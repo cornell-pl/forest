@@ -159,39 +159,40 @@ if ($help) {
     if (-d $ocaml_lib_dir) {
       push(@incs, "-I $ocaml_lib_dir");
     } else {
-      print "\nWarning: expected dir $ocaml_lib_dir not found, check your OCAML_LIB_DIR env var setting\n\n";
-      exit -1;
+      print "\nWarning: expected dir $ocaml_lib_dir not found, check your OCAML_LIB_DIR env var setting\n";
+      print "   (you are likely to get errors due to missing .h files below)\n\n";
     }
     
     my $galax_home = $ENV{"GALAX_HOME"};
     if ($galax_home eq "") {
-      print "\nEnv variable GALAX_HOME must be set to use -x option\n\n";
-      exit -1;
-    }
-    if ($galax_home !~ m|/$|) {
-      $galax_home .= "/";
-    }
-    my $galax_lib_dir = $galax_home . "lib/c";
-    $galax_lib_dir =~ s|/$||;
-    if (-d $galax_lib_dir) {
-      push(@incs, "-I $galax_lib_dir");
+      print "\nWarning: env variable GALAX_HOME should be set when using the -x option\n";
+      print "   (you are likely to get errors due to missing .h files below)\n\n";
     } else {
-      print "\nWarning: expected dir $galax_lib_dir not found, check your GALAX_HOME env var setting\n\n";
-      exit -1;
+      if ($galax_home !~ m|/$|) {
+	$galax_home .= "/";
+      }
+      my $galax_lib_dir = $galax_home . "lib/c";
+      $galax_lib_dir =~ s|/$||;
+      if (-d $galax_lib_dir) {
+	push(@incs, "-I $galax_lib_dir");
+      } else {
+	print "\nWarning: expected dir $galax_lib_dir not found, check your GALAX_HOME env var setting\n";
+	print "   (you are likely to get errors due to missing .h files below)\n\n";
+      }
     }
-    
     my $padsglx_home = $ENV{"PADSGLX_HOME"};
     if ($padsglx_home eq "") {
-      print "\nEnv variable PADSGLX_HOME must be set to use -x option\n\n";
-      exit -1;
-    }
-    my $padsglx_lib_dir = $padsglx_home;
-    $padsglx_lib_dir =~ s|/$||;
-    if (-d $padsglx_lib_dir) {
-      push(@incs, "-I $padsglx_lib_dir");
+      print "\nWarning: env variable PADSGLX_HOME should be set when using the -x option\n";
+      print "   (you are likely to get errors due to missing .h files below)\n\n";
     } else {
-      print "\nWarning: expected dir $padsglx_lib_dir not found, check your PADSGLX_HOME env var setting\n\n";
-      exit -1;
+      my $padsglx_lib_dir = $padsglx_home;
+      $padsglx_lib_dir =~ s|/$||;
+      if (-d $padsglx_lib_dir) {
+	push(@incs, "-I $padsglx_lib_dir");
+      } else {
+	print "\nWarning: expected dir $padsglx_lib_dir not found, check your PADSGLX_HOME env var setting\n\n";
+	print "   (you are likely to get errors due to missing .h files below)\n";
+      }
     }
   }
   my $add_incs = join(" ", @incs);
