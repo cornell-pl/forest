@@ -894,9 +894,12 @@ PDC_error_t          PDC_inv_valfn_map_destroy(PDC_t *pdc, PDC_inv_valfn_map_t *
  *                   Uses disc->fopen_fn, if present, otherwise default PDC_fopen.
  *                   Returns PDC_OK on success, PDC_ERR on error
  *
- * PDC_IO_close    : Close the current sfio stream.
- *                   Uses disc->fclose_fn, if present, otherwise default PDC_fclose.
- *                   Returns PDC_OK on success, PDC_ERR on error.
+ * PDC_IO_close    : Clean up the io discipline state.
+ *                   If a file was opened via PDC_IO_fopen, close it.
+ *                   If an io was installed via PDC_IO_set, it is not closed.
+ *                   When an IO is installed via PDC_IO_set, it is up to the
+ *                   the program that opened to installed io to close it
+ *                   (*after* calling PDC_IO_close).
  *
  * PDC_IO_next_rec : Advances current IO position to start of the next record, if any.
  *                   Returns PDC_OK on success, PDC_ERR on failure 
