@@ -4,7 +4,7 @@
 my $dbg=1;
 my $targdir="./";
 my $ver="0.1";
-my $cvsroot = ":ext:raptor.research.att.com:/home/gruber/knb/cvsroot";
+my $cvsroot = ":ext:raptor.research.att.com:/home/padsproj/cvsroot";
 
 my $tmpdir = $targdir . "tmp_pads_$ver";
 my $topdir = $targdir . "pads_$ver";
@@ -31,25 +31,18 @@ if ($pads_home eq "") {
 }
 
 &docmd("mkdir -p $tmpdir");
-# XXX this would normally be a checkout command
-# &docmd("cd $tmpdir; cvs -d $cvsroot export pads");
-# XXX instead we do this (temporary hack):
-&docmd("cd $tmpdir; cp -r /home/gruber/pads pads");
-# XXX with export, will not need to get rid of CVS dirs
-my $cvstmp = &docmd("cd $tmpdir/pads; find . -name CVS");
-$cvstmp =~ s/\n/ /g;
-&docmd("cd $tmpdir/pads; /bin/rm -rf $cvstmp");
+&docmd("cd $tmpdir; cvs -d $cvsroot export pads");
 
 &docmd("/bin/rm -rf $topdir");
 &docmd("mv $tmpdir/pads $topdir");
 &docmd("/bin/rm -rf $tmpdir");
 
-# replace ast-ast with special case
-&docmd("/bin/rm -rf $topdir/ast-ast");
-&docmd("mkdir -p $topdir/ast-ast/bin");
-&docmd("mkdir -p $topdir/ast-ast/lib/package/tgz");
+# Replace the checked in ast-zip and INIT packages
+# with alternate ast-ast and INIT packages.
+# This is to avoid building the compression libraries.
+
+&docmd("/bin/rm -rf $topdir/ast-ast/lib/package/tgz/*.tgz");
 &docmd("cp $pads_home/scripts/release/*.tgz $topdir/ast-ast/lib/package/tgz/");
-&docmd("cp $pads_home/ast-ast/bin/package.cvs $topdir/ast-ast/bin/");
 
 my $release_tfiles = &docmd("cat $topdir/padsc/examples/tests/RELEASE_TESTS");
 my $all_tfiles = &docmd("cd $topdir/padsc/examples/tests; ls -d *.c");

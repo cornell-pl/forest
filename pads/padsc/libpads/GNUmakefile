@@ -23,9 +23,9 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
 
-INCDIR = $(PADS_HOME)/padsc/include
-PCGEN_IN = $(INCDIR)/pcgen-macros.h
-PCGEN = $(INCDIR)/pcgen-macros-gen.h
+SRC_INCDIR = $(PADS_HOME)/padsc/include
+PCGEN_IN = $(SRC_INCDIR)/pcgen-macros.h
+PCGEN = $(SRC_INCDIR)/pcgen-macros-gen.h
 
 OBJS_O = rbuf.o default_io_disc.o pads-gen.o pads-acc-gen.o pads-read-gen.o pads-write-gen.o pads-misc-gen.o
 
@@ -84,23 +84,22 @@ $(SHARED_PADSLIB_NM_D) : $(OBJS_D)
 	$(SHARED_LIBTOOL) -o $(SHARED_PADSLIB_NM_D) $(SHARED_LIBTOOL_WHOLE_ARCHIVE) \
         $(OBJS_D) $(SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE) $(SHARED_LIBTOOL_OPTS)
 
-ifdef FORCE_STATIC
-
-install : all
+install_static : all
 	+@(set -x ; \
-	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_O) $(INSTALLROOT)/lib; \
-	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_D) $(INSTALLROOT)/lib )
-	@(cd $(INCDIR); $(MAKE) install)
+	mkdir -p $(INSTALL_LIBDIR); \
+	for file in $(ASTLIBS); do \
+		$(PADS_HOME)/scripts/install-sh -c -m 444 $(INSTALLROOT)/lib/$$file $(INSTALL_LIBDIR); \
+	done; \
+	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_O) $(INSTALL_LIBDIR); \
+	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_D) $(INSTALL_LIBDIR) )
+	@(cd $(SRC_INCDIR); $(MAKE) install)
 
-else
-
-install : all
+install_dynamic : all
 	+@(set -x ; \
-	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_O) $(INSTALLROOT)/lib; \
-	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PADSLIB_NM_O) $(INSTALLROOT)/lib; \
-	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_D) $(INSTALLROOT)/lib; \
-	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PADSLIB_NM_D) $(INSTALLROOT)/lib; \
-	( cd $(INSTALLROOT)/lib; \
+	mkdir -p $(INSTALL_LIBDIR); \
+	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PADSLIB_NM_O) $(INSTALL_LIBDIR); \
+	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PADSLIB_NM_D) $(INSTALL_LIBDIR); \
+	( cd $(INSTALL_LIBDIR); \
 	  $(RM) $(SHARED_PADSLIB_NM_ALT1_O); \
 	  ln $(SHARED_PADSLIB_NM_O) $(SHARED_PADSLIB_NM_ALT1_O); \
 	  $(RM) $(SHARED_PADSLIB_NM_ALT2_O); \
@@ -110,9 +109,14 @@ install : all
 	  $(RM) $(SHARED_PADSLIB_NM_ALT2_D); \
 	  ln $(SHARED_PADSLIB_NM_D) $(SHARED_PADSLIB_NM_ALT2_D); \
 	  ) )
-	@(cd $(INCDIR); $(MAKE) install)
 
+INSTALL_TARGETS = install_static
+
+ifndef FORCE_STATIC
+INSTALL_TARGETS += install_dynamic
 endif
+
+install : $(INSTALL_TARGETS)
 
 dogen : $(PCGEN) $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(INCLUDE_DEPS)
 	@echo "Building generated source files"
@@ -120,7 +124,7 @@ dogen : $(PCGEN) $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(INCLUDE
 	touch dogen
 
 $(PCGEN) : $(SCRIPTS)/mksrc.pl $(PCGEN_IN)
-	@(cd $(INCDIR); $(MAKE) all)
+	@(cd $(SRC_INCDIR); $(MAKE) all)
 
 pads-gen-g.o: pads-gen.c $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK

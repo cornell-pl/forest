@@ -52,11 +52,11 @@ $(SHARED_PGLXLIB_NM_D) : $(STATIC_PGLXLIB_NM_D) $(STATIC_ASTLIB_D)
 
 install : all
 	+@(set -x ; \
-	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PGLXLIB_NM_O) $(INSTALLROOT)/lib/; \
-	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PGLXLIB_NM_O) $(INSTALLROOT)/lib/; \
-	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PGLXLIB_NM_D) $(INSTALLROOT)/lib/; \
-	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PGLXLIB_NM_D) $(INSTALLROOT)/lib/; \
-	( cd $(INSTALLROOT)/lib; \
+	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PGLXLIB_NM_O) $(INSTALL_LIBDIR); \
+	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PGLXLIB_NM_O) $(INSTALL_LIBDIR); \
+	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PGLXLIB_NM_D) $(INSTALL_LIBDIR); \
+	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PGLXLIB_NM_D) $(INSTALL_LIBDIR); \
+	( cd $(INSTALL_LIBDIR); \
 	  $(RM) $(SHARED_PGLXLIB_NM_ALT1_O); \
 	  ln $(SHARED_PGLXLIB_NM_O) $(SHARED_PGLXLIB_NM_ALT1_O); \
 	  $(RM) $(SHARED_PGLXLIB_NM_ALT2_O); \
@@ -67,7 +67,7 @@ install : all
 	  ln $(SHARED_PGLXLIB_NM_D) $(SHARED_PGLXLIB_NM_ALT2_D); \
 	  ); \
 	for file in $(INSTALL_INCLUDES); do \
-		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALLROOT)/include/; \
+		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALL_INCDIR); \
 	done;)
 
 clean :
@@ -84,8 +84,8 @@ INSTALLED_LIBS = \
   $(SHARED_PGLXLIB_NM_ALT2_D)
 
 veryclean : clean
-	(cd $(INSTALLROOT)/include; $(RM) $(INSTALL_INCLUDES); )
-	(cd $(INSTALLROOT)/lib; $(RM) $(INSTALLED_LIBS))
+	(cd $(INSTALL_INCDIR); $(RM) $(INSTALL_INCLUDES); )
+	(cd $(INSTALL_LIBDIR); $(RM) $(INSTALLED_LIBS))
 
  # End of rules that are run from the arch directory
 endif
