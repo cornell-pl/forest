@@ -1,9 +1,15 @@
-\chapter{Base types}
+\chapter{Base Types Overview}
 \label{chap:base-types}
 \cutname{base.html}
-\PADSL{} base types describe inidivual (typically small) values: numbers, strings, dates, and so on.
-This chapter describes a large number of built-in \PADSL{} base types.
-It is also possible to extend \PADSL{} with any
+
+\PADSL{} base types describe inidivual, small values: numbers, strings, dates, and so on.
+This chapter provides an overview of some of the most important built-in \PADSL{} base types,
+with a focus on how these types are used within \PADSL{} source files.
+\appref{ap:base-types} gives detailed descriptions of each of the built-in base types,
+including the full set of library API calls for each type.  (As discussed in
+\secref{sec:somewhere}, each type has correspond read, write, format, and accumulation functions.)
+
+In addition to the built-in types, it is possible to extend \PADSL{} with any
 number of new base types; see \secref{sec:library-adding-new-base-types}.
 
 \section{In-Memory Representation}
@@ -20,7 +26,7 @@ This section reviews the different in-memory representation types.
 
 Type \Pd{char} is the in-memory representation of an external
 character.  It is equivalent to the C type \cd{unsigned char}, or type
-\Pd{uint8}: all are 8-bit unsigned values.  N.B.: Regardless of the
+\Pd{uint8}: all are 8-bit unsigned values.  {\bf N.B.}: Regardless of the
 external character that is read, the corresponding ASCII character is stored in 
 the in-memory representation.
 
@@ -56,15 +62,27 @@ be called when a given \Pd{string} is no longer in use.
 These are the full set of string helper functions.
 \myvskip{1ex}
 \begin{tinycodeaux}{\leftmargin=0in}
-Perror_t Pstring_init(P_t *pads, Pstring *s);
-Perror_t Pstring_cleanup(P_t *pads, Pstring *s);
-Perror_t Pstring_share(P_t *pads, Pstring *targ, const Pstring *src);
-Perror_t Pstring_cstr_share(P_t *pads, Pstring *targ, const char *src, size_t len);
-Perror_t Pstring_copy(P_t *pads, Pstring *targ, const Pstring *src);
-Perror_t Pstring_cstr_copy(P_t *pads, Pstring *targ, const char *src, size_t len);
-Perror_t Pstring_preserve(P_t *pads, Pstring *s);
-int Pstring_eq(const Pstring *str1, const Pstring *str2);
-int Pstring_eq_cstr(const Pstring *str, const char *cstr);
+Perror\_t Pstring\_init(P\_t *pads, Pstring *s);
+Perror\_t Pstring\_cleanup(P\_t *pads, Pstring *s);
+Perror\_t Pstring\_share(P\_t *pads, Pstring *targ, const Pstring *src);
+Perror\_t Pstring\_cstr\_share(P\_t *pads, Pstring *targ, const char *src, size\_t len);
+Perror\_t Pstring\_copy(P\_t *pads, Pstring *targ, const Pstring *src);
+Perror\_t Pstring\_cstr\_copy(P\_t *pads, Pstring *targ, const char *src, size\_t len);
+Perror\_t Pstring\_preserve(P\_t *pads, Pstring *s);
+int Pstring\_eq(const Pstring *str1, const Pstring *str2);
+int Pstring\_eq\_cstr(const Pstring *str, const char *cstr);
+Pint8    Pstring2int8  (const Pstring *str);  \/\* returns P\_MIN\_INT8 on error \*\/ 
+Pint16   Pstring2int16 (const Pstring *str);  \/\* returns P\_MIN\_INT16 on error \*\/ 
+Pint32   Pstring2int32 (const Pstring *str);  \/\* returns P\_MIN\_INT32 on error \*\/ 
+Pint64   Pstring2int64 (const Pstring *str);  \/\* returns P\_MIN\_INT64 on error \*\/ 
+
+Puint8   Pstring2uint8 (const Pstring *str);  \/\* returns P\_MAX\_UINT8 on error \*\/ 
+Puint16  Pstring2uint16(const Pstring *str);  \/\* returns P\_MAX\_UINT16 on error \*\/ 
+Puint32  Pstring2uint32(const Pstring *str);  \/\* returns P\_MAX\_UINT32 on error \*\/ 
+Puint64  Pstring2uint64(const Pstring *str);  \/\* returns P\_MAX\_UINT64 on error \*\/ 
+
+Pfloat32 Pstring2float32(const Pstring *str); \/\* returns P\_MIN\_FLOAT32 on error \*\/
+Pfloat64 Pstring2float64(const Pstring *str); \/\* returns P\_MIN\_FLOAT64 on error \*\/
 \end{tinycodeaux}
 \mbox{}\\[1ex]
 \cd{Pstring\_init(pads, s)}: Initialize \cd{s} to valid empty string (no dynamic memory allocated yet).\\[1ex]
@@ -79,8 +97,16 @@ and a positive number if \cd{str1 > str2}.\\[1ex]
 \cd{Pstring\_eq(str, cstr)}: returns \cd{0} if \cd{str} equals \cd{cstr}, a negative number if \cd{str < cstr},
 and a positive number if \cd{str > cstr}.\\[1ex]
 
-Although not strictly necessary, both \Pd{string\_copy} and \Pd{string\_cstr\_copy} null-terminate \cd{targ->str}.
-Each copy function returns \Pd{\_ERR} on bad arguments or on failure to alloc space, otherwise it returns \Pd{\_OK}.
+Although not strictly necessary, both \Pd{string\_copy} and
+\Pd{string\_cstr\_copy} null-terminate \cd{targ->str}.  Each copy
+function returns \Pd{\_ERR} on bad arguments or on failure to alloc
+space, otherwise it returns \Pd{\_OK}.
+
+The various Pstring2NUMERIC functions convert a string to the
+specified numeric type.  If the contents of the string cannot be
+converted to the specified type, the minumum value for the numeric
+type is returned for signed numeric types, or the maximum value is
+returned for unsigned numeric types.
 
 \subsection{Integer types}
 
@@ -90,28 +116,28 @@ and four types for unsigned values (\Pd{uint8}, \Pd{uint16}, \Pd{uint32}, and \P
 The number in these type names indicates the number of bits in the in-memory representation,
 thus there are signed and unsigned integers that use 1, 2, 4, or 8 bytes of memory.
 The endian-ness of these in-memory representation types is the same as the
-endian-ness of the processor that the code is executing on.  Thus,
-the external representation, which may be in another format, is always converted
-to a primitive in-memory representation supported by the processor.
+endian-ness of the processor that the code is executing on. 
+The external representation, which may be in another format, is always converted
+to the primitive in-memory representation supported by the processor.
 
-For programming convenience, the header file {\tt padsc.h} includes definitions of the minimum
+For programming convenience, the header file {\tt pads.h} includes definitions of the minimum
 and maximum values for each signed type, and of the maximum value for each unsigned type:
 \begin{tinycode}
-P_MIN_INT8
-P_MAX_INT8
-P_MAX_UINT8
+P\_MIN\_INT8
+P\_MAX\_INT8
+P\_MAX\_UINT8
 
-P_MIN_INT16
-P_MAX_INT16
-P_MAX_UINT16
+P\_MIN\_INT16
+P\_MAX\_INT16
+P\_MAX\_UINT16
 
-P_MIN_INT32
-P_MAX_INT32
-P_MAX_UINT32
+P\_MIN\_INT32
+P\_MAX\_INT32
+P\_MAX\_UINT32
 
-P_MIN_INT64
-P_MAX_INT64
-P_MAX_UINT64
+P\_MIN\_INT64
+P\_MAX\_INT64
+P\_MAX\_UINT64
 \end{tinycode}
 
 \subsection{Floating-point types}
@@ -135,7 +161,7 @@ The in-memory representation always has an unsigned denominator. We
 provide signed and unsigned representations that use signed and
 unsigned numerators, respectively.  One can choose the number of bits
 used for both numerator and denominator in the same way as for the
-integer types, thus there are four four types for signed values
+integer types, thus there are four types for signed values
 and four types for unsigned values:
 
 \begin{tinycodeaux}{\leftmargin=0in}
@@ -196,114 +222,354 @@ table showing types \Pa{char} (ASCII), \Pe{char} (EBCDIC), \Pd{char}
 \aedLine{char}
 \aedEnd{}
 \\[1ex]
-The corresponding read functions are:
+Example:  Writing
 \begin{tinycodeaux}{\leftmargin=0in}
-Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
-Perror_t Pa_char_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
-Perror_t Pe_char_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
+Pa\_char  c;
 \end{tinycodeaux}
+in a \PADSL{} source file (within a Pstruct, for example) indicates
+that a single ASCII character is expected.  Writing a constraint
+such as 
+\begin{tinycodeaux}{\leftmargin=0in}
+{\bf TODO: FORMATING? }
+Pe\_char  c : c == 'A' || c == 'B';
+\end{tinycodeaux}
+indicates that an EBCDIC capital letter A or B is expected.
+{\bf NB:}\/ Note that the constraint expression is applied to the
+{\em in-memory\/} representation of c, which is an ASCII value,
+thus the C character constants (ASCII constants)
+are used to specify letters A and B.
 
-\subsection{Special character base types}
+\subsection{Special character counting base types}
 
 \aedBegin{}
 \aedLine{countX}
 \aedLine{countXtoY}
 \aedEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-Perror_t PcountX     (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required,
-		      Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pa_countX   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required,
-		      Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pe_countX   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required,
-		      Pbase_pd *pd, Pint32 *res_out);
+{\bf TODO: format the type names and the param names.}
 
-Perror_t PcountXtoY  (P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y,
-		      Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pa_countXtoY(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y,
-		      Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pe_countXtoY(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y,
-		      Pbase_pd *pd, Pint32 *res_out);
+Unlike all other base types, these counting base types
+never advance the IO cursor.  You can think of these types as
+``peeking ahead'' to see how many occurrences of a given character
+appear forward of the current IO cursor position.
+
+The PcountX types count the number of occurences of character X
+between the current IO cursor position and the fist EOR (end of
+record) or EOF (end of file).  They take three parameters, x,
+eor\_required, and count\_max.  x is the character to count.  If
+eor\_required is non-zero, then encountering EOF before EOR produces
+an error.  If count\_max is non-zero, EOR/EOF must be encountered
+before scanning count\_max characters, otherwise an error is returned.
+For example,
+\begin{tinycodeaux}{\leftmargin=0in}
+{\bf TODO: FORMAT }
+Pa\_countX(: '=', 0, 0 :) my\_count;
 \end{tinycodeaux}
+will count the number of ASCII equals-sign characters between
+the IO cursor and the next EOR or EOF, with no limit on
+the maximum scan distance.
 
 \section{String Base Types}
 
-\subsection{Fixed-width character-based encoding}
+The large number of string base types is due to the fact that there
+are many different ways to indicate the extent of a string.  The
+entire input (up to end-of-file or end-of-record) is a sequence of
+bytes that can be included in a string, so when specifying a string
+type in a PADSL description, we need to indicate how much of that
+input we would like included in the string.
+
+\subsection{Pstring\_FW}
 
 \aedBegin{}
 \aedLine{string\_FW}
 \aedEnd{}
 
+One of the simplest ways to specify the extent of a string is to give the
+exact number of characters, or width, that will be included in the string.
+For example,
 \begin{tinycodeaux}{\leftmargin=0in}
-Perror_t Pstring_FW_read   (P_t *pads, const Pbase_m *m, size_t width,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pa_string_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pe_string_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			    Pbase_pd *pd, Pstring *s_out);
+{\bf TODO: FORMAT }
+Pstring\_FW(: 10 :) my\_string;
 \end{tinycodeaux}
+Specifies a string with width 10.  In this case the default character set
+will determine whether ASCII or EBCDIC characters are expected in the
+input stream.  Regardless of the input character set, the resulting in-memory 
+Pstring contains ASCII characters. 
 
-\subsection{Variable-width character-based encoding}
+An error occurs if the specified width is not available.  See \appref{ap:base-types}
+for details.
+
+\subsection{Pstring}
 
 \aedBegin{}
 \aedLine{string}
-\aedLine{string\_ME}
-\aedLine{string\_CME}
-\aedLine{string\_SE}
-\aedLine{string\_CSE}
 \aedEnd{}
 
+For the Pstring type one specifies a 'stop character' that is
+expected immediately {\em following\/} the string.  The extent of the
+string is all characters from the IO cursor up
+to but not including the first occurrence of the stop char.
+For example,
 \begin{tinycodeaux}{\leftmargin=0in}
-Perror_t Pstring_read      (P_t *pads, const Pbase_m *m, Pchar stopChar,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pa_string_read    (P_t *pads, const Pbase_m *m, Pchar stopChar,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pe_string_read    (P_t *pads, const Pbase_m *m, Pchar stopChar,
-			    Pbase_pd *pd, Pstring *s_out);
-
-Perror_t Pstring_ME_read   (P_t *pads, const Pbase_m *m, const char *matchRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pa_string_ME_read (P_t *pads, const Pbase_m *m, const char *matchRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pe_string_ME_read (P_t *pads, const Pbase_m *m, const char *matchRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-
-Perror_t Pstring_CME_read  (P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pa_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pe_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-
-Perror_t Pstring_SE_read   (P_t *pads, const Pbase_m *m, const char *stopRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pa_string_SE_read (P_t *pads, const Pbase_m *m, const char *stopRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pe_string_SE_read (P_t *pads, const Pbase_m *m, const char *stopRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-
-Perror_t Pstring_CSE_read  (P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pa_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
-Perror_t Pe_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
-			    Pbase_pd *pd, Pstring *s_out);
+{\bf TODO: FORMAT }
+Pe\_string(: '|' :) my\_string;
 \end{tinycodeaux}
+Indicates that a series of EBCDIC characters is expected, followed by
+an EBCDIC vertical bar.  Note that the stop char is always specified
+in ASCII (in this case usng a C character constant).  When the
+character set that is being read from the input is EBCDIC, the read
+function looks for the EBCDIC character that is equivalenet to the
+specified ASCII character.
 
-\subsection{Special string base types}
+\subsection{Pstring\_ME}
 
 \aedBegin{}
-\Pd{date}, \Pa{date}, \Pe{date}.
+\aedLine{string\_ME}
 \aedEnd{}
 
+For type Pstring\_ME, a regular expression called the {\em matching
+expression\/} is given, and the extent of the string is the longest
+sequence of characters starting at the current IO position which match
+this expression.  Note that when you specify a regular expression as
+a C string, you must use two backslashes to indicate a single
+backslash character (otherwise C will think you are applying the
+special backslash operator to the following character). 
+In a language such as Perl, which does not have this requirement,
+you might write
 \begin{tinycodeaux}{\leftmargin=0in}
-Perror_t Pdate_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
-		      Pbase_pd *pd, Puint32 *res_out);
-Perror_t Pa_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
-		      Pbase_pd *pd, Puint32 *res_out);
-Perror_t Pe_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
-		      Pbase_pd *pd, Puint32 *res_out);
+% This is supposed to come out as  /\S*/
+  /\\S\*/
 \end{tinycodeaux}
+to create a regular expression which will match a
+sequence of zero or more non-space characters.  To use the
+same regular expression in a PADSL description
+with the Pa\_string\_ME type, you would write:
+\begin{tinycodeaux}{\leftmargin=0in}
+{\bf TODO: FORMAT }
+% This is supposed to come out as  "/\\S*/"
+Pa\_string\_ME(: "\/\\\\S\*\/" :) my\_string;
+\end{tinycodeaux}
+This will match a sequence of zero or non-space characters and assign
+it to my\_string.  Note that if a space occurs immediatley, a match
+still occurs, since we specified that zero characters was OK --
+my\_string would be a string of length 0.  The extent is bound be
+end-of-record/end-of-file, so if there are no spaces before an
+end-of-record, my\_string will end up containing all characters
+remaining in the record.
+
+As a concrete example, if the input at the current IO cursor is {\tt hello
+world} when the above string declaration is used to read from the
+input, my\_string will end up containing {\tt hello}.  Note that the
+space that follows {\t hello} is {\em not} included, since it does not
+part of the match.
+
+\subsection{Pstring\_SE}
+
+\aedBegin{}
+\aedLine{string\_SE}
+\aedEnd{}
+
+For type Pstring\_SE, a regular expression called the {\em stop
+expression\/} is given, and the extent of the string is the longest
+sequence of characters starting at the current IO position such that
+the characters immediately following successfully match the stop
+expression.  None of the characters matching the stop expression
+are included in the result.
+For example,
+\begin{tinycodeaux}{\leftmargin=0in}
+{\bf TODO: FORMAT }
+% This is supposed to come out as  "/\\s|$/"
+XXX FIX
+Pa\_string\_SE(: "\/\\\\s|\$\/" :) my\_string;
+\end{tinycodeaux}
+The stop expression will match {\em either\/} a space character (due to the backslash-s) {\em or\/}
+end-of-record/end-of-file (due to the special dollar-sign character).  As a result,
+my\_string will end up containing all non-space characters up to (but not including) the 
+first space characer that is found, or up to the end of the current record if no space
+character is found.  
+
+You may already have noticed that the Pa\_string\_ME and
+Pa\_string\_SE examples actually specify exactly the same extent.  Due
+to the power of regular expressions, it is often the case that you can
+choose to use either type.  You should use whichever type results in a
+clearer description of what is expected in the input.  (In this case,
+the Pa\_string\_ME form is simpler and therefore in our opinion
+clearer.)
+
+\subsection{Timestamp\_explicit}
+
+\aedBegin{}
+\aedLine{timestamp\_explicit\_FW}
+\aedLine{timestamp\_explicit}
+\aedLine{timestamp\_explicit\_ME}
+\aedLine{timestamp\_explicit\_SE}
+\aedEnd{}
+
+A timestamp is a combination of a calendar date and a time of day.
+The corresponding in-memory representation is a Puint32 which
+represents the number of seconds since {\tt 00:00:00 1-Jan-1970 UTC},
+also knows as ``seconds since the epoch.''
+Thus, the time {\tt 00:00:20 1-Jan-1970 UTC} would be represented
+internally as the number 1200, since it occurs 1200 seconds
+(20 minutes) past the epoch.
+
+The input values are ASCII or EBCDIC strings.  Each
+Ptimestamp\_explicit type takes as first argument the same form of
+specifying the string's extent as the corresponding Pstring type, and
+takes as second argument a timestamp format string which describes
+what the input string should contain.
+
+Timestamp formats consists of literal characters that are are simply
+expected to be present in the input, and special combinations of a
+percent-sign and a character used to indicate expected parts of the
+timestamp.  For example, the input format {\tt
+"\%Y-\%m-\%d+\%H:\%M"} indicates that a format that starts with a
+four digit year, then a dash, then a two digit month, then a dash,
+then a two-digit day, then a plus sign, then a two digit hour, then a
+colon, then a two digit minutes.  (To specify that a literal percent
+sign must appear in the input, use two percent signs in a row.)  A
+full description of supported formats is [[DESCRIBED HERE]].
+
+Each of the Ptimestamp\_explicit types corresponds to one of the Pstring
+types that has already been described, where ech takes one additional argument
+to specify the input format.  For example,
+\begin{tinycodeaux}{\leftmargin=0in}
+{\bf TODO: FORMAT }
+Pa\_timestamp\_explicit(: '|' , "\%Y-\%m-\%d+\%H:\%M" :) my\_timestamp;
+\end{tinycodeaux}
+Reads an ASCII string, up to but not including a vertical bar, and
+converts that string into a Puint32 timestamp.  The conversion will be
+successful only if the string has the specified format.
+
+Some timestamp formats include explicit time zone information.  For
+the rest, such as the format used above, the input time zone is taken
+from the PADS discipline field {\tt disc-$>$in\_time\_zone}, as
+described in [[THIS SECTION]].
+
+\subsection{Timestamp}
+
+\aedBegin{}
+\aedLine{timestamp\_FW}
+\aedLine{timestamp}
+\aedLine{timestamp\_ME}
+\aedLine{timestamp\_SE}
+\aedEnd{}
+
+The timestamp types are the same as the timestamp\_explicit types,
+except no timestamp format is given.  Instead, the PADS
+discipline field {\tt disc-$>$in\_formats.timestamp} is used
+for all Ptimestamp types.
+
+\subsection{Date\_explicit}
+
+\aedBegin{}
+\aedLine{date\_explicit\_FW}
+\aedLine{date\_explicit}
+\aedLine{date\_explicit\_ME}
+\aedLine{date\_explicit\_SE}
+\aedEnd{}
+
+Dates are calendar days (no time of day).  Like timestamps, we
+represent a date as a Puint32 recording ``seconds since the epoch.''
+
+The Pdate\_explicit types take a second argument, a date format,
+which accepts the same special characters as the Ptimestamp\_explciit types.
+So, technically there is nothing to stop you from using the date types
+to input time of day fields.  However, we encourage you to use the
+Ptimestamp types when both a calendar day and a time of day are to be
+input, and to use the Pdate types when just the calendar day is to be
+input.
+
+\subsection{Date}
+
+\aedBegin{}
+\aedLine{date\_FW}
+\aedLine{date}
+\aedLine{date\_ME}
+\aedLine{date\_SE}
+\aedEnd{}
+
+The date types are the same as the date\_explicit types,
+except no date format is given.  Instead, the PADS
+discipline field {\tt disc-$>$in\_formats.date} is used
+for all Pdate types.
+
+\subsection{Time\_explicit}
+
+\aedBegin{}
+\aedLine{time\_explicit\_FW}
+\aedLine{time\_explicit}
+\aedLine{time\_explicit\_ME}
+\aedLine{time\_explicit\_SE}
+\aedEnd{}
+
+Times give the time of day, with no calendar date.  The are
+represented as a Puint32 recording seconds since midnight.  For
+examle, the time 1am is represented as 3600 (i.e., 3600 seconds, or 60
+minutes, after midnight).
+
+The Ptime\_explicit types take a second argument, a time format, which
+accepts the same special characters as the timestamp and date types.
+However, we encourage you to use the Ptimes types when just a time of
+day is expected.
+
+\subsection{Time}
+
+\aedBegin{}
+\aedLine{time\_FW}
+\aedLine{time}
+\aedLine{time\_ME}
+\aedLine{time\_SE}
+\aedEnd{}
+
+The time types are the same as the time\_explicit types,
+except no time format is given.  Instead, the PADS
+discipline field {\tt disc-$>$in\_formats.time} is used
+for all Ptime types.
+
+\subsection{Ip}
+
+\aedBegin{}
+\aedLine{time\_FW}
+\aedLine{time}
+\aedLine{time\_ME}
+\aedLine{time\_SE}
+\aedEnd{}
+
+The Pip type reads an IP address string from the input that is in
+numeric dotted form (as in {\tt 10.1.0.17}) using ASCII or EBCDIC
+digits and periods (dots).  The string consists of up to four
+parts with values between 0 and 255, separated by periods,
+with an optional trailing period.  When there are
+fewer than four parts, the missing parts are treated as implicitly
+zero, and are inserted as shown in the following diagram,
+which shows the 8 legal input forms and the equivalent form.
+\begin{verbatim}
+  $<$part1$>$                          --$>$ $<$part1$>$.0.0.0
+  $<$part1$>$.                         --$>$ $<$part1$>$.0.0.0.
+  $<$part1$>$.$<$part4$>$                  --$>$ $<$part1$>$.0.0.$<$part4$>$
+  $<$part1$>$.$<$part4$>$.                 --$>$ $<$part1$>$.0.0.$<$part4$>$.
+  $<$part1$>$.$<$part2$>$.$<$part4$>$          --$>$ $<$part1$>$.$<$part2$>$.0.$<$part4$>$
+  $<$part1$>$.$<$part2$>$.$<$part4$>$.         --$>$ $<$part1$>$.$<$part2$>$.0.$<$part4$>$.
+  $<$part1$>$.$<$part2$>$.$<$part3$>$.$<$part4$>$  --$>$ same
+  $<$part1$>$.$<$part2$>$.$<$part3$>$.$<$part4$>$. --$>$ same
+\end{verbatim}
+Each $<$part$>$ is made up of 1 to 3 digits which specify a number
+in the range [0, 255].
+
+The result is a single Puint32 value with each part encoded in one
+of the four bytes.  part1 is stored in the high-order byte, part4
+in the low-order byte.  You can obtain each part using the macro
+
+\begin{tinycodeaux}{\leftmargin=0in}
+  P\_IP\_PART(addr, part)
+\end{tinycodeaux}
+where part must be from 1 to 4.
+
+The digit chars and "." char are read as EBCDIC chars if the EBCDIC
+form is used or if the default form is used and
+pads-$>$disc-$>$def\_charset is Pcharset\_EBCDIC.  Otherwise the data is
+read as ASCII chars.
 
 \section{Integer Base Types}
 
@@ -320,61 +586,22 @@ Perror_t Pe_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
 \aedLine{uint64\_FW}
 \aedEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-Perror_t Pa_int8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			  Pbase_pd *pd, Pint8 *res_out);
-Perror_t Pa_int16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			  Pbase_pd *pd, Pint16 *res_out);
-Perror_t Pa_int32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			  Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pa_int64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			  Pbase_pd *pd, Pint64 *res_out);
+The above types are used when the input represenation for an integer
+is a fixed number of ASCII or EBCDIC characters.  The int types are
+signed types, while the uint types are unsigned.  The number in the
+type name specifies how many bits are used in the in-memory
+represenation, thus a Puint32 is a 32 bit (4 byte) representation of
+an unsigned integer.
 
-Perror_t Pa_uint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			   Pbase_pd *pd, Puint8 *res_out);
-Perror_t Pa_uint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			   Pbase_pd *pd, Puint16 *res_out);
-Perror_t Pa_uint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			   Pbase_pd *pd, Puint32 *res_out);
-Perror_t Pa_uint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			   Pbase_pd *pd, Puint64 *res_out);
-
-Perror_t Pe_int8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			  Pbase_pd *pd, Pint8 *res_out);
-Perror_t Pe_int16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			  Pbase_pd *pd, Pint16 *res_out);
-Perror_t Pe_int32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			  Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pe_int64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			  Pbase_pd *pd, Pint64 *res_out);
-
-Perror_t Pe_uint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			   Pbase_pd *pd, Puint8 *res_out);
-Perror_t Pe_uint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			   Pbase_pd *pd, Puint16 *res_out);
-Perror_t Pe_uint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			   Pbase_pd *pd, Puint32 *res_out);
-Perror_t Pe_uint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			   Pbase_pd *pd, Puint64 *res_out);
-
-Perror_t Pint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			Pbase_pd *pd, Pint8 *res_out);
-Perror_t Pint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			Pbase_pd *pd, Pint16 *res_out);
-Perror_t Pint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			Pbase_pd *pd, Pint64 *res_out);
-
-Perror_t Puint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			 Pbase_pd *pd, Puint8 *res_out);
-Perror_t Puint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			 Pbase_pd *pd, Puint16 *res_out);
-Perror_t Puint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			 Pbase_pd *pd, Puint32 *res_out);
-Perror_t Puint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			 Pbase_pd *pd, Puint64 *res_out);
-\end{tinycodeaux}
+The characters in the input can have an optional plus or minus sign, for
+signed types, or an optional plus signed, for unsigned types, followed
+by a set of one or more digits.   In addition, leading or
+trailing whitespace can occur, but only if the PADS discipline field
+{\tt disc-$>$flags} has the {\tt WSPACE\_OK} flag set.
+The data is read as EBCDIC chars if an EBCDIC
+form (such as Pe\_int8) is used, or if the default form (Pint8) is used and
+pads-$>$disc-$>$def\_charset is Pcharset\_EBCDIC.  Otherwise, the data is
+read as ASCII chars.
 
 \subsection{Variable-width character-based encoding}
 
@@ -389,62 +616,13 @@ Perror_t Puint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
 \aedLine{uint64}
 \aedEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\codeallowbreaks
-Perror_t Pa_int8_read (P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint8 *res_out);
-Perror_t Pa_int16_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint16 *res_out);
-Perror_t Pa_int32_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pa_int64_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint64 *res_out);
-
-Perror_t Pa_uint8_read (P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint8 *res_out);
-Perror_t Pa_uint16_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint16 *res_out);
-Perror_t Pa_uint32_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint32 *res_out);
-Perror_t Pa_uint64_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint64 *res_out);
-
-Perror_t Pe_int8_read (P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint8 *res_out);
-Perror_t Pe_int16_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint16 *res_out);
-Perror_t Pe_int32_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pe_int64_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint64 *res_out);
-
-Perror_t Pe_uint8_read (P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint8 *res_out);
-Perror_t Pe_uint16_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint16 *res_out);
-Perror_t Pe_uint32_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint32 *res_out);
-Perror_t Pe_uint64_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint64 *res_out);
-
-Perror_t Pint8_read (P_t *pads, const Pbase_m *m,
-		     Pbase_pd *pd, Pint8 *res_out);
-Perror_t Pint16_read(P_t *pads, const Pbase_m *m,
-		     Pbase_pd *pd, Pint16 *res_out);
-Perror_t Pint32_read(P_t *pads, const Pbase_m *m,
-		     Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pint64_read(P_t *pads, const Pbase_m *m,
-		     Pbase_pd *pd, Pint64 *res_out);
-
-Perror_t Puint8_read (P_t *pads, const Pbase_m *m,
-		      Pbase_pd *pd, Puint8 *res_out);
-Perror_t Puint16_read(P_t *pads, const Pbase_m *m,
-		      Pbase_pd *pd, Puint16 *res_out);
-Perror_t Puint32_read(P_t *pads, const Pbase_m *m,
-		      Pbase_pd *pd, Puint32 *res_out);
-Perror_t Puint64_read(P_t *pads, const Pbase_m *m,
-		      Pbase_pd *pd, Puint64 *res_out);
-\end{tinycodeaux}
+The expected input for these types is an optional sign character
+followed by a sequence of digits.  The number of characters that make
+the input is variable: after the first digit, the digits are read
+until (but not including) the first non-digit or EOF/EOF.
+If the PADS discipline field
+{\tt disc-$>$flags} has the {\tt WSPACE\_OK} flag set, then
+leading whitespace is allowed.
 
 \subsection{Raw binary encoding}
 
@@ -459,26 +637,52 @@ Perror_t Puint64_read(P_t *pads, const Pbase_m *m,
 \bLine{uint64}
 \bEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\codeallowbreaks
-Perror_t Pb_int8_read (P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint8 *res_out);
-Perror_t Pb_int16_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint16 *res_out);
-Perror_t Pb_int32_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pb_int64_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint64 *res_out);
+These are the first binary types described in this chapter. The input
+is not made up of ASCII or EBCDIC characters that need to be interpreted
+to see what number they are describing.  Instead, the number itself is
+encoded in binary form, as a sequence of bytes.  
 
-Perror_t Pb_uint8_read (P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint8 *res_out);
-Perror_t Pb_uint16_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint16 *res_out);
-Perror_t Pb_uint32_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint32 *res_out);
-Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint64 *res_out);
+There are binary types for signed or unsigned {\em binary\/} integers
+of common bit widths (8, 16, 32, and 64 bit widths).  Pb\_int8 corresponds
+to one byte of input, Pb\_int16 to two bytes of input, and so on.
+
+The representation in memory is just the corresponding signed or
+unsigned type, thus Pb\_uint16 has rep type Puint16.  The bytes from
+the input are simply copied into the bytes that make up the rep.  If
+the endian-ness of input data is different from the endian-ness of the
+machine, then the byte order is reversed to form the in-memory
+represenation, otherwise the byte order is preserved.
+
+The endian-ness of the machine running the PADS program is fixed -- it
+is determined automatically by the PADS libary.  
+The input data endianess is described by PADS disipline 
+field {\tt disc-$>$d\_endian}. 
+
+In some cases it is possible to have PADS determine the
+proper setting for {\tt disc-$>$d\_endian} automatically, by
+using the special pragma {\tt CHECK\_ENDIAN}
+with the first multi-byte binary integer field that will appear
+in the data.  For example, consider this header definition:
+\begin{tinycodeaux}{\leftmargin=0in}
+Pstruct header \{
+   Pb\_uint16 version : version $<$ 10; \/\/- PRAGMA CHECK\_ENDIAN
+   ..etc..
+\};
 \end{tinycodeaux}
+This PADSL description indicates the first value in the header
+is a 2-byte unsigned binary integer, version,
+whose value should be less than 10.   The  {\tt CHECK\_ENDIAN} pragma indicates that there
+should be two attempts at reading the version field: once with the
+ current {\tt disc-$>$d\_endian} setting, and (if the read fails) once with the
+opposite {\tt disc-$>$d\_endian} setting.  If the second read succeeds, then
+the new {\tt disc-$>$d\_endian} setting is retained, otherwise the original
+setting is retained.
+
+Note that the {\tt CHECK\_ENDIAN} pragma is only able to determine the correct endian
+choice for a field that has an attached constraint, where the
+wrong choice of endian setting will always cause the constraint to fail.
+(In the above example, if a value $<$ 10 is read with the wrong d\_endian
+setting, the result is a value that is much greater than 10. )
 
 \subsection{Serialize binary encoding}
 
@@ -493,44 +697,6 @@ Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
 \sbLine{uint64}
 \bEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\codeallowbreaks
-Perror_t Psbl_int8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Pint8 *res_out);
-Perror_t Psbl_int16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Pint16 *res_out);
-Perror_t Psbl_int32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Pint32 *res_out);
-Perror_t Psbl_int64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Pint64 *res_out);
-
-Perror_t Psbl_uint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Puint8 *res_out);
-Perror_t Psbl_uint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Puint16 *res_out);
-Perror_t Psbl_uint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Puint32 *res_out);
-Perror_t Psbl_uint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Puint64 *res_out);
-
-Perror_t Psbh_int8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Pint8 *res_out);
-Perror_t Psbh_int16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Pint16 *res_out);
-Perror_t Psbh_int32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Pint32 *res_out);
-Perror_t Psbh_int64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Pint64 *res_out);
-
-Perror_t Psbh_uint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Puint8 *res_out);
-Perror_t Psbh_uint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Puint16 *res_out);
-Perror_t Psbh_uint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Puint32 *res_out);
-Perror_t Psbh_uint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			    Pbase_pd *pd, Puint64 *res_out);
-\end{tinycodeaux}
 
 \subsection{EBC and BCD encoding}
 
@@ -545,44 +711,6 @@ Perror_t Psbh_uint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
 \cLine{uint64}
 \cEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\codeallowbreaks
-Perror_t Pebc_int8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Pint8 *res_out);
-Perror_t Pebc_int16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Pint16 *res_out);
-Perror_t Pebc_int32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pebc_int64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Pint64 *res_out);
-
-Perror_t Pebc_uint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Puint8 *res_out);
-Perror_t Pebc_uint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Puint16 *res_out);
-Perror_t Pebc_uint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Puint32 *res_out);
-Perror_t Pebc_uint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Puint64 *res_out);
-
-Perror_t Pbcd_int8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Pint8 *res_out);
-Perror_t Pbcd_int16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Pint16 *res_out);
-Perror_t Pbcd_int32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pbcd_int64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Pint64 *res_out);
-
-Perror_t Pbcd_uint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Puint8 *res_out);
-Perror_t Pbcd_uint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Puint16 *res_out);
-Perror_t Pbcd_uint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Puint32 *res_out);
-Perror_t Pbcd_uint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-			   Pbase_pd *pd, Puint64 *res_out);
-\end{tinycodeaux}
 
 \section{Floating Point Base Types}
 
@@ -641,44 +769,6 @@ Perror_t Pbcd_uint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
 \sbLine{ufpoint64}
 \bEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\codeallowbreaks
-Perror_t Psbl_fpoint8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pfpoint8 *res_out);
-Perror_t Psbl_fpoint16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pfpoint16 *res_out);
-Perror_t Psbl_fpoint32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pfpoint32 *res_out);
-Perror_t Psbl_fpoint64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pfpoint64 *res_out);
-
-Perror_t Psbl_ufpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pufpoint8 *res_out);
-Perror_t Psbl_ufpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pufpoint16 *res_out);
-Perror_t Psbl_ufpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pufpoint32 *res_out);
-Perror_t Psbl_ufpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pufpoint64 *res_out);
-
-Perror_t Psbh_fpoint8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pfpoint8 *res_out);
-Perror_t Psbh_fpoint16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pfpoint16 *res_out);
-Perror_t Psbh_fpoint32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pfpoint32 *res_out);
-Perror_t Psbh_fpoint64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pfpoint64 *res_out);
-
-Perror_t Psbh_ufpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pufpoint8 *res_out);
-Perror_t Psbh_ufpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pufpoint16 *res_out);
-Perror_t Psbh_ufpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pufpoint32 *res_out);
-Perror_t Psbh_ufpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-			       Pbase_pd *pd, Pufpoint64 *res_out);
-\end{tinycodeaux}
 
 \subsection{EBC and BCD encoding}
 
@@ -693,42 +783,3 @@ Perror_t Psbh_ufpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, P
 \cLine{ufpoint64}
 \cEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\codeallowbreaks
-Perror_t Pebc_fpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pfpoint8 *res_out);
-Perror_t Pebc_fpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pfpoint16 *res_out);
-Perror_t Pebc_fpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pfpoint32 *res_out);
-Perror_t Pebc_fpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pfpoint64 *res_out);
-
-Perror_t Pebc_ufpoint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pufpoint8 *res_out);
-Perror_t Pebc_ufpoint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pufpoint16 *res_out);
-Perror_t Pebc_ufpoint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pufpoint32 *res_out);
-Perror_t Pebc_ufpoint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pufpoint64 *res_out);
-
-Perror_t Pbcd_fpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pfpoint8 *res_out);
-Perror_t Pbcd_fpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pfpoint16 *res_out);
-Perror_t Pbcd_fpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pfpoint32 *res_out);
-Perror_t Pbcd_fpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pfpoint64 *res_out);
-
-Perror_t Pbcd_ufpoint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pufpoint8 *res_out);
-Perror_t Pbcd_ufpoint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pufpoint16 *res_out);
-Perror_t Pbcd_ufpoint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pufpoint32 *res_out);
-Perror_t Pbcd_ufpoint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-			      Pbase_pd *pd, Pufpoint64 *res_out);
-
-\end{tinycodeaux}
