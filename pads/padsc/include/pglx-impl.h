@@ -23,6 +23,34 @@
     resultIN->name   = (nameIN); \
   } while (0)
 
+#define PDCI_MK_TOP_NODE(resultIN, vtIN, pdcIN, nameIN, mIN, pdIN, repIN, whatfn) \
+  do {  \
+    if (!(resultIN = PDCI_NEW_NODE(pdcIN))) { \
+      failwith("ALLOC_ERROR: in " whatfn); \
+    } \
+    resultIN->vt     = (vtIN); \
+    resultIN->pdc    = pdcIN; \
+    resultIN->parent = NULL; \
+    resultIN->m      = (void *)(mIN); \
+    resultIN->pd     = (void *)(pdIN); \
+    resultIN->rep    = (repIN); \
+    resultIN->name   = (nameIN); \
+  } while (0)
+
+#define PDCI_MK_TOP_NODE_NORET(resultIN, vtIN, pdcIN, nameIN, mIN, pdIN, repIN, whatfn) \
+  do {  \
+    resultIN = PDCI_NEW_NODE(pdcIN); \
+    if (resultIN) { \
+      resultIN->vt     = (vtIN); \
+      resultIN->pdc    = pdcIN; \
+      resultIN->parent = NULL; \
+      resultIN->m      = (void *)(mIN); \
+      resultIN->pd     = (void *)(pdIN); \
+      resultIN->rep    = (repIN); \
+      resultIN->name   = (nameIN); \
+    } \
+  } while (0)
+
 #define  PDCI_MK_TNODE(resultIN, vtIN, parentIN, nameIN, repIN, whatfn) \
   PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, 0, 0, repIN, whatfn)
 
