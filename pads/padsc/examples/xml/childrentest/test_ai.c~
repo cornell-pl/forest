@@ -1,3 +1,10 @@
+/* test_ai.c
+ * uses the walk_children function to pretty-print with XML format
+ * data sources for the PADS file examples/p/ai.p
+ * For examples see: examples/data/ex_data.ai 
+ *                   examples/data/ai.big
+ */
+
 #include "libpadsc.h"
 #include "ai.h"
 #include "pglx.h"
@@ -46,26 +53,17 @@ int main(int argc, char** argv) {
   /* init mask -- must do this! */
   http_clf_t_m_init(pdc, &m, PDC_CheckAndSet);
 
+  /* make the top-level node */
   PDCI_MK_TOP_NODE_NORET (top_node, &http_clf_t_vtable, pdc, "top", &m, &pd, &ai, "main");
   
-  /*
-   * Try to read each line of data
-   */
-  while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == http_clf_t_read(pdc, &m, &pd, &ai)) {
-      /* do something with the data */
+  /* try to read each line of data and pretty-print it */
+  while (!PDC_IO_at_EOF(pdc)) 
+    if (PDC_OK == http_clf_t_read(pdc, &m, &pd, &ai)) 
+      /* use walk_children to print data */
       walk_children(top_node,0);
-    } else {
+    else 
       error(2, "read returned: error");
-    }
-    /* accum both good and bad vals */
-    if (PDC_ERR == http_clf_t_acc_add(pdc, &acc, &pd, &ai)) {
-      error(2, "*** http_clt_t_acc_add failed ***");
-      exit(-1);
-    }	
-  }
-
-  http_clf_t_acc_report(pdc, "", 0, 0, &acc);
+  
   if (PDC_ERR == PDC_IO_close(pdc)) {
     error(2, "*** PDC_IO_close failed ***");
     exit(-1);
