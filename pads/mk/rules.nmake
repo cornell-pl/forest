@@ -1,6 +1,0 @@
-if 0
-CCFLAGS = $(CC.OPTIMIZE) $(CC.DLL) -DNDEBUG
-CCFLAGS = $(CC.DEBUG) $(CC.DLL) -Wall
-end
-CCFLAGS = $(CC.DEBUG) $(CC.DLL)
-

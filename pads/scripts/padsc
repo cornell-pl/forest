@@ -15,33 +15,27 @@
 #
 #         2. The script needs to determine $PADS_HOME, the location
 #            of the PADS installation, so that it can find
-#            $PADS_HOME/include and $PADS_HOME/lib.
-#            If environment variable PADS_HOME is set, then
-#            this is used, otherwise the script guess the
-#            location based on argument 0, e.g., if you invoke
-#            the script using path ../foo/padsc, then it
-#            sets PADS_HOME to ../foo 
+#            $PADS_HOME/padsc/include and $PADS_HOME/padsc/lib.
+#            If environment variable PADS_HOME is not set,
+#            the script fails and reports an error.
+#
 
-
-set firstout = "\n"
-
-if (!($?PADS_HOME)) then
-  if ($0:h == $0:t) then
-    set PADS_HOME = .
-  else
-    set PADS_HOME = $0:h
-  endif
-  echo $firstout"env variable PADS_HOME not set, guessing value $PADS_HOME based on invocation path\n"
-  set firstout = ""
-endif
-
-if (!(-d $PADS_HOME && -d $PADS_HOME/lib && -d $PADS_HOME/include && -e $PADS_HOME/padsc)) then
-  echo $firstout"Directory $PADS_HOME does not appear to be a valid PADS installation dir."
-  echo "Set env variable PADS_HOME to the correct location and try again"
+if (! $?PADS_HOME) then
+  echo "\n##############################################################################"
+  echo "# Set env var PADS_HOME and then use padsc again."
+  echo "##############################################################################\n"
   exit 0
 endif
 
-set arch = `$PADS_HOME/scripts/package`
+if (!(-d $PADS_HOME && -d $PADS_HOME/padsc && -d $PADS_HOME/lib && -d $PADS_HOME/padsc/include)) then
+  echo "\n##############################################################################"
+  echo "# Directory $PADS_HOME does not appear to be a valid PADS installation dir."
+  echo "# Set env var PADS_HOME to correct location and then use padsc again."
+  echo "##############################################################################\n"
+  exit 0
+endif
+
+set arch = `$PADS_HOME/ast-base/bin/package`
 
 set IMAGE = $PADS_HOME/lib/padsc
 set SMLBIN = $PADS_HOME/binlinks/smlruntime.$arch
@@ -127,22 +121,17 @@ if ($help) then
   set cmd = "-help"
 else
   if ("$pfiles" == "") then
-    echo $firstout"No .p files specified.  Usage:  $0 <options> <.p files>\n\tUse --help for all available options.\n"
+    echo "\nNo .p files specified.  Usage:  $0 <options> <.p files>\n\tUse --help for all available options.\n"
     exit -1
   endif
   if ($retarg_OK) then
       set cmd = "-r $retarg $opts $pfiles"
-      echo $firstout"Chose target dir $retarg\n"
-      set firstout = ""
+      echo "\nChose target dir $retarg\n"
   else
       set cmd = "$*"
   endif
 endif
 
-#echo $firstout"cmd = $cmd\n"
-#set firstout = ""
-#exit 0
-
-exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/include -I /home/gsf/arch/$arch/include/ast -I/usr/common/lib/ocaml \
+exec $SMLBIN @SMLload=$IMAGE $PADS_HOME/padsc/comp $cmd -I $PADS_HOME/padsc/include -I /home/gsf/arch/$arch/include/ast -I /usr/common/lib/ocaml \
 $lua $lda < /dev/null
 

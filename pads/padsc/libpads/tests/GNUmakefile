@@ -1,9 +1,9 @@
 
  # This is a GNU makefile.
 
-PADS_HOME = ../..
+PADS_HOME = ../../..
 ifndef AST_ARCH
-  AST_ARCH := $(shell $(PADS_HOME)/scripts/package)
+  AST_ARCH := $(shell $(PADS_HOME)/ast-base/bin/package)
   export AST_ARCH
 endif
 
@@ -14,7 +14,7 @@ else
 
  # The following rules are run from the arch directory
 
-PADS_HOME = ../../..
+PADS_HOME = ../../../..
 include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..

@@ -18,7 +18,7 @@ if ( test "$PADS_HOME"x == "x" || test "$AST_HOME"x == "x" || test "$INSTALLROOT
 fi
 
 if [ $_status == "OK" ]; then
-  ast_arch=`$PADS_HOME/scripts/package`
+  ast_arch=`$PADS_HOME/ast-base/bin/package`
   for dir in $PADS_HOME/libpadsc $PADS_HOME/libpadsc/tests $PADS_HOME/examples/tests; do
     if [ -e $dir/$ast_arch ]; then
       (cd $dir/$ast_arch; /bin/rm -rf *; mkdir tmp)

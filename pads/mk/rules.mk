@@ -1,16 +1,16 @@
 # N.B.: At the top of each Makefile, define the variable PADS_HOME using a
 #       relative path, then include this rules.mk file.  Example:
 #
-#   PADS_HOME = ../..
-#   include $(PADS_HOME)/rules.mk
+#   PADS_HOME = ../../..
+#   include $(PADS_HOME)/mk/rules.mk
 #
 # and set VPATH to location(s) of source files.
 #
 # If you are building the PADSL library, use:
 #
-#   PADS_HOME = ../..
+#   PADS_HOME = ../../..
 #   BuildPADSLib = 1
-#   include $(PADS_HOME)/rules.mk
+#   include $(PADS_HOME)/mk/rules.mk
 #
 # and set VPATH to location(s) of source files.
 #
@@ -28,7 +28,7 @@
 #
 
 ifndef AST_ARCH
-  AST_ARCH := $(shell $(PADS_HOME)/scripts/package)
+  AST_ARCH := $(shell $(PADS_HOME)/ast-base/bin/package)
   export AST_ARCH
 endif
 
@@ -191,8 +191,8 @@ ifdef GEN_DIR
 INCLUDES += -I$(GEN_DIR)
 endif
 ifndef BuildAST4PADSLib
-INCLUDES += -I$(PADS_HOME)/include
-INCLUDE_DEPS = $(PADS_HOME)/include/*.h
+INCLUDES += -I$(PADS_HOME)/padsc/include
+INCLUDE_DEPS = $(PADS_HOME)/padsc/include/*.h
 else
 INCLUDE_DEPS =
 endif
@@ -215,7 +215,7 @@ MKSRC_O = $(CC) -E $(CFLAGS_O)
 LINK_D = $(LINKER) $(LINKOPTS_D)
 LINK_O = $(LINKER) $(LINKOPTS_O)
 
-PADSC = $(PADS_HOME)/padsc 
+PADSC = $(PADS_HOME)/scripts/padsc 
 PADSC_REAL = $(PADS_HOME)/lib/padsc.$(ARCH_N_OPSYS)
 
 define SanityCheck

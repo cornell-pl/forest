@@ -1,9 +1,9 @@
 
  # This is a GNU makefile.
 
-PADS_HOME = ..
+PADS_HOME = ../..
 ifndef AST_ARCH
-  AST_ARCH := $(shell $(PADS_HOME)/scripts/package)
+  AST_ARCH := $(shell $(PADS_HOME)/ast-base/bin/package)
   export AST_ARCH
 endif
 
@@ -14,7 +14,7 @@ else
 
  # The following rules are run from the arch directory
 
-PADS_HOME = ../..
+PADS_HOME = ../../..
 SCRIPTS = $(PADS_HOME)/scripts
 BuildPADSLib = 1
 INCLUDE_DEPS_ADD = *-gen.h
@@ -114,7 +114,7 @@ install : all
 	  ln $(SHARED_PADSLIB_NM_D) $(SHARED_PADSLIB_NM_ALT2_D); \
 	  ); \
 	for file in $(INSTALL_INCLUDES); do \
-		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/include/$$file $(INSTALLROOT)/include/; \
+		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALLROOT)/include/; \
 	done;)
 
 install_cobol : cobol
@@ -134,12 +134,12 @@ install_cobol : cobol
 	  ln $(SHARED_COBOL_PADSLIB_NM_D) $(SHARED_COBOL_PADSLIB_NM_ALT2_D); \
 	  ); \
 	for file in $(INSTALL_INCLUDES); do \
-		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/include/$$file $(INSTALLROOT)/include/; \
+		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALLROOT)/include/; \
 	done;)
 
-dogen : $(SCRIPTS)/mksrc.pl $(PADS_HOME)/libpadsc/libpadsc.c $(INCLUDE_DEPS)
+dogen : $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpadsc/libpadsc.c $(INCLUDE_DEPS)
 	@echo "Building generated source files"
-	$(SCRIPTS)/mksrc.pl $(PADS_HOME)/libpadsc/libpadsc.c $(CURDIR) $(PADS_HOME)
+	$(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpadsc/libpadsc.c $(CURDIR) $(PADS_HOME)
 	touch dogen
 
 libpadsc-gen-g.o: libpadsc-gen.c $(INCLUDE_DEPS)

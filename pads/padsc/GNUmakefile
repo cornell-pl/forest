@@ -1,26 +1,19 @@
  # This is a GNU makefile.
 
-ARCH_N_OPSYS = $(shell scripts/arch-n-opsys)
+all:	library compiler
 
-SML=sml
-
-all:	compiler 
+library:
+	echo Making padsc library
+	@(cd libpadsc; $(MAKE) install)
 
 compiler:
-	echo Making compiler
-	sml < build-exec.sml
+	echo Making padsc compiler
+	@(cd comp; $(MAKE) all)
 
 clean:
-	$(RM) lib/padsc.$(ARCH_N_OPSYS)
-	@(cd ckit; x="`find . -name \*~`"; if [ "$$x"x != x ]; then echo "In ckit, removing:\n$$x"; $(RM) $$x; fi)
+	@(cd libpadsc; $(MAKE) clean)
+	@(cd comp; $(MAKE) clean)
 
-veryclean: clean
-	@(echo "Removing CM .bin files"; cd CM; x="`find . -name \*.bin`"; if [ "$$x"x != x ]; then echo "In CM, removing:\n$$x"; $(RM) $$x; fi)
-	@(echo "Removing ckit .bin files"; cd ckit; x="`find . -name \*.bin`"; if [ "$$x"x != x ]; then echo "In ckit, removing:\n$$x"; $(RM) $$x; fi)
-	@(echo "Removing util .bin files"; cd util; x="`find . -name \*.bin`"; if [ "$$x"x != x ]; then echo "In util, removing:\n$$x"; $(RM) $$x; fi)
-
-redo_all:
-	+@(for file in examples/p/*.p; do \
-		echo ./padsc $$file; \
-		./padsc $$file; \
-	done;)
+veryclean:
+	@(cd libpadsc; $(MAKE) veryclean)
+	@(cd comp; $(MAKE) veryclean)

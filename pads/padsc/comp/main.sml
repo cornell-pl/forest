@@ -414,10 +414,10 @@ structure Main : sig
     fun emit release =
 	if release then 
 	    (silenceGC();
-	     SMLofNJ.exportFn ("lib/padsc", main release);
+	     SMLofNJ.exportFn ("../../lib/padsc", main release);
 	    Nothing)
 	else 
-	    (if not (SMLofNJ.exportML "lib/padsc") then 
+	    (if not (SMLofNJ.exportML "../../lib/padsc") then 
 		 (print "\nPadsc translator image built.\n";
 		  Nothing)
 	     else ((silenceGC ();

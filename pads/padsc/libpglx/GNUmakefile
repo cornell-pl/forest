@@ -1,9 +1,9 @@
 
  # This is a GNU makefile.
 
-PADS_HOME = ..
+PADS_HOME = ../..
 ifndef AST_ARCH
-  AST_ARCH := $(shell $(PADS_HOME)/scripts/package)
+  AST_ARCH := $(shell $(PADS_HOME)/ast-base/bin/package)
   export AST_ARCH
 endif
 
@@ -14,7 +14,7 @@ else
 
  # The following rules are run from the arch directory
 
-PADS_HOME = ../..
+PADS_HOME = ../../..
 SCRIPTS = $(PADS_HOME)/scripts
 BuildPADSLib = 1
 BuildPGLXLib = 1
@@ -65,7 +65,7 @@ install : all
 	  ln $(SHARED_PGLXLIB_NM_D) $(SHARED_PGLXLIB_NM_ALT2_D); \
 	  ); \
 	for file in $(INSTALL_INCLUDES); do \
-		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/include/$$file $(INSTALLROOT)/include/; \
+		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALLROOT)/include/; \
 	done;)
 
 clean :

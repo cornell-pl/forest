@@ -26,11 +26,11 @@ if ($_pads_status == OK) then
 endif
 
 if ($_pads_status == "OK") then
-  if (! (-e $PADS_HOME/scripts/package)) then
+  if (! (-e $PADS_HOME/ast-base/bin/package)) then
     echo "##############################################################################"
     echo "# Invalid setting (?) : PADS_HOME = $PADS_HOME"
     echo "#"
-    echo "# Cannot find $PADS_HOME/scripts/package"
+    echo "# Cannot find $PADS_HOME/ast-base/bin/package"
     echo "#"
     echo "# Set env var PADS_HOME correctly and then use $_pads_do_prog again."
     echo "##############################################################################"
@@ -41,7 +41,7 @@ endif
 
 if ($_pads_status == "OK") then
 
-  setenv AST_ARCH `$PADS_HOME/scripts/package`
+  setenv AST_ARCH `$PADS_HOME/ast-base/bin/package`
 
   if (! $?AST_HOME) then
     setenv AST_HOME $PADS_HOME/ast-base/arch/$AST_ARCH
