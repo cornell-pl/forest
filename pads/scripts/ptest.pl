@@ -66,6 +66,7 @@ close (MOUT);
 
 open (COUT, ">$cfile") || die "\n    Could not open $cfile for output\n\n";
 print COUT "#define PADS_TY(suf) $pty ## suf
+#define MAX_RECS $maxrecs
 #define IO_DISC_MK P_nlrec_make(0)
 #include \"$pspec_h\"
 #include \"template/read_orig_write_xml.h\"
