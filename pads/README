@@ -14,7 +14,7 @@
     * NB: Make sure you do *not* have an 'nmake' program in your path.
       If you do, you should temporarily modify your PATH environment
       variable to remove the dir(s) that have nmake.  After performing
-      the above gmake you can restore your PATH to its previous setting.
+      an initial gmake you can restore your PATH to its previous setting.
   
   > gmake
 
@@ -52,14 +52,18 @@ STEP 1: ENVIRONMENT SETUP
 [OPTIONAL]: For the PADS-Galax project only, you may wish to set
    the following env variables to override their default values.
 
-   OCAML_LIB_DIR (default:  /usr/lib/ocaml)
-   GALAX_HOME    (default:  /home/mff/Galax) contains generic Galax
-                            library 
-   PADSGLX_HOME  (default:  /home/mff/pads-glx/api)  contains custom
-                 implementation of Galax for PADS
+   Example for csh/tcsh users:
+     setenv GALAX_HOME    /home/fred/Galax
+     setenv PADSGLX_HOME  /home/fred/pads-glx/api
+     setenv OCAML_LIB_DIR /home/fred/ocaml
+     setenv USE_GALAX     1
 
-   (Mary: GALAX_HOME and PADSGLX_HOME should be coalesced)
-  
+   Example for sh/ksh/bash users:
+     export GALAX_HOME=/home/fred/Galax
+     export PADSGLX_HOME=/home/fred/pads-glx/api
+     export OCAML_LIB_DIR=/home/fred/ocaml
+     export USE_GALAX=1
+
 STEP 2: INSTALL SML / SML RUNTIME
 
   To build the padsc compile, you need the Standard ML of NJ
