@@ -35,9 +35,12 @@ all_check:	clean code
 clean:	
 	rm -rf *.aux *.bbl *.log *.blg *.dvi *.ps *.pdf *.toc
 
-docode:	
+docode:	extract
 	echo Generating code for manual
 	(cd code; $(MAKE))
+
+extract: ../extract-code/pads-keywords.sml
+	(cd ../extract-code; $(MAKE))
 
 manual:
 	latex manual.tex; latex manual.tex; bibtex manual; latex manual.tex; dvips manual.dvi -o manual.ps -t letter
