@@ -349,6 +349,7 @@ end
         | pPC of (expression PX.PPostCond)
         | pPCList of (expression PX.PPostCond) list
         | pConstraints of (expression PX.PPostCond) list
+        | pConstraintsWComma of (expression PX.PPostCond) list
 	| pPostCondOpt of (expression PX.PPostCond) list
         | pManifestField of (ctype, decltype, declarator, expression) PX.PSField
         | pConstraintOpt of expression option
@@ -432,6 +433,12 @@ pConstraints :
  | pPCList AND expr (pPCList @ [PX.General expr])
  | expr AND pPCList ([PX.General expr] @ pPCList)
  | pPCList          (pPCList)
+
+pConstraintsWComma:
+	  pConstraints 			(pConstraints)
+	| exprWComma COMMA pConstraints ([PX.General exprWComma] @ pConstraints)
+
+
 
 pPostCondOpt: ([])
  | PWHERE LCURLY pConstraints SEMICOLON RCURLY  (pConstraints)
@@ -663,6 +670,7 @@ strings:  STRING                        (STRING)
 exprWComma:
 	  expr 				(expr)
 	| exprWComma COMMA expr 	(markExpression srcMap (Binop(Comma,exprWComma,expr),exprWCommaleft,exprright))
+
 
 opExpr:					(EmptyExpr)
 	| exprWComma			(exprWComma)
@@ -1260,11 +1268,11 @@ pTermExp :
  | pREexpr (PX.Expr pREexpr)
 
 pArrayConstraint : 
-   PSEP   LPAREN pREexpr    RPAREN  (PX.Sep   pREexpr)
- | PTERM  LPAREN pTermExp   RPAREN  (PX.Term  pTermExp)
- | PLAST  LPAREN exprWComma RPAREN  (PX.Last  exprWComma)
- | PENDED LPAREN exprWComma RPAREN  (PX.Ended exprWComma)
- | POMIT  LPAREN exprWComma RPAREN  (PX.Skip  exprWComma)
+   PSEP   LPAREN pREexpr            RPAREN  (PX.Sep   pREexpr)
+ | PTERM  LPAREN pTermExp           RPAREN  (PX.Term  pTermExp)
+ | PLAST  LPAREN pConstraintsWComma RPAREN  (PX.Last  pConstraintsWComma)
+ | PENDED LPAREN pConstraintsWComma RPAREN  (PX.Ended pConstraintsWComma)
+ | POMIT  LPAREN pConstraintsWComma RPAREN  (PX.Skip  pConstraintsWComma)
 
 pArrayConstraints : 
    pArrayConstraint ([pArrayConstraint])

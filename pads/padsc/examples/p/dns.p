@@ -70,9 +70,9 @@ int domain_name_dbg(label_or_ptr* elts, Puint32 length, size_t offset) {
 }
 
 Parray domain_name {
-  label_or_ptr [] : Plast(check256(eltEnd.offset - begin.offset, begin.offset)
-			      || elts[current].tag != label
-			      || elts[current].val.label.length == 0) ;
+  label_or_ptr [] : Plast(Pparsecheck(check256(eltEnd.offset - begin.offset, begin.offset)
+				      || elts[current].tag != label
+				      || elts[current].val.label.length == 0)) ;
 };
 
 
@@ -156,7 +156,7 @@ Pstruct WKS_t(:Puint16 rdlength:) {
 };
 
 Parray TXT_t(:Puint16 rdlength:) {
-  character_string [] : Plast(eltEnd.offset - begin.offset >= rdlength);
+  character_string [] : Plast(Pparsecheck(eltEnd.offset - begin.offset >= rdlength));
 };
 
 Pstruct SRV_t {

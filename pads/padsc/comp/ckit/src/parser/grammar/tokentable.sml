@@ -68,6 +68,7 @@ struct
 	      ("while", Tokens.WHILE)
 	      ] @ [  (* PADSC *)
                ("_Pdone", Tokens.PDONE),
+               ("Palternates", Tokens.PALTERNATES),
                ("Parray", Tokens.PARRAY),
                ("Pcase", Tokens.PCASE),
                ("Pcharclass", Tokens.PCHARCLASS),
@@ -94,7 +95,6 @@ struct
                ("Pterm", Tokens.PTERM),
                ("Ptypedef", Tokens.PTYPEDEF),
                ("Punion", Tokens.PUNION),
-               ("Palternates", Tokens.PALTERNATES),
                ("Pwhere", Tokens.PWHERE)
               ])
 

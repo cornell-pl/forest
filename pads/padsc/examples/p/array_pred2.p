@@ -7,7 +7,7 @@ int diff(Ppos_t e, Ppos_t b){
 };
 
 Parray seq_t{
-  Pint32 [] : Psep('|') && Plast(elts[current] > 10 || (diff(eltEnd, begin) > 10)) && Pterm('b');
+  Pint32 [] : Psep('|') && Plast(Pparsecheck(elts[current] > 10 || (diff(eltEnd, begin) > 10))) && Pterm('b');
 };
 
 Precord Pstruct entry{

@@ -25,7 +25,7 @@
      to keep them parallel.
 */
 Parray seq_t{
-  Pint32 [] : Psep('|') && Pomit(elt % 2 == 0 || numRead > 5) && Plast(elts[current] > 10) && Pterm('b');
+  Pint32 [] : Psep('|') && Pomit(Pparsecheck(elt % 2 == 0 || numRead > 5)) && Plast(elts[current] > 10) && Pterm('b');
 };
 
 Precord Pstruct entry{

@@ -4126,22 +4126,19 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     end
 
 		 fun chkParseChkConstraintSs (exp) = 
-		     let val subList = [(PNames.arrayLen,   fieldX(rep, length)), 
-					(PNames.arrayBegin, P.dotX(PT.Id tloc, PT.Id "b")), 
-					(PNames.arrayEnd,   P.dotX(PT.Id tloc, PT.Id "e")), 
-					(name,              fieldX(rep, elts)),
-					(PNames.arrayElts,  fieldX(rep, elts)),
-					(PNames.pdElts,     fieldX(pd, elts))]
-			 val needEndLoc = PTSub.isFreeInExp([PNames.arrayEnd], exp)  
+		     let val genVars    = [(PNames.arrayLen,   PL.uint32PCT,        fieldX(rep, length)), 
+					   (name,              P.ptrPCT elemRepPCT, fieldX(rep, elts)),
+					   (PNames.arrayElts,  P.ptrPCT elemRepPCT, fieldX(rep, elts)),
+					   (PNames.pdElts,     P.ptrPCT elemEdPCT,  fieldX(pd, elts))]
+			 val parseVars  = [(PNames.arrayBegin, PL.posPCT,           P.dotX(PT.Id tloc, PT.Id "b")), 
+					   (PNames.arrayEnd,   PL.posPCT,           P.dotX(PT.Id tloc, PT.Id "e"))]
+			 val vars = genVars @ parseVars
+			 val subList = getBindings (vars)
 			 val modExp = PTSub.substExps subList exp
+			 val needEndLoc =  PTSub.isFreeInExp([PNames.arrayEnd], exp) 
 		     in
 			 pushLocalEnv();
-			 ignore(insTempVar(PNames.arrayLen,   PL.uint32PCT));
-			 ignore(insTempVar(PNames.arrayBegin, PL.posPCT)); 
-			 ignore(insTempVar(PNames.arrayEnd,   PL.posPCT)); 
-			 ignore(insTempVar(name,              P.ptrPCT elemRepPCT)); 
-			 ignore(insTempVar(PNames.arrayElts,  P.ptrPCT elemRepPCT)); 
-			 ignore(insTempVar(PNames.pdElts,     P.ptrPCT elemEdPCT)); 
+			 augTyEnv vars;
 			 expEqualTy(exp, CTintTys, fn s=>("Pparsecheck constraint for array "^
 							 name ^" has type "^s^", expected type int"));
 			 popLocalEnv();
@@ -4162,33 +4159,60 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 (needEnd, modClauses)
 		     end
 
-                 fun chkPredConstraint (which, exp) = 
+                 fun chkPredConstraint (which, constraints : pcexp PX.PPostCond list) = 
 		     let val curX = P.minusX(fieldX(rep, length), P.intX 1)
-			 val varList = [(PNames.arrayLen,   PL.uint32PCT,        fieldX(rep, length)), 
-					(PNames.numRead,    PL.uint32PCT,        fieldX(pd, numRead)), 
-					(PNames.arrayCur,   PL.uint32PCT,        curX), 
+			 val genVars = [(PNames.arrayLen,   PL.uint32PCT,        fieldX(rep, length)), 
 					(name,              P.ptrPCT elemRepPCT, fieldX(rep, elts)),
 					(PNames.arrayElts,  P.ptrPCT elemRepPCT, fieldX(rep, elts)),
-					(PNames.pdElts,     P.ptrPCT elemEdPCT,  fieldX(pd, elts)),
-					(PNames.curElt,     elemRepPCT,          P.subX(fieldX(rep, elts), curX)),
+					(PNames.arrayCur,   PL.uint32PCT,        curX), 
+					(PNames.curElt,     elemRepPCT,          P.subX(fieldX(rep, elts), curX))]
+			               @ (if which = "Pended"
+					  then [(PNames.consume, P.int,              PT.Id consumeFlag)]
+				          else [])
+			 val parsVars =[(PNames.pdElts,     P.ptrPCT elemEdPCT,  fieldX(pd, elts)),
 					(PNames.curPd,      elemEdPCT,           P.subX(fieldX(pd, elts),  curX)),
+					(PNames.numRead,    PL.uint32PCT,        fieldX(pd, numRead)), 
 					(PNames.arrayBegin, PL.posPCT,           P.dotX(PT.Id tloc, PT.Id "b")), 
 					(PNames.elemBegin,  PL.posPCT,           P.dotX(fieldX(pd,"loc"), PT.Id "b")), 
 					(PNames.elemEnd,    PL.posPCT,           P.dotX(fieldX(pd,"loc"), PT.Id "e"))] 
-			 val varList = if which = "Pended"
-				       then (PNames.consume, P.int,              PT.Id consumeFlag) :: varList
-				       else varList
-			 val subList = getBindings varList
-			 val needEndLoc = PTSub.isFreeInExp([PNames.elemEnd], exp)
-			 val modExpX = PTSub.substExps subList exp
+			 val allVars      = genVars @ parsVars
+			 val genSubList   = getBindings genVars
+                         val parseSubList = getBindings allVars
 			 val errMsg = fn s => (which ^" expression for array "^
 					       name ^" has type"^s^", expected type int")
+			 fun checkConstraint (PX.General exp) = 
+                             let val modExpX = PTSub.substExps genSubList exp
+			     in
+				 pushLocalEnv();
+				 augTyEnv genVars;
+				 expEqualTy(exp, CTintTys, errMsg);
+				 popLocalEnv();
+				 (false, modExpX, SOME exp)  (* general expressions don't have location references *)
+			     end
+                           | checkConstraint (PX.ParseCheck exp) = 
+                             let val needEndLoc = PTSub.isFreeInExp([PNames.elemEnd], exp)
+				 val modExpX = PTSub.substExps parseSubList exp
+			     in
+				 pushLocalEnv();
+				 augTyEnv allVars;
+				 expEqualTy(exp, CTintTys, errMsg);
+				 popLocalEnv();
+				 (needEndLoc, modExpX, NONE)    (* parse expressions aren't included in is predicates *)
+			     end
+			 val modConstraints = List.map checkConstraint constraints
+                         fun merge ((b,cX,iXs: pcexp option), (ba, cXa, iXa:pcexp option)) = (b orelse ba, P.andX(cX,cXa), 
+			       case (iXs, iXa) 
+				 of (NONE,NONE)   => NONE
+                                  | (SOME cX, NONE) => SOME cX
+                                  | (NONE, SOME aX) => SOME aX
+				  | (SOME iX, SOME aX) => SOME (P.andX(iX, aX)))
+			 val result as (needEndLoc, constraintPredX, isPredX:pcexp option) = 
+			     case modConstraints
+			     of [] => (false, P.trueX, NONE)
+			     |  [x] => x
+                             |  (x::xs) => foldr merge x xs
 		     in
-			 pushLocalEnv();
-			 augTyEnv varList;
-			 expEqualTy(exp, CTintTys, errMsg);
-			 popLocalEnv();
-			 (needEndLoc, modExpX)
+			 result
 		     end
 
                  (* new scope needed for analysis of array constraints*)
@@ -4215,7 +4239,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       val isString = okay andalso equalType(expTy, CTstring)
 			   in
 			       if Option.isSome reOpt then
-			            (pExp, pExp, NONE, PRegExp, PL.reMatch, PL.reScan1, NONE)
+                                    (isEmptyString (unMark(Option.valOf reOpt));
+			            (pExp, pExp, NONE, PRegExp, PL.reMatch, PL.reScan1, NONE))
 			       else if isString then
 			            (pExp, pExp, #1(evalExpr exp), PString, PL.cstrlitMatch, PL.cstrlitScan1, SOME PL.cstrlitWriteBuf)
 			       else (pExp, pExp, #1(evalExpr exp), PChar,   PL.charlitMatch, PL.charlitScan1, SOME PL.charlitWriteBuf)
@@ -4809,7 +4834,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		       readTerm (readFun, exp, NONE)]
 
                  fun genLastCheck (NONE,_) = []
-                   | genLastCheck (SOME (_, exp), skipXOpt) = 
+                   | genLastCheck (SOME (_, exp, _), skipXOpt) = 
                       let val predX = case skipXOpt of NONE => exp   
 				      | _ => P.andX(P.notX (PT.Id omitresult), exp)
 		      in
@@ -4819,8 +4844,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                  fun genEndedLocCalcSs (l, e) =
                      let fun f(NONE) = [] 
-                           | f(SOME(true, _)) = [locES0]
-			   | f(SOME(false, _)) = []
+                           | f(SOME(true, _, _)) = [locES0]
+			   | f(SOME(false, _, _)) = []
 			 val last = f l
 			 val ended = case last of nil => f e | _ => last
 		     in
@@ -4842,13 +4867,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		          PL.decNestLevS(PT.Id pads)]]
 
                  fun genEndedSkipCheck (NONE, NONE) = []
-                   | genEndedSkipCheck (SOME (_,exp), NONE) = genEndedCheck exp
-                   | genEndedSkipCheck (NONE, SOME (_,omitX)) = 
+                   | genEndedSkipCheck (SOME (_,exp,_), NONE) = genEndedCheck exp
+                   | genEndedSkipCheck (NONE, SOME (_,omitX,_)) = 
 		        [P.mkCommentS "Checking Pomit predicate",
                          P.assignS(PT.Id omitresult, omitX),
 			 PT.IfThen(PT.Id omitresult,
 				   PT.Compound([P.postDecS(fieldX(rep, length))]))]
-                   | genEndedSkipCheck (SOME (_,ended), SOME (_,omitX)) = 
+                   | genEndedSkipCheck (SOME (_,ended,_), SOME (_,omitX,_)) = 
 		        [P.mkCommentS("Checking Pomit predicate"),
                          P.assignS(PT.Id omitresult, omitX),
 			 PT.IfThenElse(PT.Id omitresult,
@@ -5124,6 +5149,67 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                  (* Generate is function array case *)
                  val isName = PNames.isPref name
+                 fun genElemChecks () = 
+		     let val index = "i"
+			 val indexX = PT.Id index
+			 val upperX = fieldX(rep, length)
+			 val elemX = P.subX(fieldX(rep,elts), indexX)
+			 val elemCXs = 
+                             case lookupPred baseTy of NONE => [] 
+		             | SOME elemPred => [PT.Call(PT.Id elemPred, [P.addrX elemX] @ args)]
+			 val genVars = [(PNames.arrayLen,   PL.uint32PCT,        fieldX(rep, length)), 
+					(name,              P.ptrPCT elemRepPCT, fieldX(rep, elts)),
+					(PNames.arrayElts,  P.ptrPCT elemRepPCT, fieldX(rep, elts)),
+					(PNames.arrayCur,   PL.uint32PCT,        indexX), 
+					(PNames.curElt,     elemRepPCT,          P.subX(fieldX(rep, elts), indexX)),
+    			                (PNames.consume,    P.int,               PT.Id consumeFlag)]
+			 val omitCXs = 
+			     case skipXOpt of NONE => []
+				  | SOME (_,_, NONE) => []
+				  | SOME (_, _, SOME isPredX) => 
+				      let val modIsPredX = PTSub.substExps (getBindings genVars) isPredX
+				      in
+					  [P.notX modIsPredX] (* if would have skipped,shouldn't be in-memory representation *)
+				      end
+			 val lastCXs = 
+			     case lastXOpt of NONE => []
+				  | SOME (_,_, NONE) => []
+				  | SOME (_, _, SOME isPredX) => 
+				      let val modIsPredX = PTSub.substExps (getBindings genVars) isPredX
+				      in
+					  (* if last predicate, then should be no more elements in array *)
+					  [P.condX(modIsPredX, P.eqX(fieldX(rep, length), P.plusX(indexX,P.intX 1)), P.trueX)] 
+				      end
+			 val endedCXs = 
+			     case endedXOpt of NONE => []
+				  | SOME (_,_, NONE) => []
+				  | SOME (_, _, SOME isPredX) => 
+				      let val modIsPredX = PTSub.substExps (getBindings genVars) isPredX
+				      in
+					  (* if ended predicate, then should be no more elements in array *)
+					  [P.condX(modIsPredX, 
+					       P.condX(PT.Id consumeFlag, 
+						 P.eqX(fieldX(rep, length), P.plusX(indexX, P.intX 1)),
+						 P.eqX(fieldX(rep, length), indexX)),
+                                           P.trueX)] 
+				      end
+			 val condXs = (elemCXs @ omitCXs @ lastCXs @ endedCXs)
+			 val elemCondX = P.andBools condXs
+		     in
+		       case condXs of [] => []
+                       | _ => 
+			 [PT.Compound(
+			   [P.varDeclS'(P.int, index)]
+ 		         @ (case endedXOpt of NONE => [] | _ => [P.varDeclS(P.int, consumeFlag, P.falseX)])
+			 @ [PT.For(P.assignX(PT.Id index, P.zero),
+				 P.andX(P.notX(PT.Id violated), P.ltX(PT.Id index, upperX)), 
+				 P.postIncX(PT.Id index),
+				 PT.Compound[
+                                   PT.IfThen(P.notX(elemCondX),
+				             PT.Compound[P.assignS(PT.Id violated, P.trueX)] (* end if *))
+					     ] (* end for *))])]
+		     end
+
 		 fun genPredClause c = 
 		     case c of 
                        PX.Forall      r   => genLoop r
@@ -5131,6 +5217,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      | PX.AParseCheck exp => []
 		 val clausesSs = List.concat(List.map genPredClause postCond)
 		 val bodySs = [P.varDeclS(P.int, violated, P.falseX)]
+		             @ (genElemChecks ())
 		             @  clausesSs
                              @ [PT.Return (PT.Id violated)]
                  val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs)]

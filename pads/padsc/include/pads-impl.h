@@ -380,7 +380,7 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
   ((str1)->len == (str2)->len && strncmp((str1)->str, (str2)->str, (str1)->len) == 0)
 
 #define Pstring_eq_cstr(PDcstr, cstr) \
-  ((PDcstr)->len == strlen(cstr) && strncmp((PDcstr)->str, (cstr), (PDcstr)->len) == 0)
+  ((PDcstr)->len == strlen(cstr) && (strncmp((PDcstr)->str, (cstr), (PDcstr)->len) == 0))
 
 /* ================================================================================
  * P_STRING_FROM macros

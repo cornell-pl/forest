@@ -32,21 +32,22 @@ structure ParseTreeExt =
 
         datatype 'exp PTermExp = Expr of 'exp | noSep
 
+        datatype 'exp PPostCond = 
+           General of 'exp
+         | ParseCheck of 'exp
+
         datatype 'exp PConstraint = 
            Sep   of 'exp
          | Term  of 'exp PTermExp
-         | Last  of 'exp 
-         | Ended of 'exp 
-         | Skip  of 'exp
+         | Last  of 'exp PPostCond list 
+         | Ended of 'exp PPostCond list 
+         | Skip  of 'exp PPostCond list 
 
         datatype 'exp PArrayPostCond = 
            Forall of {index : string, range : 'exp PRange, body : 'exp}
          | AGeneral of 'exp
          | AParseCheck of 'exp
 
-        datatype 'exp PPostCond = 
-           General of 'exp
-         | ParseCheck of 'exp
 
         datatype ('ct,'dt, 'decr, 'exp) PBranches = 
            Ordered of (('ct, 'dt, 'decr, 'exp) PSField) list

@@ -12,7 +12,7 @@ int isDone(Pint32 value, Pbase_pd p, int *consume){
 };
 
 Parray fseq_t {
-  Pint32 [] : Psep(Pre "/,/") && Pended(isDone(fseq_t[current], pds[current], &consume));
+  Pint32 [] : Psep(Pre "/,/") && Pended(Pparsecheck(isDone(fseq_t[current], pds[current], &consume)));
 };
 
 Parray sseq_t {

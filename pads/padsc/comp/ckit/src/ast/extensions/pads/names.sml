@@ -10,14 +10,14 @@ struct
   val curElt      = "elt"
   val curPd       = "pd"
   val consume     = "consume"
-  val arrayBegin  = "arrayBegin"  (* tloc.b     : Ppos_t *)
-  val arrayEnd    = "arrayEnd"    (* tloc.e     : Ppos_t *)
+  val arrayBegin  = "begin"  (* tloc.b     : Ppos_t *)
+  val arrayEnd    = "end"    (* tloc.e     : Ppos_t *)
   val elemBegin   = "eltBegin"    (* pd->loc.b  : Ppos_t *)
   val elemEnd     = "eltEnd"      (* pd->loc.e  : Ppos_t *)
-  val structBegin = "structBegin"  (* tloc.b     : Ppos_t *)
-  val structEnd   = "structEnd"    (* tloc.e     : Ppos_t *)
-  val unionBegin  = "unionBegin"  (* tloc.b     : Ppos_t *)
-  val unionEnd    = "unionEnd"    (* tloc.e     : Ppos_t *)
+  val structBegin = "begin"  (* tloc.b     : Ppos_t *)
+  val structEnd   = "end"    (* tloc.e     : Ppos_t *)
+  val unionBegin  = "begin"  (* tloc.b     : Ppos_t *)
+  val unionEnd    = "end"    (* tloc.e     : Ppos_t *)
   val position    = "position"
 
   val structLevel = "structLevel"
