@@ -388,6 +388,17 @@ define RegressInput
   echo " "; )
 endef
 
+define RegressInputPP
+(echo " "; echo "Performing $@"; \
+  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
+  $(RM) tmp/tmp.$<$$suf; \
+  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
+  echo "(cat $$input | $$pp | ./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
+  (cat $$input | $$pp | ./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
+  echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
+  echo " "; )
+endef
+
 define RegressFilter
 (echo " "; echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \

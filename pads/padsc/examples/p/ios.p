@@ -75,8 +75,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 // HELPER MACROS
 
-// A regexp that matches and eats one or more spaces OR matches end of line.
-#define SPACES_OR_EOR Pre "/\s+|$/"
+// A regexp that matches and eats zero or more spaces
+#define EAT_SPACES Pre "/\A\s*/"
 
 // A regexp for 'rest of line starts with a word on good list glist'
 #define GOODLIST_RE(glist)                 "/(" glist ").*$/"
@@ -163,11 +163,11 @@ Punion opt_item {
 // ELEMENT blank_elt
 // ELEMENT comment_elt
 
-// D: skip all elements that begin with (\s*)!, %, :, or "show running"
+// D: skip all elements that begin with (\s*)[!], %, :, or "show running"
 //    also skip blank lines (lines with just spaces)
-// Precord Ptypedef Pstring_ME(: "/^(\s*!|[%:]|show running)(.*)$/" :) D_skip_elt;
+// Precord Ptypedef Pstring_ME(: "/^(\s*[!]|[%:]|show running)(.*)$/" :) D_skip_elt;
 Precord Pstruct D_skip_elt {
-  Pstring_ME(: "/(^(\s*!|[%:]|show running)(.*)$)|(^\s*$)/" :) v;
+  Pstring_ME(: "/(^(\s*[!]|[%:]|show running)(.*)$)|(^\s*$)/" :) v;
 };
 
 // Both J and D need to match blank lines, for different reasons
@@ -218,9 +218,9 @@ Precord Pstruct D_mpls_elt              { /* already parsed "mpls " */  item typ
 //    A banner begins with "banner exec", ignore the rest of that line
 //    then it includes the following banner add-on lines.
 
-// Precord Ptypedef Pstring_ME(: "/(?!(^!|^\^C))(.*)$/" :) J_banner_line;
+// Precord Ptypedef Pstring_ME(: "/(?!(^[!]|^\^C))(.*)$/" :) J_banner_line;
 Precord Pstruct J_banner_line {
-  Pstring_ME(: "/(?!(^!|^\^C))(.*)$/" :) v;
+  Pstring_ME(: "/(?!(^[!]|^\^C))(.*)$/" :) v;
 };
 Parray J_banner_lines { J_banner_line []; };
 Pstruct J_banner_elt {
@@ -230,7 +230,7 @@ Pstruct J_banner_elt {
 };
 
 // D: A banner add-on line does not begin with control-C (or banner),
-//      where comment lines (pattern /!\s*[a-z]/) are skipped over.
+//      where comment lines (pattern /[!]\s*[a-z]/) are skipped over.
 //      A banner begins with "banner ", append the rest of the current line
 //      plus all the add-on lines.
 
@@ -240,7 +240,7 @@ Precord Pstruct D_banner_line {
 };
 
 Parray D_banner_lines {
-  D_banner_line [] /* : Pskip(elt =~ Pre "/!\s*[a-z]/") */ ;
+  D_banner_line [] /* : Pskip(elt =~ Pre "/[!]\s*[a-z]/") */ ;
   // XXX Pskip not supported yet 
 };
 
@@ -257,9 +257,9 @@ Pstruct D_banner_elt {
 //    L.name = <rest>
 //    L._lineno = current line number 
 // For remaining lines, terminates when finds line
-//     with just bang ( /^!$/ ) OR a line with first word in stoplist
+//     with just bang ( /^[!]$/ ) OR a line with first word in stoplist
 // Included lines:
-//     . Skip over comment lines that have /!\s*[a-z]/ (not left-pinned, why not?)
+//     . Skip over comment lines that have /[!]\s*[a-z]/ (not left-pinned, why not?)
 //     . Ignore leading spaces
 //     . Remember whether first thing is 'no', consider rest
 //     . if you see "description (.*)", record the (.*) part as description for L
@@ -281,9 +281,9 @@ Pstruct D_banner_elt {
 //    rmap.seq = <rest>
 //    rmap._lineno = current line number 
 // For remaining lines, terminates when finds line
-//     with just bang ( /^!$/ ) OR a line whose cmd is not one of description|match|set
+//     with just bang ( /^[!]$/ ) OR a line whose cmd is not one of description|match|set
 // Included lines:
-//     . Skip over comment lines that have /!\s*[a-z]/ (not left-pinned, why not?)
+//     . Skip over comment lines that have /[!]\s*[a-z]/ (not left-pinned, why not?)
 //     . Ignore leading spaces
 //     . Remember whether first thing is 'no', consider rest
 //     . if you see "description (.*)", record the (.*) part as description for the route_map
@@ -305,7 +305,7 @@ Pstruct D_banner_elt {
 //        the interface pos = <rest>
 //  The rest of the lines are terminated by a line in a stoplist.
 //  For included lines:
-//     . Skip over comment lines that have /!\s*[a-z]/ (not left-pinned, why not?)
+//     . Skip over comment lines that have /[!]\s*[a-z]/ (not left-pinned, why not?)
 //     . Ignore leading spaces
 //     . Remember whether first thing is 'no', consider rest
 //     . if you see "ip address (.*)", add this line to set of address for the interface
@@ -370,7 +370,7 @@ Pstruct D_avici_interface_elt {
 //  The rest of the lines are terminated by a line in a stoplist, or
 //  by an empty/spaces-only line (emtpy line results in a warning).
 //  For included lines:
-//     . Skip over comment lines that begin with /!\s*[a-z]/ (not left-pinned, why not?)
+//     . Skip over comment lines that begin with /[!]\s*[a-z]/ (not left-pinned, why not?)
 //     . Ignore leading spaces
 //     . Remember whether first thing is 'no', consider rest
 //     . if you see "ip address [address] [mask]",
@@ -394,7 +394,7 @@ Precord Pstruct D_avici_m_addr_line {
   opt_no                                no;
   "ip address ";
   opt_item                              addr;
-  SPACES_OR_EOR;
+  EAT_SPACES;
   opt_item                              mask;
   remain                                rest; // expected to be emtpy string
 };
@@ -426,7 +426,7 @@ Parray D_avici_m_lines {
 Pstruct D_avici_module_elt {
   /* already parsed: [no] module */
   item                                  name;
-  SPACES_OR_EOR;
+  EAT_SPACES;
   remain                                rest;
   D_avici_m_lines                       mlines;
 };
@@ -491,7 +491,7 @@ Punion D_elt_switch(: int kind :) {
 Pstruct D_known_elt {
   opt_no                                no;
   D_elt_kind                            kind;
-  SPACES_OR_EOR;
+  EAT_SPACES;
   D_elt_switch(: (int)kind :)           elt;
 };
 

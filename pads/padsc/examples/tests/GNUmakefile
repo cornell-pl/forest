@@ -265,6 +265,11 @@ regress_test_charclass_o: test_charclass
 regress_test_charclass_d: test_charclass_d
 	@(args=""; input="../../data/charclass"; suf=""; $(RegressInput))
 
+regress_test_ios: test_ios
+	@(args=""; input="../../data/small_ios_config"; suf=""; pp="$(PADS_HOME)/scripts/ios_pp.pl"; $(RegressInputPP))
+regress_test_ios_d: test_ios_d
+	@(args=""; input="../../data/small_ios_config"; suf=""; pp="$(PADS_HOME)/scripts/ios_pp.pl"; $(RegressInputPP))
+
 clean:
 	$(RM) -f *~ *.o $(CLEANUP_TESTS)
 
