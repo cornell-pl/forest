@@ -8,6 +8,9 @@ to decide
   * how to handle name conflicts for enums and unions
      how relates to name spaces and separate compilation
 
+data formats to write
+---------------------
+  * netflow data
 
 to document
 -----------
@@ -38,9 +41,14 @@ ACCUM STUFF:
 
 DISCIPLINE:
  * slurp white space.
+ * let user set hash table size, include a symbolic constant for 
+    keep everything.
+ * accumulator controls:
+    top N to print, threshold percentage to print,...
 
 padsc compiler todo
 -------------------
+  * check that nesting cascaded values work.
   * don't complain about extra spaces if in slurp mode
   * generated accum types should have some top-level state
      as well as per-field accums.  one idea is to accum the nerr
