@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.39 2002-10-18 22:16:11 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.40 2002-10-21 16:17:43 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -598,9 +598,6 @@ int_type ## _acc_report_internal(PDC_t* pdc, Sfio_t* outstr, const char* prefix,
   Void_t*               velt;
   int_type ## _dt_elt_t* elt;
 
-  if (!disc->errorf) {
-    return PDC_OK;
-  }
   if (!prefix || *prefix == 0) {
     prefix = "<top>";
   }
@@ -694,9 +691,6 @@ int_type ## _acc_report_map_internal(PDC_t* pdc, Sfio_t* outstr, const char* pre
   Void_t*               velt;
   int_type ## _dt_elt_t* elt;
 
-  if (!disc->errorf) {
-    return PDC_OK;
-  }
   if (!prefix || *prefix == 0) {
     prefix = "<top>";
   }
@@ -1136,9 +1130,6 @@ PDC_string_acc_report_internal(PDC_t* pdc, Sfio_t* outstr, const char* prefix, c
   Void_t*               velt;
   PDC_string_dt_elt_t*  elt;
 
-  if (!disc->errorf) {
-    return PDC_OK;
-  }
   if (!prefix || *prefix == 0) {
     prefix = "<top>";
   }
