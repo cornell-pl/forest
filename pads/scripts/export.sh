@@ -21,7 +21,9 @@ rm -rf GIGASCOPE_README
 rm -rf Notes
 
 #remove .cvs files
-for x in `find . -name .cvsignore`; do echo rm $x ; done
+#rules.mk generates entries for some of these, so we're going to leave 
+#the residual files in to avoid duplicating rules.mk
+#for x in `find . -name .cvsignore`; do rm $x ; done
 
 # clean example directory
 cd padsc/examples
@@ -67,7 +69,7 @@ mv temp_padsc padsc
 echo Adding licenses
 # should be in pads directory
 # must do this before cleaning scripts directory
-scripts/release/:make.notices
+scripts/release/make.notices.sh
 
 echo cleaning scripts directory
 mkdir temp_scripts
