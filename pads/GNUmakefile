@@ -14,7 +14,15 @@ TARGS += pglx_lib
 endif
 TARGS += padsc_comp
 
+ifndef AST_ARCH
+AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
+export AST_ARCH
+endif
+AST_LIB = ast-ast/arch/$(AST_ARCH)/lib/libast.a
+
 all: $(TARGS)
+
+ast_lib : $(AST_LIB)
 
 padsc_lib:
 	@(cd padsc; $(MAKE) padsc_lib)
@@ -44,7 +52,16 @@ veryveryclean: veryclean
 	@(cd ast-ast/arch; $(RM) -rf `../bin/package`)
 	@($(RM) ./mk/rules.arch.`ast-ast/bin/package`.mk)
 
-ast_lib:
-	@(cp ast-ast/bin/package.cvs ast-ast/bin/package)
+WHERE_NMAKE := $(shell (type nmake 2>/dev/null))
+ifeq ($(WHERE_NMAKE),)
+$(AST_LIB) : ast-ast/lib/package/tgz/*.tgz
 	@(cd ast-ast; ./bin/package read)
+	@(if [ ! -f ast-ast/bin/package ]; then cp ast-ast/bin/package.cvs ast-ast/bin/package; fi)
 	@(cd ast-ast; ./bin/package make)
+else
+$(AST_LIB) : ast-ast/lib/package/tgz/ast-ast*.tgz
+	@(echo " "; echo "*** To build ast_lib, nmake must NOT be in your path."; \
+		echo "      (\`type nmake\` ==> $(WHERE_NMAKE))"; \
+		echo "    Change your PATH env variable and try again."; echo " ")
+	@(exit -1)
+endif
