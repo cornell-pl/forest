@@ -1,21 +1,17 @@
-time ./test_dibbler1 ~/knb/perl/data/head50K count_first21
+Dropped lowest 2, highest 2 (there seemed to be 2 high outlyers
+per data set)
 
-good_21: 39, total good: 49999, tot bad 0
-22.305u 0.243s 0:22.80 98.8% 0+0k 350+0io 1pf+0w
+Eq21.trim         51.9675   (perl-match)
+Eq21_nums.trim    60.0333
+Eq21_split.trim  375.338    (perl-split)
+fdib.trim         48.8747   (pads-prefix)
+fdib_mod.trim     42.5223   (pads-prefix-mod)
+dib1.trim        444.735    (pads-record)
+dib1_mod.trim    400.517    (pads-record-mod)
 
-smaug:~/knb/padsc/examples/sgi.mips3 [54]-> time ./test_fast_dib ~/knb/perl/data/head50K
+                                                             %diff
+perl-match :  51.9675    pads-prefix      :  48.8747         6.32801    
+perl-match :  51.9675    pads-prefix-mod  :  42.5223        22.21234
+perl-split : 375.338     pads-record      : 444.735         18.48920
+perl-split : 375.338     pads-record-mod  : 400.517          6.70835
 
-good_21: 39, total good: 49999, tot bad 0
-2.353u 0.183s 0:02.54 99.6% 0+0k 0+0io 0pf+0w
-
-smaug:~/knb/perl [56]-> time ./countFirstEq21.pl 
-
-  ctr = 39 
-
-2.145u 0.305s 0:02.81 86.8% 0+0k 31+0io 14pf+0w
-
-smaug:~/knb/perl [57]-> time ./countFirstEq21_split.pl 
-
-  ctr = 39 
-
-21.935u 0.264s 0:22.27 99.6% 0+0k 1+0io 0pf+0w
