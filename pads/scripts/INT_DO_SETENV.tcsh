@@ -13,21 +13,21 @@ else
   endif
 endif
 
-set _is_ast_home
-if (! $?AST_HOME) then
-  unset _is_ast_home
+set _is_ast_home_force
+if (! $?AST_HOME_FORCE) then
+  unset _is_ast_home_force
 else
-  if ("$AST_HOME"x == x) then
-    unset _is_ast_home
+  if ("$AST_HOME_FORCE"x == x) then
+    unset _is_ast_home_force
   endif
 endif
 
-set _is_installroot
-if (! $?INSTALLROOT) then
-  unset _is_installroot
+set _is_installroot_force
+if (! $?INSTALLROOT_FORCE) then
+  unset _is_installroot_force
 else
-  if ("$INSTALLROOT"x == x) then
-    unset _is_installroot
+  if ("$INSTALLROOT_FORCE"x == x) then
+    unset _is_installroot_force
   endif
 endif
 
@@ -162,25 +162,43 @@ if ($_pads_status == "OK") then
 
   setenv AST_ARCH `$PADS_HOME/ast-ast/bin/package.cvs`
 
-  if (! $?_is_ast_home) then
+  if (! $?_is_ast_home_force) then
     setenv AST_HOME $PADS_HOME/ast-ast/arch/$AST_ARCH
     if ($_pads_verbose != 0) then
       echo "##############################################################################"
       echo "# Setting env var AST_HOME to $AST_HOME"
-      echo "# If you do not like this setting, set it to something else"
-      echo "# and then use $_pads_do_prog again."
+      echo "# If you do not like this setting, set AST_HOME_FORCE to the"
+      echo "# desired value for AST_HOME, then use $_pads_do_prog again."
+      echo "##############################################################################"
+      echo " "
+    endif
+  else
+    setenv AST_HOME $AST_HOME_FORCE
+    if ($_pads_verbose != 0) then
+      echo "##############################################################################"
+      echo "# Setting env var AST_HOME to value of AST_HOME_FORCE = $AST_HOME"
+      echo "# If you prefer to use the PADS default, unsetenv AST_HOME_FORCE"
       echo "##############################################################################"
       echo " "
     endif
   endif
 
-  if (! $?_is_installroot) then
+  if (! $?_is_installroot_force) then
     setenv INSTALLROOT $PADS_HOME/ast-ast/arch/$AST_ARCH
     if ($_pads_verbose != 0) then
       echo "##############################################################################"
       echo "# Setting env var INSTALLROOT to $INSTALLROOT"
-      echo "# If you do not like this setting, set it to something else"
-      echo "# and then use $_pads_do_prog again."
+      echo "# If you do not like this setting, set INSTALLROOT_FORCE to the"
+      echo "# desired value for INSTALLROOT, then use $_pads_do_prog again."
+      echo "##############################################################################"
+      echo " "
+    endif
+  else
+    setenv INSTALLROOT $INSTALLROOT_FORCE
+    if ($_pads_verbose != 0) then
+      echo "##############################################################################"
+      echo "# Setting env var INSTALLROOT to value of INSTALLROOT_FORCE = $INSTALLROOT"
+      echo "# If you prefer to use the PADS default, unsetenv INSTALLROOT_FORCE"
       echo "##############################################################################"
       echo " "
     endif

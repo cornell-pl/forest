@@ -43,25 +43,43 @@ fi
 if [ $_pads_status = "OK" ]; then
   export AST_ARCH=`$PADS_HOME/ast-ast/bin/package.cvs SHELL=$SHELL`
 
-  if [ "$AST_HOME"x = x ]; then
+  if [ "$AST_HOME_FORCE"x = x ]; then
     export AST_HOME=$PADS_HOME/ast-ast/arch/$AST_ARCH
     if [ "$_pads_verbose" != 0 ]; then
       echo "##############################################################################"
       echo "# Setting env var AST_HOME to $AST_HOME"
-      echo "# If you do not like this setting, set it to something else"
-      echo "# and then use $_pads_do_prog again."
+      echo "# If you do not like this setting, set AST_HOME_FORCE to the"
+      echo "# desired value for AST_HOME, then use $_pads_do_prog again."
+      echo "##############################################################################"
+      echo " "
+    fi
+  else
+    export AST_HOME=$AST_HOME_FORCE
+    if [ "$_pads_verbose" != 0 ]; then
+      echo "##############################################################################"
+      echo "# Setting env var AST_HOME to value of AST_HOME_FORCE = $AST_HOME"
+      echo "# If you prefer to use the PADS default, unsetenv AST_HOME_FORCE"
       echo "##############################################################################"
       echo " "
     fi
   fi
 
-  if [ "$INSTALLROOT"x = x ]; then
+  if [ "$INSTALLROOT_FORCE"x = x ]; then
     export INSTALLROOT=$PADS_HOME/ast-ast/arch/$AST_ARCH
     if [ "$_pads_verbose" != 0 ]; then
       echo "##############################################################################"
       echo "# Setting env var INSTALLROOT to $INSTALLROOT"
-      echo "# If you do not like this setting, set it to something else"
-      echo "# and then use $_pads_do_prog again."
+      echo "# If you do not like this setting, set INSTALLROOT_FORCE to the"
+      echo "# desired value for INSTALLROOT, then use $_pads_do_prog again."
+      echo "##############################################################################"
+      echo " "
+    fi
+  else
+    export INSTALLROOT=$INSTALLROOT_FORCE
+    if [ "$_pads_verbose" != 0 ]; then
+      echo "##############################################################################"
+      echo "# Setting env var INSTALLROOT to value of INSTALLROOT_FORCE = $INSTALLROOT"
+      echo "# If you prefer to use the PADS default, unsetenv INSTALLROOT_FORCE"
       echo "##############################################################################"
       echo " "
     fi
