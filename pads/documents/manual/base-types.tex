@@ -18,129 +18,717 @@ This section reviews the different in-memory representation types.
 
 \subsection{{\tt PDC\_char}}
 
+Type \PDC{char} is the in-memory representation of an external
+character.  It is equivalent to the C type \cd{unsigned char}, or type
+\PDC{uint8}: all are 8-bit unsigned values.  N.B.: Regardless of the
+external character that is read, the corresponding ASCII character is stored in 
+the in-memory representation.
+
 \subsection{{\tt PDC\_string}}
+
+Type \PDC{string} is the in-memory representation for all forms of
+external strings.  A \PDC{string} \cd{s} has two fields:
+\begin{itemize}
+\item \cd{s.len} : the length of the string.
+\item \cd{s.str} : a pointer to a sequence of \cd{s.len} characters.
+\end{itemize}
+In addition, \PDC{string} has fields that are manipulated
+by various string functions (some of which are described below).
+Most programmers should only use \cd{s.len} and \cd{s.str}.
+
+The library discipline has a field \cd{copy\_strings} which controls
+copying behavior for string read calls.  If \cd{copy\_strings} is
+non-zero, the string read functions always copy strings. Otherwise, a
+copy is not made and the target \PDC{string} points to memory managed by
+the current IO discipline.  \cd{copy\_strings} should only be set to
+zero for record-based IO disciplines where strings from record K are
+not used after \PDC{IO\_next\_rec} has been called to move the IO cursor
+to record K+1.  Note: \PDC{string\_preserve} can be used to force
+a string that is using sharing to make a copy so that the string is
+'preserved' (remains valid) across calls to \PDC{IO\_next\_rec}.
+
+When copying is used, the string copies are stored in an internal
+resizable buffer, and \cd{s.str} points into this buffer. 
+To ensure correct behavior, function \PDC{string\_init} should be called
+prior to using a \PDC{string}, and function \PDC{string\_cleanup} should
+be called when a given \PDC{string} is no longer in use.
+\\[1ex]
+These are the full set of string helper functions.
+\vskip 1ex
+\begin{tinycodeaux}{\leftmargin=0in}
+PDC_error_t PDC_string_init(PDC_t *pdc, PDC_string *s);
+PDC_error_t PDC_string_cleanup(PDC_t *pdc, PDC_string *s);
+PDC_error_t PDC_string_share(PDC_t *pdc, PDC_string *targ, const PDC_string *src);
+PDC_error_t PDC_string_Cstr_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
+PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const PDC_string *src);
+PDC_error_t PDC_string_Cstr_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
+PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
+int PDC_string_eq(const PDC_string *str1, const PDC_string *str2);
+int PDC_string_eq_Cstr(const PDC_string *str, const char *Cstr);
+\end{tinycodeaux}
+\mbox{}\\[1ex]
+\cd{PDC\_string\_init(pdc, s)}: Initialize \cd{s} to valid empty string (no dynamic memory allocated yet).\\[1ex]
+\cd{PDC\_string\_cleanup(pdc, s)}: Free any dynamic memory allocated for \cd{s}.\\[1ex]
+\cd{PDC\_string\_share(pdc, targ, src)}: make \cd{targ} refer to the string in \cd{src},
+sharing the space with the original owner.\\[1ex]
+\cd{PDC\_string\_Cstr\_share(pdc, targ, src, len)}: make \cd{targ} refer to \cd{len} characters in C-string \cd{src}.\\[1ex]
+\cd{PDC\_string\_copy(pdc, targ, src)}: Copy the string in \cd{src} into \cd{targ}; sharing is not used.\\[1ex]
+\cd{PDC\_string\_Cstr\_copy(pdc, targ, src, len)}: Copy \cd{len} characters from C-string \cd{src} into \cd{targ}; sharing is not used.\\[1ex]
+\cd{PDC\_string\_eq(str1, str2)}: returns \cd{0} if \cd{str1} equals \cd{str2}, a negative number if \cd{str1 < str2},
+and a positive number if \cd{str1 > str2}.\\[1ex]
+\cd{PDC\_string\_eq(str, Cstr)}: returns \cd{0} if \cd{str} equals \cd{Cstr}, a negative number if \cd{str < Cstr},
+and a positive number if \cd{str > Cstr}.\\[1ex]
+
+Although not strictly necessary, both \PDC{string\_copy} and \PDC{string\_Cstr\_copy} null-terminate \cd{targ->str}.
+Each copy function returns \PDC{ERR} on bad arguments or on failure to alloc space, otherwise it returns \PDC{OK}.
 
 \subsection{Integer types}
 
-\PDC{int8} ... \PDC{int64}.
+There are 8 in-memory representations for integers, four types for
+signed values (\PDC{int8}, \PDC{int16}, \PDC{int32}, and \PDC{int64})
+and four types for unsigned values (\PDC{uint8}, \PDC{uint16}, \PDC{uint32}, and \PDC{uint64}).
+The number in these type names indicates the number of bits in the in-memory representation,
+thus there are signed and unsigned integers that use 1, 2, 4, or 8 bytes of memory.
+The endian-ness of these in-memory representation types is the same as the
+endian-ness of the processor that the code is executing on.  Thus,
+the external representation, which may be in another format, is always converted
+to a primitive in-memory representation supported by the processor.
 
-\PDC{uint8} ... \PDC{uint64}.
+For programming convenience, the header file {\tt libpadsc.h} includes definitions of the minimum
+and maximum values for each signed type, and of the maximum value for each unsigned type:
+\begin{tinycode}
+PDC_MIN_INT8
+PDC_MAX_INT8
+PDC_MAX_UINT8
+
+PDC_MIN_INT16
+PDC_MAX_INT16
+PDC_MAX_UINT16
+
+PDC_MIN_INT32
+PDC_MAX_INT32
+PDC_MAX_UINT32
+
+PDC_MIN_INT64
+PDC_MAX_INT64
+PDC_MAX_UINT64
+\end{tinycode}
 
 \subsection{Floating-point types}
 
-\PDC{float32}, \PDC{float64}
+\PADSL{} has only two in-memory floating point representations,
+\PDC{float32} and \PDC{float64}, which correspond to ansi C types \cd{float}
+and \cd{double}, respectively.
 
 \subsection{Fixed-point types}
 
-\PDC{fpoint8} ... \PDC{fpoint64}
+A fixed-point number is a number with a fixed number of decimal digits
+(digits after the 'dot').  For example, 123.456 is a fixed-point
+number with three decimal digits.  External formats for such numbers
+occur, e.g., in COBOL data.  We have chosen a very simple in-memory
+representation for such numbers: a struct with a numerator (\cd{num})
+that contains all of the digits and a denominator (\cd{denom}) that
+contains some power of 10.  For example, 123.456 would be represented
+with a numerator containing 123456 and a denominator containing 1000 ($10^3$).
 
-\PDC{ufpoint8} ... \PDC{ufpoint64}
+The in-memory representation always has an unsigned denominator. We
+provide signed and unsigned representations that use signed and
+unsigned numerators, respectively.  One can choose the number of bits
+used for both numerator and denominator in the same way as for the
+integer types, thus there are four four types for signed values
+and four types for unsigned values:
+
+\begin{tinycodeaux}{\leftmargin=0in}
+typedef struct \{ PDC_int8   num; PDC_uint8  denom; \} PDC_fpoint8;
+typedef struct \{ PDC_int16  num; PDC_uint16 denom; \} PDC_fpoint16;
+typedef struct \{ PDC_int32  num; PDC_uint32 denom; \} PDC_fpoint32;
+typedef struct \{ PDC_int64  num; PDC_uint64 denom; \} PDC_fpoint64;
+
+typedef struct \{ PDC_uint8  num; PDC_uint8  denom; \} PDC_ufpoint8;
+typedef struct \{ PDC_uint16 num; PDC_uint16 denom; \} PDC_ufpoint16;
+typedef struct \{ PDC_uint32 num; PDC_uint32 denom; \} PDC_ufpoint32;
+typedef struct \{ PDC_uint64 num; PDC_uint64 denom; \} PDC_ufpoint64;
+\end{tinycodeaux}
+
+There are two macros to help one use values of these in-memory types.
+\PDC{FPOINT2FLT(fp)} calculates \cd{fp.num/fp.denom} as a float,
+while \PDC{FPOINT2DBL(fp)} calculates \cd{fp.num/fp.denom} as a double.
 
 \section{Base Type Mask}
 \label{sec:base-type-mask}
 
-Describe \PDCbasem{} and the 'normal' meaning for each value.
+XXX \PDCbasem{} was already described?
 
 \section{Base Type Parse Descriptor}
 \label{sec:base-type-parse-descriptors}
 
-Describe \PDCbasepd{}.  This involves describing \PDCloct{}, \PDCpost{},
+XXX already described \PDCbasepd{}.  Which involves describing \PDCloct{}, \PDCpost{},
 and \PDCerrCodet{}.  
 
 Specific error codes are discussed below
 when the base type read functions are described.
 
-\section{Helper Types}
+\section{Character Sets}
 
-\PDCregexpt{}.
+\PADSL{} currently supports two character sets for external data, ASCII and EBCDIC.
+As discussed in \secref{sec:common-character-sets}, the library
+discipline contain a field
+\cd{def\_charset} that selects which character set to use when
+one is not specified explicitly.  As a result, for each 'kind' of data
+that has an external form made up of characters (characters, strings,
+character-based dates, character-based integer and floating point
+numbers, \etc{}), \PADSL{} has three types: a type that indicates the external
+form is always ASCII, a type that indicates the external form is
+always EBCDIC, and a type that indicates that the external form uses
+the character set specified in \cd{def\_charset}.
 
-Other?
+In each section below describing character-based types, we give a
+three-column table indicating the type(s) that use ASCII, EBCDIC, or
+DEFAULT character sets.  For example, the next section begins with a
+table showing types \Pa{char} (ASCII), \Pe{char} (EBCDIC), \Pd{char}
+(DEFAULT).
 
 \section{Character Base Types}
-\Pd{char}, \Pa{char}, \Pe{char}.
+
+\subsection{Fixed-width character-based encoding}
+
+\aedBegin{}
+\aedLine{char}
+\aedEnd{}
+\\[1ex]
+The corresponding read functions are:
+\begin{tinycodeaux}{\leftmargin=0in}
+PDC_error_t PDC_char_read   (PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, PDC_char *c_out);
+PDC_error_t PDC_a_char_read (PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, PDC_char *c_out);
+PDC_error_t PDC_e_char_read (PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, PDC_char *c_out);
+\end{tinycodeaux}
 
 \subsection{Special character base types}
 
-\Pd{countX}, \Pa{countX}, \Pe{countX}.
+\aedBegin{}
+\aedLine{countX}
+\aedLine{countXtoY}
+\aedEnd{}
 
-\Pd{countXtoY}, \Pa{countXtoY}, \Pe{countXtoY}.
+\begin{tinycodeaux}{\leftmargin=0in}
+PDC_error_t PDC_countX     (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
+		            PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_a_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
+			    PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_e_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
+			    PDC_base_pd *pd, PDC_int32 *res_out);
+
+PDC_error_t PDC_countXtoY  (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
+		            PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_a_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
+			    PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_e_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
+			    PDC_base_pd *pd, PDC_int32 *res_out);
+\end{tinycodeaux}
 
 \section{String Base Types}
 
-\PFW{string}, \PaFW{string}, \PeFW{string}.
+\subsection{Fixed-width character-based encoding}
 
-\Pd{string}, \Pa{string}, \Pe{string}.
+\aedBegin{}
+\aedLine{string\_FW}
+\aedEnd{}
 
-\PME{string}, \PaME{string}, \PeME{stringME}.
+\begin{tinycodeaux}{\leftmargin=0in}
+PDC_error_t PDC_string_FW_read   (PDC_t *pdc, const PDC_base_m *m, size_t width,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_a_string_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_e_string_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
+				  PDC_base_pd *pd, PDC_string *s_out);
+\end{tinycodeaux}
 
-\PCME{string}, \PaCME{string}, \PeCME{string}.
+\subsection{Variable-width character-based encoding}
 
-\PSE{string}, \PaSE{string}, \PeSE{string}.
+\aedBegin{}
+\aedLine{string}
+\aedLine{string\_ME}
+\aedLine{string\_CME}
+\aedLine{string\_SE}
+\aedLine{string\_CSE}
+\aedEnd{}
 
-\PCSE{stringCSE}, \PaCSE{string}, \PeCSE{string}.
+\begin{tinycodeaux}{\leftmargin=0in}
+PDC_error_t PDC_string_read      (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
+			          PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_a_string_read    (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
+			          PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_e_string_read    (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
+			          PDC_base_pd *pd, PDC_string *s_out);
+
+PDC_error_t PDC_string_ME_read   (PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_a_string_ME_read (PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_e_string_ME_read (PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+
+PDC_error_t PDC_string_CME_read  (PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_a_string_CME_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_e_string_CME_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+
+PDC_error_t PDC_string_SE_read   (PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_a_string_SE_read (PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_e_string_SE_read (PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+
+PDC_error_t PDC_string_CSE_read  (PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_a_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+PDC_error_t PDC_e_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
+				  PDC_base_pd *pd, PDC_string *s_out);
+\end{tinycodeaux}
 
 \subsection{Special string base types}
 
+\aedBegin{}
 \Pd{date}, \Pa{date}, \Pe{date}.
+\aedEnd{}
+
+\begin{tinycodeaux}{\leftmargin=0in}
+PDC_error_t PDC_date_read  (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
+			    PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_a_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
+			    PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_e_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
+			    PDC_base_pd *pd, PDC_uint32 *res_out);
+\end{tinycodeaux}
 
 \section{Integer Base Types}
 
-\PFW{int8} ... \PFW{int64}, \PaFW{int8} ... \PaFW{int64}, \PeFW{int8} ... \PeFW{int64}.
+\subsection{Fixed-width character-based encoding}
 
-\PFW{uint8} ... \PFW{uint64}, \PaFW{uint8} ... \PaFW{uint64}, \PeFW{uint8} ... \PeFW{uint64}.
+\aedBegin{}
+\aedLine{int8\_FW}
+\aedLine{int16\_FW}
+\aedLine{int32\_FW}
+\aedLine{int64\_FW}
+\aedLine{uint8\_FW}
+\aedLine{uint16\_FW}
+\aedLine{uint32\_FW}
+\aedLine{uint64\_FW}
+\aedEnd{}
 
-\Pd{int8} ... \Pd{int64}, \Pa{int8} ... \Pa{int64}, \Pe{int8} ... \Pe{int64}.
+\begin{tinycodeaux}{\leftmargin=0in}
+PDC_error_t PDC_a_int8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
+				PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_a_int16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_a_int32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_a_int64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				PDC_base_pd *pd, PDC_int64 *res_out);
 
-\Pd{uint8} ... \Pd{uint64}, \Pa{uint8} ... \Pa{uint64}, \Pe{uint8} ... \Pe{uint64}.
+PDC_error_t PDC_a_uint8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
+				 PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_a_uint16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				 PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_a_uint32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				 PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_a_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				 PDC_base_pd *pd, PDC_uint64 *res_out);
 
-\Pb{int8} ... \Pb{int64}.
+PDC_error_t PDC_e_int8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
+				PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_e_int16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_e_int32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_e_int64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				PDC_base_pd *pd, PDC_int64 *res_out);
 
-\Pb{uint8} ... \Pb{uint64}.
+PDC_error_t PDC_e_uint8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
+				 PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_e_uint16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				 PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_e_uint32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				 PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_e_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+				 PDC_base_pd *pd, PDC_uint64 *res_out);
 
-\Pebc{int8} ... \Pebc{int64}.
+PDC_error_t PDC_int8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
+			      PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_int16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+			      PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_int32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+			      PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_int64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+			      PDC_base_pd *pd, PDC_int64 *res_out);
 
-\Pebc{uint8} ... \Pebc{uint64}.
+PDC_error_t PDC_uint8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
+			       PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_uint16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+			       PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_uint32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+			       PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
+			       PDC_base_pd *pd, PDC_uint64 *res_out);
+\end{tinycodeaux}
 
-\Pbcd{int8} ... \Pbcd{int64}.
+\subsection{Variable-width character-based encoding}
 
-\Pbcd{uint8} ... \Pbcd{uint64}.
+\aedBegin{}
+\aedLine{int8}
+\aedLine{int16}
+\aedLine{int32}
+\aedLine{int64}
+\aedLine{uint8}
+\aedLine{uint16}
+\aedLine{uint32}
+\aedLine{uint64}
+\aedEnd{}
 
-\Psbl{int8} ... \Psbl{int64}.
+\begin{tinycodeaux}{\leftmargin=0in}
+\codeallowbreaks
+PDC_error_t PDC_a_int8_read (PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_a_int16_read(PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_a_int32_read(PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_a_int64_read(PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int64 *res_out);
 
-\Psbl{uint8} ... \Psbl{uint64}.
+PDC_error_t PDC_a_uint8_read (PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_a_uint16_read(PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_a_uint32_read(PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_a_uint64_read(PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint64 *res_out);
 
-\Psbh{int8} ... \Psbh{int64}.
+PDC_error_t PDC_e_int8_read (PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_e_int16_read(PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_e_int32_read(PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_e_int64_read(PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int64 *res_out);
 
-\Psbh{uint8} ... \Psbh{uint64}.
+PDC_error_t PDC_e_uint8_read (PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_e_uint16_read(PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_e_uint32_read(PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_e_uint64_read(PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint64 *res_out);
+
+PDC_error_t PDC_int8_read (PDC_t *pdc, const PDC_base_m *m,
+			    PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_int16_read(PDC_t *pdc, const PDC_base_m *m,
+			   PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_int32_read(PDC_t *pdc, const PDC_base_m *m,
+			   PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_int64_read(PDC_t *pdc, const PDC_base_m *m,
+			   PDC_base_pd *pd, PDC_int64 *res_out);
+
+PDC_error_t PDC_uint8_read (PDC_t *pdc, const PDC_base_m *m,
+			    PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_uint16_read(PDC_t *pdc, const PDC_base_m *m,
+			    PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_uint32_read(PDC_t *pdc, const PDC_base_m *m,
+			    PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_uint64_read(PDC_t *pdc, const PDC_base_m *m,
+			    PDC_base_pd *pd, PDC_uint64 *res_out);
+\end{tinycodeaux}
+
+\subsection{Raw binary encoding}
+
+\bBegin{}
+\bLine{int8}
+\bLine{int16}
+\bLine{int32}
+\bLine{int64}
+\bLine{uint8}
+\bLine{uint16}
+\bLine{uint32}
+\bLine{uint64}
+\bEnd{}
+
+\begin{tinycodeaux}{\leftmargin=0in}
+\codeallowbreaks
+PDC_error_t PDC_b_int8_read (PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_b_int16_read(PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_b_int32_read(PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_b_int64_read(PDC_t *pdc, const PDC_base_m *m,
+			     PDC_base_pd *pd, PDC_int64 *res_out);
+
+PDC_error_t PDC_b_uint8_read (PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_b_uint16_read(PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_b_uint32_read(PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_b_uint64_read(PDC_t *pdc, const PDC_base_m *m,
+			      PDC_base_pd *pd, PDC_uint64 *res_out);
+\end{tinycodeaux}
+
+\subsection{Serialize binary encoding}
+
+\sbBegin{}
+\sbLine{int8}
+\sbLine{int16}
+\sbLine{int32}
+\sbLine{int64}
+\sbLine{uint8}
+\sbLine{uint16}
+\sbLine{uint32}
+\sbLine{uint64}
+\bEnd{}
+
+\begin{tinycodeaux}{\leftmargin=0in}
+\codeallowbreaks
+PDC_error_t PDC_sbl_int8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			         PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_sbl_int16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			         PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_sbl_int32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			         PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_sbl_int64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			         PDC_base_pd *pd, PDC_int64 *res_out);
+
+PDC_error_t PDC_sbl_uint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			 	 PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_sbl_uint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			 	 PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_sbl_uint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			 	 PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_sbl_uint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			 	 PDC_base_pd *pd, PDC_uint64 *res_out);
+
+PDC_error_t PDC_sbh_int8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			         PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_sbh_int16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			         PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_sbh_int32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			         PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_sbh_int64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			         PDC_base_pd *pd, PDC_int64 *res_out);
+
+PDC_error_t PDC_sbh_uint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			 	 PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_sbh_uint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			 	 PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_sbh_uint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			 	 PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_sbh_uint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
+			 	 PDC_base_pd *pd, PDC_uint64 *res_out);
+\end{tinycodeaux}
+
+\subsection{EBC and BCD encoding}
+
+\cBegin{}
+\cLine{int8}
+\cLine{int16}
+\cLine{int32}
+\cLine{int64}
+\cLine{uint8}
+\cLine{uint16}
+\cLine{uint32}
+\cLine{uint64}
+\cEnd{}
+
+\begin{tinycodeaux}{\leftmargin=0in}
+\codeallowbreaks
+PDC_error_t PDC_ebc_int8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_ebc_int16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_ebc_int32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_ebc_int64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_int64 *res_out);
+
+PDC_error_t PDC_ebc_uint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_ebc_uint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_ebc_uint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_ebc_uint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_uint64 *res_out);
+
+PDC_error_t PDC_bcd_int8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_int8 *res_out);
+PDC_error_t PDC_bcd_int16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_int16 *res_out);
+PDC_error_t PDC_bcd_int32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_int32 *res_out);
+PDC_error_t PDC_bcd_int64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_int64 *res_out);
+
+PDC_error_t PDC_bcd_uint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_uint8 *res_out);
+PDC_error_t PDC_bcd_uint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_uint16 *res_out);
+PDC_error_t PDC_bcd_uint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_uint32 *res_out);
+PDC_error_t PDC_bcd_uint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
+				 PDC_base_pd *pd, PDC_uint64 *res_out);
+\end{tinycodeaux}
 
 \section{Floating Point Base Types}
 
-\Pd{float32}, \Pa{float32}, \Pe{float32}.
+\subsection{Fixed-width character-based encoding}
 
-\Pd{float64}, \Pa{float64}, \Pe{float64}.
+\aedBegin{}
+\aedLine{float32\_FW}
+\aedLine{float64\_FW}
+\aedEnd{}
 
-\Pb{float32}, \Pb{float64}.
+\begin{tinycodeaux}{\leftmargin=0in}
+\end{tinycodeaux}
 
-\Psbl{float32}, \Psbl{float64}.
+\subsection{Variable-width character-based encoding}
 
-\Psbh{float32}, \Psbh{float64}.
+\aedBegin{}
+\aedLine{float32}
+\aedLine{float64}
+\aedEnd{}
+
+\begin{tinycodeaux}{\leftmargin=0in}
+\end{tinycodeaux}
+
+\subsection{Raw binary encoding}
+
+\bBegin{}
+\bLine{float32}
+\bLine{float64}
+\bEnd{}
+
+\begin{tinycodeaux}{\leftmargin=0in}
+\end{tinycodeaux}
+
+\subsection{Serialized binary encoding}
+
+\sbBegin{}
+\sbLine{float32}
+\sbLine{float64}
+\sbEnd{}
+
+\begin{tinycodeaux}{\leftmargin=0in}
+\end{tinycodeaux}
 
 \section{Fixed Point Base Types}
 
-\Pebc{fpoint8} .. \Pebc{fpoint64}.
+\subsection{Serialized binary encoding}
 
-\Pebc{ufpoint8} .. \Pebc{ufpoint64}.
+\sbBegin{}
+\sbLine{fpoint8}
+\sbLine{fpoint16}
+\sbLine{fpoint32}
+\sbLine{fpoint64}
+\sbLine{ufpoint8}
+\sbLine{ufpoint16}
+\sbLine{ufpoint32}
+\sbLine{ufpoint64}
+\bEnd{}
 
-\Pbcd{fpoint8} .. \Pbcd{fpoint64}.
+\begin{tinycodeaux}{\leftmargin=0in}
+\codeallowbreaks
+PDC_error_t PDC_sbl_fpoint8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint8 *res_out);
+PDC_error_t PDC_sbl_fpoint16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint16 *res_out);
+PDC_error_t PDC_sbl_fpoint32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint32 *res_out);
+PDC_error_t PDC_sbl_fpoint64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint64 *res_out);
 
-\Pbcd{ufpoint8} .. \Pbcd{ufpoint64}.
+PDC_error_t PDC_sbl_ufpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint8 *res_out);
+PDC_error_t PDC_sbl_ufpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint16 *res_out);
+PDC_error_t PDC_sbl_ufpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint32 *res_out);
+PDC_error_t PDC_sbl_ufpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint64 *res_out);
 
-\Psbl{fpoint8} .. \Psbl{fpoint64}.
+PDC_error_t PDC_sbh_fpoint8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint8 *res_out);
+PDC_error_t PDC_sbh_fpoint16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint16 *res_out);
+PDC_error_t PDC_sbh_fpoint32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint32 *res_out);
+PDC_error_t PDC_sbh_fpoint64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint64 *res_out);
 
-\Psbl{ufpoint8} .. \Psbl{ufpoint64}.
+PDC_error_t PDC_sbh_ufpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint8 *res_out);
+PDC_error_t PDC_sbh_ufpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint16 *res_out);
+PDC_error_t PDC_sbh_ufpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint32 *res_out);
+PDC_error_t PDC_sbh_ufpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint64 *res_out);
+\end{tinycodeaux}
 
-\Psbh{fpoint8} .. \Psbh{fpoint64}.
+\subsection{EBC and BCD encoding}
 
-\Psbh{ufpoint8} .. \Psbh{ufpoint64}.
+\cBegin{}
+\cLine{fpoint8}
+\cLine{fpoint16}
+\cLine{fpoint32}
+\cLine{fpoint64}
+\cLine{ufpoint8}
+\cLine{ufpoint16}
+\cLine{ufpoint32}
+\cLine{ufpoint64}
+\cEnd{}
 
- 
+\begin{tinycodeaux}{\leftmargin=0in}
+\codeallowbreaks
+PDC_error_t PDC_ebc_fpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint8 *res_out);
+PDC_error_t PDC_ebc_fpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint16 *res_out);
+PDC_error_t PDC_ebc_fpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint32 *res_out);
+PDC_error_t PDC_ebc_fpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint64 *res_out);
+
+PDC_error_t PDC_ebc_ufpoint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint8 *res_out);
+PDC_error_t PDC_ebc_ufpoint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint16 *res_out);
+PDC_error_t PDC_ebc_ufpoint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint32 *res_out);
+PDC_error_t PDC_ebc_ufpoint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint64 *res_out);
+
+PDC_error_t PDC_bcd_fpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint8 *res_out);
+PDC_error_t PDC_bcd_fpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint16 *res_out);
+PDC_error_t PDC_bcd_fpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint32 *res_out);
+PDC_error_t PDC_bcd_fpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_fpoint64 *res_out);
+
+PDC_error_t PDC_bcd_ufpoint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint8 *res_out);
+PDC_error_t PDC_bcd_ufpoint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint16 *res_out);
+PDC_error_t PDC_bcd_ufpoint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint32 *res_out);
+PDC_error_t PDC_bcd_ufpoint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
+				    PDC_base_pd *pd, PDC_ufpoint64 *res_out);
+
+\end{tinycodeaux}

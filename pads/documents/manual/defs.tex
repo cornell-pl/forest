@@ -27,8 +27,8 @@
 
 
 % keywords and PADSL types: added micro space on either side
-\newcommand{\padskw}[1]{\mbox{\/\bftt{#1}\/}}
-\newcommand{\padstype}[1]{\mbox{\/\cd{#1}\/}}
+\newcommand{\padskw}[1]{\mbox{\/\/\bftt{#1}\/\/}}
+\newcommand{\padstype}[1]{\mbox{\/\/\cd{#1}\/\/}}
 
 % \newcommand{\kw}[1]{\bftt{#1}}
 \newcommand{\kw}[1]{\padskw{#1}}
@@ -55,19 +55,19 @@
 \newcommand{\Pbcd}[1]{\padstype{Pbcd\_#1}}
 \newcommand{\Psbl}[1]{\padstype{Psbl\_#1}}
 \newcommand{\Psbh}[1]{\padstype{Psbh\_#1}}
-\newcommand{\PFW}[1]{\padstype{P#1\_FW}}
+\newcommand{\PdFW}[1]{\padstype{P#1\_FW}}
 \newcommand{\PaFW}[1]{\padstype{Pa\_#1\_FW}}
 \newcommand{\PeFW}[1]{\padstype{Pe\_#1\_FW}}
-\newcommand{\PSE}[1]{\padstype{P#1\_SE}}
+\newcommand{\PdSE}[1]{\padstype{P#1\_SE}}
 \newcommand{\PaSE}[1]{\padstype{Pa\_#1\_SE}}
 \newcommand{\PeSE}[1]{\padstype{Pe\_#1\_SE}}
-\newcommand{\PCSE}[1]{\padstype{P#1\_CSE}}
+\newcommand{\PdCSE}[1]{\padstype{P#1\_CSE}}
 \newcommand{\PaCSE}[1]{\padstype{Pa\_#1\_CSE}}
 \newcommand{\PeCSE}[1]{\padstype{Pe\_#1\_CSE}}
-\newcommand{\PME}[1]{\padstype{P#1\_ME}}
+\newcommand{\PdME}[1]{\padstype{P#1\_ME}}
 \newcommand{\PaME}[1]{\padstype{Pa\_#1\_ME}}
 \newcommand{\PeME}[1]{\padstype{Pe\_#1\_ME}}
-\newcommand{\PCME}[1]{\padstype{P#1\_CME}}
+\newcommand{\PdCME}[1]{\padstype{P#1\_CME}}
 \newcommand{\PaCME}[1]{\padstype{Pa\_#1\_CME}}
 \newcommand{\PeCME}[1]{\padstype{Pe\_#1\_CME}}
 
@@ -110,3 +110,23 @@
 \newcommand{\pdSuf}[1]{\padstype{#1\_pd}}
 
 \newcommand{\external}{external}
+
+\newcommand{\mcc}[1]{\multicolumn{1}{|c|}{#1}}
+\newcommand{\mccb}[1]{\multicolumn{1}{|c|}{\bf #1}}
+
+\newcommand{\aedBegin}{\begin{tabular}{|l|l|l} \hline \mccb{ASCII} & \mccb{EBCDIC} & \mccb{DEFAULT} \\[.1ex] \hline}
+\newcommand{\aedLine}[1]{\padstype{Pa\_#1} & \padstype{Pe\_#1} & \padstype{P#1} \\[.1ex] \hline}
+\newcommand{\aedEnd}{\end{tabular}}
+
+\newcommand{\bBegin}{\begin{tabular}{|l|} \hline \mccb{RAW} \\[.1ex] \hline}
+\newcommand{\bLine}[1]{\padstype{Pb\_#1} \\[.1ex] \hline}
+\newcommand{\bEnd}{\end{tabular}}
+
+\newcommand{\sbBegin}{\begin{tabular}{|l|l|} \hline \mccb{SBL} & \mccb{SBH} \\[.1ex] \hline}
+\newcommand{\sbLine}[1]{\padstype{Psbl\_#1} & \padstype{Psbh\_#1} \\[.1ex] \hline}
+\newcommand{\sbEnd}{\end{tabular}}
+
+\newcommand{\cBegin}{\begin{tabular}{|l|l|} \hline \mccb{EBC} & \mccb{BCD} \\[.1ex] \hline}
+\newcommand{\cLine}[1]{\padstype{Pebc\_#1} & \padstype{Pbcd\_#1} \\[.1ex] \hline}
+\newcommand{\cEnd}{\end{tabular}}
+
