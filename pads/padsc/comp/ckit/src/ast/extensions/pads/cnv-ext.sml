@@ -3718,14 +3718,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				of PTys.CTy =>
 				   mkCommentBreakCase(PT.Id name, "branch has C type: C type accum not implemented (yet)", NONE)
 				 | _ =>
-				   let val pty = getPadsName tyname
-				       val initSs = 
-					   [P.varDeclS'(P.makeTypedefPCT(lookupTy(pty, pdSuf, #pdname)), tpd),
-					    P.assignS(P.dotX(PT.Id tpd, PT.Id errCode),
-						      P.arrowX(PT.Id pd, PT.Id errCode))] 
-				   in
-				       genCase(name, pty, initSs, getUnionBranchX(pd, name))
-				   end
+				   genCase(name, getPadsName tyname, [], getUnionBranchX(pd, name))
 		      val nameBranchSs = mungeFields genAccAddFull genAccAddBrief genAccAddMan variants
 		      val errBranchSs = mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
 		      val addBranchSs = nameBranchSs @ errBranchSs
