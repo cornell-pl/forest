@@ -4,7 +4,7 @@ Parray nIP {
 
 Parray sIP{
   Pstring_SE(:"/[. ]/":) [] : Psep('.') && Pterm(Pnosep); 
-}
+};
 
 Punion host_t  {
   nIP resolved;    /- 135.207.23.32

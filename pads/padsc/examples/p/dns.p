@@ -70,7 +70,7 @@ int domain_name_dbg(label_or_ptr* elts, Puint32 length, size_t offset) {
 }
 
 Parray domain_name {
-  label_or_ptr [] : Plast(check256(eltEnd.offset - arrayBegin.offset, arrayBegin.offset)
+  label_or_ptr [] : Plast(check256(eltEnd.offset - begin.offset, begin.offset)
 			      || elts[current].tag != label
 			      || elts[current].val.label.length == 0) ;
 };
@@ -156,7 +156,7 @@ Pstruct WKS_t(:Puint16 rdlength:) {
 };
 
 Parray TXT_t(:Puint16 rdlength:) {
-  character_string [] : Plast(eltEnd.offset - arrayBegin.offset >= rdlength);
+  character_string [] : Plast(eltEnd.offset - begin.offset >= rdlength);
 };
 
 Pstruct SRV_t {
@@ -405,9 +405,9 @@ Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
   Pdefault : Pa_string_FW(:rdlength:) unknown;
   }
 } Pwhere { 
-  //   Pparsecheck(fprintf(stderr,"unionEnd.offset=%llx,unionBegin.offset=%llx,rdlength=%x\n",
-  //   (long long)unionEnd.offset,(long long)unionBegin.offset,rdlength)) &&
-           Pparsecheck(unionEnd.offset - unionBegin.offset == rdlength); };
+  //   Pparsecheck(fprintf(stderr,"end.offset=%llx,begin.offset=%llx,rdlength=%x\n",
+  //   (long long)end.offset,(long long)begin.offset,rdlength)) &&
+           Pparsecheck(end.offset - begin.offset == rdlength); };
 
 Pstruct resource_record {
   domain_name              name;
