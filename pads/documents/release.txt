@@ -1,0 +1,143 @@
+Title: 
+PADS: A declarative domain-specific language for describing ad hoc data.
+
+IP Management Contact: ??
+
+Business Unit Sponsor: AT&T Labs Research
+
+IP Type: Software License- source code
+
+Enable E*Contact Technology: ??
+
+License Type: ??
+Proposal owner : ??
+Proposal SME: ??
+Attorney contact:??
+Issued patent, submission, or patent application: No
+  We wrote a workshop paper about PADS which appeared in June 2003.
+  At various points, we were contacted by IP lawyers, but no patent
+  application was filed for PADS before the deadline.
+
+Standard Issued or Contribution: No
+
+Value Projected $: ??
+
+Licensees: ??
+
+Executive Summary
+What is the function of this technology (Service, Software, etc.)?
+
+PADS is a declarative data description language that allows data
+consumers to specify both the physical layout and the semantic
+properties of their data.  From this description, the PADS system
+generates libraries and tools for manipulating the data.  Because it
+captures the relevant properties of a data source in a concise
+declarative form, a PADS description can serve as documentation for
+otherwise undocumented ad hoc data sources.
+
+For a given description, the generated core library contains functions
+for parsing, validating, summarizing, and pretty-printing the data.
+Generated tools include programs for aggregating data, formatting it
+for inclusion in a relational database, and feeding it into a
+stream-based query system.  In addition, the PADS system generates an
+instance of the Galax Data API, enabling the execution of XQueries
+over PADS data sources.
+
+PADS differs from traditional parser generators in several respects.  
+First, PADS chooses a canonical in-memory
+representation for the data, allowing the specification to be purely
+declarative, which in turn allows the PADS system to generate many
+useful tools from one specification.  
+Second, the PADS parser returns both an in-memory representation of
+the data and a parse descriptor that describes any errors that
+occurred during the parse.  This parse descriptor allows data analysts
+to respond flexibly to errors in the data: they can halt all
+processing, discard the offending data, or even repair it, all at
+their discretion.
+Third, it allows data-dependent parsing, in which values in the data
+control down-stream parsing.  Common examples include sequences whose
+lengths are fixed by a header field and choices whose variants are
+determined by tag fields.  
+
+
+
+
+What is the driving force to release this intellectual property?
+
+The PADS system will improve dramatically with input from outside AT&T
+sources, both in terms of users and collaborators.  The goal of the
+system is to be able express as many data formats as possible.  By
+expanding our user base outside of AT&T, we will be able to test and
+refine the design of PADS on a wider variety of data formats,
+improving it for internal as well as external use.  In addition, there
+is growing interest outside of AT&T in formalizing the semantics of
+PADS and in extending the system with translation capablities.
+Formalization would significantly clarify the semantics.  Adding a
+translation capability would facilitate converting ad hoc data sources
+into more tractable forms.  Ideally, the PADS language would grow into
+some kind of standard for ad hoc data sources.  As a standard, the
+language would have many more resources put into it that AT&T can
+invest alone.  AT&T would dramatically benefit from such investments
+as we process so many ad hoc data sources.
+
+
+Complete list of all Intellectual Property being licensed for release.
+PADS system (compiler written in SML, runtime libraries written in C)
+enabling technology:  portions of the AST library
+
+
+Risk Assessment
+Advantages: How does this release help AT&T?
+Releasing PADS helps AT&T in three ways:
+ 1. Allow us to get feedback on the design and implementation from
+    a wide variety of users.
+ 2. Allow non-AT&T people to collaborate on the formalization of PADS
+    and on extensions to support translation.  Such work would improve
+    the PADS system for internal use.
+ 3. Support an eventual standardization effort, which would be the
+    most likely path through which AT&T could get commercial quality
+    implementation of PADS-like facilities.
+
+
+Disadvantages:
+ a) What happens if AT&T chooses not to release the Intellectual
+ Property?
+
+   The development of the PADS system would be weakened, both because
+   fewer people would be able to exercise the system and because fewer
+   people would able to develop for it.
+
+ b) Is there a competitive or strategic danger to AT&T, if it releases
+ the Intellectual property?
+
+   None that I can think of.  
+
+
+5. What are the geographic restrictions?
+
+   None that I am aware of.  We are not using any cryptography.
+
+6. What is the duration of the license?
+
+   ??
+
+
+7. What are the rights being granted the lincesees by AT&T?
+
+   Compile and use source code
+   View and edit source code, (returning product to AT&T?)
+   Non-commercial use?  (Seek additional license for commercial use?)
+
+
+8. What are the costs associated with the release of this Intellectual
+Property? (Other than the administrative costs to review and legal
+costs to prepare and negotiate the contract)
+
+  Negligible.
+
+9. Any additional pertinent information? 
+
+Organizations expected to be impaced? ??
+Comments for organizations to be impacted, including contact person ??
+ 
+Terms and conditions of an agreement. ??
