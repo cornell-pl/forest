@@ -1,0 +1,46 @@
+Copyright Notice
+Copyright C2002 Mount Sinai Hospital, Toronto, Canada. All Rights Reserved.
+
+Disclaimer
+Permission to use, copy, and modify this document for educational, research, and not-for-profit purposes, without fee and without a signed licensing agreement, is hereby granted, provided that the above copyright notice, this paragraph and the following paragraphs appear in all copies, modifications, and distributions.
+
+Contact Terry Donaghue, Technology Transfer & Industrial Liaison, Mount Sinai Hospital, & The Samuel Lunenfeld Research Institute, 600 University Avenue, Toronto, ON Canada M5G 1X5, Tel. (416) 586-8225, Fax (416) 586-3110, E-mail: donaghue@mshri.on.ca, for commercial licensing opportunities. 
+
+IN NO EVENT SHALL MOUNT SINAI HOSPITAL BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF MOUNT SINAI HOSPITAL HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+MOUNT SINAI HOSPITAL SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED "AS IS". MOUNT SINAI HOSPITAL HAS NO
+OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+Published research assisted by this document should cite:
+
+Breitkreutz, BJ., Stark, C., Tyers M. "The GRID: the General Repository for Interaction Datasets." Genome Biology 2003 4(3):R23
+
+------------------------------------------------------------------------------------------------------------------------------
+
+Brief description of the columns:
+
+A.) INTERACTOR_A			(Unique ID for geneA)
+B.) INTERACTOR_B			(Unique ID for geneB)
+C.) ALIASES_FOR_A			(List of common names for geneA, separated by ';')
+D.) ALIASES_FOR_B			(List of common names for geneB, separated by ';')
+E.) EXPERIMENTAL_SYSTEM			(System in which the interaction was shown)
+F.) SOURCE			(Author/s of the interaction)
+G.) DIRECTION			(Direction is shown by default as going from GeneA to GeneB, if however the same source also demonstrates this interaction in the opposite direction then the "AB" will be replaced with a "BOTH")
+H.) PUBMED_ID			(PubMed_ID of the paper)
+
+------------------------------------------------------------------------------------------------------------------------------
+
+INTERACTOR_A	INTERACTOR_B	ALIASES_FOR_A	ALIASES_FOR_B	EXPERIMENTAL_SYSTEM	SOURCE	DIRECTION	PUBMED_ID
+YDL140C	YBR154C	;RPO21;RPB1;RPB220;SUA8;	;RPB5;	Two Hybrid	BIND	AB	;2496296;9207794;10393904;
+YER006W	YPL211W	;NUG1;	;NIP7;	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YKL009W	;NUG1;	;MRT4;	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YNL002C	;NUG1;	;RLP7;RPL7;	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YHR052W	;NUG1;	;CIC1;NSA3;	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YCR072C	;NUG1;	NONE	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YMR290C	;NUG1;	;HAS1;	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YPL146C	;NUG1;	NONE	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YDR101C	;NUG1;	;ARX1;	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YPL093W	;NUG1;	;NOG1;	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YGR103W	;NUG1;	;NOP7;YPH1;	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YLR002C	;NUG1;	;NOC3;	Affinity Precipitation	Bassler et al	AB	;11583615;
+YER006W	YNL061W	;NUG1;	;NOP2;YNA1;	Affinity Precipitation	Bassler et al	AB	;11583615;

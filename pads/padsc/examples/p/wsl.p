@@ -37,7 +37,7 @@ bool chkVersion(version_t v, method_t m) {
   if ((v.major == 1) && (v.minor == 1)) return true;
   if ((m == LINK) || (m == UNLINK)) return false;
   return true;
-}
+};
 
 Pstruct request_t {
   '\"';   method_t       meth;     

@@ -4331,7 +4331,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val (roParamsStructDecls,_) = cnvCTy (genRPStructED(name,cParams,stRPInfo))
 								  
                  val readEDs = initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
-			     @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs @ readOneFunEDs
+			     @ copyRepEDs @ copyPDEDs @ maskFunEDs @ (* readFunEDs @ *)readOneFunEDs
 
                  (***** array PADS-Galax *****)
 			 

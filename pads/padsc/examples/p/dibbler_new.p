@@ -34,7 +34,6 @@ Punion dib_ramp_t {
   no_ramp_t  genRamp;
 };
 
-
 Pstruct order_header_t {
        Puint32             order_num;
  '|';  Puint32             att_order_num;
@@ -63,7 +62,6 @@ Parray eventSeq {
   Pforall (i Pin [0..length-2] : 
            (elts[i].tstamp <= elts[i+1].tstamp));
 };
-
 
 Precord Pstruct entry_t {
   order_header_t  header;
