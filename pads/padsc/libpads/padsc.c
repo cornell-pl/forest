@@ -400,7 +400,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
 	goto fatal_forward_err;
       }
       if (res_out && *em == PDC_CheckAndSet) {
-	(*res_out) = (targ_type)tmp;
+	(*res_out) = tmp;
       }
       ed->errCode = PDC_NO_ERR;
       return PDC_OK;
@@ -509,7 +509,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
     goto fatal_forward_err;
   }
   if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) = (targ_type)tmp;
+    (*res_out) = tmp;
   }
   ed->errCode = PDC_NO_ERR;
   return PDC_OK;
@@ -680,7 +680,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits_or_byte
     goto fatal_forward_err;
   }
   if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) = (targ_type)tmp;
+    (*res_out) = tmp;
   }
   ed->errCode = PDC_NO_ERR;
   return PDC_OK;
@@ -729,6 +729,48 @@ fn_name(PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits_or_bytes,
   }
   PDCI_IODISC_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
   return fn_name ## _internal (pdc, em, num_digits_or_bytes, ed, res_out);
+}
+/* END_MACRO */
+
+#define PDCI_EBCBCDSB_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
+PDC_error_t
+fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits_or_bytes, PDC_uint32 d_exp,
+		      PDC_base_ed *ed, targ_type *res_out)
+{
+  targ_type       tmp;   /* tmp num */
+
+  PDC_TRACE(pdc->disc, PDCI_MacroArg2String(fn_name) "_internal called" );
+  if (PDC_ERR == internal_numerator_read_fn(pdc, em, num_digits_or_bytes, ed, &(tmp.num))) {
+    /* ed filled in already, IO cursor advanced if appropriate */
+    return PDC_ERR;
+  }
+  /* so far so good, IO cursor has been advanced, ed->errCode set to PDC_NO_ERR */
+  if (d_exp > dexp_max) {
+    PDCI_READFN_SET_LOC_BE(-width, 0);
+    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_BAD_PARAM);
+  }
+  if (res_out && *em == PDC_CheckAndSet) {
+    tmp.denom = PDCI_10toThe[d_exp];
+    (*res_out) = tmp;
+  }
+  return PDC_OK;
+}
+
+PDC_error_t
+fn_name(PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits_or_bytes, PDC_uint32 d_exp,
+	PDC_base_ed *ed, targ_type *res_out)
+{
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  PDCI_IODISC_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
+  return fn_name ## _internal (pdc, em, num_digits_or_bytes, d_exp, ed, res_out);
 }
 /* END_MACRO */
 
@@ -1701,7 +1743,7 @@ rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type u, PDC_uint32 num_digits)
 }
 /* END_MACRO */
 
-#define PDCI_SB2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nb_max)
+#define PDCI_SB2INT(fn_name, rev_fn_name, targ_type, sb_endian, int_min, int_max, nb_max)
 targ_type
 fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out)
 {
@@ -1716,7 +1758,7 @@ fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_
     errno = EDOM;
     return int_min;
   }
-  if (pdc->m_endian == PDC_littleEndian) {
+  if (pdc->m_endian == sb_endian) {
     /* on-disk order same as in-memory rep */
     memcpy(resbytes, bytes, n);
   } else {
@@ -1744,7 +1786,7 @@ rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_bytes)
     errno = ERANGE;
     return -1;
   }
-  if (pdc->m_endian == PDC_littleEndian) {
+  if (pdc->m_endian == sb_endian) {
     /* on-disk order same as in-memory rep */
     memcpy(sb, ibytes, n);
   } else {
@@ -1758,7 +1800,7 @@ rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_bytes)
 }
 /* END_MACRO */
 
-#define PDCI_SB2UINT(fn_name, rev_fn_name, targ_type, int_max, nb_max)
+#define PDCI_SB2UINT(fn_name, rev_fn_name, targ_type, sb_endian, int_max, nb_max)
 targ_type
 fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out)
 {
@@ -1773,7 +1815,7 @@ fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_
     errno = EDOM;
     return int_max;
   }
-  if (pdc->m_endian == PDC_littleEndian) {
+  if (pdc->m_endian == sb_endian) {
     /* on-disk order same as in-memory rep */
     memcpy(resbytes, bytes, n);
   } else {
@@ -1801,7 +1843,7 @@ rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type u, PDC_uint32 num_bytes)
     errno = ERANGE;
     return -1;
   }
-  if (pdc->m_endian == PDC_littleEndian) {
+  if (pdc->m_endian == sb_endian) {
     /* on-disk order same as in-memory rep */
     memcpy(sb, ubytes, n);
   } else {
@@ -1920,7 +1962,7 @@ PDCI_B_INT_READ_FN(PDC_b_int64_read,  PDC_int64,  8, 7);
 PDCI_B_INT_READ_FN(PDC_b_uint64_read, PDC_uint64, 8, 7);
 
 /* ================================================================================ */
-/* EBC NUMERIC ENCODING INTEGER READ FUNCTIONS */
+/* EBC, BCD, SBL, SBH NUMERIC ENCODING INTEGER READ FUNCTIONS */
 
 /*
  * PDCI_EBCBCDSB_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
@@ -1935,13 +1977,6 @@ PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_uint16_read, PDC_uint16, PDCI_ebc2uint16, PDC_
 PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_uint32_read, PDC_uint32, PDCI_ebc2uint32, PDC_INVALID_EBC_NUM, num_digits_or_bytes);
 PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_uint64_read, PDC_uint64, PDCI_ebc2uint64, PDC_INVALID_EBC_NUM, num_digits_or_bytes);
 
-/* ================================================================================ */
-/* BCD NUMERIC ENCODING INTEGER READ FUNCTIONS */
-
-/*
- * PDCI_EBCBCDSB_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
- */
-
 PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_int8_read,   PDC_int8,   PDCI_bcd2int8,   PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
 PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_int16_read,  PDC_int16,  PDCI_bcd2int16,  PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
 PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_int32_read,  PDC_int32,  PDCI_bcd2int32,  PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
@@ -1951,21 +1986,66 @@ PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_uint16_read, PDC_uint16, PDCI_bcd2uint16, PDC_
 PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_uint32_read, PDC_uint32, PDCI_bcd2uint32, PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
 PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_uint64_read, PDC_uint64, PDCI_bcd2uint64, PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
 
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbl_int8_read,   PDC_int8,   PDCI_sbl2int8,   PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbl_int16_read,  PDC_int16,  PDCI_sbl2int16,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbl_int32_read,  PDC_int32,  PDCI_sbl2int32,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbl_int64_read,  PDC_int64,  PDCI_sbl2int64,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbl_uint8_read,  PDC_uint8,  PDCI_sbl2uint8,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbl_uint16_read, PDC_uint16, PDCI_sbl2uint16, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbl_uint32_read, PDC_uint32, PDCI_sbl2uint32, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbl_uint64_read, PDC_uint64, PDCI_sbl2uint64, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbh_int8_read,   PDC_int8,   PDCI_sbh2int8,   PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbh_int16_read,  PDC_int16,  PDCI_sbh2int16,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbh_int32_read,  PDC_int32,  PDCI_sbh2int32,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbh_int64_read,  PDC_int64,  PDCI_sbh2int64,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbh_uint8_read,  PDC_uint8,  PDCI_sbh2uint8,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbh_uint16_read, PDC_uint16, PDCI_sbh2uint16, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbh_uint32_read, PDC_uint32, PDCI_sbh2uint32, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sbh_uint64_read, PDC_uint64, PDCI_sbh2uint64, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+
 /* ================================================================================ */
-/* SB NUMERIC ENCODING INTEGER READ FUNCTIONS */
+/* EBC, BCD, SBL, SBH NUMERIC ENCODING FIXED POINT READ FUNCTIONS */
 
 /*
- * PDCI_EBCBCDSB_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+ * PDCI_EBCBCDSB_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
  */
 
-PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_int8_read,   PDC_int8,   PDCI_sb2int8,   PDC_UNEXPECTED_ERR, num_digits_or_bytes);
-PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_int16_read,  PDC_int16,  PDCI_sb2int16,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
-PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_int32_read,  PDC_int32,  PDCI_sb2int32,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
-PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_int64_read,  PDC_int64,  PDCI_sb2int64,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
-PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_uint8_read,  PDC_uint8,  PDCI_sb2uint8,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
-PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_uint16_read, PDC_uint16, PDCI_sb2uint16, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
-PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_uint32_read, PDC_uint32, PDCI_sb2uint32, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
-PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_uint64_read, PDC_uint64, PDCI_sb2uint64, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_ebc_fpoint8_read,   PDC_fpoint8,   PDC_ebc_int8_read_internal,   num_digits_or_bytes,  2)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_ebc_fpoint16_read,  PDC_fpoint16,  PDC_ebc_int16_read_internal,  num_digits_or_bytes,  4)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_ebc_fpoint32_read,  PDC_fpoint32,  PDC_ebc_int32_read_internal,  num_digits_or_bytes,  9)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_ebc_fpoint64_read,  PDC_fpoint64,  PDC_ebc_int64_read_internal,  num_digits_or_bytes, 19)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_ebc_ufpoint8_read,  PDC_ufpoint8,  PDC_ebc_uint8_read_internal,  num_digits_or_bytes,  2)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_ebc_ufpoint16_read, PDC_ufpoint16, PDC_ebc_uint16_read_internal, num_digits_or_bytes,  4)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_ebc_ufpoint32_read, PDC_ufpoint32, PDC_ebc_uint32_read_internal, num_digits_or_bytes,  9)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_ebc_ufpoint64_read, PDC_ufpoint64, PDC_ebc_uint64_read_internal, num_digits_or_bytes, 19)
+
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_bcd_fpoint8_read,   PDC_fpoint8,   PDC_bcd_int8_read_internal,   ((num_digits_or_bytes+1)/2),  2)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_bcd_fpoint16_read,  PDC_fpoint16,  PDC_bcd_int16_read_internal,  ((num_digits_or_bytes+1)/2),  4)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_bcd_fpoint32_read,  PDC_fpoint32,  PDC_bcd_int32_read_internal,  ((num_digits_or_bytes+1)/2),  9)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_bcd_fpoint64_read,  PDC_fpoint64,  PDC_bcd_int64_read_internal,  ((num_digits_or_bytes+1)/2), 19)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_bcd_ufpoint8_read,  PDC_ufpoint8,  PDC_bcd_uint8_read_internal,  ((num_digits_or_bytes+1)/2),  2)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_bcd_ufpoint16_read, PDC_ufpoint16, PDC_bcd_uint16_read_internal, ((num_digits_or_bytes+1)/2),  4)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_bcd_ufpoint32_read, PDC_ufpoint32, PDC_bcd_uint32_read_internal, ((num_digits_or_bytes+1)/2),  9)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_bcd_ufpoint64_read, PDC_ufpoint64, PDC_bcd_uint64_read_internal, ((num_digits_or_bytes+1)/2), 19)
+
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbl_fpoint8_read,   PDC_fpoint8,   PDC_sbl_int8_read_internal,   num_digits_or_bytes,  2)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbl_fpoint16_read,  PDC_fpoint16,  PDC_sbl_int16_read_internal,  num_digits_or_bytes,  4)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbl_fpoint32_read,  PDC_fpoint32,  PDC_sbl_int32_read_internal,  num_digits_or_bytes,  9)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbl_fpoint64_read,  PDC_fpoint64,  PDC_sbl_int64_read_internal,  num_digits_or_bytes, 19)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbl_ufpoint8_read,  PDC_ufpoint8,  PDC_sbl_uint8_read_internal,  num_digits_or_bytes,  2)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbl_ufpoint16_read, PDC_ufpoint16, PDC_sbl_uint16_read_internal, num_digits_or_bytes,  4)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbl_ufpoint32_read, PDC_ufpoint32, PDC_sbl_uint32_read_internal, num_digits_or_bytes,  9)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbl_ufpoint64_read, PDC_ufpoint64, PDC_sbl_uint64_read_internal, num_digits_or_bytes, 19)
+
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_fpoint8_read,   PDC_fpoint8,   PDC_sbh_int8_read_internal,   num_digits_or_bytes,  2)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_fpoint16_read,  PDC_fpoint16,  PDC_sbh_int16_read_internal,  num_digits_or_bytes,  4)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_fpoint32_read,  PDC_fpoint32,  PDC_sbh_int32_read_internal,  num_digits_or_bytes,  9)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_fpoint64_read,  PDC_fpoint64,  PDC_sbh_int64_read_internal,  num_digits_or_bytes, 19)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_ufpoint8_read,  PDC_ufpoint8,  PDC_sbh_uint8_read_internal,  num_digits_or_bytes,  2)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_ufpoint16_read, PDC_ufpoint16, PDC_sbh_uint16_read_internal, num_digits_or_bytes,  4)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_ufpoint32_read, PDC_ufpoint32, PDC_sbh_uint32_read_internal, num_digits_or_bytes,  9)
+PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_ufpoint64_read, PDC_ufpoint64, PDC_sbh_uint64_read_internal, num_digits_or_bytes, 19)
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
@@ -2547,17 +2627,29 @@ PDCI_BCD2UINT(PDCI_bcd2uint16, PDCI_uint16_2bcd, PDC_uint16, PDC_MAX_UINT16,  5)
 PDCI_BCD2UINT(PDCI_bcd2uint32, PDCI_uint32_2bcd, PDC_uint32, PDC_MAX_UINT32, 10)
 PDCI_BCD2UINT(PDCI_bcd2uint64, PDCI_uint64_2bcd, PDC_uint64, PDC_MAX_UINT64, 20)
 
-/* PDCI_SB2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nb_max) */
-PDCI_SB2INT(PDCI_sb2int8,  PDCI_int8_2sb,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8,  1)
-PDCI_SB2INT(PDCI_sb2int16, PDCI_int16_2sb, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16, 2)
-PDCI_SB2INT(PDCI_sb2int32, PDCI_int32_2sb, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32, 4)
-PDCI_SB2INT(PDCI_sb2int64, PDCI_int64_2sb, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64, 8)
+/* PDCI_SB2INT(fn_name, rev_fn_name, targ_type, sb_endian, int_min, int_max, nb_max) */
+PDCI_SB2INT(PDCI_sbl2int8,  PDCI_int8_2sbl,  PDC_int8,  PDC_littleEndian, PDC_MIN_INT8,  PDC_MAX_INT8,  1)
+PDCI_SB2INT(PDCI_sbl2int16, PDCI_int16_2sbl, PDC_int16, PDC_littleEndian, PDC_MIN_INT16, PDC_MAX_INT16, 2)
+PDCI_SB2INT(PDCI_sbl2int32, PDCI_int32_2sbl, PDC_int32, PDC_littleEndian, PDC_MIN_INT32, PDC_MAX_INT32, 4)
+PDCI_SB2INT(PDCI_sbl2int64, PDCI_int64_2sbl, PDC_int64, PDC_littleEndian, PDC_MIN_INT64, PDC_MAX_INT64, 8)
 
-/* PDCI_SB2UINT(fn_name, rev_fn_name, targ_type, int_max, nb_max) */
-PDCI_SB2UINT(PDCI_sb2uint8,  PDCI_uint8_2sb,  PDC_uint8,  PDC_MAX_UINT8,  1)
-PDCI_SB2UINT(PDCI_sb2uint16, PDCI_uint16_2sb, PDC_uint16, PDC_MAX_UINT16, 2)
-PDCI_SB2UINT(PDCI_sb2uint32, PDCI_uint32_2sb, PDC_uint32, PDC_MAX_UINT32, 4)
-PDCI_SB2UINT(PDCI_sb2uint64, PDCI_uint64_2sb, PDC_uint64, PDC_MAX_UINT64, 8)
+/* PDCI_SB2UINT(fn_name, rev_fn_name, targ_type, sb_endian, int_max, nb_max) */
+PDCI_SB2UINT(PDCI_sbl2uint8,  PDCI_uint8_2sbl,  PDC_uint8,  PDC_littleEndian, PDC_MAX_UINT8,  1)
+PDCI_SB2UINT(PDCI_sbl2uint16, PDCI_uint16_2sbl, PDC_uint16, PDC_littleEndian, PDC_MAX_UINT16, 2)
+PDCI_SB2UINT(PDCI_sbl2uint32, PDCI_uint32_2sbl, PDC_uint32, PDC_littleEndian, PDC_MAX_UINT32, 4)
+PDCI_SB2UINT(PDCI_sbl2uint64, PDCI_uint64_2sbl, PDC_uint64, PDC_littleEndian, PDC_MAX_UINT64, 8)
+
+/* PDCI_SB2INT(fn_name, rev_fn_name, targ_type, sb_endian, int_min, int_max, nb_max) */
+PDCI_SB2INT(PDCI_sbh2int8,  PDCI_int8_2sbh,  PDC_int8,  PDC_bigEndian, PDC_MIN_INT8,  PDC_MAX_INT8,  1)
+PDCI_SB2INT(PDCI_sbh2int16, PDCI_int16_2sbh, PDC_int16, PDC_bigEndian, PDC_MIN_INT16, PDC_MAX_INT16, 2)
+PDCI_SB2INT(PDCI_sbh2int32, PDCI_int32_2sbh, PDC_int32, PDC_bigEndian, PDC_MIN_INT32, PDC_MAX_INT32, 4)
+PDCI_SB2INT(PDCI_sbh2int64, PDCI_int64_2sbh, PDC_int64, PDC_bigEndian, PDC_MIN_INT64, PDC_MAX_INT64, 8)
+
+/* PDCI_SB2UINT(fn_name, rev_fn_name, targ_type, sb_endian, int_max, nb_max) */
+PDCI_SB2UINT(PDCI_sbh2uint8,  PDCI_uint8_2sbh,  PDC_uint8,  PDC_bigEndian, PDC_MAX_UINT8,  1)
+PDCI_SB2UINT(PDCI_sbh2uint16, PDCI_uint16_2sbh, PDC_uint16, PDC_bigEndian, PDC_MAX_UINT16, 2)
+PDCI_SB2UINT(PDCI_sbh2uint32, PDCI_uint32_2sbh, PDC_uint32, PDC_bigEndian, PDC_MAX_UINT32, 4)
+PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_MAX_UINT64, 8)
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
@@ -2572,7 +2664,7 @@ PDCI_SB2UINT(PDCI_sb2uint64, PDCI_uint64_2sb, PDC_uint64, PDC_MAX_UINT64, 8)
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.62 2003-04-08 02:59:29 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.63 2003-04-08 16:53:45 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

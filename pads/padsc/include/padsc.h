@@ -1066,38 +1066,52 @@ PDC_error_t PDC_b_uint64_read(PDC_t *pdc, PDC_base_em *em,
 			      PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================
- * EBC, BCD, and SB ENCODINGS OF INTEGERS
+ * EBC, BCD, and SBL, and SBH ENCODINGS OF INTEGERS
  *   (VARIABLE NUMBER OF DIGITS/BYTES)
  *
- * These functions parse signed or unsigned EBCDIC numeric (ebc_), BCD (bcd_), or
- * SERIALIZED BINARY (sb_) encoded integers with a specified number of digits
- * (for ebc_ and bcd_) or number of bytes (for sb_).
+ * These functions parse signed or unsigned EBCDIC numeric (ebc_), BCD (bcd_),
+ * SBL (sbl_) or SBH (sbh_) encoded integers with a specified number of digits
+ * (for ebc_ and bcd_) or number of bytes (for sbl_ and sbh_).
  *
  * EBC INTEGER ENCODING (PDC_ebc_int64_read / PDC_ebc_uint64_read):
  *
- * Each byte on disk encodes one digit (in low 4 bits).  For signed
- * values, the final byte encodes the sign (high 4 bits == 0xD for negative).
- * A signed or unsigned 5 digit value is encoded in 5 bytes.
+ *   Each byte on disk encodes one digit (in low 4 bits).  For signed
+ *   values, the final byte encodes the sign (high 4 bits == 0xD for negative).
+ *   A signed or unsigned 5 digit value is encoded in 5 bytes.
  *
  * BCD INTEGER ENCODING (PDC_bcd_int_read / PDC_bcd_uint_read):
  *
- * Each byte on disk encodes two digits, 4 bits per digit.  For signed
- * values, a negative number is encoded by having number of digits be odd
- * so that the remaining low 4 bits in the last byte are available for the sign.
- * (low 4 bits == 0xD for negative).
- * A signed or unsigned 5 digit value is encoded in 3 bytes, where the unsigned
- * value ignores the final 4 bits and the signed value uses them to get the sign.
+ *   Each byte on disk encodes two digits, 4 bits per digit.  For signed
+ *   values, a negative number is encoded by having number of digits be odd
+ *   so that the remaining low 4 bits in the last byte are available for the sign.
+ *   (low 4 bits == 0xD for negative).
+ *   A signed or unsigned 5 digit value is encoded in 3 bytes, where the unsigned
+ *   value ignores the final 4 bits and the signed value uses them to get the sign.
  *
- * SERIALIZED BINARY INTEGER ENCODING (PDC_sb_int_read / PDC_sb_uint_read):
+ * SBL (Serialized Binary, Low-Order Byte First) INTEGER ENCODING
+ *   (PDC_sbl_int_read / PDC_sbl_uint_read):
  *
- * For a K-bytess sbin encoding, the first byte on disk is treated 
- * as the low order byte of a K byte value.  I.e., the value can be computed
- * using this algorithm:
- *   res = 0;
- *   for (i = 0; i < K; i++) {
- *      res = (res << 8) | bytes[i]; 
- *   }
- * Whether the result is treated as signed or unsigned depends on the read function used.
+ *   For a K-byte SBL encoding, the first byte on disk is treated 
+ *   as the low order byte of a K byte value.
+ *
+ * SBH (Serialized Binary, High-Order Byte First) INTEGER ENCODING
+ *   (PDC_sbh_int_read / PDC_sbh_uint_read):
+ *
+ *   For a K-byte SBH encoding, the first byte on disk is treated 
+ *   as the high order byte of a K byte value.
+ * 
+ * For SBL and SBH, each byte is moved to the in-memory target integer unchanged.
+ * Whether the result is treated as a signed or unsigned number depends on the target type.
+ *
+ * Note that SBL and SBH differ from the COMMON WIDTH BINARY (B) read functions above
+ * in 3 ways: (1) SBL and SBH support any number of bytes between 1 and 8,
+ * while B only supports 1, 2, 4, and 8; (2) with SBL and SBH you specify the target
+ * type independently of the num_bytes; (3) SBL and SBH explicitly state the
+ * byte ordering, while B uses the disc->d_endian setting to determine the
+ * byte ordering of the data.
+ *
+ * FOR ALL TYPES
+ * =============
  *
  * The legal range of values for num_digits (for EBC/BCD) or num_bytes (for SB)
  * depends on target type:
@@ -1127,8 +1141,8 @@ PDC_error_t PDC_b_uint64_read(PDC_t *pdc, PDC_base_em *em,
  * Otherwise, the IO cursor is always advanced.  There are 3 error cases that
  * can occur even though the IO cursor advances:
  *
- * If num_digits or num_bytes is not a legal choice for the target type and the
- * sign of the value):
+ * If num_digits or num_bytes is not a legal choice for the target type and
+ * sign of the value:
  *    if !em || *em < PDC_Ignore:
  *          + ed->errCode set to PDC_BAD_PARAM
  *
@@ -1180,31 +1194,49 @@ PDC_error_t PDC_bcd_uint32_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_dig
 PDC_error_t PDC_bcd_uint64_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_uint64 *res_out);
 
-PDC_error_t PDC_sb_int8_read    (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_int8_read    (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int8 *res_out);
-PDC_error_t PDC_sb_int16_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_int16_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int16 *res_out);
-PDC_error_t PDC_sb_int32_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_int32_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_sb_int64_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_int64_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_sb_uint8_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_uint8_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint8 *res_out);
-PDC_error_t PDC_sb_uint16_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_uint16_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint16 *res_out);
-PDC_error_t PDC_sb_uint32_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_uint32_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_sb_uint64_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_uint64_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+			 	 PDC_base_ed *ed, PDC_uint64 *res_out);
+
+PDC_error_t PDC_sbh_int8_read    (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+			         PDC_base_ed *ed, PDC_int8 *res_out);
+PDC_error_t PDC_sbh_int16_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+			         PDC_base_ed *ed, PDC_int16 *res_out);
+PDC_error_t PDC_sbh_int32_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+			         PDC_base_ed *ed, PDC_int32 *res_out);
+PDC_error_t PDC_sbh_int64_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+			         PDC_base_ed *ed, PDC_int64 *res_out);
+
+PDC_error_t PDC_sbh_uint8_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+			 	 PDC_base_ed *ed, PDC_uint8 *res_out);
+PDC_error_t PDC_sbh_uint16_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+			 	 PDC_base_ed *ed, PDC_uint16 *res_out);
+PDC_error_t PDC_sbh_uint32_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
+			 	 PDC_base_ed *ed, PDC_uint32 *res_out);
+PDC_error_t PDC_sbh_uint64_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================
  * FIXED POINT READ FUNCTIONS
- * FOR EBC (ebc_), BCD (bcd_), and SERIALIZED BINARY (sb_) ENCODINGS
+ * FOR EBC (ebc_), BCD (bcd_), SBL (sbl_), and SBH (sbh_) ENCODINGS
  *
  * An fpoint or ufpoint number is a signed or unsigned fixed-point
  * rational number with a numerator and denominator that both have the
- * same size.  For fpoint types, the numerator carries the sign, while
+ * same size.  For signed fpoint types, the numerator carries the sign, while
  * the denominator is always unsigned.  For example, type PDC_fpoint16
  * has a signed PDC_int16 numerator and an unsigned PDC_uint16 denominator.
  *
@@ -1213,24 +1245,24 @@ PDC_error_t PDC_sb_uint64_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_byt
  * of bytes implied by num_digits is the same as specified above for the
  * EBC/BCD integer read functions.
  *
- * For the SB fpoint read functions, num_bytes is the number of bytes on
+ * For the SBL and SBH fpoint read functions, num_bytes is the number of bytes on
  * disk used to encode the numerator, the encoding being the same as
- * for the SB integer read functions
+ * for the SBL and SBH integer read functions, respectively.
  *
  * For all fpoint types, d_exp determines the denominator value,
  * which is implicitly 10^d_exp and is not encoded on disk.
  * The legal range of values for d_exp depends on the type:
  *
- * Type                     d_exp  Max denominator (min is 1)
+ * Type                     d_exp     Max denominator (min is 1)
  * -----------------------  --------  --------------------------
- * PDC_fpoint8 / _ufpoint8  0-2                              100
- * PDC_fpoint16/_ufpoint16  0-4                           10,000
- * PDC_fpoint32/_ufpoint32  0-9                    1,000,000,000
- * PDC_fpoint64/_ufpoint64  0-19      10,000,000,000,000,000,000
+ * PDC_fpoint8  /  ufpoint8  0-2                             100
+ * PDC_fpoint16 / ufpoint16  0-4                          10,000
+ * PDC_fpoint32 / ufpoint32  0-9                   1,000,000,000
+ * PDC_fpoint64 / ufpoint64  0-19     10,000,000,000,000,000,000
  *
- * The legal range of values for num_digits (for EBC/BCD) or num_bytes (for SB)
+ * The legal range of values for num_digits (for EBC/BCD) or num_bytes (for SBL/SBH)
  * depends on target type, and is the same as specified above for the
- * EBC/BCD/SB integer read functions.
+ * EBC/BCD/SBL/SBH integer read functions.
  *    
  * For all cases, if the specified number of bytes are NOT available,
  * the IO cursor is not advanced, and:
@@ -1241,7 +1273,8 @@ PDC_error_t PDC_sb_uint64_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_byt
  * Otherwise, the IO cursor is always advanced.  There are 3 error cases that
  * can occur even though the IO cursor advances:
  *
- * If n_digits, bytes, or d_exp is not in a legal choice for the target type
+ * If num_digits, num_bytes, or d_exp is not in a legal choice for the target type
+ * and sign of the value:
  *    if !em || *em < PDC_Ignore:
  *          + ed->errCode set to PDC_BAD_PARAM
  *
@@ -1293,22 +1326,40 @@ PDC_error_t PDC_bcd_ufpoint32_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_
 PDC_error_t PDC_bcd_ufpoint64_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint64 *res_out);
 
-PDC_error_t PDC_sb_fpoint8_read    (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_fpoint8_read    (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint8 *res_out);
-PDC_error_t PDC_sb_fpoint16_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_fpoint16_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint16 *res_out);
-PDC_error_t PDC_sb_fpoint32_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_fpoint32_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint32 *res_out);
-PDC_error_t PDC_sb_fpoint64_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_fpoint64_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint64 *res_out);
 
-PDC_error_t PDC_sb_ufpoint8_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_ufpoint8_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint8 *res_out);
-PDC_error_t PDC_sb_ufpoint16_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_ufpoint16_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint16 *res_out);
-PDC_error_t PDC_sb_ufpoint32_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_ufpoint32_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint32 *res_out);
-PDC_error_t PDC_sb_ufpoint64_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_ufpoint64_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_ed *ed, PDC_ufpoint64 *res_out);
+
+PDC_error_t PDC_sbh_fpoint8_read    (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_ed *ed, PDC_fpoint8 *res_out);
+PDC_error_t PDC_sbh_fpoint16_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_ed *ed, PDC_fpoint16 *res_out);
+PDC_error_t PDC_sbh_fpoint32_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_ed *ed, PDC_fpoint32 *res_out);
+PDC_error_t PDC_sbh_fpoint64_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_ed *ed, PDC_fpoint64 *res_out);
+
+PDC_error_t PDC_sbh_ufpoint8_read   (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_ed *ed, PDC_ufpoint8 *res_out);
+PDC_error_t PDC_sbh_ufpoint16_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_ed *ed, PDC_ufpoint16 *res_out);
+PDC_error_t PDC_sbh_ufpoint32_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+				    PDC_base_ed *ed, PDC_ufpoint32 *res_out);
+PDC_error_t PDC_sbh_ufpoint64_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint64 *res_out);
 
 /* ================================================================================
