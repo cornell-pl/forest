@@ -17,11 +17,16 @@
 /* #include "caml/mlvalues.h"  */   /* Need value      */
 /* #include "caml/fail.h" */        /* Need failwith   */
 
-/* XXX_REMOVE next 8 lines: */
+/* XXX_REMOVE next 14 lines: */
 #ifdef FOR_CKIT
-void failwith(const char *);
+void* failwith(const char *);
 #else
-#define failwith(s) error(2, s)
+#define failwith(s) do { \
+  char *s1 = (s); \
+  char *s2 = (char*)malloc(strlen(s1) + 1); \
+  strcpy(s2, s1); \
+  return (void*)s2; \
+} while(0)
 #endif
 #ifndef FAKE_CAML_VALUE
 #define FAKE_CAML_VALUE
@@ -58,6 +63,7 @@ void PDCI_MK_TNODE(PDCI_node_t *result,
 		   const char *name, 
 		   void* val, /* PDCI_structured_pd* val, */
 		   const char *whatfn);
+
 void  PDCI_MK_NODE(PDCI_node_t *result,
 		   const PDCI_vtable_t *vt,
 		   PDCI_node_t *parent,
@@ -65,6 +71,14 @@ void  PDCI_MK_NODE(PDCI_node_t *result,
 		   void* m, void* pd,
 		   void* rep,
 		   const char *whatfn);
+
+void  PDCI_MK_TOP_NODE(PDCI_node_t *result,
+		       const PDCI_vtable_t *vt,
+		       PDC_t *pdc,
+		       const char *name, 
+		       void* m, void* pd,
+		       void* rep,
+		       const char *whatfn);
 #endif
 
 /* Helper macros that we always want expanded */
