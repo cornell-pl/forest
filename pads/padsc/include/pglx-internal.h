@@ -4,6 +4,14 @@
 #endif
 
 /* ================================================================================
+ * Predeclare some types */
+
+typedef struct PDCI_node_s          PDCI_node_t;
+typedef struct PDCI_vtable_s        PDCI_vtable_t;
+typedef struct PDCI_structured_pd_s PDCI_structured_pd;
+typedef struct PDCI_sequenced_pd_s PDCI_sequenced_pd;
+
+/* ================================================================================
  * HELPER MACROS */
 
 /* These macros are defind in pglx-impl.h.  Here we give prototypes for CKIT: */ 
@@ -35,21 +43,15 @@ void  PDCI_MK_NODE(PDCI_node_t *result,
 #define PDCI_DECL_VT(ty) extern const PDCI_vtable_t ty ## _vtable
 #define PDCI_DECL_VAL_VT(ty) extern const PDCI_vtable_t ty ## _val_vtable
 
-#define PDCI_DECL_BASE_MK(ty) \
-void ty ## _mk_node(PDCI_node_t *result, PDCI_node_t *parent, const char *name, \
-                    PDC_base_m *m, PDC_base_pd *pd, ty *v)
-
 /* ================================================================================
  * TYPES */
 
-typedef struct PDCI_node_s PDCI_node_t;
-typedef struct PDCI_vtable_s   PDCI_vtable_t;
-
 /* prototypes for vtable functions */
-typedef PDCI_node_t **  (* PDCI_children_fn)    (PDCI_node_t *node); 
+typedef PDCI_node_t **      (* PDCI_children_fn)    (PDCI_node_t *node); 
 typedef value               (* PDCI_typed_value_fn)   (PDCI_node_t *node); 
 typedef const char *        (* PDCI_string_value_fn) (PDCI_node_t *node);
 
+/* Type PDCI_node_t: */
 struct PDCI_node_s {
   const PDCI_vtable_t   *vt;
   PDC_t                 *pdc;
@@ -64,6 +66,7 @@ struct PDCI_node_s {
   void                  *base_val;
 };
 
+/* Type PDCI_vtable_t: */
 struct PDCI_vtable_s {
   PDCI_children_fn       children;
   PDCI_typed_value_fn    typed_value;
@@ -72,22 +75,26 @@ struct PDCI_vtable_s {
 
 /* PARSE DESCRIPTOR SUPPORT */
 /* NB all generated structured pd types must BEGIN with the declarations given here: */
-typedef struct PDCI_structured_pd_s {
+
+/* type PDCI_structured_pd: */
+struct PDCI_structured_pd_s {
   int nerr;
   PDC_errCode_t errCode;
   PDC_loc_t loc;
   int panic;
-} PDCI_structured_pd;
+};
 
 /* NB all generated sequenced pd types must BEGIN with the declarations given here: */
-typedef struct PDCI_sequenced_pd_s {
+
+/* Type PDCI_sequenced_pd_t: */
+struct PDCI_sequenced_pd_s {
   int nerr;
   PDC_errCode_t errCode;
   PDC_loc_t loc;
   int panic;
   int neerr;		        
   int firstError;		
-} PDCI_sequenced_pd;
+};
 
 /* ================================================================================
  * Helper functions */
@@ -268,50 +275,4 @@ PDCI_DECL_VAL_VT(PDC_e_date);
 #define PDC_e_date_val_vtable         PDC_e_date_val_vtable
 
 #endif /* FOR_CKIT */
-
-/* ================================================================================
- * MAKE FUNCTIONS */
-
-#ifdef FOR_CKIT
-/* Declare mk_node functions for all the base types */
-/* These are actually macros in pglx-impl.h. */
-/* Here we declare prototypes for CKIT */
-
-PDCI_DECL_BASE_MK(PDC_char);
-PDCI_DECL_BASE_MK(PDC_a_char);
-PDCI_DECL_BASE_MK(PDC_e_char);
-
-PDCI_DECL_BASE_MK(PDC_string);
-PDCI_DECL_BASE_MK(PDC_string_ME);
-PDCI_DECL_BASE_MK(PDC_string_CME);
-PDCI_DECL_BASE_MK(PDC_string_SE);
-PDCI_DECL_BASE_MK(PDC_string_CSE);
-
-PDCI_DECL_BASE_MK(PDC_a_string);
-PDCI_DECL_BASE_MK(PDC_a_string_ME);
-PDCI_DECL_BASE_MK(PDC_a_string_CME);
-PDCI_DECL_BASE_MK(PDC_a_string_SE);
-PDCI_DECL_BASE_MK(PDC_a_string_CSE);
-
-PDCI_DECL_BASE_MK(PDC_e_string);
-PDCI_DECL_BASE_MK(PDC_e_string_ME);
-PDCI_DECL_BASE_MK(PDC_e_string_CME);
-PDCI_DECL_BASE_MK(PDC_e_string_SE);
-PDCI_DECL_BASE_MK(PDC_e_string_CSE);
-
-PDCI_DECL_BASE_MK(PDC_date);
-PDCI_DECL_BASE_MK(PDC_a_date);
-PDCI_DECL_BASE_MK(PDC_e_date);
-
-PDCI_DECL_BASE_MK(PDC_int8);
-PDCI_DECL_BASE_MK(PDC_int16);
-PDCI_DECL_BASE_MK(PDC_int32);
-PDCI_DECL_BASE_MK(PDC_int64);
-PDCI_DECL_BASE_MK(PDC_uint8);
-PDCI_DECL_BASE_MK(PDC_uint16);
-PDCI_DECL_BASE_MK(PDC_uint32);
-PDCI_DECL_BASE_MK(PDC_uint64);
-
-#endif /* FOR_CKIT */
-
 
