@@ -307,7 +307,7 @@ P_fwrec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
       }
     }
     if (ctr) {
-      P_WARN1(disc, "XXX_CHANGE_TO_DBG P_fwrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      P_DBG1(disc, "P_fwrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -636,7 +636,7 @@ P_norec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
       }
     }
     if (ctr) {
-      P_WARN1(disc, "XXX_CHANGE_TO_DBG P_norec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      P_DBG1(disc, "P_norec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -1009,7 +1009,7 @@ P_ctrec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
       }
     }
     if (ctr) {
-      P_WARN1(disc, "XXX_CHANGE_TO_DBG P_ctrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      P_DBG1(disc, "P_ctrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -1464,7 +1464,7 @@ P_vlrec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
       }
     }
     if (ctr) {
-      P_WARN1(disc, "XXX_CHANGE_TO_DBG P_vlrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      P_DBG1(disc, "P_vlrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -2029,7 +2029,7 @@ P_norec_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t re
       if (-1 == sfseek(data->io, offset, 0)) {
 	P_WARN1(disc, "P_norec_sfclose: failed to return %llu bytes to IO stream", to_return);
       } else {
-	P_WARN1(disc, "XXX_CHANGE_TO_DBG P_norec_sfclose: restored %llu bytes to IO stream using sfseek", to_return);
+	P_DBG1(disc, "P_norec_sfclose: restored %llu bytes to IO stream using sfseek", to_return);
       }
     }
   }

@@ -401,7 +401,8 @@ typedef enum PerrCode_t_e {
   P_REGEXP_NOT_FOUND              =  220,
   P_INVALID_REGEXP                =  230,
   P_WIDTH_NOT_AVAILABLE           =  240,
-  P_INVALID_DATE                  =  250
+  P_INVALID_DATE                  =  250,
+  P_INVALID_IPADDR                =  260
 } PerrCode_t;
 
 /* PerrCode_t as string */
@@ -1852,6 +1853,50 @@ Perror_t Pdate_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
 #endif /* FOR_CKIT */
 
 /* ================================================================================
+ * IP ADDRESS READ FUNCTIONS
+ *
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * Pipaddr_read                     Pa_ipaddr_read                   Pe_ipaddr_read
+ *
+ * Attempts to read an ipaddr string (an IP address in numeric dotted form); stores
+ * a Puint32.  These read functions take a stop character, which is always
+ * specified in ASCII.  It is converted to EBCDIC and the data is read as
+ * EBCDIC chars if the EBCDIC form is used or if the DEFAULT form is used and
+ * pads->disc->def_charset is Pcharset_EBCDIC.  Otherwise the data is read as
+ * ASCII chars.
+ *
+ * If the current IO cursor position points to a valid ipaddr string:
+ *   + Sets (*res_out) to the resulting Puint32
+ *   + advances the IO cursor position to just after the last legal character
+ *     in the ipaddr string
+ *   + returns P_OK
+ * Otherwise:
+ *   + does not advance the IO cursor pos
+ *   + returns P_ERR */
+
+#ifdef FOR_CKIT
+#if P_CONFIG_READ_FUNCTIONS > 0
+
+#if P_CONFIG_A_CHAR_STRING > 0
+Perror_t Pa_ipaddr_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
+			Pbase_pd *pd, Puint32 *res_out);
+#endif
+
+#if P_CONFIG_E_CHAR_STRING > 0
+Perror_t Pe_ipaddr_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
+			Pbase_pd *pd, Puint32 *res_out);
+#endif
+
+#if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
+Perror_t Pipaddr_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
+			Pbase_pd *pd, Puint32 *res_out);
+#endif
+
+#endif /* P_CONFIG_READ_FUNCTIONS */
+#endif /* FOR_CKIT */
+
+/* ================================================================================
  * ASCII STRING TO INTEGER READ FUNCTIONS
  *
  * An ascii representation of an integer value (a string of digits in [0-9])
@@ -2793,6 +2838,45 @@ ssize_t Pdate_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, 
 
 ssize_t Pdate_write_xml_2io   (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
 ssize_t Pdate_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+#endif
+
+#endif /* P_CONFIG_WRITE_FUNCTIONS */
+#endif /* FOR_CKIT */
+
+/* ================================================================================
+ * IPADDR WRITE FUNCTIONS
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * Pipaddr_write2io               Pa_ipaddr_write2io             Pe_ipaddr_write2io 
+ *
+ * Pipaddr_write2buf              Pa_ipaddr_write2buf            Pe_ipaddr_write2buf
+ */
+
+#ifdef FOR_CKIT
+#if P_CONFIG_WRITE_FUNCTIONS > 0
+
+#if P_CONFIG_A_CHAR_STRING > 0
+ssize_t Pa_ipaddr_write2io (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_ipaddr_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+
+ssize_t Pa_ipaddr_write_xml_2io (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_ipaddr_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+#endif
+
+#if P_CONFIG_E_CHAR_STRING > 0
+ssize_t Pe_ipaddr_write2io (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_ipaddr_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+
+ssize_t Pe_ipaddr_write_xml_2io (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_ipaddr_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+#endif
+
+#if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
+ssize_t Pipaddr_write2io   (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pipaddr_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+
+ssize_t Pipaddr_write_xml_2io   (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pipaddr_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
 #endif
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */

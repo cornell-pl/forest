@@ -169,6 +169,10 @@ Perror_t PDCI_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
 			Pbase_pd *pd, Puint32 *res_out,
 			Pcharset char_set, const char *whatfn);
 
+Perror_t PDCI_ipaddr_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
+			  Pbase_pd *pd, Puint32 *res_out,
+			  Pcharset char_set, const char *whatfn);
+
 Perror_t PDCI_char_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out,
 			Pcharset char_set, const char *whatfn);
 
@@ -282,6 +286,18 @@ ssize_t PDCI_date_write2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int *
 				    Pchar type_arg1, Pbase_pd *pd, Puint32 *d,
 				    Pcharset char_set, const char *inv_type, const char *whatfn);
 
+ssize_t PDCI_ipaddr_write2io(P_t *pads, Sfio_t *io,  void *type_arg1, Pbase_pd *pd,
+			     Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn);
+ssize_t PDCI_ipaddr_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      void *type_arg1, Pbase_pd *pd, Puint32 *d,
+			      Pcharset char_set, const char *inv_type, const char *whatfn);
+
+ssize_t PDCI_ipaddr_write2io_chararg(P_t *pads, Sfio_t *io,  Pchar type_arg1, Pbase_pd *pd,
+				     Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn);
+ssize_t PDCI_ipaddr_write2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				      Pchar type_arg1, Pbase_pd *pd, Puint32 *d,
+				      Pcharset char_set, const char *inv_type, const char *whatfn);
+
 ssize_t PDCI_countX_write2io(P_t *pads, Sfio_t *io,
 			     Puint8 x, int eor_required, size_t count_max,
 			     Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn);
@@ -328,6 +344,18 @@ ssize_t PDCI_date_write_xml_2io_chararg(P_t *pads, Sfio_t *io,  Pchar type_arg1,
 ssize_t PDCI_date_write_xml_2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 					 Pchar type_arg1, Pbase_pd *pd, Puint32 *d,
 					 const char* tag, int indent, const char *inv_type, const char *whatfn);
+
+ssize_t PDCI_ipaddr_write_xml_2io(P_t *pads, Sfio_t *io,  void *type_arg1, Pbase_pd *pd,
+				  Puint32 *d, const char* tag, int indent, const char *inv_type, const char *whatfn);
+ssize_t PDCI_ipaddr_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   void *type_arg1, Pbase_pd *pd, Puint32 *d,
+				   const char* tag, int indent, const char *inv_type, const char *whatfn);
+
+ssize_t PDCI_ipaddr_write_xml_2io_chararg(P_t *pads, Sfio_t *io,  Pchar type_arg1, Pbase_pd *pd,
+					  Puint32 *d, const char* tag, int indent, const char *inv_type, const char *whatfn);
+ssize_t PDCI_ipaddr_write_xml_2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+					   Pchar type_arg1, Pbase_pd *pd, Puint32 *d,
+					   const char* tag, int indent, const char *inv_type, const char *whatfn);
 
 ssize_t PDCI_countX_write_xml_2io(P_t *pads, Sfio_t *io,
 				  Puint8 x, int eor_required, size_t count_max,
@@ -620,6 +648,15 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 
 #define Pe_date_read(pads, m, stopChar, pd, res_out) \
   PDCI_date_read(pads, m, stopChar, pd, res_out, Pcharset_EBCDIC, "Pe_date_read")
+
+#define Pipaddr_read(pads, m, stopChar, pd, res_out) \
+  PDCI_ipaddr_read(pads, m, stopChar, pd, res_out, PDCI_DEF_CHARSET(pads), "Pipaddr_read")
+
+#define Pa_ipaddr_read(pads, m, stopChar, pd, res_out) \
+  PDCI_ipaddr_read(pads, m, stopChar, pd, res_out, Pcharset_ASCII, "Pa_ipaddr_read")
+
+#define Pe_ipaddr_read(pads, m, stopChar, pd, res_out) \
+  PDCI_ipaddr_read(pads, m, stopChar, pd, res_out, Pcharset_EBCDIC, "Pe_ipaddr_read")
 
 #define Pchar_read(pads, m, pd, c_out) \
   PDCI_char_read(pads, m, pd, c_out, PDCI_DEF_CHARSET(pads), "Pchar_read")
@@ -950,6 +987,24 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 
 #define Pe_date_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, d) \
   PDCI_date_write2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, Pcharset_EBCDIC, "Pdate", "Pe_date_write2buf")
+
+#define Pipaddr_write2io(pads, io, stopChar, pd, d) \
+  PDCI_ipaddr_write2io_chararg(pads, io, stopChar, pd, d, PDCI_DEF_CHARSET(pads), "Pipaddr", "Pipaddr_write2io")
+
+#define Pa_ipaddr_write2io(pads, io, stopChar, pd, d) \
+  PDCI_ipaddr_write2io_chararg(pads, io, stopChar, pd, d, Pcharset_ASCII, "Pipaddr", "Pa_ipaddr_write2io")
+
+#define Pe_ipaddr_write2io(pads, io, stopChar, pd, d) \
+  PDCI_ipaddr_write2io_chararg(pads, io, stopChar, pd, d, Pcharset_EBCDIC, "Pipaddr", "Pe_ipaddr_write2io")
+
+#define Pipaddr_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, d) \
+  PDCI_ipaddr_write2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, PDCI_DEF_CHARSET(pads), "Pipaddr", "Pipaddr_write2buf")
+
+#define Pa_ipaddr_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, d) \
+  PDCI_ipaddr_write2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, Pcharset_ASCII, "Pipaddr", "Pa_ipaddr_write2buf")
+
+#define Pe_ipaddr_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, d) \
+  PDCI_ipaddr_write2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, Pcharset_EBCDIC, "Pipaddr", "Pe_ipaddr_write2buf")
 
 #define PcountX_write2io(pads, io, x, eor_required, count_max, pd, val) \
   PDCI_countX_write2io(pads, io, x, eor_required, count_max, pd, val, PDCI_DEF_CHARSET(pads), "PcountX_write2io")
@@ -1282,6 +1337,24 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 
 #define Pe_date_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent) \
   PDCI_date_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent, "Pdate", "Pe_date_write_xml_2buf")
+
+#define Pipaddr_write_xml_2io(pads, io, stopChar, pd, d, tag, indent) \
+  PDCI_ipaddr_write_xml_2io_chararg(pads, io, stopChar, pd, d, tag, indent, "Pipaddr", "Pipaddr_write_xml_2io")
+
+#define Pa_ipaddr_write_xml_2io(pads, io, stopChar, pd, d, tag, indent) \
+  PDCI_ipaddr_write_xml_2io_chararg(pads, io, stopChar, pd, d, tag, indent, "Pipaddr", "Pa_ipaddr_write_xml_2io")
+
+#define Pe_ipaddr_write_xml_2io(pads, io, stopChar, pd, d, tag, indent) \
+  PDCI_ipaddr_write_xml_2io_chararg(pads, io, stopChar, pd, d, tag, indent, "Pipaddr", "Pe_ipaddr_write_xml_2io")
+
+#define Pipaddr_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent) \
+  PDCI_ipaddr_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent, "Pipaddr", "Pipaddr_write_xml_2buf")
+
+#define Pa_ipaddr_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent) \
+  PDCI_ipaddr_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent, "Pipaddr", "Pa_ipaddr_write_xml_2buf")
+
+#define Pe_ipaddr_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent) \
+  PDCI_ipaddr_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent, "Pipaddr", "Pe_ipaddr_write_xml_2buf")
 
 #define PcountX_write_xml_2io(pads, io, x, eor_required, count_max, pd, val, tag, indent) \
   PDCI_countX_write_xml_2io(pads, io, x, eor_required, count_max, pd, val, tag, indent, "PcountX_write_xml_2io")
