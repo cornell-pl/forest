@@ -7,6 +7,7 @@ const char* line3 = "  %04d%04d   %04d   %04d\n";
 
 int main(int argc, char** argv) {
   int i, lines, num_lines;
+  const char* fname = "../../data/ex_data.biglibtest1";
   FILE* f;
 
   if (argc != 2) {
@@ -16,7 +17,8 @@ int main(int argc, char** argv) {
   sscanf(argv[1], "%d", &num_lines);
   printf("\nNUM LINES: %d\n", num_lines);
 
-  f = fopen("../ex_data.biglibtest1", "w");
+  f = fopen(fname, "w");
+  printf("fname = %s\n", fname);
   for (i = 1, lines = 0; 1; i += 12) {
     if (i > (9999-11)) { i = 1; }
     fprintf(f, line1, i + 0, i + 1, i +  2, i +  3);

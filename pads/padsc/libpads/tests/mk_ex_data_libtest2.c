@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
   PDC_uint64  data8 = 2;
 
   h = getenv("HOSTSHORT");
-  sprintf(fname, "../ex_data.libtest2.%s", h);
+  sprintf(fname, "../../data/ex_data.libtest2.%s", h);
   printf("fname = %s\n", fname);
   io = sfopen(0, fname, "w");
   sfwrite(io, (void*)&data1, sizeof(data1));
