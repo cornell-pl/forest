@@ -43,6 +43,8 @@ PDCI_node_t *barArray_smartNode_kthChild (PDCI_node_t *self, PDCI_childIndex_t i
 	  return result; // array finished so nothing read; return the default node.
 	// else, go on as normal.
       }
+
+      
     }
 
     result = bar_node_new(self,"elt",&(m->element),arrayInfo->tmap[idx].pd,arrayInfo->tmap[idx].rep,"element",WHATFN);
@@ -139,12 +141,16 @@ Perror_t P_io_seek(P_t *pads, Sfoff_t offset){
   if (-1 == sfseek(io, offset, 0)) {
     return P_ERR;
   }
+
   return P_io_set(pads, io);
 }
 
 #undef WHATFN
 #define WHATFN "barArray_seqSmartNode_eltRead"
-/* Currently, only reads sequentially */
+/* Currently, only reads sequentially.
+   Also, for new elements (i.e. being read for the first time)
+   this function fills in their offset field.
+ */
 Perror_t barArray_seqSmartNode_eltRead(PDCI_node_t *smartNode, P_t *pads, PDCI_smart_elt_info_t *info){
   PDCI_IODISC_2P_CHECKS (WHATFN,smartNode,info);
   {

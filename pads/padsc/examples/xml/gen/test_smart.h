@@ -93,6 +93,7 @@ int main(int argc, char** argv) {
 
   err = galax_eval_statement_from_file_with_context_item_from_xml(doc, argv[2], &docitems);
   exit_on_error(err); 
+  printf("About to serialize.\n");
   //docitems = itemlist_cons(doc, itemlist_empty()); 
   err = galax_serialize_to_stdout(docitems);
   exit_on_error(err);
