@@ -62,9 +62,6 @@ STATIC_ASTLIB_NM_D = libast.a
 STATIC_PADSLIB_NM_O = libpadsc.a
 STATIC_PADSLIB_NM_D = libpadsc-g.a
 
-STATIC_COBOL_PADSLIB_NM_O = libpadsc-cobol.a
-STATIC_COBOL_PADSLIB_NM_D = libpadsc-cobol-g.a
-
 STATIC_PGLXLIB_NM_O = libpglx.a
 STATIC_PGLXLIB_NM_D = libpglx-g.a
 
@@ -78,14 +75,6 @@ SHARED_PADSLIB_NM_ALT2_O = libpadsc.so
 SHARED_PADSLIB_NM_D = libpadsc-g.so.1.0
 SHARED_PADSLIB_NM_ALT1_D = libpadsc-g.so.1
 SHARED_PADSLIB_NM_ALT2_D = libpadsc-g.so
-
-SHARED_COBOL_PADSLIB_NM_O = libpadsc-cobol.so.1.0
-SHARED_COBOL_PADSLIB_NM_ALT1_O = libpadsc-cobol.so.1
-SHARED_COBOL_PADSLIB_NM_ALT2_O = libpadsc-cobol.so
-
-SHARED_COBOL_PADSLIB_NM_D = libpadsc-cobol-g.so.1.0
-SHARED_COBOL_PADSLIB_NM_ALT1_D = libpadsc-cobol-g.so.1
-SHARED_COBOL_PADSLIB_NM_ALT2_D = libpadsc-cobol-g.so
 
 SHARED_PGLXLIB_NM_O = libpglxc.so.1.0
 SHARED_PGLXLIB_NM_ALT1_O = libpglxc.so.1
@@ -119,14 +108,10 @@ CARCHFLAGS =
 LIB_DEP_PATTERN = %.a
 STATIC_ASTLIB_NM = libast.a
 STATIC_PADSLIB_NM = libpadsc-g.a
-STATIC_COBOL_PADSLIB_NM = libpadsc-cobol-g.a
 SHARED_ASTLIB_NM = libast.so
 SHARED_PADSLIB_NM = libpadsc.so.1.0
 SHARED_PADSLIB_NM_ALT1 = libpadsc.so.1
 SHARED_PADSLIB_NM_ALT2 = libpadsc.so
-SHARED_COBOL_PADSLIB_NM = libpadsc-cobol.so.1.0
-SHARED_COBOL_PADSLIB_NM_ALT1 = libpadsc-cobol.so.1
-SHARED_COBOL_PADSLIB_NM_ALT2 = libpadsc-cobol.so
 STATIC_LIBTOOL = ar r
 STATIC_LIBTOOL_OPTS =
 SHARED_LIBTOOL = $(CC) -shared -update_registry $(LIB_DIR)/registry.ld
@@ -157,36 +142,26 @@ endif
 
 LIB_DIR = $(INSTALLROOT)/lib
 STATIC_PADSLIB_O = $(LIB_DIR)/$(STATIC_PADSLIB_NM_O)
-STATIC_COBOL_PADSLIB_O = $(LIB_DIR)/$(STATIC_COBOL_PADSLIB_NM_O)
 STATIC_ASTLIB_O = $(LIB_DIR)/$(STATIC_ASTLIB_NM_O)
 STATIC_LIBS_O = $(STATIC_PADSLIB_O) $(STATIC_ASTLIB_O) 
-COBOL_STATIC_LIBS_O = $(STATIC_COBOL_PADSLIB_O) $(STATIC_ASTLIB_O) 
 LIB_DEPS_O = $(STATIC_LIBS_O)
-COBOL_LIB_DEPS_O = $(COBOL_STATIC_LIBS_O)
 
-DYNAMIC_LIBS_O = -L $(LIB_DIR) -lpadsc -last
-COBOL_DYNAMIC_LIBS_O = -L $(LIB_DIR) -lpadsc-cobol -last
+DYNAMIC_LIBS_O = -L $(LIB_DIR) -lpadsc -lpglx -last
 SHARED_PADSLIB_DEP_O = $(LIB_DIR)/$(SHARED_PADSLIB_NM_O)
-SHARED_COBOL_PADSLIB_DEP_O = $(LIB_DIR)/$(SHARED_COBOL_PADSLIB_NM_O)
 SHARED_ASTLIB_DEP_O = $(LIB_DIR)/$(SHARED_ASTLIB_NM_O)
 # DYNAMIC_LIB_DEPS_O = $(SHARED_PADSLIB_DEP_O) $(SHARED_ASTLIB_DEP_O)
 
 STATIC_PADSLIB_D = $(LIB_DIR)/$(STATIC_PADSLIB_NM_D)
-STATIC_COBOL_PADSLIB_D = $(LIB_DIR)/$(STATIC_COBOL_PADSLIB_NM_D)
 STATIC_ASTLIB_D = $(LIB_DIR)/$(STATIC_ASTLIB_NM_D)
 STATIC_LIBS_D = $(STATIC_PADSLIB_D) $(STATIC_ASTLIB_D) 
-COBOL_STATIC_LIBS_D = $(STATIC_COBOL_PADSLIB_D) $(STATIC_ASTLIB_D) 
 LIB_DEPS_D = $(STATIC_LIBS_D)
-COBOL_LIB_DEPS_D = $(COBOL_STATIC_LIBS_D)
 
-DYNAMIC_LIBS_D = -L $(LIB_DIR) -lpadsc-g -last
-COBOL_DYNAMIC_LIBS_D = -L $(LIB_DIR) -lpadsc-cobol-g -last
+DYNAMIC_LIBS_D = -L $(LIB_DIR) -lpadsc-g -lpglx-g -last
 SHARED_PADSLIB_DEP_D = $(LIB_DIR)/$(SHARED_PADSLIB_NM_D)
-SHARED_COBOL_PADSLIB_DEP_D = $(LIB_DIR)/$(SHARED_COBOL_PADSLIB_NM_D)
 SHARED_ASTLIB_DEP_D = $(LIB_DIR)/$(SHARED_ASTLIB_NM_D)
 # DYNAMIC_LIB_DEPS_D = $(SHARED_PADSLIB_DEP_D) $(SHARED_ASTLIB_DEP_D)
 
-INCLUDES =  -I. -I.. -I$(AST_HOME)/include/ast
+INCLUDES =  -I. -I.. -I$(AST_HOME)/include/ast -I /usr/common/lib/ocaml
 ifdef GEN_DIR
 INCLUDES += -I$(GEN_DIR)
 endif
@@ -246,6 +221,22 @@ define LibSanityCheck
   done; \
 )
 endef
+
+DYNAMIC_OCAML_LIBS_D = /usr/common/lib/ocaml/libcamlrun.a -L/usr/common/lib/ocaml -lm -ldl -lcurses -lunix -lstr -lnums
+DYNAMIC_OCAML_LIBS_O = $(DYNAMIC_OCAML_LIBS_D)
+DYNAMIC_LIBS_D += $(DYNAMIC_OCAML_LIBS_D)
+DYNAMIC_LIBS_O += $(DYNAMIC_OCAML_LIBS_O)
+
+STATIC_OCAML_LIBS_D = \
+/usr/common/lib/ocaml/libcamlrun.a \
+/usr/common/lib/ocaml/libunix.a \
+/usr/common/lib/ocaml/libstr.a \
+/usr/common/lib/ocaml/libnums.a \
+ -lm -ldl 
+
+STATIC_OCAML_LIBS_O = $(STATIC_OCAML_LIBS_D)
+STATIC_LIBS_D += $(STATIC_OCAML_LIBS_D)
+STATIC_LIBS_O += $(STATIC_OCAML_LIBS_O)
 
 define CCExec_DYNAMIC_D
 (set -x; \
@@ -337,23 +328,6 @@ ifdef BuildPADSLib
 	@echo "Using rules.mk rule A_O"
 	$(COMPILE_O) -c $< -o $@
 else
-ifdef cobol_stuff
-cobol_%-g: cobol_%-g.o $(COBOL_LIB_DEPS_D)
-	@echo "Using rules.mk rule M_D"
-	$(LINK_D) $< $(COBOL_DYNAMIC_LIBS_D) -o $@
-
-cobol_%: cobol_%.o $(COBOL_LIB_DEPS_O)
-	@echo "Using rules.mk rule M_O"
-	$(LINK_O) $< $(COBOL_DYNAMIC_LIBS_O) -o $@
-
-cobol_%-g.o: cobol_%.c $(INCLUDE_DEPS) $(COBOL_LIB_DEPS_D)
-	@echo "Using rules.mk rule N_D"
-	$(COMPILE_D) $< $(COBOL_DYNAMIC_LIBS_D) -o $@
-
-cobol_%.o: cobol_%.c $(INCLUDE_DEPS) $(COBOL_LIB_DEPS_O)
-	@echo "Using rules.mk rule N_O"
-	$(COMPILE_O) $< $(COBOL_DYNAMIC_LIBS_O) -o $@
-endif
 
 %-g: %-g.o $(LIB_DEPS_D)
 	@echo "Using rules.mk rule J_D"
@@ -385,7 +359,7 @@ ifdef GEN_DIR
 ifdef GEN_WRITE
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 	@echo "Using rule P"
-	$(PADSC) $< -r $(GEN_DIR) -I . -I ..
+	$(PADSC) $< -x -r $(GEN_DIR) -I . -I ..
 else
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 	@echo "Using rule P-nowrite"
