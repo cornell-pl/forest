@@ -967,7 +967,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   fun ppAst srcFile paidinfo aidinfo tidtab pps edecls =
       let val fileName = case srcFile of NONE => "" | SOME name => name
 	  val headerLeft = "<xs:schema targetNamespace=\"file:"
-	  val headerRight = "\n           xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">" 
+	  val headerRight = "\"\n           xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">" 
       in
         ( PPL.newline pps
         ; PPL.addStr pps (headerLeft ^ fileName ^ headerRight)
