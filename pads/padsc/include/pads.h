@@ -363,6 +363,17 @@ typedef enum PerrCode_t_e {
 
   P_FMT_EMPTY_DELIM_ERR           =   30,
 
+  P_INVALID_FUNCTION_CALL         =   50,
+
+  /* A general error relating to smart nodes*/
+  P_SMART_NODE_ERR                =   60,
+
+  /* 
+   * A general error that requires that an ocaml 
+   * ocaml exception be thrown.
+   */
+  P_FAILWITH_ERR                  =   61,
+
   /* The following errors (code >= 100) DO have a corresponding location  */
   P_USER_CONSTRAINT_VIOLATION     =  100,
   P_MISSING_LITERAL               =  101,
@@ -408,6 +419,35 @@ typedef enum PerrCode_t_e {
   P_INVALID_DATE                  =  250,
   P_INVALID_IPADDR                =  260
 } PerrCode_t;
+
+typedef enum Pread_res_t_e{
+  
+  /*
+   * The read call placed data in 
+   * the "out" parameters.
+   */
+  P_READ_OK_DATA,
+
+  /*
+   * The read call did not place data in the "out" parameters.
+   * Does not imply that there was an error. For example, satisfaction
+   * of Pomit or consume (in Pended) can both cause P_READ_OK_NO_DATA to
+   * be returned.
+   */
+  P_READ_OK_NO_DATA,
+
+  /*
+   *  All error codes imply that there was no data.
+   */
+  P_READ_ERR                  = P_ERR,
+  P_READ_ALREADY_DONE_ERR,
+  P_READ_BAD_INDEX_ERR,
+
+  /*
+   * A hard error occurred.
+   */
+  P_READ_FAILURE
+} Pread_res_t;
 
 /* PerrCode_t as string */
 const char *P_errCode2str(PerrCode_t code);
@@ -578,6 +618,11 @@ extern Puint32 P_WSPACE_OK;
 #define P_WSPACE_OK          1UL
 #endif /* FOR_CKIT */
 
+/* PDCI_id_t: type of the internal identifier generated for use with 
+   systems needing unique identifiers for each node in a pads data structure
+   (for example, Galax). 
+ */
+typedef Puint64 PDCI_id_t;
 
 /* ================================================================================
  * Pstring: PADS strings have a ptr and length;
@@ -763,7 +808,7 @@ Sfio_t *P_fopen(const char* source, const char* mode);
  *       P_FLG_PROMPT  : do not emit a newline
  *       P_FLG_SYSERR  : add a description of errno (errno should be a system error)
  *       P_FLG_LIBRARY : error is from library
- * Give a level lev that may include flags, one can use:
+ * Given a level lev that may include flags, one can use:
  *   P_GET_LEV(lev) : just the level   example: P_GET_LEV(lev) == P_LEV_FATAL
  *   P_GET_FLG(lev) : just the flags   example: P_GET_FLG(lev) & P_FLG_PROMPT
  *
@@ -981,11 +1026,17 @@ struct Ploc_s {
  * parse descriptor type.  (They are the only fields in type Pbase_pd.)
  */
 
-#define PD_COMMON_FIELDS \
+#define PD_COMMON_FIELDS_BASE \
   Pflags_t    pstate; /* parse state */ \
   Puint32     nerr; \
   PerrCode_t  errCode; \
   Ploc_t      loc
+
+#ifndef USE_GALAX
+#  define PD_COMMON_FIELDS PD_COMMON_FIELDS_BASE
+#else
+#  define PD_COMMON_FIELDS PD_COMMON_FIELDS_BASE; PDCI_id_t _id_
+#endif
 
 /* PD_COMMON_INIT: Function (macro actually) that initializes the first four fields of
  * any parse descriptor type: initializes pstate to 'not panic',
@@ -1054,6 +1105,9 @@ struct Pdisc_s {
   Pfloat64           acc_pcnt2rep;  /* default maximum percent of values to describe in detail in report */
   Pinv_valfn_map_t  *inv_valfn_map; /* map types to inv_valfn for write functions */
   Pio_disc_t        *io_disc;       /* sub-discipline for controlling IO */
+#ifdef USE_GALAX
+  PDCI_id_t          id_gen;        /* generator for field ids */
+#endif
 };
 
 extern Pdisc_t Pdefault_disc;
@@ -4996,12 +5050,6 @@ do { \
   T ## _cleanup (pads, &t); \
   T ## _pd_cleanup (pads, &t_pd); \
 } while (0)
-
-typedef enum Pread_result_t_e{
-  STATUS_ONGOING,
-  STATUS_DONE,
-  STATUS_ALREADY_DONE
-} Pread_result_t;
 
 /* ================================================================================
  * INCLUDE MACRO IMPLS OF SOME OF THE FUNCTIONS DECLARED ABOVE

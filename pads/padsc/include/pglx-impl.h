@@ -23,7 +23,7 @@
 #define PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, mIN, pdIN, repIN, kindIN, whatfn) \
   do {  \
     if (!(resultIN = PDCI_NEW_NODE((parentIN)->pads))) { \
-      failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
+      PDCI_report_err((parentIN)->pads,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax ALLOC_ERROR"); \
     } \
     PDCI_INIT_NODE(resultIN,vtIN,(parentIN)->pads,parentIN,nameIN,mIN,pdIN,repIN,kindIN); \
   } while (0)
@@ -31,7 +31,7 @@
 #define PDCI_MK_TOP_NODE(resultIN, vtIN, padsIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
     if (!(resultIN = PDCI_NEW_NODE(padsIN))) { \
-      failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
+      PDCI_report_err(padsIN,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax ALLOC_ERROR"); \
     } \
     PDCI_INIT_NODE(resultIN,vtIN,padsIN,NULL,nameIN,mIN,pdIN,repIN,"document"); \
   } while (0)
@@ -52,7 +52,7 @@
 
 /* TODO: BASE TYPE: make macro for each base type */
 
-#define PDCI_NEW_NODE(pads) (NodeMM_alloc((NodeMM_t *)(pads->ext1)))
+#define PDCI_NEW_NODE(pads) (NodeMM_alloc(pads))
 
 #define PDCI_NEW_LIST(num) \
   ((PDCI_node_t**)calloc((num), sizeof(void*)))
@@ -70,13 +70,13 @@
 #define PDCI_SND_INIT(ty,selfIN,managerIN,anc_idxIN,genIN,idxIN)   \
 do{                                           \
    /* Setup the virtual table */              \
-  (self)->vt = & ty ## _sndNode_vtable;     \
+  (selfIN)->vt = & ty ## _sndNode_vtable;     \
 					      \
   /* Setup node-type specific fields  */      \
-  (self)->manager = (managerIN);		      \
-  (self)->ancestor_idx = (anc_idxIN);		      \
-  (self)->ptr_gen = (genIN);	              \
-  (self)->idx = (idxIN);	              \
+  (selfIN)->manager = (managerIN);		      \
+  (selfIN)->ancestor_idx = (anc_idxIN);		      \
+  (selfIN)->ptr_gen = (genIN);	              \
+  (selfIN)->idx = (idxIN);	              \
 }while(0)
 
 /*
@@ -123,15 +123,15 @@ do{\
 #define PDCI_NODE_CHECK(n, whatfn) \
 do { \
   if (!(n)) \
-    failwith("PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null in " whatfn); \
+    PDCI_report_err((n)->pads,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null"); \
 } while (0)
 
 #define PDCI_NODE_VT_CHECK(n, whatfn) \
 do { \
   if (!n) \
-    failwith("PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null in " whatfn); \
+    PDCI_report_err((n)->pads,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null"); \
   if (!n->vt) \
-    failwith("PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) "->vt null in " whatfn); \
+    PDCI_report_err((n)->pads,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) "->vt null"); \
 } while (0)
 
 #else

@@ -200,6 +200,50 @@ void PCGEN_FMT_TYPEDEF(ssize_t length);
 void PCGEN_FMT_ENUM(char *fnName, const char *tagName);
 void PCGEN_FMT_RECORD(char * fnName);
 
+typedef int type_t;
+typedef int field_t;
+typedef int var_t;
+
+void PCGEN_ARRAY_TEST_MIN_GT_MAX(type_t ty);
+void PCGEN_ARRAY_TEST_NEW_RBUF_ZERO(type_t ty,void *vIN);
+void PCGEN_ARRAY_TEST_NEW_RBUF_NOZERO(type_t ty,void *vIN);
+void PCGEN_ARRAY_TEST_FC_PANIC();
+void PCGEN_ARRAY_TEST_FC_REACHED_END();
+void PCGEN_ARRAY_TEST_FC_MATCH_TERM(void *funIn,char termIN,int eat_fIN,int panicIN);
+void PCGEN_ARRAY_TEST_FC_REACHED_MAX(int maxIN);
+int  PCGEN_ARRAY_RESERVE_SPACE(type_t ty,type_t elRepTy,type_t elPdTy,int hintIN);
+void PCGEN_ARRAY_GET_BEGIN_LOC();
+void PCGEN_ARRAY_TEST_FC_SOURCE_ADVANCE(Ploc_t bIN,Ploc_t eIN);
+void PCGEN_ARRAY_TEST_FC_SOURCE_ADVANCE2();
+void PCGEN_ARRAY_CHECKPOINT(type_t ty);
+void PCGEN_ARRAY_READ_ELEM(Perror_t readCallIN);
+void PCGEN_ARRAY_READ_ELEM_HD(Perror_t readCallIN,int haveDataIN);
+Perror_t PCGEN_ARRAY_REREAD_ELEM_BODY(Perror_t readCallIN);
+Perror_t PCGEN_ARRAY_REREAD_ELEM_RET();
+void PCGEN_ARRAY_TEST_READ_ERR(int addTest1IN, int addTest2IN);
+void PCGEN_ARRAY_TEST_FC_PANIC_RECOVER1(void *pdIN,int addTestIN,void *sepIN, void *termIN);
+void PCGEN_ARRAY_TEST_FC_PANIC_RECOVER2(void *pdIN,int addTestIN,void *sepIN, void *termIN);
+void PCGEN_ARRAY_FC_SCAN_SEP_TERM(type_t ty,void *funIn,void *sepIN,void *termIN,int eat_fIN,int eat_sIN,int panicIN);
+void PCGEN_ARRAY_SCAN_SEP(type_t ty,void *funIn,void *sepIN,int eat_fIN,int panicIN);
+void PCGEN_ARRAY_TEST_TRAILING_JUNK_C(type_t ty,void *funIn,char termIN);
+void PCGEN_ARRAY_TEST_TRAILING_JUNK_P(type_t ty,void *funIn,void *termIN);
+void PCGEN_ARRAY_READ_EOR(type_t ty);
+void PCGEN_ARRAY_RECORD_ERROR(int errCodeIN,char *whatfn,...);
+void PCGEN_ARRAY_CHK_ENOUGH_ELEMENTS(type_t ty);
+void PCGEN_ARRAY_CFORALL_LOOP(var_t indexIN, int lowerIN,int upperIN, int bodyIN);
+void PCGEN_ARRAY_CHK_FORALL_CONSTRAINT(type_t ty,var_t indexIN, int lowerIN,int upperIN, int bodyIN);
+Perror_t PCGEN_ARRAY_STD_RETURN();
+void PCGEN_ARRAY_TEST_ALREADY_DONE();
+void PCGEN_ARRAY_DO_FINAL_CHECKS();
+void PCGEN_ARRAY_RO_DECS();
+void PCGEN_ARRAY_LBL_FINAL_CHECKS();
+//int  PCGEN_ARRAY_RET_FINAL_CHECKS();
+int  PCGEN_ARRAY_RET_ONGOING(int keepElt);
+int  PCGEN_ARRAY_RET_DONE(int keepElt);
+void PCGEN_ARRAY_SET_PARTIAL();
+void PCGEN_ARRAY_UNSET_PARTIAL();
+void PCGEN_ARRAY_READ_ALL(int allocCall, Perror_t readCall, int incX, const char* whatfn);
+
 #else
 /* The actual macros */
 /* ********************************** END_HEADER ********************************** */
@@ -2162,7 +2206,7 @@ do {
  * 
  *
  ***********/
-#define AR_TEST_MIN_GT_MAX(ty)
+#define PCGEN_ARRAY_TEST_MIN_GT_MAX(ty)
 do{
     if (P_Test_SynCheck (m->compoundLevel)&&(min>max)) 
       {
@@ -2179,12 +2223,12 @@ do{
             (pd->nerr)++;
           }
         if (P_spec_level (pads)) 
-          return STATUS_DONE;
+          return P_READ_ERR;
       }
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_NEW_RBUF_ZERO(ty,vIN)
+#define PCGEN_ARRAY_TEST_NEW_RBUF_ZERO(ty,vIN)
 do{
     if (0==((vIN)->_internal)) 
       {
@@ -2197,7 +2241,7 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_NEW_RBUF_NOZERO(ty,vIN)
+#define PCGEN_ARRAY_TEST_NEW_RBUF_NOZERO(ty,vIN)
 do{
     if (0==((vIN)->_internal)) 
       {
@@ -2210,7 +2254,7 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_FC_PANIC()
+#define PCGEN_ARRAY_TEST_FC_PANIC()
 do{
   if (P_PS_isPanic (pd)){
     goto do_final_checks;
@@ -2218,7 +2262,7 @@ do{
 }while(0)
 /* END_MACRO */   
 
-#define AR_TEST_FC_REACHED_END()
+#define PCGEN_ARRAY_TEST_FC_REACHED_END()
 do{
   if (P_io_at_eof (pads)|| P_io_at_eor (pads)){
     goto do_final_checks;
@@ -2226,7 +2270,7 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_FC_MATCH_TERM(funIn,termIN,eat_fIN,panicIN)
+#define PCGEN_ARRAY_TEST_FC_MATCH_TERM(funIn,termIN,eat_fIN,panicIN)
 do{
   if (P_OK== (funIN) (pads,(termIN),(eat_fIN),(panicIN),&offset))
     {
@@ -2237,7 +2281,7 @@ do{
 /* END_MACRO */
 
 
-#define AR_TEST_FC_REACHED_MAX(maxIN)
+#define PCGEN_ARRAY_TEST_FC_REACHED_MAX(maxIN)
 do{
   if((rep->length)==(maxIN)){
     goto do_final_checks;
@@ -2248,7 +2292,7 @@ do{
 /* END_MACRO */
 
 
-#define AR_RESERVE_SPACE(ty,elRepTy,elPdTy,hintIN)
+#define PCGEN_ARRAY_RESERVE_SPACE(ty,elRepTy,elPdTy,hintIN)
 do{
   if (0!=RBuf_reserve (rep->_internal,(void **) (&(rep->elts)),sizeof(elRepTy),rep->length + 1,hintIN)) 
     {
@@ -2261,13 +2305,13 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_GET_BEGIN_LOC()
+#define PCGEN_ARRAY_GET_BEGIN_LOC()
 do{
   P_io_getLocB (pads,&beginLoc,0);
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_FC_SOURCE_ADVANCE(bIN,eIN)
+#define PCGEN_ARRAY_TEST_FC_SOURCE_ADVANCE(bIN,eIN)
 do{
   P_io_getLocB (pads,&(eIN),0);
   if (P_POS_EQ ((bIN).b, (eIN).b)) 
@@ -2279,23 +2323,23 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_FC_SOURCE_ADVANCE2()
+#define PCGEN_ARRAY_TEST_FC_SOURCE_ADVANCE2()
 do{
-  AR_TEST_FC_SOURCE_ADVANCE(beginLoc,endLoc);
+  PCGEN_ARRAY_TEST_FC_SOURCE_ADVANCE(beginLoc,endLoc);
 }while(0)
 /* END_MACRO */
 
-#define AR_CHECKPOINT(ty)
+#define PCGEN_ARRAY_CHECKPOINT(ty)
 do{
-  (pads->inestlev)++;
-  if (P_ERR==P_io_checkpoint (pads,1)) 
+    /*(pads->inestlev)++;*/
+  if (P_ERR==P_io_checkpoint (pads,0)) 
     {
       PDCI_report_err (pads,P_LEV_FATAL,0,P_CHKPOINT_ERR, #ty "_read",0);
     }
 }while(0)
 /* END_MACRO */
 
-#define AR_READ_ELEM(readCallIN)
+#define PCGEN_ARRAY_READ_ELEM(readCallIN)
 do{
   result = (readCallIN);
   (pd->numRead)++;
@@ -2303,7 +2347,24 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_RECORD_ERROR(errCodeIN,WHATFN,ERRMSG...)
+#define PCGEN_ARRAY_READ_ELEM_HD(readCallIN,haveDataIN)
+do{
+  result = (readCallIN);
+  (pd->numRead)++;
+  (rep->length)++;
+  (haveDataIN) = 1; /* after the read, the rep and pd are valid.*/
+}while(0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_REREAD_ELEM_BODY(readCallIN)
+do{
+    (readCallIN);
+}while(0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_REREAD_ELEM_RET() P_READ_OK_DATA
+
+#define PCGEN_ARRAY_RECORD_ERROR(errCodeIN,WHATFN,ERRMSG...)
 do{
   if (!(pd->nerr)) 
     {
@@ -2317,11 +2378,11 @@ do{
       (pd->nerr)++;
     }
   if (P_spec_level (pads)) 
-    return STATUS_DONE;
+    return P_READ_ERR;
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_READ_ERR(addTest1IN, addTest2IN)
+#define PCGEN_ARRAY_TEST_READ_ERR(addTest1IN, addTest2IN)
 do{
   if (result==P_ERR && (addTest1IN) && (addTest2IN)) 
     {
@@ -2338,14 +2399,14 @@ do{
 	      pd->firstError = ((rep->length)-1);
 	    }
 	  if (P_spec_level (pads)) 
-	    return STATUS_DONE;
+	    return P_READ_ERR;
 	}
     }
   
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_FC_PANIC_RECOVER1(pdIN,addTestIN,sepIN,termIN)
+#define PCGEN_ARRAY_TEST_FC_PANIC_RECOVER1(pdIN,addTestIN,sepIN,termIN)
 do{
   if (P_PS_isPanic (&(pdIN)) && (addTestIN)) 
     {
@@ -2365,7 +2426,7 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_FC_PANIC_RECOVER2(pdIN,addTestIN,sepIN,termIN)
+#define PCGEN_ARRAY_TEST_FC_PANIC_RECOVER2(pdIN,addTestIN,sepIN,termIN)
 do{
   if (P_PS_isPanic (&(pdIN)) && (addTestIN)) 
     {
@@ -2388,7 +2449,7 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_FC_SCAN_SEP_TERM(ty,funIn,sepIN,termIN,eat_fIN,eat_sIN,panicIN)
+#define PCGEN_ARRAY_FC_SCAN_SEP_TERM(ty,funIn,sepIN,termIN,eat_fIN,eat_sIN,panicIN)
 do{
   int sepFound;
   size_t offset;
@@ -2415,7 +2476,7 @@ do{
 		  (pd->nerr)++;
 		}
 	      if (P_spec_level (pads)) 
-		return STATUS_DONE;
+		return P_READ_ERR;
 	    }
 	  else
 	    {
@@ -2434,7 +2495,7 @@ do{
 		    }
 
 		  if (P_spec_level (pads)) 
-		    return STATUS_DONE;
+		    return P_READ_ERR;
 		}
 	      goto do_final_checks;
 	    }
@@ -2456,7 +2517,7 @@ do{
 	    (pd->nerr)++;
 	  }
 	if (P_spec_level (pads)) 
-	  return STATUS_DONE;
+	  return P_READ_ERR;
 	P_PS_setPanic (pd);
       }
       goto do_final_checks;
@@ -2464,7 +2525,7 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_SCAN_SEP(ty,funIn,sepIN,eat_fIN,panicIN)
+#define PCGEN_ARRAY_SCAN_SEP(ty,funIn,sepIN,eat_fIN,panicIN)
 do{
   size_t offset;
   P_io_getLocB (pads,&(pd->loc),0);
@@ -2486,7 +2547,7 @@ do{
 		  (pd->nerr)++;
 		}
 	      if (P_spec_level (pads)) 
-		return STATUS_DONE;
+		return P_READ_ERR;
 	    }
 	}
     }
@@ -2506,7 +2567,7 @@ do{
 	    (pd->nerr)++;
 	  }
 	if (P_spec_level (pads)) 
-	  return STATUS_DONE;
+	  return P_READ_ERR;
 	P_PS_setPanic (pd);
       }
       goto do_final_checks;
@@ -2514,7 +2575,7 @@ do{
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_TRAILING_JUNK(ty,funIN,termIN)
+#define PCGEN_ARRAY_TEST_TRAILING_JUNK(ty,funIN,termIN)
 do{
   /* End of loop. Read trailing terminator if there was trailing junk */
     if ((!P_PS_isPanic (pd))&&(!foundTerm)) 
@@ -2538,7 +2599,7 @@ do{
                       (pd->nerr)++;
                     }
                   if (P_spec_level (pads)) 
-                    return STATUS_DONE;
+                    return P_READ_ERR;
                 }
                 foundTerm = 1;
               }
@@ -2557,17 +2618,17 @@ do{
                 (pd->nerr)++;
               }
             if (P_spec_level (pads)) 
-              return STATUS_DONE;
+              return P_READ_ERR;
             P_PS_setPanic (pd);
           }
       }
 }while(0)
 /* END_MACRO */
 
-#define AR_TEST_TRAILING_JUNK_C(ty,funIN,termIN) AR_TEST_TRAILING_JUNK(ty,funIN,termIN)
-#define AR_TEST_TRAILING_JUNK_P(ty,funIN,termIN) AR_TEST_TRAILING_JUNK(ty,funIN,termIN)
+#define PCGEN_ARRAY_TEST_TRAILING_JUNK_C(ty,funIN,termIN) PCGEN_ARRAY_TEST_TRAILING_JUNK(ty,funIN,termIN)
+#define PCGEN_ARRAY_TEST_TRAILING_JUNK_P(ty,funIN,termIN) PCGEN_ARRAY_TEST_TRAILING_JUNK(ty,funIN,termIN)
 
-#define AR_READ_EOR(ty)
+#define PCGEN_ARRAY_READ_EOR(ty)
 do{
   /*  Read to EOR */
   Pbase_pd tpd;
@@ -2596,7 +2657,7 @@ do{
 	      PDCI_report_err (pads,P_LEV_INFO,&(tpd.loc),P_NO_ERR,#ty "_read","Resynching at EOR");
 	    }
 	  if (P_spec_level (pads)) 
-	    return STATUS_DONE;
+	    return P_READ_ERR;
 	}
       P_PS_unsetPanic (pd);
     }
@@ -2607,19 +2668,19 @@ do{
       P_io_getLocE (pads,&(tpd.loc),-1);
       PDCI_report_err (pads,P_LEV_WARN,&(tpd.loc),P_AT_EOR,#ty "_read","Found EOF when searching for EOR");
       if (P_spec_level (pads)) 
-	return STATUS_DONE;
+	return P_READ_ERR;
     }
 }while(0)
 /* END_MACRO */
 
-#define AR_CHK_ENOUGH_ELEMENTS(ty)
+#define PCGEN_ARRAY_CHK_ENOUGH_ELEMENTS(ty)
 do{
   if ((!reachedLimit)&&((rep->length)<min)) 
-    AR_RECORD_ERROR(P_ARRAY_SIZE_ERR,#ty "_read","Read %d element(s) for array " #ty "; required %d",rep->length,min);
+    PCGEN_ARRAY_RECORD_ERROR(P_ARRAY_SIZE_ERR,#ty "_read","Read %d element(s) for array " #ty "; required %d",rep->length,min);
 }while(0)
 /* END_MACRO */
 
-#define AR_CFORALL_LOOP(indexIN,lowerIN,upperIN,bodyIN)
+#define PCGEN_ARRAY_CFORALL_LOOP(indexIN,lowerIN,upperIN,bodyIN)
 do{
   int indexIN;
   if (!((0<=(lowerIN))&&((upperIN)<(rep->length)))) 
@@ -2639,80 +2700,73 @@ do{
 /* 
  * Must preceed this call with a phantom declaration of indexIN.
  */
-#define AR_CHK_FORALL_CONSTRAINT(ty,indexIN,lowerIN,upperIN,bodyIN)
+#define PCGEN_ARRAY_CHK_FORALL_CONSTRAINT(ty,indexIN,lowerIN,upperIN,bodyIN)
 do{
   int violated=0;
   {
-    AR_CFORALL_LOOP(indexIN,lowerIN,upperIN,bodyIN);
+    PCGEN_ARRAY_CFORALL_LOOP(indexIN,lowerIN,upperIN,bodyIN);
   }
   if (violated) 
     {
-      AR_RECORD_ERROR(P_ARRAY_USER_CONSTRAINT_ERR,#ty "_read","Pforall constraint for array " #ty " violated");
+      PCGEN_ARRAY_RECORD_ERROR(P_ARRAY_USER_CONSTRAINT_ERR,#ty "_read","Pforall constraint for array " #ty " violated");
     }
 }while(0)
 /* END_MACRO */
 
-#define AR_STD_RETURN()
+#define PCGEN_ARRAY_STD_RETURN()
 ((pd->nerr)==0) ? P_OK : P_ERR
 /* END_MACRO */
 
-#define AR_TEST_ALREADY_DONE()
+#define PCGEN_ARRAY_TEST_ALREADY_DONE()
 do{
   if (!P_PS_isPartial(pd))
-    return STATUS_ALREADY_DONE;
+    return P_READ_ALREADY_DONE_ERR;
 }while(0)
 /* END_MACRO */
 
-#define AR_DO_FINAL_CHECKS()
+#define PCGEN_ARRAY_DO_FINAL_CHECKS()
 do{
   goto do_final_checks;
 }while(0)
 /* END_MACRO */
 
-#define AR_RO_DECS()
+#define PCGEN_ARRAY_RO_DECS()
   int result;
   Ploc_t beginLoc, endLoc
 /* END_MACRO */
 
-#define AR_LBL_FINAL_CHECKS()
+#define PCGEN_ARRAY_LBL_FINAL_CHECKS()
  do_final_checks:
 /* END_MACRO */
 
-#define AR_RET_ONGOING()
-STATUS_ONGOING
+#define PCGEN_ARRAY_RET_ONGOING(keepEltIN)
+((keepEltIN) ? P_READ_OK_DATA : P_READ_OK_NO_DATA)
 /* END_MACRO */
 
-#define AR_RET_DONE()
-STATUS_DONE
+#define PCGEN_ARRAY_RET_DONE(keepEltIN)
+((keepEltIN) ? P_READ_OK_DATA : P_READ_OK_NO_DATA)
 /* END_MACRO */
 
-#define AR_SET_PARTIAL()
+#define PCGEN_ARRAY_SET_PARTIAL()
 do{
   P_PS_setPartial(pd);  
 }while(0)
 /* END_MACRO */
 
-#define AR_UNSET_PARTIAL()
+#define PCGEN_ARRAY_UNSET_PARTIAL()
 do{
   P_PS_unsetPartial(pd);  
 }while(0)
 /* END_MACRO */
 
 
-#define AR_READ_ALL(allocCallIN,readCallIN,incIN,WHATFN)
+#define PCGEN_ARRAY_READ_ALL(allocCallIN,readCallIN,incIN,WHATFN)
 do{
     allocCallIN;
     result = readCallIN;
     incIN;
-}while(result == STATUS_ONGOING)
-/*
-  if (result == STATUS_ALREADY_DONE){
-    PDCI_report_err(pads,P_LEV_FATAL,P_NO_ERR,WHATFN,
-		      "attempting to read into a completed array.");
-  }
-*/
+}while(P_PS_isPartial(pd))
 /* END_MACRO */
-
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 #endif /* FOR_CKIT */

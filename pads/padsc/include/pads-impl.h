@@ -85,6 +85,30 @@ Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
 #define P_PS_unsetPartial(pd)    do { (pd)->pstate &= ~P_Partial; } while (0)
 #define P_PS_isPartial(pd)       ((pd)->pstate & P_Partial)
 
+/* Identifier suport macros. */
+
+#ifdef USE_GALAX
+
+/* The maximum number of nodes in a pd (including itself) is 14, */
+/* which is the numer of nodes in the pd of an array with errors. */
+/* In addition, arrays have a length field, which makes 15. */
+#  define PDCI_MAX_ID_INCR 15
+
+#  define PDCI_ID_RESET(padsIN,valIN)\
+     do{\
+       (padsIN)->disc->id_gen = (valIN);\
+     }while(0)
+
+#  define PDCI_ID_NEW(idOUT,padsIN)\
+do{\
+  (idOUT) = (padsIN)->disc->id_gen;\
+  (padsIN)->disc->id_gen += PDCI_MAX_ID_INCR;\
+}while(0)
+     
+#endif
+
+/* Parse descriptor macros */
+
 #define PD_COMMON_INIT(pd) do { \
   memset((void*)(pd), 0, sizeof(Pbase_pd)); \
 } while (0)
@@ -94,8 +118,19 @@ Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
   (pd)->errCode = P_NO_ERR; \
 } while (0)
 
-#define PD_COMMON_READ_INIT(padsIN,pdIN) do { \
+#ifndef USE_GALAX
+# define PD_PGLX_INIT(padsIN,pdIN) 
+#else
+# define PD_PGLX_INIT(padsIN,pdIN) \
+  do { \
+    PDCI_ID_NEW(((pdIN)->_id_),padsIN);\
+  } while (0)
+#endif
+
+#define PD_COMMON_READ_INIT(padsIN,pdIN) \
+do { \
   PDCI_IO_BEGINLOC(padsIN,(pdIN)->loc); \
+  PD_PGLX_INIT(padsIN,pdIN);\
 } while (0)
 
 #define Pbase_pd_init(pd) PD_COMMON_INIT(pd)

@@ -39,9 +39,19 @@ typedef PDCI_smart_node_t                PDCI_manager_t;
 //          they were already bumped on the first read, and we do not need to check
 //          for termination conditions because they were already checked.
 // 
+// Returns: P_OK if read succeeded, P_ERR otherwise. Note that a read with data errors is still a 
+//          successful read.
 
-typedef  Perror_t (*PDCI_smart_elt_read_fn)(PDCI_node_t *node, P_t *pads, PDCI_smart_elt_info_t *info);
+typedef  Pread_res_t (*PDCI_smart_elt_read_fn)(PDCI_node_t *node, P_t *pads, PDCI_smart_elt_info_t *info);
 
+
+// Type: PDCI_smart_elt_alloc_fn
+//
+// Allocates a new rep, pd and any other necessary memory.
+// 
+
+typedef  Perror_t (*PDCI_smart_elt_alloc_fn)(PDCI_node_t *smartNode, P_t *pads,
+					     void **elt_pd, void **elt_rep);
 
 // Type: PDCI_smart_elt_free_fn
 //
@@ -65,6 +75,7 @@ typedef Perror_t  (* PDCI_path_walk_fn) (P_t *pads, void *m, void *pd, void *rep
 
 typedef void   (* PDCI_smart_failure_fn) (P_t *pads, PDCI_smart_node_t *node, 
 					  PDCI_smart_elt_info_t *info,
+					  int error_level,
 					  const char *descr);
 
 
@@ -84,27 +95,12 @@ typedef void   (* PDCI_smart_failure_fn) (P_t *pads, PDCI_smart_node_t *node,
 
 struct PDCI_smart_node_s {
 
-  // Parts of a PDCI_node_t that are used by the smart node:
-  //     contents.mask:        is used (both the array-level mask and the elt-level mask are used)
-  //     contents.pd:
-  //         pstate : tells us if panic is happening, tells us if final state has been reached
-  //         nerr:    number of errors so far
-  //         neerr:   number of element errors so far (for arrays)
-  //         etc.
-  //         elts/_internal: used as a cache of in-memory element pds. Unlike normal arrays,
-  //                         the length does not reflect the true length of the array.
-  //         length: length of the elts cache.
-  //    contents.rep
-  //         elts/_internal: used as a cache of in-memory elements. Unlike normal arrays,
-  //                         the length does not reflect the true length of the array.
-  //         length: length of the elts cache.
-  //
-  //PDCI_node_t                contents;  // includes elt mask passed to read_elt_fn
-
   // information needed to manage elements
   PDCI_smart_elt_read_fn     elt_read;
+  PDCI_smart_elt_alloc_fn    elt_alloc;
   PDCI_smart_elt_free_fn     elt_free;
   PDCI_path_walk_fn          elt_path_walk;
+  /* Deprecated: */
   PDCI_smart_failure_fn      handle_failure;
   void                      *elt_state;  // for arrays, this is PDCI_smart_array_t 
 };
@@ -123,8 +119,8 @@ struct PDCI_smart_array_info_s {
   // INV: Forall valid idx, tmap[idx].pd != NULL iff tmap[idx] is in memory.
   PDCI_smart_elt_info_t     *tmap;         // alias of _internal's buf; reset on growth
   RBuf_t                    *_internal;    // growable rbuf for tmap
-  PDCI_childIndex_t         *invMap;       // map from rep element indexes to corresponding smart element indexes.
-  RBuf_t                    *_internal_inv;    // growable rbuf for invMap.
+  PDCI_childIndex_t         *liveList;       // list of live elements, used to choose an evictee.
+  RBuf_t                    *_internal_live;    // growable rbuf for liveList.
 
   unsigned int               max_elts;         // maximum number of elements allowed in-memory at once.
 
@@ -134,8 +130,13 @@ struct PDCI_smart_array_info_s {
 
   PDCI_childIndex_t          next_idx_read;    // first unread index
   PDCI_childIndex_t          next_idx_create;  // first uncreated index
-  unsigned int               next_idx_evict;   // next eviction candidate 
 
+  /* live is used as a "producer" and 
+   * evict is used as a "consumer".
+   */
+  unsigned int               next_idx_live;    // next available space in the live list
+  unsigned int               next_idx_evict;   // next eviction candidate of the live list.
+  unsigned int               live_count;
   // ...
   
 };
@@ -170,21 +171,22 @@ struct PDCI_smart_elt_info_s {
 #define PDCI_NEW_SMART_NODE(padsIN)\
   ((PDCI_smart_node_t *)calloc(1,sizeof(PDCI_smart_node_t)))
 
-#define PDCI_INIT_SMART_NODE(resultIN, readIN, freeIN, walkIN, failIN, stateIN) \
+#define PDCI_INIT_SMART_NODE(resultIN, readIN, allocIN, freeIN, walkIN, failIN, stateIN) \
   do {  \
     (resultIN)->elt_read = (readIN); \
+    (resultIN)->elt_alloc = (allocIN); \
     (resultIN)->elt_free = (freeIN); \
     (resultIN)->elt_path_walk = (walkIN); \
     (resultIN)->handle_failure = (failIN); \
     (resultIN)->elt_state = (stateIN); \
   } while (0)
 
-#define PDCI_MK_SMART_NODE(resultIN, padsIN, readIN, freeIN, walkIN, failIN, stateIN, whatfn) \
+#define PDCI_MK_SMART_NODE(resultIN, padsIN, readIN, allocIN, freeIN, walkIN, failIN, stateIN, whatfn) \
   do {  \
     if (!(resultIN = PDCI_NEW_SMART_NODE(padsIN))) { \
       failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
     } \
-    PDCI_INIT_SMART_NODE(resultIN, readIN, freeIN, walkIN, failIN, stateIN); \
+    PDCI_INIT_SMART_NODE(resultIN, readIN, allocIN, freeIN, walkIN, failIN, stateIN); \
   } while (0)
 
 #define PDCI_INIT_SMART_ELT(eltIN, parentIN, idxIN, offsetIN, genIN, repIN, pdIN, mIN) \
@@ -201,6 +203,32 @@ do {\
 // ======================================================================
 // Function Headers
 // ======================================================================
+
+Perror_t P_sn_getFreeElt(PDCI_node_t *smartNode, P_t *pads,
+			 void **elt_pd, void **elt_rep);
+
+/* Tell the system that element with index elt is in memory. 
+   Called after getFreeElt. */
+Perror_t P_sn_markElementLive(PDCI_smart_array_info_t *arrayInfo,
+			      PDCI_childIndex_t elt,
+			      void *elt_pd,void *elt_rep);
+
+/* Current implementation uses a FIFO eviction strategy. */
+Perror_t P_sn_chooseEltToEvict(PDCI_smart_array_info_t *arrayInfo,
+			       PDCI_childIndex_t *elt);
+
+/* After an element is evicted, and its memory recycled, it must be
+   marked as dead. */
+Perror_t P_sn_markElementDead(PDCI_smart_array_info_t *arrayInfo, 
+			      PDCI_childIndex_t elt);
+
+/* A default implementation of the smart node handle_failure function.*/
+void P_sn_handleFailure(P_t *pads, PDCI_smart_node_t *node, 
+			PDCI_smart_elt_info_t *info,
+			int error_level,
+			const char *descr);
+
+PDCI_smart_array_info_t *PDCI_makeSmartArrayInfo(P_t *pads,int max_elts, int size);
 
 //
 // Check whether *node refers to an in-memory element.

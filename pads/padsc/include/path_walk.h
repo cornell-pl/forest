@@ -15,13 +15,9 @@ struct PDCI_path_s{
 PDCI_path_t PDCI_node_getPath(PDCI_node_t *node, int curLength);
 
 #define PDCI_DECL_BASE_PATH_WALK(ty)\
-extern const unsigned char ty ## _pathWidth;\
-extern const unsigned char ty ## _pathMask;\
-extern const unsigned char ty ## _val_pathWidth;  \
-extern const unsigned char ty ## _val_pathMask; \
 Perror_t ty ## _node_pathWalk(P_t *pads, Pbase_m *m, Pbase_pd *pd, ty *rep, PDCI_path_t path,\
 			      void **m_out, void **pd_out, void **rep_out);\
-Perror_t ty ## _val_node_pathWalk(P_t *pads, ty *rep, PDCI_path_t path,void **rep_out);\
+Perror_t ty ## _val_node_pathWalk(P_t *pads, Pbase_pd *pd, ty *rep, PDCI_path_t path,void **pd_out, void **rep_out);\
 Perror_t ty ## _text_node_pathWalk(P_t *pads, ty *rep, PDCI_path_t path,void **rep_out)
 
 
@@ -47,11 +43,11 @@ extern const unsigned char PDCI_structured_pd_pathMask;
 extern const unsigned char PDCI_sequenced_pd_pathWidth;
 extern const unsigned char PDCI_sequenced_pd_pathMask;
 
-Perror_t Ppos_t_node_pathWalk(P_t *pads, Ppos_t *pos, PDCI_path_t path, void **rep_out);
-Perror_t Ploc_t_node_pathWalk(P_t *pads, Ploc_t *loc, PDCI_path_t path, void **rep_out);
-Perror_t Pbase_pd_node_pathWalk(P_t *pads, Pbase_pd *pd, PDCI_path_t path, void **rep_out);
-Perror_t PDCI_structured_pd_node_pathWalk(P_t *pads, PDCI_structured_pd *pd, PDCI_path_t path, void **rep_out);
-Perror_t PDCI_sequenced_pd_node_pathWalk(P_t *pads, PDCI_sequenced_pd *pd, PDCI_path_t path, void **rep_out);
-Perror_t PDCI_cstr_val_node_pathWalk(P_t *pads,char *rep, PDCI_path_t path,void **rep_out);
+Perror_t Ppos_t_node_pathWalk(P_t *pads, Pbase_pd *pd, Ppos_t *pos, PDCI_path_t path, void **pd_out, void **rep_out);
+Perror_t Ploc_t_node_pathWalk(P_t *pads, Pbase_pd *pd, Ploc_t *loc, PDCI_path_t path, void **pd_out, void **rep_out);
+Perror_t Pbase_pd_node_pathWalk(P_t *pads, Pbase_pd *pd, PDCI_path_t path, void **pd_out, void **rep_out);
+Perror_t PDCI_structured_pd_node_pathWalk(P_t *pads, PDCI_structured_pd *pd, PDCI_path_t path, void **pd_out, void **rep_out);
+Perror_t PDCI_sequenced_pd_node_pathWalk(P_t *pads, PDCI_sequenced_pd *pd, PDCI_path_t path, void **pd_out, void **rep_out);
+Perror_t PDCI_cstr_val_node_pathWalk(P_t *pads,Pbase_pd *pd,char *rep, PDCI_path_t path,void **pd_out,void **rep_out);
 
 #endif /* __PATH_WALK_H__ */
