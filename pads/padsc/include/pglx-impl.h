@@ -81,6 +81,9 @@ do{                                           \
 extern const PDCI_path_t PDCI_emptyPath;
 #define PDCI_EMPTY_PATH (PDCI_emptyPath)
 
+#define PDCI_PATH_INC(pathIN) ((pathIN).length++)
+#define PDCI_PATH_DEC(pathIN) ((pathIN).length--)
+
 /* child <= ty_PATH_MASK */
 #define PDCI_PATH_ADD(ty,p,child)\
   {((p).path |((child) << (p).length)),(p).length+(ty ## _pathWidth)}

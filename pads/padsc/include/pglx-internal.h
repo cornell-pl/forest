@@ -26,15 +26,15 @@ typedef struct PDCI_vtable_s        PDCI_vtable_t;
 typedef struct PDCI_structured_pd_s PDCI_structured_pd;
 typedef struct PDCI_sequenced_pd_s  PDCI_sequenced_pd;
 
+#include "node_mm.h"
+#include "path_walk.h"
+#include "smart.h"
+
 /* ================================================================================
  * HELPER MACROS */
 
-/* These macros are defind in pglx-impl.h.  Here we give prototypes for CKIT: */ 
-
+/* These macros are defined in pglx-impl.h.  Here we give prototypes for CKIT: */ 
 #ifndef FOR_CKIT
-#  include "node_mm.h"
-#  include "path_walk.h"
-#  include "smart.h"
 #  include "pglx-impl.h"
 #else
 
