@@ -211,20 +211,6 @@ if ($help) {
 	print "   (you are likely to get errors due to missing .h files below)\n\n";
       }
     }
-    my $padsglx_home = $ENV{"PADSGLX_HOME"};
-    if ($padsglx_home eq "") {
-      print "\nWarning: env variable PADSGLX_HOME should be set when using the -x option\n";
-      print "   (you are likely to get errors due to missing .h files below)\n\n";
-    } else {
-      my $padsglx_lib_dir = $padsglx_home;
-      $padsglx_lib_dir =~ s|/$||;
-      if (-d $padsglx_lib_dir) {
-	push(@incs, "-I $padsglx_lib_dir");
-      } else {
-	print "\nWarning: expected dir $padsglx_lib_dir not found, check your PADSGLX_HOME env var setting\n\n";
-	print "   (you are likely to get errors due to missing .h files below)\n";
-      }
-    }
   }
   my $add_incs = join(" ", @incs);
   $cmd .= " $args $lua $lda -I $pads_home/padsc/include -I $pads_home/ast-ast/arch/$ast_arch/include/ast $add_incs";
