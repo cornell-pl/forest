@@ -27,7 +27,7 @@ Drivers for PADS/Galax:
 
     Loading
     =======
- 	gen/test_load_X.c :
+ 	gen/test_load.h :
 
 	  (Currently,) the loading driver tests the PADS/Galax data
           model interface by reading in a pads source, creating the
@@ -35,10 +35,18 @@ Drivers for PADS/Galax:
           padsDocument constructor to create an instance of an XML
           document, then calling Galax to serialize/print the source
           in XML.
+	  test_load.h is a template for creating other tests. See
+	  test_load_myenum.c for an example usage.
+
+    Getting the Kth Child
+    =====================
+ 	gen/test_kth_child.h :
+
+	A simple template for testing the XXX_kth_child function.
 
     Querying
     ========
- 	gen/test_query_X.c :
+ 	gen/test_query.h :
  
 	  (Currently,) the query driver takes as input the name of a
           pads data source (that must conform to the definition X.p)
@@ -48,6 +56,8 @@ Drivers for PADS/Galax:
           the padsDocument constructor to create an instance of an XML
           document, then applies the query to the padsDocument node,
           and serializes the result to standard output.
+	  test_query.h is a template for creating other tests. See
+	  test_query_myenum.c for an example usage.
 
 	queries/test_X_*.xq:
 
