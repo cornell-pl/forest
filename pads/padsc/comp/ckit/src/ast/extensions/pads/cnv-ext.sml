@@ -1442,7 +1442,7 @@ structure CnvExt : CNVEXT = struct
 			[P.mkCommentS ("Reading delimiter field: EOR"),
 			 PT.Compound[
 			   P.varDeclS'(PL.base_edPCT, ted),
-			   P.varDeclS'(P.int, "n"),
+			   P.varDeclS'(PL.sizePCT, "n"),
 			   PL.getLocBeginS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
                            PT.IfThenElse(
 			      P.eqX(PL.PDC_OK, 
