@@ -534,7 +534,7 @@ PDCI_node_t * ty ## _val_node_kthChild(PDCI_node_t *node, childIndex idx) \
   if (idx) return 0; \
   /* Old remark: the following mk call raises an exception on alloc error */ \
   PDCI_MK_TEXTNODE(result, & ty ## _text_node_vtable,  node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); \
-  /* Mary: Calling this function directly, instead of through the above macro 
+  /* Mary: Calling this function directly, instead of through the above macro yields garbage in <pd> */ \
   /* result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); */\ 
   return result; \
 } \
