@@ -2368,7 +2368,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genRepBrief e = []
 		      val canonicalFields = mungeFields genRepFull genRepBrief genRepMan fields
 		      val canonicalFields = if List.length canonicalFields = 0 
-			                    then (PE.warn ("PStruct "^structName^" does not contain any non-omitted fields\n");
+			                    then ((* PE.warn ("PStruct "^structName^" does not contain any non-omitted fields\n"); *)
 						  [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty struct")])
 
 					    else canonicalFields
@@ -3233,7 +3233,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 end
 		     val canonicalVariants = mungeFields genRepFull genRepBrief genRepMan variants
 		     val canonicalVariants = if List.length canonicalVariants = 0
-			                    then (PE.warn ("PUnion "^unionName^" does not contain any non-omitted fields\n");
+			                    then ((* PE.warn ("PUnion "^unionName^" does not contain any non-omitted fields\n"); *)
 						 [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty union")])
 					    else canonicalVariants
 		     val unionPD = P.makeTyDefUnionEDecl(canonicalVariants, unSuf name)
