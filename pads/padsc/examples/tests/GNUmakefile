@@ -105,7 +105,8 @@ regress_o:  sanity_check \
           regress_rw_struct_good_o \
           regress_rw_pendian_o \
           regress_rwxml_struct1_o \
-          regress_rwxml_alt1_o
+          regress_rwxml_alt1_o \
+          regress_rwxml_2ips_o
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -144,7 +145,8 @@ regress_d:  sanity_check \
           regress_rw_struct_good_d \
           regress_rw_pendian_d \
           regress_rwxml_struct1_d \
-          regress_rwxml_alt1_d
+          regress_rwxml_alt1_d \
+          regress_rwxml_2ips_d
 	@echo " "; echo "DONE"; echo " "
 
 dib_tests: sanity_check $(DIB_TESTS)
@@ -358,6 +360,12 @@ regress_rwxml_alt1_o: rwxml_alt1
 	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_alt1_d: rwxml_alt1_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_2ips_o: rwxml_2ips
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_2ips_d: rwxml_2ips_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_cpyrecgen_rps_o: test_cpyrecgen_rps_o

@@ -6,8 +6,8 @@ Precord Pstruct attflow {
   Pstring(:'|':)                 AnalyzerIP; '|'; //- Analyzer IP address.
   Puint32                        AnalyzerID; '|'; //- Analyzer ID.
   Pstring(:'|':)                 PopNm;      '|'; //- Analyzer POP name.
-  Pipaddr(:'|':)                 SourceIP;   '|'; //- Source IP address.
-  Pipaddr(:'|':)                 DestIP;     '|'; //- Destination IP address.
+  Pip                            SourceIP;   '|'; //- Source IP address.
+  Pip                            DestIP;     '|'; //- Destination IP address.
   Puint32                        PktsSent;   '|'; //- Number of packets sent by source.
   Puint32                        BytesSent;  '|'; //- Number of bytes sent by source.
   My_time_t                      StartTime;  '|'; //- Time for the first packet in the flow.
