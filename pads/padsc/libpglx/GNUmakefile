@@ -77,8 +77,19 @@ install : all
 clean :
 	$(RM) $(STATIC_PGLXLIB_NM_O) $(SHARED_PGLXLIB_NM_O) $(STATIC_PGLXLIB_NM_D) $(SHARED_PGLXLIB_NM_D) *~ *.o ../*~
 
+INSTALLED_LIBS = \
+  $(STATIC_PGLXLIB_NM_O) \
+  $(SHARED_PGLXLIB_NM_O) \
+  $(STATIC_PGLXLIB_NM_D) \
+  $(SHARED_PGLXLIB_NM_D) \
+  $(SHARED_PGLXLIB_NM_ALT1_O) \
+  $(SHARED_PGLXLIB_NM_ALT2_O) \
+  $(SHARED_PGLXLIB_NM_ALT1_D) \
+  $(SHARED_PGLXLIB_NM_ALT2_D)
+
 veryclean : clean
 	(cd $(INSTALLROOT)/include; $(RM) $(INSTALL_INCLUDES); )
+	(cd $(INSTALLROOT)/lib; $(RM) $(INSTALLED_LIBS))
 
  # End of rules that are run from the arch directory
 endif

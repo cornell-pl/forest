@@ -6,6 +6,7 @@
  * AT&T Labs Research
  */
 
+#include "pads-internal.h"
 #include "pglx-internal.h"
 #include "pglx.h"
 #include <stdio.h>
