@@ -6,7 +6,7 @@
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
-  call_ed         ced = {0};
+  call_pd         cpd = {0};
   call            cdata;
   call_m          cm;
 
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
    */
   while (!PDC_IO_at_EOF(pdc)) {
     PDC_error_t res;
-    res= call_read(pdc, &cm, &ced, &cdata);
+    res= call_read(pdc, &cm, &cpd, &cdata);
 
     if (res == PDC_OK) {
       error(NO_NL, "Record okay:\t");

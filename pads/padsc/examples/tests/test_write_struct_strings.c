@@ -3,10 +3,10 @@
 #define FILENAME  "../../data/ex_data.struct_strings_write"
 
 
-PDC_error_t my_string_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **type_args) {
-  PDC_base_ed *ed  = (PDC_base_ed*)ed_void;
+PDC_error_t my_string_inv_val(PDC_t *pdc, void *pd_void, void *val_void, void **type_args) {
+  PDC_base_pd *pd  = (PDC_base_pd*)pd_void;
   PDC_string  *val = (PDC_string*)val_void;
-  if (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
+  if (pd->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
     PDC_string_Cstr_copy(pdc, val, "BAD_LEN", 7);
   } else {
     PDC_string_Cstr_copy(pdc, val, "INV_STR", 7);
@@ -14,11 +14,11 @@ PDC_error_t my_string_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **
   return PDC_OK;
 }
 
-PDC_error_t my_string_fw_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **type_args) {
-  PDC_base_ed *ed    = (PDC_base_ed*)ed_void;
+PDC_error_t my_string_fw_inv_val(PDC_t *pdc, void *pd_void, void *val_void, void **type_args) {
+  PDC_base_pd *pd    = (PDC_base_pd*)pd_void;
   PDC_string  *val   = (PDC_string*)val_void;
   size_t      *width = type_args[0];
-  if (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
+  if (pd->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
     PDC_string_Cstr_copy(pdc, val, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", *width);
   } else {
     PDC_string_Cstr_copy(pdc, val, "x---------------------------------------------------------", *width);
@@ -29,7 +29,7 @@ PDC_error_t my_string_fw_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void
 int main(int argc, char** argv) {
   PDC_t*         pdc;
   test           rep;
-  test_ed        ed = {0};
+  test_pd        pd = {0};
   test_m         m;
   const char    *fname = FILENAME;
 
@@ -72,13 +72,13 @@ int main(int argc, char** argv) {
    */
   while (!PDC_IO_at_EOF(pdc)) {
     error(0, "\ncalling testtwo_read");
-    if (PDC_OK == test_read(pdc, &m, &ed, &rep)) {
+    if (PDC_OK == test_read(pdc, &m, &pd, &rep)) {
       /* do something with the data */
       error(2, "test_read returned: s1 %.*s  s2 %.*s", rep.s1.len, rep.s1.str, rep.s2.len, rep.s2.str);
-      test_write2io(pdc, sfstdout, &ed, &rep);
+      test_write2io(pdc, sfstdout, &pd, &rep);
     } else {
       error(2, "test_read returned: error");
-      test_write2io(pdc, sfstdout, &ed, &rep);
+      test_write2io(pdc, sfstdout, &pd, &rep);
     }
   }
   error(0, "\nFound eof");

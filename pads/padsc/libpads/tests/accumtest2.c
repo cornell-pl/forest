@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
   PDC_uint64         key64u;
   PDC_uint64_acc     accum64u20th;
   PDC_uint64         key64u20th;
-  PDC_base_ed        ed = {0};
+  PDC_base_pd        pd = {0};
 
   if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
     error(2, "*** PDC_open failed ***");
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
   }
 
   error(0, "\nadd MIN/MAX vals to all the accums");
-  ed.errCode = PDC_NO_ERR;
+  pd.errCode = PDC_NO_ERR;
   for (i = 0; i < 100000; i++) {
     key8      = PDC_MAX_INT8;
     key16     = PDC_MAX_INT16;
@@ -112,45 +112,45 @@ int main(int argc, char** argv) {
     key64u    = PDC_MAX_UINT64;
     key64u20th = PDC_MAX_UINT64 / 20;
 
-    if (PDC_ERR == PDC_int8_acc_add(pdc, &accum8, &ed, &key8)) {
+    if (PDC_ERR == PDC_int8_acc_add(pdc, &accum8, &pd, &key8)) {
       error(0, "** accum8 add failed **");
     }
-    if (PDC_ERR == PDC_int16_acc_add(pdc, &accum16, &ed, &key16)) {
+    if (PDC_ERR == PDC_int16_acc_add(pdc, &accum16, &pd, &key16)) {
       error(0, "** accum16 add failed **");
     }
-    if (PDC_ERR == PDC_int32_acc_add(pdc, &accum32, &ed, &key32)) {
+    if (PDC_ERR == PDC_int32_acc_add(pdc, &accum32, &pd, &key32)) {
       error(0, "** accum32 add failed **");
     }
-    if (PDC_ERR == PDC_int64_acc_add(pdc, &accum64, &ed, &key64)) {
+    if (PDC_ERR == PDC_int64_acc_add(pdc, &accum64, &pd, &key64)) {
       error(0, "** accum64 add failed **");
     }
 
-    if (PDC_ERR == PDC_int8_acc_add(pdc, &accum8min, &ed, &key8min)) {
+    if (PDC_ERR == PDC_int8_acc_add(pdc, &accum8min, &pd, &key8min)) {
       error(0, "** accum8min add failed **");
     }
-    if (PDC_ERR == PDC_int16_acc_add(pdc, &accum16min, &ed, &key16min)) {
+    if (PDC_ERR == PDC_int16_acc_add(pdc, &accum16min, &pd, &key16min)) {
       error(0, "** accum16min add failed **");
     }
-    if (PDC_ERR == PDC_int32_acc_add(pdc, &accum32min, &ed, &key32min)) {
+    if (PDC_ERR == PDC_int32_acc_add(pdc, &accum32min, &pd, &key32min)) {
       error(0, "** accum32min add failed **");
     }
-    if (PDC_ERR == PDC_int64_acc_add(pdc, &accum64min, &ed, &key64min)) {
+    if (PDC_ERR == PDC_int64_acc_add(pdc, &accum64min, &pd, &key64min)) {
       error(0, "** accum64min add failed **");
     }
 
-    if (PDC_ERR == PDC_uint8_acc_add(pdc, &accum8u, &ed, &key8u)) {
+    if (PDC_ERR == PDC_uint8_acc_add(pdc, &accum8u, &pd, &key8u)) {
       error(0, "** accum8u add failed **");
     }
-    if (PDC_ERR == PDC_uint16_acc_add(pdc, &accum16u, &ed, &key16u)) {
+    if (PDC_ERR == PDC_uint16_acc_add(pdc, &accum16u, &pd, &key16u)) {
       error(0, "** accum16u add failed **");
     }
-    if (PDC_ERR == PDC_uint32_acc_add(pdc, &accum32u, &ed, &key32u)) {
+    if (PDC_ERR == PDC_uint32_acc_add(pdc, &accum32u, &pd, &key32u)) {
       error(0, "** accum32u add failed **");
     }
-    if (PDC_ERR == PDC_uint64_acc_add(pdc, &accum64u, &ed, &key64u)) {
+    if (PDC_ERR == PDC_uint64_acc_add(pdc, &accum64u, &pd, &key64u)) {
       error(0, "** accum64u add failed **");
     }
-    if (PDC_ERR == PDC_uint64_acc_add(pdc, &accum64u20th, &ed, &key64u20th)) {
+    if (PDC_ERR == PDC_uint64_acc_add(pdc, &accum64u20th, &pd, &key64u20th)) {
       error(0, "** accum64u20th add failed **");
     }
   }

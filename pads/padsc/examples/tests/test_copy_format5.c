@@ -3,7 +3,7 @@
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
-  call_ed         ced, cedCpy;
+  call_pd         cpd, cpdCpy;
   call            cdata, cdataCpy;
   PDC_disc_t      mydisc = PDC_default_disc;
   
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
    */
   while (!PDC_IO_at_EOF(pdc)) {
     PDC_error_t res;
-    res= call_read(pdc, 0, &ced, &cdata);
+    res= call_read(pdc, 0, &cpd, &cdata);
 
     if (res == PDC_OK) {
       sfprintf(sfstdout, "Record okay:\t");
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     } else {
       sfprintf(sfstdout, "Record not okay:\t");
       call_copy(pdc, &cdataCpy, &cdata);
-      call_ed_copy(pdc, &cedCpy, &ced);
+      call_pd_copy(pdc, &cpdCpy, &cpd);
     }
     sfprintf(sfstdout, "x = %d\t", cdata.x.x);
     switch (cdata.pn.tag ){

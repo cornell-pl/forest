@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
   PDC_uint64      u64;
   PDC_disc_t      my_disc = PDC_default_disc;
   PDC_base_m      m       = PDC_CheckAndSet;
-  PDC_base_ed     ed;
+  PDC_base_pd     pd;
   size_t          bytes_skipped;
   unsigned long        ultmp;
 
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
   /* use FW read functions */
 
-  if (PDC_OK == PDC_e_int8_FW_read(pdc, &m, 20, &ed, &i8)) {
+  if (PDC_OK == PDC_e_int8_FW_read(pdc, &m, 20, &pd, &i8)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i8);
     if (i8 != 0) {
       error(0, "XXX failure: should be %ld XXX", (long)0);
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int8_FW_read(pdc, &m, 20, &ed, &i8)) {
+  if (PDC_OK == PDC_e_int8_FW_read(pdc, &m, 20, &pd, &i8)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i8);
     if (i8 != PDC_MIN_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT8);
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int8_FW_read(pdc, &m, 20, &ed, &i8)) {
+  if (PDC_OK == PDC_e_int8_FW_read(pdc, &m, 20, &pd, &i8)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i8);
     if (i8 != PDC_MAX_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT8);
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_uint8_FW_read(pdc, &m, 20, &ed, &u8)) {
+  if (PDC_OK == PDC_e_uint8_FW_read(pdc, &m, 20, &pd, &u8)) {
     error(0, "Read ebcdic integer of width 20: %lu", (unsigned long)u8);
     if (u8 != PDC_MAX_UINT8) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT8);
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int16_FW_read(pdc, &m, 20, &ed, &i16)) {
+  if (PDC_OK == PDC_e_int16_FW_read(pdc, &m, 20, &pd, &i16)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i16);
     if (i16 != PDC_MIN_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT16);
@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int16_FW_read(pdc, &m, 20, &ed, &i16)) {
+  if (PDC_OK == PDC_e_int16_FW_read(pdc, &m, 20, &pd, &i16)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i16);
     if (i16 != PDC_MAX_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT16);
@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_uint16_FW_read(pdc, &m, 20, &ed, &u16)) {
+  if (PDC_OK == PDC_e_uint16_FW_read(pdc, &m, 20, &pd, &u16)) {
     error(0, "Read ebcdic integer of width 20: %lu", (unsigned long)u16);
     if (u16 != PDC_MAX_UINT16) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT16);
@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int32_FW_read(pdc, &m, 20, &ed, &i32)) {
+  if (PDC_OK == PDC_e_int32_FW_read(pdc, &m, 20, &pd, &i32)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i32);
     if (i32 != PDC_MIN_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT32);
@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int32_FW_read(pdc, &m, 20, &ed, &i32)) {
+  if (PDC_OK == PDC_e_int32_FW_read(pdc, &m, 20, &pd, &i32)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i32);
     if (i32 != PDC_MAX_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT32);
@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_uint32_FW_read(pdc, &m, 20, &ed, &u32)) {
+  if (PDC_OK == PDC_e_uint32_FW_read(pdc, &m, 20, &pd, &u32)) {
     error(0, "Read ebcdic integer of width 20: %lu", (unsigned long)u32);
     if (u32 != PDC_MAX_UINT32) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT32);
@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int64_FW_read(pdc, &m, 20, &ed, &i64)) {
+  if (PDC_OK == PDC_e_int64_FW_read(pdc, &m, 20, &pd, &i64)) {
     error(0, "Read ebcdic integer of width 20: %lld", (long long)i64);
     if (i64 != PDC_MIN_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MIN_INT64);
@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int64_FW_read(pdc, &m, 20, &ed, &i64)) {
+  if (PDC_OK == PDC_e_int64_FW_read(pdc, &m, 20, &pd, &i64)) {
     error(0, "Read ebcdic integer of width 20: %lld", (long long)i64);
     if (i64 != PDC_MAX_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MAX_INT64);
@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
   } else { return -1; }
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_uint64_FW_read(pdc, &m, 20, &ed, &u64)) {
+  if (PDC_OK == PDC_e_uint64_FW_read(pdc, &m, 20, &pd, &u64)) {
     error(0, "Read ebcdic integer of width 20: %llu", (unsigned long long)u64);
     if (u64 != PDC_MAX_UINT64) {
       error(0, "XXX failure: should be %llu XXX", (unsigned long long)PDC_MAX_UINT64);
@@ -219,7 +219,7 @@ int main(int argc, char** argv) {
   }
 
   /* use variable-width read functions */
-  if (PDC_OK == PDC_e_int8_read(pdc, &m, &ed, &i8)) {
+  if (PDC_OK == PDC_e_int8_read(pdc, &m, &pd, &i8)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i8);
     if (i8 != 0) {
       error(0, "XXX failure: should be %ld XXX", (long)0);
@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int8_read(pdc, &m, &ed, &i8)) {
+  if (PDC_OK == PDC_e_int8_read(pdc, &m, &pd, &i8)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i8);
     if (i8 != PDC_MIN_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT8);
@@ -237,7 +237,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int8_read(pdc, &m, &ed, &i8)) {
+  if (PDC_OK == PDC_e_int8_read(pdc, &m, &pd, &i8)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i8);
     if (i8 != PDC_MAX_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT8);
@@ -246,7 +246,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_uint8_read(pdc, &m, &ed, &u8)) {
+  if (PDC_OK == PDC_e_uint8_read(pdc, &m, &pd, &u8)) {
     error(0, "Read ebcdic integer of width 20: %lu", (unsigned long)u8);
     if (u8 != PDC_MAX_UINT8) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT8);
@@ -255,7 +255,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int16_read(pdc, &m, &ed, &i16)) {
+  if (PDC_OK == PDC_e_int16_read(pdc, &m, &pd, &i16)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i16);
     if (i16 != PDC_MIN_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT16);
@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int16_read(pdc, &m, &ed, &i16)) {
+  if (PDC_OK == PDC_e_int16_read(pdc, &m, &pd, &i16)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i16);
     if (i16 != PDC_MAX_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT16);
@@ -273,7 +273,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_uint16_read(pdc, &m, &ed, &u16)) {
+  if (PDC_OK == PDC_e_uint16_read(pdc, &m, &pd, &u16)) {
     error(0, "Read ebcdic integer of width 20: %lu", (unsigned long)u16);
     if (u16 != PDC_MAX_UINT16) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT16);
@@ -282,7 +282,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int32_read(pdc, &m, &ed, &i32)) {
+  if (PDC_OK == PDC_e_int32_read(pdc, &m, &pd, &i32)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i32);
     if (i32 != PDC_MIN_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT32);
@@ -291,7 +291,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int32_read(pdc, &m, &ed, &i32)) {
+  if (PDC_OK == PDC_e_int32_read(pdc, &m, &pd, &i32)) {
     error(0, "Read ebcdic integer of width 20: %ld", (long)i32);
     if (i32 != PDC_MAX_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT32);
@@ -300,7 +300,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_uint32_read(pdc, &m, &ed, &u32)) {
+  if (PDC_OK == PDC_e_uint32_read(pdc, &m, &pd, &u32)) {
     error(0, "Read ebcdic integer of width 20: %lu", (unsigned long)u32);
     if (u32 != PDC_MAX_UINT32) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT32);
@@ -309,7 +309,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int64_read(pdc, &m, &ed, &i64)) {
+  if (PDC_OK == PDC_e_int64_read(pdc, &m, &pd, &i64)) {
     error(0, "Read ebcdic integer of width 20: %lld", (long long)i64);
     if (i64 != PDC_MIN_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MIN_INT64);
@@ -318,7 +318,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_int64_read(pdc, &m, &ed, &i64)) {
+  if (PDC_OK == PDC_e_int64_read(pdc, &m, &pd, &i64)) {
     error(0, "Read ebcdic integer of width 20: %lld", (long long)i64);
     if (i64 != PDC_MAX_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MAX_INT64);
@@ -327,7 +327,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_e_uint64_read(pdc, &m, &ed, &u64)) {
+  if (PDC_OK == PDC_e_uint64_read(pdc, &m, &pd, &u64)) {
     error(0, "Read ebcdic integer of width 20: %llu", (unsigned long long)u64);
     if (u64 != PDC_MAX_UINT64) {
       error(0, "XXX failure: should be %llu XXX", (unsigned long long)PDC_MAX_UINT64);

@@ -52,9 +52,8 @@ struct
   val PDC_littleEndian = PT.Id "PDC_littleEndian"
   val PDC_bigEndian    = PT.Id "PDC_bigEndian"
 
-
-
   val ERROR_INFO  = PT.Id "PDC_LEV_INFO" 
+  val ERROR_WARN  = PT.Id "PDC_LEV_WARN" 
   val ERROR_ERROR = PT.Id "PDC_LEV_ERR"
   val ERROR_FATAL = PT.Id "PDC_LEV_FATAL"
 
@@ -70,7 +69,7 @@ struct
   val rMMPCT       = P.makeTypedefPCT "RMM_t"
 
   val base_mPCT    = P.makeTypedefPCT "PDC_base_m"
-  val base_edPCT   = P.makeTypedefPCT "PDC_base_ed"
+  val base_pdPCT   = P.makeTypedefPCT "PDC_base_pd"
   val bytePCT      = P.makeTypedefPCT "PDC_byte"
   val bytePtr      = P.ptrPCT(bytePCT)
   val VoidPtr      = P.ptrPCT(P.makeTypedefPCT "Void_t")
@@ -120,12 +119,12 @@ struct
 
   fun userErrorS(pdc:PT.expression, loc:PT.expression, errCode:PT.expression, 
 		 whatFunction: string, format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [pdc, ERROR_INFO, loc, errCode, 
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [pdc, ERROR_WARN, loc, errCode, 
 					      mkFName whatFunction, format]@args))
 
-  fun userWarnS(pdc:PT.expression, loc:PT.expression,
+  fun userInfoS(pdc:PT.expression, loc:PT.expression,
                 whatFunction: string,  format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [pdc, ERROR_ERROR, loc, PDC_NO_ERROR, 
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [pdc, ERROR_INFO, loc, PDC_NO_ERROR, 
 					      mkFName whatFunction , format]@args))
 
   fun userFatalErrorS(pdc:PT.expression, loc:PT.expression, whatFunction: string,
@@ -318,16 +317,16 @@ struct
 
   fun readFunX(n:string, pdc:PT.expression, loc:PT.expression, 
 	                 optArgs: PT.expression list,
-			 ed:PT.expression, 
+			 pd:PT.expression, 
 	                 res:PT.expression) = 
-      PT.Call(PT.Id n, [pdc, loc] @ optArgs @[ed,res])
+      PT.Call(PT.Id n, [pdc, loc] @ optArgs @[pd,res])
 
   fun readFunChkX(expectedValX : PT.expression,
 		  n:string, pdc:PT.expression, 
 		  loc:PT.expression, optArgs:PT.expression list,
-		  ed:PT.expression, 
+		  pd:PT.expression, 
 	          res:PT.expression) = 
-      P.eqX(expectedValX, readFunX(n,pdc,loc,optArgs,ed,res))
+      P.eqX(expectedValX, readFunX(n,pdc,loc,optArgs,pd,res))
 
   fun scanFunX(n:string, pdc:PT.expression, c : PT.expression, s : PT.expression,eatLit:PT.expression,
 	                res:PT.expression, offset:PT.expression) = 

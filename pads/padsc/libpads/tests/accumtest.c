@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   PDC_disc_t*        disc = 0;
   PDC_int32_acc      accum;
   PDC_int32          key1;
-  PDC_base_ed        ed = {0};
+  PDC_base_pd        pd = {0};
 
   if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
     error(2, "*** PDC_open failed ***");
@@ -42,28 +42,28 @@ int main(int argc, char** argv) {
   }
 
   error(0, "\n\nadd vals to the accum\n");
-  ed.errCode = PDC_NO_ERR;
+  pd.errCode = PDC_NO_ERR;
   for (i = 0; i < 100000; i++) {
     for (key1 = -20; key1 < 100; key1 += 10) {
-      if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {
+      if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &pd, &key1)) {
 	error(0, "** accum_add failed **");
       }
       if (key1 <= 10) {
-	if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {
+	if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &pd, &key1)) {
 	  error(0, "** accum_add failed **");
 	}
       }
       if (key1 <= 50) {
-	if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {
+	if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &pd, &key1)) {
 	  error(0, "** accum_add failed **");
 	}
       }
     }
   }
-  ed.errCode = PDC_INVALID_A_NUM;
+  pd.errCode = PDC_INVALID_A_NUM;
   for (i = 0; i < 100000; i++) {
     for (key1 = -100; key1 < -40; key1 += 10) {
-      if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {
+      if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &pd, &key1)) {
 	error(0, "** accum_add failed **");
       }
     }
@@ -75,28 +75,28 @@ int main(int argc, char** argv) {
 
 
   error(0, "\n\nadd MORE vals to the accum\n");
-  ed.errCode = PDC_NO_ERR;
+  pd.errCode = PDC_NO_ERR;
   for (i = 0; i < 100000; i++) {
     for (key1 = -20; key1 < 100; key1 += 10) {
-      if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {
+      if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &pd, &key1)) {
 	error(0, "** accum_add failed **");
       }
       if (key1 <= 10) {
-	if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {
+	if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &pd, &key1)) {
 	  error(0, "** accum_add failed **");
 	}
       }
       if (key1 <= 50) {
-	if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {
+	if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &pd, &key1)) {
 	  error(0, "** accum_add failed **");
 	}
       }
     }
   }
-  ed.errCode = PDC_INVALID_A_NUM;
+  pd.errCode = PDC_INVALID_A_NUM;
   for (i = 0; i < 100000; i++) {
     for (key1 = -100; key1 < -40; key1 += 10) {
-      if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {
+      if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &pd, &key1)) {
 	error(0, "** accum_add failed **");
       }
     }

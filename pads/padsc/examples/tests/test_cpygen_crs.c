@@ -12,10 +12,10 @@ int main(int argc, char** argv) {
   PDC_disc_t         my_disc = PDC_default_disc;
 
   cpy_crshdr         hdr_rep;
-  cpy_crshdr_ed      hdr_ed;
+  cpy_crshdr_pd      hdr_pd;
 
   det_or_tlr         rep;
-  det_or_tlr_ed      ed;
+  det_or_tlr_pd      pd;
   cpy_crsdet_acc     acc;
 
   char              *fileName;
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   if (PDC_ERR == cpy_crshdr_init(pdc, &hdr_rep)) {
     error(2|ERROR_FATAL, "*** cpy_crshdr representation initialization failed ***");
   }
-  if (PDC_ERR == cpy_crshdr_ed_init(pdc, &hdr_ed)) {
+  if (PDC_ERR == cpy_crshdr_pd_init(pdc, &hdr_pd)) {
     error(2|ERROR_FATAL, "*** cpy_crshdr error description initialization failed ***");
   }
 
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
   if (PDC_ERR == det_or_tlr_init(pdc, &rep)) {
     error(2|ERROR_FATAL, "*** det_or_tlr representation initialization failed ***");
   }
-  if (PDC_ERR == det_or_tlr_ed_init(pdc, &ed)) {
+  if (PDC_ERR == det_or_tlr_pd_init(pdc, &pd)) {
     error(2|ERROR_FATAL, "*** det_or_tlr error description initialization failed ***");
   }
 
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
   /*
    * Try to read the header
    */
-  if (PDC_OK != cpy_crshdr_read(pdc, 0, &hdr_ed, &hdr_rep)) {
+  if (PDC_OK != cpy_crshdr_read(pdc, 0, &hdr_pd, &hdr_rep)) {
     error(2|ERROR_FATAL, "crshdr_read returned error");
   }
   error(0, "HEADER INFO:");
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
-    e = det_or_tlr_read(pdc, 0, &ed, &rep);
+    e = det_or_tlr_read(pdc, 0, &pd, &rep);
     if (rep.tag == is_tlr) break;
     num_recs++;
     if (e == PDC_ERR) {
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
       print_cpy_crsdet(pdc, &(rep.val.is_det));
     }
     /* accum both good and bad vals */
-    if (PDC_ERR == cpy_crsdet_acc_add(pdc, &acc, &(ed.val.is_det), &(rep.val.is_det))) {
+    if (PDC_ERR == cpy_crsdet_acc_add(pdc, &acc, &(pd.val.is_det), &(rep.val.is_det))) {
       error(2|ERROR_FATAL, "*** accumulator add failed ***");
     }
   }
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
     error(0, "** representation cleanup failed **");
   }
 
-  if (PDC_ERR == det_or_tlr_ed_cleanup(pdc, &ed)) {
+  if (PDC_ERR == det_or_tlr_pd_cleanup(pdc, &pd)) {
     error(0, "** error descriptor cleanup failed **");
   }
 

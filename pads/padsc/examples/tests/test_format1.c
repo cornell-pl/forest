@@ -7,7 +7,7 @@ int main(int argc, char** argv) {
   PDC_disc_t      mydisc = PDC_default_disc;
   test            f1data;
   test_acc        accum;
-  test_ed         ed = {0};
+  test_pd         pd = {0};
   test_m          m;
 
   mydisc.flags |= PDC_WSPACE_OK;
@@ -35,15 +35,15 @@ int main(int argc, char** argv) {
    */
   while (!PDC_IO_at_EOF(pdc)) {
     error(0, "\ncalling test_read");
-    if (PDC_OK == test_read(pdc, &m, &ed, &f1data)) {
+    if (PDC_OK == test_read(pdc, &m, &pd, &f1data)) {
       /* do something with the data */
       error(2, "test_read returned: id %d  ts %d", f1data.id, f1data.ts);
-      if (PDC_ERR == test_acc_add(pdc, &accum, &ed, &f1data)) {
+      if (PDC_ERR == test_acc_add(pdc, &accum, &pd, &f1data)) {
 	error(0, "** accum_add failed **");
       }
     } else {
       error(2, "test_read returned: error");
-      if (PDC_ERR == test_acc_add(pdc, &accum, &ed, &f1data)) {
+      if (PDC_ERR == test_acc_add(pdc, &accum, &pd, &f1data)) {
 	error(0, "** accum_add failed **");
       }
     }

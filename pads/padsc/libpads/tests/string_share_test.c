@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
   PDC_t*          pdc;
   PDC_IO_disc_t*  io_disc;
   PDC_base_m      m = PDC_CheckAndSet;
-  PDC_base_ed     ed;
+  PDC_base_pd     pd;
   size_t          bytes_skipped;
   unsigned long   ultmp;
   PDC_regexp_t    *my_regexp;
@@ -95,25 +95,25 @@ int main(int argc, char** argv) {
       break;
     }
     /* try to read line with 2 strings term by vbar 1 string term by EOR */
-    if (PDC_ERR == PDC_a_string_read(pdc, &m, '|', &ed, str1)) {
+    if (PDC_ERR == PDC_a_string_read(pdc, &m, '|', &pd, str1)) {
       goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(str1), str1->len);
     }
-    if (PDC_ERR == PDC_a_char_lit_read(pdc, &m, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
+    if (PDC_ERR == PDC_a_char_lit_read(pdc, &m, &pd, '|')) {
+      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_a_string_read(pdc, &m, '|', &ed, str2)) {
+    if (PDC_ERR == PDC_a_string_read(pdc, &m, '|', &pd, str2)) {
       goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(str2), str2->len);
     }
-    if (PDC_ERR == PDC_a_char_lit_read(pdc, &m, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
+    if (PDC_ERR == PDC_a_char_lit_read(pdc, &m, &pd, '|')) {
+      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_a_string_CSE_read(pdc, &m, my_regexp, &ed, str3)) {
+    if (PDC_ERR == PDC_a_string_CSE_read(pdc, &m, my_regexp, &pd, str3)) {
       break;
     } else {
       error(0, "Read string term by EOR(newline) or X : %s (length %d)", PDC_fmt_str(str3), str3->len);

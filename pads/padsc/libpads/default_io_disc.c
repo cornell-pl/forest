@@ -1227,7 +1227,7 @@ typedef struct PDC_vlrec_noseek_data_s {
   size_t          dbuf_alloc;  /* current size of dbuf */
   size_t          gc_point;    /* always == (dbuf_alloc * PDC_VLREC_NOSEEK_GC_PCNT)/100 */
   PDC_uint32_acc  acc;         /* used to accumulate record lengths */
-  PDC_base_ed     ed;          /* used with acc */
+  PDC_base_pd     pd;          /* used with acc */
   size_t          avg_rlen;    /* latest computed record length avg */
   size_t          blk_expect;  /* total bytes in current block (expected) -- only used if blocked is set */
   size_t          blk_seen;    /* bytes read in current block -- only used if blocked is set */
@@ -1469,7 +1469,7 @@ PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   data->dbuf_end += 4;
   if (data->rlen_hint == 0) {
     PDC_uint32 ui32 = record_len + 5;
-    PDC_uint32_acc_add(pdc, &(data->acc), &(data->ed), &ui32);
+    PDC_uint32_acc_add(pdc, &(data->acc), &(data->pd), &ui32);
     if (data->num % 10 == 0) {
       data->avg_rlen = PDC_uint32_acc_ravg(pdc, &(data->acc));
       /*  PDC_WARN1(pdc->disc, "XXX_REMOVE changed avg_rlen to %ld", (long)data->avg_rlen); */
@@ -1702,7 +1702,7 @@ PDC_vlrec_noseek_make(int blocked, size_t avg_rlen_hint)
   io_disc->blk_cbytes   = 0;
   io_disc->data         = data;
 
-  /* data->ed starts zeroed due to vmnewof */
+  /* data->pd starts zeroed due to vmnewof */
 
   return io_disc;
 

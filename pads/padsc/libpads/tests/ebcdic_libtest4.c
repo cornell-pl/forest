@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   PDC_IO_disc_t*  io_disc;
   PDC_disc_t      my_disc = PDC_default_disc;
   PDC_base_m      m       = PDC_CheckAndSet;
-  PDC_base_ed     ed;
+  PDC_base_pd     pd;
   size_t          bytes_skipped;
   unsigned long   ultmp;
   PDC_regexp_t    *my_regexp;
@@ -56,25 +56,25 @@ int main(int argc, char** argv) {
       break;
     }
     /* try to read line with 2 strings term by vbar 1 string term by EOR */
-    if (PDC_ERR == PDC_e_string_read(pdc, &m, '|', &ed, &s)) {
+    if (PDC_ERR == PDC_e_string_read(pdc, &m, '|', &pd, &s)) {
       goto find_EOR1;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
     }
-    if (PDC_ERR == PDC_e_char_lit_read(pdc, &m, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
+    if (PDC_ERR == PDC_e_char_lit_read(pdc, &m, &pd, '|')) {
+      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR1;
     }
-    if (PDC_ERR == PDC_e_string_read(pdc, &m, '|', &ed, &s)) {
+    if (PDC_ERR == PDC_e_string_read(pdc, &m, '|', &pd, &s)) {
       goto find_EOR1;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
     }
-    if (PDC_ERR == PDC_e_char_lit_read(pdc, &m, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
+    if (PDC_ERR == PDC_e_char_lit_read(pdc, &m, &pd, '|')) {
+      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR1;
     }
-    if (PDC_ERR == PDC_e_string_CSE_read(pdc, &m, my_regexp, &ed, &s)) {
+    if (PDC_ERR == PDC_e_string_CSE_read(pdc, &m, my_regexp, &pd, &s)) {
       break;
     } else {
       error(0, "Read string term by EOR or X : %s (length %d)", PDC_fmt_str(&s), s.len);
@@ -92,25 +92,25 @@ int main(int argc, char** argv) {
     }
 
     /* try to read line with 2 strings term by vbar 1 string term by EOR */
-    if (PDC_ERR == PDC_e_string_FW_read(pdc, &m, 4, &ed, &s)) {
+    if (PDC_ERR == PDC_e_string_FW_read(pdc, &m, 4, &pd, &s)) {
       goto find_EOR2;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
     }
-    if (PDC_ERR == PDC_e_char_lit_read(pdc, &m, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
+    if (PDC_ERR == PDC_e_char_lit_read(pdc, &m, &pd, '|')) {
+      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR2;
     }
-    if (PDC_ERR == PDC_e_string_read(pdc, &m, '|', &ed, &s)) {
+    if (PDC_ERR == PDC_e_string_read(pdc, &m, '|', &pd, &s)) {
       goto find_EOR2;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
     }
-    if (PDC_ERR == PDC_e_char_lit_read(pdc, &m, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
+    if (PDC_ERR == PDC_e_char_lit_read(pdc, &m, &pd, '|')) {
+      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR2;
     }
-    if (PDC_ERR == PDC_e_string_SE_read(pdc, &m, "[X]|EOR", &ed, &s)) {
+    if (PDC_ERR == PDC_e_string_SE_read(pdc, &m, "[X]|EOR", &pd, &s)) {
       break;
     } else {
       error(0, "Read string term by EOR or X : %s (length %d)", PDC_fmt_str(&s), s.len);

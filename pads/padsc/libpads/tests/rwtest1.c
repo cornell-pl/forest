@@ -32,7 +32,7 @@
 
 #define READ1(int_type, ivar, expect, fmt) do { \
   CHECK_EOF; \
-  if (PDC_ERR == PDC_a_ ## int_type ## _read(pdc, &m, &ed, &ivar)) { \
+  if (PDC_ERR == PDC_a_ ## int_type ## _read(pdc, &m, &pd, &ivar)) { \
     error(2|ERROR_FATAL, "Failed to read " PDCI_MacroArg2String(int_type)); \
   } \
   if (ivar != expect) { \
@@ -42,7 +42,7 @@
 } while(0)
 
 #define WRITE1(int_type, ivar) do { \
-  if (-1 == PDC_a_ ## int_type ## _write2io(pdc, io, &ed, &ivar)) { \
+  if (-1 == PDC_a_ ## int_type ## _write2io(pdc, io, &pd, &ivar)) { \
     error(2|ERROR_FATAL, "Failed to write " PDCI_MacroArg2String(int_type)); \
   } \
   if (-1 == sfprintf(io, "\n")) { \
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
   PDC_uint32      u32;
   PDC_uint64      u64;
   PDC_base_m      m     = PDC_CheckAndSet;
-  PDC_base_ed     ed;
+  PDC_base_pd     pd;
   PDC_disc_t      my_disc = PDC_default_disc;
   size_t          bytes_skipped;
   Sfio_t         *io;

@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   PDC_ufpoint64   uf64;
   PDC_disc_t      my_disc = PDC_default_disc;
   PDC_base_m      m       = PDC_CheckAndSet;
-  PDC_base_ed     ed;
+  PDC_base_pd     pd;
   size_t          bytes_skipped;
   unsigned long   ultmp;
   const char     *argv1;
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  if (PDC_OK == PDC_bcd_fpoint8_read(pdc, &m, 3, 0, &ed, &f8)) {
+  if (PDC_OK == PDC_bcd_fpoint8_read(pdc, &m, 3, 0, &pd, &f8)) {
     error(0, "Read bcd fpoint: num %ld denom %lu", (long)f8.num, (unsigned long)f8.denom);
     if (f8.num != 0) {
       error(0, "XXX failure: should be %ld XXX", (long)0);
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_fpoint8_read(pdc, &m, 3, 1, &ed, &f8)) {
+  if (PDC_OK == PDC_bcd_fpoint8_read(pdc, &m, 3, 1, &pd, &f8)) {
     error(0, "Read bcd fpoint: num %ld denom %lu", (long)f8.num, (unsigned long)f8.denom);
     if (f8.num != PDC_MIN_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT8);
@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_fpoint8_read(pdc, &m, 3, 2, &ed, &f8)) {
+  if (PDC_OK == PDC_bcd_fpoint8_read(pdc, &m, 3, 2, &pd, &f8)) {
     error(0, "Read bcd fpoint: num %ld denom %lu", (long)f8.num, (unsigned long)f8.denom);
     if (f8.num != PDC_MAX_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT8);
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_ufpoint8_read(pdc, &m, 3, 2, &ed, &uf8)) {
+  if (PDC_OK == PDC_bcd_ufpoint8_read(pdc, &m, 3, 2, &pd, &uf8)) {
     error(0, "Read bcd ufpoint: num %lu denom %lu", (unsigned long)uf8.num, (unsigned long)uf8.denom);
     if (uf8.num != PDC_MAX_UINT8) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT8);
@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_fpoint16_read(pdc, &m, 5, 4, &ed, &f16)) {
+  if (PDC_OK == PDC_bcd_fpoint16_read(pdc, &m, 5, 4, &pd, &f16)) {
     error(0, "Read bcd fpoint: num %ld denom %lu", (long)f16.num, (unsigned long)f16.denom);
     if (f16.num != PDC_MIN_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT16);
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_fpoint16_read(pdc, &m, 5, 4, &ed, &f16)) {
+  if (PDC_OK == PDC_bcd_fpoint16_read(pdc, &m, 5, 4, &pd, &f16)) {
     error(0, "Read bcd fpoint: num %ld denom %lu", (long)f16.num, (unsigned long)f16.denom);
     if (f16.num != PDC_MAX_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT16);
@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_ufpoint16_read(pdc, &m, 5, 4, &ed, &uf16)) {
+  if (PDC_OK == PDC_bcd_ufpoint16_read(pdc, &m, 5, 4, &pd, &uf16)) {
     error(0, "Read bcd ufpoint: num %lu denom %lu", (unsigned long)uf16.num, (unsigned long)uf16.denom);
     if (uf16.num != PDC_MAX_UINT16) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT16);
@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_fpoint32_read(pdc, &m, 11, 9, &ed, &f32)) {
+  if (PDC_OK == PDC_bcd_fpoint32_read(pdc, &m, 11, 9, &pd, &f32)) {
     error(0, "Read bcd fpoint: num %ld denom %lu", (long)f32.num, (unsigned long)f32.denom);
     if (f32.num != PDC_MIN_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT32);
@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_fpoint32_read(pdc, &m, 10, 9, &ed, &f32)) {
+  if (PDC_OK == PDC_bcd_fpoint32_read(pdc, &m, 10, 9, &pd, &f32)) {
     error(0, "Read bcd fpoint: num %ld denom %lu", (long)f32.num, (unsigned long)f32.denom);
     if (f32.num != PDC_MAX_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT32);
@@ -204,7 +204,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_ufpoint32_read(pdc, &m, 10, 9, &ed, &uf32)) {
+  if (PDC_OK == PDC_bcd_ufpoint32_read(pdc, &m, 10, 9, &pd, &uf32)) {
     error(0, "Read bcd ufpoint: num %lu denom %lu", (unsigned long)uf32.num, (unsigned long)uf32.denom);
     if (uf32.num != PDC_MAX_UINT32) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT32);
@@ -217,7 +217,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_fpoint64_read(pdc, &m, 19, 19, &ed, &f64)) {
+  if (PDC_OK == PDC_bcd_fpoint64_read(pdc, &m, 19, 19, &pd, &f64)) {
     error(0, "Read bcd fpoint: num %lld denom %llu", (long long)f64.num, (unsigned long long)f64.denom);
     if (f64.num != PDC_MIN_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MIN_INT64);
@@ -230,7 +230,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_fpoint64_read(pdc, &m, 19, 19, &ed, &f64)) {
+  if (PDC_OK == PDC_bcd_fpoint64_read(pdc, &m, 19, 19, &pd, &f64)) {
     error(0, "Read bcd fpoint: num %lld denom %llu", (long long)f64.num, (unsigned long long)f64.denom);
     if (f64.num != PDC_MAX_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MAX_INT64);
@@ -243,7 +243,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_bcd_ufpoint64_read(pdc, &m, 20, 19, &ed, &uf64)) {
+  if (PDC_OK == PDC_bcd_ufpoint64_read(pdc, &m, 20, 19, &pd, &uf64)) {
     error(0, "Read bcd ufpoint: num %llu denom %llu", (unsigned long long)uf64.num, (unsigned long long)uf64.denom);
     if (uf64.num != PDC_MAX_UINT64) {
       error(0, "XXX failure: should be %llu XXX", (unsigned long long)PDC_MAX_UINT64);

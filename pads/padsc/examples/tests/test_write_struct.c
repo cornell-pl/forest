@@ -4,10 +4,10 @@
 #define FILENAME  "../../data/ex_data.struct_write" 
 
 
-PDC_error_t my_uint32_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **type_args) {
-  PDC_base_ed *ed  = (PDC_base_ed*)ed_void;
+PDC_error_t my_uint32_inv_val(PDC_t *pdc, void *pd_void, void *val_void, void **type_args) {
+  PDC_base_pd *pd  = (PDC_base_pd*)pd_void;
   PDC_uint32  *val = (PDC_uint32*)val_void;
-  if (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
+  if (pd->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
     (*val) = 77777;
   } else {
     (*val) = 99999;
@@ -18,7 +18,7 @@ PDC_error_t my_uint32_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **
 int main(int argc, char** argv) {
   PDC_t*         pdc;
   testtwo        f1data;
-  testtwo_ed     ed = {0};
+  testtwo_pd     pd = {0};
   testtwo_m      m;
   const char    *fname = FILENAME;
 
@@ -55,13 +55,13 @@ int main(int argc, char** argv) {
    */
   while (!PDC_IO_at_EOF(pdc)) {
     error(0, "\ncalling testtwo_read");
-    if (PDC_OK == testtwo_read(pdc, &m, &ed, &f1data)) {
+    if (PDC_OK == testtwo_read(pdc, &m, &pd, &f1data)) {
       /* do something with the data */
       error(2, "testtwo_read returned: id %d  ts %d  f %d ", f1data.header.id, f1data.header.ts, f1data.f);
-      testtwo_write2io(pdc, sfstdout, &ed, &f1data);
+      testtwo_write2io(pdc, sfstdout, &pd, &f1data);
     } else {
       error(2, "testtwo_read returned: error");
-      testtwo_write2io(pdc, sfstdout, &ed, &f1data);
+      testtwo_write2io(pdc, sfstdout, &pd, &f1data);
     }
   }
   error(0, "\nFound eof");

@@ -7,10 +7,10 @@ int main(int argc, char** argv) {
   PDC_disc_t               *disc;
   PDC_IO_disc_t            *io_disc;
   out_sum_header           header;
-  out_sum_header_ed        header_ed;
+  out_sum_header_pd        header_pd;
   out_sum_header_m         header_m = { 0 };
   out_sum_data_line        dline;
-  out_sum_data_line_ed     dline_ed;
+  out_sum_data_line_pd     dline_pd;
   out_sum_data_line_m      dline_m = { 0 };
   char                    *fname = "../../data/ex_data.dibbler1";
   int                      commit;
@@ -34,17 +34,17 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  /* INIT all data and ed types */
+  /* INIT all data and pd types */
   out_sum_header_init(pdc, &header);
-  out_sum_header_ed_init(pdc, &header_ed);
+  out_sum_header_pd_init(pdc, &header_pd);
   out_sum_data_line_init(pdc, &dline);
-  out_sum_data_line_ed_init(pdc, &dline_ed);
+  out_sum_data_line_pd_init(pdc, &dline_pd);
 
   /*
    * Try to read header
    */
 
-  if (PDC_OK == out_sum_header_read(pdc, &header_m, &header_ed, &header)) {
+  if (PDC_OK == out_sum_header_read(pdc, &header_m, &header_pd, &header)) {
     error(0, "reading header returned: OK");
   } else {
     error(2, "reading header returned: error");
@@ -59,11 +59,11 @@ int main(int argc, char** argv) {
   while (!PDC_IO_at_EOF(pdc)) {
     PDC_IO_checkpoint(pdc, 0);
     commit = 1;
-    out_sum_data_line_read(pdc, &dline_m, &dline_ed, &dline);
+    out_sum_data_line_read(pdc, &dline_m, &dline_pd, &dline);
     /* Fields that contribute to the query expression must be error free, 
        even though entire order need not be error free.
        What does it mean if you say nothing about errors at all */
-    if (dline_ed.billing_tn.nerr == 0) {
+    if (dline_pd.billing_tn.nerr == 0) {
       if (dline.billing_tn.tag == yesPN) { /* should be dib_pn_vbar_yesPN ??? */
 	if (dline.billing_tn.val.yesPN.val == TEST_VAL) {
 	  /* could call a copy method here and add to list */

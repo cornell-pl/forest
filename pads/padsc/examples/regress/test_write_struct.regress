@@ -10,7 +10,7 @@ calling testtwo_read
 testtwo_read returned: id 3  ts 33  f 33 
 3|33|33
 calling testtwo_read
-Error [in testtwo_read]: record 4 char 6 : User constraint on field f violated.
+warning: Error [in testtwo_read]: record 4 char 6 : User constraint on field f violated.
 [record 4]3|33|>>>10<<<
 testtwo_read returned: error
 3|33|77777

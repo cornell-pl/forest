@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
   PDC_t*          pdc;
   PDC_IO_disc_t*  io_disc;
   PDC_base_m      m = PDC_CheckAndSet;
-  PDC_base_ed     ed;
+  PDC_base_pd     pd;
   size_t          bytes_skipped;
   unsigned long   ultmp;
   PDC_uint32      tm;
@@ -35,19 +35,19 @@ int main(int argc, char** argv) {
       break;
     }
     /* try to read line with 1 date term by vbar, 1 date term by EOR */
-    if (PDC_ERR == PDC_a_date_read(pdc, &m, '|', &ed, &tm)) {
-      if (ed.errCode != PDC_INVALID_DATE) {
+    if (PDC_ERR == PDC_a_date_read(pdc, &m, '|', &pd, &tm)) {
+      if (pd.errCode != PDC_INVALID_DATE) {
 	goto find_EOR;
       }
     } else {
       error(0, "Read date term by vbar: %s (secs = %lu)", fmttime("%K", (time_t)tm), (unsigned long)tm);
     }
-    if (PDC_ERR == PDC_a_char_lit_read(pdc, &m, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
+    if (PDC_ERR == PDC_a_char_lit_read(pdc, &m, &pd, '|')) {
+      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_a_date_read(pdc, &m, 0, &ed, &tm)) {
-      if (ed.errCode != PDC_INVALID_DATE) {
+    if (PDC_ERR == PDC_a_date_read(pdc, &m, 0, &pd, &tm)) {
+      if (pd.errCode != PDC_INVALID_DATE) {
 	goto find_EOR;
       }
     } else {

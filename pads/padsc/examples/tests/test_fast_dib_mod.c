@@ -14,9 +14,9 @@ int main(int argc, char** argv) {
   PDC_IO_disc_t            *io_disc;
   out_sum_header           header;
   out_sum_fixed1           f1;
-  out_sum_fixed1_ed        f1_ed;
+  out_sum_fixed1_pd        f1_pd;
   event                    ev;
-  event_ed                 ev_ed;
+  event_pd                 ev_pd;
   size_t                   bytes_skipped;
   char                     *fname          = "../../data/ex_data.dibbler1";
   behave                   b               = count_first21;
@@ -85,8 +85,8 @@ int main(int argc, char** argv) {
   switch (b) {
     case count_first21: {
       while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_fixed1_read(pdc, &f1_m, &f1_ed, &f1)) {
-	  if (PDC_OK == event_read(pdc, 0, &ev_ed, &ev)) {
+	if (PDC_OK == out_sum_fixed1_read(pdc, &f1_m, &f1_pd, &f1)) {
+	  if (PDC_OK == event_read(pdc, 0, &ev_pd, &ev)) {
 	    good++;
 	    if (PDC_string_eq_Cstr(&(ev.state), "21")) {
 	      good_21++;

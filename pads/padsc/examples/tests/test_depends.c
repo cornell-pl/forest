@@ -4,11 +4,11 @@
 #define PADS_TY_INIT line_init
 #define PADS_TY_READ line_read
 #define PADS_TY_CLEANUP line_cleanup
-#define PADS_TY_ED line_ed
+#define PADS_TY_PD line_pd
 #define PADS_TY_M line_m
 #define PADS_TY_MASKFILL line_maskFill
-#define PADS_TY_ED_INIT line_ed_init
-#define PADS_TY_ED_CLEANUP line_ed_cleanup
+#define PADS_TY_PD_INIT line_pd_init
+#define PADS_TY_PD_CLEANUP line_pd_cleanup
 #define PADS_TY_ACC line_acc
 #define PADS_TY_ACC_INIT line_acc_init
 #define PADS_TY_ACC_ADD line_acc_add
@@ -18,7 +18,7 @@
 int main(int argc, char** argv) {
   PDC_t           *pdc;
   PADS_TY         rep;
-  PADS_TY_ED      ed;
+  PADS_TY_PD      pd;
   PADS_TY_M       m;
   PADS_TY_ACC     acc;
   char            *fileName;
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
-  if (PDC_ERR == PADS_TY_ED_INIT(pdc, &ed)) {
+  if (PDC_ERR == PADS_TY_PD_INIT(pdc, &pd)) {
     error(2, "*** error description initialization failed ***");
     exit(-1);
   }
@@ -63,11 +63,11 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK != PADS_TY_READ(pdc, &m, &ed, &rep)) {
+    if (PDC_OK != PADS_TY_READ(pdc, &m, &pd, &rep)) {
       error(2, "read returned error");
     }
     /* accum both good and bad vals */
-    if (PDC_ERR == PADS_TY_ACC_ADD(pdc, &acc, &ed, &rep)) {
+    if (PDC_ERR == PADS_TY_ACC_ADD(pdc, &acc, &pd, &rep)) {
       error(2, "*** accumulator add failed ***");
       exit(-1);
     }	
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
     error(0, "** representation cleanup failed **");
   }
 
-  if (PDC_ERR == PADS_TY_ED_CLEANUP(pdc, &ed)) {
+  if (PDC_ERR == PADS_TY_PD_CLEANUP(pdc, &pd)) {
     error(0, "** error descriptor cleanup failed **");
   }
 

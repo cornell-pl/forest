@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   PDC_t*             pdc;
   PDC_string_acc     accum;
   PDC_string         key1;
-  PDC_base_ed        ed = {0};
+  PDC_base_pd        pd = {0};
 
   if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
     error(2, "*** PDC_open failed ***");
@@ -32,31 +32,31 @@ int main(int argc, char** argv) {
   }
 
   error(0, "\nadd vals to the accum");
-  ed.errCode = PDC_NO_ERR;
+  pd.errCode = PDC_NO_ERR;
   for (i = 0; i < 100000; i++) {
     nm = (char*)names[i % 10];
     key1.str = nm;
     key1.len = strlen(nm);
-    if (PDC_ERR == PDC_string_acc_add(pdc, &accum, &ed, &key1)) {
+    if (PDC_ERR == PDC_string_acc_add(pdc, &accum, &pd, &key1)) {
       error(0, "** accum_add failed **");
     }
     if (i % 10 < 3) {
-      if (PDC_ERR == PDC_string_acc_add(pdc, &accum, &ed, &key1)) {
+      if (PDC_ERR == PDC_string_acc_add(pdc, &accum, &pd, &key1)) {
 	error(0, "** accum_add failed **");
       }
     }
     if (i % 10 < 7) {
-      if (PDC_ERR == PDC_string_acc_add(pdc, &accum, &ed, &key1)) {
+      if (PDC_ERR == PDC_string_acc_add(pdc, &accum, &pd, &key1)) {
 	error(0, "** accum_add failed **");
       }
     }
   }
-  ed.errCode = PDC_CHAR_LIT_NOT_FOUND; /* typical error for string term by char lit */
+  pd.errCode = PDC_CHAR_LIT_NOT_FOUND; /* typical error for string term by char lit */
   for (i = 0; i < 100000; i++) {
     nm = (char*)names[i % 10];
     key1.str = nm;
     key1.len = strlen(nm);
-    if (PDC_ERR == PDC_string_acc_add(pdc, &accum, &ed, &key1)) {
+    if (PDC_ERR == PDC_string_acc_add(pdc, &accum, &pd, &key1)) {
       error(0, "** accum_add failed **");
     }
   }

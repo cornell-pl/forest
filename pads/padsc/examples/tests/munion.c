@@ -5,7 +5,7 @@
  */
 #define PADS_TY str2
 #define PADS_TY_READ str2_read
-#define PADS_TY_ED str2_ed
+#define PADS_TY_PD str2_pd
 #define PADS_TY_M str2_m
 #define PADS_TY_M_INIT str2_m_init
 #define PADS_TY_ACC str2_acc
@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   PDC_t*             pdc;
   PADS_TY            rep;
   PADS_TY_ACC        accum;
-  PADS_TY_ED         ed = {0};
+  PADS_TY_PD         pd = {0};
   PADS_TY_M          m;
   char*              fileName = 0;
 
@@ -58,13 +58,13 @@ int main(int argc, char** argv) {
    */
   while (!PDC_IO_at_EOF(pdc)) {
     error(0, "\nCalling read function");
-    if (PDC_OK == PADS_TY_READ(pdc, &m, &ed, &rep)) {
-      if (PDC_ERR == PADS_TY_ACC_ADD(pdc, &accum, &ed, &rep)) {
+    if (PDC_OK == PADS_TY_READ(pdc, &m, &pd, &rep)) {
+      if (PDC_ERR == PADS_TY_ACC_ADD(pdc, &accum, &pd, &rep)) {
 	error(0, "** accum_add failed **");
       }
     } else {
       error(2, "Read returned error");
-      if (PDC_ERR == PADS_TY_ACC_ADD(pdc, &accum, &ed, &rep)) {
+      if (PDC_ERR == PADS_TY_ACC_ADD(pdc, &accum, &pd, &rep)) {
 	error(0, "** accum_add failed **");
       }
     }

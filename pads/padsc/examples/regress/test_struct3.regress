@@ -1,18 +1,18 @@
 Data file = standard in
 warning: Installing default IO discipline : newline-terminated records
-Error [in line_read]: record 3 char 12 : User constraint on field a violated.
+warning: Error [in line_read]: record 3 char 12 : User constraint on field a violated.
 [record 3]23|9|24|12.>>>5<<< - 2 6
-Error [in line_read]: record 3 char 16 : User constraint on field t violated.
+warning: Error [in line_read]: record 3 char 16 : User constraint on field t violated.
 [record 3]23|9|24|12.5 - >>>2<<< 6
 read returned error
 warning: Error [in PDC_a_int32_read]: record 4 char 15 : spaces not allowed in a_int field unless flag PDC_WSPACE_OK is set
 [record 4]12|23|9|24|12.>>> <<<ksf 1 1
-Error [in line_read]: record 4 char 20 : User constraint on field t violated.
+warning: Error [in line_read]: record 4 char 20 : User constraint on field t violated.
 [record 4]12|23|9|24|12. ksf >>>1<<< 1
-Error [in line_read]: record 4 char 1 : Post condition for pstruct line violated.
+warning: Error [in line_read]: record 4 char 1 : Post condition for pstruct line violated.
 [record 4]>>>12|23|9|24|12. ksf 1 1<<<
 read returned error
-Error [in line_read]: record 5 char 1 : Post condition for pstruct line violated.
+warning: Error [in line_read]: record 5 char 1 : Post condition for pstruct line violated.
 [record 5]>>>3|4.2 bobg 2 17<<<
 read returned error
 *****************************************************************************************************

@@ -4,7 +4,7 @@ struct
    type baseInfoTy = {padsname : Atom.atom, 
 		      repname  : Atom.atom, 
                       mname    : Atom.atom,
-                      edname   : Atom.atom,
+                      pdname   : Atom.atom,
   		      readname : Atom.atom,
 		      scanname : Atom.atom option,
 		      accname  : Atom.atom option,
@@ -16,7 +16,7 @@ struct
    fun printEntry    {padsname : Atom.atom, 
 		      repname  : Atom.atom, 
                       mname    : Atom.atom,
-                      edname   : Atom.atom,
+                      pdname   : Atom.atom,
   		      readname : Atom.atom,
 		      scanname : Atom.atom option,
 		      accname  : Atom.atom option,
@@ -26,7 +26,7 @@ struct
     (print (String.concat["padsname = ", (Atom.toString padsname), "\n"]));
     (print (String.concat["repname = ", Atom.toString repname, "\n"]));
     (print (String.concat["mname = ", Atom.toString mname, "\n"]));
-    (print (String.concat["edname = ", Atom.toString edname, "\n"]));
+    (print (String.concat["pdname = ", Atom.toString pdname, "\n"]));
     (print (String.concat["readname = ", Atom.toString readname, "\n"]));
     (print (String.concat["scanname = ", case scanname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
     (print (String.concat["accname = ", case accname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
@@ -50,7 +50,7 @@ struct
 	               [{padsname = Atom.atom(List.nth(fields,0)),
 			 repname  = Atom.atom(List.nth(fields,1)),
 			 mname    = Atom.atom(List.nth(fields,2)),
-			 edname   = Atom.atom(List.nth(fields,3)),
+			 pdname   = Atom.atom(List.nth(fields,3)),
 			 readname = Atom.atom(List.nth(fields,4)),
 			 scanname = if List.nth(fields,5) = "-" then NONE
 				    else SOME (Atom.atom(List.nth(fields,5))),

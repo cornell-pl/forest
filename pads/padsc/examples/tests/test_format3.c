@@ -5,7 +5,7 @@ int main(int argc, char** argv) {
   PDC_t           *pdc;
   PDC_IO_disc_t   *io_disc;
   intList         f3data;
-  intList_ed      f3ed;
+  intList_pd      f3pd;
   intList_m       f3m;
 
   io_disc = PDC_norec_make(0);
@@ -20,9 +20,9 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
-  /* INIT f3data, f3ed -- must do this for all variable data types */
+  /* INIT f3data, f3pd -- must do this for all variable data types */
   intList_init   (pdc, &f3data);
-  intList_ed_init(pdc, &f3ed);
+  intList_pd_init(pdc, &f3pd);
 
   /* INIT mask -- must do this! */
   intList_maskFill(pdc, &f3m, PDC_CheckAndSet);
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     PDC_error_t res;
     int i;
     error(0, "\nCalling intList_read");
-    res= intList_read(pdc, &f3m, &f3ed, &f3data);
+    res= intList_read(pdc, &f3m, &f3pd, &f3data);
 
     if (res == PDC_OK) {
       error(0|ERROR_PROMPT, "Record okay:\t");

@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   PDC_IO_disc_t*  io_disc;
   PDC_disc_t      my_disc = PDC_default_disc;
   PDC_base_m      m       = PDC_CheckAndSet;
-  PDC_base_ed     ed;
+  PDC_base_pd     pd;
   size_t          bytes_skipped;
 
   my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     }
     /* try to read 4 fixed width integers (width 6) */
     for (i = 0; i < 4; i++) {
-      PDC_a_int32_FW_read(pdc, &m, 6, &ed, &i1);
+      PDC_a_int32_FW_read(pdc, &m, 6, &pd, &i1);
     }
     if (strncmp(argv[1], "norec", 5) == 0) {
       if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {

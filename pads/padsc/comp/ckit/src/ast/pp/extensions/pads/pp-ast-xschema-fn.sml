@@ -692,29 +692,29 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	handle Option => (PError.bug "expected SOME"; (SOME "bogus", [], []))
       end
 
-  fun unionEdInfo tidtab tid =
+  fun unionPdInfo tidtab tid =
       let val binding = bind tidtab tid
           val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
           val (Ast.StructRef stid) = cty
-          val Bindings.Struct(tid'',edfields) = valOf(#ntype (bind tidtab stid))    
-          val edfield = (List.last edfields)
+          val Bindings.Struct(tid'',pdfields) = valOf(#ntype (bind tidtab stid))    
+          val pdfield = (List.last pdfields)
           fun valtid (uctype,_,_,_) = uctype
-          val (Ast.TypeRef edtid) = valtid edfield
-          val Bindings.Typedef(tid''',uedtype) = valOf(#ntype (bind tidtab edtid))
-          val (Ast.UnionRef uedtid) = uedtype
-          val Bindings.Union(tid'''',uedfields) = valOf(#ntype (bind tidtab uedtid))   
+          val (Ast.TypeRef pdtid) = valtid pdfield
+          val Bindings.Typedef(tid''',updtype) = valOf(#ntype (bind tidtab pdtid))
+          val (Ast.UnionRef updtid) = updtype
+          val Bindings.Union(tid'''',updfields) = valOf(#ntype (bind tidtab updtid))   
           fun cnvField (cty,mem: Ast.member,_) =                            
               let val fsym : Symbol.symbol = #name mem
               in
                   (getCTyName tidtab cty, SOME (Symbol.name fsym))
               end
-	  fun cnvEdField (cty,memOpt : Ast.member option,_,_) = 
+	  fun cnvPdField (cty,memOpt : Ast.member option,_,_) = 
 	      let val fsym : Symbol.symbol = #name(valOf memOpt)
 	      in
 		  (getCTyName tidtab cty, SOME (Symbol.name fsym))
 	      end
       in
-	 (#name binding,List.map cnvEdField edfields,List.map cnvField uedfields)
+	 (#name binding,List.map cnvPdField pdfields,List.map cnvField updfields)
 	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", [], []))
   	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", [], []))
       end
@@ -805,14 +805,14 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; newline pps)
 
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
-      let val edTid = #edTid ptyInfo
-	  val (edTyName, edFields) = structInfo tidtab edTid
+      let val pdTid = #pdTid ptyInfo
+	  val (pdTyName, pdFields) = structInfo tidtab pdTid
           val (repName, repFields) = structInfo tidtab tid
       in
 	((newline pps
-        ; ppXMLComplex pps (edTyName,edFields)
+        ; ppXMLComplex pps (pdTyName,pdFields)
         ; newline pps
-	; ppXMLComplex pps (repName,((edTyName,SOME "errDesc") :: repFields)) 
+	; ppXMLComplex pps (repName,((pdTyName,SOME "errDesc") :: repFields)) 
     	; newline pps
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
@@ -820,23 +820,23 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
     | ppPStruct ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
   fun ppPUnion (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...}) =
-      let val edTid = #edTid ptyInfo
+      let val pdTid = #pdTid ptyInfo
           val (repName,sFields,uFields) = unionInfo tidtab tid
-          val (edTyName,Fields,uEdFields) = unionEdInfo tidtab edTid
+          val (pdTyName,Fields,uPdFields) = unionPdInfo tidtab pdTid
 	  val tagName = SOME (valOf repName ^ "_tag")  
        in 
       ( newline pps
       ; ppXMLHeader "<simpleType " "> \n<restriction base=\"xsd:string\"/> \n</simpleType> \n" pps (NONE,tagName) 
       ; newline pps
-      ; ppXMLChoice pps (SOME ((valOf edTyName) ^ "_u"),uEdFields)
+      ; ppXMLChoice pps (SOME ((valOf pdTyName) ^ "_u"),uPdFields)
       ; newline pps
-      ; ppXMLComplex pps (edTyName, Fields) 
+      ; ppXMLComplex pps (pdTyName, Fields) 
       ; newline pps
       ; ppXMLHeader "<complexType " ">" pps (NONE,repName) 
       ; newline pps
       ; PPL.addStr pps "<sequence>"
       ; newline pps
-      ; ppXMLHeader "<element " "/>" pps (edTyName,SOME "errDesc")
+      ; ppXMLHeader "<element " "/>" pps (pdTyName,SOME "errDesc")
       ; newline pps
       ; ppXMLChoiceFields pps uFields    		(* original union fields *)
       ; PPL.addStr pps "</sequence>"
@@ -850,18 +850,18 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   fun ppPArray (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let fun changeName newName (oldType,oldName) = (oldType, SOME newName) 
           fun addType Facets (oldType,oldName) = (SOME ((valOf oldType) ^ Facets), oldName) 
-	  val edTid = #edTid ptyInfo
-	  val (edTyName, ed1Fields) = structInfo tidtab edTid
+	  val pdTid = #pdTid ptyInfo
+	  val (pdTyName, pd1Fields) = structInfo tidtab pdTid
           val (repName, repFields) = structInfo tidtab tid
           val lengthField = List.hd repFields				(* takes only two fields = length & elts *) 
           val eltField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.hd (List.tl repFields)))
-          val Fields = (edTyName,SOME "errDesc") :: lengthField :: eltField :: []
-          val ed2Fields = List.take (ed1Fields,8)			(* eliminates RBuf_t field *) 
-          val eltEdField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.last ed2Fields))
-          val edFields = List.take (ed2Fields,7) @ (eltEdField :: []) 
+          val Fields = (pdTyName,SOME "errDesc") :: lengthField :: eltField :: []
+          val pd2Fields = List.take (pd1Fields,8)			(* eliminates RBuf_t field *) 
+          val eltPdField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.last pd2Fields))
+          val pdFields = List.take (pd2Fields,7) @ (eltPdField :: []) 
       in
 	((newline pps
-        ; ppXMLComplex pps (edTyName,edFields)  
+        ; ppXMLComplex pps (pdTyName,pdFields)  
         ; newline pps
 	; ppXMLComplex pps (repName,Fields)
     	; newline pps                      

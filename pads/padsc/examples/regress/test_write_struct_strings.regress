@@ -4,7 +4,7 @@ calling testtwo_read
 test_read returned: s1 xabcdefghi  s2 abcdefg
 xabcdefghi|abcdefg|
 calling testtwo_read
-Error [in test_read]: record 2 char 12 : User constraint on field s2 violated.
+warning: Error [in test_read]: record 2 char 12 : User constraint on field s2 violated.
 [record 2]xabcdefghi|>>>abcdefgh<<<|
 test_read returned: error
 xabcdefghi|BAD_LEN|
@@ -16,14 +16,14 @@ Note [in test_read]: record 3 char 12 : Resynching at EOR
 test_read returned: error
 xabcdefghi|INV_STR|
 calling testtwo_read
-Error [in test_read]: record 4 char 1 : User constraint on field s1 violated.
+warning: Error [in test_read]: record 4 char 1 : User constraint on field s1 violated.
 [record 4]>>>aabcdefghi<<<|abcdefg|
 test_read returned: error
 xxxxxxxxxx|abcdefg|
 calling testtwo_read
 warning: Error [in PDC_string_FW_read]: at (partial: missing newline) record 5 at char 1 : Specified width not available (EOR/EOF encountered) 
 [(partial: missing newline) record 5]>>> <<<
-Error [in test_read]: (partial: missing newline) record 5 char 1 : Found EOF when searching for EOR
+warning: Error [in test_read]: (partial: missing newline) record 5 char 1 : Found EOF when searching for EOR
 [(partial: missing newline) record 5]>>> <<<
 test_read returned: error
 x---------|INV_STR|

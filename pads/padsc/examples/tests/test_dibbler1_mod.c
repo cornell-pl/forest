@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
   PDC_IO_disc_t            *io_disc;
   out_sum_header           header;
   out_sum_data_line        dline;
-  out_sum_data_line_ed     dline_ed;
+  out_sum_data_line_pd     dline_pd;
   out_sum_data_line_acc    acc;
   char                     *fname = "../../data/ex_data.dibbler1";
   behave                   b = count_first21;
@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
 
   /* INIT dline -- must do this for all variable data types */
   out_sum_data_line_init(pdc, &dline);
-  out_sum_data_line_ed_init(pdc, &dline_ed);
+  out_sum_data_line_pd_init(pdc, &dline_pd);
   if (b == accum_all) {
     out_sum_data_line_acc_init(pdc, &acc);
   }
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
   switch (b) {
     case count_all: {
       while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_data_line_read (pdc, 0, &dline_ed, &dline)) {
+	if (PDC_OK == out_sum_data_line_read (pdc, 0, &dline_pd, &dline)) {
 	  good++;
 	} else {
 	  bad++;
@@ -112,8 +112,8 @@ int main(int argc, char** argv) {
 
     case accum_all: {
       while (!PDC_IO_at_EOF(pdc)) {
-	out_sum_data_line_read(pdc, 0, &dline_ed, &dline);
-	out_sum_data_line_acc_add(pdc, &acc, &dline_ed, &dline);
+	out_sum_data_line_read(pdc, 0, &dline_pd, &dline);
+	out_sum_data_line_acc_add(pdc, &acc, &dline_pd, &dline);
       }
       out_sum_data_line_acc_report(pdc, "dline", 0, 0, &acc);
     } break;
@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
 
     case count_first21: {
       while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_data_line_read_internal (pdc, &dline_m, &dline_ed, &dline)) {
+	if (PDC_OK == out_sum_data_line_read_internal (pdc, &dline_m, &dline_pd, &dline)) {
 	  /* do something with the data */
 	  /* 	  error(0, "data line read returned OK, number of events = %d", dline.events.length); */
 	  good++;

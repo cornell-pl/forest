@@ -7,7 +7,7 @@ int main(int argc, char** argv) {
   PDC_t*          pdc;
   testtwo            f1data;
   testtwo_acc        accum;
-  testtwo_ed         ed = {0};
+  testtwo_pd         pd = {0};
 
   if (PDC_ERR == PDC_open(&pdc,0,0)) {
     error(2, "*** PDC_open failed ***");
@@ -39,15 +39,15 @@ int main(int argc, char** argv) {
    */
   while (!PDC_IO_at_EOF(pdc)) {
     error(0, "\ncalling testtwo_read");
-    if (PDC_OK == testtwo_read(pdc, 0, &ed, &f1data)) {
+    if (PDC_OK == testtwo_read(pdc, 0, &pd, &f1data)) {
       /* do something with the data */
       error(2, "testtwo_read returned: id %d  ts %d  f %d ", f1data.header.id, f1data.header.ts, f1data.f);
-      if (PDC_ERR == testtwo_acc_add(pdc, &accum, &ed, &f1data)) {
+      if (PDC_ERR == testtwo_acc_add(pdc, &accum, &pd, &f1data)) {
 	error(0, "** accum_add failed **");
       }
     } else {
       error(2, "testtwo_read returned: error");
-      if (PDC_ERR == testtwo_acc_add(pdc, &accum, &ed, &f1data)) {
+      if (PDC_ERR == testtwo_acc_add(pdc, &accum, &pd, &f1data)) {
 	error(0, "** accum_add failed **");
       }
     }

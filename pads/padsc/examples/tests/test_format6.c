@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
-  defPN_ed        ped;
+  defPN_pd        ppd;
   defPN           pdata;
   defPN_m         pm;
 
@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
    */
   while (!PDC_IO_at_EOF(pdc)) {
     PDC_error_t res;
-    res= defPN_read(pdc, &pm, 1999999999LL, 9999999999LL, &ped, &pdata);
+    res= defPN_read(pdc, &pm, 1999999999LL, 9999999999LL, &ppd, &pdata);
 
     if (res == PDC_OK) {
       error(NO_NL, "Record okay:\t");

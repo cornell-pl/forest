@@ -222,7 +222,7 @@ structure Main : sig
 	    "__"^upper^"__H__"
 	end
     fun generateAccumProgram (homeDir, headerFile, name,
-			      {memChar, repName,repInit,repRead,repClean,edName,edInit,edClean,
+			      {memChar, repName,repInit,repRead,repClean,pdName,pdInit,pdClean,
 			       accName,accInit,accAdd,accReport,accClean,...}:PTys.pTyInfo) =
 	let val aname = name^".c"
 	    val aoutstream = getAccStream(aname)
@@ -240,14 +240,14 @@ structure Main : sig
 	    TextIO.output(aoutstream, "#define PADS_TY_READ "^repRead^"\n");
 	    case repClean of NONE => ()
 	       | SOME repClean =>TextIO.output(aoutstream, "#define PADS_TY_CLEANUP "^repClean^"\n");
-	    TextIO.output(aoutstream, "#define PADS_TY_ED "^edName^"\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_PD "^pdName^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_M "^repName^"_m\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_M_INIT "^repName^"_m_init\n");
-	    case edInit of NONE => ()
-	       | SOME edInit =>TextIO.output(aoutstream, "#define PADS_TY_ED_INIT "^edInit^"\n");
-	    case edClean of NONE => ()
-	       | SOME edClean =>TextIO.output(aoutstream, 
-					      "#define PADS_TY_ED_CLEANUP "^edClean^"\n");
+	    case pdInit of NONE => ()
+	       | SOME pdInit =>TextIO.output(aoutstream, "#define PADS_TY_PD_INIT "^pdInit^"\n");
+	    case pdClean of NONE => ()
+	       | SOME pdClean =>TextIO.output(aoutstream, 
+					      "#define PADS_TY_PD_CLEANUP "^pdClean^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_ACC "^accName^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_ACC_INIT "^accInit^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_ACC_ADD "^accAdd^"\n");

@@ -8,7 +8,7 @@
 
 int main(int argc, char** argv) {
   PDC_t           *pdc;
-  http_clf_t_ed   ed;
+  http_clf_t_pd   pd;
   http_clf_t      ai;
   http_clf_t_acc  acc;
   http_clf_t_m    m;
@@ -33,8 +33,8 @@ int main(int argc, char** argv) {
     error(2, "*** http_clt_t_init failed ***");
     exit(-1);
   }
-  if (PDC_ERR == http_clf_t_ed_init(pdc, &ed)) {
-    error(2, "*** http_clt_t_ed_init failed ***");
+  if (PDC_ERR == http_clf_t_pd_init(pdc, &pd)) {
+    error(2, "*** http_clt_t_pd_init failed ***");
     exit(-1);
   }
   if (PDC_ERR == http_clf_t_acc_init(pdc, &acc)) {
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == http_clf_t_read(pdc, &m, &ed, &ai)) {
+    if (PDC_OK == http_clf_t_read(pdc, &m, &pd, &ai)) {
       /* do something with the data */
 #ifndef NO_PRINT
       if (ai.host.tag == resolved) {
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
       error(2, "read returned: error");
     }
     /* accum both good and bad vals */
-    if (PDC_ERR == http_clf_t_acc_add(pdc, &acc, &ed, &ai)) {
+    if (PDC_ERR == http_clf_t_acc_add(pdc, &acc, &pd, &ai)) {
       error(2, "*** http_clt_t_acc_add failed ***");
       exit(-1);
     }	
