@@ -42,37 +42,39 @@ appear only in particular locations in the grammar.  Syntactically,
 
 \vskip 1ex
 \begin{tabular}{rcll}
-\nont{p\_comment} & \is{} & \cd{/-} text  \\[1ex]
+\nont{p\_comment} & \is{} & \cd{/-} \term{text}  \\[1ex]
 \end{tabular}
 
 \noindent
-These comments are reflected to the generated \texttt{.h} file as documentation.
+where \term{text} is a new-line terminated sequence of characters.
+\pads{} comments are reflected to the generated \texttt{.h} file as
+documentation. 
 
 
 
 \section{Predicates}
 \label{sec:common-predicates}
- written in C. integer type
- assumed to be side-effect free
- \term{predicate}
+\pads{} descriptions permit the user to supply \term{predicates}
+for validating semantic properties of syntactically correct data. 
+Syntactically, such predicates are arbitrary \C{} expressions of
+integer type.  Predicates that evaluate to \cd{0} imply the data
+is valid, while all other values imply the data is
+invalid. Predicates are assumed to be side-effect free.
 
 \section{Literals}
 \label{sec:common-literals}
-
-\begin{tabular}{l}
-\term{char\_lit} \\[1ex]
-\term{str\_lit} \\[1ex]
-\end{tabular}
-
-\PADSL{} supports C-style character and string literals such as {\tt '}\cd{a}{\tt '} and
-\cd{"foo"}.  These literals may use all of C character escapes such as
-\begin{verbatim}\" and \'\end{verbatim}
-.
+\PADSL{} supports \C{}-style character and string
+literals, referred to in the \pads{} grammar as \term{char\_lit} and
+\term{str\_lit}, respectively.  
+These literals may contain \C{} character escapes such as \cd{\\"} and
+\cd{\\'}. 
 
 Character and string literals are used to read external characters
-without putting any corresponding data in the resulting in-memory representation.
-\Ie, they 'skip over' some expected character(s).
-They are typically used in \Pstruct{}s; see \secref{sec:sec:structs-literal-fields}.
+without storing any corresponding data in the resulting in-memory
+representation, \ie, they 'skip over' some expected character(s) in
+the external representation.
+They are typically used in \Pstruct{}s (\cf{}
+\secref{sec:structs-literal-fields}). 
 
 \section{Character Sets}
 \label{sec:common-character-sets}
@@ -111,19 +113,39 @@ where \nont{expression} is any \C{} expression. Formal parameter lists
 \nont{formals} are the same as in \C{}. 
 
 \subsection{Example}
-The following \padsl{} fragment illustrates both declaring and passing
-parameters to \pads{} types.
+The \cd{formalParamExample} in the following \padsl{} fragment
+illustrates both declaring parameters to \pads{} types, while
+the \cd{actualParamExample} illustrates passing parameters.
 \begin{code}
 \input{code/struct.parameters}
 \end{code}
+Type \cd{formalParamExample} expects its single field \cd{data} to be
+less than a supplied value \cd{limit}, while the type \cd{actualParamExample}
+describes an external representation with two pieces: an integer
+\cd{limit} and then an instance of \cd{formalParamExample}.  The value
+of \cd{limit} is passed as the actual parameter to the \cd{formalParamExample}
+\pstruct{}. 
 
 \section{\Precord{} modifier}
+\lable{sec:commong-precord}
+The \Precord{} modifier may be used as an annotation on any \pads{}
+type, indicating that the type describes a \textit{record} in the
+external representation of the data.  \pads{} supports a number of
+different interpretations of what constitutes a record:
+
+\textbf{Bob:? Fill in here.} 
+
 
 \section{\Pfile{} modifier}
+\lable{sec:commong-pfile}
+The \Pfile{} modifier may be used as an annotation on any \pads{}
+type, indicating that the type in question describes the entirety of
+the external representation of the data.
 
 \section{Error model}
 \label{sec:common-error-model}
- panic versus non-panic errors
+During parsing, two different kinds of errors can occur, which can be
+intuitively classified as...
 
 
 
