@@ -10,9 +10,9 @@ that we need shared tools and infrastructure to simplify these tasks:
      data stream.
 
    * Reliable data transport: we need a framework to monitor data stream
-     transport, restart failed processes, etc., to ensure reliable stream.
+     transport, restart failed processes, etc., to ensure reliable streams.
      Howard Katseff's data stream monitor is a good
-     start, but there is much to do here.
+     start, but there is much more to do.
 
    * Distributed data processing: we need declarative query and aggregation
      languages that can be mapped to distributed computations, so that
@@ -21,16 +21,16 @@ that we need shared tools and infrastructure to simplify these tasks:
      are pushing filtering to the data source, but
      there are many other domains where this approach should be applied.
 
-Furthermore, this shared infrastructure should work not just
-with databases and XML data, but with *arbitrary* data streams.  Many
-data sources, typified by those in the InfoLab, are in legacy formats
-over which data consumers have no control. Currently researchers deal
-with such data in an \textit{ad hoc} fashion, using Perl/shell scripts
-or hand-coded \C{} programs that are hard to maintain, extend, and
-share.
 
-We are attacking this grand vision from the ground up, starting
-with one of the core problems, the need to handle arbitrary data.
+We are attacking this grand vision from the ground up, starting with
+one of the core problems, the need to handle arbitrary data.  The
+shared infrastructure should work not just with databases and XML
+data, but with *arbitrary* data streams.  Many data sources, typified
+by those in the InfoLab, are in legacy formats over which data
+consumers have no control. Currently researchers deal with such data
+in an \textit{ad hoc} fashion, using Perl/shell scripts or hand-coded
+\C{} programs that are hard to maintain, extend, and share.
+
 The \pads{} project aims to make it easy to manipulate such data,
 either programmatically or through high-level tools.  Central to
 \pads{} is a declarative data-description language, \padsl{},
