@@ -351,7 +351,7 @@ endif
 
 # use this rule as follows
 # (lib=<library>; $(FixStaticLib))
-ifeq ($(OPSYS),linux)
+ifeq ($(OPSYS),darwin)
 define FixStaticLib
 (ranlib $$lib)>/dev/null 2>&1 || true
 endef
