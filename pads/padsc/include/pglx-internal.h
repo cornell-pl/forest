@@ -13,9 +13,12 @@
 
 #include "libpadsc-internal.h"
 
-/* XXX_RESTORE: */
-/* #include "caml/mlvalues.h"  */   /* Need value      */
-/* #include "caml/fail.h" */        /* Need failwith   */
+#ifdef USE_GALAX
+
+#include "caml/mlvalues.h"    /* Need value      */
+#include "caml/fail.h"        /* Need failwith   */
+
+#else
 
 /* XXX_REMOVE next 14 lines: */
 #ifdef FOR_CKIT
@@ -32,6 +35,8 @@ void* failwith(const char *);
 #define FAKE_CAML_VALUE
 typedef void* value;
 #endif /* FAKE_CAML_VALUE */
+
+#endif /* USE_GALAX */
 
 #ifndef FOR_CKIT
 #  include "pglx-impl.h"

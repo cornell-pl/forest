@@ -15,14 +15,24 @@
 
 #include "libpadsc.h"       /* Need to include ast stuff before caml stuff for some reason */
 
-/* XXX_RESTORE: */
-/* #include "caml/mlvalues.h"  */ /* Need value */
+#ifdef USE_GALAX
+
+#include "caml/mlvalues.h"  /* Need value */
+
+#else
 
 /* XXX_REMOVE next 4 lines: */
 #ifndef FAKE_CAML_VALUE
 #define FAKE_CAML_VALUE
 typedef void* value;
 #endif /* FAKE_CAML_VALUE */
+
+#endif /* USE_GALAX */
+
+/*
+ * XXX TEMPORARY:
+ */
+void walk_children(void *n, int indent);
 
 void**      PGLX_generic_children    (void *ocaml_n);
 void*       PGLX_generic_parent      (void *ocaml_n);

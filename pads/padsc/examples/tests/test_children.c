@@ -2,31 +2,6 @@
 #include "format1.h"
 #include "pglx.h"
 
-const char *spaces = "                                                                                                                        ";
-
-void walk_children(void *n, int indent) {
-  void ** children, **iter;
-  void *  child;
-  int i;
-  const char * n_name = PGLX_generic_name(n);
-  if (!(children = PGLX_generic_children(n))) {
-    error(ERROR_FATAL, "PGLX_generic_children(%s) returned NULL", n_name);
-  }
-  for (i = 0, iter = children, child = *iter; child; i++, child = *++iter);
-  if (i) {
-    error(0, "%.*s<%s>",
-	  indent, spaces, n_name);
-    for (iter = children, child = *iter; child; child = *++iter) {
-      walk_children(child, indent+4);
-    }
-    error(0, "%.*s</%s>",
-	  indent, spaces, n_name);
-  } else {
-    error(0, "%.*s<%s>%s</%s>",
-	  indent, spaces, n_name, PGLX_generic_typed_value(n), n_name);
-  }
-}
-
 int main(int argc, char** argv) {
   PDC_t*          pdc;
   PDC_disc_t      mydisc = PDC_default_disc;
