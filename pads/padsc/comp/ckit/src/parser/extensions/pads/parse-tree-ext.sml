@@ -133,6 +133,11 @@ structure ParseTreeExt =
         datatype PStatement = PComment of string
         datatype ('exp) PExpression = Pregexp of 'exp
 
+						 
+	datatype PDeclaration = 
+		 (* A phantom decl takes a type name and a var name. *)
+		 PPhantomDecl of string * string
+
   (* External bindings *)
 	type operatorExt = unit
 
@@ -149,7 +154,7 @@ structure ParseTreeExt =
 	    statementExt = PStatement
 
 	type ('spec,'decr,'ct,'dt,'oper,'exp,'stmt) 
-	    declarationExt = unit
+	    declarationExt = PDeclaration
 
 	type ('spec,'decr,'ct,'dt,'oper,'exp,'stmt) 
 	    externalDeclExt = ('decr, 'ct, 'dt, 'exp) PExternal 
