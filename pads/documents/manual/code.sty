@@ -174,6 +174,16 @@
   \@makeother\^\@makeother\_\@makeother\~%
   \@makeother\%\cd@obeytabs\cd@obeyspaces}
 
+\def\setuptinycode{\parsep=0pt\parindent=0pt%
+  \renewcommand{\baselinestretch}{1.0}%
+  \normalfont\ttfamily\footnotesize\frenchspacing\catcode``=13\@noligs%
+  \def\\{\char`\\}\def\_{\char`\_}%
+  \def\{{\char`\{}\def\}{\char`\}}%
+  \let\dcd=\cd@dcd\let\cddollar=\cd@dollarspecial\let\cdmath=\cd@mathspecial%
+  \@makeother\$\@makeother\&\@makeother\#%
+  \@makeother\^\@makeother\_\@makeother\~%
+  \@makeother\%\cd@obeytabs\cd@obeyspaces}
+
 \def\setupcode{\parsep=0pt\parindent=0pt%
   \normalfont\ttfamily\frenchspacing\catcode``=13\@noligs%
   \def\\{\char`\\}\def\_{\char`\_}%
@@ -214,6 +224,15 @@
    \halign\bgroup##\hfil\span}
 
 \def\endcodebox{\crcr\egroup\egroup\m@th$\egroup}
+
+\def\tinycodebox{\leavevmode\@ifnextchar[{\@tinycodebox}{\@tinycodebox[c]\cr}} %]
+
+\def\@tinycodebox[#1]%
+  {\hbox\bgroup$\if #1t\vtop \else \if#1b\vbox \else \vcenter \fi\fi\bgroup%
+   \tabskip\z@\setuptinycode\cd@obeycr% just before cd@obey
+   \halign\bgroup##\hfil\span}
+
+\def\endtinycodebox{\crcr\egroup\egroup\m@th$\egroup}
 
 % Center the box on the page:
 \newenvironment{centercode}%
@@ -259,11 +278,23 @@
 %  {\vspace{-1\parskip}\begin{codeaux}{\partopsep\z@\topsep\z@}}%
 %  {\end{codeaux}\vspace{-1\parskip}}
 
+\def\tinycodeaux{\@ifnextchar[{\@tinycodeaux}{\@tinycodeaux[\parskip]}} %]
+\def\@tinycodeaux[#1]#2{%
+  \bgroup\parskip#1%
+    \begin{list}{}%
+      {\parsep\z@\leftmargin=\codeindent\rightskip\z@\listparindent\z@\itemindent\z@#2}%
+        \item[]\setuptinycode\cd@obeylines}%
+\def\endtinycodeaux{\end{list}\leavevmode\egroup\ignorespaces\global\@ignoretrue}
 
+%% tinycode env is tinycodeaux with the default margin and spacing \list params:
+\def\tinycode{\tinycodeaux{}} \let\endtinycode=\endtinycodeaux
+
+%% Like tinycode, but with no extra vertical space above and below.
+\def\tighttinycode{\tinycodeaux[=0pt]{\topsep\z@}}%
+\let\endtighttinycode\endtinycodeaux
 
 % Reasonable separation between lines of code
 \newcommand{\codeskip}{\penalty0\vspace{2ex}}
-
 
 % \cd is used to build a code environment in the middle of text.
 % Note: only difference from display code is that cr's are taken
