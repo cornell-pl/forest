@@ -35,6 +35,9 @@ STEP 1: ENVIRONMENT SETUP
   (INSTALLROOT,  PATH, LD_LIBRARY_PATH, etc.).  DO_SETENV will also make
   your installation directories (rooted at INSTALLROOT) if they do not
   exist yet.
+
+  To control the C-compiler used, do 
+  > setenv CC path-to-desired-compiler
   
   Below are instructions for different kinds of shells.  You could do
   the following by hand, or add them to your shell init script.  Note:
