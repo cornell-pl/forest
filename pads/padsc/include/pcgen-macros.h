@@ -188,9 +188,15 @@ void PCGEN_ARRAY_PD_XML_OUT();
 void PCGEN_UNION_PD_XML_OUT();
 
 void PCGEN_ENUM_XML_OUT(const char *def_tag, const char *(rep2str_fn)(int));
-void PCGEN_FMT_INIT(char * fnName, char * maskName);
+void PCGEN_FMT_INIT(char * fnName);
+void PCGEN_FMT_INIT_TYPEDEF(char * fnName);
+void PCGEN_FMT_INIT_ENUM(char * fnName);
 void PCGEN_FMT_STRUCT_FIELD(char *fieldName, ssize_t length);
 void PCGEN_FMT_FIX_LAST();
+
+void PCGEN_FMT_UNION(char *fieldName, ssize_t length, char *tagName);
+void PCGEN_FMT_TYPEDEF(char *fieldName, ssize_t length);
+void PCGEN_FMT_ENUM(char *fieldName, const char *tagName);
 void PCGEN_FMT_RECORD(char * fnName);
 
 #else
@@ -2011,7 +2017,22 @@ do {
 
 #define PCGEN_FMT_NEXT(delim) ((*(delim + 1)) ? delim + 1 : delim)
 
-#define PCGEN_FMT_INIT(fnName, structMask) 
+#define PCGEN_FMT_INIT_TYPEDEF(fnName)
+ do { 
+  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
+  if (!(P_Write|P_WriteVoid)&(m->compoundLevel)) {
+     *requestedOut = 0; 
+     return length_PCGEN_=0;}
+  *buf_full = 0;
+ } while (0)
+/* END_MACRO */
+
+
+
+
+
+
+#define PCGEN_FMT_INIT(fnName) 
  do { 
   PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
   if (!(*delims)) { 
@@ -2020,12 +2041,24 @@ do {
   };
   /* Invariant: delims[0] is always ok. */
   tdelim_PCGEN_ = PCGEN_FMT_NEXT(delims);
-  if (!(P_Write|P_WriteVoid)&(m->structMask)) {
+  if (!(P_Write|P_WriteVoid)&(m->compoundLevel)) {
      *requestedOut = 0; 
      return length_PCGEN_=0;}
   *buf_full = 0;
  } while (0)
 /* END_MACRO */
+
+#define PCGEN_FMT_TYPEDEF(fmtCall)
+ do { 
+      trequestedOut_PCGEN_ = 0;
+      tlen_PCGEN_ = fmtCall;
+      PCGEN_TLEN_UPDATES (); 
+      if (trequestedOut_PCGEN_) { 
+	*requestedOut = 1; 
+      };
+ } while (0)
+
+
 
 #define PCGEN_FMT_STRUCT_FIELD(fdName, fmtCall)
  do { 
@@ -2038,8 +2071,8 @@ do {
         PCGEN_TLEN_UPDATES ();
       };
  } while (0)
-
 /* END_MACRO */
+
 
 /*  If last field didn't request output, we need to unwrite the previous separator as well as the last one. */
 #define PCGEN_FMT_FIX_LAST()
@@ -2055,6 +2088,45 @@ do{
       buf_len++;
     }
 } while (0)
+/* END_MACRO */
+
+#define PCGEN_FMT_UNION(fdName, fmtCall, tagStr)
+ do { 
+      trequestedOut_PCGEN_ = 0;
+      if (P_WriteMeta & m->compoundLevel) {
+        tlen_PCGEN_ = Pcstr_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,tagStr);
+	PCGEN_TLEN_UPDATES (); 
+        tlen_PCGEN_ = Pchar_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,delims[0]);
+        PCGEN_TLEN_UPDATES ();
+	*requestedOut = 1; 
+      };
+      tlen_PCGEN_ = fmtCall;
+      PCGEN_TLEN_UPDATES (); 
+      if (trequestedOut_PCGEN_) { 
+	*requestedOut = 1; 
+      };
+ } while (0)
+
+/* END_MACRO */
+
+#define PCGEN_FMT_INIT_ENUM(fnName)
+ do { 
+  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
+  *buf_full = 0;
+ } while (0)
+/* END_MACRO */
+
+#define PCGEN_FMT_ENUM(fdName, enumStr)
+ do { 
+      if (P_Write & (*m)){
+         tlen_PCGEN_ = Pcstr_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,enumStr);
+	 PCGEN_TLEN_UPDATES (); 
+	 *requestedOut = 1;
+         tdelim_PCGEN_ = 0;
+	 trequestedOut_PCGEN_ = 0;
+      };
+ } while (0)
+
 /* END_MACRO */
 
 #define PCGEN_FMT_RECORD(fname)

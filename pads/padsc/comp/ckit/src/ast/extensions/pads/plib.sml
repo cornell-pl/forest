@@ -375,11 +375,26 @@ struct
   fun nullCheck(prefix, ptrX) =
     PT.Expr(PT.Call(PT.Id "PDCI_NULLPARAM_CHECK", [prefix, PT.Cast(P.voidPtr, ptrX)]))
 
-  fun fmtInit(fnNameX, maskName) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_INIT", [fnNameX, maskName]))
+  fun fmtInit(fnNameX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_INIT", [fnNameX]))
 
-  fun fmt(fnNameX, callX) = 
+  fun fmtInitTypedef(fnNameX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_INIT_TYPEDEF", [fnNameX]))
+
+  fun fmtInitEnum(fnNameX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_INIT_ENUM", [fnNameX]))
+
+  fun fmtStruct(fnNameX, callX) = 
     PT.Expr(PT.Call(PT.Id "PCGEN_FMT_STRUCT_FIELD", [fnNameX, callX]))
+
+  fun fmtUnion(fnNameX, callX, tagNameX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_UNION", [fnNameX, callX, tagNameX]))
+
+  fun fmtTypedef(fnNameX, callX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_TYPEDEF", [fnNameX, callX]))
+
+  fun fmtEnum(fnNameX, enumX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_ENUM", [fnNameX, enumX]))
 
   fun fmtFixLast() = 
     PT.Expr(PT.Call(PT.Id "PCGEN_FMT_FIX_LAST", []))
