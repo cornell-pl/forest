@@ -31,16 +31,16 @@ int main(int argc, char** argv) {
   Pdisc_t           my_disc = Pdefault_disc;
   Pio_disc_t       *io_disc = 0;
   Ppos_t            bpos, epos;
-  PADS_TY()         rep;
+  PADS_TY( )        rep;
   PADS_TY(_pd)      pd;
   PADS_TY(_m)       m;
 
-  PADS_TY()        *rep_ptr = &rep;
+  PADS_TY( )       *rep_ptr = &rep;
   PADS_TY(_pd)     *pd_ptr = &pd;
   PADS_TY(_m)      *m_ptr = &m;
 
 #ifdef PADS_HDR_TY
-  PADS_HDR_TY()     hdr_rep;
+  PADS_HDR_TY( )    hdr_rep;
   PADS_HDR_TY(_pd)  hdr_pd;
   PADS_HDR_TY(_m)   hdr_m;
 #endif /* PADS_HDR_TY */
