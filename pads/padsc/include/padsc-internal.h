@@ -116,12 +116,13 @@ PDC_error_t PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, PDC_disc_
 /* ================================================================================ */
 /* RBUF: RESIZABLE ALLLOC'D SPACE */
 
-PDC_error_t   PDC_RBUF_alloc   (PDC_t* pdc, int elSize, int numElements, 
+PDC_error_t   PDC_RBUF_alloc   (PDC_t* pdc, int elSize, int minElements, int maxElements, 
 				PDC_rbuf_t** rbuf_out, void** buf_out, PDC_disc_t* disc);
-PDC_error_t   PDC_RBUF_grow    (PDC_t* pdc, PDC_rbuf_t* rbuf, int numRequired, 
-				void** buf_out, PDC_disc_t* disc);
-PDC_error_t   PDC_RBUF_getBuf  (PDC_t* pdc, PDC_rbuf_t* rbuf, void** buf_out, PDC_disc_t* disc);
-PDC_error_t   PDC_RBUF_free    (PDC_t* pdc, PDC_rbuf_t* rbuf, int dealloc_buf, void** buf_out, PDC_disc_t* disc);
+
+PDC_error_t   PDC_RBUF_reserve (PDC_rbuf_t* rbuf, int numElements, void** buf_out, PDC_disc_t* disc);
+size_t        PDC_RBUF_getSize (PDC_rbuf_t* rbuf, PDC_disc_t* disc);
+PDC_error_t   PDC_RBUF_getBuf  (PDC_rbuf_t* rbuf, void** buf_out, PDC_disc_t* disc);
+PDC_error_t   PDC_RBUF_free    (PDC_rbuf_t* rbuf, int dealloc_buf, void** buf_out, PDC_disc_t* disc);
 
 PDC_error_t   PDC_freeBuf      (PDC_t* pdc, void* buf, PDC_disc_t* disc);
 
