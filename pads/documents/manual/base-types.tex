@@ -1,3 +1,4 @@
+
 \chapter{Base Types Overview}
 \label{chap:base-types}
 \cutname{base.html}
@@ -156,8 +157,19 @@ while \Pd{\_FPOINT2FLOAT64(fp)} calculates \cd{fp.num/fp.denom} as a \Pd{float64
 
 \section{Base Type Mask}
 \label{sec:base-type-mask}
+The mask for base types is just an integer type, treated as an array
+of bits:
 
-\note{\Pbasem{} was already described?  No: they should be described here.}
+\begin{centercode}
+ typedef Puint32 Pbase\_m;
+\end{centercode}
+%
+\noindent
+Masks for accessing individual bits of the base type masks are described in
+sections describing operations that use mask. (\cf{}
+\secref{sec:common-features-read-function}). 
+More information about how base types handle masks is available in
+\appref{ap:base-types}
 
 \section{Base Type Parse Descriptor}
 \label{sec:base-type-parse-descriptors}
@@ -243,7 +255,7 @@ will count the number of ASCII equals-sign characters between
 the IO cursor and the next EOR or EOF, with no limit on
 the maximum scan distance.
 
-\section{String Base Types}
+\section{String Base Types (including dates and times)}
 
 The large number of string base types arises from the fact that there
 are many different ways to indicate the extent of a string.  The
@@ -418,10 +430,14 @@ Reads an ASCII string, up to but not including a vertical bar, and
 converts that string into a \cd{Puint32} timestamp.  The conversion will be
 successful only if the string has the specified format.
 
-Some timestamp formats include explicit time zone information.  For
-the rest, such as the format used above, the input time zone is taken
+Some timestamp formats include explicit time zone information,such as
+the one above.  \pads{} provides the function \cd{P\_cstr2timezone} to convert a
+string representation of a time zone into an value of type
+\cd{Tm\_zone\_t *}.  This function is described in \chapref{chap:library-use}.
+
+For the rest,the input time zone is taken
 from the \pads{} discipline field \cd{ disc->in\_time\_zone}, as
-described in [[THIS SECTION]].
+described in \secref{sec:library-customization-input-time-zone}.
 
 \subsection{Timestamp}
 

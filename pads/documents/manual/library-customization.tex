@@ -168,7 +168,7 @@ two additional arguments, \cd{libnm} and \cd{level}.  For example, where
 one might use \cd{printf} as follows:
 
 \begin{centercode}
-     printf("count: \%d\\n", 10);
+     printf("count: \%d\newl{}", 10);
 \end{centercode}
 %
 \noindent
@@ -179,7 +179,7 @@ one  can do the same thing with \cd{P_error} using:
 %
 \noindent
 Note that \cd{P\_error} automatically adds a newline, so we did not
-have to include a \cd{\literal{"\\n"}} in the format string, as we did with
+have to include a \cd{\literal{"\newl{}"}} in the format string, as we did with
 the \cd{printf} example.
 
 The first argument to an error function, \cd{libnm},  is normally
@@ -239,10 +239,12 @@ must be a time zone description that \cd{tmzone}
 understands. Intuitively, it accepts three-letter strings such as 
 \literal{\cd{"PST"}}  and \literal{\cd{"EDT"}}  as well as strings
 denoting numeric offsets from UTC time, such as \literal{\cd{"-0500"}}.
+\chapref{chap:library-use} describes the legal time zone designation strings.
 Documentation for the \cd{tmzone} function appears on the web page:
 \ifthenelse{\boolean{hevea}}{
 \myurl{www.research.att.com/\~gsf/man/man3/tm.html}}{
 \myurl{www.research.att.com/~gsf/man/man3/tm.html}}
+
 
 Before calling \cd{P\_open}, the discipline field \cd{disc->in\_time}
 can be initialized directly.  After calling \cd{P\_open}, however, it
@@ -268,6 +270,7 @@ Note that in the normal case you should use the same time zone
 for both input and output, unless you are intentially translating
 times from one time zone to another one. The format of output time
 zone specification strings is the same as for input time zone.
+\chapref{chap:library-use} describes the legal time zone designation strings.
 
 Before calling \cd{P\_open}, the discipline field \cd{disc->in\_time}
 can be initialized directly.  After calling \cd{P\_open}, however, it
@@ -523,7 +526,7 @@ character that marks the end of a record. Argument
 \texttt{block\_size\_hint} suggests a block size to use, if the
 discipline chooses to do fixed block-sized reads 'under the covers'.
 It may be ignored by the discipline.
-For ASCII newline-terminated records use, \literal{\cd{'\\n'}} or
+For ASCII newline-terminated records use, \literal{\cd{'\newl{}'}} or
 \cd{P\_ASCII\_NEWLINE} 
 as the term character.  For \cd{EBCDIC} newline-terminated records, use
 \cd{P\_EBCDIC\_NEWLINE} as the term character.
@@ -536,11 +539,11 @@ that does not require that the SFIO stream is seekable.
 
 \item[\small{\cd{Pio\_disc\_t * P\_nlrec\_make(size\_t block\_size\_hint)}}]
 Shorthand for calling the corresponding \cd{ctrec} make function with
-\literal{\cd{'\\n'}} as \cd{termChar}.
+\literal{\cd{'\newl{}'}} as \cd{termChar}.
 
 \item[\small{\cd{Pio\_disc\_t * P\_nlrec\_noseek\_make(size\_t block\_size\_hint)}}]
 Shorthand for calling the corresponding \cd{ctrec} make function with
-\literal{\cd{'\\n'}} as \cd{termChar}.
+\literal{\cd{'\newl{}'}} as \cd{termChar}.
 
 
 

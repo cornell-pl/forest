@@ -21,7 +21,7 @@ Pstruct foo{
  Pa_string_ME(: "/\\S\*/" :) my_string;
 /*@END string-match.tex */
 /*@BEGIN timestamp-explicit.tex */
-Pa_timestamp_explicit(: '|' , "%Y-%m-%d+%H:%M" :) my_timestamp;
+Pa_timestamp_explicit(: '|' , "%Y-%m-%d+%H:%M", P_cstr2timezone("-0500"):) my_timestamp;
 /*@END timestamp-explicit.tex */
 
 };

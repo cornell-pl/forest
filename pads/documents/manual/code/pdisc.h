@@ -1,4 +1,4 @@
-/*@FILE pdisc.tex pinformats.tex poutformats.tex timestamp-format.tex date-format.tex time-format.tex timestamp-output-format.tex date-output-format.tex time-output-format.tex pfopen_fn.tex errorfn.tex invfn.tex invfn-example.tex*/
+/*@FILE pdisc.tex pinformats.tex poutformats.tex timestamp-format.tex date-format.tex time-format.tex timestamp-output-format.tex date-output-format.tex time-output-format.tex pfopen_fn.tex errorfn.tex invfn.tex invfn-example.tex pos.tex loc.tex reg-exp-ex.tex comp-regexp.tex*/
 
 /*@BEGIN pinformats.tex*/
 typedef struct Pin_formats_s {
@@ -125,3 +125,30 @@ P_set_inv_val_fn(pads, pads->disc->inv_val_fn_map, "Pint32", my_int32_inv_val);
 /*@END invfn-example.tex*/
 
 
+/*@BEGIN pos.tex */
+typedef struct Ppos_s {
+  size_t       byte;
+  size_t       num;
+  Sfoff_t      offset;
+} Ppos_t;
+/*@END pos.tex */
+
+/*@BEGIN loc.tex*/
+struct Ploc_s {
+  Ppos_t b;
+  Ppos_t e;
+};
+/*@END loc.tex*/
+
+struct goo{
+/*@BEGIN reg-exp-ex.tex*/
+      Pstring_SE(:"/[,]|$/":)    my_string;
+/*@END reg-exp-ex.tex*/
+};
+
+/*@BEGIN comp-regexp.tex*/
+typedef struct Pregexp_s {
+  int                  valid;
+  P_REGEXP_T_PRIVATE_STATE;
+} Pregexp_t;
+/*@END comp-regexp.tex*/

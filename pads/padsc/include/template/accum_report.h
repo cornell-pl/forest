@@ -52,9 +52,9 @@ int main(int argc, char** argv) {
 #ifdef WSPACE_OK
   my_disc.flags |= (Pflags_t)P_WSPACE_OK;
 #endif
-#ifdef COPY_STRINGS
-  my_disc.copy_strings = 1;
-#endif
+
+  my_disc.copy_strings = 1;  /* strings should almost always be copied for accumulator programs */
+
 #ifdef IN_TIME_ZONE
   my_disc.in_time_zone = IN_TIME_ZONE;
   error(0, "Note: set my_disc.in_time_zone to \"%s\"\n", IN_TIME_ZONE);

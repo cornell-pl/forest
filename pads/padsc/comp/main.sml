@@ -398,7 +398,7 @@ structure Main : sig
            val flags = if release then flags_release @ extensions
                        else flags_release @ flags_debug @ extensions
            val banner = PCL.genBanner("padsc", 
-				      "PADS Compiler version 0.9", flags)
+				      "PADS Compiler version 1.0", flags)
            val () = PCL.parseArgs(arguments, flags, addUnknownFile, banner)
            val () = checkFlags()
            (* At this point, flag booleans have been set from command-line *)
