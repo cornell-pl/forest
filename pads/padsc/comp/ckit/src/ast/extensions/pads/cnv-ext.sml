@@ -2192,7 +2192,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* ,) *)
 		      val addFun = (addSuf o accSuf) name
 		      val addDeclSs = [P.varDeclS(P.int, nerr, P.zero),  P.varDeclS'(PL.base_edPCT, ted)]
-		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), PL.PDC_OK)]
+		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), PL.PDC_NO_ERROR)]
 
 		      fun genAccAddFull {pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool, 

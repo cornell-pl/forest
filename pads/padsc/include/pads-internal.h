@@ -645,7 +645,7 @@ ssize_t PDC_Cstr_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_le
 #define PDC_e_str_lit_write2io_internal(pdc, io, s) \
   PDCI_str_lit_write2io(pdc, io, s, PDC_charset_EBCDIC, "PDC_e_str_lit_write2io", 0)
 
-#define PDC_a_str_lit_write2io_internal(pdc, io, s) \
+#define PDC_str_lit_write2io_internal(pdc, io, s) \
   PDCI_str_lit_write2io(pdc, io, s, pdc->disc->def_charset, "PDC_str_lit_write2io", 0)
 
 #define PDC_a_Cstr_lit_write2io_internal(pdc, io, s) \

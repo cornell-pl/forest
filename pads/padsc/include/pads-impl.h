@@ -285,7 +285,7 @@
 #define PDC_e_str_lit_write2io(pdc, io, s) \
   PDCI_str_lit_write2io(pdc, io, s, PDC_charset_EBCDIC, "PDC_e_str_lit_write2io", 1)
 
-#define PDC_a_str_lit_write2io(pdc, io, s) \
+#define PDC_str_lit_write2io(pdc, io, s) \
   PDCI_str_lit_write2io(pdc, io, s, PDC_SAFE_DEF_CHARSET(pdc), "PDC_str_lit_write2io", 1)
 
 #define PDC_a_Cstr_lit_write2io(pdc, io, s) \

@@ -50,7 +50,7 @@
  *                PDC_errorRep_Med  : medium reporting:  like Min, but adds descriptive string
  *                PDC_errorRep_Max  : maximum reporting, like Med, but adds offending IO elt up to error position
  *
- *   def_charset : default character class, one of:
+ *   def_charset : default character set, one of:
  *                PDC_charset_ASCII
  *                PDC_charset_EBCDIC
  *
@@ -89,16 +89,91 @@
  *   stop_maxlen : a maximum # of bytes that will be traversed by a scan.
  *                      if set to 0, no stop_maxlen constraint is imposed.
  *
+ * Specifying what value to write during write calls when an invalid value is present:
+ *
+ * Write functions take an error descriptor and a value.  The value is valid if the
+ * error descriptor's errCode is set PDC_NO_ERR.  The value has been filled in if the
+ * errCode is PDC_USER_CONSTRAINT_VIOLATION.  For other errCodes, the value should be
+ * assumed to contain garbage.  For invalid values, the write function must still
+ * write SOME value.  For every type, one can specify an inv_val helper function
+ * that produces an invalid value for the type, to be used by the type's write
+ * functions.  If no function is specified, then a default invalid value is used,
+ * where there are two cases: if the errorCode is PDC_USER_CONSTRAINT_VIOLATION, then
+ * the current invalid value is used; for any other errorCode, a default invalid
+ * value is used.
+ *
+ * The map from write functions to inv_val functions is found in the discipline:
+ *
+ *    inv_valfn_map: map from const char* (string form of the type name)
+ *                        to PDC_inv_valfn function
+ *                   can be NULL, in which case no mapping are used
+ *
+ * An invalid val function that handles type T values always takes 4 arguments:
+ *       1. The PDC_t* handle
+ *       2. A pointer to a type T error descriptor
+ *       3. A pointer to the invalid type T rep
+ *       4. A void ** arg which is a pointer to a list of pointers to type parameters,
+ *          where the list is terminated by a null pointer.  For example,
+ *          type a_int32_FW(:<width>:) has a single type parameter (width) of type PDC_uint32.
+ *   Args 2-4 use void* types to enable the table to be used with arbitrary types,
+ *   including user-defined types.  One must cast these void* args to the appropriate
+ *   error pointer types before use -- see the example below.  The function should
+ *   replace the invalid value with a new 'invalid val' value.  Return PDC_OK on
+ *   success and PDC_ERR if a replacement value has not been set.
+ *
+ * Use PDC_set_inv_valfn to set a function ptr, PDC_get_inv_valfn to do a lookup.
+ *
+ * EXAMPLE: suppose an a_int32 field has an attached constraint that requires the
+ * value must be >= -30.  If a value of -50 is read, errCode will be
+ * PDC_USER_CONSTRAINT_VIOLATION, and if no inv_val function is provided then the
+ * a_int32 write function will output -50.  If the read function fails to read even a
+ * valid integer, the errCode will be PDC_INVALID_A_NUM, and the a_int32 write
+ * function will output PDC_MIN_INT32 (the default invalid value for all int32 write
+ * functions). If one wanted to correct all user contraint cases to use value -30, and
+ * to use PDC_INT32_MAX for other invalid cases, one could provide an inv_val
+ * helper function to do so:
+ *
+ *   PDC_error_t my_in32_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **type_args) {
+ *     PDC_base_ed *ed  = (PDC_base_ed*)ed_void;
+ *     PDC_int32   *val = (PDC_int32*)val_void;
+ *     if (ed->errCode == PDC_USER_CONTRAINT_VIOLATION) {
+ *       (*val) = -30;
+ *     } else {
+ *       (*val) = PDC_INT32_MAX;
+ *     }
+ *     return PDC_OK;
+ *   }
+ *
+ *   PDC_set_inv_valfn(pdc, pdc->disc->inv_valfn_map, "PDC_int32", (void)*my_int32_inv_val);
+ *
+ * N.B. Note that for a type T with three forms, PDC_T, PDC_a_T, and PDC_e_T, there
+ * is only one entry in the inv_valfn_map, under string "PDC_T".  For example, use
+ * "PDC_int32" to specify an invalid val function for all of these types: PDC_int32,
+ * PDC_a_int32, PDC_e_int32.
+ *
+ * N.B. "PDC_string_FW" is mapped to these 3 types:
+ *           PDC_string_FW             PDC_a_string_FW           PDC_e_string_FW
+ * while "PDC_string" is mapped to all of these types:
+ *           PDC_string                PDC_a_string              PDC_e_string
+ *           PDC_string_ME             PDC_a_string_ME           PDC_e_string_ME
+ *           PDC_string_CME            PDC_a_string_CME          PDC_e_string_CME
+ *           PDC_string_SE             PDC_a_string_SE           PDC_e_string_SE
+ *           PDC_string_CSE            PDC_a_string_CSE          PDC_e_string_CSE
+ * One should use PDC_string_copy, PDC_string_Cstr_copy, PDC_string_share, or
+ * PDC_string_Cstr_share to fill in the value of a PDC_string* param.
+ * 
  * The default disc is PDC_default_disc.  It provides the following defaults:
  *    version:       PDC_VERSION (above) 
  *    flags:         0
- *    def_charset: PDC_charset_ASCII
+ *    def_charset:   PDC_charset_ASCII
  *    copy_strings:  0
  *    stop_regexp:   0
  *    stop_maxlen:   0
  *    errorf:        PDC_errorf
  *    e_rep:         PDC_errorRep_Max
  *    d_endian:      PDC_littleEndian
+ *    inv_valfn_map  NULL -- user must created and install a map
+ *                           if inv_val functions need to be provided
  *    io_disc:       NULL -- a default IO discipline (newline-terminated records)
  *                     is installed on PDC_open if one is not installed beforehand
  *
@@ -265,7 +340,7 @@ typedef enum PDC_errCode_t_e {
  *     PDC_base_csm  : base CheckSet mask
  *     PDC_errorRep  : enum for specifying error reporting level
  *     PDC_endian    : enum for specifying endian-ness
- *     PDC_charset : enum for specifying character class
+ *     PDC_charset   : enum for specifying character set
  * 
  * The struct type decls for these types are in pdc_io_disc.h:
  *     PDC_IO_disc_t : sub-discipline type for controlling IO
@@ -341,35 +416,50 @@ struct PDC_string_s {
 /* ================================================================================
  * STRING HELPER FUNCTIONS
  *
- *    PDC_string_init     : initialize to valid empty string (no dynamic memory allocated yet)
- *    PDC_string_cleanup  : free up the rbuf and any allocated space for the string
- *    PDC_string_mk_share : makes the PDC_string targ refer to the string specified by src/len,
- *                           sharing the space with the original owner.
- *    PDC_string_mk_copy  : copy len chars from string src into the PDC_string targ;
- *                           allocates RBuf and/or space for the copy, as necessary.
- *                           Although not strictly necessary, null-terminates targ->str.
- *                           string_mk_copy returns PDC_ERR on bad arguments or on failure to
- *                           alloc space, otherwise it returns PDC_OK
- *    PDC_string_preserve : If the string is using space-sharing, force it use a private copy 
- *                          instead, so that the (formerly) shared space can be discarded.
- *                          It is safe to call preserve on any PDC_string.
- *    PDC_string_copy     : Copy src PDC_string into targ PDC_string; sharing is not used.
+ *    PDC_string_init       : initialize to valid empty string (no dynamic memory allocated yet)
+ *
+ *    PDC_string_cleanup    : free up the rbuf and any allocated space for the string
+ *
+ *    PDC_string_share      : makes the PDC_string targ refer to the string in PDC_string src,
+ *                            sharing the space with the original owner.
+ *
+ *    PDC_string_Cstr_share : makes the PDC_string targ refer len chars in the C-style string src.
+ *
+ *       Note on sharing: the original space for the string (src) must not be 'cleaned up' while
+ *                        the targ PDC_string continues to be used.  One can use PDC_string_preserve
+ *                        on targ if it becomes necessary to copy the string into targ at a later point.
+ *
+ *    PDC_string_copy      : Copy src PDC_string into targ PDC_string; sharing is not used.
+ *
+ *    PDC_string_Cstr_copy : copy len chars from C-style string src into the PDC_string targ;
+ *                           sharing is not used.
+ *
+ *       Both copy functions allocate an RBuf and/or space for the copy, as necessary.
+ *       Although not strictly necessary, they also null-terminate targ->str.
+ *       They return PDC_ERR on bad arguments or on failure to alloc space, otherwise PDC_OK.
+ *
+ *    PDC_string_preserve  : If the string is using space-sharing, force it use a private copy 
+ *                            instead, so that the (formerly) shared space can be discarded.
+ *                            It is safe to call preserve on any PDC_string.
  *
  * String comparison:
- *    PDC_string_eq       : compares two PDC_string, str1 and str2.
+ *
+ *    PDC_string_eq        : compares two PDC_string, str1 and str2.
  *                            returns 0 if str1 equals str2, a negative # if str1 < str2,
  *                            and a positive # if str1 > str2.
- *    PDC_string_eq_Cstr  : compare PDC_string str to a C-style string Cstr.
+ *
+ *    PDC_string_eq_Cstr   : compare PDC_string str to a C-style string Cstr.
  *                            returns 0 if str equals Cstr, a negative # if str < Cstr,
  *                            and a positive # if str > Cstr.
  */
 
 PDC_error_t PDC_string_init(PDC_t *pdc, PDC_string *s);
 PDC_error_t PDC_string_cleanup(PDC_t *pdc, PDC_string *s);
-PDC_error_t PDC_string_mk_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
-PDC_error_t PDC_string_mk_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
-PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
+PDC_error_t PDC_string_share(PDC_t *pdc, PDC_string *targ, const PDC_string *src);
+PDC_error_t PDC_string_Cstr_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
 PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const PDC_string *src);
+PDC_error_t PDC_string_Cstr_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
+PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
 #ifdef FOR_CKIT
 int PDC_string_eq(const PDC_string *str1, const PDC_string *str2);
 int PDC_string_eq_Cstr(const PDC_string *str, const char *Cstr);
@@ -542,17 +632,24 @@ struct PDC_base_ed_s {
   PDC_loc_t      loc;
 };
 
+/* PDC_inv_valfn: type of a pointer to an invalid val function */
+typedef PDC_error_t (*PDC_inv_valfn)(PDC_t *pdc, void *ed_void, void *val_void, void **type_args);
+
+/* PDC_inv_valfn_map_t: type of an invalid val function map */
+typedef struct PDC_inv_valfn_map_s PDC_inv_valfn_map_t;
+
 /* type PDC_disc_t: */
 struct PDC_disc_s {
   PDC_flags_t           version;       /* interface version */
   PDC_flags_t           flags;         /* control flags */
-  PDC_charset         def_charset; /* default char class */ 
+  PDC_charset           def_charset;   /* default char set */ 
   int                   copy_strings;  /* if non-zero,  ASCII string read functions copy the strings found, otherwise not */
   PDC_regexp_t          *stop_regexp;  /* scan stop pattern, use 0 to disable */
   size_t                stop_maxlen;   /* max scan distance, use 0 to disable */
   PDC_error_f           errorf;        /* error function using  ... */
   PDC_errorRep          e_rep;         /* controls error reporting */
   PDC_endian            d_endian;      /* endian-ness of the data */ 
+  PDC_inv_valfn_map_t  *inv_valfn_map; /* map types to inv_valfn for write functions */
   PDC_IO_disc_t         *io_disc;      /* sub-discipline for controlling IO */
 };
 
@@ -617,6 +714,29 @@ PDC_error_t  PDC_set_IO_disc(PDC_t* pdc, PDC_IO_disc_t* new_io_disc);
 
 RMM_t * PDC_rmm_zero  (PDC_t *pdc);
 RMM_t * PDC_rmm_nozero(PDC_t *pdc);
+
+/* ================================================================================
+ * TOP-LEVEL invalid_val_fn FUNCTIONS
+ *
+ * Getting and setting invalid val functions in a map:
+ *   PDC_get_inv_valfn returns the currently installed function for type_name, or NULL if none is installed
+ *
+ *   PDC_set_inv_valfn returns the previously installed function for type_name, or NULL if none was installed.
+ *   If the fn argument is NULL, any current mapping for type_name is removed.
+ *
+ */
+PDC_inv_valfn PDC_get_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name); 
+PDC_inv_valfn PDC_set_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name, PDC_inv_valfn fn);
+
+/* 
+ * Creating and destroying invalid val function maps: 
+ *
+ * PDC_inv_valfn_map_create: create a new, empty map
+ * PDC_inv_valfn_map_destroy: destroy a map
+ *
+ */
+PDC_inv_valfn_map_t* PDC_inv_valfn_map_create(PDC_t *pdc);
+PDC_error_t          PDC_inv_valfn_map_destroy(PDC_t *pdc, PDC_inv_valfn_map_t *map);
 
 /* ================================================================================
  * TOP-LEVEL IO FUNCTIONS

@@ -246,13 +246,15 @@ ifdef BuildPADSLib
 	@echo "INCLUDE_DEPS = $(INCLUDE_DEPS)"
 	$(COMPILE) -c $<
 else
+ifdef cobol_stuff
 cobol_%: cobol_%.o $(COBOL_LIB_DEPS)
 	@echo "Using rules.mk rule J_C"
 	$(LINK) $< $(COBOL_DYNAMIC_LIBS) -o $@
 
-cobol_%: cobol_%.c $(INCLUDE_DEPS) $(COBOL_LIB_DEPS)
+cobol_%.o: cobol_%.c $(INCLUDE_DEPS) $(COBOL_LIB_DEPS)
 	@echo "Using rules.mk rule L_C"
 	$(COMPILE) $< $(COBOL_DYNAMIC_LIBS) -o $@
+endif
 
 %: %.o $(LIB_DEPS)
 	@echo "Using rules.mk rule J"

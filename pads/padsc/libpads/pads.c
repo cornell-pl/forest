@@ -1,20 +1,20 @@
 ## This source file is run through srcgen.pl to produce 
 ## a number of generated files:
 ##
-##    libpadsc-macros-gen.h      : generally useful macros
-##    libpadsc-read-macros-gen.h : macros that help implement read  functions
-##    libpadsc-read-macros-gen.h : macros that help implement write functions
-##    libpadsc-acc-macros-gen.h  : macros that help implement accum functions
-##    libpadsc-misc-macros-gen.h : macros that help implement misc  functions
+##    libpadsc-macros-gen.h       : generally useful macros
+##    libpadsc-read-macros-gen.h  : macros that help implement read  functions
+##    libpadsc-write-macros-gen.h : macros that help implement write functions
+##    libpadsc-acc-macros-gen.h   : macros that help implement accum functions
+##    libpadsc-misc-macros-gen.h  : macros that help implement misc  functions
 ## 
-##    libpadsc-read-gen.c        : generated read  functions
-##    libpadsc-write-gen.c       : generated write functions
-##    libpadsc-cobol-read-gen.c  : generated cobol read  functions
-##    libpadsc-cobol-write-gen.c : generated cobol write functions
-##    libpadsc-acc-gen.c         : generated accum functions
-##    libpadsc-misc-gen.c        : generated misc  functions
-##    libpadsc-cobol-only-gen.c  : stubs for functions not required by cobol-only version of library
-##    libpadsc-gen.c             : the rest of the libpadsc library
+##    libpadsc-read-gen.c         : generated read  functions
+##    libpadsc-write-gen.c        : generated write functions
+##    libpadsc-cobol-read-gen.c   : generated cobol read  functions
+##    libpadsc-cobol-write-gen.c  : generated cobol write functions
+##    libpadsc-acc-gen.c          : generated accum functions
+##    libpadsc-misc-gen.c         : generated misc  functions
+##    libpadsc-cobol-only-gen.c   : stubs for functions not required by cobol-only version of library
+##    libpadsc-gen.c              : the rest of the libpadsc library
 ##
 /* ********************* BEGIN_MACROS(libpadsc-macros-gen.h) ********************** */
 /*
@@ -104,7 +104,7 @@
 #define PDCI_STRING_HINT 128
 /* END_MACRO */
 
-/* PDC_string_mk_copy -- inline version.  Caller must provide fatal_alloc_err target */
+/* PDC_string_Cstr_copy -- inline version.  Caller must provide fatal_alloc_err target */
 #define PDCI_STR_CPY(s, b, wdth)
   do {
     if (!(s)->rbuf) {
@@ -1020,9 +1020,9 @@ int_type ## _dt_elt_free(Dt_t *dt, int_type ## _dt_elt_t *a, Dtdisc_t *disc)
 }
 
 static Dtdisc_t int_type ## _acc_dt_set_disc = {
-  offsetof(int_type ## _dt_elt_t, key),     /* key     */
+  DTOFFSET(int_type ## _dt_elt_t, key),     /* key     */
   num_bytes,                                /* size    */
-  offsetof(int_type ## _dt_elt_t, link),    /* link    */
+  DTOFFSET(int_type ## _dt_elt_t, link),    /* link    */
   (Dtmake_f)int_type ## _dt_elt_make,       /* makef   */
   (Dtfree_f)int_type ## _dt_elt_free,       /* freef   */
   (Dtcompar_f)int_type ## _dt_elt_set_cmp,  /* comparf */
@@ -1032,9 +1032,9 @@ static Dtdisc_t int_type ## _acc_dt_set_disc = {
 };
 
 static Dtdisc_t int_type ## _acc_dt_oset_disc = {
-  offsetof(int_type ## _dt_elt_t, key),     /* key     */
+  DTOFFSET(int_type ## _dt_elt_t, key),     /* key     */
   num_bytes,                                /* size    */
-  offsetof(int_type ## _dt_elt_t, link),    /* link    */
+  DTOFFSET(int_type ## _dt_elt_t, link),    /* link    */
   (Dtmake_f)int_type ## _dt_elt_make,       /* makef   */
   (Dtfree_f)int_type ## _dt_elt_free,       /* freef   */
   (Dtcompar_f)int_type ## _dt_elt_oset_cmp, /* comparf */
@@ -1150,7 +1150,7 @@ int_type ## _acc_add(PDC_t *pdc, int_type ## _acc *a, const PDC_base_ed *ed, con
     insert_elt.key.val = v;
     insert_elt.key.cnt = 0;
     if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
-      PDC_WARN(pdc->disc, "** PADC internal error: dtinsert failed (out of memory?) **");
+      PDC_WARN(pdc->disc, "** PADSC internal error: dtinsert failed (out of memory?) **");
       return PDC_ERR;
     }
     (tmp1->key.cnt)++;
@@ -1425,9 +1425,9 @@ fpoint_type ## _dt_elt_free(Dt_t *dt, fpoint_type ## _dt_elt_t *a, Dtdisc_t *dis
 }
 
 static Dtdisc_t fpoint_type ## _acc_dt_set_disc = {
-  offsetof(fpoint_type ## _dt_elt_t, key),     /* key     */
+  DTOFFSET(fpoint_type ## _dt_elt_t, key),     /* key     */
   sizeof(floatORdouble),                       /* size    */
-  offsetof(fpoint_type ## _dt_elt_t, link),    /* link    */
+  DTOFFSET(fpoint_type ## _dt_elt_t, link),    /* link    */
   (Dtmake_f)fpoint_type ## _dt_elt_make,       /* makef   */
   (Dtfree_f)fpoint_type ## _dt_elt_free,       /* freef   */
   (Dtcompar_f)fpoint_type ## _dt_elt_set_cmp,  /* comparf */
@@ -1437,9 +1437,9 @@ static Dtdisc_t fpoint_type ## _acc_dt_set_disc = {
 };
 
 static Dtdisc_t fpoint_type ## _acc_dt_oset_disc = {
-  offsetof(fpoint_type ## _dt_elt_t, key),     /* key     */
+  DTOFFSET(fpoint_type ## _dt_elt_t, key),     /* key     */
   sizeof(floatORdouble),                       /* size    */
-  offsetof(fpoint_type ## _dt_elt_t, link),    /* link    */
+  DTOFFSET(fpoint_type ## _dt_elt_t, link),    /* link    */
   (Dtmake_f)fpoint_type ## _dt_elt_make,       /* makef   */
   (Dtfree_f)fpoint_type ## _dt_elt_free,       /* freef   */
   (Dtcompar_f)fpoint_type ## _dt_elt_oset_cmp, /* comparf */
@@ -1544,7 +1544,7 @@ fpoint_type ## _acc_add(PDC_t *pdc, fpoint_type ## _acc *a, const PDC_base_ed *e
     insert_elt.key.val = v;
     insert_elt.key.cnt = 0;
     if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
-      PDC_WARN(pdc->disc, "** PADC internal error: dtinsert failed (out of memory?) **");
+      PDC_WARN(pdc->disc, "** PADSC internal error: dtinsert failed (out of memory?) **");
       return PDC_ERR;
     }
     (tmp1->key.cnt)++;
@@ -3098,9 +3098,9 @@ PDCI_string_dt_elt_free(Dt_t *dt, PDCI_string_dt_elt_t *a, Dtdisc_t *disc)
 }
 
 static Dtdisc_t PDCI_string_acc_dt_set_disc = {
-  offsetof(PDCI_string_dt_elt_t, key),     /* key     */
+  DTOFFSET(PDCI_string_dt_elt_t, key),     /* key     */
   0,				           /* size    */
-  offsetof(PDCI_string_dt_elt_t, link),    /* link    */
+  DTOFFSET(PDCI_string_dt_elt_t, link),    /* link    */
   (Dtmake_f)PDCI_string_dt_elt_make,       /* makef   */
   (Dtfree_f)PDCI_string_dt_elt_free,       /* freef */
   (Dtcompar_f)PDCI_string_dt_elt_set_cmp,  /* comparf */
@@ -3110,9 +3110,9 @@ static Dtdisc_t PDCI_string_acc_dt_set_disc = {
 };
 
 static Dtdisc_t PDCI_string_acc_dt_oset_disc = {
-  offsetof(PDCI_string_dt_elt_t, key),     /* key     */
+  DTOFFSET(PDCI_string_dt_elt_t, key),     /* key     */
   0,				           /* size    */
-  offsetof(PDCI_string_dt_elt_t, link),    /* link    */
+  DTOFFSET(PDCI_string_dt_elt_t, link),    /* link    */
   (Dtmake_f)PDCI_string_dt_elt_make,       /* makef   */
   (Dtfree_f)PDCI_string_dt_elt_free,       /* freef */
   (Dtcompar_f)PDCI_string_dt_elt_oset_cmp, /* comparf */
@@ -3182,7 +3182,7 @@ PDC_string_acc_add(PDC_t *pdc, PDC_string_acc *a, const PDC_base_ed *ed, const P
     insert_elt.key.len = val->len;
     insert_elt.key.cnt = 0;
     if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
-      PDC_WARN(pdc->disc, "** PADC internal error: dtinsert failed (out of memory?) **");
+      PDC_WARN(pdc->disc, "** PADSC internal error: dtinsert failed (out of memory?) **");
       return PDC_ERR;
     }
     (tmp1->key.cnt)++;
@@ -3687,7 +3687,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.80 2003-05-22 00:29:22 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.81 2003-05-23 18:00:34 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -4059,11 +4059,12 @@ PDC_disc_t PDC_default_disc = {
   PDC_charset_ASCII,
   0, /* string read functions do not copy strings */
   0, /* stop_regexp disabled    */
-  0, /* no stop_maxlen disabled */
+  0, /* no stop_maxlen (disabled) */
   PDC_errorf,
   PDC_errorRep_Max,
   PDC_littleEndian,
-  0 /* a default IO discipline is installed on PDC_open */
+  0, /* by default, no inv_valfn map */
+  0  /* a default IO discipline is installed on PDC_open */
 };
 
 PDC_error_t
@@ -4271,6 +4272,132 @@ PDC_rmm_nozero(PDC_t *pdc)
 }
 
 /* ================================================================================ */
+/* EXTERNAL inv_val FUNCTIONS */
+
+/* Type PDC_inv_valfn_map_t: */
+struct PDC_inv_valfn_map_s {
+  Dt_t *dt;
+};
+
+typedef struct PDCI_inv_valfn_elt_s {
+  Dtlink_t        link;
+  const char     *key;
+  PDC_inv_valfn   val;
+} PDCI_inv_valfn_elt_t;
+
+static Dtdisc_t PDCI_inv_valfn_map_disc = {
+  DTOFFSET(PDCI_inv_valfn_elt_t, key),      /* key     */
+  -1,                                       /* size    */
+  DTOFFSET(PDCI_inv_valfn_elt_t, link),     /* link    */
+  NiL,                                      /* makef   */
+  NiL,                                      /* freef   */
+  NiL,                                      /* comparf */
+  NiL,                                      /* hashf   */
+  NiL,                                      /* memoryf */
+  NiL                                       /* eventf  */
+};
+
+PDC_inv_valfn_map_t*
+PDC_inv_valfn_map_create(PDC_t *pdc)
+{
+  PDC_inv_valfn_map_t *map; 
+
+  PDCI_DISC_INIT_CHECKS_RET_0("PDC_inv_valfn_map_create");
+  if (!pdc->vm) {
+    PDC_WARN(pdc->disc, "PDC_inv_valfn_map_create: pdc handle not initialized properly");
+    return 0;
+  }
+  if (!(map = vmnewof(pdc->vm, 0, PDC_inv_valfn_map_t, 1, 0))) {
+    goto alloc_err;
+  }
+  if (!(map->dt = dtopen(&PDCI_inv_valfn_map_disc, Dtset))) {
+    vmfree(pdc->vm, map);
+    goto alloc_err;
+  }
+  return map;
+
+ alloc_err:
+  PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_ALLOC_ERR, "PDC_inv_valfn_map_create", "Memory alloc error");
+  return 0;
+}
+
+PDC_error_t
+PDC_inv_valfn_map_destroy(PDC_t *pdc, PDC_inv_valfn_map_t *map)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_inv_valfn_map_destroy");
+  PDCI_NULLPARAM_CHECK("PDC_inv_valfn_map_destroy", map);
+  if (!pdc->vm) {
+    PDC_WARN(pdc->disc, "PDC_inv_valfn_map_destroy: pdc handle not initialized properly");
+    return PDC_ERR;
+  }
+  if (map->dt) {
+    dtclose(map->dt);
+    map->dt = 0;
+  }
+  vmfree(pdc->vm, map);
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_inv_valfn_map_clear(PDC_t *pdc, PDC_inv_valfn_map_t *map)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_inv_valfn_map_clear");
+  PDCI_NULLPARAM_CHECK("PDC_inv_valfn_map_destroy", map);
+  if (map->dt) {
+    dtclear(map->dt);
+    return PDC_OK;
+  }
+  return PDC_ERR;
+}
+
+PDC_inv_valfn
+PDC_get_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name)
+{
+  PDCI_inv_valfn_elt_t *tmp;
+
+  PDCI_DISC_INIT_CHECKS_RET_0("PDC_get_inv_valfn");
+  PDCI_NULLPARAM_CHECK_RET_0("PDC_get_inv_valfn", map);
+  PDCI_NULLPARAM_CHECK_RET_0("PDC_get_inv_valfn", type_name);
+  if (!map->dt) {
+    PDC_WARN(pdc->disc, "PDC_get_inv_valfn: map not initialized properly");
+    return 0;
+  }
+  if ((tmp = dtmatch(map->dt, type_name))) {
+    return tmp->val;
+  }
+  return 0;
+}
+ 
+PDC_inv_valfn
+PDC_set_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name, PDC_inv_valfn fn)
+{
+  PDC_inv_valfn          res = 0;
+  PDCI_inv_valfn_elt_t  *tmp;
+  PDCI_inv_valfn_elt_t   insert_elt;
+
+  PDCI_DISC_INIT_CHECKS_RET_0("PDC_set_inv_valfn");
+  PDCI_NULLPARAM_CHECK_RET_0("PDC_set_inv_valfn", map);
+  PDCI_NULLPARAM_CHECK_RET_0("PDC_set_inv_valfn", type_name);
+  if (!map->dt) {
+    PDC_WARN(pdc->disc, "PDC_set_inv_valfn: map not initialized properly");
+    return 0;
+  }
+  if ((tmp = dtmatch(map->dt, type_name))) {
+    res = tmp->val;
+    tmp->val = fn;
+    return res;
+  }
+  if (fn) {
+    insert_elt.key = type_name;
+    insert_elt.val = fn;
+    if (!(tmp = dtinsert(map->dt, &insert_elt))) {
+      PDC_WARN(pdc->disc, "** PADSC internal error: dtinsert failed (out of memory?) **");
+    }
+  }
+  return 0;
+}
+
+/* ================================================================================ */
 /* EXTERNAL IO FUNCTIONS */
 
 PDC_error_t
@@ -4383,7 +4510,7 @@ PDC_IO_write_abort (PDC_t *pdc, Sfio_t *io, PDC_byte *buf, int set_buf)
   PDCI_DISC_INIT_CHECKS_RET_VOID("PDC_IO_write_abort");
   PDCI_NULLPARAM_CHECK_RET_VOID("PDC_IO_write_abort", io);
   PDCI_NULLPARAM_CHECK_RET_VOID("PDC_IO_write_abort", buf);
-  return PDCI_IO_write_abort(pdc, io, buf, set_buf, "PDC_IO_write_abort");
+  PDCI_IO_write_abort(pdc, io, buf, set_buf, "PDC_IO_write_abort");
 }
 
 ssize_t
@@ -4542,40 +4669,23 @@ PDC_string_cleanup(PDC_t *pdc, PDC_string *s)
 }
 
 PDC_error_t
-PDC_string_mk_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
+PDC_string_share(PDC_t *pdc, PDC_string *targ, const PDC_string *src)
 {
-  PDCI_DISC_INIT_CHECKS("PDC_string_mk_share");
-  PDCI_NULLPARAM_CHECK("PDC_string_mk_share", src);
-  PDCI_NULLPARAM_CHECK("PDC_string_mk_share", targ);
+  PDCI_DISC_INIT_CHECKS("PDC_string_share");
+  PDCI_NULLPARAM_CHECK("PDC_string_share", src);
+  PDCI_NULLPARAM_CHECK("PDC_string_share", targ);
+  PDCI_STR_SHARE(targ, src->str, src->len);
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_string_Cstr_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_string_Cstr_share");
+  PDCI_NULLPARAM_CHECK("PDC_string_Cstr_share", src);
+  PDCI_NULLPARAM_CHECK("PDC_string_Cstr_share", targ);
   PDCI_STR_SHARE(targ, src, len);
   return PDC_OK;
-}
-
-PDC_error_t
-PDC_string_mk_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
-{
-  PDCI_DISC_INIT_CHECKS("PDC_string_mk_copy");
-  PDCI_NULLPARAM_CHECK("PDC_string_mk_copy", src);
-  PDCI_NULLPARAM_CHECK("PDC_string_mk_copy", targ);
-  PDCI_STR_CPY(targ, src, len);
-  return PDC_OK;
-
- fatal_alloc_err:
-  PDC_FATAL(pdc->disc, "PDC_string_mk_copy: out of space");
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_string_preserve(PDC_t *pdc, PDC_string *s)
-{
-  PDCI_DISC_INIT_CHECKS("PDC_string_preserve");
-  PDCI_NULLPARAM_CHECK("PDC_string_preserve", s);
-  PDCI_STR_PRESERVE(s);
-  return PDC_OK;
-
- fatal_alloc_err:
-  PDC_FATAL(pdc->disc, "PDC_string_preserve: out of space");
-  return PDC_ERR;
 }
 
 PDC_error_t
@@ -4589,6 +4699,33 @@ PDC_string_copy(PDC_t *pdc, PDC_string *targ, const PDC_string *src)
 
  fatal_alloc_err:
   PDC_FATAL(pdc->disc, "PDC_string_copy: out of space");
+  return PDC_ERR;
+}
+
+PDC_error_t
+PDC_string_Cstr_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_string_Cstr_copy");
+  PDCI_NULLPARAM_CHECK("PDC_string_Cstr_copy", src);
+  PDCI_NULLPARAM_CHECK("PDC_string_Cstr_copy", targ);
+  PDCI_STR_CPY(targ, src, len);
+  return PDC_OK;
+
+ fatal_alloc_err:
+  PDC_FATAL(pdc->disc, "PDC_string_Cstr_copy: out of space");
+  return PDC_ERR;
+}
+
+PDC_error_t
+PDC_string_preserve(PDC_t *pdc, PDC_string *s)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_string_preserve");
+  PDCI_NULLPARAM_CHECK("PDC_string_preserve", s);
+  PDCI_STR_PRESERVE(s);
+  return PDC_OK;
+
+ fatal_alloc_err:
+  PDC_FATAL(pdc->disc, "PDC_string_preserve: out of space");
   return PDC_ERR;
 }
 
@@ -4663,6 +4800,7 @@ PDC_base_csm2str(PDC_base_csm e)
     case PDC_Ignore:
       return "PDC_Ignore";
     default:
+      break;
     }
   return "*Invalid PDC_base_csm value*";
 }
@@ -4681,6 +4819,7 @@ PDC_errorRep2str(PDC_errorRep e)
     case PDC_errorRep_None:
       return "PDC_errorRep_None";
     default:
+      break;
     }
   return "*Invalid PDC_errorRep value*";
 }
@@ -4695,6 +4834,7 @@ PDC_endian2str(PDC_endian e)
     case PDC_littleEndian:
       return "PDC_littleEndian";
     default:
+      break;
     }
   return "*Invalid PDC_endian value*";
 }
@@ -4709,6 +4849,7 @@ PDC_charset2str(PDC_charset e)
     case PDC_charset_EBCDIC:
       return "PDC_charset_EBCDIC";
     default:
+      break;
     }
   return "*Invalid PDC_charset value*";
 }

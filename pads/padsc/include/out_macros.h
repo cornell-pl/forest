@@ -98,14 +98,6 @@ void PDC_FATAL6(PDC_disc_t *t, char * fmt,...);
 # define PDC_DBG4(disc,fmt,a1,a2,a3,a4)         PDC_FMT_ERR_MSG4((disc),(fmt),PDC_DBG_FLAGS,(a1),(a2),(a3),(a4))
 # define PDC_DBG5(disc,fmt,a1,a2,a3,a4,a5)      PDC_FMT_ERR_MSG5((disc),(fmt),PDC_DBG_FLAGS,(a1),(a2),(a3),(a4),(a5))
 # define PDC_DBG6(disc,fmt,a1,a2,a3,a4,a5,a6)   PDC_FMT_ERR_MSG6((disc),(fmt),PDC_DBG_FLAGS,(a1),(a2),(a3),(a4),(a5),(a6))
-
-# define PDC_TRACE(disc,fmt)                    PDC_FMT_ERR_MSG ((disc),(fmt),PDC_TRACE_FLAGS)
-# define PDC_TRACE1(disc,fmt,a1)                PDC_FMT_ERR_MSG1((disc),(fmt),PDC_TRACE_FLAGS,(a1))
-# define PDC_TRACE2(disc,fmt,a1,a2)             PDC_FMT_ERR_MSG2((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2))
-# define PDC_TRACE3(disc,fmt,a1,a2,a3)          PDC_FMT_ERR_MSG3((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2),(a3))
-# define PDC_TRACE4(disc,fmt,a1,a2,a3,a4)       PDC_FMT_ERR_MSG4((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2),(a3),(a4))
-# define PDC_TRACE5(disc,fmt,a1,a2,a3,a4,a5)    PDC_FMT_ERR_MSG5((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2),(a3),(a4),(a5))
-# define PDC_TRACE6(disc,fmt,a1,a2,a3,a4,a5,a6) PDC_FMT_ERR_MSG6((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2),(a3),(a4),(a5),(a6))
 #else
 # define PDC_DBG(disc,fmt)                      PDC_NULL_STMT
 # define PDC_DBG1(disc,fmt,a1)                  PDC_NULL_STMT
@@ -114,7 +106,17 @@ void PDC_FATAL6(PDC_disc_t *t, char * fmt,...);
 # define PDC_DBG4(disc,fmt,a1,a2,a3,a4)         PDC_NULL_STMT
 # define PDC_DBG5(disc,fmt,a1,a2,a3,a4,a5)      PDC_NULL_STMT
 # define PDC_DBG6(disc,fmt,a1,a2,a3,a4,a5,a6)   PDC_NULL_STMT
+#endif
 
+#ifdef TRACE
+# define PDC_TRACE(disc,fmt)                    PDC_FMT_ERR_MSG ((disc),(fmt),PDC_TRACE_FLAGS)
+# define PDC_TRACE1(disc,fmt,a1)                PDC_FMT_ERR_MSG1((disc),(fmt),PDC_TRACE_FLAGS,(a1))
+# define PDC_TRACE2(disc,fmt,a1,a2)             PDC_FMT_ERR_MSG2((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2))
+# define PDC_TRACE3(disc,fmt,a1,a2,a3)          PDC_FMT_ERR_MSG3((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2),(a3))
+# define PDC_TRACE4(disc,fmt,a1,a2,a3,a4)       PDC_FMT_ERR_MSG4((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2),(a3),(a4))
+# define PDC_TRACE5(disc,fmt,a1,a2,a3,a4,a5)    PDC_FMT_ERR_MSG5((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2),(a3),(a4),(a5))
+# define PDC_TRACE6(disc,fmt,a1,a2,a3,a4,a5,a6) PDC_FMT_ERR_MSG6((disc),(fmt),PDC_TRACE_FLAGS,(a1),(a2),(a3),(a4),(a5),(a6))
+#else
 # define PDC_TRACE(disc,fmt)                    PDC_NULL_STMT
 # define PDC_TRACE1(disc,fmt,a1)                PDC_NULL_STMT
 # define PDC_TRACE2(disc,fmt,a1,a2)             PDC_NULL_STMT
