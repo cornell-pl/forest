@@ -11,9 +11,15 @@
 #   Types starting with "Pa_"    are represented on disk using ASCII character encoding.
 #   Types starting with "Pe_"    are represented on disk using EBCDIC character encoding.
 #   Types starting with "Pb_"    are represented on disk using raw binary encoding
-#                                 (fixed number of bytes, endian-ness determined by disc setting).
-#   Types starting with "Psb_"   are represented on disk using a serialized binary encoding
+#                                (fixed number of bytes, endian-ness determined by disc setting).
+#   Types starting with "Pbl_"    are represented on disk using raw binary encoding
+#                                (fixed number of bytes, low-order byte first [big-endian]).
+#   Types starting with "Pbh_"    are represented on disk using raw binary encoding
+#                                (fixed number of bytes, high-order byte first [big-endian]).
+#   Types starting with "Psbl_"   are represented on disk using a serialized binary encoding
 #                                 (variable number of bytes, low-order byte first)
+#   Types starting with "Psbh_"   are represented on disk using a serialized binary encoding
+#                                 (variable number of bytes, high-order byte first)
 #   Types starting with "Pebc_"  are represented on disk using EBCDIC numeric encoding,
 #                                which stores 1 digit per byte on disk.
 #   Types starting with "Pbcd_"  are represented on disk using BCD numeric encoding,
@@ -45,7 +51,7 @@
 #   have only one fixed width, such as bint8, do not have the "_FW" suffix.
 #
 #   For the fixedpoint types, TWO parameters are required: the number of digits
-#   (for the ebc_ and bcd_ fpoint types) or bytes (for the sb_ fpoint types)
+#   (for the ebc_ and bcd_ fpoint types) or bytes (for the sbl_ and sbh_fpoint types)
 #   used to encode the numerator, and the number of digits after the decimal
 #   place.  Digits-after-decimal is part of the type specification, and is not
 #   encoded on disk.  "_FW" is not used for this case because it does not fit
@@ -62,68 +68,68 @@
 
 #PADS_name       numArg inMemory      mask       parseDescription     isPredOpt            scanFunctionOpt       accumulatorOpt  DiskSize     Memory(S/V) Endian
 
-Puint8           0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      V            S           Y
-Pint8            0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       V            S           Y
-Puint8_FW        1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           Y
-Pint8_FW         1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           Y
+Puint8           0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      V            S           N
+Pint8            0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       V            S           N
+Puint8_FW        1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           N
+Pint8_FW         1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           N
 
-Puint16          0      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     V            S           Y
-Pint16           0      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      V            S           Y
-Puint16_FW       1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           Y
-Pint16_FW        1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           Y
+Puint16          0      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     V            S           N
+Pint16           0      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      V            S           N
+Puint16_FW       1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           N
+Pint16_FW        1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           N
 
-Puint32          0      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     V            S           Y
-Pint32           0      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      V            S           Y
-Puint32_FW       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           Y
-Pint32_FW        1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           Y
+Puint32          0      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     V            S           N
+Pint32           0      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      V            S           N
+Puint32_FW       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           N
+Pint32_FW        1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           N
 
-Puint64          0      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     V            S           Y
-Pint64           0      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      V            S           Y
-Puint64_FW       1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           Y
-Pint64_FW        1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           Y
+Puint64          0      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     V            S           N
+Pint64           0      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      V            S           N
+Puint64_FW       1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           N
+Pint64_FW        1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           N
 
-Pa_uint8         0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      V            S           Y
-Pa_int8          0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       V            S           Y
-Pa_uint8_FW      1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           Y
-Pa_int8_FW       1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           Y
+Pa_uint8         0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      V            S           N
+Pa_int8          0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       V            S           N
+Pa_uint8_FW      1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           N
+Pa_int8_FW       1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           N
 
-Pa_uint16        0      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     V            S           Y
-Pa_int16         0      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      V            S           Y
-Pa_uint16_FW     1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           Y
-Pa_int16_FW      1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           Y
+Pa_uint16        0      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     V            S           N
+Pa_int16         0      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      V            S           N
+Pa_uint16_FW     1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           N
+Pa_int16_FW      1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           N
 
-Pa_uint32        0      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     V            S           Y
-Pa_int32         0      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      V            S           Y
-Pa_uint32_FW     1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           Y
-Pa_int32_FW      1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           Y
+Pa_uint32        0      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     V            S           N
+Pa_int32         0      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      V            S           N
+Pa_uint32_FW     1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           N
+Pa_int32_FW      1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           N
 
-Pa_uint64        0      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     V            S           Y
-Pa_int64         0      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      V            S           Y
-Pa_uint64_FW     1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           Y
-Pa_int64_FW      1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           Y
+Pa_uint64        0      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     V            S           N
+Pa_int64         0      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      V            S           N
+Pa_uint64_FW     1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           N
+Pa_int64_FW      1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           N
 
-Pe_uint8         0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      V            S           Y
-Pe_int8          0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       V            S           Y
-Pe_uint8_FW      1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           Y
-Pe_int8_FW       1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           Y
+Pe_uint8         0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      V            S           N
+Pe_int8          0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       V            S           N
+Pe_uint8_FW      1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           N
+Pe_int8_FW       1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           N
 
-Pe_uint16        0      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     V            S           Y
-Pe_int16         0      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      V            S           Y
-Pe_uint16_FW     1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           Y
-Pe_int16_FW      1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           Y
+Pe_uint16        0      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     V            S           N
+Pe_int16         0      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      V            S           N
+Pe_uint16_FW     1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           N
+Pe_int16_FW      1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           N
 
-Pe_uint32        0      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     V            S           Y
-Pe_int32         0      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      V            S           Y
-Pe_uint32_FW     1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           Y
-Pe_int32_FW      1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           Y
+Pe_uint32        0      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     V            S           N
+Pe_int32         0      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      V            S           N
+Pe_uint32_FW     1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           N
+Pe_int32_FW      1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           N
 
-Pe_uint64        0      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     V            S           Y
-Pe_int64         0      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      V            S           Y
-Pe_uint64_FW     1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           Y
-Pe_int64_FW      1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           Y
+Pe_uint64        0      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     V            S           N
+Pe_int64         0      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      V            S           N
+Pe_uint64_FW     1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           N
+Pe_int64_FW      1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           N
 
-Pb_uint8         0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      1            S           Y
-Pb_int8          0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       1            S           Y
+Pb_uint8         0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      1            S           N
+Pb_int8          0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       1            S           N
 Pb_uint16        0      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     2            S           Y
 Pb_int16         0      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      2            S           Y
 Pb_uint32        0      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     4            S           Y
@@ -131,77 +137,110 @@ Pb_int32         0      Pint32        Pbase_m    Pbase_pd             -         
 Pb_uint64        0      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     8            S           Y
 Pb_int64         0      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      8            S           Y
 
-Pebc_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           Y
-Pebc_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           Y
-Pebc_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           Y
-Pebc_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           Y
-Pebc_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           Y
-Pebc_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           Y
-Pebc_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           Y
-Pebc_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           Y
+Pbl_uint8        0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      1            S           N
+Pbl_int8         0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       1            S           N
+Pbl_uint16       0      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     2            S           N
+Pbl_int16        0      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      2            S           N
+Pbl_uint32       0      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     4            S           N
+Pbl_int32        0      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      4            S           N
+Pbl_uint64       0      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     8            S           N
+Pbl_int64        0      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      8            S           N
 
-Pbcd_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P((p1+2)/2)  S           Y
-Pbcd_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P((p1+2)/2)  S           Y
-Pbcd_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P((p1+2)/2)  S           Y
-Pbcd_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P((p1+2)/2)  S           Y
-Pbcd_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P((p1+2)/2)  S           Y
-Pbcd_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P((p1+2)/2)  S           Y
-Pbcd_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P((p1+2)/2)  S           Y
-Pbcd_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P((p1+2)/2)  S           Y
+Pbh_uint8        0      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      1            S           N
+Pbh_int8         0      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       1            S           N
+Pbh_uint16       0      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     2            S           N
+Pbh_int16        0      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      2            S           N
+Pbh_uint32       0      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     4            S           N
+Pbh_int32        0      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      4            S           N
+Pbh_uint64       0      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     8            S           N
+Pbh_int64        0      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      8            S           N
 
-Psbl_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           Y
-Psbl_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           Y
-Psbl_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           Y
-Psbl_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           Y
-Psbl_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           Y
-Psbl_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           Y
-Psbl_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           Y
-Psbl_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           Y
+Pebc_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           N
+Pebc_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           N
+Pebc_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           N
+Pebc_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           N
+Pebc_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           N
+Pebc_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           N
+Pebc_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           N
+Pebc_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           N
 
-Psbh_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           Y
-Psbh_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           Y
-Psbh_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           Y
-Psbh_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           Y
-Psbh_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           Y
-Psbh_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           Y
-Psbh_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           Y
-Psbh_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           Y
+Pbcd_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P((p1+2)/2)  S           N
+Pbcd_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P((p1+2)/2)  S           N
+Pbcd_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P((p1+2)/2)  S           N
+Pbcd_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P((p1+2)/2)  S           N
+Pbcd_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P((p1+2)/2)  S           N
+Pbcd_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P((p1+2)/2)  S           N
+Pbcd_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P((p1+2)/2)  S           N
+Pbcd_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P((p1+2)/2)  S           N
 
-Pebc_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P(p1)        S           Y
-Pebc_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P(p1)        S           Y
-Pebc_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P(p1)        S           Y
-Pebc_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P(p1)        S           Y
-Pebc_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P(p1)        S           Y
-Pebc_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P(p1)        S           Y
-Pebc_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P(p1)        S           Y
-Pebc_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P(p1)        S           Y
+Psbl_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           N
+Psbl_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           N
+Psbl_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           N
+Psbl_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           N
+Psbl_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           N
+Psbl_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           N
+Psbl_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           N
+Psbl_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           N
 
-Pbcd_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P((p1+2)/2)  S           Y
-Pbcd_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P((p1+2)/2)  S           Y
-Pbcd_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P((p1+2)/2)  S           Y
-Pbcd_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P((p1+2)/2)  S           Y
-Pbcd_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P((p1+2)/2)  S           Y
-Pbcd_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P((p1+2)/2)  S           Y
-Pbcd_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P((p1+2)/2)  S           Y
-Pbcd_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P((p1+2)/2)  S           Y
+Psbh_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           N
+Psbh_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           N
+Psbh_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P(p1)        S           N
+Psbh_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P(p1)        S           N
+Psbh_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P(p1)        S           N
+Psbh_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P(p1)        S           N
+Psbh_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           N
+Psbh_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           N
 
-Psbl_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P(p1)        S           Y
-Psbl_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P(p1)        S           Y
-Psbl_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P(p1)        S           Y
-Psbl_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P(p1)        S           Y
-Psbl_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P(p1)        S           Y
-Psbl_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P(p1)        S           Y
-Psbl_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P(p1)        S           Y
-Psbl_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P(p1)        S           Y
+Pfloat32         0      Pfloat32      Pbase_m    Pbase_pd             -                    -                     Pfloat32_acc    V            S           N
+Pfloat32_FW      1      Pfloat32      Pbase_m    Pbase_pd             -                    -                     Pfloat32_acc    P(p1)        S           N
+Pfloat64         0      Pfloat64      Pbase_m    Pbase_pd             -                    -                     Pfloat64_acc    V            S           N
+Pfloat64_FW      1      Pfloat64      Pbase_m    Pbase_pd             -                    -                     Pfloat64_acc    P(p1)        S           N
 
-Psbh_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P(p1)        S           Y
-Psbh_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P(p1)        S           Y
-Psbh_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P(p1)        S           Y
-Psbh_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P(p1)        S           Y
-Psbh_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P(p1)        S           Y
-Psbh_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P(p1)        S           Y
-Psbh_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P(p1)        S           Y
-Psbh_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P(p1)        S           Y
+Pa_float32       0      Pfloat32      Pbase_m    Pbase_pd             -                    -                     Pfloat32_acc    V            S           N
+Pa_float32_FW    1      Pfloat32      Pbase_m    Pbase_pd             -                    -                     Pfloat32_acc    P(p1)        S           N
+Pa_float64       0      Pfloat64      Pbase_m    Pbase_pd             -                    -                     Pfloat64_acc    V            S           N
+Pa_float64_FW    1      Pfloat64      Pbase_m    Pbase_pd             -                    -                     Pfloat64_acc    P(p1)        S           N
+
+Pe_float32       0      Pfloat32      Pbase_m    Pbase_pd             -                    -                     Pfloat32_acc    V            S           N
+Pe_float32_FW    1      Pfloat32      Pbase_m    Pbase_pd             -                    -                     Pfloat32_acc    P(p1)        S           N
+Pe_float64       0      Pfloat64      Pbase_m    Pbase_pd             -                    -                     Pfloat64_acc    V            S           N
+Pe_float64_FW    1      Pfloat64      Pbase_m    Pbase_pd             -                    -                     Pfloat64_acc    P(p1)        S           N
+
+Pebc_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P(p1)        S           N
+Pebc_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P(p1)        S           N
+Pebc_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P(p1)        S           N
+Pebc_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P(p1)        S           N
+Pebc_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P(p1)        S           N
+Pebc_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P(p1)        S           N
+Pebc_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P(p1)        S           N
+Pebc_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P(p1)        S           N
+
+Pbcd_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P((p1+2)/2)  S           N
+Pbcd_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P((p1+2)/2)  S           N
+Pbcd_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P((p1+2)/2)  S           N
+Pbcd_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P((p1+2)/2)  S           N
+Pbcd_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P((p1+2)/2)  S           N
+Pbcd_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P((p1+2)/2)  S           N
+Pbcd_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P((p1+2)/2)  S           N
+Pbcd_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P((p1+2)/2)  S           N
+
+Psbl_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P(p1)        S           N
+Psbl_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P(p1)        S           N
+Psbl_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P(p1)        S           N
+Psbl_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P(p1)        S           N
+Psbl_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P(p1)        S           N
+Psbl_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P(p1)        S           N
+Psbl_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P(p1)        S           N
+Psbl_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P(p1)        S           N
+
+Psbh_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P(p1)        S           N
+Psbh_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P(p1)        S           N
+Psbh_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P(p1)        S           N
+Psbh_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P(p1)        S           N
+Psbh_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P(p1)        S           N
+Psbh_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P(p1)        S           N
+Psbh_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P(p1)        S           N
+Psbh_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P(p1)        S           N
 
 # pchar/a_char/e_char : a single character on disk
 
@@ -281,4 +320,3 @@ Pe_countX        3      Pint32        Pbase_m    Pbase_pd             -         
 PcountXtoY       3      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      0            S           N
 Pa_countXtoY     3      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      0            S           N
 Pe_countXtoY     3      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      0            S           N
-

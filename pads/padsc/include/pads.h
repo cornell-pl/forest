@@ -999,7 +999,7 @@ struct Pdisc_s {
   Pendian_t          d_endian;      /* endian-ness of the data */ 
   Puint64            acc_max2track; /* default maximum distinct values for accumulators to track */
   Puint64            acc_max2rep;   /* default maximum number of tracked values to describe in detail in report */
-  double             acc_pcnt2rep;  /* default maximum percent of values to describe in detail in report */
+  Pfloat64           acc_pcnt2rep;  /* default maximum percent of values to describe in detail in report */
   Pinv_valfn_map_t  *inv_valfn_map; /* map types to inv_valfn for write functions */
   Pio_disc_t        *io_disc;       /* sub-discipline for controlling IO */
 };
@@ -3652,8 +3652,8 @@ ssize_t PcountXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *bu
  * BASE TYPE ACCUMULATORS
  *
  * For integer type T, accumulator functions P_T_acc_avg returns the running average
- * as a double, while P_T_acc_ravg returns the average as a T value by roudning the
- * double to the nearest T.
+ * as a Pfloat64, while P_T_acc_ravg returns the average as a T value by roudning the
+ * Pfloat64 to the nearest T.
  *
  * Each report function takes the following params (in addition to pads/disc first/last args):
  *   prefix: a descriptive string, usually the field name
@@ -3672,13 +3672,13 @@ typedef struct Pint_acc_s {
   Dt_t     *dict;
   Puint64   max2track;
   Puint64   max2rep;
-  double    pcnt2rep;
+  Pfloat64  pcnt2rep;
   Puint64   good;
   Puint64   bad;
   Puint64   fold;
   Puint64   tracked;
   Pint64    psum;
-  double    avg;
+  Pfloat64  avg;
   Pint64    min;
   Pint64    max;
 } Pint_acc;
@@ -3687,13 +3687,13 @@ typedef struct Puint_acc_s {
   Dt_t     *dict;
   Puint64   max2track;
   Puint64   max2rep;
-  double    pcnt2rep;
+  Pfloat64  pcnt2rep;
   Puint64   good;
   Puint64   bad;
   Puint64   fold;
   Puint64   tracked;
   Puint64   psum;
-  double    avg;
+  Pfloat64  avg;
   Puint64   min;
   Puint64   max;
 } Puint_acc;
@@ -3718,7 +3718,7 @@ Perror_t Pint32_acc_reset   (P_t *pads, Pint32_acc *a);
 Perror_t Pint32_acc_cleanup (P_t *pads, Pint32_acc *a);
 Perror_t Pint32_acc_add     (P_t *pads, Pint32_acc *a, const Pbase_pd *pd, const Pint32 *val);
 Perror_t Pint32_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pint32_acc *a);
-double   Pint32_acc_avg     (P_t *pads, Pint32_acc *a);
+Pfloat64 Pint32_acc_avg     (P_t *pads, Pint32_acc *a);
 Pint32   Pint32_acc_ravg    (P_t *pads, Pint32_acc *a);
 
 Perror_t Puint32_acc_init    (P_t *pads, Puint32_acc *a);
@@ -3726,7 +3726,7 @@ Perror_t Puint32_acc_reset   (P_t *pads, Puint32_acc *a);
 Perror_t Puint32_acc_cleanup (P_t *pads, Puint32_acc *a);
 Perror_t Puint32_acc_add     (P_t *pads, Puint32_acc *a, const Pbase_pd *pd, const Puint32 *val);
 Perror_t Puint32_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Puint32_acc *a);
-double   Puint32_acc_avg     (P_t *pads, Puint32_acc *a);
+Pfloat64 Puint32_acc_avg     (P_t *pads, Puint32_acc *a);
 Puint32  Puint32_acc_ravg    (P_t *pads, Puint32_acc *a);
 
 /*
@@ -3761,7 +3761,7 @@ typedef struct Pstring_acc_s {
   Dt_t        *dict;
   Puint64      max2track;
   Puint64      max2rep;
-  double       pcnt2rep;
+  Pfloat64     pcnt2rep;
   Puint64      tracked;
   Puint32_acc  len_accum; /* used for length distribution and good/bad accounting */
 } Pstring_acc;
@@ -3771,7 +3771,7 @@ Perror_t Pint8_acc_reset   (P_t *pads, Pint8_acc *a);
 Perror_t Pint8_acc_cleanup (P_t *pads, Pint8_acc *a);
 Perror_t Pint8_acc_add     (P_t *pads, Pint8_acc *a, const Pbase_pd *pd, const Pint8 *val);
 Perror_t Pint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pint8_acc *a);
-double   Pint8_acc_avg     (P_t *pads, Pint8_acc *a);
+Pfloat64 Pint8_acc_avg     (P_t *pads, Pint8_acc *a);
 Pint8    Pint8_acc_ravg    (P_t *pads, Pint8_acc *a);
 
 Perror_t Pint16_acc_init    (P_t *pads, Pint16_acc *a);
@@ -3779,7 +3779,7 @@ Perror_t Pint16_acc_reset   (P_t *pads, Pint16_acc *a);
 Perror_t Pint16_acc_cleanup (P_t *pads, Pint16_acc *a);
 Perror_t Pint16_acc_add     (P_t *pads, Pint16_acc *a, const Pbase_pd *pd, const Pint16 *val);
 Perror_t Pint16_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pint16_acc *a);
-double   Pint16_acc_avg     (P_t *pads, Pint16_acc *a);
+Pfloat64 Pint16_acc_avg     (P_t *pads, Pint16_acc *a);
 Pint16   Pint16_acc_ravg    (P_t *pads, Pint16_acc *a);
 
 Perror_t Pint64_acc_init    (P_t *pads, Pint64_acc *a);
@@ -3787,7 +3787,7 @@ Perror_t Pint64_acc_reset   (P_t *pads, Pint64_acc *a);
 Perror_t Pint64_acc_cleanup (P_t *pads, Pint64_acc *a);
 Perror_t Pint64_acc_add     (P_t *pads, Pint64_acc *a, const Pbase_pd *pd, const Pint64 *val);
 Perror_t Pint64_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pint64_acc *a);
-double   Pint64_acc_avg     (P_t *pads, Pint64_acc *a);
+Pfloat64 Pint64_acc_avg     (P_t *pads, Pint64_acc *a);
 Pint64   Pint64_acc_ravg    (P_t *pads, Pint64_acc *a);
 
 Perror_t Puint8_acc_init    (P_t *pads, Puint8_acc *a);
@@ -3795,7 +3795,7 @@ Perror_t Puint8_acc_reset   (P_t *pads, Puint8_acc *a);
 Perror_t Puint8_acc_cleanup (P_t *pads, Puint8_acc *a);
 Perror_t Puint8_acc_add     (P_t *pads, Puint8_acc *a, const Pbase_pd *pd, const Puint8 *val);
 Perror_t Puint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Puint8_acc *a);
-double   Puint8_acc_avg     (P_t *pads, Puint8_acc *a);
+Pfloat64 Puint8_acc_avg     (P_t *pads, Puint8_acc *a);
 Puint8   Puint8_acc_ravg    (P_t *pads, Puint8_acc *a);
 
 Perror_t Puint16_acc_init    (P_t *pads, Puint16_acc *a);
@@ -3803,7 +3803,7 @@ Perror_t Puint16_acc_reset   (P_t *pads, Puint16_acc *a);
 Perror_t Puint16_acc_cleanup (P_t *pads, Puint16_acc *a);
 Perror_t Puint16_acc_add     (P_t *pads, Puint16_acc *a, const Pbase_pd *pd, const Puint16 *val);
 Perror_t Puint16_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Puint16_acc *a);
-double   Puint16_acc_avg     (P_t *pads, Puint16_acc *a);
+Pfloat64 Puint16_acc_avg     (P_t *pads, Puint16_acc *a);
 Puint16  Puint16_acc_ravg    (P_t *pads, Puint16_acc *a);
 
 Perror_t Puint64_acc_init    (P_t *pads, Puint64_acc *a);
@@ -3811,7 +3811,7 @@ Perror_t Puint64_acc_reset   (P_t *pads, Puint64_acc *a);
 Perror_t Puint64_acc_cleanup (P_t *pads, Puint64_acc *a);
 Perror_t Puint64_acc_add     (P_t *pads, Puint64_acc *a, const Pbase_pd *pd, const Puint64 *val);
 Perror_t Puint64_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Puint64_acc *a);
-double   Puint64_acc_avg     (P_t *pads, Puint64_acc *a);
+Pfloat64 Puint64_acc_avg     (P_t *pads, Puint64_acc *a);
 Puint64  Puint64_acc_ravg    (P_t *pads, Puint64_acc *a);
 
 Perror_t Pstring_acc_init    (P_t *pads, Pstring_acc *a);
@@ -3834,38 +3834,38 @@ Perror_t Pchar_acc_report    (P_t *pads, const char *prefix, const char *what, i
 /*
  * fpoint/ufpoint accumulator types
  *
- *    Note that double-based arithmetic is used for the fpoint64/ufpoint64 accumulators,
- *    while float-based arithmetic is used for all other fpoint/ufpoint accumulators.
+ *    Note that Pfloat64-based arithmetic is used for the fpoint64/ufpoint64 accumulators,
+ *    while Pfloat32-based arithmetic is used for all other fpoint/ufpoint accumulators.
  */
 
 typedef struct Pfpoint_acc_flt_s {
   Dt_t     *dict;
   Puint64   max2track;
   Puint64   max2rep;
-  double    pcnt2rep;
+  Pfloat64  pcnt2rep;
   Puint64   good;
   Puint64   bad;
   Puint64   fold;
   Puint64   tracked;
-  double    psum;
-  double    avg;
-  double    min;
-  double    max;
+  Pfloat64  psum;
+  Pfloat64  avg;
+  Pfloat64  min;
+  Pfloat64  max;
 } Pfpoint_acc_flt;
 
 typedef struct Pfpoint_acc_dbl_s {
   Dt_t     *dict;
   Puint64   max2track;
   Puint64   max2rep;
-  double    pcnt2rep;
+  Pfloat64  pcnt2rep;
   Puint64   good;
   Puint64   bad;
   Puint64   fold;
   Puint64   tracked;
-  double    psum;
-  double    avg;
-  double    min;
-  double    max;
+  Pfloat64  psum;
+  Pfloat64  avg;
+  Pfloat64  min;
+  Pfloat64  max;
 } Pfpoint_acc_dbl;
 
 typedef Pfpoint_acc_flt Pfpoint8_acc;
@@ -3883,56 +3883,56 @@ Perror_t Pfpoint8_acc_reset   (P_t *pads, Pfpoint8_acc *a);
 Perror_t Pfpoint8_acc_cleanup (P_t *pads, Pfpoint8_acc *a);
 Perror_t Pfpoint8_acc_add     (P_t *pads, Pfpoint8_acc *a, const Pbase_pd *pd, const Pfpoint8 *val);
 Perror_t Pfpoint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint8_acc *a);
-float    Pfpoint8_acc_avg     (P_t *pads, Pfpoint8_acc *a);
+Pfloat32 Pfpoint8_acc_avg     (P_t *pads, Pfpoint8_acc *a);
 
 Perror_t Pfpoint16_acc_init   (P_t *pads, Pfpoint16_acc *a);
 Perror_t Pfpoint16_acc_reset  (P_t *pads, Pfpoint16_acc *a);
 Perror_t Pfpoint16_acc_cleanup(P_t *pads, Pfpoint16_acc *a);
 Perror_t Pfpoint16_acc_add    (P_t *pads, Pfpoint16_acc *a, const Pbase_pd *pd, const Pfpoint16 *val);
 Perror_t Pfpoint16_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint16_acc *a);
-float    Pfpoint16_acc_avg    (P_t *pads, Pfpoint16_acc *a);
+Pfloat32 Pfpoint16_acc_avg    (P_t *pads, Pfpoint16_acc *a);
 
 Perror_t Pfpoint32_acc_init   (P_t *pads, Pfpoint32_acc *a);
 Perror_t Pfpoint32_acc_reset  (P_t *pads, Pfpoint32_acc *a);
 Perror_t Pfpoint32_acc_cleanup(P_t *pads, Pfpoint32_acc *a);
 Perror_t Pfpoint32_acc_add    (P_t *pads, Pfpoint32_acc *a, const Pbase_pd *pd, const Pfpoint32 *val);
 Perror_t Pfpoint32_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint32_acc *a);
-float    Pfpoint32_acc_avg    (P_t *pads, Pfpoint32_acc *a);
+Pfloat32 Pfpoint32_acc_avg    (P_t *pads, Pfpoint32_acc *a);
 
 Perror_t Pfpoint64_acc_init   (P_t *pads, Pfpoint64_acc *a);
 Perror_t Pfpoint64_acc_reset  (P_t *pads, Pfpoint64_acc *a);
 Perror_t Pfpoint64_acc_cleanup(P_t *pads, Pfpoint64_acc *a);
 Perror_t Pfpoint64_acc_add    (P_t *pads, Pfpoint64_acc *a, const Pbase_pd *pd, const Pfpoint64 *val);
 Perror_t Pfpoint64_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint64_acc *a);
-double   Pfpoint64_acc_avg    (P_t *pads, Pfpoint64_acc *a);
+Pfloat64 Pfpoint64_acc_avg    (P_t *pads, Pfpoint64_acc *a);
 
 Perror_t Pufpoint8_acc_init    (P_t *pads, Pufpoint8_acc *a);
 Perror_t Pufpoint8_acc_reset   (P_t *pads, Pufpoint8_acc *a);
 Perror_t Pufpoint8_acc_cleanup (P_t *pads, Pufpoint8_acc *a);
 Perror_t Pufpoint8_acc_add     (P_t *pads, Pufpoint8_acc *a, const Pbase_pd *pd, const Pufpoint8 *val);
 Perror_t Pufpoint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint8_acc *a);
-float    Pufpoint8_acc_avg     (P_t *pads, Pufpoint8_acc *a);
+Pfloat32 Pufpoint8_acc_avg     (P_t *pads, Pufpoint8_acc *a);
 
 Perror_t Pufpoint16_acc_init   (P_t *pads, Pufpoint16_acc *a);
 Perror_t Pufpoint16_acc_reset  (P_t *pads, Pufpoint16_acc *a);
 Perror_t Pufpoint16_acc_cleanup(P_t *pads, Pufpoint16_acc *a);
 Perror_t Pufpoint16_acc_add    (P_t *pads, Pufpoint16_acc *a, const Pbase_pd *pd, const Pufpoint16 *val);
 Perror_t Pufpoint16_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint16_acc *a);
-float    Pufpoint16_acc_avg    (P_t *pads, Pufpoint16_acc *a);
+Pfloat32 Pufpoint16_acc_avg    (P_t *pads, Pufpoint16_acc *a);
 
 Perror_t Pufpoint32_acc_init   (P_t *pads, Pufpoint32_acc *a);
 Perror_t Pufpoint32_acc_reset  (P_t *pads, Pufpoint32_acc *a);
 Perror_t Pufpoint32_acc_cleanup(P_t *pads, Pufpoint32_acc *a);
 Perror_t Pufpoint32_acc_add    (P_t *pads, Pufpoint32_acc *a, const Pbase_pd *pd, const Pufpoint32 *val);
 Perror_t Pufpoint32_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint32_acc *a);
-float    Pufpoint32_acc_avg    (P_t *pads, Pufpoint32_acc *a);
+Pfloat32 Pufpoint32_acc_avg    (P_t *pads, Pufpoint32_acc *a);
 
 Perror_t Pufpoint64_acc_init   (P_t *pads, Pufpoint64_acc *a);
 Perror_t Pufpoint64_acc_reset  (P_t *pads, Pufpoint64_acc *a);
 Perror_t Pufpoint64_acc_cleanup(P_t *pads, Pufpoint64_acc *a);
 Perror_t Pufpoint64_acc_add    (P_t *pads, Pufpoint64_acc *a, const Pbase_pd *pd, const Pufpoint64 *val);
 Perror_t Pufpoint64_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint64_acc *a);
-double   Pufpoint64_acc_avg    (P_t *pads, Pufpoint64_acc *a);
+Pfloat64 Pufpoint64_acc_avg    (P_t *pads, Pufpoint64_acc *a);
 
 #endif /* P_CONFIG_ACCUM_FUNCTIONS */
 

@@ -56,10 +56,6 @@
 #define P_CONFIG_E_FLOAT_FW       1 /* need EBCDIC-based fixed-width floats */
 
 #define P_CONFIG_B_INT            1 /* need raw binary integers */ 
-#define P_CONFIG_B_FLOAT          1 /* need raw binary floats */ 
-
-#define P_CONFIG_SBL_FLOAT        1 /* need SBL encoding floats */ 
-#define P_CONFIG_SBH_FLOAT        1 /* need SBH encoding floats */ 
 
 #define P_CONFIG_EBC_INT          1 /* need EBC encoding integers */ 
 #define P_CONFIG_BCD_INT          1 /* need BCD encoding integers */ 

@@ -1404,7 +1404,7 @@ fn_pref ## _write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 			   const char *tag, int indent)
 {
   ssize_t     writelen;
-  double      d;
+  Pfloat64    d;
   Pinv_valfn  fn;
   void       *type_args[3];
 
@@ -1427,7 +1427,7 @@ fn_pref ## _write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
     }
     return -1;
   }
-  d = P_FPOINT2DBL(*val);
+  d = P_FPOINT2FLOAT64(*val);
   PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%llf", d);
 }
 
@@ -1435,7 +1435,7 @@ ssize_t
 fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Puint32 num_digits_or_bytes, Puint32 d_exp,
 			  Pbase_pd *pd, targ_type *val, const char *tag, int indent)
 {
-  double      d;
+  Pfloat64    d;
   Pinv_valfn  fn;
   void       *type_args[3];
 
@@ -1458,7 +1458,7 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Puint32 num_digits_or_bytes, Pu
     }
     return -1;
   }
-  d = P_FPOINT2DBL(*val);
+  d = P_FPOINT2FLOAT64(*val);
   PDCI_BASEVAL_XML_OUT2IO(inv_type, "%llf", d);
 }
 /* END_MACRO */
@@ -1690,20 +1690,20 @@ int_type ## _acc_cleanup(P_t *pads, int_type ## _acc *a)
 
 void
 int_type ## _acc_fold_psum(int_type ## _acc *a) {
-  double pavg, navg;
+  Pfloat64 pavg, navg;
   Puint64 recent = a->good - a->fold;
   if (recent == 0) {
     return;
   }
-  pavg = a->psum / (double)recent;
-  navg = ((a->avg * a->fold) + (pavg * recent))/(double)a->good;
+  pavg = a->psum / (Pfloat64)recent;
+  navg = ((a->avg * a->fold) + (pavg * recent))/(Pfloat64)a->good;
   /* could test for change between a->avg and navg */
   a->avg = navg;
   a->psum = 0;
   a->fold += recent;
 }
 
-double
+Pfloat64
 int_type ## _acc_avg(P_t *pads, int_type ## _acc *a) {
   int_type ## _acc_fold_psum(a);
   return a->avg;
@@ -1774,10 +1774,10 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
 {
   int                    i, sz, rp;
   Puint64                cnt_sum;
-  double                 cnt_sum_pcnt;
-  double                 bad_pcnt;
-  double                 track_pcnt;
-  double                 elt_pcnt;
+  Pfloat64               cnt_sum_pcnt;
+  Pfloat64               bad_pcnt;
+  Pfloat64               track_pcnt;
+  Pfloat64               elt_pcnt;
   Void_t                *velt;
   int_type ## _dt_elt_t *elt;
 
@@ -1806,7 +1806,7 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
-    bad_pcnt = 100.0 * (a->bad / (double)(a->good + a->bad));
+    bad_pcnt = 100.0 * (a->bad / (Pfloat64)(a->good + a->bad));
   }
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
@@ -1829,7 +1829,7 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
   sfprintf(outstr, " avg %.3lf\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
-    track_pcnt = 100.0 * (a->tracked/(double)a->good);
+    track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
@@ -1841,11 +1841,11 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
       break;
     }
     elt = (int_type ## _dt_elt_t*)velt;
-    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
+    elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
     sfprintf(outstr, "        val: %10" fmt, elt->key.val);
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
-    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
   }
   dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
@@ -1891,10 +1891,10 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   const char            *mapped_val;
   int                    i, sz, rp, tmp;
   Puint64                cnt_sum;
-  double                 cnt_sum_pcnt;
-  double                 bad_pcnt;
-  double                 track_pcnt;
-  double                 elt_pcnt;
+  Pfloat64               cnt_sum_pcnt;
+  Pfloat64               bad_pcnt;
+  Pfloat64               track_pcnt;
+  Pfloat64               elt_pcnt;
   Void_t                *velt;
   int_type ## _dt_elt_t *elt;
 
@@ -1924,7 +1924,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
-    bad_pcnt = 100.0 * (a->bad / (double)(a->good + a->bad));
+    bad_pcnt = 100.0 * (a->bad / (Pfloat64)(a->good + a->bad));
   }
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
@@ -1950,7 +1950,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   sfprintf(outstr, ")\n");
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
-    track_pcnt = 100.0 * (a->tracked/(double)a->good);
+    track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   sz = tmp = 0;
@@ -1972,7 +1972,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
     }
     dtnext(a->dict, 0); /* discard any iterator state */
     elt = (int_type ## _dt_elt_t*)velt;
-    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
+    elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
     mapped_val = fn(elt->key.val);
     sfprintf(outstr, "        val: %s (%5" fmt, mapped_val, elt->key.val);
     sfprintf(outstr, ") ");
@@ -1980,7 +1980,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
     sfprintf(outstr, "%-.*s", pad, PDCI_spaces);
     sfprintf(outstr, "  count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
-    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
   }
   sfprintf(outstr,   "%-.*s", tmp,
 	   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .");
@@ -2015,10 +2015,10 @@ int_type ## _acc_map_report(P_t *pads, const char *prefix, const char *what, int
 }
 /* END_MACRO */
 
-#define PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr, floatORdouble, fpoint2floatORdouble)
+#define PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64)
 
 typedef struct fpoint_type ## _dt_key_s {
-  floatORdouble  val;
+  float32or64  val;
   Puint64     cnt;
 } fpoint_type ## _dt_key_t;
 
@@ -2082,7 +2082,7 @@ fpoint_type ## _dt_elt_free(Dt_t *dt, fpoint_type ## _dt_elt_t *a, Dtdisc_t *dis
 
 static Dtdisc_t fpoint_type ## _acc_dt_set_disc = {
   DTOFFSET(fpoint_type ## _dt_elt_t, key),     /* key     */
-  sizeof(floatORdouble),                       /* size    */
+  sizeof(float32or64),                       /* size    */
   DTOFFSET(fpoint_type ## _dt_elt_t, link),    /* link    */
   (Dtmake_f)fpoint_type ## _dt_elt_make,       /* makef   */
   (Dtfree_f)fpoint_type ## _dt_elt_free,       /* freef   */
@@ -2094,7 +2094,7 @@ static Dtdisc_t fpoint_type ## _acc_dt_set_disc = {
 
 static Dtdisc_t fpoint_type ## _acc_dt_oset_disc = {
   DTOFFSET(fpoint_type ## _dt_elt_t, key),     /* key     */
-  sizeof(floatORdouble),                       /* size    */
+  sizeof(float32or64),                       /* size    */
   DTOFFSET(fpoint_type ## _dt_elt_t, link),    /* link    */
   (Dtmake_f)fpoint_type ## _dt_elt_make,       /* makef   */
   (Dtfree_f)fpoint_type ## _dt_elt_free,       /* freef   */
@@ -2146,20 +2146,20 @@ fpoint_type ## _acc_cleanup(P_t *pads, fpoint_type ## _acc *a)
 
 void
 fpoint_type ## _acc_fold_psum(fpoint_type ## _acc *a) {
-  floatORdouble pavg, navg;
+  float32or64 pavg, navg;
   Puint64 recent = a->good - a->fold;
   if (recent == 0) {
     return;
   }
-  pavg = a->psum / (floatORdouble)recent;
-  navg = ((a->avg * a->fold) + (pavg * recent))/(floatORdouble)a->good;
+  pavg = a->psum / (float32or64)recent;
+  navg = ((a->avg * a->fold) + (pavg * recent))/(float32or64)a->good;
   /* could test for change between a->avg and navg */
   a->avg = navg;
   a->psum = 0;
   a->fold += recent;
 }
 
-floatORdouble
+float32or64
 fpoint_type ## _acc_avg(P_t *pads, fpoint_type ## _acc *a) {
   fpoint_type ## _acc_fold_psum(a);
   return a->avg;
@@ -2168,7 +2168,7 @@ fpoint_type ## _acc_avg(P_t *pads, fpoint_type ## _acc *a) {
 Perror_t
 fpoint_type ## _acc_add(P_t *pads, fpoint_type ## _acc *a, const Pbase_pd *pd, const fpoint_type *val)
 {
-  floatORdouble             v          = fpoint2floatORdouble(*val);
+  float32or64             v          = fpoint2float32or64(*val);
   fpoint_type ## _dt_elt_t  insert_elt;
   fpoint_type ## _dt_key_t  lookup_key;
   fpoint_type ## _dt_elt_t  *tmp1;
@@ -2219,10 +2219,10 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
 {
   int                   i, sz, rp;
   Puint64            cnt_sum;
-  floatORdouble         cnt_sum_pcnt;
-  floatORdouble         bad_pcnt;
-  floatORdouble         track_pcnt;
-  floatORdouble         elt_pcnt;
+  float32or64         cnt_sum_pcnt;
+  float32or64         bad_pcnt;
+  float32or64         track_pcnt;
+  float32or64         elt_pcnt;
   Void_t                *velt;
   fpoint_type ## _dt_elt_t *elt;
 
@@ -2251,7 +2251,7 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
-    bad_pcnt = 100.0 * (a->bad / (floatORdouble)(a->good + a->bad));
+    bad_pcnt = 100.0 * (a->bad / (float32or64)(a->good + a->bad));
   }
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
@@ -2274,7 +2274,7 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
   sfprintf(outstr, " avg %.3lf\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
-    track_pcnt = 100.0 * (a->tracked/(floatORdouble)a->good);
+    track_pcnt = 100.0 * (a->tracked/(float32or64)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
@@ -2286,11 +2286,11 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
       break;
     }
     elt = (fpoint_type ## _dt_elt_t*)velt;
-    elt_pcnt = 100.0 * (elt->key.cnt/(floatORdouble)a->good);
+    elt_pcnt = 100.0 * (elt->key.cnt/(float32or64)a->good);
     sfprintf(outstr, "        val: %10.5lf", elt->key.val);
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
-    cnt_sum_pcnt = 100.0 * (cnt_sum/(floatORdouble)a->good);
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(float32or64)a->good);
   }
   dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
@@ -2331,12 +2331,12 @@ fpoint_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int 
             PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, fold_test)
 #  define PDCI_INT_ACCUM_MAP_REPORT(int_type, int_descr, fmt) \
             PDCI_INT_ACCUM_MAP_REPORT_GEN(int_type, int_descr, fmt)
-#  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, floatORdouble, fpoint2floatORdouble) \
-            PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr, floatORdouble, fpoint2floatORdouble)
+#  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64) \
+            PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64)
 #else
 #  define PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, fold_test)
 #  define PDCI_INT_ACCUM_MAP_REPORT(int_type, int_descr, fmt)
-#  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, floatORdouble, fpoint2floatORdouble)
+#  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64)
 #endif
 
 /* ********************************** END_MACROS ********************************** */
@@ -4346,16 +4346,16 @@ PDCI_INT_ACCUM(Puint64, "uint64", 8, "llu", PDCI_FOLDTEST_UINT64)
 /* Always generate this report function */  
 PDCI_INT_ACCUM_MAP_REPORT_GEN(Pint32, "int32", "ld")
 
-/* PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, floatORdouble, fpoint2floatORdouble) */
+/* PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64) */
 
-PDCI_FPOINT_ACCUM(Pfpoint8,   "fpoint8",   float,  P_FPOINT2FLT)
-PDCI_FPOINT_ACCUM(Pufpoint8,  "ufpoint8",  float,  P_FPOINT2FLT)
-PDCI_FPOINT_ACCUM(Pfpoint16,  "fpoint16",  float,  P_FPOINT2FLT)
-PDCI_FPOINT_ACCUM(Pufpoint16, "ufpoint16", float,  P_FPOINT2FLT)
-PDCI_FPOINT_ACCUM(Pfpoint32,  "fpoint32",  float,  P_FPOINT2FLT)
-PDCI_FPOINT_ACCUM(Pufpoint32, "ufpoint32", float,  P_FPOINT2FLT)
-PDCI_FPOINT_ACCUM(Pfpoint64,  "fpoint64",  double, P_FPOINT2DBL)
-PDCI_FPOINT_ACCUM(Pufpoint64, "ufpoint64", double, P_FPOINT2DBL)
+PDCI_FPOINT_ACCUM(Pfpoint8,   "fpoint8",   Pfloat32, P_FPOINT2FLOAT32)
+PDCI_FPOINT_ACCUM(Pufpoint8,  "ufpoint8",  Pfloat32, P_FPOINT2FLOAT32)
+PDCI_FPOINT_ACCUM(Pfpoint16,  "fpoint16",  Pfloat32, P_FPOINT2FLOAT32)
+PDCI_FPOINT_ACCUM(Pufpoint16, "ufpoint16", Pfloat32, P_FPOINT2FLOAT32)
+PDCI_FPOINT_ACCUM(Pfpoint32,  "fpoint32",  Pfloat32, P_FPOINT2FLOAT32)
+PDCI_FPOINT_ACCUM(Pufpoint32, "ufpoint32", Pfloat32, P_FPOINT2FLOAT32)
+PDCI_FPOINT_ACCUM(Pfpoint64,  "fpoint64",  Pfloat64, P_FPOINT2FLOAT64)
+PDCI_FPOINT_ACCUM(Pufpoint64, "ufpoint64", Pfloat64, P_FPOINT2FLOAT64)
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 
@@ -4551,9 +4551,9 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
   size_t                 pad;
   int                    i, sz, len_sz, rp;
   Puint64             cnt_sum;
-  double                 cnt_sum_pcnt;
-  double                 track_pcnt;
-  double                 elt_pcnt;
+  Pfloat64               cnt_sum_pcnt;
+  Pfloat64               track_pcnt;
+  Pfloat64               elt_pcnt;
   Void_t                 *velt;
   PDCI_string_dt_elt_t   *elt;
 
@@ -4601,7 +4601,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
   sfprintf(outstr, "\n  Characterizing string values:\n");
   sfprintf(outstr, "    => distribution of top %d strings out of %d distinct strings:\n", rp, sz);
   if (sz == a->max2track && a->len_accum.good > a->tracked) {
-    track_pcnt = 100.0 * (a->tracked/(double)a->len_accum.good);
+    track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->len_accum.good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
@@ -4613,7 +4613,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
       break;
     }
     elt = (PDCI_string_dt_elt_t*)velt;
-    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->len_accum.good);
+    elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->len_accum.good);
     sfprintf(outstr, "        val: ");
     sfprintf(outstr, "%-.*s", elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len));
     sfprintf(outstr, "");
@@ -4621,7 +4621,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
     sfprintf(outstr, "%-.*s", pad, PDCI_spaces);
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
-    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->len_accum.good);
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->len_accum.good);
   }
   dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr, ". . . . . . . .");
@@ -4689,10 +4689,10 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
 {
   int                   i, sz, rp;
   Puint64            cnt_sum;
-  double                cnt_sum_pcnt;
-  double                bad_pcnt;
-  double                track_pcnt;
-  double                elt_pcnt;
+  Pfloat64              cnt_sum_pcnt;
+  Pfloat64              bad_pcnt;
+  Pfloat64              track_pcnt;
+  Pfloat64              elt_pcnt;
   Void_t                *velt;
   Puint8_dt_elt_t    *elt;
 
@@ -4721,7 +4721,7 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
-    bad_pcnt = 100.0 * (a->bad / (double)(a->good + a->bad));
+    bad_pcnt = 100.0 * (a->bad / (Pfloat64)(a->good + a->bad));
   }
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
@@ -4745,7 +4745,7 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
 
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
-    track_pcnt = 100.0 * (a->tracked/(double)a->good);
+    track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
@@ -4757,11 +4757,11 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
       break;
     }
     elt = (Puint8_dt_elt_t*)velt;
-    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
+    elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
     sfprintf(outstr, "        val: %6s", P_qfmt_char(elt->key.val));
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
-    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
   }
   dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
@@ -4803,10 +4803,10 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
   int                i, sz, rp;
   Puint64            ngood, nbad;
   Puint64            cnt_sum;
-  double             bad_pcnt;
-  double             cnt_sum_pcnt;
-  double             track_pcnt;
-  double             elt_pcnt;
+  Pfloat64           bad_pcnt;
+  Pfloat64           cnt_sum_pcnt;
+  Pfloat64           track_pcnt;
+  Pfloat64           elt_pcnt;
   Void_t            *velt;
   Puint32_dt_elt_t  *elt;
   Puint32_dt_key_t   lookup_key;
@@ -4839,7 +4839,7 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
   } else {
     ngood = elt->key.cnt;
     nbad = a->good - ngood;
-    bad_pcnt = 100.0 * (nbad / (double)(a->good));
+    bad_pcnt = 100.0 * (nbad / (Pfloat64)(a->good));
   }
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   ngood, nbad, bad_pcnt);
@@ -4854,7 +4854,7 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
     sfprintf(outstr, " avg %.3lf\n", a->avg);
     sfprintf(outstr, "    => distribution of top %d nerr-per-read values out of %d distinct nerr-per-read values:\n", rp, sz);
     if (sz == a->max2track && a->good > a->tracked) {
-      track_pcnt = 100.0 * (a->tracked/(double)a->good);
+      track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
       sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all nerr-per-read values *) \n", track_pcnt);
     }
     for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
@@ -4866,11 +4866,11 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
 	break;
       }
       elt = (Puint32_dt_elt_t*)velt;
-      elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
+      elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
       sfprintf(outstr, "        val: %10ld", elt->key.val);
       sfprintf(outstr, " count: %10llu pcnt-of-total-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
       cnt_sum += elt->key.cnt;
-      cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
+      cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
     }
     dtnext(a->dict, 0); /* discard any iterator state */
     sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
@@ -5132,7 +5132,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.147 2004-02-24 22:04:09 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.148 2004-03-03 18:10:59 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
