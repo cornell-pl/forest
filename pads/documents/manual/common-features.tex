@@ -5,14 +5,17 @@ types.
 
 \section{Overall structure}
 \label{sec:common-overall}
-\begin{tabular}{rcl}
+\begin{tabular}{rcll}
 \nont{p\_ty} & \is{} & \nont{base\_ty} \\[1ex]
-& & \nont{struct\_ty} \\[1ex]
-& & \nont{union\_ty} \\[1ex]
-& & \nont{array\_ty} \\[1ex]
-& & \nont{typedef\_ty} \\[1ex]
-& & \nont{enum\_ty} \\[1ex]
+& \alt{} & \nont{struct\_ty} \\[1ex]
+& \alt{} & \nont{union\_ty} \\[1ex]
+& \alt{} & \nont{array\_ty} \\[1ex]
+& \alt{} & \nont{typedef\_ty} \\[1ex]
+& \alt{} & \nont{enum\_ty} \\[1ex]
 \end{tabular}
+
+
+
 \section{Comments}
 \label{sec:common-comments}
 c-style and /-- form, which are reflected into output.
@@ -27,6 +30,7 @@ c-style and /-- form, which are reflected into output.
 \label{sec:common-literals}
  characters: 'a'  \term{char\_lit}
  strings: ``foo'' \term{str\_lit}
+ escape characters: \begin{verbatim}\" \' \end{verbatim}
 
 \section{Parameterization}
 \label{sec:common-parameterization}
@@ -42,5 +46,9 @@ c-style and /-- form, which are reflected into output.
 
 \section{file modifier}
 
-\section{error handling}
+\section{Error model}
+\label{sec:common-error-model}
  panic versus non-panic errors
+
+\appref{app:error-codes} contains a list of all error codes and
+describes their meanints.

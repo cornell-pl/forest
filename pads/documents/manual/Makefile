@@ -7,10 +7,11 @@ SHELL= /bin/sh
 # Default environment variables.
 ###############################################################################
 
-## root hancock directory.
+## root pads directory.
 
-## flags to always pass to the hancock compiler
-HCC_FLAGS= 
+## flags to always pass to the pads compiler
+PADS_FLAGS= 
+
 
 ## location of padsc executable.
 PADS=$(PADS_HOME)/padsc
@@ -21,26 +22,25 @@ PADS=$(PADS_HOME)/padsc
 
 
 EXAMPLE_DIR= $(PADS_HOME)/documents/manual/code
-PEXAMPLES= ai.p pstruct.p
-CEXAMPLES= ai.h
-EXAMPLES = $(PEXAMPLES) $(CEXAMPLES)
+EXAMPLES= ai.p
 
 CLEAN= 
 
 EXTRACT= $(PADS_HOME)/documents/extract-code/extract
-PADSC= $(PADS_HOME)/padsc
-OUTPUT=gen/
 
-all:	clean code
+all:	docode manual
 
-check:	$(PEXAMPLES) Makefile 
-	for i in $(PEXAMPLES) ; do $(PADSC) -r $(OUTPUT) $$i; done
+all_check:	clean code
 
 clean:	
-	rm -rf *.tex
-	rm -rf gen/*
+	rm -rf *.aux *.bbl *.log *.blg *.dvi *.ps *.pdf *.toc
 
+docode:	
+	echo Generating code for manual
+	(cd code; $(MAKE))
 
-code:	$(EXAMPLES) Makefile 
-	for i in $(EXAMPLES) ; do $(EXTRACT) $$i; done
+manual:
+	bibtex manual
+	latex manual.tex; latex manual.tex; dvips manual.dvi -o manual.ps -t letter
+	ps2pdf manual.ps manual.pdf
 
