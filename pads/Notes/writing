@@ -1,97 +1,360 @@
+/* predeclare internal routines */
+ssize_t test_write2io_internal (PDC_t *pdc, Sfio_t *io, <test_params>, test_ed *ed, test *rep);
+ssize_t test_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, <test_params>, test_ed *ed, test *rep)
 
-int test_write (PDC_t *pdc,Sfio_t *io,test_ed *ed,test *rep)
+ssize_t
+test_write2io (PDC_t *pdc, Sfio_t *io, <test_params>, test_ed *ed, test *rep)
 {
-  int length=-1;
-  PDC_byte *buf=0;
-  int set_buf=0;
-  int buf_full=0;
   test_ed ted;
-  size_t buf_len;
 
-  PDCI_DISC_INIT_CHECKS("test_write");
-  PDCI_NULLPARAM_CHECK( "test_write" , (void *)io );
-  PDCI_NULLPARAM_CHECK( "test_write" , (void *)rep );
+  PDCI_IODISC_INIT_CHECKS("test_write2io");  /* use for record (must have io disc installed for record writes) */
+     /* or */
+  PDCI_DISC_INIT_CHECKS("test_write2io");  /* can use for non-record */
 
-  if (!ed) 
-    {
-      memset ((void *) (&ted),0,sizeof(test_ed));
-      ed = (&ted);
-    }
-  buf_len = pdc->outbuf_res; /* if know printed size, fill in here */
-  buf = PDCI_write_start (pdc, io, &buf_len, &set_buf, 1/0 /*record/not record*/);
-  if (!buf) 
-    {
-      /* don't have to abort because start failed */
+  PDCI_NULLPARAM_CHECK( "test_write2io" , (void *)io );
+  PDCI_NULLPARAM_CHECK( "test_write2io" , (void *)rep );
+
+  if (!ed) {
+    memset ((void *) (&ted),0,sizeof(test_ed));
+    ed = (&ted);
+  }
+  return test_write2io_internal(pdc, io, <test_params>, ed, rep);
+}
+
+ssize_t
+test_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, <test_params>, test_ed *ed, test *rep)
+{
+  test_ed ted;
+
+  PDCI_IODISC_INIT_CHECKS("test_write2io");  /* use for record (must have io disc installed for record writes) */
+     /* or */
+  PDCI_DISC_INIT_CHECKS("test_write2buf");  /* can use for non-record */
+
+  PDCI_NULLPARAM_CHECK( "test_write2buf" , (void *)buf );
+  PDCI_NULLPARAM_CHECK( "test_write2buf" , (void *)buf_full );
+  PDCI_NULLPARAM_CHECK( "test_write2buf" , (void *)rep );
+
+  if (!ed) {
+    memset ((void *) (&ted),0,sizeof(test_ed));
+    ed = (&ted);
+  }
+  return test_write2buf_internal(pdc, buf, buf_len, buf_full, <test_params>, ed, rep);
+}
+
+ssize_t
+test_write2io_internal (PDC_t *pdc, Sfio_t *io, test_ed *ed, test *rep)
+{
+  PDC_byte    *buf;
+  int          set_buf, buf_full;
+  ssize_t      length;
+
+  /* XXX CASE 1: test is variable length, choose a large buffer size */
+  size_t       buf_len = pdc->outbuf_res;
+  /* XXX CASE 2: test is static length 107; test not a record type */
+  size_t       buf_len = 107;
+  /* XXX CASE 3: test is static length 107, test is a record type */
+  size_t       buf_len = 107 + pdc->disc->io_disc->rec_bytes;
+
+  length = -1;
+  while (1) {
+    set_buf  = 0;
+    buf_full = 0;
+    buf = PDC_IO_write_start_internal (pdc, io, &buf_len, &set_buf);
+    if (!buf) {
+      /* write_start reported the error */
+      /* don't have to abort because write_start failed */
       return -1;
     }
-  length = test_write_internal (pdc, buf, buf_len, &buf_full, ed, rep);
-  /* 
- We could check buf_full and redo with a bigger buffer 
- */
-  if (length>=0) 
-    {
-      length = PDCI_write_commit (pdc, io, buf, length, set_buf, 1/0 /* record/not record */);
+    length = test_write2buf_internal (pdc, buf, buf_len, &buf_full, ed, rep);
+    if (buf_full) {
+      /* try again with bigger buffer */
+      PDC_IO_write_abort_internal (pdc, io, buf, set_buf);
+      buf_len *= 2;
+      continue;
     }
-  else
-    {
-      PDCI_write_abort (pdc, io, buf, set_buf, 1/0 /* record/not record */);
-    }
-  
-  return length;
-}
-******************************************************************
-int write_external(PDC_t *pdc, Sfio_t *io, <params>, ed, can){
-  int length = -1;
-  PDC_byte * buf = 0;
-  int set_buf = 0;  
-  int buf_full = 0;
-  ted 
-  if !(pdc and io and can) {report error; goto write_External_done;};
-  if !ed then {memset(&ted,0,sizeof(ted)); ed = &ted;};
-
-  if !sfsetbuf(io, (Void_t *)1, 0)  {
-    sfsetbuf(io, pdc->outbuf, pdc->outbuf_len);
-    set_buf = 1;
+    break;
   }
-  buf = (PDC_byte *) sfreserve(io,pdc->outbuf_res, SF_LOCKR);
-  if (!buf) { report error; length = -1; goto write_External_done;};
-
-  length = write_internal(pdc, buf, pdc->outbuf_res, &buf_full, <params>, ed, can);
-  /* could check buf_full and redo with bigger buffer, potentially in while loop */
   if (length >= 0) {
-    length = sfwrite(io, (Void_t *)buf, length);
-  } else {
-    sfwrite(io, (Void_t *)buf, 0);  /* ??? how do we release sfreserve buffer if
-                                      don't want to write*/
+    return PDC_IO_write_commit_internal (pdc, io, buf, length, set_buf);
   }
+  PDC_IO_write_abort_internal (pdc, io, buf, set_buf);
+  return -1;
+}
 
-write_External_done:
-  if (set_buf) {
-    sfsetbuf(io, (Void_t *)0, 0);
+ssize_t
+test_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, <test_params>, test_ed *ed, test *rep)
+{
+  PDC_byte *buf_cursor = buf;
+  ssize_t   length     = 0;
+  ssize_t   tlen;
+
+  (*buf_full) = 0;
+
+  /* XXX if this is a record type then: */
+  /* append record open marker (if any) to buffer */
+  tlen = PDC_IO_rec_open_write2buf_internal(pdc, buf_cursor, buf_len, buf_full);
+  if (tlen < 0) {
+    return -1;
   }
-  return length;
-};
+  length     += tlen;
+  buf_cursor += tlen;
+  buf_len    -= tlen;
 
-int write_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int * buf_full, <params>,ed, can){
-  int length = 0;
-  int tlen;
-  
-  tlen = write_foo_internal(pdc, buf, buf_len, buf_full, <params>, &ed->field, &can->field);
+  /* append field foo */
+  tlen = footype_write2buf_internal(pdc, buf_cursor, buf_len, buf_full, <foo_params>, &(ed->foo), &(rep->foo));
   if (tlen < 0) {
     return -1;
   };
-  buf += tlen;
-  length += tlen;
-  buf_len -= tlen;
-  tlen = write_literal_internal(pdc, buf, buf_len, buf_full, <params>, "-");
+  length     += tlen;
+  buf_cursor += tlen;
+  buf_len    -= tlen;
+
+  /* append string literal "HTTP/" */
+  tlen = PDC_Cstr_lit_write2buf_internal(pdc, buf_cursor, buf_len, buf_full, "HTTP/");
   if (tlen < 0) {
     return -1;
   };
-  buf += tlen;
-  length += tlen;
-  buf_len -= tlen;
+  length     += tlen;
+  buf_cursor += tlen;
+  buf_len    -= tlen;
+
   /* ... repeat for all pieces of the struct ... */
+
+  /* append field zot */
+  tlen = zottype_write2buf_internal(pdc, buf_cursor, buf_len, buf_full, <zot_params>, &(ed->zot), &(rep->zot));
+  if (tlen < 0) {
+    return -1;
+  };
+  length     += tlen;
+  buf_cursor += tlen;
+  buf_len    -= tlen;
+
+  /* XXX if this is a record type then: */
+  /* append record close marker (if any) and possibly update the open marker (if any) */
+  tlen = PDC_IO_rec_close_write2buf_internal(pdc, buf_cursor, buf_len, buf_full, buf, length);
+  if (tlen < 0) {
+    return -1;
+  }
+  length     += tlen;
+
+  /* XXX CODEGEN NOTE: do not need to generate buf_cursor += tlen or buf_len -= tlen
+     XXX after the final field.  In this case the final 'field' is the record end marker
+     XXX but if this type were not a record type it would be the zot field
+  */ 
+
   return length;
 }  
 
+/* ================================================================================ */
+/* HAND-WRITTEN USER CODE: WHAT TO SUPPORT? */
+
+/* example code for writing a record block with set of foo records */
+/* using a temporary in-memory IO stream to collect the data bytes */
+/* (assumes foo is a precord type) */
+
+/* returns bytes written, or -1 on error */
+ssize_t
+write_block_of_foo_using_tmpstr(PDC_t *pdc, Sfio_t *io, int num_foos, foo_ed **foo_eds, foo **foo_reps)
+{
+  Sfio_t *tmpstr; /* use this temporary io stream to build up the block's data bytes */
+  ssize_t tlen, blk_data_len, blk_len;
+  int i;
+
+  if (!(tmpstr = sfstropen())) {
+    return -1;
+  }
+  blk_data_len = 0;
+  for (i = 0; i < num_foos; i++) {
+    tlen = foo_write2io(pdc, tmpstr, foo_eds[i], foo_reps[i]);
+    if (tlen == -1) {
+      /* report record write problem */
+      goto error_case;
+    }
+    blk_data_len += tlen;
+  }
+  blk_len = PDC_IO_rblk_write(pdc, io, sfstruse(tmpstr), blk_data_len, num_foos);
+  if (blk_len == -1) {
+    /* report block write problem */
+    goto error_case;
+  }
+  sfstrclose(tmpstr);
+  return blk_len;
+
+ error_case:
+  sfstrclose(tmpstr);
+  return -1
+}
+
+/* example code for writing a record block with set of foo records */
+/* using an in-memory buffer provided by PDC libary using PDC_IO_write_start */
+/* (assumes foo is a precord type) */
+
+/* returns bytes written, or -1 on error */
+ssize_t
+write_block_of_foo_using_buf(PDC_t *pdc, Sfio_t *io, int num_foos, foo_ed **foo_eds, foo **foo_reps)
+{
+  PDC_byte *buf_start, *buf_cursor;
+  size_t buf_len;
+  ssize_t tlen, blk_len, act_blk_len;
+  int i, set_buf, buf_full;
+
+  /* pick a block len we know is big enough */
+  blk_len = num_foos * 512 + 32; /* e.g., suppose we know foo records are less than 512 bytes each, 32 is > any record block markers */
+  buf_len = blk_len;
+  buf_start = buf_cursor = PDC_IO_write_start(pdc, io, &buf_len, &set_buf);
+  if (!buf_start) {
+    return -1;
+  }
+  /* write_start was successful: it must be completed with either a write_commit or a write_abort */
+  buf_full = 0;
+  act_blk_len = 0;
+  /* first append block open marker (if any) to buffer */
+  tlen = PDC_IO_rblk_open_write2buf(pdc, buf_cursor, buf_len, &buf_full);
+  if (tlen == -1) {
+    /* report rblk_open_write problem */
+    goto error_case;
+  }
+  act_blk_len += tlen;
+  buf_cursor += tlen;
+  buf_len -= tlen;
+  /* append all foo records to buffer */
+  for (i = 0; i < num_foos; i++) {
+    tlen = foo_write2buf(pdc, buf_cursor, buf_len, &buf_full, foo_eds[i], foo_reps[i]);
+    if (tlen == -1) {
+      /* report foo record write problem */
+      goto error_case;
+    }
+    act_blk_len += tlen;
+    buf_cursor += tlen;
+    buf_len -= tlen;
+  }
+  /* append a block close marker (if any) to buffer and update block open marker (if necessary) */
+  tlen = PDC_IO_rblk_close_write2buf(pdc, buf_cursor, buf_len, &buff_full, buf_start, blk_len, num_foos);
+  if (tlen == -1) {
+    /* report rblk_close_write problem */
+    goto error_case;
+  }
+  act_blk_len += tlen;
+  /* we should have appended blk_len bytes total */
+  if (act_blk_len != blk_len) {
+    /* report unexpeced error case: bytes written to buffer != expected blk_len */
+    goto error_case;
+  }
+  act_blk_len = PDC_IO_write_commit(pdc, io, buf_start, set_buf, blk_len);
+  if (act_blk_len != blk_len) {
+    /* report unexpeced error case: num bytes written to io stream != blk_len */
+    return act_blk_len;
+  }
+  return blk_len;
+
+ error_case:
+  PDC_IO_write_abort(pdc, io, buf_start, set_buf);
+  return -1;
+}
+
+/* suppose you want to construct a record with two values in it (no separator needed)
+   of type t1, t2 and you do not have a convenient record type defined... */
+
+/* example code that uses a temporary in-memory Sfio stream */
+
+/* returns bytes written, or -1 on error */
+ssize_t
+write_myrec_using_tmpstr(PDC_t* pdc, Sfio_t *io, t1_ed *t1_ed, t1 *t1_rep, t2_ed *t2_ed, t2 *t2_rep)
+{
+  Sfio_t *tmpstr;  /* use this temporary io stream to build up the record's data bytes */
+  ssize_t rec_data_len, rec_len, tlen;
+
+  if (!(tmpstr = sfstropen())) {
+    return -1;
+  }
+  rec_data_len = 0;
+  tlen = t1_write2io(pdc, tmpstr, t1_ed, t1_rep);
+  if (tlen == -1) {
+    /* report t1 write problem */
+    goto error_case;
+  }
+  rec_data_len += tlen;
+  tlen = t2_write2io(pdc, tmpstr, t2_ed, t2_rep);
+  if (tlen == -1) {
+    /* report t2 write problem */
+    goto error_case;
+  }
+  rec_len = PDC_IO_rec_write(pdc, io, sfstruse(tmpstr), rec_data_len);
+  if (rec_len == -1) {
+    /* report record write problem */
+    goto error_case;
+  }
+  sfstrclose(tmpstr);
+  return rec_len;
+
+ error_case:
+  sfstrclose(tmpstr);
+  return -1
+}
+
+/* example code using in-memory buffer supplied by PDC library via PDC_IO_write_start */
+
+/* returns bytes written, or -1 on error */
+ssize_t
+write_myrec_fixed_len(PDC_t* pdc, Sfio_t *io, t1_ed *t1_ed, t1 *t1_rep, t2_ed *t2_ed, t2 *t2_rep)
+{
+  ssize_t tlen, rec_len;
+  PDC_byte *buf, *buf_cursor;
+  size_t buf_len;
+  int set_buf, buf_full;
+
+  /* pick a buffer length we know is big enough */
+  buf_len = 1024; /* we know t1 + t2 take less than 1K, including leaving some extra for record markers */
+  buf = buf_cursor = PDC_IO_write_start(pdc, io, &buf_len, &set_buf);
+  if (!buf) {
+    return -1;
+  }
+  /* write_start was successful: it must be completed with either a write_commit or a write_abort */
+  buf_full = 0;
+  rec_len = 0;
+
+  /* first append record open marker (if any) to buffer */
+  tlen = PDC_IO_rec_open_write2buf(pdc, buf_cursor, buf_len, &buf_full);
+  if (tlen == -1) {
+    /* report rec_open_write problem */
+    goto error_case;
+  }
+  rec_len     += tlen;
+  buf_cursor  += tlen;
+  buf_len     -= tlen;
+
+  /* next append t1 value */
+  tlen = t1_write2buf(pdc, buf_cursor, buf_len, &buf_full, t1_ed, t1_rep);
+  if (tlen == -1) {
+    /* report t1 record write problem */
+    goto error_case;
+  }
+  rec_len     += tlen;
+  buf_cursor  += tlen;
+  buf_len     -= tlen;
+
+  /* next append t2 value */
+  tlen = t1_write2buf(pdc, buf_cursor, buf_len, &buf_full, t1_ed, t1_rep);
+  if (tlen == -1) {
+    /* report t1 record write problem */
+    goto error_case;
+  }
+  rec_len     += tlen;
+  buf_cursor  += tlen;
+  buf_len     -= tlen;
+
+  /* finally append a record close marker (if any) and possibly update record open marker (if any) */
+  tlen = PDC_IO_rec_close_write2buf(pdc, buf_cursor, buf_len, &buf_full, buf, rec_len);
+  if (tlen < 0) {
+    return -1;
+  }
+  rec_len     += tlen;
+
+  /* now write the record */
+  return PDC_IO_write_commit(pdc, io, buf, rec_len, set_buf);
+
+ error_case:
+  PDC_IO_write_abort (pdc, io, buf, set_buf);
+  return -1;
+}
 
