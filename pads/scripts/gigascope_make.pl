@@ -157,9 +157,9 @@ if ($hdrtype && $ptext !~ /Pstruct\s+$hdrtype/) {
   exit -1;
 }
 
-my %iodisc_mk =
-  ( "norec" => "#define IO_DISC_MK Pnorec_make(0)",
-    "nlrec" => "#define IO_DISC_MK Pnlrec_make(0)"
+my %io_disc_mk =
+  ( "norec" => "#define IO_DISC_MK P_norec_make(0)",
+    "nlrec" => "#define IO_DISC_MK P_nlrec_make(0)"
 );
 
 my $pads_ty_define = "#define PADS_TY(suf) $rectype ## suf";
