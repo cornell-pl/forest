@@ -4173,16 +4173,19 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		 (* Generate Write function array case *)
 		 val writeName = writeSuf name
 		 val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy) 
+		 val lengthX = P.arrowX(PT.Id rep, PT.Id length)
 		 fun elemX base = P.addrX(P.subX(P.arrowX(PT.Id base, PT.Id elts), PT.Id "i"))
                  val writeBaseSs = writeFieldSs(writeBaseName, args @[elemX pd, elemX rep], true)
+		 val writeLastBaseSs =  [PT.IfThen(P.neqX(lengthX, P.zero),PT.Compound(writeBaseSs))]
+
 		 val writeSepSs = case sepXOpt of NONE => [] 
 		                  | SOME(e,_, _,_,writeSep) => writeFieldSs(writeSep, [e], true)
 		 val writeArraySs = [PT.Compound (
 				     [P.varDeclS'(P.int, "i"),
 				      PT.For(P.assignX(PT.Id "i",P.zero),
-					     P.ltX(PT.Id "i", P.minusX(P.intX numElemsToTrack, P.intX 1)),
+					     P.ltX(PT.Id "i", P.minusX(lengthX, P.intX 1)),
 					     P.postIncX (PT.Id "i"),
-					     PT.Compound (writeBaseSs @ writeSepSs) )] @ writeBaseSs)]
+					     PT.Compound (writeBaseSs @ writeSepSs) )] @ writeLastBaseSs)]
 		 val writeTermSs = case termXOpt of NONE => []
 		                   | SOME(e, _, _,_,writeTerm) => writeFieldSs(writeTerm, [e], true)
 		 val bodySs = writeArraySs @ writeTermSs
