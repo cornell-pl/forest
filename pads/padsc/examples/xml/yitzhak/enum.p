@@ -4,12 +4,15 @@ Penum foo {
     S_care,
     S_tpv
 };
+  //  Pint32[] farr : Psep(':') && Pterm('|');
 
 */
 
+
 Precord Pstruct bar {
-  Pint16 f1;
-  Pint32 f2;
+  Pint32[] farr : Psep(':');
+  '|'; Pint16 f1;
+  '|'; Pint32 f2;
   '|'; Pchar f3;
 }
 
