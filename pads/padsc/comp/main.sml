@@ -32,7 +32,9 @@ structure Main : sig
     datatype ArgType = Pads | Unknown
     val srcFiles = ref [] : (ArgType * string) list ref 
 
-    val includes = ref ""
+    val includes    = ref ""  (* paths user listed as include paths with -I flag *)
+    val defines     = ref ""  (* symbols user defined with -U flag *)
+    val undefines   = ref ""  (* symbols user undefined with -D flag *)
 
     val traceFlag = ref true
     val parseTreeOnlyFlag = ref false
@@ -42,8 +44,12 @@ structure Main : sig
     val outputHeaderFileFlag = ref false
     val outputCFileName = ref ""
     val outputCFileFlag = ref false
+    val outputDir = ref ""
+    val outputDirFlag = ref false
 
     fun addInclude i = (includes := (" -I "^i^(!includes)))
+    fun addDefine  i = (defines := (" -D"^i^(!defines)))
+    fun addUndefine  i = (undefines := (" -U"^i^(!undefines)))
     fun addPadsFile s =    srcFiles := ((Pads,s) :: !srcFiles)
     fun addUnknownFile s = srcFiles := ((Unknown,s) :: !srcFiles)
   
@@ -56,14 +62,22 @@ structure Main : sig
         outputCFileName := s; 
 	stdoutFlag := false; 
         outputCFileFlag := true)
+  
+    fun setOutputDir s = (
+        outputDir := s;
+        outputDirFlag := true)
+
 
     val extensions = [("p", "PADS files", PCL.Extension(addPadsFile,true))]
 
     val flags_release = [
          ("h", "output header file",      PCL.String (setHeaderOutputFile, false)),
          ("c", "output code file",        PCL.String (setCOutputFile, false)),
+         ("p", "output directory",        PCL.String (setOutputDir, false)),
          ("s", "send output to standard out", PCL.BoolSet(stdoutFlag)),
 	 ("I", "augment include path",        PCL.String (addInclude, true)),
+	 ("D", "add definition",              PCL.String (addDefine, true)),
+	 ("U", "remove definition",           PCL.String (addUndefine, true)),
          ("t", "trace system commands",       PCL.BoolSet traceFlag)
         ]
 
@@ -130,7 +144,7 @@ structure Main : sig
     fun preprocess(srcFile, destFile) = 
 	let val srcFile = OS.FileSys.fullPath srcFile
             val compositeFile = tmp ".c"
-            val includePrefix = ("#include <padslib-internal.h>\n"^
+            val includePrefix = ("#include <libpadsc-internal.h>\n"^
                                  "\n")
             val compositeProg = (includePrefix ^
 				   ("#include \"" ^srcFile^"\"\n"))
@@ -139,6 +153,8 @@ structure Main : sig
 		      TextIO.closeOut outStrm)
             val command = (" cc "  (* invoke c compiler *)
                           ^ "-E "  (* preprocessor only *)
+                          ^ (!defines)  (* symbols defined by user *)
+                          ^ (!undefines)  (* symbols undefined by user *)
                           ^ (!includes)  (* augment include path *)
                           ^ " "
                           ^ compositeFile (* on composite file *)
@@ -157,23 +173,39 @@ structure Main : sig
 	   raise DebugExn(Parse tree))
        end
 
-    fun generateOutput (astInfo : BuildAst.astBundle, destFile) =
+    fun getOutStream(destFile, from, to) : string * TextIO.outstream = 
+	let val name = valOf (mungeFileName(destFile, from, to))
+	    val name' = if !outputDirFlag 
+			then OS.Path.joinDirFile {dir = (!outputDir),
+						  file = OS.Path.file name}
+			else name
+	in
+	    (OS.Path.file name', TextIO.openOut name')
+	    handle Io => err ("Couldn't open output file: " ^ name' ^ ".")
+	end
+
+    fun generateOutput (astInfo : BuildAst.astBundle, fileName) =
       let val {ast,tidtab,errorCount,warningCount,...} = astInfo
+	  val srcFile = OS.Path.file fileName
       in
           if !stdoutFlag then 
-             PPLib.ppToStrm ((PPAst.ppAst PPAst.ALL) () tidtab) TextIO.stdOut ast
+             PPLib.ppToStrm ((PPAst.ppAst PPAst.ALL (SOME srcFile)) () tidtab) TextIO.stdOut ast
           else let 
-	        val houtstream = 
-		    if !outputHeaderFileFlag then TextIO.openOut (!outputHeaderFileName)
-		    else TextIO.openOut (valOf (mungeFileName(destFile, "p", "h")))
+	        val (houtname, houtstream) = 
+		    if !outputHeaderFileFlag then 
+			(OS.Path.file (!outputHeaderFileName), TextIO.openOut (!outputHeaderFileName))
+		    else getOutStream(fileName, "p", "h")
 	        val coutstream = 
 		    if !outputCFileFlag then TextIO.openOut (!outputCFileName)
-		    else TextIO.openOut (valOf (mungeFileName(destFile, "p", "c")))
+		    else #2(getOutStream(fileName, "p", "c"))
 	       in
-		   PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER) () tidtab) houtstream ast;		   
+		   TextIO.output(houtstream, "#include \"libpadsc.h\"\n");
+		   PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER (SOME srcFile)) () tidtab) houtstream ast;
 		   TextIO.flushOut houtstream;
 		   TextIO.closeOut houtstream;
-		   PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL) () tidtab) coutstream ast;		   
+		   TextIO.output(coutstream, "#include \"libpadsc-internal.h\"\n");
+		   TextIO.output(coutstream, ("#include \"" ^ houtname ^ "\"\n"));
+		   PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
 		   TextIO.flushOut coutstream;
 		   TextIO.closeOut coutstream
 	       end
@@ -188,18 +220,25 @@ structure Main : sig
 	     val () = if status <> OS.Process.success 
 	              then err "Pre-processor failed."
 		      else ()
+	     val () = stage := "Parsing"
              val () = if (!parseTreeOnlyFlag) then doParseOnly ppoutFile else ()
+	     val () = stage := "Translating"
 	     val astInfo as {ast, tidtab, ...} = CKIT.fileToAst ppoutFile
              val () = if (!astOnlyFlag) then (setPrintDepth(); raise DebugExn(Ast ast)) else ()
+	     val () = stage := "Generating output"
 	 in
 	     generateOutput(astInfo, fname)
 	 end
       | _ => error "Unrecognized file type")
 
     fun checkFlags _ = (* Check that the user didn't supply bogus flag combinations. *)
-        let val () = if (!stdoutFlag) andalso ((!outputHeaderFileFlag) orelse (!outputCFileFlag))
-			 then error "Cannot specify both standard out and output file."
-		     else ()
+        let val () = if (!stdoutFlag) 
+	             then if ((!outputHeaderFileFlag) orelse (!outputCFileFlag))
+			  then error "Cannot specify both standard out and output file."
+		          else if (!outputDirFlag)
+			       then error "Cannot specify both standard out and output directory."
+		               else ()
+                     else ()
         in
            ()
 	end
@@ -223,6 +262,7 @@ structure Main : sig
        end)  
             handle PCL.Invalid => (rmTmp(); OS.Process.exit(OS.Process.failure))
                   | DebugExn r => raise DebugExn r
+                  | Exit r => OS.Process.exit(OS.Process.failure)
                   | ex => (TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName ex,
 		          " [", exnMessage ex, "]\n"
