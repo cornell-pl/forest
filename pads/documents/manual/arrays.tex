@@ -6,7 +6,7 @@
 The syntax for \Parray{}s is given by the following BNF grammar fragment:
 \tskip{}
 \begin{tabular}{rcl}
-\nont{p\_size\_spec} & \is{} & \opt{\nont{expresssion}} \alt{}\opt{nont{expression}} : \opt{\nont{expression}}\\[1ex]
+\nont{p\_size\_spec} & \is{} & \opt{\nont{expresssion}} \alt{}\opt{\nont{expression}} : \opt{\nont{expression}}\\[1ex]
 \\
 \nont{p\_term\_expression} & \is{} & \Pnosep{} \alt{} \nont{p\_expression}\\[1ex]
 \nont{p\_array\_constraint} & \is{}  & \Psep{}(\nont{p\_expression})  \alt{} \Pterm{}(\nont{p\_term\_expression})\\
@@ -100,6 +100,8 @@ end     & \Pparsecheck{} & Position in input source after reading sequence. \\ \
 elemBegin   & \Pparsecheck{} & Position in input source before reading element. \\ \hline
 elemEnd     & \Pparsecheck{} & Position in input source after reading element. \\ \hline
 \end{tabular}
+\vskip 1ex
+
 \noindent
 In addition, the name of the array type is in scope in every context;
 it is bound to the in-memory representation of the sequence.
@@ -116,9 +118,15 @@ indicates that the sequence has ended.  The body of the \Pterm{}
 constraint can be a character, string, or regular expression, or the
 special keyword \Pnosep{}, which indicates that the lack of a
 separator should be interpreted as signalling the end of the
-sequence. 
+sequence.   The terminator is not consumed by the read function for
+the array.
 
 \subsection{\Plast}
+The \Plast{} constraint is used to specify an arbitrary termination
+condition.  It takes as its argument a predicate expression (\cf{}
+\ref{sec:common-predicates}) 
+
+
 \subsection{\Pended}
 \subsection{\Pomit}
 \subsection{\Pwhere}
