@@ -238,7 +238,7 @@ PDC_fwrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
 }
 
 PDC_error_t
-PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_IO_elt_t** next_elt_out)
+PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, PDC_IO_elt_t** next_elt_out)
 {
   PDC_fwrec_noseek_data_t     *data;
   PDC_fwrec_noseek_iodata_t   *iodata;
@@ -540,7 +540,7 @@ PDC_norec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
 }
 
 PDC_error_t
-PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_IO_elt_t** next_elt_out)
+PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, PDC_IO_elt_t** next_elt_out)
 {
   PDC_norec_noseek_data_t  *data;
   PDC_IO_elt_t             *elt, *keepelt;
@@ -904,7 +904,7 @@ PDC_ctrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
 }
 
 PDC_error_t
-PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_IO_elt_t** next_elt_out)
+PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, PDC_IO_elt_t** next_elt_out)
 {
   PDC_ctrec_noseek_data_t   *data;
   PDC_IO_elt_t              *elt, *keepelt;
@@ -1345,7 +1345,7 @@ PDC_vlrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
 }
 
 PDC_error_t
-PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_IO_elt_t** next_elt_out)
+PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, PDC_IO_elt_t** next_elt_out)
 {
   PDC_vlrec_noseek_data_t    *data;
   PDC_IO_elt_t               *elt, *keepelt;
@@ -1882,7 +1882,7 @@ PDC_norec_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, 
 }
 
 PDC_error_t
-PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_IO_elt_t **next_elt_out)
+PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, PDC_IO_elt_t **next_elt_out)
 {
   PDC_norec_data_t    *data;
   PDC_IO_elt_t        *elt, *firstelt, *keepelt;

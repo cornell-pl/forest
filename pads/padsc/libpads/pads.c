@@ -4713,7 +4713,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
 #gen_include "padsc-internal.h"
 #gen_include "padsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.102 2003-09-12 19:04:35 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.103 2003-09-15 18:25:06 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5524,25 +5524,16 @@ PDC_IO_close(PDC_t *pdc)
 PDC_error_t
 PDC_IO_next_rec(PDC_t *pdc, size_t *skipped_bytes_out) {
   PDCI_stkElt_t    *tp;
-  PDCI_stkElt_t    *bot;
-  PDC_IO_elt_t     *io_elt;
-  size_t           io_remain;
+  PDC_IO_elt_t     *keep_elt;
   PDC_IO_elt_t     *next_elt;
-  int              prev_eor;
+  int               prev_eor;
 
   PDCI_IODISC_1P_CHECKS("PDC_IO_next_rec", skipped_bytes_out);
-  tp        = &(pdc->stack[pdc->top]);
-  bot       = &(pdc->stack[0]);
-  io_elt    = bot->elt;
-  io_remain  = bot->remain;
-  (*skipped_bytes_out) = 0;
+  tp                    = &(pdc->stack[pdc->top]);
+  (*skipped_bytes_out)  = 0;
   if (pdc->disc->io_disc->rec_based == 0) {
     PDC_WARN(pdc->disc, "PDC_IO_next_rec called when pdc->disc->io_disc does not support records");
     return PDC_ERR;
-  }
-  if (pdc->top == 0) { /* no need to preserve any bytes on read_fn call */ 
-    io_elt    = 0;
-    io_remain = 0;
   }
   while (1) {
     prev_eor = tp->elt->eor;
@@ -5556,7 +5547,8 @@ PDC_IO_next_rec(PDC_t *pdc, size_t *skipped_bytes_out) {
       tp->elt = tp->elt->next;
     } else {
       /* use IO disc read_fn */
-      if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
+      keep_elt = pdc->stack[0].elt;
+      if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, keep_elt, &next_elt)) {
 	tp->elt = PDC_LAST_ELT(pdc->head); /* IO disc may have added eof elt */
 	tp->remain = 0;
 	return PDC_ERR;
@@ -6227,7 +6219,8 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
   if (errCode == PDC_NO_ERR) {
     severity = "Note";
   }
-  if (loc && loc->b.num == loc->e.num && loc->e.byte == loc->b.byte -1 ) {
+  /* Any backwards span is treated as a null span */
+  if (loc && ((loc->e.num < loc->b.num) || (loc->b.num == loc->e.num && loc->e.byte < loc->b.byte))) {
     nullspan = 1;
   }
   sfstrset(pdc->tmp1, 0);
@@ -6390,7 +6383,7 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
       break;
     }
     if (loc) {
-      if (loc->b.num != loc->e.num) {
+      if (loc->b.num < loc->e.num) {
 	sfprintf(pdc->tmp1, "%s %s: from %s %d char %d to %s %d char %d: %s ",
 		 severity, infn,
 		 loc->b.unit, loc->b.num, loc->b.byte, 
@@ -6418,7 +6411,7 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
   }
   if (loc && (pdc->disc->e_rep == PDC_errorRep_Max)) {
     PDC_IO_elt_t *elt1, *elt2;
-    if (loc->b.num != loc->e.num) {
+    if (loc->b.num < loc->e.num) {
       if (PDC_OK == PDCI_IO_getElt(pdc, loc->b.num, &elt1)) {
 	sfprintf(pdc->tmp1, "\n[%s %d]", loc->b.unit, loc->b.num);
 	if (elt1->len == 0) {
@@ -6448,8 +6441,8 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 	}
       }
     } else { /* same elt */
-      if (PDC_OK == PDCI_IO_getElt(pdc, loc->e.num, &elt1)) {
-	sfprintf(pdc->tmp1, "\n[%s %d]", loc->e.unit, loc->e.num);
+      if (PDC_OK == PDCI_IO_getElt(pdc, loc->b.num, &elt1)) {
+	sfprintf(pdc->tmp1, "\n[%s %d]", loc->b.unit, loc->b.num);
 	if (elt1->len == 0) {
 	  sfprintf(pdc->tmp1, ">>>(**EMPTY**)<<<");
 	} else if (nullspan) {
@@ -6521,7 +6514,7 @@ PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io)
     return PDC_ERR;
   }
   /* perform first read */
-  if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, 0, 0, &next_elt)) {
+  if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, 0, &next_elt)) {
     tp->elt = PDC_LAST_ELT(pdc->head); /* IO disc may have added eof elt */
     tp->remain = 0;
     return PDC_ERR;
@@ -6564,9 +6557,7 @@ PDCI_IO_morebytes(PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2
 		  int *eor_out, int *eof_out, size_t *bytes_out)
 {
   PDC_IO_elt_t     *lastelt   = PDC_LAST_ELT(pdc->head);
-  PDCI_stkElt_t    *bot       = &(pdc->stack[0]);
-  PDC_IO_elt_t     *io_elt    = bot->elt;
-  size_t            io_remain = bot->remain;
+  PDC_IO_elt_t     *keep_elt;
   PDC_IO_elt_t     *next_elt;
   size_t            offset;
   PDC_byte         *prev_lastelt_end;
@@ -6582,7 +6573,8 @@ PDCI_IO_morebytes(PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2
     return PDC_ERR;
   }
 #endif
-  if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
+  keep_elt  = pdc->stack[0].elt;
+  if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, keep_elt, &next_elt)) {
     (*bytes_out) = 0;
     (*eof_out)   = 1;
     return PDC_ERR;
@@ -6628,11 +6620,9 @@ PDCI_IO_need_rec_bytes(PDC_t *pdc, int skip_rec,
 		       int *eor_out, int *eof_out, size_t *skipped_bytes_out)
 {
   PDCI_stkElt_t    *tp          = &(pdc->stack[pdc->top]);
-  PDCI_stkElt_t    *bot         = 0; /* once set, do not need to set again */
   PDC_IO_elt_t     *elt;
   PDC_IO_elt_t     *next_elt;
-  PDC_IO_elt_t     *io_elt      = 0;
-  size_t            io_remain   = 0;
+  PDC_IO_elt_t     *keep_elt;
 
 #ifndef NDEBUG
   if (!pdc->disc->io_disc->rec_based) {
@@ -6666,16 +6656,8 @@ PDCI_IO_need_rec_bytes(PDC_t *pdc, int skip_rec,
       tp->elt = tp->elt->next;
     } else {
       /* need to read another elt using IO discipline */
-      if (pdc->top == 0) {
-	/* no need to preserve bytes on this read_fn call */
-	io_elt     = 0;
-	io_remain  = 0;
-      } else {
-	bot        = &(pdc->stack[0]);
-	io_elt     = bot->elt;
-	io_remain  = bot->remain;
-      }
-      if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
+      keep_elt = pdc->stack[0].elt;
+      if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, keep_elt, &next_elt)) {
 	/* read problem, return zero length, !eor, eof */
 	tp->elt      = PDC_LAST_ELT(pdc->head); /* IO disc may have added eof elt */
 	tp->remain   = 0;
@@ -6701,14 +6683,8 @@ PDCI_IO_need_rec_bytes(PDC_t *pdc, int skip_rec,
   while (!(elt->eor|elt->eof)) {
     if (elt->next == pdc->head) {
       /* need to read another elt using IO discipline */
-      if (!bot) {
-	/* We have not established io_elt/io_remain yet. */
-	/* There should be a valid bot + we need to keep it around. */
-	bot        = &(pdc->stack[0]);
-	io_elt     = bot->elt;
-	io_remain  = bot->remain;
-      }
-      if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
+      keep_elt = pdc->stack[0].elt;
+      if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, keep_elt, &next_elt)) {
 	/* read problem, return zero length, !eor, eof */
 	(*b_out)     = elt->end;
 	(*e_out)     = (*b_out);
@@ -6737,9 +6713,7 @@ PDCI_IO_forward(PDC_t *pdc, size_t num_bytes)
 {
   PDCI_stkElt_t    *tp        = &(pdc->stack[pdc->top]);
   size_t todo                 = num_bytes;
-  PDCI_stkElt_t    *bot       = &(pdc->stack[0]);
-  PDC_IO_elt_t     *io_elt    = bot->elt;
-  size_t           io_remain  = bot->remain;
+  PDC_IO_elt_t     *keep_elt;
   PDC_IO_elt_t     *next_elt;
 
   PDC_TRACE(pdc->disc, "PDCI_IO_forward called");
@@ -6777,11 +6751,8 @@ PDCI_IO_forward(PDC_t *pdc, size_t num_bytes)
     return PDC_OK;
   }
   /* need to read some data -- use IO disc read_fn */
-  if (pdc->top == 0) { /* no need to preserve any bytes on read_fn call */ 
-    io_elt    = 0;
-    io_remain = 0;
-  }
-  if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
+  keep_elt = pdc->stack[0].elt;
+  if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, keep_elt, &next_elt)) {
     tp->elt = PDC_LAST_ELT(pdc->head); /* IO disc may have added eof elt */
     tp->remain = 0;
     return PDC_ERR;

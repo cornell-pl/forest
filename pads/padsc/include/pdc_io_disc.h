@@ -137,7 +137,7 @@ struct PDC_IO_elt_s {
 typedef PDC_error_t (*PDC_IO_unmake_fn)    (PDC_t *pdc, PDC_IO_disc_t* io_disc);
 typedef PDC_error_t (*PDC_IO_sfopen_fn)    (PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t *sfio, PDC_IO_elt_t *head);
 typedef PDC_error_t (*PDC_IO_sfclose_fn)   (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain);
-typedef PDC_error_t (*PDC_IO_read_fn)      (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain,
+typedef PDC_error_t (*PDC_IO_read_fn)      (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt,
 					    PDC_IO_elt_t **next_elt_out);
 typedef ssize_t     (*PDC_IO_rec_close_fn) (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf,
 					    PDC_byte *rec_start, size_t num_bytes);
