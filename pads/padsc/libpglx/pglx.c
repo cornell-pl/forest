@@ -10,9 +10,6 @@
 #include "pglx-internal.h"
 #include <stdio.h>
 
-/* pads-galax interface generated from IDL: */
-#include "pads_c.h"
-
 /* ocaml header files can be found in /usr/common/lib/ocaml/caml */
 
 /*
@@ -317,7 +314,7 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *self)
 
   printf("IN PDCI_no_children: %s\n", self->name); 
 
-  if (self->kind = "text") { 
+  if (strcmp(self->kind, "text") == 0) { 
     if (!(result = PDCI_NEW_NODE_PTR_LIST(0))) {
       failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
     }
@@ -435,11 +432,7 @@ item Puint32_typed_value (PDCI_node_t *node)
     pd = &tpd;
     pd->errCode = P_NO_ERR;
   }
-  sfstrset(node->pads->tmp2, 0);
-  if (-1 == Puint32_write2io(node->pads, node->pads->tmp2, pd, r)) {
-    failwith("PADS/Galax UNEXPECTED_IO_FAILURE in base type typed_value function");
-  }
-  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) {
+  if (glx_atomicInteger(*r, &res)) {
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in Puint32_typed_value");
   }
   return res;
@@ -449,88 +442,3 @@ const PDCI_vtable_t Puint32_val_vtable = {PDCI_no_children,
 					     Puint32_typed_value,
 					     0};
 
-
-#ifndef USE_GALAX
-/*
- * These will go away some day.
- * They all leak memory, but they are just used for simple testing so that is OK.
- */
-glx_err
-fake_glx_atomicString(char *s, atomicString *outval)
-{
-  char *buf = (char*)malloc(strlen(s) + 1);
-  strcpy(buf, s); 
-  (*outval) = buf;
-  return 0;
-}
-
-glx_err
-fake_glx_atomicBoolean(int b, atomicBoolean *outval)
-{
-  char *buf = (char*)malloc(5);
-  strcpy(buf, b ? "true" : "false");
-  (*outval) = buf;
-  return 0;
-}
-
-glx_err
-fake_glx_atomicInt(int i, atomicInt *outval)
-{
-  char *buf = (char*)malloc(40);
-  snprintf(buf, 39, "%d", i);
-  (*outval) = buf;
-  return 0;
-}
- 
-glx_err
-fake_glx_atomicInteger(int i, atomicInteger *outval)
-{
-  char *buf = (char*)malloc(40);
-  snprintf(buf, 39, "%d", i);
-  (*outval) = buf;
-  return 0;
-}
- 
-glx_err
-fake_glx_atomicDecimal(int i, atomicDecimal *outval)
-{
-  char *buf = (char*)malloc(40);
-  snprintf(buf, 39, "%d", i);
-  (*outval) = buf;
-  return 0;
-}
- 
-glx_err
-fake_glx_atomicFloat(double f, atomicFloat *outval)
-{
-  char *buf = (char*)malloc(40);
-  snprintf(buf, 39, "%f", f);
-  (*outval) = buf;
-  return 0;
-}
- 
-glx_err
-fake_glx_atomicDouble(double f, atomicDouble *outval)
-{
-  char *buf = (char*)malloc(40);
-  snprintf(buf, 39, "%lf", f);
-  (*outval) = buf;
-  return 0;
-}
- 
-glx_err
-fake_glx_atomicAnyURI(char* u, atomicAnyURI *outval)
-{
-  char *buf = (char*)malloc(strlen(u) + 1);
-  strcpy(buf, u);
-  (*outval) = buf;
-  return 0;
-}
-
-glx_err
-fake_glx_string_of_atomicValue(atomicValue v, char **outval)
-{
-  (*outval) = (char*)v;
-  return 0;
-}
-#endif

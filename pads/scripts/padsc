@@ -142,6 +142,8 @@ else
 endif
 
 set _ocaml_status = OK
+set _galaxlib_status = OK
+set _padsglxlib_status = OK
 
 if (! $?OCAML_LIB_DIR) then
   set _ocaml_status = FAILED
@@ -161,6 +163,42 @@ if (-d $ocaml_lib_dir) then
   set add_incs = "-I $ocaml_lib_dir"
 else
   set add_incs = ""
+endif
+
+if (! $?GALAX_LIB_DIR) then
+  set _galaxlib_status = FAILED
+else
+  if ("$GALAX_LIB_DIR"x == x) then
+    set _galaxlib_status = FAILED
+  endif
+endif
+
+if ($_galaxlib_status == "FAILED") then
+  set galax_lib_dir = /home/mff/Galax/lib/c
+else
+  set galax_lib_dir = $GALAX_LIB_DIR
+endif
+
+if (-d $galax_lib_dir) then
+  set add_incs = "$add_incs -I $galax_lib_dir"
+endif
+
+if (! $?PADSGLX_LIB_DIR) then
+  set _padsglxlib_status = FAILED
+else
+  if ("$PADSGLX_LIB_DIR"x == x) then
+    set _padsglxlib_status = FAILED
+  endif
+endif
+
+if ($_padsglxlib_status == "FAILED") then
+  set padsglx_lib_dir = /home/mff/pads-glx/api
+else
+  set padsglx_lib_dir = $PADSGLX_LIB_DIR
+endif
+
+if (-d $padsglx_lib_dir) then
+  set add_incs = "$add_incs -I $padsglx_lib_dir"
 endif
 
 exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-ast/arch/$arch/include/ast $add_incs \

@@ -14,18 +14,7 @@
 /* generic calls from galax to pads */
 
 #include "pads.h"       /* Need to include ast stuff before caml stuff for some reason */
-
-#ifdef USE_GALAX
 #include "pads_dm.h"  /* Need Pads-Galax IDL defns */
-#else
-
-/* XXX_REMOVE next 4 lines: */
-#ifndef FAKE_CAML_VALUE
-#define FAKE_CAML_VALUE
-typedef void* item;
-#endif /* FAKE_CAML_VALUE */
-
-#endif /* USE_GALAX */
 
 /*
  * XXX TEMPORARY:

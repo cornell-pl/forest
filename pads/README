@@ -123,13 +123,9 @@ STEP 4: BUILD AND INSTALL THE PADSC LIBRARY
 
 STEP 4B [OPTIONAL]: BUILD AND INSTALL THE PGLX LIBRARY
 
-  For the PADS-Galax project only, you need to do one of the following:
+  For the PADS-Galax project only, you need to do:
 
-  > gmake GEN_GALAX=1 pglx_lib
   > gmake USE_GALAX=1 pglx_lib
-
-  GEN_GALAX uses 'fake' calls to Galax.
-  USE_GALAX uses real calls to Galax.
 
 STEP 5: TEST THE PADSC LIBRARY
 
@@ -170,13 +166,12 @@ STEP 7: TEST THE COMPILER
   
   > gmake regress
 
-  [OPTIONAL]: Or, for the PADS-Galax project only, use one of:
+  [OPTIONAL]: Or, for the PADS-Galax project only, use
 
-  > gmake GEN_GALAX=1
   > gmake USE_GALAX=1
   
-  If you are switching between GEN_GALX and USE_GALAX, or
-  if you install a major upgrade to the source, you may need to do:
+
+  If you install a major upgrade to the source, you may need to do:
   
   > gmake veryclean
   

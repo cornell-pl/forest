@@ -29,34 +29,12 @@
 # If using rules that cause the padsc compiler to be called, you can
 # define PADSC_EXTRA to specify extra padsc params (such as -x).
 #
-# If GEN_GALAX is defined, the padsc option -x is included
+# If USE_GALAX is defined, the padsc option -x is included
 # and the pglx library is added to the set of libraries to link against.
-#
-# If USE_GALAX is defined, the GALAX include paths are added as -I
+# Also, the GALAX include paths are added as -I
 # options and the appropriate ocaml and Galax libraries are added
 # to the set of libraries to link against. In addition, the compilation
 # flag -DUSE_GALAX is added.
-#
-# If USE_GALAX is NOT defined, then there is no -DUSE_GALAX flag, and
-# this will cause 'fake' versions of the following to be added to
-# libglx:
-#   failwith
-#   glx_atomicString
-#   glx_atomicBoolean
-#   glx_atomicInt
-#   glx_atomicInteger
-#   glx_atomicDecimal
-#   glx_atomicFloat
-#   glx_atomicDouble
-#   glx_atomicAnyURI
-#   glx_string_of_atomicValue
-#
-# Thus, GEN_GALAX without USE_GALAX allows you to test C code against the
-# fake versions of the above, while GEN_GALAX plus USE_GALAX is for
-# real testing.
-#
-# (IF USE_GALAX is defined, GEN_GALAX is automatically defined)
-#
 
 # uncomment this to debug rules.mk
 # DEBUG_RULES_MK = 1
@@ -105,10 +83,6 @@ endif
 
 ifndef USR_LIB_DIR
 USR_LIB_DIR = /usr/lib
-endif
-
-ifdef USE_GALAX
-GEN_GALAX = 1
 endif
 
 ARCH_N_OPSYS = $(shell $(PADS_HOME)/scripts/arch-n-opsys)
@@ -190,11 +164,8 @@ endif
 
 # Done with architecture-specific stuff
 
-ifdef GEN_GALAX
-PADSC_EXTRA = -x
-endif
-
 ifdef USE_GALAX
+PADSC_EXTRA = -x
 CDBGFLAGS += -DUSE_GALAX
 COPTFLAGS += -DUSE_GALAX
 endif
@@ -212,7 +183,7 @@ STATIC_OCAMLLIB_O = \
   $(OCAML_LIB_DIR)/libunix$(mam_cc_SUFFIX_ARCHIVE) \
   $(OCAML_LIB_DIR)/libstr$(mam_cc_SUFFIX_ARCHIVE)
 # XXX what about $(mam_cc_PREFIX_ARCHIVE)camlrun$(mam_cc_SUFFIX_ARCHIVE) ?
-ifdef GEN_GALAX
+ifdef USE_GALAX
 STATIC_LIBS_O = $(STATIC_PGLXLIB_O) $(STATIC_PADSLIB_O) $(STATIC_ASTLIB_O) 
 else
 STATIC_LIBS_O = $(STATIC_PADSLIB_O) $(STATIC_ASTLIB_O) 
@@ -228,7 +199,7 @@ STATIC_ASTLIB_D = $(LIBDIR)/$(STATIC_ASTLIB_NM_D)
 # mff may need to change next two defns
 STATIC_GALAXLIB_D = $(PADSGLX_LIB_DIR)/libpadsglxopt$(mam_cc_SUFFIX_ARCHIVE)
 STATIC_OCAMLLIB_D = $(STATIC_OCAMLLIB_O) # no debug versions available
-ifdef GEN_GALAX
+ifdef USE_GALAX
 STATIC_LIBS_D = $(STATIC_PGLXLIB_D)
 endif
 STATIC_LIBS_D += $(STATIC_PADSLIB_D) $(STATIC_ASTLIB_D) 
@@ -246,7 +217,7 @@ SHARED_ASTLIB_D = $(STATIC_ASTLIB_D)
 endif
 
 DYNAMIC_LIBS_O = -L $(LIBDIR)
-ifdef GEN_GALAX
+ifdef USE_GALAX
 DYNAMIC_LIBS_O += -lpglx
 endif
 DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O)
@@ -257,7 +228,7 @@ endif
 SHARED_PADSLIB_DEP_O = $(LIBDIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(LIBDIR)/$(SHARED_PGLXLIB_NM_O)
 SHARED_ASTLIB_DEP_O = $(LIBDIR)/$(SHARED_ASTLIB_NM_O)
-ifdef GEN_GALAX
+ifdef USE_GALAX
 DYNAMIC_LIB_DEPS_O = $(SHARED_PGLXLIB_DEP_O) $(SHARED_PADSLIB_DEP_O) $(SHARED_ASTLIB_DEP_O)
 else
 DYNAMIC_LIB_DEPS_O = $(SHARED_PADSLIB_DEP_O) $(SHARED_ASTLIB_DEP_O)
@@ -268,7 +239,7 @@ DYNAMIC_LIB_DEPS_O += $(STATIC_GALAXLIB_O) $(STATIC_OCAMLLIB_O)
 endif
 
 DYNAMIC_LIBS_D = -L $(LIBDIR)
-ifdef GEN_GALAX
+ifdef USE_GALAX
 DYNAMIC_LIBS_D += -lpglx-g
 endif
 DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D)
@@ -280,7 +251,7 @@ endif
 SHARED_PADSLIB_DEP_D = $(LIBDIR)/$(SHARED_PADSLIB_NM_D)
 SHARED_PGLXLIB_DEP_D = $(LIBDIR)/$(SHARED_PGLXLIB_NM_D)
 SHARED_ASTLIB_DEP_D = $(LIBDIR)/$(SHARED_ASTLIB_NM_D)
-ifdef GEN_GALAX
+ifdef USE_GALAX
 DYNAMIC_LIB_DEPS_D = $(SHARED_PGLXLIB_DEP_D)
 endif
 DYNAMIC_LIB_DEPS_D += $(SHARED_PADSLIB_DEP_D) $(SHARED_ASTLIB_DEP_D)

@@ -14,38 +14,7 @@ else
 
  # The following rules are run from the arch directory
 
-ifndef GEN_GALAX
-ifndef USE_GALAX
-VAR_ERROR = 1
-endif
-endif
-
-ifdef VAR_ERROR
-
-all: var_error
-
-opt: var_error
-
-debug: var_error
-
-install: var_error
-
-clean: var_error
-
-veryclean: var_error
-
-var_error:
-	@echo " "
-	@echo "ERROR: use one of the following"
-	@echo "   gmake GEN_GALAX=1 [ <target> ]"
-	@echo "   gmake USE_GALAX=1 [ <target> ]"
-	@echo " "
-	@echo "GEN_GALAX: generate a libpglx with fake calls to Galax API"
-	@echo "USE_GALAX: generate a libpglx with real calls to Galax API"
-	@echo " "
-
-else
-
+USE_GALAX=1
 PADS_HOME = ../../..
 SCRIPTS = $(PADS_HOME)/scripts
 BuildPADSLib = 1
@@ -105,8 +74,6 @@ clean :
 
 veryclean : clean
 	(cd $(INSTALLROOT)/include; $(RM) $(INSTALL_INCLUDES); )
-
-endif # VAR_ERROR
 
  # End of rules that are run from the arch directory
 endif

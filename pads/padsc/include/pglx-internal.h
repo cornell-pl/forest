@@ -13,75 +13,7 @@
 
 #include "pads-internal.h"
 
-#ifdef USE_GALAX
 #include "glx.h"              /* Need to pack/unpack Galax atomic values */
-#else
-
-#ifndef FAKE_CAML_VALUE
-#define FAKE_CAML_VALUE
-typedef void* item;
-#endif /* FAKE_CAML_VALUE */
-
-/* make all the value types be value */
-#define atomicString item
-#define atomicBoolean item
-#define atomicInt item
-#define atomicInteger item
-#define atomicDecimal item
-#define atomicFloat item
-#define atomicDouble item
-#define atomicAnyURI item
-#define atomicValue item
-
-#define glx_err int
-
-/* XXX_REMOVE next 14 lines: */
-#ifdef FOR_CKIT
-void* failwith(const char *);
-glx_err glx_atomicString(char *s, atomicString *); 
-glx_err glx_atomicBoolean(int b, atomicBoolean *);
-glx_err glx_atomicInt(int i, atomicInt *); 
-glx_err glx_atomicInteger(int i, atomicInteger *); 
-glx_err glx_atomicDecimal(int i, atomicDecimal *); 
-glx_err glx_atomicFloat(double f, atomicFloat *); 
-glx_err glx_atomicDouble(double f, atomicDouble *); 
-glx_err glx_atomicAnyURI(char* u, atomicAnyURI *);
-glx_err glx_string_of_atomicValue(atomicValue, char **);
-#else
-#define prev_failwith(s) do { \
-  char *s1 = (s); \
-  char *s2 = (char*)malloc(strlen(s1) + 1); \
-  strcpy(s2, s1); \
-  return (void*)s2; \
-} while(0)
-#define failwith(s) error(ERROR_FATAL, "%s", s)
-
-#define glx_atomicString(s, outval) fake_glx_atomicString(s, outval)
-#define glx_atomicBoolean(b, outval)
-#define glx_atomicInt(i, outval) fake_glx_atomicInt(i, outval)
-#define glx_atomicInteger(i, outval) fake_glx_atomicInteger(i, outval)
-#define glx_atomicDecimal(i, outval) fake_glx_atomicDecimal(i, outval)
-#define glx_atomicFloat(f, outval) fake_glx_atomicFloat(f, outval)
-#define glx_atomicDouble(f, outval) fake_glx_atomicDouble(f, outval)
-#define glx_atomicAnyURI(u, outval) fake_glx_atomicAnyURI(u, outval)
-#define glx_string_of_atomicValue(atomicValue, outval) fake_glx_string_of_atomicValue(atomicValue, outval)
-
-glx_err fake_glx_atomicString(char *s, atomicString *); 
-glx_err fake_glx_atomicBoolean(int b, atomicBoolean *);
-glx_err fake_glx_atomicInt(int i, atomicInt *); 
-glx_err fake_glx_atomicInteger(int i, atomicInteger *); 
-glx_err fake_glx_atomicDecimal(int i, atomicDecimal *); 
-glx_err fake_glx_atomicFloat(double f, atomicFloat *); 
-glx_err fake_glx_atomicDouble(double f, atomicDouble *); 
-glx_err fake_glx_atomicAnyURI(char* u, atomicAnyURI *);
-glx_err fake_glx_string_of_atomicValue(atomicValue, char **);
-
-#endif
-#endif /* USE_GALAX */
-
-#ifndef FOR_CKIT
-#  include "pglx-impl.h"
-#endif
 
 /* ================================================================================
  * Predeclare some types */
@@ -95,7 +27,12 @@ typedef struct PDCI_sequenced_pd_s PDCI_sequenced_pd;
  * HELPER MACROS */
 
 /* These macros are defind in pglx-impl.h.  Here we give prototypes for CKIT: */ 
-#ifdef FOR_CKIT
+
+#ifndef FOR_CKIT
+#  include "pglx-impl.h"
+
+#else
+
 void PDCI_NODE_CHECK(PDCI_node_t *n, const char *whatfn);
 void PDCI_NODE_VT_CHECK(PDCI_node_t *n, const char *whatfn);
 PDCI_node_t *PDCI_NEW_NODE();

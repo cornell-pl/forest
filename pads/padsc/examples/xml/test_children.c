@@ -2,7 +2,7 @@
 #include "format7.h"
 #include "pglx.h"
 
-#define exit_on_error(_Expr) {err = _Expr; if (err != 0) {printf("%s\n", glx_error_string); exit(err);}}	
+#define exit_on_error(_Expr) {err = _Expr; if (err != 0) {error(0, "%s\n", glx_error_string); exit(err);}}	
 
 int try_galax() { 
   processing_context pc; 
@@ -16,7 +16,7 @@ int try_galax() {
 
   err = glx_eval_statement_from_string(sc, "<a/>", &items);
   err = glx_serialize_to_string(items, &str);
-  printf("%s\n", str); 
+  error(0, "%s\n", str); 
   return err;
 }
 
@@ -74,25 +74,25 @@ int main(int argc, char** argv) {
     exit_on_error(padsDocument(argv[1], (nodeRep)doc_node, &doc)); 
     docitems = itemlist_cons(doc, itemlist_empty());
     err = glx_serialize_to_string(docitems, &str);
-    printf("%d: %s\n", strlen(str), str);  
+    error(0, "%d: %s\n", strlen(str), str);  
     exit_on_error(glx_serialize_to_output_channel(docitems));
 
     exit_on_error(glx_children(doc, &k)); 	
     for (i = 0; !is_empty(k); i++) {
-      printf("%d...", i);
+      error(0, "%d...", i);
       n = items_first(k); 
       exit_on_error(glx_node_kind(n, &str)); 
-      printf("%s\n", str);  
+      error(0, "%s\n", str);  
       exit_on_error(glx_node_name(n, &av)); 
       exit_on_error(glx_serialize_to_string(av, &str));
-      printf("%s\n", str);  
+      error(0, "%s\n", str);  
       k = items_next(k); 
     }
     exit_on_error(glx_node_kind(doc, &str)); 
-    printf("%s\n", str);  
+    error(0, "%s\n", str);  
     /* 
        exit_on_error(glx_serialize_to_string(k, &str));
-    printf("%s\n", str); */
+    error(0, "%s\n", str); */
     /* 
     */
     error(0, "\nmyfile_read returned: ok");
