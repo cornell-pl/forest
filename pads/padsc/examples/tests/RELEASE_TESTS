@@ -2,7 +2,7 @@ rw_pendian.c
 rw_struct_good.c
 rwxml_alt1.c
 rwxml_punion_literal2.c
-rwxml_struct.c
+rwxml_struct1.c
 test_ai.c
 test_array_ended.c
 test_array_ended2.c
@@ -30,5 +30,5 @@ test_punion_manifest.c
 test_readint.c
 test_struct3.c
 test_struct_regexp.c
-test_write_struct.c
+test_write_struct1.c
 test_write_struct_strings.c

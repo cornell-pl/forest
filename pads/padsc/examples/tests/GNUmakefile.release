@@ -111,9 +111,9 @@ regress_test_ai_o: test_ai
 regress_test_ai_d: test_ai_d
 	@(args=""; suf=""; $(RegressDef))
 
-regress_test_write_struct_o: test_write_struct
+regress_test_write_struct1_o: test_write_struct1
 	@(args=""; suf=""; $(RegressDef))
-regress_test_write_struct_d: test_write_struct_d
+regress_test_write_struct1_d: test_write_struct1_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_write_struct_strings_o: test_write_struct_strings
@@ -230,11 +230,11 @@ regress_rw_pendian_d: rw_pendian_d
 	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(RegressRW))
 	@(args=""; input="../../data/endian.raptor"; suf="_raptor"; $(RegressRW))
 
-regress_rwxml_struct_o: rwxml_struct
-	@(args=""; input="../../data/struct"; suf=""; $(RegressInput))
+regress_rwxml_struct1_o: rwxml_struct1
+	@(args=""; input="../../data/struct1"; suf=""; $(RegressInput))
 
-regress_rwxml_struct_d: rwxml_struct_d
-	@(args=""; input="../../data/struct"; suf=""; $(RegressInput))
+regress_rwxml_struct1_d: rwxml_struct1_d
+	@(args=""; input="../../data/struct1"; suf=""; $(RegressInput))
 
 regress_rwxml_alt1_o: rwxml_alt1
 	@(args=""; input="../../data/alt1"; suf=""; $(RegressInput))
@@ -257,9 +257,9 @@ test_copy_format5: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LI
 test_copy_format5_d: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
-test_write_struct: $(GEN_DIR)/struct.c test_write_struct.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+test_write_struct1: $(GEN_DIR)/struct1.c test_write_struct1.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_write_struct_d: $(GEN_DIR)/struct.c test_write_struct.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_write_struct1_d: $(GEN_DIR)/struct1.c test_write_struct1.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 test_write_struct_strings: $(GEN_DIR)/struct_strings.c test_write_struct_strings.c $(INCLUDE_DEPS) $(LIB_DEPS_O)

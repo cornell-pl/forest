@@ -45,11 +45,11 @@ FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 
                test_array_nosep test_array_pred test_array_pred2 test_array_ended test_array_ended2 test_array_post \
                test_array_skip test_array_skip2 test_charclass test_me test_me_fooclass
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
-WRITE_TESTS = test_write_struct test_write_struct_strings
-OTHER_TESTS  = test_array test_array_string test_record_enum test_struct test_struct2 \
+WRITE_TESTS = test_write_struct1 test_write_struct_strings
+OTHER_TESTS  = test_array test_array_string test_record_enum test_struct1 test_struct2 \
                test_punion2 test_punion_manifest test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
-               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct_good rw_pendian rwxml_struct \
+               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct_good rw_pendian rwxml_struct1 \
                test_cpyrecgen_rps rwxml_cpyrecgen_rps
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
@@ -84,7 +84,7 @@ regress_o:  sanity_check \
 	  regress_test_struct3_o \
           regress_test_me_o \
           regress_test_me_fooclass_o \
-	  regress_test_write_struct_o \
+	  regress_test_write_struct1_o \
 	  regress_test_write_struct_strings_o \
           regress_test_struct_regexp_o \
           regress_test_array_regexp_o \
@@ -101,7 +101,7 @@ regress_o:  sanity_check \
           regress_test_charclass_o \
           regress_rw_struct_good_o \
           regress_rw_pendian_o \
-          regress_rwxml_struct_o \
+          regress_rwxml_struct1_o \
           regress_rwxml_alt1_o
 
 	@echo " "; echo "DONE"; echo " "
@@ -124,7 +124,7 @@ regress_d:  sanity_check \
 	  regress_test_struct3_d \
           regress_test_me_d \
           regress_test_me_fooclass_d \
-	  regress_test_write_struct_d \
+	  regress_test_write_struct1_d \
 	  regress_test_write_struct_strings_d \
           regress_test_struct_regexp_d \
           regress_test_array_regexp_d \
@@ -141,7 +141,7 @@ regress_d:  sanity_check \
           regress_test_charclass_d \
           regress_rw_struct_good_d \
           regress_rw_pendian_d \
-          regress_rwxml_struct_d \
+          regress_rwxml_struct1_d \
           regress_rwxml_alt1_d
 	@echo " "; echo "DONE"; echo " "
 
@@ -215,9 +215,9 @@ regress_test_dns_o: test_dns
 regress_test_dns_d: test_dns_d
 	@(args=""; suf=""; $(RegressDef))
 
-regress_test_write_struct_o: test_write_struct
+regress_test_write_struct1_o: test_write_struct1
 	@(args=""; suf=""; $(RegressDef))
-regress_test_write_struct_d: test_write_struct_d
+regress_test_write_struct1_d: test_write_struct1_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_write_struct_strings_o: test_write_struct_strings
@@ -346,11 +346,11 @@ regress_rw_pendian_d: rw_pendian_d
 	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(RegressRW))
 	@(args=""; input="../../data/endian.raptor"; suf="_raptor"; $(RegressRW))
 
-regress_rwxml_struct_o: rwxml_struct
-	@(args=""; input="../../data/struct"; suf=""; $(RegressInput))
+regress_rwxml_struct1_o: rwxml_struct1
+	@(args=""; input="../../data/struct1"; suf=""; $(RegressInput))
 
-regress_rwxml_struct_d: rwxml_struct_d
-	@(args=""; input="../../data/struct"; suf=""; $(RegressInput))
+regress_rwxml_struct1_d: rwxml_struct1_d
+	@(args=""; input="../../data/struct1"; suf=""; $(RegressInput))
 
 regress_rwxml_alt1_o: rwxml_alt1
 	@(args=""; suf=""; $(RegressDef))
@@ -385,9 +385,9 @@ test_copy_format5: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LI
 test_copy_format5_d: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
-test_write_struct: $(GEN_DIR)/struct.c test_write_struct.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+test_write_struct1: $(GEN_DIR)/struct1.c test_write_struct1.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_write_struct_d: $(GEN_DIR)/struct.c test_write_struct.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_write_struct1_d: $(GEN_DIR)/struct1.c test_write_struct1.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 test_write_struct_strings: $(GEN_DIR)/struct_strings.c test_write_struct_strings.c $(INCLUDE_DEPS) $(LIB_DEPS_O)

@@ -82,7 +82,7 @@ II. Running Regression Tests for PADS-Galax Interface
 
 2. In examples/xml/tests/
 
-      gmake regress
+      gmake regress_ai
 
    This regression will compare the output of each
    test_{load,bulk,smart}_* program with the expected results in
