@@ -764,6 +764,20 @@ do { \
   PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, msg); \
 } while (0)
 
+/* XXX should it be -1 or 0 below ??? */
+#define PDCI_ELT_CONSTRAINT_ERR(fn_nm, elt_pd, elt_ecode, top_ecode, msg) \
+do { \
+  ((elt_pd).nerr)++; \
+  (elt_pd).errCode = elt_ecode; \
+  PDCI_IO_ENDLOC_MINUS1(pads, (elt_pd).loc); \
+  PDCI_report_err (pads, P_LEV_WARN, &((elt_pd).loc), (elt_pd).errCode, fn_nm, msg); \
+  if (pd->nerr == 0) { \
+    pd->errCode = top_ecode; \
+    pd->loc = (elt_pd).loc; \
+  } \
+  (pd->nerr)++; \
+} while (0)
+
 /* for the following 4 macros, pd and rep shared with base type */
 /* base_read_call reports error, fills in pd->nerr */
 
@@ -1109,10 +1123,8 @@ do { \
   if (P_ERR == read_call) { \
     pd->nerr = 1; \
     pd->errCode = P_UNION_MATCH_ERR; \
-    PDCI_IO_ENDLOC_MINUS1(pads, pd->loc); \
+    pd->loc = pd->val.the_tag.loc; \
     PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match branch with tag " PDCI_MacroArg2String(the_tag)); \
-    rep->tag = err_tag; \
-    pd->tag  = err_tag; \
     goto branches_done; \
   } \
   pd->errCode = P_NO_ERR; \
@@ -1159,12 +1171,7 @@ do { \
 #define PDCI_SWUNION_READ_POST_CHECK(fn_nm, the_tag, err_tag, usercheck) \
 do { \
   if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) { \
-    pd->nerr = 1; \
-    pd->errCode = P_UNION_MATCH_ERR; \
-    PDCI_IO_ENDLOC_MINUS1(pads, pd->loc); \
-    PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "User constraint check failed for branch with tag " PDCI_MacroArg2String(the_tag)); \
-    rep->tag = err_tag; \
-    pd->tag  = err_tag; \
+    PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->val.the_tag, P_USER_CONSTRAINT_VIOLATION, P_UNION_MATCH_ERR, "User constraint check failed for branch with tag " PDCI_MacroArg2String(the_tag)); \
     goto branches_done; \
   } \
 } while (0)

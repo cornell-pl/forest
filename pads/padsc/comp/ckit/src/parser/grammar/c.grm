@@ -1162,13 +1162,13 @@ pQualifiers : []
 *)
 
 pManifestField: 
-  pOmitOpt typeName pOptActParams ID EQUALS expr SEMICOLON pCommentOpt  
+  pOmitOpt typeName pOptActParams ID EQUALS expr pConstraintOpt SEMICOLON pCommentOpt  
          (PX.Manifest{tyname  = typeName,
 	              name    = ID,
 	              args    = pOptActParams,
 		      isVirtual = pOmitOpt,
 		      expr    = expr,
-		      pred    = NONE, 
+		      pred    = pConstraintOpt, 
 		      comment = pCommentOpt})
 			              (* fill in when add constraints *)                           
 

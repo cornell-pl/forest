@@ -40,7 +40,7 @@ Union tag: good vals:          3    bad vals:          1    pcnt-bad:   25.000
 =====================================================================================================
 <top>.b.number : int32
 =====================================================================================================
-good vals:          1    bad vals:          0    pcnt-bad:    0.000
+good vals:          1    bad vals:          1    pcnt-bad:   50.000
   Characterizing int32:  min 4 max 4 avg 4.000
     => distribution of top 1 values out of 1 distinct values:
         val:          4 count:          1  pcnt-of-good-vals:  100.000
