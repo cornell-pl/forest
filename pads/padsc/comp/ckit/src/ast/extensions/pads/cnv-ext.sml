@@ -12,7 +12,6 @@ structure CnvExt : CNVEXT = struct
   structure SYM  = Symbol
   structure B    = Bindings
   structure G :> GENGALAX = GenGalax
-(*  structure G = GenGalax *)
 
   open PNames
 
@@ -728,6 +727,7 @@ structure CnvExt : CNVEXT = struct
 	      val tpd       = "tpd"
 	      val tm        = "tm"
 	      val tloc      = "tloc"
+	      val locPtr    = "loc_ptr"
 	      val tlen      = pcgenName("tlen")
 	      val tdelim    = pcgenName("tdelim")
 	      val trequestedOut = pcgenName("trequestedOut")
@@ -1132,7 +1132,7 @@ structure CnvExt : CNVEXT = struct
 
 
 
-              fun genReadEOR (readName, reportErrorSs) () = 
+              fun genReadEOR (readName, reportErrorSs, esRetX) () = 
 		  [P.mkCommentS ("Read to EOR"),
 		    PT.Compound[
 			   P.varDeclS'(PL.base_pdPCT, tpd),
@@ -1163,7 +1163,7 @@ structure CnvExt : CNVEXT = struct
 						       readName,
 						       PT.String "Resynching at EOR", 
 						       [])]),
-				   PL.endSpec pads]),
+				   PL.endSpec pads PL.P_ERROR]),
 				PL.unsetPanicS(PT.Id pd)],
 			      PT.Compound
 			       [P.mkCommentS "in genReadEOR2",
@@ -1175,7 +1175,7 @@ structure CnvExt : CNVEXT = struct
 					      readName,
 					      PT.String "Found EOF when searching for EOR", 
 					      []),
-				PL.endSpec pads	]) ]  ]
+				PL.endSpec pads	PL.P_ERROR]) ]  ]
 
 
 	      fun genReadFun (readName, cParams:(string * pcty)list, 
@@ -1187,7 +1187,8 @@ structure CnvExt : CNVEXT = struct
                       val paramNames = [pads, m] @ cNames @ [pd, rep]
                       val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
 		      val innerInits = (if doInit
-					then [PT.Expr(PT.Call(PT.Id "PD_COMMON_INIT_NO_ERR", [PT.Id pd]))]
+					then [PT.Expr(PT.Call(PT.Id "PD_COMMON_INIT_NO_ERR", [PT.Id pd])),
+					      PT.Expr(PT.Call(PT.Id "PD_COMMON_READ_INIT", [PT.Id pads,PT.Id pd]))]
 					else [])
 		      val returnTy =  PL.toolErrPCT
 		      val checkParamsSs = [PL.IODiscChecks3P(PT.String readName, PT.Id m, PT.Id pd, PT.Id rep)]
@@ -2359,18 +2360,34 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val elemEdPCT  = P.makeTypedefPCT(lookupTy(baseTy, pdSuf, #pdname))
                  val elemMPCT  = P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname))
                  val elemReadName = lookupTy(baseTy, readSuf, #readname)
-		 val tLocX      =  P.addrX(PT.Id tloc)
+		 (* 
+		  val tLocX      =  P.addrX(PT.Id tloc) 
+		  val tLocBX     = P.dotX(PT.Id tloc, PT.Id "b")
+		  val tLocEX     = P.dotX(PT.Id tloc, PT.Id "e")
+		  *)
+		 val tLocX      =  PT.Id locPtr
+		 val tLocBX     = P.arrowX(tLocX, PT.Id "b")
+		 val tLocEX     = P.arrowX(tLocX, PT.Id "e")				  
 		 val tlocES1    =  PL.getLocEndS(PT.Id pads, tLocX, ~1) 
 		 val tlocES0    =  PL.getLocEndS(PT.Id pads, tLocX, 0) 
 
 
                  (* Some useful functions *)
+(*                 fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic, endSpec) = 
+                     PT.Compound([PT.IfThenElse(P.notX(P.fieldX(pd, nerr)),
+						PT.Compound (reportErrorSs(getLocSs, locX, true, errCodeC,
+									   shouldPrint, whatFun, msg, args)),
+						incPDNerrCompS)]
+				 @ (if endSpec then [PL.endSpec pads PL.P_ERROR] else [])
+				 @ (if setPanic then [PL.setPanicS(PT.Id pd)] else []))
+*)
+  
                  fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic, endSpec) = 
                      PT.Compound([PT.IfThenElse(P.notX(P.fieldX(pd, nerr)),
 						PT.Compound (reportErrorSs(getLocSs, locX, true, errCodeC,
 									   shouldPrint, whatFun, msg, args)),
 						incPDNerrCompS)]
-				 @ (if endSpec then [PL.endSpec pads] else [])
+				 @ (case endSpec of SOME(esRetX) => [PL.endSpec pads esRetX] | _ => [])
 				 @ (if setPanic then [PL.setPanicS(PT.Id pd)] else []))
   
                  fun amCheckingBasicE(SOME testE) = 
@@ -2385,6 +2402,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  (* Calculate bounds on array, generate statements for checking values *)
                  (* used in read function, defined below *)
 		 val readName = readSuf name
+		 val roDriverName = readName (* roDriverSuf name *)
+		 val roInitName = roInitSuf name
+		 val readOneName = readOneSuf name
+		 val fcName      = finalChecksSuf name
 		 val pdRBufferX   = P.fieldX(pd, internal)
 		 val resRBufferX  = P.fieldX(rep, internal)
 
@@ -2398,8 +2419,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 (* scope is removed at end of cnvPArray *)
 
                  
-                 (* -- Check size specification for array *)
-                 val (minOpt, maxOpt, minConstOpt, maxConstOpt, chkBoundsSs) = 
+                 (* -- Check size specification for array. 
+		       Parameter esRetX is the return code passed to
+		       recordArrayErrorS. 
+		  *)
+		 fun chkSizeSpecs esRetX = 
                      let fun allocBuffs  countX = 
 			 let val zeroCanonical = 
 			     case lookupMemChar baseTy
@@ -2438,7 +2462,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							       readName,
 							       "Minimum value for the size of array "^
 							       name ^  "(%d) " ^
-							       "is negative", [minX], false, true))]
+							       "is negative", [minX], false, SOME(esRetX)))]
 
 			 fun genPosMaxCheckSs (maxConstOpt, maxX) = 
 			     case maxConstOpt of NONE => []
@@ -2450,7 +2474,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							       PL.P_ARRAY_MAX_NEGATIVE, true, readName,
 							       "Maximum value for the size of array "^
 							       name ^  "(%d) " ^
-							       "is negative", [maxX], true, true))]
+							       "is negative", [maxX], true, SOME(esRetX)))]
 
 		     in
                      (case sizeSpec 
@@ -2480,7 +2504,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 									      name ^ "(%d) " ^
 									      "is greater than "^
 									      "its maximum size (%d)",
-									 [minX, maxX], false,true)
+									 [minX, maxX], false,SOME(esRetX))
 						      )])
 
 				    val dynBoundsCheckSs =  minMaxCheckSs 
@@ -2522,6 +2546,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                            (* end case (min, max) *))
                          (* END size case *))
 		     end
+
+                 val (minOpt, maxOpt, minConstOpt, maxConstOpt, chkBoundsSs) = chkSizeSpecs PL.P_ERROR
+
 		 val () = popLocalEnv()  (* remove scope with parameters used for type checking
 					  size specifications *)
 
@@ -2617,8 +2644,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					   (name,              P.ptrPCT elemRepPCT, P.fieldX(rep, elts)),
 					   (PNames.arrayElts,  P.ptrPCT elemRepPCT, P.fieldX(rep, elts)),
 					   (PNames.pdElts,     P.ptrPCT elemEdPCT,  P.fieldX(pd, elts))]
-			 val parseVars  = [(PNames.arrayBegin, PL.posPCT,           P.dotX(PT.Id tloc, PT.Id "b")), 
-					   (PNames.arrayEnd,   PL.posPCT,           P.dotX(PT.Id tloc, PT.Id "e"))]
+			 val parseVars  = [(PNames.arrayBegin, PL.posPCT,           tLocBX), 
+					   (PNames.arrayEnd,   PL.posPCT,           tLocEX)]
 			 val vars = genVars @ parseVars
 			 val subList = getBindings (vars)
 			 val modExp = PTSub.substExps subList exp
@@ -2659,7 +2686,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val parsVars =[(PNames.pdElts,     P.ptrPCT elemEdPCT,  P.fieldX(pd, elts)),
 					(PNames.curPd,      elemEdPCT,           P.subX(P.fieldX(pd, elts),  curX)),
 					(PNames.numRead,    PL.uint32PCT,        P.fieldX(pd, numRead)), 
-					(PNames.arrayBegin, PL.posPCT,           P.dotX(PT.Id tloc, PT.Id "b")), 
+					(PNames.arrayBegin, PL.posPCT,           tLocBX), 
 					(PNames.elemBegin,  PL.posPCT,           P.dotX(P.fieldX(pd,"loc"), PT.Id "b")), 
 					(PNames.elemEnd,    PL.posPCT,           P.dotX(P.fieldX(pd,"loc"), PT.Id "e"))] 
 			 val allVars      = genVars @ parsVars
@@ -2713,7 +2740,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		       |  (SOME p, SOME q) => (PE.error("Multiple "^which^" clauses"); SOME p)
 
                  val (sepXOpt, termXOpt, noSepIsTerm, lastXOpt, endedXOpt, skipXOpt,
-		      sepTermDynamicCheck, scan2Opt, stdeclSs, stinitSs, stcloseSs) = 
+		      sepTermDynamicCheck, scan2Opt, stdeclSs, stparams, stinitSs, stcloseSs) = 
                       let fun getFuns (which, exp) =
 			   let val (okay, expTy) = getExpEqualTy(exp, CTstring :: CTintTys,
 								fn s=>(which ^ " expression for array "^
@@ -2731,8 +2758,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       else if isString then
 			            (pExp, pExp, #1(evalExpr exp), PString, PL.cstrlitMatch, PL.cstrlitScan1, SOME PL.cstrlitWriteBuf)
 			       else (pExp, pExp, #1(evalExpr exp), PChar,   PL.charlitMatch, PL.charlitScan1, SOME PL.charlitWriteBuf)
-			      end
-
+			   end
+			       
 			  fun doOne (constr:pcexp PX.PConstraint) = 
                               case constr 
                               of PX.Sep   exp => (SOME (getFuns("Separator", exp)), NONE, NONE, NONE, NONE, NONE)
@@ -2764,16 +2791,22 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                           fun compRegExp (which, endLabel, e) = 
 			      let val regName = which^"_regexp"
 				  val regArgX = P.addrX(PT.Id regName)
+			          val ptrName = which^"_regexp_ptr"
+				  val ptrArgX = PT.Id ptrName
 			      in
-			        ([PL.regexpDeclNullS(regName)],
-			         [PT.IfThen(P.eqX(PL.P_ERROR, PL.regexpCompileCStrX(PT.Id pads, e, regArgX, 
+			        ([PL.regexpDeclNullS(regName), 
+				  PL.regexpPtrDeclS(ptrName, regArgX)],
+				 [(P.ptrPCT PL.regexpPCT, ptrName)],
+			         [PT.IfThen(P.eqX(PL.P_ERROR, PL.regexpCompileCStrX(PT.Id pads, e, ptrArgX, 
 										    PT.String ("Array "^which), PT.String readName)),
 					    PT.Compound([P.assignS(P.fieldX(pd, errCode), PL.P_INVALID_REGEXP),
 							 P.plusAssignS(P.fieldX(pd, nerr), P.intX 1),
 						         PL.setPanicS(PT.Id pd),
 						         PT.Goto endLabel] ))],
-				 regArgX,
-				 [PL.regexpCleanupS(PT.Id pads, regArgX)])
+				 (* N.B. The later function genFinalChecks assumes that 
+					 the expression returned below is always a simple identifier.  *)
+				 ptrArgX,
+				 [PL.regexpCleanupS(PT.Id pads, ptrArgX)])
 			      end
 			  fun strToRegExp(which, endLabel, e) =
                               compRegExp(which, endLabel, PL.regexpLitFromCStrX(PT.Id pads, e)) 
@@ -2785,94 +2818,97 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  val strArgX = PT.Id strName
 			      in
 				  ([P.varDeclS'(P.arrayPCT(P.intX 1, P.char), strName)], 
+				   [(P.charPtr, strName)], 
 				   [P.assignS(P.subX(PT.Id strName, P.zero), e)], 
 				   strArgX, [])
 			      end	  
 
-			  val (sepXOpt, termXOpt, declSs, initSs, closeSs, scan2Opt) = 
+			  val (sepXOpt, termXOpt, declSs, params, initSs, closeSs, scan2Opt) = 
 			      let val endLabel = name^"_end"
 			      in
 			      case (sepXOpt, termXOpt) of
-                                (NONE, NONE) => (NONE, NONE, [], [], [], NONE)
+                                (NONE, NONE) => (NONE, NONE, [], [], [], [], NONE)
                               | (SOME (e, e2, v, PRegExp, match, scan, write), NONE) => 
-				    let val (declSs, initSs, expr, closeS) = compRegExp("separator", endLabel, e)
+				    let val (declSs, params, initSs, expr, closeS) = compRegExp("separator", endLabel, e)
 					val wCloseSs = [PT.Labeled(endLabel, PT.Compound closeS)]
 				    in
-					(SOME(expr, expr, v, PRegExp, match, scan, write), termXOpt, declSs, initSs, wCloseSs, NONE)
+					(SOME(expr, expr, v, PRegExp, match, scan, write), termXOpt, declSs, 
+					 params, initSs, wCloseSs, NONE)
 				    end
-                              | (SOME s, NONE) => (sepXOpt, termXOpt, [], [], [], NONE)
+                              | (SOME s, NONE) => (sepXOpt, termXOpt, [], [], [], [], NONE)
                               | (NONE, SOME(e, e2, v, PRegExp, match, scan, write)) =>
-				    let val (declSs, initSs, expr, closeS) = compRegExp("terminator", endLabel, e)
+				    let val (declSs, params, initSs, expr, closeS) = compRegExp("terminator", endLabel, e)
 					val wCloseSs = [PT.Labeled(endLabel, PT.Compound closeS)]
 				    in
-					(SOME(expr, expr, v, PRegExp, match, scan, write), termXOpt, declSs, initSs, wCloseSs, NONE)
+					(SOME(expr, expr, v, PRegExp, match, scan, write), termXOpt, declSs, params, 
+					 initSs, wCloseSs, NONE)
 				    end
-                              | (NONE, SOME t) => (sepXOpt, termXOpt, [], [], [], NONE) 
+                              | (NONE, SOME t) => (sepXOpt, termXOpt, [], [], [], [], NONE) 
                               | (SOME(es, es2, vs, PChar, matchs, scans, writes), SOME(et, et2, vt, PChar, matcht, scant, writet)) =>
 				      (SOME(es, es2, vs, PChar, matchs, scans, writes), 
-				       SOME(et, et2, vt, PChar, matcht, scant, writet), [], [], [],
+				       SOME(et, et2, vt, PChar, matcht, scant, writet), [], [], [], [],
 				       SOME PL.charlitScan2)
                               | (SOME(es, es2, vs, PString, matchs, scans, writes), SOME(et, et2, vt, PString, matcht, scant, writet)) =>
 				      (SOME(es, es2, vs, PString, matchs, scans, writes), 
-				       SOME(et, et2, vt, PString, matcht, scant, writet), [], [], [],
+				       SOME(et, et2, vt, PString, matcht, scant, writet), [], [], [], [],
 				       SOME PL.cstrlitScan2)
                               | (SOME(es, es2, vs, PRegExp, matchs, scans, writes), SOME(et, et2, vt, PRegExp, matcht, scant, writet)) =>
-				    let val (declSss, initSss, exprs, closeSs) = compRegExp("separator", endLabel, es)
-					val (declSst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel, et)
+				    let val (declSss, paramss, initSss, exprs, closeSs) = compRegExp("separator", endLabel, es)
+					val (declSst, paramst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel, et)
 					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs @ closeSt))]
 				    in
 					(SOME(exprs, exprs, vs, PRegExp, matchs, scans, writes), 
 					 SOME(exprt, exprt, vt, PRegExp, matcht, scant, writet), 
-					 declSss @ declSst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
+					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
 				    end
                               | (SOME(es, es2, vs, PRegExp, matchs, scans, writes), SOME(et, et2, vt, PString, matcht, scant, writet)) =>
-				    let val (declSss, initSss, exprs, closeSs) = compRegExp("separator", endLabel, es)
-					val (declSst, initSst, exprt, closeSt) = strToRegExp("terminator", endLabel, et)
+				    let val (declSss, paramss, initSss, exprs, closeSs) = compRegExp("separator", endLabel, es)
+					val (declSst, paramst, initSst, exprt, closeSt) = strToRegExp("terminator", endLabel, et)
 					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs @ closeSt))]
 				    in
 					(SOME(exprs, exprs, vs, PRegExp, matchs, scans, writes), 
 					 SOME(et, exprt, vt, PString, matcht, scant, writet), 
-					 declSss @ declSst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
+					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
 				    end
                               | (SOME(es, es2, vs, PString, matchs, scans, writes), SOME(et, et2, vt, PRegExp, matcht, scant, writet)) =>
-				    let val (declSss, initSss, exprs, closeSs) = strToRegExp("separator", endLabel, es)
-					val (declSst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel, et)
+				    let val (declSss, paramss, initSss, exprs, closeSs) = strToRegExp("separator", endLabel, es)
+					val (declSst, paramst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel, et)
 					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs @ closeSt))]
 				    in
 					(SOME(es, exprs, vs, PRegExp, matchs, scans, writes), 
 					 SOME(exprt, exprt, vt, PString, matcht, scant, writet), 
-					 declSss @ declSst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
+					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
 				    end
                               | (SOME(es, es2, vs, PRegExp, matchs, scans, writes), SOME(et, et2, vt, PChar, matcht, scant, writet)) =>
-				    let val (declSss, initSss, exprs, closeSs) = compRegExp("separator", endLabel, es)
-					val (declSst, initSst, exprt, closeSt) = charToRegExp("terminator", endLabel, et)
+				    let val (declSss, paramss, initSss, exprs, closeSs) = compRegExp("separator", endLabel, es)
+					val (declSst, paramst, initSst, exprt, closeSt) = charToRegExp("terminator", endLabel, et)
 					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs @ closeSt))]
 				    in
 					(SOME(exprs, exprs, vs, PRegExp, matchs, scans, writes), 
 					 SOME(et, exprt, vt, PChar, matcht, scant, writet), 
-					 declSss @ declSst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
+					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
 				    end
                               | (SOME(es, es2, vs, PChar, matchs, scans, writes), SOME(et, et2, vt, PRegExp, matcht, scant, writet)) =>
-				    let val (declSss, initSss, exprs, closeSs) = charToRegExp("separator", endLabel, es)
-					val (declSst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel, et)
+				    let val (declSss, paramss, initSss, exprs, closeSs) = charToRegExp("separator", endLabel, es)
+					val (declSst, paramst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel, et)
 					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs @ closeSt))]
 				    in
 					(SOME(es, exprs, vs, PChar, matchs, scans, writes), 
 					 SOME(exprt, exprt, vt, PRegExp, matcht, scant, writet), 
-					 declSss @ declSst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
+					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseSs, SOME PL.reScan2)
 				    end
                               | (SOME(es, es2, vs, PString, matchs, scans, writes), SOME(et, et2, vt, PChar, matcht, scant, writet)) =>
-				    let val (declSst, initSst, exprt, closeSt) = charToString("terminator", et)
+				    let val (declSst, paramst, initSst, exprt, closeSt) = charToString("terminator", et)
 				    in
 				      (SOME(es, es2, vs, PString, matchs, scans, writes), 
-				       SOME(et, exprt, vt, PChar, matcht, scant, writet), declSst, initSst, closeSt,
+				       SOME(et, exprt, vt, PChar, matcht, scant, writet), declSst, paramst, initSst, closeSt,
 				       SOME PL.cstrlitScan2)
 				    end
                               | (SOME(es, es2, vs, PChar, matchs, scans, writes), SOME(et, et2, vt, PString, matcht, scant, writet)) =>
-				    let val (declSss, initSss, exprs, closeSs) = charToString("separator", es)
+				    let val (declSss, paramss, initSss, exprs, closeSs) = charToString("separator", es)
 				    in
 				      (SOME(es, exprs, vs, PChar, matchs, scans, writes), 
-				       SOME(et, et2, vt, PString, matcht, scant, writet), declSss, initSss, closeSs,
+				       SOME(et, et2, vt, PString, matcht, scant, writet), declSss, paramss, initSss, closeSs,
 				       SOME PL.cstrlitScan2)
 				    end
 			      end
@@ -2920,7 +2956,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      end
 		      in
 			  (sepXOpt, termXOpt, isSome termNoSepXOpt, lastXOpt, endedXOpt, skipXOpt,
-			   sepTermDynamicCheck, scan2Opt, declSs, initSs, closeSs)
+			   sepTermDynamicCheck, scan2Opt, declSs, params, initSs, closeSs)
                       end
 		 val _ = popLocalEnv()
 
@@ -3041,12 +3077,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val edBufferX    = P.fieldX(pd, elts)
  		 val edNext       = P.subX(edBufferX, indexX)
 
+		 val eltPd        = "elt_pd"
+		 val eltRep       = "elt_rep"
+				    
 
                  (* -- Check parameters to base type read function *)
 		 val () = checkParamTys(name, elemReadName, args, 2, 2)
                  (* -- Declare top-level variables and initialize them *)
-                 val initSs =   stdeclSs
+                 val initDecSs =   stdeclSs
 			      @ [P.varDeclS'(PL.locPCT, tloc),
+				 P.varDeclS(P.ptrPCT PL.locPCT, locPtr, P.addrX(PT.Id tloc)),
 				 P.varDeclS'(P.int, result)] 
                               @ (if Option.isSome termXOpt then             (* int foundTerm = false *)
                                    [P.varDeclS(P.int, foundTerm, P.falseX)] 
@@ -3064,12 +3104,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                               @ (if Option.isSome maxOpt then               (* int reachedLimit = false *)
 				   [P.varDeclS(P.int, reachedLimit, P.falseX)]
 			        else [])
-                              @ [ P.assignS(P.fieldX(rep, length), P.zero),
+                 val initAssignSs = [ P.assignS(P.fieldX(rep, length), P.zero),
 				  P.assignS(P.fieldX(pd, neerr), P.zero),
 				  P.assignS(P.fieldX(pd, firstError), P.zero),
-				  P.assignS(P.fieldX(pd, numRead), P.zero)]
-		              @ stinitSs
-			      @ [ PL.getLocBeginS(PT.Id pads, P.addrX(PT.Id tloc))]      
+				  P.assignS(P.fieldX(pd, numRead), P.zero)]		              
+				@ stinitSs
+		 val initGetLocSs = [ PL.getLocBeginS(PT.Id pads, tLocX)]      
+
+		 val initSs = initDecSs @ initAssignSs @ initGetLocSs 
 
                  (* -- fragments for while loop for reading input *)
 
@@ -3125,20 +3167,23 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						                    P.orX(termFoundX, limitReachedX))), lastSetX), endedSetX)
 		     end
 
-                 fun genBreakCheckSs (term, size, last, ended) = 
+                 fun genBreakCheckSs (term, size, last, ended, breakSs) = 
 		     [P.mkCommentS("Have we finished reading array?"),
-		      PT.IfThen(genBreakCheckX(term, size, last, ended), PT.Compound[PT.Break])]
+		      PT.IfThen(genBreakCheckX(term, size, last, ended), PT.Compound breakSs)]
 		     
-                 (* -- Check that we found separator on last loop. *)
-                 fun genSepCheck NONE = []
-                   | genSepCheck (SOME (sepX, scan2SepX, cSepX, typ, matchSep, scan1Sep, writeSep)) = 
+                 (* -- Check that we found separator on last loop.
+		       Parameter esRetX is the return code passed to
+		       recordArrayErrorS. 
+		  *)
+                 fun genSepCheck (NONE, breakSs, esRetX) = []
+                   | genSepCheck (SOME (sepX, scan2SepX, cSepX, typ, matchSep, scan1Sep, writeSep), breakSs, esRetX) = 
 		      case (termXOpt, noSepIsTerm) of 
                         (NONE, true) => 
                         [P.mkCommentS("Checking for separator"),
 			 PT.IfThen(P.eqX(PL.P_ERROR, PL.matchFunX(matchSep, PT.Id pads, sepX, P.trueX (* eatlit *))),
-				   PT.Compound[
-				       P.mkCommentS("No separator, therefore array is finished"),
-				       PT.Break])]
+				   PT.Compound(
+				       P.mkCommentS("No separator, therefore array is finished")::
+				       breakSs))]
                       | (NONE, false) => 
                         [P.mkCommentS("Array not finished; reading separator"),
 			 PT.Compound([
@@ -3154,12 +3199,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      PT.Compound[(* if am checking *)
 			        PT.IfThen(PT.Id "offset",
 				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, 
-						      readName,"", [], false, not(Option.isSome endedXOpt)))])],
-                           PT.Compound([ (* else error in reading separator *)
-			      P.mkCommentS("Error reading separator")]
-                             @(PL.commitS(PT.Id pads, readName))
-			     @[ recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, "Missing separator", [], true, true),
-			        PT.Break]))])]
+						      readName,"", [], false, 
+						      case endedXOpt of SOME(_) => NONE
+								      | NONE => SOME(esRetX)))])],
+                            PT.Compound([ (* else error in reading separator *)
+			     P.mkCommentS("Error reading separator")]
+			     @(if (Option.isSome endedXOpt) then (PL.commitS(PT.Id pads, readName)) else [])
+			     @(recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, 
+						 "Missing separator", [], true, SOME(esRetX)) ::
+			        breakSs)))])]
 		      | (SOME(termX, scan2TermX, _, _, _, _, _), _) => 
                        [P.mkCommentS("Array not finished; read separator with recovery to terminator"),
                          PT.Compound([
@@ -3184,19 +3232,21 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	  		       PT.Compound[ (* if am checking *)
 			         PT.IfThenElse(P.andX(PT.Id "f_found", PT.Id "offset"),
 				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], 
-						      false,not (Option.isSome endedXOpt)),
+						      false,case endedXOpt of SOME(_) => NONE
+									    | NONE => SOME(esRetX)),
                                     PT.Compound [PT.IfThen(P.notX(PT.Id "f_found"),
-					                   PT.Compound[recordArrayErrorS([locES1], locX,
+					                   PT.Compound(recordArrayErrorS([locES1], locX,
 											 PL.P_ARRAY_EXTRA_BEFORE_TERM, true,
-											 readName,"", [], false,true),
-								       PT.Break])] )])],
+											 readName,"", [], false,SOME(esRetX)) ::
+								       breakSs))] )])],
 			    PT.Compound( (* else error in reading separator *)
 			      [P.mkCommentS("Error reading separator")]
 			      @ (if Option.isSome endedXOpt  
 				     then (PL.chkPtS(PT.Id pads, readName)) else [])
-			      @ [(recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, 
-						    true, readName, "Missing separator", [], true,true)),
-			         PT.Break]))])]
+			      @ (recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, 
+						    true, readName, "Missing separator", [], true,SOME(esRetX)) ::
+			         breakSs)
+			      ))])]
 
                  (* -- read next element *)
 		 val (chkLenSs, bufSugX) = case maxOpt of NONE => ([], P.zero)
@@ -3236,6 +3286,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       @ [P.assignS(PT.Id result, PL.readFunX(elemReadName, PT.Id pads, P.addrX(P.fieldX(m, element)),
 							    args, P.addrX(edNext), P.addrX(resNext))),
 			 PT.Expr(P.postIncX (P.fieldX(pd, numRead)))]
+
 		 val markErrorSs = 
 		     let val baseX = P.eqX(PT.Id result, PL.P_ERROR) 
 			 val etestX = case endedXOpt of 
@@ -3255,12 +3306,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	 			           (reportErrorSs([locES1], locX, true, PL.P_ARRAY_ELEM_ERR, false, readName, "", []))
                                          @ [P.mkCommentS("Index of first element with an error"),
 				            P.assignS(P.fieldX(pd, firstError), P.minusX(P.fieldX(rep, length), P.intX 1))])),
-                                            PL.endSpec pads])])]
+                                            PL.endSpec pads PL.P_ERROR])])]
 		     end
 
                  (* -- panic recovery code *)
-		 fun genPanicRecoveryS (sepXOpt, termXOpt, maxOpt) = 
-                     let val panicSs = [PL.setPanicS(PT.Id pd), PT.Break]
+		 fun genPanicRecoveryS (sepXOpt, termXOpt, maxOpt, breakSs) = 
+                     let val panicSs = PL.setPanicS(PT.Id pd) :: breakSs
                          val recoveryFailedSs = P.mkCommentS("Recovery failed") :: panicSs
 			 val noRecoverySs = P.mkCommentS("No recovery possible") :: panicSs
 			 fun scan1ToRecoverSs(which, scan, forX, eatForX) = [
@@ -3303,17 +3354,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     in
 			 PT.Compound recoverSs
 		     end
-                 fun genPanicRecoverySs (endedXOpt, skipXOpt) = 
+                 fun genPanicRecoverySs (endedXOpt, skipXOpt, breakSs) = 
 		     let val predX = case endedXOpt of NONE => PL.testPanicX(P.addrX(edNext))
 			             | _ => P.andX(P.notX (PT.Id endedSet), PL.testPanicX(P.addrX(edNext)))
 			 val predX = case skipXOpt of NONE => predX
 			             | _ => P.andX(predX, P.notX (PT.Id omitresult))
 		     in
-			 [PT.IfThen(predX, PT.Compound[genPanicRecoveryS(sepXOpt, termXOpt, maxOpt)])]
+			 [PT.IfThen(predX, PT.Compound[genPanicRecoveryS(sepXOpt, termXOpt, maxOpt,breakSs)])]
 		     end
 
                  (* -- while loop for reading input *)
-
+		 (* executes body (when once is given) on failure to find terminator. *)
 		 fun readTerm (termRead, termX, bdyOpt) = 
 		     let val rhsX = PL.matchFunX(termRead, PT.Id pads, termX, P.falseX(*do not eat lit"*))
 			 val bodyS = case bdyOpt of NONE => 
@@ -3325,6 +3376,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							PT.Compound[bdyS])
 		     in
 			 PT.Compound [bodyS]
+		     end
+		 (* executes doneS on succesful match of terminator *)
+		 fun readTerm' (termRead, termX, doneS) = 
+		     let val rhsX = PL.matchFunX(termRead, PT.Id pads, termX, P.falseX(*do not eat lit"*))
+		     in
+			 PT.IfThen(P.eqX(PL.P_OK, rhsX),
+				   PT.Compound[P.assignS(PT.Id foundTerm, P.trueX),
+					       doneS])
 		     end
 
                  fun genTermCheck NONE = []
@@ -3404,41 +3463,49 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      (* end case *))
 			    | (_, _) => bdyS
 
+			 fun insTermChk bdyS =
+			     case termXOpt of 
+				 NONE => PT.Compound[bdyS]
+		               | SOME (termX, _, _, _, termRead, _, _) => (readTerm (termRead, termX, SOME bdyS))
+
+			 val breakSs = [PT.Break]
 
 			 val bdyS = 
 			     PT.Compound[
 			      locBS,
 			      PT.While(P.trueX,  
                                  PT.Compound(
-				     [P.mkCommentS("Ready to read next element")]
+				   [P.mkCommentS("Ready to read next element")]
 				   @ readElementSs 
                                    @ (genEndedLocCalcSs (lastXOpt, endedXOpt))
                                    @ (genEndedSkipCheck (endedXOpt, skipXOpt))
 				   @ markErrorSs
-				   @ (genPanicRecoverySs (endedXOpt,skipXOpt))
+				   @ (genPanicRecoverySs (endedXOpt,skipXOpt,breakSs))
                                    @ (genLastCheck  (lastXOpt, skipXOpt))
                                    @ (genTermCheck  termXOpt)
-				   @ genBreakCheckSs (termXOpt, maxOpt, lastXOpt, endedXOpt)
-                                   @ (genSepCheck sepXOpt)
-                                 ))]
+				   @ genBreakCheckSs (termXOpt, maxOpt, lastXOpt, endedXOpt,breakSs)
+                                   @ (genSepCheck (sepXOpt,breakSs,PL.P_ERROR))
+				   ))]
 			 val termCondX = if isRecord then 
 			                   P.andX(P.notX(PL.isEofX(PT.Id pads)),
 						  P.notX(PL.isEorX(PT.Id pads)))
 					 else
 			                   P.notX(PL.isEofX(PT.Id pads))
 			 val lengthChkBdyS = insLengthChk bdyS
-			 val termChkBdyS = case termXOpt of NONE => PT.Compound[lengthChkBdyS]
-		                           | SOME (termX, _, _, _, termRead, _, _) => (readTerm (termRead, termX, SOME lengthChkBdyS))
+			 val termChkBdyS = insTermChk lengthChkBdyS
+			 val allChkS = PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd), termCondX), termChkBdyS)
 
 		     in 
 			 [P.mkCommentS("Read input until we reach a termination condition"),
-                                PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd), termCondX), termChkBdyS)]
+                          allChkS]
 		     end
 
                  (* -- Check if there was junk before trailing terminator *)
 	         val trailingJunkChkSs = 
-		     case termXOpt of NONE => []
-		     | SOME (termX, _, _, _, _, termScan1, _) => 
+		     let val esRetX = PL.P_ERROR				      
+		     in case termXOpt of 
+			 NONE => []
+		         | SOME (termX, _, _, _, _, termScan1, _) => 
 			 [P.mkCommentS("End of loop. Read trailing terminator if there was trailing junk"),
 			  PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd), P.notX(PT.Id foundTerm)),
 			   PT.Compound[
@@ -3454,13 +3521,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      PT.IfThen(amCheckingBasicE NONE, 
 			        PT.Compound[
 				 recordArrayErrorS([locES1], locX, PL.P_ARRAY_EXTRA_BEFORE_TERM,
-						   true, readName,"", [], false,true),
+						   true, readName,"", [], false,SOME(esRetX)),
 				 P.assignS(PT.Id foundTerm, P.trueX)])],
 			     recordArrayErrorS([locES1], locX, PL.P_ARRAY_TERM_ERR, true, readName,
-					       "Missing terminator", [], true,true))
+					       "Missing terminator", [], true,SOME(esRetX)))
 			 ])]
+		     end
 
-		 val readEORSs = if isRecord then genReadEOR (readName, reportStructErrorSs) () else []
+		 fun readEORSs esRetX = if isRecord then genReadEOR (readName, reportStructErrorSs, esRetX) () else []
                  (* -- Set data fields in canonical rep and ed from growable buffers *)
                  val setDataFieldsSs = 
                      [
@@ -3468,20 +3536,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      ]
 
                  (* -- Check array-level constraints *)
-                 (* -- -- Check that we read at least min elements, if min specified *)
-                 fun genMinReachedConstraintSs minX =  
-                     let val lengthTestX = P.ltX(P.fieldX(rep, length), minX)
-			 val testX = if Option.isSome maxOpt 
-			             then P.andX(P.notX(PT.Id reachedLimit), lengthTestX)
-				     else lengthTestX
-		     in
-		      [P.mkCommentS("Checking that we read enough elements"),
-		       PT.IfThen(testX,
-			  recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_SIZE_ERR, true, readName,
-			    ("Read %d element(s) for array "^name^"; required %d"),
-			    [P.fieldX(rep, length), minX], false,true))]
-		     end
-
                  (* -- -- Check that the user's forall array constraint is satisfied. *)
                  fun genLoop {index:string, range, body:PT.expression}  = 
 		     let val (lower, upper) = case range of PX.Bounds(lower, upper) => (lower, upper)
@@ -3501,43 +3555,60 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					     ] (* end for *))]]
 		     end
 		           
-                 fun genForallConstraintSs forall  = 
-		        [P.mkCommentS "Checking Pforall constraint",
-                         PT.Compound(
-                          [P.varDeclS(P.int, "violated", P.falseX)]
-			  @ genLoop forall
-			  @ [PT.IfThen(PT.Id "violated",
-				       recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
-							 ("Pforall constraint for array "^name^" violated"), [], false,true))])]
+                 fun genArrayConstraintsSs esRetX = 
+		     let 
+			 (* -- -- Check that we read at least min elements, if min specified *)
+			 fun genMinReachedConstraintSs minX =  
+			     let val lengthTestX = P.ltX(P.fieldX(rep, length), minX)
+				 val testX = if Option.isSome maxOpt 
+					     then P.andX(P.notX(PT.Id reachedLimit), lengthTestX)
+					     else lengthTestX
+			     in
+			      [P.mkCommentS("Checking that we read enough elements"),
+			       PT.IfThen(testX,
+				  recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_SIZE_ERR, true, readName,
+				    ("Read %d element(s) for array "^name^"; required %d"),
+				    [P.fieldX(rep, length), minX], false,SOME(esRetX)))]
+			     end
+
+			 fun genForallConstraintSs forall  = 
+				[P.mkCommentS "Checking Pforall constraint",
+				 PT.Compound(
+				  [P.varDeclS(P.int, "violated", P.falseX)]
+				  @ genLoop forall
+				  @ [PT.IfThen(PT.Id "violated",
+					       recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, 
+								 true, readName,("Pforall constraint for array "^name^" violated"), 
+								 [], false,SOME(esRetX)))])]
 
 
-                 (* -- -- Check that the user's general array constraint is satisfied. *)
-                 fun genGeneralConstraintSs exp = 
-                        [PT.Compound(
-			   [P.mkCommentS "Checking PWhere constraint"]
-		           @ [PT.IfThen(P.notX exp,
-			           recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
-						     ("Pwhere constraint for array "^name^" violated"), [], false,true))])]
+			 (* -- -- Check that the user's general array constraint is satisfied. *)
+			 fun genGeneralConstraintSs exp = 
+				[PT.Compound(
+				   [P.mkCommentS "Checking PWhere constraint"]
+				   @ [PT.IfThen(P.notX exp,
+					   recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
+							     ("Pwhere constraint for array "^name^" violated"), [], false,SOME(esRetX)))])]
 
-                 (* -- -- Check that the user's parse check predicate is satisfied *)
-                 fun genParseCheckConstraintSs exp = 
-                        [PT.Compound(
-			   [P.mkCommentS "Checking Pparsecheck constraint"]
-			   @ (if needArrayEndExp then [tlocES0] else [])
-		           @ [PT.IfThen(P.notX exp,
-			           recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
-						     ("Pparsecheck constraint for array "^name^" violated"), [], false,true))])]
-                 fun genWhereClause c = 
-		     case c of
-		       PX.Forall r      => genForallConstraintSs     r
-		     | PX.AGeneral exp  => genGeneralConstraintSs    exp
-                     | PX.AParseCheck p => genParseCheckConstraintSs p
-       
+			 (* -- -- Check that the user's parse check predicate is satisfied *)
+			 fun genParseCheckConstraintSs exp = 
+				[PT.Compound(
+				   [P.mkCommentS "Checking Pparsecheck constraint"]
+				   @ (if needArrayEndExp then [tlocES0] else [])
+				   @ [PT.IfThen(P.notX exp,
+					   recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
+							     ("Pparsecheck constraint for array "^name^" violated"), 
+							     [], false,SOME(esRetX)))])]
+			 fun genWhereClause c = 
+			     case c of
+			       PX.Forall r      => genForallConstraintSs     r
+			     | PX.AGeneral exp  => genGeneralConstraintSs    exp
+			     | PX.AParseCheck p => genParseCheckConstraintSs p
 
-                 val semanticConstraintSs = List.concat (List.map genWhereClause postCond)
 
-                 val arrayConstraintsSs = 
-		     let fun condWrapBase bdySs = 
+			 val semanticConstraintSs = List.concat (List.map genWhereClause postCond)
+
+			 fun condWrapBase bdySs = 
 			 [P.mkCommentS "Checking basic array constraints",
 			  PT.IfThen(amCheckingBasicE(SOME(PL.testNotPanicX(PT.Id pd))),
 				    PT.Compound bdySs)]
@@ -3571,18 +3642,398 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                 @ chkBoundsSs
                                 @ whileSs
 				@ trailingJunkChkSs
-				@ readEORSs
+				@ (readEORSs PL.P_ERROR)
 				@ setDataFieldsSs
-				@ arrayConstraintsSs
+				@ (genArrayConstraintsSs PL.P_ERROR)
 				@ stcloseSs
                                 @ [returnS])]
-                 val readFunEDs = genReadFun(readName, cParams, mPCT, pdPCT, canonicalPCT, 
+                 val readFunEDs = genReadFun(readName ^ "_old", cParams, mPCT, pdPCT, canonicalPCT, 
 					     NONE, true, bodySs)
+				  
+
+		 (************* read_one functions *****************)
+
+
+		 (* 
+		 val roArgsFields = [(tloc,PL.locPCT, NONE),
+				        (elts, P.ptrPCT elemRepPCT, NONE),
+					(internal, P.ptrPCT PL.rbufferPCT, NONE) ]
+		 val roArgsStructED = P.makeTyDefStructEDecl (canonicalFields, roArgsSuf name)
+		 val (canonicalDecls, canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
+		 val roArgsPCT = P.makeTypedefPCT (repSuf name)			 
+		  *)
+
+				  
+		 (* Macros used in read-one generated code *)
+
+		 (*val macroSetStatusBreak = PT.Expr (PT.Call(PT.Id "AR_SET_STATUS",[PT.Id "STATUS_BREAK"]))*)
+		 val macroDoFinalChecks = PT.Expr (PT.Call(PT.Id "AR_DO_FINAL_CHECKS",[]))
+
+		 fun chkAlreadyDone () =  PT.Expr (PT.Call(PT.Id "AR_TEST_ALREADY_DONE",[]))
+
+		 val macroReadOneDecs = PT.Expr (PT.Call(PT.Id "AR_RO_DECS",[]))
+					   
+		 val macroGetBeginLoc = PT.Expr (PT.Call(PT.Id "AR_GET_BEGIN_LOC",[]))
+
+		 fun macroReserveSpaceX name elemName elemPdName bufSugX = 
+		     PT.Call(PT.Id "AR_RESERVE_SPACE",[PT.Id name, PT.Id elemName, 
+								PT.Id elemPdName, bufSugX])
+
+		 fun macroCheckpoint(name) = PT.Expr (PT.Call(PT.Id "AR_CHECKPOINT",[PT.Id name]))
+
+		 fun macroReadElem(readCall) = PT.Expr (PT.Call(PT.Id "AR_READ_ELEM",[readCall]))
+
+		 fun macroTestReadErr(eTestX,oTestX) = PT.Expr(PT.Call(PT.Id "AR_TEST_READ_ERR",[eTestX,oTestX]))
+
+		 val macroSourceAdvanceCheck  = PT.Expr (PT.Call (PT.Id "AR_TEST_FC_SOURCE_ADVANCE2",[]))
+
+		 val macroRetOngoing = PT.Call(PT.Id "AR_RET_ONGOING",[])
+
+		 val macroLblFinalChecks = PT.Expr (PT.Call(PT.Id "AR_LBL_FINAL_CHECKS",[]))
+		 val macroRetFinalChecks = PT.Call(PT.Id "AR_RET_FINAL_CHECKS",[])
+
+		 fun macroTestTrailingJunk(name,termX,termScan1,termType) = 
+		     PT.Expr(PT.Call(PT.Id ("AR_TEST_TRAILING_JUNK_" ^ termType),
+				     [PT.Id name,PT.Id termScan1,termX]))
+		 val macroSetPartial = PT.Expr (PT.Call(PT.Id "AR_SET_PARTIAL",[]))
+		 val macroUnsetPartial = PT.Expr (PT.Call(PT.Id "AR_UNSET_PARTIAL",[]))
+
+		 val macroRetDone = PT.Call(PT.Id "AR_RET_DONE",[])
+
+		 fun macroReadAll allocCall readCall incX = 
+		     PT.Expr (PT.Call(PT.Id "AR_READ_ALL",[allocCall, readCall, incX, PT.String roDriverName]))
+
+		 val macroStdReturn = PT.Call(PT.Id "AR_STD_RETURN",[])
+
+                 val roReadElementSs = 
+		      (if Option.isSome endedXOpt  (* checkpoint if have ended predicate in play *)
+		       then [PT.Compound (G.makeInvisibleDecls([name],[]) @ [macroCheckpoint(name)])] 
+		       else [])
+                      @ [macroReadElem(PL.readFunX(elemReadName, PT.Id pads, P.addrX(P.fieldX(m, element)),
+							    args, PT.Id eltPd, PT.Id eltRep))]
+		      
+		 fun genROInitFun (initName, cParams:(string * pcty)list, 
+				   mPCT, pdPCT, canonicalPCT,
+				   bodySs) = 
+		     let val (cNames, cTys) = ListPair.unzip cParams
+			 val paramTys1 = [P.ptrPCT PL.toolStatePCT, P.ptrPCT mPCT]
+			 val paramNames1 = [pads, m]
+
+			 val paramTys2 =[P.ptrPCT pdPCT, P.ptrPCT canonicalPCT, P.ptrPCT PL.locPCT]
+			 val paramNames2 = [pd, rep, locPtr]
+
+			 val formalParams = List.map P.mkParam 
+						     (ListPair.zip (paramTys1 @ cTys @ paramTys2,
+								    paramNames1 @ cNames @ paramNames2)
+						      @ stparams)
+			 val innerInits = ([PT.Expr(PT.Call(PT.Id "PD_COMMON_INIT_NO_ERR", [PT.Id pd])),
+					    PT.Expr(PT.Call(PT.Id "PD_COMMON_READ_INIT", [PT.Id pads,PT.Id pd]))])
+			 val returnTy =  P.int
+			 val checkParamsSs = [PL.IODiscChecks3P(PT.String initName, PT.Id m, PT.Id pd, PT.Id rep)]
+			 val innerBody = checkParamsSs 
+					 @ innerInits @ bodySs
+			 val readFunED = 
+			     P.mkFunctionEDecl(initName, formalParams, PT.Compound innerBody, returnTy)
+		     in
+			 [readFunED]
+		     end
+			 
+		 fun genReadOneFun (readName, cParams:(string * pcty)list, 
+				    mPCT, pdPCT, canonicalPCT, elemPdPCT, elemCanonicalPCT,
+				    bodySs) = 
+		     let val (cNames, cTys) = ListPair.unzip cParams
+			 val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT mPCT]
+					@ cTys
+					@ [P.ptrPCT pdPCT, P.ptrPCT canonicalPCT, P.ptrPCT PL.locPCT,
+					   P.ptrPCT elemPdPCT, P.ptrPCT elemCanonicalPCT]
+			 val paramNames = [pads, m] @ cNames @ [pd, rep, locPtr, elt_pd, elt_rep]
+
+			 val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames)
+								@ stparams)
+			 val returnTy =  P.int
+			 val checkParamsSs = [PL.IODiscChecks3P(PT.String readName, PT.Id m, PT.Id pd, PT.Id rep),
+					      PL.IODiscChecks2P(PT.String readName, PT.Id elt_pd, PT.Id elt_rep)]
+			 val innerBody = checkParamsSs @ bodySs
+			 val readFunED = 
+			     P.mkFunctionEDecl(readName, formalParams, PT.Compound innerBody, returnTy)
+		     in
+			 [readFunED]
+		     end
+
+	      fun genFinalChecksFun (fcName, cParams:(string * pcty)list, 
+				     mPCT, pdPCT, canonicalPCT,
+				     bodySs) = 
+		  let val (cNames, cTys) = ListPair.unzip cParams
+                      val paramTys1 = [P.ptrPCT PL.toolStatePCT, P.ptrPCT mPCT]
+		      val paramNames1 = [pads, m]
+		      val paramTys2 =[P.ptrPCT pdPCT, P.ptrPCT canonicalPCT,P.ptrPCT PL.locPCT]
+		      val paramNames2 = [pd, rep,locPtr]
+
+		      val paramsTerm = if Option.isSome termXOpt 
+				       then [(P.int,foundTerm)]
+				       else []
+
+		      val paramsMax = if Option.isSome maxOpt 
+				      then [(P.int, reachedLimit)]
+			              else []
+
+                      val formalParams = List.map P.mkParam 
+						  (ListPair.zip (paramTys1 @ cTys @ paramTys2, 
+								 paramNames1 @ cNames @ paramNames2)
+						   @ stparams
+						   @ paramsTerm 
+						   @ paramsMax)
+		      val returnTy =  P.int
+		      val checkParamsSs = [PL.IODiscChecks3P(PT.String fcName, PT.Id m, PT.Id pd, PT.Id rep)]
+		      val innerBody = G.makeInvisibleDecls([name],nil) @ checkParamsSs 
+				      @ bodySs
+		      val readFunED = 
+			  P.mkFunctionEDecl(fcName, formalParams, PT.Compound innerBody, returnTy)
+		  in
+		      [readFunED]
+		  end
+
+		 fun callROInit(cParams) =
+		     let val (cNames, _) = ListPair.unzip cParams
+			 val (_,stNames) = ListPair.unzip stparams
+				 
+			 val paramNames = [pads, m] 
+					@ cNames
+					@ [pd, rep, locPtr]
+					@ stNames
+		     in
+			 PT.Call(PT.Id roInitName, List.map PT.Id paramNames)
+		     end
+			 
+		 fun callReadOne(cParams,eltPdX,eltRepX) =
+		     let val (cNames, _) = ListPair.unzip cParams
+			 val (_,stNames) = ListPair.unzip stparams
+				 
+			 val params = (List.map PT.Id 
+						([pads, m] 
+						 @ cNames
+						 @ [pd, rep, locPtr]))
+				      @ [eltPdX,eltRepX]
+				      @ (List.map PT.Id stNames)
+		     in
+			 PT.Call(PT.Id readOneName,  params)
+		     end
+			 
+		 fun callFinalChecks(cParams) =
+		     let val (cNames, _) = ListPair.unzip cParams
+			 val (_,stNames) = ListPair.unzip stparams
+				 
+			 val paramNames = [pads, m] 
+					@ cNames
+					@ [pd, rep, locPtr]
+					@ stNames
+					@ (if Option.isSome termXOpt
+					   then [foundTerm]
+					   else [])
+					@ (if Option.isSome maxOpt 
+					   then [reachedLimit]
+					   else [])
+		     in
+			 PT.Call(PT.Id fcName, List.map PT.Id paramNames)
+		     end
+			 
+				       
+                 (* -- return value *)
+                 val roReturnOngoingS = P.returnS (macroRetOngoing)
+		 val roFinalChecksSs   = [macroLblFinalChecks,
+					  P.returnS (callFinalChecks(cParams))]
+
+		 val markErrorSs' = 
+		     let val macroNotEnded = P.notX(PT.Id endedSet)
+			 val macroNoOmit   = P.notX(PT.Id omitresult)
+			 val eTestX = case endedXOpt of 
+			               NONE   => P.trueX
+				     | SOME _ => macroNotEnded
+			 val oTestX = case skipXOpt of
+			               NONE => P.trueX
+				     | SOME _ => macroNoOmit
+		     in
+			 [macroTestReadErr(eTestX,oTestX)]
+		     end
+
+                 (* -- Check if there was junk before trailing terminator *)
+		 fun trailingJunkChkSs'(name) = 
+		     case termXOpt of
+			 NONE => []
+		       | SOME (termX, _, _, PChar, _, termScan1, _) => 
+			 [macroTestTrailingJunk(name,termX,termScan1,"C")]
+		       | SOME (termX, _, _, _, _, termScan1, _) => 
+			 [macroTestTrailingJunk(name,termX,termScan1,"P")]
+
+		 (* Assemble read_one driver function *)
+		 fun roDriverBodySs(name) =
+		     let val elemName = lookupTy(baseTy, repSuf, #repname)
+			 val elemPdName  = lookupTy(baseTy, pdSuf, #pdname)
+
+			 val initDecSs =   
+			     stdeclSs
+			     @ [P.varDeclS'(PL.locPCT, tloc),
+				P.varDeclS(P.ptrPCT PL.locPCT, locPtr, 
+					   P.addrX(PT.Id tloc)),
+				P.varDeclS(P.int, "i", P.zero),
+				P.varDeclS'(P.int, result)] 
+			     @ G.makeInvisibleDecls([name, elemName, elemPdName],[])
+
+			 val indexX  = PT.Id "i"
+
+			 val pdsX    = P.fieldX(pd, elts)
+ 			 val pdNext  = P.subX(pdsX, indexX)
+
+			 val repsX   = P.fieldX(rep, elts)
+			 (* incremement loop variable here *)
+			 val repNext = P.subX(repsX, indexX)
+
+			 val advanceX = P.assignX(indexX, P.fieldX(rep,length))
+
+			 val bodySs = [PT.Expr (callROInit (cParams)),
+				      macroReadAll (macroReserveSpaceX name elemName elemPdName bufSugX)
+						   (callReadOne(cParams,P.addrX pdNext,P.addrX repNext))
+						   (advanceX),
+				      P.returnS(macroStdReturn)]
+		     in
+			 [PT.Compound(initDecSs @ bodySs)]
+		     end
+		     
+		 (* Assemble read_one_init function *)
+		 val roInitBodySs = 
+		     let fun genPanicEndChkS doneS =
+			     let val endCondX = 
+				     if isRecord then 
+					 P.orX(PL.isEofX(PT.Id pads),
+						PL.isEorX(PT.Id pads))
+				     else
+			                 PL.isEofX(PT.Id pads)
+			     in
+				 PT.IfThen(P.orX(PL.testPanicX(PT.Id pd), endCondX), 
+					   doneS)
+			     end
+
+			 fun genTermChkSs doneS =
+			     case termXOpt of 
+				 NONE => []
+		               | SOME (termX, _, _, _, termRead, _, _) => 
+				 [readTerm' (termRead, termX, doneS)]
+
+			 fun genLengthChkSs doneS = 
+			    case (maxOpt, maxConstOpt) 
+                            of (SOME maxX, NONE) => (
+				[PT.IfThen(
+                                 P.gteX(P.fieldX(rep, length), maxX),
+				 PT.Compound[P.assignS(PT.Id reachedLimit, P.trueX),
+					     doneS])]
+			      (* end case *))
+			    | (_, _) => []
+
+			 val doneS = macroDoFinalChecks
+
+			 val decls = 
+			     (if Option.isSome termXOpt then             (* int foundTerm = false *)
+				  [P.varDeclS(P.int, foundTerm, P.falseX)] 
+                              else [])
+			     @ (if Option.isSome maxOpt then               (* int reachedLimit = false *)
+				    [P.varDeclS(P.int, reachedLimit, P.falseX)]
+			        else [])
+
+			 val bdySs =
+			       initAssignSs 
+			     @ initGetLocSs
+			     @ sepTermDynamicCheck
+			     @ chkBoundsSs
+			     @ [genPanicEndChkS doneS]
+			     @ genTermChkSs doneS
+			     @ genLengthChkSs doneS
+			     @ [locBS,macroSetPartial]
+			     @ [roReturnOngoingS]
+			     @ roFinalChecksSs
+			     @ stcloseSs
+			     @ [macroUnsetPartial]
+                             @ [P.returnS(macroRetDone)]
+		     in
+			 [PT.Compound(decls @ bdySs)]
+		     end
+
+	         (* -- Assemble read_one function *)
+                 val readOneBodySs = 
+		     let val breakSs = [macroDoFinalChecks]
+				
+			 val initDecSs = 
+			     (if Option.isSome termXOpt then             (* int foundTerm = false *)
+                                    [P.varDeclS(P.int, foundTerm, P.falseX)] 
+                                else [])
+                             @ (if Option.isSome lastXOpt then             (* int lastSet = false *)
+                                    [P.varDeclS(P.int, lastSet, P.falseX)] 
+                                else [])
+                             @ (if Option.isSome endedXOpt then             (* int endedSet = false *)
+                                    [P.varDeclS(P.int, endedSet, P.falseX),
+				     P.varDeclS(P.int, consumeFlag,  P.falseX)]   (* default is to return last element *)
+                                else [])
+                             @ (if Option.isSome skipXOpt then               
+				    [P.varDeclS(P.int, omitresult, P.falseX)]
+				else [])
+                             @ (if Option.isSome maxOpt then               (* int reachedLimit = false *)
+				    [P.varDeclS(P.int, reachedLimit, P.falseX)]
+			        else [])
+					   
+
+			 fun insNotFirstChk bodySs =
+			     [PT.IfThen(P.gtX(P.fieldX(pd, numRead),P.zero),
+					PT.Compound bodySs)]
+			 val bdyS = 
+			       initDecSs
+			     @ [macroReadOneDecs,
+				chkAlreadyDone(),
+			        macroGetBeginLoc,
+				P.mkCommentS("Ready to read next element")]
+			     @ insNotFirstChk (genSepCheck (sepXOpt, breakSs,PL.readOneError))
+			     @ roReadElementSs 
+			     @ (genEndedLocCalcSs (lastXOpt, endedXOpt))
+			     @ (genEndedSkipCheck (endedXOpt, skipXOpt))
+			     @ markErrorSs'
+			     @ (genPanicRecoverySs (endedXOpt,skipXOpt, breakSs))
+			     @ (genLastCheck  (lastXOpt, skipXOpt))
+			     @ (genTermCheck  termXOpt)
+			     @ chkLenSs
+			     @ genBreakCheckSs (termXOpt, maxOpt, lastXOpt, endedXOpt, breakSs)
+			     @ [macroSourceAdvanceCheck]
+		             @ [roReturnOngoingS]
+			     @ roFinalChecksSs
+		     in
+			 [PT.Compound(bdyS)]
+		     end
+
+
+		 val returnDoneS = P.returnS(macroRetDone)
+
+		 (* Assemble final_checks function*)
+		 val finalChecksBodySs = [PT.Compound (
+				  [macroUnsetPartial]
+				@ trailingJunkChkSs'(name)
+				@ (readEORSs PL.readOneError)
+				@ setDataFieldsSs
+				@ (genArrayConstraintsSs PL.readOneError)
+				@ stcloseSs
+                                @ [returnDoneS])]
+
+                 val readOneFunEDs = genFinalChecksFun(fcName, cParams, mPCT, pdPCT, canonicalPCT, 
+						       finalChecksBodySs)
+				     @ genROInitFun(roInitName, cParams, mPCT, pdPCT, canonicalPCT, 
+						    roInitBodySs)
+				     @ genReadOneFun(readOneName, cParams, mPCT, pdPCT, canonicalPCT, 
+						     elemEdPCT,elemRepPCT,
+						     readOneBodySs)				  
+				     @ genReadFun(roDriverName, cParams, mPCT, pdPCT, canonicalPCT, 
+						  NONE, true, roDriverBodySs(name))
+				     
                  val _ = popLocalEnv()
 
 
                  val readEDs = initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
-			     @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
+			     @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs @ readOneFunEDs
 
                  (***** array PADS-Galax *****)
 
@@ -6242,10 +6693,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					[])
 			         @ [PL.setPanicS(PT.Id pd),
 				    P.assignS(PT.Id result, PL.P_ERROR)]
-		  val slurpToEORSs = if isRecord then genReadEOR (readName, reportBaseErrorSs) () else []
+		  val slurpToEORSs = if isRecord then genReadEOR (readName, reportBaseErrorSs, PL.P_ERROR) () else []
                   val gotoSs = [PT.Labeled(findEORSuf name,
-					PT.Compound (slurpToEORSs @ [PT.Return (PT.Id result)]))]
-
+					   PT.Compound (slurpToEORSs @ [PT.Return (PT.Id result)]))]
 
 		  (* -- Assemble read function enum case*)
 		  val _ = pushLocalEnv()                                        (* create new scope *)
@@ -6258,8 +6708,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					      mPCT, pdPCT, canonicalPCT, NONE, true, bodySs)
 
                   val readEDs = toStringEDs @ initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
-			     @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
-
+				@ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
 
                  (* Generate is function enum case *)
                  val isName = PNames.isPref name

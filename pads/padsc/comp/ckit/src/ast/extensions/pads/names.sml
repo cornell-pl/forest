@@ -28,6 +28,8 @@ struct
   val user        = "compoundLevel"  (* typedef case *)
 
 
+  val elt_rep   = "elt_rep"
+  val elt_pd    = "elt_pd"
   val m         = "m" 
   val pd        = "pd"
   val rep       = "rep"
@@ -46,6 +48,11 @@ struct
   fun dstSuf s = s^"_dst"
   fun addSuf  s = s^"_add"
   fun readSuf s = s^"_read"
+  fun roDriverSuf s = s^"_ro_driver"
+  fun roArgsSuf s = s^"_roArgs"
+  fun roInitSuf s = s^"_read_one_init"
+  fun readOneSuf s = s^"_read_one"
+  fun finalChecksSuf s = s^"_final_checks"
   fun scan1Suf s = s^"_scan1"
   fun scan2Suf s = s^"_scan2"
   fun maskInitSuf s = s^"_m_init"

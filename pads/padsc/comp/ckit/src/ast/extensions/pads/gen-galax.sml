@@ -280,9 +280,7 @@ structure GenGalax = struct
   val NEFName = ".remove_pads"
 
   fun makeInvisibleDecls(tys,fields) =
-      let val loc = SourceMap.LOC {srcFile=NEFName,
-				   beginLine=1,beginCol=1,endLine=1,endCol=1}
-	  fun makeDecl ty name = 
+      let fun makeDecl ty name = 
 	      PT.Decl (PT.DeclarationExt (PX.PPhantomDecl (ty, name)))
 
 	  val tyDecls = map (makeDecl "type_t") tys

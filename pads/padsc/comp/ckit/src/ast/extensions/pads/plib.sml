@@ -6,6 +6,11 @@ struct
  
   val libInit = "P_lib_init"
 
+  val readOneOngoing = PT.Id "STATUS_ONGOING"
+  val readOneDone = PT.Id "STATUS_DONE"
+  val readOneAlreadyDone = PT.Id "STATUS_ALREADY_DONE"
+  val readOneError = readOneDone
+
   val P_ERROR = PT.Id "P_ERR"
   val P_OK    = PT.Id "P_OK"
 
@@ -526,7 +531,7 @@ struct
   fun getSpecLevelX(pads:PT.expression) =
      PT.Call(PT.Id "P_spec_level", [pads])
 
-  fun endSpec pads = PT.IfThen(getSpecLevelX(PT.Id pads), PT.Return P_ERROR)
+  fun endSpec pads ret = PT.IfThen(getSpecLevelX(PT.Id pads), PT.Return ret)
 
 
   fun commitS(pads:PT.expression, whatFun) =
@@ -574,6 +579,7 @@ struct
 
 (* -- regexp routines *)
   fun regexpDeclNullS(regexp) = P.varDeclS(regexpPCT, regexp, PT.InitList[P.zero])
+  fun regexpPtrDeclS(p, reInitX) = P.varDeclS(P.ptrPCT regexpPCT, p, reInitX)
   fun regexpLitFromCharX(padsX, charX) = 
         PT.Call(PT.Id "P_RE_STRING_FROM_CHAR", [padsX, charX])
   fun regexpLitFromCStrX(padsX, strX) = 
