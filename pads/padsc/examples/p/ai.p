@@ -3,7 +3,7 @@ Parray nIP {
 };
 
 Parray sIP{
-  Pstring_SE(:"[. ]":) [] : Psep == '.' && Pterm == ' '; 
+  Pstring_SE(:"/[. ]/":) [] : Psep == '.' && Pterm == ' '; 
 }
 
 Punion host_t  {
