@@ -8,6 +8,8 @@
 \usepackage{latexsym}
 \usepackage{graphics}
 \input{slidemacros}
+\newcommand{\bftt}[1]{{\ttfamily\bfseries{}#1}}
+\newcommand{\kw}[1]{{\bftt{#1}}}
 
 \newcommand{\scream}[1]{\textbf{#1}}
 
@@ -68,16 +70,16 @@ Yitzhak Mandelbaum, Princeton University
 
 {\small
 \begin{alltt}
-Pstruct http_clf_t \{
-        clihost_t \textbf{host};              /- IP address of client requesting service
-   ' '; auth_id_t \textbf{remoteID};          /- Remote identity; '-' means not obtained
-   ' '; auth_id_t \textbf{auth};              /- Name of authenticated user
+\kw{Pstruct} http_clf_t \{
+        clihost_t \blue{host};              /- IP address of client requesting service
+   ' '; auth_id_t \blue{remoteID};          /- Remote identity; '-' means not obtained
+   ' '; auth_id_t \blue{auth};              /- Name of authenticated user
    " [";
-   Pdate(:']':) \textbf{my_date};             /- Timestamp of request
+   Pdate(:']':) \blue{my_date};             /- Timestamp of request
    "] ";
-   http_request_t \textbf{request};           /- Request
-   ' ';  Puint16_FW(:3:) \textbf{response};   /- 3-digit response code
-   ' ';  contentOpt_t \textbf{contentLength}; /- Number of bytes in request response
+   http_request_t \blue{request};           /- Request
+   ' ';  Puint16_FW(:3:) \blue{response};   /- 3-digit response code
+   ' ';  contentOpt_t \blue{contentLength}; /- Number of bytes in request response
 \};
 \end{alltt}}
 
