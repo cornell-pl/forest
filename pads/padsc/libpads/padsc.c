@@ -9,7 +9,7 @@
 #include "libpadsc-internal.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.10 2002-08-28 20:23:29 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.11 2002-08-28 20:30:18 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -37,7 +37,8 @@ PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...)
 }
 
 PDC_error_t
-PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errCode, const char* format, ...)
+PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
+	       PDC_errCode_t errCode, const char* format, ...)
 {
   char*   severity = "error";
 

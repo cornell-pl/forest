@@ -134,8 +134,8 @@ PDC_error_t PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, size_t* l
  *      or if the discipline e_rep is PDC_errorRep_None
  */
 
-PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, PDC_errCode_t errCode,
-			   const char* format, ... );
+PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
+			   PDC_errCode_t errCode, const char* format, ... );
 
 /*
  *  PDC_errorf: default discipline error reporting routine
