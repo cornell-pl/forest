@@ -1593,12 +1593,14 @@ PDC_vlrec_noseek_rec_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PD
   /* num_bytes already equal to total bytes in record */
   ibytes = (PDC_byte*)(&num_bytes);
   if (pdc->m_endian == PDC_littleEndian) {
+    rec_start[0] = ibytes[1];
+    rec_start[1] = ibytes[0];
+  } else {
     rec_start[0] = ibytes[0];
     rec_start[1] = ibytes[1];
-  } else {
-    rec_start[1] = ibytes[0];
-    rec_start[0] = ibytes[1];
   }
+  rec_start[2] = 0;
+  rec_start[3] = 0;
   return 0; /* no bytes added at end */
 }
 
@@ -1617,12 +1619,14 @@ PDC_vlrec_noseek_blk_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PD
   /* num_bytes already equal to total bytes in block */
   ibytes = (PDC_byte*)(&num_bytes);
   if (pdc->m_endian == PDC_littleEndian) {
+    blk_start[0] = ibytes[1];
+    blk_start[1] = ibytes[0];
+  } else {
     blk_start[0] = ibytes[0];
     blk_start[1] = ibytes[1];
-  } else {
-    blk_start[1] = ibytes[0];
-    blk_start[0] = ibytes[1];
   }
+  blk_start[2] = 0;
+  blk_start[3] = 0;
   return 0; /* no bytes added at end */
 }
 
