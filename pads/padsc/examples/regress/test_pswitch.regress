@@ -18,7 +18,7 @@ good vals:          3    bad vals:          1    pcnt-bad:   25.000
 <top>.a : uint32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          4    bad vals:          0    pcnt-bad:    0.000
-  Characterizing uint32:  min 1 max 3 avg 1.750
+  Characterizing uint32 values:  min 1 max 3 avg 1.750
     => distribution of top 3 values out of 3 distinct values:
         val:          1 count:          2  pcnt-of-good-vals:   50.000
         val:          2 count:          1  pcnt-of-good-vals:   25.000
@@ -29,7 +29,7 @@ good vals:          4    bad vals:          0    pcnt-bad:    0.000
 <top>.b : union branches
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Union tag: good vals:          3    bad vals:          1    pcnt-bad:   25.000
-  Characterizing tag:  min number (    1)  max def (    3)
+  Characterizing tag values:  min number (    1)  max def (    3)
     => distribution of top 3 values out of 3 distinct values:
         val: number (    1)   count:          1  pcnt-of-good-vals:   33.333
         val: name (    2)     count:          1  pcnt-of-good-vals:   33.333
@@ -41,31 +41,12 @@ Union tag: good vals:          3    bad vals:          1    pcnt-bad:   25.000
 <top>.b.number : int32
 =====================================================================================================
 good vals:          1    bad vals:          1    pcnt-bad:   50.000
-  Characterizing int32:  min 4 max 4 avg 4.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          4 count:          1  pcnt-of-good-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          1  pcnt-of-good-vals:  100.000
+For good int32 values, 100 pcnt identical:          4
 =====================================================================================================
 <top>.b.name : string
 =====================================================================================================
-String lengths: good vals:          1    bad vals:          0    pcnt-bad:    0.000
-  Characterizing lengths:  min 6 max 6 avg 6.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          6 count:          1  pcnt-of-good-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          1  pcnt-of-good-vals:  100.000
-  Characterizing strings:
-    => distribution of top 1 strings out of 1 distinct strings:
-        val: " hello" count:          1  pcnt-of-good-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING       count:          1  pcnt-of-good-vals:  100.000
+1 string values, 100 pcnt good, 100 pcnt identical (length        6): " hello"
 =====================================================================================================
 <top>.b.def : uint32
 =====================================================================================================
-good vals:          1    bad vals:          0    pcnt-bad:    0.000
-  Characterizing uint32:  min 3 max 3 avg 3.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          3 count:          1  pcnt-of-good-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          1  pcnt-of-good-vals:  100.000
+1 uint32 values, 100 pcnt good, 100 pcnt identical:          3

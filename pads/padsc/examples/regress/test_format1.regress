@@ -48,7 +48,7 @@ good vals:          5    bad vals:          6    pcnt-bad:   54.545
 <top>.id : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          8    bad vals:          3    pcnt-bad:   27.273
-  Characterizing int32:  min 1 max 8 avg 4.500
+  Characterizing int32 values:  min 1 max 8 avg 4.500
     => distribution of top 8 values out of 8 distinct values:
         val:          1 count:          1  pcnt-of-good-vals:   12.500
         val:          2 count:          1  pcnt-of-good-vals:   12.500
@@ -64,7 +64,7 @@ good vals:          8    bad vals:          3    pcnt-bad:   27.273
 <top>.ts : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          7    bad vals:          4    pcnt-bad:   36.364
-  Characterizing int32:  min 11 max 88 avg 47.143
+  Characterizing int32 values:  min 11 max 88 avg 47.143
     => distribution of top 7 values out of 7 distinct values:
         val:         11 count:          1  pcnt-of-good-vals:   14.286
         val:         22 count:          1  pcnt-of-good-vals:   14.286

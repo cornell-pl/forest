@@ -80,6 +80,7 @@ regress_o:  sanity_check \
           regress_test_readint_o \
           regress_test_punion_manifest_o \
           regress_test_ai_o \
+          regress_test_dns_o \
 	  regress_test_pswitch_o \
 	  regress_test_pswitch2_o \
 	  regress_test_depends_o \
@@ -113,6 +114,7 @@ regress_d:  sanity_check \
           regress_test_readint_d \
           regress_test_punion_manifest_d \
           regress_test_ai_d \
+          regress_test_dns_d \
 	  regress_test_pswitch_d \
 	  regress_test_pswitch2_d \
 	  regress_test_depends_d \
@@ -198,6 +200,11 @@ regress_test_readint_d: test_readint_d
 regress_test_ai_o: test_ai
 	@(args=""; suf=""; $(RegressDef))
 regress_test_ai_d: test_ai_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_dns_o: test_dns
+	@(args=""; suf=""; $(RegressDef))
+regress_test_dns_d: test_dns_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_write_struct_o: test_write_struct

@@ -3034,7 +3034,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     isRecord: bool, containsRecord, largeHeuristic, isSource: bool, 
 			     variants: (pcty, pdty, pcdecr, pcexp) PX.PBranches, postCond : (pcexp PX.PPostCond) list} = 
 		 let val unionName = name
-
+		     fun whereNeedsEndChk1 cond =
+			 case cond
+			  of PX.General expr => false
+			   | PX.ParseCheck expr => PTSub.isFreeInExp([PNames.unionEnd], expr)
+		     val whereNeedsEnd = (List.exists whereNeedsEndChk1 postCond)
 		     (* Functions for walking over list of branch, variant *)
 		     fun mungeBV f b m eopt (PX.Full fd) = f (eopt, fd)
 		       | mungeBV f b m eopt (PX.Brief e) = b (eopt, e)
@@ -3409,9 +3413,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		     fun readWhereCheck () =
 		         if List.length whereReadXs = 0 then []
-			 else let val whereCheck
-				    = case descOpt of NONE => "PDCI_UNION_READ_WHERE_CHECK"
-						    | SOME descriminator => "PDCI_SWUNION_READ_WHERE_CHECK"
+			 else let val needsEnd = if whereNeedsEnd then "_END" else ""
+				  val whereCheck
+				    = case descOpt of NONE => "PDCI_UNION_READ_WHERE"^needsEnd^"_CHECK"
+						    | SOME descriminator => "PDCI_SWUNION_READ_WHERE"^needsEnd^"_CHECK"
 			      in
 				  [P.mkCommentS "Checking Pwhere constraint",
 				   PT.Expr(PT.Call(PT.Id whereCheck, [PT.String readName, (P.andBools whereReadXs)]))]
@@ -5266,7 +5271,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val lengthX = P.arrowX(PT.Id acc, PT.Id length)
 			 val doLengthSs = [chkPrint(
 					     callIntPrint((ioSuf o reportSuf) PL.uint32Act, PT.String "Array lengths", 
-						 	 PT.String "lengths", P.intX ~1, P.addrX lengthX)) ]
+						 	 PT.String "array length", P.intX ~1, P.addrX lengthX)) ]
 			 val maxX = P.dotX(lengthX, PT.Id "max")
 			 val limitX = PT.QuestionColon(P.ltX(maxX, P.intX 10), maxX, P.intX 10)
 						 

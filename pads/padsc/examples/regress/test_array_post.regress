@@ -17,16 +17,12 @@ intList_read returned: error
 <top> : array intList of Puint32
 *****************************************************************************************************
 Array lengths: good vals:          1    bad vals:          4    pcnt-bad:   80.000
-  Characterizing lengths:  min 4 max 4 avg 4.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          4 count:          1  pcnt-of-good-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          1  pcnt-of-good-vals:  100.000
+For good array length values, 100 pcnt identical:          4
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.allArrayElts : all array elements
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:         20    bad vals:          0    pcnt-bad:    0.000
-  Characterizing all array elements:  min 0 max 1500 avg 110.650
+  Characterizing all array elements values:  min 0 max 1500 avg 110.650
     => distribution of top 10 values out of 16 distinct values:
         val:          2 count:          2  pcnt-of-good-vals:   10.000
         val:          4 count:          2  pcnt-of-good-vals:   10.000
@@ -44,7 +40,7 @@ good vals:         20    bad vals:          0    pcnt-bad:    0.000
 <top>.arrayDetail[0] : array element
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
-  Characterizing array element:  min 0 max 12 avg 4.400
+  Characterizing array element values:  min 0 max 12 avg 4.400
     => distribution of top 4 values out of 4 distinct values:
         val:          4 count:          2  pcnt-of-good-vals:   40.000
         val:          0 count:          1  pcnt-of-good-vals:   20.000
@@ -56,7 +52,7 @@ good vals:          5    bad vals:          0    pcnt-bad:    0.000
 <top>.arrayDetail[1] : array element
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
-  Characterizing array element:  min 2 max 24 avg 9.800
+  Characterizing array element values:  min 2 max 24 avg 9.800
     => distribution of top 5 values out of 5 distinct values:
         val:          2 count:          1  pcnt-of-good-vals:   20.000
         val:          3 count:          1  pcnt-of-good-vals:   20.000
@@ -69,7 +65,7 @@ good vals:          5    bad vals:          0    pcnt-bad:    0.000
 <top>.arrayDetail[2] : array element
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
-  Characterizing array element:  min 8 max 34 avg 20.400
+  Characterizing array element values:  min 8 max 34 avg 20.400
     => distribution of top 4 values out of 4 distinct values:
         val:         34 count:          2  pcnt-of-good-vals:   40.000
         val:          8 count:          1  pcnt-of-good-vals:   20.000
@@ -81,7 +77,7 @@ good vals:          5    bad vals:          0    pcnt-bad:    0.000
 <top>.arrayDetail[3] : array element
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
-  Characterizing array element:  min 10 max 1500 avg 408.000
+  Characterizing array element values:  min 10 max 1500 avg 408.000
     => distribution of top 5 values out of 5 distinct values:
         val:         10 count:          1  pcnt-of-good-vals:   20.000
         val:         18 count:          1  pcnt-of-good-vals:   20.000

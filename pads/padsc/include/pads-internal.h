@@ -185,6 +185,7 @@ void PDCI_UNION_READ_MAN_POST_CHECK      (const char *fn_nm, void *rep_cleanup, 
 
 void PDCI_UNION_READ_FAILED      (const char *fn_nm, const char *nm, int err_tag);
 void PDCI_UNION_READ_WHERE_CHECK (const char *fn_nm, int usercheck);
+void PDCI_UNION_READ_WHERE_END_CHECK (const char *fn_nm, int usercheck);
 
 #define PDCI_SWUNION_READ_ARGS const char *fn_nm, int the_tag, int err_tag, \
                                void *rep_cleanup, void *rep_init, \
@@ -205,6 +206,7 @@ void PDCI_SWUNION_READ_MAN_VIRT_PRE      (PDCI_SWUNION_READ_MAN_PRE_ARGS);
 void PDCI_SWUNION_READ_POST_CHECK  (const char *fn_nm, int the_tag, int err_tag, int usercheck);
 void PDCI_SWUNION_READ_FAILED      (const char *fn_nm, const char *nm, int err_tag);
 void PDCI_SWUNION_READ_WHERE_CHECK (const char *fn_nm, int usercheck);
+void PDCI_SWUNION_READ_WHERE_END_CHECK (const char *fn_nm, int usercheck);
 
 void PDCI_FIND_EOR(const char *fn_nm);
 
@@ -1130,6 +1132,12 @@ do { \
     } \
 } while (0)
 
+#define PDCI_UNION_READ_WHERE_END_CHECK(fn_nm, usercheck) \
+do { \
+    PDCI_IO_ENDLOC(pads, pd->loc); \
+    PDCI_UNION_READ_WHERE_CHECK(fn_nm, usercheck); \
+} while (0)
+
 /* XXX why was K codegen using -2 below ??? XXX */
 #define PDCI_UNION_READ_FAILED(fn_nm, nm, err_tag) \
 do { \
@@ -1228,6 +1236,12 @@ do { \
     if (pd->nerr == 0 && P_Test_SemCheck(m->unionLevel) && (!(usercheck))) { \
       PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation"); \
     } \
+} while (0)
+
+#define PDCI_SWUNION_READ_WHERE_END_CHECK(fn_nm, usercheck) \
+do { \
+    PDCI_IO_ENDLOC(pads, pd->loc); \
+    PDCI_SWUNION_READ_WHERE_CHECK(fn_nm, usercheck); \
 } while (0)
 
 /* function body for a write2io function that has params pads, io, pd, rep */

@@ -18,7 +18,7 @@ good vals:          3    bad vals:          1    pcnt-bad:   25.000
 <top>.c : char
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          4    bad vals:          0    pcnt-bad:    0.000
-  Characterizing char:  min 'a' max 'q' (based on ASCII encoding)
+  Characterizing char values:  min 'a' max 'q' (based on ASCII encoding)
     => distribution of top 2 values out of 2 distinct values:
         val:    'a' count:          3  pcnt-of-good-vals:   75.000
         val:    'q' count:          1  pcnt-of-good-vals:   25.000

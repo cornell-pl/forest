@@ -4505,7 +4505,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
     dtnext(a->dict, 0); /* discard any iterator state */
     return P_OK;
   }
-  if (P_ERR == Puint32_acc_report2io(pads, outstr, "String lengths", "lengths", -1, &(a->len_accum))) {
+  if (P_ERR == Puint32_acc_report2io(pads, outstr, "String lengths", "string length", -1, &(a->len_accum))) {
     return P_ERR;
   }
   if (a->len_accum.good == 0) {
@@ -4750,7 +4750,7 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
   }
 #endif
   if (a->good == 0) {
-    sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n", 0, 0, 0);
+    // sfprintf(outstr, "good vals: %10u    bad vals: %10u    pcnt-bad: %8.3f\n", 0, 0, 0.0); XXX do not report anything
     return P_OK;
   }
   Puint32_acc_fold_psum(a);
@@ -5057,7 +5057,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.131 2003-11-25 17:13:41 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.132 2003-11-25 18:02:50 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

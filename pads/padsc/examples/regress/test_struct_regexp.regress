@@ -18,7 +18,7 @@ good vals:          2    bad vals:          1    pcnt-bad:   33.333
 <top>.f : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          3    bad vals:          0    pcnt-bad:    0.000
-  Characterizing int32:  min 12 max 14 avg 13.000
+  Characterizing int32 values:  min 12 max 14 avg 13.000
     => distribution of top 3 values out of 3 distinct values:
         val:         12 count:          1  pcnt-of-good-vals:   33.333
         val:         13 count:          1  pcnt-of-good-vals:   33.333
@@ -29,7 +29,7 @@ good vals:          3    bad vals:          0    pcnt-bad:    0.000
 <top>.g : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          3    bad vals:          0    pcnt-bad:    0.000
-  Characterizing int32:  min 13 max 15 avg 14.000
+  Characterizing int32 values:  min 13 max 15 avg 14.000
     => distribution of top 3 values out of 3 distinct values:
         val:         13 count:          1  pcnt-of-good-vals:   33.333
         val:         14 count:          1  pcnt-of-good-vals:   33.333
@@ -40,7 +40,7 @@ good vals:          3    bad vals:          0    pcnt-bad:    0.000
 <top>.h : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          3    bad vals:          0    pcnt-bad:    0.000
-  Characterizing int32:  min 4 max 16 avg 11.667
+  Characterizing int32 values:  min 4 max 16 avg 11.667
     => distribution of top 3 values out of 3 distinct values:
         val:          4 count:          1  pcnt-of-good-vals:   33.333
         val:         15 count:          1  pcnt-of-good-vals:   33.333
@@ -51,7 +51,7 @@ good vals:          3    bad vals:          0    pcnt-bad:    0.000
 <top>.i : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          3    bad vals:          0    pcnt-bad:    0.000
-  Characterizing int32:  min 11 max 17 avg 13.000
+  Characterizing int32 values:  min 11 max 17 avg 13.000
     => distribution of top 2 values out of 2 distinct values:
         val:         11 count:          2  pcnt-of-good-vals:   66.667
         val:         17 count:          1  pcnt-of-good-vals:   33.333
