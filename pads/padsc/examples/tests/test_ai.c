@@ -83,14 +83,14 @@ int main(int argc, char** argv) {
       error(0, "response: %u   contentLength: %u", ai.response, ai.contentLength);
       error(0, "");
 #endif
-      if (PDC_ERR == http_clf_t_acc_add(pdc, &acc, &ed, &ai)) {
-	error(2, "*** http_clt_t_acc_add failed ***");
-	exit(-1);
-      }	
-
     } else {
       error(2, "read returned: error");
     }
+    /* accum both good and bad vals */
+    if (PDC_ERR == http_clf_t_acc_add(pdc, &acc, &ed, &ai)) {
+      error(2, "*** http_clt_t_acc_add failed ***");
+      exit(-1);
+    }	
   }
   http_clf_t_acc_report(pdc, "", 0, 0, &acc);
   if (PDC_ERR == PDC_IO_fclose(pdc)) {
