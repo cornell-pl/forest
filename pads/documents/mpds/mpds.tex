@@ -2,14 +2,203 @@
 
 \usepackage{times}
 \usepackage{code} 
+\input{defs}
 \setlength{\textwidth}{6.5in}
 \setlength{\textheight}{9in}
 \setlength{\oddsidemargin}{0in}
 \setlength{\evensidemargin}{0in}
 \setlength{\parskip}{5pt}
 
+\title{\vskip -.5in \pads{}: Processing Arbitrary Data Streams}
+\date{\today}
+\author{
+  Kathleen Fisher\\
+  AT\&T Labs --- Research \\
+  \small\texttt{kfisher@research.att.com}
+\and
+  Robert E. Gruber \\
+  AT\&T Labs --- Research \\
+  \small\texttt{gruber@research.att.com}
+}
+
 \begin{document}
 
+\maketitle
 \thispagestyle{empty}
+\newcommand{\smallersp}{\vskip -2ex}
+\newcommand{\smallerend}{\vskip -5ex}
+\section{Introduction}
+\smallersp{}
+Transactional data streams, such as sequences of stock-market buy/sell orders,
+credit-card purchase records, web server entries, and electronic fund
+transfer orders, can be mined very profitably.  As an example,
+researchers at AT\&T have built customer profiles from streams of
+call-detail records to significant financial effect~\cite{kdd98,kdd99,kdd00}.   
 
+Often such streams are high-volume: AT\&T's call-detail stream contains
+roughly 300~million calls per day requiring approximately 7GBs of
+storage space.  Typically, such stream data arrives ``as is'' in
+\textit{ad hoc} formats with poor documentation.  In addition, the
+data frequently contains errors.  The appropriate response to such
+errors is application-specific. Some applications can simply discard
+unexpected or erroneous values and continue processing.  For other
+applications, however, errors in the data can be the most interesting
+part of the data.  
+
+Understanding a new data stream and producing a suitable parser are
+crucial first steps in any use of stream data.  Unfortunately, writing
+parsers for such data is a difficult task, both tedious and
+error-prone. It is complicated by lack of documentation, convoluted
+encodings designed to save space, the need to handle errors
+robustly, and the need to produce efficient code to cope with the
+scale of the stream.  Often, the hard-won understanding of the data
+ends up embedded in parsing code, making long-term maintenance
+difficult for the original writer and sharing the knowledge with
+others nearly impossible.
+
+The goal of the PADS project is to provide languages and tools for
+simplifying data stream analysis.  We have a preliminary design of a
+declarative data-description language, \padsl{}, expressive enough to
+describe the data feeds we see at AT\&T in practice, including ASCII,
+binary, EBCDIC, Cobol, and mixed data formats.  From
+\padsl{} we generate a tunable \C{} library with functions for
+parsing, manipulating, and summarizing the data.   
+
+\smallerend{}
+\section{\pads{} language}
+\smallersp
+Intuitively, a \padsl{} description specifies complete information
+about the physical layout and semantic constraints for the associated
+data stream.  Most type declarations in \padsl{} are analogous to type
+declarations in \C{}.
+\padsl{} has an extensible set of base types that
+specify how to read and verify atomic pieces of data such as ASCII
+32-bit integers (\cd{Pa_int32}) and binary bytes (\cd{Pb_int8}).
+Verification conditions for such base types include checking that the
+resulting number fits in the indicated space, \ie, 16-bits for
+\cd{Pa_int16}.  \padsl{} has 
+\kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s to describe
+record-like structures, alternatives, and sequences, respectively.
+Each of these
+types can have an associated predicate that indicates whether a
+value calculated from the physical specification is indeed a legal
+value for the type.  For example, a predicate might require that two
+fields of a \kw{Pstruct} are related or that the elements
+of a sequence are in increasing order.  Programmers can specify such
+predicates using \padsl{} expressions or functions.
+\padsl{} \kw{Ptypedef}s can be used
+to define new types that add further constraints to existing types.
+
+In addition, \padsl{} types can be parameterized by values.
+This mechanism
+serves both to reduce the number of base types and to permit the
+format of later portions of the data to depend upon earlier portions.
+For example, 
+the base type \cd{Pa_uint32_FW(:3:)} specifies an unsigned integer
+physically represented by exactly 3 ASCII characters, while the type
+\cd{Pa_string(:' ':)} 
+describes an ASCII string terminated by a space.  Parameters can be 
+used with compound types to specify the size of an array or which
+branch of a union should be taken.
+
+As an example, consider the common log format for Web server logs.  A
+typical record looks like the following:
+\begin{verbatim}
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
+\end{verbatim}
+
+\noindent
+recording the IP address of the requester; either a dash or the owner
+of the TCP session; either a dash or the login of the requester; the
+date; the actual request, which consists of the HTTP method, the
+requested URL, the HTTP version number; a response code; and the
+number of bytes returned.  A \padsl{} type describing the request
+portion is
+\begin{code}
+\kw{Pstruct} http_request_t \{
+  '\\"'; http_method_t    meth;           /- Method used during request
+  ' ';  Pa_string(:' ':) req_uri;        /- Requested uri.
+  ' ';  http_v_t         version : checkVersion(version, meth);
+                                         /- HTTP version number of request 
+  '\\"';
+\};
+\end{code}
+This \kw{Pstruct} uses (omitted) auxiliary types \cd{http_method_t} and
+\cd{http_v_t} to describe
+the HTTP method and version formats, respectively.
+It uses character literals (\cd{'\\"'} and \cd{' '}) to consume
+the quotes and 
+spaces from the physical representation. 
+The \cd{version} field has a constraint predicate \cd{checkVersion}
+which ensures that obsolete HTTP methods \cd{LINK} and \cd{UNLINK} 
+are only used with HTTP version \cd{1.0}.
+
+\smallerend{}
+\section{Generated library}
+\smallersp
+From each type in a \padsl{} description, we generate C declarations for
+(1) an in-memory representation, 
+(2) a {\em checkset}\/-mask, which allows users to specify 
+which portions of the data are relevant to their applications,
+(3) an error-description, which we use to describe physical and
+semantic errors detected during parsing, 
+(4) a parse function, and 
+(5) utility functions.
+The parse function takes as arguments pointers to a checkset-mask, an
+in-memory representation, and an error-description.  The generated
+library maintains the invariant that if the checkset-mask requests
+that a data item be verified and set, and if the error description
+indicates no error, then the in-memory representation satisfies the
+semantic constraints on the data.
+
+The checkset-mask allows the user to specify with fine granularity
+which constraints the parser should check and which portions of the
+in-memory representation it should fill in.  This control allows the
+description-writer to specify all known constraints about the data
+without worrying about the run-time cost of verifying potentially
+expensive constraints for time-critical applications.
+
+Appropriate error-handling can be as important as processing
+error-free data.  The error descriptor marks which portions of the
+data contain errors and characterizes the detected errors.
+Depending upon the nature of the errors and the desired application,
+programmers can take the appropriate action: halting the program,
+discarding parts of the data, or repairing the errors.
+
+By supporting multiple entry-points, we accommodate larger-scale data.
+For a small file, programmers can define a \padsl{} type that describes
+the entire file and use that type's parsing function to read the whole
+file with one call.  For larger-scale data, programmers can sequence
+calls to parsing functions that read manageable portions of the file,
+\eg{}, reading a record at a time in a loop.
+
+\smallerend{}
+\section{Related work}
+\smallersp
+There are many tools for describing data formats. For example,
+\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl} are both
+systems for declaratively describing data and then generating
+libraries for manipulating that data.  In contrast to \pads{},
+however, both these systems specify the {\em logical\/} representation
+and automatically generate a {\em physical\/} representation.
+Although useful for many purposes, this technology does not help
+process data that arrives in predetermined, \textit{ad hoc} formats.
+
+
+More closely related work allows declarative descriptions of physical
+data~\cite{sigcomm00,erlang-bit-syntax,gpce02}, motivated by parsing
+\textsc{TCP/IP} packets and \java{} jar-files.  In contrast to our
+work, these systems only handle binary data and assume the data is
+error-free or halt parsing if an error is detected.  
+
+\smallerend{}
+\section{Conclusion}
+\smallersp
+Further information and a source-code distribution of \pads{} is
+available from:
+\begin{centercode}
+http://www.research.att.com/projects/pads
+\end{centercode}
+\bibliographystyle{jhr-alpha} 
+\bibliography{mpds}
 \end{document}
