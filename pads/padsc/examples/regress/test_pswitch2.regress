@@ -1,4 +1,4 @@
-Data file = standard in
+Data file = /dev/stdin
 warning: P_open: Installing default IO discipline : newline-terminated records
 warning: Error [in branches_read]: record 3 byte 2 : Failed to match any branch of branches.
 [record 3]3>>><<<

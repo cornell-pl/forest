@@ -419,7 +419,7 @@ Punion D_avici_m_line {
   D_avici_m_feature_line                m_feature;
 };
 Parray D_avici_m_lines {
-  D_avici_m_line [] /* : Pskip(elt.tag == m_blank) */ ;
+  D_avici_m_line [] /* : Pskip(elts[current].tag == m_blank) */ ;
   // XXX Pskip not supported yet
 };
 

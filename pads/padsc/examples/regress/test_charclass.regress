@@ -1,4 +1,4 @@
-Data file = standard in
+Data file = /dev/stdin
 warning: P_open: Installing default IO discipline : newline-terminated records
 warning: Error [in entry_read]: record 3 byte 1 : Missing literal: "/[[:digit:]]+/".
 [record 3]>>><<<a

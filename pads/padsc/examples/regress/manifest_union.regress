@@ -1,4 +1,4 @@
-Data file = standard in
+Data file = /dev/stdin
 warning: P_open: Installing default IO discipline : newline-terminated records
 *****************************************************************************************************
 <top> : struct str2

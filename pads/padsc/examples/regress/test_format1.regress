@@ -1,4 +1,4 @@
-Data file = standard in
+Data file = /dev/stdin
 warning: P_open: Installing default IO discipline : newline-terminated records
 test_read returned: id 1  ts 11
 test_read returned: id 2  ts 22

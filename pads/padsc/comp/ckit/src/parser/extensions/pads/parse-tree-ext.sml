@@ -77,10 +77,11 @@ structure ParseTreeExt =
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
 		      isRecord : bool, 
+		      isSource   : bool,
                       containsRecord : bool, 
                       largeHeuristic : bool,
-		      isSource   : bool,
-		      variants : ('dt, 'decr, 'exp) PBranches}
+		      variants : ('dt, 'decr, 'exp) PBranches,
+		      postCond : 'exp option}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
 		      isRecord : bool, 

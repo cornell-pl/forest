@@ -140,6 +140,9 @@ struct
     fun varDeclS' (ct,v) = varDeclS(ct,v,PT.EmptyExpr)
     fun mkCommentS s = PT.StatExt(PX.PComment s)
 
+    fun andBools [] = trueX
+      | andBools [bX] = bX
+      | andBools (cX::cXs) = andX(cX, andBools cXs)
 
     fun makeStructEDecl (fields : (string*PT.ctype*string option) list, tag : string option) =
         PT.ExternalDecl(

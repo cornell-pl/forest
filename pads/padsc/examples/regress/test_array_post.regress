@@ -1,4 +1,4 @@
-Data file = standard in
+Data file = /dev/stdin
 warning: P_open: Installing default IO discipline : newline-terminated records
 intList_read returned array of length: 4
 warning: Error [in intList_read]: record 2 byte 1 : Pgeneral constraint for array intList violated.

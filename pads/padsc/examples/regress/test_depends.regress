@@ -1,4 +1,4 @@
-Data file = standard in
+Data file = /dev/stdin
 warning: P_open: Installing default IO discipline : newline-terminated records
 warning: Error [in line_read]: record 3 byte 12 : User constraint on field a violated.
 [record 3]23|9|24|12.>>>5<<< - 2

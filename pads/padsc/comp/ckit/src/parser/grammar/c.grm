@@ -179,12 +179,20 @@ fun insertParams params =
 
 fun addComment ((name, expOpt), commentOpt) = (name, expOpt, commentOpt)
 
-fun addPostCond (decl,postCondOpt) = 
+fun addStructPostCond (decl,postCondOpt) = 
    (case decl of
     (PX.PStruct{isRecord,isSource,containsRecord,largeHeuristic,name,params,fields,postCond}) => 
       PX.PStruct{isRecord = isRecord, isSource = isSource, 
 		 containsRecord = containsRecord, largeHeuristic = largeHeuristic,
                  name = name, params = params, fields = fields, postCond = postCondOpt} 
+    | s => s)
+
+fun addUnionPostCond (decl,postCondOpt) = 
+   (case decl of
+    (PX.PUnion{isRecord,isSource,containsRecord,largeHeuristic,name,params,variants,postCond}) => 
+      PX.PUnion{isRecord = isRecord, isSource = isSource, 
+		 containsRecord = containsRecord, largeHeuristic = largeHeuristic,
+                 name = name, params = params, variants = variants, postCond = postCondOpt} 
     | s => s)
 
 
@@ -353,7 +361,7 @@ end
         | pBranch of expression option * (decltype, declarator, expression) PX.PSField
         | pBranchList of (expression option * (decltype, declarator, expression) PX.PSField) list
         | pVariants of (decltype, declarator, expression) PX.PBranches
-        | pUnion of externalDecl
+        | pUnion of (declarator, ctype, decltype, expression) PX.PExternal
         | pEnumField of string * expression option
         | pAnnotatedEnumField of string * expression option * string option
         | pAnnotatedLastEnumField of string * expression option * string option
@@ -429,12 +437,16 @@ externalDeclaration:
 							               functionDefinitionright)))
 (* PADS: start external declarations *)
         | pTypedef RCURLY               (SOME(markExternalDecl srcMap (pTypedef,pTypedefleft,RCURLYright)))
-        | pStruct RCURLY pPostCondOpt   (let val augPStruct = addPostCond(pStruct, pPostCondOpt)
+        | pStruct RCURLY pPostCondOpt   (let val augPStruct = addStructPostCond(pStruct, pPostCondOpt)
                                              val structDecl = ExternalDeclExt augPStruct
 	                                 in
 					   SOME(markExternalDecl srcMap (structDecl,pStructleft,pPostCondOptright))
 				         end)
-        | pUnion  RCURLY                (SOME(markExternalDecl srcMap (pUnion, pUnionleft, RCURLYright)))
+        | pUnion  RCURLY pPostCondOpt    (let val augPUnion = addUnionPostCond(pUnion, pPostCondOpt)
+	                                      val unionDecl = ExternalDeclExt augPUnion
+					  in
+					  SOME(markExternalDecl srcMap (unionDecl, pUnionleft, pPostCondOptright))
+					  end)
         | pArray  RCURLY pArrayPostConds 
 	                                (let val augPArray = addArrayPostCond(pArray, pArrayPostConds)
 	                                     val arrayDecl = ExternalDeclExt augPArray
@@ -1226,9 +1238,9 @@ pVariants:
 pUnion:
  pIsRecord pIsSource PUNION pName pushScope pTyParams LCURLY pVariants popScope
  ( makeTypeName pName;
-   ExternalDeclExt(PX.PUnion {name = pName, params = pTyParams, 
-			      containsRecord = false, largeHeuristic = false,
-                              isRecord = pIsRecord, isSource = pIsSource, variants=pVariants})
+   PX.PUnion {name = pName, params = pTyParams, 
+	      containsRecord = false, largeHeuristic = false,
+              isRecord = pIsRecord, isSource = pIsSource, variants=pVariants, postCond = NONE}
  ) 
 
 

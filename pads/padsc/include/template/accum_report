@@ -2,6 +2,10 @@
 #  define EXTRA_READ_ARGS
 #endif
 
+#ifndef DEF_INPUT_FILE
+#  define DEF_INPUT_FILE "/dev/stdin"
+#endif
+
 int main(int argc, char** argv) {
   P_t              *pads;
   Pdisc_t           my_disc = Pdefault_disc;
@@ -19,8 +23,8 @@ int main(int argc, char** argv) {
     fileName = argv[1];
     error(0, "Data file = %s\n", fileName);
   } else {
-    fileName = "/dev/stdin";
-    error(0, "Data file = standard in\n");
+    fileName = DEF_INPUT_FILE;
+    error(0, "Data file = %s\n", DEF_INPUT_FILE);
   }
 
   if (P_ERR == P_open(&pads, &my_disc, 0)) {
