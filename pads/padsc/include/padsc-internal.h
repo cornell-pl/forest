@@ -175,7 +175,7 @@ PDC_error_t PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
 			      PDC_disc_t* disc);
 
 PDC_error_t PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopStr,
-			     size_t* offset_out, PDC_string** str_out, PDC_disc_t* disc);
+			     PDC_string** str_out, size_t* offset_out, PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* READ FUNCTIONS */
