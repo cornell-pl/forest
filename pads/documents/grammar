@@ -1,0 +1,49 @@
+_[]_ denotes optional element
+Capitalized words are non-terminals; non-capitalized are terminals
+| denote choice
+/* */ is comment form
+all other symbols are literals
+************************************************************************
+PadsDecl  ::= PStruct | PUnion | PEnum | PTypedef | PArray 
+
+
+PStruct   ::= pstruct TyName _[(C-parameter-declaration-list)]_ {
+               FieldList
+              };
+FieldList ::= Field | Field FieldList
+Field     ::= _[endian]_ _[pvirtual]_ TyName _[(: C-comma-separated-expression-list :)]_
+	                   FieldName _[: Expr ]_; _[/- comment ]_
+          | Expr 
+          | EOR
+
+
+PUnion   ::= punion TyName _[(C-parameter-declaration-list)]_{
+              FieldList
+             };
+
+
+PEnum    ::= penum TyName {
+               /* comma separated list of */ PAnnotatedEnumFields
+             };
+PAnnotatedEnumFields ::= EnumField _[/- comment ]_
+EnumField ::= Name | Name = Expr
+
+
+PTypedef  ::= ptypedef OldTyName _[(: C-comma-separated-expression-list :)]_   
+              NewTyName _[(C-parameter-declaration-list)]_ 
+                 :: NewTyName Name => Expr
+
+
+PArray   ::= parray TyName _[(C-parameter-declaration-list)]_{
+              BaseTyName SizeSpec ArrayConstraintOpt;
+             };
+SizeSpec ::= [] | [Expr] | [Expr: ] | [:Expr] | [Expr : Expr]
+ArrayConstraintOpt ::=  /* Nothing */ | : ArrayConstraints
+ArrayConstraints   ::= ArrayConstraint | ArrayConstraint && ArrayConstraints
+ArrayConstraint    ::= sep = Expr | term = Expr | 
+		       forall Name in [Expr .. Expr] {Expr} |
+		       forall Name in ArrayTyName {Expr} 
+
+
+Expr ::= C expression 
+TyName,Name,NewTyName,OldTyName,ArrayTyName,BaseTyName ::= C identifier
