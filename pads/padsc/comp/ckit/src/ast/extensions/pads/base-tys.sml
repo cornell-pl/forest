@@ -42,7 +42,29 @@ struct
 	   emname   = Atom.atom "PDC_base_em", 
 	   edname   = Atom.atom "PDC_base_ed", 
 	   readname = Atom.atom "PDC_char_lit_read",
-           scanname = SOME(Atom.atom "PDC_char_lit_scan")}
+           scanname = SOME(Atom.atom "PDC_char_lit_scan")},
+
+	  {padsname = Atom.atom "astring", 
+	   repname  = Atom.atom "PDC_string", 
+	   emname   = Atom.atom "PDC_base_em", 
+	   edname   = Atom.atom "PDC_base_ed", 
+	   readname = Atom.atom "PDC_string_stopChar_read",
+           scanname = NONE},
+
+	  {padsname = Atom.atom "astringFW", 
+	   repname  = Atom.atom "PDC_string", 
+	   emname   = Atom.atom "PDC_base_em", 
+	   edname   = Atom.atom "PDC_base_ed", 
+	   readname = Atom.atom "PDC_string_fw_read",
+           scanname = NONE},
+
+	  {padsname = Atom.atom "astringSRE", 
+	   repname  = Atom.atom "PDC_string", 
+	   emname   = Atom.atom "PDC_base_em", 
+	   edname   = Atom.atom "PDC_base_ed", 
+	   readname = Atom.atom "PDC_string_stopRegexp_read",
+           scanname = NONE}
+
        ]
 
 

@@ -163,7 +163,18 @@ fun insertFuncParams (FuncDecr (_,params)) : unit =
   | insertFuncParams (ArrayDecr(dcl,_)) = insertFuncParams dcl
   | insertFuncParams (PointerDecr dcl) = insertFuncParams dcl
   | insertFuncParams _ = ()  (* this is actually an error, but it will be caught in
-		              * BuildAst when processing a PT.FunctionDef *)
+		              * BuildAst when processing a
+     PT.FunctionDef *)
+
+(* PADS*)
+fun insertParams params =
+    let
+	fun getName (ct, dclr) = dclr2str dclr
+	val names = map getName params
+    in
+	List.app TypeDefs.addNoTdef names
+    end
+(* PADS*)
 
 abstype 'a seq = SEQ of 'a list
 with val emptySeq = SEQ nil
@@ -211,6 +222,7 @@ end
  	| ASSOCIATIVE | TO | KWAND                                         (* D *)     
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
+        | LCOLON | RCOLON (* PADS *)
         | PSTRUCT | PARRAY | PSEP | PTERM | PFORALL | PIN (* PADS *)
 
 %nonterm 
@@ -280,10 +292,15 @@ end
         | popScope of unit
         | strings of string
 (* PADS:start *)
+        | pTyParamDeclaration of (PX.Pty * string)
+        | pTyParamList of (PX.Pty * string) list
+        | pTyParams of (PX.Pty * string) list
+        | pOptActParams of expression list
+        | pOptActParamList of expression list
         | pName of string
         | pStruct of externalDecl
-        | pStructFieldList of ((ctype, expression) PX.PSField) list
-        | pStructField of (ctype, expression) PX.PSField
+        | pStructFieldList of (expression PX.PSField) list
+        | pStructField of expression PX.PSField
         | pConstraintOpt of expression option
         | pCommentOpt of string option
         | pArray of externalDecl
@@ -936,8 +953,27 @@ pConstraintOpt: (NONE)
 pCommentOpt: (NONE)
   | PCOMMENT   (SOME PCOMMENT)
 
-pStructField: pName ID pConstraintOpt SEMICOLON pCommentOpt 
+pTyParamDeclaration:
+  pName ID   (PX.Name pName, ID)
+
+pTyParamList:
+   pTyParamDeclaration	( [pTyParamDeclaration] )
+ | pTyParamList COMMA pTyParamDeclaration ( pTyParamDeclaration :: pTyParamList)
+
+pTyParams:
+	([])
+ | LPAREN pTyParamList RPAREN ( List.rev pTyParamList )
+
+pOptActParamList:
+   expr ([expr])
+ | pOptActParamList COMMA expr ( expr :: pOptActParamList)
+
+pOptActParams: ([])
+ | LCOLON pOptActParamList RCOLON ( List.rev pOptActParamList )
+
+pStructField: pName pOptActParams ID pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 
+				                args = pOptActParams,
 						pred = pConstraintOpt, comment = pCommentOpt})
   | expr SEMICOLON                    (PX.Brief expr)
 
@@ -946,9 +982,9 @@ pStructFieldList:
   | pStructField   pStructFieldList  (pStructField :: pStructFieldList)
 
 pStruct:
- PSTRUCT pName pushScope LCURLY pStructFieldList popScope
+ PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
  (
-   ExternalDeclExt(PX.PStruct {name = pName, fields = pStructFieldList})
+   ExternalDeclExt(PX.PStruct {name = pName, params = pTyParams, fields = pStructFieldList})
  )
 
 pArrayConstraint : 

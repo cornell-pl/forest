@@ -162,14 +162,18 @@ struct
 	     PDC_RESTORE_FAILURE)
 
 
-  fun readFunX(n:string, ts:PT.expression, loc:PT.expression, ed:PT.expression, 
-	                res:PT.expression, disc:PT.expression) = 
-      PT.Call(PT.Id n, [ts,loc,ed,res,disc])
+  fun readFunX(n:string, ts:PT.expression, loc:PT.expression, 
+	                 optArgs: PT.expression list,
+			 ed:PT.expression, 
+	                 res:PT.expression, disc:PT.expression) = 
+      PT.Call(PT.Id n, [ts, loc] @ optArgs @[ed,res,disc])
 
   fun readFunChkX(expectedValX : PT.expression,
-		  n:string, ts:PT.expression, loc:PT.expression, ed:PT.expression, 
+		  n:string, ts:PT.expression, 
+		  loc:PT.expression, optArgs:PT.expression list,
+		  ed:PT.expression, 
 	          res:PT.expression, disc:PT.expression) = 
-      P.eqX(expectedValX, readFunX(n,ts,loc,ed,res,disc))
+      P.eqX(expectedValX, readFunX(n,ts,loc,optArgs,ed,res,disc))
 
   fun scanFunX(n:string, ts:PT.expression, c : PT.expression, s : PT.expression,
 	                res:PT.expression, offset:PT.expression, disc:PT.expression) = 

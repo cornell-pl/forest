@@ -8,11 +8,9 @@ pstruct test2 {
   auint32 s;
   '|';
   test(:h,s:) i;
-  /*
   astringFW(:10:) fw;
   astring(:'|':) v;     //- stop char
   '|';
-   */
 };
 
 

@@ -75,6 +75,7 @@ structure CnvExt : CNVEXT = struct
   type pcty = ParseTree.ctype
   type pcexp = ParseTree.expression
   type pcstmt = ParseTree.statement
+  type pcdecr = ParseTree.declarator
 
   type acty = Ast.ctype
   type aexp = Ast.expression
@@ -338,6 +339,137 @@ structure CnvExt : CNVEXT = struct
 	    else PE.error (genErrMsg (CTtoString expTy)) 
 	end
 
+    fun CTcnvType (ct : PT.ctype) : (acty * Ast.storageClass) 
+	= cnvType(false,P.pctToPDT ct)
+
+    fun CTcnvDecr(ct,d) : Ast.ctype * string option = 
+	let val (ct', sc) = CTcnvType ct  	(* check storage class okay*)
+	in                                 	(* XXX - missing piece *)
+	    mungeTyDecr(ct',d)
+	end
+
+
+    (* The following function "decompiles" a ctype.  *)
+    fun CTtoPTct (ct:acty) : PT.ctype =
+	(case ct of
+	     Ast.Void => P.void
+	   | Ast.Ellipses => P.makePCT [PT.Ellipses]
+	   | Ast.Qual (q,ct') => 
+		 let val q' = (case q of 
+				   Ast.CONST => PT.CONST 
+				 | _ => PT.VOLATILE)
+		     val {qualifiers=q'',specifiers = s''} = CTtoPTct ct'
+		 in
+		     { qualifiers = q' :: q'',
+		       specifiers = s''
+		       }
+		 end		     
+	   | Ast.Numeric(s,f,sgn,intk,sgntag) => 
+		 let val sat = (case s of 
+				    Ast.SATURATE => PT.Saturate 
+				  | _ => PT.Nonsaturate)
+		     val frac = (case f of 
+				     Ast.FRACTIONAL => PT.Fractional
+				   | Ast.WHOLENUM => PT.Wholenum)
+		     fun cnvSgn Ast.SIGNED = [PT.Signed]
+		       | cnvSgn Ast.UNSIGNED = [PT.Unsigned]
+		     val sgn = (case sgntag of
+				            Ast.SIGNASSUMED => []
+     				          | Ast.SIGNDECLARED => cnvSgn sgn)
+		     val ik = (case intk of
+				   Ast.CHAR => [PT.Char]
+				 | Ast.SHORT => [PT.Short]
+				 | Ast.INT => [PT.Int]
+				 | Ast.LONG => [PT.Long]
+				 | Ast.LONGLONG => [PT.Long, PT.Long]
+				 | Ast.FLOAT => [PT.Float]
+				 | Ast.DOUBLE => [PT.Double]
+				 | Ast.LONGDOUBLE => [PT.Long, PT.Double])
+		     val specs = sat :: frac :: sgn @ ik
+		 in
+		     P.makePCT specs
+		 end
+	   | Ast.Array (iopt,ct') =>
+		 let val e = (case iopt of 
+				  NONE => PT.EmptyExpr
+				| SOME (i,_) => P.int32X i) (* XXX: should get expression but it is an AST expression. *)
+		     val ct'' = CTtoPTct ct'
+		 in
+		     P.makePCT [PT.Array(e,ct'')]
+		 end
+	   | Ast.Pointer ct' => P.makePCT [PT.Pointer (CTtoPTct ct')]
+	   | Ast.Function (ct',cts) =>
+		 let val ct'' = CTtoPTct ct'
+		     fun f ct = (P.pctToPDT (CTtoPTct ct),PT.EmptyDecr)
+		 in
+		     P.makePCT [ PT.Function { retType = ct'',
+					      params = (List.map f cts)
+					      } ]
+		 end
+	   | Ast.StructRef t => 
+		 let fun procMem (ct,mopt : Ast.member option,iopt, commentOpt) =
+		     let val ct' = CTtoPTct ct 
+			 val dr = 
+			     case mopt of
+				 NONE => PT.EmptyDecr
+			       | SOME {name,...} => PT.VarDecr (SYM.name name)
+			 val e = 
+			     case iopt of
+				 NONE => PT.EmptyExpr
+			       | SOME i => P.int32X i
+		     in
+			 (ct',[(dr,e)], commentOpt)
+		     end
+		 in case lookTid t of
+(*		     SOME {name=SOME n,ntype=NONE,...} =>
+			 P.makePCT [PT.StructTag {isStruct=true, name=n }] *)
+		     SOME {name=SOME n,...} =>
+			 P.makePCT [PT.StructTag {isStruct=true, name=n }] 
+		   | SOME {name=nopt,ntype=SOME (B.Struct (_,ms)), ...} =>
+			 P.makePCT [PT.Struct {isStruct=true,
+					      tagOpt=nopt,
+					      members=List.map procMem ms}]
+		   
+		   | _ => PE.bug "Ill-formed type table (struct)."
+		 end
+	   | Ast.UnionRef t => 
+		 let fun procMem (ct,m:Ast.member) =
+		     let val ct' = CTtoPTct ct
+			 val dr = PT.VarDecr (SYM.name (#name m))
+		     in
+			 (ct',[(dr,PT.EmptyExpr)], NONE)
+		     end
+		 in case lookTid t of
+		     SOME {name=SOME n,ntype=NONE,...} => 
+			 P.makePCT [PT.StructTag {isStruct=false, name=n}]
+		   | SOME {name=nopt,ntype=SOME (B.Union (_,ms)),...} =>
+			 P.makePCT [PT.Struct {isStruct = false,
+					      tagOpt = nopt,
+					      members = List.map procMem ms}
+				    ]			 
+		   | _ => PE.bug "Ill-formed type table (union)."
+		 end
+	   | Ast.EnumRef t =>
+		 let fun procMem ({name,...}:Ast.member,i) = 
+		     (SYM.name name, P.int32X i)
+		 in case lookTid t of
+		     SOME {name=SOME n,ntype=NONE,...} => 
+			 P.makePCT [PT.EnumTag n]
+		   | SOME {name=nopt,ntype=SOME (B.Enum (_,ms)),...} =>
+			 P.makePCT [PT.Enum {tagOpt = nopt,
+					    enumerators = List.map procMem ms,
+					    trailingComma = false}]
+		   | _ => PE.bug "Ill-formed type table (enum)."
+		 end
+	   | Ast.TypeRef t =>
+		 let in case lookTid t of
+		     SOME {name= SOME n,...} => P.makePCT [PT.TypedefName n]
+		   | _ => PE.bug "Ill-formed type table (typedef)."
+		 end
+	   | Ast.Error => PE.fail "Error type found."
+	     )
+
+
 (* Conversions ***************************************************************)
       fun pcnvExternalDecl decl = 
 	  let (* Some useful names *)
@@ -370,6 +502,11 @@ structure CnvExt : CNVEXT = struct
                   of PX.Name s => ( case PTys.find(PTys.baseInfo, Atom.atom s)
 				    of NONE => NONE
                                     |  SOME(b:PTys.baseInfoTy) => #scanname b)
+              fun mungeParam(pty:pty, name:string) : string * pcty = 
+		  let val pcty = lookupTy (pty, repSuf, #repname)
+		  in
+                      (name, P.makeTypedefPCT pcty)
+		  end
 	      fun fieldX (bsName, fName) = P.arrowX(PT.Id(gMod bsName), PT.Id fName)
 	      fun genLocTemp (pcty, paramName, firstTyopt) = 
                   let val initX = case firstTyopt of NONE => P.zero
@@ -383,12 +520,15 @@ structure CnvExt : CNVEXT = struct
 			    PT.Compound[
  			      P.assignS(PT.Id (gMod paramName), P.addrX(PT.Id(gTemp paramName)))])
 
-	      fun genReadFun (readName, emPCT,edPCT,canonicalPCT, emFirstPCT, bodySs) = 
-		  let val paramList = List.map P.mkParam [(P.ptrPCT PL.toolStatePCT, ts),
-							  (P.ptrPCT emPCT, em),
-							  (P.ptrPCT edPCT, ed),
-							  (P.ptrPCT canonicalPCT, rep),
-							  (P.ptrPCT PL.toolDiscPCT, disc)]
+	      fun genReadFun (readName, cParams:(string * pcty)list, 
+			      emPCT,edPCT,canonicalPCT, emFirstPCT, bodySs) = 
+		  let val cParams = List.map (fn (n,ty) => (ty,n)) cParams
+		      val paramList = List.map P.mkParam (  [(P.ptrPCT PL.toolStatePCT, ts),
+							     (P.ptrPCT emPCT, em)]
+							  @ cParams 
+							  @ [(P.ptrPCT edPCT, ed),
+							     (P.ptrPCT canonicalPCT, rep),
+							     (P.ptrPCT PL.toolDiscPCT, disc)])
 		      val returnTy =  PL.toolErrPCT
 		      val decls =   genLocTemp(canonicalPCT, rep, NONE) 
 			          @ genLocTemp(emPCT, em, emFirstPCT) 
@@ -403,6 +543,32 @@ structure CnvExt : CNVEXT = struct
 		      readFunED
 		  end
 
+	      fun checkParamTys (fieldName, functionName, extraargs, numBefore, numAfter) = 
+		  let val (eaty, _) = cnvExpression (PT.Id functionName)
+		      val fargtysOpt = case eaty
+			  of Ast.Pointer(Ast.Function (retTy, argTys)) => (
+			      (SOME (List.take(List.drop(argTys, numBefore), 
+			                  (List.length argTys) - numAfter - numBefore)))
+				  handle Subscript => NONE)
+			| _ =>   NONE (* error, to be reported later *)
+		      val aargtys = #1( ListPair.unzip (List.map cnvExpression extraargs))
+		      fun match([], []) = true
+			| match(fty::ftys, aty::atys) = 
+			  isAssignable(fty,aty,NONE) andalso
+			  match(ftys,atys)
+			| match _ = false
+		      val errMsg = "Actual argument(s) for field "^
+			  fieldName ^" did not have expected type(s)."
+		  in
+		      case fargtysOpt
+			  of NONE => (PE.error errMsg)
+			| SOME fargtys => (
+					   if not (match(fargtys, aargtys))
+					       then (PE.error errMsg)
+					   else ()
+		  (* end case *))
+		  end
+                                      
               fun reportErrorSs(errCodeC, shouldPrint, msg, args) = 
 		  let val locX = P.addrX(fieldX(ed,loc))
                       val errCodeX = fieldX(ed,errCode)
@@ -418,7 +584,7 @@ structure CnvExt : CNVEXT = struct
                     @ printSs
 		  end
 
-	      fun cnvPStruct ({name:string, fields : (pcty, pcexp) PX.PSField list}) = 
+	      fun cnvPStruct ({name:string, params: (pty * string) list, fields : pcexp PX.PSField list}) = 
 	          let (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b (PX.Full fd) = f fd
                         | mungeField f b (PX.Brief e) = b e
@@ -426,7 +592,8 @@ structure CnvExt : CNVEXT = struct
 			| mungeFields f b (x::xs) = (mungeField f b x) @ (mungeFields f b xs)
 
 		      (* Generate canonical representation *)
-		      fun genRepFull {pty :PX.Pty, name:string, pred:pcexp option, comment:string option} = 
+		      fun genRepFull {pty :PX.Pty, args : pcexp list, 
+				      name:string, pred:pcexp option, comment:string option} = 
 			  let val predStringOpt = Option.map P.expToString pred
 			      val fullCommentOpt = stringOptMerge(comment, predStringOpt)
 			  in
@@ -439,7 +606,8 @@ structure CnvExt : CNVEXT = struct
                       val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 		       
 		      (* Generate error mask *)
-		      fun genEMFull {pty :PX.Pty, name:string, pred:pcexp option, comment} = 
+		      fun genEMFull {pty :PX.Pty, args : pcexp list, 
+				     name:string, pred:pcexp option, comment} = 
 			  [(name,P.makeTypedefPCT(lookupTy (pty,emSuf,#emname)), NONE)]
 		      fun genEMBrief e = []
 		      val emFields = mungeFields genEMFull genEMBrief fields
@@ -455,7 +623,8 @@ structure CnvExt : CNVEXT = struct
                       val emPCT = P.makeTypedefPCT (emSuf name)			  
 
 		      (* Generate error description *)
-		      fun genEDFull {pty :PX.Pty, name:string, pred:pcexp option, comment} = 
+		      fun genEDFull {pty :PX.Pty, args : pcexp list,
+				     name:string, pred:pcexp option, comment} = 
 			  [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		      fun genEDBrief e = []
 		      val auxEDFields = [(nerr, P.int,NONE), (errCode, P.int,NONE),
@@ -474,10 +643,13 @@ structure CnvExt : CNVEXT = struct
                       fun addSub (a : string * pcexp) = subList := (a:: (!subList))
 
                       (* -- Some helper functions *)
-		      fun genReadFull {pty :PX.Pty, name:string, pred:pcexp option, comment} = 
+		      fun genReadFull {pty :PX.Pty, args:pcexp list,
+				       name:string, pred:pcexp option, comment} = 
 			  let val readFieldName = lookupTy(pty, readSuf, #readname)
                               val modEdNameX = fieldX(ed,name)
                               val () = addSub(name, fieldX(rep,name))  (* record additional binding *)
+			      val modArgs = List.map (PTSub.substExps (!subList)) args
+                              val () = checkParamTys(name, readFieldName, modArgs, 2, 3)
 			      val commentS = P.mkCommentS ("Reading field: "^ name )
 			      val readS = 
 			      PT.IfThenElse
@@ -498,8 +670,9 @@ structure CnvExt : CNVEXT = struct
                                    PT.IfThenElse
                                     (P.eqX(PL.PDC_ERROR,
 					   PL.readFunX(readFieldName, 
-						       PT.Id ts, (* aopt, *)
+						       PT.Id ts, 
 						       P.addrX(fieldX(em,name)),
+						       modArgs,
 						       P.addrX(fieldX(ed,name)),
 						       P.addrX(fieldX(rep,name)), PT.Id disc)),
 				     PT.Compound[ (* error reading field *)
@@ -522,7 +695,7 @@ structure CnvExt : CNVEXT = struct
                                       (case pred 
                                        of NONE => []
                                        | SOME exp => 
-                                           let val exp = PTSub.substExps ((!subList), exp)
+                                           let val exp = PTSub.substExps (!subList) exp
 					       val () = expEqualTy(exp, CTintTys, 
 								 fn s=> ("Constraint for field "^
 								  name ^ " " ^
@@ -572,7 +745,7 @@ structure CnvExt : CNVEXT = struct
 			  end
 
 		      fun genReadBrief e = 
-			  let val e = PTSub.substExps((!subList), e)
+			  let val e = PTSub.substExps (!subList) e
 			      val (expTy, expAst) = cnvExpression e
 			      val () = if CTisInt expTy then ()
 				       else PE.error "Currently only characters supported as delimiters."
@@ -617,6 +790,7 @@ structure CnvExt : CNVEXT = struct
 							    readFieldName, 
 							    PT.Id ts, 
 							    P.addrX (PT.Id tem),
+							    [],
 							    P.addrX (PT.Id ted),
 							    e, PT.Id disc),
                                      PT.Compound[
@@ -653,13 +827,16 @@ structure CnvExt : CNVEXT = struct
                       (* -- Assemble read function *)
 		      val _ = pushLocalEnv()                                        (* create new scope *)
 		      val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
+		      val cParams : (string * pcty) list = List.map mungeParam params
+                      val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		      val readFields = mungeFields genReadFull genReadBrief fields  (* does type checking *)
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val returnS = P.returnS (
 				      P.condX(P.eqX(P.arrowX(PT.Id (gMod(ed)), PT.Id nerr),P.zero),
 				      PL.PDC_OK, PL.PDC_ERROR))
 		      val bodySs = readFields @ [returnS]
-		      val readFunED = genReadFun(readName, emPCT,edPCT,canonicalPCT, emFirstPCT, bodySs)
+		      val readFunED = genReadFun(readName, cParams, 
+						 emPCT,edPCT,canonicalPCT, emFirstPCT, bodySs)
 	      in 
  		   canonicalDecls (* converted earlier because used in typechecking constraints *)
                  @ cnvExternalDecl emStructED
@@ -873,8 +1050,12 @@ structure CnvExt : CNVEXT = struct
                               |  PX.Forall (r as {index,arrayName,body}) => (
                                  let val subList = [(length, fieldX(rep,length)), 
 						    (arrayName, fieldX(rep,arrayName))]
-				     val modBodyX = PTSub.substExps(subList, body)
+				     val modBodyX = PTSub.substExps subList body
 				 in
+				   if not (arrayName = name) then
+                                     PE.error ("Name of array in forall clause ("^arrayName^
+					       ") does not equal name of array ("^name^").")
+				   else ();
 				   pushLocalEnv();
 				   ignore(insTempVar(index, P.int));
 				   ignore(insTempVar(length, P.int));
@@ -882,6 +1063,7 @@ structure CnvExt : CNVEXT = struct
 				   expEqualTy(body, CTintTys, fn s=>("Forall expression for array "^
 								   name ^" has type "^s^". Expected "^
 								   "type int."));
+
 				   popLocalEnv();
                                    (NONE,NONE,SOME {index=index, arrayName=arrayName, body=modBodyX}, NONE)
 				 end
@@ -935,7 +1117,7 @@ structure CnvExt : CNVEXT = struct
                    | genTermCheck (SOME (exp, readFun, scanFun)) = 
                       [P.mkCommentS("Looking for terminator"),
 		       PT.IfThen(
-                          PL.readFunChkX(PL.PDC_OK, readFun, PT.Id ts, P.addrX(PT.Id tem),
+                          PL.readFunChkX(PL.PDC_OK, readFun, PT.Id ts, P.addrX(PT.Id tem),  [], 
 						             P.addrX(PT.Id ted), exp, PT.Id disc),
 			  PT.Compound
                            [P.assignS(PT.Id foundTerm, P.trueX)])]
@@ -1019,11 +1201,12 @@ structure CnvExt : CNVEXT = struct
                           PL.readFunChkX(PL.PDC_ERROR, elemReadName, 
 					               PT.Id ts, 
 					               P.addrX(fieldX(em,element)),
+						       [],
 						       P.addrX(edNext),
 						       P.addrX(resNext),
 						       PT.Id disc),
                           PT.Compound[
-			   PT.IfThen(P.lteX(fieldX(em,element), PL.EM_CHECK),
+			   PT.IfThen(P.lteX(fieldX(em,array), PL.EM_CHECK),
 			     PT.Compound[
                               PT.IfThen(P.notX(fieldX(ed,nerr)),
                                  PT.Compound (
@@ -1088,7 +1271,7 @@ structure CnvExt : CNVEXT = struct
 			     | SOME (termX, termRead, _) => (
                                 PT.IfThenElse(
                                  PL.readFunChkX(PL.PDC_OK, termRead, PT.Id ts, 
-						P.addrX (PT.Id tem), P.addrX (PT.Id ted),
+						P.addrX (PT.Id tem), [], P.addrX (PT.Id ted),
 						termX, PT.Id disc),
 				 PT.Compound[
 				  P.assignS(PT.Id foundTerm, P.trueX)
@@ -1202,7 +1385,7 @@ structure CnvExt : CNVEXT = struct
 				@ setDataFieldsSs
 				@ arrayConstraintsSs
                                 @ [returnS])]
-                 val readFunED = genReadFun(readName, emPCT,edPCT,canonicalPCT, NONE, bodySs)
+                 val readFunED = genReadFun(readName, [], emPCT,edPCT,canonicalPCT, NONE, bodySs)
 
 	     in
 		   canonicalDecls

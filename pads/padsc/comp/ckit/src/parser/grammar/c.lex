@@ -224,6 +224,8 @@ directive = #(.)*\n;
 <INITIAL>"&&"		=> (Tokens.AND(yypos,yypos+2));
 <INITIAL>"<<"		=> (Tokens.LSHIFT(yypos,yypos+2));
 <INITIAL>">>"		=> (Tokens.RSHIFT(yypos,yypos+2));
+<INITIAL>"(:"		=> (Tokens.LCOLON(yypos,yypos+2));
+<INITIAL>":)"		=> (Tokens.RCOLON(yypos,yypos+2));
 
 <INITIAL>{octnum}	=> (Tokens.DECNUM(mkOctInt(yytext,yypos,yypos+size(yytext),errWarn),yypos, yypos+size(yytext)));
 <INITIAL>{hexnum}	=> (Tokens.DECNUM(mkHexInt(yytext,yypos,yypos+size(yytext),errWarn),yypos, yypos+size(yytext)));

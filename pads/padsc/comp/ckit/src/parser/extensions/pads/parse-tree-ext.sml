@@ -3,8 +3,12 @@ structure ParseTreeExt =
         datatype Pty = 
            Name of string
 
-        datatype ('ct, 'exp) PSField = 
-           Full of {pty : Pty, name : string, pred : 'exp option, comment : string option}
+        datatype 'exp PSField = 
+           Full of {    pty : Pty, 
+		       args : 'exp list, 
+		       name : string, 
+		       pred : 'exp option, 
+		    comment : string option}
          | Brief of 'exp
 
         datatype 'exp PSize = 
@@ -16,8 +20,10 @@ structure ParseTreeExt =
          | Forall of {index : string, arrayName : string, body : 'exp}
          | General of 'exp
        
-        datatype ('ct, 'exp) PExternal = 
-           PStruct of {name : string, fields : (('ct, 'exp) PSField) list}
+        datatype ('decr, 'ct, 'exp) PExternal = 
+           PStruct of {name : string, 
+		       params: (Pty * string) list, 
+		       fields : ('exp PSField) list}
          | PArray  of {name : string, baseTy : Pty, 
 		       sizeSpec : ('exp PSize) option, 
 		       constraints : ('exp PConstraint) list} 
@@ -44,7 +50,7 @@ structure ParseTreeExt =
 	    declarationExt = unit
 
 	type ('spec,'decr,'ct,'dt,'oper,'exp,'stmt) 
-	    externalDeclExt = ('ct, 'exp) PExternal 
+	    externalDeclExt = ('decr, 'ct, 'exp) PExternal 
     end
 
 

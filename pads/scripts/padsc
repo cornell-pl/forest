@@ -3,7 +3,7 @@
 set gsfarch = `/home/gsf/bin/package`
 set knbarchdir = /home/gruber/knb/arch/$gsfarch
 
-set PADSCDIR = /home/gruber/knb/padsc/
+set PADSCDIR = /home/kfisher/padsc/
 set SMLBIN = $knbarchdir/bin/smlruntime
 
 set IMAGE = ${PADSCDIR}/lib/padsc

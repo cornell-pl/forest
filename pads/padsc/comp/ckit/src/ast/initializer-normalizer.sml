@@ -15,7 +15,7 @@ struct
 
   exception NormalizeExn
 
-  fun fail msg = (print msg; raise NormalizeExn)
+  fun fail msg = (print (msg^"\n"); raise NormalizeExn)
   (* does this signal an internal "compiler bug"?
    * only acts as a warning, since normalize acts as an identity
    * on the expression if this is called. *)

@@ -68,8 +68,8 @@ structure ParseTreeSubst : PARSE_TREE_SUBST = struct
 	      | _ => x
 	end
 
-    fun substExps ([]:(string * ParseTree.expression) list, e : ParseTree.expression) = e
-      | substExps ((n,nexp)::ls, e) = substExps(ls, substExp(n,nexp,e))
+    fun substExps ([]:(string * ParseTree.expression) list) (e : ParseTree.expression) = e
+      | substExps ((n,nexp)::ls) e = substExps ls (substExp(n,nexp,e))
 
     fun isFreeInExp (vars : string list, EmptyExpr )  = false
       | isFreeInExp (vars : string list, IntConst _ )  = false
@@ -90,4 +90,35 @@ structure ParseTreeSubst : PARSE_TREE_SUBST = struct
       | isFreeInExp (vars : string list, ExprExt e) = isFreeInExpExt(vars, e)
 
     and isFreeInExpExt (vars, _) = false
+
+
+   fun mungePCT(f:string -> string, pcty:ctype) : ParseTree.ctype = 
+       let val {qualifiers, specifiers} = pcty
+           fun mungeSpec spec = 
+               case spec
+               of TypedefName s => TypedefName (f s)
+               | Array(e,cty) => Array(e, mungePCT(f, cty))
+               | Pointer cty => Pointer(mungePCT(f, cty))
+               | Function {retType, params} =>
+		   Function {retType = mungePCT(f, retType),
+			     params = List.map (mungePDT f) params}
+               | Struct{isStruct, tagOpt,members} =>
+		   let fun mungeMem (pcty', del, sOpt) = 
+		       (mungePCT(f, pcty'), del, sOpt)
+		   in
+		       Struct {isStruct=isStruct, tagOpt=tagOpt,
+			       members = List.map mungeMem members}
+		   end
+               | x => x
+	   val newSpecs = List.map mungeSpec specifiers
+   in
+       {qualifiers = qualifiers, specifiers = newSpecs}
+   end
+
+   and mungePDT f (dt:decltype, decl) = 
+       let val {qualifiers, specifiers, storage} = dt
+	   val {qualifiers, specifiers} = mungePCT(f, {qualifiers=qualifiers, specifiers=specifiers})
+       in
+          ({qualifiers=qualifiers, specifiers=specifiers, storage=storage}, decl)
+       end
 end
