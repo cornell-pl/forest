@@ -1447,7 +1447,7 @@ int_type ## _acc_add(PDC_t *pdc, int_type ## _acc *a, const PDC_base_pd *pd, con
   if (!a->dict) {
     return PDC_ERR;
   }
-  if (pd->errCode != 0) {
+  if (pd->errCode != PDC_NO_ERR) {
     (a->bad)++;
     return PDC_OK;
   }
@@ -1832,7 +1832,7 @@ fpoint_type ## _acc_add(PDC_t *pdc, fpoint_type ## _acc *a, const PDC_base_pd *p
   if (!a->dict) {
     return PDC_ERR;
   }
-  if (pd->errCode != 0) {
+  if (pd->errCode != PDC_NO_ERR) {
     (a->bad)++;
     return PDC_OK;
   }
@@ -3862,7 +3862,7 @@ PDC_string_acc_add(PDC_t *pdc, PDC_string_acc *a, const PDC_base_pd *pd, const P
   if (PDC_ERR == PDC_uint32_acc_add(pdc, &(a->len_accum), pd, &(val->len))) {
     return PDC_ERR;
   }
-  if (pd->errCode != 0) {
+  if (pd->errCode != PDC_NO_ERR) {
     return PDC_OK;
   }
   if (dtsize(a->dict) < PDCI_ACC_MAX2TRACK) {
@@ -4395,7 +4395,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.91 2003-07-15 19:58:42 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.92 2003-08-04 18:22:15 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
