@@ -6,8 +6,8 @@
  * AT&T Labs Research
  */
 
-#ifndef __LIBPADSC_INTERNAL_H__
-#define __LIBPADSC_INTERNAL_H__
+#ifndef __LIBPADSC_INTERNAL__
+#define __LIBPADSC_INTERNAL__
 
 #ifdef __PREPROCESSOR_FIXES
 typedef void * __builtin_va_list;
@@ -16,119 +16,153 @@ typedef void * __builtin_va_list;
 
 #endif
 
+typedef struct PDCI_stkElt_s PDCI_stkElt_t;
+
+#define PDC_PRIVATE_STATE \
+  Vmalloc_t         *vm;       /* vm handle */ \
+  Sfio_t            *tmp;      /* tmp sfprintf area */ \
+  RMM_t             *rmm_z;    /* rbuf memory mgr -- zeroes allocated memory */  \
+  RMM_t             *rmm_nz;   /* rbuf memory mgr -- does not zero allocated memory */  \
+  /* The following are all related to IO state / checkpointing */ \
+  char              *path;     /* original path -- eventually want to support a set of input files */ \
+  Sfio_t            *io;       /* sfio stream */ \
+  char              *sfbuf;    /* buffer that is installed in any sfio that is opened */ \
+  PDC_IO_elt_t      *head;     /* head of list of input elts */ \
+  PDCI_stkElt_t     *stack;    /* stack - resized dynamically */ \
+  size_t            salloc;    /* total elts allocated for stack */ \
+  size_t            top;       /* index of top stack elt */ \
+  unsigned int      speclev;   /* speculative nesting level */ \
+  char              dummy[1];  /* used for error case */ \
+
 #include "libpadsc.h"
 #include "pdc_io_disc.h"
 #include "pdc_out_macros.h"
 
 /* ================================================================================ */
+/* INTERNAL TYPE DEFINITIONS */
+
+/* PDCI_stkElt_t: A stack elt has a cursor position cur, which is a
+ * pointer to a PDC_IO_elt plus the number of byte remaining.  We also
+ * record the spec flag passed to PDC_IO_checkpoint, to enable proper
+ * de-bumping of pdc->speclev.
+ */
+
+/* type PDCI_stkElt_t: */
+struct PDCI_stkElt_s {
+  PDC_IO_elt_t  *elt;
+  size_t        remain;  /* bytes remaining in current IO elt; determines cursor position */
+  int           spec;    /* the spec flag passed to checkpoint */
+};
+
+/* ================================================================================ */
 /* INTERNAL VERSIONS OF EXTERNAL IO FUNCTIONS */
 
-PDC_error_t  PDC_IO_fopen_internal    (PDC_t *pdc, char *path, PDC_disc_t *disc);
-PDC_error_t  PDC_IO_fclose_internal   (PDC_t *pdc, PDC_disc_t *disc);
-PDC_error_t  PDC_IO_next_rec_internal (PDC_t *pdc, size_t *skipped_bytes_out, PDC_disc_t *disc);
+PDC_error_t  PDC_IO_fopen_internal    (PDC_t *pdc, char *path);
+PDC_error_t  PDC_IO_fclose_internal   (PDC_t *pdc);
+PDC_error_t  PDC_IO_next_rec_internal (PDC_t *pdc, size_t *skipped_bytes_out);
 
-int          PDC_IO_at_EOR_internal   (PDC_t *pdc, PDC_disc_t *disc);
-int          PDC_IO_at_EOF_internal   (PDC_t *pdc, PDC_disc_t *disc);
+int          PDC_IO_at_EOR_internal   (PDC_t *pdc);
+int          PDC_IO_at_EOF_internal   (PDC_t *pdc);
 
-PDC_error_t  PDC_IO_getPos_internal   (PDC_t *pdc, PDC_pos_t *pos, int offset, PDC_disc_t *disc); 
+PDC_error_t  PDC_IO_getPos_internal   (PDC_t *pdc, PDC_pos_t *pos, int offset); 
 
 /* ================================================================================ */ 
 /* INTERNAL VERSIONS OF ALL BASE TYPE READ FUNCTIONS */
 
 PDC_error_t PDC_char_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
-				       PDC_base_ed *ed, unsigned char c, PDC_disc_t *disc);
+				       PDC_base_ed *ed, unsigned char c);
 
 PDC_error_t PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
-				      PDC_base_ed *ed, const PDC_string *s, PDC_disc_t *disc);
+				      PDC_base_ed *ed, const PDC_string *s);
 
 PDC_error_t PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
-				   PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc);
+				   PDC_base_ed *ed, PDC_int32 *res_out);
 
 PDC_error_t PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, 
-				    PDC_uint32 *res_out, PDC_disc_t *disc);
+				    PDC_uint32 *res_out);
 
 PDC_error_t PDC_string_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc);
+					PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_string_stopChar_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
-					      PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc);
+					      PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_string_stopRegexp_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-						PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc);
+						PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_aint8_read_internal (PDC_t *pdc, PDC_base_em *em,
-				     PDC_base_ed *ed, PDC_int8 *res_out, PDC_disc_t *disc);
+				     PDC_base_ed *ed, PDC_int8 *res_out);
 
 PDC_error_t PDC_aint16_read_internal(PDC_t *pdc, PDC_base_em *em,
-				     PDC_base_ed *ed, PDC_int16 *res_out, PDC_disc_t *disc);
+				     PDC_base_ed *ed, PDC_int16 *res_out);
 
 PDC_error_t PDC_aint32_read_internal(PDC_t *pdc, PDC_base_em *em,
-				     PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc);
+				     PDC_base_ed *ed, PDC_int32 *res_out);
 
 PDC_error_t PDC_aint64_read_internal(PDC_t *pdc, PDC_base_em *em,
-				     PDC_base_ed *ed, PDC_int64 *res_out, PDC_disc_t *disc);
+				     PDC_base_ed *ed, PDC_int64 *res_out);
 
 PDC_error_t PDC_auint8_read_internal (PDC_t *pdc, PDC_base_em *em,
-				      PDC_base_ed *ed, PDC_uint8 *res_out, PDC_disc_t *disc);
+				      PDC_base_ed *ed, PDC_uint8 *res_out);
 
 PDC_error_t PDC_auint16_read_internal(PDC_t *pdc, PDC_base_em *em,
-				      PDC_base_ed *ed, PDC_uint16 *res_out, PDC_disc_t *disc);
+				      PDC_base_ed *ed, PDC_uint16 *res_out);
 
 PDC_error_t PDC_auint32_read_internal(PDC_t *pdc, PDC_base_em *em,
-				      PDC_base_ed *ed, PDC_uint32 *res_out, PDC_disc_t *disc);
+				      PDC_base_ed *ed, PDC_uint32 *res_out);
 
 PDC_error_t PDC_auint64_read_internal(PDC_t *pdc, PDC_base_em *em,
-				      PDC_base_ed *ed, PDC_uint64 *res_out, PDC_disc_t *disc);
+				      PDC_base_ed *ed, PDC_uint64 *res_out);
 
 PDC_error_t PDC_aint8_fw_read_internal (PDC_t *pdc, PDC_base_em *em, size_t width,
-					PDC_base_ed *ed, PDC_int8 *res_out, PDC_disc_t *disc);
+					PDC_base_ed *ed, PDC_int8 *res_out);
 
 PDC_error_t PDC_aint16_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					PDC_base_ed *ed, PDC_int16 *res_out, PDC_disc_t *disc);
+					PDC_base_ed *ed, PDC_int16 *res_out);
 
 PDC_error_t PDC_aint32_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc);
+					PDC_base_ed *ed, PDC_int32 *res_out);
 
 PDC_error_t PDC_aint64_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					PDC_base_ed *ed, PDC_int64 *res_out, PDC_disc_t *disc);
+					PDC_base_ed *ed, PDC_int64 *res_out);
 
 
 PDC_error_t PDC_auint8_fw_read_internal (PDC_t *pdc, PDC_base_em *em, size_t width,
-					 PDC_base_ed *ed, PDC_uint8 *res_out, PDC_disc_t *disc);
+					 PDC_base_ed *ed, PDC_uint8 *res_out);
 
 PDC_error_t PDC_auint16_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					 PDC_base_ed *ed, PDC_uint16 *res_out, PDC_disc_t *disc);
+					 PDC_base_ed *ed, PDC_uint16 *res_out);
 
 PDC_error_t PDC_auint32_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					 PDC_base_ed *ed, PDC_uint32 *res_out, PDC_disc_t *disc);
+					 PDC_base_ed *ed, PDC_uint32 *res_out);
 
 PDC_error_t PDC_auint64_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					 PDC_base_ed *ed, PDC_uint64 *res_out, PDC_disc_t *disc);
+					 PDC_base_ed *ed, PDC_uint64 *res_out);
 
 
 PDC_error_t PDC_bint8_read_internal (PDC_t *pdc, PDC_base_em *em,
-				     PDC_base_ed *ed, PDC_int8 *res_out, PDC_disc_t *disc);
+				     PDC_base_ed *ed, PDC_int8 *res_out);
 
 PDC_error_t PDC_bint16_read_internal(PDC_t *pdc, PDC_base_em *em,
-				     PDC_base_ed *ed, PDC_int16 *res_out, PDC_disc_t *disc);
+				     PDC_base_ed *ed, PDC_int16 *res_out);
 
 PDC_error_t PDC_bint32_read_internal(PDC_t *pdc, PDC_base_em *em,
-				     PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc);
+				     PDC_base_ed *ed, PDC_int32 *res_out);
 
 PDC_error_t PDC_bint64_read_internal(PDC_t *pdc, PDC_base_em *em,
-				     PDC_base_ed *ed, PDC_int64 *res_out, PDC_disc_t *disc);
+				     PDC_base_ed *ed, PDC_int64 *res_out);
 
 PDC_error_t PDC_buint8_read_internal (PDC_t *pdc, PDC_base_em *em,
-				      PDC_base_ed *ed, PDC_uint8 *res_out, PDC_disc_t *disc);
+				      PDC_base_ed *ed, PDC_uint8 *res_out);
 
 PDC_error_t PDC_buint16_read_internal(PDC_t *pdc, PDC_base_em *em,
-				      PDC_base_ed *ed, PDC_uint16 *res_out, PDC_disc_t *disc);
+				      PDC_base_ed *ed, PDC_uint16 *res_out);
 
 PDC_error_t PDC_buint32_read_internal(PDC_t *pdc, PDC_base_em *em,
-				      PDC_base_ed *ed, PDC_uint32 *res_out, PDC_disc_t *disc);
+				      PDC_base_ed *ed, PDC_uint32 *res_out);
 
 PDC_error_t PDC_buint64_read_internal(PDC_t *pdc, PDC_base_em *em,
-				      PDC_base_ed *ed, PDC_uint64 *res_out, PDC_disc_t *disc);
+				      PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================ */ 
 /* INTERNAL VERSIONS OF ACCUM REPORTING FUNCTIONS */
@@ -139,68 +173,35 @@ PDC_error_t PDC_buint64_read_internal(PDC_t *pdc, PDC_base_em *em,
  */
 
 PDC_error_t PDC_int8_acc_report_internal   (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_int8_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_int8_acc *a);
 PDC_error_t PDC_int16_acc_report_internal  (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_int16_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_int16_acc *a);
 PDC_error_t PDC_int32_acc_report_internal  (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_int32_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_int32_acc *a);
 PDC_error_t PDC_int64_acc_report_internal  (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_int64_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_int64_acc *a);
 PDC_error_t PDC_uint8_acc_report_internal  (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_uint8_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_uint8_acc *a);
 PDC_error_t PDC_uint16_acc_report_internal (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_uint16_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_uint16_acc *a);
 PDC_error_t PDC_uint32_acc_report_internal (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_uint32_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_uint32_acc *a);
 PDC_error_t PDC_uint64_acc_report_internal (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_uint64_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_uint64_acc *a);
 
 PDC_error_t PDC_int32_acc_report_map_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					      int nst, PDC_int32_map_fn  fn, PDC_int32_acc *a, PDC_disc_t *disc);
+					      int nst, PDC_int32_map_fn  fn, PDC_int32_acc *a);
 
 PDC_error_t PDC_string_acc_report_internal (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_string_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_string_acc *a);
 PDC_error_t PDC_char_acc_report_internal   (PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,
-					    int nst, PDC_char_acc *a, PDC_disc_t *disc);
+					    int nst, PDC_char_acc *a);
 
 /* ********************************************************************************
- * Remainder of this file contains function decls for functions and types
+ * Remainder of this file contains function decls for functions
  * purely internal to the library impl.  Note the use of the PDCI prefix
  * for these functions 
  * ********************************************************************************/
-
-/* ================================================================================ */
-/* INTERNAL TYPE DEFINITIONS */
-
-/* PDCI_stkElt_t: A stack elt has a cursor position cur, which is a
- * pointer to a PDC_IO_elt plus the number of byte remaining.  We also
- * record the spec flag passed to PDC_IO_checkpoint, to enable proper
- * de-bumping of pdc->speclev.
- */
-typedef struct PDCI_stkElt_s {
-  PDC_IO_elt_t  *elt;
-  size_t        remain;  /* bytes remaining in current IO elt; determines cursor position */
-  int           spec;    /* the spec flag passed to checkpoint */
-} PDCI_stkElt_t;
-
-struct PDC_s {
-  const char        *id;       /* interface id */
-  PDC_disc_t        *disc;     /* user-supplied disc (can be null) */
-  Vmalloc_t         *vm;       /* vm handle */
-  Sfio_t            *tmp;      /* tmp sfprintf area */
-  RMM_t             *rmm_z;    /* rbuf memory mgr -- zeroes allocated memory */ 
-  RMM_t             *rmm_nz;   /* rbuf memory mgr -- does not zero allocated memory */ 
-  /* The following are all related to IO state / checkpointing */
-  char              *path;     /* original path -- eventually want to support a set of input files */
-  Sfio_t            *io;       /* sfio stream */
-  char              *sfbuf;    /* buffer that is installed in any sfio that is opened */
-  PDC_IO_elt_t      *head;     /* head of list of input elts */
-  PDCI_stkElt_t     *stack;    /* stack - resized dynamically */
-  size_t            salloc;    /* total elts allocated for stack */
-  size_t            top;       /* index of top stack elt */
-  unsigned int      speclev;   /* speculative nesting level */
-  char              dummy[1];  /* used for error case */
-};
 
 /* ================================================================================ */ 
 /* INTERNAL ERROR REPORTING FUNCTIONS */
@@ -219,7 +220,7 @@ struct PDC_s {
  *      or if the disc e_rep is PDC_errorRep_None
  */
 
-PDC_error_t PDCI_report_err(PDC_t *pdc, PDC_disc_t *disc, int level, PDC_loc_t *loc,
+PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 			    PDC_errCode_t errCode, const char *format, ... );
 
 /* ================================================================================ */
@@ -252,11 +253,10 @@ PDC_error_t PDCI_report_err(PDC_t *pdc, PDC_disc_t *disc, int level, PDC_loc_t *
  */
 
 PDC_error_t PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, 
-			       unsigned char *c_out, size_t *offset_out,
-			       PDC_disc_t *disc);
+			       unsigned char *c_out, size_t *offset_out);
 
 PDC_error_t PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
-			      PDC_string **str_out, size_t *offset_out, PDC_disc_t *disc);
+			      PDC_string **str_out, size_t *offset_out);
 
 /* ================================================================================ */
 /* PURELY INTERNAL IO FUNCTIONS */
@@ -271,10 +271,10 @@ PDC_error_t PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_s
  * is removed by either commit or restore, the nesting level is
  * decremented by one.  PDC_spec_level gives the current nesting level.
  */
-PDC_error_t  PDCI_IO_checkpoint (PDC_t *pdc, int speculative, PDC_disc_t *disc);
-PDC_error_t  PDCI_IO_commit     (PDC_t *pdc, PDC_disc_t *disc);
-PDC_error_t  PDCI_IO_restore    (PDC_t *pdc, PDC_disc_t *disc);
-unsigned int PDCI_spec_level    (PDC_t *pdc, PDC_disc_t *disc);
+PDC_error_t  PDCI_IO_checkpoint (PDC_t *pdc, int speculative);
+PDC_error_t  PDCI_IO_commit     (PDC_t *pdc);
+PDC_error_t  PDCI_IO_restore    (PDC_t *pdc);
+unsigned int PDCI_spec_level    (PDC_t *pdc);
 
 /* 
  * Note: all of the following act on the IO cursor of the top checkpoint
@@ -293,10 +293,10 @@ unsigned int PDCI_spec_level    (PDC_t *pdc, PDC_disc_t *disc);
  */
 
 PDC_error_t  PDCI_IO_needbytes (PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char **e_out,
-			        int *eor_out, int *eof_out, size_t *bytes_out, PDC_disc_t *disc);
+			        int *eor_out, int *eof_out, size_t *bytes_out);
 PDC_error_t  PDCI_IO_morebytes (PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char **e_out,
-				int *eor_out, int *eof_out, size_t *bytes_out, PDC_disc_t *disc);
-PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes, PDC_disc_t *disc);
+				int *eor_out, int *eof_out, size_t *bytes_out);
+PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
 
 /*
  * Other IO routines:
@@ -305,7 +305,7 @@ PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes, PDC_disc_t *disc);
  *                    otherwise returns PDC_ERR.
  */
 
-PDC_error_t PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out, PDC_disc_t *disc);
+PDC_error_t PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out);
 
 /* ================================================================================ */
 /* INTERNAL MODIFIED CONVERSION ROUTINES */
@@ -343,7 +343,7 @@ char *PDCI_fmtQStrL(const char *s, size_t len);
  *  (or 0 if str does not match the regular expression).
  */
 
-size_t PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, char *begin, char *end, PDC_disc_t *disc);
+size_t PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, char *begin, char *end);
 
 /* Accum impl helpers:
  *
@@ -356,4 +356,4 @@ void PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const ch
 
 /* ================================================================================ */
 
-#endif /*  __LIBPADSC_INTERNAL_H__  */
+#endif /*  __LIBPADSC_INTERNAL__  */

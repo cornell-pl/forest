@@ -31,19 +31,22 @@
 #define PDCI_READFN_INIT_CHECKS(prefix)
   do {
     if (!pdc)  {
-      if (!disc) {
-	disc = &PDC_default_disc;
-      }
-      PDC_WARN(NiL, disc, prefix ": null pdc param");
+      PDC_WARN(&PDC_default_disc, prefix ": null pdc param");
       if (*em < PDC_Ignore) {
 	ed->errCode = PDC_BAD_PARAM;
       }
       return PDC_ERR;
     }
-    if (!disc) { disc = pdc->disc; }
-    PDC_TRACE(pdc, disc, prefix " called");
-    if (!disc->io_disc) {
-      PDC_WARN(pdc, disc, prefix ": IO discipline not installed");
+    if (!pdc->disc) {
+      PDC_WARN(&PDC_default_disc, prefix ": null pdc->disc");
+      if (*em < PDC_Ignore) {
+	ed->errCode = PDC_BAD_PARAM;
+      }
+      return PDC_ERR;
+    }
+    PDC_TRACE(pdc->disc, prefix " called");
+    if (!pdc->disc->io_disc) {
+      PDC_WARN(pdc->disc, prefix ": IO discipline not installed");
       if (*em < PDC_Ignore) {
 	ed->errCode = PDC_BAD_PARAM;
       }
@@ -55,14 +58,14 @@
 /* eoff is one byte beyond last error byte, so sub 1 */
 #define PDCI_READFN_SET_LOC_BE(boff, eoff)
   do {
-    PDC_IO_getPos_internal(pdc, &(ed->loc.b), (boff), disc);
-    PDC_IO_getPos_internal(pdc, &(ed->loc.e), (eoff)-1, disc);
+    PDC_IO_getPos_internal(pdc, &(ed->loc.b), (boff));
+    PDC_IO_getPos_internal(pdc, &(ed->loc.e), (eoff)-1);
   } while (0)
 /* END_MACRO */
 
 #define PDCI_READFN_SET_NULLSPAN_LOC(boff)
   do {
-    PDC_IO_getPos_internal(pdc, &(ed->loc.b), (boff), disc);
+    PDC_IO_getPos_internal(pdc, &(ed->loc.b), (boff));
     ed->loc.e = ed->loc.b;
     (ed->loc.e.byte)--;
   } while (0)
@@ -73,7 +76,7 @@
   do {
     if (pdc->speclev == 0 && (*em < PDC_Ignore)) {
       ed->errCode = (errcode);
-      PDCI_report_err(pdc, disc, PDC_WARN_FLAGS, &(ed->loc), (errcode), (msg));
+      PDCI_report_err(pdc, PDC_WARN_FLAGS, &(ed->loc), (errcode), (msg));
     }
     return PDC_ERR;
   } while (0)
@@ -84,7 +87,7 @@
   do {
     if (pdc->speclev == 0 && (*em < PDC_Ignore)) {
       ed->errCode = (errcode);
-      PDCI_report_err(pdc, disc, PDC_FATAL_FLAGS, 0, (errcode), (msg));
+      PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, (errcode), (msg));
     }
     return PDC_ERR;
   } while (0)
@@ -170,30 +173,30 @@
 #define PDCI_DISC_INIT_CHECKS(prefix)
   do {
     if (!pdc)  {
-      if (!disc) {
-	disc = &PDC_default_disc;
-      }
-      PDC_WARN(NiL, disc, prefix ": null pdc param");
+      PDC_WARN(&PDC_default_disc, prefix ": null pdc param");
       return PDC_ERR;
     }
-    if (!disc) { disc = pdc->disc; }
-    PDC_TRACE(pdc, disc, prefix " called");
+    if (!pdc->disc) {
+      PDC_WARN(&PDC_default_disc, prefix ": null pdc->disc");
+      return PDC_ERR;
+    }
+    PDC_TRACE(pdc->disc, prefix " called");
   } while (0)
 /* END_MACRO */
 
 #define PDCI_IODISC_INIT_CHECKS(prefix)
   do {
     if (!pdc)  {
-      if (!disc) {
-	disc = &PDC_default_disc;
-      }
-      PDC_WARN(NiL, disc, prefix ": null pdc param");
+      PDC_WARN(&PDC_default_disc, prefix ": null pdc param");
       return PDC_ERR;
     }
-    if (!disc) { disc = pdc->disc; }
-    PDC_TRACE(pdc, disc, prefix " called");
-    if (!disc->io_disc) {
-      PDC_WARN(pdc, disc, prefix ": IO discipline not installed");
+    if (!pdc->disc) {
+      PDC_WARN(&PDC_default_disc, prefix ": null pdc->disc");
+      return PDC_ERR;
+    }
+    PDC_TRACE(pdc->disc, prefix " called");
+    if (!pdc->disc->io_disc) {
+      PDC_WARN(pdc->disc, prefix ": IO discipline not installed");
       return PDC_ERR;
     }
   } while (0)
@@ -203,7 +206,7 @@
 #define PDCI_NULLPARAM_CHECK(prefix, param)
   do {
     if (!param)  {
-      PDC_WARN(pdc, disc, prefix ": param " PDCI_MacroArg2String(param) " must not be NULL");
+      PDC_WARN(pdc->disc, prefix ": param " PDCI_MacroArg2String(param) " must not be NULL");
       return PDC_ERR;
     }
   } while (0)
@@ -223,27 +226,27 @@
 /* ********************************** END_HEADER ********************************** */
 #define PDCI_AINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
 fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
-		      PDC_base_ed *ed, targ_type *res_out, PDC_disc_t *disc)
+		      PDC_base_ed *ed, targ_type *res_out)
 {
   int_type        tmp;   /* tmp num */
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
 
-  PDC_TRACE(pdc, disc, PDCI_MacroArg2String(fn_name) "_internal called" );
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  PDC_TRACE(pdc->disc, PDCI_MacroArg2String(fn_name) "_internal called" );
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   if (bytes == 0) {
     goto at_eor_or_eof_err;
   }
-  if (isspace(*p1) && !(disc->flags & PDC_WSPACE_OK)) {
+  if (isspace(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
     goto invalid_wspace;
   }
   while (!(eor|eof)) { /* find a non-space */ 
     while (isspace(*p1)) { p1++; }
     if (p1 < end) { break; } 
-    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
       goto fatal_mb_io_err;
     }
     if (bytes == 0) { /* all spaces! */
@@ -254,7 +257,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
   while (!(eor|eof)) { /* find a non-digit */
     while (isdigit(*p1)) { p1++; }
     if (p1 < end) { break; }
-    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
       goto fatal_mb_io_err;
     }
   }
@@ -272,7 +275,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
     goto range_err;
   }
   /* success */
-  if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin, disc)) {
+  if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
     goto fatal_forward_err;
   }
   if (res_out && *em == PDC_CheckAndSet) {
@@ -296,7 +299,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
  range_err:
   /* range error still consumes the number */
   PDCI_READFN_SET_LOC_BE(0, p1-begin);
-  if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin, disc)) {
+  if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
     goto fatal_forward_err;
   }
   PDCI_READFN_RET_ERRCODE_WARN(0, PDC_RANGE);
@@ -312,7 +315,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
 }
 
 fn_name(PDC_t *pdc, PDC_base_em *em,
-	PDC_base_ed *ed, targ_type *res_out, PDC_disc_t *disc)
+	PDC_base_ed *ed, targ_type *res_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -324,14 +327,14 @@ fn_name(PDC_t *pdc, PDC_base_em *em,
     ed = &edt;
   }
   PDCI_READFN_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
-  return fn_name ## _internal (pdc, em, ed, res_out, disc);
+  return fn_name ## _internal (pdc, em, ed, res_out);
 }
 /* END_MACRO */
 
 #define PDCI_AINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
 PDC_error_t
 fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
-		      PDC_base_ed *ed, targ_type *res_out, PDC_disc_t *disc)
+		      PDC_base_ed *ed, targ_type *res_out)
 {
   unsigned char   ct;    /* char tmp */
   int_type        tmp;   /* tmp num */
@@ -339,25 +342,25 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
   int             eor, eof;
   size_t          bytes;
 
-  PDC_TRACE(pdc, disc, PDCI_MacroArg2String(fn_name) "_internal called" );
+  PDC_TRACE(pdc->disc, PDCI_MacroArg2String(fn_name) "_internal called" );
   if (width <= 0) {
-    PDC_WARN(pdc, disc, "UNEXPECTED PARAM VALUE: " PDCI_MacroArg2String(fn_name) " called with width <= 0");
+    PDC_WARN(pdc->disc, "UNEXPECTED PARAM VALUE: " PDCI_MacroArg2String(fn_name) " called with width <= 0");
     goto bad_param_err;
   }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (end-begin < width) {
     if ((eor|eof) || bytes == 0) {
       goto width_not_avail;
     }
-    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
       goto fatal_mb_io_err;
     }
   }
   /* end-begin >= width */
   end = begin + width;
-  if (isspace(*begin) && !(disc->flags & PDC_WSPACE_OK)) {
+  if (isspace(*begin) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
     goto invalid_wspace;
   }
   ct = *end;    /* save */
@@ -368,7 +371,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
     goto invalid;
   }
   *end = ct;    /* restore */
-  while (isspace(*p1) && !(disc->flags & PDC_WSPACE_OK)) {
+  while (isspace(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
     goto invalid_wspace;
   }
   while (p1 < end && isspace(*p1)) { p1++; } 
@@ -379,7 +382,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
     goto range_err;
   }
   /* success */
-  if (PDC_ERR == PDCI_IO_forward(pdc, width, disc)) {
+  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
   if (res_out && *em == PDC_CheckAndSet) {
@@ -395,7 +398,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
  width_not_avail:
   /* FW field: eat the space whether or not there is an error */
   PDCI_READFN_SET_LOC_BE(0, end-begin);
-  if (PDC_ERR == PDCI_IO_forward(pdc, end-begin, disc)) {
+  if (PDC_ERR == PDCI_IO_forward(pdc, end-begin)) {
     goto fatal_forward_err;
   }
   PDCI_READFN_RET_ERRCODE_WARN(0, PDC_WIDTH_NOT_AVAILABLE);
@@ -403,7 +406,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
  invalid:
   /* FW field: eat the space whether or not there is an error */
   PDCI_READFN_SET_LOC_BE(0, width);
-  if (PDC_ERR == PDCI_IO_forward(pdc, width, disc)) {
+  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
   PDCI_READFN_RET_ERRCODE_WARN(0, invalid_err);
@@ -411,7 +414,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
  invalid_wspace:
   /* FW field: eat the space whether or not there is an error */
   PDCI_READFN_SET_LOC_BE(0, width);
-  if (PDC_ERR == PDCI_IO_forward(pdc, width, disc)) {
+  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
   PDCI_READFN_RET_ERRCODE_WARN("spaces not allowed in aint field unless flag PDC_WSPACE_OK is set", invalid_err);
@@ -419,7 +422,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
  range_err:
   /* FW field: eat the space whether or not there is an error */
   PDCI_READFN_SET_LOC_BE(0, width);
-  if (PDC_ERR == PDCI_IO_forward(pdc, width, disc)) {
+  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
   PDCI_READFN_RET_ERRCODE_WARN(0, PDC_RANGE);
@@ -439,7 +442,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
 
 PDC_error_t
 fn_name(PDC_t *pdc, PDC_base_em *em, size_t width,
-	PDC_base_ed *ed, targ_type *res_out, PDC_disc_t *disc)
+	PDC_base_ed *ed, targ_type *res_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -451,40 +454,40 @@ fn_name(PDC_t *pdc, PDC_base_em *em, size_t width,
     ed = &edt;
   }
   PDCI_READFN_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
-  return fn_name ## _internal (pdc, em, width, ed, res_out, disc);
+  return fn_name ## _internal (pdc, em, width, ed, res_out);
 }
 /* END_MACRO */
 
 #define PDCI_BINT_READ_FN(fn_name, targ_type, width, swapmem_op)
 PDC_error_t
 fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
-		      PDC_base_ed *ed, targ_type *res_out, PDC_disc_t *disc)
+		      PDC_base_ed *ed, targ_type *res_out)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
 
-  PDC_TRACE(pdc, disc, PDCI_MacroArg2String(fn_name) "_internal called" );
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  PDC_TRACE(pdc->disc, PDCI_MacroArg2String(fn_name) "_internal called" );
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (end-begin < width) {
     if ((eor|eof) || bytes == 0) {
       goto width_not_avail;
     }
-    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
       goto fatal_mb_io_err;
     }
   }
   /* end-begin >= width */
   if (res_out && *em == PDC_CheckAndSet) {
-    if (disc->m_endian != disc->d_endian) {
+    if (pdc->disc->m_endian != pdc->disc->d_endian) {
       swapmem(swapmem_op, begin, res_out, width);
     } else {
       swapmem(0, begin, res_out, width);
     }
   }
-  if (PDC_ERR == PDCI_IO_forward(pdc, width, disc)) {
+  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
   ed->errCode = PDC_NO_ERR;
@@ -506,7 +509,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
 
 PDC_error_t
 fn_name(PDC_t *pdc, PDC_base_em *em,
-	PDC_base_ed *ed, targ_type *res_out, PDC_disc_t *disc)
+	PDC_base_ed *ed, targ_type *res_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -518,7 +521,7 @@ fn_name(PDC_t *pdc, PDC_base_em *em,
     ed = &edt;
   }
   PDCI_READFN_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
-  return fn_name ## _internal (pdc, em, ed, res_out, disc);
+  return fn_name ## _internal (pdc, em, ed, res_out);
 }
 /* END_MACRO */
 
@@ -624,12 +627,10 @@ static Dtdisc_t int_type ## _acc_dt_oset_disc = {
 };
 
 PDC_error_t
-int_type ## _acc_init(PDC_t *pdc, int_type ## _acc *a, PDC_disc_t *disc)
+int_type ## _acc_init(PDC_t *pdc, int_type ## _acc *a)
 {
   PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(int_type) "_acc_init" );
-  if (!a) {
-    return PDC_ERR;
-  }
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_init" , a );
   if (!(a->dict = dtopen(&int_type ## _acc_dt_set_disc, Dtset))) {
     return PDC_ERR;
   }
@@ -638,10 +639,11 @@ int_type ## _acc_init(PDC_t *pdc, int_type ## _acc *a, PDC_disc_t *disc)
 }
 
 PDC_error_t
-int_type ## _acc_reset(PDC_t *pdc, int_type ## _acc *a, PDC_disc_t *disc)
+int_type ## _acc_reset(PDC_t *pdc, int_type ## _acc *a)
 {
   PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(int_type) "_acc_reset" );
-  if (!a || !a->dict) {
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_reset" , a );
+  if (!a->dict) {
     return PDC_ERR;
   }
   dtclear(a->dict);
@@ -650,12 +652,10 @@ int_type ## _acc_reset(PDC_t *pdc, int_type ## _acc *a, PDC_disc_t *disc)
 }
 
 PDC_error_t
-int_type ## _acc_cleanup(PDC_t *pdc, int_type ## _acc *a, PDC_disc_t *disc)
+int_type ## _acc_cleanup(PDC_t *pdc, int_type ## _acc *a)
 {
   PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(int_type) "_acc_cleanup" );
-  if (!a) {
-    return PDC_ERR;
-  }
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_cleanup" , a );
   if (a->dict) {
     dtclose(a->dict);
     a->dict = 0;
@@ -679,14 +679,17 @@ int_type ## _acc_fold_psum(int_type ## _acc *a) {
 }
 
 PDC_error_t
-int_type ## _acc_add(PDC_t *pdc, int_type ## _acc *a, PDC_base_ed *ed, int_type *val, PDC_disc_t *disc)
+int_type ## _acc_add(PDC_t *pdc, int_type ## _acc *a, PDC_base_ed *ed, int_type *val)
 {
   int_type               v          = (*val);
   int_type ## _dt_elt_t  insert_elt;
   int_type ## _dt_key_t  lookup_key;
   int_type ## _dt_elt_t  *tmp1;
   PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(int_type) "_acc_add" );
-  if (!a || !a->dict || !ed || !val) {
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_add" , a );
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_add" , ed );
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_add" , val );
+  if (!a->dict) {
     return PDC_ERR;
   }
   if (ed->errCode != 0) {
@@ -709,7 +712,7 @@ int_type ## _acc_add(PDC_t *pdc, int_type ## _acc *a, PDC_base_ed *ed, int_type 
     insert_elt.key.val = v;
     insert_elt.key.cnt = 0;
     if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
-      PDC_WARN(pdc, disc, "** PADC internal error: dtinsert failed (out of memory?) **");
+      PDC_WARN(pdc->disc, "** PADC internal error: dtinsert failed (out of memory?) **");
       return PDC_ERR;
     }
     (tmp1->key.cnt)++;
@@ -725,7 +728,7 @@ int_type ## _acc_add(PDC_t *pdc, int_type ## _acc *a, PDC_base_ed *ed, int_type 
 
 PDC_error_t
 int_type ## _acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
-				 int_type ## _acc *a, PDC_disc_t *disc)
+				 int_type ## _acc *a)
 {
   const char            *cmt = ""; 
   int                   i = 0, sz, rp;
@@ -736,7 +739,7 @@ int_type ## _acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix,
   Void_t                *velt;
   int_type ## _dt_elt_t *elt;
 
-  PDC_TRACE(pdc, disc, PDCI_MacroArg2String(int_type) "_acc_report_internal called" );
+  PDC_TRACE(pdc->disc, PDCI_MacroArg2String(int_type) "_acc_report_internal called" );
   if (!prefix || *prefix == 0) {
     prefix = "<top>";
   }
@@ -788,23 +791,21 @@ int_type ## _acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix,
 
 PDC_error_t
 int_type ## _acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
-			int_type ## _acc *a, PDC_disc_t *disc)
+			int_type ## _acc *a)
 {
   Sfio_t *tmpstr;
   PDC_error_t res;
   PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(int_type) "_acc_report" );
-  if (!a) {
-    return PDC_ERR;
-  }
-  if (!disc->errorf) {
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_report" , a );
+  if (!pdc->disc->errorf) {
     return PDC_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
     return PDC_ERR;
   }
-  res = int_type ## _acc_report_internal(pdc, tmpstr, prefix, what, nst, a, disc);
+  res = int_type ## _acc_report_internal(pdc, tmpstr, prefix, what, nst, a);
   if (res == PDC_OK) {
-    disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pdc->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -814,7 +815,7 @@ int_type ## _acc_report(PDC_t *pdc, const char *prefix, const char *what, int ns
 #define PDCI_INT_ACCUM_REPORT_MAP(int_type, int_descr, fmt)
 PDC_error_t
 int_type ## _acc_report_map_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,  int nst,
-				     int_type ## _map_fn fn, int_type ## _acc *a, PDC_disc_t *disc)
+				     int_type ## _map_fn fn, int_type ## _acc *a)
 {
   size_t                pad;
   const char            *mapped_min;
@@ -829,7 +830,7 @@ int_type ## _acc_report_map_internal(PDC_t *pdc, Sfio_t *outstr, const char *pre
   Void_t                *velt;
   int_type ## _dt_elt_t *elt;
 
-  PDC_TRACE(pdc, disc, PDCI_MacroArg2String(int_type) "_acc_report_map_internal called" );
+  PDC_TRACE(pdc->disc, PDCI_MacroArg2String(int_type) "_acc_report_map_internal called" );
   if (!prefix || *prefix == 0) {
     prefix = "<top>";
   }
@@ -897,23 +898,21 @@ int_type ## _acc_report_map_internal(PDC_t *pdc, Sfio_t *outstr, const char *pre
 
 PDC_error_t
 int_type ## _acc_report_map(PDC_t *pdc, const char *prefix, const char *what, int nst,
-			    int_type ## _map_fn fn, int_type ## _acc *a, PDC_disc_t *disc)
+			    int_type ## _map_fn fn, int_type ## _acc *a)
 {
   Sfio_t *tmpstr;
   PDC_error_t res;
   PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(int_type) "_acc_report_map" );
-  if (!a) {
-    return PDC_ERR;
-  }
-  if (!disc->errorf) {
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_report_map" , a );
+  if (!pdc->disc->errorf) {
     return PDC_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
     return PDC_ERR;
   }
-  res = int_type ## _acc_report_map_internal(pdc, tmpstr, prefix, what, nst, fn, a, disc);
+  res = int_type ## _acc_report_map_internal(pdc, tmpstr, prefix, what, nst, fn, a);
   if (res == PDC_OK) {
-    disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pdc->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -1177,54 +1176,54 @@ static Dtdisc_t PDCI_string_acc_dt_oset_disc = {
 };
 
 PDC_error_t
-PDC_string_acc_init(PDC_t *pdc, PDC_string_acc *a, PDC_disc_t *disc)
+PDC_string_acc_init(PDC_t *pdc, PDC_string_acc *a)
 {
   PDCI_DISC_INIT_CHECKS("PDC_string_acc_init");
-  if (!a) {
-    return PDC_ERR;
-  }
+  PDCI_NULLPARAM_CHECK("PDC_string_acc_init", a);
   if (!(a->dict = dtopen(&PDCI_string_acc_dt_set_disc, Dtset))) {
     return PDC_ERR;
   }
-  return PDC_uint32_acc_init(pdc, &(a->len_accum), disc);
+  return PDC_uint32_acc_init(pdc, &(a->len_accum));
 }
 
 PDC_error_t
-PDC_string_acc_reset(PDC_t *pdc, PDC_string_acc *a, PDC_disc_t *disc)
+PDC_string_acc_reset(PDC_t *pdc, PDC_string_acc *a)
 {
   PDCI_DISC_INIT_CHECKS("PDC_string_acc_reset");
-  if (!a || !a->dict) {
+  PDCI_NULLPARAM_CHECK("PDC_string_acc_reset", a);
+  if (!a->dict) {
     return PDC_ERR;
   }
   dtclear(a->dict);
-  return PDC_uint32_acc_reset(pdc, &(a->len_accum), disc);
+  return PDC_uint32_acc_reset(pdc, &(a->len_accum));
 }
 
 PDC_error_t
-PDC_string_acc_cleanup(PDC_t *pdc, PDC_string_acc *a, PDC_disc_t *disc)
+PDC_string_acc_cleanup(PDC_t *pdc, PDC_string_acc *a)
 {
   PDCI_DISC_INIT_CHECKS("PDC_string_acc_cleanup");
-  if (!a) {
-    return PDC_ERR;
-  }
+  PDCI_NULLPARAM_CHECK("PDC_string_acc_cleanup", a);
   if (a->dict) {
     dtclose(a->dict);
     a->dict = 0;
   }
-  return PDC_uint32_acc_cleanup(pdc, &(a->len_accum), disc);
+  return PDC_uint32_acc_cleanup(pdc, &(a->len_accum));
 }
 
 PDC_error_t
-PDC_string_acc_add(PDC_t *pdc, PDC_string_acc *a, PDC_base_ed *ed, PDC_string *val, PDC_disc_t *disc)
+PDC_string_acc_add(PDC_t *pdc, PDC_string_acc *a, PDC_base_ed *ed, PDC_string *val)
 {
   PDCI_string_dt_elt_t  insert_elt;
   PDCI_string_dt_key_t  lookup_key;
   PDCI_string_dt_elt_t  *tmp1;
   PDCI_DISC_INIT_CHECKS("PDC_string_acc_add");
-  if (!a || !a->dict || !ed || !val) {
+  PDCI_NULLPARAM_CHECK("PDC_string_acc_add", a);
+  PDCI_NULLPARAM_CHECK("PDC_string_acc_add", ed);
+  PDCI_NULLPARAM_CHECK("PDC_string_acc_add", val);
+  if (!a->dict) {
     return PDC_ERR;
   }
-  if (PDC_ERR == PDC_uint32_acc_add(pdc, &(a->len_accum), ed, &(val->len), disc)) {
+  if (PDC_ERR == PDC_uint32_acc_add(pdc, &(a->len_accum), ed, &(val->len))) {
     return PDC_ERR;
   }
   if (ed->errCode != 0) {
@@ -1235,7 +1234,7 @@ PDC_string_acc_add(PDC_t *pdc, PDC_string_acc *a, PDC_base_ed *ed, PDC_string *v
     insert_elt.key.len = val->len;
     insert_elt.key.cnt = 0;
     if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
-      PDC_WARN(pdc, disc, "** PADC internal error: dtinsert failed (out of memory?) **");
+      PDC_WARN(pdc->disc, "** PADC internal error: dtinsert failed (out of memory?) **");
       return PDC_ERR;
     }
     (tmp1->key.cnt)++;
@@ -1253,7 +1252,7 @@ PDC_string_acc_add(PDC_t *pdc, PDC_string_acc *a, PDC_base_ed *ed, PDC_string *v
 
 PDC_error_t
 PDC_string_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
-			       PDC_string_acc *a, PDC_disc_t *disc)
+			       PDC_string_acc *a)
 {
   size_t                 pad;
   const char             *cmt = ""; 
@@ -1264,7 +1263,7 @@ PDC_string_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, c
   Void_t                 *velt;
   PDCI_string_dt_elt_t   *elt;
 
-  PDC_TRACE(pdc, disc, "PDC_string_acc_report_internal called");
+  PDC_TRACE(pdc->disc, "PDC_string_acc_report_internal called");
   if (!prefix || *prefix == 0) {
     prefix = "<top>";
   }
@@ -1272,7 +1271,7 @@ PDC_string_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, c
     what = "string";
   }
   PDCI_nst_prefix_what(outstr, &nst, prefix, what);
-  if (PDC_ERR == PDC_uint32_acc_report_internal(pdc, outstr, "String lengths", "lengths", -1, &(a->len_accum), disc)) {
+  if (PDC_ERR == PDC_uint32_acc_report_internal(pdc, outstr, "String lengths", "lengths", -1, &(a->len_accum))) {
     return PDC_ERR;
   }
   if (a->len_accum.good == 0) {
@@ -1319,55 +1318,53 @@ PDC_string_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, c
 }
 
 PDC_error_t
-PDC_string_acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst, PDC_string_acc *a, PDC_disc_t *disc)
+PDC_string_acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst, PDC_string_acc *a)
 {
   Sfio_t *tmpstr;
   PDC_error_t res;
   PDCI_DISC_INIT_CHECKS("PDC_string_acc_report");
-  if (!a) {
-    return PDC_ERR;
-  }
-  if (!disc->errorf) {
+  PDCI_NULLPARAM_CHECK("PDC_string_acc_report", a);
+  if (!pdc->disc->errorf) {
     return PDC_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
     return PDC_ERR;
   }
-  res = PDC_string_acc_report_internal(pdc, tmpstr, prefix, what, nst, a, disc);
+  res = PDC_string_acc_report_internal(pdc, tmpstr, prefix, what, nst, a);
   if (res == PDC_OK) {
-    disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pdc->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
 }
 
 PDC_error_t
-PDC_char_acc_init(PDC_t *pdc, PDC_char_acc *a, PDC_disc_t *disc)
+PDC_char_acc_init(PDC_t *pdc, PDC_char_acc *a)
 {
-  return PDC_uint8_acc_init(pdc, a, disc);
+  return PDC_uint8_acc_init(pdc, a);
 }
 
 PDC_error_t
-PDC_char_acc_reset(PDC_t *pdc, PDC_char_acc *a, PDC_disc_t *disc)
+PDC_char_acc_reset(PDC_t *pdc, PDC_char_acc *a)
 {
-  return PDC_uint8_acc_reset(pdc, a, disc);
+  return PDC_uint8_acc_reset(pdc, a);
 }
 
 PDC_error_t
-PDC_char_acc_cleanup(PDC_t *pdc, PDC_char_acc *a, PDC_disc_t *disc)
+PDC_char_acc_cleanup(PDC_t *pdc, PDC_char_acc *a)
 {
-  return PDC_uint8_acc_cleanup(pdc, a, disc);
+  return PDC_uint8_acc_cleanup(pdc, a);
 }
 
 PDC_error_t
-PDC_char_acc_add(PDC_t *pdc, PDC_char_acc *a, PDC_base_ed *ed, PDC_uint8 *val, PDC_disc_t *disc)
+PDC_char_acc_add(PDC_t *pdc, PDC_char_acc *a, PDC_base_ed *ed, PDC_uint8 *val)
 {
-  return PDC_uint8_acc_add(pdc, a, ed, val, disc);
+  return PDC_uint8_acc_add(pdc, a, ed, val);
 }
 
 PDC_error_t
 PDC_char_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
-			     PDC_char_acc *a, PDC_disc_t *disc)
+			     PDC_char_acc *a)
 {
   const char            *cmt = ""; 
   int                   i = 0, sz, rp;
@@ -1378,7 +1375,7 @@ PDC_char_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, con
   Void_t                *velt;
   PDC_uint8_dt_elt_t    *elt;
 
-  PDC_TRACE(pdc, disc, "PDC_char_acc_report_internal called");
+  PDC_TRACE(pdc->disc, "PDC_char_acc_report_internal called");
   if (!prefix || *prefix == 0) {
     prefix = "<top>";
   }
@@ -1429,23 +1426,21 @@ PDC_char_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, con
 
 PDC_error_t
 PDC_char_acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
-		    PDC_char_acc *a, PDC_disc_t *disc)
+		    PDC_char_acc *a)
 {
   Sfio_t *tmpstr;
   PDC_error_t res;
   PDCI_DISC_INIT_CHECKS("PDC_char_acc_report");
-  if (!a) {
-    return PDC_ERR;
-  }
-  if (!disc->errorf) {
+  PDCI_NULLPARAM_CHECK("PDC_char_acc_report", a);
+  if (!pdc->disc->errorf) {
     return PDC_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
     return PDC_ERR;
   }
-  res = PDC_char_acc_report_internal(pdc, tmpstr, prefix, what, nst, a, disc);
+  res = PDC_char_acc_report_internal(pdc, tmpstr, prefix, what, nst, a);
   if (res == PDC_OK) {
-    disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pdc->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -1494,7 +1489,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.42 2002-11-12 22:52:59 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.43 2002-11-13 17:33:29 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -1537,14 +1532,14 @@ PDC_disc_t PDC_default_disc = {
 };
 
 PDC_error_t
-PDC_open(PDC_disc_t *disc, PDC_t **pdc_out)
+PDC_open(PDC_t **pdc_out, PDC_disc_t *disc, PDC_IO_disc_t *io_disc)
 {
   Vmalloc_t    *vm;
   PDC_t        *pdc;
 
-  PDC_TRACE(NiL, &PDC_default_disc, "PDC_open called");
+  PDC_TRACE(&PDC_default_disc, "PDC_open called");
   if (!pdc_out) {
-    PDC_WARN(NiL, &PDC_default_disc, "PDC_open called with null pdc_out");
+    PDC_WARN(&PDC_default_disc, "PDC_open called with null pdc_out");
     return PDC_ERR;
   }
   if (!(vm = vmopen(Vmdcheap, Vmbest, 0))) {
@@ -1557,13 +1552,12 @@ PDC_open(PDC_disc_t *disc, PDC_t **pdc_out)
     }
     (*disc) = PDC_default_disc;
   }
-  if (!disc->io_disc) {
-    PDC_WARN(NiL, disc, "Installing default IO discipline nlrec");
-    if (PDC_ERR == PDC_nlrec_install(disc, 0)) {
-      goto any_err;
-    }
-    if (!disc->io_disc) {
-      PDC_FATAL(NiL, disc, "Unexpected failure to install default IO discipline");
+  if (io_disc) {
+    disc->io_disc = io_disc;
+  } else if (!disc->io_disc) {
+    PDC_WARN(disc, "Installing default IO discipline nlrec_noseek");
+    if (!(disc->io_disc = PDC_nlrec_noseek_make(0))) {
+      PDC_FATAL(disc, "Unexpected failure to install default IO discipline");
     }
   }
   if (!(pdc = vmnewof(vm, 0, PDC_t, 1, 0))) {
@@ -1604,7 +1598,7 @@ PDC_open(PDC_disc_t *disc, PDC_t **pdc_out)
   return PDC_OK;
 
  fatal_alloc_err:
-  PDC_FATAL(NiL, disc, "out of space error during PDC_open");
+  PDC_FATAL(disc, "out of space error during PDC_open");
  any_err:
   if (pdc) {
     if (pdc->rmm_z) {
@@ -1624,12 +1618,12 @@ PDC_open(PDC_disc_t *disc, PDC_t **pdc_out)
 }
 
 PDC_error_t
-PDC_close(PDC_t *pdc, PDC_disc_t *disc)
+PDC_close(PDC_t *pdc)
 {
 
   PDCI_DISC_INIT_CHECKS("PDC_close");
-  if (disc->io_disc) {
-    disc->io_disc->uninstall_fn(pdc, disc);
+  if (pdc->disc->io_disc) {
+    pdc->disc->io_disc->unmake_fn(pdc, pdc->disc->io_disc);
   }
   if (pdc->rmm_z) {
     RMM_close(pdc->rmm_z);
@@ -1646,94 +1640,156 @@ PDC_close(PDC_t *pdc, PDC_disc_t *disc)
   return PDC_OK;
 }
 
+
+/* ================================================================================ */
+/* EXTERNAL DISCIPLINE GET/SET FUNCTIONS */
+
+PDC_disc_t *
+PDC_get_disc(PDC_t *pdc)
+{
+  return (pdc ? pdc->disc : 0);
+}
+
+PDC_error_t
+PDC_set_disc(PDC_t *pdc, PDC_disc_t *new_disc, int xfer_io)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_set_disc");
+  PDCI_NULLPARAM_CHECK("PDC_set_disc", new_disc);
+  if (xfer_io) {
+    if (new_disc->io_disc) {
+      PDC_WARN(pdc->disc, "PDC_set_disc: Cannot transfer IO discipline when new_disc->io_disc is non-NULL");
+      return PDC_ERR;
+    }
+    new_disc->io_disc = pdc->disc->io_disc;
+    pdc->disc->io_disc = 0;
+  }
+  pdc->disc = new_disc;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_set_IO_disc(PDC_t* pdc, PDC_IO_disc_t* new_io_disc)
+{
+  PDCI_stkElt_t    *bot       = &(pdc->stack[0]);
+  PDC_IO_elt_t     *io_elt    = bot->elt;
+  size_t           io_remain  = bot->remain;
+
+  PDCI_DISC_INIT_CHECKS("PDC_set_disc");
+  PDCI_NULLPARAM_CHECK("PDC_set_disc", new_io_disc);
+  if (pdc->top != 0) {
+    PDC_WARN(pdc->disc, "PDC_set_IO_disc: cannot change IO discipline "
+	     "in the middle of a speculative read function (e.g., union, ...)");
+    return PDC_ERR;
+  }
+  if (pdc->io && pdc->disc->io_disc) {
+    /* do an clean sfclose */
+    if (PDC_ERR == pdc->disc->io_disc->sfclose_fn(pdc, pdc->disc->io_disc, io_elt, io_remain)) {
+      /* XXX perhaps it was not open?? */
+    }
+  }
+  if (pdc->disc->io_disc) {
+    /* unmake the previous discipline */
+    if (PDC_ERR == pdc->disc->io_disc->unmake_fn(pdc, pdc->disc->io_disc)) {
+      /* XXX report an error ??? */
+    }
+  }
+  pdc->disc->io_disc = new_io_disc;
+  if (pdc->io) {
+    if (PDC_ERR == pdc->disc->io_disc->sfopen_fn(pdc, new_io_disc, pdc->io, pdc->head)) {
+      /* XXX report an error ??? */
+    }
+  }
+  return PDC_OK;
+}
+
 /* ================================================================================ */
 /* EXTERNAL RMM ACCESSORS */
 
-RMM_t*
-PDC_rmm_zero  (PDC_t *pdc, PDC_disc_t *disc)
+RMM_t *
+PDC_rmm_zero(PDC_t *pdc)
 {
-  return pdc->rmm_z;
+  return (pdc ? pdc->rmm_z : 0);
 }
 
-RMM_t*
-PDC_rmm_nozero(PDC_t *pdc, PDC_disc_t *disc)
+RMM_t *
+PDC_rmm_nozero(PDC_t *pdc)
 {
-  return pdc->rmm_nz;
+  return (pdc ? pdc->rmm_nz : 0);
 }
 
 /* ================================================================================ */
 /* EXTERNAL IO FUNCTIONS */
 
 PDC_error_t
-PDC_IO_fopen(PDC_t *pdc, char *path, PDC_disc_t *disc)
+PDC_IO_fopen(PDC_t *pdc, char *path)
 {
   PDCI_DISC_INIT_CHECKS("PDC_IO_fopen");
   PDCI_NULLPARAM_CHECK("PDC_IO_fopen", path);
-  return PDC_IO_fopen_internal(pdc, path, disc);
+  return PDC_IO_fopen_internal(pdc, path);
 }
 
 PDC_error_t
-PDC_IO_fclose(PDC_t *pdc, PDC_disc_t *disc)
+PDC_IO_fclose(PDC_t *pdc)
 {
   PDCI_DISC_INIT_CHECKS("PDC_IO_fclose");
-  return PDC_IO_fclose_internal(pdc, disc);
+  return PDC_IO_fclose_internal(pdc);
 }
 
 PDC_error_t
-PDC_IO_next_rec(PDC_t *pdc, size_t *skipped_bytes_out, PDC_disc_t *disc) {
+PDC_IO_next_rec(PDC_t *pdc, size_t *skipped_bytes_out) {
   size_t  tmp_skipped_bytes;
 
   PDCI_IODISC_INIT_CHECKS("PDC_IO_next_rec");
   if (!skipped_bytes_out) {
     skipped_bytes_out = &tmp_skipped_bytes;
   }
-  return PDC_IO_next_rec_internal(pdc, skipped_bytes_out, disc);
+  return PDC_IO_next_rec_internal(pdc, skipped_bytes_out);
 }
 
 int
-PDC_IO_at_EOR(PDC_t *pdc, PDC_disc_t *disc) {
+PDC_IO_at_EOR(PDC_t *pdc) {
   PDCI_DISC_INIT_CHECKS("PDC_IO_at_EOR");
-  return PDC_IO_at_EOR_internal(pdc, disc);
+  return PDC_IO_at_EOR_internal(pdc);
 }
 
 int
-PDC_IO_at_EOF(PDC_t *pdc, PDC_disc_t *disc) {
+PDC_IO_at_EOF(PDC_t *pdc) {
   PDCI_DISC_INIT_CHECKS("PDC_IO_at_EOF");
-  return PDC_IO_at_EOF_internal(pdc, disc);
+  return PDC_IO_at_EOF_internal(pdc);
 }
 
 PDC_error_t
-PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset, PDC_disc_t *disc)
+PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
 {
   PDCI_DISC_INIT_CHECKS("PDC_IO_getPos");
   PDCI_NULLPARAM_CHECK("PDC_IO_getPos", pos);
-  return PDC_IO_getPos_internal(pdc, pos, offset, disc);
+  return PDC_IO_getPos_internal(pdc, pos, offset);
 }
 
 PDC_error_t
-PDC_IO_getLocB(PDC_t *pdc, PDC_loc_t *loc, int offset, PDC_disc_t *disc)
+PDC_IO_getLocB(PDC_t *pdc, PDC_loc_t *loc, int offset)
 {
   PDCI_DISC_INIT_CHECKS("PDC_IO_getLocB");
   PDCI_NULLPARAM_CHECK("PDC_IO_getLocB", loc);
-  return PDC_IO_getPos_internal(pdc, &(loc->b), offset, disc);
+  return PDC_IO_getPos_internal(pdc, &(loc->b), offset);
 }
 
 PDC_error_t
-PDC_IO_getLocE(PDC_t *pdc, PDC_loc_t *loc, int offset, PDC_disc_t *disc)
+PDC_IO_getLocE(PDC_t *pdc, PDC_loc_t *loc, int offset)
 {
   PDCI_DISC_INIT_CHECKS("PDC_IO_getLocE");
   PDCI_NULLPARAM_CHECK("PDC_IO_getLocE", loc);
-  return PDC_IO_getPos_internal(pdc, &(loc->e), offset, disc);
+  return PDC_IO_getPos_internal(pdc, &(loc->e), offset);
 }
 
 PDC_error_t
-PDC_IO_getLoc(PDC_t *pdc, PDC_loc_t *loc, int offset, PDC_disc_t *disc)
+PDC_IO_getLoc(PDC_t *pdc, PDC_loc_t *loc, int offset)
 {
   PDCI_DISC_INIT_CHECKS("PDC_IO_getLoc");
   PDCI_NULLPARAM_CHECK("PDC_IO_getLoc", loc);
-  if (PDC_ERR == PDC_IO_getPos_internal(pdc, &(loc->b), offset, disc)) {
+  if (PDC_ERR == PDC_IO_getPos_internal(pdc, &(loc->b), offset)) {
   } return PDC_ERR;
-  return PDC_IO_getPos_internal(pdc, &(loc->e), offset, disc);
+  return PDC_IO_getPos_internal(pdc, &(loc->e), offset);
 }
 
 /* ================================================================================ */
@@ -1741,7 +1797,7 @@ PDC_IO_getLoc(PDC_t *pdc, PDC_loc_t *loc, int offset, PDC_disc_t *disc)
 
 PDC_error_t
 PDC_char_lit_read(PDC_t *pdc, PDC_base_em *em,
-		  PDC_base_ed *ed, unsigned char c, PDC_disc_t *disc)
+		  PDC_base_ed *ed, unsigned char c)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -1753,12 +1809,12 @@ PDC_char_lit_read(PDC_t *pdc, PDC_base_em *em,
     ed = &edt;
   }
   PDCI_READFN_INIT_CHECKS("PDC_char_lit_read");
-  return PDC_char_lit_read_internal(pdc, em, ed, c, disc);
+  return PDC_char_lit_read_internal(pdc, em, ed, c);
 }
 
 PDC_error_t
 PDC_str_lit_read(PDC_t *pdc, PDC_base_em *em,
-		 PDC_base_ed *ed, const PDC_string *s, PDC_disc_t *disc)
+		 PDC_base_ed *ed, const PDC_string *s)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -1770,12 +1826,12 @@ PDC_str_lit_read(PDC_t *pdc, PDC_base_em *em,
     ed = &edt;
   }
   PDCI_READFN_INIT_CHECKS("PDC_str_lit_read");
-  return PDC_str_lit_read_internal(pdc, em, ed, s, disc);
+  return PDC_str_lit_read_internal(pdc, em, ed, s);
 }
 
 PDC_error_t
 PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
-	      PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc)
+	      PDC_base_ed *ed, PDC_int32 *res_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -1788,7 +1844,7 @@ PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
   }
   PDCI_READFN_INIT_CHECKS("PDC_countXtoY");
   PDCI_NULLPARAM_CHECK("PDC_countXtoY", res_out);
-  return PDC_countXtoY_internal(pdc, em, x, y, ed, res_out, disc);
+  return PDC_countXtoY_internal(pdc, em, x, y, ed, res_out);
 }
 
 /* ================================================================================ */
@@ -1796,7 +1852,7 @@ PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 
 PDC_error_t
 PDC_adate_read (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, 
-		PDC_uint32 *res_out, PDC_disc_t *disc)
+		PDC_uint32 *res_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -1808,7 +1864,7 @@ PDC_adate_read (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed,
     ed = &edt;
   }
   PDCI_READFN_INIT_CHECKS("PDC_adate_read");
-  return PDC_adate_read_internal(pdc, em, ed, res_out, disc);
+  return PDC_adate_read_internal(pdc, em, ed, res_out);
 }
 
 /* ================================================================================ */
@@ -1819,7 +1875,7 @@ PDC_adate_read (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed,
  */
 
 PDC_error_t
-PDC_string_init(PDC_t *pdc, PDC_string *s, PDC_disc_t *disc)
+PDC_string_init(PDC_t *pdc, PDC_string *s)
 {
   if (!s) {
     return PDC_ERR;
@@ -1829,7 +1885,7 @@ PDC_string_init(PDC_t *pdc, PDC_string *s, PDC_disc_t *disc)
 }
 
 PDC_error_t
-PDC_string_cleanup(PDC_t *pdc, PDC_string *s, PDC_disc_t *disc)
+PDC_string_cleanup(PDC_t *pdc, PDC_string *s)
 {
   if (!s) {
     return PDC_ERR;
@@ -1839,7 +1895,7 @@ PDC_string_cleanup(PDC_t *pdc, PDC_string *s, PDC_disc_t *disc)
 }
 
 PDC_error_t
-PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len, PDC_disc_t *disc)
+PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
 {
   PDCI_DISC_INIT_CHECKS("PDC_string_copy");
   PDCI_NULLPARAM_CHECK("PDC_string_copy", src);
@@ -1857,19 +1913,19 @@ PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len, PDC_d
   return PDC_OK;
 
  fatal_alloc_err:
-  PDC_FATAL(pdc, disc, "PDC_string_copy: out of space");
+  PDC_FATAL(pdc->disc, "PDC_string_copy: out of space");
   return PDC_ERR;
 }
 
 PDC_error_t
-PDC_string_ed_init(PDC_t *pdc, PDC_string_ed *ed, PDC_disc_t *disc)
+PDC_string_ed_init(PDC_t *pdc, PDC_string_ed *ed)
 {
   PDCI_DISC_INIT_CHECKS("PDC_string_ed_init");
   return PDC_OK;
 }
 
 PDC_error_t
-PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed, PDC_disc_t *disc)
+PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed)
 {
   PDCI_DISC_INIT_CHECKS("PDC_string_ed_cleanup");
   return PDC_OK;
@@ -1881,7 +1937,7 @@ PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed, PDC_disc_t *disc)
 
 PDC_error_t
 PDC_string_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-		   PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc)
+		   PDC_base_ed *ed, PDC_string *s_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -1893,11 +1949,11 @@ PDC_string_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
     ed = &edt;
   }
   PDCI_READFN_INIT_CHECKS("PDC_string_fw_read");
-  return PDC_string_fw_read_internal(pdc, em, width, ed, s_out, disc);
+  return PDC_string_fw_read_internal(pdc, em, width, ed, s_out);
 }
 
 PDC_string_stopChar_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
-			 PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc)
+			 PDC_base_ed *ed, PDC_string *s_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -1909,12 +1965,12 @@ PDC_string_stopChar_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
     ed = &edt;
   }
   PDCI_READFN_INIT_CHECKS("PDC_string_stopChar_read");
-  return PDC_string_stopChar_read_internal(pdc, em, stopChar, ed, s_out, disc);
+  return PDC_string_stopChar_read_internal(pdc, em, stopChar, ed, s_out);
 }
 
 PDC_error_t
 PDC_string_stopRegexp_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-			   PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc)
+			   PDC_base_ed *ed, PDC_string *s_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -1927,7 +1983,7 @@ PDC_string_stopRegexp_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp
   }
   PDCI_READFN_INIT_CHECKS("PDC_string_stopRegexp_read");
   PDCI_NULLPARAM_CHECK("PDC_string_stopRegexp_read", stopRegexp);
-  return PDC_string_stopRegexp_read_internal(pdc, em, stopRegexp, ed, s_out, disc);
+  return PDC_string_stopRegexp_read_internal(pdc, em, stopRegexp, ed, s_out);
 }
 
 /* ================================================================================ */
@@ -1943,7 +1999,7 @@ struct PDC_regexp_s {
 };
 
 PDC_error_t
-PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, PDC_disc_t *disc)
+PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out)
 {
   PDC_regexp_t *res;
   size_t        last;
@@ -1952,11 +2008,11 @@ PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, PD
   PDCI_DISC_INIT_CHECKS("PDC_regexp_compile");
 
   if (!regexp_out) {
-    PDC_WARN(pdc, disc, "PDC_regexp_compile: regexp_out cannot be NULL");
+    PDC_WARN(pdc->disc, "PDC_regexp_compile: regexp_out cannot be NULL");
     return PDC_ERR;
   }
   if (!regexp || !(*regexp)) {
-    PDC_WARN(pdc, disc, "PDC_regexp_compile: null regular expression specified");
+    PDC_WARN(pdc->disc, "PDC_regexp_compile: null regular expression specified");
     return PDC_ERR;
   }
   last = strlen(regexp) - 1;
@@ -1970,7 +2026,7 @@ PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, PD
     last -= 4;
   }
   if (last < 2 || regexp[0] != '[' || regexp[last] != ']') {
-    PDC_WARN1(pdc, disc,
+    PDC_WARN1(pdc->disc,
 	      "PDC_regexp_compile: Invalid regular expression: %s\n"
 	      "    currently only support the forms \"EOR\", \"[<chars>]\", and \"[<chars>]|EOR\"",
 	      PDCI_fmtQStrL(regexp, strlen(regexp)));
@@ -1979,7 +2035,7 @@ PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, PD
 
  done:
   if (!(res = vmnewof(pdc->vm, 0, PDC_regexp_t, 1, last-1))) {
-    PDC_FATAL(pdc, disc, "Out of space [regexp]");
+    PDC_FATAL(pdc->disc, "Out of space [regexp]");
     return PDC_ERR;
   }
   res->invert = 0;
@@ -1996,7 +2052,7 @@ PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, PD
 }
 
 PDC_error_t
-PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp, PDC_disc_t *disc)
+PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp)
 {
   PDCI_DISC_INIT_CHECKS("PDC_regexp_free");
   if (regexp) {
@@ -2014,7 +2070,7 @@ PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp, PDC_disc_t *disc)
  */
 
 PDC_error_t
-PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes, PDC_disc_t *disc)
+PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes)
 {
   PDCI_DISC_INIT_CHECKS("PDC_swap_bytes");
 
@@ -2029,7 +2085,7 @@ PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes, PDC_disc_t *disc)
     swapmem(7, bytes, bytes, num_bytes);
     return PDC_OK;
   }
-  PDC_WARN1(pdc, disc, "PDC_swap_bytes: invalid num_bytes (%d), use 2, 4, or 8", num_bytes);
+  PDC_WARN1(pdc->disc, "PDC_swap_bytes: invalid num_bytes (%d), use 2, 4, or 8", num_bytes);
   return PDC_ERR;
 }
 
@@ -2041,7 +2097,7 @@ PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes, PDC_disc_t *disc)
 /* INTERNAL ERROR REPORTING FUNCTIONS */
 
 PDC_error_t
-PDCI_report_err(PDC_t *pdc, PDC_disc_t *disc, int level, PDC_loc_t *loc,
+PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 		PDC_errCode_t errCode, const char *format, ...)
 {
   PDC_error_f pdc_errorf;
@@ -2051,37 +2107,26 @@ PDCI_report_err(PDC_t *pdc, PDC_disc_t *disc, int level, PDC_loc_t *loc,
   size_t  tmplen1, tmplen2, tmplen3;
   int     nullspan = 0;
 
-  PDC_TRACE(pdc, disc, "PDCI_report_err called");
-  pdc_errorf = disc->errorf;
+  PDC_TRACE(pdc->disc, "PDCI_report_err called");
+  pdc_errorf = pdc->disc->errorf;
   if (PDC_GET_LEV(level) == PDC_LEV_FATAL) {
     severity = "FATAL error";
     if (!pdc_errorf) { /* need an error function anyway for fatal case */
       pdc_errorf = PDC_errorf;
     }
-  } else if (pdc->speclev > 0 || disc->e_rep == PDC_errorRep_None || !pdc_errorf) {
+  } else if (pdc->speclev > 0 || pdc->disc->e_rep == PDC_errorRep_None || !pdc_errorf) {
     return PDC_OK;
   }
   if (loc && loc->b.num == loc->e.num && loc->e.byte == loc->b.byte -1 ) {
     nullspan = 1;
   }
   sfstrset(pdc->tmp, 0);
-  if (disc->e_rep == PDC_errorRep_Min) {
+  if (pdc->disc->e_rep == PDC_errorRep_Min) {
     if (loc) {
-      Sfio_t *tmpstr; /* XXX_REMOVE_ME */
-      if (!(tmpstr = sfstropen())) {
-	PDC_FATAL(pdc, disc, "failed to open an sfstr");
-      }
-      sfstrset(tmpstr, 0);
-      sfprintf(tmpstr, "%s", severity);
-      sfprintf(tmpstr, " at %s", loc->b.unit);
-      sfprintf(tmpstr, " %d", loc->b.num);
-      sfprintf(tmpstr, " char %d", loc->b.byte);
-      sfprintf(tmpstr, " : errCode %d", errCode);
-      pdc_errorf(NiL, level, "%s", sfstruse(tmpstr));
-      sfstrclose(tmpstr);
+      pdc_errorf(NiL, level, "%s at %s %d char %d : errCode %d",
+		 severity, loc->b.unit, loc->b.num, loc->b.byte, errCode);
     } else {
-      sfprintf(pdc->tmp, "%s : errCode %d", severity, errCode);
-      pdc_errorf(NiL, level, "%s", sfstruse(pdc->tmp));
+      pdc_errorf(NiL, level, "%s : errCode %d", severity, errCode);
     }
     return PDC_OK;
   }
@@ -2237,10 +2282,10 @@ PDCI_report_err(PDC_t *pdc, PDC_disc_t *disc, int level, PDC_loc_t *loc,
       sfprintf(pdc->tmp, "%s : %s ", severity, msg);
     }
   }
-  if (loc && (disc->e_rep == PDC_errorRep_Max)) {
+  if (loc && (pdc->disc->e_rep == PDC_errorRep_Max)) {
     PDC_IO_elt_t *elt1, *elt2;
     if (loc->b.num != loc->e.num) {
-      if (PDC_OK == PDCI_IO_getElt(pdc, loc->b.num, &elt1, disc)) {
+      if (PDC_OK == PDCI_IO_getElt(pdc, loc->b.num, &elt1)) {
 	sfprintf(pdc->tmp, "\n[%s %d]", loc->b.unit, loc->b.num);
 	if (elt1->len == 0) {
 	  sfprintf(pdc->tmp, "(**EMPTY**)>>>");
@@ -2252,7 +2297,7 @@ PDCI_report_err(PDC_t *pdc, PDC_disc_t *disc, int level, PDC_loc_t *loc,
 	  sfprintf(pdc->tmp, "%s>>>%s", tmpstr1, tmpstr2);
 	}
       }
-      if (PDC_OK == PDCI_IO_getElt(pdc, loc->e.num, &elt2, disc)) {
+      if (PDC_OK == PDCI_IO_getElt(pdc, loc->e.num, &elt2)) {
 	if (!elt1) {
 	  sfprintf(pdc->tmp, "\n[%s %d]: ... >>>(char pos %d) ...",
 		   loc->b.unit, loc->b.num, loc->b.byte);
@@ -2269,7 +2314,7 @@ PDCI_report_err(PDC_t *pdc, PDC_disc_t *disc, int level, PDC_loc_t *loc,
 	}
       }
     } else { /* same elt */
-      if (PDC_OK == PDCI_IO_getElt(pdc, loc->e.num, &elt1, disc)) {
+      if (PDC_OK == PDCI_IO_getElt(pdc, loc->e.num, &elt1)) {
 	sfprintf(pdc->tmp, "\n[%s %d]", loc->e.unit, loc->e.num);
 	if (elt1->len == 0) {
 	  sfprintf(pdc->tmp, ">>>(**EMPTY**)<<<");
@@ -2300,8 +2345,7 @@ PDCI_report_err(PDC_t *pdc, PDC_disc_t *disc, int level, PDC_loc_t *loc,
 
 PDC_error_t
 PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s,
-		   unsigned char *c_out, size_t *offset_out,
-		   PDC_disc_t *disc)
+		   unsigned char *c_out, size_t *offset_out)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
@@ -2309,14 +2353,14 @@ PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s,
   int             matchlen = -1;
 
   PDCI_IODISC_INIT_CHECKS("PDCI_char_lit_scan");
-  PDC_TRACE2(pdc, disc, "PDCI_char_lit_scan args: c %s stop %s", PDCI_fmtQChar(c), PDCI_fmtQChar(s));
+  PDC_TRACE2(pdc->disc, "PDCI_char_lit_scan args: c %s stop %s", PDCI_fmtQChar(c), PDCI_fmtQChar(s));
   if (offset_out) {
     (*offset_out) = 0;
   }
-  if (disc->stop_regexp) {
-    matchlen = disc->stop_regexp->max;
+  if (pdc->disc->stop_regexp) {
+    matchlen = pdc->disc->stop_regexp->max;
   }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     return PDC_ERR;
   }
   while (1) {
@@ -2324,7 +2368,7 @@ PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s,
       if (eor || eof) {
 	break;
       }
-      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
 	return PDC_ERR;
       }
       if (bytes == 0) {
@@ -2347,15 +2391,15 @@ PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s,
 	(*offset_out) = (p1-begin);
       }
       p1++; /* advance beyond char found */
-      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin, disc)) {
-	PDC_FATAL(pdc, disc, "Internal error : unexpected failure of PDCI_IO_forward");
+      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
       }
       return PDC_OK;
     }
-    if (disc->stop_maxlen && ((p1-begin) >= disc->stop_maxlen)) {
+    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       break;
     }
-    if (disc->stop_regexp && PDCI_regexpMatch(pdc, disc->stop_regexp, p1, end, disc)) {
+    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
       break;
     }
     p1++;
@@ -2365,7 +2409,7 @@ PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s,
 
 PDC_error_t
 PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
-		  PDC_string **str_out, size_t *offset_out, PDC_disc_t *disc) 
+		  PDC_string **str_out, size_t *offset_out) 
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
@@ -2373,22 +2417,22 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
   int             matchlen = -1;
 
   PDCI_IODISC_INIT_CHECKS("PDCI_str_lit_scan");
-  PDC_TRACE2(pdc, disc, "PDCI_str_lit_scan args: findStr = %s stopStre = %s",
+  PDC_TRACE2(pdc->disc, "PDCI_str_lit_scan args: findStr = %s stopStre = %s",
 	     PDCI_fmtQStr(findStr), PDCI_fmtQStr(stopStr));
   if (offset_out) {
     (*offset_out) = 0;
   }
   if (!findStr || findStr->len == 0) {
-    PDC_WARN(pdc, disc, "PDC_str_lit_scan : null/empty findStr specified");
+    PDC_WARN(pdc->disc, "PDC_str_lit_scan : null/empty findStr specified");
     return PDC_ERR;
   }
-  if (disc->stop_regexp) {
-    matchlen = disc->stop_regexp->max;
+  if (pdc->disc->stop_regexp) {
+    matchlen = pdc->disc->stop_regexp->max;
   }
   if (matchlen != 0 && stopStr && matchlen < stopStr->len) {
     matchlen = stopStr->len;
   }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     return PDC_ERR;
   }
   while (1) {
@@ -2396,7 +2440,7 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
       if (eor || eof) {
 	break;
       }
-      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
 	return PDC_ERR;
       }
       if (bytes == 0) {
@@ -2419,8 +2463,8 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
 	(*offset_out) = (p1-begin);
       }
       p1 += findStr->len; /* advance beyond findStr */
-      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin, disc)) {
-	PDC_FATAL(pdc, disc, "Internal error : unexpected failure of PDCI_IO_forward");
+      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
       }
       return PDC_OK;
     }
@@ -2433,15 +2477,15 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
 	(*offset_out) = (p1-begin);
       }
       p1 += stopStr->len; /* advance beyond stopStr */
-      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin, disc)) {
-	PDC_FATAL(pdc, disc, "Internal error : unexpected failure of PDCI_IO_forward");
+      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
       }
       return PDC_OK;
     }
-    if (disc->stop_maxlen && ((p1-begin) >= disc->stop_maxlen)) {
+    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       break;
     }
-    if (disc->stop_regexp && PDCI_regexpMatch(pdc, disc->stop_regexp, p1, end, disc)) {
+    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
       break;
     }
     p1++;
@@ -2453,22 +2497,22 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
 /* INTERNAL VERSIONS OF EXTERNAL IO FUNCTIONS */
 
 PDC_error_t
-PDC_IO_fopen_internal(PDC_t *pdc, char *path, PDC_disc_t *disc)
+PDC_IO_fopen_internal(PDC_t *pdc, char *path)
 {
   PDCI_stkElt_t    *tp        = &(pdc->stack[0]);
   PDC_IO_elt_t     *next_elt;
 
-  PDC_TRACE(pdc, disc, "PDC_IO_fopen_internal called");
+  PDC_TRACE(pdc->disc, "PDC_IO_fopen_internal called");
   if (pdc->io) {
-    PDC_WARN(pdc, disc, "fopen called while previous file still open");
+    PDC_WARN(pdc->disc, "fopen called while previous file still open");
     return PDC_ERR;
   }
-  if (!disc->io_disc) {
-    PDC_WARN(pdc, disc, "fopen called with no IO discipline installed");
+  if (!pdc->disc->io_disc) {
+    PDC_WARN(pdc->disc, "fopen called with no IO discipline installed");
     return PDC_ERR;
   }
   if (!(pdc->io = sfopen(NiL, path, "r"))) {
-    PDC_SYSERR1(pdc, disc, "Failed to open file \"%s\"", path);
+    PDC_SYSERR1(pdc->disc, "Failed to open file \"%s\"", path);
     return PDC_ERR;
   }
 #if 1
@@ -2476,8 +2520,8 @@ PDC_IO_fopen_internal(PDC_t *pdc, char *path, PDC_disc_t *disc)
   sfsetbuf(pdc->io, (Void_t*)pdc->sfbuf, 1024 * 1024);
 #endif
   if (!(pdc->path = vmnewof(pdc->vm, 0, char, strlen(path) + 1, 0))) {
-    PDC_FATAL(pdc, disc, "out of space [string to record file path]");
-    PDC_IO_fclose(pdc, disc);
+    PDC_FATAL(pdc->disc, "out of space [string to record file path]");
+    PDC_IO_fclose(pdc);
     return PDC_ERR;
   }
   strcpy(pdc->path, path);
@@ -2487,31 +2531,31 @@ PDC_IO_fopen_internal(PDC_t *pdc, char *path, PDC_disc_t *disc)
   pdc->speclev    = 0;
 
   /* open IO discipline */
-  if (PDC_ERR == disc->io_disc->sfopen_fn(pdc, pdc->io, pdc->head, disc)) {
+  if (PDC_ERR == pdc->disc->io_disc->sfopen_fn(pdc, pdc->disc->io_disc, pdc->io, pdc->head)) {
     return PDC_ERR;
   }
   /* perform first read */
-  if (PDC_ERR == disc->io_disc->read_fn(pdc, 0, 0, &next_elt, disc)) {
+  if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, 0, 0, &next_elt)) {
     return PDC_ERR;
   }
   tp->elt = PDC_FIRST_ELT(pdc->head);
   if (tp->elt == pdc->head || tp->elt != next_elt) {
-    PDC_FATAL(pdc, disc, "Internal error : IO read function failure in PDC_IO_fopen_internal");
+    PDC_FATAL(pdc->disc, "Internal error : IO read function failure in PDC_IO_fopen_internal");
   }
   tp->remain = tp->elt->len;
   return PDC_OK;
 }
 
 PDC_error_t
-PDC_IO_fclose_internal(PDC_t *pdc, PDC_disc_t *disc)
+PDC_IO_fclose_internal(PDC_t *pdc)
 {
-  PDC_TRACE(pdc, disc, "PDC_IO_fclose_internal called");
+  PDC_TRACE(pdc->disc, "PDC_IO_fclose_internal called");
   if (!pdc->io) {
     return PDC_ERR;
   }
   /* close IO discpline */
-  if (disc->io_disc) {
-    disc->io_disc->sfclose_fn(pdc, 0, 0, disc); /* do not both returning bytes to io stream */
+  if (pdc->disc->io_disc) {
+    pdc->disc->io_disc->sfclose_fn(pdc, pdc->disc->io_disc, 0, 0); /* do not both returning bytes to io stream */
   }
   if (pdc->io) {
     sfclose(pdc->io);
@@ -2526,7 +2570,7 @@ PDC_IO_fclose_internal(PDC_t *pdc, PDC_disc_t *disc)
 }
 
 PDC_error_t
-PDC_IO_next_rec_internal(PDC_t *pdc, size_t *skipped_bytes_out, PDC_disc_t *disc) {
+PDC_IO_next_rec_internal(PDC_t *pdc, size_t *skipped_bytes_out) {
   PDCI_stkElt_t    *tp        = &(pdc->stack[pdc->top]);
   PDCI_stkElt_t    *bot       = &(pdc->stack[0]);
   PDC_IO_elt_t     *io_elt    = bot->elt;
@@ -2534,10 +2578,10 @@ PDC_IO_next_rec_internal(PDC_t *pdc, size_t *skipped_bytes_out, PDC_disc_t *disc
   PDC_IO_elt_t     *next_elt;
   int              prev_eor;
 
-  PDC_TRACE(pdc, disc, "PDC_IO_next_rec_internal called");
+  PDC_TRACE(pdc->disc, "PDC_IO_next_rec_internal called");
   (*skipped_bytes_out) = 0;
-  if (disc->io_disc->uses_eor == 0) {
-    PDC_WARN(pdc, disc, "PDC_IO_next_rec called when disc->io_disc does not support records");
+  if (pdc->disc->io_disc->uses_eor == 0) {
+    PDC_WARN(pdc->disc, "PDC_IO_next_rec called when pdc->disc->io_disc does not support records");
     return PDC_ERR;
   }
   if (pdc->top == 0) { /* no need to preserve any bytes on read_fn call */ 
@@ -2556,14 +2600,14 @@ PDC_IO_next_rec_internal(PDC_t *pdc, size_t *skipped_bytes_out, PDC_disc_t *disc
       tp->elt = tp->elt->next;
     } else {
       /* use IO disc read_fn */
-      if (PDC_ERR == disc->io_disc->read_fn(pdc, io_elt, io_remain, &next_elt, disc)) {
+      if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
 	/* perhaps put an eof rec in */
 	tp->elt = PDC_LAST_ELT(pdc->head);
 	tp->remain = 0;
 	return PDC_ERR;
       }
       if (next_elt == pdc->head) { /* should not happen */
-	PDC_FATAL(pdc, disc, "Internal error, PDC_IO_next_rec_internal observed incorrect read_fn behavior");
+	PDC_FATAL(pdc->disc, "Internal error, PDC_IO_next_rec_internal observed incorrect read_fn behavior");
 	return PDC_ERR;
       }
       tp->elt = next_elt;
@@ -2578,29 +2622,29 @@ PDC_IO_next_rec_internal(PDC_t *pdc, size_t *skipped_bytes_out, PDC_disc_t *disc
 }
 
 int
-PDC_IO_at_EOR_internal(PDC_t *pdc, PDC_disc_t *disc) {
+PDC_IO_at_EOR_internal(PDC_t *pdc) {
   PDCI_stkElt_t    *tp        = &(pdc->stack[pdc->top]);
   PDC_IO_elt_t     *tpelt     = tp->elt;
-  PDC_TRACE(pdc, disc, "PDC_IO_at_EOR_internal called");
+  PDC_TRACE(pdc->disc, "PDC_IO_at_EOR_internal called");
   return (tp->remain == 0 && tpelt && tpelt->eor) ? 1 : 0;
 }
 
 int
-PDC_IO_at_EOF_internal(PDC_t *pdc, PDC_disc_t *disc) {
+PDC_IO_at_EOF_internal(PDC_t *pdc) {
   PDCI_stkElt_t    *tp        = &(pdc->stack[pdc->top]);
   PDC_IO_elt_t     *tpelt     = tp->elt;
-  PDC_TRACE(pdc, disc, "PDC_IO_at_EOF_internal called");
+  PDC_TRACE(pdc->disc, "PDC_IO_at_EOF_internal called");
   return (tp->remain == 0 && tpelt && tpelt->eof) ? 1 : 0;
 }
 
 PDC_error_t
-PDC_IO_getPos_internal(PDC_t *pdc, PDC_pos_t *pos, int offset, PDC_disc_t *disc)
+PDC_IO_getPos_internal(PDC_t *pdc, PDC_pos_t *pos, int offset)
 {
   PDCI_stkElt_t    *tp        = &(pdc->stack[pdc->top]);
   PDC_IO_elt_t     *elt       = tp->elt;
   size_t           remain     = tp->remain;
   size_t           avail;
-  PDC_TRACE(pdc, disc, "PDC_IO_getPos_internal called");
+  PDC_TRACE(pdc->disc, "PDC_IO_getPos_internal called");
   /* invariant: remain should be in range [1, elt->len]; should only be 0 if elt->len is 0 */
   if (offset > 0) {
     while (1) {
@@ -2667,12 +2711,12 @@ PDC_IO_getPos_internal(PDC_t *pdc, PDC_pos_t *pos, int offset, PDC_disc_t *disc)
 
 PDC_error_t
 PDCI_IO_needbytes(PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char **e_out,
-		  int *eor_out, int *eof_out, size_t *bytes_out, PDC_disc_t *disc)
+		  int *eor_out, int *eof_out, size_t *bytes_out)
 {
   PDCI_stkElt_t   *tp       = &(pdc->stack[pdc->top]);
   PDC_IO_elt_t    *elt      = tp->elt;
 
-  PDC_TRACE(pdc, disc, "PDCI_IO_needbytes called");
+  PDC_TRACE(pdc->disc, "PDCI_IO_needbytes called");
   (*bytes_out) = tp->remain;
   (*b_out) = (*p1_out) = (*p2_out) = (elt->end - tp->remain);
 
@@ -2688,7 +2732,7 @@ PDCI_IO_needbytes(PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char *
 
 PDC_error_t
 PDCI_IO_morebytes(PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char **e_out,
-		  int *eor_out, int *eof_out, size_t *bytes_out, PDC_disc_t *disc)
+		  int *eor_out, int *eof_out, size_t *bytes_out)
 {
   PDC_IO_elt_t     *lastelt   = PDC_LAST_ELT(pdc->head);
   PDCI_stkElt_t    *bot       = &(pdc->stack[0]);
@@ -2699,20 +2743,20 @@ PDCI_IO_morebytes(PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char *
   char             *prev_lastelt_end;
 
   if (lastelt->eor|lastelt->eof) {
-    PDC_FATAL(pdc, disc, "Internal error, PDCI_IO_morebytes called when lastelt eor or eof is set");
+    PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_morebytes called when lastelt eor or eof is set");
     return PDC_ERR;
   }
   if ((prev_lastelt_end = lastelt->end) != (*e_out)) {
-    PDC_FATAL(pdc, disc, "Internal error, PDCI_IO_morebytes called when lastelt->end != (*e_out)");
+    PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_morebytes called when lastelt->end != (*e_out)");
     return PDC_ERR;
   }
-  if (PDC_ERR == disc->io_disc->read_fn(pdc, io_elt, io_remain, &next_elt, disc)) {
+  if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
     (*bytes_out) = 0;
     (*eof_out)   = 1;
     return PDC_ERR;
   }
   if (lastelt->next != next_elt || next_elt == pdc->head) { /* should not happen */
-    PDC_FATAL(pdc, disc, "Internal error, PDCI_IO_morebytes observed incorrect read_fn behavior");
+    PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_morebytes observed incorrect read_fn behavior");
     (*bytes_out) = 0;
     (*eof_out)   = 1;
     return PDC_ERR;
@@ -2745,7 +2789,7 @@ PDCI_IO_morebytes(PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char *
 }
 
 PDC_error_t
-PDCI_IO_forward(PDC_t *pdc, size_t num_bytes, PDC_disc_t *disc)
+PDCI_IO_forward(PDC_t *pdc, size_t num_bytes)
 {
   PDCI_stkElt_t    *tp        = &(pdc->stack[pdc->top]);
   size_t todo                 = num_bytes;
@@ -2754,15 +2798,15 @@ PDCI_IO_forward(PDC_t *pdc, size_t num_bytes, PDC_disc_t *disc)
   size_t           io_remain  = bot->remain;
   PDC_IO_elt_t     *next_elt;
 
-  PDC_TRACE(pdc, disc, "PDCI_IO_forward called");
+  PDC_TRACE(pdc->disc, "PDCI_IO_forward called");
   /* should be able to move forward without reading new bytes or advancing past EOR/EOF */
   while (todo > 0) {
     if (tp->remain == 0) {
       if (tp->elt->eor|tp->elt->eof) {
-	PDC_FATAL(pdc, disc, "Internal error, PDCI_IO_forward hit EOR OR EOF");
+	PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_forward hit EOR OR EOF");
       }
       if (tp->elt->next == pdc->head) {
-	PDC_FATAL(pdc, disc, "Internal error, PDCI_IO_forward would need to read bytes from io stream");
+	PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_forward would need to read bytes from io stream");
 	return PDC_ERR;
       }
       tp->elt = tp->elt->next;
@@ -2793,14 +2837,14 @@ PDCI_IO_forward(PDC_t *pdc, size_t num_bytes, PDC_disc_t *disc)
     io_elt    = 0;
     io_remain = 0;
   }
-  if (PDC_ERR == disc->io_disc->read_fn(pdc, io_elt, io_remain, &next_elt, disc)) {
+  if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
     /* perhaps put an eof rec in */
     tp->elt = PDC_LAST_ELT(pdc->head);
     tp->remain = 0;
     return PDC_ERR;
   }
   if (next_elt == pdc->head) { /* should not happen */
-    PDC_FATAL(pdc, disc, "Internal error, PDCI_IO_forward observed incorrect read_fn behavior");
+    PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_forward observed incorrect read_fn behavior");
     return PDC_ERR;
   }
   tp->elt = next_elt;
@@ -2809,15 +2853,15 @@ PDCI_IO_forward(PDC_t *pdc, size_t num_bytes, PDC_disc_t *disc)
 }
 
 PDC_error_t
-PDCI_IO_checkpoint(PDC_t *pdc, int speculative, PDC_disc_t *disc)
+PDCI_IO_checkpoint(PDC_t *pdc, int speculative)
 {
-  PDC_TRACE(pdc, disc, "PDCI_IO_checkpoint called");
+  PDC_TRACE(pdc->disc, "PDCI_IO_checkpoint called");
   if (++(pdc->top) >= pdc->salloc) {
     PDCI_stkElt_t *stack_next;
     size_t salloc_next = 2 * pdc->salloc;
-    PDC_DBG2(pdc, disc, "XXX Growing from %d to %d checkpoint stack slots", pdc->salloc, salloc_next);
+    PDC_DBG2(pdc->disc, "XXX Growing from %d to %d checkpoint stack slots", pdc->salloc, salloc_next);
     if (!(stack_next = vmnewof(pdc->vm, pdc->stack, PDCI_stkElt_t, salloc_next, 0))) {
-      PDC_FATAL(pdc, disc, "out of space [input cursor stack]");
+      PDC_FATAL(pdc->disc, "out of space [input cursor stack]");
       return PDC_ERR;
     }
     pdc->stack  = stack_next;
@@ -2833,11 +2877,11 @@ PDCI_IO_checkpoint(PDC_t *pdc, int speculative, PDC_disc_t *disc)
 }
 
 PDC_error_t
-PDCI_IO_restore(PDC_t *pdc, PDC_disc_t *disc)
+PDCI_IO_restore(PDC_t *pdc)
 {
-  PDC_TRACE(pdc, disc, "PDCI_IO_restore called");
+  PDC_TRACE(pdc->disc, "PDCI_IO_restore called");
   if (pdc->top <= 0) {
-    PDC_WARN(pdc, disc, "Internal error: PDCI_IO_restore called when stack top <= 0");
+    PDC_WARN(pdc->disc, "Internal error: PDCI_IO_restore called when stack top <= 0");
     return PDC_ERR;
   }
   if (pdc->stack[pdc->top].spec) {
@@ -2849,11 +2893,11 @@ PDCI_IO_restore(PDC_t *pdc, PDC_disc_t *disc)
 }
 
 PDC_error_t
-PDCI_IO_commit(PDC_t *pdc, PDC_disc_t *disc)
+PDCI_IO_commit(PDC_t *pdc)
 {
-  PDC_TRACE(pdc, disc, "PDCI_IO_commit called");
+  PDC_TRACE(pdc->disc, "PDCI_IO_commit called");
   if (pdc->top <= 0) {
-    PDC_WARN(pdc, disc, "Internal error: PDCI_IO_commit called when stack top <= 0");
+    PDC_WARN(pdc->disc, "Internal error: PDCI_IO_commit called when stack top <= 0");
     return PDC_ERR;
   }
   if (pdc->stack[pdc->top].spec) {
@@ -2867,19 +2911,19 @@ PDCI_IO_commit(PDC_t *pdc, PDC_disc_t *disc)
 }
 
 unsigned int
-PDCI_spec_level(PDC_t *pdc, PDC_disc_t *disc)
+PDCI_spec_level(PDC_t *pdc)
 {
-  PDC_TRACE(pdc, disc, "PDCI_spec_level called");
+  PDC_TRACE(pdc->disc, "PDCI_spec_level called");
   return pdc->speclev;
 }
 
 PDC_error_t
-PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out, PDC_disc_t *disc) {
+PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out) {
   PDC_IO_elt_t *elt;
 
-  PDC_TRACE(pdc, disc, "PDCI_IO_getElt called");
+  PDC_TRACE(pdc->disc, "PDCI_IO_getElt called");
   if (!elt_out) {
-    PDC_WARN(pdc, disc, "PDCI_IO_getElt called with null elt_out");
+    PDC_WARN(pdc->disc, "PDCI_IO_getElt called with null elt_out");
     return PDC_ERR;
   }
   for (elt = PDC_FIRST_ELT(pdc->head); elt != pdc->head; elt = elt->next) {
@@ -2896,21 +2940,21 @@ PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out, PDC_disc_t *disc)
 
 PDC_error_t
 PDC_char_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
-			   PDC_base_ed *ed, unsigned char c, PDC_disc_t *disc)
+			   PDC_base_ed *ed, unsigned char c)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
 
-  PDC_TRACE1(pdc, disc, "PDC_char_lit_read_internal called, arg: %s", PDCI_fmtQChar(c));
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  PDC_TRACE1(pdc->disc, "PDC_char_lit_read_internal called, arg: %s", PDCI_fmtQChar(c));
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   if (bytes == 0) {
     goto at_eor_or_eof_err;
   }
   if ((*em == PDC_Ignore) || (c == (*begin))) {
-    if (PDC_ERR == PDCI_IO_forward(pdc, 1, disc)) {
+    if (PDC_ERR == PDCI_IO_forward(pdc, 1)) {
       goto fatal_forward_err;
     }
     ed->errCode = PDC_NO_ERR;
@@ -2935,31 +2979,31 @@ PDC_char_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 
 PDC_error_t
 PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
-			  PDC_base_ed *ed, const PDC_string *s, PDC_disc_t *disc)
+			  PDC_base_ed *ed, const PDC_string *s)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
 
-  PDC_TRACE1(pdc, disc, "PDC_str_lit_read_internal called, arg: %s", PDCI_fmtQStr(s));
+  PDC_TRACE1(pdc->disc, "PDC_str_lit_read_internal called, arg: %s", PDCI_fmtQStr(s));
   if (s->len <= 0) {
-    PDC_WARN(pdc, disc, "UNEXPECTED PARAM VALUE: PDC_str_lit_read called with s->len <= 0");
+    PDC_WARN(pdc->disc, "UNEXPECTED PARAM VALUE: PDC_str_lit_read called with s->len <= 0");
     goto bad_param_err;
   }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (end-begin < s->len) {
     if ((eor|eof) || bytes == 0) {
       goto width_not_avail;
     }
-    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
       goto fatal_mb_io_err;
     }
   }
   /* end-begin >= s->len */
   if ((*em == PDC_Ignore) || (strncmp(begin, s->str, s->len) == 0)) {
-    if (PDC_ERR == PDCI_IO_forward(pdc, s->len, disc)) {
+    if (PDC_ERR == PDCI_IO_forward(pdc, s->len)) {
       goto fatal_forward_err;
     }
     ed->errCode = PDC_NO_ERR;
@@ -2991,7 +3035,7 @@ PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 
 PDC_error_t
 PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
-		       PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc)
+		       PDC_base_ed *ed, PDC_int32 *res_out)
 {
   PDC_int32       count = 0;
   char            *begin, *p1, *p2, *end;
@@ -3000,12 +3044,12 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
   int             matchlen = -1;
   char            *tmp;
 
-  PDC_TRACE2(pdc, disc, "PDC_countXtoY_internal called, args: x = %s y = %s", PDCI_fmtQChar(x), PDCI_fmtQChar(y));
+  PDC_TRACE2(pdc->disc, "PDC_countXtoY_internal called, args: x = %s y = %s", PDCI_fmtQChar(x), PDCI_fmtQChar(y));
   (*res_out) = 0;
-  if (disc->stop_regexp) {
-    matchlen = disc->stop_regexp->max;
+  if (pdc->disc->stop_regexp) {
+    matchlen = pdc->disc->stop_regexp->max;
   }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (1) {
@@ -3013,7 +3057,7 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
       if (eor || eof) {
 	break;
       }
-      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
 	goto fatal_mb_io_err;
       }
       if (bytes == 0) {
@@ -3043,10 +3087,10 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
     if (x == (*p1)) {
       count++;
     }
-    if (disc->stop_maxlen && ((p1-begin) >= disc->stop_maxlen)) {
+    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       break;
     }
-    if (disc->stop_regexp && PDCI_regexpMatch(pdc, disc->stop_regexp, p1, end, disc)) {
+    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
       break;
     }
     p1++;
@@ -3069,9 +3113,9 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 
 PDC_error_t
 PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, 
-			PDC_uint32 *res_out, PDC_disc_t *disc)
+			PDC_uint32 *res_out)
 {
-  PDC_TRACE(pdc, disc, "PDC_adate_read_internal called");
+  PDC_TRACE(pdc->disc, "PDC_adate_read_internal called");
   /* TODO */
   return PDC_ERR;
 }
@@ -3081,33 +3125,33 @@ PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed,
 
 PDC_error_t
 PDC_string_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-			    PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc)
+			    PDC_base_ed *ed, PDC_string *s_out)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
 
-  PDC_TRACE(pdc, disc, "PDC_string_fw_read_internal called");
+  PDC_TRACE(pdc->disc, "PDC_string_fw_read_internal called");
   if (width <= 0) {
-    PDC_WARN(pdc, disc, "UNEXPECTED PARAM VALUE: PDC_string_fw_read called with width <= 0");
+    PDC_WARN(pdc->disc, "UNEXPECTED PARAM VALUE: PDC_string_fw_read called with width <= 0");
     goto bad_param_err;
   }
   /* ensure there are width chars available */
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (end-begin < width) {
     if ((eor|eof) || bytes == 0) {
       goto width_not_avail;
     }
-    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
       goto fatal_mb_io_err;
     }
   }
   /* end-begin >= width */
   end = begin + width;
   PDCI_STR_COPY(s_out, begin, end);
-  if (PDC_ERR == PDCI_IO_forward(pdc, width, disc)) {
+  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
   ed->errCode = PDC_NO_ERR;
@@ -3136,18 +3180,18 @@ PDC_string_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 
 PDC_error_t
 PDC_string_stopChar_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
-				  PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc)
+				  PDC_base_ed *ed, PDC_string *s_out)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
   int             matchlen = -1;
 
-  PDC_TRACE(pdc, disc, "PDC_string_stopChar_read_internal called");
-  if (disc->stop_regexp) {
-    matchlen = disc->stop_regexp->max;
+  PDC_TRACE(pdc->disc, "PDC_string_stopChar_read_internal called");
+  if (pdc->disc->stop_regexp) {
+    matchlen = pdc->disc->stop_regexp->max;
   }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (1) {
@@ -3155,7 +3199,7 @@ PDC_string_stopChar_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char sto
       if (eor || eof) {
 	break;
       }
-      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
 	goto fatal_mb_io_err;
       }
       if (bytes == 0) {
@@ -3173,16 +3217,16 @@ PDC_string_stopChar_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char sto
     if (stopChar == (*p1)) {
       /* success */
       PDCI_STR_COPY(s_out, begin, p1);
-      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin, disc)) {
+      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	goto fatal_forward_err;
       }
       ed->errCode = PDC_NO_ERR;
       return PDC_OK;
     }
-    if (disc->stop_maxlen && ((p1-begin) >= disc->stop_maxlen)) {
+    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       break;
     }
-    if (disc->stop_regexp && PDCI_regexpMatch(pdc, disc->stop_regexp, p1, end, disc)) {
+    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
       break;
     }
     p1++;
@@ -3208,30 +3252,30 @@ PDC_string_stopChar_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char sto
 
 PDC_error_t
 PDC_string_stopRegexp_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-				    PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc)
+				    PDC_base_ed *ed, PDC_string *s_out)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
   int             matchlen;
 
-  PDC_TRACE(pdc, disc, "PDC_string_stopRegexp_read_internal called");
+  PDC_TRACE(pdc->disc, "PDC_string_stopRegexp_read_internal called");
   matchlen = stopRegexp->max;
-  if (matchlen && disc->stop_regexp) {
-    if (disc->stop_regexp->max == 0) {
+  if (matchlen && pdc->disc->stop_regexp) {
+    if (pdc->disc->stop_regexp->max == 0) {
       matchlen = 0;
-    } else if (matchlen < disc->stop_regexp->max) {
-      matchlen = disc->stop_regexp->max;
+    } else if (matchlen < pdc->disc->stop_regexp->max) {
+      matchlen = pdc->disc->stop_regexp->max;
     }
   }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (1) {
     if (p1 == end) {
       if (eor && stopRegexp->or_eor) { /* EOR is valid stop */
 	PDCI_STR_COPY(s_out, begin, p1);
-	if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin, disc)) {
+	if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	  goto fatal_forward_err;
 	}
 	ed->errCode = PDC_NO_ERR;
@@ -3240,7 +3284,7 @@ PDC_string_stopRegexp_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *s
       if (eor || eof) {
 	break;
       }
-      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes, disc)) {
+      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
 	goto fatal_mb_io_err;
       }
       if (bytes == 0) {
@@ -3255,18 +3299,18 @@ PDC_string_stopRegexp_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *s
       continue;
     }
     /* p1 < end */
-    if (PDCI_regexpMatch(pdc, stopRegexp, p1, end, disc)) {
+    if (PDCI_regexpMatch(pdc, stopRegexp, p1, end)) {
       PDCI_STR_COPY(s_out, begin, p1);
-      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin, disc)) {
+      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	goto fatal_forward_err;
       }
       ed->errCode = PDC_NO_ERR;
       return PDC_OK;
     }
-    if (disc->stop_maxlen && ((p1-begin) >= disc->stop_maxlen)) {
+    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       break;
     }
-    if (disc->stop_regexp && PDCI_regexpMatch(pdc, disc->stop_regexp, p1, end, disc)) {
+    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
       break;
     }
     p1++;
@@ -3388,7 +3432,7 @@ PDCI_fmtQStrL(const char *s, size_t len) {
 
 
 size_t
-PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, char *begin, char *end, PDC_disc_t *disc)
+PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, char *begin, char *end)
 {
   if (!begin || !begin[0]) {
     return 0;

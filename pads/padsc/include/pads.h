@@ -55,6 +55,7 @@ extern void bzero(void *s, size_t n);
  *   io_disc  : This field contains a pointer to a sub-discipline obj of type
  *              PDC_IO_dist_t which is used to enable reading different kinds
  *              of data files.  See pdc_io_disc.h for details.
+ *              Also see 'Changing The IO Discipline' below.
  *
  *  Limiting the scanning scope:
  *
@@ -84,18 +85,72 @@ extern void bzero(void *s, size_t n);
  *    io_disc:      NULL -- a default IO discipline (nlrec: for newline-terminated records)
  *                  is installed on PDC_open if one is not installed beforehand
  *
- * Here is an example initialization that modifies the default discipline
- * and installs one of the IO disciplines:
+ *
+ * Initializing a PDC handle
+ * -------------------------
+ *   XXX_TODOC
+ *
+ * Here is an example initialization that modifies the constructs a discipline
+ * object, my_disc, and allocates an instance of the 'norec' IO discpline
+ * to be the IO discipline:
  *
  *     PDC_t *pdc;
+ *     PDC_IO_disc_t* norec;
  *     PDC_disc_t my_disc = PDC_default_disc;
  *     my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
- *     PDC_norec_install(&my_disc, 0);
- *     if (PDC_ERR == PDC_open(&pdc, &my_disc)) {
+ *     norec = PDC_norec_make(0);
+ *     if (PDC_ERR == PDC_open(&pdc, &my_disc, norec)) {
  *       fprintf(stderr, "Failed to open PDC library handle\n");
  *       exit(-1);
  *     }
  *     -- start using pdc
+ *
+ * If we are willing to use the default IO discipline we could have used:
+ *        
+ *     PDC_t *pdc;
+ *     PDC_disc_t my_disc = PDC_default_disc;
+ *     my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
+ *     if (PDC_ERR == PDC_open(&pdc, &my_disc, 0)) {
+ *       fprintf(stderr, "Failed to open PDC library handle\n");
+ *       exit(-1);
+ *     }
+ *     -- start using pdc
+ *
+ * Similarly, if we do not need to modify the default discipline:
+ *
+ *     PDC_t *pdc;
+ *     if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
+ *       fprintf(stderr, "Failed to open PDC library handle\n");
+ *       exit(-1);
+ *     }
+ *     -- start using pdc
+ *
+ * Changing The Main Discipline
+ * -----------------------------
+ *   XXX_TODOC
+ *     PDC_disc_t my_disc = PDC_default_disc;
+ *     my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
+ *     PDC_set_disc(pdc, &my_disc, 1);
+ *
+ * The third arg value of 1 indicates that the IO discipline
+ * installed in the old main discipline should be moved to
+ * be installed instead in the new main discipline.
+ *
+ * Changing The IO Discipline
+ * --------------------------
+ *   XXX_TODOC
+ * For example, suppose in the middle of parsing we need to change
+ * to a version of the fixed-width IO discipline for records that have
+ * 0 leader bytes, 30 data byte records, and  2 trailer bytes:
+ *
+ *       PDC_IO_disc_t* fwrec;
+ *       ..
+ *       fwrec = PDC_fwrec_make(0, 30, 2);
+ *       PDC_set_IO_disc(pdc, fwrec, 1);
+ *
+ *  The third arg value of 1 indicates the current sfio stream
+ *  should be transferred to the new IO discipline.  If this is not done,
+ *  XXX_TODOC.
  */
 
 /* ================================================================================ */
@@ -172,7 +227,7 @@ typedef enum PDC_errCode_t_e {
 /* The struct and enum decls for these types are in this file:
  *     PDC_t*        : runtime library handle (opaque)
  *                      initialized with PDC_open, passed as first arg to most library routines
- *     PDC_disc_t*   : handle to user-supplied disc, passed as last arg to most library routines
+ *     PDC_disc_t*   : handle to discipline
  *     PDC_regexp_t* : handle to a compiled regular expression
  *
  *     PDC_pos_t     : IO position
@@ -184,7 +239,7 @@ typedef enum PDC_errCode_t_e {
  * 
  * The struct type decls for these types are in pdc_io_disc.h:
  *     PDC_IO_disc_t : sub-discipline type for controlling IO
- *     PDC_IO_elt_t  : element of a linked list managed by the io discipline 
+ *     PDC_IO_elt_t  : element of a linked list managed by the IO discipline 
  */
 
 typedef struct PDC_s               PDC_t;
@@ -380,14 +435,54 @@ struct PDC_disc_s {
   PDC_IO_disc_t         *io_disc;     /* sub-discipline for controlling IO */
 };
 
+/* PARTIAL descriptionof type PDC_t:
+ * It is safe to get the id and disc from a PDC_t* handle,
+ * but other elements of the struct are only manipulated
+ * by the internal library routines
+ *
+ */
+struct PDC_s {
+  const char        *id;       /* interface id */
+  PDC_disc_t        *disc;     /* discipline handle */
+#ifdef __LIBPADSC_INTERNAL__
+PDC_PRIVATE_STATE
+#endif
+};
+
 /* ================================================================================ */
 /* LIBRARY HANDLE OPEN/CLOSE FUNCTIONS */
 
-PDC_error_t  PDC_open          (PDC_disc_t *disc, PDC_t **pdc_out);
-PDC_error_t  PDC_close         (PDC_t *pdc, PDC_disc_t *disc); 
+PDC_error_t  PDC_open          (PDC_t **pdc_out, PDC_disc_t *disc, PDC_IO_disc_t *io_disc);
+PDC_error_t  PDC_close         (PDC_t *pdc); 
 
 /* ================================================================================ */
-/* RMM FUNCTIONS */
+/* TOP-LEVEL GET/SET FUNCTIONS */
+
+/* PDC_get_disc    : returns NULL on error, otherwise returns pointer to
+ *                   the installed discipline
+ *
+ * PDC_set_disc    : install a different discipline handle.  If param xfer_io
+ *                   is non-zero, then the IO discipline from the old handle is
+ *                   moved to the new handle.  In other words, the call
+ *                      PDC_set_disc(pdc, new_handle, 1)
+ *                   is equivalent to
+ *                      old_handle = PDC_get_disc(pdc);
+ *                      new_handle->io_disc = old_handle->io_disc;
+ *                      old_handle->io_disc = 0;
+ *                      PDC_set_disc(pdc, new_handle, 0);
+ *
+ * PDC_set_IO_disc : install a different IO discipline into the
+ *                   main discipline.  if there is an open sfio stream,
+ *                   it is transferred to the
+ *                   new IO discipline after closing the old IO
+ *                   discipline in a way that returns
+ *                   all bytes beyond the current IO cursor to 
+ *                   the stream.  The old IO discipline is unmade.
+ */
+
+PDC_disc_t * PDC_get_disc   (PDC_t *pdc);
+PDC_error_t  PDC_set_disc   (PDC_t *pdc, PDC_disc_t *new_disc, int xfer_io);
+PDC_error_t  PDC_set_IO_disc(PDC_t* pdc, PDC_IO_disc_t* new_io_disc);
 
 /* PDC_rmm_zero    : get rbuf memory manager that zeroes allocated memory
  * PDC_rmm_nozero  : get rbuf memory manager that does not zero allocated memory
@@ -395,8 +490,8 @@ PDC_error_t  PDC_close         (PDC_t *pdc, PDC_disc_t *disc);
  * See rbuf.h for the RMM/Rbuf memory management API
  */
 
-RMM_t* PDC_rmm_zero  (PDC_t *pdc, PDC_disc_t *disc);
-RMM_t* PDC_rmm_nozero(PDC_t *pdc, PDC_disc_t *disc);
+RMM_t * PDC_rmm_zero  (PDC_t *pdc);
+RMM_t * PDC_rmm_nozero(PDC_t *pdc);
 
 /* ================================================================================ */
 /* TOP-LEVEL IO FUNCTIONS */
@@ -432,17 +527,17 @@ RMM_t* PDC_rmm_nozero(PDC_t *pdc, PDC_disc_t *disc);
  *   based on offset -- offset only refers to data bytes.
  */
 
-PDC_error_t  PDC_IO_fopen    (PDC_t *pdc, char *path, PDC_disc_t *disc);
-PDC_error_t  PDC_IO_fclose   (PDC_t *pdc, PDC_disc_t *disc);
-PDC_error_t  PDC_IO_next_rec (PDC_t *pdc, size_t *skipped_bytes_out, PDC_disc_t *disc);
+PDC_error_t  PDC_IO_fopen    (PDC_t *pdc, char *path);
+PDC_error_t  PDC_IO_fclose   (PDC_t *pdc);
+PDC_error_t  PDC_IO_next_rec (PDC_t *pdc, size_t *skipped_bytes_out);
 
-int          PDC_IO_at_EOR   (PDC_t *pdc, PDC_disc_t *disc);
-int          PDC_IO_at_EOF   (PDC_t *pdc, PDC_disc_t *disc);
+int          PDC_IO_at_EOR   (PDC_t *pdc);
+int          PDC_IO_at_EOF   (PDC_t *pdc);
 
-PDC_error_t  PDC_IO_getPos   (PDC_t *pdc, PDC_pos_t *pos, int offset, PDC_disc_t *disc); 
-PDC_error_t  PDC_IO_getLocB  (PDC_t *pdc, PDC_loc_t *loc, int offset, PDC_disc_t *disc); 
-PDC_error_t  PDC_IO_getLocE  (PDC_t *pdc, PDC_loc_t *loc, int offset, PDC_disc_t *disc); 
-PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset, PDC_disc_t *disc); 
+PDC_error_t  PDC_IO_getPos   (PDC_t *pdc, PDC_pos_t *pos, int offset); 
+PDC_error_t  PDC_IO_getLocB  (PDC_t *pdc, PDC_loc_t *loc, int offset); 
+PDC_error_t  PDC_IO_getLocE  (PDC_t *pdc, PDC_loc_t *loc, int offset); 
+PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset); 
 
 /* ================================================================================ */
 /* LITERAL READ FUNCTIONS */
@@ -460,10 +555,10 @@ PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset, PDC_disc_t
  */
 
 PDC_error_t PDC_char_lit_read(PDC_t *pdc, PDC_base_em *em,
-			      PDC_base_ed *ed, unsigned char c, PDC_disc_t *disc);
+			      PDC_base_ed *ed, unsigned char c);
 
 PDC_error_t PDC_str_lit_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, const PDC_string *s, PDC_disc_t *disc);
+			     PDC_base_ed *ed, const PDC_string *s);
 
 /* PDC_countXtoY: count occurrences of char x until char y
  * Uses disc->p_stop to determine how far to scan for y.
@@ -485,7 +580,7 @@ PDC_error_t PDC_str_lit_read(PDC_t *pdc, PDC_base_em *em,
  */
 
 PDC_error_t PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
-		          PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc);
+		          PDC_base_ed *ed, PDC_int32 *res_out);
 
 /* ================================================================================ */
 /* DATE/TIME READ FUNCTIONS */
@@ -505,7 +600,7 @@ PDC_error_t PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
  */
 
 PDC_error_t PDC_adate_read(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, 
-			   PDC_uint32 *res_out, PDC_disc_t *disc);
+			   PDC_uint32 *res_out);
 
 /* ================================================================================ */
 /* STRING READ FUNCTIONS */
@@ -521,9 +616,9 @@ PDC_error_t PDC_adate_read(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed,
  *              otherwise it returns PDC_OK
  */
 
-PDC_error_t PDC_string_init(PDC_t *pdc, PDC_string *s, PDC_disc_t *disc);
-PDC_error_t PDC_string_cleanup(PDC_t *pdc, PDC_string *s, PDC_disc_t *disc);
-PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len, PDC_disc_t *disc);
+PDC_error_t PDC_string_init(PDC_t *pdc, PDC_string *s);
+PDC_error_t PDC_string_cleanup(PDC_t *pdc, PDC_string *s);
+PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
 
 /*
  * Type T with T_init/T_cleanup also must have T_ed_init/T_ed_cleanup.
@@ -532,8 +627,8 @@ PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_
  *    PDC_string_ed_cleanup : a no-op  
  */
 
-PDC_error_t PDC_string_ed_init(PDC_t *pdc, PDC_string_ed *ed, PDC_disc_t *disc);
-PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed, PDC_disc_t *disc);
+PDC_error_t PDC_string_ed_init(PDC_t *pdc, PDC_string_ed *ed);
+PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed);
 
 /* The string read functions each has a different way of specifying
  * how much to read: string_fw_read specifies a fixed width,
@@ -565,13 +660,13 @@ PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed, PDC_disc_t *dis
  */
 
 PDC_error_t PDC_string_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc);
+			       PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_string_stopChar_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
-				     PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc);
+				     PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_string_stopRegexp_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-				       PDC_base_ed *ed, PDC_string *s_out, PDC_disc_t *disc);
+				       PDC_base_ed *ed, PDC_string *s_out);
 
 /* ================================================================================ */
 /* REGULAR EXPRESSION SUPPORT */
@@ -588,8 +683,8 @@ PDC_error_t PDC_string_stopRegexp_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t
  *     are supported, i.e., a set of chars can be specified.
  */
 
-PDC_error_t PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, PDC_disc_t *disc);
-PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp, PDC_disc_t *disc);
+PDC_error_t PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out);
+PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
 
 /* ================================================================================ */
 /* ASCII INTEGER READ FUNCTIONS */
@@ -638,29 +733,29 @@ PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp, PDC_disc_t *disc);
  */
 
 PDC_error_t PDC_aint8_read (PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int8 *res_out, PDC_disc_t *disc);
+			    PDC_base_ed *ed, PDC_int8 *res_out);
 
 PDC_error_t PDC_aint16_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int16 *res_out, PDC_disc_t *disc);
+			    PDC_base_ed *ed, PDC_int16 *res_out);
 
 PDC_error_t PDC_aint32_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc);
+			    PDC_base_ed *ed, PDC_int32 *res_out);
 
 PDC_error_t PDC_aint64_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int64 *res_out, PDC_disc_t *disc);
+			    PDC_base_ed *ed, PDC_int64 *res_out);
 
 
 PDC_error_t PDC_auint8_read (PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint8 *res_out, PDC_disc_t *disc);
+			     PDC_base_ed *ed, PDC_uint8 *res_out);
 
 PDC_error_t PDC_auint16_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint16 *res_out, PDC_disc_t *disc);
+			     PDC_base_ed *ed, PDC_uint16 *res_out);
 
 PDC_error_t PDC_auint32_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint32 *res_out, PDC_disc_t *disc);
+			     PDC_base_ed *ed, PDC_uint32 *res_out);
 
 PDC_error_t PDC_auint64_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint64 *res_out, PDC_disc_t *disc);
+			     PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /*
  * Fixed-width ascii integer read functions:
@@ -691,29 +786,29 @@ PDC_error_t PDC_auint64_read(PDC_t *pdc, PDC_base_em *em,
  */
 
 PDC_error_t PDC_aint8_fw_read (PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_int8 *res_out, PDC_disc_t *disc);
+			       PDC_base_ed *ed, PDC_int8 *res_out);
 
 PDC_error_t PDC_aint16_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_int16 *res_out, PDC_disc_t *disc);
+			       PDC_base_ed *ed, PDC_int16 *res_out);
 
 PDC_error_t PDC_aint32_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc);
+			       PDC_base_ed *ed, PDC_int32 *res_out);
 
 PDC_error_t PDC_aint64_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_int64 *res_out, PDC_disc_t *disc);
+			       PDC_base_ed *ed, PDC_int64 *res_out);
 
 
 PDC_error_t PDC_auint8_fw_read (PDC_t *pdc, PDC_base_em *em, size_t width,
-				PDC_base_ed *ed, PDC_uint8 *res_out, PDC_disc_t *disc);
+				PDC_base_ed *ed, PDC_uint8 *res_out);
 
 PDC_error_t PDC_auint16_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-				PDC_base_ed *ed, PDC_uint16 *res_out, PDC_disc_t *disc);
+				PDC_base_ed *ed, PDC_uint16 *res_out);
 
 PDC_error_t PDC_auint32_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-				PDC_base_ed *ed, PDC_uint32 *res_out, PDC_disc_t *disc);
+				PDC_base_ed *ed, PDC_uint32 *res_out);
 
 PDC_error_t PDC_auint64_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-				PDC_base_ed *ed, PDC_uint64 *res_out, PDC_disc_t *disc);
+				PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================ */
 /* BINARY INTEGER READ FUNCTIONS */
@@ -755,28 +850,28 @@ PDC_error_t PDC_auint64_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
  */
 
 PDC_error_t PDC_bint8_read (PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int8 *res_out, PDC_disc_t *disc);
+			    PDC_base_ed *ed, PDC_int8 *res_out);
 
 PDC_error_t PDC_bint16_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int16 *res_out, PDC_disc_t *disc);
+			    PDC_base_ed *ed, PDC_int16 *res_out);
 
 PDC_error_t PDC_bint32_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int32 *res_out, PDC_disc_t *disc);
+			    PDC_base_ed *ed, PDC_int32 *res_out);
 
 PDC_error_t PDC_bint64_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int64 *res_out, PDC_disc_t *disc);
+			    PDC_base_ed *ed, PDC_int64 *res_out);
 
 PDC_error_t PDC_buint8_read (PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint8 *res_out, PDC_disc_t *disc);
+			     PDC_base_ed *ed, PDC_uint8 *res_out);
 
 PDC_error_t PDC_buint16_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint16 *res_out, PDC_disc_t *disc);
+			     PDC_base_ed *ed, PDC_uint16 *res_out);
 
 PDC_error_t PDC_buint32_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint32 *res_out, PDC_disc_t *disc);
+			     PDC_base_ed *ed, PDC_uint32 *res_out);
 
 PDC_error_t PDC_buint64_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint64 *res_out, PDC_disc_t *disc);
+			     PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================ */
 /* BASE TYPE ACCUMULATORS */
@@ -832,80 +927,80 @@ typedef struct PDC_string_acc_s {
   PDC_uint32_acc len_accum; /* used for length distribution and good/bad accounting */
 } PDC_string_acc;
 
-PDC_error_t PDC_int8_acc_init    (PDC_t *pdc, PDC_int8_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int8_acc_reset   (PDC_t *pdc, PDC_int8_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int8_acc_cleanup (PDC_t *pdc, PDC_int8_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int8_acc_add     (PDC_t *pdc, PDC_int8_acc *a, PDC_base_ed *ed, PDC_int8 *val, PDC_disc_t *disc);
+PDC_error_t PDC_int8_acc_init    (PDC_t *pdc, PDC_int8_acc *a);
+PDC_error_t PDC_int8_acc_reset   (PDC_t *pdc, PDC_int8_acc *a);
+PDC_error_t PDC_int8_acc_cleanup (PDC_t *pdc, PDC_int8_acc *a);
+PDC_error_t PDC_int8_acc_add     (PDC_t *pdc, PDC_int8_acc *a, PDC_base_ed *ed, PDC_int8 *val);
 PDC_error_t PDC_int8_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				  PDC_int8_acc *a, PDC_disc_t *disc);
+				  PDC_int8_acc *a);
 
-PDC_error_t PDC_int16_acc_init    (PDC_t *pdc, PDC_int16_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int16_acc_reset   (PDC_t *pdc, PDC_int16_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int16_acc_cleanup (PDC_t *pdc, PDC_int16_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int16_acc_add     (PDC_t *pdc, PDC_int16_acc *a, PDC_base_ed *ed, PDC_int16 *val, PDC_disc_t *disc);
+PDC_error_t PDC_int16_acc_init    (PDC_t *pdc, PDC_int16_acc *a);
+PDC_error_t PDC_int16_acc_reset   (PDC_t *pdc, PDC_int16_acc *a);
+PDC_error_t PDC_int16_acc_cleanup (PDC_t *pdc, PDC_int16_acc *a);
+PDC_error_t PDC_int16_acc_add     (PDC_t *pdc, PDC_int16_acc *a, PDC_base_ed *ed, PDC_int16 *val);
 PDC_error_t PDC_int16_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				   PDC_int16_acc *a, PDC_disc_t *disc);
+				   PDC_int16_acc *a);
 
-PDC_error_t PDC_int32_acc_init    (PDC_t *pdc, PDC_int32_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int32_acc_reset   (PDC_t *pdc, PDC_int32_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int32_acc_cleanup (PDC_t *pdc, PDC_int32_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int32_acc_add     (PDC_t *pdc, PDC_int32_acc *a, PDC_base_ed *ed, PDC_int32 *val, PDC_disc_t *disc);
+PDC_error_t PDC_int32_acc_init    (PDC_t *pdc, PDC_int32_acc *a);
+PDC_error_t PDC_int32_acc_reset   (PDC_t *pdc, PDC_int32_acc *a);
+PDC_error_t PDC_int32_acc_cleanup (PDC_t *pdc, PDC_int32_acc *a);
+PDC_error_t PDC_int32_acc_add     (PDC_t *pdc, PDC_int32_acc *a, PDC_base_ed *ed, PDC_int32 *val);
 PDC_error_t PDC_int32_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				   PDC_int32_acc *a, PDC_disc_t *disc);
+				   PDC_int32_acc *a);
 
-PDC_error_t PDC_int64_acc_init    (PDC_t *pdc, PDC_int64_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int64_acc_reset   (PDC_t *pdc, PDC_int64_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int64_acc_cleanup (PDC_t *pdc, PDC_int64_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_int64_acc_add     (PDC_t *pdc, PDC_int64_acc *a, PDC_base_ed *ed, PDC_int64 *val, PDC_disc_t *disc);
+PDC_error_t PDC_int64_acc_init    (PDC_t *pdc, PDC_int64_acc *a);
+PDC_error_t PDC_int64_acc_reset   (PDC_t *pdc, PDC_int64_acc *a);
+PDC_error_t PDC_int64_acc_cleanup (PDC_t *pdc, PDC_int64_acc *a);
+PDC_error_t PDC_int64_acc_add     (PDC_t *pdc, PDC_int64_acc *a, PDC_base_ed *ed, PDC_int64 *val);
 PDC_error_t PDC_int64_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				   PDC_int64_acc *a, PDC_disc_t *disc);
+				   PDC_int64_acc *a);
 
-PDC_error_t PDC_uint8_acc_init    (PDC_t *pdc, PDC_uint8_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint8_acc_reset   (PDC_t *pdc, PDC_uint8_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint8_acc_cleanup (PDC_t *pdc, PDC_uint8_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint8_acc_add     (PDC_t *pdc, PDC_uint8_acc *a, PDC_base_ed *ed, PDC_uint8 *val, PDC_disc_t *disc);
+PDC_error_t PDC_uint8_acc_init    (PDC_t *pdc, PDC_uint8_acc *a);
+PDC_error_t PDC_uint8_acc_reset   (PDC_t *pdc, PDC_uint8_acc *a);
+PDC_error_t PDC_uint8_acc_cleanup (PDC_t *pdc, PDC_uint8_acc *a);
+PDC_error_t PDC_uint8_acc_add     (PDC_t *pdc, PDC_uint8_acc *a, PDC_base_ed *ed, PDC_uint8 *val);
 PDC_error_t PDC_uint8_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				   PDC_uint8_acc *a, PDC_disc_t *disc);
+				   PDC_uint8_acc *a);
 
-PDC_error_t PDC_uint16_acc_init    (PDC_t *pdc, PDC_uint16_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint16_acc_reset   (PDC_t *pdc, PDC_uint16_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint16_acc_cleanup (PDC_t *pdc, PDC_uint16_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint16_acc_add     (PDC_t *pdc, PDC_uint16_acc *a, PDC_base_ed *ed, PDC_uint16 *val, PDC_disc_t *disc);
+PDC_error_t PDC_uint16_acc_init    (PDC_t *pdc, PDC_uint16_acc *a);
+PDC_error_t PDC_uint16_acc_reset   (PDC_t *pdc, PDC_uint16_acc *a);
+PDC_error_t PDC_uint16_acc_cleanup (PDC_t *pdc, PDC_uint16_acc *a);
+PDC_error_t PDC_uint16_acc_add     (PDC_t *pdc, PDC_uint16_acc *a, PDC_base_ed *ed, PDC_uint16 *val);
 PDC_error_t PDC_uint16_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				    PDC_uint16_acc *a, PDC_disc_t *disc);
+				    PDC_uint16_acc *a);
 
-PDC_error_t PDC_uint32_acc_init    (PDC_t *pdc, PDC_uint32_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint32_acc_reset   (PDC_t *pdc, PDC_uint32_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint32_acc_cleanup (PDC_t *pdc, PDC_uint32_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint32_acc_add     (PDC_t *pdc, PDC_uint32_acc *a, PDC_base_ed *ed, PDC_uint32 *val, PDC_disc_t *disc);
+PDC_error_t PDC_uint32_acc_init    (PDC_t *pdc, PDC_uint32_acc *a);
+PDC_error_t PDC_uint32_acc_reset   (PDC_t *pdc, PDC_uint32_acc *a);
+PDC_error_t PDC_uint32_acc_cleanup (PDC_t *pdc, PDC_uint32_acc *a);
+PDC_error_t PDC_uint32_acc_add     (PDC_t *pdc, PDC_uint32_acc *a, PDC_base_ed *ed, PDC_uint32 *val);
 PDC_error_t PDC_uint32_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				    PDC_uint32_acc *a, PDC_disc_t *disc);
+				    PDC_uint32_acc *a);
 
-PDC_error_t PDC_uint64_acc_init    (PDC_t *pdc, PDC_uint64_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint64_acc_reset   (PDC_t *pdc, PDC_uint64_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint64_acc_cleanup (PDC_t *pdc, PDC_uint64_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_uint64_acc_add     (PDC_t *pdc, PDC_uint64_acc *a, PDC_base_ed *ed, PDC_uint64 *val, PDC_disc_t *disc);
+PDC_error_t PDC_uint64_acc_init    (PDC_t *pdc, PDC_uint64_acc *a);
+PDC_error_t PDC_uint64_acc_reset   (PDC_t *pdc, PDC_uint64_acc *a);
+PDC_error_t PDC_uint64_acc_cleanup (PDC_t *pdc, PDC_uint64_acc *a);
+PDC_error_t PDC_uint64_acc_add     (PDC_t *pdc, PDC_uint64_acc *a, PDC_base_ed *ed, PDC_uint64 *val);
 PDC_error_t PDC_uint64_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				    PDC_uint64_acc *a, PDC_disc_t *disc);
+				    PDC_uint64_acc *a);
 
-PDC_error_t PDC_string_acc_init    (PDC_t *pdc, PDC_string_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_string_acc_reset   (PDC_t *pdc, PDC_string_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_string_acc_cleanup (PDC_t *pdc, PDC_string_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_string_acc_add     (PDC_t *pdc, PDC_string_acc *a, PDC_base_ed *ed, PDC_string* val, PDC_disc_t *disc);
+PDC_error_t PDC_string_acc_init    (PDC_t *pdc, PDC_string_acc *a);
+PDC_error_t PDC_string_acc_reset   (PDC_t *pdc, PDC_string_acc *a);
+PDC_error_t PDC_string_acc_cleanup (PDC_t *pdc, PDC_string_acc *a);
+PDC_error_t PDC_string_acc_add     (PDC_t *pdc, PDC_string_acc *a, PDC_base_ed *ed, PDC_string* val);
 PDC_error_t PDC_string_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				    PDC_string_acc *a, PDC_disc_t *disc);
+				    PDC_string_acc *a);
 
 /*
  * char_acc is just like uint8_acc except a different report is generated
  */
 typedef PDC_uint8_acc PDC_char_acc;
 
-PDC_error_t PDC_char_acc_init      (PDC_t *pdc, PDC_char_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_char_acc_reset     (PDC_t *pdc, PDC_char_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_char_acc_cleanup   (PDC_t *pdc, PDC_char_acc *a, PDC_disc_t *disc);
-PDC_error_t PDC_char_acc_add       (PDC_t *pdc, PDC_char_acc *a, PDC_base_ed *ed, PDC_uint8 *val, PDC_disc_t *disc);
+PDC_error_t PDC_char_acc_init      (PDC_t *pdc, PDC_char_acc *a);
+PDC_error_t PDC_char_acc_reset     (PDC_t *pdc, PDC_char_acc *a);
+PDC_error_t PDC_char_acc_cleanup   (PDC_t *pdc, PDC_char_acc *a);
+PDC_error_t PDC_char_acc_add       (PDC_t *pdc, PDC_char_acc *a, PDC_base_ed *ed, PDC_uint8 *val);
 PDC_error_t PDC_char_acc_report    (PDC_t *pdc, const char *prefix, const char *what, int nst,
-				    PDC_char_acc *a, PDC_disc_t *disc);
+				    PDC_char_acc *a);
 
 /* A map_<int_type> function maps a given integer type to a string */
 typedef const char * (*PDC_int8_map_fn)  (PDC_int8   i);
@@ -923,7 +1018,7 @@ typedef const char * (*PDC_uint64_map_fn)(PDC_uint64 u);
  * string values.  
  */
 PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char *what, int nst,
-				     PDC_int32_map_fn  fn, PDC_int32_acc *a, PDC_disc_t *disc);
+				     PDC_int32_map_fn  fn, PDC_int32_acc *a);
 
 /* ================================================================================ */
 /* MISC ROUTINES */
@@ -932,6 +1027,6 @@ PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char 
  * PDC_swap_bytes: in-place memory byte order swap
  *    num_bytes should be oneof: 1, 2, 4, 8
  */
-PDC_error_t PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes, PDC_disc_t *disc);
+PDC_error_t PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes);
 
 #endif  /* __LIBPADSC_H__ */

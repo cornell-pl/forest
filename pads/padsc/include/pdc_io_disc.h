@@ -23,35 +23,55 @@
  *
  * From a user standpoint, what is needed is knowledge about how to
  * install different disciplines.  The standard disciplines are
- * installed using the following functions:
+ * installed by making an instance of an IO discipline using one
+ * of the following make functions, and then either passing 
+ * the resulting handle either to PDC_open or to PDC_set_IO_disc.
+ *
+ * Note that there are two versions of each kind of IO discipline:
+ *    fwrec and fwrec_noseek
+ *    nlrec and nlrec_noseek
+ *    norec and norec_noseek
+ * The noseek versions do not require that the sfio stream
+ * be seekable, while the other versions do.  
  */
 
-PDC_error_t PDC_fwrec_install(PDC_disc_t *disc, size_t data_len, size_t eor_len);
-/* Installs fwrec, a discipline for fixed-width records.
- * data_len specifies the number of data bytes per record, while
- * eor_len specifies the number of EOR-marker bytes per record (can be zero).
- * Thus the total record size in bytes is data_len + eor_len.
+PDC_IO_disc_t * PDC_fwrec_make(size_t leader_len, size_t data_len, size_t trailer_len);
+/* Instantiates an instance of fwrec, a discipline for fixed-width
+ * records.  data_len specifies the number of data bytes per record,
+ * while leader_len and trailer_len specifies the number of bytes that
+ * occur before and after the data bytes within each record (either or
+ * both can be zero).  Thus the total record size in bytes is the sum
+ * of the 3 arguments.  
  */
 
-PDC_error_t PDC_nlrec_install(PDC_disc_t *disc, size_t block_size_hint);
-/* Installs nlrec, a discipline for newline-terminated variable-width
- * records.  block_size_hint is a hint as to what block size to use,
- * if the discipline chooses to do fixed block-sized reads 'under the
- * covers'.  It may be ignored by the discipline. 
+PDC_IO_disc_t * PDC_nlrec_make(size_t block_size_hint);
+/* Instantiates an instance of nlrec, a discipline for
+ * newline-terminated variable-width records.  block_size_hint is a
+ * hint as to what block size to use, if the discipline chooses to do
+ * fixed block-sized reads 'under the covers'.  It may be ignored by
+ * the discipline.
  */
 
-PDC_error_t PDC_norec_install(PDC_disc_t *disc, size_t block_size_hint);
-/* Installs norec, a raw bytes discipline that does not use EOR.
- * block_size_hint is a hint as to what block size to use, if the
- * discipline chooses to do fixed block-sized reads 'under the
- * covers'.  It may be ignored by the discipline. 
+PDC_IO_disc_t * PDC_norec_make(size_t block_size_hint);
+/* Instantiates an instance of norec, a raw bytes discipline that
+ * does not use EOR.  block_size_hint is a hint as to what block size
+ * to use, if the discipline chooses to do fixed block-sized reads
+ * 'under the covers'.  It may be ignored by the discipline.
  */
 
-PDC_error_t PDC_newrec_install(PDC_disc_t *disc, size_t block_size_hint);
-/* Installs newrec, a raw bytes discipline that does not use EOR.
- * block_size_hint is a hint as to what block size to use, if the
- * discipline chooses to do fixed block-sized reads 'under the
- * covers'.  It may be ignored by the discipline. 
+PDC_IO_disc_t * PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len);
+/* Instantiates an instance of fwrec_noseek, a version of norec
+ * that does not require that the sfio stream is seekable.
+ */
+
+PDC_IO_disc_t * PDC_nlrec_noseek_make(size_t block_size_hint);
+/* Instantiates an instance of nlrec_noseek, a version of norec
+ * that does not require that the sfio stream is seekable.
+ */
+
+PDC_IO_disc_t * PDC_norec_noseek_make(size_t block_size_hint);
+/* Instantiates an instance of norec_noseek, a version of norec
+ * that does not require that the sfio stream is seekable.
  */
 
 /* PDC_IO_elt_t: used for list of input records managed by the io discipline.
@@ -60,7 +80,8 @@ PDC_error_t PDC_newrec_install(PDC_disc_t *disc, size_t block_size_hint);
  * that is not used except as a placeholder for managing the list.
  *
  * There are two extra data fields:
- *   disc_ptr, disc_off: (optionally) used by the io discipline; ignored by the main library code
+ *   disc_ptr, disc_off: (optionally) used by the io discipline;
+ *                        ignored by the main library code
  */
 
 /* type PDC_IO_elt_t: */
@@ -80,14 +101,11 @@ struct PDC_IO_elt_s {
 
 /* Function types needed for the IO discipline: */
 
-typedef PDC_error_t (*PDC_IO_uninstall_fn) (PDC_t *pdc, PDC_disc_t *disc);
-typedef PDC_error_t (*PDC_IO_sfopen_fn)    (PDC_t *pdc, Sfio_t *sfio, PDC_IO_elt_t *head, PDC_disc_t *disc);
-typedef PDC_error_t (*PDC_IO_sfclose_fn)   (PDC_t *pdc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_disc_t *disc);
-typedef PDC_error_t (*PDC_IO_read_fn)      (PDC_t *pdc, PDC_IO_elt_t *io_cur_elt, size_t remain,
-					    PDC_IO_elt_t **next_elt_out, PDC_disc_t *disc);
-typedef PDC_error_t (*PDC_IO_uses_eor_fn)  (PDC_t *pdc, int *res_out,   PDC_disc_t *disc);
-typedef PDC_error_t (*PDC_IO_eor_len_fn)   (PDC_t *pdc, size_t *res_out, PDC_disc_t *disc);
-typedef PDC_error_t (*PDC_IO_name_fn)      (PDC_t *pdc, const char *name_out, PDC_disc_t *disc);
+typedef PDC_error_t (*PDC_IO_unmake_fn)    (PDC_t *pdc, PDC_IO_disc_t* io_disc);
+typedef PDC_error_t (*PDC_IO_sfopen_fn)    (PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t *sfio, PDC_IO_elt_t *head);
+typedef PDC_error_t (*PDC_IO_sfclose_fn)   (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain);
+typedef PDC_error_t (*PDC_IO_read_fn)      (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain,
+					    PDC_IO_elt_t **next_elt_out);
 
 /* type PDC_IO_disc_t: */
 struct PDC_IO_disc_s {
@@ -95,16 +113,13 @@ struct PDC_IO_disc_s {
   const char          *name;       /* short IO discipline name */
   const char          *descr;      /* short IO discipline description */
   int                 uses_eor;    /* discipline uses EOR? */
-  size_t              eor_len;     /* bytes for EOR marker */
   void                *data;       /* discipline-specific data */
   /* functions */
-  PDC_IO_uninstall_fn uninstall_fn;/* pairs with this discipline's install routine */
+  PDC_IO_unmake_fn    unmake_fn;   /* pairs with this discipline's make routine */
   PDC_IO_sfopen_fn    sfopen_fn;   /* Sfio-based open */
   PDC_IO_sfclose_fn   sfclose_fn;  /* Sfio-based close */
   PDC_IO_read_fn      read_fn;     /* read */
 };
-
-
 
 /* ================================================================================ */
 /* Helper macros */
