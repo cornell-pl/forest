@@ -83,6 +83,7 @@ struct
                ("Pnosep", Tokens.PNOSEP),
                ("Pomit", Tokens.POMIT),
 	       ("Pparsecheck", Tokens.PPARSECHECK),
+               ("Pprefix", Tokens.PPREFIX),     
                ("Pre", Tokens.PRE),    
                ("Precord", Tokens.PRECORD),     
 	       ("Pselect", Tokens.PSELECT),

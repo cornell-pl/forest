@@ -261,7 +261,7 @@ end
         | POMIT | PENDIAN | PCOMPUTE (* PADS *)
         | PFROM  (*PADS*)
  	| PRECORD | PSOURCE | PWHERE  (* PADS *)  
-        | PSWITCH | PCASE | PDEFAULT (* PADS*)
+        | PSWITCH | PCASE | PDEFAULT | PPREFIX (* PADS*)
         | PRE | PDONE (* PADS *)
 
 %nonterm 
@@ -369,6 +369,7 @@ end
         | pAnnotatedEnumField of string * string option * expression option * string option
         | pAnnotatedLastEnumField of string * string option * expression option * string option
         | pEnumFieldList of (string * string option * expression option * string option) list
+	| pEnumPrefixOpt of string option
         | pEnum of externalDecl
 	| pSelect of externalDecl
 	| pCharClass of externalDecl
@@ -1263,6 +1264,7 @@ pEnumField:
     pName pFromOpt                  (pName, pFromOpt, NONE)
  |  pName pFromOpt EQUALS expr      (pName, pFromOpt, SOME expr)
 
+
 pAnnotatedEnumField:
   pEnumField COMMA pCommentOpt          (addComment(pEnumField, pCommentOpt))
 
@@ -1274,12 +1276,17 @@ pEnumFieldList:
   | pAnnotatedEnumField pEnumFieldList
                                          (pAnnotatedEnumField :: pEnumFieldList)
 
+pEnumPrefixOpt:
+                             	(NONE)
+ | PPREFIX LPAREN STRING RPAREN (SOME STRING)
+
+
 pEnum:
- pIsRecord pIsSource PENUM pName pushScope  pTyParams LCURLY pEnumFieldList popScope
+ pIsRecord pIsSource PENUM pName pushScope  pTyParams pEnumPrefixOpt LCURLY pEnumFieldList popScope
  ( makeTypeName pName1;
    ExternalDeclExt(PX.PEnum {name = pName1, params = [], isRecord = pIsRecord, 
 		             containsRecord = false, largeHeuristic = false,
-			     isSource = pIsSource, members = pEnumFieldList})
+			     isSource = pIsSource, prefix = pEnumPrefixOpt, members = pEnumFieldList})
  ) 
 
 pSelect:

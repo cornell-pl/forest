@@ -89,6 +89,7 @@ structure ParseTreeExt =
                       containsRecord : bool, 
                       largeHeuristic : bool,
 		      isSource   : bool,
+		      prefix   :  string option,
                       members  : (string * string option * 'exp option * string option) list}
          | PSelect of {selName : string,
 		       tyName  : string,

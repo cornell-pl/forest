@@ -4912,7 +4912,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	     end
 
 	  fun cnvPEnum  {name:string, params: (pcty * pcdecr) list, 
-			 isRecord, containsRecord, largeHeuristic, isSource,
+			 isRecord, containsRecord, largeHeuristic, isSource, prefix = eprefix : string option,
 			 members: (string * string option * pcexp option * string option) list } =
 	      let val baseTy = PL.strlit
 		  val baseEM = mSuf baseTy
@@ -4923,9 +4923,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
                   fun mungeMembers (name, fromXOpt, expOpt, commentOpt) = 
 		      let val expr = case expOpt of NONE =>   PT.EmptyExpr | SOME e => e
+			  val prefix = case eprefix of NONE => "" | SOME p => p
 		      in
-			  case fromXOpt of NONE => (name, name, expr, commentOpt)
-                          | SOME fromName => (name, fromName, expr, commentOpt)
+			  case fromXOpt of NONE => (prefix^name, name, expr, commentOpt)
+                          | SOME fromName =>       (prefix^name, fromName, expr, commentOpt)
 			                     (* enum label, on disk name, value of enum label, comment *)
 			   
 		      end
