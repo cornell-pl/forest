@@ -7,6 +7,9 @@ struct
   val PDC_OK    = PT.Id "PDC_OK"
 
   val PDC_NO_ERROR                       = PT.Id "PDC_NO_ERR"
+  val PDC_SKIPPED                        = PT.Id "PDC_SKIPPED"
+  val PDC_NOT_PARSED                     = PT.Id "PDC_NOT_PARSED"
+
   val PDC_CHKPOINT_FAILURE               = PT.Id "PDC_CHKPOINT_ERR"
   val PDC_COMMIT_FAILURE                 = PT.Id "PDC_COMMIT_ERR"
   val PDC_RESTORE_FAILURE                = PT.Id "PDC_RESTORE_ERR"

@@ -29,35 +29,35 @@ int main(int argc, char** argv) {
       /* do something with the data */
     } else {
       error(0, "rec_read returned: error");
-      if (pd.l.i8.errCode) {
+      if (pd.l.i8.errCode != PDC_NO_ERR) {
 	error(0|ERROR_PROMPT, "i8 error: ");
 	PDCI_report_err(pdc, 0, &(pd.l.i8.loc), pd.l.i8.errCode, "main", 0);
       }
-      if (pd.l.i16.errCode) {
+      if (pd.l.i16.errCode != PDC_NO_ERR) {
 	error(0|ERROR_PROMPT, "i16 error: ");
 	PDCI_report_err(pdc, 0, &(pd.l.i16.loc), pd.l.i16.errCode, "main", 0);
       }
-      if (pd.l.i32.errCode) {
+      if (pd.l.i32.errCode != PDC_NO_ERR) {
 	error(0|ERROR_PROMPT, "i32 error: ");
 	PDCI_report_err(pdc, 0, &(pd.l.i32.loc), pd.l.i32.errCode, "main", 0);
       }
-      if (pd.l.i64.errCode) {
+      if (pd.l.i64.errCode != PDC_NO_ERR) {
 	error(0|ERROR_PROMPT, "i64 error: ");
 	PDCI_report_err(pdc, 0, &(pd.l.i64.loc), pd.l.i64.errCode, "main", 0);
       }
-      if (pd.l.ui8.errCode) {
+      if (pd.l.ui8.errCode != PDC_NO_ERR) {
 	error(0|ERROR_PROMPT, "ui8 error: ");
 	PDCI_report_err(pdc, 0, &(pd.l.ui8.loc), pd.l.ui8.errCode, "main", 0);
       }
-      if (pd.l.ui16.errCode) {
+      if (pd.l.ui16.errCode != PDC_NO_ERR) {
 	error(0|ERROR_PROMPT, "ui16 error: ");
 	PDCI_report_err(pdc, 0, &(pd.l.ui16.loc), pd.l.ui16.errCode, "main", 0);
       }
-      if (pd.l.ui32.errCode) {
+      if (pd.l.ui32.errCode != PDC_NO_ERR) {
 	error(0|ERROR_PROMPT, "ui32 error: ");
 	PDCI_report_err(pdc, 0, &(pd.l.ui32.loc), pd.l.ui32.errCode, "main", 0);
       }
-      if (pd.l.ui64.errCode) {
+      if (pd.l.ui64.errCode != PDC_NO_ERR) {
 	error(0|ERROR_PROMPT, "ui64 error: ");
 	PDCI_report_err(pdc, 0, &(pd.l.ui64.loc), pd.l.ui64.errCode, "main", 0);
       }

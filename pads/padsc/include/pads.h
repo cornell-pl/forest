@@ -249,13 +249,15 @@ typedef enum PDC_error_t_e {
 } PDC_error_t;
 
 typedef enum PDC_errCode_t_e {
-  PDC_NO_ERR                        =    0,
+  PDC_NOT_PARSED                    =    0,
+  PDC_NO_ERR                        =    1,
+  PDC_SKIPPED                       =    2, 
 
-  PDC_UNEXPECTED_ERR                =    1,
+  PDC_UNEXPECTED_ERR                =    3,
 
-  PDC_BAD_PARAM                     =    2,
-  PDC_SYS_ERR                       =    3,
-  PDC_IO_ERR                        =    4,
+  PDC_BAD_PARAM                     =    4,
+  PDC_SYS_ERR                       =    5,
+  PDC_IO_ERR                        =    6,
 
   PDC_CHKPOINT_ERR                  =   11,
   PDC_COMMIT_ERR                    =   12,

@@ -1885,7 +1885,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun genRepBrief e = []
 		      val canonicalFields = mungeFields genRepFull genRepBrief genRepMan fields
 		      val canonicalFields = if List.length canonicalFields = 0 
-			                    then [(dummy, P.int, SOME "Dummy field inserted to avoid empty struct")]
+			                    then (PE.warn ("PStruct "^structName^" does not contain any non-ommitted fields.\n");
+						 [(dummy, P.int, SOME "Dummy field inserted to avoid empty struct")])
 					    else canonicalFields
 		      val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
 		      val (canonicalDecls, canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
@@ -2786,14 +2787,20 @@ in function...
 			     fun doOne (cty, nameOpt, exp) = 
 				 let val name = case nameOpt of NONE => "bogus"
 			       | SOME n => n  
-				     val repX = P.dotX(fieldX(rep, value), PT.Id name)
+				     fun glhsX base = P.dotX(fieldX(base, value), PT.Id name)
+				     val repX = glhsX rep
+				     val pdX = glhsX pd
 				     val commentS = P.mkCommentS ("Computing variant: "^ name ^ ".")
 				     val initS = genAssignMan(cty,name,repX, exp)
 				 in
 				      cleanupSpaceSs
 				      @[commentS,
 				        P.assignS(fieldX(rep, tag), PT.Id name),
-				        initS]
+				        initS,
+				        P.assignS(fieldX(pd, tag), PT.Id name),
+					P.assignS(P.dotX(pdX, PT.Id errCode), PL.PDC_NO_ERROR),
+					P.assignS(P.dotX(pdX, PT.Id panic), P.falseX), 
+					PL.getLocS(PT.Id pdc,P.addrX(P.dotX(pdX,PT.Id loc)))]
 				      @ returnSs
 				 end
 			 in

@@ -7,7 +7,7 @@ int main(int argc, char** argv) {
   PDC_disc_t      mydisc = PDC_default_disc;
   test            f1data;
   test_acc        accum;
-  test_pd         pd = {0};
+  test_pd         pd ;
   test_m          m;
 
   mydisc.flags |= PDC_WSPACE_OK;
@@ -21,6 +21,8 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
+  test_init(pdc, &f1data);
+  test_pd_init(pdc, &pd);
   /* init mask -- must do this! */
   test_maskFill(pdc, &m, PDC_CheckAndSet);
 
