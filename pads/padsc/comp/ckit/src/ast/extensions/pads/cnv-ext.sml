@@ -4557,8 +4557,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     in
 			 PT.Compound recoverSs
 		     end
-                 val panicRecoverySs = [PT.IfThen(PL.testPanicX(P.addrX(edNext)),
-					   PT.Compound[genPanicRecoveryS(sepXOpt, termXOpt, maxOpt)])]
+                 fun genPanicRecoverySs endedXOpt = 
+		     let val predX = case endedXOpt of NONE => PL.testPanicX(P.addrX(edNext))
+			             | _ => P.andX(P.notX (PT.Id endedSet), PL.testPanicX(P.addrX(edNext)))
+		     in
+			 [PT.IfThen(predX, PT.Compound[genPanicRecoveryS(sepXOpt, termXOpt, maxOpt)])]
+		     end
 
                  (* -- while loop for reading input *)
 
@@ -4629,7 +4633,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                    @ (genEndedLocCalcSs (lastXOpt, endedXOpt))
                                    @ (genEndedCheck endedXOpt)
 				   @ markErrorSs
-				   @ panicRecoverySs
+				   @ (genPanicRecoverySs endedXOpt)
                                    @ (genLastCheck  lastXOpt)
                                    @ (genTermCheck  termXOpt)
 				   @ genBreakCheckSs (termXOpt,maxOpt,lastXOpt, endedXOpt)
