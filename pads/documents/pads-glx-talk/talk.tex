@@ -6,7 +6,7 @@
 \usepackage{code}
 \usepackage{epsfig}
 \usepackage{latexsym}
-
+\usepackage{graphics}
 \input{slidemacros}
 
 \newcommand{\scream}[1]{\textbf{#1}}
@@ -81,13 +81,13 @@ Pstruct http_clf_t \{
 \};
 \end{alltt}}
 
-\bb Parsing library called from host application
+\bb Parsing library \\
+\bbb Called from host C application
 
 {\small
 \begin{alltt}
   http_clf_t http_clf;        /* In-memory representation */
-                              /* Read procedures */  
-  Perror_t http_clf_t_read(..., &http_clf, ...); 
+  Perror_t http_clf_t_read(..., &http_clf, ...); /* Read procedures */
 \end{alltt}}
 
 
@@ -130,14 +130,17 @@ Pstruct http_clf_t \{
 \end{Slide}
 
 \begin{Slide}{PADX Architecture} 
-  \centerline{\psfig{file=pads-galax-overview-yitzhak.pdf}}
+
+\vspace{2cm}
+\centerline{{\psfig{file=padx-overview.pdf}}}
+
 \end{Slide}
 
 \begin{Slide}{Technical Challenges}
 
   \bb Natural mapping from PADS description to XML Schema 
 
-  \bb Materialize PADS data as virtual XML \\
+  \bb Access PADS data as virtual XML \\
   \bbb Implement Galax's abstract tree data model on top of PADS 
 
   \bb Memory management of PADS records \\
@@ -150,27 +153,28 @@ Pstruct http_clf_t \{
   \bbb Describe PADS data, compile library, write \& execute queries
 \end{Slide}
 
-\begin{Slide}{Project Status}
+\begin{Slide}{Status}
 
-\bb PADS
+  \bb PADS (URL TBA)\\
+  \bbb Open-source implementation \\
+  \bbb Binaries on numerous Unix platforms\\
 
-\bb Galax
+  \bb Galax (\texttt{http://www.galaxquery.org})\\
+  \bbb Open-source implementation \\
+  \bbb Version 0.5.0 binaries for Linux, Mac OS, MinGW\\
+  \bbb On-line documentation and demo
 
-\bb PADX
+  \bb PADX\\
+  \bbb Currently proprietary\\
+  \bbb Needs everything: testing, documentation, users
 
-\bb Integration effort successful 
-
-\bb More thorough regression testing
-
-\bb Demonstrate to potential users
-
-\bb Research problems\\
-\bbb Extending Galax's data model to leverage streams access\\
-\bbb More efficient meta-data structures in PADS 
-
+  \bb Research problems\\
+  \bbb Extending Galax's data model to leverage streams access\\
+  \bbb More efficient meta-data structures in PADS 
 \end{Slide}
 
 \begin{Slide}{Abstract Tree Data Model}
+
 \vspace*{1cm}
 \bb Fragment of Galax's abstract tree data model\\
 \bbb Full navigation of XML tree\\
