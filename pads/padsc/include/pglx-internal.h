@@ -24,6 +24,7 @@
 #ifndef FAKE_CAML_VALUE
 #define FAKE_CAML_VALUE
 typedef void* item;
+#endif /* FAKE_CAML_VALUE */
 
 /* make all the value types be value */
 #define atomicString item
@@ -37,7 +38,6 @@ typedef void* item;
 #define atomicValue item
 
 #define glx_err int
-#endif /* FAKE_CAML_VALUE */
 
 /* XXX_REMOVE next 14 lines: */
 #ifdef FOR_CKIT
