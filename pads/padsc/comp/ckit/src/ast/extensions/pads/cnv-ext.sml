@@ -1168,16 +1168,51 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                         PT.String cnvName]))]
 
 		  (* PDCI_MK_NODE: common in foo_children function *)
-		  fun macroNodeCall (returnName,n,tyField,nameField,nameValField,nameStruct) = 
+		  fun macroNodeCall' (returnName,n,tyField,nameField,getField1,getField2,getField3,nameStruct) = 
 	  	      PT.Expr(PT.Call(PL.PDCI_MK_NODE,
                                       [P.subX(returnName,n), 
                                        P.addrX(PT.Id (vTableSuf tyField)),
                                        PT.Id self, 
                                        PT.String nameField, 
-                                       getFieldX(m,nameField),
-                                       getFieldX(pd,nameValField),
-                                       getFieldX(rep,nameValField),
+				       getField1, getField2, getField3,	
                                        PT.String nameStruct])) 
+
+		  fun macroNodeCall (returnName,n,tyField,nameField,nameStruct) = (* for Struct *)
+                      macroNodeCall'(returnName,n,tyField,nameField,
+				     getFieldX(m,nameField),
+                                     getFieldX(pd,nameField),
+                                     getFieldX(rep,nameField),
+				     nameStruct)
+
+		  fun macroNodeCall1 (returnName,n,tyField,nameField,nameStruct) = (* for Union *)
+                      macroNodeCall'(returnName,n,tyField,nameField,
+				     getFieldX(m,nameField),
+                                     getFieldX(pd,"val."^nameField),
+                                     getFieldX(rep,"val."^nameField),
+				     nameStruct)
+	
+		  fun macroNodeCall2 (returnName,n,tyField,nameField,nameStruct) = (* for Typedef *)
+                      macroNodeCall'(returnName,n,tyField,nameField,
+				     getFieldX(m,nameField),
+                                     getFieldX(pd,nameField),
+                                     PT.Id rep,
+				     nameStruct)
+
+		  fun macroNodeCall3 (returnName,n,tyField,nameField,nameElem,nameElts,nameStruct) = (* for Array *)
+                      macroNodeCall'(returnName,n,tyField,nameField,
+				     getFieldX(m,nameElem),
+                                     getFieldX(pd,nameElts),
+                                     getFieldX(rep,nameElts),
+				     nameStruct)
+
+		  (* const PDCI_vtable_t foo_vtable = {foo_children,PDCI_error_typed_value,0}; *)
+                  fun genGalaxVtable(name) =
+		      PT.ExternalDecl(PT.Declaration({specifiers=[PL.PDCI_vtable_t],qualifiers=[PT.CONST],storage=[]},
+                                                     [(PT.VarDecr (vTableSuf name),
+			                               PT.InitList [PT.Id (childrenSuf name),
+                                              		            PL.PDCI_error_typed_value,
+	                                         		    P.zero])])) 
+
 		  (** end generation of common PADS-Galax stuff **)		
 
                   (* const char * name2str(enumPCT which) *)
@@ -1632,6 +1667,33 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val maskFillName = maskFillSuf name 
                       val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
 
+	              (***** typedef PADS-Galax *****)
+
+    	              (* PDCI_node_t** fooTy_children(PDCI_node_t *self) *)
+		      fun genGalaxTyChildrenFun(name) =		
+		          let val nodeRepTy = PL.nodeT
+                              val returnName = PT.Id result
+			      val returnTy = P.ptrPCT (P.ptrPCT (nodeRepTy))
+                              val cnvName = childrenSuf name 
+                              val paramNames = [self]
+                              val paramTys = [P.ptrPCT nodeRepTy]
+                              val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
+			      val enumType = P.ptrPCT(P.makeTypedefPCT name)
+			      val baseType = P.ptrPCT(PL.base_pdPCT)
+ 		              val bodySs = headerGalaxChildrenFun(name) @
+					   ifGalaxChildren(returnName,P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
+					   macroTNode(returnName,PL.PDCI_structured_pd,pd,pd,cnvName) @
+					   [P.mkCommentS "base child",
+ 				 	   macroNodeCall2(returnName,P.intX 1,baseTyName,"base",cnvName),
+					   P.returnS (returnName)]
+                              in   
+                               P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+                              end
+
+	              val galaxEDs = [genGalaxTyChildrenFun(name),
+				      genGalaxVtable(name)]
+
+
                       (* Generate Write function typedef case *)
 		      val writeName = writeSuf name
 		      val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy) 
@@ -1746,6 +1808,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      @ (List.concat(List.map cnvExternalDecl copyPDEDs))
                       @ (List.concat(List.map cnvExternalDecl readFunEDs))
                       @ (List.concat(List.map cnvExternalDecl maskFunEDs))
+  		      @ (List.concat(List.map cnvExternalDecl galaxEDs))
                       @ (emitWrites writeFunEDs)
 		      @ cnvExternalDecl initFunED
                       @ cnvExternalDecl resetFunED
@@ -1760,7 +1823,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                params: (pcty * pcdecr) list, fields: (pdty, pcdecr, pcexp) PX.PSField list, 
                                postCond}) = 
 	          let val dummy = "_dummy"
-		      val structName = name 
 
 		      (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b m (PX.Full fd) = f fd
@@ -1768,16 +1830,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                         | mungeField f b m (PX.Manifest md) = m md
 		      fun mungeFields f b m [] = []
 			| mungeFields f b m (x::xs) = (mungeField f b m x) @ (mungeFields f b m xs)
-
-
-		      (* Struct: general error checking  *)
-		      fun errorChkFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
-				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred: pcexp option, comment: string option} = 
-		           (if name = "pd" then PE.error ("PStruct "^ structName ^" contains field with reserved name 'pd'.\n") else (); [])
-		      fun errorChkBrief e = []
-		      val _ = mungeFields errorChkFull errorChkBrief errorChkBrief fields
-
 
 		      (* Generate local variables  *)
 		      fun genLocFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
@@ -1842,7 +1894,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val accDecls = cnvExternalDecl accStructED 
                       val accPCT = P.makeTypedefPCT (accSuf name)			 
 
-		      (* Struct: Calculate and insert type properties into type table; do error checking*)
+		      (* Struct: Calculate and insert type properties into type table *)
 		      fun genTyPropsFull {pty: PX.Pty, args: pcexp list, name: string, 
 					  isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				          pred: pcexp option, comment:string option} = 
@@ -2221,14 +2273,19 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun genFieldMan m = []
 		      val localFields = mungeFields genFieldFull genFieldBrief genFieldMan fields
 
-(*ERROR?
-		      fun isFull (PX.Full f) = 1
-		        | isFull _ = 0
-		      fun countFullFields fs = List.foldr + 0 (List.map isFull fs)
-		      fun countFields fs = List.length fs 	
-in function...	      
-		      val numChildren = (countFullFields fields)+(countFields fields)+1  	
-*)
+		      (* counting Full and Computed fields 
+		      fun isFullorManif (PX.Full f) = 1
+			| isFullorManif (PX.Manifest f) = 1
+		        | isFullorManif _ = 0
+		      fun plus (a,b) = a+b
+		      fun countFields fs = List.foldr plus 1 (List.map isFullorManif fs)
+		      *)
+
+		      fun countFieldFull f = [1]
+		      fun countFieldMan m = []
+		      fun countFieldBrief e = [1]
+		      val countFields = List.length (mungeFields countFieldFull countFieldMan countFieldBrief fields) 
+
     	              (* PDCI_node_t** fooStruct_children(PDCI_node_t *self) *)
 		      fun genGalaxStructChildrenFun(name,fields) =		
 		          let val nodeRepTy = PL.nodeT
@@ -2239,9 +2296,8 @@ in function...
                               val paramTys = [P.ptrPCT nodeRepTy]
                               val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
 		              fun macroNode (n,(nameField,f)) = 
-					macroNodeCall(returnName,P.intX n,f,nameField,nameField,cnvName)
-(*		              val numFields = List.length fields*)
-			      val numChildren = 2
+					macroNodeCall(returnName,P.intX n,f,nameField,cnvName)
+			      val numChildren = countFields + 1
  		              val bodySs = headerGalaxChildrenFun(name) @
 					   ifGalaxChildren(returnName,P.intX numChildren, "ALLOC_ERROR: in " ^ cnvName) @
 					   macroTNode(returnName,PL.PDCI_structured_pd,pd,pd,cnvName) @
@@ -2251,17 +2307,8 @@ in function...
                             P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
                           end
 
-			(* const PDCI_vtable_t fooStruct_vtable = {fooStruct_children,
-                                        			   PDCI_error_typed_value, 0};*)
-(*                      fun genGalaxStructVtable(name) =
-  			   PT.ExternalDecl(P.varDeclS(P.int,name,P.falseX))*)
-			(* P.assignS(name^"_vtable",*)
-			(* P.makeStructEDecl([("into",P.int,SOME name)], SOME (name^"_vtable"))*)
-			(*  PT.ExternalDecl(P.varDeclS(P.makeTypedefPCT (name^"_vtable"),name,P.falseX))*)
-
- 
-		      val galaxEDs = [genGalaxStructChildrenFun(name,fields)]
-(*		                      ,genGalaxStructVtable(name)] *)
+		      val galaxEDs = [genGalaxStructChildrenFun(name,fields),
+		                      genGalaxVtable(name)] 
 
                       (* Generate Write function struct case *)
 		      val writeName = writeSuf name
@@ -2557,17 +2604,6 @@ in function...
 					    in
 						(SOME descriminator, hasDefault, cases, branches)
 					    end
-
-                     (* Union: general error checking *)
-		     fun errorChkFull {pty: PX.Pty, args: pcexp list, name: string, 
-				       isVirtual: bool, isEndian: bool, 
-				       isRecord, containsRecord, largeHeuristic: bool,
-				       pred: pcexp option, comment: string option} = 
-		          (if name = "pd" then PE.error ("PUnion "^ unionName ^" contains branch with reserved name 'pd'.\n") else ();[])
-		     fun errorChkDef _ = []
-
-		     val _ = mungeVariants errorChkFull errorChkDef errorChkDef variants
-
 
                      (* generate enumerated type describing tags *)
 		     val tagVal = ref 0
@@ -2919,8 +2955,8 @@ in function...
 		      fun tagbranches [] = []
 		  	| tagbranches ((m,(n,f))::ps) = 
 				(PT.CaseLabel(PT.Id n,
-				              PT.Compound ([macroNodeCall(PT.Id "result",
-(* check about 'branch' in Macro Call*)			    P.intX m,f,n,"val."^n,childrenSuf name),
+				              PT.Compound ([macroNodeCall1(PT.Id result,
+(* check out 'branch' in Macro Call*)			    P.intX m,f,n,childrenSuf name),
 						            PT.Break])))::(tagbranches ps)
 
 		      fun switchTag xs = PT.Switch (P.arrowX(PT.Id rep, PT.Id tag),
@@ -2936,8 +2972,6 @@ in function...
                               val paramTys = [P.ptrPCT nodeRepTy]
                               val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
 			      val numFields = List.length variants
-		              fun macroNode (n,(nameField,f)) = 
-					macroNodeCall(returnName,P.intX n,f,nameField,nameField,cnvName)
  		              val bodySs = headerGalaxChildrenFun(name) @
 					   [P.varDeclS(P.ccharPtr,"branch",
                                                        PT.Call(PT.Id (toStringSuf (tgSuf name)),[fieldX(rep,tag)]))] @
@@ -2949,26 +2983,8 @@ in function...
                             P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
                           end
 
-			(* const PDCI_vtable_t fooStruct_vtable = {fooStruct_children,
-                                        			   PDCI_error_typed_value, 0};*)
-(*                      fun genGalaxStructVtable(name) =
-  			   PT.ExternalDecl(P.varDeclS(P.int,name,P.falseX))*)
-			(* P.assignS(name^"_vtable",*)
-			(* P.makeStructEDecl([("into",P.int,SOME name)], SOME (name^"_vtable"))*)
-			(*  PT.ExternalDecl(P.varDeclS(P.makeTypedefPCT (name^"_vtable"),name,P.falseX))*)
-
- 
-		      val galaxEDs = [genGalaxUnionChildrenFun(name,variants)]
-(*		                      ,genGalaxStructVtable(name)] *)
-
-(*	      fun genFieldFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
-				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred: pcexp option, comment: string option} = 
-			  [(name, lookupTy (pty,repSuf,#repname))]
-		      fun genFieldBrief e = []
-		      fun genFieldMan m = []
-		      val localFields = mungeFields genFieldFull genFieldBrief genFieldMan fields
-*)
+		      val galaxEDs = [genGalaxUnionChildrenFun(name,variants),
+		                      genGalaxVtable(name)]
 
                       (* Generate Write function union case *)
 		      val writeName = writeSuf name
@@ -3204,8 +3220,8 @@ in function...
                      @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 		 end
 	  
-             fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, largeHeuristic, isFile : bool,
-			    args : pcexp list, baseTy:PX.Pty, 
+             fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, 
+                            largeHeuristic, isFile : bool, args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
 	     let val length = PNames.arrayLen
                  val elts = PNames.arrayElts
@@ -3897,6 +3913,40 @@ in function...
                  val maskFillName = maskFillSuf name 
                  val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
 
+                 (***** array PADS-Galax *****)
+
+    	         (* PDCI_node_t** fooArray_children(PDCI_node_t *self) *)
+		 fun genGalaxArrayChildrenFun(name) =		
+		     let val nodeRepTy = PL.nodeT
+                         val returnName = PT.Id result
+			 val returnTy = P.ptrPCT (P.ptrPCT (nodeRepTy))
+                         val cnvName = childrenSuf name 
+                         val paramNames = [self]
+                         val paramTys = [P.ptrPCT nodeRepTy]
+                         val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
+		         val length = "length"
+			 val i = "i"
+		         val bodySs = headerGalaxChildrenFun(name) @
+				      [P.varDeclS'(P.int, i)] @
+				      ifGalaxChildren(returnName,P.plusX(fieldX(rep,length),P.intX 2), 
+						      "ALLOC_ERROR: in " ^ cnvName) @
+				      macroTNode(returnName,PL.PDCI_sequenced_pd,pd,pd,cnvName) @
+				      macroTNode(returnName,"PDCI_uint32_val",length,"(rep->length)",cnvName) @
+				      [P.mkCommentS "now do elements",
+                                       PT.For(P.assignX(PT.Id i,P.intX 0),
+                                              P.ltX(PT.Id i,fieldX(rep,length)),
+                                              P.postIncX(PT.Id i),
+                                              macroNodeCall3(returnName,P.plusX(PT.Id i,P.intX 2),
+                                                             elemReadName,"elt",element,"elts[i]",cnvName)),
+				       P.returnS (returnName)]
+                          in   
+                            P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+                          end
+
+	         val galaxEDs = [genGalaxArrayChildrenFun(name),
+				 genGalaxVtable(name)]
+	         
+
 		 (* Generate Write function array case *)
 		 val writeName = writeSuf name
 		 val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy) 
@@ -4110,6 +4160,7 @@ in function...
                  @ (List.concat(List.map cnvExternalDecl copyPDEDs))
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
                  @ (List.concat(List.map cnvExternalDecl maskFunEDs))
+                 @ (emitXML galaxEDs)
                  @ (emitWrites writeFunEDs)
                  @ cnvExternalDecl initFunED
                  @ cnvExternalDecl resetFunED 
@@ -4122,11 +4173,9 @@ in function...
 			 isRecord, containsRecord, largeHeuristic, isFile,
 			 members: (string * pcexp option * string option) list } =
 	      let val baseTy = PX.Name PL.strlit
-                  val enumName = name
                   fun mungeMembers (name, expOpt, commentOpt) = 
-		      (if name = "pd" then PE.error ("PEnum "^ enumName^" contains case with reserved name 'pd'.\n") else ();
 		      case expOpt of NONE => (name, PT.EmptyExpr, commentOpt)
- 		                   | SOME e => (name, e, commentOpt))
+ 		                   | SOME e => (name, e, commentOpt)
 		  val enumFields = List.map mungeMembers members
 
                   (* generate CheckSet mask *)
@@ -4239,18 +4288,19 @@ in function...
 					P.varDeclS(baseType,pd,PT.Cast(baseType,fieldX(self,pd))),
                                         P.varDeclS'(P.ptrPCT (P.ptrPCT nodeRepTy), result)] @
 				        ifGalaxChildren(returnName,P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
-					macroTNode(returnName,"PDC_base_pd",pd,pd,cnvName) @
+					macroTNode(returnName,PL.PDC_base_pd,pd,pd,cnvName) @
 					[P.mkCommentS "string val child",
-					P.assignS(PT.Id Cstr,PT.Cast(P.charPtr,PT.Id (toStringSuf name)))] @ 
-											(* /*rep/ missing *)
+					P.assignS(PT.Id Cstr,PT.Cast(P.charPtr,PT.Call(PT.Id (toStringSuf name),
+										       [PT.Id ("* "^rep)])))] @ 
+											(* problem with *rep *)
 					macroTNode(returnName,PL.PDCI_Cstr_val,"val",Cstr,cnvName) @
 					[P.returnS (returnName)]
                       in   
                         P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
                       end
 
-	          val galaxEDs = [genGalaxEnumChildrenFun(name)]
-
+	          val galaxEDs = [genGalaxEnumChildrenFun(name),
+				  genGalaxVtable(name)]
 
                   (* Generate Write functions (enum case) *)
 		  val writeName = writeSuf name
@@ -4326,7 +4376,7 @@ in function...
 		@ (List.concat(List.map cnvExternalDecl copyPDEDs))
                 @ (List.concat(List.map cnvExternalDecl readFunEDs))
                 @ (List.concat(List.map cnvExternalDecl maskFunEDs))
-		@ (emitXML galaxEDs)
+                @ (emitXML galaxEDs)
                 @ (emitWrites writeFunEDs)
                 @ cnvExternalDecl initFunED
                 @ cnvExternalDecl resetFunED

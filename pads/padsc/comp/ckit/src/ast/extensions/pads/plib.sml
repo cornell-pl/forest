@@ -65,7 +65,11 @@ struct
   val PDCI_NEW_NODE_PTR_LIST = PT.Id "PDCI_NEW_NODE_PTR_LIST"
   val nodeT = P.makeTypedefPCT "PDCI_node_t"
   val PDCI_structured_pd = "PDCI_structured_pd"
+  val PDCI_sequenced_pd = "PDCI_sequenced_pd"
   val PDCI_Cstr_val = "PDCI_Cstr_val"
+  val PDC_base_pd = "PDC_base_pd"
+  val PDCI_error_typed_value = PT.Id "PDCI_error_typed_value"
+  val PDCI_vtable_t = PT.TypedefName "PDCI_vtable_t"
 
   val toolErrPCT   = P.makeTypedefPCT "PDC_error_t"
   val toolStatePCT = P.makeTypedefPCT "PDC_t"
