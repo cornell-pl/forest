@@ -904,6 +904,7 @@ typedef struct PDC_int_acc_s {
   PDC_uint64  good;
   PDC_uint64  bad;
   PDC_uint64  fold;
+  PDC_uint64  tracked;
   PDC_int64   psum;
   double      avg;
   PDC_int64   min;
@@ -920,6 +921,7 @@ typedef struct PDC_uint_acc_s {
   PDC_uint64  good;
   PDC_uint64  bad;
   PDC_uint64  fold;
+  PDC_uint64  tracked;
   PDC_uint64  psum;
   double      avg;
   PDC_uint64  min;
@@ -933,6 +935,7 @@ typedef PDC_uint_acc PDC_uint64_acc;
 
 typedef struct PDC_string_acc_s {
   Dt_t           *dict;
+  PDC_uint64     tracked;
   PDC_uint32_acc len_accum; /* used for length distribution and good/bad accounting */
 } PDC_string_acc;
 

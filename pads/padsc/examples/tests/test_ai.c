@@ -3,8 +3,9 @@
 #include <ast.h>
 #include <error.h>
 
+#define NO_PRINT 1
+
 int main(int argc, char** argv) {
-  int             i;
   PDC_t           *pdc;
   http_clf_t_ed   ed;
   http_clf_t      ai;
@@ -45,6 +46,7 @@ int main(int argc, char** argv) {
   while (!PDC_IO_at_EOF(pdc)) {
     if (PDC_OK == http_clf_t_read(pdc, 0, &ed, &ai)) {
       /* do something with the data */
+#ifndef NO_PRINT
       if (ai.host.tag == resolved) {
 	error(0, "host: %u.%u.%u.%u",
 	      ai.host.val.resolved.nIP[0], 
@@ -52,6 +54,7 @@ int main(int argc, char** argv) {
 	      ai.host.val.resolved.nIP[2], 
 	      ai.host.val.resolved.nIP[3]);
       } else {
+	int i;
 	error(0|ERROR_PROMPT, "host: ");
 	for (i = 0; i < ai.host.val.symbolic.length; i++) {
 	  if (i <  ai.host.val.symbolic.length-1) {
@@ -79,7 +82,7 @@ int main(int argc, char** argv) {
 	    ai.request.version.minor);
       error(0, "response: %u   contentLength: %u", ai.response, ai.contentLength);
       error(0, "");
-
+#endif
       if (PDC_ERR == http_clf_t_acc_add(pdc, &acc, &ed, &ai)) {
 	error(2, "*** http_clt_t_acc_add failed ***");
 	exit(-1);

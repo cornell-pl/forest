@@ -8,7 +8,7 @@ end
 CCFLAGS = $(CC.OPT)
 
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6
-OTHER_TESTS  = test_enum test_from test_ai test_dibbler1 test_readint test_fast_dib
+OTHER_TESTS  = test_enum test_from test_ai test_dibbler1 test_readint test_fast_dib test_fast_dib_mod
 ALL_TESTS = $(FORMAT_TESTS) $(OTHER_TESTS)
 
 format_tests : $(FORMAT_TESTS)
@@ -30,6 +30,7 @@ test_ai       :: test_ai.c        ai.c          -lpadsc
 test_readint  :: test_readint.c   readinttest.c -lpadsc
 test_dibbler1 :: test_dibbler1.c  dibbler.c     -lpadsc
 test_fast_dib :: test_fast_dib.c  dibbler2.c    -lpadsc
+test_fast_dib_mod :: test_fast_dib.c  dibbler2-mod.c    -lpadsc
 regress : regress_test_format1 \
           regress_test_format2 \
           regress_test_format3 \
