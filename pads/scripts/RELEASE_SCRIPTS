@@ -21,7 +21,7 @@ install-sh
 mk_last_prec.pl
 mksrc.pl
 opsys
-padsc.release
+padsc
 ppp.pl
 ptest.pl
 release.pl
