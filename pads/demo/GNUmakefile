@@ -4,7 +4,9 @@
 .PRECIOUS: %.c
 
 # These variables need to be set
-PADS_HOME=/home/kfisher/pads
+ifndef PADS_HOME
+  PADS_HOME=/home/kfisher/pads
+endif
 
 # These variables should not need to change
 PADSC=$(PADS_HOME)/scripts/padsc

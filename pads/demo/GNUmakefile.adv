@@ -4,12 +4,16 @@
 .PRECIOUS: %.c
 
 # These variables need to be set
-PADS_HOME=/home/kfisher/pads
+ifndef PADS_HOME
+  PADS_HOME=/home/kfisher/pads
+endif
 
 include $(PADS_HOME)/mk/rules.mk
 # Rule to run the pads compiler on foo.p
 %.c: %.p
 	$(PADSC) $<
+
+all:	wsl-xml wsl-xml-g wsl-xml-shared wsl-xml-shared-g
 
 wsl-xml: wsl-xml.c wsl.c $(STATIC_LIBS_O)
 	$(COMPILE_O) $^ -o $@
