@@ -154,6 +154,7 @@ Perror_t PDCI_sndNode_make_valid(PDCI_node_t *node){
   PDCI_smart_node_t      *sn       = ancestor->parent->snExt; // Alias the smart node.
   PDCI_path_t             path;
 
+  error(2, "In PDCI_sndNode_make_valid\n");
   if (ancestor->rep == NULL) { 
     /* must read from IO stream first */ 
     res = sn->elt_read(ancestor->parent, node->pads, ancestor);

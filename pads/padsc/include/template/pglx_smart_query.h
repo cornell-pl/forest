@@ -131,6 +131,37 @@ int main(int argc, char** argv) {
     queryName = DEF_QUERY_FILE;
   }
 
+  /* The remaining flags are for galax */
+  {
+    int i;
+    for (i = 3; i < argc; i++) { 
+      if (strcmp(argv[i], "-monitor") == 0) monitor_flag = 1;
+      else if  (strcmp(argv[i], "-sbdo") == 0) { 
+	sbdo_flag = 1;
+	i++;
+	if (i < argc) {
+	  if (strcmp(argv[i], "remove") == 0) sbdo_kind = SBDO_Remove;
+	  else if (strcmp(argv[i], "preserve") == 0) sbdo_kind = SBDO_Preserve;
+	  else if (strcmp(argv[i], "adhoc") == 0)	sbdo_kind = SBDO_AdHoc;
+	  else if (strcmp(argv[i], "tidy") == 0) sbdo_kind = SBDO_Tidy;
+	  else if (strcmp(argv[i], "duptidy") == 0) sbdo_kind = SBDO_DupTidy;
+	  else if (strcmp(argv[i], "sloppy") == 0) sbdo_kind = SBDO_Sloppy;
+	  else error(2, "Usage: -sbdo [remove, preserve, adhoc, tidy, duptidy, sloppy]");
+	} else error(2, "Usage: -sbdo [remove, preserve, adhoc, tidy, duptidy, sloppy]");
+      }
+    }
+  }
+
+  /* Initialization up Galax flags */
+  exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
+  exit_on_error(galax_set_serialization_kind(pc, Serialize_As_Well_Formed), "galax_set_serialization_kind");
+  if (sbdo_flag)
+    exit_on_error(galax_set_sbdo_kind(pc, sbdo_kind), "galax_set_sbdo_kind");
+  if (monitor_flag) {
+    exit_on_error(galax_set_monitor_mem(pc, 1), "galax_set_monitor_mem");
+    exit_on_error(galax_set_monitor_time(pc, 1), "galax_set_monitor_time");
+  }
+
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(2, "*** P_open failed ***");
     exit(-1);
@@ -177,9 +208,11 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
+    exit_on_error(galax_start_monitor_call(pc, "pads_header_read"), "galax_start_monitor_call");
     if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
       error(2, "<note>header read returned error</note>");
     } else {
+      exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
       error(2, "<note>header read returned OK</note>");
     }
   }
@@ -191,19 +224,20 @@ int main(int argc, char** argv) {
       char *input = "";
 
       // Create the new smart node.
+      exit_on_error(galax_start_monitor_call(pc, "pads_mk_top_node"), "galax_start_monitor_call");
       PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
       PADS_TY(_smartNode_init)(smart_node, MAX_ELTS  EXTRA_ARGS);
+      exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
 
-      exit_on_error(padsDocument(inName, (nodeRep)smart_node, &doc), "padsDocument");
-      docitems = itemlist_cons(doc, itemlist_empty()); 
-      exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
       exit_on_error(galax_load_standard_library(pc, &cp), "galax_load_standard_library");
+      exit_on_error(padsDocument(pc, inName, (nodeRep)smart_node, &doc), "padsDocument");
+      docitems = itemlist_cons(doc, itemlist_empty()); 
       exit_on_error(galax_import_main_module(cp, ExternalContextItem, Buffer_Input, input, &cm), "galax_import_main_module");
-      exit_on_error(galax_build_external_context(docitems, itemlist_empty(), vars, vals, 0, &exc), "galax_build_external_context");
+      exit_on_error(galax_build_external_context(pc, docitems, itemlist_empty(), vars, vals, 0, &exc), "galax_build_external_context");
       exit_on_error(galax_eval_prolog(cm->compiled_prolog, exc, &pp), "galax_eval_prolog");
       exit_on_error(galax_eval_statement(pp, File_Input, queryName, &docitems), "galax_eval_statement"); 
       
-      exit_on_error(galax_serialize_to_stdout(docitems), "galax_serialize_to_stdout");
+      exit_on_error(galax_serialize_to_stdout(pc,docitems), "galax_serialize_to_stdout");
  }
   /* 
    * The smart code doesn't use rep->elts, pd->elts, 

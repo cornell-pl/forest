@@ -501,10 +501,12 @@ PDCI_node_t * ty ## _val_node_new(PDCI_node_t *parent, \
   return result;\
 }\
 \
-PDCI_node_t * ty ## _text_node_new(PDCI_node_t *parent,const char *whatfn)\
+PDCI_node_t * ty ## _text_node_new(PDCI_node_t *parent, const char *whatfn)\
 {\
   PDCI_node_t *result;\
   PDCI_MK_TEXTNODE (result,& ty ## _text_node_vtable,parent,whatfn);\
+  result->pd = parent->pd;\
+  result->id_offset = PDCI_TEXT_OFF; \
   return result;\
 }\
 \
@@ -600,7 +602,7 @@ const PDCI_vtable_t ty ## _text_node_vtable = {ty ## _text_cachedNode_init,\
 					       PDCI_node_no_kthChild, \
 					       PDCI_node_no_kthChildNamed, \
 					       PDCI_node_free,\
-					       PDCI_error_getId,\
+					       PDCI_node_getId, /* PDCI_error_getId, */\
 					       ty ## _text_typed_value, \
 					       ty ## _string_value};\
 					       \
@@ -608,7 +610,7 @@ const PDCI_vtable_t ty ## _text_cachedNode_vtable = {PDCI_error_cachedNode_init,
 						     PDCI_node_no_kthChild, /* no children */\
 						     PDCI_node_no_kthChildNamed, /* no children */\
 						     PDCI_cachedNode_free,  \
-					             PDCI_error_getId,\
+					             PDCI_node_getId, /* PDCI_error_getId, */\
 						     ty ## _text_typed_value, \
 						     ty ## _string_value};\
 \
@@ -616,7 +618,7 @@ const PDCI_vtable_t ty ## _text_sndNode_vtable = {PDCI_error_cachedNode_init, \
 						     PDCI_node_no_kthChild, /* no children */\
 						     PDCI_node_no_kthChildNamed, /* no children */\
 						     PDCI_node_free,  \
-  					             PDCI_error_getId,\
+  					             PDCI_sndNode_getId, /* PDCI_error_getId */\
 						     ty ## _text_sndNode_typed_value, \
 						     ty ## _sndNode_string_value}
 
@@ -1854,7 +1856,7 @@ PDCI_pglx_id_t PDCI_error_getId(PDCI_node_t *node)
   PDCI_pglx_id_t id = {0,0};
   
   PGLX_report_err(node->pads,P_LEV_FATAL,0, P_INVALID_FUNCTION_CALL,
-		  "PDCI_error_getId","Pads-galax node of name %s does not have a nodeid.",node->name);
+		  "PDCI_error_getId","\nPads-galax node of name %s does not have a nodeid.\n",node->name);
   return id;  /* will never get here*/
 }
 

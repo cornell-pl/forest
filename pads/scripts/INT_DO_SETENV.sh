@@ -68,13 +68,16 @@ if [ $_pads_status = "OK" ]; then
   fi
 
   if [ "$OCAML_LIB_DIR"x = x ]; then
-    export OCAML_LIB_DIR=/usr/lib/ocaml
+    export OCAML_LIB_DIR=/usr/local/lib/ocaml
+  fi
+  if [ "$OCAML_BIN_DIR"x = x ]; then
+    export OCAML_BIN_DIR=/usr/local/bin
   fi
   if [ "$GALAX_HOME"x = x ]; then
     export GALAX_HOME=/home/mff/Galax
   fi
-  if [ "$PADSGLX_HOME"x = x ]; then
-    export PADSGLX_HOME=/home/mff/pads_glx/api
+  if [ "$GALAX_SRC"x = x ]; then
+    export GALAX_SRC=/home/mff/galax
   fi
   if [ "$PCRE_LIB_DIR"x = x ]; then
     export PCRE_LIB_DIR=/home/mff/pcre-4.5-rh9/lib
@@ -166,7 +169,9 @@ if [ $_pads_status = "OK" ]; then
     echo "MANPATH=$MANPATH"
     echo "PATH=$PATH"
     echo "OCAML_LIB_DIR=$OCAML_LIB_DIR"
+    echo "OCAML_BIN_DIR=$OCAML_BIN_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
+    echo "GALAX_SRC=$GALAX_SRC"
     echo "PADSGLX_HOME=$PADSGLX_HOME"
     echo "PCRE_LIB_DIR=$PCRE_LIB_DIR"
     echo " "

@@ -29,7 +29,7 @@
 #
 # If USE_GALAX is defined, the padsc option -x is included
 # and the pglx library is added to the set of libraries to link against.
-# In this case env variables GALAX_HOME and PADSGLX_HOME must be defined.
+# In this case env variables GALAX_HOME and GALAX_SRC must be defined.
 # Also, the GALAX include paths are added as -I
 # options and the appropriate ocaml and Galax libraries are added
 # to the set of libraries to link against. In addition, the compilation
@@ -60,9 +60,9 @@ ifndef GALAX_HOME
 	@exit 1
 forceabort2: ;
 endif
-ifndef PADSGLX_HOME
+ifndef GALAX_SRC
 %: forceabort2
-	@echo "ERROR: env variable PADSGLX_HOME must be defined when building with USE_GALAX defined"
+	@echo "ERROR: env variable GALAX_SRC must be defined when building with USE_GALAX defined"
 	@exit 1
 forceabort2: ;
 endif
@@ -106,8 +106,6 @@ ifndef AST_HOME
 AST_HOME := $(PADS_HOME)/ast-ast/arch/$(AST_ARCH)
 export AST_HOME
 endif
-
-PADSGLX_LIB_DIR = $(PADSGLX_HOME)
 
 ifndef OCAML_LIB_DIR
 OCAML_LIB_DIR = /usr/lib/ocaml
@@ -232,6 +230,12 @@ space:=$(empty) $(empty)
 
 CC_DLL = $(mam_cc_DLL)
 
+# Mary : for profiling using gprof
+ifdef PROFILE
+CDBGFLAGS += -pg
+COPTFLAGS += -pg
+endif
+
 # OS specific rules
 # (may override some of the above)
 
@@ -298,8 +302,13 @@ else
 STATIC_ASTLIB_O = $(INSTALL_LIBDIR)/$(STATIC_ASTLIB_NM_O)
 endif
 
-# mff may need to change next two defns
-STATIC_GALAXLIB_O = $(PADSGLX_LIB_DIR)/libpadsglxopt$(mam_cc_SUFFIX_ARCHIVE)
+ifndef PADSGLX_LIB_DIR
+PADSGLX_LIB_DIR = $(PADS_HOME)/padsc/pads-glx/$(AST_ARCH)
+endif
+
+STATIC_GALAXLIB_O = $(PADSGLX_LIB_DIR)/$(mam_cc_PREFIX_ARCHIVE)padsglxopt$(mam_cc_SUFFIX_ARCHIVE)
+STATIC_GALAXLIB_D = $(PADSGLX_LIB_DIR)/$(mam_cc_PREFIX_ARCHIVE)padsglxopt$(mam_cc_SUFFIX_ARCHIVE)
+SHARED_GALAXLIB_O = $(PADSGLX_LIB_DIR)/$(mam_cc_PREFIX_SHARED)padsglxopt$(mam_cc_SUFFIX_SHARED)
 STATIC_OCAMLLIB_O = \
   $(OCAML_LIB_DIR)/libnums$(mam_cc_SUFFIX_ARCHIVE) \
   $(USR_LIB_DIR)/libm$(mam_cc_SUFFIX_ARCHIVE) \
@@ -330,7 +339,6 @@ else
 STATIC_ASTLIB_D = $(INSTALL_LIBDIR)/$(STATIC_ASTLIB_NM_D)
 endif
 # mff may need to change next two defns
-STATIC_GALAXLIB_D = $(PADSGLX_LIB_DIR)/libpadsglxopt$(mam_cc_SUFFIX_ARCHIVE)
 STATIC_OCAMLLIB_D = $(STATIC_OCAMLLIB_O) # no debug versions available
 
 ifdef USE_GALAX
@@ -398,8 +406,7 @@ else
 DYNAMIC_LIB_DEPS_O = $(SHARED_PADSLIB_DEP_O) $(SHARED_ASTLIB_DEP_O)
 endif
 ifdef USE_GALAX
-# only statics available
-DYNAMIC_LIB_DEPS_O += $(STATIC_GALAXLIB_O) $(STATIC_OCAMLLIB_O)
+DYNAMIC_LIB_DEPS_O += $(SHARED_GALAXLIB_O) $(STATIC_OCAMLLIB_O)
 endif
 ifdef USE_PZIP
 DYNAMIC_LIB_DEPS_O += $(SHARED_DLL_LIB_DEP_O) $(SHARED_BZLIB_DEP_O) $(SHARED_ZLIB_DEP_O) $(SHARED_PZLIB_DEP_O) 
@@ -416,7 +423,6 @@ DYNAMIC_LIBS_D += \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c -lpcre_stubs
-# XXX what about -lcamlrun ?
 endif
 SHARED_PADSLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PADSLIB_NM_D)
 SHARED_PGLXLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PGLXLIB_NM_D)
@@ -449,7 +455,7 @@ INCLUDES += -I$(GEN_DIR)
 endif
 
 ifdef USE_GALAX
-INCLUDES +=  -I$(GALAX_HOME)/lib/c -I$(PADSGLX_LIB_DIR) -I$(OCAML_LIB_DIR)
+INCLUDES +=  -I$(GALAX_HOME)/lib/c -I$(PADS_HOME)/padsc/pads-glx -I$(OCAML_LIB_DIR) 
 endif
 
 ifndef BuildAST4PADSLib

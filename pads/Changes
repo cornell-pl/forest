@@ -1,3 +1,17 @@
+January 4, 2005 - Mary
+
+  o Integrated PADS-Galax glue code into PADS code base.
+
+    - Added pads/padsc/pads-glx source directory
+
+    - Added pads/documents/{pads-glx-doc,pads-glx-talk} directories
+
+    - Added new required environment variable GALAX_SRC to mk/rules.mk.
+      Must point to galax source directory.
+
+    - Added pads_glx target to pads/GNUmakefile : 
+      Target is made when USE_GALAX=1
+
 October 19, 2004 - Mary
 
   o Normalized occurrence of <pd> type for all P-types:
@@ -109,3 +123,97 @@ October 12, 2004 - Mary
 	idltest/  
         yitzhak 
 
+===============  PADS-GALAX ===============================================
+19 October 2004 - Mary
+  o Added pads-glx/doc directory
+
+14 October 2004 - Mary
+  o Pads_dm
+    - Changed padsDocumentNode so that it always contains exactly one
+      root element named <Psource>.
+
+22 June 2004 - Yitzhak
+
+  o In root directory:
+      I've moved the files smart.c and smart.h to a new directory called smart.
+      I've removed them from the root directory.
+      I've also added a number of other new files to "smart". I will use smart 
+      as my working directory until I'm ready to try integrating the changes 
+      into the main pads src tree.
+
+  o In api:
+      I've modified the c api to support garbage collection of unreachable 
+      nodereps.
+
+  o In smart:
+      Work-in-progress, as described above.
+
+15 June 2004 - Yitzhak
+  o Fixed new kth_child-based pads_dm implementation.
+  o Modified the idl to treat result from kth_child as a nodeRep option. 
+    Also added a type nodeRepOption, which will be treated differently by the 
+    idl compiler than nodeRep.
+    (Note: We use options becuase nodeRep is opaque and can't be tested for nullity.)
+  o Added nodeRepOpt conversion functions to pads_dm_stub.c. These functions convert c nodeRep
+    to ml "nodeRep option" and vice versa.
+  o Added a debug targe to Makefile (plus some minor fixes).
+
+10 June 2004 - Yitzhak
+  o Added kth_child function to pads_c.idl and pads_pglx.c
+  o Changed pads_dm.ml to use kth_child function
+
+  o Updated api/README to more accurately reflect directory contents.
+  o Removed root() function from pads_c.idl.
+  o Created root.idl to contain root() function.
+  o Modified pads_dummy.c to implement PGLX_generic_XXX functions rather 
+    than the pads_c.h functions. Now, pads_pglx.c can work with both pads_dummy.c 
+    and real PADS implementations.
+  o Modified test_pads_c.c to use root.h.
+  o Fixed Makefile so that pads-galax library is compiled identically whether 
+    for testing or not.
+
+
+8 June 2004 - Yitzhak and Mary and Bob
+  o PADS Example compilation
+    Added dependency in Makefile
+
+  o  Updated TODO with a couple API fixes.
+
+  o  Added new file ON_DEMAND for notes on on-demand parsing
+      (includes notes on the need for a new way to do Identity testing).
+
+  Testing
+
+  o TEST=0 variable links without pads_dummy.o.
+  o TEST must be set to one of 0 or 1.
+
+  Pads_dm module:
+
+  o Ancestor, descendent, etc. axes are implemented naively. Code
+    taken from galax_dm.
+
+
+7 June 2004 - Yitzhak and Mary
+
+  Pads_dm module:
+
+  o Re-align PADS-GALAX interface with current Galax abstract Dm module
+ 
+  Makefile
+
+  o Removed all references to byte-code compilation.  libpadsglxopt.{a,so} are
+    native code libraries
+
+  Testing
+
+  o TEST=1 variable links pads_dummy.o to test libpadsglxopt
+    independently of Pads generated libraries
+
+  o Tested linking using test_pads_c_opt.  Uses TEST=1 and pads_dummy.c,
+    which constructs simple XML document that simulates PADS library
+
+23 November 2003 - Mary
+
+  o Alignment with Nov'03 WD of Galax
+
+===============  PADS-GALAX ===============================================

@@ -76,12 +76,30 @@ else
   endif
 endif
 
+set _is_ocaml_bin
+if (! $?OCAML_BIN_DIR) then
+  unset _is_ocaml_bin
+else
+  if ("$OCAML_BIN_DIR"x == x) then
+    unset _is_ocaml_bin
+  endif
+endif
+
 set _is_galax_home
 if (! $?GALAX_HOME) then
   unset _is_galax_home
 else
   if ("$GALAX_HOME"x == x) then
     unset _is_galax_home
+  endif
+endif
+
+set _is_galax_src
+if (! $?GALAX_SRC) then
+  unset _is_galax_src
+else
+  if ("$GALAX_SRC"x == x) then
+    unset _is_galax_src
   endif
 endif
 
@@ -216,10 +234,16 @@ if ($_pads_status == "OK") then
     setenv MANPATH ""
   endif
   if (! $?_is_ocaml_lib) then
-    setenv OCAML_LIB_DIR /usr/lib/ocaml
+    setenv OCAML_LIB_DIR /usr/local/lib/ocaml
+  endif
+  if (! $?_is_ocaml_bin) then
+    setenv OCAML_BIN_DIR /usr/local/bin
   endif
   if (! $?_is_galax_home) then
     setenv GALAX_HOME /home/mff/Galax
+  endif
+  if (! $?_is_galax_src) then
+    setenv GALAX_SRC /home/mff/galax
   endif
   if (! $?_is_padsglx_home) then
     setenv PADSGLX_HOME /home/mff/pads-glx/api
@@ -302,7 +326,9 @@ if ($_pads_status == "OK") then
     echo "MANPATH=$MANPATH"
     echo "PATH=$PATH"
     echo "OCAML_LIB_DIR=$OCAML_LIB_DIR"
+    echo "OCAML_BIN_DIR=$OCAML_BIN_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
+    echo "GALAX_SRC=$GALAX_SRC"
     echo "PADSGLX_HOME=$PADSGLX_HOME"
     echo "PCRE_LIB_DIR=$PCRE_LIB_DIR"
     echo " "

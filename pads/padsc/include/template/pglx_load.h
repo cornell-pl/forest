@@ -62,7 +62,9 @@ int main(int argc, char** argv) {
 
   galax_err err;
   item doc;
-  itemlist docitems;
+  processing_context pc; 
+  itemlist docitems, monitems;
+  int monitor_flag = 0; 
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -111,6 +113,21 @@ int main(int argc, char** argv) {
     inName = DEF_INPUT_FILE;
   }
 
+  /* The remaining flags are for galax */
+  {
+    int i;
+    for (i = 2; i < argc; i++) { 
+      if (strcmp(argv[i], "-monitor") == 0) monitor_flag = 1;
+    }
+  }
+  /* Initialization up Galax flags */
+  exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
+  if (monitor_flag) {
+    exit_on_error(galax_set_monitor_mem(pc, 1), "galax_set_monitor_mem");
+    exit_on_error(galax_set_monitor_time(pc, 1), "galax_set_monitor_time");
+  }
+  exit_on_error(galax_set_serialization_kind(pc, Serialize_As_Well_Formed), "galax_set_serialization_kind");
+
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(2, "*** P_open failed ***");
     exit(-1);
@@ -145,7 +162,9 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** header parse description initialization failed ***");
   }
   /* init mask -- must do this! */
+  exit_on_error(galax_start_monitor_call(pc, "pads_init"), "galax_start_monitor_call");
   PADS_HDR_TY(_m_init)(pads, &hdr_m, P_CheckAndSet);
+  exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
 #endif /* PADS_HDR_TY */
 
 #ifdef PADS_HDR_TY
@@ -153,15 +172,18 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
+    exit_on_error(galax_start_monitor_call(pc, "pads_header_read"), "galax_start_monitor_call");
     if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
       error(2, "<note>header read returned error</note>");
     } else {
+      exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
       error(2, "<note>header read returned OK</note>");
     }
   }
 #endif /* PADS_HDR_TY */
 
   /* Try to read entire file */
+  exit_on_error(galax_start_monitor_call(pc, "pads_read"), "galax_start_monitor_call");
   if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS)) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
@@ -170,12 +192,20 @@ int main(int argc, char** argv) {
 #endif
     }
   else { 
+    exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
     if (!P_PS_isPanic(&pd)) { 
       /* make the top-level node */
       PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
-      exit_on_error((padsDocument(inName, (nodeRep)doc_node, &doc)), "padsDocument");
+
+      exit_on_error((padsDocument(pc, inName, (nodeRep)doc_node, &doc)), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 
-      exit_on_error(galax_serialize_to_stdout(docitems), "galax_serialize_to_stdout");
+      exit_on_error(galax_serialize_to_stdout(pc, docitems), "galax_serialize_to_stdout");
+
+      if (monitor_flag) {
+	exit_on_error(galax_monitor_of_all_calls(pc, &monitems), "galax_monitor_of_all_calls");
+	exit_on_error(galax_serialize_to_file(pc,"load-monitor.out", monitems), "galax_serialize_to_file");
+      }
+
     } else {
       error(0, "read raised panic error");
     }

@@ -64,9 +64,6 @@ test_load_%: $(GEN_DIR)/%.c  $(CODE_DIR)/test_%.h $(CODE_DIR)/test_load_%.c $(TE
 	@$(CCExec_DYNAMIC_O)
 
 # Test bulk load & query
-test_bulk_%-d: $(GEN_DIR)/%_expanded.c  $(CODE_DIR)/test_%.h $(CODE_DIR)/test_bulk_%.c $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)  
-	@$(CCExec_DYNAMIC_D)
-
 test_bulk_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/test_bulk_%.c $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 

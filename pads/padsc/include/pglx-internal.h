@@ -268,6 +268,7 @@ extern const PDCI_vtable_t ty ## _text_sndNode_vtable
 #define PDCI_E_OFF            4
 
 #define PDCI_VAL_OFF          12
+#define PDCI_TEXT_OFF         13
 
 #define PDCI_SEQ_PD_OFF       1
 #define PDCI_FIRSTERROR_OFF   12

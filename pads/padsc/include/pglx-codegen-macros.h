@@ -986,7 +986,7 @@ P_OK;
        arrayInfo->tmap[arrayInfo->next_idx_read].offset = begin_offset;
        arrayInfo->next_idx_read++;       
 
-       PDCI_IO_GETOFFSET((padsIN),begin_offset);       
+       PDCI_ALWAYS_GETOFFSET((padsIN),begin_offset);       
        PDCI_ID_RESET((padsIN),0);
      }while (P_PS_isPartial(pd) && virtIdx >= arrayInfo->next_idx_read);
      

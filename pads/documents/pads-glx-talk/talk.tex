@@ -1,0 +1,249 @@
+\documentclass[landscape]{slides}
+
+\usepackage{amssymb}
+\usepackage{alltt}
+\usepackage{color}
+\usepackage{code}
+\usepackage{epsfig}
+\usepackage{latexsym}
+
+\input{defs}
+
+\input{slidemacros}
+
+\newcommand{\scream}[1]{\textbf{#1}}
+
+\newcommand{\notes}[1]{{\tiny #1}}
+%\newcommand{\notes}[1]{}
+
+\newcounter{chap}
+\stepcounter{chap}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Title slide
+\begin{slide}
+\begin{center}\LARGE\color{blue}
+The PADS-Galax Project: \\
+Enabling XQuery over  Ad-hoc Data Sources
+
+Yitzhak Mandelbaum
+\end{center}
+\end{slide}
+
+\begin{Slide}{Existing Technologies}
+  
+  \vspace*{1cm}
+  \bb What is PADS?\\
+  \bbb Declarative data-stream description language\\
+  \bbb Syntax \& semantics of \blue{semi-structured}, legacy data sources \\
+  \bbb Compiler generates data-parsing library from description\\
+  \bbb Library detects \& recovers from non-fatal errors in data
+
+  \bb What is Galax?\\
+  \bbb Complete, extensible implementation of XQuery 1.0 
+
+  \bb What is XQuery?\\
+  \bbb Functional, strongly typed XML query language \\
+  \bbb Well-suited to querying \blue{semi-structured} sources
+
+\end{Slide}
+
+\begin{Slide}{Describing HTTP Common Log Format}
+
+  \bb Data
+
+{\small
+\begin{alltt}
+\blue{207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30}
+\end{alltt}
+}
+  \bb PADS Description
+
+{\small
+\begin{alltt}
+\kw{Pstruct} http_request_t \{
+  '\verb|\"|'; http_method_t    meth;           /- Method used during request
+  ' ';  Pa_string(:' ':) req_uri;        /- Requested uri.
+  ' ';  http_v_t         version : checkVersion(version, meth);
+                                         /- HTTP version number of request 
+  '\verb|\"|';
+\};
+\end{alltt}
+}
+
+\end{Slide}
+
+\begin{Slide}{Viewing \& Querying HTTP CLF}
+
+  \bb Virtual XML Data
+{\tiny
+\begin{alltt}
+\blue{<http-clf>
+  <host>207.136.97.49</host>
+  <remoteID>-</remoteID>
+  <auth>-</auth>
+  <mydate>15/Oct/1997:18:46:51 -0700</mydate>
+  <request><meth>GET</meth><req_uri>/tk/p.txt</req_uri><version>HTTP/1.0 ...
+  <response>200</response>
+  <contentLength>30</contentLength>
+<http-clf>}
+\end{alltt}
+}
+
+\bb Selection \& projection using XQuery\\
+\bbb Return hosts of CLF records with content length greater than 2K
+
+{\small
+\begin{alltt}
+\blue{\$pads-doc/http-clf[contentLength > 2048]/host}
+\end{alltt}}
+
+\bb Vet errors in data using XQuery \\
+\bbb Return locations of records with error in content-length field
+
+{\small
+\begin{alltt}
+\blue{\$pads-doc/http-clf[contentLength/@pads:errCode]/@pads:loc}
+\end{alltt}}
+\end{Slide}
+
+\begin{Slide}{Technical Challenges}
+
+  \bb Define mapping from PADS description to XML Schema 
+
+  \bb Materialize PADS data as virtual XML \\
+  \bbb Galax has extensible data model \\
+  \bbb Implement Galax's abstract data model on top of PADS 
+
+  \bb Memory management of PADS records \\
+  \bbb Data exceeding memory limits requires clever MM\\
+  \bbb PADS program typically reads records sequentially \\
+  \bbb Galax may not access records sequentially 
+
+  \bb User-friendly interface\\
+  \bbb Describe PADS data, compile library, write \& execute queries
+
+\end{Slide}
+
+\begin{Slide}{Technical Challenges \& Solutions}
+
+  \bb Define mapping from PADS description to XML Schema \\
+  \bbb Canonical mapping defined Summer 2003
+
+  \bb Materialize PADS data as virtual XML \\
+  \bbb Started Summer 2003 but incomplete \\
+  \bbb Align with current Galax Data Model
+
+  \bb Memory management of PADS records \\
+  \bbb Focus in Summer 2004
+
+  \bb User-friendly interface\\
+  \bbb Room for improvement
+
+\end{Slide}
+
+\begin{Slide}{PADS-Galax Architecture} 
+
+  \vspace*{1cm}
+  \centerline{\psfig{file=pads-galax-overview-yitzhak.pdf}}
+\end{Slide}
+
+\begin{Slide}{Abstract Node Interface}
+
+  \vspace*{1cm}
+\bb Fragment of Galax's abstract XML node interface\\
+\bbb Full navigation of XML tree\\
+\bbb Access to atomic values
+
+{\small
+\begin{alltt}
+  method virtual \blue{node_name}    : unit -> atomicQName option
+
+  method virtual \blue{typed_value}  : unit -> atomicValue cursor
+
+  method virtual \blue{parent}       : unit -> node option
+  method virtual \blue{children}     : unit -> \green{node cursor}
+
+  method virtual \blue{docorder}  : unit -> Nodeid.docorder
+\end{alltt}}
+
+\bb Cursor : lazy iterator access to node sequence\\
+\bb Node identity \& document order : canonical order 
+
+\end{Slide}
+
+\begin{Slide}{Accessing Record Sequences}
+
+  \bb Access to record (node) sequence \\
+  \bbb Read all items in sequence \\
+  \bbb Produce items on demand
+
+  \bb Each record field materialized strictly as needed
+
+  \bb Solution: \\
+  \bbb Choose record as read granularity \\
+  \bbb Read record on demand \\
+  \bbb Maintain meta-data for fast re-retrieval
+
+%   \bb paging, with element as page granularity
+%   \bb tmap, page-table for elements 
+%   \bb (for finer granularity, group
+%     elements into fixed-size arrays)
+\end{Slide}
+
+\begin{Slide}{smart arrays - weak references}
+
+  \bb data references can't be trusted
+  \bb challenge: irregular structure of elements. 
+
+    \bbb finding element is not enough.
+    \bbb store pointers in page members.
+    \bbb guard with gen.
+    \bbb gen invalidated when elt. evicted.
+
+\end{Slide}
+
+\begin{Slide}{Rereading an element}
+
+  \bb Pads elements are read in full.
+  \bb Designed incremental read function.
+  \bb non trivial due to the complexity of the array termination semantics.
+  \bb reread can't modify parse-descriptor.
+
+\end{Slide}
+
+\begin{Slide}{Project Status}
+
+\bb Integration effort successful 
+
+\bb More thorough regression testing
+
+\bb Demonstrate to potential users
+
+\bb Research problems\\
+\bbb Extending Galax's data model to leverage streams access\\
+\bbb More efficient meta-data structures in PADS 
+
+\end{Slide}
+
+% \begin{Slide}{Demo slide}
+%   , showing commands needed to get up and running.
+% \end{Slide}
+
+
+% \begin{Slide}{Project Challenges}
+%   \bb learning all the pieces
+%   \bb dividing between macros and compiler
+%   \bb dividing between type-specific code and polymorphic macros.
+% \end{Slide}
+
+\begin{Slide}{thanks to Kathleen, Bob, and Mary!}
+\end{Slide}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

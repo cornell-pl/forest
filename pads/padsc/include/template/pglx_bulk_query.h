@@ -42,7 +42,7 @@
 #  define MAX_RECS 0
 #endif
 
-#define exit_on_error(_Expr, _Msg) {err = _Expr; if (err != 0) {error(2, "%s: %s\n", _Msg, galax_error_string);}}
+#define exit_on_error(_Expr, _Msg) {err = _Expr; if (err != 0) {error(2, "%s: %s\n", _Msg, galax_error_string); exit(-1); }}
 
 int main(int argc, char** argv) {
   P_t*          pads;
@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
   PADS_TY(_pd)  pd ;
   PADS_TY(_m)   m;
   PDCI_node_t   *doc_node;
+  time_t timer;	 
 
 #ifdef PADS_HDR_TY
   PADS_HDR_TY( )    hdr_rep;
@@ -64,12 +65,23 @@ int main(int argc, char** argv) {
 
   galax_err err;
   item doc;
-  itemlist docitems;
+  itemlist docitems, monitems;
   processing_context pc;
   compiled_prolog cp;
   compiled_module cm;
   prepared_prolog pp;
   external_context exc;
+  int monitor_flag = 0; 
+  char *monitor_out;
+  char *file_out;
+  FILE *file_fp;
+  int sbdo_flag = 0;
+  int sbdo_kind = SBDO_AdHoc;; 
+
+  monitor_out = malloc(strlen(argv[0]) + strlen(".out"));
+  file_out = malloc(strlen(argv[0]) + strlen(".xml"));
+  strcpy(monitor_out,argv[0]); strcat(monitor_out,".out");
+  strcpy(file_out,argv[0]); strcat(file_out,".xml");
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -99,7 +111,10 @@ int main(int argc, char** argv) {
      it is necessary to call galax_init first, so the runtime is initialized and then 
      can delegate control back to the C program 
   */
+
+  time(&timer);  fprintf(stderr, "Before init %s\n", ctime(&timer)); 
   galax_init();
+  time(&timer);  fprintf(stderr, "After init %s\n", ctime(&timer)); 
 
 #ifdef IO_DISC_MK
   if (!(io_disc = IO_DISC_MK)) {
@@ -121,6 +136,51 @@ int main(int argc, char** argv) {
     queryName = argv[2];
   } else {
     queryName = DEF_QUERY_FILE;
+  }
+
+  /* The remaining flags are for galax */
+  {
+    int i;
+    for (i = 3; i < argc; i++) { 
+      if (strcmp(argv[i], "-output-monitor") == 0) {
+	monitor_flag = 1;
+	i++;
+	if (i < argc) {
+	  monitor_out = argv[i];
+	} else error(2, "Usage: -output-monitor <filename>");
+      }
+      else if (strcmp(argv[i], "-output-xml") == 0) {
+	i++;
+	if (i < argc) {
+	  file_out = argv[i];
+	} else error(2, "Usage: -output-xml <filename>");
+      }
+      else if  (strcmp(argv[i], "-sbdo") == 0) { 
+	sbdo_flag = 1;
+	i++;
+	if (i < argc) {
+	  if (strcmp(argv[i], "remove") == 0) sbdo_kind = SBDO_Remove;
+	  else if (strcmp(argv[i], "preserve") == 0) sbdo_kind = SBDO_Preserve;
+	  else if (strcmp(argv[i], "adhoc") == 0)	sbdo_kind = SBDO_AdHoc;
+	  else if (strcmp(argv[i], "tidy") == 0) sbdo_kind = SBDO_Tidy;
+	  else if (strcmp(argv[i], "duptidy") == 0) sbdo_kind = SBDO_DupTidy;
+	  else if (strcmp(argv[i], "sloppy") == 0) sbdo_kind = SBDO_Sloppy;
+	  else error(2, "Usage: -sbdo [remove, preserve, adhoc, tidy, duptidy, sloppy]");
+	} else error(2, "Usage: -sbdo [remove, preserve, adhoc, tidy, duptidy, sloppy]");
+      }
+    }
+  }
+  /* Open files */	
+  if (!(file_fp = fopen(file_out, "w"))) { error(2, "Cannot open %s\n", file_out); exit(-1); }
+
+  /* Initialize Galax flags */
+  exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
+  exit_on_error(galax_set_serialization_kind(pc, Serialize_As_Well_Formed), "galax_set_serialization_kind");
+  if (sbdo_flag)
+    exit_on_error(galax_set_sbdo_kind(pc, sbdo_kind), "galax_set_sbdo_kind");
+  if (monitor_flag) {
+    /*    exit_on_error(galax_set_monitor_mem(pc, 1), "galax_set_monitor_mem"); */
+    exit_on_error(galax_set_monitor_time(pc, 1), "galax_set_monitor_time");
   }
 
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
@@ -168,15 +228,18 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
+    exit_on_error(galax_start_monitor_call(pc, "pads_header_read"), "galax_start_monitor_call");
     if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
-      error(2, "<note>header read returned error</note>");
+      error(2, "<note>header read returned error</note>\n");
     } else {
-      error(2, "<note>header read returned OK</note>");
+      exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
+      error(2, "<note>header read returned OK</note>\n");
     }
   }
 #endif /* PADS_HDR_TY */
 
   /* Try to read entire file */
+  exit_on_error(galax_start_monitor_call(pc, "pads_read"), "galax_start_monitor_call");
   if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS)) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
@@ -184,23 +247,46 @@ int main(int argc, char** argv) {
       error(2, "read returned error");
 #endif
   } else { 
+    exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
+    /*    time(&timer);  fprintf(stderr, "After read %s\n", ctime(&timer)); */
     if (!P_PS_isPanic(&pd)) {
       char *vars[0];
       itemlist vals[0]; 
       char *input = "";
 
       PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
-      exit_on_error(padsDocument(inName, (nodeRep)doc_node, &doc), "padsDocument");
+
+      exit_on_error(padsDocument(pc, inName, (nodeRep)doc_node, &doc), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 
-      exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
+
       exit_on_error(galax_load_standard_library(pc, &cp), "galax_load_standard_library");
       exit_on_error(galax_import_main_module(cp, ExternalContextItem, Buffer_Input, input, &cm), "galax_import_main_module");
-      exit_on_error(galax_build_external_context(docitems, itemlist_empty(), vars, vals, 0, &exc), "galax_build_external_context");
+      exit_on_error(galax_build_external_context(pc,docitems, itemlist_empty(), vars, vals, 0, &exc), "galax_build_external_context");
       exit_on_error(galax_eval_prolog(cm->compiled_prolog, exc, &pp), "galax_eval_prolog");
+
+      time(&timer);  fprintf(stderr, "Before %s\n", ctime(&timer)); 
+      exit_on_error(galax_start_monitor_call(pc, "galax_eval_statement"), "galax_start_monitor"); 
       exit_on_error(galax_eval_statement(pp, File_Input, queryName, &docitems), "galax_eval_statement"); 
+      exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor"); 
+      time(&timer);  fprintf(stderr, "After eval %s\n", ctime(&timer)); 
 
       if (is_empty(docitems)) error(2, "*** Result is empty") ;
-      else exit_on_error(galax_serialize_to_stdout(docitems), "galax_serialize_to_stdout");
+      else {
+	char *result;
+	exit_on_error(galax_serialize_to_string(pc,docitems,&result), "galax_serialize_to_string");
+	fprintf(file_fp,"%s",result);
+	fflush(file_fp);
+	fclose(file_fp);
+      }
+      /*      else exit_on_error(galax_serialize_to_stdout(pc,docitems), "galax_serialize_to_stdout"); */
+      time(&timer);  fprintf(stderr, "After serialize %s\n", ctime(&timer)); 
+
+      if (monitor_flag) {
+	exit_on_error(galax_monitor_of_all_calls(pc, &monitems), "galax_monitor_of_all_calls");
+	exit_on_error(galax_serialize_to_file(pc, monitor_out, monitems), "galax_serialize_to_file");
+      }
+      time(&timer);  fprintf(stderr, "After monitor %s\n", ctime(&timer)); 
+
     } else {
       error(0, "read raised panic error");
     }
@@ -221,5 +307,7 @@ int main(int argc, char** argv) {
   sfclose(io);
 
   NodeMM_freeMM(pads);
+  time(&timer);  fprintf(stderr, "After end %s\n", ctime(&timer)); 
+
   return 0;
 }

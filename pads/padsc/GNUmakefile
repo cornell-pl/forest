@@ -7,7 +7,7 @@ endif
 
 TARGS = padsc_lib
 ifdef USE_GALAX
-TARGS += pglx_lib 
+TARGS += pglx_lib pads_glx
 endif
 TARGS += padsc_comp
 
@@ -20,6 +20,10 @@ padsc_lib:
 pglx_lib:
 	echo Making pglx library
 	@(cd libpglx; $(MAKE) install)
+
+pads_glx:
+	echo Making pads-glx library
+	@(cd pads-glx; $(MAKE) install)
 
 padsc_comp:
 	echo Making padsc compiler
