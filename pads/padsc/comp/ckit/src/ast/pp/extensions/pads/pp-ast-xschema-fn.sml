@@ -662,16 +662,16 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   	  handle Option => (PError.bug "expected SOME"; ("bogus", []))
       end
 
-  fun ppStrPairs pps (tyNameOpt, fieldName) = 
+  fun ppStrPairs pps (tyNameOpt, fieldName) =
       let val tyName = case tyNameOpt of NONE => "NoTypeName" | SOME name => name
       in
-	  ( PPL.addStr pps tyName
-	  ; space pps
+          ( PPL.addStr pps tyName
+          ; space pps
           ; PPL.addStr pps fieldName
           )
       end
 
-  fun ppElemPair pps (tyNameOpt, fieldName) = (* new function; before, we used ppStrPairs *)
+  fun ppElemPair pps (tyNameOpt, fieldName) = (* XQuery types: element fieldName of type tyName *)
       let val tyName = case tyNameOpt of NONE => "NoTypeName" | SOME name => name
       in
 	  ( PPL.addStr pps "element"
@@ -704,6 +704,37 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 		      } pps eFields
       ; newline pps) 
 
+
+  (** XML Schema notation **)
+
+  fun ppXMLElemPair pps (tyNameOpt, fieldName) =     (* <element name=fieldName [type=tyNameOpt/]> *)
+      let val tyName = case tyNameOpt of NONE => ">" | SOME name => (" type=\"" ^ name ^ "\"/>")
+      in
+          PPL.addStr pps ("<element name=\"" ^ fieldName ^ "\"" ^ tyName)
+      end
+
+  fun ppXMLSequence pps eFields =   (* <seq> eFields </seq> *)
+      ( PPL.ppList { pp=ppXMLElemPair (* must be a function that choose the actual pp function for each element *)
+                      , sep="\n    "
+                      , lDelim="\n  <sequence>\n    "
+                      , rDelim="\n  </sequence>"
+                      } pps eFields
+      ; newline pps)
+
+  fun ppXMLComplex pps (eName,eFields) =   (* <complex [name=eName]> <seq> eFields </seq> </complex> *) 
+      let val theName = case eName of NONE => ">" | SOME name => ("name=\"" ^ name ^ "\">")
+      in 
+          ( PPL.addStr pps ("\n <complexType" ^ theName) 
+          ; ppXMLSequence pps eFields
+          ; PPL.addStr pps " </complexType>"
+          ; newline pps)
+      end 
+
+  fun ppXMLElemList pps (eName, eFields) =   (* <elem eName> <complex> <seq> eFields </seq> </complex> *)
+      ( ppXMLElemPair pps (NONE, eName)
+      ; ppXMLComplex pps (NONE,eFields))
+
+
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val edTid = #edTid ptyInfo
 	  val (edName, edFields) = structInfo tidtab edTid
@@ -713,10 +744,10 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; space pps
         ; PPL.addStr pps repName
 	; space pps
-	; PPL.addStr pps "{\n  "
-(*-->*) ; ppElemList pps ("errDesc",edFields) (* dirty trick: pp errDesc and then pp list of rep.fields *)
+	; PPL.addStr pps "{\n " 
+(*-->*) ; ppXMLElemList pps ("errDesc",edFields) (* dirty trick? pp err.desc and then pp list of rep.fields *)
         ; PPL.addStr pps ","
-        ; PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
+        ; PPL.ppList { pp=ppXMLElemPair (* must be a function that choose the actual pp function for this kind of element *)
 		        , sep=",\n  "
 		        , lDelim="  " (*{\n*)
 		        , rDelim="\n}"
