@@ -5902,9 +5902,11 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
   }
   if (sz == 1 && a->len_accum.bad == 0) {
     elt = (PDCI_string_dt_elt_t*)dtfirst(a->dict);
-    sfprintf(outstr, "%llu string values, 100 pcnt good, 100 pcnt identical (length %8lu): %-.*s\n",
+    /*    sfprintf(outstr, "%llu string values, 100 pcnt good, 100 pcnt identical (length %8lu): %-.*s\n",
 	     a->len_accum.good,
-	     (unsigned long)elt->key.len, elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len));
+	     (unsigned long)elt->key.len, elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len)); */
+         sfprintf(outstr, "%llu string values, 100 pcnt good, 100 pcnt identical (length %8lu): %s\n",
+	     (unsigned long)elt->key.len, elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len)); 
     dtnext(a->dict, 0); /* discard any iterator state */
     return P_OK;
   }
@@ -6599,7 +6601,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.178 2004-12-14 20:35:39 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.179 2004-12-14 22:05:32 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
