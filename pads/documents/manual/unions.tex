@@ -14,7 +14,7 @@ until it finds one in which no errors occurred during parsing.
                     \alt{}  \Pdefault : \nont{union\_field}\\[1ex]
 \nont{branches}   & \is{} & \nont{branch} \alt{} \nont{branch} \nont{branches} \\[1ex]
 \nont{switched}   & \is{} & \Pswitch{} (\nont{expression})\{ \nont{branches} \}\\[1ex]
-\nont{in\_place}  & \is{} & \nont{branches}\\[1ex]
+\nont{in\_place}  & \is{} & \nont{union\_field} \alt{} \nont{union\_field} \nont{in\_place}\\[1ex]
 \nont{union\_bdy} & \is{} & \nont{switched} \alt{} \nont{in\_place}\\[1ex]
 \nont{union\_ty}  & \is{} & \Punion{} identifier \opt{\nont{formals}} \{ \nont{union\_bdy} \} \\[4ex]
 \end{tabular}
@@ -32,26 +32,57 @@ Expressions (\nont{expression}) represent any \C{} expression.
 
 
 \subsection{Example: Switched \Punion{}s}
-The following description uses a switched \Punion{} to describe data
-which starts with an 
-integer tag that determines the form of the rest of the data.  A tag
-value of \cd{1} indicates an unsigned integer will follow, while a tag
-value of \cd{2} indicates a string terminated by an end-of-record
-mark.  Any other value for the tag indicates that no further data
-exists for the union.   Examples of this data format include:
+The \pads{} declarations in \figref{fig:switched-union} describe data
+which uses an integer tag to determine the format of the rest of the
+data. 
+The \Pstruct{} \cd{choice} specifies the integer field \cd{which}
+should be passed to the switched \Punion{} \cd{branches}.   
+The \cd{branches} declaration describes three alternatives, depending
+upon the value of the tag \cd{which}.  
+%
+\begin{figure}
+\input{code/union.switch}
+\caption{Switched \Punion{} for describing data variations determined
+  by tags earlier in the data source.}
+\label{fig:switched-union}
+\end{figure}
+%
+A tag value of \cd{1} indicates an unsigned integer will follow:
 \begin{verbatim}
  1 4
+\end{verbatim}%
+while a tag
+value of \cd{2} indicates a string terminated by an end-of-record
+mark:  
+\begin{verbatim}
  2 hello
+\end{verbatim}%
+Any other value for the tag will fall into the default clause of the
+union, which indicates that no further data
+exists:
+\begin{verbatim}
  3
-\end{verbatim}
-
-\input{code/union.switch}
-The \Pstruct{} \cd{choice} handles reading the tags
+\end{verbatim}%
 
 \subsection{Example: In-place \Punion{}s}
+The following in-place \Punion{} describes a data fragment that is
+either a resolved or a symbolic IP address:
 \input{code/host_t}
-tries each branch in turn til one found that succeeds in finding an
-element of the indicated type and satisifies the constraint.
+The (omitted) types \cd{nIP} and \cd{sIP} describe named and symbolic
+IP addresses, respectively.
+The comments embedded in the description give an example of each of the two
+forms.   With in-line \Punion{}s, the parser tries each of the branches
+in turn until it finds one that matches the data without any errors.
+
+\subsection{\Pswitch{}}
+The expression on which a switched \Punion{} branches can be any \C{}
+expression of integer type (as in a \kw{switch} statement in \C{}).
+Typically, this expression is computed from a parameter to the
+switched \Punion{}.
+
+\subsection{Branches}
+Each branch in either a switched or in-place \Punion can have one of
+two forms: a \Pcase{} statement, or a \Pdefault{} statement.  
 
 
 \section{Generated library}
