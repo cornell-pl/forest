@@ -13,6 +13,8 @@ structure CnvExt : CNVEXT = struct
   structure SYM  = Symbol
   structure B    = Bindings
 
+  open PNames
+
   type coreConversionFuns = 
 	{
 	 stateFuns : State.stateFuns,
@@ -600,12 +602,9 @@ structure CnvExt : CNVEXT = struct
               val errCode   = "errCode"
               val loc       = "loc"
               val nerr      = "nerr"
-	      val pads       = "pads"
-	      val m         = "m" 
-	      val pd        = "pd"
-	      val acc       = "acc"
-	      val rep       = "rep"
-	      val io        = "io"
+	      val pads      = "pads"
+              val rep       = "rep"
+              val io        = "io"
 	      val buf       = "buf"
 	      val bufLen    = "buf_len"
 	      val bufFull   = "buf_full"
@@ -626,34 +625,6 @@ structure CnvExt : CNVEXT = struct
 	      val self      = "self"
 
 	      (* Some useful functions *)
-	      fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
-              fun mSuf   s = s^"_"^m
-              fun pdSuf   s = s^"_"^pd
-              fun accSuf  s = s^"_"^acc
-              fun initSuf s = s^"_init"
-              fun resetSuf s = s^"_reset"
-              fun cleanupSuf s = s^"_cleanup"
-              fun copySuf s = s^"_copy"
-              fun srcSuf s = s^"_src"
-              fun dstSuf s = s^"_dst"
-              fun addSuf  s = s^"_add"
-              fun readSuf s = s^"_read"
-              fun scan1Suf s = s^"_scan1"
-              fun scan2Suf s = s^"_scan2"
-              fun maskInitSuf s = s^"_m_init"
-              fun writeSuf s = s^"_write"
-	      fun ioSuf s = s^"2io"
-	      fun bufSuf s = s^"2buf"
-              fun reportSuf s = s^"_report"
-	      fun mapSuf s = s^"_map"
-	      fun toStringSuf s = s^"2str"
-	      fun errSuf s = s^"_err"
-	      fun findEORSuf s = s^"_findEOR"
-	      fun findEndSuf s = s^"_end"
-	      fun gTemp base = "tmp"^base
-              fun childrenSuf name = name^"_children" 
-              fun vTableSuf name = name^"_vtable"
-	      fun isPref name = "is_"^name
 		
 	      fun fieldX (bsName, fName) = P.arrowX(PT.Id bsName, PT.Id fName)
 	      fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
@@ -722,6 +693,12 @@ structure CnvExt : CNVEXT = struct
                   of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
 				    of NONE => SOME(accSuf s)  (* non-base type; acc constructed from type name*)
                                     |  SOME(b:PBTys.baseInfoTy) => Option.map Atom.toString (#accname b))
+
+              fun lookupPred(ty:pty) = 
+		  case ty
+                  of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
+				    of NONE => SOME(isPref s)  (* non-base type; acc constructed from type name*)
+                                    |  SOME(b:PBTys.baseInfoTy) => Option.map Atom.toString (#predname b))
 
               fun lookupWrite(ty:pty) = 
 		  case ty
@@ -1180,11 +1157,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  end
 
               (* int is_foo(foo *rep) *)
-              fun genIsFun(funName, rep, argPCT, bodyX) = 
+              fun genIsFun(funName, rep, argPCT, bodySs) = 
 		  let val paramTys = [P.ptrPCT argPCT]
 		      val paramNames = [rep]
 		      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
-		      val bodySs = [PT.Return bodyX]
 		      val returnTy =  P.int
 		      val isFunED = 
 			  P.mkFunctionEDecl(funName, formalParams, PT.Compound bodySs, returnTy)
@@ -1650,6 +1626,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
               fun emitRead  eds = emit (!(#outputRead(PInput.inputs)), eds)
               fun emitWrite eds = emit (!(#outputWrite(PInput.inputs)), eds)
               fun emitXML   eds = emit (!(#outputXML(PInput.inputs)), eds)
+	      fun emitPred  eds = emit (false, eds)
 
               fun cnvCTy ctyED = 
 		  let val astdecls = cnvExternalDecl ctyED
@@ -1667,7 +1644,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                        (Ast.DECL(coreDecl, aid, bindPaid padsInfo, loc) ::xs, tid)
                   | _ => (PE.bug "Expected Ast declaration"; ([], Tid.new()))
 
-(*  Typedef case *)
+              (*  Typedef case *)
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
 			        largeHeuristic,	isSource : bool, baseTy: PX.Pty, args: pcexp list, 
 			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
@@ -1828,8 +1805,12 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			          @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
 
                       (* -- generate is function (typedef case) *)
-(*		      val isName = "foo
-		      val isFunEDs = genIsFun(isName, this, canonicalPCT, pred) *)
+		      val isName = isPref name
+		      val modPredX = PTSub.substExps [(thisVar, P.starX(PT.Id rep))] pred
+		      val predX  = case lookupPred baseTy of NONE => modPredX
+			           | SOME basePred => P.andX(modPredX, PT.Call(PT.Id basePred, [PT.Id rep]))
+		      val bodySs = [PT.Return predX]
+		      val isFunEDs = [genIsFun(isName, rep, canonicalPCT, bodySs) ]
 
                       (* -- generate accumulator init, reset, and cleanup functions (typedef case) *)
 		      fun genResetInitCleanup theSuf = 
@@ -1922,6 +1903,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                       @ mDecls
                       @ pdDecls
 		      @ (emitRead readEDs)
+		      @ (emitPred isFunEDs)
                       @ (emitAccum accumEDs)
                       @ (emitWrite writeFunEDs)
   		      @ (emitXML galaxEDs)
@@ -4949,13 +4931,24 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	  fun cnvPCharClass {name,pred} = 
 	      let val intpredPTct = P.ptrPCT(P.func P.int [P.int])
 		  val (intpredCT,_) = CTcnvType intpredPTct
+		  val intPtrpredPTct = P.ptrPCT(P.func P.int [P.intPtr])
+		  val (intPtrpredCT,_) = CTcnvType intPtrpredPTct
 		  val charpredPTct = P.ptrPCT(P.func P.int [P.char])
 		  val (charpredCT,_) = CTcnvType charpredPTct
+		  val charPtrpredPTct = P.ptrPCT(P.func P.int [P.charPtr])
+		  val (charPtrpredCT,_) = CTcnvType charPtrpredPTct
 		  val _ = pushLocalEnv()
 		  val (apredCT, _ ) = cnvExpression pred
 		  val _ = popLocalEnv()
 		  val (body, decls) = 
 		              if isAssignable(intpredCT, apredCT, NONE) then (pred, [])
+			      else if isAssignable(intPtrpredCT, apredCT, NONE) then
+				  let val wrapperName = padsID(isPref name) 
+				      val formalParams = [P.mkParam(P.int, "i")]
+				      val bodySs = [PT.Return( PT.Call(pred, [P.addrX(PT.Id "i")]))]
+				  in
+				      (PT.Id wrapperName, [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
+				  end
 		              else if isAssignable(charpredCT, apredCT, NONE) then
 				  let val wrapperName = padsID(isPref name) 
 				      val formalParams = [P.mkParam(P.int, "i")]
@@ -4965,6 +4958,15 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				  in
 				      (PT.Id wrapperName, [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
 				  end
+			      else if isAssignable(charPtrpredCT, apredCT, NONE) then
+				  let val wrapperName = padsID(isPref name) 
+				      val formalParams = [P.mkParam(P.int, "i")]
+				      val bodySs = [P.varDeclS(P.char, "y", PT.Cast(P.char, PT.Id "i")),
+						    PT.Return(P.andX(P.eqX(PT.Id "i", PT.Id "y"), 
+								     PT.Call(pred, [P.addrX(PT.Id "y")])))]
+				  in
+				      (PT.Id wrapperName, [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
+				  end				  
 		              else (PE.error ("Predicate for Pcharclass "^name^" has type: "^
 					  (CTtoString apredCT) ^". Expected type compatible "^
 					  "with int (*)(int).");(pred,[]))

@@ -8,6 +8,7 @@ structure PBaseTys = struct
   		      readname : Atom.atom,
 		      scanname : Atom.atom option,
 		      accname  : Atom.atom option,
+		      predname : Atom.atom option,
 		      diskSize : TyProps.diskSize,
                       memChar  : TyProps.memChar,
 		      numArgs  : int,
@@ -22,6 +23,7 @@ structure PBaseTys = struct
   		      readname : Atom.atom,
 		      scanname : Atom.atom option,
 		      accname  : Atom.atom option,
+		      predname  : Atom.atom option,
 		      diskSize : TyProps.diskSize,
 		      memChar  : TyProps.memChar,
 		      endian   : bool} = (
@@ -33,6 +35,7 @@ structure PBaseTys = struct
     (print (String.concat["readname = ", Atom.toString readname, "\n"]));
     (print (String.concat["scanname = ", case scanname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
     (print (String.concat["accname = ", case accname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
+    (print (String.concat["predname = ", case predname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
     (print (String.concat["diskSize = ", 
 			  case diskSize of TyProps.Size (n,r) => IntInf.toString n 
                                          | TyProps.Param (params, SOME s, exp, _) =>  ("P"^s)
@@ -82,7 +85,9 @@ structure PBaseTys = struct
 			 repname  = Atom.atom(List.nth(fields,2)),
 			 mname    = Atom.atom(List.nth(fields,3)),
 			 pdname   = Atom.atom(List.nth(fields,4)),
-			 readname = Atom.atom(List.nth(fields,5)),
+			 readname = Atom.atom(PNames.readSuf padsname),
+			 predname  = if List.nth(fields,5) = "-" then NONE
+				    else SOME (Atom.atom(List.nth(fields,5))),
 			 scanname = if List.nth(fields,6) = "-" then NONE
 				    else SOME (Atom.atom(List.nth(fields,6))),
 			 accname  = if List.nth(fields,7) = "-" then NONE
