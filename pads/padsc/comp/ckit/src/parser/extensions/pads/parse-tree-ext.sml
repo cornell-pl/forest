@@ -35,7 +35,8 @@ structure ParseTreeExt =
          | PStruct of {name : string, 
 		       params: ('ct * 'decr) list, 
 		       fields : ('exp PSField) list}
-         | PArray  of {name : string, baseTy : Pty, 
+         | PArray  of {name : string, 
+		       baseTy : Pty, 
 		       params : ('ct * 'decr) list, 
 		       args   : 'exp list, 
 		       sizeSpec : ('exp PSize) option, 
@@ -43,6 +44,9 @@ structure ParseTreeExt =
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
 		      variants : ('exp PSField) list}
+         | PEnum of  {name     : string,
+                      params   : ('ct * 'decr) list,
+                      members  : (string * 'exp option) list}
 
         datatype PStatement = 
           PComment of string

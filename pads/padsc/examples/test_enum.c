@@ -1,17 +1,15 @@
 #include "libpadsc.h"
-#include "format3.h"
+#include "enum.h"
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
-  intList         f3data;
-  intList_ed      f3ed;
-  intList_em      f3em;
+  orderStates     enumdata;
 
   if (PDC_ERROR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.format3", 0)) {
+  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.enum", 0)) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -20,22 +18,11 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_peek_EOF(pdc, 0)) {
-    PDC_error_t res;
-    int i;
-    res= intList_read(pdc, &f3em, &f3ed, &f3data, 0);
-
-    if (res == PDC_OK) {
-      printf("Record okay:\t");
-    } else if (f3data.length) {
-      printf("Record not okay:\t");
-    }
-    for (i = 0; i < f3data.length; i++){
-      printf("%d", f3data.intList[i]);
-      if (i != f3data.length-1) {
-	printf("|");
-      }  else {
-	printf("\n");
-      }
+    if (PDC_OK == orderStates_read(pdc, 0, 0, &enumdata, 0)) {
+      /* do something with the data */
+      error(2, "orderStates_read returned:  %d", enumdata);
+    } else {
+      error(2, "orderStates_read returned: error");
     }
   }
 

@@ -3,7 +3,7 @@
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
-  test_rep        f1data;
+  test            f1data;
 
   if (PDC_ERROR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");

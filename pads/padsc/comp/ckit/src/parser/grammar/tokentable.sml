@@ -71,6 +71,7 @@ struct
                ("pstruct", Tokens.PSTRUCT),
                ("parray", Tokens.PARRAY),
                ("punion", Tokens.PUNION),
+               ("penum", Tokens.PENUM),
                ("sep", Tokens.PSEP),
                ("term", Tokens.PTERM),
                ("forall", Tokens.PFORALL),

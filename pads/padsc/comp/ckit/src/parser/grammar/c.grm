@@ -226,7 +226,8 @@ end
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
-        | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PSEP | PTERM | PFORALL | PIN (* PADS *)
+        | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
+	| PSEP | PTERM | PFORALL | PIN  (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -315,6 +316,9 @@ end
         | pArrayConstraints of (expression PX.PConstraint) list
         | pArrayConstraintOpt of (expression PX.PConstraint) list
         | pUnion of externalDecl
+        | pEnumField of string * expression option
+        | pEnumFieldList of (string * expression option) list
+        | pEnum of externalDecl
 
 %pos int
 %verbose
@@ -322,7 +326,7 @@ end
 %start translationUnit
 %eop EOF 
 %noshift EOF
-%keyword QUESTION IF THEN ELSE FOR DO SWITCH CASE DEFAULT WHILE RETURN BREAK CONTINUE GOTO
+%keyword QUESTION IF THEN ELSE FOR DO SWITCH CASE DEFAULT WHILE RETURN BREAK CONTINUE GOTO 
 %subst TYPE_NAME for ID
 %value TYPE_NAME(Error.hint "Likely cause: missing typedef declaration.\n"; "bogus")
 
@@ -369,6 +373,7 @@ externalDeclaration:
         | pStruct RCURLY                (SOME(markExternalDecl srcMap (pStruct,pStructleft,RCURLYright)))
         | pUnion  RCURLY                (SOME(markExternalDecl srcMap (pUnion, pUnionleft, RCURLYright)))
         | pArray  RCURLY                (SOME(markExternalDecl srcMap (pArray, pArrayleft, RCURLYright)))
+        | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,  pEnumleft,  RCURLYright)))
 (* PADS END *)
 
 statement:
@@ -1056,4 +1061,20 @@ pUnion:
  PUNION pName pushScope pTyParams LCURLY pStructFieldList popScope
  ( makeTypeName pName;
    ExternalDeclExt(PX.PUnion {name = pName, params = pTyParams, variants=pStructFieldList})
+ ) 
+
+
+pEnumField: 
+    pName                  (pName, NONE)
+ |  pName EQUALS expr      (pName, SOME expr)
+
+pEnumFieldList:
+    pEnumField                           ([pEnumField])
+  | pEnumFieldList COMMA pEnumField      (pEnumField :: pEnumFieldList)
+
+pEnum:
+ PENUM pName pushScope  LCURLY pEnumFieldList popScope
+ ( makeTypeName pName1;
+   ExternalDeclExt(PX.PEnum {name = pName1, params = [], 
+			     members = List.rev pEnumFieldList})
  ) 

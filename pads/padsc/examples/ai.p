@@ -30,7 +30,6 @@ int checkVersion(http_v_t version, astring meth) {
   return 1;
 }
 
-
 pstruct http_request_t {
   '\"';
   astring(:' ':) meth;             //- Method used during request
@@ -42,7 +41,6 @@ pstruct http_request_t {
   '\"';
 };
 
-#if 0
 pstruct http_clf_t {
    host_t host;                   //- IP address of client requesting service
    ' ';
@@ -59,4 +57,4 @@ pstruct http_clf_t {
    auint32 contentLength;         //- Number of bytes in request response.
    '\n';
 };
-#endif
+

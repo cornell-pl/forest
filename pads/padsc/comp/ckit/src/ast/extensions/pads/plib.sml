@@ -65,6 +65,8 @@ struct
   val charlit      = "PDC_char_lit"
   val strlit       = "PDC_str_lit"
   val stringPCT    = P.makeTypedefPCT "PDC_string"
+  val str          = "str"
+  val len          = "len"
 
   fun fmtChar(chr:PT.expression) =
    (*  char*       PDC_fmtChar(char c); *)
