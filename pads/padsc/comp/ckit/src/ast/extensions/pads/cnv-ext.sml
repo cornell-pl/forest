@@ -4359,8 +4359,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT, P.ccharPtr]
                          val paramNames = [G.self,G.idx,G.childName]
                          val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
-					     
-		         val bodySs = [G.macroArrKCN()]
+		         val bodySs = G.makeInvisibleDecls([name],nil)
+				      @ [G.macroArrKCN(name)]
 				      @ [P.returnS (G.macroArrKCNRet())]
 		     in   
                          P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)

@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
       char *input = "";
 
       // Create the new smart node.
-      PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "doc", &m, &pd, &rep, "main");
+      PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
       PADS_TY(_smartNode_init)(smart_node, MAX_ELTS  EXTRA_ARGS);
 
       exit_on_error(padsDocument(inName, (nodeRep)smart_node, &doc), "padsDocument");

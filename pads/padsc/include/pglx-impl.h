@@ -33,14 +33,14 @@
     if (!(resultIN = PDCI_NEW_NODE(padsIN))) { \
       PGLX_report_err(padsIN,P_LEV_FATAL,0,P_FAILWITH_ERR,whatfn,"PADS/Galax ALLOC_ERROR"); \
     } \
-    PDCI_INIT_NODE(resultIN,vtIN,padsIN,NULL,nameIN,mIN,pdIN,repIN,"document"); \
+    PDCI_INIT_NODE(resultIN,vtIN,padsIN,NULL,nameIN,mIN,pdIN,repIN,"element"); \
   } while (0)
 
 #define PDCI_MK_TOP_NODE_NORET(resultIN, vtIN, padsIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
     resultIN = PDCI_NEW_NODE(padsIN); \
     if (resultIN) { \
-      PDCI_INIT_NODE(resultIN,vtIN,padsIN,NULL,nameIN,mIN,pdIN,repIN,"document"); \
+      PDCI_INIT_NODE(resultIN,vtIN,padsIN,NULL,nameIN,mIN,pdIN,repIN,"element"); \
     } \
   } while (0)
 

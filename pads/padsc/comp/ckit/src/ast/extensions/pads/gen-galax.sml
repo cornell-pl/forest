@@ -234,11 +234,11 @@ structure GenGalax = struct
 
   fun macroArrLength(ty) = PT.Call(PL.ARR_LENGTH, [PT.Id ty])
 
-  fun macroArrKCN() =
-	  PT.Expr(PT.Call(PL.ARR_NODE_KTH_CHILD_NAMED_BODY,
-			  nil))
+  fun macroArrKCN(ty) =
+      PT.Expr(PT.Call(PL.ARR_NODE_KTH_CHILD_NAMED_BODY,
+			  [PT.Id ty]))
   fun macroArrKCNRet() =
-		    PT.Call(PL.ARR_NODE_KTH_CHILD_NAMED_RET,nil)
+      PT.Call(PL.ARR_NODE_KTH_CHILD_NAMED_RET,nil)
 
   fun macroArrSNDKCBody(ty,childTy) =
       PT.Expr(PT.Call(PL.ARR_SND_NODE_KTH_CHILD_BODY,[PT.Id ty, PT.Id childTy]))

@@ -1,3 +1,9 @@
+October 14, 2004 - Mary
+  o Fixed XML representations of Parrays so that <pd> and <length>
+    always follow <elt> elements. 
+
+    - Required changes to several macros and generated code related to
+      kth_childNamed and kth_child.
 
 October 14, 2004 - Mary
   o Removed examples/p/{dibbler2.p,dibbler_manifest.p,dibbler_most_permissive.p}

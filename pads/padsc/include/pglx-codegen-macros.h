@@ -215,13 +215,7 @@ res
       result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
  				    PDCI_MacroArg2String(ty)"_node_kthChild");
   } else if (idx == rep->length) {  /* index of rep->length indicates parse descriptor */
-
-        result = Puint32_val_node_new(self,"pd",pd,&(rep->length),
-				  PDCI_LENGTH_OFF,
-				  PDCI_MacroArg2String(ty) "_node_kthChild");
-
-	/* Mary is here 
-	   result = PDCI_structured_pd_node_new(self,"pd", pd, PDCI_MacroArg2String(ty) "_node_kthChild"); */
+	result = PDCI_sequenced_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
 
   } else if (idx == rep->length + 1) { /* index of rep->length indicates length */
       result = Puint32_val_node_new(self,"length",pd,&(rep->length),
@@ -235,16 +229,21 @@ res
 result
 /* END_MACRO */
 
-#define ARR_NODE_KTH_CHILD_NAMED_BODY()
+/* Mary: This code must align with kth_child, above.  All array <elt>
+   elements come first, followed by the <pd> element, followed by the
+   <length> element.
+*/
+#define ARR_NODE_KTH_CHILD_NAMED_BODY(ty)
   PDCI_childIndex_t k = 0;
+  ty *rep=(ty *) (self->rep);
 
   if (GLX_STR_MATCH(name,"elt")) {
     k = idx;
   } else if (GLX_STR_MATCH(name,"pd")){
-    if (idx == 0) k = idx;
+    if (idx == 0) k = rep->length;
     else return 0;
   } else if (GLX_STR_MATCH(name,"length")){
-    if (idx == 0) k = idx + 1;
+    if (idx == 0) k = rep->length + 1;
     else return 0;
   } else return 0;
 /* END_MACRO */
@@ -253,6 +252,10 @@ result
 (self->vt->kth_child)(self,k);
 /* END_MACRO */
 
+/* Mary: This code must align with ARR_NODE_KTH_CHILD_BODY, above.  All array <elt>
+   elements come first, followed by the <pd> element, followed by the
+   <length> element.
+*/
 #define ARR_SND_NODE_KTH_CHILD_BODY(ty,childTy)
   PDCI_node_t *result = 0;
   ty *rep;
@@ -264,27 +267,24 @@ result
   rep = (ty *) (self->rep);
   pd = (ty ## _pd *) (self->pd);
 
-  switch(idx){
-  case 0: 
+  if (idx < rep-> length) { /* indexes between 0 and rep->length belong to elements */
+    result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
+				  PDCI_MacroArg2String(ty)"_sndNode_kthChild");
+    childTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+
+  } else if (idx == rep->length) {  /* index of rep->length indicates parse descriptor */
     /* parse descriptor child */
     result = PDCI_sequenced_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
     PDCI_sequenced_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
-    break;
-  case 1: /* length field */
+
+
+  } else if (idx == rep->length + 1) { /* index of rep->length+1 indicates length */
     result = Puint32_val_node_new(self,"length",pd,&(rep->length),
 				  PDCI_LENGTH_OFF,
 				  PDCI_MacroArg2String(ty) "_sndNode_kthChild");
     Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
-    break;
-  default: /* now do elements */
-    idx -= 2;
-    if (idx < rep->length){
-      result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
-				       PDCI_MacroArg2String(ty)"_sndNode_kthChild");
-      childTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx + 2);
-    }
-    break;
-  }
+  } /* otherwise, an illegal child was requested */
+
 /* END_MACRO */
 
 #define ARR_SND_NODE_KTH_CHILD_RET()

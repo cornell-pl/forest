@@ -189,7 +189,7 @@ int main(int argc, char** argv) {
       itemlist vals[0]; 
       char *input = "";
 
-      PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "doc", &m, &pd, &rep, "main");
+      PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
       exit_on_error(padsDocument(inName, (nodeRep)doc_node, &doc), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 
       exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
