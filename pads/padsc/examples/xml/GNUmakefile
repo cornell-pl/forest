@@ -30,6 +30,9 @@ USE_GALAX = 1
 REGRESS_TESTS = 1
 
 INCLUDES += -I ../gen
+CURDIR := $(shell pwd)
+SCRIPTS = $(PADS_HOME)/scripts
+INCLUDE_DEPS += $(PADS_HOME)/padsc/include/pglx-codegen-macros-gen.h
 
 include $(PADS_HOME)/mk/rules.mk
 
@@ -42,8 +45,6 @@ endif
 
 .PHONY: current pglx_lib
 
-pglx_lib:
-	@(cd $(PADS_HOME)/padsc; $(MAKE) pglx_lib)
 
 current: test_smart_myenum-d
 
@@ -77,7 +78,17 @@ test_query_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_
 test_query_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-$(GEN_DIR)/myenum.c: $(CODE_DIR)/enum_kth.c $(CODE_DIR)/enum_kth.h
+#dogen : $(CODE_DIR)/enum_kth.c $(CODE_DIR)/enum_kth.h
+#	@echo "Building generated source files"
+#	$(SCRIPTS)/mksrc.pl $(CODE_DIR)/enum_kth.c $(CODE_DIR) $(PADS_HOME)
+#	touch dogen
+
+pglx_lib:
+	@(cd $(PADS_HOME)/padsc; $(MAKE) pglx_lib)
+
+# MYENUM_DEPS = $(CODE_DIR)/enum_kth.c $(CODE_DIR)/enum_kth.h
+MYENUM_DEPS = $(CODE_DIR)/enum_kth.h
+$(GEN_DIR)/myenum.c: $(MYENUM_DEPS)
 	touch $(GEN_DIR)/myenum.c
 
 
