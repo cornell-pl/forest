@@ -31,57 +31,71 @@ For sh/ksh/bash users:
   export PADS_HOME=/home/fred/pads
   . $PADS_HOME/scripts/Q_DO_SETENV.sh
 
-Install link to SML runtime environment in $PADS_HOME/binlinks
-  Follow instructions in $PADS_HOME/binlinks/README
+STEP 2: INSTALL SML RUNTIME
 
-STEP 2: BUILD AND INSTALL libast
+If your machine does not have an SML runtime installed,
+you can learn about acquiring and installing SML here:
+XXX_TODOC.
 
-Folks at AT&T Labs Research (who were also at Bell Labs before the
-AT&T - Lucent split) collect many useful C routines in a
+For each architecture <arch> supported
+($PADS_ARCH, which is the output of by $PADS_HOME/scripts/arch-n-opsys)
+there must be a sybolic link in $PADS_HOME/binlinks to
+smlruntime.<arch> to the sml runtime.
+
+Some examples from the AT&T installation:
+
+on our linux machines:
+   ln -s /usr/common/sml/bin/.run/run.x86-linux    $PADS_HOME/binlinks/smlruntime.linux.i386
+
+on our sgi machines:
+   ln -s /usr/local/sml/bin/.run/run.mipseb-irix6  $PADS_HOME/binlinks/smlruntime.sgi.mips3
+
+
+STEP 3: BUILD AND INSTALL libast.a
+
+Folks at AT&T Labs Research collect many useful C routines in a
 single library called libast.  PADS uses this library, so you need
-to build it: 
+to build it.  
+
+IMPORTANT: BEFORE you issue the gmake command
+
+* Make sure INSTALLROOT has been set -- see step 1 above.
+
+* Make sure you do *not* have an 'nmake' program in your path.
+  If you do, you should temporarily modify your PATH environment
+  variable to remove the dir(s) that have nmake.  After performing
+  this step, restore your PATH to its previous setting.
+
+* Make sure the 'gunzip' and 'tar' utilities are in your PATH.
+    + If you do not have 'gunzip', see http://www.gzip.org
+    + If you do not have 'tar', see http://www.gnu.org/software/tar/
+
+Now issue the following gmake command:
 
 > gmake ast_lib
 
-(Before you issue this command, make sure INSTALLROOT has been set
-by one of the DO_SETENV scripts!)
+If everything goes as planned, the following file will be installed:
 
-If everything goes as planned, the following files will end up being
-installed in directory $PADS_HOME/ast-base/arch/$AST_ARCH/lib:
 
-   libast.a
-   libast.so
-   libast.so.5.4
+$PADS_HOME/ast-ast/arch/$AST_ARCH/lib/libast.a
 
-where the latter 2 are really 2 names for the same file.
+(or the equivalent library name for your architecture).
 
-*** NB Right now the entire ast-base package is built.  This contains
-*** a lot more stuff than libast, and we will eventually produce a
-*** smaller package just for building libast.  In the meantime:
-*** you may get some errors during the package build that have
-*** nothing to do with libast.  If the 3 libast files above are built
-*** successfully, then you are done with step 2.
-
-If you got the PADS distribution from a CVS repository,
-then after building libast, you may with to execute:
-
-> $PADS_HOME/scripts/fix_ast_base.tcsh
-
-This will get rid of a small modification to
-two files under $PADS_HOME/ast-base/bin that
-need not be preserved and are simply annoying.
-
-STEP 3: BUILD AND INSTALL THE PADSC LIBRARY
+STEP 4: BUILD AND INSTALL THE PADSC LIBRARY
 
 > gmake padsc_lib
 
-STEP 3B [OPTIONAL]: BUILD AND INSTALL THE PGLX LIBRARY
+STEP 4B [OPTIONAL]: BUILD AND INSTALL THE PGLX LIBRARY
 
-For the PADS-Galax project only, you need to do:
+For the PADS-Galax project only, you need to do one of the following:
 
-> gmake pglx_lib
+> gmake GEN_GALAX=1 pglx_lib
+> gmake USE_GALAX=1 pglx_lib
 
-STEP 4: TEST THE PADSC LIBRARY
+GEN_GALAX uses 'fake' calls to Galax.
+USE_GALAX uses real calls to Galax.
+
+STEP 5: TEST THE PADSC LIBRARY
 
 > gmake test_libpadsc
 
@@ -92,11 +106,11 @@ to be built and run.  If you see a message of the form
 
 then there is a problem with the test_foo test.
 
-STEP 5: BUILD THE COMPILER
+STEP 6: BUILD THE COMPILER
 
 > gmake padsc_comp
 
-STEP 6: TEST THE COMPILER
+STEP 7: TEST THE COMPILER
 
 > gmake test_comp
 
@@ -112,14 +126,15 @@ then there is a problem with the test_foo test.
 =========================================
 
 ** NOTE **
-Steps 2, 3, and 5 can be done together using
+Steps 3, 4, and 6 can be done together using
 
 > gmake
 
-Steps 2, 3, 3b, and 5 can be done together using
+Steps 3, 4, 4b, and 6 can be done together using
+one of the following:
 
 > gmake GEN_GALAX=1
-
+> gmake USE_GALAX=1
 
 If you are switching between the two, or if
 you install new changes to the source, you may
@@ -129,7 +144,7 @@ need to do:
 
 before you do a new build.
 
-Testing steps 4 and 6 can be done together using
+Testing steps 5 and 7 can be done together using
 
 > gmake regress
 

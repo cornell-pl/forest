@@ -3,7 +3,7 @@
 
 PADS_HOME = ../..
 ifndef AST_ARCH
-  AST_ARCH := $(shell $(PADS_HOME)/ast-base/bin/package)
+  AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package)
   export AST_ARCH
 endif
 
@@ -97,11 +97,15 @@ dogen : $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpadsc/libpadsc.c $(INCLUDE_DEP
 	touch dogen
 
 libpadsc-gen-g.o: libpadsc-gen.c $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule A-mod-D"
+endif
 	$(COMPILE_D) -c $< -o $@
 
 libpadsc-gen.o: libpadsc-gen.c $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule A-mod-O"
+endif
 	$(COMPILE_O) -c $< -o $@
 
 clean :

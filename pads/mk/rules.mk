@@ -58,13 +58,19 @@
 # (IF USE_GALAX is defined, GEN_GALAX is automatically defined)
 #
 
+# uncomment this to debug rules.mk
+# DEBUG_RULES_MK = 1
+
+# uncomment this once we build a shared libast
+# HAVE_SHARED_ASTLIB = 1
+
 ifndef AST_ARCH
-AST_ARCH := $(shell $(PADS_HOME)/ast-base/bin/package)
+AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package)
 export AST_ARCH
 endif
 
 ifndef AST_HOME
-AST_HOME := $(PADS_HOME)/ast-base/arch/$(AST_ARCH)
+AST_HOME := $(PADS_HOME)/ast-ast/arch/$(AST_ARCH)
 export AST_HOME
 endif
 
@@ -101,8 +107,13 @@ STATIC_PADSLIB_NM_D = libpadsc-g.a
 STATIC_PGLXLIB_NM_O = libpglx.a
 STATIC_PGLXLIB_NM_D = libpglx-g.a
 
+ifdef HAVE_SHARED_ASTLIB
 SHARED_ASTLIB_NM_O = libast.so
 SHARED_ASTLIB_NM_D = libast.so
+else
+SHARED_ASTLIB_NM_O = $(STATIC_ASTLIB_NM_O)
+SHARED_ASTLIB_NM_D = $(STATIC_ASTLIB_NM_D)
+endif
 
 SHARED_PADSLIB_NM_O = libpadsc.so.1.0
 SHARED_PADSLIB_NM_ALT1_O = libpadsc.so.1
@@ -150,8 +161,8 @@ ifeq ($(OPSYS),irix)
 ifndef CC
 CC = cc
 endif
-CDBGFLAGS = -g -woff 47,1174
-COPTFLAGS = -DNDEBUG -O2 -woff 47,1174
+CDBGFLAGS = -g -woff 47,1174,3434
+COPTFLAGS = -DNDEBUG -O2 -woff 47,1174,3434
 ifdef BuildPADSLib
 CSHAREFLAGS = -KPIC
 else
@@ -210,7 +221,7 @@ STATIC_OCAMLLIB_O = \
   $(OCAML_LIB_DIR)/libstr.a
 # XXX what about libcamlrun.a ?
 ifdef GEN_GALAX
-STATIC_LIBS_O = $(STATIC_PADSLIB_O) $(STATIC_PGLXLIB_O) $(STATIC_ASTLIB_O) 
+STATIC_LIBS_O = $(STATIC_PGLXLIB_O) $(STATIC_PADSLIB_O) $(STATIC_ASTLIB_O) 
 else
 STATIC_LIBS_O = $(STATIC_PADSLIB_O) $(STATIC_ASTLIB_O) 
 endif
@@ -226,20 +237,27 @@ STATIC_ASTLIB_D = $(LIB_DIR)/$(STATIC_ASTLIB_NM_D)
 STATIC_GALAXLIB_D = $(GALAX_LIB_DIR)/libglxopt.a
 STATIC_OCAMLLIB_D = $(STATIC_OCAMLLIB_O) # no debug versions available
 ifdef GEN_GALAX
-STATIC_LIBS_D = $(STATIC_PADSLIB_D) $(STATIC_PGLXLIB_D) $(STATIC_ASTLIB_D) 
-else
-STATIC_LIBS_D = $(STATIC_PADSLIB_D) $(STATIC_ASTLIB_D) 
+STATIC_LIBS_D = $(STATIC_PGLXLIB_D)
 endif
+STATIC_LIBS_D += $(STATIC_PADSLIB_D) $(STATIC_ASTLIB_D) 
 ifdef USE_GALAX
 STATIC_LIBS_D += $(STATIC_GALAXLIB_D) $(STATIC_OCAMLLIB_D)
 endif
 LIB_DEPS_D = $(STATIC_LIBS_D)
 
-ifdef GEN_GALAX
-DYNAMIC_LIBS_O = -L $(LIB_DIR) -lpadsc -lpglx -last 
+ifdef HAVE_SHARED_ASTLIB
+SHARED_ASTLIB_O = -last
+SHARED_ASTLIB_D = -last
 else
-DYNAMIC_LIBS_O = -L $(LIB_DIR) -lpadsc -last
+SHARED_ASTLIB_O = $(STATIC_ASTLIB_O)
+SHARED_ASTLIB_D = $(STATIC_ASTLIB_D)
 endif
+
+DYNAMIC_LIBS_O = -L $(LIB_DIR)
+ifdef GEN_GALAX
+DYNAMIC_LIBS_O += -lpglx
+endif
+DYNAMIC_LIBS_O += -lpadsc $(SHARED_ASTLIB_O)
 ifdef USE_GALAX
 # mff may need to change next line
 DYNAMIC_LIBS_O += -L $(GALAX_LIB_DIR) -lglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
@@ -248,7 +266,7 @@ SHARED_PADSLIB_DEP_O = $(LIB_DIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(LIB_DIR)/$(SHARED_PGLXLIB_NM_O)
 SHARED_ASTLIB_DEP_O = $(LIB_DIR)/$(SHARED_ASTLIB_NM_O)
 ifdef GEN_GALAX
-DYNAMIC_LIB_DEPS_O = $(SHARED_PADSLIB_DEP_O) $(SHARED_PGLXLIB_DEP_O) $(SHARED_ASTLIB_DEP_O)
+DYNAMIC_LIB_DEPS_O = $(SHARED_PGLXLIB_DEP_O) $(SHARED_PADSLIB_DEP_O) $(SHARED_ASTLIB_DEP_O)
 else
 DYNAMIC_LIB_DEPS_O = $(SHARED_PADSLIB_DEP_O) $(SHARED_ASTLIB_DEP_O)
 endif
@@ -257,11 +275,11 @@ ifdef USE_GALAX
 DYNAMIC_LIB_DEPS_O += $(STATIC_GALAXLIB_O) $(STATIC_OCAMLLIB_O)
 endif
 
+DYNAMIC_LIBS_D = -L $(LIB_DIR)
 ifdef GEN_GALAX
-DYNAMIC_LIBS_D = -L $(LIB_DIR) -lpadsc-g -lpglx-g -last
-else
-DYNAMIC_LIBS_D = -L $(LIB_DIR) -lpadsc-g -last
+DYNAMIC_LIBS_D += -lpglx-g
 endif
+DYNAMIC_LIBS_D += -lpadsc-g  $(SHARED_ASTLIB_D)
 ifdef USE_GALAX
 # mff may need to change next line 
 DYNAMIC_LIBS_D += -L $(GALAX_LIB_DIR) -lglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
@@ -271,10 +289,9 @@ SHARED_PADSLIB_DEP_D = $(LIB_DIR)/$(SHARED_PADSLIB_NM_D)
 SHARED_PGLXLIB_DEP_D = $(LIB_DIR)/$(SHARED_PGLXLIB_NM_D)
 SHARED_ASTLIB_DEP_D = $(LIB_DIR)/$(SHARED_ASTLIB_NM_D)
 ifdef GEN_GALAX
-DYNAMIC_LIB_DEPS_D = $(SHARED_PADSLIB_DEP_D) $(SHARED_PGLXLIB_DEP_D) $(SHARED_ASTLIB_DEP_D)
-else
-DYNAMIC_LIB_DEPS_D = $(SHARED_PADSLIB_DEP_D) $(SHARED_ASTLIB_DEP_D)
+DYNAMIC_LIB_DEPS_D = $(SHARED_PGLXLIB_DEP_D)
 endif
+DYNAMIC_LIB_DEPS_D += $(SHARED_PADSLIB_DEP_D) $(SHARED_ASTLIB_DEP_D)
 ifdef USE_GALAX
 # only statics available
 DYNAMIC_LIB_DEPS_D += $(STATIC_GALAXLIB_D) $(STATIC_OCAMLLIB_D)
@@ -424,36 +441,52 @@ endef
 
 ifdef BuildPADSLib
 %-g.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule A_D"
+endif
 	$(COMPILE_D) -c $< -o $@
 
 %.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule A_O"
+endif
 	$(COMPILE_O) -c $< -o $@
 else
 
 %-g: %-g.o $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule J_D"
+endif
 	$(LINK_D) $< $(DYNAMIC_LIBS_D) -o $@
 
 %: %.o $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule J_O"
+endif
 	$(LINK_O) $< $(DYNAMIC_LIBS_O) -o $@
 
 %-g.o: %.c $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule K_D"
+endif
 	$(COMPILE_D) -c $< -o $@
 
 %.o: %.c $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule K_O"
+endif
 	$(COMPILE_O) -c $< -o $@
 
 %-g: %.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule L_D"
+endif
 	$(COMPILE_D) $< $(DYNAMIC_LIBS_D) -o $@
 
 %: %.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule L_O"
+endif
 	$(COMPILE_O) $< $(DYNAMIC_LIBS_O) -o $@
 
 endif
@@ -461,11 +494,15 @@ endif
 ifdef GEN_DIR
 ifdef GEN_WRITE
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
+ifdef DEBUG_RULES_MK
 	@echo "Using rule P"
+endif
 	$(PADSC) $< $(PADSC_EXTRA) -r $(GEN_DIR) -I. -I..
 else
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
+ifdef DEBUG_RULES_MK
 	@echo "Using rule P-nowrite"
+endif
 	$(PADSC) $< $(PADSC_EXTRA) -r $(GEN_DIR) -wnone -I. -I..
 endif
 endif

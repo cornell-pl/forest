@@ -1,3 +1,6 @@
+
+ # This is a GNU makefile.
+
 PADS_HOME = .
 
 include $(PADS_HOME)/mk/rules.mk
@@ -40,4 +43,5 @@ veryclean:
 
 # This should only be done once
 ast_lib:
-	@(cd ast-base; ./bin/package make || echo "make failed but libast may have been built")
+	@(cp ast-ast/bin/package.cvs ast-ast/bin/package)
+	@(cd ast-ast; ./bin/package read; ./bin/package make)

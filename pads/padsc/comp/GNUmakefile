@@ -1,4 +1,5 @@
- # This is a GNU makefile.
+
+ # This is a GNU makefile
 
 ARCH_N_OPSYS = $(shell $(PADS_HOME)/scripts/arch-n-opsys)
 

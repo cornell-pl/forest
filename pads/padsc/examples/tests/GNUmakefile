@@ -3,7 +3,7 @@
 
 PADS_HOME = ../../..
 ifndef AST_ARCH
-  AST_ARCH := $(shell $(PADS_HOME)/ast-base/bin/package)
+  AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package)
   export AST_ARCH
 endif
 
@@ -17,9 +17,6 @@ else
 PADS_HOME = ../../../..
 GEN_DIR = ../../gen
 GEN_WRITE = 1
-
-# Uncomment the following to use libpglx and the -x padsc option
-GEN_GALAX = 1
 
 # the following indicates that generated .c files should not be removed
 .PRECIOUS: $(GEN_DIR)/%.c 
@@ -36,7 +33,18 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH =  .. ../../p
 
+ifndef GEN_GALAX
+ifndef USE_GALAX
+GALAX_NONE = 1
+endif
+endif
+
+ifdef GALAX_NONE
+XML_TESTS =
+else
 XML_TESTS = test_children
+endif
+
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct test_write_struct_strings
@@ -222,11 +230,30 @@ test_dibbler1: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_O
 test_dibbler1-g: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
+ifdef GALAX_NONE
+test_children: var_error
+
+test_children-g: var_error
+
+var_error:
+	@echo " "
+	@echo "ERROR: to build test_children you must use one of the following"
+	@echo "   gmake GEN_GALAX=1 <target>"
+	@echo "   gmake USE_GALAX=1 <target>"
+	@echo " "
+	@echo "GEN_GALAX: use the libpglx with fake calls to Galax API"
+	@echo "USE_GALAX: use the libpglx with real calls to Galax API"
+	@echo " "
+	@echo "(you must build libpglx with the same option for things to work properly)"
+	@echo " "
+
+else
 test_children: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 test_children-g: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
+endif
 
  # End of rules that are run from the arch directory
 endif

@@ -3,7 +3,7 @@
 
 PADS_HOME = ../..
 ifndef AST_ARCH
-  AST_ARCH := $(shell $(PADS_HOME)/ast-base/bin/package)
+  AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package)
   export AST_ARCH
 endif
 
@@ -13,6 +13,34 @@ include $(PADS_HOME)/mk/redirect.mk
 else
 
  # The following rules are run from the arch directory
+
+ifndef GEN_GALAX
+ifndef USE_GALAX
+VAR_ERROR = 1
+endif
+endif
+
+ifdef VAR_ERROR
+
+all: var_error
+
+opt: var_error
+
+debug: var_error
+
+install: var_error
+
+var_error:
+	@echo " "
+	@echo "ERROR: use one of the following"
+	@echo "   gmake GEN_GALAX=1 [ <target> ]"
+	@echo "   gmake USE_GALAX=1 [ <target> ]"
+	@echo " "
+	@echo "GEN_GALAX: generate a libpglx with fake calls to Galax API"
+	@echo "USE_GALAX: generate a libpglx with real calls to Galax API"
+	@echo " "
+
+else
 
 PADS_HOME = ../../..
 SCRIPTS = $(PADS_HOME)/scripts
@@ -67,6 +95,8 @@ install : all
 	for file in $(INSTALL_INCLUDES); do \
 		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALLROOT)/include/; \
 	done;)
+
+endif # VAR_ERROR
 
 clean :
 	$(RM) $(STATIC_PGLXLIB_NM_O) $(SHARED_PGLXLIB_NM_O) $(STATIC_PGLXLIB_NM_D) $(SHARED_PGLXLIB_NM_D) *~ *.o ../*~
