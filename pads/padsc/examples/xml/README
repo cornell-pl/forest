@@ -1,3 +1,32 @@
+
+Sanity Check for PADS-Galax Interface
+=====================================
+
+1. If the PADS Compiler has changed, then in pads/padsc/examples/xml
+
+   make -C yitzhak
+
+   This will generate in pads/padsc/examples/gen the appropriate PADS 
+   *.{ch} files.  There is a fixed collection of tests, enum.c is the
+   one we use in our tests.
+
+2. In pads/padsc/examples/xml
+
+   make test_query_enum
+
+   This will generate an executable that will create smart nodes over
+   the enum data source.
+
+3. In pads/padsc/examples/xml
+
+   ./linux.i386/test_query_enum  out3.enum queries/dot.xq 
+
+   This will run the "." query over the data source out3.enum and
+   serialize the XML representation of the source.
+
+   Either it will produce XML or it will crash.
+
+
 General organization of tests:
 =============================
 Example PADS Descriptions are in 
