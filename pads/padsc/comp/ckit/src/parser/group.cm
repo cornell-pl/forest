@@ -36,13 +36,15 @@ is
         (* configuration *)
         ../variants/group.cm
 
-	(* utilitities *)
+	(* utilitities *) 
+        util/group.cm
+(*
 	util/old-pp.sml
 	(* util/ascii.sml *)
 	util/sourcemap-sig.sml
 	util/sourcemap.sml
 	util/error-sig.sml
-	util/error.sml
+	util/error.sml *)
 
 	(* lexer and parser *)
 	grammar/tdefs.sml

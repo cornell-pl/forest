@@ -1,4 +1,4 @@
-/*@FILE @LEFT  simple-opt.tex simple-inline-opt.tex constraint-opt.tex constraint-inline-opt.tex */
+/*@FILE @LEFT  simple-opt.tex simple-inline-opt.tex constraint-opt.tex constraint-inline-opt.tex source-opt.tex translation-opt.tex */
 
 /*@BEGIN simple-opt.tex */
 Popt Puint32 oPuint32;
@@ -42,3 +42,16 @@ Precord Pstruct entry4{
   '|';
 };
 /*@END constraint-inline-opt.tex */
+
+Ptypedef Puint32 Ty;
+
+/*@BEGIN source-opt.tex */
+Popt Ty OptTy;
+/*@END source-opt.tex */
+
+/*@BEGIN translation-opt.tex */
+Punion OptTyTrans {
+  Ty                some_OptTy;
+  Pcompute Puint32  none_OptTy = 0; 
+};
+/*@END translation-opt.tex */

@@ -1,7 +1,15 @@
 \chapter{Penums}
 \label{chap:enums}
+\Penum{}s allow a fixed collection of strings to be converted into
+integers in-memory.
+
 \section{Syntax}
-To convert a fixed collection of strings into an integer
+\begin{tabular}{rcl}
+\nont{typedef\_predicates} & \is{}  & identifier identifier \cd{=>} \{ \nont{predicate} \}\\
+\nont{enum\_ty}    & \is{} & \Penum{} \nont{p\_ty} identifier \opt{\nont{p\_formals}} \opt{\cd{:} \nont{typedef\_predicates}};\\[4ex]
+\end{tabular}
+
+
 \begin{verbatim}
 
 Penum orderStates {

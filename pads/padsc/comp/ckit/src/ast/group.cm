@@ -63,6 +63,9 @@ is
 	pp/pp-ast-ext-sig.sml
 	pp/pp-ast-fn.sml
 
+	extensions/pads/transform/group.cm
+
+
 (* Not currently needed: current uses of ast-equality (in simplify-ast)
    just use polymorphic equality.  But this code may be useful in the future
    if the modifications to the ast types violate rules for eqtypes.
@@ -118,9 +121,13 @@ is
         extensions/pads/perror.sml
         extensions/pads/names.sml
         extensions/pads/plib.sml
+      
+        extensions/pads/utils.sml
 
 	(* pretty printer extensions *)
 	pp/extensions/pads/pp-ast-paid-adornment-sig.sml
 	pp/extensions/pads/pp-ast-xschema-sig.sml       
 	pp/extensions/pads/pp-ast-xschema-fn.sml       
 	pp/extensions/pads/pp-ast-xschema.sml       
+
+        extensions/pads/transform/transform.sml

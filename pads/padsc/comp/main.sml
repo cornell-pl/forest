@@ -40,6 +40,7 @@ structure Main : sig
     val includes    = ref ""  (* paths user listed as include paths with -I flag *)
     val defines     = ref ""  (* symbols user defined with -U flag *)
     val undefines   = ref ""  (* symbols user undefined with -D flag *)
+    val translates  = ref [] :  string list ref  (* files specifying a transform *)
 
     val traceFlag = ref true
     val xmlFlag   = ref true
@@ -65,6 +66,7 @@ structure Main : sig
     fun addInclude i = (includes := (" -I "^i^(!includes)))
     fun addDefine  i = (defines := (" -D"^i^(!defines)))
     fun addUndefine  i = (undefines := (" -U"^i^(!undefines)))
+    fun addTranslate  i = (translates := (i :: (!translates)))
   
     fun setHeaderOutputFile s = (
         outputHeaderFileName := s; 
@@ -93,6 +95,7 @@ structure Main : sig
 	 ("I", "augment include path",        PCL.String (addInclude, true)),
 	 ("D", "add definition",              PCL.String (addDefine, true)),
 	 ("U", "remove definition",           PCL.String (addUndefine, true)),
+         ("T", "transform specification",      PCL.String (addTranslate, true)),
          ("t", "trace system commands",       PCL.BoolSet traceFlag)
         ]
 
@@ -338,13 +341,17 @@ structure Main : sig
 	    (houtname, coutname)
 	end
 
+    fun generateTransforms(ast, tidtab, paidtab) = 
+	    List.app (Transform.doFile (ast, tidtab, paidtab)) (!translates)
+
     fun generateOutput (padsDir, astInfo : BuildAst.astBundle, fileName) =
       let val {ast,tidtab,errorCount,warningCount,auxiliaryInfo={paidtab,...},...} = astInfo
 	  val (houtname, coutname) = generateCoreLibrary(padsDir, ast, tidtab, fileName)
       in
 	  generateSelect(fileName);
 	  generateAccum(padsDir, fileName, houtname, coutname);
-	  generateXschema(fileName, ast,tidtab, paidtab)
+	  generateXschema(fileName, ast,tidtab, paidtab);
+          generateTransforms(ast,tidtab,paidtab)
       end
 	    
     fun doFile (padsDir, baseTyFile) (typ, fname) = 

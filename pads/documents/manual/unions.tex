@@ -59,19 +59,19 @@ upon the value of the tag \cd{which}.
 A tag value of \cd{1} indicates an unsigned integer will follow:
 \begin{verbatim}
  1 4
-\end{verbatim}%
+\end{verbatim}
 while a tag
 value of \cd{2} indicates a string terminated by an end-of-record
 mark:  
 \begin{verbatim}
  2 hello
-\end{verbatim}%
+\end{verbatim}
 Any other value for the tag will fall into the default clause of the
 union, which indicates that no further data
 exists:
 \begin{verbatim}
  3
-\end{verbatim}%
+\end{verbatim}
 
 \subsection{Example: In-place \Punion{}s}
 The following in-place \Punion{} describes a data fragment that is
@@ -243,10 +243,10 @@ union to a string.  For a \Punion{} named \cd{myUnion}, this function
 has the name \cd{myUnion_tag2str}.  
 For the \Punion{}
 \cd{branches}, the prototypes for all the generated functions appear in
-\figref{fig:punion-ops} 
+\figref{fig:punion-ops}.
 \begin{figure}
 \input{code/union-impl-branches-ops}
-\caption{Prototypes of operations geneerated for
+\caption{Prototypes of operations generated for
   the \Punion{} \texttt{branches}.}
 \label{fig:punion-ops}
 \end{figure}
@@ -279,8 +279,15 @@ descriptor and in-memory representation to the error tag.
 Errors that occur duing parsing branches of an in-line \Punion{} are
 surpressed because of the speculative nature of the parsing.
 
-For in-place \Punion{}s with the \Plongest{} qualifier, the reading
-code reads the data... \note{finish this description.}
+For in-place \Punion{}s with the \Plongest{} qualifier, the read
+function parses each branch, preserving in the in-memory representation the
+non-erroneous branch that occupied the most space in the physical source.
+Ties are resolved in favor of the earliest branch.  Non-erroneious branches
+that occupy zero space in the physical representation, such as
+\Pcompute{} fields or non-matching options, are considered matches;
+the first such branch will be preserved in the in-memory
+representation if no longer non-erroneous branch is found.   The read
+function reports an error if no branch matches without an error.
 
 The error codes for \Punion{}s are:
 

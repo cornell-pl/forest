@@ -199,14 +199,19 @@ separator.  To indicate that the terminating element should
 instead be considered part of the array, the predicate can set the
 special variable \texttt{consume} to true as a side-effect. 
 
-The following specification describes a sequence of comma-separated
+The specification in \figref{fig:array-ended} describes a sequence of
+comma-separated 
 integers.  The \cd{isDone} function in the \Pended{} clause examines
 the most recently read value and the parse descriptor to determine if
 the sequence has terminated.  Because the function takes the parse
 descriptor as an argument, it must be within the scope of a
 \Pparsecheck{} clause.
 
+\begin{figure}
 \input{code/ended}
+\caption{\Parray{} with \Pomit{} clause.}
+\label{fig:array-ended}
+\end{figure}
 
 If an array has a \Pended{} constraint, it cannot have a
 \Plast{} or a \Plongest{} constraint.
@@ -226,7 +231,8 @@ the array.  Consequently, \texttt{numRead} will always be greater than
 or equal to \texttt{length}.  
 
 
-The following code reads a sequence of up to four space-separated, signed
+The following code reads a sequence of up to four
+space-separated, signed 
 integers terminated by the end of the record.  It omits each of the
 negative numbers from the in-memory representation.
 \input{code/array-omit}
@@ -262,6 +268,11 @@ to \texttt{length-2}, inclusive).  Following the colon, it gives a
 boolean-valued expression. This expression is executed once for each
 value of the index in the range;  the value of the clause is the
 conjunction of the resulting values.
+
+\subsection{In-line arrays}
+For conciseness, \Parray{}s can be declared in-line in \Pstruct{} and
+\Punion{} declartions  (\cf{} \secref{sec:structs-inline} and
+\secref{sec:unions-inline}).
 
 \section{Termination conditions}
 There are a number of conditions under which parsing for an array will
