@@ -528,7 +528,7 @@ do { \
   } \
 } while (0)
 
-#define PDCI_FIND_EOR() \
+#define PDCI_FIND_EOR(fn_nm) \
 do { \
   Pbase_pd tpd; \
   size_t bytes_skipped; \
@@ -562,7 +562,7 @@ do { \
   } \
 } while (0)
 
-#define PDCI_CONSTRAINT_ERR(ecode) \
+#define PDCI_CONSTRAINT_ERR(fn_nm, ecode) \
 do { \
   (pd->nerr)++; \
   pd->errCode = P_TYPEDEF_CONSTRAINT_ERR; \
@@ -585,7 +585,7 @@ do { \
 do { \
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep); \
   base_read_call; \
-  PDCI_FIND_EOR(); \
+  PDCI_FIND_EOR(fn_nm); \
 } while (0)
 
 /* invoke this macro, return (pd->nerr == 0) ? P_OK : P_ERR */
@@ -593,7 +593,7 @@ do { \
 do { \
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep); \
   if (P_OK == (base_read_call) && P_Test_SemCheck (m->user) && (!(usercheck))) { \
-    PDCI_CONSTRAINT_ERR(P_TYPEDEF_CONSTRAINT_ERR); \
+    PDCI_CONSTRAINT_ERR(fn_nm, P_TYPEDEF_CONSTRAINT_ERR); \
   } \
 } while (0)
 
@@ -602,9 +602,9 @@ do { \
 do { \
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep); \
   if (P_OK == (base_read_call) && P_Test_SemCheck (m->user) && (!(usercheck))) { \
-    PDCI_CONSTRAINT_ERR(P_TYPEDEF_CONSTRAINT_ERR); \
+    PDCI_CONSTRAINT_ERR(fn_nm, P_TYPEDEF_CONSTRAINT_ERR); \
   } \
-  PDCI_FIND_EOR(); \
+  PDCI_FIND_EOR(fn_nm); \
 } while (0)
 
 /* function body for a write2io function that has params pads, io, pd, rep */

@@ -918,6 +918,8 @@ structure CnvExt : CNVEXT = struct
 		  end
 
               fun genReturnChk e =  P.returnS (P.condX(P.eqX(e,P.zero), PL.P_OK, PL.P_ERROR))
+	      val stdReturnS = genReturnChk (P.arrowX(PT.Id pd, PT.Id nerr))
+
 
 	      fun reportStructErrorSs (code, shouldGetLoc, locX) = 
 		  let val setLocSs = if shouldGetLoc 
@@ -1000,19 +1002,19 @@ structure CnvExt : CNVEXT = struct
 
 
 	      fun genReadFun (readName, cParams:(string * pcty)list, 
-			      mPCT,pdPCT,canonicalPCT, mFirstPCT, hasNErr, bodySs) = 
+			      mPCT, pdPCT, canonicalPCT, mFirstPCT, hasNErr, doInit, bodySs) = 
 		  let val (cNames, cTys) = ListPair.unzip cParams
                       val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT mPCT]
 			             @ cTys
 			             @ [P.ptrPCT pdPCT, P.ptrPCT canonicalPCT]
                       val paramNames = [pads, m] @ cNames @ [pd,rep]
                       val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
-		      val incNerrSs = if hasNErr then
+		      val initNerrSs = if hasNErr then
 			              [P.assignS(P.arrowX(PT.Id pd, PT.Id nerr), P.zero)]
 				      else []
-		      val innerInitDecls = incNerrSs
-				     @ [PL.initParseStateS(PT.Id pd),
-					P.assignS(P.arrowX(PT.Id pd, PT.Id errCode), PL.P_NO_ERROR)]
+		      val innerInitDecls = initNerrSs
+				     @ (if doInit then [PL.initParseStateS(PT.Id pd),
+					P.assignS(P.arrowX(PT.Id pd, PT.Id errCode), PL.P_NO_ERROR)] else [])
 		      val returnTy =  PL.toolErrPCT
 		      val checkParamsSs = [PL.IODiscChecks3P(PT.String readName, PT.Id m, PT.Id pd, PT.Id rep)]
 		      val innerBody = checkParamsSs @ innerInitDecls @ bodySs
@@ -1028,6 +1030,10 @@ ssize_t test_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, <te
 ssize_t test_write_xml_2io (P_t *pads, Sfio_t *io, <test_params>, test_pd *pd, test *rep, const char *tag, int indent);
 ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, <test_params>, test_pd *pd, test *rep, const char *tag, int indent)
 *)
+
+	      fun modTagSs (newTag) = 
+		  [PT.IfThen(P.notX(PT.Id tag),
+		             P.assignS(PT.Id tag, PT.String newTag))]
 
 	      fun writeAdjustLenSs shouldAdjustBuffer = 
 		[PT.Expr(PT.Call(PT.Id (if shouldAdjustBuffer then "PDCI_TLEN_UPDATES" else "PDCI_FINAL_TLEN_UPDATES"), []))]
@@ -1648,16 +1654,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val mDecls   = cnvExternalDecl mED
                       val mPCT     = P.makeTypedefPCT (mSuf name)		
 
-                      (* Generate parse description *)
-		      val baseEDPCT = P.makeTypedefPCT(lookupTy(baseTy,pdSuf, #pdname))
-                      val pdFields  = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
-				       (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT,NONE),
-				       (base, baseEDPCT, SOME "Base parse description")]
-		      val pdED      = P.makeTyDefStructEDecl (pdFields, pdSuf name)
+                      (* Generate parse description: typedef to base pd *)
+		      val pdEDPCT = P.makeTypedefPCT(lookupTy(baseTy,pdSuf, #pdname))
+		      val pdED = P.makeTyDefEDecl (pdEDPCT, pdSuf name)
 		      val (pdDecls,pdTid)  = cnvCTy pdED
-                      val pdPCT     = P.makeTypedefPCT (pdSuf name)		
+                      val pdPCT = P.makeTypedefPCT (pdSuf name)
 
-  		      (* Generate accumulator type *)
+		      (* Generate accumulator type *)
 		      val PX.Name baseName = baseTy
 		      val baseAccPCT = case PBTys.find(PBTys.baseInfo, Atom.atom baseName) 
 			               of NONE => P.makeTypedefPCT (accSuf baseName)  (* must have been generated *)
@@ -1754,35 +1757,28 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  name ^ " has type: " ^ s ^
 						  ". Expected an int.")))
 
-                      fun genReadSs () = 
-			  let val resDeclSs = [P.varDeclS'(PL.toolErrPCT, result)]
-			      val readBaseSs = 
-				  [P.assignS(PT.Id result, 
-					     PL.readFunX(baseReadFun, 
-							 PT.Id pads, 
-							 P.addrX (fieldX(m,base)),
-							 args,
-							 P.addrX (fieldX(pd,base)),
-							 PT.Id rep)),
-				   PT.IfThen(P.eqX(PT.Id result, PL.P_ERROR),
-					     PT.Goto (findEORSuf name))]
-
-			      val checkConstraintSs = 
-				  case modPredXOpt of NONE => []
+                      fun genReadBody () = 
+			  let val readBaseX = 
+				  PL.readFunX(baseReadFun, 
+					      PT.Id pads, 
+					      P.addrX (fieldX(m,base)),
+					      args,
+					      PT.Id pd,
+					      PT.Id rep)
+			      val callMacroS =
+				  case modPredXOpt of NONE =>
+					if isRecord then 
+					  PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_READ_REC", [PT.String(readName),readBaseX]))
+					else
+					  PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_READ", [PT.String(readName),readBaseX]))
 				  | SOME modPredX => 
-				      [PT.IfThen(P.andX(PL.mTestSemCheckX(fieldX(m,user)),
-							P.notX modPredX),
-					         PT.Compound (reportErrorSs([locS],locX,true,
-									    PL.P_TYPEDEF_CONSTRAINT_ERR,
-									    true, readName, "", [])
-							     @ [P.assignS(PT.Id result, PL.P_ERROR),
-							        PT.Goto (findEORSuf name)])
-					     )]
-			      val slurpSs = if isRecord then genReadEOR (readName,reportStructErrorSs) () else []
-			      val endSs = [PT.Labeled(findEORSuf name, 
-						     PT.Compound(slurpSs @ [PT.Return (PT.Id result)]))]
+					if isRecord then 
+					  PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_READ_USERCHECK_REC", [PT.String(readName),readBaseX,modPredX]))
+					else
+					  PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_READ_USERCHECK", [PT.String(readName),readBaseX,modPredX]))
+
 		      in
-			  [PT.Compound (resDeclSs @ readBaseSs @ checkConstraintSs @ endSs)]
+			  [callMacroS,stdReturnS]
 		      end
 
                       (* -- Assemble read function typedef case *)
@@ -1790,11 +1786,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val () = ignore (insTempVar(rep, P.ptrPCT canonicalPCT))      (* add rep to scope *)
                       val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
 		      val () = chk()
-		      val readFields = genReadSs ()                                 (* does type checking *)
+		      val readBody = genReadBody ()                               (* does type checking *)
 		      val _ = popLocalEnv()                                         (* remove scope *)
-		      val bodySs = readFields 
-		      val readFunEDs = genReadFun(readName, cParams, mPCT,pdPCT,canonicalPCT, 
-						  NONE, true, bodySs)
+		      val readFunEDs = genReadFun(readName, cParams, mPCT, pdPCT, canonicalPCT, 
+						  NONE, false, false, readBody)
 
                       val readEDs = initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
 			          @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
@@ -1839,8 +1834,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						   PT.Return PL.P_OK])
                         | genAdd (SOME a) =
                            let val addX = PT.Call(PT.Id (addSuf  a), 
-						  [PT.Id pads, PT.Id acc, 
-						   P.addrX(P.arrowX(PT.Id pd,PT.Id base)), PT.Id rep])
+						  [PT.Id pads, PT.Id acc, PT.Id pd, PT.Id rep])
 			       val addReturnS = PT.Return addX
 			       val addBodySs =  [addReturnS]
 			   in
@@ -1867,8 +1861,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val writeXMLName = writeXMLSuf name
 		      val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy) 
 		      val writeXMLBaseName = (bufSuf o writeXMLSuf) (lookupWrite baseTy) 
-		      val bodySs = writeFieldSs(writeBaseName, args @ [getFieldX(pd,base), PT.Id rep], isRecord)
-		      val bodyXMLSs = writeXMLFieldSs(writeXMLBaseName, args @ [getFieldX(pd,base), PT.Id rep], PT.Id tag, true, true)
+		      val bodySs = writeFieldSs(writeBaseName, args @ [PT.Id pd, PT.Id rep], isRecord)
+		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, args @ [PT.Id pd, PT.Id rep], PT.Id tag, false, false)
                       val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
 
 	              (***** typedef PADS-Galax *****)
@@ -2477,11 +2471,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val bodyS = localDeclSs @ postLocSs @ readFields @ postCondSs @ readRecord
 		      val bodySs = if 0 = List.length localDeclSs andalso 0 = List.length postCond
 				       then bodyS else [PT.Compound bodyS]
-		      val returnS = genReturnChk (P.arrowX(PT.Id pd, PT.Id nerr))
-		      val bodySs = bodySs @ [returnS]
+		      val bodySs = bodySs @ [stdReturnS]
 
 		      val readFunEDs = genReadFun(readName, cParams, mPCT, pdPCT, canonicalPCT, 
-						  mFirstPCT, true, bodySs)
+						  mFirstPCT, true, true, bodySs)
 
                       val readEDs = initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
 			          @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
@@ -3370,7 +3363,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val bodySs = buildReadFun() 
 		     val _ = popLocalEnv()                                         (* remove scope *)
 		     val readFunEDs = genReadFun(readName, cParams,mPCT,pdPCT,canonicalPCT, 
-						 mFirstPCT, true, bodySs)
+						 mFirstPCT, true, true, bodySs)
 
                      val readEDs = toStringEDs @ initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
 			         @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
@@ -4796,7 +4789,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				@ stcloseSs
                                 @ [returnS])]
                  val readFunEDs = genReadFun(readName, cParams, mPCT,pdPCT,canonicalPCT, 
-					     NONE, true, bodySs)
+					     NONE, true, true, bodySs)
                  val _ = popLocalEnv()
 
 
@@ -5153,7 +5146,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  val _ = popLocalEnv()                                         (* remove scope *)
 		  val bodySs = [PT.Compound(readFields @ cleanupSs @ gotoSs)]
 		  val readFunEDs = genReadFun(readName, cParams, 
-					      mPCT,pdPCT,canonicalPCT, NONE, false, bodySs)
+					      mPCT,pdPCT,canonicalPCT, NONE, false, true, bodySs)
 
                   val readEDs = toStringEDs @ initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
 			     @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
