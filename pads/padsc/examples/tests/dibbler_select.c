@@ -7,8 +7,8 @@
 // Where the defaults are:
 
 #define SELECT_STATE       "10"
-#define CLEAN_INPUT_FILE   "/home/kfisher/esig/dibbler_clean_big_C"
-#define OUTPUT_FILE        "/home/kfisher/esig/dibbler_selected_big_C"
+#define CLEAN_INPUT_FILE   "/home/kfisher/esig/small_clean"
+#define OUTPUT_FILE        "/home/kfisher/esig/small_clean_selected_C"
 
 // dibber_select parses entry lines from CLEAN_INPUT_FILE according to
 // the spec in dibbler_new.p.  It does not do any error checking, and
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(ERROR_FATAL, "*** P_open failed ***");
   }
-
+   my_disc.e_rep = PerrorRep_None;
   summary_header_t_init(pads, &header);
   summary_header_t_pd_init(pads, &header_pd);
   summary_header_t_m_init(pads, &header_m, P_Set);
@@ -68,6 +68,26 @@ int main(int argc, char** argv) {
   // INIT entry -- must do this for all variable data types
   entry_t_init(pads, &entry);
   entry_t_pd_init(pads, &entry_pd);
+
+  // start with Ignore
+  entry_t_m_init(pads, &entry_m, P_Ignore);
+  // Do not ignore order_num field
+  entry_m.header.order_num = P_Set;
+  // Do not ignore state fields
+  entry_m.events.element.state = P_Set;
+
+  // Need to check union fields to choose the right arm
+  zip_code_t_m_init(pads, &entry_m.header.zip_code, P_BothCheck);
+  entry_m.header.zip_code.compoundLevel = P_Ignore;
+
+
+#if 0
+  // Need to do CheckAndSet for union field (zip_code) ???
+  zip_code_t_m_init(pads, &entry_m.header.zip_code, P_CheckAndSet);
+  entry_m.header.zip_code.compoundLevel = P_Ignore;
+#endif
+
+#if 0
   // start with P_Set
   entry_t_m_init(pads, &entry_m, P_Set);  
   // turn off setting of timestamp fields in elements
@@ -78,6 +98,7 @@ int main(int argc, char** argv) {
   entry_m.header.zip_code.compoundLevel = P_Ignore;
   // turn back on setting of header's order_num field
   entry_m.header.order_num = P_Set;
+#endif
 
   if (P_ERR == P_io_fopen(pads, input_name)) {
     error(ERROR_FATAL, "*** P_io_fopen failed ***");
