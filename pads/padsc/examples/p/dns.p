@@ -29,7 +29,7 @@ Pstruct label_t {
 
 // For convenience to get the actual pointer from ptr_t field p
 int p_offset(Puint16 p) {
-  return (p & 49151); // 0xC000-1, but CKit does not read 0xC000 right
+  return  p &( 0xC000 -1 ); 
 }
 
 Pstruct ptr_t {
@@ -75,8 +75,8 @@ Parray domain_name {
   label_or_ptr [] : Plast(check256(eltEnd.offset - arrayBegin.offset, arrayBegin.offset)
 			      || elts[current].tag != label
 			      || elts[current].val.label.length == 0) ;
-//} Pwhere { Pparsecheck(domain_name_dbg(elts, length, arrayBegin.offset));
 };
+
 
 Pstruct character_string {
   Psbh_uint8(:1:)        length;
@@ -182,15 +182,24 @@ Pstruct KX_t {
   domain_name exchanger;
 };
 
+Punion domain_name_opt(:Pint8 len:) {
+  Pswitch(len){
+    Pcase 0 : Pcompute Pint8 x = 0;  // PADS ISSUE: really want a Pvoid here
+    Pdefault: domain_name dn;
+  }
+};
+
 Pstruct A6_t {
-  Psbh_uint8(:1:) prefix_len; // FIX: must be <129
+  Psbh_uint8(:1:) prefix_len : prefix_len < 129;
   Pa_string_FW(:(prefix_len==128)?0:((128-prefix_len)/8 + 1):) address_suffix; // Note: can be 0 octets
-  domain_name prefix; // FIX: if prefix_len is 0, should be omitted!!
+  domain_name_opt(:prefix_len:) prefix;
 };
 
 Pstruct DNAME_t {
   domain_name target;
 };
+
+
 
 Pstruct DS_t(:Puint16 rdlength:) {
   Pcompute size_t start = position.offset;
@@ -199,7 +208,11 @@ Pstruct DS_t(:Puint16 rdlength:) {
   Psbh_uint8(:1:) digest_type;
   domain_name signers_name;
   Pcompute size_t middle = position.offset;
-  // Need to make sure rdlength > middle - start
+  Pcompute Pint32 x = ((rdlength > middle - start) ? 1 : (abort(),0)); 
+  // PADS ISSUE: Should be able to use C base type on lhs
+  // PADS ISSUE:constraints on Pcompute fields
+  // PADS ISSUE:Pabort(predicate) to abort program if constraint failure
+  // PADS ISSUE:Pomit on Pcompute
   Pa_string_FW(:rdlength-(middle-start):) digest;
 };
 
@@ -334,7 +347,7 @@ Pstruct TKEY_t {
 
 Pstruct TSIG_t {
   domain_name algorithm;
-  Psbh_uint64(:8:) time_signed; // FIX: SHOULD BE UINT48!!!!!
+  Psbh_uint64(:6:) time_signed;
   Psbh_uint16(:2:) fudge;
   Psbh_uint16(:2:) mac_size;
   Pa_string_FW(:mac_size:) mac;
@@ -387,16 +400,17 @@ Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
   Pcase 250 : TSIG_t TSIG;
   Pdefault : Pa_string_FW(:rdlength:) unknown;
   }
-} Pwhere { Pparsecheck(fprintf(stderr,"unionEnd.offset=%x,unionBegin.offset=%x,rdlength=%x\n",unionEnd.offset,unionBegin.offset,rdlength)) &&
-  Pparsecheck(unionEnd.offset - unionBegin.offset == rdlength); }
-;
+} Pwhere { 
+  // Pparsecheck(fprintf(stderr,"unionEnd.offset=%llx,unionBegin.offset=%llx,rdlength=%x\n",
+  // (long long)unionEnd.offset,(long long)unionBegin.offset,rdlength)) &&
+           Pparsecheck(unionEnd.offset - unionBegin.offset == rdlength); };
 
 Pstruct resource_record {
   domain_name              name;
   Psbh_uint16(:2:)         type;
   Psbh_uint16(:2:)         class;
-  Psbh_uint32(:4:)         ttl;    /- should be limited to positive signed 32bit
-  Psbh_uint16(:2:)         rdlength : fprintf(stderr,"rdlength=%x\n",rdlength);
+  Psbh_uint32(:4:)         ttl: ttl < (1<<31);    /- should be limited to positive signed 32bit
+  Psbh_uint16(:2:)         rdlength;
   rr_spec(:type,rdlength:) rdata;
 };
 
@@ -406,7 +420,7 @@ Parray resource_records(:unsigned int size:) {
 
 Pstruct question_t {
    domain_name qname;
-   Psbh_uint16(:2:) qtype : printf("Question type %d\n",qtype);
+   Psbh_uint16(:2:) qtype;
    Psbh_uint16(:2:) qclass;
 };
 
@@ -416,7 +430,7 @@ Parray questions(:unsigned int size:) {
 
 Pstruct header_t {
    Psbh_uint16(:2:) id;
-   Psbh_uint16(:2:) blob : printf("Truncate is %d\n", (blob >> 9) & 1);
+   Psbh_uint16(:2:) blob;
    Psbh_uint16(:2:) qdcount; /- number of questions
    Psbh_uint16(:2:) ancount; /- number of answers
    Psbh_uint16(:2:) nscount; /- number of authorities
@@ -424,7 +438,7 @@ Pstruct header_t {
 };
 
 int cnt_dbg(const char *cnt_descr, unsigned int cnt) {
-  fprintf(stderr, "# of %s = %u\n", cnt_descr, cnt);
+  //  fprintf(stderr, "# of %s = %u\n", cnt_descr, cnt);
   return 1;
 };
 
