@@ -1,3 +1,46 @@
+
+October 16, 2004 - Kathleen
+
+A set of changes to support PADS+Gigascope
+
+  o A couple of new include files
+       A pads_gigascope.h
+       A pads_gigascope_macros.h
+
+  o GNUmakefiles and rules.mk: if GIGASCOPE_HOME is defined, then
+    this becomes PADS_INSTALLROOT, and a -DFOR_GIGASCOPE flag
+    is added to the compile options.  Also, FORCE_STATIC is set.
+    GIGASCOPE_INCLUDES is set to the above include files.
+    INSTALL_LIBDIR and INSTALL_INCDIR are now the target dirs for a
+    'make install'.   install in libpads now also installs the ast
+    library/libraries in INSTALL_LIBDIR (which does nothing if this
+    is the same as the normal ast-ast/arch/<ARCH>/ 
+       M rules.mk
+       M GNUmakefile
+       M padsc/GNUmakefile
+       M padsc/include/GNUmakefile
+       M padsc/libpads/GNUmakefile
+       M padsc/libpglx/GNUmakefile
+
+  o release.pl produces a tar file with a 'released' version of PADS.
+    Currently its target use is Gigascope, so it replaces the checked in
+    ast-zip/INIT packages with ast-ast/INIT packages to avoid
+    building the compression libraries.  release.pl deletes files that
+    should not be in the release, such as stuff that should remain internal
+    to AT&T.  I may have missed some things.  It also replaces
+    examples/tests/GNUmakefile with examples/tests/GNUmakefile.release.
+    N.B. This means if you add a regression test that you think should
+    be part of the release, you need to add it the corresponding rules
+    to both GNUmakefile and GNUmakefile.release, AND you need to add
+    the .c file to examples/tests/RELEASE_TESTS, which release.pl uses
+    to figure out what data/test/regression files to keep.
+     
+       M scripts/release.pl
+       R scripts/release/INIT.2003-10-31.tgz
+       A scripts/release/INIT.2004-10-11.tgz
+       R scripts/release/ast-ast.2003-10-31.tgz
+       A scripts/release/ast-ast.2004-10-11.tgz
+
 October 14, 2004 - Mary
   o Eliminated smart-node init call in pglx-codegen-macros.h that I
     don't understand that that trashes <pd> values. 
