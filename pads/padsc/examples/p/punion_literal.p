@@ -3,4 +3,5 @@ Precord Punion test {
   'c';
    Pint32 f;
   star Pfrom("*");
+  ap Pfrom(Pre "/a*/");
 };

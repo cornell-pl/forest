@@ -1077,10 +1077,7 @@ structure CnvExt : CNVEXT = struct
 			       [PT.IfThen(
 				 PT.Id "bytes_skipped",
 				 PT.Compound
-                                  [PT.IfThen(
-				    PL.getSpecLevelX(PT.Id pads),
-				    PT.Compound
-				     [PT.Return PL.P_ERROR]),
+                                  [P.mkCommentS "in genReadEOR1",
 				   PL.getLocEndS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc)), ~1),
 				   PT.IfThenElse(
 				     PL.testNotPanicX(PT.Id pd),
@@ -1097,12 +1094,11 @@ structure CnvExt : CNVEXT = struct
 						       P.addrX(P.dotX(PT.Id tpd, PT.Id loc)),
 						       readName,
 						       PT.String "Resynching at EOR", 
-						       [])])]),
+						       [])]),
+				   PL.endSpec pads]),
 				PL.unsetPanicS(PT.Id pd)],
 			      PT.Compound
-			       [PT.IfThen(
-				 PL.getSpecLevelX(PT.Id pads),
-				 PT.Compound[PT.Return PL.P_ERROR]),
+			       [P.mkCommentS "in genReadEOR2",
 				PL.unsetPanicS(PT.Id pd),
 				PL.getLocEndS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc)), ~1),
 				PL.userErrorS(PT.Id pads, 
@@ -1110,7 +1106,8 @@ structure CnvExt : CNVEXT = struct
 					      PL.P_AT_EOR,
 					      readName,
 					      PT.String "Found EOF when searching for EOR", 
-					      [])])]]
+					      []),
+				PL.endSpec pads	]) ]  ]
 
 
 	      fun genReadFun (readName, cParams:(string * pcty)list, 
@@ -4006,12 +4003,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                  (* Some useful functions *)
                  fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic) = 
-                     PT.Compound([PT.IfThen(PL.getSpecLevelX(PT.Id pads),
-					    PT.Return PL.P_ERROR),
+                     PT.Compound([P.mkCommentS "from recordArrayErrorS",
   				  PT.IfThenElse(P.notX(fieldX(pd, nerr)),
 						PT.Compound (reportErrorSs(getLocSs, locX, true, errCodeC,
 									   shouldPrint, whatFun, msg, args)),
-						incPDNerrCompS)]
+						incPDNerrCompS),
+				  PL.endSpec pads]
 				 @ (if setPanic then [PL.setPanicS(PT.Id pd)] else []))
   
                  fun amCheckingBasicE(SOME testE) = 
@@ -4874,17 +4871,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				     | SOME _ => P.andX(etestX, P.notX(PT.Id omitresult))
 		     in
 			 [PT.IfThen(testX,
-			   PT.Compound[
-			      PT.IfThen(PL.getSpecLevelX(PT.Id pads),
-				        PT.Return PL.P_ERROR),
-			      PT.IfThen(PL.mTestNotIgnoreX(fieldX(m, array)),
+			   PT.Compound[P.mkCommentS "in markErrorSs", 
+				 PT.IfThen(PL.mTestNotIgnoreX(fieldX(m, array)),
 			         PT.Compound[
+				    P.postIncS(fieldX(pd, neerr)),
                                     PT.IfThen(P.notX(fieldX(pd, nerr)),
                                        PT.Compound (
 	 			           (reportErrorSs([locES1], locX, true, PL.P_ARRAY_ELEM_ERR, false, readName, "", []))
                                          @ [P.mkCommentS("Index of first element with an error"),
 				            P.assignS(fieldX(pd, firstError), P.minusX(fieldX(rep, length), P.intX 1))])),
-                                            P.postIncS(fieldX(pd, neerr))])])]
+                                            PL.endSpec pads])])]
 		     end
 
                  (* -- panic recovery code *)
@@ -5614,7 +5610,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					PT.Compound (slurpToEORSs @ [PT.Return (PT.Id result)]))]
 
 
-		  (* -- Assemble read function *)
+		  (* -- Assemble read function enum case*)
 		  val _ = pushLocalEnv()                                        (* create new scope *)
 		  val () = ignore (insTempVar(rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
 		  val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)

@@ -139,33 +139,33 @@ void PCGEN_ENUM_XML_OUT(const char *def_tag, const char *(rep2str_fn)(int));
 do {
   Pbase_pd tpd;
   size_t bytes_skipped;
+  int no_panic = !P_PS_isPanic(pd);
+  P_PS_unsetPanic(pd);
   PDCI_IO_BEGINLOC(pads, tpd.loc);
   if (P_OK == P_io_next_rec(pads, &bytes_skipped)) {
     if (bytes_skipped) {
-      if (P_spec_level(pads)) return P_ERR;
       PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
-      if (!P_PS_isPanic(pd)) {
+      if (no_panic) {
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_EXTRA_BEFORE_EOR, fn_nm, "Unexpected data before EOR");
-	if (pd->nerr == 0) {
+	(pd->nerr)++;
+	if (pd->nerr == 1) {
 	  pd->errCode = P_EXTRA_BEFORE_EOR;
 	  pd->loc = tpd.loc;
+	  if (P_spec_level(pads)) return P_ERR;
 	}
-	(pd->nerr)++;
       } else {
 	PDCI_report_err(pads, P_LEV_INFO, &(tpd.loc), P_NO_ERR, fn_nm, "Resynching at EOR");
       }
     }
-    P_PS_unsetPanic(pd);
   } else {
-    if (P_spec_level(pads)) return P_ERR;
-    P_PS_unsetPanic(pd);
     PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
     PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_EOF_BEFORE_EOR, fn_nm, "Found EOF when searching for EOR");
-    if (pd->nerr == 0) {
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
       pd->errCode = P_EOF_BEFORE_EOR;
       pd->loc = tpd.loc;
+      if (P_spec_level(pads)) return P_ERR;
     }
-    (pd->nerr)++;
   }
 } while (0)
 /* END_MACRO */
@@ -181,18 +181,25 @@ do {
 /* END_MACRO */
 
 /* XXX should it be -1 or 0 below ??? */
-#define PDCI_ELT_CONSTRAINT_ERR(fn_nm, elt_pd, elt_ecode, top_ecode, msg)
+#define PDCI_ELT_CONSTRAINT_ERR(fn_nm, elt_pd, elt_ecode, top_ecode, msg, xtra)
 do {
   (elt_pd).nerr = 1;
   (elt_pd).errCode = elt_ecode;
   PDCI_IO_ENDLOC_MINUS1(pads, (elt_pd).loc);
   PDCI_report_err(pads, P_LEV_WARN, &((elt_pd).loc), (elt_pd).errCode, fn_nm, msg);
-  if (pd->nerr == 0) {
+  (pd->nerr)++;
+  if (pd->nerr == 1) {
     pd->errCode = top_ecode;
     pd->loc = (elt_pd).loc;
+    xtra
   }
-  (pd->nerr)++;
 } while (0)
+/* END_MACRO */
+
+#define PDCI_STRUCT_ELT_CONSTRAINT_ERR(fn_nm, the_field)
+  PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->the_field, P_USER_CONSTRAINT_VIOLATION,
+                          P_STRUCT_FIELD_ERR, "User constraint on field " PDCI_MacroArg2String(the_field) " violated",
+			  if (P_spec_level(pads)) return P_ERR;)
 /* END_MACRO */
 
 /* for the following 4 macros, pd and rep shared with base type */
@@ -243,12 +250,6 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PDCI_STRUCT_ELT_CONSTRAINT_ERR(fn_nm, the_field)
-  if (P_spec_level(pads)) return P_ERR;
-  PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->the_field, P_USER_CONSTRAINT_VIOLATION,
-                          P_STRUCT_FIELD_ERR, "User constraint on field " PDCI_MacroArg2String(the_field) " violated")
-/* END_MACRO */
-
 #define PCGEN_STRUCT_READ_POST_CHECK(fn_nm, the_field, usercheck)
 do {
   if (P_Test_SemCheck(m->the_field ## _con) && (!(usercheck))) {
@@ -278,15 +279,15 @@ do {
 #define PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call)
   PDCI_IO_BEGINLOC(pads, pd->the_field.loc);
   if (P_ERR == read_call) {
-    if (P_spec_level(pads)) return P_ERR;
     if (P_PS_isPanic(&(pd->the_field))) {
       P_PS_setPanic(pd);
     }
-    if (pd->nerr == 0) {
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
       pd->errCode = P_STRUCT_FIELD_ERR;
       pd->loc = pd->the_field.loc;
+      if (P_spec_level(pads)) return P_ERR;
     }
-    (pd->nerr)++;
   }
 /* END_MACRO */
 
@@ -357,27 +358,27 @@ do {
   PDCI_IO_BEGINLOC(pads, tpd.loc);
   if (P_OK == Pchar_lit_scan1(pads, char_lit, 1, 0, &toffset)) {
     if (toffset) {
-      if (P_spec_level(pads)) return P_ERR;
-      if (pd->nerr == 0) {
+      (pd->nerr)++;
+      if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
 	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
 	pd->loc = tpd.loc;
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before char separator %s", P_qfmt_char(char_lit));
+	if (P_spec_level(pads)) return P_ERR;
       }
-      (pd->nerr)++;
     }
   } else {
-    if (P_spec_level(pads)) return P_ERR;
-    if (pd->nerr == 0) {
+    P_PS_setPanic(pd);
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
       PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
       pd->loc = tpd.loc;
       PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing char separator %s", P_qfmt_char(char_lit));
+      if (P_spec_level(pads)) return P_ERR;
     }
-    (pd->nerr)++;
-    P_PS_setPanic(pd);
   }
 } while (0)
 /* END_MACRO */
@@ -404,27 +405,27 @@ do {
   PDCI_IO_BEGINLOC(pads, tpd.loc);
   if (P_OK == Pstr_lit_scan1(pads, pads_str_lit, 1, 0, &toffset)) {
     if (toffset) {
-      if (P_spec_level(pads)) return P_ERR;
-      if (pd->nerr == 0) {
+      (pd->nerr)++;
+      if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
 	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
 	pd->loc = tpd.loc;
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before string separator %s", P_qfmt_str(pads_str_lit));
+	if (P_spec_level(pads)) return P_ERR;
       }
-      (pd->nerr)++;
     }
   } else {
-    if (P_spec_level(pads)) return P_ERR;
-    if (pd->nerr == 0) {
+    P_PS_setPanic(pd);
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
       PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
       pd->loc = tpd.loc;
       PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing string separator %s", P_qfmt_str(pads_str_lit));
+      if (P_spec_level(pads)) return P_ERR;
     }
-    (pd->nerr)++;
-    P_PS_setPanic(pd);
   }
 } while (0)
 /* END_MACRO */
@@ -458,27 +459,27 @@ do {
   Pregexp_cleanup(pads, regexp);
   if (terr == P_OK) {
     if (toffset) {
-      if (P_spec_level(pads)) return P_ERR;
-      if (pd->nerr == 0) {
+      (pd->nerr)++;
+      if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
 	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
 	pd->loc = tpd.loc;
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before regexp separator Pre %s", P_qfmt_cstr(regexp_str));
+	if (P_spec_level(pads)) return P_ERR;
       }
-      (pd->nerr)++;
     }
   } else {
-    if (P_spec_level(pads)) return P_ERR;
-    if (pd->nerr == 0) {
+    P_PS_setPanic(pd);
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
       PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
       pd->loc = tpd.loc;
       PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing regexp separator Pre %s", P_qfmt_cstr(regexp_str));
+      if (P_spec_level(pads)) return P_ERR;
     }
-    (pd->nerr)++;
-    P_PS_setPanic(pd);
   }
 } while (0)
 /* END_MACRO */
@@ -522,10 +523,8 @@ do {
 /* END_MACRO */
 
 #define PDCI_ALT_ELT_CONSTRAINT_ERR(fn_nm, the_field)
-  if (!P_spec_level(pads)) {
     PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->the_field, P_USER_CONSTRAINT_VIOLATION,
-			    P_STRUCT_FIELD_ERR, "User constraint on field " PDCI_MacroArg2String(the_field) " violated")
-  }
+			    P_STRUCT_FIELD_ERR, "User constraint on field " PDCI_MacroArg2String(the_field) " violated",)
 /* END_MACRO */
 
 #define PCGEN_ALT_READ_BEGIN(fn_nm)
@@ -624,11 +623,11 @@ do {
     if (P_PS_isPanic(&(pd->the_field))) {
       P_PS_setPanic(pd);
     }
-    if (pd->nerr == 0) {
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
       pd->errCode = P_STRUCT_FIELD_ERR;
       pd->loc = pd->the_field.loc;
     }
-    (pd->nerr)++;
   }
 /* END_MACRO */
 
@@ -665,29 +664,25 @@ do {
   PDCI_IO_BEGINLOC(pads, tpd.loc);
   if (P_OK == Pchar_lit_scan1(pads, char_lit, 1, 0, &toffset)) {
     if (toffset) {
-      if (pd->nerr == 0) {
+      (pd->nerr)++;
+      if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
 	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
 	pd->loc = tpd.loc;
-	if (!P_spec_level(pads)) {
-	  PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
-			  "Extra data before char separator %s", P_qfmt_char(char_lit));
-	}
+        PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
+			"Extra data before char separator %s", P_qfmt_char(char_lit));
       }
-      (pd->nerr)++;
     }
   } else {
-    if (pd->nerr == 0) {
+    P_PS_setPanic(pd);
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
       PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
       pd->loc = tpd.loc;
-      if (!P_spec_level(pads)) {
-	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
-			"Missing char separator %s", P_qfmt_char(char_lit));
-      }
+      PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
+		      "Missing char separator %s", P_qfmt_char(char_lit));
     }
-    (pd->nerr)++;
-    P_PS_setPanic(pd);
   }
 } while (0)
 /* END_MACRO */
@@ -707,29 +702,25 @@ do {
   PDCI_IO_BEGINLOC(pads, tpd.loc);
   if (P_OK == Pstr_lit_scan1(pads, pads_str_lit, 1, 0, &toffset)) {
     if (toffset) {
-      if (pd->nerr == 0) {
+      (pd->nerr)++;
+      if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
 	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
 	pd->loc = tpd.loc;
-	if (!P_spec_level(pads)) {
-	  PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
-			  "Extra data before string separator %s", P_qfmt_str(pads_str_lit));
-	}
+	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
+			"Extra data before string separator %s", P_qfmt_str(pads_str_lit));
       }
-      (pd->nerr)++;
     }
   } else {
-    if (pd->nerr == 0) {
+    P_PS_setPanic(pd);
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
       PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
       pd->loc = tpd.loc;
-      if (!P_spec_level(pads)) {
-	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
-			"Missing string separator %s", P_qfmt_str(pads_str_lit));
-      }
+      PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
+		      "Missing string separator %s", P_qfmt_str(pads_str_lit));
     }
-    (pd->nerr)++;
-    P_PS_setPanic(pd);
   }
 } while (0)
 /* END_MACRO */
@@ -753,29 +744,25 @@ do {
   Pregexp_cleanup(pads, regexp);
   if (terr == P_OK) {
     if (toffset) {
-      if (pd->nerr == 0) {
+      (pd->nerr)++;
+      if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
 	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
 	pd->loc = tpd.loc;
-	if (!P_spec_level(pads)) {
-	  PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
-			  "Extra data before regexp separator Pre %s", P_qfmt_cstr(regexp_str));
-	}
+	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
+			"Extra data before regexp separator Pre %s", P_qfmt_cstr(regexp_str));
       }
-      (pd->nerr)++;
     }
   } else {
-    if (pd->nerr == 0) {
+    P_PS_setPanic(pd);
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
       PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
       pd->loc = tpd.loc;
-      if (P_spec_level(pads)) {
-	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
-			"Missing regexp separator Pre %s", P_qfmt_cstr(regexp_str));
-      }
+      PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
+		      "Missing regexp separator Pre %s", P_qfmt_cstr(regexp_str));
     }
-    (pd->nerr)++;
-    P_PS_setPanic(pd);
   }
 } while (0)
 /* END_MACRO */
@@ -1180,7 +1167,7 @@ do {
 #define PCGEN_SWUNION_READ_POST_CHECK(fn_nm, the_tag, err_tag, usercheck)
 do {
   if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
-    PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->val.the_tag, P_USER_CONSTRAINT_VIOLATION, P_UNION_MATCH_ERR, "User constraint on branch " PDCI_MacroArg2String(the_tag) " violated");
+    PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->val.the_tag, P_USER_CONSTRAINT_VIOLATION, P_UNION_MATCH_ERR, "User constraint on branch " PDCI_MacroArg2String(the_tag) " violated",);
     goto branches_done;
   }
 } while (0)

@@ -202,6 +202,7 @@ struct
   fun errAccReport(pads, outStrmX, prefixX, whatX, nstX, fieldX) = 
       PT.Call(PT.Id "P_nerr_acc_report2io",[pads, outStrmX, prefixX, whatX, nstX, fieldX])
 
+
 (* Growable buffers *)
   fun zeroMM(pads:PT.expression) = 
     PT.Call(PT.Id "P_rmm_zero", [pads])
@@ -409,6 +410,9 @@ struct
 
   fun getSpecLevelX(pads:PT.expression) =
      PT.Call(PT.Id "P_spec_level", [pads])
+
+  fun endSpec pads = PT.IfThen(getSpecLevelX(PT.Id pads), PT.Return P_ERROR)
+
 
   fun commitS(pads:PT.expression, whatFun) =
     chkError(pads, (PT.Call(PT.Id "P_io_commit", [pads])),
