@@ -68,6 +68,7 @@ struct
   val str          = "str"
   val len          = "len"
   val intAct       = "PDC_int32_acc"
+  val intCvtPCT    = P.makeTypedefPCT "PDC_int32_map_fn"
   val intAccPCT    = P.makeTypedefPCT "PDC_int32_acc"
   val intPCT       = P.makeTypedefPCT "PDC_int32"
   val sfioPCT      = P.ptrPCT (P.makeTypedefPCT "Sfio_t")
@@ -227,4 +228,7 @@ struct
   fun sfstruse (tmpstr : PT.expression) = 
       PT.Call(PT.Id "sfstruse", [tmpstr])
 
+(* -- C helper functions *)
+  fun bzeroX (spX, sizeX) = PT.Call(PT.Id "bzero",[PT.Cast(P.voidPtr, spX), sizeX])
+  fun bzeroS (spX, sizeX) = PT.Expr(bzeroX(spX,sizeX))
 end

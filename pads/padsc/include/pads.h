@@ -13,6 +13,7 @@
 #include <ast_common.h>
 #include <dt.h>
 #include "rbuf.h"
+void bzero(void *s, size_t n);
 
 /* ================================================================================ */
 /* CONSTANTS */

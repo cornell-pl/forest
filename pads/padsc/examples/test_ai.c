@@ -9,6 +9,14 @@ int main(int argc, char** argv) {
   http_clf_t_ed   ed = {0};
   http_clf_t      ai = {0};
   http_clf_t_acc  acc;
+  char *          fileName = "../ex_data.ai";
+  
+  if (argc == 2) {
+    fileName = argv[1];
+  } else {
+    fileName = "../ex_data.ai";
+  }
+  error(0, "Data file = %s\n", fileName);
 
   if (PDC_ERROR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
@@ -16,6 +24,14 @@ int main(int argc, char** argv) {
   }
   if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.ai", 0)) {
     error(2, "*** PDC_IO_fopen failed ***");
+    exit(-1);
+  }
+  if (PDC_ERROR == http_clf_t_init(pdc, &ai, 0)) {
+    error(2, "*** http_clt_t_init failed ***");
+    exit(-1);
+  }
+  if (PDC_ERROR == http_clf_t_ed_init(pdc, &ed, 0)) {
+    error(2, "*** http_clt_t_ed_init failed ***");
     exit(-1);
   }
   if (PDC_ERROR == http_clf_t_acc_init(pdc, &acc, 0)) {
