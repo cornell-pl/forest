@@ -129,7 +129,7 @@ function traverse(d, multi,	z1,z2,z3,z4,z5){
 }
 BEGIN {
   mod_cbname = cbname
-  if (mod_cbname == ""){
+  if(mod_cbname == ""){
     mod_cbname = label
   }
   cbname = toupper(cbname);
@@ -197,16 +197,16 @@ BEGIN {
 
 # -------------------- MAIN LOOP -----------------------------------
 $2 == "r"  {
-   if (redef[$4]) {
+   if(redef[$4]){
      # printf("XXX redef[%s] = %s\n", $3, redef[$4])>stderr;
      redef[$3] = redef[$4]; # all redefs point to first def
-   } else {
+   }else{
      # printf("XXX redef[%s] = %s\n", $3, $4)>stderr;
      redef[$3] = $4; # $4 is the first def
    }
-   if (mkunion[redef[$3]]) {
+   if(mkunion[redef[$3]]){
      mkunion[redef[$3]] = sprintf("%s|%s", mkunion[redef[$3]], $3)
-   } else {
+   }else{
      num_unions++
      mkunion[redef[$3]] = sprintf("%s|%s", redef[$3], $3)
      mkunion_t_nm[redef[$3]] = sprintf("gen_union_%d_t", num_unions)
@@ -223,14 +223,19 @@ $2 < fieldlev  {                       # pop things off the stack
       fieldname = stack[nstack]
       fieldvarname = stackvar[nstack]
       fieldlev = flev[nstack]
+      is_array = stackisarray[nstack]
     }
   }
 
-$2 > fieldlev  {                    # start a new level
-    stack[nstack] = fieldname       # save active struct name
-    stackvar[nstack] = fieldvarname # save active struct var name
-    flev[nstack] = fieldlev         # and the current level
-    fieldlev = $2                   # level on stmt becomes current
+$2 > fieldlev  {                        # start a new level
+    stack[nstack] = fieldname           # save active struct name
+    stackvar[nstack] = fieldvarname     # save active struct var name
+    stackisarray[nstack] = is_array     # save is_array
+    flev[nstack] = fieldlev             # and the current level
+    fieldlev = $2                       # level on stmt becomes current
+    if(nstack == 0){
+	recType = fieldname
+    }
     nstack++                       
   }
 
@@ -248,19 +253,29 @@ $2 == fieldlev  {       # add an element to current structure
 		}
 	    }
         }
+	is_array = 0
+	split($4, aa, "!")
+	if(aa[1] > 1){
+	    is_array = 1
+        }
 	if(outpathq == 1){
 	    # printf("ZZZ FOUND LINE %d myname %s\n", lineno, myname)>stderr
-	    for (i = nstack-1; i > 0; i--){
-		pathvar = stackvar[i]
-		if (i == nstack-1){
-		    outpathnm = pathvar
+	    for(i = nstack-1; i > 0; i--){
+		pathpart_var = stackvar[i]
+		pathpart_is_array = stackisarray[i]
+		# printf("ZZZ var %s is_array %d\n", pathpart_nm, pathpart_var, pathpart_is_array)>stderr
+		pathpart = pathpart_var "," pathpart_is_array
+		if(i == nstack-1){
+		    outpathnm = pathpart
 		}else{
-		    outpathnm = pathvar "." outpathnm
+		    outpathnm = pathpart "." outpathnm
 		}
 	    }
-	    outpathnm = outpathnm "." myname
+	    pathpart = myname "," is_array
+	    outpathnm = outpathnm "." pathpart
+	    # printf("ZZZ myname %s is_array %d\n", myname, is_array)>stderr
 	    outpathlineno[outpathnm] = lineno
-	    # printf("outpathnm = %s\n", outpathnm)>stderr
+	    # printf("ZZZ outpathnm = %s\n", outpathnm)>stderr
 	}
 #	vlen = 0 + $4
 	for(i = 0; i < 1; i++){              # for each occurance
@@ -268,7 +283,6 @@ $2 == fieldlev  {       # add an element to current structure
 		name[fieldname,nfield[fieldname]] = x
 		outpath[fieldname,nfield[fieldname]] = outpathnm
 		# printf("ZZZ outpath[%s,%d] = %s\n", fieldname, nfield[fieldname], outpathnm)>stderr
-		split($4, aa, "!")
 		max_len[fieldname,nfield[fieldname]] = aa[1]
      		min_len[fieldname,nfield[fieldname]] = aa[2]
 		var_len[fieldname,nfield[fieldname]] = aa[3]
@@ -280,7 +294,7 @@ $2 == fieldlev  {       # add an element to current structure
 
 		if($5 == "none"){           # if group, this name has its own type
 			dtype[x] = $3 globalname
-		} else {                         # else it has type indicated by pass 1
+		}else{                         # else it has type indicated by pass 1
 			len[x] = blen($5, $6, $7)
 		}
 		digits_before_v[x] = $6
@@ -340,36 +354,36 @@ for(i = ndefn-1; i >= 0; i--){
 		f = name[d,j]				# get next element (field) name
 		vlen = max_len[d,j]
 		if(dtype[f]){				# if element is a structure
-                   if (vlen > 1 && !pads_ar_type[dtype[f]]) {
+                   if(vlen > 1 && !pads_ar_type[dtype[f]]){
 			cur_type = dtype[f]
-			if (redef[f]) {
+			if(redef[f]){
 			    cur_type = mkunion_t_nm[redef[f]]
 			}
 			pads_ar_type[cur_type] = sprintf("gen_parray_of_%s", cur_type);
-			printf("Parray %s (int len) {\n\t%s [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads;
+			printf("Parray %s (int len){\n\t%s [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads;
                    }
-                } else {
+                }else{
 			s = typeof[substr(fmt[d,j], 1, index(fmt[d,j], ",")-1)]
-                        if (padstype[s] && vlen > 1) {
+                        if(padstype[s] && vlen > 1){
 			    cur_type = padstype[s]
-			    if (!pads_ar_type[cur_type]) {
+			    if(!pads_ar_type[cur_type]){
 				pads_ar_type[cur_type] = sprintf("gen_parray_of_%s", cur_type);
-				if (padsargs[s] == "digsum") {
-					printf("Parray %s (int num_digits, int len) {\n\t%s(:num_digits:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+				if(padsargs[s] == "digsum"){
+					printf("Parray %s (int num_digits, int len){\n\t%s(:num_digits:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
-				if (padsargs[s] == "bytes"){
-					printf("Parray %s (int num_bytes, int len) {\n\t%s(:num_bytes:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+				if(padsargs[s] == "bytes"){
+					printf("Parray %s (int num_bytes, int len){\n\t%s(:num_bytes:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
-				if (padsargs[s] == "digsum_after_v"){
-					printf("Parray %s (int num_digits, int d_exp, int len) {\n\t%s(:num_digits, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+				if(padsargs[s] == "digsum_after_v"){
+					printf("Parray %s (int num_digits, int d_exp, int len){\n\t%s(:num_digits, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
-				if (padsargs[s] == "bytes_after_v"){
-					printf("Parray %s (int num_bytes, int d_exp, int len) {\n\t%s(:num_bytes, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+				if(padsargs[s] == "bytes_after_v"){
+					printf("Parray %s (int num_bytes, int d_exp, int len){\n\t%s(:num_bytes, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
 			    }
 			}
                 }
-		if(mkunion[f]) {
+		if(mkunion[f]){
 		    printf("Punion %s {\n", mkunion_t_nm[f]) >pads;
 		    num_uelts = split(mkunion[f], uelts , "|")
 		    for(u = 1; u <= num_uelts; u++){
@@ -401,16 +415,16 @@ for(i = ndefn-1; i >= 0; i--){
 			}
 			if(vlen == 1) xx = ""; else xx = "[" vlen "]"
 			printf("\tstruct %s %s%s;   /* %d */\n", dtype[f], f, xx, x) >hdr
-			if (!redef[f]) {
+			if(!redef[f]){
 			    cur_type = dtype[f]
 			    cur_field = f
-			    if (mkunion[f]) {
+			    if(mkunion[f]){
 				cur_type = mkunion_t_nm[f]
 				cur_field = mkunion_f_nm[f]
 			    }
 			    if(vlen == 1){
 				printf("\t%-*s %s;\n", max_tlen, cur_type, cur_field) >pads
-			    } else {
+			    }else{
 				# printf("\t//- XXX_CHECK Type here should be an array of %s with %d elts\n", cur_type, vlen) >pads
 				ty_str = sprintf("%s(:%d:)", pads_ar_type[cur_type], vlen)
 				printf("\t%-*s %s;\n", max_tlen, ty_str, cur_field) >pads
@@ -425,7 +439,7 @@ for(i = ndefn-1; i >= 0; i--){
 			if(vlen == 1){
 				printf("\tdo_%s(buf+%d, &t->%s, tt);\n", dtype[f], y, f) >src
 				printf("\tpr_%s(indent, buf+%d, out%s, tt);\n", dtype[f], y, xx) >prt
-			} else {
+			}else{
 				if(var_len[d,j])
 					xx = "tt->" var_used[var_len[d,j]]
 				else
@@ -434,10 +448,10 @@ for(i = ndefn-1; i >= 0; i--){
      			 	printf("\t{int i; for(i = 0; i < %s; i++) pr_%s(indent, buf+%d+i*%d, out, tt);}\n", xx, dtype[f], y, mylen) >prt
 			}
 			offset[f] = y			# save for possible redefine of this field
-		} else {		# element is a primitive
+		}else{		# element is a primitive
 			if(redef[f]){			# if it is a redefine of another element 
 				fo = offset[redef[f]]	# get offset of real field
-			} else {
+			}else{
 				offset[f] = x		# save offset of the field 
 				fo = x			# set field offset to current offset
 			}
@@ -452,12 +466,12 @@ for(i = ndefn-1; i >= 0; i--){
 				}
 				printf("\t  /*FILL_%s(%s, buf+%d, %s);*/\n", s, f, fo, y) >src
 				printf("\tPR_%s(%s, buf+%d, %s);\n", s, f, fo, y) >prt
-				if(vlen == 1) {
+				if(vlen == 1){
 					printf("\tT_CHARS %s[%d];   /* %d */\n", f, len[f], fo) >hdr
-				} else {
+				}else{
 					printf("\tT_CHARS %s[%d][%d];   /* %d */\n", f, vlen, len[f], fo) >hdr
 				}
-			} else {
+			}else{
 				if(charstart){		# need to terminate what previously written
 					printf("\t%s, %d);\n", charstart, charlen) >src
 					charstart = ""
@@ -466,49 +480,49 @@ for(i = ndefn-1; i >= 0; i--){
 					printf("\tFILL_%s(%s, buf+%d, %s);\n", s, f, fo, y) >src
 					printf("\tPR_%s(%s, buf+%d, %s);\n", s, f, fo, y) >prt
 					printf("\t%s %s;   /* %d */\n", s, f, fo) >hdr
-				} else {
+				}else{
 					printf("\t{int i; for(i=0;i<%d;i++)FILL_%s(%s[i], buf+%d+i*%d, %s);}\n", vlen, s, f, fo, len[f], y) >src
 					printf("\t{int i; for(i=0;i<%d;i++)PR_%s(%s, buf+%d+i*%d, %s);}\n", vlen, s, f, fo, len[f], y) >prt
 					printf("\t%s %s[%d];   /* %d */\n", s, f, vlen, fo) >hdr
 				}
 			}
-			if (padstype[s]) {
+			if(padstype[s]){
 			    cur_type = padstype[s]
-			    if (padsargs[s] == "digsum"){
-				if(vlen == 1) {
+			    if(padsargs[s] == "digsum"){
+				if(vlen == 1){
 					ty_str = sprintf("%s(:%d:)", cur_type, digits_summed[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
-				} else {
+				}else{
 					# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %d elts\n", cur_type, digits_summed[f], vlen) >pads
 					ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], digits_summed[f], vlen)
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 				}
 			    }
-			    if (padsargs[s] == "bytes"){
-				if(vlen == 1) {
+			    if(padsargs[s] == "bytes"){
+				if(vlen == 1){
 					ty_str = sprintf("%s(:%d:)", cur_type, len[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
-				} else {
+				}else{
 					# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %d elts\n", cur_type, len[f], vlen) >pads
 					ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], len[f], vlen)
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 				}
 			    }
-			    if (padsargs[s] == "digsum_after_v"){
-				if(vlen == 1) {
+			    if(padsargs[s] == "digsum_after_v"){
+				if(vlen == 1){
 					ty_str = sprintf("%s(:%d,%d:)", cur_type, digits_summed[f], digits_after_v[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
-				} else {
+				}else{
 					# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %d elts\n", cur_type, digits_summed[f], digits_after_v[f], vlen) >pads
 					ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], digits_summed[f], digits_after_v[f], vlen)
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 				}
 			    }
-			    if (padsargs[s] == "bytes_after_v"){
-				if(vlen == 1) {
+			    if(padsargs[s] == "bytes_after_v"){
+				if(vlen == 1){
 					ty_str = sprintf("%s(:%d,%d:)", cur_type, len[f], digits_after_v[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
-				} else {
+				}else{
 					# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %d elts\n", cur_type, len[f], digits_after_v[f], vlen) >pads
 					ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], len[f], digits_after_v[f], vlen)
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
@@ -559,107 +573,136 @@ for(i = ndefn-1; i >= 0; i--){
 		f = name[d,j]				# get next element (field) name
 		vlen = max_len[d,j]
 		opn = outpath[d,j]
-		if (opn != ""){
+		if(opn != ""){
+		    #printf("YYY f %s vlen %d opn %s\n", f, vlen, opn)>stderr
 		    lineno = outpathlineno[opn]
-		    # printf("YYY MUNGING OUTPATH %s\n", opn)>stderr;
+		    #printf("YYY MUNGING OUTPATH %s\n", opn)>stderr;
 		    opn_off = 0
 		    mod_opn = ""
 		    num_opn_elts = split(opn, opn_elts, ".")
-		    for(k = 1; k <= num_opn_elts; k++) {
-			pathvar = opn_elts[k]
+		    part_of_array = 0
+		    for(k = 1; k <= num_opn_elts; k++){
+			pathvarplus = opn_elts[k]
+			split(pathvarplus, pvarpluselt, ",")
+			pathvar = pvarpluselt[1]
+			pathvar_is_array = pvarpluselt[2]
 			mod_pathvar = pathvar
-			# printf("YYY pathvar = %s\n", pathvar);
+			# printf("YYY pathvar = %s\n", pathvar)>stderr
+			# printf("YYY pathvar = %s pathvar_is_array = %s\n", pathvar, pathvar_is_array)>stderr
 			mod_off = offset[pathvar]
-			if (redef[pathvar]){
+			if(redef[pathvar]){
 			    # printf("YYY redef = %s mkunion_f_nm[redef] = %s\n", redef[pathvar], mkunion_f_nm[redef[pathvar]])>stderr
 			    mod_pathvar = mkunion_f_nm[redef[pathvar]] "." pathvar "_arm"
 			    mod_off = offset[redef[pathvar]]
 			}else{
-			    if (mkunion_f_nm[pathvar]){
+			    if(mkunion_f_nm[pathvar]){
 				# printf("YYY redef root = %s mkunion_f_nm[root] = %s\n", pathvar, mkunion_f_nm[pathvar])>stderr
 				mod_pathvar = mkunion_f_nm[pathvar] "." pathvar "_arm"
 			    }
 			}
-			if (k == 1){
+			if(pathvar_is_array){
+			    mod_pathvar = mod_pathvar "[0]"
+			    part_of_array = 1
+                        }
+			if(k == 1){
 			    mod_opn = mod_pathvar
 			}else{
 			    mod_opn = mod_opn "." mod_pathvar
 			}
 			opn_off += mod_off
+			#printf("YYY pathvar = %s mod_off = %d opn_off = %d\n", pathvar, mod_off, opn_off)>stderr
 		    }
-		    # printf("YYY ==> MUNGED OUTPATH %s\n", mod_opn)>stderr;
+		    #printf("YYY ==> MUNGED OUTPATH %s\n", mod_opn)>stderr;
+		    path_err = 0
+		    ty_str = ""
 		    if(dtype[f]){				# if element is a structure
 			# no paths except at leaves
-			num_paths++
-			formatted_path[num_paths] = sprintf("/* ERROR: selected path %s from copybook %s line %d is not a base type [offset %d] */\n",
-							    mod_opn, mod_cbname, lineno, opn_off)
-			formatted_path_offset[num_paths] = opn_off
-			printf("%s", formatted_path[num_paths])>stderr
-
-		    } else {		# element is a primitive
+			path_err = 1
+			if(vlen > 1){
+			    # ty_str = "array of struct"
+			    ty_str = "struct" # we selected element zero, so modified path is a struct
+			}else{
+			    ty_str = "struct"
+			}
+		    }else{		# element is a primitive
 			s = typeof[substr(fmt[d,j], 1, index(fmt[d,j], ",")-1)]
-			if (padstype[s]) {
+			if(padstype[s]){
 				cur_type = padstype[s]
-				ty_str = ""
-				if (padsargs[s] == "digsum"){
-				    if(vlen == 1) {
+				if(padsargs[s] == "digsum"){
+				    if(vlen == 1){
 					    ty_str = sprintf("%s(:%d:)", cur_type, digits_summed[f])
-				    } else {
+				    }else{
+					    path_err = 1
 					    ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], digits_summed[f], vlen)
 				    }
 				}
-				if (padsargs[s] == "bytes"){
-				    if(vlen == 1) {
+				if(padsargs[s] == "bytes"){
+				    if(vlen == 1){
 					    ty_str = sprintf("%s(:%d:)", cur_type, len[f])
-				    } else {
+				    }else{
+					    path_err = 1
 					    ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], len[f], vlen)
 				    }
 				}
-				if (padsargs[s] == "digsum_after_v"){
-				    if(vlen == 1) {
+				if(padsargs[s] == "digsum_after_v"){
+				    if(vlen == 1){
 					    ty_str = sprintf("%s(:%d,%d:)", cur_type, digits_summed[f], digits_after_v[f])
-				    } else {
+				    }else{
+					    path_err = 1
 					    ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], digits_summed[f], digits_after_v[f], vlen)
 				    }
 				}
-				if (padsargs[s] == "bytes_after_v"){
-				    if(vlen == 1) {
+				if(padsargs[s] == "bytes_after_v"){
+				    if(vlen == 1){
 					    ty_str = sprintf("%s(:%d,%d:)", cur_type, len[f], digits_after_v[f])
-				    } else {
+				    }else{
+					    path_err = 1
 					    ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], len[f], digits_after_v[f], vlen)
 				    }
 				}
-				if (ty_str != ""){
-				    num_paths++
-				    if(vlen == 1){
-					formatted_path[num_paths] = sprintf("Poutpath %s; /- field %s type %s offset %d from copybook %s line %d\n", mod_opn, f, ty_str, opn_off, mod_cbname, lineno)
-					formatted_path_offset[num_paths] = opn_off
-				    }else{
-					formatted_path[num_paths] = sprintf("Poutpath %s; /- **ERROR: ARRAY** field %s type %s offset %d from copybook %s line %d\n", mod_opn, f, ty_str, opn_off, mod_cbname, lineno)
-					formatted_path_offset[num_paths] = opn_off
-				    }
-				}
-			    }
 			}
+		    }
+		    if(ty_str != ""){
+			num_paths++
+			formatted_path_sortval[num_paths] = (opn_off * 100000) + lineno
+			arr_note = ""
+			arr_note_txt = sprintf("WARNING: item at copybook %s line %s is part of an array, traversing ONLY first element",
+						mod_cbname, lineno)
+			if(path_err == 1){
+			    if(part_of_array == 1){
+				arr_note = sprintf(" %s\n *", arr_note_txt)
+			    }
+			    formatted_path[num_paths] = sprintf("/*%s ERROR: The following Pselect does not select a base type:\n * Pselect (x:%s) x.%s; /- field %s type %s offset %d from copybook %s line %d\n */\n",
+								arr_note, recType, mod_opn, f, ty_str, opn_off, mod_cbname, lineno)
+			    printf("\n%s\n", formatted_path[num_paths])>stderr
+			}else{
+			    if(part_of_array == 1){
+				arr_note = sprintf("/* %s */\n", arr_note_txt)
+				printf("\n%s\n", arr_note)>stderr
+			    }
+			    formatted_path[num_paths] = sprintf("%sPselect (x:%s) x.%s; /- field %s type %s offset %d from copybook %s line %d\n",
+								arr_note, recType, mod_opn, f, ty_str, opn_off, mod_cbname, lineno)
+			}
+		    }
 		}
 	}
 }
 for(i = 1; i < num_paths; i++){
     for(j = i+1; j <= num_paths; j++){
-	if (formatted_path_offset[i] > formatted_path_offset[j]){
+	if(formatted_path_sortval[i] > formatted_path_sortval[j]){
 	    tmp_path = formatted_path[i]
-	    tmp_fpo  = formatted_path_offset[i]
+	    tmp_fpo  = formatted_path_sortval[i]
 	    formatted_path[i] = formatted_path[j]
-	    formatted_path_offset[i] = formatted_path_offset[j]
+	    formatted_path_sortval[i] = formatted_path_sortval[j]
 	    formatted_path[j] = tmp_path
-	    formatted_path_offset[j] = tmp_fpo
+	    formatted_path_sortval[j] = tmp_fpo
 	}
     }
 }
 for(k = 1; k <= num_paths; k++){
     printf("\n%s", formatted_path[k]) >qfile
 }
-if (num_paths) printf("\n") >qfile
+if(num_paths) printf("\n") >qfile
 
 d = defn[0]                  # clean up the root structure and get out
 
