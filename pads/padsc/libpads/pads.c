@@ -945,122 +945,111 @@ fn_name(P_t *pads, const Pbase_m *m,
 }
 /* END_MACRO */
 
-#define PDCI_AE_FLOAT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn, dot_char, a_or_e_float)
+#define PDCI_ASCII_LOWER_E   'e'
+/* END_MACRO */
 
+#define PDCI_EBCDIC_LOWER_E   XXX_TODO
+/* END_MACRO */
+
+#define PDCI_AE_FLOAT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspacemap, isdigitmap, charmap, a_or_e_float)
+/* Char-based floats have the form:     [+|-]DIGITS[.][DIGITS][(e|E)[+|-]DIGITS] */
 Perror_t
 fn_pref ## _read(P_t *pads, const Pbase_m *m,
 		 Pbase_pd *pd, targ_type *res_out)
 {
-  targ_type    tmp;   /* tmp num */
-  Pbyte        ct;    /* char tmp */
-  Pbyte       *p1;
+  targ_type tmp;
+  Pbyte    ct;
+  Pbyte   *p1;
+  Pchar plus     = charmap[(int)'+'];
+  Pchar minus    = charmap[(int)'-'];
+  Pchar e_lower  = charmap[(int)'e'];
+  Pchar e_upper  = charmap[(int)'E'];
+  Pchar dot      = charmap[(int)'.'];
   PDCI_IO_NEED_BYTES_SETUP_NUMERIC;
 
-  PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_pref) "_read", m, pd, res_out);
+  PDCI_IODISC_3P_CHECKS(PDCI_MacroArg2String(fn_pref) "_read", m, pd, res_out);
   PDCI_READFN_PD_INIT(pads, pd);
   PDCI_IO_NEED_BYTES(goto fatal_nb_io_err);
   if (begin == end) {
     goto at_eor_or_eof_err;
   }
   p1 = begin;
+  ct = *end;    /* save */
+  *end = 0;     /* null */
   if (P_Test_Ignore(*m)) {
-    /* move beyond anything that looks like an ascii float, return P_ERR if none such */
-    if (isspace_fn(*p1) && !(pads->disc->flags & P_WSPACE_OK)) {
-      return P_ERR;
-    }
-    while (isspace_fn(*p1)) { /* skip spaces, if any */
+    /* move beyond anything that looks like a float, return P_ERR if none such */
+    if (isspacemap[(int)*p1] && !(pads->disc->flags & P_WSPACE_OK)) goto nocheck_err;
+    while (isspacemap[(int)(*p1)]) { p1++; }            /* skip spaces, if any */
+    if (plus == (*p1) || minus == (*p1)) { p1++; }   /* skip +/-, if any */
+    if (!isdigitmap[(int)*p1]) goto nocheck_err;        /* did not find a digit */
+    while (isdigitmap[(int)*p1]) { p1++; }              /* skip digits */
+    if (dot == (*p1)) {    /* skip dot and trailing digits */
       p1++;
-      if (p1 == end) return P_ERR; /* did not find digit */
+      while (isdigitmap[(int)*p1]) { p1++; }
     }
-    if ('-' == (*p1) || '+' == (*p1)) { /* skip +/-, if any */
+    /* skip e, optional sign, digits, if present */
+    if ((e_lower == (*p1) || e_upper == (*p1))) {
       p1++;
-      if (p1 == end) return P_ERR; /* did not find a digit */
+      if (p1 == end) goto nocheck_err; /* did not find at least 1 digit after e */
+      if (plus == (*p1) || minus == (*p1)) {  /* skip +/-, if any */
+	p1++;
+	if (p1 == end) goto nocheck_err; /* did not find at least 1 digit after e */
+      }
+      if (!isdigitmap[(int)*p1]) goto nocheck_err; /* did not find at least 1 digit after e */
+      while (isdigitmap[(int)*p1]) { p1++; }  /* skip digits */
     }
-    if (dot_char == (*p1)) { /* skip leading dot, if any */
-      p1++;
-      if (p1 == end) return P_ERR; /* did not find a digit */
-      if (!isdigit_fn(*p1)) {
-	return P_ERR; /* did not find a digit */
-      }
-      /* all set: skip digits, move IO cursor, and return P_OK */
-      while (isdigit_fn(*p1)) {
-	p1++;
-	if (p1 == end && !(eor|eof)) {
-	  /* did not find end of digits within P_BUILTIN_NUMERIC_MAX bytes */
-	  return P_ERR;
-	}
-      }
-    } else {
-      if (!isdigit_fn(*p1)) {
-	return P_ERR; /* did not find a digit */
-      }
-      /* all set: skip digits and up to one dot, move IO cursor, and return P_OK */
-      while (isdigit_fn(*p1)) {
-	p1++;
-	if (p1 == end && !(eor|eof)) {
-	  /* did not find end of digits within P_BUILTIN_NUMERIC_MAX bytes */
-	  return P_ERR;
-	}
-      }
-      if (dot_char == (*p1)) { /* skip dot */
-	p1++;
-	if (p1 == end && !(eor|eof)) {
-	  /* did not find end of digits within P_BUILTIN_NUMERIC_MAX bytes */
-	  return P_ERR;
-	}
-      }
-      while (isdigit_fn(*p1)) {
-	p1++;
-	if (p1 == end && !(eor|eof)) {
-	  /* did not find end of digits within P_BUILTIN_NUMERIC_MAX bytes */
-	  return P_ERR;
-	}
-      }
-    }
+    if (p1 == end && !(eor|eof)) goto nocheck_err; /* did not find end of float within P_BUILTIN_NUMERIC_MAX bytes */
+    /* OK */
+    *end = ct; /* restore */
     PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     return P_OK;
 
   } else { /* !P_Test_Ignore(*m) */
 
-    if (isspace_fn(*p1) && !(pads->disc->flags & P_WSPACE_OK)) {
+    if (isspacemap[(int)(*p1)] && !(pads->disc->flags & P_WSPACE_OK)) {
       goto invalid_wspace;
     }
-    ct = *end;    /* save */
-    *end = 0;     /* null */
     if (P_Test_SemCheck(*m)) {
       tmp = bytes2num_fn(begin, &p1);
     } else {
       tmp = bytes2num_fn ## _norange(begin, &p1);
     }
-    *end = ct;    /* restore */
     if (errno == EINVAL) {
       if (p1 != end) p1++; /* move to just beyond offending char */
       goto invalid;
     }
     if (errno == ERANGE) goto range_err;
-    /* success */
     PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
     }
+    *end = ct;    /* restore */
     return P_OK;
   }
 
+ nocheck_err:
+  *end = ct; /* restore */
+  return P_ERR;
+
  at_eor_or_eof_err:
+  /* don't need to restore, eor/eof error occurs before *end is set to 0 */
   PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, eor ? P_AT_EOR : P_AT_EOF);
 
  invalid_wspace:
+  *end = ct; /* restore */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", "spaces not allowed in " a_or_e_float " field unless flag P_WSPACE_OK is set", invalid_err);
 
  invalid:
+  *end = ct; /* restore */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, invalid_err);
 
  range_err:
+  *end = ct; /* restore */
   /* range error still consumes the number */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
@@ -1068,9 +1057,11 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, P_RANGE);
 
  fatal_nb_io_err:
+  /* don't need to restore, need bytes error occurs before *end is set to 0 */
   PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_pref) "_read", *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
+  *end = ct;    /* restore */
   PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_pref) "_read", *m, "IO_forward error", P_FORWARD_ERR);
 }
 /* END_MACRO */
@@ -1328,14 +1319,14 @@ fn_name(P_t *pads, const Pbase_m *m,
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_A_FLOAT > 0
 #  define PDCI_A_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn) \
-            PDCI_AE_FLOAT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit, P_ASCII_DOT, "a_float")
+            PDCI_AE_FLOAT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, P_INVALID_A_NUM, PDCI_ascii_is_space, PDCI_ascii_is_digit, PDCI_identity_charmap, "a_float")
 #else
 #  define PDCI_A_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_E_FLOAT > 0
 #  define PDCI_E_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn) \
-            PDCI_AE_FLOAT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit, P_EBCDIC_DOT, "e_float")
+            PDCI_AE_FLOAT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, P_INVALID_E_NUM, PDCI_ebcdic_is_space, PDCI_ebcdic_is_digit, P_mod_ae_tab, "e_float")
 #else
 #  define PDCI_E_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn)
 #endif
@@ -6921,7 +6912,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.188 2005-02-15 22:25:54 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.189 2005-03-07 04:26:50 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6933,6 +6924,26 @@ static const char lib[] = "padsc";
 /* ================================================================================
  * ASCII CHAR TABLES
  */
+
+/* Identity map */
+int PDCI_identity_charmap[256] = {
+  /* 0x0? */ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+  /* 0x1? */ 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+  /* 0x2? */ 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+  /* 0x3? */ 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+  /* 0x4? */ 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
+  /* 0x5? */ 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F,
+  /* 0x6? */ 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F,
+  /* 0x7? */ 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
+  /* 0x8? */ 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
+  /* 0x9? */ 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F,
+  /* 0xA? */ 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
+  /* 0xB? */ 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF,
+  /* 0xC? */ 0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
+  /* 0xD? */ 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF,
+  /* 0xE? */ 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
+  /* 0xF? */ 0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,
+};
 
 /* ASCII digits are 0x3[0-9] */
 int PDCI_ascii_digit[256] = {

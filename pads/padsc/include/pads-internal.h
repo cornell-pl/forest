@@ -1405,6 +1405,7 @@ Perror_t PDCI_io_getElt(P_t *pads, size_t num, Pio_elt_t **elt_out);
 /* INTERNAL CONVERSION ROUTINES */
 
 /* Various tables */
+extern int PDCI_identity_charmap[];
 extern int PDCI_ascii_digit[];
 extern int PDCI_ascii_is_digit[];
 extern int PDCI_ascii_is_space[];
