@@ -736,18 +736,18 @@ P_OK;
 
   if (0 == *(elt_pdIN))
     {
-      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
+      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement", "smart-node element PD allocation failed");
     }
-  if (P_ERR == eltTy ## _init((padsIN), *(elt_repIN))) {
-    PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_SYS_ERR,#ty "_smartNode_allocElement",0);
+  if (P_ERR == eltPdTy ## _init((padsIN), *(elt_pdIN))) {
+    PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_SYS_ERR,#ty "_smartNode_allocElement", 0);
   }
 
   *(elt_repIN) = calloc(1,sizeof(eltTy));
   if (0 == *(elt_repIN))
     {
-      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
+      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement", "smart-node element allocation failed");
     }
-  if (P_ERR == eltPdTy ## _init((padsIN), *(elt_pdIN))) {
+  if (P_ERR == eltTy ## _init((padsIN), *(elt_repIN))) {
     PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_SYS_ERR,#ty "_smartNode_allocElement",0);
   }
 
