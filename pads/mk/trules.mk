@@ -16,7 +16,14 @@ endif
 	@$(CCExec_DYNAMIC_O)
 
 tmp_rwxml_%_d: $(GEN_DIR)/%.c tmp_rwxml_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
-ifdef DEBUG_RULES_MK
+ifdef DEBUG_TRULES_MK
 	@echo "Using trules.mk rule TMP_RWXML_D"
 endif
 	@$(CCExec_DYNAMIC_D)
+
+tmp_rwxml_%_dd: $(GEN_DIR)/%_expanded.c tmp_rwxml_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_TRULES_MK
+	@echo "Using trules.mk rule TMP_RWXML_DD"
+endif
+	@$(CCExec_DYNAMIC_D)
+endif # REGRESS_TESTS / _d rule
