@@ -972,6 +972,34 @@ structure CnvExt : CNVEXT = struct
 		      results
 		  end
 
+              fun reduceArrayParts(subList, args, sizeSpec, arrayPreds) = 
+		  let val doSub = PTSub.substExps subList
+		      val modArgs = List.map doSub args
+                      fun doSizeSpec NONE = NONE
+                        | doSizeSpec (SOME (PX.SizeInfo {min, max, maxTight})) = 
+			    SOME (PX.SizeInfo {min = Option.map doSub min,
+					       max = Option.map doSub max,
+					       maxTight=maxTight})
+		      val modSizeSpec = doSizeSpec sizeSpec
+
+		      fun doParseCond e = 
+			  case e 
+			  of PX.General e => PX.General (doSub e)
+			  |  PX.ParseCheck e => PX.ParseCheck (doSub e)
+
+		      fun doArrayConstraint ac = 
+			  case ac 
+                          of PX.Sep e => PX.Sep (doSub e)
+                          |  PX.Term PX.noSep => PX.Term PX.noSep
+                          |  PX.Term (PX.Expr e) => PX.Term (PX.Expr e)
+			  |  PX.Last es  => PX.Last  (List.map doParseCond es)
+			  |  PX.Ended es => PX.Ended (List.map doParseCond es)
+			  |  PX.Skip es  => PX.Skip  (List.map doParseCond es)
+		      val modArrayPreds = List.map doArrayConstraint arrayPreds
+		  in
+		      (modArgs, modSizeSpec, modArrayPreds)
+		  end
+
               fun evalExprNoErrs e = 
 		  let val () = (Error.warningsEnabled errorState false;
 				Error.errorsEnabled errorState false)
@@ -3799,12 +3827,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				       case findOffset (fn(nm,_) => nm = name) (ListPair.zip (allVars, tyNames)) 0
 			               of SOME (n,(fname,tynm)) => (n,tynm)
 				       | NONE => (PE.bug "Compiler bug"; (0, padsID name))
-				  val otherFields = List.take (ListPair.zip (tys, List.map PT.VarDecr allVars), offset)
-				  val otherArgs =   List.take (#2(ListPair.unzip allVarSubs), offset)
+				  val otherFields = List.take (ListPair.zip (tys, List.map (PT.PointerDecr o PT.VarDecr) allVars), offset)
+				  val relSubs = List.take (allVarSubs, offset)
+				  val otherArgs = List.map (fn x=>P.addrX x) (#2 (ListPair.unzip relSubs))
+                                  val modRelSubs = List.map (fn (name,rep) => (name, P.starX (PT.Id name))) relSubs
+				  val otherArgs =   List.map (fn x => P.addrX x) (List.take (#2(ListPair.unzip allVarSubs), offset))
+				  val (modargs, modsize, modarraypred) = reduceArrayParts(modRelSubs, args, size, arraypred)
 				  val params = params @ otherFields
-				  val arrayPX =      {name=arrayName, baseTy = pty, params = params (* this needs to be augmented with preceeding fields*),
+				  val arrayPX =      {name=arrayName, baseTy = pty, params = params, 
 						      isRecord = false, containsRecord = false, largeHeuristic = false, isSource = false,
-						      args = args, sizeSpec=size, constraints=arraypred, postCond = []}
+						      args = modargs, sizeSpec=modsize, constraints=modarraypred, postCond = []}
 				  val arrayASTs = cnvPArray arrayPX
 				  val sfield = ({pty=PX.Name arrayName, args=(List.map (fn x=> PT.Id x) paramNames)@otherArgs, 
 						 name=name, isVirtual=isVirtual, isEndian=isEndian,
