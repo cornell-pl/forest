@@ -5,7 +5,8 @@
 
 Note: these instructions use GNU make (often called gmake or make).
 Be sure that the make program you are using is GNU make before
-proceeding.
+proceeding.  All of the gmake commands below are issued
+from directory $PADS_HOME.
 
 STEP 1: ENVIRONMENT SETUP
 
@@ -40,8 +41,7 @@ AT&T - Lucent split) collect many useful C routines in a
 single library called libast.  PADS uses this library, so you need
 to build it: 
 
-> cd $PADS_HOME/ast-base
-> bin/package make
+> gmake libast
 
 (Before you issue this command, make sure INSTALLROOT has been set
 by one of the DO_SETENV scripts!)
@@ -73,13 +73,17 @@ need not be preserved and are simply annoying.
 
 STEP 3: BUILD AND INSTALL THE PADSC LIBRARY
 
-> cd $PADS_HOME/padsc/libpadsc
-> gmake install
+> gmake libpadsc
+
+STEP 3B [OPTIONAL]: BUILD AND INSTALL THE PGLX LIBRARY
+
+For the PADS-Galax project only, you need to do:
+
+> gmake libpadsc
 
 STEP 4: TEST THE PADSC LIBRARY
 
-> cd $PADS_HOME/padsc/libpadsc/tests
-> gmake
+> gmake test_libpadsc
 
 This causes a set of regression tests for the library
 to be built and run.  If you see a message of the form 
@@ -90,13 +94,11 @@ then there is a problem with the test_foo test.
 
 STEP 5: BUILD THE COMPILER
 
-> cd $PADS_HOME/padsc/comp
-> gmake
+> gmake comp
 
 STEP 6: TEST THE COMPILER
 
-> cd $PADS_HOME/padsc/examples/tests
-> gmake
+> gmake test_comp
 
 This causes a set of regression tests for the compiler/library
 to be built and run. If you see a message of the form 
@@ -104,6 +106,32 @@ to be built and run. If you see a message of the form
     test_foo DIFFERS
 
 then there is a problem with the test_foo test.
+
+=========================================
+  Rebuilding the Compiler and Libraries
+=========================================
+
+** NOTE **
+Steps 2, 3, and 5 can be done together using
+
+> gmake
+
+Steps 2, 3, 3b, and 5 can be done together using
+
+> gmake USE_GALAX=1
+
+
+If you are switching between the two, or if
+you install new changes to the source, you may
+need to do:
+
+> gmake veryclean
+
+before you do a new build.
+
+Testing steps 4 and 6 can be done together using
+
+> gmake regress
 
 =========================================
   Using the PADSC Compiler and Library
