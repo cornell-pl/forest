@@ -3,20 +3,52 @@ In this chapter, we describe \PADSL{} features shared by all types.
 Subsequent chapters describe features particular to various \PADSL{}
 types. 
 
-\section{Overall structure}
+\section{\pads{} types}
 \label{sec:common-overall}
+Each \padsl{} type specifies the external representation of a
+particular kind of data.  \padsl{} base types describe the
+representations of atomic pieces of data, while structured types
+specify how compound representations are built from more basic ones. 
+\padsl{} provides a large and extensible collection of base types
+and a family of type constructors for building structured types: 
+\pstruct{}s for record-like sequences, 
+\punion{}s for alternatives, 
+\parray{}s for sequences, 
+\penum{}s for fixed collections of strings, and
+\ptypedef{}s for refinements of existing types.
+
+Syntactically, a \padsl{} type (\nont{p\_ty}) must have the following form:
+
+\vskip 1ex
 \begin{tabular}{rcll}
-\nont{p\_ty} & \is{} & \nont{base\_ty} \\[1ex]
-& \alt{} & \nont{struct\_ty} \\[1ex]
-& \alt{} & \nont{union\_ty} \\[1ex]
-& \alt{} & \nont{array\_ty} \\[1ex]
-& \alt{} & \nont{typedef\_ty} \\[1ex]
-& \alt{} & \nont{enum\_ty} \\[1ex]
+\nont{p\_ty} & \is{} & \nont{base\_ty} & (* \chapref{chap:base-types} *) \\[1ex]
+& \alt{} & \nont{struct\_ty}           & (* \chapref{chap:structs} *)\\[1ex]
+& \alt{} & \nont{union\_ty}            & (* \chapref{chap:unions} *)\\[1ex]
+& \alt{} & \nont{array\_ty}            & (* \chapref{chap:arrays} *)\\[1ex]
+& \alt{} & \nont{enum\_ty}             & (* \chapref{chap:enums} *)\\[1ex]
+& \alt{} & \nont{typedef\_ty}          & (* \chapref{chap:typedefs} *)\\[1ex]
 \end{tabular}
+
+\noindent
+The grammar for each of the above non-terminals is given in the
+associated chapter.
 
 \section{Comments}
 \label{sec:common-comments}
-c-style and /-- form, which are reflected into output.
+In addition to \C{} and \Cplusplus{} style comments of the form 
+\cd{/* ... */} and \cd{//...}, which may appear anywhere in a \pads{}
+description, \padsl{} also supports \nont{p\_comment}s, which may
+appear only in particular locations in the grammar.  Syntactically,
+
+\vskip 1ex
+\begin{tabular}{rcll}
+\nont{p\_comment} & \is{} & \cd{/-} text  \\[1ex]
+\end{tabular}
+
+\noindent
+These comments are reflected to the generated \texttt{.h} file as documentation.
+
+
 
 \section{Predicates}
 \label{sec:common-predicates}
@@ -34,7 +66,8 @@ c-style and /-- form, which are reflected into output.
 
 \PADSL{} supports C-style character and string literals such as {\tt '}\cd{a}{\tt '} and
 \cd{"foo"}.  These literals may use all of C character escapes such as
-\begin{verbatim}\" and \'\end{verbatim}.
+\begin{verbatim}\" and \'\end{verbatim}
+.
 
 Character and string literals are used to read external characters
 without putting any corresponding data in the resulting in-memory representation.
@@ -59,13 +92,30 @@ Is there anything we need to say here?
 
 \section{Parameterization}
 \label{sec:common-parameterization}
- mechanism to pass values from earlier portions of data to later
- portions
- 
- reduce number of type declarations.
+To reduce the number of necessary type declarations and to permit the
+format of later portions of the data to depend upon earlier portions, 
+\PADSL{} types can be parameterized by values.  A common example of
+the latter use is a data source which first specifies the length of a
+sequence and then gives the sequence itself.  The length is read,
+stored in the in-memory representation, and then passed to the type
+that describes the sequence to specify the termination condition for
+the sequence. Syntactically, 
+\vskip 1ex
+\begin{tabular}{rcl}
+\nont{p\_actuals} & \is{} & \nont{expression} \alt{} \nont{expression}, \nont{p\_actuals} \\[1ex]
+\nont{p\_actual\_list} & \is{} & (: \nont{p\_actuals} :)\\[2ex]
+\end{tabular}
 
-\nont{formal\_param\_list}
-\nont{actual\_param\_list}
+\noindent
+where \nont{expression} is any \C{} expression. Formal parameter lists
+\nont{formals} are the same as in \C{}. 
+
+\subsection{Example}
+The following \padsl{} fragment illustrates both declaring and passing
+parameters to \pads{} types.
+\begin{code}
+\input{code/struct.parameters}
+\end{code}
 
 \section{\Precord{} modifier}
 
@@ -75,10 +125,7 @@ Is there anything we need to say here?
 \label{sec:common-error-model}
  panic versus non-panic errors
 
-\appref{app:error-codes} contains a list of all error codes and
-describes their meanings.
 
-describe the type \cd{PDC\_error\_t} and the possible error codes.
 
 \section{In-memory representations}
 \label{sec:common-rep}
@@ -142,9 +189,14 @@ void PDC_PS_unsetPanic(void *pd);
 int  PDC_PS_isPanic(void *pd);      
 \end{code}
 
+\cd{errCode}: \appref{app:error-codes} contains a list of all error codes and
+describes their meanings.
+
+\cd{loc} : describe the structure of this data.
+
 Details about how parse descriptors are customized for various \PADS{}
 types appear in
-\secref{sec:base-types-parse-descriptors}, \secref{sec:structs-parse-descriptors},
+\secref{sec:base-type-parse-descriptors}, \secref{sec:structs-parse-descriptors},
 \secref{sec:unions-parse-descriptors}, \secref{sec:arrays-parse-descriptors}, 
 \secref{sec:enums-parse-descriptors} and \secref{sec:typedefs-parse-descriptors}.
 
@@ -161,6 +213,11 @@ All operations take a pointer to an
 initialized \pads{} handle as their first parameter.  Information
 about how to manage \pads{} library handles appears in
 \chapref{chap:using-library}. 
+
+Many of the operations that can fail return a value of type
+\cd{PDC\_error\_t} to indicate success or failure.  This type has two
+values: \cd{PDC\_OK} and \cd{PDC\_ERROR}. 
+
 
 \subsection{Initialization and cleanup functions}
 For each type \cd{foo}, the generated library contains
@@ -255,6 +312,7 @@ The library also provides the following macros for testing or
 modifying base read-function flags:
 
 \vskip 1ex
+{\small
 \begin{tabular}{ll}
 \cd{\#define PDC\_Test\_Set(m)}            & \cd{(m \& PDC\_Set)} \\
 \cd{\#define PDC\_Test\_SynCheck(m)}       & \cd{(m \& PDC\_SynCheck)}\\
@@ -264,19 +322,13 @@ modifying base read-function flags:
 \cd{\#define PDC\_Test\_NotSynCheck(m)}    & \cd{(!PDC\_Test\_SynCheck(m))}\\
 \cd{\#define PDC\_Test\_NotSemCheck(m)}    & \cd{(!PDC\_Test\_SemCheck(m))}\\
 \\
-\cd{\#define PDC\_Test\_CheckAndSet(m)}\\
-\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) == PDC\_CheckAndSet)}}\\
-\cd{\#define PDC\_Test\_BothCheck(m)}\\
-\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) == PDC\_BothCheck)}}\\
-\cd{\#define PDC\_Test\_Ignore(m)}\\
-\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) == PDC\_Ignore)}}\\
+\cd{\#define PDC\_Test\_CheckAndSet(m)}    & \cd{((m \& PDC\_CheckAndSet) == PDC\_CheckAndSet)}\\
+\cd{\#define PDC\_Test\_BothCheck(m)}      & \cd{((m \& PDC\_CheckAndSet) == PDC\_BothCheck)}\\
+\cd{\#define PDC\_Test\_Ignore(m)}         & \cd{((m \& PDC\_CheckAndSet) == PDC\_Ignore)}\\
 \\
-\cd{\#define PDC\_Test\_NotCheckAndSet(m)}\\
-\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) != PDC\_CheckAndSet)}}\\
-\cd{\#define PDC\_Test\_NotBothCheck(m)}\\
-\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) != PDC\_BothCheck)}}\\
-\cd{\#define PDC\_Test\_NotIgnore(m)}\\
-\multicolumn{2}{r}{  \cd{((m \& PDC\_CheckAndSet) != PDC\_Ignore)}}\\
+\cd{\#define PDC\_Test\_NotCheckAndSet(m)} & \cd{((m \& PDC\_CheckAndSet) != PDC\_CheckAndSet)}\\
+\cd{\#define PDC\_Test\_NotBothCheck(m)}   & \cd{((m \& PDC\_CheckAndSet) != PDC\_BothCheck)}\\
+\cd{\#define PDC\_Test\_NotIgnore(m)}      & \cd{((m \& PDC\_CheckAndSet) != PDC\_Ignore)}\\
 \\
 \cd{\#define PDC\_Do\_Set(m)}              & \cd{(m |= PDC\_Set)}\\
 \cd{\#define PDC\_Do\_SynCheck(m)}         & \cd{(m |= PDC\_SynCheck)}\\
@@ -286,7 +338,7 @@ modifying base read-function flags:
 \cd{\#define PDC\_Dont\_SynCheck(m)}       & \cd{(m \&= (~PDC\_SynCheck))}\\
 \cd{\#define PDC\_Dont\_SemCheck(m)}       & \cd{(m \&= (~PDC\_SemCheck))}\\[1ex]
 \end{tabular}
-
+}
 \subsection{Write functions}
 For each \pads{} type, the generated library provides 
 two functions for writing out the in-memory representation of the type
