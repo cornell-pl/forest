@@ -14,7 +14,7 @@ sub readFile
 }
 
 # =========================
-sub cleanup
+sub cleanupStr
 {
     my( $txt ) = @_;
     chomp($txt);
@@ -35,7 +35,7 @@ if ($pads_home eq "") {
     $path =~ s|/getprobeinfo.pl$||;
     $path .= "/..";
     $pads_home = `(cd $path; pwd)` || "";
-    $pads_home = &cleanup($pads_home);
+    $pads_home = &cleanupStr($pads_home);
     print "\n*** Guessing PADS_HOME = [$pads_home]\n\n" if ($dbg);
   }
 }
@@ -49,7 +49,7 @@ if ($pads_home eq "") {
 }
 
 my $ast_arch = `$pads_home/ast-ast/bin/package.cvs`;
-$ast_arch = &cleanup($ast_arch);
+$ast_arch = &cleanupStr($ast_arch);
 my $ast_home = "$pads_home/ast-ast/arch/$ast_arch";
 my $targ = "$pads_home/mk/foo.rules.arch.$ast_arch.mk";
 
@@ -70,7 +70,7 @@ if (-e $targ) {
 if (! -e $targ) {
   my $probe_dir = "$ast_home/lib/probe/C/mam";
   my $probe_file = `grep -l mam_cc_DEBUG $probe_dir/* | head -1`;
-  $probe_file = &cleanup($probe_file);
+  $probe_file = &cleanupStr($probe_file);
   print "probe_file = $probe_file\n" if ($dbg);
   open(INP, $probe_file) or die "\nCould not open file $probe_file for reading\n\n";
   my @txt = ();
