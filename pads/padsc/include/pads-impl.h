@@ -73,6 +73,8 @@
 /* ================================================================================ */
 /* INTERNAL SCAN ROUTINES (helpers) */
 
+#if PDC_CONFIG_READ_FUNCTIONS > 0
+
 PDC_error_t PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
 			       PDC_char *c_out, size_t *offset_out, PDC_charset char_set,
 			       const char *whatfn);
@@ -85,8 +87,12 @@ PDC_error_t PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stop
 			       const char **str_out, size_t *offset_out, PDC_charset char_set,
 			       const char *whatfn);
 
+#endif /* PDC_CONFIG_READ_FUNCTIONS */
+
 /* ================================================================================ */
 /* INTERNAL READ ROUTINES (helpers) */
+
+#if PDC_CONFIG_READ_FUNCTIONS > 0
 
 PDC_error_t PDCI_char_lit_read(PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd,
 			       PDC_char c, PDC_charset char_set,
@@ -139,9 +145,13 @@ PDC_error_t PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *
 				 PDC_base_pd *pd, PDC_string *s_out,
 				 PDC_charset char_set, const char *whatfn);
 
+#endif  /* PDC_CONFIG_READ_FUNCTIONS */
+
 /* ================================================================================ */
 /* INTERNAL WRITE ROUTINES (helpers) */
 
+
+#if PDC_CONFIG_WRITE_FUNCTIONS > 0
 
 ssize_t PDCI_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_char c,
 			       PDC_charset char_set, const char *whatfn);
@@ -160,9 +170,12 @@ ssize_t PDCI_Cstr_lit_write2io(PDC_t *pdc, Sfio_t *io, const char *s,
 
 ssize_t PDCI_Cstr_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const char *s,
 				PDC_charset char_set, const char *whatfn);
+#endif /* PDC_CONFIG_WRITE_FUNCTIONS */
 
 /* ================================================================================ */
 /* INTERNAL char/string write FUNCTIONS (helpers) */
+
+#if PDC_CONFIG_WRITE_FUNCTIONS > 0
 
 ssize_t PDCI_char_write2io (PDC_t *pdc, Sfio_t *io, PDC_base_pd *pd,
 			    PDC_char *c, PDC_charset char_set, const char *whatfn);
@@ -185,6 +198,8 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
 			    void *type_arg1, PDC_base_pd *pd, PDC_uint32 *d,
 			    PDC_charset char_set, const char *inv_type, const char *whatfn);
 
+#endif /* PDC_CONFIG_WRITE_FUNCTIONS */
+
 /* ================================================================================
  * STRING COMPARISON
  */
@@ -198,6 +213,8 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
 /* ================================================================================
  * CHAR/STRING SCAN FUNCTIONS
  */
+
+#if PDC_CONFIG_READ_FUNCTIONS > 0
 
 #define PDC_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out) \
   PDCI_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_char_lit_scan")
@@ -226,9 +243,13 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
 #define PDC_e_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
   PDCI_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_scan")
 
+#endif /* PDC_CONFIG_READ_FUNCTIONS */
+
 /* ================================================================================
  * CHAR/STRING READ FUNCTIONS
  */
+
+#if PDC_CONFIG_READ_FUNCTIONS > 0
 
 #define PDC_char_lit_read(pdc, m, pd, c) \
   PDCI_char_lit_read(pdc, m, pd, c, PDCI_DEF_CHARSET(pdc), "PDC_char_lit_read")
@@ -352,10 +373,13 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
 #define PDC_e_string_CSE_read(pdc, m, stopRegexp, pd, s_out) \
   PDCI_string_CSE_read(pdc, m, stopRegexp, pd, s_out, PDC_charset_EBCDIC, "PDC_e_string_CSE_read")
 
+#endif /* PDC_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================
  * DEFAULT STRING TO INTEGER READ FUNCTIONS
  */
+
+#if PDC_CONFIG_READ_FUNCTIONS > 0
 
 #define PDC_int8_read(pdc, m, pd, res_out) \
   PDCI_CHARSET_SWITCH(pdc, PDC, int8_read, (pdc, m, pd, res_out))
@@ -405,9 +429,13 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
 #define PDC_uint64_FW_read(pdc, m, width, pd, res_out) \
   PDCI_CHARSET_SWITCH(pdc, PDC, uint64_FW_read, (pdc, m, width, pd, res_out))
 
+#endif /* PDC_CONFIG_READ_FUNCTIONS */
+
 /* ================================================================================
  * WRITE FUNCTIONS
  */
+
+#if PDC_CONFIG_WRITE_FUNCTIONS > 0
 
 #define PDC_a_char_lit_write2io(pdc, io, c) \
   PDCI_char_lit_write2io(pdc, io, c, PDC_charset_ASCII, "PDC_a_char_lit_write2io")
@@ -702,6 +730,8 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
 
 #define PDC_uint64_write2buf(pdc, buf, buf_len, buf_full, pd, val) \
   PDCI_CHARSET_SWITCH(pdc, PDC, uint64_write2buf, (pdc, buf, buf_len, buf_full, pd, val))
+
+#endif /* PDC_CONFIG_WRITE_FUNCTIONS */
 
 #endif   /*   ! FOR_CKIT             */
 #endif   /*   ! __LIBPADSC_IMPL_H__  */

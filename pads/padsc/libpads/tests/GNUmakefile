@@ -21,7 +21,7 @@ VPATH = ..
 
 HELPERS = myrand cvt_ebcdic_to_ascii cvt_ascii_to_ebcdic dttest
 
-LIBTESTS = rwtest1 \
+LIBTESTS_O = rwtest1 \
            recrwtest1 \
            io_openclose_test \
            ebcdic_test \
@@ -45,6 +45,9 @@ LIBTESTS = rwtest1 \
            biglibtest1 \
            string_share_test
 
+LIBTESTS_D = $(LIBTESTS_O:%=%-g)
+LIBTESTS = $(LIBTESTS_O) $(LIBTESTS_D) 
+
 ACCUMTESTS = accumtest accumtest2 accumtest_s
 
 ALL_PROGS = $(HELPERS) $(LIBTESTS) $(ACCUMTESTS)
@@ -53,8 +56,6 @@ regress : regress_o regress_d
 
 regress_o : sanity_check \
 	  regress_o_announce \
-          regress_rwtest1_o \
-          regress_recrwtest1_o \
           regress_libtest1_o \
           regress_libtest2_o \
           regress_libtest4_o \
@@ -63,14 +64,14 @@ regress_o : sanity_check \
           regress_cobol_ebc_test_o \
           regress_bcd_test_o \
           regress_sb_test_o \
+          regress_bcd_fpoint_test_o \
           regress_ebc_fpoint_test_o \
-          regress_bcd_fpoint_test_o
+          regress_rwtest1_o \
+          regress_recrwtest1_o
 	@echo " "; echo "DONE"; echo " "
 
 regress_d : sanity_check \
 	  regress_d_announce \
-          regress_rwtest1_d \
-          regress_recrwtest1_d \
           regress_libtest1_d \
           regress_libtest2_d \
           regress_libtest4_d \
@@ -79,8 +80,10 @@ regress_d : sanity_check \
           regress_cobol_ebc_test_d \
           regress_bcd_test_d \
           regress_sb_test_d \
+          regress_bcd_fpoint_test_d \
           regress_ebc_fpoint_test_d \
-          regress_bcd_fpoint_test_d
+          regress_rwtest1_d \
+          regress_recrwtest1_d
 	@echo " "; echo "DONE"; echo " "
 
 libtests: sanity_check $(LIBTESTS)

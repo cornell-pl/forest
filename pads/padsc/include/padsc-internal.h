@@ -468,6 +468,7 @@ struct PDCI_stkElt_s {
 
 /* These do not have the same API as external versions; they take a whatfn arg */
 
+#if PDC_CONFIG_WRITE_FUNCTIONS > 0
 PDC_byte*    PDCI_IO_write_start  (PDC_t *pdc, Sfio_t *io, size_t *buf_len, int *set_buf, const char *whatfn);
 ssize_t      PDCI_IO_write_commit (PDC_t *pdc, Sfio_t *io, PDC_byte *buf, int set_buf, size_t num_bytes, const char *whatfn);
 void         PDCI_IO_write_abort  (PDC_t *pdc, Sfio_t *io, PDC_byte *buf, int set_buf, const char *whatfn);
@@ -482,6 +483,7 @@ ssize_t      PDCI_IO_rblk_write2io       (PDC_t *pdc, Sfio_t *io, PDC_byte *buf,
 ssize_t      PDCI_IO_rblk_open_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const char *whatfn);
 ssize_t      PDCI_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
 					  PDC_byte *blk_start, size_t num_bytes, PDC_uint32 num_recs, const char *whatfn);
+#endif
 
 /* ================================================================================ */ 
 /* HELPER MACRO TO DECLARE FAMILY OF FUNCTIONS */
@@ -518,19 +520,20 @@ ret_type fn_prefix ## u ## typ ## 64 ## fn_suffix(PDCI_FIRST_ARGS, const PDC_u #
 #undef PDCI_FIRST_ARGS
 #define PDCI_FIRST_ARGS PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst
 
+/* we always need these 4 functions */
+PDC_error_t PDC_int32_acc_report2io  (PDCI_FIRST_ARGS, PDC_int32_acc *a);
+PDC_error_t PDC_uint32_acc_report2io (PDCI_FIRST_ARGS, PDC_uint32_acc *a);
+PDC_error_t PDC_int32_acc_map_report2io(PDCI_FIRST_ARGS, PDC_int32_map_fn  fn, PDC_int32_acc *a);
+PDC_error_t PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
+					 PDC_int32_acc *a);
+
+#if PDC_CONFIG_ACCUM_FUNCTIONS > 0
 PDC_error_t PDC_int8_acc_report2io   (PDCI_FIRST_ARGS, PDC_int8_acc *a);
 PDC_error_t PDC_int16_acc_report2io  (PDCI_FIRST_ARGS, PDC_int16_acc *a);
-PDC_error_t PDC_int32_acc_report2io  (PDCI_FIRST_ARGS, PDC_int32_acc *a);
 PDC_error_t PDC_int64_acc_report2io  (PDCI_FIRST_ARGS, PDC_int64_acc *a);
 PDC_error_t PDC_uint8_acc_report2io  (PDCI_FIRST_ARGS, PDC_uint8_acc *a);
 PDC_error_t PDC_uint16_acc_report2io (PDCI_FIRST_ARGS, PDC_uint16_acc *a);
-PDC_error_t PDC_uint32_acc_report2io (PDCI_FIRST_ARGS, PDC_uint32_acc *a);
 PDC_error_t PDC_uint64_acc_report2io (PDCI_FIRST_ARGS, PDC_uint64_acc *a);
-
-PDC_error_t PDC_int32_acc_map_report2io(PDCI_FIRST_ARGS, PDC_int32_map_fn  fn, PDC_int32_acc *a);
-
-PDC_error_t PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
-					 PDC_int32_acc *a);
 
 PDC_error_t PDC_string_acc_report2io (PDCI_FIRST_ARGS, PDC_string_acc *a);
 PDC_error_t PDC_char_acc_report2io   (PDCI_FIRST_ARGS, PDC_char_acc *a);
@@ -543,6 +546,8 @@ PDC_error_t PDC_ufpoint8_acc_report2io  (PDCI_FIRST_ARGS, PDC_ufpoint8_acc *a);
 PDC_error_t PDC_ufpoint16_acc_report2io (PDCI_FIRST_ARGS, PDC_ufpoint16_acc *a);
 PDC_error_t PDC_ufpoint32_acc_report2io (PDCI_FIRST_ARGS, PDC_ufpoint32_acc *a);
 PDC_error_t PDC_ufpoint64_acc_report2io (PDCI_FIRST_ARGS, PDC_ufpoint64_acc *a);
+
+#endif /* PDC_CONFIG_ACCUM_FUNCTIONS */
 
 /* ********************************************************************************
  * Remainder of this file contains function decls for functions
@@ -950,10 +955,6 @@ void PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const ch
  */ 
 PDC_byte *PDCI_findfirst(const PDC_byte *begin, const PDC_byte *end, PDC_byte b);
 PDC_byte *PDCI_findlast(const PDC_byte *begin, const PDC_byte *end, PDC_byte b);
-
-#ifdef FOR_CKIT
-#else
-#endif
 
 /* ================================================================================ */
 

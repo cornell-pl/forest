@@ -1336,7 +1336,9 @@ PDC_vlrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
 
   data->io      = 0;
   data->head    = 0; 
+#if 0
   PDC_uint32_acc_report (pdc, "XXX_REMOVE_vlrec_noseek.record_len", "PDC_uint32", 0, &(data->acc));
+#endif
   PDC_uint32_acc_cleanup(pdc, &(data->acc));
 
   return PDC_OK;
@@ -1415,8 +1417,10 @@ PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
       PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: could not alloc space for input record");
       goto eof_case;
     }
+#if 0
     PDC_WARN2(pdc->disc, "XXX_REMOVE grew dbuf from %lu to %lu",
 	      (unsigned long)data->dbuf_alloc, (unsigned long)dbuf_alloc_next);
+#endif
     data->dbuf_alloc = dbuf_alloc_next;
     data->gc_point   = (data->dbuf_alloc * PDC_VLREC_NOSEEK_GC_PCNT) / 100;
     diff = dbuf_next - data->dbuf;
@@ -1492,7 +1496,9 @@ PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
       PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: could not alloc space for input record");
       goto eof_case;
     }
+#if 0
     PDC_WARN2(pdc->disc, "XXX_REMOVE grew dbuf from %lu to %lu", data->dbuf_alloc, dbuf_alloc_next);
+#endif
     data->dbuf_alloc = dbuf_alloc_next;
     data->gc_point   = (data->dbuf_alloc * PDC_VLREC_NOSEEK_GC_PCNT) / 100;
     diff = dbuf_next - data->dbuf;
@@ -1519,8 +1525,10 @@ PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   if (data->blocked) {
     data->blk_seen += (readlen+4);
     if (data->blk_seen > data->blk_expect) {
+#if 0
       PDC_WARN2(pdc->disc, "XXX_REMOVE seen: %lu  expect:  %lu",
 		(unsigned long)data->blk_seen, (unsigned long)data->blk_expect);
+#endif
       PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: length of records in block exceeds block length, entering EOF state");
       goto eof_case;
     }
