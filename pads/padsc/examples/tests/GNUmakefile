@@ -18,8 +18,7 @@ PADS_HOME = ../../../..
 GEN_DIR = ../../gen
 GEN_WRITE = 1
 
-# Uncomment the following to use libpglx / the -x option
-PADSC_EXTRA = -x
+# Uncomment the following to use libpglx and the -x padsc option
 GEN_GALAX = 1
 
 # the following indicates that generated .c files should not be removed

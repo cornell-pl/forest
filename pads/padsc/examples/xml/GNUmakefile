@@ -19,7 +19,6 @@ GEN_DIR = ../../gen
 GEN_WRITE = 1
 
 # Uncomment the following to use libpglx / the -x option
-PADSC_EXTRA = -x
 GEN_GALAX = 1
 
 # the following indicates that generated .c files should not be removed
