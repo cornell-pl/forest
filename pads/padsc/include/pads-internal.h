@@ -141,6 +141,8 @@ void PDCI_STRUCT_PD_XML_OUT();
 void PDCI_ARRAY_PD_XML_OUT();
 void PDCI_UNION_PD_XML_OUT();
 
+void PDCI_ENUM_XML_OUT(const char *def_tag, const char *(rep2str_fn)(int));
+
 #else
 /* The actual impls */
 
@@ -593,6 +595,25 @@ do { \
   tlen = sfprintf(pads->tmp4, "%.*s</val>\n", val_indent, PDCI_spaces); \
   PDCI_TMP4_TLEN_UPDATES(); \
   indent -= 2; \
+} while (0)
+
+#define PDCI_ENUM_XML_OUT(def_tag, rep2str_fn) do { \
+  if (!tag) { tag = def_tag; } \
+  indent = ((indent) > 128) ? 128 : indent; \
+  sfstrset(pads->tmp4, 0); \
+  if ((pd)->errCode == P_NO_ERR) { /* no error */ \
+    tlen = sfprintf(pads->tmp4, "%.*s<%s><val>%s</></>\n", indent, PDCI_spaces, tag, rep2str_fn(*rep)); \
+  } else if ((pd)->errCode < 100) { /* error, no location */ \
+    tlen = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><errCode>%s</errCode></pd></%s>\n", \
+		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), P_errCode2str((pd)->errCode), tag); \
+  } else { /* error, location */ \
+    tlen = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc></pd></%s>\n", \
+		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), P_errCode2str((pd)->errCode), \
+		    (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset, \
+		    (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset, \
+		    tag); \
+  } \
+  PDCI_FINAL_TMP4_TLEN_UPDATES(); \
 } while (0)
 
 #define PDCI_STRUCT_PD_XML_OUT() do { \
