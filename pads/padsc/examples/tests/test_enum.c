@@ -4,21 +4,22 @@
 int main(int argc, char** argv) {
   PDC_t*          pdc;
   orderStates     enumdata;
+  orderStates_m   enumdata_m;
+  orderStates_pd  enumdata_pd;
 
-  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
-    error(2, "*** PDC_open failed ***");
-    exit(-1);
-  }
+  PDC_open(&pdc, 0, 0);
   if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.enum")) {
-    error(2, "*** PDC_IO_fopen failed ***");
-    exit(-1);
+    error(ERROR_FATAL, "*** PDC_IO_fopen failed ***");
   }
+
+  PDC_INIT_ALL(orderStates, pdc, enumdata, enumdata_m, enumdata_pd, PDC_CheckAndSet);
 
   /*
    * Try to read each line of data
    */
+
   while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == orderStates_read(pdc, 0, 0, &enumdata)) {
+    if (PDC_OK == orderStates_read(pdc, &enumdata_m, &enumdata_pd, &enumdata)) {
       /* do something with the data */
       error(2, "orderStates_read returned:  %d", enumdata);
     } else {
@@ -26,15 +27,8 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
-    exit(-1);
-  }
-
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
-    exit(-1);
-  }
-
+  PDC_CLEANUP_ALL(orderStates, pdc, enumdata, enumdata_pd);
+  PDC_IO_close(pdc);
+  PDC_close(pdc);
   return 0;
 }
