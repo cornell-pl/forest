@@ -29,11 +29,7 @@ int main(int argc, char** argv) {
     error(0, "Data file = standard in\n");
   }
 
-#if 0
-  io_disc = PDC_norec_make(0);
-#else
   io_disc = PDC_fwrec_noseek_make(0, 86, 0);
-#endif
 
   if (!io_disc) {
     error(ERROR_FATAL, "\nFailed to install IO discipline");
