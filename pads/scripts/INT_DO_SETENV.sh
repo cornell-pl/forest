@@ -67,11 +67,11 @@ if [ $_pads_status == "OK" ]; then
     fi
   fi
 
-  if [ "$OCAML_LIB"x == x ]; then
-    OCAML_LIB=/usr/common/lib/ocaml; export OCAML_LIB
+  if [ "$OCAML_LIB_DIR"x == x ]; then
+    OCAML_LIB_DIR=/usr/lib/ocaml; export OCAML_LIB_DIR
   fi
   if [ "$GALAX_HOME"x == x ]; then
-    GALAX_HOME=/home/mff/Galax-rh7; export GALAX_HOME
+    GALAX_HOME=/home/mff/Galax; export GALAX_HOME
   fi
   GALAX_LIB=$GALAX_HOME/lib/c; export GALAX_LIB
 

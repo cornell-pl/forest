@@ -1,6 +1,6 @@
 #!/bin/tcsh
 
-source $PADS_HOME/scripts/Q_DO_SETENV.tcsh
+source $PADS_HOME/scripts/DO_SETENV.tcsh
 set targ = $PADS_HOME/mk/rules.arch.$AST_ARCH.mk
 if (! -e $targ) then
   set probe_dir = $AST_HOME/lib/probe/C/mam

@@ -185,10 +185,10 @@ if ($_pads_status == "OK") then
     setenv MANPATH ""
   endif
   if (! $?_is_ocaml_lib) then
-    setenv OCAML_LIB /usr/common/lib/ocaml
+    setenv OCAML_LIB_LIB /usr/lib/ocaml
   endif
   if (! $?_is_galax_home) then
-    setenv GALAX_HOME /home/mff/Galax-rh7
+    setenv GALAX_HOME /home/mff/Galax
   endif
   setenv GALAX_LIB $GALAX_HOME/lib/c
 
