@@ -1531,19 +1531,19 @@ String lengths: good vals:        105    bad vals:          0    pcnt-bad:    0.
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:        105  pcnt-of-good-vals:  100.000
   Characterizing string values:
-    => distribution of top 10 strings out of 26 distinct strings:
+    => distribution of top 10 strings out of 11 distinct strings:
+        val: ""          count:         21  pcnt-of-good-vals:   20.000
         val: "att"       count:         21  pcnt-of-good-vals:   20.000
         val: "com"       count:         21  pcnt-of-good-vals:   20.000
         val: "research"  count:         21  pcnt-of-good-vals:   20.000
-        val: ""          count:          5  pcnt-of-good-vals:    4.762
         val: "njfpsrv01" count:          4  pcnt-of-good-vals:    3.810
         val: "njmtprt01" count:          4  pcnt-of-good-vals:    3.810
         val: "njmtsrv08" count:          4  pcnt-of-good-vals:    3.810
         val: "phys"      count:          4  pcnt-of-good-vals:    3.810
         val: "njfpsrv2"  count:          3  pcnt-of-good-vals:    2.857
-        val: ""          count:          2  pcnt-of-good-vals:    1.905
+        val: "njfpsrv02" count:          1  pcnt-of-good-vals:    0.952
 . . . . . . . . . . . .  . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING          count:         89  pcnt-of-good-vals:   84.762
+        SUMMING          count:        104  pcnt-of-good-vals:   99.048
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.allArrayElts.rdata.SRV.target.allArrayElts.ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -1678,21 +1678,7 @@ good vals:         21    bad vals:          0    pcnt-bad:    0.000
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[4].label.l : string
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-String lengths: 21 string length values, 100 pcnt good, 100 pcnt identical:          0
-  Characterizing string values:
-    => distribution of top 10 strings out of 16 distinct strings:
-        val: "" count:          5  pcnt-of-good-vals:   23.810
-        val: "" count:          2  pcnt-of-good-vals:    9.524
-        val: "" count:          1  pcnt-of-good-vals:    4.762
-        val: "" count:          1  pcnt-of-good-vals:    4.762
-        val: "" count:          1  pcnt-of-good-vals:    4.762
-        val: "" count:          1  pcnt-of-good-vals:    4.762
-        val: "" count:          1  pcnt-of-good-vals:    4.762
-        val: "" count:          1  pcnt-of-good-vals:    4.762
-        val: "" count:          1  pcnt-of-good-vals:    4.762
-        val: "" count:          1  pcnt-of-good-vals:    4.762
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING count:         15  pcnt-of-good-vals:   71.429
+21 string values, 100 pcnt good, 100 pcnt identical (length        0): ""
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[4].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
