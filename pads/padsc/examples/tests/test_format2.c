@@ -26,14 +26,14 @@ int main(int argc, char** argv) {
    */
   while (!PDC_IO_at_EOF(pdc)) {
     ctr = 0;
-    while (PDC_OK == PDCI_char_lit_scan(pdc, '|', '|', 1, &c, &n)) {
+    while (PDC_OK == PDC_char_lit_scan(pdc, '|', '|', 1, &c, &n)) {
       ctr++;
       if (PDC_OK == PDC_char_lit_read(pdc, 0, &ed, 'a')) {
 	error(2, "found an 'a' after a vbar");
       }
     }
     error(2, "Found %d vertical bars on line", ctr);
-    if (PDC_ERR == PDCI_char_lit_scan(pdc, '\n', '\n', 1, 0, 0)) {
+    if (PDC_ERR == PDC_char_lit_scan(pdc, '\n', '\n', 1, 0, 0)) {
       error(2, "Could not find newline, ending program");
       break;
     }

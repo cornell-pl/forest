@@ -20,9 +20,9 @@ test_format6  :: test_format6.c   format6.c     -lpadsc
 test_enum     :: test_enum.c      enum.c        -lpadsc
 test_from     :: test_from.c      from.c        -lpadsc
 test_ai       :: test_ai.c        ai.c          -lpadsc
-test_dibbler1 :: test_dibbler1.c  dibbler.c     -lpadsc
 test_readint  :: test_readint.c   readinttest.c -lpadsc
-
+test_dibbler1 :: test_dibbler1.c  dibbler.c     -lpadsc
+test_fast_dib :: test_fast_dib.c  dibbler2.c    -lpadsc
 regress : regress_test_format1 \
           regress_test_format2 \
           regress_test_format3 \

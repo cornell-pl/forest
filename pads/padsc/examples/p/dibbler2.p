@@ -39,7 +39,7 @@ parray eventSeq(int size) {
 
 int getLen(int numBars){ return (numBars - 4)/2; }
 
-pstruct out_sum_data_line {
+pstruct out_sum_fixed1 {
   auint32_vbar             order_num;
   auint32_vbar             order_item;
   dib_pn_vbar              servicen;
@@ -47,12 +47,22 @@ pstruct out_sum_data_line {
   auint32_vbar             zip_code;
   dib_pn_vbar              nlp_service_tn;
   dib_pn_vbar              nlp_billing_tn;
-  pvirtual countX(:'|',1:) bars;
-  eventSeq(:getLen(bars):) events;
+};
+pstruct out_sum_fixed2 {
   opt_auint32_vbar         siid;
   opt_auint32_vbar         create_id;
   opt_auint64_vbar         rampII;
   auint32_vbar             order_type;
   auint32                  parent_order;
+};
+pstruct do_ev_count {
+  pvirtual countX(:'|',1:) bars;
+  dummy(:getLen(bars):) ev_count;
+};
+pstruct out_sum_data_line {
+  out_sum_fixed1           f1;
+  do_ev_count              c;
+  eventSeq(:c.ev_count:)   events;
+  out_sum_fixed2           f2;
   EOR;
 };
