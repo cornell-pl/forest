@@ -38,25 +38,33 @@ structure Main : sig
     val parseTreeOnlyFlag = ref false
     val astOnlyFlag = ref false
     val stdoutFlag = ref false
-    val outputFileName = ref ""
-    val outputFileFlag = ref false
+    val outputHeaderFileName = ref ""
+    val outputHeaderFileFlag = ref false
+    val outputCFileName = ref ""
+    val outputCFileFlag = ref false
 
     fun addInclude i = (includes := (" -I "^i^(!includes)))
     fun addPadsFile s =    srcFiles := ((Pads,s) :: !srcFiles)
     fun addUnknownFile s = srcFiles := ((Unknown,s) :: !srcFiles)
   
-    fun setOutputFile s = (
-        outputFileName := s; 
+    fun setHeaderOutputFile s = (
+        outputHeaderFileName := s; 
 	stdoutFlag := false; 
-        outputFileFlag := true)
+        outputHeaderFileFlag := true)
+
+    fun setCOutputFile s = (
+        outputCFileName := s; 
+	stdoutFlag := false; 
+        outputCFileFlag := true)
 
     val extensions = [("p", "PADS files", PCL.Extension(addPadsFile,true))]
 
     val flags_release = [
-         ("o", "set output file", PCL.String (setOutputFile,false)),
-         ("s", "send output to standard out", PCL.BoolSet (stdoutFlag)),
-	 ("I", "augment include path", PCL.String(addInclude, true)),
-         ("t", "trace system commands", PCL.BoolSet traceFlag)
+         ("h", "output header file",      PCL.String (setHeaderOutputFile, false)),
+         ("c", "output code file",        PCL.String (setCOutputFile, false)),
+         ("s", "send output to standard out", PCL.BoolSet(stdoutFlag)),
+	 ("I", "augment include path",        PCL.String (addInclude, true)),
+         ("t", "trace system commands",       PCL.BoolSet traceFlag)
         ]
 
     val flags_debug = [
@@ -149,15 +157,26 @@ structure Main : sig
 	   raise DebugExn(Parse tree))
        end
 
-    fun generateC (astInfo : BuildAst.astBundle, destFile) =
+    fun generateOutput (astInfo : BuildAst.astBundle, destFile) =
       let val {ast,tidtab,errorCount,warningCount,...} = astInfo
-	  val outstream = if !stdoutFlag then TextIO.stdOut 
-                          else if !outputFileFlag then TextIO.openOut (!outputFileName)
-			  else TextIO.openOut (valOf (mungeFileName(destFile, "p", "c"))) 
       in
-	  PPLib.ppToStrm (PPAst.ppAst () tidtab) outstream ast;
-          (if !stdoutFlag then () else (TextIO.flushOut outstream;
-					TextIO.closeOut outstream))
+          if !stdoutFlag then 
+             PPLib.ppToStrm ((PPAst.ppAst PPAst.ALL) () tidtab) TextIO.stdOut ast
+          else let 
+	        val houtstream = 
+		    if !outputHeaderFileFlag then TextIO.openOut (!outputHeaderFileName)
+		    else TextIO.openOut (valOf (mungeFileName(destFile, "p", "h")))
+	        val coutstream = 
+		    if !outputCFileFlag then TextIO.openOut (!outputCFileName)
+		    else TextIO.openOut (valOf (mungeFileName(destFile, "p", "c")))
+	       in
+		   PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER) () tidtab) houtstream ast;		   
+		   TextIO.flushOut houtstream;
+		   TextIO.closeOut houtstream;
+		   PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL) () tidtab) coutstream ast;		   
+		   TextIO.flushOut coutstream;
+		   TextIO.closeOut coutstream
+	       end
       end
 	    
     fun doFile (typ, fname) = 
@@ -173,12 +192,12 @@ structure Main : sig
 	     val astInfo as {ast, tidtab, ...} = CKIT.fileToAst ppoutFile
              val () = if (!astOnlyFlag) then (setPrintDepth(); raise DebugExn(Ast ast)) else ()
 	 in
-	     generateC(astInfo, fname)
+	     generateOutput(astInfo, fname)
 	 end
       | _ => error "Unrecognized file type")
 
     fun checkFlags _ = (* Check that the user didn't supply bogus flag combinations. *)
-        let val () = if (!stdoutFlag) andalso (!outputFileFlag)
+        let val () = if (!stdoutFlag) andalso ((!outputHeaderFileFlag) orelse (!outputCFileFlag))
 			 then error "Cannot specify both standard out and output file."
 		     else ()
         in

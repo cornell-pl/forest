@@ -14,6 +14,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
   open Ast
 
   type aidinfo = PPAE.aidinfo
+  datatype outputType = HEADER | IMPL | ALL  (* PADS *)
 
   val printLocation = false (* internal flag - pretty print locations as comments *)
 
@@ -600,10 +601,12 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 		        , rDelim="}"
 		        } pps initExprs
 
+  (* PADS : print everything *)
   fun ppCoreExternalDecl aidinfo tidtab pps edecl =
     case edecl
-      of ExternalDecl decl =>
-	  ppDeclaration aidinfo tidtab pps decl
+      of ExternalDecl decl => 
+	  (ppDeclaration aidinfo tidtab pps decl;
+	   PPL.newline pps)		    
        | FunctionDef (id,ids,stmt) => 
 	   let val {location,...} = id
 	       val (stClass,ctype) = getCtype id
@@ -633,14 +636,102 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	     ;PPL.newline pps
 	     ;if kNr then (blockify 2 kr pps ids; newline pps) else ()
 	     ;ppStmt aidinfo tidtab pps stmt
+             ;PPL.newline pps
+	   end 
+       | ExternalDeclExt ed => PPAE.ppExternalDeclExt (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+
+  (* PADS: print .h version *)
+  fun ppCoreExternalDeclH aidinfo tidtab pps edecl =
+    case edecl
+      of ExternalDecl decl =>
+	  (ppDeclaration aidinfo tidtab pps decl;
+	   PPL.newline pps)
+       | FunctionDef (id,ids,stmt) => 
+	   let val {location,...} = id
+	       val (stClass,ctype) = getCtype id
+	       val (ctype,kNr,params) =
+		   case ctype
+		     of Ast.Function (retTy,paramTys) =>
+			 if null paramTys andalso not (null ids)
+			     then (ctype,true,KNR ids)
+			 else (ctype,false,ANSI ids)
+		      | _ =>
+			 (warning
+			  "ppCoreExternalDecl" 
+			  ("No function type associated with id:"
+			   ^(PPL.ppToString PPL.ppId id))
+			 ;(Ast.Function (Ast.Void,[]),false,ANSI [])
+			 )
+	       fun kr pps [] = []
+		 | kr pps (id::ids) = 
+		   (ppIdDecl aidinfo tidtab pps id
+		   ;PPL.addStr pps ";"
+		   ;if null ids then () else newline pps
+		   ;kr pps ids
+		   )
+	   in ppLoc pps location
+	     ;ppStorageClass pps stClass
+	     ;ppDecl0 aidinfo tidtab pps (SOME (ID id),params,ctype)
+             ;PPL.addStr pps ";"
+	     ;PPL.newline pps
+	   end 
+       | ExternalDeclExt ed => PPAE.ppExternalDeclExt (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+
+  (* PADS: print .c version *)
+  fun ppCoreExternalDeclC aidinfo tidtab pps edecl =
+    case edecl
+      of ExternalDecl decl => () (* type declarations are in header file *)
+       | FunctionDef (id,ids,stmt) => 
+	   let val {location,...} = id
+	       val (stClass,ctype) = getCtype id
+	       val (ctype,kNr,params) =
+		   case ctype
+		     of Ast.Function (retTy,paramTys) =>
+			 if null paramTys andalso not (null ids)
+			     then (ctype,true,KNR ids)
+			 else (ctype,false,ANSI ids)
+		      | _ =>
+			 (warning
+			  "ppCoreExternalDecl" 
+			  ("No function type associated with id:"
+			   ^(PPL.ppToString PPL.ppId id))
+			 ;(Ast.Function (Ast.Void,[]),false,ANSI [])
+			 )
+	       fun kr pps [] = []
+		 | kr pps (id::ids) = 
+		   (ppIdDecl aidinfo tidtab pps id
+		   ;PPL.addStr pps ";"
+		   ;if null ids then () else newline pps
+		   ;kr pps ids
+		   )
+	   in ppLoc pps location
+	     ;ppStorageClass pps stClass
+	     ;ppDecl0 aidinfo tidtab pps (SOME (ID id),params,ctype)
+	     ;PPL.newline pps
+	     ;if kNr then (blockify 2 kr pps ids; newline pps) else ()
+	     ;ppStmt aidinfo tidtab pps stmt
+             ;PPL.newline pps
 	   end 
        | ExternalDeclExt ed => PPAE.ppExternalDeclExt (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
   fun ppExternalDecl aidinfo tidtab pps edecl = 
        PPAA.ppExternalDeclAdornment ppCoreExternalDecl aidinfo tidtab pps edecl
 
-  fun ppAst aidinfo tidtab pps edecls = 
-      PPL.separate (ppExternalDecl aidinfo tidtab,PPL.newline) pps edecls
+  fun ppExternalDeclRefined outputTyp aidinfo tidtab pps edecl = 
+      let val ppCoreED = 
+          case outputTyp
+          of HEADER => ppCoreExternalDeclH  (* PADS: print .h information *)
+          |  IMPL =>   ppCoreExternalDeclC  (* PADS: print .c information *)
+          |  ALL  =>   ppCoreExternalDecl   (* PADS: print everything *)
+      in
+	  PPAA.ppExternalDeclAdornment ppCoreED aidinfo tidtab pps edecl
+      end
+
+  fun ppAst outputTyp aidinfo tidtab pps edecls = 
+(*PADS: this change removes extraneous white space from output file *)
+      List.app (ppExternalDeclRefined outputTyp aidinfo tidtab pps) edecls
+
+(* old version:  PPL.separate (ppExternalDecl aidinfo tidtab,PPL.newline) pps edecls *)
 
   (* The pretty-printer expects a block at top level, so all of the
    * external interfaces are wrapped to give it one.
@@ -654,7 +745,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 
   fun wrap pp aidinfo tidtab pps v = 
     ( PPL.bBlock pps PP.INCONSISTENT 0
-    ; PPL.newline pps
+(* PADS: adds blank line at beggining of file   ; PPL.newline pps *)
     ; pp aidinfo tidtab pps v
     ; PPL.newline pps
     ; PPL.eBlock pps
@@ -669,5 +760,5 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
   val ppCoreExpression = wrap (ppCoreExpr {nested=false})
   val ppExternalDecl = wrap ppExternalDecl
   val ppCoreExternalDecl = wrap ppCoreExternalDecl
-  val ppAst = wrap ppAst
+  val ppAst  = fn outputTyp => wrap (ppAst outputTyp) 
 end

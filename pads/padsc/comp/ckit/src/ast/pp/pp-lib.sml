@@ -21,7 +21,8 @@ structure PPLib = struct
       let val pps = PP.mk_ppstream {consumer = (fn s => TextIO.output (strm,s)),
 				    flush = (fn () => TextIO.flushOut(strm)),
 				    linewidth = 80}
-       in pp pps v;
+       in 
+	  pp pps v;
 	  PP.flush_ppstream pps
       end
 

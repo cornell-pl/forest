@@ -5,6 +5,7 @@ sig
 
   type aidinfo
   type 'a pp = OldPrettyPrint.ppstream -> 'a -> unit
+  datatype outputType = HEADER | IMPL | ALL  (* PADS *)
 
   val printConst      : bool ref
   val ppId            : Ast.id pp
@@ -29,7 +30,7 @@ sig
   val ppInitExpression   : aidinfo -> Tables.tidtab -> Ast.initExpression pp
   val ppCoreExternalDecl : aidinfo -> Tables.tidtab -> Ast.coreExternalDecl pp
   val ppExternalDecl     : aidinfo -> Tables.tidtab -> Ast.externalDecl pp
-  val ppAst              : aidinfo -> Tables.tidtab -> Ast.ast pp
+  val ppAst              : outputType -> aidinfo -> Tables.tidtab -> Ast.ast pp
 
 end
 
