@@ -2,7 +2,7 @@ Installed IO discipline norec
 Calling entry_read
 Record okay:	12|24|34
 Calling entry_read
-warning: Error [in intList_read]: 512B Block 1 byte 10 : Parray constraint for array intList violated.
+warning: Error [in intList_read]: 512B Block 1 byte 10 : Pforall constraint for array intList violated.
 [512B Block 1]12|24|34\n>>>34|24|12<<<\n23\n12|24|45|56|77|99\n12a|23|34\n12|24|34\n12|24|34\n24|34\n
 Record not okay
 Calling entry_read

@@ -3562,6 +3562,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  val arrayDetail = "arrayDetail"
                  val neerr = "neerr"
                  val firstError = "firstError"
+		 val violated = "violated"
                  val elemRepPCT = P.makeTypedefPCT(lookupTy(baseTy, repSuf, #repname))
                  val elemEdPCT  = P.makeTypedefPCT(lookupTy(baseTy, pdSuf, #pdname))
                  val elemMPCT  = P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname))
@@ -4604,28 +4605,33 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     end
 
                  (* -- -- Check that the user's forall array constraint is satisfied. *)
-                 fun genForallConstraintSs {index:string, range, body:PT.expression}  = 
-		     let val PX.Bounds(lower,upper) = range
+                 fun genLoop {index:string, range, body:PT.expression}  = 
+		     let val (lower, upper) = case range of PX.Bounds(lower,upper) => (lower,upper)
+			                      | _ => (PE.bug "unexpected array name"; (P.zero, P.zero)  (* not possible *))
 		     in
+			 [PT.Compound
+			 [P.varDeclS'(P.int, index),
+			  PT.IfThen(P.notX(P.andX(P.lteX(P.zero, lower),
+						  P.ltX(upper, fieldX(rep,length)))),
+				    PT.Compound[P.assignS(PT.Id violated, P.trueX)]),
+			  PT.For(P.assignX(PT.Id index, lower),
+				 P.andX(P.notX(PT.Id violated), P.lteX(PT.Id index, upper)), 
+				 P.postIncX(PT.Id index),
+				 PT.Compound[
+                                   PT.IfThen(P.notX(body),
+				             PT.Compound[P.assignS(PT.Id violated, P.trueX)] (* end if *))
+					     ] (* end for *))]]
+		     end
+		           
+                 fun genForallConstraintSs forall  = 
 		        [P.mkCommentS "Checking Pforall constraint.",
                          PT.Compound(
-                          [ P.varDeclS'(P.int, index),
-                            P.varDeclS(P.int, "violated", P.falseX)]
-		          @ [PT.IfThen(P.notX(P.andX(P.lteX(P.zero, lower),
-						 P.ltX(upper, fieldX(rep,length)))),
-				   PT.Compound[P.assignS(PT.Id "violated", P.trueX)]),
-		             PT.For(P.assignX(PT.Id index, lower),
-				P.andX(P.notX(PT.Id "violated"), P.lteX(PT.Id index, upper)), 
-				P.postIncX(PT.Id index),
-				PT.Compound[
-                                   PT.IfThen(P.notX(body),
-				             PT.Compound[P.assignS(PT.Id "violated", P.trueX)] (* end if *))
-                                ] (* end for *)),
-		             PT.IfThen(PT.Id "violated",
+                          [P.varDeclS(P.int, "violated", P.falseX)]
+			  @ genLoop forall
+			  @ [PT.IfThen(PT.Id "violated",
 				       recordArrayErrorS([tlocES],tLocX,PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
-							 ("Pforall constraint for array "^name^" violated."), [], false))
-			])]
-		     end
+							 ("Pforall constraint for array "^name^" violated."), [], false))])]
+
 
                  (* -- -- Check that the user's general array constraint is satisfied. *)
                  fun genGeneralConstraintSs exp = 
@@ -4761,7 +4767,15 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
                  (* Generate is function array case *)
                  val isName = PNames.isPref name
-		 val bodySs = [PT.Return P.trueX]  (*XXX to be implemented *)
+		 fun genPredClause c = 
+		     case c of 
+                       PX.Forall     r   => genLoop r
+		     | PX.General    exp => [PT.IfThen(exp, PT.Compound[P.assignS(PT.Id violated, P.trueX)])]
+                     | PX.ParseCheck exp => []
+		 val clausesSs = List.concat(List.map genPredClause postCond)
+		 val bodySs = [P.varDeclS(P.int, violated, P.falseX)]
+		             @  clausesSs
+                             @ [PT.Return (PT.Id violated)]
                  val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs)]
 
                  (* Generate accumulator functions array case *) 
