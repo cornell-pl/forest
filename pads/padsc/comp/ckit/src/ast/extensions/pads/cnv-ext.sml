@@ -3242,56 +3242,61 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun addSFNL(theTag) = (if #memChar unionProps = TyProps.Static then "_STAT"
 					    else (if theTag = !firstTag then "_FIRST"
 						  else (if theTag = !lastTag then "_LAST" else "_NEXT")))
-		     fun modCheck(check, theTag)
-		       = PTSub.substExp (theTag, P.dotX(fieldX(rep, value), PT.Id theTag), check)
-			 before expEqualTy(check, CTintTys,
-					fn s=> (" constraint for union branch "^
-						theTag ^ " has type: " ^ s ^ ", expected type int"))
-		     fun uReadSetup (theTag)
-		       = [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_SETUP"^addStat),
+		     fun modCheckSubst (check, theTag) =
+			 PTSub.substExp (theTag, P.dotX(fieldX(rep, value), PT.Id theTag), check)
+		     fun modCheck (check, theTag) =
+			 let val mCheck = modCheckSubst(check, theTag)
+			     val () = expEqualTy(mCheck, CTintTys,
+					      fn s=> (" constraint for union branch "^
+						      theTag ^ " has type: " ^ s ^ ", expected type int"))
+			 in
+			     mCheck
+			 end
+		     fun uReadSetup (theTag)=
+			 [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_SETUP"^addStat),
 					  [PT.String readName, PT.Id theTag, repCleanup, repInit, pdCleanup, pdInit]))]
-		     fun uRead (theTag, predOpt, readCall)
-		       = case predOpt of
+		     fun uRead (theTag, predOpt, readCall) =
+			 case predOpt of
 			     NONE       => [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ"^addSFNL(theTag)),
-							   [PT.String readName, PT.Id theTag, repCleanup, repInit,
-							    pdCleanup,  pdInit, readCall]))]
+							    [PT.String readName, PT.Id theTag, repCleanup, repInit,
+							     pdCleanup,  pdInit, readCall]))]
 			   | SOME check => [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ"^addSFNL(theTag)^"_CHECK"),
-							   [PT.String readName, PT.Id theTag, repCleanup, repInit,
-							    pdCleanup,  pdInit, readCall, modCheck(check, theTag)]))]
-		     fun uReadManPre (theTag, isVirt)
-		       = [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_MAN"^addSFN(theTag)^addVirt(isVirt)^"_PRE"),
-					 [PT.String readName, PT.Id theTag, repInit, pdInit]))]
-		     fun uReadManPost (theTag, predOpt)
-		       = case predOpt of
+							    [PT.String readName, PT.Id theTag, repCleanup, repInit,
+							     pdCleanup,  pdInit, readCall, modCheck(check, theTag)]))]
+		     fun uReadManPre (theTag, isVirt) =
+			 [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_MAN"^addSFN(theTag)^addVirt(isVirt)^"_PRE"),
+					  [PT.String readName, PT.Id theTag, repInit, pdInit]))]
+		     fun uReadManPost (theTag, predOpt) =
+			 case predOpt of
 			     NONE       => [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_MAN"^addStat^"_POST"),
-							   [PT.String readName]))]
+							    [PT.String readName]))]
 			   | SOME check => [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_MAN"^addStat^"_POST_CHECK"),
-							   [PT.String readName, repCleanup, pdCleanup, modCheck(check, theTag)]))]
-		     fun uReadFailed ()
-		       = [P.mkCommentS ("Failed to match any branch of union "^unionName),
+							    [PT.String readName, repCleanup, pdCleanup, modCheck(check, theTag)]))]
+		     fun uReadFailed () =
+			 [P.mkCommentS ("Failed to match any branch of union "^unionName),
 			  PT.Expr(PT.Call(PT.Id "PDCI_UNION_READ_FAILED",
 					  [PT.String readName, PT.String unionName, errTag]))]
-		     fun swReadPostCheck (theTag, predOpt)
-		       = case predOpt of
+		     fun swReadPostCheck (theTag, predOpt) =
+			 case predOpt of
 			     NONE       => []
 			   | SOME check => [PT.Expr(PT.Call(PT.Id "PDCI_SWUNION_READ_POST_CHECK",
 							    [PT.String readName, PT.Id theTag, errTag, modCheck(check, theTag)]))]
-		     fun swRead (theTag, predOpt, readCall)
-		       = [PT.Expr(PT.Call(PT.Id("PDCI_SWUNION_READ"^addStat),
+		     fun swRead (theTag, predOpt, readCall) =
+			 [PT.Expr(PT.Call(PT.Id("PDCI_SWUNION_READ"^addStat),
 					  [PT.String readName, PT.Id theTag, errTag, repCleanup, repInit,
 					   pdCleanup, pdInit, readCall]))]
 			 @ swReadPostCheck(theTag, predOpt) @ [PT.Break]
-		     fun swReadManPre (theTag, isVirt)
-		       = [PT.Expr(PT.Call(PT.Id("PDCI_SWUNION_READ_MAN"^addStat^addVirt(isVirt)^"_PRE"),
+		     fun swReadManPre (theTag, isVirt) =
+			 [PT.Expr(PT.Call(PT.Id("PDCI_SWUNION_READ_MAN"^addStat^addVirt(isVirt)^"_PRE"),
 					  [PT.String readName, PT.Id theTag, repCleanup, repInit, pdCleanup, pdInit]))]
 		     fun swReadManPost (theTag, predOpt) = swReadPostCheck(theTag, predOpt) @ [PT.Break]
-		     fun swReadFailed ()
-		       = [P.mkCommentS ("Switch value does not match any branch of switched union "^unionName),
+		     fun swReadFailed () =
+		         [P.mkCommentS ("Switch value does not match any branch of switched union "^unionName),
 			  PT.Expr(PT.Call(PT.Id "PDCI_SWUNION_READ_FAILED",
 					  [PT.String readName, PT.String unionName, errTag]))]
 
-		     fun readWhereCheck ()
-		       = if List.length whereReadXs = 0 then []
+		     fun readWhereCheck () =
+		         if List.length whereReadXs = 0 then []
 			 else let val whereCheck
 				    = case descOpt of NONE => "PDCI_UNION_READ_WHERE_CHECK"
 						    | SOME descriminator => "PDCI_SWUNION_READ_WHERE_CHECK"
@@ -3302,8 +3307,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun mkLabel(s) = [PT.Labeled(s, PT.Compound([]))]
 		     fun branchesDoneLabel() = mkLabel("branches_done")
 		     fun finalCheckLabel()   = mkLabel("final_check")
-		     fun eorCheck()
-		       = (if isRecord then [PT.Expr(PT.Call(PT.Id "PDCI_FIND_EOR", [PT.String readName]))] else [])
+		     fun eorCheck() =
+			 (if isRecord then [PT.Expr(PT.Call(PT.Id "PDCI_FIND_EOR", [PT.String readName]))] else [])
 
                      fun genReadFull{pty :PX.Pty, args:pcexp list, name:string,
 				     isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
@@ -3354,7 +3359,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 let val readFieldName = lookupTy(pty, readSuf, #readname)
 			     val () = checkParamTys(name, readFieldName, args, 2, 2)
 			     val () = chkCaseLabel eOpt
-			     val readCall = PL.readFunX(readFieldName,PT.Id pads, P.addrX(fieldX(m, name)),
+			     val readCall = PL.readFunX(readFieldName, PT.Id pads, P.addrX(fieldX(m, name)),
 							args, getUnionBranchX(pd, name), getUnionBranchX(rep, name))
 			     val readS = swRead(name, pred, readCall)
 			     val swPart = case eOpt of NONE => [PT.DefaultLabel(PT.Compound(readS))]
@@ -3439,7 +3444,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					    isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 					    pred: pcexp option, comment: string option} = 
 			             let val predXs  = case pred of NONE => [] 
-				                       | SOME e => [e]
+				                       | SOME e => [modCheckSubst(e, name)]
 					 val fieldXs = case lookupPred pty of NONE => []
 				                       | SOME fieldPred => 
 								  [PT.Call(PT.Id fieldPred, [getUnionBranchX(rep, name)]@args)]
