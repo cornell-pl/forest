@@ -12,10 +12,13 @@
 #define FMT_MASK P_Write
 #endif
 
+#ifndef MASK_MOD
+#define MASK_MOD
+#endif
+
 #ifndef FMT_DELIMS
 #define FMT_DELIMS "|,:"
 #endif
-
 
 #ifndef EXTRA_READ_ARGS
 #  define EXTRA_READ_ARGS
@@ -108,6 +111,9 @@ int main(int argc, char** argv) {
   }
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, READ_MASK|FMT_MASK);
+
+  MASK_MOD
+
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
     error(ERROR_FATAL, "*** header representation initialization failed ***");

@@ -2021,9 +2021,10 @@ do {
 #define PCGEN_FMT_INIT_TYPEDEF(fnName)
  do { 
   PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
-  if (!(P_Write|P_WriteVoid)&(m->compoundLevel)) {
-     *requestedOut = 0; 
-     return length_PCGEN_=0;}
+  if (!P_Test_WriteOrWriteVoid(m->compoundLevel)) {
+    *requestedOut = 0; 
+    return 0;
+  }
   *buf_full = 0;
   tdelim_PCGEN_ = delims;
  } while (0)
@@ -2049,9 +2050,10 @@ do {
   };
   /* Invariant: delims[0] is always ok. */
   tdelim_PCGEN_ = PCGEN_FMT_NEXT(delims);
-  if (!(P_Write|P_WriteVoid)&(m->compoundLevel)) {
-     *requestedOut = 0; 
-     return length_PCGEN_=0;}
+  if (!P_Test_WriteOrWriteVoid(m->compoundLevel)) {
+    *requestedOut = 0; 
+    return 0;
+  }
   *buf_full = 0;
  } while (0)
 /* END_MACRO */

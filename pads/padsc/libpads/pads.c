@@ -1070,16 +1070,24 @@ ssize_t
 fn_pref ## _fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
 		    Pbase_m *m, Pbase_pd *pd, rep_ty *rep)
 {
-  *requested_out = 1;
-  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
+  if (P_Test_Write(*m)) {
+    (*requested_out) = 1;
+    return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
+  }
+  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
+  return 0;
 }
 
 ssize_t
 fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
 		   Pbase_m *m, Pbase_pd *pd, rep_ty *rep)
 {
-  *requested_out = 1;
-  return afn_pref ## _write2io(pads, io, pd, rep);
+  if (P_Test_Write(*m)) {
+    (*requested_out) = 1;
+    return afn_pref ## _write2io(pads, io, pd, rep);
+  }
+  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
+  return 0;
 }
 /* END_MACRO */
 
@@ -1088,16 +1096,24 @@ ssize_t
 fn_pref ## _fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
 		    Pbase_m *m, xtra_ty1 x1, Pbase_pd *pd, rep_ty *rep)
 {
-  *requested_out = 1;
-  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, x1, pd, rep);
+  if (P_Test_Write(*m)) {
+    (*requested_out) = 1;
+    return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, x1, pd, rep);
+  }
+  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
+  return 0;
 }
 
 ssize_t
 fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
 		   Pbase_m *m, xtra_ty1 x1, Pbase_pd *pd, rep_ty *rep)
 {
-  *requested_out = 1;
-  return afn_pref ## _write2io(pads, io, x1, pd, rep);
+  if (P_Test_Write(*m)) {
+    (*requested_out) = 1;
+    return afn_pref ## _write2io(pads, io, x1, pd, rep);
+  }
+  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
+  return 0;
 }
 /* END_MACRO */
 
@@ -1106,16 +1122,24 @@ ssize_t
 fn_pref ## _fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
 		    Pbase_m *m, xtra_ty1 x1, Pbase_pd *pd, rep_ty *rep)
 {
-  *requested_out = 1;
-  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
+  if (P_Test_Write(*m)) {
+    (*requested_out) = 1;
+    return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
+  }
+  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
+  return 0;
 }
 
 ssize_t
 fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
 		   Pbase_m *m, xtra_ty1 x1, Pbase_pd *pd, rep_ty *rep)
 {
-  *requested_out = 1;
-  return afn_pref ## _write2io(pads, io, pd, rep);
+  if (P_Test_Write(*m)) {
+    (*requested_out) = 1;
+    return afn_pref ## _write2io(pads, io, pd, rep);
+  }
+  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
+  return 0;
 }
 /* END_MACRO */
 
@@ -6104,7 +6128,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.161 2004-08-03 21:34:42 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.162 2004-08-06 19:40:55 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
