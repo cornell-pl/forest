@@ -1474,7 +1474,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.48 2002-11-15 04:32:35 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.49 2002-11-18 14:46:41 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -2113,6 +2113,27 @@ PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes)
   }
   PDC_WARN1(pdc->disc, "PDC_swap_bytes: invalid num_bytes (%d), use 2, 4, or 8", num_bytes);
   return PDC_ERR;
+}
+
+/*
+ * XXX dummy going away eventually
+ */
+PDC_error_t
+PDC_dummy_read(PDC_t *pdc, PDC_base_em *em, PDC_int32 dummy_val, PDC_base_ed *ed, PDC_int32 *res_out)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_dummy_read");
+  PDCI_NULLPARAM_CHECK("PDC_dummy_read", res_out);
+  (*res_out) = dummy_val;
+  ed->errCode = PDC_NO_ERR;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_dummy_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_int32 dummy_val, PDC_base_ed *ed, PDC_int32 *res_out)
+{
+  (*res_out) = dummy_val;
+  ed->errCode = PDC_NO_ERR;
+  return PDC_OK;
 }
 
 /* ================================================================================ */
