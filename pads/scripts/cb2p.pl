@@ -3,6 +3,8 @@
 use File::Basename;
 
 # hash tables
+my %orig_ids = ();
+my %map_id = ();
 my %alt_ids = ();
 my %aux_arrays = ();
 my %field_ids = ();
@@ -29,10 +31,11 @@ my @dbytes;
 my $nst = 0;
 my $altctr = 1;
 my $level = 1;
-my ($id, $id1, $id2, $line, $lineno, $the_rest);
+my $get_top_id = 1;
+my ($id, $op, $id1, $id2, $line, $lineno, $the_rest);
 my ($max, $array_param, $is_struct, $ty, $dlen);
 my ($tmp, $root, $field, $def);
-$lev[$nst] = -2;
+$lev[$nst] = -99;
 
 goto usage if ($#ARGV != 1);
 my $cbook  = $ARGV[0];
@@ -45,7 +48,11 @@ if ($pads_home eq "") {
   exit(-1);
 }
 
-open(CBIN, "cat $cbook | $pads_home/scripts/cb.py|") or die("failed to open $cbook or failed to exec $pads_home/scripts/cb.py\n");
+if ($cbook =~ /[.]int$/) {
+  open(CBIN, "cat $cbook|") or die("failed to open $cbook\n");
+} else {
+  open(CBIN, "cat $cbook | $pads_home/scripts/cb.py|") or die("failed to open $cbook or failed to exec $pads_home/scripts/cb.py\n");
+}
 
 my $cprefix = basename($cbook);
 $cprefix =~ s/[.](.*)//;
@@ -53,16 +60,47 @@ my $padsfile = "$outdir/$cprefix" . "_gen.p";
 
 open(POUT, ">$padsfile") or die("failed to open $padsfile for writing\n");
 
+push(@lines, "0 -2 __THE_BEGINNING___0 1 none\n");
+push(@lines, "0 -1 __THE_TOP___0 1 none\n");
 while (<CBIN>) {
+  if ($get_top_id && /^\d+ \d+ (\S+)_\d+ /) {
+    $id1 = $1;
+    $top_id = $id1 . "_top";
+    $get_top_id = 0;
+  }
   push(@lines, $_);
 }
+push(@lines, "999999999 -99 __THE_END___0 1 none\n");
 close(CBIN) or die("failure while reading $cbook\n");
-push(@lines, "999999999 -1 __THE_END__\n");
 
-for $line (@lines) {
+$lines[1] =~ s/__THE_TOP__/$top_id/;
+
+# remove extra numbers at end of IDs if they are unnecessary
+foreach $line (@lines) {
+  $_ = $line;
+  if (/^\d+ [-]?\d+ (\S+)_\d+ /) {
+    $id1 = $1;
+    $orig_ids{$id1}++;
+  }
+}
+foreach $line (@lines) {
+  $_ = $line;
+  if (/^(\d+) [-]?\d+ ((\S+)_\d+) /) {
+    ($lineno, $id1, $id2) = ($1, $3, $2);
+    if ($orig_ids{$id1} == 1) { # only one, remove the extension
+      $map_id{$id2} = $id1;
+    } else { # more than one, use lineno
+      $map_id{$id2} = $id1 . "_ln_$lineno";
+    }
+  }
+}
+
+foreach $line (@lines) {
   $_ = $line;
   if (/^(\d+) r (\S+) (\S+)/) {
     ($lineno, $id1, $id2) = ($1, $2, $3);
+    $id1 = $map_id{$id1};
+    $id2 = $map_id{$id2};
     if (defined($redef{$id2})) {
       $root = $redef{$id1} = $redef{$id2};
     } else {
@@ -78,18 +116,19 @@ for $line (@lines) {
   }
 }
 print "\n\n";
-for $line (@lines) {
+foreach $line (@lines) {
   $_ = $line;
   if (/^(\d+) r (\S+) (\S+)/) {
     next;
   }
   if (/^(\d+) ([-]?\d+) (\S+)\s?(.*)/) {
-    ($lineno, $level, $id, $the_rest) = ($1, $2, $3, $4);
+    ($lineno, $level, $id1, $the_rest) = ($1, $2, $3, $4);
+    $id1 = $map_id{$id1};
     if ($level <= $lev[$nst]) {
       print "Changing from level $lev[$nst] to final level $level -- popping levels\n";
-      while ($level <= $lev[$nst]) {
+      while ($nst && $level <= $lev[$nst]) {
 	print " -- popping nst $nst (lev $lev[$nst], id $id[$nst], rest $rest[$nst])\n";
-	if ($rest[$nst-1] !~ /none/) {
+	if ($nst > 1 && $rest[$nst-1] !~ /none/) {
 	  die("something is wrong, parent is not structured");
 	}
 	# parent is a struct or alternate, add a field and possibly an array declaration
@@ -106,32 +145,36 @@ for $line (@lines) {
 	  $ty = sprintf("%s(:%s:)", $ty, $array_param);
 	} # else ty is OK as-is
 	$field = sprintf("    %-40s %s;\n", $ty, $id[$nst]);
-	$fields[$nst-1] .= $field;
+	if ($nst > 1) {
+	  $fields[$nst-1] .= $field;
+	}
 	if ($rest[$nst] =~ /none/) {
-	  push(@defs, "$id[$nst]|");
-	  $fmt_arrarys{$id[$nst]} = "";
-	  $fmt_structs{$id[$nst]} = "";
-	  $arrays[$nst] =~ s/[#]$//;
-	  for my $a (split(/[#]/, $arrays[$nst])) {
+	  $arrays[$nst] =~ s/[\#]$//;
+	  foreach my $a (split(/[\#]/, $arrays[$nst])) {
 	    print POUT "$a\n";
 	  }
-	  $fields[$nst] =~ s/\n$//;
-	  print POUT "Pstruct $id[$nst]_T {\n";
-	  for my $f (split(/\n/, $fields[$nst])) {
-	    print POUT "$f\n";
+	  if ($nst > 1) {
+	    $fmt_arrarys{$id[$nst]} = "";
+	    $fmt_structs{$id[$nst]} = "";
+	    push(@defs, "$id[$nst]");
+	    $fields[$nst] =~ s/\n$//;
+	    print POUT "Pstruct $id[$nst]_T {\n";
+	    foreach my $f (split(/\n/, $fields[$nst])) {
+	      print POUT "$f\n";
+	    }
+	    print POUT "};\n";
 	  }
-	  print POUT "};\n";
 	}
 	$nst--;
       }
     }
-    if ($level != -1) {
+    if ($level != -99) {
       print "Changing from level $lev[$nst] to $level\n";
       $nst++;
-      print " -- pushed nst $nst (lev $level, id $id, rest $the_rest)\n";
-      $lev[$nst] = $level;
-      $id[$nst] = $id;
-      $rest[$nst] = $the_rest;
+      print " -- pushed nst $nst (lev $level, id $id1, rest $the_rest)\n";
+      $lev[$nst]    = $level;
+      $id[$nst]     = $id1;
+      $rest[$nst]   = $the_rest;
       $fields[$nst] = "";
       $arrays[$nst] = "";
       $dbytes[$nst] = 0;
@@ -141,7 +184,7 @@ for $line (@lines) {
   }
 }
 
-for $def in (@defs) {
+foreach $def (@defs) {
   &padsgen($def);
 }
 close(POUT) or die("failure while writing $padsfile\n");
@@ -328,9 +371,9 @@ sub padsgen_alt
   my ($def) = @_;
   my ($aids, $aid);
   $aids = $alt_ids{$def};
-  $aids =~ s/[#]$//;
-  my @split_alts = split(/[#]/, $aids);
-  for $aid in (@split_alts) {
+  $aids =~ s/[\#]$//;
+  my @split_alts = split(/[\#]/, $aids);
+  foreach $aid (@split_alts) {
     if ($is_str{$aid}) {
       &padsgen_str($aid);
     } else {
@@ -338,7 +381,7 @@ sub padsgen_alt
     }
   }
   print POUT "Palternates $altnm{$def} {\n";
-  for $aid in (@split_alts) {
+  foreach $aid (@split_alts) {
     print POUT $fieldgen{$aid};
   }
   print POUT "};\n\n";
@@ -354,11 +397,11 @@ sub padsgen_str
   my ($def) = @_;
   my ($stnm, $fids, $fid);
   $fids = $field_ids{$def};
-  $fids =~ s/[#]$//;
+  $fids =~ s/[\#]$//;
   $stnm = $def . "_T";
   &padsgen_aux_arrays($def);
   print POUT "Pstruct $stnm \{\n";
-  for $fid in (split(/[#]/, $fids)) {
+  foreach $fid (split(/[\#]/, $fids)) {
     print POUT $fieldgen{$fid};
   }
   print POUT "};\n\n";
@@ -373,8 +416,8 @@ sub padsgen_aux_arrays
   my ($def) = @_;
   my ($ars, $ar);
   $ars = $aux_arrays{$def};
-  $ars =~ s/[#]$//;
-  for $ar in (split(/[#]/, $ars)) {
+  $ars =~ s/[\#]$//;
+  foreach $ar (split(/[\#]/, $ars)) {
     print  POUT "Parray $ar (:unsigned int len:) {\n";
     printf POUT "    %-40s [len];\n", $elt_type{$ar};
     print  POUT "};\n\n";
@@ -389,7 +432,7 @@ sub add_array
 {
   my ($ty) = @_;
   return 0 if (defined($arraynm{$ty}));
-  my $anm = "array_of_$ty_T;
+  my $anm = "array_of_$ty_T";
   $anm =~ s/\s//g;
   $anm =~ s/[(][:]/_/g;
   $anm =~ s/[)][:]//g;
