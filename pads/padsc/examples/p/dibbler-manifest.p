@@ -1,45 +1,44 @@
-pstruct a_uint32_vbar {
-  a_uint32 val; '|';
+Pstruct a_uint32_vbar {
+  Pa_uint32 val; '|';
 };
-pstruct a_uint64_vbar {
-  a_uint64 val; '|';
+Pstruct a_uint64_vbar {
+  Pa_uint64 val; '|';
 };
-pstruct just_vbar {
+Pstruct just_vbar {
   '|';
-  compute PDC_int32 d = 0;
+  Pcompute PDC_int32 d = 0;
 };
-punion opt_a_uint32_vbar {
+Punion opt_a_uint32_vbar {
   a_uint32_vbar yes32;
   just_vbar    no32;
 };
-punion opt_a_uint64_vbar {
+Punion opt_a_uint64_vbar {
   a_uint64_vbar yes64;
   just_vbar    no64;
 };
-pstruct no_pn_vbar {
+Pstruct no_pn_vbar {
   "no_TN|";
-  compute PDC_int32 d = 0;
+  Pcompute PDC_int32 d = 0;
 };
-punion dib_pn_vbar {
+Punion dib_pn_vbar {
   a_uint64_vbar yesPN;
   no_pn_vbar   noPN;
 };
-pstruct event {
-  a_string(:'|':) state;   '|';
-  a_uint32        tstamp;  '|';
+Pstruct event {
+  Pa_string(:'|':) state;   '|';
+  Pa_uint32        tstamp;  '|';
 };
-pstruct out_sum_header {
+Precord Pstruct out_sum_header {
   "0|";
-  a_uint32        tstamp;
-  EOR;
+  Pa_uint32       tstamp;
 };
-parray eventSeq(int size) {
+Parray eventSeq(int size) {
   event [size];
 };
 
 int getLen(int numBars){ return (numBars - 4)/2; }
 
-pstruct out_sum_fixed1 {
+Pstruct out_sum_fixed1 {
   a_uint32_vbar             order_num;
   a_uint32_vbar             order_item;
   dib_pn_vbar              servicen;
@@ -48,19 +47,19 @@ pstruct out_sum_fixed1 {
   dib_pn_vbar              nlp_service_tn;
   dib_pn_vbar              nlp_billing_tn;
 };
-pstruct out_sum_fixed2 {
+Pstruct out_sum_fixed2 {
   opt_a_uint32_vbar         siid;
   opt_a_uint32_vbar         create_id;
   opt_a_uint64_vbar         rampII;
   a_uint32_vbar             order_type;
-  a_uint32                  parent_order;
+  Pa_uint32                 parent_order;
 };
-pstruct do_ev_count {
-  omit countX(:'|',1:) bars;
-  compute PDC_int32 ev_count = getLen(bars);
+Pstruct do_ev_count {
+  Pomit PcountX(:'|',1:) bars;
+  Pcompute PDC_int32 ev_count = getLen(bars);
 };
 
-precord pstruct out_sum_data_line {
+precord Pstruct out_sum_data_line {
   out_sum_fixed1           f1;
   do_ev_count              c;
   eventSeq(:c.ev_count:)   events;

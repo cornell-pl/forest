@@ -10,11 +10,11 @@ Pstruct just_vbar {
 };
 Ppunion opt_a_uint32_vbar {
   a_uint32_vbar yes32;
-  just_vbar    no32;
+  just_vbar     no32;
 };
 Punion opt_a_uint64_vbar {
   a_uint64_vbar yes64;
-  just_vbar    no64;
+  just_vbar     no64;
 };
 Pstruct no_pn_vbar {
   "no_TN|";
@@ -22,7 +22,7 @@ Pstruct no_pn_vbar {
 };
 Punion dib_pn_vbar {
   a_uint64_vbar yesPN;
-  no_pn_vbar   noPN;
+  no_pn_vbar    noPN;
 };
 Pstruct event {
   a_string(:'|':) state;   '|';
@@ -41,11 +41,11 @@ int getLen(int numBars){ return (numBars - 4)/2; }
 Pstruct out_sum_fixed1 {
   a_uint32_vbar             order_num;
   a_uint32_vbar             order_item;
-  dib_pn_vbar              servicen;
-  dib_pn_vbar              billing_tn;
+  dib_pn_vbar               servicen;
+  dib_pn_vbar               billing_tn;
   a_uint32_vbar             zip_code;
-  dib_pn_vbar              nlp_service_tn;
-  dib_pn_vbar              nlp_billing_tn;
+  dib_pn_vbar               nlp_service_tn;
+  dib_pn_vbar               nlp_billing_tn;
 };
 Pstruct out_sum_fixed2 {
   opt_a_uint32_vbar         siid;

@@ -1,20 +1,20 @@
-pstruct str1 {
-  a_int32 id : id < 100000;     /-- identity 
+Pstruct str1 {
+  Pint32 id : id < 100000;     /- identity 
   '|';
-  a_int32 ts : ts == 11 * id;   /-- time stamp
+  Pint32 ts : ts == 11 * id;   /- time stamp
 };
 
-punion choice {
+Punion choice {
   str1 bigger;
-  compute a_int32 first = 12; /-- default value
-  a_int32 two;
+  Pcompute Pint32 first = 12; /- default value
+  Pint32 two;
 };
 
-precord pstruct str2{
+Precord Pstruct str2{
   choice c;
   ' ';
-  a_int32 t;
-  compute a_int32 v = 11; /-- struct manifest field
+  Pint32 t;
+  Pcompute Pint32 v = 11; /- struct manifest field
 }
 
 

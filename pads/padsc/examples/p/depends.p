@@ -3,8 +3,8 @@ Parray intList {
 };
 
 Punion auth_id_t {
-  Pchar unauthorized : unauthorized == '-';    /- non-authenticated http session
-  Pstring(:' ':) id;                           /- login supplied during authentication
+  Pchar          unauthorized : unauthorized == '-';  /- non-authenticated http session
+  Pstring(:' ':) id;                                  /- login supplied during authentication
 };
 
 int check(PDC_int32 t, auth_id_t user){
@@ -20,7 +20,7 @@ int check(PDC_int32 t, auth_id_t user){
 
 Precord Pstruct line{
        intList    f;
-       Pint32    a : a == f.length;
+       Pint32     a : a == f.length;
   ' '; auth_id_t  user;
-  ' '; Pint32    t : check(t, user);
+  ' '; Pint32     t : check(t, user);
 }

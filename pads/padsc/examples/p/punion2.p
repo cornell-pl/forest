@@ -1,12 +1,12 @@
-pstruct test {
-  a_int32 id : id < 100000;     //- identity 
+Pstruct test {
+  Pa_int32 id : id < 100000;     //- identity 
   '|';
-  a_int32 ts : ts == 11 * id;   //- time stamp
+  Pa_int32 ts : ts == 11 * id;   //- time stamp
 };
 
-precord punion test2 {
-  test bigger;
-  a_int32 two;
+Precord Punion test2 {
+  test       bigger;
+  Pa_int32   two;
 };
 
 
