@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.37 2002-10-18 20:04:32 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.38 2002-10-18 20:10:39 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -735,7 +735,7 @@ int_type ## _acc_report_map_internal(PDC_t* pdc, Sfio_t* outstr, const char* pre
     elt_pcnt = ((double)100.0 * elt->key.cnt)/a->good;
     mapped_val = fn(elt->key.val);
     sfprintf(outstr, "        val: %5" fmt, elt->key.val);
-    sfprintf(outstr, " (%s)", mapped_val);
+    sfprintf(outstr, " (%s) ", mapped_val);
     pad = rp-strlen(mapped_val);
     sfprintf(outstr, "%-.*s", pad,
 	     "                                                                                ");
