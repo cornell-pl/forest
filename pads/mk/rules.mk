@@ -402,19 +402,19 @@ endef
 .SUFFIXES:
 .SUFFIXES: .c .o
 
+# First we put all the -g rules
+
 ifdef BuildPADSLib
+ # Just one -g rule needed for BuildPADSLib
+
 %-g.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule A_D"
 endif
 	$(COMPILE_D) -c $< -o $@
 
-%.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule A_O"
-endif
-	$(COMPILE_O) -c $< -o $@
 else
+ # Three -g rules needed for !BuildPADSLib
 
 %-g: %-g.o $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
@@ -422,23 +422,11 @@ ifdef DEBUG_RULES_MK
 endif
 	$(LINK_D) $< $(DYNAMIC_LIBS_D) -o $@
 
-%: %.o $(LIB_DEPS_O)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule J_O"
-endif
-	$(LINK_O) $< $(DYNAMIC_LIBS_O) -o $@
-
 %-g.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule K_D"
 endif
 	$(COMPILE_D) -c $< -o $@
-
-%.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule K_O"
-endif
-	$(COMPILE_O) -c $< -o $@
 
 %-g: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
@@ -446,27 +434,58 @@ ifdef DEBUG_RULES_MK
 endif
 	$(COMPILE_D) $< $(DYNAMIC_LIBS_D) -o $@
 
+endif # BuildPADSLib / -g rules
+
+# Now the non -g rules
+
+ifdef BuildPADSLib
+ # Just one non -g rule needed for BuildPADSLib
+
+%.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule A_O"
+endif
+	$(COMPILE_O) -c $< -o $@
+
+else
+ # Three non -g rules needed for !BuildPADSLib
+
+%: %.o $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule J_O"
+endif
+	$(LINK_O) $< $(DYNAMIC_LIBS_O) -o $@
+
+%.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule K_O"
+endif
+	$(COMPILE_O) -c $< -o $@
+
 %: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS) $(LIB_DEPS_O)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule L_O"
 endif
 	$(COMPILE_O) $< $(DYNAMIC_LIBS_O) -o $@
 
-endif
+endif # BuildPadsLib / non -g rules
 
 ifdef GEN_DIR
 ifdef GEN_WRITE
+
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 ifdef DEBUG_RULES_MK
 	@echo "Using rule P"
 endif
 	$(PADSC) $< $(PADSC_EXTRA) -r $(GEN_DIR) -I. -I..
-else
+
+else # !GEN_WRITE
+
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 ifdef DEBUG_RULES_MK
 	@echo "Using rule P-nowrite"
 endif
 	$(PADSC) $< $(PADSC_EXTRA) -r $(GEN_DIR) -wnone -I. -I..
-endif
-endif
 
+endif # GEN_WRITE
+endif # GEN_DIR
