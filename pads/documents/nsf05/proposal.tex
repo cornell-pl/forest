@@ -721,7 +721,7 @@ Some data formats contain explicit embedded pointers
 from one part of the data source to another.
 For example, part of the DNS packet format compresses
 host names by using pointers to point back to common
-hostname suffixes~\cite{dns}.  The GO data source
+hostname suffixes.  The GO data source
 mentioned above also contains pointers as the
 hierarchy that describes gene product interactions
 is not a tree, but rather a DAG.  
@@ -787,17 +787,17 @@ automatic tool generation infrastructure.
 \paragraph*{Attribute-based Tool Generation}
 The primary reason that automatic tool generation is brittle
 is that the tools assume that the data passed to them fits a generic
-shape.  When the data does not fit the assumed shape, automatic
-tool generation breaks down.  For instance, in order to use the
-statistical summary tool, the data in question must be divided
-into a {\em header} section and a {\em body} section, where the latter
-is an array of records.  The generated tool can then track and summarize
-the values in each field of the record.  If the data in question
-does not conform to this shape (header then body), the statistical
-analysis tool cannot be used.  Moreover, in order to specify 
+shape: it must be an optional {\em header} followed by
+a {\em body} that consists of a sequence of records 
+terminated by the end of source.  
+When the data does not fit the assumed shape, automatic
+tool generation cannot be used.  Moreover, in order to specify 
 the header and body sections, a programmer must write a complicated series of
-C macros that specialize the tool.  This process is obviously highly error-prone 
-and extremely inflexible.
+C macros that specialize the tool.  This process is obviously highly 
+error-prone and extremely inflexible.  We need a more flexible 
+tool generation paradigm that allows data analysts to manipulate
+any data format they might come across, and also to
+analyze any subparts of a data set they deem important.
 
 We propose to develop a more principled and substantially more robust
 approach to automatic tool generation by extending \pads{}\ with a
@@ -851,10 +851,46 @@ the right language design and effective tool interfaces.
 
 % mention FAX here?
 
-\paragraph*{Application-specific Customizations}
-application-specific error correction.
-Compile time mask application for improved performance.
+\paragraph*{Application-specific, Compile-time Specialization}
+For any ad hoc data format, there should be a single \pads{} description
+to describe the data format including all appropriate
+semantic constraints.  However, different applications
+may use the data in entirely different ways.  Consequently,
+it can be extremely advantageous to specialize the basic
+parser to an individual application.  Our research has discovered
+three important ways to specialize generated \pads{} parsers.
 
+\begin{enumerate}
+\item Some data sources are quite irregular and have much redundancy.
+It is common to want to ``clean up'' a data source by
+normalizing it in some way or another.  For instance,
+IP backbone data from the Regulus project at AT\&T has
+multiple different formats that represent  ``missing values.''
+For statistical summaries and querying,
+it is highly desirable to take the multiple missing value representations
+and convert them all to a single representation.
+\item For performance reasons, when processing high-volume data,
+it is sometimes necessary to turn off semantic checks.  
+Currently, this is possible with \pads{} masks, but the masks
+are checked over and over again at run time.  We believe it is
+possible to partially evaluate the masks at compile time
+and achieve performance improvements.
+\item Different applications deal with errors in different ways. 
+Sometimes a single error in a data fragment is sufficient
+reason to skip to the end of the fragment; other times,
+the parser can attempt to recover.  Sometimes, there are
+application-specific ways to fix errors as they are recognized.
+Allowing the user to control when and how to perform
+error recovery can result in both
+higher performance and better parsing.
+\end{enumerate}
+
+We propose to investigate how we might develop a mechanism
+that will allow us to specialize the \pads-generated parsers 
+with this sort of application-specific behavior.  We believe that
+it may be possible to use some ideas from the literature on partial 
+evaluation to accomplish our goal, but we must do much more
+research to determine the best way to solve these problems.
 
 %\label{subsec:general}
 
@@ -885,9 +921,17 @@ Compile time mask application for improved performance.
 
 \subsubsection{Formalization and Semantic Analysis}
 
-Currently, \pads{} has no formal description or semantics. However,
-we plan to formalize the core features of the current language
-and to analyze the semantics of our extensions as we develop them.
+Currently, \pads{} has no formal description or semantics. 
+In other words, there is no implementation-independent specification
+of what a \pads{} description means and there is no way to
+formally guarantee that a parse descriptor accurately describes the
+error structure of the result.
+We propose to ameliorate this situation by
+formalizing the core features of the current language
+and analyzing the semantics of our extensions as we develop them.
+%We believe the formalization will provide another dimension along which we can
+%evaluate our tools, will help us find bugs in the implementation and 
+%may suggest ways to generalize or streamline the \pads{} system.
 
 We believe that the best way to model \pads{} is as a dependent
 type theory with dependent record types ($\sigma x;\tau.\tau'$) to model
@@ -922,7 +966,9 @@ Indeed, we have already made preliminary progress on the semantics and we have
 found bugs in the array-processing code of the compiler.  
 \item There are several corner cases in the current system 
 that we are unsure how to implement.  We hope our semantics
-will suggest implementation strategies in these cases.
+will allow us to reevaluate our overall design
+and will also suggest implementation strategies in these 
+corner cases.
 \item We hope to use our semantics to understand other data
 processing languages such as
 \packettypes{}~\cite{sigcomm00} and
@@ -956,8 +1002,7 @@ as general as possible so it can be used to process all
 kinds of ad hoc data.  More specifically, part of our mission will be
 to provide support for the data processing needs of biologists,
 chemists and physicists at Princeton University first and 
-the broader natural sciences community later.  Indeed, many of our
-proposed extensions to \pads{}\ are motivated directly by
+the broader natural sciences community later.  
  
 To this end, we have already begun to work with Olga Troyanskaya, a
 computational biologist, who works in Princeton's Lewis-Sigler Institute 
@@ -972,7 +1017,10 @@ she is a world expert.
 
 Troyanskaya has pointed us to several data
 repositories~\cite{grid,bind,geneontology} that she and her colleagues
-commonly use in their scientific investigations.  If this research is
+commonly use in their scientific investigations.  
+In fact, many of our proposed extensions to \pads{}\ are motivated directly by
+our investigation of these data sources.
+If this research is
 funded, we will be able to provide a suite of tools that Troyanskaya
 and her colleagues at Princeton's Genomics Institute and the wider
 genomics community will be able to use to boost their productivity
@@ -982,7 +1030,7 @@ can generate automatically from PADS.  A second important contribution
 will be a visual interface built on top of PADS that allows scientists
 to browse data represented in ad hoc data formats without having to
 know anything about programming or parsing.  All of our software will
-be open source and freely available on the Web.
+be freely available to academics via the Web.
 
 \paragraph*{Undergraduate Research}
 Princeton University has a very active undergraduate research program.
