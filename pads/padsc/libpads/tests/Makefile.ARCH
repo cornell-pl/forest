@@ -9,7 +9,7 @@ CCFLAGS = $(CC.DEBUG)
 
 myrand :: myrand.c
 
-libtests : adate_test mk_ex_data_libtest2 libtest1 libtest2 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1 string_share_test
+libtests : ebcdic_test adate_test mk_ex_data_libtest2 mk_ex_data_ebcdic_test libtest1 libtest2 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1 string_share_test
 
 accumtests : accumtest accumtest2 accumtest_s
 
@@ -21,6 +21,7 @@ biglibtest1      :: biglibtest1.c       -lpadsc
 libtest2         :: libtest2.c          -lpadsc
 libtest4         :: libtest4.c          -lpadsc
 rbuftest1        :: rbuftest1.c         -lpadsc
+ebcdic_test      :: ebcdic_test.c       -lpadsc
 
 dttest         :: dttest.c        -lpadsc
 accumtest      :: accumtest.c     -lpadsc
@@ -31,6 +32,7 @@ string_share_test   :: string_share_test.c          -lpadsc
 
 mk_ex_data_biglibtest1 :: mk_ex_data_biglibtest1.c
 mk_ex_data_libtest2    :: mk_ex_data_libtest2.c
+mk_ex_data_ebcdic_test :: mk_ex_data_ebcdic_test.c
 
 regress : regress_libtest1 \
           regress_libtest2 \

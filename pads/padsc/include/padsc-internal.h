@@ -132,7 +132,6 @@ PDC_error_t PDC_aint32FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width
 PDC_error_t PDC_aint64FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 				       PDC_base_ed *ed, PDC_int64 *res_out);
 
-
 PDC_error_t PDC_auint8FW_read_internal (PDC_t *pdc, PDC_base_em *em, size_t width,
 					PDC_base_ed *ed, PDC_uint8 *res_out);
 
@@ -145,6 +144,53 @@ PDC_error_t PDC_auint32FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t widt
 PDC_error_t PDC_auint64FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 					PDC_base_ed *ed, PDC_uint64 *res_out);
 
+PDC_error_t PDC_eint8_read_internal (PDC_t *pdc, PDC_base_em *em,
+				     PDC_base_ed *ed, PDC_int8 *res_out);
+
+PDC_error_t PDC_eint16_read_internal(PDC_t *pdc, PDC_base_em *em,
+				     PDC_base_ed *ed, PDC_int16 *res_out);
+
+PDC_error_t PDC_eint32_read_internal(PDC_t *pdc, PDC_base_em *em,
+				     PDC_base_ed *ed, PDC_int32 *res_out);
+
+PDC_error_t PDC_eint64_read_internal(PDC_t *pdc, PDC_base_em *em,
+				     PDC_base_ed *ed, PDC_int64 *res_out);
+
+PDC_error_t PDC_euint8_read_internal (PDC_t *pdc, PDC_base_em *em,
+				      PDC_base_ed *ed, PDC_uint8 *res_out);
+
+PDC_error_t PDC_euint16_read_internal(PDC_t *pdc, PDC_base_em *em,
+				      PDC_base_ed *ed, PDC_uint16 *res_out);
+
+PDC_error_t PDC_euint32_read_internal(PDC_t *pdc, PDC_base_em *em,
+				      PDC_base_ed *ed, PDC_uint32 *res_out);
+
+PDC_error_t PDC_euint64_read_internal(PDC_t *pdc, PDC_base_em *em,
+				      PDC_base_ed *ed, PDC_uint64 *res_out);
+
+PDC_error_t PDC_eint8FW_read_internal (PDC_t *pdc, PDC_base_em *em, size_t width,
+				       PDC_base_ed *ed, PDC_int8 *res_out);
+
+PDC_error_t PDC_eint16FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+				       PDC_base_ed *ed, PDC_int16 *res_out);
+
+PDC_error_t PDC_eint32FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+				       PDC_base_ed *ed, PDC_int32 *res_out);
+
+PDC_error_t PDC_eint64FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+				       PDC_base_ed *ed, PDC_int64 *res_out);
+
+PDC_error_t PDC_euint8FW_read_internal (PDC_t *pdc, PDC_base_em *em, size_t width,
+					PDC_base_ed *ed, PDC_uint8 *res_out);
+
+PDC_error_t PDC_euint16FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+					PDC_base_ed *ed, PDC_uint16 *res_out);
+
+PDC_error_t PDC_euint32FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+					PDC_base_ed *ed, PDC_uint32 *res_out);
+
+PDC_error_t PDC_euint64FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+					PDC_base_ed *ed, PDC_uint64 *res_out);
 
 PDC_error_t PDC_bint8_read_internal (PDC_t *pdc, PDC_base_em *em,
 				     PDC_base_ed *ed, PDC_int8 *res_out);
@@ -263,6 +309,17 @@ PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
  */
 
 PDC_error_t PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out);
+
+/* ================================================================================ */
+/* INTERNAL EBCDIC ROUTINES */
+
+int is_e_digit(unsigned char c);
+int is_e_space(unsigned char c);
+
+long PDCI_estrtol(const char *str, char **ptr, int base);
+long long PDCI_estrtoll(const char *str, char **ptr, int base);
+unsigned long PDCI_estrtoul(const char *str, char **ptr, int base);
+unsigned long long PDCI_estrtoull(const char *str, char **ptr, int base);
 
 /* ================================================================================ */
 /* INTERNAL MODIFIED CONVERSION ROUTINES */

@@ -277,7 +277,7 @@
  */
 
 /* ********************************** END_HEADER ********************************** */
-#define PDCI_AINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
+#define PDCI_AEINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, isspace_fn, isdigit_fn, opt_tmp_test)
 fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
 		      PDC_base_ed *ed, targ_type *res_out)
 {
@@ -297,10 +297,10 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
   case PDC_Ignore:
     {
       /* move beyond anything that looks like an ascii number, return PDC_ERR if none such */
-      if (isspace(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
+      if (isspace_fn(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
 	return PDC_ERR;
       }
-      while (isspace(*p1)) { /* skip spaces, if any */
+      while (isspace_fn(*p1)) { /* skip spaces, if any */
 	p1++;
 	if (p1 == end) {
 	  if (eor|eof) { return PDC_ERR; } /* did not find a digit */
@@ -320,11 +320,11 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
 	  if (bytes == 0) { return PDC_ERR; } /* did not find a digit */
 	}
       }
-      if (!isdigit(*p1)) {
+      if (!isdigit_fn(*p1)) {
 	return PDC_ERR; /* did not find a digit */
       }
       /* all set: skip digits, move IO cursor, and return PDC_OK */
-      while (isdigit(*p1)) {
+      while (isdigit_fn(*p1)) {
 	p1++;
 	if (p1 == end && !(eor|eof)) {
 	  if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
@@ -342,11 +342,11 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
   case PDC_Check:
   case PDC_CheckAndSet:
     {
-      if (isspace(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
+      if (isspace_fn(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
 	goto invalid_wspace;
       }
       while (!(eor|eof)) { /* find a non-space */ 
-	while (isspace(*p1)) { p1++; }
+	while (isspace_fn(*p1)) { p1++; }
 	if (p1 < end) { break; } 
 	if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
 	  goto fatal_mb_io_err;
@@ -357,7 +357,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
       }
       if (!(eor|eof) && ('-' == (*p1) || '+' == (*p1))) { p1++; }
       while (!(eor|eof)) { /* find a non-digit */
-	while (isdigit(*p1)) { p1++; }
+	while (isdigit_fn(*p1)) { p1++; }
 	if (p1 < end) { break; }
 	if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
 	  goto fatal_mb_io_err;
@@ -368,9 +368,9 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
       tmp = strtonum_fn(begin, &p1, 10);
       if (p1==0 || p1==begin) {
 	p1 = begin;
-	while (isspace(*p1)) { p1++; }
+	while (isspace_fn(*p1)) { p1++; }
 	if ('-' == (*p1) || '+' == (*p1)) { p1++; }
-	while (isdigit(*p1)) { p1++; }
+	while (isdigit_fn(*p1)) { p1++; }
 	goto invalid;
       }
       if (errno==ERANGE opt_tmp_test) {
@@ -435,7 +435,7 @@ fn_name(PDC_t *pdc, PDC_base_em *em,
 }
 /* END_MACRO */
 
-#define PDCI_AINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
+#define PDCI_AEINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, isspace_fn, opt_tmp_test)
 PDC_error_t
 fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
 		      PDC_base_ed *ed, targ_type *res_out)
@@ -464,7 +464,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
   }
   /* end-begin >= width */
   end = begin + width;
-  if (isspace(*begin) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
+  if (isspace_fn(*begin) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
     goto invalid_wspace;
   }
   ct = *end;    /* save */
@@ -475,11 +475,11 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
     goto invalid;
   }
   *end = ct;    /* restore */
-  if (p1 < end && isspace(*p1)) {
+  if (p1 < end && isspace_fn(*p1)) {
     if (!(pdc->disc->flags & PDC_WSPACE_OK)) {
       goto invalid_wspace;
     }
-    do { p1++; } while (p1 < end && isspace(*p1));
+    do { p1++; } while (p1 < end && isspace_fn(*p1));
   }
   if (p1 != end) {
     goto invalid;
@@ -1047,55 +1047,109 @@ int_type ## _acc_report_map(PDC_t *pdc, const char *prefix, const char *what, in
 /* VARIABLE-WIDTH ASCII INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_AINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
+ * PDCI_AEINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, isspace_fn, isdigit_fn, opt_tmp_test)
  */
 
-PDCI_AINT_READ_FN(PDC_aint8_read,  PDC_int8,  long,      PDCI_strtol,  PDC_INVALID_AINT,
+PDCI_AEINT_READ_FN(PDC_aint8_read,  PDC_int8,  long,      PDCI_strtol,  PDC_INVALID_AINT, isspace, isdigit,
  || tmp < PDC_MIN_INT8  || tmp > PDC_MAX_INT8);
 
-PDCI_AINT_READ_FN(PDC_aint16_read, PDC_int16, long,      PDCI_strtol,  PDC_INVALID_AINT,
+PDCI_AEINT_READ_FN(PDC_aint16_read, PDC_int16, long,      PDCI_strtol,  PDC_INVALID_AINT, isspace, isdigit,
  || tmp < PDC_MIN_INT16 || tmp > PDC_MAX_INT16);
 
-PDCI_AINT_READ_FN(PDC_aint32_read, PDC_int32, long,      PDCI_strtol,  PDC_INVALID_AINT, );
+PDCI_AEINT_READ_FN(PDC_aint32_read, PDC_int32, long,      PDCI_strtol,  PDC_INVALID_AINT, isspace, isdigit, );
 
-PDCI_AINT_READ_FN(PDC_aint64_read, PDC_int64, long long, PDCI_strtoll, PDC_INVALID_AINT, );
+PDCI_AEINT_READ_FN(PDC_aint64_read, PDC_int64, long long, PDCI_strtoll, PDC_INVALID_AINT, isspace, isdigit, );
 
-PDCI_AINT_READ_FN(PDC_auint8_read,  PDC_uint8,  unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT,
+PDCI_AEINT_READ_FN(PDC_auint8_read,  PDC_uint8,  unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, isspace, isdigit,
  || tmp > PDC_MAX_UINT8);
 
-PDCI_AINT_READ_FN(PDC_auint16_read, PDC_uint16, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT,
+PDCI_AEINT_READ_FN(PDC_auint16_read, PDC_uint16, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, isspace, isdigit,
  || tmp > PDC_MAX_UINT16);
 
-PDCI_AINT_READ_FN(PDC_auint32_read, PDC_uint32, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, );
+PDCI_AEINT_READ_FN(PDC_auint32_read, PDC_uint32, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, isspace, isdigit, );
 
-PDCI_AINT_READ_FN(PDC_auint64_read, PDC_uint64, unsigned long long, PDCI_strtoull, PDC_INVALID_AUINT, );
+PDCI_AEINT_READ_FN(PDC_auint64_read, PDC_uint64, unsigned long long, PDCI_strtoull, PDC_INVALID_AUINT, isspace, isdigit, );
 
 /* ================================================================================ */
 /* FIXED-WIDTH ASCII INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_AINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
+ * PDCI_AEINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, isspace_fn, opt_tmp_test)
  */
 
-PDCI_AINT_FW_READ_FN(PDC_aint8FW_read,  PDC_int8,  long,      PDCI_strtol,  PDC_INVALID_AINT,
+PDCI_AEINT_FW_READ_FN(PDC_aint8FW_read,  PDC_int8,  long,      PDCI_strtol,  PDC_INVALID_AINT, isspace,
  || tmp < PDC_MIN_INT8  || tmp > PDC_MAX_INT8);
 
-PDCI_AINT_FW_READ_FN(PDC_aint16FW_read, PDC_int16, long,      PDCI_strtol,  PDC_INVALID_AINT,
+PDCI_AEINT_FW_READ_FN(PDC_aint16FW_read, PDC_int16, long,      PDCI_strtol,  PDC_INVALID_AINT, isspace,
  || tmp < PDC_MIN_INT16 || tmp > PDC_MAX_INT16);
 
-PDCI_AINT_FW_READ_FN(PDC_aint32FW_read, PDC_int32, long,      PDCI_strtol,  PDC_INVALID_AINT, );
+PDCI_AEINT_FW_READ_FN(PDC_aint32FW_read, PDC_int32, long,      PDCI_strtol,  PDC_INVALID_AINT, isspace, );
 
-PDCI_AINT_FW_READ_FN(PDC_aint64FW_read, PDC_int64, long long, PDCI_strtoll, PDC_INVALID_AINT, );
+PDCI_AEINT_FW_READ_FN(PDC_aint64FW_read, PDC_int64, long long, PDCI_strtoll, PDC_INVALID_AINT, isspace, );
 
-PDCI_AINT_FW_READ_FN(PDC_auint8FW_read,  PDC_uint8,  unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT,
+PDCI_AEINT_FW_READ_FN(PDC_auint8FW_read,  PDC_uint8,  unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, isspace,
  || tmp > PDC_MAX_UINT8);
 
-PDCI_AINT_FW_READ_FN(PDC_auint16FW_read, PDC_uint16, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT,
+PDCI_AEINT_FW_READ_FN(PDC_auint16FW_read, PDC_uint16, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, isspace,
  || tmp > PDC_MAX_UINT16);
 
-PDCI_AINT_FW_READ_FN(PDC_auint32FW_read, PDC_uint32, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, );
+PDCI_AEINT_FW_READ_FN(PDC_auint32FW_read, PDC_uint32, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, isspace, );
 
-PDCI_AINT_FW_READ_FN(PDC_auint64FW_read, PDC_uint64, unsigned long long, PDCI_strtoull, PDC_INVALID_AUINT, );
+PDCI_AEINT_FW_READ_FN(PDC_auint64FW_read, PDC_uint64, unsigned long long, PDCI_strtoull, PDC_INVALID_AUINT, isspace, );
+
+/* ================================================================================ */
+/* VARIABLE-WIDTH EBCDIC INTEGER READ FUNCTIONS */
+
+/*
+ * PDCI_AEINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, isspace_fn, isdigit_fn, opt_tmp_test)
+ */
+
+PDCI_AEINT_READ_FN(PDC_eint8_read,  PDC_int8,  long,      PDCI_estrtol,  PDC_INVALID_EINT, is_e_space, is_e_digit,
+ || tmp < PDC_MIN_INT8  || tmp > PDC_MAX_INT8);
+
+PDCI_AEINT_READ_FN(PDC_eint16_read, PDC_int16, long,      PDCI_estrtol,  PDC_INVALID_EINT, is_e_space, is_e_digit,
+ || tmp < PDC_MIN_INT16 || tmp > PDC_MAX_INT16);
+
+PDCI_AEINT_READ_FN(PDC_eint32_read, PDC_int32, long,      PDCI_estrtol,  PDC_INVALID_EINT, is_e_space, is_e_digit, );
+
+PDCI_AEINT_READ_FN(PDC_eint64_read, PDC_int64, long long, PDCI_estrtoll, PDC_INVALID_EINT, is_e_space, is_e_digit, );
+
+PDCI_AEINT_READ_FN(PDC_euint8_read,  PDC_uint8,  unsigned long,      PDCI_estrtoul,  PDC_INVALID_EUINT, is_e_space, is_e_digit,
+ || tmp > PDC_MAX_UINT8);
+
+PDCI_AEINT_READ_FN(PDC_euint16_read, PDC_uint16, unsigned long,      PDCI_estrtoul,  PDC_INVALID_EUINT, is_e_space, is_e_digit,
+ || tmp > PDC_MAX_UINT16);
+
+PDCI_AEINT_READ_FN(PDC_euint32_read, PDC_uint32, unsigned long,      PDCI_estrtoul,  PDC_INVALID_EUINT, is_e_space, is_e_digit, );
+
+PDCI_AEINT_READ_FN(PDC_euint64_read, PDC_uint64, unsigned long long, PDCI_estrtoull, PDC_INVALID_EUINT, is_e_space, is_e_digit, );
+
+/* ================================================================================ */
+/* FIXED-WIDTH EBCDIC INTEGER READ FUNCTIONS */
+
+/*
+ * PDCI_AEINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, isspace_fn, opt_tmp_test)
+ */
+
+PDCI_AEINT_FW_READ_FN(PDC_eint8FW_read,  PDC_int8,  long,      PDCI_estrtol,  PDC_INVALID_EINT, is_e_space,
+ || tmp < PDC_MIN_INT8  || tmp > PDC_MAX_INT8);
+
+PDCI_AEINT_FW_READ_FN(PDC_eint16FW_read, PDC_int16, long,      PDCI_estrtol,  PDC_INVALID_EINT, is_e_space,
+ || tmp < PDC_MIN_INT16 || tmp > PDC_MAX_INT16);
+
+PDCI_AEINT_FW_READ_FN(PDC_eint32FW_read, PDC_int32, long,      PDCI_estrtol,  PDC_INVALID_EINT, is_e_space, );
+
+PDCI_AEINT_FW_READ_FN(PDC_eint64FW_read, PDC_int64, long long, PDCI_estrtoll, PDC_INVALID_EINT, is_e_space, );
+
+PDCI_AEINT_FW_READ_FN(PDC_euint8FW_read,  PDC_uint8,  unsigned long,      PDCI_estrtoul,  PDC_INVALID_EUINT, is_e_space,
+ || tmp > PDC_MAX_UINT8);
+
+PDCI_AEINT_FW_READ_FN(PDC_euint16FW_read, PDC_uint16, unsigned long,      PDCI_estrtoul,  PDC_INVALID_EUINT, is_e_space,
+ || tmp > PDC_MAX_UINT16);
+
+PDCI_AEINT_FW_READ_FN(PDC_euint32FW_read, PDC_uint32, unsigned long,      PDCI_estrtoul,  PDC_INVALID_EUINT, is_e_space, );
+
+PDCI_AEINT_FW_READ_FN(PDC_euint64FW_read, PDC_uint64, unsigned long long, PDCI_estrtoull, PDC_INVALID_EUINT, is_e_space, );
 
 /* ================================================================================ */
 /* BINARY INTEGER READ FUNCTIONS */
@@ -1599,7 +1653,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.55 2002-12-03 15:18:20 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.56 2002-12-04 20:26:24 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -2706,6 +2760,12 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
     case PDC_INVALID_AUINT:
       msg = "Invalid ASCII unsigned integer";
       break;
+    case PDC_INVALID_EINT:
+      msg = "Invalid EBCDIC integer";
+      break;
+    case PDC_INVALID_EUINT:
+      msg = "Invalid EBCDIC unsigned integer";
+      break;
     case PDC_INVALID_BINT:
       msg = "Invalid binary integer";
       break;
@@ -3791,6 +3851,196 @@ PDCI_strtoull(const char *str, char **ptr, int base)
     return 0;
   }
   return strtoull(str, ptr, base);
+}
+
+/* ================================================================================ */
+/* INTERNAL EBCDIC ROUTINES */
+
+int
+is_e_digit(unsigned char c) {
+  unsigned char lo = c & 0x0F;
+  unsigned char hi = c & 0xF0;
+  return ((lo <= 9) && (hi == 0xC0 || hi == 0xD0 || hi == 0xF0));
+}
+
+int
+is_e_space(unsigned char c) {
+  /* 0x05:HT, 0x0B:VT, 0x0C:FF, 0x0D:CR, 0x15:NL, 0x40:SP */
+  return (c == 0x05 || c == 0x0B || c == 0x0C || c == 0x0D || c == 0x15 || c == 0x40);
+}
+
+long
+PDCI_estrtol(const char *str, char **ptr, int base)
+{
+  unsigned char digit;
+  int  neg = 0, range_err = 0;
+  long res = 0;
+
+  while (is_e_space(*str)) {
+    str++;
+  }
+  if (!is_e_digit(*str)) {
+    if (ptr) {
+      (*ptr) = (char*)str;
+    }
+    errno = EINVAL;
+    return PDC_MIN_INT32;
+  }
+  while (is_e_digit(*str)) {
+    if (res > (PDC_MAX_INT32 / 10)) {
+      range_err = 1;
+    }
+    res *= 10;
+    digit = (*str) & 0x0F;
+    if (res > (PDC_MAX_INT32 - digit)) {
+      range_err = 1;
+    }
+    res += digit;
+    str++;
+  }
+  if ((*(str-1) & 0xF0) == 0xD0) { /* sign nible; C,F >=0; D < 0 */
+    neg = 1;
+    res = -1 * res;
+  }
+  if (ptr) {
+    (*ptr) = (char*)str;
+  }
+  if (range_err) {
+    errno = ERANGE;
+    return neg ? PDC_MIN_INT32 : PDC_MAX_INT32;
+  }
+  errno = 0;
+  return res;
+}
+
+long long
+PDCI_estrtoll(const char *str, char **ptr, int base)
+{
+  unsigned char digit;
+  int  neg = 0, range_err = 0;
+  long long res = 0;
+
+  while (is_e_space(*str)) {
+    str++;
+  }
+  if (!is_e_digit(*str)) {
+    if (ptr) {
+      (*ptr) = (char*)str;
+    }
+    errno = EINVAL;
+    return PDC_MIN_INT64;
+  }
+  while (is_e_digit(*str)) {
+    if (res > (PDC_MAX_INT64 / 10)) {
+      range_err = 1;
+    }
+    res *= 10;
+    digit =  (*str) & 0x0F;
+    if (res > (PDC_MAX_INT64 - digit)) {
+      range_err = 1;
+    }
+    res += digit;
+    str++;
+  }
+  if ((*(str-1) & 0xF0) == 0xD0) { /* sign nible; C,F >=0; D < 0 */
+    neg = 1;
+    res = -1 * res;
+  }
+  if (ptr) {
+    (*ptr) = (char*)str;
+  }
+  if (range_err) {
+    errno = ERANGE;
+    return neg ? PDC_MIN_INT64 : PDC_MAX_INT64;
+  }
+  errno = 0;
+  return res;
+}
+
+unsigned long
+PDCI_estrtoul(const char *str, char **ptr, int base)
+{
+  unsigned char digit;
+  int range_err = 0;
+  unsigned long res = 0;
+
+  while (is_e_space(*str)) {
+    str++;
+  }
+  if (!is_e_digit(*str)) {
+    if (ptr) {
+      (*ptr) = (char*)str;
+    }
+    errno = EINVAL;
+    return PDC_MAX_UINT32;
+  }
+  while (is_e_digit(*str)) {
+    if (res > (PDC_MAX_UINT32 / 10)) {
+      range_err = 1;
+    }
+    res *= 10;
+    digit = (*str) & 0x0F;
+    if (res > (PDC_MAX_UINT32 - digit)) {
+      range_err = 1;
+    }
+    res += digit;
+    str++;
+  }
+  if ((*(str-1) & 0xF0) == 0xD0) { /* sign nible; C,F >=0; D < 0 */
+    range_err = 1;
+  }
+  if (ptr) {
+    (*ptr) = (char*)str;
+  }
+  if (range_err) {
+    errno = ERANGE;
+    return PDC_MAX_UINT32;
+  }
+  errno = 0;
+  return res;
+}
+
+unsigned long long
+PDCI_estrtoull(const char *str, char **ptr, int base)
+{
+  unsigned char digit;
+  int range_err = 0;
+  unsigned long long res = 0;
+
+  while (is_e_space(*str)) {
+    str++;
+  }
+  if (!is_e_digit(*str)) {
+    if (ptr) {
+      (*ptr) = (char*)str;
+    }
+    errno = EINVAL;
+    return PDC_MAX_UINT64;
+  }
+  while (is_e_digit(*str)) {
+    if (res > (PDC_MAX_UINT64 / 10)) {
+      range_err = 1;
+    }
+    res *= 10;
+    digit = (*str) & 0x0F;
+    if (res > (PDC_MAX_UINT64 - digit)) {
+      range_err = 1;
+    }
+    res += digit;
+    str++;
+  }
+  if ((*(str-1) & 0xF0) == 0xD0) { /* sign nible; C,F >=0; D < 0 */
+    range_err = 1;
+  }
+  if (ptr) {
+    (*ptr) = (char*)str;
+  }
+  if (range_err) {
+    errno = ERANGE;
+    return PDC_MAX_UINT64;
+  }
+  errno = 0;
+  return res;
 }
 
 /* ================================================================================ */

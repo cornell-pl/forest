@@ -6,6 +6,7 @@
 #   in some data stream -- data streams need not be disk-based.
 #
 #   Types starting with "a" are represented on disk in ASCII.
+#   Types starting with "e" are represented on disk in EBCDIC
 #   Types starting with "b" are represented on disk in binary.
 #   "u" represents unsigned, while its absence indicates signed.
 #   Trailing number indicates number of bits required to store in memory; this property is checked by read functions.
@@ -34,6 +35,26 @@ auint64      PDC_uint64  PDC_base_em   PDC_base_ed          PDC_auint64_read    
 aint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64_read            -                 PDC_int64_acc   V         S           Y
 auint64FW    PDC_uint64  PDC_base_em   PDC_base_ed          PDC_auint64FW_read         -                 PDC_uint64_acc  P         S           Y
 aint64FW     PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64FW_read          -                 PDC_int64_acc   P         S           Y
+
+euint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_euint8_read            -                 PDC_uint8_acc   V         S           Y
+eint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_eint8_read             -                 PDC_int8_acc    V         S           Y
+euint8FW     PDC_uint8   PDC_base_em   PDC_base_ed          PDC_euint8FW_read          -                 PDC_uint8_acc   P         S           Y
+eint8FW      PDC_int8    PDC_base_em   PDC_base_ed          PDC_eint8FW_read           -                 PDC_int8_acc    P         S           Y
+
+euint16      PDC_uint16  PDC_base_em   PDC_base_ed          PDC_euint16_read           -                 PDC_uint16_acc  V         S           Y
+eint16       PDC_int16   PDC_base_em   PDC_base_ed          PDC_eint16_read            -                 PDC_int16_acc   V         S           Y
+euint16FW    PDC_uint16  PDC_base_em   PDC_base_ed          PDC_euint16FW_read         -                 PDC_uint16_acc  P         S           Y
+eint16FW     PDC_int16   PDC_base_em   PDC_base_ed          PDC_eint16FW_read          -                 PDC_int16_acc   P         S           Y
+
+euint32      PDC_uint32  PDC_base_em   PDC_base_ed          PDC_euint32_read           -                 PDC_uint32_acc  V         S           Y
+eint32       PDC_int32   PDC_base_em   PDC_base_ed          PDC_eint32_read            -                 PDC_int32_acc   V         S           Y
+euint32FW    PDC_uint32  PDC_base_em   PDC_base_ed          PDC_euint32FW_read         -                 PDC_uint32_acc  P         S           Y
+eint32FW     PDC_int32   PDC_base_em   PDC_base_ed          PDC_eint32FW_read          -                 PDC_int32_acc   P         S           Y
+
+euint64      PDC_uint64  PDC_base_em   PDC_base_ed          PDC_euint64_read           -                 PDC_uint64_acc  V         S           Y
+eint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_eint64_read            -                 PDC_int64_acc   V         S           Y
+euint64FW    PDC_uint64  PDC_base_em   PDC_base_ed          PDC_euint64FW_read         -                 PDC_uint64_acc  P         S           Y
+eint64FW     PDC_int64   PDC_base_em   PDC_base_ed          PDC_eint64FW_read          -                 PDC_int64_acc   P         S           Y
 
 buint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_buint8_read            -                 PDC_uint8_acc   1         S           Y
 bint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_bint8_read             -                 PDC_int8_acc    1         S           Y

@@ -222,8 +222,10 @@ typedef enum PDC_errCode_t_e {
   PDC_RANGE                         =  170,
   PDC_INVALID_AINT                  =  180,
   PDC_INVALID_AUINT                 =  181,
-  PDC_INVALID_BINT                  =  182,
-  PDC_INVALID_BUINT                 =  183,
+  PDC_INVALID_EINT                  =  182,
+  PDC_INVALID_EUINT                 =  183,
+  PDC_INVALID_BINT                  =  184,
+  PDC_INVALID_BUINT                 =  185,
   PDC_CHAR_LIT_NOT_FOUND            =  190,
   PDC_STR_LIT_NOT_FOUND             =  200,
   PDC_REGEXP_NOT_FOUND              =  210,
@@ -855,6 +857,63 @@ PDC_error_t PDC_auint32FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
 			       PDC_base_ed *ed, PDC_uint32 *res_out);
 
 PDC_error_t PDC_auint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			       PDC_base_ed *ed, PDC_uint64 *res_out);
+
+/* ================================================================================ */
+/* EBCDIC INTEGER READ FUNCTIONS */
+
+/* These functions are just like their ascii counterparts; the only
+ * difference is the encoding.  The error codes used are also the same,
+ * except that codes PDC_INVALID_EINT/PDC_INVALID_EUINT are used rather 
+ * than PDC_INVALID_AINT/PDC_INVALID_AUINT.
+ */
+
+PDC_error_t PDC_eint8_read (PDC_t *pdc, PDC_base_em *em,
+			    PDC_base_ed *ed, PDC_int8 *res_out);
+
+PDC_error_t PDC_eint16_read(PDC_t *pdc, PDC_base_em *em,
+			    PDC_base_ed *ed, PDC_int16 *res_out);
+
+PDC_error_t PDC_eint32_read(PDC_t *pdc, PDC_base_em *em,
+			    PDC_base_ed *ed, PDC_int32 *res_out);
+
+PDC_error_t PDC_eint64_read(PDC_t *pdc, PDC_base_em *em,
+			    PDC_base_ed *ed, PDC_int64 *res_out);
+
+PDC_error_t PDC_euint8_read (PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_uint8 *res_out);
+
+PDC_error_t PDC_euint16_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_uint16 *res_out);
+
+PDC_error_t PDC_euint32_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_uint32 *res_out);
+
+PDC_error_t PDC_euint64_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_uint64 *res_out);
+
+PDC_error_t PDC_eint8FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
+			      PDC_base_ed *ed, PDC_int8 *res_out);
+
+PDC_error_t PDC_eint16FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			      PDC_base_ed *ed, PDC_int16 *res_out);
+
+PDC_error_t PDC_eint32FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			      PDC_base_ed *ed, PDC_int32 *res_out);
+
+PDC_error_t PDC_eint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			      PDC_base_ed *ed, PDC_int64 *res_out);
+
+PDC_error_t PDC_euint8FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
+			       PDC_base_ed *ed, PDC_uint8 *res_out);
+
+PDC_error_t PDC_euint16FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			       PDC_base_ed *ed, PDC_uint16 *res_out);
+
+PDC_error_t PDC_euint32FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			       PDC_base_ed *ed, PDC_uint32 *res_out);
+
+PDC_error_t PDC_euint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
 			       PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================ */
