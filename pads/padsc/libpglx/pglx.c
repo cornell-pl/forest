@@ -26,9 +26,9 @@ nodeRep PGLX_generic_kth_child (nodeRep ocaml_n, childIndex idx)
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   if (!n)
-    PDCI_report_err(n->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"PGLX_generic_kth_child","PADS/Galax INVALID_PARAM: n null");
+    PGLX_report_err(n->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"PGLX_generic_kth_child","PADS/Galax INVALID_PARAM: n null");
   if (!n->vt)
-    PDCI_report_err(n->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"PGLX_generic_kth_child","PADS/Galax INVALID_PARAM: n->vt null");
+    PGLX_report_err(n->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"PGLX_generic_kth_child","PADS/Galax INVALID_PARAM: n->vt null");
   PDCI_NODE_VT_CHECK(n, "PGLX_generic_kth_child");
   return (nodeRep) ((n->vt->kth_child)(n, idx));
 }
@@ -37,9 +37,9 @@ nodeRep PGLX_generic_kth_child_named (nodeRep ocaml_n, childIndex idx, const cha
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   if (!n)
-    PDCI_report_err(n->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"PGLX_generic_kth_child_named","PADS/Galax INVALID_PARAM: n null");
+    PGLX_report_err(n->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"PGLX_generic_kth_child_named","PADS/Galax INVALID_PARAM: n null");
   if (!n->vt)
-    PDCI_report_err(n->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"PGLX_generic_kth_child_named","PADS/Galax INVALID_PARAM: n->vt null");
+    PGLX_report_err(n->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"PGLX_generic_kth_child_named","PADS/Galax INVALID_PARAM: n->vt null");
   PDCI_NODE_VT_CHECK(n, "PGLX_generic_kth_child_named");
   return (nodeRep) ((n->vt->kth_child_named)(n, idx, name));
 }
@@ -100,6 +100,24 @@ void PGLX_nodelist_free(nodeRepArray list)
 /* ================================================================================
  * INTERNAL */
 
+Perror_t
+PGLX_report_err(P_t *pads, int level, Ploc_t *loc,
+		PerrCode_t errCode, const char *whatfn, const char *format, ...)
+{
+  if (errCode == P_FAILWITH_ERR){
+    failwith(format);
+    return P_OK;
+  }else{
+    va_list ap;
+    Perror_t res;
+
+    va_start(ap,format);
+    res = PDCI_report_err(pads,level,loc,errCode,whatfn,format,ap);
+    va_end(ap);
+    return res;
+  }
+}
+
 padsNID PDCI_pglx_id_2_padsNID(PDCI_pglx_id_t id){
   padsNID id_;
   id_.gId = id.gId;
@@ -142,7 +160,7 @@ PDCI_node_t * ty ## _cachedNode_init(PDCI_node_t *node){\
   /* Setup node-type specific fields */ \
   node->child_cache = (PDCI_node_t **)PDCI_NEW_LIST(2);\
   if(node->child_cache == NULL)\
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_cachedNode_init","PADS/Galax ALLOC_ERROR");  \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_cachedNode_init","PADS/Galax ALLOC_ERROR");  \
 \
   return node;\
 }\
@@ -269,10 +287,10 @@ item ty ## _typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 }\
@@ -295,10 +313,10 @@ item ty ## _sndNode_typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 }
@@ -315,7 +333,7 @@ item ty ## _typed_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   if (galax_atomicInt(r, &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 }\
@@ -337,7 +355,7 @@ item ty ## _sndNode_typed_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   if (galax_atomicInt(r, &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 }
@@ -355,7 +373,7 @@ item ty ## _typed_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   if (galax_atomicInteger(r, &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 }\
@@ -377,7 +395,7 @@ item ty ## _sndNode_typed_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   if (galax_atomicInteger(r, &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 }
@@ -397,10 +415,10 @@ item ty ## _typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 }\
@@ -423,10 +441,10 @@ item ty ## _sndNode_typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 }
@@ -476,7 +494,7 @@ PDCI_node_t * ty ## _val_cachedNode_init(PDCI_node_t *node){\
   /*  Setup node-type specific fields */ \
   node->child_cache = (PDCI_node_t **)PDCI_NEW_LIST(1);\
   if(node->child_cache == NULL)\
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_val_cachedNode_init","PADS/Galax ALLOC_ERROR:");  \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_val_cachedNode_init","PADS/Galax ALLOC_ERROR:");  \
 \
   return node;\
 }\
@@ -593,7 +611,7 @@ const char * ty ## _string_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
 } \
@@ -610,10 +628,10 @@ item ty ## _text_typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 } \
@@ -634,7 +652,7 @@ const char * ty ## _sndNode_string_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
 } \
@@ -657,10 +675,10 @@ item ty ## _text_sndNode_typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 } \
@@ -680,7 +698,7 @@ const char * ty ## _string_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
 } \
@@ -697,10 +715,10 @@ item ty ## _text_typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 } \
@@ -721,7 +739,7 @@ const char * ty ## _sndNode_string_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
 } \
@@ -744,10 +762,10 @@ item ty ## _text_sndNode_typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pads->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 } \
@@ -816,7 +834,7 @@ PDCI_node_t * Ppos_t_cachedNode_init(PDCI_node_t *node){
   /*  Setup node-type specific fields */ 
   node->child_cache = (PDCI_node_t **)PDCI_NEW_LIST(NUM_CHILDREN);
   if(node->child_cache == NULL)
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"Ppos_t_cachedNode_init","PADS/Galax ALLOC_ERROR");  
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Ppos_t_cachedNode_init","PADS/Galax ALLOC_ERROR");  
 
   return node;
 }
@@ -960,7 +978,7 @@ PDCI_node_t * Ploc_t_cachedNode_init(PDCI_node_t *node){
   /*  Setup node-type specific fields */ 
   node->child_cache = (PDCI_node_t **)PDCI_NEW_LIST(NUM_CHILDREN);
   if(node->child_cache == NULL)
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"Ploc_t_cachedNode_init","PADS/Galax ALLOC_ERROR");  
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Ploc_t_cachedNode_init","PADS/Galax ALLOC_ERROR");  
 
   return node;
 }
@@ -1090,7 +1108,7 @@ PDCI_node_t * Pbase_pd_cachedNode_init(PDCI_node_t *node){
   /*  Setup node-type specific fields */ 
   node->child_cache = (PDCI_node_t **)PDCI_NEW_LIST(NUM_CHILDREN);
   if(node->child_cache == NULL)
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"Pbase_pd_cachedNode_init","PADS/Galax ALLOC_ERROR");  
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pbase_pd_cachedNode_init","PADS/Galax ALLOC_ERROR");  
 
   return node;
 }
@@ -1192,7 +1210,7 @@ PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *node, childIndex idx)
     case 2:
       /* We need to know the value of errCode, so force validation. */
       if (P_ERR == PDCI_sndNode_make_valid(node)){
-	PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax failed to page node into memory in "); 
+	PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax failed to page node into memory in "); 
       }
       pd = node->rep;
 
@@ -1250,7 +1268,7 @@ PDCI_node_t * PDCI_structured_pd_cachedNode_init(PDCI_node_t *node){
   /*  Setup node-type specific fields */ 
   node->child_cache = (PDCI_node_t **)PDCI_NEW_LIST(NUM_CHILDREN);
   if(node->child_cache == NULL)
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"PDCI_structured_pd_cachedNode_init","PADS/Galax ALLOC_ERROR");  
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"PDCI_structured_pd_cachedNode_init","PADS/Galax ALLOC_ERROR");  
 
   return node;
 }
@@ -1367,7 +1385,7 @@ PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *node, childIndex 
     case 3:
       /* We need to know the value of errCode, so force validation. */
       if (P_ERR == PDCI_sndNode_make_valid(node)){
-	PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax failed to page node into memory in "); 
+	PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax failed to page node into memory in "); 
       }
       pd = node->rep;
 
@@ -1432,7 +1450,7 @@ PDCI_node_t * PDCI_sequenced_pd_cachedNode_init(PDCI_node_t *node){
   /*  Setup node-type specific fields */ 
   node->child_cache = (PDCI_node_t **)PDCI_NEW_LIST(NUM_CHILDREN);
   if(node->child_cache == NULL)
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"PDCI_sequenced_pd_cachedNode_init","PADS/Galax ALLOC_ERROR");  
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"PDCI_sequenced_pd_cachedNode_init","PADS/Galax ALLOC_ERROR");  
 
   return node;
 }
@@ -1566,7 +1584,7 @@ PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *node, childIndex i
     case 5:
       /* We need to know the value of errCode, so force validation. */
       if (P_ERR == PDCI_sndNode_make_valid(node)){
-	PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax failed to page node into memory in "); 
+	PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax failed to page node into memory in "); 
       }
       pd = node->rep;
 
@@ -1629,7 +1647,7 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *node)
   PDCI_node_t **result;
 
   if (!(result = PDCI_NEW_NODE_PTR_LIST(1))) {
-      PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax ALLOC_ERROR: in ");
+      PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax ALLOC_ERROR: in ");
   }
   return result;
 }
@@ -1703,7 +1721,7 @@ PDCI_pglx_id_t PDCI_error_getId(PDCI_node_t *node)
 { 
   PDCI_pglx_id_t id = {0,0};
   
-  PDCI_report_err(node->pads,P_LEV_FATAL,0, P_INVALID_FUNCTION_CALL,
+  PGLX_report_err(node->pads,P_LEV_FATAL,0, P_INVALID_FUNCTION_CALL,
 		  "PDCI_error_getId","Pads-galax node of name %s does not have a nodeid.",node->name);
   return id;  /* will never get here*/
 }
@@ -1712,10 +1730,10 @@ PDCI_pglx_id_t PDCI_error_getId(PDCI_node_t *node)
 item PDCI_error_typed_value(PDCI_node_t *node)
 {
   /*
-  PDCI_report_err(node->pads,P_LEV_FATAL,0, P_INVALID_FUNCTION_CALL,
+  PGLX_report_err(node->pads,P_LEV_FATAL,0, P_INVALID_FUNCTION_CALL,
 		  "PDCI_error_getId","PADS/Galax NOT_A_VALUE: typed_value called on structured type.Name: %s, kind: %s.",node->name,node->kind);
   */
-  PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"PDCI_error_typed_value","PADS/Galax NOT_A_VALUE: typed_value called on structured type.");
+  PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"PDCI_error_typed_value","PADS/Galax NOT_A_VALUE: typed_value called on structured type.");
   return 0;  /* will never get here*/
 } 
 
@@ -1723,7 +1741,7 @@ item PDCI_error_typed_value(PDCI_node_t *node)
    be reinitialized. */
 PDCI_node_t *PDCI_error_cachedNode_init(PDCI_node_t *node)
 {
-  PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"PDCI_error_cachedNode_init",
+  PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"PDCI_error_cachedNode_init",
 		  "PADS/Galax Error: Attempting to re-initialize cachedNode.");
   return 0;  /* will never get here*/
 } 
@@ -1755,9 +1773,7 @@ item PDCI_cstr_typed_value(PDCI_node_t *node)
 
   printf("cstr val: %s.\n",s);
   if (galax_atomicUntyped(s, &res)) {
-    /*    PDCI_report_err(node->pads,P_LEV_INFO,0, P_NO_ERR,
-	  "PDCI_cstr_typed_value","PADS/Galax exception raised.");*/
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"Pcstr_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pcstr_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
   }
   return res;
 }
@@ -1772,7 +1788,7 @@ item PDCI_cstr_sndNode_typed_value(PDCI_node_t *node)
   s   = (char *)node->rep;
 
   if (galax_atomicUntyped(s, &res)) {
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"Pcstr_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pcstr_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
   }
   return res;
 }
@@ -1791,7 +1807,7 @@ item Pchar_typed_value (PDCI_node_t *node)
   sfstrset(node->pads->tmp2, 0);
   sfprintf(node->pads->tmp2, "%c", c);
   if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) {
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"Pchar_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pchar_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
   }
   return res;
 }
@@ -1815,7 +1831,7 @@ item Pchar_sndNode_typed_value (PDCI_node_t *node)
   sfstrset(node->pads->tmp2, 0);
   sfprintf(node->pads->tmp2, "%c", c);
   if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) {
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"Pchar_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pchar_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
   }
   return res;
 }
@@ -1833,7 +1849,7 @@ item Pstring_typed_value (PDCI_node_t *node)
   sfstrset(node->pads->tmp2, 0);
   sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str);
   if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) {
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"Pstring_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pstring_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
   }
   return res;
 }
@@ -1857,7 +1873,7 @@ item Pstring_sndNode_typed_value (PDCI_node_t *node)
   sfstrset(node->pads->tmp2, 0);
   sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str);
   if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) {
-    PDCI_report_err(node->pads,P_LEV_INFO,0,P_FAILWITH_ERR,"Pstring_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pstring_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
   }
   return res;
 }

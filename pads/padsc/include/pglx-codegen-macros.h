@@ -705,15 +705,15 @@ res
 
   if (0!=RBuf_reserve (rep->_internal,(void **) (&(rep->elts)),sizeof(eltTy),arrayInfo->live_count+1,0)) 
     {
-      PDCI_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_allocElement",0);
+      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_allocElement",0);
     }
   if (0!=RBuf_reserve (pd->_internal,(void **) (&(pd->elts)),sizeof(eltPdTy),arrayInfo->live_count+1,0)) 
     {
-      PDCI_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
+      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
   if (0!=RBuf_reserve (arrayInfo->_internal_live,(void **) (&(arrayInfo->liveList)),sizeof(PDCI_childIndex_t),arrayInfo->live_count+1,0)) 
     {
-      PDCI_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
+      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
   *(elt_pdIN) = &pd->elts[arrayInfo->live_count];
   *(elt_repIN) = &rep->elts[arrayInfo->live_count];
@@ -735,20 +735,26 @@ P_OK;
   *(elt_pdIN) = calloc(1,sizeof(eltPdTy));
   if (0 == *(elt_pdIN))
     {
-      PDCI_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
+      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
+  if (P_ERR == eltTy ## _init(pads, (elt_repIN)) {
+    PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_SYS_ERR,#ty "_smartNode_allocElement",0);
+  }
 
   *(elt_repIN) = calloc(1,sizeof(eltTy));
   if (0 == *(elt_repIN))
     {
-      PDCI_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
+      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
+  if (P_ERR == eltPdTy ## _pd_init(pads, (elt_pdIN))) {
+    PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_SYS_ERR,#ty "_smartNode_allocElement",0);
+  }
 
   if (0!=RBuf_reserve (arrayInfo->_internal_live,(void **) (&(arrayInfo->liveList)),
 		       sizeof(PDCI_childIndex_t),arrayInfo->live_count+1,
 		       arrayInfo->max_elts)) 
     {
-      PDCI_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
+      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
 /* END_MACRO */
 
@@ -860,7 +866,7 @@ P_OK;
 			        SN_INS_PARAMS ST_PARAMS);
 
       if (res != P_READ_OK_DATA){
-	PDCI_report_err((padsIN),P_LEV_WARN,0, P_IO_ERR,
+	PGLX_report_err((padsIN),P_LEV_WARN,0, P_IO_ERR,
 		  #ty "_smartNode_eltRead","Reread failed at offset %ld.",(infoIN)->offset);
 	return res;
       }
@@ -1063,7 +1069,7 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
     if (0!=RBuf_reserve (arrayInfo->_internal,(void **) (&(arrayInfo->tmap)),
 			 sizeof(PDCI_smart_elt_info_t),(idxIN)+1,0)) 
       {
-	PDCI_report_err ((selfIN)->pads,P_LEV_FATAL,0,P_ALLOC_ERR,
+	PGLX_report_err ((selfIN)->pads,P_LEV_FATAL,0,P_ALLOC_ERR,
                           #ty "_smartNode_kthChild",0);
 	return 0; /* Never reached. */
       }
@@ -1097,10 +1103,8 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
 
     /* Was there an error? */
     if (P_READ_OK_DATA != res){
-      /* 
-       * What is the appropriate action? 
-       * Should we report the error?
-       */
+      PGLX_report_err((selfIN)->pads,P_LEV_FATAL,0,P_SMART_NODE_ERR,#ty "_smartNode_kthChildNamed",
+			"Element read failure due to error.");
       return 0; 
     }
 
@@ -1144,7 +1148,7 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
        * large, or something is wrong.
        */
       if (P_PS_isPartial(pd)){
-	PDCI_report_err((selfIN)->pads,P_LEV_FATAL,0,P_SMART_NODE_ERR,#ty "_smartNode_kthChildNamed",
+	PGLX_report_err((selfIN)->pads,P_LEV_FATAL,0,P_SMART_NODE_ERR,#ty "_smartNode_kthChildNamed",
 			"Array size meets or exceeds PDCI_MAX_CHILD_INDEX.");
 	return 0;
       }

@@ -386,6 +386,10 @@ struct PDCI_sequenced_pd_s {
 /* ================================================================================
  * Helper functions */
 
+Perror_t
+PGLX_report_err(P_t *pads, int level, Ploc_t *loc,
+  PerrCode_t errCode, const char *whatfn, const char *format, ...);
+
 /* Node new functions */
 
 PDCI_node_t * Pbase_pd_node_new(PDCI_node_t *parent, const char *name, 

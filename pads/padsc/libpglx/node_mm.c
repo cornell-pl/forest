@@ -5,7 +5,7 @@
 /* This should be modified to work the way the rest of the system works,
    but in the meantime ... */
 #define MM_FATAL(padsIN,s,WHATFN)\
-  PDCI_report_err(padsIN,P_LEV_INFO,0,P_FAILWITH_ERR,WHATFN,\
+  PGLX_report_err(padsIN,P_LEV_FATAL,0,P_FAILWITH_ERR,WHATFN,\
 		  "PADS/Galax: Fatal Error in Node Memory Manager: %s.",(s));
 
 struct NodeMM_s {

@@ -899,7 +899,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 							PL.PDCI_error_typed_value,
 							P.zero])]))
       (* Generate type-specific array info structure  *)
-      fun genArrayInfoStructED(ty) =
+      fun makeArrayInfoStructED(ty) =
 	  let val aiFields = [(base, sainfoTy, NONE),
 			      (params, P.makeTypedefPCT (PN.roParamsSuf ty), 
 			       SOME("Type-specific parameters to read related funcitons."))]
@@ -907,17 +907,17 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  in
 	      aiStructED
 	  end
+
       fun makeAllEDs(ty,eltTy,eltPdTy,eltMaskTy,cparams,stparams) = 
-	  makeEltAllocFun(ty, eltTy, eltPdTy)
-	  :: makeEltReadFun(ty, eltTy, eltPdTy, cparams, stparams)
-	  :: makeEltFreeFun(ty)
-	  :: makeEltPathWalkFun(ty,eltTy,eltPdTy,eltMaskTy)
-	  :: makeArrayInfoInitFun(ty,cparams,stparams)
-	  :: makeInitFun(ty,cparams,stparams)
-          :: makeKthChildFun(ty,eltTy)
-          :: makeKthChildNamedFun(ty)
-	  :: makeVTable(ty)
-	  :: [genArrayInfoStructED(ty)]
+	  [makeEltAllocFun(ty, eltTy, eltPdTy),
+	   makeEltReadFun(ty, eltTy, eltPdTy, cparams, stparams),
+	   makeEltFreeFun(ty),
+	   makeEltPathWalkFun(ty,eltTy,eltPdTy,eltMaskTy),
+	   makeArrayInfoInitFun(ty,cparams,stparams),
+	   makeInitFun(ty,cparams,stparams),
+           makeKthChildFun(ty,eltTy),
+           makeKthChildNamedFun(ty),
+	   makeVTable(ty)]
 	      
   end (* SmartNode struct *)
 

@@ -23,7 +23,7 @@
 #define PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, mIN, pdIN, repIN, kindIN, whatfn) \
   do {  \
     if (!(resultIN = PDCI_NEW_NODE((parentIN)->pads))) { \
-      PDCI_report_err((parentIN)->pads,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax ALLOC_ERROR"); \
+      PGLX_report_err((parentIN)->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,whatfn,"PADS/Galax ALLOC_ERROR"); \
     } \
     PDCI_INIT_NODE(resultIN,vtIN,(parentIN)->pads,parentIN,nameIN,mIN,pdIN,repIN,kindIN); \
   } while (0)
@@ -31,7 +31,7 @@
 #define PDCI_MK_TOP_NODE(resultIN, vtIN, padsIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
     if (!(resultIN = PDCI_NEW_NODE(padsIN))) { \
-      PDCI_report_err(padsIN,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax ALLOC_ERROR"); \
+      PGLX_report_err(padsIN,P_LEV_FATAL,0,P_FAILWITH_ERR,whatfn,"PADS/Galax ALLOC_ERROR"); \
     } \
     PDCI_INIT_NODE(resultIN,vtIN,padsIN,NULL,nameIN,mIN,pdIN,repIN,"document"); \
   } while (0)
@@ -123,15 +123,15 @@ do{\
 #define PDCI_NODE_CHECK(n, whatfn) \
 do { \
   if (!(n)) \
-    PDCI_report_err((n)->pads,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null"); \
+    PGLX_report_err((n)->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,whatfn,"PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null"); \
 } while (0)
 
 #define PDCI_NODE_VT_CHECK(n, whatfn) \
 do { \
   if (!n) \
-    PDCI_report_err((n)->pads,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null"); \
+    PGLX_report_err((n)->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,whatfn,"PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null"); \
   if (!n->vt) \
-    PDCI_report_err((n)->pads,P_LEV_INFO,0,P_FAILWITH_ERR,whatfn,"PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) "->vt null"); \
+    PGLX_report_err((n)->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,whatfn,"PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) "->vt null"); \
 } while (0)
 
 #else

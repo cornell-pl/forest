@@ -3797,10 +3797,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					@ List.map (fn (f,ty) => (f,ty,NONE)) cParams
 					@ List.concat (List.map mungeInfo stRPInfo) 
 
-			 val rpStructED = P.makeTyDefStructEDecl (rpFields, roParamsSuf name)
-		     (* val (pdStructDecls, pdTid) = cnvCTy pdStructED *)			       
 		     in
-			 [rpStructED]
+			 P.makeTyDefStructEDecl (rpFields, roParamsSuf name)
 		     end
 
 		 fun genRPInitFun(name,cParams,stRPInfo) =
@@ -4247,8 +4245,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				@ (stcloseSsFun false)
                                 @ [returnDoneS])]
 
-                 val readOneFunEDs = genRPStructED(name,cParams,stRPInfo)
-				     @ genRPInitFun(name,cParams,stRPInfo)
+                 val readOneFunEDs = genRPInitFun(name,cParams,stRPInfo)
 				     @ genFinalChecksFun(fcName, cParams, mPCT, pdPCT, canonicalPCT, 
 						       finalChecksBodySs)
 				     @ genROInitFun(roInitName, cParams, mPCT, pdPCT, canonicalPCT, 
@@ -4265,6 +4262,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val _ = popLocalEnv()
 
 
+		 val (roParamsStructDecls,_) = cnvCTy (genRPStructED(name,cParams,stRPInfo))
+								  
                  val readEDs = initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
 			     @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs @ readOneFunEDs
 
@@ -4317,9 +4316,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  G.makeNodeVtable(name),
 			  G.makeCachedNodeVtable(name),
 			  G.makeSNDNodeVtable(name)]
-			  @ G.SmartNode.makeAllEDs(name,elemName,pdName,mName,cParams,stparams)
+			  @ (if (lookupContainsRecord baseTy)
+			    then G.SmartNode.makeAllEDs(name,elemName,pdName,mName,cParams,stparams)
+			    else [])
 		     end
-			 
+				  			 
 	         val galaxEDs = makeGalaxEDs(name)
 				
 
@@ -4572,10 +4573,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
       		 val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
+		 val galaxStructDecls = 
+		     if !(#outputXML(PInput.inputs)) andalso (lookupContainsRecord baseTy)
+		     then #1(cnvCTy (G.SmartNode.makeArrayInfoStructED(name)))
+		     else []
+
 	     in
 		   canonicalDecls
 		 @ mStructDecls
                  @ pdStructDecls
+		 @ roParamsStructDecls
+		 @ galaxStructDecls
 		 @ (emitRead readEDs)
 		 @ (emitPred isFunEDs)
                  @ (emitAccum accumEDs)

@@ -58,6 +58,9 @@ signature GENGALAX = sig
       val makeVTable:  string ->
 		       ParseTree.externalDecl			
     
+      val makeArrayInfoStructED: string ->
+				 ParseTree.externalDecl			
+				 
       val makeAllEDs:  string * string  * string * string * cparams * stparams->
 		       ParseTree.externalDecl list
   end

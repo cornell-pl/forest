@@ -63,7 +63,7 @@ void P_sn_handleFailure(P_t *pads, PDCI_smart_node_t *node,
 			int error_level,
 			const char *descr)
 {
-  PDCI_report_err(pads,P_LEV_FATAL,0,P_SMART_NODE_ERR,
+  PGLX_report_err(pads,P_LEV_FATAL,0,P_SMART_NODE_ERR,
 		  "(via) P_sn_handleFailure",descr);
 }
 
@@ -109,12 +109,12 @@ PDCI_smart_array_info_t *PDCI_makeSmartArrayInfo(P_t *pads,int max_elts, int siz
   arrayInfo->_internal = RMM_new_rbuf (P_rmm_nozero (pads));
   if (0==(arrayInfo->_internal)) 
     {
-      PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,"");
+      PGLX_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,"");
     }
   arrayInfo->_internal_live = RMM_new_rbuf (P_rmm_nozero (pads));
   if (0==(arrayInfo->_internal_live)) 
     {
-      PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,"");
+      PGLX_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,"");
     }
   arrayInfo->max_elts = max_elts;
 
