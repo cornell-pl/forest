@@ -388,16 +388,13 @@ SHARED_ASTLIB_D = $(STATIC_ASTLIB_D)
 endif
 
 DYNAMIC_LIBS_O = -L$(INSTALL_LIBDIR)
-ifdef USE_GALAX
-DYNAMIC_LIBS_O += -lpglx
-endif
 DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
 # mff may need to change next line
 # Note: PCRE_LIB_DIR needs to be defined in 
 # any makefile using galax.
 DYNAMIC_LIBS_O += \
-  -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lcamlidl \
+  -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c -lpcre_stubs
 endif
