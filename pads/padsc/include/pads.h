@@ -2821,12 +2821,12 @@ PDC_error_t PDC_int32_acc_map_report(PDC_t *pdc, const char *prefix, const char 
 
 /*
  * PDC_nerr_acc_report is used to report on the accumulation of the nerr field
- * of a struct, union, array, etc.  The accumulator used must be a PDC_int32_acc.
- * This is very similar to calling PDC_int32_acc_report, it just has slightly
+ * of a struct, union, array, etc.  The accumulator used must be a PDC_uint32_acc.
+ * This is very similar to calling PDC_uint32_acc_report, it just has slightly
  * different formatting since no bad values are expected.
  */
 PDC_error_t PDC_nerr_acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
-				PDC_int32_acc *a);
+				PDC_uint32_acc *a);
 
 /* Remaining accumulator types: only if configured */ 
 #if PDC_CONFIG_ACCUM_FUNCTIONS > 0

@@ -109,12 +109,17 @@ struct
   val m_endian     = "m_endian"
   val littleEndian = PDC_littleEndian
   val bigEndian    = PDC_bigEndian
-  val uint32       = P.makeTypedefPCT "PDC_uint32"
-  val intAct       = "PDC_int32_acc"
   val flags_t      = P.makeTypedefPCT "PDC_flags_t"
-  val intCvtPCT    = P.makeTypedefPCT "PDC_int32_map_fn"
-  val intAccPCT    = P.makeTypedefPCT "PDC_int32_acc"
+
+  val uint32PCT    = P.makeTypedefPCT "PDC_uint32"
+  val uint32Act    = "PDC_uint32_acc"
+  val uint32AccPCT = P.makeTypedefPCT "PDC_uint32_acc"
+
   val intPCT       = P.makeTypedefPCT "PDC_int32"
+  val intAct       = "PDC_int32_acc"
+  val intAccPCT    = P.makeTypedefPCT "PDC_int32_acc"
+  val intCvtPCT    = P.makeTypedefPCT "PDC_int32_map_fn"
+
   val sfioPCT      = P.ptrPCT (P.makeTypedefPCT "Sfio_t")
 
   fun fmtChar(chr:PT.expression) =

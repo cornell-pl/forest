@@ -1643,7 +1643,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       (* Generate parse description *)
 		      val baseEDPCT = P.makeTypedefPCT(lookupTy(baseTy,pdSuf, #pdname))
                       val pdFields  = [(pstate, PL.flags_t, NONE), (errCode, PL.errCodePCT, NONE),
-				       (loc, PL.locPCT,NONE), (nerr, PL.uint32, NONE),
+				       (loc, PL.locPCT,NONE), (nerr, PL.uint32PCT, NONE),
 				       (base, baseEDPCT, SOME "Base parse description")]
 		      val pdED      = P.makeTyDefStructEDecl (pdFields, pdSuf name)
 		      val (pdDecls,pdTid)  = cnvCTy pdED
@@ -1948,7 +1948,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			  [(name,P.makeTypedefPCT(lookupTy (pty,pdSuf,#pdname)),NONE)]
 		      fun genEDBrief e = []
 		      val auxEDFields = [(pstate, PL.flags_t, NONE), (errCode, PL.errCodePCT, NONE),
-					 (loc, PL.locPCT, NONE), (nerr, PL.uint32, NONE)]
+					 (loc, PL.locPCT, NONE), (nerr, PL.uint32PCT, NONE)]
 		      val pdFields = auxEDFields @ (mungeFields genEDFull genEDBrief genMMan fields)
 		      val pdStructED = P.makeTyDefStructEDecl (pdFields, pdSuf name)
 		      val (pdDecls,pdTid) = cnvCTy pdStructED 
@@ -1971,7 +1971,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			  else []
 		      fun genAccBrief e = []
 		      val accFields = mungeFields genAccFull genAccBrief genAccMan fields
-		      val auxAccFields = [(nerr, PL.intAccPCT, NONE)]
+		      val auxAccFields = [(nerr, PL.uint32AccPCT, NONE)]
 		      val accED = P.makeTyDefStructEDecl (auxAccFields @ accFields, accSuf name)
                       val accPCT = P.makeTypedefPCT (accSuf name)			 
 
@@ -2036,7 +2036,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val canonicalFields = mungeFields genRepFull genRepBrief genRepMan fields
 		      val canonicalFields = if List.length canonicalFields = 0 
 			                    then (PE.warn ("PStruct "^structName^" does not contain any non-omitted fields.\n");
-						 [(dummy, PL.uint32, SOME "Dummy field inserted to avoid empty struct")])
+						 [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty struct")])
 
 					    else canonicalFields
 		      val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
@@ -2415,7 +2415,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       (* -- generate accumulator init, reset, cleanup, and report functions *)
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
-			      val auxFields = chk3Pfun(theSuf PL.intAct, getFieldX(acc,nerr))
+			      val auxFields = chk3Pfun(theSuf PL.uint32Act, getFieldX(acc,nerr))
 			      fun genAccTheFull {pty: PX.Pty, args: pcexp list, name: string, 
 						 isVirtual: bool, isEndian: bool, 
 						 isRecord, containsRecord, largeHeuristic: bool,
@@ -2426,7 +2426,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  else []
 			      fun genAccTheBrief e = []
 
-			      val theDeclSs = [P.varDeclS(PL.uint32, nerr, P.zero)]
+			      val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 			      val theFields = mungeFields genAccTheFull genAccTheBrief (genAccTheMan theSuf) fields
 			      val theReturnS = genReturnChk (PT.Id nerr)
 			      val theBodySs = theDeclSs @ auxFields @ theFields @ [theReturnS]
@@ -2442,7 +2442,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       (* -- generate accumulator function *)
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_pd*, T* ,) *)
 		      val addFun = (addSuf o accSuf) name
-		      val addDeclSs = [P.varDeclS(PL.uint32, nerr, P.zero),  P.varDeclS'(PL.base_pdPCT, tpd)]
+		      val addDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero),  P.varDeclS'(PL.base_pdPCT, tpd)]
 		      val initTpdSs = [P.assignS(P.dotX(PT.Id tpd, PT.Id errCode), PL.PDC_NO_ERROR)]
 
 		      fun genAccAddFull {pty: PX.Pty, args: pcexp list, name: string, 
@@ -2470,9 +2470,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      List.concat(List.map doOne ctNoptEs)
 			  end
 
-		      val addNErrSs = chkAddFun(addSuf PL.intAct, getFieldX(acc,nerr), 
+		      val addNErrSs = chkAddFun(addSuf PL.uint32Act, getFieldX(acc,nerr), 
 						P.addrX(PT.Id tpd),
-						PT.Cast(P.ptrPCT PL.intPCT, getFieldX(pd,nerr)))
+						getFieldX(pd,nerr))
 
 		      val addFields = mungeFields genAccAddFull genAccAddBrief genAccAddMan fields
 		      val addReturnS = genReturnChk (PT.Id nerr)
@@ -2755,7 +2755,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val (unionPDDecls, updTid) = cnvCTy unionPD
 		     val unionPDPCT = P.makeTypedefPCT((unSuf o pdSuf) name)
 		     val structEDFields = [(pstate, PL.flags_t, NONE), (errCode, PL.errCodePCT, NONE),
-				  	   (loc, PL.locPCT, NONE), (nerr, PL.uint32, NONE),
+				  	   (loc, PL.locPCT, NONE), (nerr, PL.uint32PCT, NONE),
 					   (tag, tagPCT, NONE), (value, unionPDPCT, NONE)]
 		     val pdStructED = P.makeTyDefStructEDecl (structEDFields, pdSuf name)
 		     val (pdStructPDDecls, pdTid) = cnvCTy pdStructED
@@ -3139,7 +3139,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       (* -- generate accumulator init, reset, and cleanup functions *)
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
-			      val theDeclSs = [P.varDeclS(PL.uint32, nerr, P.zero)]
+			      val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 			      fun genAccTheFull {pty :PX.Pty, args:pcexp list, name:string, 
 						 isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool,
 						 pred:pcexp option, comment} = 
@@ -3163,7 +3163,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       (* -- generate accumulator function *)
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_pd*, T* ) *)
 		      val addFun = (addSuf o accSuf) name
-		      val addDeclSs = [P.varDeclS(PL.uint32, nerr, P.zero), P.varDeclS'(PL.base_pdPCT, tpd)]
+		      val addDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero), P.varDeclS'(PL.base_pdPCT, tpd)]
 		      val initTpdSs = [P.assignS(P.dotX(PT.Id tpd, PT.Id errCode), 
 						 P.condX(P.eqX(P.arrowX(PT.Id pd, PT.Id errCode),
 							       PL.PDC_UNION_MATCH_FAILURE),
@@ -3539,11 +3539,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  val pdFields = [(pstate, PL.flags_t, NONE), 
 				 (errCode, PL.errCodePCT, NONE),
 				 (loc, PL.locPCT, NONE), 
-				 (nerr, PL.uint32,    SOME "Number of array errors"),
-				 (neerr, PL.uint32,   SOME "Number of element errors"),
-				 (firstError, PL.uint32, 
+				 (nerr, PL.uint32PCT,    SOME "Number of array errors"),
+				 (neerr, PL.uint32PCT,   SOME "Number of element errors"),
+				 (firstError, PL.uint32PCT, 
 				    SOME "if errCode == ARRAY_ELEM_ERR, index of first error"),
-				 (length, PL.uint32, NONE),
+				 (length, PL.uint32PCT, NONE),
 				 (elts, P.ptrPCT(elemEdPCT), NONE),
 				 (internal, P.ptrPCT PL.rbufferPCT, NONE)] 
 		 val pdStructED = P.makeTyDefStructEDecl (pdFields, pdSuf name)
@@ -3559,7 +3559,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			 [(array, P.makeTypedefPCT acc, SOME "Accumulator for all array elements"),
 			  (arrayDetail, P.arrayPCT (P.intX numElemsToTrack, P.makeTypedefPCT acc), 
 			   SOME ("Accumulator for first "^(Int.toString numElemsToTrack)^" array elements"))]
-		 val accFields = (length, PL.intAccPCT, SOME "Accumulator for array length")::baseFields
+		 val accFields = (length, PL.uint32AccPCT, SOME "Accumulator for array length")::baseFields
 		 val accED = P.makeTyDefStructEDecl (accFields, accSuf name)
 		 val accPCT = P.makeTypedefPCT (accSuf name)			
 
@@ -3587,7 +3587,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     in
 			 pushLocalEnv();
 			 ignore(insTempVar(index, P.int));
-			 ignore(insTempVar(length, PL.uint32));
+			 ignore(insTempVar(length, PL.uint32PCT));
 			 ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
 			 ignore(insTempVar(elts, P.ptrPCT elemRepPCT)); 
 			 expEqualTy(lower, CTintTys, errMsg "Lower");
@@ -3700,7 +3700,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
 		 (* array: Generate canonical representation *)
-		 val canonicalFields = [(length, PL.intPCT, NONE), 
+		 val canonicalFields = [(length, PL.uint32PCT, NONE), 
 				        (elts, P.ptrPCT elemRepPCT, NONE),
 					(internal, P.ptrPCT PL.rbufferPCT, NONE) ]
 		 val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
@@ -4232,8 +4232,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				   doArraySs @ doArrayDetailSs
 			       end(* end SOME acc case *))
 			 val lengthX = P.addrX(P.arrowX(PT.Id acc, PT.Id length))
-			 val doLength = chk3Pfun(theSuf PL.intAct, lengthX)
-			 val theDeclSs = [P.varDeclS(PL.uint32, nerr, P.zero)]
+			 val doLength = chk3Pfun(theSuf PL.uint32Act, lengthX)
+			 val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 			 val theReturnS = genReturnChk (PT.Id nerr)
 			 val theBodySs = theDeclSs @ doLength @ doElems @ [theReturnS]
 			 val theFunED = gen3PFun(theFun, accPCT, theBodySs)
@@ -4245,7 +4245,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  fun genAdd () = 
 		     let val theSuf = addSuf
 			 val theFun = (theSuf o accSuf) name
-			 val theDeclSs = [P.varDeclS(PL.uint32, nerr, P.zero), P.varDeclS'(PL.base_pdPCT, tpd)]
+			 val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero), P.varDeclS'(PL.base_pdPCT, tpd)]
 			 val initTpdSs = [P.assignS(P.dotX(PT.Id tpd, PT.Id errCode), 
 						    P.arrowX(PT.Id pd, PT.Id errCode))]
                          val doElems = 
@@ -4272,7 +4272,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			       in
 				   doArrayDetailSs
 			       end(* end SOME acc case *))
-			 val doLength = chkAddFun(theSuf PL.intAct, getFieldX(acc,length), P.addrX(PT.Id tpd), 
+			 val doLength = chkAddFun(theSuf PL.uint32Act, getFieldX(acc,length), P.addrX(PT.Id tpd), 
 						  getFieldX(rep,length))
 			 val theReturnS = genReturnChk (PT.Id nerr)
 			 val theBodySs = theDeclSs @ initTpdSs @ doLength @ doElems @ [theReturnS]
@@ -4292,7 +4292,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     let val reportFun = (reportSuf o accSuf) name
 			 val lengthX = P.arrowX(PT.Id acc, PT.Id length)
 			 val doLengthSs = [chkPrint(
-					     callIntPrint((ioSuf o reportSuf) PL.intAct, PT.String "Array lengths", 
+					     callIntPrint((ioSuf o reportSuf) PL.uint32Act, PT.String "Array lengths", 
 						 	 PT.String "lengths", P.intX ~1, P.addrX lengthX)) ]
 			 val maxX = P.dotX(lengthX, PT.Id "max")
 			 val limitX = PT.QuestionColon(P.ltX(maxX,P.intX 10), maxX, P.intX 10)

@@ -4412,7 +4412,7 @@ PDC_char_acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
 
 PDC_error_t
 PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
-		       PDC_int32_acc *a)
+		       PDC_uint32_acc *a)
 {
   int                   i, sz, rp;
   PDC_uint64            cnt_sum;
@@ -4420,7 +4420,7 @@ PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
   double                track_pcnt;
   double                elt_pcnt;
   Void_t                *velt;
-  PDC_int32_dt_elt_t *elt;
+  PDC_uint32_dt_elt_t   *elt;
 
   PDC_TRACE(pdc->disc, "PDC_nerr_acc_report2io called");
   if (!prefix || *prefix == 0) {
@@ -4437,10 +4437,10 @@ PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
   if (a->good == 0) {
     return PDC_OK;
   }
-  PDC_int32_acc_fold_psum(a);
+  PDC_uint32_acc_fold_psum(a);
   sz = dtsize(a->dict);
   rp = (sz < a->max2rep) ? sz : a->max2rep;
-  dtdisc(a->dict,   &PDC_int32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtdisc(a->dict,   &PDC_uint32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %ld", what, a->min);
   sfprintf(outstr, " max %ld", a->max);
@@ -4458,7 +4458,7 @@ PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
 	       rp-i, rp, a->pcnt2rep);
       break;
     }
-    elt = (PDC_int32_dt_elt_t*)velt;
+    elt = (PDC_uint32_dt_elt_t*)velt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
     sfprintf(outstr, "        val: %10ld", elt->key.val);
     sfprintf(outstr, " count: %10llu pcnt-of-total-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
@@ -4470,13 +4470,13 @@ PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
 	   cnt_sum, cnt_sum_pcnt);
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
-  dtdisc(a->dict,   &PDC_int32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  dtdisc(a->dict,   &PDC_uint32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
   return PDC_OK;
 }
 
 PDC_error_t
 PDC_nerr_acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
-		    PDC_int32_acc *a)
+		    PDC_uint32_acc *a)
 {
   Sfio_t *tmpstr;
   PDC_error_t res;
@@ -4713,7 +4713,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
 #gen_include "padsc-internal.h"
 #gen_include "padsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.101 2003-09-11 19:25:28 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.102 2003-09-12 19:04:35 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5642,7 +5642,7 @@ PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
 	  pos->unit = "*pos not found*";
 #ifndef NDEBUG
 	  goto err_check; /* XXX_REMOVE */
-endif
+#endif
 	  return PDC_ERR;
 	}
 	if (elt->len) {
