@@ -22,6 +22,7 @@ rbuftest1 :: rbuftest1.c  -lpadsc
 
 mk_ex_data_libtest2 :: mk_ex_data_libtest2.c
 
-dttest      :: dttest.c     -lpadsc
-accumtest   :: accumtest.c  -lpadsc
+dttest         :: dttest.c        -lpadsc
+accumtest      :: accumtest.c     -lpadsc
+test_readint   :: test_readint.c  readinttest.c -lpadsc
 

@@ -10,7 +10,7 @@
 #gen_include "libpadsc-macros-gen.h"
 #gen_include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.23 2002-10-01 02:01:52 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.24 2002-10-01 03:53:07 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -598,9 +598,21 @@ PDC_BINT_READ_FN(PDC_buint64_read, PDC_uint64, 8, 7);
 /* ********************************** END_HEADER ********************************** */
 #gen_include "libpadsc-acc-macros-gen.h"
 
+PDC_INT_ACCUM(PDC_int8, "d");
+
+PDC_INT_ACCUM(PDC_uint8, "u");
+
+PDC_INT_ACCUM(PDC_int16, "d");
+
+PDC_INT_ACCUM(PDC_uint16, "u");
+
 PDC_INT_ACCUM(PDC_int32, "ld");
 
 PDC_INT_ACCUM(PDC_uint32, "lu");
+
+PDC_INT_ACCUM(PDC_int64, "lld");
+
+PDC_INT_ACCUM(PDC_uint64, "llu");
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
