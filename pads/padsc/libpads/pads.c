@@ -5943,7 +5943,8 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
     elt = (PDCI_string_dt_elt_t*)velt;
     elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->len_accum.good);
     sfprintf(outstr, "        val: ");
-    sfprintf(outstr, "%-.*s", elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len));
+    /*    sfprintf(outstr, "%-.*s", elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len)); */
+    sfprintf(outstr, "%s", P_qfmt_cstr_n(elt->key.str, elt->key.len));
     sfprintf(outstr, "");
     pad = a->len_accum.max - elt->key.len;
     sfprintf(outstr, "%-.*s", pad, PDCI_spaces);
@@ -6598,7 +6599,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.177 2004-11-11 07:54:04 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.178 2004-12-14 20:35:39 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
