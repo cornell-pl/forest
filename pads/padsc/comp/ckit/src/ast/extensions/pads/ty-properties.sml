@@ -8,12 +8,13 @@ struct
                       | Variable
 
    type argList = string list * ParseTree.expression list
-   type labelInfo = string * string * argList 
+   type labelInfo = string * string * argList (* label name, label type, supplied arguments *)
 
    datatype compoundSize =  Base of diskSize | Typedef of diskSize 
                           | Struct of (labelInfo option * diskSize) list 
                           | Union of diskSize list 
-                          | Array of {elem : diskSize, sep : diskSize, term : diskSize, length : diskSize}
+                          | Array of {baseTy : string, args : argList,
+				      elem : diskSize, sep : diskSize, term : diskSize, length : diskSize}
                           | Enum of diskSize
 
    datatype memChar = Static | Dynamic
@@ -39,6 +40,19 @@ struct
 							             P.plusX(erecs, ParseTree.IntConst y2))
      | add (Param(ps1,s1,ebytes1, erecs1), Param(ps2,s2,ebytes2,erecs2)) = 
              Param(ps1, NONE, P.plusX(ebytes1, ebytes2), P.plusX(erecs1, erecs2))
+
+   (* scale first argument by first first component of second;
+      using byte size to represent array repetition. *)
+   fun scale (Variable, _ ) = Variable 
+     | scale (_, Variable ) = Variable 
+     | scale (Size(x1,y1), Size(rep,_)) = Size(IntInf.*(x1, rep), IntInf.*(y1, rep))
+     | scale (Size(x1,y1), Param(ps, s, rep, _)) = Param(ps, s, P.timesX(ParseTree.IntConst x1, rep),
+							        P.timesX(ParseTree.IntConst y1, rep))
+     | scale (Param(ps, s, rep, _), Size(x2,y2)) = Param(ps, s, P.timesX(rep, ParseTree.IntConst x2),
+							          P.timesX(rep, ParseTree.IntConst y2))
+     | scale (Param(ps1,s1,ebytes1, erecs1), Param(ps2,s2,rep,_)) = 
+             Param(ps1, NONE, P.timesX(ebytes1, rep), P.plusX(erecs1, rep))
+
 
 
    fun mergeDiskSize f (x,y) = case (x,y) 

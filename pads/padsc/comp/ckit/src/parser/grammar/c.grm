@@ -1210,5 +1210,5 @@ pEnum:
  ) 
 
 pSelect:
- PSELECT LPAREN pushScope pName pName RPAREN LCURLY expr popScope
- (ExternalDeclExt(PX.PSelect {tyName = pName1, varName = pName2, path = expr}))
+ PSELECT pName LPAREN pushScope pName pName RPAREN LCURLY expr popScope
+ (ExternalDeclExt(PX.PSelect {selName = pName1, tyName = pName2, varName = pName3, path = expr}))

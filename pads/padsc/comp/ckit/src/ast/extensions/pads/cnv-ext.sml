@@ -785,6 +785,26 @@ structure CnvExt : CNVEXT = struct
 		      results
 		  end
 
+              fun evalExprNoErrs e = 
+		  let val () = (Error.warningsEnabled errorState false;
+				Error.errorsEnabled errorState false)
+		      val result = #1(evalExpr e)
+		      val () = (Error.warningsEnabled errorState true;
+				Error.errorsEnabled errorState true)
+		  in
+		      result
+		  end
+	      
+	      fun evalArgList(args) : IntInf.int list =
+		  let fun doOne e = 
+		        let val resOpt = evalExprNoErrs e
+			in
+			    case resOpt of NONE => raise Fail "Expected a closed expression." | SOME res => res
+			end
+		  in
+		      List.map doOne args
+		  end
+
               fun reduceSizeSpec (cFormals, args, sizeSpec) = 
 		  let fun g (formals, exp, recExp) = 
 			  let val subList = ListPair.zip(formals, args)
@@ -792,12 +812,8 @@ structure CnvExt : CNVEXT = struct
 			      val rrecExp = PTSub.substExps subList recExp
 			  in
       			      if  (PTSub.expIsClosed(cFormals, rExp)) andalso (PTSub.expIsClosed(cFormals, rrecExp)) then
-				  let val () = (Error.warningsEnabled errorState false;
-						 Error.errorsEnabled errorState false)
-				      val cval = #1(evalExpr rExp)
-				      val crecval = #1(evalExpr rrecExp)
-				      val () = (Error.warningsEnabled errorState true;
-						Error.errorsEnabled errorState true)
+				  let val cval = evalExprNoErrs rExp
+				      val crecval = evalExprNoErrs rrecExp
 				  in
 				      case (cval, crecval)
 			              of (NONE,NONE) => TyProps.Param(cFormals, NONE, rExp,rrecExp)
@@ -827,6 +843,9 @@ structure CnvExt : CNVEXT = struct
 		  in
 		      reduceSizeSpec(cFormals, args, sizeSpec)
 		  end
+
+	      fun coreArraySize (elemSize, sepSize, rep) = 
+		  TyProps.scale(TyProps.add(elemSize, sepSize), rep)
 
               fun mungeParam(pcty:pcty, decr:pcdecr) : string * pcty = 
 		  let val (act, nOpt) = CTcnvDecr(pcty, decr)
@@ -3281,7 +3300,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, 
                             largeHeuristic, isFile : bool, args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
-	     let val length = PNames.arrayLen
+	     let 
+		 val cParams : (string * pcty) list = List.map mungeParam params
+		 val paramNames = #1(ListPair.unzip cParams)
+		 val length = PNames.arrayLen
                  val elts = PNames.arrayElts
                  val internal = "_internal"
 		 val element = "element"
@@ -3491,24 +3513,141 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		 val accED = P.makeTyDefStructEDecl (accFields, accSuf name)
 		 val accPCT = P.makeTypedefPCT (accSuf name)			
 
+          
+                 (* -- process constriants *)
+                 fun chkForallConstraint (r as {index, range, body}) = 
+		     let val subList = [(length, fieldX(rep,length)), 
+					(name, fieldX(rep,elts)),
+					(elts, fieldX(rep,elts))]
+			 val (lower, upper) = 
+			     (case range 
+			      of PX.ArrayName n => (
+				 (if n = name orelse n = elts then ()
+				  else PE.error ("Array name in bound expression ("^
+						 n^") does not match the name "^
+						 "of the array (must use '"^ name ^ "' or 'elts').")
+				      ); (P.zero, PT.Id length))
+			      | PX.Bounds(lower, upper) => (lower,upper))
+			 val modBodyX = PTSub.substExps subList body
+			 val modLowerX = PTSub.substExps subList lower
+			 val modUpperX = PTSub.substExps subList upper
+			 fun errMsg which = (fn s => 
+					     (which^" bound for forall expression for array "^
+					      name ^" has type"^s^". Expected type int."))
+		     in
+			 pushLocalEnv();
+			 ignore(insTempVar(index, P.int));
+			 ignore(insTempVar(length, PL.uint32));
+			 ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
+			 ignore(insTempVar(elts, P.ptrPCT elemRepPCT)); 
+			 expEqualTy(lower, CTintTys, errMsg "Lower");
+			 expEqualTy(lower, CTintTys, errMsg "Upper");
+			 expEqualTy(body, CTintTys, fn s=>("Forall expression for array "^
+							   name ^" has type "^s^". Expected "^
+							   "type int."));
+			 popLocalEnv();
+			 {index=index, lower=modLowerX, upper=modUpperX, body=modBodyX}
+		     end
+
+                 (* new scope needed for analysis of array constraints*)
+		 val _ = pushLocalEnv()                                        (* create new scope *)
+		 val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
+
+                 val (sepXOpt, termXOpt, arrayXOpt, genXOpt, sepTermDynamicCheck) = 
+                      let fun doOne (constr:pcexp PX.PConstraint) = 
+                              case constr 
+                              of PX.Sep exp => (
+				 expEqualTy(exp, CTintTys,fn s=>("Separator expression for array "^
+								 name ^" has type "^s^". Expected "^
+								 "type char."));
+				 let val pTyName = PL.charlit
+				     val readFun = readSuf pTyName
+				     val scanFun = SOME(Atom.atom(scanSuf pTyName))
+				     val writeFun = lookupLitWrite pTyName
+				     val (valOpt,_,_,_) = evalExpr exp
+				 in
+				    (SOME (exp, valOpt, readFun, scanFun, writeFun), NONE,NONE,NONE)
+                                 end
+
+                              (* end Sep case *))
+                              |  PX.Term exp => (
+				 expEqualTy(exp, CTintTys,fn s=>("Terminator expression for array "^
+								 name ^" has type "^s^". Expected "^
+								 "type char."));
+                                 let val pTyName = PL.charlit 
+				     val readFun = readSuf pTyName
+				     val scanFun = SOME(Atom.atom(scanSuf pTyName))
+				     val writeFun = lookupLitWrite pTyName
+				     val (valOpt,_,_,_) = evalExpr exp
+				 in
+				   (NONE, SOME (exp,valOpt,readFun,scanFun,writeFun), NONE, NONE)
+                                 end
+                              (* end Term case *))
+                              |  PX.Forall (r as {index,range,body}) => 
+				  (NONE, NONE, SOME r, NONE) (* defer checking until after rep generated *)
+			      |  PX.General exp => (
+				 expEqualTy(exp, CTintTys,fn s=>("General constraint for array "^
+								 name ^" has type "^s^". Expected "^
+								 "type int."));
+				 (NONE, NONE, NONE, SOME exp)
+                              (* end General case *))
+			  val constrs = List.map doOne constraints
+			  fun mergeOpt which (o1,o2) = 
+			      case (o1,o2) 
+			      of (NONE,NONE) => NONE
+			      |  (NONE, SOME q) => SOME q
+			      |  (SOME p, NONE) => SOME p
+                              |  (SOME p, SOME q) => (PE.error("Multiple "^which^" clauses."); SOME p)
+                          fun mergeAll ((a,b,c,d),(ra,rb,rc,rd)) =
+			      (mergeOpt "separator"  (a,ra),
+                               mergeOpt "terminator" (b,rb),
+                               mergeOpt "array"      (c,rc),
+                               mergeOpt "general"    (d,rd))
+			  val (sepXOpt, termXOpt, arrayXOpt, genXOpt) = 
+			      List.foldr mergeAll (NONE,NONE,NONE,NONE) constrs
+			  val sepTermErrorMsg = "Psep and Pterm expressions for Parray "^ name^
+							 " have the same value."
+			  val sepTermDynamicCheck = 
+			      case (sepXOpt, termXOpt) 
+			      of (SOME(_, SOME i, _, _, _), SOME(_, SOME j, _, _, _)) => 
+				  if i = j then (PE.error (sepTermErrorMsg^"."); [])
+				  else []
+			      | (SOME(sepX, _, _, _, _), SOME(termX, _, _, _, _)) => 
+				      [PT.IfThen(P.eqX(sepX,termX),
+						 PL.userErrorS(PT.Id pdc, locX, 
+							       PL.PDC_ARRAY_SEP_TERM_SAME_ERR, readName, 
+							       PT.String (sepTermErrorMsg^": %c"), [sepX]))]
+			      |  (_,_) => []
+		      in
+			  (sepXOpt, termXOpt, arrayXOpt, genXOpt, sepTermDynamicCheck)
+                      end
+		 val _ = popLocalEnv()
 
 	         (* Calculate and insert type properties into type table *)
                  val baseMemChar = lookupMemChar baseTy
 		 val arrayMemChar = TyProps.Dynamic (* at the moment, all arrays are dynamically allocated. *)
-                 val baseDiskSize = lookupDiskSize baseTy
-                 val arrayDiskSize = case (maxConstOpt, minConstOpt, baseDiskSize)
-		                     of (SOME min, SOME max, TyProps.Size (n,r)) => 
-					 if min = max then TyProps.Size(IntInf.*(n, max), IntInf.*(r, max))
-					 else TyProps.Variable
-				     | _ => TyProps.Variable
+                 val baseDiskSize = computeDiskSize(name, paramNames, baseTy,args)
+                 val arrayRep = case sizeSpec 
+		                     of NONE => TyProps.Variable  (* unbounded array *)
+				     |  SOME (PX.SizeInfo{min,max,maxTight}) => 
+					  if not maxTight then TyProps.Variable  (* lower and upper bounds differ *)
+					  else (case (maxConstOpt, minConstOpt)
+					        of (SOME min, SOME max) =>  (* constant size given: maxTight => min = max *)
+						     TyProps.Size(max, IntInf.fromInt 0)
+					        | _ => TyProps.Param(paramNames, NONE, valOf max, P.zero)(* case max *))
+		 val sepSize  = case sepXOpt of NONE => TyProps.mkSize(0,0) | SOME _ => TyProps.mkSize(1,0)
+		 val termSize  = case termXOpt of NONE => TyProps.mkSize(0,0) | SOME _ => TyProps.mkSize(1,0)
+		 val arrayDiskSize = TyProps.add(coreArraySize(baseDiskSize, sepSize,arrayRep), termSize)
 		 val contR = lookupContainsRecord baseTy 
 		 val lH = contR orelse (lookupHeuristic baseTy)
                  val numArgs = List.length params
-		 val compoundArrayDiskSize = TyProps.Array {elem=TyProps.Variable, sep = TyProps.Variable, term=TyProps.Variable, length = TyProps.Variable}
+		 val PX.Name baseTyName = baseTy
+		 val compoundArrayDiskSize = TyProps.Array {baseTy=baseTyName, args=(paramNames, args),
+							    elem=baseDiskSize, sep = sepSize,
+							    term=termSize, length = arrayRep}
                  val arrayProps = buildTyProps(name, PTys.Array, arrayDiskSize, compoundArrayDiskSize,
 					       arrayMemChar,false,isRecord,contR,lH,isFile,pdTid, numArgs)
                  val () = PTys.insert(Atom.atom name, arrayProps)
-
 
 		 (* array: Generate canonical representation *)
 		 val canonicalFields = [(length, PL.intPCT, NONE), 
@@ -3518,6 +3657,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		 val (canonicalDecls,canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
 		 val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
+
+                 val arrayXOpt = case arrayXOpt of NONE => NONE | SOME r => SOME (chkForallConstraint r)
 
 		 (* Generate init function, array case *)
 		 fun genInitEDs(suf, base, aPCT) = 
@@ -3590,6 +3731,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
 
 		 (* Array: Generate read function *)
+		 val _ = pushLocalEnv()                                        (* create new scope *)
+		 val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
+
                  (* -- Some useful names *)
                  val readName = readName (* defined above *)
                  val foundTerm    = "foundTerm"
@@ -3604,115 +3748,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		 val edBufferX    = fieldX(pd, elts)
  		 val edNext       = P.subX(edBufferX, indexX)
 
-		 val _ = pushLocalEnv()                                        (* create new scope *)
-		 val cParams : (string * pcty) list = List.map mungeParam params
-		 val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
-		 (* scope is removed at end of cnvPArray *)
-          
-
-                 (* -- process constriants *)
-                 val (sepXOpt, termXOpt, arrayXOpt, genXOpt, sepTermDynamicCheck) = 
-                      let fun doOne (constr:pcexp PX.PConstraint) = 
-                              case constr 
-                              of PX.Sep exp => (
-				 expEqualTy(exp, CTintTys,fn s=>("Separator expression for array "^
-								 name ^" has type "^s^". Expected "^
-								 "type char."));
-				 let val pTyName = PL.charlit
-				     val readFun = readSuf pTyName
-				     val scanFun = SOME(Atom.atom(scanSuf pTyName))
-				     val writeFun = lookupLitWrite pTyName
-				     val (valOpt,_,_,_) = evalExpr exp
-				 in
-				    (SOME (exp, valOpt, readFun, scanFun, writeFun), NONE,NONE,NONE)
-                                 end
-
-                              (* end Sep case *))
-                              |  PX.Term exp => (
-				 expEqualTy(exp, CTintTys,fn s=>("Terminator expression for array "^
-								 name ^" has type "^s^". Expected "^
-								 "type char."));
-                                 let val pTyName = PL.charlit 
-				     val readFun = readSuf pTyName
-				     val scanFun = SOME(Atom.atom(scanSuf pTyName))
-				     val writeFun = lookupLitWrite pTyName
-				     val (valOpt,_,_,_) = evalExpr exp
-				 in
-				   (NONE, SOME (exp,valOpt,readFun,scanFun,writeFun), NONE, NONE)
-                                 end
-                              (* end Term case *))
-                              |  PX.Forall (r as {index,range,body}) => (
-                                 let val subList = [(length, fieldX(rep,length)), 
-						    (name, fieldX(rep,elts)),
-						    (elts, fieldX(rep,elts))]
-				     val (lower, upper) = 
-					(case range 
-					 of PX.ArrayName n => (
-					    (if n = name orelse n = elts then ()
-					     else PE.error ("Array name in bound expression ("^
-							    n^") does not match the name "^
-							    "of the array (must use '"^ name ^ "' or 'elts').")
-                                            ); (P.zero, PT.Id length))
-					 | PX.Bounds(lower, upper) => (lower,upper))
-				     val modBodyX = PTSub.substExps subList body
-				     val modLowerX = PTSub.substExps subList lower
-				     val modUpperX = PTSub.substExps subList upper
-				     fun errMsg which = (fn s => 
-							  (which^" bound for forall expression for array "^
-						           name ^" has type"^s^". Expected type int."))
-				 in
-				   pushLocalEnv();
-				   ignore(insTempVar(index, P.int));
-				   ignore(insTempVar(length, PL.uint32));
-				   ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
-				   ignore(insTempVar(elts, P.ptrPCT elemRepPCT)); 
-				   expEqualTy(lower, CTintTys, errMsg "Lower");
-				   expEqualTy(lower, CTintTys, errMsg "Upper");
-				   expEqualTy(body, CTintTys, fn s=>("Forall expression for array "^
-								   name ^" has type "^s^". Expected "^
-								   "type int."));
-
-				   popLocalEnv();
-                                   (NONE,NONE,SOME {index=index, lower=modLowerX, 
-						    upper=modUpperX, body=modBodyX}, NONE)
-				 end
-                              (* end Array case *))
-			      |  PX.General exp => (
-				 expEqualTy(exp, CTintTys,fn s=>("General constraint for array "^
-								 name ^" has type "^s^". Expected "^
-								 "type int."));
-				 (NONE, NONE, NONE, SOME exp)
-                              (* end General case *))
-			  val constrs = List.map doOne constraints
-			  fun mergeOpt which (o1,o2) = 
-			      case (o1,o2) 
-			      of (NONE,NONE) => NONE
-			      |  (NONE, SOME q) => SOME q
-			      |  (SOME p, NONE) => SOME p
-                              |  (SOME p, SOME q) => (PE.error("Multiple "^which^" clauses."); SOME p)
-                          fun mergeAll ((a,b,c,d),(ra,rb,rc,rd)) =
-			      (mergeOpt "separator"  (a,ra),
-                               mergeOpt "terminator" (b,rb),
-                               mergeOpt "array"      (c,rc),
-                               mergeOpt "general"    (d,rd))
-			  val (sepXOpt, termXOpt, arrayXOpt, genXOpt) = 
-			      List.foldr mergeAll (NONE,NONE,NONE,NONE) constrs
-			  val sepTermErrorMsg = "Psep and Pterm expressions for Parray "^ name^
-							 " have the same value"
-			  val sepTermDynamicCheck = 
-			      case (sepXOpt, termXOpt) 
-			      of (SOME(_, SOME i, _, _, _), SOME(_, SOME j, _, _, _)) => 
-				  if i = j then (PE.error (sepTermErrorMsg^"."); [])
-				  else []
-			      | (SOME(sepX, _, _, _, _), SOME(termX, _, _, _, _)) => 
-				      [PT.IfThen(P.eqX(sepX,termX),
-						 PL.userErrorS(PT.Id pdc, locX, 
-							       PL.PDC_ARRAY_SEP_TERM_SAME_ERR, readName, 
-							       PT.String (sepTermErrorMsg^": %c"), [sepX]))]
-			      |  (_,_) => []
-		      in
-			  (sepXOpt, termXOpt, arrayXOpt, genXOpt, sepTermDynamicCheck)
-                      end
 
                  (* -- Check parameters to base type read function *)
 		 val () = checkParamTys(name, elemReadName, args, 2, 2)
@@ -4467,29 +4502,17 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                 @ (emitXML galaxEDs)
 	      end
 
-	  fun cnvPSelect {tyName, varName, path} = 
+	  fun cnvPSelect {selName,tyName, varName, path} = 
 	      let val (Select.Id root):: path = Select.sexprToPath(P.stripExp path)
 		  val () = if root = varName then ()
-			       else raise Fail ("Select name ("^varName^")and root of path expression ("^root^") don't match.")
-		  val errS = "Request "^varName^" ill-typed."
+			       else raise Fail ("Select parameter ("^varName^")and root of path expression ("^root^") don't match.")
+		  val errS = "Request "^selName^" ill-typed."
 		  fun getPos(tyName,path,accumSize,args) = 
 		      let val cds = lookupCompoundDiskSize (PX.Name tyName)
-			            handle Fail s => raise Fail (s^" Required for " ^varName^" request.")
-fun printArgs [exp] = print ((P.expToString exp)^".\n")
-  | printArgs (e::es) = (print ((P.expToString e)^", "); printArgs es)
-  | printArgs [] = print "No arguments.\n"
-val () = printArgs args
+			            handle Fail s => raise Fail (s^" Required for " ^selName^" request.")
 		      in
 			  case cds
-			  of TyProps.Base ds => 
-(			      print "Base type:";
- print "orig size:";
-			      TyProps.printSize (ds);
- print "reduced by args size:";
-			      TyProps.printSize (reduceCDSize(args,ds));
-			      print "Result: ";
-			      TyProps.printSize (TyProps.add(accumSize, reduceCDSize(args,ds)));
-(tyName, accumSize, reduceCDSize(args, ds)))
+			  of TyProps.Base ds => (tyName, accumSize, reduceCDSize(args, ds), args)
                           |  TyProps.Struct dsl => 
 			      let val (f,path) = case path of ((Select.Dot f)::path) => (f,path) | _ => raise Fail errS
 				  val () = print "In struct case\n"
@@ -4500,33 +4523,45 @@ val () = printArgs args
 				         case sOpt of NONE => findField(ss, TyProps.add(closedDS,accum)) (* literal*)
                                          | SOME (l,tyName,sargs:TyProps.argList) => 
 					     if not (l = f) then 
-						 (print ("did field "^l^".\nSize:"); 
-						  TyProps.printSize 
-						  (TyProps.add(closedDS,accum));
-						 findField(ss, TyProps.add(closedDS,accum)))
+						 findField(ss, TyProps.add(closedDS,accum))
 					     else if (tyName = "Pcompute") then
 						 raise Fail ("Ill-formed request: Computed field "^l^
 							     " has no external representation.")
-					     else (print ("found field "^l^".\nSize:"); 
-							 TyProps.printSize  accum;
-						  getPos(tyName,path,accum,reduceArgList(args,sargs)))
+					     else getPos(tyName,path,accum,reduceArgList(args,sargs))
 				      end
 			      in
 				  findField(dsl,accumSize)
 			      end (* struct case *)
+                          | TyProps.Array {baseTy, args=arrayArgs, elem, sep, term, length} =>
+		             let val (i,path) = case path of ((Select.Sub i)::path) => (i,path)  | _ => raise Fail errS
+				 val closedLen = reduceCDSize(args,length)
+				 val max = case closedLen of TyProps.Size(n,nr) => n 
+			                   | _ => raise Fail (selName^": can't index into arrays of unknown size.")
+				 val () = if IntInf.>=(i,max) 
+					  then raise Fail (selName ^": index "^(IntInf.toString i)^
+							   " greater than array length "^(IntInf.toString max)^".")
+					  else ()
+				 val index = TyProps.Size(i,IntInf.fromInt 0)
+				 val prelimSize = coreArraySize(elem, sep, index)
+				 val prelimClosed = reduceCDSize(args, prelimSize)
+				 val accum = TyProps.add(accumSize, prelimClosed)
+			     in
+				 getPos(baseTy, path, accum, reduceArgList(args,arrayArgs))
+			     end
                           |  _ => raise Fail "Not yet implemented"
 		      end
-		  val (itemType, offset, size) = getPos(tyName, path, TyProps.mkSize(0,0),[](* top level must be closed *))
+		  val (itemType, offset, size, argList) = getPos(tyName, path, TyProps.mkSize(0,0),[](* top level must be closed *))
 	      in
 		((case offset
-		  of TyProps.Variable => PE.error ("Location of "^varName^" request depends on data.\n") 
-                  |  TyProps.Param(_) => PE.error ("Location of "^varName^" request depends on parameters.\n") 
+		  of TyProps.Variable => PE.error ("Location of "^selName^" request depends on data.\n") 
+                  |  TyProps.Param(_) => PE.error ("Location of "^selName^" request depends on parameters.\n") 
                   |  TyProps.Size(location,nr) => 
 		      (case size 
-		       of TyProps.Variable => PE.error ("Size of "^varName^" request depends on data.\n") 
-		       |  TyProps.Param(_) => PE.error ("Size of "^varName^" request depends on parameters.\n") 
+		       of TyProps.Variable => PE.error ("Size of "^selName^" request depends on data.\n") 
+		       |  TyProps.Param(_) => PE.error ("Size of "^selName^" request depends on parameters.\n") 
                        |  TyProps.Size(n,nr) => 
-			   Select.insert(Select.Select{tyName = itemType, offset = location, size = n})
+			   Select.insert(Select.Select{selName = selName, tyName = itemType, 
+						       args = evalArgList argList, offset = location, size = n})
 		      (* end case size *))
 	        (* end case offset*));
 		[] (* return no AST decls *))

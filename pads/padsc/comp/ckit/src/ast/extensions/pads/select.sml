@@ -2,7 +2,8 @@ structure Select =
 struct
    structure PT = ParseTree
 
-   datatype selectInfo = Select of {tyName : string, offset : IntInf.int, size : IntInf.int}
+   datatype selectInfo = Select of {selName : string, tyName : string, args : IntInf.int list,
+				    offset : IntInf.int, size : IntInf.int}
 
    datatype pathNode = Id of string | Dot of string | Sub of IntInf.int 
    type path = pathNode list
@@ -19,8 +20,13 @@ struct
        end
 
 
-   fun selectToString (Select {tyName, offset, size}) =
-       tyName^"("^(IntInf.toString offset)^","^(IntInf.toString size)^")"
+   fun selectToString (Select {selName, tyName, args, offset, size}) =
+       let fun argsToString [] = ""
+             | argsToString [i] = IntInf.toString i
+             | argsToString (i::is) = (IntInf.toString i)^","^(argsToString is)
+       in
+	   selName^":"^tyName^"(:"^(argsToString args)^":)"^"("^(IntInf.toString offset)^","^(IntInf.toString size)^")"
+       end
 
    fun selectListToString sl = 
        let fun h sl = 
@@ -32,27 +38,20 @@ struct
 	   "{"^(h sl)^"}"
        end
 
-   fun cmp (Select {tyName=tyName1, offset=offset1, size=size1}, Select {tyName=tyName2, offset=offset2, size=size2})  = 
+   fun cmp (Select {offset=offset1, size=size1,...}, Select {offset=offset2, size=size2,...})  = 
        if IntInf.< (offset1, offset2) then LESS
        else if IntInf.>(offset1, offset2) then GREATER
        else if IntInf.<(size1, size2) then LESS
        else if IntInf.>(size1, size2) then GREATER
        else EQUAL
 
-   structure SelectMap = RedBlackMapFn(
-			     struct type ord_key = selectInfo
-			     val compare = cmp
-		         end) 
-
-
-   type selectMapTy = unit SelectMap.map
-   val selectMap : selectMapTy ref = ref SelectMap.empty
+   val selectList : selectInfo list ref = ref []
 
    fun insert (s : selectInfo) = 
-       selectMap := SelectMap.insert(!selectMap, s, ())
-   fun listSelections () = SelectMap.listKeys (!selectMap)
+       selectList := s::(!selectList)
 
-   fun isSelection () = not (SelectMap.isEmpty (!selectMap))
+   fun listSelections () = List.rev(!selectList)
 
+   fun isSelection () = not (List.null (!selectList))
 
 end
