@@ -15,6 +15,6 @@ Precord Pstruct str2{
   ' ';
   Pint32 t;
   Pcompute Pint32 v = 11; /- struct manifest field
-}
+};
 
 

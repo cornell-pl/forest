@@ -454,6 +454,8 @@ struct
         PT.Call(PT.Id "PDCI_regexp_compile_cstr", [padsX, regCstrX, regExpX, prefixX, whatFunX ])
   fun regexpCleanupS(padsX, regexpX) = 
         PT.Expr(PT.Call(PT.Id "Pregexp_cleanup", [padsX, regexpX]))
+  fun regexpCharClass(nameX, predX) = 
+        PT.Expr(PT.Call(PT.Id "regaddclass", [nameX, predX]))
 
 (* -- reading/writing record functions *)
   fun IOReadNextRecX(pads, namp) = PT.Call(PT.Id "P_io_next_rec", [pads, namp])

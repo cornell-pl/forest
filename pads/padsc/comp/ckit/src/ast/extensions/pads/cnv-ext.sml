@@ -4924,6 +4924,23 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                 @ (emitXML galaxEDs)
 	      end
 
+	  fun cnvPCharClass {name,pred} = 
+	      let val regS = PL.regexpCharClass(PT.String name, pred)
+		  val predPTct = P.ptrPCT(P.func P.int [P.int])
+		  val (predCT,_) = CTcnvType predPTct
+		  val _ = pushLocalEnv()
+		  val (apredCT, _ ) = cnvExpression pred
+		  val _ = popLocalEnv()
+		  val () = if isAssignable(predCT, apredCT, NONE) then ()
+		           else PE.error ("Predicate for Pcharclass "^name^" has type: "^
+					  (CTtoString apredCT) ^". Expected type compatible "^
+					  "with int (*)(int).")
+		  val () = () (* add type checking *)
+		  val () = CharClass.insert regS
+	      in
+		  []
+	      end
+
 	  fun cnvPSelect {selName,tyName, varName, path} = 
 	      let val (Select.Id root):: path = Select.sexprToPath(P.stripExp path)
 		  val () = if root = varName then ()
@@ -5026,6 +5043,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	  fun cnvPDone () = 
 	      let val () = (if !seenDone then PE.error ("Unexpected Pdone declaration.") else (); seenDone := true)
 		  val bodySs = [P.mkCommentS "Initialize character classes."]
+		               @ (CharClass.listClasses ())
 		  val initFunED = P.mkFunctionEDecl(PL.libInit,[],PT.Compound bodySs, P.void)
 		  fun cnvLoc ast = 
 		      case ast of (Ast.DECL (cdecl, aid,paid,SourceMap.LOC{srcFile, beginLine,beginCol,endLine,endCol}))=> 
@@ -5038,13 +5056,14 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 	  in
 	      case decl 
-	      of PX.PTypedef t => cnvPTypedef t
-              |  PX.PStruct  s => cnvPStruct  s
-              |  PX.PUnion   u => cnvPUnion   u
-              |  PX.PArray   a => cnvPArray   a
-              |  PX.PEnum    e => cnvPEnum    e
-	      |  PX.PSelect  s => cnvPSelect  s
-	      |  PX.PDone      => cnvPDone ()
+	      of PX.PTypedef   t => cnvPTypedef   t
+              |  PX.PStruct    s => cnvPStruct    s
+              |  PX.PUnion     u => cnvPUnion     u
+              |  PX.PArray     a => cnvPArray     a
+              |  PX.PEnum      e => cnvPEnum      e
+	      |  PX.PCharClass c => cnvPCharClass c
+	      |  PX.PSelect    s => cnvPSelect    s
+	      |  PX.PDone        => cnvPDone      ()
 	  end
 
       fun pcnvStat (PX.PComment s) =  wrapSTMT(Ast.StatExt(AstExt.SComment(formatComment s)))

@@ -36,4 +36,6 @@ Parray intList {
 Pstruct entry{
   intList i;
   '\n';
-}
+};
+
+

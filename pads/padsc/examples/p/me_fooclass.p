@@ -3,10 +3,9 @@
 /* to define a new char class, we need an int->int predicate.
    want a class that just allows 'f', 'o', and digits */
 #include "regex.h"
-int is_foo(int c) { return (c == 'f') || (c == 'o') || isdigit(c); }
+char is_foo(int c) { return (c == 'f') || (c == 'o') || isdigit(c); };
 
-/* used to register the new class: */
-void reg_foo() { regaddclass("foo", is_foo); }
+Pcharclass foo {is_foo};
 
 Precord Pstruct T1 {
   Pstring_ME(:"/[[:foo:]]+/":)            id1;

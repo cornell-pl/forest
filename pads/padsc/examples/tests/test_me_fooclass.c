@@ -17,8 +17,6 @@ int main(int argc, char** argv) {
   SUF( T1 , _m)      t_m;
   SUF( T1 , _pd)     t_pd;
 
-  reg_foo();
-
   P_open(&pads, 0, 0);
   if (P_ERR == P_io_fopen(pads, DAT_FILE)) {
     error(ERROR_FATAL, "*** P_io_fopen failed on file %s ***", DAT_FILE);

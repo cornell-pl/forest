@@ -76,6 +76,12 @@ struct
     val voidPtr    = ptrPCT  void
     val voidPtrPtr = ptrPCT (voidPtr)
 
+    fun func (ret:PT.ctype) (args:PT.ctype list) =
+	let fun f ct = (pctToPDT ct,PT.EmptyDecr) in	    
+	    makePCT [PT.Function {retType = ret, params = List.map f args}]
+	end
+
+
     fun intX i = PT.IntConst (IntInf.fromInt i)
     fun int32X i = (PT.IntConst (IntInf.fromInt (Int32.toInt i)))
 

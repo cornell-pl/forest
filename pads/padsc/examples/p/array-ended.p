@@ -3,14 +3,14 @@ Ptypedef Pint32 odd  :: odd  x => {x % 2 == 1};
 
 Parray eseq_t {
   even [] : Psep(Pre "/a/") && Pended(pds[current].errCode != P_NO_ERR);
-}
+};
 
 Parray oseq_t {
   odd [] :  Psep(Pre "/a/") && Pended(pds[current].errCode != P_NO_ERR) && Pterm('b');
-}
+};
 
 Precord Pstruct entry{
   eseq_t evens;
   oseq_t odds;
   'b';
-}
+};

@@ -247,7 +247,7 @@ end
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
-        | PSELECT (* PADS *)
+        | PSELECT | PCHARCLASS (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
 	| PSEP | PTERM | PNOSEP | PFORALL | PGENERAL | PIN | PLAST | PENDED (* PADS *)
         | POMIT | PENDIAN | PCOMPUTE (* PADS *)
@@ -360,6 +360,8 @@ end
         | pEnumFieldList of (string * expression option * string option) list
         | pEnum of externalDecl
 	| pSelect of externalDecl
+	| pCharClass of externalDecl
+	| pDone of externalDecl
 
 %pos int
 %verbose
@@ -440,9 +442,10 @@ externalDeclaration:
 					  in
 					    SOME(markExternalDecl srcMap (arrayDecl, pArrayleft, pArrayPostCondsright))
 				          end)
-        | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,     pEnumleft,  RCURLYright)))
-        | pSelect RCURLY                (SOME(markExternalDecl srcMap (pSelect,   pSelectleft,  RCURLYright)))
-        | PDONE                         (SOME(markExternalDecl srcMap (ExternalDeclExt PX.PDone,  PDONEleft,  PDONEright)))
+        | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,      pEnumleft,      RCURLYright)))
+        | pSelect RCURLY                (SOME(markExternalDecl srcMap (pSelect,    pSelectleft,    RCURLYright)))
+        | pCharClass RCURLY             (SOME(markExternalDecl srcMap (pCharClass, pCharClassleft, RCURLYright)))
+        | pDone RCURLY                  (SOME(markExternalDecl srcMap (pDone,      pDoneleft,      RCURLYright)))
 (* PADS END *)
 
 statement:
@@ -1256,3 +1259,9 @@ pEnum:
 pSelect:
  PSELECT pName LCOLON pushScope pName pName RCOLON LCURLY expr popScope
  (ExternalDeclExt(PX.PSelect {selName = pName1, tyName = pName2, varName = pName3, path = expr}))
+
+pCharClass:
+ PCHARCLASS pName LCURLY expr (ExternalDeclExt(PX.PCharClass{name=pName, pred = expr}))
+
+pDone:
+ PDONE pName LCURLY (ExternalDeclExt(PX.PDone))

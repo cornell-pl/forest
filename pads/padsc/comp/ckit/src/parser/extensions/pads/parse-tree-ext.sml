@@ -92,6 +92,8 @@ structure ParseTreeExt =
 		       tyName  : string,
 		       varName : string,
 		       path    : 'exp}
+         | PCharClass of {name : string,
+		          pred : 'exp}
          | PDone
 
         datatype PStatement = PComment of string

@@ -69,9 +69,10 @@ struct
 	      ] @ [  (* PADSC *)
                ("Parray", Tokens.PARRAY),
                ("Pcase", Tokens.PCASE),
+               ("Pcharclass", Tokens.PCHARCLASS),
                ("Pcompute",  Tokens.PCOMPUTE),       
                ("Pdefault", Tokens.PDEFAULT),
-               ("Pdone", Tokens.PDONE),
+               ("_Pdone", Tokens.PDONE),
                ("Pended",   Tokens.PENDED),       
                ("Pendian",   Tokens.PENDIAN),       
                ("Penum", Tokens.PENUM),

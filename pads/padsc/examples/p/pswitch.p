@@ -4,9 +4,9 @@ Punion branches(:Puint32 a:) {
   Pcase 2  : Pstring_SE(:"/$/":)  name;
   Pdefault : Pcompute Puint32     def = 3; 
   }
-}
+};
 
 Precord Pstruct choice{
   Puint32       a; 
   branches(:a:)   b; 
-}
+};

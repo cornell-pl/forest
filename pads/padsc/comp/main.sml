@@ -167,10 +167,10 @@ structure Main : sig
 				 "#include <pads-internal.h>\n"^
 				 (if !xmlFlag then "#include <pglx-internal.h>\n" else "") ^ 
 				 "#include \""^baseTyFile^"\"\n"^
-				 "Pdone\n"^
                                  "\n")
             val compositeProg = (includePrefix ^
-				   ("#include \"" ^ppFile^"\"\n"))
+				 "#include \"" ^ppFile^"\"\n"^
+				 ";_Pdone foo {};\n")
 	    val outStrm = TextIO.openOut compositeFile
             val () = (TextIO.output(outStrm, compositeProg);
 		      TextIO.closeOut outStrm)

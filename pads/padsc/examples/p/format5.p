@@ -10,7 +10,7 @@ Precord Pstruct int32record{
 Pstruct call{
   int32record x;
   dibblerPN(:x.x:) pn; 
-}	    
+};
 
 
 
