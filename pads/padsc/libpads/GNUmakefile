@@ -72,6 +72,7 @@ real_debug : $(DBG_TARGS)
 
 $(STATIC_PADSLIB_NM_O) : $(OBJS_O)
 	$(STATIC_LIBTOOL) $(STATIC_PADSLIB_NM_O) $(STATIC_LIBTOOL_OPTS) $(OBJS_O)
+	(lib=$@; $(FixStaticLib))
 
 $(SHARED_PADSLIB_NM_O) : $(OBJS_O)
 	$(SHARED_LIBTOOL) -o $(SHARED_PADSLIB_NM_O) $(SHARED_LIBTOOL_WHOLE_ARCHIVE) \
@@ -79,6 +80,7 @@ $(SHARED_PADSLIB_NM_O) : $(OBJS_O)
 
 $(STATIC_PADSLIB_NM_D) : $(OBJS_D)
 	$(STATIC_LIBTOOL) $(STATIC_PADSLIB_NM_D) $(STATIC_LIBTOOL_OPTS) $(OBJS_D)
+	(lib=$@; $(FixStaticLib))
 
 $(SHARED_PADSLIB_NM_D) : $(OBJS_D)
 	$(SHARED_LIBTOOL) -o $(SHARED_PADSLIB_NM_D) $(SHARED_LIBTOOL_WHOLE_ARCHIVE) \
@@ -89,9 +91,12 @@ install_static : all
 	mkdir -p $(INSTALL_LIBDIR); \
 	for file in $(ASTLIBS); do \
 		$(PADS_HOME)/scripts/install-sh -c -m 444 $(INSTALLROOT)/lib/$$file $(INSTALL_LIBDIR); \
+		(lib=$(INSTALL_LIBDIR)/$$file; $(FixStaticLib)); \
 	done; \
 	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_O) $(INSTALL_LIBDIR); \
-	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_D) $(INSTALL_LIBDIR) )
+	(lib=$(INSTALL_LIBDIR)/$(STATIC_PADSLIB_NM_O); $(FixStaticLib)); \
+	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_D) $(INSTALL_LIBDIR); \
+	(lib=$(INSTALL_LIBDIR)/$(STATIC_PADSLIB_NM_D); $(FixStaticLib)) )
 	@(cd $(SRC_INCDIR); $(MAKE) install)
 
 install_dynamic : all

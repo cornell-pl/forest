@@ -93,18 +93,22 @@ debug : $(STATIC_GALAXLIB_D)
 
 $(STATIC_GALAXLIB_O) : $(OBJS_O)
 	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_O) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
+	(lib=$@; $(FixStaticLib))
 
 $(SHARED_GALAXLIB_O) : $(OBJS_O)
 	$(SHARED_LIBTOOL) -o $(SHARED_GALAXLIB_O) $(SHARED_LIBTOOL_WHOLE_ARCHIVE) \
         $(OBJS_O) $(SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE) $(SHARED_LIBTOOL_OPTS) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
 $(STATIC_GALAXLIB_D) : $(OBJS_O)
 	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_D) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
+	(lib=$@; $(FixStaticLib))
 
 install : all
 	+@(set -x ; \
 	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_GALAXLIB_O) $(INSTALL_LIBDIR); \
+	(lib=$(INSTALL_LIBDIR)/$(STATIC_GALAXLIB_O); $(FixStaticLib)); \
 	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_GALAXLIB_O) $(INSTALL_LIBDIR); \
 	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_GALAXLIB_D) $(INSTALL_LIBDIR); \
+	(lib=$(INSTALL_LIBDIR)/$(STATIC_GALAXLIB_D); $(FixStaticLib)); \
 	for file in $(INSTALL_INCLUDES); do \
 		$(PADS_HOME)/scripts/install-sh -c -m 444 $(VPATH)/$$file $(INSTALL_INCDIR); \
 	done;)
