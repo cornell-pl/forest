@@ -4477,17 +4477,21 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       end)
                          | SOME label => 
 			     let val reOpt = getRE e
+				 val repX = unionRepX(rep, label, true, isLongestMatch)
 			     in
 				 case reOpt of NONE => 
 				    (case extractString e of NONE => NONE (* error reported eariler *)
                                      | SOME s => 
 				         let val cmt = "Pliteral branch '"^s^"'.\n"
-					     val repX = unionRepX(rep, label, true, isLongestMatch)
 					     val readCall = PL.matchFunX(PL.cstrlitMatch, PT.Id pads, PT.String s, P.trueX)
 					 in
 					     SOME(cmt,label,readCall)
 					 end)
-                                 | SOME e => ((PE.error "regular expression literals not yet supported in Punions.\n");NONE)
+                                 | SOME e => (let val cmt = "Pliteral branch regexp.\n"
+						  val readCall = PL.matchFunX(PL.reMatchFromString, PT.Id pads, e, P.trueX)
+					      in 
+						  SOME(cmt, label, readCall)
+					      end)
 
 			     end
 

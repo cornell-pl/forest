@@ -79,6 +79,7 @@ regress_o:  sanity_check \
           regress_test_format6_o \
           regress_test_readint_o \
           regress_test_punion_manifest_o \
+	  regress_rwxml_punion_literal2_o \
           regress_test_ai_o \
           regress_test_dns_o \
 	  regress_test_pswitch_o \
@@ -118,6 +119,7 @@ regress_d:  sanity_check \
           regress_test_format6_d \
           regress_test_readint_d \
           regress_test_punion_manifest_d \
+	  regress_rwxml_punion_literal2_d \
           regress_test_ai_d \
           regress_test_dns_d \
 	  regress_test_pswitch_d \
@@ -230,6 +232,11 @@ regress_test_write_struct_strings_d: test_write_struct_strings_d
 regress_test_punion_manifest_o: test_punion_manifest
 	@(args=""; suf=""; $(RegressDef))
 regress_test_punion_manifest_d: test_punion_manifest_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_punion_literal2_o: rwxml_punion_literal2
+	@(args=""; suf=""; $(RegressDef))
+regress_rwxml_punion_literal2_d: rwxml_punion_literal2_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_pswitch_o: test_pswitch

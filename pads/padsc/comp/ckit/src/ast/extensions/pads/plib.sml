@@ -123,7 +123,9 @@ struct
   val strlitPDCleanup = "Pstring_pd_cleanup"
   val strlitPDCopy = "Pstring_pd_copy"
 
+
   val reMatch    = "Pre_match"
+  val reMatchFromString = "Pcstr_re_match" (* pads, cstr, eat *)
   val reWriteBuf = cstrlitWriteBuf (* not yet implemented.  what should go here?*)
   val reWriteXMLBuf = cstrlitWriteXMLBuf (* not yet implemented.  what should go here?*)
   val reScan1    = "Pre_scan1"
