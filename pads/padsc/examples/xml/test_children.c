@@ -50,10 +50,10 @@ int main(int argc, char** argv) {
     if (PDC_OK == test_read(pdc, &m, &pd, &rep)) {
       /* do something with the data */
       error(2, "test_read returned: id %d  ts %d", rep.id, rep.ts);
-      //      walk_children(top_node, 0);
+      walk_children(top_node, 0);
     } else {
       error(2, "test_read returned: error");
-      //      walk_children(top_node, 0);
+      walk_children(top_node, 0);
     }
   }
   error(0, "\nFound eof");
