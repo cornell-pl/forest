@@ -41,9 +41,11 @@ int main(int argc, char** argv) {
 
   /* init -- must do this! */
 
+  /* Initialize nodeid generator */
+  PDCI_ID_RESET(pads,0);
+
   /* Initialize NodeMM. */
-  pads->ext1 = NodeMM_newMM();
-  NodeMM_init((NodeMM_t *)pads->ext1);  
+  NodeMM_initMM(pads,50);  
   
   //P_INIT_ALL(pads, PADS_TY( ), rep, m, pd, P_CheckAndSet);
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
@@ -64,9 +66,17 @@ int main(int argc, char** argv) {
     exit_on_error(padsDocument(argv[1], (nodeRep)doc_node, &doc)); 
     exit_on_error(galax_eval_statement_from_file_with_context_item_from_xml(doc, argv[2], &docitems)); 
     exit_on_error(galax_serialize_to_stdout(docitems));
+
+    printf("\nAnd again:\n");
+
+    exit_on_error(padsDocument(argv[1], (nodeRep)doc_node, &doc)); 
+    exit_on_error(galax_eval_statement_from_file_with_context_item_from_xml(doc, argv[2], &docitems)); 
+    exit_on_error(galax_serialize_to_stdout(docitems));
   } else {
     error(0, "read raised panic error");
   } 
+
+  printf("id_gen: %ld.\n", pads->disc->id_gen);
 
   //P_CLEANUP_ALL(pads, log_t, rep, pd);
   if (P_ERR == PADS_TY(_cleanup)(pads, &rep)) {
@@ -76,6 +86,8 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "** parse descriptor cleanup failed **");
   }
   P_io_close(pads);
+
+  NodeMM_freeMM(pads);
   P_close(pads);
   return 0;
 }

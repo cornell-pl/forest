@@ -47,8 +47,7 @@ int main(int argc, char** argv) {
   /* init -- must do this! */
 
   /* Initialize NodeMM. */
-  pads->ext1 = NodeMM_newMM();
-  NodeMM_init((NodeMM_t *)pads->ext1);  
+  NodeMM_initMM(pads,50);  
   
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
@@ -81,7 +80,8 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "** parse descriptor cleanup failed **");
   }
   P_io_close(pads);
-  NodeMM_freeMM((NodeMM_t *) pads->ext1);
+
+  NodeMM_freeMM(pads);
   P_close(pads);
   return 0;
 }

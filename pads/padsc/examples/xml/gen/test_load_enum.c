@@ -4,4 +4,4 @@
 #define PADS_TY(suf) barArray ## suf
 #define PPADS_TY(pref) pref ## barArray
 
-#include "test_query.h"
+#include "test_load.h"

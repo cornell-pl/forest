@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   P_INIT_ALL(pads, log_t, rep, m, pd, P_CheckAndSet);
 
   /* make the top-level node */
-  PDCI_MK_TOP_NODE_NORET (doc_node, &log_t_vtable, pads, "doc", &m, &pd, &rep, "main");
+  PDCI_MK_TOP_NODE_NORET (doc_node, &log_t_node_vtable, pads, "doc", &m, &pd, &rep, "main");
 
   /* Try to read entire file */
   log_t_read(pads, &m, &pd, &rep);

@@ -9,8 +9,12 @@
 #define exit_on_error(_Expr) {err = _Expr; if (err != 0) {error(0, "%s\n", galax_error_string); exit(err);}}	
 
 
-#define MAX_ELTS 10
+#define MAX_NODES 1000
+#define MAX_ELTS 1
 
+#ifndef EXTRA_ARGS
+#  define EXTRA_ARGS
+#endif
 
 #ifndef MAX_RECS
 #  define MAX_RECS 0
@@ -21,7 +25,7 @@ int main(int argc, char** argv) {
   PADS_TY( )         rep;
   PADS_TY(_pd)       pd ;
   PADS_TY(_m)        m;
-  PDCI_node_t    *smart_node;
+  PDCI_node_t    *smart_node,*result_node;  
 
   galax_err err;
   item doc,doc2;
@@ -43,7 +47,7 @@ int main(int argc, char** argv) {
   */
   galax_init();
 
-  if (argc != 3) { error(2, "Usage: test_load_XXX <XXX-data-file> <XXX-query> \n"); exit(-1); }
+  if (argc != 4) { error(2, "Usage: test_load_XXX <XXX-data-file> <XXX-query> <XXX_child-name> \n"); exit(-1); }
 
   if (P_ERR == P_open(&pads,&mydisc,0)) {
     error(2, "*** P_open failed ***");
@@ -68,10 +72,18 @@ int main(int argc, char** argv) {
 
   /* init -- must do this! */
 
-  /* Initialize NodeMM. */
-  pads->ext1 = NodeMM_newMM();
-  NodeMM_init((NodeMM_t *)pads->ext1);  
+  /* Initialize pads-galax */
+
+  /*pads->disc->error_fn = PDCI_pglx_error;*/
+
+  /* Initialize nodeid generator */
+  PDCI_ID_RESET(pads,0);
+
+  NodeMM_init(pads, MAX_NODES);  
   
+  /* End initialize pads-galax */
+
+
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
   }
@@ -81,10 +93,12 @@ int main(int argc, char** argv) {
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, P_CheckAndSet);
 
-  // Create a new smart node.
+  // Read header here, if any:
+  // ...
+
+  // Create the new smart node.
   PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "doc", &m, &pd, &rep, "main");
-  PADS_TY(_seqSmartNode_init)(smart_node, MAX_ELTS);
-  //  PADS_TY(_dummySmartNode_init)(smart_node);
+  PADS_TY(_smartNode_init)(smart_node, MAX_ELTS  EXTRA_ARGS);
 
   printf("1st Traversal.\n");
 
@@ -93,11 +107,25 @@ int main(int argc, char** argv) {
 
   err = galax_eval_statement_from_file_with_context_item_from_xml(doc, argv[2], &docitems);
   exit_on_error(err); 
+
   printf("About to serialize.\n");
   //docitems = itemlist_cons(doc, itemlist_empty()); 
   err = galax_serialize_to_stdout(docitems);
   exit_on_error(err);
 
+  /*
+  result_node = Puint32_node_new(smart_node,"result",NULL,NULL,NULL,"element","main");
+  (result_node->vt->cachedNode_init)(result_node);
+  result_node->child_cache[0]= PGLX_generic_kth_child_named((nodeRep)smart_node,0,argv[3]);
+  result_node->child_cache[1]= result_node->child_cache[0];
+
+  printf("Forming document ....\n");
+  err = padsDocument("pd.xml", (nodeRep)result_node, &doc2);
+  exit_on_error(err); 
+  docitems = itemlist_cons(doc2, itemlist_empty()); 
+  err = galax_serialize_to_stdout(docitems);
+  exit_on_error(err);
+  */
 
   /*
   printf("2nd Traversal.\n");
@@ -106,21 +134,32 @@ int main(int argc, char** argv) {
   err = padsDocument(argv[1], (nodeRep)smart_node, &doc2);
   exit_on_error(err); 
 
-  docitems = itemlist_cons(doc, itemlist_empty()); 
+  docitems = itemlist_cons(doc2, itemlist_empty()); 
   err = galax_serialize_to_stdout(docitems);
   exit_on_error(err);
-
   */
 
+  printf("\nFinished Traversals.\n");
+
   // P_CLEANUP_ALL(pads, PADS_TY_, rep, pd);
-  if (P_ERR == PADS_TY(_cleanup)(pads, smart_node->rep)) {
+  /* 
+   * The smart code doesn't use rep->elts, pd->elts, 
+   * but it does use the length variables. Therefore,
+   * we need to reset them to 0 before cleanup.
+   */
+  rep.length = 0;
+  if (P_ERR == PADS_TY(_cleanup)(pads, &rep)) {
     error(ERROR_FATAL, "** representation cleanup failed **");
   }
+  
+  pd.length = 0;
   if (P_ERR == PADS_TY(_pd_cleanup)(pads, &pd)) {
     error(ERROR_FATAL, "** parse descriptor cleanup failed **");
   }
+  /**/
   P_io_close(pads);
-  NodeMM_freeMM((NodeMM_t *) pads->ext1);
+
+  NodeMM_freeMM(pads);
   P_close(pads);
   return 0;
 }

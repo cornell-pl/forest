@@ -171,6 +171,51 @@ read_one(P_t *pads,ty_m *m,t...,
   return AR_RET_FINAL_CHECKS();
 }
 
+  /* reread_one can be called whether 
+     finished with the array or not 
+     Guarantee: returns the same state in elt_rep and elt_pd 
+     as read_one from the same offset.
+
+     Note that it does not guarantee to leave the iostream after the call
+     at the same offset as read_one.
+
+     returns: whether an element was read or not.
+  */
+
+Pread_res_t
+reread_one(P_t *pads,ty_m *m,t...,
+	 ty_pd *pd,ty *rep,
+	 elemTy_pd *elt_pd, elemTy *elt_rep,
+	 int notFirstElt)
+{
+  if (notFirstElt){
+    META( Psep && Pterm ) => AR_SCAN_SEP_TERM(...);      
+    META( Psep ) => AR_SCAN_SEP(...);
+  }
+  
+  /**
+   * INV: Ready to read element.
+   */
+  
+  /* READ_ELEMENT */
+  result = elemTy_read(...);
+  
+  META( Pomit(test1) ) =>
+    if (test1()){
+      return P_READ_OMIT;
+    }
+  
+  META( Pended(test1,outparam1) ) => {
+    (isEnded,consume) = test1();
+    
+    if (isEnded && !consume){
+      return P_READ_OMIT;
+    } 
+  }
+
+  return P_READ_RETAIN;
+}
+
 ReadResult_t
 ty ## _final_checks(P_t *pads,ty_m *m,ty_pd *pd,ty *rep,
 	       int foundTerm,
