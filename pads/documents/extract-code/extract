@@ -1,0 +1,8 @@
+#!/bin/sh
+#will be filled in by install script
+
+ARCH=`${PADS_HOME}/scripts/package`
+SMLBIN=${PADS_HOME}/binlinks/smlruntime.${ARCH}
+IMAGE=${PADS_HOME}/documents/extract-code/extract-code
+ 
+exec ${SMLBIN} @SMLload=${IMAGE}  $* < /dev/null

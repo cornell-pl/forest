@@ -1,17 +1,34 @@
 \chapter{PStructs}
 \label{chap:structs}
+\pads{} \kw{pstructs} are used to describe sequences of values with
+potentially unrelated types.  Intuitively, they correspond to
+record-like structures \external ly and \C{}-\cd{structs} in memory.
 \section{Syntax}
-record-like: sequence of fields of various types.
-\begin{verbatim}
-struct name ( param list ){
-qualifiers type name constraint comment
-character/string literal
-...
-} where {
 
-}
-\end{verbatim}
-two types of fields: literals and full
+\begin{tabular}{rcl}
+\nont{qualifier}  & \is{} & \compute{} \alt{} \pomit{} \alt{} \pendian{}\\[1ex]
+\nont{qualifiers}  & \is{} & \nont{qualifier} \alt{} \nont{qualifier} \nont{qualifiers}\\[1ex]
+\nont{constraint} & \is{} & : \nont{predicate}\\[1ex]
+\nont{full\_field} & \is{} & \nont{qualifiers}
+     \nont{p\_ty} \opt{\nont{p\_actuals}} identifier 
+       \opt{\nont{constraint}}; \opt{\nont{p\_comment}} \\[1ex]
+\nont{literal\_field} & \is{} & \term{char\_lit}; \alt{} \term{str\_lit};\\[1ex]
+\nont{field} & \is{} & \nont{literal\_field}  \alt{} \nont{full\_field}\\[1ex]
+\nont{fields} & \is{} & \nont{field} \alt{} \nont{field} \ \nont{fields}\\[1ex]
+\nont{struct\_ty} & \is{} &  \kw{pstruct} identifier \opt{\nont{formals}} \{\\
+&& \quad \nont{fields}\\
+&& \}\ \opt{ \kw{pwhere} \ \{\ \nont{predicate}\ \}}; \\[4ex]
+\end{tabular}
+
+\noindent
+Character (\term{char\_lit}) and string (\term{str\_lit}) literals are described in
+\secref{sec:common-literals}.
+Predicates (\nont{predicate}) are described in \secref{sec:common-predicates}.
+\pads{} comments (\nont{p\_comment}) are described in \secref{sec:common-comments}.
+Formal (\nont{formals}) and actual (\nont{p\_actuals}) parameter lists
+are described in \secref{sec:common-parameterization}.
+\subsection{Example}
+\input{code/httpRequest}
 \subsection{full fields}
 earlier fields and all parameters visible 
 

@@ -1,0 +1,23 @@
+(* sources.cm
+ *
+ * COPYRIGHT (c) 2002 Bell Labs, Lucent Technologies.
+ *)
+
+Library
+  structure Main
+is
+
+smlnj-lib.cm
+
+pads-keywords.sml
+pads-lexer : MLLex
+
+sml-keywords.sml
+sml-lexer : MLLex
+
+tokens.sml
+scanner-fn.sml
+languages.sml
+outfile.sml
+main.sml
+

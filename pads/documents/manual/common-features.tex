@@ -3,18 +3,40 @@ In this chapter, we describe \padsl{} features shared by all types.
 Subsequent chapters describe features particular to various \padsl{}
 types. 
 
-\section{comments}
+\section{Overall structure}
+\label{sec:common-overall}
+\begin{tabular}{rcl}
+\nont{p\_ty} & \is{} & \nont{base\_ty} \\[1ex]
+& & \nont{struct\_ty} \\[1ex]
+& & \nont{union\_ty} \\[1ex]
+& & \nont{array\_ty} \\[1ex]
+& & \nont{typedef\_ty} \\[1ex]
+& & \nont{enum\_ty} \\[1ex]
+\end{tabular}
+\section{Comments}
+\label{sec:common-comments}
 c-style and /-- form, which are reflected into output.
 
 \section{Predicates}
+\label{sec:common-predicates}
  written in C. integer type
  assumed to be side-effect free
+ \term{predicate}
+
+\section{Literals}
+\label{sec:common-literals}
+ characters: 'a'  \term{char\_lit}
+ strings: ``foo'' \term{str\_lit}
 
 \section{Parameterization}
+\label{sec:common-parameterization}
  mechanism to pass values from earlier portions of data to later
  portions
  
  reduce number of type declarations.
+
+\nont{formal\_param\_list}
+\nont{actual\_param\_list}
 
 \section{record modifier}
 
