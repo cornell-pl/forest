@@ -1,5 +1,7 @@
 #include "libpadsc.h"
 #include "ai.h"
+#include <ast.h>
+#include <error.h>
 
 int main(int argc, char** argv) {
   int             i;
@@ -34,22 +36,22 @@ int main(int argc, char** argv) {
 	      ai.host.val.resolved.nIP[2], 
 	      ai.host.val.resolved.nIP[3]);
       } else {
-	printf("host: ");
+	error(0|ERROR_PROMPT, "host: ");
 	for (i = 0; i < ai.host.val.symbolic.length; i++) {
 	  if (i <  ai.host.val.symbolic.length-1) {
-	    printf("%-.*s.", ai.host.val.symbolic.sIP[i].len, ai.host.val.symbolic.sIP[i].str);
+	    error(0|ERROR_PROMPT, "%-.*s.", ai.host.val.symbolic.sIP[i].len, ai.host.val.symbolic.sIP[i].str);
 	  } else {
-	    printf("%-.*s\n", ai.host.val.symbolic.sIP[i].len, ai.host.val.symbolic.sIP[i].str);
+	    error(0, "%-.*s", ai.host.val.symbolic.sIP[i].len, ai.host.val.symbolic.sIP[i].str);
 	  }
 	}
       }
       if (ai.remoteID.tag == unauthorized) {
-	error(0, "remoteID: -");
+	error(0, "remoteID: **unauthorized**");
       } else {
 	error(0, "remoteID: %-.*s", ai.remoteID.val.id.len, ai.remoteID.val.id.str);
       }
       if (ai.auth.tag == unauthorized) {
-	error(0, "authid: -");
+	error(0, "authid: **unauthorized**");
       } else {
 	error(0, "authid: %-.*s", ai.auth.val.id.len, ai.auth.val.id.str);
       }
@@ -60,7 +62,7 @@ int main(int argc, char** argv) {
 	    ai.request.version.major,
 	    ai.request.version.minor);
       error(0, "response: %u   contentLength: %u", ai.response, ai.contentLength);
-      printf("\n");
+      error(0, "");
 
       if (PDC_ERROR == http_clf_t_acc_add(pdc, &acc, &ed, &ai, 0)) {
 	error(2, "*** http_clt_t_acc_add failed ***");
