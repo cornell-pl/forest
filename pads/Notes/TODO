@@ -101,6 +101,9 @@ NOT SURE WHEN
   * should array eat the Pterm char?  (no other term gets eaten)
   * for every type that has a term should there be a way to declare
        that the term should be eaten?
+  * liberalize array termination-
+       allow users to indicate that an array element violation should
+       constitute array termination.  similarly for lack of a separator.
 
 DEFERRED
 --------
@@ -124,12 +127,15 @@ to decide
   * how to handle name conflicts for enums and unions
      how relates to name spaces and separate compilation
   * in-place parsing from buffers?
-  * translation specs: generate conversion from one pads type to another.
+  * translation specs: generate conversion from one pads type to
+  another.
+
 
 data formats to write
 ---------------------
   * netflow data
   * DNS data
+  * http packets
 
 to document
 -----------

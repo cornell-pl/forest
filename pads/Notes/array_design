@@ -1,0 +1,86 @@
+
+Termination conditions
+
+1. Reaches maximum number of array elements.
+2. Finds terminator expression (character, string, regular expression,
+                                lack of a separator)
+3. User-supplied predicate over read-prefix indicates termination.
+   //- should last element be consumed or replaced?
+   //- user should give an indication up front? dynamically? 
+   //- if done dynamically, will always have to read elements
+       speculatively if termination predicate supplied.
+4. Exhaust source.
+***************************************************************
+Reading terminates when any termination condition triggers.
+Order of termination checks:
+  Maximum number of elements already read (doesn't require input, cheap)
+  Predicate check (doesn't require any more input, potentially expensive)
+  Exhaust source 
+  Terminator expression (requires input)
+
+***************************************************************
+What happens with various errors?
+ 
+Errors detected during processing
+ - missing separator
+ - extra stuff before separator
+ - array element error is reported at lower level. 
+
+Errors detected post processing
+ - extra stuff before required terminating expression
+ - required terminating expression not found
+ - not enough elements read
+ - forall constraint violated
+
+Static errors:
+ - Pnosep as terminator if no separator is specified
+***************************************************************
+What do we do with panicking?
+***************************************************************
+Predicate specification:
+  user could just give an expression, have rep, pd, and length in
+  scope
+  
+  how do we handle choice between gobble/no-gobble?
+  1. Static part of spec: Ppred-gobble vs Ppred-nogobble (but nicer)
+  2. Dynamic: predicate returns two things:
+     a. array is finished
+     b. last element is in/out
+
+  If we adopt choice 2, then we can't make predicate a simple
+  expression, must make it a function.
+
+  We could allow either form and branch based on type of expression.
+  If appropriate function type, assume richer interface; otherwise
+  make default decision about inclusion.  Default should probably be
+  inclusive, as that would not require checkpointing and would
+  therefore be cheaper.
+
+***************************************************************
+1. Reaches logical size specification
+2. Find terminator expression (character, string, regular expression)
+3. Missing separator
+4. Element fails constraint
+    -- speculative: back up input
+5. Exhausts physical source
+6. Elements fail/satisfy user-supplied predicate
+     -- should this be speculative or not?
+
+4-6 could all be handled with user predicate on last element
+   if we fold array element error case into predicate case, then we
+   run the predicate for the element twice: once when reading the
+   element and once when running the user's predicate.  Does this
+   inefficiency matter?  ah, but we could pass to the predicate not
+   just the logical rep to current, but also the logical pd to
+   current. The predicate could look at the pd for the last element
+   and determine if there was an error and avoid using the generated
+   predicate. 
+
+***************************************************************
+other changes
+ - want variable currentLoc to be available everywhere.
+   could be mentioned in user-supplied predicate
+
+ - each pads type could generate a predicate function 
+    true if in-memory rep satisifies all constraints, false otherwise
+
