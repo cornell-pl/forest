@@ -1,4 +1,4 @@
-/*@FILE @LEFT dibbler_types.tex dibbler_core.tex dibbler_util.tex dibbler_accum.tex dibbler_fmt.tex */
+/*@FILE @LEFT dibbler_library.tex*/
 
 #ifndef __DIBBLER_NEW__H__
 #define __DIBBLER_NEW__H__
@@ -1036,7 +1036,7 @@ ssize_t eventSeq_t_fmt2buf_final (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_f
 ssize_t eventSeq_t_fmt2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *requestedOut,char const *delims,eventSeq_t_m *m,eventSeq_t_pd *pd,eventSeq_t *rep);
 
 ssize_t eventSeq_t_fmt2io (P_t *pads,Sfio_t *io,int *requestedOut,char const *delims,eventSeq_t_m *m,eventSeq_t_pd *pd,eventSeq_t *rep);
-/*@BEGIN dibbler_types.tex */
+/*@BEGIN dibbler_library.tex */
 typedef struct {
   Pbase_m compoundLevel;   // Struct-level controls, eg., check Pwhere clause
   order_header_t_m h;	    
@@ -1056,7 +1056,8 @@ typedef struct {
   order_header_t h;
   eventSeq_t events;
 } entry_t;
-/*@END dibbler_types.tex */
+
+/*@END dibbler_library.tex */
 
 Perror_t entry_t_init (P_t *pads,entry_t *rep);
 
@@ -1070,16 +1071,16 @@ Perror_t entry_t_copy (P_t *pads,entry_t *rep_dst,entry_t *rep_src);
 
 Perror_t entry_t_pd_copy (P_t *pads,entry_t_pd *pd_dst,entry_t_pd *pd_src);
 
-/*@BEGIN dibbler_util.tex */
+/*@BEGIN dibbler_library.tex */
 /* Selected utility functions */
 void entry_t_m_init (P_t *pads,entry_t_m *mask,Pbase_m baseMask);
 int entry_t_verify (entry_t *rep);
-/*@END dibbler_util.tex */
+/*@END dibbler_library.tex */
 
-/*@BEGIN dibbler_core.tex */
+/*@BEGIN dibbler_library.tex */
 /* Core parsing library */
 Perror_t entry_t_read (P_t *pads,entry_t_m *m,entry_t_pd *pd,entry_t *rep);
-/*@END dibbler_core.tex */
+/*@END dibbler_library.tex */
 typedef struct entry_t_acc_s entry_t_acc;
 struct entry_t_acc_s {
   Puint32_acc nerr;
@@ -1087,29 +1088,29 @@ struct entry_t_acc_s {
   eventSeq_t_acc events;
 };
 
-/*@BEGIN dibbler_accum.tex */
+/*@BEGIN dibbler_library.tex */
 /* Selected accumulator functions */
 Perror_t entry_t_acc_init (P_t *pads,entry_t_acc *acc);
-/*@END dibbler_accum.tex */
+/*@END dibbler_library.tex */
 
 Perror_t entry_t_acc_reset (P_t *pads,entry_t_acc *acc);
 
 Perror_t entry_t_acc_cleanup (P_t *pads,entry_t_acc *acc);
-/*@BEGIN dibbler_accum.tex */
+/*@BEGIN dibbler_library.tex */
 Perror_t entry_t_acc_add (P_t *pads,entry_t_acc *acc,entry_t_pd *pd,entry_t *rep);
-/*@END dibbler_accum.tex */
+/*@END dibbler_library.tex */
 
 Perror_t entry_t_acc_report2io (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,entry_t_acc *acc);
-/*@BEGIN dibbler_accum.tex */
+/*@BEGIN dibbler_library.tex */
 Perror_t entry_t_acc_report (P_t *pads,char const *prefix,char const *what,
 			     int nst,entry_t_acc *acc);
-/*@END dibbler_accum.tex */
+/*@END dibbler_library.tex */
 
 ssize_t entry_t_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,entry_t_pd *pd,entry_t *rep);
 
-/*@BEGIN dibbler_core.tex */
+/*@BEGIN dibbler_library.tex */
 ssize_t entry_t_write2io (P_t *pads,Sfio_t *io,entry_t_pd *pd,entry_t *rep);
-/*@END dibbler_core.tex */
+/*@END dibbler_library.tex */
 
 ssize_t entry_t_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,entry_t_pd *pd,entry_t *rep,char const *tag,int indent);
 
@@ -1122,11 +1123,11 @@ ssize_t entry_t_fmt2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,
 			 int *requestedOut,char const *delims,
 			 entry_t_m *m,entry_t_pd *pd,entry_t *rep);
 
-/*@BEGIN dibbler_fmt.tex */
+/*@BEGIN dibbler_library.tex */
 /* Formatting */
 ssize_t entry_t_fmt2io (P_t *pads,Sfio_t *io,int *requestedOut,
 			char const *delims,entry_t_m *m,entry_t_pd *pd,entry_t *rep);
-/*@END dibbler_fmt.tex */
+/*@END dibbler_library.tex */
 typedef struct entries_t_s entries_t;
 typedef struct entries_t_m_s entries_t_m;
 typedef struct entries_t_pd_s entries_t_pd;
