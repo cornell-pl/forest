@@ -5217,6 +5217,7 @@ Pstring_acc_cleanup(P_t *pads, Pstring_acc *a)
 Perror_t
 Pstring_acc_add(P_t *pads, Pstring_acc *a, const Pbase_pd *pd, const Pstring *val)
 {
+  Puint32 val_len;
   PDCI_string_dt_elt_t  insert_elt;
   PDCI_string_dt_key_t  lookup_key;
   PDCI_string_dt_elt_t  *tmp1;
@@ -5224,7 +5225,7 @@ Pstring_acc_add(P_t *pads, Pstring_acc *a, const Pbase_pd *pd, const Pstring *va
   if (!a->dict) {
     return P_ERR;
   }
-  Puint32 val_len = val->len;
+  val_len = val->len;
   if (P_ERR == Puint32_acc_add(pads, &(a->len_accum), pd, &val_len)) {
     return P_ERR;
   }
@@ -5869,7 +5870,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.154 2004-06-06 22:10:50 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.155 2004-06-07 00:30:57 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
