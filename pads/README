@@ -73,13 +73,13 @@ need not be preserved and are simply annoying.
 
 STEP 3: BUILD AND INSTALL THE PADSC LIBRARY
 
-> gmake libpadsc
+> gmake padsc_lib
 
 STEP 3B [OPTIONAL]: BUILD AND INSTALL THE PGLX LIBRARY
 
 For the PADS-Galax project only, you need to do:
 
-> gmake libpadsc
+> gmake pglx_lib
 
 STEP 4: TEST THE PADSC LIBRARY
 
@@ -94,7 +94,7 @@ then there is a problem with the test_foo test.
 
 STEP 5: BUILD THE COMPILER
 
-> gmake comp
+> gmake padsc_comp
 
 STEP 6: TEST THE COMPILER
 
@@ -118,7 +118,7 @@ Steps 2, 3, and 5 can be done together using
 
 Steps 2, 3, 3b, and 5 can be done together using
 
-> gmake USE_GALAX=1
+> gmake GEN_GALAX=1
 
 
 If you are switching between the two, or if

@@ -1,19 +1,16 @@
  # This is a GNU makefile.
 
 TARGS = padsc_lib
-ifdef GALAX_GEN
+ifdef USE_GALAX
 TARGS += pglx_lib 
 else
-ifdef USE_GALAX
+ifdef GEN_GALAX
 TARGS += pglx_lib 
 endif
 endif
 TARGS += padsc_comp
 
 all:	$(TARGS)
-
-foo:
-	echo TARGS $(TARGS) FOO $(FOO) MAKEFLAGS $(MAKEFLAGS)
 
 padsc_lib:
 	echo Making padsc library
