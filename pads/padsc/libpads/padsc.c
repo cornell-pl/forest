@@ -403,7 +403,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
       }
       while (!(eor|eof)) { /* find a non-space */ 
 	while (isspace_fn(*p1)) { p1++; }
-	if (p1 < end) { break; } 
+	if (p1 < end) { break; }
 	if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
 	  goto fatal_mb_io_err;
 	}
@@ -422,7 +422,10 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
       /* Either eor|eof, or found non-digit before end.  Thus, */
       /* the range [begin, end] is now set up for the strtonum function */
       tmp = bytes2num_fn(pdc, begin, &p1);
-      if (errno == EINVAL) goto invalid;
+      if (errno == EINVAL) {
+	if (p1 != end) p1++; /* move to just beyond offending char */
+	goto invalid;
+      }
       if (errno == ERANGE) goto range_err;
       /* success */
       if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
@@ -3029,7 +3032,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.69 2003-05-08 17:23:28 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.70 2003-05-08 20:40:06 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
