@@ -90,7 +90,7 @@ Precord Pstruct out_sum_data_line {
   a_uint32_field                zip_code;
   dib_pn_field                  nlp_service_tn;
   dib_pn_field                  nlp_billing_tn;
-  omit PcountX(:'|', 1:)        vbars;
+  Pomit PcountX(:'|', 1:)       vbars;
   eventSeq(:getLength(vbars):)  events;
   a_uint32_field                siid;
   a_uint32_field                create_id;

@@ -36,21 +36,21 @@ Parray eventSeq(int size) {
   event [size];
 };
 
-int getLen(int numBars){ return (numBars - 4)/2; }
+int getLength(int numBars){ return (numBars - 4)/2; }
 
 Precord Pstruct out_sum_data_line {
-  a_uint32_vbar             order_num;
-  a_uint32_vbar             order_item;
-  dib_pn_vbar               servicen;
-  dib_pn_vbar               billing_tn;
-  a_uint32_vbar             zip_code;
-  dib_pn_vbar               nlp_service_tn;
-  dib_pn_vbar               nlp_billing_tn;
-  Pomit PcountX(:'|',1:)    bars;
-  eventSeq(:getLen(bars):)  events;
-  opt_a_uint32_vbar         siid;
-  opt_a_uint32_vbar         create_id;
-  opt_a_uint64_vbar         rampII;
-  a_uint32_vbar             order_type;
-  Pa_uint32                 parent_order;
+  a_uint32_vbar                 order_num;
+  a_uint32_vbar                 order_item;
+  dib_pn_vbar                   servicen;
+  dib_pn_vbar                   billing_tn;
+  a_uint32_vbar                 zip_code;
+  dib_pn_vbar                   nlp_service_tn;
+  dib_pn_vbar                   nlp_billing_tn;
+  Pomit PcountX(:'|', 1:)       vbars;
+  eventSeq(:getLength(vbars):)  events;
+  opt_a_uint32_vbar             siid;
+  opt_a_uint32_vbar             create_id;
+  opt_a_uint64_vbar             rampII;
+  a_uint32_vbar                 order_type;
+  Pa_uint32                     parent_order;
 };

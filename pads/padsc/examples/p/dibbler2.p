@@ -8,7 +8,7 @@ Pstruct just_vbar {
   '|';
   Pcompute PDC_int8 d = 0; /-- padsc should provide dummy field for 'empty' structs
 };
-Ppunion opt_a_uint32_vbar {
+Punion opt_a_uint32_vbar {
   a_uint32_vbar yes32;
   just_vbar     no32;
 };
@@ -18,19 +18,19 @@ Punion opt_a_uint64_vbar {
 };
 Pstruct no_pn_vbar {
   "no_TN|";
-  compute PDC_int8 d = 0; /-- padsc should provide dummy field for 'empty' structs
+  Pcompute PDC_int8 d = 0; /-- padsc should provide dummy field for 'empty' structs
 };
 Punion dib_pn_vbar {
   a_uint64_vbar yesPN;
   no_pn_vbar    noPN;
 };
 Pstruct event {
-  a_string(:'|':) state;   '|';
-  a_uint32        tstamp;  '|';
+  Pa_string(:'|':) state;   '|';
+  Pa_uint32        tstamp;  '|';
 };
 Precord Pstruct out_sum_header {
   "0|";
-  a_uint32        tstamp;
+  Pa_uint32        tstamp;
 };
 Parray eventSeq(int size) {
   event [size];
@@ -55,7 +55,7 @@ Pstruct out_sum_fixed2 {
   Puint32                   parent_order;
 };
 Pstruct do_ev_count {
-  Pomit countX(:'|',1:) bars;
+  Pomit PcountX(:'|',1:) bars;
   Pcompute PDC_int32 ev_count = getLen(bars);
 };
 Precord Pstruct out_sum_data_line {
