@@ -83,7 +83,7 @@ expression that is allowed to refer
 to special constants providing location information.  The precise constants
 depend upon the context of the \pparsecheck{} clause in the \pads{}
 description, but always include the constant \cd{position} of type 
-\PDCpost{}, bound to the current position in the physical
+\Ppost{}, bound to the current position in the physical
 source.  
 
 For integration with general predicates, \pparsecheck{} expressions
@@ -136,8 +136,8 @@ indicates the expected character set of the external representation of
 character and string literals, as well as the external representation
 of all character and string 
 base types that do not explicitly name a character set.  Supported
-character sets include ASCII (\cd{PDC_charset_ASCII}) and EBCDIC
-(\cd{PDC_charset_EBCDIC}), where ASCII is the default character set.
+character sets include ASCII (\cd{Pcharset_ASCII}) and EBCDIC
+(\cd{Pcharset_EBCDIC}), where ASCII is the default character set.
 \secref{sec:library-customization-character-encodings} describes how
 to set \cd{def_charset}.
 
@@ -223,7 +223,7 @@ cannot be reconciled with the physical aspects of the description.
 Typical examples include failing to find literals required by
 \Pstruct{} declarations or separators from \Parray{} declarations. We
 say that a read function enters \textit{panic} mode when it detects
-such an error. Read functions set the \cd{PDC\_Panic} flag in the
+such an error. Read functions set the \cd{P_Panic} flag in the
 \cd{pstate} field of the appropriate parse descriptor when entering
 panic mode (\secref{sec:common-parse-descriptor} describes the general
 role and structure of parse descriptors).
@@ -276,16 +276,16 @@ Each \PADS{} type \cd{foo} has an associated parse descriptor type,
 fields:
 \vskip 1ex
 \begin{tabular}{lp{4in}}
- \cd{PDC\_uint32 pstate} & Flags that describe the state after parsing the
+ \cd{Puint32 pstate} & Flags that describe the state after parsing the
                            associated value.\\[1ex]
- \cd{PDC\_errCode\_t errCode} & A code indicating the nature of the 
+ \cd{PerrCode_t errCode} & A code indicating the nature of the 
                                first detected error. 
                                \appref{app:error-codes} contains a 
                                list of all error codes and 
 			       describes their meanings. \\[1ex]
- \cd{PDC\_loc\_t loc}  & The location in the data source of the first 
+ \cd{Ploc_t loc}  & The location in the data source of the first 
                          error.\\[1ex]
- \cd{PDC\_uint32 nerr} & The number of errors detected during parsing
+ \cd{Puint32 nerr} & The number of errors detected during parsing
                         of the associated value.\\[1ex]
 \end{tabular}
 
@@ -293,7 +293,7 @@ fields:
 Field \cd{pstate} contains the following flags:
 \vskip 1ex
 \begin{tabular}{lp{3.5in}}
- \cd{PDC\_Panic} & Set if the parser was in panic mode during the
+ \cd{PPanic} & Set if the parser was in panic mode during the
                   parsing of the associated data.  See
                   \secref{sec:common-error-model} for more information.\\[1ex]
 \end{tabular}
@@ -303,10 +303,10 @@ The \pads{} library provides a collection of functions (macros
 actually) for manipulating the parse state field:
 \vskip 1ex
 \begin{code}
-void PDC_PS_init(void *pd);         
-void PDC_PS_setPanic(void *pd);     
-void PDC_PS_unsetPanic(void *pd);   
-int  PDC_PS_isPanic(void *pd);      
+void P_PS_init(void *pd);         
+void P_PS_setPanic(void *pd);     
+void P_PS_unsetPanic(void *pd);   
+int  P_PS_isPanic(void *pd);      
 \end{code}
 
 
@@ -331,7 +331,7 @@ Need to describe semantics currently supported.
 
 Need to mention extra backslashes.
 
-Need to describe compiled (type \PDCregexpt{}) vs. strings.
+Need to describe compiled (type \Pregexpt{}) vs. strings.
 
 Mention uses:  library discipline, read functions.
 
@@ -360,8 +360,8 @@ about how to manage \pads{} library handles appears in
 \chapref{chap:using-library}. 
 
 Many of the operations that can fail return a value of type
-\cd{PDC\_error\_t} to indicate success or failure.  This type has two
-values: \cd{PDC\_OK} and \cd{PDC\_ERROR}. 
+\cd{Perror_t} to indicate success or failure.  This type has two
+values: \cd{P_OK} and \cd{P_ERR}. 
 
 
 \subsection{Initialization and cleanup functions}
@@ -373,26 +373,26 @@ appropriately.  Each cleanup function takes a pointer to allocated and
 initialized space and deallocates any memory allocated by \pads{} functions.
 It does not deallocate the space pointed to by the parameter.  
 \begin{code}
-PDC_error_t foo_init (PDC_t *pdc, foo *rep);
+Perror_t foo_init (P_t *pads, foo *rep);
 
-PDC_error_t foo_cleanup (PDC_t *pdc, foo *rep);
+Perror_t foo_cleanup (P_t *pads, foo *rep);
 
-PDC_error_t foo_pd_init (PDC_t *pdc, foo_pd *pd);
+Perror_t foo_pd_init (P_t *pads, foo_pd *pd);
 
-PDC_error_t foo_pd_cleanup (PDC_t *pdc, foo_pd *pd);
+Perror_t foo_pd_cleanup (P_t *pads, foo_pd *pd);
 \end{code}
 Because all masks have statically-known size, the library does not
 contain initialization and cleanup functions for masks.  
 Instead, it contains a function for setting all nested base masks 
 to a specified value:  
 \begin{code}
-void foo_m_init (PDC_t *pdc, foo_m *mask, PDC_base_m baseMask);
+void foo_m_init (P_t *pads, foo_m *mask, Pbase_m baseMask);
 \end{code}
 The function takes two parameters (in
 addition to the \pads{} handle): a pointer to allocated space for the
 mask and a base mask value.  Because mask initialization
 functions cannot fail, the return type is \cd{void} instead of
-\cd{PDC_error_t}. 
+\cd{Perror_t}. 
 
 \subsection{Utilty functions}
 Each type \cd{foo} comes equipped with copy functions for both the
@@ -400,9 +400,9 @@ in-memory representation and the parse descriptor.  Both the source
 and destination pointers are assumed to point to allocated space.  In
 addition, the source pointers are assumed to point to initialized space.
 \begin{code}
-PDC_error_t foo_copy (PDC_t *pdc, foo *rep_dst, foo *rep_src);
+Perror_t foo_copy (P_t *pads, foo *rep_dst, foo *rep_src);
 
-PDC_error_t foo_pd_copy (PDC_t *pdc, foo_pd *pd_dst, foo_pd *pd_src);
+Perror_t foo_pd_copy (P_t *pads, foo_pd *pd_dst, foo_pd *pd_src);
 \end{code}
 
 \noindent
@@ -419,11 +419,11 @@ The read function for a \pads{} type \cd{foo} takes as an input parameter a
 pointer to a mask \cd{m} and returns as output parameters a pointer to
 a parse descriptor \cd{pd} and a pointer to an in-memory
 reprsentation \cd{rep}.  If any errors occur during the parsing,
-the function will return \cd{PDC_ERROR}.  Otherwise, it
-will return \cd{PDC_OK}.  
+the function will return \cd{P_ERR}.  Otherwise, it
+will return \cd{P_OK}.  
 
 \begin{code}
-PDC_error_t foo_read (PDC_t *pdc, foo_m *m, foo_pd *pd, foo *rep);
+Perror_t foo_read (P_t *pads, foo_m *m, foo_pd *pd, foo *rep);
 \end{code}
 
 The mask argument allows the library user to specify independently
@@ -434,9 +434,9 @@ three different ``knobs'' associated with each atomic element of a
 
 \vskip 1ex
 \begin{tabular}{ll}
-\cd{PDC_SynCheck} & Check syntactic constraints\\
-\cd{PDC_SymCheck} & Check semantic constraints\\
-\cd{PDC_Set}      & Set the in-memory representation\\[1ex]
+\cd{P_SynCheck} & Check syntactic constraints\\
+\cd{P_SymCheck} & Check semantic constraints\\
+\cd{P_Set}      & Set the in-memory representation\\[1ex]
 \end{tabular}
 
 \noindent
@@ -456,9 +456,9 @@ For convenience, the \pads{} library provides the following abbreviations:
 
 \vskip 1ex
 \begin{tabular}{ll}
-\cd{\#define PDC\_CheckAndSet} & \cd{PDC\_Set|PDC\_SynCheck|PDC\_SemCheck}\\
-\cd{\#define PDC\_BothCheck}   & \cd{PDC\_SynCheck|PDC\_SemCheck} \\
-\cd{\#define PDC\_Ignore}      & no flags set\\[1ex]
+\cd{\#define P_CheckAndSet} & \cd{P_Set|P_SynCheck|P_SemCheck}\\
+\cd{\#define P_BothCheck}   & \cd{P_SynCheck|P_SemCheck} \\
+\cd{\#define P_Ignore}      & no flags set\\[1ex]
 \end{tabular}
 
 \noindent
@@ -468,29 +468,29 @@ modifying base read-function flags:
 \vskip 1ex
 {\small
 \begin{tabular}{ll}
-\cd{\#define PDC\_Test\_Set(m)}            & \cd{(m \& PDC\_Set)} \\
-\cd{\#define PDC\_Test\_SynCheck(m)}       & \cd{(m \& PDC\_SynCheck)}\\
-\cd{\#define PDC\_Test\_SemCheck(m)}       & \cd{(m \& PDC\_SemCheck)}\\
+\cd{\#define P_Test_Set(m)}            & \cd{(m \& P_Set)} \\
+\cd{\#define P_Test_SynCheck(m)}       & \cd{(m \& P_SynCheck)}\\
+\cd{\#define P_Test_SemCheck(m)}       & \cd{(m \& P_SemCheck)}\\
 \\
-\cd{\#define PDC\_Test\_NotSet(m)}         & \cd{(!PDC\_Test\_Set(m))}\\
-\cd{\#define PDC\_Test\_NotSynCheck(m)}    & \cd{(!PDC\_Test\_SynCheck(m))}\\
-\cd{\#define PDC\_Test\_NotSemCheck(m)}    & \cd{(!PDC\_Test\_SemCheck(m))}\\
+\cd{\#define P_Test_NotSet(m)}         & \cd{(!P_Test_Set(m))}\\
+\cd{\#define P_Test_NotSynCheck(m)}    & \cd{(!P_Test_SynCheck(m))}\\
+\cd{\#define P_Test_NotSemCheck(m)}    & \cd{(!P_Test_SemCheck(m))}\\
 \\
-\cd{\#define PDC\_Test\_CheckAndSet(m)}    & \cd{((m \& PDC\_CheckAndSet) == PDC\_CheckAndSet)}\\
-\cd{\#define PDC\_Test\_BothCheck(m)}      & \cd{((m \& PDC\_CheckAndSet) == PDC\_BothCheck)}\\
-\cd{\#define PDC\_Test\_Ignore(m)}         & \cd{((m \& PDC\_CheckAndSet) == PDC\_Ignore)}\\
+\cd{\#define P_Test_CheckAndSet(m)}    & \cd{((m \& P_CheckAndSet) == P_CheckAndSet)}\\
+\cd{\#define P_Test_BothCheck(m)}      & \cd{((m \& P_CheckAndSet) == P_BothCheck)}\\
+\cd{\#define P_Test_Ignore(m)}         & \cd{((m \& P_CheckAndSet) == P_Ignore)}\\
 \\
-\cd{\#define PDC\_Test\_NotCheckAndSet(m)} & \cd{((m \& PDC\_CheckAndSet) != PDC\_CheckAndSet)}\\
-\cd{\#define PDC\_Test\_NotBothCheck(m)}   & \cd{((m \& PDC\_CheckAndSet) != PDC\_BothCheck)}\\
-\cd{\#define PDC\_Test\_NotIgnore(m)}      & \cd{((m \& PDC\_CheckAndSet) != PDC\_Ignore)}\\
+\cd{\#define P_Test_NotCheckAndSet(m)} & \cd{((m \& P_CheckAndSet) != P_CheckAndSet)}\\
+\cd{\#define P_Test_NotBothCheck(m)}   & \cd{((m \& P_CheckAndSet) != P_BothCheck)}\\
+\cd{\#define P_Test_NotIgnore(m)}      & \cd{((m \& P_CheckAndSet) != P_Ignore)}\\
 \\
-\cd{\#define PDC\_Do\_Set(m)}              & \cd{(m |= PDC\_Set)}\\
-\cd{\#define PDC\_Do\_SynCheck(m)}         & \cd{(m |= PDC\_SynCheck)}\\
-\cd{\#define PDC\_Do\_SemCheck(m)}         & \cd{(m |= PDC\_SemCheck)}\\
+\cd{\#define P_Do_Set(m)}              & \cd{(m |= P_Set)}\\
+\cd{\#define P_Do_SynCheck(m)}         & \cd{(m |= P_SynCheck)}\\
+\cd{\#define P_Do_SemCheck(m)}         & \cd{(m |= P_SemCheck)}\\
 \\
-\cd{\#define PDC\_Dont\_Set(m)}            & \cd{(m \&= (~PDC\_Set))}\\
-\cd{\#define PDC\_Dont\_SynCheck(m)}       & \cd{(m \&= (~PDC\_SynCheck))}\\
-\cd{\#define PDC\_Dont\_SemCheck(m)}       & \cd{(m \&= (~PDC\_SemCheck))}\\[1ex]
+\cd{\#define P_Dont_Set(m)}            & \cd{(m \&= (~P_Set))}\\
+\cd{\#define P_Dont_SynCheck(m)}       & \cd{(m \&= (~P_SynCheck))}\\
+\cd{\#define P_Dont_SemCheck(m)}       & \cd{(m \&= (~P_SemCheck))}\\[1ex]
 \end{tabular}
 }
 \subsection{Write functions}
@@ -498,17 +498,17 @@ For each \pads{} type, the generated library provides
 two functions for writing out the in-memory representation of the type
 in a format as close as possible to its original form.
 \begin{code}
-ssize\_t foo\_write2io (PDC\_t *pdc, Sfio\_t *io, foo\_pd *pd, foo *rep);
+ssize_t foo_write2io (P_t *pads, Sfio_t *io, foo_pd *pd, foo *rep);
 
-ssize\_t foo\_write2buf (PDC\_t *pdc, PDC\_byte *buf, size\_t buf\_len, 
-                        int *buf\_full, foo\_pd *pd, foo *rep);
+ssize_t foo_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, 
+                        int *buf_full, foo_pd *pd, foo *rep);
 \end{code}
 The first of these functions emits its output to an SFIO file;
 the second to an in-memory buffer.  Information about SFIO may be
 found from \url{www.research.att.com/sw/tools/sfio}.  For the buffer
 version, the parameter \cd{buf} points to an allocated sequence of
-bytes and \cd{buf\_len} indicates the size of the buffer.  Out
-parameter \cd{buf\_full} is a boolean which is set if the requested
+bytes and \cd{buf_len} indicates the size of the buffer.  Out
+parameter \cd{buf_full} is a boolean which is set if the requested
 write would have overflowed the buffer. The return value
 for both of the functions is the number of bytes written, with \cd{-1}
 indicating an error occurred.  

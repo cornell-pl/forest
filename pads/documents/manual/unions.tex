@@ -141,7 +141,7 @@ first indicates which branch of the union matched, while the second
 contains the representation of the matched branch. 
 Within the context of a 
 \Pparsecheck{} clause, constants \cd{begin} and \cd{end}, each of type 
-\PDCpost{} are available.  Constant \cd{begin} is bound to the input
+\Ppost{} are available.  Constant \cd{begin} is bound to the input
 position of the beginning of the \punion{}; \cd{end} is bound to its end.
 If the predicate given in
 the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
@@ -161,7 +161,7 @@ has already been defined
 elsewhere.  In this case, the name of the tag is 
 \texttt{unionName\_branchName}.  
 The name of the tag enumeration is the name of
-the \pads{} specification with the \cd{\_tag} suffix.
+the \pads{} specification with the \cd{_tag} suffix.
 For example, the generated enumeration type
 for the \Punion{} \cd{branches} is the following:
 \input{code/union-impl-branches-tag}
@@ -235,7 +235,7 @@ The read function for a switched \Punion{} evaluates the \Pswitch{}
 expression and uses a \C{} \cd{switch} statement to jump to the
 appropriate branch.  If there is no \Pdefault{} branch and none of the
 \Pcase{} branches match,  the read function will return the error code
-\cd{PDC\_UNION\_MATCH\_ERR} and set the \cd{tag} fields of the parse
+\cd{P_UNION_MATCH_ERR} and set the \cd{tag} fields of the parse
 descriptor and in-memory representation to the error tag. 
 
 For an in-place \Punion{}, the read function speculatively reads each
@@ -246,11 +246,11 @@ described by the type of the branch.  If the nested read function
 succeeds and any user-level constraint on the branch also succeeds,
 the read function commits to the parse, sets the \cd{tag} fields to
 the name of the successful branch, and returns
-\cd{PDC\_NO\_ERR}. If an error occurs, the read function aborts the
+\cd{P_NO_ERR}. If an error occurs, the read function aborts the
 read, rolling back the input to the marked location, and tries the next
 branch.  If the last branch in an in-place \Punion{} fails, the read
 function returns the error code
-\cd{PDC\_UNION\_MATCH\_ERR} and sets the \cd{tag} fields of the parse
+\cd{P_UNION_MATCH_ERR} and sets the \cd{tag} fields of the parse
 descriptor and in-memory representation to the error tag. 
 Errors that occur duing parsing branches of an in-line \Punion{} are
 surpressed because of the speculative nature of the parsing.
@@ -259,8 +259,8 @@ The error codes for \Punion{}s are:
 
 \tskip{}
 \begin{tabular}{lp{4in}}
- \cd{PDC\_NO\_ERR}                 & Indicates no error occurred\\[1ex]
- \cd{PDC\_UNION\_MATCH\_ERR}         & Indicates that no branch of the
+ \cd{P_NO_ERR}                 & Indicates no error occurred\\[1ex]
+ \cd{P_UNION_MATCH_ERR}         & Indicates that no branch of the
                                     union parsed without error.\\[1ex]
 \end{tabular}
 

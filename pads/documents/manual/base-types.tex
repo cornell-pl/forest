@@ -12,81 +12,81 @@ number of new base types; see \secref{sec:library-adding-new-base-types}.
 Each base type as an external and an in-memory representation, where
 related base types share the same in-memory representation.  For
 example, while there are 18 different string base types, all of them
-use \PDC{string} as their in-memory representation.
+use \Pd{string} as their in-memory representation.
 
 This section reviews the different in-memory representation types.
 
-\subsection{{\tt PDC\_char}}
+\subsection{{\tt Pchar}}
 
-Type \PDC{char} is the in-memory representation of an external
+Type \Pd{char} is the in-memory representation of an external
 character.  It is equivalent to the C type \cd{unsigned char}, or type
-\PDC{uint8}: all are 8-bit unsigned values.  N.B.: Regardless of the
+\Pd{uint8}: all are 8-bit unsigned values.  N.B.: Regardless of the
 external character that is read, the corresponding ASCII character is stored in 
 the in-memory representation.
 
-\subsection{{\tt PDC\_string}}
+\subsection{{\tt Pstring}}
 
-Type \PDC{string} is the in-memory representation for all forms of
-external strings.  A \PDC{string} \cd{s} has two fields:
+Type \Pd{string} is the in-memory representation for all forms of
+external strings.  A \Pd{string} \cd{s} has two fields:
 \begin{itemize}
 \item \cd{s.len} : the length of the string.
 \item \cd{s.str} : a pointer to a sequence of \cd{s.len} characters.
 \end{itemize}
-In addition, \PDC{string} has fields that are manipulated
+In addition, \Pd{string} has fields that are manipulated
 by various string functions (some of which are described below).
 Most programmers should only use \cd{s.len} and \cd{s.str}.
 
 The library discipline has a field \cd{copy\_strings} which controls
 copying behavior for string read calls.  If \cd{copy\_strings} is
 non-zero, the string read functions always copy strings. Otherwise, a
-copy is not made and the target \PDC{string} points to memory managed by
+copy is not made and the target \Pd{string} points to memory managed by
 the current IO discipline.  \cd{copy\_strings} should only be set to
 zero for record-based IO disciplines where strings from record K are
-not used after \PDC{IO\_next\_rec} has been called to move the IO cursor
-to record K+1.  Note: \PDC{string\_preserve} can be used to force
+not used after \Pd{\_io\_next\_rec} has been called to move the IO cursor
+to record K+1.  Note: \Pd{string\_preserve} can be used to force
 a string that is using sharing to make a copy so that the string is
-'preserved' (remains valid) across calls to \PDC{IO\_next\_rec}.
+'preserved' (remains valid) across calls to \Pd{\_io\_next\_rec}.
 
 When copying is used, the string copies are stored in an internal
 resizable buffer, and \cd{s.str} points into this buffer. 
-To ensure correct behavior, function \PDC{string\_init} should be called
-prior to using a \PDC{string}, and function \PDC{string\_cleanup} should
-be called when a given \PDC{string} is no longer in use.
+To ensure correct behavior, function \Pd{string\_init} should be called
+prior to using a \Pd{string}, and function \Pd{string\_cleanup} should
+be called when a given \Pd{string} is no longer in use.
 \\[1ex]
 These are the full set of string helper functions.
 \vskip 1ex
 \begin{tinycodeaux}{\leftmargin=0in}
-PDC_error_t PDC_string_init(PDC_t *pdc, PDC_string *s);
-PDC_error_t PDC_string_cleanup(PDC_t *pdc, PDC_string *s);
-PDC_error_t PDC_string_share(PDC_t *pdc, PDC_string *targ, const PDC_string *src);
-PDC_error_t PDC_string_Cstr_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
-PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const PDC_string *src);
-PDC_error_t PDC_string_Cstr_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
-PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
-int PDC_string_eq(const PDC_string *str1, const PDC_string *str2);
-int PDC_string_eq_Cstr(const PDC_string *str, const char *Cstr);
+Perror_t Pstring_init(P_t *pads, Pstring *s);
+Perror_t Pstring_cleanup(P_t *pads, Pstring *s);
+Perror_t Pstring_share(P_t *pads, Pstring *targ, const Pstring *src);
+Perror_t Pstring_cstr_share(P_t *pads, Pstring *targ, const char *src, size_t len);
+Perror_t Pstring_copy(P_t *pads, Pstring *targ, const Pstring *src);
+Perror_t Pstring_cstr_copy(P_t *pads, Pstring *targ, const char *src, size_t len);
+Perror_t Pstring_preserve(P_t *pads, Pstring *s);
+int Pstring_eq(const Pstring *str1, const Pstring *str2);
+int Pstring_eq_cstr(const Pstring *str, const char *cstr);
 \end{tinycodeaux}
 \mbox{}\\[1ex]
-\cd{PDC\_string\_init(pdc, s)}: Initialize \cd{s} to valid empty string (no dynamic memory allocated yet).\\[1ex]
-\cd{PDC\_string\_cleanup(pdc, s)}: Free any dynamic memory allocated for \cd{s}.\\[1ex]
-\cd{PDC\_string\_share(pdc, targ, src)}: make \cd{targ} refer to the string in \cd{src},
+\cd{Pstring\_init(pads, s)}: Initialize \cd{s} to valid empty string (no dynamic memory allocated yet).\\[1ex]
+\cd{Pstring\_cleanup(pads, s)}: Free any dynamic memory allocated for \cd{s}.\\[1ex]
+\cd{Pstring\_share(pads, targ, src)}: make \cd{targ} refer to the string in \cd{src},
 sharing the space with the original owner.\\[1ex]
-\cd{PDC\_string\_Cstr\_share(pdc, targ, src, len)}: make \cd{targ} refer to \cd{len} characters in C-string \cd{src}.\\[1ex]
-\cd{PDC\_string\_copy(pdc, targ, src)}: Copy the string in \cd{src} into \cd{targ}; sharing is not used.\\[1ex]
-\cd{PDC\_string\_Cstr\_copy(pdc, targ, src, len)}: Copy \cd{len} characters from C-string \cd{src} into \cd{targ}; sharing is not used.\\[1ex]
-\cd{PDC\_string\_eq(str1, str2)}: returns \cd{0} if \cd{str1} equals \cd{str2}, a negative number if \cd{str1 < str2},
+\cd{Pstring\_cstr\_share(pads, targ, src, len)}: make \cd{targ} refer to \cd{len} characters in C-string \cd{src}.\\[1ex]
+\cd{Pstring\_copy(pads, targ, src)}: Copy the string in \cd{src} into \cd{targ}; sharing is not used.\\[1ex]
+\cd{Pstring\_cstr\_copy(pads, targ, src, len)}: Copy \cd{len} characters from C-string \cd{src} into \cd{targ}; sharing is not used.\\[1ex]
+\cd{Pstring\_eq(str1, str2)}: returns \cd{0} if \cd{str1} equals \cd{str2}, a negative number if \cd{str1 < str2},
 and a positive number if \cd{str1 > str2}.\\[1ex]
-\cd{PDC\_string\_eq(str, Cstr)}: returns \cd{0} if \cd{str} equals \cd{Cstr}, a negative number if \cd{str < Cstr},
-and a positive number if \cd{str > Cstr}.\\[1ex]
+\cd{Pstring\_eq(str, cstr)}: returns \cd{0} if \cd{str} equals \cd{cstr}, a negative number if \cd{str < cstr},
+and a positive number if \cd{str > cstr}.\\[1ex]
 
-Although not strictly necessary, both \PDC{string\_copy} and \PDC{string\_Cstr\_copy} null-terminate \cd{targ->str}.
-Each copy function returns \PDC{ERR} on bad arguments or on failure to alloc space, otherwise it returns \PDC{OK}.
+Although not strictly necessary, both \Pd{string\_copy} and \Pd{string\_cstr\_copy} null-terminate \cd{targ->str}.
+Each copy function returns \Pd{\_ERR} on bad arguments or on failure to alloc space, otherwise it returns \Pd{\_OK}.
 
 \subsection{Integer types}
 
 There are 8 in-memory representations for integers, four types for
-signed values (\PDC{int8}, \PDC{int16}, \PDC{int32}, and \PDC{int64})
-and four types for unsigned values (\PDC{uint8}, \PDC{uint16}, \PDC{uint32}, and \PDC{uint64}).
+signed values (\Pd{int8}, \Pd{int16}, \Pd{int32}, and \Pd{int64})
+and four types for unsigned values (\Pd{uint8}, \Pd{uint16}, \Pd{uint32}, and \Pd{uint64}).
 The number in these type names indicates the number of bits in the in-memory representation,
 thus there are signed and unsigned integers that use 1, 2, 4, or 8 bytes of memory.
 The endian-ness of these in-memory representation types is the same as the
@@ -97,27 +97,27 @@ to a primitive in-memory representation supported by the processor.
 For programming convenience, the header file {\tt padsc.h} includes definitions of the minimum
 and maximum values for each signed type, and of the maximum value for each unsigned type:
 \begin{tinycode}
-PDC_MIN_INT8
-PDC_MAX_INT8
-PDC_MAX_UINT8
+P_MIN_INT8
+P_MAX_INT8
+P_MAX_UINT8
 
-PDC_MIN_INT16
-PDC_MAX_INT16
-PDC_MAX_UINT16
+P_MIN_INT16
+P_MAX_INT16
+P_MAX_UINT16
 
-PDC_MIN_INT32
-PDC_MAX_INT32
-PDC_MAX_UINT32
+P_MIN_INT32
+P_MAX_INT32
+P_MAX_UINT32
 
-PDC_MIN_INT64
-PDC_MAX_INT64
-PDC_MAX_UINT64
+P_MIN_INT64
+P_MAX_INT64
+P_MAX_UINT64
 \end{tinycode}
 
 \subsection{Floating-point types}
 
 \PADSL{} has only two in-memory floating point representations,
-\PDC{float32} and \PDC{float64}, which correspond to ansi C types \cd{float}
+\Pd{float32} and \Pd{float64}, which correspond to ansi C types \cd{float}
 and \cd{double}, respectively.
 
 \subsection{Fixed-point types}
@@ -139,31 +139,31 @@ integer types, thus there are four four types for signed values
 and four types for unsigned values:
 
 \begin{tinycodeaux}{\leftmargin=0in}
-typedef struct \{ PDC_int8   num; PDC_uint8  denom; \} PDC_fpoint8;
-typedef struct \{ PDC_int16  num; PDC_uint16 denom; \} PDC_fpoint16;
-typedef struct \{ PDC_int32  num; PDC_uint32 denom; \} PDC_fpoint32;
-typedef struct \{ PDC_int64  num; PDC_uint64 denom; \} PDC_fpoint64;
+typedef struct \{ Pint8   num; Puint8  denom; \} Pfpoint8;
+typedef struct \{ Pint16  num; Puint16 denom; \} Pfpoint16;
+typedef struct \{ Pint32  num; Puint32 denom; \} Pfpoint32;
+typedef struct \{ Pint64  num; Puint64 denom; \} Pfpoint64;
 
-typedef struct \{ PDC_uint8  num; PDC_uint8  denom; \} PDC_ufpoint8;
-typedef struct \{ PDC_uint16 num; PDC_uint16 denom; \} PDC_ufpoint16;
-typedef struct \{ PDC_uint32 num; PDC_uint32 denom; \} PDC_ufpoint32;
-typedef struct \{ PDC_uint64 num; PDC_uint64 denom; \} PDC_ufpoint64;
+typedef struct \{ Puint8  num; Puint8  denom; \} Pufpoint8;
+typedef struct \{ Puint16 num; Puint16 denom; \} Pufpoint16;
+typedef struct \{ Puint32 num; Puint32 denom; \} Pufpoint32;
+typedef struct \{ Puint64 num; Puint64 denom; \} Pufpoint64;
 \end{tinycodeaux}
 
 There are two macros to help one use values of these in-memory types.
-\PDC{FPOINT2FLT(fp)} calculates \cd{fp.num/fp.denom} as a float,
-while \PDC{FPOINT2DBL(fp)} calculates \cd{fp.num/fp.denom} as a double.
+\Pd{\_FPOINT2FLOAT32(fp)} calculates \cd{fp.num/fp.denom} as a \Pd{float32},
+while \Pd{\_FPOINT2FLOAT64(fp)} calculates \cd{fp.num/fp.denom} as a \Pd{float64}.
 
 \section{Base Type Mask}
 \label{sec:base-type-mask}
 
-XXX \PDCbasem{} was already described?
+XXX \Pbasem{} was already described?
 
 \section{Base Type Parse Descriptor}
 \label{sec:base-type-parse-descriptors}
 
-XXX already described \PDCbasepd{}.  Which involves describing \PDCloct{}, \PDCpost{},
-and \PDCerrCodet{}.  
+XXX already described \Pbasepd{}.  Which involves describing \Ploct{}, \Ppost{},
+and \PerrCodet{}.  
 
 Specific error codes are discussed below
 when the base type read functions are described.
@@ -198,9 +198,9 @@ table showing types \Pa{char} (ASCII), \Pe{char} (EBCDIC), \Pd{char}
 \\[1ex]
 The corresponding read functions are:
 \begin{tinycodeaux}{\leftmargin=0in}
-PDC_error_t PDC_char_read   (PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, PDC_char *c_out);
-PDC_error_t PDC_a_char_read (PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, PDC_char *c_out);
-PDC_error_t PDC_e_char_read (PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, PDC_char *c_out);
+Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
+Perror_t Pa_char_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
+Perror_t Pe_char_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
 \end{tinycodeaux}
 
 \subsection{Special character base types}
@@ -211,19 +211,19 @@ PDC_error_t PDC_e_char_read (PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, P
 \aedEnd{}
 
 \begin{tinycodeaux}{\leftmargin=0in}
-PDC_error_t PDC_countX     (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
-		            PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_a_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
-			    PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_e_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
-			    PDC_base_pd *pd, PDC_int32 *res_out);
+Perror_t PcountX     (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required,
+		      Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pa_countX   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required,
+		      Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pe_countX   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required,
+		      Pbase_pd *pd, Pint32 *res_out);
 
-PDC_error_t PDC_countXtoY  (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
-		            PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_a_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
-			    PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_e_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
-			    PDC_base_pd *pd, PDC_int32 *res_out);
+Perror_t PcountXtoY  (P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y,
+		      Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pa_countXtoY(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y,
+		      Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pe_countXtoY(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y,
+		      Pbase_pd *pd, Pint32 *res_out);
 \end{tinycodeaux}
 
 \section{String Base Types}
@@ -235,12 +235,12 @@ PDC_error_t PDC_e_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_ui
 \aedEnd{}
 
 \begin{tinycodeaux}{\leftmargin=0in}
-PDC_error_t PDC_string_FW_read   (PDC_t *pdc, const PDC_base_m *m, size_t width,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_a_string_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_e_string_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
-				  PDC_base_pd *pd, PDC_string *s_out);
+Perror_t Pstring_FW_read   (P_t *pads, const Pbase_m *m, size_t width,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pa_string_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pe_string_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			    Pbase_pd *pd, Pstring *s_out);
 \end{tinycodeaux}
 
 \subsection{Variable-width character-based encoding}
@@ -254,40 +254,40 @@ PDC_error_t PDC_e_string_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
 \aedEnd{}
 
 \begin{tinycodeaux}{\leftmargin=0in}
-PDC_error_t PDC_string_read      (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
-			          PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_a_string_read    (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
-			          PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_e_string_read    (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
-			          PDC_base_pd *pd, PDC_string *s_out);
+Perror_t Pstring_read      (P_t *pads, const Pbase_m *m, Pchar stopChar,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pa_string_read    (P_t *pads, const Pbase_m *m, Pchar stopChar,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pe_string_read    (P_t *pads, const Pbase_m *m, Pchar stopChar,
+			    Pbase_pd *pd, Pstring *s_out);
 
-PDC_error_t PDC_string_ME_read   (PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_a_string_ME_read (PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_e_string_ME_read (PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
+Perror_t Pstring_ME_read   (P_t *pads, const Pbase_m *m, const char *matchRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pa_string_ME_read (P_t *pads, const Pbase_m *m, const char *matchRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pe_string_ME_read (P_t *pads, const Pbase_m *m, const char *matchRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
 
-PDC_error_t PDC_string_CME_read  (PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_a_string_CME_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_e_string_CME_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
+Perror_t Pstring_CME_read  (P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pa_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pe_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
 
-PDC_error_t PDC_string_SE_read   (PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_a_string_SE_read (PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_e_string_SE_read (PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
+Perror_t Pstring_SE_read   (P_t *pads, const Pbase_m *m, const char *stopRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pa_string_SE_read (P_t *pads, const Pbase_m *m, const char *stopRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pe_string_SE_read (P_t *pads, const Pbase_m *m, const char *stopRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
 
-PDC_error_t PDC_string_CSE_read  (PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_a_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
-PDC_error_t PDC_e_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
-				  PDC_base_pd *pd, PDC_string *s_out);
+Perror_t Pstring_CSE_read  (P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pa_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
+Perror_t Pe_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
+			    Pbase_pd *pd, Pstring *s_out);
 \end{tinycodeaux}
 
 \subsection{Special string base types}
@@ -297,12 +297,12 @@ PDC_error_t PDC_e_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t 
 \aedEnd{}
 
 \begin{tinycodeaux}{\leftmargin=0in}
-PDC_error_t PDC_date_read  (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
-			    PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_a_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
-			    PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_e_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
-			    PDC_base_pd *pd, PDC_uint32 *res_out);
+Perror_t Pdate_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
+		      Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pa_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
+		      Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pe_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
+		      Pbase_pd *pd, Puint32 *res_out);
 \end{tinycodeaux}
 
 \section{Integer Base Types}
@@ -321,59 +321,59 @@ PDC_error_t PDC_e_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 \aedEnd{}
 
 \begin{tinycodeaux}{\leftmargin=0in}
-PDC_error_t PDC_a_int8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
-				PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_a_int16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_a_int32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_a_int64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Pa_int8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Pint8 *res_out);
+Perror_t Pa_int16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pa_int32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pa_int64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_a_uint8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
-				 PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_a_uint16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				 PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_a_uint32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				 PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_a_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				 PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Pa_uint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			   Pbase_pd *pd, Puint8 *res_out);
+Perror_t Pa_uint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			   Pbase_pd *pd, Puint16 *res_out);
+Perror_t Pa_uint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			   Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pa_uint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			   Pbase_pd *pd, Puint64 *res_out);
 
-PDC_error_t PDC_e_int8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
-				PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_e_int16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_e_int32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_e_int64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Pe_int8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Pint8 *res_out);
+Perror_t Pe_int16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pe_int32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pe_int64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_e_uint8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
-				 PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_e_uint16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				 PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_e_uint32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				 PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_e_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				 PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Pe_uint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			   Pbase_pd *pd, Puint8 *res_out);
+Perror_t Pe_uint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			   Pbase_pd *pd, Puint16 *res_out);
+Perror_t Pe_uint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			   Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pe_uint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			   Pbase_pd *pd, Puint64 *res_out);
 
-PDC_error_t PDC_int8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
-			      PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_int16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-			      PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_int32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-			      PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_int64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-			      PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Pint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			Pbase_pd *pd, Pint8 *res_out);
+Perror_t Pint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_uint8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
-			       PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_uint16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-			       PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_uint32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-			       PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-			       PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Puint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			 Pbase_pd *pd, Puint8 *res_out);
+Perror_t Puint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			 Pbase_pd *pd, Puint16 *res_out);
+Perror_t Puint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			 Pbase_pd *pd, Puint32 *res_out);
+Perror_t Puint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			 Pbase_pd *pd, Puint64 *res_out);
 \end{tinycodeaux}
 
 \subsection{Variable-width character-based encoding}
@@ -391,59 +391,59 @@ PDC_error_t PDC_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 
 \begin{tinycodeaux}{\leftmargin=0in}
 \codeallowbreaks
-PDC_error_t PDC_a_int8_read (PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_a_int16_read(PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_a_int32_read(PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_a_int64_read(PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Pa_int8_read (P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint8 *res_out);
+Perror_t Pa_int16_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pa_int32_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pa_int64_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_a_uint8_read (PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_a_uint16_read(PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_a_uint32_read(PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_a_uint64_read(PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Pa_uint8_read (P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint8 *res_out);
+Perror_t Pa_uint16_read(P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint16 *res_out);
+Perror_t Pa_uint32_read(P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pa_uint64_read(P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint64 *res_out);
 
-PDC_error_t PDC_e_int8_read (PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_e_int16_read(PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_e_int32_read(PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_e_int64_read(PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Pe_int8_read (P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint8 *res_out);
+Perror_t Pe_int16_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pe_int32_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pe_int64_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_e_uint8_read (PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_e_uint16_read(PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_e_uint32_read(PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_e_uint64_read(PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Pe_uint8_read (P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint8 *res_out);
+Perror_t Pe_uint16_read(P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint16 *res_out);
+Perror_t Pe_uint32_read(P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pe_uint64_read(P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint64 *res_out);
 
-PDC_error_t PDC_int8_read (PDC_t *pdc, const PDC_base_m *m,
-			    PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_int16_read(PDC_t *pdc, const PDC_base_m *m,
-			   PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_int32_read(PDC_t *pdc, const PDC_base_m *m,
-			   PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_int64_read(PDC_t *pdc, const PDC_base_m *m,
-			   PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Pint8_read (P_t *pads, const Pbase_m *m,
+		     Pbase_pd *pd, Pint8 *res_out);
+Perror_t Pint16_read(P_t *pads, const Pbase_m *m,
+		     Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pint32_read(P_t *pads, const Pbase_m *m,
+		     Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pint64_read(P_t *pads, const Pbase_m *m,
+		     Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_uint8_read (PDC_t *pdc, const PDC_base_m *m,
-			    PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_uint16_read(PDC_t *pdc, const PDC_base_m *m,
-			    PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_uint32_read(PDC_t *pdc, const PDC_base_m *m,
-			    PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_uint64_read(PDC_t *pdc, const PDC_base_m *m,
-			    PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Puint8_read (P_t *pads, const Pbase_m *m,
+		      Pbase_pd *pd, Puint8 *res_out);
+Perror_t Puint16_read(P_t *pads, const Pbase_m *m,
+		      Pbase_pd *pd, Puint16 *res_out);
+Perror_t Puint32_read(P_t *pads, const Pbase_m *m,
+		      Pbase_pd *pd, Puint32 *res_out);
+Perror_t Puint64_read(P_t *pads, const Pbase_m *m,
+		      Pbase_pd *pd, Puint64 *res_out);
 \end{tinycodeaux}
 
 \subsection{Raw binary encoding}
@@ -461,23 +461,23 @@ PDC_error_t PDC_uint64_read(PDC_t *pdc, const PDC_base_m *m,
 
 \begin{tinycodeaux}{\leftmargin=0in}
 \codeallowbreaks
-PDC_error_t PDC_b_int8_read (PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_b_int16_read(PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_b_int32_read(PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_b_int64_read(PDC_t *pdc, const PDC_base_m *m,
-			     PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Pb_int8_read (P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint8 *res_out);
+Perror_t Pb_int16_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pb_int32_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pb_int64_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_b_uint8_read (PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_b_uint16_read(PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_b_uint32_read(PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_b_uint64_read(PDC_t *pdc, const PDC_base_m *m,
-			      PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Pb_uint8_read (P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint8 *res_out);
+Perror_t Pb_uint16_read(P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint16 *res_out);
+Perror_t Pb_uint32_read(P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
+			Pbase_pd *pd, Puint64 *res_out);
 \end{tinycodeaux}
 
 \subsection{Serialize binary encoding}
@@ -495,41 +495,41 @@ PDC_error_t PDC_b_uint64_read(PDC_t *pdc, const PDC_base_m *m,
 
 \begin{tinycodeaux}{\leftmargin=0in}
 \codeallowbreaks
-PDC_error_t PDC_sbl_int8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			         PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_sbl_int16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			         PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_sbl_int32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			         PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_sbl_int64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			         PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Psbl_int8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Pint8 *res_out);
+Perror_t Psbl_int16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Pint16 *res_out);
+Perror_t Psbl_int32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Pint32 *res_out);
+Perror_t Psbl_int64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_sbl_uint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			 	 PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_sbl_uint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			 	 PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_sbl_uint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			 	 PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_sbl_uint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			 	 PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Psbl_uint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Puint8 *res_out);
+Perror_t Psbl_uint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Puint16 *res_out);
+Perror_t Psbl_uint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Puint32 *res_out);
+Perror_t Psbl_uint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Puint64 *res_out);
 
-PDC_error_t PDC_sbh_int8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			         PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_sbh_int16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			         PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_sbh_int32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			         PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_sbh_int64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			         PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Psbh_int8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Pint8 *res_out);
+Perror_t Psbh_int16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Pint16 *res_out);
+Perror_t Psbh_int32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Pint32 *res_out);
+Perror_t Psbh_int64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_sbh_uint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			 	 PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_sbh_uint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			 	 PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_sbh_uint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			 	 PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_sbh_uint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
-			 	 PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Psbh_uint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Puint8 *res_out);
+Perror_t Psbh_uint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Puint16 *res_out);
+Perror_t Psbh_uint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Puint32 *res_out);
+Perror_t Psbh_uint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
+			    Pbase_pd *pd, Puint64 *res_out);
 \end{tinycodeaux}
 
 \subsection{EBC and BCD encoding}
@@ -547,41 +547,41 @@ PDC_error_t PDC_sbh_uint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 nu
 
 \begin{tinycodeaux}{\leftmargin=0in}
 \codeallowbreaks
-PDC_error_t PDC_ebc_int8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_ebc_int16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_ebc_int32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_ebc_int64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Pebc_int8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Pint8 *res_out);
+Perror_t Pebc_int16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pebc_int32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pebc_int64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_ebc_uint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_ebc_uint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_ebc_uint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_ebc_uint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Pebc_uint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Puint8 *res_out);
+Perror_t Pebc_uint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Puint16 *res_out);
+Perror_t Pebc_uint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pebc_uint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Puint64 *res_out);
 
-PDC_error_t PDC_bcd_int8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_int8 *res_out);
-PDC_error_t PDC_bcd_int16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_int16 *res_out);
-PDC_error_t PDC_bcd_int32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_bcd_int64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_int64 *res_out);
+Perror_t Pbcd_int8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Pint8 *res_out);
+Perror_t Pbcd_int16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pbcd_int32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pbcd_int64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Pint64 *res_out);
 
-PDC_error_t PDC_bcd_uint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_uint8 *res_out);
-PDC_error_t PDC_bcd_uint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_uint16 *res_out);
-PDC_error_t PDC_bcd_uint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_uint32 *res_out);
-PDC_error_t PDC_bcd_uint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
-				 PDC_base_pd *pd, PDC_uint64 *res_out);
+Perror_t Pbcd_uint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Puint8 *res_out);
+Perror_t Pbcd_uint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Puint16 *res_out);
+Perror_t Pbcd_uint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pbcd_uint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
+			   Pbase_pd *pd, Puint64 *res_out);
 \end{tinycodeaux}
 
 \section{Floating Point Base Types}
@@ -643,41 +643,41 @@ PDC_error_t PDC_bcd_uint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num
 
 \begin{tinycodeaux}{\leftmargin=0in}
 \codeallowbreaks
-PDC_error_t PDC_sbl_fpoint8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint8 *res_out);
-PDC_error_t PDC_sbl_fpoint16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint16 *res_out);
-PDC_error_t PDC_sbl_fpoint32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint32 *res_out);
-PDC_error_t PDC_sbl_fpoint64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint64 *res_out);
+Perror_t Psbl_fpoint8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pfpoint8 *res_out);
+Perror_t Psbl_fpoint16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pfpoint16 *res_out);
+Perror_t Psbl_fpoint32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pfpoint32 *res_out);
+Perror_t Psbl_fpoint64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pfpoint64 *res_out);
 
-PDC_error_t PDC_sbl_ufpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint8 *res_out);
-PDC_error_t PDC_sbl_ufpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint16 *res_out);
-PDC_error_t PDC_sbl_ufpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint32 *res_out);
-PDC_error_t PDC_sbl_ufpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint64 *res_out);
+Perror_t Psbl_ufpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pufpoint8 *res_out);
+Perror_t Psbl_ufpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pufpoint16 *res_out);
+Perror_t Psbl_ufpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pufpoint32 *res_out);
+Perror_t Psbl_ufpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pufpoint64 *res_out);
 
-PDC_error_t PDC_sbh_fpoint8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint8 *res_out);
-PDC_error_t PDC_sbh_fpoint16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint16 *res_out);
-PDC_error_t PDC_sbh_fpoint32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint32 *res_out);
-PDC_error_t PDC_sbh_fpoint64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint64 *res_out);
+Perror_t Psbh_fpoint8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pfpoint8 *res_out);
+Perror_t Psbh_fpoint16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pfpoint16 *res_out);
+Perror_t Psbh_fpoint32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pfpoint32 *res_out);
+Perror_t Psbh_fpoint64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pfpoint64 *res_out);
 
-PDC_error_t PDC_sbh_ufpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint8 *res_out);
-PDC_error_t PDC_sbh_ufpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint16 *res_out);
-PDC_error_t PDC_sbh_ufpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint32 *res_out);
-PDC_error_t PDC_sbh_ufpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint64 *res_out);
+Perror_t Psbh_ufpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pufpoint8 *res_out);
+Perror_t Psbh_ufpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pufpoint16 *res_out);
+Perror_t Psbh_ufpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pufpoint32 *res_out);
+Perror_t Psbh_ufpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
+			       Pbase_pd *pd, Pufpoint64 *res_out);
 \end{tinycodeaux}
 
 \subsection{EBC and BCD encoding}
@@ -695,40 +695,40 @@ PDC_error_t PDC_sbh_ufpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32
 
 \begin{tinycodeaux}{\leftmargin=0in}
 \codeallowbreaks
-PDC_error_t PDC_ebc_fpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint8 *res_out);
-PDC_error_t PDC_ebc_fpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint16 *res_out);
-PDC_error_t PDC_ebc_fpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint32 *res_out);
-PDC_error_t PDC_ebc_fpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint64 *res_out);
+Perror_t Pebc_fpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pfpoint8 *res_out);
+Perror_t Pebc_fpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pfpoint16 *res_out);
+Perror_t Pebc_fpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pfpoint32 *res_out);
+Perror_t Pebc_fpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pfpoint64 *res_out);
 
-PDC_error_t PDC_ebc_ufpoint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint8 *res_out);
-PDC_error_t PDC_ebc_ufpoint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint16 *res_out);
-PDC_error_t PDC_ebc_ufpoint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint32 *res_out);
-PDC_error_t PDC_ebc_ufpoint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint64 *res_out);
+Perror_t Pebc_ufpoint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pufpoint8 *res_out);
+Perror_t Pebc_ufpoint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pufpoint16 *res_out);
+Perror_t Pebc_ufpoint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pufpoint32 *res_out);
+Perror_t Pebc_ufpoint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pufpoint64 *res_out);
 
-PDC_error_t PDC_bcd_fpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint8 *res_out);
-PDC_error_t PDC_bcd_fpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint16 *res_out);
-PDC_error_t PDC_bcd_fpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint32 *res_out);
-PDC_error_t PDC_bcd_fpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_fpoint64 *res_out);
+Perror_t Pbcd_fpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pfpoint8 *res_out);
+Perror_t Pbcd_fpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pfpoint16 *res_out);
+Perror_t Pbcd_fpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pfpoint32 *res_out);
+Perror_t Pbcd_fpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pfpoint64 *res_out);
 
-PDC_error_t PDC_bcd_ufpoint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint8 *res_out);
-PDC_error_t PDC_bcd_ufpoint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint16 *res_out);
-PDC_error_t PDC_bcd_ufpoint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint32 *res_out);
-PDC_error_t PDC_bcd_ufpoint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
-				    PDC_base_pd *pd, PDC_ufpoint64 *res_out);
+Perror_t Pbcd_ufpoint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pufpoint8 *res_out);
+Perror_t Pbcd_ufpoint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pufpoint16 *res_out);
+Perror_t Pbcd_ufpoint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pufpoint32 *res_out);
+Perror_t Pbcd_ufpoint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
+			      Pbase_pd *pd, Pufpoint64 *res_out);
 
 \end{tinycodeaux}
