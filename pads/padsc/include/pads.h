@@ -450,10 +450,10 @@ const char *P_errCode2str(PerrCode_t code);
 #define P_MAX_INT64         9223372036854775807LL
 #define P_MAX_UINT64       18446744073709551615ULL
 
-#define P_MIN_FLOAT32      ((float)1e-37)
+#define P_MIN_FLOAT32      ((float)-3.40282346638528860e+38)
 #define P_MAX_FLOAT32      ((float)3.40282346638528860e+38)
 
-#define P_MIN_FLOAT64      ((double)4.94065645841246544e-324)
+#define P_MIN_FLOAT64      ((double)-1.79769313486231470e+308)
 #define P_MAX_FLOAT64      ((double)1.79769313486231470e+308)
 
 /* USEFUL ASCII AND EBCDIC CHAR CONSTANTS */
