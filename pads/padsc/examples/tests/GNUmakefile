@@ -99,6 +99,7 @@ regress_o:  sanity_check \
           regress_test_array_post_o \
           regress_test_array_skip_o \
           regress_test_array_skip2_o \
+          regress_test_in_place_o \
           regress_test_charclass_o \
           regress_rw_struct_o \
           regress_rw_pendian_o \
@@ -136,6 +137,7 @@ regress_d:  sanity_check \
           regress_test_array_post_d \
           regress_test_array_skip_d \
           regress_test_array_skip2_d \
+          regress_test_in_place_d \
           regress_test_charclass_d \
           regress_rw_struct_d \
           regress_rw_pendian_d \
@@ -291,6 +293,11 @@ regress_test_array_skip_d: test_array_skip_d
 regress_test_array_skip2_o: test_array_skip2
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_skip2_d: test_array_skip2_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_in_place_o: test_in_place
+	@(args=""; suf=""; $(RegressDef))
+regress_test_in_place_d: test_in_place_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_array_post_o: test_array_post

@@ -222,10 +222,10 @@ datatype FieldDesc =
        | PTStruct of string * (expression option)
 
 fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, isEndian, comment) = 
-    let val (fName, pred, arraypred, sizeOpt) = 
+    let val (fName, pred, arraypred, sizeOpt,isArray) = 
 	case compoundField 
-        of   PTStruct(fName, pred)              => (fName, pred, [], NONE)
-	|    PTArray(fName, sizeOpt, arrayPred) => (fName, NONE, arrayPred, sizeOpt)
+        of   PTStruct(fName, pred)              => (fName, pred, [], NONE,false)
+	|    PTArray(fName, sizeOpt, arrayPred) => (fName, NONE, arrayPred, sizeOpt,true)
     in
     (PX.Full {pty = PX.Name tyName, name = fName, 
 	      args = tyParams,
@@ -236,6 +236,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, 
 	      largeHeuristic = false,
 	      pred = pred,
 	      comment = comment,
+	      arrayDecl = isArray,
 	      arraypred = arraypred,
 	      size = sizeOpt
 	      })	
@@ -1224,15 +1225,13 @@ pCompoundField:
 pStructField:                         pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
                                       (buildStructFieldRep(pName, pOptActParams, pCompoundField, false, false, pCommentOpt))
   | POMIT                             pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true, false, pCommentOpt))
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true,  false, pCommentOpt))
   | PENDIAN                           pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, false, true, pCommentOpt))
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, false, true,  pCommentOpt))
   | PENDIAN  POMIT                    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true, true, pCommentOpt))
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true,  true,  pCommentOpt))
   | POMIT  PENDIAN                    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName,
-                                      pOptActParams, pCompoundField,
-                                      true, true, pCommentOpt))  
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true,  true,  pCommentOpt))  
   | PCOMPUTE pManifestField           (pManifestField)
   | pREexpr SEMICOLON                 (PX.Brief (pREexpr, NONE)) 
   | pName PFROM LPAREN pREexpr RPAREN SEMICOLON (PX.Brief (pREexpr, SOME pName))

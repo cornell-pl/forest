@@ -30,6 +30,7 @@ structure ParseTreeExt =
              largeHeuristic : bool,
 		       pred : 'exp option, 
 		    comment : string option,
+		  arrayDecl : bool, 
 		       size : ('exp PSize) option,
 		  arraypred : ('exp PConstraint) list}
 	 | Manifest of {tyname : 'ct,

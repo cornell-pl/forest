@@ -90,6 +90,7 @@ structure CnvExt : CNVEXT = struct
        largeHeuristic : bool,
        pred : pcexp option, 
        comment : string option,
+       arrayDecl : bool,
        size : (pcexp PX.PSize) option,
        arraypred : (pcexp PX.PConstraint) list}
 
@@ -1694,8 +1695,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      fun structRepX (base, name, isVirt) =
 		  if isVirt then tmpId(name) else fieldX(rep, name)
 
-              fun isArray size = Option.isSome size
-
 	      (* Does some checks, produces tuple with 4 lists:                                      *)
 	      (*     1. A list of all of the field names in order that they occur                    *)
 	      (*     2. A list of just the names of the virtual fields                               *)
@@ -1715,14 +1714,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* gen functions produce [( [name], [name(if omit)|empty], [var-pair(if omit)|empty], [empty(if omit)|mapping] )] *)
 		      fun genLocFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred: pcexp option, comment: string option, size,...}:pfieldty) = 
+				      pred: pcexp option, comment: string option, size,arrayDecl,...}:pfieldty) = 
 			  ( if   name = PNames.pd orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
 			    then PE.error (structOrUnion^" "^structOrUnionName^" contains field with reserved name '"^name^"'\n")
 			    else ();
 			    let val tyName = lookupTy (pty, repSuf, #repname)
 				val ty = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
 				val () = ( CTcnvType ty  (* ensure that the type has been defined *) ; () )
-				val (ty,tyName) = if isArray size then 
+				val (ty,tyName) = if arrayDecl then 
 				                    let val tyName = padsID name 
 						    in (P.makeTypedefPCT tyName, tyName) 
 						    end 
@@ -3820,9 +3819,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun findOffset p [] n = NONE
                         | findOffset p (x::xs) n = if p x then SOME (n, x) else findOffset p xs (n+1)
 
-                       fun cvtInPlaceFULL (f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,...}:pfieldty) = 
-			   case size of NONE => [([], PX.Full f)]
-                           | SOME _ => 
+                       fun cvtInPlaceFULL (f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,arrayDecl,...}:pfieldty) = 
+			   if not arrayDecl then [([], PX.Full f)]
+			   else
 			      let val (offset, arrayName) = 
 				       case findOffset (fn(nm,_) => nm = name) (ListPair.zip (allVars, tyNames)) 0
 			               of SOME (n,(fname,tynm)) => (n,tynm)
@@ -3841,7 +3840,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  val sfield = ({pty=PX.Name arrayName, args=(List.map (fn x=> PT.Id x) paramNames)@otherArgs, 
 						 name=name, isVirtual=isVirtual, isEndian=isEndian,
 						  isRecord=false, containsRecord=false, largeHeuristic=false, pred=NONE,comment=comment,
-						  size=NONE, arraypred=[]} : pfieldty)
+						  arrayDecl = false, size=NONE, arraypred=[]} : pfieldty)
 			      in
 				  [(arrayASTs, PX.Full sfield)]
 	 		      end
@@ -4696,7 +4695,23 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val firstTag = ref "bogus"
 		     val lastTag = ref "bogus"
 		     fun chkTag(name) = 			 
-			 let val name = if enumConstDefined name then unionName^"_"^name else name
+			 let val name = if enumConstDefined name then 
+			                  let t0 = unionName^"_"^name 
+					  in 
+					      if enumConstDefined t0 then
+						  let fun getname base next = 
+						       let val t = base^"_"^(Int.toString next)
+						       in
+						          if enumConstDefined t
+							      then getname base (next + 1)
+							      else t
+						       end
+						  in
+						      getname t0 0
+						  end
+					      else t0
+					  end
+					else name
 			 in
 			 (if !tagVal = 0 then firstTag := name else ();
 			  lastTag := name;
