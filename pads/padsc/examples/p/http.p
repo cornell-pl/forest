@@ -99,14 +99,8 @@ int is_OCTET(Pchar x) { return (0 >= x) && (x <= 255); };
 Ptypedef Pchar OCTET_t :: OCTET_t x => { is_OCTET(x) };
 Pcharclass OCTET {is_OCTET};
 #define RE_OCTET "[[:OCTET:]]"
-int is_Reason_Phrase(Pchar x) { return
-  ((x >= 32) && (x <= 126))
-  || ((x >= 128) && (x <= 255))
-  ;
-};
-Ptypedef Pchar Reason_Phrase_t :: Reason_Phrase_t x => { is_Reason_Phrase(x) };
-Pcharclass Reason_Phrase {is_Reason_Phrase};
-#define RE_Reason_Phrase "[[:Reason_Phrase:]]"
+#define RE_Reason_Phrase "([\\x20-\\x7e]|[\\x80-\\xff])*"
+Ptypedef Pstring_ME(:"/" RE_Reason_Phrase "/":) Reason_Phrase_t;
 int is_SP(Pchar x) { return (x == 32); };
 Ptypedef Pchar SP_t :: SP_t x => { is_SP(x) };
 Pcharclass SP {is_SP};
@@ -589,6 +583,8 @@ Ptypedef Pstring_ME(:"/" RE_hier_part "/":) hier_part_t;
 Ptypedef Pstring_ME(:"/" RE_absoluteURI "/":) absoluteURI_t;
 #define RE_Request_URI "(\\*|" RE_absoluteURI "|" RE_abs_path "|" RE_authority ")"
 Ptypedef Pstring_ME(:"/" RE_Request_URI "/":) Request_URI_t;
+#define RE_Request_Line "(" RE_Method "" RE_SP "" RE_Request_URI "" RE_SP "" RE_HTTP_Version "" RE_CRLF ")"
+Ptypedef Pstring_ME(:"/" RE_Request_Line "/":) Request_Line_t;
 #define RE_digest_uri_value RE_Request_URI
 Ptypedef Pstring_ME(:"/" RE_digest_uri_value "/":) digest_uri_value_t;
 #define RE_relativeURI "((" RE_net_path "|" RE_abs_path "|" RE_rel_path ")(\\?" RE_query ")?)"
@@ -649,8 +645,6 @@ Ptypedef Pstring_ME(:"/" RE_MIME_Version "/":) MIME_Version_t;
 Ptypedef Pstring_ME(:"/" RE_Max_Forwards "/":) Max_Forwards_t;
 #define RE_Referer "(Referer" RE_ws "\\:" RE_ws "(" RE_absoluteURI "|" RE_relativeURI "))"
 Ptypedef Pstring_ME(:"/" RE_Referer "/":) Referer_t;
-#define RE_Request_Line "(" RE_Method "" RE_ws "" RE_SP "" RE_ws "" RE_Request_URI "" RE_ws "" RE_SP "" RE_ws "" RE_HTTP_Version "" RE_ws "" RE_CRLF ")"
-Ptypedef Pstring_ME(:"/" RE_Request_Line "/":) Request_Line_t;
 #define RE_accept_extension "(\\;" RE_ws "" RE_token "" RE_ws "(\\=" RE_ws "(" RE_token "|" RE_quoted_string "))?)"
 Ptypedef Pstring_ME(:"/" RE_accept_extension "/":) accept_extension_t;
 #define RE_algorithm "(algorithm" RE_ws "\\=" RE_ws "(MD5|MD5\\-sess|" RE_token "))"
@@ -727,7 +721,7 @@ Ptypedef Pstring_ME(:"/" RE_Expect "/":) Expect_t;
 Ptypedef Pstring_ME(:"/" RE_extension_code "/":) extension_code_t;
 #define RE_Status_Code "(100|101|200|201|202|203|204|205|206|300|301|302|303|304|305|307|400|401|402|403|404|405|406|407|408|409|410|411|412|413|414|415|416|417|500|501|502|503|504|505|" RE_extension_code ")"
 Ptypedef Pstring_ME(:"/" RE_Status_Code "/":) Status_Code_t;
-#define RE_Status_Line "(" RE_HTTP_Version "" RE_ws "" RE_SP "" RE_ws "" RE_Status_Code "" RE_ws "" RE_SP "" RE_ws "" RE_Reason_Phrase "" RE_ws "" RE_CRLF ")"
+#define RE_Status_Line "(" RE_HTTP_Version "" RE_SP "" RE_Status_Code "" RE_SP "" RE_Reason_Phrase "" RE_CRLF ")"
 Ptypedef Pstring_ME(:"/" RE_Status_Line "/":) Status_Line_t;
 #define RE_extension_pragma "(" RE_token "" RE_ws "(\\=" RE_ws "(" RE_token "|" RE_quoted_string "))?)"
 Ptypedef Pstring_ME(:"/" RE_extension_pragma "/":) extension_pragma_t;
@@ -753,7 +747,7 @@ Ptypedef Pstring_ME(:"/" RE_language_range "/":) language_range_t;
 Ptypedef Pstring_ME(:"/" RE_last_byte_pos "/":) last_byte_pos_t;
 #define RE_byte_range_resp_spec "((" RE_first_byte_pos "" RE_ws "\\-" RE_ws "" RE_last_byte_pos ")|\\*)"
 Ptypedef Pstring_ME(:"/" RE_byte_range_resp_spec "/":) byte_range_resp_spec_t;
-#define RE_byte_content_range_spec "(" RE_bytes_unit "" RE_ws "" RE_SP "" RE_ws "" RE_byte_range_resp_spec "" RE_ws "\\/" RE_ws "(" RE_instance_length "|\\*))"
+#define RE_byte_content_range_spec "(" RE_bytes_unit "" RE_SP "" RE_byte_range_resp_spec "\\/(" RE_instance_length "|\\*))"
 Ptypedef Pstring_ME(:"/" RE_byte_content_range_spec "/":) byte_content_range_spec_t;
 #define RE_byte_range_spec "(" RE_first_byte_pos "" RE_ws "\\-" RE_ws "" RE_last_byte_pos "?)"
 Ptypedef Pstring_ME(:"/" RE_byte_range_spec "/":) byte_range_spec_t;
@@ -1925,7 +1919,6 @@ Pstruct warn_date_t {
 };
 Pstruct _bnf_127_t {
   SP_t SP;
-  ws_t ws;
   warn_date_t warn_date;
 };
 Punion _bnf_126_t {
@@ -1934,29 +1927,24 @@ Punion _bnf_126_t {
 };
 Pstruct warning_value_t {
   warn_code_t warn_code;
-  ws_t ws;
   SP_t SP;
-  ws_t _bnf_323;
   warn_agent_t warn_agent;
-  ws_t _bnf_324;
-  SP_t _bnf_325;
-  ws_t _bnf_326;
+  SP_t _bnf_323;
   warn_text_t warn_text;
-  ws_t _bnf_327;
   _bnf_126_t _bnf_126;
 };
-Pstruct _bnf_328_t {
+Pstruct _bnf_324_t {
   commas_t commas;
   warning_value_t warning_value;
 };
 Parray _bnf_128_t {
-  _bnf_328_t[] : Plongest;
+  _bnf_324_t[] : Plongest;
 };
 Pstruct Warning_t {
   "Warning";
   ws_t ws;
   ":";
-  ws_t _bnf_329;
+  ws_t _bnf_325;
   warning_value_t warning_value;
   _bnf_128_t _bnf_128;
 };
@@ -1977,18 +1965,18 @@ Punion _bnf_131_t {
   entity_header_t entity_header;
 };
 Punion _bnf_133_t {
-  general_header_t _bnf_330;
-  request_header_t _bnf_331;
-  entity_header_t _bnf_332;
+  general_header_t _bnf_326;
+  request_header_t _bnf_327;
+  entity_header_t _bnf_328;
 };
-Pstruct _bnf_333_t {
+Pstruct _bnf_329_t {
   ws_t ws;
   _bnf_133_t _bnf_133;
-  ws_t _bnf_334;
+  ws_t _bnf_330;
   CRLF_t CRLF;
 };
 Parray _bnf_132_t {
-  _bnf_333_t[] : Plongest;
+  _bnf_329_t[] : Plongest;
 };
 Pstruct _bnf_130_t {
   _bnf_131_t _bnf_131;
@@ -1998,39 +1986,39 @@ Pstruct _bnf_130_t {
 };
 Punion _bnf_129_t {
   _bnf_130_t _bnf_130;
-  Pvoid(_bnf_335);
+  Pvoid(_bnf_331);
 };
 Punion _bnf_134_t {
-  message_body_t _bnf_336;
-  Pvoid(_bnf_337);
+  message_body_t _bnf_332;
+  Pvoid(_bnf_333);
 };
 Pstruct Request_t {
   Request_Line_t Request_Line;
   ws_t ws;
   _bnf_129_t _bnf_129;
-  ws_t _bnf_338;
+  ws_t _bnf_334;
   CRLF_t CRLF;
-  ws_t _bnf_339;
+  ws_t _bnf_335;
   _bnf_134_t _bnf_134;
 };
 Punion _bnf_137_t {
-  general_header_t _bnf_340;
+  general_header_t _bnf_336;
   response_header_t response_header;
-  entity_header_t _bnf_341;
+  entity_header_t _bnf_337;
 };
 Punion _bnf_139_t {
-  general_header_t _bnf_342;
-  response_header_t _bnf_343;
-  entity_header_t _bnf_344;
+  general_header_t _bnf_338;
+  response_header_t _bnf_339;
+  entity_header_t _bnf_340;
 };
-Pstruct _bnf_345_t {
+Pstruct _bnf_341_t {
   ws_t ws;
   _bnf_139_t _bnf_139;
-  ws_t _bnf_346;
+  ws_t _bnf_342;
   CRLF_t CRLF;
 };
 Parray _bnf_138_t {
-  _bnf_345_t[] : Plongest;
+  _bnf_341_t[] : Plongest;
 };
 Pstruct _bnf_136_t {
   _bnf_137_t _bnf_137;
@@ -2040,19 +2028,19 @@ Pstruct _bnf_136_t {
 };
 Punion _bnf_135_t {
   _bnf_136_t _bnf_136;
-  Pvoid(_bnf_347);
+  Pvoid(_bnf_343);
 };
 Punion _bnf_140_t {
-  message_body_t _bnf_348;
-  Pvoid(_bnf_349);
+  message_body_t _bnf_344;
+  Pvoid(_bnf_345);
 };
 Pstruct Response_t {
   Status_Line_t Status_Line;
   ws_t ws;
   _bnf_135_t _bnf_135;
-  ws_t _bnf_350;
+  ws_t _bnf_346;
   CRLF_t CRLF;
-  ws_t _bnf_351;
+  ws_t _bnf_347;
   _bnf_140_t _bnf_140;
 };
 Punion HTTP_message_t {
