@@ -36,6 +36,9 @@ padsc_comp:
 regress:
 	@(cd padsc; $(MAKE) regress)
 
+regress_pglx:
+	@(cd padsc; $(MAKE) regress_pglx)
+
 test_xml:
 	@(cd padsc; $(MAKE) test_xml)
 
