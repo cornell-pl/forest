@@ -90,7 +90,7 @@ structure Main : sig
 	 ("wnone", "suppress write function generation", PCL.BoolSet writeNoneFlag),
 	 ("anone", "suppress accumulator generation", PCL.BoolSet accumNoneFlag),
          ("a", "generate accumulator program",    PCL.String (addAccumulator, true)),
-         ("x", "output XSchema",          PCL.BoolSet xmlFlag),
+         ("x", "output Galax Data API",   PCL.BoolSet xmlFlag),
          ("r", "output directory",        PCL.String (setOutputDir, false)),
          ("b", "add base type table",         PCL.String (addBaseTable, false)),
 	 ("I", "augment include path",        PCL.String (addInclude, true)),
@@ -300,15 +300,15 @@ structure Main : sig
 	end
 
     fun generateXschema(fileName, ast, tidtab,paidtab) =
-	if not (!xmlFlag) then () 
-	else
-	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xsd")		
+	if (!xmlFlag) orelse not (!writeNoneFlag) then  
+	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xsd")		(* This name computation is repeated in cnv-ext.sml*)
 		val srcPath = OS.FileSys.fullPath(fileName)
 	    in
 		PPLib.ppToStrm((PPXSchemaAst.ppAst (SOME srcPath) paidtab) () tidtab) xoutstream ast;
 		TextIO.flushOut xoutstream;
 		TextIO.closeOut xoutstream			
 	    end
+	else ()
 
     fun generateCoreLibrary(padsDir, ast, tidtab, fileName) = 
 	let val srcFile = OS.Path.file fileName
@@ -359,7 +359,7 @@ structure Main : sig
     fun doFile (padsDir, cc, baseTyFile) (typ, fname) = 
       (curFile := fname;
        case typ of Pads =>
-	 let val () = PadsState.reset()
+	 let val () = PadsState.reset fname
 	     val () = stage := "Preprocessing"
 	     val ppoutFile = tmp ".c"
 	     val status = preprocess(padsDir, cc, baseTyFile, fname, ppoutFile)

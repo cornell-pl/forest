@@ -124,4 +124,11 @@ struct
 	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", SOME "bogus type"))
   	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", SOME "bogus type"))
       end
+
+    fun mungeFileName (fileName, from, to) = 
+    (case OS.Path.splitBaseExt fileName
+     of {base, ext=SOME from} =>
+	 SOME (OS.Path.joinBaseExt{base=base, ext=SOME to})
+     | _ => NONE (*end case *))
+
 end
