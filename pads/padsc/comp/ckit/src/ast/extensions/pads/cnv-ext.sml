@@ -521,7 +521,7 @@ structure CnvExt : CNVEXT = struct
 	      val prefix = "prefix"
 	      val tmpstr = "tmpstr"
 
-		      
+	      val sepstr = "*********************************************************************"
 	      (* Some useful functions *)
 	      fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
               fun emSuf   s = s^"_em"
@@ -1418,7 +1418,8 @@ structure CnvExt : CNVEXT = struct
 				 let val reportName = reportSuf a
 				     fun gfieldX base = P.addrX(P.arrowX(PT.Id base, PT.Id name))
 				 in
-				    genPrintPiece(reportName, name, gfieldX acc,[])
+				     genPrintPiece(reportName, name, gfieldX acc,[])
+				   @ [PL.sfprintf(PT.Id tmpstr, PT.String(sepstr^"\n"),[])]
 				 end
                               (* end accOpt SOME case *))
 			  else []
@@ -1714,6 +1715,7 @@ structure CnvExt : CNVEXT = struct
 				 let val reportName = reportSuf a
 				 in
 				    genPrintPiece(reportName, name, gfieldX(acc,name),[])
+				   @ [PL.sfprintf(PT.Id tmpstr, PT.String(sepstr^"\n"),[])]
 				 end
                               (* end accOpt SOME case *))
                       fun genAccReportBrief e = []
@@ -2543,7 +2545,8 @@ structure CnvExt : CNVEXT = struct
 			       end(* end SOME acc case *))
 			 val lengthX = P.addrX(P.arrowX(PT.Id acc, PT.Id length))
 			 val doLength = genPrintPiece(reportSuf PL.intAct, length, lengthX,[])
-			 val theBodySs = doLength @ doElems 
+			 val sepSs    = [PL.sfprintf(PT.Id tmpstr, PT.String(sepstr^"\n"),[])]
+			 val theBodySs = doLength @ doElems @ sepSs
 			 val theFunED = genReportFun(reportFun, accPCT, theBodySs)
 		     in
 			 theFunED
