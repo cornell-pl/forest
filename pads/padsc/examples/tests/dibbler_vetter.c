@@ -94,11 +94,11 @@ int main(int argc, char** argv) {
 
   error_io = sfopen(0, error_name, "w");
   clean_io = sfopen(0, clean_name, "w");
-  io_disc = P_nlrec_noseek_make(0);
+  io_disc = P_nlrec_make(0);
   if (!io_disc) {
-    error(ERROR_FATAL, "\nFailed to install IO discipline nlrec_noseek");
+    error(ERROR_FATAL, "\nFailed to install IO discipline nlrec");
   } else {
-    error(0, "\nInstalled IO discipline nlrec_noseek");
+    error(0, "\nInstalled IO discipline nlrec");
   }
 
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {

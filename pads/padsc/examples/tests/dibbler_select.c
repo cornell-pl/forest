@@ -52,9 +52,9 @@ int main(int argc, char** argv) {
   output_io = sfopen(0, output_name, "w");
   io_disc = P_nlrec_make(0);
   if (!io_disc) {
-    error(ERROR_FATAL, "\nFailed to install IO discipline nlrec_noseek");
+    error(ERROR_FATAL, "\nFailed to install IO discipline nlrec");
   } else {
-    error(0, "\nInstalled IO discipline nlrec_noseek");
+    error(0, "\nInstalled IO discipline nlrec");
   }
 
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
