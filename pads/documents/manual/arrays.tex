@@ -93,7 +93,7 @@ variables, their types, and their bindings.
 \begin{tabular}{|l|l|l|l|}
 \hline
 Variable & Type & Contexts & Binding \\\hline \hline
-\texttt{numRead}  & \texttt{int}     & all & Number of elements read from source. \\ \hline
+\texttt{numRead}  & \texttt{int}     & \Pparsecheck{} & Number of elements read from source. \\ \hline
 \texttt{length}   & \texttt{int}     & all & Length of in-memory representation of sequence.\\ \hline
 \textit{arrayName}& \texttt{rep\_t *}& all & In-memory representation of element sequence. \\ \hline
 \texttt{elts}     & \texttt{rep\_t *}& all & In-memory representation of element sequence. \\ \hline
@@ -144,6 +144,7 @@ than the upper bound.
 The \Psep{} constraint is used to specify separators, \ie{} data in
 the source that occurs between sequence elements.  The body of the
 \Psep{} constraint can be a character, string, or regular expression. 
+It is an error for a \Parray{} to contain more than one \Psep{} clause.
 
 \subsection{\Pterm}
 The \Pterm{} constraint is used to specify a terminator, \ie{} data in
@@ -153,9 +154,12 @@ constraint can be a character, string, or regular expression, or the
 special keyword \Pnosep{}, which indicates that the lack of a
 separator should be interpreted as signalling the end of the
 sequence.   The terminator is not consumed by the read function for
-the array.  The following description uses \Pnosep{} to indicate that
+the array. 
+It is an error for a \Parray{} to contain more than one \Pterm{} clause.
+The following description uses \Pnosep{} to indicate that
 an IP address should be terminated by the lack of a period.
 \input{code/nosep}
+
 
 \subsection{\Plast}
 The \Plast{} constraint is used to specify an arbitrary termination
@@ -265,7 +269,10 @@ sequence is in sorted order
 \input{code/array-forall}
 Syntactically, the \Pforall{} clause gives an index variable
 (\texttt{i} in the example) and a range for that variable (\texttt{0}
-to \texttt{length-2}, inclusive).  Following the colon, it gives a
+to \texttt{length-2}, inclusive).  Ranges can be written either as an
+integer lower and upper bound, as in the example, or as the name of
+the array, in which case the lower bound is zero and the upper bound
+is one less than the length of the array. Following the colon, it gives a
 boolean-valued expression. This expression is executed once for each
 value of the index in the range;  the value of the clause is the
 conjunction of the resulting values.
