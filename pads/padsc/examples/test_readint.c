@@ -6,7 +6,6 @@ int main(int argc, char** argv) {
   PDC_t*          pdc;
   record          r;
   record_ed       ed = {0};
-  record_ed       zero_ed = {0};
 
   if (PDC_ERROR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
@@ -21,7 +20,6 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_peek_EOF(pdc, 0)) {
-    ed = zero_ed; /* XXX SHOULD NOT HAVE TO DO THIS XXX */
     if (PDC_OK == record_read(pdc, 0, &ed, &r, 0)) {
       /* do something with the data */
     } else {
