@@ -145,3 +145,8 @@ if ($defgen == 1) {
     die "Error running command $cmd\n";
   }
 }
+$cmd = "/bin/rm -f tmp[12].*";
+$res = `$cmd`;
+if ($res =~ /ERROR/) {
+  die "Error running command $cmd\n";
+}
