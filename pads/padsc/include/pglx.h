@@ -21,6 +21,10 @@
 void walk_children(void *n, int indent);
 
 nodeRepArray PGLX_generic_children    (nodeRep ocaml_n);
+
+nodeRep      PGLX_generic_kth_child         (nodeRep ocaml_n, childIndex idx);
+nodeRep      PGLX_generic_kth_named_child   (nodeRep ocaml_n, childIndex idx, const char *name);
+
 nodeRep      PGLX_generic_parent      (nodeRep ocaml_n);
 item         PGLX_generic_typed_value (nodeRep ocaml_n);
 const char*  PGLX_generic_string_value(nodeRep ocaml_n);

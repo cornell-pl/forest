@@ -21,7 +21,7 @@
 typedef struct PDCI_node_s          PDCI_node_t;
 typedef struct PDCI_vtable_s        PDCI_vtable_t;
 typedef struct PDCI_structured_pd_s PDCI_structured_pd;
-typedef struct PDCI_sequenced_pd_s PDCI_sequenced_pd;
+typedef struct PDCI_sequenced_pd_s  PDCI_sequenced_pd;
 
 /* ================================================================================
  * HELPER MACROS */
@@ -78,6 +78,8 @@ extern const PDCI_vtable_t ty ## _vtable
 
 #define PDCI_DECL_VAL_VT(ty) \
 PDCI_node_t ** ty ## _val_children(PDCI_node_t *node); \
+PDCI_node_t  * ty ## _val_kth_child(PDCI_node_t *node, childIndex idx); \
+PDCI_node_t  * ty ## _val_kth_child_named(PDCI_node_t *node, childIndex idx, const char *name); \
 item ty ## _typed_value(PDCI_node_t *node); \
 const char * ty ## _string_value(PDCI_node_t *node); \
 extern const PDCI_vtable_t ty ## _val_vtable; \
@@ -87,9 +89,11 @@ extern const PDCI_vtable_t ty ## _text_vtable
  * TYPES */
 
 /* prototypes for vtable functions */
-typedef PDCI_node_t **      (* PDCI_children_fn)      (PDCI_node_t *node); 
-typedef item                (* PDCI_typed_value_fn)   (PDCI_node_t *node); 
-typedef const char *        (* PDCI_string_value_fn)  (PDCI_node_t *node);
+typedef PDCI_node_t **      (* PDCI_children_fn)         (PDCI_node_t *node); 
+typedef PDCI_node_t *       (* PDCI_kth_child_fn)        (PDCI_node_t *node, childIndex idx); 
+typedef PDCI_node_t *       (* PDCI_kth_child_named_fn)  (PDCI_node_t *node, childIndex idx, const char *name); 
+typedef item                (* PDCI_typed_value_fn)      (PDCI_node_t *node); 
+typedef const char *        (* PDCI_string_value_fn)     (PDCI_node_t *node);
 
 /* Type PDCI_node_t: */
 struct PDCI_node_s {
@@ -105,9 +109,11 @@ struct PDCI_node_s {
 
 /* Type PDCI_vtable_t: */
 struct PDCI_vtable_s {
-  PDCI_children_fn       children;
-  PDCI_typed_value_fn    typed_value;
-  PDCI_string_value_fn   string_value;
+  PDCI_children_fn          children;
+  PDCI_kth_child_fn         kth_child;
+  PDCI_kth_child_named_fn   kth_child_named;
+  PDCI_typed_value_fn       typed_value;
+  PDCI_string_value_fn      string_value;
 };
 
 /* PARSE DESCRIPTOR SUPPORT */
@@ -136,15 +142,34 @@ struct PDCI_sequenced_pd_s {
 /* ================================================================================
  * Helper functions */
 
-/* Children functions */
+/* children functions that return an array - will go away */
 
 PDCI_node_t ** Pbase_pd_children(PDCI_node_t *self);
 PDCI_node_t ** Ploc_t_children(PDCI_node_t *self);
 PDCI_node_t ** Ppos_t_children(PDCI_node_t *self);
-
 PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self);
 PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self);
 PDCI_node_t ** PDCI_no_children(PDCI_node_t *self);
+
+/* Kth child functions */
+
+PDCI_node_t  * Pbase_pd_kth_child(PDCI_node_t *self, childIndex idx);
+PDCI_node_t  * Ploc_t_kth_child(PDCI_node_t *self, childIndex idx);
+PDCI_node_t  * Ppos_t_kth_child(PDCI_node_t *self, childIndex idx);
+PDCI_node_t  * PDCI_structured_pd_kth_child(PDCI_node_t *self, childIndex idx);
+PDCI_node_t  * PDCI_sequenced_pd_kth_child(PDCI_node_t *self, childIndex idx);
+
+/* Kth child named functions */
+
+PDCI_node_t  * Pbase_pd_kth_child_named(PDCI_node_t *self, childIndex idx, const char *name);
+PDCI_node_t  * Ploc_t_kth_child_named(PDCI_node_t *self, childIndex idx, const char *name);
+PDCI_node_t  * Ppos_t_kth_child_named(PDCI_node_t *self, childIndex idx, const char *name);
+PDCI_node_t  * PDCI_structured_pd_kth_child_named(PDCI_node_t *self, childIndex idx, const char *name);
+PDCI_node_t  * PDCI_sequenced_pd_kth_child_named(PDCI_node_t *self, childIndex idx, const char *name);
+
+/* Helpers for nodes with no children */
+PDCI_node_t  * PDCI_no_kth_child(PDCI_node_t *self, childIndex idx);
+PDCI_node_t  * PDCI_no_kth_child_named(PDCI_node_t *self, childIndex idx, const char *name);
 
 /* Typed Value functions */
 
