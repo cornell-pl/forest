@@ -7,10 +7,11 @@
  */
 
 #include "libpadsc-internal.h"
+#include "libpadsc-macros.h"
 #include "libpadsc-read-macros.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.20 2002-09-27 18:13:58 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.21 2002-09-27 21:04:43 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -81,9 +82,7 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
 {
   char*   severity = "error";
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_report_err called");
   if (disc->e_rep == PDC_errorRep_None || !disc->errorf) {
     return PDC_OK;
@@ -277,9 +276,7 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
 {
   unsigned char ct;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE1(pdc, "PDC_char_lit_scan called for char = %s", PDC_fmtChar(c));
   if (offset_out) {
     (*offset_out) = 0;
@@ -317,9 +314,7 @@ PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopSt
   char            *begin, *end, *ptr;
   size_t          remain;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE2(pdc, "PDC_str_lit_scan called for findStr = %s stopStre = %s",
 	 PDC_fmtStr(findStr), PDC_fmtStr(stopStr));
   if (offset_out) {
@@ -387,9 +382,7 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE1(pdc, "PDC_char_lit_read called for char = %s", PDC_fmtChar(c));
   if (!em) {
     em = &emt;
@@ -415,9 +408,7 @@ PDC_str_lit_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE1(pdc, "PDC_str_lit_read called for str = %s", PDC_fmtStr(s));
   if (!em) {
     em = &emt;
@@ -461,9 +452,7 @@ PDC_adate_read (PDC_t* pdc, PDC_base_em* em, PDC_base_ed* ed,
 PDC_error_t
 PDC_free_string(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc)
 {
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_free_string called");
   if (!s && !s->str) {
     /* XXX REPORT ERROR */
@@ -483,9 +472,7 @@ PDC_string_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_string_fw_read called");
   if (!em) {
     em = &emt;
@@ -522,9 +509,7 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_string_stopChar_read called");
   if (!em) {
     em = &emt;
@@ -580,9 +565,7 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_string_stopRegexp_read called");
   if (!em) {
     em = &emt;
@@ -656,9 +639,7 @@ PDC_aint8_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_aint8_read called");
   if (!em) {
     em = &emt;
@@ -713,9 +694,7 @@ PDC_aint16_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_aint16_read called");
   if (!em) {
     em = &emt;
@@ -770,9 +749,7 @@ PDC_aint32_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_aint32_read called");
   if (!em) {
     em = &emt;
@@ -827,9 +804,7 @@ PDC_aint64_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_aint64_read called");
   if (!em) {
     em = &emt;
@@ -884,9 +859,7 @@ PDC_auint8_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_auint8_read called");
   if (!em) {
     em = &emt;
@@ -941,9 +914,7 @@ PDC_auint16_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_auint16_read called");
   if (!em) {
     em = &emt;
@@ -998,9 +969,7 @@ PDC_auint32_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_auint32_read called");
   if (!em) {
     em = &emt;
@@ -1055,9 +1024,7 @@ PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_auint64_read called");
   if (!em) {
     em = &emt;
@@ -1116,9 +1083,7 @@ PDC_IO_refill(PDC_t* pdc, PDC_disc_t* disc)
   PDC_IO_line_t*  latestline  = &(pdc->ilines[pdc->itail]);
   PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_refill called");
 #ifndef NDEBUG
   if (tp->idx != pdc->itail) {
@@ -1210,9 +1175,7 @@ PDC_get_loc(PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc)
   PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
   PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   if (!l) {
     WARN(pdc, "PDC_get_loc called with null loc ptr");
     return PDC_ERROR;
@@ -1228,9 +1191,7 @@ PDC_get_loc2end(PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc)
   PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
   PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   if (!l) {
     WARN(pdc, "PDC_get_loc2end called with null loc ptr");
     return PDC_ERROR;
@@ -1247,9 +1208,7 @@ PDC_get_beginLoc(PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc)
   PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
   PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   if (!l) {
     WARN(pdc, "PDC_get_beginLoc called with null loc ptr");
     return PDC_ERROR;
@@ -1265,9 +1224,7 @@ PDC_get_endLoc(PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc)
   PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
   PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   if (!l) {
     WARN(pdc, "PDC_getEnd_loc called with null loc ptr");
     return PDC_ERROR;
@@ -1287,9 +1244,7 @@ int
 PDC_IO_peek_EOF(PDC_t* pdc, PDC_disc_t* disc) {
   unsigned char ct;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_peek_EOF called");
   if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     return 1;
@@ -1305,9 +1260,7 @@ PDC_IO_getchar(PDC_t* pdc, int obeyPanicStop, unsigned char* ct_out, PDC_disc_t*
   PDC_IO_line_t*  tpline;
   char* base;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_getchar called");
   if (PDC_Internal_IO_needchar(pdc, obeyPanicStop, &tp, &tpline, disc)) {
     return PDC_ERROR; /* at panic stop or at EOF */
@@ -1330,9 +1283,7 @@ PDC_IO_getchars(PDC_t* pdc, size_t num_chars, char** b_out, char** e_out, PDC_di
   PDC_IO_line_t*  tpline;
   char* base;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_getchars called");
   if (PDC_Internal_IO_needchar(pdc, 0, &tp, &tpline, disc)) { /* hit EOF */
     return PDC_ERROR;
@@ -1361,9 +1312,7 @@ PDC_IO_back(PDC_t* pdc, size_t num_chars, PDC_disc_t* disc)
   PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
   size_t avail_this_line, todo;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_back called");
   todo = num_chars;
   while (1) {
@@ -1393,9 +1342,7 @@ PDC_IO_back(PDC_t* pdc, size_t num_chars, PDC_disc_t* disc)
 PDC_error_t
 PDC_IO_fopen(PDC_t* pdc, char* path, PDC_disc_t* disc)
 {
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE1(pdc, "PDC_IO_fopen called for path = %s", path);
   if (!path) {
     WARN(pdc, "fopen called with null path");
@@ -1424,9 +1371,7 @@ PDC_error_t
 PDC_IO_fclose(PDC_t* pdc, PDC_disc_t* disc)
 {
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_fclose called");
   if (!pdc->io) {
     return PDC_ERROR;
@@ -1447,9 +1392,7 @@ PDC_IO_fclose(PDC_t* pdc, PDC_disc_t* disc)
 PDC_error_t
 PDC_IO_checkpoint(PDC_t* pdc, PDC_disc_t* disc)
 {
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_checkpoint called");
   if (++(pdc->top) >= pdc->salloc) {
     DBG2(pdc, "XXX Growing from %d to %d checkpoint stack slots", pdc->salloc, 2*pdc->salloc);
@@ -1466,9 +1409,7 @@ PDC_IO_checkpoint(PDC_t* pdc, PDC_disc_t* disc)
 PDC_error_t
 PDC_IO_restore(PDC_t* pdc, PDC_disc_t* disc)
 {
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_restore called");
   if (pdc->top <= 0) {
     WARN(pdc, "Internal error: PDC_IO_restore called when stack top <= 0");
@@ -1482,9 +1423,7 @@ PDC_IO_restore(PDC_t* pdc, PDC_disc_t* disc)
 PDC_error_t
 PDC_IO_commit(PDC_t* pdc, PDC_disc_t* disc)
 {
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_commit called");
   if (pdc->top <= 0) {
     WARN(pdc, "Internal error: PDC_IO_commit called when stack top <= 0");
@@ -1501,9 +1440,7 @@ PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, size_t* len_out, PDC_
   char* base;
   int i;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_getLineBuf called");
   if (!buf_out) {
     WARN(pdc, "PDC_IO_getLineBuf called with null buf_out");
@@ -1531,9 +1468,7 @@ PDC_IO_initialize(PDC_t* pdc, PDC_disc_t* disc)
   PDC_stkElt_t*   tp          = &(pdc->stack[0]);
   PDC_IO_line_t*  tpline      = &(pdc->ilines[0]);
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_initialize called");
   pdc->top        = 0;
   pdc->itail      = 0;
@@ -1631,9 +1566,7 @@ PDC_error_t
 PDC_close(PDC_t* pdc, PDC_disc_t* disc)
 {
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_close called");
   if (pdc->rmm_z) {
     RMM_close(pdc->rmm_z);
@@ -1674,9 +1607,7 @@ PDC_countXtoY(PDC_t* pdc, PDC_base_em* em, PDC_uint8 x, PDC_uint8 y,
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
-  if (!disc) {
-    disc = pdc->disc;
-  }
+  PDC_DISC_INIT_CHECKS;
   TRACE2(pdc, "PDC_countXtoY called for x = %s y = %s", PDC_fmtChar(x), PDC_fmtChar(y));
   if (!em) {
     em = &emt;

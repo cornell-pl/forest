@@ -1,3 +1,14 @@
+#pragma prototyped
+/*
+ * read macros
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+
+#ifndef __LIBPADSC_READ_MACROS_H__
+#define __LIBPADSC_READ_MACROS_H__
+
 #ifndef MacroArg2String
 #define MacroArg2String(s) #s
 #endif
@@ -179,3 +190,5 @@ fn_name(PDC_t* pdc, PDC_base_em* em, \
  width_not_avail: \
   HANDLE_ERR_CUR2ENDPOS(PDC_WIDTH_NOT_AVAILABLE); \
 }
+
+#endif  /*  __LIBPADSC_READ_MACROS_H__  */

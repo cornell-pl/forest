@@ -10,6 +10,7 @@
 #define __LIBPADSC_H__
 
 #include <ast_common.h>
+#include <dt.h>
 
 /* ================================================================================ */
 /* CONSTANTS */
@@ -143,6 +144,7 @@ typedef unsigned _ast_int8_t   PDC_uint64;
 
 typedef PDC_int8               PDC_aint8_rep;
 typedef PDC_aint8_rep          PDC_aint8;
+
 typedef PDC_base_em            PDC_aint8_em;
 typedef PDC_base_ed            PDC_int8_ed;
 
@@ -522,16 +524,44 @@ PDC_error_t PDC_buint32_read(PDC_t* pdc, PDC_base_em* em,
 PDC_error_t PDC_buint64_read(PDC_t* pdc, PDC_base_em* em,
 			     PDC_base_ed* ed, PDC_uint64* res_out, PDC_disc_t* disc);
 
+/* ================================================================================ */
+/* BASE TYPE ACCUMULATORS */
+
+typedef struct PDC_int_acc_s {
+  Dt_t*       dict;
+  PDC_uint64  good;
+  PDC_uint64  bad;
+  PDC_uint64  fold;
+  PDC_int64   psum;
+  double      avg;
+  PDC_int64   min;
+  PDC_int64   max;
+} PDC_int_acc;
+typedef PDC_int_acc PDC_int8_acc;
+typedef PDC_int_acc PDC_int16_acc;
+typedef PDC_int_acc PDC_int32_acc;
+typedef PDC_int_acc PDC_int64_acc;
+
+typedef struct PDC_uint_acc_s {
+  Dt_t*       dict;
+  PDC_uint64  good;
+  PDC_uint64  bad;
+  PDC_uint64  fold;
+  PDC_uint64  psum;
+  double      avg;
+} PDC_uint_acc;
+typedef PDC_uint_acc PDC_uint8_acc;
+typedef PDC_uint_acc PDC_uint16_acc;
+typedef PDC_uint_acc PDC_uint32_acc;
+typedef PDC_uint_acc PDC_uint64_acc;
+
+PDC_error_t PDC_int32_acc_init(PDC_t* pdc, PDC_int32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int32_acc_reset(PDC_t* pdc, PDC_int32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int32_acc_cleanup(PDC_t* pdc, PDC_int32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int32_acc_add(PDC_t* pdc, PDC_int32_acc* a, PDC_base_ed* ed, PDC_int32* val, PDC_disc_t* disc);
+PDC_error_t PDC_int32_acc_report(PDC_t* pdc, const char* prefix, PDC_int32_acc* a, PDC_disc_t* disc);
 
 /* ================================================================================ */
-typedef int PDC_uint32_acc;   /* temporary placeholder */
-PDC_error_t PDC_uint32_acc_init(PDC_t* ts, PDC_uint32_acc *acc, PDC_disc_t *disc);
-PDC_error_t PDC_uint32_acc_reset(PDC_t* ts, PDC_uint32_acc *acc, PDC_disc_t *disc);
-PDC_error_t PDC_uint32_acc_free(PDC_t* ts, PDC_uint32_acc *acc, PDC_disc_t *disc);
-PDC_error_t PDC_uint32_acc_add (PDC_t* ts, PDC_uint32_acc *acc, PDC_base_ed *ed, PDC_uint32 *rep, PDC_disc_t *disc);
-
-/* ================================================================================ */
-
 /* MISC ROUTINES */
 
 /* PDC_countXtoY: count occurrences of char x until char y
