@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.27 2002-10-02 00:30:30 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.28 2002-10-02 16:50:09 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -385,6 +385,8 @@ fn_name(PDC_t* pdc, PDC_base_em* em,
  */
 
 /* ********************************** END_HEADER ********************************** */
+
+
 #define PDC_INT_ACCUM(int_type, fmt, fold_test)
 
 typedef struct int_type ## _dt_elt_s {
@@ -402,24 +404,26 @@ int int_type ## _dt_elt_describe(Dt_t* dt, Void_t* a, Void_t* data)
 }
 
 int
-int_type ## _dt_elt_cmp(Dt_t* dt, int_type ## _dt_elt_t* a, int_type ## _dt_elt_t* b, Dtdisc_t* disc)
+int_type ## _dt_elt_cmp(Dt_t* dt, int_type* a, int_type* b, Dtdisc_t* disc)
 {
   NoP(dt);
   NoP(disc);
-  if (a->val < b->val)
+  if (*a < *b) {
     return -1;
-  if (a->val > b->val)
+  }
+  if (*a > *b) {
     return 1;
+  }
   return 0;
 }
 
 void*
 int_type ## _dt_elt_make(Dt_t* dt, int_type ## _dt_elt_t* a, Dtdisc_t* disc)
 {
-   int_type ## _dt_elt_t* b;
+  int_type ## _dt_elt_t* b;
   if ((b = oldof(0, int_type ## _dt_elt_t, 1, 0))) {
-    b->val = a->val;
-    b->cnt = a->cnt;
+    b->val  = a->val;
+    b->cnt  = a->cnt;
   }
   return b;
 }
@@ -431,7 +435,7 @@ int_type ## _dt_elt_free(Dt_t* dt, int_type ## _dt_elt_t* a, Dtdisc_t* disc)
 }
 
 static Dtdisc_t int_type ## _acc_dt_disc = {
-  0,                                      /* key     */
+  offsetof(int_type ## _dt_elt_t, val),   /* key     */
   0,                                      /* size    */
   offsetof(int_type ## _dt_elt_t, link),  /* link    */
   (Dtmake_f)int_type ## _dt_elt_make,     /* makef   */
@@ -542,11 +546,42 @@ int_type ## _acc_add(PDC_t* pdc, int_type ## _acc* a, PDC_base_ed* ed, int_type*
 }
 
 PDC_error_t
-int_type ## _acc_report(PDC_t* pdc, const char* prefix, int_type ## _acc* a, PDC_disc_t* disc)
+int_type ## _acc_report_internal(PDC_t* pdc, const char* prefix1, const char* prefix2, int_type ## _acc* a, PDC_disc_t* disc)
 {
-  PDC_uint64 cnt_sum = 0;
-  double     cnt_sum_pcnt;
-  Void_t* velt;
+  PDC_uint64            cnt_sum = 0;
+  double                cnt_sum_pcnt;
+  double                elt_pcnt;
+  Void_t*               velt;
+  int_type ## _dt_elt_t* elt;
+
+  if (a->good == 0) {
+    disc->errorf(pdc, disc, 0, "%s: 0 good vals %llu bad vals", prefix1, a->bad);
+    return PDC_OK;
+  }
+  int_type ## _acc_fold_psum(a);
+  sfstrset(pdc->tmp, 0);
+  sfprintf(pdc->tmp, "%s: %llu good vals %llu bad vals\n",
+	   prefix1, a->good, a->bad);
+  sfprintf(pdc->tmp, "  Characterizing %s: (" MacroArg2String(int_type) ") min %" fmt " max %" fmt " avg %lf\n",
+	   prefix2, a->min, a->max, a->avg);
+  sfprintf(pdc->tmp, "    => distribution of first 10 values encountered:\n");
+  for (velt = dtfirst(a->dict); velt; velt = dtnext(a->dict, velt)) {
+    elt = (int_type ## _dt_elt_t*)velt;
+    cnt_sum += elt->cnt;
+    elt_pcnt = (100.0 * elt->cnt)/a->good;
+    sfprintf(pdc->tmp, "        val: %10" fmt " count: %10llu  pcnt-of-good-vals: %8.3lf\n",
+	     elt->val, elt->cnt, elt_pcnt);
+  }
+  cnt_sum_pcnt = (100.0 * cnt_sum)/a->good;
+  sfprintf(pdc->tmp,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf",
+	   cnt_sum, cnt_sum_pcnt);
+  disc->errorf(pdc, disc, 0, "%s", sfstruse(pdc->tmp));
+  return PDC_OK;
+}
+
+PDC_error_t
+int_type ## _acc_report(PDC_t* pdc, const char* prefix1, int_type ## _acc* a, PDC_disc_t* disc)
+{
   PDC_DISC_INIT_CHECKS;
   TRACE(pdc, MacroArg2String(int_type) "_acc_report called");
   if (!a) {
@@ -555,30 +590,7 @@ int_type ## _acc_report(PDC_t* pdc, const char* prefix, int_type ## _acc* a, PDC
   if (!disc->errorf) {
     return PDC_OK;
   }
-  if (!a->good) {
-    disc->errorf(pdc, disc, 0,
-		 "%s: " MacroArg2String(int_type) " field with 0 good vals %llu bad vals ==> ** NO GOOD VALS **",
-		 prefix, a->bad);
-    return PDC_OK;
-  }
-  int_type ## _acc_fold_psum(a);
-  sfstrset(pdc->tmp, 0);
-  sfprintf(pdc->tmp, "%s: " MacroArg2String(int_type) " field with %llu good vals %llu bad vals - for good vals: min %" fmt " max %" fmt " avg %lf\n",
-	   prefix, a->good, a->bad, a->min, a->max, a->avg);
-  sfprintf(pdc->tmp, "  Distribution of first 10 values encountered:\n");
-  for (velt = dtfirst(a->dict); velt; velt = dtnext(a->dict, velt)) {
-    double elt_pcnt;
-    int_type ## _dt_elt_t* elt = (int_type ## _dt_elt_t*)velt;
-    cnt_sum += elt->cnt;
-    elt_pcnt = (100.0 * elt->cnt)/a->good;
-    sfprintf(pdc->tmp, "        val: %10" fmt " count: %10llu  pcnt-of-good-vals: %7.3lf\n",
-	     elt->val, elt->cnt, elt_pcnt);
-  }
-  cnt_sum_pcnt = (100.0 * cnt_sum)/a->good;
-  sfprintf(pdc->tmp,   "        SUMMING          count: %10llu  pcnt-of-good-vals: %7.3lf",
-	   cnt_sum, cnt_sum_pcnt);
-  disc->errorf(pdc, disc, 0, "%s", sfstruse(pdc->tmp));
-  return PDC_OK;
+  return int_type ## _acc_report_internal(pdc, prefix1, prefix1, a, disc);
 }
 /* END_MACRO */
 
@@ -716,6 +728,197 @@ PDC_INT_ACCUM(PDC_int64, "lld", PDC_FOLDTEST_INT64);
 PDC_INT_ACCUM(PDC_uint64, "llu", PDC_FOLDTEST_UINT64);
 
 /* ********************************* BEGIN_TRAILER ******************************** */
+
+typedef struct PDC_string_dt_elt_s {
+  PDC_string  s;
+  PDC_uint64  cnt;
+  Dtlink_t    link;
+  char        buf[1];
+} PDC_string_dt_elt_t;
+
+int
+PDC_string_dt_elt_describe(Dt_t* dt, Void_t* a, Void_t* data)
+{
+  PDC_string_dt_elt_t* elt = (PDC_string_dt_elt_t*)a;
+  NoP(dt);
+  NoP(data);
+  error(0, "  dt_elt: str %-.*s cnt %3llu", elt->s.len, elt->s.str, elt->cnt);
+  return 0;
+}
+
+unsigned int
+PDC_string_dt_elt_hash(Dt_t* dt, Void_t* key, Dtdisc_t* disc)
+{
+  PDC_string* s = (PDC_string*)key;
+  NoP(dt);
+  NoP(disc);
+  return dtstrhash(0, s->str, s->len);
+}
+
+int
+PDC_string_dt_elt_cmp(Dt_t* dt, PDC_string* a, PDC_string* b, Dtdisc_t* disc)
+{
+  int res;
+  size_t minlen;
+
+  NoP(dt);
+  NoP(disc);
+  minlen = (a->len < b->len) ? a->len : b->len;
+  if ((res = strncmp(a->str, b->str, minlen)) || (a->len == b->len)) {
+    return res;
+  }
+  return (a->len < b->len) ? -1 : 1;
+}
+
+void*
+PDC_string_dt_elt_make(Dt_t* dt, PDC_string_dt_elt_t* a, Dtdisc_t* disc)
+{
+  PDC_string_dt_elt_t* b;
+  NoP(dt);
+  NoP(disc);
+  if ((b = oldof(0, PDC_string_dt_elt_t, 1, a->s.len))) {
+    memcpy(b->buf, a->s.str, a->s.len);
+    b->cnt   = a->cnt;
+    b->s.str = b->buf;
+    b->s.len = a->s.len;
+  }
+  return b;
+}
+
+void
+PDC_string_dt_elt_free(Dt_t* dt, PDC_string_dt_elt_t* a, Dtdisc_t* disc)
+{
+  free(a);
+}
+
+static Dtdisc_t PDC_string_acc_dt_disc = {
+  offsetof(PDC_string_dt_elt_t, s),    /* key     */
+  0,				       /* size    */
+  offsetof(PDC_string_dt_elt_t, link), /* link    */
+  (Dtmake_f)PDC_string_dt_elt_make,    /* makef   */
+  (Dtfree_f)PDC_string_dt_elt_free,    /* freef */
+  (Dtcompar_f)PDC_string_dt_elt_cmp,   /* comparf */
+  (Dthash_f)PDC_string_dt_elt_hash,    /* hashf   */
+  NiL,				       /* memoryf */
+  NiL				       /* eventf  */
+};
+
+PDC_error_t
+PDC_string_acc_init(PDC_t* pdc, PDC_string_acc* a, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_string_acc_init called");
+  if (!a) {
+    return PDC_ERROR;
+  }
+  if (!(a->dict = dtopen(&PDC_string_acc_dt_disc, Dttree))) {
+    return PDC_ERROR;
+  }
+  return PDC_uint32_acc_init(pdc, &(a->len_accum), disc);
+}
+
+PDC_error_t
+PDC_string_acc_reset(PDC_t* pdc, PDC_string_acc* a, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_string_acc_reset called");
+  if (!a || !a->dict) {
+    return PDC_ERROR;
+  }
+  dtclear(a->dict);
+  return PDC_uint32_acc_reset(pdc, &(a->len_accum), disc);
+}
+
+PDC_error_t
+PDC_string_acc_cleanup(PDC_t* pdc, PDC_string_acc* a, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_string_acc_cleanup called");
+  if (!a) {
+    return PDC_ERROR;
+  }
+  if (a->dict) {
+    dtclose(a->dict);
+    a->dict = 0;
+  }
+  return PDC_uint32_acc_cleanup(pdc, &(a->len_accum), disc);
+}
+
+PDC_error_t
+PDC_string_acc_add(PDC_t* pdc, PDC_string_acc* a, PDC_base_ed* ed, PDC_string* val, PDC_disc_t* disc)
+{
+  PDC_string_dt_elt_t insert_val;
+  PDC_string_dt_elt_t* tmp1;
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_string_acc_add called");
+  if (!a || !a->dict || !ed || !val) {
+    return PDC_ERROR;
+  }
+  if (PDC_ERROR == PDC_uint32_acc_add(pdc, &(a->len_accum), ed, &(val->len), disc)) {
+    return PDC_ERROR;
+  }
+  if (ed->errCode != 0) {
+    return PDC_OK;
+  }
+  if (dtsize(a->dict) < 10) {
+    insert_val.s.str = val->str;
+    insert_val.s.len = val->len;
+    if (!(tmp1 = dtinsert(a->dict, &insert_val))) {
+      WARN(pdc, "** PADC internal error: dtinsert failed (out of memory?) **");
+      return PDC_ERROR;
+    }
+    (tmp1->cnt)++;
+  }
+  else if ((tmp1 = dtmatch(a->dict, (Void_t*)val))) {
+    (tmp1->cnt)++;
+  }
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_string_acc_report(PDC_t* pdc, const char* prefix, PDC_string_acc* a, PDC_disc_t* disc)
+{
+  PDC_uint64            cnt_sum = 0;
+  double                cnt_sum_pcnt;
+  double                elt_pcnt;
+  Void_t*               velt;
+  PDC_string_dt_elt_t*  elt;
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_string_acc_report called");
+  if (!a) {
+    return PDC_ERROR;
+  }
+  if (!disc->errorf) {
+    return PDC_OK;
+  }
+  if (PDC_ERROR == PDC_uint32_acc_report_internal(pdc, prefix, "string length", &(a->len_accum), disc)) {
+    return PDC_ERROR;
+  }
+  sfstrset(pdc->tmp, 0);
+  if (a->len_accum.good == 0) {
+    return PDC_OK;
+  }
+  sfprintf(pdc->tmp, "  Characterizing strings:\n");
+  sfprintf(pdc->tmp, "    => distribution of first 10 strings encountered:\n");
+  for (velt = dtfirst(a->dict); velt; velt = dtnext(a->dict, velt)) {
+    elt = (PDC_string_dt_elt_t*)velt;
+    cnt_sum += elt->cnt;
+    elt_pcnt = (100.0 * elt->cnt)/a->len_accum.good;
+    sfprintf(pdc->tmp, "        val: [%-.*s]%-.*s count: %10llu  pcnt-of-good-vals: %8.3lf\n",
+	     elt->s.len, elt->s.str,
+	     a->len_accum.max - elt->s.len,
+	     "                                                                                ",
+	     elt->cnt, elt_pcnt);
+  }
+  cnt_sum_pcnt = (100.0 * cnt_sum)/a->len_accum.good;
+  sfprintf(pdc->tmp, "        SUMMING%-.*s count: %10llu  pcnt-of-good-vals: %8.3lf",
+	   a->len_accum.max,
+	   "                                                                                ",
+	   cnt_sum, cnt_sum_pcnt);
+  disc->errorf(pdc, disc, 0, "%s", sfstruse(pdc->tmp));
+  return PDC_OK;
+};
+
 /* ********************************** END_MACGEN ********************************** */
 
 /* ================================================================================ */ 

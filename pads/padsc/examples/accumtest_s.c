@@ -1,0 +1,63 @@
+#include "libpadsc-internal.h"
+
+static const char* names[] = {
+  "bob",
+  "kathleen",
+  "foo",
+  "foobar",
+  "ba",
+  "bar",
+  "sam I am",
+  "cat in the hat",
+  "a",
+  ""
+};
+
+int main(int argc, char** argv) {
+  char*        nm;
+  int                i;
+  PDC_t*             pdc;
+  PDC_string_acc     accum;
+  PDC_string         key1;
+  PDC_base_ed        ed = {0};
+
+  if (PDC_ERROR == PDC_open(0, &pdc)) {
+    error(2, "*** PDC_open failed ***");
+    exit(-1);
+  }
+  error(0, "\ninit the accum");
+  if (PDC_ERROR == PDC_string_acc_init(pdc, &accum, 0)) {
+    error(2, "** init failed **");
+    exit(-1);
+  }
+
+  error(0, "\nadd vals to the accum");
+  ed.errCode = PDC_NO_ERROR;
+  for (i = 0; i < 100000; i++) {
+    nm = (char*)names[i % 10];
+    key1.str = nm;
+    key1.len = strlen(nm);
+    if (PDC_ERROR == PDC_string_acc_add(pdc, &accum, &ed, &key1, 0)) {
+      error(0, "** accum_add failed **");
+    }
+  }
+  ed.errCode = PDC_CHAR_LIT_NOT_FOUND; /* typical error for string term by char lit */
+  for (i = 0; i < 100000; i++) {
+    nm = (char*)names[i % 10];
+    key1.str = nm;
+    key1.len = strlen(nm);
+    if (PDC_ERROR == PDC_string_acc_add(pdc, &accum, &ed, &key1, 0)) {
+      error(0, "** accum_add failed **");
+    }
+  }
+  error(0, "\ndescribe the accum");
+  if (PDC_ERROR == PDC_string_acc_report(pdc, "foo_prefix", &accum, 0)) {
+    error(0, "** accum_report failed **");
+  }
+
+  if (PDC_ERROR == PDC_close(pdc, 0)) {
+    error(2, "*** PDC_close failed ***");
+    exit(-1);
+  }
+  return 0;
+}

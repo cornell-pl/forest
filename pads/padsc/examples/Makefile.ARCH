@@ -31,6 +31,7 @@ mk_ex_data_libtest2 :: mk_ex_data_libtest2.c
 dttest         :: dttest.c        -lpadsc
 accumtest      :: accumtest.c     -lpadsc
 accumtest2     :: accumtest2.c    -lpadsc
+accumtest_s    :: accumtest_s.c   -lpadsc
 test_readint   :: test_readint.c  readinttest.c -lpadsc
 
 regress : regress_test_format1 \
