@@ -9,41 +9,36 @@ present.  In this case, the read code tries the branches in order
 until it finds one in which no errors occurred during parsing.
 \section{Syntax}
 \begin{tabular}{rcl}
-\nont{qualifier}  & \is{} & \Pomit{} \alt{} \Pendian{}\\[1ex]
-\nont{qualifiers}  & \is{} & \nont{qualifier} \alt{} \nont{qualifier} \nont{qualifiers}\\[1ex]
-\nont{constraint} & \is{} & : \nont{predicate}\\[1ex]
-\nont{full\_field} & \is{} & \opt{\nont{qualifiers}}
-     \nont{p\_ty} \opt{\nont{p\_actual\_list}} identifier 
-       \opt{\nont{constraint}}; \opt{\nont{p\_comment}} \\[1ex]
-\nont{literal\_field} & \is{} & \term{char\_lit}; \alt{} \term{str\_lit};\\[1ex]
-\nont{comp\_field} & \is{} & \Pcompute{} \nont{c\_ty} identifier \cd{=} \nont{expression};\\[1ex]
-\nont{field} & \is{} & \nont{full\_field} \alt{} \nont{literal\_field}  \alt{} \nont{comp\_field}\\[1ex]
-\nont{fields} & \is{} & \nont{field} \alt{} \nont{field} \ \nont{fields}\\[1ex]
-
-\nont{union\_field} & \is{} & \nont{full\_field} \altP{} \nont{comp\_field}\\[1ex]
-\nont{branch}     & \is{} & \Pcase \nont{expression} : \nont{union\_field}\\[1ex]
-                  & \alt{} & \Pdefault : \nont{full\_field}\\[1ex]
+\nont{union\_field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field}\\[1ex]
+\nont{branch}     & \is{} & \Pcase{} \nont{expression} : \nont{union\_field}
+                    \alt{}  \Pdefault : \nont{union\_field}\\[1ex]
 \nont{branches}   & \is{} & \nont{branch} \alt{} \nont{branch} \nont{branches} \\[1ex]
-\nont{switched}   & \is{} & \Pswtich (\nont{expression})\{ branches \}\\[1ex]
-\nont{union\_bdy} & \is{} & \nont{in\_place} \alt{} \nont{switched}\\[1ex]
-\nont{union\_ty}  & \is{} & \Punion{} identifier \opt{\nont{formals}} \{ union\_bdy \} \\[4ex]
-
+\nont{switched}   & \is{} & \Pswitch{} (\nont{expression})\{ \nont{branches} \}\\[1ex]
+\nont{in\_place}  & \is{} & \nont{branches}\\[1ex]
+\nont{union\_bdy} & \is{} & \nont{switched} \alt{} \nont{in\_place}\\[1ex]
+\nont{union\_ty}  & \is{} & \Punion{} identifier \opt{\nont{formals}} \{ \nont{union\_bdy} \} \\[4ex]
 \end{tabular}
 
-\subsection{switched}
-jumps to appropriate branch indicated by switch expression.
-switch must be of integral type. 
-\begin{verbatim}
-Punion branches(a_uint32 a){
-  Pswitch (a) {
-  case 1 : a_int32  number : number % 2 == 0;
-  case 2 : a_string_SE(:"EOR":) name;
-  default: compute PDC_int32 def = 3; 
-  }
-}
-\end{verbatim}
+\noindent
+We explain the meaning of this syntax in the remainder of this chapter.
+All non-terminals not defined in this grammar fragment were
+defined previously, as follows.
+Full fields (\nont{full\_field}) 
+appear in \secref{sec:structs-full-fields}, 
+computed fields (\nont{comp\_field}) in
+\secref{sec:structs-computed-fields}, and
+parameter lists (\nont{formals}) in \secref{sec:common-parameterization}.
+Expressions (\nont{expression}) represent any \C{} expression. 
 
-\subsection{in-place}
+
+\subsection{Example: Switched \Punion{}s}
+The following switched \Punion{}  describes data which starts with an
+integer tag which determines the form of the rest of the data.  A tag
+of \cd{1} indicates an unsigned integer will follow, while a tag of
+\cd{2} indicates a string terminated by the end
+\input{code/union.switch}
+
+\subsection{Example: In-place \Punion{}s}
 \begin{verbatim}
 Punion name ( param list ){
  qualifier type name constraint comment

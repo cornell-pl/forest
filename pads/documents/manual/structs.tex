@@ -64,6 +64,7 @@ to ensure that the obsolete HTTP methods
 \cd{LINK} and \cd{UNLINK} are only used with HTTP version \cd{1.0}.
 
 \subsection{Full fields}
+\label{sec:structs-full-fields}
 Each full field in a \Pstruct{} must include the name of the field
 and its type.  
 The name serves to document the data and to permit later reference.  
@@ -129,6 +130,7 @@ that allow the library user to tune the extent of such scanning
 (\cf{} \secref{sec:library-customization-scanning-extent}).
 
 \subsection{Computed fields}
+\label{sec:structs-computed-fields}
 Instead of being read from the external source, the value of a
 computed field is set from an initializing expression.  Such fields
 are marked by the \Pcompute{} keyword.  Each such field gives its name
