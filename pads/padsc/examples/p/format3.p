@@ -7,7 +7,9 @@ Pstruct test {
 
 #define RECLIST_SIZE 10
 Parray recList {
-  test [RECLIST_SIZE] : Pforall i Pin [0..length-2] { recList[i].id < recList[i+1].id };
+  test [RECLIST_SIZE];
+} Pwhere {
+  Pforall i Pin [0..length-2] {recList[i].id < recList[i+1].id };
 };
 
 
@@ -26,8 +28,9 @@ Parray recListtwo{
 #define MIN 2
 #define MAX 5
 Parray intList {
-  Puint32 [MIN : MAX] : Psep == '|' && Pterm == '\n' && 
-		   Pforall i Pin [0 .. length -2] {intList[i] < intList[i+1]};
+  Puint32 [MIN : MAX] : Psep == '|' && Pterm == '\n';
+} Pwhere {
+  Pforall i Pin [0 .. length -2] {intList[i] < intList[i+1]};
 };
 
 Pstruct entry{

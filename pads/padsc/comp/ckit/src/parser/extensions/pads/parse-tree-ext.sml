@@ -28,7 +28,9 @@ structure ParseTreeExt =
         datatype 'exp PConstraint = 
            Sep of 'exp
          | Term of 'exp
-         | Forall of {index : string, range : 'exp PRange, body : 'exp}
+
+        datatype 'exp PPostCond = 
+           Forall of {index : string, range : 'exp PRange, body : 'exp}
          | General of 'exp
 
         datatype ('dt, 'decr, 'exp) PBranches = 
@@ -66,7 +68,8 @@ structure ParseTreeExt =
 		       isSource : bool,
 		       args   : 'exp list, 
 		       sizeSpec : ('exp PSize) option, 
-		       constraints : ('exp PConstraint) list} 
+		       constraints : ('exp PConstraint) list,
+		       postCond : ('exp PPostCond) list} 
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
 		      isRecord : bool, 

@@ -163,8 +163,7 @@ fun insertFuncParams (FuncDecr (_,params)) : unit =
   | insertFuncParams (ArrayDecr(dcl,_)) = insertFuncParams dcl
   | insertFuncParams (PointerDecr dcl) = insertFuncParams dcl
   | insertFuncParams _ = ()  (* this is actually an error, but it will be caught in
-		              * BuildAst when processing a
-     PT.FunctionDef *)
+		              * BuildAst when processing a  PT.FunctionDef *)
 
 (* PADS*)
 
@@ -186,6 +185,17 @@ fun addPostCond (decl,postCondOpt) =
       PX.PStruct{isRecord = isRecord, isSource = isSource, 
 		 containsRecord = containsRecord, largeHeuristic = largeHeuristic,
                  name = name, params = params, fields = fields, postCond = postCondOpt} 
+    | s => s)
+
+
+fun addArrayPostCond (decl,postConds) = 
+   (case decl of
+     (PX.PArray{name, baseTy, params, isRecord, containsRecord, largeHeuristic,
+	       isSource, args,  sizeSpec, constraints, postCond})  => 
+       (makeTypeName name;
+       PX.PArray{name = name, baseTy = baseTy, params=params, isRecord=isRecord, containsRecord=containsRecord, 
+                largeHeuristic = largeHeuristic, isSource=isSource, args=args,  sizeSpec=sizeSpec, 
+		constraints=constraints, postCond = postConds})
     | s => s)
 
 (* PADS*)
@@ -240,7 +250,7 @@ end
         | PSELECT (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
 	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE (* PADS *)
- 	| PRECORD | PSOURCE | PWHERE (* PADS *)  
+ 	| PRECORD | PSOURCE | PWHERE | PAND (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT (* PADS*)
         | PRE (* PADS *)
 
@@ -327,13 +337,16 @@ end
         | pManifestField of decltype * (declarator * expression) list
         | pConstraintOpt of expression option
         | pCommentOpt of string option
-        | pArray of externalDecl
+        | pArray of (declarator, ctype, decltype, expression) PX.PExternal
         | pSizeOpt of (expression PX.PSize) option
         | pSizeSpec of (expression PX.PSize) option
         | pForAllRange of (expression PX.PRange)
         | pArrayConstraint of (expression PX.PConstraint) 
         | pArrayConstraints of (expression PX.PConstraint) list
         | pArrayConstraintOpt of (expression PX.PConstraint) list
+        | pArrayPostConstraint of (expression PX.PPostCond) 
+        | pArrayPostConstraints of (expression PX.PPostCond) list
+        | pArrayPostConds of (expression PX.PPostCond) list
         | pBranch of expression option * (decltype, declarator, expression) PX.PSField
         | pBranchList of (expression option * (decltype, declarator, expression) PX.PSField) list
         | pVariants of (decltype, declarator, expression) PX.PBranches
@@ -388,6 +401,18 @@ tu:
 (* PADS *)
 pPostCondOpt: (NONE)
  | PWHERE LCURLY expr SEMICOLON RCURLY  (SOME expr)
+
+pArrayPostConstraint : 
+   PFORALL pName PIN pForAllRange LCURLY expr RCURLY 
+                (PX.Forall {index = pName, range = pForAllRange, body = expr})
+ | expr         (PX.General expr)
+
+pArrayPostConstraints : 
+   pArrayPostConstraint ([pArrayPostConstraint])
+ | pArrayPostConstraint PAND pArrayPostConstraints  (pArrayPostConstraint :: pArrayPostConstraints)
+
+pArrayPostConds : ([])
+ | PWHERE LCURLY pArrayPostConstraints SEMICOLON RCURLY (pArrayPostConstraints)
 (* PADS END *)
 
 externalDeclaration:
@@ -406,7 +431,12 @@ externalDeclaration:
 					   SOME(markExternalDecl srcMap (structDecl,pStructleft,pPostCondOptright))
 				         end)
         | pUnion  RCURLY                (SOME(markExternalDecl srcMap (pUnion, pUnionleft, RCURLYright)))
-        | pArray  RCURLY                (SOME(markExternalDecl srcMap (pArray, pArrayleft, RCURLYright)))
+        | pArray  RCURLY pArrayPostConds 
+	                                (let val augPArray = addArrayPostCond(pArray, pArrayPostConds)
+	                                     val arrayDecl = ExternalDeclExt augPArray
+					  in
+					    SOME(markExternalDecl srcMap (arrayDecl, pArrayleft, pArrayPostCondsright))
+				          end)
         | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,  pEnumleft,  RCURLYright)))
         | pSelect RCURLY                (SOME(markExternalDecl srcMap (pSelect,  pSelectleft,  RCURLYright)))
 (* PADS END *)
@@ -1134,9 +1164,6 @@ pForAllRange :
 pArrayConstraint : 
    PSEP EQ expr  (PX.Sep expr)
  | PTERM EQ expr (PX.Term expr)
- | PFORALL pName PIN pForAllRange LCURLY expr RCURLY 
-   (PX.Forall {index = pName1, range = pForAllRange, body = expr})
- | expr         (PX.General expr)
 
 pArrayConstraints : 
    pArrayConstraint ([pArrayConstraint])
@@ -1156,12 +1183,12 @@ pSizeSpec:
 
 pArray:
  pIsRecord pIsSource PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
- ( makeTypeName pName1;
-   ExternalDeclExt(PX.PArray {isRecord=pIsRecord, isSource = pIsSource, 
-			      containsRecord = false, largeHeuristic = false,
-			      name = pName1, params = pTyParams, 
-			      args = pOptActParams, baseTy = PX.Name pName2, 
-			      sizeSpec = pSizeSpec, constraints = pArrayConstraintOpt})
+ ( PX.PArray {isRecord=pIsRecord, isSource = pIsSource, 
+	      containsRecord = false, largeHeuristic = false,
+	      name = pName1, params = pTyParams, 
+              args = pOptActParams, baseTy = PX.Name pName2, 
+	      sizeSpec = pSizeSpec, constraints = pArrayConstraintOpt,
+	      postCond = []}
  )
 
 pBranch: 

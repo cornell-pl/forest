@@ -3364,7 +3364,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	  
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, 
                             largeHeuristic, isSource : bool, args : pcexp list, baseTy:PX.Pty, 
-			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
+			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list,
+			    postCond : pcexp PX.PPostCond list} =
 	     let 
 		 val cParams : (string * pcty) list = List.map mungeParam params
 		 val paramNames = #1(ListPair.unzip cParams)
@@ -3617,8 +3618,30 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  (* new scope needed for analysis of array constraints*)
 		 val _ = pushLocalEnv()                                        (* create new scope *)
 		 val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
+		 fun mergeOpt which (o1,o2) = 
+		     case (o1,o2) 
+		     of   (NONE,NONE) => NONE
+		       |  (NONE, SOME q) => SOME q
+		       |  (SOME p, NONE) => SOME p
+		       |  (SOME p, SOME q) => (PE.error("Multiple "^which^" clauses."); SOME p)
 
-                 val (sepXOpt, termXOpt, arrayXOpt, genXOpt, sepTermDynamicCheck) = 
+                 val (arrayXOpt, genXOpt) = 
+		     let fun doOne(constr: pcexp PX.PPostCond) = 
+			     case constr 
+			     of PX.Forall (r as {index,range,body}) => (SOME r, NONE) (* defer checking until after rep generated *)
+		             |  PX.General exp => (expEqualTy(exp, CTintTys,fn s=>("General constraint for array "^
+										   name ^" has type "^s^". Expected "^
+										   "type int."));
+						   (NONE, SOME exp)
+		                                   (* end General case *))
+			 fun mergeAll ((a,b),(ra,rb)) = (mergeOpt "array" (a,ra), mergeOpt "general" (b,rb))
+			 val constrs = List.map doOne postCond
+			 val (arrayXOpt, genXOpt) = List.foldr mergeAll (NONE,NONE) constrs
+		     in
+			 (arrayXOpt, genXOpt)
+		     end
+
+                 val (sepXOpt, termXOpt, sepTermDynamicCheck) = 
                       let fun doOne (constr:pcexp PX.PConstraint) = 
                               case constr 
                               of PX.Sep exp => (
@@ -3635,7 +3658,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 						 (readSuf PL.charlit, scan2Suf PL.charlit, lookupLitWrite PL.charlit)
 				     val (valOpt,_,_,_) = evalExpr exp
 				 in
-				    (SOME (exp, valOpt, isString, readFun, scanFun, writeFun), NONE,NONE,NONE)
+				    (SOME (exp, valOpt, isString, readFun, scanFun, writeFun), NONE)
                                  end
 
                               (* end Sep case *))
@@ -3652,31 +3675,12 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 						 (readSuf PL.charlit, scan2Suf PL.charlit, lookupLitWrite PL.charlit)
 				     val (valOpt,_,_,_) = evalExpr exp
 				 in
-				   (NONE, SOME (exp,valOpt, isString, readFun,scanFun,writeFun), NONE, NONE)
+				   (NONE, SOME (exp,valOpt, isString, readFun,scanFun,writeFun))
                                  end
                               (* end Term case *))
-                              |  PX.Forall (r as {index,range,body}) => 
-				  (NONE, NONE, SOME r, NONE) (* defer checking until after rep generated *)
-			      |  PX.General exp => (
-				 expEqualTy(exp, CTintTys,fn s=>("General constraint for array "^
-								 name ^" has type "^s^". Expected "^
-								 "type int."));
-				 (NONE, NONE, NONE, SOME exp)
-                              (* end General case *))
 			  val constrs = List.map doOne constraints
-			  fun mergeOpt which (o1,o2) = 
-			      case (o1,o2) 
-			      of (NONE,NONE) => NONE
-			      |  (NONE, SOME q) => SOME q
-			      |  (SOME p, NONE) => SOME p
-                              |  (SOME p, SOME q) => (PE.error("Multiple "^which^" clauses."); SOME p)
-                          fun mergeAll ((a,b,c,d),(ra,rb,rc,rd)) =
-			      (mergeOpt "separator"  (a,ra),
-                               mergeOpt "terminator" (b,rb),
-                               mergeOpt "array"      (c,rc),
-                               mergeOpt "general"    (d,rd))
-			  val (sepXOpt, termXOpt, arrayXOpt, genXOpt) = 
-			      List.foldr mergeAll (NONE,NONE,NONE,NONE) constrs
+                          fun mergeAll ((a,b),(ra,rb)) = (mergeOpt "separator"  (a,ra), mergeOpt "terminator" (b,rb))
+			  val (sepXOpt, termXOpt) = List.foldr mergeAll (NONE,NONE) constrs
 			  val sepTermErrorMsg = "Psep and Pterm expressions for Parray "^ name^
 							 " have the same value."
 			  val sepTermDynamicCheck = 
@@ -3702,7 +3706,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				      end
 			      |  (_,_) => []
 		      in
-			  (sepXOpt, termXOpt, arrayXOpt, genXOpt, sepTermDynamicCheck)
+			  (sepXOpt, termXOpt, sepTermDynamicCheck)
                       end
 		 val _ = popLocalEnv()
 

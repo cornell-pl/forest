@@ -4,13 +4,16 @@ Pstruct test(Puint32 h, int x) {
 
 #define RECLIST_SIZE 10
 Parray recList(Puint32 h, int x, int size) {
-  test(:h,x:) [size] : Pforall i Pin [0 .. length - 2]
-       {  i==x || recList[i].id < recList[i+1].id };
+  test(:h,x:) [size];
+} Pwhere {
+  Pforall i Pin [0 .. length - 2] {  i==x || recList[i].id < recList[i+1].id };
 };
 
 
 Parray recList2(Puint32 h, int x, int size) {
-  test(:h,x:) [size] : Pforall i Pin recList2  {  recList2[i].id % 2 == 0};
+  test(:h,x:) [size];
+} Pwhere{
+  Pforall i Pin recList2  {  recList2[i].id % 2 == 0};
 };
 
 
