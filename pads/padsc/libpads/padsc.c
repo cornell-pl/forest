@@ -10,7 +10,7 @@
 #include "libpadsc-read-macros.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.19 2002-09-23 18:25:21 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.20 2002-09-27 18:13:58 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -110,7 +110,7 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
     sfvprintf(pdc->tmp, format, ap);
     va_end(ap);
   } else {
-    const char* msg = "** unknown error code **";
+    const char* msg = "** internal error **";
 
     switch (errCode) {
     case PDC_NO_ERROR:
@@ -121,6 +121,9 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
       break;
     case PDC_SYS_ERROR:
       msg = "System error";
+      break;
+    case PDC_INTERNAL_ERROR:
+      msg = "Internal error";
       break;
     case PDC_CHKPOINT_FAILURE:
       msg = "Checkpoint failure (misuse of libpadsc IO checkpoint facility)";
@@ -182,6 +185,9 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
     case PDC_ENUM_MATCH_FAILURE:
       msg = "Enum match failure";
       break;
+    case PDC_TYPEDEF_CONSTRAINT_ERR:
+      msg = "Typedef constraint error";
+      break;
     case PDC_AT_EOF:
       msg = "Unexpected end of file (field too short?) failure";
       break;
@@ -217,6 +223,10 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
       break;
     case PDC_WIDTH_NOT_AVAILABLE:
       msg = "Specified width not available (EOR/EOF encountered)";
+      break;
+    default:
+      sfprintf(pdc->tmp, "*** unknown error code: %d ***", errCode);
+      msg = "";
       break;
     }
     if (loc) {
@@ -1654,7 +1664,52 @@ PDC_rmm_nozero(PDC_t* pdc, PDC_disc_t* disc)
 }
 
 /* ================================================================================ */
-/* MISC ROUTINES */
+/* MISC ROUTINES -- EXTERNAL */
+
+PDC_error_t
+PDC_countXtoY(PDC_t* pdc, PDC_base_em* em, PDC_uint8 x, PDC_uint8 y,
+	      PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc)
+{
+  unsigned char   ct;
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  if (!disc) {
+    disc = pdc->disc;
+  }
+  TRACE2(pdc, "PDC_countXtoY called for x = %s y = %s", PDC_fmtChar(x), PDC_fmtChar(y));
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  if (res_out) {
+    (*res_out) = 0;
+  }
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+    HANDLE_ERR_CURPOS(PDC_OUT_OF_MEMORY);
+  }
+  while (PDC_OK == PDC_IO_getchar(pdc, 1, &ct, disc)) { /* 1 means obey panicStop */
+    if (y == ct) { /* success */
+      if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
+	HANDLE_ERR_CURPOS(PDC_INTERNAL_ERROR);
+      }
+      return PDC_OK;
+    }
+    if (x == ct && res_out) {
+      (*res_out)++;
+    }
+  }
+  /* y not found */
+  if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
+    HANDLE_ERR_CURPOS(PDC_INTERNAL_ERROR);
+  }
+  HANDLE_ERR_CURPOS(PDC_CHAR_LIT_NOT_FOUND);
+}
+
+/* ================================================================================ */
+/* MISC ROUTINES -- INTERNAL */
 
 char*
 PDC_fmtChar(char c) {

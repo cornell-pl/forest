@@ -37,6 +37,7 @@ typedef enum PDC_errCode_t_e {
 
   PDC_OUT_OF_MEMORY                 =    1,
   PDC_SYS_ERROR                     =    2,
+  PDC_INTERNAL_ERROR                =    3,
 
   PDC_CHKPOINT_FAILURE              =   11,
   PDC_COMMIT_FAILURE                =   12,
@@ -523,5 +524,29 @@ PDC_error_t PDC_buint64_read(PDC_t* pdc, PDC_base_em* em,
 			     PDC_base_ed* ed, PDC_uint64* res_out, PDC_disc_t* disc);
 
 /* ================================================================================ */
+/* MISC ROUTINES */
+
+/* PDC_countXtoY: count occurrences of char x until char y
+ * Uses disc->p_stop to determine how far to scan for y.
+ * Does not modify the IO cursor position.  Cases:
+ *   1. IO cursor is at EOF 
+ *     => If !em || *em < PDC_Ignore:
+ *           + ed->errCode set to PDC_AT_EOF
+ *           + ed->loc begin/end set to EOF 'location'
+ *             (last line number, 1 past last char in line)
+ *     PDC_ERROR returned   
+ *   2. Char y is not found
+ *     => If !em || *em < PDC_Ignore:
+ *           + ed->errCode set to PDC_CHAR_LIT_NOT_FOUND
+ *           + ed->loc begin/end set to current IO cursor location
+ *     PDC_ERROR returned   
+ *   3. Char y found
+ *     if res_out, *res_out is set to the number of occurrences of x
+ *     PDC_OK returned
+ */
+
+PDC_error_t PDC_countXtoY(PDC_t* pdc, PDC_base_em* em, PDC_uint8 x, PDC_uint8 y,
+		          PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
+
 
 #endif  /* __LIBPADSC_H__ */
