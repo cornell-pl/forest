@@ -95,19 +95,22 @@ result
 
 #define STR_NODE_KTH_CHILD_NAMED_BODY(ty,NAMES...)
   PDCI_node_t *result = 0;
-  const char *fieldNames[] = {NAMES}; 
+  PDCI_childIndex_t i;
+  const char *fieldNames[] = {NAMES,0}; 
   /* The index must be 0 as all field names are unique.*/
   if (idx != 0)
     return result;
-
-  do{
-    if (fieldNames[idx] != '\0')
-      return result;
-  }while (!GLX_STR_MATCH(name,fieldNames[idx++]))
+  for (i = 0; 1; i++) {
+    if (fieldNames[i] == 0)
+      return 0;
+    if (GLX_STR_MATCH(name, fieldNames[i]))
+      break;
+  } 
+  /* fall through if i set correctly */
 /* END_MACRO */
 
 #define STR_NODE_KTH_CHILD_NAMED_RET()
-(self->vt->kth_child)(self,idx)
+(self->vt->kth_child)(self,i)
 /* END_MACRO */
 
 #define CACHED_NODE_KTH_CHILD_BODY(ty,NUM_CHILDREN)
