@@ -13,6 +13,7 @@
 
 #include "libpadsc-internal.h"
 #include "caml/mlvalues.h"  /* Need value */
+#include "caml/fail.h"
 #ifndef FOR_CKIT
 #  include "pglx-impl.h"
 #endif
