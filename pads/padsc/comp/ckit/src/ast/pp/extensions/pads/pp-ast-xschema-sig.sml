@@ -5,6 +5,7 @@ sig
 
   type aidinfo
   type paidinfo
+  type ptyinfo
   type 'a pp = OldPrettyPrint.ppstream -> 'a -> unit
 
   val printConst      : bool ref
@@ -28,7 +29,7 @@ sig
   val ppExpression       : aidinfo -> Tables.tidtab -> Ast.expression pp
   val ppCoreExpression   : aidinfo -> Tables.tidtab -> Ast.coreExpression pp
   val ppInitExpression   : aidinfo -> Tables.tidtab -> Ast.initExpression pp
-  val ppCoreExternalDecl : aidinfo -> Tables.tidtab -> Ast.coreExternalDecl pp
+  val ppCoreExternalDecl : ptyinfo option -> aidinfo -> Tables.tidtab -> Ast.coreExternalDecl pp
   val ppExternalDecl     : paidinfo -> aidinfo -> Tables.tidtab -> Ast.externalDecl pp
   val ppAst              : string option -> paidinfo -> aidinfo -> Tables.tidtab -> Ast.ast pp
 

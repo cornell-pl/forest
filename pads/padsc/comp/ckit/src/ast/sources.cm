@@ -108,6 +108,7 @@ Group is
         extensions/pads/plib.sml
 
 	(* pretty printer extensions *)
+	pp/extensions/pads/pp-ast-paid-adornment-sig.sml
 	pp/extensions/pads/pp-ast-xschema-sig.sml       
 	pp/extensions/pads/pp-ast-xschema-fn.sml       
 	pp/extensions/pads/pp-ast-xschema.sml       

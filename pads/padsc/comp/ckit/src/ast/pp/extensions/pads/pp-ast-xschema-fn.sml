@@ -14,6 +14,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
   type aidinfo = PPAE.aidinfo
   type paidinfo = PPAstPaidAdornment.paidinfo
+  type ptyinfo = PTys.pTyInfo
 
   val printLocation = false (* internal flag - pretty print locations as comments *)
 
@@ -619,13 +620,47 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 		        , rDelim="}"
 		        } pps initExprs
 
-  (* PADS : print everything *)
-  fun ppCoreExternalDecl aidinfo tidtab pps edecl =
+
+  fun ppPStruct tidtab pps (Ast.TypeDecl{tid,...})  = 
+      let val bindingOpt = Tidtab.find(tidtab,tid)
+	  val binding : Bindings.tidBinding = valOf bindingOpt 
+	  val name = valOf (#name binding)
+	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
+	  val (Ast.StructRef stid) = cty
+	  val sbindingOpt = Tidtab.find(tidtab,stid)
+       	  val sbinding : Bindings.tidBinding = valOf sbindingOpt 
+	  val Bindings.Struct(tid'',fields) = valOf(#ntype sbinding)
+	  val (_,fstOpt,_,_) = List.hd fields
+          val fstMember : Ast.member = valOf fstOpt
+          val fstSymbol = #name fstMember
+          val fstName   = Symbol.name fstSymbol
+      in
+	((PPL.addStr pps "Struct" 
+        ; space pps
+        ; PPL.addStr pps name
+	; newline pps
+        ; PPL.addStr pps fstName
+        ; newline pps)
+	 handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
+      end  
+    | ppPStruct tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+
+  fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) tidtab pps decl = 
+      case #kind ptyInfo
+      of PTys.Typedef => PPL.addStr pps "Typedef"
+      |  PTys.Struct => ppPStruct tidtab pps decl
+      |  PTys.Union => PPL.addStr pps "Union" 
+      |  PTys.Array => PPL.addStr pps "Array" 
+      |  PTys.Enum => PPL.addStr pps "Enum" 
+
+  fun ppCoreExternalDecl' ptyInfo aidinfo tidtab pps edecl =
     case edecl
       of ExternalDecl decl => 
-	  (ppDeclaration aidinfo tidtab pps decl;
-	   PPL.newline pps)		    
-       | FunctionDef (id,ids,stmt) => 
+	  (  ppPKind ptyInfo tidtab pps decl
+	   ; PPL.newline pps
+	   ; ppDeclaration aidinfo tidtab pps decl
+	   ; PPL.newline pps)		    
+       | FunctionDef (id,ids,stmt) =>  (* This branch will not be called as functions aren't being tagged *)
 	   let val {location,...} = id
 	       val (stClass,ctype) = getCtype id
 	       val (ctype,kNr,params) =
@@ -656,124 +691,30 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	     ;ppStmt aidinfo tidtab pps stmt
              ;PPL.newline pps
 	   end 
-       | ExternalDeclExt ed => PPAE.ppExternalDeclExt (* PADS *) NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+       | ExternalDeclExt ed => 
+	   PPAE.ppExternalDeclExt (* PADS *) NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
-  (* PADS: print .h version *)
-  fun ppCoreExternalDeclH aidinfo tidtab pps edecl =
-    case edecl
-      of ExternalDecl decl =>
-	  (ppDeclaration aidinfo tidtab pps decl;
-	   PPL.newline pps)
-       | FunctionDef (id,ids,stmt) => 
-	   let val {location,...} = id
-	       val (stClass,ctype) = getCtype id
-	       val (ctype,kNr,params) =
-		   case ctype
-		     of Ast.Function (retTy,paramTys) =>
-			 if null paramTys andalso not (null ids)
-			     then (ctype,true,KNR ids)
-			 else (ctype,false,ANSI ids)
-		      | _ =>
-			 (warning
-			  "ppCoreExternalDecl" 
-			  ("No function type associated with id:"
-			   ^(PPL.ppToString PPL.ppId id))
-			 ;(Ast.Function (Ast.Void,[]),false,ANSI [])
-			 )
-	       fun kr pps [] = []
-		 | kr pps (id::ids) = 
-		   (ppIdDecl aidinfo tidtab pps id
-		   ;PPL.addStr pps ";"
-		   ;if null ids then () else newline pps
-		   ;kr pps ids
-		   )
-	       fun isInternal (id : Ast.id) = 
-		   let val name : string = Symbol.name(#name id)
-		       val len = String.size name
-		       val intLen = String.size("_internal")
-		   in
-		       if len < intLen then false
-		       else EQUAL = String.compare(String.substring(name, len - intLen, intLen), "_internal")
-		   end
-	   in 
-	       if not (isInternal id) then
-		  (PPL.newline pps
-		  ;ppLoc pps location
-	          ;ppStorageClass pps stClass
-	          ;ppDecl0 aidinfo tidtab pps (SOME (ID id),params,ctype)
-                  ;PPL.addStr pps ";"
-	          ;PPL.newline pps)
-	       else ()
-	   end 
-       | ExternalDeclExt ed => PPAE.ppExternalDeclExt NONE 
-	                       (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
-
-  (* PADS: print .c version *)
-  fun ppCoreExternalDeclC aidinfo tidtab pps edecl =
-    case edecl
-      of ExternalDecl decl => () (* type declarations are in header file *)
-       | FunctionDef (id,ids,stmt) => 
-	   let val {location,...} = id
-	       val (stClass,ctype) = getCtype id
-	       val (ctype,kNr,params) =
-		   case ctype
-		     of Ast.Function (retTy,paramTys) =>
-			 if null paramTys andalso not (null ids)
-			     then (ctype,true,KNR ids)
-			 else (ctype,false,ANSI ids)
-		      | _ =>
-			 (warning
-			  "ppCoreExternalDecl" 
-			  ("No function type associated with id:"
-			   ^(PPL.ppToString PPL.ppId id))
-			 ;(Ast.Function (Ast.Void,[]),false,ANSI [])
-			 )
-	       fun kr pps [] = []
-		 | kr pps (id::ids) = 
-		   (ppIdDecl aidinfo tidtab pps id
-		   ;PPL.addStr pps ";"
-		   ;if null ids then () else newline pps
-		   ;kr pps ids
-		   )
-	   in ppLoc pps location
-	     ;ppStorageClass pps stClass
-	     ;ppDecl0 aidinfo tidtab pps (SOME (ID id),params,ctype)
-	     ;PPL.newline pps
-	     ;if kNr then (blockify 2 kr pps ids; newline pps) else ()
-	     ;ppStmt aidinfo tidtab pps stmt
-             ;PPL.newline pps
-	   end 
-       | ExternalDeclExt ed => PPAE.ppExternalDeclExt NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+  fun ppCoreExternalDecl NONE aidinfo tidtab pps edecl = ()
+    | ppCoreExternalDecl (SOME p) aidinfo tidtab pps edecl = ppCoreExternalDecl' p aidinfo tidtab pps edecl
 
   fun ppExternalDecl paidinfo aidinfo tidtab pps edecl = 
        PPAA.ppExternalDeclAdornment NONE paidinfo ppCoreExternalDecl aidinfo tidtab pps edecl
-
+ 
   (* PADS: takes source name and description of output kind *)
   fun ppExternalDeclRefined srcFile paidinfo aidinfo tidtab pps edecl = 
-      let val ppCoreED = ppCoreExternalDecl
+      let val ppCoreED : ptyinfo option -> aidinfo -> Tables.tidtab -> Ast.coreExternalDecl pp = ppCoreExternalDecl
       in
 	  PPAA.ppExternalDeclAdornment srcFile paidinfo ppCoreED aidinfo tidtab pps edecl
       end
 
   fun ppAst srcFile paidinfo aidinfo tidtab pps edecls = 
-(*PADS: this change removes extraneous white space from output file *)
       List.app (ppExternalDeclRefined srcFile paidinfo aidinfo tidtab pps) edecls
-
-(* old version:  PPL.separate (ppExternalDecl aidinfo tidtab,PPL.newline) pps edecls *)
 
   (* The pretty-printer expects a block at top level, so all of the
    * external interfaces are wrapped to give it one.
    *)
-  fun wrap' pp aidinfo pps v = 
-    ( PPL.bBlock pps PP.INCONSISTENT 0
-    ; PPL.newline pps
-    ; pp aidinfo pps v
-    ; PPL.eBlock pps
-    )
-
   fun wrap pp aidinfo tidtab pps v = 
     ( PPL.bBlock pps PP.INCONSISTENT 0
-(* PADS: adds blank line at beggining of file   ; PPL.newline pps *)
     ; pp aidinfo tidtab pps v
     ; PPL.newline pps
     ; PPL.eBlock pps
@@ -787,6 +728,6 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   val ppExpression = wrap (ppExpr {nested=false})
   val ppCoreExpression = wrap (ppCoreExpr {nested=false})
   val ppExternalDecl = fn paidInfo => wrap (ppExternalDecl paidInfo) (* PADS*)
-  val ppCoreExternalDecl = wrap ppCoreExternalDecl
+  val ppCoreExternalDecl = fn ptyInfoOpt => wrap (ppCoreExternalDecl ptyInfoOpt) (* PADS *)
   val ppAst  = fn srcFile => fn paidInfo => wrap (ppAst srcFile paidInfo)  (* PADS *)
 end

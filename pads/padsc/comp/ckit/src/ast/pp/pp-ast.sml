@@ -17,7 +17,7 @@ local
             will be filtered out. *)
 
     fun ppExternalDeclAdornment srcFileOpt ppCoreExternalDecl aidinfo tidtab pps
-	  (Ast.DECL (coreExtDecl,_,loc:SourceMap.location)) = 
+	  (Ast.DECL (coreExtDecl,_,paid:Paid.uid,loc:SourceMap.location)) = 
 	  (case loc of SourceMap.UNKNOWN => ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
            | SourceMap.LOC r => let val fname = OS.Path.file (#srcFile r) (* PADS *)
 	                            val isPads = case OS.Path.splitBaseExt fname

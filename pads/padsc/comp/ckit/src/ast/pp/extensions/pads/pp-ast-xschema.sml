@@ -1,4 +1,15 @@
 local 
+  fun isPads loc = 
+      case loc 
+      of SourceMap.UNKNOWN => false
+      |  SourceMap.LOC r => (let val fname = OS.Path.file (#srcFile r) 
+				 val isPads = case OS.Path.splitBaseExt fname
+				     of {base, ext = SOME extension} => extension = "p"
+				     | _  => false
+			     in
+				 isPads
+			     end)
+     
   structure PPAstPaidAdornment : PPASTPAIDADORNMENT =
   struct
     type aidinfo = unit
@@ -13,11 +24,11 @@ local
 
     fun ppExternalDeclAdornment srcFileOpt paidinfo ppCoreExternalDecl aidinfo tidtab pps
 	  (Ast.DECL (coreExtDecl,_,paid:Paid.uid,loc:SourceMap.location)) = 
-          (case Paidtab.find(paidinfo, paid) 
-           of NONE => print "No pads info.\n"
-           | _ => ppCoreExternalDecl aidinfo tidtab pps coreExtDecl)          
-  end
+	  if isPads loc then 
+	      ppCoreExternalDecl (Paidtab.find(paidinfo,paid)) aidinfo tidtab pps coreExtDecl
+	  else ()
 
+end
 in
   structure PPXSchemaAst = PPAstXschemaFn(structure PPAstPaidAdornment=PPAstPaidAdornment)
 end

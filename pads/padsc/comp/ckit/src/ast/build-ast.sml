@@ -379,7 +379,7 @@ let
       Ast.STMT (coreStmt, Aid.new (), getLoc())
 
   fun wrapDECL(coreExtDecl: Ast.coreExternalDecl) : Ast.externalDecl =
-      Ast.DECL(coreExtDecl, Aid.new (), getLoc())
+      Ast.DECL(coreExtDecl, Aid.new (), Paid.new (), getLoc())
 
   fun wrapEXPR (ty, coreExpr) = 
     let val ty = cnvFunctionToPointer2Function ty

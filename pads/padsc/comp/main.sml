@@ -298,18 +298,18 @@ structure Main : sig
 	    List.app doOne (!accumulators)
 	end
 
-    fun generateXschema(fileName, srcFile, ast, tidtab) =
+    fun generateXschema(fileName, srcFile, ast, tidtab,paidtab) =
 	if not (!xmlFlag) then () 
 	else
 	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xms")		
 	    in
-		PPLib.ppToStrm((PPXSchemaAst.ppAst (SOME srcFile)) () tidtab) xoutstream ast;
+		PPLib.ppToStrm((PPXSchemaAst.ppAst (SOME srcFile) paidtab) () tidtab) xoutstream ast;
 		TextIO.flushOut xoutstream;
 		TextIO.closeOut xoutstream			
 	    end
 
     fun generateOutput (homeDir, astInfo : BuildAst.astBundle, fileName) =
-      let val {ast,tidtab,errorCount,warningCount,...} = astInfo
+      let val {ast,tidtab,errorCount,warningCount,auxiliaryInfo={paidtab,...},...} = astInfo
 	  val srcFile = OS.Path.file fileName
       in
           let val (houtname, houtstream) = 
@@ -335,7 +335,7 @@ structure Main : sig
 	      TextIO.flushOut coutstream;
 	      TextIO.closeOut coutstream;
 	      generateAccum(homeDir, fileName, houtname, coutname);
-	      generateXschema(fileName, srcFile, ast,tidtab)
+	      generateXschema(fileName, srcFile, ast,tidtab, paidtab)
 	  end
       end
 	    

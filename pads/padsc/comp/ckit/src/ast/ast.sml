@@ -6,6 +6,7 @@ struct
   type pid = Pid.uid
   type aid = Aid.uid
   type tid = Tid.uid
+  type paid = Paid.uid  (* PADS *)
 
  (* TYPES: preliminary definitions *)
   datatype storageClass = AUTO | EXTERN | REGISTER | STATIC | DEFAULT
@@ -187,7 +188,7 @@ struct
     | ExternalDeclExt of (expression, statement, binop, unop) AstExt.externalDeclExt
 
   (* marked and (potentially) annotated external declarations *)
-  datatype externalDecl = DECL of coreExternalDecl * aid * SourceMap.location
+  datatype externalDecl = DECL of coreExternalDecl * aid * paid * SourceMap.location
 
   (* PROGRAMS *)
   (* abstract syntax of "programs", i.e. the result of processing a source file

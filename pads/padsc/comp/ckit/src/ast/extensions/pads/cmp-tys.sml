@@ -1,12 +1,15 @@
 structure PTys = 
 
 struct
+  datatype PKind = Typedef | Struct | Union | Array | Enum
+
   type sTyInfo = {diskSize : TyProps.diskSize,
 		  memChar  : TyProps.memChar,
 		  endian   : bool,
                   isRecord : bool} 
 
-  type pTyInfo = {diskSize : TyProps.diskSize,
+  type pTyInfo = {kind     : PKind,
+		  diskSize : TyProps.diskSize,
 		  memChar  : TyProps.memChar,
 		  endian   : bool,
                   isRecord : bool,
