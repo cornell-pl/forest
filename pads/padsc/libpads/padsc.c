@@ -837,18 +837,23 @@ fn_name(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits_or_bytes, PDC
 
 /* ********************************** END_HEADER ********************************** */
 
-#define PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, invalid_val)
+#define PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, invalid_val)
 
 ssize_t
 fn_pref ## _write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, const targ_type *in)
 {
-  targ_type  t;
-  int        writelen;
+  targ_type     t;
+  int           writelen;
+  PDC_inv_valfn fn;
+  void         *type_args[1] = { 0 };
 
-  if (ed->errCode == PDC_NO_ERR || ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
+  if (ed->errCode == PDC_NO_ERR) {
     t = *in;
   } else {
-    t = invalid_val;
+    fn = PDCI_GET_INV_VALFN(pdc, inv_type);
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&t, type_args))) {
+      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : invalid_val;
+    }
   }
   sfstrset(pdc->tmp1, 0);
   writelen = sfprintf(pdc->tmp1, fmt, t);
@@ -864,11 +869,17 @@ fn_pref ## _write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *b
 ssize_t
 fn_pref ## _write2io_internal(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const targ_type *in)
 {
-  targ_type t;
-  if (ed->errCode == PDC_NO_ERR || ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
+  targ_type     t;
+  PDC_inv_valfn fn;
+  void         *type_args[1] = { 0 };
+
+  if (ed->errCode == PDC_NO_ERR) {
     t = *in;
   } else {
-    t = invalid_val;
+    fn = PDCI_GET_INV_VALFN(pdc, inv_type);
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&t, type_args))) {
+      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : invalid_val;
+    }
   }
   return sfprintf(io, fmt, t);
 }
@@ -895,16 +906,22 @@ fn_pref ## _write2io(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const targ_t
 }
 /* END_MACRO */
 
-#define PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, invalid_val)
+#define PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, invalid_val)
 
 ssize_t
 fn_pref ## _write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, const targ_type *in)
 {
-  targ_type  t;
-  if (ed->errCode == PDC_NO_ERR || ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
+  targ_type     t;
+  PDC_inv_valfn fn;
+  void         *type_args[1] = { 0 };
+
+  if (ed->errCode == PDC_NO_ERR) {
     t = *in;
   } else {
-    t = invalid_val;
+    fn = PDCI_GET_INV_VALFN(pdc, inv_type);
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&t, type_args))) {
+      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : invalid_val;
+    }
   }
   return num2pre ## _buf (pdc, buf, buf_len, buf_full, t);
 }
@@ -912,11 +929,17 @@ fn_pref ## _write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *b
 ssize_t
 fn_pref ## _write2io_internal(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const targ_type *in)
 {
-  targ_type t;
-  if (ed->errCode == PDC_NO_ERR || ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
+  targ_type     t;
+  PDC_inv_valfn fn;
+  void         *type_args[1] = { 0 };
+
+  if (ed->errCode == PDC_NO_ERR) {
     t = *in;
   } else {
-    t = invalid_val;
+    fn = PDCI_GET_INV_VALFN(pdc, inv_type);
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&t, type_args))) {
+      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : invalid_val;
+    }
   }
   return num2pre ## _io (pdc, io, t);
 }
@@ -2920,17 +2943,17 @@ PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_ufpoint64_read, PDC_ufpoint64, PDC_sbh_uint
 /* VARIABLE-WIDTH ASCII INTEGER WRITE FUNCTIONS */
 
 /*
- * PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, invalid_val)
+ * PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, invalid_val)
  */
 
-PDCI_A_INT_WRITE_FN(PDC_a_int8,   PDC_int8,   "%I1d",   PDC_MIN_INT8);
-PDCI_A_INT_WRITE_FN(PDC_a_int16,  PDC_int16,  "%I2d",   PDC_MIN_INT16);
-PDCI_A_INT_WRITE_FN(PDC_a_int32,  PDC_int32,  "%I4d",   PDC_MIN_INT32);
-PDCI_A_INT_WRITE_FN(PDC_a_int64,  PDC_int64,  "%I8d",   PDC_MIN_INT64);
-PDCI_A_INT_WRITE_FN(PDC_a_uint8,  PDC_uint8,  "%I1u",   PDC_MAX_UINT8);
-PDCI_A_INT_WRITE_FN(PDC_a_uint16, PDC_uint16, "%I2u",   PDC_MAX_UINT16);
-PDCI_A_INT_WRITE_FN(PDC_a_uint32, PDC_uint32, "%I4u",   PDC_MAX_UINT32);
-PDCI_A_INT_WRITE_FN(PDC_a_uint64, PDC_uint64, "%I8u",   PDC_MAX_UINT64);
+PDCI_A_INT_WRITE_FN(PDC_a_int8,   PDC_int8,   "%I1d",   "PDC_int8",   PDC_MIN_INT8);
+PDCI_A_INT_WRITE_FN(PDC_a_int16,  PDC_int16,  "%I2d",   "PDC_int16",  PDC_MIN_INT16);
+PDCI_A_INT_WRITE_FN(PDC_a_int32,  PDC_int32,  "%I4d",   "PDC_int32",  PDC_MIN_INT32);
+PDCI_A_INT_WRITE_FN(PDC_a_int64,  PDC_int64,  "%I8d",   "PDC_int64",  PDC_MIN_INT64);
+PDCI_A_INT_WRITE_FN(PDC_a_uint8,  PDC_uint8,  "%I1u",   "PDC_uint8",  PDC_MAX_UINT8);
+PDCI_A_INT_WRITE_FN(PDC_a_uint16, PDC_uint16, "%I2u",   "PDC_uint16", PDC_MAX_UINT16);
+PDCI_A_INT_WRITE_FN(PDC_a_uint32, PDC_uint32, "%I4u",   "PDC_uint32", PDC_MAX_UINT32);
+PDCI_A_INT_WRITE_FN(PDC_a_uint64, PDC_uint64, "%I8u",   "PDC_uint64", PDC_MAX_UINT64);
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
@@ -2952,17 +2975,17 @@ PDCI_A_INT_WRITE_FN(PDC_a_uint64, PDC_uint64, "%I8u",   PDC_MAX_UINT64);
 /* VARIABLE-WIDTH EBCDIC CHAR ENCODING INTEGER WRITE FUNCTIONS */
 
 /*
- * PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, invalid_val)
+ * PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, invalid_val)
  */
 
-PDCI_E_INT_WRITE_FN(PDC_e_int8,   PDC_int8,   PDCI_int8_2e,   PDC_MIN_INT8);
-PDCI_E_INT_WRITE_FN(PDC_e_int16,  PDC_int16,  PDCI_int16_2e,  PDC_MIN_INT16);
-PDCI_E_INT_WRITE_FN(PDC_e_int32,  PDC_int32,  PDCI_int32_2e,  PDC_MIN_INT32);
-PDCI_E_INT_WRITE_FN(PDC_e_int64,  PDC_int64,  PDCI_int64_2e,  PDC_MIN_INT64);
-PDCI_E_INT_WRITE_FN(PDC_e_uint8,  PDC_uint8,  PDCI_uint8_2e,  PDC_MAX_UINT8);
-PDCI_E_INT_WRITE_FN(PDC_e_uint16, PDC_uint16, PDCI_uint16_2e, PDC_MAX_UINT16);
-PDCI_E_INT_WRITE_FN(PDC_e_uint32, PDC_uint32, PDCI_uint32_2e, PDC_MAX_UINT32);
-PDCI_E_INT_WRITE_FN(PDC_e_uint64, PDC_uint64, PDCI_uint64_2e, PDC_MAX_UINT64);
+PDCI_E_INT_WRITE_FN(PDC_e_int8,   PDC_int8,   PDCI_int8_2e,   "PDC_int8",   PDC_MIN_INT8);
+PDCI_E_INT_WRITE_FN(PDC_e_int16,  PDC_int16,  PDCI_int16_2e,  "PDC_int16",  PDC_MIN_INT16);
+PDCI_E_INT_WRITE_FN(PDC_e_int32,  PDC_int32,  PDCI_int32_2e,  "PDC_int32",  PDC_MIN_INT32);
+PDCI_E_INT_WRITE_FN(PDC_e_int64,  PDC_int64,  PDCI_int64_2e,  "PDC_int64",  PDC_MIN_INT64);
+PDCI_E_INT_WRITE_FN(PDC_e_uint8,  PDC_uint8,  PDCI_uint8_2e,  "PDC_uint8",  PDC_MAX_UINT8);
+PDCI_E_INT_WRITE_FN(PDC_e_uint16, PDC_uint16, PDCI_uint16_2e, "PDC_uint16", PDC_MAX_UINT16);
+PDCI_E_INT_WRITE_FN(PDC_e_uint32, PDC_uint32, PDCI_uint32_2e, "PDC_uint32", PDC_MAX_UINT32);
+PDCI_E_INT_WRITE_FN(PDC_e_uint64, PDC_uint64, PDCI_uint64_2e, "PDC_uint64", PDC_MAX_UINT64);
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
@@ -3687,7 +3710,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.81 2003-05-23 18:00:34 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.82 2003-05-28 19:10:10 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -4285,12 +4308,29 @@ typedef struct PDCI_inv_valfn_elt_s {
   PDC_inv_valfn   val;
 } PDCI_inv_valfn_elt_t;
 
+void*
+PDCI_inv_valfn_elt_make(Dt_t *dt, PDCI_inv_valfn_elt_t *a, Dtdisc_t *disc)
+{
+  PDCI_inv_valfn_elt_t *b;
+  if ((b = oldof(0, PDCI_inv_valfn_elt_t, 1, 0))) {
+    b->key  = a->key;
+    b->val  = a->val;
+  }
+  return b;
+}
+
+void
+PDCI_inv_valfn_elt_free(Dt_t *dt, PDCI_inv_valfn_elt_t *a, Dtdisc_t *disc)
+{
+  free(a);
+}
+
 static Dtdisc_t PDCI_inv_valfn_map_disc = {
   DTOFFSET(PDCI_inv_valfn_elt_t, key),      /* key     */
   -1,                                       /* size    */
   DTOFFSET(PDCI_inv_valfn_elt_t, link),     /* link    */
-  NiL,                                      /* makef   */
-  NiL,                                      /* freef   */
+  (Dtmake_f)PDCI_inv_valfn_elt_make,        /* makef   */
+  (Dtfree_f)PDCI_inv_valfn_elt_free,        /* freef   */
   NiL,                                      /* comparf */
   NiL,                                      /* hashf   */
   NiL,                                      /* memoryf */
@@ -4298,11 +4338,13 @@ static Dtdisc_t PDCI_inv_valfn_map_disc = {
 };
 
 PDC_inv_valfn_map_t*
-PDC_inv_valfn_map_create(PDC_t *pdc)
+PDCI_inv_valfn_map_create(PDC_t *pdc, int safe)
 {
   PDC_inv_valfn_map_t *map; 
 
-  PDCI_DISC_INIT_CHECKS_RET_0("PDC_inv_valfn_map_create");
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS_RET_0("PDC_inv_valfn_map_create");
+  }
   if (!pdc->vm) {
     PDC_WARN(pdc->disc, "PDC_inv_valfn_map_create: pdc handle not initialized properly");
     return 0;
@@ -4322,27 +4364,29 @@ PDC_inv_valfn_map_create(PDC_t *pdc)
 }
 
 PDC_error_t
-PDC_inv_valfn_map_destroy(PDC_t *pdc, PDC_inv_valfn_map_t *map)
+PDCI_inv_valfn_map_destroy(PDC_t *pdc, PDC_inv_valfn_map_t *map, int safe)
 {
-  PDCI_DISC_INIT_CHECKS("PDC_inv_valfn_map_destroy");
-  PDCI_NULLPARAM_CHECK("PDC_inv_valfn_map_destroy", map);
-  if (!pdc->vm) {
-    PDC_WARN(pdc->disc, "PDC_inv_valfn_map_destroy: pdc handle not initialized properly");
-    return PDC_ERR;
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS("PDC_inv_valfn_map_destroy");
+    PDCI_NULLPARAM_CHECK("PDC_inv_valfn_map_destroy", map);
   }
   if (map->dt) {
     dtclose(map->dt);
     map->dt = 0;
   }
-  vmfree(pdc->vm, map);
+  if (pdc->vm) {
+    vmfree(pdc->vm, map);
+  }
   return PDC_OK;
 }
 
 PDC_error_t
-PDC_inv_valfn_map_clear(PDC_t *pdc, PDC_inv_valfn_map_t *map)
+PDCI_inv_valfn_map_clear(PDC_t *pdc, PDC_inv_valfn_map_t *map, int safe)
 {
-  PDCI_DISC_INIT_CHECKS("PDC_inv_valfn_map_clear");
-  PDCI_NULLPARAM_CHECK("PDC_inv_valfn_map_destroy", map);
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS("PDC_inv_valfn_map_clear");
+    PDCI_NULLPARAM_CHECK("PDC_inv_valfn_map_destroy", map);
+  }
   if (map->dt) {
     dtclear(map->dt);
     return PDC_OK;
@@ -4351,16 +4395,18 @@ PDC_inv_valfn_map_clear(PDC_t *pdc, PDC_inv_valfn_map_t *map)
 }
 
 PDC_inv_valfn
-PDC_get_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name)
+PDCI_get_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name, int safe)
 {
   PDCI_inv_valfn_elt_t *tmp;
 
-  PDCI_DISC_INIT_CHECKS_RET_0("PDC_get_inv_valfn");
-  PDCI_NULLPARAM_CHECK_RET_0("PDC_get_inv_valfn", map);
-  PDCI_NULLPARAM_CHECK_RET_0("PDC_get_inv_valfn", type_name);
-  if (!map->dt) {
-    PDC_WARN(pdc->disc, "PDC_get_inv_valfn: map not initialized properly");
-    return 0;
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS_RET_0("PDC_get_inv_valfn");
+    PDCI_NULLPARAM_CHECK_RET_0("PDC_get_inv_valfn", map);
+    PDCI_NULLPARAM_CHECK_RET_0("PDC_get_inv_valfn", type_name);
+    if (!map->dt) {
+      PDC_WARN(pdc->disc, "PDC_get_inv_valfn: map not initialized properly");
+      return 0;
+    }
   }
   if ((tmp = dtmatch(map->dt, type_name))) {
     return tmp->val;
@@ -4369,18 +4415,20 @@ PDC_get_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name)
 }
  
 PDC_inv_valfn
-PDC_set_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name, PDC_inv_valfn fn)
+PDCI_set_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name, PDC_inv_valfn fn, int safe)
 {
   PDC_inv_valfn          res = 0;
   PDCI_inv_valfn_elt_t  *tmp;
   PDCI_inv_valfn_elt_t   insert_elt;
 
-  PDCI_DISC_INIT_CHECKS_RET_0("PDC_set_inv_valfn");
-  PDCI_NULLPARAM_CHECK_RET_0("PDC_set_inv_valfn", map);
-  PDCI_NULLPARAM_CHECK_RET_0("PDC_set_inv_valfn", type_name);
-  if (!map->dt) {
-    PDC_WARN(pdc->disc, "PDC_set_inv_valfn: map not initialized properly");
-    return 0;
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS_RET_0("PDC_set_inv_valfn");
+    PDCI_NULLPARAM_CHECK_RET_0("PDC_set_inv_valfn", map);
+    PDCI_NULLPARAM_CHECK_RET_0("PDC_set_inv_valfn", type_name);
+    if (!map->dt) {
+      PDC_WARN(pdc->disc, "PDC_set_inv_valfn: map not initialized properly");
+      return 0;
+    }
   }
   if ((tmp = dtmatch(map->dt, type_name))) {
     res = tmp->val;
@@ -4409,7 +4457,7 @@ PDC_IO_set(PDC_t *pdc, Sfio_t *io)
 }
 
 PDC_error_t
-PDC_IO_fopen(PDC_t *pdc, char *path)
+PDC_IO_fopen(PDC_t *pdc, const char *path)
 {
   PDCI_DISC_INIT_CHECKS("PDC_IO_fopen");
   PDCI_NULLPARAM_CHECK("PDC_IO_fopen", path);
@@ -5273,7 +5321,7 @@ PDC_IO_set_internal(PDC_t *pdc, Sfio_t *io)
 }
 
 PDC_error_t
-PDC_IO_fopen_internal(PDC_t *pdc, char *path)
+PDC_IO_fopen_internal(PDC_t *pdc, const char *path)
 {
   Sfio_t           *io; 
 

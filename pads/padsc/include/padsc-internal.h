@@ -61,6 +61,8 @@ void PDCI_NULLPARAM_CHECK_RET_0(char *, void *);
 void PDCI_NULLPARAM_CHECK_RET_VOID(char *, void *);
 void PDCI_NULLPARAM_CHECK_RET_SSIZE(char *, void *);
 
+PDC_inv_valfn PDCI_GET_INV_VALFN(PDC_t *, const char *);
+
 #else
 /* The actual impls */
 
@@ -139,6 +141,9 @@ void PDCI_NULLPARAM_CHECK_RET_SSIZE(char *, void *);
 #define PDCI_NULLPARAM_CHECK_RET_SSIZE(prefix, param) \
      PDCI_NULLPARAM_CHECK_RET(prefix, param, return -1)
 
+#define PDCI_GET_INV_VALFN(pdc,type_name) \
+  (pdc->disc->inv_valfn_map ? PDC_get_inv_valfn_internal(pdc, pdc->disc->inv_valfn_map, type_name) : 0)
+
 #endif /* FOR_CKIT */
 
 /* ================================================================================ */
@@ -158,10 +163,37 @@ struct PDCI_stkElt_s {
 };
 
 /* ================================================================================ */
+/* INTERNAL VERSIONS OF invalid_valfn FUNCTIONS */
+
+#ifdef FOR_CKIT
+/* Prototypes for CKIT */
+PDC_inv_valfn PDC_get_inv_valfn_internal(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name); 
+PDC_inv_valfn PDC_set_inv_valfn_internal(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name, PDC_inv_valfn fn);
+
+PDC_inv_valfn_map_t* PDC_inv_valfn_map_create_internal(PDC_t *pdc);
+PDC_error_t          PDC_inv_valfn_map_destroy_internal(PDC_t *pdc, PDC_inv_valfn_map_t *map);
+#else
+/* The actual impls */
+
+#define PDC_get_inv_valfn_internal(pdc, map, type_name) \
+  PDCI_get_inv_valfn(pdc, map, type_name, 1)
+
+#define PDC_set_inv_valfn_internal(pdc, map, type_name, fn) \
+  PDCI_set_inv_valfn(pdc, map, type_name, fn, 0)
+
+#define PDC_inv_valfn_map_create_internal(pdc) \
+  PDCI_inv_valfn_map_create(pdc, 1)
+
+#define PDC_inv_valfn_map_destroy_internal(pdc, map) \
+  PDCI_inv_valfn_map_destroy(pdc, map, 1)
+
+#endif
+
+/* ================================================================================ */
 /* INTERNAL VERSIONS OF EXTERNAL IO FUNCTIONS */
 
 PDC_error_t  PDC_IO_set_internal          (PDC_t *pdc, Sfio_t *io);
-PDC_error_t  PDC_IO_fopen_internal        (PDC_t *pdc, char *path);
+PDC_error_t  PDC_IO_fopen_internal        (PDC_t *pdc, const char *path);
 PDC_error_t  PDC_IO_close_internal        (PDC_t *pdc);
 PDC_error_t  PDC_IO_next_rec_internal     (PDC_t *pdc, size_t *skipped_bytes_out);
 
@@ -929,104 +961,6 @@ PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
  */
 
 PDC_error_t PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out);
-
-/* ================================================================================ */
-/* INTERNAL SCAN ROUTINES (helpers) */
-
-PDC_error_t PDCI_char_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-			       PDC_byte *c_out, size_t *offset_out, PDC_charset char_set,
-			       const char *whatfn, int safe);
-
-PDC_error_t PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
-			      PDC_string **str_out, size_t *offset_out, PDC_charset char_set,
-			      const char *whatfn, int safe);
-
-PDC_error_t PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr, int eat_lit,
-			       const char **str_out, size_t *offset_out, PDC_charset char_set,
-			       const char *whatfn, int safe);
-
-/* ================================================================================ */
-/* INTERNAL READ ROUTINES (helpers) */
-
-PDC_error_t PDCI_char_lit_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed,
-			       PDC_byte c, PDC_charset char_set,
-			       const char* whatfn, int safe);
-
-PDC_error_t PDCI_str_lit_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, const PDC_string *s,
-			      PDC_charset char_set, const char *whatfn, int safe);
-
-PDC_error_t PDCI_Cstr_lit_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, const char *s,
-			      PDC_charset char_set, const char *whatfn, int safe);
-
-PDC_error_t PDCI_countX(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, int eor_required,
-			PDC_base_ed *ed, PDC_int32 *res_out,
-			PDC_charset char_set, const char *whatfn, int safe);
-
-
-PDC_error_t PDCI_countXtoY(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
-			   PDC_base_ed *ed, PDC_int32 *res_out,
-			   PDC_charset char_set, const char *whatfn, int safe);
-
-PDC_error_t PDCI_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
-			   PDC_base_ed *ed, PDC_uint32 *res_out,
-			   PDC_charset char_set, const char *whatfn, int safe);
-
-PDC_error_t PDCI_char_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out,
-			   PDC_charset char_set, const char *whatfn, int safe);
-
-
-PDC_error_t PDCI_string_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
-				PDC_base_ed *ed, PDC_string *s_out,
-				PDC_charset char_set, const char *whatfn, int safe);
-
-PDC_error_t PDCI_string_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
-			     PDC_base_ed *ed, PDC_string *s_out,
-			     PDC_charset char_set, const char *whatfn, int safe);
-
-PDC_error_t PDCI_string_ME_read(PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
-				PDC_base_ed *ed, PDC_string *s_out,
-				PDC_charset char_set, const char *whatfn, int safe);
-
-PDC_error_t PDCI_string_CME_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
-				 PDC_base_ed *ed, PDC_string *s_out,
-				 PDC_charset char_set, const char *whatfn, int safe);
-
-PDC_error_t PDCI_string_SE_read(PDC_t *pdc, const PDC_base_csm *csm, const char *stopRegexp,
-				PDC_base_ed *ed, PDC_string *s_out,
-				PDC_charset char_set, const char *whatfn, int safe);
-
-PDC_error_t PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
-				 PDC_base_ed *ed, PDC_string *s_out,
-				 PDC_charset char_set, const char *whatfn, int safe);
-
-/* ================================================================================ */
-/* INTERNAL READ ROUTINES (helpers) */
-
-
-ssize_t PDCI_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_byte c,
-			       PDC_charset char_set, const char *whatfn, int safe);
-
-ssize_t PDCI_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_byte c,
-				PDC_charset char_set, const char *whatfn, int safe);
-
-ssize_t PDCI_str_lit_write2io(PDC_t *pdc, Sfio_t *io, const PDC_string *s,
-			      PDC_charset char_set, const char *whatfn, int safe);
-
-ssize_t PDCI_str_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_string *s,
-			       PDC_charset char_set, const char *whatfn, int safe);
-
-ssize_t PDCI_Cstr_lit_write2io(PDC_t *pdc, Sfio_t *io, const char *s,
-			       PDC_charset char_set, const char *whatfn, int safe);
-
-ssize_t PDCI_Cstr_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const char *s,
-				PDC_charset char_set, const char *whatfn, int safe);
-
-
-
-
-
-
-
 
 /* ================================================================================ */
 /* INTERNAL CONVERSION ROUTINES */

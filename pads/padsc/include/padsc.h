@@ -24,7 +24,6 @@
 #include <math.h>
 #include "rbuf.h"
 #include "libpadsc-private.h"
-#include "libpadsc-impl.h"
 
 /* ================================================================================
  * LIBRARY DISCIPLINE TYPES
@@ -133,10 +132,10 @@
  * to use PDC_INT32_MAX for other invalid cases, one could provide an inv_val
  * helper function to do so:
  *
- *   PDC_error_t my_in32_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **type_args) {
+ *   PDC_error_t my_int32_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **type_args) {
  *     PDC_base_ed *ed  = (PDC_base_ed*)ed_void;
  *     PDC_int32   *val = (PDC_int32*)val_void;
- *     if (ed->errCode == PDC_USER_CONTRAINT_VIOLATION) {
+ *     if (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
  *       (*val) = -30;
  *     } else {
  *       (*val) = PDC_INT32_MAX;
@@ -144,7 +143,8 @@
  *     return PDC_OK;
  *   }
  *
- *   PDC_set_inv_valfn(pdc, pdc->disc->inv_valfn_map, "PDC_int32", (void)*my_int32_inv_val);
+ *   pdc->disc->inv_valfn_map = PDC_inv_valfn_map_create(pdc);   (only needed if no map installed yet)
+ *   PDC_set_inv_valfn(pdc, pdc->disc->inv_valfn_map, "PDC_int32", my_int32_inv_val);
  *
  * N.B. Note that for a type T with three forms, PDC_T, PDC_a_T, and PDC_e_T, there
  * is only one entry in the inv_valfn_map, under string "PDC_T".  For example, use
@@ -716,7 +716,7 @@ RMM_t * PDC_rmm_zero  (PDC_t *pdc);
 RMM_t * PDC_rmm_nozero(PDC_t *pdc);
 
 /* ================================================================================
- * TOP-LEVEL invalid_val_fn FUNCTIONS
+ * TOP-LEVEL invalid_valfn FUNCTIONS
  *
  * Getting and setting invalid val functions in a map:
  *   PDC_get_inv_valfn returns the currently installed function for type_name, or NULL if none is installed
@@ -724,19 +724,19 @@ RMM_t * PDC_rmm_nozero(PDC_t *pdc);
  *   PDC_set_inv_valfn returns the previously installed function for type_name, or NULL if none was installed.
  *   If the fn argument is NULL, any current mapping for type_name is removed.
  *
- */
-PDC_inv_valfn PDC_get_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name); 
-PDC_inv_valfn PDC_set_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name, PDC_inv_valfn fn);
-
-/* 
  * Creating and destroying invalid val function maps: 
  *
  * PDC_inv_valfn_map_create: create a new, empty map
  * PDC_inv_valfn_map_destroy: destroy a map
  *
  */
+#ifdef FOR_CKIT
+PDC_inv_valfn PDC_get_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name); 
+PDC_inv_valfn PDC_set_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name, PDC_inv_valfn fn);
+
 PDC_inv_valfn_map_t* PDC_inv_valfn_map_create(PDC_t *pdc);
 PDC_error_t          PDC_inv_valfn_map_destroy(PDC_t *pdc, PDC_inv_valfn_map_t *map);
+#endif
 
 /* ================================================================================
  * TOP-LEVEL IO FUNCTIONS
@@ -851,7 +851,7 @@ PDC_error_t          PDC_inv_valfn_map_destroy(PDC_t *pdc, PDC_inv_valfn_map_t *
  */
 
 PDC_error_t  PDC_IO_set      (PDC_t *pdc, Sfio_t *io);
-PDC_error_t  PDC_IO_fopen    (PDC_t *pdc, char *path);
+PDC_error_t  PDC_IO_fopen    (PDC_t *pdc, const char *path);
 PDC_error_t  PDC_IO_close    (PDC_t *pdc);
 PDC_error_t  PDC_IO_next_rec (PDC_t *pdc, size_t *skipped_bytes_out);
 
@@ -2547,6 +2547,11 @@ PDC_error_t PDC_swap_bytes(PDC_byte *bytes, size_t num_bytes);
  * Going away eventually
  */
 PDC_error_t PDC_dummy_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_int32 dummy_val, PDC_base_ed *ed, PDC_int32 *res_out);
+
+/* ================================================================================
+ * INCLUDE MACRO IMPLS OF SOME OF THE FUNCTIONS DECLARED ABOVE
+ */
+#include "libpadsc-impl.h"
 
 /* ================================================================================
  * INCLUDE THE IO DISCIPLINE DECLS
