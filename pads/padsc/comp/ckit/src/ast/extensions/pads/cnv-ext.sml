@@ -3247,24 +3247,28 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 		      (***** union PADS-Galax *****)
 	
-		      fun tagbranches [] = []
-		  	| tagbranches ((i,(n,f,b))::ps) =
-			    (* b=true <=> Pcompute field, in such case the 'mask field' argument is NULL, by now *)
-			    let val maskField = if b then (P.intX 0) else (getFieldX(m,n))
-			    in     
-                            (PT.CaseLabel(PT.Id n,
-				          PT.Compound ([macroNodeCall(PT.Id result,P.intX i,f,PT.Id "branch",maskField,
-						        P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
-					   		P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
-							       childrenSuf name),
-						        PT.Break])))::(tagbranches ps)
-			    end
+		      fun tagbranch (index,(nameField,typeField,isPcomputed)) =
+ 			  let val maskField = if isPcomputed then (P.intX 0) else (getFieldX(m,nameField)) 	
+			          (* if it's a Pcompute field, then the 'mask field' argument is NULL, by now *)
+			      val nameID = PT.Id nameField
+			      fun addrArg node = P.addrX(P.dotX(P.arrowX(PT.Id node,PT.Id value),nameID))
+			      val pdArg = addrArg pd	
+			      val repArg = addrArg rep
+			      val resultArg = PT.Id result
+			      val i = P.intX index
+			      val branchField = PT.Id "branch"
+			      val sentences = PT.Compound ([macroNodeCall(resultArg,i,typeField,branchField,maskField,
+						                          pdArg, repArg, childrenSuf name),
+						           PT.Break])
+			  in
+			    PT.CaseLabel(nameID, sentences)
+			  end
+		      fun tagbranches bs = List.map tagbranch bs 	
 
 		      fun genCaseBranch (name,pty,i) =
 			  case lookupAcc(pty) of NONE   => []
 					       | SOME a => [(name,lookupBranch pty,i)] 
-				    
-		      (* end accOpt SOME case *)
+
 		      fun genBranchFull {pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool, 
 					 pred:pcexp option, comment} = 
