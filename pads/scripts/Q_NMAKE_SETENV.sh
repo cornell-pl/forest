@@ -16,7 +16,7 @@ if [ "$PADS_HOME"x == x ]; then
 fi
 
 if [ $_pads_status == "OK" ]; then
-  _pads_verbose=1
+  _pads_verbose=0
   _pads_use_nmake=1
   . $PADS_HOME/scripts/INT_DO_SETENV.sh
   _pads_use_nmake=

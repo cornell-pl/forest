@@ -1,11 +1,12 @@
 #!/bin/tcsh
-# DO_SETENV.tcsh is for use with csh/tcsh
-# From the same directory as DO_SETENV.tcsh, do:
-#      source DO_SETENV.tcsh
+# Q_DO_SETENV.tcsh is for use with csh/tcsh
+# It is the 'quite' version of DO_SETENV.tcsh
+# From the same directory as Q_DO_SETENV.tcsh, do:
+#      source Q_DO_SETENV.tcsh
 #
 
 set _pads_status = OK
-set _pads_do_prog = DO_SETENV.tcsh
+set _pads_do_prog = Q_DO_SETENV.tcsh
 
 if (! $?PADS_HOME) then
   echo "##############################################################################"
@@ -16,7 +17,7 @@ if (! $?PADS_HOME) then
 endif
 
 if ($_pads_status == "OK") then
-  set _pads_verbose = 1
+  set _pads_verbose = 0
   set _pads_use_nmake = 0
   source $PADS_HOME/scripts/INT_DO_SETENV.tcsh
   unset _pads_use_nmake

@@ -17,19 +17,16 @@ need.  DO_SETENV will also make your installation directories
 
 Below are instructions for different kinds of shells.
 You could do the following by hand, or add them to your shell init script.
-Note: setitng _pads_verbose to 0 suppresses some output messages
-which describe the env variables that are set up.  You do not need
-to set it to 0 if you are doing the steps by hand.
+Note: Use DO_SETENV rather than Q_DO_SETENV when running from
+the command line, to see how the env variables that are set up.
 
 For csh/tcsh users:
   setenv PADS_HOME /home/fred/padsc
-  set _pads_verbose = 0
-  source $PADS_HOME/scripts/DO_SETENV.tcsh
+  source $PADS_HOME/scripts/Q_DO_SETENV.tcsh
 
 For sh/ksh/bash users:
   export PADS_HOME=/home/fred/padsc
-  _pads_verbose=0
-  . $PADS_HOME/scripts/DO_SETENV.sh
+  . $PADS_HOME/scripts/Q_DO_SETENV.sh
 
 STEP 2: BUILD AND INSTALL THE PADSC LIBRARY
 
