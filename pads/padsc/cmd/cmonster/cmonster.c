@@ -48,7 +48,13 @@ int main(int argc, char **argv)
   cm.errf   = sfstderr;
   cm.padslf = 0; 
 
-  error_cm = &cm;
+  error_cm  = &cm;
+
+  /* for some reason we need to do this early in main.c or weird things happened */
+  if (!(cm.vm = vmopen(Vmdcheap, Vmbest, 0))) {
+    sfprintf(cm.errf, "\n*** FATAL: vmopen failed\n\n");
+    return -1;
+  }
 
   /* Parse command line */
   while ((c = getopt(argc, argv, "hc:d:e:i:o:p:")) != -1) {
@@ -237,10 +243,6 @@ int main(int argc, char **argv)
   /* initialize cm */
   cm.pdc = pdc;
   PDC_string_init(pdc, &(cm.tmp1));
-  if (!(cm.vm = vmopen(Vmdcheap, Vmbest, 0))) {
-    sfprintf(cm.errf, "\n*** FATAL: vmopen failed\n\n");
-    return -1;
-  }
   cm.outbuf_sz = out_sz_cookie(&cspec);
   if (cm.outbuf_sz < 4) {
     cm.outbuf_sz = 4;
