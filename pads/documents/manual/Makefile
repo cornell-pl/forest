@@ -33,7 +33,6 @@ EXAMPLES= ai.p
 CLEAN= 
 
 EXTRACT= $(PADS_HOME)/documents/extract-code/extract
-HEVEA_PATH =	/usr/local/bin
 HEVEA = 	$(HEVEA_PATH)/hevea
 HEVEA_FILES = code.hva manual.hva 
 HEVEA_FLAGS = 	-noiso -s -exec xxdate.exe  
