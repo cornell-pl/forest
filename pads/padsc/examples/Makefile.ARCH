@@ -49,7 +49,8 @@ regress : regress_test_format1 \
           regress_test_format3 \
           regress_test_format5 \
           regress_test_format6 \
-          regress_test_readint
+          regress_test_readint \
+          regress_test_ai
 
 regress_test_format1 : test_format1
 	if [ -f tmp/tmp.test_format1 ]; then $(RM) tmp/tmp.test_format1; fi
@@ -85,6 +86,11 @@ regress_test_readint : test_readint
 	if [ -f tmp/tmp.test_readint ]; then $(RM) tmp/tmp.test_readint; fi
 	(./test_readint 2>&1) | ../../scripts/remove_junk.pl | grep error: | cat > tmp/tmp.test_readint
 	diff tmp/tmp.test_readint ../regress/test_readint.regress || echo TEST_READINT DIFFERS
+
+regress_test_ai : test_ai
+	if [ -f tmp/tmp.test_ai ]; then $(RM) tmp/tmp.test_ai; fi
+	(./test_ai 2>&1) | ../../scripts/remove_junk.pl | grep error: | cat > tmp/tmp.test_ai
+	diff tmp/tmp.test_ai ../regress/test_ai.regress || echo TEST_AI DIFFERS
 
 clean :
 	$(RM) -f *~ *.o $(ALL_TESTS)
