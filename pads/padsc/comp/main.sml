@@ -160,6 +160,7 @@ structure Main : sig
 	let val srcFile = OS.FileSys.fullPath srcFile
             val ppFile = tmp ".c"
             val ppcommand = padsDir^"/scripts/ppp.pl "^ srcFile ^" > "^ppFile
+            val combineStrLitsCmd = padsDir^"/scripts/c_str_lits.pl"
             val status = exec ppcommand
 	    val () = if status <> OS.Process.success then err "Pads pre-process failed." else ()
             val compositeFile = tmp ".c"
@@ -181,6 +182,8 @@ structure Main : sig
                           ^ (!includes)  (* augment include path *)
                           ^ " "
                           ^ compositeFile (* on composite file *)
+                          ^ " | "
+                          ^ combineStrLitsCmd (* combine C string literals *)
                           ^ " >"
                           ^ destFile)
 	    val status = exec command
