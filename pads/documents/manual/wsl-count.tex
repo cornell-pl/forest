@@ -1,0 +1,32 @@
+\begin{centercode}
+P\_t                  *p;
+entry\_t              entry;
+entry\_t\_pd           pd;
+entry\_t\_m            mask;
+int                  count = 0;   
+   
+/* Initialize PADS library */
+P\_open(&p, 0, 0);
+
+/* Initialize in-memory representation, parse descriptor, and mask */
+entry_t_init(pads, &rep);
+entry_t_pd_init(pads, &pd);
+entry\_t\_m\_init(p, &mask, P\_CheckAndSet);
+
+/* Open data file */
+P\_io\_fopen(p, "data/wsl");
+
+/* Read each line of data  */
+\kw{while} (!P\_io\_at\_eof(pads)) \{
+    \kw{if} (P\_OK == entry\_t\_read(pads, &m, &pd, &rep)) \{
+      count += rep.length; 
+    \}
+  \};
+error(0, "Sum of lengths of all legal records = \%d.\\n", count);
+
+/* Clean up */
+P\_io\_close(pads);
+entry\_t\_cleanup(pads, &rep);
+entry\_t\_pd\_cleanup(pads, &pd);
+P\_close(pads);
+\end{centercode}

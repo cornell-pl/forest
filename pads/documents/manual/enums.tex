@@ -1,5 +1,6 @@
 \chapter{Penums}
 \label{chap:enums}
+\cutname{enums.html}
 \Penum{}s allow a fixed collection of source strings to be converted into
 integers in-memory.
 
@@ -20,7 +21,10 @@ strings:\texttt{S\_init}, \texttt{S\_lec},
 \texttt{S\_care}, \texttt{S\_for}, \texttt{S\_if}, and
 \texttt{S\_tpv},
 then we can use the specification: 
-\input{code/enum.tex}
+
+\inputCode{code/enum}
+%
+\noindent
 to describe the data. 
 The labels in the enumeration correspond to the strings in the
 physical representation.  To support physical representations that are
@@ -50,30 +54,44 @@ The following \C{} code is the generated in memory representation for
 the \texttt{orderStates} \Penum{}. The associated values are computed
 at \pads{} compile time and so the associated values must be
 compile-time constants, as in \C{}.
-\input{code/enumRep}
+
+\inputCode{code/enumRep}
 
 \subsection{Mask}
 \label{sec:enums-masks}
 The mask for a \Penum{} is simply a base mask:
-\input{code/enumMask}
+
+\inputCode{code/enumMask}
+
 \subsection{Parse descriptor}
 \label{sec:enums-parse-descriptors}
 The parse descriptor for a \Penum{} is simply a base parse descriptor:
-\input{code/enumPD}
+
+\inputCode{code/enumPD}
+
 \subsection{Operations}
 The operations for \Penum{}s are those described in
 \chapref{chap:common-features}, with one addition.
 The \texttt{orderStates2str} function converts the integer
 representation of a \Penum{} into a \C{} string.
-\input{code/enumOps}
+These functions appear in \figref{figure:enum-ops}.
+\begin{figure}
+\inputCode{code/enumOps}
+\caption{Prototypes of operations generated for
+  the \Penum{} \texttt{orderStates}.}
+\label{figure:enum-ops}
+\end{figure}
+
 \subsubsection{Read Function}
 The error codes for \Penum{}s are:
 
 \tskip{}
-\begin{tabular}{lp{4in}}
+\begin{center}
+\begin{tabular}{l|p{4in}}
+Code                           & Meaning \\ \hline
  \cd{P_NO_ERR}                 & Indicates no error occurred\\[1ex]
  \cd{P_ENUM_MATCH_ERR} & Indicates that the no branch of the enum matched.\\[1ex]
 \end{tabular}
-
+\end{center}
 \subsubsection{Accumulator functions}
 Accumulator functions for \Penum{}s are described in \chapref{chap:accumulators}.

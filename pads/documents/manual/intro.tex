@@ -1,5 +1,6 @@
 \chapter{Introduction}
 \label{chap:introduction}
+\cutname{introduction.html}
 Vast amounts of useful data are stored and processed in ad hoc formats.
 Traditional databases and \xml{} systems provide rich infrastructure
 for processing well-behaved data, but are of little help when dealing with ad hoc formats.
@@ -62,9 +63,9 @@ difficult for the original writers and sharing the knowledge with
 others nearly impossible.
 
 The \pads{} system makes life easier for data analysts by addressing
-each of these concerns.\footnote{
+each of these concerns.\begin{latexonly}\footnote{
   \pads{} is short for Processing Ad hoc Data Sources.
-}
+}\end{latexonly}
 It provides a declarative data description
 language that permits analysts to describe the physical layout of
 their data, \textit{as it is}.  The language also permits analysts to
@@ -218,11 +219,11 @@ date; the actual request, which consists of the HTTP method, the
 requested URL, the HTTP version number; a response code; and the
 number of bytes returned.  A \PADSL{} type describing the request
 portion is
-\input{code/httpRequest}
+\inputCode{code/httpRequest}
 This \pstruct{} uses (omitted) auxiliary types \cd{http_method_t} and
 \cd{http_v_t} to describe
 the HTTP method and version formats, respectively.
-It uses character literals (\cd{'\\"'} and \cd{' '}) to consume
+It uses character literals (\literal{\cd{"\escdquote{}"}} and \literal{\cd{' '}}) to consume
 the quotes and 
 spaces from the physical representation. 
 The \cd{version} field has a constraint predicate \cd{checkVersion}
@@ -230,7 +231,16 @@ which ensures that obsolete HTTP methods \cd{LINK} and \cd{UNLINK}
 are only used with HTTP version \cd{1.0}.
 
 \section{Generated library}
-\figHeight{pictures/architecture}{Architecture of \pads{} system.}{fig:architecture}{2.25in}
+\begin{latexonly}
+\figHeight{pictures/architecture}{Architecture of \pads{}  system.}{fig:architecture}{2.25in}
+\end{latexonly}
+%HEVEA \begin{figure}[tb]
+%HEVEA \begin{center}
+%HEVEA \begin{rawhtml} <IMG SRC="pictures/architecture.pdf" height="260">\end{rawhtml}
+%HEVEA \caption{Architecture of \pads{}  system.}
+%HEVEA \label{fig:architecture}
+%HEVEA \end{center}
+%HEVEA \end{figure}
 
 From a description, the \pads{} compiler generates a \C{} library
 for parsing and manipulating the associated data source.  
@@ -300,8 +310,8 @@ and processing very large data sources.
 
 The ratio of the size of the data description to the size of the generated code gives a rough measure of the leverage of the
 declarative description.  For the 
-68~line \dibbler{} data description, the compiler yields a 1432~\texttt{.h} file
-and a 6471~\texttt{.c} file.  This expansion comes from the extensive error checking in the generated parser and the number of generated utility functions.
+68~line \dibbler{} data description, the compiler yields a 1432~line \texttt{.h} file
+and a 6471~line \texttt{.c} file.  This expansion comes from the extensive error checking in the generated parser and the number of generated utility functions.
 
 
 \section{Related work}
@@ -361,9 +371,11 @@ library.
 \section{Getting the \PADS{} system}
 Source code for \PADS{} is available for download with
 a non-commercial use license from: 
-\begin{centercode}
-http://www.research.att.com/projects/pads
-\end{centercode}
+
+\begin{center}
+\myurl{www.research.att.com/projects/pads}
+\end{center}
+
 \noindent
 The \PADS{} distribution contains:
 \begin{itemize}
@@ -390,9 +402,8 @@ If the directory containing \texttt{my.p} has a subdirectory named
 subdirectory.  Otherwise, it will put them in the same directory as
 the \texttt{my.p} file.
 
-\subsection{Commaind-line switches}
+\subsection{Command-line switches}
 \begin{figure}
-\begin{center}
 \begin{verbatim}
 padsc  [-wnone] [-anone] [-r <string>] 
        [-I <string> ...] [-D <string> ...] [-U <string> ...] 
@@ -408,7 +419,6 @@ padsc  [-wnone] [-anone] [-r <string>]
 \end{verbatim}
 \caption{Command-line switches understood by the \pads{} compiler.}
 \label{figure:intro-switches}
-\end{center}
 \end{figure}
 \figref{figure:intro-switches} lists the command-line options
 supported by the \pads{} compiler.
@@ -422,11 +432,8 @@ streams. \texttt{Sfio} provides functionality similar to that of
 interface.  Sfio provides both source and binary \texttt{Stdio}
 emulation packages. \texttt{Sfio} is included in the \pads{}
 distribution.  More information about \texttt{Sfio} is available from
-\url{www.research.att.com/sw/tools/sfio}.
+\myurl{www.research.att.com/sw/tools/sfio}.
 
 
 Please report any bugs in the \PADS{} implementation or problems with
-this manual by electronic mail to 
-\[
-\texttt{pads-dev@research.att.com}.
-\]
+this manual by electronic mail to \myemail{pads-dev@research.att.com}.

@@ -1,6 +1,19 @@
 \newcommand{\cut}[1]{}
 \newcommand{\note}[1]{\textbf{[[#1]]}}
-\newcommand{\warning}[1]{\textbf{Warning:} #1}
+\newcommand{\mywarning}[1]{\textbf{Warning:} #1}
+
+%
+% A command to input code produced by extract-code.
+
+\usepackage{ifthen}
+\newcommand{\inputCode}[1]{%
+  \ifthenelse{\boolean{hevea}}{\begin{small}\input{#1.hva}\end{small}}{\begin{tiny}\input{#1.tex}\end{tiny}\vskip -2ex}}
+
+
+\newcommand{\myurl}[1]{\url{#1}}
+\newcommand{\myemail}[1]{\texttt{#1}}
+\newcommand{\myvskip}[1]{\vskip #1}
+\newcommand{\literal}[1]{#1}
 
 \newcommand{\appref}[1]{Appendix~\ref{#1}}
 \newcommand{\chapref}[1]{Chapter~\ref{#1}}
@@ -22,7 +35,8 @@
 \newcommand{\forte}{{fort\'{e}\/}}
 
 \newcommand{\figHeight}[4]{\begin{figure}[tb]
-	\centerline{\epsfig{file=#1,height=#4}}
+	\centerline{
+	            \epsfig{file=#1,height=#4}}
 	\caption{#2}
 	\label{#3}
 	\end{figure}}
@@ -82,8 +96,8 @@
 \newcommand{\PaCME}[1]{\padstype{Pa\_#1\_CME}}
 \newcommand{\PeCME}[1]{\padstype{Pe\_#1\_CME}}
 
-\newcommand{\PADS}{\textsc{pads}}
-\newcommand{\PADSL}{\textsc{padsl}}
+\newcommand{\PADS}{\textsc{Pads}}
+\newcommand{\PADSL}{\textsc{Pads}}
 
 \newcommand{\Pomit}{\padskw{Pomit}}
 \newcommand{\Pcompute}{\padskw{Pcompute}}
@@ -170,7 +184,7 @@
 
 
 
-\newcommand{\tskip}{\vskip 1ex}
+\newcommand{\tskip}{\myvskip{1ex}}
 
 \newcommand{\datascript}{\textsc{DataScript}}
 \newcommand{\packettypes}{\textsc{PacketTypes}}
@@ -179,4 +193,6 @@
 \newcommand{\ningaui}{Altair}
 \newcommand{\darkstar}{Regulus}
 
+\newcommand{\escdquote}{\cd{\\"}}
+\newcommand{\escquote}{\cd{\\'}}
 

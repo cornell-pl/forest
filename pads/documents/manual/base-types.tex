@@ -1,6 +1,6 @@
 \chapter{Base types}
 \label{chap:base-types}
-
+\cutname{base.html}
 \PADSL{} base types describe inidivual (typically small) values: numbers, strings, dates, and so on.
 This chapter describes a large number of built-in \PADSL{} base types.
 It is also possible to extend \PADSL{} with any
@@ -54,7 +54,7 @@ prior to using a \Pd{string}, and function \Pd{string\_cleanup} should
 be called when a given \Pd{string} is no longer in use.
 \\[1ex]
 These are the full set of string helper functions.
-\vskip 1ex
+\myvskip{1ex}
 \begin{tinycodeaux}{\leftmargin=0in}
 Perror_t Pstring_init(P_t *pads, Pstring *s);
 Perror_t Pstring_cleanup(P_t *pads, Pstring *s);

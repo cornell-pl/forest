@@ -1,5 +1,6 @@
 \chapter{Parrays}
 \label{chap:arrays}
+\cutname{arrays.html}
 \Parray{}s are used to describe sequences of values of the same type.
 We call the repeated type the \textit{base type} of the sequence.
 \section{Syntax}
@@ -51,7 +52,9 @@ To describe a resolved IP address in ASCII, an example of which is:
 \end{verbatim}
 \end{center}
 we use the specification:
-\input{code/nIP}
+
+\inputCode{code/nIP}
+%
 \noindent
 which indicates that \Parray{} \cd{nIP} is a sequence of
 four \cd{Puint8}'s.  The elements of the sequence are separated by
@@ -65,7 +68,9 @@ other condition is not also satisifed.
 
 \subsubsection{Binary sequence of integers}
 As another example, the \Parray{} \cd{seq_t}
-\input{code/seq_t}
+
+\inputCode{code/seq_t}
+%
 \noindent
 uses the \Plast{} predicate to terminate a
 sequence of 32-bit binary integers as soon as one of those integers is
@@ -79,7 +84,10 @@ element is then the last element in the array.
 In the next example, the \Parray{} \cd{sorted_t} uses a \Pwhere{}
 clause to check that the elements of the sequence were sorted by the
 \cd{id} field of the element type..
-\input{code/sorted_t}
+
+\inputCode{code/sorted_t}
+%
+\noindent
 A \Pforall{} expression executes its body once for each value in the
 range. The index variable, \cd{i} in the example, is bound to the
 range value in the body.
@@ -89,7 +97,9 @@ range value in the body.
 Within the various expression contexts of \Parray{} declarations, a
 number of variables are in scope.  The following table lists the
 variables, their types, and their bindings.
-\vskip 1ex
+
+\myvskip{1ex}
+\begin{center}
 \begin{tabular}{|l|l|l|l|}
 \hline
 Variable & Type & Contexts & Binding \\\hline \hline
@@ -107,7 +117,8 @@ Variable & Type & Contexts & Binding \\\hline \hline
 \texttt{eltBegin}& \Ppost{}         & \Pparsecheck{} & Position in input source before reading element. \\ \hline
 \texttt{eltEnd}  & \Ppost{}         & \Pparsecheck{} & Position in input source after reading element. \\ \hline
 \end{tabular}
-\vskip 1ex
+\end{center}
+\myvskip{1ex}
 
 \noindent
 In the table, we use \texttt{rep\_t} to denote the type of the
@@ -121,7 +132,8 @@ name of the array; it is a synonym for the special variable \texttt{elts}.
 \subsection{Size specifications}
 \label{sec:array-size-spec}
 There are five different kinds of size specifications possible:
-				   
+			
+\begin{center}	   
 \begin{tabular}{ll}
   \texttt{[]}         & unbounded \\
   \texttt{[n]}        & exactly size \texttt{n}\\
@@ -129,13 +141,15 @@ There are five different kinds of size specifications possible:
   \texttt{[low:]}     & at least \texttt{low}, no upper bound\\
   \texttt{[:high]}    & at most  \texttt{high}, no lower bound\\
 \end{tabular}
+\end{center} 
 
 \noindent
 As an example, the following specification describes an integer
 sequence of length at least \texttt{min} and at most \texttt{max}:
 
-\input{code/size}
-
+\inputCode{code/size}
+%
+\noindent
 A maximum size specification constitutes a termination condition for
 reading the array.  It is an error for the lower bound to be greater
 than the upper bound.
@@ -158,7 +172,8 @@ the array.
 It is an error for a \Parray{} to contain more than one \Pterm{} clause.
 The following description uses \Pnosep{} to indicate that
 an IP address should be terminated by the lack of a period.
-\input{code/nosep}
+
+\inputCode{code/nosep}
 
 
 \subsection{\Plast}
@@ -171,8 +186,10 @@ are in scope within the predicate.
 The following description uses a \Plast{} predicate to 
 terminate array parsing if the number of input bytes consumed by
 reading the sequence is greater than a specified amount.
-\input{code/last}
 
+\inputCode{code/last}
+%
+\noindent
 If an array has a \Plast{} constraint, it cannot have a
 \Plongest{} or a \Pended{} constraint.
 
@@ -187,8 +204,10 @@ non-empty sequence of even integers separated by the character
 \cd('a'), followed by a character \cd('a'), followed by a non-empty
 sequence of odd integers, separated by the character \cd('a') and
 terminated by the character \cd('b'):
-\input{code/longest}
 
+\inputCode{code/longest}
+%
+\noindent
 If an array has a \Plongest{} constraint, it cannot have a
 \Plast{} or a \Pended{} constraint.
 
@@ -213,7 +232,7 @@ descriptor as an argument, it must be within the scope of a
 \Pparsecheck{} clause.
 
 \begin{figure}
-\input{code/ended}
+\inputCode{code/ended}
 \caption{\Parray{} with \Pomit{} clause.}
 \label{fig:array-ended}
 \end{figure}
@@ -240,7 +259,8 @@ The following code reads a sequence of up to four
 space-separated, signed 
 integers terminated by the end of the record.  It omits each of the
 negative numbers from the in-memory representation.
-\input{code/array-omit}
+
+\inputCode{code/array-omit}
 
 \subsection{Optional \Pwhere{} clause}
 If given, a \Pwhere{} clause expresses constraints over the entirety
@@ -266,7 +286,10 @@ described in \secref{sec:common-predicates}
 of the in-memory representation of an array after it has been fully
 parsed. The following example checks that the resulting integer
 sequence is in sorted order
-\input{code/array-forall}
+
+\inputCode{code/array-forall}
+%
+\noindent
 Syntactically, the \Pforall{} clause gives an index variable
 (\texttt{i} in the example) and a range for that variable (\texttt{0}
 to \texttt{length-2}, inclusive).  Ranges can be written either as an
@@ -323,18 +346,22 @@ requirement, the parse descriptor will record the error
 To explain the data structures and operations generated for array
 declarations, we will use the description of resolved IP addresses as
 an example.
-\input{code/nIP}
+
+\inputCode{code/nIP}
 
 \subsection{In-memory representation}
 \label{sec:arrays-rep}
 The in-memory representation of a \Parray{} is a struct with three
 fields.  
-\input{code/ai.arrayRep}
+
+\inputCode{code/ai.arrayRep}
+%
+\noindent
 The first of these is an integer recording the length of the
 array in memory.  The second is an array of elements of the base type
 of the array.  The third field is a pointer to a growable buffer that
 manages the dynamically-allocated space for the array.
-\note{Bob: add more detail here.}
+
 
 \subsection{Mask}
 \label{sec:arrays-masks}
@@ -343,14 +370,18 @@ The mask for a \Parray{} is a struct containing a pair of masks.  The
 mask specifies how to handle each element in the array.  The
 \cd{arrayLevel} mask allows the user to toggle behavior at the level
 of the \Parray{} as a whole. 
-\input{code/ai.arrayMask}
+
+\inputCode{code/ai.arrayMask}
 
 
 \subsection{Parse descriptor}
 \label{sec:arrays-parse-descriptors}
 The parse descriptor for a \Parray{} is a \c{} struct, with all the
 fields described in \secref{sec:common-parse-descriptor}.  
-\input{code/ai.arrayPD}
+
+\inputCode{code/ai.arrayPD}
+%
+\noindent
 In addition, the field \cd{neerr} records the number of errors that
 occurred while processing elements of the array. The field
 \cd{firstError} records the index of the first element that triggered
@@ -365,12 +396,20 @@ array of base parse descriptors.
 \subsection{Operations}
 The operations generated by the \pads{} compiler for a \Parray{} are
 those described in \chapref{chap:common-features}.
-\input{code/ai.arrayOps}
+\figref{figure:array-ops} lists these operations.
+\begin{figure}
+\inputCode{code/ai.arrayOps}
+\caption{Prototypes of operations generated for
+  the \Parray{} \texttt{nIP}.}
+\label{figure:array-ops}
+\end{figure}
 
 \subsubsection{Read function}
 The error codes for \Pstruct{}s appear in \figref{fig:array-read-error-codes}.
 \begin{figure}
-\begin{tabular}{lp{4in}}
+\begin{center}
+\begin{tabular}{l|p{3in}}
+Code                            & Meaning \\ \hline
  \cd{P_NO\_ERR}                 & No error occurred\\[1ex]
  \cd{P_ARRAY_ELEM_ERR}          & An error occurred during
                                     parsing one of the elements of
@@ -400,6 +439,7 @@ The error codes for \Pstruct{}s appear in \figref{fig:array-read-error-codes}.
 \end{tabular}
 \caption{Error codes that can be returned by \Parray{} read functions.}
 \label{fig:array-read-error-codes}
+\end{center}
 \end{figure}
 \noindent
 If multiple errors occur during the parsing of a \Parray{}, the

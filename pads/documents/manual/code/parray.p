@@ -34,7 +34,8 @@ Pstruct character_string {
 };
 
 Parray TXT_t(:Puint16 rdlength:) {
-  character_string [] : Plast(Pparsecheck(eltEnd.offset - begin.offset >= rdlength));
+  character_string [] : 
+      Plast(Pparsecheck(eltEnd.offset - begin.offset >= rdlength));
 };
 /*@END last.tex */
 
@@ -67,21 +68,22 @@ Precord Pstruct entry{
 
 /*@BEGIN ended.tex */
 int isDone(Pint32 value, Pbase_pd p, int *consume){
-  if (p.errCode != P_NO_ERR) return 0;  // continue sequence
+  if (p.errCode != P_NO_ERR) return 0;  /* continue sequence */
   if (value == 1) {
-    *consume = 1;       // consume value
-    return 1;           // terminate sequence
+    *consume = 1;       /* consume value */
+    return 1;           /* terminate sequence */
   };
   if (value == -1){     
-    *consume = 0;       // return value to input
-    return 1;           // terminate sequence
+    *consume = 0;       /* return value to input */
+    return 1;           /* terminate sequence */ 
   };
-  return 0;             // continue sequence
+  return 0;             /* continue sequence */
 };
 
 Parray fseq_t {
   Pint32 [] : Psep(',') 
-              && Pended(Pparsecheck(isDone(fseq_t[current], pds[current], &consume)));
+              && Pended(Pparsecheck(isDone(fseq_t[current], 
+					   pds[current], &consume)));
 };
 /*@END ended.tex */
 

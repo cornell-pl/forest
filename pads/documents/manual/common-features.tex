@@ -1,5 +1,6 @@
 \chapter{Common features}
 \label{chap:common-features}
+\cutname{common.html}
 In this chapter, we describe the \PADSL{} features shared by all types. 
 Subsequent chapters describe features particular to individual \PADSL{}
 types. 
@@ -21,7 +22,7 @@ and a family of type constructors for building structured types:
 Syntactically, a \padsl{} type declaration (\nont{p\_ty\_decl}) must
 have the following form: 
 
-\vskip 1ex
+\myvskip{1ex}
 \begin{tabular}{rcll}
 \nont{p\_ty\_decl} & \is{} & \nont{base\_ty} & (* \chapref{chap:base-types} *) \\[1ex]
 & \alt{} & \nont{struct\_ty}           & (* \chapref{chap:structs} *)\\[1ex]
@@ -46,7 +47,7 @@ In addition to \C{} and \Cplusplus{} style comments of the form
 description, \padsl{} also supports \nont{p\_comment}s, which may
 appear only in particular locations in the grammar.  Syntactically,
 
-\vskip 1ex
+\myvskip{1ex}
 \begin{tabular}{rcll}
 \nont{p\_comment} & \is{} & \cd{/-} \term{text}  \\[1ex]
 \end{tabular}
@@ -72,11 +73,13 @@ valid.  Predicates are assumed to be side-effect free.
 To allow users to express constraints involving the size and position
 of physical data, \padsl{} supports \nont{p\_parsecheck} expressions within
 predicates.  Syntactically,
-\vskip 1ex
+
+\myvskip{1ex}
 \begin{tabular}{rcl}
 \nont{p\_parsecheck} & \is{} & \pparsecheck{}(\nont{aug\_expression})\\
 \end{tabular}
-\vskip 1ex
+\myvskip{1ex}
+
 \noindent
 In the production, \nont{aug\_expression} is an integer-valued \C{}
 expression that is allowed to refer 
@@ -94,13 +97,14 @@ are treated as \C{} expressions with type \texttt{int}.
 \PADSL{} supports \C{}-style character and string
 literals, referred to in the \pads{} grammar as \term{char\_lit} and
 \term{str\_lit}, respectively.  
-These literals may contain \C{} character escapes such as \cd{\\"} and
-\cd{\\'}.  \PADSL{} also supports regular expression literals,
+These literals may contain \C{} character escapes such as \literal{\cd{\escdquote{}}} and
+\literal{\cd{\escquote{}}}.  \PADSL{} also supports regular expression literals,
 described in more detail in \secref{sec:regular-expressions}, and the
 special literal \Peor{}, which denotes the end of a record.  We use
 the non-terminal \term{regexp\_lit} to refer to regular expressions.
 Syntactically, 
-\vskip 1ex
+
+\myvskip{1ex}
 \begin{tabular}{rcl}
 \nont{p\_coreliteral}& \is{} & \term{char\_lit} \alt{} \nont{str\_lit} 
                             \alt{} \Pre{} \nont{regexp\_lit} 
@@ -109,6 +113,7 @@ Syntactically,
                             \alt{} \term{C\_identifer} \Pfrom{} (\nont{p\_coreliteral})\\[1ex]
 \end{tabular}
 
+\noindent
 Literals (as opposed to core literals) also support a renaming form.
 The supplied \C{} identifier gives the programmatic name for the
 literal, while the core literal supplied in the \Pfrom{} clause
@@ -155,7 +160,7 @@ sequence and then gives the sequence itself.  The length is read,
 stored in the in-memory representation, and then passed to the type
 that describes the sequence to specify the termination condition for
 the sequence. Syntactically, 
-\vskip 1ex
+\myvskip{1ex}
 \begin{tabular}{rcl}
 \nont{p\_actual\_list} & \is{} & \nont{expression} \alt{} \nont{expression}, \nont{p\_actual\_list} \\[1ex]
 \nont{p\_actuals} & \is{} & (: \nont{p\_actual\_list} :)\\[1ex]
@@ -165,7 +170,7 @@ the sequence. Syntactically,
 \noindent
 where \nont{expression} is any \C{} expression. Formal parameter lists
 are similar to \C{}'s, except they are deliminated differently:
-\vskip 1ex
+\myvskip{1ex}
 \begin{tabular}{rcl}
 \nont{p\_formals} & \is{} & (: \nont{c\_formal\_list} :)\\[1ex]
 \end{tabular}
@@ -175,7 +180,7 @@ The \cd{formalParamExample} type declaration in the following \padsl{}
 fragment illustrates declaring parameters to \pads{} types, while
 the \cd{actualParamExample} illustrates passing parameters.
 \begin{code}
-\input{code/struct.parameters}
+\inputCode{code/struct.parameters}
 \end{code}
 Type \cd{formalParamExample} expects its single field \cd{data} to be
 less than a supplied value \cd{limit}, while the type \cd{actualParamExample}
@@ -191,15 +196,18 @@ type, indicating that the type describes a \textit{record} in the
 external representation of the data.  \pads{} supports a number of
 different interpretations of what constitutes a record:
 
-\begin{tabular}{ll}
-new-line terminated & End of record marked by new-line character\\
-fixed-width record  & Records contain a specified number of bytes\\
-ibm-style record    & Record header indicates size\\
+\begin{center}
+\begin{tabular}{l|l}
+Record type         & Description\\ \hline
+New-line terminated & End of record marked by new-line character\\
+Fixed-width record  & Records contain a specified number of bytes\\
+IBM-style record    & Record header indicates size\\
 \end{tabular}
+\end{center}
 
 \noindent
-\secref{sec:library-customization-character-encodings} describes how to set the appropriate record discipline for
-a data source. 
+\secref{sec:library-customization-character-encodings} describes how
+to set the appropriate record discipline for a data source. 
 
 
 \section{\Psource{} modifier}
@@ -276,8 +284,10 @@ argument appear in the sections describing the operations.
 Each \PADS{} type \cd{foo} has an associated parse descriptor type, 
 \pdSuf{foo}, coded as a \C{} struct with at least the following four
 fields:
-\vskip 1ex
-\begin{tabular}{lp{4in}}
+
+\myvskip{1ex}
+\begin{tabular}{l|p{4in}}
+ Field & Description \\ \hline
  \cd{Puint32 pstate} & Flags that describe the state after parsing the
                            associated value.\\[1ex]
  \cd{PerrCode_t errCode} & A code indicating the nature of the 
@@ -293,7 +303,7 @@ fields:
 
 \noindent
 Field \cd{pstate} contains the following flags:
-\vskip 1ex
+\myvskip{1ex}
 \begin{tabular}{lp{3.5in}}
  \cd{PPanic} & Set if the parser was in panic mode during the
                   parsing of the associated data.  See
@@ -303,13 +313,7 @@ Field \cd{pstate} contains the following flags:
 \noindent
 The \pads{} library provides a collection of functions (macros
 actually) for manipulating the parse state field:
-\vskip 1ex
-\begin{code}
-void P_PS_init(void *pd);         
-void P_PS_setPanic(void *pd);     
-void P_PS_unsetPanic(void *pd);   
-int  P_PS_isPanic(void *pd);      
-\end{code}
+\inputCode{code/parse-state}
 
 
 \textbf{To Do:} Describe the structure of location data. 
@@ -378,22 +382,16 @@ function take a pointer to allocated space and initializes the space
 appropriately.  Each cleanup function takes a pointer to allocated and
 initialized space and deallocates any memory allocated by \pads{} functions.
 It does not deallocate the space pointed to by the parameter.  
-\begin{code}
-Perror_t foo_init (P_t *pads, foo *rep);
 
-Perror_t foo_cleanup (P_t *pads, foo *rep);
+\inputCode{code/init}
 
-Perror_t foo_pd_init (P_t *pads, foo_pd *pd);
-
-Perror_t foo_pd_cleanup (P_t *pads, foo_pd *pd);
-\end{code}
 Because all masks have statically-known size, the library does not
 contain initialization and cleanup functions for masks.  
 Instead, it contains a function for setting all nested base masks 
 to a specified value:  
-\begin{code}
-void foo_m_init (P_t *pads, foo_m *mask, Pbase_m baseMask);
-\end{code}
+
+\inputCode{code/init-mask}
+
 The function takes two parameters (in
 addition to the \pads{} handle): a pointer to allocated space for the
 mask and a base mask value.  Because mask initialization
@@ -404,20 +402,17 @@ functions cannot fail, the return type is \cd{void} instead of
 Each type \cd{foo} comes equipped with copy functions for both the
 in-memory representation and the parse descriptor.  Both the source
 and destination pointers are assumed to point to allocated space.  In
-addition, the source pointers are assumed to point to initialized space.
-\begin{code}
-Perror_t foo_copy (P_t *pads, foo *rep_dst, foo *rep_src);
+addition, the source pointers are assumed to point to initialized
+space.
 
-Perror_t foo_pd_copy (P_t *pads, foo_pd *pd_dst, foo_pd *pd_src);
-\end{code}
+\inputCode{code/utility}
 
 \noindent
 Each type \cd{foo} also has a predicate function that returns true if
 the supplied in-memory representation satisfies all of the
 non-\pparsecheck{} constraints.
-\begin{code}
-int is_foo(foo *rep_dst);
-\end{code}
+
+\inputCode{code/verify}
 
 
 \subsection{Read function}
@@ -428,9 +423,7 @@ reprsentation \cd{rep}.  If any errors occur during the parsing,
 the function will return \cd{P_ERR}.  Otherwise, it
 will return \cd{P_OK}.  
 
-\begin{code}
-Perror_t foo_read (P_t *pads, foo_m *m, foo_pd *pd, foo *rep);
-\end{code}
+\inputCode{code/read}
 
 The mask argument allows the library user to specify independently
 which constraints the parser should check and which portions of the
@@ -438,12 +431,15 @@ in-memory representation it should fill in.  Conceptually, there are
 three different ``knobs'' associated with each atomic element of a
 \pads{} type:
 
-\vskip 1ex
-\begin{tabular}{ll}
+\myvskip{1ex}
+\begin{center}
+\begin{tabular}{l|l}
+Flag name       & Definition    \\ \hline
 \cd{P_SynCheck} & Check syntactic constraints\\
 \cd{P_SymCheck} & Check semantic constraints\\
 \cd{P_Set}      & Set the in-memory representation\\[1ex]
 \end{tabular}
+\end{center}
 
 \noindent
 At the base-type level, the mask consists of one or more of the
@@ -460,20 +456,22 @@ the appropriate chapters.
 
 For convenience, the \pads{} library provides the following abbreviations:
 
-\vskip 1ex
-\begin{tabular}{ll}
+\myvskip{1ex}
+\begin{center}
+\begin{tabular}{l@{ }l}
 \cd{\#define P_CheckAndSet} & \cd{P_Set|P_SynCheck|P_SemCheck}\\
 \cd{\#define P_BothCheck}   & \cd{P_SynCheck|P_SemCheck} \\
 \cd{\#define P_Ignore}      & no flags set\\[1ex]
 \end{tabular}
+\end{center}
 
 \noindent
-The library also provides the following macros for testing or
-modifying base read-function flags:
+The library also provides macros for testing and modifying base
+read-function flags, which are listed in \figref{figure:read-flags}.
 
-\vskip 1ex
+\begin{figure*}
 {\small
-\begin{tabular}{ll}
+\begin{tabular}{l@{ }l}
 \cd{\#define P_Test_Set(m)}            & \cd{(m \& P_Set)} \\
 \cd{\#define P_Test_SynCheck(m)}       & \cd{(m \& P_SynCheck)}\\
 \cd{\#define P_Test_SemCheck(m)}       & \cd{(m \& P_SemCheck)}\\
@@ -499,19 +497,21 @@ modifying base read-function flags:
 \cd{\#define P_Dont_SemCheck(m)}       & \cd{(m \&= (~P_SemCheck))}\\[1ex]
 \end{tabular}
 }
+\caption{Provided macros for setting and testing base read-function flags.}
+\label{figure:read-flags}
+\end{figure*}
+
 \subsection{Write functions}
 For each \pads{} type, the generated library provides 
 two functions for writing out the in-memory representation of the type
 in a format as close as possible to its original form.
-\begin{code}
-ssize_t foo_write2io (P_t *pads, Sfio_t *io, foo_pd *pd, foo *rep);
 
-ssize_t foo_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, 
-                        int *buf_full, foo_pd *pd, foo *rep);
-\end{code}
+\inputCode{code/write}
+
+\noindent
 The first of these functions emits its output to an SFIO file;
 the second to an in-memory buffer.  Information about SFIO may be
-found from \url{www.research.att.com/sw/tools/sfio}.  For the buffer
+found from \myurl{www.research.att.com/sw/tools/sfio}.  For the buffer
 version, the parameter \cd{buf} points to an allocated sequence of
 bytes and \cd{buf_len} indicates the size of the buffer.  Out
 parameter \cd{buf_full} is a boolean which is set if the requested
@@ -527,7 +527,6 @@ data include skipping white space
 Passing the \texttt{-wnone} flag to the \pads{} compiler suppresses
 the generation of write functions for structured types.
 
-We anticipate adding more write functions in the future.
 
 \subsection{Additional functions}
 In addition to the basic functionality described in the preceeding

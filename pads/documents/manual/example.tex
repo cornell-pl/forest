@@ -1,5 +1,6 @@
 \chapter{Tutorial}
 \label{chap:example}
+\cutname{tutorial.html}
 In this chapter, we use examples to give an overview of \pads{}.
 The examples used in this chapter appear in the \pads{} distribution in the 
 \texttt{pads/demo} directory.
@@ -13,7 +14,7 @@ We start by briefly describing the data formats we will use as running examples.
 One of the formats that web servers use to log client
 requests is the Common Log Format (CLF)~\cite{wpp}.  Researchers use such logs to measure 
 properties of web workloads and to evaluate protocol changes
-by "replaying" the user activity recorded in the log.
+by ''replaying'' the user activity recorded in the log.
 This ASCII format consists of a sequence of
 records, each of which has seven fields: the host name or IP address
 of the client making the request, the account associated with the
@@ -60,34 +61,31 @@ this format.
 207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
 tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /scpt/dd@grp.org/confirm HTTP/1.0" 200 941
 \end{verbatim}
-\vskip -2ex
+\end{footnotesize}
 \caption{Tiny example of web server log data.}
 \label{figure:clf-records}
-\end{footnotesize}
 \end{figure*}
 
 \begin{figure*}
 \begin{footnotesize}
-\begin{center}
 \begin{verbatim}
 0|1005022800
 9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
 9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
 \end{verbatim}
+\end{footnotesize}
 \caption{Tiny example of \dibbler{} provisioning data.}
 \label{figure:dibbler-records}
-\end{center}
-\end{footnotesize}
 \end{figure*}
 
 \begin{figure}
-\input{wsl}
+\inputCode{code/wsl}
 \caption{\pads{} description for web server log data.}
 \label{figure:wsl}
 \end{figure}
 
 \begin{figure}
-\input{sirius}
+\inputCode{code/sirius}
 \caption{Partial \pads{} description for \dibbler{} provisioning data.}
 \label{figure:dibbler}
 \end{figure}
@@ -109,7 +107,7 @@ In the CLF description, the type declaration for \cd{version_t}
 illustrates a simple \kw{Pstruct}. It starts with a string literal
 that matches the constant \cd{HTTP/} in the data source.  It then has
 two unsigned integers recording the major and minor version numbers
-separated by the literal character \kw{'.'}.  \pads{} supports
+separated by the literal character \literal{\cd{'.'}}.  \pads{} supports
 character, string, and regular expression literals, which are
 interpreted with the ambient character encoding. The type
 \cd{request_t} similarly describes the request portion of a CLF
@@ -167,7 +165,7 @@ type, which always matches but never consumes any input.
 
 
 
-\subsection{Generated library}
+\section{Generated library}
 \label{sec:example:generated-library}
 From a description, the \pads{} compiler generates a \C{} library
 for parsing and manipulating the associated data source.  
@@ -177,12 +175,10 @@ for parsing and manipulating the associated data source.
 \renewcommand{\textfraction}{0.1}
 \renewcommand{\floatpagefraction}{0.75}
 \begin{figure*}
-\begin{tiny}
-\input{library}
+\inputCode{code/dibbler_library}
 \caption{Selected portions of the library generated for the \texttt{entry\_t}
   declaration from \dibbler{} data description.}
 \label{figure:library}
-\end{tiny}
 \end{figure*}
 To give a feeling for the library that \pads{} generates, 
 \figref{figure:library} includes selected portions of the generated 
@@ -198,11 +194,11 @@ Passing zero in these argument positions triggers default behavior, which
 means ASCII encoded, little endian, new-line terminated records.
 \chapref{chap:library-customization} describes the use of disciplines in more detail. 
 
-After initializing the \pads{} handle, the code uses the core library function \texttt{P\_io\_fopen} to open the data source by specify the path to the data on disk.  
- and opening the data source, the code sets
-the \texttt{entry\_t} \texttt{mask} to check all conditions in the \dibbler{} description except the
-sorting of the timestamps.  We have omitted from the figure the code to read and write the header. 
-The code then echoes error records to one file and cleaned ones to another.
+After initializing the \pads{} handle, the code uses the core library function \texttt{P\_io\_fopen} to open the data source by specify the path to the data on disk.  The code then uses generated functions to initialize the mask, parse descriptor, and in-memory representations for the header and the entry types.
+The specified mask values instruct the parsing code to check all conditions in the \dibbler{} description except the sorting of the timestamps.  The \texttt{P\_Set} flag instead instructs the compiler to simply set the in-memory representation for the timestamp sequence.
+
+After reading the header, 
+the code echoes error records to one file and cleaned ones to another.
 The raw data has two different representations of unavailable phone numbers:
 simply omitting the number altogether, which corresponds to the \cd{NONE}
 branch of the \kw{Popt}, or having the value \cd{0} in the data.  
@@ -211,26 +207,203 @@ by converting the zeroes into \cd{NONE}s.  The function \cd{entry_t_verify}
 ensures that our computation hasn't broken any of the semantic properties
 of the in-memory representation of the data.
 
+Finally, the core library functions \texttt{P\_io\_close} and \texttt{P\_close} close the IO stream and \pads{} library, respectively.
 
 \begin{figure*}
-\input{code/sirius-filter}
+\inputCode{code/sirius-filter}
 \caption{Fragment of a program to filter and normalize \dibbler{} data.}
 \label{figure:sirius-filter}
 \end{figure*}
 
 
 
+\subsection{Accumulators}
+
+Before using a data source, analysts must develop an understanding 
+of both the layout and the meaning of the data.  
+Because documentation is usually
+incomplete or out-of-date, this understanding must be developed 
+through exploring the data itself.  Typical questions include:
+how complete is the description of the syntax of the data source,
+how many different representations for ``data not available" are there,
+what is the distribution of values for particular fields, \etc{}
+\pads{} addresses these kinds of questions with the notion of an accumulator. 
+For each type in a \pads{} description, accumulators track the number of good values, the number of bad values, and the 
+distribution of legal values.  Selected functions from this portion of the library appear in \figref{figure:library}; more detailed information appears in \chapref{chap:accumulators}.  
+
+We can of course use these functions by hand to write a program to
+compute the statistical profile of any \pads{} data source.  However,
+ad hoc sources are often simply a sequence of records, perhaps
+prefixed by a header.  For example, both the web server log and the
+\dibbler{} data sources exhibit this pattern,  as does any data format
+that can be read in one bulk read. 
+As a convenience, \pads{} supplies a program
+template to construct accumulator programs for such data sources.
+\pads{} provides this template as a \C{} include file and supports
+customization via \C{}'s macro system. 
+Using this template, we can write an accumulator program by
+specifying only the names of the optional header type and the record type.  
+\figref{figure:wsl-accum} contains the entirety of the user-specified accumulator program text.  
+
+\begin{figure*}
+\inputCode{code/wsl-accum}
+\caption{Accumulator program to construct statistical profiles of web server log data.}
+\label{figure:wsl-accum}
+\end{figure*}
+
+
+
+The accumulator report for the length field
+of the web server data that results when run on a data set used
+in several studies of web traffic~\cite{clf-cluster, clf-adaptation}
+appears in \figref{figure:wsl-accum-report}.
+%
+\begin{figure*}
+\begin{small}
+\begin{verbatim}
+<top>.length : uint32
++++++++++++++++++++++++++++++++++++++++++++
+good: 53544   bad: 3824    pcnt-bad: 6.666
+min: 35  max: 248591  avg: 4090.234
+top 10 values out of 1000 distinct values:
+tracked 99.552% of values
+ val:  3082 count:  1254  %-of-good:  2.342
+ val:   170 count:  1148  %-of-good:  2.144
+ val:    43 count:  1018  %-of-good:  1.901
+ val:  9372 count:   975  %-of-good:  1.821
+ val:  1425 count:   896  %-of-good:  1.673
+ val:   518 count:   893  %-of-good:  1.668
+ val:  1082 count:   881  %-of-good:  1.645
+ val:  1367 count:   874  %-of-good:  1.632
+ val:  1027 count:   859  %-of-good:  1.604
+ val:  1277 count:   857  %-of-good:  1.601
+. . . . . . . . . . . . . . . . . . . . . . 
+ SUMMING    count:  9655  %-of-good: 18.032
+\end{verbatim}
+\end{small}
+\caption{Portion of accumulator report for length field of web server
+  log data.}
+\label{figure:wsl-accum-report}
+\end{figure*}
+%
+By default, accumulators track the first 1000 distinct
+values seen in the data source and report the frequency
+of the top ten values.  In this particular run, 99.552\%
+of all values were tracked.  When generating the accumulator
+program (or when using the library directly), \pads{} users can specify 
+the number of distinct values to track and the number 
+of values to print in the report.  Details about customizing accumulator programs appear in \chapref{chap:accumulators}.
+
+Perhaps surprisingly, the report shows that 6.66\% of the length
+fields contained errors.  A glance at the error log generated
+by the program (which contains all records flagged as errors) 
+reveals that web servers occasionally store the '-' character
+rather than the actual number of bytes returned, a possibility
+not mentioned in the documentation~\cite{wpp}.
+Accumulators often serve as a quick tool for iteratively
+refining a \pads{} description until only genuine errors remain.
 
 
 
 
+\subsection{Formatting}
+To support converting ad hoc data into a delimited format, the \pads{}
+library generates a formatting function for each type.  This function,
+an example of which appears in \figref{figure:library}, takes a delimiter
+list as an argument.  At each field boundary, it prints the first delimiter.
+At each nested type boundary, it advances the delimiter list unless the list
+is exhausted, in which case it reuses the last delimiter.  The mask argument
+allows the user to suppress printing of portions of the data.  Programmers
+can use the library directly to write formatting programs by hand.  However, 
+as in the accumulator case, \pads{} can generate a formatting program for 
+commonly occurring data patterns given only the header type (optional), record type, and a delimiter string.  Users can further customize the generated program by specifying an output format for dates and mask values as illustrated in 
+\figref{figure:wsl-fmt}.
+\begin{figure*}
+\begin{small}
+\inputCode{code/wsl-fmt}
+\caption{PADS program for formatting CLF records using formatting template.}
+\label{figure:wsl-fmt}
+\end{small}
+\end{figure*}
+Given the delimiter
+string \cd{"|"} and the output date format \cd{"\%D:\%T"}, the generated
+web server log formatting program yields
+the output shown in \figref{figure:clf-records-formatted} when applied to the
+sample data in \figref{figure:clf-records}. 
+\begin{figure*}
+\begin{small}
+\begin{verbatim}
+207.136.97.49|-|-|10/16/97:01:46:51|GET|/tk/p.txt|1|0|200|30
+tj62.aol.com|-|-|10/16/97:21:32:22|POST|/scpt/dd@grp.org/confirm|1|0|200|941
+\end{verbatim}
+\caption{Formatted CLF records.}
+\label{figure:clf-records-formatted}
+\end{small}
+\end{figure*}
 
 
+To support customization, \pads{} allows users to provide their own formatting functions for any type.  More information on formatting functions can be found in \chapref{chap:formatting}.
 
 
+\subsection{Conversion to \xml{}}
+\pads{} also supports converting ad hoc data into XML by providing a canonical mapping from \pads{} descriptions into XML.  This mapping is quite natural, as both \pads{} and XML are languages for describing semi-structured data.
+One interesting aspect of the mapping is that we embed not just the in-memory representation of \pads{} values, but also the parse descriptors in cases where the data was buggy.  This choice allows users to explore the error portions
+of their data sources, which can be the most interesting parts of the data.
+Given a \pads{} specification, the \pads{} compiler generates an XML Schema describing the canonical embedding for that data source.  
+As an example, 
+\figref{figure:sirius-xsd} shows 
+the portion of the \xml{} Schema generated from the \dibbler{} data description
+related to the 
+\cd{eventSeq} type.
+
+\begin{figure*}
+\begin{small}
+\begin{verbatim}
+<xs:complexType name="eventSeq_pd">
+<xs:sequence>
+<xs:element name="pstate" type="Pflags_t"/>
+<xs:element name="nerr" type="Puint32"/>
+<xs:element name="errCode" type="PerrCode_t"/>
+<xs:element name="loc" type="Ploc_t"/>
+<xs:element name="neerr" type="Puint32"/>
+<xs:element name="firstError" type="Puint32"/>
+<xs:element name="elt" type="Puint32" 
+    minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="eventSeq">
+<xs:sequence>
+<xs:element name="elt" type="event" 
+    minOccurs="0" maxOccurs="unbounded"/>
+<xs:element name="length" type="Puint32"/>
+<xs:element name="pd" type="eventSeq_pd" 
+    minOccurs="0" maxOccurs="1"/>
+</xs:sequence>
+</xs:complexType>
+\end{verbatim} 
+\end{small}
+\caption{Portion of \xml{} Schema generated from \dibbler{} data description.}
+\label{figure:sirius-xsd}
+\end{figure*}
+The \pads{} compiler will put the generated schema in the same directory as the generated library.  The schema file will share the name of the \pads{} description and have the extension \texttt{xsd}.
 
 
+The \pads{} compiler generates a \cd{write_xml_2io} function for each type, an example of which is shown in \figref{figure:library}.  Programmers can use these functions by hand to write conversion programs, or they can use 
 
+
+ \pads{} also provides a template for generating such conversion programs for data that can be read entirely into memory.\footnote{
+  The \xml{} template program also permits the programmer to specify a header type followed by a body record type.  However, the generated \xml{} does not include the appropriate top-level declarations to conform to the generated \xml{} schema.  We are working on addressing this problem.
+} %
+\figref{figure:sirius-xml} contains an example of such a program.
+More information about converting to \xml{} can be found in \chapref{chap:xml}.
+\begin{figure*}
+\begin{small}
+\inputCode{code/sirius-xml}
+\end{small}
+\caption{Program to convert \dibbler{} data into \xml{} using \pads{} template.}
+\label{figure:sirius-xml}
+\end{figure*}
 
 
 

@@ -1,5 +1,6 @@
 \chapter{Punions}
 \label{chap:unions}
+\cutname{unions.html}
 \Punion{}s are used to express variations in data.  \pads{}
 supports two forms of union: switched and in-place.  The first form
 supports data sources where there is an indication (\ie, a switch) in
@@ -50,7 +51,7 @@ The \cd{branches} declaration describes three alternatives, depending
 upon the value of the tag \cd{which}.  
 %
 \begin{figure}
-\input{code/union.switch}
+\inputCode{code/union.switch}
 \caption{Switched \Punion{} for describing data variations determined
   by tags earlier in the data source.}
 \label{fig:switched-union}
@@ -76,7 +77,10 @@ exists:
 \subsection{Example: In-place \Punion{}s}
 The following in-place \Punion{} describes a data fragment that is
 either a resolved or a symbolic IP address:
-\input{code/host_t}
+
+\inputCode{code/host_t}
+%
+\noindent
 The (omitted) types \cd{nIP} and \cd{sIP} describe named and symbolic
 IP addresses, respectively.
 The comments embedded in the description give an example of each of the two
@@ -119,9 +123,10 @@ it is the literal itself, unless the programmer specifies a different
 name using the \Pfrom{} form.  The \Pfrom{} form must be used when the
 literal is not a valid \C{} identifier.  For example, the following
 in-place union uses the \Pfrom{} form to provide names for the
-string literal \cd{"*"} and the regular expression literal \cd{\Pre{}
-  "/a+/"}.
-\input{code/union.literal}
+string literal \literal{\cd{"*"}} and the regular expression literal \cd{\Pre{}
+  \literal{"/a+/"}}.
+
+\inputCode{code/union.literal}
 
 
 \cut{
@@ -135,7 +140,7 @@ The \cd{intOpt} \Punion{} relies on the parameter \cd{defVal} to set
 a default value for the omitted field.
 
 \begin{figure}
-\input{code/union.option.tex}
+\inputCode{code/union.option}
 \caption{A \Punion{} with a computed field describes an optional field.}
 \label{fig:union-option}
 \end{figure}
@@ -185,7 +190,8 @@ The name of the tag enumeration is the name of
 the \pads{} specification with the \cd{_tag} suffix.
 For example, the generated enumeration type
 for the \Punion{} \cd{branches} is the following:
-\input{code/union-impl-branches-tag}
+
+\inputCode{code/union-impl-branches-tag}
 %
 
 
@@ -200,7 +206,7 @@ The representation-related type declarations for
 the \Punion{} \cd{branches} appear in \figref{fig:punion-rep}.
 
 \begin{figure}
-\input{code/union-impl-branches-rep}
+\inputCode{code/union-impl-branches-rep}
 \caption{Type declarations related to the in-memory representation of
   the \Punion{} \texttt{branches}.}
 \label{fig:punion-rep}
@@ -213,7 +219,10 @@ For each full and computed field in the union,
 there is a corresponding field in the mask, the type of which is the
 type of the mask type for that field.   For example, the mask type
 \csmSuf{branches} has the following structure:
-\input{code/union-impl-branches-mask.tex}
+
+\inputCode{code/union-impl-branches-mask}
+%
+\noindent
 Union masks have one additional field \cd{unionLevel} that allows the
 programmer to toggle behavior at the level of the union as a whole.
 
@@ -229,7 +238,7 @@ union.  The parse descriptor declarations corresponding to the
 appear in \figref{fig:punion-pd}.
 
 \begin{figure}
-\input{code/union-impl-branches-pd}
+\inputCode{code/union-impl-branches-pd}
 \caption{Type declarations related to the parse descriptor for
   the \Punion{} \texttt{branches}.}
 \label{fig:punion-pd}
@@ -245,7 +254,7 @@ For the \Punion{}
 \cd{branches}, the prototypes for all the generated functions appear in
 \figref{fig:punion-ops}.
 \begin{figure}
-\input{code/union-impl-branches-ops}
+\inputCode{code/union-impl-branches-ops}
 \caption{Prototypes of operations generated for
   the \Punion{} \texttt{branches}.}
 \label{fig:punion-ops}
@@ -292,12 +301,14 @@ function reports an error if no branch matches without an error.
 The error codes for \Punion{}s are:
 
 \tskip{}
-\begin{tabular}{lp{4in}}
+\begin{center}
+\begin{tabular}{l|p{3in}}
+Code                           & Meaning \\ \hline
  \cd{P_NO_ERR}                 & Indicates no error occurred\\[1ex]
  \cd{P_UNION_MATCH_ERR}         & Indicates that no branch of the
                                     union parsed without error.\\[1ex]
 \end{tabular}
-
+\end{center}
 \noindent
 
 \subsubsection{Accumulator functions}

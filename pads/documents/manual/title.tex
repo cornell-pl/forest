@@ -1,0 +1,51 @@
+% title.tex
+%
+% Standard title page for Pads documentation.  To customize, define the
+% following commands:
+%	\DocumentTitle		title of documention
+%	\DocumentAuthor		command for typesetting the document's author
+%	\PadsVersion		version of Pads
+%	\RevDate		date of document's last revision
+%	\CopyrightMsg
+%
+% The file Common/version.tex defines the \PadsVersion and \CopyrightMsg
+% commands.
+
+\begin{titlepage}%
+\centering
+\begin{latexonly}%
+\vspace*{1in}
+
+\begin{center}
+\ifpdf
+  \epsfig{file=logo.pdf, height=2in}
+\else
+  \includegraphics{logo.ps}
+\fi
+\end{center}
+
+
+{\LARGE{}\DocumentTitle{}}
+
+\vspace*{0.5in}
+
+\DocumentAuthor{}
+
+{\Large Last revised: \RevDate{}} \\
+
+\vspace*{0.5in}
+\centerline{
+  \CopyrightMsg
+}
+
+\end{latexonly}%
+%HEVEA \begin{center}
+%HEVEA \begin{rawhtml} <IMG SRC="logo.pdf" height="200">\end{rawhtml}
+%HEVEA \end{center}
+%HEVEA \vspace*{0.25in}
+%HEVEA {\LARGE{}\DocumentTitle{}}
+%HEVEA \vspace*{0.25in}
+%HEVEA \DocumentAuthor{}
+%HEVEA 
+%HEVEA {\Large Last revised: \RevDate{}} \\
+\end{titlepage}%

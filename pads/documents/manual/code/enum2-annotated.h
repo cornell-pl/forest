@@ -31,13 +31,17 @@ Perror_t orderStates_cleanup (P_t *pads,orderStates *rep);
 
 Perror_t orderStates_pd_cleanup (P_t *pads,orderStates_pd *pd);
 
-Perror_t orderStates_copy (P_t *pads,orderStates *rep_dst,orderStates *rep_src);
+Perror_t orderStates_copy (P_t *pads,orderStates *rep_dst,
+			   orderStates *rep_src);
 
-Perror_t orderStates_pd_copy (P_t *pads,orderStates_pd *pd_dst,orderStates_pd *pd_src);
+Perror_t orderStates_pd_copy (P_t *pads,orderStates_pd *pd_dst,
+			      orderStates_pd *pd_src);
 
-void orderStates_m_init (P_t *pads,orderStates_m *mask,Pbase_m baseMask);
+void orderStates_m_init (P_t *pads,orderStates_m *mask,
+			 Pbase_m baseMask);
 
-Perror_t orderStates_read (P_t *pads,orderStates_m *m,orderStates_pd *pd,orderStates *rep);
+Perror_t orderStates_read (P_t *pads,orderStates_m *m,
+			   orderStates_pd *pd,orderStates *rep);
 
 int orderStates_verify (orderStates *rep);
 /*@END enumOps.tex*/

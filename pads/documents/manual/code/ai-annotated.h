@@ -22,7 +22,8 @@ struct nIP_pd_s {
   PerrCode_t errCode;
   Ploc_t loc;
   Puint32 neerr;		/* Number of element errors */
-  Puint32 firstError;		/* if errCode == ARRAY_ELEM_ERR, index of first error */
+  Puint32 firstError;		/* if errCode == ARRAY_ELEM_ERR, 
+				   index of first error */
   Puint32 numRead;		/* Number of elements read */
   Puint32 length;		/* Number of elements in memory */
   Pbase_pd *elts;

@@ -61,7 +61,7 @@ struct branches_m_s {
   Pbase_m unionLevel;
   Pbase_m number;		/* nested constraints */
   Pbase_m number_con;		/* union constraints */
-  Pbase_m name;		/* nested constraints */
+  Pbase_m name; 		/* nested constraints */
 };
 /*@END union-impl-branches-mask.tex*/
 

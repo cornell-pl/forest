@@ -1,5 +1,6 @@
 \chapter{Popts}
 \label{chap:opts}
+\cutname{options.html}
 \Popt{} are used to describe optional data.
 The in-memory representation of an option records if the data was
 available and if so, the value of that data.  
@@ -32,7 +33,7 @@ in \secref{sec:common-parameterization}.
 The following declaration indicates that the type \cd{oPuint32} describes
 an optional \cd{Puint32}.  
 
-\input{code/simple-opt}
+\inputCode{code/simple-opt}
 
 \noindent
 The \pstruct{} \cd{entry1} uses the type \cd{oPuint32} to describe
@@ -53,7 +54,8 @@ value \cd{23}.
 
 A slightly more complex example of options uses predicates to
 determine if the option matches the input data:
-\input{code/constraint-opt}
+
+\inputCode{code/constraint-opt}
 
 \noindent
 Here, the type \cd{even_t} matches only even \cd{Puint32}s, while
@@ -101,9 +103,15 @@ is \cd{some_OptTy}, where \cd{OptTy} is the name of the \Popt{}
 type.  The second branch corresponds to the case where the value is
 not present; its name is \cd{none_OptTy}.  For example, the
 \pads{} compiler translates the \Popt{} declaration
-\input{code/source-opt.tex}
+
+\inputCode{code/source-opt}
+%
+\noindent
 into
-\input{code/translation-opt.tex}
+
+\inputCode{code/translation-opt}
+%
+\noindent
 and then generates the appropriate code for this declaration.
 
 \subsection{Tags}
@@ -111,7 +119,10 @@ and then generates the appropriate code for this declaration.
 Because the compilation of \Popt{}s is based on that of \Punion{}s,
 the \pads{} compiler generates a tag type to describe whether the
 option was present.  
-\input{code/opt.TyOptTags}
+
+\inputCode{code/opt.TyOptTags}
+%
+\noindent
 Details about the form of this declaration may be found in
 \secref{sec:unions-tags}. 
 
@@ -121,8 +132,8 @@ The in-memory representation of an option is a \C{} struct containing
 a \cd{tag} field and a \cd{val} field.  The tag indicates whether the
 option was present.  If the tag indicates it was, the value field
 stores the corresponding value. 
-\input{code/opt.TyOptRep}
 
+\inputCode{code/opt.TyOptRep}
 \subsection{Mask}
 \label{sec:opts-masks}
 The mask of a \Popt{} is a \C{} struct with two fields.
@@ -131,7 +142,8 @@ toggle behavior at the level of the option as a whole.  The second
 field controls the behavior of various-library functions on the
 ``some'' branch of the option, \ie{}, the branch that corresponds to
 the value being present in the source.
-\input{code/opt.TyOptCSM}
+
+\inputCode{code/opt.TyOptCSM}
 
 \subsection{Parse descriptor}
 \label{sec:opts-parse-descriptors}
@@ -141,7 +153,8 @@ addition,  there is a \cd{tag} field indicating whether the option
 appeared in the source and a \cd{val} field which stores
 the parse descriptor of the populated branch, represented as a \C{}
 union. 
-\input{code/opt.TyOptPD}
+
+\inputCode{code/opt.TyOptPD}
 
 \subsection{Operations}
 \label{sec:opts-operations}
@@ -155,7 +168,7 @@ For the \Punion{}
 \figref{fig:popt-ops}.
 \begin{figure}
 \label{fig:popt-ops}
-\input{code/opt.TyOptOps}
+\inputCode{code/opt.TyOptOps}
 \caption{Prototypes of operations generated for the \Popt{} \texttt{TyOpt}.}
 \end{figure}
 
@@ -164,11 +177,14 @@ For the \Punion{}
 The error codes for \Popt{}s are:
 
 \tskip{}
-\begin{tabular}{lp{4in}}
+\begin{center}
+\begin{tabular}{l|p{4in}}
+Code                           & Meaning \\ \hline
  \cd{P_NO_ERR}                 & Indicates no error occurred\\[1ex]
  \cd{P_OPTION_MATCH_ERR}       & Indicates that no branch of the
                                     option parsed without error.\\[1ex]
 \end{tabular}
+\end{center}
 
 \noindent
 For a option parsing function to return the \cd{P_OPTION_MATCH_ERR}, 

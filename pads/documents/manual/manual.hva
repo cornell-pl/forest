@@ -1,0 +1,11 @@
+%\renewcommand{\sc}{\Huge}
+\renewcommand{\myvskip}[1]{}
+\renewcommand{\Cplusplus}{C++}
+\renewcommand{\escdquote}{\begin{rawhtml}\"\end{rawhtml}}
+\renewcommand{\escquote}{\begin{rawhtml}\'\end{rawhtml}}
+\renewcommand{\mcomment}[1]{\textit{\red{} #1}}
+\newcommand{\hlt}{\begin{rawhtml}<\end{rawhtml}}
+\newcommand{\hgt}{\begin{rawhtml}>\end{rawhtml}}
+\renewcommand{\myurl}[1]{\hlt{}a href="http://#1"\hgt{}\texttt{#1}\hlt{}/a\hgt{} }
+\renewcommand{\myemail}[1]{\hlt{}a href="mailto:#1"\hgt{}\texttt{#1}\hlt{}/a\hgt{}}
+\renewcommand{\is}{~::=~}

@@ -1,8 +1,18 @@
-\documentclass{report}
+\documentclass[11pt,twoside]{report}
+
+\newif\ifpdf
+\ifx\pdfoutput\undefined
+  \pdffalse
+\else
+  \pdfoutput=1
+  \pdftrue
+\fi
+
 \usepackage{code}
 \usepackage{times}
 \usepackage{moreverb}
 \usepackage{url}
+\usepackage{hevea}
 \input{spacing.tex}
 \setlength{\oddsidemargin}{0in}
 \setlength{\evensidemargin}{0in}
@@ -11,44 +21,55 @@
 \usepackage{graphics}        % standard LaTeX graphics tool
 \usepackage{epsfig}
 
-\begin{document}
-\date{}
-%\setlength{\parskip}{0pt}
-
-\input{defs.tex}
-\title{{\LARGE \bf PADS \\ Manual} \\
-\vspace*{.1in}
-{\large \today{}} \\
-\vspace*{.1in}
-{\large
- \begin{tabular}{r@{\hskip .5em}c@{\hskip .5em}l}
-%   (Hancock 2.0 &:& May    15, 2001)\\
- \end{tabular}}
+\input{version}
+\newcommand{\RevDate}{\today{}}
+\newcommand{\DocumentTitle}{ 
+   PADS Manual \\
+  (Version \PadsVersion) \\
 }
+\input{defs}
+\tocnumber
+\htmlprefix{\pads{} Manual: }
+%BEGIN LATEX
+\setlength{\textwidth}{6in}
+\oddsidemargin 0.25in
+\evensidemargin 0.25in
+\addtolength{\textheight}{1.0in}
+\addtolength{\topmargin}{-0.5in}
+\parskip 5pt
+%END LATEX
 
-\author{Kathleen Fisher \\
-        Robert Gruber \\[1ex]
-        {\em AT\&T Labs }\\
-	{\em Shannon Laboratory} \\
-	{\em 180 Park Avenue} \\
-	{\em Florham Park, NJ 07932, USA} \\
-        {\small\tt pads@research.att.com}}
 
+
+%BEGIN LATEX
+%-------------------------
+% the following magic makes the tt font in math mode be the same as the
+% normal tt font (i.e., Courier)
+%
+\SetMathAlphabet{\mathtt}{normal}{OT1}{pcr}{n}{n}
+\SetMathAlphabet{\mathtt}{bold}{OT1}{pcr}{bx}{n}
+%-------------------------
+%END LATEX
+
+\begin{document}
+\pagestyle{empty}
+\input{title}
+
+\cleardoublepage
+\pagestyle{plain}
 \pagenumbering{roman}
-\maketitle
-\setcounter{page}{0}
-\vspace*{3in}
-\begin{center}
-Copyright \copyright{ 2003 AT\&T Corp.}
-\end{center}
-\thispagestyle{empty} \pagebreak[4]
+
+\setcounter{page}{1}
+\begin{latexonly}
 \tableofcontents
-\clearpage
-\mbox{}
-\thispagestyle{empty} \pagebreak[4]
+\end{latexonly}
 \input{preface}
-\clearpage
+
+\cleardoublepage
+\setcounter{page}{1}
 \pagenumbering{arabic}
+
+
 \input{intro}
 \input{example}
 %\input{library}
@@ -63,6 +84,8 @@ Copyright \copyright{ 2003 AT\&T Corp.}
 \input{library-use}
 \input{library-customization}
 \input{accumulators}
+\input{format}
+\input{xml}
 %\input{implementation}
 
 
@@ -70,7 +93,6 @@ Copyright \copyright{ 2003 AT\&T Corp.}
 \bibliography{pads}
 
 \appendix
-\input{ai}
 \input{error-codes}
 \end{document}
 
