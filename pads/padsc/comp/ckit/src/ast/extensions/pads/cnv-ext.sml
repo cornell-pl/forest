@@ -359,6 +359,10 @@ structure CnvExt : CNVEXT = struct
     fun CTcnvType (ct : PT.ctype) : (acty * Ast.storageClass) 
 	= cnvType(false, P.pctToPDT ct)
 
+    fun CTisSigned cty = 
+        case cty of Ast.Numeric (_, _, Ast.UNSIGNED, _, _) => true
+        | _ => false
+
     datatype CTsign = Signed | Unsigned | Any
     type CTnum =  Ast.intKind * CTsign
 
@@ -3906,6 +3910,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		 (* scope is removed at end of cnvPArray *)
 
+                 
                  (* -- Check size specification for array *)
                  val (minOpt, maxOpt, minConstOpt, maxConstOpt, chkBoundsSs) = 
                      let fun allocBuffs  countX = 
@@ -3922,21 +3927,24 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							    ", expected type unsigned int"))
 			 fun chkSize(boundX, which) = 
 			     let val () = checkSizeTy(boundX, which)
-				 val boundConstOpt = #1(evalExpr boundX)
+				 val (boundConstOpt, cty, _, _) = evalExpr boundX
+				 val isUnsigned = CTisSigned cty
 			     in
 				 case boundConstOpt of NONE => NONE
-                                 | cOpt as SOME cVal => (
+                                 | SOME cVal => (
 				     if IntInf.<(cVal, IntInf.fromInt 0)
 				     then (PE.error("Mininum value for the size of array "^
 						    name ^ " (" ^ (IntInf.toString cVal) ^")"^
 						    " must be greater than zero"))
                                      else ();
-				     cOpt
+				     SOME (cVal, isUnsigned)
                                  (* end SOME cVal *))
 			     end
 			 fun genPosMinCheckSs (minConstOpt, minX) = 
-			     if isSome minConstOpt then []
-			     else [PT.IfThen( (* if (minX<0) *)
+			     case minConstOpt of NONE => []
+                             | SOME(_, isUnsigned) => 
+			       if isUnsigned then []
+			       else [PT.IfThen( (* if (minX<0) *)
 					     amCheckingBasicE(SOME (P.ltX(minX, P.zero))),
 					     recordArrayErrorS([tlocES1], tLocX,
 							       PL.P_ARRAY_MIN_NEGATIVE, true,
@@ -3946,8 +3954,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							       "is negative", [minX], false))]
 
 			 fun genPosMaxCheckSs (maxConstOpt, maxX) = 
-			     if isSome maxConstOpt then []
-			     else [PT.IfThen( (* if (maxX<0) *)
+			     case maxConstOpt of NONE => []
+                             | SOME(_,isUnsigned) => 
+				 if isUnsigned then []
+				 else [PT.IfThen( (* if (maxX<0) *)
 					     amCheckingBasicE(SOME(P.ltX(maxX, P.zero))),
 					     recordArrayErrorS([tlocES1], tLocX,
 							       PL.P_ARRAY_MAX_NEGATIVE, true, readName,
@@ -3964,10 +3974,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                            |  (SOME minX, SOME maxX) => (
 				let val minConstOpt = chkSize(minX, "Minimum")
 				    val maxConstOpt = chkSize(maxX, "Maximum")
-				    val staticBounds = (isSome minConstOpt) andalso (isSome maxConstOpt)
+				    val staticBounds = (Option.isSome minConstOpt) andalso (Option.isSome maxConstOpt)
 				    val minMaxCheckSs = 
 					   if staticBounds 
-                                             then if IntInf.> (valOf minConstOpt, valOf maxConstOpt) 
+                                             then if IntInf.> (#1(valOf minConstOpt), (#1(valOf maxConstOpt))) 
 					          then (PE.error("Mininum value for the size of array "^
 								name ^ " " ^
 								" is greater than its maximum size");
@@ -3989,11 +3999,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				    val dynBoundsCheckSs =  minMaxCheckSs 
 					                  @ genPosMinCheckSs(minConstOpt, minX) 
 					                  @ genPosMaxCheckSs(maxConstOpt, maxX)
-				    val fixedSize =  (valOf minConstOpt) = (valOf maxConstOpt)
+				    val fixedSize =  (#1(valOf minConstOpt)) = (#1(valOf maxConstOpt))
 							 handle Option => false
 				    val sizeAllocSs = 
 					if fixedSize 
-                                        then allocBuffs (P.intX (IntInf.toInt(valOf maxConstOpt)))
+                                        then allocBuffs (P.intX (IntInf.toInt(#1(valOf maxConstOpt))))
 					else allocBuffs (P.zero)
 					             
 				in
@@ -4053,7 +4063,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		 (* Generate accumulator type (array case) *)
                  val numElemsToTrack = case maxConstOpt of NONE => 10
-		                       | SOME x => Int.min(10, IntInf.toInt x)
+		                       | SOME(x,y) => Int.min(10, IntInf.toInt x)
 		 val baseFields = 
 		     case lookupAcc baseTy of NONE => [] 
 		     | SOME acc => 
@@ -4410,7 +4420,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				     |  SOME (PX.SizeInfo{min, max, maxTight}) => 
 					  if not maxTight then TyProps.Variable  (* lower and upper bounds differ *)
 					  else (case (maxConstOpt, minConstOpt)
-					        of (SOME min, SOME max) =>  (* constant size given: maxTight => min = max *)
+					        of (SOME (min,_), SOME( max,_)) =>  (* constant size given: maxTight => min = max *)
 						     TyProps.Size(max, IntInf.fromInt 0)
 					        | _ => TyProps.Param(paramNames, NONE, valOf max, P.zero)(* case max *))
                  fun getSize Xopt = case Xopt of NONE => TyProps.mkSize(0,0) | SOME (e, _, _, typ, _, _, _) => getLitSize(typ, e)
