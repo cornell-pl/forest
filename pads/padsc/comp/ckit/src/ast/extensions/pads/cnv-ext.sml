@@ -2561,14 +2561,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun genFieldMan m = []
 		      val localFields = mungeFields genFieldFull genFieldBrief genFieldMan fields
 
-		      (* counting Full and Computed fields 
-		      fun isFullorManif (PX.Full f) = 1
-			| isFullorManif (PX.Manifest f) = 1
-		        | isFullorManif _ = 0
-		      fun plus (a,b) = a+b
-		      fun countFields fs = List.foldr plus 1 (List.map isFullorManif fs)
-		      *)
-
+		      (* counting Full and Computed fields *)
 		      fun countFieldFull f = [1]
 		      fun countFieldMan m = []
 		      fun countFieldBrief e = [1]
