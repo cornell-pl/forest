@@ -223,7 +223,7 @@ end
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT (* PADS *)
-        | PSTRUCT | PARRAY | PSEP | PTERM | PFORALL | PIN (* PADS *)
+        | PSTRUCT | PUNION | PARRAY | PSEP | PTERM | PFORALL | PIN (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -306,9 +306,11 @@ end
         | pArray of externalDecl
         | pSizeOpt of (expression PX.PSize) option
         | pSizeSpec of (expression PX.PSize) option
+        | pForAllRange of (expression PX.PRange)
         | pArrayConstraint of (expression PX.PConstraint) 
         | pArrayConstraints of (expression PX.PConstraint) list
         | pArrayConstraintOpt of (expression PX.PConstraint) list
+        | pUnion of externalDecl
 
 %pos int
 %verbose
@@ -360,6 +362,7 @@ externalDeclaration:
 							               functionDefinitionright)))
 (* PADS: start external declarations *)
         | pStruct RCURLY                (SOME(markExternalDecl srcMap (pStruct,pStructleft,RCURLYright)))
+        | pUnion  RCURLY                (SOME(markExternalDecl srcMap (pUnion, pUnionleft, RCURLYright)))
         | pArray  RCURLY                (SOME(markExternalDecl srcMap (pArray, pArrayleft, RCURLYright)))
 (* PADS END *)
 
@@ -996,11 +999,15 @@ pStruct:
    ExternalDeclExt(PX.PStruct {name = pName, params = pTyParams, fields = pStructFieldList})
  )
 
+pForAllRange : 
+   LBRACE expr DOTDOT expr RBRACE   (PX.Bounds(expr1, expr2))
+ | pName		            (PX.ArrayName pName)
+
 pArrayConstraint : 
    PSEP EQ expr  (PX.Sep expr)
  | PTERM EQ expr (PX.Term expr)
- | PFORALL pName PIN LBRACE expr DOTDOT expr RBRACE LCURLY expr RCURLY 
-   (PX.Forall {index = pName1, lower = expr1, upper = expr2, body = expr3})
+ | PFORALL pName PIN pForAllRange LCURLY expr RCURLY 
+   (PX.Forall {index = pName1, range = pForAllRange, body = expr})
  | expr         (PX.General expr)
 
 pArrayConstraints : 
@@ -1026,3 +1033,9 @@ pArray:
 			      args = pOptActParams, baseTy = PX.Name pName2, 
 			      sizeSpec = pSizeSpec, constraints = pArrayConstraintOpt})
  )
+
+pUnion:
+ PUNION pName pushScope pTyParams LCURLY pStructFieldList popScope
+ (
+   ExternalDeclExt(PX.PUnion {name = pName, params = pTyParams, variants=pStructFieldList})
+ ) 

@@ -860,6 +860,154 @@ structure CnvExt : CNVEXT = struct
                  @ cnvExternalDecl edStructED
                  @ cnvExternalDecl readFunED
 	      end
+
+	     fun cnvPUnion ({name:string, params: (pcty * pcdecr) list, variants : pcexp PX.PSField list}) = 
+		 let (* Some useful names *)
+                     val value = "val"
+		     val tag = "tag"
+		     fun tgSuf s = s^"_tag"
+		     fun unSuf s = s^"_u"
+
+		     (* Functions for walking over list of variabts *)
+		     fun mungeVariant f b (PX.Full fd) = f fd
+		       | mungeVariant f b (PX.Brief e) = b e
+		     fun mungeVariants f b [] = []
+		       | mungeVariants f b (x::xs) = (mungeVariant f b x) @ (mungeVariants f b xs)
+
+                     (* generate enumerated type describing tags *)
+		     fun genTagFull {pty :PX.Pty, args : pcexp list, 
+				     name:string, pred:pcexp option, comment:string option} = 
+			 [(name,PT.EmptyExpr)]
+
+		     fun genTagBrief e = []
+		     val tagFields = mungeVariants genTagFull genTagBrief variants
+		     val tagED = P.makeTyDefEnumEDecl(tagFields, tgSuf name)
+		     val tagDecls = cnvExternalDecl tagED
+		     val tagPCT = P.makeTypedefPCT(tgSuf name)
+
+                     (* generate canoncical representation *)
+		     fun genRepFull {pty :PX.Pty, args : pcexp list, 
+				     name:string, pred:pcexp option, comment:string option} = 
+			 let val predStringOpt = Option.map P.expToString pred
+			     val fullCommentOpt = stringOptMerge(comment, predStringOpt)
+			 in
+			     [(name,P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)), fullCommentOpt )]
+			 end
+		     fun genRepBrief e = (PE.error "Unions do not currently support brief fields.\n"; [])
+		     val canonicalVariants = mungeVariants genRepFull genRepBrief variants
+		     val unionED = P.makeTyDefUnionEDecl(canonicalVariants, unSuf name)
+		     val unionDecls = cnvExternalDecl unionED
+                     val unionPCT = P.makeTypedefPCT(unSuf name)
+                     val structFields = [(tag, tagPCT, NONE),
+					 (value, unionPCT, NONE)]
+		     val canonicalStructED = P.makeTyDefStructEDecl (structFields, repSuf name)
+		     val canonicalDecls = cnvExternalDecl canonicalStructED 
+                     val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
+
+		      (* Generate error mask *)
+		     fun genEMFull {pty :PX.Pty, args : pcexp list, 
+				    name:string, pred:pcexp option, comment} = 
+			 [(name,P.makeTypedefPCT(lookupTy (pty,emSuf,#emname)), NONE)]
+		     fun genEMBrief e = []
+		     val emFields = mungeVariants genEMFull genEMBrief variants
+		     val emFirstPCT = case emFields
+                                       of [] => NONE
+                                       | (f::fs) => let val ty = #2 f
+							val aty = #1 (CTcnvType ty)
+						    in
+						       if Option.isSome(CTisEnum aty) 
+							   then SOME ty else NONE
+						    end
+		     val emStructED = P.makeTyDefStructEDecl (emFields, emSuf name)
+		     val emPCT = P.makeTypedefPCT (emSuf name)			  
+
+		     (* Generate error description *)
+		     fun genEDFull {pty :PX.Pty, args : pcexp list,
+				    name:string, pred:pcexp option, comment} = 
+			 [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
+		     fun genEDBrief e = []
+		     val auxEDFields = [(nerr, P.int,NONE), (errCode, P.int,NONE),
+					(loc, PL.locPCT,NONE), (panic, P.int,NONE)]
+		     val edFields = auxEDFields @ (mungeVariants genEDFull genEDBrief variants)
+		     val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
+		     val edPCT = P.makeTypedefPCT (edSuf name)			  
+
+                     (* Generate read function *)
+                     (* -- Some useful names *)
+		     val readName = readSuf name
+
+                     (* -- some helper functions *)
+                     fun genReadFull{pty :PX.Pty, args:pcexp list,
+				       name:string, pred:pcexp option, comment} = 
+			  let val readFieldName = lookupTy(pty, readSuf, #readname)
+                              val () = checkParamTys(name, readFieldName, args, 2, 3)
+                              val () = case pred of NONE => ()
+				       | SOME constraint => 
+				             expEqualTy(constraint, CTintTys, 
+						        fn s=> (" constraint for variant "^
+								name ^ " has type: " ^ s ^
+								". Expected an int."))
+			      val commentS = P.mkCommentS ("Reading field: "^ name )
+			      val foundItSs = PT.Compound(
+					       PL.commitS(PT.Id ts, PT.Id disc)
+					       @[P.assignS(fieldX(rep,tag),PT.Id name),
+					         PT.Return PL.PDC_OK])
+			      fun doConstraint pred = case pred of NONE => foundItSs
+				  | SOME constraint => PT.Compound[
+                                          PT.IfThenElse(
+                                           P.andX(P.lteX(fieldX(em,name), PL.EM_CHECK),
+						  P.notX constraint),
+					   PT.Compound(PL.restoreS(PT.Id ts, PT.Id disc)),
+					   foundItSs
+					  )]
+
+			      val readS = 
+				    PL.chkPtS(PT.Id ts, PT.Id disc)
+				  @[PT.IfThenElse(
+				      PL.readFunChkX(
+					 PL.PDC_ERROR, readFieldName, PT.Id ts, 
+					 P.addrX(fieldX(em,name)), args, 
+					 P.addrX(fieldX(ed,name)),
+					 P.addrX(P.dotX(fieldX(rep,value), PT.Id name)),
+					 PT.Id disc),
+				       PT.Compound (PL.restoreS(PT.Id ts, PT.Id disc)),
+				       doConstraint pred)
+				    ]
+			  in
+			      [commentS] @  readS
+			  end
+
+                     fun genReadBrief _ = []
+
+		     val cleanupSs =  [P.mkCommentS("We didn't match any branch")]
+			             @ reportErrorSs(
+					PL.PDC_UNION_MATCH_FAILURE,
+					true, 
+					("Did not match any branch of union "^name^"."),
+					[])
+			             @ [P.assignS(fieldX(ed,panic), P.trueX),
+					PT.Return PL.PDC_ERROR]
+
+
+                     (* -- Assemble read function *)
+		     val _ = pushLocalEnv()                                        (* create new scope *)
+		     val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
+		     val cParams : (string * pcty) list = List.map mungeParam params
+                     val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
+		     val readFields = mungeVariants genReadFull genReadBrief variants  (* does type checking *)
+		     val _ = popLocalEnv()                                         (* remove scope *)
+		     val bodySs = readFields @ cleanupSs
+		     val readFunED = genReadFun(readName, cParams, 
+						emPCT,edPCT,canonicalPCT, emFirstPCT, bodySs)
+
+		 in
+		       tagDecls
+		     @ unionDecls
+		     @ canonicalDecls
+	             @ cnvExternalDecl emStructED
+	             @ cnvExternalDecl edStructED
+	             @ cnvExternalDecl readFunED
+		 end
 	  
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
@@ -1069,9 +1217,18 @@ structure CnvExt : CNVEXT = struct
 				   (NONE, SOME (exp,readFun,scanFun), NONE, NONE)
                                  end
                               (* end Term case *))
-                              |  PX.Forall (r as {index,lower, upper,body}) => (
+                              |  PX.Forall (r as {index,range,body}) => (
                                  let val subList = [(length, fieldX(rep,length)), 
 						    (name, fieldX(rep,name))]
+				     val (lower, upper) = 
+					(case range 
+					 of PX.ArrayName n => (
+					    (if n = name then ()
+					     else PE.error ("Array name in bound expression ("^
+							    n^") does not match the name "^
+							    "of the array ("^ name ^ ").")
+                                            ); (P.zero, PT.Id length))
+					 | PX.Bounds(lower, upper) => (lower,upper))
 				     val modBodyX = PTSub.substExps subList body
 				     val modLowerX = PTSub.substExps subList lower
 				     val modUpperX = PTSub.substExps subList upper
@@ -1374,15 +1531,16 @@ structure CnvExt : CNVEXT = struct
                       PT.Compound[
                        P.varDeclS'(P.int, index),
                        P.varDeclS(P.int, "violated", P.falseX),
+		       PT.IfThen(P.notX(P.andX(P.lteX(P.zero, lower),
+				 	P.ltX(upper, fieldX(rep,length)))),
+				 P.assignS(PT.Id "violated", P.trueX)),
 		       PT.For(P.assignX(PT.Id index, lower),
-			      P.andX(P.lteX(PT.Id index, upper), 
-				     P.ltX(PT.Id index, fieldX(rep,length))),
+			      P.andX(P.notX(PT.Id "violated"), P.lteX(PT.Id index, upper)), 
 			      P.postIncX(PT.Id index),
                               PT.Compound[
                                PT.IfThen(P.notX(body),
 				 PT.Compound[
-                                  P.assignS(PT.Id "violated", P.trueX),
-				  PT.Break
+                                  P.assignS(PT.Id "violated", P.trueX)
                                  ] (* end if *))
                               ] (* end for *)),
 		       PT.IfThen(PT.Id "violated",
@@ -1428,6 +1586,7 @@ structure CnvExt : CNVEXT = struct
 	  in
 	      case decl 
 	      of PX.PStruct s => cnvPStruct s
+              |  PX.PUnion  u => cnvPUnion  u
               |  PX.PArray  a => cnvPArray  a
 	  end
 

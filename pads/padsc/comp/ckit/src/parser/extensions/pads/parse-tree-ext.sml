@@ -14,10 +14,14 @@ structure ParseTreeExt =
         datatype 'exp PSize = 
            SizeInfo of {min : 'exp option, max : 'exp option, maxTight : bool}
 
+        datatype 'exp PRange = 
+           ArrayName of string
+         | Bounds of 'exp * 'exp
+
         datatype 'exp PConstraint = 
            Sep of 'exp
          | Term of 'exp
-         | Forall of {index : string, lower : 'exp, upper : 'exp, body : 'exp}
+         | Forall of {index : string, range : 'exp PRange, body : 'exp}
          | General of 'exp
        
         datatype ('decr, 'ct, 'exp) PExternal = 
@@ -29,6 +33,9 @@ structure ParseTreeExt =
 		       args   : 'exp list, 
 		       sizeSpec : ('exp PSize) option, 
 		       constraints : ('exp PConstraint) list} 
+         | PUnion of {name     : string,
+		      params   : ('ct * 'decr) list,
+		      variants : ('exp PSField) list}
 
         datatype PStatement = 
           PComment of string

@@ -69,6 +69,7 @@ struct
 	      ] @ [  (* PADSC *)
                ("pstruct", Tokens.PSTRUCT),
                ("parray", Tokens.PARRAY),
+               ("punion", Tokens.PUNION),
                ("sep", Tokens.PSEP),
                ("term", Tokens.PTERM),
                ("forall", Tokens.PFORALL),

@@ -9,6 +9,11 @@ parray recList(auint32 h, int x, int size) {
 };
 
 
+parray recList2(auint32 h, int x, int size) {
+  test(:h,x:) [size] : forall i in recList2  {  recList2[i].id % 2 == 0};
+};
+
+
 pstruct test2 {
   auint32 h;
   '|';

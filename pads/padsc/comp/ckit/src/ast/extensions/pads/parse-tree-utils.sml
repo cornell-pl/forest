@@ -32,6 +32,25 @@ struct
 		      ]
 	end
 
+    fun makeUnionPCT (variants : (string * PT.ctype * string option) list, tag : string option) =
+	let fun genVariant (id,ct,sOpt) = 
+	    (ct,[ (PT.VarDecr id, PT.EmptyExpr) ],sOpt)
+	in
+	    makePCT [PT.Struct {isStruct = false,
+				 tagOpt = tag,
+				 members = List.map genVariant variants
+				 }
+		      ]
+	end
+
+    fun makeEnumPCT (members : (string * PT.expression) list, tag : string option) =
+	    makePCT [PT.Enum   { tagOpt = tag,
+				 enumerators = members,
+				 trailingComma = false
+				 }
+		      ]
+
+
     fun makeTypedefPCT s  = makePCT [PT.TypedefName s]
     fun ptrPCT ty         = makePCT [PT.Pointer ty]
 
@@ -116,6 +135,18 @@ struct
         PT.ExternalDecl(
           PT.Declaration(
               pctToPTyDefDT(makeStructPCT(fields,SOME (tag^"_s"))),
+              [(PT.VarDecr tag, PT.EmptyExpr)]))
+
+    fun makeTyDefUnionEDecl (fields : (string*PT.ctype * string option) list, tag : string) =
+        PT.ExternalDecl(
+          PT.Declaration(
+              pctToPTyDefDT(makeUnionPCT(fields,SOME (tag^"_u"))),
+              [(PT.VarDecr tag, PT.EmptyExpr)]))
+
+    fun makeTyDefEnumEDecl (fields : (string * PT.expression) list, tag : string) =
+        PT.ExternalDecl(
+          PT.Declaration(
+              pctToPTyDefDT(makeEnumPCT(fields,SOME (tag^"_e"))),
               [(PT.VarDecr tag, PT.EmptyExpr)]))
 
     fun mkFunctionEDecl(funName, paramList, bodyS, retTy:PT.ctype) =
