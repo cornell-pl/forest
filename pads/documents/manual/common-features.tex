@@ -655,11 +655,7 @@ three different ``knobs'' associated with each atomic element of a
 Flag name       & Definition    \\ \hline
 \cd{P_SynCheck} & Check syntactic constraints\\
 \cd{P_SymCheck} & Check semantic constraints\\
-\cd{P_BothCheck} & Check both syntactic and semantic constraings.\\
 \cd{P_Set}      & Set the in-memory representation\\
-\cd{P_CheckAndSet} & Check both syntactic and semantic constraints and
-set the in-memory representation\\[1ex]
-\cd{P_Ignore}   & Do as little as possible to process this field\\
 \end{tabular}
 \end{center}
 
@@ -676,14 +672,16 @@ supplied value.
 Details about the read functions for particular types may be found in
 the appropriate chapters.
 
-For convenience, the \pads{} library provides the following abbreviations:
+Flags can be combined using the bit-wise OR operator (vertical bar, or '\cd{|}').  For example,
+one can write \cd{P_Set|P_SynCheck|P_SemCheck} to combine the first three flags.  
+For convenience, {\tt pads.h} provides the following abbreviations:
 
 \myvskip{1ex}
 \begin{center}
 \begin{tabular}{l@{ }l}
 \cd{\#define P_CheckAndSet} & \cd{P_Set|P_SynCheck|P_SemCheck}\\
 \cd{\#define P_BothCheck}   & \cd{P_SynCheck|P_SemCheck} \\
-\cd{\#define P_Ignore}      & no flags set\\[1ex]
+\cd{\#define P_Ignore}      & no flags set (do as little work as possible to process this field) \\
 \end{tabular}
 \end{center}
 
