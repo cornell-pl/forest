@@ -32,6 +32,9 @@ padsc_comp:
 regress:
 	@(cd libpads/tests; $(MAKE) regress; cd ../../examples/tests; $(MAKE) regress) | $(PADS_HOME)/scripts/count_differs.pl
 
+regress_pglx:
+	@(cd examples/xml/tests_pglx; $(MAKE) regress) 
+
 test_xml:
 	@(cd examples/xml/tests; $(MAKE) regress) 
 
