@@ -562,7 +562,6 @@ for(i = ndefn-1; i >= 0; i--){
 		if (opn != ""){
 		    lineno = outpathlineno[opn]
 		    # printf("YYY MUNGING OUTPATH %s\n", opn)>stderr;
-		    cur_type = padstype[s]
 		    opn_off = 0
 		    mod_opn = ""
 		    num_opn_elts = split(opn, opn_elts, ".")
@@ -600,6 +599,7 @@ for(i = ndefn-1; i >= 0; i--){
 		    } else {		# element is a primitive
 			s = typeof[substr(fmt[d,j], 1, index(fmt[d,j], ",")-1)]
 			if (padstype[s]) {
+				cur_type = padstype[s]
 				ty_str = ""
 				if (padsargs[s] == "digsum"){
 				    if(vlen == 1) {
