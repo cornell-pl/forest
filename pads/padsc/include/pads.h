@@ -1152,6 +1152,15 @@ ssize_t P_invoke_fmt_fn(Pfmt_fn fn, P_t *pads, Pbyte *buf, size_t buf_len, int *
 			int *requested_out, const char *delims,
 			void *m, void *pd, void *rep, ...);
 
+/* If delims is a pointer to a delimiter within a string of
+ * delimiters, P_ADVANCE_DELIMS produces a pointer to the
+ * next delimiter, or to the same delimeter if there are no
+ * more available delimiters.  Typically used as follows:
+ *
+ *      delims = P_ADVANCE_DELIMS(delims);
+ */
+#define P_ADVANCE_DELIMS(delims) ((*(delims + 1)) ? delims + 1 : delims)
+
 /* Pfmt_fn_map_t: type of a fmt function map */
 typedef struct Pfmt_fn_map_s Pfmt_fn_map_t;
 

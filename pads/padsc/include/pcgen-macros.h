@@ -188,9 +188,14 @@ void PCGEN_ARRAY_PD_XML_OUT();
 void PCGEN_UNION_PD_XML_OUT();
 
 void PCGEN_ENUM_XML_OUT(const char *def_tag, const char *(rep2str_fn)(int));
+
 void PCGEN_FMT_INIT(char * fnName);
 void PCGEN_FMT_INIT_TYPEDEF(char * fnName);
 void PCGEN_FMT_INIT_ENUM(char * fnName);
+
+void PCGEN_FMT_INIT_LOOKUP(char * fnName, Pfmt_fn fnLookupAssign, ssize_t fnInvoke);
+void PCGEN_FMT_INIT_TYPEDEF_LOOKUP(char * fnName, Pfmt_fn fnLookupAssign, ssize_t fnInvoke);
+void PCGEN_FMT_INIT_ENUM_LOOKUP(char * fnName, Pfmt_fn fnLookupAssign, ssize_t fnInvoke);
 
 void PCGEN_FMT_STRUCT_FIELD(char *fieldName, ssize_t length);
 void PCGEN_FMT_FIX_LAST();
@@ -1997,17 +2002,80 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_FMT_NEXT(delim) ((*(delim + 1)) ? delim + 1 : delim)
+#define PCGEN_FMT_INIT_ENUM_REAL(fnName)
+     PDCI_STANDARD_FMT2BUF_INIT(*m, requestedOut)
+/* END_MACRO */
 
-#define PCGEN_FMT_INIT_TYPEDEF(fnName)
+#define PCGEN_FMT_INIT_TYPEDEF_REAL(fnName)
+do { 
+  PDCI_STANDARD_FMT2BUF_INIT(m->compoundLevel, requestedOut);
+  PDCI_DELIMS_CHECK_RET_SSIZE(fnName, delims);
+  tdelim_PCGEN_ = delims;
+ } while (0)
+/* END_MACRO */
+
+#define PCGEN_FMT_INIT_REAL(fnName) 
+ do { 
+  PDCI_STANDARD_FMT2BUF_INIT(m->compoundLevel, requestedOut);
+  PDCI_DELIMS_CHECK_RET_SSIZE(fnName, delims);
+  tdelim_PCGEN_ = P_ADVANCE_DELIMS(delims);
+ } while (0)
+/* END_MACRO */
+
+#define PCGEN_FMT_INIT_ENUM(fnName)
  do { 
   PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
-  if (!P_Test_WriteOrWriteVoid(m->compoundLevel)) {
-    *requestedOut = 0; 
-    return 0;
+  PCGEN_FMT_INIT_ENUM_REAL(fnName);
+ } while (0)
+/* END_MACRO */
+
+//  fnLookupAssign should be of the form:
+//     fn = PDCI_GET_FMT_FN(pads, "ty1")
+//  fnInvoke should be of the form:
+//     P_invoke_format_fn(fn, pads, buf, buf_len, buf_full, requestedOut, delims, m, pd, rep [, typearg1 ... typeargN])
+
+#define PCGEN_FMT_INIT_ENUM_LOOKUP(fnName, fnLookupAssign, fnInvoke)
+ do { 
+  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
+  PCGEN_FMT_INIT_ENUM_REAL(fnName);
+  if ((fnLookupAssign)) {
+    return fnInvoke;
   }
-  *buf_full = 0;
-  tdelim_PCGEN_ = delims;
+ } while (0)
+/* END_MACRO */
+
+#define PCGEN_FMT_INIT_TYPEDEF(fnName)
+do {
+  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
+  PCGEN_FMT_INIT_TYPEDEF_REAL(fnName);
+ } while (0)
+/* END_MACRO */
+
+#define PCGEN_FMT_INIT_TYPEDEF_LOOKUP(fnName, fnLookupAssign, fnInvoke)
+do {
+  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
+  PCGEN_FMT_INIT_TYPEDEF_REAL(fnName);
+  if ((fnLookupAssign)) {
+    return fnInvoke;
+  }
+ } while (0)
+/* END_MACRO */
+
+#define PCGEN_FMT_INIT(fnName) 
+ do { 
+  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
+  PCGEN_FMT_INIT_REAL(fnName);
+} while (0)
+/* END_MACRO */
+
+
+#define PCGEN_FMT_INIT_LOOKUP(fnName, fnLookupAssign, fnInvoke) 
+ do { 
+  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
+  PCGEN_FMT_INIT_REAL(fnName);
+  if ((fnLookupAssign)) {
+    return fnInvoke;
+  }
  } while (0)
 /* END_MACRO */
 
@@ -2022,29 +2090,12 @@ do {
  } while (0)
 /* END_MACRO */
 
-#define PCGEN_FMT_INIT(fnName) 
- do { 
-  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
-  if (!(*delims)) { 
-       PDCI_report_err(pads, P_WARN_FLAGS, 0, P_FMT_EMPTY_DELIM_ERR, (fnName), "Empty delimiter sequence");
-       return -1;
-  };
-  /* Invariant: delims[0] is always ok. */
-  tdelim_PCGEN_ = PCGEN_FMT_NEXT(delims);
-  if (!P_Test_WriteOrWriteVoid(m->compoundLevel)) {
-    *requestedOut = 0; 
-    return 0;
-  }
-  *buf_full = 0;
- } while (0)
-/* END_MACRO */
-
 #define PCGEN_FMT_ARRAY(fdName, fmtCall)
  do {
     const char * ttdelim_PCGEN_ = tdelim_PCGEN_;
     Pbase_pd pd_PCGEN_;
     pd_PCGEN_.errCode = P_NO_ERR;
-    tdelim_PCGEN_  = PCGEN_FMT_NEXT(tdelim_PCGEN_);
+    tdelim_PCGEN_  = P_ADVANCE_DELIMS(tdelim_PCGEN_);
     if (P_WriteMeta & m->compoundLevel) {
         tlen_PCGEN_ = Pa_uint32_write2buf(pads,buf_cursor_PCGEN_,buf_len,buf_full,&pd_PCGEN_, &rep->length); 
 	PCGEN_TLEN_UPDATES (); 
@@ -2110,13 +2161,6 @@ do{
       if (trequestedOut_PCGEN_) { 
 	*requestedOut = 1; 
       };
- } while (0)
-/* END_MACRO */
-
-#define PCGEN_FMT_INIT_ENUM(fnName)
- do { 
-  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
-  *buf_full = 0;
  } while (0)
 /* END_MACRO */
 

@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
   PADS_TY(_pd)      pd;
   PADS_TY(_m)       m;
   int               requestedOut;
+  Perror_t          err;
 #ifdef PADS_HDR_TY
   PADS_HDR_TY( )    hdr_rep;
   PADS_HDR_TY(_pd)  hdr_pd;
@@ -59,6 +60,11 @@ int main(int argc, char** argv) {
   Sfio_t           *io;
   char             *inName  = 0;
   char             *outName = 0;
+#ifdef FMT_ERROR_CASES
+  int               fmt_error_cases = 1;
+#else
+  int               fmt_error_cases = 0;
+#endif
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -131,6 +137,24 @@ int main(int argc, char** argv) {
   PADS_HDR_TY(_m_init)(pads, &hdr_m, P_CheckAndSet|FMT_MASK);
 #endif /* PADS_HDR_TY */
 
+#if defined(FMT_OVERRIDE_TY1) && defined(FMT_OVERRIDE_FN1)
+  if (!pads->disc->fmt_fn_map) {
+    pads->disc->fmt_fn_map = Pfmt_fn_map_create(pads);
+  }
+  error(0, "Installing fmt override function %s for type %s",
+	PDCI_MacroArg2String(FMT_OVERRIDE_TY1), FMT_OVERRIDE_TY1);
+  P_set_fmt_fn(pads, pads->disc->fmt_fn_map, FMT_OVERRIDE_TY1, FMT_OVERRIDE_FN1);
+#endif
+
+#if defined(FMT_OVERRIDE_TY2) && defined(FMT_OVERRIDE_FN2)
+  if (!pads->disc->fmt_fn_map) {
+    pads->disc->fmt_fn_map = Pfmt_fn_map_create(pads);
+  }
+  error(0, "Installing fmt override function %s for type %s",
+	PDCI_MacroArg2String(FMT_OVERRIDE_TY2), FMT_OVERRIDE_TY2);
+  P_set_fmt_fn(pads, pads->disc->fmt_fn_map, FMT_OVERRIDE_TY2, FMT_OVERRIDE_FN2);
+#endif
+
 #ifdef PADS_HDR_TY
   /*
    * Try to read header
@@ -150,21 +174,22 @@ int main(int argc, char** argv) {
    */
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
-    if (P_OK != PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep)) {
+    err = PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep);
+    if (err == P_ERR) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
       error(2, "read returned error");
 #endif
     }
-    else {
-      if (P_ERR == PADS_TY(_fmt2io)(pads, io, &requestedOut, DELIMS, &m, EXTRA_READ_ARGS &pd, &rep)) {
-        error(ERROR_FATAL, "*** IO error during format");
-      }
-#ifdef EXTRA_GOOD_READ_CODE
-      EXTRA_GOOD_READ_CODE;
-#endif
+    if ((err == P_OK || fmt_error_cases) && (P_ERR == PADS_TY(_fmt2io)(pads, io, &requestedOut, DELIMS, &m, EXTRA_READ_ARGS &pd, &rep))) {
+      error(ERROR_FATAL, "*** IO error during format");
     }
+#ifdef EXTRA_GOOD_READ_CODE
+    if (err == P_OK) {
+      EXTRA_GOOD_READ_CODE;
+    }
+#endif
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");

@@ -1098,12 +1098,10 @@ fn_pref ## _fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, 
   PDCI_DISC_4P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf_final", buf, buf_full, requested_out, delims);
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf_final", m, pd, rep);
 
-  if (P_Test_Write(*m)) {
-    (*requested_out) = 1;
-    return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
-  }
-  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
-  return 0;
+  PDCI_STANDARD_FMT2BUF_INIT(*m, requested_out);
+
+  (*requested_out) = 1;
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
 }
 
 ssize_t
@@ -1115,15 +1113,13 @@ fn_pref ## _fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *r
   PDCI_DISC_4P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf", buf, buf_full, requested_out, delims);
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf", m, pd, rep);
 
+  PDCI_STANDARD_FMT2BUF_INIT(*m, requested_out);
+
   if ((fn = PDCI_GET_FMT_FN(pads, lookup_ty))) {
     return P_invoke_fmt_fn(fn, pads, buf, buf_len, buf_full, requested_out, delims, m, pd, rep);
   }
-  if (P_Test_Write(*m)) {
-    (*requested_out) = 1;
-    return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
-  }
-  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
-  return 0;
+  (*requested_out) = 1;
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
 }
 
 ssize_t
@@ -1135,6 +1131,8 @@ fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2io", io, requested_out, delims);
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2io", m, pd, rep);
 
+  PDCI_STANDARD_FMT2IO_INIT(*m, requested_out);
+
   if ((fn = PDCI_GET_FMT_FN(pads, lookup_ty))) {
     ssize_t length;
     Pbyte *buf;
@@ -1142,12 +1140,8 @@ fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims
     size_t buf_len;
     PDCI_FMT2IO_USE_FMT2BUF_FN(PDCI_MacroArg2String(fn_pref) "_fmt2io", length=P_invoke_fmt_fn(fn, pads, buf, buf_len, &buf_full, requested_out, delims, m, pd, rep));
   }
-  if (P_Test_Write(*m)) {
-    (*requested_out) = 1;
-    return afn_pref ## _write2io(pads, io, pd, rep);
-  }
-  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
-  return 0;
+  (*requested_out) = 1;
+  return afn_pref ## _write2io(pads, io, pd, rep);
 }
 /* END_MACRO */
 
@@ -1159,12 +1153,10 @@ fn_pref ## _fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, 
   PDCI_DISC_4P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf_final", buf, buf_full, requested_out, delims);
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf_final", m, pd, rep);
 
-  if (P_Test_Write(*m)) {
-    (*requested_out) = 1;
-    return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1);
-  }
-  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
-  return 0;
+  PDCI_STANDARD_FMT2BUF_INIT(*m, requested_out);
+
+  (*requested_out) = 1;
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1);
 }
 
 ssize_t
@@ -1176,15 +1168,13 @@ fn_pref ## _fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *r
   PDCI_DISC_4P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf", buf, buf_full, requested_out, delims);
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf", m, pd, rep);
 
+  PDCI_STANDARD_FMT2BUF_INIT(*m, requested_out);
+
   if ((fn = PDCI_GET_FMT_FN(pads, lookup_ty))) {
     return P_invoke_fmt_fn(fn, pads, buf, buf_len, buf_full, requested_out, delims, m, pd, rep, x1);
   }
-  if (P_Test_Write(*m)) {
-    (*requested_out) = 1;
-    return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1);
-  }
-  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
-  return 0;
+  (*requested_out) = 1;
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1);
 }
 
 ssize_t
@@ -1196,6 +1186,8 @@ fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2io", io, requested_out, delims);
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2io", m, pd, rep);
 
+  PDCI_STANDARD_FMT2IO_INIT(*m, requested_out);
+
   if ((fn = PDCI_GET_FMT_FN(pads, lookup_ty))) {
     ssize_t length;
     Pbyte *buf;
@@ -1203,12 +1195,8 @@ fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims
     size_t buf_len;
     PDCI_FMT2IO_USE_FMT2BUF_FN(PDCI_MacroArg2String(fn_pref) "_fmt2io", length=P_invoke_fmt_fn(fn, pads, buf, buf_len, &buf_full, requested_out, delims, m, pd, rep, x1));
   }
-  if (P_Test_Write(*m)) {
-    (*requested_out) = 1;
-    return afn_pref ## _write2io(pads, io, pd, rep, x1);
-  }
-  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
-  return 0;
+  (*requested_out) = 1;
+  return afn_pref ## _write2io(pads, io, pd, rep, x1);
 }
 /* END_MACRO */
 
@@ -1220,12 +1208,10 @@ fn_pref ## _fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, 
   PDCI_DISC_4P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf_final", buf, buf_full, requested_out, delims);
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf_final", m, pd, rep);
 
-  if (P_Test_Write(*m)) {
-    (*requested_out) = 1;
-    return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
-  }
-  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
-  return 0;
+  PDCI_STANDARD_FMT2BUF_INIT(*m, requested_out);
+
+  (*requested_out) = 1;
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
 }
 
 ssize_t
@@ -1237,15 +1223,13 @@ fn_pref ## _fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *r
   PDCI_DISC_4P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf", buf, buf_full, requested_out, delims);
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf", m, pd, rep);
 
+  PDCI_STANDARD_FMT2BUF_INIT(*m, requested_out);
+
   if ((fn = PDCI_GET_FMT_FN(pads, lookup_ty))) {
     return P_invoke_fmt_fn(fn, pads, buf, buf_len, buf_full, requested_out, delims, m, pd, rep);
   }
-  if (P_Test_Write(*m)) {
-    (*requested_out) = 1;
-    return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
-  }
-  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
-  return 0;
+  (*requested_out) = 1;
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep);
 }
 
 ssize_t
@@ -1257,6 +1241,8 @@ fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2io", io, requested_out, delims);
   PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2io", m, pd, rep);
 
+  PDCI_STANDARD_FMT2IO_INIT(*m, requested_out);
+
   if ((fn = PDCI_GET_FMT_FN(pads, lookup_ty))) {
     ssize_t length;
     Pbyte *buf;
@@ -1264,12 +1250,8 @@ fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims
     size_t buf_len;
     PDCI_FMT2IO_USE_FMT2BUF_FN(PDCI_MacroArg2String(fn_pref) "_fmt2io", length=P_invoke_fmt_fn(fn, pads, buf, buf_len, &buf_full, requested_out, delims, m, pd, rep));
   }
-  if (P_Test_Write(*m)) {
-    (*requested_out) = 1;
-    return afn_pref ## _write2io(pads, io, pd, rep);
-  }
-  (*requested_out) = P_Test_WriteVoid(*m) ? 1 : 0;
-  return 0;
+  (*requested_out) = 1;
+  return afn_pref ## _write2io(pads, io, pd, rep);
 }
 /* END_MACRO */
 
@@ -6229,7 +6211,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.168 2004-09-16 03:19:37 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.169 2004-09-17 04:24:58 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

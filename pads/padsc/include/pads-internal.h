@@ -84,6 +84,8 @@ void PDCI_DATE_OUT_FMT_CHECK_RET_0(char * whatfn);
 void PDCI_DATE_OUT_FMT_CHECK_RET_VOID(char * whatfn);
 void PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(char * whatfn);
 
+void PDCI_DELIMS_CHECK_RET_SSIZE(const char *whatfn, const char *delims);
+
 void PDCI_IODISC_INIT_CHECKS(char * whatfn);
 void PDCI_IODISC_INIT_CHECKS_RET_0(char * whatfn);
 void PDCI_IODISC_INIT_CHECKS_RET_VOID(char * whatfn);
@@ -178,6 +180,8 @@ void PDCI_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr,
 
 void PDCI_FMT2IO_USE_FMT2BUF_FN(const char *whatfn, ssize_t fmt2buf_call);
 
+void PDCI_STANDARD_FMT2BUF_INIT(Pbase_m m, int *requestedOut);
+void PDCI_STANDARD_FMT2IO_INIT(Pbase_m m, int *requestedOut);
 
 #else
 /* The actual impls */
@@ -297,6 +301,13 @@ void PDCI_FMT2IO_USE_FMT2BUF_FN(const char *whatfn, ssize_t fmt2buf_call);
 #define PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn) \
      PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, return -1)
 
+#define PDCI_DELIMS_CHECK_RET_SSIZE(whatfn, delims) \
+do { \
+  if (!(*(delims))) {  \
+    PDCI_report_err(pads, P_WARN_FLAGS, 0, P_FMT_EMPTY_DELIM_ERR, whatfn, "Empty delimiter sequence"); \
+    return -1; \
+  }; \
+} while (0)
 
 #define PDCI_IODISC_INIT_CHECKS_RET(whatfn, ret) \
   do { \
@@ -692,6 +703,8 @@ do { \
 #define PDCI_DATE_OUT_FMT_CHECK_RET_VOID(whatfn)               P_NULL_STMT
 #define PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn)              P_NULL_STMT
 
+#define PDCI_DELIMS_CHECK_RET_SSIZE(whatfn, delims)            P_NULL_STMT
+
 #define PDCI_IODISC_INIT_CHECKS(whatfn)                        P_NULL_STMT
 #define PDCI_IODISC_INIT_CHECKS_RET_0(whatfn)                  P_NULL_STMT
 #define PDCI_IODISC_INIT_CHECKS_RET_VOID(whatfn)               P_NULL_STMT
@@ -954,6 +967,23 @@ do { \
   } \
   PDCI_io_write_abort(pads, io, buf, set_buf_, whatfn); \
   return -1; \
+} while (0)
+
+#define PDCI_STANDARD_FMT2BUF_INIT(mask, requestedOut) \
+ do { \
+  (*buf_full) = 0; \
+  if (P_Test_NotWrite(mask)) { \
+    (*requestedOut) = P_Test_WriteVoid(mask) ? 1 : 0; \
+    return 0; \
+  } \
+} while (0)
+
+#define PDCI_STANDARD_FMT2IO_INIT(mask, requestedOut) \
+ do { \
+  if (P_Test_NotWrite(mask)) { \
+    (*requestedOut) = P_Test_WriteVoid(mask) ? 1 : 0; \
+    return 0; \
+  } \
 } while (0)
 
 #endif /* FOR_CKIT */
