@@ -1,6 +1,12 @@
+8/7/2003
+
+ * panic -> status flags and macros
+ * accumulator controls:
+    hash table size, top N to print, threshold percentage to print
+
 8/6/2003
 ints -> PDC_uint32
-
+* PDC_NOT_PARSED errCode
 
 8/5/2003
   * generate better error message if field type is non-existent.

@@ -1,9 +1,25 @@
-by 8/6
-------
+soon
+----
+ * add instructions in README for how to obtain SML
+   which is required for padsc compiler
 
-by 8/??
--------
-manual
+by end of Aug
+-------------
+ * manual
+
+ * Add base types whose in-memory rep is either PDC_float32 or PDC_float64
+
+       Pfloat32, Pa_float32, Pe_float32, Pfloat64, Pa_float64, Pe_float64
+       Pb_float32, Pb_float64
+       Psbl_float32, Psbl_float64
+       Psbh_float32, Psbh_float64
+
+ * for most scripts, replace .tcsh with .sh
+   or consider using perl (e.g., for padsc script)
+   [Not everyone will have tcsh...]
+
+ * for scripts designed to be sourced by csh/tcsh, 
+   rename foo.tcsh to foo.csh
 
 DEFERRED
 --------
@@ -41,7 +57,6 @@ to document
 
 library todo
 ------------
- * accum config params in disc
  * accum report to buffer and to IO (now just to PDC error stream)
  * buffer data source
  * alias to PDC_IO_dump_start, PDC_IO_dump_end
@@ -60,15 +75,9 @@ IO STUFF:
                 a new io_cur_elt/io_remain to allow cleanup after write
 
 ACCUM STUFF:
-  * accumulators need quad groupoing
+  * accumulators need quad grouping
     - skipped values, syntactic errors, semantic errors, good values
 
-
-DISCIPLINE:
- * let user set hash table size, include a symbolic constant for 
-    keep everything.
- * accumulator controls:
-    top N to print, threshold percentage to print,...
 
 padsc compiler todo
 -------------------
