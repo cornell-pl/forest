@@ -212,7 +212,7 @@ res
   ty ## _pd *pd=(ty ## _pd *) (self->pd);
   ty ## _m *m=(ty ## _m *) (self->m);
 
-error(2, PDCI_MacroArg2String(ty)"_node_kthChild\n");
+/* error(2, PDCI_MacroArg2String(ty)"_node_kthChild\n"); */
   if (idx < rep-> length) { /* indexes between 0 and rep->length belong to elements */
       result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
  				    PDCI_MacroArg2String(ty)"_node_kthChild");
