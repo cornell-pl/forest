@@ -7,13 +7,15 @@ for another project to augment my PADS research.
 
 1. PADS
    a) Get PADS released.  This includes subgoals:
-         + Get Andrew Hume and Trevor Jim using PADS
+         + Get Andrew Hume using PADS
            (DGB asked for AT&T in-house use before release).
          + Finish writing the manual.
-   b) Do extensive performance testing and tuning.
-   c) Continue to work with Mary Fernandez on PADS/Galax (XQuery) integretation; 
+   b) Work with Trevor Jim on using PADS for automatically generating
+        parsers based on IETF specs (http, dns, etc.).
+   c) Do extensive performance testing and tuning.
+   d) Continue to work with Mary Fernandez on PADS/Galax (XQuery) integretation; 
       the next big step is to develop and use a Galax streaming model.
-   d) Continue to evolve the language, code generator, and core library.
+   e) Continue to evolve the language, code generator, and core library.
 
 2. Professional development
    a) Submit papers based on PADS work.
