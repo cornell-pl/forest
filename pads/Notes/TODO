@@ -1,11 +1,13 @@
 by 8/6
 ------
-accum disc. knobs
-panic -> status flags and macros
-skipped error codes: PDC_SKIPPED (library and generated code)
-PDC_NOT_PARSED errCode
 
+by 8/??
+-------
 manual
+
+DEFERRED
+--------
+* skipped error codes: PDC_SKIPPED (library and generated code)
 
 testing
 -------
