@@ -425,6 +425,34 @@ sub padsgen
 }
 
 # ==============================
+# Subroutine: shorten_more($fid, $fids)
+#   if $fid has ln format but it is not a controlling variable
+#   and there is no conflict with the other fids, shorten it.
+
+sub shorten_more
+{
+  my ($fid, $fids) = @_;
+  if (!defined($controls_array{$fid}) && $fid =~ /_ln_/) {
+    my $sfid = $fid;
+    $sfid =~ s/_ln_\d+$//;
+    for my $fid2 (split(/[\#]/, $fids)) {
+      print "XXX_REMOVE comparing $fid and $fid2\n";
+      if (!($fid eq $fid2) && $fid2 =~ /_ln_/) {
+	my $sfid2 = $fid2;
+	$sfid2 =~ s/_ln_\d+$//;
+	if ($sfid eq $sfid2) {
+	  print "XXX_REMOVE cannot shorten because of $fid, $fid2\n";
+	  return $fid;
+	}
+      }
+    }
+    print "XXX_REMOVE shortening $fid to $sfid\n";
+    return $sfid;
+  }
+  return $fid;
+}
+
+# ==============================
 # Subroutine: padsgen_struct($def)
 #   emit Pstruct decl for $def
 #   (preceded by any aux arrays)
@@ -438,7 +466,8 @@ sub padsgen_struct
   $fids = $field_ids{$def};
   $fids =~ s/[\#]$//;
   foreach $fid (split(/[\#]/, $fids)) {
-    my $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fid . ";", $dfieldlength{$fid});
+    my $fshort = &shorten_more($fid, $fids);
+    my $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fshort . ";", $dfieldlength{$fid});
     print POUT $field;
   }
   printf POUT "};                                                                     // Total length: %5s\n\n", $dtylength{$def};
@@ -458,7 +487,8 @@ sub padsgen_alt
   $fids = $field_ids{$def};
   $fids =~ s/[\#]$//;
   foreach $fid (split(/[\#]/, $fids)) {
-    my $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fid . ";", $dfieldlength{$fid});
+    my $fshort = &shorten_more($fid, $fids);
+    my $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fshort . ";", $dfieldlength{$fid});
     print POUT $field;
   }
   printf POUT "};                                                                     // Total length: %5s\n\n", $dtylength{$def};
