@@ -1077,6 +1077,15 @@ PDC_error_t PDC_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_st
 			     PDC_string **str_out, size_t *offset_out);
 
 /* ================================================================================ */
+/* STRING COMPARISON */
+
+#define PDC_string_eq(str1, str2) \
+  ((str1)->len == (str2)->len && strncmp((str1)->str, (str2)->str, (str1)->len) == 0)
+
+#define PDC_string_eq_Cstr(PDCstr, Cstr) \
+  ((PDCstr)->len == strlen(Cstr) && strncmp((PDCstr)->str, (Cstr), (PDCstr)->len) == 0)
+
+/* ================================================================================ */
 /* REGULAR EXPRESSION SUPPORT */
 
 /* PDC_regexp_compile: if regexp is a valid regular expression, this function
@@ -1102,6 +1111,11 @@ PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
  *    num_bytes should be oneof: 1, 2, 4, 8
  */
 PDC_error_t PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes);
+
+/*
+ * Going away eventually
+ */
+PDC_error_t PDC_dummy_read(PDC_t *pdc, PDC_base_em *em, PDC_int32 dummy_val, PDC_base_ed *ed, PDC_int32 *res_out);
 
 /* ================================================================================ */
 /* INCLUDE THE IO DISCIPLINE DECLS */
