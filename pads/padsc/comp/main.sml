@@ -53,6 +53,8 @@ structure Main : sig
     val outputDirFlag = ref false
 
     val writeNoneFlag = ref false
+    val readNoneFlag = ref false
+    val accumNoneFlag = ref false
 
     fun addPadsFile s =    srcFiles := ((Pads,s) :: !srcFiles)
     fun addUnknownFile s = srcFiles := ((Unknown,s) :: !srcFiles)
@@ -83,6 +85,7 @@ structure Main : sig
          ("h", "output header file",      PCL.String (setHeaderOutputFile, false)),
          ("c", "output code file",        PCL.String (setCOutputFile, false)),
 	 ("wnone", "suppress write function generation", PCL.BoolSet writeNoneFlag),
+	 ("anone", "suppress accumulator generation", PCL.BoolSet accumNoneFlag),
          ("a", "generate accumulator program",    PCL.String (addAccumulator, true)),
          ("x", "output XSchema",          PCL.BoolSet xmlFlag),
          ("r", "output directory",        PCL.String (setOutputDir, false)),
@@ -369,11 +372,15 @@ structure Main : sig
       | _ => error "Unrecognized file type")
 
     fun checkFlags _ = (* Check that the user didn't supply bogus flag combinations. *)
-	()
-    fun initState() = (* more customization in the future *)
-	if !writeNoneFlag then PInput.emitWrites false
-        else if !xmlFlag then PInput.emitXML true
+	if !readNoneFlag then
+            (if !xmlFlag then err "-x flag illegal with -rnone flag" else ();
+             xmlFlag := false; accumNoneFlag := true; writeNoneFlag := true)
 	else ()
+        
+    fun initState() = (* more customization in the future *)
+	( if !accumNoneFlag then PInput.emitAccum false else ();
+	  if !writeNoneFlag then PInput.emitWrite false else ();
+          if !xmlFlag       then PInput.emitXML true else ())
 
     fun main release (cmd, args) = 
       (stage := "Command-line processing";

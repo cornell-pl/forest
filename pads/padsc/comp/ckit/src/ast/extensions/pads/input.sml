@@ -1,14 +1,19 @@
 structure PInput = 
 struct
 
-type PinputTy = {outputWrites : bool ref,
+type PinputTy = {outputAccum  : bool ref,
+		 outputRead   : bool ref,
+		 outputWrite  : bool ref,
 		 outputXML    : bool ref}
 
 
-val inputs : PinputTy = {outputWrites = ref true,
+val inputs : PinputTy = {outputAccum  = ref true,
+			 outputRead   = ref true,
+			 outputWrite  = ref true,
 			 outputXML    = ref false}
 
-
-fun emitWrites (status) = (#outputWrites inputs) := status
-fun emitXML (status) = (#outputXML inputs) := status
+fun emitAccum (status) = (#outputAccum inputs) := status
+fun emitRead  (status) = (#outputRead inputs) := status
+fun emitWrite (status) = (#outputWrite inputs) := status
+fun emitXML   (status) = (#outputXML inputs) := status
 end
