@@ -1,7 +1,14 @@
+/*
+ * Template: test_smart.h 
+ * Test load and print on smart nodes.
+ */
+
 #include "pads.h"
 #include "pglx.h"
 
 #define exit_on_error(_Expr) {err = _Expr; if (err != 0) {error(0, "%s\n", galax_error_string); exit(err);}}	
+
+#define MAX_IDX 20
 
 #ifndef MAX_RECS
 #  define MAX_RECS 0
@@ -12,7 +19,7 @@ int main(int argc, char** argv) {
   PADS_TY( )         rep;
   PADS_TY(_pd)       pd ;
   PADS_TY(_m)        m;
-  PDCI_node_t    *doc_node;
+  PDCI_node_t    *smart_node;
 
   galax_err err;
   item doc;
@@ -59,22 +66,20 @@ int main(int argc, char** argv) {
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, P_CheckAndSet);
 
-  /* Try to read entire file */
-  PADS_TY(_read)(pads, &m, &pd, &rep);
-  if (!P_PS_isPanic(&pd)) { 
-    /* make the top-level node */
-    PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "doc", &m, &pd, &rep, "main");
-    err = padsDocument(argv[1], (nodeRep)doc_node, &doc);
-    exit_on_error(err); 
-    docitems = itemlist_cons(doc, itemlist_empty()); 
-    err = galax_serialize_to_stdout(docitems);
-    exit_on_error(err);
-  } else {
-    error(0, "read raised panic error");
-  }
+  // Create a new smart node.
+  PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "doc", &m, &pd, &rep, "main");
+  PADS_TY(_seqSmartNode_init)(smart_node,MAX_IDX);
+  //  PADS_TY(_dummySmartNode_init)(smart_node);
+
+  err = padsDocument(argv[1], (nodeRep)smart_node, &doc);
+  exit_on_error(err); 
+
+  docitems = itemlist_cons(doc, itemlist_empty()); 
+  err = galax_serialize_to_stdout(docitems);
+  exit_on_error(err);
 
   // P_CLEANUP_ALL(pads, PADS_TY_, rep, pd);
-  if (P_ERR == PADS_TY(_cleanup)(pads, &rep)) {
+  if (P_ERR == PADS_TY(_cleanup)(pads, smart_node->rep)) {
     error(ERROR_FATAL, "** representation cleanup failed **");
   }
   if (P_ERR == PADS_TY(_pd_cleanup)(pads, &pd)) {

@@ -5,4 +5,4 @@
 #define PPADS_TY(pref) pref ## barArray
 #define WSPACE_OK
 
-#include "test_kth_child.h"
+#include "test_smart.h"

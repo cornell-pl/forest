@@ -30,8 +30,8 @@ int main(int argc, char** argv) {
   /* When linking with the Galax library, which contains a custom O'Caml runtime system, 
      it is necessary to call galax_init first, so the runtime is initialized and then 
      can delegate control back to the C program 
-  */
   galax_init();
+  */
 
   if (argc != 2) { error(2, "Usage: test_children <enum-data-file>\n"); exit(-1); }
 
@@ -45,7 +45,11 @@ int main(int argc, char** argv) {
   }
 
   /* init -- must do this! */
-  // P_INIT_ALL(pads, PADS_TY_, rep, m, pd, P_CheckAndSet);
+
+  /* Initialize NodeMM. */
+  pads->ext1 = NodeMM_newMM();
+  NodeMM_init((NodeMM_t *)pads->ext1);  
+  
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
   }
@@ -55,18 +59,26 @@ int main(int argc, char** argv) {
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, P_CheckAndSet);
 
-  /* make the top-level node */
-  PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_vtable), pads, "doc", &m, &pd, &rep, "main");
-
   /* Try to read entire file */
   PADS_TY(_read)(pads, &m, &pd, &rep);
   if (!P_PS_isPanic(&pd)) {     
     item doc2;
+
+    /* make the top-level node */
+    PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "doc", &m, &pd, &rep, "main");
+    
+    /* Use Galax for testing: 
     exit_on_error(padsDocument(argv[1], (nodeRep)doc_node, &doc)); 
     kth_node = bar_kth_child(doc_node,1);
     exit_on_error(padsDocument(argv[1], (nodeRep)kth_node, &doc2)); 
     docitems = itemlist_cons(doc2, itemlist_empty()); 
     exit_on_error(galax_serialize_to_stdout(docitems));
+    */
+
+    /* Do not use Galax for testing: */
+    // walk_children(doc_node,0);
+    kth_node = PADS_TY(_node_kthChild)(doc_node,2);
+    walk_children(kth_node,0);
   } else {
     error(0, "read raised panic error");
   }
@@ -79,6 +91,7 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "** parse descriptor cleanup failed **");
   }
   P_io_close(pads);
+  NodeMM_freeMM((NodeMM_t *) pads->ext1);
   P_close(pads);
   return 0;
 }
