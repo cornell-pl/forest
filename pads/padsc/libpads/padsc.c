@@ -1375,6 +1375,8 @@ int_type ## _acc_init(PDC_t *pdc, int_type ## _acc *a)
   if (!(a->dict = dtopen(&int_type ## _acc_dt_set_disc, Dtset))) {
     return PDC_ERR;
   }
+  a->max2track  = pdc->disc->acc_max2track;
+  a->num2rep    = pdc->disc->acc_num2rep;
   return PDC_OK;
 }
 
@@ -1464,7 +1466,7 @@ int_type ## _acc_add(PDC_t *pdc, int_type ## _acc *a, const PDC_base_pd *pd, con
   } else if (v > a->max) {
     a->max = v;
   }
-  if (dtsize(a->dict) < PDCI_ACC_MAX2TRACK) {
+  if (dtsize(a->dict) < a->max2track) {
     insert_elt.key.val = v;
     insert_elt.key.cnt = 0;
     if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
@@ -1517,18 +1519,18 @@ int_type ## _acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const
   }
   int_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < PDCI_ACC_REPORT_K) ? sz : PDCI_ACC_REPORT_K;
+  rp = (sz < a->num2rep) ? sz : a->num2rep;
   dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %" fmt, what, a->min);
   sfprintf(outstr, " max %" fmt, a->max);
   sfprintf(outstr, " avg %.3lf\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
-  if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
+  if (sz == a->max2track && a->good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
     elt = (int_type ## _dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
@@ -1607,7 +1609,7 @@ int_type ## _acc_map_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, c
   }
   int_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < PDCI_ACC_REPORT_K) ? sz : PDCI_ACC_REPORT_K;
+  rp = (sz < a->num2rep) ? sz : a->num2rep;
   dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   mapped_min = fn(a->min);
@@ -1616,19 +1618,19 @@ int_type ## _acc_map_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, c
   sfprintf(outstr, ")  max %s (%5" fmt, mapped_max, a->max);
   sfprintf(outstr, ")\n");
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
-  if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
+  if (sz == a->max2track && a->good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   sz = rp = 0;
-  for (i = 0, velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+  for (i = 0, velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
     elt = (int_type ## _dt_elt_t*)velt;
     sz = strlen(fn(elt->key.val));
     if (sz > rp) {
       rp = sz; 
     }
   }
-  for (i = 0, velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+  for (i = 0, velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
     elt = (int_type ## _dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
@@ -1772,6 +1774,8 @@ fpoint_type ## _acc_init(PDC_t *pdc, fpoint_type ## _acc *a)
   if (!(a->dict = dtopen(&fpoint_type ## _acc_dt_set_disc, Dtset))) {
     return PDC_ERR;
   }
+  a->max2track  = pdc->disc->acc_max2track;
+  a->num2rep    = pdc->disc->acc_num2rep;
   return PDC_OK;
 }
 
@@ -1850,7 +1854,7 @@ fpoint_type ## _acc_add(PDC_t *pdc, fpoint_type ## _acc *a, const PDC_base_pd *p
   } else if (v > a->max) {
     a->max = v;
   }
-  if (dtsize(a->dict) < PDCI_ACC_MAX2TRACK) {
+  if (dtsize(a->dict) < a->max2track) {
     insert_elt.key.val = v;
     insert_elt.key.cnt = 0;
     if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
@@ -1903,18 +1907,18 @@ fpoint_type ## _acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, co
   }
   fpoint_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < PDCI_ACC_REPORT_K) ? sz : PDCI_ACC_REPORT_K;
+  rp = (sz < a->num2rep) ? sz : a->num2rep;
   dtdisc(a->dict,   &fpoint_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %.5lf", what, a->min);
   sfprintf(outstr, " max %.5lf", a->max);
   sfprintf(outstr, " avg %.3lf\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
-  if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
+  if (sz == a->max2track && a->good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(floatORdouble)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
     elt = (fpoint_type ## _dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(floatORdouble)a->good);
@@ -3673,10 +3677,6 @@ PDCI_EBCBCDSB_FPOINT_WRITE_FN(PDC_sbh_ufpoint64, PDC_ufpoint64, PDCI_uint64_2sbh
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-/* track up to 1000 values, report the top 10 */
-#define PDCI_ACC_MAX2TRACK      1000
-#define PDCI_ACC_REPORT_K         10
-
 /* ********************************** END_HEADER ********************************** */
 #gen_include "libpadsc-acc-macros-gen.h"
 
@@ -3824,6 +3824,8 @@ PDC_string_acc_init(PDC_t *pdc, PDC_string_acc *a)
   if (!(a->dict = dtopen(&PDCI_string_acc_dt_set_disc, Dtset))) {
     return PDC_ERR;
   }
+  a->max2track  = pdc->disc->acc_max2track;
+  a->num2rep    = pdc->disc->acc_num2rep;
   a->tracked = 0;
   return PDC_uint32_acc_init(pdc, &(a->len_accum));
 }
@@ -3867,7 +3869,7 @@ PDC_string_acc_add(PDC_t *pdc, PDC_string_acc *a, const PDC_base_pd *pd, const P
   if (pd->errCode != PDC_NO_ERR) {
     return PDC_OK;
   }
-  if (dtsize(a->dict) < PDCI_ACC_MAX2TRACK) {
+  if (dtsize(a->dict) < a->max2track) {
     insert_elt.key.str = val->str;
     insert_elt.key.len = val->len;
     insert_elt.key.cnt = 0;
@@ -3918,16 +3920,16 @@ PDC_string_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const c
   }
   /* rehash tree to get keys ordered by count */
   sz = dtsize(a->dict);
-  rp = (sz < PDCI_ACC_REPORT_K) ? sz : PDCI_ACC_REPORT_K;
+  rp = (sz < a->num2rep) ? sz : a->num2rep;
   dtdisc(a->dict, &PDCI_string_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "\n  Characterizing strings:\n");
   sfprintf(outstr, "    => distribution of top %d strings out of %d distinct strings:\n", rp, sz);
-  if (sz == PDCI_ACC_MAX2TRACK && a->len_accum.good > a->tracked) {
+  if (sz == a->max2track && a->len_accum.good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(double)a->len_accum.good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
     elt = (PDCI_string_dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->len_accum.good);
@@ -4033,7 +4035,7 @@ PDC_char_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
   }
   PDC_uint8_acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < PDCI_ACC_REPORT_K) ? sz : PDCI_ACC_REPORT_K;
+  rp = (sz < a->num2rep) ? sz : a->num2rep;
   dtdisc(a->dict,   &PDC_uint8_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %s", what, PDC_qfmt_char(a->min));
@@ -4041,11 +4043,11 @@ PDC_char_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
   sfprintf(outstr, " (based on ASCII encoding)\n");
 
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
-  if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
+  if (sz == a->max2track && a->good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
     elt = (PDC_uint8_dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
@@ -4113,18 +4115,18 @@ PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
   }
   PDC_int32_acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < PDCI_ACC_REPORT_K) ? sz : PDCI_ACC_REPORT_K;
+  rp = (sz < a->num2rep) ? sz : a->num2rep;
   dtdisc(a->dict,   &PDC_int32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %ld", what, a->min);
   sfprintf(outstr, " max %ld", a->max);
   sfprintf(outstr, " avg %.3lf\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
-  if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
+  if (sz == a->max2track && a->good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
     elt = (PDC_int32_dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
@@ -4397,7 +4399,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.95 2003-08-07 16:02:09 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.96 2003-08-07 20:28:57 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -4773,8 +4775,10 @@ PDC_disc_t PDC_default_disc = {
   PDC_errorf,
   PDC_errorRep_Max,
   PDC_littleEndian,
-  0, /* by default, no inv_valfn map */
-  0  /* a default IO discipline is installed on PDC_open */
+  1000, /* default max2track */
+  10,   /* default num2rep */
+  0,    /* by default, no inv_valfn map */
+  0     /* a default IO discipline is installed on PDC_open */
 };
 
 PDC_error_t

@@ -67,6 +67,25 @@
  *                 by the binary integer read functions.  See comments below about
  *                 the CHECK_ENDIAN pragma.
  *
+ *   acc_max2track : default maximum distinct values for accumulators to track.
+ *                 Upon calling an acc_init function on some base-type accumulator a,
+ *                 a.max2track is set to pdc->disc->acc_max2track, the default
+ *                 limit on number of distinct to keep track of.
+ *                 a.max2track can be modified directly after this call to force
+ *                 accumulator a to use a non-default value.
+ *
+ *   acc_num2rep : default number of tracked values for accumulator to describe in detail in report.
+ *                 Upon calling an acc_init function on some base-type accumulator a,
+ *                 a.num2rep is set to pdc->disc->acc_num2rep, the default
+ *                 number of tracked values to describe in detail.
+ *                 a.num2rep can be modified directly after this call to force
+ *                 accumulator a to use a non-default value.
+ *
+ *      [Note that generated accumulators have components that are base-type
+ *       accumlators.  Thus, after initializing some generated accumulator a,
+ *       one could modify a.foo.bar.max2track or a.foo.bar.num2rep to change
+ *       the tracking or reporting of the foo.bar component a.]
+ *                 
  *   io_disc  : This field contains a pointer to a sub-discipline obj of type
  *              PDC_IO_dist_t which is used to enable reading different kinds
  *              of data files.  See pdc_io_disc.h for details.
@@ -164,6 +183,8 @@
  *    errorf:        PDC_errorf
  *    e_rep:         PDC_errorRep_Max
  *    d_endian:      PDC_littleEndian
+ *    acc_max2track  1000
+ *    acc_num2rep    10
  *    inv_valfn_map  NULL -- user must created and install a map
  *                           if inv_val functions need to be provided
  *    io_disc:       NULL -- a default IO discipline (newline-terminated records)
@@ -758,8 +779,10 @@ struct PDC_disc_s {
   PDC_error_f           errorf;        /* error function using  ... */
   PDC_errorRep          e_rep;         /* controls error reporting */
   PDC_endian            d_endian;      /* endian-ness of the data */ 
+  PDC_uint64            acc_max2track; /* default maximum distinct values for accumulators to track */
+  PDC_uint64            acc_num2rep;   /* default number of tracked values to describe in detail in report */
   PDC_inv_valfn_map_t  *inv_valfn_map; /* map types to inv_valfn for write functions */
-  PDC_IO_disc_t         *io_disc;      /* sub-discipline for controlling IO */
+  PDC_IO_disc_t        *io_disc;       /* sub-discipline for controlling IO */
 };
 
 extern PDC_disc_t PDC_default_disc;
@@ -2483,14 +2506,16 @@ ssize_t PDC_countXtoY_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 typedef struct PDC_int_acc_s {
   Dt_t        *dict;
-  PDC_uint64  good;
-  PDC_uint64  bad;
-  PDC_uint64  fold;
-  PDC_uint64  tracked;
-  PDC_int64   psum;
-  double      avg;
-  PDC_int64   min;
-  PDC_int64   max;
+  PDC_uint64   max2track;
+  PDC_uint64   num2rep;
+  PDC_uint64   good;
+  PDC_uint64   bad;
+  PDC_uint64   fold;
+  PDC_uint64   tracked;
+  PDC_int64    psum;
+  double       avg;
+  PDC_int64    min;
+  PDC_int64    max;
 } PDC_int_acc;
 
 typedef PDC_int_acc PDC_int8_acc;
@@ -2500,14 +2525,16 @@ typedef PDC_int_acc PDC_int64_acc;
 
 typedef struct PDC_uint_acc_s {
   Dt_t        *dict;
-  PDC_uint64  good;
-  PDC_uint64  bad;
-  PDC_uint64  fold;
-  PDC_uint64  tracked;
-  PDC_uint64  psum;
-  double      avg;
-  PDC_uint64  min;
-  PDC_uint64  max;
+  PDC_uint64   max2track;
+  PDC_uint64   num2rep;
+  PDC_uint64   good;
+  PDC_uint64   bad;
+  PDC_uint64   fold;
+  PDC_uint64   tracked;
+  PDC_uint64   psum;
+  double       avg;
+  PDC_uint64   min;
+  PDC_uint64   max;
 } PDC_uint_acc;
 
 typedef PDC_uint_acc PDC_uint8_acc;
@@ -2517,8 +2544,10 @@ typedef PDC_uint_acc PDC_uint64_acc;
 
 typedef struct PDC_string_acc_s {
   Dt_t           *dict;
-  PDC_uint64     tracked;
-  PDC_uint32_acc len_accum; /* used for length distribution and good/bad accounting */
+  PDC_uint64      max2track;
+  PDC_uint64      num2rep;
+  PDC_uint64      tracked;
+  PDC_uint32_acc  len_accum; /* used for length distribution and good/bad accounting */
 } PDC_string_acc;
 
 PDC_error_t PDC_int8_acc_init    (PDC_t *pdc, PDC_int8_acc *a);
@@ -2648,26 +2677,30 @@ PDC_error_t PDC_nerr_acc_report(PDC_t *pdc, const char *prefix, const char *what
 
 typedef struct PDC_fpoint_acc_flt_s {
   Dt_t        *dict;
-  PDC_uint64  good;
-  PDC_uint64  bad;
-  PDC_uint64  fold;
-  PDC_uint64  tracked;
-  double      psum;
-  double      avg;
-  double      min;
-  double      max;
+  PDC_uint64   max2track;
+  PDC_uint64   num2rep;
+  PDC_uint64   good;
+  PDC_uint64   bad;
+  PDC_uint64   fold;
+  PDC_uint64   tracked;
+  double       psum;
+  double       avg;
+  double       min;
+  double       max;
 } PDC_fpoint_acc_flt;
 
 typedef struct PDC_fpoint_acc_dbl_s {
   Dt_t        *dict;
-  PDC_uint64  good;
-  PDC_uint64  bad;
-  PDC_uint64  fold;
-  PDC_uint64  tracked;
-  double      psum;
-  double      avg;
-  double      min;
-  double      max;
+  PDC_uint64   max2track;
+  PDC_uint64   num2rep;
+  PDC_uint64   good;
+  PDC_uint64   bad;
+  PDC_uint64   fold;
+  PDC_uint64   tracked;
+  double       psum;
+  double       avg;
+  double       min;
+  double       max;
 } PDC_fpoint_acc_dbl;
 
 typedef PDC_fpoint_acc_flt PDC_fpoint8_acc;
