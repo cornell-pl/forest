@@ -89,13 +89,23 @@ structure CnvExt : CNVEXT = struct
        isRecord : bool,
        containsRecord : bool,
        largeHeuristic : bool,
-       pred : pcexp option, 
+       pred : pcexp PX.PPostCond list option, 
        comment : string option,
        optPred : (pcexp PX.OptPredicate) option,
        optDecl : bool, 
        arrayDecl : bool,
        size : (pcexp PX.PSize) option,
        arraypred : (pcexp PX.PConstraint) list}
+
+
+  type pmanty = 
+      {tyname : pcty, 
+       name : string, 
+       args : pcexp list, 
+       isVirtual : bool,
+       expr : pcexp,
+       pred : pcexp PX.PPostCond list option, 
+       comment : string option}
 
 
   type acty = Ast.ctype
@@ -1754,7 +1764,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  [var-pair(if omit)|empty], [empty(if omit)|mapping], [empty(if omit)|mapping] )] *)
 		      fun genLocFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred: pcexp option, comment: string option, size,optDecl, arrayDecl,...}:pfieldty) = 
+				      pred, comment: string option, size,optDecl, arrayDecl,...}:pfieldty) = 
 			  ( if   name = PNames.pd orelse name = PNames.identifier orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
 			    then PE.error (structOrUnion^" "^structOrUnionName^" contains field with reserved name '"^name^"'\n")
 			    else ();
@@ -1875,28 +1885,39 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      (List.map checkOneField nmap; ())
 		  end
 
+
 	      fun modStructPred (structName, curName, names, pred, subList) =
 		  case pred of NONE => NONE
-			     | SOME exp =>
-	                       let val ()     = checkStructFieldScope(structName, curName, names, exp)
-				   val modExp = PTSub.substExps subList exp
-				   val ()     = expEqualTy(modExp, CTintTys,
+			     | SOME predList =>
+	                       let fun doOne subList exp = 
+				       let val exp = case exp of PX.General e => e | PX.ParseCheck e => e
+					   val ()     = checkStructFieldScope(structName, curName, names, exp)
+					   val modExp = PTSub.substExps subList exp
+					   val ()     = expEqualTy(modExp, CTintTys,
 							   (fn(s) => ("Pstruct "^structName^": constraint for field '"^
 								      curName ^ "' has type " ^ s ^ ", expected type int")))
+				       in
+					   modExp
+				       end
 			       in
-				   SOME modExp
+				   SOME (P.andBools(List.map (doOne subList) predList))
 			       end
 
 	      fun modUnionPred (unionName, curName, names, pred, subList) =
 		  case pred of NONE => NONE
-			     | SOME exp =>
-	                       let val ()     = checkUnionFieldScope(unionName, curName, names, exp)
-				   val modExp = PTSub.substExps subList exp
-				   val ()     = expEqualTy(modExp, CTintTys,
+			     | SOME predList =>
+	                       let fun doOne subList exp = 
+				      let val exp = case exp of  PX.General e => e | PX.ParseCheck e => e
+					  val ()     = checkUnionFieldScope(unionName, curName, names, exp)
+					  val modExp = PTSub.substExps subList exp
+					  val ()     = expEqualTy(modExp, CTintTys,
 							   (fn(s) => ("Punion "^unionName^": constraint for branch '"^
 								      curName ^ "' has type " ^ s ^ ", expected type int")))
+				      in 
+					  modExp
+				      end
 			       in
-				   SOME modExp
+				   SOME (P.andBools(List.map (doOne subList) predList))
 			       end
 
 	      fun ifNotPanicSkippedSs (stmts) =
@@ -1917,7 +1938,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 	      fun manComment (name, comment, expr, pred) =
 		  let val defStringOpt =  SOME(name^" = "^P.expToString expr)
-		      val predStringOpt = Option.map P.expToString pred
+		      val predStringOpt = Option.map P.constraintToString pred
 		      val partialCommentOpt = stringOptMerge(comment,  defStringOpt)
 		      val fullCommentOpt = stringOptMerge(partialCommentOpt, predStringOpt)
 		  in
@@ -4427,11 +4448,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      let val someTag = "some_"^name
 		  fun cvtDecon {some,none} = 
 		      case some of NONE => (NONE, none)
-		      | SOME (var, expr) => (SOME (PTSub.substExps  [(var, PT.Id (someTag))] expr), none)
+		      | SOME (var, conds) => (SOME (P.substPostCond  [(var, PT.Id (someTag))] conds), none)
 		  val (predend, (predsome, prednone)) = 
 		      case pred of NONE => ([], (NONE, NONE))
 		      | SOME(PX.Simple x) => (PE.error ("Form of constraint on "^name^ " opt is currently not supported.");
-					      ([PX.General x], (NONE, NONE)))
+					      (x, (NONE, NONE)))
  	              | SOME(PX.Decon d) => ([], cvtDecon d)
 		  val some = PX.Full {pty = baseTy, 
 				      args = args,
@@ -4624,7 +4645,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genTagFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, 
 				     isRecord, containsRecord, largeHeuristic: bool,
-				     pred: pcexp option, comment: string option,...}:pfieldty) = 
+				     pred, comment: string option,...}:pfieldty) = 
 			 chkTag(name)
 		     fun genTagBrief e = case getString e of NONE => [] | SOME s => chkTag s
                      fun genTagMan {tyname, name, args, isVirtual, expr, pred, comment} = chkTag name
@@ -4639,7 +4660,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genMFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				    isVirtual: bool, isEndian: bool, 
                                     isRecord, containsRecord, largeHeuristic: bool,
-				    pred: pcexp option, comment,...}:pfieldty) = 
+				    pred, comment,...}:pfieldty) = 
 			 [(name, P.makeTypedefPCT(lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
 			 @ (case pred of NONE => [] | SOME _ => [(mConSuf name, PL.base_mPCT, SOME "union constraints")])
 		     fun genMBrief e = []
@@ -4655,7 +4676,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genEDFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				    isVirtual: bool, isEndian: bool,
 				    isRecord, containsRecord, largeHeuristic: bool,
-				    pred: pcexp option, comment,...}:pfieldty) = 
+				    pred, comment,...}:pfieldty) = 
 			 [(name, P.makeTypedefPCT(lookupTy (pty, pdSuf, #pdname)), NONE)]
 		     fun genEDBrief e = []
 		     val pdVariants = mungeFields genEDFull genEDBrief genEDMan variants
@@ -4677,7 +4698,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genAccFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, 
 				     isRecord, containsRecord, largeHeuristic: bool, 
-				     pred: pcexp option, comment,...}:pfieldty) = 
+				     pred, comment,...}:pfieldty) = 
 			 if not isVirtual then
 			     case lookupAcc pty of NONE => []
 			   | SOME a => [(name, P.makeTypedefPCT a, NONE)]
@@ -4692,7 +4713,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genTyPropsFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					 isVirtual: bool, isEndian: bool, 
 					 isRecord, containsRecord, largeHeuristic: bool,
-					 pred: pcexp option, comment: string option,...}:pfieldty) = 
+					 pred, comment: string option,...}:pfieldty) = 
 			  let val PX.Name ftyName = pty
 			      val mc = lookupMemChar pty
 			      val ds = computeDiskSize(name, paramNames, pty, args)
@@ -4743,9 +4764,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      (* union: generate canonical representation *)
 		     fun genRepFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				     pred: pcexp option, comment: string option,...}:pfieldty) = 
+				     pred, comment: string option,...}:pfieldty) = 
 			 if not isVirtual then
-			     let val predStringOpt = Option.map P.expToString pred
+			     let val predStringOpt = Option.map P.constraintToString pred
 				 val fullCommentOpt = stringOptMerge(comment, predStringOpt)
 			     in
 				 [(name, P.makeTypedefPCT(lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
@@ -4835,7 +4856,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			   | TyProps.Dynamic => 
 			       let fun genCleanupFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
 						    name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
-						    pred:pcexp option, comment:string option,...}:pfieldty) = 
+						    pred, comment:string option,...}:pfieldty) = 
 				    if (isVirtual andalso var = rep) orelse (TyProps.Static = lookupMemChar pty) then []
 				    else let val baseFunName = lookupMemFun (PX.Name tyName)
 					 in
@@ -4871,7 +4892,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				|  TyProps.Dynamic => 
 			           let fun genCopyFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
 							name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
-							pred:pcexp option, comment:string option,...}:pfieldty) = 
+							pred, comment:string option,...}:pfieldty) = 
 					   let val nestedCopyFunName = suf (lookupMemFun pty)
 					   in
 					       if (isVirtual andalso base = rep) 
@@ -4994,7 +5015,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                      fun genReadFull({pty :PX.Pty, args:pcexp list, name:string,
 				     isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-				     pred:pcexp option, comment,...}:pfieldty) = 
+				     pred, comment,...}:pfieldty) = 
 			 let val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
 			     val readFieldName = lookupTy(pty, readSuf, #readname)
 	                     val tyname = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
@@ -5082,7 +5103,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genReadSwFull (eOpt,
 			               ({pty :PX.Pty, args:pcexp list, name:string, 
 				        isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-				        pred:pcexp option, comment,...}:pfieldty)) = 
+				        pred, comment,...}:pfieldty)) = 
 			 let val () = chkCaseLabel eOpt
 			     val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
 			     val readFieldName = lookupTy(pty, readSuf, #readname)
@@ -5207,16 +5228,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 let val agg = "isValid"
 			     fun setAgg to   = P.assignS(PT.Id agg, to)
 			     fun setAggSs to = PT.Compound[setAgg(to), PT.Break]
+
+				     
 			     fun mkPadsIsCase(pty, args, name, isVirt, pred) =
-				 let val hasTest =
-					 (case pred
+				 let val predListOption = Option.map P.getIsPredXs pred
+				     val hasTest =
+					 (case predListOption
 					   of NONE => (case lookupPred pty of NONE => false | SOME fieldPred => true)
-					    | SOME e => true)
+					    | SOME [] => false
+					    | SOME e  => true)
 				 in
 				     if hasTest
 				     then 
-					 let val predXs  = case pred of NONE   => [] 
-								      | SOME e => [PTSub.substExps (!postReadSubList) e]
+					 let val predXs  = case predListOption of NONE   => [] 
+								      | SOME e => [PTSub.substExps (!postReadSubList) (P.andBools e)]
 					     val fieldXs = case lookupPred pty of NONE           => []
 										| SOME fieldPred => 
 										  [PT.Call(PT.Id fieldPred,
@@ -5239,8 +5264,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					 mkCommentBreakCase(PT.Id name, cmt, NONE)
 				     end
 				   | SOME e =>
-				     let val predXs  = [PTSub.substExps (!postReadSubList) e]
-					 val condX = P.andBools(predXs)
+				     let val e = P.andBools (P.getIsPredXs e)
+					 val condX  = PTSub.substExps (!postReadSubList) e
 					 val cmt = "Pcompute branch (with C type)"
 				     in
 					 mkCommentBreakCase(PT.Id name, cmt, SOME [setAgg(condX)])
@@ -5253,14 +5278,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 end
 			     fun getConFull({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 					    isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					    pred: pcexp option, comment: string option,...}:pfieldty) = 
+					    pred, comment: string option,...}:pfieldty) = 
 				 if isVirtual
 				 then mkVirtIsCase(name, pred)
 				 else mkPadsIsCase(pty, args, name, isVirtual, pred)
 			     fun getConBrief e = 
 				 case getString e of NONE => [] 
 				     | SOME s => mkVirtIsCase(s, NONE)
-			     fun getConMan {tyname, name, args, isVirtual, expr, pred, comment} =
+			     fun getConMan ({tyname, name, args, isVirtual, expr, pred, comment} : pmanty) =
 				 if isVirtual
 				 then mkVirtIsCase(name, pred)
 				 else case isPadsTy tyname
@@ -5289,7 +5314,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 			      fun genAccTheFull ({pty :PX.Pty, args:pcexp list, name:string, 
 						 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
-						 pred:pcexp option, comment,...}:pfieldty) = 
+						 pred, comment,...}:pfieldty) = 
 				  if isVirtual then []
 				  else case lookupAcc(pty) of NONE => []
 							    | SOME a => chk3Pfun(theSuf a, P.getFieldX(acc, name))
@@ -5336,7 +5361,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  mkCommentBreakCase(PT.Id name, "Pomit branch: cannot accumulate", NONE)
 		      fun genAccAddFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					 pred:pcexp option, comment,...}:pfieldty) = 
+					 pred, comment,...}:pfieldty) = 
 			  if isVirtual then genVirt(name)
 			  else genCase(name, pty, [], getUnionBranchX(pd, name))
 		      fun genAccAddBrief e = 
@@ -5370,7 +5395,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						    [PT.Id prefix])]
 		      fun genAccReportFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					    isVirtual:bool, isEndian: bool, isRecord, containsRecord, largeHeuristic:bool, 
-					    pred:pcexp option, comment,...}:pfieldty) = 
+					    pred, comment,...}:pfieldty) = 
 			  if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
 			  else cnvPtyForReport(reportSuf, ioSuf, pty, name, "branch")
                       fun genAccReportBrief e = []
@@ -5384,7 +5409,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* Generate Write function union case *)
 		      fun genWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					pred:pcexp option, comment,...}:pfieldty) = 
+					pred, comment,...}:pfieldty) = 
 			  if isVirtual
 			  then
 			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
@@ -5414,7 +5439,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genXMLWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					   isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					   pred:pcexp option, comment,...}:pfieldty) = 
+					   pred, comment,...}:pfieldty) = 
 			  if isVirtual
 			  then
 			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
@@ -5459,7 +5484,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genFmtFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					   isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					   pred:pcexp option, comment,...}:pfieldty) = 
+					   pred, comment,...}:pfieldty) = 
 			  if isVirtual
 			  then
 			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
@@ -5540,7 +5565,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genBranchFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					 pred:pcexp option, comment,...}:pfieldty) = 
+					 pred, comment,...}:pfieldty) = 
 			  genCaseBranch (name, pty, false)
 		      fun genBranchBrief e = []
 		      fun genBranchMan {tyname, name, args, isVirtual, expr, pred, comment}= 
@@ -5644,12 +5669,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					  (cnvPArray arrayPX, NONE)
 				      end
 				  fun doOpt () = 
-				      let val doSub = PTSub.substExps modRelSubs
-					  val modpred = Option.map doSub pred
+				      let val modpred = Option.map (P.substPostCond modRelSubs) pred
 					  val () = case modpred of NONE => () | _ => PE.error ("The form of constraint "^
 											       "on opt field " ^name^
 											       " is not currently supported.")
-					  val modArgs = List.map doSub args
+					  val modArgs = List.map (PTSub.substExps modRelSubs) args
 					  val optPX = {name     = declName, params   = params, args     = modArgs,
 						       isRecord = false, isSource = false, pred = optPred, baseTy   = pty}
 				      in
@@ -5678,7 +5702,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					(* Generate CheckSet mask *)
 		      fun genMFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				     pred:pcexp option, comment,...} : pfieldty ) = 
+				     pred, comment,...} : pfieldty ) = 
 			  [(name, P.makeTypedefPCT(lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
 			  @ (case pred of NONE => [] | SOME _ =>  [(mConSuf name, PL.base_mPCT, SOME "struct constraints")])
 		      fun genMBrief e = []
@@ -5703,7 +5727,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genEDFull ({pty: PX.Pty, args: pcexp list, name: string,  
 				     isVirtual: bool, isEndian: bool, 
                                      isRecord, containsRecord, largeHeuristic: bool, 
-				     pred:pcexp option, comment,...}: pfieldty) = 
+				     pred, comment,...}: pfieldty) = 
 			  [(name, P.makeTypedefPCT(lookupTy (pty, pdSuf, #pdname)), NONE)]
 		      fun genEDBrief e = []
 					     (* fun genEDMan e = [] *) (* XXX use the one above *)
@@ -5719,9 +5743,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genAccFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				      isVirtual: bool, isEndian: bool, 
 				      isRecord, containsRecord, largeHeuristic: bool,
-				      pred: pcexp option, comment: string option,...}: pfieldty) = 
+				      pred, comment: string option,...}: pfieldty) = 
 			  if not isVirtual then 
-			      let val predStringOpt = Option.map P.expToString pred
+			      let val predStringOpt = Option.map P.constraintToString pred
 			          val fullCommentOpt = stringOptMerge(comment, predStringOpt)
 				  val accOpt = lookupAcc pty
 			      in
@@ -5739,7 +5763,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						    (* Struct: Calculate and insert type properties into type table *)
 		      fun genTyPropsFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					  isVirtual: bool, isEndian: bool, isRecord, containsRecord, 
-					  largeHeuristic: bool, pred: pcexp option, comment:string option,...}: pfieldty) = 
+					  largeHeuristic: bool, pred, comment:string option,...}: pfieldty) = 
 			  let val ftyName = tyName pty
 			      val mc = lookupMemChar pty
 			      val ds = computeDiskSize (name, paramNames, pty, args)
@@ -5789,9 +5813,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					  (* Struct: Generate canonical representation *)
 		      fun genRepFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				      isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred:pcexp option, comment:string option,...}: pfieldty) = 
+				      pred, comment:string option,...}: pfieldty) = 
 			  if not isVirtual then 
-			      let val predStringOpt = Option.map P.expToString pred
+			      let val predStringOpt = Option.map P.constraintToString pred
 			          val fullCommentOpt = stringOptMerge(comment, predStringOpt)
 			      in
 				  [(name, P.makeTypedefPCT(lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
@@ -5840,7 +5864,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      fun genInitFull ({pty: PX.Pty, args: pcexp list, 
 						       name: string, isVirtual: bool, isEndian: bool,
 						       isRecord, containsRecord, largeHeuristic: bool,
-						       pred: pcexp option, comment: string option,...}:pfieldty) = 
+						       pred, comment: string option,...}:pfieldty) = 
 					  doDynamic(isVirtual, pty, name)
 				      fun genInitBrief _ = []
 				      fun genInitMan {tyname, name, args, isVirtual, expr, pred, comment} = 
@@ -5912,7 +5936,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				       fun genCopyFull ({pty as PX.Name tyName: PX.Pty, args: pcexp list, 
 							name: string, isVirtual: bool, isEndian: bool, 
 							isRecord, containsRecord, largeHeuristic: bool,
-							pred: pcexp option, comment: string option,...}:pfieldty) = 
+							pred, comment: string option,...}:pfieldty) = 
 					   doCopy(isVirtual, pty, name)
 				       fun noop _ = []
 				       fun genCopyMan {tyname, name, args, isVirtual, expr, pred, comment} = 
@@ -5966,7 +5990,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genReadFull ({pty: PX.Pty, args: pcexp list, name: string,
 				       isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				       pred:pcexp option, comment, ...}:pfieldty) =
+				       pred, comment, ...}:pfieldty) =
 			  let val firstNext = if isAlt then "" else (if !first then (first := false; "_FIRST") else "_NEXT")
 			      val modPred = modStructPred(structName, name, allVars, pred, (!readSubList))
 			      val readFieldName = lookupTy(pty, readSuf, #readname)
@@ -6144,16 +6168,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 										(* Generate is function struct case *)
 		      val isName = PNames.isPref name
 		      val predX = 
-			  let fun getConFull({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
+			  let fun getConM name pred = 
+  			          case pred of NONE => [] 
+			           | SOME e => if P.isFreeInPostCond omitNames e
+					       then (PE.warn ("Omitted field passed to constraint "^
+							      "for field "^name^". "^
+							      "Excluding constraint in "^ isName); [])
+					       else P.getIsPredXs(P.substPostCond (!postReadSubList) e)
+
+
+			      fun getConFull({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 					     isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					     pred: pcexp option, comment: string option,...}:pfieldty) = 
+					     pred, comment: string option,...}:pfieldty) = 
 			          if isVirtual then [] 
-                                  else let val predXs  = case pred of NONE => [] 
-								    | SOME e => if PTSub.isFreeInExp(omitNames, e) 
-										then (PE.warn ("Omitted field passed to constraint "^
-											       "for field "^name^". "^
-											       "Excluding constraint in "^ isName); [])
-										else [PTSub.substExps (!postReadSubList) e]
+                                  else let val predXs  = getConM name pred
 					   val fieldXs = case lookupPred pty of NONE => []
 									      | SOME fieldPred => 
 										if List.exists(fn a=>PTSub.isFreeInExp(omitNames, a)) args
@@ -6166,8 +6194,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				       in
 					   fieldXs @ predXs 
 				       end
-			      fun getConMan  {tyname, name, args, isVirtual, pred, expr, comment} = 
-				  (* check predicate here. *) []
+			      fun getConMan  {tyname, name, args, isVirtual, pred, expr, comment} = getConM name pred
 			      val fieldConS = mungeFields getConFull (fn x=>[]) getConMan fields
 			      val whereConS = [getIsExp postCond]
 			      val constraintSs = List.map (PTSub.substExps (!postReadSubList)) (fieldConS @ whereConS)
@@ -6186,7 +6213,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      fun genAccTheFull ({pty: PX.Pty, args: pcexp list, name: string, 
 						 isVirtual: bool, isEndian: bool, 
 						 isRecord, containsRecord, largeHeuristic: bool,
-						 pred: pcexp option, comment,...}:pfieldty) = 
+						 pred, comment,...}:pfieldty) = 
 				  if not isVirtual then
 				      case lookupAcc(pty) of NONE => []
 							   | SOME a => cnvPtyMan(theSuf a, acc, name)
@@ -6215,7 +6242,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genAccAddFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					 isVirtual: bool, isEndian: bool, 
 					 isRecord, containsRecord, largeHeuristic: bool,
-					 pred: pcexp option, comment,...}:pfieldty) = 
+					 pred, comment,...}:pfieldty) = 
 			  if not isVirtual then cnvPtyForAdd(pty, name, P.getFieldX(pd, name)) else []
                       fun genAccAddBrief e = []
 
@@ -6254,7 +6281,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genAccReportFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					    isVirtual: bool, isEndian: bool, 
 					    isRecord, containsRecord, largeHeuristic: bool,
-					    pred: pcexp option, comment,...}:pfieldty) = 
+					    pred, comment,...}:pfieldty) = 
 			  if not isVirtual then cnvPtyForReport(reportSuf, ioSuf, pty, name, "field")
 			  else []
                       fun genAccReportBrief e = []
@@ -6308,7 +6335,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genWriteFull (f as ({pty: PX.Pty, args: pcexp list, name: string, 
 					      isVirtual: bool, isEndian: bool, 
   					      isRecord=_, containsRecord, largeHeuristic: bool,
-					      pred: pcexp option, comment,...}:pfieldty)) = 
+					      pred, comment,...}:pfieldty)) = 
 			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
                           else genWriteForM(PX.Full f, pty, args, name, isRecord, P.getFieldX(pd, name), fn x=>x)
 
@@ -6367,7 +6394,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genXMLWriteFull (f as ({pty: PX.Pty, args: pcexp list, name: string, 
 						 isVirtual: bool, isEndian: bool, 
   						 isRecord=_, containsRecord, largeHeuristic: bool,
-						 pred: pcexp option, comment,...}:pfieldty)) = 
+						 pred, comment,...}:pfieldty)) = 
 			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
                           else genXMLWriteForM(PX.Full f, pty, args, name, isRecord, P.getFieldX(pd, name), fn x=>x)
 
@@ -6427,7 +6454,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genFmtFull (f as ({pty: PX.Pty, args: pcexp list, name: string, 
 					      isVirtual: bool, isEndian: bool, 
   					      isRecord=_, containsRecord, largeHeuristic: bool,
-					      pred: pcexp option, comment,...}:pfieldty)) = 
+					      pred, comment,...}:pfieldty)) = 
 			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
                           else genFmtForM(PX.Full f, pty, args, name, isRecord, P.getFieldX(pd, name), fn x=>x)
 
@@ -6466,7 +6493,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genFieldFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 					isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					pred: pcexp option, comment: string option,...}:pfieldty) = 
+					pred, comment: string option,...}:pfieldty) = 
 			  if isVirtual then [] else [(name, lookupTy (pty, repSuf, #repname), false)]
 		      fun genFieldBrief e = []
 		      fun genFieldMan {tyname, name, args, isVirtual, expr, pred, comment} =
@@ -6482,7 +6509,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						    (* counting Full and Computed fields *)
 		      fun countFieldFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool,
 					  isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					  pred: pcexp option, comment: string option,...}:pfieldty) =
+					  pred, comment: string option,...}:pfieldty) =
 			  if isVirtual then [] else [1]
 		      fun countFieldMan m = []
 		      fun countFieldBrief e = [1]

@@ -3,6 +3,7 @@ struct
 
     structure PT = ParseTree
     structure PX = ParseTreeExt
+    structure PTSub= ParseTreeSubst(* Function for subtituting an expression for a string in an expression *)
 
     fun makePCT s : PT.ctype = {qualifiers=[], specifiers=s}
     fun makePDT s : PT.decltype = {qualifiers=[],specifiers=s,storage=[]}
@@ -279,5 +280,34 @@ struct
       | printExpList s [e] = expToString e
       | printExpList s (e::es) = ((expToString e) ^ s ^ " " ^ (printExpList s es))
 
+    fun substPostCond subs [] = []
+      | substPostCond subs (x::xs) = 
+	let val rest = (substPostCond subs xs)
+	in
+	    case x of PX.General x  => 	  (PX.General (PTSub.substExps subs x)) :: rest 
+            | PX.ParseCheck x      => 	  (PX.ParseCheck (PTSub.substExps subs x)) :: rest 
+	end
+
+    fun isFreeInPostCond subs [] = false
+      | isFreeInPostCond subs (x::xs) = 
+	let val rest = (isFreeInPostCond subs xs)
+	    val core = case x of PX.General e => e | PX.ParseCheck e => e
+	in
+	    PTSub.isFreeInExp(subs, core) andalso rest
+	end
+    
+    fun getIsPredXs [] = []
+	| getIsPredXs (x::xs) = case x of PX.General e => e :: (getIsPredXs xs) | _ => (getIsPredXs xs)
+
+    fun getPredXs [] = []
+	| getPredXs (x::xs) = case x of PX.General e => e :: (getPredXs xs) | PX.ParseCheck e => e :: (getPredXs xs)
+
+    fun constraintToString arg = 
+       (case arg of [] => ""
+        | ((PX.General e)::rest) => (expToString e) ^ "&&" ^ constraintToString rest
+        | ((PX.ParseCheck e) :: rest) => "ParseCheck("^expToString e^") &&" ^ constraintToString rest
+       (* end case *))
+
 end
+
 

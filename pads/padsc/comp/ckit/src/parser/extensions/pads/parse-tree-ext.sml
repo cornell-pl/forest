@@ -20,8 +20,8 @@ structure ParseTreeExt =
          | Skip  of 'exp PPostCond list 
          | Longest
 
-        datatype 'exp  OptPredicate = Simple of 'exp 
-	                        | Decon of {some : (string * 'exp) option, none : 'exp option}
+        datatype 'exp  OptPredicate = Simple of 'exp PPostCond list
+	                        | Decon of {some : (string * 'exp PPostCond list) option, none : 'exp PPostCond list option}
        
         datatype ('ct, 'dt, 'decr, 'exp) PSField = 
            Full of {    pty : Pty, 
@@ -32,7 +32,7 @@ structure ParseTreeExt =
                    isRecord : bool,
              containsRecord : bool,
              largeHeuristic : bool,
-		       pred : 'exp option, 
+		       pred : 'exp PPostCond list option, 
 		    comment : string option,
 		    optDecl : bool,
                     optPred : ('exp OptPredicate) option,
@@ -44,7 +44,7 @@ structure ParseTreeExt =
 			 args  : 'exp list,
 	             isVirtual : bool,
 			 expr  : 'exp,
-			 pred  : 'exp option,
+			 pred  : 'exp PPostCond list option,
                       comment  : string option}
          | Brief of 'exp * string option
 

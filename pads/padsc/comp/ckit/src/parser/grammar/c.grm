@@ -218,7 +218,7 @@ with val emptySeq = SEQ nil
 end
 
 datatype ConstraintKind = 
-         SimpleStructCon of expression option
+         SimpleStructCon of expression PX.PPostCond list option
        | OptStructCon    of expression PX.OptPredicate
 
 
@@ -377,8 +377,8 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | pIsSource of bool
         | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
-	| pOptNone of expression option
-	| pOptSome of (string * expression) option
+	| pOptNone of expression PX.PPostCond list option
+	| pOptSome of (string * expression PX.PPostCond list) option
         | pOptDecon of expression PX.OptPredicate
         | pOptPred of expression PX.OptPredicate
         | pOptPredOpt of (expression PX.OptPredicate) option
@@ -399,7 +399,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | pConstraintsWComma of (expression PX.PPostCond) list
 	| pPostCondOpt of (expression PX.PPostCond) list
         | pManifestField of (ctype, decltype, declarator, expression) PX.PSField
-        | pConstraintOpt of expression option
+        | pConstraintOpt of expression PX.PPostCond list option
         | pCommentOpt of string option
         | pArray of (declarator, ctype, decltype, expression) PX.PExternal
         | pSizeOpt of (expression PX.PSize) option
@@ -1136,7 +1136,7 @@ pName:
  | TYPE_NAME (TYPE_NAME)
 
 pConstraintOpt: (NONE)
-  | COLON exprWComma (SOME exprWComma)
+  | COLON pConstraintsWComma (SOME pConstraintsWComma)
 
 pCommentOpt: (NONE)
   | PCOMMENT   (SOME PCOMMENT)
@@ -1197,10 +1197,10 @@ pTypedef:
 				pred = pTypedefPredOpt}) )
 
 pOptNone : 
- PNONE EQGT LCURLY exprWComma RCURLY (SOME exprWComma)
+ PNONE EQGT LCURLY pConstraintsWComma RCURLY (SOME pConstraintsWComma)
 
 pOptSome : 
- PSOME ID EQGT LCURLY exprWComma RCURLY (SOME(ID, exprWComma))
+ PSOME ID EQGT LCURLY pConstraintsWComma RCURLY (SOME(ID, pConstraintsWComma))
 
 pOptDecon : 
   pOptSome BAR pOptNone (PX.Decon{some = pOptSome, none = pOptNone})
@@ -1209,7 +1209,7 @@ pOptDecon :
 | pOptSome              (PX.Decon{some = pOptSome, none = NONE})
 
 pOptPred : 
-  LCURLY expr RCURLY (PX.Simple expr)
+  LCURLY pConstraintsWComma RCURLY (PX.Simple pConstraintsWComma)
 | pOptDecon           (pOptDecon)
 
 pOptPredOpt : (NONE)
