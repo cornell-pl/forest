@@ -5181,7 +5181,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.140 2004-02-10 16:33:37 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.141 2004-02-10 21:30:10 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6887,6 +6887,7 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
   int         nullspan = 0;
 
   P_TRACE(pads->disc, "PDCI_report_err called");
+  if ((pads->speclev || pads->disc->e_rep == PerrorRep_None) && P_GET_LEV(level) != P_LEV_FATAL) return P_OK;
   if (!whatfn) {
     infn = "";
   } else {
@@ -6900,7 +6901,7 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
     if (!pdc_errorf) { /* need an error function anyway for fatal case */
       pdc_errorf = P_error;
     }
-  } else if (pads->speclev > 0 || pads->disc->e_rep == PerrorRep_None || !pdc_errorf) {
+  } else if (!pdc_errorf) {
     return P_OK;
   }
   if (errCode == P_NO_ERR) {
