@@ -2,7 +2,13 @@ Latest Compiler TODO
 --------------------
 * generated copy functions for non-static types should do a cleanup of
   the target before doing the actual copy work.  Otherwise allocated
-  space will never get cleanup up.
+  space will never get cleanup up.  This is not right: strings and
+  arrays re-use an existing rbuf.  The issue has to do with union
+  types, where it is important to cleanup before doing the copy.
+  Actually if all of the arms have the SAME type, then there is no
+  need to do a cleanup.  Or even better: if TYPEOF(src->tag) == TYPEOF(targ->tag)
+  then there is no reason to do a cleanup.  Hard for the compiler to
+  generate this test?
 
 * omitted fields for non-static types: currently we generate init calls,
   but no cleanup calls.  This means if the space is grown during read,
