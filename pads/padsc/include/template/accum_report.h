@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   char             *fileName = 0;
 #ifdef EXTRA_DECLS
   EXTRA_DECLS;
-#endif EXTRA_DECLS
+#endif
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
