@@ -61,10 +61,18 @@ astringCSE   PDC_string  PDC_base_em   PDC_base_ed          PDC_astringCSE_read 
 
 # adate rep and read function should be based on libast's clock = tmdate(s, &e, (time_t *)0);               
 adate        PDC_string  PDC_base_em   PDC_base_ed          PDC_astring_read           -                 -              V         V           N
+# countX    is a counter data type that is parameterized by a count char (X)
+#           and represents the number of X chars between the current IO position and the first EOR/EOF
+#           a second param, if non-zero, indicates whether encountering EOF before EOR is an error. E.g.,
+#           countX(:'|', 1:) counts the number of vertical bars between the current IO position and
+#           the remainder of the current record, where an error occurs if EOF prior to detecting EOR.
+#
 # countXtoY is a counter data type that is parameterized by a count char (X) and a terminating char (Y),
-#           and represents the number of X chars found before the first Y char
+#           and represents the number of X chars between the current IO position and the first Y char
+#
+countX       PDC_int32   PDC_base_em   PDC_base_ed          PDC_countX                 -                 -              V         S           N
 countXtoY    PDC_int32   PDC_base_em   PDC_base_ed          PDC_countXtoY              -                 -              V         S           N
 
 # internal only
-PDC_char_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_char_lit_read          PDCI_char_lit_scan PDC_uint8_acc  1         S           N
-PDC_str_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_str_lit_read           PDCI_str_lit_scan  PDC_string_acc P         V           N
+PDC_char_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_char_lit_read          PDC_char_lit_scan  PDC_uint8_acc  1         S           N
+PDC_str_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_str_lit_read           PDC_str_lit_scan   PDC_string_acc P         V           N
