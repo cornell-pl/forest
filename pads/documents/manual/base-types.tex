@@ -7,16 +7,17 @@ This chapter provides an overview of some of the most important built-in \PADSL{
 with a focus on how these types are used within \PADSL{} source files.
 \appref{ap:base-types} gives detailed descriptions of each of the built-in base types,
 including the full set of library API calls for each type.  (As discussed in
-\secref{sec:somewhere}, each type has correspond read, write, format, and accumulation functions.)
+\chapref{chap:common-features}, each type has correspond read, write,
+format, and accumulator functions.) 
 
-In addition to the built-in types, it is possible to extend \PADSL{} with any
-number of new base types; see \secref{sec:library-adding-new-base-types}.
+In addition to the built-in types, it is possible to extend \PADSL{} with 
+new base types; see \secref{sec:library-adding-new-base-types}.
 
 \section{In-Memory Representation}
 \label{sec:base-types-rep}
 
-Each base type as an external and an in-memory representation, where
-related base types share the same in-memory representation.  For
+Each base type has an external and an in-memory representation. 
+Related base types share the same in-memory representation.  For
 example, while there are 18 different string base types, all of them
 use \Pd{string} as their in-memory representation.
 
@@ -58,48 +59,41 @@ resizable buffer, and \cd{s.str} points into this buffer.
 To ensure correct behavior, function \Pd{string\_init} should be called
 prior to using a \Pd{string}, and function \Pd{string\_cleanup} should
 be called when a given \Pd{string} is no longer in use.
-\\[1ex]
-These are the full set of string helper functions.
-\myvskip{1ex}
-\begin{tinycodeaux}{\leftmargin=0in}
-Perror\_t Pstring\_init(P\_t *pads, Pstring *s);
-Perror\_t Pstring\_cleanup(P\_t *pads, Pstring *s);
-Perror\_t Pstring\_share(P\_t *pads, Pstring *targ, const Pstring *src);
-Perror\_t Pstring\_cstr\_share(P\_t *pads, Pstring *targ, const char *src, size\_t len);
-Perror\_t Pstring\_copy(P\_t *pads, Pstring *targ, const Pstring *src);
-Perror\_t Pstring\_cstr\_copy(P\_t *pads, Pstring *targ, const char *src, size\_t len);
-Perror\_t Pstring\_preserve(P\_t *pads, Pstring *s);
-int Pstring\_eq(const Pstring *str1, const Pstring *str2);
-int Pstring\_eq\_cstr(const Pstring *str, const char *cstr);
-Pint8    Pstring2int8  (const Pstring *str);  \/\* returns P\_MIN\_INT8 on error \*\/ 
-Pint16   Pstring2int16 (const Pstring *str);  \/\* returns P\_MIN\_INT16 on error \*\/ 
-Pint32   Pstring2int32 (const Pstring *str);  \/\* returns P\_MIN\_INT32 on error \*\/ 
-Pint64   Pstring2int64 (const Pstring *str);  \/\* returns P\_MIN\_INT64 on error \*\/ 
+Generated initialization and cleanup functions call these routines for
+any \pads{} type containing a \Pd{string}.
 
-Puint8   Pstring2uint8 (const Pstring *str);  \/\* returns P\_MAX\_UINT8 on error \*\/ 
-Puint16  Pstring2uint16(const Pstring *str);  \/\* returns P\_MAX\_UINT16 on error \*\/ 
-Puint32  Pstring2uint32(const Pstring *str);  \/\* returns P\_MAX\_UINT32 on error \*\/ 
-Puint64  Pstring2uint64(const Pstring *str);  \/\* returns P\_MAX\_UINT64 on error \*\/ 
+The full set of string helper functions appears in \figref{fig:string-functions}.
+\begin{figure}
+\inputCode{code/strings}
+\caption{Library functions for manipulating \texttt{Pstring}s.}
+\label{fig:string-functions}
+\end{figure}
 
-Pfloat32 Pstring2float32(const Pstring *str); \/\* returns P\_MIN\_FLOAT32 on error \*\/
-Pfloat64 Pstring2float64(const Pstring *str); \/\* returns P\_MIN\_FLOAT64 on error \*\/
-\end{tinycodeaux}
-\mbox{}\\[1ex]
-\cd{Pstring\_init(pads, s)}: Initialize \cd{s} to valid empty string (no dynamic memory allocated yet).\\[1ex]
-\cd{Pstring\_cleanup(pads, s)}: Free any dynamic memory allocated for \cd{s}.\\[1ex]
-\cd{Pstring\_share(pads, targ, src)}: make \cd{targ} refer to the string in \cd{src},
-sharing the space with the original owner.\\[1ex]
-\cd{Pstring\_cstr\_share(pads, targ, src, len)}: make \cd{targ} refer to \cd{len} characters in C-string \cd{src}.\\[1ex]
-\cd{Pstring\_copy(pads, targ, src)}: Copy the string in \cd{src} into \cd{targ}; sharing is not used.\\[1ex]
-\cd{Pstring\_cstr\_copy(pads, targ, src, len)}: Copy \cd{len} characters from C-string \cd{src} into \cd{targ}; sharing is not used.\\[1ex]
-\cd{Pstring\_eq(str1, str2)}: returns \cd{0} if \cd{str1} equals \cd{str2}, a negative number if \cd{str1 < str2},
-and a positive number if \cd{str1 > str2}.\\[1ex]
-\cd{Pstring\_eq(str, cstr)}: returns \cd{0} if \cd{str} equals \cd{cstr}, a negative number if \cd{str < cstr},
-and a positive number if \cd{str > cstr}.\\[1ex]
+The following list describes the behaviors of these functions.
+\begin{description}
+\item[\cd{Pstring\_init(pads, s)}] 
+  Initialize \cd{s} to valid empty string (no dynamic memory allocated yet).
+\item[\cd{Pstring\_cleanup(pads, s)}] 
+  Free any dynamic memory allocated for \cd{s}.
+\item[\cd{Pstring\_share(pads, targ, src)}] 
+  Make \cd{targ} refer to the string in \cd{src}, sharing the space with the original owner.
+\item[\cd{Pstring\_cstr\_share(pads, targ, src, len)}] 
+  Make \cd{targ} refer to \cd{len} characters in C-string \cd{src}.
+\item[\cd{Pstring\_copy(pads, targ, src)}]
+  Copy the string in \cd{src} into \cd{targ}; sharing is not used.
+\item[\cd{Pstring\_cstr\_copy(pads, targ, src, len)}] 
+ Copy \cd{len} characters from C-string \cd{src} into \cd{targ}; sharing is not used.
+\item[\cd{Pstring\_eq(str1, str2)}] 
+ Returns \cd{0} if \cd{str1} equals \cd{str2}, a negative number if \cd{str1 < str2},
+ and a positive number if \cd{str1 > str2}.
+\item[\cd{Pstring\_eq(str, cstr)}]
+ Returns \cd{0} if \cd{str} equals \cd{cstr}, a negative number if \cd{str < cstr},
+ and a positive number if \cd{str > cstr}.
+\end{description}
 
 Although not strictly necessary, both \Pd{string\_copy} and
 \Pd{string\_cstr\_copy} null-terminate \cd{targ->str}.  Each copy
-function returns \Pd{\_ERR} on bad arguments or on failure to alloc
+function returns \Pd{\_ERR} on bad arguments or on failure to allocate
 space, otherwise it returns \Pd{\_OK}.
 
 The various Pstring2NUMERIC functions convert a string to the
@@ -110,7 +104,7 @@ returned for unsigned numeric types.
 
 \subsection{Integer types}
 
-There are 8 in-memory representations for integers, four types for
+There are eight in-memory representations for integers, four types for
 signed values (\Pd{int8}, \Pd{int16}, \Pd{int32}, and \Pd{int64})
 and four types for unsigned values (\Pd{uint8}, \Pd{uint16}, \Pd{uint32}, and \Pd{uint64}).
 The number in these type names indicates the number of bits in the in-memory representation,
@@ -121,29 +115,19 @@ The external representation, which may be in another format, is always converted
 to the primitive in-memory representation supported by the processor.
 
 For programming convenience, the header file {\tt pads.h} includes definitions of the minimum
-and maximum values for each signed type, and of the maximum value for each unsigned type:
-\begin{tinycode}
-P\_MIN\_INT8
-P\_MAX\_INT8
-P\_MAX\_UINT8
+and maximum values for each signed type, and of the maximum value for
+each unsigned type.  \figref{fig:limits} list these constants.
+\begin{figure}
+\inputCode{code/limits}
+\caption{Minimum and maximum values for \pads{} integer types.}
+\label{fig:limits}
+\end{figure}
 
-P\_MIN\_INT16
-P\_MAX\_INT16
-P\_MAX\_UINT16
-
-P\_MIN\_INT32
-P\_MAX\_INT32
-P\_MAX\_UINT32
-
-P\_MIN\_INT64
-P\_MAX\_INT64
-P\_MAX\_UINT64
-\end{tinycode}
 
 \subsection{Floating-point types}
 
 \PADSL{} has only two in-memory floating point representations,
-\Pd{float32} and \Pd{float64}, which correspond to ansi C types \cd{float}
+\Pd{float32} and \Pd{float64}, which correspond to ANSI C types \cd{float}
 and \cd{double}, respectively.
 
 \subsection{Fixed-point types}
@@ -164,17 +148,7 @@ used for both numerator and denominator in the same way as for the
 integer types, thus there are four types for signed values
 and four types for unsigned values:
 
-\begin{tinycodeaux}{\leftmargin=0in}
-typedef struct \{ Pint8   num; Puint8  denom; \} Pfpoint8;
-typedef struct \{ Pint16  num; Puint16 denom; \} Pfpoint16;
-typedef struct \{ Pint32  num; Puint32 denom; \} Pfpoint32;
-typedef struct \{ Pint64  num; Puint64 denom; \} Pfpoint64;
-
-typedef struct \{ Puint8  num; Puint8  denom; \} Pufpoint8;
-typedef struct \{ Puint16 num; Puint16 denom; \} Pufpoint16;
-typedef struct \{ Puint32 num; Puint32 denom; \} Pufpoint32;
-typedef struct \{ Puint64 num; Puint64 denom; \} Pufpoint64;
-\end{tinycodeaux}
+\inputCode{code/fixedpoint}
 
 There are two macros to help one use values of these in-memory types.
 \Pd{\_FPOINT2FLOAT32(fp)} calculates \cd{fp.num/fp.denom} as a \Pd{float32},
@@ -183,22 +157,21 @@ while \Pd{\_FPOINT2FLOAT64(fp)} calculates \cd{fp.num/fp.denom} as a \Pd{float64
 \section{Base Type Mask}
 \label{sec:base-type-mask}
 
-XXX \Pbasem{} was already described?
+\note{\Pbasem{} was already described?  No: they should be described here.}
 
 \section{Base Type Parse Descriptor}
 \label{sec:base-type-parse-descriptors}
+Parse descriptors for base types contain only the fields described in 
+\secref{sec:common-parse-descriptor}.
+Specific error codes are discussed when the base type read functions
+are described.
 
-XXX already described \Pbasepd{}.  Which involves describing \Ploct{}, \Ppost{},
-and \PerrCodet{}.  
-
-Specific error codes are discussed below
-when the base type read functions are described.
 
 \section{Character Sets}
 
 \PADSL{} currently supports two character sets for external data, ASCII and EBCDIC.
 As discussed in \secref{sec:common-character-sets}, the library
-discipline contain a field
+discipline contains a field
 \cd{def\_charset} that selects which character set to use when
 one is not specified explicitly.  As a result, for each 'kind' of data
 that has an external form made up of characters (characters, strings,
@@ -208,7 +181,7 @@ form is always ASCII, a type that indicates the external form is
 always EBCDIC, and a type that indicates that the external form uses
 the character set specified in \cd{def\_charset}.
 
-In each section below describing character-based types, we give a
+In each section describing character-based types, we give a
 three-column table indicating the type(s) that use ASCII, EBCDIC, or
 DEFAULT character sets.  For example, the next section begins with a
 table showing types \Pa{char} (ASCII), \Pe{char} (EBCDIC), \Pd{char}
@@ -221,18 +194,21 @@ table showing types \Pa{char} (ASCII), \Pe{char} (EBCDIC), \Pd{char}
 \aedBegin{}
 \aedLine{char}
 \aedEnd{}
-\\[1ex]
-Example:  Writing
-\begin{tinycodeaux}{\leftmargin=0in}
-Pa\_char  c;
-\end{tinycodeaux}
+\myvskip{1ex}
+
+\noindent
+For example,  writing
+
+\inputCode{code/char-decl}
+%
+\noindent
 in a \PADSL{} source file (within a Pstruct, for example) indicates
 that a single ASCII character is expected.  Writing a constraint
 such as 
-\begin{tinycodeaux}{\leftmargin=0in}
-{\bf TODO: FORMATING? }
-Pe\_char  c : c == 'A' || c == 'B';
-\end{tinycodeaux}
+
+\inputCode{code/char-constraint-decl}
+%
+\noindent
 indicates that an EBCDIC capital letter A or B is expected.
 {\bf NB:}\/ Note that the constraint expression is applied to the
 {\em in-memory\/} representation of c, which is an ASCII value,
@@ -261,21 +237,21 @@ eor\_required is non-zero, then encountering EOF before EOR produces
 an error.  If count\_max is non-zero, EOR/EOF must be encountered
 before scanning count\_max characters, otherwise an error is returned.
 For example,
-\begin{tinycodeaux}{\leftmargin=0in}
-{\bf TODO: FORMAT }
-Pa\_countX(: '=', 0, 0 :) my\_count;
-\end{tinycodeaux}
+
+\inputCode{code/countX}
+%
+\noindent
 will count the number of ASCII equals-sign characters between
 the IO cursor and the next EOR or EOF, with no limit on
 the maximum scan distance.
 
 \section{String Base Types}
 
-The large number of string base types is due to the fact that there
+The large number of string base types arises from the fact that there
 are many different ways to indicate the extent of a string.  The
 entire input (up to end-of-file or end-of-record) is a sequence of
 bytes that can be included in a string, so when specifying a string
-type in a PADSL description, we need to indicate how much of that
+type in a \padsl{} description, we need to indicate how much of that
 input we would like included in the string.
 
 \subsection{Pstring\_FW}
@@ -287,10 +263,9 @@ input we would like included in the string.
 One of the simplest ways to specify the extent of a string is to give the
 exact number of characters, or width, that will be included in the string.
 For example,
-\begin{tinycodeaux}{\leftmargin=0in}
-{\bf TODO: FORMAT }
-Pstring\_FW(: 10 :) my\_string;
-\end{tinycodeaux}
+\inputCode{code/stringFW}
+%
+\noindent
 Specifies a string with width 10.  In this case the default character set
 will determine whether ASCII or EBCDIC characters are expected in the
 input stream.  Regardless of the input character set, the resulting in-memory 
@@ -310,10 +285,10 @@ expected immediately {\em following\/} the string.  The extent of the
 string is all characters from the IO cursor up
 to but not including the first occurrence of the stop char.
 For example,
-\begin{tinycodeaux}{\leftmargin=0in}
-{\bf TODO: FORMAT }
-Pe\_string(: '|' :) my\_string;
-\end{tinycodeaux}
+
+\inputCode{code/string-stop}
+%
+\noindent
 Indicates that a series of EBCDIC characters is expected, followed by
 an EBCDIC vertical bar.  Note that the stop char is always specified
 in ASCII (in this case usng a C character constant).  When the
@@ -327,40 +302,39 @@ specified ASCII character.
 \aedLine{string\_ME}
 \aedEnd{}
 
-For type Pstring\_ME, a regular expression called the {\em matching
+For type \cd{Pstring\_ME}, a regular expression called the {\em matching
 expression\/} is given, and the extent of the string is the longest
 sequence of characters starting at the current IO position which match
 this expression.  Note that when you specify a regular expression as
-a C string, you must use two backslashes to indicate a single
+a \C{} string, you must use two backslashes to indicate a single
 backslash character (otherwise C will think you are applying the
 special backslash operator to the following character). 
 In a language such as Perl, which does not have this requirement,
 you might write
-\begin{tinycodeaux}{\leftmargin=0in}
-% This is supposed to come out as  /\S*/
-  /\\S\*/
-\end{tinycodeaux}
+
+\inputCode{code/reg-exp}
+%
+\noindent
 to create a regular expression which will match a
 sequence of zero or more non-space characters.  To use the
 same regular expression in a PADSL description
-with the Pa\_string\_ME type, you would write:
-\begin{tinycodeaux}{\leftmargin=0in}
-{\bf TODO: FORMAT }
-% This is supposed to come out as  "/\\S*/"
-Pa\_string\_ME(: "\/\\\\S\*\/" :) my\_string;
-\end{tinycodeaux}
+with the \cd{Pa\_string\_ME} type, you would write:
+
+\inputCode{code/string-match}
+%
+\noindent
 This will match a sequence of zero or non-space characters and assign
-it to my\_string.  Note that if a space occurs immediatley, a match
-still occurs, since we specified that zero characters was OK --
-my\_string would be a string of length 0.  The extent is bound be
+it to \cd{my\_string}.  Note that if a space occurs immediatley, a match
+still occurs, since we specified that zero characters was OK;
+\cd{my\_string} would be a string of length zero.  The extent is bound be
 end-of-record/end-of-file, so if there are no spaces before an
-end-of-record, my\_string will end up containing all characters
+end-of-record, \cd{my\_string} will end up containing all characters
 remaining in the record.
 
 As a concrete example, if the input at the current IO cursor is {\tt hello
 world} when the above string declaration is used to read from the
-input, my\_string will end up containing {\tt hello}.  Note that the
-space that follows {\t hello} is {\em not} included, since it does not
+input, \cd{my\_string} will end up containing {\tt hello}.  Note that the
+space that follows {\tt hello} is {\em not} included, since it does not
 part of the match.
 
 \subsection{Pstring\_SE}
@@ -369,42 +343,42 @@ part of the match.
 \aedLine{string\_SE}
 \aedEnd{}
 
-For type Pstring\_SE, a regular expression called the {\em stop
+For type \cd{Pstring\_SE}, a regular expression called the {\em stop
 expression\/} is given, and the extent of the string is the longest
 sequence of characters starting at the current IO position such that
 the characters immediately following successfully match the stop
 expression.  None of the characters matching the stop expression
 are included in the result.
 For example,
-\begin{tinycodeaux}{\leftmargin=0in}
-{\bf TODO: FORMAT }
-% This is supposed to come out as  "/\\s|$/"
-XXX FIX
-Pa\_string\_SE(: "\/\\\\s|\$\/" :) my\_string;
-\end{tinycodeaux}
+
+\inputCode{code/string-stope}
+%
+\noindent
 The stop expression will match {\em either\/} a space character (due to the backslash-s) {\em or\/}
 end-of-record/end-of-file (due to the special dollar-sign character).  As a result,
-my\_string will end up containing all non-space characters up to (but not including) the 
+\cd{my\_string} will end up containing all non-space characters up to (but not including) the 
 first space characer that is found, or up to the end of the current record if no space
 character is found.  
 
-You may already have noticed that the Pa\_string\_ME and
-Pa\_string\_SE examples actually specify exactly the same extent.  Due
-to the power of regular expressions, it is often the case that you can
+You may have noticed that the \cd{Pa\_string\_ME} and
+\cd{Pa\_string\_SE} examples actually specify exactly the same extent.  
+Because of the power of regular expressions, it is often the case that you can
 choose to use either type.  You should use whichever type results in a
 clearer description of what is expected in the input.  (In this case,
-the Pa\_string\_ME form is simpler and therefore in our opinion
-clearer.)
+the\cd{Pa\_string\_ME} form is simpler and therefore clearer.)
 
 \subsection{Timestamp\_explicit}
 
+\begin{small}
 \aedBegin{}
 \aedLine{timestamp\_explicit\_FW}
 \aedLine{timestamp\_explicit}
 \aedLine{timestamp\_explicit\_ME}
 \aedLine{timestamp\_explicit\_SE}
 \aedEnd{}
+\end{small}
 
+\noindent
 A timestamp is a combination of a calendar date and a time of day.
 The corresponding in-memory representation is a Puint32 which
 represents the number of seconds since {\tt 00:00:00 1-Jan-1970 UTC},
@@ -414,36 +388,41 @@ internally as the number 1200, since it occurs 1200 seconds
 (20 minutes) past the epoch.
 
 The input values are ASCII or EBCDIC strings.  Each
-Ptimestamp\_explicit type takes as first argument the same form of
-specifying the string's extent as the corresponding Pstring type, and
+\cd{Ptimestamp\_explicit} type takes as first argument the same form of
+specifying the string's extent as the corresponding \cd{Pstring} type, and
 takes as second argument a timestamp format string which describes
 what the input string should contain.
 
 Timestamp formats consists of literal characters that are are simply
-expected to be present in the input, and special combinations of a
+expected to be present in the input and special combinations of a
 percent-sign and a character used to indicate expected parts of the
-timestamp.  For example, the input format {\tt
-"\%Y-\%m-\%d+\%H:\%M"} indicates that a format that starts with a
+timestamp.  For example, the input format
+\literal{\cd{"\%Y-\%m-\%d+\%H:\%M"}} 
+indicates that a format that starts with a 
 four digit year, then a dash, then a two digit month, then a dash,
 then a two-digit day, then a plus sign, then a two digit hour, then a
 colon, then a two digit minutes.  (To specify that a literal percent
 sign must appear in the input, use two percent signs in a row.)  A
-full description of supported formats is [[DESCRIBED HERE]].
+full description of supported formats appears on the webpage:
+\ifthenelse{\boolean{hevea}}{
+\myurl{www.research.att.com/\~gsf/man/man3/tm.html}}{
+\myurl{www.research.att.com/~gsf/man/man3/tm.html}}
 
-Each of the Ptimestamp\_explicit types corresponds to one of the Pstring
-types that has already been described, where ech takes one additional argument
+
+Each of the \cd{Ptimestamp\_explicit} types corresponds to one of the \cd{Pstring}
+types that has already been described, where each takes one additional argument
 to specify the input format.  For example,
-\begin{tinycodeaux}{\leftmargin=0in}
-{\bf TODO: FORMAT }
-Pa\_timestamp\_explicit(: '|' , "\%Y-\%m-\%d+\%H:\%M" :) my\_timestamp;
-\end{tinycodeaux}
+
+\inputCode{code/timestamp-explicit}
+%
+\noindent
 Reads an ASCII string, up to but not including a vertical bar, and
-converts that string into a Puint32 timestamp.  The conversion will be
+converts that string into a \cd{Puint32} timestamp.  The conversion will be
 successful only if the string has the specified format.
 
 Some timestamp formats include explicit time zone information.  For
 the rest, such as the format used above, the input time zone is taken
-from the PADS discipline field {\tt disc-$>$in\_time\_zone}, as
+from the \pads{} discipline field \cd{ disc->in\_time\_zone}, as
 described in [[THIS SECTION]].
 
 \subsection{Timestamp}
@@ -455,10 +434,10 @@ described in [[THIS SECTION]].
 \aedLine{timestamp\_SE}
 \aedEnd{}
 
-The timestamp types are the same as the timestamp\_explicit types,
-except no timestamp format is given.  Instead, the PADS
-discipline field {\tt disc-$>$in\_formats.timestamp} is used
-for all Ptimestamp types.
+The timestamp types are the same as the \cd{timestamp\_explicit} types,
+except no timestamp format is given.  Instead, the \pads{}
+discipline field \cd{disc->in\_formats.timestamp} is used
+for all \cd{Ptimestamp} types.
 
 \subsection{Date\_explicit}
 
@@ -470,14 +449,14 @@ for all Ptimestamp types.
 \aedEnd{}
 
 Dates are calendar days (no time of day).  Like timestamps, we
-represent a date as a Puint32 recording ``seconds since the epoch.''
+represent a date as a \cd{Puint32} recording ``seconds since the epoch.''
 
-The Pdate\_explicit types take a second argument, a date format,
-which accepts the same special characters as the Ptimestamp\_explciit types.
+The \cd{Pdate\_explicit} types take a second argument, a date format,
+which accepts the same special characters as the \cd{Ptimestamp\_explcit} types.
 So, technically there is nothing to stop you from using the date types
 to input time of day fields.  However, we encourage you to use the
-Ptimestamp types when both a calendar day and a time of day are to be
-input, and to use the Pdate types when just the calendar day is to be
+\cd{Ptimestamp} types when both a calendar day and a time of day are to be
+input, and to use the \cd{Pdate} types when just the calendar day is to be
 input.
 
 \subsection{Date}
@@ -489,10 +468,10 @@ input.
 \aedLine{date\_SE}
 \aedEnd{}
 
-The date types are the same as the date\_explicit types,
-except no date format is given.  Instead, the PADS
-discipline field {\tt disc-$>$in\_formats.date} is used
-for all Pdate types.
+The date types are the same as the \cd{date\_explicit} types,
+except no date format is given.  Instead, the \pads{}
+discipline field \cd{disc->in\_formats.date} is used
+for all \cd{Pdate} types.
 
 \subsection{Time\_explicit}
 
@@ -503,14 +482,14 @@ for all Pdate types.
 \aedLine{time\_explicit\_SE}
 \aedEnd{}
 
-Times give the time of day, with no calendar date.  The are
-represented as a Puint32 recording seconds since midnight.  For
+Times give the time of day, with no calendar date.  They are
+represented as a \cd{Puint32} recording seconds since midnight.  For
 examle, the time 1am is represented as 3600 (i.e., 3600 seconds, or 60
 minutes, after midnight).
 
-The Ptime\_explicit types take a second argument, a time format, which
+The \cd{Ptime\_explicit} types take a second argument, a time format, which
 accepts the same special characters as the timestamp and date types.
-However, we encourage you to use the Ptimes types when just a time of
+However, we encourage you to use the \cd{Ptimes} types when just a time of
 day is expected.
 
 \subsection{Time}
@@ -522,12 +501,12 @@ day is expected.
 \aedLine{time\_SE}
 \aedEnd{}
 
-The time types are the same as the time\_explicit types,
-except no time format is given.  Instead, the PADS
-discipline field {\tt disc-$>$in\_formats.time} is used
-for all Ptime types.
+The time types are the same as the \cd{time\_explicit} types,
+except no time format is given.  Instead, the \pads{}
+discipline field \cd{disc->in\_formats.time} is used
+for all \cd{Ptime} types.
 
-\subsection{Ip}
+\subsection{IP}
 
 \aedBegin{}
 \aedLine{time\_FW}
@@ -536,39 +515,44 @@ for all Ptime types.
 \aedLine{time\_SE}
 \aedEnd{}
 
-The Pip type reads an IP address string from the input that is in
+The \cd{Pip} type reads an IP address string from the input that is in
 numeric dotted form (as in {\tt 10.1.0.17}) using ASCII or EBCDIC
 digits and periods (dots).  The string consists of up to four
 parts with values between 0 and 255, separated by periods,
 with an optional trailing period.  When there are
 fewer than four parts, the missing parts are treated as implicitly
 zero, and are inserted as shown in the following diagram,
-which shows the 8 legal input forms and the equivalent form.
-\begin{verbatim}
-  $<$part1$>$                          --$>$ $<$part1$>$.0.0.0
-  $<$part1$>$.                         --$>$ $<$part1$>$.0.0.0.
-  $<$part1$>$.$<$part4$>$                  --$>$ $<$part1$>$.0.0.$<$part4$>$
-  $<$part1$>$.$<$part4$>$.                 --$>$ $<$part1$>$.0.0.$<$part4$>$.
-  $<$part1$>$.$<$part2$>$.$<$part4$>$          --$>$ $<$part1$>$.$<$part2$>$.0.$<$part4$>$
-  $<$part1$>$.$<$part2$>$.$<$part4$>$.         --$>$ $<$part1$>$.$<$part2$>$.0.$<$part4$>$.
-  $<$part1$>$.$<$part2$>$.$<$part3$>$.$<$part4$>$  --$>$ same
-  $<$part1$>$.$<$part2$>$.$<$part3$>$.$<$part4$>$. --$>$ same
-\end{verbatim}
+which shows the eight legal input forms and the equivalent expanded form.
+
+{\tt
+\begin{center}
+\begin{tabular}{lcl}
+  <part1>                          & ~~$\longrightarrow{}$~~ & <part1>.0.0.0\\
+  <part1>.                         & ~~$\longrightarrow{}$~~ & <part1>.0.0.0.\\
+  <part1>.<part4>                  & ~~$\longrightarrow{}$~~ & <part1>.0.0.<part4>\\
+  <part1>.<part4>.                 & ~~$\longrightarrow{}$~~ & <part1>.0.0.<part4>.\\
+  <part1>.<part2>.<part4>          & ~~$\longrightarrow{}$~~ & <part1>.<part2>.0.<part4>\\
+  <part1>.<part2>.<part4>.         & ~~$\longrightarrow{}$~~ & <part1>.<part2>.0.<part4>.\\
+  <part1>.<part2>.<part3>.<part4>  & ~~$\longrightarrow{}$~~ & same\\
+  <part1>.<part2>.<part3>.<part4>. & ~~$\longrightarrow{}$~~ & same\\
+\end{tabular}
+\end{center}}
+
 Each $<$part$>$ is made up of 1 to 3 digits which specify a number
 in the range [0, 255].
 
-The result is a single Puint32 value with each part encoded in one
+The result is a single \cd{Puint32} value with each part encoded in one
 of the four bytes.  part1 is stored in the high-order byte, part4
 in the low-order byte.  You can obtain each part using the macro
 
-\begin{tinycodeaux}{\leftmargin=0in}
+\begin{centercode}
   P\_IP\_PART(addr, part)
-\end{tinycodeaux}
-where part must be from 1 to 4.
+\end{centercode}
+where \cd{part} must be an integer between 1 and 4.
 
-The digit chars and "." char are read as EBCDIC chars if the EBCDIC
+The digits and the "." char are read as EBCDIC chars if the EBCDIC
 form is used or if the default form is used and
-pads-$>$disc-$>$def\_charset is Pcharset\_EBCDIC.  Otherwise the data is
+\cd{pads->disc->def\_charset} is \cd{Pcharset\_EBCDIC}.  Otherwise the data is
 read as ASCII chars.
 
 \section{Integer Base Types}
@@ -586,21 +570,21 @@ read as ASCII chars.
 \aedLine{uint64\_FW}
 \aedEnd{}
 
-The above types are used when the input represenation for an integer
-is a fixed number of ASCII or EBCDIC characters.  The int types are
-signed types, while the uint types are unsigned.  The number in the
+The above types are used when the input representation for an integer
+is a fixed number of ASCII or EBCDIC characters.  The \cd{int} types are
+signed types, while the \cd{uint} types are unsigned.  The number in the
 type name specifies how many bits are used in the in-memory
-represenation, thus a Puint32 is a 32 bit (4 byte) representation of
+represenation, thus a \cd{Puint32} is a 32-bit (4 byte) representation of
 an unsigned integer.
 
-The characters in the input can have an optional plus or minus sign, for
-signed types, or an optional plus signed, for unsigned types, followed
+The characters in the input can have an optional plus or minus sign for
+signed types, or an optional plus signed for unsigned types, followed
 by a set of one or more digits.   In addition, leading or
-trailing whitespace can occur, but only if the PADS discipline field
-{\tt disc-$>$flags} has the {\tt WSPACE\_OK} flag set.
+trailing whitespace can occur, but only if the \pads{} discipline field
+\cd{disc->flags} has the \cd{WSPACE\_OK} flag set.
 The data is read as EBCDIC chars if an EBCDIC
-form (such as Pe\_int8) is used, or if the default form (Pint8) is used and
-pads-$>$disc-$>$def\_charset is Pcharset\_EBCDIC.  Otherwise, the data is
+form (such as \cd{Pe\_int8}) is used, or if the default form (\cd{Pint8}) is used and
+\cd{pads->disc->def\_charset} is \cd{Pcharset\_EBCDIC}.  Otherwise, the data is
 read as ASCII chars.
 
 \subsection{Variable-width character-based encoding}
@@ -620,8 +604,8 @@ The expected input for these types is an optional sign character
 followed by a sequence of digits.  The number of characters that make
 the input is variable: after the first digit, the digits are read
 until (but not including) the first non-digit or EOF/EOF.
-If the PADS discipline field
-{\tt disc-$>$flags} has the {\tt WSPACE\_OK} flag set, then
+If the \pads discipline field
+\cd{disc->flags} has the \cd{WSPACE\_OK} flag set, then
 leading whitespace is allowed.
 
 \subsection{Raw binary encoding}
@@ -643,46 +627,44 @@ to see what number they are describing.  Instead, the number itself is
 encoded in binary form, as a sequence of bytes.  
 
 There are binary types for signed or unsigned {\em binary\/} integers
-of common bit widths (8, 16, 32, and 64 bit widths).  Pb\_int8 corresponds
-to one byte of input, Pb\_int16 to two bytes of input, and so on.
+of common bit widths (8, 16, 32, and 64 bit widths).  \cd{Pb\_int8} corresponds
+to one byte of input, \cd{Pb\_int16} to two bytes of input, and so on.
 
 The representation in memory is just the corresponding signed or
-unsigned type, thus Pb\_uint16 has rep type Puint16.  The bytes from
-the input are simply copied into the bytes that make up the rep.  If
+unsigned type, thus \cd{Pb\_uint16} has representation type \cd{Puint16}.  The bytes from
+the input are simply copied into the bytes that make up the representation.  If
 the endian-ness of input data is different from the endian-ness of the
 machine, then the byte order is reversed to form the in-memory
-represenation, otherwise the byte order is preserved.
+representation; otherwise the byte order is preserved.
 
-The endian-ness of the machine running the PADS program is fixed -- it
-is determined automatically by the PADS libary.  
-The input data endianess is described by PADS disipline 
-field {\tt disc-$>$d\_endian}. 
+The endian-ness of the machine running the \pads{} program is fixed: it
+is determined automatically by the \pads{} libary.  
+The input data endianess is described by \pads{} disipline 
+field \cd{disc->d\_endian}. 
 
-In some cases it is possible to have PADS determine the
-proper setting for {\tt disc-$>$d\_endian} automatically, by
-using the special pragma {\tt CHECK\_ENDIAN}
-with the first multi-byte binary integer field that will appear
+In some cases it is possible to have \pads{} determine the
+proper setting for \cd{disc->d\_endian} automatically, by
+using the annotation \cd{Pendian}
+with the first multi-byte binary integer field that appears
 in the data.  For example, consider this header definition:
-\begin{tinycodeaux}{\leftmargin=0in}
-Pstruct header \{
-   Pb\_uint16 version : version $<$ 10; \/\/- PRAGMA CHECK\_ENDIAN
-   ..etc..
-\};
-\end{tinycodeaux}
-This PADSL description indicates the first value in the header
-is a 2-byte unsigned binary integer, version,
-whose value should be less than 10.   The  {\tt CHECK\_ENDIAN} pragma indicates that there
+
+\inputCode{code/pendian}
+%
+\noindent
+This \padsl{} description indicates the first value in the header
+is a 2-byte unsigned binary integer, \cd{version},
+whose value should be less than ten0.   The \cd {Pendian} annotation indicates that there
 should be two attempts at reading the version field: once with the
- current {\tt disc-$>$d\_endian} setting, and (if the read fails) once with the
-opposite {\tt disc-$>$d\_endian} setting.  If the second read succeeds, then
-the new {\tt disc-$>$d\_endian} setting is retained, otherwise the original
+current \cd{disc->d\_endian} setting, and (if the read fails) once with the
+opposite \cd{disc->d\_endian} setting.  If the second read succeeds, then
+the new \cd{disc->d\_endian} setting is retained, otherwise the original
 setting is retained.
 
-Note that the {\tt CHECK\_ENDIAN} pragma is only able to determine the correct endian
+Note that the \cd{Pendian} pragma is only able to determine the correct endian
 choice for a field that has an attached constraint, where the
 wrong choice of endian setting will always cause the constraint to fail.
-(In the above example, if a value $<$ 10 is read with the wrong d\_endian
-setting, the result is a value that is much greater than 10. )
+(In the above example, if a value less than ten is read with the wrong \cd{d\_endian}
+setting, the result is a value that is much greater than ten. )
 
 \subsection{Serialize binary encoding}
 
@@ -721,8 +703,7 @@ setting, the result is a value that is much greater than 10. )
 \aedLine{float64\_FW}
 \aedEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\end{tinycodeaux}
+
 
 \subsection{Variable-width character-based encoding}
 
@@ -731,8 +712,6 @@ setting, the result is a value that is much greater than 10. )
 \aedLine{float64}
 \aedEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\end{tinycodeaux}
 
 \subsection{Raw binary encoding}
 
@@ -741,8 +720,6 @@ setting, the result is a value that is much greater than 10. )
 \bLine{float64}
 \bEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\end{tinycodeaux}
 
 \subsection{Serialized binary encoding}
 
@@ -751,8 +728,6 @@ setting, the result is a value that is much greater than 10. )
 \sbLine{float64}
 \sbEnd{}
 
-\begin{tinycodeaux}{\leftmargin=0in}
-\end{tinycodeaux}
 
 \section{Fixed Point Base Types}
 
