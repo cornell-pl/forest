@@ -339,6 +339,7 @@ end
         | pName of string
         | pIsRecord of bool
         | pIsSource of bool
+        | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
         | pREexpr of expression
         | pStruct of (declarator, ctype, decltype, expression) PX.PExternal
@@ -448,7 +449,7 @@ externalDeclaration:
 						   	               functionDefinitionleft,
 							               functionDefinitionright)))
 (* PADS: start external declarations *)
-        | pTypedef RCURLY               (SOME(markExternalDecl srcMap (pTypedef,pTypedefleft,RCURLYright)))
+        | pTypedef                      (SOME(markExternalDecl srcMap (pTypedef,pTypedefleft,pTypedefright)))
         | pStruct RCURLY pPostCondOpt   (let val augPStruct = addStructPostCond(pStruct, pPostCondOpt)
                                              val structDecl = ExternalDeclExt augPStruct
 	                                 in
@@ -1100,8 +1101,13 @@ pActParamList:
 pOptActParams: ([])
  | LCOLON pActParamList RCOLON ( List.rev pActParamList )
 
+
+pTypedefPredOpt :
+		(NONE)
+ | COLONCOLON pName pName EQGT LCURLY expr popScope RCURLY (SOME{predTy=PX.Name pName1, thisVar=pName2, pred=expr})
+
 pTypedef:
-  pIsRecord pIsSource PTYPEDEF pName pOptActParams pName pushScope pTyParams COLONCOLON pName pName EQGT LCURLY expr popScope
+  pIsRecord pIsSource PTYPEDEF pName pOptActParams pName pushScope pTyParams pTypedefPredOpt
  ( makeTypeName pName2;
    ExternalDeclExt(PX.PTypedef {baseTy = PX.Name pName1, 
                                 args   = pOptActParams,
@@ -1111,10 +1117,7 @@ pTypedef:
 				isSource = pIsSource,
 				containsRecord = false,
 				largeHeuristic = false,
-				predTy = PX.Name pName3,
-			        thisVar= pName4,
-			        pred = expr})
- )
+				pred = pTypedefPredOpt}) )
 
 pREexpr :
    PRE expr (ExprExt(PX.Pregexp expr))

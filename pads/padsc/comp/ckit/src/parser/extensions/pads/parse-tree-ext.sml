@@ -43,6 +43,8 @@ structure ParseTreeExt =
          | Switched of {descriminator : 'exp,
 			cases         : 'exp option list,
 			branches      : (('dt, 'decr, 'exp) PSField) list}
+
+        type 'exp  PPredicate =  {predTy: Pty, thisVar : string, pred : 'exp}
        
         datatype ('decr, 'ct, 'dt, 'exp) PExternal = 
            PTypedef of {name : string,
@@ -53,9 +55,7 @@ structure ParseTreeExt =
 			isSource : bool,
                         baseTy: Pty,
 			args   : 'exp list, 
-                        predTy: Pty,
-			thisVar: string,
-			pred: 'exp}
+			pred : ('exp PPredicate) option}
          | PStruct of {name : string, 
 		       params: ('ct * 'decr) list, 
 		       isRecord : bool, 

@@ -1657,7 +1657,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
               (*  Typedef case *)
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
 			        largeHeuristic,	isSource : bool, baseTy: PX.Pty, args: pcexp list, 
-			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
+				pred : pcexp PX.PPredicate option})=
+(*			        predTy: PX.Pty option, thisVar: string option, pred: pcexp option}) =  *)
 		  let val base = "base"
 		      val user = "user"
 		      val baseTyName = lookupTy(baseTy,repSuf,#padsname)		
@@ -1763,14 +1764,18 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                       (* Generate m_init function typedef case *)
                       val maskInitName = maskInitSuf name 
                       val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
+
                       (* Generate read function *)
                       (* -- Some helper functions *)
 		      val readName = readSuf name
                       val baseReadFun = lookupTy(baseTy, readSuf, #readname)
-		      val modPredX = PTSub.substExp (thisVar, P.starX(PT.Id rep), pred)
+		      val modPredXOpt = case pred of NONE => NONE
+			             | SOME {predTy,thisVar, pred} => SOME (PTSub.substExp (thisVar, P.starX(PT.Id rep), pred))
 		      fun chk () = 
 			  (checkParamTys(name, baseReadFun, args, 2, 2);
-			   expEqualTy(modPredX, CTintTys, 				
+			   case modPredXOpt of NONE => ()
+                           | SOME modPredX => 
+			       expEqualTy(modPredX, CTintTys, 				
 					  fn s=> (" constraint for typedef "^
 						  name ^ " has type: " ^ s ^
 						  ". Expected an int.")))
@@ -1789,14 +1794,15 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 					     PT.Goto (findEORSuf name))]
 
 			      val checkConstraintSs = 
-				  [PT.IfThen(P.andX(PL.mTestSemCheckX(fieldX(m,user)),
-						    P.notX modPredX),
-					     PT.Compound (reportErrorSs([locS],locX,
-									true,
-									PL.P_TYPEDEF_CONSTRAINT_ERR,
-									true, readName, "", [])
-							  @ [P.assignS(PT.Id result, PL.P_ERROR),
-							     PT.Goto (findEORSuf name)])
+				  case modPredXOpt of NONE => []
+				  | SOME modPredX => 
+				      [PT.IfThen(P.andX(PL.mTestSemCheckX(fieldX(m,user)),
+							P.notX modPredX),
+					         PT.Compound (reportErrorSs([locS],locX,true,
+									    PL.P_TYPEDEF_CONSTRAINT_ERR,
+									    true, readName, "", [])
+							     @ [P.assignS(PT.Id result, PL.P_ERROR),
+							        PT.Goto (findEORSuf name)])
 					     )]
 			      val slurpSs = if isRecord then genReadEOR (readName,reportStructErrorSs) () else []
 			      val endSs = [PT.Labeled(findEORSuf name, 
@@ -1821,9 +1827,11 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
                       (* -- generate is function (typedef case) *)
 		      val isName = isPref name
-		      val modPredX = PTSub.substExps [(thisVar, P.starX(PT.Id rep))] pred
-		      val predX  = case lookupPred baseTy of NONE => modPredX
-			           | SOME basePred => P.andX(modPredX, PT.Call(PT.Id basePred, [PT.Id rep]@args))
+		      val predX  = case (lookupPred baseTy, modPredXOpt) of 
+			             (NONE,NONE) => P.trueX
+				   | (SOME basePred, NONE) => PT.Call(PT.Id basePred, [PT.Id rep]@args)
+				   | (NONE, SOME modPredX) => modPredX
+			           | (SOME basePred, SOME modPredX) => P.andX(PT.Call(PT.Id basePred, [PT.Id rep]@args), modPredX)
 		      val bodySs = [PT.Return predX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
@@ -4920,7 +4928,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  val baseMatchFun = PL.strlitMatch
 		  val cParams : (string * pcty) list = List.map mungeParam params
 		  val paramNames = #1(ListPair.unzip cParams)
-
+		  val () = if (List.length cParams) > 0 then PE.warn ("Parameters are not supported for Penums.") else ()
                   fun mungeMembers (name, fromXOpt, expOpt, commentOpt) = 
 		      let val expr = case expOpt of NONE =>   PT.EmptyExpr | SOME e => e
 			  val prefix = case eprefix of NONE => "" | SOME p => p
@@ -4933,7 +4941,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 		  val enumFields = List.map mungeMembers members
 		  val enumFieldsforTy = List.map (fn(ename, dname, expr, comment) => (ename, expr,comment)) enumFields
-                  val enumFieldsForDisk = List.map (fn(ename, dname, expr, comment) => (dname, expr,comment)) enumFields
+
 
                   (* generate CheckSet mask *)
 		  val baseMPCT = PL.base_mPCT
