@@ -19,10 +19,10 @@
 /* #include "caml/mlvalues.h"  */ /* Need value */
 
 /* XXX_REMOVE next 4 lines: */
-#ifndef CAML_VALUE
-#define CAML_VALUE
+#ifndef FAKE_CAML_VALUE
+#define FAKE_CAML_VALUE
 typedef void* value;
-#endif
+#endif /* FAKE_CAML_VALUE */
 
 void**      PGLX_generic_children    (void *ocaml_n);
 void*       PGLX_generic_parent      (void *ocaml_n);
