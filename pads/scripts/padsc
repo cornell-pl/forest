@@ -57,6 +57,10 @@ if ($pads_home eq "") {
     Set PADS_HOME or use a relative or absolute path to the script and try again\n\n";
   exit -1;
 }
+my $sml = $ENV{"PADS_SML"};
+if ($sml eq "") {
+  $sml = "sml";
+}
 
 my $ast_arch = `$pads_home/ast-ast/bin/package.cvs` || "";
 $ast_arch = &cleanupStr($ast_arch);
@@ -64,17 +68,18 @@ my $arch_n_opsys = `$pads_home/scripts/arch-n-opsys` || "";
 $arch_n_opsys = &cleanupStr($arch_n_opsys);
 
 my $image  = "$pads_home/lib/padsc";
-my $smlbin = "$pads_home/binlinks/smlruntime.$arch_n_opsys";
 
 my $lua = "";
 my $lda = "";
 my $archmk = "$pads_home/mk/rules.arch.$ast_arch.mk";
 
+# undefine __GNUC__ in case a GNU compiler is being used, ckit does not handle certain special GNU features
+$lua = "-U__GNUC__";
+
 if (-e $archmk) {
   my $gnutst = `grep -l GNU $archmk`;
   $gnutst = &cleanupStr($gnutst); 
   if ($gnutst ne "") {
-    $lua = "-U__GNUC__";
     $lda = "-D__LINUX_PREPROCESSOR_FIXES";
   }
 }
@@ -131,7 +136,7 @@ if ($dbg) {
   print "retarg    = $retarg\n";
 }
 
-my $cmd = "$smlbin \@SMLload=$image $pads_home";
+my $cmd = "$sml \@SMLload=$image $pads_home";
 if ($help) {
   $cmd .= " -help";
 } else {

@@ -118,8 +118,6 @@ foreach $f1 (split(/\s/, $all_pfiles)) {
 &docmd("cd $topdir/padsc/include; /bin/rm -f *pglx*");
 
 # other fixups
-&docmd("cd $topdir/scripts; mv padsc.release padsc");
-&docmd("cd $topdir/padsc/comp; mv GNUmakefile.release GNUmakefile");
 &docmd("cd $topdir/padsc/examples/tests; mv GNUmakefile.release GNUmakefile");
 
 exit 0;

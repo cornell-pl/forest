@@ -81,31 +81,19 @@ STEP 2: INSTALL SML / SML RUNTIME
      http://smlnj.sourceforge.net/index.html.
 
   The simplest thing to do is to install the entire SML.  (Advanced users
-  may decide to only install the runtime once padsc has been built.)
+  may decide to only install the runtime and the sml startup script
+  once padsc has been built.)
 
-  (b) Install links in $PADS_HOME/binlinks
-  
-  Once the runtime is installed, you need to place two symbolic links in
-  $PADS_HOME/binlinks:
-
-     $PADS_HOME/binlinks/smlruntime.$ARCH_N_OPSYS   : link to sml runtime
-     $PADS_HOME/binlinks/sml.$ARCH_N_HEAPOPSYS      : link to sml command
-  where
-     ARCH_N_OPSYS is given by $PADS_HOME/scripts/arch-n-opsys
-     ARCH_N_HEAPOPSYS is given by $PADS_HOME/scripts/arch-n-heapopsys
-
-  The easiest way to set up these links is to do the following.
-  Set the environment variable SML_BIN_DIR to the bin directory of
-  your SML installation, and then execute MAKE_SML_LINK.sh:
+  (b) Put the sml startup script in your path, or
+      set the environment variable PADS_SML to the
+      location of this script.
   
   Example for csh/tcsh users:
-    setenv SML_BIN_DIR /usr/common/sml/bin
-    $PADS_HOME/scripts/MAKE_SML_LINK.sh
+    setenv PADS_SML /usr/common/sml/bin/sml
   
   Example for sh/ksh/bash users:
-    export SML_BIN_DIR=/usr/common/sml/bin
-    $PADS_HOME/scripts/MAKE_SML_LINK.sh
-  
+    export PADS_SML=/usr/common/sml/bin/sml
+
 STEP 3: BUILD AND INSTALL libast.a
 
   Folks at AT&T Labs Research collect many useful C routines in a single
