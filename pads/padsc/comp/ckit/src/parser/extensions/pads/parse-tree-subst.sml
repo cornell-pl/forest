@@ -57,8 +57,8 @@ structure ParseTreeSubst : PARSE_TREE_SUBST = struct
 			  trailingComma=trailingComma}
 	      | Struct {isStruct,tagOpt,members} =>
 		    let fun g (d,e) = (d,se' e)
-			fun f (ct,des) = (sct' ct, 
-					  List.map g des)
+			fun f (ct,des, commentOpt) = 
+			    (sct' ct, List.map g des, commentOpt)
 		    in 
 			Struct {isStruct = isStruct,
 				tagOpt = tagOpt,

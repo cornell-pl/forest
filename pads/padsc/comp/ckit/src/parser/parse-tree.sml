@@ -68,7 +68,7 @@ struct
     | Struct of
         {isStruct : bool,   (* struct or union; true => struct *)
 	 tagOpt : string option,  (* optional tag *)
-	 members: (ctype * (declarator * expression) list) list} (* member specs *)
+	 members: (ctype * (declarator * expression) list * string option (* PADS *)) list} (* member specs *)
     | TypedefName of string
     | StructTag of
 	{isStruct : bool,   (* ??? *)

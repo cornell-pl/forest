@@ -627,7 +627,7 @@ let
     | TCInitializer (Ast.StructRef tid, Ast.Aggregate exprs) =
       (case lookTid tid
 	 of SOME{ntype=SOME(B.Struct(tid,fields)),...} =>
-	      let fun f ((fieldType, _, _) :: l, expr :: exprs) =
+	      let fun f ((fieldType, _, _,_(*PADS*)) :: l, expr :: exprs) =
 			(TCInitializer(fieldType, expr);
 			 f (l, exprs))
 		    | f (nil, nil) = ()
@@ -2731,11 +2731,11 @@ end old code ******)
 
 		      (* add members to symbol table, evaluate bit fields
 		       * when present *)
-		      fun process1 (ct, declExprs) =
+		      fun process1 (ct, declExprs, commentOpt) =
 			  let
 			    val ty = cnvCtype (false, ct)
 			    fun process2 (decr,expr)
-				 : Ast.ctype * Ast.member option * Int32.int option = 
+				 : Ast.ctype * Ast.member option * Int32.int option * string option = 
 			      let
 				val (ty', memNameOpt) = mungeTyDecr (ty, decr)
 				val sizeOpt = 
@@ -2784,20 +2784,20 @@ end old code ******)
 					    (* DBM: FIELDs? *)
 					  end
 					| NONE => NONE)
-			       in (ty', memberOpt, sizeOpt)
+			       in (ty', memberOpt, sizeOpt, commentOpt (* PADS *))
 			      end (* fun process2 *)
 			   in map process2 declExprs
 			  end (* fun process1 *)
 
 		      (* union members are more restricted than struct members *)
 		      fun checkUnionMember (ty: Ast.ctype, NONE: Ast.member option,
-					    _ : Int32.int option) =
+					    _ : Int32.int option, _(*PADS*)) =
 			  (error "union member has no name";
 			   (ty,bogusMember(Sym.member(tid,"<noname>"))))
-			| checkUnionMember (ty,SOME m,SOME _) =
+			| checkUnionMember (ty,SOME m,SOME _, _(*PADS*)) =
 			  (error "union member has size spec";
 			   (ty,m))
-			| checkUnionMember (ty,SOME m,NONE) = (ty,m)
+			| checkUnionMember (ty,SOME m,NONE,_(*PADS*)) = (ty,m)
 
 		   in if alreadyDefined then ()
 		      else
@@ -2931,7 +2931,7 @@ end old code ******)
        Ast.DEFAULT)
 
   (* --------------------------------------------------------------------
-   * evalExpr : ParseTree expr -> int option
+   * evalExpr : ParseTree expr -> int option * Ast.ctype * Ast.expression * bool
    *
    * Converts parse-tree expressions to integer constants where possible;
    * NONE used for cases where no constant can be computed or when no
@@ -3043,7 +3043,8 @@ end old code ******)
 		       cnvExternalDecl=cnvExternalDecl,
 		       wrapEXPR=wrapEXPR,
 		       wrapSTMT=wrapSTMT,
-		       wrapDECL=wrapDECL} 
+		       wrapDECL=wrapDECL,
+		       evalExpr=evalExpr (* PADS *)} 
      val {CNVExp, CNVStat, CNVBinop, CNVUnop, CNVExternalDecl,
 	    CNVSpecifier, CNVDeclarator, CNVDeclaration} = CnvExt.makeExtensionFuns coreFuns
    in

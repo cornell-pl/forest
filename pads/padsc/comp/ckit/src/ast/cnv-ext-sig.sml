@@ -13,7 +13,9 @@ sig
 
 	 wrapEXPR: (Ast.ctype*Ast.coreExpression -> Ast.ctype*Ast.expression),
 	 wrapSTMT: Ast.coreStatement -> Ast.statement,
-	 wrapDECL: Ast.coreExternalDecl -> Ast.externalDecl
+	 wrapDECL: Ast.coreExternalDecl -> Ast.externalDecl,
+	 evalExpr: ParseTree.expression -> 
+	              (IntInf.int option * Ast.ctype * Ast.expression * bool) (* PADS *)
 	 }
 
   type expressionExt = (ParseTree.specifier, ParseTree.declarator, ParseTree.ctype, ParseTree.decltype,

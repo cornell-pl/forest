@@ -53,7 +53,7 @@ struct
       end
 
   fun fieldSizeStruct (sizesErrWarnBug as {sizes, err, warn, bug})
-                      tidtab (ctype, memberOpt, SOME li) =
+                      tidtab (ctype, memberOpt, SOME li, s(*PADS*)) =
 	let val errors =
 		case TU.getCoreType tidtab ctype
 	          of Ast.Numeric(_, _, _, Ast.FLOAT, _) =>
@@ -92,7 +92,7 @@ struct
 	 in if i > bits then err "Width of field exceeds its type" else ();
 	    {memberOpt=memberOpt, bitfield=SOME i, size=bits, align=align}
 	end
-    | fieldSizeStruct sizesErrWarnBug tidtab (ctype, memberOpt, NONE) = 
+    | fieldSizeStruct sizesErrWarnBug tidtab (ctype, memberOpt, NONE, s(*PADS*)) = 
 	let val {bits, align,...} = process sizesErrWarnBug tidtab ctype
 	 in {memberOpt=memberOpt, bitfield=NONE, size=bits, align=align}
 	end

@@ -142,7 +142,7 @@ struct
 	(case Tidtab.find (tidtab,tid)
 	   of SOME{ntype=SOME(B.Struct (_,fields)),...} => 
 	       List.all
-	         (fn (ty, _, _) => (hasKnownStorageSize tidtab ty))
+	         (fn (ty, _, _,_) => (hasKnownStorageSize tidtab ty)) (* fourth arg is PADS *)
 		 fields
 	    | _ => false)
        | Ast.UnionRef tid =>

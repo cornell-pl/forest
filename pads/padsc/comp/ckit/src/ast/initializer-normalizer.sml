@@ -43,6 +43,9 @@ let
        in EXPR (coreExp,aid,SourceMap.UNKNOWN)
       end
 
+  (* PADS *)
+  fun expToCoreExp(EXPR (coreExp, _,_)) = coreExp
+
   fun mkChrInit c =
       Simple(coreExp2exp (charCt, (IntConst (IntInf.fromInt (ord c)))))
 
@@ -85,12 +88,12 @@ let
 
   and structNorm (structType, fields) origInits =
       let fun loop [] inits = ([],inits)
-	    | loop ((fieldType,NONE,liOpt)::fields) inits =
+	    | loop ((fieldType,NONE,liOpt, s(*PADS*))::fields) inits =
 	       (* according to the standard, unnamed fields don't
 		* have initializers.
 		*)
 	       loop fields inits
-	    | loop ((fieldType,pidOpt,liOpt)::fields) inits =
+	    | loop ((fieldType,pidOpt,liOpt, s(*PADS*))::fields) inits =
 	       let val (fieldInit,remainder) = norm(fieldType, inits)
 		   val (fieldInits,remainder') = loop fields remainder
 	       in (fieldInit::fieldInits, remainder')
@@ -115,6 +118,20 @@ let
          | [] => let val scalarInit = mkIntInit 0
 		 in (scalarInit, [])
 		 end
+
+(* PADS *)
+  and enumNorm ctype origInits =
+      let fun wrapTy exp = Simple(coreExp2exp (ctype, 
+					  (Cast(ctype, 
+						coreExp2exp(ctype, exp)))))
+      in
+      case origInits
+        of ((Simple scalarExp)::remainder) => (wrapTy (expToCoreExp scalarExp), remainder)
+         | (aggr::remainder) => (aggr, remainder)
+         | [] => let val enumInit = wrapTy (IntConst(IntInf.fromInt 0))
+                 in (enumInit, [])
+		 end
+      end
 			   
   (* feed supplies its argument initfn with the inits from the first aggregate,
    * if there is one.  The initfn should consume all the inits from the aggregate. *)
@@ -154,7 +171,8 @@ let
 		   feed (unionNorm (ctype, fields), inits)
 		| SOME _ => fail "Incomplete type for union ref"
 		| NONE => fail "Inconsistent table for union ref")
-	 | (Ast.Numeric _ | Ast.Pointer _ | Ast.Function _ | Ast.EnumRef _) =>
+         | Ast.EnumRef tid => feed(enumNorm ctype, inits) (* PADS *)
+	 | (Ast.Numeric _ | Ast.Pointer _ | Ast.Function _ (* | Ast.EnumRef _*)) =>
 	    feed (scalarNorm ctype, inits)
 	 | Ast.Void => fail "Incomplete type: void"
 	 | Ast.Ellipses => fail "Cannot initialize ellipses"

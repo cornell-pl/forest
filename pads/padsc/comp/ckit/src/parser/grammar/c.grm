@@ -209,9 +209,9 @@ end
 	| TYPE_NAME of string
  	| PARALLEL | SEQUENTIAL | COUNT | IN | REDUCE | WHERE | DEPENDENCY  (* D *)
  	| ASSOCIATIVE | TO | KWAND                                         (* D *)     
-        | COMMENT of string
-        | PSTRUCT (* PADS *)
-         
+        | COMMENT of string (* PADS *)
+        | PCOMMENT of string (* PADS *)
+        | PSTRUCT | PARRAY | PSEP | PTERM | PFORALL | PIN (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -274,8 +274,8 @@ end
 	| notypeStructDeclarator of (declarator * expression)
 	| structDeclaratorList of (declarator * expression) seq
 	| notypeStructDeclaratorList of (declarator * expression) seq
-	| structDeclarationList of (ctype * (declarator * expression) list) seq
-	| structDeclaration of (ctype * (declarator * expression) list)
+	| structDeclarationList of (ctype * (declarator * expression) list * string option) seq  (*PADS*)
+	| structDeclaration of (ctype * (declarator * expression) list * string option)           (*PADS*)
 	| pushScope of unit
         | popScope of unit
         | strings of string
@@ -285,8 +285,12 @@ end
         | pStructFieldList of ((ctype, expression) PX.PSField) list
         | pStructField of (ctype, expression) PX.PSField
         | pConstraintOpt of expression option
-
-
+        | pCommentOpt of string option
+        | pArray of externalDecl
+        | pSizeOpt of (expression PX.PSize) option
+        | pArrayConstraint of (expression PX.PConstraint) 
+        | pArrayConstraints of (expression PX.PConstraint) list
+        | pArrayConstraintOpt of (expression PX.PConstraint) list
 
 %pos int
 %verbose
@@ -338,6 +342,7 @@ externalDeclaration:
 							               functionDefinitionright)))
 (* PADS: start external declarations *)
         | pStruct RCURLY                (SOME(markExternalDecl srcMap (pStruct,pStructleft,RCURLYright)))
+        | pArray  RCURLY                (SOME(markExternalDecl srcMap (pArray, pArrayleft, RCURLYright)))
 (* PADS END *)
 
 statement:
@@ -631,12 +636,12 @@ structDeclarationList:
 
 structDeclaration:
 	specifierQualifierList structDeclaratorList SEMICOLON
-					((specifierQualifierList, seqToList structDeclaratorList))
+					((specifierQualifierList, seqToList structDeclaratorList, NONE))
         | typeQualifierList notypeStructDeclaratorList SEMICOLON
                                         (let
 					    val ct = {qualifiers=typeQualifierList, specifiers=[]}
 					 in
-					   (ct, seqToList notypeStructDeclaratorList)
+					   (ct, seqToList notypeStructDeclaratorList, NONE)
 					 end)
 
 structDeclaratorList:
@@ -928,12 +933,17 @@ pName:
 pConstraintOpt: (NONE)
   | COLON expr (SOME expr)
 
-pStructField: pName ID pConstraintOpt (PX.Full {pty = PX.Name pName, name = ID, pred = pConstraintOpt})
-  | expr                              (PX.Brief expr)
+pCommentOpt: (NONE)
+  | PCOMMENT   (SOME PCOMMENT)
+
+pStructField: pName ID pConstraintOpt SEMICOLON pCommentOpt 
+                                      (PX.Full {pty = PX.Name pName, name = ID, 
+						pred = pConstraintOpt, comment = pCommentOpt})
+  | expr SEMICOLON                    (PX.Brief expr)
 
 pStructFieldList: 
-    pStructField SEMICOLON                    ([pStructField])
-  | pStructField SEMICOLON  pStructFieldList  (pStructField :: pStructFieldList)
+    pStructField                     ([pStructField])
+  | pStructField   pStructFieldList  (pStructField :: pStructFieldList)
 
 pStruct:
  PSTRUCT pName pushScope LCURLY pStructFieldList popScope
@@ -941,4 +951,28 @@ pStruct:
    ExternalDeclExt(PX.PStruct {name = pName, fields = pStructFieldList})
  )
 
+pArrayConstraint : 
+   PSEP EQ expr  (PX.Sep expr)
+ | PTERM EQ expr (PX.Term expr)
+ | PFORALL pName PIN pName LCURLY expr RCURLY (PX.Forall {index = pName1, arrayName = pName2, body = expr})
+ | expr         (PX.General expr)
+
+pArrayConstraints : 
+   pArrayConstraint ([pArrayConstraint])
+ | pArrayConstraint AND pArrayConstraints  (pArrayConstraint :: pArrayConstraints)
+
+pArrayConstraintOpt: ([])
+ | COLON pArrayConstraints ( pArrayConstraints )
+
+pSizeOpt:            (NONE)
+ | expr              (SOME(PX.SizeInfo{min = NONE, max = SOME expr, maxTight = true}))
+ | expr COLON        (SOME(PX.SizeInfo{min = SOME expr, max = NONE, maxTight = false}))
+ | expr COLON expr   (SOME(PX.SizeInfo{min = SOME expr1, max = SOME expr2, maxTight = false}))
+ | COLON expr        (SOME(PX.SizeInfo{min = NONE, max = SOME expr, maxTight = false}))
  
+pArray:
+ PARRAY pName pushScope LCURLY pName LBRACE pSizeOpt RBRACE pArrayConstraintOpt SEMICOLON popScope
+ (
+   ExternalDeclExt(PX.PArray {name = pName1, baseTy = PX.Name pName2, 
+			      sizeSpec = pSizeOpt, constraints = pArrayConstraintOpt})
+ )

@@ -21,9 +21,9 @@ struct
     fun mkParam(ct,s) = (pctToPDT ct, PT.VarDecr s)
 
 
-    fun makeStructPCT (fields : (string*PT.ctype) list, tag : string option) =
-	let fun genField (id,ct) = 
-	    (ct,[ (PT.VarDecr id, PT.EmptyExpr) ])
+    fun makeStructPCT (fields : (string * PT.ctype * string option) list, tag : string option) =
+	let fun genField (id,ct,sOpt) = 
+	    (ct,[ (PT.VarDecr id, PT.EmptyExpr) ],sOpt)
 	in
 	    makePCT [PT.Struct {isStruct = true,
 				 tagOpt = tag,
@@ -47,7 +47,12 @@ struct
     val ulonglong  = makePCT [PT.Long, PT.Long, PT.Unsigned]
     val float      = makePCT [PT.Float]
     val double     = makePCT [PT.Double]
-
+    val charPtr    = ptrPCT  char
+    val ucharPtr   = ptrPCT  uchar
+    val charPtrPtr = ptrPCT  charPtr
+    val void       = makePCT [PT.Void]
+    val voidPtr    = ptrPCT  void
+    val voidPtrPtr = ptrPCT (voidPtr)
 
     fun intX i = PT.IntConst (IntInf.fromInt i)
     fun int32X i = (PT.IntConst (IntInf.fromInt (Int32.toInt i)))
@@ -70,6 +75,7 @@ struct
     fun ltX (e1,e2)       = PT.Binop(PT.Lt,e1,e2)
     fun lteX(e1,e2)       = PT.Binop(PT.Lte,e1,e2)
     fun gtX (e1,e2)       = PT.Binop(PT.Gt,e1,e2)
+    fun gteX (e1,e2)      = PT.Binop(PT.Gte,e1,e2)
     fun notX e            = PT.Unop(PT.Not,e)
     fun orX (e1,e2)       = PT.Binop(PT.Or,e1,e2)
     fun plusX (e1,e2)     = PT.Binop(PT.Plus,e1,e2)
@@ -79,6 +85,7 @@ struct
     fun modX (e1,e2)      = PT.Binop(PT.Mod,e1,e2)
     fun plusAssignS(e1,e2)= PT.Expr(PT.Binop(PT.PlusAssign,e1,e2))
     fun postIncX e        = PT.Unop(PT.PostInc, e)
+    fun postIncS e        = PT.Expr(PT.Unop(PT.PostInc, e))
     fun postDecX e        = PT.Unop(PT.PostDec, e)
     fun starX e           = PT.Unop(PT.Star,e)
     fun sizeofX ct        = PT.Unop(PT.SizeofType(ct),PT.EmptyExpr)
@@ -99,13 +106,13 @@ struct
     fun mkCommentS s = PT.StatExt(PX.PComment s)
 
 
-    fun makeStructEDecl (fields : (string*PT.ctype) list, tag : string option) =
+    fun makeStructEDecl (fields : (string*PT.ctype*string option) list, tag : string option) =
         PT.ExternalDecl(
           PT.Declaration(
               pctToPDT(makeStructPCT(fields,tag)),
               []))
 
-    fun makeTyDefStructEDecl (fields : (string*PT.ctype) list, tag : string) =
+    fun makeTyDefStructEDecl (fields : (string*PT.ctype * string option) list, tag : string) =
         PT.ExternalDecl(
           PT.Declaration(
               pctToPTyDefDT(makeStructPCT(fields,SOME (tag^"_s"))),
@@ -118,4 +125,44 @@ struct
                krParams = [],
                retType = pctToPDT retTy}
 
+    fun expToString p =
+        case p
+        of PT.EmptyExpr => ""
+        |  PT.IntConst i => IntInf.toString i
+        |  PT.RealConst r => Real.toString r
+        |  PT.String s => "\"" ^ s ^ "\""
+        |  PT.Id s => s
+        |  PT.Unop uexp => printUnopExp uexp
+        |  PT.Binop binexp => printBinopExp binexp
+        |  PT.QuestionColon (e1,e2,e3) => (expToString e1)^ " ? " ^
+                                          (expToString e2)^ " : " ^
+                                          (expToString e3)
+        |  PT.Call (e,es) => (expToString e)^"("^(printExpList "," es) ^")"
+        | PT.MARKexpression (loc,e) => expToString e
+        |  _ => ""
+
+    and printUnopExp (rator, exp) =
+	case rator
+        of PT.Uplus => "+ "^(expToString exp)
+        |  _ => "unop(" ^ (expToString exp) ^")"
+
+    and printBinopExp (rator, exp1, exp2) =
+	case rator
+        of PT.Plus => (expToString exp1)^ " + " ^(expToString exp2)
+        |  PT.Minus => (expToString exp1)^ " - " ^(expToString exp2)
+        |  PT.Times => (expToString exp1)^ " * " ^(expToString exp2)
+        |  PT.Divide => (expToString exp1)^ " / " ^(expToString exp2)
+        |  PT.Mod => (expToString exp1)^ " % " ^(expToString exp2)
+        |  PT.Gt => (expToString exp1)^ " > " ^(expToString exp2)
+        |  PT.Lt => (expToString exp1)^ " < " ^(expToString exp2)
+        |  PT.Gte => (expToString exp1)^ " >= " ^(expToString exp2)
+        |  PT.Lte => (expToString exp1)^ " <= " ^(expToString exp2)
+        |  PT.Eq => (expToString exp1)^ " == " ^(expToString exp2)
+        |  _ => (expToString exp1) ^ "binop"  ^ (expToString exp2)
+
+    and printExpList s [] = ""
+      | printExpList s [e] = expToString e
+      | printExpList s (e::es) = ((expToString e) ^ s ^ " " ^ (printExpList s es))
+
 end
+

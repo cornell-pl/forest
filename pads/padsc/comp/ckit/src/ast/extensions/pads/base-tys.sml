@@ -37,7 +37,7 @@ struct
 	   readname = Atom.atom "PDC_aint32_read",
            scanname = NONE},
 
-	  {padsname = Atom.atom "char_lit", 
+	  {padsname = Atom.atom "PDC_char_lit", 
 	   repname  = Atom.atom "PDC_uint8", 
 	   emname   = Atom.atom "PDC_base_em", 
 	   edname   = Atom.atom "PDC_base_ed", 

@@ -292,10 +292,12 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	 of B.Struct (tid,members) =>
 	      let fun ppLI' pps li = (addStr pps ":"; ppLI pps li)
 
-		  fun ppMember pps (ct, memberOpt, LIOpt) =
+		  fun ppMember pps (ct, memberOpt, LIOpt, strOpt) = (* strOpt is PADS *)
 		    (ppDecl0 aidinfo tidtab pps (Option.map MEMBER memberOpt,EMPTY,ct)
 		    ;ppOpt ppLI' pps LIOpt
 		    ;addStr pps ";"
+		    ;(case strOpt of SOME s => addStr pps ("\t\t/* "^ s ^" */")
+			          | NONE => () (* PADS *))
 		    )
 
 	      in (addStr pps "struct "
@@ -669,7 +671,8 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 		   ;if null ids then () else newline pps
 		   ;kr pps ids
 		   )
-	   in ppLoc pps location
+	   in PPL.newline pps
+	     ;ppLoc pps location
 	     ;ppStorageClass pps stClass
 	     ;ppDecl0 aidinfo tidtab pps (SOME (ID id),params,ctype)
              ;PPL.addStr pps ";"

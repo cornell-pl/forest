@@ -4,11 +4,23 @@ structure ParseTreeExt =
            Name of string
 
         datatype ('ct, 'exp) PSField = 
-           Full of {pty : Pty, name : string, pred : 'exp option}
+           Full of {pty : Pty, name : string, pred : 'exp option, comment : string option}
          | Brief of 'exp
+
+        datatype 'exp PSize = 
+           SizeInfo of {min : 'exp option, max : 'exp option, maxTight : bool}
+
+        datatype 'exp PConstraint = 
+           Sep of 'exp
+         | Term of 'exp
+         | Forall of {index : string, arrayName : string, body : 'exp}
+         | General of 'exp
        
         datatype ('ct, 'exp) PExternal = 
-          PStruct of {name : string, fields : (('ct, 'exp) PSField) list}
+           PStruct of {name : string, fields : (('ct, 'exp) PSField) list}
+         | PArray  of {name : string, baseTy : Pty, 
+		       sizeSpec : ('exp PSize) option, 
+		       constraints : ('exp PConstraint) list} 
 
         datatype PStatement = 
           PComment of string

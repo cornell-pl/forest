@@ -113,6 +113,7 @@ fun special_char(c,fst,last,errWarn:errWarn) =
    S -- inside a string (entered from INTITAL with ")
    C -- inside a comment (entered from INITIAL with /* )
    CC -- inside a C++ style comment
+   Pc -- inside a pads comment
  *)
 
 
@@ -123,7 +124,7 @@ fun special_char(c,fst,last,errWarn:errWarn) =
 			 sharing TokTable.Tokens = Tokens));
 
 %arg ({comLevel,errWarn,sourceMap,charlist,stringstart});
-%s CC C S; 
+%s CC C S PC; 
 
 eol=.*"\n";
 newline = ("\010" | "\010\013" | "\013" | "\013\010");
@@ -151,6 +152,13 @@ directive = #(.)*\n;
 <INITIAL>"/*"		=> (YYBEGIN C; continue());
 <C>"*/"	 	=> (YYBEGIN INITIAL; continue());
 <C>.		=> (continue());
+
+
+<INITIAL>"//-"		=> (YYBEGIN PC; charlist := [""]; stringstart := yypos; continue());
+<PC>{newline}	 	=> (YYBEGIN INITIAL; 
+                            SourceMap.newline sourceMap yypos;
+                            Tokens.PCOMMENT(makeString charlist, !stringstart, yypos));
+<PC>.		        => (addString(charlist,yytext); continue());
 
 <INITIAL>"//"   => (YYBEGIN CC; continue());
 <CC>{newline}   => (YYBEGIN INITIAL; 

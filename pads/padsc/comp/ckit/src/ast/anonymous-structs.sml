@@ -65,10 +65,15 @@ struct
        sOpt = sOpt' andalso eqList (eqPair (eqString, eqExpr)) (sel, sel')
     | eqTy({qualifiers=[], specifiers=[Struct{isStruct=b, tagOpt=sOpt, members=cdell}]}
           ,{qualifiers=[], specifiers=[Struct{isStruct=b',tagOpt=sOpt',members=cdell'}]}) =
-      (b = b') andalso sOpt = sOpt' andalso
-      eqList
-        (eqPair (eqCtype, eqList(eqPair(eqDeclarator, eqExpr))))
-        (cdell, cdell')
+       let fun strip (c,del,cOpt) = (c,del)  (*PADS*)
+	   val cdellstripped = List.map strip cdell
+	   val cdell'stripped = List.map strip cdell'
+       in
+	   (b = b') andalso sOpt = sOpt' andalso
+	   eqList
+	   (eqPair (eqCtype, eqList(eqPair(eqDeclarator, eqExpr))))
+	   (cdellstripped, cdell'stripped)
+       end
     | eqTy(_, _) = false
 
   end (* local *)
