@@ -9,10 +9,20 @@
 #ifndef __LIBPADSC_INTERNAL_H__
 #define __LIBPADSC_INTERNAL_H__
 
+#ifdef __PREPROCESSOR_FIXES
+typedef void* __builtin_va_list;
+#define __THROW
+/* extern int ftruncate (int __fd, long int __length) ; */
+
+#endif
+
 #include <ast.h>
 #include <vmalloc.h>
 #include <sfstr.h>
+#include <error.h>
 #include "libpadsc.h"
+
+
 
 /* ================================================================================ */
 /* TYPE DEFINITIONS */
@@ -33,8 +43,9 @@ typedef struct PDC_IO_s {
 } PDC_IO_t;
 
 struct PDC_s {
-  Vmalloc_t*        vm;     /* vm handle */
+  const char*       id;     /* interface id */
   PDC_disc_t*       disc;   /* user-supplied discipline (can be null) */
+  Vmalloc_t*        vm;     /* vm handle */
   PDC_IO_t          iost;   /* io state */
 };
 
@@ -61,6 +72,8 @@ PDC_error_t  PDC_IO_checkpoint (PDC_t* pdc, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_commit     (PDC_t* pdc, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_restore    (PDC_t* pdc, PDC_disc_t* disc);
 
+PDC_error_t  PDC_IO_refill     (PDC_t* pdc, PDC_disc_t* disc);
+
 /* ================================================================================ */
 /* RBUF: RESIZABLE ALLLOC'D SPACE */
 
@@ -79,13 +92,19 @@ PDC_error_t   PDC_freeBuf      (PDC_t* pdc, void* buf, PDC_disc_t* disc);
 /*
  * PDC_report_err: Report a parse error that occurred at location loc;
  *   XXX errCode's type should be an enum that describes the kind of error XXX ???
- *   format is an additional printf-formatted description that augments the default
- *   description based on errCode and the optional args go with the format arg.
+ *   The varargs are for a printf-style format, arg1, ... 
+ *   (printf-style) description that augments the default
+ *   description based on errCode.
  * N.B. This call does nothing if either (disc && !disc->errorf) or
  * or if (!disc && !pdc->disc->errorf).
  */
-PDC_error_t   PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc,
-			     int errCode, const char* format, ...);
+PDC_error_t   PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc, int errCode, /* format, args */ ...);
+
+/*
+ *  PDC_errorf, PDC_errorvf: error reporting impls
+ */
+int           PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...);
+int           PDC_errorvf(PDC_t* pdc, PDC_disc_t* disc, int level, va_list ap);
 
 /* ================================================================================ */
 /* SCAN FUNCTIONS */
@@ -121,6 +140,73 @@ PDC_error_t PDC_char_lit_scan(PDC_t* pdc, PDC_base_em* em,
 
 PDC_error_t PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
 			      PDC_base_ed* er, unsigned char c, PDC_disc_t* disc);
+
+/* ================================================================================ */
+/* OUTPUT MACROS  */
+
+#define PDC_DBG_FLAGS      -2
+#define PDC_TRACE_FLAGS    -4
+#define PDC_WARN_FLAGS      2
+#define PDC_SYSERR_FLAGS    ERROR_SYSTEM|2
+
+#define NULL_STMT do { } while (0)
+
+#ifndef NDEBUG
+#  define DBG(pdc, format)                                   FMT_ERR_MSG (pdc, format, PDC_DBG_FLAGS)
+#  define DBG1(pdc, format, arg1)                            FMT_ERR_MSG1(pdc, format, PDC_DBG_FLAGS, arg1)
+#  define DBG2(pdc, format, arg1, arg2)                      FMT_ERR_MSG2(pdc, format, PDC_DBG_FLAGS, arg1, arg2)
+#  define DBG3(pdc, format, arg1, arg2, arg3)                FMT_ERR_MSG3(pdc, format, PDC_DBG_FLAGS, arg1, arg2, arg3)
+#  define DBG4(pdc, format, arg1, arg2, arg3, arg4)          FMT_ERR_MSG4(pdc, format, PDC_DBG_FLAGS, arg1, arg2, arg3, arg4)
+#  define DBG5(pdc, format, arg1, arg2, arg3, arg4, arg5)    FMT_ERR_MSG5(pdc, format, PDC_DBG_FLAGS, arg1, arg2, arg3, arg4, arg5)
+
+#  define TRACE(pdc, format)                                 FMT_ERR_MSG (pdc, format, PDC_TRACE_FLAGS)
+#  define TRACE1(pdc, format, arg1)                          FMT_ERR_MSG1(pdc, format, PDC_TRACE_FLAGS, arg1)
+#  define TRACE2(pdc, format, arg1, arg2)                    FMT_ERR_MSG2(pdc, format, PDC_TRACE_FLAGS, arg1, arg2)
+#  define TRACE3(pdc, format, arg1, arg2, arg3)              FMT_ERR_MSG3(pdc, format, PDC_TRACE_FLAGS, arg1, arg2, arg3)
+#  define TRACE4(pdc, format, arg1, arg2, arg3, arg4)        FMT_ERR_MSG4(pdc, format, PDC_TRACE_FLAGS, arg1, arg2, arg3, arg4)
+#  define TRACE5(pdc, format, arg1, arg2, arg3, arg4, arg5)  FMT_ERR_MSG5(pdc, format, PDC_TRACE_FLAGS, arg1, arg2, arg3, arg4, arg5)
+#else
+#  define DBG(pdc, format)                                   NULL_STMT
+#  define DBG1(pdc, format, arg1)                            NULL_STMT
+#  define DBG2(pdc, format, arg1, arg2)                      NULL_STMT
+#  define DBG3(pdc, format, arg1, arg2, arg3)                NULL_STMT
+#  define DBG4(pdc, format, arg1, arg2, arg3, arg4)          NULL_STMT
+#  define DBG5(pdc, format, arg1, arg2, arg3, arg4, arg5)    NULL_STMT
+
+#  define TRACE(pdc, format)                                 NULL_STMT
+#  define TRACE1(pdc, format, arg1)                          NULL_STMT
+#  define TRACE2(pdc, format, arg1, arg2)                    NULL_STMT
+#  define TRACE3(pdc, format, arg1, arg2, arg3)              NULL_STMT
+#  define TRACE4(pdc, format, arg1, arg2, arg3, arg4)        NULL_STMT
+#  define TRACE5(pdc, format, arg1, arg2, arg3, arg4, arg5)  NULL_STMT
+#endif
+
+#define WARN(pdc, format)                                  FMT_ERR_MSG (pdc, format, PDC_WARN_FLAGS)
+#define WARN1(pdc, format, arg1)                           FMT_ERR_MSG1(pdc, format, PDC_WARN_FLAGS, arg1)
+#define WARN2(pdc, format, arg1, arg2)                     FMT_ERR_MSG2(pdc, format, PDC_WARN_FLAGS, arg1, arg2)
+#define WARN3(pdc, format, arg1, arg2, arg3)               FMT_ERR_MSG3(pdc, format, PDC_WARN_FLAGS, arg1, arg2, arg3)
+#define WARN4(pdc, format, arg1, arg2, arg3, arg4)         FMT_ERR_MSG4(pdc, format, PDC_WARN_FLAGS, arg1, arg2, arg3, arg4)
+#define WARN5(pdc, format, arg1, arg2, arg3, arg4, arg5)   FMT_ERR_MSG5(pdc, format, PDC_WARN_FLAGS, arg1, arg2, arg3, arg4, arg5)
+
+#define SYSERR(pdc, format)                                FMT_ERR_MSG (pdc, format, PDC_SYSERR_FLAGS)
+#define SYSERR1(pdc, format, arg1)                         FMT_ERR_MSG1(pdc, format, PDC_SYSERR_FLAGS, arg1)
+#define SYSERR2(pdc, format, arg1, arg2)                   FMT_ERR_MSG2(pdc, format, PDC_SYSERR_FLAGS, arg1, arg2)
+#define SYSERR3(pdc, format, arg1, arg2, arg3)             FMT_ERR_MSG3(pdc, format, PDC_SYSERR_FLAGS, arg1, arg2, arg3)
+#define SYSERR4(pdc, format, arg1, arg2, arg3, arg4)       FMT_ERR_MSG4(pdc, format, PDC_SYSERR_FLAGS, arg1, arg2, arg3, arg4)
+#define SYSERR5(pdc, format, arg1, arg2, arg3, arg4, arg5) FMT_ERR_MSG5(pdc, format, PDC_SYSERR_FLAGS, arg1, arg2, arg3, arg4, arg5)
+
+#define FMT_ERR_MSG(pdc, format, erlev) \
+  if (disc->errorf) {(*disc->errorf)(pdc, disc, erlev, format);}
+#define FMT_ERR_MSG1(pdc, format, erlev, arg1) \
+  if (disc->errorf) {(*disc->errorf)(pdc, disc, erlev, format, arg1);}
+#define FMT_ERR_MSG2(pdc, format, erlev, arg1, arg2) \
+  if (disc->errorf) {(*disc->errorf)(pdc, disc, erlev, format, arg1, arg2);}
+#define FMT_ERR_MSG3(pdc, format, erlev, arg1, arg2, arg3) \
+  if (disc->errorf) {(*disc->errorf)(pdc, disc, erlev, format, arg1, arg2, arg3);}
+#define FMT_ERR_MSG4(pdc, format, erlev, arg1, arg2, arg3, arg4) \
+  if (disc->errorf) {(*disc->errorf)(pdc, disc, erlev, format, arg1, arg2, arg3, arg4);}
+#define FMT_ERR_MSG5(pdc, format, erlev, arg1, arg2, arg3, arg4, arg5) \
+  if (disc->errorf) {(*disc->errorf)(pdc, disc, erlev, format, arg1, arg2, arg3, arg4, arg5);}
 
 /* ================================================================================ */
 
