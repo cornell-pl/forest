@@ -1,5 +1,4 @@
 Using PADSC IO discipline nlrec
-warning: Installing default IO discipline : newline-terminated records
 Read string term by vbar: foo1 (length 4)
 Read string term by vbar: bar1 (length 4)
 Read string term by EOR or X : zot1 (length 4)
