@@ -5,4 +5,5 @@ struct
   val arrayLen = "length"
   val arrayElts = "elts"
   val pdElts    = "pds"
+  val arrayCur  = "current"
 end

@@ -30,6 +30,7 @@ structure ParseTreeExt =
         datatype 'exp PConstraint = 
            Sep of 'exp
          | Term of 'exp PTermExp
+         | Last of 'exp 
 
         datatype 'exp PPostCond = 
            Forall of {index : string, range : 'exp PRange, body : 'exp}

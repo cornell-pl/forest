@@ -75,6 +75,7 @@ struct
                ("Penum", Tokens.PENUM),
                ("Pforall", Tokens.PFORALL),
                ("Pin", Tokens.PIN),
+               ("Plast", Tokens.PLAST),
                ("Pnosep", Tokens.PNOSEP),
                ("Pomit", Tokens.POMIT),
                ("Pre", Tokens.PRE),    

@@ -3632,6 +3632,27 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 {index=index, lower=modLowerX, upper=modUpperX, body=modBodyX}
 		     end
 
+                 fun chkLastConstraint exp = 
+		     let val subList = [(PNames.arrayLen, fieldX(rep,length)), 
+					(PNames.arrayCur, P.minusX(fieldX(rep,length), P.intX 1)), 
+					(name, fieldX(rep,elts)),
+					(PNames.arrayElts, fieldX(rep,elts)),
+					(PNames.pdElts,   fieldX(pd,elts))]
+			 val modExpX = PTSub.substExps subList exp
+			 val errMsg = fn s => ("Plast expression for array "^
+					       name ^" has type"^s^". Expected type int.")
+		     in
+			 pushLocalEnv();
+			 ignore(insTempVar(length, PL.uint32PCT));
+			 ignore(insTempVar(PNames.arrayCur, PL.uint32PCT));
+			 ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
+			 ignore(insTempVar(elts, P.ptrPCT elemRepPCT)); 
+			 ignore(insTempVar(PNames.pdElts, P.ptrPCT elemEdPCT)); 
+			 expEqualTy(exp, CTintTys, errMsg);
+			 popLocalEnv();
+			 modExpX
+		     end
+
                  (* new scope needed for analysis of array constraints*)
 		 val _ = pushLocalEnv()                                        (* create new scope *)
 		 val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
@@ -3658,7 +3679,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 (arrayXOpt, genXOpt)
 		     end
 
-                 val (sepXOpt, termXOpt, noSepIsTerm, sepTermDynamicCheck, scan2Opt, stdeclSs, stinitSs, stcloseSs) = 
+                 val (sepXOpt, termXOpt, noSepIsTerm, lastXOpt,sepTermDynamicCheck, scan2Opt, stdeclSs, stinitSs, stcloseSs) = 
                       let fun getFuns (which, exp) =
 			   let val (okay,expTy) = getExpEqualTy(exp, CTstring :: CTintTys,
 								fn s=>(which ^ " expression for array "^
@@ -3680,19 +3701,22 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 			  fun doOne (constr:pcexp PX.PConstraint) = 
                               case constr 
-                              of PX.Sep exp => (SOME (getFuns("Separator", exp)), NONE, NONE)
-                              |  PX.Term (PX.Expr exp) =>(NONE, SOME( getFuns("Terminator", exp)), NONE)
-                              |  PX.Term PX.noSep => (NONE, NONE, SOME ())
+                              of PX.Sep exp => (SOME (getFuns("Separator", exp)), NONE, NONE, NONE)
+                              |  PX.Term (PX.Expr exp) =>(NONE, SOME( getFuns("Terminator", exp)), NONE,NONE)
+                              |  PX.Term PX.noSep => (NONE, NONE, SOME (),NONE)
+                              |  PX.Last exp => (NONE, NONE, NONE, SOME exp)
 			  val constrs = List.map doOne constraints
-                          fun mergeAll ((a,b,c),(ra,rb,rc)) = 
-			      (mergeOpt "separator"  (a,ra), mergeOpt "terminator" (b,rb), mergeOpt "terminator as no separator" (c,rc))
-			  val (sepXOpt, termXOpt, termNoSepXOpt) = List.foldr mergeAll (NONE,NONE,NONE) constrs
+                          fun mergeAll ((a,b,c,d),(ra,rb,rc,rd)) = 
+			      (mergeOpt "separator"  (a,ra), mergeOpt "terminator" (b,rb), 
+			       mergeOpt "terminator as no separator" (c,rc), mergeOpt "last" (d,rd))
+			  val (sepXOpt, termXOpt, termNoSepXOpt, lastXOpt ) = List.foldr mergeAll (NONE,NONE,NONE,NONE) constrs
 
 			  val () = case (termXOpt, termNoSepXOpt) of 
 			             (SOME _, SOME _) => PE.error ("Multiple terminator clauses in array "^name^".")
 				   | _ => ()
 			  val () = case (sepXOpt, termNoSepXOpt) of
-			              (NONE, SOME _) => PE.error ("Array "^name^" must have a separator for termination specification "^
+			              (NONE, SOME _) => PE.error ("Array "^name^
+								  " must have a separator for termination specification "^
 								  "of Pnosep to be valid.")
 				   | _ => ()
 
@@ -3854,7 +3878,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			      |  (_,_) => []
 			      end
 		      in
-			  (sepXOpt, termXOpt, isSome termNoSepXOpt, sepTermDynamicCheck, scan2Opt, declSs, initSs, closeSs)
+			  (sepXOpt, termXOpt, isSome termNoSepXOpt, lastXOpt,
+			   sepTermDynamicCheck, scan2Opt, declSs, initSs, closeSs)
                       end
 		 val _ = popLocalEnv()
 
@@ -3894,6 +3919,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		 val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
                  val arrayXOpt = case arrayXOpt of NONE => NONE | SOME r => SOME (chkForallConstraint r)
+                 val lastXOpt  = case lastXOpt  of NONE => NONE | SOME r => SOME (chkLastConstraint   r)
 
 		 (* Generate init function, array case *)
 		 fun genInitEDs(suf, base, aPCT) = 
@@ -3972,6 +3998,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  (* -- Some useful names *)
                  val readName = readName (* defined above *)
                  val foundTerm    = "foundTerm"
+		 val lastSet      = "lastSet"
 		 val reachedLimit = "reachedLimit"
 
 		 val resBufferX   = fieldX(rep, elts)
@@ -3990,6 +4017,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                               @ (if Option.isSome termXOpt then             (* int foundTerm = false *)
                                    [P.varDeclS(P.int, foundTerm, P.falseX)] 
                                  else [])
+                              @ (if Option.isSome lastXOpt then             (* int lastSet = false *)
+                                   [P.varDeclS(P.int, lastSet, P.falseX)] 
+                                 else [])
                               @ (if Option.isSome maxOpt then               (* int reachedLimit = false *)
 				   [P.varDeclS(P.int, reachedLimit, P.falseX)]
 			        else [])
@@ -4004,28 +4034,39 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  (* -- code for checking if terminator is next in input *)
 
                  (* -- Code for checking termination conditions *)
-                 fun genBreakCheckX (termOpt, sizeOpt) = 
+                 fun genBreakCheckX (termOpt, sizeOpt,lastOpt) = 
 		     let val isEofX = PL.isEofX(PT.Id pads)
 			 val isEorX = PL.isEorX(PT.Id pads)
 			 val termFoundX = PT.Id foundTerm
+			 val lastSetX = PT.Id lastSet
 			 val limitReachedX = PT.Id reachedLimit
 		     in
-                        case (termOpt,sizeOpt,isRecord)
-			of (NONE,   NONE,_ )      => P.orX(isEofX,isEorX)
-                        |  (NONE,   SOME _,false) => P.orX(isEofX, limitReachedX)
-                        |  (NONE,   SOME _,true)  => P.orX(isEofX, P.orX(isEorX,limitReachedX))
-                        |  (SOME _, NONE,  false) => P.orX(isEofX, termFoundX)
-                        |  (SOME _, NONE,  true)  => P.orX(isEofX, P.orX(isEorX, termFoundX))
-                        |  (SOME _, SOME _,false) => P.orX(isEofX, 
-						     P.orX(termFoundX,limitReachedX))
-                        |  (SOME _, SOME _,true)  => P.orX(isEofX, 
-						     P.orX(isEorX,
-						     P.orX(termFoundX,limitReachedX)))
+                        case (termOpt,sizeOpt,lastOpt,isRecord)
+			of (NONE,   NONE,  NONE,   _)    => P.orX(isEofX,isEorX)
+                        |  (NONE,   NONE,  SOME _, _)    => P.orX(P.orX(isEofX,isEorX),lastSetX)
+                        |  (NONE,   SOME _,NONE,  false) => P.orX(isEofX, limitReachedX)
+                        |  (NONE,   SOME _,SOME _,false) => P.orX(P.orX(isEofX, limitReachedX), lastSetX)
+                        |  (NONE,   SOME _,NONE,  true)  => P.orX(isEofX, P.orX(isEorX,limitReachedX))
+                        |  (NONE,   SOME _,SOME _,true)  => P.orX(P.orX(isEofX, P.orX(isEorX,limitReachedX)), lastSetX)
+                        |  (SOME _, NONE,  NONE,  false) => P.orX(isEofX, termFoundX)
+                        |  (SOME _, NONE,  SOME _,false) => P.orX(P.orX(isEofX, termFoundX), lastSetX)
+                        |  (SOME _, NONE,  NONE,  true)  => P.orX(isEofX, P.orX(isEorX, termFoundX))
+                        |  (SOME _, NONE,  SOME _,true)  => P.orX(P.orX(isEofX, P.orX(isEorX, termFoundX)), lastSetX)
+                        |  (SOME _, SOME _,NONE,  false) => P.orX(isEofX, 
+						            P.orX(termFoundX,limitReachedX))
+                        |  (SOME _, SOME _,SOME _,false) => P.orX(P.orX(isEofX, 
+							    P.orX(termFoundX,limitReachedX)), lastSetX)
+                        |  (SOME _, SOME _,NONE,  true)  => P.orX(isEofX, 
+							    P.orX(isEorX,
+							    P.orX(termFoundX,limitReachedX)))
+                        |  (SOME _, SOME _,SOME _, true) => P.orX(P.orX(isEofX, 
+							    P.orX(isEorX,
+						            P.orX(termFoundX,limitReachedX))), lastSetX)
 		     end
 
-                 fun genBreakCheckSs (term,size) = 
+                 fun genBreakCheckSs (term,size,last) = 
 		     [P.mkCommentS("Have we finished reading array?"),
-		      PT.IfThen(genBreakCheckX(term,size), PT.Compound[PT.Break])]
+		      PT.IfThen(genBreakCheckX(term,size,last), PT.Compound[PT.Break])]
 		     
                  (* -- Check that we found separator on last loop. *)
                  fun genSepCheck NONE = []
@@ -4194,6 +4235,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                       [P.mkCommentS("Looking for terminator"), 
 		       readTerm (readFun, exp,NONE)]
 
+                 fun genLastCheck NONE = []
+                   | genLastCheck (SOME exp) = 
+                      [P.mkCommentS("Checking last predicate"),
+		       PT.IfThen(exp, PT.Compound[P.assignS(PT.Id lastSet, P.trueX)])]
 
                  val whileSs = 
 		     let fun insLengthChk bdyS = 
@@ -4216,8 +4261,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				     [P.mkCommentS("Ready to read next element.")]
 				   @ readElementSs 
 				   @ panicRecoverySs
+                                   @ (genLastCheck lastXOpt)
                                    @ (genTermCheck termXOpt)
-				   @ genBreakCheckSs (termXOpt,maxOpt)
+				   @ genBreakCheckSs (termXOpt,maxOpt,lastXOpt)
                                    @ (genSepCheck sepXOpt)
                                  ))
 			 val termCondX = if isRecord then 
