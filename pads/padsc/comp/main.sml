@@ -158,6 +158,10 @@ structure Main : sig
     (* Run preprocessor ********************************************)
     fun preprocess(baseTyFile, srcFile, destFile) = 
 	let val srcFile = OS.FileSys.fullPath srcFile
+            val ppFile = tmp ".c"
+            val ppcommand = "ppp.pl "^ srcFile ^" > "^ppFile
+            val status = exec ppcommand
+	    val () = if status <> OS.Process.success then err "Pads pre-process failed." else ()
             val compositeFile = tmp ".c"
             val includePrefix = ("#include <ckit-first.h>\n"^
 				 "#include <pads-internal.h>\n"^
@@ -165,7 +169,7 @@ structure Main : sig
 				 "#include \""^baseTyFile^"\"\n"^
                                  "\n")
             val compositeProg = (includePrefix ^
-				   ("#include \"" ^srcFile^"\"\n"))
+				   ("#include \"" ^ppFile^"\"\n"))
 	    val outStrm = TextIO.openOut compositeFile
             val () = (TextIO.output(outStrm, compositeProg);
 		      TextIO.closeOut outStrm)
@@ -181,7 +185,7 @@ structure Main : sig
                           ^ destFile)
 	    val status = exec command
 	in
-	    (rm compositeFile; status)
+	    (rm ppFile; rm compositeFile; status)
 	end
 
     fun doParseOnly(srcFile:string) = 
