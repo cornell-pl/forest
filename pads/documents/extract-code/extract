@@ -1,9 +1,10 @@
 #!/bin/sh
 #will be filled in by install script
 
-_arch_n_opsys=`$PADS_HOME/scripts/arch-n-opsys`
+if [ "$PADS_SML"x = x ]; then
+  PADS_SML=sml
+fi
 
-SMLBIN=$PADS_HOME/binlinks/smlruntime.$_arch_n_opsys
 IMAGE=$PADS_HOME/documents/extract-code/extract-code
  
-exec $SMLBIN @SMLload=$IMAGE $* < /dev/null
+exec $PADS_SML @SMLload=$IMAGE $* < /dev/null
