@@ -46,7 +46,7 @@ Although traditional databases and \xml{} systems provide rich
 infrastructure for processing well-behaved data, vast amounts of
 useful data are stored and processed neither in databases nor in
 \xml{}, but rather in ad hoc data formats. 
-Examples include call detail data~\cite{kdd00}, 
+Examples we face at AT\&T include call detail data~\cite{kdd00}, 
 %compiler traces~\cite{chilimbi},
 web server logs~\cite{wpp}, 
 netflows capturing internet traffic\cite{netflow}, 
@@ -94,21 +94,26 @@ second~\cite{gigascope}. Such volumes mean it must be possible to
 process the data without loading it all into memory at once.
 
 Finally, before anything can be done with an ad hoc data source,
-someone has to produce a suitable parser for it, typically in \C{} or \perl{}. 
+someone has to produce a suitable parser for it.
+Today, people tend to use \C{} or \perl{} for this task.
 Unfortunately, writing
 such parsers is tedious and error-prone. It is complicated by the lack
 of documentation, convoluted encodings designed to save space, 
 the need to produce efficient code to cope with the scale of the data,
 and the need to handle errors robustly to avoid corrupting precious data.
-In fact, such parsers tend to skip checking all possible errors
+In our experience, 
+such parsers tend to skip checking for all possible errors
 because doing so requires writing so much extra code. 
-Often, the hard-won understanding of the data
+Moreover, the hard-won understanding of the data
 ends up embedded in parsing code, making long-term maintenance
 difficult for the original writer and sharing the knowledge with
 others nearly impossible.
 
 The \pads{} system facilitates ad hoc data processing by addressing
-each of these concerns.  It provides a declarative data description
+each of these concerns.\footnote{
+  \pads{} is short for Processing Arbitrary Data Sources.
+}%
+It provides a declarative data description
 language that permits analysts to describe the physical layout of
 their data, \textit{as it is}.  The language also permits analysts to
 describe expected semantic properties of their data so deviations can
@@ -122,7 +127,7 @@ artifacts are generated from the descriptions provides strong
 incentive for keeping the descriptions current, allowing them to serve
 as living documentation.  
 
-From such a description, the \pads{} compiler produces tunable \C{} libraries
+From such a description, the \pads{} compiler produces customizable \C{} libraries
 and tools for parsing, manipulating, and summarizing the data,
 obviating the need for a hand-written parser and leveraging the
 declarative specification to produce additional useful tools. 
@@ -211,10 +216,9 @@ shows a couple of typical records.
 \begin{figure*}
 \begin{small}
 \begin{center}
-\begin{verbatim}
-207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
-tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /scpt/dd@grp.org/confirm  HTTP/1.0" 200 941
-\end{verbatim}
+\begin{code}
+\input{../../padsc/examples/data/ai.paper}
+\end{code}
 \label{figure:clf-records}
 \caption{Typical CLF records.}
 \end{center}
@@ -223,10 +227,11 @@ tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /scpt/dd@grp.org/confirm  HT
 
 
 \subsection{Provisioning summary data}
-
+In the telecommunications industry, the term \textit{provisioning} refers to the steps necessary to convert an order for phone service into the actual 
+service.  
 To track AT\&T's provisioning process, the Dibbler project compiles
-weekly summaries of the state of each order for phone service.  
-These ASCII summaries store the processing date and one record per order.
+weekly summaries of the state of certain types of phone service orders.  
+These ASCII summaries store the summary date and one record per order.
 Each order record contains a header followed by a sequence of events.
 The header has 13 pipe separated fields: the order number, AT\&T's
 internal order number, the order version, four different telephone
@@ -401,6 +406,9 @@ their own encodings.  By default, \pads{} assumes records are new-line terminate
 Before parsing, however, the user can direct \pads{} to use a different record
 definition.
 
+More information about the \pads{} language may be found in the
+\pads{} manual~\cite{padsmanual}
+
 \section{Generated library}
 From a \pads{} description, the \pads{} compiler generates a \C{} library
 for parsing and manipulating the associated data source.  We selected \C{}
@@ -471,6 +479,11 @@ for \kw{Parrays} allows users to choose between reading the entire array
 at once or reading it one element at a time, again to support parsing
 and processing very large data sources.
 
+The ratio of the size of the data description to the size of the generated code gives some measure, albeit a very rough one, of the leverage of the
+declarative description.  For the 
+68~line Dibbler data description, the compiler yields a 1269~\texttt{.h} file
+and a 5923~\text{.c} file.  The functional richness of the generated code and the thoroughness of the error checking code explain this expansion factor.
+
 We discuss details of the generated library in the following section
 as we describe its uses.
 
@@ -481,9 +494,10 @@ library.  As a result, \pads{} provides direct support for a number
 of different uses: computing with the data, developing a high-level
 understanding of the data through statistical summaries, converting the data into a more standard form, and querying.  
 
-\subsection{General programs}
+\subsection{Dibbler}
+\label{subsec:general}
 We start by showing a simple use of 
-the core library to filter and normalize Dibbler data
+the core library to clean and normalize Dibbler data
 in \figref{figure:dibbler-filter}. After initializing
 the \pads{} library handle and opening the data source, the code sets
 the mask to check all conditions in the Dibbler description except the
@@ -506,6 +520,7 @@ of the in-memory representation of the data.
 \end{small}
 \end{figure*}
 
+\subsection{Hancock}
 Another programmatic use of the core library is to define  
 Hancock streams.  Hancock is a domain-specific language for
 building persistent profiles of the entities described in transaction 
@@ -520,20 +535,339 @@ motivated the \pads{} project.
 Before using a data source, analysts must develop an understanding 
 of the semantics of that source.  Because documentation is usually
 incomplete or out-of-date, this understanding must be developed 
-through playing with the data itself.  Typical questions include:
-how complete is my understanding of the syntax of the data source,
-how many different representations for "data not available" are there,
-what is the distribution of values for particular fields, \etc{}.
-To address this type of question, we added the notion of an accumulator
-to the generated library
+through exploring the data itself.  Typical questions include:
+how complete is the description of the syntax of the data source,
+how many different representations for ``data not available" are there,
+what is the distribution of values for particular fields, \etc{}
+To address these kinds of questions, we added the notion of an accumulator
+to the generated library.  For each type in a \pads{} description, accumulators track the number of good values, the number of bad values, and the 
+distribution of legal values.  Selected functions from this portion of the library appear in \figref{figure:library}.  
+
+We can of course use these functions by hand to write
+a program to compute the statistical profile of any \pads{} data source.
+However, many such data sources have a structure we can leverage
+to create an accumulator program from minimal extra information.  In particular,
+ad hoc sources are often simply a sequence of records, perhaps prefixed by a header. Both the web server log and the Dibbler data sources exhibit this pattern.\footnote{
+  Note that data format that can be read in one bulk read fits this pattern.
+} 
+Consequently, given only the names of the optional
+header type and the record type, the \pads{} system will generate 
+an accumulator program.  The accumulator report for the length field
+of the web server data looks as follows when run on an available data set:
+
+\begin{verbatim}
+<top>.length : uint32
++++++++++++++++++++++++++++++++++++++++++++
+good: 53544   bad: 3824    pcnt-bad: 6.666
+min: 35  max: 248591  avg: 4090.234
+top 10 values out of 1000 distinct values:
+tracked 99.552% of values
+ val:  3082 count:  1254  %-of-good:  2.342
+ val:   170 count:  1148  %-of-good:  2.144
+ val:    43 count:  1018  %-of-good:  1.901
+ val:  9372 count:   975  %-of-good:  1.821
+ val:  1425 count:   896  %-of-good:  1.673
+ val:   518 count:   893  %-of-good:  1.668
+ val:  1082 count:   881  %-of-good:  1.645
+ val:  1367 count:   874  %-of-good:  1.632
+ val:  1027 count:   859  %-of-good:  1.604
+ val:  1277 count:   857  %-of-good:  1.601
+. . . . . . . . . . . . . . . . . . . . . . 
+ SUMMING    count:  9655  %-of-good: 18.032
+\end{verbatim}
+%
+By default, accumulators track the first 1000 distinct
+values seen in the data source and report the frequency
+of the top ten values.  In this particular run, 99.552\%
+of all values were tracked.  When generating the accumulator
+program (or when using the library directly), \pads{} users can specify 
+the number of distinct values to track and the number 
+of values to print in the report.
+
+Perhaps surprisingly, the report shows that 6.66\% of the length
+fields contained errors.  A glance at the error log generated
+by the program (which contains all records flagged as errors) 
+reveals that web servers occasionally store the '-' character
+rather than the actual number of bytes returned, a possibility
+not mentioned in the documentation~\cite{wpp}.
+
+Accumulators can also be used to profile data sources automatically.
+Indeed, this application motivated the initial design of accumulators.
+AT\&T's Ningaui project receives roughly 4000~data files per day in various
+Cobol formats.  This volume makes looking at each file by hand 
+prohibitively expensive.  However, accumulator profiles can be used to 
+automatically determine
+which profiles have high percentages of errors and which have significantly
+different statistical profiles than earlier versions of the same file.  
+To support this usage, we built a tool that automatically translates
+Cobol copybooks into \pads{} descriptions.
+
+In practice at AT\&T, accumulators have proven themselves very useful for
+data exploration.  The Darkstar project uses \pads{} accumulator programs
+to find all the different representations of ``data not available,"  typical 
+examples of which include \cd{0}, a blank, \cd{NONE}, and \cd{Nothing}.
+An accumulator program revealed the two representations
+of missing phone numbers in the Dibbler data that the example program
+in \secref{subsec:general} repaired.
+Accumulators also often serve as a quick tool for iteratively
+refining a \pads{} description until only genuine errors remain.
 
 \subsection{Format Conversion}
+Another common need is to convert ad hoc data into a more well-behaved format, such as delimited fields suitable for loading into a spreadsheet or relational database, or into XML.  
+\subsubsection{Formatting}
+To support converting ad hoc data into a delimited format, the \pads{}
+library generates a formatting function for each type.  This function,
+an example of which appears in \figref{figure:library}, takes a delimiter
+list as an argument.  At each field boundary, it prints the first delimiter.
+At each nested type boundary, it advances the delimiter list unless the list
+is exhausted, in which case it reuses the last delimiter.  The mask argument
+allows the user to suppress printing of portions of the data.  Programmers
+can use the library directly to write formatting programs by hand.  However, 
+as in the accumulator case, \pads{} can generate a formatting program for 
+commonly occurring data patterns given only the name of the header type (optional), record type, and a delimiter string.  Users can further customize the generated program by specifying an ouput format for dates and mask values.   Given the delimiter
+string \cd{"|"} and the output date format \cd{"\%D:\%T"}, the generated
+web server log formatting program yields
+the output show in \figref{figure:clf-records-formatted} when applied to the
+sample data in \figref{figure:clf-records}. 
+\begin{figure*}
+\begin{small}
+\begin{center}
+\begin{code}
+\input{ai.fmt}
+\end{code}
+\label{figure:clf-records-formatted}
+\caption{Formatted CLF records.}
+\end{center}
+\end{small}
+\end{figure*}
+To support customization, \pads{} allows users to provide their own formatting functions for any type.
+
+AT\&T's Darkstar project uses generated formatting programs to convert
+various data sources into a format suitable for loading into a relational
+database.
+
+\subsubsection{XML Generation}
+\pads{} also supports converting ad hoc data into XML by providing a canonical mapping from \pads{} descriptions into XML.  This mapping is quite natural, as both \pads{} and XML are languages for describing semi-structured data.
+One interesting aspect of the mapping is that we embed not just the in-memory representation of \pads{} values, but also the parse descriptors in cases where the data was buggy.  This choice allows users to explore the error portions
+of their data sources, which can be the most interesting parts of the data.
+Given a \pads{} specification, the \pads{} compiler generates an XSchema describing the canonical embedding for that data source.  As an example, 
+the following is the portion of the generated XSchema for the \cd{eventSeq} type in the Dibbler data description.
+\begin{small}
+\begin{verbatim}
+<xs:complexType name="eventSeq_pd">
+<xs:sequence>
+<xs:element name="pstate" type="Pflags_t"/>
+<xs:element name="nerr" type="Puint32"/>
+<xs:element name="errCode" type="PerrCode_t"/>
+<xs:element name="loc" type="Ploc_t"/>
+<xs:element name="neerr" type="Puint32"/>
+<xs:element name="firstError" type="Puint32"/>
+<xs:element name="elt" type="Puint32" 
+    minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="eventSeq">
+<xs:sequence>
+<xs:element name="elt" type="event" 
+    minOccurs="0" maxOccurs="unbounded"/>
+<xs:element name="length" type="Puint32"/>
+<xs:element name="pd" type="eventSeq_pd" 
+    minOccurs="0" maxOccurs="1"/>
+</xs:sequence>
+</xs:complexType>
+\end{verbatim} 
+\end{small}
+The \pads{} compiler generates a \cd{write_xml_2io} function for each type, an example of which is shown in \figref{figure:library}.  Given a specification of the top level type, \pads{} can also automatically generate a conversion program, the output of which conforms to the generated XSchema.
+
 \subsection{Queries}
+Given a data source, a natural desire is to ask questions about the data, a desire which led to SQL and its many variants for relational data and XQuery for XML data.  Analysts working with ad hoc data would also like to query their
+data, but the lack of tools generally means they code their queries in an imperative fashion in languages such as \textsc{awk}, \perl{}, or \C{}.
+Indeed, the analyst working with the Dibbler data took this approach.
+He coded queries such as ``Select all orders starting within a certain time window," ``Count the number of orders going through a particular state," and ``What is the average time required to go from a particular state to another
+particular state" in a mixture of \textsc{awk} and \textsc{perl}.  He was
+able to get the answers to his questions, but he had to code the queries explicitly, and the query-related code ended up embedded in his already-brittle parsing code.
+
+We wanted to support declarative querying over ad hoc sources, but we didn't want to invent an entirely new query language, which led us to examine existing languages.  Because XQuery is designed to manipulate semi-structured data, its expressiveness matched our data sources well.  We were able to code all the Dibbler-related queries in XQuery.  For example, the XQuery
+\begin{code}
+\begin{small}
+{ $dibbler/dibbler/order[event[1]
+    [timeStamp >= 950000000 and 
+     timeStamp <= 1010000000 ]] }
+\end{small}
+\end{code}
+asks for all orders starting within a given time window.  
+
+Happy with the expressiveness of the language, we worked with the designers of the Galax~\cite{galax} open-source implementation of XQuery to define a data API~\cite{galaxmanual}.  This API presents the source as a tree to Galax. With this architecture, Galax can incorporate any data source accessible through an instance of the data API.  We then extended the \pads{} system to produce such instances.  We were able to define the bulk of the API generically, having to generate on a per type basis only a handful of functions. 
+\figref{figure:library} contains the key generated functions for the \cd{entry_t} type from the Dibbler data.    The  \cd{node_new} function creates a node in the tree representation of the data, storing the supplied name, mask, parse descriptor, and in-memory representation.  It makes the argument node the parent of the newly created node.
+The \cd{node_kthChild} function takes a tree
+corresponding to an \cd{entry_t} node and a child index and returns the appropriate child.  For the \cd{entry_t} type, possible children are the header, the event sequence, or a parse descriptor. 
+At the moment, it is possible to use the resulting system to query ad hoc data sources that can be loaded entirely into memory, and a version that allows the data to be read lazily is well underway.
+How best to optimizing Xqueries over ad hoc data sources is an open research area.
+
 \section{Implementation}
+From a \pads{} description, the \pads{} compiler generates \texttt{.h} and
+\texttt{.c} files that together implement the data structures and operations 
+necessary for manipulating the types declared in the source file.  The
+\pads{} run-time library implements all shared functionality, including file operations, regular expression manipulation, memory management, the provided base types, and the generic portions of the Galax data API.  We are currently generating a recursive descent parser that makes it easy to provide multiple entry points.
+
+We used the CKIT library~\cite{ckit} to implement the \pads{} compiler.
+This library greatly facilitated the construction of the compiler as it
+provides a framework for extending \C{}, typechecking the extension, and then pretty printing the result.  Because of CKIT, we were able to have a working version of the \pads{} compiler very quickly.
+Currently, our compiler consists of 10,000 lines of \smlnj{} code layered on top of CKIT.
+
+The \pads{} run-time libraries comprise approximately 30,000 lines of \C{} code, built on top of the AST~\cite{ast} and SFIO~\cite{sfio} libraries.
+These libraries provide support for regular expressions, container data types, a date parsing library, and various I/O routines.  
+ 
+To make the collection of base types user-extensible, the compiler reads all base type specifications from files.  
+At compile time, the user can provide a list of such files to augment the provided base types.
+A base type specification
+declares the names of the in-memory representation, mask, and parse descriptor data structures and the names of the functions that implement the parsing, writing, formatting, \etc{} operations.  Support for accumulators is optional, as is support for the Galax data API.  The user is responsible for providing a \C{} library with implementations of all the named types and functions. 
+More information about user-defined base types appears in the \pads{} manual~\cite{padsmanual}.
+
+The \pads{} implementation is currently going through AT\&T's software
+release process.  When the process is finished, hopefully in the next few weeks, the source code will be available from the \pads{} website with a non-commercial use license:
+\begin{center}
+\url{http://www.research.att.com/projects/pads}
+\end{center}
+ 
 \section{Performance}
+To measure the performance of \pads{}, we compare the parser \pads{} generates for the Dibbler data description against a hand-written \perl{} program, as \perl{} is the language that our user base has typically been using. We compare the performance of the two approaches on two different tasks: vetting Dibbler data in a fashion similar to the filter program of
+\figref{figure:dibbler-filter} and collecting the order number of all records that ever pass through a particular state.  For the first task, we check all the specified properties on the data, including the constraint that the time stamps in the events appear in sorted order.  For the second task, we turn off all error checking and simply output the desired order numbers on standard out.
+We attempted to write the \perl{} programs in as efficient a manner possible, given the specified tasks.  XXX:Bob, describe the approach taken in \perl{}.
+
+We used a Dibbler data file to exercise the programs.  This 2.2GB file contained 11773843 records.  The minimum number of states for an order was one, the maximum number was 156, and the average was 5.5.  One of these records violated the expected sorting order on event time stamps, and 53 of them contained a syntax error.
+(These statistics are courtesy of the generated \pads{} accumulator program, a nice side-benefit of the \pads{} description.)  
+
+We ran each program XXX times on a XXX processor running Irix XXX.   We report the XXX running times.
+
+%156 different states for one order
+%-rw-r--r--    1 angusm   dibbler   2187472314 Jun  9  2003 /fs/dibblerd/tlf/data/out_sum.stream
+%2171.364u 31.379s 40:41.54 90.2% 0+0k 2+0io 2pf+0w
+%53 had trailing t or } after zip code
+
+As
+we have not yet devoted significant time to optimizing the generated parser,
+we expect significant improvements are possible.
+
 \section{Related work}
+There are many tools for describing data formats. For example,
+\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl} are both
+systems for declaratively describing data and then generating
+libraries for manipulating that data.  In contrast to \pads{},
+however, both these systems specify the {\em logical\/} representation
+and automatically generate a {\em physical\/} representation.
+Although useful for many purposes, this technology does not help
+process data that arrives in predetermined, \textit{ad hoc} formats.
+
+
+More closely related work allows declarative descriptions of physical
+data~\cite{sigcomm00,gpce02}, motivated by parsing
+\textsc{TCP/IP} packets and \java{} jar-files, respectively.  Like
+\pads{}, both of these languages have a type-directed approach to
+describing ad hoc data and permit the user to define semantic constraints.
+In contrast to our
+work, these systems handle only binary data and assume the data is
+error-free or halt parsing if an error is detected. 
+Parsing non-binary data poses additional challenges because of the need
+to handle delimiter values and to express richer termination conditions
+on sequences of data. These systems also
+focus exclusively on the parsing/unparsing problem, whereas we have 
+devoted considerable effort in leveraging the declarative nature of
+our data descriptions to build additional useful tools.
+
+
+Recently, a standardization effort has been started whose stated goals are quite similar to those of the \pads{} project~\cite{dfdl}. The description
+language seems to be \xml{} based, but at the moment, more details are 
+not available.
+
+\section{Future work}
+The \pads{} project is very much work in progress.  In
+this section, we describe some future directions.
+
+\subsection{Language expressiveness}  
+We intend to add bit-field 
+and overlay constructs to \pads{} to better support binary data sources.  We also plan to generalize the switched union construct to permit arbitrary lookahead to better support
+parsing for complex ASCII formats such the HTTP packet specification~\cite{http}.  Further, we need to design a mechanism
+for specifying character encodings so that we may support 
+Unicode~\cite{unicode} data sources.
+
+\subsection{Generated artifacts} 
+For testing purposes, it would be very useful to be able to generate random data that conforms to a given specification, or 
+deviates from it in specified ways.  Given a \pads{} specification and a characterization of the desired distribution, it should be possible to generate such data.  We also plan to augment the statistical profiling library with
+functions that use randomized and approximate techniques to create
+small summaries such as histograms~\cite{histograms,histograms-wavelets}, wavelet summaries~\cite{histograms-wavelets},
+or quantile summaries\cite{quantiles}.
+
+
+Another useful tool we 
+would like to generate from \pads{} descriptions is a graphical binary data editor. 
+
+\subsection{Semantics}  We are in the process of developing a formal semantics for the \pads{} language so that we may have a declarative specification of what a \pads{} specification means.
+
+\subsection{Application-specific customization}
+Ideally, \pads{} specifications describe everything about a given
+data source, but nothing about how the data is to be used. This
+division allows a single description of a given source to be used
+for multiple applications.  However, different applications have different
+performance, verification, and error-handling needs.  Currently,
+\pads{} allows users to customize the behavior of library
+functions at run-time by supplying appropriate masks and setting various error handlers.  However, this leaves a run-time overhead.  We would like to 
+design a mechanism whereby users can specify application-specific information.  The \pads{} system would then use this information to generate an 
+application-specific instance of the library.  Conceptually, this would
+amount to performing partial evaluation on the currently generated \pads{} library by specifying the mask arguments at binding time.
+
+\subsection{Language bindings}  Nothing about the \pads{} language is specific to \C{}.  It would be very interesting to develop a binding for \pads{} in a higher-order functional language because the pattern-matching constructs of such languages are extremely adept at expressing transformations, the natural next step after parsing data.
+
+
 \section{Conclusions}
+\pads{} is a declarative data description language that allows 
+its users to describe ad hoc data sources as they are, capturing
+both layout information and semantic constraints.  The language
+is expressive enough to describe almost all of the ASCII, Cobol, 
+and binary data formats we have seen in practice, while being 
+concise enough to serve as living documentation for those data sources.  
+
+The 
+advantages of a declarative language for describing data are
+significant.  First, the user is spared from having to write
+the parser in the first place, which is an inherently tedious
+process.   Second, because the parser is machine
+generated, it can check all the error conditions necessary to
+guard against corrupting downstream data without cluttering
+user code.  Third, because of its conciseness, the \pads{}
+description can serve as documentation for a data source.  Given
+that the parser is generated from the description, there is 
+strong incentive to maintain the description and hence the documentation
+as the data evolves.  Finally, because we have a declarative
+specification, we can generate not just a parser, but also
+a validator, an unparser, a statistical profiler, various formatting
+tools, query support, \etc{}  In other words, we can leverage the declarative nature of the specification to build a large number of useful tools.
+
+\pads{} has already been quite useful at AT\&T, and as the collection of generated tools grows, it will only become more so.  We look forward to developing a larger user base to get more feedback to further improve the system. 
+
+
+\section{Acknowledgments}
+We would like to thank Mary Fern\'andez and J\'er\^ome Sim\'eon for 
+developing the Galax data API and our summer
+students Ricardo Medel and Yitzhak Mandelbaum for their work on implementing
+the XML-related portions of the \pads{} compiler and run-time library.
+
 \bibliographystyle{abbrv}
 \bibliography{pads} 
 
 \end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

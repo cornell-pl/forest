@@ -1370,13 +1370,14 @@ ssize_t entry_t_fmt2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *
 ssize_t entry_t_fmt2io (P_t *pads,Sfio_t *io,int *requestedOut,char const *delims,entry_t_m *m,entry_t_pd *pd,entry_t *rep);
 
 /*@BEGIN dibbler_galax.tex */
+/* Galax Data API */
 PDCI_node_t *entry_t_node_new (PDCI_node_t *parent,char const *name,void *m,
 			       void *pd,void *rep,char const *kind,char const *whatfn);
-
+/*@END dibbler_galax.tex */
 PDCI_node_t *entry_t_cachedNode_init (PDCI_node_t *self);
-
+/*@BEGIN dibbler_galax.tex */
 PDCI_node_t *entry_t_node_kthChild (PDCI_node_t *self,PDCI_childIndex_t idx);
-
+/*@END dibbler_galax.tex */
 PDCI_node_t *entry_t_node_kthChildNamed (PDCI_node_t *self,PDCI_childIndex_t idx,char const *name);
 
 PDCI_node_t *entry_t_cachedNode_kthChild (PDCI_node_t *self,PDCI_childIndex_t idx);
@@ -1385,12 +1386,11 @@ PDCI_node_t *entry_t_sndNode_init (PDCI_node_t *self,PDCI_manager_t *manager,
 				   PDCI_childIndex_t ancestor_idx,PDCI_gen_t gen,PDCI_childIndex_t idx);
 
 PDCI_node_t *entry_t_sndNode_kthChild (PDCI_node_t *self,PDCI_childIndex_t idx);
-
-Perror_t entry_t_node_pathWalk (P_t *pads,entry_t_m *m,entry_t_pd *pd,entry_t *rep,PDCI_path_t path,void **m_out,void **pd_out,void **rep_out);
+Perror_t entry_t_node_pathWalk (P_t *pads,entry_t_m *m,entry_t_pd *pd,entry_t *rep,
+				PDCI_path_t path,void **m_out,void **pd_out,void **rep_out);
 extern PDCI_vtable_t const entry_t_node_vtable;
 extern PDCI_vtable_t const entry_t_cachedNode_vtable;
 extern PDCI_vtable_t const entry_t_sndNode_vtable;
-/*@END dibbler_galax.tex */
 typedef struct entries_t_s entries_t;
 typedef struct entries_t_m_s entries_t_m;
 typedef struct entries_t_pd_s entries_t_pd;

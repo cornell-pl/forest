@@ -30,7 +30,7 @@ CCHECK=cc -I. -I.. -I$(PADS_HOME)/ast-ast/arch/darwin.ppc/include/ast -I/Users/k
 
 EXAMPLE_DIR= $(PADS_HOME)/padsc/examples/p
 PEXAMPLES= $(EXAMPLE_DIR)/wsl.p $(EXAMPLE_DIR)/dibbler_new.p
-CEXAMPLES= dibbler_new_annotated.h dibbler_new_xml_annotated.h $(PADS_HOME)/padsc/examples/tests/filter_dibbler.c
+CEXAMPLES= dibbler_new_annotated.h dibbler_new_xml_annotated.h $(PADS_HOME)/padsc/examples/tests/filter_dibbler.c $(PADS_HOME)/padsc/examples/tests/test_wsl.c
 EXAMPLES= $(PEXAMPLES) $(CEXAMPLES)
 
 CLEAN= 
@@ -55,6 +55,10 @@ check:	$(PEXAMPLES) Makefile
 code:	$(EXAMPLES) Makefile
 	echo Generating code for paper
 	for i in $(EXAMPLES) ; do $(EXTRACT) $$i; done
+	(cd $(PADS_HOME)/padsc/examples/tests; \
+	 $(MAKE) fmt_wsl;\
+	 cd darwin.ppc;\
+         ./fmt_wsl ../../data/ai.paper > ../../../../documents/pldi/ai.fmt)
 
 docode:	check code
 

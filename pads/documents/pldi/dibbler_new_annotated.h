@@ -1118,14 +1118,15 @@ ssize_t entry_t_write_xml_2io (P_t *pads,Sfio_t *io,entry_t_pd *pd,entry_t *rep,
 
 ssize_t entry_t_fmt2buf_final (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *requestedOut,char const *delims,entry_t_m *m,entry_t_pd *pd,entry_t *rep);
 
-/*@BEGIN dibbler_fmt.tex */
-/* Formatting */
 ssize_t entry_t_fmt2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,
 			 int *requestedOut,char const *delims,
 			 entry_t_m *m,entry_t_pd *pd,entry_t *rep);
-/*@END dibbler_fmt.tex */
 
-ssize_t entry_t_fmt2io (P_t *pads,Sfio_t *io,int *requestedOut,char const *delims,entry_t_m *m,entry_t_pd *pd,entry_t *rep);
+/*@BEGIN dibbler_fmt.tex */
+/* Formatting */
+ssize_t entry_t_fmt2io (P_t *pads,Sfio_t *io,int *requestedOut,
+			char const *delims,entry_t_m *m,entry_t_pd *pd,entry_t *rep);
+/*@END dibbler_fmt.tex */
 typedef struct entries_t_s entries_t;
 typedef struct entries_t_m_s entries_t_m;
 typedef struct entries_t_pd_s entries_t_pd;
