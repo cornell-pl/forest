@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  if (P_OK == Pbcd_int8_read(pads, &m, 3, &pd, &i8)) {
+  if (P_OK == Pbcd_int8_read(pads, &m, &pd, &i8, 3)) {
     error(0, "Read bcd integer: %ld", (long)i8);
     if (i8 != 0) {
       error(0, "XXX failure: should be %ld XXX", (long)0);
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_int8_read(pads, &m, 3, &pd, &i8)) {
+  if (P_OK == Pbcd_int8_read(pads, &m, &pd, &i8, 3)) {
     error(0, "Read bcd integer: %ld", (long)i8);
     if (i8 != P_MIN_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)P_MIN_INT8);
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_int8_read(pads, &m, 3, &pd, &i8)) {
+  if (P_OK == Pbcd_int8_read(pads, &m, &pd, &i8, 3)) {
     error(0, "Read bcd integer: %ld", (long)i8);
     if (i8 != P_MAX_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)P_MAX_INT8);
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_uint8_read(pads, &m, 3, &pd, &u8)) {
+  if (P_OK == Pbcd_uint8_read(pads, &m, &pd, &u8, 3)) {
     error(0, "Read bcd integer: %lu", (unsigned long)u8);
     if (u8 != P_MAX_UINT8) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)P_MAX_UINT8);
@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_int16_read(pads, &m, 5, &pd, &i16)) {
+  if (P_OK == Pbcd_int16_read(pads, &m, &pd, &i16, 5)) {
     error(0, "Read bcd integer: %ld", (long)i16);
     if (i16 != P_MIN_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)P_MIN_INT16);
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_int16_read(pads, &m, 5, &pd, &i16)) {
+  if (P_OK == Pbcd_int16_read(pads, &m, &pd, &i16, 5)) {
     error(0, "Read bcd integer: %ld", (long)i16);
     if (i16 != P_MAX_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)P_MAX_INT16);
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_uint16_read(pads, &m, 5, &pd, &u16)) {
+  if (P_OK == Pbcd_uint16_read(pads, &m, &pd, &u16, 5)) {
     error(0, "Read bcd integer: %lu", (unsigned long)u16);
     if (u16 != P_MAX_UINT16) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)P_MAX_UINT16);
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_int32_read(pads, &m, 11, &pd, &i32)) {
+  if (P_OK == Pbcd_int32_read(pads, &m, &pd, &i32, 11)) {
     error(0, "Read bcd integer: %ld", (long)i32);
     if (i32 != P_MIN_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)P_MIN_INT32);
@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_int32_read(pads, &m, 10, &pd, &i32)) {
+  if (P_OK == Pbcd_int32_read(pads, &m, &pd, &i32, 10)) {
     error(0, "Read bcd integer: %ld", (long)i32);
     if (i32 != P_MAX_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)P_MAX_INT32);
@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_uint32_read(pads, &m, 10, &pd, &u32)) {
+  if (P_OK == Pbcd_uint32_read(pads, &m, &pd, &u32, 10)) {
     error(0, "Read bcd integer: %lu", (unsigned long)u32);
     if (u32 != P_MAX_UINT32) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)P_MAX_UINT32);
@@ -173,7 +173,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_int64_read(pads, &m, 19, &pd, &i64)) {
+  if (P_OK == Pbcd_int64_read(pads, &m, &pd, &i64, 19)) {
     error(0, "Read bcd integer: %lld", (long long)i64);
     if (i64 != P_MIN_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)P_MIN_INT64);
@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_int64_read(pads, &m, 19, &pd, &i64)) {
+  if (P_OK == Pbcd_int64_read(pads, &m, &pd, &i64, 19)) {
     error(0, "Read bcd integer: %lld", (long long)i64);
     if (i64 != P_MAX_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)P_MAX_INT64);
@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (P_OK == Pbcd_uint64_read(pads, &m, 20, &pd, &u64)) {
+  if (P_OK == Pbcd_uint64_read(pads, &m, &pd, &u64, 20)) {
     error(0, "Read bcd integer: %llu", (unsigned long long)u64);
     if (u64 != P_MAX_UINT64) {
       error(0, "XXX failure: should be %llu XXX", (unsigned long long)P_MAX_UINT64);

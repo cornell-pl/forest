@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
    */
   while (!P_io_at_eof(pads)) {
     Perror_t res;
-    res= defPN_read(pads, &pm, 1999999999LL, 9999999999LL, &ppd, &pdata);
+    res= defPN_read(pads, &pm, &ppd, &pdata, 1999999999LL, 9999999999LL);
 
     if (res == P_OK) {
       error(NO_NL, "Record okay:\t");

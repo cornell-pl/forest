@@ -608,7 +608,7 @@ struct
 	                 optArgs: PT.expression list,
 			 pd:PT.expression, 
 	                 res:PT.expression) = 
-      PT.Call(PT.Id n, [pads, loc] @ optArgs @[pd,res])
+      PT.Call(PT.Id n, [pads, loc, pd,res]@ optArgs)
 
   fun readFunChkX(expectedValX : PT.expression,
 		  n:string, pads:PT.expression, 

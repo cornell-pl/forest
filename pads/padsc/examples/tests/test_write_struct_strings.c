@@ -3,7 +3,7 @@
 #define FILENAME  "../../data/write_struct_strings"
 
 
-Perror_t my_string_inv_val(P_t *pads, void *pd_void, void *val_void, void **type_args) {
+Perror_t my_string_inv_val(P_t *pads, void *pd_void, void *val_void, va_list type_args) {
   Pbase_pd *pd  = (Pbase_pd*)pd_void;
   Pstring  *val = (Pstring*)val_void;
   if (pd->errCode == P_USER_CONSTRAINT_VIOLATION) {
@@ -14,14 +14,17 @@ Perror_t my_string_inv_val(P_t *pads, void *pd_void, void *val_void, void **type
   return P_OK;
 }
 
-Perror_t my_string_fw_inv_val(P_t *pads, void *pd_void, void *val_void, void **type_args) {
+Perror_t my_string_fw_inv_val(P_t *pads, void *pd_void, void *val_void, va_list type_args) {
   Pbase_pd *pd    = (Pbase_pd*)pd_void;
   Pstring  *val   = (Pstring*)val_void;
-  size_t      *width = type_args[0];
+  size_t    width;
+
+  width = va_arg(type_args, size_t);
+
   if (pd->errCode == P_USER_CONSTRAINT_VIOLATION) {
-    Pstring_cstr_copy(pads, val, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", *width);
+    Pstring_cstr_copy(pads, val, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", width);
   } else {
-    Pstring_cstr_copy(pads, val, "x---------------------------------------------------------", *width);
+    Pstring_cstr_copy(pads, val, "x---------------------------------------------------------", width);
   }
   return P_OK;
 }
@@ -44,10 +47,10 @@ int main(int argc, char** argv) {
 
   test_init(pads, &rep);
 
-  pads->disc->inv_valfn_map = Pinv_valfn_map_create(pads); /* only needed if no map installed yet */ 
+  pads->disc->inv_val_fn_map = Pinv_val_fn_map_create(pads); /* only needed if no map installed yet */ 
 #if 1
-  P_set_inv_valfn(pads, pads->disc->inv_valfn_map, "Pstring", my_string_inv_val);
-  P_set_inv_valfn(pads, pads->disc->inv_valfn_map, "Pstring_FW", my_string_fw_inv_val);
+  P_set_inv_val_fn(pads, pads->disc->inv_val_fn_map, "Pstring", my_string_inv_val);
+  P_set_inv_val_fn(pads, pads->disc->inv_val_fn_map, "Pstring_FW", my_string_fw_inv_val);
 #endif
 
   if (strcasecmp(fname, "stdin") == 0) {

@@ -159,7 +159,8 @@ void PDCI_IO_ENDLOC_SPAN1(P_t *pads, Ploc_t loc);
 void PDCI_IO_GETLOC_SPAN0(P_t *pads, Ploc_t loc);
 void PDCI_IO_GETLOC_SPAN1(P_t *pads, Ploc_t loc);
 
-Pinv_valfn PDCI_GET_INV_VALFN(P_t *, const char *);
+Pinv_val_fn PDCI_GET_INV_VAL_FN(P_t *, const char *);
+Pfmt_fn     PDCI_GET_FMT_FN(P_t *, const char *);
 
 void PDCI_fill_mask(Pbase_m* mask, Pbase_m m, size_t mask_size);
 
@@ -169,6 +170,9 @@ void PDCI_REGEXP_FROM_CSTR(P_t *pads, Pregexp_t my_regexp, const char *str_expr,
 			   const char *err_prefix, const char *whatfn);
 void PDCI_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr,
 			  const char *err_prefix, const char *whatfn);
+
+void PDCI_FMT2IO_USE_FMT2BUF_FN(const char *whatfn, ssize_t fmt2buf_call);
+
 
 #else
 /* The actual impls */
@@ -866,8 +870,11 @@ do { \
   PDCI_IO_ENDLOC_SPAN1(pads, loc); \
 } while (0)
 
-#define PDCI_GET_INV_VALFN(pads,type_name) \
-  (pads->disc->inv_valfn_map ? P_get_inv_valfn(pads, pads->disc->inv_valfn_map, type_name) : 0)
+#define PDCI_GET_INV_VAL_FN(pads,type_name) \
+  (pads->disc->inv_val_fn_map ? P_get_inv_val_fn(pads, pads->disc->inv_val_fn_map, type_name) : 0)
+
+#define PDCI_GET_FMT_FN(pads,type_name) \
+  (pads->disc->fmt_fn_map ? P_get_fmt_fn(pads, pads->disc->fmt_fn_map, type_name) : 0)
 
 #define PDCI_fill_mask(mask, m, sz) \
 do { \
@@ -879,6 +886,43 @@ do { \
       ((Pbase_m*)(mask))[i] = (m); \
     } \
   } \
+} while (0)
+
+/* stmts for a fmt2io function that uses a fmt2buf function from the hash table
+ * always precede with decls for length, buf, buf_len, and buf_full:
+ *    ssize_t length;
+ *    Pbyte *buf;
+ *    int buf_full;
+ *    size_t buf_len;
+ * the fmt2buf call must assign a value to length
+ * returns an ssize or -1 on error 
+*/
+#define PDCI_FMT2IO_USE_FMT2BUF_FN(whatfn, fmt2buf_call) \
+do { \
+  int set_buf_; \
+  buf_len = pads->outbuf_res; \
+  while (1) { \
+    set_buf_  = 0; \
+    buf_full  = 0; \
+    buf = PDCI_io_write_start(pads, io, &buf_len, &set_buf_, whatfn); \
+    if (!buf)  { \
+      /* Don't have to abort because start failed. */ \
+      return -1; \
+    } \
+    fmt2buf_call; \
+    if (buf_full)  { \
+      /* Try again with a bigger buffer */ \
+      PDCI_io_write_abort(pads, io, buf, set_buf_, whatfn); \
+      buf_len*=2; \
+      continue; \
+    } \
+    break; \
+  } \
+  if (length >=0) { \
+    return PDCI_io_write_commit(pads, io, buf, set_buf_, length, whatfn); \
+  } \
+  PDCI_io_write_abort(pads, io, buf, set_buf_, whatfn); \
+  return -1; \
 } while (0)
 
 #endif /* FOR_CKIT */

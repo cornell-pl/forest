@@ -4,7 +4,7 @@
 #define FILENAME  "../../data/write_struct" 
 
 
-Perror_t my_uint32_inv_val(P_t *pads, void *pd_void, void *val_void, void **type_args) {
+Perror_t my_uint32_inv_val(P_t *pads, void *pd_void, void *val_void, va_list type_args) {
   Pbase_pd *pd  = (Pbase_pd*)pd_void;
   Puint32  *val = (Puint32*)val_void;
   if (pd->errCode == P_USER_CONSTRAINT_VIOLATION) {
@@ -30,8 +30,8 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
-  pads->disc->inv_valfn_map = Pinv_valfn_map_create(pads); /* only needed if no map installed yet */ 
-  P_set_inv_valfn(pads, pads->disc->inv_valfn_map, "Puint32", my_uint32_inv_val);
+  pads->disc->inv_val_fn_map = Pinv_val_fn_map_create(pads); /* only needed if no map installed yet */ 
+  P_set_inv_val_fn(pads, pads->disc->inv_val_fn_map, "Puint32", my_uint32_inv_val);
 
   if (strcasecmp(fname, "stdin") == 0) {
     error(0, "Data file = standard in\n");
