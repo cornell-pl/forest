@@ -1,4 +1,4 @@
-/*@FILE pdisc.tex pinformats.tex poutformats.tex timestamp-format.tex date-format.tex time-format.tex timestamp-output-format.tex date-output-format.tex time-output-format.tex pfopen_fn.tex*/
+/*@FILE pdisc.tex pinformats.tex poutformats.tex timestamp-format.tex date-format.tex time-format.tex timestamp-output-format.tex date-output-format.tex time-output-format.tex pfopen_fn.tex errorfn.tex invfn.tex invfn-example.tex*/
 
 /*@BEGIN pinformats.tex*/
 typedef struct Pin_formats_s {
@@ -95,3 +95,33 @@ const char *tout =
 /*@BEGIN pfopen_fn.tex*/
 typedef Sfio_t* (*Pfopen_fn)(const char *source, const char *mode);
 /*@END pfopen_fn.tex*/
+
+/*@BEGIN errorfn.tex*/
+typedef int (*Perror_fn)(const char *libnm, int level, ...);
+/*@END errorfn.tex*/
+
+/*@BEGIN invfn.tex*/
+Pinv_val_fn P_get_inv_val_fn(P_t* pads, Pinv_val_fn_map_t *map, 
+			     const char *type_name); 
+Pinv_val_fn P_set_inv_val_fn(P_t* pads, Pinv_val_fn_map_t *map, 
+			     const char *type_name, Pinv_val_fn fn);
+/*@END invfn.tex*/
+
+/*@BEGIN invfn-example.tex*/
+Perror_t my_int32_inv_val(P_t *pads, void *pd_void, void *val_void, va_list type_args) {
+  Pbase_pd *pd  = (Pbase_pd*)pd_void;
+  Pint32   *val = (Pint32*)val_void;
+  if (pd->errCode == P_USER_CONSTRAINT_VIOLATION) {
+     (*val) = -30;
+  } else {
+     (*val) = P_MAX_INT32;
+  }
+  return P_OK;
+};
+
+/*create call only needed if no map installed yet*/
+pads->disc->inv_val_fn_map = Pinv_val_fn_map_create(pads);   
+P_set_inv_val_fn(pads, pads->disc->inv_val_fn_map, "Pint32", my_int32_inv_val);
+/*@END invfn-example.tex*/
+
+

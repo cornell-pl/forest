@@ -1,4 +1,91 @@
 \chapter{Error codes}
 \label{app:error-codes}
 \cutname{error_codes.html}
-include table listing all error codes and their meaning.
+The values of type \cd{Perror_t} are:
+
+\begin{tabular}{|l|c|l|}
+\hline
+Name       & Value            & Meaning \\ \hline
+\cd{P\_OK} & \cd{\literal{0}} & No error \\ \hline
+\cd{P\_ERR} & \cd{\literal{-1}} & Some error \\ \hline
+\end{tabular}
+
+The values of type \cd{PerrCode_t} are listed below.  The ``Has
+location'' field indicates whether the parse descriptor contains a
+corresponding location in the source file.
+
+\begin{tabular}{|l|l|l|}
+\hline
+Name       &   Has location     & Meaning \\\hline
+\cd{P\_NOT\_PARSED}  & No & Data not yet parsed \\\hline
+\cd{P\_NO\_ERR}      & No & Value read, no error detected\\\hline
+\cd{P\_SKIPPED}      & No &    \\\hline
+\cd{P\_UNEXPECTED\_ERR} & No & \\\hline
+\cd{P\_BAD\_PARAM}      & No & \\\hline
+\cd{P\_SYS\_ERR}        & No & \\\hline
+\cd{P\_IO\_ERR}         & No & \\\hline
+\cd{P\_CHKPOINT\_ERR}   & No & \\\hline
+\cd{P\_COMMIT\_ERR}     & No & \\\hline 
+\cd{P\_RESTORE\_ERR}    & No & \\\hline      
+\cd{P\_ALLOC\_ERR}      & No & \\\hline                      
+\cd{P\_FORWARD\_ERR}    & No & \\\hline 
+\cd{P\_PANIC\_SKIPPED}  & No & Value skipped because of panic\\\hline
+\cd{P\_FMT\_EMPTY\_DELIM\_ERR} & No & \\\hline
+\cd{P\_INVALID\_FUNCTION\_CALL} & No & \\\hline
+\cd{P\_SMART\_NODE\_ERR} & No & General error relating to smart nodes\\\hline
+\cd{P\_FAILWITH\_ERR}    & No & Error requiring an ocaml exception  \\\hline
+\end{tabular}
+
+\begin{tabular}{|l|l|l|}
+\hline
+Name       &   Has location     & Meaning \\\hline 
+\cd{P\_USER\_CONSTRAINT\_VIOLATION} & Yes & \\\hline
+\cd{P\_MISSING\_LITERAL}            & Yes & \\\hline
+&&\\\hline
+\cd{P\_ARRAY\_ELEM\_ERR}            & Yes & \\\hline
+\cd{P\_ARRAY\_SEP\_ERR}             & Yes & \\\hline
+\cd{P\_ARRAY\_TERM\_ERR}            & Yes & \\\hline
+\cd{P\_ARRAY\_SIZE\_ERR}            & Yes & \\\hline
+\cd{P\_ARRAY\_SEP\_TERM\_SAME\_ERR} & Yes & \\\hline
+\cd{P\_ARRAY\_USER\_CONSTRAINT\_ERR} & Yes & \\\hline
+\cd{P\_ARRAY\_MIN\_BIGGER\_THAN\_MAX\_ERR}& Yes & \\\hline
+\cd{P\_ARRAY\_MIN\_NEGATIVE}        & Yes & \\\hline
+\cd{P\_ARRAY\_MAX\_NEGATIVE}        & Yes & \\\hline
+\cd{P\_ARRAY\_EXTRA\_BEFORE\_SEP}   & Yes & \\\hline
+\cd{P\_ARRAY\_EXTRA\_BEFORE\_TERM}  & Yes & \\\hline
+&&\\\hline
+\cd{P\_STRUCT\_FIELD\_ERR}          & Yes &\\\hline
+\cd{P\_STRUCT\_EXTRA\_BEFORE\_SEP}  & Yes &\\\hline
+\cd{P\_UNION\_MATCH\_ERR}           & Yes &\\\hline
+\cd{P\_OPTION\_MATCH\_ERR}          & Yes &\\\hline
+\cd{P\_ENUM\_MATCH\_ERR}            & Yes &\\\hline
+\cd{P\_TYPEDEF\_CONSTRAINT\_ERR}    & Yes &\\\hline
+&&\\\hline
+\cd{P\_AT\_EOF}                     & Yes &\\\hline
+\cd{P\_AT\_EOR}                     & Yes &\\\hline
+\cd{P\_EXTRA\_BEFORE\_EOR}          & Yes &\\\hline
+\cd{P\_EOF\_BEFORE\_EOR}            & Yes &\\\hline
+\cd{P\_COUNT\_MAX\_LIMIT}           & Yes &\\\hline
+\cd{P\_RANGE}                       & Yes &\\\hline
+&&\\\hline
+\cd{P\_INVALID\_A\_NUM}             & Yes & Invalid ASCII number \\\hline
+\cd{P\_INVALID\_E\_NUM}             & Yes & Invalid EBCDIC number \\\hline
+\cd{P\_INVALID\_EBC\_NUM}           & Yes & Invalid EBC number \\\hline
+\cd{P\_INVALID\_BCD\_NUM}           & Yes & Invalid BCD number \\\hline
+&&\\\hline
+\cd{P\_INVALID\_CHARSET}            & Yes & \\\hline
+\cd{P\_INVALID\_WIDTH}              & Yes & \\\hline
+&&\\\hline
+\cd{P\_CHAR\_LIT\_NOT\_FOUND}       & Yes & \\\hline
+\cd{P\_STR\_LIT\_NOT\_FOUND}        & Yes & \\\hline
+\cd{P\_REGEXP\_NOT\_FOUND}          & Yes & \\\hline
+\cd{P\_INVALID\_REGEXP}             & Yes & \\\hline
+\cd{P\_WIDTH\_NOT\_AVAILABLE}       & Yes & \\\hline
+\cd{P\_INVALID\_TIMESTAMP}          & Yes & \\\hline
+\cd{P\_INVALID\_DATE}               & Yes & \\\hline
+\cd{P\_INVALID\_TIME}               & Yes & \\\hline
+\cd{P\_INVALID\_IP}                 & Yes & \\\hline
+\cd{P\_INVALID\_IP\_RANGE}          & Yes & \\\hline
+\end{tabular}
+
+
