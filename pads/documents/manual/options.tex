@@ -1,17 +1,19 @@
 \chapter{Popts}
 \label{chap:opts}
+\Popts{} are used to describe optional data.
+The in-memory representation of an option records if the data was
+available and if so, the value of that data.  
 \section{Syntax}
 \begin{tabular}{rcl}
-\nont{union\_field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field}\\[1ex]
-\nont{branch}     & \is{} & \Pcase{} \nont{expression} : \nont{union\_field}
-                    \alt{}  \Pdefault : \nont{union\_field}\\[1ex]
-\nont{branches}   & \is{} & \nont{branch} \alt{} \nont{branch} \nont{branches} \\[1ex]
-\nont{switched}   & \is{} & \Pswitch{} (\nont{expression})\{ \nont{branches} \}\\[1ex]
-\nont{in\_place}  & \is{} & \nont{union\_field} \alt{} \nont{union\_field} \nont{in\_place}\\[1ex]
-\nont{union\_bdy} & \is{} & \nont{switched} \alt{} \nont{in\_place}\\[1ex]
-\nont{union\_ty}  & \is{} & \Punion{} identifier \opt{\nont{p\_formals}} \{ \\
-&& \quad \nont{union\_bdy} \\
-&& \}\ \opt{ \Pwhere{} \ \{\ \nont{predicate}\ \}}; \\[4ex]
+\nont{p\_opt\_some}    & \is{}  & \Psome{} identifier \cd{=>} \{ \nont{predicate} \}\\[1ex]
+\nont{p\_opt\_none}    & \is{}  & \Pnone{} \cd{=>} \{ \nont{predicate} \}\\[1ex]
+\nont{opt\_predicates} & \is{}  & : \nont{p\_opt\_some} `$\mid$' \nont{p\_opt\_none} \\
+                       & \alt{} & : \nont{p\_opt\_none} `$\mid$' \nont{p\_opt\_some} \\
+                       & \alt{} & : \nont{p\_opt\_none} \\
+                       & \alt{} & : \nont{p\_opt\_some} \\
+\nont{opt\_ty}    & \is{} & \Popt{} \nont{p\_ty} identifier \opt{\nont{p\_formals}} \opt{\nont{opt\_predicates}};\\
+
+\\[4ex]
 
 \end{tabular}
 
@@ -19,20 +21,79 @@
 We explain the meaning of this syntax in the remainder of this chapter.
 All non-terminals not defined in this grammar fragment were
 defined previously, as follows.
-Full fields (\nont{full\_field}) 
-appear in \secref{sec:structs-full-fields}, 
-computed fields (\nont{comp\_field}) in
-\secref{sec:structs-computed-fields}, 
-literals (\nont{literal\_fields}) in \secref{sec:common-literals}
-and
+Predicates (\term{predicate}) are defined in \secref{sec:common-predicates}
 \padsl{} parameter lists (\nont{p\_formals}) in \secref{sec:common-parameterization}.
-Expressions (\nont{expression}) represent any \C{} expression. 
 
 
-\subsection{Example}
+\subsection{Examples}
+The following declaration indicates that the type \cd{oPuint32} describes
+an optional \cd{Puint32}.  
+
+\input{code/simple-opt}
+
+\noindent
+The \pstruct{} \cd{entry1} uses the type \cd{oPuint32} to describe
+new-line terminated records with the form:
+
+\begin{verbatim}
+12|24
+|23
+|
+24|
+\end{verbatim}
+\noindent
+In this case, the representations of both \cd{f} and \cd{g} will
+indicate that the data matched, storing the values \cd{12} and
+\cd{24}, respectively.  For the second line, the representation of
+\cd{f} will record no match, while \cd{g}'s will indicate a match with
+value \cd{23}. 
+
+Because \Popt{}s can be declared in-line in \Pstruct{} and \Punion{}
+declarations (\cf{} \secref{sec:options-inline} ) \note{still to be
+implemented in unions...}, we can rewrite \cd{entry1} as follows and
+produce an equivalent description:
+\input{code/simple-inline-opt}
+
+A slightly more complex example of options uses predicates to
+determine if the option matches the input data:
+\input{code/constraint-opt}
+
+\noindent
+Here, the type \cd{even_t} matches only even \cd{Puint32}s, while
+\cd{odd_t} matches only odd \cd{Puint32}s.  The \Psome{} clause binds
+the identifier \cd{i} to the in-memory representation of the
+\cd{Puint32} found in the data source (if one is found without
+error).  With \cd{i} bound, it executes the associated predicate,
+which ensures that the number is even for \cd{even_t} and odd for
+\cd{odd_t}. 
+The type \cd{entry3} uses
+these types to describe newline-terminated data of the form:
+\begin{verbatim}
+12|14|
+13|15|
+|13|
+13|12|
+\end{verbatim}
+For the first record, \cd{x1} will match \cd{12} and \cd{y1} will
+match \cd{14}, while \cd{x2} and \cd{y2} will be marked as not
+matching. For the second record, \cd{x2} and \cd{y2} will match 
+instead, with \cd{x1} and \cd{y1} being marked as no match, \etc{}
+
+Again, using in-line declarations, we can rewrite \cd{entry3} to the
+equivalent description \cd{entry4}
+\input{code/constraint-inline-opt}
+
+\subsection{Constraints}
+Option constraints can have a \Psome{} clause and/or a \Pnone{}
+clause.  The \Psome{} clause specifies a variable and a predicate to
+execute if the base type of the option is successfully read.  If a
+legal base element is found, the variable is bound to the in-memory
+representation of the base element and the associated predicate is
+executed in that context.  If the predicate returns true, the
+
+\subsection{In-line options}
 
 \section{Generated library}
-
 
 \subsection{In-memory representation}
 \label{sec:opts-rep}
@@ -48,7 +109,7 @@ Expressions (\nont{expression}) represent any \C{} expression.
 
 \subsubsection{Read function}
 
-The error codes for \Popts{}s are:
+The error codes for \Popt{}s are:
 
 \tskip{}
 \begin{tabular}{lp{4in}}
@@ -60,5 +121,5 @@ The error codes for \Popts{}s are:
 \noindent
 
 \subsubsection{Accumulator functions}
-Accumulator functions for \Popts{}s are described in \chapref{chap:accumulators}. 
+Accumulator functions for \Popt{}s are described in \chapref{chap:accumulators}. 
 

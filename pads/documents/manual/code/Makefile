@@ -15,7 +15,7 @@ PADSC= $(PADS_HOME)/scripts/padsc
 
 
 EXAMPLE_DIR= $(PADS_HOME)/documents/manual/code
-PEXAMPLES= ai.p pstruct.p punion.p parray.p
+PEXAMPLES= ai.p pstruct.p punion.p parray.p opt.p
 CEXAMPLES= ai-annotated.h punion-annotated.h
 EXAMPLES = $(PEXAMPLES) $(CEXAMPLES)
 

@@ -26,7 +26,8 @@ have the following form:
 \nont{p\_ty\_decl} & \is{} & \nont{base\_ty} & (* \chapref{chap:base-types} *) \\[1ex]
 & \alt{} & \nont{struct\_ty}           & (* \chapref{chap:structs} *)\\[1ex]
 & \alt{} & \nont{union\_ty}            & (* \chapref{chap:unions} *)\\[1ex]
-& \alt{} & \nont{array\_ty}            & (* \chapref{chap:arrays} *)\\[1ex]
+& \alt{} & \nont{array\_ty}            & (* \chapref{chap:arrays}*)\\[1ex]
+& \alt{} & \nont{opt\_ty}              & (* \chapref{chap:opts} *)\\[1ex]
 & \alt{} & \nont{enum\_ty}             & (* \chapref{chap:enums} *)\\[1ex]
 & \alt{} & \nont{typedef\_ty}          & (* \chapref{chap:typedefs} *)\\[1ex]
 \end{tabular}
@@ -70,7 +71,7 @@ valid.  Predicates are assumed to be side-effect free.
 
 To allow users to express constraints involving the size and position
 of physical data, \padsl{} supports \nont{p\_parsecheck} expressions within
-constraints.  Syntactically,
+predicates.  Syntactically,
 \vskip 1ex
 \begin{tabular}{rcl}
 \nont{p\_parsecheck} & \is{} & \pparsecheck{}(\nont{aug\_expression})\\
@@ -85,7 +86,7 @@ description, but always include the constant \cd{position} of type
 \PDCpost{}, bound to the current position in the physical
 source.  
 
-For integration with general constraints, \pparsecheck{} expressions
+For integration with general predicates, \pparsecheck{} expressions
 are treated as \C{} expressions with type \texttt{int}.
 
 \section{Literals}
