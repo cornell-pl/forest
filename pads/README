@@ -30,6 +30,12 @@ STEP 1: ENVIRONMENT SETUP
   Example for sh/ksh/bash users:
     export PADS_HOME=/home/fred/pads
     . $PADS_HOME/scripts/Q_DO_SETENV.sh
+
+[OPTIONAL]: For the PADS-Galax project only, you may wish to set
+   the following env variables to override their default values.
+
+   OCAML_LIB     (default:  /usr/common/lib/ocaml)
+   GALAX_HOME    (default:  /home/mff/Galax-rh7)
   
 STEP 2: INSTALL SML RUNTIME
 
