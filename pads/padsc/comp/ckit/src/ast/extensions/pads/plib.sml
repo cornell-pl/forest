@@ -67,6 +67,7 @@ struct
   val stringPCT    = P.makeTypedefPCT "PDC_string"
   val str          = "str"
   val len          = "len"
+  val errorf       = "errorf"
   val intAct       = "PDC_int32_acc"
   val intCvtPCT    = P.makeTypedefPCT "PDC_int32_map_fn"
   val intAccPCT    = P.makeTypedefPCT "PDC_int32_acc"
@@ -77,9 +78,7 @@ struct
    (*  char*       PDC_fmtChar(char c); *)
    PT.Call(PT.Id "PDC_fmtChar", [chr])
 
-  fun strLen(s:PT.expression)=
-   PT.Call(PT.Id "strlen", [s])
-
+(* error functions *)
   fun userErrorS(ts:PT.expression, disc:PT.expression, loc:PT.expression,
                  errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
     (* PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc, 
@@ -149,7 +148,7 @@ struct
       P.neqX(P.zero,freeRBufferE(ts, disc, prbuf,ppbuf)),
       PT.Compound[
          userFatalErrorS(ts, disc, P.zero, PDC_ALLOC_FAILURE, 
-			 PT.String "Couldn't free growable buffer", [])]
+			 PT.String "Couldn't free growable buffer.", [])]
     )
 
   fun cfreeRBufferE(prbuf:PT.expression) = 
@@ -217,6 +216,10 @@ struct
 			      PDC_disc_t* disc); *)
       PT.Call(PT.Id n, [ts,c,s,res,offset,disc])
 
+  fun nstPrefixWhat(outstr, pnst, prefix, what) = 
+      PT.Expr(PT.Call(PT.Id "PDC_nst_prefix_what", [outstr, pnst, prefix, what]))
+
+(* -- Sfio functions *)
   fun sfstrclose(str:PT.expression) = 
     PT.Expr(PT.Call(PT.Id "sfstrclose", [str]))
 
@@ -228,7 +231,10 @@ struct
   fun sfstruse (tmpstr : PT.expression) = 
       PT.Call(PT.Id "sfstruse", [tmpstr])
 
+
 (* -- C helper functions *)
   fun bzeroX (spX, sizeX) = PT.Call(PT.Id "bzero",[PT.Cast(P.voidPtr, spX), sizeX])
   fun bzeroS (spX, sizeX) = PT.Expr(bzeroX(spX,sizeX))
+  fun strLen(s:PT.expression)= PT.Call(PT.Id "strlen", [s])
+
 end

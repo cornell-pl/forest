@@ -519,9 +519,12 @@ structure CnvExt : CNVEXT = struct
 	      val tem = "tem"
 	      val all = "structLevel"
 	      val prefix = "prefix"
+	      val what = "what"
+	      val nst = "nst"
 	      val tmpstr = "tmpstr"
+	      val outstr = "outstr"
+	      val result = "result"
 
-	      val sepstr = "*********************************************************************"
 	      (* Some useful functions *)
 	      fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
               fun emSuf   s = s^"_em"
@@ -662,25 +665,74 @@ structure CnvExt : CNVEXT = struct
 		      initFunED
 		  end
 
-              (* PDC_error_t foostruct_report(PDC_t* pdc, foostruct_acc* acc, const char* prefix, PDC_disc_t* disc) *)
-	      fun genReportFun (reportName, accPCT,bodySs) = 
-		  let val paramTys = [P.ptrPCT PL.toolStatePCT, 
-				      P.ccharPtr,
-				      P.ptrPCT accPCT, 
-				      P.ptrPCT PL.toolDiscPCT]
-                      val paramNames = [ts, prefix, acc, disc]
-                      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
-		      val tempStringDecl = P.varDeclS'(PL.sfioPCT, tmpstr)
-		      val tempInitSs = [PT.IfThen(P.notX(P.assignX(PT.Id tmpstr, PL.sfstropen)),
-						  PT.Return PL.PDC_ERROR)]
-		      val closeSs = [PL.sfstrclose(PT.Id tmpstr), PT.Return PL.PDC_OK]
-		      val bodySs = tempStringDecl 
-			           :: (tempInitSs @ bodySs @ closeSs)
+              fun genInitTmpStrSs str = [P.varDeclS'(PL.sfioPCT, str),
+					 PT.IfThen(P.notX(P.assignX(PT.Id str, PL.sfstropen)),
+						   PT.Compound[PT.Return PL.PDC_ERROR])]
+	      val setDiscS = PT.IfThen(P.notX(PT.Id disc), 
+				       PT.Compound[P.assignS(PT.Id disc,
+							     P.arrowX(PT.Id ts, PT.Id disc))])
+
+              (* PDC_error_t foostruct_report(PDC_t* pdc, const char * prefix,
+	                                      const char* what, int nst, foostruct_acc* acc, PDC_disc_t* disc) *)
+              fun genExternalReport(reportName, intlParamNames, formalParams) = 
+		  let val resDecl = P.varDeclS'(PL.toolErrPCT, result)
+		      val initTmpStrSs = genInitTmpStrSs outstr
+                      val chkTSandAccS = PT.IfThen(P.orX(P.notX(PT.Id ts), P.notX(PT.Id acc)), 
+						   PT.Compound[PT.Return PL.PDC_ERROR])
+		      val setDiscS = setDiscS
+		      val internalCallS = P.assignS(PT.Id result,
+						    PT.Call(PT.Id (iSuf reportName),
+							    List.map PT.Id intlParamNames))
+		      val errorFX = P.arrowX(PT.Id disc, PT.Id (PL.errorf))
+		      val chkErrorFS = PT.IfThen(P.notX errorFX, PT.Compound[PT.Return PL.PDC_OK])
+                      val reportS = PT.IfThen(P.eqX(PL.PDC_OK, PT.Id result),
+					      PT.Compound[
+							  PT.Expr(PT.Call(errorFX,
+							      [PT.Id ts, PT.Id disc, P.zero, 
+							       PT.String "%s", PL.sfstruse (PT.Id outstr)]))])
+		      val closeSs = [PL.sfstrclose(PT.Id outstr), PT.Return (PT.Id result)]
+		      val bodySs =  (resDecl :: initTmpStrSs) 
+			          @ (chkTSandAccS :: setDiscS :: chkErrorFS :: internalCallS :: reportS :: closeSs)
 		      val returnTy =  PL.toolErrPCT
 		      val reportFunED = 
 			  P.mkFunctionEDecl(reportName, formalParams, PT.Compound bodySs, returnTy)
 		  in
 		      reportFunED
+		  end
+              (* PDC_error_t foostruct_report(PDC_t* pdc, [sfio_t *str], const char * prefix,
+	                                      const char* what, int nst, foostruct_acc* acc, PDC_disc_t* disc) *)
+	      fun genReportFuns (reportName, whatStr, accPCT,intlBodySs) = 
+		  let fun genParamTys extraPCTs =
+		          [P.ptrPCT PL.toolStatePCT] 
+			 @ extraPCTs
+			 @[P.ccharPtr,
+			   P.ccharPtr,
+			   P.int,
+			   P.ptrPCT accPCT, 
+			   P.ptrPCT PL.toolDiscPCT]
+                      fun genParamNames extraNames = [ts] @ extraNames @ [ prefix, what, nst, acc, disc]
+                      val intlParamNames = genParamNames [outstr]
+                      val extlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [], genParamNames []))
+		      val intlFormalParams = List.map P.mkParam 
+			                        (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
+ 		      val initTmpStrSs = genInitTmpStrSs tmpstr
+		      val setPrefixS = PT.IfThen(P.orX(P.notX(PT.Id prefix), P.eqX(P.zero, P.starX(PT.Id prefix))),
+						 PT.Compound[P.assignS(PT.Id prefix, PT.String "<top>")])
+		      val setWhatS = PT.IfThen(P.notX(PT.Id what),
+						 PT.Compound[P.assignS(PT.Id what, PT.String whatStr)])
+                      val printNstS = PL.nstPrefixWhat(PT.Id outstr, P.addrX(PT.Id nst), PT.Id prefix, PT.Id what)
+		      val intlBodySs = intlBodySs (* parameter from above *)
+		      val closeSs = [PL.sfstrclose(PT.Id tmpstr), PT.Return PL.PDC_OK]
+		      val bodySs = initTmpStrSs
+			          @[setPrefixS, setWhatS, printNstS]
+			          @ intlBodySs
+			          @ closeSs
+		      val bodyS = PT.Compound bodySs
+		      val returnTy = PL.toolErrPCT
+		      val internalReportFunED = P.mkFunctionEDecl(iSuf reportName, intlFormalParams, bodyS, returnTy)
+		      val externalReportFunED = genExternalReport(reportName, intlParamNames, extlFormalParams)
+		  in
+		      [internalReportFunED, externalReportFunED]
 		  end
 
                   (* const char * name2str(enumPCT which) *)
@@ -749,29 +801,40 @@ structure CnvExt : CNVEXT = struct
 					   [PT.Id ts, accX, edX, repX, PT.Id disc])),
 			     PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
 
+              fun chkPrint (bodyX) = 		   
+		  PT.IfThen(
+		      P.eqX(PL.PDC_ERROR, bodyX), 
+		      PT.Compound[PL.sfstrclose (PT.Id tmpstr),
+				  PT.Return PL.PDC_ERROR])
+
               fun printScaffolding (fieldDescriptor, extraArgsXs, bodyX) = 
 		  [PL.sfprintf(PT.Id tmpstr, PT.String ("%s."^fieldDescriptor),[PT.Id prefix]@extraArgsXs),
-		   PT.IfThen(
-		      P.eqX(PL.PDC_ERROR, bodyX), 
-			     PT.Compound[PL.sfstrclose (PT.Id tmpstr),
-					 PT.Return PL.PDC_ERROR])]
+		   chkPrint bodyX]
 
-              fun genPrintPiece(reportName, fieldDescriptor, fieldX, extraArgsXs) = 
+              fun genPrintPiece(reportName, fieldDescriptor, whatX, fieldX, extraArgsXs) = 
                   let val bodyX = PT.Call(PT.Id reportName, 
-				    [PT.Id ts, PL.sfstruse (PT.Id tmpstr),  
+				    [PT.Id ts, PT.Id outstr, PL.sfstruse (PT.Id tmpstr), whatX, PT.Id nst, 
 				     fieldX,  PT.Id disc])
 		  in
 		      printScaffolding(fieldDescriptor, extraArgsXs, bodyX)
 		  end
 
-              fun genEnumPrint(reportName, fieldDescriptor, mapFnX, fieldX, extraArgsXs) = 
-		  let val bodyX = PT.Call(PT.Id reportName, 
-				    [PT.Id ts, PL.sfstruse (PT.Id tmpstr),  
-				     PT.Cast(PL.intCvtPCT, mapFnX),
-				     fieldX,  PT.Id disc])
+	      fun callIntPrint (reportName, prefixX, whatX, nstX, fieldX) = 
+		  PT.Call(PT.Id reportName, 
+			  [PT.Id ts, PT.Id outstr, prefixX, whatX, nstX, fieldX, PT.Id disc])
+
+	      fun callEnumPrint (reportName, prefixX, whatX, nstX, mapFnX, fieldX) = 
+		  PT.Call(PT.Id reportName, 
+			  [PT.Id ts, PT.Id outstr,  prefixX, whatX, nstX,
+			   PT.Cast(PL.intCvtPCT, mapFnX),
+			   fieldX,  PT.Id disc])
+
+              fun genEnumPrint(reportName, fieldDescriptor, prefixX, whatX, nstX, mapFnX, fieldX) = 
+		  let val bodyX = callEnumPrint(reportName, prefixX, whatX, nstX, mapFnX, fieldX)
 		  in
-		      printScaffolding(fieldDescriptor, extraArgsXs, bodyX)
+		      printScaffolding(fieldDescriptor, [], bodyX)
 		  end
+
 	      fun checkParamTys (fieldName, functionName, extraargs, numBefore, numAfter) = 
 		  let val (eaty, _) = cnvExpression (PT.Id functionName)
 		      val fargtysOpt = case eaty
@@ -979,9 +1042,10 @@ structure CnvExt : CNVEXT = struct
 		      val reportFields = 
 			  case lookupAcc(baseTy) of NONE => []
                              | SOME a => (
-				 genPrintPiece(reportSuf a, name, PT.Id acc,[])
+				 genPrintPiece((iSuf o reportSuf) a, name, P.zero, PT.Id acc,[])
 		             (* end accOpt SOME case *))
-                      val reportFunED = genReportFun(reportFun, accPCT, reportFields)
+
+                      val reportFunEDs = genReportFuns(reportFun, "typedef "^name, accPCT, reportFields)
 
                       (* Generate Init function (typedef case) *)
 		      val baseFunName = lookupMemFun (PX.Name baseTyName)
@@ -1011,7 +1075,7 @@ structure CnvExt : CNVEXT = struct
                       @ cnvExternalDecl resetFunED
                       @ cnvExternalDecl cleanupFunED
                       @ cnvExternalDecl addFunED
- 		      @ cnvExternalDecl reportFunED
+		      @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 		      @ (List.concat(List.map cnvExternalDecl initRepEDs))
 		      @ (List.concat(List.map cnvExternalDecl initEDEDs))
 		      @ (List.concat(List.map cnvExternalDecl cleanupRepEDs))
@@ -1410,6 +1474,9 @@ structure CnvExt : CNVEXT = struct
                       (* -- generate report function pstruct *)
                       (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
 		      val reportFun = (reportSuf o accSuf) name
+		      val headerSs = [PL.sfprintf(PT.Id outstr, 
+						  PT.String "\n[Describing each field of %s]\n", 
+						  [PT.Id prefix])]
 		      fun genAccReportFull {pty :PX.Pty, args:pcexp list,
 				          name:string, isVirtual:bool, pred:pcexp option, comment} = 
 			  if not isVirtual then
@@ -1418,14 +1485,13 @@ structure CnvExt : CNVEXT = struct
 				 let val reportName = reportSuf a
 				     fun gfieldX base = P.addrX(P.arrowX(PT.Id base, PT.Id name))
 				 in
-				     genPrintPiece(reportName, name, gfieldX acc,[])
-				   @ [PL.sfprintf(PT.Id tmpstr, PT.String(sepstr^"\n"),[])]
+				     genPrintPiece(iSuf reportName, name, P.zero, gfieldX acc,[])
 				 end
                               (* end accOpt SOME case *))
 			  else []
                       fun genAccReportBrief e = []
 		      val reportFields = mungeFields genAccReportFull genAccReportBrief fields
-                      val reportFunED = genReportFun(reportFun, accPCT, reportFields)
+                      val reportFunEDs = genReportFuns(reportFun, "struct "^name, accPCT, headerSs @ reportFields)
 
                       (* Generate Init Function struct case *)
 		      val initFunName = lookupMemFun (PX.Name name)
@@ -1467,7 +1533,7 @@ structure CnvExt : CNVEXT = struct
                  @ cnvExternalDecl resetFunED
                  @ cnvExternalDecl cleanupFunED
                  @ cnvExternalDecl addFunED
-                 @ cnvExternalDecl reportFunED
+                 @ (List.concat(List.map cnvExternalDecl reportFunEDs))
                  @ (List.concat(List.map cnvExternalDecl initRepEDs))
                  @ (List.concat(List.map cnvExternalDecl initEDEDs))
                  @ (List.concat(List.map cnvExternalDecl cleanupRepEDs))
@@ -1504,9 +1570,11 @@ structure CnvExt : CNVEXT = struct
 
                      (* generate enumerated type describing tags *)
 		     val tagVal = ref 0
+		     val firstTag = ref "bogus"
 		     fun genTagFull {pty :PX.Pty, args : pcexp list, 
 				     name:string, isVirtual:bool, pred:pcexp option, comment:string option} = 
-			 (tagVal := !tagVal + 1;
+			 (if !tagVal = 0 then firstTag := name else ();
+			  tagVal := !tagVal + 1;
 			  [(name,P.intX(!tagVal),NONE)])
 
 		     fun genTagBrief e = []
@@ -1599,14 +1667,23 @@ structure CnvExt : CNVEXT = struct
 					   PT.Compound(PL.restoreS(PT.Id ts, PT.Id disc)),
 					   foundItSs
 					  )]
+			      val doDeallocOldSpaceSs = 
+				  [PT.Expr(PT.Call(PT.Id (cleanupSuf unionName), 
+						   [PT.Id ts, PT.Id (gMod rep), PT.Id disc])),
+				   PT.Expr(PT.Call(PT.Id (initSuf unionName), 
+						   [PT.Id ts, PT.Id (gMod rep), PT.Id disc])),
+				   PT.Expr(PT.Call(PT.Id ((cleanupSuf o edSuf) unionName), 
+						   [PT.Id ts, PT.Id (gMod ed), PT.Id disc])),
+				   PT.Expr(PT.Call(PT.Id ((initSuf o edSuf) unionName), 
+						   [PT.Id ts, PT.Id (gMod ed), PT.Id disc]))]
                               val deallocOldSpaceSs = 
 				   case #memChar unionProps of TyProps.Static => []
 				   | TyProps.Dynamic => 
-				       [PT.Expr(PT.Call(PT.Id (cleanupSuf unionName), 
-						       [PT.Id ts, PT.Id (gMod rep), PT.Id disc])),
-					PT.Expr(PT.Call(PT.Id (initSuf unionName), 
-						       [PT.Id ts, PT.Id (gMod rep), PT.Id disc]))
-					]
+				       if name = !firstTag then 
+					   [PT.IfThen(
+					     P.neqX(fieldX(rep,tag), PT.Id (!firstTag)),
+					     PT.Compound doDeallocOldSpaceSs)]
+				       else doDeallocOldSpaceSs
 			      val readS = 
 				    PL.chkPtS(PT.Id ts, PT.Id disc)
 				  @ deallocOldSpaceSs 
@@ -1704,25 +1781,29 @@ structure CnvExt : CNVEXT = struct
                       val addBodySs = addDeclSs @ initTedSs @ addTagSs @ addVariantsSs @ [addReturnS]
                       val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
 
-                      (* -- generate report function punion *)
-                      (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
+                      (* -- generate report function (internal and external)  punion *)
+                      (*  PDC_error_t T_acc_report (PDC_t* , [Sfio_t * outstr], const char* prefix, 
+		                                    const char * what, int nst, T_acc* , PDC_disc_t* ) *)
 		      val reportFun = (reportSuf o accSuf) name
 		      fun gfieldX (base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
+                      val reportTags = [chkPrint(callEnumPrint((iSuf o mapSuf o reportSuf) PL.intAct,
+						    PT.String "Union tag", PT.String "tag", P.intX ~1,
+						    PT.Id ((toStringSuf o tgSuf) name), gfieldX(acc,tag))),
+					PL.sfprintf(PT.Id outstr, 
+						    PT.String "\n[Describing each tag arm of %s]\n", 
+						    [PT.Id prefix])]
 		      fun genAccReportFull {pty :PX.Pty, args:pcexp list,
 					    name:string, isVirtual:bool, pred:pcexp option, comment} = 
 			  case lookupAcc(pty) of NONE => []
 			      | SOME a => (
 				 let val reportName = reportSuf a
 				 in
-				    genPrintPiece(reportName, name, gfieldX(acc,name),[])
-				   @ [PL.sfprintf(PT.Id tmpstr, PT.String(sepstr^"\n"),[])]
+				    genPrintPiece(iSuf reportName, name, P.zero, gfieldX(acc,name),[])
 				 end
                               (* end accOpt SOME case *))
                       fun genAccReportBrief e = []
 		      val reportVariants = mungeVariants genAccReportFull genAccReportBrief variants
-                      val reportTags = genEnumPrint((mapSuf o reportSuf) PL.intAct, tag, 
-						    PT.Id ((toStringSuf o tgSuf) name), gfieldX(acc,tag),[])
-                      val reportFunED = genReportFun(reportFun, accPCT, reportTags @ reportVariants)
+                      val reportFunEDs = genReportFuns(reportFun, "union "^name, accPCT, reportTags @ reportVariants)
 
                       (* Generate init function, union case *)
 		      val initFunName = lookupMemFun (PX.Name name)
@@ -1805,15 +1886,15 @@ structure CnvExt : CNVEXT = struct
 	             @ cnvExternalDecl accStructED
 	             @ cnvExternalDecl toStringED
                      @ (List.concat(List.map cnvExternalDecl cleanupRepEDs))  (* cleanup used in read function *)
+                     @ (List.concat(List.map cnvExternalDecl cleanupEDEDs))   (* cleanup ed used in read function *)
                      @ (List.concat(List.map cnvExternalDecl initRepEDs))     (* init used in read function *)
+                     @ (List.concat(List.map cnvExternalDecl initEDEDs))      (* init ed used in read function *)
 	             @ (List.concat (List.map cnvExternalDecl readFunEDs))
 	             @ cnvExternalDecl initFunED
 	             @ cnvExternalDecl resetFunED
 	             @ cnvExternalDecl cleanupFunED
 	             @ cnvExternalDecl addFunED
-	             @ cnvExternalDecl reportFunED
-                     @ (List.concat(List.map cnvExternalDecl initEDEDs))
-                     @ (List.concat(List.map cnvExternalDecl cleanupEDEDs))
+                     @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 		 end
 	  
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, args : pcexp list, baseTy:PX.Pty, 
@@ -2109,16 +2190,7 @@ structure CnvExt : CNVEXT = struct
                               @ (if Option.isSome maxOpt then               (* int reachedLimit = false *)
 				   [P.varDeclS(P.int, reachedLimit, P.falseX)]
 			        else [])
-                              @ [
-(*                               P.varDeclS(P.ptrPCT PL.rbufferPCT, resRBuffer, P.zero),
-			                                                    (* RBuf_t *resRBuffer = 0; *)
-                               P.varDeclS(P.ptrPCT elemRepPCT, resBuffer, P.zero),
-			                                                    (* canonical *resBuffer = 0; *)
-                               P.varDeclS(P.ptrPCT PL.rbufferPCT, edRBuffer, P.zero),
-			                                                    (* RBuf_t *edRBuffer = 0; *)
-                               P.varDeclS(P.ptrPCT elemEdPCT, edBuffer, P.zero),
-			                                                    (* canonical *edBuffer = 0; *) *)
-                               P.assignS(fieldX(rep,length), P.zero)]       (* modres->length = 0; *)
+                              @ [ P.assignS(fieldX(rep,length), P.zero)]       (* modres->length = 0; *)
 
                  (* -- fragments for while loop for reading input *)
 
@@ -2196,17 +2268,19 @@ structure CnvExt : CNVEXT = struct
 
                       end
                  (* -- read next element *)
+		 val (chkLenSs, bufSugX) = case maxOpt of NONE => ([], P.zero)
+	             | SOME sizeX => 
+		        ([P.assignS(PT.Id reachedLimit, P.gteX(fieldX(rep,length), Option.valOf maxOpt))],
+			 sizeX)
                  val readElementSs = 
                        [P.postIncS(fieldX(rep,length))]
-                     @ (if Option.isSome maxOpt 
-		        then [P.assignS(PT.Id reachedLimit, P.gteX(fieldX(rep,length), Option.valOf maxOpt))]
-		        else [])
+                     @ chkLenSs
 		     @ (PL.chkReserveSs(PT.Id ts, PT.Id disc, resRBufferX, 
 				     P.addrX resBufferX, P.sizeofX elemRepPCT,
-				     fieldX(rep,length),P.zero))
+				     fieldX(rep,length),bufSugX))
 		     @ (PL.chkReserveSs(PT.Id ts, PT.Id disc, edRBufferX, 
 				     P.addrX edBufferX, P.sizeofX elemEdPCT,
-				     fieldX(rep,length),P.zero))
+				     fieldX(rep,length),bufSugX))
                      @ [PT.IfThen(
                           PL.readFunChkX(PL.PDC_ERROR, elemReadName, 
 					               PT.Id ts, 
@@ -2524,11 +2598,16 @@ structure CnvExt : CNVEXT = struct
 		 (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
                  fun genReport () = 
 		     let val reportFun = (reportSuf o accSuf) name
+			 val lengthX = P.addrX(P.arrowX(PT.Id acc, PT.Id length))
+			 val doLengthSs = [chkPrint(
+					     callIntPrint((iSuf o reportSuf) PL.intAct, PT.String "Array lengths", 
+						 	 PT.String "lengths", P.intX ~1, lengthX)) ]
                          val doElems = 
 			     case lookupAcc baseTy of NONE => []
 			   | SOME a => (
 			       let val elemFunName = reportSuf a
-				   fun doOne (s,eX,extraArgXs) = genPrintPiece (elemFunName, s, eX,extraArgXs)
+				   fun doOne (descriptor, prefixX, eX,extraArgXs) = 
+					genPrintPiece (iSuf elemFunName, descriptor, prefixX, eX,extraArgXs)
 				   val fieldX = P.addrX(P.subX(P.arrowX(PT.Id acc, PT.Id arrayDetail), PT.Id "i"))
 				   val doArrayDetailSs = [
 					PT.Compound
@@ -2536,22 +2615,21 @@ structure CnvExt : CNVEXT = struct
 					  PT.For(P.assignX(PT.Id "i",P.zero),
 						 P.ltX(PT.Id "i", P.intX numElemsToTrack),
 						 P.postIncX (PT.Id "i"),
-						 PT.Compound (doOne (arrayDetail^"[%d]", fieldX, [PT.Id "i"]))
+						 PT.Compound (doOne (arrayDetail^"[%d]", PT.String "array element", 
+								     fieldX, [PT.Id "i"]))
 						 )]]
 				   val arrayX = P.addrX(P.arrowX(PT.Id acc, PT.Id array))
-				   val doArraySs = doOne (array, arrayX, [])
+				   val doArraySs = doOne ("allArrayElts", PT.String "all array elements", arrayX, [])
 			       in
 				   doArraySs @ doArrayDetailSs
 			       end(* end SOME acc case *))
-			 val lengthX = P.addrX(P.arrowX(PT.Id acc, PT.Id length))
-			 val doLength = genPrintPiece(reportSuf PL.intAct, length, lengthX,[])
-			 val sepSs    = [PL.sfprintf(PT.Id tmpstr, PT.String(sepstr^"\n"),[])]
-			 val theBodySs = doLength @ doElems @ sepSs
-			 val theFunED = genReportFun(reportFun, accPCT, theBodySs)
+			 val theBodySs = doLengthSs @ doElems 
+			 val baseTyStr = case baseTy of PX.Name n => n
+			 val theFunEDs = genReportFuns(reportFun, "array "^ name ^" of "^baseTyStr, accPCT, theBodySs)
 		     in
-			 theFunED
+			 theFunEDs
 		     end
-                 val reportFunED = genReport()
+                 val reportFunEDs = genReport()
 
 		 (* Generate init function, array case *)
 		 fun genInitEDs(suf, base, aPCT) = 
@@ -2597,7 +2675,7 @@ structure CnvExt : CNVEXT = struct
                  @ cnvExternalDecl resetFunED 
                  @ cnvExternalDecl cleanupFunED 
                  @ cnvExternalDecl addFunED
-                 @ cnvExternalDecl reportFunED
+                 @ (List.concat(List.map cnvExternalDecl reportFunEDs))
                  @ (List.concat(List.map cnvExternalDecl initRepEDs))
                  @ (List.concat(List.map cnvExternalDecl initEDEDs))
                  @ (List.concat(List.map cnvExternalDecl cleanupRepEDs))
@@ -2717,9 +2795,10 @@ structure CnvExt : CNVEXT = struct
 		   (* -- generate report function enum *)
 		   (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
 		   val reportFun = (reportSuf o accSuf) name
-		   val reportFields = genEnumPrint((mapSuf o reportSuf) PL.intAct, "branchDistribution", 
-						   PT.Id (toStringSuf name), PT.Id acc,[])
-		   val reportFunED = genReportFun(reportFun, accPCT, reportFields)
+		   val reportFields = genEnumPrint((iSuf o mapSuf o reportSuf) PL.intAct, "branchDistribution", 
+						   PT.Id prefix, PT.Id what, PT.Id nst, 
+						   PT.Id (toStringSuf name), PT.Id acc)
+		   val reportFunEDs = genReportFuns(reportFun, "enum "^name, accPCT, reportFields)
 
 		  (* Generate enum to string function *)
 		  val cnvFunED = genEnumToStringFun(name, canonicalPCT, members)
@@ -2734,7 +2813,7 @@ structure CnvExt : CNVEXT = struct
                 @ cnvExternalDecl cleanupFunED
                 @ cnvExternalDecl addFunED
                 @ cnvExternalDecl cnvFunED
-                @ cnvExternalDecl reportFunED
+                @ (List.concat (List.map cnvExternalDecl reportFunEDs))
 	      end
 
 

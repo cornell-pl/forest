@@ -1,5 +1,5 @@
 #include "libpadsc.h"
-#include "ai_bob.h"
+#include "ai.h"
 #include <ast.h>
 #include <error.h>
 
