@@ -108,11 +108,12 @@ void PGLX_nodelist_free(nodeRepArray list)
 
 #define PDCI_SND_INIT_DEF(ty) \
 PDCI_node_t * ty ## _sndNode_init(PDCI_node_t *self,          \
-				  PDCI_smart_elt_info_t *elt, \
+				  PDCI_manager_t *manager, \
+                                  PDCI_childIndex_t ancestor_idx, \
 				  PDCI_gen_t gen, 	      \
 				  PDCI_childIndex_t idx)      \
 {                                                             \
-  PDCI_SND_INIT(ty,self,elt,gen,idx);			      \
+  PDCI_SND_INIT(ty,self,manager,ancestor_idx,gen,idx);		 \
   return self;						      \
 }							      
 
@@ -225,7 +226,7 @@ PDCI_node_t * ty ## _sndNode_kthChild(PDCI_node_t *self, childIndex idx) \
   switch (idx) { \
     case 0: \
       result = Pbase_pd_node_new(self, "pd",  pd,  PDCI_MacroArg2String(ty) "_sndNode_kthChild"); \
-      Pbase_pd_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);\
+      Pbase_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);\
       break; \
     case 1: \
 \
@@ -236,7 +237,7 @@ PDCI_node_t * ty ## _sndNode_kthChild(PDCI_node_t *self, childIndex idx) \
 \
       if (pd->errCode == P_NO_ERR || pd->errCode == P_USER_CONSTRAINT_VIOLATION) { \
         result = ty ## _val_node_new(self, "val", rep, PDCI_MacroArg2String(ty) "_sndNode_kthChild"); \
-        ty ## _val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx); \
+        ty ## _val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx); \
       } \
       break; \
   } \
@@ -542,7 +543,7 @@ PDCI_node_t * ty ## _val_sndNode_kthChild(PDCI_node_t *self, childIndex idx) \
   if (idx) return 0; \
 \
   result = ty ## _text_node_new(self, PDCI_MacroArg2String(ty) "_val_sndNode_kthChild"); \
-  ty ## _text_sndNode_init(result,self->ancestor,self->ancestor_gen,idx); \
+  ty ## _text_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx); \
   return result; \
 }
 
@@ -920,11 +921,11 @@ PDCI_node_t * Ppos_t_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Pint32_val_node_new(self, "byte", NULL, WHATFN);
-      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Pint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result = Pint32_val_node_new(self, "num", NULL, WHATFN);
-      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Pint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 2:
       /* PDCI_MK_TNODE(result[2], &Puint64_val_vtable,  self, "offset",  (Puint64)(pos->offset), WHATFN); */
@@ -934,11 +935,11 @@ PDCI_node_t * Ppos_t_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Pint32_val_node_new(self, "byte", &(pos->byte), WHATFN);
-      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Pint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result = Pint32_val_node_new(self, "num", &(pos->num), WHATFN);
-      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Pint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 2:
       /*  PDCI_MK_TNODE(result[2], &Puint64_val_vtable,  self, "offset",  (Puint64)(pos->offset), WHATFN); */
@@ -1063,22 +1064,22 @@ PDCI_node_t * Ploc_t_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Ppos_t_node_new(self, "b", NULL,     WHATFN);
-      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Ppos_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result =  Ppos_t_node_new(self, "e", NULL,     WHATFN);
-      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Ppos_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     }
   }else{
     switch (idx) {
     case 0:
       result = Ppos_t_node_new(self, "b",     &(loc->b),     WHATFN);
-      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Ppos_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result =  Ppos_t_node_new(self, "e",     &(loc->e),     WHATFN);
-      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Ppos_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     }
   }
@@ -1222,11 +1223,11 @@ PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",  NULL,  WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "errCode", NULL, WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 2:
       /* We need to know the value of errCode, so force validation. */
@@ -1237,7 +1238,7 @@ PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
 
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(self, "loc",  NULL,     WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+	Ploc_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       }
       break;
     }
@@ -1245,16 +1246,16 @@ PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",  &(pd->pstate),  WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "errCode", &(pd->errCode), WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 2:
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(self, "loc",     &(pd->loc),     WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+	Ploc_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       }
       break;
     }
@@ -1409,15 +1410,15 @@ PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *self, childIndex 
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",  NULL,  WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "nerr", NULL,    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 2:
       result = Puint32_val_node_new(self, "errCode", NULL,    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 3:
       /* We need to know the value of errCode, so force validation. */
@@ -1428,7 +1429,7 @@ PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *self, childIndex 
 
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(self, "loc", &(pd->loc),     WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+	Ploc_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       }
       break;
     }
@@ -1436,20 +1437,20 @@ PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *self, childIndex 
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",  &(pd->pstate),  WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "nerr",    &(pd->nerr),    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 2:
       result = Puint32_val_node_new(self, "errCode",    &(pd->errCode),    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 3:
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(self, "loc",     &(pd->loc),     WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+	Ploc_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       }
       break;
     }
@@ -1605,23 +1606,23 @@ PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *self, childIndex i
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",   NULL,     WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "nerr",     NULL,       WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 2:
       result = Puint32_val_node_new(self, "errCode",  NULL,    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 3:
       result = Puint32_val_node_new(self, "neerr",    NULL,      WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 4:
       result = Puint32_val_node_new(self, "firstError", NULL, WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 5:
       /* We need to know the value of errCode, so force validation. */
@@ -1632,7 +1633,7 @@ PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *self, childIndex i
 
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(     self, "loc",&(pd->loc),        WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+	Ploc_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       }
       break;
     }
@@ -1640,28 +1641,28 @@ PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *self, childIndex i
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",   &(pd->pstate),     WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "nerr",     &(pd->nerr),       WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 2:
       result = Puint32_val_node_new(self, "errCode",  &(pd->errCode),    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 3:
       result = Puint32_val_node_new(self, "neerr",    &(pd->neerr),      WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 4:
       result = Puint32_val_node_new(self, "firstError", &(pd->firstError), WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+      Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       break;
     case 5:
       if (pd->errCode >= 100) { /* return loc as child */
 	result = Ploc_t_node_new(     self, "loc",      &(pd->loc),        WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+	Ploc_t_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
       }
       break;
     }

@@ -4,7 +4,7 @@
 PDCI_path_t PDCI_node_getPath(PDCI_node_t *node, int curLength)
 {
   PDCI_path_t path;
-  if (node->parent == node->ancestor->parent){
+  if (node->parent->snExt == node->manager){
     PDCI_PATH_NEW(path,curLength);
   }else{
     path = PDCI_node_getPath(node->parent,curLength + 1);

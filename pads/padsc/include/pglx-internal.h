@@ -145,7 +145,8 @@ PDCI_node_t * ty ## _node_new(PDCI_node_t *parent, \
 			 const char *kind,const char *whatfn); \
 \
 PDCI_node_t * ty ## _sndNode_init(PDCI_node_t *self,          \
-				  PDCI_smart_elt_info_t *elt, \
+				  PDCI_manager_t *manager,\
+                                  PDCI_childIndex_t ancestor_idx, \
 				  PDCI_gen_t gen, 	      \
 				  PDCI_childIndex_t idx)
 
@@ -164,9 +165,9 @@ PDCI_node_t * ty ## _val_node_new(PDCI_node_t *parent, const char *name, \
 PDCI_node_t * ty ## _text_node_new(PDCI_node_t *parent, const char *whatfn);\
 PDCI_node_t  * ty ## _val_cachedNode_init(PDCI_node_t *node); \
 PDCI_node_t  * ty ## _text_cachedNode_init(PDCI_node_t *node); \
-PDCI_node_t  * ty ## _val_sndNode_init(PDCI_node_t *node, PDCI_smart_elt_info_t *elt, \
+PDCI_node_t  * ty ## _val_sndNode_init(PDCI_node_t *node, PDCI_manager_t *manager, PDCI_childIndex_t ancestor_idx, \
 				     PDCI_gen_t gen, PDCI_childIndex_t idx); \
-PDCI_node_t  * ty ## _text_sndNode_init(PDCI_node_t *node, PDCI_smart_elt_info_t *elt, \
+PDCI_node_t  * ty ## _text_sndNode_init(PDCI_node_t *node, PDCI_manager_t *manager, PDCI_childIndex_t ancestor_idx, \
 				     PDCI_gen_t gen, PDCI_childIndex_t idx); \
 PDCI_node_t  * ty ## _val_node_kthChild(PDCI_node_t *node, PDCI_childIndex_t idx); \
 PDCI_node_t  * ty ## _val_node_kthChildNamed(PDCI_node_t *node, PDCI_childIndex_t idx, const char *name); \
@@ -209,11 +210,13 @@ struct PDCI_node_s {
   // Used by smart node descendents
 
   /* 
-   *  ancestor: pointer to ancestor element.
-   *  ancestor_gen: generation of ancestor data.
+   *  manager: pointer to manager of ancestor element.
+   *  ancestor_idx: idx of ancestor element.
+   *  ptr_gen: generation of rep and pd pointers.
    */     
-  PDCI_smart_elt_info_t   *ancestor;     
-  PDCI_gen_t               ancestor_gen;
+  PDCI_manager_t          *manager;
+  PDCI_childIndex_t        ancestor_idx;
+  PDCI_gen_t               ptr_gen;
 
   /*
    * index of object in relation to parent
@@ -290,15 +293,15 @@ PDCI_node_t  * PDCI_sequenced_pd_cachedNode_init(PDCI_node_t *self);
 
 /* sndNode init functions */
 
-PDCI_node_t  * Pbase_pd_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
+PDCI_node_t  * Pbase_pd_sndNode_init(PDCI_node_t *self, PDCI_manager_t *manager, PDCI_childIndex_t ancestor_idx, 
 				     PDCI_gen_t gen, PDCI_childIndex_t idx);
-PDCI_node_t  * Ploc_t_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
+PDCI_node_t  * Ploc_t_sndNode_init(PDCI_node_t *self, PDCI_manager_t *manager, PDCI_childIndex_t ancestor_idx, 
 				     PDCI_gen_t gen, PDCI_childIndex_t idx);
-PDCI_node_t  * Ppos_t_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
+PDCI_node_t  * Ppos_t_sndNode_init(PDCI_node_t *self, PDCI_manager_t *manager, PDCI_childIndex_t ancestor_idx, 
 				     PDCI_gen_t gen, PDCI_childIndex_t idx);
-PDCI_node_t  * PDCI_structured_pd_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
+PDCI_node_t  * PDCI_structured_pd_sndNode_init(PDCI_node_t *self, PDCI_manager_t *manager, PDCI_childIndex_t ancestor_idx, 
 				     PDCI_gen_t gen, PDCI_childIndex_t idx);
-PDCI_node_t  * PDCI_sequenced_pd_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
+PDCI_node_t  * PDCI_sequenced_pd_sndNode_init(PDCI_node_t *self, PDCI_manager_t *manager, PDCI_childIndex_t ancestor_idx, 
 				     PDCI_gen_t gen, PDCI_childIndex_t idx);
 
 /* children functions that return an array - will go away */
@@ -361,6 +364,9 @@ item PDCI_cstr_typed_value (PDCI_node_t *node); /* node->rep is a C-style string
 
 /* String Value functions */
 const char * PDCI_not_impl_yet_string_value(PDCI_node_t *node);
+
+/* Misc. */
+PDCI_smart_elt_info_t *PDCI_get_ancestor(PDCI_node_t *node);
 
 /* ================================================================================
  * VTABLES */

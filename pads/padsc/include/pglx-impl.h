@@ -67,15 +67,16 @@
 #define PDCI_FREE_NODE_PTR_LIST(list) \
   free(list)
 
-#define PDCI_SND_INIT(ty,self,elt,gen,path)   \
+#define PDCI_SND_INIT(ty,selfIN,managerIN,anc_idxIN,genIN,idxIN)   \
 do{                                           \
    /* Setup the virtual table */              \
   (self)->vt = & ty ## _sndNode_vtable;     \
 					      \
   /* Setup node-type specific fields  */      \
-  (self)->ancestor = (elt);		      \
-  (self)->ancestor_gen = (gen);		      \
-  (self)->path = (path);	              \
+  (self)->manager = (managerIN);		      \
+  (self)->ancestor_idx = (anc_idxIN);		      \
+  (self)->ptr_gen = (genIN);	              \
+  (self)->idx = (idxIN);	              \
 }while(0)
 
 /*

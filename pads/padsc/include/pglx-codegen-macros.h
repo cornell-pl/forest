@@ -41,8 +41,9 @@ self
   self->vt = & ty ## _sndNode_vtable;
 					      
   /* Setup node-type specific fields  */      
-  self->ancestor = elt;		      
-  self->ancestor_gen = gen;
+  self->manager = manager;		      
+  self->ancestor_idx = ancestor_idx;
+  self->ptr_gen = gen;
   self->idx = idx
 /* END_MACRO */
 
@@ -149,7 +150,7 @@ PDCI_ALIAS_NODE(result)
   case 0: 
     /* parse descriptor child */
     result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    PDCI_structured_pd_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+    PDCI_structured_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
     break
 /* END_MACRO */
 
@@ -169,7 +170,7 @@ result
 				  &(pd->fieldNameIN),
 				  &(rep->fieldNameIN),
 				  "element", PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    fieldTy ## _sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+    fieldTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
     break
 /* END_MACRO */
 
@@ -178,7 +179,7 @@ result
     result = fieldTy ## _node_new(self,PDCI_MacroArg2String(fieldNameIN),
                                   0,0,&(rep->fieldNameIN),
 				  "element", PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    fieldTy ## _sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+    fieldTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
     break
 /* END_MACRO */
 
@@ -291,18 +292,18 @@ result
   case 0: 
     /* parse descriptor child */
     result = PDCI_sequenced_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    PDCI_sequenced_pd_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+    PDCI_sequenced_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
     break;
   case 1: /* length field */
     result = Puint32_val_node_new(self,"length",&(rep->length),PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
+    Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
     break;
   default: /* now do elements */
     idx -= 2;
     if (idx < rep->length){
       result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
 				       PDCI_MacroArg2String(ty)"_sndNode_kthChild");
-      childTy ## _sndNode_init(result,self->ancestor,self->ancestor_gen,idx + 2);
+      childTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx + 2);
     }
     break;
   }

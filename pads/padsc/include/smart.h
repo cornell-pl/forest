@@ -19,6 +19,7 @@ typedef unsigned long PDCI_gen_t;// XXX: Soundness not guaranteed, due to potent
 typedef struct PDCI_smart_elt_info_s     PDCI_smart_elt_info_t;
 typedef struct PDCI_smart_node_s         PDCI_smart_node_t;
 typedef struct PDCI_smart_array_info_s   PDCI_smart_array_info_t; 
+typedef PDCI_smart_node_t                PDCI_manager_t;
 
 // ======================================================================
 // Functions needed by smart nodes
