@@ -125,7 +125,7 @@ open (MOUT, ">$mfile") || die "\n    Could not open $mfile for output\n\n";
 print MOUT $mtmpl;
 close (MOUT);
 
-open (COUT, ">$cfile") || die "\n    Could not open $cfile for output\n\n";
+open (COUT, ">$arch/$cfile") || die "\n    Could not open $cfile for output\n\n";
 if ($skippre) { print COUT "#define PRE_SKIP_BYTES $skippre\n"; }
 if ($skippost) { print COUT "#define POST_SKIP_BYTES $skippost\n"; }
 print COUT "#define PADS_TY(suf) $pty ## suf
@@ -157,16 +157,22 @@ while ($res2 =~ m|\n\n|) {
   $res2 =~ s|\n\n|\n|sg;
 }
 print "\nResult:\n$res2\n";
+my $res3 = `mv $mfile $arch/ 2>&1`;
 exit(0);
 
 usage:
-print "\n    usage:  ptest.pl [ -m/--maxrecs # ] [ -i/--iodisc <iodisc> ] [ -s/--skip-pre # ] [ -S/--skip-post # ] [ -d/--debug ] [ -e/--expanded-debug ] [ -p/--ptest-debug ] <pspec> <ptype>
+print "\n    usage:  ptest.pl [options] <pspec> <ptype>
 
-   Notes:
-       . the default IO discipline is nlrec.  Other choices: norec
-       . --skip-pre skips the specified # of bytes before each read call, while
-          --skip-post skips the specified # of bytes after each read call;
-          for a record-based discipline, bytes can only be skipped within a given record
+    where options are:
+
+     -m/--maxrecs #         : specify max # of record to process
+     -i/--iodisc <iodisc>   : specify IO discipline, default is nlrec, other choices: norec
+     -s/--skip-pre #        : skip specified # of bytes prior to each read call
+     -S/--skip-post #       : skip specified # of bytes after each reach call
+     -d/--debug             : enable read debugging (init read mask with P_CheckAndSet|P_DbgRead)
+     -e/--expanded-debug    : use the _dd build rule (expands macros prior to compilation step)
+
+    Notes: for a record-based discipline, bytes can only be skipped within a given record
 
 ";
 exit(-1);
