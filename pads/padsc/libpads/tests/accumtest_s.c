@@ -1,5 +1,7 @@
 #include "pads-internal.h"
 
+P_NOGEN;
+
 static const char* names[] = {
   "bob",
   "kathleen",
@@ -21,8 +23,8 @@ int main(int argc, char** argv) {
   Pstring         key1;
   Pbase_pd        pd = {0};
 
-  if (P_ERR == P_open(&pads, 0, 0)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, 0, 0, 1)) {
+    error(2, "*** P_libopen failed ***");
     exit(-1);
   }
   error(0, "\ninit the accum");

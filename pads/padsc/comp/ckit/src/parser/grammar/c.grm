@@ -249,11 +249,11 @@ end
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PLAST | PENDED (* PADS *)
+	| PSEP | PTERM | PNOSEP | PFORALL | PGENERAL | PIN | PLAST | PENDED (* PADS *)
         | POMIT | PENDIAN | PCOMPUTE (* PADS *)
- 	| PRECORD | PSOURCE | PWHERE | PAND (* PADS *)  
+ 	| PRECORD | PSOURCE | PWHERE  (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT (* PADS*)
-        | PRE (* PADS *)
+        | PRE | PDONE (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -408,11 +408,11 @@ pPostCondOpt: (NONE)
 pArrayPostConstraint : 
    PFORALL pName PIN pForAllRange LCURLY expr RCURLY 
                 (PX.Forall {index = pName, range = pForAllRange, body = expr})
- | expr         (PX.General expr)
+ | PGENERAL LPAREN expr RPAREN         (PX.General expr)
 
 pArrayPostConstraints : 
    pArrayPostConstraint ([pArrayPostConstraint])
- | pArrayPostConstraint PAND pArrayPostConstraints  (pArrayPostConstraint :: pArrayPostConstraints)
+ | pArrayPostConstraint AND pArrayPostConstraints  (pArrayPostConstraint :: pArrayPostConstraints)
 
 pArrayPostConds : ([])
  | PWHERE LCURLY pArrayPostConstraints SEMICOLON RCURLY (pArrayPostConstraints)
@@ -440,8 +440,9 @@ externalDeclaration:
 					  in
 					    SOME(markExternalDecl srcMap (arrayDecl, pArrayleft, pArrayPostCondsright))
 				          end)
-        | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,  pEnumleft,  RCURLYright)))
-        | pSelect RCURLY                (SOME(markExternalDecl srcMap (pSelect,  pSelectleft,  RCURLYright)))
+        | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,     pEnumleft,  RCURLYright)))
+        | pSelect RCURLY                (SOME(markExternalDecl srcMap (pSelect,   pSelectleft,  RCURLYright)))
+        | PDONE                         (SOME(markExternalDecl srcMap (ExternalDeclExt PX.PDone,  PDONEleft,  PDONEright)))
 (* PADS END *)
 
 statement:

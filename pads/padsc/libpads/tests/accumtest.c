@@ -1,5 +1,7 @@
 #include "pads-internal.h"
 
+P_NOGEN;
+
 const char* names[] = {
   "foo",
   "bobozot",
@@ -28,8 +30,8 @@ int main(int argc, char** argv) {
   Pint32          key1;
   Pbase_pd        pd = {0};
 
-  if (P_ERR == P_open(&pads, 0, 0)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, 0, 0, 1)) {
+    error(2, "*** P_libopen failed ***");
     exit(-1);
   }
   if (!disc) {

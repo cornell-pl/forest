@@ -127,7 +127,7 @@ Pio_disc_t * P_norec_noseek_make(size_t block_size_hint);
  * list is always a 'dummy' record that is not used except as a
  * placeholder for managing the list.
  * 
- * XXX_TODOC: sfio_offset, begin, end, etc.
+ * XXX_TODOC: offset, begin, end, etc.
  *
  * There is an extra data fields, disc_ptr, which is optionally used by
  * the io discipline and ignored by the main library code.
@@ -137,7 +137,7 @@ Pio_disc_t * P_norec_noseek_make(size_t block_size_hint);
 struct Pio_elt_s {
   Pio_elt_t     *prev;
   Pio_elt_t     *next;
-  Sfoff_t        sfio_offset;
+  Sfoff_t        offset;
   Pbyte         *begin;
   Pbyte         *end;
   size_t         len;

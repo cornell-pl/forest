@@ -12,6 +12,8 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
+P_NOGEN;
+
 #define NEXT_REC do {\
   if (strncmp(argv1, "norec", 5) == 0) { \
     if (P_ERR == Pe_char_lit_scan1(pads, '\n', 1, 0, &bytes_skipped)) { \
@@ -78,8 +80,8 @@ int main(int argc, char** argv) {
     error(0, "\nInstalled IO discipline %s", argv1);
   }
 
-  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+    error(2, "*** P_libopen failed ***");
     return -1;
   }
   if (P_ERR == P_io_fopen(pads, "../../data/ex_data.bcd_test")) {

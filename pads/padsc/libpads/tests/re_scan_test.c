@@ -5,6 +5,8 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
+P_NOGEN;
+
 int main(int argc, char** argv) {
   P_STRING_DECL_NULL(stmp);
   P_t*          pads;
@@ -22,8 +24,8 @@ int main(int argc, char** argv) {
   for (try = 0; try < 2; try++) {
     error(0, "\nTry using scan%d\n", try+1);
 
-    if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-      error(ERROR_FATAL, "*** P_open failed ***");
+    if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+      error(ERROR_FATAL, "*** P_libopen failed ***");
     }
 
     if (P_ERR == P_io_fopen(pads, "../../data/re_scan_test.dat")) {

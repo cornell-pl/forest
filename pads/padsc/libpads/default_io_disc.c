@@ -81,7 +81,7 @@
 #define IODISC_RELOC_DBG_ELT(elt) \
   do { \
     if (pads->disc->errorf) { \
-      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d sfio_offset %d) = AT NEW LOC =>\n[%s]", elt->unit, elt->num, elt->sfio_offset, P_fmt_cstr_n(elt->begin, elt->len)); \
+      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d offset %d) = AT NEW LOC =>\n[%s]", elt->unit, elt->num, elt->offset, P_fmt_cstr_n(elt->begin, elt->len)); \
     } \
   } while (0)
 #else
@@ -357,7 +357,7 @@ P_fwrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     return P_ERR;
   }
   iodata = (P_fwrec_noseek_iodata_t*)elt->disc_ptr;
-  elt->sfio_offset = data->tail_off;
+  elt->offset = data->tail_off;
   readlen = sfread(data->io, iodata->dbuf, data->block_size);
   data->tail_off = sftell(data->io);
   if (readlen < 0) {
@@ -729,7 +729,7 @@ P_norec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
   elt->bor         = 0; /* norec_noseek never uses bor */
   elt->eor         = 0; /* norec_noseek never uses eor */
   elt->begin       = data->dbuf_end;
-  elt->sfio_offset = data->tail_off;
+  elt->offset = data->tail_off;
   readlen = sfread(data->io, elt->begin, data->block_size);
   data->tail_off = sftell(data->io);
   if (readlen < 0) {
@@ -1161,7 +1161,7 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     elt->eof       = 0;
     elt->num       = (data->num)++;
     elt->unit      = "record";
-    elt->sfio_offset = prev_tail_off;
+    elt->offset = prev_tail_off;
     prev_tail_off += (elt->len + 1); /* account for cterm */
     data->un_bytes -= (elt->len + 1); /* acount for cterm */
     elt->begin[elt->len] = 0; /* null-terminate the record, replaces cterm with NULL */
@@ -1187,7 +1187,7 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     elt->begin     = tmp;
     elt->end       = data->dbuf_end;
     elt->len       = data->un_bytes;
-    elt->sfio_offset = prev_tail_off;
+    elt->offset = prev_tail_off;
     data->un_bytes = 0;
     elt->num  = (data->num)++;
     if (elt->len == 0) { /* trivial EOF record */
@@ -1695,7 +1695,7 @@ P_vlrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     readlen = 0;
     goto eof_case;
   }
-  elt->sfio_offset  = elt_off;
+  elt->offset  = elt_off;
   elt->begin        = data->dbuf_end;
   data->dbuf_end += readlen;
   elt->end          = data->dbuf_end;
@@ -1710,7 +1710,7 @@ P_vlrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
   elt = data->eof_elt;
   data->eof_elt     = 0;
   data->dbuf_end += readlen;
-  elt->sfio_offset  = elt_off;
+  elt->offset  = elt_off;
   elt->begin        = data->dbuf_end;
   elt->end          = data->dbuf_end;
   elt->len          = 0; /* ignore readlen except for putback (captured in dbuf_end) */
@@ -2023,7 +2023,7 @@ P_norec_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t re
     if (data->r_end) { /* restore in case we are returning saved_byte to stream */ 
       *(data->r_end) = data->saved_byte;
     }
-    offset = io_cur_elt->sfio_offset + io_cur_elt->len - remain;
+    offset = io_cur_elt->offset + io_cur_elt->len - remain;
     if (offset < data->tail_off) {
       unsigned long long to_return = data->tail_off - offset;
       if (-1 == sfseek(data->io, offset, 0)) {
@@ -2091,10 +2091,10 @@ P_norec_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_elt_t **
     to_keep = 0;
   } else {
     /* seek to offset of first elt */
-    if (-1 == sfseek(data->io, firstelt->sfio_offset, 0)) {
+    if (-1 == sfseek(data->io, firstelt->offset, 0)) {
       P_FATAL(pads->disc, "P_norec_read: unexpected sfseek failure");
     }
-    to_keep = data->tail_off - firstelt->sfio_offset;
+    to_keep = data->tail_off - firstelt->offset;
   }
   new_data_off = data->tail_off;
   to_discard = (data->r_end - data->r_begin) - to_keep;
@@ -2171,11 +2171,11 @@ P_norec_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_elt_t **
   elt->begin = new_data;
   elt->end   = new_data + readlen;
   elt->len   = readlen;
-  elt->sfio_offset = new_data_off;
+  elt->offset = new_data_off;
   P_APPEND_ELT(data->head, elt);
 #if 0
   if (pads->disc->errorf) {
-    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d sfio_offset %d)\n[%s]", elt->unit, elt->num, elt->sfio_offset, P_fmt_cstr_n(elt->begin, elt->len));
+    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d offset %d)\n[%s]", elt->unit, elt->num, elt->offset, P_fmt_cstr_n(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;

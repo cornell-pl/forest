@@ -8,6 +8,7 @@ struct
   val arrayCur    = "current"
   val consume     = "consume"
   val arrayBegin  = "arrayBegin"  (* tloc.b     : Ppos_t *)
-  val elemBegin   = "eltBegin"   (* pd->loc.b  : Ppos_t *)
+  val arrayEnd    = "arrayEnd"    (* tloc.e     : Ppos_t *)
+  val elemBegin   = "eltBegin"    (* pd->loc.b  : Ppos_t *)
   val elemEnd     = "eltEnd"      (* pd->loc.e  : Ppos_t *)
 end

@@ -4,6 +4,9 @@
 
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
+
+P_NOGEN;
+
 #ifndef PDCI_MacroArg2String
 #define PDCI_MacroArg2String(s) #s
 #endif
@@ -163,8 +166,8 @@ int main(int argc, char** argv) {
     error(0, "\nInstalled IO discipline %s", argv[1]);
   }
 
-  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-    error(2|ERROR_FATAL, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+    error(2|ERROR_FATAL, "*** P_libopen failed ***");
   }
   if (P_ERR == P_io_fopen(pads, "../../data/ex_data.rwtest1")) {
     error(2|ERROR_FATAL, "*** P_io_fopen failed ***");

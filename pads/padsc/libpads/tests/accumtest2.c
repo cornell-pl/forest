@@ -1,5 +1,7 @@
 #include "pads-internal.h"
 
+P_NOGEN;
+
 int main(int argc, char** argv) {
   int                i;
   P_t*             pads;
@@ -33,8 +35,8 @@ int main(int argc, char** argv) {
   Puint64         key64u20th;
   Pbase_pd        pd = {0};
 
-  if (P_ERR == P_open(&pads, 0, 0)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, 0, 0, 1)) {
+    error(2, "*** P_libopen failed ***");
     exit(-1);
   }
   error(0, "\ninit all the accums");

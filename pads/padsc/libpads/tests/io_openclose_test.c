@@ -5,6 +5,8 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
+P_NOGEN;
+
 int main(int argc, char** argv) {
   Sfio_t         *io;
   int             i;
@@ -54,8 +56,8 @@ int main(int argc, char** argv) {
     error(0, "Installed IO discipline %s", argv[1]);
   }
 
-  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-    error(ERROR_FATAL, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+    error(ERROR_FATAL, "*** P_libopen failed ***");
   }
   if (strcmp(fname, "/dev/stdin") == 0) {
     io = sfstdin;

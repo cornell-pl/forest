@@ -167,6 +167,7 @@ structure Main : sig
 				 "#include <pads-internal.h>\n"^
 				 (if !xmlFlag then "#include <pglx-internal.h>\n" else "") ^ 
 				 "#include \""^baseTyFile^"\"\n"^
+				 "Pdone\n"^
                                  "\n")
             val compositeProg = (includePrefix ^
 				   ("#include \"" ^ppFile^"\"\n"))

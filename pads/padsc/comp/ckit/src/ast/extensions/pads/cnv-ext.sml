@@ -238,7 +238,7 @@ structure CnvExt : CNVEXT = struct
 
 
     val bug = Error.bug errorState
-
+    val seenDone : bool ref = ref false
 
 (* AST help functions ********************************************************)
 
@@ -3401,6 +3401,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  val elemReadName = lookupTy(baseTy, readSuf, #readname)
 		 val tLocX      =  P.addrX(PT.Id tloc)
 		 val tlocES     =  PL.getLocEndS(PT.Id pads, tLocX, ~1) 
+		 val tlocES0    =  PL.getLocEndS(PT.Id pads, tLocX, 0) 
 
 
                  (* Some useful functions *)
@@ -3418,9 +3419,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                      P.andX(PL.mTestSynCheckX(fieldX(m,array)), testE)
                    | amCheckingBasicE(NONE) = PL.mTestSynCheckX(fieldX(m,array))
 
-                 fun amCheckingForallE(SOME testE) = 
+                 fun amCheckingUserE(SOME testE) = 
                      P.andX(PL.mTestSemCheckX(fieldX(m,array)), testE)
-                   | amCheckingForallE(NONE) = PL.mTestSemCheckX(fieldX(m,array))
+                   | amCheckingUserE(NONE) = PL.mTestSemCheckX(fieldX(m,array))
 
 
                  (* Calculate bounds on array, generate statements for checking values *)
@@ -3599,10 +3600,12 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
           
                  (* -- process constriants *)
                  fun chkForallConstraint (r as {index, range, body}) = 
-		     let val subList = [(PNames.arrayLen, fieldX(rep,length)), 
-					(name, fieldX(rep,elts)),
-					(PNames.arrayElts, fieldX(rep,elts)),
-					(PNames.pdElts,   fieldX(pd,elts))]
+		     let val subList = [(PNames.arrayLen,   fieldX(rep,length)), 
+					(PNames.arrayBegin, P.dotX(PT.Id tloc, PT.Id "b")), 
+					(PNames.arrayEnd,   P.dotX(PT.Id tloc, PT.Id "e")), 
+					(name,              fieldX(rep,elts)),
+					(PNames.arrayElts,  fieldX(rep,elts)),
+					(PNames.pdElts,     fieldX(pd,elts))]
 			 val (lower, upper) = 
 			     (case range 
 			      of PX.ArrayName n => (
@@ -3612,7 +3615,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 						 "of the array (must use '"^ name ^ "' or 'elts').")
 				      ); (P.zero, P.minusX(PT.Id length, P.intX 1)))
 			      | PX.Bounds(lower, upper) => (lower,upper))
-			 val modBodyX = PTSub.substExps subList body
+			 val needEndLoc = PTSub.isFreeInExp([PNames.arrayEnd], body) orelse
+			                  PTSub.isFreeInExp([PNames.arrayEnd], lower) orelse
+					  PTSub.isFreeInExp([PNames.arrayEnd], upper) 
+			 val modBodyX  = PTSub.substExps subList body
 			 val modLowerX = PTSub.substExps subList lower
 			 val modUpperX = PTSub.substExps subList upper
 			 fun errMsg which = (fn s => 
@@ -3620,18 +3626,44 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 					      name ^" has type"^s^". Expected type int."))
 		     in
 			 pushLocalEnv();
-			 ignore(insTempVar(index, P.int));
-			 ignore(insTempVar(length, PL.uint32PCT));
-			 ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
-			 ignore(insTempVar(elts, P.ptrPCT elemRepPCT)); 
-			 ignore(insTempVar(PNames.pdElts, P.ptrPCT elemEdPCT)); 
+			 ignore(insTempVar(index,             P.int));
+			 ignore(insTempVar(length,            PL.uint32PCT));
+			 ignore(insTempVar(name,              P.ptrPCT elemRepPCT)); 
+			 ignore(insTempVar(PNames.arrayBegin, PL.posPCT)); 
+			 ignore(insTempVar(PNames.arrayEnd,   PL.posPCT)); 
+			 ignore(insTempVar(elts,              P.ptrPCT elemRepPCT)); 
+			 ignore(insTempVar(PNames.pdElts,     P.ptrPCT elemEdPCT)); 
 			 expEqualTy(lower, CTintTys, errMsg "Lower");
 			 expEqualTy(lower, CTintTys, errMsg "Upper");
-			 expEqualTy(body, CTintTys, fn s=>("Forall expression for array "^
+			 expEqualTy(body, CTintTys, fn s=>("Pforall expression for array "^
 							   name ^" has type "^s^". Expected "^
 							   "type int."));
 			 popLocalEnv();
-			 {index=index, lower=modLowerX, upper=modUpperX, body=modBodyX}
+			 (needEndLoc, {index=index, lower=modLowerX, upper=modUpperX, body=modBodyX})
+		     end
+
+                 fun chkGeneralConstraint (exp) = 
+		     let val subList = [(PNames.arrayLen,   fieldX(rep,length)), 
+					(PNames.arrayBegin, P.dotX(PT.Id tloc, PT.Id "b")), 
+					(PNames.arrayEnd,   P.dotX(PT.Id tloc, PT.Id "e")), 
+					(name,              fieldX(rep,elts)),
+					(PNames.arrayElts,  fieldX(rep,elts)),
+					(PNames.pdElts,     fieldX(pd,elts))]
+			 val modExpX = PTSub.substExps subList exp
+			 val needEndLoc = PTSub.isFreeInExp([PNames.arrayEnd], exp)
+		     in
+			 pushLocalEnv();
+			 ignore(insTempVar(length,            PL.uint32PCT));
+			 ignore(insTempVar(name,              P.ptrPCT elemRepPCT)); 
+			 ignore(insTempVar(PNames.arrayBegin, PL.posPCT)); 
+			 ignore(insTempVar(PNames.arrayEnd,   PL.posPCT)); 
+			 ignore(insTempVar(elts,              P.ptrPCT elemRepPCT)); 
+			 ignore(insTempVar(PNames.pdElts,     P.ptrPCT elemEdPCT)); 
+			 expEqualTy(exp, CTintTys,fn s=>("Pgeneral constraint for array "^
+							 name ^" has type "^s^". Expected "^
+							 "type int."));
+			 popLocalEnv();
+                         (needEndLoc, modExpX)
 		     end
 
                  fun chkPredConstraint (which, exp) = 
@@ -3680,12 +3712,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     let fun doOne(constr: pcexp PX.PPostCond) = 
 			     case constr 
 			     of PX.Forall (r as {index,range,body}) => (SOME r, NONE) (* defer checking until after rep generated *)
-		             |  PX.General exp => (expEqualTy(exp, CTintTys,fn s=>("General constraint for array "^
-										   name ^" has type "^s^". Expected "^
-										   "type int."));
-						   (NONE, SOME exp)
-		                                   (* end General case *))
-			 fun mergeAll ((a,b),(ra,rb)) = (mergeOpt "array" (a,ra), mergeOpt "general" (b,rb))
+		             |  PX.General exp =>  (NONE, SOME exp)                   (* defer checking until after rep generated *)
+			 fun mergeAll ((a,b),(ra,rb)) = (mergeOpt "Parray" (a,ra), mergeOpt "Pgeneral" (b,rb))
 			 val constrs = List.map doOne postCond
 			 val (arrayXOpt, genXOpt) = List.foldr mergeAll (NONE,NONE) constrs
 		     in
@@ -3938,8 +3966,16 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		 val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
                  val arrayXOpt = case arrayXOpt of NONE => NONE | SOME r => SOME (chkForallConstraint r)
+		 val genXOpt   = case genXOpt   of NONE => NONE | SOME r => SOME (chkGeneralConstraint r)
                  val lastXOpt  = case lastXOpt  of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Plast",  r))
                  val endedXOpt = case endedXOpt of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Pended",  r))
+
+                 val needArrayEndExp = 
+		     case (arrayXOpt, genXOpt) of 
+                       (SOME(isEA, x), SOME(isEG, y)) => isEA orelse isEG 
+                     | (SOME(isEA, x), NONE )         => isEA
+                     | (NONE,          SOME(isEG,y))  => isEG
+                     | (_,_)                          => false
 
 		 (* Generate init function, array case *)
 		 fun genInitEDs(suf, base, aPCT) = 
@@ -4395,28 +4431,44 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			    ("Read %d element(s) for array "^name^"; required %d."),
 			    [fieldX(rep,length), minX], false))]
 		     end
-                 (* -- -- Check that the user's whole array constraint is satisfied. *)
-                 fun genArrayConstraintSs {index:string, lower, upper, body:PT.expression}  = 
-		     [P.mkCommentS "Checking user's array constraint.",
-                      PT.Compound[
-                       P.varDeclS'(P.int, index),
-                       P.varDeclS(P.int, "violated", P.falseX),
-		       PT.IfThen(P.notX(P.andX(P.lteX(P.zero, lower),
-				 	P.ltX(upper, fieldX(rep,length)))),
-				 P.assignS(PT.Id "violated", P.trueX)),
-		       PT.For(P.assignX(PT.Id index, lower),
-			      P.andX(P.notX(PT.Id "violated"), P.lteX(PT.Id index, upper)), 
-			      P.postIncX(PT.Id index),
-                              PT.Compound[
-                               PT.IfThen(P.notX(body),
-				 PT.Compound[
-                                  P.assignS(PT.Id "violated", P.trueX)
-                                 ] (* end if *))
-                              ] (* end for *)),
-		       PT.IfThen(PT.Id "violated",
-			recordArrayErrorS([tlocES],tLocX,PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
-					  ("User constraint for array "^name^" violated."), [], false))
-                     ]]
+
+                 (* -- -- Check that the user's forall array constraint is satisfied. *)
+                 fun genForallConstraintSs arrayXOpt = 
+		     case arrayXOpt of NONE => []
+                     | SOME(needEndLoc, {index:string, lower, upper, body:PT.expression})  => 
+		        [P.mkCommentS "Checking user's Pforall constraint.",
+                         PT.Compound(
+                          [ P.varDeclS'(P.int, index),
+                            P.varDeclS(P.int, "violated", P.falseX)]
+                          @ (if needEndLoc then [tlocES0] else [])
+		          @ [PT.IfThen(P.notX(P.andX(P.lteX(P.zero, lower),
+						 P.ltX(upper, fieldX(rep,length)))),
+				   PT.Compound[P.assignS(PT.Id "violated", P.trueX)]),
+		             PT.For(P.assignX(PT.Id index, lower),
+				P.andX(P.notX(PT.Id "violated"), P.lteX(PT.Id index, upper)), 
+				P.postIncX(PT.Id index),
+				PT.Compound[
+                                   PT.IfThen(P.notX(body),
+				             PT.Compound[P.assignS(PT.Id "violated", P.trueX)] (* end if *))
+                                ] (* end for *)),
+		             PT.IfThen(PT.Id "violated",
+				       recordArrayErrorS([tlocES],tLocX,PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
+							 ("Parray constraint for array "^name^" violated."), [], false))
+			])]
+
+                 (* -- -- Check that the user's general array constraint is satisfied. *)
+                 fun genGeneralConstraintSs genXOpt =
+		     case genXOpt of NONE => []
+		     | SOME (needEndLoc, exp) => 
+                        [PT.Compound(
+			   [P.mkCommentS "Checking user's PGeneral constraint."]
+			   @ (if needEndLoc then [tlocES0] else [])
+		           @ [PT.IfThen(P.notX exp,
+			           recordArrayErrorS([tlocES],tLocX,PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
+						     ("Pgeneral constraint for array "^name^" violated."), [], false))])]
+
+                 val semanticConstraintSs = (genForallConstraintSs arrayXOpt) @ (genGeneralConstraintSs genXOpt)
+
                  val arrayConstraintsSs = 
 		     let fun condWrapBase bdySs = 
 			 [P.mkCommentS "Checking basic array constraints",
@@ -4424,22 +4476,21 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				    PT.Compound bdySs)]
                          fun condWrapUser bdySs = 
 			 [P.mkCommentS "Checking user-defined array constraints",
-			  PT.IfThen(amCheckingForallE(SOME(PL.testNotPanicX(PT.Id pd))),
+			  PT.IfThen(amCheckingUserE(SOME(PL.testNotPanicX(PT.Id pd))),
 				    PT.Compound bdySs)]
                          fun condWrapBoth (bdySs1, bdySs2) = 
 			 [PT.IfThen(PL.testNotPanicX(PT.Id pd),
 				PT.Compound[P.mkCommentS "Checking basic array constraints",
-				            PT.IfThen(amCheckingBasicE NONE,
-					              PT.Compound bdySs1),
+				            PT.IfThen(amCheckingBasicE NONE,PT.Compound bdySs1),
 				            P.mkCommentS "Checking user-defined array constraints",
-				            PT.IfThen(amCheckingForallE NONE,
-					              PT.Compound bdySs2)])]
+				            PT.IfThen(amCheckingUserE NONE, PT.Compound bdySs2)])]
 		     in
-		       case (minOpt, arrayXOpt) of (NONE,NONE) => []
-                       | (SOME minX, NONE) => condWrapBase(genMinReachedConstraintSs minX)
-                       | (NONE, SOME r) => condWrapUser(genArrayConstraintSs r)
-                       | (SOME minX, SOME r) =>
-			   condWrapBoth(genMinReachedConstraintSs minX, genArrayConstraintSs r)
+		       case (minOpt, semanticConstraintSs) of 
+                         (NONE,      []) => []
+                       | (SOME minX, []) => condWrapBase(genMinReachedConstraintSs minX)
+                       | (NONE,      ss) => condWrapUser ss
+                       | (SOME minX, ss) =>
+			   condWrapBoth(genMinReachedConstraintSs minX, ss)
 		     end
 
                  (* -- return value *)
@@ -4958,12 +5009,12 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  val (itemType, offset, size, argList) = getPos(tyName, path, TyProps.mkSize(0,0),[](* top level must be closed *))
 	      in
 		((case offset
-		  of TyProps.Variable => PE.error (selName^ ": location of request depends on data.\n") 
-                  |  TyProps.Param(_) => PE.error (selName^ ": location of request depends on parameters.\n") 
+		  of TyProps.Variable => PE.error (selName^ ": location of request depends on data.") 
+                  |  TyProps.Param(_) => PE.error (selName^ ": location of request depends on parameters.") 
                   |  TyProps.Size(location,nr) => 
 		      (case size 
-		       of TyProps.Variable => PE.error (selName^ ": size of request depends on data.\n") 
-		       |  TyProps.Param(_) => PE.error (selName^ ": size of "^selName^" request depends on parameters.\n") 
+		       of TyProps.Variable => PE.error (selName^ ": size of request depends on data.") 
+		       |  TyProps.Param(_) => PE.error (selName^ ": size of "^selName^" request depends on parameters.") 
                        |  TyProps.Size(n,nr) => 
 			   Select.insert(Select.Select{selName = selName, tyName = itemType, 
 						       args = evalArgList argList, offset = location, size = n})
@@ -4971,6 +5022,19 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	        (* end case offset*));
 		[] (* return no AST decls *))
 	      end handle Fail s => (PE.error s; [])
+
+	  fun cnvPDone () = 
+	      let val () = (if !seenDone then PE.error ("Unexpected Pdone declaration.") else (); seenDone := true)
+		  val bodySs = [P.mkCommentS "Initialize character classes."]
+		  val initFunED = P.mkFunctionEDecl(PL.libInit,[],PT.Compound bodySs, P.void)
+		  fun cnvLoc ast = 
+		      case ast of (Ast.DECL (cdecl, aid,paid,SourceMap.LOC{srcFile, beginLine,beginCol,endLine,endCol}))=> 
+			  Ast.DECL(cdecl,aid,paid,SourceMap.LOC{srcFile="main.p", beginLine=beginLine,
+								beginCol=beginCol,endLine=endLine,endCol=endCol})
+		      | _ => ast
+	      in
+		  List.map cnvLoc (cnvExternalDecl initFunED)
+	      end
 
 	  in
 	      case decl 
@@ -4980,6 +5044,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
               |  PX.PArray   a => cnvPArray   a
               |  PX.PEnum    e => cnvPEnum    e
 	      |  PX.PSelect  s => cnvPSelect  s
+	      |  PX.PDone      => cnvPDone ()
 	  end
 
       fun pcnvStat (PX.PComment s) =  wrapSTMT(Ast.StatExt(AstExt.SComment(formatComment s)))

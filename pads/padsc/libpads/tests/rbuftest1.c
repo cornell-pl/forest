@@ -4,6 +4,8 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
+P_NOGEN;
+
 int main(int argc, char** argv) {
   int             err, i;
   P_t*          pads;
@@ -18,8 +20,8 @@ int main(int argc, char** argv) {
   Pint32*      ar1;
   Pint8*       ar2;
 
-  if (P_ERR == P_open(&pads, 0, 0)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, 0, 0, 1)) {
+    error(2, "*** P_libopen failed ***");
     exit(-1);
   }
   rmm_z = P_rmm_zero(pads);

@@ -7,6 +7,8 @@
 
 #include "pads-internal.h"
 
+P_NOGEN;
+
 const char* false_true [] = { "TRUE", "FALSE" };
 
 int is_foo(int c) { return c == 'f' || c == 'o' || isdigit(c); }
@@ -29,8 +31,8 @@ int main(int argc, char** argv) {
   reg_foo();
 
   io_disc = P_nlrec_make(0);
-  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-    error(ERROR_FATAL, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+    error(ERROR_FATAL, "*** P_libopen failed ***");
   }
 
   if (argc != 3 && argc != 6) {

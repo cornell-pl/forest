@@ -2,6 +2,8 @@ structure PLib =
 struct
   structure PT = ParseTree
   structure P  = ParseTreeUtil
+ 
+  val libInit = "P_lib_init"
 
   val P_ERROR = PT.Id "P_ERR"
   val P_OK    = PT.Id "P_OK"

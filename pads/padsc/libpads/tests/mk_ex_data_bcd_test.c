@@ -1,4 +1,7 @@
 #include "pads-internal.h" /* for testing - normally do not include internal */
+
+P_NOGEN;
+
 #include <stdio.h>
 
 int main(int argc, char** argv) {
@@ -12,8 +15,8 @@ int main(int argc, char** argv) {
     tmp[len] = P_EBCDIC_SPACE;
   }
 
-  if (P_ERR == P_open(&pads, 0, 0)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, 0, 0, 1)) {
+    error(2, "*** P_libopen failed ***");
     return -1;
   }
 

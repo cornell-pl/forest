@@ -4,6 +4,9 @@
 
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
+
+P_NOGEN;
+
 #include <stdio.h>
 
 /* Remove comments to see classic example of a case where mixing binary data and newlines can fail */
@@ -51,8 +54,8 @@ int main(int argc, char** argv) {
   sprintf(fname, "../../data/ex_data.libtest2.%s", h);
   error(0, "fname = %s    rev = %d\n", fname, rev);
 
-  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+    error(2, "*** P_libopen failed ***");
     exit(-1);
   }
 

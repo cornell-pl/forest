@@ -1,7 +1,7 @@
 /*  eltBegin is also available in Plast and Pended predicates. */
 
 int diff(Ppos_t e, Ppos_t b){
-  int delta = e.sfio_offset - b.sfio_offset;
+  int delta = e.offset - b.offset;
   error(2, "offset = %d\n", delta);
   return delta;
 }

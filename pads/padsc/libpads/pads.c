@@ -35,10 +35,10 @@ do {
   if (elt->len) {
     size_t pos_offset = elt->len - tp->remain;
     (pos).byte        = pos_offset + 1;
-    (pos).sfio_offset = elt->sfio_offset + pos_offset;
+    (pos).offset = elt->offset + pos_offset;
   } else {
     (pos).byte        = 0;
-    (pos).sfio_offset = elt->sfio_offset;
+    (pos).offset = elt->offset;
   }
 } while (0)
 /* END_MACRO */ 
@@ -72,13 +72,13 @@ do {
   if (elt == pads->head) {
     (pos).num         =  0;
     (pos).byte        =  0;
-    (pos).sfio_offset = -1;
+    (pos).offset = -1;
     P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_PLUS called with bad offset");
   } else {
     size_t pos_offset = elt->len - remain;
     (pos).num         = elt->num;
     (pos).byte        = pos_offset + 1;
-    (pos).sfio_offset = elt->sfio_offset + pos_offset;
+    (pos).offset = elt->offset + pos_offset;
   }
 } while (0)
 /* END_MACRO */ 
@@ -115,13 +115,13 @@ do {
   if (elt == pads->head) {
     (pos).num         =  0;
     (pos).byte        =  0;
-    (pos).sfio_offset = -1;
+    (pos).offset = -1;
     P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_MINUS called with bad offset");
   } else {
     size_t pos_offset = elt->len - remain;
     (pos).num         = elt->num;
     (pos).byte        = pos_offset + 1;
-    (pos).sfio_offset = elt->sfio_offset + pos_offset;
+    (pos).offset = elt->offset + pos_offset;
   }
 } while (0)
 /* END_MACRO */ 
@@ -133,8 +133,8 @@ do {
   (loc).e = (loc).b;
   if ((loc).e.byte) {
     ((loc).e.byte)--;
-    if ((loc).e.sfio_offset > 0) {
-      ((loc).e.sfio_offset)--;
+    if ((loc).e.offset > 0) {
+      ((loc).e.offset)--;
     }
   }
 } while (0)
@@ -4595,7 +4595,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.115 2003-10-09 17:52:28 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.116 2003-10-13 21:52:21 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5006,15 +5006,16 @@ Pdisc_t Pdefault_disc = {
 };
 
 Perror_t
-P_open(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc)
+PDCI_libopen(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc, int iodisc_required, const char *whatfn)
 {
   Vmalloc_t    *vm;
   P_t        *pads;
   Pint32     testint = 2;
 
-  P_TRACE(&Pdefault_disc, "P_open called");
+  P_TRACE2(&Pdefault_disc, "PDCI_libopen called, iodisc_required = %d whatfn = %s",
+	   iodisc_required, whatfn);
   if (!pads_out) {
-    P_WARN(&Pdefault_disc, "P_open: param pads_out must not be NULL");
+    P_WARN1(&Pdefault_disc, "%s: param pads_out must not be NULL", whatfn);
     return P_ERR;
   }
   if (!(vm = vmopen(Vmdcheap, Vmbest, 0))) {
@@ -5029,10 +5030,10 @@ P_open(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc)
   }
   if (io_disc) {
     disc->io_disc = io_disc;
-  } else if (!disc->io_disc) {
-    P_WARN(disc, "P_open: Installing default IO discipline : newline-terminated records");
+  } else if (iodisc_required && !disc->io_disc) {
+    P_WARN1(disc, "%s: Installing default IO discipline : newline-terminated records", whatfn);
     if (!(disc->io_disc = P_ctrec_noseek_make('\n', 0))) {
-      P_FATAL(disc, "P_open: Unexpected failure to install default IO discipline");
+      P_FATAL1(disc, "%s: Unexpected failure to install default IO discipline", whatfn);
     }
   }
   if (!(pads = vmnewof(vm, 0, P_t, 1, 0))) {
@@ -5080,10 +5081,11 @@ P_open(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc)
    *   path, io_state, top, buf, balloc, bchars, speclev
    */
   (*pads_out) = pads;
+  P_lib_init();
   return P_OK;
 
  fatal_alloc_err:
-  P_FATAL(disc, "out of space error during P_open");
+  P_FATAL(disc, "out of space error during PDCI_libopen");
 #if 0
   /* P_FATAL halts program, so the following is not needed */
   if (pads) {
@@ -5105,6 +5107,18 @@ P_open(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc)
   }
 #endif
   return P_ERR;
+}
+
+Perror_t
+P_open(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc)
+{
+  return PDCI_libopen(pads_out, disc, io_disc, 1, "P_open");
+}
+
+Perror_t
+P_libopen(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc, int iodisc_required)
+{
+  return PDCI_libopen(pads_out, disc, io_disc, iodisc_required, "P_libopen");
 }
 
 Perror_t
@@ -5559,7 +5573,7 @@ P_io_getPos(P_t *pads, Ppos_t *pos, int offset)
 	if (elt == pads->head) {
 	  pos->num         = 0;
 	  pos->byte        = 0;
-	  pos->sfio_offset = 0;
+	  pos->offset = 0;
 #ifndef NDEBUG
 	  goto err_check; /* XXX_REMOVE */
 #else
@@ -5587,7 +5601,7 @@ P_io_getPos(P_t *pads, Ppos_t *pos, int offset)
 	if (elt == pads->head) {
 	  pos->num         =  0;
 	  pos->byte        =  0;
-	  pos->sfio_offset = -1;
+	  pos->offset = -1;
 #ifndef NDEBUG
 	  goto err_check; /* XXX_REMOVE */
 #else
@@ -5609,10 +5623,10 @@ P_io_getPos(P_t *pads, Ppos_t *pos, int offset)
   if (elt->len) {
     size_t pos_offset = elt->len - remain;
     pos->byte         = pos_offset + 1;
-    pos->sfio_offset  = elt->sfio_offset + pos_offset;
+    pos->offset  = elt->offset + pos_offset;
   } else {
     pos->byte         = 0;
-    pos->sfio_offset  = elt->sfio_offset;
+    pos->offset  = elt->offset;
   }
 #ifndef NDEBUG
   /* XXX_REMOVE */
@@ -5670,8 +5684,8 @@ P_io_getLoc(P_t *pads, Ploc_t *loc, int offset)
   loc->e = loc->b;
   if (loc->e.byte) {
     (loc->e.byte)--;
-    if (loc->e.sfio_offset > 0) {
-      (loc->e.sfio_offset)--;
+    if (loc->e.offset > 0) {
+      (loc->e.offset)--;
     }
   }
   return P_OK;

@@ -16,3 +16,4 @@ Precord Pstruct test2 {
   '=';
   Pint32 two;
 };
+

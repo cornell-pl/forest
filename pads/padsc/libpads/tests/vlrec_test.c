@@ -1,5 +1,7 @@
 #include "pads-internal.h"
 
+P_NOGEN;
+
 int main(int argc, char** argv) {
   P_t*             pads;
   Pio_disc_t*     io_disc;
@@ -33,8 +35,8 @@ int main(int argc, char** argv) {
     error(0, "\nInstalled IO discipline vlrec_noseek");
   }
 
-  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+    error(2, "*** P_libopen failed ***");
     return -1;
   }
   if (P_ERR == P_io_fopen(pads, (char*)fname)) {

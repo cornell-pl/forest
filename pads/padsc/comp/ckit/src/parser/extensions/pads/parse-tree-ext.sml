@@ -92,6 +92,7 @@ structure ParseTreeExt =
 		       tyName  : string,
 		       varName : string,
 		       path    : 'exp}
+         | PDone
 
         datatype PStatement = PComment of string
         datatype ('exp) PExpression = Pregexp of 'exp

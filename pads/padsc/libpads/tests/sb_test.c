@@ -21,6 +21,8 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
+P_NOGEN;
+
 #define NEXT_REC do {\
   if (P_ERR == P_io_next_rec(pads, &bytes_skipped)) { \
     error(2, "Could not find EOR (newline), ending program"); \
@@ -67,8 +69,8 @@ int main(int argc, char** argv) {
     error(0, "\nInstalled IO discipline %s", argv[1]);
   }
 
-  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+    error(2, "*** P_libopen failed ***");
     return -1;
   }
   if (P_ERR == P_io_fopen(pads, "../../data/ex_data.sb_test")) {

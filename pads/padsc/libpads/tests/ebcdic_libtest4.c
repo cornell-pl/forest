@@ -13,6 +13,8 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
+P_NOGEN;
+
 int main(int argc, char** argv) {
   Pchar          cfound;
   Pstring        s;
@@ -28,8 +30,8 @@ int main(int argc, char** argv) {
   error(0, "\nUsing PADSC IO discipline ctrec with cterm P_EBCDIC_NEWLINE\n\n");
   io_disc = P_ctrec_noseek_make(P_EBCDIC_NEWLINE, 0);
 
-  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+    error(2, "*** P_libopen failed ***");
     exit(-1);
   }
   if (P_ERR == P_io_fopen(pads, "../../data/ex_data.libtest4.ebcdic")) {

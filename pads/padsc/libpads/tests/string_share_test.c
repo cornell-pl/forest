@@ -5,6 +5,8 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
+P_NOGEN;
+
 int main(int argc, char** argv) {
   Pstring      s1, s2, s3, s4, s5, s6;
   Pstring      *str1, *str2, *str3;
@@ -45,8 +47,8 @@ int main(int argc, char** argv) {
     error(0, "\nInstalled IO discipline %s block size 21", argv[1]);
   }
 
-  if (P_ERR == P_open(&pads, 0, io_disc)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, 0, io_disc, 1)) {
+    error(2, "*** P_libopen failed ***");
     return -1;
   }
   if (P_ERR == P_io_fopen(pads, "../../data/ex_data.string_share_test")) {

@@ -5,6 +5,8 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
+P_NOGEN;
+
 int main(int argc, char** argv) {
   /* int             ctr; */
   /* size_t          n; */
@@ -23,8 +25,8 @@ int main(int argc, char** argv) {
   error(0, "\nUsing PADSC IO discipline nlrec\n\n");
   io_disc = P_nlrec_make(0);
 
-  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
-    error(2, "*** P_open failed ***");
+  if (P_ERR == P_libopen(&pads, &my_disc, io_disc, 1)) {
+    error(2, "*** P_libopen failed ***");
     exit(-1);
   }
   if (P_ERR == P_io_fopen(pads, "../../data/ex_data.libtest4")) {
