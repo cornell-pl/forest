@@ -1,0 +1,7 @@
+#!/bin/tcsh
+foreach x (*)
+set y = `basename $x .trim`
+if ($x == $y) then
+  echo $x `cat $x | awk '{ sum +=  $1 } END { print sum/NR }'`
+endif
+end

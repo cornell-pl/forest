@@ -1,0 +1,5 @@
+#!/bin/tcsh
+foreach x (*.trim)
+set y = `basename $x .trim`
+echo $y `cat $x | awk '{ sum +=  $1 } END { print sum/NR }'`
+end
