@@ -5154,6 +5154,33 @@ PDCI_FMT_FN_XTRA1(Pstring_SE,   Pa_string_SE,   Pstring,  const char *)
 PDCI_FMT_FN_XTRA1(Pstring_CSE,  Pa_string_CSE,  Pstring,  Pregexp_t *)
 #endif
 
+#if P_CONFIG_A_CHAR_STRING > 0
+PDCI_FMT_FN_XTRA1(Pa_date,      Pa_date,      Puint32,  Pchar)
+PDCI_FMT_FN_XTRA1(Pa_date_FW,   Pa_date_FW,   Puint32,  size_t)
+PDCI_FMT_FN_XTRA1(Pa_date_ME,   Pa_date_ME,   Puint32,  const char *)
+PDCI_FMT_FN_XTRA1(Pa_date_CME,  Pa_date_CME,  Puint32,  Pregexp_t *)
+PDCI_FMT_FN_XTRA1(Pa_date_SE,   Pa_date_SE,   Puint32,  const char *)
+PDCI_FMT_FN_XTRA1(Pa_date_CSE,  Pa_date_CSE,  Puint32,  Pregexp_t *)
+#endif
+
+#if P_CONFIG_E_CHAR_STRING > 0
+PDCI_FMT_FN_XTRA1(Pe_date,      Pa_date,      Puint32,  Pchar)
+PDCI_FMT_FN_XTRA1(Pe_date_FW,   Pa_date_FW,   Puint32,  size_t)
+PDCI_FMT_FN_XTRA1(Pe_date_ME,   Pa_date_ME,   Puint32,  const char *)
+PDCI_FMT_FN_XTRA1(Pe_date_CME,  Pa_date_CME,  Puint32,  Pregexp_t *)
+PDCI_FMT_FN_XTRA1(Pe_date_SE,   Pa_date_SE,   Puint32,  const char *)
+PDCI_FMT_FN_XTRA1(Pe_date_CSE,  Pa_date_CSE,  Puint32,  Pregexp_t *)
+#endif
+
+#if P_CONFIG_A_CHAR_STRING > 0 || P_CONFIG_E_CHAR_STRING > 0
+PDCI_FMT_FN_XTRA1(Pdate,      Pa_date,      Puint32,  Pchar)
+PDCI_FMT_FN_XTRA1(Pdate_FW,   Pa_date_FW,   Puint32,  size_t)
+PDCI_FMT_FN_XTRA1(Pdate_ME,   Pa_date_ME,   Puint32,  const char *)
+PDCI_FMT_FN_XTRA1(Pdate_CME,  Pa_date_CME,  Puint32,  Pregexp_t *)
+PDCI_FMT_FN_XTRA1(Pdate_SE,   Pa_date_SE,   Puint32,  const char *)
+PDCI_FMT_FN_XTRA1(Pdate_CSE,  Pa_date_CSE,  Puint32,  Pregexp_t *)
+#endif
+
 #if P_CONFIG_A_INT > 0
 PDCI_FMT_FN(Pa_int8,   Pa_int8,   Pint8)
 PDCI_FMT_FN(Pa_int16,  Pa_int16,  Pint16)
@@ -6148,7 +6175,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.164 2004-09-09 03:33:34 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.165 2004-09-09 04:36:22 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -10961,7 +10988,7 @@ PDCI_string_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 }
 
 ssize_t
-PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, void *type_arg1, size_t width, Pbase_pd *pd,
+PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd,
 		      Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn)
 {
   ssize_t      n;
@@ -10976,7 +11003,7 @@ PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, void *type_arg1, size_t width, Pbas
 	     Pcharset2str(char_set), whatfn);
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VALFN(pads, inv_type);
-    type_args[0] = type_arg1;
+    type_args[0] = (void*)&width;
     type_args[1] = 0;
     if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
       if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {
@@ -11036,7 +11063,7 @@ PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, void *type_arg1, size_t width, Pbas
 }
 
 ssize_t
-PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, void *type_arg1,
+PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 		       size_t width, Pbase_pd *pd,
 		       Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn)
 {
@@ -11052,7 +11079,7 @@ PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, voi
 	     Pcharset2str(char_set), whatfn);
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VALFN(pads, inv_type);
-    type_args[0] = type_arg1;
+    type_args[0] = (void*)&width;
     type_args[1] = 0;
     if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
       if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {

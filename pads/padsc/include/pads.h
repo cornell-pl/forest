@@ -3956,6 +3956,90 @@ ssize_t Pstring_CSE_fmt2io   (P_t *pads, Sfio_t *io, int *requested_out, const c
 			      Pbase_m *m, Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *rep);
 #endif
 
+#if P_CONFIG_A_CHAR_STRING > 0
+ssize_t Pa_date_FW_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, size_t width, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_fmt2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, Pchar stopChar, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_ME_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_CME_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_SE_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_CSE_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+
+ssize_t Pa_date_FW_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, size_t width, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_fmt2io     (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, Pchar stopChar, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_ME_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_CME_fmt2io (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_SE_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pa_date_CSE_fmt2io (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+#endif
+
+#if P_CONFIG_E_CHAR_STRING > 0
+ssize_t Pe_date_FW_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, size_t width, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_fmt2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, Pchar stopChar, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_ME_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_CME_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_SE_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_CSE_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+
+ssize_t Pe_date_FW_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, size_t width, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_fmt2io     (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, Pchar stopChar, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_ME_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_CME_fmt2io (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_SE_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pe_date_CSE_fmt2io (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+#endif
+
+#if P_CONFIG_A_CHAR_STRING > 0 || P_CONFIG_E_CHAR_STRING > 0
+ssize_t Pdate_FW_fmt2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, size_t width, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_fmt2buf      (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, Pchar stopChar, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_ME_fmt2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_CME_fmt2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_SE_fmt2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_CSE_fmt2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+
+ssize_t Pdate_FW_fmt2io    (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, size_t width, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_fmt2io       (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, Pchar stopChar, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_ME_fmt2io    (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_CME_fmt2io   (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_SE_fmt2io    (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, const char *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+ssize_t Pdate_CSE_fmt2io   (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			    Pbase_m *m, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *rep);
+#endif
+
 #if P_CONFIG_A_INT > 0
 ssize_t Pa_int8_fmt2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
 			  Pbase_m *m, Pbase_pd *pd, Pint8  *rep);

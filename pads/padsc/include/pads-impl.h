@@ -350,9 +350,9 @@ ssize_t PDCI_string_write2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int
 				      Pchar type_arg1, Pbase_pd *pd, Pstring *s,
 				      Pcharset char_set, const char *inv_type, const char *whatfn);
 
-ssize_t PDCI_date_FW_write2io(P_t *pads, Sfio_t *io,  void *type_arg1, size_t width, Pbase_pd *pd,
+ssize_t PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd,
 			      Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn);
-ssize_t PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, void *type_arg1,
+ssize_t PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 			       size_t width, Pbase_pd *pd,
 			       Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn);
 
@@ -1131,19 +1131,19 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
   PDCI_date_FW_write2io(pads, io, width, pd, d, PDCI_DEF_CHARSET(pads), "Pdate_FW_write2io")
 
 #define Pa_date_FW_write2io(pads, io, width, pd, d) \
-  PDCI_date_FW_write2io(pads, io, width, pd, d, Pcharset_ASCII, "Pa_date_FW_write2io")
+  PDCI_date_FW_write2io(pads, io, width, pd, d, Pcharset_ASCII, "Pa_date_FW", "Pa_date_FW_write2io")
 
 #define Pe_date_FW_write2io(pads, io, width, pd, d) \
-  PDCI_date_FW_write2io(pads, io, width, pd, d, Pcharset_EBCDIC, "Pe_date_FW_write2io")
+  PDCI_date_FW_write2io(pads, io, width, pd, d, Pcharset_EBCDIC, "Pe_date_FW", "Pe_date_FW_write2io")
 
 #define Pdate_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d) \
-  PDCI_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d, PDCI_DEF_CHARSET(pads), "Pdate_FW_write2buf")
+  PDCI_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d, PDCI_DEF_CHARSET(pads), "Pdate_FW", "Pdate_FW_write2buf")
 
 #define Pa_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d) \
-  PDCI_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d, Pcharset_ASCII, "Pa_date_FW_write2buf")
+  PDCI_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d, Pcharset_ASCII, "Pa_date_FW", "Pa_date_FW_write2buf")
 
 #define Pe_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d) \
-  PDCI_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d, Pcharset_EBCDIC, "Pe_date_FW_write2buf")
+  PDCI_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d, Pcharset_EBCDIC, "Pe_date_FW", "Pe_date_FW_write2buf")
 
 #define Pdate_write2io(pads, io, stopChar, pd, d) \
   PDCI_date_write2io_chararg(pads, io, stopChar, pd, d, PDCI_DEF_CHARSET(pads), "Pdate", "Pdate_write2io")
