@@ -169,9 +169,75 @@ ACCUM STUFF:
 padsc compiler todo
 -------------------
 NEW
+* Ptypedef without a constraint should be legal.
 
+* Pswitch int test should be assignable to int
+
+* Penum:
+    a. specify both a C identifier and the source rep:
+          package_file Pfrom "package-file"
+
+    b. maybe Pfrom form should allow regexp?
+          Penum my_enum {
+            clock from Pre "/clock/i",
+            package_file Pfrom Pre "/package-file/i"
+          };
+
+    c. specify a suffix to add to all the identifiers
+          Penum my_enum Psuf(_e) {
+            clock,
+            package_file Pfrom "package-file"
+          };
+       ==> clock_e, package_file_e
+
+* Parray: Pskip constraint which is used on each element after a successful read
+          (including: use of Plast test did not remove the element).  If true,
+          length is decremented by 1 (IO position does not change).
+
+* foo_m_init: after filling everything in with the provided base mask,
+    if the Set flag has been set, it should be unset for Pomit fields,
+    so that the user does not need to do this by hand.
+    This is tricky because foo_m_init functions
+    do not call each other, so you would have a top-level function doing
+    something like...
+
+   void foo_m_init (P_t *pads,foo_m *mask,Pbase_m baseMask)
+   {
+     PDCI_fill_mask ((Pbase_m *) mask,baseMask,sizeof(foo_m));
+     // special code for foo type that has some P_omit fields 
+     baseMask &= (~P_Set);
+     mask->foo.bar = mask->baz.zebra = mask->zot = baseMask;
+   }
 
 DEFER
+ * More support for Pstring, as in:
+
+       // convert from x|y| to single field z containing "xy"
+       Pstruct my_struct {
+          Pomit Pstring(:'|') x; '|';
+          Pomit Pstring(:'|') y; '|';
+          Pcompute Pstring z = x . y;
+       }
+
+       // alternate version of the above
+       Pstruct my_struct {
+          Pstring(:'|') z; '|';
+          Pomit Pstring(:'|') y; '|' : (z .= y, 1);
+       }
+
+ * It should be possible to declare type parameters as only
+    required for reading, both for built-in types and for user-defined types,
+    and maybe we will need to declare params that are are only
+    required for writing, although I am less sure about that.  E.g.,
+
+      Pint32 x        :  x is both a read and a write param
+      Pread Pint32 x  :  x is only a read param
+      Pwrite Pint32 x :  x is only a write param
+
+In base-ty-info table we will need a new column, e.g:
+      -         : all params are both read and write params
+      r2,r3,w4  : param 1 is both, params 2+3 are read, param 4 is write
+    
   * set parse descriptor errCode to PDC_NoError if read successfully
   * if checkset mask is ignore or no-check, then set error descriptor
     to indicate that status: PDC_Skipped
