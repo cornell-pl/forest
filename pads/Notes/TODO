@@ -3,10 +3,10 @@ testing
 
 to decide
 ---------
-  * design & implement tagged unions
+  * design and implement support for bit fields
+  * padsl pragmas for specifying record-type, endian, slurp mode
   * allow union arms with no variable names by specifying a tag name
   * more convenient ways of specying error-mask settings.
-  * fields with computed values (instead of read)
   * support for optional fields?
   * how to handle name conflicts for enums and unions
      how relates to name spaces and separate compilation
@@ -14,10 +14,12 @@ to decide
 data formats to write
 ---------------------
   * netflow data
+  * DNS data
 
 to document
 -----------
   * write documentation to allow users to define new base types.
+  * write user manual
 
 library todo
 ------------
@@ -74,18 +76,3 @@ padsc compiler todo
         # Static specification of error mask and related customization
 	  will be a bigger win, I think.
 
-very minor:
- * instead of doing PDC_getLocB/E(0) can do:
-   PDC_IO_getPos_internal(pdc, &(loc->b), 0);
-   PDC_IO_getPos_internal(pdc, &(loc->e), -1);
-    -1 is normal case because the last char
-    of interest is normally just to the left of the IO cursor
-
- * for array code, could remember begin loc, as in
-    PDC_pos_t array_begin;
-    PDC_IO_getPos_internal(pdc, &array_begin, 0);
-   and use it for the 'end case' errors where the
-   error applies to the whole array span.
-   
-   similarly for term missing end case, prior to scanning for
-   it could do   
