@@ -1207,7 +1207,7 @@ pStructFieldList:
 
 
 pStruct:
- pIsRecord pIsSource PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
+ pIsRecord pIsSource PSTRUCT pName  pTyParams LCURLY pStructFieldList 
  ( makeTypeName pName;
    PX.PStruct {isRecord = pIsRecord, isSource = pIsSource, 
 	       containsRecord = false, largeHeuristic = false,
