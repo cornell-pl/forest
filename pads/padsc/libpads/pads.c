@@ -4713,7 +4713,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
 #gen_include "padsc-internal.h"
 #gen_include "padsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.100 2003-09-09 19:45:26 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.101 2003-09-11 19:25:28 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5612,8 +5612,10 @@ PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
   PDC_IO_elt_t     *elt;
   size_t           remain;
   size_t           avail;
+#ifndef NDEBUG
   PDC_pos_t        tpos; /* XXX_REMOVE */
   int              toffset = offset; /* XXX_REMOVE */
+#endif
 
   PDCI_DISC_1P_CHECKS("PDC_IO_getPos", pos);
   tp        = &(pdc->stack[pdc->top]);
@@ -5638,7 +5640,9 @@ PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
 	  pos->num = 0;
 	  pos->byte = 0;
 	  pos->unit = "*pos not found*";
+#ifndef NDEBUG
 	  goto err_check; /* XXX_REMOVE */
+endif
 	  return PDC_ERR;
 	}
 	if (elt->len) {
@@ -5663,7 +5667,9 @@ PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
 	  pos->num = 0;
 	  pos->byte = 0;
 	  pos->unit = "*pos not found*";
+#ifndef NDEBUG
 	  goto err_check; /* XXX_REMOVE */
+#endif
 	  return PDC_ERR;
 	}
 	if (elt->len) {
@@ -5684,6 +5690,7 @@ PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
     pos->byte = 0;
   }
   pos->unit = elt->unit;
+#ifndef NDEBUG
   /* XXX_REMOVE */
   if (toffset == 0) {
     PDCI_IO_GETPOS(pdc, tpos);
@@ -5695,8 +5702,10 @@ PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
   if (!PDC_POS_EQ(*pos, tpos)) {
     PDC_FATAL(pdc->disc, "XXX_REMOVE (1) Internal error, PDCI_IO_POSfoo macro not computing the right thing???");
   }
+#endif
   return PDC_OK;
 
+#ifndef NDEBUG
  err_check:
   /* XXX_REMOVE */
   if (toffset == 0) {
@@ -5710,6 +5719,7 @@ PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
     PDC_FATAL(pdc->disc, "XXX_REMOVE (2) Internal error, PDCI_IO_GETPOSfoo macro not computing the right thing???");
   }
   return PDC_ERR;
+#endif
 }
 
 PDC_error_t
