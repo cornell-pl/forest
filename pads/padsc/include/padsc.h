@@ -1362,6 +1362,10 @@ PDC_error_t PDC_sbh_ufpoint64_read  (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num
 /* ================================================================================
  * BASE TYPE ACCUMULATORS
  *
+ * For integer type T, accumulator functions PDC_T_acc_avg returns the running average
+ * as a double, while PDC_T_acc_ravg returns the average as a T value by roudning the
+ * double to the nearest T.
+ *
  * Each report function takes the following params (in addition to pdc/disc first/last args):
  *   prefix: a descriptive string, usually the field name
  *           if NULL or empty, the string "<top>" is used
@@ -1421,6 +1425,8 @@ PDC_error_t PDC_int8_acc_cleanup (PDC_t *pdc, PDC_int8_acc *a);
 PDC_error_t PDC_int8_acc_add     (PDC_t *pdc, PDC_int8_acc *a, PDC_base_ed *ed, PDC_int8 *val);
 PDC_error_t PDC_int8_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
 				  PDC_int8_acc *a);
+double      PDC_int8_acc_avg     (PDC_t *pdc, PDC_int8_acc *a);
+PDC_int8    PDC_int8_acc_ravg    (PDC_t *pdc, PDC_int8_acc *a);
 
 PDC_error_t PDC_int16_acc_init    (PDC_t *pdc, PDC_int16_acc *a);
 PDC_error_t PDC_int16_acc_reset   (PDC_t *pdc, PDC_int16_acc *a);
@@ -1428,6 +1434,8 @@ PDC_error_t PDC_int16_acc_cleanup (PDC_t *pdc, PDC_int16_acc *a);
 PDC_error_t PDC_int16_acc_add     (PDC_t *pdc, PDC_int16_acc *a, PDC_base_ed *ed, PDC_int16 *val);
 PDC_error_t PDC_int16_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
 				   PDC_int16_acc *a);
+double      PDC_int16_acc_avg     (PDC_t *pdc, PDC_int16_acc *a);
+PDC_int16   PDC_int16_acc_ravg    (PDC_t *pdc, PDC_int16_acc *a);
 
 PDC_error_t PDC_int32_acc_init    (PDC_t *pdc, PDC_int32_acc *a);
 PDC_error_t PDC_int32_acc_reset   (PDC_t *pdc, PDC_int32_acc *a);
@@ -1435,6 +1443,8 @@ PDC_error_t PDC_int32_acc_cleanup (PDC_t *pdc, PDC_int32_acc *a);
 PDC_error_t PDC_int32_acc_add     (PDC_t *pdc, PDC_int32_acc *a, PDC_base_ed *ed, PDC_int32 *val);
 PDC_error_t PDC_int32_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
 				   PDC_int32_acc *a);
+double      PDC_int32_acc_avg     (PDC_t *pdc, PDC_int32_acc *a);
+PDC_int32   PDC_int32_acc_ravg    (PDC_t *pdc, PDC_int32_acc *a);
 
 PDC_error_t PDC_int64_acc_init    (PDC_t *pdc, PDC_int64_acc *a);
 PDC_error_t PDC_int64_acc_reset   (PDC_t *pdc, PDC_int64_acc *a);
@@ -1442,6 +1452,8 @@ PDC_error_t PDC_int64_acc_cleanup (PDC_t *pdc, PDC_int64_acc *a);
 PDC_error_t PDC_int64_acc_add     (PDC_t *pdc, PDC_int64_acc *a, PDC_base_ed *ed, PDC_int64 *val);
 PDC_error_t PDC_int64_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
 				   PDC_int64_acc *a);
+double      PDC_int64_acc_avg     (PDC_t *pdc, PDC_int64_acc *a);
+PDC_int64   PDC_int64_acc_ravg    (PDC_t *pdc, PDC_int64_acc *a);
 
 PDC_error_t PDC_uint8_acc_init    (PDC_t *pdc, PDC_uint8_acc *a);
 PDC_error_t PDC_uint8_acc_reset   (PDC_t *pdc, PDC_uint8_acc *a);
@@ -1449,6 +1461,8 @@ PDC_error_t PDC_uint8_acc_cleanup (PDC_t *pdc, PDC_uint8_acc *a);
 PDC_error_t PDC_uint8_acc_add     (PDC_t *pdc, PDC_uint8_acc *a, PDC_base_ed *ed, PDC_uint8 *val);
 PDC_error_t PDC_uint8_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
 				   PDC_uint8_acc *a);
+double      PDC_uint8_acc_avg     (PDC_t *pdc, PDC_uint8_acc *a);
+PDC_uint8   PDC_uint8_acc_ravg    (PDC_t *pdc, PDC_uint8_acc *a);
 
 PDC_error_t PDC_uint16_acc_init    (PDC_t *pdc, PDC_uint16_acc *a);
 PDC_error_t PDC_uint16_acc_reset   (PDC_t *pdc, PDC_uint16_acc *a);
@@ -1456,6 +1470,8 @@ PDC_error_t PDC_uint16_acc_cleanup (PDC_t *pdc, PDC_uint16_acc *a);
 PDC_error_t PDC_uint16_acc_add     (PDC_t *pdc, PDC_uint16_acc *a, PDC_base_ed *ed, PDC_uint16 *val);
 PDC_error_t PDC_uint16_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
 				    PDC_uint16_acc *a);
+double      PDC_uint16_acc_avg     (PDC_t *pdc, PDC_uint16_acc *a);
+PDC_uint16  PDC_uint16_acc_ravg    (PDC_t *pdc, PDC_uint16_acc *a);
 
 PDC_error_t PDC_uint32_acc_init    (PDC_t *pdc, PDC_uint32_acc *a);
 PDC_error_t PDC_uint32_acc_reset   (PDC_t *pdc, PDC_uint32_acc *a);
@@ -1463,6 +1479,8 @@ PDC_error_t PDC_uint32_acc_cleanup (PDC_t *pdc, PDC_uint32_acc *a);
 PDC_error_t PDC_uint32_acc_add     (PDC_t *pdc, PDC_uint32_acc *a, PDC_base_ed *ed, PDC_uint32 *val);
 PDC_error_t PDC_uint32_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
 				    PDC_uint32_acc *a);
+double      PDC_uint32_acc_avg     (PDC_t *pdc, PDC_uint32_acc *a);
+PDC_uint32  PDC_uint32_acc_ravg    (PDC_t *pdc, PDC_uint32_acc *a);
 
 PDC_error_t PDC_uint64_acc_init    (PDC_t *pdc, PDC_uint64_acc *a);
 PDC_error_t PDC_uint64_acc_reset   (PDC_t *pdc, PDC_uint64_acc *a);
@@ -1470,6 +1488,8 @@ PDC_error_t PDC_uint64_acc_cleanup (PDC_t *pdc, PDC_uint64_acc *a);
 PDC_error_t PDC_uint64_acc_add     (PDC_t *pdc, PDC_uint64_acc *a, PDC_base_ed *ed, PDC_uint64 *val);
 PDC_error_t PDC_uint64_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
 				    PDC_uint64_acc *a);
+double      PDC_uint64_acc_avg     (PDC_t *pdc, PDC_uint64_acc *a);
+PDC_uint64  PDC_uint64_acc_ravg    (PDC_t *pdc, PDC_uint64_acc *a);
 
 PDC_error_t PDC_string_acc_init    (PDC_t *pdc, PDC_string_acc *a);
 PDC_error_t PDC_string_acc_reset   (PDC_t *pdc, PDC_string_acc *a);

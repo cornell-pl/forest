@@ -9,12 +9,18 @@
  *                   as the term character.  for EBCDIC newline-terminated records, use
  *                   PDC_EBCDIC_NEWLINE as the term character.
  *
+ *   vlrec:        an IO discipline for IBM style variable length records
+ *                 with length specified at front
+ *
  *   norec:        a raw bytes IO discipline that does not use EOR
  *
  *   fwrec_noseek: a version of fwrec that does not require that
  *                 the sfio stream be seekable
  *
  *   ctrec_noseek: a version of ctrec that does not require that
+ *                 the sfio stream be seekable
+ *
+ *   vlrec_noseek: a version of vlrec that does not require that
  *                 the sfio stream be seekable
  *
  *   norec_noseek: a version of norec that does not require that
@@ -121,7 +127,7 @@ typedef struct PDC_fwrec_noseek_data_s {
   PDC_IO_elt_t   *f_head;     /* head of free list   */
   Sfio_t         *io;         /* Sfio stream to read from */
   int             eof;        /* hit EOF? */
-  size_t          num;        /* record/block number */
+  size_t          num;        /* unit number */
   char            unit[100];  /* unit description when reading blocks */
   char            punit[100]; /* ditto -- partial read case */
 } PDC_fwrec_noseek_data_t;
@@ -269,7 +275,7 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     return PDC_ERR;
   }
   iodata = (PDC_fwrec_noseek_iodata_t*)elt->disc_ptr;
-  readlen = sfread(data->io, (Void_t*)iodata->dbuf, data->block_size);
+  readlen = sfread(data->io, iodata->dbuf, data->block_size);
   if (readlen < 0) {
     PDC_SYSERR(pdc->disc, "PDC_fwrec_noseek_read: Error reading IO stream");
     readlen = 0;
@@ -282,11 +288,7 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     elt->len = 0; /* ignore partial data except for putback */
     elt->begin = elt->end = iodata->dbuf;
     iodata->eof_putback = readlen;
-    if (readlen == 0) { /* trivial EOF record */
-      elt->unit = "(empty EOF) block";
-    } else { /* malformed EOF record */
-      elt->unit = "(malformed EOF) block";
-    }
+    elt->unit = "(EOF)";
   } else {
     elt->eor = 1;
     elt->eof = 0;
@@ -417,7 +419,7 @@ typedef struct PDC_norec_noseek_data_s {
   PDC_IO_elt_t   *f_head;     /* head of free list   */
   Sfio_t         *io;         /* Sfio stream to read from */
   int             eof;        /* hit EOF? */
-  size_t          num;        /* record/block number */
+  size_t          num;        /* unit number */
   char            unit[100];  /* unit description when reading blocks */
   char            punit[100]; /* ditto -- partial read case */
   PDC_byte       *dbuf;       /* resizable data buffer */
@@ -500,7 +502,7 @@ PDC_norec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
       }
     }
     if (ctr) {
-      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_fwrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_norec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -592,7 +594,7 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
 
   elt->eor = 0; /* norec_noseek never uses eor */
   elt->begin = data->dbuf_end;
-  readlen = sfread(data->io, (Void_t*)elt->begin, data->block_size);
+  readlen = sfread(data->io, elt->begin, data->block_size);
   if (readlen < 0) {
     PDC_SYSERR(pdc->disc, "PDC_norec_noseek_read: Error reading IO stream");
     readlen = 0;
@@ -609,7 +611,7 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     elt->eof = 1;
     data->eof = 1;
     if (elt->len == 0) { /* trivial EOF record */
-      elt->unit = "(empty EOF) block";
+      elt->unit = "(EOF)";
     } else { /* partial-read EOF record */
       elt->unit = (const char*)data->punit;
     }
@@ -741,7 +743,7 @@ typedef struct PDC_ctrec_noseek_data_s {
   PDC_IO_elt_t   *eof_elt;     /* always keep around an elt to be used as EOF elt */
   Sfio_t         *io;          /* Sfio stream to read from */
   int             eof;         /* hit EOF? */
-  size_t          num;         /* line number */
+  size_t          num;         /* unit number */
   PDC_byte       *dbuf;        /* resizable data buffer */
   PDC_byte       *dbuf_end;    /* 1 beyond last byte read */ 
   size_t          un_bytes;    /* unread bytes: # bytes not yet part of IO rec list */
@@ -826,12 +828,12 @@ PDC_ctrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
     for (; b >= bmin; b--, ctr++) {
       c = *b;
       if (c != sfungetc(data->io, c)) {
-	PDC_WARN1(pdc->disc, "PDC_norec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	PDC_WARN1(pdc->disc, "PDC_ctrec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
 	goto after_restore;
       }
     }
     if (ctr) {
-      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_fwrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_ctrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -853,12 +855,12 @@ PDC_ctrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
 PDC_error_t
 PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_IO_elt_t** next_elt_out)
 {
-  PDC_ctrec_noseek_data_t    *data;
-  PDC_IO_elt_t        *elt, *keepelt;
-  ssize_t             readlen, keep_len, discard_len, bytes_read;
-  PDC_byte            *tmp;
-  PDC_byte            *found_cterm;
-  Sfoff_t             diff;
+  PDC_ctrec_noseek_data_t   *data;
+  PDC_IO_elt_t              *elt, *keepelt;
+  ssize_t                    readlen, keep_len, discard_len, bytes_read;
+  PDC_byte                  *tmp;
+  PDC_byte                  *found_cterm;
+  Sfoff_t                    diff;
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -943,7 +945,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     } else {
       /* dbuf already had space at block index btail */
     }
-    readlen = sfread(data->io, (Void_t*)data->dbuf_end, data->block_size);
+    readlen = sfread(data->io, data->dbuf_end, data->block_size);
     if (readlen < 0) {
       PDC_SYSERR(pdc->disc, "PDC_ctrec_noseek_read: Error reading IO stream");
       readlen = 0;
@@ -969,6 +971,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   while (found_cterm) {
     IODISC_NEED_AN_ELT("PDC_ctrec_noseek_read", elt, data->f_head, data->disc_vm);
     if (!elt) { /* turn this error into an EOF case */
+      PDC_WARN(pdc->disc, "PDC_ctrec_noseek_read: internal memory alloc error, entering EOF state");
       readlen = 0;
       break;
     }
@@ -978,7 +981,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     elt->eor       = 1;
     elt->eof       = 0;
     elt->num       = (data->num)++;
-    elt->unit      = "line";
+    elt->unit      = "record";
     data->un_bytes -= (elt->len + 1); /* acount for cterm */
     elt->begin[elt->len] = 0; /* null-terminate the record, replaces cterm with NULL */
     PDC_APPEND_ELT(data->head, elt);
@@ -1005,12 +1008,12 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     data->un_bytes = 0;
     elt->num  = (data->num)++;
     if (elt->len == 0) { /* trivial EOF record */
-      elt->unit = "(empty EOF) line";
+      elt->unit = "(EOF)";
     } else { /* partial-read EOF record */
       if (data->cterm == '\n') {
-	elt->unit = "(partial: missing newline) line";
+	elt->unit = "(partial: missing newline) record";
       } else {
-	elt->unit = "(partial: missing record terminator) line";
+	elt->unit = "(partial: missing record terminator) record";
       }
     }
     elt->begin[elt->len] = 0; /* null-terminate the record */
@@ -1051,12 +1054,12 @@ PDC_ctrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
 PDC_IO_disc_t *
 PDC_ctrec_noseek_make(PDC_byte termChar, size_t block_size_hint)
 {
-  Vmalloc_t         *disc_vm = 0;
-  PDC_ctrec_noseek_data_t  *data;
-  PDC_IO_disc_t     *io_disc;
-  PDC_IO_elt_t      *f_head;
-  PDC_byte          *dbuf;
-  size_t            block_size;
+  Vmalloc_t                 *disc_vm = 0;
+  PDC_ctrec_noseek_data_t   *data;
+  PDC_IO_disc_t             *io_disc;
+  PDC_IO_elt_t              *f_head;
+  PDC_byte                  *dbuf;
+  size_t                     block_size;
 
   block_size = (block_size_hint) ? block_size_hint : PDC_CTREC_NOSEEK_DEF_BSIZE;
 
@@ -1110,6 +1113,468 @@ PDC_ctrec_noseek_make(PDC_byte termChar, size_t block_size_hint)
 }
 
 /* ================================================================================ */
+/* PDC_vlrec_noseek IMPLEMENTATION */
+
+/* default expected avg rlen, must be > 4 */
+#define PDC_VLREC_NOSEEK_DEF_AVG_RLEN 512
+/* multiply expected avg rlen by the following to get intial allocation */
+#define PDC_VLREC_NOSEEK_INIT_RECS 8
+/* multiply expected avg rlen by the following to get growth increment */
+#define PDC_VLREC_NOSEEK_GROW_RECS 8
+/* once we can free at least this pcnt of bytes, do so (specify pcnt using 1--100) */
+#define PDC_VLREC_NOSEEK_GC_PCNT 25
+
+/* private types */
+typedef struct PDC_vlrec_noseek_data_s {
+  /* configuration fields */
+  int             blocked;     /* are records grouped into blocks? */
+  size_t          rlen_hint;   /* if set, a running avg is not computed */
+  /* other fields */
+  Vmalloc_t      *disc_vm;     /* lifetime: make/unmake pairing */
+  PDC_IO_elt_t   *head;        /* head of IO rec list */
+  PDC_IO_elt_t   *f_head;      /* head of free list   */
+  PDC_IO_elt_t   *eof_elt;     /* always keep around an elt to be used as EOF elt */
+  Sfio_t         *io;          /* Sfio stream to read from */
+  int             eof;         /* hit EOF? */
+  size_t          num;         /* unit number */
+  PDC_byte       *dbuf;        /* resizable data buffer */
+  PDC_byte       *dbuf_end;    /* 1 beyond last byte read */ 
+  size_t          dbuf_alloc;  /* current size of dbuf */
+  size_t          gc_point;    /* always == (dbuf_alloc * PDC_VLREC_NOSEEK_GC_PCNT)/100 */
+  PDC_uint32_acc  acc;         /* used to accumulate record lengths */
+  PDC_base_ed     ed;          /* used with acc */
+  size_t          avg_rlen;    /* latest computed record length avg */
+  size_t          blk_expect;  /* total bytes in current block (expected) -- only used if blocked is set */
+  size_t          blk_seen;    /* bytes read in current block -- only used if blocked is set */
+  char            descr[100];  /* description */ 
+} PDC_vlrec_noseek_data_t;
+
+PDC_error_t
+PDC_vlrec_noseek_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t* sfio, PDC_IO_elt_t* head)
+{
+  PDC_vlrec_noseek_data_t  *data;
+  PDC_IO_elt_t             *elt; 
+
+  if (!pdc || !pdc->disc) {
+    return PDC_ERR;
+  }
+  if (!sfio || !head || !io_disc || !io_disc->data) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_sfopen: bad param(s)");
+    return PDC_ERR;
+  }
+  if (head->next != head || head->prev != head) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_sfopen: head->next and head->prev must both point to head");
+    return PDC_ERR;
+  }
+  data = (PDC_vlrec_noseek_data_t*)io_disc->data;
+  if (data->io) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_sfopen: not in a valid closed state");
+    return PDC_ERR;
+  }
+  IODISC_NEED_AN_ELT("PDC_vlrec_noseek_sfopen", elt, data->f_head, data->disc_vm);
+  if (!elt) {
+    return PDC_ERR;
+  }
+
+  data->io           = sfio;
+  data->eof          = 0;
+  data->eof_elt      = elt;
+  data->head         = head;
+  data->num          = 1;
+  data->dbuf_end     = data->dbuf;
+  data->blk_expect   = (data->blocked) ? 0 : 1;
+  /* the combination blocked == 0, blk_expect != 0 is sufficient to suppress all block processing */
+  /* if blocked is set, we set blk_expect to zero to force the block length to be read */
+
+  if (data->rlen_hint) {
+    data->avg_rlen = data->rlen_hint;
+  } else {
+    data->avg_rlen = PDC_VLREC_NOSEEK_DEF_AVG_RLEN;
+    PDC_uint32_acc_init(pdc, &(data->acc));
+  }
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_vlrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain)
+{
+  PDC_vlrec_noseek_data_t  *data;
+  PDC_IO_elt_t             *elt;
+  int                       c, ctr;
+  PDC_byte                 *b, *bmin;
+
+  if (!pdc || !pdc->disc) {
+    return PDC_ERR;
+  }
+  if (!io_disc || !io_disc->data) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_sfclose: bad param(s)");
+    return PDC_ERR;
+  }
+  data = (PDC_vlrec_noseek_data_t*)io_disc->data;
+  if (!data->io) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_sfclose: not in a valid open state");
+    return PDC_ERR;
+  }
+  if (io_cur_elt == data->head) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_sfclose: io_cur_elt == head not a valid elt!");
+    return PDC_ERR;
+  }
+  if (io_cur_elt && remain > io_cur_elt->len) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_sfclose: remain > io_cur_elt->len!");
+    return PDC_ERR;
+  }
+  if (io_cur_elt) {
+    /* return remaining bytes to Sfio stream using sfungetc */
+    ctr = 0;
+    b = data->dbuf_end - 1;
+    bmin = io_cur_elt->end - remain;
+    for (; b >= bmin; b--, ctr++) {
+      c = *b;
+      if (c != sfungetc(data->io, c)) {
+	PDC_WARN1(pdc->disc, "PDC_vlrec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	goto after_restore;
+      }
+    }
+    if (ctr) {
+      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_vlrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+    }
+  }
+ after_restore:
+
+  /* remove all elts from list -- put them on the free list */
+  IODISC_REMOVE_ALL_ELTS(data->head, data->f_head, elt);
+  if (data->eof_elt) {
+    elt = data->eof_elt;
+    data->eof_elt = 0;
+    PDC_APPEND_ELT(data->f_head, elt);
+  }
+
+  data->io      = 0;
+  data->head    = 0; 
+  PDC_uint32_acc_report (pdc, "XXX_REMOVE_vlrec_noseek.record_len", "PDC_uint32", 0, &(data->acc));
+  PDC_uint32_acc_cleanup(pdc, &(data->acc));
+
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_IO_elt_t** next_elt_out)
+{
+  PDC_vlrec_noseek_data_t    *data;
+  PDC_IO_elt_t               *elt, *keepelt;
+  ssize_t                     readlen, keep_len, discard_len;
+  size_t                      record_len, xtra;
+  Sfoff_t                     diff;
+
+  if (!pdc || !pdc->disc) {
+    return PDC_ERR;
+  }
+  if (!io_disc || !io_disc->data || !next_elt_out) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: bad param(s)");
+    return PDC_ERR;
+  }
+  (*next_elt_out) = 0;
+  data = (PDC_vlrec_noseek_data_t*)io_disc->data;
+
+  if (!data->io) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: not in a valid open state");
+    return PDC_ERR;
+  }
+  if (data->eof) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: called after returning EOF flag in previous call");
+    return PDC_ERR;
+  }
+  if (io_cur_elt == data->head) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: io_cur_elt == head not a valid elt!");
+    return PDC_ERR;
+  }
+  keepelt = io_cur_elt ? io_cur_elt : data->head;
+  /* move some elts to the free list */
+  IODISC_REMOVE_SOME_ELTS(data->head, data->f_head, keepelt, elt);
+  /*
+   * garbage collect if there is a good chunk of data to be discarded
+   */
+  if (io_cur_elt) {
+    keep_len = data->dbuf_end - io_cur_elt->begin;
+  } else {
+    keep_len = 0;
+  }
+  if (keep_len == 0) {
+    /* starting from scratch, no io_cur_elt or unread bytes */
+    data->dbuf_end = data->dbuf;
+    *(data->dbuf_end) = 0; /* null-terminate dbuf */
+  } else {
+    discard_len = (data->dbuf_end - data->dbuf) - keep_len;
+    if (discard_len > data->gc_point) {
+      /* garbage collect */
+      diff = - discard_len; /* data moving down - negative offset */
+      memmove((void*)data->dbuf, (const void*)(data->dbuf_end - keep_len), keep_len);
+      data->dbuf_end = data->dbuf + keep_len;
+      /* redo begin/end ptrs */
+      IODISC_RELOC_ELTS("PDC_vlrec_noseek_read", data->head, diff, elt);
+      *(data->dbuf_end) = 0; /* null-terminate dbuf */
+    }
+  }
+
+  /* set extra to 4 if it is time to read a new block length, else 0 */
+  xtra = (data->blk_expect == 0) ? 4 : 0;
+
+  /* grow dbuf if there are fewer than avg_rlen bytes left (note always > 4) */
+  readlen = 0;
+  diff = data->dbuf_end - data->dbuf;
+  if (data->dbuf_alloc - diff < data->avg_rlen + xtra) {
+    /* grow with room for more than one record */
+    PDC_byte *dbuf_next; 
+    size_t    dbuf_alloc_next = data->dbuf_alloc + (data->avg_rlen * PDC_VLREC_NOSEEK_GROW_RECS) + xtra + 1;
+    if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, PDC_byte, dbuf_alloc_next, 1))) {
+      PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: could not alloc space for input record");
+      goto eof_case;
+    }
+    PDC_WARN2(pdc->disc, "XXX_REMOVE grew dbuf from %lu to %lu",
+	      (unsigned long)data->dbuf_alloc, (unsigned long)dbuf_alloc_next);
+    data->dbuf_alloc = dbuf_alloc_next;
+    data->gc_point   = (data->dbuf_alloc * PDC_VLREC_NOSEEK_GC_PCNT) / 100;
+    diff = dbuf_next - data->dbuf;
+    if (diff) {
+      keep_len         = data->dbuf_end - data->dbuf;
+      data->dbuf       = dbuf_next;
+      data->dbuf_end   = dbuf_next + keep_len;
+      IODISC_RELOC_ELTS("PDC_vlrec_noseek_read", data->head, diff, elt);
+    }
+  }
+
+  /* read 4 (or 8) bytes to determine record_len, goto eof_case if not enough bytes */
+  readlen = sfread(data->io, data->dbuf_end, 4+xtra);
+  if (readlen != 4+xtra) {
+    if (readlen < 0) {
+      PDC_SYSERR(pdc->disc, "PDC_vlrec_noseek_read: Error reading IO stream, entering EOF state");
+      readlen = 0;
+    } else if (readlen > 0) {
+      PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: bytes remaining < record length field, entering EOF state");
+    }
+    goto eof_case;
+  }
+
+  if (xtra) {
+    /* initialize blk_expect and blk_seen */
+    data->blk_expect = (data->dbuf_end[0] << 8) + data->dbuf_end[1]; /* third and fourth bytes ignored */
+    /* XXX should only do this if some paranoid flag is set */
+    if (data->dbuf_end[2] || data->dbuf_end[3]) {
+      PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: block length field has non-null bytes 3/4, ignoring");
+    }
+    /*    PDC_WARN1(pdc->disc, "XXX_REMOVE starting new block of size %lu", (unsigned long)data->blk_expect); */
+    data->dbuf_end += 4;
+    data->blk_seen = 4;
+    if (data->blk_expect < 8) {
+      PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: Invalid block length, entering EOF state");
+      goto eof_case;
+    }
+  }
+
+  record_len = (data->dbuf_end[0] << 8) + data->dbuf_end[1]; /* third and fourth bytes ignored */
+  /* XXX should only do this if some paranoid flag is set */
+  if (data->dbuf_end[2] || data->dbuf_end[3]) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: record length field has non-null bytes 3/4, ignoring");
+  }
+  /* XXX should only do this if some paranoid flag is set */
+  if (record_len > PDC_MAX_INT16) {
+    PDC_WARN2(pdc->disc, "PDC_vlrec_noseek_read: record_len %ld is greater than %ld as established by IBM",
+	      (long)record_len, (long)PDC_MAX_INT16);
+  }
+  data->dbuf_end += 4;
+  if (data->rlen_hint == 0) {
+    PDC_uint32 ui32 = record_len + 5;
+    PDC_uint32_acc_add(pdc, &(data->acc), &(data->ed), &ui32);
+    if (data->num % 10 == 0) {
+      data->avg_rlen = PDC_uint32_acc_ravg(pdc, &(data->acc));
+      /*  PDC_WARN1(pdc->disc, "XXX_REMOVE changed avg_rlen to %ld", (long)data->avg_rlen); */
+    }
+  }
+  if (record_len < 4) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: Invalid record length, entering EOF state");
+    goto eof_case;
+  }
+  record_len -= 4; /* record_len is now == bytes remaining to be read */
+
+  /* grow dbuf if there are fewer than (record_len + 1) bytes left */
+  readlen = 0;
+  diff = data->dbuf_end - data->dbuf;
+  if (data->dbuf_alloc - diff < record_len + 1) {
+    /* grow with room for more than one record */
+    PDC_byte *dbuf_next; 
+    size_t    dbuf_alloc_next = data->dbuf_alloc + record_len + (data->avg_rlen * PDC_VLREC_NOSEEK_GROW_RECS) + 1;
+    if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, PDC_byte, dbuf_alloc_next, 1))) {
+      PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: could not alloc space for input record");
+      goto eof_case;
+    }
+    PDC_WARN2(pdc->disc, "XXX_REMOVE grew dbuf from %lu to %lu", data->dbuf_alloc, dbuf_alloc_next);
+    data->dbuf_alloc = dbuf_alloc_next;
+    data->gc_point   = (data->dbuf_alloc * PDC_VLREC_NOSEEK_GC_PCNT) / 100;
+    diff = dbuf_next - data->dbuf;
+    if (diff) {
+      keep_len         = data->dbuf_end - data->dbuf;
+      data->dbuf       = dbuf_next;
+      data->dbuf_end   = dbuf_next + keep_len;
+      IODISC_RELOC_ELTS("PDC_vlrec_noseek_read", data->head, diff, elt);
+    }
+  }
+
+  /* read record_len bytes, goto eof_case if not enough bytes */
+  readlen = sfread(data->io, data->dbuf_end, record_len);
+  if (readlen != record_len) {
+    if (readlen < 0) {
+      PDC_SYSERR(pdc->disc, "PDC_vlrec_noseek_read: Error reading IO stream");
+      readlen = 0;
+    } else if (readlen > 0) {
+      PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: bytes remaining smaller than record length");
+    }
+    goto eof_case;
+  }
+
+  if (data->blocked) {
+    data->blk_seen += (readlen+4);
+    if (data->blk_seen > data->blk_expect) {
+      PDC_WARN2(pdc->disc, "XXX_REMOVE seen: %lu  expect:  %lu",
+		(unsigned long)data->blk_seen, (unsigned long)data->blk_expect);
+      PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: length of records in block exceeds block length, entering EOF state");
+      goto eof_case;
+    }
+    if (data->blk_seen == data->blk_expect) {
+      /* PDC_WARN(pdc->disc, "XXX_REMOVE finished reading a block"); */
+      data->blk_expect = 0; /* force next block length to be read */
+    }
+  }
+
+  /* make an elt using the bytes just read */
+  IODISC_NEED_AN_ELT("PDC_vlrec_noseek_read", elt, data->f_head, data->disc_vm);
+  if (!elt) { /* turn this error into an EOF case */
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_read: internal memory alloc error, entering EOF state");
+    goto eof_case;
+  }
+  elt->begin     = data->dbuf_end;
+  data->dbuf_end += readlen;
+  elt->end       = data->dbuf_end;
+  elt->len       = readlen;
+  elt->eor       = 1;
+  elt->eof       = 0;
+  elt->unit      = "record";
+  goto done;
+
+ eof_case:
+  elt = data->eof_elt;
+  data->eof_elt     = 0;
+  data->dbuf_end += readlen;
+  elt->begin        = data->dbuf_end;
+  elt->end          = data->dbuf_end;
+  elt->len          = 0; /* ignore readlen except for putback (captured in dbuf_end) */
+  elt->eor          = 0;
+  elt->eof          = 1;
+  data->eof         = 1;
+  elt->unit         = "(EOF)";
+
+ done:
+  elt->num             = (data->num)++;
+  elt->begin[elt->len] = 0; /* null-terminate the record */
+  PDC_APPEND_ELT(data->head, elt);
+#if 0
+  if (pdc->disc->errorf) {
+    pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, PDC_fmt_Cstr(elt->begin, elt->len));
+  }
+#endif
+  (*next_elt_out) = elt;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_vlrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
+{
+  PDC_vlrec_noseek_data_t  *data;
+
+  if (!pdc || !pdc->disc) {
+    return PDC_ERR;
+  }
+  data = (PDC_vlrec_noseek_data_t*)io_disc->data;
+  if (data) {
+    if (data->io) {
+      PDC_WARN(pdc->disc, "PDC_vlrec_noseek_unmake: sfclose should have been called first, calling it now");
+      PDC_vlrec_noseek_sfclose(pdc, io_disc, 0, 0);
+    }
+    if (data->disc_vm) {
+      vmclose(data->disc_vm);
+    }
+  }
+  return PDC_ERR;
+}
+
+PDC_IO_disc_t *
+PDC_vlrec_noseek_make(int blocked, size_t avg_rlen_hint)
+{
+  Vmalloc_t                 *disc_vm = 0;
+  PDC_vlrec_noseek_data_t   *data;
+  PDC_IO_disc_t             *io_disc;
+  PDC_IO_elt_t              *f_head;
+  PDC_byte                  *dbuf;
+  size_t                     dbuf_alloc;
+  size_t                     rlen;
+
+  if (avg_rlen_hint > 0 && avg_rlen_hint < 5) {
+    PDC_WARN(&PDC_default_disc, "PDC_vlrec_noseek_make: avg_rlen_hint is > 0 but less than min of 5; changing to 5");
+    avg_rlen_hint = 5;
+  }
+  rlen = (avg_rlen_hint) ? avg_rlen_hint : PDC_VLREC_NOSEEK_DEF_AVG_RLEN;
+
+  if (!(disc_vm = vmopen(Vmdcheap, Vmbest, 0))) {
+    goto alloc_err;
+  }
+  if (!(io_disc = vmnewof(disc_vm, 0, PDC_IO_disc_t, 1, 0))) {
+    goto alloc_err;
+  }
+  if (!(data = vmnewof(disc_vm, 0, PDC_vlrec_noseek_data_t, 1, 0))) {
+    goto alloc_err;
+  }
+  if (!(f_head = vmnewof(disc_vm, 0, PDC_IO_elt_t, 1, 0))) {
+    goto alloc_err;
+  }
+  dbuf_alloc = PDC_VLREC_NOSEEK_INIT_RECS * rlen;
+  if (!(dbuf = vmoldof(disc_vm, 0, PDC_byte, dbuf_alloc, 1))) {
+    goto alloc_err;
+  }
+
+  f_head->prev = f_head;
+  f_head->next = f_head;
+
+  data->disc_vm       = disc_vm;
+  data->blocked       = blocked;
+  data->rlen_hint     = avg_rlen_hint;
+  data->f_head        = f_head;
+  data->dbuf          = dbuf;
+  data->dbuf_alloc    = dbuf_alloc;
+  data->gc_point      = (data->dbuf_alloc * PDC_VLREC_NOSEEK_GC_PCNT) / 100;
+  sprintf(data->descr, "an IO discipline for IBM-stle variable-length records");
+
+  io_disc->unmake_fn    = PDC_vlrec_noseek_unmake;
+  io_disc->sfopen_fn    = PDC_vlrec_noseek_sfopen;
+  io_disc->sfclose_fn   = PDC_vlrec_noseek_sfclose;
+  io_disc->read_fn      = PDC_vlrec_noseek_read;
+
+  io_disc->name         = "vlrec_noseek";
+  io_disc->descr        = data->descr;
+  io_disc->uses_eor     = 1;
+  io_disc->data         = data;
+
+  /* data->ed starts zeroed due to vmnewof */
+
+  return io_disc;
+
+ alloc_err:
+  PDC_WARN(&PDC_default_disc, "PDC_vlrec_noseek_make: out of space");
+  if (disc_vm) {
+    vmclose(disc_vm);
+  }
+  return 0;
+}
+
+/* ================================================================================ */
 /* PDC_fwrec IMPLEMENTATION */
 
 PDC_IO_disc_t *
@@ -1124,6 +1589,16 @@ PDC_fwrec_make(size_t leader_len, size_t data_len, size_t trailer_len)
 
 PDC_IO_disc_t *
 PDC_ctrec_make(PDC_byte termChar, size_t block_size_hint)
+{
+  /* XXX_TODO */
+  return 0;
+}
+
+/* ================================================================================ */
+/* PDC_vlrec IMPLEMENTATION */
+
+PDC_IO_disc_t *
+PDC_vlrec_make(int blocked, size_t avg_rlen_hint)
 {
   /* XXX_TODO */
   return 0;
@@ -1146,7 +1621,7 @@ typedef struct PDC_norec_data_s {
   PDC_IO_elt_t   *eof_elt;    /* always keep around an elt to be used as EOF elt */
   Sfio_t         *io;         /* Sfio stream to read from */
   int             eof;        /* hit EOF? */
-  size_t          num;        /* record/block number */
+  size_t          num;        /* unit number */
   PDC_byte        dummy[1];   /* for immediate EOF error */
   char            unit[100];  /* unit description when reading blocks */
   char            punit[100]; /* ditto -- partial read case */
@@ -1198,7 +1673,7 @@ PDC_norec_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t *sfio, PDC_IO_elt_t 
 PDC_error_t
 PDC_norec_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain)
 {
-  PDC_norec_data_t  *data;
+  PDC_norec_data_t   *data;
   PDC_IO_elt_t       *elt;
 
   if (!pdc || !pdc->disc) {
@@ -1256,10 +1731,10 @@ PDC_error_t
 PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_IO_elt_t **next_elt_out)
 {
   PDC_norec_data_t    *data;
-  PDC_IO_elt_t         *elt, *firstelt, *keepelt;
+  PDC_IO_elt_t        *elt, *firstelt, *keepelt;
   ssize_t              readlen, to_keep, to_discard, to_reserve;
   Sfoff_t              new_data_off, diff;
-  PDC_byte             *new_r_begin, *new_data;
+  PDC_byte            *new_r_begin, *new_data;
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -1338,7 +1813,7 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
   if (readlen == data->block_size) { /* full block read */
     IODISC_NEED_AN_ELT("PDC_norec_read", elt, data->f_head, data->disc_vm);
     if (!elt) {
-      PDC_WARN(pdc->disc, "PDC_norec_read memory alloc error");
+      PDC_WARN(pdc->disc, "PDC_norec_read memory alloc error, entering EOF state");
       goto eof_case;
     }
     new_data  = data->r_begin + to_keep; /* new bytes start here */
@@ -1362,7 +1837,7 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
   } else if (readlen) {
     elt->unit = (const char*)data->punit;
   } else {
-    elt->unit = "(empty EOF) block";
+    elt->unit = "(EOF)";
   }
 
  done:
@@ -1407,10 +1882,10 @@ PDC_IO_disc_t *
 PDC_norec_make(size_t block_size_hint)
 {
   Vmalloc_t          *disc_vm = 0;
-  PDC_norec_data_t  *data;
+  PDC_norec_data_t   *data;
   PDC_IO_disc_t      *io_disc;
   PDC_IO_elt_t       *f_head;
-  size_t             block_size;
+  size_t              block_size;
 
   block_size = (block_size_hint) ? block_size_hint : PDC_NOREC_DEF_BSIZE;
 

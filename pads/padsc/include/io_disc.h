@@ -34,6 +34,7 @@
  * Note that there are two versions of each kind of IO discipline:
  *    fwrec and fwrec_noseek
  *    ctrec and ctrec_noseek
+ *    vlrec and vlrec_noseek
  *    norec and norec_noseek
  * The noseek versions do not require that the sfio stream
  * be seekable, while the other versions do.  
@@ -46,6 +47,11 @@ PDC_IO_disc_t * PDC_fwrec_make(size_t leader_len, size_t data_len, size_t traile
  * occur before and after the data bytes within each record (either or
  * both can be zero).  Thus the total record size in bytes is the sum
  * of the 3 arguments.  
+ */
+
+PDC_IO_disc_t * PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len);
+/* Instantiates an instance of fwrec_noseek, a version of norec
+ * that does not require that the sfio stream is seekable.
  */
 
 PDC_IO_disc_t * PDC_ctrec_make(PDC_byte termChar, size_t block_size_hint);
@@ -61,21 +67,32 @@ PDC_IO_disc_t * PDC_ctrec_make(PDC_byte termChar, size_t block_size_hint);
  * PDC_EBCDIC_NEWLINE as the term character.
  */
 
+PDC_IO_disc_t * PDC_ctrec_noseek_make(PDC_byte termChar, size_t block_size_hint);
+/* Instantiates an instance of ctrec_noseek, a version of norec
+ * that does not require that the sfio stream is seekable.
+ */
+
+PDC_IO_disc_t * PDC_vlrec_make(int blocked, size_t avg_rlen_hint);
+/* Instantiates an instance of vlrec, a discipline for IBM-style
+ * variable-length records with record length specified at the start
+ * of each record.  If blocked is set (!= 0) then the records are
+ * grouped into blocks, where each block has a length given at the
+ * start of each block.  avg_rlen_hint is a hint as to what the
+ * average record length is, to help the discipline allocate memory.
+ * It should include the 4 bytes at the start of each record used for
+ * the record length.  It may be ignored by the discipline.
+ */
+
+PDC_IO_disc_t * PDC_vlrec_noseek_make(int blocked, size_t avg_rlen_hint);
+/* Instantiates an instance of vlrec_noseek, a version of vlrec
+ * that does not require that the sfio stream is seekable.
+ */
+
 PDC_IO_disc_t * PDC_norec_make(size_t block_size_hint);
 /* Instantiates an instance of norec, a raw bytes discipline that
  * does not use EOR.  block_size_hint is a hint as to what block size
  * to use, if the discipline chooses to do fixed block-sized reads
  * 'under the covers'.  It may be ignored by the discipline.
- */
-
-PDC_IO_disc_t * PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len);
-/* Instantiates an instance of fwrec_noseek, a version of norec
- * that does not require that the sfio stream is seekable.
- */
-
-PDC_IO_disc_t * PDC_ctrec_noseek_make(PDC_byte termChar, size_t block_size_hint);
-/* Instantiates an instance of ctrec_noseek, a version of norec
- * that does not require that the sfio stream is seekable.
  */
 
 PDC_IO_disc_t * PDC_norec_noseek_make(size_t block_size_hint);

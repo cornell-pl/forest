@@ -944,6 +944,24 @@ int_type ## _acc_fold_psum(int_type ## _acc *a) {
   a->fold += recent;
 }
 
+double
+int_type ## _acc_avg(PDC_t *pdc, int_type ## _acc *a) {
+  int_type ## _acc_fold_psum(a);
+  return a->avg;
+}
+
+int_type
+int_type ## _acc_ravg(PDC_t *pdc, int_type ## _acc *a) {
+  int_type res;
+  int_type ## _acc_fold_psum(a);
+  if (a->avg >= 0) {
+    res = (a->avg + 0.5); /* truncate( avg + 0.5) */ 
+  } else {
+    res = (a->avg - 0.5); /* truncate( avg - 0.5) */ 
+  }
+  return res;
+}
+
 PDC_error_t
 int_type ## _acc_add(PDC_t *pdc, int_type ## _acc *a, PDC_base_ed *ed, int_type *val)
 {
@@ -2697,7 +2715,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.66 2003-04-25 20:46:14 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.67 2003-04-28 21:51:12 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
