@@ -98,6 +98,8 @@ test_copy_format3     :: test_copy_format3.c	  format3.c	-lpadsc
 test_copy_format5     :: test_copy_format5.c	  format5.c	-lpadsc
 test_write_struct     :: test_write_struct.c      struct.c      -lpadsc
 
+count_dibbler :: count_dib bler.c  dibbler-manifest.c     -lpadsc
+
 regress_test_format1 : test_format1
 	(set +x; test -d tmp || mkdir tmp)
 	(set +x; if [ -f tmp/tmp.test_format1 ]; then $(RM) tmp/tmp.test_format1; fi)
