@@ -76,9 +76,14 @@ Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
 /* These can be used with both Pbase_pd and with generated structured parse descriptors */
 
 #define P_PS_init(pd)          do { (pd)->pstate = 0; } while (0)
+
 #define P_PS_setPanic(pd)      do { (pd)->pstate |= P_Panic; } while (0)
 #define P_PS_unsetPanic(pd)    do { (pd)->pstate &= ~P_Panic; } while (0)
 #define P_PS_isPanic(pd)       ((pd)->pstate & P_Panic)
+
+#define P_PS_setPartial(pd)      do { (pd)->pstate |= P_Partial; } while (0)
+#define P_PS_unsetPartial(pd)    do { (pd)->pstate &= ~P_Partial; } while (0)
+#define P_PS_isPartial(pd)       ((pd)->pstate & P_Partial)
 
 #define PD_COMMON_INIT(pd) do { \
   memset((void*)(pd), 0, sizeof(Pbase_pd)); \

@@ -413,6 +413,7 @@ const char *P_errCode2str(PerrCode_t code);
 /* parse state flags */
 #define P_Panic               0x0001
 /* more flags will be added later to support partial-read functionality */ 
+#define P_Partial             0x0002  /* final state not reached, more reading required */
  
 /*
  * Other useful constants
@@ -989,6 +990,10 @@ void P_PS_init(void *pd);         /* init pd->pstate */
 void P_PS_setPanic(void *pd);     /* set P_Panic in pd->pstate */
 void P_PS_unsetPanic(void *pd);   /* unset P_Panic in pd->pstate */
 int  P_PS_isPanic(void *pd);      /* test whether P_Panic is set in pd->pstate */
+
+void P_PS_setPartial(void *pd);   /* set P_Partial in pd->pstate */
+void P_PS_unsetPartial(void *pd); /* unset P_Partial in pd->pstate */
+int  P_PS_isPartial(void *pd);    /* test whether P_Partial is set in pd->pstate */
 #endif
 
 /* Pinv_valfn: type of a pointer to an invalid val function */
