@@ -226,6 +226,12 @@ void PDCI_UNION_PD_XML_OUT();
 
 void PDCI_ENUM_XML_OUT(const char *def_tag, const char *(rep2str_fn)(int));
 
+void PDCI_STRUCT_ACC_REP_NOVALS();
+void PDCI_UNION_ACC_REP_NOVALS();
+void PDCI_ARRAY_ACC_REP_NOVALS();
+Perror_t PDCI_ENUM_ACC_REP2IO(const char *default_what, Perror_t int_acc_call);
+Perror_t PDCI_TYPEDEF_ACC_REP2IO(const char *default_what, const char *basety_nm, Perror_t base_acc_call);
+
 #else
 /* The actual impls */
 
@@ -719,7 +725,8 @@ do { \
 #define PDCI_GET_INV_VALFN(pads,type_name) \
   (pads->disc->inv_valfn_map ? P_get_inv_valfn(pads, pads->disc->inv_valfn_map, type_name) : 0)
 
-#define PDCI_fill_mask(mask, m, sz) do { \
+#define PDCI_fill_mask(mask, m, sz) \
+do { \
   if ((m) == 0) { \
     memset((void*)(mask), 0, (sz)); \
   } else { \
@@ -1273,7 +1280,8 @@ do { \
   } \
   PDCI_io_write_abort (pads, io, buf, set_buf, fn_nm)
 
-#define PDCI_TLEN_UPDATES() do { \
+#define PDCI_TLEN_UPDATES() \
+do { \
   if (tlen<0) { \
     return -1; \
   } \
@@ -1282,14 +1290,16 @@ do { \
   buf_len-=tlen; \
 } while (0)
 
-#define PDCI_FINAL_TLEN_UPDATES() do { \
+#define PDCI_FINAL_TLEN_UPDATES() \
+do { \
   if (tlen<0) { \
     return -1; \
   } \
   length+=tlen; \
 } while (0)
 
-#define PDCI_TMP4_TLEN_UPDATES() do { \
+#define PDCI_TMP4_TLEN_UPDATES() \
+do { \
   if (tlen <= 0) { \
     return -1; \
   } \
@@ -1303,7 +1313,8 @@ do { \
   buf_len-=tlen; \
 } while (0)
 
-#define PDCI_FINAL_TMP4_TLEN_UPDATES() do { \
+#define PDCI_FINAL_TMP4_TLEN_UPDATES() \
+do { \
   if (tlen <= 0) { \
     return -1; \
   } \
@@ -1315,7 +1326,8 @@ do { \
   length+=tlen; \
 } while (0)
 
-#define PDCI_TAG_OPEN_XML_OUT(def_tag) do { \
+#define PDCI_TAG_OPEN_XML_OUT(def_tag) \
+do { \
   indent = (indent > 128) ? 128 : indent; \
   if (!tag) { tag = def_tag; } \
   sfstrset(pads->tmp4, 0); \
@@ -1323,20 +1335,23 @@ do { \
   PDCI_TMP4_TLEN_UPDATES(); \
 } while (0)
 
-#define PDCI_TAG_CLOSE_XML_OUT() do { \
+#define PDCI_TAG_CLOSE_XML_OUT() \
+do { \
   sfstrset(pads->tmp4, 0); \
   tlen = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, tag); \
   PDCI_FINAL_TMP4_TLEN_UPDATES(); \
 } while (0)
 
-#define PDCI_UNION_TAG_XML_OUT(tag) do { \
+#define PDCI_UNION_TAG_XML_OUT(tag) \
+do { \
   int tag_indent = (indent > 126) ? 128 : indent+2; \
   sfstrset(pads->tmp4, 0); \
   tlen = sfprintf(pads->tmp4, "%.*s<tag>%s</>\n", tag_indent, PDCI_spaces, tag); \
   PDCI_TMP4_TLEN_UPDATES(); \
 } while (0)
 
-#define PDCI_UNION_OPEN_VAL_XML_OUT() do { \
+#define PDCI_UNION_OPEN_VAL_XML_OUT() \
+do { \
   int val_indent = (indent > 126) ? 128 : indent+2; \
   sfstrset(pads->tmp4, 0); \
   tlen = sfprintf(pads->tmp4, "%.*s<val>\n", val_indent, PDCI_spaces); \
@@ -1344,7 +1359,8 @@ do { \
   indent += 2; \
 } while (0)
 
-#define PDCI_UNION_CLOSE_VAL_XML_OUT() do { \
+#define PDCI_UNION_CLOSE_VAL_XML_OUT() \
+do { \
   int val_indent = (indent > 126) ? 128 : indent; \
   sfstrset(pads->tmp4, 0); \
   tlen = sfprintf(pads->tmp4, "%.*s</val>\n", val_indent, PDCI_spaces); \
@@ -1352,7 +1368,8 @@ do { \
   indent -= 2; \
 } while (0)
 
-#define PDCI_ENUM_XML_OUT(def_tag, rep2str_fn) do { \
+#define PDCI_ENUM_XML_OUT(def_tag, rep2str_fn) \
+do { \
   if (!tag) { tag = def_tag; } \
   indent = ((indent) > 128) ? 128 : indent; \
   sfstrset(pads->tmp4, 0); \
@@ -1371,7 +1388,8 @@ do { \
   PDCI_FINAL_TMP4_TLEN_UPDATES(); \
 } while (0)
 
-#define PDCI_STRUCT_PD_XML_OUT() do { \
+#define PDCI_STRUCT_PD_XML_OUT() \
+do { \
   if ((pd)->errCode != P_NO_ERR) { \
     int pd_indent = ((indent) > 126) ? 128 : (indent)+2; \
     sfstrset(pads->tmp4, 0); \
@@ -1390,7 +1408,8 @@ do { \
 
 #define PDCI_UNION_PD_XML_OUT() PDCI_STRUCT_PD_XML_OUT()
 
-#define PDCI_ARRAY_PD_XML_OUT() do { \
+#define PDCI_ARRAY_PD_XML_OUT() \
+do { \
   if ((pd)->errCode != P_NO_ERR) { \
     int pd_indent = ((indent) > 126) ? 128 : (indent)+2; \
     sfstrset(pads->tmp4, 0); \
@@ -1406,6 +1425,71 @@ do { \
     } \
     PDCI_TMP4_TLEN_UPDATES(); \
   } \
+} while (0)
+
+#define PDCI_STRUCT_ACC_REP_NOVALS() \
+do { \
+  if (dtsize(acc->nerr.dict) == 0) { \
+    sfprintf(outstr, "(No %s values.)", what); \
+    sfstrclose (tmpstr); \
+    return P_OK; \
+  } \
+} while (0)
+
+#define PDCI_UNION_ACC_REP_NOVALS() \
+do { \
+  if (dtsize(acc->tag.dict) == 0) { \
+    sfprintf(outstr, "(No %s values.)", what); \
+    sfstrclose (tmpstr); \
+    return P_OK; \
+  } \
+} while (0)
+
+#define PDCI_ARRAY_ACC_REP_NOVALS() \
+do { \
+  int dtsz = dtsize(acc->length.dict); \
+  if (dtsz == 0) { \
+    sfprintf(outstr, "(No %s values.)", what); \
+    sfstrclose (tmpstr); \
+    return P_OK; \
+  } \
+  if (dtsz == 1) { \
+    Puint32_dt_key_t   lookup_key; \
+    lookup_key.val = 0; \
+    lookup_key.cnt = 0; \
+    if (dtmatch(acc->length.dict, &lookup_key)) { \
+      sfprintf(outstr, "(No element values accumulated; all arrays had zero length.)"); \
+      sfstrclose (tmpstr); \
+      return P_OK; \
+    } \
+  } \
+} while (0)
+
+#define PDCI_ENUM_ACC_REP2IO(default_what, int_acc_call) \
+do { \
+  if (!what) { \
+    what = default_what; \
+  } \
+  return int_acc_call; \
+} while (0)
+
+#define PDCI_TYPEDEF_ACC_REP2IO(default_what, basety_nm, base_acc_call) \
+do { \
+  Perror_t res; \
+  Sfio_t *tmpstr; \
+  if (!(tmpstr = sfstropen())) { \
+    return P_ERR; \
+  } \
+  if (!what) { \
+    sfprintf (tmpstr, "%s [--> %s]", default_what, basety_nm); \
+    what = sfstruse(tmpstr); \
+  } else { \
+    sfprintf (tmpstr, "%s [%s --> %s]", what, default_what, basety_nm); \
+    what = sfstruse(tmpstr); \
+  } \
+  res = base_acc_call; \
+  sfstrclose(tmpstr); \
+  return res; \
 } while (0)
 
 #endif /* FOR_CKIT */
@@ -2019,6 +2103,30 @@ ssize_t PDCI_uint64_2sbh_io(P_t *pads, Sfio_t *io, Puint64 u, Puint32 num_bytes)
 /* MISC STRING CONSTANTS */
 extern const char *PDCI_spaces;
 
+
+/* ================================================================================ */
+/* int accum helper types */
+
+#define PDCI_INT_ACCUM_DT_TYPES(int_type) \
+ \
+typedef struct int_type ## _dt_key_s { \
+  int_type     val; \
+  Puint64   cnt; \
+} int_type ## _dt_key_t; \
+ \
+typedef struct int_type ## _dt_elt_s { \
+  int_type ## _dt_key_t   key; \
+  Dtlink_t         link; \
+} int_type ## _dt_elt_t
+
+PDCI_INT_ACCUM_DT_TYPES(Pint8);
+PDCI_INT_ACCUM_DT_TYPES(Pint16);
+PDCI_INT_ACCUM_DT_TYPES(Pint32);
+PDCI_INT_ACCUM_DT_TYPES(Pint64);
+PDCI_INT_ACCUM_DT_TYPES(Puint8);
+PDCI_INT_ACCUM_DT_TYPES(Puint16);
+PDCI_INT_ACCUM_DT_TYPES(Puint32);
+PDCI_INT_ACCUM_DT_TYPES(Puint64);
 
 /* ================================================================================ */
 /* INTERNAL MISC TYPES + ROUTINES */

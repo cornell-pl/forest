@@ -1621,16 +1621,6 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Puint32 num_digits_or_bytes, Pu
 
 #define PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, fold_test)
 
-typedef struct int_type ## _dt_key_s {
-  int_type     val;
-  Puint64   cnt;
-} int_type ## _dt_key_t;
-
-typedef struct int_type ## _dt_elt_s {
-  int_type ## _dt_key_t   key;
-  Dtlink_t         link;
-} int_type ## _dt_elt_t;
-
 /*
  * Order set comparison function: only used at the end to rehash
  * the (formerly unordered) set.  Since same val only occurs
@@ -5057,7 +5047,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.132 2003-11-25 18:02:50 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.133 2003-12-02 15:30:20 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

@@ -1328,7 +1328,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val setWhatS = PT.IfThen(P.notX(PT.Id what),
 						 PT.Compound[P.assignS(PT.Id what, PT.String whatStr)])
                       val printNstS = PL.nstPrefixWhat(PT.Id outstr, P.addrX(PT.Id nst), PT.Id prefix, PT.Id what)
-		      val intlBodySs = intlBodySs (* parameter from above *)
 		      val closeSs = [PL.sfstrclose(PT.Id tmpstr), PT.Return PL.P_OK]
 		      val bodySs = initTmpStrSs
 			          @ [setPrefixS, setWhatS, printNstS]
@@ -1337,6 +1336,34 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val bodyS = PT.Compound bodySs
 		      val returnTy = PL.toolErrPCT
 		      val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, bodyS, returnTy)
+		      val externalReportFunED = genExternalReport(reportName, intlParamNames, extlFormalParams)
+		  in
+		      [toioReportFunED, externalReportFunED]
+		  end
+
+	      fun genTrivReportFuns (reportName, whatStr, baseWhatStr, accPCT, repioCallX) = 
+		  let fun genParamTys extraPCTs =
+		          [P.ptrPCT PL.toolStatePCT] 
+			 @ extraPCTs
+			 @ [P.ccharPtr,
+			    P.ccharPtr,
+			    P.int,
+			    P.ptrPCT accPCT]
+                      fun genParamNames extraNames = [pads] @ extraNames @ [ prefix, what, nst, acc]
+                      val intlParamNames = genParamNames [outstr]
+                      val extlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [], genParamNames []))
+		      val intlFormalParams = List.map P.mkParam 
+			                        (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
+		      val macroCallS =
+			  case baseWhatStr of
+			      NONE   => PT.Expr(PT.Call(PT.Id "PDCI_ENUM_ACC_REP2IO", [PT.String whatStr, repioCallX]))
+			    | SOME b => PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_ACC_REP2IO", [PT.String whatStr, b, repioCallX]))
+		      val XXXsetWhatS = PT.IfThen(P.notX(PT.Id what),
+						 PT.Compound[P.assignS(PT.Id what, PT.String whatStr)])
+		      val XXXbodySs = PT.Compound([XXXsetWhatS, PT.Return(repioCallX)])
+		      val bodySs = PT.Compound([macroCallS])
+		      val returnTy = PL.toolErrPCT
+		      val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, bodySs, returnTy)
 		      val externalReportFunED = genExternalReport(reportName, intlParamNames, extlFormalParams)
 		  in
 		      [toioReportFunED, externalReportFunED]
@@ -1479,7 +1506,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
               fun chkPrint (bodyX) = 		   
 		  PT.IfThen(
 		      P.eqX(PL.P_ERROR, bodyX), 
-		      PT.Compound[PL.sfstrclose (PT.Id tmpstr),
+		      PT.Compound[PL.sfstrclose(PT.Id tmpstr),
 				  PT.Return PL.P_ERROR])
 
               fun printScaffolding (fieldDescriptor, extraArgsXs, bodyX) = 
@@ -1503,12 +1530,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  [PT.Id pads, PT.Id outstr,  prefixX, whatX, nstX,
 			   PT.Cast(PL.intCvtPCT, mapFnX),
 			   fieldX])
-
-              fun genEnumPrint(reportName, fieldDescriptor, prefixX, whatX, nstX, mapFnX, fieldX) = 
-		  let val bodyX = callEnumPrint(reportName, prefixX, whatX, nstX, mapFnX, fieldX)
-		  in
-		      printScaffolding(fieldDescriptor, [], bodyX)
-		  end
 
 	      fun checkParamTys (fieldName, functionName, extraargs, numBefore, numAfter) = 
 		  let val (eaty, _) = cnvExpression (PT.Id functionName)
@@ -2110,13 +2131,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* -- generate report function ptypedef *)
                       (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix) *)
 		      val reportFun = (reportSuf o accSuf) name
-		      val reportFields = 
-			  case lookupAcc(baseTy) of NONE => []
-                             | SOME a => (
-				 genPrintPiece((ioSuf o reportSuf) a, name, P.zero, PT.Id acc, [])
-		             (* end accOpt SOME case *))
-
-                      val reportFunEDs = genReportFuns(reportFun, "typedef "^name, accPCT, reportFields)
+		      val repioCallX =
+			  case lookupAcc(baseTy)
+			   of NONE => PL.P_OK
+			    | SOME a => PT.Call(PT.Id((ioSuf o reportSuf) a),
+						[PT.Id pads, PT.Id outstr, PT.Id prefix, PT.Id what, PT.Id nst, PT.Id acc])
+                      val reportFunEDs = genTrivReportFuns(reportFun, "typedef "^name, SOME(PT.String baseTyName), accPCT, repioCallX)
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
                       (* Generate Write function typedef case *)
@@ -2792,7 +2812,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					      (* -- generate report function pstruct *)
 					      (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix , ) *)
 		      val reportFun = (reportSuf o accSuf) name
-
+		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PDCI_STRUCT_ACC_REP_NOVALS", []))]
 		      val reportNerrSs = [chkPrint(
  				          PL.errAccReport(PT.Id pads, PT.Id outstr, PT.String "Errors", 
 							  PT.String "errors", P.intX ~1, getFieldX(acc, nerr))) ]
@@ -2810,7 +2830,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val reportFields = (mungeFields genAccReportFull genAccReportBrief 
 						      (genAccReportMan (reportSuf, ioSuf, "field")) fields)
                       val reportFunEDs = genReportFuns(reportFun, "struct "^name, accPCT, 
-						       reportNerrSs @ headerSs @ reportFields)
+						       checkNoValsSs @ reportNerrSs @ headerSs @ reportFields)
 
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
@@ -3746,10 +3766,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
 			  else cnvPtyForReport(reportSuf, ioSuf, pty, name, "branch")
                       fun genAccReportBrief e = []
+		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PDCI_UNION_ACC_REP_NOVALS", []))]
 		      val reportVariants = mungeFields genAccReportFull genAccReportBrief 
 			                      (genAccReportMan (reportSuf, ioSuf, "branch")) variants
                       val reportFunEDs = genReportFuns(reportFun, "union "^name, 
-						       accPCT, reportTags @ reportVariants)
+						       accPCT, checkNoValsSs @ reportTags @ reportVariants)
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
                       (* Generate Write function union case *)
@@ -5292,11 +5313,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 								     fieldX, [PT.Id "i"]))
 						 )]]
 				   val arrayX = P.addrX(P.arrowX(PT.Id acc, PT.Id array))
-				   val doArraySs = doOne ("allArrayElts", PT.String "all array elements", arrayX, [])
+				   val doArraySs = doOne ("allArrayElts", PT.String "all array element", arrayX, [])
 			       in
 				   doArraySs @ doArrayDetailSs
 			       end(* end SOME acc case *))
-			 val theBodySs = doLengthSs @ doElems 
+			 val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PDCI_ARRAY_ACC_REP_NOVALS", []))]
+			 val theBodySs = checkNoValsSs @ doLengthSs @ doElems 
 			 val baseTyStr = case baseTy of PX.Name n => n
 			 val theFunEDs = genReportFuns(reportFun, "array "^ name ^" of "^baseTyStr, accPCT, theBodySs)
 		     in
@@ -5493,10 +5515,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		   (* -- generate report function enum *)
 		   (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix ) *)
 		   val reportFun = (reportSuf o accSuf) name
-		   val reportFields = genEnumPrint((ioSuf o reportSuf o mapSuf) PL.intAct, "branchDistribution", 
-						   PT.Id prefix, PT.Id what, PT.Id nst, 
+		   val repioCallX = callEnumPrint((ioSuf o reportSuf o mapSuf) PL.intAct,
+						   PT.Id prefix, PT.Id what, PT.Id nst,
 						   PT.Id(toStringSuf name), PT.Id acc)
-		   val reportFunEDs = genReportFuns(reportFun, "enum "^name, accPCT, reportFields)
+		   val reportFunEDs = genTrivReportFuns(reportFun, "enum "^name, NONE, accPCT, repioCallX)
 		   val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
  
                   (* Generate Write functions (enum case) *)

@@ -19,10 +19,10 @@ intList_read returned: error
 Array lengths: good vals:          1    bad vals:          4    pcnt-bad:   80.000
 For good array length values, 100 pcnt identical:          4
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<top>.allArrayElts : all array elements
+<top>.allArrayElts : all array element
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:         20    bad vals:          0    pcnt-bad:    0.000
-  Characterizing all array elements values:  min 0 max 1500 avg 110.650
+  Characterizing all array element values:  min 0 max 1500 avg 110.650
     => distribution of top 10 values out of 16 distinct values:
         val:          2 count:          2  pcnt-of-good-vals:   10.000
         val:          4 count:          2  pcnt-of-good-vals:   10.000

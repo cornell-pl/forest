@@ -21,10 +21,10 @@ Union tag: good vals:         11    bad vals:          0    pcnt-bad:    0.000
 =====================================================================================================
 Array lengths: 4 array length values, 100 pcnt good, 100 pcnt identical:          4
 -----------------------------------------------------------------------------------------------------
-<top>.host.resolved.allArrayElts : all array elements
+<top>.host.resolved.allArrayElts : all array element
 -----------------------------------------------------------------------------------------------------
 good vals:         16    bad vals:          0    pcnt-bad:    0.000
-  Characterizing all array elements values:  min 49 max 207 avg 122.375
+  Characterizing all array element values:  min 49 max 207 avg 122.375
     => distribution of top 5 values out of 5 distinct values:
         val:         97 count:          4  pcnt-of-good-vals:   25.000
         val:        136 count:          4  pcnt-of-good-vals:   25.000
@@ -60,7 +60,7 @@ good vals:          4    bad vals:          0    pcnt-bad:    0.000
 =====================================================================================================
 Array lengths: 7 array length values, 100 pcnt good, 100 pcnt identical:          4
 -----------------------------------------------------------------------------------------------------
-<top>.host.symbolic.allArrayElts : all array elements
+<top>.host.symbolic.allArrayElts : all array element
 -----------------------------------------------------------------------------------------------------
 String lengths: good vals:         28    bad vals:          0    pcnt-bad:    0.000
   Characterizing string length values:  min 1 max 3 avg 1.500
@@ -107,12 +107,9 @@ String lengths: 7 string length values, 100 pcnt good, 100 pcnt identical:      
 Union tag: 11 tag values, 100 pcnt good, 100 pcnt identical: unauthorized (    1)
 [Describing each tag arm of <top>.remoteID]
 =====================================================================================================
-<top>.remoteID.unauthorized : typedef unknown_t
+<top>.remoteID.unauthorized : typedef unknown_t [--> Pchar]
 =====================================================================================================
------------------------------------------------------------------------------------------------------
-<top>.remoteID.unauthorized.unknown_t : char
------------------------------------------------------------------------------------------------------
-11 char values, 100 pcnt good, 100 pcnt identical: '-' (as ASCII)
+11 typedef unknown_t [--> Pchar] values, 100 pcnt good, 100 pcnt identical: '-' (as ASCII)
 =====================================================================================================
 <top>.remoteID.id : string
 =====================================================================================================
@@ -123,12 +120,9 @@ Union tag: 11 tag values, 100 pcnt good, 100 pcnt identical: unauthorized (    1
 Union tag: 11 tag values, 100 pcnt good, 100 pcnt identical: unauthorized (    1)
 [Describing each tag arm of <top>.auth]
 =====================================================================================================
-<top>.auth.unauthorized : typedef unknown_t
+<top>.auth.unauthorized : typedef unknown_t [--> Pchar]
 =====================================================================================================
------------------------------------------------------------------------------------------------------
-<top>.auth.unauthorized.unknown_t : char
------------------------------------------------------------------------------------------------------
-11 char values, 100 pcnt good, 100 pcnt identical: '-' (as ASCII)
+11 typedef unknown_t [--> Pchar] values, 100 pcnt good, 100 pcnt identical: '-' (as ASCII)
 =====================================================================================================
 <top>.auth.id : string
 =====================================================================================================
@@ -141,9 +135,6 @@ good vals:         11    bad vals:          0    pcnt-bad:    0.000
 =====================================================================================================
 <top>.request.meth : enum http_method_t
 =====================================================================================================
------------------------------------------------------------------------------------------------------
-<top>.request.meth : enum http_method_t
------------------------------------------------------------------------------------------------------
 11 enum http_method_t values, 100 pcnt good, 100 pcnt identical: GET (    0)
 =====================================================================================================
 <top>.request.req_uri : string
@@ -203,9 +194,6 @@ good vals:         11    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:         11  pcnt-of-good-vals:  100.000
 =====================================================================================================
-<top>.contentLength.unavailable : typedef unknown_t
+<top>.contentLength.unavailable : typedef unknown_t [--> Pchar]
 =====================================================================================================
------------------------------------------------------------------------------------------------------
-<top>.contentLength.unavailable.unknown_t : char
------------------------------------------------------------------------------------------------------
-(No char values.)
+(No typedef unknown_t [--> Pchar] values.)
