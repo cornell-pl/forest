@@ -55,8 +55,8 @@ veryveryclean: veryclean
 WHERE_NMAKE := $(shell (type nmake 2>/dev/null))
 ifeq ($(WHERE_NMAKE),)
 $(AST_LIB) : ast-ast/lib/package/tgz/*.tgz
-	@(cd ast-ast; ./bin/package read)
 	@(if [ ! -f ast-ast/bin/package ]; then cp ast-ast/bin/package.cvs ast-ast/bin/package; fi)
+	@(cd ast-ast; ./bin/package read)
 	@(cd ast-ast; ./bin/package make)
 else
 $(AST_LIB) : ast-ast/lib/package/tgz/ast-ast*.tgz
