@@ -1,2 +1,20 @@
 \chapter{Accumulators}
-Describe accumulators here.
+\label{chap:accumulators}
+\begin{code}
+PDC_error_t foo_acc_init (PDC_t *pdc, foo_acc *acc);
+
+PDC_error_t foo_acc_reset (PDC_t *pdc, foo_acc *acc);
+
+PDC_error_t foo_acc_cleanup (PDC_t *pdc, foo_acc *acc);
+
+PDC_error_t foo_acc_add (PDC_t *pdc, foo_acc *acc, foo_pd *pd, foo *rep);
+
+PDC_error_t foo_acc_report2io (PDC_t *pdc, Sfio_t *outstr, 
+                               char const *prefix, char const *what, 
+                               int nst, foo_acc *acc);
+
+PDC_error_t foo_acc_report (PDC_t *pdc, char const *prefix, 
+                            char const *what, int nst, foo_acc *acc);
+
+\end{code}
+

@@ -14,8 +14,6 @@ types.
 & \alt{} & \nont{enum\_ty} \\[1ex]
 \end{tabular}
 
-
-
 \section{Comments}
 \label{sec:common-comments}
 c-style and /-- form, which are reflected into output.
@@ -55,6 +53,10 @@ character sets include ASCII (\cd{PDC_charset_ASCII}) and EBCDIC
 \secref{sec:library-customization-character-encodings} describes how
 to set \cd{def_charset}.
 
+\section{White Space}
+\label{sec:common-features-white-space}
+Is there anything we need to say here?
+
 \section{Parameterization}
 \label{sec:common-parameterization}
  mechanism to pass values from earlier portions of data to later
@@ -76,6 +78,8 @@ to set \cd{def_charset}.
 \appref{app:error-codes} contains a list of all error codes and
 describes their meanings.
 
+describe the type \cd{PDC\_error\_t} and the possible error codes.
+
 \section{In-memory representations}
 \label{sec:common-rep}
 Each \PADS{} type \cd{foo} has an associated in-memory representation
@@ -93,12 +97,14 @@ Details appear in
 \section{Masks}
 \label{sec:common-masks}
 Each \PADS{} type \cd{foo} has an associated mask type, \csmSuf{foo}.
-Masks allow the library user to customize operations to portions of
-the associated values.  The structure of the mask for a given \PADS{}
-type varies depending on the structure of the \PADS{} type.  Details
+Masks allow the library user to customize operations on portions of
+the associated data.  The structure of the mask for a given \PADS{}
+type mirrors the structure of the representation type.  Details about
+the structure for various types
 appear in \secref{sec:base-types-masks}, \secref{sec:structs-masks},
 \secref{sec:unions-masks}, \secref{sec:arrays-masks}, 
 \secref{sec:enums-masks}, and \secref{sec:typedefs-masks}.
+
 
 \section{Parse descriptors}
 \label{sec:common-parse-descriptor}
@@ -106,7 +112,7 @@ Each \PADS{} type \cd{foo} has an associated parse descriptor type,
 \pdSuf{foo}, coded as a \C{} struct with at least the following four
 fields:
 \vskip 1ex
-\begin{tabular}{lp{2.25in}}
+\begin{tabular}{lp{4in}}
  \cd{PDC\_uint32 pstate} & Flags that describe the state after parsing the
                            associated value.\\[1ex]
  \cd{PDC\_errCode\_t errCode} & A code indicating the nature of the 
@@ -126,7 +132,7 @@ Field \cd{pstate} contains the following flags:
 \end{tabular}
 
 \noindent
-The \PADS{} library provides a collection of functions (macros
+The \pads{} library provides a collection of functions (macros
 actually) for manipulating the parse state field:
 \vskip 1ex
 \begin{code}
@@ -144,7 +150,26 @@ types appear in
 
 \section{Operations}
 \label{common-operations}
+For each \pads{} type, the generated library contains a collection of
+functions for manipulating the associated data.  For structured types,
+the \pads{} compiler generates these functions;  for base types, the
+\pads{} library provides them.  This section describes the common
+features of such functions.  Type-specific information may be found in
+the appropriate chapter.
+
+All operations take a pointer to an
+initialized \pads{} handle as their first parameter.  Information
+about how to manage \pads{} library handles appears in
+\chapref{chap:using-library}. 
+
 \subsection{Initialization and cleanup functions}
+For each type \cd{foo}, the generated library contains
+initialization and cleanup functions for the associated representation
+\cd{foo} and parse descriptor \pdSuf{foo} types.  Each initialization
+function take a pointer to allocated space and initializes the space
+appropriately.  Each cleanup function takes a pointer to allocated and
+initialized space and deallocates any memory allocated by \pads{} functions.
+It does not deallocate the space pointed to by the parameter.  
 \begin{code}
 PDC_error_t foo_init (PDC_t *pdc, foo *rep);
 
@@ -153,47 +178,151 @@ PDC_error_t foo_cleanup (PDC_t *pdc, foo *rep);
 PDC_error_t foo_pd_init (PDC_t *pdc, foo_pd *pd);
 
 PDC_error_t foo_pd_cleanup (PDC_t *pdc, foo_pd *pd);
-
-void foo_m_init (PDC_t *pdc, foo_m *mask, PDC_base_m baseMask);
-
 \end{code}
+Because all masks have statically-known size, the library does not
+contain initialization and cleanup functions for masks.  
+\begin{code}
+void foo_m_init (PDC_t *pdc, foo_m *mask, PDC_base_m baseMask);
+\end{code}
+Instead, it
+contains a function for setting all nested base masks 
+to a specified value.  The function takes two parameters (in
+addition to the \pads{} handle): a pointer to allocated space for the
+mask and a base mask value.  Because mask initialization
+functions cannot fail, the return type is \cd{void} instead of
+\cd{PDC_error_t}. 
 
 \subsection{Utilty functions}
+Each type \cd{foo} comes equipped with copy functions for both the
+in-memory representation and the parse descriptor.  Both the source
+and destination pointers are assumed to point to allocated space.  In
+addition, the src pointers are assumed to point to initialized space.
 \begin{code}
 PDC_error_t foo_copy (PDC_t *pdc, foo *rep_dst, foo *rep_src);
 
 PDC_error_t foo_pd_copy (PDC_t *pdc, foo_pd *pd_dst, foo_pd *pd_src);
 \end{code}
 
-\subsection{Reading functions}
+\subsection{Read function}
+The read function for a \pads{} type \cd{foo} takes as an input parameter a
+pointer to a mask \cd{m} and returns as output parameters a pointer to
+a parse descriptor \cd{pd} and a pointer to an in-memory
+reprsentation \cd{rep}.  If any errors occurred during the parsing, the return
+value for the function is \cd{PDC_ERROR}.  Otherwise, the function
+will return \cd{PDC_OK}.  
+
 \begin{code}
 PDC_error_t foo_read (PDC_t *pdc, foo_m *m, foo_pd *pd, foo *rep);
 \end{code}
 
-\subsection{Writing functions}
+The mask argument allows the library user to specify independently
+which constraints the parser should check and which portions of the
+in-memory representation it should fill in.  Conceptually, there are
+three different ``knobs'' associated with each atomic element of a
+\pads{} type:
+
+\vskip 1ex
+\begin{tabular}{ll}
+\cd{PDC_SynCheck} & Check syntactic constraints\\
+\cd{PDC_SymCheck} & Check semantic constraints\\
+\cd{PDC_Set}      & Set the in-memory reprsentation\\[1ex]
+\end{tabular}
+
+\noindent
+At the base-type level, the mask consists of one or more of the
+above flags.
+For structured types, the mask consists of a combination of base masks
+and the masks associated with nested types, the exact combination of
+which depends upon the kind of structured type.  Note that for a
+structured type \cd{foo}, the mask initialization function
+\cd{foo_m_init} can be used to initialize all nested masks to the
+supplied value.
+
+Details about the read functions for particular types may be found in
+the appropriate chapters.
+
+For convenience, the \pads{} library provides the following abbreviations:
+
+\vskip 1ex
+\begin{tabular}{ll}
+\cd{\#define PDC\_CheckAndSet} & \cd{PDC\_Set|PDC\_SynCheck|PDC\_SemCheck}\\
+\cd{\#define PDC\_BothCheck}   & \cd{PDC\_SynCheck|PDC\_SemCheck} \\
+\cd{\#define PDC\_Ignore}      & no flags set\\[1ex]
+\end{tabular}
+
+\noindent
+The library also provides the following macros for testing or
+modifying base read-function flags:
+
+\vskip 1ex
+\begin{tabular}{ll}
+\cd{\#define PDC\_Test\_Set(m)}            & \cd{(m \& PDC\_Set)} \\
+\cd{\#define PDC\_Test\_SynCheck(m)}       & \cd{(m \& PDC\_SynCheck)}\\
+\cd{\#define PDC\_Test\_SemCheck(m)}       & \cd{(m \& PDC\_SemCheck)}\\
+\\
+\cd{\#define PDC\_Test\_NotSet(m)}         & \cd{(!PDC\_Test\_Set(m))}\\
+\cd{\#define PDC\_Test\_NotSynCheck(m)}    & \cd{(!PDC\_Test\_SynCheck(m))}\\
+\cd{\#define PDC\_Test\_NotSemCheck(m)}    & \cd{(!PDC\_Test\_SemCheck(m))}\\
+\\
+\cd{\#define PDC\_Test\_CheckAndSet(m)}\\
+\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) == PDC\_CheckAndSet)}}\\
+\cd{\#define PDC\_Test\_BothCheck(m)}\\
+\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) == PDC\_BothCheck)}}\\
+\cd{\#define PDC\_Test\_Ignore(m)}\\
+\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) == PDC\_Ignore)}}\\
+\\
+\cd{\#define PDC\_Test\_NotCheckAndSet(m)}\\
+\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) != PDC\_CheckAndSet)}}\\
+\cd{\#define PDC\_Test\_NotBothCheck(m)}\\
+\multicolumn{2}{r}{ \cd{((m \& PDC\_CheckAndSet) != PDC\_BothCheck)}}\\
+\cd{\#define PDC\_Test\_NotIgnore(m)}\\
+\multicolumn{2}{r}{  \cd{((m \& PDC\_CheckAndSet) != PDC\_Ignore)}}\\
+\\
+\cd{\#define PDC\_Do\_Set(m)}              & \cd{(m |= PDC\_Set)}\\
+\cd{\#define PDC\_Do\_SynCheck(m)}         & \cd{(m |= PDC\_SynCheck)}\\
+\cd{\#define PDC\_Do\_SemCheck(m)}         & \cd{(m |= PDC\_SemCheck)}\\
+\\
+\cd{\#define PDC\_Dont\_Set(m)}            & \cd{(m \&= (~PDC\_Set))}\\
+\cd{\#define PDC\_Dont\_SynCheck(m)}       & \cd{(m \&= (~PDC\_SynCheck))}\\
+\cd{\#define PDC\_Dont\_SemCheck(m)}       & \cd{(m \&= (~PDC\_SemCheck))}\\[1ex]
+\end{tabular}
+
+\subsection{Write functions}
+For each \pads{} type, the generated library provides 
+two functions for writing out the in-memory representation of the type
+in a format as close as possible to its original form.
 \begin{code}
-ssize_t foo_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, 
-                       int *buf_full, foo_pd *pd, foo *rep);
+ssize\_t foo\_write2io (PDC\_t *pdc, Sfio\_t *io, foo\_pd *pd, foo *rep);
 
-ssize_t foo_write2io (PDC_t *pdc, Sfio_t *io, foo_pd *pd, foo *rep);
-
+ssize\_t foo\_write2buf (PDC\_t *pdc, PDC\_byte *buf, size\_t buf\_len, 
+                        int *buf\_full, foo\_pd *pd, foo *rep);
 \end{code}
+The first of these functions emits its output to an SFIO file;
+the second to an in-memory buffer.  Information about SFIO may be
+found from \url{www.research.att.com/sw/tools/sfio}.  For the buffer
+version, the parameter \cd{buf} points to an allocated sequence of
+bytes and \cd{buf\_len} indicates the size of the buffer.  Out
+parameter \cd{buf\_full} is a boolean which is set if the requested
+write would have overflowed the buffer. The return value
+for both of the functions is the number of bytes written, with \cd{-1}
+indicating an error occurred.  
 
-\subsection{Accumulator functions}
-\begin{code}
-PDC_error_t foo_acc_init (PDC_t *pdc, foo_acc *acc);
+Issues that may cause the written data to differ from the original
+data include skipping white space
+(\secref{sec:library-customization-white-space}) and omitting fields in
+\Pstruct{}s (\secref{sec:structs-qualifiers}). 
 
-PDC_error_t foo_acc_reset (PDC_t *pdc, foo_acc *acc);
+Passing the \texttt{-wnone} flag to the \pads{} compiler suppresses
+the generation of these functions for structured types.
 
-PDC_error_t foo_acc_cleanup (PDC_t *pdc, foo_acc *acc);
+We anticipate adding more write functions in the future.
 
-PDC_error_t foo_acc_add (PDC_t *pdc, foo_acc *acc, foo_pd *pd, foo *rep);
+\subsection{Additional functions}
+In addition to the basic functionality described in the preceeding
+sections, \pads{} provides more advanced features described in later
+chapters. 
 
-PDC_error_t foo_acc_report2io (PDC_t *pdc, Sfio_t *outstr, 
-                               char const *prefix, char const *what, 
-                               int nst, foo_acc *acc);
-
-PDC_error_t foo_acc_report (PDC_t *pdc, char const *prefix, 
-                            char const *what, int nst, foo_acc *acc);
-
-\end{code}
+\begin{tabular}{lp{4in}}
+Accumulators (\chapref{chap:accumulators})  & Provide structures and
+functions for automatically summarizing data.\\
+\end{tabular}
