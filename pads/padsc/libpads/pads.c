@@ -5132,7 +5132,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.148 2004-03-03 18:10:59 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.149 2004-03-04 15:43:51 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6070,6 +6070,27 @@ P_io_next_rec(P_t *pads, size_t *skipped_bytes_out) {
     /* just advanced past a partial read -- continue while loop */
   }
   return P_OK;
+}
+
+Perror_t
+P_io_skip_bytes(P_t *pads, size_t width, size_t *skipped_bytes_out) {
+  Pbyte            *begin, *p1, *end;
+  int               bor, eor, eof;
+  size_t            skipped;
+
+  PDCI_IODISC_1P_CHECKS("P_io_skip_bytes", skipped_bytes_out);
+  if (width == 0) return P_OK;
+  if (P_ERR == PDCI_io_need_K_bytes(pads, width, &begin, &end, &bor, &eor, &eof)) {
+    PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_IO_ERR, "P_io_skip_bytes", "IO error (nb)");
+    return P_ERR;
+  }
+  skipped = end - begin;
+  if (skipped && P_ERR == PDCI_io_forward(pads, skipped)) {
+    PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, "P_io_skip_bytes", "IO_forward error");
+    return P_ERR;
+  }
+  (*skipped_bytes_out) = skipped;
+  return (skipped == width) ? P_OK : P_ERR;
 }
 
 int

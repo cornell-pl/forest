@@ -126,9 +126,19 @@ int main(int argc, char** argv) {
 #endif /* PADS_HDR_TY */
 
   /*
-   * Try to read each line of data
+   * Try to read each item of data
    */
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
+#ifdef PRE_SKIP_BYTES
+    {
+      size_t bytes_skipped;
+      if (P_ERR == P_io_skip_bytes(pads, PRE_SKIP_BYTES, &bytes_skipped)) {
+        error(ERROR_FATAL, "*** tried to skip %lu bytes prior to read, only skipped %lu bytes",
+	      (unsigned long)PRE_SKIP_BYTES, (unsigned long)bytes_skipped);
+      }
+      error(2, "<note>skipped %lu bytes prior to read</note>", (unsigned long)PRE_SKIP_BYTES);
+    }
+#endif
     P_io_getPos(pads, &bpos, 0);
     if (P_OK != PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep)) {
       error(2, "<note>read returned error</note>");
@@ -143,6 +153,16 @@ int main(int argc, char** argv) {
     if (P_ERR == PADS_TY(_write_xml_2io)(pads, io, EXTRA_READ_ARGS &pd, &rep, (const char*)0, 0)) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
+#ifdef POST_SKIP_BYTES
+    {
+      size_t bytes_skipped;
+      if (P_ERR == P_io_skip_bytes(pads, POST_SKIP_BYTES, &bytes_skipped)) {
+        error(ERROR_FATAL, "*** tried to skip %lu bytes prior to read, only skipped %lu bytes",
+	      (unsigned long)POST_SKIP_BYTES, (unsigned long)bytes_skipped);
+      }
+      error(2, "<note>skipped %lu bytes prior to read</note>", (unsigned long)POST_SKIP_BYTES);
+    }
+#endif
   }
   if (P_ERR == P_io_close(pads)) {
     error(ERROR_FATAL, "*** P_io_close failed ***");

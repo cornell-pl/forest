@@ -1154,6 +1154,14 @@ Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
  *                   For P_OK case, sets (*skipped_bytes_out) to the number of
  *                   data bytes that were passed over while searching for EOR.
  *
+ * P_io_skip_bytes : Advances current IO position by specified number of bytes, or if that many
+ *                   bytes cannot be skipped, then by as many bytes as available.
+ *                   Sets (*bytes_skipped_out) to the number of bytes skipped.
+ *                   Returns P_OK if the requested bytes were skipped, P_ERR if fewer
+ *                   than the requested bytes were skipped.  NOTE: for record-based
+ *                   disciplines, does NOT advance the IO position beyond the current
+ *                   record.
+ *
  * P_io_at_eor   : Returns 1 if the current IO position is at EOR, otherwise 0.
  * P_io_at_eof   : Returns 1 if current IO position is at EOF, otherwise 0.
  * P_io_at_eor_or_eof : Returns 1 if current IO position is at EOR or EOF, otherwise 0.
@@ -1250,10 +1258,11 @@ Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
  *                      in the block.
  */
 
-Perror_t  P_io_set      (P_t *pads, Sfio_t *io);
-Perror_t  P_io_fopen    (P_t *pads, const char *path);
-Perror_t  P_io_close    (P_t *pads);
-Perror_t  P_io_next_rec (P_t *pads, size_t *skipped_bytes_out);
+Perror_t  P_io_set       (P_t *pads, Sfio_t *io);
+Perror_t  P_io_fopen     (P_t *pads, const char *path);
+Perror_t  P_io_close     (P_t *pads);
+Perror_t  P_io_next_rec  (P_t *pads, size_t *skipped_bytes_out);
+Perror_t  P_io_skip_bytes(P_t *pads, size_t width, size_t *skipped_bytes_out);
 
 int       P_io_at_eor        (P_t *pads);
 int       P_io_at_eof        (P_t *pads);
@@ -1600,7 +1609,7 @@ Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m, const char *s, Pbase_pd *
  * first EOR or EOF, while countXtoY counts occurrences of x between the current
  * IO cursor and the first occurrence of char y.  x and y are always specified
  * as ASCII chars.  They are converted to EBCDIC if the EBCDIC form is used or
- * if the default form is used and pads->disc->def->charset is Pcharset_EBCDIC.
+ * if the DEFAULT form is used and pads->disc->def->charset is Pcharset_EBCDIC.
  *
  * If parameter count_max is non-zero, then the count functions also stop counting
  * after scanning count_max characters, in which case an error is returned.
@@ -1615,21 +1624,21 @@ Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m, const char *s, Pbase_pd *
  *
  * countX outcomes:
  *   1. IO cursor is already at EOF and eor_required is non-zero:
- *     => If !m || *m < P_Ignore:
- *           + pd->errCode set to P_AT_EOF
- *           + pd->loc begin/end set to EOF 'location'
- *     P_ERR returned   
- *   2. EOF is encountered before EOR and eor_required is non-zero
- *     => If !m || *m < P_Ignore:
- *           + pd->errCode set to P_EOF_BEFORE_EOR
- *           + pd->loc begin/end set to current IO cursor location
- *     P_ERR returned   
- *   3. count_max is > 0 and count_max limit is reached before x or EOR or EOF.
- *     => If !m || *m < P_Ignore:
- *           + pd->errCode set to P_COUNT_MAX_LIMIT
- *           + pd->loc begin/end set to current IO cursor location
- *     P_ERR returned
- *   4. EOR is encountered, or EOF is encounterd and eor_required is zero.
+ *     + pd->loc begin/end set to EOF 'location'
+ *     + If P_Test_NotIgnore(*m), pd->errCode set to P_AT_EOF,
+ *         pd->nerr set to 1, and an error is reported
+ *     + P_ERR returned   
+ *   2. EOF is encountered before EOR and eor_required is non-zero:
+ *     + pd->loc begin/end set to current IO cursor location
+ *     + if P_Test_NotIgnore(*m), pd->errCode set to P_EOF_BEFORE_EOR,
+ *         pd->nerr set to 1, and an error is reported
+ *     + P_ERR returned
+ *   3. count_max is > 0 and count_max limit is reached before x or EOR or EOF:
+ *     + pd->loc begin/end set to current IO cursor location
+ *     + if P_Test_NotIgnore(*m), pd->errCode set to P_COUNT_MAX_LIMIT,
+ *         pd->nerr set to 1, and an error is reported
+ *     + P_ERR returned
+ *   4. EOR is encountered, or EOF is encounterd and eor_required is zero:
  *     (*res_out) is set to the number of occurrences of x from the IO cursor to EOR/EOF.
  *     P_OK returned
  *
@@ -1689,18 +1698,22 @@ Perror_t PcountXtoY_read (P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_
  * -----------------------------  -----------------------------  -----------------------------
  * Pchar_read                     Pa_char_read                   Pe_char_read
  *
- * Read a single character.  The in-memory result is always an ASCII character.
- * A conversion fom EBCDIC to ASCII occurs if the EBCDIC form is used or if the DEFAULT
- * form is used and pads->disc->def_charset is Pcharset_EBCDIC.
- *
- *   If *m is P_Ignore or P_Check, simply skips one byte and returns P_OK.
- *   If *m is P_CheckAndSet, sets (*c_out) to the byte at the current IO position
- *   and advances one byte.
- *
- *   If a char is not available, the IO cursor is not advanced, and
- *    if !m || *m < P_Ignore:
- *        + pd->errCode set to P_WIDTH_NOT_AVAILABLE
- *        + pd->loc begin/end set to the current IO position
+ * Cases:
+ *  (1) A character is not available:
+ *        + pd->loc set to the current IO position
+ *        + if P_Test_NotIgnore(*m), pd->errCode is set to P_WIDTH_NOT_AVAILABLE,
+ *             pd->nerr is set to 1, and an error is reported
+ *        + the IO cursor is not advanced
+ *        + P_ERR is returned
+ *  (2) A character is available and P_Test_NotSet(*m)
+ *        + the IO cursor is advanced by 1 byte
+ *        + P_OK is returned
+ *  (3) A character is available and P_Test_Set(*m)
+ *        + (*c_out) is set to the ASCII equivalent of the character, where
+ *             a conversion fom EBCDIC to ASCII occurs if the EBCDIC form is used or
+ *             if the DEFAULT form is used and pads->disc->def_charset is Pcharset_EBCDIC.
+ *        + the IO cursor is advanced by 1 byte
+ *        + P_OK is returned
  */
 
 #ifdef FOR_CKIT
@@ -1758,7 +1771,7 @@ Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
  * condition, then a string of length zero results.
  *
  * If an expected stop char/pattern/width is found, P_OK is returned.
- * If !m || *m == P_CheckAndSet, then:
+ * If P_TestSet(*m) then:
  *   + (*s_out) is set to contain an in-memory string.
  *     If the original data is ASCII, then s_out will either share the string or contain a
  *     copy of the string, depending on pads->disc->copy_strings.  If the original data is
@@ -1767,7 +1780,7 @@ Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
  *     at some point prior using Pstring_init or one of the initializing P_STRING macros.
  *     (It can be initialized once and re-used in string read calls many times.)
  * 
- * Cleanup note: If copy_strings is non-zero, the memory allocated by *s_out should
+ * Cleanup note: If copy_strings is non-zero, the memory allocated in *s_out should
  *               ultimately be freed using Pstring_cleanup.
  *
  * If an expected stop condition is not encountered, the
@@ -1780,8 +1793,8 @@ Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
  * EBCDIC Example: passing '|' (vertical bar, which is code 124 in ASCII) to
  * Pe_string_read as the stop char will result in a search for the EBCDIC
  * encoding of vertical bar (code 79 in EBCDIC), and (*s_out) will be a string
- * containing all EBCDIC chars between the IO cursor and the EBCDIC vertical
- * bar, with each cahr converted to ASCII. 
+ * containing all chars between the IO cursor and the EBCDIC vertical
+ * bar, with each EBCDIC char converted to ASCII. 
  */
 
 #ifdef FOR_CKIT

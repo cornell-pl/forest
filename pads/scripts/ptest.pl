@@ -7,6 +7,8 @@ if ($pads_home eq "") {
   exit(-1);
 }
 my $maxrecs = 0;
+my $skippre = 0;
+my $skippost = 0;
 my $readmask = "P_CheckAndSet";
 my $iodiscmk = "P_nlrec_make(0)";
 my $parsing_opt_args = 1;
@@ -14,6 +16,16 @@ ARG: while ($parsing_opt_args) {
   if ($#ARGV > 0 && ($ARGV[0] eq "-m" || $ARGV[0] eq "--maxrecs")) {
     shift(@ARGV);
     $maxrecs = shift(@ARGV);
+    next ARG;
+  }
+  if ($#ARGV > 0 && ($ARGV[0] eq "-s" || $ARGV[0] eq "--skip-pre")) {
+    shift(@ARGV);
+    $skippre = shift(@ARGV);
+    next ARG;
+  }
+  if ($#ARGV > 0 && ($ARGV[0] eq "-S" || $ARGV[0] eq "--skip-post")) {
+    shift(@ARGV);
+    $skippost = shift(@ARGV);
     next ARG;
   }
   if ($#ARGV > 0 && ($ARGV[0] eq "-i" || $ARGV[0] eq "--iodisc")) {
@@ -97,6 +109,8 @@ print MOUT $mtmpl;
 close (MOUT);
 
 open (COUT, ">$cfile") || die "\n    Could not open $cfile for output\n\n";
+if ($skippre) { print COUT "#define PRE_SKIP_BYTES $skippre\n"; }
+if ($skippost) { print COUT "#define POST_SKIP_BYTES $skippost\n"; }
 print COUT "#define PADS_TY(suf) $pty ## suf
 #define MAX_RECS $maxrecs
 #define READ_MASK $readmask
@@ -128,9 +142,13 @@ print "\nResult:\n$res2\n";
 exit(0);
 
 usage:
-print "\n    usage:  ptest.pl [ -m/--maxrecs # ] [ -i/--iodisc <iodisc> ] [ -d/--debug ] <pspec> <ptype>
+print "\n    usage:  ptest.pl [ -m/--maxrecs # ] [ -i/--iodisc <iodisc> ] [ -s/--skip_pre # ] [ -S/--skip_post # ] [ -d/--debug ] <pspec> <ptype>
 
-       the default IO discipline is nlrec.  Other choices: norec
+   Notes:
+       . the default IO discipline is nlrec.  Other choices: norec
+       . --skip_pre skips the specified # of bytes before each read call, while
+          --skip_post skips the specified # of bytes after each read call;
+          for a record-based discipline, bytes can only be skipped within a given record
 
 ";
 exit(-1);
