@@ -57,10 +57,6 @@ if ($pads_home eq "") {
     Set PADS_HOME or use a relative or absolute path to the script and try again\n\n";
   exit -1;
 }
-my $sml = $ENV{"PADS_SML"};
-if ($sml eq "") {
-  $sml = "sml";
-}
 
 my $ast_arch = `$pads_home/ast-ast/bin/package.cvs` || "";
 $ast_arch = &cleanupStr($ast_arch);
@@ -76,12 +72,47 @@ my $archmk = "$pads_home/mk/rules.arch.$ast_arch.mk";
 # undefine __GNUC__ in case a GNU compiler is being used, ckit does not handle certain special GNU features
 $lua = "-U__GNUC__";
 
+my $cc = "";
 if (-e $archmk) {
   my $gnutst = `grep -l GNU $archmk`;
   $gnutst = &cleanupStr($gnutst); 
   if ($gnutst ne "") {
     $lda = "-D__LINUX_PREPROCESSOR_FIXES";
   }
+  my $ccline = `grep mam_cc_CC= $archmk`;
+  chomp($ccline);
+  $ccline =~ s/mam_cc_CC=//;
+  $cc = $ccline if (length($ccline));
+}
+
+if (length($cc) == 0) {
+  chomp($cc = $ENV{'CC'});
+}
+if (length($cc) == 0) {
+  chomp($cc = `type gcc 2>/dev/null`);
+  $cc =~ s/gcc is//;
+  $cc = "" if ($cc =~ /not/);
+}
+if (length($cc) == 0) {
+  chomp($cc = `type cc 2>/dev/null`);
+  $cc =~ s/cc is//;
+  $cc = "" if ($cc =~ /not/);
+}
+if (length($cc) == 0) {
+  print "\n** No environment variable CC, and no gcc or cc in your path.\n** Please fix and re-run make.\n\n";
+  exit -1;
+}
+
+my $sml;
+chomp($sml = $ENV{'SML'});
+if (length($sml) == 0) {
+  chomp($sml = `type sml 2>/dev/null`);
+  $sml =~ s/sml is//;
+  $sml = "" if ($sml =~ /not/);
+}
+if (length($sml) == 0) {
+  print "\n** No environment variable SML, and no sml in your path.\n** Please fix and re-run make.\n\n";
+  exit -1;
 }
 
 my $opts = "";      # all options other than pfiles
@@ -136,7 +167,7 @@ if ($dbg) {
   print "retarg    = $retarg\n";
 }
 
-my $cmd = "$sml \@SMLload=$image $pads_home";
+my $cmd = "$sml \@SMLload=$image $pads_home $cc";
 if ($help) {
   $cmd .= " -help";
 } else {

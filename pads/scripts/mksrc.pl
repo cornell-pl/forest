@@ -1,25 +1,11 @@
 #!/usr/bin/env perl
 
-goto usage if ($#ARGV != 2);
-my $ifilename = $ARGV[0];
-my $odir = $ARGV[1];
-my $pads_home = $ARGV[2];
+goto usage if ($#ARGV != 3);
+my $cc = $ARGV[0];
+my $ifilename = $ARGV[1];
+my $odir = $ARGV[2];
+my $pads_home = $ARGV[3];
 my $sdir = "$pads_home/scripts";
-
-my $cc;
-chomp($cc = $ENV{'CC'});
-if (length($cc) == 0) {
-    chomp($cc = `type gcc 2>/dev/null`);
-    $cc =~ s/gcc is//;
-}
-if (length($cc) == 0) {
-  chomp($cc = `type cc 2>/dev/null`);
-    $cc =~ s/cc is//;
-}
-if (length($cc) == 0) {
-  print "\n** No environment variable CC, and no gcc or cc in your path.\n** Please fix and re-run make.\n\n";
-  exit -1;
-}
 
 my $cc_include =  "-I $pads_home/padsc/include";
 
@@ -186,4 +172,4 @@ if ($res =~ /ERROR/) {
 exit 0;
 
 usage:
- die "Usage: mksrc.pl <infile> <target_dir> <PADS_HOME>";
+ die "Usage: mksrc.pl <preprocessor> <infile> <target_dir> <PADS_HOME>";
