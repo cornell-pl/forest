@@ -41,6 +41,9 @@ int main(int argc, char** argv) {
   PADS_HDR_TY(_m)   hdr_m;
 #endif /* PADS_HDR_TY */
   char             *fileName = 0;
+#ifdef EXTRA_DECLS
+  EXTRA_DECLS;
+#endif EXTRA_DECLS
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -101,6 +104,10 @@ int main(int argc, char** argv) {
   }
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, READ_MASK);
+#ifdef EXTRA_BEGIN_CODE
+  EXTRA_BEGIN_CODE;
+#endif
+
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
     error(ERROR_FATAL, "*** header representation initialization failed ***");
@@ -157,6 +164,10 @@ int main(int argc, char** argv) {
   if (P_ERR == PADS_TY(_acc_report)(pads, "", 0, 0, &acc)) {
     error(ERROR_FATAL, "** accum_report failed **");
   }
+
+#ifdef EXTRA_DONE_CODE
+  EXTRA_DONE_CODE;
+#endif
   if (P_ERR == P_io_close(pads)) {
     error(ERROR_FATAL, "*** P_io_close failed ***");
   }
