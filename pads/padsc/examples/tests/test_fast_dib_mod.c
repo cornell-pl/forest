@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
 	  break;
 	}
       }
-      error(0, "\ntest_fast_dib: good_21: %lu  tot_good: %lu  tot_bad: %lu", good_21, good, bad);
+      error(0, "\ntest_fast_dib_mod: good_21: %lu  tot_good: %lu  tot_bad: %lu", good_21, good, bad);
     } break;
 
     case out_first21: {

@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
 	} else {
 	  bad++;
 	}
-	error(0, "\ngood: %lu, bad %lu", good, bad);
+	error(0, "\ngood: %lu bad: %lu", good, bad);
       }
     } break;
 
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 	  bad++;
 	}
       }
-      error(0, "\ngood_21: %lu, total good: %lu, tot bad %lu", good_21, good, bad);
+      error(0, "\ntest_dibbler1: good_21: %lu  tot_good: %lu  tot_bad: %lu", good_21, good, bad);
     } break;
 
     case out_first21: {
