@@ -26,6 +26,9 @@
 #
 # (You can use _D instead of _O to choose debug rather than optimized)
 #
+# If using rules that cause the padsc compiler to be called, you can
+# define PADSC_EXTRA to specify extra padsc params (such as -x).
+#
 
 ifndef AST_ARCH
   AST_ARCH := $(shell $(PADS_HOME)/ast-base/bin/package)
@@ -359,11 +362,11 @@ ifdef GEN_DIR
 ifdef GEN_WRITE
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 	@echo "Using rule P"
-	$(PADSC) $< -x -r $(GEN_DIR) -I . -I ..
+	$(PADSC) $< $(PADSC_EXTRA) -r $(GEN_DIR) -I . -I ..
 else
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 	@echo "Using rule P-nowrite"
-	$(PADSC) $< -r $(GEN_DIR) -wnone -I . -I ..
+	$(PADSC) $< $(PADSC_EXTRA) -r $(GEN_DIR) -wnone -I . -I ..
 endif
 endif
 
