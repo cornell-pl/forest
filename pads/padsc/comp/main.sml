@@ -184,6 +184,13 @@ structure Main : sig
 	    handle Io => err ("Couldn't open output file: " ^ name' ^ ".")
 	end
 
+    fun buildIncludeName fileName = 
+        let val {base,ext} = OS.Path.splitBaseExt(OS.Path.file fileName)
+            val upper = String.translate (String.str o Char.toUpper) base
+	in
+	    "__"^upper^"__H__"
+	end
+
     fun generateOutput (astInfo : BuildAst.astBundle, fileName) =
       let val {ast,tidtab,errorCount,warningCount,...} = astInfo
 	  val srcFile = OS.Path.file fileName
@@ -198,9 +205,13 @@ structure Main : sig
 	        val coutstream = 
 		    if !outputCFileFlag then TextIO.openOut (!outputCFileName)
 		    else #2(getOutStream(fileName, "p", "c"))
+		val includeName = buildIncludeName fileName
 	       in
+		   TextIO.output(houtstream, "#ifndef "^ includeName ^"\n");
+		   TextIO.output(houtstream, "#define "^ includeName ^"\n");
 		   TextIO.output(houtstream, "#include \"libpadsc.h\"\n");
 		   PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER (SOME srcFile)) () tidtab) houtstream ast;
+		   TextIO.output(houtstream, "#endif /*  "^ includeName ^"  */\n");
 		   TextIO.flushOut houtstream;
 		   TextIO.closeOut houtstream;
 		   TextIO.output(coutstream, "#include \"libpadsc-internal.h\"\n");
