@@ -9,7 +9,7 @@
 #include "libpadsc-internal.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.8 2002-08-28 15:33:10 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.9 2002-08-28 18:00:14 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -39,6 +39,8 @@ PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...)
 PDC_error_t
 PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errCode, const char* format, ...)
 {
+  char* severity = "error";
+
   if (!disc) {
     disc = pdc->disc;
   }
@@ -46,13 +48,24 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errC
   if (disc->e_rep == PDC_errorRep_None || !disc->errorf) {
     return PDC_OK;
   }
+  if (level & ERROR_FATAL) {
+    severity = "FATAL error";
+  }
   if (disc->e_rep == PDC_errorRep_Min) {
-    disc->errorf(pdc, disc, level, "line %d char %d errCode %d", loc->beginLine, loc->beginChar, errCode);
+    if (loc) {
+      disc->errorf(pdc, disc, level, "%s at line %d char %d : errCode %d", severity, loc->beginLine, loc->beginChar, errCode);
+    } else {
+      disc->errorf(pdc, disc, level, "%s : errCode %d", severity, errCode);
+    }
     return PDC_OK;
   }
   if (format && strlen(format)) {
     va_list ap;
-    sfprintf(pdc->tmp, "line %d char %d : ", loc->beginLine, loc->beginChar);
+    if (loc) {
+      sfprintf(pdc->tmp, "%s at line %d char %d : ", severity, loc->beginLine, loc->beginChar);
+    } else {
+      sfprintf(pdc->tmp, "%s : ", severity);
+    }
     va_start(ap, format);
     sfvprintf(pdc->tmp, format, ap);
     va_end(ap);
@@ -60,6 +73,24 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errC
     const char* msg = "** unknown error code **";
 
     switch (errCode) {
+    case PDC_NO_ERROR:
+      msg = "(errcode indicates no error)";
+      break;
+    case PDC_CHKPOINT_FAILURE:
+      msg = "Checkpoint failure (misuse of libpadsc IO checkpoint facility)";
+      break;
+    case PDC_COMMIT_FAILURE:
+      msg = "Commit failure (misuse of libpadsc IO checkpoint facility)";
+      break;
+    case PDC_RESTORE_FAILURE:
+      msg = "Restore failure (misuse of libpadsc IO checkpoint facility)";
+      break;
+    case PDC_ALLOC_FAILURE:
+      msg = "Memory alloc failure (out of space)";
+      break;
+    case PDC_PANIC_SKIPPED:
+      msg = "Data element parsing skipped: in panic mode due to earlier error(s)";
+      break;
     case PDC_USER_CONSTRAINT_VIOLATION:
       msg = "User constraint violation";
       break;
@@ -83,6 +114,18 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errC
       break;
     case PDC_ARRAY_MIN_BIGGER_THAN_MAX_ERR:
       msg = "Array min bigger than array max";
+      break;
+    case PDC_ARRAY_MIN_NEGATIVE:
+      msg = "Negative number used for array min";
+      break;
+    case PDC_ARRAY_MAX_NEGATIVE:
+      msg = "Negative number used for array max";
+      break;
+    case PDC_ARRAY_EXTRA_BEFORE_SEP:
+      msg = "Unexpected extra data before array element separator";
+      break;
+    case PDC_ARRAY_EXTRA_BEFORE_TERM:
+      msg = "Unexpected extra data before array element terminator";
       break;
     case PDC_STRUCT_FIELD_ERR:
       msg = "Structure field error";
@@ -109,9 +152,13 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errC
       msg = "Expected character literal not found";
       break;
     }
-    sfprintf(pdc->tmp, "line %d char %d : %s ", loc->beginLine, loc->beginChar, msg);
+    if (loc) {
+      sfprintf(pdc->tmp, "%s at line %d char %d : %s ", severity, loc->beginLine, loc->beginChar, msg);
+    } else {
+      sfprintf(pdc->tmp, "%s : %s ", severity, msg);
+    }
   }
-  if (disc->e_rep == PDC_errorRep_Max) {
+  if (loc && (disc->e_rep == PDC_errorRep_Max)) {
     char* buf;
     if (PDC_OK == PDC_IO_getLineBuf(pdc, loc->endLine, &buf, disc)) {
       size_t minc = (loc->beginLine == loc->endLine) ? loc->beginChar : 1;
