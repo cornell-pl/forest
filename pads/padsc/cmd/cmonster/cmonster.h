@@ -23,7 +23,8 @@ struct CM_s {
   Vmalloc_t       *vm;
   size_t           outbuf_sz;
   PDC_byte        *outbuf;
-  PDC_byte        *cursor;
+  PDC_byte        *outbuf_end;
+  PDC_byte        *outbuf_cursor; /* cursor always in range [outbuf, outbuf_end] */
 };
 
 /* -------------------------------------------------------------------------------- */

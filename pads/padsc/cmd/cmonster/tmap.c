@@ -142,143 +142,144 @@ CM_SVAL_FN_DECL(char);
 CM_SVAL_FN_DECL(a_char);
 CM_SVAL_FN_DECL(e_char);
 
-/* Declare the out_sz functions that we need */
+/* Declare the in_sz and out_sz functions that we need */
 
-size_t CM_out_sz_1(CM_query *qy);
-size_t CM_out_sz_2(CM_query *qy);
-size_t CM_out_sz_4(CM_query *qy);
-size_t CM_out_sz_8(CM_query *qy);
-size_t CM_out_sz_p1(CM_query *qy);
+size_t CM_sz_1(CM_query *qy);
+size_t CM_sz_2(CM_query *qy);
+size_t CM_sz_4(CM_query *qy);
+size_t CM_sz_8(CM_query *qy);
+size_t CM_sz_p1(CM_query *qy);
+size_t CM_sz_p1plus1div2(CM_query *qy);
 
 /* fill in tmap */
 
-#define CM_STD_TMAP_ENTRY(ty, out_sz_suf) \
-  { "P" PDCI_MacroArg2String(ty) , CM_RW_FN_NM(ty), 0,                 CM_out_sz_ ## out_sz_suf }
+#define CM_STD_TMAP_ENTRY(ty, in_sz_suf, out_sz_suf) \
+  { "P" PDCI_MacroArg2String(ty) , CM_RW_FN_NM(ty), 0,                 CM_sz_ ## in_sz_suf, CM_sz_ ## out_sz_suf }
 
-#define CM_SVAL_TMAP_ENTRY(ty, out_sz_suf) \
-  { "P" PDCI_MacroArg2String(ty) , CM_RW_FN_NM(ty), CM_SVAL_FN_NM(ty), CM_out_sz_ ## out_sz_suf }
+#define CM_SVAL_TMAP_ENTRY(ty, in_sz_suf, out_sz_suf) \
+  { "P" PDCI_MacroArg2String(ty) , CM_RW_FN_NM(ty), CM_SVAL_FN_NM(ty), CM_sz_ ## in_sz_suf, CM_sz_ ## out_sz_suf }
 
 CM_tmentry_t tmap[] = {
 
-  CM_STD_TMAP_ENTRY(int8_FW,         1 ),
-  CM_STD_TMAP_ENTRY(int16_FW,        2 ),
-  CM_SVAL_TMAP_ENTRY(int32_FW,       4 ),
-  CM_STD_TMAP_ENTRY(int64_FW,        8 ),
-  CM_STD_TMAP_ENTRY(uint8_FW,        1 ),
-  CM_STD_TMAP_ENTRY(uint16_FW,       2 ),
-  CM_STD_TMAP_ENTRY(uint32_FW,       4 ),
-  CM_STD_TMAP_ENTRY(uint64_FW,       8 ),
+  CM_STD_TMAP_ENTRY(int8_FW,         p1,           1 ),
+  CM_STD_TMAP_ENTRY(int16_FW,        p1,           2 ),
+  CM_SVAL_TMAP_ENTRY(int32_FW,       p1,           4 ),
+  CM_STD_TMAP_ENTRY(int64_FW,        p1,           8 ),
+  CM_STD_TMAP_ENTRY(uint8_FW,        p1,           1 ),
+  CM_STD_TMAP_ENTRY(uint16_FW,       p1,           2 ),
+  CM_STD_TMAP_ENTRY(uint32_FW,       p1,           4 ),
+  CM_STD_TMAP_ENTRY(uint64_FW,       p1,           8 ),
 
-  CM_STD_TMAP_ENTRY(a_int8_FW,       1 ),
-  CM_STD_TMAP_ENTRY(a_int16_FW,      2 ),
-  CM_SVAL_TMAP_ENTRY(a_int32_FW,     4 ),
-  CM_STD_TMAP_ENTRY(a_int64_FW,      8 ),
-  CM_STD_TMAP_ENTRY(a_uint8_FW,      1 ),
-  CM_STD_TMAP_ENTRY(a_uint16_FW,     2 ),
-  CM_STD_TMAP_ENTRY(a_uint32_FW,     4 ),
-  CM_STD_TMAP_ENTRY(a_uint64_FW,     8 ),
+  CM_STD_TMAP_ENTRY(a_int8_FW,       p1,           1 ),
+  CM_STD_TMAP_ENTRY(a_int16_FW,      p1,           2 ),
+  CM_SVAL_TMAP_ENTRY(a_int32_FW,     p1,           4 ),
+  CM_STD_TMAP_ENTRY(a_int64_FW,      p1,           8 ),
+  CM_STD_TMAP_ENTRY(a_uint8_FW,      p1,           1 ),
+  CM_STD_TMAP_ENTRY(a_uint16_FW,     p1,           2 ),
+  CM_STD_TMAP_ENTRY(a_uint32_FW,     p1,           4 ),
+  CM_STD_TMAP_ENTRY(a_uint64_FW,     p1,           8 ),
 
-  CM_STD_TMAP_ENTRY(e_int8_FW,       1 ),
-  CM_STD_TMAP_ENTRY(e_int16_FW,      2 ),
-  CM_SVAL_TMAP_ENTRY(e_int32_FW,     4 ),
-  CM_STD_TMAP_ENTRY(e_int64_FW,      8 ),
-  CM_STD_TMAP_ENTRY(e_uint8_FW,      1 ),
-  CM_STD_TMAP_ENTRY(e_uint16_FW,     2 ),
-  CM_STD_TMAP_ENTRY(e_uint32_FW,     4 ),
-  CM_STD_TMAP_ENTRY(e_uint64_FW,     8 ),
+  CM_STD_TMAP_ENTRY(e_int8_FW,       p1,           1 ),
+  CM_STD_TMAP_ENTRY(e_int16_FW,      p1,           2 ),
+  CM_SVAL_TMAP_ENTRY(e_int32_FW,     p1,           4 ),
+  CM_STD_TMAP_ENTRY(e_int64_FW,      p1,           8 ),
+  CM_STD_TMAP_ENTRY(e_uint8_FW,      p1,           1 ),
+  CM_STD_TMAP_ENTRY(e_uint16_FW,     p1,           2 ),
+  CM_STD_TMAP_ENTRY(e_uint32_FW,     p1,           4 ),
+  CM_STD_TMAP_ENTRY(e_uint64_FW,     p1,           8 ),
 
-  CM_STD_TMAP_ENTRY(b_int8,          1 ),
-  CM_STD_TMAP_ENTRY(b_int16,         2 ),
-  CM_SVAL_TMAP_ENTRY(b_int32,        4 ),
-  CM_STD_TMAP_ENTRY(b_int64,         8 ),
-  CM_STD_TMAP_ENTRY(b_uint8,         1 ),
-  CM_STD_TMAP_ENTRY(b_uint16,        2 ),
-  CM_STD_TMAP_ENTRY(b_uint32,        4 ),
-  CM_STD_TMAP_ENTRY(b_uint64,        8 ),
+  CM_STD_TMAP_ENTRY(b_int8,          1,            1 ),
+  CM_STD_TMAP_ENTRY(b_int16,         2,            2 ),
+  CM_SVAL_TMAP_ENTRY(b_int32,        4,            4 ),
+  CM_STD_TMAP_ENTRY(b_int64,         8,            8 ),
+  CM_STD_TMAP_ENTRY(b_uint8,         1,            1 ),
+  CM_STD_TMAP_ENTRY(b_uint16,        2,            2 ),
+  CM_STD_TMAP_ENTRY(b_uint32,        4,            4 ),
+  CM_STD_TMAP_ENTRY(b_uint64,        8,            8 ),
 
-  CM_STD_TMAP_ENTRY(ebc_int8,        1 ),
-  CM_STD_TMAP_ENTRY(ebc_int16,       2 ),
-  CM_SVAL_TMAP_ENTRY(ebc_int32,      4 ),
-  CM_STD_TMAP_ENTRY(ebc_int64,       8 ),
-  CM_STD_TMAP_ENTRY(ebc_uint8,       1 ),
-  CM_STD_TMAP_ENTRY(ebc_uint16,      2 ),
-  CM_STD_TMAP_ENTRY(ebc_uint32,      4 ),
-  CM_STD_TMAP_ENTRY(ebc_uint64,      8 ),
+  CM_STD_TMAP_ENTRY(ebc_int8,        p1,           1 ),
+  CM_STD_TMAP_ENTRY(ebc_int16,       p1,           2 ),
+  CM_SVAL_TMAP_ENTRY(ebc_int32,      p1,           4 ),
+  CM_STD_TMAP_ENTRY(ebc_int64,       p1,           8 ),
+  CM_STD_TMAP_ENTRY(ebc_uint8,       p1,           1 ),
+  CM_STD_TMAP_ENTRY(ebc_uint16,      p1,           2 ),
+  CM_STD_TMAP_ENTRY(ebc_uint32,      p1,           4 ),
+  CM_STD_TMAP_ENTRY(ebc_uint64,      p1,           8 ),
 
-  CM_STD_TMAP_ENTRY(bcd_int8,        1 ),
-  CM_STD_TMAP_ENTRY(bcd_int16,       2 ),
-  CM_SVAL_TMAP_ENTRY(bcd_int32,      4 ),
-  CM_STD_TMAP_ENTRY(bcd_int64,       8 ),
-  CM_STD_TMAP_ENTRY(bcd_uint8,       1 ),
-  CM_STD_TMAP_ENTRY(bcd_uint16,      2 ),
-  CM_STD_TMAP_ENTRY(bcd_uint32,      4 ),
-  CM_STD_TMAP_ENTRY(bcd_uint64,      8 ),
+  CM_STD_TMAP_ENTRY(bcd_int8,        p1plus1div2,  1 ),
+  CM_STD_TMAP_ENTRY(bcd_int16,       p1plus1div2,  2 ),
+  CM_SVAL_TMAP_ENTRY(bcd_int32,      p1plus1div2,  4 ),
+  CM_STD_TMAP_ENTRY(bcd_int64,       p1plus1div2,  8 ),
+  CM_STD_TMAP_ENTRY(bcd_uint8,       p1plus1div2,  1 ),
+  CM_STD_TMAP_ENTRY(bcd_uint16,      p1plus1div2,  2 ),
+  CM_STD_TMAP_ENTRY(bcd_uint32,      p1plus1div2,  4 ),
+  CM_STD_TMAP_ENTRY(bcd_uint64,      p1plus1div2,  8 ),
 
-  CM_STD_TMAP_ENTRY(sbl_int8,        1 ),
-  CM_STD_TMAP_ENTRY(sbl_int16,       2 ),
-  CM_SVAL_TMAP_ENTRY(sbl_int32,      4 ),
-  CM_STD_TMAP_ENTRY(sbl_int64,       8 ),
-  CM_STD_TMAP_ENTRY(sbl_uint8,       1 ),
-  CM_STD_TMAP_ENTRY(sbl_uint16,      2 ),
-  CM_STD_TMAP_ENTRY(sbl_uint32,      4 ),
-  CM_STD_TMAP_ENTRY(sbl_uint64,      8 ),
+  CM_STD_TMAP_ENTRY(sbl_int8,        p1,           1 ),
+  CM_STD_TMAP_ENTRY(sbl_int16,       p1,           2 ),
+  CM_SVAL_TMAP_ENTRY(sbl_int32,      p1,           4 ),
+  CM_STD_TMAP_ENTRY(sbl_int64,       p1,           8 ),
+  CM_STD_TMAP_ENTRY(sbl_uint8,       p1,           1 ),
+  CM_STD_TMAP_ENTRY(sbl_uint16,      p1,           2 ),
+  CM_STD_TMAP_ENTRY(sbl_uint32,      p1,           4 ),
+  CM_STD_TMAP_ENTRY(sbl_uint64,      p1,           8 ),
 
-  CM_STD_TMAP_ENTRY(sbh_int8,        1 ),
-  CM_STD_TMAP_ENTRY(sbh_int16,       2 ),
-  CM_SVAL_TMAP_ENTRY(sbh_int32,      4 ),
-  CM_STD_TMAP_ENTRY(sbh_int64,       8 ),
-  CM_STD_TMAP_ENTRY(sbh_uint8,       1 ),
-  CM_STD_TMAP_ENTRY(sbh_uint16,      2 ),
-  CM_STD_TMAP_ENTRY(sbh_uint32,      4 ),
-  CM_STD_TMAP_ENTRY(sbh_uint64,      8 ),
+  CM_STD_TMAP_ENTRY(sbh_int8,        p1,           1 ),
+  CM_STD_TMAP_ENTRY(sbh_int16,       p1,           2 ),
+  CM_SVAL_TMAP_ENTRY(sbh_int32,      p1,           4 ),
+  CM_STD_TMAP_ENTRY(sbh_int64,       p1,           8 ),
+  CM_STD_TMAP_ENTRY(sbh_uint8,       p1,           1 ),
+  CM_STD_TMAP_ENTRY(sbh_uint16,      p1,           2 ),
+  CM_STD_TMAP_ENTRY(sbh_uint32,      p1,           4 ),
+  CM_STD_TMAP_ENTRY(sbh_uint64,      p1,           8 ),
 
-  CM_STD_TMAP_ENTRY(ebc_fpoint8,     1 ),
-  CM_STD_TMAP_ENTRY(ebc_fpoint16,    2 ),
-  CM_STD_TMAP_ENTRY(ebc_fpoint32,    4 ),
-  CM_STD_TMAP_ENTRY(ebc_fpoint64,    8 ),
-  CM_STD_TMAP_ENTRY(ebc_ufpoint8,    1 ),
-  CM_STD_TMAP_ENTRY(ebc_ufpoint16,   2 ),
-  CM_STD_TMAP_ENTRY(ebc_ufpoint32,   4 ),
-  CM_STD_TMAP_ENTRY(ebc_ufpoint64,   8 ),
+  CM_STD_TMAP_ENTRY(ebc_fpoint8,     p1,           1 ),
+  CM_STD_TMAP_ENTRY(ebc_fpoint16,    p1,           2 ),
+  CM_STD_TMAP_ENTRY(ebc_fpoint32,    p1,           4 ),
+  CM_STD_TMAP_ENTRY(ebc_fpoint64,    p1,           8 ),
+  CM_STD_TMAP_ENTRY(ebc_ufpoint8,    p1,           1 ),
+  CM_STD_TMAP_ENTRY(ebc_ufpoint16,   p1,           2 ),
+  CM_STD_TMAP_ENTRY(ebc_ufpoint32,   p1,           4 ),
+  CM_STD_TMAP_ENTRY(ebc_ufpoint64,   p1,           8 ),
 
-  CM_STD_TMAP_ENTRY(bcd_fpoint8,     1 ),
-  CM_STD_TMAP_ENTRY(bcd_fpoint16,    2 ),
-  CM_STD_TMAP_ENTRY(bcd_fpoint32,    4 ),
-  CM_STD_TMAP_ENTRY(bcd_fpoint64,    8 ),
-  CM_STD_TMAP_ENTRY(bcd_ufpoint8,    1 ),
-  CM_STD_TMAP_ENTRY(bcd_ufpoint16,   2 ),
-  CM_STD_TMAP_ENTRY(bcd_ufpoint32,   4 ),
-  CM_STD_TMAP_ENTRY(bcd_ufpoint64,   8 ),
+  CM_STD_TMAP_ENTRY(bcd_fpoint8,     p1plus1div2,  1 ),
+  CM_STD_TMAP_ENTRY(bcd_fpoint16,    p1plus1div2,  2 ),
+  CM_STD_TMAP_ENTRY(bcd_fpoint32,    p1plus1div2,  4 ),
+  CM_STD_TMAP_ENTRY(bcd_fpoint64,    p1plus1div2,  8 ),
+  CM_STD_TMAP_ENTRY(bcd_ufpoint8,    p1plus1div2,  1 ),
+  CM_STD_TMAP_ENTRY(bcd_ufpoint16,   p1plus1div2,  2 ),
+  CM_STD_TMAP_ENTRY(bcd_ufpoint32,   p1plus1div2,  4 ),
+  CM_STD_TMAP_ENTRY(bcd_ufpoint64,   p1plus1div2,  8 ),
 
-  CM_STD_TMAP_ENTRY(sbl_fpoint8,     1 ),
-  CM_STD_TMAP_ENTRY(sbl_fpoint16,    2 ),
-  CM_STD_TMAP_ENTRY(sbl_fpoint32,    4 ),
-  CM_STD_TMAP_ENTRY(sbl_fpoint64,    8 ),
-  CM_STD_TMAP_ENTRY(sbl_ufpoint8,    1 ),
-  CM_STD_TMAP_ENTRY(sbl_ufpoint16,   2 ),
-  CM_STD_TMAP_ENTRY(sbl_ufpoint32,   4 ),
-  CM_STD_TMAP_ENTRY(sbl_ufpoint64,   8 ),
+  CM_STD_TMAP_ENTRY(sbl_fpoint8,     p1,           1 ),
+  CM_STD_TMAP_ENTRY(sbl_fpoint16,    p1,           2 ),
+  CM_STD_TMAP_ENTRY(sbl_fpoint32,    p1,           4 ),
+  CM_STD_TMAP_ENTRY(sbl_fpoint64,    p1,           8 ),
+  CM_STD_TMAP_ENTRY(sbl_ufpoint8,    p1,           1 ),
+  CM_STD_TMAP_ENTRY(sbl_ufpoint16,   p1,           2 ),
+  CM_STD_TMAP_ENTRY(sbl_ufpoint32,   p1,           4 ),
+  CM_STD_TMAP_ENTRY(sbl_ufpoint64,   p1,           8 ),
 
-  CM_STD_TMAP_ENTRY(sbh_fpoint8,     1 ),
-  CM_STD_TMAP_ENTRY(sbh_fpoint16,    2 ),
-  CM_STD_TMAP_ENTRY(sbh_fpoint32,    4 ),
-  CM_STD_TMAP_ENTRY(sbh_fpoint64,    8 ),
-  CM_STD_TMAP_ENTRY(sbh_ufpoint8,    1 ),
-  CM_STD_TMAP_ENTRY(sbh_ufpoint16,   2 ),
-  CM_STD_TMAP_ENTRY(sbh_ufpoint32,   4 ),
-  CM_STD_TMAP_ENTRY(sbh_ufpoint64,   8 ),
+  CM_STD_TMAP_ENTRY(sbh_fpoint8,     p1,           1 ),
+  CM_STD_TMAP_ENTRY(sbh_fpoint16,    p1,           2 ),
+  CM_STD_TMAP_ENTRY(sbh_fpoint32,    p1,           4 ),
+  CM_STD_TMAP_ENTRY(sbh_fpoint64,    p1,           8 ),
+  CM_STD_TMAP_ENTRY(sbh_ufpoint8,    p1,           1 ),
+  CM_STD_TMAP_ENTRY(sbh_ufpoint16,   p1,           2 ),
+  CM_STD_TMAP_ENTRY(sbh_ufpoint32,   p1,           4 ),
+  CM_STD_TMAP_ENTRY(sbh_ufpoint64,   p1,           8 ),
 
-  CM_SVAL_TMAP_ENTRY(char,           1 ),
-  CM_STD_TMAP_ENTRY(string_FW,       p1),
+  CM_SVAL_TMAP_ENTRY(char,           1,            1 ),
+  CM_STD_TMAP_ENTRY(string_FW,       p1,           p1),
 
-  CM_SVAL_TMAP_ENTRY(a_char,         1 ),
-  CM_STD_TMAP_ENTRY(a_string_FW,     p1),
+  CM_SVAL_TMAP_ENTRY(a_char,         1,            1 ),
+  CM_STD_TMAP_ENTRY(a_string_FW,     p1,           p1),
 
-  CM_SVAL_TMAP_ENTRY(e_char,         1 ),
-  CM_STD_TMAP_ENTRY(e_string_FW,     p1),
+  CM_SVAL_TMAP_ENTRY(e_char,         1,            1 ),
+  CM_STD_TMAP_ENTRY(e_string_FW,     p1,           p1),
 
   /* END MARKER */
-  { 0, 0 }
+  { 0, 0, 0, 0, 0 }
 };
 
 CM_tmentry_t* CM_get_tmentry(PDC_string *s, int switch_qy)

@@ -21,8 +21,9 @@ void describe_query(CM_query *q)
     error(ERROR_PROMPT, "%lu", (unsigned long)q->params.elts[i]);
   }
   error(ERROR_PROMPT, ") [offset: %lu]", (unsigned long)q->off);
-  error(ERROR_PROMPT, " type: %s, ok_switch_type: %d, out_sz: %lu\n",
-	q->entry->tname, ok_switch_type, (unsigned long)q->out_sz);
+  error(ERROR_PROMPT, " type: %s, ok_switch_type: %d, in_sz: %lu out_sz: %lu\n",
+	q->entry->tname, ok_switch_type,
+	(unsigned long)q->in_sz, (unsigned long)q->out_sz);
 }
 
 void describe_queries(CM_queries *qs)
@@ -145,35 +146,40 @@ PDC_error_t rw_s_cookie(CM_t *cm, CM_s_cookie *s, PDC_byte *begin, PDC_byte *end
   return PDC_ERR;
 }
 
-int CM_calc_out_sz(CM_query *q, PDC_int32 out_val)
+int CM_calc_in_out_sz(CM_query *q, PDC_int32 out_val)
 {
+  q->in_sz = q->entry->in_sz_fn(q);
   if (!out_val) return 1; /* leave out_sz == 0 */
   q->out_sz = q->entry->out_sz_fn(q);
   return 1;
 }
 
-size_t CM_out_sz_1(CM_query *qy)
+size_t CM_sz_1(CM_query *qy)
 {
   return 1;
 }
 
-size_t CM_out_sz_2(CM_query *qy)
+size_t CM_sz_2(CM_query *qy)
 {
   return 2;
 }
 
-size_t CM_out_sz_4(CM_query *qy)
+size_t CM_sz_4(CM_query *qy)
 {
   return 4;
 }
 
-size_t CM_out_sz_8(CM_query *qy)
+size_t CM_sz_8(CM_query *qy)
 {
   return 8;
 }
 
-size_t CM_out_sz_p1(CM_query *qy)
+size_t CM_sz_p1(CM_query *qy)
 {
   return (size_t)(qy->params.elts[0]);
 }
 
+size_t CM_sz_p1plus1div2(CM_query *qy)
+{
+  return (size_t)((qy->params.elts[0] + 1)/2);
+}
