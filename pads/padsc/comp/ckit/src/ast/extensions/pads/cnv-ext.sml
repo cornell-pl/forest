@@ -1856,8 +1856,22 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 end
 			 end
 		      val resall = mungeFields genLocFull genLocBrief genLocMan fields
+		      fun analyzePred NONE = false
+                        | analyzePred (SOME pred:pcexp PX.PPostCond list option) = 
+			  let fun f [] = false
+			        | f ((PX.General x)::ls) = f ls
+			        | f ((PX.ParseCheck x) ::ls) = true
+			  in
+			      f pred
+			  end
+		      fun predInfoFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
+				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+				      pred, comment: string option, size,optDecl, arrayDecl,...}:pfieldty) = [analyzePred pred]
+		      fun predInfoBrief _ = [false]
+		      fun predInfoMan {tyname, name, args, isVirtual, expr, pred, comment} = [analyzePred pred]
+		      val hasParseCheck = List.exists (fn x=>x) (mungeFields predInfoFull predInfoBrief predInfoMan fields)
 		  in
-		     unzip8' resall
+		     (hasParseCheck, unzip8' resall)
 		  end
 
 	      (* For an omitted field, generate init call if cty is a dynamic PADS type *)
@@ -4746,7 +4760,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      val postReadSubList : (string * pcexp) list ref = ref []
                      fun addReadSub (a : string * pcexp) = readSubList := (a:: (!readSubList))
                      fun addPostReadSub (a : string * pcexp) = postReadSubList := (a:: (!postReadSubList))
-		     val (allVars, omitNames, omitVars, readSubs, pdSubs, postReadSubs, tys, tyNames) =
+		     val (hasParseCheck, (allVars, omitNames, omitVars, readSubs, pdSubs, postReadSubs, tys, tyNames)) =
 			 checkStructUnionFields("Punion", unionName, isLongestMatch, variants)
 		     val _ = List.map addReadSub readSubs
 		     val _ = List.map addReadSub pdSubs
@@ -5852,7 +5866,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val postReadSubList : (string * pcexp) list ref = ref []
                       fun addReadSub (a : string * pcexp) = readSubList := (a:: (!readSubList))
                       fun addPostReadSub (a : string * pcexp) = postReadSubList := (a:: (!postReadSubList))
-		      val (allVars, omitNames, omitVars, readSubs, pdSubs, postReadSubs, tys, tyNames) =
+		      val (hasParseCheck, (allVars, omitNames, omitVars, readSubs, pdSubs, postReadSubs, tys, tyNames)) =
 			  checkStructUnionFields("Pstruct", structName, false, fields)
 		      val _ = List.map addReadSub readSubs
 		      val _ = List.map addReadSub pdSubs
@@ -6237,7 +6251,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						| SOME predX => ("_CHECK", [predX])
 			      val (endAdd, endArgs) =
 				  if isEndian then ("_ENDIAN", [PL.swapBytesX(repX)]) else ("", [])
-			      val macroCallS = PT.Expr(PT.Call(PT.Id(macroNm^checkAdd^endAdd), macroArgs @ checkArgs @ endArgs))
+			      val setEndArgs = [PT.Id(if hasParseCheck then setEndID else noopID)]
+
+			      val macroCallS = PT.Expr(PT.Call(PT.Id(macroNm^checkAdd^endAdd), macroArgs @ checkArgs @ endArgs @ setEndArgs))
 			  in
 			      [commentS, macroCallS]
 			  end
@@ -6361,6 +6377,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val () = ignore (insTempVar(m,  P.ptrPCT mPCT))               (* add m to scope *)
 		      val () = ignore (List.map insTempVar omitVars)                (* insert virtuals into scope *)
                       val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
+                      val () = ignore (insTempVar(setEndID, P.int))                   (* add phantom arg to conrol setting end location
+										       to scope to fake out type checker. *)
+		      val () = ignore (insTempVar(noopID, P.int))                   
 		      val readFields = mungeFields genReadFull genReadBrief genReadMan fields  
 		                                   (* does type checking *)
 		      val augReadFields = if isAlt
@@ -6387,6 +6406,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      (* convert readEDs now, with mapping of field name -> void* for each field in a temporary scope *)
 		      val () = pushLocalEnv()
 		      val () = ignore(List.map (fn(name) => insTempVar(name, P.voidPtr)) allVars)
+                      val () = ignore (insTempVar(setEndID, P.int))                   (* add phantom arg to conrol setting end location
+										       to scope to fake out type checker. *)
+		      val () = ignore (insTempVar(noopID, P.int))                   
 		      val readDecls = (emitRead readEDs)
 		      val () = popLocalEnv()
 

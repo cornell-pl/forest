@@ -24,12 +24,12 @@ void PCGEN_STRUCT_READ_PRE(const char *fn_nm, void *the_field);
 void PCGEN_STRUCT_READ_POST_CHECK(const char *fn_nm, void *the_field, int usercheck);
 void PCGEN_STRUCT_READ_POST_CHECK_ENDIAN(const char *fn_nm, void *the_field, int usercheck, Perror_t swap_call);
 
-void PCGEN_STRUCT_READ_FIRST(const char *fn_nm, void *the_field, Perror_t read_call);
-void PCGEN_STRUCT_READ_FIRST_CHECK(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck);
-void PCGEN_STRUCT_READ_FIRST_CHECK_ENDIAN(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck, Perror_t swap_call);
-void PCGEN_STRUCT_READ_NEXT(const char *fn_nm, void *the_field, Perror_t read_call);
-void PCGEN_STRUCT_READ_NEXT_CHECK(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck);
-void PCGEN_STRUCT_READ_NEXT_CHECK_ENDIAN(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck, Perror_t swap_call);
+void PCGEN_STRUCT_READ_FIRST(const char *fn_nm, void *the_field, Perror_t read_call, int setEnd);
+void PCGEN_STRUCT_READ_FIRST_CHECK(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck, int setEnd);
+void PCGEN_STRUCT_READ_FIRST_CHECK_ENDIAN(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck, Perror_t swap_call, int setEnd);
+void PCGEN_STRUCT_READ_NEXT(const char *fn_nm, void *the_field, Perror_t read_call, int setEnd);
+void PCGEN_STRUCT_READ_NEXT_CHECK(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck, int setEnd);
+void PCGEN_STRUCT_READ_NEXT_CHECK_ENDIAN(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck, Perror_t swap_call, int setEnd);
 
 void PCGEN_STRUCT_READ_FIRST_CHAR_LIT(const char *fn_nm, Pchar char_lit);
 void PCGEN_STRUCT_READ_NEXT_CHAR_LIT(const char *fn_nm, Pchar char_lit);
@@ -45,9 +45,9 @@ void PCGEN_ALT_READ_PRE(const char *fn_nm, void *the_field);
 void PCGEN_ALT_READ_POST_CHECK(const char *fn_nm, void *the_field, int usercheck);
 void PCGEN_ALT_READ_POST_CHECK_ENDIAN(const char *fn_nm, void *the_field, int usercheck, Perror_t swap_call);
 
-void PCGEN_ALT_READ(const char *fn_nm, void *the_field, Perror_t read_call);
-void PCGEN_ALT_READ_CHECK(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck);
-void PCGEN_ALT_READ_CHECK_ENDIAN(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck, Perror_t swap_call);
+void PCGEN_ALT_READ(const char *fn_nm, void *the_field, Perror_t read_call, int setEnd);
+void PCGEN_ALT_READ_CHECK(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck, int setEnd);
+void PCGEN_ALT_READ_CHECK_ENDIAN(const char *fn_nm, void *the_field, Perror_t read_call, int usercheck, Perror_t swap_call, int setEnd);
 
 void PCGEN_ALT_READ_CHAR_LIT(const char *fn_nm, Pchar char_lit);
 void PCGEN_ALT_READ_STR_LIT(const char *fn_nm, const char *str_lit, size_t str_len_expr);
@@ -400,9 +400,18 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call)
+#define PDCI_IO_ENDLOC_SET(loc)  PDCI_IO_ENDLOC(pads, loc)
+/* END_MACRO */
+
+#define PDCI_IO_ENDLOC_NOOP(loc) P_NULL_STMT
+/* END_MACRO */
+
+#define PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call, doEnd)
+  Perror_t res;
   PDCI_IO_BEGINLOC(pads, pd->the_field.loc);
-  if (P_ERR == read_call) {
+  res = read_call;
+  PDCI_IO_ENDLOC##doEnd(pd->the_field.loc);
+  if (P_ERR == res) {
     if (P_PS_isPanic(&(pd->the_field))) {
       P_PS_setPanic(pd);
     }
@@ -423,53 +432,53 @@ do {
   (pd->nerr)++;
 /* END_MACRO */
 
-#define PCGEN_STRUCT_READ_FIRST(fn_nm, the_field, read_call)
+#define PCGEN_STRUCT_READ_FIRST(fn_nm, the_field, read_call, doEnd)
 do {
-  PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call)
+  PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call, doEnd)
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_STRUCT_READ_FIRST_CHECK(fn_nm, the_field, read_call, usercheck)
+#define PCGEN_STRUCT_READ_FIRST_CHECK(fn_nm, the_field, read_call, usercheck, doEnd)
 do {
-  PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call)
+  PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call, doEnd)
   else PCGEN_STRUCT_READ_POST_CHECK(fn_nm, the_field, usercheck);
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_STRUCT_READ_FIRST_CHECK_ENDIAN(fn_nm, the_field, read_call, usercheck, swap_call)
+#define PCGEN_STRUCT_READ_FIRST_CHECK_ENDIAN(fn_nm, the_field, read_call, usercheck, swap_call, doEnd)
 do {
-  PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call)
+  PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call, doEnd)
   else PCGEN_STRUCT_READ_POST_CHECK_ENDIAN(fn_nm, the_field, usercheck, swap_call);
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_STRUCT_READ_NEXT(fn_nm, the_field, read_call)
+#define PCGEN_STRUCT_READ_NEXT(fn_nm, the_field, read_call, doEnd)
 do {
   if (P_PS_isPanic(pd)) {
     PDCI_STRUCT_READ_HANDLE_PANIC(fn_nm, the_field)
   } else {
-    PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call)
+    PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call,doEnd)
   }
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_STRUCT_READ_NEXT_CHECK(fn_nm, the_field, read_call, usercheck)
+#define PCGEN_STRUCT_READ_NEXT_CHECK(fn_nm, the_field, read_call, usercheck,doEnd)
 do {
   if (P_PS_isPanic(pd)) {
     PDCI_STRUCT_READ_HANDLE_PANIC(fn_nm, the_field)
   } else {
-    PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call)
+    PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call,doEnd)
     else PCGEN_STRUCT_READ_POST_CHECK(fn_nm, the_field, usercheck);
   }
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_STRUCT_READ_NEXT_CHECK_ENDIAN(fn_nm, the_field, read_call, usercheck, swap_call)
+#define PCGEN_STRUCT_READ_NEXT_CHECK_ENDIAN(fn_nm, the_field, read_call, usercheck, swap_call, doEnd)
 do {
   if (P_PS_isPanic(pd)) {
     PDCI_STRUCT_READ_HANDLE_PANIC(fn_nm, the_field)
   } else {
-    PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call)
+    PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call,doEnd)
     else PCGEN_STRUCT_READ_POST_CHECK_ENDIAN(fn_nm, the_field, usercheck, swap_call);
   }
 } while (0)
@@ -744,9 +753,12 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call)
+#define PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call,doEnd)
+  Perror_t res;
   PDCI_IO_BEGINLOC(pads, pd->the_field.loc);
-  if (P_ERR == read_call) {
+  res = read_call;
+  PDCI_IO_ENDLOC ## doEnd(pd->the_field.loc);
+  if (P_ERR == res) {
     if (P_PS_isPanic(&(pd->the_field))) {
       P_PS_setPanic(pd);
     }
@@ -758,27 +770,27 @@ do {
   }
 /* END_MACRO */
 
-#define PCGEN_ALT_READ(fn_nm, the_field, read_call)
+#define PCGEN_ALT_READ(fn_nm, the_field, read_call, doEnd)
 do {
   PDCI_ALT_READ_FIELD_PRE(fn_nm)
-  PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call)
+  PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call,doEnd)
   PDCI_ALT_READ_FIELD_POST(fn_nm)
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_ALT_READ_CHECK(fn_nm, the_field, read_call, usercheck)
+#define PCGEN_ALT_READ_CHECK(fn_nm, the_field, read_call, usercheck, doEnd)
 do {
   PDCI_ALT_READ_FIELD_PRE(fn_nm)
-  PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call)
+  PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call, doEnd)
   else PCGEN_ALT_READ_POST_CHECK(fn_nm, the_field, usercheck);
   PDCI_ALT_READ_FIELD_POST(fn_nm)
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_ALT_READ_CHECK_ENDIAN(fn_nm, the_field, read_call, usercheck, swap_call)
+#define PCGEN_ALT_READ_CHECK_ENDIAN(fn_nm, the_field, read_call, usercheck, swap_call, doEnd)
 do {
   PDCI_ALT_READ_FIELD_PRE(fn_nm)
-  PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call)
+  PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call,doEnd)
   else PCGEN_ALT_READ_POST_CHECK_ENDIAN(fn_nm, the_field, usercheck, swap_call);
   PDCI_ALT_READ_FIELD_POST(fn_nm)
 } while (0)

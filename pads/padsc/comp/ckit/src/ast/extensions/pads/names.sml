@@ -22,6 +22,8 @@ struct
   val unionEnd    = "end"    (* tloc.e     : Ppos_t *)
   val position    = "position"
   val identifier  = "_id_"
+  val setEndID    = "_SET"
+  val noopID      = "_NOOP"
 
   val structLevel = "compoundLevel"
   val unionLevel  = "compoundLevel"
