@@ -6,6 +6,8 @@ if ($pads_home eq "") {
   print "\n    set PADS_HOME and try again\n\n";
   exit(-1);
 }
+my $ptest_dbg = 0;
+my $expanded = 0;
 my $maxrecs = 0;
 my $skippre = 0;
 my $skippost = 0;
@@ -37,6 +39,16 @@ ARG: while ($parsing_opt_args) {
       print "\n    Did not recognize IO discipline $idisc\n";
       goto usage;
     }
+    next ARG;
+  }
+  if ($#ARGV >= 0 && ($ARGV[0] eq "-p" || $ARGV[0] eq "--ptest-debug")) {
+    shift(@ARGV);
+    $ptest_dbg = 1;
+    next ARG;
+  }
+  if ($#ARGV >= 0 && ($ARGV[0] eq "-e" || $ARGV[0] eq "--expanded-debug")) {
+    shift(@ARGV);
+    $expanded = 1;
     next ARG;
   }
   if ($#ARGV >= 0 && ($ARGV[0] eq "-d" || $ARGV[0] eq "--debug")) {
@@ -82,7 +94,12 @@ my $pspec_h = "$pname.h";
 my $pty = $ARGV[1];
 my $mfile = "tmp_GNUmakefile.ptest";
 my $efile = "tmp_rwxml_$pname";
-my $efile_d = $efile . "_d";
+my $efile_d;
+if ($expanded) {
+  $efile_d = $efile . "_dd";
+} else {
+  $efile_d = $efile . "_d";
+}
 my $cfile = "$efile.c";
 my $gendir = ".";
 
@@ -123,6 +140,7 @@ close(COUT);
 
 print "\nBuilding test program\n";
 my $res = `gmake -f $mfile 2>&1` || die "\n    Build of test program failed\n\n";
+print "PTEST_DBG: gmake res = \n$res" if ($ptest_dbg);
 if ($res =~ /\`?$pty\'?\s+undeclared/is) {
   print "\nBuild of test program failed, ptype $pty not found\n\n";
   exit(-1);
@@ -142,7 +160,7 @@ print "\nResult:\n$res2\n";
 exit(0);
 
 usage:
-print "\n    usage:  ptest.pl [ -m/--maxrecs # ] [ -i/--iodisc <iodisc> ] [ -s/--skip-pre # ] [ -S/--skip-post # ] [ -d/--debug ] <pspec> <ptype>
+print "\n    usage:  ptest.pl [ -m/--maxrecs # ] [ -i/--iodisc <iodisc> ] [ -s/--skip-pre # ] [ -S/--skip-post # ] [ -d/--debug ] [ -e/--expanded-debug ] [ -p/--ptest-debug ] <pspec> <ptype>
 
    Notes:
        . the default IO discipline is nlrec.  Other choices: norec
