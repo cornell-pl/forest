@@ -27,8 +27,10 @@ Pstruct label_t {
    Pa_string_FW(:length:) l;  
 };
 
-// to get the offset in a pointer field, ignore the top two bits
-int p_offset(Puint16 p) { return p - (p & 49152); } // return p & ~0xC000
+// For convenience to get the actual pointer from ptr_t field p
+int p_offset(Puint16 p) {
+  return (p & (0xC000-1));
+}
 
 Pstruct ptr_t {
   Psbh_uint16(:2:)          p : (p>>14) == 3;
@@ -73,11 +75,77 @@ Parray domain_name {
   label_or_ptr [] : Plast(check256(eltEnd.offset - arrayBegin.offset, arrayBegin.offset)
 			      || elts[current].tag != label
 			      || elts[current].val.label.length == 0) ;
-//} Pwhere { Pparsecheck(domain_name_dbg(elts, length, arrayBegin.offset))
+//} Pwhere { Pparsecheck(domain_name_dbg(elts, length, arrayBegin.offset));
 };
+
+Pstruct character_string {
+  Psbh_uint8(:1:)        length;
+  Pa_string_FW(:length:) bytes;
+}
 
 Pstruct A_t(:Puint16 rdlength:) {
   Psbh_uint32(:4:) address : rdlength == 4;
+};
+
+Pstruct CNAME_t {
+  domain_name name;
+};
+
+Pstruct HINFO_t {
+  character_string cpu;
+  character_string os;
+};
+
+Pstruct MB_t {
+  domain_name name;
+};
+
+Pstruct MD_t {
+  domain_name name;
+};
+
+Pstruct MF_t {
+  domain_name name;
+};
+
+Pstruct MG_t {
+  domain_name name;
+};
+
+Pstruct MINFO_t {
+  domain_name rmailbx;
+  domain_name emailbx;
+};
+
+Pstruct MR_t {
+  domain_name name;
+};
+
+Pstruct MX_t {
+  Psbh_uint16(:2:) preference;
+  domain_name exchange;
+};
+
+Pstruct NULL_t(:Puint16 rdlength:) {
+  Pa_string_FW(:rdlength:) rdata;
+};
+  
+Pstruct NS_t {
+  domain_name name;
+};
+
+Pstruct PTR_t {
+  domain_name name;
+};
+
+Pstruct SOA_t {
+  domain_name mname;
+  domain_name rname;
+  Psbh_uint32(:4:) serial;
+  Psbh_uint32(:4:) refresh;
+  Psbh_uint32(:4:) retry;
+  Psbh_uint32(:4:) expire;
+  Psbh_uint32(:4:) minimum;
 };
 
 Pstruct WKS_t(:Puint16 rdlength:) {
@@ -89,23 +157,40 @@ Pstruct WKS_t(:Puint16 rdlength:) {
   Pa_string_FW(:rdlength-(middle-start):) bitmap;
 };
 
+Parray TXT_t(:Puint16 rdlength:) {
+  character_string [] : Plast(eltEnd.offset - arrayBegin.offset >= rdlength);
+};
+
 Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
-  // Would be nice to check that rdlength was consumed
   Pswitch (t) {
   Pcase 1 : A_t(:rdlength:) A;
+  Pcase 2 : NS_t NS;
+  Pcase 3 : MD_t MD;
+  Pcase 4 : MF_t MF;
+  Pcase 5 : CNAME_t CNAME;
+  Pcase 6 : SOA_t SOA;
+  Pcase 7 : MB_t MB;
+  Pcase 8 : MG_t MG;
+  Pcase 9 : MR_t MR;
+  Pcase 10 : NULL_t(:rdlength:) RRNULL;
   Pcase 11 : WKS_t(:rdlength:) WKS;
+  Pcase 12 : PTR_t PTR;
+  Pcase 13 : HINFO_t HINFO;
+  Pcase 14 : MINFO_t MINFO;
+  Pcase 15 : MX_t MX;
+  Pcase 16 : TXT_t(:rdlength:) TXT;
   Pdefault : Pa_string_FW(:rdlength:) unknown;
   }
+  // Want to check here that we consumed exactly rdlength octets
 };
 
 Pstruct resource_record {
   domain_name              name;
-  Psbh_uint16(:2:)         type /* : printf("Type is %d\n",type) */ ;
+  Psbh_uint16(:2:)         type;
   Psbh_uint16(:2:)         class;
   Psbh_uint32(:4:)         ttl;    /- should be limited to positive signed 32bit
   Psbh_uint16(:2:)         rdlength;
   rr_spec(:type,rdlength:) rdata;
-  //  Pa_string_FW(:rdlength:) rdata; /- structure determined by type, will fill in later
 };
 
 Parray resource_records(:unsigned int size:) {
@@ -114,7 +199,7 @@ Parray resource_records(:unsigned int size:) {
 
 Pstruct question_t {
    domain_name qname;
-   Psbh_uint16(:2:) qtype;
+   Psbh_uint16(:2:) qtype : printf("Question type %d\n",qtype);
    Psbh_uint16(:2:) qclass;
 };
 
@@ -124,7 +209,7 @@ Parray questions(:unsigned int size:) {
 
 Pstruct header_t {
    Psbh_uint16(:2:) id;
-   Psbh_uint16(:2:) blob;
+   Psbh_uint16(:2:) blob : printf("Truncate is %d\n", (blob >> 9) & 1);
    Psbh_uint16(:2:) qdcount; /- number of questions
    Psbh_uint16(:2:) ancount; /- number of answers
    Psbh_uint16(:2:) nscount; /- number of authorities
