@@ -684,7 +684,7 @@ PDC_norec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
 {
   PDC_norec_noseek_data_t   *data;
 
-  if (!pdc | !pdc->disc) {
+  if (!pdc || !pdc->disc) {
     return PDC_ERR;
   }
   if (!io_disc) {
@@ -1871,11 +1871,11 @@ PDC_norec_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, 
     }
     offset = io_cur_elt->disc_off + io_cur_elt->len - remain;
     if (offset < data->tail_off) {
-      unsigned long to_return = data->tail_off - offset;
+      unsigned long long to_return = data->tail_off - offset;
       if (-1 == sfseek(data->io, offset, 0)) {
-	PDC_WARN1(pdc->disc, "PDC_norec_sfclose: failed to return %lu bytes to IO stream", to_return);
+	PDC_WARN1(pdc->disc, "PDC_norec_sfclose: failed to return %llu bytes to IO stream", to_return);
       } else {
-	PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_norec_sfclose: restored %lu bytes to IO stream using sfseek", to_return);
+	PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_norec_sfclose: restored %llu bytes to IO stream using sfseek", to_return);
       }
     }
   }
