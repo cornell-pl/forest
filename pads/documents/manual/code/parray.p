@@ -46,8 +46,8 @@ Parray list(:Puint32 min, Puint32 max:) {
 /*@END size.tex */
 
 /*@BEGIN longest.tex */
-Ptypedef Pint32 even_t :: even_t x => {x % 2 == 0};
-Ptypedef Pint32 odd_t  :: odd_t  x => {x % 2 == 1};
+Ptypedef Pint32 even_t : even_t x => {x % 2 == 0};
+Ptypedef Pint32 odd_t  : odd_t  x => {x % 2 == 1};
 
 Parray eseq_t {
   even_t [1:] : Psep('a') && Plongest;
@@ -86,18 +86,18 @@ Parray fseq_t {
 /*@END ended.tex */
 
 /*@BEGIN array-omit.tex */
-Parray seq_t{
+Parray nseq_t{
   Pint32 [:4] : Psep(' ') && Pomit(elt < 0) && Pterm(Peor);
 };
 /*@END array-omit.tex */
 
-
+#define INTLIST_SIZE 10
 /*@BEGIN array-forall.tex */
 Precord Parray intList {
   Puint32 [INTLIST_SIZE] : Psep('|');
 } Pwhere {
-  Pforall( i Pin [0..length-2] : (intList[i] < intList[i+1]) )  && 
-  Pparsecheck(end.offset - begin.offset > 10)       
+    Pforall( i Pin [0..length-2] : (intList[i] < intList[i+1]) )  && 
+    Pparsecheck(end.offset - begin.offset > 10);       
 };
 /*@END array-forall.tex */
 

@@ -1,4 +1,6 @@
 \documentclass{sig-alternate}
+%\documentclass{acm-sigplan}
+
 \usepackage{times,url}
 \usepackage{code} 
 \input{defs}
@@ -147,7 +149,7 @@ description of the data source.
 The result of a parse is a pair consisting of a canonical in-memory
 representation of the data and a parse descriptor. The parse
 descriptor precisely characterizes both the syntactic and the semantic
-errors that occured during parsing.  This structure allows analysts
+errors that occurred during parsing.  This structure allows analysts
 to choose how to respond to errors in application-specific ways.  
 
 With such huge datasets, performance is critical. The \pads{} system addresses performance in a number of ways.
@@ -162,12 +164,12 @@ description to pay the run-time cost of checking them.
 Given the importance of the problem, it is perhaps surprising
 that more tools do not exist to solve it.  \xml{} and relational databases
 only help with data already in well-behaved formats.  Lex and Yacc are both
-over- and under- kill.  Overkill because the division into a lexer and a context free grammar is not necessary for many ad hoc data sources, and underkill in that such systems require the user to build in-memory representations manually,
+over- and under- kill.  Overkill because the division into a lexer and a context free grammar is not necessary for many ad hoc data sources, and under-kill in that such systems require the user to build in-memory representations manually,
 support only ASCII sources, and don't provide extra tools.  ASN.1~\cite{asn} and related systems~\cite{asdl} allow the user to specify an in-memory representation and generate an on-disk format, but this doesn't help when given a particular on-disk format.  
 Existing ad hoc description languages~\cite{gpce02,sigcomm00,erlang} are steps 
 in the right direction, but they focus on binary, error-free data and they do not provide auxiliary tools.
 
-In building the \pads{} system, we faced design challenges on two fronts:
+In building the \pads{} system, we faced challenges on two fronts:
 designing the data description language and
 crafting the generated libraries and tools.
 In the rest of the paper, 
@@ -771,7 +773,7 @@ This library greatly facilitated the construction of the compiler as it
 provides a framework for extending \C{}, typechecking the extension, and then pretty printing the result.  Because of CKIT, we were able to have a working version of the \pads{} compiler very quickly.
 Currently, our compiler consists of 10,000 lines of \smlnj{} code layered on top of CKIT.
 
-The \pads{} run-time libraries comprise approximately 30,000 lines of \C{} code, built on top of the AST~\cite{ast} and SFIO~\cite{sfio} libraries.
+The \pads{} run-time library comprise approximately 30,000 lines of \C{} code, built on top of the AST~\cite{ast} and SFIO~\cite{sfio} libraries.
 These libraries provide support for regular expressions, container data types, a date parsing library, and various I/O routines.  
  
 To make the collection of base types user-extensible, the compiler reads all base type specifications from files.  
@@ -790,18 +792,18 @@ release process.  When the process is finished, hopefully in the next few weeks,
 To measure the performance of \pads{}, we compare the parser \pads{} generates for the \dibbler{} data description against a hand-written \perl{} program, as \perl{} is the language that our user base has typically used. We compare the performance of the two approaches on two different tasks: vetting \dibbler{} data in a fashion similar to the filter program of
 \figref{figure:dibbler-filter} and collecting the order number of all records that ever pass through a particular state.  For the first task, we check all the specified properties on the data, including the constraint that the timestamps in the events appear in sorted order.  For the second task, we turn off all error checking and simply output the desired order numbers on standard out.
 We pass as input to the selection programs the cleaned data file produced by the vetter programs. 
-We attempted to write the equivalent \perl{} programs in as efficient a manner possible, given the specified tasks.  The \perl{} vetter uses the built-in \cd{split} operator to produce an in-memory list of the pipe-separated fields of the data source.  The \perl{} selection program uses \perl{}'s regular expression pattern matcher to find lines with the desired state in any 
-position after the 13th field.  \figref{figure:perl-re} shows the relevent regular expression, looking for orders going through state ``10.''
-\perl{} compiles this pattern and applies the compiled pattern to each line.  The \perl{} vetter is 323~lines of well-commented \perl{} code, while the selection program is 69~lines.  
+We attempted to write the equivalent \perl{} programs in as efficient a manner possible, given the specified tasks.  For each record, the \perl{} vetter uses the built-in \cd{split} operator to produce an in-memory array of the pipe-separated fields.  The \perl{} selection program uses \perl{}'s regular expression pattern matcher to find lines with the desired state in any 
+position after the 13th field.  \figref{figure:perl-re} shows the relevent regular expression, looking for orders going through state \cd{\$STATE}.
+\perl{} compiles this pattern and applies the compiled pattern to each line.  The \perl{} vetter is 323~lines of well-commented \perl{} code, while the selection program is 66~lines.  
 The \pads{} vetter is 153~lines of well-commented \C{} code, while the \pads{} selection program is 120~lines. 
 
 \begin{figure*}
-\begin{small}
+\begin{center}
 \begin{verbatim}
-qr/^(\d+)\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*(?:\|[^|]*\|[^|]*)*\|$SELECT_STATE\|/;
+                   qr/^(\d+)\|(?:[^|]*\|){12}(?:[^|]*\|[^|]*\|)*$STATE\|/;
 \end{verbatim}
 \vskip -2ex
-\end{small}
+\end{center}
 \caption{Regular expression at the heart of the \perl{} selection program.}
 \label{figure:perl-re}
 \end{figure*}
@@ -816,22 +818,21 @@ and \cd{gcc} version 3.2.2 with optimization level O2 to compile the \pads{} pro
 We ran each program three times.  \figref{figure:performance} reports the elapsed running times using the Unix \cd{time} utitlity.
 For comparison, a \perl{} program that simply counts the number of records takes on average~124 seconds.  The corresponding \pads{} program takes~81 seconds.
 
-
 \begin{figure}
 \begin{center}
 \begin{tabular}{|l@{\hskip 2ex}l|}
 \hline
 pads\_vet  & perl\_vet.pl \\ \hline
-1619.129   & 3310.804       \\
-1600.729   & 3300.945       \\
-1627.481   & 3205.151       \\ \hline 
+1619.1   & 3310.8       \\
+1600.7   & 3300.9       \\
+1627.5   & 3205.2       \\ \hline 
 \end{tabular}
 \begin{tabular}{|l@{\hskip 2ex}l|}
 \hline
 pads\_select  & perl\_select.pl \\ \hline
-543.925     & 552.001       \\
-544.243     & 372.427       \\
-547.650     & 331.939        \\  \hline
+426.4     & 548.7       \\
+419.8     & 518.4       \\
+418.4     & 492.1        \\  \hline
 \end{tabular}
 \end{center}
 \vskip -2ex
@@ -839,8 +840,9 @@ pads\_select  & perl\_select.pl \\ \hline
 \label{figure:performance}
 \end{figure}
 
-The \pads{} vetter was more than twice as fast as the \perl{} vetter, while the \perl{} selection program outperformed the \pads{} selection program after the initial run, which presumably loaded some \perl{} libraries that remained resident for the successive runs.
-We have not yet devoted significant time to optimizing the generated parser,
+The \pads{} vetter was more than twice as fast as the \perl{} vetter, while the \pads{} selection program outperformed the \perl{} selection program by a smaller margin.
+We have not yet devoted significant time to optimizing the generated parser
+or the base type library,
 so we expect improvements are possible.
 
 \section{Related work}
@@ -848,11 +850,13 @@ There are many tools for describing data formats. For example,
 \textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl} are both
 systems for declaratively describing data and then generating
 libraries for manipulating that data.  In contrast to \pads{},
-however, both these systems specify the {\em logical\/} representation
+however, both of these systems specify the {\em logical\/} representation
 and automatically generate a {\em physical\/} representation.
 Although useful for many purposes, this technology does not help
 process data that arrives in predetermined, ad hoc formats.
 
+Lex and yacc-based tools generate parsers from declarative descriptions, but 
+they require users to write both a lexer and a grammar and to construct the in-memory representations by hand.  In addition, they only work for ASCII data,  they do not easily accommodate data-dependent parsing, and they do not provide auxiliary services. 
 
 More closely related work includes \erlang{}'s bit syntax~\cite{erlang} and
 the \packettypes{}~\cite{sigcomm00} and
@@ -882,7 +886,7 @@ However, there are a number of directions for future research and possibilities 
 
 \textbf{Language expressiveness.}  
 We intend to add bit-field 
-and overlay constructs to \pads{} to better support binary data sources,
+and overlay constructs to \pads{} to support binary data sources better,
 in a fashion similar to that already supported in the \datascript{} and \packettypes{} languages.
 We also plan to generalize the switched union construct to permit arbitrary lookahead to better support
 parsing for complex ASCII formats such the HTTP packet specification~\cite{http}.  Further, we need to design a mechanism

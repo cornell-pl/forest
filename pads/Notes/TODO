@@ -1,5 +1,20 @@
+Oct 29 Kathleen Fisher (From Yitzhak)
+  in array read one:
+     read separator
+     read element
+     if (element in panic)
+       look for sep/term (consume sep, not term)
+
+when tring to recover from panic, we search for sep and consume if
+found,  but we then reenter readone and search for sep.
+
+
+Oct 23  Kathleen Fisher
+  change is_type function to type_verify
+
 Oct 21  Kathleen Fisher
  remove _id entries from generated xschema
+ make Pd entries optional?
 
 Oct 15  Kathleen Fisher
 

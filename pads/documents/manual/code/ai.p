@@ -11,13 +11,13 @@ Parray sIP{
 }
 
 /*@BEGIN host_t.tex */
-Punion host_t  {
+Punion clihost_t  {
   nIP resolved;    /- 135.207.23.32
   sIP symbolic;    /- www.research.att.com
 };
 /*@END host_t.tex */
 
-Ptypedef Pchar unknown_t :: unknown_t x => { x == '-'};
+Ptypedef Pchar unknown_t : unknown_t x => { x == '-'};
 
 Punion auth_id_t {
   unknown_t unauthorized;                       /- non-authenticated http session
@@ -64,7 +64,7 @@ Pstruct http_request_t {
 /*@END httpRequest.tex */
 
 Precord Pstruct http_clf_t {
-   host_t host;                            /- IP address of client requesting service
+   clihost_t host;                         /- IP address of client requesting service
    auth_id_t remoteID;                     /- Remote identity; '-' indicates not obtained.
    ' ';   auth_id_t auth;                  /- Name of authenticated user.
    " [";  Pdate(:']':) date;               /- Timestamp of request.

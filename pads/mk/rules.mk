@@ -50,6 +50,12 @@
 # library routines in the profile
 # GPROF_FLAGS = -pg
 
+# uncomment this to use memory profiling with debug libaries/executables
+# WARNING: there seems to be a bug in the support for VM_RSZERO
+# (zero-fill allocating memory) when this flag is set, observed for
+# a case where the memory region shifted during a realloc
+# VM_FLAGS = -DVMFL=1
+
 # uncomment this to turn off loc setting for (most) reads
 # NOREAD_FLAGS = -DNO_READ_LOCS
 
@@ -85,7 +91,7 @@ endif
 
 ifdef GIGASCOPE_HOME
 # gigascope distribution
-FORCE_STATIC = 1
+# FORCE_STATIC = 1
 PADS_INSTALLROOT = $(GIGASCOPE_HOME)
 GIGASCOPE_FLAGS = -DFOR_GIGASCOPE
 GIGASCOPE_INCLUDES = pads_gigascope.h pads_gigascope_macros.h  
@@ -474,7 +480,7 @@ endif
 
 DEFS += $(NOREAD_FLAGS)
 
-CFLAGS_D = $(GPROF_FLAGS) $(CDBGFLAGS) $(CARCHFLAGS) $(INCLUDES)
+CFLAGS_D = $(GPROF_FLAGS) $(VM_FLAGS) $(CDBGFLAGS) $(CARCHFLAGS) $(INCLUDES)
 COMPILE_D = $(CC) $(CSHAREFLAGS) $(CFLAGS_D) $(DEFS) $(SHAREDEFS)
 MKSRC_D = $(CC) -E $(CFLAGS_D)
 
@@ -630,7 +636,7 @@ endef
 
 ifdef GEN_DIR
 $(GEN_DIR)/%_expanded.c: $(GEN_DIR)/%.c
-	$(MKSRC_D) $< | $(PADS_HOME)/scripts/addnl.pl > $@
+	$(MKSRC_D) $< | $(PADS_HOME)/scripts/addnl.pl | $(PADS_HOME)/scripts/fix_FILE_LINE.pl $< > $@
 endif
 
 
