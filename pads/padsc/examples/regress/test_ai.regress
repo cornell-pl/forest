@@ -129,14 +129,14 @@ Union tag: 11 tag values, 100 pcnt good, 100 pcnt identical: unauthorized (    1
 =====================================================================================================
 (No string values.)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<top>.my_date : date
-    ** N.B. dates are reported in # of seconds since midnight 1-jan-1970, and also as formatted strings (using the default date output format)
+<top>.ts : timestamp
+    ** N.B. timestamps are reported in # of seconds since midnight 1-jan-1970, and also as formatted strings (using the default timestamp output format)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:         11    bad vals:          0    pcnt-bad:    0.000
-  Characterizing date values:  min 876966411 (1997-10-15) max 876974569 (1997-10-15) avg 876971602.455
+  Characterizing timestamp values:  min 876966411 (1997-10-15+18:46:51) max 876974569 (1997-10-15+21:02:49) avg rounded down to nearest Puint32: 876971602 (1997-10-15+20:13:22)
     => distribution of top 2 values out of 2 distinct values:
-        val:  876974569 (1997-10-15) count:          7  pcnt-of-good-vals:   63.636
-        val:  876966411 (1997-10-15) count:          4  pcnt-of-good-vals:   36.364
+        val:  876974569 (1997-10-15+21:02:49) count:          7  pcnt-of-good-vals:   63.636
+        val:  876966411 (1997-10-15+18:46:51) count:          4  pcnt-of-good-vals:   36.364
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:         11  pcnt-of-good-vals:  100.000
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
