@@ -14,7 +14,6 @@
 
 void* RMM_allin1_zero(void* vm, void* data, size_t size)
 {
-  error(2, "RMM_allin1_zero called with vm %p, data %p, size %ld", vm, data, size);
   if (!vm) {
     return (void*)vmopen(Vmdcheap, Vmbest, 0);
   }
@@ -27,7 +26,6 @@ void* RMM_allin1_zero(void* vm, void* data, size_t size)
 
 void* RMM_allin1_nozero(void* vm, void* data, size_t size)
 {
-  error(2, "RMM_allin1_nozero called with vm %p, data %p, size %ld", vm, data, size);
   if (!vm) {
     return (void*)vmopen(Vmdcheap, Vmbest, 0);
   }
@@ -78,7 +76,7 @@ RMM_close(RMM_t* mgr)
 }
 
 /* ================================================================================ */
-/* RMM : new/free/reserve functions */
+/* RMM : new/free functions */
 
 RBuf_t*
 RMM_new_rbuf (RMM_t* mgr)
@@ -150,6 +148,9 @@ RMM_free_buf(RMM_t* mgr, void* buf)
   return 0; /* success */
 }
 
+/* ================================================================================ */
+/* RBuf: reserve function */
+
 int
 RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
 	     size_t numElts, size_t maxEltHint)
@@ -159,10 +160,12 @@ RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
   size_t targ_size;
 
   if (!rbuf) {
+    error(2, "RBuf_reserve called with null rbuf");
     return -3; /* failure - other */
   }
   mgr = rbuf->mgr;
   if (!mgr || !mgr->vm || !mgr->fn) {
+    error(2, "RBuf_reserve called with rbuf that has no mem mgr");
     return -1; /* failure - no manager */
   }
   targ_size = (eltSize * numElts);
@@ -189,6 +192,7 @@ RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
     }
   }
   if (!(rbuf->buf = mgr->fn(mgr->vm, rbuf->buf, new_size))) { /* resize buf */
+    error(2, "RBuf_reserve -- out of space");
     return -2; /* failure - out of space */
   }
   rbuf->bufSize    = new_size;
