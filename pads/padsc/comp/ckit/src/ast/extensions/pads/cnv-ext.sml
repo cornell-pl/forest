@@ -1509,7 +1509,7 @@ structure CnvExt : CNVEXT = struct
 						      P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
 						      PL.PDC_MISSING_LITERAL,
 						      PT.String "Missing separator: %s.", 
-						      [PT.String commentV])]
+						      [PL.fmtStr(commentV)])]
 					@ reportStructErrorSs(PL.PDC_MISSING_LITERAL, P.dotX(PT.Id ted,PT.Id loc))
 					@[P.assignS(fieldX(ed,panic),P.trueX)]))]
 			  in

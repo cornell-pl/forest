@@ -275,7 +275,6 @@ structure Main : sig
            (* At this point, flag booleans have been set from command-line *)
            (* Generate base type typedefs from base description file *)
            val baseTyDefsFile = tmp ".h"
-	   val () = (List.app print (!baseTables); print "\n")
 	   val internalBaseTysPath = [homeDir^"/ckit/src/ast/extensions/pads/base-ty-info.txt",
 				      homeDir^"/ckit/src/ast/extensions/pads/internal-base-ty-info.txt"]
 	                             @(!baseTables)

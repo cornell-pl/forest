@@ -94,6 +94,9 @@ struct
    (*  char*       PDC_fmtChar(char c); *)
    PT.Call(PT.Id "PDC_fmtChar", [chr])
 
+  fun fmtStr s =
+   PT.Call(PT.Id "PDC_qfmt_Cstr", [PT.String s, P.intX (String.size s)] )
+
 (* error functions *)
   fun trace(disc: PT.expression, msg:string) =
     PT.Expr(PT.Call(PT.Id "PDC_TRACE", [disc, PT.String msg]))

@@ -75,10 +75,6 @@ padsc compiler todo
 	  will be a bigger win, I think.
 
 very minor:
- *  format char literal / str lit in err msgs
-    (e.g., rather than "|", use PDCI_fmtQStrL("|", 1)
-    important for newline, null char, etc.
-
  * instead of doing PDC_getLocB/E(0) can do:
    PDC_IO_getPos_internal(pdc, &(loc->b), 0);
    PDC_IO_getPos_internal(pdc, &(loc->e), -1);
