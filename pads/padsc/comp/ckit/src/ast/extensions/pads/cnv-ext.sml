@@ -194,6 +194,7 @@ structure CnvExt : CNVEXT = struct
 (* AST help functions ********************************************************)
 
     val isFunction          = TU.isFunction          ttab
+    val isStructOrUnion     = TU.isStructOrUnion     ttab
     val getCoreType         = TU.getCoreType         ttab
     val equalType           = TU.equalType           ttab
 
@@ -327,7 +328,13 @@ structure CnvExt : CNVEXT = struct
             isPointer andalso (CTisChar (getBase coreTy))
         end
 
-
+    fun CTisStruct ty = 
+	case isStructOrUnion ty
+	    of SOME tid => 
+		(case lookTid tid of
+		     SOME {ntype = SOME(B.Struct(_)),...} => true
+		   | _ => false)
+	  | NONE => false
 
     (* Type-utils implements but does not export an essentially identical
      function!!! *)
@@ -509,7 +516,10 @@ structure CnvExt : CNVEXT = struct
 	      val rep = "rep"
 	      val ted = "ted"
 	      val tem = "tem"
+	      val all = "structLevel"
 
+
+		      
 	      (* Some useful functions *)
 	      fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
               fun emSuf   s = s^"_em"
@@ -619,6 +629,13 @@ structure CnvExt : CNVEXT = struct
                     @ printSs
 		  end
 
+              fun getEMExp(exp:pcexp) = 
+		  let val (expTy,_) = cnvExpression exp
+		  in
+		      if CTisStruct expTy then P.dotX(exp, PT.Id all)
+		      else exp
+		  end
+
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, 
 			        baseTy: PX.Pty, args: pcexp list, 
 			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
@@ -726,7 +743,10 @@ structure CnvExt : CNVEXT = struct
 				     name:string, pred:pcexp option, comment} = 
 			  [(name,P.makeTypedefPCT(lookupTy (pty,emSuf,#emname)), NONE)]
 		      fun genEMBrief e = []
-		      val emFields = mungeFields genEMFull genEMBrief fields
+		      val emFieldsNested = mungeFields genEMFull genEMBrief fields
+		      val auxEMFields = [(all, PL.base_emPCT, NONE)]
+		      val emFields = auxEMFields @ emFieldsNested
+
 		      val emFirstPCT = case emFields
                                        of [] => NONE
                                        | (f::fs) => let val ty = #2 f
@@ -736,6 +756,7 @@ structure CnvExt : CNVEXT = struct
 							   then SOME ty else NONE
 						    end
 		      val emStructED = P.makeTyDefStructEDecl (emFields, emSuf name)
+		      val emDecls = cnvExternalDecl emStructED 
                       val emPCT = P.makeTypedefPCT (emSuf name)			  
 
 		      (* Generate error description *)
@@ -819,7 +840,7 @@ structure CnvExt : CNVEXT = struct
 					   in
 					       [(* if ((modem->name <= Check) && (!(exp))) *)
 						PT.IfThen(
-                                                 P.andX(P.lteX(fieldX(em,name), PL.EM_CHECK),
+                                                 P.andX(P.lteX(getEMExp(fieldX(em,name)), PL.EM_CHECK),
 							P.notX exp),
 						 PT.Compound[
 						   (* moded->name.errCode = PDC_STRUCT_FIELD_ERROR; *)
@@ -964,6 +985,7 @@ structure CnvExt : CNVEXT = struct
                       (* -- Assemble read function *)
 		      val _ = pushLocalEnv()                                        (* create new scope *)
 		      val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
+		      val () = ignore (insTempVar(gMod em,  P.ptrPCT emPCT))        (* add modem to scope *)
 		      val cParams : (string * pcty) list = List.map mungeParam params
                       val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		      val readFields = mungeFields genReadFull genReadBrief fields  (* does type checking *)
@@ -976,7 +998,7 @@ structure CnvExt : CNVEXT = struct
 						 emPCT,edPCT,canonicalPCT, emFirstPCT, bodySs)
 	      in 
  		   canonicalDecls (* converted earlier because used in typechecking constraints *)
-                 @ cnvExternalDecl emStructED
+                 @ emDecls
                  @ cnvExternalDecl edStructED
                  @ cnvExternalDecl readFunED
 	      end
