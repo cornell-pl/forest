@@ -59,8 +59,13 @@ else
         set lua = -U__GNUC__
         set lda = -D__LINUX_PREPROCESSOR_FIXES
     else
-        set lua =
-        set lda = 
+       if ($_ast_arch == sol8.sun4) then 
+        set lua = -U__GNUC__
+        set lda = -D__LINUX_PREPROCESSOR_FIXES
+        else
+            set lua =
+            set lda = 
+        endif
     endif
 endif
 
