@@ -156,10 +156,10 @@ structure Main : sig
 	 OS.Process.system s)
 
     (* Run preprocessor ********************************************)
-    fun preprocess(baseTyFile, srcFile, destFile) = 
+    fun preprocess(padsDir, baseTyFile, srcFile, destFile) = 
 	let val srcFile = OS.FileSys.fullPath srcFile
             val ppFile = tmp ".c"
-            val ppcommand = "ppp.pl "^ srcFile ^" > "^ppFile
+            val ppcommand = padsDir^"/scripts/ppp.pl "^ srcFile ^" > "^ppFile
             val status = exec ppcommand
 	    val () = if status <> OS.Process.success then err "Pads pre-process failed." else ()
             val compositeFile = tmp ".c"
@@ -359,7 +359,7 @@ structure Main : sig
 	 let val () = PadsState.reset()
 	     val () = stage := "Preprocessing"
 	     val ppoutFile = tmp ".c"
-	     val status = preprocess(baseTyFile, fname, ppoutFile)
+	     val status = preprocess(padsDir, baseTyFile, fname, ppoutFile)
 	     val () = if status <> OS.Process.success 
 	              then err "Pre-processor failed."
 		      else ()
