@@ -71,8 +71,8 @@ struct
 	       r
 	   end
 
-   fun buildBaseInfo () = 
-       let val strm = TextIO.openIn("ckit/src/ast/extensions/pads/base-ty-info.txt")
+   fun buildBaseInfo (homeDir) = 
+       let val strm = TextIO.openIn(homeDir^"/ckit/src/ast/extensions/pads/base-ty-info.txt")
            fun loop(s) = if s = ""
 	                 then []
                          else processLine(s) @ (loop(TextIO.inputLine strm))
@@ -109,10 +109,10 @@ struct
        TextIO.output(strm, Atom.toString(#padsname(r)));
        TextIO.output(strm, ";\n"))
 
-  fun genPadsInternal(filename) = 
+  fun genPadsInternal(homeDir, filename) = 
       let val outStrm = TextIO.openOut(filename)
       in
-	  baseInfoList := buildBaseInfo();
+	  baseInfoList := buildBaseInfo(homeDir);
           baseInfo := initBaseInfoMap(!baseInfoList);
 	  TextIO.output(outStrm, "#ifndef __PADS_INTERNAL__H__\n");
 	  TextIO.output(outStrm, "#define __PADS_INTERNAL__H__\n");

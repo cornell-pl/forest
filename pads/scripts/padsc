@@ -1,12 +1,50 @@
 #!/bin/tcsh
-#will be filled in by install script
+
+# file paths will be filled in by install script
+
+# padsc : front-end script to padsc compiler
+# 
+# features of this front-end script:
+#         1. If all the .p files are in the same dir P 
+#            and there is a 'gen' dir at the same level
+#            as P, the generated files are placed in gen.
+#            This auto retargeting does not occur if
+#            there is no gen, or an explicit -p option
+#            is already present, or if some .p files
+#            are in different locations.
+#
+#         2. The script needs to determine $PADSCDIR, the location
+#            of the PADS installation, so that it can find
+#            $PADSCDIR/include and $PADSCDIR/lib.
+#            If environment variable PADSCDIR is set, then
+#            this is used, otherwise the script guess the
+#            location based on argument 0, e.g., if you invoke
+#            the script using path ../foo/padsc, then it
+#            sets PADSCDIR to ../foo 
+
+set firstout = "\n"
+
 set gsfarch = `/home/gsf/bin/package`
 set knbarchdir = /home/gruber/knb/arch/$gsfarch
 
-set PADSCDIR = ./
+if (!($?PADSCDIR)) then
+  if ($0:h == $0:t) then
+    set PADSCDIR = .
+  else
+    set PADSCDIR = $0:h
+  endif
+  echo $firstout"env variable PADSCDIR not set, guessing value $PADSCDIR based on invocation path\n"
+  set firstout = ""
+endif
+if (!(-d $PADSCDIR && -d $PADSCDIR/lib && -d $PADSCDIR/include && -e $PADSCDIR/padsc)) then
+  echo $firstout"Directory $PADSCDIR does not appear to be a valid PADS installation dir."
+  echo "Set env variable PADSCDIR to the correct location and try again"
+  exit 0
+endif
+
 set SMLBIN = $knbarchdir/bin/smlruntime
 
-set IMAGE = ${PADSCDIR}/lib/padsc
+set IMAGE = $PADSCDIR/lib/padsc
 
 if ($gsfarch == linux.i386) then 
     set lua = -U__GNUC__
@@ -16,6 +54,93 @@ else
     set lda = 
 endif
 
-exec ${SMLBIN} @SMLload=${IMAGE} ${PADSCDIR} $* -I ${PADSCDIR}include -I /home/gsf/arch/$gsfarch/include/ast \
+set opts = ""
+set pfiles = ""
+set retarg = ""
+set retarg_OK = 1
+set help = 0
+
+#set echo
+foreach x ($*)
+    switch ($x)
+    case -p:
+      set retarg_OK = 0
+    case -help:
+    case --help:
+      set help = 1
+    case -*:
+      set opts = "$opts $x"
+      breaksw
+    default:
+      set y = `basename $x .p`
+      if ($x == $y) then
+        set opts = "$opts $x"
+      else
+        set pfiles = "$pfiles $x"
+        set zh = $x:h
+        set zt = $x:t
+        if ($zh == $zt) then
+          set pdir = "."
+          set tdir = "../gen"
+        else
+          set pdir = $zh
+          set zhh = $zh:h
+          set zht = $zh:t
+          if ($zhh == $zht) then
+            set tdir = "./gen"
+          else
+            set tdir = $zhh/gen
+          endif
+	  if (!(-d $tdir)) then
+	    set tdir = $pdir/../gen
+	  endif
+        endif
+        if (-d $pdir && -d $tdir) then
+          if ($retarg == "") then
+            set retarg = $tdir
+            #echo "initial retarg $retarg"
+          else
+            #echo "checking another tdir against retarg"
+            if ($tdir != $retarg) then
+              #echo "tdir $tdir != retarg $retarg"
+              set retarg_OK = 0
+            endif
+          endif
+        else
+          #echo "pdir $pdir or tdir $tdir are not dirs"
+          set retarg_OK = 0
+        endif
+      endif
+      breaksw
+    endsw
+end # forech
+
+#echo "full_args = $*"
+#echo "pfiles    = $pfiles"
+#echo "opts      = $opts"
+#echo "retarg_OK = $retarg_OK"
+#echo "retarg    = $retarg"
+
+if ($help) then
+  set cmd = "-help"
+else
+  if ($pfiles == "") then
+    echo $firstout"No .p files specified.  Usage:  $0 <options> <.p files>\n\tUse --help for all available options.\n"
+    exit -1
+  endif
+  if ($retarg_OK) then
+      set cmd = "-p $retarg $opts $pfiles"
+      echo $firstout"Chose target dir $retarg\n"
+      set firstout = ""
+  else
+      set cmd = "$*"
+  endif
+endif
+
+#echo $firstout"cmd = $cmd\n"
+#set firstout = ""
+#exit 0
+
+exec $SMLBIN @SMLload=$IMAGE $PADSCDIR $cmd -I $PADSCDIR/include -I /home/gsf/arch/$gsfarch/include/ast \
 $lua $lda < /dev/null
 

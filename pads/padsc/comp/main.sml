@@ -270,7 +270,7 @@ structure Main : sig
            (* Generate base type typedefs from base description file *)
            val baseTyDefsFile = tmp ".h"
        in
-         PBaseTys.genPadsInternal baseTyDefsFile;	   
+         PBaseTys.genPadsInternal(homeDir, baseTyDefsFile);	   
          app (doFile baseTyDefsFile) (!srcFiles); 
          rmTmp();
          if !anyErrors 
