@@ -230,7 +230,6 @@ do {
   Pio_elt_t        *next_elt;
   Pbyte            *begin;
   Pbyte            *end;
-  Pbyte            *goal;
   size_t            bytes           = tp->remain;
   int               eor;
   int               eof
@@ -334,13 +333,6 @@ do {
      * Since this is record-based case, set goal > end if !eor
      */
     end = elt->end;
-    if (elt->eor) {
-      goal = elt->end;
-    } else if (goal_bytes) {
-      goal = begin + goal_bytes; /* Note goal > end */
-    } else {
-      goal = elt->end + PDCI_GOAL_HUGE; /* Note that goal > end */
-    }
     eor = elt->eor;
     eof = elt->eof;
   } else {
@@ -349,17 +341,14 @@ do {
     if (bytes > goal_bytes) {
       /* found more than enough (end will be prior to any eof byte) */
       end  = begin + goal_bytes;
-      goal = end;
       eof  = 0;
     } else if (bytes == goal_bytes) {
       /* found exactly enough (not sure if end is at eof) */
       end  = begin + goal_bytes;
-      goal = end;
       eof  = (end == elt->end) ? elt->eof : 0;
     } else {
       /* did not find enough (must have hit eof) */
       end  = elt->end;
-      goal = begin + goal_bytes; /* Note goal > end */
       eof  = 1;
     }
   }
@@ -399,7 +388,7 @@ do {
       bytes += elt->len;
     }
     begin = tp->elt->end - tp->remain;
-    goal = end = elt->end;
+    end  = elt->end;
     eor  = elt->eor;
     eof  = elt->eof;
   } else {
@@ -420,18 +409,19 @@ do {
       bytes += elt->len;
     }
     begin = tp->elt->end - tp->remain;
-    goal = end = begin + goal_bytes; /* Note end may be changed below */
     if (bytes > goal_bytes) {
       /* found more than enough (end will be prior any eor/eof) */
+      end = begin + goal_bytes;
       eor  = 0;
       eof  = 0;
     } else if (bytes == goal_bytes) {
       /* may have hit eor or eof */
+      end = begin + goal_bytes;
       eor  = elt->eor;
       eof  = elt->eof;
     } else {
       /* def hit eor or eof.  produce as many bytes as available */
-      end = elt->end; /* Note goal > end */
+      end  = elt->end;
       eor  = elt->eor;
       eof  = elt->eof;
     }
@@ -488,6 +478,59 @@ do {
   }
 } while (0)
 /* END_MACRO */
+
+/* ----------------------------------------------------------------- */
+/* Move forward by K bytes; should be able to move forward K without */
+/* reading new bytes or advancing past EOR/EOF.                      */
+/* N.B. Assumes one of the NEED_BYTES macros has been used and that  */
+/*      the variables introduced by the SETUP macro are in scope.    */
+
+/* The IOerrorSTMT statement must be/include goto or return; it */
+/* is assumed NOT to fall through.                              */
+
+#define PDCI_IO_FORWARD(num_bytes, IOerrorSTMT)
+do {
+  size_t todo = num_bytes;
+  while (todo > 0) {
+    if (tp->remain == 0) {
+      if (tp->elt->eor|tp->elt->eof) {
+	P_FATAL(pads->disc, "Internal error, PDCI_IO_FORWARD hit EOR or EOF");
+      }
+      if (tp->elt->next == pads->head) {
+	P_FATAL(pads->disc, "Internal error, PDCI_IO_FORWARD would need to read bytes from io stream");
+      }
+      tp->elt = tp->elt->next;
+      tp->remain = tp->elt->len;
+      continue;
+    }
+    if (todo <= tp->remain) {
+      tp->remain -= todo;
+      todo = 0;
+      break;
+    }
+    /* current IO rec gets us partway */
+    todo -= tp->remain;
+    tp->remain = 0;
+  }
+  /* success */
+  if (!tp->remain && !(tp->elt->eor|tp->elt->eof)) {
+    /* at end of a non-EOR, non-EOF elt: advance now */
+    if (tp->elt->next != pads->head) {
+      tp->elt = tp->elt->next;
+      tp->remain = tp->elt->len;
+    } else {
+      /* need to read some data -- use IO disc read_fn */
+      keep_elt = pads->stack[0].elt;
+      if (P_ERR == pads->disc->io_disc->read_fn(pads, pads->disc->io_disc, keep_elt, &next_elt)) {
+	tp->elt = P_LAST_ELT(pads->head); /* IO disc may have added eof elt */
+	tp->remain = 0;
+	IOerrorSTMT;
+      }
+      tp->elt = next_elt;
+      tp->remain = tp->elt->len;
+    }
+  }
+} while (0)
 
 /* ================================================================================ */
 /* MACROS USED BY ACCUM FUNCTIONS */
@@ -753,9 +796,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
 	return P_ERR;
       }
     }
-    if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     return P_OK;
 
   } else { /* !P_Test_Ignore(*m) */
@@ -777,9 +818,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
     }
     if (errno == ERANGE) goto range_err;
     /* success */
-    if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
     }
@@ -804,9 +843,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
   /* range error still consumes the number */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
-  if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, P_RANGE);
 
  fatal_nb_io_err:
@@ -857,17 +894,13 @@ fn_name(P_t *pads, const Pbase_m *m,
     }
     if (errno == ERANGE) goto range_err;
     /* success */
-    if (P_ERR == PDCI_io_forward(pads, width)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(width, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
     }
   } else {
     /* just move forward */
-    if (P_ERR == PDCI_io_forward(pads, width)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(width, goto fatal_forward_err);
   }
   return P_OK;
 
@@ -875,36 +908,28 @@ fn_name(P_t *pads, const Pbase_m *m,
   /* FW field: eat the space whether or not there is an error */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
-  if (P_ERR == PDCI_io_forward(pads, end-begin)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(end-begin, goto fatal_forward_err);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  invalid:
   /* FW field: eat the space whether or not there is an error */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, width-1);
-  if (P_ERR == PDCI_io_forward(pads, width)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(width, goto fatal_forward_err);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, invalid_err);
 
  invalid_wspace:
   /* FW field: eat the space whether or not there is an error */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, width-1);
-  if (P_ERR == PDCI_io_forward(pads, width)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(width, goto fatal_forward_err);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), "spaces not allowed in " a_or_e_int " field unless flag P_WSPACE_OK is set", invalid_err);
 
  range_err:
   /* FW field: eat the space whether or not there is an error */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, width-1);
-  if (P_ERR == PDCI_io_forward(pads, width)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(width, goto fatal_forward_err);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_RANGE);
 
   /* fatal_alloc_err:
@@ -990,9 +1015,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
 	}
       }
     }
-    if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     return P_OK;
 
   } else { /* !P_Test_Ignore(*m) */
@@ -1014,9 +1037,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
     }
     if (errno == ERANGE) goto range_err;
     /* success */
-    if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
     }
@@ -1041,9 +1062,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
   /* range error still consumes the number */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
-  if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, P_RANGE);
 
  fatal_nb_io_err:
@@ -1069,9 +1088,7 @@ fn_name(P_t *pads, const Pbase_m *m,
   if (P_Test_Set(*m)) {
     (*res_out) = *begin;
   }
-  if (P_ERR == PDCI_io_forward(pads, 1)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(1, goto fatal_forward_err);
   return P_OK;
 
  width_not_avail:
@@ -1106,9 +1123,7 @@ fn_name(P_t *pads, const Pbase_m *m,
       swapmem(0, begin, res_out, width);
     }
   }
-  if (P_ERR == PDCI_io_forward(pads, width)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(width, goto fatal_forward_err);
   return P_OK;
 
  width_not_avail:
@@ -1145,17 +1160,13 @@ fn_name(P_t *pads, const Pbase_m *m, Pbase_pd *pd, targ_type *res_out, Puint32 n
     }
     if (errno) goto invalid_range_dom;
     /* success */
-    if (P_ERR == PDCI_io_forward(pads, width)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(width, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
     }
   } else {
     /* just move forward */
-    if (P_ERR == PDCI_io_forward(pads, width)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(width, goto fatal_forward_err);
   }
   return P_OK;
 
@@ -1163,9 +1174,7 @@ fn_name(P_t *pads, const Pbase_m *m, Pbase_pd *pd, targ_type *res_out, Puint32 n
   /* FW field: eat the space whether or not there is an error */
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, width-1);
-  if (P_ERR == PDCI_io_forward(pads, width)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(width, goto fatal_forward_err);
   switch (errno) {
   case EINVAL:
     PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, invalid_err);
@@ -6589,7 +6598,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.176 2004-11-11 06:52:38 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.177 2004-11-11 07:54:04 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7790,15 +7799,16 @@ P_io_skip_bytes(P_t *pads, size_t width, size_t *skipped_bytes_out) {
   if (width == 0) return P_OK;
   PDCI_IO_NEED_K_BYTES(width, goto fatal_nb_io_err);
   skipped = end - begin;
-  if (skipped && P_ERR == PDCI_io_forward(pads, skipped)) {
-    PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, "P_io_skip_bytes", "IO_forward error");
-    return P_ERR;
-  }
+  PDCI_IO_FORWARD(skipped, goto fatal_forward_err);
   (*skipped_bytes_out) = skipped;
   return (skipped == width) ? P_OK : P_ERR;
 
  fatal_nb_io_err:
   PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_IO_ERR, "P_io_skip_bytes", "IO error (nb)");
+  return P_ERR;
+
+ fatal_forward_err:
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, "P_io_skip_bytes", "IO_forward error");
   return P_ERR;
 }
 
@@ -9492,9 +9502,7 @@ PDCI_char_lit_scan1(P_t *pads, Pchar f, int eat_f, int panic,
       if (eat_f) {
 	p1++; /* advance beyond char found */
       }
-      if ((p1-begin) && P_ERR == PDCI_io_forward(pads, p1-begin)) {
-	goto fatal_forward_err;
-      }
+      PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
     }
     p1++;
@@ -9542,9 +9550,7 @@ PDCI_char_lit_scan2(P_t *pads, Pchar f, Pchar s, int eat_f, int eat_s, int panic
       if (eat_f) {
 	p1++; /* advance beyond char found */
       }
-      if ((p1-begin) && P_ERR == PDCI_io_forward(pads, p1-begin)) {
-	goto fatal_forward_err;
-      }
+      PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
     }
     if (s == (*p1)) {
@@ -9553,9 +9559,7 @@ PDCI_char_lit_scan2(P_t *pads, Pchar f, Pchar s, int eat_f, int eat_s, int panic
       if (eat_s) {
 	p1++; /* advance beyond char found */
       }
-      if ((p1-begin) && P_ERR == PDCI_io_forward(pads, p1-begin)) {
-	goto fatal_forward_err;
-      }
+      PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
     }
     p1++;
@@ -9616,9 +9620,7 @@ PDCI_str_lit_scan1(P_t *pads, const Pstring *f,
       if (eat_f) {
 	p1 += width; /* advance beyond f */
       }
-      if ((p1-begin) && P_ERR == PDCI_io_forward(pads, p1-begin)) {
-	goto fatal_forward_err;
-      }
+      PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
     }
     p1++;
@@ -9694,9 +9696,7 @@ PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
       if (eat_f) {
 	p1 += fwidth; /* advance beyond f */
       }
-      if ((p1-begin) && P_ERR == PDCI_io_forward(pads, p1-begin)) {
-	goto fatal_forward_err;
-      }
+      PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
     }
     if ((p1 + swidth <= end) &&
@@ -9706,9 +9706,7 @@ PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
       if (eat_s) {
 	p1 += swidth; /* advance beyond s */
       }
-      if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
-	goto fatal_forward_err;
-      }
+      PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
     }
     p1++;
@@ -9770,11 +9768,12 @@ PDCI_re_scan1(P_t *pads, Pregexp_t *f,
   } else {
     p1 = begin + f->match[0].rm_so; /* if rm_so is zero then match occurred at begin */
   }
-  if ((p1 - begin) && P_ERR == PDCI_io_forward(pads, p1 - begin)) {
-    PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, whatfn, "IO_forward error");
-    return P_ERR;
-  }
+  PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   return P_OK;
+
+ fatal_forward_err:
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, whatfn, "IO_forward error");
+  return P_ERR;
 }
 
 Perror_t
@@ -9856,11 +9855,12 @@ PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
       }
     }
   }
-  if ((p1 - begin) && P_ERR == PDCI_io_forward(pads, p1 - begin)) {
-    PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, whatfn, "IO_forward error");
-    return P_ERR;
-  }
+  PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   return P_OK;
+
+ fatal_forward_err:
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, whatfn, "IO_forward error");
+  return P_ERR;
 }
 
 Perror_t
@@ -9919,8 +9919,8 @@ PDCI_char_lit_match(P_t *pads, Pchar f, int eat_f,
   PDCI_IO_NEED_K_BYTES(1, goto fatal_nb_io_err);
   if (end-begin != 1) return P_ERR;
   if (f == (*begin)) {
-    if (eat_f && (P_ERR == PDCI_io_forward(pads, 1))) {
-      goto fatal_forward_err;
+    if (eat_f) {
+      PDCI_IO_FORWARD(1, goto fatal_forward_err);
     }
     return P_OK;
   }
@@ -9975,8 +9975,8 @@ PDCI_str_lit_match(P_t *pads, const Pstring *f, int eat_f,
   PDCI_IO_NEED_K_BYTES(width, goto fatal_nb_io_err);
   if (end-begin != width) return P_ERR;
   if (strncmp((char*)begin, tmp_f->str, width) == 0) {
-    if (eat_f && (P_ERR == PDCI_io_forward(pads, width))) {
-      goto fatal_forward_err;
+    if (eat_f) {
+      PDCI_IO_FORWARD(width, goto fatal_forward_err);
     }
     return P_OK;
   }
@@ -9988,7 +9988,7 @@ PDCI_str_lit_match(P_t *pads, const Pstring *f, int eat_f,
   return P_ERR;
 
  fatal_nb_io_err:
-  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_IO_ERR, "P_io_skip_bytes", "IO error (nb)");
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_IO_ERR, whatfn, "IO error (nb)");
   return P_ERR;
 
  fatal_forward_err:
@@ -10035,12 +10035,13 @@ PDCI_re_match(P_t *pads, Pregexp_t *f, int eat_f,
   /* found */
   if (eat_f) {
     size_t width = f->match[0].rm_eo; /* if rm_eo is 1 then last char in match is at begin */
-    if (width && P_ERR == PDCI_io_forward(pads, width)) {
-      PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, whatfn, "IO_forward error");
-      return P_ERR;
-    }
+    PDCI_IO_FORWARD(width, goto fatal_forward_err);
   }
   return P_OK;
+
+ fatal_forward_err:
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, whatfn, "IO_forward error");
+  return P_ERR;
 }
 
 Perror_t
@@ -10105,9 +10106,7 @@ PDCI_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c,
   PDCI_IO_NEED_K_BYTES(1, goto fatal_nb_io_err);
   if (end-begin != 1) goto at_eor_or_eof_err;
   if (P_Test_NotSynCheck(*m) || (c == (*begin))) {
-    if (P_ERR == PDCI_io_forward(pads, 1)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(1, goto fatal_forward_err);
     (*c_out) = c;
     return P_OK;  /* IO cursor is one beyond c */
   }
@@ -10172,9 +10171,7 @@ PDCI_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s,
       default:
 	goto invalid_charset;
       }
-    if (P_ERR == PDCI_io_forward(pads, width)) {
-      goto fatal_forward_err;
-    }
+    PDCI_IO_FORWARD(width, goto fatal_forward_err);
     return P_OK;    /* found it */
   }
   goto not_found;
@@ -10513,9 +10510,7 @@ PDCI_char_read(P_t *pads, const Pbase_m *m,
 	goto invalid_charset;
       }
   }
-  if (P_ERR == PDCI_io_forward(pads, 1)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(1, goto fatal_forward_err);
   return P_OK;
 
  invalid_charset:
@@ -10566,9 +10561,7 @@ PDCI_string_FW_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_forward(pads, width)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(width, goto fatal_forward_err);
   return P_OK;
 
  invalid_charset:
@@ -10635,9 +10628,7 @@ PDCI_string_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   return P_OK;
 
  invalid_charset:
@@ -10724,9 +10715,7 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_forward(pads, p1 - begin)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   return P_OK;
 
  invalid_charset:
@@ -10812,9 +10801,7 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_forward(pads, p1 - begin)) {
-    goto fatal_forward_err;
-  }
+  PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   return P_OK;
 
  invalid_charset:
