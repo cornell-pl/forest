@@ -10,21 +10,45 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \paragraph*{Intellectual Merits:} 
-An {\em ad hoc data format} is any nonstandard data format
-for which parsing, querying, analysis or transformation
-tools are not readily available.
-There are vast amounts of useful data 
-stored in traditional databases and \xml\ formats, but there is just
-as much in ad hoc formats.
-In the networking and telecommunications
-domain, we find ad hoc formats for web server logs, 
-netflows capturing internet traffic, 
-log files characterizing IP backbone resource utilization,
-wire formats for legacy telecommunication billing systems, 
-and telephone call detail data, to name just a few.
-The ability to parse, query, monitor and transform this ad hoc data
-is a crucial part of maintaining and providing security for
-our communications infrastructure.
+An {\em ad hoc data format} is any nonstandard data format for which
+parsing, querying, analysis or transformation tools are not readily
+available.  \xml{} is not an ad hoc data format --- there are hundreds
+of tools for reading, querying, and transforming \xml{}.  However,
+network administrators,
+data analysts, computer scientists,
+biologists, chemists, and physicists deal with ad hoc
+data in a myriad of complex formats on a daily basis.
+This data, which is often unpredictable, poorly documented,
+filled with errors (malicious and benign) and unwieldy,
+poses tremendous challenges to its users and the software
+that manipulates it.  
+Our goal is to alleviate the burden, risk and confusion associated
+with ad hoc data by developing a universal data processing system
+capable of 
+
+\begin{enumerate}
+\item concisely and accurately describing any ad hoc data source at an 
+easy-to-understand, high-level of abstraction, and
+\item automatically generating a suite of high-assurance,
+efficient data processing tools that make understanding, manipulating 
+and transforming ad hoc data an effortless task.
+\end{enumerate}
+
+% An {\em ad hoc data format} is any nonstandard data format
+% for which parsing, querying, analysis or transformation
+% tools are not readily available.
+% There are vast amounts of useful data 
+% stored in traditional databases and \xml\ formats, but there is just
+% as much in ad hoc formats.
+% In the networking and telecommunications
+% domain, we find ad hoc formats for web server logs, 
+% netflows capturing internet traffic, 
+% log files characterizing IP backbone resource utilization,
+% wire formats for legacy telecommunication billing systems, 
+% and telephone call detail data, to name just a few.
+% The ability to parse, query, monitor and transform this ad hoc data
+% is a crucial part of maintaining and providing security for
+% our communications infrastructure.
 
 % Explanation as to why ad hoc data is relevant to cyber trust goes here.
 
@@ -64,15 +88,16 @@ While the work to date demonstrates the feasibility of the \pads{}
 approach, the \pads{} design and implementation are still in their infancy:
 We have discovered many common, real-world data formats that the current PADS 
 infrastructure is incapable of describing, parsing or analyzing. 
-To address these deficiencies, we propose to explore a number of different ways
+To address these deficiencies, we propose to explore innovative ways
 of extending the basic \pads{} specification language and related
 infrastructure.  The second thrust of our research involves
 improving the automatic tool generation infrastructure in the \pads{} system.
 The current tool generation system is brittle, inflexible and suffers from
 subpar performance.  We will develop a novel extension to \pads{} 
 that allows users to augment \pads{} descriptions with application-specific
-attributes.  These attributes can then convey semantic information to
-the tool generators.  Our new architecture has the promise of being
+attributes and customizations.  The attributes convey semantic information to
+the tool generators and the customizations improve error-handling
+and performance.  Our new architecture has the promise of being
 substantially more robust, flexible and efficient.
 Finally, in order to improve the reliability of the infrastructure,
 we will formalize \pads{} and prove important correctness properties
@@ -84,9 +109,8 @@ problems.
 \paragraph*{Broader Impacts:}  We are collaborating with researchers at
 AT\&T who will be able to use our tools to address real problems such as
 telephone fraud detection.  In addition, our tools will be 
-freely available and open source so that other industrial partners
-may use them.  Moreover, ad hoc data is everywhere, not just the
-telecommunications industry.  Part of our mission will be to work with 
+freely available to researchers and scientists over the web.  
+Moreover, part of our mission will be to work with 
 biologists, chemists and physicists at Princeton and the broader community
 to help them with their data 
 processing needs.  We have already been meeting with Olga Troyanskaya,
