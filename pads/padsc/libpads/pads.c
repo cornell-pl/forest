@@ -2697,7 +2697,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.65 2003-04-18 04:26:43 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.66 2003-04-25 20:46:14 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -4413,17 +4413,42 @@ PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io)
 {
   PDCI_stkElt_t    *tp        = &(pdc->stack[0]);
   PDC_IO_elt_t     *next_elt;
+  Void_t           *buf;
 
   /* XXX_TODO handle case where pdc->io is already set, io_discipline already open, etc */
   pdc->io = io;
 #if 1
-  /* tell sfio to use pdc->sfbuf but only let it know about 1 MB of space */
-  sfsetbuf(pdc->io, (Void_t*)pdc->sfbuf, 1024 * 1024);
+  /* tell sfio to use pdc->sfbuf but only let it know about sizeof(sfbuf)-1 space */
+  buf = sfsetbuf(pdc->io, (Void_t*)1, 0);
+  if (!buf) {
+    sfsetbuf(pdc->io, (Void_t*)pdc->sfbuf, 1024 * 1024);
+  } else if (buf == (Void_t*)pdc->sfbuf) {
+    /* PDC_WARN(pdc->disc, "XXX_REMOVE pdc->sfbuf has already been installed so not installing it again"); */
+  } else {
+    /* PDC_WARN(pdc->disc, "XXX_REMOVE An unknown buffer has already been installed so not installing pdc->sfbuf\n"
+                 "  (could be due to use of sfungetc)"); */
+  }
 #endif
 
-  /* set state to nothing read/no checkpoints */
-  pdc->top        = 0;
-  pdc->speclev    = 0;
+  /* AT PRESENT we only support switching io at a very simply boundary:
+   *    1. no checkpoint established
+   *    2. not performing a speculative read (redundant based on 1)
+   *    3. no nested internal calls in progress
+   *    ...
+   */
+  if (PDC_SOME_ELTS(pdc->head)) {
+    PDC_FATAL(pdc->disc, "Internal error: new io is being installed when pdc->head list is non-empty\n"
+	      "Should not happen if IO discipline close is working properly");
+  }
+  if (pdc->top != 0) {
+    PDC_FATAL(pdc->disc, "Switching io during IO checkpoint not supported yet");
+  }
+  if (pdc->speclev != 0) {
+    PDC_FATAL(pdc->disc, "Switching io during speculative read not supported yet");
+  }
+  if (pdc->inestlev != 0) {
+    PDC_FATAL(pdc->disc, "Switching io during internal call nesting not supported yet");
+  }
 
   /* open IO discipline */
   if (PDC_ERR == pdc->disc->io_disc->sfopen_fn(pdc, pdc->disc->io_disc, pdc->io, pdc->head)) {
@@ -4435,7 +4460,7 @@ PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io)
   }
   tp->elt = PDC_FIRST_ELT(pdc->head);
   if (tp->elt == pdc->head || tp->elt != next_elt) {
-    PDC_FATAL(pdc->disc, "Internal error : IO read function failure in PDC_IO_set_internal");
+    PDC_FATAL(pdc->disc, "Internal error : IO read function failure in PDCI_IO_install_io");
   }
   tp->remain = tp->elt->len;
   return PDC_OK;
@@ -4450,6 +4475,10 @@ PDC_IO_set_internal(PDC_t *pdc, Sfio_t *io)
     return PDC_ERR;
   }
   if (pdc->io) {
+    if (pdc->io == io) {
+      PDC_DBG(pdc->disc, "PDC_IO_set_internal: same io installed more than once, ignoring this call");
+      return PDC_OK;
+    }
     if (pdc->path) {
       PDC_WARN(pdc->disc, "IO_set called with previous installed io due to fopen; closing");
     }
@@ -4476,6 +4505,9 @@ PDC_IO_fopen_internal(PDC_t *pdc, char *path)
     PDC_IO_close_internal(pdc);
     /* path and io are no longer set */
   }
+  if (strcmp(path, "/dev/stdin") == 0) {
+    return PDC_IO_set_internal(pdc, sfstdin);
+  }
   if (!(pdc->path = vmnewof(pdc->vm, 0, char, strlen(path) + 1, 0))) {
     PDC_FATAL(pdc->disc, "out of space [string to record file path]");
     return PDC_ERR;
@@ -4493,21 +4525,25 @@ PDC_IO_fopen_internal(PDC_t *pdc, char *path)
 PDC_error_t
 PDC_IO_close_internal(PDC_t *pdc)
 {
+  PDCI_stkElt_t    *bot       = &(pdc->stack[0]);
+  PDC_IO_elt_t     *io_elt    = bot->elt;
+  size_t           io_remain  = bot->remain;
+
   PDC_TRACE(pdc->disc, "PDC_IO_close_internal called");
   if (!pdc->io) {
     return PDC_ERR;
   }
   /* close IO discpline */
   if (pdc->disc->io_disc) {
-    pdc->disc->io_disc->sfclose_fn(pdc, pdc->disc->io_disc, 0, 0); /* do not both returning bytes to io stream */
+    pdc->disc->io_disc->sfclose_fn(pdc, pdc->disc->io_disc, io_elt, io_remain);
   }
-  if (pdc->io && pdc->path) {
+  if (pdc->path) {
     sfclose(pdc->io);
-    pdc->io = 0;
   }
   if (pdc->vm && pdc->path) {
     vmfree(pdc->vm, pdc->path);
   }
+  pdc->io = 0;
   pdc->path = 0;
   return PDC_OK;
 }

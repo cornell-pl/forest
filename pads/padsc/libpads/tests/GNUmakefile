@@ -21,7 +21,8 @@ VPATH = ..
 
 HELPERS = myrand cvt_ebcdic_to_ascii cvt_ascii_to_ebcdic dttest
 
-LIBTESTS = ebcdic_test \
+LIBTESTS = io_openclose_test \
+           ebcdic_test \
            ebc_test \
            bcd_test \
            sb_test \

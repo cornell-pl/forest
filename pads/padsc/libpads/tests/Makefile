@@ -22,7 +22,8 @@ REGRESS_DIR = ../../regress
 
 HELPERS = myrand cvt_ebcdic_to_ascii cvt_ascii_to_ebcdic dttest
 
-LIBTESTS = ebcdic_test \
+LIBTESTS = io_openclose_test \
+           ebcdic_test \
            ebc_test \
            bcd_test \
            sb_test \
@@ -66,6 +67,8 @@ all: $(ALL_PROGS)
 myrand :: myrand.c
 cvt_ebcdic_to_ascii :: cvt_ebcdic_to_ascii.c
 cvt_ascii_to_ebcdic :: cvt_ascii_to_ebcdic.c
+
+io_openclose_test  :: io_openclose_test.c   -lpadsc
 
 adate_test       :: adate_test.c        -lpadsc
 libtest1         :: libtest1.c          -lpadsc

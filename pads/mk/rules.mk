@@ -56,7 +56,7 @@ SHARED_LIBTOOL_PRE_PADSLIB = -Wl,-whole-archive
 SHARED_LIBTOOL_PRE_ASTLIB  = -Wl,-no-whole-archive
 SHARED_LIBTOOL_OPTS = -lc
 LINKER = $(CC)
-LINKOPTS = $(CDBGFLAGS) -Wl,-z,origin '-Wl,-R,$ORIGIN/../lib'
+LINKOPTS = $(CDBGFLAGS) -Wl,-z,origin '-Wl,-R,$$ORIGIN/../lib'
 endif
 
 ifeq ($(OPSYS),irix)

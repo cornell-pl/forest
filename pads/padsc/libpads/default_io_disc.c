@@ -24,65 +24,6 @@
  * AT&T Labs Research
  */
 
-/* Documentation of the state vars for an IO discipline
- *
- * name: 
- *    a short name for the IO discipline
- *
- * descr:
- *    a short description of the IO discpline
- *
- * uses_eor:
- *    set to 1 if this discipline implements record-based reading
- *    (i.e., if the discipline sets the eor flag), to 0 if it does not.
- *
- * data:
- *    IO-discpline-specific data.
- *
- */
-
-/* Documentation for each of the required functions in an IO discipline
- *
- * PDC_unmake_fn:
- *    The unmake function cleans up all space allocated by the IO
- *    discipline, including the space for the discipline itself as
- *    allocated by the _make function.  The discipline should not be
- *    used after this call.
- *
- * PDC_sfopen_fn:
- *    sfopen takes an already-open Sfio stream; the open call here simply
- *    enables reading from this stream using the IO discpline.
- *
- * PDC_sfclose_fn:
- *    sfclose does not close the Sfio stream; the close call here simply
- *    disables reading from the IO discpline until another open call occurs;
- *    its main purpose is to return unused bytes to the Sfio stream.  
- *    An IO discipline should be closed before it is unmade.
- *
- * PDC_read_fn:
- *    After adding one or more elts to head, for the final elt,
- *    elt->end points to a final NULL byte one byte beyond the last valid data byte
- *    that was read.  (Note that this means for a fixed width record of len L,
- *    L+1 bytes of space must be allocated to allow for null-termination of the bytes.)
- *    If both eor and eof are 0, then the terminating null byte is over-written with the
- *    first data byte produced by the next read_fn call.  If eor or eof is 1,
- *    then the terminating null byte should not be overwritten by a subsequent
- *    read_fn call if the cur_io_elt position refers to a byte before this byte.
- *
- *    invariants:
- *        1. elt->eor or elt->eof set, but not both
- *        2. elt->len always > 0 (unless elt->eof == 1, in which case elt->len can be 0)
- *
- *    out params:
- *        + If PDC_OK is returned, (*next_elt_out) is set to the
- *          first new element added to the IO elt list.  Note that if
- *          cur_io_elt is NULL, then the read function is allowed to
- *          remove all existing elements and this 'next element' may
- *          end up being the only element in the list.  If some elt
- *          lastelt is the last element prior to a read_fn call, then
- *          it is only safe to use lastelt->next if a non-NULL cur_io_elt
- *          is used.  */
-
 #include "libpadsc-internal.h" /* XXX for debugging, should be libpadsc.h XXX */
 #include "libpadsc-macros-gen.h"
 #include "pdc_out_macros.h"
@@ -170,24 +111,25 @@
 /* private types */
 typedef struct PDC_fwrec_noseek_data_s {
   /* configuration fields */
-  size_t         leader_len;
-  size_t         data_len;
-  size_t         trailer_len;
-  size_t         block_size; /* data_len + trailer_len (leader read/skipped separately) */
+  size_t          leader_len;
+  size_t          data_len;
+  size_t          trailer_len;
+  size_t          block_size; /* leader_len + data_len + trailer_len */
   /* other fields */
-  Vmalloc_t      *disc_vm;   /* lifetime: make/unmake pairing */
-  PDC_IO_elt_t   *head;      /* head of IO rec list */
-  PDC_IO_elt_t   *f_head;    /* head of free list   */
-  Sfio_t         *io;        /* Sfio stream to read from */
-  int            eof;        /* hit EOF? */
-  size_t         num;        /* record/block number */
-  char           unit[100];  /* unit description when reading blocks */
-  char           punit[100]; /* ditto -- partial read case */
+  Vmalloc_t      *disc_vm;    /* lifetime: make/unmake pairing */
+  PDC_IO_elt_t   *head;       /* head of IO rec list */
+  PDC_IO_elt_t   *f_head;     /* head of free list   */
+  Sfio_t         *io;         /* Sfio stream to read from */
+  int             eof;        /* hit EOF? */
+  size_t          num;        /* record/block number */
+  char            unit[100];  /* unit description when reading blocks */
+  char            punit[100]; /* ditto -- partial read case */
 } PDC_fwrec_noseek_data_t;
 
 typedef struct PDC_fwrec_noseek_iodata_s {
-  size_t eor_putback;
-  PDC_byte dbuf[1]; /* actual size : block_size+1 */
+  size_t    eof_putback; /* non-zero only if partial block was read */
+  PDC_byte  saved_byte;  /* we NULL byte after last data byte, use saved_byte to restore it */
+  PDC_byte  dbuf[1];     /* actual size : block_size+1 */
 } PDC_fwrec_noseek_iodata_t;
 
 PDC_error_t
@@ -223,7 +165,9 @@ PDC_fwrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
 {
   PDC_fwrec_noseek_data_t     *data;
   PDC_fwrec_noseek_iodata_t   *iodata;
-  PDC_IO_elt_t         *elt;
+  PDC_IO_elt_t                *elt;
+  int                          c, ctr;
+  PDC_byte                    *b, *bmin;
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -246,24 +190,40 @@ PDC_fwrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
     return PDC_ERR;
   }
   if (io_cur_elt) {
-    /* add up the number of bytes to return to the Sfio stream */
-    for (elt = io_cur_elt; elt != data->head; elt = elt->next) {
+    /* return remaining bytes to Sfio stream using sfungetc */
+    ctr = 0;
+    for (elt = PDC_LAST_ELT(data->head); (elt != io_cur_elt->prev) && (elt != data->head); elt = elt->prev) {
       iodata = (PDC_fwrec_noseek_iodata_t*)elt->disc_ptr;
-      if (elt != io_cur_elt) {
-	remain += elt->len;
-      }
-      remain += iodata->eor_putback;
-    }
-    if (remain) { /* try to seek backwards remain bytes */
-      unsigned long remain_ul = remain;
-      Sfoff_t       offset    = -1 * remain;
-      if (-1 == sfseek(data->io, offset, SEEK_CUR)) {
-	PDC_WARN1(pdc->disc, "PDC_fwrec_noseek_sfclose: failed to return %lu bytes to IO stream", remain_ul);
+      if (elt->eof) {
+	/* eof elt, restore eof_putback bytes */
+	bmin = iodata->dbuf;
+	b = bmin + iodata->eof_putback - 1;
       } else {
-	PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_fwrec_noseek_sfclose: returned %lu bytes to IO stream", remain_ul);
+	*(elt->end) = iodata->saved_byte;
+	if (elt != io_cur_elt || elt->len == remain) {
+	  /* restore all elt bytes, including leader and trailer bytes */
+	  bmin = iodata->dbuf;
+	  b = bmin + data->block_size - 1;
+	} else {
+	  /* elt is io_cur_elt and remain < elt->len; restore trailer plus remain only */
+	  b = &(iodata->dbuf[data->block_size - 1]);
+	  bmin = b - (remain + data->trailer_len);
+	}
       }
+      for (; b >= bmin; b--, ctr++) {
+	c = *b;
+	if (c != sfungetc(data->io, c)) {
+	  PDC_WARN1(pdc->disc, "PDC_fwrec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	  goto after_restore;
+	}
+      }
+    }
+    if (ctr) {
+      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_fwrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
+ after_restore:
+
   /* remove all elts from list -- put them on the free list */
   IODISC_REMOVE_ALL_ELTS(data->head, data->f_head, elt);
   data->io      = 0;
@@ -276,8 +236,8 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
 {
   PDC_fwrec_noseek_data_t     *data;
   PDC_fwrec_noseek_iodata_t   *iodata;
-  PDC_IO_elt_t         *elt, *keepelt;
-  ssize_t              readlen  = 0;
+  PDC_IO_elt_t                *elt, *keepelt;
+  ssize_t                      readlen;
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -309,38 +269,35 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     return PDC_ERR;
   }
   iodata = (PDC_fwrec_noseek_iodata_t*)elt->disc_ptr;
-  if (data->leader_len) {
-    if (-1 == sfseek(data->io, data->leader_len, SEEK_CUR)) {
-      readlen = -1;
-      goto skip_sfread;
-    }
-  }
   readlen = sfread(data->io, (Void_t*)iodata->dbuf, data->block_size);
- skip_sfread:
   if (readlen < 0) {
     PDC_SYSERR(pdc->disc, "PDC_fwrec_noseek_read: Error reading IO stream");
     readlen = 0;
   }
-  elt->len = (readlen >= data->trailer_len) ? (readlen - data->trailer_len) : 0;
-  iodata->dbuf[elt->len] = 0; /* null-terminate the bytes read */
-  iodata->eor_putback = readlen - elt->len; /* normally data->trailer_len */
-  elt->begin = iodata->dbuf;
-  elt->end   = elt->begin + elt->len;
   elt->num = (data->num)++;
-  if (readlen == data->block_size) { /* normal EOR case */
-    elt->eor = 1;
-    elt->eof = 0;
-    elt->unit = (const char*)data->unit;
-  } else { /* partial read, hit EOF before EOR */
+  if (readlen < data->block_size) { /* EOF case */
     elt->eor = 0;
     elt->eof = 1;
     data->eof = 1;
-    if (elt->len == 0) { /* trivial EOF record */
+    elt->len = 0; /* ignore partial data except for putback */
+    elt->begin = elt->end = iodata->dbuf;
+    iodata->eof_putback = readlen;
+    if (readlen == 0) { /* trivial EOF record */
       elt->unit = "(empty EOF) block";
-    } else { /* partial-read EOF record */
-      elt->unit = (const char*)data->punit;
+    } else { /* malformed EOF record */
+      elt->unit = "(malformed EOF) block";
     }
+  } else {
+    elt->eor = 1;
+    elt->eof = 0;
+    elt->len = data->data_len;
+    elt->begin = iodata->dbuf + data->leader_len;
+    elt->end   = elt->begin + elt->len;
+    iodata->eof_putback = 0;
+    iodata->saved_byte = *(elt->end);
+    elt->unit = (const char*)data->unit;
   }
+  *(elt->end) = 0; /* null-terminate the bytes read */
   PDC_APPEND_ELT(data->head, elt);
 #if 0
   if (pdc->disc->errorf) {
@@ -409,15 +366,13 @@ PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len)
   data->leader_len    = leader_len;
   data->data_len      = data_len;
   data->trailer_len   = trailer_len;
-  data->block_size    = data_len + trailer_len;
+  data->block_size    = leader_len + data_len + trailer_len;
   data->f_head        = f_head;
 
   if ((data->block_size % 1024) == 0) {
     sprintf(data->unit,  "%dKB Block", data->block_size / 1024);
-    sprintf(data->punit, "(last: partial) %dKB Block", data->block_size / 1024);
   } else {
     sprintf(data->unit,  "%dB Block", data->block_size);
-    sprintf(data->punit, "(last: partial)%dB Block", data->block_size);
   }
 
   io_disc->unmake_fn    = PDC_fwrec_noseek_unmake;
@@ -455,21 +410,21 @@ PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len)
 /* private types */
 typedef struct PDC_norec_noseek_data_s {
   /* configuration fields */
-  size_t         block_size;
+  size_t          block_size;
   /* other fields */
-  Vmalloc_t      *disc_vm;   /* lifetime: make/unmake pairing */
-  PDC_IO_elt_t   *head;      /* head of IO rec list */
-  PDC_IO_elt_t   *f_head;    /* head of free list   */
-  Sfio_t         *io;        /* Sfio stream to read from */
-  int            eof;        /* hit EOF? */
-  size_t         num;        /* record/block number */
-  char           unit[100];  /* unit description when reading blocks */
-  char           punit[100]; /* ditto -- partial read case */
-  PDC_byte       *dbuf;      /* resizable data buffer */
-  PDC_byte       *dbuf_end;  /* 1 beyond last byte read */
-  size_t         balloc;     /* # blocks allocated */
-  size_t         btail;      /* idx of last block in use */
-  size_t         gc_point;
+  Vmalloc_t      *disc_vm;    /* lifetime: make/unmake pairing */
+  PDC_IO_elt_t   *head;       /* head of IO rec list */
+  PDC_IO_elt_t   *f_head;     /* head of free list   */
+  Sfio_t         *io;         /* Sfio stream to read from */
+  int             eof;        /* hit EOF? */
+  size_t          num;        /* record/block number */
+  char            unit[100];  /* unit description when reading blocks */
+  char            punit[100]; /* ditto -- partial read case */
+  PDC_byte       *dbuf;       /* resizable data buffer */
+  PDC_byte       *dbuf_end;   /* 1 beyond last byte read */
+  size_t          balloc;     /* # blocks allocated */
+  size_t          btail;      /* idx of last block in use */
+  size_t          gc_point;
 } PDC_norec_noseek_data_t;
 
 PDC_error_t
@@ -508,7 +463,9 @@ PDC_error_t
 PDC_norec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain)
 {
   PDC_norec_noseek_data_t  *data;
-  PDC_IO_elt_t      *elt;
+  PDC_IO_elt_t             *elt;
+  int                       c, ctr;
+  PDC_byte                 *b, *bmin;
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -531,17 +488,22 @@ PDC_norec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
     return PDC_ERR;
   }
   if (io_cur_elt) {
-    Sfoff_t        offset;
-    unsigned long  remain_ul;
-    remain        = (data->dbuf_end - io_cur_elt->end) + remain;
-    remain_ul     = remain;
-    offset        = -1 * remain;
-    if (-1 == sfseek(data->io, offset, SEEK_CUR)) {
-      PDC_WARN1(pdc->disc, "PDC_norec_noseek_sfclose: failed to return %lu bytes to IO stream", remain_ul);
-    } else {
-      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_norec_noseek_sfclose: returned %lu bytes to IO stream", remain_ul);
+    /* return remaining bytes to Sfio stream using sfungetc */
+    ctr = 0;
+    b = data->dbuf_end - 1;
+    bmin = io_cur_elt->end - remain;
+    for (; b >= bmin; b--, ctr++) {
+      c = *b;
+      if (c != sfungetc(data->io, c)) {
+	PDC_WARN1(pdc->disc, "PDC_norec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	goto after_restore;
+      }
+    }
+    if (ctr) {
+      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_fwrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
+ after_restore:
 
   /* remove all elts from list -- put them on the free list */
   IODISC_REMOVE_ALL_ELTS(data->head, data->f_head, elt);
@@ -554,11 +516,11 @@ PDC_norec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
 PDC_error_t
 PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain, PDC_IO_elt_t** next_elt_out)
 {
-  PDC_norec_noseek_data_t     *data;
-  PDC_IO_elt_t         *elt, *keepelt;
-  size_t               keep_len;
-  ssize_t              readlen  = 0;
-  Sfoff_t              diff;
+  PDC_norec_noseek_data_t  *data;
+  PDC_IO_elt_t             *elt, *keepelt;
+  size_t                    keep_len;
+  ssize_t                   readlen;
+  Sfoff_t                   diff;
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -695,7 +657,7 @@ PDC_norec_noseek_make(size_t block_size_hint)
   PDC_IO_disc_t             *io_disc;
   PDC_IO_elt_t              *f_head;
   PDC_byte                  *dbuf;
-  size_t                    block_size;
+  size_t                     block_size;
 
   block_size = (block_size_hint) ? block_size_hint : PDC_NOREC_NOSEEK_DEF_BSIZE;
 
@@ -770,30 +732,30 @@ PDC_norec_noseek_make(size_t block_size_hint)
 /* private types */
 typedef struct PDC_ctrec_noseek_data_s {
   /* configuration fields */
-  PDC_byte       cterm;
-  size_t         block_size;
+  PDC_byte        cterm;
+  size_t          block_size;
   /* other fields */
-  Vmalloc_t      *disc_vm;    /* lifetime: make/unmake pairing */
-  PDC_IO_elt_t   *head;       /* head of IO rec list */
-  PDC_IO_elt_t   *f_head;     /* head of free list   */
-  PDC_IO_elt_t   *eof_elt;    /* always keep around an elt to be used as EOF elt */
-  Sfio_t         *io;         /* Sfio stream to read from */
-  int            eof;         /* hit EOF? */
-  size_t         num;         /* line number */
-  PDC_byte       *dbuf;       /* resizable data buffer */
-  PDC_byte       *dbuf_end;   /* 1 beyond last byte read */ 
-  size_t         un_bytes;    /* unread bytes: # bytes not yet part of IO rec list */
-  size_t         balloc;      /* # blocks allocated */
-  size_t         btail;       /* idx of last block in use */
-  size_t         gc_point;
-  char           descr[100];  /* description */ 
+  Vmalloc_t      *disc_vm;     /* lifetime: make/unmake pairing */
+  PDC_IO_elt_t   *head;        /* head of IO rec list */
+  PDC_IO_elt_t   *f_head;      /* head of free list   */
+  PDC_IO_elt_t   *eof_elt;     /* always keep around an elt to be used as EOF elt */
+  Sfio_t         *io;          /* Sfio stream to read from */
+  int             eof;         /* hit EOF? */
+  size_t          num;         /* line number */
+  PDC_byte       *dbuf;        /* resizable data buffer */
+  PDC_byte       *dbuf_end;    /* 1 beyond last byte read */ 
+  size_t          un_bytes;    /* unread bytes: # bytes not yet part of IO rec list */
+  size_t          balloc;      /* # blocks allocated */
+  size_t          btail;       /* idx of last block in use */
+  size_t          gc_point;
+  char            descr[100];  /* description */ 
 } PDC_ctrec_noseek_data_t;
 
 PDC_error_t
 PDC_ctrec_noseek_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t* sfio, PDC_IO_elt_t* head)
 {
   PDC_ctrec_noseek_data_t  *data;
-  PDC_IO_elt_t      *elt; 
+  PDC_IO_elt_t             *elt; 
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -832,7 +794,9 @@ PDC_error_t
 PDC_ctrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain)
 {
   PDC_ctrec_noseek_data_t  *data;
-  PDC_IO_elt_t      *elt;
+  PDC_IO_elt_t             *elt;
+  int                       c, ctr;
+  PDC_byte                 *b, *bmin;
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -855,17 +819,22 @@ PDC_ctrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
     return PDC_ERR;
   }
   if (io_cur_elt) {
-    Sfoff_t        offset;
-    unsigned long  remain_ul;
-    remain        = (data->dbuf_end - io_cur_elt->end) + remain;
-    remain_ul     = remain;
-    offset        = -1 * remain;
-    if (-1 == sfseek(data->io, offset, SEEK_CUR)) {
-      PDC_WARN1(pdc->disc, "PDC_ctrec_noseek_sfclose: failed to return %lu bytes to IO stream", remain_ul);
-    } else {
-      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_ctrec_noseek_sfclose: returned %lu bytes to IO stream", remain_ul);
+    /* return remaining bytes to Sfio stream using sfungetc */
+    ctr = 0;
+    b = data->dbuf_end - 1;
+    bmin = io_cur_elt->end - remain;
+    for (; b >= bmin; b--, ctr++) {
+      c = *b;
+      if (c != sfungetc(data->io, c)) {
+	PDC_WARN1(pdc->disc, "PDC_norec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	goto after_restore;
+      }
+    }
+    if (ctr) {
+      PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_fwrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
+ after_restore:
 
   /* remove all elts from list -- put them on the free list */
   IODISC_REMOVE_ALL_ELTS(data->head, data->f_head, elt);
@@ -890,7 +859,6 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   PDC_byte            *tmp;
   PDC_byte            *found_cterm;
   Sfoff_t             diff;
-  /*  unsigned long       tmp_ul1, tmp_ul2, tmp_ul3; */ /* XXX_REMOVE */
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -936,14 +904,8 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     if (data->balloc - data->btail < PDC_CTREC_NOSEEK_GC_BLOCKS_LEFT && discard_len >= data->gc_point) {
       /* garbage collect */
       diff = - discard_len; /* data moving down - negative offset */
-      /* tmp_ul1 = keep_len; */    /* XXX_REMOVE */
-      /* tmp_ul2 = discard_len; */ /* XXX_REMOVE */
-      /* PDC_WARN2(pdc->disc, "XXX_REMOVE: about to memmove keep_len %lu bytes down by %d bytes", tmp_ul1, tmp_ul2); */
       memmove((void*)data->dbuf, (const void*)(data->dbuf_end - keep_len), keep_len);
       data->btail = keep_len/data->block_size; /* # blocks copied -> index of next block index */
-      /* tmp_ul1 = data->btail; */ /* XXX_REMOVE */
-      /* tmp_ul2 = keep_len;    */ /* XXX_REMOVE */
-      /* PDC_WARN2(pdc->disc, "XXX_REMOVE: btail set to %lu after memmove with keep_len %lu", tmp_ul1, tmp_ul2); */
       data->dbuf_end = data->dbuf + keep_len;
       /* redo begin/end ptrs */
       IODISC_RELOC_ELTS("PDC_ctrec_noseek_read", data->head, diff, elt);
@@ -978,19 +940,9 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
       if (diff) { /* data moved, redo begin/end pointers */
 	IODISC_RELOC_ELTS("PDC_ctrec_noseek_read", data->head, diff, elt);
       }
-      /* tmp_ul1 = data->btail; */   /* XXX_REMOVE */
-      /* tmp_ul2 = data->balloc; */  /* XXX_REMOVE */
-      /* PDC_WARN2(pdc->disc, "XXX_REMOVE: btail %lu, so GREW balloc to %lu", tmp_ul1, tmp_ul2); */
     } else {
       /* dbuf already had space at block index btail */
-      /* tmp_ul1 = data->btail;  */ /* XXX_REMOVE */
-      /* tmp_ul2 = data->balloc; */ /* XXX_REMOVE */
-      /* PDC_WARN2(pdc->disc, "XXX_REMOVE: btail %lu, so no need to grow balloc %lu", tmp_ul1, tmp_ul2); */
     }
-    /* tmp_ul1 = data->btail;                 */  /* XXX_REMOVE */
-    /* tmp_ul2 = data->dbuf_end - data->dbuf; */  /* XXX_REMOVE */
-    /* tmp_ul3 = tmp_ul2 / data->block_size;  */  /* XXX_REMOVE */
-    /* if (tmp_ul1 == tmp_ul3) {      PDC_WARN2(pdc->disc, "XXX_REMOVE: prior to sfread, balloc %lu, dbuf_end - dbuf = %lu [good btail]", tmp_ul1, tmp_ul2);    } else {      PDC_WARN3(pdc->disc, "XXX_REMOVE: prior to sfread, balloc %lu, dbuf_end - dbuf = %lu [btail SHOULD BE %lu]", tmp_ul1, tmp_ul2, tmp_ul3);    } */
     readlen = sfread(data->io, (Void_t*)data->dbuf_end, data->block_size);
     if (readlen < 0) {
       PDC_SYSERR(pdc->disc, "PDC_ctrec_noseek_read: Error reading IO stream");
@@ -1001,8 +953,6 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
       break;
     }
     (data->btail)++;
-    /* tmp_ul1 = data->btail;  */ /* XXX_REMOVE */
-    /* PDC_WARN1(pdc->disc, "XXX_REMOVE: after sfread, btail bumped to %lu", tmp_ul1); */
     bytes_read += readlen;
     tmp = data->dbuf_end;
     data->dbuf_end += readlen;
@@ -1188,22 +1138,22 @@ PDC_ctrec_make(PDC_byte termChar, size_t block_size_hint)
 /* private types */
 typedef struct PDC_norec_data_s {
   /* configuration fields */
-  size_t         block_size;
+  size_t          block_size;
   /* other fields */
-  Vmalloc_t      *disc_vm;   /* lifetime: make/unmake pairing */
-  PDC_IO_elt_t   *head;      /* head of IO rec list */
-  PDC_IO_elt_t   *f_head;    /* head of free list   */
-  PDC_IO_elt_t   *eof_elt;   /* always keep around an elt to be used as EOF elt */
-  Sfio_t         *io;        /* Sfio stream to read from */
-  int            eof;        /* hit EOF? */
-  size_t         num;        /* record/block number */
-  PDC_byte       dummy[1];   /* for immediate EOF error */
-  char           unit[100];  /* unit description when reading blocks */
-  char           punit[100]; /* ditto -- partial read case */
-  PDC_byte       *r_begin;   /* begin of reserved sfio bytes */
-  PDC_byte       *r_end;     /* 1 byte past end of reserved sfio bytes */
-  PDC_byte       saved_byte; /* we NULL *(r_end) after each sfreserve, restore it prior to next sfreserve */
-  Sfoff_t        tail_off;   /* tail offset (obtained after each sfreserve call) */
+  Vmalloc_t      *disc_vm;    /* lifetime: make/unmake pairing */
+  PDC_IO_elt_t   *head;       /* head of IO rec list */
+  PDC_IO_elt_t   *f_head;     /* head of free list   */
+  PDC_IO_elt_t   *eof_elt;    /* always keep around an elt to be used as EOF elt */
+  Sfio_t         *io;         /* Sfio stream to read from */
+  int             eof;        /* hit EOF? */
+  size_t          num;        /* record/block number */
+  PDC_byte        dummy[1];   /* for immediate EOF error */
+  char            unit[100];  /* unit description when reading blocks */
+  char            punit[100]; /* ditto -- partial read case */
+  PDC_byte       *r_begin;    /* begin of reserved sfio bytes */
+  PDC_byte       *r_end;      /* 1 byte past end of reserved sfio bytes */
+  PDC_byte        saved_byte; /* we NULL *(r_end) after each sfreserve, restore it prior to next sfreserve */
+  Sfoff_t         tail_off;   /* tail offset (obtained after each sfreserve call) */
 } PDC_norec_data_t;
 
 PDC_error_t
@@ -1228,7 +1178,7 @@ PDC_norec_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t *sfio, PDC_IO_elt_t 
     PDC_WARN(pdc->disc, "PDC_norec_sfopen: not in a valid closed state");
     return PDC_ERR;
   }
-  IODISC_NEED_AN_ELT("PDC_ctrec_noseek_sfopen", elt, data->f_head, data->disc_vm);
+  IODISC_NEED_AN_ELT("PDC_norec_sfopen", elt, data->f_head, data->disc_vm);
   if (!elt) {
     return PDC_ERR;
   }
@@ -1272,13 +1222,18 @@ PDC_norec_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, 
     return PDC_ERR;
   }
   if (io_cur_elt) {
-    Sfoff_t offset = io_cur_elt->disc_off + io_cur_elt->len - remain;
+    Sfoff_t offset;
+
+    if (data->r_end) { /* restore in case we are returning saved_byte to stream */ 
+      *(data->r_end) = data->saved_byte;
+    }
+    offset = io_cur_elt->disc_off + io_cur_elt->len - remain;
     if (offset < data->tail_off) {
       unsigned long to_return = data->tail_off - offset;
       if (-1 == sfseek(data->io, offset, 0)) {
 	PDC_WARN1(pdc->disc, "PDC_norec_sfclose: failed to return %lu bytes to IO stream", to_return);
       } else {
-	PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_norec_sfclose: returned %lu bytes to IO stream", to_return);
+	PDC_WARN1(pdc->disc, "XXX_CHANGE_TO_DBG PDC_norec_sfclose: restored %lu bytes to IO stream using sfseek", to_return);
       }
     }
   }
@@ -1329,7 +1284,7 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
     return PDC_ERR;
   }
   if (data->r_end) {
-    *(data->r_end) = data->saved_byte; /* restore in case sfio assumes it is there */
+    *(data->r_end) = data->saved_byte;
   }
   /* move some elts to the free list */
   keepelt = io_cur_elt ? io_cur_elt : data->head;
@@ -1360,7 +1315,8 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
     }
   }
   data->tail_off = sftell(data->io);
-  if (new_r_begin) {
+  data->r_end = 0;
+  if (readlen) {
     data->r_end = new_r_begin + readlen;
     if (readlen < to_keep) {
       PDC_FATAL(pdc->disc, "PDC_norec_read: unexpected failure, reserve got even fewer bytes than last time");
