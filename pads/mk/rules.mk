@@ -99,7 +99,7 @@ endif
 
 ifdef GIGASCOPE_HOME
 # gigascope distribution
-# FORCE_STATIC = 1
+FORCE_STATIC = 1
 PADS_INSTALLROOT = $(GIGASCOPE_HOME)
 GIGASCOPE_FLAGS = -DFOR_GIGASCOPE
 GIGASCOPE_INCLUDES = pads_gigascope.h pads_gigascope_macros.h  
