@@ -1318,18 +1318,20 @@ structure CnvExt : CNVEXT = struct
 			  let val theFun = (theSuf o accSuf) name
 			      fun genAccTheFull {pty :PX.Pty, args:pcexp list,
 						  name:string, isVirtual:bool, pred:pcexp option, comment} = 
-				  case lookupAcc(pty) of NONE => []
-				| SOME a => (
-					     let val theName = theSuf a
-						 val fieldX = P.addrX(P.arrowX(PT.Id acc, PT.Id name))
-					     in
-						 [PT.IfThen(
+				  if not isVirtual then
+				      case lookupAcc(pty) of NONE => []
+				    | SOME a => (
+						 let val theName = theSuf a
+						     val fieldX = P.addrX(P.arrowX(PT.Id acc, PT.Id name))
+						 in
+						     [PT.IfThen(
 							    P.eqX(PL.PDC_ERROR, 
 								  PT.Call(PT.Id theName, 
 									  [PT.Id ts, fieldX, PT.Id disc])),
 							    PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
-					     end
-                                             (* end accOpt SOME case *))
+						 end
+			                         (* end accOpt SOME case *))
+				  else []
 			      fun genAccTheBrief e = []
 			      val theDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
 			      val theFields = mungeFields genAccTheFull genAccTheBrief fields
@@ -1348,6 +1350,7 @@ structure CnvExt : CNVEXT = struct
 		      val addFun = (addSuf o accSuf) name
 		      fun genAccAddFull {pty :PX.Pty, args:pcexp list,
 				          name:string, isVirtual:bool, pred:pcexp option, comment} = 
+			  if not isVirtual then
 			  case lookupAcc(pty) of NONE => []
 			      | SOME a => (
 				 let val addName = addSuf a
@@ -1360,6 +1363,7 @@ structure CnvExt : CNVEXT = struct
                                       PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
 				 end
                               (* end accOpt SOME case *))
+			  else []
                       fun genAccAddBrief e = []
 		      val addDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
 		      val addFields = mungeFields genAccAddFull genAccAddBrief fields
@@ -1372,6 +1376,7 @@ structure CnvExt : CNVEXT = struct
 		      val reportFun = (reportSuf o accSuf) name
 		      fun genAccReportFull {pty :PX.Pty, args:pcexp list,
 				          name:string, isVirtual:bool, pred:pcexp option, comment} = 
+			  if not isVirtual then
 			  case lookupAcc(pty) of NONE => []
 			      | SOME a => (
 				 let val reportName = reportSuf a
@@ -1380,6 +1385,7 @@ structure CnvExt : CNVEXT = struct
 				    genPrintPiece(reportName, name, gfieldX acc,[])
 				 end
                               (* end accOpt SOME case *))
+			  else []
                       fun genAccReportBrief e = []
 		      val reportFields = mungeFields genAccReportFull genAccReportBrief fields
                       val reportFunED = genReportFun(reportFun, accPCT, reportFields)
@@ -1392,6 +1398,7 @@ structure CnvExt : CNVEXT = struct
 			       let fun genInitFull {pty as PX.Name tyName :PX.Pty, args : pcexp list, 
 						    name:string, isVirtual:bool, 
 						    pred:pcexp option, comment:string option} = 
+				   if not isVirtual then
 				       if TyProps.Static = lookupMemChar pty then []
 				       else let val baseFunName = lookupMemFun (PX.Name tyName)
 					    in
@@ -1403,6 +1410,7 @@ structure CnvExt : CNVEXT = struct
 								       PT.Id name)), 
 							 PT.Id disc]))]
 					    end
+				   else []
 				   fun genInitBrief _ = []
 				   val bodySs = mungeFields genInitFull genInitBrief fields
 			       in
@@ -2374,10 +2382,12 @@ structure CnvExt : CNVEXT = struct
 		 (* Generate accumulator type (array case) *)
                  val numElemsToTrack = case maxConstOpt of NONE => 10
 		                       | SOME x => Int.min(10,IntInf.toInt x)
-		 val baseFields = case lookupAcc baseTy of NONE => [] 
-	                        | SOME acc => [(array, P.makeTypedefPCT acc, SOME "Accumulator for all array elements"),
-					       (arrayDetail, P.arrayPCT (P.intX numElemsToTrack, P.makeTypedefPCT acc), 
-						SOME ("Accumulator for first "^(Int.toString numElemsToTrack)^" array elements"))]
+		 val baseFields = 
+		     case lookupAcc baseTy of NONE => [] 
+		     | SOME acc => 
+			 [(array, P.makeTypedefPCT acc, SOME "Accumulator for all array elements"),
+			  (arrayDetail, P.arrayPCT (P.intX numElemsToTrack, P.makeTypedefPCT acc), 
+			   SOME ("Accumulator for first "^(Int.toString numElemsToTrack)^" array elements"))]
 		 val accFields = (length, PL.intAccPCT, SOME "Accumulator for array length")::baseFields
 		 val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
 		 val accDecls = cnvExternalDecl accStructED 
@@ -2517,7 +2527,11 @@ structure CnvExt : CNVEXT = struct
 			 let val bodySs = 
 			     [P.assignS(P.arrowX(PT.Id base, PT.Id length), P.zero),
 			      P.assignS(P.arrowX(PT.Id base, PT.Id name), P.zero),
-			      PL.chkCFreeRBufferS(PT.Id ts, PT.Id disc, P.arrowX(PT.Id base, PT.Id internal))]
+			      PT.IfThen(
+				P.arrowX(PT.Id base, PT.Id internal),
+			        PT.Compound[
+			          PL.chkCFreeRBufferS(PT.Id ts, PT.Id disc, 
+						      P.arrowX(PT.Id base, PT.Id internal))])]
 			 in
 			     [genInitFun(suf name, base, aPCT, bodySs)]
 			 end
