@@ -13,7 +13,7 @@ for another project to augment my PADS research.
    b) Work with Trevor Jim on using PADS for automatically generating
         parsers based on IETF specs (http, DNS, etc.).
    c) Do extensive performance testing and tuning.
-   d) Continue to work with Mary Fernandez on PADS/Galax (XQuery) integretation; 
+   d) Continue to work with Mary Fernandez on PADS/Galax (XQuery) integration; 
       the next big step is to develop and use a Galax streaming model.
    e) Continue to evolve the language, code generator, and core library.
 

@@ -1,3 +1,21 @@
+Latest Compiler TODO
+--------------------
+* generated copy functions for non-static types should do a cleanup of
+  the target before doing the actual copy work.  Otherwise allocated
+  space will never get cleanup up.
+
+* omitted fields for non-static types: currently we generate init calls,
+  but no cleanup calls.  This means if the space is grown during read,
+  it is not cleaned up before the temporaries pop off the stack.
+  In C++ this would be easy to fix (destructor called on stack pop).
+  For C code we will need to have
+  a 'goto cleanup_and_return' everywhere and at that target we will
+  do the cleanups and then the standard return (pd->nerr) ? P_ERR : P_OK.
+
+Misc Bob (PADS library) TODO
+----------------------------
+* IO position macros: start using them everywhere?
+
 TO DISCUSS (NO DECISION YET)
 -----------------------------
 * nerr/neerr for all structured types
