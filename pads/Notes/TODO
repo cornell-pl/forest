@@ -66,7 +66,6 @@ padsc compiler todo
             3 elt errors          2% of time
      More basic thing would just be number of good/bad values
   * implement compiler optimizations mentioned in talk
-      - call internal functions if available
       - glomming ignores (see examples/gen/dibbler2-mod.c)
       - first field in a struct should not check for panic mode.
   * change basety structure to allow additional tables
