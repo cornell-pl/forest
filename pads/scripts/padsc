@@ -132,6 +132,6 @@ else
   endif
 endif
 
-exec $SMLBIN @SMLload=$IMAGE $PADS_HOME/padsc/comp $cmd -I $PADS_HOME/padsc/include -I /home/gsf/arch/$arch/include/ast -I /usr/common/lib/ocaml \
+exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-base/arch/$arch/include/ast -I /usr/common/lib/ocaml \
 $lua $lda < /dev/null
 
