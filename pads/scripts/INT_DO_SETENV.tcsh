@@ -103,15 +103,6 @@ else
   endif
 endif
 
-set _is_padsglx_home
-if (! $?PADSGLX_HOME) then
-  unset _is_padsglx_home
-else
-  if ("$PADSGLX_HOME"x == x) then
-    unset _is_padsglx_home
-  endif
-endif
-
 set _is_pcre_lib_dir
 if (! $?PCRE_LIB_DIR) then
   unset _is_pcre_lib_dir
@@ -245,9 +236,6 @@ if ($_pads_status == "OK") then
   if (! $?_is_galax_src) then
     setenv GALAX_SRC /home/mff/galax
   endif
-  if (! $?_is_padsglx_home) then
-    setenv PADSGLX_HOME /home/mff/pads-glx/api
-  endif
   if (! $?_is_pcre_lib_dir) then
     setenv PCRE_LIB_DIR /home/mff/pcre-4.5-rh9/lib
   endif
@@ -281,10 +269,10 @@ if ($_pads_status == "OK") then
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
     setenv SHLIB_PATH `echo ${SHLIB_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
   endif
-  if (-d $PADSGLX_HOME) then
-    setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
-    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
-    setenv SHLIB_PATH `echo ${SHLIB_PATH}:${PADSGLX_HOME} | $remove_dups`
+  if (-d $PADSGLX_LIB_DIR) then
+    setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${PADSGLX_LIB_DIR} | $remove_dups`
+    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${PADSGLX_LIB_DIR} | $remove_dups`
+    setenv SHLIB_PATH `echo ${SHLIB_PATH}:${PADSGLX_LIB_DIR} | $remove_dups`
   endif
   if (-d $PCRE_LIB_DIR) then
     setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`
@@ -329,7 +317,6 @@ if ($_pads_status == "OK") then
     echo "OCAML_BIN_DIR=$OCAML_BIN_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
     echo "GALAX_SRC=$GALAX_SRC"
-    echo "PADSGLX_HOME=$PADSGLX_HOME"
     echo "PCRE_LIB_DIR=$PCRE_LIB_DIR"
     echo " "
   endif

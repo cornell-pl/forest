@@ -7,7 +7,7 @@ endif
 
 TARGS = padsc_lib
 ifdef USE_GALAX
-TARGS += pglx_lib pads_glx
+TARGS +=  pads_glx pglx_lib
 endif
 TARGS += padsc_comp
 
@@ -21,9 +21,12 @@ pglx_lib:
 	echo Making pglx library
 	@(cd libpglx; $(MAKE) install)
 
+# pads_glx GNUmakefile depends on O'Caml .depend file.
+# To bootstrap compilation, we create it:
 pads_glx:
 	echo Making pads-glx library
-	@(cd pads-glx; $(MAKE) install)
+	@(cd pads-glx; echo "">.depend; echo "">$(AST_ARCH)/.depend)
+	@(cd pads-glx; echo $(MAKE) install)
 
 padsc_comp:
 	echo Making padsc compiler
@@ -31,6 +34,9 @@ padsc_comp:
 
 regress:
 	@(cd libpads/tests; $(MAKE) regress; cd ../../examples/tests; $(MAKE) regress) | $(PADS_HOME)/scripts/count_differs.pl
+
+test_xml:
+	@(cd examples/xml/tests; $(MAKE) regress) 
 
 test_libpads:
 	@(cd libpads/tests; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
@@ -40,10 +46,12 @@ test_comp:
 
 clean:
 	@(cd libpads; $(MAKE) clean)
+	@(cd pads-glx; $(MAKE) clean)
 	@(cd libpglx; $(MAKE) clean)
 	@(cd comp; $(MAKE) clean)
 
 veryclean:
 	@(cd libpads; $(MAKE) veryclean)
+	@(cd pads-glx; $(MAKE) veryclean)
 	@(cd libpglx; $(MAKE) veryclean)
 	@(cd comp; $(MAKE) veryclean)

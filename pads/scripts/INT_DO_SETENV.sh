@@ -142,10 +142,10 @@ if [ $_pads_status = "OK" ]; then
     export LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
     export SHLIB_PATH=`echo ${SHLIB_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
   fi
-  if [ -e $PADSGLX_HOME ]; then
-    export DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
-    export LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
-    export SHLIB_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
+  if [ -e $PADSGLX_LIB_DIR ]; then
+    export DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PADSGLX_LIB_DIR} | $remove_dups`
+    export LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_LIB_DIR} | $remove_dups`
+    export SHLIB_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_LIB_DIR} | $remove_dups`
   fi
   if [ -e $PCRE_LIB_DIR ]; then
     export DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`
@@ -172,7 +172,6 @@ if [ $_pads_status = "OK" ]; then
     echo "OCAML_BIN_DIR=$OCAML_BIN_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
     echo "GALAX_SRC=$GALAX_SRC"
-    echo "PADSGLX_HOME=$PADSGLX_HOME"
     echo "PCRE_LIB_DIR=$PCRE_LIB_DIR"
     echo " "
   fi

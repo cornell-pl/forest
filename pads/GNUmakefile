@@ -7,7 +7,7 @@ endif
 
 TARGS = ast_lib padsc_lib
 ifdef USE_GALAX
-TARGS += pglx_lib pads_glx
+TARGS += pads_glx pglx_lib 
 endif
 TARGS += padsc_comp
 
@@ -36,9 +36,8 @@ padsc_comp:
 regress:
 	@(cd padsc; $(MAKE) regress)
 
-# XML regression tests:
-# regress_xml:
-# @(cd padsc; $(MAKE) test_xml)
+test_xml:
+	@(cd padsc; $(MAKE) test_xml)
 
 test_libpads:
 	@(cd padsc; $(MAKE) test_libpads)

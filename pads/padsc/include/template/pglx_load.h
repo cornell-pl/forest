@@ -64,7 +64,17 @@ int main(int argc, char** argv) {
   item doc;
   processing_context pc; 
   itemlist docitems, monitems;
+
+  /* Galax configuration options */
   int monitor_flag = 0; 
+  char *monitor_out;
+  char *file_out;
+  FILE *file_fp;
+
+  monitor_out = malloc(strlen(argv[0]) + strlen(".out"));
+  file_out = malloc(strlen(argv[0]) + strlen(".xml"));
+  strcpy(monitor_out,argv[0]); strcat(monitor_out,".out");
+  strcpy(file_out,argv[0]); strcat(file_out,".xml");
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -116,11 +126,26 @@ int main(int argc, char** argv) {
   /* The remaining flags are for galax */
   {
     int i;
-    for (i = 2; i < argc; i++) { 
-      if (strcmp(argv[i], "-monitor") == 0) monitor_flag = 1;
+    for (i = 3; i < argc; i++) { 
+      if (strcmp(argv[i], "-output-monitor") == 0) {
+	monitor_flag = 1;
+	i++;
+	if (i < argc) {
+	  monitor_out = argv[i];
+	} else error(2, "Usage: -output-monitor <filename>");
+      }
+      else if (strcmp(argv[i], "-output-xml") == 0) {
+	i++;
+	if (i < argc) {
+	  file_out = argv[i];
+	} else error(2, "Usage: -output-xml <filename>");
+      }
     }
   }
-  /* Initialization up Galax flags */
+  /* Open files */	
+  if (!(file_fp = fopen(file_out, "w"))) { error(2, "Cannot open %s\n", file_out); exit(-1); }
+
+  /* Initialize Galax flags */
   exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
   if (monitor_flag) {
     exit_on_error(galax_set_monitor_mem(pc, 1), "galax_set_monitor_mem");
@@ -199,8 +224,15 @@ int main(int argc, char** argv) {
 
       exit_on_error((padsDocument(pc, inName, (nodeRep)doc_node, &doc)), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 
-      exit_on_error(galax_serialize_to_stdout(pc, docitems), "galax_serialize_to_stdout");
 
+      if (is_empty(docitems)) error(2, "*** Result is empty") ;
+      else {
+	char *result;
+	exit_on_error(galax_serialize_to_string(pc,docitems,&result), "galax_serialize_to_string");
+	fprintf(file_fp,"%s",result);
+	fflush(file_fp);
+	fclose(file_fp);
+      }
       if (monitor_flag) {
 	exit_on_error(galax_monitor_of_all_calls(pc, &monitems), "galax_monitor_of_all_calls");
 	exit_on_error(galax_serialize_to_file(pc,"load-monitor.out", monitems), "galax_serialize_to_file");

@@ -95,18 +95,19 @@ pglx_lib:
 
 # REGRESSION TESTS
 compare_files:
-	if [[ -f $${S} && -f $${T} && -z "`cmp $${S} $${T}`" ]]; then echo "*** OK: $${N} PASSED"; else echo "*** ERROR: $${N} FAILED"; fi;
+	(cmp $${S} $${T} && echo "*** OK: $${N} PASSED") || echo "*** ERROR: $${N} FAILED" 
+
 regress_load_%: test_load_% 
-	./$? >$(XML_DIR)/$?.xml	
-	$(MAKE) -f ../GNUmakefile -k -s N=test_load_$* S=$(XML_DIR)/test_load_$*.xml T=../../regress/test_$*.xml compare_files
+	./$? 
+	$(MAKE) -f ../GNUmakefile -k -s N=test_load_$* S=test_load_$*.xml T=../../regress/test_$*.xml compare_files
 
 regress_bulk_%: test_bulk_% 
-	./$? >$(XML_DIR)/$?.xml 
-	$(MAKE) -f ../GNUmakefile -k -s N=test_bulk_$* S=$(XML_DIR)/test_bulk_$*.xml T=../../regress/test_$*.xml compare_files
+	./$? 
+	$(MAKE) -f ../GNUmakefile -k -s N=test_bulk_$* S=test_bulk_$*.xml T=../../regress/test_$*.xml compare_files
 
 regress_smart_%: test_smart_% 
-	./$? >$(XML_DIR)/$?.xml 
-	$(MAKE) -f ../GNUmakefile -k -s N=test_smart_$* S=$(XML_DIR)/test_smart_$*.xml T=../../regress/test_$*.xml compare_files
+	./$? 
+	$(MAKE) -f ../GNUmakefile -k -s N=test_smart_$* S=test_smart_$*.xml T=../../regress/test_$*.xml compare_files
 
 regress_format7: regress_load_format7 regress_bulk_format7 regress_smart_format7
 
@@ -116,13 +117,15 @@ regress_dns: regress_load_dns regress_bulk_dns
 
 regress_dibbler_notrailer: regress_load_dibbler_notrailer regress_bulk_dibbler_notrailer regress_smart_dibbler_notrailer
 
-regress: $(REGRESS_TESTS)
+#regress: $(REGRESS_TESTS)
+
+regress: regress_ai
 
 clean:
-	$(RM) -f *~ *.o $(ALL_TESTS)
+	$(RM) -f *~ *.o $(ALL_TESTS) 
 
 veryclean: clean
-	$(RM) $(GEN_DIR)/*.[hc] $(GEN_DIR)/*.xsd $(XML_DIR)/*.xml
+	$(RM) $(GEN_DIR)/*.[hc] $(GEN_DIR)/*.xsd *.xml
 
  # End of rules that are run from the arch directory
 endif

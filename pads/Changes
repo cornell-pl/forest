@@ -1,3 +1,6 @@
+January 5, 2005 - Mary
+  o Added XML "regression" test_xml target to pads/GNUmakefile
+
 January 4, 2005 - Mary
 
   o Integrated PADS-Galax glue code into PADS code base.

@@ -53,7 +53,7 @@ INSTALL_INCLUDES=$(CHEADERS)
 # Moving the generated files is a hack!
 pads_c.h : pads_c.idl
 	$(OCAML_BIN_DIR)/camlidl -header $<
-	mv $(VPATH)/pads_c.h  $(VPATH)/pads_c.ml  $(VPATH)/pads_c.mli .
+	cp $(VPATH)/pads_c.h  $(VPATH)/pads_c.ml  $(VPATH)/pads_c.mli .
 
 # PADS Data model in Caml and C
 OPTLDFLAGS=-linkall nums.cmxa unix.cmxa str.cmxa -cclib -lunix -cclib -lstr $(GALAX_HOME)/lib/caml/galax.cmxa
@@ -120,17 +120,17 @@ pads_c.cmi: pads_c.mli
 
 .ml.cmo:
 	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c $< 
-	mv $*.cmo .
+	cp $*.cmo .
 
 .mli.cmi:
 	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c $<
-	mv $*.cmi .
+	cp $*.cmi .
 
 .ml.cmx:
 	$(OCAML_BIN_DIR)/ocamlopt $(OCAML_FLAGS) -c $<
-	mv $*.cmx $*.o .
+	cp $*.cmx $*.o .
 
 .c.o: $(CHEADERS)
 	$(CC) $(CFLAGS) -I . -I$(GALAX_HOME)/lib/c -c $(VPATH)/$<
-	mv $*.o .
+	cp $*.o .
 

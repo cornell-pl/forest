@@ -43,7 +43,7 @@
 #  define MAX_RECS 0
 #endif
 
-#define exit_on_error(_Expr, _Msg) {err = _Expr; if (err != 0) {error(2, "%s: %s\n", _Msg, galax_error_string);}}
+#define exit_on_error(_Expr, _Msg) {err = _Expr; if (err != 0) {error(2, "%s: %s\n", _Msg, galax_error_string); exit(-1); }}
 
 #define MAX_NODES 100000
 #define MAX_ELTS 100000
@@ -68,16 +68,29 @@ int main(int argc, char** argv) {
 #endif /* PADS_HDR_TY */
   Sfio_t       *io;
   char         *inName  = 0;
-  char         *queryName  = 0;
+  char         *queryName = 0;
 
   galax_err err;
   item doc;
-  itemlist docitems;
+  itemlist docitems, monitems;
   processing_context pc;
   compiled_prolog cp;
   compiled_module cm;
   prepared_prolog pp;
   external_context exc;
+
+  /* Galax configuration options */
+  int monitor_flag = 0; 
+  char *monitor_out;
+  char *file_out;
+  FILE *file_fp;
+  int sbdo_flag = 0;
+  int sbdo_kind = SBDO_AdHoc;; 
+
+  monitor_out = malloc(strlen(argv[0]) + strlen(".out"));
+  file_out = malloc(strlen(argv[0]) + strlen(".xml"));
+  strcpy(monitor_out,argv[0]); strcat(monitor_out,".out");
+  strcpy(file_out,argv[0]); strcat(file_out,".xml");
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -135,7 +148,19 @@ int main(int argc, char** argv) {
   {
     int i;
     for (i = 3; i < argc; i++) { 
-      if (strcmp(argv[i], "-monitor") == 0) monitor_flag = 1;
+      if (strcmp(argv[i], "-output-monitor") == 0) {
+	monitor_flag = 1;
+	i++;
+	if (i < argc) {
+	  monitor_out = argv[i];
+	} else error(2, "Usage: -output-monitor <filename>");
+      }
+      else if (strcmp(argv[i], "-output-xml") == 0) {
+	i++;
+	if (i < argc) {
+	  file_out = argv[i];
+	} else error(2, "Usage: -output-xml <filename>");
+      }
       else if  (strcmp(argv[i], "-sbdo") == 0) { 
 	sbdo_flag = 1;
 	i++;
@@ -151,8 +176,10 @@ int main(int argc, char** argv) {
       }
     }
   }
+  /* Open files */	
+  if (!(file_fp = fopen(file_out, "w"))) { error(2, "Cannot open %s\n", file_out); exit(-1); }
 
-  /* Initialization up Galax flags */
+  /* Initialize Galax flags */
   exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
   exit_on_error(galax_set_serialization_kind(pc, Serialize_As_Well_Formed), "galax_set_serialization_kind");
   if (sbdo_flag)
@@ -237,7 +264,14 @@ int main(int argc, char** argv) {
       exit_on_error(galax_eval_prolog(cm->compiled_prolog, exc, &pp), "galax_eval_prolog");
       exit_on_error(galax_eval_statement(pp, File_Input, queryName, &docitems), "galax_eval_statement"); 
       
-      exit_on_error(galax_serialize_to_stdout(pc,docitems), "galax_serialize_to_stdout");
+      if (is_empty(docitems)) error(2, "*** Result is empty") ;
+      else {
+	char *result;
+	exit_on_error(galax_serialize_to_string(pc,docitems,&result), "galax_serialize_to_string");
+	fprintf(file_fp,"%s",result);
+	fflush(file_fp);
+	fclose(file_fp);
+      }
  }
   /* 
    * The smart code doesn't use rep->elts, pd->elts, 
