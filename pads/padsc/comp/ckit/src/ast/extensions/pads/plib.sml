@@ -235,6 +235,9 @@ struct
 
 (* -- Mask check/manipulation routines *)
 
+  fun fillMaskS(maskPtr, mask, sizeTy) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_fill_mask", [PT.Cast(P.ptrPCT base_mPCT, maskPtr), mask, P.sizeofX sizeTy]))
+
   fun mTestSetX(m) =
     PT.Call(PT.Id "PDC_Test_Set", [m])
 

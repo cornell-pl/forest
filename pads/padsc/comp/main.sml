@@ -253,9 +253,6 @@ structure Main : sig
 	    TextIO.output(aoutstream, "#define PADS_TY_ACC_ADD "^accAdd^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_ACC_REPORT "^accReport^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_ACC_CLEANUP "^accClean^"\n");
-	    TextIO.output(aoutstream, "\n/* XXX_REMOVE next 2 lines: */\n");
-	    TextIO.output(aoutstream, "#include \"libpadsc-internal.h\"\n");
-	    TextIO.output(aoutstream, "#define "^repName^"_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))\n\n");
 	    echoFile(templateName,aoutstream);
 
 	    TextIO.flushOut aoutstream;

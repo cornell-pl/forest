@@ -6,7 +6,7 @@
 #define PADS_TY_CLEANUP line_cleanup
 #define PADS_TY_ED line_ed
 #define PADS_TY_M line_m
-#define PADS_TY_M_INIT line_m_init
+#define PADS_TY_M_INIT line_maskFill
 #define PADS_TY_ED_INIT line_ed_init
 #define PADS_TY_ED_CLEANUP line_ed_cleanup
 #define PADS_TY_ACC line_acc
@@ -15,9 +15,6 @@
 #define PADS_TY_ACC_REPORT line_acc_report
 #define PADS_TY_ACC_CLEANUP line_acc_cleanup
 
-/* XXX_REMOVE next 2 lines: */
-#include "libpadsc-internal.h"
-#define line_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
 
 int main(int argc, char** argv) {
   PDC_t           *pdc;

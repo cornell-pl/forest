@@ -1,10 +1,6 @@
 #include "libpadsc.h"
 #include "format3.h"
 
-/* XXX_REMOVE NEXT 2 LINES: */
-#include "libpadsc-internal.h"
-#define intList_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
-
 int main(int argc, char** argv) {
   PDC_t           *pdc;
   PDC_IO_disc_t   *io_disc;
@@ -29,7 +25,7 @@ int main(int argc, char** argv) {
   intList_ed_init(pdc, &f3ed);
 
   /* INIT mask -- must do this! */
-  intList_m_init(pdc, &f3m, PDC_CheckAndSet);
+  intList_maskFill(pdc, &f3m, PDC_CheckAndSet);
 
   if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format3")) {
     error(2, "*** PDC_IO_fopen failed ***");

@@ -3,9 +3,6 @@
 #include <ast.h>
 #include <error.h>
 
-/* XXX_REMOVE NEXT 2 LINES: */
-#include "libpadsc-internal.h"
-#define http_clf_t_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
 
 #define NO_PRINT 1
 
@@ -46,7 +43,7 @@ int main(int argc, char** argv) {
   }
 
   /* init mask -- must do this! */
-  http_clf_t_m_init(pdc, &m, PDC_CheckAndSet);
+  http_clf_t_maskFill(pdc, &m, PDC_CheckAndSet);
 
   /*
    * Try to read each line of data

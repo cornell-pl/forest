@@ -1,9 +1,6 @@
 #include "libpadsc.h"
 #include "format5.h"
 
-/* XXX_REMOVE NEXT 2 LINES: */
-#include "libpadsc-internal.h"
-#define call_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
 
 #define NO_NL 0|ERROR_PROMPT
 
@@ -26,7 +23,7 @@ int main(int argc, char** argv) {
   }
 
   /* Init mask -- must do this! */
-  call_m_init(pdc, &cm, PDC_CheckAndSet);
+  call_maskFill(pdc, &cm, PDC_CheckAndSet);
 
   /*
    * Try to read each line of data

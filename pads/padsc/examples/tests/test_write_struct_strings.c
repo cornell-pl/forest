@@ -2,9 +2,6 @@
 #include "struct_strings.h"
 #define FILENAME  "../../data/ex_data.struct_strings_write"
 
-/* XXX_REMOVE NEXT 2 LINES: */
-#include "libpadsc-internal.h"
-#define test_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
 
 PDC_error_t my_string_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **type_args) {
   PDC_base_ed *ed  = (PDC_base_ed*)ed_void;
@@ -68,7 +65,7 @@ int main(int argc, char** argv) {
   }
 
   /* init mask -- must do this! */
-  test_m_init(pdc, &m, PDC_CheckAndSet);
+  test_maskFill(pdc, &m, PDC_CheckAndSet);
 
   /*
    * Try to read each line of data

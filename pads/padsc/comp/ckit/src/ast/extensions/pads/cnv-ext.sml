@@ -607,6 +607,7 @@ structure CnvExt : CNVEXT = struct
               fun dstSuf s = s^"_dst"
               fun addSuf  s = s^"_add"
               fun readSuf s = s^"_read"
+              fun maskFillSuf s = s^"_maskFill"
               fun writeSuf s = s^"_write"
 	      fun ioSuf s = s^"2io"
 	      fun bufSuf s = s^"2buf"
@@ -1060,6 +1061,21 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					    PT.Compound bodySs, returnTy)
 		  in
 		      initFunED
+		  end
+
+	      fun genMaskFillFun(funName, maskPCT) = 
+		  let val mask = "mask"
+		      val baseMask = "baseMask"
+		      val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT maskPCT, PL.base_mPCT]
+		      val paramNames = [pdc, mask, baseMask]  
+		      val formalParams = List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+		      val bodySs = [PL.fillMaskS(PT.Id mask, PT.Id baseMask, maskPCT)]
+		      val returnTy =  P.void
+		      val maskFillFunED = 
+			  P.mkFunctionEDecl(funName, formalParams, 
+					    PT.Compound bodySs, returnTy)
+		  in
+		      [maskFillFunED]
 		  end
 
               (* PDC_error_t foo_copy(PDC_t* pdc, foo *dst, foo* src) *)
@@ -1589,6 +1605,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						  NONE, true, bodySs)
 
 
+                      (* Generate MaskFill function typedef case *)
+                      val maskFillName = maskFillSuf name 
+                      val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+
                       (* Generate Write function typedef case *)
 		      val writeName = writeSuf name
 		      val writeBaseName = (iSuf o bufSuf o writeSuf) (lookupWrite baseTy) 
@@ -1702,6 +1722,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      @ (List.concat(List.map cnvExternalDecl copyRepEDs))
 		      @ (List.concat(List.map cnvExternalDecl copyEDEDs))
                       @ (List.concat(List.map cnvExternalDecl readFunEDs))
+                      @ (List.concat(List.map cnvExternalDecl maskFunEDs))
                       @ (emitWrites writeFunEDs)
 		      @ cnvExternalDecl initFunED
                       @ cnvExternalDecl resetFunED
@@ -2142,6 +2163,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val readFunEDs = genReadFun(readName, cParams, mPCT,edPCT,canonicalPCT, 
 						  mFirstPCT, true, bodySs)
 
+                      (* Generate MaskFill function struct case *)
+                      val maskFillName = maskFillSuf name 
+                      val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+
                       (* Generate Write function struct case *)
 		      val writeName = writeSuf name
 		      fun getLastField fs = 
@@ -2363,6 +2388,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  @ (List.concat(List.map cnvExternalDecl copyRepEDs))
                  @ (List.concat(List.map cnvExternalDecl copyEDEDs))
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
+                 @ (List.concat(List.map cnvExternalDecl maskFunEDs))
 		 @ (emitWrites writeFunEDs)
                  @ cnvExternalDecl initFunED
                  @ cnvExternalDecl resetFunED
@@ -2745,6 +2771,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val readFunEDs = genReadFun(readName, cParams,mPCT,edPCT,canonicalPCT, 
 						 mFirstPCT, true, bodySs)
 
+                      (* Generate MaskFill function union case *)
+                      val maskFillName = maskFillSuf name 
+                      val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+
                       (* Generate Write function union case *)
 		      val writeName = writeSuf name
 		      fun genWriteFull {pty :PX.Pty, args:pcexp list, name:string, 
@@ -2969,6 +2999,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     @ (List.concat(List.map cnvExternalDecl copyRepEDs))
 		     @ (List.concat(List.map cnvExternalDecl copyEDEDs))
 	             @ (List.concat (List.map cnvExternalDecl readFunEDs))
+	             @ (List.concat (List.map cnvExternalDecl maskFunEDs))
                      @ (emitWrites writeFunEDs)
 	             @ cnvExternalDecl initFunED
 	             @ cnvExternalDecl resetFunED
@@ -3663,6 +3694,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					     NONE, true, bodySs)
                  val _ = popLocalEnv()
 
+                 (* Generate MaskFill function array case *)
+                 val maskFillName = maskFillSuf name 
+                 val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+
 		 (* Generate Write function array case *)
 		 val writeName = writeSuf name
 		 val writeBaseName = (iSuf o bufSuf o writeSuf) (lookupWrite baseTy) 
@@ -3875,6 +3910,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  @ (List.concat(List.map cnvExternalDecl copyRepEDs))
                  @ (List.concat(List.map cnvExternalDecl copyEDEDs))
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
+                 @ (List.concat(List.map cnvExternalDecl maskFunEDs))
                  @ (emitWrites writeFunEDs)
                  @ cnvExternalDecl initFunED
                  @ cnvExternalDecl resetFunED 
@@ -3978,6 +4014,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		  val readFunEDs = genReadFun(readName, cParams, 
 					      mPCT,edPCT,canonicalPCT, NONE, false, bodySs)
 
+                  (* Generate MaskFill function enum case *)
+                  val maskFillName = maskFillSuf name 
+                  val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+
                   (* Generate Write functions (enum case) *)
 		  val writeName = writeSuf name
 		  val writeBaseName = lookupLitWrite PL.strlitWrite
@@ -4051,6 +4091,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		@ (List.concat(List.map cnvExternalDecl copyRepEDs))
 		@ (List.concat(List.map cnvExternalDecl copyEDEDs))
                 @ (List.concat(List.map cnvExternalDecl readFunEDs))
+                @ (List.concat(List.map cnvExternalDecl maskFunEDs))
                 @ (emitWrites writeFunEDs)
                 @ cnvExternalDecl initFunED
                 @ cnvExternalDecl resetFunED
