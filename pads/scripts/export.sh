@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -D today pads
+cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r pads2005-03-07 pads
 
 # build documentation
 cd pads/documents/manual

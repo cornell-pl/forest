@@ -154,6 +154,9 @@ structure PBaseTys = struct
   val find : (baseTyMap ref * Atom.atom) -> baseInfoTy option = 
       fn (bRef, a) => PBST.find(!bRef, a)
 
+  val isBaseTy : (baseTyMap ref * ParseTreeExt.Pty) -> bool = 
+      fn (bRef, pty) => case pty of ParseTreeExt.Name a => Option.isSome(PBST.find(!bRef, Atom.atom a))
+
   fun listItemsi(bRef : baseTyMap ref) : (Atom.atom * baseInfoTy) list = 
       PBST.listItemsi(!bRef)
 

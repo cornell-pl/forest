@@ -628,8 +628,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  end
          fun getIntName(intKind, signedness, signednessTag) =
 	     case (intKind, signedness) 
-	     of (Ast.INT, Ast.SIGNED) => SOME("xsd:int")
-             |  (Ast.FLOAT, _) => SOME("xsd:float")
+	     of (Ast.INT, Ast.SIGNED) => SOME("xs:int")
+             |  (Ast.FLOAT, _) => SOME("xs:float")
              | _ => SOME ("ToBeImplemented")
       in
        (case cty 
@@ -647,29 +647,30 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
   (** PADS to XML XSchema translation **)
 
-  fun ppXMLName pps (tyNameOpt,NameOpt) =	(* [name=NameOpt] [type=tyNameOpt] *)
-      let val tyName = case tyNameOpt of NONE => "" | SOME name => (" type=\"" ^ name ^ "\"")
-          val Name = case NameOpt of NONE => "" | SOME name => ("name=\"" ^ name ^ "\"")
+  fun ppXMLName f pps (tyNameOpt,NameOpt) =	(* [name=NameOpt] [type=tyNameOpt] *)
+      let val tyName = case tyNameOpt of NONE => "" | SOME name => (" type=\"" ^ (f name) ^ "\"")
+          val (Name,isOpt) = case NameOpt of NONE => ("", false) | SOME name => (("name=\"" ^ name ^ "\""), name = "pd")
+	  val optStr = if isOpt then " minOccurs=\"0\" maxOccurs=\"unbounded\"" else ""
       in
-          PPL.addStr pps (Name ^ tyName)
+          PPL.addStr pps (Name ^ tyName ^ optStr)
       end
 
-  fun ppXMLHeader str1 str2 pps pair =		(* changes parameters' order, useful with PPL.ppList *) 
+  fun ppXMLHeader str1 str2 f pps  pair =		(* changes parameters' order, useful with PPL.ppList *) 
       ( PPL.addStr pps str1
-      ; ppXMLName pps pair
+      ; ppXMLName f pps pair
       ; PPL.addStr pps str2)
 
-  fun ppXMLList pps eFields =			(* list of eFields w/o <seq> *)
-      ( PPL.ppList { pp=ppXMLHeader "<xs:element " "/>"  
+  fun ppXMLList f pps eFields =			(* list of eFields w/o <seq> *)
+      ( PPL.ppList { pp=ppXMLHeader "<xs:element " "/>"  f
                       , sep="\n"
                       , lDelim=""
                       , rDelim=""
                       } pps eFields)
 
-  fun ppXMLSequence pps eFields =		(* <seq> eFields </seq> *)
+  fun ppXMLSequence f pps eFields =		(* <seq> eFields </seq> *)
       ( PPL.addStr pps "<xs:sequence>"
       ; newline pps
-      ; ppXMLList pps eFields
+      ; ppXMLList f pps eFields
       ; newline pps
       ; PPL.addStr pps "</xs:sequence>"
       ; newline pps)
@@ -677,30 +678,37 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   fun ppXMLRestriction pps base =
       PPL.addStr pps ("\n <restriction base=\"" ^ base ^ "\"/> \n")
 
-  fun ppXMLComplex pps (eNameOpt,eFields) =	(* <complex name=eName> <seq> eFields </seq> </complex> *) 
-        ( ppXMLHeader "<xs:complexType " ">" pps (NONE,eNameOpt)
+  fun isIdentity  arg = case arg of
+      (_,NONE) => false 
+    | (tyOpt, SOME name) =>  name = PNames.identifier 
+
+  fun id s = s
+
+
+  fun ppXMLComplex f pps (eNameOpt,eFields) =	(* <complex name=eName> <seq> eFields </seq> </complex> *) 
+        ( ppXMLHeader "<xs:complexType " ">" id pps (NONE,eNameOpt)
         ; newline pps 
-        ; ppXMLSequence pps eFields
+        ; ppXMLSequence f pps (List.filter (not o isIdentity) eFields)
         ; PPL.addStr pps "</xs:complexType>"
         ; newline pps)
 
   fun ppXMLElemList pps (eNameOpt, eFields) =	(* <elem name=eName><complex><seq> eFields </seq></complex></elem> *)
-      ( ppXMLHeader "<xs:element " ">" pps (NONE,eNameOpt) 
+      ( ppXMLHeader "<xs:element " ">" id pps (NONE,eNameOpt) 
       ; newline pps 
-      ; ppXMLComplex pps (NONE,eFields)
+      ; ppXMLComplex id pps (NONE,eFields)
       ; PPL.addStr pps "</xs:element>"
       ; newline pps)
 
   fun ppXMLChoiceFields pps Fields =		(* <choice> Fields </choice> *)
       ( PPL.addStr pps "<xs:choice>"
       ; newline pps
-      ; ppXMLList pps Fields
+      ; ppXMLList id pps Fields
       ; newline pps
       ; PPL.addStr pps "</xs:choice>"
       ; newline pps)
 
   fun ppXMLChoice pps (NameOpt, Fields) =	(* <complex name=NameOpt><choice> Fields </choice></complex> *) 
-      ( ppXMLHeader "<xs:complexType " ">" pps (NONE,NameOpt)
+      ( ppXMLHeader "<xs:complexType " ">" id pps (NONE,NameOpt)
       ; newline pps 
       ; ppXMLChoiceFields pps Fields
       ; PPL.addStr pps "</xs:complexType>"
@@ -708,7 +716,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
   fun ppTopElemIfPsource pps (ptyInfo:PTys.pTyInfo,repNameOpt) =
 	if (#isSource ptyInfo) 
-	then ( ppXMLHeader "<xs:element " "/>" pps (repNameOpt,SOME "PSource")
+	then ( ppXMLHeader "<xs:element " "/>" id pps (repNameOpt,SOME "PSource")
 	     ; newline pps)
 	else ()
 
@@ -716,11 +724,12 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val pdTid = #pdTid ptyInfo
 	  val (pdTyName, pdFields) = structInfo tidtab pdTid
           val (repName, repFields) = structInfo tidtab tid
+	  fun cnvBTypes s =  if PBaseTys.isBaseTy(PBaseTys.baseInfo, ParseTreeExt.Name s) then ("p:val_"^s) else s
       in
 	((newline pps
-        ; ppXMLComplex pps (pdTyName,pdFields)
+        ; ppXMLComplex id pps (pdTyName,pdFields)
         ; newline pps
-	; ppXMLComplex pps (repName,(repFields @ [(pdTyName,SOME "pd")])) 
+	; ppXMLComplex cnvBTypes pps (repName,repFields) 
     	; newline pps
 	; ppTopElemIfPsource pps (ptyInfo,repName)
 	)						
@@ -735,22 +744,20 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  val tagName = SOME (valOf repName ^ "_tag")  
        in 
       ((newline pps
-      ; ppXMLHeader "<xs:simpleType " ">" pps (NONE,tagName)
-      ; ppXMLRestriction pps "xsd:string"
+      ; ppXMLHeader "<xs:simpleType " ">" id pps (NONE,tagName)
+      ; ppXMLRestriction pps "xs:string"
       ; PPL.addStr pps "</xs:simpleType>\n"
       ; newline pps
       ; ppXMLChoice pps (SOME ((valOf pdTyName) ^ "_u"),uPdFields)
       ; newline pps
-      ; ppXMLComplex pps (pdTyName, Fields) 
+      ; ppXMLComplex id pps (pdTyName, Fields) 
       ; newline pps
-      ; ppXMLHeader "<xs:complexType " ">" pps (NONE,repName) 
+      ; ppXMLHeader "<xs:complexType " ">" id pps (NONE,repName) 
       ; newline pps
       ; PPL.addStr pps "<xs:sequence>"
       ; newline pps
       ; ppXMLChoiceFields pps uFields    		(* original union fields *)
       ; PPL.addStr pps "</xs:sequence>"
-      ; newline pps
-      ; ppXMLHeader "<xs:element " "/>" pps (pdTyName,SOME "pd")
       ; newline pps
       ; PPL.addStr pps "</xs:complexType>"
       ; newline pps
@@ -774,9 +781,9 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           val pdFields = List.take (pd2Fields,7) @ (eltPdField :: []) 
       in
 	((newline pps
-        ; ppXMLComplex pps (pdTyName,pdFields)  
+        ; ppXMLComplex id pps (pdTyName,pdFields)  
         ; newline pps
-	; ppXMLComplex pps (repName,Fields)
+	; ppXMLComplex id pps (repName,Fields)
     	; newline pps
 	; ppTopElemIfPsource pps (ptyInfo,repName)
         )
@@ -788,8 +795,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val (repName, repFields) = enumInfo tidtab tid
       in
 	((newline pps
-        ; ppXMLHeader "<xs:simpleType " ">" pps (NONE,repName)
- 	; ppXMLRestriction pps "xsd:int"
+        ; ppXMLHeader "<xs:simpleType " ">" id pps (NONE,repName)
+ 	; ppXMLRestriction pps "xs:int"
 	; PPL.addStr pps "</xs:simpleType>"
     	; newline pps
         ; ppTopElemIfPsource pps (ptyInfo,repName)	
@@ -802,7 +809,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val (Name, Ty) = typedefInfo tidtab tid
       in
         ((newline pps
-        ; ppXMLHeader "<xs:simpleType " ">\n" pps (NONE, Name)
+        ; ppXMLHeader "<xs:simpleType " ">\n" id pps (NONE, Name)
         ; ppXMLRestriction pps (valOf Ty)
         ; PPL.addStr pps "</xs:simpleType>"
         ; newline pps

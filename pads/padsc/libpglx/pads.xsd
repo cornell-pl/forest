@@ -2,137 +2,278 @@
 <xs:schema targetNamespace="http://www.w3.org/1999/xhtml"
 	   xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-<xs:simpleType name="P_char">
-  <xs:restriction base="xsd:string">
+<xs:simpleType name="Pchar">
+  <xs:restriction base="xs:string">
     <xs:maxLength value="1"/>
   </xs:restriction>
 </xs:simpleType>
 
-<xs:simpleType name="P_string">
-  <xs:restriction base="xsd:string"/>
+<xs:complexType name="p:val_Pchar">
+  <xs:choice>
+   <xs:element name="val" type = "Pchar"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+<xs:simpleType name="Pstring">
+  <xs:restriction base="xs:string"/>
 </xs:simpleType>
 
-<xs:simpleType name="P_int8">
-  <xs:restriction base="xsd:byte"/>
+<xs:complexType name="p:val_Pstring">
+  <xs:choice>
+   <xs:element name="val" type = "Pstring"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pint8">
+  <xs:restriction base="xs:byte"/>
 </xs:simpleType>
 
-<xs:simpleType name="P_int16">
-  <xs:restriction base="xsd:short"/>
+<xs:complexType name="p:val_Pint8">
+  <xs:choice>
+   <xs:element name="val" type = "Pint8"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pint16">
+  <xs:restriction base="xs:short"/>
 </xs:simpleType>
 
-<xs:simpleType name="P_int32">
-  <xs:restriction base="xsd:int"/>
+<xs:complexType name="p:val_Pint16">
+  <xs:choice>
+   <xs:element name="val" type = "Pint16"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pint32">
+  <xs:restriction base="xs:int"/>
 </xs:simpleType>
 
-<xs:simpleType name="P_int64">
-  <xs:restriction base="xsd:long"/>
+<xs:complexType name="p:val_Pint32">
+  <xs:choice>
+   <xs:element name="val" type = "Pint32"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pint64">
+  <xs:restriction base="xs:long"/>
 </xs:simpleType>
 
-<xs:simpleType name="P_uint8">
-  <xs:restriction base="xsd:unsignedByte"/>
+<xs:complexType name="p:val_Pint64">
+  <xs:choice>
+   <xs:element name="val" type = "Pint64"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+<xs:simpleType name="Puint8">
+  <xs:restriction base="xs:unsignedByte"/>
 </xs:simpleType>
 
-<xs:simpleType name="P_uint16">
-  <xs:restriction base="xsd:unsignedShort"/>
+<xs:complexType name="p:val_Puint8">
+  <xs:choice>
+   <xs:element name="val" type = "Puint8"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Puint16">
+  <xs:restriction base="xs:unsignedShort"/>
 </xs:simpleType>
 
-<xs:simpleType name="P_uint32">
-  <xs:restriction base="xsd:unsignedInt"/>
+<xs:complexType name="p:val_Puint16">
+  <xs:choice>
+   <xs:element name="val" type = "Puint16"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Puint32">
+  <xs:restriction base="xs:unsignedInt"/>
 </xs:simpleType>
 
-<xs:simpleType name="P_uint64">
-  <xs:restriction base="xsd:unsignedLong"/>
+<xs:complexType name="p:val_Puint32">
+  <xs:choice>
+   <xs:element name="val" type = "Puint32"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Puint64">
+  <xs:restriction base="xs:unsignedLong"/>
 </xs:simpleType>
 
-<xs:simpleType name="P_fpoint8">
-  <xs:restriction base="xsd:float">
+<xs:complexType name="p:val_Puint64">
+  <xs:choice>
+   <xs:element name="val" type = "Puint64"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+<xs:simpleType name="Pfpoint8">
+  <xs:restriction base="xs:float">
     <xs:minInclusive value="-128"/>
     <xs:maxInclusive value="127"/> 
   </xs:restriction>
 </xs:simpleType>
 
-<xs:simpleType name="P_fpoint16">
-  <xs:restriction base="xsd:float">
+<xs:complexType name="p:val_Pfpoint8">
+  <xs:choice>
+   <xs:element name="val" type = "Pfpoint8"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pfpoint16">
+  <xs:restriction base="xs:float">
     <xs:minInclusive value="-32768"/>
     <xs:maxInclusive value="32767"/> 
   </xs:restriction>
 </xs:simpleType>
 
-<xs:simpleType name="P_fpoint32">
-  <xs:restriction base="xsd:float">
+<xs:complexType name="p:val_Pfpoint16">
+  <xs:choice>
+   <xs:element name="val" type = "Pfpoint16"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pfpoint32">
+  <xs:restriction base="xs:float">
     <xs:minInclusive value="-2147483647"/>
     <xs:maxInclusive value="2147483647"/> 
   </xs:restriction>
 </xs:simpleType>
 
-<xs:simpleType name="P_fpoint64">
-  <xs:restriction base="xsd:float">
+<xs:complexType name="p:val_Pfpoint32">
+  <xs:choice>
+   <xs:element name="val" type = "Pfpoint32"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pfpoint64">
+  <xs:restriction base="xs:float">
     <xs:minInclusive value="-9223372036854775807"/>
     <xs:maxInclusive value="9223372036854775807"/> 
   </xs:restriction>
 </xs:simpleType>
 
-<xs:simpleType name="P_ufpoint8">
-  <xs:restriction base="xsd:float">
+<xs:complexType name="p:val_Pfpoint64">
+  <xs:choice>
+   <xs:element name="val" type = "Pfpoint64"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pufpoint8">
+  <xs:restriction base="xs:float">
     <xs:minInclusive value="0"/>
     <xs:maxInclusive value="255"/> 
   </xs:restriction>
 </xs:simpleType>
 
-<xs:simpleType name="P_ufpoint16">
-  <xs:restriction base="xsd:float">
+<xs:complexType name="p:val_Pufpoint8">
+  <xs:choice>
+   <xs:element name="val" type = "Pufpoint8"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pufpoint16">
+  <xs:restriction base="xs:float">
     <xs:minInclusive value="0"/>
     <xs:maxInclusive value="65535"/> 
   </xs:restriction>
 </xs:simpleType>
 
-<xs:simpleType name="P_ufpoint32">
-  <xs:restriction base="xsd:float">
+<xs:complexType name="p:val_Pufpoint16">
+  <xs:choice>
+   <xs:element name="val" type = "Pufpoint16"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pufpoint32">
+  <xs:restriction base="xs:float">
     <xs:minInclusive value="0"/>
     <xs:maxInclusive value="4294967295"/> 
   </xs:restriction>
 </xs:simpleType>
 
-<xs:simpleType name="P_ufpoint64">
-  <xs:restriction base="xsd:float">
+<xs:complexType name="p:val_Pufpoint32">
+  <xs:choice>
+   <xs:element name="val" type = "Pufpoint32"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pufpoint64">
+  <xs:restriction base="xs:float">
     <xs:minInclusive value="0"/>
     <xs:maxInclusive value="18446744073709551615"/> 
   </xs:restriction>
 </xs:simpleType>
 
+<xs:complexType name="p:val_Pufpoint64">
+  <xs:choice>
+   <xs:element name="val" type = "Pufpoint64"/>
+   <xs:element name="pd" type = "Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
 
-<xs:simpleType name="size_t" type="xsd:integer"/>
 
-<complexType name="P_flags_t">
+
+<xs:simpleType name="size_t" type="xs:integer"/>
+
+<complexType name="Pflags_t">
  <choice>
   <element name="Panic"/>
  </choice>
 </complexType>
 
-<complexType name="P_pos_t"> 
+<complexType name="Ppos_t"> 
  <sequence>
   <element name="byte" type="size_t"/>
   <element name="num" type="size_t"/>
-  <element name="unit" type="xsd:string"/> <!-- string??? -->
+  <element name="unit" type="xs:string"/> <!-- string??? -->
  </sequence>
 </complexType>
 
-<complexType name="P_loc_t"> 
+<complexType name="Ploc_t"> 
  <sequence>
-  <element name="b" type="P_pos_t"/>
-  <element name="e" type="P_pos_t"/>
+  <element name="b" type="Ppos_t"/>
+  <element name="e" type="Ppos_t"/>
  </sequence>
 </complexType>
 
-<xs:simpleType name="P_errCode_t">
-  <xs:restriction base="xsd:string"/>  
+<xs:simpleType name="PerrCode_t">
+  <xs:restriction base="xs:string"/>  
 </xs:simpleType>
 
-<complexType name="P_base_ed">
+<complexType name="Pbase_ed">
  <sequence>
-  <element name="panic" type="xsd:integer"/>
-  <element name="errCode" type="P_errCode_t"/>
-  <element name="loc" type="P_loc_t"/>
+  <element name="panic" type="xs:integer"/>
+  <element name="errCode" type="PerrCode_t"/>
+  <element name="loc" type="Ploc_t"/>
  </sequence>
 </complexType>
 

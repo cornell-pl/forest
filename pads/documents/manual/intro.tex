@@ -268,8 +268,10 @@ type declaration.  The mapping to \C{} for each is straightforward:
 \kw{Pstruct}s map to \C{} structs with appropriately mapped fields, 
 \kw{Punion}s map to tagged unions coded as \C{} structs with a tag field 
 and an embedded 
-union, \kw{Parray}s map to a \C{} struct with a length field and an 
-embedded sequence, \kw{Penums} map to \C{} enumerations, \kw{Poptions} 
+union, \kw{Parray}s map to a \C{} struct with a length field and a
+pointer
+to a dynamically allocated sequence, \kw{Penums} map to \C{}
+enumerations, \kw{Poptions}  
 to tagged unions, and \kw{Ptypedef}s to \C{} typedefs.  Masks include
 auxiliary fields to control behavior at the level of a structured
 type, and parse descriptors include extra fields to record the 
