@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   if (argc >= 2) {
     h = argv[1];
   } else {
-    h = getenv("HOSTSHORT");
+    h = getenv("AST_ARCH");
   }
   if (argc >= 3 && strcmp(argv[2], "rev") == 0) {
     rev = 1;

@@ -35,13 +35,20 @@ library todo
  * buffer data source
 
 MORE BASE TYPES:
- * adate
- * echar, estring, estringFW, estringSE, estringCSE
- * afloat32, afloat64, bfloat32, bfloat64
- * BCD (numeric), rational numbers (fixed point, unsigned fixed point)
- * astringME, estringME (low priority)
+
+  DONE, TEST WRITTEN:
+     * adate
+
+  DONE?, NO TEST?
+     * echar, estring, estringFW, estringSE, estringCSE [done?, no test?
+
+  NOT DONE?
+     * afloat32, afloat64, bfloat32, bfloat64
+     * BCD (numeric), rational numbers (fixed point, unsigned fixed point)
+     * astringME, estringME (low priority)
 
 IO STUFF:
+ * io discipline for IBM-style records, vlvd whatever 
  * PDCI_IO_commit_sfwrite : writes all bytes from start of checkpoint
                             to the current IO cursor that is being committed
                             to the sfio stream provided

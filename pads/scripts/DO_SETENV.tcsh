@@ -1,3 +1,4 @@
+#!/bin/tcsh
 # DO_SETENV.tcsh is for use with csh/tcsh
 # From the same directory as DO_SETENV.tcsh, do:
 #      source DO_SETENV.tcsh
@@ -29,7 +30,7 @@ if ($_status == "OK") then
 endif
 
 if ($_status == "OK") then
-  SETENV AST_ARCH `$PADS_HOME/scripts/package`
+  setenv AST_ARCH `$PADS_HOME/scripts/package`
   if (! $?INSTALLROOT) then
     setenv INSTALLROOT $PADS_HOME/arch/$AST_ARCH
     echo "##############################################################################"

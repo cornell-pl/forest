@@ -70,7 +70,7 @@ regress_libtest1 : libtest1
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
 
 regress_libtest2 : libtest2
-	@(args=""; suf=".$(GSFARCH)"; $(RegressDef))
+	@(args=""; suf=".$(AST_ARCH)"; $(RegressDef))
 
 regress_libtest4 : libtest4
 	@(args=""; suf=""; $(RegressDef))
