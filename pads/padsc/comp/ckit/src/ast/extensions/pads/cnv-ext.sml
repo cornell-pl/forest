@@ -2388,13 +2388,24 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				 let val name = case nameOpt of NONE => "bogus"
 			       | SOME n => n  
 				     val repX = fieldX(rep, name)
+				     val pos = "ppos"
 				     val () = addSub(name, repX) (* should this be here, or after the subst? *)
 				     val comment = ("Computing field: "^ name ^ ".")
 				     val commentS = P.mkCommentS (comment)
-				     val exp = PTSub.substExps (!subList) exp
-				     val initS = genAssignMan(cty,name,repX, exp)
+				     val needsPosition = PTSub.isFreeInExp([PNames.position], exp) 
+				     val exp = PTSub.substExps ((!subList)@ [(PNames.position, PT.Id pos)] ) exp
+				     val () = pushLocalEnv()
+				     val () = ignore(insTempVar(pos, PL.posPCT))
+				     val assignS = genAssignMan(cty,name,repX, exp)
+				     val () = popLocalEnv()
+				     val initSs = if needsPosition
+					            then [PT.Compound[
+							   P.varDeclS'(PL.posPCT, pos),
+							   PL.getPosS(PT.Id pads, P.addrX(PT.Id pos)),
+							   assignS]]
+						    else [assignS]
 				 in
-				     [commentS, initS]
+				     commentS :: initSs
 				 end
 			 in
 			     List.concat(List.map doOne ctNoptEs)

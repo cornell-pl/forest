@@ -386,6 +386,9 @@ struct
   fun getLocEndS(pads:PT.expression, locAddr:PT.expression, offset:int) = 
     PT.Expr(PT.Call(PT.Id "P_io_getLocE", [pads, locAddr,P.intX offset]))
 
+  fun getPosS(pads:PT.expression, posAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "P_io_getPos", [pads, posAddr, P.zero]))
+
   fun isEofX(pads:PT.expression) = 
     PT.Call(PT.Id "P_io_at_eof", [pads])
 

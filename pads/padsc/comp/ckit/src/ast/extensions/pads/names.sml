@@ -11,6 +11,7 @@ struct
   val arrayEnd    = "arrayEnd"    (* tloc.e     : Ppos_t *)
   val elemBegin   = "eltBegin"    (* pd->loc.b  : Ppos_t *)
   val elemEnd     = "eltEnd"      (* pd->loc.e  : Ppos_t *)
+  val position    = "position"
 
   val structLevel = "structLevel"
   val unionLevel  = "unionLevel"
