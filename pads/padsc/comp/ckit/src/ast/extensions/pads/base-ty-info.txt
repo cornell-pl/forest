@@ -1,0 +1,9 @@
+#PADS_name    repName    errorMaskName errorDescriptionName readFunction             scanFunctionOpt
+auint8       PDC_uint8  PDC_base_em   PDC_base_ed          PDC_auint8_read          -
+aint8        PDC_int8   PDC_base_em   PDC_base_ed          PDC_aint8_read           -
+auint32      PDC_uint32 PDC_base_em   PDC_base_ed          PDC_auint32_read         -
+aint32       PDC_int32  PDC_base_em   PDC_base_ed          PDC_aint32_read          -
+PDC_char_lit PDC_uint8  PDC_base_em   PDC_base_ed          PDC_char_lit_read        PDC_char_lit_scan
+astring      PDC_string PDC_base_em   PDC_base_ed          PDC_string_stopChar_read -
+astringFW    PDC_string PDC_base_em   PDC_base_ed          PDC_string_fw_read       -
+astringSRE   PDC_string PDC_base_em   PDC_base_ed          PDC_string_stopRegexp_read -
