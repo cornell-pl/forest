@@ -76,9 +76,10 @@ foreach x ($*)
     case -r:
       set retarg_OK = 0
       breaksw
-    case -help:
+    case -h:
     case --help:
       set help = 1
+      breaksw
     case -x:
       set opts = "$opts $x"
       set optx = 1
