@@ -22,7 +22,7 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
 
-OBJS = rbuf.o default_io_disc.o libpadsc-gen.o libpadsc-acc-gen.o libpadsc-read-gen.o libpadsc-misc-gen.o
+OBJS = rbuf.o default_io_disc.o libpadsc-gen.o libpadsc-acc-gen.o libpadsc-read-gen.o libpadsc-write-gen.o libpadsc-cobol-read-gen.o libpadsc-cobol-write-gen.o libpadsc-misc-gen.o
 
 GEN_FILES = libpadsc-acc-gen.c \
             libpadsc-misc-gen.c \
@@ -30,8 +30,12 @@ GEN_FILES = libpadsc-acc-gen.c \
             libpadsc-misc-macros-gen.h \
             libpadsc-gen.c             \
             libpadsc-read-gen.c \
+            libpadsc-write-gen.c \
+            libpadsc-cobol-read-gen.c \
+            libpadsc-cobol-write-gen.c \
             libpadsc-macros-gen.h      \
-            libpadsc-read-macros-gen.h
+            libpadsc-read-macros-gen.h \
+            libpadsc-write-macros-gen.h
 
 all :
 	@$(MAKE) -f ../GNUmakefile dogen

@@ -49,16 +49,16 @@
       error(0, "** Trying buf_len %lu", (unsigned long)buf_len); \
       set_buf = 0; \
       buf_full = 0; \
-      buf = PDC_IO_write_start_internal(pdc, io, &buf_len, &set_buf); \
+      buf = PDC_IO_write_start(pdc, io, &buf_len, &set_buf); \
       if (!buf) { \
         error(2|ERROR_FATAL, "write_start failed"); \
       } \
       error(0, "** write_start set buf_len to %lu", (unsigned long)buf_len); \
       buf_cursor = buf; \
       length = 0; \
-      tlen = PDC_IO_rec_open_write2buf_internal(pdc, buf_cursor, buf_len, &buf_full); \
+      tlen = PDC_IO_rec_open_write2buf(pdc, buf_cursor, buf_len, &buf_full); \
       if (buf_full) { \
-        PDC_IO_write_abort_internal(pdc, io, buf, set_buf); \
+        PDC_IO_write_abort(pdc, io, buf, set_buf); \
         try_buf_len *= 2; \
         continue; \
       } \
@@ -72,7 +72,7 @@
       buf_len -= tlen; \
       tlen = PDC_a_ ## int_type ## _write2buf(pdc, buf, buf_len, &buf_full, &ed, &ivar); \
       if (buf_full) { \
-        PDC_IO_write_abort_internal(pdc, io, buf, set_buf); \
+        PDC_IO_write_abort(pdc, io, buf, set_buf); \
         try_buf_len *= 2; \
         continue; \
       } \
@@ -84,9 +84,9 @@
       length += tlen; \
       buf_cursor += tlen; \
       buf_len -= tlen; \
-      tlen = PDC_IO_rec_close_write2buf_internal(pdc, buf_cursor, buf_len, &buf_full, buf, length); \
+      tlen = PDC_IO_rec_close_write2buf(pdc, buf_cursor, buf_len, &buf_full, buf, length); \
       if (buf_full) { \
-        PDC_IO_write_abort_internal(pdc, io, buf, set_buf); \
+        PDC_IO_write_abort(pdc, io, buf, set_buf); \
         try_buf_len *= 2; \
         continue; \
       } \
@@ -100,12 +100,12 @@
     } \
     if (length >= 0) { \
       error(0, "** Succeeded with try_buf_len %lu, actual len %lu", (unsigned long)try_buf_len, (unsigned long)length); \
-      if (length != PDC_IO_write_commit_internal(pdc, io, buf, set_buf, length)) { \
+      if (length != PDC_IO_write_commit(pdc, io, buf, set_buf, length)) { \
         error(2|ERROR_FATAL, "write_commit failed"); \
       } \
     } else { \
       error(0, "one of the open/close/cwrite2buf calls failed, calling abort"); \
-      PDC_IO_write_abort_internal(pdc, io, buf, set_buf); \
+      PDC_IO_write_abort(pdc, io, buf, set_buf); \
       error(2|ERROR_FATAL, "aborting because one of the calls failed"); \
     } \
   } else { \

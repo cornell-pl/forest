@@ -153,8 +153,8 @@ structure Main : sig
     fun preprocess(baseTyFile, srcFile, destFile) = 
 	let val srcFile = OS.FileSys.fullPath srcFile
             val compositeFile = tmp ".c"
-            val includePrefix = ("#include <libpadsc-internal.h>\n"^
-				 "#include <libpadsc-ckit.h>\n"^
+            val includePrefix = ("#include <ckit-first.h>\n"^
+				 "#include <libpadsc-internal.h>\n"^
 				 "#include \""^baseTyFile^"\"\n"^
                                  "\n")
             val compositeProg = (includePrefix ^
@@ -164,6 +164,7 @@ structure Main : sig
 		      TextIO.closeOut outStrm)
             val command = (" cc "  (* invoke c compiler *)
                           ^ "-E "  (* preprocessor only *)
+			  ^ "-DFOR_CKIT" (* tell include files to include prototypes for macros *)
                           ^ (!defines)  (* symbols defined by user *)
                           ^ (!undefines)  (* symbols undefined by user *)
                           ^ (!includes)  (* augment include path *)

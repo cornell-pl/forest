@@ -288,6 +288,12 @@ void*     RBuf_get_elt  (RBuf_t* rbuf, size_t index);
 #define RBuf_GET_ELT(rbuf, index, type) \
   (type)* RBuf_get_elt(rbuf, index)
 
+#ifdef FOR_CKIT
+/* Prototype for CKIT */
+void RBuf_CPY_SRC2DEST(RBuf_t*, RBuf_t*, void *, size_t, RMM_t*);
+
+#else
+/* The actual impl */
 #define RBuf_CPY_SRC2DEST(src, dest, dest_buf, bytes, mgr) do { \
   void *src_buf; \
   if (!(dest)) { \
@@ -297,5 +303,6 @@ void*     RBuf_get_elt  (RBuf_t* rbuf, size_t index);
   src_buf = RBuf_get_buf(src); \
   memcpy((dest_buf), src_buf, (bytes)); \
 } while (0)
+#endif /* ! FOR_CKIT */
 
 #endif  /*  __RBUF_H__  */

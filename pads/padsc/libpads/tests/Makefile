@@ -22,7 +22,9 @@ REGRESS_DIR = ../../regress
 
 HELPERS = myrand cvt_ebcdic_to_ascii cvt_ascii_to_ebcdic dttest
 
-LIBTESTS = io_openclose_test \
+LIBTESTS = rwtest1 \
+           recrwtest1 \
+           io_openclose_test \
            ebcdic_test \
            ebc_test \
            bcd_test \
@@ -48,7 +50,9 @@ ACCUMTESTS = accumtest accumtest2 accumtest_s
 
 ALL_PROGS = $(HELPERS) $(LIBTESTS) $(ACCUMTESTS)
 
-regress : regress_libtest1 \
+regress : regress_rwtest1 \
+          regress_recrwtest1 \
+          regress_libtest1 \
           regress_libtest2 \
           regress_libtest4 \
           regress_ebcdic_test \
@@ -70,6 +74,8 @@ cvt_ascii_to_ebcdic :: cvt_ascii_to_ebcdic.c
 
 io_openclose_test  :: io_openclose_test.c   -lpadsc
 
+rwtest1          :: rwtest1.c           -lpadsc
+recrwtest1       :: recrwtest1.c        -lpadsc
 adate_test       :: adate_test.c        -lpadsc
 libtest1         :: libtest1.c          -lpadsc
 biglibtest1      :: biglibtest1.c       -lpadsc
@@ -98,16 +104,19 @@ mk_ex_data_ebc_test    :: mk_ex_data_ebc_test.c           -lpadsc
 mk_ex_data_bcd_test    :: mk_ex_data_bcd_test.c           -lpadsc
 mk_ex_data_sb_test     :: mk_ex_data_sb_test.c            -lpadsc
 
-regress : regress_libtest1 \
-          regress_libtest2 \
-          regress_libtest4 \
-          regress_ebcdic_test \
-          regress_ebcdic_libtest4 \
-          regress_ebc_test \
-          regress_bcd_test \
-          regress_sb_test \
-          regress_ebc_fpoint_test \
-          regress_bcd_fpoint_test \
+regress_rwtest1 : rwtest1
+	(set +x; if [ -f tmp/tmp.rwtest1 ]; then $(RM) tmp/tmp.rwtest1; fi)
+	(set +x; echo "(./rwtest1 nlrec_noseek 2>&1) | $(SCRIPTS)/remove_junk.pl | cat > tmp/tmp.rwtest1")
+	(set +x; ((./rwtest1 nlrec_noseek 2>&1) | $(SCRIPTS)/remove_junk.pl | cat > tmp/tmp.rwtest1))
+	diff tmp/tmp.rwtest1 $(REGRESS_DIR)/rwtest1.regress || echo RWTEST1 DIFFERS
+	(set +x; echo " ")
+
+regress_recrwtest1 : recrwtest1
+	(set +x; if [ -f tmp/tmp.recrwtest1 ]; then $(RM) tmp/tmp.recrwtest1; fi)
+	(set +x; echo "(./recrwtest1 nlrec_noseek 2>&1) | $(SCRIPTS)/remove_junk.pl | cat > tmp/tmp.recrwtest1")
+	(set +x; ((./recrwtest1 nlrec_noseek 2>&1) | $(SCRIPTS)/remove_junk.pl | cat > tmp/tmp.recrwtest1))
+	diff tmp/tmp.recrwtest1 $(REGRESS_DIR)/recrwtest1.regress || echo RECRWTEST1 DIFFERS
+	(set +x; echo " ")
 
 regress_libtest1 : libtest1
 	(set +x; if [ -f tmp/tmp.libtest1 ]; then $(RM) tmp/tmp.libtest1; fi)

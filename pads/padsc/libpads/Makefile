@@ -19,7 +19,7 @@ SCRIPTS = $(PADS_HOME)/scripts
 
 .SOURCE : .. $(PADS_HOME)/include $(SCRIPTS)
 
-padsc 1.0 :LIBRARY: rbuf.c default_io_disc.c libpadsc-gen.c libpadsc-acc-gen.c libpadsc-read-gen.c libpadsc-misc-gen.c
+padsc 1.0 :LIBRARY: rbuf.c default_io_disc.c libpadsc-gen.c libpadsc-acc-gen.c libpadsc-read-gen.c libpadsc-write-gen.c libpadsc-cobol-read-gen.c libpadsc-cobol-write-gen.c libpadsc-misc-gen.c
 
 $(INCLUDEDIR) :INSTALLPROTO: libpadsc.h libpadsc-internal.h rbuf.h
 
@@ -29,8 +29,12 @@ GEN_FILES = libpadsc-acc-gen.c \
             libpadsc-misc-macros-gen.h \
             libpadsc-gen.c             \
             libpadsc-read-gen.c \
+            libpadsc-write-gen.c \
+            libpadsc-cobol-read-gen.c \
+            libpadsc-cobol-write-gen.c \
             libpadsc-macros-gen.h      \
-            libpadsc-read-macros-gen.h
+            libpadsc-read-macros-gen.h \
+            libpadsc-write-macros-gen.h
 
 $(GEN_FILES) :JOINT: mksrc.pl libpadsc.c
 	$(*) $(PWD) $(PADS_HOME)
