@@ -64,7 +64,8 @@ typedef enum PDC_errCode_t_e {
   PDC_INVALID_AUINT                 =  181,
   PDC_INVALID_BINT                  =  182,
   PDC_INVALID_BUINT                 =  183,
-  PDC_CHAR_LIT_NOT_FOUND            =  190
+  PDC_CHAR_LIT_NOT_FOUND            =  190,
+  PDC_INVALID_REGEXP                =  200
 } PDC_errCode_t;
 
 /* ================================================================================ */
