@@ -167,10 +167,10 @@ foreach $line (@lines) {
 	}
 	if ($nst > 1 && $rest{$popid} =~ /none/) {
 	  push(@defs, "$popid");
-	  if (defined($last_alt{$targetid}) && $last_alt{$targetid} eq $popid) {
-	    push(@defs, "$targetid");
-	    &calc_alt_lengths($targetid);
-	  }
+	}
+	if (defined($last_alt{$targetid}) && $last_alt{$targetid} eq $popid) {
+	  push(@defs, "$targetid");
+	  &calc_alt_lengths($targetid);
 	}
 	$nst--;
       }
