@@ -48,7 +48,7 @@ WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_array test_array_string test_record_enum test_struct test_struct2 \
                test_punion2 test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
-               test_pswitch test_pswitch2 test_struct3 manifest_union
+               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
