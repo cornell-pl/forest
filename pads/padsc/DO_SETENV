@@ -15,9 +15,18 @@ set gsfmandir = $gsfarchdir/man
 set knbbindir = $knbarchdir/bin
 set knblibdir = $knbarchdir/lib
 
+switch ($gsfarch)
+  case linux*:
+    setenv LD_LIBRARY_PATH :${knblibdir}:${gsflibdir}:/usr/common/lib:/usr/common/egcs73.3.2.0/lib
+    breaksw
+  case sgi*:
+    setenv LD_LIBRARY_PATH :${knblibdir}:${gsflibdir}:/usr/common/libn32
+    breaksw
+endsw
+
+
 setenv MANPATH ${gsfmandir}:$MANPATH
 setenv PATH ${knbbindir}:${gsfbindir}:${knbscriptdir}:$PATH
-setenv LD_LIBRARY_PATH :${knblibdir}:${gsflibdir}:/usr/common/libn32
 setenv SHLIB_PATH $LD_LIBRARY_PATH
 setenv INSTALLROOT ~/knb/arch/$gsfarch
 setenv CCcGSF "cc -c -I$gsfincdir -I../include"
