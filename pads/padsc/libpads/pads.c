@@ -9,7 +9,7 @@
 #include "libpadsc-internal.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.7 2002-08-27 15:07:54 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.8 2002-08-28 15:33:10 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -1920,6 +1920,16 @@ PDC_open(PDC_disc_t* disc, PDC_t** pdc_out)
     vmclose(vm);
     return PDC_ERROR;
   }
+  if (!(pdc->rmm_z = RMM_open(RMM_zero_disc_ptr))) {
+    WARN(NiL, "out of space [rbuf memory mgr]");
+    vmclose(vm);
+    return PDC_ERROR;
+  }
+  if (!(pdc->rmm_nz = RMM_open(RMM_nozero_disc_ptr))) {
+    WARN(NiL, "out of space [rbuf memory mgr]");
+    vmclose(vm);
+    return PDC_ERROR;
+  } 
   pdc->id          = lib;
   pdc->vm          = vm;
   pdc->disc        = disc;
@@ -1956,11 +1966,32 @@ PDC_close(PDC_t* pdc, PDC_disc_t* disc)
     disc = pdc->disc;
   }
   TRACE(pdc, "PDC_close called");
+  if (pdc->rmm_z) {
+    RMM_close(pdc->rmm_z);
+  }
+  if (pdc->rmm_nz) {
+    RMM_close(pdc->rmm_nz);
+  }
   if (!pdc->vm) {
     return PDC_ERROR;
   }
   vmclose(pdc->vm); /* frees everything alloc'd using vm */
   return PDC_OK;
+}
+
+/* ================================================================================ */
+/* INTERNAL PDC FUNCTIONS */
+
+RMM_t*
+PDC_rmm_zero  (PDC_t* pdc, PDC_disc_t* disc)
+{
+  return pdc->rmm_z;
+}
+
+RMM_t*
+PDC_rmm_nozero(PDC_t* pdc, PDC_disc_t* disc)
+{
+  return pdc->rmm_nz;
 }
 
 /* ================================================================================ */

@@ -21,8 +21,7 @@ typedef void* __builtin_va_list;
 #include <sfstr.h>
 #include <error.h>
 #include "libpadsc.h"
-
-
+#include "rbuf.h"
 
 /* ================================================================================ */
 /* TYPE DEFINITIONS */
@@ -51,10 +50,12 @@ typedef struct PDC_stkElt_s {
 } PDC_stkElt_t;
 
 struct PDC_s {
-  const char*       id;     /* interface id */
-  PDC_disc_t*       disc;   /* user-supplied discipline (can be null) */
-  Vmalloc_t*        vm;     /* vm handle */
-  Sfio_t*           tmp;    /* tmp sfprintf area */
+  const char*       id;      /* interface id */
+  PDC_disc_t*       disc;    /* user-supplied discipline (can be null) */
+  Vmalloc_t*        vm;      /* vm handle */
+  Sfio_t*           tmp;     /* tmp sfprintf area */
+  RMM_t*            rmm_z;   /* rbuf memory mgr -- zeroes allocated memory */ 
+  RMM_t*            rmm_nz;  /* rbuf memory mgr -- does not zero allocated memory */ 
   /* The following are all IO state */
   Sfio_t*           io;      /* io stream */
   int               eof;     /* hit eof? */ 
@@ -72,15 +73,11 @@ struct PDC_s {
   size_t            bchars;  /* total chars copied into buf so far */
 };
 
-/*
- * PDC_rbuf_t: resizable buffer
- */
-typedef struct PDC_rbuf_s {
-  int               elementSize;
-  int               numElements;
-  int               numAllocated;
-  void*             buffer;
-} PDC_rbuf_t;
+/* ================================================================================ */
+/* INTERNAL PDC FUNCTIONS */
+
+RMM_t* PDC_rmm_zero  (PDC_t* pdc, PDC_disc_t* disc);  /* get rbuf memory mgr that zeroes allocated memory */
+RMM_t* PDC_rmm_nozero(PDC_t* pdc, PDC_disc_t* disc);  /* get rbuf memory mgr that does not zero allocated memory */
 
 /* ================================================================================ */
 /* INTERNAL IO FUNCTIONS */
@@ -112,19 +109,6 @@ PDC_error_t  PDC_IO_refill      (PDC_t* pdc, PDC_disc_t* disc);
  */
 
 PDC_error_t PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, PDC_disc_t* disc);
-
-/* ================================================================================ */
-/* RBUF: RESIZABLE ALLLOC'D SPACE */
-
-PDC_error_t   PDC_RBUF_alloc   (PDC_t* pdc, int elSize, int minElements, int maxElements, 
-				PDC_rbuf_t** rbuf_out, void** buf_out, PDC_disc_t* disc);
-
-PDC_error_t   PDC_RBUF_reserve (PDC_rbuf_t* rbuf, int numElements, void** buf_out, PDC_disc_t* disc);
-size_t        PDC_RBUF_getSize (PDC_rbuf_t* rbuf, PDC_disc_t* disc);
-PDC_error_t   PDC_RBUF_getBuf  (PDC_rbuf_t* rbuf, void** buf_out, PDC_disc_t* disc);
-PDC_error_t   PDC_RBUF_free    (PDC_rbuf_t* rbuf, int dealloc_buf, void** buf_out, PDC_disc_t* disc);
-
-PDC_error_t   PDC_freeBuf      (PDC_t* pdc, void* buf, PDC_disc_t* disc);
 
 /* ================================================================================ */ 
 /* INTERNAL ERROR REPORTING FUNCTIONS */

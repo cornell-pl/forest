@@ -1,6 +1,8 @@
 #pragma prototyped
 /*
  * rbuf interface
+ *         RBuf : Resizable Buffer
+ *         RMM  : RBuf Memory Manager
  * 
  * Kathleen Fisher, Robert Gruber
  * AT&T Labs Research
@@ -9,10 +11,8 @@
 #ifndef __RBUF_H__
 #define __RBUF_H__
 
-/*
- * RBuf : Resizable Buffer
- * RMM  : RBuf Memory Manager
- */
+#include <ast_common.h>
+#include <error.h>
 
 /* ================================================================================
 
@@ -28,7 +28,7 @@ about a resizable buffer, buf, which can be allocated, resized, and
 released using operations on the rbuf.  Since buf is resizable, it is
 always allocated (and resized) using a memory manager; it is never on
 the stack.  In contrast, rbuf is a simple fixed-sized data structure
-that could be stack allocated or head allocated.  However, for
+that could be stack allocated or heap allocated.  However, for
 simplicity we currently require that it is always heap allocated.
 
 It is important to remember that the lifetime of an rbuf is not always the
@@ -65,7 +65,7 @@ char* sample2_helper(RMM_t* mgr) {
 
 void sample2(RMM_t* mgr) {
   char* buf;
-  buf = sample3_helper(mgr);
+  buf = sample2_helper(mgr);
   ...use buf...
   RMM_free_buf(mgr, (void*)buf)       -- finally frees buf
 }
@@ -99,7 +99,9 @@ RMM_t* RMM_open(RMM_disc_t* disc)
  RMM_allin1_zero zeroes all memory that is (re)allocated and the other does not.
 
  Two handles to disciplines that use these functions are also provided:
- RMM_zero_disc and RMM_nozero_disc.  RMM_zero_disc is the default.
+ RMM_zero_disc_ptr and RMM_nozero_disc_ptr; they point to disciplines 
+ RMM_zero_disc and RMM_nozero_disc, respectively.
+ RMM_zero_disc is the default discipline if none is specified.
 
 ================================================================================
 int RMM_close(RMM_t* mgr);
@@ -120,7 +122,7 @@ int RMM_close(RMM_t* mgr);
 
 ================================================================================
 int RMM_free_rbuf(RBuf_t* rbuf);
-int RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t* mgr_out);
+int RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t** mgr_out);
 ================================================================================
  Frees the space allocated for rbuf.  Note that the rbuf knows who its manager
  is... this is really a call on a manager, thus the RMM_ prefix.
@@ -149,13 +151,18 @@ int RMM_free_buf(RMM_t* mgr, void* buf);
 
 ================================================================================
 int RBuf_reserve(Rbuf_t* rbuf, void** buf_out, size_t eltSize,
-                 size_t numElts, size_t extraBytes, size_t maxEltHint)
+                 size_t numElts, size_t maxEltHint)
 ================================================================================
   RBuf_reserve ensures that the buffer associated with rbuf has space for
-  at least numElts elements of size eltSize, plus some optional extraBytes
-  of space.  If necessary, it reallocates the space and copies the previous
-  buffer.  If buf_out is non-nil, *buf_out is set to point to the associated
-  buffer.  
+  at least numElts elements of size eltSize.  If necessary, it reallocates
+  the space and copies the previous buffer.  If buf_out is non-nil,
+  *buf_out is set to point to the associated buffer.  
+
+ Return codes:
+    0 => success
+   -1 => no manager
+   -2 => out of space
+   -3 => other error
 
   RBuf_reserve is free to allocate more space than is requested, and is not
   required to free up space if the specified space requirement is less than the
@@ -188,8 +195,7 @@ For example, these 2 calls are equivalent:
   RBuf_RESERVE(rbuf, buf, char, 12);
   RBuf_reserve(rbuf, (void**)&buf, sizeof(char), 12, 0, 0);
 
-Note that if you want to specify either maxEltHint or extraBytes, you
-cannot use this macro (which uses 0 for both values).
+Note that if you want to specify maxEltHint  you cannot use this macro.
 
 ================================================================================
 RBuf state access functions:
@@ -197,35 +203,29 @@ RBuf state access functions:
   size_t RBuf_bufSize   (RBuf_t* rbuf)
   size_t RBuf_numElts   (RBuf_t* rbuf)
   size_t RBuf_eltSize   (RBuf_t* rbuf)
-  size_t RBuf_extraBytes(RBuf_t* rbuf)
   size_t RBuf_maxEltHint(RBuf_t* rbuf)
 
   void* RBuf_get_buf  (RBuf_t* rbuf)
   void* RBuf_get_elt  (RBuf_t* rbuf, size_t index)
-  void* RBuf_get_extra(RBuf_t* rbuf)
 ================================================================================
 Return values:
-   RBuf_bufSize:   the actual number of bytes currently allocated
-   RBuf_numelts:   numElts    as given in latest RBuf_reserve call
-   RBuf_eltSize:   eltSize    as given in latest RBuf_reserve call
-   RBuf_etraBytes: extraBytes as given in latest RBuf_reserve call
-   RBuf_etraBytes: maxEltHint as given in latest RBuf_reserve call
+   RBuf_bufSize:    the actual number of bytes currently allocated
+   RBuf_numelts:    numElts    as given in latest RBuf_reserve call
+   RBuf_eltSize:    eltSize    as given in latest RBuf_reserve call
+   RBuf_maxEltHint: maxEltHint as given in latest RBuf_reserve call
 
    RBuf_get_buf:   pointer to start of buffer
    RBuf_get_elt:   returns pointer to element (index+1) in the buffer
-   RBuf_get_extra: pointer to the 'extra byte' region
-                   which begins just after the numElts element
 
-N.B.: get_elt and get_extra use numElts/eltSize as given in the latest
+N.B.: get_elt uses numElts/eltSize as given in the latest
       RBuf_reserve call to compute the necessary offset into the buffer.
 
 ================================================================================
 RBuf access macros:
   type* RBuf_GET_BUF  (rbuf, type)
   type* RBuf_GET_ELT  (rbuf, index, type)
-  type* RBuf_GET_EXTRA(rbuf, type)
 ================================================================================
-These 3 macros take a type as last argument and return a
+These macros take a type as last argument and return a
 pointer that has been cast to be a pointer to data of the specified type.
 They are otherwise the same as the corresponding routines.
 
@@ -238,17 +238,20 @@ struct RMM_s;
 typedef struct RBuf_s RBuf_t;
 typedef struct RMM_s RMM_t;
 
-typedef void* (RMM_allin1_fn)((void*) vm, (void*) data, size_t size);
+typedef void* (*RMM_allin1_fn)(void* vm, void* data, size_t size);
 
 typedef struct RMM_disc_t {
   RMM_allin1_fn allin1;
 } RMM_disc_t;
 
-extern void* RMM_allin1_zero((void*) vm, (void*) data, size_t size);
-extern void* RMM_allin1_nozero((void*) vm, (void*) data, size_t size);
+extern void* RMM_allin1_zero  (void* vm, void* data, size_t size);
+extern void* RMM_allin1_nozero(void* vm, void* data, size_t size);
 
-extern RMM_disc_t* RMM_zero_disc;
-extern RMM_disc_t* RMM_nozero_disc;
+extern RMM_disc_t RMM_zero_disc;
+extern RMM_disc_t RMM_nozero_disc;
+
+extern RMM_disc_t* RMM_zero_disc_ptr;
+extern RMM_disc_t* RMM_nozero_disc_ptr;
 
 RMM_t*    RMM_open(RMM_disc_t* disc);
 int       RMM_close(RMM_t* mgr);
@@ -256,22 +259,20 @@ int       RMM_close(RMM_t* mgr);
 RBuf_t*   RMM_new_rbuf (RMM_t* mgr);
 
 int       RMM_free_rbuf(RBuf_t* rbuf);
-int       RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t* mgr_out);
+int       RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t** mgr_out);
 
 int       RMM_free_buf(RMM_t* mgr, void* buf);
 
-int       RBuf_reserve(Rbuf_t* rbuf, void** buf_out, size_t eltSize,
-		       size_t numElts, size_t extraBytes, size_t maxEltHint);
+int       RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
+		       size_t numElts, size_t maxEltHint);
 
 size_t    RBuf_bufSize   (RBuf_t* rbuf);
 size_t    RBuf_numElts   (RBuf_t* rbuf);
 size_t    RBuf_eltSize   (RBuf_t* rbuf);
-size_t    RBuf_extraBytes(RBuf_t* rbuf);
 size_t    RBuf_maxEltHint(RBuf_t* rbuf);
 
 void*     RBuf_get_buf  (RBuf_t* rbuf);
 void*     RBuf_get_elt  (RBuf_t* rbuf, size_t index);
-void*     RBuf_get_extra(RBuf_t* rbuf);
 
 /* ================================================================================ */
 /* MACROS */
@@ -284,8 +285,5 @@ void*     RBuf_get_extra(RBuf_t* rbuf);
 
 #define RBuf_GET_ELT(rbuf, index, type) \
   (type)* RBuf_get_elt(rbuf, index)
-
-#define RBuf_GET_EXTRA(rbuf, type) \
-  (type)* RBuf_get_extra(rbuf)
 
 #endif  /*  __RBUF_H__  */

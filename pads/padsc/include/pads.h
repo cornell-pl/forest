@@ -51,6 +51,9 @@ typedef enum PDC_errCode_t_e {
   PDC_ARRAY_MIN_BIGGER_THAN_MAX_ERR =  115,
   PDC_ARRAY_MIN_NEGATIVE            =  116,
   PDC_ARRAY_MAX_NEGATIVE            =  117,
+  PDC_ARRAY_EXTRA_BEFORE_SEP        =  118,
+  PDC_ARRAY_EXTRA_BEFORE_TERM       =  119,
+
   PDC_STRUCT_FIELD_ERR              =  120,
   PDC_UNION_MATCH_FAILURE           =  130,
   PDC_ENUM_MATCH_FAILURE            =  140,
