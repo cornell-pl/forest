@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
    */
   if (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
-      error(ERROR_FATAL, "<note>header read returned error</note>");
+      error(2, "<note>header read returned error</note>");
     } else {
       error(2, "<note>header read returned OK</note>");
     }
