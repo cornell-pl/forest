@@ -142,8 +142,16 @@ usage:
     print "\n\nUsage: release.pl [options]\n\n";
     exit -1;
 
-##############################
+# =========================
+sub cleanupStr
+{
+    my( $txt ) = @_;
+    chomp($txt);
+    $txt =~ s/\s//g;
+    return $txt;
+}
 
+# =========================
 sub docmd {
     my ($cmd) = @_;
     my $res = `$cmd` || "";
@@ -151,4 +159,6 @@ sub docmd {
     print "CMD [$cmd] RES [$res]\n" if ($dbg);
     return $res;
 }
+
+# =========================
 
