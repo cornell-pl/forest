@@ -4,7 +4,12 @@ testing
 to decide
 ---------
   * design and implement support for bit fields
+     - C bitfields have platform dependent semantics
+       (fill from left or from right)
+     - want to be able to define special bit patterns,
+        either individual bits or collections of them.
   * padsl pragmas for specifying record-type, endian, slurp mode
+  * add struct predicates to calculuate properties of entire struct
   * allow union arms with no variable names by specifying a tag name
   * more convenient ways of specying error-mask settings.
   * support for optional fields?
@@ -23,7 +28,7 @@ to document
 
 library todo
 ------------
-
+ * add nerr to padsc base types
 
 MORE BASE TYPES:
  * adate
@@ -49,7 +54,6 @@ ACCUM STUFF:
   * Need function for reporting numbers of errors
 
 DISCIPLINE:
- * slurp white space.
  * let user set hash table size, include a symbolic constant for 
     keep everything.
  * accumulator controls:
@@ -75,4 +79,10 @@ padsc compiler todo
 	  optimization.
         # Static specification of error mask and related customization
 	  will be a bigger win, I think.
+  * rationalize union error structure, nerr semantics
+  * add file qualifier
+  * allow records for arrays, typedefs and enums
+  * fix accumulator generation program to start from file type
+  * add analysis to determine if checkset mask is plausible 
+    given other constraints
 
