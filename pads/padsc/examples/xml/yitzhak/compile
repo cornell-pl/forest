@@ -1,1 +1,1 @@
-padsc enum.p -x -r ../gen -I. -I.. -DGALAXCOMPILE
+padsc enum.p -x -r . -I. -I.. -DGALAXCOMPILE -DOLD_PGLX
