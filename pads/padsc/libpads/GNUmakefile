@@ -54,11 +54,21 @@ debug :
 	@$(MAKE) -f ../GNUmakefile dogen
 	@$(MAKE) -f ../GNUmakefile real_debug
 
-real_all : $(STATIC_PADSLIB_NM_O) $(SHARED_PADSLIB_NM_O) $(STATIC_PADSLIB_NM_D) $(SHARED_PADSLIB_NM_D)
+ifdef FORCE_STATIC
+OPT_TARGS = $(STATIC_PADSLIB_NM_O)
+DBG_TARGS = $(STATIC_PADSLIB_NM_D)
+ALL_TARGS = $(STATIC_PADSLIB_NM_O) $(STATIC_PADSLIB_NM_D)
+else
+OPT_TARGS = $(STATIC_PADSLIB_NM_O) $(SHARED_PADSLIB_NM_O)
+DBG_TARGS = $(STATIC_PADSLIB_NM_D) $(SHARED_PADSLIB_NM_D)
+ALL_TARGS = $(STATIC_PADSLIB_NM_O) $(SHARED_PADSLIB_NM_O) $(STATIC_PADSLIB_NM_D) $(SHARED_PADSLIB_NM_D)
+endif
 
-real_opt : $(STATIC_PADSLIB_NM_O) $(SHARED_PADSLIB_NM_O)
+real_all : $(ALL_TARGS)
 
-real_debug : $(STATIC_PADSLIB_NM_D) $(SHARED_PADSLIB_NM_D)
+real_opt : $(OPT_TARGS)
+
+real_debug : $(DBG_TARGS)
 
 $(STATIC_PADSLIB_NM_O) : $(OBJS_O)
 	$(STATIC_LIBTOOL) $(STATIC_PADSLIB_NM_O) $(STATIC_LIBTOOL_OPTS) $(OBJS_O)
@@ -73,6 +83,16 @@ $(STATIC_PADSLIB_NM_D) : $(OBJS_D)
 $(SHARED_PADSLIB_NM_D) : $(STATIC_PADSLIB_NM_D)
 	$(SHARED_LIBTOOL) -o $(SHARED_PADSLIB_NM_D) $(SHARED_LIBTOOL_WHOLE_ARCHIVE) \
         $(STATIC_PADSLIB_NM_D) $(SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE) $(SHARED_LIBTOOL_OPTS)
+
+ifdef FORCE_STATIC
+
+install : all
+	+@(set -x ; \
+	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_O) $(INSTALLROOT)/lib; \
+	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_D) $(INSTALLROOT)/lib )
+	@(cd $(INCDIR); $(MAKE) install)
+
+else
 
 install : all
 	+@(set -x ; \
@@ -91,6 +111,8 @@ install : all
 	  ln $(SHARED_PADSLIB_NM_D) $(SHARED_PADSLIB_NM_ALT2_D); \
 	  ) )
 	@(cd $(INCDIR); $(MAKE) install)
+
+endif
 
 dogen : $(PCGEN) $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(INCLUDE_DEPS)
 	@echo "Building generated source files"
