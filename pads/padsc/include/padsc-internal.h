@@ -209,6 +209,8 @@ PDC_error_t PDC_int32_acc_report_map_internal(PDC_t* pdc, Sfio_t* outstr, const 
 
 PDC_error_t PDC_string_acc_report_internal (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
 					    int nst, PDC_string_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_char_acc_report_internal   (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_char_acc* a, PDC_disc_t* disc);
 
 /* Accum impl helpers:
  *
@@ -254,12 +256,16 @@ PDC_error_t PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_st
  *        N.B. Resulting string should be printed immediately then not used again, e.g.,
  *        PDC_report_err( ..xxx.. , "Missing separator: %s", PDC_fmtChar(010)); 
  * 
- *    PDC_fmtStr  : same thing for a PDC_string
- *    PDC_fmtStrL : same thing for a char* string / length
+ *    PDC_fmtStr   : same thing for a PDC_string
+ *    PDC_fmtStrL  : same thing for a char* string / length
+ *    PDC_fmtQChar/PDC_fmtQStr/PDC_fmtQStrL : adds quote marks
  */
 char*       PDC_fmtChar(char c);
 char*       PDC_fmtStr(const PDC_string* s);
 char*       PDC_fmtStrL(const char* s, size_t len);
+char*       PDC_fmtQChar(char c);
+char*       PDC_fmtQStr(const PDC_string* s);
+char*       PDC_fmtQStrL(const char* s, size_t len);
 
 /*
  * Wrappers for conversion routines that set errno to zero before

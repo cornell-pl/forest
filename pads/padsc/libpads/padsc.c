@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.40 2002-10-21 16:17:43 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.41 2002-10-21 20:48:04 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -718,9 +718,9 @@ int_type ## _acc_report_map_internal(PDC_t* pdc, Sfio_t* outstr, const char* pre
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   mapped_min = fn(a->min);
   mapped_max = fn(a->max);
-  sfprintf(outstr, "  Characterizing %s:  min %" fmt, what, a->min);
-  sfprintf(outstr, " (%s) max %" fmt, mapped_min, a->max);
-  sfprintf(outstr, " (%s)\n", mapped_max);
+  sfprintf(outstr, "  Characterizing %s:  min %s (%5" fmt, what, mapped_min, a->min);
+  sfprintf(outstr, ")  max %s (%5" fmt, mapped_max, a->max);
+  sfprintf(outstr, ")\n");
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values%s:\n",
 	   rp, sz, cmt);
   sz = rp = 0;
@@ -736,8 +736,8 @@ int_type ## _acc_report_map_internal(PDC_t* pdc, Sfio_t* outstr, const char* pre
     cnt_sum += elt->key.cnt;
     elt_pcnt = ((double)100.0 * elt->key.cnt)/a->good;
     mapped_val = fn(elt->key.val);
-    sfprintf(outstr, "        val: %5" fmt, elt->key.val);
-    sfprintf(outstr, " (%s) ", mapped_val);
+    sfprintf(outstr, "        val: %s (%5" fmt, mapped_val, elt->key.val);
+    sfprintf(outstr, ") ");
     pad = rp-strlen(mapped_val);
     sfprintf(outstr, "%-.*s", pad,
 	     "                                                                                ");
@@ -1158,9 +1158,9 @@ PDC_string_acc_report_internal(PDC_t* pdc, Sfio_t* outstr, const char* prefix, c
     elt = (PDC_string_dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
     elt_pcnt = ((double)100.0 * elt->key.cnt)/a->len_accum.good;
-    sfprintf(outstr, "        val: [");
-    sfprintf(outstr, "%-.*s", elt->key.len, elt->key.str);
-    sfprintf(outstr, "]");
+    sfprintf(outstr, "        val: ");
+    sfprintf(outstr, "%-.*s", elt->key.len+2, PDC_fmtQStrL(elt->key.str, elt->key.len));
+    sfprintf(outstr, "");
     pad = a->len_accum.max - elt->key.len;
     sfprintf(outstr, "%-.*s", pad,
 	     "                                                                                ");
@@ -1206,6 +1206,119 @@ PDC_string_acc_report(PDC_t* pdc, const char* prefix, const char* what, int nst,
   sfstrclose (tmpstr);
   return res;
 }
+
+PDC_error_t
+PDC_char_acc_init(PDC_t* pdc, PDC_char_acc* a, PDC_disc_t* disc)
+{
+  return PDC_uint8_acc_init(pdc, a, disc);
+}
+
+PDC_error_t
+PDC_char_acc_reset(PDC_t* pdc, PDC_char_acc* a, PDC_disc_t* disc)
+{
+  return PDC_uint8_acc_reset(pdc, a, disc);
+}
+
+PDC_error_t
+PDC_char_acc_cleanup(PDC_t* pdc, PDC_char_acc* a, PDC_disc_t* disc)
+{
+  return PDC_uint8_acc_cleanup(pdc, a, disc);
+}
+
+PDC_error_t
+PDC_char_acc_add(PDC_t* pdc, PDC_char_acc* a, PDC_base_ed* ed, PDC_uint8* val, PDC_disc_t* disc)
+{
+  return PDC_uint8_acc_add(pdc, a, ed, val, disc);
+}
+
+PDC_error_t
+PDC_char_acc_report_internal(PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what, int nst,
+			     PDC_char_acc* a, PDC_disc_t* disc)
+{
+  const char*           cmt = ""; 
+  int                   i = 0, sz, rp;
+  PDC_uint64            cnt_sum = 0;
+  double                bad_pcnt;
+  double                cnt_sum_pcnt;
+  double                elt_pcnt;
+  Void_t*               velt;
+  PDC_uint8_dt_elt_t*   elt;
+
+  if (!prefix || *prefix == 0) {
+    prefix = "<top>";
+  }
+  if (!what) {
+    what = "char";
+  }
+  PDC_nst_prefix_what(outstr, &nst, prefix, what);
+  if (a->good == 0) {
+    bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
+  } else {
+    bad_pcnt = a->bad / (double)(a->good + a->bad);
+  }
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+	   a->good, a->bad, bad_pcnt);
+  if (a->good == 0) {
+    return PDC_OK;
+  }
+  PDC_uint8_acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < PDC_ACC_REPORT_K) ? sz : PDC_ACC_REPORT_K;
+  if (sz == PDC_ACC_MAX2TRACK) {
+    cmt = " (* hit tracking limit *) ";
+  }
+  dtdisc(a->dict,   &PDC_uint8_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+  sfprintf(outstr, "  Characterizing %s:  min %s", what, PDC_fmtQChar(a->min));
+  sfprintf(outstr, " max %s\n", PDC_fmtQChar(a->max));
+
+  sfprintf(outstr, "    => distribution of top %d values out of %d distinct values%s:\n",
+	   rp, sz, cmt);
+  for (velt = dtfirst(a->dict); velt && i < PDC_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+    elt = (PDC_uint8_dt_elt_t*)velt;
+    cnt_sum += elt->key.cnt;
+    elt_pcnt = ((double)100.0 * elt->key.cnt)/a->good;
+    sfprintf(outstr, "        val: %6s", PDC_fmtQChar(elt->key.val));
+    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+
+  }
+  cnt_sum_pcnt = ((double)100.0 * cnt_sum)/a->good;
+  sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
+  sfprintf(outstr,   "        SUMMING     count: %10llu  pcnt-of-good-vals: %8.3lf\n",
+	   cnt_sum, cnt_sum_pcnt);
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &PDC_uint8_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_char_acc_report(PDC_t* pdc, const char* prefix, const char* what, int nst,
+		    PDC_char_acc* a, PDC_disc_t* disc)
+{
+  Sfio_t *tmpstr;
+  PDC_error_t res;
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_char_acc_report called");
+  if (!a) {
+    return PDC_ERROR;
+  }
+  if (!disc->errorf) {
+    return PDC_OK;
+  }
+  if (!(tmpstr = sfstropen ())) { 
+    return PDC_ERROR;
+  }
+  res = PDC_char_acc_report_internal(pdc, tmpstr, prefix, what, nst, a, disc);
+  if (res == PDC_OK) {
+    disc->errorf(pdc, disc, 0, "%s", sfstruse(tmpstr));
+  }
+  sfstrclose (tmpstr);
+  return res;
+}
+
+/* ================================================================================ */ 
+/* ACCUM IMPL HELPERS */
 
 static const char* PDC_hdr_lines[] = {
   "*****************************************************************************************************\n",
@@ -1471,7 +1584,7 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
   unsigned char ct;
 
   PDC_DISC_INIT_CHECKS;
-  TRACE1(pdc, "PDC_char_lit_scan called for char = %s", PDC_fmtChar(c));
+  TRACE1(pdc, "PDC_char_lit_scan called for char = %s", PDC_fmtQChar(c));
   if (offset_out) {
     (*offset_out) = 0;
   }
@@ -1509,7 +1622,7 @@ PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopSt
 
   PDC_DISC_INIT_CHECKS;
   TRACE2(pdc, "PDC_str_lit_scan called for findStr = %s stopStre = %s",
-	 PDC_fmtStr(findStr), PDC_fmtStr(stopStr));
+	 PDC_fmtQStr(findStr), PDC_fmtQStr(stopStr));
   if (offset_out) {
     (*offset_out) = 0;
   }
@@ -1572,7 +1685,7 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_ed     edt;
 
   PDC_DISC_INIT_CHECKS;
-  TRACE1(pdc, "PDC_char_lit_read called for char = %s", PDC_fmtChar(c));
+  TRACE1(pdc, "PDC_char_lit_read called for char = %s", PDC_fmtQChar(c));
   if (!em) {
     em = &emt;
   }
@@ -1599,7 +1712,7 @@ PDC_str_lit_read(PDC_t* pdc, PDC_base_em* em,
   PDC_base_ed     edt;
 
   PDC_DISC_INIT_CHECKS;
-  TRACE1(pdc, "PDC_str_lit_read called for str = %s", PDC_fmtStr(s));
+  TRACE1(pdc, "PDC_str_lit_read called for str = %s", PDC_fmtQStr(s));
   if (!em) {
     em = &emt;
   }
@@ -1859,7 +1972,7 @@ PDC_countXtoY(PDC_t* pdc, PDC_base_em* em, PDC_uint8 x, PDC_uint8 y,
   PDC_base_ed     edt;
 
   PDC_DISC_INIT_CHECKS;
-  TRACE2(pdc, "PDC_countXtoY called for x = %s y = %s", PDC_fmtChar(x), PDC_fmtChar(y));
+  TRACE2(pdc, "PDC_countXtoY called for x = %s y = %s", PDC_fmtQChar(x), PDC_fmtQChar(y));
   if (!em) {
     em = &emt;
   }
@@ -2560,13 +2673,28 @@ PDC_fmtChar(char c) {
 }
 
 char*
+PDC_fmtQChar(char c) {
+  return fmtquote(&c, "\'", "\'", 1, 1);
+}
+
+char*
 PDC_fmtStr(const PDC_string* s) {
   return fmtquote(s->str, NiL, NiL, s->len, 0);
 }
 
 char*
+PDC_fmtQStr(const PDC_string* s) {
+  return fmtquote(s->str, "\"", "\"", s->len, 1);
+}
+
+char*
 PDC_fmtStrL(const char* s, size_t len) {
   return fmtquote(s, NiL, NiL, len, 0);
+}
+
+char*
+PDC_fmtQStrL(const char* s, size_t len) {
+  return fmtquote(s, "\"", "\"", len, 1);
 }
 
 /* ================================================================================ */

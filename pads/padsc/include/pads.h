@@ -674,6 +674,18 @@ PDC_error_t PDC_string_acc_add     (PDC_t* pdc, PDC_string_acc* a, PDC_base_ed* 
 PDC_error_t PDC_string_acc_report  (PDC_t* pdc, const char* prefix, const char* what, int nst,
 				    PDC_string_acc* a, PDC_disc_t* disc);
 
+/*
+ * char accum is just like uint8 accum except a different report is generated
+ */
+typedef PDC_uint8_acc PDC_char_acc;
+
+PDC_error_t PDC_char_acc_init      (PDC_t* pdc, PDC_char_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_char_acc_reset     (PDC_t* pdc, PDC_char_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_char_acc_cleanup   (PDC_t* pdc, PDC_char_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_char_acc_add       (PDC_t* pdc, PDC_char_acc* a, PDC_base_ed* ed, PDC_uint8* val, PDC_disc_t* disc);
+PDC_error_t PDC_char_acc_report    (PDC_t* pdc, const char* prefix, const char* what, int nst,
+				    PDC_char_acc* a, PDC_disc_t* disc);
+
 /* ================================================================================ */
 /* MISC ROUTINES */
 
