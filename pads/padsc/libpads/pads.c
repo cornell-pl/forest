@@ -58,7 +58,7 @@ do {
 /* Assumes pd->loc has already been set */
 #define PDCI_READFN_RET_ERRCODE_WARN(whatfn, msg, errcode)
   do {
-    if (pads->speclev == 0 && P_Test_NotIgnore(*(m))) {
+    if (P_Test_NotIgnore(*(m))) {
       pd->errCode = (errcode);
       pd->nerr = 1;
       if (!pads->inestlev) {
@@ -72,10 +72,8 @@ do {
 /* Assumes pd->loc and pd->errCode have already been set */
 #define PDCI_READFN_RET_EXIST_ERRCODE_WARN(whatfn, msg)
   do {
-    if (pads->speclev == 0 && P_Test_NotIgnore(*(m))) {
-      if (!pads->inestlev) {
+    if (pads->speclev == 0 && P_Test_NotIgnore(*(m)) && (!pads->inestlev) ) {
 	PDCI_report_err(pads, P_WARN_FLAGS, &(pd->loc), pd->errCode, (whatfn), (msg));
-      }
     }
     return P_ERR;
   } while (0)
@@ -84,7 +82,7 @@ do {
 /* Assumes pd->loc has already been set, warning already issued */
 #define PDCI_READFN_RET_ERRCODE_NOWARN(errcode)
   do {
-    if (pads->speclev == 0 && P_Test_NotIgnore(*(m))) {
+    if (P_Test_NotIgnore(*(m))) {
       pd->errCode = (errcode);
       pd->nerr = 1;
     }
@@ -95,7 +93,7 @@ do {
 /* Does not use pd->loc */
 #define PDCI_READFN_RET_ERRCODE_FATAL(whatfn, msg, errcode)
   do {
-    if (pads->speclev == 0 && P_Test_NotIgnore(*(m))) {
+    if ( P_Test_NotIgnore(*(m))) {
       pd->errCode = (errcode);
       pd->nerr = 1;
       PDCI_report_err(pads, P_FATAL_FLAGS, 0, (errcode), (whatfn), (msg));
@@ -5181,7 +5179,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.141 2004-02-10 21:30:10 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.142 2004-02-16 21:48:22 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 

@@ -11,6 +11,7 @@ Parray oseq_t {
 
 Precord Pstruct entry{
   eseq_t evens;
+  'a';
   oseq_t odds;
   'b';
 };

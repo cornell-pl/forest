@@ -2316,13 +2316,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
                  (* Some useful functions *)
-                 fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic) = 
-                     PT.Compound([P.mkCommentS "from recordArrayErrorS",
-  				  PT.IfThenElse(P.notX(fieldX(pd, nerr)),
+                 fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic, endSpec) = 
+                     PT.Compound([PT.IfThenElse(P.notX(fieldX(pd, nerr)),
 						PT.Compound (reportErrorSs(getLocSs, locX, true, errCodeC,
 									   shouldPrint, whatFun, msg, args)),
-						incPDNerrCompS),
-				  PL.endSpec pads]
+						incPDNerrCompS)]
+				 @ (if endSpec then [PL.endSpec pads] else [])
 				 @ (if setPanic then [PL.setPanicS(PT.Id pd)] else []))
   
                  fun amCheckingBasicE(SOME testE) = 
@@ -2390,7 +2389,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							       readName,
 							       "Minimum value for the size of array "^
 							       name ^  "(%d) " ^
-							       "is negative", [minX], false))]
+							       "is negative", [minX], false, true))]
 
 			 fun genPosMaxCheckSs (maxConstOpt, maxX) = 
 			     case maxConstOpt of NONE => []
@@ -2402,7 +2401,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							       PL.P_ARRAY_MAX_NEGATIVE, true, readName,
 							       "Maximum value for the size of array "^
 							       name ^  "(%d) " ^
-							       "is negative", [maxX], true))]
+							       "is negative", [maxX], true, true))]
 
 		     in
                      (case sizeSpec 
@@ -2432,7 +2431,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 									      name ^ "(%d) " ^
 									      "is greater than "^
 									      "its maximum size (%d)",
-									 [minX, maxX], false)
+									 [minX, maxX], false,true)
 						      )])
 
 				    val dynBoundsCheckSs =  minMaxCheckSs 
@@ -3107,9 +3106,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				       PT.Break])]
                       | (NONE, false) => 
                         [P.mkCommentS("Array not finished; reading separator"),
-			 PT.Compound[
-			  P.varDeclS'(PL.sizePCT, "offset"),
-			  locBS,
+			 PT.Compound([
+			  P.varDeclS'(PL.sizePCT, "offset")]
+			  @ (if (Option.isSome endedXOpt) then PL.chkPtS'(PT.Id pads, readName) else [])
+			  @ [locBS,
 		          PT.IfThenElse(
 			    P.eqX(PL.P_OK,
 				  PL.scan1FunX(scan1Sep, PT.Id pads, sepX,
@@ -3118,17 +3118,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     PT.IfThen(amCheckingBasicE NONE, 
 			      PT.Compound[(* if am checking *)
 			        PT.IfThen(PT.Id "offset",
-				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], false))])],
-                           PT.Compound[ (* else error in reading separator *)
-			      P.mkCommentS("Error reading separator"),
-			      recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, "Missing separator", [], true),
-			      PT.Break])]]
+				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, 
+						      readName,"", [], false, not(Option.isSome endedXOpt)))])],
+                           PT.Compound([ (* else error in reading separator *)
+			      P.mkCommentS("Error reading separator")]
+                             @(PL.commitS(PT.Id pads, readName))
+			     @[ recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, "Missing separator", [], true, true),
+			        PT.Break]))])]
 		      | (SOME(termX, scan2TermX, _, _, _, _, _), _) => 
                        [P.mkCommentS("Array not finished; read separator with recovery to terminator"),
-                         PT.Compound[
+                         PT.Compound([
 			 P.varDeclS'(P.int, "f_found"),
-			 P.varDeclS'(PL.sizePCT, "offset"),
-			 locBS,
+			 P.varDeclS'(PL.sizePCT, "offset")]
+		      @ (if (Option.isSome endedXOpt) then PL.chkPtS'(PT.Id pads, readName) else [])
+		      @ [locBS,
 		         PT.IfThenElse(
 			    P.eqX(PL.P_OK,
 				  PL.scan2FunX(valOf scan2Opt, PT.Id pads, 
@@ -3137,21 +3140,28 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					       P.addrX (PT.Id "f_found"),
 					       P.addrX (PT.Id "offset"))),
 			    PT.Compound[
+			      PT.IfThen(P.notX(PT.Id "f_found"),
+					PT.Compound([P.assignS(PT.Id foundTerm, P.trueX)]
+						    @ (if Option.isSome endedXOpt  
+							   then (PL.chkPtS(PT.Id pads, readName)) else []))),
+								  
                               PT.IfThen(amCheckingBasicE NONE, 
 	  		       PT.Compound[ (* if am checking *)
 			         PT.IfThenElse(P.andX(PT.Id "f_found", PT.Id "offset"),
-				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], false),
+				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], 
+						      false,not (Option.isSome endedXOpt)),
                                     PT.Compound [PT.IfThen(P.notX(PT.Id "f_found"),
 					                   PT.Compound[recordArrayErrorS([locES1], locX,
 											 PL.P_ARRAY_EXTRA_BEFORE_TERM, true,
-											 readName,"", [], false),
-								       P.assignS(PT.Id foundTerm, P.trueX),
+											 readName,"", [], false,true),
 								       PT.Break])] )])],
-			    PT.Compound[ (* else error in reading separator *)
-			      P.mkCommentS("Error reading separator"),
-			      recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, 
-						true, readName, "Missing separator", [], true),
-			      PT.Break])]]
+			    PT.Compound( (* else error in reading separator *)
+			      [P.mkCommentS("Error reading separator")]
+			      @ (if Option.isSome endedXOpt  
+				     then (PL.chkPtS(PT.Id pads, readName)) else [])
+			      @ [(recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, 
+						    true, readName, "Missing separator", [], true,true)),
+			         PT.Break]))])]
 
                  (* -- read next element *)
 		 val (chkLenSs, bufSugX) = case maxOpt of NONE => ([], P.zero)
@@ -3290,19 +3300,30 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 ended
 		     end
 
+                 val firstIterX = P.gtX(fieldX(rep, length), P.intX 1)
+
                  fun genEndedCheck exp = 
+		     let val (sepCommitSs, sepRestoreSs) = if Option.isSome sepXOpt then
+			 ([PT.IfThen(firstIterX, PT.Compound (PL.commitS(PT.Id pads, readName)))],
+			  [PT.IfThen(firstIterX, PT.Compound (PL.restoreS(PT.Id pads, readName)))])
+			 else ([],[])
+		     in
                       [P.mkCommentS("Checking Pended predicate"),
                        PT.Compound[
 			  P.varDeclS(P.int, "Ppredresult", exp),
 		          PT.IfThenElse(P.notX (PT.Id "Ppredresult"),
-			     PT.Compound(PL.commitS(PT.Id pads, readName)),
+			     PT.Compound(PL.commitS(PT.Id pads, readName)
+					 @ sepCommitSs),
 			     PT.Compound([P.assignS(PT.Id endedSet, P.trueX), 
 					  PT.IfThenElse(PT.Id consumeFlag,
-					     PT.Compound(PL.commitS(PT.Id pads, readName)),
+					     PT.Compound(PL.commitS(PT.Id pads, readName)
+							 @ sepCommitSs),
 			                     PT.Compound(PL.restoreS(PT.Id pads, readName)
+							 @ sepRestoreSs
 							 @ [P.postDecS(fieldX(rep, length)),
 							    P.postDecS(fieldX(pd, numRead))]))])),
 		          PL.decNestLevS(PT.Id pads)]]
+		     end
 
                  fun genEndedSkipCheck (NONE, NONE) = []
                    | genEndedSkipCheck (SOME (_,exp,_), NONE) = genEndedCheck exp
@@ -3380,10 +3401,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      PT.IfThen(amCheckingBasicE NONE, 
 			        PT.Compound[
 				 recordArrayErrorS([locES1], locX, PL.P_ARRAY_EXTRA_BEFORE_TERM,
-						   true, readName,"", [], false),
+						   true, readName,"", [], false,true),
 				 P.assignS(PT.Id foundTerm, P.trueX)])],
 			     recordArrayErrorS([locES1], locX, PL.P_ARRAY_TERM_ERR, true, readName,
-					       "Missing terminator", [], true))
+					       "Missing terminator", [], true,true))
 			 ])]
 
 		 val readEORSs = if isRecord then genReadEOR (readName, reportStructErrorSs) () else []
@@ -3405,7 +3426,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		       PT.IfThen(testX,
 			  recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_SIZE_ERR, true, readName,
 			    ("Read %d element(s) for array "^name^"; required %d"),
-			    [fieldX(rep, length), minX], false))]
+			    [fieldX(rep, length), minX], false,true))]
 		     end
 
                  (* -- -- Check that the user's forall array constraint is satisfied. *)
@@ -3434,7 +3455,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  @ genLoop forall
 			  @ [PT.IfThen(PT.Id "violated",
 				       recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
-							 ("Pforall constraint for array "^name^" violated"), [], false))])]
+							 ("Pforall constraint for array "^name^" violated"), [], false,true))])]
 
 
                  (* -- -- Check that the user's general array constraint is satisfied. *)
@@ -3443,7 +3464,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			   [P.mkCommentS "Checking PWhere constraint"]
 		           @ [PT.IfThen(P.notX exp,
 			           recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
-						     ("Pwhere constraint for array "^name^" violated"), [], false))])]
+						     ("Pwhere constraint for array "^name^" violated"), [], false,true))])]
 
                  (* -- -- Check that the user's parse check predicate is satisfied *)
                  fun genParseCheckConstraintSs exp = 
@@ -3452,7 +3473,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			   @ (if needArrayEndExp then [tlocES0] else [])
 		           @ [PT.IfThen(P.notX exp,
 			           recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
-						     ("Pparsecheck constraint for array "^name^" violated"), [], false))])]
+						     ("Pparsecheck constraint for array "^name^" violated"), [], false,true))])]
                  fun genWhereClause c = 
 		     case c of
 		       PX.Forall r      => genForallConstraintSs     r
@@ -4696,7 +4717,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val lastTag = ref "bogus"
 		     fun chkTag(name) = 			 
 			 let val name = if enumConstDefined name then 
-			                  let t0 = unionName^"_"^name 
+			                  let val t0 = unionName^"_"^name 
 					  in 
 					      if enumConstDefined t0 then
 						  let fun getname base next = 

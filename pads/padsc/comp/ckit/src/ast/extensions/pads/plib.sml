@@ -408,6 +408,11 @@ struct
 	     whatFun,
 	     P_CHKPOINT_FAILURE)
 
+  fun chkPtS'(pads:PT.expression, whatFun) =
+    chkError(pads, (PT.Call(PT.Id "P_io_checkpoint", [pads, P.falseX])), (* always speculative *)
+	     whatFun,
+	     P_CHKPOINT_FAILURE)
+
   fun getSpecLevelX(pads:PT.expression) =
      PT.Call(PT.Id "P_spec_level", [pads])
 
