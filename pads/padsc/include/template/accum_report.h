@@ -2,6 +2,10 @@
 #define PDCI_MacroArg2String(s) #s
 #endif
 
+#ifndef READ_MASK
+#define READ_MASK P_CheckAndSet
+#endif
+
 #ifndef EXTRA_READ_ARGS
 #  define EXTRA_READ_ARGS
 #endif
@@ -82,7 +86,7 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** accumulator initialization failed ***");
   }
   /* init mask -- must do this! */
-  PADS_TY(_m_init)(pads, &m, P_CheckAndSet);
+  PADS_TY(_m_init)(pads, &m, READ_MASK);
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
     error(ERROR_FATAL, "*** header representation initialization failed ***");
