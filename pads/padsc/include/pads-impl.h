@@ -109,7 +109,7 @@ do{ \
 #  define PDCI_REST_PD_ID(idtmpIN, pdIN)          (pdIN)->_id_ = idtmpIN
 #  define PDCI_IO_RESTORE_KEEP_ID_GEN(fn_nmIN, padsIN) \
      do{ \
-       PCDI_id_t id_tmp = (padsIN)->stack[(padsIN)->top].id_gen; \
+       PDCI_id_t id_tmp = (padsIN)->stack[(padsIN)->top].id_gen; \
        if (P_ERR == P_io_restore(padsIN)) { \
          PDCI_report_err(padsIN, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nmIN, 0); \
        } \
