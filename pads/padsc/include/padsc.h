@@ -3325,6 +3325,47 @@ PDC_error_t PDC_swap_bytes(PDC_byte *bytes, size_t num_bytes);
 PDC_error_t PDC_dummy_read(PDC_t *pdc, const PDC_base_m *m, PDC_int32 dummy_val, PDC_base_pd *pd, PDC_int32 *res_out);
 
 /* ================================================================================
+ * USEFUL 'COMBO' MACROS
+ *
+ * Suppose your T.p file declares a type T, which gives you a generated T.h file
+ * with types T, T_m, and T_pd.  You can write a main.c that includes:
+ *
+ *  #include "padsc.h"
+ *  #include "T.h"
+ *  PDC_t *pdc;
+ *  T      t;
+ *  T_m    t_m;
+ *  T_pd   t_pd;
+ *
+ *  (first open pdc handle)
+ *  PDC_INIT_ALL(pdc, T, t, t_m, t_pd, PDC_CheckAndSet);
+ *
+ * The PDC_INIT_ALL macro call is equivalent to writing:
+ *
+ *    T_init(pdc, &t);
+ *    T_m_init(pdc, &t_m, PDC_CheckAndSet); 
+ *    T_pd_init(pdc, &t_pd);
+ *
+ * Similarly, the macro call PDC_CLEANUP_ALL(pdc, T, t, t_pd) is equivalent to:
+ *
+ *    T_cleanup(pdc, &t);
+ *    T_pd_cleanup(pdc, &t_pd);
+ */
+
+#define PDC_INIT_ALL(pdc, T, t, t_m, t_pd, mask) \
+do { \
+  T ## _init (pdc, &t); \
+  T ## _m_init (pdc, &t_m, mask); \
+  T ## _pd_init (pdc, &t_pd); \
+} while (0)
+
+#define PDC_CLEANUP_ALL(pdc, T, t, t_pd) \
+do { \
+  T ## _cleanup (pdc, &t); \
+  T ## _pd_cleanup (pdc, &t_pd); \
+} while (0)
+
+/* ================================================================================
  * INCLUDE MACRO IMPLS OF SOME OF THE FUNCTIONS DECLARED ABOVE
  */
 #include "padsc-impl.h"

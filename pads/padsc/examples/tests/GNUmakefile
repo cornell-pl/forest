@@ -69,6 +69,7 @@ regress_o:  sanity_check \
 	  regress_test_pswitch2_o \
 	  regress_test_depends_o \
 	  regress_test_struct3_o \
+          regress_test_me_o \
 	  regress_test_write_struct_o \
 	  regress_test_write_struct_strings_o
 	@echo " "; echo "DONE"; echo " "
@@ -87,6 +88,7 @@ regress_d:  sanity_check \
 	  regress_test_pswitch2_d \
 	  regress_test_depends_d \
 	  regress_test_struct3_d \
+          regress_test_me_d \
 	  regress_test_write_struct_d \
 	  regress_test_write_struct_strings_d
 	@echo " "; echo "DONE"; echo " "
@@ -105,6 +107,11 @@ regress_o_announce:
 regress_d_announce:
 	@echo " "; echo "REGRESS USING DEBUG CODE"; echo " " \
 
+
+regress_test_me_o: test_me
+	@(args=""; suf=""; $(RegressDef))
+regress_test_me_d: test_me-g
+	@(args=""; suf=""; $(RegressDef))
 
 regress_test_format1_o: test_format1
 	@(args=""; suf=""; $(RegressDef))
