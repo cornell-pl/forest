@@ -588,13 +588,14 @@ endif
 ifndef TRULES_MK
 ifdef GEN_DIR
 
-ifdef GEN_WRITE
+PADSC_OPTIONS=-r $(GEN_DIR) -I. -I..
 
+ifdef GEN_WRITE
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 ifdef DEBUG_RULES_MK
 	@echo "Using rule P"
 endif
-	$(PADSC) $< $(PADSC_EXTRA) -r $(GEN_DIR) -I. -I..
+	$(PADSC) $< $(PADSC_EXTRA) $(PADSC_OPTIONS) 
 
 else # !GEN_WRITE
 
@@ -602,7 +603,7 @@ $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 ifdef DEBUG_RULES_MK
 	@echo "Using rule P-nowrite"
 endif
-	$(PADSC) $< $(PADSC_EXTRA) -r $(GEN_DIR) -wnone -I. -I..
+	$(PADSC) $< $(PADSC_EXTRA) -wnone $(PADSC_OPTIONS) 
 
 endif # GEN_WRITE
 endif # GEN_DIR

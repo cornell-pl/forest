@@ -105,7 +105,7 @@ PGLX_report_err(P_t *pads, int level, Ploc_t *loc,
 		PerrCode_t errCode, const char *whatfn, const char *format, ...)
 {
   if (errCode == P_FAILWITH_ERR){
-    failwith(format);
+    failwith((char *)format);
     return P_OK;
   }else{
     va_list ap;

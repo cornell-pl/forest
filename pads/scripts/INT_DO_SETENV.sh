@@ -129,6 +129,10 @@ if [ $_pads_status = "OK" ]; then
     DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`; export DYLD_LIBRARY_PATH
     LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`; export LD_LIBRARY_PATH
   fi
+  if [ -e $PCRE_LIB_DIR ]; then
+    DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`; export DYLD_LIBRARY_PATH
+    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`; export LD_LIBRARY_PATH
+  fi
 
   if [ "$_pads_use_nmake" != 0 ]; then
     ast_bin_dir=$AST_HOME/bin
@@ -148,6 +152,7 @@ if [ $_pads_status = "OK" ]; then
     echo "OCAML_LIB_DIR=$OCAML_LIB_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
     echo "PADSGLX_HOME=$PADSGLX_HOME"
+    echo "PCRE_LIB_DIR=$PCRE_LIB_DIR"
     echo " "
   fi
 fi

@@ -733,11 +733,12 @@ P_OK;
     *arrayInfo  = (PDCI_smart_array_info_t *)sn->elt_state;
 
   *(elt_pdIN) = calloc(1,sizeof(eltPdTy));
+
   if (0 == *(elt_pdIN))
     {
       PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
-  if (P_ERR == eltTy ## _init(pads, (elt_repIN)) {
+  if (P_ERR == eltTy ## _init((padsIN), *(elt_repIN))) {
     PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_SYS_ERR,#ty "_smartNode_allocElement",0);
   }
 
@@ -746,7 +747,7 @@ P_OK;
     {
       PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
-  if (P_ERR == eltPdTy ## _pd_init(pads, (elt_pdIN))) {
+  if (P_ERR == eltPdTy ## _init((padsIN), *(elt_pdIN))) {
     PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_SYS_ERR,#ty "_smartNode_allocElement",0);
   }
 

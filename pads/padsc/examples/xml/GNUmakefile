@@ -77,6 +77,9 @@ test_query_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_
 test_query_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
+test_query_%-d: $(GEN_DIR)/%_expanded.c $(CODE_DIR)/test_query_%.c $(CODE_DIR)/test_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)  
+	@$(CCExec_DYNAMIC_D)
+
 test_rr_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_rr_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)  
 	@$(CCExec_DYNAMIC_D)
 

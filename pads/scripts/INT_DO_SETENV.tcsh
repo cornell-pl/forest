@@ -237,6 +237,10 @@ if ($_pads_status == "OK") then
     setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
   endif
+  if (-d $PCRE_LIB_DIR) then
+    setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`
+    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`
+  endif
 
   if ($_pads_use_nmake == 1) then
     set ast_bin_dir  = $AST_HOME/bin
@@ -274,6 +278,7 @@ if ($_pads_status == "OK") then
     echo "OCAML_LIB_DIR=$OCAML_LIB_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
     echo "PADSGLX_HOME=$PADSGLX_HOME"
+    echo "PCRE_LIB_DIR=$PCRE_LIB_DIR"
     echo " "
   endif
 
