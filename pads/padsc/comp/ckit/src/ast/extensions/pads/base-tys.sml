@@ -60,7 +60,7 @@ struct
        TextIO.output(strm, "\t");
        TextIO.output(strm, Atom.toString(#padsname(r)));
        TextIO.output(strm, ";\n"))
-      
+
   fun genPadsInternal(filename) = 
       let val outStrm = TextIO.openOut(filename)
       in
@@ -68,6 +68,12 @@ struct
 	  TextIO.output(outStrm, "#define __PADS_INTERNAL__H__\n");
 	  TextIO.output(outStrm, "#include \"libpadsc.h\"\n");
 	  TextIO.output(outStrm, "#include \"libpadsc-internal.h\"\n");
+          TextIO.output(outStrm, "#ifdef sfstropen\n#undef sfstropen\n#endif\n");
+          TextIO.output(outStrm, "Sfio_t *sfstropen();\n");
+          TextIO.output(outStrm, "#ifdef sfstrclose\n#undef sfstrclose\n#endif\n");
+          TextIO.output(outStrm, "void sfstrclose(Sfio_t *);\n");
+          TextIO.output(outStrm, "#ifdef sfstruse\n#undef sfstruse\n#endif\n");
+          TextIO.output(outStrm, "const char* sfstruse(Sfio_t *);\n");
           List.app (genTypedef outStrm) baseInfoList;
 	  TextIO.output(outStrm, "#endif /*  __PADS_INTERNAL__H__  */\n");
 	  TextIO.flushOut outStrm;

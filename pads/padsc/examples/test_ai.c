@@ -4,7 +4,9 @@
 int main(int argc, char** argv) {
   int             i;
   PDC_t*          pdc;
+  http_clt_t_ed   ed;
   http_clf_t      ai;
+  http_clf_t_acc  acc;
 
   if (PDC_ERROR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
@@ -14,12 +16,16 @@ int main(int argc, char** argv) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
+  if (PDC_ERROR == http_clf_t_acc_init(pdc, &acc, 0)) {
+    error(2, "*** http_clt_t_acc_init failed ***");
+    exit(-1);
+  }
 
   /*
    * Try to read each line of data
    */
   while (!PDC_IO_peek_EOF(pdc, 0)) {
-    if (PDC_OK == http_clf_t_read(pdc, 0, 0, &ai, 0)) {
+    if (PDC_OK == http_clf_t_read(pdc, 0, &ed, &ai, 0)) {
       /* do something with the data */
       if (ai.host.tag == resolved) {
 	error(0, "host: %u.%u.%u.%u",
@@ -55,6 +61,11 @@ int main(int argc, char** argv) {
 	    ai.request.version.minor);
       error(0, "response: %u   contentLength: %u", ai.response, ai.contentLength);
       printf("\n");
+      if (PDC_ERROR == http_clf_t_acc_add(pdc, &acc, &ed, &ai0)) {
+	error(2, "*** http_clt_t_acc_add failed ***");
+	exit(-1);
+      }	
+
     } else {
       error(2, "read returned: error");
     }

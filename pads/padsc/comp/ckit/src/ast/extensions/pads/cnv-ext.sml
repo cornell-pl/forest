@@ -518,7 +518,8 @@ structure CnvExt : CNVEXT = struct
 	      val ted = "ted"
 	      val tem = "tem"
 	      val all = "structLevel"
-
+	      val prefix = "prefix"
+	      val tmpstr = "tmpstr"
 
 		      
 	      (* Some useful functions *)
@@ -532,6 +533,7 @@ structure CnvExt : CNVEXT = struct
               fun addSuf  s = s^"_add"
               fun readSuf s = s^"_read"
               fun iSuf s = s^"_internal"
+              fun reportSuf s = s^"_report"
 	      fun gTemp base = "tmp"^base
 	      fun gMod  base = "mod"^base
 	      fun lookupTy (ty:pty, sufFun:string->string, fldSelect:PTys.baseInfoTy ->Atom.atom) = 
@@ -617,6 +619,28 @@ structure CnvExt : CNVEXT = struct
 		      [readFunInternalED, readFunED]
 		  end
 
+              (* PDC_error_t foostruct_report(PDC_t* pdc, foostruct_acc* acc, const char* prefix, PDC_disc_t* disc) *)
+	      fun genReportFun (reportName, accPCT,bodySs) = 
+		  let val paramTys = [P.ptrPCT PL.toolStatePCT, 
+				      P.ccharPtr,
+				      P.ptrPCT accPCT, 
+				      P.ptrPCT PL.toolDiscPCT]
+                      val paramNames = [ts, prefix, acc, disc]
+                      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
+		      val tempStringDecl = P.varDeclS'(PL.sfioPCT, tmpstr)
+		      val tempInitSs = [PT.IfThen(P.notX(P.assignX(PT.Id tmpstr, PL.sfstropen)),
+						  PT.Return PL.PDC_ERROR)]
+		      val closeSs = [PL.sfstrclose(PT.Id tmpstr), PT.Return PL.PDC_OK]
+		      val bodySs = tempStringDecl 
+			           :: (tempInitSs @ bodySs @ closeSs)
+		      val returnTy =  PL.toolErrPCT
+		      val reportFunED = 
+			  P.mkFunctionEDecl(reportName, formalParams, PT.Compound bodySs, returnTy)
+		  in
+		      reportFunED
+		  end
+
+
              (*  PDC_error_t T_acc_name(PDC_t* , T_acc* , PDC_disc_t* ) *)
 	      fun gen3PFun (name, accPCT, bodySs) = 
 		  let val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT accPCT, P.ptrPCT PL.toolDiscPCT]
@@ -652,6 +676,8 @@ structure CnvExt : CNVEXT = struct
 		  in
 		      addFunED
 		  end
+
+
 
               fun chkAddFun (funName, accX,edX,repX) = 
 		  [PT.IfThen(P.eqX(PL.PDC_ERROR, 
@@ -988,6 +1014,8 @@ structure CnvExt : CNVEXT = struct
 						       P.addrX(fieldX(ed,name)),
 						       P.addrX repX, PT.Id disc)),
 				     PT.Compound[ (* error reading field *)
+				      PT.IfThen(PL.getSpecLevelX(PT.Id ts, PT.Id disc),
+						PT.Return PL.PDC_ERROR),
 				      (* if (moded->name.panic) *)
                                       PT.IfThen(P.dotX(fieldX(ed, name), PT.Id panic),
  				        (* moded->panic = true *)
@@ -1125,6 +1153,8 @@ structure CnvExt : CNVEXT = struct
 							    P.addrX (PT.Id ted),
 							    expr, PT.Id disc),
                                      PT.Compound[
+				       PT.IfThen(PL.getSpecLevelX(PT.Id ts, PT.Id disc),
+					 	 PT.Return PL.PDC_ERROR),
 				       (* PDC_report_err(ts,disc, &ted.loc, 
 					                   MISSING_LITERAL,"missing separator", e) *)
 				       PL.userErrorS(PT.Id ts, PT.Id disc, 
@@ -1174,7 +1204,7 @@ structure CnvExt : CNVEXT = struct
 						  emFirstPCT, true, bodySs)
 
                       (* Generate Accumulator functions *)
-                      (* -- generate accumulator init, reset, and cleanup functions *)
+                      (* -- generate accumulator init, reset, cleanup, and report functions *)
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
 			      fun genAccTheFull {pty :PX.Pty, args:pcexp list,
@@ -1228,6 +1258,29 @@ structure CnvExt : CNVEXT = struct
                       val addBodySs = addDeclSs @ addFields @ [addReturnS]
                       val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
 
+                      (* -- generate report function *)
+                      (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
+		      val reportFun = (reportSuf o accSuf) name
+		      fun genAccReportFull {pty :PX.Pty, args:pcexp list,
+				          name:string, isVirtual:bool, pred:pcexp option, comment} = 
+			  case lookupAcc(pty) of NONE => []
+			      | SOME a => (
+				 let val reportName = reportSuf a
+				     fun gfieldX base = P.addrX(P.arrowX(PT.Id base, PT.Id name))
+				 in
+				    [PL.sfprintf(PT.Id tmpstr, PT.String (prefix^"."^name),[]),
+				     PT.IfThen(
+				      P.eqX(PL.PDC_ERROR, 
+					    PT.Call(PT.Id reportName, 
+						    [PT.Id ts, PL.sfstruse (PT.Id tmpstr),  
+						     gfieldX acc, PT.Id disc])),
+                                      PT.Compound[PL.sfstrclose (PT.Id tmpstr),
+						  PT.Return PL.PDC_ERROR])]
+				 end
+                              (* end accOpt SOME case *))
+                      fun genAccReportBrief e = []
+		      val reportFields = mungeFields genAccReportFull genAccReportBrief fields
+                      val reportFunED = genReportFun(reportFun, accPCT, reportFields)
 	      in 
  		   canonicalDecls (* converted earlier because used in typechecking constraints *)
                  @ emDecls
@@ -1238,6 +1291,7 @@ structure CnvExt : CNVEXT = struct
                  @ cnvExternalDecl resetFunED
                  @ cnvExternalDecl cleanupFunED
                  @ cnvExternalDecl addFunED
+                 @ cnvExternalDecl reportFunED
 	      end
 
 	     fun cnvPUnion ({name:string, params: (pcty * pcdecr) list, variants : pcexp PX.PSField list}) = 
@@ -1472,6 +1526,8 @@ structure CnvExt : CNVEXT = struct
                  (* Some useful functions *)
                  fun recordArrayErrorS (errCodeC, shouldPrint,msg,args, setPanic) = 
                      PT.Compound([
+		       PT.IfThen(PL.getSpecLevelX(PT.Id ts, PT.Id disc),
+				 PT.Return PL.PDC_ERROR),
   		       PT.IfThenElse(P.notX(fieldX(ed,nerr)),
 			  PT.Compound (reportErrorSs(true,errCodeC,shouldPrint,msg,args)),
 			  PT.Compound[P.postIncS(fieldX(ed,nerr))])]
@@ -1842,6 +1898,8 @@ structure CnvExt : CNVEXT = struct
 						       P.addrX(resNext),
 						       PT.Id disc),
                           PT.Compound[
+			   PT.IfThen(PL.getSpecLevelX(PT.Id ts, PT.Id disc),
+				     PT.Return PL.PDC_ERROR),
 			   PT.IfThen(P.lteX(fieldX(em,array), PL.EM_CHECK),
 			     PT.Compound[
                               PT.IfThen(P.notX(fieldX(ed,nerr)),
@@ -2220,19 +2278,26 @@ structure CnvExt : CNVEXT = struct
 			  in
 			      theFunED
 			  end
-		      val initFunED = genResetInitCleanup initSuf
-		      val resetFunED = genResetInitCleanup resetSuf
-                      val cleanupFunED = genResetInitCleanup cleanupSuf
+		   val initFunED = genResetInitCleanup initSuf
+		   val resetFunED = genResetInitCleanup resetSuf
+                   val cleanupFunED = genResetInitCleanup cleanupSuf
 
-                      (* -- generate accumulator function *)
-                      (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
-		      val addFun = (addSuf o accSuf) name
-		      val addX = PT.Call(PT.Id (addSuf PL.intAct), 
-					  [PT.Id ts, PT.Id acc, PT.Id ed, 
-					   PT.Cast(P.ptrPCT PL.intPCT, PT.Id rep), PT.Id disc])
-		      val addReturnS = PT.Return addX
-                      val addBodySs =  [addReturnS]
-                      val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
+                   (* -- generate accumulator function *)
+                   (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
+		   val addFun = (addSuf o accSuf) name
+		   val addX = PT.Call(PT.Id (addSuf PL.intAct), 
+				      [PT.Id ts, PT.Id acc, PT.Id ed, 
+				       PT.Cast(P.ptrPCT PL.intPCT, PT.Id rep), PT.Id disc])
+		   val addReturnS = PT.Return addX
+		   val addBodySs =  [addReturnS]
+		   val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
+
+		   (* -- generate report function *)
+		   (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
+		   val reportFun = (reportSuf o accSuf) name
+		   val reportFields = []
+		   val reportFunED = genReportFun(reportFun, accPCT, reportFields)
+
 
 		  (* Generate enum to string function *)
 		  val cnvName = name^"2str"

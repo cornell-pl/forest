@@ -70,6 +70,7 @@ struct
   val intAct       = "PDC_uint32_acc"
   val intAccPCT    = P.makeTypedefPCT "PDC_uint32_acc"
   val intPCT       = P.makeTypedefPCT "PDC_uint32"
+  val sfioPCT      = P.ptrPCT (P.makeTypedefPCT "Sfio_t")
 
   fun fmtChar(chr:PT.expression) =
    (*  char*       PDC_fmtChar(char c); *)
@@ -163,8 +164,11 @@ struct
 (* check point routines *)
   fun chkPtS(ts:PT.expression, disc:PT.expression) =
     (* PDC_error_t  PDC_IO_checkpoint  (PDC_t* pdc, PDC_disc_t* disc); *)
-    chkError(ts, disc, (PT.Call(PT.Id "PDC_IO_checkpoint", [ts,disc])), 
+    chkError(ts, disc, (PT.Call(PT.Id "PDC_IO_checkpoint", [ts, P.trueX, disc])), (* always speculative *)
 	     PDC_CHKPOINT_FAILURE)
+
+  fun getSpecLevelX(ts:PT.expression, disc:PT.expression) =
+     PT.Call(PT.Id "PDC_spec_level", [ts,disc])
 
   fun commitS(ts:PT.expression, disc:PT.expression) =
     (* PDC_error_t  PDC_IO_commit  (PDC_t* pdc, PDC_disc_t* disc); *)
@@ -196,5 +200,16 @@ struct
 			      unsigned char* c_out, size_t* offset_out,
 			      PDC_disc_t* disc); *)
       PT.Call(PT.Id n, [ts,c,s,res,offset,disc])
+
+  fun sfstrclose(str:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "sfstrclose", [str]))
+
+  val sfstropen = PT.Call(PT.Id "sfstropen", [])
+
+  fun sfprintf (tmpstr :PT.expression, control:PT.expression, args : PT.expression list) =
+      PT.Expr(PT.Call(PT.Id "sfprintf", tmpstr::control::args))
+
+  fun sfstruse (tmpstr : PT.expression) = 
+      PT.Call(PT.Id "sfstruse", [tmpstr])
 
 end
