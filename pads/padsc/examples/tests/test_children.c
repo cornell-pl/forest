@@ -57,6 +57,9 @@ int main(int argc, char** argv) {
   }
   error(0, "\nFound eof");
 
+  /* done with top-level node */
+  PGLX_node_free(top_node);
+
   if (PDC_ERR == PDC_IO_close(pdc)) {
     error(2, "*** PDC_IO_close failed ***");
     exit(-1);
