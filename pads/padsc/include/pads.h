@@ -778,6 +778,11 @@ void PDC_PS_unsetPanic(void *pd);   /* unset PDC_Panic in pd->pstate */
 int  PDC_PS_isPanic(void *pd);      /* test whether PDC_Panic is set in pd->pstate */
 #endif
 
+/* Function (macro actually) for initalizing a PDC_base_pd: */
+#ifdef FOR_CKIT
+void PDC_base_pd_init(PDC_base_pd *pd); /* init pstate to 'not panic' state; errCode to PDC_NO_ERR */
+#endif
+
 /* PDC_inv_valfn: type of a pointer to an invalid val function */
 typedef PDC_error_t (*PDC_inv_valfn)(PDC_t *pdc, void *pd_void, void *val_void, void **type_args);
 
@@ -2131,7 +2136,7 @@ ssize_t PDC_a_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_char c);
 ssize_t PDC_a_str_lit_write2io (PDC_t *pdc, Sfio_t *io, const PDC_string *s);
 ssize_t PDC_a_Cstr_lit_write2io(PDC_t *pdc, Sfio_t *io, const char *s);
 
-ssize_t PDC_a_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, ssize_t *buf_full, PDC_char c);
+ssize_t PDC_a_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char c);
 ssize_t PDC_a_str_lit_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_string *s);
 ssize_t PDC_a_Cstr_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const char *s);
 #endif

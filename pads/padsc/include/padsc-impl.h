@@ -70,6 +70,13 @@
 #define PDC_PS_unsetPanic(pd)    do { (pd)->pstate &= ~PDC_Panic; } while (0)
 #define PDC_PS_isPanic(pd)       ((pd)->pstate & PDC_Panic)
 
+/* Macro for initalizing a PDC_base_pd */
+#define PDC_base_pd_init(pd) \
+do { \
+  (pd)->pstate  = 0; \
+  (pd)->errCode = PDC_NO_ERR; \
+} while (0)
+
 /* ================================================================================ */
 /* INTERNAL SCAN ROUTINES (helpers) */
 
