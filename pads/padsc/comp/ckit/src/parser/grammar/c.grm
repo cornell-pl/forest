@@ -237,6 +237,7 @@ end
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
+        | PSELECT (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
 	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE | PRECORD | PFILE | PWHERE (* PADS *)
 
@@ -339,6 +340,7 @@ end
         | pAnnotatedLastEnumField of string * expression option * string option
         | pEnumFieldList of (string * expression option * string option) list
         | pEnum of externalDecl
+	| pSelect of externalDecl
 
 %pos int
 %verbose
@@ -403,6 +405,7 @@ externalDeclaration:
         | pUnion  RCURLY                (SOME(markExternalDecl srcMap (pUnion, pUnionleft, RCURLYright)))
         | pArray  RCURLY                (SOME(markExternalDecl srcMap (pArray, pArrayleft, RCURLYright)))
         | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,  pEnumleft,  RCURLYright)))
+        | pSelect RCURLY                (SOME(markExternalDecl srcMap (pSelect,  pSelectleft,  RCURLYright)))
 (* PADS END *)
 
 statement:
@@ -1205,3 +1208,7 @@ pEnum:
 		             containsRecord = false, largeHeuristic = false,
 			     isFile = pIsFile, members = pEnumFieldList})
  ) 
+
+pSelect:
+ PSELECT LPAREN pushScope pName pName RPAREN LCURLY expr popScope
+ (ExternalDeclExt(PX.PSelect {tyName = pName1, varName = pName2, path = expr}))

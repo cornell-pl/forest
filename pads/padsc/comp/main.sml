@@ -290,6 +290,19 @@ structure Main : sig
 		        print "Build of accumulator program failed.\n"
 			else ()
 	end
+
+    fun generateSelect(fileName) = 
+	if Select.isSelection() then
+	    let val (qoutname, qoutstream) = getOutStream(fileName, "p", "q")
+		val itemsStr = Select.selectListToString (Select.listSelections())
+	    in
+		TextIO.output(qoutstream, itemsStr);
+		TextIO.flushOut qoutstream;
+		TextIO.closeOut qoutstream
+	    end
+	else ()
+
+
     fun generateAccum (padsDir, fileName, headerFile, genLibFile) = 
 	let val p = PTys.pTys
 	    fun doOne(name : string) = 
@@ -306,7 +319,7 @@ structure Main : sig
 	    List.app doOne (!accumulators)
 	end
 
-    fun generateXschema(fileName, srcFile, ast, tidtab,paidtab) =
+    fun generateXschema(fileName, ast, tidtab,paidtab) =
 	if not (!xmlFlag) then () 
 	else
 	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xsd")		
@@ -317,38 +330,46 @@ structure Main : sig
 		TextIO.closeOut xoutstream			
 	    end
 
+    fun generateCoreLibrary(padsDir, ast, tidtab, fileName) = 
+	let val srcFile = OS.Path.file fileName
+	    val (houtname, houtstream) = 
+		if !outputHeaderFileFlag then 
+		    (OS.Path.file (!outputHeaderFileName), TextIO.openOut (!outputHeaderFileName))
+		else getOutStream(fileName, "p", "h")
+	    val (coutname, coutstream) = 
+		if !outputCFileFlag then 
+		    (OS.Path.file(!outputCFileName), TextIO.openOut (!outputCFileName))
+		else getOutStream(fileName, "p", "c")
+	    val includeName = buildIncludeName fileName
+	in
+	    TextIO.output(houtstream, "#ifndef "^ includeName ^"\n");
+	    TextIO.output(houtstream, "#define "^ includeName ^"\n");
+	    TextIO.output(houtstream, "#include \"libpadsc.h\"\n");
+	    if (!xmlFlag) then 
+		TextIO.output(houtstream, "#include \"pglx-internal.h\"\n")
+	    else ();
+	    PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER (SOME srcFile)) () tidtab) houtstream ast;
+	    TextIO.output(houtstream, "#endif /*  "^ includeName ^"  */\n");
+	    TextIO.flushOut houtstream;
+	    TextIO.closeOut houtstream;
+	    TextIO.output(coutstream, "#include \"libpadsc-internal.h\"\n");
+	    if (!xmlFlag) then 
+		TextIO.output(coutstream, "#include \"pglx-internal.h\"\n")
+	    else ();
+	    TextIO.output(coutstream, ("#include \"" ^ houtname ^ "\"\n"));
+	    PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
+	    TextIO.flushOut coutstream;
+	    TextIO.closeOut coutstream;
+	    (houtname, coutname)
+	end
+
     fun generateOutput (padsDir, astInfo : BuildAst.astBundle, fileName) =
       let val {ast,tidtab,errorCount,warningCount,auxiliaryInfo={paidtab,...},...} = astInfo
-	  val srcFile = OS.Path.file fileName
+	  val (houtname, coutname) = generateCoreLibrary(padsDir, ast, tidtab, fileName)
       in
-          let val (houtname, houtstream) = 
-	      if !outputHeaderFileFlag then 
-		  (OS.Path.file (!outputHeaderFileName), TextIO.openOut (!outputHeaderFileName))
-	      else getOutStream(fileName, "p", "h")
-	      val (coutname, coutstream) = 
-		  if !outputCFileFlag then 
-		      (OS.Path.file(!outputCFileName), TextIO.openOut (!outputCFileName))
-		  else getOutStream(fileName, "p", "c")
-	      val includeName = buildIncludeName fileName
-	  in
-	      TextIO.output(houtstream, "#ifndef "^ includeName ^"\n");
-	      TextIO.output(houtstream, "#define "^ includeName ^"\n");
-	      TextIO.output(houtstream, "#include \"libpadsc.h\"\n");
-	      PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER (SOME srcFile)) () tidtab) houtstream ast;
-	      TextIO.output(houtstream, "#endif /*  "^ includeName ^"  */\n");
-	      TextIO.flushOut houtstream;
-	      TextIO.closeOut houtstream;
-	      TextIO.output(coutstream, "#include \"libpadsc-internal.h\"\n");
-              if (!xmlFlag) then 
-		  TextIO.output(coutstream, "#include \"pglx-internal.h\"\n")
-	      else ();
-	      TextIO.output(coutstream, ("#include \"" ^ houtname ^ "\"\n"));
-	      PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
-	      TextIO.flushOut coutstream;
-	      TextIO.closeOut coutstream;
-	      generateAccum(padsDir, fileName, houtname, coutname);
-	      generateXschema(fileName, srcFile, ast,tidtab, paidtab)
-	  end
+	  generateSelect(fileName);
+	  generateAccum(padsDir, fileName, houtname, coutname);
+	  generateXschema(fileName, ast,tidtab, paidtab)
       end
 	    
     fun doFile (padsDir, baseTyFile) (typ, fname) = 

@@ -380,6 +380,40 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	   | NONE => ()
        ;PPL.addStr pps ";")
 
+  and ppDeclarationH aidinfo tidtab pps (TypeDecl{shadow=NONE, tid}) = 
+       (case Tidtab.find (tidtab,tid)
+	  of SOME {ntype=SOME nct,location,...} => 
+	       (ppLoc pps location; ppNamedCtype aidinfo tidtab pps nct)
+	   | _ => (warning
+		     "ppCoreStmt" 
+		     ("No type associated with tid:"^(Tid.toString tid));
+		   PPL.addStr pps "...");
+        PPL.addStr pps ";")
+    | ppDeclarationH aidinfo tidtab pps (TypeDecl{shadow=SOME{strct=true}, tid}) = 
+	  (PPLib.addStr pps "struct "
+	  ;PPLib.ppTid tidtab pps tid
+	  ;PPL.addStr pps ";")
+    | ppDeclarationH aidinfo tidtab pps (TypeDecl{shadow=SOME{strct=false}, tid}) = 
+	  (PPLib.addStr pps "union "
+	  ;PPLib.ppTid tidtab pps tid
+	  ;PPL.addStr pps ";")
+    | ppDeclarationH aidinfo tidtab pps (VarDecl (id as {location,...}, initOpt)) = 
+       (ppLoc pps location
+       ;PPLib.addStr pps "extern "
+       ;ppIdDecl aidinfo tidtab pps id
+       ;PPL.addStr pps ";")
+
+  and ppDeclarationC aidinfo tidtab pps (TypeDecl{shadow, tid}) =   ((* type declarations *))
+    | ppDeclarationC aidinfo tidtab pps (VarDecl (id as {location,...}, initOpt)) = 
+       (ppLoc pps location
+       ;ppIdDecl aidinfo tidtab pps id
+       ;case initOpt
+	  of SOME initExpr => 
+	      (PPL.addStr pps "=";
+	       ppInitExpression aidinfo tidtab pps initExpr)
+	   | NONE => ()
+       ;PPL.addStr pps ";")
+
   and ppIdDecl aidinfo tidtab pps (id: Ast.id) =
     let val (stClass,ctype) = getCtype id
     in (ppStorageClass pps stClass
@@ -663,7 +697,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
   fun ppCoreExternalDeclH aidinfo tidtab pps edecl =
     case edecl
       of ExternalDecl decl =>
-	  (ppDeclaration aidinfo tidtab pps decl;
+	  (ppDeclarationH aidinfo tidtab pps decl;
 	   PPL.newline pps)
        | FunctionDef (id,ids,stmt) => 
 	   let val {location,...} = id
@@ -712,7 +746,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
   (* PADS: print .c version *)
   fun ppCoreExternalDeclC aidinfo tidtab pps edecl =
     case edecl
-      of ExternalDecl decl => () (* type declarations are in header file *)
+      of ExternalDecl decl => (ppDeclarationC aidinfo tidtab pps decl)
        | FunctionDef (id,ids,stmt) => 
 	   let val {location,...} = id
 	       val (stClass,ctype) = getCtype id

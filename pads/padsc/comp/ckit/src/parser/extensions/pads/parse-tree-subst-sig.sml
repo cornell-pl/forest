@@ -8,6 +8,8 @@ sig
 
     val isFreeInExp : (string list * ParseTree.expression) -> bool
 
+    val expIsClosed : (string list * ParseTree.expression) -> bool
+
     val mungePCT : ((string -> string) * ParseTree.ctype) -> ParseTree.ctype
 
 end

@@ -81,6 +81,9 @@ structure ParseTreeExt =
                       largeHeuristic : bool,
 		      isFile   : bool,
                       members  : (string * 'exp option * string option) list}
+         | PSelect of {tyName  : string,
+		       varName : string,
+		       path    : 'exp}
 
         datatype PStatement = PComment of string
 

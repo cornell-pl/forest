@@ -64,6 +64,11 @@ struct
   fun inc (i: int ref) = (i := !i + 1; ())
   fun dec (i: int ref) = (i := !i - 1; ())
 
+  fun warningsEnabled (ES {warningsEnabled,...}) b =  warningsEnabled := b
+
+  fun errorsEnabled (ES {errorsEnabled,...}) b = errorsEnabled := b
+
+
 (* curried version of TextIO.output *)
   fun outputc outstrm strng = TextIO.output(outstrm, strng)
 

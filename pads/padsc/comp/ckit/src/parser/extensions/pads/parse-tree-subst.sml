@@ -91,6 +91,26 @@ structure ParseTreeSubst : PARSE_TREE_SUBST = struct
 
     and isFreeInExpExt (vars, _) = false
 
+    fun expIsClosed (vars : string list, EmptyExpr )  = true
+      | expIsClosed (vars : string list, IntConst _ )  = true
+      | expIsClosed (vars : string list, RealConst _ )  = true
+      | expIsClosed (vars : string list, String _ )  = true
+      | expIsClosed (vars : string list, Id s )  = List.exists (fn s'=> s = s') vars
+      | expIsClosed (vars : string list, Unop (rator,exp) )  = expIsClosed(vars,exp)
+      | expIsClosed (vars : string list, Binop (rator,exp1,exp2) )  = 
+	expIsClosed(vars,exp1) andalso expIsClosed(vars,exp2)
+      | expIsClosed (vars : string list, QuestionColon (exp1,exp2,exp3) )  = 
+	expIsClosed(vars,exp1) andalso expIsClosed(vars,exp2) andalso expIsClosed(vars,exp3)
+      | expIsClosed (vars : string list, Call (exp1,exps) )  = 
+	expIsClosed(vars,exp1) andalso (List.all (fn e => expIsClosed(vars,e)) exps)
+      | expIsClosed (vars : string list, Cast (ty,exp) )  = expIsClosed(vars,exp)
+      | expIsClosed (vars : string list, InitList exps )  = 
+         List.all (fn e => expIsClosed(vars,e)) exps
+      | expIsClosed (vars : string list, MARKexpression(l, exp)) = expIsClosed(vars,exp)
+      | expIsClosed (vars : string list, ExprExt e) = expIsClosedExt(vars, e)
+
+    and expIsClosedExt (vars, _) = true
+
 
    fun mungePCT(f:string -> string, pcty:ctype) : ParseTree.ctype = 
        let val {qualifiers, specifiers} = pcty

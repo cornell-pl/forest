@@ -71,6 +71,8 @@ sig
   val noMoreWarnings : errorState -> unit
     (* turns off printing of warning messages for the given errorState *)
 
+  val warningsEnabled : errorState -> bool -> unit
+    (* toggles printing of warning messages for the given errorState *)
 
 (* generating error messages *)
 
@@ -92,6 +94,9 @@ sig
                -> unit
   val noMoreErrors : errorState -> unit
     (* turns off printing of warning messages for the given errorState *)
+
+  val errorsEnabled : errorState -> bool -> unit
+    (* toggles printing of error messages for the given errorState *)
 
   val ppError :
 	(errorState * SourceMap.location * (OldPrettyPrint.ppstream -> unit))

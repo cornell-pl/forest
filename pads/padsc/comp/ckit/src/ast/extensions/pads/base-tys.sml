@@ -35,7 +35,8 @@ structure PBaseTys = struct
     (print (String.concat["accname = ", case accname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
     (print (String.concat["diskSize = ", 
 			  case diskSize of TyProps.Size (n,r) => Int.toString n 
-                                         | TyProps.Param (num, s, exp) =>  ("P"^(Int.toString num)^s)
+                                         | TyProps.Param (params, SOME s, exp, _) =>  ("P"^s)
+                                         | TyProps.Param (params, NONE, exp,_) =>  ("P")
                                          | TyProps.Variable => "V", "\n"]));
     (print (String.concat["memory characteristic = ", 
 			  case memChar of TyProps.Static => "S"
@@ -92,8 +93,11 @@ structure PBaseTys = struct
 				       else if String.isPrefix "P" str then 
 					   let val expStr = String.extract(str, 1, NONE) 
 					       val exp = cnvStrToCExp(padsname, expStr)
+					       val fNames =  List.take(["p1", "p2", "p3", "p4", "p5", 
+									"p6", "p7", "p8", "p9", "p0"], numArgs)
+					       val () = if not (ParseTreeSubst.expIsClosed(fNames, exp)) then print errStr else ()
 					   in
-					       TyProps.Param (numArgs, expStr, exp) 
+					       TyProps.Param (fNames, SOME expStr, exp, ParseTreeUtil.zero) 
 					   end handle Subscript => (print errStr; TyProps.Variable)
 				       else if str = "V" then TyProps.Variable
 				       else case Int.fromString str
