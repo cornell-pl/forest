@@ -880,7 +880,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   fun ppCoreExternalDecl' ptyInfo aidinfo tidtab pps edecl =
     case edecl
       of ExternalDecl decl => 
-	  (  ppPKind ptyInfo tidtab pps decl
+	  ( ppPKind ptyInfo tidtab pps decl
 	  (* ; PPL.newline pps                            Is this the invocation to produce the XML output?
 	   ; ppDeclaration aidinfo tidtab pps decl
 	  *) ; PPL.newline pps)		    
@@ -939,8 +939,12 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
    *)
   fun wrap pp aidinfo tidtab pps v = 
     ( PPL.bBlock pps PP.INCONSISTENT 0
+    ; PPL.addStr pps "<xs:schema targetNamespace=\"http://www.w3.org/1999/xhtml\" \n xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">"
+    ; PPL.newline pps 
     ; pp aidinfo tidtab pps v
     ; PPL.newline pps
+    ; PPL.addStr pps "</xs:schema>"
+    ; PPL.newline pps 
     ; PPL.eBlock pps
     )
 
