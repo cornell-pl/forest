@@ -86,8 +86,6 @@ structure CnvExt : CNVEXT = struct
 
   exception CnvExt of string
 
-  fun CNVExp _ = raise (CnvExt "No proper extensions to expressions")
-
   fun CNVStat _ = raise (CnvExt "No proper extensions to statements")
 
   fun CNVBinop _ = raise (CnvExt "No proper extensions to binops")
@@ -2015,6 +2013,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			          case eX of PT.MARKexpression(l,e) => getStaticSize e
 				  | PT.String s => TyProps.mkSize(String.size s, 0)
 				  | PT.IntConst i => TyProps.mkSize(1,0)
+				  | PT.ExprExt (PX.Pregexp e) => TyProps.Variable
 				  | _ => TyProps.Variable
 			      val diskSize = getStaticSize e
 			  in
@@ -2261,7 +2260,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				  case eX of PT.String s => P.intX (String.size s)
                                   | PT.MARKexpression(l,e) => getStrLen e
 				  | _ => PL.strLen eX
-			      val (pTyName, litdecls,expr,commentV) = 
+			      val (pTyName, litdecls, expr, commentV) = 
 				  if CTisIntorChar expTy then (PL.charlit, [], e, getCharComment e)
 				  else if CTisString expTy 
 				       then (PL.strlit,
@@ -2272,28 +2271,23 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				  else (PE.error ("Currently only characters and strings "^
 					          "supported as delimiters. Delimiter type: "^ (CTtoString expTy) ^".");
 					(PL.charlit, [], e, CExptoString expAst))
-			      val commentS = P.mkCommentS ("Reading delimiter field: "^
-						           commentV)
-                              (* base_pd tpd; *)
+			      val commentS = P.mkCommentS ("Reading delimiter field: "^ commentV)
+
+			      val scanFieldName = scan1Suf pTyName
+
 			      val tpdDecl = P.varDeclS'(PL.base_pdPCT, tpd)
-			      val scanFieldName = scan2Suf pTyName
 			      val offsetDecl = P.varDeclS'(PL.sizePCT, "offset")
-			      val fFoundDecl = P.varDeclS'(P.int, "f_found")
 
 			      fun genPanicRecovery (pTyName:string) : pcstmt list -> pcstmt list = 
                                         fn elseSs =>
-                                           [PT.IfThenElse((* if (P_PS_isPanic(pd) *)
-                                              PL.testPanicX(PT.Id pd),
+                                           [PT.IfThenElse(PL.testPanicX(PT.Id pd),
 					      PT.Compound [
-                                                (* base_m tmask = Ignore; *)
 						PT.IfThen(
 						 P.neqX(PL.P_ERROR,
-						       PL.scan2FunX(scanFieldName, PT.Id pads, 
-								    expr, expr, P.trueX, P.trueX,
+						       PL.scan1FunX(scanFieldName, PT.Id pads, 
+								    expr, P.trueX, 
 								    P.trueX, (* panic=1 *)
-								    P.addrX (PT.Id "f_found"),
                                                                     P.addrX (PT.Id "offset"))),
-						 (* P_PS_unsetPanic(pd) *)
 						 PT.Compound[PL.unsetPanicS(PT.Id pd)])
                                               ], 
                                               PT.Compound elseSs
@@ -2324,10 +2318,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				  [PL.getLocBeginS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc))),
 				   PT.IfThenElse(
 				      P.eqX(PL.P_OK,
-					    PL.scan2FunX(scanFieldName, 
-							 PT.Id pads, expr, expr, P.trueX, P.trueX,
+					    PL.scan1FunX(scanFieldName, 
+							 PT.Id pads, expr, P.trueX,
 							 P.falseX, (* panic=0 *)
-							 P.addrX (PT.Id "f_found"),
 							 P.addrX (PT.Id "offset"))),
 				      PT.Compound(
 					 [PT.IfThen(
@@ -2345,7 +2338,6 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				    PT.Compound(
 				     tpdDecl 
 				     :: offsetDecl
-				     :: fFoundDecl
 				     :: litdecls
 				     @ (genPanicRecovery pTyName notPanicSs))])]
 			  end
@@ -4701,9 +4693,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	  end
 
       fun pcnvStat (PX.PComment s) =  wrapSTMT(Ast.StatExt(AstExt.SComment(formatComment s)))
+      fun pcnvExp  (PX.Pregexp e) =   cnvExpression e
 
       in
-	  {CNVExp = CNVExp,
+	  {CNVExp = pcnvExp,
 	   CNVStat = pcnvStat,
 	   CNVBinop = CNVBinop,
 	   CNVUnop = CNVUnop,

@@ -16,7 +16,7 @@ structure ParseTreeExt =
 		    comment : string option}
 	 | Manifest of { decl : 'dt * ('decr * 'exp) list, 
                       comment : string option}
-         | Brief of 'exp
+         | Brief of 'exp  
 
         datatype 'exp PSize = 
            SizeInfo of {min : 'exp option, max : 'exp option, maxTight : bool}
@@ -87,12 +87,13 @@ structure ParseTreeExt =
 		       path    : 'exp}
 
         datatype PStatement = PComment of string
+        datatype ('exp) PExpression = Pregexp of 'exp
 
   (* External bindings *)
 	type operatorExt = unit
 
 	type ('spec,'decr,'ct,'dt,'oper,'exp,'stmt) 
-	    expressionExt = unit
+	    expressionExt = ('exp) PExpression
 
 	type ('spec,'decr,'ct,'dt,'oper,'exp,'stmt) 
 	    specifierExt = unit
