@@ -7,8 +7,11 @@
 # Where the defaults are:
 
 my $SELECT_STATE = "10";
-my $CLEAN_INPUT_FILE = "perl_vet.7.clean";
-my $OUTPUT_FILE  = "perl_select_first.${SELECT_STATE}";
+my $CLEAN_INPUT_FILE = "/home/kfisher/esig/dibbler_clean_big_C";
+my $OUTPUT_FILE  = "/home/kfisher/esig/dibbler_selected_big_Perl";
+
+# my $CLEAN_INPUT_FILE = "perl_vet.7.clean";
+# my $OUTPUT_FILE  = "perl_select_first.${SELECT_STATE}";
 
 # strategy: use Perl's regexp pattern matcher
 #           including its ability to precompile a pattern

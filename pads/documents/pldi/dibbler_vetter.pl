@@ -6,13 +6,13 @@
 #
 # Where the defaults are:
 
-# my $INPUT_FILE  = "../../data/dibbler_short";
+# my $INPUT_FILE  = "/home/kfisher/pads/padsc/examples/data/dibbler_short";
 # my $SEQ_MASK    = 7;
 # my $CLEAN_FILE  = "/home/kfisher/esig/dibbler_clean_PY";
 # my $ERROR_FILE  =  "/home/kfisher/esig/dibbler_errors_PY";
 #   (SEQ_MASK arg must be numberic; P_CheckAndSet == 7, P_Set == 1)
 
-my $INPUT_FILE  = "data";
+my $INPUT_FILE  = "/home/kfisher/pads/padsc/examples/data/dibbler.10001";
 my $SEQ_MASK    = 7;
 my $CLEAN_FILE  = "perl_vet.${SEQ_MASK}.clean";
 my $ERROR_FILE  = "perl_vet.${SEQ_MASK}.error";
