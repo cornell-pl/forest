@@ -12,12 +12,6 @@
 
 /* ocaml header files can be found in /usr/common/lib/ocaml/caml */
 
-/* XXX_RESTORE: */
-/* #include "caml/fail.h" */     /* exception */
-
-/* XXX_REMOVE: */ 
-#define failwith(s) error(2, s)
-
 /* include mary's stuff for c to ocaml rep functions */
 
 /* ================================================================================
@@ -156,8 +150,8 @@ const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
 
 /* A pos_t has 3 children (byte, num, and unit) */
 #undef WHATFN
-#define WHATFN "PDCI_pos_t_children"
-PDCI_node_t ** PDCI_pos_t_children(PDCI_node_t *self)
+#define WHATFN "PDC_pos_t_children"
+PDCI_node_t ** PDC_pos_t_children(PDCI_node_t *self)
 {
   PDC_pos_t *pos = (PDC_pos_t *) self->rep;
   PDCI_node_t **result;
@@ -172,8 +166,8 @@ PDCI_node_t ** PDCI_pos_t_children(PDCI_node_t *self)
 
 /* A loc_t has 2 children (b and e) */
 #undef WHATFN
-#define WHATFN "PDCI_loc_t_children"
-PDCI_node_t ** PDCI_loc_t_children(PDCI_node_t *self)
+#define WHATFN "PDC_loc_t_children"
+PDCI_node_t ** PDC_loc_t_children(PDCI_node_t *self)
 {
   PDC_loc_t *loc = (PDC_loc_t *) self->rep;
   PDCI_node_t **result;
@@ -187,8 +181,8 @@ PDCI_node_t ** PDCI_loc_t_children(PDCI_node_t *self)
 
 /* A base_pd has three children (pstate, errCode, loc) */
 #undef WHATFN
-#define WHATFN "PDCI_base_pd_children"
-PDCI_node_t ** PDCI_base_pd_children(PDCI_node_t *self)
+#define WHATFN "PDC_base_pd_children"
+PDCI_node_t ** PDC_base_pd_children(PDCI_node_t *self)
 {
   PDC_base_pd *pd = (PDC_base_pd *) self->rep;
   PDCI_node_t **result;
@@ -291,19 +285,19 @@ PDCI_sequenced_pd_vtable = {PDCI_sequenced_pd_children,
 			    0};
 
 const PDCI_vtable_t
-PDCI_base_pd_vtable = {PDC_base_pd_children,
-		       PDCI_error_typed_value,
-		       0};
+PDC_base_pd_vtable = {PDC_base_pd_children,
+		      PDCI_error_typed_value,
+		      0};
 
 const PDCI_vtable_t
-PDCI_loc_t_vtable = {PDC_loc_t_children,
-		     PDCI_error_typed_value,
-		     0};
+PDC_loc_t_vtable = {PDC_loc_t_children,
+		    PDCI_error_typed_value,
+		    0};
 
 const PDCI_vtable_t
-PDCI_pos_t_vtable = {PDC_pos_t_children,
-		     PDCI_error_typed_value,
-		     0};
+PDC_pos_t_vtable = {PDC_pos_t_children,
+		    PDCI_error_typed_value,
+		    0};
 
 const PDCI_vtable_t
 PDCI_Cstr_val_vtable = {PDCI_no_children,
