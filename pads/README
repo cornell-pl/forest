@@ -41,7 +41,7 @@ AT&T - Lucent split) collect many useful C routines in a
 single library called libast.  PADS uses this library, so you need
 to build it: 
 
-> gmake libast
+> gmake ast_lib
 
 (Before you issue this command, make sure INSTALLROOT has been set
 by one of the DO_SETENV scripts!)
