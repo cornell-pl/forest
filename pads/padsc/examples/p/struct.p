@@ -5,7 +5,7 @@ Pstruct test {
 };
 
 Precord Pstruct testtwo{
-  test header : header.id == 12;
+  test header;
   '|';
   Puint32 f : f == header.ts;   
 };

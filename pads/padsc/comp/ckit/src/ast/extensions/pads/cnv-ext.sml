@@ -1859,9 +1859,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 								  "does not have integer type."))
 					       val reportErrSs = 
 						     [P.assignS(P.dotX(modFieldX(ed,name), PT.Id errCode), 
-								PL.PDC_STRUCT_FIELD_ERR),
+								PL.PDC_USER_CONSTRAINT_VIOLATION),
 						      PL.getLocEndS(PT.Id pdc, P.addrX(locX), ~1)]
-						   @ reportStructErrorSs(PL.PDC_USER_CONSTRAINT_VIOLATION, false,locX)
+						   @ reportStructErrorSs(PL.PDC_STRUCT_FIELD_ERR, false,locX)
 						   @ [PL.userErrorS(PT.Id pdc,
 								    P.addrX(locX),
 								    P.dotX(modFieldX(ed,name), PT.Id errCode),
