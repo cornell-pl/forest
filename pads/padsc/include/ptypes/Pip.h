@@ -1,7 +1,4 @@
 /*@FILE Pip_app_1.tex Pip_app_2.tex Pip_app_3.tex Pip_app_4.tex Pip_app_5.tex Pip_app_6.tex Pip_app_7.tex Pip_app_8.tex Pip_app_9.tex Pip_app_10.tex Pip_app_11.tex Pip_app_12.tex Pip_app_13.tex Pip_app_14.tex*/
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 
 /*
  * Kathleen Fisher, Robert Gruber

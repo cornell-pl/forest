@@ -1,7 +1,4 @@
 /*@FILE Psb_int_app_1.tex Psb_int_app_2.tex Psb_int_app_3.tex Psb_int_app_4.tex Psb_int_app_5.tex Psb_int_app_6.tex Psb_int_app_7.tex Psb_int_app_8.tex Psb_int_app_9.tex Psb_int_app_10.tex Psb_int_app_11.tex Psb_int_app_12.tex Psb_int_app_13.tex Psb_int_app_14.tex Psb_int_app_15.tex Psb_int_app_16.tex Psb_int_app_17.tex Psb_int_app_18.tex Psb_int_app_19.tex Psb_int_app_20.tex Psb_int_app_21.tex Psb_int_app_22.tex Psb_int_app_23.tex Psb_int_app_24.tex Psb_int_app_25.tex Psb_int_app_26.tex Psb_int_app_27.tex Psb_int_app_28.tex Psb_int_app_29.tex Psb_int_app_30.tex Psb_int_app_31.tex Psb_int_app_32.tex Psb_int_app_33.tex Psb_int_app_34.tex Psb_int_app_35.tex Psb_int_app_36.tex*/
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 
 /*
  * Kathleen Fisher, Robert Gruber

@@ -1,6 +1,3 @@
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 /*
  * internal APIs, galax-pads
  * 

@@ -1,7 +1,4 @@
 /*@FILE Pchar_app_1.tex Pchar_app_2.tex Pchar_app_3.tex Pchar_app_4.tex Pchar_app_5.tex Pchar_app_6.tex Pchar_app_7.tex Pchar_app_8.tex Pchar_app_9.tex Pchar_app_10.tex Pchar_app_11.tex*/
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 
 /*
  * Kathleen Fisher, Robert Gruber

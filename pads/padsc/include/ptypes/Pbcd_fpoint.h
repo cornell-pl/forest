@@ -1,7 +1,4 @@
 /*@FILE Pbcd_fpoint_app_1.tex Pbcd_fpoint_app_2.tex Pbcd_fpoint_app_3.tex Pbcd_fpoint_app_4.tex Pbcd_fpoint_app_5.tex Pbcd_fpoint_app_6.tex Pbcd_fpoint_app_7.tex*/
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 
 /*
  * Kathleen Fisher, Robert Gruber

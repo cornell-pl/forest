@@ -1,7 +1,4 @@
 /*@FILE Pfloat_app_1.tex Pfloat_app_2.tex Pfloat_app_3.tex Pfloat_app_4.tex Pfloat_app_5.tex Pfloat_app_6.tex Pfloat_app_7.tex Pfloat_app_8.tex Pfloat_app_9.tex Pfloat_app_10.tex*/
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 
 /*
  * Kathleen Fisher, Robert Gruber

@@ -1,7 +1,4 @@
 /*@FILE Pb_int_app_1.tex Pb_int_app_2.tex Pb_int_app_3.tex Pb_int_app_4.tex Pb_int_app_5.tex Pb_int_app_6.tex Pb_int_app_7.tex Pb_int_app_8.tex*/
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 
 /*
  * Kathleen Fisher, Robert Gruber

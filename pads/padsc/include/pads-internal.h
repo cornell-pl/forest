@@ -1,6 +1,3 @@
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 /*
  * padc library interface -- internal functions
  * 

@@ -1,7 +1,4 @@
 /*@FILE Pcount_app_1.tex Pcount_app_2.tex Pcount_app_3.tex Pcount_app_4.tex Pcount_app_5.tex Pcount_app_6.tex Pcount_app_7.tex Pcount_app_8.tex*/
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 
 /*
  * Kathleen Fisher, Robert Gruber

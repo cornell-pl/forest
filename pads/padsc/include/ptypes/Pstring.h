@@ -1,7 +1,4 @@
 /*@FILE Pstring_app_1.tex Pstring_app_2.tex Pstring_app_3.tex Pstring_app_4.tex Pstring_app_5.tex Pstring_app_6.tex Pstring_app_7.tex Pstring_app_8.tex Pstring_app_9.tex Pstring_app_10.tex Pstring_app_11.tex Pstring_app_12.tex Pstring_app_13.tex Pstring_app_14.tex Pstring_app_15.tex Pstring_app_16.tex Pstring_app_17.tex Pstring_app_18.tex Pstring_app_19.tex Pstring_app_20.tex Pstring_app_21.tex Pstring_app_22.tex Pstring_app_23.tex Pstring_app_24.tex Pstring_app_25.tex Pstring_app_26.tex Pstring_app_27.tex Pstring_app_28.tex*/
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 
 /*
  * Kathleen Fisher, Robert Gruber

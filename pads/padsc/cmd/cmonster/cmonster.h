@@ -1,6 +1,3 @@
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 /*
  * Decls for impl of cmonster ('cookie monster') command
  *

@@ -1,7 +1,4 @@
 /*@FILE Pint_app_1.tex Pint_app_2.tex Pint_app_3.tex Pint_app_4.tex Pint_app_5.tex Pint_app_6.tex Pint_app_7.tex Pint_app_8.tex Pint_app_9.tex Pint_app_10.tex Pint_app_11.tex Pint_app_12.tex Pint_app_13.tex Pint_app_14.tex Pint_app_15.tex Pint_app_16.tex Pint_app_17.tex Pint_app_18.tex Pint_app_19.tex Pint_app_20.tex Pint_app_21.tex Pint_app_22.tex Pint_app_23.tex Pint_app_24.tex Pint_app_25.tex Pint_app_26.tex Pint_app_27.tex Pint_app_28.tex Pint_app_29.tex Pint_app_30.tex Pint_app_31.tex Pint_app_32.tex Pint_app_33.tex Pint_app_34.tex Pint_app_35.tex Pint_app_36.tex Pint_app_37.tex Pint_app_38.tex Pint_app_39.tex Pint_app_40.tex Pint_app_41.tex Pint_app_42.tex Pint_app_43.tex Pint_app_44.tex Pint_app_45.tex Pint_app_46.tex Pint_app_47.tex Pint_app_48.tex Pint_app_49.tex Pint_app_50.tex Pint_app_51.tex Pint_app_52.tex Pint_app_53.tex Pint_app_54.tex Pint_app_55.tex Pint_app_56.tex Pint_app_57.tex Pint_app_58.tex Pint_app_59.tex Pint_app_60.tex Pint_app_61.tex Pint_app_62.tex Pint_app_63.tex Pint_app_64.tex Pint_app_65.tex Pint_app_66.tex Pint_app_67.tex Pint_app_68.tex Pint_app_69.tex Pint_app_70.tex Pint_app_71.tex Pint_app_72.tex Pint_app_73.tex Pint_app_74.tex Pint_app_75.tex Pint_app_76.tex Pint_app_77.tex Pint_app_78.tex Pint_app_79.tex Pint_app_80.tex Pint_app_81.tex*/
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 
 /*
  * Kathleen Fisher, Robert Gruber

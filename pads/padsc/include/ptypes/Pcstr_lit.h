@@ -1,7 +1,3 @@
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
-
 /*
  * Kathleen Fisher, Robert Gruber
  * AT&T Labs Research
