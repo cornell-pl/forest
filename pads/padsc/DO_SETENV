@@ -1,8 +1,8 @@
 # source this to get gsf stuff into env variables
 
-setenv PATH `echo $PATH | sed -e 's|^[^:]*knb[^:]*:||g' -e 's|:/[^:]*knb[^:]*:|:|g' -e 's|:/[^:]*knb[^:]*$||g' -e 's|^[^:]*gsf[^:]*:||g' -e 's|:/[^:]*gsf[^:]*:|:|g' -e 's|:/[^:]*gsf[^:]*$||g'`
-setenv LD_LIBRARY_PATH `echo $LD_LIBRARY_PATH | sed -e 's|^[^:]*knb[^:]*:||g' -e 's|:/[^:]*knb[^:]*:|:|g' -e 's|:/[^:]*knb[^:]*$||g' -e 's|^[^:]*gsf[^:]*:||g' -e 's|:/[^:]*gsf[^:]*:|:|g' -e 's|:/[^:]*gsf[^:]*$||g'`
-setenv MANPATH `echo $MANPATH | sed -e 's|^[^:]*knb[^:]*:||g' -e 's|:/[^:]*knb[^:]*:|:|g' -e 's|:/[^:]*knb[^:]*$||g' -e 's|^[^:]*gsf[^:]*:||g' -e 's|:/[^:]*gsf[^:]*:|:|g' -e 's|:/[^:]*gsf[^:]*$||g'`
+setenv PATH `echo $PATH | sed -e 's|^[^:]*knb/arch[^:]*:||g' -e 's|:/[^:]*knb/arch[^:]*:|:|g' -e 's|:/[^:]*knb/arch[^:]*$||g' -e 's|^[^:]*gsf[^:]*:||g' -e 's|:/[^:]*gsf[^:]*:|:|g' -e 's|:/[^:]*gsf[^:]*$||g'`
+setenv LD_LIBRARY_PATH `echo $LD_LIBRARY_PATH | sed -e 's|^[^:]*knb/arch[^:]*:||g' -e 's|:/[^:]*knb/arch[^:]*:|:|g' -e 's|:/[^:]*knb/arch[^:]*$||g' -e 's|^[^:]*gsf[^:]*:||g' -e 's|:/[^:]*gsf[^:]*:|:|g' -e 's|:/[^:]*gsf[^:]*$||g'`
+setenv MANPATH `echo $MANPATH | sed -e 's|^[^:]*knb/arch[^:]*:||g' -e 's|:/[^:]*knb/arch[^:]*:|:|g' -e 's|:/[^:]*knb/arch[^:]*$||g' -e 's|^[^:]*gsf[^:]*:||g' -e 's|:/[^:]*gsf[^:]*:|:|g' -e 's|:/[^:]*gsf[^:]*$||g'`
 
 set gsfarch = `/home/gsf/bin/package`
 set gsfarchdir = /home/gsf/arch/$gsfarch
