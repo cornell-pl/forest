@@ -181,15 +181,16 @@ Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
   Pcase 16 : TXT_t(:rdlength:) TXT;
   Pdefault : Pa_string_FW(:rdlength:) unknown;
   }
-  // Want to check here that we consumed exactly rdlength octets
-};
+} Pwhere { Pparsecheck(fprintf(stderr,"unionEnd.offset=%x,unionBegin.offset=%x,rdlength=%x\n",unionEnd.offset,unionBegin.offset,rdlength)) &&
+  Pparsecheck(unionEnd.offset - unionBegin.offset == rdlength); }
+;
 
 Pstruct resource_record {
   domain_name              name;
   Psbh_uint16(:2:)         type;
   Psbh_uint16(:2:)         class;
   Psbh_uint32(:4:)         ttl;    /- should be limited to positive signed 32bit
-  Psbh_uint16(:2:)         rdlength;
+  Psbh_uint16(:2:)         rdlength : fprintf(stderr,"rdlength=%x\n",rdlength);
   rr_spec(:type,rdlength:) rdata;
 };
 
