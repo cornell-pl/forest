@@ -94,6 +94,15 @@ else
   endif
 endif
 
+set _is_pcre_lib_dir
+if (! $?PCRE_LIB_DIR) then
+  unset _is_pcre_lib_dir
+else
+  if ("$PCRE_LIB_DIR"x == x) then
+    unset _is_pcre_lib_dir
+  endif
+endif
+
 set _pads_status = OK
 
 if (! $?_pads_verbose) then
@@ -213,6 +222,9 @@ if ($_pads_status == "OK") then
   endif
   if (! $?_is_padsglx_home) then
     setenv PADSGLX_HOME /home/mff/pads-glx/api
+  endif
+  if (! $?_is_pcre_lib_dir) then
+    setenv PCRE_LIB_DIR /home/mff/pcre-4.5-rh9/lib
   endif
 
   setenv DYLD_LIBRARY_PATH `echo ${pads_lib_dir}:${ast_lib_dir}:${DYLD_LIBRARY_PATH} | $remove_dups`
