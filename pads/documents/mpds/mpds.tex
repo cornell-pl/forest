@@ -73,20 +73,20 @@ data stream.  Most type declarations in \padsl{} are analogous to type
 declarations in \C{}.
 \padsl{} has an extensible set of base types that
 specify how to read and verify atomic pieces of data such as ASCII
-32-bit integers (\cd{a_int32}) and binary bytes (\cd{b_int8}).
+32-bit integers (\cd{Pa_int32}) and binary bytes (\cd{Pb_int8}).
 Verification conditions for such base types include checking that the
 resulting number fits in the indicated space, \ie, 16-bits for
-\cd{a_int16}.  \padsl{} has 
-\kw{pstruct}s, \kw{punion}s, and \kw{parray}s to describe
+\cd{Pa_int16}.  \padsl{} has 
+\kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s to describe
 record-like structures, alternatives, and sequences, respectively.
 Each of these
 types can have an associated predicate that indicates whether a
 value calculated from the physical specification is indeed a legal
 value for the type.  For example, a predicate might require that two
-fields of a \kw{pstruct} are related or that the elements
+fields of a \kw{Pstruct} are related or that the elements
 of a sequence are in increasing order.  Programmers can specify such
 predicates using \padsl{} expressions or functions.
-\padsl{} \kw{typedef}s can be used
+\padsl{} \kw{Ptypedef}s can be used
 to define new types that add further constraints to existing types.
 
 In addition, \padsl{} types can be parameterized by values.
@@ -94,9 +94,9 @@ This mechanism
 serves both to reduce the number of base types and to permit the
 format of later portions of the data to depend upon earlier portions.
 For example, 
-the base type \cd{a_uint32_FW(:3:)} specifies an unsigned integer
+the base type \cd{Pa_uint32_FW(:3:)} specifies an unsigned integer
 physically represented by exactly 3 ASCII characters, while the type
-\cd{a_string(:' ':)} 
+\cd{Pa_string(:' ':)} 
 describes an ASCII string terminated by a space.  Parameters can be 
 used with compound types to specify the size of an array or which
 branch of a union should be taken.
@@ -115,15 +115,15 @@ requested URL, the HTTP version number; a response code; and the
 number of bytes returned.  A \padsl{} type describing the request
 portion is
 \begin{code}
-\kw{pstruct} http_request_t \{
-  '\\"'; http_method_t   meth;           /- Method used during request
-  ' ';  a_string(:' ':) req_uri;        /- Requested uri.
-  ' ';  http_v_t        version : checkVersion(version, meth);
-                                        /- HTTP version number of request 
+\kw{Pstruct} http_request_t \{
+  '\\"'; http_method_t    meth;           /- Method used during request
+  ' ';  Pa_string(:' ':) req_uri;        /- Requested uri.
+  ' ';  http_v_t         version : checkVersion(version, meth);
+                                         /- HTTP version number of request 
   '\\"';
 \};
 \end{code}
-This \kw{pstruct} uses (omitted) auxiliary types \cd{http_method_t} and
+This \kw{Pstruct} uses (omitted) auxiliary types \cd{http_method_t} and
 \cd{http_v_t} to describe
 the HTTP method and version formats, respectively.
 It uses character literals (\cd{'\\"'} and \cd{' '}) to consume
