@@ -628,7 +628,7 @@ structure CnvExt : CNVEXT = struct
 	      val tm        = "tm"
 	      val tloc      = "tloc"
 	      val tlen      = "tlen"
-	      val all       = "structLevel"
+	      val all       = PNames.structLevel
 	      val prefix    = "prefix"
 	      val what      = "what"
 	      val nst       = "nst"
@@ -1950,7 +1950,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      fun checkFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				     isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				     pred: pcexp option, comment: string option} = 
-			  (if name = PNames.pd orelse name = PNames.structLevel
+			  (if name = PNames.pd orelse name = all
 			       then PE.error ("Pstruct "^ structName ^" contains field with reserved name '"^name^"'.\n")  
 			   else (); 
 			   let val ty = P.makeTypedefPCT(lookupTy(pty, repSuf, #repname))
@@ -2415,7 +2415,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				val getEndLocSs = [PL.getLocEndS(PT.Id pads, P.addrX locX, ~1)]
 				val expr = PTSub.substExps (!subList) expr
 				val () = expEqualTy(expr, CTintTys, 
-						    fn s=> ("Post condition for pstruct "^
+						    fn s=> ("Pwhere clause for Pstruct "^
 							    name ^ " " ^
 							    "does not have integer type."))
 				val reportErrSs = 
@@ -2425,11 +2425,11 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 						      P.addrX(locX),
 						      fieldX(pd,errCode),
 						      readName,
-						      PT.String("Post condition for pstruct "^
+						      PT.String("Pwhere clause for Pstruct "^
 								name ^ " " ^
 								"violated."), [])]
 				val condSs = 
-				       [P.mkCommentS ("Checking post constraint for pstruct "^ name ^"."),
+				       [P.mkCommentS ("Checking Pwhere for Pstruct "^ name ^"."),
 					PT.IfThen(
                                            P.andX( PL.mTestSemCheckX(fieldX(m,all)), P.notX expr),
 					   PT.Compound reportErrSs)]
@@ -2448,7 +2448,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      val readFields = mungeFields genReadFull genReadBrief genReadMan fields  
 		                                                                    (* does type checking *)
 		      val (postLocSs, postCondSs) = genCheckPostConstraint postCond
-                      val readRecord = if isRecord  then genReadEOR (readName, reportStructErrorSs) () else []
+                      val readRecord = if isRecord then genReadEOR (readName, reportStructErrorSs) () else []
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val localDeclSs = List.map (P.varDeclS' o (fn(x,y) => (y,x))) localVars
 		      val bodyS = localDeclSs @ postLocSs @ readFields @ postCondSs @ readRecord
@@ -2735,11 +2735,12 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     val paramNames = #1(ListPair.unzip cParams)
                      val value = PNames.unionVal
 		     val tag = PNames.unionTag
+		     val all = PNames.unionLevel
 		     fun tgSuf s = s^"_tag"
 		     fun unSuf s = s^"_u"
-                     fun unionBranchX (base, name) = P.addrX(P.dotX(fieldX(base, value), PT.Id name))
+                     fun unionBranchX (base, name) = P.dotX(fieldX(base, value), PT.Id name)
+                     fun getUnionBranchX (base, name) = P.addrX(unionBranchX(base,name))
 			
-		     val () = case postCond of NONE => () | SOME e => PE.error "Pwhere clauses are not supported in Punions."
 
 		     (* Functions for walking over list of variants *)
 		     fun mungeVariant f b m (PX.Full fd) = f fd
@@ -2839,7 +2840,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 [(name,P.makeTypedefPCT(lookupTy (pty,mSuf,#mname)), NONE)]
 		     fun genMBrief e = []
 		     fun genMMan m = []
-		     val mFields = mungeVariants genMFull genMBrief genMMan variants
+		     val mFieldsNested = mungeVariants genMFull genMBrief genMMan variants
+		     val auxMFields    = [(all, PL.base_mPCT, NONE)]
+                     val mFields = auxMFields @ mFieldsNested
 		     val mFirstPCT = getFirstEMPCT mFields
 		     val mStructED = P.makeTyDefStructEDecl (mFields, mSuf name)
 		     val mPCT = P.makeTypedefPCT (mSuf name)			  
@@ -2899,7 +2902,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			      | ({isRecord=first,...}::xs) => 
 			           (if List.exists (fn {isRecord,diskSize,memChar,endian,
 							containsRecord,largeHeuristic,labels} => not (isRecord = first)) xs 
-				    then PE.error "All branches of union must terminate record if any branch does."
+				    then PE.error "All branches of Punion must terminate record if any branch does."
 				    else ())
 					
 		     val {diskSize,memChar,endian,isRecord=_,containsRecord,largeHeuristic, labels} = 
@@ -2926,7 +2929,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 in
 			     [(name,P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)), fullCommentOpt )]
 			 end
-		     fun genRepBrief e = (PE.error "Unions do not currently support brief fields.\n"; [])
+		     fun genRepBrief e = (PE.error "Punions do not currently support literal fields.\n"; [])
 		     val canonicalVariants = mungeVariants genRepFull genRepBrief genRepMan variants
 		     val unionPD = P.makeTyDefUnionEDecl(canonicalVariants, unSuf name)
 		     val unionDecls = cnvExternalDecl unionPD
@@ -2936,6 +2939,21 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     val canonicalStructED = P.makeTyDefStructEDecl (structFields, repSuf name)
 		     val (canonicalDecls, canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
                      val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
+
+                     (* Process where clause *)
+		     val wherePredXOpt = case postCond of NONE => NONE
+                         | SOME wherePred => 
+			    let val env = [(tag, tagPCT), (value, unionPCT)]
+				val subList = [(tag, fieldX(rep,tag)), (value, fieldX(rep, value))]
+				fun errMsg s = "Pwhere clause for Punion "^name^" has type "^s^". Expected type int."
+				val () = (pushLocalEnv();
+				          ignore(List.map insTempVar env);
+					  expEqualTy(wherePred, CTintTys, errMsg);
+					  popLocalEnv())
+				val predX = PTSub.substExps subList wherePred
+			    in
+				SOME predX
+			    end
 
                      (* Generate tag to string function *)
 		     val toStringEDs = [genEnumToStringFun(tgSuf name, tagPCT, tagFields)]
@@ -2974,7 +2992,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 					       PT.Expr(
 					           PT.Call(PT.Id (suf baseFunName),
 							   [PT.Id pads, 
-							    unionBranchX(var,name)])), 
+							    getUnionBranchX(var,name)])), 
 					       PT.Break])]
 					 end
 				   fun genCleanupBrief _ = []
@@ -3012,8 +3030,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 					       PT.Expr(
 						  PT.Call(PT.Id (nestedCopyFunName),
 							[PT.Id pads, 
-							 unionBranchX(dst, name),
-							 unionBranchX(src, name)])),
+							 getUnionBranchX(dst, name),
+							 getUnionBranchX(src, name)])),
 					       PT.Break])]
 				     end
 				     fun noop _ = []
@@ -3074,6 +3092,21 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 					  )]
 				 end
 
+                     val checkWhereSs = 
+                         case wherePredXOpt of NONE => []
+                         | SOME predX =>
+			     let val errorMsg = "Pwhere clause violation"
+				 val getEndLocSs = [PL.getLocEndS(PT.Id pads, P.addrX locX, ~1)]
+				 val reportErrSs = reportErrorSs([locS], locX, true, 
+								 PL.P_USER_CONSTRAINT_VIOLATION, true, readName, errorMsg, [])
+				                   @[P.assignS(PT.Id result, PL.P_ERROR)]
+			     in
+			     [P.mkCommentS "Checking Pwhere clause",
+			      PT.IfThen(P.andX(PL.mTestSemCheckX(fieldX(m,all)), P.notX predX),
+					PT.Compound reportErrSs)]
+
+			     end
+
                      fun readVariant(pred,name,args,readFieldName,foundSs,notFoundSs) = 
 			 let val constraintChkS = doConstraint(pred,name,foundSs,notFoundSs)
 			 in
@@ -3083,8 +3116,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				 PL.readFunChkX(
 				     PL.P_ERROR, readFieldName, PT.Id pads, 
 				     P.addrX(fieldX(m,name)), args, 
-				     unionBranchX(pd, name),
-				     unionBranchX(rep, name)),
+				     getUnionBranchX(pd, name),
+				     getUnionBranchX(rep, name)),
 				 notFoundSs,
 				 constraintChkS)]
 			 end
@@ -3153,7 +3186,6 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			                 [PT.Labeled(findEORSuf name, 
 						   PT.Compound (genReadEOR (readName, reportUnionErrorSs) ()))]
 				        else [])
-				     @ [PT.Return (PT.Id result)]
                      
 		     fun chkCaseLabel eOpt = 
 			 case eOpt of NONE => ()
@@ -3203,25 +3235,25 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				                     else readFields @ (genSwDefaultIfAbsent())
 				 val bodyS = PT.Switch(descriminator, PT.Compound augReadFields)
 			     in
-				 [PT.Compound (  [P.varDeclS(PL.toolErrPCT, result, PL.P_ERROR)] 
-					       @ deallocOldSpaceSs 
-                                               @ [locBS,
-						  bodyS,
-						  PT.Return (PT.Id result)])]
+				   [P.varDeclS(PL.toolErrPCT, result, PL.P_ERROR)] 
+				 @ deallocOldSpaceSs 
+				 @ [locBS, bodyS]
 			     end
 
                      fun buildReadFun () = 
-			 case descOpt of NONE => 
-			     let val readFields = mungeVariants genReadFull genReadBrief genReadMan
- 					           variants  (* does type checking *)
-				 val cleanupSs = genCleanupSs ("Failed to match any branch of union "^name^".",
-							       locES)
-			     in
-				 [PT.Compound ([P.varDeclS(PL.toolErrPCT, result, PL.P_ERROR),
-						locBS] 
-					       @ deallocOldSpaceSs @ readFields @ cleanupSs)]
-			     end
-                         | SOME descriminator => buildSwitchRead(descriminator)
+			 let val coreSs = 
+                               case descOpt of NONE => 
+			         let val readFields = mungeVariants genReadFull genReadBrief genReadMan variants  (* does type checking *)
+				     val cleanupSs = genCleanupSs ("Failed to match any branch of union "^name^".", locES)
+				 in
+				     [P.varDeclS(PL.toolErrPCT, result, PL.P_ERROR),locBS] 
+				     @ deallocOldSpaceSs @ readFields @ cleanupSs
+				 end
+			       | SOME descriminator => buildSwitchRead(descriminator)
+			     val bodySs = coreSs @ checkWhereSs @ [PT.Return (PT.Id result)]
+			 in
+			     [PT.Compound bodySs]
+			 end
 
                      (* -- Assemble read function union case *)
 		     val _ = pushLocalEnv()                                        (* create new scope *)
@@ -3248,7 +3280,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				                       | SOME e => [e]
 					 val fieldXs = case lookupPred pty of NONE => []
 				                       | SOME fieldPred => 
-								  [PT.Call(PT.Id fieldPred, [unionBranchX(rep,name)]@args)]
+								  [PT.Call(PT.Id fieldPred, [getUnionBranchX(rep,name)]@args)]
 					 val condX = P.andBools(predXs @ fieldXs)
 					 val aggS = [P.assignS(PT.Id agg, condX), PT.Break]
 				     in
@@ -3271,7 +3303,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 						  PT.DefaultLabel(setAggSs P.falseX)]
 			     val fieldConS = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound fieldConCases)]
 			     val aggDecl = P.varDeclS'(P.int, agg)
-			     val whereConS = case postCond of NONE => [] | SOME e => [P.assignS(PT.Id agg, e)]
+			     val whereConS = case wherePredXOpt of NONE => [] | SOME e => [P.assignS(PT.Id agg, e)]
 			     val constraintSs = fieldConS @ whereConS
 			 in
                               [aggDecl]
@@ -3322,7 +3354,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      fun genCase (name,pty, initSs, pdX) = 
 			  case lookupAcc(pty) of NONE => []
 			| SOME a => (let val funName = addSuf a
-					 val repX = unionBranchX(rep,name)
+					 val repX = getUnionBranchX(rep,name)
 				     in 
 					 [PT.CaseLabel(PT.Id name, 
 						       PT.Compound (initSs 
@@ -3334,7 +3366,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      fun genAccAddFull {pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool, 
 					 pred:pcexp option, comment} = 
-			  genCase (name,pty, [], unionBranchX(pd,name))
+			  genCase (name,pty, [], getUnionBranchX(pd,name))
 
 		      fun genAccAddBrief e = []
 		      fun genAccAddMan {decl, comment:string option} = 
@@ -3350,7 +3382,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 					   P.assignS(P.dotX(PT.Id tpd,PT.Id errCode),
 						     P.arrowX(PT.Id pd, PT.Id errCode))] 
 				       in
-					  genCase(name,pty,initSs,unionBranchX(pd,name))
+					  genCase(name,pty,initSs,getUnionBranchX(pd,name))
 				       end
 				  end
 			  in
@@ -3397,7 +3429,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			    in
 				[PT.CaseLabel(PT.Id name,
 				  PT.Compound(
-				     writeFieldSs(writeFieldName, args@[unionBranchX(pd,name),unionBranchX(rep,name)],true)
+				     writeFieldSs(writeFieldName, args@[getUnionBranchX(pd,name),getUnionBranchX(rep,name)],true)
                                    @ [PT.Break]))]
 			    end
 		      fun genWriteBrief e = []
@@ -3740,7 +3772,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 val modUpperX = PTSub.substExps subList upper
 			 fun errMsg which = (fn s => 
 					     (which^" bound for forall expression for array "^
-					      name ^" has type"^s^". Expected type int."))
+					      name ^" has type "^s^". Expected type int."))
 		     in
 			 pushLocalEnv();
 			 ignore(insTempVar(index,             P.int));

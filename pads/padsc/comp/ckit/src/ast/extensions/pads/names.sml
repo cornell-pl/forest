@@ -12,6 +12,7 @@ struct
   val elemBegin   = "eltBegin"    (* pd->loc.b  : Ppos_t *)
   val elemEnd     = "eltEnd"      (* pd->loc.e  : Ppos_t *)
   val structLevel = "structLevel"
+  val unionLevel  = "unionLevel"
 
   val m         = "m" 
   val pd        = "pd"
