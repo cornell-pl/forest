@@ -1171,10 +1171,12 @@ pTyParams:
 
 pActParamList:
    expr ([expr])
- | pActParamList COMMA expr ( expr :: pActParamList)
+ | PRE expr ([expr])
+ | expr COMMA pActParamList  ( expr :: pActParamList)
+ | PRE expr COMMA pActParamList  ( expr :: pActParamList)
 
 pOptActParams: ([])
- | LCOLON pActParamList RCOLON ( List.rev pActParamList )
+ | LCOLON pActParamList RCOLON ( pActParamList )
 
 
 pTypedefPredOpt :

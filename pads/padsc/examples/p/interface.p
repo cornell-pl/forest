@@ -1,4 +1,4 @@
-Precord Pstruct interface {
+Pstruct interface {
       Pstring(:'|':) network;                  /- VARCHAR (10)    NOT NULL
 '|';  Pstring(:'|':) router_name;              /- VARCHAR(14)     NOT NULL
 '|';  Pstring(:'|':) card;                     /- VARCHAR2(26)    NOT NULL
@@ -20,5 +20,6 @@ Precord Pstruct interface {
 '|';  Pstring(:'|':) framing;                  /- VARCHAR2(6)
 '|';  Pstring(:'|':) cdp;                      /- VARCHAR2(2)
 '|';  Pstring(:'|':) clock_si;                 /- VARCHAR2(2)
-'|';  Pstring_SE(:Peor:) dir_broadcast;           /- VARCHAR2(2)
+'|';  Pstring_SE(:Pre "/$/":) dir_broadcast;           /- VARCHAR2(2)
+'\n';
 };
