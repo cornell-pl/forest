@@ -3242,6 +3242,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  val elts = PNames.arrayElts
                  val internal = "_internal"
 		 val element = "element"
+		 val elt = "elt"
                  val array = "array"
                  val arrayDetail = "arrayDetail"
                  val neerr = "neerr"
@@ -3974,7 +3975,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                        PT.For(P.assignX(indexId,P.zero),
                                               P.ltX(indexId,fieldX(rep,length)),
                                               P.postIncX(indexId),
-					      macroNodeCall(returnName,P.plusX(indexId,P.intX 2),elemName,"elt",
+					      macroNodeCall(returnName,P.plusX(indexId,P.intX 2),elemName,elt,
 							     getFieldX(m,element),P.addrX(P.subX(edBufferX,indexId)),
                                      			     P.addrX(P.subX(edBufferX,indexId)),cnvName)),
 				       P.returnS (returnName)]
