@@ -31,13 +31,25 @@ if ($pads_home eq "") {
 }
 
 &docmd("mkdir -p $tmpdir");
-# this would normally be a checkout command
+# XXX this would normally be a checkout command
 # &docmd("cd $tmpdir; cvs -d $cvsroot export pads");
-# instead we do this (temporary hack):
+# XXX instead we do this (temporary hack):
 &docmd("cd $tmpdir; cp -r /home/gruber/pads pads");
+# XXX with export, will not need to get rid of CVS dirs
+my $cvstmp = &docmd("cd $tmpdir/pads; find . -name CVS");
+$cvstmp =~ s/\n/ /g;
+&docmd("cd $tmpdir/pads; /bin/rm -rf $cvstmp");
+
 &docmd("/bin/rm -rf $topdir");
 &docmd("mv $tmpdir/pads $topdir");
 &docmd("/bin/rm -rf $tmpdir");
+
+# replace ast-ast with special case
+&docmd("/bin/rm -rf $topdir/ast-ast");
+&docmd("mkdir -p $topdir/ast-ast/bin");
+&docmd("mkdir -p $topdir/ast-ast/lib/package/tgz");
+&docmd("cp $pads_home/scripts/release/*.tgz $topdir/ast-ast/lib/package/tgz/");
+&docmd("cp $pads_home/ast-ast/bin/package.cvs $topdir/ast-ast/bin/");
 
 my $release_tfiles = &docmd("cat $topdir/padsc/examples/tests/RELEASE_TESTS");
 my $all_tfiles = &docmd("cd $topdir/padsc/examples/tests; ls -d *.c");
@@ -112,13 +124,17 @@ foreach $f1 (split(/\s/, $all_pfiles)) {
 }
 
 # remove other unwanted dirs
-&docmd("/bin/rm -rf $topdir/documents $topdir/Notes $topdir/lib $topdir/padsc/examples/xml $topdir/padsc/libpglx $topdir/padsc/cmd $topdir/padsc/examples/NOTES $topdir/padsc/examples/cbtests $topdir/padsc/examples/copybook");
+&docmd("/bin/rm -rf $topdir/documents $topdir/Notes $topdir/padsc/examples/xml $topdir/padsc/libpglx $topdir/padsc/cmd $topdir/padsc/examples/NOTES $topdir/padsc/examples/cbtests $topdir/padsc/examples/copybook");
 
 # remove other unwanted files
-&docmd("cd $topdir/padsc/include; /bin/rm -f *pglx*");
+# need to keep pglx-codegen-macros.h, possibly some others
+# &docmd("cd $topdir/padsc/include; mv pglx-codegen-macros.h foo.h; /bin/rm -f *pglx*; mv foo.h pglx-codegen-macros.h");
 
 # other fixups
 &docmd("cd $topdir/padsc/examples/tests; mv GNUmakefile.release GNUmakefile");
+
+# make the tarball
+&docmd("cd $topdir/..; gtar cfz $topdir.tar.gz $topdir");
 
 exit 0;
 
