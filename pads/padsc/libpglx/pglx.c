@@ -94,8 +94,7 @@ const PDCI_vtable_t ty ## _vtable = {ty ## _children, \
 value ty ## _typed_value (PDCI_node_t *node) \
 { \
   /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
-  /* For now, raise exception containing the value. Exception string has format: */ \
-  /* "VAL: value"     */ \
+  /* For now, raise exception containing the value as as string. */ \
   ty          *r   = (ty*)node->rep; \
   PDC_base_pd *pd  = (PDC_base_pd*)node->pd; \
   PDC_base_pd  tpd; \
@@ -121,8 +120,7 @@ const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
 value ty ## _typed_value (PDCI_node_t *node) \
 { \
   /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
-  /* For now, raise exception containing the value. Exception string has format: */ \
-  /* "VAL: value"     */ \
+  /* For now, raise exception containing the value as a string. */ \
   ty          *r   = (ty*)node->rep; \
   PDC_base_pd *pd  = (PDC_base_pd*)node->pd; \
   PDC_base_pd  tpd; \
@@ -184,14 +182,20 @@ PDCI_node_t ** PDC_loc_t_children(PDCI_node_t *self)
 #define WHATFN "PDC_base_pd_children"
 PDCI_node_t ** PDC_base_pd_children(PDCI_node_t *self)
 {
-  PDC_base_pd *pd = (PDC_base_pd *) self->rep;
-  PDCI_node_t **result;
+  int            i = 0;
+  PDC_base_pd   *pd = (PDC_base_pd *) self->rep;
+  PDCI_node_t  **result;
+
   if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 3))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
-  PDCI_MK_TNODE(result[2], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN);
-  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN);
-  PDCI_MK_TNODE(result[1], &PDC_loc_t_vtable,      self, "loc",     &(pd->loc),     WHATFN);
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
+  if (pd->errCode >= 100) {
+    PDCI_MK_TNODE(result[i], &PDC_loc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
+  } else {
+    result[i] = 0; i++;
+  }
   return result;
 }
 
@@ -200,16 +204,22 @@ PDCI_node_t ** PDC_base_pd_children(PDCI_node_t *self)
 #define WHATFN "PDCI_structured_pd_children"
 PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
 {
-  PDCI_structured_pd *pd = (PDCI_structured_pd *) self->rep;
-  PDCI_node_t **result;
+  int                  i = 0;
+  PDCI_structured_pd  *pd = (PDCI_structured_pd *) self->rep;
+  PDCI_node_t        **result;
+
   if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 4))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[3], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN);
-  PDCI_MK_TNODE(result[1], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN);
-  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable,      self, "loc",     &(pd->loc),     WHATFN);
-  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN);
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
+  if (pd->errCode >= 100) {
+    PDCI_MK_TNODE(result[i], &PDC_loc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
+  } else {
+    result[i] = 0; i++;
+  }
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN); i++;
   return result;
 }
 
@@ -219,18 +229,24 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
 #define WHATFN "PDCI_sequenced_pd_children"
 PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
 {
-  PDCI_sequenced_pd *pd = (PDCI_sequenced_pd *) self->rep;
-  PDCI_node_t **result;
+  int                 i = 0;
+  PDCI_sequenced_pd  *pd = (PDCI_sequenced_pd *) self->rep;
+  PDCI_node_t       **result;
+
   if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 6))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[3], &PDC_uint32_val_vtable, self, "pstate",   &(pd->pstate),     WHATFN);
-  PDCI_MK_TNODE(result[1], &PDC_uint32_val_vtable, self, "errCode",  &(pd->errCode),    WHATFN);
-  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable,      self, "loc",      &(pd->loc),        WHATFN);
-  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN);
-  PDCI_MK_TNODE(result[4], &PDC_uint32_val_vtable, self, "neerr",    &(pd->neerr),      WHATFN);
-  PDCI_MK_TNODE(result[5], &PDC_uint32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN);
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",   &(pd->pstate),     WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "errCode",  &(pd->errCode),    WHATFN); i++;
+  if (pd->errCode >= 100) {
+    PDCI_MK_TNODE(result[i], &PDC_loc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
+  } else {
+    result[i] = 0; i++;
+  }
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "neerr",    &(pd->neerr),      WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN); i++;
   return result;
 }
 
@@ -262,10 +278,9 @@ value PDCI_Cstr_typed_value(PDCI_node_t *node)
 {
   const char * s = (const char *)node->rep;
   /* XXX_TODO: invoke Galax-provided macro for producing a value containing a Galax string */
-  /* For now, raise exception with the value */
-  /* encoded as a string of the form   "VAL: <value>"   */
+  /* For now, raise exception containing the value as a string. */
   sfstrset(node->pdc->tmp1, 0);
-  if (-1 == sfprintf(node->pdc->tmp1, "VAL: %s", s)) {
+  if (-1 == sfprintf(node->pdc->tmp1, "%s", s)) {
     failwith("UNEXPECTED_IO_FAILURE in PDCI_Cstr_typed_value");
   }
   failwith(sfstruse(node->pdc->tmp1));
@@ -346,8 +361,7 @@ PDCI_IMPL_BASE_VAL_VT(PDC_uint64);
 value PDC_uint32_typed_value (PDCI_node_t *node)
 {
   /* XXX_TODO: invoke Galax-provided macro for producing a value containing an unsigned int */
-  /* For now, raise exception containing the value. Exception string has format: */
-  /* "VAL: value"     */
+  /* For now, raise exception containing the value as a string */
   PDC_uint32  *r   = (PDC_uint32*)node->rep;
   PDC_base_pd *pd  = (PDC_base_pd*)node->pd;
   PDC_base_pd  tpd;
