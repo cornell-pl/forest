@@ -6,33 +6,38 @@ struct
                       emname   : Atom.atom,
                       edname   : Atom.atom,
   		      readname : Atom.atom,
-		      scanname : Atom.atom option}
+		      scanname : Atom.atom option,
+		      accname  : Atom.atom option}
 
    fun printEntry {padsname : Atom.atom, 
 		      repname  : Atom.atom, 
                       emname   : Atom.atom,
                       edname   : Atom.atom,
   		      readname : Atom.atom,
-		      scanname : Atom.atom option} = (
+		      scanname : Atom.atom option,
+		      accname  : Atom.atom option} = (
     (print (String.concat["padsname = ", (Atom.toString padsname), "\n"]));
     (print (String.concat["repname = ", Atom.toString repname, "\n"]));
     (print (String.concat["emname = ", Atom.toString emname, "\n"]));
     (print (String.concat["edname = ", Atom.toString edname, "\n"]));
     (print (String.concat["readname = ", Atom.toString readname, "\n"]));
-    (print (String.concat["scanname = ", case scanname of NONE => "-" | SOME n =>  Atom.toString n, "\n\n"])))
+    (print (String.concat["scanname = ", case scanname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
+    (print (String.concat["accname = ", case accname of NONE => "-" | SOME n =>  Atom.toString n, "\n\n"])))
 
    fun processLine s = 
        if String.isPrefix "#" s then [] 
        else 
 	   let val fields = String.tokens (fn c => c = #" " orelse c = #"\n") s
-	       val r = if (List.length fields = 6) then 
+	       val r = if (List.length fields >=7 ) then 
 	               [{padsname = Atom.atom(List.nth(fields,0)),
 			 repname  = Atom.atom(List.nth(fields,1)),
 			 emname   = Atom.atom(List.nth(fields,2)),
 			 edname   = Atom.atom(List.nth(fields,3)),
 			 readname = Atom.atom(List.nth(fields,4)),
 			 scanname = if List.nth(fields,5) = "-" then NONE
-				    else SOME (Atom.atom(List.nth(fields,5)))}]
+				    else SOME (Atom.atom(List.nth(fields,5))),
+			 accname  = if List.nth(fields,6) = "-" then NONE
+				    else SOME (Atom.atom(List.nth(fields,6)))}]
 		       else []
 	   in
 	       r
