@@ -388,17 +388,6 @@ define RegressInput
   echo " "; )
 endef
 
-define RegressInput
-(echo " "; echo "Performing $@"; \
-  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
-  $(RM) tmp/tmp.$<$$suf; \
-  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
-  echo "(./$< $$args < $$input 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
-  (./$< $$args < $$input 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
-  echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
-  echo " "; )
-endef
-
 define RegressInputPP
 (echo " "; echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
@@ -474,6 +463,16 @@ ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule RWXML_D"
 endif
 	@$(CCExec_DYNAMIC_D)
+
+$(GEN_DIR)/%_expanded.c: $(GEN_DIR)/%.c
+	$(MKSRC_D) $< | $(PADS_HOME)/scripts/addnl.pl > $@
+
+test_%_dd: $(GEN_DIR)/%_expanded.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule R_DD"
+endif
+	@$(CCExec_DYNAMIC_D)
+
 endif # REGRESS_TESTS / _d rule
 
 ifdef BuildPADSLib

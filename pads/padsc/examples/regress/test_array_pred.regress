@@ -1,7 +1,7 @@
-Data file = /dev/stdin
+Data file = ../../data/array_pred
 warning: P_open: Installing default IO discipline : newline-terminated records
 entry_read returned array of length: 5
-warning: Error [in seq_t_read]: record 2 byte 9 : Missing terminator.
+warning: Error [in seq_t_read]: record 2 byte 9 : Missing terminator
 [record 2]1|2|5|14>>><<<
 entry_read returned: error
 warning: Error [in seq_t_read]: at record 3 from byte 7 to byte 10: Unexpected extra data before array element terminator 

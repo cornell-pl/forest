@@ -1,5 +1,4 @@
-// data file is "../../data/punion"
-
+#define DEF_INPUT_FILE "../../data/punion"
 #define EXTRA_GOOD_READ_CODE do { \
   error(2, "test2_read returned: id %s", test2_tag2str(rep.tag)); \
 } while (0)

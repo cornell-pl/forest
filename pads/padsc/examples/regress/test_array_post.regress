@@ -1,16 +1,16 @@
-Data file = /dev/stdin
+Data file = ../../data/array_post
 warning: P_open: Installing default IO discipline : newline-terminated records
 intList_read returned array of length: 4
-warning: Error [in intList_read]: record 2 byte 1 : Pparsecheck constraint for array intList violated.
+warning: Error [in intList_read]: record 2 byte 1 : Pparsecheck constraint for array intList violated
 [record 2]>>>4|6|8|10<<<
 intList_read returned: error
-warning: Error [in intList_read]: record 3 byte 1 : Pforall constraint for array intList violated.
+warning: Error [in intList_read]: record 3 byte 1 : Pforall constraint for array intList violated
 [record 3]>>>4|2|10|1500<<<
 intList_read returned: error
-warning: Error [in intList_read]: record 4 byte 1 : Pwhere constraint for array intList violated.
+warning: Error [in intList_read]: record 4 byte 1 : Pwhere constraint for array intList violated
 [record 4]>>>0|24|34|46<<<
 intList_read returned: error
-warning: Error [in intList_read]: record 5 byte 1 : Pforall constraint for array intList violated.
+warning: Error [in intList_read]: record 5 byte 1 : Pforall constraint for array intList violated
 [record 5]>>>2|3|34|466<<<
 intList_read returned: error
 *****************************************************************************************************

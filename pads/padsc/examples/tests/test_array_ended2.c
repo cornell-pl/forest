@@ -1,3 +1,5 @@
+#define DEF_INPUT_FILE "../../data/array_ended2"
+
 #define EXTRA_GOOD_READ_CODE do { \
       error(2, "entry_read returned array first of length: %d", rep.first.length); \
       error(2, "entry_read returned array second  of length: %d", rep.second.length); \

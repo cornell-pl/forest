@@ -1,3 +1,5 @@
+#define DEF_INPUT_FILE "../../data/array_pred"
+
 #define EXTRA_GOOD_READ_CODE do { \
   error(2, "entry_read returned array of length: %d", rep.seq.length); \
 } while (0)

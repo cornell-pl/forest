@@ -1,18 +1,19 @@
-Data file = /dev/stdin
+Data file = ../../data/pswitch
 warning: P_open: Installing default IO discipline : newline-terminated records
-warning: Error [in branches_read]: record 3 byte 2 : Failed to match any branch of branches.
+warning: Error [in branches_read]: record 3 byte 2 : Switch value failed to match any branch of switched union branches
 [record 3]3>>><<<
 read returned error
-warning: Error [in branches_read]: record 4 byte 2 : Failed to match branch number.
+warning: Error [in branches_read]: record 4 byte 2 : User constraint check failed for branch with tag number
 [record 4]1>>> 23<<<
+read returned error
 *****************************************************************************************************
 <top> : struct choice
 *****************************************************************************************************
 Errors: total vals:          4
-  Characterizing errors:  min 0 max 1 avg 0.250
+  Characterizing errors:  min 0 max 1 avg 0.500
     => distribution of top 2 values out of 2 distinct values:
-        val:          0 count:          3 pcnt-of-total-vals:   75.000
-        val:          1 count:          1 pcnt-of-total-vals:   25.000
+        val:          0 count:          2 pcnt-of-total-vals:   50.000
+        val:          1 count:          2 pcnt-of-total-vals:   50.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          4 pcnt-of-total-vals:  100.000
 [Describing each field of <top>]
@@ -50,16 +51,14 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 =====================================================================================================
 <top>.b.name : string
 =====================================================================================================
-String lengths: good vals:          2    bad vals:          0    pcnt-bad:    0.000
-  Characterizing lengths:  min 0 max 6 avg 3.000
-    => distribution of top 2 values out of 2 distinct values:
-        val:          0 count:          1  pcnt-of-good-vals:   50.000
-        val:          6 count:          1  pcnt-of-good-vals:   50.000
+String lengths: good vals:          1    bad vals:          0    pcnt-bad:    0.000
+  Characterizing lengths:  min 6 max 6 avg 6.000
+    => distribution of top 1 values out of 1 distinct values:
+        val:          6 count:          1  pcnt-of-good-vals:  100.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          2  pcnt-of-good-vals:  100.000
+        SUMMING         count:          1  pcnt-of-good-vals:  100.000
   Characterizing strings:
-    => distribution of top 2 strings out of 2 distinct strings:
-        val: ""       count:          1  pcnt-of-good-vals:   50.000
-        val: " hello" count:          1  pcnt-of-good-vals:   50.000
+    => distribution of top 1 strings out of 1 distinct strings:
+        val: " hello" count:          1  pcnt-of-good-vals:  100.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING       count:          2  pcnt-of-good-vals:  100.000
+        SUMMING       count:          1  pcnt-of-good-vals:  100.000

@@ -44,6 +44,7 @@ do { \
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#define DEF_INPUT_FILE "../../data/ex_data.ai"
 #define PADS_TY(suf) http_clf_t ## suf
 #include "ai.h"
 #include "template/accum_report.h"

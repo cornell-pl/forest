@@ -1,4 +1,4 @@
-Data file = /dev/stdin
+Data file = ../../data/array_pred2
 warning: P_open: Installing default IO discipline : newline-terminated records
 offset = 1
 offset = 3
@@ -8,7 +8,7 @@ entry_read returned array of length: 5
 offset = 1
 offset = 3
 offset = 5
-warning: Error [in seq_t_read]: record 2 byte 9 : Missing terminator.
+warning: Error [in seq_t_read]: record 2 byte 9 : Missing terminator
 [record 2]1|2|5|14>>><<<
 entry_read returned: error
 offset = 1

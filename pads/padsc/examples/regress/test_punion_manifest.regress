@@ -1,4 +1,4 @@
-Data file = /dev/stdin
+Data file = ../../data/union_manifest
 warning: P_open: Installing default IO discipline : newline-terminated records
 *****************************************************************************************************
 <top> : struct str2

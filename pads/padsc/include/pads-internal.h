@@ -118,6 +118,15 @@ void PDCI_IODISC_4P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, voi
 void PDCI_READFN_WIDTH_CHECK(const char *whatfn, const char *elt_descr, size_t width);
 void PDCI_READFN_WIDTH_CHECK_ZERO_OK(const char *whatfn, const char *elt_descr, size_t width);
 
+void PDCI_IO_GETPOS(P_t *pads, Ppos_t pos);
+void PDCI_IO_GETPOS_PLUS(P_t *pads, Ppos_t pos, size_t k);
+void PDCI_IO_GETPOS_MINUS(P_t *pads, Ppos_t pos, size_t k);
+void PDCI_IO_BEGINLOC(P_t *pads, Ploc_t loc);
+void PDCI_IO_ENDLOC_SPAN0(P_t *pads, Ploc_t loc);
+void PDCI_IO_ENDLOC_SPAN1(P_t *pads, Ploc_t loc);
+void PDCI_IO_GETLOC_SPAN0(P_t *pads, Ploc_t loc);
+void PDCI_IO_GETLOC_SPAN1(P_t *pads, Ploc_t loc);
+
 Pinv_valfn PDCI_GET_INV_VALFN(P_t *, const char *);
 
 void PDCI_fill_mask(Pbase_m* mask, Pbase_m m, size_t mask_size);
@@ -135,37 +144,65 @@ typedef ssize_t (PDCI_write_xml_2buf_fn)(P_t *pads, Pbyte *buf, size_t buf_len, 
 
 void PDCI_TYPEDEF_READ(const char *fn_nm, Perror_t base_read_call);
 void PDCI_TYPEDEF_READ_REC(const char *fn_nm, Perror_t base_read_call);
-void PDCI_TYPEDEF_READ_USERCHECK(const char *fn_nm, Perror_t base_read_call, int usercheck);
-void PDCI_TYPEDEF_READ_USERCHECK_REC(const char *fn_nm, Perror_t base_read_call, int usercheck);
+void PDCI_TYPEDEF_READ_CHECK(const char *fn_nm, Perror_t base_read_call, int usercheck);
+void PDCI_TYPEDEF_READ_CHECK_REC(const char *fn_nm, Perror_t base_read_call, int usercheck);
 
+void PDCI_UNION_READ_SETUP_STAT(const char *fn_nm, int the_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup, void *pd_init);
 void PDCI_UNION_READ_SETUP(const char *fn_nm, int the_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup, void *pd_init);
-void PDCI_UNION_READ_MANIFEST_STATIC(int the_tag);
-void PDCI_UNION_READ_MANIFEST_FIRST(int the_tag);
-void PDCI_UNION_READ_MANIFEST_NEXT(int the_tag, void *rep_init, void *pd_init);
-void PDCI_UNION_READ_STATIC(const char *fn_nm, int the_tag, Perror_t read_call);
-void PDCI_UNION_READ_FIRST(const char *fn_nm, int the_tag, void *rep_cleanup, void *pd_cleanup, Perror_t read_call);
-void PDCI_UNION_READ_NEXT(const char *fn_nm, int the_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup,
-			  void *pd_init, Perror_t read_call);
-void PDCI_UNION_READ_LAST(const char *fn_nm, int last_tag, void *rep_init, void *pd_init, Perror_t read_call);
 
-void PDCI_UNION_READ_MANIFEST_STATIC_USERCHECK(int the_tag, int usercheck);
-void PDCI_UNION_READ_MANIFEST_FIRST_USERCHECK(int the_tag, int usercheck);
-void PDCI_UNION_READ_MANIFEST_NEXT_USERCHECK(int the_tag, void *rep_init, void *pd_init, int usercheck);
-void PDCI_UNION_READ_STATIC_USERCHECK(const char *fn_nm, int the_tag, Perror_t read_call, int usercheck);
-void PDCI_UNION_READ_FIRST_USERCHECK(const char *fn_nm, int the_tag, void *rep_cleanup, void *pd_cleanup, Perror_t read_call, int usercheck);
-void PDCI_UNION_READ_NEXT_USERCHECK(const char *fn_nm, int the_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup,
-				    void *pd_init, Perror_t read_call, int usercheck);
-void PDCI_UNION_READ_LAST_USERCHECK(const char *fn_nm, int last_tag, void *rep_init, void *pd_init, Perror_t read_call, int usercheck);
+#define PDCI_UNION_READ_ARGS const char *fn_nm, int the_tag, \
+                             void *rep_cleanup, void *rep_init, \
+                             void *pd_cleanup, void *pd_init, Perror_t read_call
 
-void PDCI_UNION_READ_WHERE_CHECK_USERCHECK(const char *fn_nm, int usercheck, int usercheck);
-void PDCI_UNION_READ_FAILED_USERCHECK(const char *fn_nm, const char *nm, int err_tag, int usercheck);
+void PDCI_UNION_READ_STAT        (PDCI_UNION_READ_ARGS);
+void PDCI_UNION_READ_FIRST       (PDCI_UNION_READ_ARGS);
+void PDCI_UNION_READ_NEXT        (PDCI_UNION_READ_ARGS);
+void PDCI_UNION_READ_LAST        (PDCI_UNION_READ_ARGS);
 
-void PDCI_SWUNION_READ_STATIC(const char *fn_nm, int the_tag, int err_tag, Perror_t read_call);
-void PDCI_SWUNION_READ(const char *fn_nm, int the_tag, int err_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup,
-		       void *pd_init, Perror_t read_call);
-void PDCI_SWUNION_READ_MANIFEST_STATIC(int the_tag);
-void PDCI_SWUNION_READ_MANIFEST(const char *fn_nm, int the_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup, void *pd_init);
-void PDCI_SWUNION_DO_USERCHECK(const char *fn_nm, int the_tag, int err_tag, Perror_t usercheck);
+void PDCI_UNION_READ_STAT_CHECK  (PDCI_UNION_READ_ARGS, int usercheck);
+void PDCI_UNION_READ_FIRST_CHECK (PDCI_UNION_READ_ARGS, int usercheck);
+void PDCI_UNION_READ_NEXT_CHECK  (PDCI_UNION_READ_ARGS, int usercheck);
+void PDCI_UNION_READ_LAST_CHECK  (PDCI_UNION_READ_ARGS, int usercheck);
+
+#define PDCI_UNION_READ_MAN_PRE_ARGS const char *fn_nm, int the_tag, void *rep_init, void *pd_init
+
+void PDCI_UNION_READ_MAN_STAT_PRE       (PDCI_UNION_READ_MAN_PRE_ARGS);
+void PDCI_UNION_READ_MAN_FIRST_PRE      (PDCI_UNION_READ_MAN_PRE_ARGS);
+void PDCI_UNION_READ_MAN_NEXT_PRE       (PDCI_UNION_READ_MAN_PRE_ARGS);
+
+void PDCI_UNION_READ_MAN_STAT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
+void PDCI_UNION_READ_MAN_FIRST_VIRT_PRE (PDCI_UNION_READ_MAN_PRE_ARGS);
+void PDCI_UNION_READ_MAN_NEXT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
+
+void PDCI_UNION_READ_MAN_STAT_POST       (const char *fn_nm);
+void PDCI_UNION_READ_MAN_POST            (const char *fn_nm);
+void PDCI_UNION_READ_MAN_STAT_POST_CHECK (const char *fn_nm, void *rep_cleanup, void *pd_cleanup, int usercheck);
+void PDCI_UNION_READ_MAN_POST_CHECK      (const char *fn_nm, void *rep_cleanup, void *pd_cleanup, int usercheck);
+
+void PDCI_UNION_READ_FAILED      (const char *fn_nm, const char *nm, int err_tag);
+void PDCI_UNION_READ_WHERE_CHECK (const char *fn_nm, int usercheck);
+
+#define PDCI_SWUNION_READ_ARGS const char *fn_nm, int the_tag, int err_tag, \
+                               void *rep_cleanup, void *rep_init, \
+                               void *pd_cleanup, void *pd_init, Perror_t read_call
+
+void PDCI_SWUNION_READ_STAT (PDCI_SWUNION_READ_ARGS);
+void PDCI_SWUNION_READ      (PDCI_SWUNION_READ_ARGS);
+
+#define PDCI_SWUNION_READ_MAN_PRE_ARGS const char *fn_nm, int the_tag, \
+                                       void *rep_cleanup, void *rep_init, \
+                                       void *pd_cleanup, void *pd_init
+
+void PDCI_SWUNION_READ_MAN_STAT_PRE      (PDCI_SWUNION_READ_MAN_PRE_ARGS);
+void PDCI_SWUNION_READ_MAN_STAT_VIRT_PRE (PDCI_SWUNION_READ_MAN_PRE_ARGS);
+void PDCI_SWUNION_READ_MAN_PRE           (PDCI_SWUNION_READ_MAN_PRE_ARGS);
+void PDCI_SWUNION_READ_MAN_VIRT_PRE      (PDCI_SWUNION_READ_MAN_PRE_ARGS);
+
+void PDCI_SWUNION_READ_POST_CHECK  (const char *fn_nm, int the_tag, int err_tag, int usercheck);
+void PDCI_SWUNION_READ_FAILED      (const char *fn_nm, const char *nm, int err_tag);
+void PDCI_SWUNION_READ_WHERE_CHECK (const char *fn_nm, int usercheck);
+
+void PDCI_FIND_EOR(const char *fn_nm);
 
 void PDCI_WRITE2IO_USE_WRITE2BUF(const char *fn_nm, ssize_t write2buf_call);
 
@@ -543,6 +580,133 @@ do { \
 
 #endif /* !NDEBUG */
 
+#define PDCI_IO_GETPOS(pads, pos) \
+do { \
+  PDCI_stkElt_t    *tp        = &((pads)->stack[(pads)->top]); \
+  Pio_elt_t        *elt       = tp->elt; \
+ \
+  (pos).num = elt->num; \
+  if (elt->len) { \
+    size_t pos_offset = elt->len - tp->remain; \
+    (pos).byte        = pos_offset + 1; \
+    (pos).offset      = elt->offset + pos_offset; \
+  } else { \
+    (pos).byte        = 0; \
+    (pos).offset      = elt->offset; \
+  } \
+} while (0)
+
+/* k must be > 0 */
+#define PDCI_IO_GETPOS_PLUS(pads, pos, k) \
+do { \
+  PDCI_stkElt_t   *tp        = &(pads->stack[pads->top]); \
+  Pio_elt_t       *elt       = tp->elt; \
+  size_t           remain    = tp->remain; \
+  size_t           offset    = k; \
+  /* invariant: remain should be in range [1, elt->len] */ \
+  if (remain > offset) { \
+    remain -= offset; \
+  } else { \
+    while (1) { \
+      offset -= remain; \
+      elt = elt->next; \
+      if (elt == pads->head) break; \
+      remain = elt->len; \
+      /* now at first byte of next elt */ \
+      if (remain > offset) { \
+	remain -= offset; \
+	break; \
+      } \
+    } \
+  } \
+  /* either we hit pads->head or we got to the proper spot */ \
+  if (elt == pads->head) { \
+    (pos).num         =  0; \
+    (pos).byte        =  0; \
+    (pos).offset      = -1; \
+    P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_PLUS called with bad offset"); \
+  } else { \
+    size_t pos_offset = elt->len - remain; \
+    (pos).num         = elt->num; \
+    (pos).byte        = pos_offset + 1; \
+    (pos).offset      = elt->offset + pos_offset; \
+  } \
+} while (0)
+
+/* k must be > 0 */
+#define PDCI_IO_GETPOS_MINUS(pads, pos, k) \
+do { \
+  PDCI_stkElt_t    *tp        = &(pads->stack[pads->top]); \
+  Pio_elt_t        *elt       = tp->elt; \
+  size_t            remain    = tp->remain; \
+  size_t            offset    = k; \
+  size_t            avail; \
+  /* invariant: remain should be in range [1, elt->len] */ \
+  avail = elt->len - remain; \
+  if (avail >= offset) { \
+    remain += offset; \
+  } else { \
+    while (1) { \
+      offset -= avail; /* note offset still > 0 */ \
+      elt = elt->prev; \
+      if (elt == pads->head) break; \
+      if (!elt->len) { avail = 0; continue; } \
+      remain = 1; \
+      offset--; \
+      avail = elt->len - 1; \
+      /* now at last byte of prev elt */ \
+      if (avail >= offset) { \
+	remain += offset; \
+	break; \
+      } \
+    } \
+  } \
+  /* either we hit pads->head or we got to the proper spot */ \
+  if (elt == pads->head) { \
+    (pos).num         =  0; \
+    (pos).byte        =  0; \
+    (pos).offset      = -1; \
+    P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_MINUS called with bad offset"); \
+  } else { \
+    size_t pos_offset = elt->len - remain; \
+    (pos).num         = elt->num; \
+    (pos).byte        = pos_offset + 1; \
+    (pos).offset      = elt->offset + pos_offset; \
+  } \
+} while (0)
+
+#define PDCI_IO_BEGINLOC(pads, loc) PDCI_IO_GETPOS(pads, (loc).b)
+#define PDCI_IO_ENDLOC(pads, loc)   PDCI_IO_GETPOS(pads, (loc).e)
+#define PDCI_IO_ENDLOC_MINUS1(pads, loc)   PDCI_IO_GETPOS_MINUS(pads, (loc).e, 1)
+
+#define PDCI_IO_ENDLOC_SPAN0(pads, loc) \
+do { \
+  (loc).e = (loc).b; \
+  if ((loc).e.byte) { \
+    ((loc).e.byte)--; \
+    if ((loc).e.offset > 0) { \
+      ((loc).e.offset)--; \
+    } \
+  } \
+} while (0)
+
+#define PDCI_IO_ENDLOC_SPAN1(pads, loc) \
+do { \
+  (loc).e = (loc).b; \
+} while (0)
+
+#define PDCI_IO_GETLOC_SPAN0(pads, loc) \
+do { \
+  PDCI_IO_BEGINLOC(pads, loc); \
+  PDCI_IO_ENDLOC_SPAN0(pads, loc); \
+} while (0)
+
+#define PDCI_IO_GETLOC_SPAN1(pads, loc) \
+do { \
+  PDCI_IO_BEGINLOC(pads, loc); \
+  PDCI_IO_ENDLOC_SPAN1(pads, loc); \
+} while (0)
+
 #define PDCI_GET_INV_VALFN(pads,type_name) \
   (pads->disc->inv_valfn_map ? P_get_inv_valfn(pads, pads->disc->inv_valfn_map, type_name) : 0)
 
@@ -561,11 +725,11 @@ do { \
 do { \
   Pbase_pd tpd; \
   size_t bytes_skipped; \
-  P_io_getLocB (pads, &(tpd.loc), 0); \
+  PDCI_IO_BEGINLOC(pads, tpd.loc); \
   if (P_OK == P_io_next_rec (pads, &bytes_skipped)) { \
     if (bytes_skipped) { \
       if (P_spec_level (pads)) return P_ERR; \
-      P_io_getLocE (pads, &(tpd.loc), -1); \
+      PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc); \
       if (!P_PS_isPanic (pd)) { \
 	PDCI_report_err (pads, P_LEV_WARN, &(tpd.loc), P_EXTRA_BEFORE_EOR, fn_nm, "Unexpected data before EOR"); \
 	if (0==(pd->nerr)) { \
@@ -581,7 +745,7 @@ do { \
   } else { \
     if (P_spec_level (pads)) return P_ERR; \
     P_PS_unsetPanic (pd); \
-    P_io_getLocE (pads, &(tpd.loc), -1); \
+    PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc); \
     PDCI_report_err (pads, P_LEV_WARN, &(tpd.loc), P_EOF_BEFORE_EOR, fn_nm, "Found EOF when searching for EOR"); \
     if (0==(pd->nerr)) { \
       pd->errCode = P_EOF_BEFORE_EOR; \
@@ -596,7 +760,7 @@ do { \
 do { \
   (pd->nerr)++; \
   pd->errCode = ecode; \
-  P_io_getLocE (pads, &(pd->loc), -1); \
+  PDCI_IO_ENDLOC_MINUS1(pads, pd->loc); \
   PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, msg); \
 } while (0)
 
@@ -619,7 +783,7 @@ do { \
 } while (0)
 
 /* invoke this macro, return (pd->nerr == 0) ? P_OK : P_ERR */
-#define PDCI_TYPEDEF_READ_USERCHECK(fn_nm, base_read_call, usercheck) \
+#define PDCI_TYPEDEF_READ_CHECK(fn_nm, base_read_call, usercheck) \
 do { \
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep); \
   if (P_OK == (base_read_call) && P_Test_SemCheck (m->user) && (!(usercheck))) { \
@@ -628,7 +792,7 @@ do { \
 } while (0)
 
 /* invoke this macro, return (pd->nerr == 0) ? P_OK : P_ERR */
-#define PDCI_TYPEDEF_READ_USERCHECK_REC(fn_nm, base_read_call, usercheck) \
+#define PDCI_TYPEDEF_READ_CHECK_REC(fn_nm, base_read_call, usercheck) \
 do { \
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep); \
   if (P_OK == (base_read_call) && P_Test_SemCheck (m->user) && (!(usercheck))) { \
@@ -637,8 +801,16 @@ do { \
   PDCI_FIND_EOR(fn_nm); \
 } while (0)
 
-#define PDCI_UNION_READ_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
+#define PDCI_UNION_READ_SETUP_STAT(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
+Ppos_t start_pos; \
 do { \
+  PDCI_IO_GETPOS(pads, start_pos); \
+} while (0)
+
+#define PDCI_UNION_READ_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
+Ppos_t start_pos; \
+do { \
+  PDCI_IO_GETPOS(pads, start_pos); \
   if ((rep->tag) != the_tag) { \
     rep_cleanup (pads, rep); \
     pd_cleanup  (pads, pd); \
@@ -647,79 +819,88 @@ do { \
   } \
 } while (0)
 
-#define PDCI_UNION_READ_MANIFEST_STATIC_DO(the_tag, final_code)  \
-do { \
-  rep->tag = the_tag; \
-  pd->tag = the_tag; \
-  ((pd->val).the_tag).errCode = P_NO_ERR; \
-  P_PS_init (&(pd->val.the_tag)); \
-  P_io_getLocB (pads, &(pd->val.the_tag.loc), 0); \
-  final_code; \
-} while (0)
-
-/* for manifest case, do assignement to rep->val.the_tag, then invoke this macro */
-/* goes to branches_done on success, falls through on failure */
-#define PDCI_UNION_READ_MANIFEST_STATIC(the_tag) \
-  PDCI_UNION_READ_MANIFEST_STATIC_DO(the_tag,goto branches_done)
-#define PDCI_UNION_READ_MANIFEST_STATIC_USERCHECK(the_tag, usercheck) \
-  PDCI_UNION_READ_MANIFEST_STATIC_DO(the_tag,if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) goto branches_done)
-
-/* for manifest case, do assignement to rep->val.the_tag, then invoke this macro */
-/* goes to branches_done on success, falls through on failure */
-#define PDCI_UNION_READ_MANIFEST_FIRST(the_tag)  \
-  PDCI_UNION_READ_MANIFEST_STATIC(the_tag)
-#define PDCI_UNION_READ_MANIFEST_FIRST_USERCHECK(the_tag, usercheck)  \
-  PDCI_UNION_READ_MANIFEST_STATIC_USERCHECK(the_tag, userchek)
-
-/* for manifest case, do assignement to rep->val.the_tag, then invoke this macro */
-/* goes to branches_done on success, falls through on failure */
-#define PDCI_UNION_READ_MANIFEST_NEXT(the_tag, rep_init, pd_init)  \
-do { rep_init (pads, rep); pd_init  (pads, pd); PDCI_UNION_READ_MANIFEST_STATIC(the_tag); } while (0)
-#define PDCI_UNION_READ_MANIFEST_NEXT_USERCHECK(the_tag, rep_init, pd_init, usercheck)  \
-do { rep_init (pads, rep); pd_init  (pads, pd); PDCI_UNION_READ_MANIFEST_STATIC_USERCHECK(the_tag, usercheck); } while (0)
-
-/* goes to branches_done on success, falls through on failure */
-#define PDCI_UNION_READ_FIRST(fn_nm, the_tag, rep_cleanup, pd_cleanup, read_call) \
+/* falls through on error, goes to branches_done on success */
+#define PDCI_UNION_READ_STAT(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call) \
 do { \
   if (P_ERR==P_io_checkpoint (pads, 1)) { \
     PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
   } \
   rep->tag = the_tag; \
   pd->tag  = the_tag; \
-  if (P_ERR == read_call) { \
-    if (P_ERR==P_io_restore (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
-    } \
-    rep_cleanup (pads, rep); \
-    pd_cleanup  (pads, pd); \
-  } else { \
+  if (P_OK == read_call) { \
     if (P_ERR == P_io_commit (pads)) { \
       PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
     } \
+    pd->loc.b = start_pos; \
     goto branches_done; \
+  } \
+  if (P_ERR==P_io_restore (pads)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
   } \
 } while (0)
 
-/* goes to branches_done on success, falls through on failure */
-#define PDCI_UNION_READ_FIRST_USERCHECK(fn_nm, the_tag, rep_cleanup, pd_cleanup, read_call, usercheck) \
+/* falls through on error, goes to branches_done on success */
+#define PDCI_UNION_READ_STAT_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call, usercheck) \
 do { \
   if (P_ERR==P_io_checkpoint (pads, 1)) { \
     PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
   } \
   rep->tag = the_tag; \
   pd->tag  = the_tag; \
-  if (P_ERR == read_call) { \
-    if (P_ERR==P_io_restore (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
-    } \
-    rep_cleanup (pads, rep); \
-    pd_cleanup  (pads, pd); \
-  } else if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) { \
+  if ((P_OK == read_call) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) { \
     if (P_ERR == P_io_commit (pads)) { \
       PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
     } \
+    pd->loc.b = start_pos; \
     goto branches_done; \
   } \
+  if (P_ERR==P_io_restore (pads)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
+  } \
+} while (0)
+
+/* goes to branches_done on success, falls through on failure */
+#define PDCI_UNION_READ_FIRST(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call) \
+do { \
+  if (P_ERR==P_io_checkpoint (pads, 1)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
+  } \
+  rep->tag = the_tag; \
+  pd->tag  = the_tag; \
+  if (P_OK == read_call) { \
+    if (P_ERR == P_io_commit (pads)) { \
+      PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
+    } \
+    pd->loc.b = start_pos; \
+    goto branches_done; \
+  } \
+  if (P_ERR==P_io_restore (pads)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
+  } \
+  rep_cleanup (pads, rep); \
+  pd_cleanup  (pads, pd); \
+} while (0)
+
+/* goes to branches_done on success, falls through on failure */
+#define PDCI_UNION_READ_FIRST_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call, usercheck) \
+do { \
+  if (P_ERR==P_io_checkpoint (pads, 1)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
+  } \
+  rep->tag = the_tag; \
+  pd->tag  = the_tag; \
+  if ((P_OK == read_call) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) { \
+    if (P_ERR == P_io_commit (pads)) { \
+      PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
+    } \
+    pd->loc.b = start_pos; \
+    goto branches_done; \
+  } \
+  if (P_ERR==P_io_restore (pads)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
+  } \
+  rep_cleanup (pads, rep); \
+  pd_cleanup  (pads, pd); \
 } while (0)
 
 /* falls through on error, goes to branches_done on success */
@@ -732,22 +913,22 @@ do { \
   } \
   rep->tag = the_tag; \
   pd->tag  = the_tag; \
-  if (P_ERR == read_call) { \
-    if (P_ERR==P_io_restore (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
-    } \
-    rep_cleanup (pads, rep); \
-    pd_cleanup  (pads, pd); \
-  } else { \
+  if (P_OK == read_call) { \
     if (P_ERR == P_io_commit (pads)) { \
       PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
     } \
+    pd->loc.b = start_pos; \
     goto branches_done; \
   } \
+  if (P_ERR==P_io_restore (pads)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
+  } \
+  rep_cleanup (pads, rep); \
+  pd_cleanup  (pads, pd); \
 } while (0)
 
 /* falls through on error, goes to branches_done on success */
-#define PDCI_UNION_READ_NEXT_USERCHECK(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call, usercheck) \
+#define PDCI_UNION_READ_NEXT_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call, usercheck) \
 do { \
   rep_init (pads, rep); \
   pd_init  (pads, pd); \
@@ -756,152 +937,172 @@ do { \
   } \
   rep->tag = the_tag; \
   pd->tag  = the_tag; \
-  if (P_ERR == read_call) { \
-    if (P_ERR==P_io_restore (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
-    } \
-    rep_cleanup (pads, rep); \
-    pd_cleanup  (pads, pd); \
-  } else if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) { \
+  if ((P_OK == read_call) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) { \
     if (P_ERR == P_io_commit (pads)) { \
       PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
     } \
+    pd->loc.b = start_pos; \
     goto branches_done; \
   } \
+  if (P_ERR==P_io_restore (pads)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
+  } \
+  rep_cleanup (pads, rep); \
+  pd_cleanup  (pads, pd); \
 } while (0)
 
 /* falls through on error, goes to branches_done on success */
-#define PDCI_UNION_READ_LAST(fn_nm, last_tag, rep_init, pd_init, read_call) \
+#define PDCI_UNION_READ_LAST(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call) \
 do { \
   rep_init (pads, rep); \
   pd_init  (pads, pd); \
   if (P_ERR==P_io_checkpoint (pads, 1)) { \
     PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
   } \
-  rep->tag = last_tag; \
-  pd->tag  = last_tag; \
-  if (P_ERR == read_call) { \
-    if (P_ERR==P_io_restore (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
-    } \
-  } else { \
+  rep->tag = the_tag; \
+  pd->tag  = the_tag; \
+  if (P_OK == read_call) { \
     if (P_ERR == P_io_commit (pads)) { \
       PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
     } \
+    pd->loc.b = start_pos; \
     goto branches_done; \
+  } \
+  if (P_ERR==P_io_restore (pads)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
   } \
 } while (0)
 
 /* falls through on error, goes to branches_done on success */
-#define PDCI_UNION_READ_LAST_USERCHECK(fn_nm, last_tag, rep_init, pd_init, read_call, usercheck) \
+#define PDCI_UNION_READ_LAST_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call, usercheck) \
 do { \
   rep_init (pads, rep); \
   pd_init  (pads, pd); \
   if (P_ERR==P_io_checkpoint (pads, 1)) { \
     PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
   } \
-  rep->tag = last_tag; \
-  pd->tag  = last_tag; \
-  if (P_ERR == read_call) { \
-    if (P_ERR==P_io_restore (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
-    } \
-  } else if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) { \
+  rep->tag = the_tag; \
+  pd->tag  = the_tag; \
+  if ((P_OK == read_call)&& (!P_Test_SemCheck(m->unionLevel) || (usercheck))) { \
     if (P_ERR == P_io_commit (pads)) { \
       PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
     } \
+    pd->loc.b = start_pos; \
+    goto branches_done; \
+  } \
+  if (P_ERR==P_io_restore (pads)) { \
+    PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
+  } \
+} while (0)
+
+#define PDCI_UNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init)  \
+do { \
+  rep->tag = the_tag; \
+  pd->tag = the_tag; \
+  PD_COMMON_INIT(&(pd->val.the_tag)); \
+  PDCI_IO_BEGINLOC(pads, pd->val.the_tag.loc); \
+} while (0)
+
+#define PDCI_UNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init)  \
+do { \
+  rep->tag = the_tag; \
+  pd->tag = the_tag; \
+} while (0)
+
+#define PDCI_UNION_READ_MAN_FIRST_PRE(fn_nm, the_tag, rep_init, pd_init)  \
+  PDCI_UNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init)
+
+#define PDCI_UNION_READ_MAN_FIRST_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init)  \
+  PDCI_UNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init)
+
+#define PDCI_UNION_READ_MAN_NEXT_PRE(fn_nm, the_tag, rep_init, pd_init)  \
+do { \
+  rep_init(pads, rep); \
+  pd_init (pads, pd); \
+  PDCI_UNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init); \
+} while (0)
+
+/* not sure that the init calls are needed */
+#define PDCI_UNION_READ_MAN_NEXT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init)  \
+do { \
+  rep_init(pads, rep); \
+  pd_init (pads, pd); \
+  PDCI_UNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init); \
+} while (0)
+
+#define PDCI_UNION_READ_MAN_STAT_POST(fn_nm) \
+do { \
+  pd->loc.b = start_pos; \
+  goto branches_done; \
+} while (0)
+
+#define PDCI_UNION_READ_MAN_POST(fn_nm) \
+do { \
+  pd->loc.b = start_pos; \
+  goto branches_done; \
+} while (0)
+
+#define PDCI_UNION_READ_MAN_STAT_POST_CHECK(fn_nm, rep_cleanup, pd_cleanup, usercheck) \
+do { \
+  if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) { \
+    pd->loc.b = start_pos; \
     goto branches_done; \
   } \
 } while (0)
 
-/* falls through on error, goes to branches_done on success */
-#define PDCI_UNION_READ_STATIC(fn_nm, the_tag, read_call) \
+#define PDCI_UNION_READ_MAN_POST_CHECK(fn_nm, rep_cleanup, pd_cleanup, usercheck) \
 do { \
-  if (P_ERR==P_io_checkpoint (pads, 1)) { \
-    PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
-  } \
-  rep->tag = the_tag; \
-  pd->tag  = the_tag; \
-  if (P_ERR == read_call) { \
-    if (P_ERR==P_io_restore (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
-    } \
-  } else { \
-    if (P_ERR == P_io_commit (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
-    } \
+  if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) { \
+    pd->loc.b = start_pos; \
     goto branches_done; \
   } \
-} while (0)
-
-/* falls through on error, goes to branches_done on success */
-#define PDCI_UNION_READ_STATIC_USERCHECK(fn_nm, the_tag, read_call, usercheck) \
-do { \
-  if (P_ERR==P_io_checkpoint (pads, 1)) { \
-    PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
-  } \
-  rep->tag = the_tag; \
-  pd->tag  = the_tag; \
-  if (P_ERR == read_call) { \
-    if (P_ERR==P_io_restore (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0); \
-    } \
-  } else if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) { \
-    if (P_ERR == P_io_commit (pads)) { \
-      PDCI_report_err (pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0); \
-    } \
-    goto branches_done; \
-  } \
+  rep_cleanup(pads, rep); \
+  pd_cleanup(pads, pd); \
 } while (0)
 
 #define PDCI_UNION_READ_WHERE_CHECK(fn_nm, usercheck) \
 do { \
     if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) { \
+      pd->loc.b = start_pos; \
       PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation"); \
     } \
 } while (0)
 
-#define PDCI_SWUNION_READ_WHERE_CHECK(fn_nm, usercheck) \
-do { \
-    if (pd->nerr == 0 && P_Test_SemCheck(m->unionLevel) && (!(usercheck))) { \
-      PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation"); \
-    } \
-} while (0)
-
-/* XXX why is it using -2 below ??? XXX */
+/* XXX why was K codegen using -2 below ??? XXX */
 #define PDCI_UNION_READ_FAILED(fn_nm, nm, err_tag) \
 do { \
   (pd->nerr)++; \
   pd->errCode = P_UNION_MATCH_ERR; \
-  P_io_getLocE (pads, &(pd->loc), -2); \
+  pd->loc.b = start_pos; \
+  PDCI_IO_ENDLOC_MINUS1(pads, pd->loc); \
   PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match any branch of union " nm); \
   rep->tag = err_tag; \
   pd->tag = err_tag; \
   P_PS_setPanic (pd); \
+  goto final_check; \
 } while (0)
 
-/* always does goto branches_done */
-#define PDCI_SWUNION_READ_FAILED(fn_nm, nm, err_tag) \
+#define PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
 do { \
-  (pd->nerr)++; \
-  pd->errCode = P_UNION_MATCH_ERR; \
-  P_io_getLocE (pads, &(pd->loc), -1); \
-  PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Switch value failed to match any branch of switched union " nm); \
-  rep->tag = err_tag; \
-  pd->tag = err_tag; \
-  goto branches_done; \
+  if ((rep->tag) != the_tag) { \
+    rep_cleanup (pads, rep); \
+    pd_cleanup  (pads, pd); \
+    rep_init    (pads, rep); \
+    pd_init     (pads, pd); \
+  } \
 } while (0)
 
 /* falls through on success, goto branches_done on failure */
-#define PDCI_SWUNION_READ_STATIC(fn_nm, the_tag, err_tag, read_call) \
+#define PDCI_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call) \
 do { \
+  PDCI_IO_BEGINLOC(pads, pd->loc); \
   rep->tag = the_tag; \
   pd->tag  = the_tag; \
   if (P_ERR == read_call) { \
     pd->nerr = 1; \
     pd->errCode = P_UNION_MATCH_ERR; \
-    P_io_getLocE (pads, &(pd->loc), -1); \
-    PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match branch with tag " PDCI_MacroArg2Str(the_tag)); \
+    PDCI_IO_ENDLOC_MINUS1(pads, pd->loc); \
+    PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match branch with tag " PDCI_MacroArg2String(the_tag)); \
     rep->tag = err_tag; \
     pd->tag  = err_tag; \
     goto branches_done; \
@@ -911,41 +1112,65 @@ do { \
 /* falls through on success, goto branches_done on failure */
 #define PDCI_SWUNION_READ(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call) \
 do { \
-  PDCI_UNION_READ_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init); \
-  PDCI_SWUNION_READ_STATIC(fn_nm, the_tag, err_tag, read_call); \
+  PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init); \
+  PDCI_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call); \
 } while (0)
 
-/* for manifest case, do assignement to rep->val.the_tag, then invoke this macro */
-/* falls through on success (always succeeds) */
-#define PDCI_SWUNION_READ_MANIFEST_STATIC(the_tag) \
+#define PDCI_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
 do { \
-  rep->tag = the_tag; \
-  pd->tag = the_tag; \
-  ((pd->val).the_tag).errCode = P_NO_ERR; \
-  P_PS_init (&(pd->val.the_tag)); \
-  P_io_getLocB (pads, &(pd->val.the_tag.loc), 0); \
+  PDCI_IO_BEGINLOC(pads, pd->loc); \
+  PDCI_UNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init); \
 } while (0)
 
-/* for manifest case, do assignement to rep->val.the_tag, then invoke this macro */
-/* falls through on success (always succeeds) */
-#define PDCI_SWUNION_READ_MANIFEST(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
+#define PDCI_SWUNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
 do { \
-  PDCI_UNION_READ_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init); \
-  PDCI_SWUNION_MANIFEST_STATIC(the_tag); \
+  PDCI_IO_BEGINLOC(pads, pd->loc); \
+  PDCI_UNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init); \
+} while (0)
+
+#define PDCI_SWUNION_READ_MAN_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
+do { \
+  PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init); \
+  PDCI_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init); \
+} while (0)
+
+#define PDCI_SWUNION_READ_MAN_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
+do { \
+  PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init); \
+  PDCI_SWUNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init); \
 } while (0)
 
 /* falls through on success, goto branches_done on failure */
-#define PDCI_SWUNION_DO_USERCHECK(fn_nm, the_tag, err_tag, usercheck) \
+#define PDCI_SWUNION_READ_POST_CHECK(fn_nm, the_tag, err_tag, usercheck) \
 do { \
   if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) { \
     pd->nerr = 1; \
     pd->errCode = P_UNION_MATCH_ERR; \
-    P_io_getLocE (pads, &(pd->loc), -1); \
-    PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "User constraint check failed for branch with tag " PDCI_MacroArg2Str(the_tag)); \
+    PDCI_IO_ENDLOC_MINUS1(pads, pd->loc); \
+    PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "User constraint check failed for branch with tag " PDCI_MacroArg2String(the_tag)); \
     rep->tag = err_tag; \
     pd->tag  = err_tag; \
     goto branches_done; \
   } \
+} while (0)
+
+/* always does goto branches_done */
+#define PDCI_SWUNION_READ_FAILED(fn_nm, nm, err_tag) \
+do { \
+  (pd->nerr)++; \
+  pd->errCode = P_UNION_MATCH_ERR; \
+  PDCI_IO_GETLOC_SPAN0(pads, pd->loc); \
+  PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Switch value failed to match any branch of switched union " nm); \
+  rep->tag = err_tag; \
+  pd->tag = err_tag; \
+  goto branches_done; \
+} while (0)
+
+#define PDCI_SWUNION_READ_WHERE_CHECK(fn_nm, usercheck) \
+do { \
+    if (pd->nerr == 0 && P_Test_SemCheck(m->unionLevel) && (!(usercheck))) { \
+      PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation"); \
+    } \
 } while (0)
 
 /* function body for a write2io function that has params pads, io, pd, rep */

@@ -1,4 +1,4 @@
-Data file = /dev/stdin
+Data file = ../../data/array_nosep
 warning: P_open: Installing default IO discipline : newline-terminated records
 entry_read returned array of length: 3
 entry_read returned array of length: 2

@@ -1,3 +1,4 @@
+#define DEF_INPUT_FILE "../../data/ex_data.struct_regexp"
 #define PADS_TY(suf) line ## suf
 #define WSPACE_OK 1
 #include "struct_regexp.h"

@@ -1,6 +1,6 @@
-Data file = /dev/stdin
+Data file = ../../data/ex_data.struct_regexp
 warning: P_open: Installing default IO discipline : newline-terminated records
-warning: Error [in line_read]: record 1 byte 3 : Extra data before separator: "/a+/".
+warning: Error [in line_read]: record 1 byte 3 : Extra data before separator: "/a+/"
 [record 1]12>>>faaa<<<a13b4cat11AAaa
 read returned error
 *****************************************************************************************************

@@ -6,7 +6,7 @@ calling testtwo_read
 test_read returned: s1 xabcdefghi  s2 abcdefg
 xabcdefghi|abcdefg|
 calling testtwo_read
-warning: Error [in test_read]: record 2 byte 12 : User constraint on field s2 violated.
+warning: Error [in test_read]: record 2 byte 12 : User constraint on field s2 violated
 [record 2]xabcdefghi|>>>abcdefgh<<<|
 test_read returned: error
 xabcdefghi|BAD_LEN|
@@ -18,7 +18,7 @@ Note [in test_read]: record 3 byte 12 : Resynching at EOR
 test_read returned: error
 xabcdefghi|INV_STR|
 calling testtwo_read
-warning: Error [in test_read]: record 4 byte 1 : User constraint on field s1 violated.
+warning: Error [in test_read]: record 4 byte 1 : User constraint on field s1 violated
 [record 4]>>>aabcdefghi<<<|abcdefg|
 test_read returned: error
 xxxxxxxxxx|abcdefg|

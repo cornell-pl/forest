@@ -144,10 +144,6 @@ do {
 } while (0)
 /* END_MACRO */ 
 
-#define PDCI_IO_ENDLOC_CUR_MINUS(pads, loc, k)
-  PDCI_IO_GETPOS_MINUS(pads, (loc).e, k)
-/* END_MACRO */ 
-
 #define PDCI_IO_GETLOC_SPAN0(pads, loc)
 do {
   PDCI_IO_BEGINLOC(pads, loc);
@@ -4890,7 +4886,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.123 2003-11-10 20:08:05 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.124 2003-11-12 22:07:45 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

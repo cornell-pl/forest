@@ -1,4 +1,4 @@
-Data file = /dev/stdin
+Data file = ../../data/array_ended2
 warning: P_open: Installing default IO discipline : newline-terminated records
 entry_read returned array first of length: 1
 entry_read returned array second  of length: 0
