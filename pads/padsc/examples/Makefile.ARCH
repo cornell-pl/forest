@@ -2,13 +2,20 @@
 
 .SOURCE : .. ../include ../tests ../gen
 
+if 0
 CCFLAGS = $(CC.DEBUG)
+end
+CCFLAGS = $(CC.OPT)
 
-format_tests : test_format1 test_format2 test_format3 test_format5 test_format6
+FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6
+OTHER_TESTS  = test_enum test_from test_ai test_dibbler1 test_readint test_fast_dib
+ALL_TESTS = $(FORMAT_TESTS) $(OTHER_TESTS)
 
-other_tests : test_enum test_from test_ai test_dibbler1 test_readint 
+format_tests : $(FORMAT_TESTS)
 
-all_tests : format_tests other_tests
+other_tests : $(OTHER_TESTS)
+
+all_tests : $(ALL_TESTS)
 
 test_format1  :: test_format1.c   format1.c     -lpadsc
 test_format2  :: test_format2.c   format2.c     -lpadsc
@@ -64,3 +71,6 @@ regress_test_readint : test_readint
 	if [ -f tmp/tmp.test_readint ]; then $(RM) tmp/tmp.test_readint; fi
 	(./test_readint 2>&1) | grep -v XXX_REMOVE | grep error: | cat > tmp/tmp.test_readint
 	diff tmp/tmp.test_readint ../regress/test_readint.regress || echo TEST_READINT DIFFERS
+
+clean :
+	$(RM) -f *~ *.o $(ALL_TESTS)

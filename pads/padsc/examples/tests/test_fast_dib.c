@@ -1,5 +1,7 @@
 #include "dibbler2.h"
 
+#define FASTEST 1
+
 typedef enum behave_e { count_first21, out_first21 } behave;
 
 const char * behave_descr[] = {
@@ -9,6 +11,7 @@ const char * behave_descr[] = {
 
 int main(int argc, char** argv) {
   PDC_t                    *pdc;
+  PDC_IO_disc_t            *io_disc;
   out_sum_header           header;
   out_sum_fixed1           f1;
   out_sum_fixed1_ed        f1_ed;
@@ -18,8 +21,8 @@ int main(int argc, char** argv) {
   char                     *fname          = "../data/ex_data.dibbler1";
   behave                   b               = count_first21;
   unsigned long            good_21         = 0, good = 0, bad = 0;
-  out_sum_fixed1_em        f1_em           = { 0 };
-  /*  out_sum_fixed1_em        f1_em           = {PDC_Ignore,{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}}}; */
+  /* out_sum_fixed1_em        f1_em           = { 0 }; */
+  out_sum_fixed1_em        f1_em           = {PDC_Ignore,{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}}};
 
   if (argc > 3) {
     goto usage;
@@ -27,6 +30,7 @@ int main(int argc, char** argv) {
   if (argc >= 2 ) {
     fname = argv[1];
   }
+#ifndef FASTEST
   if (argc == 3 ) {
     if (strcmp(argv[2], "count_first21") == 0) {
       b = count_first21;
@@ -39,8 +43,18 @@ int main(int argc, char** argv) {
 
   error(0, "\nUsing input file %s", fname);
   error(0, "\nUsing behavior %s", behave_descr[b]);
+#endif
 
-  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
+  io_disc = PDC_nlrec_noseek_make(0);
+#ifndef FASTEST
+  if (!io_disc) {
+    error(ERROR_FATAL, "\nFailed to install IO discipline nlrec_noseek");
+  } else {
+    error(0, "\nInstalled IO discipline nlrec_noseek");
+  }
+#endif
+
+  if (PDC_ERR == PDC_open(&pdc, 0, io_disc)) {
     error(2, "*** PDC_open failed ***");
     return -1;
   }
@@ -55,7 +69,9 @@ int main(int argc, char** argv) {
    */
 
   if (PDC_OK == out_sum_header_read(pdc, 0, 0, &header)) {
+#ifndef FASTEST
     error(0, "reading header returned: OK");
+#endif
   } else {
     error(2, "reading header returned: error");
   }
@@ -80,7 +96,9 @@ int main(int argc, char** argv) {
 	  bad++;
 	}
 	if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped)) {
+#ifndef FASTEST
 	  error(2, "Could not find EOR (newline), ending program");
+#endif
 	  break;
 	}
       }
