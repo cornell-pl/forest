@@ -1,0 +1,19 @@
+We (Mary Fernandez, Bob Gruber, and Kathleen Fisher) would like to
+host a summer student to continue integrating PADS and Galax.  Last
+summer, Ricardo Medel helped us integrate the two systems to the point
+where we can now write XQueries that run against data with a PADS
+description without requiring that data to be translated into XML.  At
+the moment, however, that data must fit into main memory, a poor
+assumption for much of our data.
+
+Our goal for this summer is to extend the Galax data API with
+functions to support streaming access and to enrich the generated PADS
+libraries to provide these additional functions.
+
+Ideally, the summer student would be a programming languages graduate
+student familiar with functional programming, particularly ML or
+O'Caml, as those are the languages in which PADS and Galax are
+implemented.
+
+
+
