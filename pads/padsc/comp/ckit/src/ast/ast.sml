@@ -81,7 +81,7 @@ struct
     | Do of expression * statement
     | For of expression option * expression option * expression option * statement
     | Labeled of label * statement
-    | CaseLabel of LargeInt.int * statement
+    | CaseLabel of LargeInt.int * expression option * statement
     | DefaultLabel of statement
     | Goto of label
     | Break

@@ -444,11 +444,12 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	   ; PPL.newline pps
 	   ; ppStmt aidinfo tidtab pps stmt
 	   )
-       | CaseLabel (li,stmt) => 
+       | CaseLabel (li,expOpt (*PADS *), stmt) => 
 	   ( PPL.bBlock pps PP.INCONSISTENT ~2
 	   ; PPL.newline pps
 	   ; PPL.addStr pps "case "
-	   ; PPL.ppLI pps li
+	   ; (case expOpt of NONE => PPL.ppLI pps li
+	                  | SOME exp => (ppExpr {nested=false} aidinfo tidtab) pps exp)
 	   ; PPL.addStr pps ": "
 	   ; PPL.eBlock pps
 	   ; PPL.newline pps

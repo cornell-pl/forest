@@ -1552,20 +1552,20 @@ let
 	    in wrapSTMT(Ast.Labeled (label, stmt))
 	   end
 	| PT.CaseLabel (expr, stmt) =>
-	   let val n = case expr of
-	     PT.EmptyExpr => (error "Non-constant case label."; 0)
+	   let val (n,symbolic) = case expr of
+	     PT.EmptyExpr => (error "Non-constant case label."; (0,NONE))
 	   | _ => (case evalExpr expr of  (* cannot be EmptyExpr *)
 		     (SOME i, _, _, sizeofFl) =>
 		       (if sizeofFl andalso not(!reduce_sizeof)
 			  then warn("sizeof in case label not preserved in source-to-source mode.")
 			else ();
-		        (IntInf.toLarge i) 
-                        handle OverFlow => (error("Case label too large.");  0))
-		   | (NONE, _, _, _) => (error "Non-constant case label."; 0))
+		        ((IntInf.toLarge i), SOME (#2 (cnvExpression expr))) (* PADS *)
+                        handle OverFlow => (error("Case label too large.");  (0, NONE)))
+		   | (NONE, _, _, _) => (error "Non-constant case label."; (0, NONE)))
 	   in case addSwitchLabel n
 	     of NONE => ()
 	   | SOME msg => error msg;
-	   wrapSTMT(Ast.CaseLabel (n, (cnvStatement stmt)))
+	   wrapSTMT(Ast.CaseLabel (n, symbolic, (cnvStatement stmt)))
 	   end
 	| PT.DefaultLabel stmt => 
 	   let val stmt = cnvStatement stmt
