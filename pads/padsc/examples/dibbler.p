@@ -1,5 +1,10 @@
-ptypedef auint64 pn_t :: pn_t x => {x > 1999999999 && x < 10000000000};
-ptypedef auint16 zip5_t :: zip5_t x => {x < 100000};
+#if 0
+ptypedef auint64 pn_t    :: pn_t   x => {x > 1999999999 && x < 10000000000};
+ptypedef auint16 zip5_t  :: zip5_t x => {x < 100000};
+#else
+ptypedef auint64 pn_t    :: pn_t   x => { x <= 0 || x >= 0 };
+ptypedef auint16 zip5_t  :: zip5_t x => { x <= 0 || x >= 0 };
+#endif
 
 pstruct gen_pn_t {
   "no_PN";
@@ -28,7 +33,7 @@ parray eventSeq(int size) {
                             { eventSeq[i].tstamp <= eventSeq[i+1].tstamp};
 };
 
-int getLength(int numBars){ return (numBars - 3)/2; }
+int getLength(int numBars){ return (numBars - 4)/2; }
 
 pstruct out_sum_data_line_t {
   auint32             order_num;            '|';
@@ -40,6 +45,7 @@ pstruct out_sum_data_line_t {
   dib_pn_t            nlp_billing_tn;       '|';
   pvirtual countXtoY(:'|', '\n':)vbars;
   eventSeq(:getLength(vbars):)  events;     '|';
+  auint32             siid;                 '|';  //- why did kf omit
   auint32             create_id;            '|';
   auint64             rampII;               '|';
   auint32             order_type;           '|';

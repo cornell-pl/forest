@@ -4,18 +4,24 @@
 
 CCFLAGS = $(CC.DEBUG)
 
-test_format1 :: test_format1.c format1.c -lpadsc
-test_format3 :: test_format3.c format3.c -lpadsc
-test_format5 :: test_format5.c format5.c -lpadsc
-test_format6 :: test_format6.c format6.c -lpadsc
-test_enum    :: test_enum.c    enum.c -lpadsc
-test_from    :: test_from.c    from.c -lpadsc
-test_ai      :: test_ai.c      ai.c -lpadsc
+libtests : mk_ex_data_libtest2 libtest1 libtest2 libtest4 rbuftest1 
 
-libtest1 :: libtest1.c -lpadsc
-libtest2 :: libtest2.c -lpadsc
-libtest4 :: libtest4.c -lpadsc
-rbuftest1 :: rbuftest1.c -lpadsc
+test_format1  :: test_format1.c   format1.c   -lpadsc
+test_format3  :: test_format3.c   format3.c   -lpadsc
+test_format5  :: test_format5.c   format5.c   -lpadsc
+test_format6  :: test_format6.c   format6.c   -lpadsc
+test_enum     :: test_enum.c      enum.c      -lpadsc
+test_from     :: test_from.c      from.c      -lpadsc
+test_ai       :: test_ai.c        ai.c        -lpadsc
+test_dibbler1 :: test_dibbler1.c  dibbler.c   -lpadsc
+
+libtest1  :: libtest1.c   -lpadsc
+libtest2  :: libtest2.c   -lpadsc
+libtest4  :: libtest4.c   -lpadsc
+rbuftest1 :: rbuftest1.c  -lpadsc
 
 mk_ex_data_libtest2 :: mk_ex_data_libtest2.c
+
+dttest      :: dttest.c     -lpadsc
+accumtest   :: accumtest.c  -lpadsc
 
