@@ -7,11 +7,11 @@
 ##    pads-acc-macros-gen.h   : macros that help implement accum functions
 ##    pads-misc-macros-gen.h  : macros that help implement misc  functions
 ## 
-##    padsc-read-gen.c         : generated read  functions
-##    padsc-write-gen.c        : generated write functions
-##    padsc-acc-gen.c          : generated accum functions
-##    padsc-misc-gen.c         : generated misc  functions
-##    padsc-gen.c              : the rest of the padsc library
+##    pads-read-gen.c         : generated read  functions
+##    pads-write-gen.c        : generated write functions
+##    pads-acc-gen.c          : generated accum functions
+##    pads-misc-gen.c         : generated misc  functions
+##    pads-gen.c              : the rest of the padsc library
 ##
 /* ********************* BEGIN_MACROS(pads-macros-gen.h) ********************** */
 /*
@@ -30,6 +30,7 @@
 do {
   Pbase_pd_init_no_err(pd);
   PDCI_IO_BEGINLOC(pads, (pd)->loc);
+  PD_PGLX_INIT(pads,pd);
 } while (0)
 /* END_MACRO */
 
@@ -6128,7 +6129,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.162 2004-08-06 19:40:55 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.163 2004-09-01 14:31:39 yitzhak Exp $\0\n";
 
 static const char lib[] = "padsc";
 

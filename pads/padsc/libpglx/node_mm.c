@@ -2,13 +2,11 @@
 #include "pglx-free-list.h"
 #include "node_mm.h"
 
-#define FREE_LIST_MAX_SIZE 10
-
 /* This should be modified to work the way the rest of the system works,
    but in the meantime ... */
-#define MM_FATAL(s)\
-  printf("Fatal Error in Node Memory Manager: %s.\n",(s));\
-  exit(-1)
+#define MM_FATAL(padsIN,s,WHATFN)\
+  PDCI_report_err(padsIN,P_LEV_INFO,0,P_FAILWITH_ERR,WHATFN,\
+		  "PADS/Galax: Fatal Error in Node Memory Manager: %s.",(s));
 
 struct NodeMM_s {
   char init;
@@ -20,16 +18,23 @@ NodeMM_t *NodeMM_newMM(){
   return (NodeMM_t *)calloc(1, sizeof(NodeMM_t));
 }
 
-void NodeMM_freeMM(NodeMM_t *mm){
-  free(mm);
-}
+void NodeMM_initMM(P_t *pads, unsigned int max_size){
+  NodeMM_t *mm = NodeMM_newMM();
+  pads->ext1 = mm;  
 
-void NodeMM_init(NodeMM_t *mm){
+  if (max_size == 0)
+    max_size = FREE_LIST_DEFAULT_MAX_SIZE;
+
   if (!mm->init){
-    FreeList_init(&(mm->list), FREE_LIST_MAX_SIZE);  
+    FreeList_init(&(mm->list), max_size);  
     mm->init = 1;
   }
-  
+}
+
+void NodeMM_freeMM(P_t *pads){
+  NodeMM_t *mm = (NodeMM_t *)pads->ext1;
+  free(mm);
+  pads->ext1 = 0;
 }
 
 PDCI_node_t *NodeMM_get_alias(PDCI_node_t *n){
@@ -37,9 +42,10 @@ PDCI_node_t *NodeMM_get_alias(PDCI_node_t *n){
   return n;
 }
 
-PDCI_node_t *NodeMM_alloc(NodeMM_t *mm){
+PDCI_node_t *NodeMM_alloc(P_t *pads){
+  NodeMM_t *mm = (NodeMM_t *)pads->ext1;
   if (!mm->init){
-    MM_FATAL("Node Memory Manager not initialized");
+    MM_FATAL(pads,"Node Memory Manager not initialized","NodeMM_alloc");
     return 0; //never reached.
   }
 
@@ -48,9 +54,10 @@ PDCI_node_t *NodeMM_alloc(NodeMM_t *mm){
   return n;
 }
 
-void NodeMM_free(NodeMM_t *mm, PDCI_node_t *n){
+void NodeMM_free(P_t *pads, PDCI_node_t *n){
+  NodeMM_t *mm = (NodeMM_t *)pads->ext1;
   if (!mm->init){
-    MM_FATAL("Node Memory Manager not initialized");
+    MM_FATAL(pads,"Node Memory Manager not initialized","NodeMM_free");
   }
 
   // Decrement and check the reference count
@@ -62,10 +69,8 @@ void NodeMM_free(NodeMM_t *mm, PDCI_node_t *n){
 }
 
 // If the array is longer than MAX_INT, then free it in pieces.
-void NodeMM_freeArray(NodeMM_t *mm, PDCI_node_t **nArray, unsigned int length){
+void NodeMM_freeArray(P_t *pads, PDCI_node_t **nArray, unsigned int length){
   int i;
   for (i=0; i < length; i++)
-    NodeMM_free(mm,nArray[i]);
+    NodeMM_free(pads,nArray[i]);
 }
-
-#undef FREE_LIST_MAX_SIZE

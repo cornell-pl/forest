@@ -24,7 +24,7 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
 
-OBJS_O = pglx.o node_mm.o pglx-free-list.o path_walk.o
+OBJS_O = pglx.o node_mm.o pglx-free-list.o path_walk.o smart.o
 
 OBJS_D = $(OBJS_O:%.o=%_d.o)
 
