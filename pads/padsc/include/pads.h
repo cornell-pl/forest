@@ -549,6 +549,7 @@ const char *P_errCode2str(PerrCode_t code);
  *     P_t*        : runtime library handle (opaque)
  *                      initialized with P_open, passed as first arg to most library routines
  *     Pdisc_t*   : handle to discipline
+ *     Pformats_t : default output format descriptions, a component of Pdisc_t
  *     Pregexp_t* : handle to a compiled regular expression
  *
  *     Ppos_t     : IO position
@@ -566,6 +567,7 @@ const char *P_errCode2str(PerrCode_t code);
 
 typedef struct P_s              P_t;
 typedef struct Pdisc_s          Pdisc_t;
+typedef struct Pformats_s       Pformats_t;
 typedef struct Pregexp_s        Pregexp_t;
 
 typedef struct Ppos_s           Ppos_t;
@@ -1102,6 +1104,11 @@ typedef ssize_t (*Pfmt_fn)(P_t *pads, Pbyte *buf, size_t buf_len,
 /* Pfmt_fn_map_t: type of a fmt function map */
 typedef struct Pfmt_fn_map_s Pfmt_fn_map_t;
 
+/* type Pformats_t: */
+struct Pformats_s {
+  const char        *date;          /* must be a non-NULL date format string */
+};
+
 /* type Pdisc_t: */
 struct Pdisc_s {
   Pflags_t           version;       /* interface version */
@@ -1120,6 +1127,7 @@ struct Pdisc_s {
   Puint64            acc_max2track; /* default maximum distinct values for accumulators to track */
   Puint64            acc_max2rep;   /* default maximum number of tracked values to describe in detail in report */
   Pfloat64           acc_pcnt2rep;  /* default maximum percent of values to describe in detail in report */
+  Pformats_t         formats;       /* default output formats */
   Pinv_valfn_map_t  *inv_valfn_map; /* map types to inv_valfn for write functions */
   Pfmt_fn_map_t     *fmt_fn_map;    /* map types to fmt functions */
   Pio_disc_t        *io_disc;       /* sub-discipline for controlling IO */

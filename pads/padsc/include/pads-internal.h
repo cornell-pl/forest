@@ -74,6 +74,11 @@ void PDCI_DISC_INIT_CHECKS_RET_0(char * whatfn);
 void PDCI_DISC_INIT_CHECKS_RET_VOID(char * whatfn);
 void PDCI_DISC_INIT_CHECKS_RET_SSIZE(char * whatfn);
 
+void PDCI_DATE_FMT_CHECK(char * whatfn);
+void PDCI_DATE_FMT_CHECK_RET_0(char * whatfn);
+void PDCI_DATE_FMT_CHECK_RET_VOID(char * whatfn);
+void PDCI_DATE_FMT_CHECK_RET_SSIZE(char * whatfn);
+
 void PDCI_IODISC_INIT_CHECKS(char * whatfn);
 void PDCI_IODISC_INIT_CHECKS_RET_0(char * whatfn);
 void PDCI_IODISC_INIT_CHECKS_RET_VOID(char * whatfn);
@@ -242,6 +247,26 @@ void PDCI_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr,
 
 #define PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn) \
      PDCI_DISC_INIT_CHECKS_RET(whatfn, return -1)
+
+#define PDCI_DATE_FMT_CHECK_RET(whatfn, ret) \
+  do { \
+    if (!pads->disc->formats.date)  { \
+      P_WARN1(pads->disc, "%s: null pads->disc->formats.date", whatfn); \
+      ret; \
+    } \
+  } while (0)
+
+#define PDCI_DATE_FMT_CHECK(whatfn) \
+     PDCI_DATE_FMT_CHECK_RET(whatfn, return P_ERR)
+
+#define PDCI_DATE_FMT_CHECK_RET_0(whatfn) \
+     PDCI_DATE_FMT_CHECK_RET(whatfn, return 0)
+
+#define PDCI_DATE_FMT_CHECK_RET_VOID(whatfn) \
+     PDCI_DATE_FMT_CHECK_RET(whatfn, return)
+
+#define PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn) \
+     PDCI_DATE_FMT_CHECK_RET(whatfn, return -1)
 
 #define PDCI_IODISC_INIT_CHECKS_RET(whatfn, ret) \
   do { \
@@ -626,6 +651,11 @@ do { \
 #define PDCI_DISC_INIT_CHECKS_RET_0(whatfn)                    P_NULL_STMT
 #define PDCI_DISC_INIT_CHECKS_RET_VOID(whatfn)                 P_NULL_STMT
 #define PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn)                P_NULL_STMT
+
+#define PDCI_DATE_FMT_CHECK(whatfn)                            P_NULL_STMT
+#define PDCI_DATE_FMT_CHECK_RET_0(whatfn)                      P_NULL_STMT
+#define PDCI_DATE_FMT_CHECK_RET_VOID(whatfn)                   P_NULL_STMT
+#define PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn)                  P_NULL_STMT
 
 #define PDCI_IODISC_INIT_CHECKS(whatfn)                        P_NULL_STMT
 #define PDCI_IODISC_INIT_CHECKS_RET_0(whatfn)                  P_NULL_STMT
