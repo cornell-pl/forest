@@ -2,10 +2,6 @@ typedef int bool;
 #define true 1
 #define false 0
 
-Parray Pip {
-  Puint8 [4] : Psep('.') && Pterm(Pnosep);          
-};
-
 Parray Phostname{
   Pstring_SE(:"/[. ]/":) [] : Psep('.') && Pterm(Pnosep); 
 };
