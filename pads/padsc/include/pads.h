@@ -106,17 +106,26 @@
  *              of data files.  See pdc_io_disc.h for details.
  *              Also see 'Changing The IO Discipline' below.
  *
- *  Limiting the scanning scope:
+ *  Limiting the scope of scanning and pattern matching:
  *
- *  When scanning for a character, string literal, or pattern,
- *  how far should the scan go before giving up?  If a record-based
- *  file read discipline is used, scanning is limited to the scope of a single record.
- *  In addition, the following PDC_disc_t fields can be used to provide
- *  stop conditions.  Specifying such stop conditions is more 
- *  important for read disciplines that are not record based.
+ *  When scanning for a character, string literal, or stop pattern, how far
+ *  should the scan go before giving up?  When matching over a regular
+ *  expression, how many characters should the matcher consider before deciding
+ *  it has looked at enough characters?  If a record-based IO discipline is
+ *  used, scanning and matching is limited to the scope of a single record.  In
+ *  addition, the following PDC_disc_t fields can be used to provide further
+ *  constraints on the scan and/or match scope.  Specifying such constraints is
+ *  very important for read disciplines that are not record based!
  *
- *   stop_maxlen : a maximum # of bytes that will be traversed by a scan.
- *                      if set to 0, no stop_maxlen constraint is imposed.
+ *   scan_max  : Maximum # of bytes that will be traversed by a scan.
+ *               If set to 0, no scan_max constraint is imposed.
+ *
+ *   match_max : Maximum # of bytes that will be included in an
+ *               attempted pattern match.
+ *               If set to 0, no match_max constraint is imposed.
+ *
+ * Note: when a pattern is used as a terminating condition, the
+ * scope bound for the pattern search is the sum of scan_max and match_max.
  *
  * Specifying what value to write during write calls when an invalid value is present:
  *
@@ -189,7 +198,8 @@
  *    flags:         0
  *    def_charset:   PDC_charset_ASCII
  *    copy_strings:  0
- *    stop_maxlen:   0
+ *    scan_max:      0
+ *    match_max:     0
  *    errorf:        PDC_errorf
  *    e_rep:         PDC_errorRep_Max
  *    d_endian:      PDC_littleEndian
@@ -265,8 +275,7 @@
  *
  *  The third arg value of 1 indicates the current sfio stream
  *  should be transferred to the new IO discipline.  If this is not done,
- *  XXX_TODOC.
- */
+ *  XXX_TODOC.  */
 
 /* ================================================================================
  * CONSTANTS
@@ -791,7 +800,8 @@ struct PDC_disc_s {
   PDC_flags_t           flags;         /* control flags */
   PDC_charset           def_charset;   /* default char set */ 
   int                   copy_strings;  /* if non-zero,  ASCII string read functions copy the strings found, otherwise not */
-  size_t                stop_maxlen;   /* max scan distance, use 0 to disable */
+  size_t                scan_max;      /* max scan distance, use 0 to disable */
+  size_t                match_max;     /* max matching distance, use 0 to disable */
   PDC_error_f           errorf;        /* error function using  ... */
   PDC_errorRep          e_rep;         /* controls error reporting */
   PDC_endian            d_endian;      /* endian-ness of the data */ 
@@ -837,7 +847,7 @@ PDC_error_t  PDC_close         (PDC_t *pdc);
  *                   moved to the new handle.  In other words, the call
  *                      PDC_set_disc(pdc, new_handle, 1)
  *                   is equivalent to
- *                      old_handle = PDC_get_disc(pdc);
+ *                      old_handle = pdc->disc;
  *                      new_handle->io_disc = old_handle->io_disc;
  *                      old_handle->io_disc = 0;
  *                      PDC_set_disc(pdc, new_handle, 0);

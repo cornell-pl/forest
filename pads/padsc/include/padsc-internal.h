@@ -598,11 +598,16 @@ PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
  *   region so IO_forward should only be used after all relevant data
  *   bytes have been observed.  Causes fatal error if K would move
  *   beyond an EOR/EOF marker or beyond the last in-memory data byte.
+ *
+ *   want_len is either 0 (unknown) or a goal number of bytes.
+ *   If want_len is > 0 and (*bytes_out) is set to a number K < want_len,
+ *   this means that only K bytes are available (before eor or eof).
+ *   In other words, morebytes will not produce any more bytes.
  */
 
 PDC_error_t  PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io);
 
-PDC_error_t  PDCI_IO_needbytes (PDC_t *pdc,
+PDC_error_t  PDCI_IO_needbytes (PDC_t *pdc, size_t want_len,
 				PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,
 			        int *bor_out, int *eor_out, int *eof_out, size_t *bytes_out);
 PDC_error_t  PDCI_IO_morebytes (PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,
@@ -947,6 +952,9 @@ ssize_t PDCI_uint64_2sbh_io(PDC_t *pdc, Sfio_t *io, PDC_uint64 u, PDC_uint32 num
 /* ================================================================================ */
 /* INTERNAL MISC TYPES + ROUTINES */
 
+/* If IO disc is not record-based, make sure scan_max and match_max are both > 0 */
+void PDCI_norec_check(PDC_t *pdc, const char *whatfn);
+
 /* XXX_REMOVE */
 /* #define DEBUG_REGEX 1 */
 
@@ -962,10 +970,6 @@ struct PDC_regexp_s {
 #endif
   PDC_byte   *prev_begin;
   PDC_byte   *prev_end;
-
-  /* eventually hook EOR testing into gsf's stuff? */
-  int         or_eor;
-  int         just_eor;
 };
 
 /* Internal version of PDC_regexp_compile, takes whatfn */
