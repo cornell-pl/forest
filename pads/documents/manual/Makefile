@@ -14,7 +14,7 @@ PADS_FLAGS=
 
 
 ## location of padsc executable.
-PADS=$(PADS_HOME)/padsc
+PADS=$(PADS_HOME)/scripts/padsc
 
 ###############################################################################
 #  Documentation programs.

@@ -27,7 +27,7 @@ ends up embedded in parsing code, making long-term maintenance
 difficult for the original writer and sharing the knowledge with
 others nearly impossible.
 
-The goal of the PADS project is to provide languages and tools for
+The goal of PADS is to provide languages and tools for
 simplifying data stream analysis.  We have a preliminary design of a
 declarative data-description language, \padsl{}, expressive enough to
 describe the data feeds we see at AT\&T in practice, including ASCII,
@@ -104,20 +104,20 @@ are only used with HTTP version \cd{1.0}.
 \section{Generated library}
 From each type in a \padsl{} description, we generate C declarations for
 (1) an in-memory representation, 
-(2) a {\em checkset}\/-mask, which allows users to specify 
-which portions of the data are relevant to their applications,
-(3) an error-description, which we use to describe physical and
-semantic errors detected during parsing, 
+(2) a mask, which allows users to specify which portions of the data
+are relevant to their applications, 
+(3) a  parse description, which we use to describe meta-information
+collected during parsing, such as any detected physical or semantic errors,
 (4) a parse function, and 
 (5) utility functions.
-The parse function takes as arguments pointers to a checkset-mask, an
-in-memory representation, and an error-description.  The generated
-library maintains the invariant that if the checkset-mask requests
-that a data item be verified and set, and if the error description
+The parse function takes as arguments pointers to a mask, an
+in-memory representation, and an parse description.  The generated
+library maintains the invariant that if the mask requests
+that a data item be verified and set, and if the parse description
 indicates no error, then the in-memory representation satisfies the
 semantic constraints on the data.
 
-The checkset-mask allows the user to specify with fine granularity
+The mask allows the user to specify with fine granularity
 which constraints the parser should check and which portions of the
 in-memory representation it should fill in.  This control allows the
 description-writer to specify all known constraints about the data
@@ -125,7 +125,7 @@ without worrying about the run-time cost of verifying potentially
 expensive constraints for time-critical applications.
 
 Appropriate error-handling can be as important as processing
-error-free data.  The error descriptor marks which portions of the
+error-free data.  The parse descriptor marks which portions of the
 data contain errors and characterizes the detected errors.
 Depending upon the nature of the errors and the desired application,
 programmers can take the appropriate action: halting the program,
@@ -178,17 +178,18 @@ library.
 
 
 \section{Getting the \pads{} system}
-Source code for \pads{} will be available for download shortly with
+Source code for \pads{} will be available for download with
 a non-commercial use license from: 
 \begin{centercode}
 http://www.research.att.com/projects/pads
 \end{centercode}
 
-Distribution contains:
-1. this manual
-2. source code 
-3. README file describing installation procedure.
-
+The PADS distribution contains:
+\begin{itemize}
+\item this manual
+\item source code 
+\item README file describing installation procedure.
+\end{itemize}
 
 \section{Using the \pads{} compiler}
 This section describes how to use the \pads{} compiler \texttt{padsc}.

@@ -7,13 +7,7 @@ SHELL= /bin/sh
 # Default environment variables.
 ###############################################################################
 
-## root hancock directory.
-
-## flags to always pass to the hancock compiler
-HCC_FLAGS= 
-
-## location of padsc executable.
-PADS=$(PADS_HOME)/padsc
+PADSC= $(PADS_HOME)/scripts/padsc
 
 ###############################################################################
 #  Documentation programs.
@@ -22,13 +16,13 @@ PADS=$(PADS_HOME)/padsc
 
 EXAMPLE_DIR= $(PADS_HOME)/documents/manual/code
 PEXAMPLES= ai.p pstruct.p
-CEXAMPLES= ai.h
+CEXAMPLES= ai-annotated.h
 EXAMPLES = $(PEXAMPLES) $(CEXAMPLES)
 
 CLEAN= 
 
 EXTRACT= $(PADS_HOME)/documents/extract-code/extract
-PADSC= $(PADS_HOME)/padsc
+
 OUTPUT=gen/
 
 all:	clean code

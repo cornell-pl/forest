@@ -63,8 +63,8 @@ The name serves to document the data and to permit later reference.
 The type determines how that piece of the \struct{} will be
 processed.  If the field type is parameterized 
 (\cf{} \secref{sec:common-parameterization}), the field type must be
-followed by appropriate actual parameters, as in the \cd{req\_uri}
-field in the \cd{http\_request\_t} example.
+followed by appropriate actual parameters, as in the \cd{Pstring} type
+of the \cd{req\_uri} field in the \cd{http\_request\_t} example.
 
 Optionally, each full field may be followed by a constraint (\cf{}
 \secref{sec:common-predicates}).  Such a constraint is used to express
@@ -74,14 +74,14 @@ fields in the \struct{} are in scope in the constraint, as are any
 parameters to the \struct{}.  As an example, the \cd{checkVersion}
 predicate on the \cd{version} field uses the values of the \cd{meth}
 and \cd{version} fields to determine if the \cd{version} value is
-legal.  If the constraint associated with a field evalutes to false
-(\ie{}, zero) during parsing, then the error descriptor returned with
+legal.  If the constraint associated with a field evaluates to false
+(\ie{}, zero) after parsing, then the parse descriptor returned with
 the in-memory representation will indicate a user-constraint violation
 has occurred for the field.
 
 Each full field in a \struct{} may optionally be followed by a \padsl{}
-comment. Such comments are reflected by the \pads{} compiler as
-comments into the output library. 
+comment. Such comments are reflected by the \pads{} compiler into the
+output library as comments. 
 
 \subsubsection{Qualifiers}
 Each full field can take one or more qualifiers.
@@ -108,21 +108,14 @@ Each full field can take one or more qualifiers.
 \subsection{Literal fields}
 Literal fields can either be character or string literals.  They are
 written using the notation described in \secref{sec:common-literals}.  
-The library discipline contains a field that indicates the appropriate
-encoding for the external representation of the field.  Supported
-encodings include ASCII and EBCDIC.  ASCII is the default encoding.  
-\secref{sec:library-customization-character-encodings} describes how
-to set the character encoding.  
 
-\note{Add syntax for specifying enoding of each field: alit, clit, etc.}
-
-In addition to specifying how to consume literals from the external
+In addition to specifying literals to consume from the external
 representation, literal fields also play a role in error recovery.  If
 the generated parser encounters a syntactic error while parsing a full
 field, causing it to enter panic mode (\cf{}
 \secref{sec:common-error-model}), the parser will scan to find the next
 literal, marking all intervening fields as errors in the
-associated error descriptor.  The library discipline has parameters
+associated parse descriptor.  The library discipline has parameters
 that allow the library user to tune the extent of such scanning
 (\cf{} \secref{sec:library-customization-scanning-extent}).
 
@@ -146,7 +139,7 @@ If given, a \where{} clause expresses constraints over the entirety
 of a \struct{} value.  The values of all previous fields and any
 parameters to the \struct{} are in scope.  If the predicate given in
 the \where{} clause evaluates to false (\ie{}, zero), the error code
-in the associated error descriptor will indicate a user-constraint
+in the associated parse descriptor will indicate a user-constraint
 error has occurred.  
 
 The \where{} clause in the \cd{whereExample} \struct{} ensures
@@ -155,6 +148,7 @@ that the sum of the first two fields is less than the given limit.
 
 \section{Generated library}
 \subsection{In-memory representation}
+\label{sec:structs-rep}
 The in-memory representation of a \struct{} is a \C{} struct of the
 same name.  Each field of the \C{} struct corresponds to a full or
 computed field of the \struct{}.  The type of each full field in
@@ -169,15 +163,33 @@ The type \cd{PDC\_string} is the in-memory representation of the base
 type \cd{Pstring} (\cf{} \chapref{chap:base-types}).  Note that literal fields
 do not appear in the in-memory representation. 
 
-\subsection{\csm{} mask}
-The \csm{} mask of a \struct{} \cd{myStruct} is a \C{} struct 
-with name \csm{myStruct}.  
-\input{code/ai.httpRequestCSM}
-This struct has one 
-a field named \cd{structLevel} with base 
-\csm{} mask type.  
+\subsection{Mask}
+\label{sec:structs-masks}
+The mask of a \struct{} with name \cd{myStruct} is a \C{} struct 
+with name \csmSuf{\cd myStruct}.  For each full field in
+\cd{myStruct}, there is a corresponding field in the mask struct, the
+type of which is the mask type for
+the field.  In addition, there is a 
+\cd{structLevel} field, which has the base mask type.  This field allows
+library users to toggle operations at the level of the structure as a
+whole. 
 
-\subsection{error descriptor}
+For example, the mask type \csmSuf{http\_request\_t} has the
+following structure:
+\input{code/ai.httpRequestCSM}
+
+\subsection{Parse descriptor}
+\label{sec:structs-parse-descriptors}
+The parse descriptor of a \struct{} with name \cd{myStruct} is a \C{}
+struct with name \pdSuf{myStruct}.  This struct has the fields
+described in \secref{sec:common-parse-descriptor}. In addition, for
+each full field in \cd{myStruct}, there is a corresponding field in
+the parse descriptor struct, the type of which is the parse descriptor
+type for the field.
+
+For example, the parse descriptor type \pdSuf{http\_request\_t} has
+the following structure:
+\input{code/ai.httpRequestPD}
 \subsection{Operations}
 init/cleanup rep
 init/cleanup ed

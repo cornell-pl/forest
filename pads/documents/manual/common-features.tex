@@ -32,6 +32,13 @@ c-style and /-- form, which are reflected into output.
  strings: ``foo'' \term{str\_lit}
  escape characters: \begin{verbatim}\" \' \end{verbatim}
 
+The library discipline contains a field that indicates the appropriate
+encoding for the external representation of literals.  Supported
+encodings include ASCII and EBCDIC.  ASCII is the default encoding.  
+\secref{sec:library-customization-character-encodings} describes how
+to set the character encoding.  
+
+
 \section{Parameterization}
 \label{sec:common-parameterization}
  mechanism to pass values from earlier portions of data to later
@@ -42,13 +49,135 @@ c-style and /-- form, which are reflected into output.
 \nont{formal\_param\_list}
 \nont{actual\_param\_list}
 
-\section{record modifier}
+\section{\record{} modifier}
 
-\section{file modifier}
+\section{\file{} modifier}
 
 \section{Error model}
 \label{sec:common-error-model}
  panic versus non-panic errors
 
 \appref{app:error-codes} contains a list of all error codes and
-describes their meanints.
+describes their meanings.
+
+\section{In-memory representations}
+\label{sec:common-rep}
+Each \pads{} type \cd{foo} has an associated in-memory representation
+type of the same name.  The structure of this representation depends
+upon the particular \pads{} type.  
+In general, these representations fall into two broad categories:
+\textit{static} representations, whose size can be computed at
+library-generation time, and \textit{dynamic} representations, whose size 
+depends on the data being parsed. 
+Details appear in 
+appear in \secref{sec:base-types-rep}, \secref{sec:structs-rep},
+\secref{sec:unions-rep}, \secref{sec:arrays-rep}, 
+\secref{sec:enums-rep}, and \secref{sec:typedefs-rep}.
+
+\section{Masks}
+\label{sec:common-masks}
+Each \pads{} type \cd{foo} has an associated mask type, \csmSuf{foo}.
+Masks allow the library user to customize operations to portions of
+the associated values.  The structure of the mask for a given \pads{}
+type varies depending on the structure of the \pads{} type.  Details
+appear in \secref{sec:base-types-masks}, \secref{sec:structs-masks},
+\secref{sec:unions-masks}, \secref{sec:arrays-masks}, 
+\secref{sec:enums-masks}, and \secref{sec:typedefs-masks}.
+
+\section{Parse descriptors}
+\label{sec:common-parse-descriptor}
+Each \pads{} type \cd{foo} has an associated parse descriptor type, 
+\pdSuf{foo}, coded as a \C{} struct with at least the following four
+fields:
+\vskip 1ex
+\begin{tabular}{lp{2.25in}}
+ \cd{PDC\_uint32 pstate} & Flags that describe the state after parsing the
+                           associated value.\\[1ex]
+ \cd{PDC\_errCode\_t errCode} & A code indicating the nature of the 
+                               first detected error.\\[1ex]
+ \cd{PDC\_loc\_t loc}  & The location in the data source of the first 
+                         error.\\[1ex]
+ \cd{PDC\_uint32 nerr} & The number of errors detected during parsing
+                        of the associated value.\\[1ex]
+\end{tabular}
+
+\noindent
+Field \cd{pstate} contains the following flags:
+\vskip 1ex
+\begin{tabular}{lp{3.5in}}
+ \cd{PDC\_Panic} & Set if the parser was in panic mode during the
+                  parsing of the associated data.\\[1ex]
+\end{tabular}
+
+\noindent
+The \pads{} library provides a collection of functions (macros
+actually) for manipulating the parse state field:
+\vskip 1ex
+\begin{code}
+void PDC_PS_init(void *pd);         
+void PDC_PS_setPanic(void *pd);     
+void PDC_PS_unsetPanic(void *pd);   
+int  PDC_PS_isPanic(void *pd);      
+\end{code}
+
+Details about how parse descriptors are customized for various \pads{}
+types appear in
+\secref{sec:base-types-parse-descriptors}, \secref{sec:structs-parse-descriptors},
+\secref{sec:unions-parse-descriptors}, \secref{sec:arrays-parse-descriptors}, 
+\secref{sec:enums-parse-descriptors} and \secref{sec:typedefs-parse-descriptors}.
+
+\section{Operations}
+\label{common-operations}
+\subsection{Initialization and cleanup functions}
+\begin{code}
+PDC_error_t foo_init (PDC_t *pdc, foo *rep);
+
+PDC_error_t foo_cleanup (PDC_t *pdc, foo *rep);
+
+PDC_error_t foo_pd_init (PDC_t *pdc, foo_pd *pd);
+
+PDC_error_t foo_pd_cleanup (PDC_t *pdc, foo_pd *pd);
+
+void foo_maskFill (PDC_t *pdc, foo_m *mask, PDC_base_m baseMask);
+
+\end{code}
+
+\subsection{Utilty functions}
+\begin{code}
+PDC_error_t foo_copy (PDC_t *pdc, foo *rep_dst, foo *rep_src);
+
+PDC_error_t foo_pd_copy (PDC_t *pdc, foo_pd *pd_dst, foo_pd *pd_src);
+\end{code}
+
+\subsection{Reading functions}
+\begin{code}
+PDC_error_t foo_read (PDC_t *pdc, foo_m *m, foo_pd *pd, foo *rep);
+\end{code}
+
+\subsection{Writing functions}
+\begin{code}
+ssize_t foo_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, 
+                       int *buf_full, foo_pd *pd, foo *rep);
+
+ssize_t foo_write2io (PDC_t *pdc, Sfio_t *io, foo_pd *pd, foo *rep);
+
+\end{code}
+
+\subsection{Accumulator functions}
+\begin{code}
+PDC_error_t foo_acc_init (PDC_t *pdc, foo_acc *acc);
+
+PDC_error_t foo_acc_reset (PDC_t *pdc, foo_acc *acc);
+
+PDC_error_t foo_acc_cleanup (PDC_t *pdc, foo_acc *acc);
+
+PDC_error_t foo_acc_add (PDC_t *pdc, foo_acc *acc, foo_pd *pd, foo *rep);
+
+PDC_error_t foo_acc_report2io (PDC_t *pdc, Sfio_t *outstr, 
+                               char const *prefix, char const *what, 
+                               int nst, foo_acc *acc);
+
+PDC_error_t foo_acc_report (PDC_t *pdc, char const *prefix, 
+                            char const *what, int nst, foo_acc *acc);
+
+\end{code}
