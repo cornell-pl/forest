@@ -215,6 +215,7 @@ struct
   val flags_t      = P.makeTypedefPCT "Pflags_t"
 
   val uint32PCT    = P.makeTypedefPCT "Puint32"
+  val uint64PCT    = P.makeTypedefPCT "Puint64"
   val uint32Act    = "Puint32_acc"
   val uint32AccPCT = P.makeTypedefPCT "Puint32_acc"
 

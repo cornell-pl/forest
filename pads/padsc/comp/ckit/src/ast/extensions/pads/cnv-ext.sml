@@ -2047,6 +2047,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
               fun emitXML   eds = emit (!(#outputXML(PInput.inputs)), eds)
 	      fun emitPred  eds = emitRead eds
 
+              fun isGalax () = (!(#outputExper(PInput.inputs)))
+
               fun cnvCTy ctyED = 
 		  let val astdecls = cnvExternalDecl ctyED
 		  in
@@ -2568,8 +2570,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 (firstError, PL.uint32PCT, 
 				    SOME "if errCode == ARRAY_ELEM_ERR, index of first error"),
 				 (numRead, PL.uint32PCT, SOME "Number of elements read"),
-				 (length, PL.uint32PCT, SOME "Number of elements in memory"),
-				 (elts, P.ptrPCT(elemEdPCT), NONE),
+				 (length, PL.uint32PCT, SOME "Number of elements in memory")] 
+                               @ (if isGalax() then [(identifier, PL.uint64PCT, SOME "Identifier tag for Galax")] else [])
+			       @ [(elts, P.ptrPCT(elemEdPCT), NONE),
 				 (internal, P.ptrPCT PL.rbufferPCT, NONE)] 
 		 val pdStructED = P.makeTyDefStructEDecl (pdFields, pdSuf name)
 		 val (pdStructDecls, pdTid) = cnvCTy pdStructED 
@@ -4665,6 +4668,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val structEDFields = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
 				  	   (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT, NONE),
 					   (tag, tagPCT, NONE), (value, unionPDPCT, NONE)]
+                                         @ (if isGalax() then [(identifier, PL.uint64PCT, SOME "Identifier tag for Galax")] else [])
 		     val pdStructED = P.makeTyDefStructEDecl (structEDFields, pdSuf name)
 		     val (pdStructPDDecls, pdTid) = cnvCTy pdStructED
 		     val pdPCT = P.makeTypedefPCT (pdSuf name)			  
@@ -5706,6 +5710,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val auxEDFields = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
 					 (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT, NONE)]
 		      val pdFields = auxEDFields @ (mungeFields genEDFull genEDBrief genEDMan fields)
+                                         @ (if isGalax() then [(identifier, PL.uint64PCT, SOME "Identifier tag for Galax")] else [])
 		      val pdStructED = P.makeTyDefStructEDecl (pdFields, pdSuf name)
 		      val (pdDecls, pdTid) = cnvCTy pdStructED
                       val pdPCT = P.makeTypedefPCT (pdSuf name)
