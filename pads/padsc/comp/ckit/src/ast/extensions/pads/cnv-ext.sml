@@ -767,6 +767,12 @@ structure CnvExt : CNVEXT = struct
                                                     (* end nested case *)) 
                                     |  SOME(b:PBTys.baseInfoTy) => false)(* ???? *)
 
+              fun lookupBranch(ty:pty) = 
+		  case ty
+                  of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
+				    of NONE => s  (* non-base type *)
+                                    |  SOME (b:PBTys.baseInfoTy) => Atom.toString (#repname b))
+
 	      fun lookupCompoundDiskSize (ty:pty) =
 		  case ty
 		  of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
@@ -2603,9 +2609,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
   		 @ (emitXML galaxEDs)
 	      end
 
-	     fun cnvPUnion ({name: string, params: (pcty * pcdecr) list, 
+	     fun cnvPUnion {name: string, params: (pcty * pcdecr) list, 
 			     isRecord: bool, containsRecord, largeHeuristic, isFile: bool, 
-			     variants: (pdty, pcdecr, pcexp) PX.PBranches}) = 
+			     variants: (pdty, pcdecr, pcexp) PX.PBranches} = 
 		 let (* Some useful names *)
 		     val unionName = name
 		     val cParams : (string * pcty) list = List.map mungeParam params
@@ -3244,25 +3250,49 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 		      (***** union PADS-Galax *****)
 
-		      fun genBranchFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
-				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred: pcexp option, comment: string option} = 
-			  [(name, lookupTy (pty,repSuf,#repname))]
-		      fun genBranchBrief e = []
-		      fun genBranchMan m = []
-		      val localBranches = mungeVariants genBranchFull genBranchBrief genBranchMan variants		
-
 		      fun tagbranches [] = []
-		  	| tagbranches ((i,(n,f))::ps) = 
-				(PT.CaseLabel(PT.Id n,
-				              PT.Compound ([macroNodeCall(PT.Id result,P.intX i,f,n,getFieldX(m,n),
-							       P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
-(* check out 'branch' in Macro Call*)	   		       P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
+		  	| tagbranches ((i,(n,f,false))::ps) =
+                            (PT.CaseLabel(PT.Id n,
+				          PT.Compound ([macroNodeCall(PT.Id result,P.intX i,f,n,getFieldX(m,n),
+						        P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
+					   		P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
 							       childrenSuf name),
-						            PT.Break])))::(tagbranches ps)
+						        PT.Break])))::(tagbranches ps)
+		  	| tagbranches ((i,(n,f,true))::ps) =	(* Pcompute field in mask is NULL by now *) 
+                            (PT.CaseLabel(PT.Id n,
+				          PT.Compound ([macroNodeCall(PT.Id result,P.intX i,f,n,P.intX 0,
+						        P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
+					   		P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
+							       childrenSuf name),
+						        PT.Break])))::(tagbranches ps)
 
-		      fun switchTag xs = PT.Switch (P.arrowX(PT.Id rep, PT.Id tag),
-						    PT.Compound (tagbranches (enumerate xs)))
+		      fun genCaseBranch (name,pty,i) =
+			  case lookupAcc(pty) of NONE   => []
+					       | SOME a => [(name,lookupBranch pty,i)] 
+				    
+		      (* end accOpt SOME case *)
+		      fun genBranchFull {pty :PX.Pty, args:pcexp list, name:string, 
+					 isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool, 
+					 pred:pcexp option, comment} = 
+			  genCaseBranch (name,pty,false)
+		      fun genBranchBrief e = []
+		      fun genBranchMan {decl, comment} = 
+			  let val ctNoptEs = cnvDeclaration decl
+			      fun doOne (cty, nameOpt, exp) = 
+				  let val name = case nameOpt of NONE => "bogus" | SOME n => n
+				      val accPtyOpt = reverseLookup cty
+				  in
+				    case accPtyOpt of NONE => [] 
+				     		    | SOME pty => genCaseBranch(name,pty,true)
+				  end
+			  in
+			    List.concat (List.map doOne ctNoptEs)
+			  end
+		      val nameBranchSs = mungeVariants genBranchFull genBranchBrief genBranchMan variants		
+		      val addBranchSs = (tagbranches (enumerate nameBranchSs))
+		      val errBranchSs = [PT.CaseLabel(PT.Id (errSuf name), PT.Break)]
+                      val switchTag = PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), 
+						    PT.Compound (addBranchSs @ errBranchSs))
 
     	              (* PDCI_node_t** fooUnion_children(PDCI_node_t *self) *)
 		      fun genGalaxUnionChildrenFun(name,variants) =		
@@ -3279,7 +3309,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                                        PT.Call(PT.Id (toStringSuf (tgSuf name)),[fieldX(rep,tag)]))] @
 					   ifGalaxChildren(returnName,P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
 					   macroTNode(returnName,PL.PDCI_structured_pd,pd,PT.Id pd,cnvName) @
-				 	   [switchTag localBranches] @
+				 	   [switchTag] (* localBranches *)  @
 					   [P.returnS (returnName)]
                           in   
                             P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
