@@ -1,1 +1,1 @@
-Ptypedef Puint64 u64;
+Ptypedef Psbh_uint8(:1:) u64;

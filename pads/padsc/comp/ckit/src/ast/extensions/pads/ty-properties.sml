@@ -4,6 +4,7 @@ struct
    structure P = ParseTreeUtil
    structure PT = ParseTree
 
+
    datatype diskSize =  Size of IntInf.int * IntInf.int  (* number of bytes, number of EOR markers *)
                       | Param of string list * string option * PT.expression * PT.expression
                       | Variable

@@ -14,8 +14,11 @@ structure ParseTreeExt =
              largeHeuristic : bool,
 		       pred : 'exp option, 
 		    comment : string option}
-	 | Manifest of { decl : 'dt * ('decr * 'exp) list, 
-                      comment : string option}
+	 | Manifest of {tyname : string,
+			name   : string,
+			 args  : 'exp list,
+			 expr  : 'exp,
+                      comment  : string option}
          | Brief of 'exp  
 
         datatype 'exp PSize = 

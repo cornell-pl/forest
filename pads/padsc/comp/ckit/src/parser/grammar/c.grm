@@ -346,7 +346,7 @@ end
         | pStructFieldList of ((decltype, declarator, expression) PX.PSField) list
         | pStructField of (decltype, declarator, expression) PX.PSField
 	| pPostCondOpt of expression option
-        | pManifestField of decltype * (declarator * expression) list
+        | pManifestField of (decltype, declarator, expression) PX.PSField
         | pConstraintOpt of expression option
         | pCommentOpt of string option
         | pArray of (declarator, ctype, decltype, expression) PX.PExternal
@@ -1124,8 +1124,13 @@ pREexpr :
  | expr     (expr) 
 
 pManifestField: 
-  declarationSpecifiers initDeclaratorList
-	        (declarationSpecifiers, seqToList initDeclaratorList)
+  pName pOptActParams ID EQUALS expr SEMICOLON pCommentOpt  
+         (PX.Manifest{tyname  = pName,
+	              name    = ID,
+	              args    = pOptActParams,
+		      expr    = expr,
+		      comment = pCommentOpt})
+			                                         
 
 pStructField:                   pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 
@@ -1177,7 +1182,7 @@ pStructField: POMIT  PENDIAN pName pOptActParams ID  pConstraintOpt SEMICOLON pC
 				                isEndian  = true,
 						pred = pConstraintOpt,
                                                 comment = pCommentOpt})	
-  | PCOMPUTE pManifestField SEMICOLON pCommentOpt   (PX.Manifest{decl = pManifestField, comment=pCommentOpt})
+  | PCOMPUTE pManifestField           (pManifestField)
   | pREexpr SEMICOLON                 (PX.Brief (pREexpr))
 
 pStructFieldList: 

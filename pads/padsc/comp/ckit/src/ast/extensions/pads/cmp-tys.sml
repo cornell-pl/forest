@@ -35,6 +35,9 @@ struct
 		  accReport: string,
 		  accClean : string}
 
+   datatype padsTy = BaseTy of PBaseTys.baseInfoTy | CompoundTy of pTyInfo | CTy
+
+
   fun mergeTyInfo mergeDiskSizes (r1 : sTyInfo, r2:sTyInfo) =
       {diskSize = mergeDiskSizes (#diskSize r1, #diskSize r2),
        memChar  = TyProps.mergeMemChar(#memChar r1,   #memChar  r2),
