@@ -2,6 +2,9 @@
 \usepackage{times,url}
 \usepackage{code} 
 \input{defs}
+\newcommand{\dibbler}{Sirius}
+\newcommand{\ningaui}{Altair}
+\newcommand{\darkstar}{Regulus}
 
 \begin{document}
 \title{PADS\\ A domain-specific language for processing ad hoc data}
@@ -45,10 +48,10 @@ for processing well-behaved data, but are of little help when dealing with ad ho
 Examples that we face at AT\&T include call detail data~\cite{kdd00}, 
 %compiler traces~\cite{chilimbi},
 web server logs~\cite{wpp}, 
-netflows capturing internet traffic\cite{netflow}, 
+netflows capturing internet traffic~\cite{netflow}, 
 log files characterizing IP backbone resource utilization,
 wire formats for legacy telecommunication billing systems, 
-etc{}. 
+\etc{}
 Such data may simply require processing before it can be loaded into a
 data management system, or it may be too large or too transient to
 make such loading cost effective.
@@ -80,8 +83,8 @@ A fourth challenge is that such data sources can be high volume:
 AT\&T's call-detail stream contains roughly 300~million calls per day
 requiring approximately 7GBs of storage space. Although this data is
 eventually archived in a database, analysts mine it profitably before
-such archiving~\cite{kdd98,kdd99}. More challenging, the Ningaui project at AT\&T
-accumulates data related to provisioning business services at a rate
+such archiving~\cite{kdd98,kdd99}. More challenging, the \ningaui{} project at AT\&T
+accumulates billing data at a rate
 of 250-300GB/day, with occasional spurts of 750GBs/day, and Netflow data
 arrives from Cisco routers at rates over a gigabyte per
 second~\cite{gigascope}! Such volumes mean it must be possible to
@@ -103,10 +106,10 @@ ends up embedded in parsing code, making long-term maintenance
 difficult for the original writer and sharing the knowledge with
 others nearly impossible.
 
-The \pads{} system facilitates ad hoc data processing by addressing
+The \pads{} system makes life easier for data analysts by addressing
 each of these concerns.\footnote{
-  \pads{} is short for Processing Arbitrary Data Sources.
-}%
+  \pads{} is short for Processing Ad hoc Data Sources.
+}
 It provides a declarative data description
 language that permits analysts to describe the physical layout of
 their data, \textit{as it is}.  The language also permits analysts to
@@ -119,7 +122,7 @@ and to provide the analysts with a library of broadly useful routines in exchang
 \pads{} descriptions are concise enough to
 serve as documentation and flexible enough to describe most of
 the data formats we have seen in practice, including ASCII, binary,
-EBCDIC, and mixed data formats.  The fact that useful software
+Cobol, and mixed data formats.  The fact that useful software
 artifacts are generated from the descriptions provides strong
 incentive for keeping the descriptions current, allowing them to serve
 as living documentation.  
@@ -144,7 +147,6 @@ related to deviations in the physical format; and semantic errors in
 which the data violates user constraints.  Because these checks appear
 only in generated code, they do not clutter the high-level declarative
 description of the data source.
-
 The result of a parse is a pair consisting of a canonical in-memory
 representation of the data and a parse descriptor. The parse
 descriptor precisely characterizes both the syntactic and the semantic
@@ -160,6 +162,19 @@ choose which semantic conditions to check at run-time, permitting them to specif
 all known properties in the source description without forcing all users of that 
 description to pay the run-time cost of checking them.  
 
+Given the importance of the problem, it is perhaps surprising
+that more tools do not exist to solve it.  \xml{} and relational databases
+only help with data already in well-behaved formats.  Lex and Yacc are both
+over- and under- kill.  Overkill  because the division into a lexer and a context free grammar is not necessary for many ad hoc data sources, and underkill in that such systems require the user to build in-memory representations manually and don't provide extra tools.  ASN.1~\cite{asn} and related systems~\cite{asdl} allow the user to specify an in-memory representation and generate an on-disk format, but this doesn't help when given a particular on-disk format.  
+Existing ad hoc description languages~\cite{gpce02,sigcomm00,erlang} are steps 
+in the right direction, but they focus on binary, error-free data and they do not provide auxiliary tools.
+
+In building the \pads{} system, we faced design challenges on two fronts:
+designing the data description language and
+crafting the generated libraries and tools.
+We describe each of these designs in the rest of the paper
+and illustrate their utility in examples drawn
+from our experiences at AT\&T. 
 
 \section{Example data sources}
 
@@ -180,12 +195,12 @@ representations.
 Name \& Use   &  Representation              &Size           & Common Errors \\ \hline\hline
 \textbf{Web server logs (CLF)}: &  Fixed-column ASCII records & $\leq$12GB/week & Race conditions on log entry\\ 
 Measuring web workloads                   &                             &                             & \\ \hline
-\textbf{AT\&T provisioning data (Dibbler)}: & Variable-width ASCII records & 2.2GB/week & Unexpected values \\ 
+\textbf{AT\&T provisioning data (\dibbler{})}: & Variable-width ASCII records & 2.2GB/week & Unexpected values \\ 
 Monitoring service activation &                              &            & Corrupted data feeds \\ \hline
-Call detail: Fraud detection/marketing   &  Fixed width binary records  &\appr{}7GB/day &  Undocumented data\\  \hline 
-AT\&T billing data (Ningaui): & Various Cobol data formats  & \appr{}4000 files/day, & Unexpected values\\ 
+Call detail: Fraud detection  &  Fixed width binary records  &\appr{}7GB/day &  Undocumented data\\  \hline 
+AT\&T billing data (\ningaui{}): & Various Cobol data formats  & \appr{}4000 files/day, & Unexpected values\\ 
 Monitoring billing process   &                             & 250-300GB/day    & Corrupted data feeds \\ \hline
-IP backbone data (Darkstar)  & ASCII  & $\ge$ 15 sources  & Multiple missing-value representations \\
+IP backbone data (\darkstar{})  & ASCII  & $\ge$ 15 sources  & Multiple missing-value representations \\
 Monitoring network performance  &        & \appr{}15 GB/day              & Undocumented data \\ \hline
 Netflow       & Data-dependent number of     & $\ge$1Gigabit/second  & Missed packets\\ 
 Monitoring network performance              &  fixed-width binary record   &                       & \\ \hline
@@ -219,7 +234,7 @@ shows a couple of typical records.
 \subsection{Provisioning data}
 In the telecommunications industry, the term \textit{provisioning} refers to the steps necessary to convert an order for phone service into the actual 
 service.  
-To track AT\&T's provisioning process, the Dibbler project compiles
+To track AT\&T's provisioning process, the \dibbler{} project compiles
 weekly summaries of the state of certain types of phone service orders.  
 These ASCII summaries store the summary date and one record per order.
 Each order record contains a header followed by a sequence of events.
@@ -309,7 +324,7 @@ branch of a union should be taken.
 
 
 \figref{figure:wsl} gives the \pads{} description for CLF web server logs, 
-while \figref{figure:dibbler} gives the description for the Dibbler 
+while \figref{figure:dibbler} gives the description for the \dibbler{} 
 provisioning data.  We will use these two examples to illustrate various 
 features of the \pads{} language.  As with all \pads{} descriptions, types are declared before they are used, so the type that describes the totality of the data source appears at the bottom of the description.
 
@@ -339,7 +354,7 @@ of a constraint: the branch \cd{unauthorized} is chosen only if the parsed
 character is a dash.  
 
 \pads{} provides \kw{Parray}s to describe varying-length sequences of data all 
-with the same type.  The \cd{eventSeq_t} declaration in the Dibbler data description
+with the same type.  The \cd{eventSeq_t} declaration in the \dibbler{} data description
 uses a \kw{Parray} to characterize the sequence of events an
 order goes through during processing.  This declaration indicates that the elements
 in the sequence have type \cd{event_t}.  It also specifies that the elements will
@@ -360,7 +375,7 @@ constants using the ambient character encoding.  The \kw{Ptypedef}
 \cd{response_t} describes possible server response codes in CLF data by adding
 the constraint that the three-digit integer must be between 100 and 600.
 
-The \cd{order_header_t} type in the Dibbler data description contains several
+The \cd{order_header_t} type in the \dibbler{} data description contains several
 anonymous uses of the \kw{Popt} type.  This type is syntactic sugar for a 
 stylized use of a \kw{Punion} with two branches: the first with the indicated type, and the second with what might be thought of as the void type, which  
 always matches but never consumes any input.
@@ -390,7 +405,7 @@ always matches but never consumes any input.
 9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
 9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
 \end{verbatim}
-\caption{Tiny example of Dibbler provisioning data.}
+\caption{Tiny example of \dibbler{} provisioning data.}
 \label{figure:dibbler-records}
 \end{center}
 \end{small}
@@ -405,7 +420,7 @@ always matches but never consumes any input.
 
 \begin{figure}
 \input{dibbler_new}
-\caption{\pads{} description for Dibbler provisioning data.}
+\caption{\pads{} description for \dibbler{} provisioning data.}
 \label{figure:dibbler}
 \end{figure}
 
@@ -446,15 +461,21 @@ semantic errors detected during parsing,
 \item parsing and printing functions, and 
 \item a broad collection of utility functions.
 \end{itemize}
+
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
 \begin{figure*}
+\begin{tiny}
 \input{library}
 \caption{Selected portions of the library generated for the \texttt{entry\_t}
-  declaration from Dibbler data description.}
+  declaration from \dibbler{} data description.}
 \label{figure:library}
+\end{tiny}
 \end{figure*}
 To give a feeling for the library that \pads{} generates, 
 \figref{figure:library} includes selected portions of the generated 
-library for the Dibbler \cd{entry_t} declaration.
+library for the \dibbler{} \cd{entry_t} declaration.
 
 The \C{} declarations for the in-memory representation, the mask, 
 and the parse descriptor all share the structure of the \pads{}
@@ -503,7 +524,7 @@ and processing very large data sources.
 
 The ratio of the size of the data description to the size of the generated code gives a rough measure of the leverage of the
 declarative description.  For the 
-68~line Dibbler data description, the compiler yields a 1269~\texttt{.h} file
+68~line \dibbler{} data description, the compiler yields a 1269~\texttt{.h} file
 and a 5923~\text{.c} file.  This expansion comes from the extensive error checking in the generated parser and the number of generated utility functions.
 
 We discuss details of the generated library in the following section
@@ -520,10 +541,10 @@ understanding of the data through statistical summaries, converting the data int
 \subsubsection{Normalizing data}
 \label{subsec:general}
 We start by showing a simple use of 
-the core library to clean and normalize Dibbler data
+the core library to clean and normalize \dibbler{} data
 in \figref{figure:dibbler-filter}. After initializing
 the \pads{} library handle and opening the data source, the code sets
-the mask to check all conditions in the Dibbler description except the
+the mask to check all conditions in the \dibbler{} description except the
 sorting of the timestamps.  We have omitted from the figure the code to read and write the header. 
 The code then echoes error records to one file and cleaned ones to another.
 The raw data has two different representations of unavailable phone numbers:
@@ -537,7 +558,7 @@ of the in-memory representation of the data.
 \begin{small}
 \begin{center}
 \input{dibbler_filter}
-\caption{Code fragment for filtering and normalizing Dibbler data.}
+\caption{Code fragment for filtering and normalizing \dibbler{} data.}
 \label{figure:dibbler-filter}
 \end{center}
 \end{small}
@@ -550,7 +571,7 @@ building persistent profiles of the entities described in transaction
 streams.  Data analysts at AT\&T use Hancock 
 programs over streams of call-detail records to build 
 profiles of phone numbers, capturing behaviors like the frequency with which a given number makes a phone call.  They uses these profiles
-to detect fraud and target marketing. 
+to detect fraud. 
 Defining the input streams turned out to be one of the most
 difficult parts of writing Hancock programs because the parsing
 code had to handle erroneous values and decipher complex encodings.  
@@ -575,7 +596,7 @@ distribution of legal values.  Selected functions from this portion of the libra
 
 We can of course use these functions by hand to write
 a program to compute the statistical profile of any \pads{} data source.
-However, ad hoc sources are often simply a sequence of records, perhaps prefixed by a header, so we can create a complete accumulator program from minimal extra information.  Both the web server log and the Dibbler data sources exhibit this pattern.\footnote{
+However, ad hoc sources are often simply a sequence of records, perhaps prefixed by a header, so we can create a complete accumulator program from minimal extra information.  Both the web server log and the \dibbler{} data sources exhibit this pattern.\footnote{
   Note that a data format that can be read in one bulk read also fits this pattern.
 } 
 Consequently, given only the names of the optional
@@ -624,7 +645,7 @@ not mentioned in the documentation~\cite{wpp}.
 
 Accumulators can also be used to profile data sources automatically.
 Indeed, this application motivated the initial design of accumulators.
-AT\&T's Ningaui project receives roughly 4000~data files per day in various
+AT\&T's \ningaui{} project receives roughly 4000~data files per day in various
 Cobol formats.  This volume makes looking at each file by hand 
 prohibitively expensive.  However, accumulator profiles can be used to 
 automatically determine
@@ -634,11 +655,11 @@ To support this usage, we built a tool that automatically translates
 Cobol copybooks into \pads{} descriptions.
 
 In practice at AT\&T, accumulators have proven themselves very useful for
-data exploration.  The Darkstar project uses \pads{} accumulator programs
+data exploration.  The \darkstar{} project uses \pads{} accumulator programs
 to find all the different representations of ``data not available,"  typical 
 examples of which include \cd{0}, a blank, \cd{NONE}, and \cd{Nothing}.
 An accumulator program revealed the two representations
-of missing phone numbers in the Dibbler data that the example program
+of missing phone numbers in the \dibbler{} data that the example program
 in \secref{subsec:general} repaired.
 Accumulators also often serve as a quick tool for iteratively
 refining a \pads{} description until only genuine errors remain.
@@ -673,7 +694,7 @@ sample data in \figref{figure:clf-records}.
 \end{figure*}
 To support customization, \pads{} allows users to provide their own formatting functions for any type.
 
-AT\&T's Darkstar project uses generated formatting programs to convert
+AT\&T's \darkstar{} project uses generated formatting programs to convert
 various data sources into a format suitable for loading into a relational
 database.
 
@@ -682,7 +703,7 @@ database.
 One interesting aspect of the mapping is that we embed not just the in-memory representation of \pads{} values, but also the parse descriptors in cases where the data was buggy.  This choice allows users to explore the error portions
 of their data sources, which can be the most interesting parts of the data.
 Given a \pads{} specification, the \pads{} compiler generates an XML Schema describing the canonical embedding for that data source.  As an example, 
-the following is the portion of the generated XML Schema for the \cd{eventSeq} type in the Dibbler data description.
+the following is the portion of the generated XML Schema for the \cd{eventSeq} type in the \dibbler{} data description.
 
 \begin{small}
 \begin{verbatim}
@@ -716,15 +737,15 @@ The \pads{} compiler generates a \cd{write_xml_2io} function for each type, an e
 Our final use-scenario is querying data.
 Given a data source, a natural desire is to ask questions about the data, a desire which led to SQL and its many variants for relational data and XQuery for XML data~\cite{boag03XQueryDraft}.  Analysts working with ad hoc data would also like to query their
 data, but the lack of tools generally means they code their queries in an imperative fashion in languages such as \textsc{awk}, \perl{}, or \C{}.
-Indeed, the analyst working with the Dibbler data took this approach.
+Indeed, the analyst working with the \dibbler{} data took this approach.
 He coded queries such as ``Select all orders starting within a certain time window," ``Count the number of orders going through a particular state," and ``What is the average time required to go from a particular state to another
 particular state" in a mixture of \textsc{awk} and \textsc{perl}.  He was
 able to get the answers to his questions, but he had to code the queries explicitly, and the query-related code ended up embedded in his already-brittle parsing code.
 
-We wanted to support declarative querying over ad hoc sources, but we didn't want to invent an entirely new query language, which led us to examine existing languages.  Because XQuery is designed to manipulate semi-structured data, its expressiveness matched our data sources well.  We were able to code all the Dibbler-related queries in XQuery.  For example, the XQuery
+We wanted to support declarative querying over ad hoc sources, but we didn't want to invent an entirely new query language, which led us to examine existing languages.  Because XQuery is designed to manipulate semi-structured data, its expressiveness matched our data sources well.  We were able to code all the \dibbler{}-related queries in XQuery.  For example, the XQuery
 \begin{code}
 \begin{small}
-{ $dibbler/dibbler/order[event[1]
+{ $sirius/sirius/order[event[1]
     [timeStamp >= xs:date("2002-04-14") and 
      timeStamp <= xs:date("2002-05-25") ]] }
 \end{small}
@@ -733,7 +754,7 @@ asks for all orders starting within the given time window.
 
 Happy with XQuery's expressiveness, we worked with the designers of the Galax~\cite{galax} open-source implementation of XQuery to define a data API~\cite{galaxmanual}. 
 This API presents the source as a tree to Galax. With this architecture, Galax can incorporate any data source accessible through an instance of the data API.  We then extended the \pads{} system to produce such instances.  We were able to define the bulk of the API generically, having to generate on a per type basis only a handful of functions. 
-\figref{figure:library} contains the key generated functions for the \cd{entry_t} type from the Dibbler data.    The  \cd{node_new} function creates a node in the tree representation of the data, storing the supplied name, mask, parse descriptor, and in-memory representation.  It makes the argument node the parent of the newly created node.
+\figref{figure:library} contains the key generated functions for the \cd{entry_t} type from the \dibbler{} data.    The  \cd{node_new} function creates a node in the tree representation of the data, storing the supplied name, mask, parse descriptor, and in-memory representation.  It makes the argument node the parent of the newly created node.
 The \cd{node_kthChild} function takes a tree
 corresponding to an \cd{entry_t} node and a child index and returns the appropriate child.  For the \cd{entry_t} type, possible children are the header, the event sequence, or a parse descriptor. 
 At the moment, it is possible to use the resulting system to query ad hoc data sources that can be loaded entirely into memory, and a version that allows the data to be read lazily is well underway.
@@ -766,12 +787,12 @@ release process.  When the process is finished, hopefully in the next few weeks,
 \end{center}
  
 \section{Performance}
-To measure the performance of \pads{}, we compare the parser \pads{} generates for the Dibbler data description against a hand-written \perl{} program, as \perl{} is the language that our user base has typically been using. We compare the performance of the two approaches on two different tasks: vetting Dibbler data in a fashion similar to the filter program of
+To measure the performance of \pads{}, we compare the parser \pads{} generates for the \dibbler{} data description against a hand-written \perl{} program, as \perl{} is the language that our user base has typically been using. We compare the performance of the two approaches on two different tasks: vetting \dibbler{} data in a fashion similar to the filter program of
 \figref{figure:dibbler-filter} and collecting the order number of all records that ever pass through a particular state.  For the first task, we check all the specified properties on the data, including the constraint that the timestamps in the events appear in sorted order.  For the second task, we turn off all error checking and simply output the desired order numbers on standard out.
 We attempted to write the equivalent \perl{} programs in as efficient a manner possible, given the specified tasks.  For the vetting task, the \perl{} program uses the built-in \cd{split} operator to produce an in-memory list of the pipe-separated fields of the data source.  For the selection task, it uses \perl{}'s regular expression pattern matcher to find lines with the desired state in the 14th position.  It "compiles" this pattern and applies the compiled pattern to each line.  The \perl{} vetter is 323~lines of reasonably well-commented \perl{} code, while the selection program is 69~lines.  
 
 
-We used a Dibbler data file to exercise the programs.  This 2.2GB file contained 11,773,843 records.  The minimum number of states for an order was one, the maximum number was 156, and the average was 5.5.  One of these records violated the expected sorting order on event timestamps, and 53 of them contained a syntax error.
+We used a \dibbler{} data file to exercise the programs.  This 2.2GB file contained 11,773,843 records.  The minimum number of states for an order was one, the maximum number was 156, and the average was 5.5.  One of these records violated the expected sorting order on event timestamps, and 53 of them contained a syntax error.
 (These statistics are courtesy of the generated \pads{} accumulator program, a nice side-benefit of the \pads{} description.)  
 
 We ran each program XXX times on a XXX processor running Irix XXX.   We report the XXX running times.
@@ -797,7 +818,7 @@ process data that arrives in predetermined, \textit{ad hoc} formats.
 
 
 More closely related work allows declarative descriptions of physical
-data~\cite{sigcomm00,gpce02}, motivated by parsing
+data~\cite{erlang,sigcomm00,gpce02}, motivated by parsing telephony protocols,
 \textsc{TCP/IP} packets and \java{} jar-files, respectively.  Like
 \pads{}, both of these languages have a type-directed approach to
 describing ad hoc data and permit the user to define semantic constraints.
@@ -887,6 +908,8 @@ developing the Galax data API and our summer
 students Ricardo Medel and Yitzhak Mandelbaum for their work on implementing
 the XML-related portions of the \pads{} compiler and run-time library.
 Mary Fern\'andez, Yitzhak Mandelbaum, David Walker, and John Launchbury made many helpful comments on an earlier draft.
+
+\small
 \bibliographystyle{abbrv}
 \bibliography{pads} 
 
