@@ -349,6 +349,12 @@ SHARED_LIBTOOL_WHOLE_ARCHIVE :=-dynamiclib -flat_namespace -undefined suppress -
 CARCHFLAGS :=-fno-common
 endif
 
+# use this rule as follows
+# (lib=<library>; $(FixStaticLib))
+define FixStaticLib
+(ranlib $$lib)>/dev/null 2>&1 || true
+endef
+
 ifeq ($(ARCH_N_OPSYS),x86-freebsd)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 # XXX why doesn't mamake figure this out ???
