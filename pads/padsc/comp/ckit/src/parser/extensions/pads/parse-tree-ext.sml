@@ -18,6 +18,7 @@ structure ParseTreeExt =
          | Last  of 'exp PPostCond list 
          | Ended of 'exp PPostCond list 
          | Skip  of 'exp PPostCond list 
+         | Longest
 
         datatype 'exp  OptPredicate = Simple of 'exp 
 	                        | Decon of {some : (string * 'exp) option, none : 'exp option}

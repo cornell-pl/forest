@@ -50,7 +50,7 @@ is
 	uidtabimp-sig.sml
 	uidtabimp-fn.sml
         aidtab.sml
-	pidtab.sml
+	(* pidtab.sml *)
 	extensions/pads/paidtab.sml
 	tidtab.sml
 	tables.sml (* type abbreviations for pidtab, tidtab, aidtab *)

@@ -2,6 +2,7 @@ structure PLib =
 struct
   structure PT = ParseTree
   structure P  = ParseTreeUtil
+  structure PX = ParseTreeExt
  
   val libInit = "P_lib_init"
 
@@ -156,6 +157,14 @@ struct
   val intCvtPCT    = P.makeTypedefPCT "Pint32_map_fn"
 
   val sfioPCT      = P.ptrPCT (P.makeTypedefPCT "Sfio_t")
+
+
+  val longestX     = [PX.ParseCheck(
+		       PT.Call(PT.Id "PDCI_Plongest_chkErr",
+			       [P.dotX(P.subX(PT.Id PNames.pdElts, PT.Id PNames.arrayCur),PT.Id PNames.nerr),
+				P.minusX(P.dotX(PT.Id PNames.elemEnd, PT.Id PNames.offset),
+					 P.dotX(PT.Id PNames.elemBegin, PT.Id PNames.offset)),
+				P.addrX(PT.Id PNames.consume)]))]
 
   fun fmtChar(chr:PT.expression) =
    (*  char*       P_fmtChar(char c); *)

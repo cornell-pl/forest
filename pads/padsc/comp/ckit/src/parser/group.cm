@@ -38,7 +38,7 @@ is
 
 	(* utilitities *)
 	util/old-pp.sml
-	util/ascii.sml
+	(* util/ascii.sml *)
 	util/sourcemap-sig.sml
 	util/sourcemap.sml
 	util/error-sig.sml

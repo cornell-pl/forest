@@ -295,7 +295,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
 	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
         | POPT | POMIT | PENDIAN | PCOMPUTE (* PADS *)
         | PFROM  | PSOME | PNONE (*PADS*)
- 	| PLONGESTMATCH | PRECORD | PSOURCE | PWHERE  (* PADS *)  
+ 	| PLONGEST | PRECORD | PSOURCE | PWHERE  (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT | PPREFIX (* PADS*)
         | PRE | PDONE (* PADS *)
 
@@ -1145,7 +1145,7 @@ pIsRecord : (false)
   | PRECORD (true)
 
 pIsLongestMatch : (false)
-  | PLONGESTMATCH (true)
+  | PLONGEST (true)
 
 pIsSource : (false)
   | PSOURCE (true)
@@ -1311,6 +1311,7 @@ pArrayConstraint :
  | PLAST  LPAREN pConstraintsWComma RPAREN  (PX.Last  pConstraintsWComma)
  | PENDED LPAREN pConstraintsWComma RPAREN  (PX.Ended pConstraintsWComma)
  | POMIT  LPAREN pConstraintsWComma RPAREN  (PX.Skip  pConstraintsWComma)
+ | PLONGEST                                 (PX.Longest)
 
 pArrayConstraints : 
    pArrayConstraint ([pArrayConstraint])

@@ -10,6 +10,8 @@ struct
   val curElt      = "elt"
   val curPd       = "pd"
   val consume     = "consume"
+  val offset      = "offset"
+  val nerr        = "nerr"
   val arrayBegin  = "begin"  (* tloc.b     : Ppos_t *)
   val arrayEnd    = "end"    (* tloc.e     : Ppos_t *)
   val elemBegin   = "eltBegin"    (* pd->loc.b  : Ppos_t *)

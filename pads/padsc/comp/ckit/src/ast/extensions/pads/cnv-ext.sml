@@ -708,7 +708,7 @@ structure CnvExt : CNVEXT = struct
               val pstate    = "pstate"
               val errCode   = "errCode"
               val loc       = "loc"
-              val nerr      = "nerr"
+              val nerr      = PNames.nerr
               val nerrPCGEN = pcgenName("nerr")
 	      val pads      = "pads"
               val rep       = "rep"
@@ -1009,6 +1009,7 @@ structure CnvExt : CNVEXT = struct
 			  |  PX.Last es  => PX.Last  (List.map doParseCond es)
 			  |  PX.Ended es => PX.Ended (List.map doParseCond es)
 			  |  PX.Skip es  => PX.Skip  (List.map doParseCond es)
+			  |  PX.Longest =>  PX.Ended (List.map doParseCond PL.longestX)
 		      val modArrayPreds = List.map doArrayConstraint arrayPreds
 		  in
 		      (modArgs, modSizeSpec, modArrayPreds)
@@ -2749,6 +2750,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                               |  PX.Last  exp => (NONE, NONE, NONE, SOME exp, NONE, NONE)
                               |  PX.Ended exp => (NONE, NONE, NONE, NONE, SOME exp, NONE)
                               |  PX.Skip  exp => (NONE, NONE, NONE, NONE, NONE, SOME exp)
+			      |  PX.Longest   => (NONE, NONE, NONE, NONE, SOME PL.longestX, NONE)
 			  val constrs = List.map doOne constraints
                           fun mergeAll ((a, b, c, d, e, f), (ra, rb, rc, rd, re, rf)) = 
 			      (mergeOpt "Psep"  (a, ra), mergeOpt "Pterm" (b, rb), 
