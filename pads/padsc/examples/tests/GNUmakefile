@@ -422,6 +422,17 @@ dibbler_select: $(GEN_DIR)/dibbler_new.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_
 dibbler_select_d: $(GEN_DIR)/dibbler_new.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
+ifdef GEN_DIR
+$(GEN_DIR)/dibbler_select_expanded.c: $(GEN_DIR)/dibbler_select_expanded.c
+	$(MKSRC_D) $< | $(PADS_HOME)/scripts/addnl.pl > $@
+endif
+
+dibbler_select_dd: $(GEN_DIR)/dibbler_select_expanded.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule R_DD"
+endif
+	@$(CCExec_DYNAMIC_D)
+
 test_dibbler1: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 test_dibbler1_d: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_D)

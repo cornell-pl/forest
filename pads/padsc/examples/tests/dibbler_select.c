@@ -69,11 +69,12 @@ int main(int argc, char** argv) {
   entry_t_init(pads, &entry);
   entry_t_pd_init(pads, &entry_pd);
   // start with P_Set
-  entry_t_m_init(pads, &entry_m, P_Set);
+  entry_t_m_init(pads, &entry_m, P_Set);  
   // turn off setting of timestamp fields in elements
-  entry_m.events.element.tstamp = P_Ignore;
+  entry_m.events.element.tstamp = P_Ignore;  
   // turn off setting for entire header
-  order_header_t_m_init(pads, &(entry_m.header), P_Ignore);
+  order_header_t_m_init(pads, &(entry_m.header), P_Set);
+  zip_code_t_m_init(pads, &entry_m.header.zip_code, P_SemCheck);  // Necessary for proper parsing of union
   // turn back on setting of header's order_num field
   entry_m.header.order_num = P_Set;
 
