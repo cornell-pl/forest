@@ -42,13 +42,17 @@ test_comp:
 	@(cd examples/tests; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
 
 clean:
+	@(cd comp; $(MAKE) clean)
 	@(cd libpads; $(MAKE) clean)
+ifdef USE_GALAX
 	@(cd pads-glx; $(MAKE) clean)
 	@(cd libpglx; $(MAKE) clean)
-	@(cd comp; $(MAKE) clean)
+endif
 
 veryclean:
+	@(cd comp; $(MAKE) veryclean)
 	@(cd libpads; $(MAKE) veryclean)
+ifdef USE_GALAX
 	@(cd pads-glx; $(MAKE) veryclean)
 	@(cd libpglx; $(MAKE) veryclean)
-	@(cd comp; $(MAKE) veryclean)
+endif
