@@ -10,12 +10,6 @@ Transform Schema : TyDecl -> IO;
 
 Schema(Pstruct HDR_TYPE)
 Begin
- Pre:        -> "\n\
-\n\
-#include \"FUNS_H_FILE_NOPATH\" \n\
-#include \"pads_gigascope_macros.h\" \n\
-\n\
-"
  Each:  ty f -> "HDR_^PickMacro(^ty)(^Ty(^ty), ^f)\n"
 End;
 

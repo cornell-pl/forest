@@ -9,11 +9,5 @@ Transform Schema : TyDecl -> IO;
 
 Schema(Pstruct REC_TYPE)
 Begin
- Pre:        -> "\n\
-\n\
-#include \"packet.h\" \n\
-#include \"lfta/rts_string.h\" \n\
-\n\
-"
  Each:  ty f -> "int get_pads_^f (struct packet *p, ^Ty(^ty) *r);"
 End;

@@ -14,6 +14,7 @@
      -m/--maxrecs <#>       : specify max # of record to process (optional)
      -i/--iodisc <iodisc>   : specify IO discipline (optional)
                               default is norec, other choices: nlrec, ...
+     -w/--wspace_ok         : set WSPACE_OK flag
 
     Template Descriptions
     =====================

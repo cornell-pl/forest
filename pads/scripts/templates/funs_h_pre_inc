@@ -1,0 +1,7 @@
+
+#ifndef FUNS_H_GUARD
+#define FUNS_H_GUARD
+
+#include "packet.h"
+#include "lfta/rts_string.h"
+
