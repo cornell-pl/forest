@@ -1304,7 +1304,7 @@ structure CnvExt : CNVEXT = struct
                       of NONE => (NONE, NONE, [])
                       |  SOME (PX.SizeInfo {min, max, maxTight}) => (
                            case (min,max) 
-                           of (NONE,NONE) => (NONE, NONE, [])
+                           of (NONE,NONE) => (NONE, NONE, allocBuffs P.zero)
                            |  (SOME minX, SOME maxX) => (
 				let val minConstOpt = chkSize(minX, "Minimum")
 				    val maxConstOpt = chkSize(maxX, "Maximum")

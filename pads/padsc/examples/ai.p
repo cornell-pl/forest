@@ -28,8 +28,8 @@ penum http_method_t {
     PUT, 
     POST, 
     HEAD, 
-    DELETE, /- Unused after http 1.1
-    LINK,       
+    DELETE, 
+    LINK,        /- Unused after http 1.1
     UNLINK      /- Unused after http 1.1
 };
 
