@@ -147,6 +147,10 @@ void PDCI_TYPEDEF_READ_REC(const char *fn_nm, Perror_t base_read_call);
 void PDCI_TYPEDEF_READ_CHECK(const char *fn_nm, Perror_t base_read_call, int usercheck);
 void PDCI_TYPEDEF_READ_CHECK_REC(const char *fn_nm, Perror_t base_read_call, int usercheck);
 
+void PDCI_STRUCT_READ_PRE(const char *fn_nm, void *the_field);
+void PDCI_STRUCT_READ_POST_CHECK(const char *fn_nm, void *the_field, int usercheck);
+void PDCI_STRUCT_READ_POST_CHECK_ENDIAN(const char *fn_nm, void *the_field, Perror_t swap_call, int usercheck);
+
 void PDCI_UNION_READ_SETUP_STAT(const char *fn_nm, int the_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup, void *pd_init);
 void PDCI_UNION_READ_SETUP(const char *fn_nm, int the_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup, void *pd_init);
 
@@ -510,7 +514,10 @@ do { \
   } \
 } while (0)
 
-#define PDCI_READFN_WIDTH_CHECK_ZERO_OK(whatfn, elt_descr, width) \
+/* size_t width is an unsigned value, so the following is never needed */
+#define PDCI_READFN_WIDTH_CHECK_ZERO_OK(whatfn, elt_descr, width)
+
+#define OLD_PDCI_READFN_WIDTH_CHECK_ZERO_OK(whatfn, elt_descr, width) \
 do { \
   if (width < 0) { \
     if (pads->speclev == 0) { \
@@ -767,7 +774,7 @@ do { \
 /* XXX should it be -1 or 0 below ??? */
 #define PDCI_ELT_CONSTRAINT_ERR(fn_nm, elt_pd, elt_ecode, top_ecode, msg) \
 do { \
-  ((elt_pd).nerr)++; \
+  ((elt_pd).nerr) = 1; \
   (elt_pd).errCode = elt_ecode; \
   PDCI_IO_ENDLOC_MINUS1(pads, (elt_pd).loc); \
   PDCI_report_err (pads, P_LEV_WARN, &((elt_pd).loc), (elt_pd).errCode, fn_nm, msg); \
@@ -814,6 +821,42 @@ do { \
   } \
   PDCI_FIND_EOR(fn_nm); \
 } while (0)
+
+#define PDCI_STRUCT_READ_PRE(fn_nm, the_field) \
+do { \
+  pd->the_field.errCode = P_NO_ERR; \
+  PDCI_IO_BEGINLOC(pads, pd->the_field.loc); \
+} while (0)
+
+#define PDCI_STRUCT_ELT_CONSTRAINT_ERR(fn_nm, the_field) \
+  if (P_spec_level(pads)) return P_ERR; \
+  PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->the_field, P_USER_CONSTRAINT_VIOLATION, \
+                          P_STRUCT_FIELD_ERR, "User constraint on field " PDCI_MacroArg2String(the_field) " violated")
+
+#define PDCI_STRUCT_READ_POST_CHECK(fn_nm, the_field, usercheck) \
+do { \
+  if (P_Test_SemCheck(m->the_field ## _con) && (!(usercheck))) { \
+    PDCI_STRUCT_ELT_CONSTRAINT_ERR(fn_nm, the_field); \
+  } \
+} while (0)
+
+#define PDCI_STRUCT_READ_POST_CHECK_ENDIAN(fn_nm, the_field, swap_call, usercheck) \
+do { \
+  if (P_Test_SemCheck(m->the_field ## _con) && (!(usercheck))) { \
+    PDCI_IO_ENDLOC_MINUS1(pads, pd->the_field.loc); \
+    swap_call; \
+    if (usercheck) { \
+       pads->disc->d_endian = ((pads->disc->d_endian == PbigEndian) ? PlittleEndian : PbigEndian); \
+       PDCI_report_err(pads, P_LEV_INFO, &(pd->the_field.loc), P_NO_ERR, fn_nm, \
+                       "New data endian value: %s.  Machine endian value: %s (from " PDCI_MacroArg2String(the_field) " field test)", \
+                       Pendian2str(pads->disc->d_endian), Pendian2str(pads->m_endian)); \
+    } else { \
+      swap_call; \
+      PDCI_STRUCT_ELT_CONSTRAINT_ERR(fn_nm, the_field); \
+    } \
+  } \
+} while (0)
+
 
 #define PDCI_UNION_READ_SETUP_STAT(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
 Ppos_t start_pos; \
@@ -1024,10 +1067,7 @@ do { \
 } while (0)
 
 #define PDCI_UNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init)  \
-do { \
-  rep->tag = the_tag; \
-  pd->tag = the_tag; \
-} while (0)
+  PDCI_UNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init)
 
 #define PDCI_UNION_READ_MAN_FIRST_PRE(fn_nm, the_tag, rep_init, pd_init)  \
   PDCI_UNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init)
@@ -1148,12 +1188,7 @@ do { \
 } while (0)
 
 #define PDCI_SWUNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
-do { \
-  PDCI_IO_BEGINLOC(pads, pd->loc); \
-  pd->errCode = P_NO_ERR; \
-  rep->tag = the_tag; \
-  pd->tag = the_tag; \
-} while (0)
+  PDCI_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init)
 
 #define PDCI_SWUNION_READ_MAN_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
 do { \
@@ -1171,7 +1206,7 @@ do { \
 #define PDCI_SWUNION_READ_POST_CHECK(fn_nm, the_tag, err_tag, usercheck) \
 do { \
   if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) { \
-    PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->val.the_tag, P_USER_CONSTRAINT_VIOLATION, P_UNION_MATCH_ERR, "User constraint check failed for branch " PDCI_MacroArg2String(the_tag)); \
+    PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->val.the_tag, P_USER_CONSTRAINT_VIOLATION, P_UNION_MATCH_ERR, "User constraint on branch " PDCI_MacroArg2String(the_tag) " violated"); \
     goto branches_done; \
   } \
 } while (0)
@@ -1477,7 +1512,7 @@ Perror_t Pufpoint64_acc_report2io (PDCI_FIRST_ARGS, Pufpoint64_acc *a);
  *
  * Can also use for other errors that have error codes: loc can be NULL.
  *
- * See description of Perror_f for description of level
+ * See description of P_error for description of level
  *  
  *   XXX errCode's type should be an enum that describes the kind of error XXX ???
  *
@@ -1492,7 +1527,7 @@ Perror_t Pufpoint64_acc_report2io (PDCI_FIRST_ARGS, Pufpoint64_acc *a);
  */
 
 Perror_t PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
-			    PerrCode_t errCode, const char *whatfn, const char *format, ... );
+			 PerrCode_t errCode, const char *whatfn, const char *format, ... );
 
 /* ================================================================================ */
 /* PURELY INTERNAL IO FUNCTIONS */
@@ -1772,6 +1807,36 @@ ssize_t PDCI_uint8_2e_FW_io (P_t *pads, Sfio_t *io, Puint8  u, size_t width);
 ssize_t PDCI_uint16_2e_FW_io(P_t *pads, Sfio_t *io, Puint16 u, size_t width);
 ssize_t PDCI_uint32_2e_FW_io(P_t *pads, Sfio_t *io, Puint32 u, size_t width);
 ssize_t PDCI_uint64_2e_FW_io(P_t *pads, Sfio_t *io, Puint64 u, size_t width);
+
+Pint8   PDCI_b2int8 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Pint16  PDCI_b2int16(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Pint32  PDCI_b2int32(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Pint64  PDCI_b2int64(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+
+ssize_t PDCI_int8_2b_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint8  i);
+ssize_t PDCI_int16_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint16 i);
+ssize_t PDCI_int32_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint32 i);
+ssize_t PDCI_int64_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint64 i);
+
+ssize_t PDCI_int8_2b_io (P_t *pads, Sfio_t *io, Pint8  i);
+ssize_t PDCI_int16_2b_io(P_t *pads, Sfio_t *io, Pint16 i);
+ssize_t PDCI_int32_2b_io(P_t *pads, Sfio_t *io, Pint32 i);
+ssize_t PDCI_int64_2b_io(P_t *pads, Sfio_t *io, Pint64 i);
+
+Puint8   PDCI_b2uint8 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Puint16  PDCI_b2uint16(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Puint32  PDCI_b2uint32(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Puint64  PDCI_b2uint64(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+
+ssize_t PDCI_uint8_2b_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint8  u);
+ssize_t PDCI_uint16_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint16 u);
+ssize_t PDCI_uint32_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint32 u);
+ssize_t PDCI_uint64_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint64 u);
+
+ssize_t PDCI_uint8_2b_io (P_t *pads, Sfio_t *io, Puint8  u);
+ssize_t PDCI_uint16_2b_io(P_t *pads, Sfio_t *io, Puint16 u);
+ssize_t PDCI_uint32_2b_io(P_t *pads, Sfio_t *io, Puint32 u);
+ssize_t PDCI_uint64_2b_io(P_t *pads, Sfio_t *io, Puint64 u);
 
 Pint8   PDCI_ebc2int8 (P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
 Pint16  PDCI_ebc2int16(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);

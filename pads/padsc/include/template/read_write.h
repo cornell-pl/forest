@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
   if (P_ERR == P_io_fopen(pads, inName)) {
     error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
-  if (!(io = sfopen(NiL, outName, "w"))) {
+  if (!(io = P_fopen(outName, "w"))) {
     P_SYSERR1(pads->disc, "Failed to open output file \"%s\" for writing", outName);
   }
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
