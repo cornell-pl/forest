@@ -10,10 +10,10 @@ if (! (-e $PADS_HOME/scripts/DO_SETENV.tcsh)) then
   endif
 endif
 
-source $PADS_HOME/scripts/DO_SETENV.tcsh
+source $PADS_HOME/scripts/Q_DO_SETENV.tcsh
 set targ = $PADS_HOME/mk/rules.arch.$AST_ARCH.mk
 if (-e $targ) then
-  set mamtst = `grep mam $targ`
+  set mamtst = `grep -l mam $targ`
   if ("$mamtst"x == x) then
     /bin/rm -f $targ
   endif
