@@ -22,6 +22,7 @@ VPATH = ..
 HELPERS = myrand cvt_ebcdic_to_ascii cvt_ascii_to_ebcdic dttest
 
 LIBTESTS = rwtest1 \
+           recrwtest1 \
            io_openclose_test \
            ebcdic_test \
            ebc_test \
@@ -50,6 +51,7 @@ ALL_PROGS = $(HELPERS) $(LIBTESTS) $(ACCUMTESTS)
 
 regress : sanity_check \
           regress_rwtest1 \
+          regress_recrwtest1 \
           regress_libtest1 \
           regress_libtest2 \
           regress_libtest4 \
@@ -70,6 +72,9 @@ sanity_check:
 	@$(LibSanityCheck)
 
 regress_rwtest1 : rwtest1
+	@(args="nlrec_noseek"; suf=""; $(RegressDef))
+
+regress_recrwtest1 : recrwtest1
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
 
 regress_libtest1 : libtest1

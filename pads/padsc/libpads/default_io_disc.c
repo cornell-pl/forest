@@ -1094,7 +1094,7 @@ PDC_ctrec_noseek_rec_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PD
     return -1;
   }
   data = (PDC_ctrec_noseek_data_t*)io_disc->data;
-  buf[num_bytes] = data->cterm;
+  *buf = data->cterm;
   return 1;
 }
 
