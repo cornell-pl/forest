@@ -31,6 +31,7 @@
 #
 # If USE_GALAX is defined, the padsc option -x is included
 # and the pglx library is added to the set of libraries to link against.
+# In this case env variables GALAX_HOME and PADSGLX_HOME must be defined.
 # Also, the GALAX include paths are added as -I
 # options and the appropriate ocaml and Galax libraries are added
 # to the set of libraries to link against. In addition, the compilation
@@ -49,6 +50,21 @@ ifndef INSTALLROOT
 forceabort2: ;
 endif
 
+ifdef USE_GALAX
+ifndef GALAX_HOME
+%: forceabort2
+	@echo "ERROR: env variable GALAX_HOME must be defined when building with USE_GALAX defined"
+	@exit 1
+forceabort2: ;
+endif
+ifndef PADSGLX_HOME
+%: forceabort2
+	@echo "ERROR: env variable PADSGLX_HOME must be defined when building with USE_GALAX defined"
+	@exit 1
+forceabort2: ;
+endif
+endif
+
 LIBDIR = $(INSTALLROOT)/lib
 
 ifndef AST_ARCH
@@ -64,16 +80,6 @@ AST_HOME := $(PADS_HOME)/ast-ast/arch/$(AST_ARCH)
 export AST_HOME
 endif
 
-ifndef GALAX_HOME
-GALAX_HOME := /home/mff/Galax
-export GALAX_HOME
-endif
-GALAX_LIB_DIR = $(GALAX_HOME)/lib/c
-
-ifndef PADSGLX_HOME
-PADSGLX_HOME := /home/mff/pads-glx/api
-export PADSGLX_HOME
-endif
 PADSGLX_LIB_DIR = $(PADSGLX_HOME)
 
 ifndef OCAML_LIB_DIR
@@ -276,7 +282,7 @@ INCLUDES += -I$(GEN_DIR)
 endif
 
 ifdef USE_GALAX
-INCLUDES +=  -I$(GALAX_LIB_DIR) -I$(PADSGLX_LIB_DIR) -I$(OCAML_LIB_DIR)
+INCLUDES +=  -I$(GALAX_HOME)/lib/c -I$(PADSGLX_LIB_DIR) -I$(OCAML_LIB_DIR)
 endif
 
 ifndef BuildAST4PADSLib
