@@ -100,7 +100,7 @@ struct
    PT.Call(PT.Id "PDC_fmt_Cstr", [PT.String s, P.intX (String.size s)] )
 
 (* error functions *)
-  fun mkFName s = PT.String ("[in "^s^"]")
+  fun mkFName s = PT.String (s)
   fun trace(disc: PT.expression, msg:string) =
     PT.Expr(PT.Call(PT.Id "PDC_TRACE", [disc, PT.String msg]))
 

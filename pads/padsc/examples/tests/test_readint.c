@@ -30,31 +30,31 @@ int main(int argc, char** argv) {
       }
       if (ed.l.i16.errCode) {
 	error(0|ERROR_PROMPT, "i16 error: ");
-	PDCI_report_err(pdc, 0, &(ed.l.i16.loc), ed.l.i16.errCode, "[in main]", 0);
+	PDCI_report_err(pdc, 0, &(ed.l.i16.loc), ed.l.i16.errCode, "main", 0);
       }
       if (ed.l.i32.errCode) {
 	error(0|ERROR_PROMPT, "i32 error: ");
-	PDCI_report_err(pdc, 0, &(ed.l.i32.loc), ed.l.i32.errCode, "[in main]", 0);
+	PDCI_report_err(pdc, 0, &(ed.l.i32.loc), ed.l.i32.errCode, "main", 0);
       }
       if (ed.l.i64.errCode) {
 	error(0|ERROR_PROMPT, "i64 error: ");
-	PDCI_report_err(pdc, 0, &(ed.l.i64.loc), ed.l.i64.errCode, "[in main]", 0);
+	PDCI_report_err(pdc, 0, &(ed.l.i64.loc), ed.l.i64.errCode, "main", 0);
       }
       if (ed.l.ui8.errCode) {
 	error(0|ERROR_PROMPT, "ui8 error: ");
-	PDCI_report_err(pdc, 0, &(ed.l.ui8.loc), ed.l.ui8.errCode, "[in main]", 0);
+	PDCI_report_err(pdc, 0, &(ed.l.ui8.loc), ed.l.ui8.errCode, "main", 0);
       }
       if (ed.l.ui16.errCode) {
 	error(0|ERROR_PROMPT, "ui16 error: ");
-	PDCI_report_err(pdc, 0, &(ed.l.ui16.loc), ed.l.ui16.errCode, "[in main]", 0);
+	PDCI_report_err(pdc, 0, &(ed.l.ui16.loc), ed.l.ui16.errCode, "main", 0);
       }
       if (ed.l.ui32.errCode) {
 	error(0|ERROR_PROMPT, "ui32 error: ");
-	PDCI_report_err(pdc, 0, &(ed.l.ui32.loc), ed.l.ui32.errCode, "[in main]", 0);
+	PDCI_report_err(pdc, 0, &(ed.l.ui32.loc), ed.l.ui32.errCode, "main", 0);
       }
       if (ed.l.ui64.errCode) {
 	error(0|ERROR_PROMPT, "ui64 error: ");
-	PDCI_report_err(pdc, 0, &(ed.l.ui64.loc), ed.l.ui64.errCode, "[in main]", 0);
+	PDCI_report_err(pdc, 0, &(ed.l.ui64.loc), ed.l.ui64.errCode, "main", 0);
       }
     }
   }

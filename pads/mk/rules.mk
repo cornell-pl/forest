@@ -48,11 +48,15 @@ CARCHFLAGS =
 LIB_DEP_PATTERN = %.a
 STATIC_ASTLIB_NM = libast-g.a
 STATIC_PADSLIB_NM = libpadsc-g.a
+STATIC_COBOL_PADSLIB_NM = libpadsc-cobol-g.a
 # SHARED_ASTLIB_NM = libast.so.5.4
 SHARED_ASTLIB_NM = libast.so
 SHARED_PADSLIB_NM = libpadsc.so.1.0
 SHARED_PADSLIB_NM_ALT1 = libpadsc.so.1
 SHARED_PADSLIB_NM_ALT2 = libpadsc.so
+SHARED_COBOL_PADSLIB_NM = libpadsc-cobol.so.1.0
+SHARED_COBOL_PADSLIB_NM_ALT1 = libpadsc-cobol.so.1
+SHARED_COBOL_PADSLIB_NM_ALT2 = libpadsc-cobol.so
 STATIC_LIBTOOL = ar r
 STATIC_LIBTOOL_OPTS =
 SHARED_LIBTOOL = /usr/bin/cc -shared -nostartfiles
@@ -75,11 +79,15 @@ CARCHFLAGS =
 LIB_DEP_PATTERN = %.a
 STATIC_ASTLIB_NM = libast-g.a
 STATIC_PADSLIB_NM = libpadsc-g.a
+STATIC_COBOL_PADSLIB_NM = libpadsc-cobol-g.a
 # SHARED_ASTLIB_NM = libast.so.5.4
 SHARED_ASTLIB_NM = libast.so
 SHARED_PADSLIB_NM = libpadsc.so.1.0
 SHARED_PADSLIB_NM_ALT1 = libpadsc.so.1
 SHARED_PADSLIB_NM_ALT2 = libpadsc.so
+SHARED_COBOL_PADSLIB_NM = libpadsc-cobol.so.1.0
+SHARED_COBOL_PADSLIB_NM_ALT1 = libpadsc-cobol.so.1
+SHARED_COBOL_PADSLIB_NM_ALT2 = libpadsc-cobol.so
 STATIC_LIBTOOL = ar r
 STATIC_LIBTOOL_OPTS =
 SHARED_LIBTOOL = /usr/bin/cc -shared -update_registry $(INSTALLROOT)/lib/registry.ld
@@ -109,12 +117,17 @@ endif
 
 ASTLIB_DIR = /home/gsf/arch/$(AST_ARCH)/lib
 STATIC_PADSLIB = $(INSTALLROOT)/lib/$(STATIC_PADSLIB_NM)
+STATIC_COBOL_PADSLIB = $(INSTALLROOT)/lib/$(STATIC_COBOL_PADSLIB_NM)
 STATIC_ASTLIB = $(ASTLIB_DIR)/$(STATIC_ASTLIB_NM)
 STATIC_LIBS = $(STATIC_PADSLIB) $(STATIC_ASTLIB) 
+COBOL_STATIC_LIBS = $(STATIC_COBOL_PADSLIB) $(STATIC_ASTLIB) 
 LIB_DEPS = $(STATIC_LIBS)
+COBOL_LIB_DEPS = $(COBOL_STATIC_LIBS)
 
 DYNAMIC_LIBS = -L $(ASTLIB_DIR) -L $(INSTALLROOT)/lib -lpadsc-g -last-g
+COBOL_DYNAMIC_LIBS = -L $(ASTLIB_DIR) -L $(INSTALLROOT)/lib -lpadsc-cobol-g -last-g
 SHARED_PADSLIB_DEP = $(INSTALLROOT)/lib/$(SHARED_PADSLIB_NM)
+SHARED_COBOL_PADSLIB_DEP = $(INSTALLROOT)/lib/$(SHARED_COBOL_PADSLIB_NM)
 SHARED_ASTLIB_DEP = $(ASTLIB_DIR)/$(SHARED_ASTLIB_NM)
 # DYNAMIC_LIB_DEPS = $(SHARED_PADSLIB_DEP) $(SHARED_ASTLIB_DEP)
 
@@ -233,6 +246,14 @@ ifdef BuildPADSLib
 	@echo "INCLUDE_DEPS = $(INCLUDE_DEPS)"
 	$(COMPILE) -c $<
 else
+cobol_%: cobol_%.o $(COBOL_LIB_DEPS)
+	@echo "Using rules.mk rule J_C"
+	$(LINK) $< $(COBOL_DYNAMIC_LIBS) -o $@
+
+cobol_%: cobol_%.c $(INCLUDE_DEPS) $(COBOL_LIB_DEPS)
+	@echo "Using rules.mk rule L_C"
+	$(COMPILE) $< $(COBOL_DYNAMIC_LIBS) -o $@
+
 %: %.o $(LIB_DEPS)
 	@echo "Using rules.mk rule J"
 	$(LINK) $< $(DYNAMIC_LIBS) -o $@
@@ -244,6 +265,7 @@ else
 %: %.c $(INCLUDE_DEPS) $(LIB_DEPS)
 	@echo "Using rules.mk rule L"
 	$(COMPILE) $< $(DYNAMIC_LIBS) -o $@
+
 endif
 
 ifdef GEN_DIR

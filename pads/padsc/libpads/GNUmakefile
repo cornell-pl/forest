@@ -24,6 +24,8 @@ VPATH = ..
 
 OBJS = rbuf.o default_io_disc.o libpadsc-gen.o libpadsc-acc-gen.o libpadsc-read-gen.o libpadsc-write-gen.o libpadsc-cobol-read-gen.o libpadsc-cobol-write-gen.o libpadsc-misc-gen.o
 
+COBOL_OBJS = rbuf.o default_io_disc.o libpadsc-gen.o libpadsc-acc-gen.o libpadsc-cobol-read-gen.o libpadsc-cobol-write-gen.o libpadsc-misc-gen.o
+
 GEN_FILES = libpadsc-acc-gen.c \
             libpadsc-misc-gen.c \
             libpadsc-acc-macros-gen.h  \
@@ -43,12 +45,25 @@ all :
 
 real_all : $(STATIC_PADSLIB_NM) $(SHARED_PADSLIB_NM)
 
+cobol:
+	@$(MAKE) -f ../GNUmakefile dogen
+	@$(MAKE) -f ../GNUmakefile real_cobol
+
+real_cobol : $(STATIC_COBOL_PADSLIB_NM) $(SHARED_COBOL_PADSLIB_NM)
+
 $(STATIC_PADSLIB_NM) : $(OBJS)
 	$(STATIC_LIBTOOL) $(STATIC_PADSLIB_NM) $(STATIC_LIBTOOL_OPTS) $(OBJS)
 
 $(SHARED_PADSLIB_NM) : $(STATIC_PADSLIB_NM) $(STATIC_ASTLIB)
 	$(SHARED_LIBTOOL) -o $(SHARED_PADSLIB_NM) $(SHARED_LIBTOOL_PRE_PADSLIB) \
         $(STATIC_PADSLIB_NM) $(SHARED_LIBTOOL_PRE_ASTLIB) $(STATIC_ASTLIB) $(SHARED_LIBTOOL_OPTS)
+
+$(STATIC_COBOL_PADSLIB_NM) : $(COBOL_OBJS)
+	$(STATIC_LIBTOOL) $(STATIC_COBOL_PADSLIB_NM) $(STATIC_LIBTOOL_OPTS) $(COBOL_OBJS)
+
+$(SHARED_COBOL_PADSLIB_NM) : $(STATIC_COBOL_PADSLIB_NM) $(STATIC_ASTLIB)
+	$(SHARED_LIBTOOL) -o $(SHARED_COBOL_PADSLIB_NM) $(SHARED_LIBTOOL_PRE_PADSLIB) \
+        $(STATIC_COBOL_PADSLIB_NM) $(SHARED_LIBTOOL_PRE_ASTLIB) $(STATIC_ASTLIB) $(SHARED_LIBTOOL_OPTS)
 
 install : all
 	+@(set -x ; $(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM) $(INSTALLROOT)/lib/; \
@@ -61,6 +76,22 @@ install : all
 	  if (test -e $(SHARED_PADSLIB_NM_ALT2) && ! (cmp $(SHARED_PADSLIB_NM) $(SHARED_PADSLIB_NM_ALT2) > /dev/null)); then \
 		$(RM) $(SHARED_PADSLIB_NM_ALT2); \
 		ln $(SHARED_PADSLIB_NM) $(SHARED_PADSLIB_NM_ALT2); \
+	  fi ); \
+	for file in libpadsc.h rbuf.h libpadsc-private.h pdc_io_disc.h; do \
+		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/include/$$file $(INSTALLROOT)/include/; \
+	done;)
+
+install_cobol : cobol
+	+@(set -x ; $(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_COBOL_PADSLIB_NM) $(INSTALLROOT)/lib/; \
+	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_COBOL_PADSLIB_NM) $(INSTALLROOT)/lib/; \
+	( cd $(INSTALLROOT)/lib; \
+	  if (test -e $(SHARED_COBOL_PADSLIB_NM_ALT1) && ! (cmp $(SHARED_COBOL_PADSLIB_NM) $(SHARED_COBOL_PADSLIB_NM_ALT1) > /dev/null)); then \
+		$(RM) $(SHARED_COBOL_PADSLIB_NM_ALT1); \
+		ln $(SHARED_COBOL_PADSLIB_NM) $(SHARED_COBOL_PADSLIB_NM_ALT1); \
+	  fi; \
+	  if (test -e $(SHARED_COBOL_PADSLIB_NM_ALT2) && ! (cmp $(SHARED_COBOL_PADSLIB_NM) $(SHARED_COBOL_PADSLIB_NM_ALT2) > /dev/null)); then \
+		$(RM) $(SHARED_COBOL_PADSLIB_NM_ALT2); \
+		ln $(SHARED_COBOL_PADSLIB_NM) $(SHARED_COBOL_PADSLIB_NM_ALT2); \
 	  fi ); \
 	for file in libpadsc.h rbuf.h libpadsc-private.h pdc_io_disc.h; do \
 		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/include/$$file $(INSTALLROOT)/include/; \

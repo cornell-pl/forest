@@ -25,7 +25,7 @@ LIBTESTS = rwtest1 \
            recrwtest1 \
            io_openclose_test \
            ebcdic_test \
-           ebc_test \
+           cobol_ebc_test \
            bcd_test \
            sb_test \
            ebc_fpoint_test \
@@ -57,7 +57,7 @@ regress : sanity_check \
           regress_libtest4 \
           regress_ebcdic_test \
           regress_ebcdic_libtest4 \
-          regress_ebc_test \
+          regress_cobol_ebc_test \
           regress_bcd_test \
           regress_sb_test \
           regress_ebc_fpoint_test \
@@ -92,7 +92,7 @@ regress_ebcdic_libtest4 : ebcdic_libtest4
 regress_ebcdic_test : ebcdic_test
 	@(args="ctrec_noseek"; suf=""; $(RegressDef))
 
-regress_ebc_test : ebc_test
+regress_cobol_ebc_test : cobol_ebc_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
 
 regress_bcd_test : bcd_test
