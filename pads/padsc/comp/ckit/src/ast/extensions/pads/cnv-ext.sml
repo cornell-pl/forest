@@ -380,7 +380,8 @@ structure CnvExt : CNVEXT = struct
 		  end
 	      fun genLocInit paramName =
 		  PT.IfThen(P.notX(PT.Id(gMod paramName)),
-			    P.assignS(PT.Id (gMod paramName), P.addrX(PT.Id(gTemp paramName))))
+			    PT.Compound[
+ 			      P.assignS(PT.Id (gMod paramName), P.addrX(PT.Id(gTemp paramName)))])
 
 	      fun genReadFun (readName, emPCT,edPCT,canonicalPCT, emFirstPCT, bodySs) = 
 		  let val paramList = List.map P.mkParam [(P.ptrPCT PL.toolStatePCT, ts),
@@ -505,7 +506,7 @@ structure CnvExt : CNVEXT = struct
 				      (* if (moded->name.panic) *)
                                       PT.IfThen(P.dotX(fieldX(ed, name), PT.Id panic),
  				        (* moded->panic = true *)
-				        P.assignS(fieldX(ed,panic), P.trueX)),
+				        PT.Compound[P.assignS(fieldX(ed,panic), P.trueX)]),
                                       (* if (moded->nerr == 0) *)
                                       PT.IfThen(P.eqX(P.zero, fieldX(ed,nerr)), 
                                        PT.Compound [
@@ -601,7 +602,7 @@ structure CnvExt : CNVEXT = struct
                                                                    P.addrX (PT.Id "n"), 
 								   PT.Id disc)),
 						 (* moded->panic = false *)
-						 P.assignS(fieldX(ed,panic),P.falseX))
+						 PT.Compound[P.assignS(fieldX(ed,panic),P.falseX)])
                                               ], 
                                               PT.Compound elseSs
                                            )]
@@ -683,7 +684,7 @@ structure CnvExt : CNVEXT = struct
                      PT.Compound([
   		       PT.IfThenElse(P.notX(fieldX(ed,nerr)),
 			  PT.Compound (reportErrorSs(errCodeC,shouldPrint,msg,args)),
-			  P.postIncS(fieldX(ed,nerr)))]
+			  PT.Compound[P.postIncS(fieldX(ed,nerr))])]
                        @ (if setPanic then [P.assignS(fieldX(ed,panic),P.trueX)] else []))
   
 
@@ -956,7 +957,7 @@ structure CnvExt : CNVEXT = struct
 
                  fun genBreakCheckSs (term,size) = 
 		     [P.mkCommentS("Have we finished reading array?"),
-		      PT.IfThen(genBreakCheckX(term,size), PT.Break)]
+		      PT.IfThen(genBreakCheckX(term,size), PT.Compound[PT.Break])]
 
                  (* -- Check that we found separator on last loop. *)
                  fun genSepCheck NONE = []
@@ -987,12 +988,13 @@ structure CnvExt : CNVEXT = struct
 				  PL.scanFunX(Atom.toString scanSep, PT.Id ts, 
 					      sepX, scanStopX, P.addrX (PT.Id "c"),
 					      P.addrX (PT.Id "n"),PT.Id disc)),
-                            PT.IfThen(amCheckingE NONE, 
-			     PT.Compound[ (* if am checking *)
-			      PT.IfThenElse(P.andX(P.eqX(PT.Id "c", sepX),P.gtX(PT.Id "n", P.zero)),
-				 recordArrayErrorS(PL.PDC_ARRAY_EXTRA_BEFORE_SEP, true,
+			    PT.Compound[
+                              PT.IfThen(amCheckingE NONE, 
+	  		       PT.Compound[ (* if am checking *)
+			         PT.IfThenElse(P.andX(P.eqX(PT.Id "c", sepX),P.gtX(PT.Id "n", P.zero)),
+				    recordArrayErrorS(PL.PDC_ARRAY_EXTRA_BEFORE_SEP, true,
 						   "", [],false),
-                                 PT.Compound (chkTermSs))]),
+                                    PT.Compound (chkTermSs))])],
                             PT.Compound[ (* else error in reading separator *)
 			      P.mkCommentS("Error reading separator"),
 			      recordArrayErrorS(PL.PDC_ARRAY_SEP_ERR, 
@@ -1077,12 +1079,12 @@ structure CnvExt : CNVEXT = struct
 			 PT.Compound recoverSs
 		     end
                  val panicRecoverySs = [PT.IfThen(P.dotX(edNext, PT.Id panic), 
-						 genPanicRecoveryS(sepXOpt, termXOpt, maxOpt))]
+					   PT.Compound[genPanicRecoveryS(sepXOpt, termXOpt, maxOpt)])]
 
                  (* -- while loop for reading input *)
                  val whileSs = 
 		     let fun insTermChk bdyS = 
-			     case termXOpt of NONE => PT.Compound[bdyS]
+			     case termXOpt of NONE => bdyS
 			     | SOME (termX, termRead, _) => (
                                 PT.IfThenElse(
                                  PL.readFunChkX(PL.PDC_OK, termRead, PT.Id ts, 
@@ -1107,7 +1109,7 @@ structure CnvExt : CNVEXT = struct
 			 [P.mkCommentS("Reading input until we reach a termination condition"),
                                 PT.IfThen(P.andX(P.notX(fieldX(ed,panic)), 
 						 P.notX(PL.isEofX(PT.Id ts, PT.Id disc))) ,
-					  insTermChk bdyS)]
+					  PT.Compound[insTermChk bdyS])]
 		     end
 
                  (* -- Check if there was junk before trailing terminator *)
