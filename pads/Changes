@@ -1,0 +1,29 @@
+
+October 12, 2004 - Mary
+  PADS/Galax Interface:
+
+  o scripts/INT_DO_SETENV.sh
+    - Added arguments to package.cvs script, which did not work on
+      Fedora
+
+  o libpglx/ and include/templates/pglx*.h
+    - Aligned with development version of Galax 
+
+  o Regorganized padsc/examples/xml directory and installed regression
+    tests.
+
+    examples/xml:
+	gen/	    Generated *.{h,c,xsd} files
+	queries/    Example queries
+	README	    
+	regress/    Expected results for XML regression tests
+	schema/	    PADS-specific XML schemas
+	tests/	    Template *.[ch] files for testing 
+	xml/	    Generated XML output
+
+    Following directories are empty/unused but stuck in CVS:
+        childrentest/
+        data/  
+	idltest/  
+        yitzhak 
+

@@ -41,7 +41,7 @@ if [ $_pads_status = "OK" ]; then
 fi
 
 if [ $_pads_status = "OK" ]; then
-  AST_ARCH=`$PADS_HOME/ast-ast/bin/package.cvs`; export AST_ARCH
+  AST_ARCH=`$PADS_HOME/ast-ast/bin/package.cvs SHELL=$SHELL`; export AST_ARCH
 
   if [ "$AST_HOME"x = x ]; then
     AST_HOME=$PADS_HOME/ast-ast/arch/$AST_ARCH; export AST_HOME

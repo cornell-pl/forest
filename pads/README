@@ -56,12 +56,14 @@ STEP 1: ENVIRONMENT SETUP
      setenv GALAX_HOME    /home/fred/Galax
      setenv PADSGLX_HOME  /home/fred/pads-glx/api
      setenv OCAML_LIB_DIR /home/fred/ocaml
+     setenv PCRE_LIB_DIR  <location of libpcre.so version 4.5>
      setenv USE_GALAX     1
 
    Example for sh/ksh/bash users:
      export GALAX_HOME=/home/fred/Galax
      export PADSGLX_HOME=/home/fred/pads-glx/api
      export OCAML_LIB_DIR=/home/fred/ocaml
+     export PCRE_LIB_DIR=<location of libpcre.so version 4.5>
      export USE_GALAX=1
 
 STEP 2: INSTALL SML / SML RUNTIME

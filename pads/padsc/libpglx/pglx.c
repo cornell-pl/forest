@@ -1881,7 +1881,7 @@ item PDCI_cstr_typed_value(PDCI_node_t *node)
   item        res = 0;
   char        *s   = (char *)node->rep;
 
-  printf("cstr val: %s.\n",s);
+  //  printf("cstr val: %s.\n",s);
   if (galax_atomicUntyped(s, &res)) {
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pcstr_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
   }
