@@ -3985,6 +3985,54 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun tgSuf s = s^"_tag"
 		     fun unSuf s = s^"_u"
 
+                     (* Process in-line declarations *)
+                     fun cvtInPlaceFULL ( f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,
+						optPred, optDecl, arrayDecl,...}:pfieldty) = 
+			   if not (arrayDecl orelse optDecl) then 
+			       (if Option.isSome optPred then PE.error ("Field "^name^" in "^unionName^ " has option-style constraints "^
+									"but is not an in-line option declaration.\n")
+			        else ();
+			       [([], PX.Full f)])
+			   else
+			       let val declName = case List.find (fn(nm,_) => nm = name) (ListPair.zip(allVars, tyNames))
+				                  of NONE => (PE.bug "Compiler bug";  padsID name)
+						  |  SOME (fname, tynm) => tynm
+						      
+				   fun doArray() = 
+				       let val arrayPX = {name=declName, baseTy = pty, params = params, 
+							 isRecord = false, containsRecord = false, largeHeuristic = false, isSource = false,
+							 args = args, sizeSpec=size, constraints=arraypred, postCond = []}
+				      in
+					  (cnvPArray arrayPX, NONE)
+				      end
+				  fun doOpt () = 
+				      let val () = case pred of NONE => () | _ => PE.error ("The form of constraint "^
+											    "on opt field " ^name^
+											    " is not currently supported.")
+					  val optPX = {name     = declName, params   = params, args     = args,
+						       isRecord = false, isSource = false, pred = optPred, baseTy   = pty}
+				      in
+					   (cnvPOpt optPX, pred)
+				      end
+				  val (newAsts,modpred) = if arrayDecl then doArray() else doOpt ()
+				  val sfield = {pty=PX.Name declName, args=(List.map (fn x=> PT.Id x) paramNames),
+						name=name, isVirtual=isVirtual, isEndian=isEndian,
+						isRecord=false, containsRecord=false, largeHeuristic=false, pred=pred,
+						comment=comment,optPred = NONE,
+						optDecl = false, arrayDecl = false, size=NONE, arraypred=[]} : pfieldty
+			      in
+				  [(newAsts, PX.Full sfield)]
+	 		      end
+                      fun cvtInPlaceBrief x = [([],PX.Brief x)]
+                      fun cvtInPlaceMan   x = [([],PX.Manifest x)]
+                      fun cvtRep variants = 
+			  let val res = mungeFields cvtInPlaceFULL cvtInPlaceBrief cvtInPlaceMan variants
+			      val (asts, newfields) = ListPair.unzip res
+			  in
+			      (List.concat asts, newfields)
+			  end
+		      val (asts, variants) = cvtRep variants
+
                      (* generate enumerated type describing tags *)
 		     val tagVal = ref 0
 		     val firstTag = ref "bogus"
@@ -4912,7 +4960,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		                      genGalaxVtable(name)]
 
 		 in
-		       tagDecls
+		     asts
+                     @ tagDecls
 		     @ unionDecls
 		     @ canonicalDecls
 	             @ cnvExternalDecl mStructED
@@ -4951,7 +5000,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                        fun cvtInPlaceFULL (f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,
 						 optPred, optDecl, arrayDecl,...}:pfieldty) = 
-			   if not (arrayDecl orelse optDecl) then [([], PX.Full f)]
+			   if not (arrayDecl orelse optDecl) then 
+			       (if Option.isSome optPred then PE.error ("Field "^name^" in "^structName^ " has option-style constraints "^
+									"but is not an in-line option declaration.\n")
+			        else ();
+			       [([], PX.Full f)])
 			   else
 			      let val (offset, declName) = 
 				       case findOffset (fn(nm,_) => nm = name) (ListPair.zip (allVars, tyNames)) 0
@@ -4995,6 +5048,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	 		      end
                       fun cvtInPlaceBrief x = [([],PX.Brief x)]
                       fun cvtInPlaceMan   x = [([],PX.Manifest x)]
+
                       fun cvtRep fields = 
 			  let val res = mungeFields cvtInPlaceFULL cvtInPlaceBrief cvtInPlaceMan fields
 			      val (asts, newfields) = ListPair.unzip res
