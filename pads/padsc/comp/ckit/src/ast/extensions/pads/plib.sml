@@ -123,6 +123,8 @@ struct
   val nodeT = P.makeTypedefPCT "PDCI_node_t"
   val childIndexT = P.makeTypedefPCT "PDCI_childIndex_t"
   val smartEltInfoT = P.makeTypedefPCT "PDCI_smart_elt_info_t"
+  val smartArrayInfoT = P.makeTypedefPCT "PDCI_smart_array_info_t"
+  val managerT        = P.makeTypedefPCT "PDCI_manager_t"
   val genT = P.makeTypedefPCT "PDCI_gen_t"
   val pathT = P.makeTypedefPCT "PDCI_path_t"
   

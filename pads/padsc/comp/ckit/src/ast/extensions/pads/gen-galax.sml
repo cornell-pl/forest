@@ -18,6 +18,8 @@ structure GenGalax = struct
   val childName = "name"
   val nameStr = childName
   val elt =  "elt"
+  val manager = "manager"
+  val ancIdx = "ancestor_idx"
   val gen = "gen"
   val path = "path"
   val pads = "pads"
@@ -341,13 +343,13 @@ structure GenGalax = struct
 
   fun makeSNDInitFun(name) =		
       let val nodeRepTy = PL.nodeT
-	  val eltTy = P.ptrPCT PL.smartEltInfoT   
+	  val managerTy = P.ptrPCT PL.managerT   
 	  val genTy = PL.genT                     
 	  val childTy = PL.childIndexT                   
 	  val returnTy = P.ptrPCT nodeRepTy
 	  val cnvName = PN.sndInitSuf name
-	  val paramTys = [returnTy, eltTy, genTy, childTy]
-	  val paramNames = [self,elt,gen,idx]
+	  val paramTys = [returnTy, managerTy, childTy, genTy, childTy]
+	  val paramNames = [self,manager,ancIdx,gen,idx]
 	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
 	  val bodySs = makeInvisibleDecls([name],nil)
