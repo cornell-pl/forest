@@ -9,7 +9,7 @@
 #include "libpadsc-internal.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.9 2002-08-28 18:00:14 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.10 2002-08-28 20:23:29 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -39,7 +39,7 @@ PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...)
 PDC_error_t
 PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errCode, const char* format, ...)
 {
-  char* severity = "error";
+  char*   severity = "error";
 
   if (!disc) {
     disc = pdc->disc;
@@ -160,13 +160,26 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errC
   }
   if (loc && (disc->e_rep == PDC_errorRep_Max)) {
     char* buf;
-    if (PDC_OK == PDC_IO_getLineBuf(pdc, loc->endLine, &buf, disc)) {
+    size_t len;
+    if (PDC_OK == PDC_IO_getLineBuf(pdc, loc->endLine, &buf, &len, disc)) {
       size_t minc = (loc->beginLine == loc->endLine) ? loc->beginChar : 1;
       size_t maxc = loc->endChar;
-      if (minc < maxc) {
-	sfprintf(pdc->tmp, "\n[LINE %d]%-.*s>>>%-.*s<<<", loc->endLine, minc-1, buf, maxc-minc+1, buf+minc-1);
+      if (len <= 1) {
+	sfprintf(pdc->tmp, "\n[LINE %d](**EMPTY**)", loc->endLine);
       } else {
-	sfprintf(pdc->tmp, "\n[LINE %d]%-.*s<<<", loc->endLine, maxc, buf);
+	if (maxc > len-1) {
+	  maxc = len-1;
+	}
+	if (minc > maxc) {
+	  minc = maxc;
+	}
+	if (maxc > 0) {
+	  if (minc < maxc) {
+	    sfprintf(pdc->tmp, "\n[LINE %d]%-.*s>>>%-.*s<<<", loc->endLine, minc-1, buf, maxc-minc+1, buf+minc-1);
+	  } else {
+	    sfprintf(pdc->tmp, "\n[LINE %d]%-.*s<<<", loc->endLine, maxc, buf);
+	  }
+	}
       }
     }
   }
@@ -192,7 +205,7 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
     return PDC_ERROR; /* XXX out of space -- unrecoverable error */
   }
   if (offset_out) {
-    *offset_out = 0;
+    (*offset_out) = 0;
   }
   while (PDC_OK == PDC_IO_getchar(pdc, &ct, 1, disc)) { /* 1 means panicking */
     if ((c == ct) || (s == ct)) {
@@ -200,12 +213,12 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
 	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
       }
       if (c_out) {
-	*c_out = ct;
+	(*c_out) = ct;
       }
       return PDC_OK;  /* IO cursor is one beyond c/s */
     }
     if (offset_out) {
-      *offset_out++;
+      (*offset_out)++;
     }
   }
   /* restore IO cursor to original position and return error */
@@ -216,7 +229,7 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
 }
 
 /* ================================================================================ */
-/* READ FUNCTIONS */
+/* LITERAL READ FUNCTIONS */
 
 PDC_error_t
 PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
@@ -249,6 +262,9 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
   }
   return PDC_ERROR;
 }
+
+/* ================================================================================ */
+/* VARIABLE-WIDTH ASCII INTEGER READ FUNCTIONS */
 
 PDC_error_t
 PDC_aint8_read(PDC_t* pdc, PDC_base_em* em,
@@ -825,6 +841,9 @@ PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
   }
   return PDC_ERROR;
 }
+
+/* ================================================================================ */
+/* FIXED-WIDTH ASCII INTEGER READ FUNCTIONS */
 
 PDC_error_t
 PDC_FW_aint8_read(PDC_t* pdc, PDC_base_em* em, size_t width,
@@ -1586,6 +1605,16 @@ PDC_FW_auint64_read(PDC_t* pdc, PDC_base_em* em, size_t width,
   return PDC_ERROR;
 }
 
+/* ================================================================================ */
+/* BINARY INTEGER READ FUNCTIONS */
+
+PDC_error_t
+PDC_bint8_ll32_read(PDC_t* pdc, PDC_base_em* em,
+		    PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc)
+{
+  /* TBD */
+  return PDC_OK;
+}
 
 /* ================================================================================ */
 /* IO FUNCTIONS */
@@ -1911,7 +1940,7 @@ PDC_IO_commit(PDC_t* pdc, PDC_disc_t* disc)
 }
 
 PDC_error_t
-PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, PDC_disc_t* disc) {
+PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, size_t* len_out, PDC_disc_t* disc) {
   char* base;
   int i;
 
@@ -1919,10 +1948,19 @@ PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, PDC_disc_t* disc) {
     disc = pdc->disc;
   }
   TRACE(pdc, "PDC_IO_getLineBuf called");
+  if (!buf_out) {
+    WARN(pdc, "PDC_IO_getLineBuf called with null buf_out");
+    return PDC_ERROR;
+  }
+  if (!len_out) {
+    WARN(pdc, "PDC_IO_getLineBuf called with null len_out");
+    return PDC_ERROR;
+  }
   for (i = 0; i <= pdc->itail; i++) {
     if (pdc->ilines[i].lnum == line) {
       base = (i == pdc->itail) ? pdc->sfbuf : pdc->buf;
       (*buf_out) = base + pdc->ilines[i].boffset;
+      (*len_out) = pdc->ilines[i].eoffset - pdc->ilines[i].boffset;
       return PDC_OK;
     }
   }
@@ -1953,6 +1991,10 @@ PDC_open(PDC_disc_t* disc, PDC_t** pdc_out)
     disc = &PDC_default_disc;
   }
   TRACE(NiL, "PDC_open called");
+  if (!pdc_out) {
+    WARN(NiL, "PDC_open called with null pdc_out");
+    return PDC_ERROR;
+  }
   if (!(vm = vmopen(Vmdcheap, Vmbest, 0))) {
     WARN(NiL, "out of space [vm]");
     return PDC_ERROR;
