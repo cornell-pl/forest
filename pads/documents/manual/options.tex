@@ -1,0 +1,64 @@
+\chapter{Popts}
+\label{chap:opts}
+\section{Syntax}
+\begin{tabular}{rcl}
+\nont{union\_field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field}\\[1ex]
+\nont{branch}     & \is{} & \Pcase{} \nont{expression} : \nont{union\_field}
+                    \alt{}  \Pdefault : \nont{union\_field}\\[1ex]
+\nont{branches}   & \is{} & \nont{branch} \alt{} \nont{branch} \nont{branches} \\[1ex]
+\nont{switched}   & \is{} & \Pswitch{} (\nont{expression})\{ \nont{branches} \}\\[1ex]
+\nont{in\_place}  & \is{} & \nont{union\_field} \alt{} \nont{union\_field} \nont{in\_place}\\[1ex]
+\nont{union\_bdy} & \is{} & \nont{switched} \alt{} \nont{in\_place}\\[1ex]
+\nont{union\_ty}  & \is{} & \Punion{} identifier \opt{\nont{p\_formals}} \{ \\
+&& \quad \nont{union\_bdy} \\
+&& \}\ \opt{ \Pwhere{} \ \{\ \nont{predicate}\ \}}; \\[4ex]
+
+\end{tabular}
+
+\noindent
+We explain the meaning of this syntax in the remainder of this chapter.
+All non-terminals not defined in this grammar fragment were
+defined previously, as follows.
+Full fields (\nont{full\_field}) 
+appear in \secref{sec:structs-full-fields}, 
+computed fields (\nont{comp\_field}) in
+\secref{sec:structs-computed-fields}, 
+literals (\nont{literal\_fields}) in \secref{sec:common-literals}
+and
+\padsl{} parameter lists (\nont{p\_formals}) in \secref{sec:common-parameterization}.
+Expressions (\nont{expression}) represent any \C{} expression. 
+
+
+\subsection{Example}
+
+\section{Generated library}
+
+
+\subsection{In-memory representation}
+\label{sec:opts-rep}
+
+\subsection{Mask}
+\label{sec:opts-masks}
+
+\subsection{Parse descriptor}
+\label{sec:opts-parse-descriptors}
+
+\subsection{Operations}
+
+
+\subsubsection{Read function}
+
+The error codes for \Popts{}s are:
+
+\tskip{}
+\begin{tabular}{lp{4in}}
+ \cd{PDC\_NO\_ERR}                 & Indicates no error occurred\\[1ex]
+ \cd{PDC\_UNION\_MATCH\_ERR}         & Indicates that no branch of the
+                                    union parsed without error.\\[1ex]
+\end{tabular}
+
+\noindent
+
+\subsubsection{Accumulator functions}
+Accumulator functions for \Popts{}s are described in \chapref{chap:accumulators}. 
+
