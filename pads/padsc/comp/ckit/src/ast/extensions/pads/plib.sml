@@ -387,11 +387,14 @@ struct
   fun fmtStruct(fnNameX, callX) = 
     PT.Expr(PT.Call(PT.Id "PCGEN_FMT_STRUCT_FIELD", [fnNameX, callX]))
 
+  fun fmtArray(fnNameX, callX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_ARRAY", [fnNameX, callX]))
+
   fun fmtUnion(fnNameX, callX, tagNameX) = 
     PT.Expr(PT.Call(PT.Id "PCGEN_FMT_UNION", [fnNameX, callX, tagNameX]))
 
-  fun fmtTypedef(fnNameX, callX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_TYPEDEF", [fnNameX, callX]))
+  fun fmtTypedef(callX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_TYPEDEF", [callX]))
 
   fun fmtEnum(fnNameX, enumX) = 
     PT.Expr(PT.Call(PT.Id "PCGEN_FMT_ENUM", [fnNameX, enumX]))

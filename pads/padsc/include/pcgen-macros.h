@@ -191,12 +191,13 @@ void PCGEN_ENUM_XML_OUT(const char *def_tag, const char *(rep2str_fn)(int));
 void PCGEN_FMT_INIT(char * fnName);
 void PCGEN_FMT_INIT_TYPEDEF(char * fnName);
 void PCGEN_FMT_INIT_ENUM(char * fnName);
+
 void PCGEN_FMT_STRUCT_FIELD(char *fieldName, ssize_t length);
 void PCGEN_FMT_FIX_LAST();
-
-void PCGEN_FMT_UNION(char *fieldName, ssize_t length, char *tagName);
-void PCGEN_FMT_TYPEDEF(char *fieldName, ssize_t length);
-void PCGEN_FMT_ENUM(char *fieldName, const char *tagName);
+void PCGEN_FMT_ARRAY(char *fnName, ssize_t length);
+void PCGEN_FMT_UNION(char *fnName, ssize_t length, char *tagName);
+void PCGEN_FMT_TYPEDEF(ssize_t length);
+void PCGEN_FMT_ENUM(char *fnName, const char *tagName);
 void PCGEN_FMT_RECORD(char * fnName);
 
 #else
@@ -2024,11 +2025,24 @@ do {
      *requestedOut = 0; 
      return length_PCGEN_=0;}
   *buf_full = 0;
+  tdelim_PCGEN_ = delims;
  } while (0)
 /* END_MACRO */
 
 
 
+
+
+
+#define PCGEN_FMT_TYPEDEF(fmtCall)
+ do { 
+      trequestedOut_PCGEN_ = 0;
+      tlen_PCGEN_ = fmtCall;
+      PCGEN_TLEN_UPDATES (); 
+      if (trequestedOut_PCGEN_) { 
+	*requestedOut = 1; 
+      };
+ } while (0)
 
 
 
@@ -2048,22 +2062,36 @@ do {
  } while (0)
 /* END_MACRO */
 
-#define PCGEN_FMT_TYPEDEF(fmtCall)
- do { 
-      trequestedOut_PCGEN_ = 0;
-      tlen_PCGEN_ = fmtCall;
-      PCGEN_TLEN_UPDATES (); 
-      if (trequestedOut_PCGEN_) { 
+#define PCGEN_FMT_ARRAY(fdName, fmtCall)
+ do {
+    const char * ttdelim_PCGEN_ = tdelim_PCGEN_;
+    Pbase_pd pd_PCGEN_;
+    pd_PCGEN_.errCode = P_NO_ERR;
+    tdelim_PCGEN_  = PCGEN_FMT_NEXT(tdelim_PCGEN_);
+    if (P_WriteMeta & m->compoundLevel) {
+        tlen_PCGEN_ = Pa_uint32_write2buf(pads,buf_cursor_PCGEN_,buf_len,buf_full,&pd_PCGEN_, &rep->length); 
+	PCGEN_TLEN_UPDATES (); 
+        tlen_PCGEN_ = Pchar_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,delims[0]);
+        PCGEN_TLEN_UPDATES ();
 	*requestedOut = 1; 
       };
+    for (i = 0; i<rep->length; i++){
+       tlen_PCGEN_ = fmtCall;
+       PCGEN_TLEN_UPDATES (); 
+       if (trequestedOut_PCGEN_){
+	 *requestedOut = 1;
+	 tlen_PCGEN_ = Pchar_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,ttdelim_PCGEN_[0]);
+	 PCGEN_TLEN_UPDATES ();
+       };
+    };
+
  } while (0)
-
-
+/* END_MACRO */
 
 #define PCGEN_FMT_STRUCT_FIELD(fdName, fmtCall)
  do { 
       trequestedOut_PCGEN_ = 0;
-      tlen_PCGEN_ = fmtCall;
+      tlen_PCGEN_ = fmtCall;   /* uses tdelim_PCGEN_, sets trequesetedOut */
       PCGEN_TLEN_UPDATES (); 
       if (trequestedOut_PCGEN_) { 
 	*requestedOut = 1; 

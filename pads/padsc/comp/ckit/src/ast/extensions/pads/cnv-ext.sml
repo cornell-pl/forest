@@ -1229,7 +1229,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      fun fmtBranchSs (fname, argXs, tagX) = 
 		      [PL.fmtUnion(PT.String fname, fmtCall(fname, argXs), tagX)]
 
-              fun fmtTypedefSs(fname, argXs) =  [PL.fmtTypedef(PT.String fname, fmtCall(fname, argXs))]
+              fun fmtTypedefSs(fname, argXs) =  [PL.fmtTypedef(fmtCall(fname, argXs))]
 
 	      fun writeXMLFieldSs (fname, argXs, tagArg, adjustLengths, bumpIndent) = 
 		  [P.assignS(PT.Id tlen, 
@@ -2288,7 +2288,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val bodySs = writeFieldSs(writeBaseName, args @ [PT.Id pd, PT.Id rep], isRecord)
 		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, args @ [PT.Id pd, PT.Id rep], PT.Id tag, false, false)
 		      val fmtNameBuf = bufSuf fmtName
-		      val bodyFmtSs = (PL.fmtInitTypedef (PT.String fmtNameBuf)) ::(fmtTypedefSs(fmtBaseName, [PT.Id m] @ args @ [PT.Id pd, PT.Id rep]))
+		      val bodyFmtSs = (PL.fmtInitTypedef (PT.String fmtNameBuf)) ::(fmtTypedefSs(fmtBaseName, [P.getFieldX(m,base)] @ args @ [PT.Id pd, PT.Id rep]))
                       val (writeFunEDs, experFmtFunEDs)  = genWriteFuns(writeName, writeXMLName, fmtName, isRecord, cParams, 
 									mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtSs)
 
@@ -3711,11 +3711,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val writeName = writeSuf name
 		 val writeXMLName = writeXMLSuf name
 		 val fmtName = fmtSuf name
+		 val fmtBaseName = (bufSuf o fmtSuf) (lookupWrite baseTy) 
 		 val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy) 
 		 val writeXMLBaseName = (bufSuf o writeXMLSuf) (lookupWrite baseTy) 
 		 val lengthX = P.arrowX(PT.Id rep, PT.Id length)
 		 fun elemX base = P.addrX(P.subX(P.arrowX(PT.Id base, PT.Id elts), PT.Id "i"))
                  val writeBaseSs = writeFieldSs(writeBaseName, args @ [elemX pd, elemX rep], true)
+		 val fmtBaseX = fmtCall(fmtBaseName, [P.getFieldX(m, element)] @ args @ [elemX pd, elemX rep])
                  val writeXMLBaseSs = writeXMLFieldSs(writeXMLBaseName, args @ [elemX pd, elemX rep], PT.String "elt", true, true)
 		 val writeLastBaseSs =  [PT.IfThen(P.neqX(lengthX, P.zero), PT.Compound(writeBaseSs))]
 		 fun writeLitSs litXOpt = 
@@ -3744,7 +3746,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_PD_XML_OUT", []))]
 				 @ writeXMLArraySs
 				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
-		 val bodyFmtSs = [] (* to be implemented array case *)
+		 val fmtBufName = bufSuf fmtName
+		 val bodyFmtSs = [P.varDeclS(P.int, "i", P.zero),
+				  PL.fmtInit (PT.String fmtBufName) ] @ [PL.fmtArray(PT.String fmtBufName, fmtBaseX)] @ [PL.fmtFixLast()]
 		 val (writeFunEDs, experFmtFunEDs) = genWriteFuns(writeName, writeXMLName, fmtName, isRecord, cParams, 
 								  mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtSs)
 
@@ -5052,7 +5056,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				       PT.Expr(PT.Call(PT.Id "PCGEN_UNION_PD_XML_OUT", []))]
 					@ writeXMLVariantsSs
 					@ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
-		      val bodyFmtSs =  [PL.fmtInit (PT.String fmtBufName) ] @ fmtVariantsSs (* to be implemented union case*)
+		      val bodyFmtSs =  [PL.fmtInit (PT.String fmtBufName) ] @ fmtVariantsSs 
                       val (writeFunEDs,  experFmtFunEDs) = genWriteFuns(writeName, writeXMLName, fmtName, isRecord, cParams, 
 									mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtSs)
 
@@ -6310,7 +6314,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  val bodySs = writeFieldSs(writeBaseName, [expX], isRecord)
 		  val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ENUM_XML_OUT", [PT.String(name), PT.Id(toStringSuf name)]))]
 
-		  val bodyFmtSs = [PL.fmtInitEnum(PT.String fmtBufName), PL.fmtEnum(PT.String fmtBufName, expX)] (* to be implemented *)
+		  val bodyFmtSs = [PL.fmtInitEnum(PT.String fmtBufName), PL.fmtEnum(PT.String fmtBufName, expX)] 
 		  val (writeFunEDs, experFmtFunEDs) = genWriteFuns(writeName, writeXMLName, fmtName, isRecord, cParams,
 						 mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtSs)
 
