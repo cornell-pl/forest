@@ -1,4 +1,4 @@
-#include "struct_bob.h"
+#include "struct_bob2.h"
 
 // fmt function used to override the default Pstring fmt function
 ssize_t
