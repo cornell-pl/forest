@@ -433,7 +433,7 @@ test_children_d: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS
 endif
 
 $(GEN_DIR)/http.c:
-	/home/gruber/knb/pads/scripts/padsc -anone ../../p/http.p  -r ../../gen -I. -I..
+	$(PADS_HOME)/scripts/padsc -anone ../../p/http.p  -r ../../gen -I. -I..
 
  # End of rules that are run from the arch directory
 endif
