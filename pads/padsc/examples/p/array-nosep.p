@@ -1,5 +1,5 @@
 
 Precord Parray entry {
-  Pint32 [] : Psep ==  Pre "/a+/" :&&: Pterm == Pnosep;
+  Pint32 [] : Psep(Pre "/a+/") && Pterm( Pnosep);
 }
 

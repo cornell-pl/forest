@@ -1172,13 +1172,13 @@ pTermExp :
  | pREexpr (PX.Expr pREexpr)
 
 pArrayConstraint : 
-   PSEP EQ pREexpr             (PX.Sep pREexpr)
- | PTERM EQ pTermExp           (PX.Term pTermExp)
- | PLAST LPAREN expr RPAREN    (PX.Last expr)
+   PSEP LPAREN pREexpr RPAREN    (PX.Sep pREexpr)
+ | PTERM LPAREN pTermExp RPAREN  (PX.Term pTermExp)
+ | PLAST LPAREN expr RPAREN      (PX.Last expr)
 
 pArrayConstraints : 
    pArrayConstraint ([pArrayConstraint])
- | pArrayConstraint PAND pArrayConstraints  (pArrayConstraint :: pArrayConstraints)
+ | pArrayConstraint AND pArrayConstraints  (pArrayConstraint :: pArrayConstraints)
 
 pArrayConstraintOpt: ([])
  | COLON pArrayConstraints ( pArrayConstraints )

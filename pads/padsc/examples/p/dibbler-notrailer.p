@@ -45,7 +45,7 @@ Precord Pstruct out_sum_header {
   Puint32       tstamp;
 };
 Parray eventSeq {
-  event [] : Psep == '|';
+  event [] : Psep('|');
 };
 
 Pstruct header {

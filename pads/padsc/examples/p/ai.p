@@ -1,9 +1,9 @@
 Parray nIP {
-  Puint8 [4] : Psep == '.' :&&: Pterm == Pnosep;          
+  Puint8 [4] : Psep('.') && Pterm(Pnosep);          
 };
 
 Parray sIP{
-  Pstring_SE(:"/[. ]/":) [] : Psep == '.' :&&: Pterm == Pnosep; 
+  Pstring_SE(:"/[. ]/":) [] : Psep('.') && Pterm(Pnosep); 
 }
 
 Punion host_t  {
