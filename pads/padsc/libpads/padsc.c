@@ -11,7 +11,7 @@
 #include "libpadsc-read-macros.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.21 2002-09-27 21:04:43 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.22 2002-09-27 21:25:03 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -98,6 +98,7 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
     }
     return PDC_OK;
   }
+  sfstrset(pdc->tmp, 0);
   if (format && strlen(format)) {
     va_list ap;
     if (loc) {
