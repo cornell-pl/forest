@@ -1499,7 +1499,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.45 2002-11-14 04:20:17 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.46 2002-11-14 20:31:38 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -1854,6 +1854,7 @@ PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
   }
   PDCI_READFN_INIT_CHECKS("PDC_countXtoY");
   PDCI_NULLPARAM_CHECK("PDC_countXtoY", res_out);
+  PDCI_NULLPARAM_CHECK("PDC_countXtoY", x);
   return PDC_countXtoY_internal(pdc, em, x, y, ed, res_out);
 }
 
@@ -2393,7 +2394,7 @@ PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
   }
   while (1) {
     if (p1 == end) {
-      if (eor || eof) {
+      if (eor|eof) {
 	break;
       }
       if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
@@ -2467,7 +2468,7 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
   }
   while (1) {
     if (p1 + findStr->len > end) {
-      if (eor || eof) {
+      if (eor|eof) {
 	break;
       }
       if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
@@ -3086,7 +3087,7 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
   }
   while (1) {
     if (p1 == end) {
-      if (eor || eof) {
+      if (eor|eof) {
 	break;
       }
       if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
@@ -3111,7 +3112,7 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
       continue;
     }
     /* p1 < end */
-    if (y == (*p1)) { /* success */
+    if (y && y == (*p1)) { /* success */
       (*res_out) = count;
       ed->errCode = PDC_NO_ERR;
       return PDC_OK;
@@ -3126,6 +3127,11 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
       break;
     }
     p1++;
+  }
+  if (!y && (eor|eof)) { /* EOR/EOF is target: success */
+    (*res_out) = count;
+    ed->errCode = PDC_NO_ERR;
+    return PDC_OK;
   }
   goto not_found; /* y not found */
 
@@ -3228,7 +3234,7 @@ PDC_astring_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
   }
   while (1) {
     if (p1 == end) {
-      if (eor || eof) {
+      if (eor|eof) {
 	break;
       }
       if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
@@ -3328,7 +3334,7 @@ PDC_astringCSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRege
 	ed->errCode = PDC_NO_ERR;
 	return PDC_OK;
       }
-      if (eor || eof) {
+      if (eor|eof) {
 	break;
       }
       if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
