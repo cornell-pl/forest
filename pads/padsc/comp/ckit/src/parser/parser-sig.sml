@@ -10,6 +10,6 @@ sig
        * See ckit/src/parser/util/error-sig.sml for documentation on 
        * Error.errorState.
        *)
-
+  val parseString : Error.errorState -> string -> string -> ParseTree.externalDecl list
 end
 

@@ -608,6 +608,7 @@ structure CnvExt : CNVEXT = struct
               fun dstSuf s = s^"_dst"
               fun addSuf  s = s^"_add"
               fun readSuf s = s^"_read"
+              fun scanSuf s = s^"_scan"
               fun maskInitSuf s = s^"_m_init"
               fun writeSuf s = s^"_write"
 	      fun ioSuf s = s^"2io"
@@ -643,7 +644,7 @@ structure CnvExt : CNVEXT = struct
 				      SOME ((initSuf o pdSuf) name),
 				      SOME ((cleanupSuf o pdSuf) name))
 
-              fun buildTyProps (name,kind,diskSize,memChar,endian,isRecord,containsRecord,largeHeuristic,isFile,pdTid) = 
+              fun buildTyProps (name,kind,diskSize,memChar,endian,isRecord,containsRecord,largeHeuristic,isFile,pdTid, numArgs) = 
      		  let val (repInit, repClean, pdInit, pdClean) = getDynamicFunctions (name,memChar)
 		  in
 		      {kind     = kind,
@@ -654,6 +655,7 @@ structure CnvExt : CNVEXT = struct
 		       containsRecord = containsRecord,
                        largeHeuristic = largeHeuristic, 
 		       isFile   = isFile,
+		       numArgs  = numArgs,
 		       repName  = name, 
 		       repInit  = repInit,
 		       repRead  = readSuf name, 
@@ -1576,7 +1578,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val endian = lookupEndian baseTy
                       val contR = lookupContainsRecord baseTy
  		      val lH = lookupHeuristic baseTy
-		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, mc, endian, isRecord, contR, lH, isFile, pdTid)
+		      val numArgs = List.length params
+		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, mc, endian, isRecord, contR, lH, isFile, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
 
@@ -1907,8 +1910,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
                       val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic} = 
 			  List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
+		      val numArgs = List.length params
 		      val structProps = buildTyProps(name, PTys.Struct, diskSize, memChar, endian, 
-                                                     isRecord, containsRecord, largeHeuristic, isFile, pdTid)
+                                                     isRecord, containsRecord, largeHeuristic, isFile, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, structProps)
 
 		      (* Struct: Generate canonical representation *)
@@ -2150,28 +2154,23 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  else (PE.error ("Currently only characters and strings "^
 					          "supported as delimiters. Delimiter type: "^ (CTtoString expTy) ^".");
 					(PL.charlit, [], e, CExptoString expAst))
-		      val commentS = P.mkCommentS ("Reading delimiter field: "^
+			      val commentS = P.mkCommentS ("Reading delimiter field: "^
 						           commentV)
                               (* base_pd tpd; *)
 			      val tpdDecl = P.varDeclS'(PL.base_pdPCT, tpd)
 			      val offsetDecl = P.varDeclS'(PL.sizePCT, "n")
 
-			      val scanFieldNameOpt = 
-				  case PBTys.find(PBTys.baseInfo, Atom.atom pTyName)
-				      of NONE => NONE
-				    | SOME (b:PBTys.baseInfoTy) => (#scanname b)
+			      val scanFieldName = scanSuf pTyName
+
 			      fun genPanicRecovery (pTyName:string) : pcstmt list -> pcstmt list = 
-                                  case scanFieldNameOpt 
-                                  of NONE => (fn id => id)     (* don't know how to recover *)
-                                  |  SOME a => 
-                                        (fn elseSs =>
+                                        fn elseSs =>
                                            [PT.IfThenElse((* if (PDC_PS_isPanic(pd) *)
                                               PL.testPanicX(PT.Id pd),
 					      PT.Compound [
                                                 (* base_m tmask = Ignore; *)
 						PT.IfThen(
 						 P.neqX(PL.PDC_ERROR,
-						       PL.scanFunX(Atom.toString a, PT.Id pdc, 
+						       PL.scanFunX(scanFieldName, PT.Id pdc, 
 								   expr, expr, P.trueX,
 								   P.zero,
                                                                    P.addrX (PT.Id "n"))),
@@ -2179,7 +2178,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						 PT.Compound[PL.unsetPanicS(PT.Id pd)])
                                               ], 
                                               PT.Compound elseSs
-                                           )])
+                                           )]
 
 			      val readFieldName = lookupTy(PX.Name pTyName, readSuf, #readname)
 			      fun reportBriefErrorSs (code, msg, offset) = 
@@ -2202,11 +2201,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						      [PL.fmtStr(commentV)])]),
 				    P.plusAssignS(fieldX(pd,nerr), P.intX 1)]
 				  end
-			      fun notPanicSsScan scanName= 
+			      val notPanicSs = 
 				  [PL.getLocBeginS(PT.Id pdc, P.addrX(P.dotX(PT.Id tpd, PT.Id loc))),
 				   PT.IfThenElse(
 				      P.eqX(PL.PDC_OK,
-					    PL.scanFunX(Atom.toString scanName, 
+					    PL.scanFunX(scanFieldName, 
 							PT.Id pdc, expr, expr, P.trueX,
 							P.zero, P.addrX (PT.Id "n"))),
 				      PT.Compound(
@@ -2219,30 +2218,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						                       "Missing literal", ~1)
                                                   @[PL.setPanicS(PT.Id pd)]))]
 
-                              val notPanicSsNoScan = 
-                                  [(* base_m tm = Check *)
-				   P.varDeclS(PL.base_mPCT, tm, PL.M_CHECK), (* base_m tm = PDC_Check; *)
-                                   PT.IfThen( (* PDC_ERROR == readFieldName(pdc, &tm, &tpd, e) *)
-                                             PL.readFunChkX(PL.PDC_ERROR, 
-							    readFieldName, 
-							    PT.Id pdc, 
-							    P.addrX (PT.Id tm),
-							    [],
-							    P.addrX (PT.Id tpd),
-							    expr),
-                                     PT.Compound(
-				       [PT.IfThen(PL.getSpecLevelX(PT.Id pdc),
-					 	  PT.Compound[PT.Return PL.PDC_ERROR]),
-				        PL.userErrorS(PT.Id pdc, 
-						      P.addrX(P.dotX(PT.Id tpd, PT.Id loc)),
-						      PL.PDC_MISSING_LITERAL,
-						      readName,
-						      PT.String "Missing separator: %s.", 
-						      [PL.fmtStr(commentV)])]
-					@ reportStructErrorSs(PL.PDC_MISSING_LITERAL, true,P.dotX(PT.Id tpd,PT.Id loc))
-					@[PL.setPanicS(PT.Id pd)]))]
-			      val notPanicSs = case scanFieldNameOpt of NONE => notPanicSsNoScan
-				               | SOME s => notPanicSsScan s
 			  in
 			      [PT.Compound(
                                    [commentS, 
@@ -2709,8 +2684,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
 		     val {diskSize,memChar,endian,isRecord=_,containsRecord,largeHeuristic} = 
 			 List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
+		     val numArgs = List.length params
 		     val unionProps = buildTyProps(name, PTys.Union, diskSize, memChar, 
-						   endian, isRecord, containsRecord, largeHeuristic, isFile, pdTid)
+						   endian, isRecord, containsRecord, largeHeuristic, isFile, pdTid, numArgs)
                      val () = PTys.insert(Atom.atom name, unionProps)
 
                      (* union: generate canonical representation *)
@@ -3447,8 +3423,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				     | _ => TyProps.Variable
 		 val contR = lookupContainsRecord baseTy 
 		 val lH = contR orelse (lookupHeuristic baseTy)
-
-                 val arrayProps = buildTyProps(name,PTys.Array,arrayDiskSize,arrayMemChar,false,isRecord,contR,lH,isFile,pdTid)
+                 val numArgs = List.length params
+                 val arrayProps = buildTyProps(name,PTys.Array,arrayDiskSize,arrayMemChar,false,isRecord,contR,lH,isFile,pdTid, numArgs)
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
 
@@ -3561,9 +3537,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 								 name ^" has type "^s^". Expected "^
 								 "type char."));
 				 let val pTyName = PL.charlit
-				     val readFun = lookupTy(PX.Name pTyName, readSuf, #readname)
-				     val scanFun = lookupScan(PX.Name pTyName)
-				     val writeFun = lookupLitWrite(pTyName)
+				     val readFun = readSuf pTyName
+				     val scanFun = SOME(Atom.atom(scanSuf pTyName))
+				     val writeFun = lookupLitWrite pTyName
 				     val (valOpt,_,_,_) = evalExpr exp
 				 in
 				    (SOME (exp, valOpt, readFun, scanFun, writeFun), NONE,NONE,NONE)
@@ -3575,9 +3551,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 								 name ^" has type "^s^". Expected "^
 								 "type char."));
                                  let val pTyName = PL.charlit 
-				     val readFun = lookupTy(PX.Name pTyName, readSuf, #readname)
-				     val scanFun = lookupScan(PX.Name pTyName)
-				     val writeFun = lookupLitWrite(pTyName)
+				     val readFun = readSuf pTyName
+				     val scanFun = SOME(Atom.atom(scanSuf pTyName))
+				     val writeFun = lookupLitWrite pTyName
 				     val (valOpt,_,_,_) = evalExpr exp
 				 in
 				   (NONE, SOME (exp,valOpt,readFun,scanFun,writeFun), NONE, NONE)
@@ -4195,20 +4171,22 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 	  fun cnvPEnum  {name:string, params: (pcty * pcdecr) list, 
 			 isRecord, containsRecord, largeHeuristic, isFile,
 			 members: (string * pcexp option * string option) list } =
-	      let val baseTy = PX.Name PL.strlit
+	      let val baseTy = PL.strlit
+		  val baseEM = mSuf baseTy
+		  val basePD = pdSuf baseTy
                   fun mungeMembers (name, expOpt, commentOpt) = 
 		      case expOpt of NONE => (name, PT.EmptyExpr, commentOpt)
  		                   | SOME e => (name, e, commentOpt)
 		  val enumFields = List.map mungeMembers members
 
                   (* generate CheckSet mask *)
-		  val baseMPCT = P.makeTypedefPCT(lookupTy(baseTy,mSuf, #mname))
+		  val baseMPCT = PL.base_mPCT
 		  val mED      = P.makeTyDefEDecl (baseMPCT, mSuf name)
 		  val mDecls   = cnvExternalDecl mED
 		  val mPCT     = P.makeTypedefPCT (mSuf name)		
 
                   (* generate parse description *)
-		  val baseEDPCT = P.makeTypedefPCT(lookupTy(baseTy,pdSuf, #pdname))
+		  val baseEDPCT = PL.base_pdPCT
 		  val pdED      = P.makeTyDefEDecl (baseEDPCT, pdSuf name)
 		  val (pdDecls,pdTid) = cnvCTy pdED
 		  val pdPCT     = P.makeTypedefPCT (pdSuf name)		
@@ -4227,7 +4205,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  else TyProps.Variable
 			      end
 			   else TyProps.Size (0,0)
-                  val enumProps = buildTyProps(name,PTys.Enum,ds,TyProps.Static,true,isRecord,containsRecord,largeHeuristic,isFile,pdTid)
+		  val numArgs = List.length params
+                  val enumProps = buildTyProps(name,PTys.Enum,ds,TyProps.Static,true,isRecord,containsRecord,
+					       largeHeuristic,isFile,pdTid, numArgs)
 		  val () = PTys.insert(Atom.atom name, enumProps)
 
                   (* enums: generate canonical representation *)
@@ -4268,7 +4248,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                   (* Generate read function *)
                   (* -- Some useful names *)
                   val readName = readSuf name
-		  val baseReadFun = lookupTy(baseTy, readSuf, #readname)
+		  val baseReadFun = readSuf baseTy
 		  fun readOneBranch (bname, bvalOpt, commentOpt) =
 		      let val labelLenX = P.intX(String.size bname)
 		      in

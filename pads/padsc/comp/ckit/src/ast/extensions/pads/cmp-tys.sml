@@ -18,6 +18,7 @@ struct
 		  containsRecord: bool,
 	          largeHeuristic: bool,
 		  isFile   : bool,
+		  numArgs  : int,
 		  repName  : string,
 		  repInit  : string option,
 		  repRead  : string,

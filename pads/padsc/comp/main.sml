@@ -395,8 +395,7 @@ structure Main : sig
            (* At this point, flag booleans have been set from command-line *)
            (* Generate base type typedefs from base description file *)
            val baseTyDefsFile = tmp ".h"
-	   val internalBaseTysPath = [padsDir^compilerFileLoc^"base-ty-info.txt",
-				      padsDir^compilerFileLoc^"internal-base-ty-info.txt"]
+	   val internalBaseTysPath = [padsDir^compilerFileLoc^"base-ty-info.txt"]
 	                             @(!baseTables)
        in
          PBaseTys.genPadsInternal(internalBaseTysPath, baseTyDefsFile);	   

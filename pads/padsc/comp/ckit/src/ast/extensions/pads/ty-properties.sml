@@ -2,7 +2,7 @@ structure TyProps =
 
 struct
    datatype diskSize = Size of int * int  (* number of bytes, number of EOR markers *)
-                      | Param of string * int option ref | Variable
+                      | Param of int * string * ParseTree.expression | Variable
    datatype memChar = Static | Dynamic
 
    fun mergeDiskSize f (x,y) = case (x,y) 
