@@ -250,6 +250,26 @@ PDC_error_t  PDC_IO_fopen      (PDC_t* pdc, char* path, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_fclose     (PDC_t* pdc, PDC_disc_t* disc);
 
 /* ================================================================================ */
+/* DATE/TIME READ FUNCTIONS */
+
+/* PDC_adate_read : attempts to read an ascii date string and convert it to
+ *                  seconds since the epoch.  For the different formats supported,
+ *                  see the libast tmdate documentation.
+ *
+ * If the current IO cursor position points to a valid ascii date string:
+ *   + if res_out, sets *res_out to the resulting date in seconds since the epoch
+ *   + advances the IO cursor position to just after the last legal character
+ *     in the date string
+ *   + returns PDC_OK
+ * Otherwise:
+ *   + does not advance the IO cursor pos
+ *   + returns PDC_ERROR
+ */
+
+PDC_error_t PDC_adate_read (PDC_t* pdc, PDC_base_em* em, PDC_base_ed* ed, 
+			    PDC_uint32* res_out, PDC_disc_t* disc);
+
+/* ================================================================================ */
 /* STRING READ FUNCTIONS */
 
 /* Related helper function: PDC_string_freefree frees memory s->str
@@ -399,29 +419,29 @@ PDC_error_t PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
  *        + ed->loc begin/end set to line/char position of start/end of the 'too small' field
  */
 
-PDC_error_t PDC_fw_aint8_read (PDC_t* pdc, PDC_base_em* em, size_t width,
+PDC_error_t PDC_aint8_fw_read (PDC_t* pdc, PDC_base_em* em, size_t width,
 			       PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc);
 
-PDC_error_t PDC_fw_aint16_read(PDC_t* pdc, PDC_base_em* em, size_t width,
+PDC_error_t PDC_aint16_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 			       PDC_base_ed* ed, PDC_int16* res_out, PDC_disc_t* disc);
 
-PDC_error_t PDC_fw_aint32_read(PDC_t* pdc, PDC_base_em* em, size_t width,
+PDC_error_t PDC_aint32_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 			       PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
 
-PDC_error_t PDC_fw_aint64_read(PDC_t* pdc, PDC_base_em* em, size_t width,
+PDC_error_t PDC_aint64_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 			       PDC_base_ed* ed, PDC_int64* res_out, PDC_disc_t* disc);
 
 
-PDC_error_t PDC_fw_auint8_read (PDC_t* pdc, PDC_base_em* em, size_t width,
+PDC_error_t PDC_auint8_fw_read (PDC_t* pdc, PDC_base_em* em, size_t width,
 				PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc);
 
-PDC_error_t PDC_fw_auint16_read(PDC_t* pdc, PDC_base_em* em, size_t width,
+PDC_error_t PDC_auint16_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 				PDC_base_ed* ed, PDC_uint16* res_out, PDC_disc_t* disc);
 
-PDC_error_t PDC_fw_auint32_read(PDC_t* pdc, PDC_base_em* em, size_t width,
+PDC_error_t PDC_auint32_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 				PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
 
-PDC_error_t PDC_fw_auint64_read(PDC_t* pdc, PDC_base_em* em, size_t width,
+PDC_error_t PDC_auint64_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 				PDC_base_ed* ed, PDC_uint64* res_out, PDC_disc_t* disc);
 
 /* ================================================================================ */
