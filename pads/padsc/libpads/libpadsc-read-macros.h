@@ -168,7 +168,11 @@ fn_name(PDC_t* pdc, PDC_base_em* em, \
   } \
   /* success */ \
   if (res_out && *em == PDC_CheckAndSet) { \
-    swapmem(swapmem_op, begin, res_out, width); \
+    if (disc->m_endian != disc->d_endian) { \
+      swapmem(swapmem_op, begin, res_out, width); \
+    } else { \
+      swapmem(0, begin, res_out, width); \
+    } \
   } \
   return PDC_OK; \
  \

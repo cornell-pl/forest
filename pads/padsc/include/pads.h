@@ -88,18 +88,26 @@ typedef enum PDC_errCode_t_e {
  *
  * Members of PDC_disc_t:
  *
- *   e_rep : error reporting, one of:
- *              PDC_errorRep_None : do not generate descriptive error reports
- *              PDC_errorRep_Min  : minimal reporting: report errCode, error line/char position
- *              PDC_errorRep_Med  : medium reporting:  like Min, but adds descriptive string
- *  [default]   PDC_errorRep_Max  : maximum reporting, like Med, but adds offending line up to error position
+ *   version : interface version
+ *   flags   : control flags
+ *   p_stop  : panic stop 
+ *              When searching for a character or string literal (or for some other
+ *              target that allows resynching the input stream after a parse error),
+ *              how far should the search progress?  Values currently supported:
+ *                 PDC_Line_Stop : stop at the first newline encountered (or EOF)
+ *                 PDC_EOF_Stop  : stop at EOF (no more input)
+ *   errorf   : error reporting function 
+ *   e_rep    : error reporting, one of:
+ *                PDC_errorRep_None : do not generate descriptive error reports
+ *                PDC_errorRep_Min  : minimal reporting: report errCode, error line/char position
+ *                PDC_errorRep_Med  : medium reporting:  like Min, but adds descriptive string
+ *      [default] PDC_errorRep_Max  : maximum reporting, like Med, but adds offending line up to error position
  *
- *   p_stop: panic stop 
- *             When searching for a character or string literal (or for some other
- *             target that allows resynching the input stream after a parse error),
- *             how far should the search progress?  Values currently supported:
- *                PDC_Line_Stop : stop at the first newline encountered (or EOF)
- *                PDC_EOF_Stop  : stop at EOF (no more input)
+ *   m_endian  : machine endian-ness (PDC_bigEndian or PDC_littleEndian)
+ *   d_endian  : data endian-ness    (PDC_bigEndian or PDC_littleEndian)
+ *                 If m_endian != d_endian, then the byte order of binary integers is swapped 
+ *                 by the binary integer read functions.  See comments below about
+ *                 the CHECK_ENDIAN pragma.
  *
  * The default discipline is PDC_default_disc.  It can be copied and modified, e.g.:
  *
@@ -114,6 +122,7 @@ typedef struct PDC_base_ed_s       PDC_base_ed;
 typedef enum   PDC_base_em_e       PDC_base_em;
 typedef enum   PDC_panicStop_e     PDC_panicStop;
 typedef enum   PDC_errorRep_e      PDC_errorRep;
+typedef enum   PDC_endian_e        PDC_endian;
 
 extern PDC_disc_t PDC_default_disc;
 
@@ -196,6 +205,8 @@ enum PDC_panicStop_e { PDC_Line_Stop /* , PDC_EOF_Stop */ };    /* At the moment
 
 enum PDC_errorRep_e { PDC_errorRep_Max, PDC_errorRep_Med, PDC_errorRep_Min, PDC_errorRep_None };
 
+enum PDC_endian_e { PDC_bigEndian, PDC_littleEndian };
+
 /* A position has a beginning and an ending: it marks the first and last
  * character where something interesting happened, e.g., a field with
  * invalid format.  In cases where clearcut boundaries for an error
@@ -222,6 +233,8 @@ struct PDC_disc_s {
   PDC_panicStop         p_stop;    /* controls scope of panic */
   PDC_error_f           errorf;    /* error function using  ... */
   PDC_errorRep          e_rep;     /* controls error reporting */
+  PDC_endian            m_endian;  /* endian-ness of the machine */ 
+  PDC_endian            d_endian;  /* endian-ness of the data */ 
 };
 
 /* ================================================================================ */
@@ -332,8 +345,8 @@ PDC_error_t PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* 
  *          + ed->loc begin/end set to line/char position of start and end of the ascii integer
  */
 
-PDC_error_t PDC_aint8_read(PDC_t* pdc, PDC_base_em* em,
-			   PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_aint8_read (PDC_t* pdc, PDC_base_em* em,
+			    PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc);
 
 PDC_error_t PDC_aint16_read(PDC_t* pdc, PDC_base_em* em,
 			    PDC_base_ed* ed, PDC_int16* res_out, PDC_disc_t* disc);
@@ -345,8 +358,8 @@ PDC_error_t PDC_aint64_read(PDC_t* pdc, PDC_base_em* em,
 			    PDC_base_ed* ed, PDC_int64* res_out, PDC_disc_t* disc);
 
 
-PDC_error_t PDC_auint8_read(PDC_t* pdc, PDC_base_em* em,
-			    PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_auint8_read (PDC_t* pdc, PDC_base_em* em,
+			     PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc);
 
 PDC_error_t PDC_auint16_read(PDC_t* pdc, PDC_base_em* em,
 			     PDC_base_ed* ed, PDC_uint16* res_out, PDC_disc_t* disc);
@@ -386,8 +399,8 @@ PDC_error_t PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
  *        + ed->loc begin/end set to line/char position of start/end of the 'too small' field
  */
 
-PDC_error_t PDC_fw_aint8_read(PDC_t* pdc, PDC_base_em* em, size_t width,
-			      PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_fw_aint8_read (PDC_t* pdc, PDC_base_em* em, size_t width,
+			       PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc);
 
 PDC_error_t PDC_fw_aint16_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 			       PDC_base_ed* ed, PDC_int16* res_out, PDC_disc_t* disc);
@@ -399,8 +412,8 @@ PDC_error_t PDC_fw_aint64_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 			       PDC_base_ed* ed, PDC_int64* res_out, PDC_disc_t* disc);
 
 
-PDC_error_t PDC_fw_auint8_read(PDC_t* pdc, PDC_base_em* em, size_t width,
-			       PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_fw_auint8_read (PDC_t* pdc, PDC_base_em* em, size_t width,
+				PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc);
 
 PDC_error_t PDC_fw_auint16_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 				PDC_base_ed* ed, PDC_uint16* res_out, PDC_disc_t* disc);
@@ -415,8 +428,33 @@ PDC_error_t PDC_fw_auint64_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 /* BINARY INTEGER READ FUNCTIONS */
 
 /* These functions parse signed or unsigned binary integers.
- * The number of functions required for a given target size varies, so
- * each set of functions is documented below.
+ * Whether bytes are reversed is controlled by two fields,
+ * disc->m_endian and disc->d_endian... if they differ, then the byte
+ * order is reversed in the in-memory representation, otherwise it is not.
+ *
+ * A good way to set the d_endian value in a machine-independent way is to
+ * use PRAGMA CHECK_ENDIAN with the first multi-byte binary integer field that appears
+ * in the data.  For example, this header definition:
+ *
+ *
+ * pstruct header {
+ *    buint16 version : version < 10; //- PRAGMA CHECK_ENDIAN
+ *    ...
+ * };
+ *
+ * indicates the first value is a 2-byte unsigned binary integer, version,
+ * whose value should be less than 10.   The pragma indicates that there
+ * should be two attempts at reading the version field: once with the
+ * current disc->d_endian setting, and (if the read fails) once with the
+ * opposite disc->d_endian setting.  If the second read succeeds, then
+ * the new disc->d_endian setting is retained, otherwise the original
+ * disc->d_endian setting is retained.
+ * 
+ * N.B. The CHECK_ENDIAN pragma is only able to determine the correct endian
+ * choice for a field that has an attached constraint, where the
+ * wrong choice of endian setting will always cause the constraint to fail.
+ * (In the above example, if a value < 10 is read with the wrong d_endian
+ * setting, the result is a value that is much greater than 10.) 
  *
  * For all cases, if the specified number of bytes is available, it is always read.
  * If the width is not available, the IO cursor is not advanced, and
@@ -425,66 +463,23 @@ PDC_error_t PDC_fw_auint64_read(PDC_t* pdc, PDC_base_em* em, size_t width,
  *        + ed->loc begin/end set to line/char position of start/end of the 'too small' field
  */
 
-/* 8-bit read functions:
- *     For these functions, there is no issue of byte ordering or machine architecture,
- *     thus there is only 1 signed and 1 unsigned version.
- */
-   
-PDC_error_t PDC_bint8_read(PDC_t* pdc, PDC_base_em* em,
-			   PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_buint8_read(PDC_t* pdc, PDC_base_em* em,
-			    PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_bint8_read (PDC_t* pdc, PDC_base_em* em,
+			    PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_bint16_read(PDC_t* pdc, PDC_base_em* em,
+			    PDC_base_ed* ed, PDC_int16* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_bint32_read(PDC_t* pdc, PDC_base_em* em,
+			    PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_bint64_read(PDC_t* pdc, PDC_base_em* em,
+			    PDC_base_ed* ed, PDC_int64* res_out, PDC_disc_t* disc);
 
-/* 16-bit read functions:
- *     For these functions, byte ordering matters: rev/norev indicates
- *     whether the 2 bytes that are read are reversed.
- */
-   
-PDC_error_t PDC_bint16_rev_read(PDC_t* pdc, PDC_base_em* em,
-				PDC_base_ed* ed, PDC_int16* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_bint16_norev_read(PDC_t* pdc, PDC_base_em* em,
-				  PDC_base_ed* ed, PDC_int16* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_buint16_rev_read(PDC_t* pdc, PDC_base_em* em,
-				 PDC_base_ed* ed, PDC_uint16* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_buint16_norev_read(PDC_t* pdc, PDC_base_em* em,
-				   PDC_base_ed* ed, PDC_uint16* res_out, PDC_disc_t* disc);
-/* 32-bit read functions:
- *     For these functions, byte ordering matters: rev/norev indicates
- *     whether the 4 bytes that are read are reversed.
- */
-   
-PDC_error_t PDC_bint32_rev_read(PDC_t* pdc, PDC_base_em* em,
-				PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_bint32_norev_read(PDC_t* pdc, PDC_base_em* em,
-				  PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_buint32_rev_read(PDC_t* pdc, PDC_base_em* em,
-				 PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_buint32_norev_read(PDC_t* pdc, PDC_base_em* em,
-				   PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
-
-/* 64-bit read functions:
- *     For these functions, two transforms may be necessary:
- *        rev/norev indicates whether the 8 bytes are reversed, and
- *        swap/noswap indicates whether the upper and lower 32 bit values are subsequently swapped
- */
-
-PDC_error_t PDC_bint32_rev_swap_read(PDC_t* pdc, PDC_base_em* em,
-				     PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_bint32_rev_noswap_read(PDC_t* pdc, PDC_base_em* em,
-				       PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_bint32_norev_swap_read(PDC_t* pdc, PDC_base_em* em,
-				       PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_bint32_norev_noswap_read(PDC_t* pdc, PDC_base_em* em,
-					 PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
-
-PDC_error_t PDC_buint32_rev_swap_read(PDC_t* pdc, PDC_base_em* em,
-				      PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_buint32_rev_noswap_read(PDC_t* pdc, PDC_base_em* em,
-					PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_buint32_norev_swap_read(PDC_t* pdc, PDC_base_em* em,
-					PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
-PDC_error_t PDC_buint32_norev_noswap_read(PDC_t* pdc, PDC_base_em* em,
-					  PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_buint8_read (PDC_t* pdc, PDC_base_em* em,
+			     PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_buint16_read(PDC_t* pdc, PDC_base_em* em,
+			     PDC_base_ed* ed, PDC_uint16* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_buint32_read(PDC_t* pdc, PDC_base_em* em,
+			     PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
+PDC_error_t PDC_buint64_read(PDC_t* pdc, PDC_base_em* em,
+			     PDC_base_ed* ed, PDC_uint64* res_out, PDC_disc_t* disc);
 
 /* ================================================================================ */
 

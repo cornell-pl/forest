@@ -202,10 +202,12 @@ PDC_error_t PDC_str_lit_read(PDC_t* pdc, PDC_base_em* em,
  *        N.B. Resulting string should be printed immediately then not used again, e.g.,
  *        PDC_report_err( ..xxx.. , "Missing separator: %s", PDC_fmtChar(010)); 
  * 
- *    PDC_fmtStr: same thing for a PDC_string
+ *    PDC_fmtStr  : same thing for a PDC_string
+ *    PDC_fmtStrL : same thing for a char* string / length
  */
 char*       PDC_fmtChar(char c);
 char*       PDC_fmtStr(const PDC_string* s);
+char*       PDC_fmtStrL(const char* s, size_t len);
 
 /* ================================================================================ */
 /* OUTPUT MACROS  */

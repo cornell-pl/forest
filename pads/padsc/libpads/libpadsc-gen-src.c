@@ -43,29 +43,14 @@ PDC_AINT_FW_READ_FN(PDC_auint64_fw_read, PDC_uint64, unsigned long long, strtoul
  *    7 -> reverse each byte in each string of 8 bytes
  */
 
-PDC_BINT_READ_FN(PDC_bint8_read,         PDC_int8,   1, 0);
-PDC_BINT_READ_FN(PDC_buint8_read,        PDC_uint8,  1, 0);
+PDC_BINT_READ_FN(PDC_bint8_read,   PDC_int8,   1, 0);
+PDC_BINT_READ_FN(PDC_buint8_read,  PDC_uint8,  1, 0);
 
-PDC_BINT_READ_FN(PDC_bint16_norev_read,  PDC_int16,  2, 0);
-PDC_BINT_READ_FN(PDC_buint16_norev_read, PDC_uint16, 2, 0);
-PDC_BINT_READ_FN(PDC_bint16_rev_read,    PDC_int16,  2, 1);
-PDC_BINT_READ_FN(PDC_buint16_rev_read,   PDC_uint16, 2, 1);
+PDC_BINT_READ_FN(PDC_bint16_read,  PDC_int16,  2, 1);
+PDC_BINT_READ_FN(PDC_buint16_read, PDC_uint16, 2, 1);
 
-PDC_BINT_READ_FN(PDC_bint32_norev_read,  PDC_int32,  4, 0);
-PDC_BINT_READ_FN(PDC_buint32_norev_read, PDC_uint32, 4, 0);
-PDC_BINT_READ_FN(PDC_bint32_rev_read,    PDC_int32,  4, 3);
-PDC_BINT_READ_FN(PDC_buint32_rev_read,   PDC_uint32, 4, 3);
+PDC_BINT_READ_FN(PDC_bint32_read,  PDC_int32,  4, 3);
+PDC_BINT_READ_FN(PDC_buint32_read, PDC_uint32, 4, 3);
 
-PDC_BINT_READ_FN(PDC_bint64_norev_noswap_read,  PDC_int64,  8, 0);
-PDC_BINT_READ_FN(PDC_buint64_norev_noswap_read, PDC_uint64, 8, 0);
-PDC_BINT_READ_FN(PDC_bint64_rev_noswap_read,    PDC_int64,  8, 7);
-PDC_BINT_READ_FN(PDC_buint64_rev_noswap_read,   PDC_uint64, 8, 7);
-
-PDC_BINT_READ_FN(PDC_bint64_norev_swap_read,    PDC_int64,  8, 4);
-PDC_BINT_READ_FN(PDC_buint64_norev_swap_read,   PDC_uint64, 8, 4);
-#if 0 
-PDC_BINT_READ_FN(PDC_bint64_rev_swap_read,      PDC_int64,  8, ?);
-PDC_BINT_READ_FN(PDC_buint64_rev_swap_read,     PDC_uint64, 8, ?);
-#endif
-
-
+PDC_BINT_READ_FN(PDC_bint64_read,  PDC_int64,  8, 7);
+PDC_BINT_READ_FN(PDC_buint64_read, PDC_uint64, 8, 7);

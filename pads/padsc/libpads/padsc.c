@@ -10,7 +10,7 @@
 #include "libpadsc-read-macros.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.17 2002-09-16 17:36:29 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.18 2002-09-17 19:21:05 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -201,9 +201,9 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
 	}
 	if (maxc > 0) {
 	  if (minc < maxc) {
-	    sfprintf(pdc->tmp, "\n[LINE %d]%-.*s>>>%-.*s<<<", loc->endLine, minc-1, buf, maxc-minc+1, buf+minc-1);
+	    sfprintf(pdc->tmp, "\n[LINE %d]%s>>>%s<<<", loc->endLine, PDC_fmtStrL(buf,minc-1), PDC_fmtStrL(buf+minc-1,maxc-minc+1));
 	  } else {
-	    sfprintf(pdc->tmp, "\n[LINE %d]%-.*s<<<", loc->endLine, maxc, buf);
+	    sfprintf(pdc->tmp, "\n[LINE %d]%s<<<", loc->endLine, PDC_fmtStrL(buf, maxc));
 	  }
 	}
       }
@@ -1018,8 +1018,10 @@ PDC_IO_refill(PDC_t* pdc, PDC_disc_t* disc)
   }
   readline->boffset = tp->cur = 0;
   readline->eoffset = readlen;
-  if (*(pdc->sfbuf + readlen - 1) == '\n') { readlen--; } /* XXX_REMOVE */
-  WARN3(pdc, "XXX_REMOVE line %d: %-.*s", pdc->lnum, readlen, pdc->sfbuf);
+  { /* XXX_REMOVE THIS WHOLE SCOPE */
+    if (*(pdc->sfbuf + readlen - 1) == '\n') { readlen--; }
+    WARN2(pdc, "XXX_REMOVE line %d: %s", pdc->lnum, PDC_fmtStrL(pdc->sfbuf, readlen));
+  }
   return PDC_OK;
 
  at_eof:
@@ -1406,7 +1408,9 @@ PDC_disc_t PDC_default_disc = {
   (PDC_flags_t)PDC_NULL_CTL_FLAG,
   PDC_Line_Stop,
   PDC_errorf,
-  PDC_errorRep_Max
+  PDC_errorRep_Max,
+  PDC_bigEndian,
+  PDC_bigEndian
 };
 
 PDC_error_t
@@ -1522,6 +1526,11 @@ PDC_fmtChar(char c) {
 char*
 PDC_fmtStr(const PDC_string* s) {
   return fmtquote(s->str, NiL, NiL, s->len, 0);
+}
+
+char*
+PDC_fmtStrL(const char* s, size_t len) {
+  return fmtquote(s, NiL, NiL, len, 0);
 }
 
 /* ================================================================================ */
