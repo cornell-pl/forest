@@ -305,7 +305,7 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     elt->eof = 1;
     data->eof = 1;
     if (elt->len == 0) { /* trivial EOF record */
-      elt->unit = "empty block (EOF)";
+      elt->unit = "(empty EOF) block";
     } else { /* partial-read EOF record */
       elt->unit = (const char*)data->punit;
     }
@@ -358,10 +358,10 @@ PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len)
 
   if ((data->block_size % 1024) == 0) {
     sprintf(data->unit,  "%dKB Block", data->block_size / 1024);
-    sprintf(data->punit, "%dKB Block (last: partial)", data->block_size / 1024);
+    sprintf(data->punit, "(last: partial) %dKB Block", data->block_size / 1024);
   } else {
     sprintf(data->unit,  "%dB Block", data->block_size);
-    sprintf(data->punit, "%dB Block (last: partial)", data->block_size);
+    sprintf(data->punit, "(last: partial)%dB Block", data->block_size);
   }
 
   io_disc->unmake_fn    = PDC_fwrec_noseek_unmake;
@@ -618,7 +618,7 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     elt->eof = 1;
     data->eof = 1;
     if (elt->len == 0) { /* trivial EOF record */
-      elt->unit = "empty block (EOF)";
+      elt->unit = "(empty EOF) block";
     } else { /* partial-read EOF record */
       elt->unit = (const char*)data->punit;
     }
@@ -673,10 +673,10 @@ PDC_norec_noseek_make(size_t block_size_hint)
 
   if ((block_size % 1024) == 0) {
     sprintf(data->unit,  "%dKB Block", block_size / 1024);
-    sprintf(data->punit, "%dKB Block (last: partial)", block_size / 1024);
+    sprintf(data->punit, "(last: partial) %dKB Block", block_size / 1024);
   } else {
     sprintf(data->unit,  "%dB Block", block_size);
-    sprintf(data->punit, "%dB Block (last: partial)", block_size);
+    sprintf(data->punit, "(last: partial) %dB Block", block_size);
   }
 
   io_disc->unmake_fn    = PDC_norec_noseek_unmake;
@@ -1004,9 +1004,9 @@ PDC_nlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     data->un_bytes = 0;
     elt->num  = (data->num)++;
     if (elt->len == 0) { /* trivial EOF record */
-      elt->unit = "empty line (EOF)";
+      elt->unit = "(empty EOF) line";
     } else { /* partial-read EOF record */
-      elt->unit = "line (partial: missing newline)";
+      elt->unit = "(partial: missing newline) line";
     }
     elt->begin[elt->len] = 0; /* null-terminate the record */
     PDC_APPEND_ELT(data->head, elt);
@@ -1378,7 +1378,7 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
   } else if (readlen) {
     elt->unit = (const char*)data->punit;
   } else {
-    elt->unit = "empty block (EOF)";
+    elt->unit = "(empty EOF) block";
   }
 
  done:
@@ -1431,10 +1431,10 @@ PDC_norec_make(size_t block_size_hint)
 
   if ((block_size % 1024) == 0) {
     sprintf(data->unit,  "%dKB Block", block_size / 1024);
-    sprintf(data->punit, "%dKB Block (last: partial)", block_size / 1024);
+    sprintf(data->punit, "(last: partial) %dKB Block", block_size / 1024);
   } else {
     sprintf(data->unit,  "%dB Block", block_size);
-    sprintf(data->punit, "%dB Block (last: partial)", block_size);
+    sprintf(data->punit, "(last: partial) %dB Block", block_size);
   }
 
   io_disc->unmake_fn    = PDC_norec_unmake;

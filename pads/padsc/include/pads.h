@@ -535,65 +535,24 @@ PDC_error_t  PDC_IO_getLocE  (PDC_t *pdc, PDC_loc_t *loc, int offset);
 PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset); 
 
 /* ================================================================================ */
-/* INTERNAL SCAN FUNCTIONS */
-
-/* Scan functions are used to 'find' a location that is forward of the
- * current IO position.  They are normally used for error recovery purposes,
- * but are exposed here because they are generally useful.
- * N.B. Use PDC_char_lit_read / PDC_string_lit_read for cases where
- * a literal is known to be at the current IO position.
- */
-
-/* PDC_char_lit_scan:
- *
- * EFFECT: 
- *  Scans for either goal character c or stop character s.  If a gloal
- *  char is found, then if eat_lit is non-zero the IO points to just
- *  beyond the char, otherwise it points to the char.  disc controls
- *  maximum scan distance.  Hitting eor or eof considered to be an
- *  error.  N.B. If there is mixed binary and ascii data, scanning can
- *  'find' an ascii char in a binary field.  Be careful!  Do not use 0
- *  to mean EOF.  If there is no stop char, use the same char for both
- *  the c and s params.
- *
- * RETURNS: PDC_error_t
- *         PDC_OK    => goal/stop char found, IO cursor now points to just beyond char
- *                      (eat_lit non-zero) or to the char (eat_lit zero).
- *                      if c_out, *c_out set to the char that was found
- *                      if offset_out, *offset_out set to the distance scanned to find that char
- *                      (0 means the IO cursor was already pointing at the found char)
- *         PDC_ERR   => char not found, IO cursor unchanged
- * 
- * PDC_string_lit_scan: same as char_lit_scan execpt a goal string
- * and stop string are given.  In this case, if there is no stop
- * string, a NULL stop string should be used.  On PDC_OK, *str_out
- * points to either findStr or stopStr (depending on which was found),
- * *offset_out is the distance scanned to find the string (0 means
- * the IO cursor was already pointing at the string).  If eat_lit
- * is non-zero, the IO cursor points just beyond the string literal
- * that was found, otherwise it points to the start of the string that
- * was found.  On PDC_ERR, the IO cursor is unchanged. 
- */
-
-PDC_error_t PDC_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
-			      unsigned char *c_out, size_t *offset_out);
-
-PDC_error_t PDC_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
-			     PDC_string **str_out, size_t *offset_out);
-
-/* ================================================================================ */
 /* LITERAL READ FUNCTIONS */
 
 /* PDC_char_lit_read / str_lit_read:
  *
  * EFFECT: verify IO cursor points to specified char/string, move IO cursor just beyond
- *         N.B. If *em is PDC_Ignore, IO cursor is advanced by the specified length
- *              (1 char / length of string) without checking
+ *   N.B. The error mask has the following meaning for these two functions.  If *em is:
+ *
+ *        PDC_CheckAndSet : IO cursor only advanced if literal matches,
+ *                          warning message is issued on error
+ *        PDC_Check       : like PDC_CheckAndSet, but no warning on error
+ *        PDC_Ignore      : IO cursor is advanced by the length
+ *                          (1 char / length of string) of the literal
+ *                          without checking for a match
  *
  * RETURNS: PDC_error_t
  *            OK    => IO cursor now points just beyond char / string
  *            ERROR => IO cursor did not point to char/string; unchanged
- *               (PDC_CHAR_LIT_NOT_FOUND / PDC_STR_LIT_NOT_FOUND)
+ *               (errCode PDC_CHAR_LIT_NOT_FOUND / PDC_STR_LIT_NOT_FOUND)
  */
 
 PDC_error_t PDC_char_lit_read(PDC_t *pdc, PDC_base_em *em,
@@ -736,24 +695,6 @@ PDC_error_t PDC_astringSE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRege
 
 PDC_error_t PDC_astringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
 				PDC_base_ed *ed, PDC_string *s_out);
-
-/* ================================================================================ */
-/* REGULAR EXPRESSION SUPPORT */
-
-/* PDC_regexp_compile: if regexp is a valid regular expression, this function
- * allocates a new compiled regular expression obj, assigns a handle to the obj
- * to (*regexp_out), and returns PDC_OK.  If regexp_out is NULL or regexp is
- * not valid, it returns PDC_ERR.
- *
- * PDC_regexp_free takes a handle to a compiled regexp obj and frees the obj.
- *
- * ** At the moment, only regular expressions of the form
- *               [<chars>]
- *     are supported, i.e., a set of chars can be specified.
- */
-
-PDC_error_t PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out);
-PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
 
 /* ================================================================================ */
 /* ASCII INTEGER READ FUNCTIONS */
@@ -1087,6 +1028,71 @@ typedef const char * (*PDC_uint64_map_fn)(PDC_uint64 u);
  */
 PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char *what, int nst,
 				     PDC_int32_map_fn  fn, PDC_int32_acc *a);
+
+/* ================================================================================ */
+/* SCAN FUNCTIONS */
+
+/* Scan functions are used to 'find' a location that is forward of the
+ * current IO position.  They are normally used for error recovery purposes,
+ * but are exposed here because they are generally useful.
+ * N.B. Use PDC_char_lit_read / PDC_string_lit_read for cases where
+ * a literal is known to be at the current IO position.
+ */
+
+/* PDC_char_lit_scan:
+ *
+ * EFFECT: 
+ *  Scans for either goal character c or stop character s.  If a gloal
+ *  char is found, then if eat_lit is non-zero the IO points to just
+ *  beyond the char, otherwise it points to the char.  disc controls
+ *  maximum scan distance.  Hitting eor or eof considered to be an
+ *  error.  N.B. If there is mixed binary and ascii data, scanning can
+ *  'find' an ascii char in a binary field.  Be careful!  Do not use 0
+ *  to mean EOR/EOF.  If there is no stop char, use the same char for both
+ *  the c and s params.
+ *
+ * RETURNS: PDC_error_t
+ *         PDC_OK    => goal/stop char found, IO cursor now points to just beyond char
+ *                      (eat_lit non-zero) or to the char (eat_lit zero).
+ *                      if c_out, *c_out set to the char that was found
+ *                      if offset_out, *offset_out set to the distance scanned to find that char
+ *                      (0 means the IO cursor was already pointing at the found char)
+ *         PDC_ERR   => char not found, IO cursor unchanged
+ * 
+ * PDC_string_lit_scan: same as char_lit_scan execpt a goal string
+ * and stop string are given.  In this case, if there is no stop
+ * string, a NULL stop string should be used.  On PDC_OK, *str_out
+ * points to either findStr or stopStr (depending on which was found),
+ * *offset_out is the distance scanned to find the string (0 means
+ * the IO cursor was already pointing at the string).  If eat_lit
+ * is non-zero, the IO cursor points just beyond the string literal
+ * that was found, otherwise it points to the start of the string that
+ * was found.  On PDC_ERR, the IO cursor is unchanged. 
+ */
+
+PDC_error_t PDC_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
+			      unsigned char *c_out, size_t *offset_out);
+
+PDC_error_t PDC_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+			     PDC_string **str_out, size_t *offset_out);
+
+/* ================================================================================ */
+/* REGULAR EXPRESSION SUPPORT */
+
+/* PDC_regexp_compile: if regexp is a valid regular expression, this function
+ * allocates a new compiled regular expression obj, assigns a handle to the obj
+ * to (*regexp_out), and returns PDC_OK.  If regexp_out is NULL or regexp is
+ * not valid, it returns PDC_ERR.
+ *
+ * PDC_regexp_free takes a handle to a compiled regexp obj and frees the obj.
+ *
+ * ** At the moment, only regular expressions of the form
+ *               [<chars>]
+ *     are supported, i.e., a set of chars can be specified.
+ */
+
+PDC_error_t PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out);
+PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
 
 /* ================================================================================ */
 /* MISC ROUTINES */

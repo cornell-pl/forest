@@ -1474,7 +1474,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.47 2002-11-15 01:27:46 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.48 2002-11-15 04:32:35 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -2288,7 +2288,7 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 		PDC_errCode_t errCode, const char *format, ...)
 {
   PDC_error_f pdc_errorf;
-  char    *severity = "error";
+  char    *severity = "Error";
   char    *msg      = "** unknown error code **";
   char    *tmpstr1, *tmpstr2, *tmpstr3;
   size_t  tmplen1, tmplen2, tmplen3;
@@ -2304,13 +2304,16 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
   } else if (pdc->speclev > 0 || pdc->disc->e_rep == PDC_errorRep_None || !pdc_errorf) {
     return PDC_OK;
   }
+  if (errCode == PDC_NO_ERR) {
+    severity = "Note";
+  }
   if (loc && loc->b.num == loc->e.num && loc->e.byte == loc->b.byte -1 ) {
     nullspan = 1;
   }
   sfstrset(pdc->tmp, 0);
   if (pdc->disc->e_rep == PDC_errorRep_Min) {
     if (loc) {
-      pdc_errorf(NiL, level, "%s at %s %d char %d : errCode %d",
+      pdc_errorf(NiL, level, "%s : %s %d char %d : errCode %d",
 		 severity, loc->b.unit, loc->b.num, loc->b.byte, errCode);
     } else {
       pdc_errorf(NiL, level, "%s : errCode %d", severity, errCode);
@@ -2320,7 +2323,7 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
   if (format && strlen(format)) {
     va_list ap;
     if (loc) {
-      sfprintf(pdc->tmp, "%s at %s %d char %d : ", severity, loc->b.unit, loc->b.num, loc->b.byte);
+      sfprintf(pdc->tmp, "%s : %s %d char %d : ", severity, loc->b.unit, loc->b.num, loc->b.byte);
     } else {
       sfprintf(pdc->tmp, "%s : ", severity);
     }
@@ -3012,7 +3015,10 @@ PDC_char_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, 1);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_CHAR_LIT_NOT_FOUND);
+  if (*em == PDC_CheckAndSet) {
+    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_CHAR_LIT_NOT_FOUND);
+  }
+  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_CHAR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
   PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_char_lit_read_internal (nb)", PDC_IO_ERR);
@@ -3061,11 +3067,17 @@ PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 
  width_not_avail:
   PDCI_READFN_SET_LOC_BE(0, end-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_STR_LIT_NOT_FOUND);
+  if (*em == PDC_CheckAndSet) {
+    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_STR_LIT_NOT_FOUND);
+  }
+  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_STR_LIT_NOT_FOUND);
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, s->len);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_STR_LIT_NOT_FOUND);
+  if (*em == PDC_CheckAndSet) {
+    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_STR_LIT_NOT_FOUND);
+  }
+  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_STR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
   PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_str_lit_read_internal (nb)", PDC_IO_ERR);
