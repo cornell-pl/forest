@@ -656,8 +656,8 @@ PDC_error_t
 fn_name(PDC_t *pdc, const PDC_base_m *m, size_t width,
 	PDC_base_pd *pd, targ_type *res_out)
 {
-  PDC_byte        ct;    /* char tmp */
   targ_type       tmp;   /* tmp num */
+  PDC_byte        ct;    /* char tmp */
   PDC_byte        *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
@@ -703,13 +703,18 @@ fn_name(PDC_t *pdc, const PDC_base_m *m, size_t width,
       goto invalid;
     }
     if (errno == ERANGE) goto range_err;
-  }
-  /* success */
-  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
-    goto fatal_forward_err;
-  }
-  if (PDC_Test_Set(*m)) {
-    (*res_out) = tmp;
+    /* success */
+    if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
+      goto fatal_forward_err;
+    }
+    if (PDC_Test_Set(*m)) {
+      (*res_out) = tmp;
+    }
+  } else {
+    /* just move forward */
+    if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
+      goto fatal_forward_err;
+    }
   }
   pd->errCode = PDC_NO_ERR;
   return PDC_OK;
@@ -885,13 +890,18 @@ fn_name(PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits_or_bytes,
       tmp = bytes2num_fn ## _norange(pdc, begin, num_digits_or_bytes, &p1);
     }
     if (errno) goto invalid_range_dom;
-  }
-  /* success */
-  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
-    goto fatal_forward_err;
-  }
-  if (PDC_Test_Set(*m)) {
-    (*res_out) = tmp;
+    /* success */
+    if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
+      goto fatal_forward_err;
+    }
+    if (PDC_Test_Set(*m)) {
+      (*res_out) = tmp;
+    }
+  } else {
+    /* just move forward */
+    if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
+      goto fatal_forward_err;
+    }
   }
   pd->errCode = PDC_NO_ERR;
   return PDC_OK;
@@ -4385,7 +4395,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.90 2003-07-15 02:58:54 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.91 2003-07-15 19:58:42 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -4844,6 +4854,8 @@ PDC_open(PDC_t **pdc_out, PDC_disc_t *disc, PDC_IO_disc_t *io_disc)
 
  fatal_alloc_err:
   PDC_FATAL(disc, "out of space error during PDC_open");
+#if 0
+  /* PDC_FATAL halts program, so the following is not needed */
   if (pdc) {
     if (pdc->rmm_z) {
       RMM_close(pdc->rmm_z);
@@ -4861,6 +4873,7 @@ PDC_open(PDC_t **pdc_out, PDC_disc_t *disc, PDC_IO_disc_t *io_disc)
   if (vm) {
     vmclose(vm);
   }
+#endif
   return PDC_ERR;
 }
 
