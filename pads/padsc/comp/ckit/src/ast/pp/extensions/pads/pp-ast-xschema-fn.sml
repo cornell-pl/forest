@@ -698,7 +698,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; PPL.addStr pps eName
       ; space pps
       ; PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
-		      , sep=",\n\t"
+		      , sep=",\n\t\t"
 		      , lDelim="{\n\t"
 		      , rDelim="\n}"
 		      } pps eFields
@@ -713,6 +713,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; space pps
         ; PPL.addStr pps repName
 	; space pps
+	; PPL.addStr pps "{\n"
 (*-->*) ; ppElemList pps ("errDesc",edFields) 
         ; PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
 		        , sep="\n\t"
