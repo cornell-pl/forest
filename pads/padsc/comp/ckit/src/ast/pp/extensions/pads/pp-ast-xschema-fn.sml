@@ -775,6 +775,9 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; PPL.addStr pps "</xs:sequence>"
       ; newline pps)
 
+  fun ppXMLRestriction pps base =
+      PPL.addStr pps ("\n <restriction base=\"" ^ base ^ "\"/> \n")
+
   fun ppXMLComplex pps (eNameOpt,eFields) =	(* <complex name=eName> <seq> eFields </seq> </complex> *) 
         ( ppXMLHeader "<xs:complexType " ">" pps (NONE,eNameOpt)
         ; newline pps 
@@ -833,7 +836,9 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  val tagName = SOME (valOf repName ^ "_tag")  
        in 
       ((newline pps
-      ; ppXMLHeader "<xs:simpleType " "> \n<restriction base=\"xsd:string\"/> \n</xs:simpleType> \n" pps (NONE,tagName) 
+      ; ppXMLHeader "<xs:simpleType " ">" pps (NONE,tagName)
+      ; ppXMLRestriction pps "xsd:string"
+      ; PPL.addStr pps "</xs:simpleType>\n"
       ; newline pps
       ; ppXMLChoice pps (SOME ((valOf pdTyName) ^ "_u"),uPdFields)
       ; newline pps
@@ -884,7 +889,9 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val (repName, repFields) = enumInfo tidtab tid
       in
 	((newline pps
-        ; ppXMLHeader "<xs:simpleType " "> \n <restriction base=\"xsd:int\"/> \n</xs:simpleType>" pps (NONE,repName)
+        ; ppXMLHeader "<xs:simpleType " ">" pps (NONE,repName)
+ 	; ppXMLRestriction pps "xsd:int"
+	; PPL.addStr pps "</xs:simpleType>"
     	; newline pps
         ; ppTopElemIfPfile pps (ptyInfo,repName)	
         )
@@ -897,7 +904,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       in
         ((newline pps
         ; ppXMLHeader "<xs:simpleType " ">\n" pps (NONE, Name)
-        ; PPL.addStr pps ("<restriction base=\"" ^ (valOf Ty) ^ "\"> \n</xs:simpleType>")
+        ; ppXMLRestriction pps (valOf Ty)
+        ; PPL.addStr pps "</xs:simpleType>"
         ; newline pps
         ; ppTopElemIfPfile pps (ptyInfo,Name)
         )
