@@ -64,7 +64,7 @@ GSFARCH = sgi.mips3
 ifndef CC
 CC = cc
 endif
-CDBGFLAGS = -g -woff 47
+CDBGFLAGS = -g -woff 47,1174
 ifdef BuildPADSLib
 CSHAREFLAGS = -KPIC
 else
@@ -81,7 +81,7 @@ SHARED_PADSLIB_NM_ALT1 = libpadsc.so.1
 SHARED_PADSLIB_NM_ALT2 = libpadsc.so
 STATIC_LIBTOOL = ar r
 STATIC_LIBTOOL_OPTS =
-SHARED_LIBTOOL = /usr/bin/cc -shared -update_registry /home/gruber/knb/arch/sgi.mips3/lib/registry.ld
+SHARED_LIBTOOL = /usr/bin/cc -shared -update_registry $(INSTALLROOT)/lib/registry.ld
 SHARED_LIBTOOL_PRE_PADSLIB = -all
 SHARED_LIBTOOL_PRE_ASTLIB  = -notall
 SHARED_LIBTOOL_OPTS =

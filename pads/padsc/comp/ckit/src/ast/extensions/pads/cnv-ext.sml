@@ -845,7 +845,7 @@ structure CnvExt : CNVEXT = struct
 				      else []
 		      val innerInitDecls = incNerrSs  
 				     @ [P.assignS(P.arrowX(PT.Id(gMod ed), PT.Id panic), P.falseX),
-					P.assignS(P.arrowX(PT.Id(gMod ed), PT.Id errCode), PL.PDC_OK)]
+					P.assignS(P.arrowX(PT.Id(gMod ed), PT.Id errCode), PL.PDC_NO_ERROR)]
 		      val returnTy =  PL.toolErrPCT
 		      val innerBody = innerInitDecls @ bodySs
 

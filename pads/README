@@ -28,12 +28,21 @@ For sh/ksh/bash users:
   export PADS_HOME=/home/fred/padsc
   . $PADS_HOME/scripts/Q_DO_SETENV.sh
 
+Install link to SML runtime environment:
+  Follow instructions in $(PADS_HOME)/binlinks/README
+
 STEP 2: BUILD AND INSTALL THE PADSC LIBRARY
 
 > cd $PADS_HOME/libpadsc
 > gmake install
 
-STEP 3: TEST THE PADSC LIBRARY
+STEP 3: BUILD THE COMPILER
+
+> cd $PADS_HOME
+> gmake
+
+
+STEP 4: TEST THE PADSC LIBRARY
 
 > cd $PADS_HOME/libpadsc/tests
 > gmake
@@ -44,12 +53,6 @@ to be built and run.  If you see a message of the form
     test_foo DIFFERS
 
 then there is a problem with the test_foo test.
-
-
-STEP 4: BUILD THE COMPILER
-
-> cd $PADS_HOME
-> gmake
 
 
 STEP 5: TEST THE COMPILER
