@@ -40,12 +40,9 @@ library provides for robust and application-specific error handling.
 \end{abstract}
 
 \section{Introduction}
-
-
-Although traditional databases and \xml{} systems provide rich
-infrastructure for processing well-behaved data, vast amounts of
-useful data are stored and processed neither in databases nor in
-\xml{}, but rather in ad hoc data formats. 
+Vast amounts of useful data are stored and processed in ad hoc formats.
+Traditional databases and \xml{} systems provide rich infrastructure
+for processing well-behaved data, but are of little help when dealing with ad hoc formats.
 Examples we face at AT\&T include call detail data~\cite{kdd00}, 
 %compiler traces~\cite{chilimbi},
 web server logs~\cite{wpp}, 
@@ -64,7 +61,7 @@ data, not request a more convenient format.
 Second, documentation for the format may not exist at all, or it may be
 significantly out of date.  A common phenomenon is for a field in a
 data source to fall into disuse because the data is no longer
-relevant.  After a while though, people find an intereting new piece of
+relevant.  After a while though, people find an interesting new piece of
 information.  Compatibility issues prevent them from modifying the
 shape of the data, so instead they hijack the unused field, often
 failing to update the documentation in the process.
@@ -72,10 +69,10 @@ failing to update the documentation in the process.
 Third, such data frequently contain errors, for a variety of
 reasons: malfunctioning equipment, race conditions on log
 entry~\cite{wpp}, non-standard values to indicate ``no data
-available,'' human error in entering data, undocumented data
-encodings, \etc{} The appropriate response to such errors is
+available,'' human error in entering data, unexpected data
+values, \etc{} The appropriate response to such errors is
 application-specific. Some applications require the data to be error free: 
-if an error is detected processing needs to stop immediately and a human
+if an error is detected, processing needs to stop immediately and a human
 needs to be alerted.  Other applications can repair the data, while still
 others can simply discard erroneous or unexpected values.  
 For some applications,
@@ -193,8 +190,8 @@ Netflow       & Data-dependent number of     & $\ge$1Gigabit/second  & Missed pa
               &  fixed-width binary record   &                       & \\ \hline
 
 \end{tabular}
-\label{figure:data-sources}
 \caption{Selected ad hoc data sources.  We will use \textbf{bold} data sources in our examples. }
+\label{figure:data-sources}
 \end{center}
 \end{figure*}
 
@@ -219,8 +216,8 @@ shows a couple of typical records.
 \begin{code}
 \input{../../padsc/examples/data/ai.paper}
 \end{code}
-\label{figure:clf-records}
 \caption{Typical CLF records.}
+\label{figure:clf-records}
 \end{center}
 \end{small}
 \end{figure*}
@@ -246,8 +243,7 @@ indicate the number was generated. The event sequence represents the
 various states a service order goes through; it is represented as a
 new-line terminated, pipe separated list of state, timestamp pairs.
 There are over 400 distinct states that an order may go through during
-provisioning.  The sequence is sorted in order of increasing time
-stamps. \figref{figure:dibbler-records} shows a small example of
+provisioning.  The sequence is sorted in order of increasing timestamps. \figref{figure:dibbler-records} shows a small example of
 this format.
 %156 different states for one order
 %-rw-r--r--    1 angusm   dibbler   2187472314 Jun  9  2003 /fs/dibblerd/tlf/data/out_sum.stream
@@ -261,8 +257,8 @@ this format.
 9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
 9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
 \end{verbatim}
-\label{figure:dibbler-records}
 \caption{Sample provisioning summary data (vastly truncated).}
+\label{figure:dibbler-records}
 \end{center}
 \end{small}
 \end{figure*}
@@ -275,13 +271,13 @@ language for describing data formats!
 \section{Pads Design}
 \begin{figure}
 \input{wsl}
-\caption{\pads{} description for web server log data}
+\caption{\pads{} description for web server log data.}
 \label{figure:wsl}
 \end{figure}
 
 \begin{figure}
 \input{dibbler_new}
-\caption{\pads{} description for telecom provisioning summary data}
+\caption{\pads{} description for telecom provisioning summary data.}
 \label{figure:dibbler}
 \end{figure}
 
@@ -330,7 +326,7 @@ serves both to reduce the number of base types and to permit the
 format and properties of later portions of the data to depend upon earlier portions.
 For example, 
 the base type \cd{Puint16_FW(:3:)} specifies an unsigned two byte integer
-physically represented by exactly 3 characters, while the type
+physically represented by exactly three characters, while the type
 \cd{Pstring(:' ':)} 
 describes a string terminated by a space.  Parameters can be 
 used with compound types to specify the size of an array or which
@@ -377,7 +373,7 @@ of array-termination conditions: reaching a maximum size, finding a terminating
 literal (including end-of-record and end-of-source),
 or satisfying a user-supplied predicate over the already-parsed portion of 
 the \kw{Parray}.  Finally, this type declaration includes a \kw{Pwhere} clause
-to specify that the sequence of time stamps must be in sorted order.
+to specify that the sequence of timestamps must be in sorted order.
 It uses the \kw{Pforall} construct to express this constraint.
 In general, the body of a \kw{Pwhere} clause can be any boolean expression.
 In such a context for arrays, the pseudo-variable \cd{elts} is bound to the in-memory representation of the sequence and \cd{length} to its length.
@@ -390,9 +386,8 @@ the constraint that the three-digit integer must be between 100 and 600.
 
 The \cd{order_header_t} type in the Dibbler data description contains several
 anonymous uses of the \kw{Popt} type.  This type is syntactic sugar for a 
-stylized use of a \kw{Punion} with two branches: the first with the indicated type, and
-the second with what might be thought of as the void type.  It always matches but
-never consumes any input.
+stylized use of a \kw{Punion} with two branches: the first with the indicated type, and the second with what might be thought of as the void type, which  
+always matches but never consumes any input.
 
 Finally, the \kw{Precord} and \kw{Psource} annotations deserve comment.  The first
 indicates that the annotated type constitutes a record,
@@ -414,7 +409,7 @@ From a \pads{} description, the \pads{} compiler generates a \C{} library
 for parsing and manipulating the associated data source.  We selected \C{}
 as the target language for pragmatic reasons: there were locally available
 libraries that made building the compiler and run-time libraries easier,
-our target users are comfortable wth \C{}, and it can serve most easily
+our target users are comfortable with \C{}, and it can serve most easily
 as a lingua franca in that essentially all languages have provisions for 
 calling \C{} libraries.  Nothing about the \pads{} language mandates compiling
 to \C{}, however, and we envision eventually building alternate bindings.
@@ -424,13 +419,18 @@ From each type in a \pads{} description, the compiler generates
 \begin{itemize}
 \item an in-memory representation, 
 \item a mask, which allows users to customize generated functions
-on a per-type basis,
-\item a parse descriptor, which we use to describe syntactic and
+on a fine-grained basis,
+\item a parse descriptor, which describes syntactic and
 semantic errors detected during parsing, 
 \item parsing and unparsing functions, and 
 \item a broad collection of utility functions.
 \end{itemize}
+\begin{figure*}
 \input{library}
+\caption{To give a feeling for the library that \pads{} generates, we include here selected portions of the library generated for the \texttt{entry\_t}
+  declaration from Dibbler data description.}
+\label{figure:library}
+\end{figure*}
 \figref{figure:library} includes selected portions of the generated 
 library for the Dibbler \cd{entry_t} declaration.
 
@@ -450,26 +450,26 @@ the error code of the first detected error, and the location of that error.
 
 The parse function takes a mask, an
 in-memory representation, and a parse descriptor as arguments.  
-The mask allows the user to specify with fine granularity
+The mask allows the user to specify 
 which constraints the parser should check and which portions of the
 in-memory representation it should fill in.  This control allows the
 description-writer to specify all known constraints about the data
 without worrying about the run-time cost of verifying potentially
 expensive constraints for time-critical applications.
-
 Appropriate error-handling can be as important as processing
 error-free data.  The parse descriptor marks which portions of the
 data contain errors and characterizes the detected errors.
 Depending upon the nature of the errors and the desired application,
 programmers can take the appropriate action: halting the program,
 discarding parts of the data, or repairing the errors.
-
 The parser maintains the invariant that if the mask requests
 that a data item be verified and set, and if the parse descriptor
 indicates no error, then the in-memory representation satisfies the
 semantic constraints on the data.
 
-By supporting multiple entry-point parsing, we accommodate larger-scale data.
+Because we generate a parsing function for each type in a \pads{} description,
+we support multiple-entry point parsing, which allows us to 
+accommodate larger-scale data.
 For a small file, programmers can define a \pads{} type that describes
 the entire file and use that type's parsing function to read the whole
 file with one call.  For larger-scale data, programmers can sequence
@@ -492,7 +492,7 @@ Because the \pads{} language is declarative, we can leverage \pads{}
 descriptions to build additional tools besides the core parsing/unparsing
 library.  As a result, \pads{} provides direct support for a number
 of different uses: computing with the data, developing a high-level
-understanding of the data through statistical summaries, converting the data into a more standard form, and querying.  
+understanding of the data through statistical summaries, converting the data into a more standard form, and querying.  In this section, we give a survey of some of these uses.
 
 \subsection{Dibbler}
 \label{subsec:general}
@@ -501,7 +501,7 @@ the core library to clean and normalize Dibbler data
 in \figref{figure:dibbler-filter}. After initializing
 the \pads{} library handle and opening the data source, the code sets
 the mask to check all conditions in the Dibbler description except the
-sorting of the time stamps.  Omitted code reads and writes the header. 
+sorting of the timestamps.  We have omitted from the figure the code to read and write the header. 
 The code then echoes error records to one file and cleaned ones to another.
 The raw data has two different representations of unavailable phone numbers:
 simply omitting the number altogether, which corresponds to the \cd{NONE}
@@ -514,8 +514,8 @@ of the in-memory representation of the data.
 \begin{small}
 \begin{center}
 \input{dibbler_filter}
-\label{figure:dibbler-filter}
 \caption{Code fragment for filtering and normalizing Dibbler data.}
+\label{figure:dibbler-filter}
 \end{center}
 \end{small}
 \end{figure*}
@@ -548,12 +548,13 @@ a program to compute the statistical profile of any \pads{} data source.
 However, many such data sources have a structure we can leverage
 to create an accumulator program from minimal extra information.  In particular,
 ad hoc sources are often simply a sequence of records, perhaps prefixed by a header. Both the web server log and the Dibbler data sources exhibit this pattern.\footnote{
-  Note that data format that can be read in one bulk read fits this pattern.
+  Note that a data format that can be read in one bulk read also fits this pattern.
 } 
 Consequently, given only the names of the optional
 header type and the record type, the \pads{} system will generate 
 an accumulator program.  The accumulator report for the length field
-of the web server data looks as follows when run on an available data set:
+of the web server data looks as follows when run on a data set collected
+from a charitable organization:
 
 \begin{verbatim}
 <top>.length : uint32
@@ -681,6 +682,7 @@ the following is the portion of the generated XSchema for the \cd{eventSeq} type
 The \pads{} compiler generates a \cd{write_xml_2io} function for each type, an example of which is shown in \figref{figure:library}.  Given a specification of the top level type, \pads{} can also automatically generate a conversion program, the output of which conforms to the generated XSchema.
 
 \subsection{Queries}
+Our fourth use-scenario is querying data.
 Given a data source, a natural desire is to ask questions about the data, a desire which led to SQL and its many variants for relational data and XQuery for XML data.  Analysts working with ad hoc data would also like to query their
 data, but the lack of tools generally means they code their queries in an imperative fashion in languages such as \textsc{awk}, \perl{}, or \C{}.
 Indeed, the analyst working with the Dibbler data took this approach.
@@ -709,7 +711,7 @@ How best to optimizing Xqueries over ad hoc data sources is an open research are
 From a \pads{} description, the \pads{} compiler generates \texttt{.h} and
 \texttt{.c} files that together implement the data structures and operations 
 necessary for manipulating the types declared in the source file.  The
-\pads{} run-time library implements all shared functionality, including file operations, regular expression manipulation, memory management, the provided base types, and the generic portions of the Galax data API.  We are currently generating a recursive descent parser that makes it easy to provide multiple entry points.
+\pads{} run-time library implements all shared functionality, including file operations, regular expression manipulation, memory management, the provided base types, and the generic portions of the Galax data API.  \pads{} generates a recursive descent parser that makes it easy to provide multiple entry points.
 
 We used the CKIT library~\cite{ckit} to implement the \pads{} compiler.
 This library greatly facilitated the construction of the compiler as it
@@ -733,10 +735,11 @@ release process.  When the process is finished, hopefully in the next few weeks,
  
 \section{Performance}
 To measure the performance of \pads{}, we compare the parser \pads{} generates for the Dibbler data description against a hand-written \perl{} program, as \perl{} is the language that our user base has typically been using. We compare the performance of the two approaches on two different tasks: vetting Dibbler data in a fashion similar to the filter program of
-\figref{figure:dibbler-filter} and collecting the order number of all records that ever pass through a particular state.  For the first task, we check all the specified properties on the data, including the constraint that the time stamps in the events appear in sorted order.  For the second task, we turn off all error checking and simply output the desired order numbers on standard out.
-We attempted to write the \perl{} programs in as efficient a manner possible, given the specified tasks.  XXX:Bob, describe the approach taken in \perl{}.
+\figref{figure:dibbler-filter} and collecting the order number of all records that ever pass through a particular state.  For the first task, we check all the specified properties on the data, including the constraint that the timestamps in the events appear in sorted order.  For the second task, we turn off all error checking and simply output the desired order numbers on standard out.
+We attempted to write the equivalent \perl{} programs in as efficient a manner possible, given the specified tasks.  For the vetting task, the \perl{} program uses the built-in \cd{split} operator to produce an in-memory list of the pipe-separated fields of the data source.  For the selection task, it uses \perl{}'s regular expression pattern matcher to find lines with the desired state in the 14th position.  It "compiles" this pattern and applies the compiled pattern to each line.  The \perl{} vetter is 323~lines of reasonably well-commented \perl{} code, while the selection program is 69~lines.  
 
-We used a Dibbler data file to exercise the programs.  This 2.2GB file contained 11773843 records.  The minimum number of states for an order was one, the maximum number was 156, and the average was 5.5.  One of these records violated the expected sorting order on event time stamps, and 53 of them contained a syntax error.
+
+We used a Dibbler data file to exercise the programs.  This 2.2GB file contained 11773843 records.  The minimum number of states for an order was one, the maximum number was 156, and the average was 5.5.  One of these records violated the expected sorting order on event timestamps, and 53 of them contained a syntax error.
 (These statistics are courtesy of the generated \pads{} accumulator program, a nice side-benefit of the \pads{} description.)  
 
 We ran each program XXX times on a XXX processor running Irix XXX.   We report the XXX running times.
@@ -748,7 +751,7 @@ We ran each program XXX times on a XXX processor running Irix XXX.   We report t
 
 As
 we have not yet devoted significant time to optimizing the generated parser,
-we expect significant improvements are possible.
+we expect improvements are possible.
 
 \section{Related work}
 There are many tools for describing data formats. For example,
@@ -825,7 +828,7 @@ amount to performing partial evaluation on the currently generated \pads{} libra
 its users to describe ad hoc data sources as they are, capturing
 both layout information and semantic constraints.  The language
 is expressive enough to describe almost all of the ASCII, Cobol, 
-and binary data formats we have seen in practice, while being 
+and binary data formats we have seen in practice at AT\&T, while being 
 concise enough to serve as living documentation for those data sources.  
 
 The 

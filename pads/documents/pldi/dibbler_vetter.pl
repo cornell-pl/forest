@@ -194,8 +194,8 @@ LINE: while (<INF>) {
     printf STDERR "Line $line char $char: field zip_code is not blank or a uint32\n";
     print ERRF $_ . "\n";
     next LINE;
-  } elsif ($a[7] > $MAX_UINT32) {
-    printf STDERR "Line $line char $char: field zip_code is too large, does not fit in a uint32\n";
+  } elsif ($a[7] > $MAX_UINT64) {
+    printf STDERR "Line $line char $char: field zip_code is too large, does not fit in a uint64\n";
     print ERRF $_ . "\n";
     next LINE;
   }
