@@ -1,6 +1,6 @@
 :PACKAGE: ast
 
-.SOURCE : .. ../include ../tests ../gen
+.SOURCE : ../../include ../tests ../gen
 
 if 0
 CCFLAGS = $(CC.DEBUG)
