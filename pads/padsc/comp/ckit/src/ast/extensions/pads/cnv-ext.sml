@@ -119,6 +119,14 @@ structure CnvExt : CNVEXT = struct
       | (PString, PT.String s) => TyProps.mkSize(String.size s,0)
       | (_, _) => TyProps.Variable
 
+  fun isSuffix s2 s1 = 
+      let val l1 = String.size s1
+	  val l2 = String.size s2
+      in
+	  if l1 < l2 then false
+	  else String.extract(s1, l1 - l2, NONE) = s2
+      end
+
   (****************** Conversion Functions ***********************)
 
   exception CnvExt of string
@@ -1788,7 +1796,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				      pred, comment: string option, size,optDecl, arrayDecl,...}:pfieldty) = 
 			  ( if  name = PNames.pd orelse name = PNames.identifier orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
-				orelse String.isSuffix "_pd" name 
+				orelse isSuffix "_pd" name 
 			    then PE.error (structOrUnion^" "^structOrUnionName^" contains field with reserved name '"^name^"'\n")
 			    else ();
 			    let val tyName = lookupTy (pty, repSuf, #repname)
