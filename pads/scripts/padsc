@@ -1,0 +1,14 @@
+#!/bin/tcsh
+#will be filled in by install script
+set gsfarch = `/home/gsf/bin/package`
+set knbarchdir = /home/gruber/knb/arch/$gsfarch
+
+set PADSCDIR = /home/gruber/knb/padsc/
+set SMLBIN = $knbarchdir/bin/smlruntime
+
+# 
+IMAGE=${PADSCDIR}/lib/padsc
+
+
+exec ${SMLBIN} @SMLload=${IMAGE} ${PADSCDIR} $* -I ${PADSCDIR}include \
+< /dev/null
