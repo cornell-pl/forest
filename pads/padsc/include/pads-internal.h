@@ -942,15 +942,20 @@ extern int PDCI_bcd_hilo_digits[];
 extern int PDCI_bcd_hi_digit[];
 extern Puint64 PDCI_10toThe[];
 
-Pint8   PDCI_a2int8  (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint16  PDCI_a2int16 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint32  PDCI_a2int32 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint64  PDCI_a2int64 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Pint8   PDCI_a2int8  (const Pbyte *bytes, Pbyte **ptr_out);
+Pint16  PDCI_a2int16 (const Pbyte *bytes, Pbyte **ptr_out);
+Pint32  PDCI_a2int32 (const Pbyte *bytes, Pbyte **ptr_out);
+Pint64  PDCI_a2int64 (const Pbyte *bytes, Pbyte **ptr_out);
 
-Pint8   PDCI_a2int8_norange  (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint16  PDCI_a2int16_norange (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint32  PDCI_a2int32_norange (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint64  PDCI_a2int64_norange (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Pint8   PDCI_a2int8_norange  (const Pbyte *bytes, Pbyte **ptr_out);
+Pint16  PDCI_a2int16_norange (const Pbyte *bytes, Pbyte **ptr_out);
+Pint32  PDCI_a2int32_norange (const Pbyte *bytes, Pbyte **ptr_out);
+Pint64  PDCI_a2int64_norange (const Pbyte *bytes, Pbyte **ptr_out);
+
+Pint8   PDCI_a2int8_max_bytes  (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
+Pint16  PDCI_a2int16_max_bytes (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
+Pint32  PDCI_a2int32_max_bytes (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
+Pint64  PDCI_a2int64_max_bytes (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
 
 ssize_t PDCI_int8_2a_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint8  i);
 ssize_t PDCI_int16_2a_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint16 i);
@@ -972,15 +977,20 @@ ssize_t PDCI_int16_2a_FW_io(P_t *pads, Sfio_t *io, Pint16 i, size_t width);
 ssize_t PDCI_int32_2a_FW_io(P_t *pads, Sfio_t *io, Pint32 i, size_t width);
 ssize_t PDCI_int64_2a_FW_io(P_t *pads, Sfio_t *io, Pint64 i, size_t width);
 
-Puint8  PDCI_a2uint8 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint16 PDCI_a2uint16(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint32 PDCI_a2uint32(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint64 PDCI_a2uint64(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Puint8  PDCI_a2uint8 (const Pbyte *bytes, Pbyte **ptr_out);
+Puint16 PDCI_a2uint16(const Pbyte *bytes, Pbyte **ptr_out);
+Puint32 PDCI_a2uint32(const Pbyte *bytes, Pbyte **ptr_out);
+Puint64 PDCI_a2uint64(const Pbyte *bytes, Pbyte **ptr_out);
 
-Puint8  PDCI_a2uint8_norange (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint16 PDCI_a2uint16_norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint32 PDCI_a2uint32_norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint64 PDCI_a2uint64_norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Puint8  PDCI_a2uint8_norange (const Pbyte *bytes, Pbyte **ptr_out);
+Puint16 PDCI_a2uint16_norange(const Pbyte *bytes, Pbyte **ptr_out);
+Puint32 PDCI_a2uint32_norange(const Pbyte *bytes, Pbyte **ptr_out);
+Puint64 PDCI_a2uint64_norange(const Pbyte *bytes, Pbyte **ptr_out);
+
+Puint8  PDCI_a2uint8_max_bytes (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
+Puint16 PDCI_a2uint16_max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
+Puint32 PDCI_a2uint32_max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
+Puint64 PDCI_a2uint64_max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
 
 ssize_t PDCI_uint8_2a_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint8  u);
 ssize_t PDCI_uint16_2a_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint16 u);
@@ -1002,15 +1012,15 @@ ssize_t PDCI_uint16_2a_FW_io(P_t *pads, Sfio_t *io, Puint16 u, size_t width);
 ssize_t PDCI_uint32_2a_FW_io(P_t *pads, Sfio_t *io, Puint32 u, size_t width);
 ssize_t PDCI_uint64_2a_FW_io(P_t *pads, Sfio_t *io, Puint64 u, size_t width);
 
-Pint8   PDCI_e2int8  (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint16  PDCI_e2int16 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint32  PDCI_e2int32 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint64  PDCI_e2int64 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Pint8   PDCI_e2int8  (const Pbyte *bytes, Pbyte **ptr_out);
+Pint16  PDCI_e2int16 (const Pbyte *bytes, Pbyte **ptr_out);
+Pint32  PDCI_e2int32 (const Pbyte *bytes, Pbyte **ptr_out);
+Pint64  PDCI_e2int64 (const Pbyte *bytes, Pbyte **ptr_out);
 
-Pint8   PDCI_e2int8_norange  (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint16  PDCI_e2int16_norange (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint32  PDCI_e2int32_norange (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Pint64  PDCI_e2int64_norange (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Pint8   PDCI_e2int8_norange  (const Pbyte *bytes, Pbyte **ptr_out);
+Pint16  PDCI_e2int16_norange (const Pbyte *bytes, Pbyte **ptr_out);
+Pint32  PDCI_e2int32_norange (const Pbyte *bytes, Pbyte **ptr_out);
+Pint64  PDCI_e2int64_norange (const Pbyte *bytes, Pbyte **ptr_out);
 
 ssize_t PDCI_int8_2e_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint8  i);
 ssize_t PDCI_int16_2e_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint16 i);
@@ -1032,15 +1042,15 @@ ssize_t PDCI_int16_2e_FW_io(P_t *pads, Sfio_t *io, Pint16 i, size_t width);
 ssize_t PDCI_int32_2e_FW_io(P_t *pads, Sfio_t *io, Pint32 i, size_t width);
 ssize_t PDCI_int64_2e_FW_io(P_t *pads, Sfio_t *io, Pint64 i, size_t width);
 
-Puint8  PDCI_e2uint8 (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint16 PDCI_e2uint16(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint32 PDCI_e2uint32(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint64 PDCI_e2uint64(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Puint8  PDCI_e2uint8 (const Pbyte *bytes, Pbyte **ptr_out);
+Puint16 PDCI_e2uint16(const Pbyte *bytes, Pbyte **ptr_out);
+Puint32 PDCI_e2uint32(const Pbyte *bytes, Pbyte **ptr_out);
+Puint64 PDCI_e2uint64(const Pbyte *bytes, Pbyte **ptr_out);
 
-Puint8  PDCI_e2uint8_norange (P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint16 PDCI_e2uint16_norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint32 PDCI_e2uint32_norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
-Puint64 PDCI_e2uint64_norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
+Puint8  PDCI_e2uint8_norange (const Pbyte *bytes, Pbyte **ptr_out);
+Puint16 PDCI_e2uint16_norange(const Pbyte *bytes, Pbyte **ptr_out);
+Puint32 PDCI_e2uint32_norange(const Pbyte *bytes, Pbyte **ptr_out);
+Puint64 PDCI_e2uint64_norange(const Pbyte *bytes, Pbyte **ptr_out);
 
 ssize_t PDCI_uint8_2e_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint8  u);
 ssize_t PDCI_uint16_2e_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint16 u);
@@ -1067,6 +1077,12 @@ Pint16  PDCI_b2int16(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
 Pint32  PDCI_b2int32(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
 Pint64  PDCI_b2int64(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
 
+/* Above functions do not have range errors, so we do not need separate _norange versions */
+#define PDCI_b2int8_norange  PDCI_b2int8
+#define PDCI_b2int16_norange PDCI_b2int16
+#define PDCI_b2int32_norange PDCI_b2int32
+#define PDCI_b2int64_norange PDCI_b2int64
+
 ssize_t PDCI_int8_2b_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint8  i);
 ssize_t PDCI_int16_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint16 i);
 ssize_t PDCI_int32_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint32 i);
@@ -1082,6 +1098,12 @@ Puint16  PDCI_b2uint16(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
 Puint32  PDCI_b2uint32(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
 Puint64  PDCI_b2uint64(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out);
 
+/* Above functions do not have range errors, so we do not need separate _norange versions */
+#define PDCI_b2uint8_norange  PDCI_b2uint8
+#define PDCI_b2uint16_norange PDCI_b2uint16
+#define PDCI_b2uint32_norange PDCI_b2uint32
+#define PDCI_b2uint64_norange PDCI_b2uint64
+
 ssize_t PDCI_uint8_2b_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint8  u);
 ssize_t PDCI_uint16_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint16 u);
 ssize_t PDCI_uint32_2b_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint32 u);
@@ -1092,15 +1114,15 @@ ssize_t PDCI_uint16_2b_io(P_t *pads, Sfio_t *io, Puint16 u);
 ssize_t PDCI_uint32_2b_io(P_t *pads, Sfio_t *io, Puint32 u);
 ssize_t PDCI_uint64_2b_io(P_t *pads, Sfio_t *io, Puint64 u);
 
-Pint8   PDCI_ebc2int8 (P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint16  PDCI_ebc2int16(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint32  PDCI_ebc2int32(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint64  PDCI_ebc2int64(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint8   PDCI_ebc2int8 (const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint16  PDCI_ebc2int16(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint32  PDCI_ebc2int32(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint64  PDCI_ebc2int64(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
 
-Pint8   PDCI_ebc2int8_norange (P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint16  PDCI_ebc2int16_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint32  PDCI_ebc2int32_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint64  PDCI_ebc2int64_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint8   PDCI_ebc2int8_norange (const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint16  PDCI_ebc2int16_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint32  PDCI_ebc2int32_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint64  PDCI_ebc2int64_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
 
 ssize_t PDCI_int8_2ebc_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint8  i, Puint32 num_digits);
 ssize_t PDCI_int16_2ebc_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint16 i, Puint32 num_digits);
@@ -1112,15 +1134,15 @@ ssize_t PDCI_int16_2ebc_io(P_t *pads, Sfio_t *io, Pint16 i, Puint32 num_digits);
 ssize_t PDCI_int32_2ebc_io(P_t *pads, Sfio_t *io, Pint32 i, Puint32 num_digits);
 ssize_t PDCI_int64_2ebc_io(P_t *pads, Sfio_t *io, Pint64 i, Puint32 num_digits);
 
-Puint8   PDCI_ebc2uint8 (P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint16  PDCI_ebc2uint16(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint32  PDCI_ebc2uint32(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint64  PDCI_ebc2uint64(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint8   PDCI_ebc2uint8 (const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint16  PDCI_ebc2uint16(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint32  PDCI_ebc2uint32(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint64  PDCI_ebc2uint64(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
 
-Puint8   PDCI_ebc2uint8_norange (P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint16  PDCI_ebc2uint16_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint32  PDCI_ebc2uint32_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint64  PDCI_ebc2uint64_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint8   PDCI_ebc2uint8_norange (const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint16  PDCI_ebc2uint16_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint32  PDCI_ebc2uint32_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint64  PDCI_ebc2uint64_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
 
 ssize_t PDCI_uint8_2ebc_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint8  u, Puint32 num_digits);
 ssize_t PDCI_uint16_2ebc_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint16 u, Puint32 num_digits);
@@ -1132,15 +1154,15 @@ ssize_t PDCI_uint16_2ebc_io(P_t *pads, Sfio_t *io, Puint16 u, Puint32 num_digits
 ssize_t PDCI_uint32_2ebc_io(P_t *pads, Sfio_t *io, Puint32 u, Puint32 num_digits);
 ssize_t PDCI_uint64_2ebc_io(P_t *pads, Sfio_t *io, Puint64 u, Puint32 num_digits);
 
-Pint8   PDCI_bcd2int8 (P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint16  PDCI_bcd2int16(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint32  PDCI_bcd2int32(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint64  PDCI_bcd2int64(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint8   PDCI_bcd2int8 (const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint16  PDCI_bcd2int16(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint32  PDCI_bcd2int32(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint64  PDCI_bcd2int64(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
 
-Pint8   PDCI_bcd2int8_norange (P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint16  PDCI_bcd2int16_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint32  PDCI_bcd2int32_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Pint64  PDCI_bcd2int64_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint8   PDCI_bcd2int8_norange (const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint16  PDCI_bcd2int16_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint32  PDCI_bcd2int32_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Pint64  PDCI_bcd2int64_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
 
 ssize_t PDCI_int8_2bcd_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint8  i, Puint32 num_digits);
 ssize_t PDCI_int16_2bcd_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint16 i, Puint32 num_digits);
@@ -1152,15 +1174,15 @@ ssize_t PDCI_int16_2bcd_io(P_t *pads, Sfio_t *io, Pint16 i, Puint32 num_digits);
 ssize_t PDCI_int32_2bcd_io(P_t *pads, Sfio_t *io, Pint32 i, Puint32 num_digits);
 ssize_t PDCI_int64_2bcd_io(P_t *pads, Sfio_t *io, Pint64 i, Puint32 num_digits);
 
-Puint8   PDCI_bcd2uint8 (P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint16  PDCI_bcd2uint16(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint32  PDCI_bcd2uint32(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint64  PDCI_bcd2uint64(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint8   PDCI_bcd2uint8 (const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint16  PDCI_bcd2uint16(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint32  PDCI_bcd2uint32(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint64  PDCI_bcd2uint64(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
 
-Puint8   PDCI_bcd2uint8_norange (P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint16  PDCI_bcd2uint16_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint32  PDCI_bcd2uint32_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
-Puint64  PDCI_bcd2uint64_norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint8   PDCI_bcd2uint8_norange (const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint16  PDCI_bcd2uint16_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint32  PDCI_bcd2uint32_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
+Puint64  PDCI_bcd2uint64_norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out);
 
 ssize_t PDCI_uint8_2bcd_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint8  u, Puint32 num_digits);
 ssize_t PDCI_uint16_2bcd_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint16 u, Puint32 num_digits);

@@ -216,7 +216,7 @@
  * valid integer, the errCode will be P_INVALID_A_NUM, and the a_int32 write
  * function will output P_MIN_INT32 (the default invalid value for all int32 write
  * functions). If one wanted to correct all user contraint cases to use value -30, and
- * to use P_INT32_MAX for other invalid cases, one could provide an inv_val
+ * to use P_MAX_INT32 for other invalid cases, one could provide an inv_val
  * helper function to do so:
  *
  *   Perror_t my_int32_inv_val(P_t *pads, void *pd_void, void *val_void, void **type_args) {
@@ -225,7 +225,7 @@
  *     if (pd->errCode == P_USER_CONSTRAINT_VIOLATION) {
  *       (*val) = -30;
  *     } else {
- *       (*val) = P_INT32_MAX;
+ *       (*val) = P_MAX_INT32;
  *     }
  *     return P_OK;
  *   }
@@ -666,6 +666,16 @@ Perror_t Pstring_cstr_share(P_t *pads, Pstring *targ, const char *src, size_t le
 Perror_t Pstring_copy(P_t *pads, Pstring *targ, const Pstring *src);
 Perror_t Pstring_cstr_copy(P_t *pads, Pstring *targ, const char *src, size_t len);
 Perror_t Pstring_preserve(P_t *pads, Pstring *s);
+
+Pint8    Pstring2int8  (const Pstring *str);  /* returns P_MIN_INT8 on error */ 
+Pint16   Pstring2int16 (const Pstring *str);  /* returns P_MIN_INT16 on error */ 
+Pint32   Pstring2int32 (const Pstring *str);  /* returns P_MIN_INT32 on error */ 
+Pint64   Pstring2int64 (const Pstring *str);  /* returns P_MIN_INT64 on error */ 
+
+Puint8   Pstring2uint8 (const Pstring *str);  /* returns P_MAX_UINT8 on error */ 
+Puint16  Pstring2uint16(const Pstring *str);  /* returns P_MAX_UINT16 on error */ 
+Puint32  Pstring2uint32(const Pstring *str);  /* returns P_MAX_UINT32 on error */ 
+Puint64  Pstring2uint64(const Pstring *str);  /* returns P_MAX_UINT64 on error */ 
 
 #ifdef FOR_CKIT
 int Pstring_eq(const Pstring *str1, const Pstring *str2);

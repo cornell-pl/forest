@@ -526,9 +526,9 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
     ct = *end;    /* save */
     *end = 0;     /* null */
     if (P_Test_SemCheck(*m)) {
-      tmp = bytes2num_fn(pads, begin, &p1);
+      tmp = bytes2num_fn(begin, &p1);
     } else {
-      tmp = bytes2num_fn ## _norange(pads, begin, &p1);
+      tmp = bytes2num_fn ## _norange(begin, &p1);
     }
     *end = ct;    /* restore */
     if (errno == EINVAL) {
@@ -599,9 +599,9 @@ fn_name(P_t *pads, const Pbase_m *m, size_t width,
     ct = *end;    /* save */
     *end = 0;     /* null */
     if (P_Test_SemCheck(*m)) {
-      tmp = bytes2num_fn(pads, begin, &p1);
+      tmp = bytes2num_fn(begin, &p1);
     } else {
-      tmp = bytes2num_fn ## _norange(pads, begin, &p1);
+      tmp = bytes2num_fn ## _norange(begin, &p1);
     }
     *end = ct;    /* restore */
     if (errno == EINVAL) goto invalid;
@@ -749,11 +749,10 @@ fn_name(P_t *pads, const Pbase_m *m,
 }
 /* END_MACRO */
 
-#define PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#define PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width, bytes2num_args)
 
 Perror_t
-fn_name(P_t *pads, const Pbase_m *m, Puint32 num_digits_or_bytes,
-	Pbase_pd *pd, targ_type *res_out)
+fn_name(P_t *pads, const Pbase_m *m, Puint32 num_digits_or_bytes, Pbase_pd *pd, targ_type *res_out)
 {
   targ_type     tmp;   /* tmp num */
   Pbyte        *begin, *p1, *end;
@@ -767,9 +766,9 @@ fn_name(P_t *pads, const Pbase_m *m, Puint32 num_digits_or_bytes,
   if (end-begin != width) goto width_not_avail;
   if (P_Test_NotIgnore(*m)) {
     if (P_Test_SemCheck(*m)) {
-      tmp = bytes2num_fn(pads, begin, num_digits_or_bytes, &p1);
+      tmp = bytes2num_fn bytes2num_args;
     } else {
-      tmp = bytes2num_fn ## _norange(pads, begin, num_digits_or_bytes, &p1);
+      tmp = bytes2num_fn ## _norange bytes2num_args;
     }
     if (errno) goto invalid_range_dom;
     /* success */
@@ -886,28 +885,28 @@ fn_name(P_t *pads, const Pbase_m *m, Puint32 num_digits_or_bytes, Puint32 d_exp,
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && (P_CONFIG_EBC_INT > 0 || P_CONFIG_EBC_FPOINT > 0)
 #  define PDCI_EBC_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width, (begin, num_digits_or_bytes, &p1))
 #else
 #  define PDCI_EBC_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && (P_CONFIG_BCD_INT > 0 || P_CONFIG_BCD_FPOINT > 0)
 #  define PDCI_BCD_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width, (begin, num_digits_or_bytes, &p1))
 #else
 #  define PDCI_BCD_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && (P_CONFIG_SBL_INT > 0 || P_CONFIG_SBL_FPOINT > 0)
 #  define PDCI_SBL_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width, (pads, begin, num_digits_or_bytes, &p1))
 #else
 #  define PDCI_SBL_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && (P_CONFIG_SBH_INT > 0 || P_CONFIG_SBH_FPOINT > 0)
 #  define PDCI_SBH_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width, (pads, begin, num_digits_or_bytes, &p1))
 #else
 #  define PDCI_SBH_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
 #endif
@@ -2403,9 +2402,9 @@ fpoint_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int 
 
 /* ********************************** END_HEADER ********************************** */
 
-#define PDCI_A2INT_GEN(fn_name, targ_type, int_min, int_max)
+#define PDCI_A2INT_GEN(fn_name, targ_type, int_min, int_max, Pstring2int_fn)
 targ_type
-fn_name(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
+fn_name(const Pbyte *bytes, Pbyte **ptr_out)
 {
   int digit;
   int  neg = 0, range_err = 0;
@@ -2446,7 +2445,74 @@ fn_name(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
+fn_name ## _max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes)
+{
+  int digit;
+  int  neg = 0, range_err = 0;
+  targ_type res = 0;
+  size_t ctr = 0;
+
+  while (PDCI_is_a_space(*bytes)) {
+    bytes++;
+    if (++ctr > max_bytes) { errno = EINVAL; return int_min; }
+  }
+  if (*bytes == '+') {
+    bytes++;
+    if (++ctr > max_bytes) { errno = EINVAL; return int_min; }
+  } else if (*bytes == '-') {
+    bytes++;
+    if (++ctr > max_bytes) { errno = EINVAL; return int_min; }
+    neg = 1;
+  }
+  if (!PDCI_is_a_digit(*bytes)) {
+    (*ptr_out) = (Pbyte*)bytes;
+    errno = EINVAL;
+    return int_min;
+  }
+  while (ctr++ <= max_bytes && ((digit = PDCI_ascii_digit[*bytes]) != -1)) {
+    if (res < int_min ## _DIV10) {
+      range_err = 1;
+    }
+    res = (res << 3) + (res << 1); /* res *= 10 */
+    if (res < int_min + digit) {
+      range_err = 1;
+    }
+    res -= digit;
+    bytes++;
+  }
+  (*ptr_out) = (Pbyte*)bytes;
+  if (range_err) {
+    errno = ERANGE;
+    return neg ? int_min : int_max;
+  }
+  errno = 0;
+  return neg ? res : - res;
+}
+
+targ_type
+Pstring2int_fn(const Pstring *s)
+{
+  Pbyte *bytes, *ptr;
+  size_t max_bytes;
+  targ_type res;
+
+  if (!s) return int_min;
+  ptr = bytes = (Pbyte*)s->str;
+  max_bytes = s->len;
+  res = fn_name ## _max_bytes(bytes, &ptr, max_bytes);
+  if (errno) return res;
+  while (ptr - bytes < max_bytes && PDCI_is_a_space(*ptr)) {
+    ptr++;
+  }
+  if (ptr - bytes != max_bytes) {
+    errno = EINVAL;
+    return int_min;
+  }
+  return res;
+}
+
+targ_type
+fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 {
   int digit;
   int  neg = 0;
@@ -2477,9 +2543,9 @@ fn_name ## _norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
 }
 /* END_MACRO */
 
-#define PDCI_A2UINT_GEN(fn_name, targ_type, int_max)
+#define PDCI_A2UINT_GEN(fn_name, targ_type, int_max, Pstring2int_fn)
 targ_type
-fn_name(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
+fn_name(const Pbyte *bytes, Pbyte **ptr_out)
 {
   int digit;
   int  range_err = 0;
@@ -2520,7 +2586,74 @@ fn_name(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
+fn_name ## _max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes)
+{
+  int digit;
+  int  range_err = 0;
+  targ_type res = 0;
+  size_t ctr = 0;
+
+  while (PDCI_is_a_space(*bytes)) {
+    bytes++;
+    if (++ctr > max_bytes) { errno = EINVAL; return int_max; }
+  }
+  if (*bytes == '+') {
+    bytes++;
+    if (++ctr > max_bytes) { errno = EINVAL; return int_max; }
+  } else if (*bytes == '-') {
+    bytes++;
+    if (++ctr > max_bytes) { errno = EINVAL; return int_max; }
+    range_err = 1;
+  }
+  if (!PDCI_is_a_digit(*bytes)) {
+    (*ptr_out) = (Pbyte*)bytes;
+    errno = EINVAL;
+    return int_max;
+  }
+  while (ctr++ <= max_bytes && ((digit = PDCI_ascii_digit[*bytes]) != -1)) {
+    if (res > int_max ## _DIV10) {
+      range_err = 1;
+    }
+    res = (res << 3) + (res << 1); /* res *= 10 */
+    if (res > int_max - digit) {
+      range_err = 1;
+    }
+    res += digit;
+    bytes++;
+  }
+  (*ptr_out) = (Pbyte*)bytes;
+  if (range_err) {
+    errno = ERANGE;
+    return int_max;
+  }
+  errno = 0;
+  return res;
+}
+
+targ_type
+Pstring2int_fn(const Pstring *s)
+{
+  Pbyte *bytes, *ptr;
+  size_t max_bytes;
+  targ_type res;
+
+  if (!s) return int_max;
+  ptr = bytes = (Pbyte*)s->str;
+  max_bytes = s->len;
+  res = fn_name ## _max_bytes(bytes, &ptr, max_bytes);
+  if (errno) return res;
+  while (ptr - bytes < max_bytes && PDCI_is_a_space(*ptr)) {
+    ptr++;
+  }
+  if (ptr - bytes != max_bytes) {
+    errno = EINVAL;
+    return int_max;
+  }
+  return res;
+}
+
+targ_type
+fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 {
   int digit;
   targ_type res = 0;
@@ -2613,7 +2746,7 @@ rev_fn_name ## _FW_io(P_t *pads, Sfio_t *io, targ_type i, size_t width)
 
 #define PDCI_E2INT_GEN(fn_name, targ_type, int_min, int_max)
 targ_type
-fn_name(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
+fn_name(const Pbyte *bytes, Pbyte **ptr_out)
 {
   int digit;
   int  neg = 0, range_err = 0;
@@ -2654,7 +2787,7 @@ fn_name(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
+fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 {
   int digit;
   int  neg = 0;
@@ -2687,7 +2820,7 @@ fn_name ## _norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
 
 #define PDCI_E2UINT_GEN(fn_name, targ_type, int_max)
 targ_type
-fn_name(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
+fn_name(const Pbyte *bytes, Pbyte **ptr_out)
 {
   int digit;
   int range_err = 0;
@@ -2728,7 +2861,7 @@ fn_name(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _norange(P_t *pads, const Pbyte *bytes, Pbyte **ptr_out)
+fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 {
   int digit;
   targ_type res = 0;
@@ -2913,7 +3046,7 @@ rev_fn_name ## _io(P_t *pads, Sfio_t *io, targ_type i)
 
 #define PDCI_EBC2INT_GEN(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max)
 targ_type
-fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
+fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   Pint32 n = num_digits;
   targ_type res = 0;
@@ -2948,7 +3081,7 @@ fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
+fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   Pint32 n = num_digits;
   targ_type res = 0;
@@ -3054,7 +3187,7 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i_in, Puint32 num_digits)
 
 #define PDCI_EBC2UINT_GEN(fn_name, rev_fn_name, targ_type, int_max, nd_max)
 targ_type
-fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
+fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   Pint32 n = num_digits;
   targ_type res = 0;
@@ -3091,7 +3224,7 @@ fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
+fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   Pint32 n = num_digits;
   targ_type res = 0;
@@ -3176,7 +3309,7 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_digits)
 
 #define PDCI_BCD2INT_GEN(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max)
 targ_type
-fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
+fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   int  digit, two_digits;
   int  neg = 0;
@@ -3229,7 +3362,7 @@ fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
+fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   int  digit, two_digits;
   int  neg = 0;
@@ -3381,7 +3514,7 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i_in, Puint32 num_digits)
 
 #define PDCI_BCD2UINT_GEN(fn_name, rev_fn_name, targ_type, int_max, nd_max)
 targ_type
-fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
+fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   int  digit, two_digits;
   Pint32 num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
@@ -3432,7 +3565,7 @@ fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
+fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   int  digit, two_digits;
   Pint32 num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
@@ -3724,16 +3857,17 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 
-#if P_CONFIG_A_INT_FW > 0 || P_CONFIG_A_INT > 0
-#  define PDCI_A2INT(fn_name, targ_type, int_min, int_max) \
-            PDCI_A2INT_GEN(fn_name, targ_type, int_min, int_max)
-#  define PDCI_A2UINT(fn_name, targ_type, int_max) \
-            PDCI_A2UINT_GEN(fn_name, targ_type, int_max)
+/* We need conversion routines for helpers such as Pstring2int32 */
+#if 1 /* P_CONFIG_A_INT_FW > 0 || P_CONFIG_A_INT > 0 */
+#  define PDCI_A2INT(fn_name, targ_type, int_min, int_max, Pstring2int_fn) \
+            PDCI_A2INT_GEN(fn_name, targ_type, int_min, int_max, Pstring2int_fn)
+#  define PDCI_A2UINT(fn_name, targ_type, int_max, Pstring2int_fn) \
+            PDCI_A2UINT_GEN(fn_name, targ_type, int_max, Pstring2int_fn)
 #  define PDCI_INT2A(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w) \
             PDCI_INT2A_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
 #else
-#  define PDCI_A2INT(fn_name, targ_type, int_min, int_max)
-#  define PDCI_A2UINT(fn_name, targ_type, int_max)
+#  define PDCI_A2INT(fn_name, targ_type, int_min, int_max, Pstring2int_fn)
+#  define PDCI_A2UINT(fn_name, targ_type, int_max, Pstring2int_fn)
 #  define PDCI_INT2A(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
 #endif
 
@@ -4929,17 +5063,17 @@ static Puint64 P_UMAX_FOR_NB[] = {
 #gen_include "pads-misc-macros-gen.h"
 
 
-/* PDCI_A2INT(fn_name, targ_type, int_min, int_max) */
-PDCI_A2INT(PDCI_a2int8,  Pint8,  P_MIN_INT8,  P_MAX_INT8)
-PDCI_A2INT(PDCI_a2int16, Pint16, P_MIN_INT16, P_MAX_INT16)
-PDCI_A2INT(PDCI_a2int32, Pint32, P_MIN_INT32, P_MAX_INT32)
-PDCI_A2INT(PDCI_a2int64, Pint64, P_MIN_INT64, P_MAX_INT64)
+/* PDCI_A2INT(fn_name, targ_type, int_min, int_max, Pstring2int_fn) */
+PDCI_A2INT(PDCI_a2int8,  Pint8,  P_MIN_INT8,  P_MAX_INT8,  Pstring2int8)
+PDCI_A2INT(PDCI_a2int16, Pint16, P_MIN_INT16, P_MAX_INT16, Pstring2int16)
+PDCI_A2INT(PDCI_a2int32, Pint32, P_MIN_INT32, P_MAX_INT32, Pstring2int32)
+PDCI_A2INT(PDCI_a2int64, Pint64, P_MIN_INT64, P_MAX_INT64, Pstring2int64)
 
-/* PDCI_A2UINT(fn_name, targ_type, int_max) */
-PDCI_A2UINT(PDCI_a2uint8,  Puint8,  P_MAX_UINT8)
-PDCI_A2UINT(PDCI_a2uint16, Puint16, P_MAX_UINT16)
-PDCI_A2UINT(PDCI_a2uint32, Puint32, P_MAX_UINT32)
-PDCI_A2UINT(PDCI_a2uint64, Puint64, P_MAX_UINT64)
+/* PDCI_A2UINT(fn_name, targ_type, int_max, Pstring2int_fn) */
+PDCI_A2UINT(PDCI_a2uint8,  Puint8,  P_MAX_UINT8,  Pstring2uint8)
+PDCI_A2UINT(PDCI_a2uint16, Puint16, P_MAX_UINT16, Pstring2uint16)
+PDCI_A2UINT(PDCI_a2uint32, Puint32, P_MAX_UINT32, Pstring2uint32)
+PDCI_A2UINT(PDCI_a2uint64, Puint64, P_MAX_UINT64, Pstring2uint64)
 
 /* PDCI_INT2A(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w) */
 PDCI_INT2A(PDCI_int8_2a,   Pint8,   "%I1d", "%0.*I1d", PDCI_FMT_INT1_WRITE, PDCI_WFMT_INT1_WRITE)
@@ -5047,7 +5181,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.137 2004-01-05 22:30:59 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.138 2004-01-20 23:14:47 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
