@@ -98,6 +98,7 @@
       goto fatal_alloc_err;
     }
     strncpy((s)->str, (b), (wdth));
+    (s)->str[wdth] = 0;
     (s)->len = (wdth);
     /* if ((s)->sharing) { PDC_WARN1(pdc->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(s)); } */
     (s)->sharing = 0;
@@ -1598,7 +1599,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.54 2002-12-02 19:41:56 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.55 2002-12-03 15:18:20 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -2056,8 +2057,8 @@ PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 /* EXTERNAL DATE/TIME READ FUNCTIONS */
 
 PDC_error_t
-PDC_adate_read (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, 
-		PDC_uint32 *res_out)
+PDC_adate_read (PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+		PDC_base_ed *ed, PDC_uint32 *res_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -2069,7 +2070,7 @@ PDC_adate_read (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed,
     ed = &edt;
   }
   PDCI_IODISC_INIT_CHECKS("PDC_adate_read");
-  return PDC_adate_read_internal(pdc, em, ed, res_out);
+  return PDC_adate_read_internal(pdc, em, stopChar, ed, res_out);
 }
 
 /* ================================================================================ */
@@ -2290,6 +2291,7 @@ PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out)
     res->charset[0] = 0;
   } else {
     strncpy(res->charset, regexp+1, last-1);
+    res->charset[last-1] = 0;
   }
   (*regexp_out) = res;
   return PDC_OK;
@@ -2724,6 +2726,9 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
       break;
     case PDC_WIDTH_NOT_AVAILABLE:
       msg = "Specified width not available (EOR/EOF encountered)";
+      break;
+    case PDC_INVALID_DATE:
+      msg = "Invalid date";
       break;
     default:
       sfprintf(pdc->tmp, "*** unknown error code: %d ***", errCode);
@@ -3459,12 +3464,35 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 /* INTERNAL VERSIONS OF EXTERNAL DATE/TIME READ FUNCTIONS */
 
 PDC_error_t
-PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, 
-			PDC_uint32 *res_out)
+PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+			PDC_base_ed *ed, PDC_uint32 *res_out)
 {
+  PDC_string      s;
+  time_t          tm;
+  char*           tmp;
+  size_t          width;
+
   PDC_TRACE(pdc->disc, "PDC_adate_read_internal called");
-  /* TODO */
-  return PDC_ERR;
+  PDC_string_init(pdc, &s);
+  if (PDC_ERR == PDC_astring_read_internal(pdc, em, stopChar, ed, &s)) {
+    PDC_string_cleanup(pdc, &s);
+    return PDC_ERR;
+  }
+  PDCI_STR_PRESERVE(&s); /* this ensures s.str is null terminated */
+  width = s.len;
+  tm = tmdate(s.str, &tmp, NiL);
+  if (!tmp || tmp - s.str != width) {
+    PDC_string_cleanup(pdc, &s);
+    PDCI_READFN_SET_LOC_BE(-width, 0);
+    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_INVALID_DATE);
+  }
+  (*res_out) = tm;
+  PDC_DBG3(pdc->disc, "PDC_adate_read_internal converted string %s => %s (secs = %lu)", PDC_qfmt_str(&s), fmttime("%K", (time_t)(*res_out)), (unsigned long)(*res_out));
+  PDC_string_cleanup(pdc, &s);
+  return PDC_OK;
+
+ fatal_alloc_err:
+  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_adate_read_internal", PDC_ALLOC_ERR);
 }
 
 /* ================================================================================ */
@@ -3543,25 +3571,27 @@ PDC_astring_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
   }
   while (1) {
     if (p1 == end) {
-      if (eor|eof) {
+      if (stopChar && (eor|eof)) {
 	break;
       }
-      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
-	goto fatal_mb_io_err;
+      if (stopChar || !(eor|eof)) {
+	if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+	  goto fatal_mb_io_err;
+	}
+	if (bytes == 0) {
+	  break;
+	}
+	/* longer regexp match may work now */
+	if (matchlen == 0) { /* no limit on match size, back up all the way */
+	  p1 = begin;
+	} else if (matchlen > 1) {
+	  p1 -= (matchlen - 1);
+	}
+	continue;
       }
-      if (bytes == 0) {
-	break;
-      }
-      /* longer regexp match may work now */
-      if (matchlen == 0) { /* no limit on match size, back up all the way */
-	p1 = begin;
-      } else if (matchlen > 1) {
-	p1 -= (matchlen - 1);
-      }
-      continue;
     }
-    /* p1 < end */
-    if (stopChar == (*p1)) {
+    /* (p1 < end) OR (p1 == end, stopChar is 0, eor|eof set) */
+    if (p1 == end || stopChar == (*p1)) {
       /* success */
       PDCI_STR_SET(s_out, begin, p1);
       if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {

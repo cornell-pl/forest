@@ -81,8 +81,8 @@ PDC_error_t PDC_countX_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eo
 PDC_error_t PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 				   PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, 
-				    PDC_uint32 *res_out);
+PDC_error_t PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+				    PDC_base_ed *ed, PDC_uint32 *res_out);
 
 PDC_error_t PDC_astringFW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 					PDC_base_ed *ed, PDC_string *s_out);

@@ -9,12 +9,13 @@ CCFLAGS = $(CC.DEBUG)
 
 myrand :: myrand.c
 
-libtests : mk_ex_data_libtest2 libtest1 libtest2 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1 string_share_test
+libtests : adate_test mk_ex_data_libtest2 libtest1 libtest2 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1 string_share_test
 
 accumtests : accumtest accumtest2 accumtest_s
 
 alltests : libtests accumtests
 
+adate_test       :: adate_test.c        -lpadsc
 libtest1         :: libtest1.c          -lpadsc
 biglibtest1      :: biglibtest1.c       -lpadsc
 libtest2         :: libtest2.c          -lpadsc

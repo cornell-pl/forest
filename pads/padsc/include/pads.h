@@ -228,7 +228,8 @@ typedef enum PDC_errCode_t_e {
   PDC_STR_LIT_NOT_FOUND             =  200,
   PDC_REGEXP_NOT_FOUND              =  210,
   PDC_INVALID_REGEXP                =  220,
-  PDC_WIDTH_NOT_AVAILABLE           =  230
+  PDC_WIDTH_NOT_AVAILABLE           =  230,
+  PDC_INVALID_DATE                  =  240
 } PDC_errCode_t;
 
 /* ================================================================================ */
@@ -640,6 +641,7 @@ PDC_error_t PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 /* PDC_adate_read : attempts to read an ascii date string and convert it to
  *                  seconds since the epoch.  For the different formats supported,
  *                  see the libast tmdate documentation.
+ *                  adate_read takes the same stop character arg as astring_read
  *
  * If the current IO cursor position points to a valid ascii date string:
  *   + if res_out, sets *res_out to the resulting date in seconds since the epoch
@@ -651,8 +653,8 @@ PDC_error_t PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
  *   + returns PDC_ERR
  */
 
-PDC_error_t PDC_adate_read(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, 
-			   PDC_uint32 *res_out);
+PDC_error_t PDC_adate_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+			   PDC_base_ed *ed, PDC_uint32 *res_out);
 
 /* ================================================================================ */
 /* STRING READ FUNCTIONS */
