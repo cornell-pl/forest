@@ -52,19 +52,170 @@
 
 An {\em ad hoc data format} is any nonstandard data format for which
 parsing, querying, analysis or transformation tools are not readily
-available.  There are vast amounts of useful data stored in
-traditional databases and \xml formats, but there is just as much in
-ad hoc formats.  For instance, in the networking and
-telecommunications domain, we find ad hoc formats for web server
+available.  \xml{} is not an ad hoc data format --- there are hundreds
+of tools for reading, querying, and transforming \xml{}.  However,
+network administrators,
+data analysts, computer scientists,
+biologists, chemists, and physicists deal with ad hoc
+data in a miriad of complex formats on a day to day basis.
+This data, which is often unpredictable, poorly documented,
+filled with errors (malicious and benign) and unwieldy,
+poses tremendous challenges to its users and the software
+that manipulates it.  
+Our goal is to alleviate the burden, risk and confusion associated
+with ad hoc data by developing a universal data processing system
+capable of 
+
+\begin{enumerate}
+\item concisely and accurately describing any ad hoc data source at an 
+easy-to-understand, high-level of abstraction, and
+\item automatically generating a suite of highly reliable and
+efficient data processing tools that make understanding, manipulating 
+and transforming ad hoc data an effortless task.
+\end{enumerate}
+
+We have already begun to develop a system called \pads{} (Processing
+Ad hoc Data Sources) that helps to address some of these concerns.
+It includes a high-level, declarative language for describing
+ad hoc data formats and it is possible to generate tools for
+parsing data, printing statistical summaries of data and transforming 
+data into \xml.  We propose to improve and generalize our work 
+in several important ways.
+
+\begin{enumerate}
+\item The current \pads{} system is far from a universal
+data processing platform.  There are many commonly-used
+data formats \pads{} cannot currently handle.  We propose
+a number of innovative ways of extending the \pads{} description language
+and compiler to alleviate these deficiencies.
+\item The current \pads{} tool generation infrastructure is brittle and
+inflexible, and the generated tools have sub-par performance.  We propose
+to improve the tool generation infrastructure by augmenting \pads{}
+with a system of user-defined attributes that can communicate
+semantic information to the tool generator and implementing a mechanism for 
+application-specific customization.
+\item The \pads{} description language has no specification of its 
+meaning or properties.  We propose to define a formal semantics for 
+\pads{}, prove properties of its data processing algorithms and
+use our formal model to re-evaluate, debug and generalize our 
+implementation.  
+\item In addition to our work on using \pads{} to implement applications 
+in the networking and telecommunications domains, part of our mission
+is to have a broad impact on researchers who do data processing
+in the natural sciences, including physics, biology and chemistry.
+We have already developed a partnership with
+Olga Troyanskaya in Princeton's Lewis-Sigler Institute for 
+Integrative Genomics
+and are studying her data processing problems.  We believe that 
+we have a tremendous
+opportunity to make an impact on the productivity of 
+genomics researchers at Princeton
+and elsewhere by supplying them with easy-to-use tools produced by our system.
+\item To extend and support our relationship with the Genomics Institute,
+and to have a broad impact on interdisciplinary education,
+we plan to develop undergraduate research projects in which
+computer science majors use \pads{} to help biologists 
+with their data processing problems.  
+\end{enumerate}
+
+Overall, our research combines novel language design, high-performance
+systems engineering and theoretical analysis.  It will substantially
+increase the overall productivity of data analysts, researchers and
+software architects who deal with ad hoc data regularly, and it will
+improve the security and reliability of the software they produce.
+Finally, our research will also have a broad impact on research in the
+natural sciences, where ad hoc data is pervasive, and on
+interdisciplinary computer science and natural science education.
+
+In the rest of this introduction, we will explain the immense
+challenges and risks posed by ad hoc data in more detail.  We will
+explain how our proposed system as a whole can deal with them.  We
+will then describe some of the features of \pads{} we have already
+implemented.  After this introductory section, we will describe the
+key components of our new research agenda and explain how our research
+will make a broad impact on disciplines well outside the bounds of
+traditional computer science and on interdisciplinary education.
+
+\subsubsection{The Challenges of Ad Hoc Data}
+
+There are vast amounts of useful data stored in
+traditional databases and \xml{} formats, but there is just as much in
+ad hoc formats.  \figref{figure:data-sources} provide some information
+on ad hoc data formats from the networking and telecommunications domain.  
+They include ASCII, binary, and Cobol data formats, with
+both fixed and variable-width records, ranging in size from
+relatively small files through network applications which process over
+a gigabyte per second.  Common errors include undocumented data,
+corrupted data, missing data, and multiple missing-value
+representations.
+
+
+\begin{figure*}
+\begin{center}
+\begin{tabular}{@{}|l|l|l|l|l|}
+\hline
+Name \& Use                           & Representation    & Size           & Common Errors \\ \hline\hline
+Web server logs (CLF):                & Fixed-column      & $\leq$12GB/week & Race conditions on log entry\\ 
+Measuring web workloads               & ASCII records     &                             & Unexpected values\\ \hline
+AT\&T provisioning data (\dibbler{}): & Variable-width    & 2.2GB/week & Unexpected values \\ 
+Monitoring service activation         & ASCII records     &            & Corrupted data feeds \\ \hline
+Call detail: Fraud detection          & Fixed-width       &\appr{}7GB/day &  Undocumented data\\
+                                      & binary records  & & \\ \hline 
+AT\&T billing data (\ningaui{}):      & Cobol  & \appr{}4000 files/day, & Unexpected values\\ 
+Monitoring billing process   &                             & 250-300GB/day    & Corrupted data feeds \\ \hline
+IP backbone data (\darkstar{})  & ASCII  & $\ge$ 15 sources  & Multiple missing-value rep's \\
+Network Monitoring  &        & \appr{}15 GB/day              & Undocumented data \\ \hline
+Netflow                               & Data-dependent      & $\ge$1Gigabit/second  & Missed packets\\ 
+Network Monitoring        & number of   &                       & \\
+                                      & fixed-width && \\
+                                      & binary records && \\ \hline
+
+\end{tabular}
+\caption{Selected ad hoc data sources.}
+\label{figure:data-sources}
+\end{center}
+\end{figure*}
+
+
+In this domain, it is possible to categorize sources of ad hoc data broadly
+as {\em online data} and {\em offline data}.  Online data
+is data sent over the wire that networking software actively
+reads, interprets and reacts to.  For instance, servers continuously
+listen for requests and react promptly to clients.  Intrusion detection 
+systems and performance evaluation systems
+monitor network activity continuously and signal administrators
+when they detect problems or anomalies.  On the other hand, offline data
+does not necessarily have to be processed in real time.  Offline
+data comes in the form of web server
 logs~\cite{wpp}, netflows capturing internet traffic~\cite{netflow},
-log files characterizing IP backbone resource utilization, wire
-formats for legacy telecommunication billing systems, and telephony
+log files characterizing IP backbone resource utilization and telephony
 call detail data~\cite{hancock-toplas}, to name just a few.
 
-%% Need to explain why this is important to CyberTrust here
+While offline and online ad hoc data have many features in common,
+they also have a few differences.  Software dealing with online data
+is amongst the most vulnerable software that we deploy on a network.
+Extraordinary lengths must be taken to ensure attackers, who can
+supply this software with unexpected data and can reach it in
+real-time, cannot exploit errors in processing code to take control of
+servers, performance monitors or intrusion detection software itself.
+A cautionary example of the dangers of online ad hoc data processors
+is the Ethereal system~\cite{ethereal}.  Ethereal is used by network
+administrators for monitoring, analyzing and troubleshooting networks.
+Unfortunately, like most network software, users have found a number
+of vulnerabilities in the software, and moreover many of these
+vulnerabilities are directly related to the mundane components of the
+system that parse ad hoc data as opposed to the parts of the system that
+perform higher-level tasks.  For instance, in March 2004, Stefan Esser
+posted an advisory on 13 different buffer overflow attacks on
+Ethereal~\cite{etherealvulnerabilities}.  Of the 13, 9 attacks
+occurred during parsing.  Therefore, in addition to all the problems
+associated with processing offline data, those who deal with
+online data must be cognizant of the substantial security risks
+inherent in each line of code they write.
 
-Processing ad hoc data can be challenging for a variety of
-reasons. First, ad hoc data typically arrives ``as is'': the analysts
+Processing either online or offline ad hoc data is challenging for 
+a variety of further reasons. 
+First, ad hoc data typically arrives ``as is'': the analysts
 who receive it can only say ``thank you,'' not request a more
 convenient format.  Second, documentation for the format may not exist
 at all, or it may be out of date.  A common phenomenon is for a field
@@ -108,10 +259,10 @@ hard-won understanding of the data ends up embedded in parsing code,
 making long-term maintenance difficult for the original writers and
 sharing the knowledge with others nearly impossible.
 
+\subsubsection{\pads{}:  Taking on the Challenge of Ad Hoc Data}
+
 The \pads{} system makes life easier for data analysts by addressing
-each of these concerns.\footnote{
-  \pads{} is short for Processing Ad hoc Data Sources.
-}
+each of the concerns outlined in the previous section.
 It provides a declarative data description
 language that permits analysts to describe the physical layout of
 their data, \textit{as it is}.  The language also permits analysts to
@@ -121,12 +272,12 @@ be flagged as errors. The intent is to allow analysts to capture in a
 and to provide the analysts with a library of useful routines in exchange. 
 
 
-\pads{} descriptions are concise enough to
-serve as documentation and flexible enough to describe many ASCII, binary,
-Cobol, and mixed data formats.  In addition, useful software
-artifacts can be generated from the descriptions and this feature provides strong
-incentive for keeping the descriptions current, allowing them to serve
-as living documentation.  
+\pads{} descriptions are intended to be concise enough to serve as
+documentation and flexible enough to describe many ASCII, binary,
+Cobol, and mixed data formats.  In addition, useful software tools
+can be generated from the descriptions and this feature provides
+strong incentive for keeping the descriptions current, allowing them
+to serve as living documentation.  
 
 Given a \pads{} description, the \pads{} compiler produces
 customizable \C{} libraries and tools for parsing, manipulating, and
@@ -148,7 +299,17 @@ buffer, or socket; syntax errors related to deviations in the physical
 format; and semantic errors in which the data violates user
 constraints.  Because these checks appear only in generated code, they
 do not clutter the high-level declarative description of the data
-source.  The result of a parse is a pair consisting of a canonical
+source.  Moreover, since tools are generated
+automatically by a compiler rather than written by hand, 
+they are far more likely to be robust
+and far less likely to have dangerous vulnerabilities such as
+buffer overflows.  Moreover, as formats change and are updated,
+one can make a small change in the high-level description
+and the compiler will takes care of the rest.  It is extremely unlikely
+new vulnerabilities or buffer overflows will be added to the code
+base over time as formats change.
+
+The result of a parse is a pair consisting of a canonical
 in-memory representation of the data and a parse descriptor. The parse
 descriptor precisely characterizes both the syntactic and the semantic
 errors that occurred during parsing.  This structure allows analysts
@@ -181,48 +342,34 @@ languages~\cite{gpce02,sigcomm00,erlang} are steps in the right
 direction, but they focus on binary, error-free data and they do not
 provide auxiliary tools.
 
-We propose to extend and improve the current \pads{}\ prototype by engaging
-in three intertwined research efforts:
+% We propose to extend and improve the current \pads{}\ prototype by engaging
+% in three intertwined research efforts:
 
-\begin{enumerate}
-\item Our experience with real-world data has revealed that
-the current \pads{}\ system is unable to process many common
-data formats.  We propose a number of extensions to \pads{} 
-that will greatly improve its expressive power and enable
-us to handle many more important ad hoc formats.
-\item While \pads{}\ can automatically generate tools for providing
-statistical data summaries, querying ad hoc data and generating
-\xml, the tool generation process is extremely brittle, inflexible
-and results in low-performance software.  We propose to redesign
-the automatic tool generation process using a principled methodology
-based upon a novel \pads{}-attribute system that can communicate
-semantic information across tools.  Our new methodology will
-improve the flexibility and reliability of the \pads{} system.
-\item There is no formal description of the \pads{} language
-and no semantics for the compiler or tools.  We propose to
-formalize the language and analyze the semantics of the
-compiler.  Our formal analysis may find bugs or flaws in the
-\pads{} system and will improve our confidence in the implementation.
-\end{enumerate}
+% \begin{enumerate}
+% \item Our experience with real-world data has revealed that
+% the current \pads{}\ system is unable to process many common
+% data formats.  We propose a number of extensions to \pads{} 
+% that will greatly improve its expressive power and enable
+% us to handle many more important ad hoc formats.
+% \item While \pads{}\ can automatically generate tools for providing
+% statistical data summaries, querying ad hoc data and generating
+% \xml, the tool generation process is extremely brittle, inflexible
+% and results in low-performance software.  We propose to redesign
+% the automatic tool generation process using a principled methodology
+% based upon a novel \pads{}-attribute system that can communicate
+% semantic information across tools.  Our new methodology will
+% improve the flexibility and reliability of the \pads{} system.
+% \item There is no formal description of the \pads{} language
+% and no semantics for the compiler or tools.  We propose to
+% formalize the language and analyze the semantics of the
+% compiler.  Our formal analysis may find bugs or flaws in the
+% \pads{} system and will improve our confidence in the implementation.
+% \end{enumerate}
 
-\noindent
-In addition, part of our mission will be to use \pads{} to provide
-data processing tools for researchers in the natural sciences including
-biology, chemistry and physics.  We have already developed a partnership with
-Olga Troyanskaya in Princeton's Lewis-Sigler Institute for Integrative Genomics
-and are studying her data processing problems.  We believe that we have a tremendous
-opportunity to make a broad impact on the productivity of genomics researchers at Princeton
-and elsewhere by supplying them with easy-to-use tools produced by our system.
-To extend and support our relationship with the Genomics Institute,
-we plan to develop interdisciplinary undergraduate research projects
-on tool development.
-
-Overall, our research combines novel language design, high-performance
-systems engineering and theoretical analysis, all aimed at solving
-important data processing problems.  However, before explaining the
-details of our proposed research and its broader impacts, we give a
-brief overview of the sorts of data sources that one can encounters in
-practice and a brief summary of the current \pads{}\ system.
+% \noindent
+% In addition, part of our mission will be to use \pads{} to provide
+% data processing tools for researchers in the natural sciences including
+% biology, chemistry and physics.  
 
 % In building the \pads{} system, we faced challenges on two fronts:
 % designing the data description language and
@@ -232,41 +379,15 @@ practice and a brief summary of the current \pads{}\ system.
 % We also give examples to show how useful they have been at AT\&T.
 
 
-\subsubsection{Ad Hoc Data Sources}
+\subsubsection{The Current \pads{} Language Infrastructure}
 
-\figref{figure:data-sources} summarizes some of the sources we have
-worked with.  They include ASCII, binary, and Cobol data formats, with
-both fixed and variable-width records, ranging in size from
-relatively small files through network applications which process over
-a gigabyte per second.  Common errors include undocumented data,
-corrupted data, missing data, and multiple missing-value
-representations.
-
-\begin{figure*}
-\begin{center}
-\begin{tabular}{@{}|l|l|l|l|l|}
-\hline
-Name \& Use                           & Representation    & Size           & Common Errors \\ \hline\hline
-Web server logs (CLF):                & Fixed-column      & $\leq$12GB/week & Race conditions on log entry\\ 
-Measuring web workloads               & ASCII records     &                             & Unexpected values\\ \hline
-AT\&T provisioning data (\dibbler{}): & Variable-width    & 2.2GB/week & Unexpected values \\ 
-Monitoring service activation         & ASCII records     &            & Corrupted data feeds \\ \hline
-Call detail: Fraud detection          & Fixed-width       &\appr{}7GB/day &  Undocumented data\\
-                                      & binary records  & & \\ \hline 
-AT\&T billing data (\ningaui{}):      & Cobol  & \appr{}4000 files/day, & Unexpected values\\ 
-Monitoring billing process   &                             & 250-300GB/day    & Corrupted data feeds \\ \hline
-IP backbone data (\darkstar{})  & ASCII  & $\ge$ 15 sources  & Multiple missing-value rep's \\
-Network Monitoring  &        & \appr{}15 GB/day              & Undocumented data \\ \hline
-Netflow                               & Data-dependent      & $\ge$1Gigabit/second  & Missed packets\\ 
-Network Monitoring        & number of   &                       & \\
-                                      & fixed-width && \\
-                                      & binary records && \\ \hline
-
-\end{tabular}
-\caption{Selected ad hoc data sources.}
-\label{figure:data-sources}
-\end{center}
-\end{figure*}
+% \figref{figure:data-sources} summarizes some of the sources we have
+% worked with.  They include ASCII, binary, and Cobol data formats, with
+% both fixed and variable-width records, ranging in size from
+% relatively small files through network applications which process over
+% a gigabyte per second.  Common errors include undocumented data,
+% corrupted data, missing data, and multiple missing-value
+% representations.
 
 
 % \subsection{Common Log Format}
@@ -288,7 +409,10 @@ Network Monitoring        & number of   &                       & \\
 % shows a couple of typical records.
 
 
-\paragraph*{Sirius Provisioning Data: A Closer Look.}
+In order to understand further how \pads{} can be used,
+will take a look at an example of ad hoc data:
+a tiny fragment of provisioning data from AT\&T and show
+how the current \pads{} system can be used to describe it.
 In the telecommunications industry, the term \textit{provisioning} refers to the steps necessary to convert an order for phone service into the actual 
 service.  
 To track AT\&T's provisioning process, the \dibbler{} project compiles
@@ -332,9 +456,6 @@ language for describing data formats!
 \end{small}
 \end{figure*}
 
-
-\subsubsection{Current Pads Design}
-
 A \pads{} description specifies the physical layout and 
 semantic properties of an ad hoc data source. 
 The language provides a type-based model:
@@ -342,53 +463,47 @@ basic types describe atomic data such as integers, strings, dates, \etc{}, while
 structured types describe compound data built from simpler pieces.
 \suppressfloats
 
-The \pads{} library provides a collection of broadly useful base types.
-Examples include
-8-bit unsigned integers (\cd{Puint8}),
-32-bit integers (\cd{Pint32}),
-dates (\cd{Pdate}), strings (\cd{Pstring}), and IP addresses (\cd{Pip}).
-Semantic conditions for such base types include checking that the
-resulting number fits in the indicated space, \ie, 16-bits for
-\cd{Pint16}.
-By themselves, these base types do not provide sufficient information to allow parsing
-because they do not specify how the data is coded, \ie{}, in ASCII, EBCDIC, or binary.  
-To resolve this ambiguity, \pads{} uses the \textit{ambient} coding, which the programmer can set.  By default,
-\pads{} uses ASCII.  To specify a particular coding, the description writer can select
-base types which indicate the coding to use.  Examples of such types include
-ASCII 32-bit integers (\cd{Pa_int32}), binary bytes (\cd{Pb_int8}), and
-EBCDIC characters (\cd{Pe_char}).  
-In addition to these types,  users can define their own base types to specify more
-specialized forms of atomic data.  
+The \pads{} library provides a collection of broadly useful base
+types.  Examples include 8-bit unsigned integers (\cd{Puint8}), 32-bit
+integers (\cd{Pint32}), dates (\cd{Pdate}), strings (\cd{Pstring}),
+and IP addresses (\cd{Pip}).  Semantic conditions for such base types
+include checking that the resulting number fits in the indicated
+space, \ie, 16-bits for \cd{Pint16}.  By themselves, these base types
+do not provide sufficient information to allow parsing because they do
+not specify how the data is coded, \ie{}, in ASCII, EBCDIC, or binary.
+To resolve this ambiguity, \pads{} uses the \textit{ambient} coding,
+which the programmer can set.  By default, \pads{} uses ASCII.  To
+specify a particular coding, the description writer can select base
+types which indicate the coding to use.  Examples of such types
+include ASCII 32-bit integers (\cd{Pa_int32}), binary bytes
+(\cd{Pb_int8}), and EBCDIC characters (\cd{Pe_char}).  In addition to
+these types, users can define their own base types to specify more
+specialized forms of atomic data.
 
-To describe more complex data, \pads{} provides a collection of 
-structured types loosely based on \C{}'s type structure.
-In particular, \pads{} has 
-\kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s to describe
-record-like structures, alternatives, and sequences, respectively.
-\kw{Penum}s describe a fixed collection of literals, while \kw{Popt}s 
-provide convenient syntax for optional data.
-Each of these
-types can have an associated predicate that indicates whether a
+To describe more complex data, \pads{} provides a collection of
+structured types loosely based on \C{}'s type structure.  In
+particular, \pads{} has \kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s
+to describe record-like structures, alternatives, and sequences,
+respectively.  \kw{Penum}s describe a fixed collection of literals,
+while \kw{Popt}s provide convenient syntax for optional data.  Each of
+these types can have an associated predicate that indicates whether a
 value calculated from the physical specification is indeed a legal
 value for the type.  For example, a predicate might require that two
-fields of a \kw{Pstruct} are related or that the elements
-of a sequence are in increasing order.  Programmers can specify such
-predicates using \pads{} expressions and functions, 
-written using a \C{}-like syntax.
-Finally, \pads{} \kw{Ptypedef}s can be used
-to define new types that add further constraints to existing types.
+fields of a \kw{Pstruct} are related or that the elements of a
+sequence are in increasing order.  Programmers can specify such
+predicates using \pads{} expressions and functions, written using a
+\C{}-like syntax.  Finally, \pads{} \kw{Ptypedef}s can be used to
+define new types that add further constraints to existing types.
 
-\pads{} types can be parameterized by values.
-This mechanism
-serves both to reduce the number of base types and to permit the
-format and properties of later portions of the data to depend upon earlier portions.
-For example, 
-the base type \cd{Puint16_FW(:3:)} specifies an unsigned two byte integer
-physically represented by exactly three characters, while the type
-\cd{Pstring(:' ':)} 
-describes a string terminated by a space.  Parameters can be 
-used with compound types to specify the size of an array or which
-branch of a union should be taken.
+\pads{} types can be parameterized by values.  This mechanism serves
+both to reduce the number of base types and to permit the format and
+properties of later portions of the data to depend upon earlier
+portions.  For example, the base type \cd{Puint16_FW(:3:)} specifies
+an unsigned two byte integer physically represented by exactly three
+characters, while the type \cd{Pstring(:' ':)} describes a string
+terminated by a space.  Parameters can be used with compound types to
+specify the size of an array or which branch of a union should be
+taken.
 
 
 %\figref{figure:wsl} gives the \pads{} description for CLF web server logs, 
@@ -497,8 +612,9 @@ definition.
 \subsection{Overview of Planned Research}
 \label{ssec:sow}
 
-Our research agenda is divided into three broad subsections.
-First, our experience with real-world data has revealed that
+Our central research agenda is divided into three broad subsections,
+which we will discuss here; our broader impacts will be discussed in the next 
+section.  First, our experience with real-world data has revealed that
 the current \pads{}\ system is unable to process many common
 data formats.  We propose a number of extensions to \pads{} 
 that will greatly improve its expressive power and enable
@@ -516,7 +632,7 @@ properties.  Overall, our research combines novel language
 design, high-performance systems engineering and theoretical analysis,
 all aimed at solving crucial data processing problems.
 
-\subsubsection{Processing More Ad Hoc Data}
+\subsubsection{Towards a Universal Data Description System}
 
 An important part of our research involves investigating as many
 different ad hoc data formats that are used in practice as possible.
@@ -524,7 +640,7 @@ These practical examples highlight deficiencies in our current tools
 and suggest many ways in which they need to be improved.  In this
 section, we discuss a number of the limitations of the current \pads{}\ 
 system and suggest extensions that we believe will be able to rectify
-many of these deficiencies.  In all cases, our ideas for extensions
+these deficiencies.  In all cases, our ideas for extensions
 are driven directly by our experience dealing with real-world data.
 
 \paragraph*{Multi-stage Data Processing}
