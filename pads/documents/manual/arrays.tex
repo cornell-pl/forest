@@ -219,19 +219,22 @@ the array.  Consequently, \texttt{numRead} will always be greater than
 or equal to \texttt{length}.  
 
 
-The following code reads a sequence of up to 4 space-separated, signed
+The following code reads a sequence of up to four space-separated, signed
 integers terminated by the end of the record.  It omits each of the
 negative numbers from the in-memory representation.
 \input{code/array-omit}
 
 \subsection{Optional \Pwhere{} clause}
 If given, a \Pwhere{} clause expresses constraints over the entirety
-of a \Parray{} value.  The special variables that are in scope are
-described in \secref{sec:special-variables}
+of a \Parray{} value. The special variables that are in scope are
+described in \secref{sec:special-variables}.
 If the predicate given in
 the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
 in the associated parse descriptor will indicate a user-constraint
-error has occurred.  
+error has occurred.   Syntactically,  \Pwhere{} clauses for arrays are
+a \cd{\&\&}-separated sequence of clauses.   There are three types of
+clauses: general expressions, \Pparsecheck{} constraints, and
+\Pforall{} 
 
 
 \subsection{\Pparsecheck}
@@ -267,7 +270,7 @@ struct with length followed by parameterized array.
 \label{sec:arrays-parse-descriptors}
 \subsection{Operations}
 init/cleanup rep
-init/cleanup ed
+pinit/cleanup ed
 \subsubsection{read}
   error codes
 \subsubsection{Accumulator functions}

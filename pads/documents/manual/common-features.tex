@@ -323,7 +323,6 @@ types appear in
 \begin{tabular}{rcl}
 \nont{p\_regexp\_lit} & \is{} & ... \\[1ex]
 \nont{p\_regexp\_expression} & \is{} & \Pre{} \nont{expression} \\[1ex]
-\nont{p\_expression} & \is{} & \nont{exprsesion} \alt{}  \Pre{} \nont{expression} \\[1ex]
 \end{tabular}
 
 \textbf{To do:}
@@ -335,6 +334,15 @@ Need to mention extra backslashes.
 Need to describe compiled (type \PDCregexpt{}) vs. strings.
 
 Mention uses:  library discipline, read functions.
+
+\section{Expressions}
+Expression forms include \C{} expressions, regular expressions, and
+the special symbol \Peor{}.
+
+\label{sec:expressions}
+\begin{tabular}{rcl}
+\nont{p\_expression} & \is{} & \nont{expression} \alt{}  \Pre{} \nont{expression} \alt{} \Peor{} \\[1ex]
+\end{tabular}
 
 
 \section{Operations}
