@@ -1729,7 +1729,7 @@ PDC_IO_disc_t *
 PDC_fwrec_make(size_t leader_len, size_t data_len, size_t trailer_len)
 {
   /* XXX_TODO */
-  return 0;
+  return PDC_fwrec_noseek_make(leader_len, data_len, trailer_len);
 }
 
 /* ================================================================================ */
@@ -1739,7 +1739,7 @@ PDC_IO_disc_t *
 PDC_ctrec_make(PDC_byte termChar, size_t block_size_hint)
 {
   /* XXX_TODO */
-  return 0;
+  return PDC_ctrec_noseek_make(termChar, block_size_hint);
 }
 
 /* ================================================================================ */
@@ -1749,7 +1749,7 @@ PDC_IO_disc_t *
 PDC_vlrec_make(int blocked, size_t avg_rlen_hint)
 {
   /* XXX_TODO */
-  return 0;
+  return PDC_vlrec_noseek_make(blocked, avg_rlen_hint);
 }
 
 /* ================================================================================ */
@@ -1931,10 +1931,15 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
   if (readlen > to_reserve) { /* hint from sfio that we could have reserved more -- ignore */
     readlen = to_reserve;
   }
-  if (!new_r_begin) {
-    new_r_begin = sfreserve(data->io, 0, SF_LASTR);
-    if (!new_r_begin) {
-      readlen = 0; 
+  if (!new_r_begin && readlen) {
+    if (!(new_r_begin = sfreserve(data->io, 0, SF_LASTR))) {
+      /*
+       * For some reason if data->io was created from a string, we need to use
+       * the following to get the final bytes (SF_LASTR is not working).
+       */
+      if (!(new_r_begin = sfreserve(data->io, readlen, 0))) {
+	readlen = 0; 
+      }
     }
   }
   data->tail_off = sftell(data->io);
