@@ -14,33 +14,31 @@ endif
 ARCH_N_HEAPOPSYS := $(shell $(PADS_HOME)/scripts/arch-n-heapopsys)
 
 SML = $(PADS_HOME)/binlinks/sml.$(ARCH_N_HEAPOPSYS)
-BUILDEXEC = build-exec-45.sml
 
-SMLVER=$(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
-
-ifeq ($(SMLVER),110)
-BUILDEXEC = build-exec-45.sml
+SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
+SML_MINOR_VER = $(shell echo $(SML_VER) | sed -e 's|.*[.]||')
+ifeq ($(SML_VER),$(SML_MINOR_VER))
+SML_MINOR_VER = 0
 endif
+SML_MINOR_VER_TEST=$(shell test $(SML_MINOR_VER) -gt 39 && echo GT40)
 
-ifeq ($(SMLVER),110.19)
-BUILDEXEC = build-exec.sml
+ifeq ($(SML_MINOR_VER_TEST),GT40)
+BUILD_EXEC = build-exec-45.sml
+else
+BUILD_EXEC = build-exec.sml
 endif
 
 all:	compiler
 
 foo:
-	@(echo SMLVER = $(SMLVER))
-	@(echo BUILDEXEC = $(BUILDEXEC))
+	@(echo SML_VER = $(SML_VER))
+	@(echo SML_MINOR_VER = $(SML_MINOR_VER))
+	@(echo SML_MINOR_VER_TEST = $(SML_MINOR_VER_TEST))
+	@(echo BUILD_EXEC = $(BUILD_EXEC))
 
 compiler:
 	echo Making compiler
-	echo $(SMLVER)
-	$(SML) < build-exec.sml
-
-compiler45:
-	echo Making compiler
-	echo $(SMLVER)
-	$(SML) < build-exec-45.sml
+	$(SML) < $(BUILD_EXEC)
 
 clean:
 	$(RM) $(PADS_HOME)/lib/padsc.$(ARCH_N_OPSYS)
