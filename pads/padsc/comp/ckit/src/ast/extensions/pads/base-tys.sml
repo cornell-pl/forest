@@ -9,7 +9,8 @@ struct
 		      scanname : Atom.atom option,
 		      accname  : Atom.atom option,
 		      diskSize : TyProps.diskSize,
-                      memChar  : TyProps.memChar}
+                      memChar  : TyProps.memChar,
+		      endian   : bool}
 
 
    fun printEntry {padsname : Atom.atom, 
@@ -20,7 +21,8 @@ struct
 		      scanname : Atom.atom option,
 		      accname  : Atom.atom option,
 		      diskSize : TyProps.diskSize,
-		      memChar  : TyProps.memChar} = (
+		      memChar  : TyProps.memChar,
+		      endian   : bool} = (
     (print (String.concat["padsname = ", (Atom.toString padsname), "\n"]));
     (print (String.concat["repname = ", Atom.toString repname, "\n"]));
     (print (String.concat["emname = ", Atom.toString emname, "\n"]));
@@ -29,12 +31,14 @@ struct
     (print (String.concat["scanname = ", case scanname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
     (print (String.concat["accname = ", case accname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
     (print (String.concat["diskSize = ", 
-			  case diskSize of TyProps.Size n => Int.toString n 
+			  case diskSize of TyProps.Size (n,r) => Int.toString n 
                                          | TyProps.Param =>  "P"
                                          | TyProps.Variable => "V", "\n"]));
     (print (String.concat["memory characteristic = ", 
 			  case memChar of TyProps.Static => "S"
-                                        | TyProps.Dynamic =>  "D", 
+                                        | TyProps.Dynamic =>  "D", "\n" ]));
+    (print (String.concat["supports endian recovery = ", 
+			  if endian then "Y" else "N", 
 			  "\n"]));
     print "\n")
 
@@ -42,7 +46,7 @@ struct
        if String.isPrefix "#" s then [] 
        else 
 	   let val fields = String.tokens (fn c => c = #" " orelse c = #"\n") s
-	       val r = if (List.length fields >=9 ) then 
+	       val r = if (List.length fields >=10 ) then 
 	               [{padsname = Atom.atom(List.nth(fields,0)),
 			 repname  = Atom.atom(List.nth(fields,1)),
 			 emname   = Atom.atom(List.nth(fields,2)),
@@ -58,9 +62,10 @@ struct
 				       else if str = "V" then TyProps.Variable
 				       else case Int.fromString str
 					    of NONE => TyProps.Variable
-					    | SOME n => TyProps.Size n
+					    | SOME n => TyProps.Size (n,0)
 				    end,
-			 memChar  = if "S" =  List.nth(fields,8)  then TyProps.Static else TyProps.Dynamic}]
+			 memChar  = if "S" =  List.nth(fields,8) then TyProps.Static else TyProps.Dynamic,
+		         endian   = if "Y" =  List.nth(fields,9) then true else false}]
 		       else []
 	   in
 	       r

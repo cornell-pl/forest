@@ -8,9 +8,11 @@ structure ParseTreeExt =
 		       args : 'exp list, 
 		       name : string, 
 		  isVirtual : bool,
+		   isEndian : bool,
 		       pred : 'exp option, 
 		    comment : string option}
          | Brief of 'exp
+         | EOR
 
         datatype 'exp PSize = 
            SizeInfo of {min : 'exp option, max : 'exp option, maxTight : bool}

@@ -15,6 +15,7 @@ local
 
    (* PADS: added argument to denote source file.  Output from all other sources files
             will be filtered out. *)
+
     fun ppExternalDeclAdornment srcFileOpt ppCoreExternalDecl aidinfo tidtab pps
 	  (Ast.DECL (coreExtDecl,_,loc:SourceMap.location)) = 
 	  (case loc of SourceMap.UNKNOWN => ppCoreExternalDecl aidinfo tidtab pps coreExtDecl

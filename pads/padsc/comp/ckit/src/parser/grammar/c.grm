@@ -180,6 +180,8 @@ fun insertParams params =
 
 fun addComment ((name, expOpt), commentOpt) = (name, expOpt, commentOpt)
 
+
+
 (* PADS*)
 
 abstype 'a seq = SEQ of 'a list
@@ -228,9 +230,9 @@ end
  	| ASSOCIATIVE | TO | KWAND                                         (* D *)     
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
-        | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
+        | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT | EOR (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PFORALL | PIN | PVIRTUAL  (* PADS *)
+	| PSEP | PTERM | PFORALL | PIN | PVIRTUAL | PENDIAN (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -1010,19 +1012,42 @@ pTypedef:
 			        pred = expr})
  )
 
-
-
-pStructField: PVIRTUAL  pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
-                                      (PX.Full {pty = PX.Name pName, name = ID, 
-				                args = pOptActParams,
-						isVirtual = true,
-						pred = pConstraintOpt,
-                                                comment = pCommentOpt})	
-  | pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
+pStructField:                   pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 
 				                args = pOptActParams,
 						isVirtual = false,
-						pred = pConstraintOpt, comment = pCommentOpt})
+				                isEndian  = false,
+						pred = pConstraintOpt,
+                                                comment = pCommentOpt})	
+pStructField: PVIRTUAL          pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
+                                      (PX.Full {pty = PX.Name pName, name = ID, 
+				                args = pOptActParams,
+						isVirtual = true,
+				                isEndian  = false,
+						pred = pConstraintOpt,
+                                                comment = pCommentOpt})	
+pStructField: PENDIAN           pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
+                                      (PX.Full {pty = PX.Name pName, name = ID, 
+				                args = pOptActParams,
+						isVirtual = false,
+				                isEndian  = true,
+						pred = pConstraintOpt,
+                                                comment = pCommentOpt})	
+pStructField: PENDIAN  PVIRTUAL pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
+                                      (PX.Full {pty = PX.Name pName, name = ID, 
+				                args = pOptActParams,
+						isVirtual = true,
+				                isEndian  = true,
+						pred = pConstraintOpt,
+                                                comment = pCommentOpt})	
+pStructField: PVIRTUAL  PENDIAN pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
+                                      (PX.Full {pty = PX.Name pName, name = ID, 
+				                args = pOptActParams,
+						isVirtual = true,
+				                isEndian  = true,
+						pred = pConstraintOpt,
+                                                comment = pCommentOpt})	
+  | EOR  SEMICOLON                    (PX.EOR)
   | expr SEMICOLON                    (PX.Brief expr)
 
 pStructFieldList: 

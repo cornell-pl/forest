@@ -1,7 +1,8 @@
 structure TyProps =
 
 struct
-   datatype diskSize = Size of int | Param | Variable
+   datatype diskSize = Size of int * int  (* number of bytes, number of EOR markers *)
+                      | Param | Variable
    datatype memChar = Static | Dynamic
 
    fun mergeDiskSize f (x,y) = case (x,y) 

@@ -674,12 +674,23 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 		   ;if null ids then () else newline pps
 		   ;kr pps ids
 		   )
-	   in PPL.newline pps
-	     ;ppLoc pps location
-	     ;ppStorageClass pps stClass
-	     ;ppDecl0 aidinfo tidtab pps (SOME (ID id),params,ctype)
-             ;PPL.addStr pps ";"
-	     ;PPL.newline pps
+	       fun isInternal (id : Ast.id) = 
+		   let val name : string = Symbol.name(#name id)
+		       val len = String.size name
+		       val intLen = String.size("_internal")
+		   in
+		       if len < intLen then false
+		       else EQUAL = String.compare(String.substring(name, len - intLen, intLen), "_internal")
+		   end
+	   in 
+	       if not (isInternal id) then
+		  (PPL.newline pps
+		  ;ppLoc pps location
+	          ;ppStorageClass pps stClass
+	          ;ppDecl0 aidinfo tidtab pps (SOME (ID id),params,ctype)
+                  ;PPL.addStr pps ";"
+	          ;PPL.newline pps)
+	       else ()
 	   end 
        | ExternalDeclExt ed => PPAE.ppExternalDeclExt NONE 
 	                       (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed

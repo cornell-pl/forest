@@ -6,6 +6,7 @@ struct
   val PDC_ERROR = PT.Id "PDC_ERROR"
   val PDC_OK    = PT.Id "PDC_OK"
 
+  val PDC_NO_ERROR                       = PT.Id "PDC_NO_ERROR"
   val PDC_CHKPOINT_FAILURE               = PT.Id "PDC_CHKPOINT_FAILURE"
   val PDC_COMMIT_FAILURE                 = PT.Id "PDC_COMMIT_FAILURE"
   val PDC_RESTORE_FAILURE                = PT.Id "PDC_RESTORE_FAILURE"
@@ -35,6 +36,8 @@ struct
   val PDC_TYPEDEF_CONSTRAINT_ERR         = PT.Id "PDC_TYPEDEF_CONSTRAINT_ERR"
 
   val PDC_AT_EOF                         = PT.Id "PDC_AT_EOF"
+  val PDC_AT_EOR                         = PT.Id "PDC_AT_EOR"
+  val PDC_EXTRA_BEFORE_EOR               = PT.Id "PDC_EXTRA_BEFORE_EOR"
   val PDC_RANGE                          = PT.Id "PDC_RANGE"
   val PDC_INVALID_AINT                   = PT.Id "PDC_INVALID_AINT"
   val PDC_INVALID_AUINT                  = PT.Id "PDC_INVALID_AUINT"
@@ -44,6 +47,11 @@ struct
   val EM_CHECK_AND_SET = PT.Id "PDC_CheckAndSet"
   val EM_CHECK         = PT.Id "PDC_Check"
   val EM_IGNORE        = PT.Id "PDC_Ignore"
+
+  val PDC_littleEndian = PT.Id "PDC_littleEndian"
+  val PDC_bigEndian    = PT.Id "PDC_bigEndian"
+
+
 
   val ERROR_INFO  = P.intX 0
   val ERROR_ERROR = P.intX 2
@@ -68,6 +76,10 @@ struct
   val str          = "str"
   val len          = "len"
   val errorf       = "errorf"
+  val d_endian     = "d_endian"
+  val m_endian     = "m_endian"
+  val littleEndian = PDC_littleEndian
+  val bigEndian    = PDC_bigEndian
   val intAct       = "PDC_int32_acc"
   val intCvtPCT    = P.makeTypedefPCT "PDC_int32_map_fn"
   val intAccPCT    = P.makeTypedefPCT "PDC_int32_acc"
@@ -84,6 +96,12 @@ struct
     (* PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc, 
                                   int errCode, /* format, args */ ...) *)
     PT.Expr(PT.Call(PT.Id "PDC_report_err", [ts,disc, ERROR_INFO, loc,errCode,format]@args))
+
+  fun userWarnS(ts:PT.expression, disc:PT.expression, loc:PT.expression,
+                 format:PT.expression, args:PT.expression list) = 
+    (* PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc, 
+                                  int errCode, /* format, args */ ...) *)
+    PT.Expr(PT.Call(PT.Id "PDC_report_err", [ts,disc, ERROR_ERROR, loc,PDC_NO_ERROR,format]@args))
 
   fun userFatalErrorS(ts:PT.expression, disc:PT.expression, loc:PT.expression,
                  errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
@@ -168,6 +186,14 @@ struct
     (* PDC_error_t  PDC_get_loc       (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); *)
     PT.Expr(PT.Call(PT.Id "PDC_get_loc", [ts, locAddr, disc]))
 
+  fun getLocBeginS(ts:PT.expression, locAddr:PT.expression, disc:PT.expression) = 
+    (* PDC_error_t  PDC_get_loc       (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); *)
+    PT.Expr(PT.Call(PT.Id "PDC_get_beginLoc", [ts, locAddr, disc]))
+
+  fun getLocEndS(ts:PT.expression, locAddr:PT.expression, disc:PT.expression) = 
+    (* PDC_error_t  PDC_get_loc       (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); *)
+    PT.Expr(PT.Call(PT.Id "PDC_get_endLoc", [ts, locAddr, disc]))
+
   fun isEofX(ts:PT.expression, disc:PT.expression) = 
     (* int          PDC_IO_is_EOF      (PDC_t* pdc, PDC_disc_t* disc); *)
     PT.Call(PT.Id "PDC_IO_is_EOF", [ts, disc])
@@ -216,6 +242,8 @@ struct
 			      PDC_disc_t* disc); *)
       PT.Call(PT.Id n, [ts,c,s,res,offset,disc])
 
+  fun IONextRecX(ts, namp, disc) = PT.Call(PT.Id "PDC_IO_next_rec", [ts, namp,disc])
+
   fun nstPrefixWhat(outstr, pnst, prefix, what) = 
       PT.Expr(PT.Call(PT.Id "PDC_nst_prefix_what", [outstr, pnst, prefix, what]))
 
@@ -237,4 +265,8 @@ struct
   fun bzeroS (spX, sizeX) = PT.Expr(bzeroX(spX,sizeX))
   fun strLen(s:PT.expression)= PT.Call(PT.Id "strlen", [s])
 
+(* -- Other helper functions *)
+  fun swapBytesS(exp) = PT.Expr(PT.Call(PT.Id "PDC_swap_bytes",
+					[PT.Cast(P.charPtr, exp), PT.Cast(P.uint,P.sizeofEX exp)]))
+  fun end2StringX(endian) = PT.Call(PT.Id "PDC_Endian2String", [endian])
 end
