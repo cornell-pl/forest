@@ -733,6 +733,7 @@ structure CnvExt : CNVEXT = struct
 	      val result    = "result"
 	      val errorf    = "error_fn"
 	      val self      = "self"
+	      val idx       = "idx"
 
 	      (* Some useful functions *)
 		
@@ -1395,7 +1396,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val returnTy =  PL.toolErrPCT
 		      val reportFunED = 
 			  P.mkFunctionEDecl(reportName, formalParams, PT.Compound bodySs, returnTy)
-	  in
+		  in
 		      reportFunED
 		  end
 
@@ -1461,19 +1462,19 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      [toioReportFunED, externalReportFunED]
 		  end
 
-		  (** generation of common PADS-Galax stuff **)
-		  (* auxiliary functions *)
-		  fun apply [] x = []
-	            | apply (f::fs) x = (f x)::(apply fs x)
+	      (** generation of common PADS-Galax stuff **)
+	      (* auxiliary functions *)
+	      fun apply [] x = []
+	        | apply (f::fs) x = (f x)::(apply fs x)
+				    
+	      fun inc x = x + 1
+			  
+	      fun listOf n = List.tabulate (n, inc)
 
-		  fun inc x = x + 1
-
-		  fun listOf n = List.tabulate (n, inc)
-
-		  fun enumerate xs = ListPair.zip(listOf (List.length xs), xs)
-
-                  (* header: common declaration part in foo_children function *) 
-		  fun headerGalaxChildrenFun(nameTy) =
+	      fun enumerate xs = ListPair.zip(listOf (List.length xs), xs)
+				 
+              (* header: common declaration part in foo_children function *) 
+	      fun headerGalaxChildrenFun(nameTy) =
     		      let val nodeRepTy = PL.nodeT
 			  fun varDecl(field, ty) = 
 			      let fun typePref n = P.ptrPCT (P.makeTypedefPCT n)        	
@@ -1484,15 +1485,38 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 @ [P.varDeclS'(P.ptrPCT (P.ptrPCT nodeRepTy), result)]
 		      end
 
-		  (* if: common if-then in foo_children function *)
-		  fun ifGalaxChildren(returnName, number, errorString) =
+              (* header: common declaration part in foo_kth_child function *) 
+	      fun headerGalaxKthChildFun(nameTy) =
+    		      let val nodeRepTy = PL.nodeT
+			  fun varDecl(field, ty) = 
+			      let fun typePref n = P.ptrPCT (P.makeTypedefPCT n)        	
+				  val typeField = typePref ty
+			      in P.varDeclS(typeField, field, PT.Cast(typeField, fieldX(self, field)))
+			      end
+		      in List.map varDecl (ListPair.zip([rep, pd, m], (apply [repSuf, pdSuf, mSuf] nameTy)))
+			 @ [P.varDeclS(P.ptrPCT nodeRepTy, result, P.zero)]
+		      end
+
+	      (* if: common if-then in foo_children function *)
+	      fun ifGalaxChildren(returnName, number, errorString) =
 		      [PT.IfThen(P.notX(P.assignX(returnName,
 			       			  PT.Call(PL.PDCI_NEW_NODE_PTR_LIST, 
 					                  [number]))),		
                                  PT.Expr(PT.Call(PT.Id "failwith", [PT.String ("PADS/Galax " ^ errorString)])))]
 	
-		  (* PDCI_MK_TNODE: common in foo_children function *)
-		  fun macroTNodeCall (returnName, index, structId, valStr, valId, cnvName) = 
+	      (* PDCI_MK_TNODE: common in foo_children function
+	         Takes a *general* result expression.*)
+	      fun macroTNodeCallGeneral (returnExpr, structId, valStr, valId, cnvName) = 
+		       [PT.Expr(PT.Call(PL.PDCI_MK_TNODE,	
+                                       [returnExpr,
+                                        P.addrX(PT.Id(vTableSuf structId)),
+                                        PT.Id self, 
+                                        PT.String valStr, 
+                                        valId,
+                                        PT.String cnvName]))]
+
+	      (* PDCI_MK_TNODE: common in foo_children function *)
+	      fun macroTNodeCall (returnName, index, structId, valStr, valId, cnvName) = 
 		       [PT.Expr(PT.Call(PL.PDCI_MK_TNODE,	
                                        [P.subX(returnName, index), 
                                         P.addrX(PT.Id(vTableSuf structId)),
@@ -1501,50 +1525,60 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                         valId,
                                         PT.String cnvName]))]
 
-		  fun macroTNode (returnName, structId, valStr, valId, cnvName) = 
-		      (P.mkCommentS "parse descriptor child")::
-		       macroTNodeCall(returnName, P.zero, structId, valStr, valId, cnvName)
+	      fun macroTNode (returnName, structId, valStr, valId, cnvName) = 
+		      (P.mkCommentS "parse descriptor child")
+		      :: macroTNodeCall(returnName, P.zero, structId, valStr, valId, cnvName)
 
-		  (* PDCI_MK_NODE: common in foo_children function *)
-		  fun macroNodeCall (returnName, n, tyField, nameField, getField1, getField2, getField3, nameStruct) = 
-	  	      PT.Expr(PT.Call(PL.PDCI_MK_NODE,
-                                      [P.subX(returnName, n), 
-                                       P.addrX(PT.Id(vTableSuf tyField)),
-                                       PT.Id self, 
-                                       nameField, 
-				       getField1, getField2, getField3,
-				       PT.String "element",
-                                       PT.String nameStruct])) 
+	      fun macroTNodeGeneral (returnName, structId, valStr, valId, cnvName) = 
+		      (P.mkCommentS "parse descriptor child")
+		      :: macroTNodeCallGeneral(returnName, structId, valStr, valId, cnvName)
+
+	      (* calls PDCI_MK_NODE. Takes a *general* result expression. *)
+	      fun macroNodeCallGeneral (returnExp, tyField, nameField, getField1, getField2, getField3, nameStruct) = 
+	  	  PT.Expr(PT.Call(PL.PDCI_MK_NODE,
+                                  [returnExp, 
+                                   P.addrX(PT.Id(vTableSuf tyField)),
+                                   PT.Id self, 
+                                   nameField, 
+				   getField1, getField2, getField3,
+				   PT.String "element",
+                                   PT.String nameStruct])) 
+		  
+	      (* calls PDCI_MK_NODE. Assumes that result expression is an array element.
+		 Therefore, takes array name "returnName" and index "n". common in foo_children function *)
+	      fun macroNodeCall (returnName, n, tyField, nameField, getField1, getField2, getField3, nameStruct) = 
+		  macroNodeCallGeneral(P.subX(returnName, n),tyField,nameField,
+				       getField1,getField2,getField3,nameStruct)
 	
-		  (* const PDCI_vtable_t foo_vtable = {foo_children, PDCI_error_typed_value,0}; *)
-                  fun genGalaxVtable(name) =
+	      (* const PDCI_vtable_t foo_vtable = {foo_children, PDCI_error_typed_value,0}; *)
+              fun genGalaxVtable(name) =
 		      PT.ExternalDecl(PT.Declaration({specifiers=[PL.PDCI_vtable_t], qualifiers=[PT.CONST], storage=[]},
                                                      [(PT.VarDecr (vTableSuf name),
 			                               PT.InitList [PT.Id(childrenSuf name),
                                               		            PL.PDCI_error_typed_value,
 	                                         		    P.zero])])) 
 
-		  (** end generation of common PADS-Galax stuff **)		
+	      (** end generation of common PADS-Galax stuff **)		
 
-                  (* const char * name2str(enumPCT which) *)
-                  fun genEnumToStringFun(name, enumPCT, members) = 
-  		      let val cnvName = toStringSuf name
-			  val which = "which"
-			  val paramNames = [which]
-			  val paramTys = [enumPCT]
-			  val formalParams = List.map P.mkParam(ListPair.zip(paramTys, paramNames))
-			  fun cnvOneBranch (ename, dname,  _, _) =
-			      mkCase(PT.Id ename, SOME [PT.Return (PT.String dname)])
-			  val defBranch =
-			      mkDefCase(SOME [PT.Return (PT.String "*unknown_tag*")])
-			  val branches = (List.concat(List.map cnvOneBranch members)) @ defBranch
-			  val bodySs = [PT.Switch ((PT.Id which), PT.Compound branches)]
-			  val returnTy = P.ccharPtr
-			  val cnvFunED = 
-			      P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
-		      in
-			  cnvFunED
-		      end
+              (* const char * name2str(enumPCT which) *)
+              fun genEnumToStringFun(name, enumPCT, members) = 
+  		  let val cnvName = toStringSuf name
+		      val which = "which"
+		      val paramNames = [which]
+		      val paramTys = [enumPCT]
+		      val formalParams = List.map P.mkParam(ListPair.zip(paramTys, paramNames))
+		      fun cnvOneBranch (ename, dname,  _, _) =
+			  mkCase(PT.Id ename, SOME [PT.Return (PT.String dname)])
+		      val defBranch =
+			  mkDefCase(SOME [PT.Return (PT.String "*unknown_tag*")])
+		      val branches = (List.concat(List.map cnvOneBranch members)) @ defBranch
+		      val bodySs = [PT.Switch ((PT.Id which), PT.Compound branches)]
+		      val returnTy = P.ccharPtr
+		      val cnvFunED = 
+			  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+		  in
+		      cnvFunED
+		  end
 
 
 
@@ -3604,7 +3638,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                          val cnvName = childrenSuf name 
                          val paramNames = [self]
                          val paramTys = [P.ptrPCT nodeRepTy]
-                         val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
+                         val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 			 val elemName = lookupTy(baseTy, repSuf, #repname)
 		         val index = "i"
 			 val indexId = PT.Id index
@@ -3623,11 +3657,43 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							     getFieldX(m, element), P.addrX(P.subX(edBufferX, indexId)),
                                      			     P.addrX(P.subX(resBufferX, indexId)), cnvName)),
 				       P.returnS (returnName)]
-                          in   
-                            P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
-                          end
+                     in   
+                         P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+                     end
+
+    	         (* PDCI_node_t* fooArray_kth_child(PDCI_node_t *self) *)
+		 fun genGalaxArrayKthChildFun(name) =		
+		     let val nodeRepTy = PL.nodeT
+                         val returnName = PT.Id result
+			 val returnTy = P.ptrPCT nodeRepTy
+                         val cnvName = kthChildSuf name 
+                         val paramNames = [self,idx]
+(* Add to PL *)          val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT]
+                         val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+			 val elemName = lookupTy(baseTy, repSuf, #repname)
+			 val idxId = PT.Id idx
+			 val cases = 
+			     [(P.zero, 
+			       macroTNodeGeneral(returnName, PL.PDCI_sequenced_pd, pd, PT.Id pd, cnvName)),
+			      (P.intX 1,
+			       P.mkCommentS "length field" ::
+			       macroTNodeCallGeneral(returnName, "Puint32_val", length,
+						     P.addrX(fieldX(rep, length)), cnvName))]
+			 val defCase = 
+			     [P.mkCommentS "now do elements",
+			      P.minusAssignS(idxId, P.intX 2),
+			      PT.IfThen(P.andX(P.gteX(idxId,P.zero), P.ltX(idxId,fieldX(rep, length))),
+					macroNodeCallGeneral(returnName, elemName, PT.String elt,
+							     getFieldX(m, element), P.addrX(P.subX(edBufferX, idxId)),
+                                     			     P.addrX(P.subX(resBufferX, idxId)), cnvName))]
+		         val bodySs = headerGalaxKthChildFun(name) 
+				      @ [P.switchWithDefS(idxId, cases, defCase), P.returnS (returnName)]
+                     in   
+                         P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+                     end
 
 	         val galaxEDs = [genGalaxArrayChildrenFun(name),
+				 genGalaxArrayKthChildFun(name),
 				 genGalaxVtable(name)]
 	         
 

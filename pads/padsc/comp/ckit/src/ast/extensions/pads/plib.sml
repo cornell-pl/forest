@@ -71,6 +71,7 @@ struct
   val PDCI_MK_NODE = PT.Id "PDCI_MK_NODE"	
   val PDCI_NEW_NODE_PTR_LIST = PT.Id "PDCI_NEW_NODE_PTR_LIST"
   val nodeT = P.makeTypedefPCT "PDCI_node_t"
+  val childIndexT = P.makeTypedefPCT "PDCI_childIndex_t"
   val PDCI_structured_pd = "PDCI_structured_pd"
   val PDCI_sequenced_pd = "PDCI_sequenced_pd"
   val PDCI_cstr_val = "PDCI_cstr_val"

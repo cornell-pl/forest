@@ -58,6 +58,7 @@ struct
   fun findEndSuf s = s^"_end"
   fun gTemp base = "tmp"^base
   fun childrenSuf name = name^"_children" 
+  fun kthChildSuf name = name^"_kth_child" 
   fun vTableSuf name = name^"_vtable"
   fun isPref name = "is_"^name
 

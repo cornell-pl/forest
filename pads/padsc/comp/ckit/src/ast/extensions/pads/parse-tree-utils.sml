@@ -140,6 +140,44 @@ struct
     fun varDeclS' (ct,v) = varDeclS(ct,v,PT.EmptyExpr)
     fun mkCommentS s = PT.StatExt(PX.PComment s)
 
+    (* 
+     * Makes a list of statements beginning with a case label and 
+     * ending with a break statement. 
+     *)
+    fun   makeSwitchCase (e,[]) =  [PT.CaseLabel (e, PT.Break)]
+    |     makeSwitchCase (e,[s]) = [PT.CaseLabel (e, s), PT.Break]
+    |     makeSwitchCase (e,s::ss) = ((PT.CaseLabel (e, s))::ss) @ [PT.Break]
+
+    (* 
+     * Makes a list of statements beginning with a default label and 
+     * ending with a break statement. 
+     *)
+    fun   makeDefaultCase nil =  [PT.DefaultLabel PT.Break]
+    |     makeDefaultCase [s] = [PT.DefaultLabel s, PT.Break]
+    |     makeDefaultCase (s::ss) = ((PT.DefaultLabel s)::ss) @ [PT.Break]
+
+    (* Makes a switch statement where each element of cases becomes a case with a break at the end. *)
+    fun switchS (e : PT.expression,
+		 cases : (PT.expression * PT.statement list) list) =
+	let
+	    val caseListList = List.map makeSwitchCase cases
+	    val caseList = List.concat caseListList
+	in
+	    PT.Switch(e,PT.Compound caseList)
+	end
+
+    (* Makes a switch statement where each element of cases becomes a case with a break at the end
+       and d becomes the default case (again with break). *)
+    fun switchWithDefS (e : PT.expression,
+			cases : (PT.expression * PT.statement list) list,
+			d : PT.statement list)  = 
+	let
+	    val caseListList = List.map makeSwitchCase cases
+	    val caseList = List.concat caseListList
+	in
+	    PT.Switch(e, PT.Compound (caseList @ (makeDefaultCase d)))
+	end
+
     fun andBools [] = trueX
       | andBools [bX] = bX
       | andBools (cX::cXs) = andX(cX, andBools cXs)
