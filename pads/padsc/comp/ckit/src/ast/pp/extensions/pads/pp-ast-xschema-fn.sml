@@ -761,7 +761,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; PPL.addStr pps str2)
 
   fun ppXMLList pps eFields = (* list of eFields w/o <seq> *)
-      ( PPL.ppList { pp=ppXMLHeader "<element " "/>"  (* Elem could be a function that choose the actual ppXML... function for each kind of element *)
+      ( PPL.ppList { pp=ppXMLHeader "<element " "/>"  (* Elem could be a function that choose the actual ppXML... 
+							 function for each kind of element *)
                       , sep="\n"
                       , lDelim=""
                       , rDelim=""
@@ -804,6 +805,12 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; PPL.addStr pps "</complexType>"
       ; newline pps)
 
+  fun ppTopElemIfPfile pps (ptyInfo:PTys.pTyInfo,repNameOpt) =
+	if (#isFile ptyInfo) 
+	then ( ppXMLHeader "<element " "/>" pps (repNameOpt,SOME "PFile")
+	     ; newline pps)
+	else ()
+	
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val pdTid = #pdTid ptyInfo
 	  val (pdTyName, pdFields) = structInfo tidtab pdTid
@@ -814,7 +821,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; newline pps
 	; ppXMLComplex pps (repName,((pdTyName,SOME "errDesc") :: repFields)) 
     	; newline pps
-        )
+	; ppTopElemIfPfile pps (ptyInfo,repName)
+	)						
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
     | ppPStruct ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
@@ -825,7 +833,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           val (pdTyName,Fields,uPdFields) = unionPdInfo tidtab pdTid
 	  val tagName = SOME (valOf repName ^ "_tag")  
        in 
-      ( newline pps
+      ((newline pps
       ; ppXMLHeader "<simpleType " "> \n<restriction base=\"xsd:string\"/> \n</simpleType> \n" pps (NONE,tagName) 
       ; newline pps
       ; ppXMLChoice pps (SOME ((valOf pdTyName) ^ "_u"),uPdFields)
@@ -843,8 +851,10 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; newline pps
       ; PPL.addStr pps "</complexType>"
       ; newline pps
-        handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
-      end
+      ; ppTopElemIfPfile pps (ptyInfo,repName)
+      )
+      handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
+    end
     | ppPUnion ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
   fun ppPArray (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
@@ -864,7 +874,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; ppXMLComplex pps (pdTyName,pdFields)  
         ; newline pps
 	; ppXMLComplex pps (repName,Fields)
-    	; newline pps                      
+    	; newline pps
+	; ppTopElemIfPfile pps (ptyInfo,repName)
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
@@ -876,6 +887,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	((newline pps
         ; ppXMLHeader "<simpleType " "> \n <restriction base=\"xsd:int\"/> \n</simpleType>" pps (NONE,repName)
     	; newline pps
+        ; ppTopElemIfPfile pps (ptyInfo,repName)	
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
@@ -888,6 +900,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; ppXMLHeader "<simpleType " ">\n" pps (NONE, Name)
         ; PPL.addStr pps ("<restriction base=\"" ^ (valOf Ty) ^ "\"> \n</simpleType>")
         ; newline pps
+        ; ppTopElemIfPfile pps (ptyInfo,Name)
         )
         handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end
