@@ -2112,7 +2112,7 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
   if (!what) {
     what = int_descr;
   }
-  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0);
   int_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
   rp = (sz < a->max2rep) ? sz : a->max2rep;
@@ -2229,7 +2229,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   if (!what) {
     what = int_descr;
   }
-  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0);
   int_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
   rp = (sz < a->max2rep) ? sz : a->max2rep;
@@ -2558,7 +2558,7 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
   if (!what) {
     what = fpoint_descr;
   }
-  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0);
   fpoint_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
   rp = (sz < a->max2rep) ? sz : a->max2rep;
@@ -2868,7 +2868,7 @@ float_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, cons
   if (!what) {
     what = float_descr;
   }
-  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0);
   float_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
   rp = (sz < a->max2rep) ? sz : a->max2rep;
@@ -5630,7 +5630,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
   if (!what) {
     what = "string";
   }
-  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0);
   sz = dtsize(a->dict);
   len_sz = dtsize(a->len_accum.dict);
   rp = (sz < a->max2rep) ? sz : a->max2rep;
@@ -5726,6 +5726,124 @@ Pstring_acc_report(P_t *pads, const char *prefix, const char *what, int nst, Pst
 }
 
 Perror_t
+Pdate_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst,
+		    Puint32_acc *a)
+{
+  int                i, sz, rp;
+  Puint64            cnt_sum;
+  Pfloat64           bad_pcnt;
+  Pfloat64           cnt_sum_pcnt;
+  Pfloat64           track_pcnt;
+  Pfloat64           elt_pcnt;
+  Void_t            *velt;
+  Puint32_dt_elt_t  *elt;
+  const char        *xtra;
+  const char        *date_fmt;
+
+  P_TRACE(pads->disc, "Pdate_acc_report2io called");
+  date_fmt = (pads->disc->out_formats.date) ?  pads->disc->out_formats.date : "%Y-%m-%d";
+  if (!prefix || *prefix == 0) {
+    prefix = "<top>";
+  }
+  if (!what) {
+    what = "date";
+  }
+  xtra = "\
+    ** N.B. Dates are recorded internally as seconds since the epoch\n\
+       (midnight 1-jan-1970). The following summary is in terms\n\
+       of this internal Puint32 representation";
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, xtra);
+  Puint32_acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    sfprintf(outstr, "(No %s values.)\n", what);
+    return P_OK;
+  }
+  if (sz == 1 && a->bad == 0) {
+    elt = (Puint32_dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %10lu\n",
+	     a->good, what, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
+  if (a->good == 0) {
+    bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
+  } else {
+    bad_pcnt = 100.0 * (a->bad / (Pfloat64)(a->good + a->bad));
+  }
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3I8f\n",
+	   a->good, a->bad, bad_pcnt);
+  if (a->good == 0) {
+    sfprintf(outstr, "(No good %s values.)\n", what);
+    return P_OK;
+  }
+  /* check for 100% identical values */
+  if (sz == 1) {
+    elt = (Puint32_dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "For good %s values, 100 pcnt identical: %10lu\n",
+	     what, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
+  dtdisc(a->dict,   &Puint32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+  sfprintf(outstr, "  Characterizing %s values:  min %llu (%s)", what, a->min, fmttime(date_fmt, (time_t)a->min));
+  sfprintf(outstr, " max %llu (%s)", a->max, fmttime(date_fmt, (time_t)a->max));
+  sfprintf(outstr, " avg %.3I8f\n", a->avg);
+  sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
+  if (sz == a->max2track && a->good > a->tracked) {
+    track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+    sfprintf(outstr, "        (* hit tracking limit, tracked %.3I8f pcnt of all values *) \n", track_pcnt);
+  }
+  for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
+       velt && i < a->max2rep;
+       velt = dtnext(a->dict, velt), i++) {
+    if (cnt_sum_pcnt >= a->pcnt2rep) {
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2I8f pcnt limit on reported values ...]\n",
+	       rp-i, rp, a->pcnt2rep);
+      break;
+    }
+    elt = (Puint32_dt_elt_t*)velt;
+    elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
+    sfprintf(outstr, "        val: %10lu (%s)", elt->key.val, fmttime(date_fmt, (time_t)elt->key.val));
+    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3I8f\n", elt->key.cnt, elt_pcnt);
+    cnt_sum += elt->key.cnt;
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
+  }
+  dtnext(a->dict, 0); /* discard any iterator state */
+  sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
+  sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3I8f\n",
+	   cnt_sum, cnt_sum_pcnt);
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &Puint32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
+Perror_t
+Pdate_acc_report(P_t *pads, const char *prefix, const char *what, int nst, Puint32_acc *a)
+{
+  Sfio_t *tmpstr;
+  Perror_t res;
+  PDCI_DISC_1P_CHECKS("Pdate_acc_report", a);
+  if (!pads->disc->error_fn) {
+    return P_OK;
+  }
+  if (!(tmpstr = sfstropen ())) { 
+    return P_ERR;
+  }
+  res = Pdate_acc_report2io(pads, tmpstr, prefix, what, nst, a);
+  if (res == P_OK) {
+    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+  }
+  sfstrclose (tmpstr);
+  return res;
+}
+
+
+
+Perror_t
 Pchar_acc_init(P_t *pads, Pchar_acc *a)
 {
   return Puint8_acc_init(pads, a);
@@ -5769,7 +5887,7 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   if (!what) {
     what = "char";
   }
-  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0);
   Puint8_acc_fold_psum(a);
   sz = dtsize(a->dict);
   rp = (sz < a->max2rep) ? sz : a->max2rep;
@@ -5884,7 +6002,7 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
   if (!what) {
     what = "nerr";
   }
-  /* XXX_REMOVE PDCI_nst_prefix_what(outstr, &nst, prefix, what); */
+  /* XXX_REMOVE PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); */
 #ifndef NDEBUG
   if (a->bad) {
     P_WARN(pads->disc, "** UNEXPECTED: P_nerr_acc_report called with bad values (all nerr are valid).  Ignoring bad.");
@@ -5986,13 +6104,16 @@ static const char *PDCI_hdr_strings[] = {
 };
 
 void
-PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *what)
+PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *what, const char *xtra)
 {
   if (prefix) {
     if ((*nst) >= 0) {
       int idx = (*nst) % 9;
       sfprintf(outstr, "\n%s", PDCI_hdr_strings[idx]);
       sfprintf(outstr, "%s : %s\n", prefix, what);
+      if (xtra) {
+	sfprintf(outstr, "%s\n", xtra);
+      }
       sfprintf(outstr, "%s", PDCI_hdr_strings[idx]);
       (*nst)++;
     } else {
@@ -6214,7 +6335,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.170 2004-09-20 04:29:22 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.171 2004-09-20 16:33:33 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

@@ -1080,6 +1080,7 @@ Perror_t Puint16_acc_report2io (PDCI_FIRST_ARGS, Puint16_acc *a);
 Perror_t Puint64_acc_report2io (PDCI_FIRST_ARGS, Puint64_acc *a);
 
 Perror_t Pstring_acc_report2io (PDCI_FIRST_ARGS, Pstring_acc *a);
+Perror_t Pdate_acc_report2io   (PDCI_FIRST_ARGS, Puint32_acc *a);
 Perror_t Pchar_acc_report2io   (PDCI_FIRST_ARGS, Pchar_acc *a);
 
 Perror_t Pfpoint8_acc_report2io   (PDCI_FIRST_ARGS, Pfpoint8_acc *a);
@@ -1724,7 +1725,7 @@ int         PDCI_regexp_match(P_t *pads, Pregexp_t *regexp, Pbyte *begin, Pbyte 
  * (unless *nst is -1) it increments the nesting level.
  */
 
-void PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *what);
+void PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *what, const char *xtra);
 
 /* 
  * PDCI_findfirst and PDCI_findlast are like strchr and strrchr except NULL does

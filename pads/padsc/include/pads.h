@@ -5102,6 +5102,9 @@ typedef Puint_acc Puint8_acc;
 typedef Puint_acc Puint16_acc;
 typedef Puint_acc Puint64_acc;
 
+/* date accumulation uses Puint32 */
+typedef Puint_acc Pdate_acc;
+
 typedef struct Pstring_acc_s {
   Dt_t        *dict;
   Puint64      max2track;
@@ -5162,8 +5165,16 @@ Puint64  Puint64_acc_ravg    (P_t *pads, Puint64_acc *a);
 Perror_t Pstring_acc_init    (P_t *pads, Pstring_acc *a);
 Perror_t Pstring_acc_reset   (P_t *pads, Pstring_acc *a);
 Perror_t Pstring_acc_cleanup (P_t *pads, Pstring_acc *a);
-Perror_t Pstring_acc_add     (P_t *pads, Pstring_acc *a, const Pbase_pd *pd, const Pstring* val);
+Perror_t Pstring_acc_add     (P_t *pads, Pstring_acc *a, const Pbase_pd *pd, const Pstring *val);
 Perror_t Pstring_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pstring_acc *a);
+
+#ifdef FOR_CKIT
+Perror_t Pdate_acc_init    (P_t *pads, Pdate_acc *a);
+Perror_t Pdate_acc_reset   (P_t *pads, Pdate_acc *a);
+Perror_t Pdate_acc_cleanup (P_t *pads, Pdate_acc *a);
+Perror_t Pdate_acc_add     (P_t *pads, Pdate_acc *a, const Pbase_pd *pd, Puint32 *val);
+#endif
+Perror_t Pdate_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pdate_acc *a);
 
 /*
  * char_acc is just like uint8_acc except a different report is generated

@@ -908,6 +908,17 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 #endif /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================
+ * ACCUM FUNCTION MACROS
+ */
+
+#if P_CONFIG_ACCUM_FUNCTIONS > 0
+#define Pdate_acc_init(pads, a)         Puint32_acc_init(pads, a)
+#define Pdate_acc_reset(pads, a)        Puint32_acc_reset(pads, a)
+#define Pdate_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
+#define Pdate_acc_add(pads, a, pd, val) Puint32_acc_add(pads, a, pd, val)
+#endif
+
+/* ================================================================================
  * WRITE FUNCTIONS
  */
 

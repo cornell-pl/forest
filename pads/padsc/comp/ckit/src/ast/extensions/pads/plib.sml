@@ -638,7 +638,7 @@ struct
       PT.Call(PT.Id n, [pads,c,s,eatLit,eatStop,panic,res,offset])
 
   fun nstPrefixWhat(outstr, pnst, prefix, what) = 
-      PT.Expr(PT.Call(PT.Id "PDCI_nst_prefix_what", [outstr, pnst, prefix, what]))
+      PT.Expr(PT.Call(PT.Id "PDCI_nst_prefix_what", [outstr, pnst, prefix, what, P.zero]))
 
 
 (* -- regexp routines *)
