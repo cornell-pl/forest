@@ -12,13 +12,16 @@ TARGS += padsc_comp
 
 all:	$(TARGS)
 
+foo:
+	echo TARGS $(TARGS) FOO $(FOO) MAKEFLAGS $(MAKEFLAGS)
+
 padsc_lib:
 	echo Making padsc library
 	@(cd libpadsc; $(MAKE) install)
 
 pglx_lib:
 	echo Making pglx library
-	@(cd libpadsc; $(MAKE) install)
+	@(cd libpglx; $(MAKE) install)
 
 padsc_comp:
 	echo Making padsc compiler
