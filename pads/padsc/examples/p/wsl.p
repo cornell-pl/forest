@@ -1,4 +1,3 @@
-/*@FILE @LEFT wsl.tex */
 typedef int bool;
 #define true 1
 #define false 0
@@ -11,7 +10,6 @@ Parray Phostname{
   Pstring_SE(:"/[. ]/":) [] : Psep('.') && Pterm(Pnosep); 
 };
 
-/*@BEGIN wsl.tex */
 Punion client_t {
   Pip       ip;      /- 135.207.23.32
   Phostname host;    /- www.research.att.com
@@ -50,13 +48,13 @@ Pstruct request_t {
 Ptypedef Puint16_FW(:3:) response_t : 
          response_t x => { 100 <= x && x < 600};
 
-/*@END wsl.tex */
-//Punion length_t {
-//  Pchar unavailable : unavailable == '-';
-//  Puint32 len;    
-// };
+/*
+Punion length_t {
+  Pchar unavailable : unavailable == '-';
+  Puint32 len;    
+};
+*/
 
-/*@BEGIN wsl.tex */
 Precord Pstruct entry_t {
          client_t       client;          
    ' ';  auth_id_t      remoteID;        
@@ -70,4 +68,4 @@ Precord Pstruct entry_t {
 Psource Parray clt_t {
   entry_t [];
 }
-/*@END wsl.tex */
+

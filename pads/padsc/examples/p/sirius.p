@@ -1,6 +1,4 @@
-/*@FILE @LEFT sirius.tex */
-
-/* add these as a Pase base type */
+/* Pzip will eventually be a base type */
 Ptypedef Puint64 pn_t;
 
 Ptypedef Pchar zipSep_t : 
@@ -18,7 +16,7 @@ Punion Pzip{
   Puint64        largeZip;
 };
 
-/*@BEGIN sirius.tex */
+/*@BEGIN dibbler_new.tex */
 Precord Pstruct summary_header_t {
   "0|";
   Puint32       tstamp;
@@ -76,6 +74,6 @@ Psource Pstruct out_sum{
   summary_header_t  h;
   entries_t         es;
 };
-/*@END sirius.tex */
+/*@END dibbler_new.tex */
 
 
