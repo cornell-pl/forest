@@ -174,6 +174,9 @@ PDC_error_t PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
 			      unsigned char* c_out, size_t* offset_out,
 			      PDC_disc_t* disc);
 
+PDC_error_t PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopStr,
+			     size_t* offset_out, PDC_disc_t* disc);
+
 /* ================================================================================ */
 /* READ FUNCTIONS */
 
@@ -189,14 +192,20 @@ PDC_error_t PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
 PDC_error_t PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
 			      PDC_base_ed* ed, unsigned char c, PDC_disc_t* disc);
 
+PDC_error_t PDC_str_lit_read(PDC_t* pdc, PDC_base_em* em,
+			     PDC_base_ed* ed, const PDC_string* s, PDC_disc_t* disc);
+
 /* ================================================================================ */
 /* MISC ROUTINES */
 /*
  *    PDC_fmtChar: produce a ptr to a string that is a pretty-print (escaped) formated for char c
  *        N.B. Resulting string should be printed immediately then not used again, e.g.,
  *        PDC_report_err( ..xxx.. , "Missing separator: %s", PDC_fmtChar(010)); 
+ * 
+ *    PDC_fmtStr: same thing for a PDC_string
  */
 char*       PDC_fmtChar(char c);
+char*       PDC_fmtStr(const PDC_string* s);
 
 /* ================================================================================ */
 /* OUTPUT MACROS  */

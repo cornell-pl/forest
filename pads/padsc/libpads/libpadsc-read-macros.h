@@ -51,28 +51,24 @@
  * If *em is CheckAndSet, create a string copy of the string
  * that goes from begin to end-1.  Must have a no_space label.
  */
-#define PDC_STR_COPY(s_out, l_out, begin, end) \
+#define PDC_STR_COPY(s_out, begin, end) \
   do { \
-    if (*em == PDC_CheckAndSet) { \
+    if (*em == PDC_CheckAndSet && s_out) { \
       size_t wdth = end-begin;  \
-      if (s_out) { \
-        char* buf; \
-        RBuf_t* rbuf; \
-        if (!(rbuf = RMM_new_rbuf(pdc->rmm_nz))) { \
-          goto no_space; \
-        } \
-        if (RBuf_RESERVE(rbuf, buf, char, wdth+1)) { \
-         RMM_free_rbuf(rbuf); \
-         goto no_space; \
-        } \
-        memcpy(buf, begin, wdth); \
-        buf[wdth] = 0; \
-        RMM_free_rbuf_keep_buf(rbuf, 0, 0); \
-        (*(s_out)) = buf; \
+      char* buf; \
+      RBuf_t* rbuf; \
+      if (!(rbuf = RMM_new_rbuf(pdc->rmm_nz))) { \
+        goto no_space; \
       } \
-      if (l_out) { \
-        (*(l_out)) = wdth; \
+      if (RBuf_RESERVE(rbuf, buf, char, wdth+1)) { \
+       RMM_free_rbuf(rbuf); \
+       goto no_space; \
       } \
+      memcpy(buf, begin, wdth); \
+      buf[wdth] = 0; \
+      RMM_free_rbuf_keep_buf(rbuf, 0, 0); \
+      s_out->str = buf; \
+      s_out->len = wdth; \
     } \
   } while (0)
 

@@ -10,7 +10,7 @@
 #include "libpadsc-read-macros.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.15 2002-09-10 21:10:20 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.16 2002-09-16 17:15:38 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -304,7 +304,7 @@ PDC_free_string(PDC_t* pdc, char* str, PDC_disc_t* disc)
 
 PDC_error_t
 PDC_string_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
-		   PDC_base_ed* ed, char** s_out, size_t* l_out, PDC_disc_t* disc)
+		   PDC_base_ed* ed, PDC_string* s_out, PDC_disc_t* disc)
 {
   char            *begin, *end;
   PDC_base_em     emt = PDC_CheckAndSet;
@@ -329,7 +329,7 @@ PDC_string_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
     goto width_not_avail;
   }
   /* success */
-  PDC_STR_COPY(s_out, l_out, begin, end);
+  PDC_STR_COPY(s_out, begin, end);
   return PDC_OK;
 
  width_not_avail:
@@ -341,7 +341,7 @@ PDC_string_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 
 PDC_error_t
 PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
-			 PDC_base_ed* ed, char** s_out, size_t* l_out,  PDC_disc_t* disc)
+			 PDC_base_ed* ed, PDC_string* s_out, PDC_disc_t* disc)
 {
   PDC_stkElt_t*   tp;
   PDC_IO_line_t*  tpline;
@@ -375,7 +375,7 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
   for (ptr = begin; ptr < end; ptr++, tp->cur++) {
     if (*ptr == stopChar) {
       /* success */
-      PDC_STR_COPY(s_out, l_out, begin, ptr);
+      PDC_STR_COPY(s_out, begin, ptr);
       if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
 	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
       }
@@ -397,7 +397,7 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
 /* XXX not supporting multi-line strings yet XXX */
 PDC_error_t
 PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
-			   PDC_base_ed* ed, char** s_out, size_t* l_out,  PDC_disc_t* disc)
+			   PDC_base_ed* ed, PDC_string* s_out, PDC_disc_t* disc)
 {
   int             len;
   char            *begin, *end, *ptr;
@@ -445,7 +445,7 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
   for (ptr = begin; ptr < end; ptr++, tp->cur++) {
     for (ptr2 = stopCharSetBegin; ptr2 < stopCharSetEnd;  ptr2++) {
       if (*ptr == *ptr2) { /* success */
-	PDC_STR_COPY(s_out, l_out, begin, ptr);
+	PDC_STR_COPY(s_out, begin, ptr);
 	if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
 	  return PDC_ERROR; /* XXX internal error -- unrecoverable error */
 	}
@@ -1512,10 +1512,12 @@ PDC_rmm_nozero(PDC_t* pdc, PDC_disc_t* disc)
 
 char*
 PDC_fmtChar(char c) {
-  char buf[2];
-  buf[0] = c;
-  buf[1] = 0;
-  return (fmtesc(buf));
+  return fmtquote(&c, NiL, NiL, 1, 0);
+}
+
+char*
+PDC_fmtStr(const PDC_string* s) {
+  return fmtquote(s->str, NiL, NiL, s->len, 0);
 }
 
 /* ================================================================================ */

@@ -160,6 +160,13 @@ typedef char *                 PDC_string;
 #define PDC_MAX_INT16    32767
 #define PDC_MAX_UINT16   65535
 
+typedef char*                 PDC_string_NT;
+
+typedef struct PDC_string_s {
+  size_t    len;
+  char*     str;
+} PDC_string;
+
 /* ================================================================================ */ 
 /* ERROR REPORTING FUNCTIONS */
 
@@ -222,8 +229,11 @@ PDC_error_t  PDC_IO_fclose     (PDC_t* pdc, PDC_disc_t* disc);
 /* ================================================================================ */
 /* STRING READ FUNCTIONS */
 
-/* related helper function: free string allocated by a string read function */
-PDC_error_t PDC_free_string(PDC_t* pdc, char* str, PDC_disc_t* disc);
+/* Related helper function: PDC_string_freefree frees memory s->str
+ * from a PDC_string *s that has been filled in by one of the string read
+ * calls (with string duplication enabled by the discipline). 
+ */
+PDC_error_t PDC_free_string(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc);
 
 /*
  * The string read functions each has a different way of specifying how much
@@ -258,13 +268,13 @@ PDC_error_t PDC_free_string(PDC_t* pdc, char* str, PDC_disc_t* disc);
  */
 
 PDC_error_t PDC_string_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
-			       PDC_base_ed* ed, char** s_out, size_t* l_out, PDC_disc_t* disc);
+			       PDC_base_ed* ed, PDC_string* s_out, PDC_disc_t* disc);
 
 PDC_error_t PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
-				     PDC_base_ed* ed, char** s_out, size_t* l_out,  PDC_disc_t* disc);
+				     PDC_base_ed* ed, PDC_string* s_out, PDC_disc_t* disc);
 
 PDC_error_t PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
-				       PDC_base_ed* ed, char** s_out, size_t* l_out,  PDC_disc_t* disc);
+				       PDC_base_ed* ed, PDC_string* s_out, PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* ASCII INTEGER READ FUNCTIONS */
