@@ -250,22 +250,6 @@ semantic errors detected during parsing,
 \item a collection of utility functions.
 \end{itemize}
 %
-\setcounter{totalnumber}{1}
-\setcounter{dbltopnumber}{1}
-\renewcommand{\topfraction}{0.85}
-\renewcommand{\textfraction}{0.1}
-\renewcommand{\floatpagefraction}{0.75}
-\begin{figure*}
-\begin{tiny}
-\input{library-functions}
-\caption{Selected portions of the library generated for the \texttt{entry\_t}
-  declaration from \dibbler{} data description.}
-\label{figure:library}
-\end{tiny}
-\end{figure*}
-To give a feeling for the library that \pads{} generates, 
-\figref{figure:library} includes selected portions of the generated 
-library for the \dibbler{} \cd{entry_t} declaration.
 
 The \C{} declarations for the in-memory representation, the mask, 
 and the parse descriptor all share the structure of the \pads{}
@@ -313,13 +297,6 @@ for \kw{Parrays} allows users to choose between reading the entire array
 at once or reading it one element at a time, again to support parsing
 and processing very large data sources.
 
-The ratio of the size of the data description to the size of the generated code gives a rough measure of the leverage of the
-declarative description.  For the 
-68~line \dibbler{} data description, the compiler yields a 1432~\texttt{.h} file
-and a 6471~\texttt{.c} file.  This expansion comes from the extensive error checking in the generated parser and the number of generated utility functions.
-
-We discuss details of the generated library in the following section
-as we describe its uses.
 
 \section{Related work}
 There are many tools for describing data formats. For example,
@@ -376,17 +353,18 @@ library.
 
 
 \section{Getting the \PADS{} system}
-Source code for \PADS{} available for download with
+Source code for \PADS{} is available for download with
 a non-commercial use license from: 
 \begin{centercode}
 http://www.research.att.com/projects/pads
 \end{centercode}
-
+\noindent
 The \PADS{} distribution contains:
 \begin{itemize}
-\item this manual
-\item source code 
+\item This manual.
+\item Source code for the \pads{} system.
 \item README file describing installation procedure.
+\item Example directory with sample \PADS{} description and client programs.
 \end{itemize}
 
 \section{Using the \PADS{} compiler}
@@ -396,12 +374,36 @@ to a C header and implementation file.  The command
 \begin{centercode}
 padsc my.p
 \end{centercode} %
-will produce my.h and my.c
+will produce \texttt{my.h} and \texttt{my.c} files containing the
+generated library.  By default, the compiler will also generate a file
+\texttt{my.xsd} containing the XSchema for the \PADS{} canonical
+embedding of the data source into \xml{}.
 
-Describe switches
+If the directory containing \texttt{my.p} has a subdirectory named
+\texttt{gen}, then the compiler will put the generated files in that
+subdirectory.  Otherwise, it will put them in the same directory as
+the \texttt{my.p} file.
+
+\subsection{Commaind-line switches}
+\begin{verbatim}
+padsc  [-wnone] [-anone] [-x] [-r <string>] [-b <string>] 
+       [-I <string> ...] [-D <string> ...] [-U <string> ...] [-t] [--help]
+-wnone	suppress write function generation
+-anone	suppress accumulator generation
+-x	output Galax Data API
+-r	output directory
+-b	add base type table
+-I	augment include path
+-D	add definition
+-U	remove definition
+-t	trace system commands
+.p	PADS files
+\end{verbatim}
+
 
 picture linking generated library with core library and main.c to
 produce executable.
+\figHeight{pictures/architecture}{Architecture of \pads{} system.}{fig:architecture}{2.25in}
 
 \section{Practical notes}
 \pads{} uses the \texttt{Sfio} library for managing I/O

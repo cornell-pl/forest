@@ -49,5 +49,7 @@ extract: ../extract-code/pads-keywords.sml
 	(cd ../extract-code; $(MAKE))
 
 manual:
-	latex manual.tex; latex manual.tex; bibtex manual; latex manual.tex; dvips manual.dvi -o manual.ps -t letter
 	pdflatex manual.tex
+
+manual-all:
+	pdflatex manual.tex; pdflatex manual.tex; bibtex manual; pdflatex manual.pdf
