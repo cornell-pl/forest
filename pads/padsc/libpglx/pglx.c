@@ -6,8 +6,8 @@
  * AT&T Labs Research
  */
 
-#include "pglx.h"
 #include "pglx-internal.h"
+#include "pglx.h"
 #include <stdio.h>
 
 /* ocaml header files can be found in /usr/common/lib/ocaml/caml */
@@ -180,7 +180,7 @@ PDCI_node_t * ty ## _kth_child_named(PDCI_node_t *self, childIndex idx, const ch
   } \
   return result; \
 } \
- \
+\
 const PDCI_vtable_t ty ## _vtable = {ty ## _children, \
 				     ty ## _kth_child, \
 				     ty ## _kth_child_named, \
@@ -728,6 +728,33 @@ PDCI_node_t * PDCI_sequenced_pd_kth_child(PDCI_node_t *self, childIndex idx)
   return result;
 }
 
+#undef WHATFN
+#define WHATFN "PDCI_sequenced_pd_kth_child_named"
+PDCI_node_t * PDCI_sequenced_pd_kth_child_named(PDCI_node_t *self, childIndex idx, const char* name)
+{
+  PDCI_sequenced_pd  *pd = (PDCI_sequenced_pd *) self->rep;
+  PDCI_node_t        *result = 0;
+  PDCI_childIndex_t count = 0;
+
+  /* the following mk calls raise an exception on alloc error */
+  if (strcmp(name,"pstate") == 0 && count++ == idx){
+    PDCI_MK_TNODE(result, &Puint32_val_vtable, self, "pstate",   &(pd->pstate),     WHATFN);
+  }else if (strcmp(name,"nerr") == 0 && count++ == idx){
+    PDCI_MK_TNODE(result, &Puint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN);
+  }else if (strcmp(name,"errCode") == 0 && count++ == idx){
+    PDCI_MK_TNODE(result, &Puint32_val_vtable, self, "errCode",  &(pd->errCode),    WHATFN);
+  }else if (pd->errCode >= 100) { /* include loc as child */
+    if (strcmp(name,"loc") == 0 && count++ == idx){
+      PDCI_MK_TNODE(result, &Ploc_t_vtable,      self, "loc",      &(pd->loc),        WHATFN);
+    }
+  }else if (strcmp(name,"neerr") == 0 && count++ == idx){
+    PDCI_MK_TNODE(result, &Puint32_val_vtable, self, "neerr",    &(pd->neerr),      WHATFN);
+  }else if (strcmp(name,"firstErr") == 0 && count++ == idx){
+    PDCI_MK_TNODE(result, &Puint32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN);
+  }
+  return result;
+}
+
 /* Used for any node with no children */
 /* 
    We have to accommodate Galax here.  For nodes that contain only typed values, 
@@ -788,7 +815,6 @@ const char * PDCI_not_impl_yet_string_value(PDCI_node_t *node)
 }
 
 /* Helper vtables */
-
 const PDCI_vtable_t
 PDCI_structured_pd_vtable = {PDCI_structured_pd_children, 
 			     PDCI_structured_pd_kth_child, 
@@ -819,6 +845,7 @@ Ploc_t_vtable = {Ploc_t_children,
 
 const PDCI_vtable_t
 Ppos_t_vtable = {Ppos_t_children,
+
 		 Ppos_t_kth_child,
 		 Ppos_t_kth_child_named,
 		 PDCI_error_typed_value,
@@ -830,7 +857,6 @@ PDCI_cstr_val_vtable = {PDCI_no_children,
 			PDCI_no_kth_child_named,
 			PDCI_cstr_typed_value,
 			PDCI_not_impl_yet_string_value};
-
 /* Impl some base type children and typed_value functions and
    associated vtable/val_vtable pairs */
 

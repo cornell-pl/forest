@@ -47,13 +47,24 @@ test_query_%: $(GEN_DIR)/%.c gen/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 include $(PADS_HOME)/mk/rules.mk
+ifdef GALAXCOMPILE
+CDBGFLAGS += -DGALAXCOMPILE
+COPTFLAGS += -DGALAXCOMPILE
+endif
 
-VPATH =  .. ../../p
+ifdef WITH_KTH
+CDBGFLAGS += -DWITH_KTH
+COPTFLAGS += -DWITH_KTH
+endif
 
-XML_TESTS = test_children
+
+INCLUDES += -I ../gen
+VPATH =  .. ../../p ../gen ../../gen
+
+XML_TESTS = test_children 
 ALL_TESTS_O = $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
-ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
+ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D) test_load_myenum
 
 clean:
 	$(RM) -f *~ *.o $(ALL_TESTS)
@@ -72,6 +83,14 @@ test_init: $(GEN_DIR)/format7.c test_init.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 
 test_children_d: $(GEN_DIR)/format7.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
+
+$(GEN_DIR)/myenum.c: enum.c enum.h enum_kth.c enum_kth.h
+
+test_load_myenum: $(GEN_DIR)/myenum.c gen/test_load_myenum.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+test_kth_child_myenum: $(GEN_DIR)/myenum.c gen/test_kth_child_myenum.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
 
  # End of rules that are run from the arch directory
 endif
