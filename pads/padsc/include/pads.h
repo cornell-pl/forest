@@ -112,20 +112,43 @@
  *              of data files.  See io_disc.h for details.
  *              Also see 'Changing The IO Discipline' below.
  *
+ *  Default input formats
+ *  ---------------------
+ *  The in_formats field of the discipline allows one to specify
+ *  default input formats for some special types where there is 
+ *  in no 'obvious' default.  The only current entry is:
+ *
+ *     in_formats.date : a format string specifying the input date format;
+ *                       alternatives can be given using %|, and the
+ *                       special %& format can be used to indicate all
+ *                       formats that can be parsed by the tmdate
+ *                       fuction.  The default,
+ *
+ *                         "%m%d%y%|%m%d%Y%|%&"
+ *
+ *                       allows for dates of these two forms:
+ *                               091172
+ *                               09111972
+ *                       and also allows for all dates that can be parsed
+ *                       by tmdate.
+ *
+ *                   (See the documentation of the libast tmscan and tmdate functions
+ *                    for a description of the legal values for in_formats.date)
+ *
  *  Default output formats
  *  ----------------------
- *  The formats field of the discipline allows one to specify
+ *  The out_formats field of the discipline allows one to specify
  *  default output formats for some special types where there is 
  *  in no 'obvious' default.  The only current entry is:
  *
- *     formats.date : a format string specifying the date format
+ *     out_formats.date : a format string specifying the date format
  *                    some examples:
  *                        "%Y-%m-%d"  (default)
  *                        "%m/%d/%Y"
  *                        "%K" (which is the same as "%Y-%m-%d+%H:%M:%S")
  *
  *                     (See the documentation of the libast fmttime function
- *                       for a description of the legal values for formats.date)
+ *                      for a description of the legal values for formats.date)
  *
  *  Limiting the scope of scanning and pattern matching
  *  ---------------------------------------------------
@@ -279,7 +302,8 @@
  *    d_endian:       PlittleEndian
  *    acc_max2track:  1000
  *    acc_max2rep:    10
- *    formats.date:   "%Y-%m-%d"
+ *    in_formats.date:    "%m%d%y%|%m%d%Y%|%&" 
+ *    out_formats.date:   "%Y-%m-%d"
  *    inv_val_fn_map: NULL -- user must created and install a map
  *                           if inv_val functions need to be provided
  *    fmt_fn_map:     NULL -- user must created and install a map
@@ -564,7 +588,8 @@ const char *P_errCode2str(PerrCode_t code);
  *     P_t*        : runtime library handle (opaque)
  *                      initialized with P_open, passed as first arg to most library routines
  *     Pdisc_t*   : handle to discipline
- *     Pformats_t : default output format descriptions, a component of Pdisc_t
+ *     Pin_formats_t  : default input format descriptions, a component of Pdisc_t
+ *     Pout_formats_t : default output format descriptions, a component of Pdisc_t
  *     Pregexp_t* : handle to a compiled regular expression
  *
  *     Ppos_t     : IO position
@@ -582,7 +607,8 @@ const char *P_errCode2str(PerrCode_t code);
 
 typedef struct P_s              P_t;
 typedef struct Pdisc_s          Pdisc_t;
-typedef struct Pformats_s       Pformats_t;
+typedef struct Pin_formats_s    Pin_formats_t;
+typedef struct Pout_formats_s   Pout_formats_t;
 typedef struct Pregexp_s        Pregexp_t;
 
 typedef struct Ppos_s           Ppos_t;
@@ -1129,9 +1155,13 @@ ssize_t P_invoke_fmt_fn(Pfmt_fn fn, P_t *pads, Pbyte *buf, size_t buf_len, int *
 /* Pfmt_fn_map_t: type of a fmt function map */
 typedef struct Pfmt_fn_map_s Pfmt_fn_map_t;
 
-/* type Pformats_t: */
-struct Pformats_s {
-  const char        *date;          /* must be a non-NULL date format string */
+/* type Pin_formats_t: */
+struct Pin_formats_s {
+  const char        *date;          /* must be a non-NULL date input format string */
+};
+/* type Pout_formats_t: */
+struct Pout_formats_s {
+  const char        *date;          /* must be a non-NULL date output format string */
 };
 
 /* type Pdisc_t: */
@@ -1152,7 +1182,8 @@ struct Pdisc_s {
   Puint64             acc_max2track;  /* default maximum distinct values for accumulators to track */
   Puint64             acc_max2rep;    /* default maximum number of tracked values to describe in detail in report */
   Pfloat64            acc_pcnt2rep;   /* default maximum percent of values to describe in detail in report */
-  Pformats_t          formats;        /* default output formats */
+  Pin_formats_t       in_formats;     /* default input formats */
+  Pout_formats_t      out_formats;    /* default output formats */
   Pinv_val_fn_map_t  *inv_val_fn_map; /* map types to inv_val_fn for write functions */
   Pfmt_fn_map_t      *fmt_fn_map;     /* map types to fmt functions */
   Pio_disc_t         *io_disc;        /* sub-discipline for controlling IO */
@@ -2045,7 +2076,7 @@ Perror_t Pstring_CSE_read  (P_t *pads, const Pbase_m *m,
  * the extent of the date field, which occurs as a 'string' in the input.  Once the
  * string is read, it is converted to a Puint32 representing the date in
  * seconds since the epoch.  For the different date formats that are supported,
- * see the libast tmdate documentation.
+ * see the discussion of disc->in_formats.date above.
  *
  * If the current IO cursor position points to a valid date string:
  *   + Sets (*res_out) to the resulting date in seconds since the epoch

@@ -4,7 +4,7 @@
 //#define MASK_MOD   P_Dont_Write(m.header.c); P_Do_WriteVoid(m.header.c); P_Dont_Write(m.header.ts); P_Do_WriteVoid(m.header.ts);
 //#define MASK_MOD   P_Dont_Write(m.header.compoundLevel);
 
-#define DATE_FMT "%K"
+#define DATE_OUT_FMT "%K"
 
 #define WSPACE_OK 1
 #define PADS_TY(suf) threedates ## suf

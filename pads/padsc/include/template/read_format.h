@@ -69,8 +69,11 @@ int main(int argc, char** argv) {
 #ifdef COPY_STRINGS
   my_disc.copy_strings = 1;
 #endif
-#ifdef DATE_FMT
-  my_disc.formats.date = DATE_FMT;
+#ifdef DATE_IN_FMT
+  my_disc.in_formats.date = DATE_IN_FMT;
+#endif
+#ifdef DATE_OUT_FMT
+  my_disc.out_formats.date = DATE_OUT_FMT;
 #endif
 
 #ifdef IO_DISC_MK

@@ -74,10 +74,15 @@ void PDCI_DISC_INIT_CHECKS_RET_0(char * whatfn);
 void PDCI_DISC_INIT_CHECKS_RET_VOID(char * whatfn);
 void PDCI_DISC_INIT_CHECKS_RET_SSIZE(char * whatfn);
 
-void PDCI_DATE_FMT_CHECK(char * whatfn);
-void PDCI_DATE_FMT_CHECK_RET_0(char * whatfn);
-void PDCI_DATE_FMT_CHECK_RET_VOID(char * whatfn);
-void PDCI_DATE_FMT_CHECK_RET_SSIZE(char * whatfn);
+void PDCI_DATE_IN_FMT_CHECK(char * whatfn);
+void PDCI_DATE_IN_FMT_CHECK_RET_0(char * whatfn);
+void PDCI_DATE_IN_FMT_CHECK_RET_VOID(char * whatfn);
+void PDCI_DATE_IN_FMT_CHECK_RET_SSIZE(char * whatfn);
+
+void PDCI_DATE_OUT_FMT_CHECK(char * whatfn);
+void PDCI_DATE_OUT_FMT_CHECK_RET_0(char * whatfn);
+void PDCI_DATE_OUT_FMT_CHECK_RET_VOID(char * whatfn);
+void PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(char * whatfn);
 
 void PDCI_IODISC_INIT_CHECKS(char * whatfn);
 void PDCI_IODISC_INIT_CHECKS_RET_0(char * whatfn);
@@ -252,25 +257,46 @@ void PDCI_FMT2IO_USE_FMT2BUF_FN(const char *whatfn, ssize_t fmt2buf_call);
 #define PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn) \
      PDCI_DISC_INIT_CHECKS_RET(whatfn, return -1)
 
-#define PDCI_DATE_FMT_CHECK_RET(whatfn, ret) \
+#define PDCI_DATE_IN_FMT_CHECK_RET(whatfn, ret) \
   do { \
-    if (!pads->disc->formats.date)  { \
-      P_WARN1(pads->disc, "%s: null pads->disc->formats.date", whatfn); \
+    if (!pads->disc->in_formats.date)  { \
+      P_WARN1(pads->disc, "%s: null pads->disc->in_formats.date", whatfn); \
       ret; \
     } \
   } while (0)
 
-#define PDCI_DATE_FMT_CHECK(whatfn) \
-     PDCI_DATE_FMT_CHECK_RET(whatfn, return P_ERR)
+#define PDCI_DATE_IN_FMT_CHECK(whatfn) \
+     PDCI_DATE_IN_FMT_CHECK_RET(whatfn, return P_ERR)
 
-#define PDCI_DATE_FMT_CHECK_RET_0(whatfn) \
-     PDCI_DATE_FMT_CHECK_RET(whatfn, return 0)
+#define PDCI_DATE_IN_FMT_CHECK_RET_0(whatfn) \
+     PDCI_DATE_IN_FMT_CHECK_RET(whatfn, return 0)
 
-#define PDCI_DATE_FMT_CHECK_RET_VOID(whatfn) \
-     PDCI_DATE_FMT_CHECK_RET(whatfn, return)
+#define PDCI_DATE_IN_FMT_CHECK_RET_VOID(whatfn) \
+     PDCI_DATE_IN_FMT_CHECK_RET(whatfn, return)
 
-#define PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn) \
-     PDCI_DATE_FMT_CHECK_RET(whatfn, return -1)
+#define PDCI_DATE_IN_FMT_CHECK_RET_SSIZE(whatfn) \
+     PDCI_DATE_IN_FMT_CHECK_RET(whatfn, return -1)
+
+#define PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, ret) \
+  do { \
+    if (!pads->disc->out_formats.date)  { \
+      P_WARN1(pads->disc, "%s: null pads->disc->out_formats.date", whatfn); \
+      ret; \
+    } \
+  } while (0)
+
+#define PDCI_DATE_OUT_FMT_CHECK(whatfn) \
+     PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, return P_ERR)
+
+#define PDCI_DATE_OUT_FMT_CHECK_RET_0(whatfn) \
+     PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, return 0)
+
+#define PDCI_DATE_OUT_FMT_CHECK_RET_VOID(whatfn) \
+     PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, return)
+
+#define PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn) \
+     PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, return -1)
+
 
 #define PDCI_IODISC_INIT_CHECKS_RET(whatfn, ret) \
   do { \
@@ -656,10 +682,15 @@ do { \
 #define PDCI_DISC_INIT_CHECKS_RET_VOID(whatfn)                 P_NULL_STMT
 #define PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn)                P_NULL_STMT
 
-#define PDCI_DATE_FMT_CHECK(whatfn)                            P_NULL_STMT
-#define PDCI_DATE_FMT_CHECK_RET_0(whatfn)                      P_NULL_STMT
-#define PDCI_DATE_FMT_CHECK_RET_VOID(whatfn)                   P_NULL_STMT
-#define PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn)                  P_NULL_STMT
+#define PDCI_DATE_IN_FMT_CHECK(whatfn)                         P_NULL_STMT
+#define PDCI_DATE_IN_FMT_CHECK_RET_0(whatfn)                   P_NULL_STMT
+#define PDCI_DATE_IN_FMT_CHECK_RET_VOID(whatfn)                P_NULL_STMT
+#define PDCI_DATE_IN_FMT_CHECK_RET_SSIZE(whatfn)               P_NULL_STMT
+
+#define PDCI_DATE_OUT_FMT_CHECK(whatfn)                        P_NULL_STMT
+#define PDCI_DATE_OUT_FMT_CHECK_RET_0(whatfn)                  P_NULL_STMT
+#define PDCI_DATE_OUT_FMT_CHECK_RET_VOID(whatfn)               P_NULL_STMT
+#define PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn)              P_NULL_STMT
 
 #define PDCI_IODISC_INIT_CHECKS(whatfn)                        P_NULL_STMT
 #define PDCI_IODISC_INIT_CHECKS_RET_0(whatfn)                  P_NULL_STMT

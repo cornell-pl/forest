@@ -60,17 +60,20 @@ do {
 do {
   time_t       tm;
   Pbyte       *tmp;
-  /* char        *tmp_t; */
+  char        *tmp_t;
+  time_t       now;
+
   PDCI_STR_PRESERVE(s); /* this ensures s.str is null terminated */
-  tm = tmdate(s->str, (char**)&tmp, NiL);
-  /* tm = tmscan(s->str, (char**)&tmp, "%m%d%y%|%&", &tmp_t, NiL, 0); */
-  if (/* tmp_t || */ !tmp || (char*)tmp - s->str != s->len) {
+  now = time(NiL);
+  /* tm = tmdate(s->str, (char**)&tmp, NiL); */
+  tm = tmscan(s->str, (char**)&tmp, pads->disc->in_formats.date, &tmp_t, &now, 0L);
+  if (!tmp_t || *tmp_t || !tmp || *tmp) {
     PDCI_READFN_SET_LOC_BE(-(s->len), 0);
     PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_DATE);
   }
   (*res_out) = tm;
-  P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %lu)",
-	   whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (unsigned long)tm);
+  P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %ld)",
+	 whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (long)tm);
   return P_OK;
 } while (0);
  fatal_alloc_err:
@@ -6226,7 +6229,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.167 2004-09-14 20:05:43 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.168 2004-09-16 03:19:37 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6671,8 +6674,13 @@ Pdisc_t Pdefault_disc = {
   100,  /* default pcnt2rep  */
 
   {
+    /* default input formats */
+    "%m%d%y%|%m%d%Y%|%&"      /* default date input format */
+  },
+
+  {
     /* default output formats */
-    "%Y-%m-%d"      /* default date format */
+    "%Y-%m-%d"      /* default date output format */
   },
 
   0,    /* by default, no inv_val_fn map */
@@ -10001,6 +10009,7 @@ PDCI_date_FW_read(P_t *pads, const Pbase_m *m,
 {
   Pstring     *s;
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
+  PDCI_DATE_IN_FMT_CHECK(whatfn);
   s = &pads->stmp1;
   P_TRACE2(pads->disc, "PDCI_date_FW_read called, args: char_set %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
@@ -10017,6 +10026,7 @@ PDCI_date_read(P_t *pads, const Pbase_m *m,
 {
   Pstring     *s;
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
+  PDCI_DATE_IN_FMT_CHECK(whatfn);
   s = &pads->stmp1;
   P_TRACE3(pads->disc, "PDCI_date_read called, args: stopChar %s char_set %s, whatfn = %s",
 	   P_qfmt_char(stopChar), Pcharset2str(char_set), whatfn);
@@ -10034,6 +10044,7 @@ PDCI_date_ME_read(P_t *pads, const Pbase_m *m,
 {
   Pstring     *s;
   PDCI_IODISC_4P_CHECKS(whatfn, m, matchRegexp, pd, res_out);
+  PDCI_DATE_IN_FMT_CHECK(whatfn);
   s = &pads->stmp1;
   P_TRACE2(pads->disc, "PDCI_date_ME_read called, args: char_set %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
@@ -10051,6 +10062,7 @@ PDCI_date_CME_read(P_t *pads, const Pbase_m *m,
 {
   Pstring     *s;
   PDCI_IODISC_4P_CHECKS(whatfn, m, matchRegexp, pd, res_out);
+  PDCI_DATE_IN_FMT_CHECK(whatfn);
   s = &pads->stmp1;
   P_TRACE2(pads->disc, "PDCI_date_CME_read called, args: char_set %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
@@ -10068,6 +10080,7 @@ PDCI_date_SE_read(P_t *pads, const Pbase_m *m,
 {
   Pstring     *s;
   PDCI_IODISC_4P_CHECKS(whatfn, m, stopRegexp, pd, res_out);
+  PDCI_DATE_IN_FMT_CHECK(whatfn);
   s = &pads->stmp1;
   P_TRACE2(pads->disc, "PDCI_date_SE_read called, args: char_set %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
@@ -10085,6 +10098,7 @@ PDCI_date_CSE_read(P_t *pads, const Pbase_m *m,
 {
   Pstring     *s;
   PDCI_IODISC_4P_CHECKS(whatfn, m, stopRegexp, pd, res_out);
+  PDCI_DATE_IN_FMT_CHECK(whatfn);
   s = &pads->stmp1;
   P_TRACE2(pads->disc, "PDCI_date_CSE_read called, args: char_set %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
@@ -11214,7 +11228,7 @@ PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
   Pinv_val_fn   fn;
 
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn);
+  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE2(pads->disc, "PDCI_date_FW_write2io args: char_set = %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
 
@@ -11226,7 +11240,7 @@ PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
       }
     }
   }
-  s.str = fmttime(pads->disc->formats.date, (time_t)(*d));
+  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
   s.len = strlen(s.str);
   if (tmp_s->len > 8 && tmp_s->len > width) {
     tmp_s->len -= 8; /* remove +%H:%M:%S */
@@ -11289,7 +11303,7 @@ PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
   Pinv_val_fn   fn;
 
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn);
+  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE2(pads->disc, "PDCI_date_FW_write2buf args: char_set = %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
 
@@ -11301,7 +11315,7 @@ PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
       }
     }
   }
-  s.str = fmttime(pads->disc->formats.date, (time_t)(*d));
+  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
   s.len = strlen(s.str);
   if (tmp_s->len > 8 && tmp_s->len > width) {
     tmp_s->len -= 8; /* remove +%H:%M:%S */
@@ -11355,7 +11369,7 @@ PDCI_date_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
   va_list       type_args;
 
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn);
+  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE2(pads->disc, "PDCI_date_write2io args: char_set = %s, whatfn = %s",
 	     Pcharset2str(char_set), whatfn);
   if (pd->errCode != P_NO_ERR) {
@@ -11368,7 +11382,7 @@ PDCI_date_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
     }
     va_end(type_args);
   }
-  s.str = fmttime(pads->disc->formats.date, (time_t)(*d));
+  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
   s.len = strlen(s.str);
   switch (char_set)
     {
@@ -11411,7 +11425,7 @@ PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
   va_list       type_args;
 
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn);
+  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE2(pads->disc, "PDCI_date_write2buf args: char_set = %s, whatfn = %s",
 	     Pcharset2str(char_set), whatfn);
   if (pd->errCode != P_NO_ERR) {
@@ -11424,7 +11438,7 @@ PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
     }
     va_end(type_args);
   }
-  s.str = fmttime(pads->disc->formats.date, (time_t)(*d));
+  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
   s.len = strlen(s.str);
   if (tmp_s->len > buf_len) {
     (*buf_full) = 1;
@@ -11462,7 +11476,7 @@ PDCI_date_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
   va_list       type_args;
 
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn);
+  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE1(pads->disc, "PDCI_date_write2io args: whatfn = %s", whatfn);
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
@@ -11474,7 +11488,7 @@ PDCI_date_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
     }
     va_end(type_args);
   }
-  s.str = fmttime(pads->disc->formats.date, (time_t)(*d));
+  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
   s.len = strlen(s.str);
   PDCI_BASEVAL_XML_OUT2IO(inv_type, "%s", P_fmt_str(&s));
 }
@@ -11490,7 +11504,7 @@ PDCI_date_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
   va_list       type_args;
 
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  PDCI_DATE_FMT_CHECK_RET_SSIZE(whatfn);
+  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE1(pads->disc, "PDCI_date_write_xml_2buf args: whatfn = %s", whatfn);
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
@@ -11502,7 +11516,7 @@ PDCI_date_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
     }
     va_end(type_args);
   }
-  s.str = fmttime(pads->disc->formats.date, (time_t)(*d));
+  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
   s.len = strlen(s.str);
   PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%s", P_fmt_str(&s));
 }
