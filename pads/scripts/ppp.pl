@@ -17,7 +17,7 @@ my %stop_re =
    s => undef
   );
 
-my ($after, $d, $elt, $expr, $first_follow, $follow_re);
+my ($after, $comment, $d, $elt, $expr, $first_follow, $follow_re);
 my ($has_re, $i, $indent, $litpre, $ll, $parsed, $pty);
 my ($rest, $toparse, $ty, $w);
 
@@ -34,23 +34,31 @@ LINE: while (<IFILE>) {
   } else {
     $just_emitted = 0;
   }
+  if (/^(.*?)\/\/(.*)$/) {
+    ($_, $comment) = ($1, $2);
+  } elsif (/^(.*?)\/\*(.*?)\*\/\s*$/) {
+    ($_, $comment) = ($1, $2);
+  } else {
+    $comment = "";
+  }
+  $indent = ""; $rest = "";
   if (/^(\s*)((.*?){(\s*Pre\s*)?:(.+?):}(\s*[;])?(.*))$/) {
     # found a line with >= 1 {: ... :} element
     ($indent, $rest) = ($1, $2);
     print "# $line \"$ifilename\"\n" if (!$just_emitted);
     print "// BEGIN PADS pre-processor translation of ${ifilename}:$line\n//   $rest\n";
+    print "// USER_COMMENT: $comment\n" if ($comment);
 
   ELT: while ($rest =~ /^(.*?){(\s*Pre\s*)?:(.+?):}(\s*[;])?(.*)$/) {
       ($before, $has_re, $toparse, $rest) = ($1, $2, $3, $5);
-
       $before =~ s/^\s+//;
       print "$indent$before\n" if ($before);
 
       $litpre = ($has_re) ? "${indent}Pre \"/" : "${indent}\"";
       $litpost = ($has_re) ? "/\"" : "\"";
       $parsed = "";
-      $follow_re = "/\$/";
-      
+      $follow_re = undef;
+
       while (1) { # parse each %<expr> in the elt
 	if (!$toparse) {
 	  # done with entire {: ... :} elt
@@ -68,7 +76,8 @@ LINE: while (<IFILE>) {
 	    if ($d == 64) {
 	      $i = 64;
 	    } else {
-	      while ($i < ($d * 8)) { $i++; }
+	      die "Illegal value for <sz> ($d) in %I<sz>$ty, largest legal value is 8, at ${ifilename}:$line\n" if ($d > 8);
+	      $i = $d * 8;
 	    }
 	    $pty = "$pads_ty{$ty}$i";
 	    $pty .= "_FW(:${w}:)" if ($w);
@@ -119,7 +128,12 @@ LINE: while (<IFILE>) {
     next LINE;
   } # end if the line contains >= 1 elt
   # the line does not contain an elt, emit as-is
-  print;
+  if ($comment) {
+    chomp;
+    print "$_//$comment\n";
+  } else {
+    print;
+  }
 }
 exit 0;
 
