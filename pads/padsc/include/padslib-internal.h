@@ -31,8 +31,8 @@ void * TS_getBuffer(TS_buffer *buf);
 void * TS_free(TS_buffer *buf, int dealloc); 
 void TS_buffFree(void *);
 
-toolError_t aint8_scan(toolState_t *ts, base_em *em,
-                       base_ed *error, int8 res);
+toolError_t char_lit_scan(toolState_t *ts, base_em *em,
+                          base_ed *error, int8 res);
 
-toolError_t auint8_scan(toolState_t *ts, base_em *em,
-                       base_ed *error, uint8 res);
+toolError_t char_lit_read(toolState_t *ts, base_em *em,
+                          base_ed *error, uint8 res);
