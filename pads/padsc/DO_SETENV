@@ -1,0 +1,23 @@
+# source this to get gsf stuff into env variables
+
+setenv PATH `echo $PATH | sed -e 's|^[^:]*knb[^:]*:||g' -e 's|:/[^:]*knb[^:]*:|:|g' -e 's|:/[^:]*knb[^:]*$||g' -e 's|^[^:]*gsf[^:]*:||g' -e 's|:/[^:]*gsf[^:]*:|:|g' -e 's|:/[^:]*gsf[^:]*$||g'`
+setenv LD_LIBRARY_PATH `echo $LD_LIBRARY_PATH | sed -e 's|^[^:]*knb[^:]*:||g' -e 's|:/[^:]*knb[^:]*:|:|g' -e 's|:/[^:]*knb[^:]*$||g' -e 's|^[^:]*gsf[^:]*:||g' -e 's|:/[^:]*gsf[^:]*:|:|g' -e 's|:/[^:]*gsf[^:]*$||g'`
+setenv MANPATH `echo $MANPATH | sed -e 's|^[^:]*knb[^:]*:||g' -e 's|:/[^:]*knb[^:]*:|:|g' -e 's|:/[^:]*knb[^:]*$||g' -e 's|^[^:]*gsf[^:]*:||g' -e 's|:/[^:]*gsf[^:]*:|:|g' -e 's|:/[^:]*gsf[^:]*$||g'`
+
+set gsfarch = `/home/gsf/bin/package`
+set gsfarchdir = /home/gsf/arch/$gsfarch
+set knbarchdir = ~/knb/arch/$gsfarch
+set gsfincdir = $gsfarchdir/include/ast
+set gsfbindir = $gsfarchdir/bin
+set gsflibdir = $gsfarchdir/lib
+set gsfmandir = $gsfarchdir/man
+set knbbindir = $knbarchdir/bin
+set knblibdir = $knbarchdir/lib
+
+setenv MANPATH ${gsfmandir}:$MANPATH
+setenv PATH ${knbbindir}:${gsfbindir}:$PATH
+setenv LD_LIBRARY_PATH :${knblibdir}:${gsflibdir}:/usr/common/libn32
+setenv SHLIB_PATH $LD_LIBRARY_PATH
+setenv INSTALLROOT /home/gruber/knb/arch/$gsfarch
+setenv CCcGSF "cc -c -I$gsfincdir -I../include"
+umask 002
