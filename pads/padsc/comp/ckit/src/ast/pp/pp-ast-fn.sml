@@ -317,15 +317,18 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	        ;ppOptList ppMember "" members
 	      end
           | B.Enum (tid,members) =>
-	        let fun ppMemberInt pps (member,li) =
+	        let fun ppMemberInt pps (member,li,commentOpt) =  (* commentOpt is PADS *)
 		      (ppMember pps member
 		      ;addStr pps "="
 		      ;ppLI pps li
+                      ;addStr pps ","                           (* PADS:slight changes from orig*)
+                      ;(case commentOpt of SOME s => addStr pps ("\t\t/* "^ s ^" */")
+			          | NONE => () (* PADS *))
 		      )
 		in (addStr pps "enum "
 		   ;ppTid tidtab pps tid
 		   ;space pps
-		   ;ppOptList ppMemberInt "," members
+		   ;ppOptList ppMemberInt "" members
 		   )
 		end
 	  | B.Typedef (tid,ctype) =>

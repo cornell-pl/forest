@@ -67,7 +67,7 @@ sig
 	 params : (decltype * declarator) list}
     | Enum of
         {tagOpt : string option,
-	 enumerators : (string * expression) list,
+	 enumerators : (string * expression * string option (*PADS *)) list,
 	 trailingComma : bool}  (* true if there was there a trailing comma in the declaration *)
     | Struct of
         {isStruct : bool,   (* struct or union; true => struct *)

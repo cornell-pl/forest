@@ -7,6 +7,7 @@ structure ParseTreeExt =
            Full of {    pty : Pty, 
 		       args : 'exp list, 
 		       name : string, 
+		  isVirtual : bool,
 		       pred : 'exp option, 
 		    comment : string option}
          | Brief of 'exp
@@ -46,10 +47,9 @@ structure ParseTreeExt =
 		      variants : ('exp PSField) list}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
-                      members  : (string * 'exp option) list}
+                      members  : (string * 'exp option * string option) list}
 
-        datatype PStatement = 
-          PComment of string
+        datatype PStatement = PComment of string
 
   (* External bindings *)
 	type operatorExt = unit

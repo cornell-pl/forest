@@ -18,7 +18,7 @@ struct
         (* pid is optional because of anonymous bit fields *)
     | Union of Tid.uid * (Ast.ctype * Ast.member) list
         (* pid is mandatory for unions *)
-    | Enum of Tid.uid * (Ast.member * LargeInt.int) list
+    | Enum of Tid.uid * (Ast.member * LargeInt.int * string option (*PADS *)) list
     | Typedef of Tid.uid * Ast.ctype
 
   (* type info contained in tidtabs bindings *)

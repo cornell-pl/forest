@@ -60,13 +60,18 @@ struct
     | eqExpr(_, _) = false
 
   (* dpo: some small changes to get eqType type correct but is the equality correct? *)
+  fun strip (a,b,c) = (a,b)  (*PADS*)
+	   
   fun eqTy({qualifiers=[], specifiers=[Enum{tagOpt=sOpt, enumerators=sel, ...}]}
 	  ,{qualifiers=[], specifiers=[Enum{tagOpt=sOpt',enumerators=sel', ...}]}) =
-       sOpt = sOpt' andalso eqList (eqPair (eqString, eqExpr)) (sel, sel')
+      let val selstripped = List.map strip sel
+          val sel'stripped = List.map strip sel'
+      in
+       sOpt = sOpt' andalso eqList (eqPair (eqString, eqExpr)) (selstripped, sel'stripped)
+      end
     | eqTy({qualifiers=[], specifiers=[Struct{isStruct=b, tagOpt=sOpt, members=cdell}]}
           ,{qualifiers=[], specifiers=[Struct{isStruct=b',tagOpt=sOpt',members=cdell'}]}) =
-       let fun strip (c,del,cOpt) = (c,del)  (*PADS*)
-	   val cdellstripped = List.map strip cdell
+       let val cdellstripped = List.map strip cdell
 	   val cdell'stripped = List.map strip cdell'
        in
 	   (b = b') andalso sOpt = sOpt' andalso

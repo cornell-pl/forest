@@ -43,7 +43,7 @@ struct
 		      ]
 	end
 
-    fun makeEnumPCT (members : (string * PT.expression) list, tag : string option) =
+    fun makeEnumPCT (members : (string * PT.expression * string option) list, tag : string option) =
 	    makePCT [PT.Enum   { tagOpt = tag,
 				 enumerators = members,
 				 trailingComma = false
@@ -143,7 +143,7 @@ struct
               pctToPTyDefDT(makeUnionPCT(fields,SOME (tag^"_u"))),
               [(PT.VarDecr tag, PT.EmptyExpr)]))
 
-    fun makeTyDefEnumEDecl (fields : (string * PT.expression) list, tag : string) =
+    fun makeTyDefEnumEDecl (fields : (string * PT.expression * string option) list, tag : string) =
         PT.ExternalDecl(
           PT.Declaration(
               pctToPTyDefDT(makeEnumPCT(fields,SOME (tag^"_e"))),

@@ -75,7 +75,8 @@ struct
                ("sep", Tokens.PSEP),
                ("term", Tokens.PTERM),
                ("forall", Tokens.PFORALL),
-               ("in", Tokens.PIN)
+               ("in", Tokens.PIN),
+               ("pvirtual", Tokens.PVIRTUAL)	       
               ])
 
 

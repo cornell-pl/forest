@@ -154,7 +154,7 @@ directive = #(.)*\n;
 <C>.		=> (continue());
 
 
-<INITIAL>"//-"		=> (YYBEGIN PC; charlist := [""]; stringstart := yypos; continue());
+<INITIAL>"/-"		=> (charlist := [""]; stringstart := yypos; YYBEGIN PC; continue());
 <PC>{newline}	 	=> (YYBEGIN INITIAL; 
                             SourceMap.newline sourceMap yypos;
                             Tokens.PCOMMENT(makeString charlist, !stringstart, yypos));

@@ -482,8 +482,8 @@ structure CnvExt : CNVEXT = struct
 		   | _ => PE.bug "Ill-formed type table (union)."
 		 end
 	   | Ast.EnumRef t =>
-		 let fun procMem ({name,...}:Ast.member,i) = 
-		     (SYM.name name, P.int32X i)
+		 let fun procMem ({name,...}:Ast.member,i,commentOpt) = 
+		     (SYM.name name, P.int32X i,commentOpt)
 		 in case lookTid t of
 		     SOME {name=SOME n,ntype=NONE,...} => 
 			 P.makePCT [PT.EnumTag n]
@@ -753,14 +753,24 @@ structure CnvExt : CNVEXT = struct
 		      fun mungeFields f b [] = []
 			| mungeFields f b (x::xs) = (mungeField f b x) @ (mungeFields f b xs)
 
+		      (* Generate local variables  *)
+		      fun genLocFull {pty :PX.Pty, args : pcexp list, name:string, isVirtual:bool, 
+				      pred:pcexp option, comment:string option} = 
+			  if not isVirtual then []
+			  else [(name, P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)))]
+		      fun genLocBrief e = []
+		      val localVars = mungeFields genLocFull genLocBrief fields
+
 		      (* Generate canonical representation *)
-		      fun genRepFull {pty :PX.Pty, args : pcexp list, 
-				      name:string, pred:pcexp option, comment:string option} = 
-			  let val predStringOpt = Option.map P.expToString pred
-			      val fullCommentOpt = stringOptMerge(comment, predStringOpt)
-			  in
+		      fun genRepFull {pty :PX.Pty, args : pcexp list, name:string, isVirtual:bool, 
+				      pred:pcexp option, comment:string option} = 
+			  if not isVirtual then 
+			    let val predStringOpt = Option.map P.expToString pred
+			        val fullCommentOpt = stringOptMerge(comment, predStringOpt)
+			    in
 			      [(name,P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)), fullCommentOpt )]
-			  end
+			    end
+			  else []
 		      fun genRepBrief e = []
 		      val canonicalFields = mungeFields genRepFull genRepBrief fields
 		      val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
@@ -769,7 +779,7 @@ structure CnvExt : CNVEXT = struct
 		       
 		      (* Generate error mask *)
 		      fun genEMFull {pty :PX.Pty, args : pcexp list, 
-				     name:string, pred:pcexp option, comment} = 
+				     name:string, isVirtual:bool, pred:pcexp option, comment} = 
 			  [(name,P.makeTypedefPCT(lookupTy (pty,emSuf,#emname)), NONE)]
 		      fun genEMBrief e = []
 		      val emFieldsNested = mungeFields genEMFull genEMBrief fields
@@ -783,7 +793,7 @@ structure CnvExt : CNVEXT = struct
 
 		      (* Generate error description *)
 		      fun genEDFull {pty :PX.Pty, args : pcexp list,
-				     name:string, pred:pcexp option, comment} = 
+				     name:string,  isVirtual:bool, pred:pcexp option, comment} = 
 			  [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		      fun genEDBrief e = []
 		      val auxEDFields = [(nerr, P.int,NONE), (errCode, P.int,NONE),
@@ -803,10 +813,13 @@ structure CnvExt : CNVEXT = struct
 
                       (* -- Some helper functions *)
 		      fun genReadFull {pty :PX.Pty, args:pcexp list,
-				       name:string, pred:pcexp option, comment} = 
+				       name:string, isVirtual:bool, pred:pcexp option, comment} = 
 			  let val readFieldName = lookupTy(pty, iSuf o readSuf, #readname)
                               val modEdNameX = fieldX(ed,name)
-                              val () = addSub(name, fieldX(rep,name))  (* record additional binding *)
+			      val repX = if isVirtual then PT.Id name else fieldX(rep,name)
+                              val () = if not isVirtual 
+					   then addSub(name, fieldX(rep,name))  (* record additional binding *)
+				       else ()
 			      val modArgs = List.map (PTSub.substExps (!subList)) args
                               val () = checkParamTys(name, readFieldName, modArgs, 2, 3)
 			      val commentS = P.mkCommentS ("Reading field: "^ name )
@@ -833,7 +846,7 @@ structure CnvExt : CNVEXT = struct
 						       P.addrX(fieldX(em,name)),
 						       modArgs,
 						       P.addrX(fieldX(ed,name)),
-						       P.addrX(fieldX(rep,name)), PT.Id disc)),
+						       P.addrX repX, PT.Id disc)),
 				     PT.Compound[ (* error reading field *)
 				      (* if (moded->name.panic) *)
                                       PT.IfThen(P.dotX(fieldX(ed, name), PT.Id panic),
@@ -1008,14 +1021,17 @@ structure CnvExt : CNVEXT = struct
 		      val _ = pushLocalEnv()                                        (* create new scope *)
 		      val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
 		      val () = ignore (insTempVar(gMod em,  P.ptrPCT emPCT))        (* add modem to scope *)
+		      val () = ignore(List.map insTempVar localVars)                (* insert virtuals into scope *)
 		      val cParams : (string * pcty) list = List.map mungeParam params
                       val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		      val readFields = mungeFields genReadFull genReadBrief fields  (* does type checking *)
 		      val _ = popLocalEnv()                                         (* remove scope *)
+		      val localDeclSs = List.map (P.varDeclS' o (fn(x,y) => (y,x))) localVars
 		      val returnS = P.returnS (
 				      P.condX(P.eqX(P.arrowX(PT.Id (gMod(ed)), PT.Id nerr),P.zero),
 				      PL.PDC_OK, PL.PDC_ERROR))
-		      val bodySs = readFields @ [returnS]
+		      val bodySs = localDeclSs @ readFields @ [returnS]
+
 		      val readFunEDs = genReadFun(readName, cParams, emPCT,edPCT,canonicalPCT, 
 						  emFirstPCT, true, bodySs)
 	      in 
@@ -1040,8 +1056,8 @@ structure CnvExt : CNVEXT = struct
 
                      (* generate enumerated type describing tags *)
 		     fun genTagFull {pty :PX.Pty, args : pcexp list, 
-				     name:string, pred:pcexp option, comment:string option} = 
-			 [(name,PT.EmptyExpr)]
+				     name:string, isVirtual:bool, pred:pcexp option, comment:string option} = 
+			 [(name,PT.EmptyExpr,NONE)]
 
 		     fun genTagBrief e = []
 		     val tagFields = mungeVariants genTagFull genTagBrief variants
@@ -1051,7 +1067,7 @@ structure CnvExt : CNVEXT = struct
 
                      (* generate canonical representation *)
 		     fun genRepFull {pty :PX.Pty, args : pcexp list, 
-				     name:string, pred:pcexp option, comment:string option} = 
+				     name:string, isVirtual:bool, pred:pcexp option, comment:string option} = 
 			 let val predStringOpt = Option.map P.expToString pred
 			     val fullCommentOpt = stringOptMerge(comment, predStringOpt)
 			 in
@@ -1070,7 +1086,7 @@ structure CnvExt : CNVEXT = struct
 
 		      (* Generate error mask *)
 		     fun genEMFull {pty :PX.Pty, args : pcexp list, 
-				    name:string, pred:pcexp option, comment} = 
+				    name:string, isVirtual:bool, pred:pcexp option, comment} = 
 			 [(name,P.makeTypedefPCT(lookupTy (pty,emSuf,#emname)), NONE)]
 		     fun genEMBrief e = []
 		     val emFields = mungeVariants genEMFull genEMBrief variants
@@ -1080,7 +1096,7 @@ structure CnvExt : CNVEXT = struct
 
 		     (* Generate error description *)
 		     fun genEDFull {pty :PX.Pty, args : pcexp list,
-				    name:string, pred:pcexp option, comment} = 
+				    name:string, isVirtual:bool, pred:pcexp option, comment} = 
 			 [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		     fun genEDBrief e = []
 		     val auxEDFields = [(nerr, P.int,NONE), (errCode, P.int,NONE),
@@ -1095,7 +1111,7 @@ structure CnvExt : CNVEXT = struct
 
                      (* -- some helper functions *)
                      fun genReadFull{pty :PX.Pty, args:pcexp list,
-				       name:string, pred:pcexp option, comment} = 
+				       name:string, isVirtual:bool, pred:pcexp option, comment} = 
 			  let val readFieldName = lookupTy(pty, iSuf o readSuf, #readname)
                               val () = checkParamTys(name, readFieldName, args, 2, 3)
                               val predXOpt = case pred of NONE => NONE
@@ -1744,11 +1760,12 @@ structure CnvExt : CNVEXT = struct
 	     end
 
 	  fun cnvPEnum  {name:string, params : (pcty * pcdecr) list, 
-			 members : (string * pcexp option) list } =
+			 members : (string * pcexp option * string option) list } =
 	      let val baseTy = PX.Name PL.strlit
                   (* generate canonical representation *)
-                  fun mungeMembers (name, expOpt) = case expOpt of NONE => (name, PT.EmptyExpr)
-		                                    | SOME e => (name, e)
+                  fun mungeMembers (name, expOpt, commentOpt) = 
+		      case expOpt of NONE => (name, PT.EmptyExpr, commentOpt)
+ 		                   | SOME e => (name, e, commentOpt)
 		  val enumFields = List.map mungeMembers members
 		  val canonicalED = P.makeTyDefEnumEDecl(enumFields, repSuf name)
 		  val canonicalDecls = cnvExternalDecl canonicalED
@@ -1770,7 +1787,7 @@ structure CnvExt : CNVEXT = struct
                   (* -- Some useful names *)
                   val readName = readSuf name
 		  val baseReadFun = lookupTy(baseTy, iSuf o readSuf, #readname)
-		  fun readOneBranch (bname, bvalOpt) =
+		  fun readOneBranch (bname, bvalOpt, commentOpt) =
 		      let val labelLenX = P.intX(String.size bname)
 		      in
                          [P.assignS(P.dotX(PT.Id "strlit", PT.Id (PL.str)), PT.String bname),

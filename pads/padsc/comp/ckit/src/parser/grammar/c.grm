@@ -177,6 +177,9 @@ fun insertParams params =
     in
 	List.app TypeDefs.addNoTdef names
     end
+
+fun addComment ((name, expOpt), commentOpt) = (name, expOpt, commentOpt)
+
 (* PADS*)
 
 abstype 'a seq = SEQ of 'a list
@@ -227,7 +230,7 @@ end
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PFORALL | PIN  (* PADS *)
+	| PSEP | PTERM | PFORALL | PIN | PVIRTUAL  (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -243,8 +246,8 @@ end
 	| unaryOperator of operator
 	| argumentExprList of expression seq
 	| trailingComma of bool
-	| enumeratorList of (string * expression) seq
-	| enumerator of (string * expression)
+	| enumeratorList of (string * expression * string option) seq
+	| enumerator of (string * expression * string option)
 	| abstractDeclarator of declarator
 	| directAbstractDeclarator of declarator
 	| initDeclarator of (declarator * expression)
@@ -300,7 +303,7 @@ end
         | pTyParamList of (ctype * declarator)  list
         | pTyParams of (ctype * declarator) list
         | pOptActParams of expression list
-        | pOptActParamList of expression list
+        | pActParamList of expression list
         | pName of string
         | pTypedef of externalDecl
         | pStruct of externalDecl
@@ -317,7 +320,9 @@ end
         | pArrayConstraintOpt of (expression PX.PConstraint) list
         | pUnion of externalDecl
         | pEnumField of string * expression option
-        | pEnumFieldList of (string * expression option) list
+        | pAnnotatedEnumField of string * expression option * string option
+        | pAnnotatedLastEnumField of string * expression option * string option
+        | pEnumFieldList of (string * expression option * string option) list
         | pEnum of externalDecl
 
 %pos int
@@ -720,8 +725,8 @@ enumeratorList:
 					 singletonSeq enumerator)
 
 enumerator:
-	  ID				((ID,ParseTree.EmptyExpr))
-	| ID EQUALS expr		(ID,expr)
+	  ID				((ID,ParseTree.EmptyExpr,NONE))
+	| ID EQUALS expr		(ID,expr,NONE)
 
 storageClassSpecifier: 
 	  EXTERN 			(EXTERN)
@@ -986,12 +991,12 @@ pTyParams:
 	([])
  | LPAREN pTyParamList RPAREN ( List.rev pTyParamList )
 
-pOptActParamList:
+pActParamList:
    expr ([expr])
- | pOptActParamList COMMA expr ( expr :: pOptActParamList)
+ | pActParamList COMMA expr ( expr :: pActParamList)
 
 pOptActParams: ([])
- | LCOLON pOptActParamList RCOLON ( List.rev pOptActParamList )
+ | LCOLON pActParamList RCOLON ( List.rev pActParamList )
 
 pTypedef:
  PTYPEDEF pName pOptActParams pName pushScope pTyParams COLONCOLON pName pName EQGT LCURLY expr popScope
@@ -1006,9 +1011,17 @@ pTypedef:
  )
 
 
-pStructField: pName pOptActParams ID pConstraintOpt SEMICOLON pCommentOpt 
+
+pStructField: PVIRTUAL  pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 
 				                args = pOptActParams,
+						isVirtual = true,
+						pred = pConstraintOpt,
+                                                comment = pCommentOpt})	
+  | pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
+                                      (PX.Full {pty = PX.Name pName, name = ID, 
+				                args = pOptActParams,
+						isVirtual = false,
 						pred = pConstraintOpt, comment = pCommentOpt})
   | expr SEMICOLON                    (PX.Brief expr)
 
@@ -1068,13 +1081,20 @@ pEnumField:
     pName                  (pName, NONE)
  |  pName EQUALS expr      (pName, SOME expr)
 
+pAnnotatedEnumField:
+  pEnumField COMMA pCommentOpt          (addComment(pEnumField, pCommentOpt))
+
+pAnnotatedLastEnumField:
+  pEnumField  pCommentOpt	        (addComment(pEnumField, pCommentOpt))
+
 pEnumFieldList:
-    pEnumField                           ([pEnumField])
-  | pEnumFieldList COMMA pEnumField      (pEnumField :: pEnumFieldList)
+    pAnnotatedLastEnumField              ([pAnnotatedLastEnumField])
+  | pAnnotatedEnumField pEnumFieldList
+                                         (pAnnotatedEnumField :: pEnumFieldList)
 
 pEnum:
  PENUM pName pushScope  LCURLY pEnumFieldList popScope
  ( makeTypeName pName1;
    ExternalDeclExt(PX.PEnum {name = pName1, params = [], 
-			     members = List.rev pEnumFieldList})
+			     members = pEnumFieldList})
  ) 

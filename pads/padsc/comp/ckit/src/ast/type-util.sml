@@ -284,7 +284,7 @@ struct
        | Ast.EnumRef tid =>
 	   (case Tidtab.find (tidtab,tid)
 	      of SOME {ntype=SOME (B.Enum (_,memberIntList)),...} => 
-		   let fun pred ({uid=uid',...}: Ast.member,_) =
+		   let fun pred ({uid=uid',...}: Ast.member,_,_) =
 		           Pid.equal (uid',uid)
 		   in List.exists pred memberIntList end
 	       | SOME {ntype=NONE,...} =>
@@ -312,10 +312,10 @@ struct
        | Ast.EnumRef tid =>
 	   (case Tidtab.find (tidtab,tid)
 	      of SOME{ntype=SOME(B.Enum(_,memberIntList)),...} => 
-		   let fun pred ({uid=uid',...}: Ast.member,_) =
+		   let fun pred ({uid=uid',...}: Ast.member,_,_) =
 		           Pid.equal(uid', uid)
 		   in case List.find pred memberIntList
-		        of SOME (_,i) => SOME i
+		        of SOME (_,i,_) => SOME i
 		         | NONE => NONE
 		   end
 	       | _ => NONE)

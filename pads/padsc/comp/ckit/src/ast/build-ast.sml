@@ -2614,7 +2614,7 @@ end old code ******)
 			    enum {e1=0,e2=1,e3=4,e4=5};
                        *)
 		      fun process prevVal nil = nil
-			| process prevVal ((name,e) :: l) =
+			| process prevVal ((name,e,cOpt) :: l) =
 			  let val constValOpt = 
 			    case e of
 			      PT.EmptyExpr => NONE
@@ -2644,7 +2644,7 @@ end old code ******)
 				
 			      val _ = bindSym (sym, binding)
 			   in 
-			      (member, constVal) :: (process constVal l)
+			      (member, constVal,cOpt) :: (process constVal l)
 			  end
 		  in if alreadyDefined then ()
 		     else 

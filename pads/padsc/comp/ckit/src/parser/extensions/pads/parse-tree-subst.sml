@@ -53,7 +53,7 @@ structure ParseTreeSubst : PARSE_TREE_SUBST = struct
 	      | Pointer(ct) => Pointer(substCT (id,e,ct))
 	      | Enum {tagOpt,enumerators,trailingComma} =>
 		    Enum {tagOpt=tagOpt,
-			  enumerators = List.map (fn (s,e) => (s,se' e)) enumerators,
+			  enumerators = List.map (fn (s,e,c) => (s,se' e,c)) enumerators,
 			  trailingComma=trailingComma}
 	      | Struct {isStruct,tagOpt,members} =>
 		    let fun g (d,e) = (d,se' e)
