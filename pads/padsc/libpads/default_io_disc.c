@@ -1594,13 +1594,15 @@ PDC_vlrec_noseek_rec_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PD
   ibytes = (PDC_byte*)(&num_bytes);
   if (pdc->m_endian == PDC_littleEndian) {
     rec_start[0] = ibytes[1];
-    rec_start[1] = ibytes[0];
+    rec_start[1] = ibytes[0]; 
+    rec_start[2] = 0;
+    rec_start[3] = 0;
   } else {
-    rec_start[0] = ibytes[0];
-    rec_start[1] = ibytes[1];
+    rec_start[0] = ibytes[2];
+    rec_start[1] = ibytes[3];
+    rec_start[2] = 0;
+    rec_start[3] = 0;
   }
-  rec_start[2] = 0;
-  rec_start[3] = 0;
   return 0; /* no bytes added at end */
 }
 
