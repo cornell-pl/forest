@@ -15,7 +15,7 @@
 
 // XXX remove _DISABLED below to enable
 // the use of ckit-replace.h
-#ifdef FOR_CKIT
+#ifdef FOR_CKIT_DISABLED
 // include minimum set of defs for ckit
 #include "ckit-replace.h"
 #else
