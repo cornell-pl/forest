@@ -181,8 +181,8 @@ fun addComment ((name, fromOpt, expOpt), commentOpt) = (name, fromOpt, expOpt, c
 
 fun addStructPostCond (decl,postCondOpt) = 
    (case decl of
-    (PX.PStruct{isRecord,isSource,containsRecord,largeHeuristic,name,params,fields,postCond}) => 
-      PX.PStruct{isRecord = isRecord, isSource = isSource, 
+    (PX.PStruct{isAlt,isRecord,isSource,containsRecord,largeHeuristic,name,params,fields,postCond}) => 
+      PX.PStruct{isAlt = isAlt, isRecord = isRecord, isSource = isSource, 
 		 containsRecord = containsRecord, largeHeuristic = largeHeuristic,
                  name = name, params = params, fields = fields, postCond = postCondOpt} 
     | s => s)
@@ -194,7 +194,6 @@ fun addUnionPostCond (decl,postCondOpt) =
 		 containsRecord = containsRecord, largeHeuristic = largeHeuristic,
                  name = name, params = params, variants = variants, postCond = postCondOpt} 
     | s => s)
-
 
 fun addArrayPostCond (decl,postConds) = 
    (case decl of
@@ -256,7 +255,7 @@ end
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT | PCHARCLASS (* PADS *)
-        | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
+        | PTYPEDEF | PSTRUCT | PALTERNATES | PUNION  | PARRAY | PENUM (* PADS *)
 	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
         | POMIT | PENDIAN | PCOMPUTE (* PADS *)
         | PFROM  (*PADS*)
@@ -344,6 +343,7 @@ end
         | pREexpr of expression
         | pOmitOpt of bool
         | pStruct of (declarator, ctype, decltype, expression) PX.PExternal
+        | pAlternates of (declarator, ctype, decltype, expression) PX.PExternal
         | pStructFieldList of ((ctype, decltype, declarator, expression) PX.PSField) list
         | pStructField of (ctype, decltype, declarator, expression) PX.PSField
         | pPC of (expression PX.PPostCond)
@@ -471,6 +471,11 @@ externalDeclaration:
                                              val structDecl = ExternalDeclExt augPStruct
 	                                 in
 					   SOME(markExternalDecl srcMap (structDecl,pStructleft,pPostCondOptright))
+				         end)
+        | pAlternates RCURLY pPostCondOpt   (let val augPAlternates = addStructPostCond(pAlternates, pPostCondOpt)
+                                             val alternatesDecl = ExternalDeclExt augPAlternates
+	                                 in
+					   SOME(markExternalDecl srcMap (alternatesDecl,pAlternatesleft,pPostCondOptright))
 				         end)
         | pUnion  RCURLY pPostCondOpt    (let val augPUnion = addUnionPostCond(pUnion, pPostCondOpt)
 	                                      val unionDecl = ExternalDeclExt augPUnion
@@ -1233,9 +1238,17 @@ pStructFieldList:
 pStruct:
  pIsSource pIsRecord  PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
  ( makeTypeName pName;
-   PX.PStruct {isRecord = pIsRecord, isSource = pIsSource, 
+   PX.PStruct {isAlt = false, isRecord = pIsRecord, isSource = pIsSource, 
 	       containsRecord = false, largeHeuristic = false,
                name = pName, params = pTyParams, fields = pStructFieldList, postCond = []}	
+ )
+
+pAlternates:
+ pIsSource pIsRecord  PALTERNATES pName pushScope pTyParams LCURLY pStructFieldList popScope
+ ( makeTypeName pName;
+   PX.PStruct {isAlt = true, isRecord = pIsRecord, isSource = pIsSource, 
+		   containsRecord = false, largeHeuristic = false,
+		   name = pName, params = pTyParams, fields = pStructFieldList, postCond = []}	
  )
 
 pForAllRange : 
@@ -1303,7 +1316,6 @@ pUnion:
 	      containsRecord = false, largeHeuristic = false,
               isRecord = pIsRecord, isSource = pIsSource, variants=pVariants, postCond = []}
  ) 
-
 
 pFromOpt:
                                     (NONE)

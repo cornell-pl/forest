@@ -50,19 +50,19 @@ Pstruct XX_HDR_DLM_DT_6_ijnltifh {
 	Pe_string_FW(:1:)                                  XX_DT_DLM_2_10;
 	Pebc_uint64(:4:)                                   XX_HDR_YR_11;
 };
-Punion gen_union_1_ijnltifh_t {
+Palternates gen_alternates_1_ijnltifh_t {
 	XX_HDR_DLM_DT_6_ijnltifh                           XX_HDR_DLM_DT_6;
 	Pe_string_FW(:10:)                                 XX_HDR_DT_12;
 };
-Punion gen_union_2_ijnltifh_t {
+Palternates gen_alternates_2_ijnltifh_t {
 	XX_HDR_DLM_TM_13_ijnltifh                          XX_HDR_DLM_TM_13;
 	Pe_string_FW(:8:)                                  XX_HDR_TM_19;
 };
-Punion gen_union_3_ijnltifh_t {
+Palternates gen_alternates_3_ijnltifh_t {
 	XX_HDR_COM_DLM_DT_20_ijnltifh                      XX_HDR_COM_DLM_DT_20;
 	Pe_string_FW(:10:)                                 XX_HDR_COM_DT_28;
 };
-Punion gen_union_4_ijnltifh_t {
+Palternates gen_alternates_4_ijnltifh_t {
 	Pe_string_FW(:2:)                                  XX_HDR_PRCSS_ENTY_CD_32;
 	XX_HDR_VTNS_PARTITION_33_ijnltifh                  XX_HDR_VTNS_PARTITION_33;
 	Pe_string_FW(:2:)                                  XX_HDR_UB_BL_CYC_NB_36;
@@ -72,20 +72,20 @@ Pstruct XX_HDR_RC_1_ijnltifh {
 	Pe_string_FW(:2:)                                  XX_HDR_CPY_CD_3;
 	Pe_string_FW(:1:)                                  XX_HDR_FL_TYPE_CD_4;
 	Pe_string_FW(:4:)                                  XX_HDR_SRCE_SYS_CD_5;
-	gen_union_1_ijnltifh_t                             GEN_UNION_1_ijnltifh;
-	gen_union_2_ijnltifh_t                             GEN_UNION_2_ijnltifh;
-	gen_union_3_ijnltifh_t                             GEN_UNION_3_ijnltifh;
+	gen_alternates_1_ijnltifh_t                        GEN_ALTERNATES_1_ijnltifh;
+	gen_alternates_2_ijnltifh_t                        GEN_ALTERNATES_2_ijnltifh;
+	gen_alternates_3_ijnltifh_t                        GEN_ALTERNATES_3_ijnltifh;
 	Pe_string_FW(:1:)                                  XX_HDR_ACRL_CD_29;
 	Pe_string_FW(:2:)                                  XX_HDR_BL_CYC_CD_30;
 	Pe_string_FW(:1:)                                  XX_HDR_COMPLX_CD_31;
-	gen_union_4_ijnltifh_t                             GEN_UNION_4_ijnltifh;
+	gen_alternates_4_ijnltifh_t                        GEN_ALTERNATES_4_ijnltifh;
 	XX_HDR_SMS_37_ijnltifh                             XX_HDR_SMS_37;
 	Pe_string_FW(:12:)                                 FILLER_52;
 };
 Precord Pstruct cpy_ijnltifh {
 	XX_HDR_RC_1_ijnltifh                               XX_HDR_RC_1;
 };
-Punion gen_union_18_ijnltif_t {
+Palternates gen_alternates_18_ijnltif_t {
 	Pebc_fpoint64(:5,5:)                               XX_TB_TAX_RT_280;
 	Pebc_fpoint64(:5,4:)                               XX_TB_TAX_RT4_281;
 	Pebc_fpoint64(:5,3:)                               XX_TB_TAX_RT3_282;
@@ -94,7 +94,7 @@ Pstruct XX_TAX_TB_276_ijnltif {
 	Pe_string_FW(:1:)                                  XX_TB_TAX_CLS_CD_277;
 	Pe_string_FW(:5:)                                  XX_TB_TAX_CLSFCTN_CD_278;
 	Pe_string_FW(:2:)                                  XX_TB_TAX_JURIS_CD_279;
-	gen_union_18_ijnltif_t                             GEN_UNION_18_ijnltif;
+	gen_alternates_18_ijnltif_t                        GEN_ALTERNATES_18_ijnltif;
 	Pe_string_FW(:4:)                                  XX_TB_TAX_RSN_CD_283;
 	Pbcd_fpoint64(:16,7:)                              XX_TB_TAX_AT_284;
 	Pbcd_fpoint64(:13,4:)                              XX_TB_MAXTAX_AT_285;
@@ -169,23 +169,23 @@ Pstruct XX_TRNSCTN_EDIT_DT_172_ijnltif {
 	Pe_string_FW(:1:)                                  XX_TRNSCTN_EDIT_DT_2_177;
 	Pebc_uint64(:2:)                                   XX_TRNSCTN_EDIT_DT_DY_178;
 };
-Punion gen_union_12_ijnltif_t {
+Palternates gen_alternates_12_ijnltif_t {
 	XX_TRNSCTN_EDIT_DT_172_ijnltif                     XX_TRNSCTN_EDIT_DT_172;
 	Pe_string_FW(:10:)                                 XX_TRNSCTN_EDIT_DT_A_179;
 };
-Punion gen_union_13_ijnltif_t {
+Palternates gen_alternates_13_ijnltif_t {
 	XX_TRNSCTN_EDIT_TM_180_ijnltif                     XX_TRNSCTN_EDIT_TM_180;
 	Pe_string_FW(:8:)                                  XX_TRNSCTN_EDIT_TM_A_186;
 };
-Punion gen_union_14_ijnltif_t {
+Palternates gen_alternates_14_ijnltif_t {
 	XX_JRNL_DT_208_ijnltif                             XX_JRNL_DT_208;
 	Pe_string_FW(:10:)                                 XX_JRNL_DT_A_215;
 };
-Punion gen_union_15_ijnltif_t {
+Palternates gen_alternates_15_ijnltif_t {
 	XX_JRNL_TM_216_ijnltif                             XX_JRNL_TM_216;
 	Pe_string_FW(:8:)                                  XX_JRNL_TM_A_222;
 };
-Punion gen_union_16_ijnltif_t {
+Palternates gen_alternates_16_ijnltif_t {
 	Pe_string_FW(:10:)                                 XX_CUST_SEG_GRP_258;
 	XX_CUST_SEG_CD_259_ijnltif                         XX_CUST_SEG_CD_259;
 };
@@ -193,8 +193,8 @@ Pstruct XX_INTRN_INFO_168_ijnltif {
 	Pe_string_FW(:10:)                                 XX_FACCT_CD_169;
 	Pe_string_FW(:10:)                                 XX_PROD_SVC_CD_170;
 	Pe_string_FW(:5:)                                  XX_CSUB_ACCT_CD_171;
-	gen_union_12_ijnltif_t                             GEN_UNION_12_ijnltif;
-	gen_union_13_ijnltif_t                             GEN_UNION_13_ijnltif;
+	gen_alternates_12_ijnltif_t                        GEN_ALTERNATES_12_ijnltif;
+	gen_alternates_13_ijnltif_t                        GEN_ALTERNATES_13_ijnltif;
 	Psbh_int64(:4:)                                    XX_TRNSCTN_GP_NB_187;
 	Psbh_int64(:4:)                                    XX_TRNSCTN_DERVD_NB_188;
 	Psbh_int64(:4:)                                    XX_TRNSCTN_OFFST_NB_189;
@@ -210,8 +210,8 @@ Pstruct XX_INTRN_INFO_168_ijnltif {
 	Pe_string_FW(:1:)                                  XX_LDS_ACSS_MTHD_CD_205;
 	Pe_string_FW(:1:)                                  XX_FILE_TYPE_CD_206;
 	Pe_string_FW(:4:)                                  XX_SRCE_SYS_ID_207;
-	gen_union_14_ijnltif_t                             GEN_UNION_14_ijnltif;
-	gen_union_15_ijnltif_t                             GEN_UNION_15_ijnltif;
+	gen_alternates_14_ijnltif_t                        GEN_ALTERNATES_14_ijnltif;
+	gen_alternates_15_ijnltif_t                        GEN_ALTERNATES_15_ijnltif;
 	Pe_string_FW(:1:)                                  XX_ACRL_CD_223;
 	Pe_string_FW(:3:)                                  XX_PRCSS_TYPE_CD_224;
 	Pe_string_FW(:1:)                                  XX_BVSJ_RVNU_CAT_CD_225;
@@ -247,7 +247,7 @@ Pstruct XX_INTRN_INFO_168_ijnltif {
 	Pe_string_FW(:2:)                                  XX_TAX_CAT_CD_FILL_255;
 	Pe_string_FW(:2:)                                  XX_RVNU_XFER_CD_FILL_256;
 	Pe_string_FW(:1:)                                  XX_UNREGU_SVC_ND_257;
-	gen_union_16_ijnltif_t                             GEN_UNION_16_ijnltif;
+	gen_alternates_16_ijnltif_t                        GEN_ALTERNATES_16_ijnltif;
 	Pe_string_FW(:6:)                                  XX_RVPP_CD_262;
 	Pe_string_FW(:1:)                                  XX_CHANNEL_ID_263;
 	Pe_string_FW(:1:)                                  XX_JRNL_ENTRY_IET_TRANS_264;
@@ -271,19 +271,19 @@ Pstruct XX_BR_OFFC_CODE_REF_128_ijnltif {
 	Pe_string_FW(:8:)                                  XX_BR_OFFC_CD_129;
 	Pe_string_FW(:3:)                                  FILLER_130;
 };
-Punion gen_union_8_ijnltif_t {
+Palternates gen_alternates_8_ijnltif_t {
 	Pe_string_FW(:10:)                                 XX_ORGN_SRCE_COM_DLM_DT_109;
 	Pe_string_FW(:10:)                                 XX_BUNDLE_NAME_110;
 };
-Punion gen_union_9_ijnltif_t {
+Palternates gen_alternates_9_ijnltif_t {
 	Pe_string_FW(:11:)                                 XX_CUST_SRVC_CTR_CD_127;
 	XX_BR_OFFC_CODE_REF_128_ijnltif                    XX_BR_OFFC_CODE_REF_128;
 };
-Punion gen_union_10_ijnltif_t {
+Palternates gen_alternates_10_ijnltif_t {
 	Pe_string_FW(:20:)                                 XX_INV_NB_131;
 	XX_BL_DT_BL_PRD_132_ijnltif                        XX_BL_DT_BL_PRD_132;
 };
-Punion gen_union_11_ijnltif_t {
+Palternates gen_alternates_11_ijnltif_t {
 	Pe_string_FW(:2:)                                  XX_RVNU_XFER_CD_155;
 	XX_RVNU_XFER_FROM_TO_CD_156_ijnltif                XX_RVNU_XFER_FROM_TO_CD_156;
 };
@@ -291,7 +291,7 @@ Pstruct XX_SUMM_KEY5_105_ijnltif {
 	Pe_string_FW(:1:)                                  XX_ORGN_SRCE_COMPLX_CD_106;
 	Pe_string_FW(:2:)                                  XX_ORGN_SRCE_PRCSS_ENTY_CD_107;
 	Pe_string_FW(:2:)                                  XX_ORGN_SRCE_BL_CYC_CD_108;
-	gen_union_8_ijnltif_t                              GEN_UNION_8_ijnltif;
+	gen_alternates_8_ijnltif_t                         GEN_ALTERNATES_8_ijnltif;
 	Pe_string_FW(:2:)                                  XX_SRCE_DEST_CD_111;
 	Pe_string_FW(:5:)                                  XX_SVC_PRVD_ID_112;
 	Pe_string_FW(:8:)                                  XX_WRLS_CYC_END_DT_113;
@@ -308,8 +308,8 @@ Pstruct XX_SUMM_KEY5_105_ijnltif {
 	Pe_string_FW(:4:)                                  XX_PRICE_ELEM_GP_124;
 	Pe_string_FW(:1:)                                  XX_CHG_FREQ_125;
 	Pe_string_FW(:2:)                                  XX_TAX_CALC_ND_126;
-	gen_union_9_ijnltif_t                              GEN_UNION_9_ijnltif;
-	gen_union_10_ijnltif_t                             GEN_UNION_10_ijnltif;
+	gen_alternates_9_ijnltif_t                         GEN_ALTERNATES_9_ijnltif;
+	gen_alternates_10_ijnltif_t                        GEN_ALTERNATES_10_ijnltif;
 	Pe_string_FW(:10:)                                 XX_LINE_NB_139;
 	Pe_string_FW(:3:)                                  XX_TYPE_OF_SVC_140;
 	Pe_string_FW(:1:)                                  XX_III_ND_141;
@@ -326,7 +326,7 @@ Pstruct XX_SUMM_KEY5_105_ijnltif {
 	Pe_string_FW(:1:)                                  XX_SVC_GP_SRCE_ND_152;
 	Pe_string_FW(:1:)                                  XX_GEO_SRCE_ND_153;
 	Pe_string_FW(:2:)                                  XX_TAX_CAT_CD_154;
-	gen_union_11_ijnltif_t                             GEN_UNION_11_ijnltif;
+	gen_alternates_11_ijnltif_t                        GEN_ALTERNATES_11_ijnltif;
 	Pe_string_FW(:1:)                                  XX_FILLER_159;
 	Pbcd_fpoint64(:9,2:)                               XX_VOLUME_QTY_160;
 	Pe_string_FW(:8:)                                  XX_PRICING_PLAN_161;
@@ -342,12 +342,12 @@ Pstruct XX_EXTRACT_TYPE_RED_100_ijnltif {
 	Pe_string_FW(:1:)                                  XX_MEMO_JRN_CD_102;
 	Pe_string_FW(:1:)                                  XX_FILLER_103;
 };
-Punion gen_union_7_ijnltif_t {
+Palternates gen_alternates_7_ijnltif_t {
 	Pe_string_FW(:3:)                                  XX_EXTRACT_TYPE_99;
 	XX_EXTRACT_TYPE_RED_100_ijnltif                    XX_EXTRACT_TYPE_RED_100;
 };
 Pstruct XX_EX_TYP_DIS_PL_98_ijnltif {
-	gen_union_7_ijnltif_t                              GEN_UNION_7_ijnltif;
+	gen_alternates_7_ijnltif_t                         GEN_ALTERNATES_7_ijnltif;
 	Pe_string_FW(:1:)                                  XX_DISCOUNT_PLAN_104;
 };
 Pstruct XX_TAX_REASONS_88_ijnltif {
@@ -362,11 +362,11 @@ Pstruct XX_BL_DT_64_ijnltif {
 	Pe_string_FW(:2:)                                  XX_BL_YR_66;
 	Pe_string_FW(:2:)                                  XX_BL_MO_67;
 };
-Punion gen_union_5_ijnltif_t {
+Palternates gen_alternates_5_ijnltif_t {
 	Pe_string_FW(:2:)                                  XX_ACCT_TYPE_CD_53;
 	Pe_string_FW(:2:)                                  XX_EXEMPT_RSN_CD_54;
 };
-Punion gen_union_6_ijnltif_t {
+Palternates gen_alternates_6_ijnltif_t {
 	Pe_string_FW(:5:)                                  XX_TAX_EXMPT_CD_87;
 	XX_TAX_REASONS_88_ijnltif                          XX_TAX_REASONS_88;
 };
@@ -375,7 +375,7 @@ Pstruct XX_SUMM_KEY4_48_ijnltif {
 	Pe_string_FW(:1:)                                  XX_JRNL_ADJMT_TO_CD_50;
 	Pe_string_FW(:1:)                                  XX_ACCT_STAT_TO_CD_51;
 	Pe_string_FW(:4:)                                  XX_STUDY_CD_52;
-	gen_union_5_ijnltif_t                              GEN_UNION_5_ijnltif;
+	gen_alternates_5_ijnltif_t                         GEN_ALTERNATES_5_ijnltif;
 	Pe_string_FW(:1:)                                  XX_HOME_ST_TAX_ND_55;
 	Pe_string_FW(:1:)                                  XX_MSG_RT_CLS_CD_56;
 	Pe_string_FW(:1:)                                  XX_MSG_TYPE_CD_57;
@@ -405,7 +405,7 @@ Pstruct XX_SUMM_KEY4_48_ijnltif {
 	Pe_string_FW(:13:)                                 XX_GEO_SHIP_TO_CD_84;
 	Pe_string_FW(:13:)                                 XX_GEO_SHIP_FROM_CD_85;
 	Pe_string_FW(:1:)                                  XX_TAX_SVC_GP_CD_86;
-	gen_union_6_ijnltif_t                              GEN_UNION_6_ijnltif;
+	gen_alternates_6_ijnltif_t                         GEN_ALTERNATES_6_ijnltif;
 	Pe_string_FW(:1:)                                  XX_JRNL_JURIS_CD_94;
 	Pe_string_FW(:1:)                                  XX_MPS_JURIS_CD_95;
 	Pe_string_FW(:3:)                                  XX_SBS_CIA_SRCE_ND_96;
@@ -414,7 +414,7 @@ Pstruct XX_SUMM_KEY3_44_ijnltif {
 	Pe_string_FW(:1:)                                  XX_RCRG_NRCRG_ND_45;
 	Pe_string_FW(:10:)                                 XX_PROD_ELEM_CD_46;
 };
-Punion gen_union_4_ijnltif_t {
+Palternates gen_alternates_4_ijnltif_t {
 	Pe_string_FW(:2:)                                  XX_TRNSCTN_CD_38;
 	Pe_string_FW(:2:)                                  XX_VTNS_ADJMT_RSN_CD_39;
 };
@@ -424,7 +424,7 @@ Pstruct XX_SUMM_KEY2_32_ijnltif {
 	Pe_string_FW(:1:)                                  XX_ADJMT_SRCE_CD_35;
 	Pe_string_FW(:1:)                                  XX_JRNL_ADJMT_CAT_CD_36;
 	Pe_string_FW(:1:)                                  XX_CASH_TRNSCTN_CD_37;
-	gen_union_4_ijnltif_t                              GEN_UNION_4_ijnltif;
+	gen_alternates_4_ijnltif_t                         GEN_ALTERNATES_4_ijnltif;
 	Pe_string_FW(:1:)                                  XX_ACCT_QLTY_CNTL_ND_40;
 };
 Pstruct XX_EDIT_GRP2_31_ijnltif {
@@ -453,15 +453,15 @@ Pstruct XX_VTNS_ACCT_NB_16_ijnltif {
 	Pe_string_FW(:11:)                                 XX_VTNS_SBU_17;
 	Pe_string_FW(:2:)                                  XX_FILLER_18;
 };
-Punion gen_union_1_ijnltif_t {
+Palternates gen_alternates_1_ijnltif_t {
 	Pe_string_FW(:13:)                                 XX_ACCT_NB_15;
 	XX_VTNS_ACCT_NB_16_ijnltif                         XX_VTNS_ACCT_NB_16;
 };
-Punion gen_union_2_ijnltif_t {
+Palternates gen_alternates_2_ijnltif_t {
 	Pe_string_FW(:13:)                                 XX_LEAD_ACCT_NB_20;
 	XX_VTNS_MSTR_ACCT_NB_21_ijnltif                    XX_VTNS_MSTR_ACCT_NB_21;
 };
-Punion gen_union_3_ijnltif_t {
+Palternates gen_alternates_3_ijnltif_t {
 	Pe_string_FW(:13:)                                 XX_BL_ACCT_NB_24;
 	XX_VTNS_ACCT_ID_25_ijnltif                         XX_VTNS_ACCT_ID_25;
 };
@@ -475,10 +475,10 @@ Pstruct XX_SUMM_KEY1_5_ijnltif {
 	Pe_string_FW(:5:)                                  XX_MISC_RVNU_TYPE_CD_12;
 	Pe_string_FW(:3:)                                  XX_FEAT_CD_13;
 	Pe_string_FW(:13:)                                 XX_GEO_CD_14;
-	gen_union_1_ijnltif_t                              GEN_UNION_1_ijnltif;
+	gen_alternates_1_ijnltif_t                         GEN_ALTERNATES_1_ijnltif;
 	Pe_string_FW(:1:)                                  XX_RC_LVL_CD_19;
-	gen_union_2_ijnltif_t                              GEN_UNION_2_ijnltif;
-	gen_union_3_ijnltif_t                              GEN_UNION_3_ijnltif;
+	gen_alternates_2_ijnltif_t                         GEN_ALTERNATES_2_ijnltif;
+	gen_alternates_3_ijnltif_t                         GEN_ALTERNATES_3_ijnltif;
 };
 Pstruct XX_EDIT_GRP1_4_ijnltif {
 	XX_SUMM_KEY1_5_ijnltif                             XX_SUMM_KEY1_5;
@@ -488,13 +488,13 @@ Pstruct XX_EXTRN_INFO_3_ijnltif {
 	Pbcd_fpoint64(:11,2:)                              XX_JRNL_GRS_AT_30;
 	XX_EDIT_GRP2_31_ijnltif                            XX_EDIT_GRP2_31;
 };
-Punion gen_union_17_ijnltif_t {
+Palternates gen_alternates_17_ijnltif_t {
 	XX_INTRN_INFO_168_ijnltif                          XX_INTRN_INFO_168;
 	XX_EXTRN_MCC_INFO_2_266_ijnltif                    XX_EXTRN_MCC_INFO_2_266;
 };
 Pstruct XX_EXTRN_INTRN_INFO_2_ijnltif {
 	XX_EXTRN_INFO_3_ijnltif                            XX_EXTRN_INFO_3;
-	gen_union_17_ijnltif_t                             GEN_UNION_17_ijnltif;
+	gen_alternates_17_ijnltif_t                        GEN_ALTERNATES_17_ijnltif;
 };
 Pstruct XX_DTL_RC_1_ijnltif {
 	XX_EXTRN_INTRN_INFO_2_ijnltif                      XX_EXTRN_INTRN_INFO_2;
@@ -518,7 +518,7 @@ Pstruct XX_TRL_RC_1_ijnltift {
 Pstruct cpy_ijnltift {
 	XX_TRL_RC_1_ijnltift                               XX_TRL_RC_1;
 };
-Precord Punion d_or_t {
+Precord Palternates d_or_t {
 	cpy_ijnltift                                       is_t;
 	cpy_ijnltif                                        is_d;
 };

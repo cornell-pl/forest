@@ -1114,7 +1114,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		             P.assignS(PT.Id tag, PT.String newTag))]
 
 	      fun writeAdjustLenSs shouldAdjustBuffer = 
-		[PT.Expr(PT.Call(PT.Id(if shouldAdjustBuffer then "PDCI_TLEN_UPDATES" else "PDCI_FINAL_TLEN_UPDATES"), []))]
+		[PT.Expr(PT.Call(PT.Id(if shouldAdjustBuffer then "PCGEN_TLEN_UPDATES" else "PCGEN_FINAL_TLEN_UPDATES"), []))]
 
 	      fun writeFieldSs (fname, argXs, adjustLengths) = 
 		  [P.assignS(PT.Id tlen, 
@@ -1197,7 +1197,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun mkWriteFunED (wIOName, fParams, wBufName, lastArgs) =
 			  P.mkFunctionEDecl(wIOName, fParams,
 					    PT.Compound ( introSs @
-							  [PT.Expr(PT.Call(PT.Id "PDCI_WRITE2IO_USE_WRITE2BUF",
+							  [PT.Expr(PT.Call(PT.Id "PCGEN_WRITE2IO_USE_WRITE2BUF",
 									   [PT.String(wIOName),
 									    doWriteS(wBufName, lastArgs)])),
 							   PT.Return(P.intX ~1)]),
@@ -1356,8 +1356,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			                        (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
 		      val macroCallS =
 			  case baseWhatStr of
-			      NONE   => PT.Expr(PT.Call(PT.Id "PDCI_ENUM_ACC_REP2IO", [PT.String whatStr, repioCallX]))
-			    | SOME b => PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_ACC_REP2IO", [PT.String whatStr, b, repioCallX]))
+			      NONE   => PT.Expr(PT.Call(PT.Id "PCGEN_ENUM_ACC_REP2IO", [PT.String whatStr, repioCallX]))
+			    | SOME b => PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_ACC_REP2IO", [PT.String whatStr, b, repioCallX]))
 		      val XXXsetWhatS = PT.IfThen(P.notX(PT.Id what),
 						 PT.Compound[P.assignS(PT.Id what, PT.String whatStr)])
 		      val XXXbodySs = PT.Compound([XXXsetWhatS, PT.Return(repioCallX)])
@@ -1614,7 +1614,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      fun unionRepX (base, name, isVirt) =
 		  if isVirt then tmpId(name) else unionBranchX(base, name)
 	      fun structRepX (base, name, isVirt) =
-		  if isVirt then PT.Id(name) else fieldX(rep, name)
+		  if isVirt then tmpId(name) else fieldX(rep, name)
 
 	      (* Does some checks, produces tuple with 4 lists:                                      *)
 	      (*     1. A list of all of the field names in order that they occur                    *)
@@ -1631,12 +1631,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  if structOrUnion = "Pstruct"
 			  then [(name, fieldX(rep, name))]
 			  else [(name, unionBranchX(rep, name))]
-		      fun tmpMapping (name) =
-			  if structOrUnion = "Punion"
-			  then [(name, tmpId(name))]
-			  else []
-		      fun tmpNm (name) =
-			  (if structOrUnion = "Pstruct" then name else tmpName(name))
+		      fun tmpMapping (name) = [(name, tmpId(name))]
                       (* gen functions produce [( [name], [name(if omit)|empty], [var-pair(if omit)|empty], [empty(if omit)|mapping] )] *)
 		      fun genLocFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
@@ -1648,7 +1643,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				val () = ( CTcnvType ty  (* ensure that the type has been defined *) ; () )
 			    in
 				if isVirtual
-				then [( [name], [name], [(tmpNm(name), ty)], tmpMapping(name)    )]
+				then [( [name], [name], [(tmpName(name), ty)], tmpMapping(name)    )]
 				else [( [name], [],     [],                  normMapping(name)   )]
 			    end
 			  )
@@ -1664,7 +1659,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     case isPadsTy tyname
 			      of PTys.CTy =>
 				 if isVirtual
-				 then [( [name], [name], [(tmpNm(name),tyname)], tmpMapping(name)    )]
+				 then [( [name], [name], [(tmpName(name),tyname)], tmpMapping(name)    )]
 				 else [( [name], [],     [],                     normMapping(name)   )]
 			       | _        => 
 				 let val ty = P.makeTypedefPCT(lookupTy ((getPadsName tyname), repSuf, #repname))
@@ -1674,7 +1669,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						else () )
 				 in
 				     if isVirtual
-				     then [( [name], [name], [(tmpNm(name),ty)], tmpMapping(name)    )]
+				     then [( [name], [name], [(tmpName(name),ty)], tmpMapping(name)    )]
 				     else [( [name], [],     [],                 normMapping(name)   )]
 				 end
 			 end
@@ -2052,14 +2047,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val callMacroS =
 				  case modPredXOpt of NONE =>
 					if isRecord then 
-					  PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_READ_REC", [PT.String(readName), readBaseX]))
+					  PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_READ_REC", [PT.String(readName), readBaseX]))
 					else
-					  PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_READ", [PT.String(readName), readBaseX]))
+					  PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_READ", [PT.String(readName), readBaseX]))
 				  | SOME modPredX => 
 					if isRecord then 
-					  PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_READ_CHECK_REC", [PT.String(readName), readBaseX, modPredX]))
+					  PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_READ_CHECK_REC", [PT.String(readName), readBaseX, modPredX]))
 					else
-					  PT.Expr(PT.Call(PT.Id "PDCI_TYPEDEF_READ_CHECK", [PT.String(readName), readBaseX, modPredX]))
+					  PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_READ_CHECK", [PT.String(readName), readBaseX, modPredX]))
 
 		      in
 			  [callMacroS, stdReturnS]
@@ -2192,17 +2187,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
 
-	      fun cnvPStruct ({name: string, isRecord, containsRecord, largeHeuristic, isSource, 
-                               params: (pcty * pcdecr) list, fields: (pcty, pdty, pcdecr, pcexp) PX.PSField list, 
-                               postCond}) = 
+	      fun cnvPStruct {isAlt, name: string, isRecord, containsRecord, largeHeuristic, isSource, 
+                              params: (pcty * pcdecr) list, fields: (pcty, pdty, pcdecr, pcexp) PX.PSField list, 
+                              postCond} = 
 	          let val structName = name
 					   (* -- collection of expressions to be substituted for in constraints *)
 					   (* -- efficiency could be improved with better representations *)
+		      val structAlt = if isAlt then "ALT" else "STRUCT"
                       val subList : (string * pcexp) list ref = ref []
                       fun addSub (a : string * pcexp) = subList := (a:: (!subList))
 		      val (allVars, omitNames, omitVars, allVarSubs) = checkStructUnionFields("Pstruct", structName, fields)
 		      val _ = List.map addSub allVarSubs
-
 		      val dummy = "_dummy"
 		      val cParams : (string * pcty) list = List.map mungeParam params
 		      val paramNames = #1(ListPair.unzip cParams)
@@ -2439,7 +2434,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					   (* -- Some helper functions *)
 
 		      fun stReadPre (name) =
-			  [PT.Expr(PT.Call(PT.Id("PDCI_STRUCT_READ_PRE"),
+			  [PT.Expr(PT.Call(PT.Id("PCGEN_"^structAlt^"_READ_PRE"),
 					   [PT.String readName, PT.Id name]))]
 
 		      fun stReadPostCheck (name, predOpt, isEndian, swapBytesLoc) =
@@ -2447,7 +2442,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      NONE       => []
 			    | SOME check => let val endAdd = (if isEndian then "_ENDIAN" else "")
 						val swapBytesCall = (if isEndian then [PL.swapBytesX(swapBytesLoc)] else [])
-						val macroCall = PT.Expr(PT.Call(PT.Id("PDCI_STRUCT_READ_POST_CHECK"^endAdd),
+						val macroCall = PT.Expr(PT.Call(PT.Id("PCGEN_"^structAlt^"_READ_POST_CHECK"^endAdd),
 										[PT.String readName, PT.Id name]
 										@ swapBytesCall @ [check]))
 					    in
@@ -2456,164 +2451,82 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      val first = ref true
 		      val next  = ref 0
-		      fun genReadFull {pty: PX.Pty, args: pcexp list, name: string, 
+
+		      fun genReadFull {pty: PX.Pty, args: pcexp list, name: string,
 				       isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				       pred:pcexp option, comment} = 
-			  let val modPred = modStructPred(structName, name, allVars, pred, (!subList))
+				       pred:pcexp option, comment} =
+			  let val firstNext = if isAlt then "" else (if !first then (first := false; "_FIRST") else "_NEXT")
+			      val modPred = modStructPred(structName, name, allVars, pred, (!subList))
 			      val readFieldName = lookupTy(pty, readSuf, #readname)
-                              val modEdNameX = fieldX(pd, name)
 			      val repX = structRepX(rep, name, isVirtual)
-						   (* XXX_REMOVE val () = addSub(name, repX)  *)
-			      val (locDecls, locX) = if isVirtual
-						     then ([P.varDeclS'(PL.locPCT, tloc)], PT.Id tloc)
-						     else ([], P.dotX(modEdNameX, PT.Id loc))
 			      val modArgs = List.map (PTSub.substExps (!subList)) args
                               val () = checkParamTys(name, readFieldName, modArgs, 2, 2)
 			      val comment = ("Read field '"^name^"'"^ 
 					     (if isEndian then ", doing endian check" else ""))
 			      val commentS = P.mkCommentS (comment)
-			      val ifPanicSs = 
-				  PT.Compound
-                                      [PL.setPanicS(P.addrX(modEdNameX)),
-				       P.assignS(P.dotX(modEdNameX, PT.Id errCode), PL.P_PANIC_SKIPPED),  
-				       P.assignS(P.dotX(modEdNameX, PT.Id nerr), P.intX 1),
-                                       PL.getLocS(PT.Id pads, P.addrX locX),
-				       P.plusAssignS(fieldX (pd, nerr), P.intX 1)]
-			      val readCallTestX = P.eqX(PL.P_ERROR,
-							PL.readFunX(readFieldName, 
-								    PT.Id pads, 
-								    P.addrX(fieldX(m, name)),
-								    modArgs,
-								    P.addrX(fieldX(pd, name)),
-								    P.addrX repX))
-			      val readErrS = PT.Compound( (* error reading field *)
-							      [PT.IfThen(PL.getSpecLevelX(PT.Id pads),
-									 PT.Compound[PT.Return PL.P_ERROR]),
-							       PT.IfThen(PL.testPanicX(P.addrX(fieldX(pd, name))),
-									 PT.Compound[PL.setPanicS(PT.Id pd)])]
-							  @ reportStructErrorSs(PL.P_STRUCT_FIELD_ERR, false, locX))
-			      val userCheckS = PT.Compound (stReadPostCheck(name, modPred, isEndian, repX))
-			      val ifNoPanicSs =
-                                  PT.Compound ([
-				  PL.getLocBeginS(PT.Id pads, P.addrX locX),
-				  (case modPred
-				    of NONE     => PT.IfThen(readCallTestX, readErrS)
-				     | SOME exp => PT.IfThenElse(readCallTestX, readErrS, userCheckS))
-				  ])
-			      fun addLocDecl s = PT.Compound (locDecls @ s)
-			      val readS = if !first then (first:= false; addLocDecl [ifNoPanicSs])
-					  else addLocDecl(
-					       [PT.IfThenElse(PL.testPanicX(PT.Id pd), ifPanicSs, ifNoPanicSs)])
+			      val readCallX = PL.readFunX(readFieldName, 
+							  PT.Id pads,
+							  P.addrX(fieldX(m, name)),
+							  modArgs,
+							  P.addrX(fieldX(pd, name)),
+							  P.addrX repX)
+			      val macroNm = "PCGEN_"^structAlt^"_READ"^firstNext
+			      val macroArgs = [PT.String readName, PT.Id name, readCallX]
+			      val (checkAdd, checkArgs) =
+				  case modPred of NONE => ("", [])
+						| SOME predX => ("_CHECK", [predX])
+			      val (endAdd, endArgs) =
+				  if isEndian then ("_ENDIAN", [PL.swapBytesX(repX)]) else ("", [])
+			      val macroCallS = PT.Expr(PT.Call(PT.Id(macroNm^checkAdd^endAdd), macroArgs @ checkArgs @ endArgs))
 			  in
-			      [commentS, readS]
+			      [commentS, macroCallS]
 			  end
 
-		      fun genReadBrief e = 
-			  let val e = PTSub.substExps (!subList) e
+		      fun genReadBrief eOrig =
+			  let val firstNext = if isAlt then "" else (if !first then (first := false; "_FIRST") else "_NEXT")
+			      val e = PTSub.substExps (!subList) (unMark eOrig)
 			      val eptopt = getRE e
 			      val (expTy, expAst) = cnvExpression e
 			      val cstr = CExptoString expAst
 
-			      fun getCharComment eX = 
+			      fun getCharComment eX =
 				  let val cval = #1(evalExpr eX)
 				      val defaultStr = CExptoString expAst
 				  in
-				      case cval of NONE => (defaultStr, defaultStr)
-						 | SOME e => ( ("'" ^ (Char.toString(Char.chr (IntInf.toInt e))) ^"'",
-								Char.toString ( Char.chr (IntInf.toInt e)))
-					  		       handle _ => (defaultStr, defaultStr))
+				      case cval of NONE => defaultStr
+						 | SOME e => ("'" ^ (Char.toString(Char.chr (IntInf.toInt e))) ^"'"
+					  		      handle _ => defaultStr)
 				  end
-			      fun getStrLen eX = 
+			      fun getStrLen eX =
 				  case eX of PT.String s => P.intX (String.size s)
-					   | PT.MARKexpression(l, e) => getStrLen e
 					   | _ => PL.strLen eX
-			      val (scanName, initStmts, expr, cleanStmts, gotoLabelOpt, commentV, cstr) = 
-				  if Option.isSome eptopt then 
-				      let val regArgX = P.addrX(PT.Id "regexplit")
-					  val () = next := !next +1
-					  val nextLabel = name ^ "_" ^ (Int.toString (!next))
-				      in (PL.reScan1,
-					  [PL.regexpDeclNullS("regexplit"),
-					   PT.IfThen(P.eqX(PL.P_ERROR, PL.regexpCompileCStrX(PT.Id pads, e, regArgX, 
-											     PT.String "Literal Field", PT.String readName)),
-						     PT.Compound([ P.assignS(fieldX(pd, errCode), PL.P_INVALID_REGEXP),
-								   P.plusAssignS(fieldX(pd, nerr), P.intX 1),
-								   PL.setPanicS(PT.Id pd),
-								   PT.Goto nextLabel] ))],
-					  regArgX,
-					  [PL.regexpCleanupS(PT.Id pads, regArgX)],
-					  SOME nextLabel, cstr, cstr)
-				      end
-				  else if CTisIntorChar expTy then 
-				      let val (commentV, cstr) = getCharComment e
-				      in (PL.charlitScan1, [], e, [], NONE, commentV, cstr)end
-				  else if CTisString expTy 
-				  then (PL.strlitScan1,
-					[P.varDeclS(PL.stringPCT, "strlit", 
-						    PT.InitList[e, P.zero]),
-					 P.assignS(P.dotX(PT.Id "strlit", PT.Id "len"), getStrLen e)],
-					P.addrX(PT.Id "strlit"), [], NONE, cstr, cstr)
-				  else (PE.error ("Currently only characters, strings, and regular expressions "^
-					          "supported as delimiters. Delimiter type: "^ (CTtoString expTy));
-					(PL.charlit, [], e, [], NONE, cstr, cstr))
-
-			      val commentS = P.mkCommentS ("Read delimiter field: "^ commentV)
-
-			      val tpdDecl = P.varDeclS'(PL.base_pdPCT, tpd)
-			      val offsetDecl = P.varDeclS'(PL.sizePCT, "offset")
-			      fun reportBriefErrorSs (code, msg, offset) = 
-				  let val locX = P.dotX(PT.Id tpd, PT.Id loc)
-				  in
-				      [PT.IfThen(PL.getSpecLevelX(PT.Id pads), PT.Compound(cleanStmts @ [PT.Return PL.P_ERROR])),
-				       PT.IfThen(P.eqX(P.zero, fieldX(pd, nerr)), 
-						 PT.Compound [P.assignS(fieldX(pd, errCode), code),
-							      PL.getLocEndS(PT.Id pads, P.addrX(locX), offset),
-							      P.assignS(fieldX(pd, loc), locX),
-							      PL.userErrorS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc)),
-									    code, readName, PT.String (msg^": %s"), [PL.fmtStr(cstr)])]),
-				       P.plusAssignS(fieldX(pd, nerr), P.intX 1)]
-				  end
-
-			      val notPanicSs = 
-				  [PL.getLocBeginS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc))),
-				   PT.IfThenElse(P.eqX(PL.P_OK,
-						       PL.scan1FunX(scanName, 
-								    PT.Id pads, expr, P.trueX,
-								    P.falseX, (* panic=0 *)
-										  P.addrX (PT.Id "offset"))),
-						 PT.Compound(
-						 [PT.IfThen(PT.Id "offset",
-							    PT.Compound(reportBriefErrorSs (PL.P_STRUCT_EXTRA_BEFORE_SEP, 
-											    "Extra data before separator", ~2)))]),
-						 PT.Compound(reportBriefErrorSs (PL.P_MISSING_LITERAL,
-										 "Missing literal", ~1)
-							     @ [PL.setPanicS(PT.Id pd)]))]
-
-			      val panicRecoverSs = 
-                                  [PT.IfThenElse(PL.testPanicX(PT.Id pd),
-						 PT.Compound [
-						 PT.IfThen(P.neqX(PL.P_ERROR,
-								  PL.scan1FunX(scanName, PT.Id pads, 
-									       expr, P.trueX, 
-									       P.trueX, (* panic=1 *)
-											    P.addrX (PT.Id "offset"))),
-							   PT.Compound[PL.unsetPanicS(PT.Id pd)])], 
-						 PT.Compound notPanicSs)]
-			      val endSs = case gotoLabelOpt of NONE => cleanStmts
-							     | SOME s => [PT.Labeled(s, PT.Compound cleanStmts)]
 			  in
-			      [PT.Compound(
-                               [commentS, 
-				PT.Compound(tpdDecl :: offsetDecl :: initStmts
-					    @ panicRecoverSs @ endSs)])]
+			      if Option.isSome eptopt then
+				  [P.mkCommentS("Read delimeter field: "^cstr),
+				   PT.Expr(PT.Call(PT.Id("PCGEN_"^structAlt^"_READ"^firstNext^"_REGEXP"),
+						   [PT.String readName, e])) ]
+			      else if CTisIntorChar expTy then
+				  [P.mkCommentS("Read delimter field: "^getCharComment(e)),
+				   PT.Expr(PT.Call(PT.Id("PCGEN_"^structAlt^"_READ"^firstNext^"_CHAR_LIT"),
+						   [PT.String readName, e])) ]
+			      else if CTisString expTy then
+				  [P.mkCommentS("Read delimeter field: "^cstr),
+				   PT.Expr(PT.Call(PT.Id("PCGEN_"^structAlt^"_READ"^firstNext^"_STR_LIT"),
+						   [PT.String readName, e, getStrLen(e)])) ]
+			      else
+				  (PE.error ("Currently only characters, strings, and regular expressions "^
+					     "supported as delimiters. Delimiter type: "^ (CTtoString expTy));
+				   [P.mkCommentS("XXX Cannot read delimeter field: "^cstr),
+				    P.mkCommentS("Currently only characters, strings, and regular expressions "^
+					         "supported as delimiters.")])
 			  end
 
 			      (* Given manifest representation, generate operations to set representation *)
 		      fun genReadMan {tyname, name, args, isVirtual, pred, expr, comment} =
-			  let val modPred = modStructPred(structName, name, allVars, pred, (!subList))
+			  let val firstNext = if isAlt then "" else (if !first then (first := false; "_FIRST") else "_NEXT")
+			      val modPred = modStructPred(structName, name, allVars, pred, (!subList))
 			      val () = chkManArgs("Pstruct", structName, tyname, name, args, (!subList))
 			      val repX = structRepX(rep, name, isVirtual)
-						   (* val () = addSub(name, repX)  XXX_REMOVE *)
 			      val pos = "ppos"
 			      val needsPosition = PTSub.isFreeInExp([PNames.position], expr) 
 			      val () = pushLocalEnv()
@@ -2689,12 +2602,18 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
 		      val readFields = mungeFields genReadFull genReadBrief genReadMan fields  
 		                                   (* does type checking *)
+		      val augReadFields = if isAlt
+					  then [PT.Compound([PT.Expr(PT.Call(PT.Id "PCGEN_ALT_READ_BEGIN", [PT.String readName]))]
+							    @ readFields
+							    @ [PT.Expr(PT.Call(PT.Id "PCGEN_ALT_READ_END", [PT.String readName]))])]
+					  else readFields
 		      val (postLocSs, postCondSs) = genCheckPostConstraint postCond
-                      val readRecord = if isRecord then genReadEOR (readName, reportStructErrorSs) () else []
+		      val eorCheck =
+			  if isRecord then [PT.Expr(PT.Call(PT.Id "PCGEN_FIND_EOR", [PT.String readName]))] else []
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val localDeclSs = omitVarDecls(omitVars)
 		      val localInitSs = omitVarInits(omitVars)
-		      val bodyS = localDeclSs @ postLocSs @ localInitSs @ readFields @ postCondSs @ readRecord
+		      val bodyS = localDeclSs @ postLocSs @ localInitSs @ augReadFields @ postCondSs @ eorCheck
 		      val bodySs = if 0 = List.length localDeclSs andalso 0 = List.length postCond
 				   then bodyS else [PT.Compound bodyS]
 		      val bodySs = bodySs @ [stdReturnS]
@@ -2812,7 +2731,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					      (* -- generate report function pstruct *)
 					      (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix , ) *)
 		      val reportFun = (reportSuf o accSuf) name
-		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PDCI_STRUCT_ACC_REP_NOVALS", []))]
+		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_ACC_REP_NOVALS", []))]
 		      val reportNerrSs = [chkPrint(
  				          PL.errAccReport(PT.Id pads, PT.Id outstr, PT.String "Errors", 
 							  PT.String "errors", P.intX ~1, getFieldX(acc, nerr))) ]
@@ -2893,14 +2812,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 									       @ ss)])
 						       end
 
-		      fun genWriteBrief e = 
-			  if PTSub.isFreeInExp(omitNames, e) then
+		      fun genWriteBrief eOrig = 
+			  if PTSub.isFreeInExp(omitNames, eOrig) then
 			      (PE.warn ("Omitted field passed to literal field. Omitted literal write from "^writeName); [])
 			  else
-			      let val e = PTSub.substExps (!subList) e
+			      let val e = PTSub.substExps (!subList) (unMark eOrig)
 				  val reOpt = getRE e
 				  val (expTy, expAst) = cnvExpression e
-				  val isString = equalType(expTy, CTstring)
+				  val isString = CTisString expTy
 				  val writeFieldName = if Option.isSome reOpt then PL.reWriteBuf
 				                       else if isString then PL.cstrlitWriteBuf
 						       else PL.charlitWriteBuf
@@ -2958,7 +2877,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      let val e = PTSub.substExps (!subList) e
 				  val reOpt = getRE e
 				  val (expTy, expAst) = cnvExpression e
-				  val isString = equalType(expTy, CTstring)
+				  val isString = CTisString expTy
 				  val writeXMLFieldName = if Option.isSome reOpt then PL.reWriteXMLBuf
 							  else if isString then PL.cstrlitWriteXMLBuf
 							  else PL.charlitWriteXMLBuf
@@ -2978,10 +2897,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val wrXMLFieldsSs = mungeFields genXMLWriteFull genXMLWriteBrief genXMLWriteMan fields
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val bodySs = wrFieldsSs
-		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PDCI_TAG_OPEN_XML_OUT", [PT.String(name)])),
-				       PT.Expr(PT.Call(PT.Id "PDCI_STRUCT_PD_XML_OUT", []))]
+		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)])),
+				       PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_PD_XML_OUT", []))]
 				      @ wrXMLFieldsSs
-				      @ [PT.Expr(PT.Call(PT.Id "PDCI_TAG_CLOSE_XML_OUT", []))]
+				      @ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
                       val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
 
 						    (***** struct PADS-Galax *****)
@@ -3051,8 +2970,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  end
 
 	     fun cnvPUnion {name: string, params: (pcty * pcdecr) list, 
-			     isRecord: bool, containsRecord, largeHeuristic, isSource: bool, 
-			     variants: (pcty, pdty, pcdecr, pcexp) PX.PBranches, postCond : (pcexp PX.PPostCond) list} = 
+			    isRecord: bool, containsRecord, largeHeuristic, isSource: bool, 
+			    variants: (pcty, pdty, pcdecr, pcexp) PX.PBranches, postCond : (pcexp PX.PPostCond) list} =
 		 let val unionName = name
 		     fun whereNeedsEndChk1 cond =
 			 case cond
@@ -3389,54 +3308,54 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  else (if theTag = !lastTag then "_LAST" else "_NEXT")))
 
 		     fun uReadSetup (theTag)=
-			 [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_SETUP"^addStat),
+			 [PT.Expr(PT.Call(PT.Id("PCGEN_UNION_READ_SETUP"^addStat),
 					  [PT.String readName, PT.Id theTag, repCleanup, repInit, pdCleanup, pdInit]))]
 		     fun uRead (theTag, predOpt, readCall) =
 			 case predOpt of
-			     NONE       => [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ"^addSFNL(theTag)),
+			     NONE       => [PT.Expr(PT.Call(PT.Id("PCGEN_UNION_READ"^addSFNL(theTag)),
 							    [PT.String readName, PT.Id theTag, repCleanup, repInit,
 							     pdCleanup,  pdInit, readCall]))]
-			   | SOME check => [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ"^addSFNL(theTag)^"_CHECK"),
+			   | SOME check => [PT.Expr(PT.Call(PT.Id("PCGEN_UNION_READ"^addSFNL(theTag)^"_CHECK"),
 							    [PT.String readName, PT.Id theTag, repCleanup, repInit,
 							     pdCleanup,  pdInit, readCall, check]))]
 		     fun uReadManPre (theTag, isVirt) =
-			 [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_MAN"^addSFN(theTag)^addVirt(isVirt)^"_PRE"),
+			 [PT.Expr(PT.Call(PT.Id("PCGEN_UNION_READ_MAN"^addSFN(theTag)^addVirt(isVirt)^"_PRE"),
 					  [PT.String readName, PT.Id theTag, repInit, pdInit]))]
 		     fun uReadManPost (theTag, predOpt) =
 			 case predOpt of
-			     NONE       => [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_MAN"^addStat^"_POST"),
+			     NONE       => [PT.Expr(PT.Call(PT.Id("PCGEN_UNION_READ_MAN"^addStat^"_POST"),
 							    [PT.String readName]))]
-			   | SOME check => [PT.Expr(PT.Call(PT.Id("PDCI_UNION_READ_MAN"^addStat^"_POST_CHECK"),
+			   | SOME check => [PT.Expr(PT.Call(PT.Id("PCGEN_UNION_READ_MAN"^addStat^"_POST_CHECK"),
 							    [PT.String readName, repCleanup, pdCleanup, check]))]
 		     fun uReadFailed () =
 			 [P.mkCommentS ("Failed to match any branch of union "^unionName),
-			  PT.Expr(PT.Call(PT.Id "PDCI_UNION_READ_FAILED",
+			  PT.Expr(PT.Call(PT.Id "PCGEN_UNION_READ_FAILED",
 					  [PT.String readName, PT.String unionName, errTag]))]
 		     fun swReadPostCheck (theTag, predOpt) =
 			 case predOpt of
 			     NONE       => []
-			   | SOME check => [PT.Expr(PT.Call(PT.Id "PDCI_SWUNION_READ_POST_CHECK",
+			   | SOME check => [PT.Expr(PT.Call(PT.Id "PCGEN_SWUNION_READ_POST_CHECK",
 							    [PT.String readName, PT.Id theTag, errTag, check]))]
 		     fun swRead (theTag, predOpt, readCall) =
-			 [PT.Expr(PT.Call(PT.Id("PDCI_SWUNION_READ"^addStat),
+			 [PT.Expr(PT.Call(PT.Id("PCGEN_SWUNION_READ"^addStat),
 					  [PT.String readName, PT.Id theTag, errTag, repCleanup, repInit,
 					   pdCleanup, pdInit, readCall]))]
 			 @ swReadPostCheck(theTag, predOpt) @ [PT.Break]
 		     fun swReadManPre (theTag, isVirt) =
-			 [PT.Expr(PT.Call(PT.Id("PDCI_SWUNION_READ_MAN"^addStat^addVirt(isVirt)^"_PRE"),
+			 [PT.Expr(PT.Call(PT.Id("PCGEN_SWUNION_READ_MAN"^addStat^addVirt(isVirt)^"_PRE"),
 					  [PT.String readName, PT.Id theTag, repCleanup, repInit, pdCleanup, pdInit]))]
 		     fun swReadManPost (theTag, predOpt) = swReadPostCheck(theTag, predOpt) @ [PT.Break]
 		     fun swReadFailed () =
 		         [P.mkCommentS ("Switch value does not match any branch of switched union "^unionName),
-			  PT.Expr(PT.Call(PT.Id "PDCI_SWUNION_READ_FAILED",
+			  PT.Expr(PT.Call(PT.Id "PCGEN_SWUNION_READ_FAILED",
 					  [PT.String readName, PT.String unionName, errTag]))]
 
 		     fun readWhereCheck () =
 		         if List.length whereReadXs = 0 then []
 			 else let val needsEnd = if whereNeedsEnd then "_END" else ""
 				  val whereCheck
-				    = case descOpt of NONE => "PDCI_UNION_READ_WHERE"^needsEnd^"_CHECK"
-						    | SOME descriminator => "PDCI_SWUNION_READ_WHERE"^needsEnd^"_CHECK"
+				    = case descOpt of NONE => "PCGEN_UNION_READ_WHERE"^needsEnd^"_CHECK"
+						    | SOME descriminator => "PCGEN_SWUNION_READ_WHERE"^needsEnd^"_CHECK"
 			      in
 				  [P.mkCommentS "Checking Pwhere constraint",
 				   PT.Expr(PT.Call(PT.Id whereCheck, [PT.String readName, (P.andBools whereReadXs)]))]
@@ -3445,7 +3364,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun branchesDoneLabel() = mkLabel("branches_done")
 		     fun finalCheckLabel()   = mkLabel("final_check")
 		     fun eorCheck() =
-			 (if isRecord then [PT.Expr(PT.Call(PT.Id "PDCI_FIND_EOR", [PT.String readName]))] else [])
+			 (if isRecord then [PT.Expr(PT.Call(PT.Id "PCGEN_FIND_EOR", [PT.String readName]))] else [])
 
                      fun genReadFull{pty :PX.Pty, args:pcexp list, name:string,
 				     isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
@@ -3454,7 +3373,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val readFieldName = lookupTy(pty, readSuf, #readname)
 	                     val tyname = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
 			     val repX = unionRepX(rep, name, isVirtual)
-			     (* val () = addSub(name, repX)  XXX_REMOVE *)
 			     val modArgs = List.map (PTSub.substExps (!subList)) args
                              val () = checkParamTys(name, readFieldName, modArgs, 2, 2)
 			     val () = pushLocalEnv()
@@ -3766,7 +3684,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
 			  else cnvPtyForReport(reportSuf, ioSuf, pty, name, "branch")
                       fun genAccReportBrief e = []
-		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PDCI_UNION_ACC_REP_NOVALS", []))]
+		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_ACC_REP_NOVALS", []))]
 		      val reportVariants = mungeFields genAccReportFull genAccReportBrief 
 			                      (genAccReportMan (reportSuf, ioSuf, "branch")) variants
                       val reportFunEDs = genReportFuns(reportFun, "union "^name, 
@@ -3844,11 +3762,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val writeXMLBranchSs = nameXMLBranchSs @ errBranchSs
                       val writeVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound writeBranchSs)]
                       val writeXMLVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound writeXMLBranchSs)]
-		      val bodySs = writeVariantsSs 
-		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PDCI_TAG_OPEN_XML_OUT", [PT.String(name)])),
-				       PT.Expr(PT.Call(PT.Id "PDCI_UNION_PD_XML_OUT", []))]
+		      val bodySs = writeVariantsSs
+		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)])),
+				       PT.Expr(PT.Call(PT.Id "PCGEN_UNION_PD_XML_OUT", []))]
 					@ writeXMLVariantsSs
-					@ [PT.Expr(PT.Call(PT.Id "PDCI_TAG_CLOSE_XML_OUT", []))]
+					@ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
                       val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
 
 		      (***** union PADS-Galax *****)
@@ -5188,10 +5106,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  PT.Compound (writeXMLBaseSs))])]
 		 val writeTermSs = writeLitSs termXOpt
 		 val bodySs = writeArraySs @ writeTermSs
-		 val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PDCI_TAG_OPEN_XML_OUT", [PT.String(name)])),
-				  PT.Expr(PT.Call(PT.Id "PDCI_ARRAY_PD_XML_OUT", []))]
+		 val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)])),
+				  PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_PD_XML_OUT", []))]
 				 @ writeXMLArraySs
-				 @ [PT.Expr(PT.Call(PT.Id "PDCI_TAG_CLOSE_XML_OUT", []))]
+				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
 		 val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
 
                  (* Generate is function array case *)
@@ -5317,7 +5235,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       in
 				   doArraySs @ doArrayDetailSs
 			       end(* end SOME acc case *))
-			 val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PDCI_ARRAY_ACC_REP_NOVALS", []))]
+			 val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_ACC_REP_NOVALS", []))]
 			 val theBodySs = checkNoValsSs @ doLengthSs @ doElems 
 			 val baseTyStr = case baseTy of PX.Name n => n
 			 val theFunEDs = genReportFuns(reportFun, "array "^ name ^" of "^baseTyStr, accPCT, theBodySs)
@@ -5528,7 +5446,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  val writeXMLBaseName = PL.cstrlitWriteXMLBuf
                   val expX = PT.Call(PT.Id(toStringSuf name), [P.starX(PT.Id rep)])
 		  val bodySs = writeFieldSs(writeBaseName, [expX], isRecord)
-		  val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PDCI_ENUM_XML_OUT", [PT.String(name), PT.Id(toStringSuf name)]))]
+		  val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ENUM_XML_OUT", [PT.String(name), PT.Id(toStringSuf name)]))]
 		  val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
 
 	          (***** enum PADS-Galax *****)
@@ -5746,14 +5664,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 	  in
 	      case decl 
-	      of PX.PTypedef   t => cnvPTypedef   t
-              |  PX.PStruct    s => cnvPStruct    s
-              |  PX.PUnion     u => cnvPUnion     u
-              |  PX.PArray     a => cnvPArray     a
-              |  PX.PEnum      e => cnvPEnum      e
-	      |  PX.PCharClass c => cnvPCharClass c
-	      |  PX.PSelect    s => cnvPSelect    s
-	      |  PX.PDone        => cnvPDone      ()
+	      of PX.PTypedef     t => cnvPTypedef   t
+              |  PX.PStruct      s => cnvPStruct    s
+              |  PX.PUnion       u => cnvPUnion     u
+              |  PX.PArray       a => cnvPArray     a
+              |  PX.PEnum        e => cnvPEnum      e
+	      |  PX.PCharClass   c => cnvPCharClass c
+	      |  PX.PSelect      s => cnvPSelect    s
+	      |  PX.PDone          => cnvPDone      ()
 	  end
 
       fun pcnvStat (PX.PComment s) =  wrapSTMT(Ast.StatExt(AstExt.SComment(formatComment s)))

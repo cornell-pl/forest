@@ -100,7 +100,8 @@ regress_o:  sanity_check \
           regress_test_charclass_o \
           regress_rw_struct_o \
           regress_rw_pendian_o \
-          regress_rwxml_struct_o
+          regress_rwxml_struct_o \
+          regress_rwxml_alt1_o
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -134,7 +135,8 @@ regress_d:  sanity_check \
           regress_test_charclass_d \
           regress_rw_struct_d \
           regress_rw_pendian_d \
-          regress_rwxml_struct_d
+          regress_rwxml_struct_d \
+          regress_rwxml_alt1_d
 	@echo " "; echo "DONE"; echo " "
 
 dib_tests: sanity_check $(DIB_TESTS)
@@ -317,6 +319,12 @@ regress_rwxml_struct_o: rwxml_struct
 
 regress_rwxml_struct_d: rwxml_struct_d
 	@(args=""; input="../../data/ex_data.struct"; suf=""; $(RegressInput))
+
+regress_rwxml_alt1_o: rwxml_alt1
+	@(args=""; input="../../data/alt1"; suf=""; $(RegressInput))
+
+regress_rwxml_alt1_d: rwxml_alt1_d
+	@(args=""; input="../../data/alt1"; suf=""; $(RegressInput))
 
 regress_test_cpyrecgen_rps_o: test_cpyrecgen_rps_o
 	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(RegressInput))

@@ -56,7 +56,7 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 4 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.allArrayElts.qname.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.allArrayElts.qname.allArrayElts.label : struct label_t
+<top>.question.allArrayElts.qname.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          4    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.allArrayElts.qname.allArrayElts.label]
@@ -100,7 +100,7 @@ String lengths: good vals:          4    bad vals:          0    pcnt-bad:    0.
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.allArrayElts.qname.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.allArrayElts.qname.arrayDetail[0].label : struct label_t
+<top>.question.allArrayElts.qname.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.allArrayElts.qname.arrayDetail[0].label]
@@ -122,7 +122,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.allArrayElts.qname.arrayDetail[1]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.allArrayElts.qname.arrayDetail[1].label : struct label_t
+<top>.question.allArrayElts.qname.arrayDetail[1].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.allArrayElts.qname.arrayDetail[1].label]
@@ -144,7 +144,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.allArrayElts.qname.arrayDetail[2]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.allArrayElts.qname.arrayDetail[2].label : struct label_t
+<top>.question.allArrayElts.qname.arrayDetail[2].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.allArrayElts.qname.arrayDetail[2].label]
@@ -166,7 +166,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.allArrayElts.qname.arrayDetail[3]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.allArrayElts.qname.arrayDetail[3].label : struct label_t
+<top>.question.allArrayElts.qname.arrayDetail[3].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.allArrayElts.qname.arrayDetail[3].label]
@@ -205,7 +205,7 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 4 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.arrayDetail[0].qname.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.arrayDetail[0].qname.allArrayElts.label : struct label_t
+<top>.question.arrayDetail[0].qname.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          4    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.arrayDetail[0].qname.allArrayElts.label]
@@ -249,7 +249,7 @@ String lengths: good vals:          4    bad vals:          0    pcnt-bad:    0.
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.arrayDetail[0].qname.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.arrayDetail[0].qname.arrayDetail[0].label : struct label_t
+<top>.question.arrayDetail[0].qname.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.arrayDetail[0].qname.arrayDetail[0].label]
@@ -271,7 +271,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.arrayDetail[0].qname.arrayDetail[1]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.arrayDetail[0].qname.arrayDetail[1].label : struct label_t
+<top>.question.arrayDetail[0].qname.arrayDetail[1].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.arrayDetail[0].qname.arrayDetail[1].label]
@@ -293,7 +293,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.arrayDetail[0].qname.arrayDetail[2]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.arrayDetail[0].qname.arrayDetail[2].label : struct label_t
+<top>.question.arrayDetail[0].qname.arrayDetail[2].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.arrayDetail[0].qname.arrayDetail[2].label]
@@ -315,7 +315,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.question.arrayDetail[0].qname.arrayDetail[3]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.question.arrayDetail[0].qname.arrayDetail[3].label : struct label_t
+<top>.question.arrayDetail[0].qname.arrayDetail[3].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.question.arrayDetail[0].qname.arrayDetail[3].label]
@@ -370,7 +370,7 @@ Union tag: good vals:       2892    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:       2892  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.allArrayElts.name.allArrayElts.label : struct label_t
+<top>.answer.allArrayElts.name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:       1396    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.name.allArrayElts.label]
@@ -460,7 +460,7 @@ Union tag: good vals:       1496    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:       1496  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.allArrayElts.name.arrayDetail[0].label : struct label_t
+<top>.answer.allArrayElts.name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:       1396    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.name.arrayDetail[0].label]
@@ -544,9 +544,9 @@ good vals:        100    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1396 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.allArrayElts.name.arrayDetail[1]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.allArrayElts.name.arrayDetail[1].label : struct label_t
+<top>.answer.allArrayElts.name.arrayDetail[1].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.allArrayElts.name.arrayDetail[1].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -678,7 +678,7 @@ Union tag: good vals:          5    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          5  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.NS.name.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.NS.name.allArrayElts.label : struct label_t
+<top>.answer.allArrayElts.rdata.NS.name.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.NS.name.allArrayElts.label]
@@ -736,7 +736,7 @@ Union tag: good vals:          3    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          3  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.NS.name.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.NS.name.arrayDetail[0].label : struct label_t
+<top>.answer.allArrayElts.rdata.NS.name.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.NS.name.arrayDetail[0].label]
@@ -781,9 +781,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 2 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.NS.name.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.NS.name.arrayDetail[1].label : struct label_t
+<top>.answer.allArrayElts.rdata.NS.name.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.allArrayElts.rdata.NS.name.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -834,7 +834,7 @@ Union tag: good vals:        106    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:        106  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.CNAME.name.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.CNAME.name.allArrayElts.label : struct label_t
+<top>.answer.allArrayElts.rdata.CNAME.name.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:         49    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.CNAME.name.allArrayElts.label]
@@ -917,7 +917,7 @@ Union tag: good vals:         57    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:         57  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.CNAME.name.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.CNAME.name.arrayDetail[0].label : struct label_t
+<top>.answer.allArrayElts.rdata.CNAME.name.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:         49    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.CNAME.name.arrayDetail[0].label]
@@ -993,9 +993,9 @@ good vals:          8    bad vals:          0    pcnt-bad:    0.000
 Union tag: 49 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.CNAME.name.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.CNAME.name.arrayDetail[1].label : struct label_t
+<top>.answer.allArrayElts.rdata.CNAME.name.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.allArrayElts.rdata.CNAME.name.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -1026,7 +1026,7 @@ Union tag: good vals:          2    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          2  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SOA.mname.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SOA.mname.allArrayElts.label : struct label_t
+<top>.answer.allArrayElts.rdata.SOA.mname.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SOA.mname.allArrayElts.label]
@@ -1053,7 +1053,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SOA.mname.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SOA.mname.arrayDetail[0].label : struct label_t
+<top>.answer.allArrayElts.rdata.SOA.mname.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SOA.mname.arrayDetail[0].label]
@@ -1075,9 +1075,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SOA.mname.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SOA.mname.arrayDetail[1].label : struct label_t
+<top>.answer.allArrayElts.rdata.SOA.mname.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.allArrayElts.rdata.SOA.mname.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -1103,7 +1103,7 @@ Union tag: good vals:          2    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          2  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SOA.rname.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SOA.rname.allArrayElts.label : struct label_t
+<top>.answer.allArrayElts.rdata.SOA.rname.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SOA.rname.allArrayElts.label]
@@ -1130,7 +1130,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SOA.rname.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SOA.rname.arrayDetail[0].label : struct label_t
+<top>.answer.allArrayElts.rdata.SOA.rname.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SOA.rname.arrayDetail[0].label]
@@ -1152,9 +1152,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SOA.rname.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SOA.rname.arrayDetail[1].label : struct label_t
+<top>.answer.allArrayElts.rdata.SOA.rname.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.allArrayElts.rdata.SOA.rname.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -1254,7 +1254,7 @@ Union tag: good vals:        112    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:        112  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.MX.exchange.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.MX.exchange.allArrayElts.label : struct label_t
+<top>.answer.allArrayElts.rdata.MX.exchange.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.MX.exchange.allArrayElts.label]
@@ -1325,7 +1325,7 @@ Union tag: good vals:        107    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:        107  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.MX.exchange.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.MX.exchange.arrayDetail[0].label : struct label_t
+<top>.answer.allArrayElts.rdata.MX.exchange.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.MX.exchange.arrayDetail[0].label]
@@ -1388,9 +1388,9 @@ good vals:        102    bad vals:          0    pcnt-bad:    0.000
 Union tag: 5 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.MX.exchange.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.MX.exchange.arrayDetail[1].label : struct label_t
+<top>.answer.allArrayElts.rdata.MX.exchange.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.allArrayElts.rdata.MX.exchange.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -1500,7 +1500,7 @@ Array lengths: 21 array length values, 100 pcnt good, 100 pcnt identical:       
 Union tag: 105 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SRV.target.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SRV.target.allArrayElts.label : struct label_t
+<top>.answer.allArrayElts.rdata.SRV.target.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:        105    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SRV.target.allArrayElts.label]
@@ -1554,7 +1554,7 @@ String lengths: good vals:        105    bad vals:          0    pcnt-bad:    0.
 Union tag: 21 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[0].label : struct label_t
+<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:         21    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[0].label]
@@ -1601,7 +1601,7 @@ String lengths: good vals:         21    bad vals:          0    pcnt-bad:    0.
 Union tag: 21 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[1].label : struct label_t
+<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:         21    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[1].label]
@@ -1623,7 +1623,7 @@ good vals:         21    bad vals:          0    pcnt-bad:    0.000
 Union tag: 21 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[2]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[2].label : struct label_t
+<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[2].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:         21    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[2].label]
@@ -1645,7 +1645,7 @@ good vals:         21    bad vals:          0    pcnt-bad:    0.000
 Union tag: 21 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[3]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[3].label : struct label_t
+<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[3].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:         21    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[3].label]
@@ -1667,7 +1667,7 @@ good vals:         21    bad vals:          0    pcnt-bad:    0.000
 Union tag: 21 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[4]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[4].label : struct label_t
+<top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[4].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:         21    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.allArrayElts.rdata.SRV.target.arrayDetail[4].label]
@@ -1756,9 +1756,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[0].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[0].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[0].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[0].name.allArrayElts.ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -1774,9 +1774,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[0].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[0].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[0].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[0].name.arrayDetail[0].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -1848,7 +1848,7 @@ Union tag: good vals:          2    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          2  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.arrayDetail[0].rdata.SOA.mname.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[0].rdata.SOA.mname.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[0].rdata.SOA.mname.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[0].rdata.SOA.mname.allArrayElts.label]
@@ -1875,7 +1875,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[0].rdata.SOA.mname.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[0].rdata.SOA.mname.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[0].rdata.SOA.mname.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[0].rdata.SOA.mname.arrayDetail[0].label]
@@ -1897,9 +1897,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[0].rdata.SOA.mname.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[0].rdata.SOA.mname.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[0].rdata.SOA.mname.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.arrayDetail[0].rdata.SOA.mname.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -1925,7 +1925,7 @@ Union tag: good vals:          2    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          2  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.arrayDetail[0].rdata.SOA.rname.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[0].rdata.SOA.rname.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[0].rdata.SOA.rname.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[0].rdata.SOA.rname.allArrayElts.label]
@@ -1952,7 +1952,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[0].rdata.SOA.rname.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[0].rdata.SOA.rname.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[0].rdata.SOA.rname.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[0].rdata.SOA.rname.arrayDetail[0].label]
@@ -1974,9 +1974,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[0].rdata.SOA.rname.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[0].rdata.SOA.rname.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[0].rdata.SOA.rname.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.arrayDetail[0].rdata.SOA.rname.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -2157,9 +2157,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[1].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[1].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[1].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[1].name.allArrayElts.ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -2175,9 +2175,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[1].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[1].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[1].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[1].name.arrayDetail[0].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -2289,7 +2289,7 @@ Union tag: good vals:          2    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          2  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.arrayDetail[1].rdata.MX.exchange.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[1].rdata.MX.exchange.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[1].rdata.MX.exchange.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[1].rdata.MX.exchange.allArrayElts.label]
@@ -2316,7 +2316,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[1].rdata.MX.exchange.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[1].rdata.MX.exchange.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[1].rdata.MX.exchange.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[1].rdata.MX.exchange.arrayDetail[0].label]
@@ -2338,9 +2338,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[1].rdata.MX.exchange.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[1].rdata.MX.exchange.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[1].rdata.MX.exchange.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.arrayDetail[1].rdata.MX.exchange.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -2465,9 +2465,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[2].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[2].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[2].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[2].name.allArrayElts.ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -2483,9 +2483,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[2].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[2].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[2].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[2].name.arrayDetail[0].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -2597,7 +2597,7 @@ Union tag: good vals:          2    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          2  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.arrayDetail[2].rdata.MX.exchange.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[2].rdata.MX.exchange.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[2].rdata.MX.exchange.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[2].rdata.MX.exchange.allArrayElts.label]
@@ -2624,7 +2624,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[2].rdata.MX.exchange.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[2].rdata.MX.exchange.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[2].rdata.MX.exchange.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[2].rdata.MX.exchange.arrayDetail[0].label]
@@ -2646,9 +2646,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[2].rdata.MX.exchange.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[2].rdata.MX.exchange.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[2].rdata.MX.exchange.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.arrayDetail[2].rdata.MX.exchange.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -2773,9 +2773,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[3].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[3].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[3].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[3].name.allArrayElts.ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -2791,9 +2791,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[3].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[3].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[3].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[3].name.arrayDetail[0].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -3004,9 +3004,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[4].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[4].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[4].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[4].name.allArrayElts.ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -3022,9 +3022,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[4].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[4].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[4].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[4].name.arrayDetail[0].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -3080,7 +3080,7 @@ Union tag: good vals:          2    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          2  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.arrayDetail[4].rdata.NS.name.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[4].rdata.NS.name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[4].rdata.NS.name.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[4].rdata.NS.name.allArrayElts.label]
@@ -3107,7 +3107,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[4].rdata.NS.name.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[4].rdata.NS.name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[4].rdata.NS.name.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[4].rdata.NS.name.arrayDetail[0].label]
@@ -3129,9 +3129,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[4].rdata.NS.name.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[4].rdata.NS.name.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[4].rdata.NS.name.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.arrayDetail[4].rdata.NS.name.arrayDetail[1].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -3308,9 +3308,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[5].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[5].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[5].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[5].name.allArrayElts.ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -3326,9 +3326,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[5].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[5].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[5].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[5].name.arrayDetail[0].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -3378,9 +3378,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[5].rdata.NS.name.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[5].rdata.NS.name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[5].rdata.NS.name.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.arrayDetail[5].rdata.NS.name.allArrayElts.ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -3396,9 +3396,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[5].rdata.NS.name.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[5].rdata.NS.name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[5].rdata.NS.name.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-(No struct label_t values.)
+(No struct dns_label_t values.)
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 <top>.answer.arrayDetail[5].rdata.NS.name.arrayDetail[0].ptr : struct ptr_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -3581,7 +3581,7 @@ Union tag: good vals:          2    bad vals:          0    pcnt-bad:    0.000
         SUMMING              count:          2  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.answer.arrayDetail[6].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[6].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[6].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[6].name.allArrayElts.label]
@@ -3608,7 +3608,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[6].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[6].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[6].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[6].name.arrayDetail[0].label]
@@ -3630,9 +3630,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[6].name.arrayDetail[1]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[6].name.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[6].name.arrayDetail[1].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[6].name.arrayDetail[1].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -3802,7 +3802,7 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 5 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[6].rdata.SRV.target.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[6].rdata.SRV.target.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[6].rdata.SRV.target.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[6].rdata.SRV.target.allArrayElts.label]
@@ -3849,7 +3849,7 @@ String lengths: good vals:          5    bad vals:          0    pcnt-bad:    0.
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[0].label]
@@ -3871,7 +3871,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[1].label]
@@ -3893,7 +3893,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[2]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[2].label : struct label_t
+<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[2].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[2].label]
@@ -3915,7 +3915,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[3]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[3].label : struct label_t
+<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[3].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[3].label]
@@ -3937,7 +3937,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[4]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[4].label : struct label_t
+<top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[4].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[6].rdata.SRV.target.arrayDetail[4].label]
@@ -4012,9 +4012,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[7].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[7].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[7].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[7].name.allArrayElts.ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -4030,9 +4030,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[7].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[7].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[7].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[7].name.arrayDetail[0].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -4202,7 +4202,7 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 5 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[7].rdata.SRV.target.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[7].rdata.SRV.target.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[7].rdata.SRV.target.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[7].rdata.SRV.target.allArrayElts.label]
@@ -4247,7 +4247,7 @@ String lengths: good vals:          5    bad vals:          0    pcnt-bad:    0.
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[0].label]
@@ -4269,7 +4269,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[1].label]
@@ -4291,7 +4291,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[2]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[2].label : struct label_t
+<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[2].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[2].label]
@@ -4313,7 +4313,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[3]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[3].label : struct label_t
+<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[3].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[3].label]
@@ -4335,7 +4335,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[4]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[4].label : struct label_t
+<top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[4].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[7].rdata.SRV.target.arrayDetail[4].label]
@@ -4410,9 +4410,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[8].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[8].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[8].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[8].name.allArrayElts.ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -4428,9 +4428,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[8].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[8].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[8].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[8].name.arrayDetail[0].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -4600,7 +4600,7 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 5 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[8].rdata.SRV.target.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[8].rdata.SRV.target.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[8].rdata.SRV.target.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[8].rdata.SRV.target.allArrayElts.label]
@@ -4647,7 +4647,7 @@ String lengths: good vals:          5    bad vals:          0    pcnt-bad:    0.
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[0].label]
@@ -4669,7 +4669,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[1].label]
@@ -4691,7 +4691,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[2]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[2].label : struct label_t
+<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[2].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[2].label]
@@ -4713,7 +4713,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[3]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[3].label : struct label_t
+<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[3].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[3].label]
@@ -4735,7 +4735,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[4]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[4].label : struct label_t
+<top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[4].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[8].rdata.SRV.target.arrayDetail[4].label]
@@ -4810,9 +4810,9 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[9].name.allArrayElts]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[9].name.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[9].name.allArrayElts.label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[9].name.allArrayElts.ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -4828,9 +4828,9 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: ptr (    2)
 [Describing each tag arm of <top>.answer.arrayDetail[9].name.arrayDetail[0]]
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-<top>.answer.arrayDetail[9].name.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[9].name.arrayDetail[0].label : struct dns_label_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-(No struct label_t values.)
+(No struct dns_label_t values.)
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 <top>.answer.arrayDetail[9].name.arrayDetail[0].ptr : struct ptr_t
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -5000,7 +5000,7 @@ Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:        
 Union tag: 5 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[9].rdata.SRV.target.allArrayElts]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[9].rdata.SRV.target.allArrayElts.label : struct label_t
+<top>.answer.arrayDetail[9].rdata.SRV.target.allArrayElts.label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[9].rdata.SRV.target.allArrayElts.label]
@@ -5047,7 +5047,7 @@ String lengths: good vals:          5    bad vals:          0    pcnt-bad:    0.
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[0]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[0].label : struct label_t
+<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[0].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[0].label]
@@ -5069,7 +5069,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[1]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[1].label : struct label_t
+<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[1].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[1].label]
@@ -5091,7 +5091,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[2]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[2].label : struct label_t
+<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[2].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[2].label]
@@ -5113,7 +5113,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[3]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[3].label : struct label_t
+<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[3].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[3].label]
@@ -5135,7 +5135,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 Union tag: 1 tag values, 100 pcnt good, 100 pcnt identical: label (    1)
 [Describing each tag arm of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[4]]
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[4].label : struct label_t
+<top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[4].label : struct dns_label_t
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.answer.arrayDetail[9].rdata.SRV.target.arrayDetail[4].label]

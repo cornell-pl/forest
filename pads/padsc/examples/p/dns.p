@@ -1,5 +1,3 @@
-#include <stdio.h> // for fprintf debugging use only
-
 // On input ../data/dns:
 //   1 question, 1496 answers, 0 auths, 0 others ?
 //   The 1 question has domain_name research.att.com, length 9 + 4 + 4 + 1 = 18,
@@ -22,7 +20,7 @@
 
 /* PADS specification for DNS */
 
-Pstruct label_t {
+Pstruct dns_label_t {
    Psbh_uint8(:1:)        length : length < 64; 
    Pa_string_FW(:length:) l;  
 };
@@ -37,7 +35,7 @@ Pstruct ptr_t {
 };
 
 Punion label_or_ptr {
-  label_t label;
+  dns_label_t label;
   ptr_t   ptr;
 };
 

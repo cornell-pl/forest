@@ -66,7 +66,8 @@ structure ParseTreeExt =
                         baseTy: Pty,
 			args   : 'exp list, 
 			pred : ('exp PPredicate) option}
-         | PStruct of {name : string, 
+         | PStruct of {isAlt : bool,
+		       name : string, 
 		       params: ('ct * 'decr) list, 
 		       isRecord : bool, 
                        containsRecord : bool, 

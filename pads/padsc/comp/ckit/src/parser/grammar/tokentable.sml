@@ -94,6 +94,7 @@ struct
                ("Pterm", Tokens.PTERM),
                ("Ptypedef", Tokens.PTYPEDEF),
                ("Punion", Tokens.PUNION),
+               ("Palternates", Tokens.PALTERNATES),
                ("Pwhere", Tokens.PWHERE)
               ])
 

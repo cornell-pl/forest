@@ -27,6 +27,10 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
 
+INCDIR = $(PADS_HOME)/padsc/include
+PCGEN_IN = $(INCDIR)/pcgen-macros.h
+PCGEN = $(INCDIR)/pcgen-macros-gen.h
+
 OBJS_O = rbuf.o default_io_disc.o pads-gen.o pads-acc-gen.o pads-read-gen.o pads-write-gen.o pads-misc-gen.o
 
 OBJS_D = $(OBJS_O:%.o=%_d.o)
@@ -41,8 +45,6 @@ GEN_FILES = pads-acc-gen.c \
             pads-macros-gen.h      \
             pads-read-macros-gen.h \
             pads-write-macros-gen.h
-
-INSTALL_INCLUDES = pads.h rbuf.h pads-private.h io_disc.h
 
 all :
 	@$(MAKE) -f ../GNUmakefile dogen
@@ -78,10 +80,10 @@ $(SHARED_PADSLIB_NM_D) : $(STATIC_PADSLIB_NM_D)
 
 install : all
 	+@(set -x ; \
-	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_O) $(INSTALLROOT)/lib/; \
-	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PADSLIB_NM_O) $(INSTALLROOT)/lib/; \
-	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_D) $(INSTALLROOT)/lib/; \
-	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PADSLIB_NM_D) $(INSTALLROOT)/lib/; \
+	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_O) $(INSTALLROOT)/lib; \
+	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PADSLIB_NM_O) $(INSTALLROOT)/lib; \
+	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_D) $(INSTALLROOT)/lib; \
+	$(PADS_HOME)/scripts/install-sh -c -m 555 $(SHARED_PADSLIB_NM_D) $(INSTALLROOT)/lib; \
 	( cd $(INSTALLROOT)/lib; \
 	  $(RM) $(SHARED_PADSLIB_NM_ALT1_O); \
 	  ln $(SHARED_PADSLIB_NM_O) $(SHARED_PADSLIB_NM_ALT1_O); \
@@ -91,15 +93,16 @@ install : all
 	  ln $(SHARED_PADSLIB_NM_D) $(SHARED_PADSLIB_NM_ALT1_D); \
 	  $(RM) $(SHARED_PADSLIB_NM_ALT2_D); \
 	  ln $(SHARED_PADSLIB_NM_D) $(SHARED_PADSLIB_NM_ALT2_D); \
-	  ); \
-	for file in $(INSTALL_INCLUDES); do \
-		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALLROOT)/include/; \
-	done;)
+	  ) )
+	@(cd $(INCDIR); $(MAKE) install)
 
-dogen : $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(INCLUDE_DEPS)
+dogen : $(PCGEN) $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(INCLUDE_DEPS)
 	@echo "Building generated source files"
 	$(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(CURDIR) $(PADS_HOME)
 	touch dogen
+
+$(PCGEN) : $(SCRIPTS)/mksrc.pl $(PCGEN_IN)
+	@(cd $(INCDIR); $(MAKE) all)
 
 pads-gen-g.o: pads-gen.c $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
@@ -118,7 +121,6 @@ clean :
 
 veryclean : clean
 	$(RM) dogen $(GEN_FILES)
-	(cd $(INSTALLROOT)/include; $(RM) $(INSTALL_INCLUDES); )
 
  # End of rules that are run from the arch directory
 endif

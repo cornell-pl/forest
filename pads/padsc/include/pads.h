@@ -13,6 +13,7 @@
 
 #include <ast.h>
 #include <ast_common.h>
+#include <stdio.h>
 #include <swap.h>
 #include <tm.h>
 #include <vmalloc.h>
@@ -895,6 +896,10 @@ struct Ppos_s {
 /* HELPER: P_POS_EQ tests whether pos1 is the same IO position as pos2 */
 /* #define P_POS_EQ(pos1, pos2) ((pos1).num == (pos2).num && (pos1).byte == (pos2).byte) */
 #define P_POS_EQ(pos1, pos2) ((pos1).offset == (pos2).offset)
+
+/* HELPER: P_POS_GT tests whether pos1 is greater than pos2 */
+/* #define P_POS_GT(pos1, pos2) ((pos1).num > (pos2).num || ((pos1).num > (pos2).num && (pos1).byte > (pos2).byte)) */
+#define P_POS_GT(pos1, pos2) ((pos1).offset > (pos2).offset)
 
 /* type Ploc_t: */
 struct Ploc_s {
@@ -3830,10 +3835,13 @@ double   Pufpoint64_acc_avg    (P_t *pads, Pufpoint64_acc *a);
  * is removed by either commit or restore, the nesting level is
  * decremented by one.  P_spec_level gives the current nesting level.
  */
-Perror_t  P_io_checkpoint (P_t *pads, int speculative);
-Perror_t  P_io_commit     (P_t *pads);
-Perror_t  P_io_restore    (P_t *pads);
-unsigned int P_spec_level    (P_t *pads);
+Perror_t  P_io_checkpoint  (P_t *pads, int speculative);
+Perror_t  P_io_commit      (P_t *pads);
+Perror_t  P_io_commit_pos  (P_t *pads, Ppos_t pos);
+          /* commit at pos rather than using the current IO cursor position */
+          /* pos should be >= the checkpoint position and <= the current IO cursor position */
+Perror_t  P_io_restore     (P_t *pads);
+unsigned int P_spec_level  (P_t *pads);
 
 /* ================================================================================
  * REGULAR EXPRESSION SUPPORT

@@ -5047,7 +5047,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.134 2003-12-02 18:55:05 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.135 2003-12-09 02:00:33 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6306,6 +6306,30 @@ P_io_commit(P_t *pads)
   return P_OK;
 }
 
+Perror_t
+P_io_commit_pos(P_t *pads, Ppos_t pos)
+{
+  Pio_elt_t *elt;
+  PDCI_DISC_INIT_CHECKS("P_io_commit_pos");
+#ifndef NDEBUG
+  if (pads->top <= 0) {
+    P_WARN(pads->disc, "Internal error: P_io_commit_pos called when stack top <= 0");
+    return P_ERR;
+  }
+#endif
+  if (pads->stack[pads->top].spec) {
+    (pads->speclev)--;
+  }
+  /* see if we can find pos */
+  (pads->top)--;
+  if (P_ERR == PDCI_io_getElt(pads, pos.num, &elt)) {
+    P_FATAL(pads->disc, "P_io_commit_pos called with invalid pos (elt not found)");
+  }
+  pads->stack[pads->top].elt    = elt;
+  pads->stack[pads->top].remain = elt->len - (pos.offset - elt->offset); /* if pos.offset == elt->offset, all bytes remain */
+  return P_OK;
+}
+
 unsigned int
 P_spec_level(P_t *pads)
 {
@@ -6535,8 +6559,7 @@ P_qfmt_str(const Pstring *s) {
 
 char*
 P_fmt_cstr_n(const char *s, size_t len) {
-  size_t mod_len = strnlen(s, len);
-  return fmtquote(s, NiL, NiL, mod_len, 0);
+  return fmtquote(s, NiL, NiL, len, 0);
 }
 
 char*
@@ -6546,8 +6569,7 @@ P_fmt_cstr(const char *s) {
 
 char*
 P_qfmt_cstr_n(const char *s, size_t len) {
-  size_t mod_len = strnlen(s, len);
-  return fmtquote(s, "\"", "\"", mod_len, 1);
+  return fmtquote(s, "\"", "\"", len, 1);
 }
 
 char*

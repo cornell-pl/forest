@@ -15,7 +15,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
   </header>
   <f><val>22</></>
 </testtwo>
-warning: Error [in test_read]: record 3 byte 2 : Extra data before separator: |
+warning: Error [in test_read]: record 3 byte 2 : Extra data before char separator '|'
 [record 3]3>>>a<<<|33|33
 <testtwo>
   <pd><pstate>Normal</pstate><nerr>1</nerr><errCode>P_STRUCT_FIELD_ERR</errCode><loc><b><num>3</><byte>2</><offset>17</></b><e><num>3</><byte>2</><offset>17</></e></loc></pd>
