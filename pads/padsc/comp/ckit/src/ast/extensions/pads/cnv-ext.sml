@@ -2383,11 +2383,22 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			  end
 
 		     (* Given manifest representation, generate operations to set representation *)
+		     fun chkManArgs (tyname, name,args) = 
+			 case isPadsTy tyname
+			 of PTys.CTy => if not (List.length args = 0) then
+			                PE.error ("Pcompute field "^name^ "has C type; hence can have no parameters.")
+					else ()
+			  | _ => (let val modArgs = List.map (PTSub.substExps (!subList)) args
+				  in
+				      checkParamTys(name, (lookupTy(PX.Name tyname, readSuf, #readname)), modArgs, 2,2)
+				  end)
+
 		     fun genReadMan {tyname, name, args, expr, comment} = 
 			 let val repX = fieldX(rep, name)
 			     val pos = "ppos"
 			     val needsPosition = PTSub.isFreeInExp([PNames.position], expr) 
 			     val () = addSub(name, repX) (* should this be here, or after the subst? *)
+			     val () = chkManArgs(tyname, name,args)
 			     val comment = ("Computing field: "^ name ^ ".")
 			     val commentS = P.mkCommentS (comment)
 			     val exp = PTSub.substExps ((!subList)@ [(PNames.position, PT.Id pos)] ) expr
