@@ -212,6 +212,12 @@ COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 OS_SPEC_XTRA_LIBS += -liconv
 endif
 
+ifeq ($(OPSYS),solaris)
+COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
+# XXX /bin/sh on solaris does not test the same way as on other os
+SHELL = bash
+endif
+
 # Done with architecture-specific stuff
 
 ifdef USE_GALAX
