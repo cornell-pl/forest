@@ -9,6 +9,8 @@
 /* define foo_vtable for all base types foo*/
 
 #include "CAML/CStuff.h"  /* value type */
+#include <pads-galax.h>
+#include <caml/fail.h>
 
 typedef PDC_error_t (* childrenVT) (PDC_node_rep_t * node);
 typedef PDC_error_t (* typeValueVT) (PDC_node_rep_t * node);
@@ -30,33 +32,40 @@ struct PDC_node_rep_s {
   PDC_vtable_t   *vt;
   PDC_t          *pdc;
   PDC_node_rep_t *parent;
-  PDC_node_rep_t *children;
-  int             num_children;
   void           *m;
   void           *pd;
   void           *rep;
   const char     *name;
-  value          *val;
 };
 
+struct PDC_base_rep_s {
+  
+}; 
+
+
 /* Generic functions */
-generic_children : (ocamln : node) -> item list
+void **generic_children (void * ocamln)
 {
-  PDC_node_rep_t *n = unmarshall(ocamln);  /* investigate */
-  int i;
-  PDC_Error_t result;
-  if (!n) return PDC_ERR;  
-  if (!n->children) {
-    result = n->vt.children(n);
-    if (result == PDC_ERR) {raise OCAML exception};
-  }
-  /* List api from galapi? where does this live? */
-  list = empty;
-  for (i = 0; i < n->num_children; i++){
-    element = encode(n->children[i]);
-    list = cons(element, list);
-  }
-  return list;  
+  PDC_node_rep_t *n = (PDC_node_rep_t *) ocamln; 
+  if (!n) return { failwith("Bad node representation in generic_children"); }
+  return n->vt.children(n);
+}
+void *generic_parent (void * ocamln)
+{
+  PDC_node_rep_t *n = (PDC_node_rep_t *) ocamln; 
+  if (!n) return { failwith("Bad node representation in generic_parent"); }
+  return n->parent;
+}
+/* Return value is: 
+
+   1. atomicValue -- a Caml object or 
+   2. a union of PADS base types, which is converted
+   to a Caml object on the Caml side. */
+generic_typed_value (void * ocamln)
+{
+  PDC_node_rep_t *n = (PDC_node_rep_t *) ocamln; 
+  if (!n) return { failwith("Bad node representation in generic_typed_value"); }
+  return n->vt.typed_value(n);
 }
 
 /* struct, union, array case */
@@ -218,6 +227,40 @@ PDC_error_t fooUn_children(PDC_node_rep_t *parent){
 /* enum case fooEnum */
 const PDC_vtable_t fooEnum_vtable = {fooEnum_children, fooEnum_typedValue, 
 				     fooEnum_write2IO, fooEnum_write2Buffer};
+
+PDC_error_t fooUn_children(PDC_node_rep_t *parent){
+  foo *rep = (foo *) parent->rep;
+  foo_pd *pd = (foo_pd *) parent->pd;
+  foo_m *m = (foo_m *) parent->m;
+  PDC_node_rep_t *current;
+  parent->numChildren =2;
+  if (!(parent->children = vmnewof(parent->pdc->vm, 0, PDC_node_rep_t, parent->numChildren, 0))){
+    return PDC_ERR;
+  };
+  /* set children m, pd, and rep */
+  /* parse descriptor child */
+  current = &(parent->children[0]);
+  current->vt = foo_pd_vtable;
+  current->pdc = parent->pdc;
+  current->parent = parent;
+  current->m = (void *)0;
+  current->pd = (void *)pd;
+  current->rep = (void *)0;
+  current->name = "parseDesc";
+  
+  current = &(parent->children[1]);
+  current->pdc = parent->pdc;
+  current->parent = parent;
+
+  current->vt = bar_vtable;
+  current->m = (void *)&(m->b);
+  current->pd = (void *)&(pd->val.b);
+  current->rep = (void *)&(rep->val.b);
+  current->name = "b";
+
+  return PDC_OK;
+}
+
 /* enum case */
 PDC_error_t foo_typed_valueVT(PDC_node_rep_t *node){
    foo *rep = (foo *) node->rep;
