@@ -130,12 +130,13 @@ result
   PDCI_node_t *result = 0;
   ty *rep;
   ty ## _pd *pd;
-  ty ## _m *m=(ty ## _m *) (self->m);
+  ty ## _m *m;
 
   /* Make sure that the node is valid before attempting to access its contents. */ 
   PDCI_sndNode_validate(self);
   rep = (ty *) (self->rep);
   pd = (ty ## _pd *) (self->pd);
+  m=(ty ## _m *) (self->m);
 
   switch(idx){
   case 0: 
@@ -211,6 +212,7 @@ res
   ty ## _pd *pd=(ty ## _pd *) (self->pd);
   ty ## _m *m=(ty ## _m *) (self->m);
 
+error(2, PDCI_MacroArg2String(ty)"_node_kthChild\n");
   if (idx < rep-> length) { /* indexes between 0 and rep->length belong to elements */
       result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
  				    PDCI_MacroArg2String(ty)"_node_kthChild");
@@ -237,6 +239,7 @@ result
   PDCI_childIndex_t k = 0;
   ty *rep=(ty *) (self->rep);
 
+/* error(2, PDCI_MacroArg2String(ty)"_sndNode_kthChildNamed\n"); */
   if (GLX_STR_MATCH(name,"elt")) {
     k = idx;
   } else if (GLX_STR_MATCH(name,"pd")){
@@ -260,12 +263,14 @@ result
   PDCI_node_t *result = 0;
   ty *rep;
   ty ## _pd *pd;
-  ty ## _m *m=(ty ## _m *) (self->m);
+  ty ## _m *m;
 
+/* error(2, PDCI_MacroArg2String(ty)"_sndNode_kthChild [%d]\n", idx); */
   /* Make sure that the node is valid before attempting to access its contents. */ 
   PDCI_sndNode_validate(self);
   rep = (ty *) (self->rep);
   pd = (ty ## _pd *) (self->pd);
+  m=(ty ## _m *) (self->m);
 
   if (idx < rep-> length) { /* indexes between 0 and rep->length belong to elements */
     result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
@@ -275,8 +280,9 @@ result
   } else if (idx == rep->length) {  /* index of rep->length indicates parse descriptor */
     /* parse descriptor child */
     result = PDCI_sequenced_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    PDCI_sequenced_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
-
+    /* error(2, "pd->nerr %d\n", pd->nerr); */
+    /* Mary: I don't know why, but this call trashes the <pd> element -- I don't understand its semantics. */
+    /* PDCI_sequenced_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx); */
 
   } else if (idx == rep->length + 1) { /* index of rep->length+1 indicates length */
     result = Puint32_val_node_new(self,"length",pd,&(rep->length),
@@ -376,12 +382,13 @@ result
   PDCI_node_t *result = 0;
   ty *rep;
   ty ## _pd *pd;
-  ty ## _m *m=(ty ## _m *) (self->m);
+  ty ## _m *m;
 
   /* Make sure that the node is valid before attempting to access its contents. */ 
   PDCI_sndNode_validate(self);
   rep = (ty *) (self->rep);
   pd = (ty ## _pd *) (self->pd);
+  m=(ty ## _m *) (self->m);
 
   switch(idx){
     /* parse descriptor child */
@@ -501,13 +508,14 @@ result
   PDCI_node_t *result = 0;
   ty *rep;
   ty ## _pd *pd;
-  ty ## _m *m=(ty ## _m *) (self->m);
+  ty ## _m *m;
   char const *branch;
 
   /* Make sure that the node is valid before attempting to access its contents. */ 
   PDCI_sndNode_validate(self);
   rep = (ty *) (self->rep);
   pd = (ty ## _pd *) (self->pd);
+  m=(ty ## _m *) (self->m);
   branch = ty ## _tag2str (rep->tag);
 
   switch(idx){

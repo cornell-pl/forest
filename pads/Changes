@@ -1,4 +1,11 @@
 October 14, 2004 - Mary
+  o Eliminated smart-node init call in pglx-codegen-macros.h that I
+    don't understand that that trashes <pd> values. 
+
+October 14, 2004 - Mary
+  o Added clean regression results in examples/xml/regress
+
+October 14, 2004 - Mary
   o Fixed XML representations of Parrays so that <pd> and <length>
     always follow <elt> elements. 
 
