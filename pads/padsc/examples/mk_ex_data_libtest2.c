@@ -33,7 +33,8 @@ int main(int argc, char** argv) {
   sfwrite(io, (void*)&data5, sizeof(data5));
   sfwrite(io, (void*)&data6, sizeof(data6));
   sfwrite(io, (void*)&data7, sizeof(data7));
-  sfwrite(io, (void*)&data8, sizeof(data8));
+  /*  sfwrite(io, (void*)&data8, sizeof(data8)); */
+  sfwrite(io, (void*)&data4, sizeof(data4));
   sfputc(io, '\n');
   sfclose(io);
 }
