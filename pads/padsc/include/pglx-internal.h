@@ -1,3 +1,16 @@
+#ifdef _USE_PROTO
+#pragma prototyped
+#endif
+/*
+ * internal APIs, galax-pads
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+
+#ifndef __PGLX_INTERNAL_H__
+#define __PGLX_INTERNAL_H__
+
 #include "libpadsc-internal.h"
 #include "caml/mlvalues.h"  /* Need value */
 #ifndef FOR_CKIT
@@ -41,16 +54,20 @@ void  PDCI_MK_NODE(PDCI_node_t *result,
 
 /* Helper macros that we always want expanded */
 
-#define PDCI_DECL_VT(ty) extern const PDCI_vtable_t ty ## _vtable
-#define PDCI_DECL_VAL_VT(ty) extern const PDCI_vtable_t ty ## _val_vtable
+#define PDCI_DECL_VT(ty) \
+extern const PDCI_vtable_t ty ## _vtable
+
+#define PDCI_DECL_VAL_VT(ty) \
+value ty ## typed_value(PDCI_node_t *node); \
+extern const PDCI_vtable_t ty ## _val_vtable
 
 /* ================================================================================
  * TYPES */
 
 /* prototypes for vtable functions */
-typedef PDCI_node_t **      (* PDCI_children_fn)    (PDCI_node_t *node); 
+typedef PDCI_node_t **      (* PDCI_children_fn)      (PDCI_node_t *node); 
 typedef value               (* PDCI_typed_value_fn)   (PDCI_node_t *node); 
-typedef const char *        (* PDCI_string_value_fn) (PDCI_node_t *node);
+typedef const char *        (* PDCI_string_value_fn)  (PDCI_node_t *node);
 
 /* Type PDCI_node_t: */
 struct PDCI_node_s {
@@ -100,9 +117,6 @@ struct PDCI_sequenced_pd_s {
 /* ================================================================================
  * Helper functions */
 
-/* Error function used for many cases */
-value PDCI_error_typed_value(PDCI_node_t *node);
-
 /* Children functions */
 
 PDCI_node_t ** PDC_base_pd_children(PDCI_node_t *self);
@@ -113,6 +127,11 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self);
 PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self);
 PDCI_node_t ** PDCI_no_children(PDCI_node_t *self);
 
+/* Typed Value functions */
+
+value PDCI_error_typed_value(PDCI_node_t *node); /* Error function used for many cases */
+value PDCI_Cstr_typed_value (PDCI_node_t *node); /* node->rep is a C-style string (const char *) */
+
 /* ================================================================================
  * VTABLES */
 
@@ -120,20 +139,16 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *self);
 
 PDCI_DECL_VT(PDCI_structured_pd);
 PDCI_DECL_VT(PDCI_sequenced_pd);
-PDCI_DECL_VT(PDCI_basetype);
 
 PDCI_DECL_VT(PDC_base_pd);
 PDCI_DECL_VT(PDC_loc_t);
 PDCI_DECL_VT(PDC_pos_t);
 
-PDCI_DECL_VT(PDCI_Cstr);
+/* Special val_vtables */
 
-/* Base type vtables: need two vtables for all base types,
-   one at level of pd/val, one for the actual value */
+PDCI_DECL_VAL_VT(PDCI_Cstr);
 
-#ifdef FOR_CKIT
-/* CKIT needs to think all of these are actual base table constants */
-
+/* Base type vtables */
 PDCI_DECL_VT(PDC_char);
 PDCI_DECL_VT(PDC_a_char);
 PDCI_DECL_VT(PDC_e_char);
@@ -156,10 +171,6 @@ PDCI_DECL_VT(PDC_e_string_CME);
 PDCI_DECL_VT(PDC_e_string_SE);
 PDCI_DECL_VT(PDC_e_string_CSE);
 
-PDCI_DECL_VT(PDC_date);
-PDCI_DECL_VT(PDC_a_date);
-PDCI_DECL_VT(PDC_e_date);
-
 PDCI_DECL_VT(PDC_int8);
 PDCI_DECL_VT(PDC_int16);
 PDCI_DECL_VT(PDC_int32);
@@ -169,46 +180,6 @@ PDCI_DECL_VT(PDC_uint16);
 PDCI_DECL_VT(PDC_uint32);
 PDCI_DECL_VT(PDC_uint64);
 
-#else 
-/* all of the above can just be defined to be PDCI_basetype_vtable */
-
-#define PDC_char_vtable PDCI_basetype_vtable
-#define PDC_a_char_vtable PDCI_basetype_vtable
-#define PDC_e_char_vtable PDCI_basetype_vtable
-
-#define PDC_string_vtable PDCI_basetype_vtable
-#define PDC_string_ME_vtable PDCI_basetype_vtable
-#define PDC_string_CME_vtable PDCI_basetype_vtable
-#define PDC_string_SE_vtable PDCI_basetype_vtable
-#define PDC_string_CSE_vtable PDCI_basetype_vtable
-
-#define PDC_a_string_vtable PDCI_basetype_vtable
-#define PDC_a_string_ME_vtable PDCI_basetype_vtable
-#define PDC_a_string_CME_vtable PDCI_basetype_vtable
-#define PDC_a_string_SE_vtable PDCI_basetype_vtable
-#define PDC_a_string_CSE_vtable PDCI_basetype_vtable
-
-#define PDC_e_string_vtable PDCI_basetype_vtable
-#define PDC_e_string_ME_vtable PDCI_basetype_vtable
-#define PDC_e_string_CME_vtable PDCI_basetype_vtable
-#define PDC_e_string_SE_vtable PDCI_basetype_vtable
-#define PDC_e_string_CSE_vtable PDCI_basetype_vtable
-
-#define PDC_date_vtable PDCI_basetype_vtable
-#define PDC_a_date_vtable PDCI_basetype_vtable
-#define PDC_e_date_vtable PDCI_basetype_vtable
-
-#define PDC_int8_vtable PDCI_basetype_vtable
-#define PDC_int16_vtable PDCI_basetype_vtable
-#define PDC_int32_vtable PDCI_basetype_vtable
-#define PDC_int64_vtable PDCI_basetype_vtable
-#define PDC_uint8_vtable PDCI_basetype_vtable
-#define PDC_uint16_vtable PDCI_basetype_vtable
-#define PDC_uint32_vtable PDCI_basetype_vtable
-#define PDC_uint64_vtable PDCI_basetype_vtable
-
-#endif /* FOR_CKIT */
-
 /* We need one _val_vtable for each in-memory format.
    All of the PADS types that share an in-memory format 
    can share a vtable */
@@ -216,7 +187,6 @@ PDCI_DECL_VT(PDC_uint64);
 /* The required _val_vtable */
 PDCI_DECL_VAL_VT(PDC_char);
 PDCI_DECL_VAL_VT(PDC_string);
-PDCI_DECL_VAL_VT(PDC_date);
 PDCI_DECL_VAL_VT(PDC_int8);
 PDCI_DECL_VAL_VT(PDC_int16);
 PDCI_DECL_VAL_VT(PDC_int32);
@@ -248,9 +218,6 @@ PDCI_DECL_VAL_VT(PDC_e_string_CME);
 PDCI_DECL_VAL_VT(PDC_e_string_SE);
 PDCI_DECL_VAL_VT(PDC_e_string_CSE);
 
-PDCI_DECL_VAL_VT(PDC_a_date);
-PDCI_DECL_VAL_VT(PDC_e_date);
-
 #else
 #define PDC_a_char_val_vtable         PDC_char_val_vtable
 #define PDC_e_char_val_vtable         PDC_char_val_vtable
@@ -272,8 +239,7 @@ PDCI_DECL_VAL_VT(PDC_e_date);
 #define PDC_e_string_SE_val_vtable    PDC_string_val_vtable
 #define PDC_e_string_CSE_val_vtable   PDC_string_val_vtable
 
-#define PDC_a_date_val_vtable         PDC_a_date_val_vtable
-#define PDC_e_date_val_vtable         PDC_e_date_val_vtable
-
 #endif /* FOR_CKIT */
+
+#endif  /*   __PGLX_INTERNAL_H__   */
 

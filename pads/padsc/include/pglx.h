@@ -1,3 +1,16 @@
+#ifdef _USE_PROTO
+#pragma prototyped
+#endif
+/*
+ * public API, galax-pads
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+
+#ifndef __PGLX_H__
+#define __PGLX_H__
+
 /* generic calls from galax to pads */
 
 #include "libpadsc.h"       /* Need to include ast stuff before caml stuff for some reason */
@@ -10,3 +23,5 @@ const char* PGLX_generic_string_value(void *ocaml_n);
 const char* PGLX_generic_name        (void *ocaml_n);
 
 void        PGLX_node_free           (void *ocaml_n);
+
+#endif  /*   __PGLX_H__   */

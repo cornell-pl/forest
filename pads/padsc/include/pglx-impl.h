@@ -1,3 +1,13 @@
+/*
+ * macros, galax-pads
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+
+#ifndef __PGLX_IMPL_H__
+#define __PGLX_IMPL_H__
+
 
 #define PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
@@ -51,3 +61,5 @@ do { \
 #define PDCI_NODE_VT_CHECK(n, whatfn)   PDC_NULL_STMT
 
 #endif
+
+#endif /*   __PGLX_IMPL_H__    */

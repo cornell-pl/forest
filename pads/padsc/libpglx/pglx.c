@@ -1,3 +1,11 @@
+/*
+ * Implementation of
+ *    public and private APIs, galax-pads
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+
 #include "pglx.h"
 #include "pglx-internal.h"
 
@@ -58,17 +66,134 @@ void PGLX_node_free(void *ocaml_n)
 /* ================================================================================
  * INTERNAL */
 
+/* Helper macros  */
+
+#define PDCI_IMPL_BASE_VT(ty) \
+/* base types have two children, pd and val. */ \
+PDCI_node_t ** ty ## _children(PDCI_node_t *self) \
+{ \
+  ty           *rep = (ty*)self->rep; \
+  PDC_base_pd  *pd  = (PDC_base_pd*)self->pd; \
+  PDCI_node_t **result; \
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 2))) { \
+    failwith("ALLOC_ERROR: in " PDCI_MacroArg2String(ty) "_children"); \
+  } \
+  /* the following mk calls raise an exception on alloc error */ \
+  PDCI_MK_TNODE(result[0], & PDC_base_pd_vtable,  self, "pd",  pd,  PDCI_MacroArg2String(ty) "_children"); \
+  PDCI_MK_TNODE(result[1], & ty ## _val_vtable,   self, "val", rep, PDCI_MacroArg2String(ty) "_children"); \
+  return result; \
+} \
+ \
+const PDCI_vtable_t ty ## _vtable = {ty ## _children, \
+				     PDCI_error_typed_value, \
+				     0}
+
+#define PDCI_IMPL_BASE_VAL_VT(ty) \
+/* node->rep is a pointer to a ty */ \
+value ty ## _typed_value (PDCI_node_t *node) \
+{ \
+  /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
+  /* For now, raise exception containing the value. Exception string has format: */ \
+  /* "VAL: value"     */ \
+  ty          *r   = (ty*)node->rep; \
+  PDC_base_pd *pd  = (PDC_base_pd*)node->pd; \
+  PDC_base_pd  tpd; \
+  if (!pd) { \
+    pd = &tpd; \
+    pd->errCode = PDC_NO_ERR; \
+  } \
+  sfstrset(node->pdc->tmp2, 0); \
+  if (-1 == ty ## _write2io(node->pdc, node->pdc->tmp2, pd, r)) { \
+    failwith("UNEXPECTED_IO_FAILURE in base type typed_value function"); \
+  } \
+  failwith(sfstruse(node->pdc->tmp2)); \
+  return 0;  /* will never get here*/ \
+} \
+ \
+const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
+				         ty ## _typed_value, \
+				         0}
+
+/* For the case where a base type requires an arg, such as stop char for PDC_string */
+#define PDCI_IMPL_BASE_VAL_VT_ARG1(ty, ty_arg1) \
+/* node->rep is a pointer to a ty */ \
+value ty ## _typed_value (PDCI_node_t *node) \
+{ \
+  /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
+  /* For now, raise exception containing the value. Exception string has format: */ \
+  /* "VAL: value"     */ \
+  ty          *r   = (ty*)node->rep; \
+  PDC_base_pd *pd  = (PDC_base_pd*)node->pd; \
+  PDC_base_pd  tpd; \
+  if (!pd) { \
+    pd = &tpd; \
+    pd->errCode = PDC_NO_ERR; \
+  } \
+  sfstrset(node->pdc->tmp2, 0); \
+  if (-1 == ty ## _write2io(node->pdc, node->pdc->tmp2, ty_arg1, pd, r)) { \
+    failwith("UNEXPECTED_IO_FAILURE in base type typed_value function"); \
+  } \
+  failwith(sfstruse(node->pdc->tmp2)); \
+  return 0;  /* will never get here*/ \
+} \
+ \
+const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
+				         ty ## _typed_value, \
+				         0}
+
 /* HELPERS */
 
-/* Helper functions */
-/* Error function used for many cases */
-value PDCI_error_typed_value(PDCI_node_t *node)
-{
-  failwith("NOT_A_VALUE: typed_value called on structured type.");
-  return 0;  /* will never get here*/
-} 
+/* ---------------------------
+ * Some children functions
+ * --------------------------- */
 
-/* Children functions for structured_pd, sequenced_pd */
+/* A pos_t has 3 children (byte, num, and unit) */
+#undef WHATFN
+#define WHATFN "PDCI_pos_t_children"
+PDCI_node_t ** PDCI_pos_t_children(PDCI_node_t *self)
+{
+  PDC_pos_t *pos = (PDC_pos_t *) self->rep;
+  PDCI_node_t **result;
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 3))) {
+    failwith("ALLOC_ERROR: in " WHATFN);
+  }
+  PDCI_MK_TNODE(result[0], &PDC_int32_val_vtable,   self, "byte",    &(pos->byte),     WHATFN);
+  PDCI_MK_TNODE(result[1], &PDC_int32_val_vtable,   self, "num",     &(pos->num),      WHATFN);
+  PDCI_MK_TNODE(result[2], &PDCI_Cstr_val_vtable,   self, "unit",    (char*)pos->unit, WHATFN);
+  return result;
+}
+
+/* A loc_t has 2 children (b and e) */
+#undef WHATFN
+#define WHATFN "PDCI_loc_t_children"
+PDCI_node_t ** PDCI_loc_t_children(PDCI_node_t *self)
+{
+  PDC_loc_t *loc = (PDC_loc_t *) self->rep;
+  PDCI_node_t **result;
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 2))) {
+    failwith("ALLOC_ERROR: in " WHATFN);
+  }
+  PDCI_MK_TNODE(result[0], &PDC_pos_t_vtable,      self, "b",     &(loc->b),     WHATFN);
+  PDCI_MK_TNODE(result[1], &PDC_pos_t_vtable,      self, "e",     &(loc->e),     WHATFN);
+  return result;
+}
+
+/* A base_pd has three children (errCode, loc, panic) */
+#undef WHATFN
+#define WHATFN "PDCI_base_pd_children"
+PDCI_node_t ** PDCI_base_pd_children(PDCI_node_t *self)
+{
+  PDC_base_pd *pd = (PDC_base_pd *) self->rep;
+  PDCI_node_t **result;
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 3))) {
+    failwith("ALLOC_ERROR: in " WHATFN);
+  }
+  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN);
+  PDCI_MK_TNODE(result[1], &PDC_loc_t_vtable,      self, "loc",     &(pd->loc),     WHATFN);
+  PDCI_MK_TNODE(result[2], &PDC_uint32_val_vtable, self, "panic",   &(pd->panic),   WHATFN);
+  return result;
+}
+
 /* A structured_pd has four children (nerr, errCode, loc, panic) */
 #undef WHATFN
 #define WHATFN "PDCI_structured_pd_children"
@@ -77,22 +202,9 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
   PDCI_structured_pd *pd = (PDCI_structured_pd *) self->rep;
   PDCI_node_t **result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 4))) {
-    failwith("ALLOC_ERROR: in PDCI_structured_pd_children");
+    failwith("ALLOC_ERROR: in " WHATFN);
   }
-  
   /* the following mk calls raise an exception on alloc error */
-  do {
-    if (!(result[0] = PDCI_NEW_NODE((self)->pdc))) {
-      failwith("ALLOC_ERROR: in " WHATFN);
-    }
-    result[0]->vt     = (&PDC_uint32_val_vtable);
-    result[0]->pdc    = (self)->pdc;
-    result[0]->parent = (self);
-    result[0]->m      = (void *)(0);
-    result[0]->pd     = (void *)(0);
-    result[0]->rep    = (&(pd->nerr));
-    result[0]->name   = ("nerr");
-  } while (0);
   PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN);
   PDCI_MK_TNODE(result[1], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN);
   PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable,      self, "loc",     &(pd->loc),     WHATFN);
@@ -109,7 +221,7 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
   PDCI_sequenced_pd *pd = (PDCI_sequenced_pd *) self->rep;
   PDCI_node_t **result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 6))) {
-    failwith("ALLOC_ERROR: in PDCI_sequenced_pd_children");
+    failwith("ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
   PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN);
@@ -121,24 +233,46 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
   return result;
 }
 
-/* All base types have two children, pd and val. */
-/* The routine that constructed self has already placed all */
-/* the necarry stuff in self->base_pd, self->base_val, and self->base_vt */
+/* Used for any node with no children */
 #undef WHATFN
-#define WHATFN "PDCI_basetype_children"
-PDCI_node_t ** PDCI_basetype_children(PDCI_node_t *self)
+#define WHATFN "PDCI_no_children"
+PDCI_node_t ** PDCI_no_children(PDCI_node_t *self)
 {
   PDCI_node_t **result;
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 2))) {
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 0))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
-  /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[0], &PDC_base_pd_vtable, self, "pd",  self->base_pd,  WHATFN);
-  PDCI_MK_TNODE(result[1], self->base_vt,        self, "val", self->base_val, WHATFN);
   return result;
 }
 
+/* ---------------------------
+ * Some typed_value functions
+ * --------------------------- */
+
+/* Error function used for many cases */
+value PDCI_error_typed_value(PDCI_node_t *node)
+{
+  failwith("NOT_A_VALUE: typed_value called on structured type.");
+  return 0;  /* will never get here*/
+} 
+
+/* node->rep is a C-style string (const char *) */
+value PDCI_Cstr_typed_value(PDCI_node_t *node)
+{
+  const char * s = (const char *)node->rep;
+  /* XXX_TODO: invoke Galax-provided macro for producing a value containing a Galax string */
+  /* For now, raise exception with the value */
+  /* encoded as a string of the form   "VAL: <value>"   */
+  sfstrset(node->pdc->tmp1, 0);
+  if (-1 == sfprintf(node->pdc->tmp1, "VAL: %s", s)) {
+    failwith("UNEXPECTED_IO_FAILURE in PDCI_Cstr_typed_value");
+  }
+  failwith(sfstruse(node->pdc->tmp1));
+  return 0;  /* will never get here*/
+}
+
 /* Helper vtables */
+
 const PDCI_vtable_t
 PDCI_structured_pd_vtable = {PDCI_structured_pd_children, 
 			     PDCI_error_typed_value,
@@ -148,11 +282,6 @@ const PDCI_vtable_t
 PDCI_sequenced_pd_vtable = {PDCI_sequenced_pd_children, 
 			    PDCI_error_typed_value,
 			    0};
-
-const PDCI_vtable_t
-PDCI_basetype_vtable = {PDCI_basetype_children,
-			PDCI_error_typed_value,
-			0};
 
 const PDCI_vtable_t
 PDCI_base_pd_vtable = {PDC_base_pd_children,
@@ -169,25 +298,71 @@ PDCI_pos_t_vtable = {PDC_pos_t_children,
 		     PDCI_error_typed_value,
 		     0};
 
-/* BASE TYPE SUPPORT */
-/* 1. Define a vtable and val_vtable for each base type */
-/* 2. Define bty_typed_value */
-/* 3. Define bty_val_typed_value */
+const PDCI_vtable_t
+PDCI_Cstr_val_vtable = {PDCI_no_children,
+			PDCI_Cstr_typed_value,
+			0};
 
-value PDC_uint32_typed_value (void * ocaml_n)
+/* Impl some base type children and typed_value functions and
+   associated vtable/val_vtable pairs */
+
+PDCI_IMPL_BASE_VT(PDC_char);
+PDCI_IMPL_BASE_VAL_VT(PDC_char);
+
+PDCI_IMPL_BASE_VT(PDC_string);
+PDCI_IMPL_BASE_VAL_VT_ARG1(PDC_string, ' ');
+
+PDCI_IMPL_BASE_VT(PDC_int8);
+PDCI_IMPL_BASE_VAL_VT(PDC_int8);
+
+PDCI_IMPL_BASE_VT(PDC_int16);
+PDCI_IMPL_BASE_VAL_VT(PDC_int16);
+
+PDCI_IMPL_BASE_VT(PDC_int32);
+PDCI_IMPL_BASE_VAL_VT(PDC_int32);
+
+PDCI_IMPL_BASE_VT(PDC_int64);
+PDCI_IMPL_BASE_VAL_VT(PDC_int64);
+
+PDCI_IMPL_BASE_VT(PDC_uint8);
+PDCI_IMPL_BASE_VAL_VT(PDC_uint8);
+
+PDCI_IMPL_BASE_VT(PDC_uint16);
+PDCI_IMPL_BASE_VAL_VT(PDC_uint16);
+
+PDCI_IMPL_BASE_VT(PDC_uint32);
+/* PDCI_IMPL_BASE_VAL_VT(PDC_uint32); */
+
+PDCI_IMPL_BASE_VT(PDC_uint64);
+PDCI_IMPL_BASE_VAL_VT(PDC_uint64);
+
+/* XXX EXPANDED PDCI_IMPL_BASE_VAL_VT(PDC_uint32) here in case
+ * XXX someone wants to play with doing a real implementation of
+ * XXX PDC_uint32_typed_value
+ */
+
+/* node->rep is a pointer to a PDC_uint32 */
+value PDC_uint32_typed_value (PDCI_node_t *node)
 {
-  PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
-  PDC_uint32 r = *((PDC_uint32 *)n->rep);
- 
-  /*
-  call macro provided my mary to create an ocaml value.
-  macro will come from/follow pattern from c_api portion of galax.
-  galax/galapi/c_api
-  whether to gc protect it is open question.
-  Xavier's email is relevant.
-  ...
-  */
-  /* XXX_TODO */
-  r = r; /* XXX_REMOVE */
-  return 0;
+  /* XXX_TODO: invoke Galax-provided macro for producing a value containing an unsigned int */
+  /* For now, raise exception containing the value. Exception string has format: */
+  /* "VAL: value"     */
+  PDC_uint32  *r   = (PDC_uint32*)node->rep;
+  PDC_base_pd *pd  = (PDC_base_pd*)node->pd;
+  PDC_base_pd  tpd;
+  if (!pd) {
+    pd = &tpd;
+    pd->errCode = PDC_NO_ERR;
+  }
+  sfstrset(node->pdc->tmp2, 0);
+  if (-1 == PDC_uint32_write2io(node->pdc, node->pdc->tmp2, pd, r)) {
+    failwith("UNEXPECTED_IO_FAILURE in base type typed_value function");
+  }
+  failwith(sfstruse(node->pdc->tmp2));
+  return 0;  /* will never get here*/
 }
+
+const PDCI_vtable_t PDC_uint32_val_vtable = {PDCI_no_children,
+					     PDC_uint32_typed_value,
+					     0};
+

@@ -16,7 +16,7 @@ PDCI_node_t** fooStruct_children(PDCI_node_t *self){
   fooStruct_pd *pd  = (fooStruct_pd *) self->pd;
   fooStruct_m  *m   = (fooStruct_m *)  self->m;
   PDCI_node_t** result; 
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, /* <numChildren> */ 2 ))) {
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, /* <numChildren>, e.g.,  */ 2 ))) {
     failwith("ALLOC_ERROR: in fooStruct_children");
   };
   /* parse descriptor child */
