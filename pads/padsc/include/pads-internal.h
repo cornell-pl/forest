@@ -97,7 +97,8 @@ PDC_error_t  PDC_IO_restore     (PDC_t* pdc, PDC_disc_t* disc);
 PDC_error_t  PDC_get_loc        (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc);
 int          PDC_IO_is_EOF      (PDC_t* pdc, PDC_disc_t* disc);
 int          PDC_IO_peek_EOF    (PDC_t* pdc, PDC_disc_t* disc);
-PDC_error_t  PDC_IO_getchar     (PDC_t* pdc, unsigned char* ct, int panicking, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_getchar     (PDC_t* pdc, unsigned char* ct, int obeyPanicStop, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_getchars    (PDC_t* pdc, size_t num_chars, char** b_out, char** e_out, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_back        (PDC_t* pdc, size_t num_chars, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_refill      (PDC_t* pdc, PDC_disc_t* disc);
 
@@ -107,9 +108,11 @@ PDC_error_t  PDC_IO_refill      (PDC_t* pdc, PDC_disc_t* disc);
  *                          + *buf_out to point to first char of line in that buffer
  *                          + *len_out to the length of the line (including newline)
  *                       and returns PDC_OK, otherwise returns PDC_ERROR.
+ *    PDC_IO_initialize : initialize IO state to 'nothing read/no checkpoints'
  */
 
 PDC_error_t PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, size_t* len_out, PDC_disc_t* disc);
+PDC_error_t PDC_IO_initialize(PDC_t* pdc, PDC_disc_t* disc);
 
 /* ================================================================================ */ 
 /* INTERNAL ERROR REPORTING FUNCTIONS */

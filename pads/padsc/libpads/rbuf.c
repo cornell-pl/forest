@@ -6,8 +6,11 @@
  * AT&T Labs Research
  */
 
+#include <ast.h>
+#include <vmalloc.h>
+#include <error.h>
 #include "rbuf-internal.h"
-#include "vmalloc.h"
+
 
 /* ================================================================================ */
 /* RMM : default allin1 functions and disciplines */
