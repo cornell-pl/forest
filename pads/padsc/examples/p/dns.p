@@ -29,7 +29,7 @@ Pstruct label_t {
 
 // For convenience to get the actual pointer from ptr_t field p
 int p_offset(Puint16 p) {
-  return (p & (0xC000-1));
+  return (p & 49151); // 0xC000-1, but CKit does not read 0xC000 right
 }
 
 Pstruct ptr_t {
