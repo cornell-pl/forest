@@ -465,25 +465,25 @@ ifdef DEBUG_RULES_MK
 endif
 	$(LINK_O) $< $(DYNAMIC_LIBS_O) -o $@
 
-%-g.o: %.c $(INCLUDE_DEPS)
+%-g.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule K_D"
 endif
 	$(COMPILE_D) -c $< -o $@
 
-%.o: %.c $(INCLUDE_DEPS)
+%.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule K_O"
 endif
 	$(COMPILE_O) -c $< -o $@
 
-%-g: %.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+%-g: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule L_D"
 endif
 	$(COMPILE_D) $< $(DYNAMIC_LIBS_D) -o $@
 
-%: %.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+%: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS) $(LIB_DEPS_O)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule L_O"
 endif
