@@ -10,7 +10,7 @@
 #include "libpadsc-read-macros.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.14 2002-09-10 20:59:33 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.15 2002-09-10 21:10:20 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -359,10 +359,10 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
   if (!ed) {
     ed = &edt;
   }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
   if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
     goto no_space;
   }
+  /* peek at first char -- ensures we are on line with at least one char to parse */
   if (PDC_ERROR == PDC_IO_getchar(pdc, 0, 0, disc)) { /* 0 means do not obey panicStop */
     goto not_found;
   }
@@ -394,6 +394,7 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
   HANDLE_ERR_CURPOS(PDC_OUT_OF_MEMORY);
 }
 
+/* XXX not supporting multi-line strings yet XXX */
 PDC_error_t
 PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
 			   PDC_base_ed* ed, char** s_out, size_t* l_out,  PDC_disc_t* disc)
@@ -416,12 +417,23 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
   if (!ed) {
     ed = &edt;
   }
-  if (!disc) {
-    disc = pdc->disc;
+  if (!stopRegexp) {
+    WARN(pdc, "astringSRE : null regexp specified");
+    goto invalid_regexp;
+  }
+  len = strlen(stopRegexp);
+  if ((len < 3) || stopRegexp[0] != '[' || stopRegexp[len-1] != ']') {
+    WARN1(pdc, "astringSRE : invalid regexp: %s, currently only support a stopRegexp of the form [<chars>], i.e., a simple stop char set", stopRegexp);
+    goto invalid_regexp;
+  }
+  stopCharSetBegin = stopRegexp + 1;          /* first stop char */
+  stopCharSetEnd   = stopRegexp + (len - 1);  /* one past last stop char */
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+    goto no_space;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
   if (PDC_ERROR == PDC_IO_getchar(pdc, 0, 0, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
+    goto not_found;
   }
   PDC_IO_back(pdc, 1, disc);
   tp      = &(pdc->stack[pdc->top]);
@@ -430,46 +442,30 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
   end = begin + tpline->eoffset;
   begin += tp->cur;
 
-  if (!stopRegexp) {
-    WARN(pdc, "astringSRE : null regexp specified");
-    HANDLE_ERR_CURPOS(PDC_INVALID_REGEXP);
-  }
-  len = strlen(stopRegexp);
-  if ((len < 3) || stopRegexp[0] != '[' || stopRegexp[len-1] != ']') {
-    WARN1(pdc, "astringSRE : invalid regexp: %s, currently only support a stopRegexp of the form [<chars>], i.e., a simple stop char set", stopRegexp);
-    HANDLE_ERR_CURPOS(PDC_INVALID_REGEXP);
-  }
-  stopCharSetBegin = stopRegexp + 1;          /* first stop char */
-  stopCharSetEnd   = stopRegexp + (len - 1);  /* one past last stop char */
   for (ptr = begin; ptr < end; ptr++, tp->cur++) {
     for (ptr2 = stopCharSetBegin; ptr2 < stopCharSetEnd;  ptr2++) {
       if (*ptr == *ptr2) { /* success */
 	PDC_STR_COPY(s_out, l_out, begin, ptr);
+	if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
+	  return PDC_ERROR; /* XXX internal error -- unrecoverable error */
+	}
 	return PDC_OK;
       }
     }
   }
-  /* hit EOF/EOR before hitting stopChar */
-  /* XXX not supporting multi-line strings yet XXX */
-  if (PDC_IO_is_EOF(pdc, disc)) {
-#if 0
-    if (eofStop) {
-      PDC_STR_COPY(s_out, l_out, begin, ptr);
-      return PDC_OK;
-    }
-#endif
-    goto at_eof_err;
+  /* hit EOF/EOR before hitting a stopChar */
+
+ not_found:
+  if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
+    /* XXX unrecoverable error -- should call discipline unrecov error handler */
   }
-  goto at_eor_err;
-
- at_eof_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
-
- at_eor_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOR);
+  HANDLE_ERR_CUR2ENDPOS(PDC_REGEXP_NOT_FOUND);
 
  no_space:
   HANDLE_ERR_CURPOS(PDC_OUT_OF_MEMORY);
+
+ invalid_regexp:
+  HANDLE_ERR_CURPOS(PDC_INVALID_REGEXP);
 }
 
 /* ================================================================================ */
