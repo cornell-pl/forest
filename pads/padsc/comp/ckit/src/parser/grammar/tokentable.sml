@@ -77,6 +77,7 @@ struct
                ("Pendian",   Tokens.PENDIAN),       
                ("Penum", Tokens.PENUM),
                ("Pforall", Tokens.PFORALL),
+               ("Pfrom", Tokens.PFROM),
                ("Pin", Tokens.PIN),
                ("Plast", Tokens.PLAST),
                ("Pnosep", Tokens.PNOSEP),

@@ -1322,8 +1322,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			  val paramNames = [which]
 			  val paramTys = [enumPCT]
 			  val formalParams = List.map P.mkParam(ListPair.zip(paramTys, paramNames))
-			  fun cnvOneBranch (bname, _, _) = 
-			      [PT.CaseLabel(PT.Id bname, PT.Return (PT.String bname))]
+			  fun cnvOneBranch (ename,dname,  _, _) = 
+			      [PT.CaseLabel(PT.Id ename, PT.Return (PT.String dname))]
 			  val defBranch = 
 			      [PT.DefaultLabel(PT.Return (PT.String "*unknown_tag*"))]
 			  val branches = (List.concat(List.map cnvOneBranch members)) @ defBranch
@@ -2963,7 +2963,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			    end
 
                      (* Generate tag to string function *)
-		     val toStringEDs = [genEnumToStringFun(tgSuf name, tagPCT, tagFields)]
+		     val tagFields' = List.map (fn(name,exp,comment) => (name,name,exp,comment)) tagFields
+		     val toStringEDs = [genEnumToStringFun(tgSuf name, tagPCT, tagFields')]
 
                       (* Generate m_init function union case *)
                       val maskInitName = maskInitSuf name 
@@ -4912,7 +4913,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 	  fun cnvPEnum  {name:string, params: (pcty * pcdecr) list, 
 			 isRecord, containsRecord, largeHeuristic, isSource,
-			 members: (string * pcexp option * string option) list } =
+			 members: (string * string option * pcexp option * string option) list } =
 	      let val baseTy = PL.strlit
 		  val baseEM = mSuf baseTy
 		  val basePD = pdSuf baseTy
@@ -4920,10 +4921,18 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  val cParams : (string * pcty) list = List.map mungeParam params
 		  val paramNames = #1(ListPair.unzip cParams)
 
-                  fun mungeMembers (name, expOpt, commentOpt) = 
-		      case expOpt of NONE => (name, PT.EmptyExpr, commentOpt)
- 		                   | SOME e => (name, e, commentOpt)
+                  fun mungeMembers (name, fromXOpt, expOpt, commentOpt) = 
+		      let val expr = case expOpt of NONE =>   PT.EmptyExpr | SOME e => e
+		      in
+			  case fromXOpt of NONE => (name, name, expr, commentOpt)
+                          | SOME fromName => (name, fromName, expr, commentOpt)
+			                     (* enum label, on disk name, value of enum label, comment *)
+			   
+		      end
+
 		  val enumFields = List.map mungeMembers members
+		  val enumFieldsforTy = List.map (fn(ename, dname, expr, comment) => (ename, expr,comment)) enumFields
+                  val enumFieldsForDisk = List.map (fn(ename, dname, expr, comment) => (dname, expr,comment)) enumFields
 
                   (* generate CheckSet mask *)
 		  val baseMPCT = PL.base_mPCT
@@ -4942,7 +4951,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  val accPCT    = P.makeTypedefPCT (accSuf name)		
 
                   (* Calculate and insert type properties into type table for enums. *)
-                  val labels = List.map #1 enumFields
+                  val labels = List.map #2 enumFields
 		  val ds = if List.length labels > 1 then
 		              let val len = String.size (hd labels)
 			      in
@@ -4958,12 +4967,12 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  val () = PTys.insert(Atom.atom name, enumProps)
 
                   (* enums: generate canonical representation *)
-		  val canonicalED = P.makeTyDefEnumEDecl(enumFields, repSuf name)
+		  val canonicalED = P.makeTyDefEnumEDecl(enumFieldsforTy, repSuf name)
 		  val (canonicalDecls,canonicalTid) = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
 		  val canonicalPCT = P.makeTypedefPCT(repSuf name)
 
 		  (* Generate enum to string function *)
-		  val toStringEDs = [genEnumToStringFun(name, canonicalPCT, members)]
+		  val toStringEDs = [genEnumToStringFun(name, canonicalPCT, enumFields)]
 
 		   (* Generate Init function (enum case) *)
 		   val initFunName = lookupMemFun (PX.Name name)
@@ -4995,24 +5004,24 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                   (* Generate read function *)
                   (* -- Some useful names *)
                   val readName = readSuf name
-		  fun readOneBranch (bname, bvalOpt, commentOpt) =
-		      let val labelLenX = P.intX(String.size bname)
+		  fun readOneBranch (ename, dname, bvalOpt, commentOpt) =
+		      let val labelLenX = P.intX(String.size dname)
 		      in
-                         [P.assignS(P.dotX(PT.Id "strlit", PT.Id (PL.str)), PT.String bname),
+                         [P.assignS(P.dotX(PT.Id "strlit", PT.Id (PL.str)), PT.String dname),
 			  P.assignS(P.dotX(PT.Id "strlit", PT.Id (PL.len)), labelLenX)]
                        @ PL.chkPtS(PT.Id pads, readName)
                        @ [PT.IfThenElse(
 			    PL.matchFunChkX(PL.P_ERROR, baseMatchFun, PT.Id pads, P.addrX(PT.Id "strlit"), P.trueX (*eat lit *)),
 			    PT.Compound (PL.restoreS(PT.Id pads, readName)),
 			    PT.Compound (  PL.commitS(PT.Id pads, readName)
-				         @ [P.assignS(P.starX (PT.Id rep), PT.Id bname),
+				         @ [P.assignS(P.starX (PT.Id rep), PT.Id ename),
 					    P.assignS(PT.Id result, PL.P_OK),
 					    PT.Goto (findEORSuf name)]))]
 		      end
                   fun genReadBranches () = 
                       [P.varDeclS'(PL.stringPCT, "strlit"),
 		       P.varDeclS'(PL.toolErrPCT, result)]
-		      @ List.concat(List.map readOneBranch members)
+		      @ List.concat(List.map readOneBranch enumFields)
 		  val cleanupSs =  [P.mkCommentS("We didn't match any branch")]
 			         @ reportErrorSs([locS],locX,false,
 					PL.P_ENUM_MATCH_FAILURE,
@@ -5045,7 +5054,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  val isName = PNames.isPref name
 		 fun cnvOneBranch(bname,_,_) = [PT.CaseLabel(PT.Id bname, PT.Return P.trueX)]
 		 val defBranch = [PT.DefaultLabel(PT.Return P.falseX)]
-		 val branches  = (List.concat(List.map cnvOneBranch members)) @ defBranch
+		 val branches  = (List.concat(List.map cnvOneBranch enumFieldsforTy)) @ defBranch
 		 val bodySs    = [PT.Switch (P.starX(PT.Id rep), PT.Compound branches), PT.Return P.trueX]
                  val isFunEDs  = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs)]
 

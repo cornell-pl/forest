@@ -1,9 +1,10 @@
-Penum orderStates {
+Precord Penum orderStates {
     S_init,
     S_lec = 2,
     S_care,
-#if 0
-    S_for from "for" = 10,
-#endif
+    S_for Pfrom("for") = 10,
+    S_if  Pfrom("if"),
     S_tpv = 5
 };
+
+

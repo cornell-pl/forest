@@ -177,7 +177,7 @@ fun insertParams params =
 	List.app TypeDefs.addNoTdef names
     end
 
-fun addComment ((name, expOpt), commentOpt) = (name, expOpt, commentOpt)
+fun addComment ((name, fromOpt, expOpt), commentOpt) = (name, fromOpt, expOpt, commentOpt)
 
 fun addStructPostCond (decl,postCondOpt) = 
    (case decl of
@@ -259,6 +259,7 @@ end
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
 	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
         | POMIT | PENDIAN | PCOMPUTE (* PADS *)
+        | PFROM  (*PADS*)
  	| PRECORD | PSOURCE | PWHERE  (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT (* PADS*)
         | PRE | PDONE (* PADS *)
@@ -363,10 +364,11 @@ end
         | pBranchList of (expression option * (decltype, declarator, expression) PX.PSField) list
         | pVariants of (decltype, declarator, expression) PX.PBranches
         | pUnion of (declarator, ctype, decltype, expression) PX.PExternal
-        | pEnumField of string * expression option
-        | pAnnotatedEnumField of string * expression option * string option
-        | pAnnotatedLastEnumField of string * expression option * string option
-        | pEnumFieldList of (string * expression option * string option) list
+        | pFromOpt   of string option
+        | pEnumField of string * string option * expression option
+        | pAnnotatedEnumField of string * string option * expression option * string option
+        | pAnnotatedLastEnumField of string * string option * expression option * string option
+        | pEnumFieldList of (string * string option * expression option * string option) list
         | pEnum of externalDecl
 	| pSelect of externalDecl
 	| pCharClass of externalDecl
@@ -1253,9 +1255,13 @@ pUnion:
  ) 
 
 
+pFromOpt:
+                                    (NONE)
+ | PFROM LPAREN STRING RPAREN        (SOME STRING)
+
 pEnumField: 
-    pName                  (pName, NONE)
- |  pName EQUALS expr      (pName, SOME expr)
+    pName pFromOpt                  (pName, pFromOpt, NONE)
+ |  pName pFromOpt EQUALS expr      (pName, pFromOpt, SOME expr)
 
 pAnnotatedEnumField:
   pEnumField COMMA pCommentOpt          (addComment(pEnumField, pCommentOpt))
@@ -1269,7 +1275,7 @@ pEnumFieldList:
                                          (pAnnotatedEnumField :: pEnumFieldList)
 
 pEnum:
- pIsRecord pIsSource PENUM pName pushScope  LCURLY pEnumFieldList popScope
+ pIsRecord pIsSource PENUM pName pushScope  pTyParams LCURLY pEnumFieldList popScope
  ( makeTypeName pName1;
    ExternalDeclExt(PX.PEnum {name = pName1, params = [], isRecord = pIsRecord, 
 		             containsRecord = false, largeHeuristic = false,
