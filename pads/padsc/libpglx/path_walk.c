@@ -28,14 +28,23 @@ Perror_t ty ## _node_pathWalk(P_t *pads, Pbase_m *m, Pbase_pd *pd, ty *rep, PDCI
 \
     switch (idx) { \
       case 0: \
-	*m_out = NULL;\
-	res = Pbase_pd_node_pathWalk(pads,pd,path,pd_out,rep_out);\
-	break; \
-      case 1: \
 	if (pd->errCode == P_NO_ERR || pd->errCode == P_USER_CONSTRAINT_VIOLATION) { \
 	  *m_out = NULL;										    \
 	  res = ty ## _val_node_pathWalk(pads,pd,rep,path,pd_out,rep_out); \
-	} \
+	} else { \
+	  *m_out = NULL;\
+  	  res = Pbase_pd_node_pathWalk(pads,pd,path,pd_out,rep_out);\
+        } \
+	break; \
+      case 1: \
+	*m_out = NULL;\
+	if (pd->nerr > 0 && pd->errCode == P_USER_CONSTRAINT_VIOLATION) \
+	  res = Pbase_pd_node_pathWalk(pads,pd,path,pd_out,rep_out);\
+	else { \
+	  *rep_out = rep;\
+          *pd_out = pd;\
+	  res = P_OK;    \
+        } \								       
 	break; \
     } \
   }else{\
@@ -110,9 +119,11 @@ Perror_t Ppos_t_node_pathWalk(P_t *pads, Pbase_pd *pd, Ppos_t *pos, PDCI_path_t 
     case 1:
       res = Pint32_val_node_pathWalk(pads,pd,&(pos->num),path,pd_out,rep_out);
       break;
+   /*
     case 2:
-      /*  PDCI_MK_TNODE(result[2], &Puint64_val_vtable,  self, "offset",  (Puint64)(pos->offset), WHATFN); */
+      PDCI_MK_TNODE(result[2], &Puint64_val_vtable,  self, "offset",  (Puint64)(pos->offset), WHATFN); 
       break;
+   */	
     }
   }else{
     *pd_out = pd;

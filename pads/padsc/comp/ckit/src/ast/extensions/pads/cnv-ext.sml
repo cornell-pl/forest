@@ -6798,7 +6798,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		              val bodySs = G.makeInvisibleDecls(name :: uniqueFieldTys, fieldNames)
 					   @ [G.macroStructKCBegin(name)]
 					   @ (List.map (G.makeKCCase name) (G.enumerate fields))
-					   @ [G.macroStructKCEnd(),
+					   @ [G.macroStructKCEnd(List.length fields),
 					      P.returnS (G.macroStructKCRet())]
 			  in   
                               P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)

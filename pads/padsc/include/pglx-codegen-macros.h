@@ -73,6 +73,10 @@ PDCI_ALIAS_NODE(result)
 
 /******* Struct macros ******/
 
+/* 
+   Mary : If the order of elements in STR_NODE_KTH_CHILD_BODY_BEGIN changes, then 
+  STR_NODE_KTH_CHILD_NAMED_BODY(ty,...) must also change
+*/
 #define STR_NODE_KTH_CHILD_BODY_BEGIN(ty)
   PDCI_node_t *result = 0;
   ty *rep=(ty *) (self->rep);
@@ -80,13 +84,14 @@ PDCI_ALIAS_NODE(result)
   ty ## _m *m=(ty ## _m *) (self->m);
 
   switch(idx){
-    /* parse descriptor child */
-  case 0:
-    result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
-    break
 /* END_MACRO */
 
-#define STR_NODE_KTH_CHILD_BODY_END()
+#define STR_NODE_KTH_CHILD_BODY_END(pdidx)
+  case pdidx:
+    /* parse descriptor child */
+    if (pd->nerr > 0)
+      result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
+    break;
   }
 /* END_MACRO */
 
@@ -109,7 +114,7 @@ result
 #define STR_NODE_KTH_CHILD_NAMED_BODY(ty,...)
   PDCI_node_t *result = 0;
   PDCI_childIndex_t i;
-  const char *fieldNames[] = {"pd", ## __VA_ARGS__,0}; 
+  const char *fieldNames[] = { __VA_ARGS__ , "pd",0}; 
   /* The index must be 0 as all field names are unique.*/
   if (idx != 0)
     return result;
@@ -119,6 +124,7 @@ result
     if (GLX_STR_MATCH(name, fieldNames[i]))
       break;
   } 
+  i -= 1;
   /* fall through if i set correctly */
 /* END_MACRO */
 
@@ -139,14 +145,17 @@ result
   m=(ty ## _m *) (self->m);
 
   switch(idx){
-  case 0: 
-    /* parse descriptor child */
-    result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    PDCI_structured_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
-    break
 /* END_MACRO */
 
-#define STR_SND_NODE_KTH_CHILD_BODY_END()
+#define STR_SND_NODE_KTH_CHILD_BODY_END(pdidx)
+  case pdidx: 
+    /* parse descriptor child */
+    if (pd->nerr > 0) 
+    {
+      result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
+      PDCI_structured_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    }
+    break;
   }
 
 /* END_MACRO */  
@@ -175,14 +184,14 @@ result
     idx = PDCI_PATH_GET(path);
 
     switch(idx){
-    case 0: 
-      *m_out = NULL;
-      res = PDCI_structured_pd_node_pathWalk(pads,(PDCI_structured_pd *)pd,path,pd_out,rep_out);
-      break
 /* END_MACRO */
 
-#define STR_NODE_PATH_WALK_BODY_END()
-    }
+#define STR_NODE_PATH_WALK_BODY_END(pdidx)
+    case pdidx: 
+      *m_out = NULL;
+      res = PDCI_structured_pd_node_pathWalk(pads,(PDCI_structured_pd *)pd,path,pd_out,rep_out);
+      break;
+    } /* end switch */
   }else{
     *rep_out = rep;
     *pd_out = pd;
@@ -216,13 +225,13 @@ res
   if (idx < rep-> length) { /* indexes between 0 and rep->length belong to elements */
       result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
  				    PDCI_MacroArg2String(ty)"_node_kthChild");
-  } else if (idx == rep->length) {  /* index of rep->length indicates parse descriptor */
-	result = PDCI_sequenced_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
-
-  } else if (idx == rep->length + 1) { /* index of rep->length indicates length */
+  } else if (idx == rep->length) { /* index of rep->length indicates length */
       result = Puint32_val_node_new(self,"length",pd,&(rep->length),
 	 			    PDCI_LENGTH_OFF,
 				    PDCI_MacroArg2String(ty) "_node_kthChild");
+  } else if (idx == rep->length+1) {  /* index of rep->length indicates parse descriptor */
+    if (pd->nerr > 0)
+      result = PDCI_sequenced_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
   } /* otherwise, an illegal child was requested */
 
 /* END_MACRO */
@@ -242,10 +251,10 @@ result
 /* error(2, PDCI_MacroArg2String(ty)"_sndNode_kthChildNamed\n"); */
   if (GLX_STR_MATCH(name,"elt")) {
     k = idx;
-  } else if (GLX_STR_MATCH(name,"pd")){
+  } else if (GLX_STR_MATCH(name,"length")){
     if (idx == 0) k = rep->length;
     else return 0;
-  } else if (GLX_STR_MATCH(name,"length")){
+  } else if (GLX_STR_MATCH(name,"pd")){
     if (idx == 0) k = rep->length + 1;
     else return 0;
   } else return 0;
@@ -277,18 +286,17 @@ result
 				  PDCI_MacroArg2String(ty)"_sndNode_kthChild");
     childTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
 
-  } else if (idx == rep->length) {  /* index of rep->length indicates parse descriptor */
-    /* parse descriptor child */
-    result = PDCI_sequenced_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    /* error(2, "pd->nerr %d\n", pd->nerr); */
-    /* Mary: I don't know why, but this call trashes the <pd> element -- I don't understand its semantics. */
-    /* PDCI_sequenced_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx); */
-
-  } else if (idx == rep->length + 1) { /* index of rep->length+1 indicates length */
+  } else if (idx == rep->length) { /* index of rep->length+1 indicates length */
     result = Puint32_val_node_new(self,"length",pd,&(rep->length),
 				  PDCI_LENGTH_OFF,
 				  PDCI_MacroArg2String(ty) "_sndNode_kthChild");
     Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+  } else if (idx == rep->length + 1) {  /* index of rep->length indicates parse descriptor */
+    if (pd->nerr > 0) { 
+      /* parse descriptor child */
+      result = PDCI_sequenced_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
+      PDCI_sequenced_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    }
   } /* otherwise, an illegal child was requested */
 
 /* END_MACRO */
@@ -297,6 +305,10 @@ result
 result
 /* END_MACRO */
 
+/* Mary: This code must align with ARR_NODE_KTH_CHILD_BODY, above.  All array <elt>
+   elements come first, followed by the <pd> element, followed by the
+   <length> element.
+*/
 #define ARR_NODE_PATH_WALK_BODY(childTy)
   Perror_t res = P_ERR;
   PDCI_childIndex_t idx;
@@ -305,22 +317,15 @@ result
     /* modifies path */
     idx = PDCI_PATH_GET(path);
 
-    switch(idx){
-    case 0: 
-      *m_out = NULL;
-      res = PDCI_sequenced_pd_node_pathWalk(pads,(PDCI_sequenced_pd *)pd,path,pd_out,rep_out);
-      break;
-    case 1:
+    if (idx < rep-> length) { /* indexes between 0 and rep->length belong to elements */
+      res = childTy ## _node_pathWalk(pads,&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],
+				      path,m_out,pd_out,rep_out);
+    } else if (idx == rep->length) { /* index of rep->length+1 indicates length */
       *m_out = NULL;
       res = Puint32_val_node_pathWalk(pads,(Pbase_pd *)pd,&(rep->length),path,pd_out,rep_out);      
-      break;
-    default:
-      idx -= 2;
-      if (idx < rep->length){
-	res = childTy ## _node_pathWalk(pads,&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],
-					path,m_out,pd_out,rep_out);
-      }
-      break;
+    } else if (idx == rep->length + 1) {  /* index of rep->length indicates parse descriptor */
+      *m_out = NULL;
+      res = PDCI_sequenced_pd_node_pathWalk(pads,(PDCI_sequenced_pd *)pd,path,pd_out,rep_out);
     }
   }else{
     *rep_out = rep;
@@ -346,13 +351,14 @@ res
   ty ## _m *m=(ty ## _m *) (self->m);
 
   switch(idx){
-    /* parse descriptor child */
   case 0:
-    result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
-    break;
-  case 1:
     result = baseTy ## _node_new(self,"base",&(m->base),pd,rep,
 				 "element", PDCI_MacroArg2String(ty) "_node_kthChild");
+    break;
+  case 1:
+    /* parse descriptor child */
+    if (pd->nerr > 0)
+      result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
     break;
   }
 /* END_MACRO */
@@ -368,8 +374,8 @@ result
   if (idx != 0)
     return 0;
   
-  if (GLX_STR_MATCH(name,"pd"))       {k = 0;}
-  else if(GLX_STR_MATCH(name,"base")) {k = 1;}
+  if (GLX_STR_MATCH(name,"base")) {k = 0;}
+  else if (GLX_STR_MATCH(name,"pd")) {k = 1;}
   else return 0;
 /* END_MACRO */
 
@@ -391,15 +397,17 @@ result
   m=(ty ## _m *) (self->m);
 
   switch(idx){
-    /* parse descriptor child */
   case 0:
-    result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    PDCI_structured_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
-    break;
-  case 1:
     result = baseTy ## _node_new(self,"base",&(m->base),pd,rep,
 				 "element", PDCI_MacroArg2String(ty) "_sndNode_kthChild");
     baseTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    break;
+  case 1:
+    /* parse descriptor child */
+    if (pd->nerr > 0) { 
+      result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
+      PDCI_structured_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    }
     break;
   }
 /* END_MACRO */
@@ -418,11 +426,11 @@ result
 
     switch(idx){
     case 0: 
-      *m_out = NULL;
-      res = PDCI_structured_pd_node_pathWalk(pads,(PDCI_structured_pd *)pd,path,pd_out,rep_out);
+      res = baseTy ## _node_pathWalk(pads,&(m->base),pd,rep,path,m_out,pd_out,rep_out);      
       break;
     case 1:
-      res = baseTy ## _node_pathWalk(pads,&(m->base),pd,rep,path,m_out,pd_out,rep_out);      
+      *m_out = NULL;
+      res = PDCI_structured_pd_node_pathWalk(pads,(PDCI_structured_pd *)pd,path,pd_out,rep_out);
       break;
     }
   }else{
@@ -448,19 +456,20 @@ res
   char const *branch = ty ## _tag2str (rep->tag);
 
   switch(idx){
-    /* parse descriptor child */
   case 0:
-    result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
-    break;
-  case 1:
     switch (rep->tag){
       case ty ## _err: 
 	/* (do nothing) */
-	break
+	break;
 /* END_MACRO */
 
 #define UNION_NODE_KTH_CHILD_BODY_END()
       }  /* end switch (rep->tag) */
+    break;
+  case 1:
+    /* parse descriptor child */
+    if (pd->nerr > 0)
+      result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
     break;
   }  /* end switch(idx)*/
 /* END_MACRO */
@@ -495,8 +504,8 @@ result
   if (idx != 0)
     return 0;
   
-  if (GLX_STR_MATCH(name,"pd"))       {k = 0;}
-  else if(GLX_STR_MATCH(name,branch)) {k = 1;}
+  if(GLX_STR_MATCH(name,branch)) {k = 0;}
+  else if (GLX_STR_MATCH(name,"pd")) {k = 1;}
   else return 0;
 /* END_MACRO */
 
@@ -519,20 +528,22 @@ result
   branch = ty ## _tag2str (rep->tag);
 
   switch(idx){
-    /* parse descriptor child */
   case 0:
-    result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    PDCI_structured_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
-    break;
-  case 1:
     switch (rep->tag){
       case ty ## _err: 
 	/* (do nothing) */
-	break
+	break;
 /* END_MACRO */
 
 #define UNION_SND_NODE_KTH_CHILD_BODY_END()
-	  } /* end switch (rep->tag) */
+    } /* end switch (rep->tag) */
+    break;
+  case 1:
+    /* parse descriptor child */
+    if (pd->nerr > 0) { 
+      result = PDCI_structured_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
+      PDCI_structured_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    }
     break;
   }  /* end switch(idx)*/
 /* END_MACRO */
@@ -548,7 +559,7 @@ result
 				   &(m->branchTagIN),&((pd->val).branchTagIN),&((rep->val).branchTagIN),
 				  "element", PDCI_MacroArg2String(ty) "_node_kthChild");
     branchTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
-    break
+    break;
 /* END_MACRO */
 
 /* case for kthChild function */
@@ -557,7 +568,7 @@ result
     result = PDCI_cstr_val_node_new(self,branch,&((pd->val).branchTagIN),(void *)branch, PDCI_VAL_OFF,
 				    PDCI_MacroArg2String(ty) "_node_kthChild");
     Pbase_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
-    break
+    break;
 /* END_MACRO */
 
 
@@ -572,20 +583,20 @@ result
 
     switch(idx){
     case 0: 
-      *m_out = NULL;
-      res = PDCI_structured_pd_node_pathWalk(pads,(PDCI_structured_pd *)pd,path,pd_out,rep_out);
-      break;
-    case 1:
       switch (rep->tag){
       case ty ## _err: 
 	/*  (do nothing) */
-	break
+      break;
 /* END_MACRO */
 
 #define UNION_NODE_PATH_WALK_BODY_END()
-      }
+      } /* end switch (rep->tag) */
+    break;
+    case 1:
+      *m_out = NULL;
+      res = PDCI_structured_pd_node_pathWalk(pads,(PDCI_structured_pd *)pd,path,pd_out,rep_out);
       break;
-    }
+    } /* end switch(idx)*/
   }else{
     *rep_out = rep;
     *pd_out = pd;
@@ -605,7 +616,7 @@ res
 					 &((pd->val).branchTagIN),
 					 &((rep->val).branchTagIN),
 					 path,m_out,pd_out,rep_out);      
-	break
+       break;
 /* END_MACRO */
 
 #define UNION_NODE_PW_CASE_LITERAL(ty, branchTagIN)
@@ -614,7 +625,7 @@ res
 					  &((pd->val).branchTagIN),
 					  (void *)ty ## _tag2str(rep->tag),
 					  path,pd_out,rep_out);      
-	break
+       break;
 /* END_MACRO */
 
 /******* Enum macros ******/
@@ -622,20 +633,19 @@ res
 /* Enum node kthChild function */
 #define ENUM_NODE_KTH_CHILD_BODY(ty)
   PDCI_node_t *result = 0;
-  char *cstr;
   ty *rep=(ty *) (self->rep);
   Pbase_pd *pd=(Pbase_pd *) (self->pd);
 
   switch(idx){
-    /* parse descriptor child */
   case 0:
-    result = Pbase_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
+    /* string val child */
+    result = Puint32_val_node_new(self, "val",  pd, rep, PDCI_VAL_OFF, 
+				  PDCI_MacroArg2String(ty) "_node_kthChild");
     break;
   case 1:
-    /* string val child */
-    cstr = ((char *) ty ## 2str (*rep));
-    result = PDCI_cstr_val_node_new(self, "val", pd, cstr, PDCI_VAL_OFF, 
-				    PDCI_MacroArg2String(ty) "_node_kthChild");
+    /* parse descriptor child */
+    if (pd->nerr > 0) 
+      result = Pbase_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_node_kthChild");
     break;
   }
 /* END_MACRO */
@@ -651,8 +661,8 @@ result
   if (idx != 0)
     return 0;
   
-  if (GLX_STR_MATCH(name,"pd"))       {k = 0;}
-  else if(GLX_STR_MATCH(name,"val"))  {k = 1;}
+  if (GLX_STR_MATCH(name,"val"))  {k = 0;}
+  else if (GLX_STR_MATCH(name,"pd")) {k = 1;}
   else return 0;
 /* END_MACRO */
 
@@ -663,7 +673,6 @@ result
 /* Enum snd node kthChild function */
 #define ENUM_SND_NODE_KTH_CHILD_BODY(ty)
   PDCI_node_t *result = 0;
-  char *cstr;
   ty *rep;
   Pbase_pd *pd;
 
@@ -673,17 +682,18 @@ result
   pd = (Pbase_pd *) (self->pd);
 
   switch(idx){
-    /* parse descriptor child */
   case 0:
-    result = Pbase_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    Pbase_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    /* string val child */
+    result = Puint32_val_node_new(self, "val",  pd, rep, PDCI_VAL_OFF, 
+				  PDCI_MacroArg2String(ty) "_sndNode_kthChild");
+    Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
     break;
   case 1:
-    /* string val child */
-    cstr = ((char *) ty ## 2str (*rep));
-    result = PDCI_cstr_val_node_new(self, "val", pd, cstr, PDCI_VAL_OFF, 
-				    PDCI_MacroArg2String(ty) "_sndNode_kthChild");
-    PDCI_cstr_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    /* parse descriptor child */
+    if (pd->nerr > 0) { 
+      result = Pbase_pd_node_new(self,"pd",pd,PDCI_MacroArg2String(ty) "_sndNode_kthChild");
+      Pbase_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    }
     break;
   }
 /* END_MACRO */
@@ -703,13 +713,13 @@ result
 
     switch(idx){
     case 0: 
-      *m_out = NULL;
-      res = Pbase_pd_node_pathWalk(pads,pd,path,pd_out,rep_out);
-      break;
-    case 1:
       cstr = ((char *) ty ## 2str (*rep));
       *m_out = NULL;
       res = PDCI_cstr_val_node_pathWalk(pads,(Pbase_pd *)pd,cstr,path,pd_out,rep_out);      
+      break;
+    case 1:
+      *m_out = NULL;
+      res = Pbase_pd_node_pathWalk(pads,pd,path,pd_out,rep_out);
       break;
     }
   }else{
@@ -1080,15 +1090,18 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
   PDCI_smart_node_t *sn = (selfIN)->snExt;  
   PDCI_smart_array_info_t *arrayInfo = (PDCI_smart_array_info_t *)sn->elt_state;
   
-  /*  parse descriptor child */
-  if (!P_PS_isPartial(pd) && (idxIN) == arrayInfo->next_idx_read){
-    return PDCI_sequenced_pd_node_new((selfIN),"pd",pd,#ty "_smartNode_kthChild");
-  }
   /* length field */
-  if (!P_PS_isPartial(pd) && (idxIN) == arrayInfo->next_idx_read + 1){
+  if (!P_PS_isPartial(pd) && (idxIN) == arrayInfo->next_idx_read){
     return Puint32_val_node_new((selfIN),"length",pd,&arrayInfo->next_idx_read,
 				  PDCI_LENGTH_OFF,
 				    #ty "_smartNode_kthChild");
+  }
+  /*  parse descriptor child */
+  if (!P_PS_isPartial(pd) && (idxIN) == arrayInfo->next_idx_read + 1){
+    if (pd->nerr > 0) 
+      return PDCI_sequenced_pd_node_new((selfIN),"pd",pd,#ty "_smartNode_kthChild");
+    else 
+      return 0;
   }
 
   if (!P_PS_isPartial(pd) && (idxIN) >= arrayInfo->next_idx_read + 2){
@@ -1128,11 +1141,14 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
     if (!P_PS_isPartial(pd) && P_READ_OK_NO_DATA == res){
       PDCI_childIndex_t i = (idxIN) - arrayInfo->next_idx_read;
       switch(i){
-      case 0:    /*  parse descriptor child */
-	return PDCI_sequenced_pd_node_new((selfIN),"pd",pd,#ty "_smartNode_kthChild");       
-      case 1:    /* length field */
+      case 0:    /* length field */
 	return Puint32_val_node_new((selfIN),"length",pd,&rep->length,
 				    PDCI_LENGTH_OFF, #ty "_smartNode_kthChild");
+      case 1:    /*  parse descriptor child */
+	if (pd->nerr > 0)
+	  return PDCI_sequenced_pd_node_new((selfIN),"pd",pd,#ty "_smartNode_kthChild");
+	else 
+	  return 0;
       default:
 	return 0;
       }
@@ -1178,7 +1194,7 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
        */
       do{
 	result = ((selfIN)->vt->kth_child)((selfIN),arrayInfo->next_idx_read);
-      }while(result != 0 && P_PS_isPartial(pd));
+      } while(result != 0 && P_PS_isPartial(pd));
 
       /* The array should no longer be partial.
        * If it is, then either the array is absurdly
@@ -1192,10 +1208,10 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
     }
 
     switch((nameIN)[0]){
-    case 'p':
+    case 'l':
       result = ((selfIN)->vt->kth_child)((selfIN),rep->length);
       break;
-    case 'l':
+    case 'p':
       result = ((selfIN)->vt->kth_child)((selfIN),rep->length + 1);
       break;
     }

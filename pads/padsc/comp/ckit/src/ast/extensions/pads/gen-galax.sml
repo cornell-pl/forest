@@ -47,7 +47,8 @@ structure GenGalax = struct
 
   fun listOf n = List.tabulate (n, inc)
 
-  fun enumerate xs = ListPair.zip(listOf (List.length xs), xs)
+  (* enumerate should start at zero *)
+  fun enumerate xs = ListPair.zip(0 :: listOf ((List.length xs) - 1), xs)
 
   fun getUniqueTys nil = nil
     | getUniqueTys (fieldTy::fs) = 
@@ -171,9 +172,9 @@ structure GenGalax = struct
       PT.Expr(PT.Call(PL.STR_NODE_KTH_CHILD_BODY_BEGIN,
 		      [PT.Id ty]))
 
-  fun macroStructKCEnd() =
+  fun macroStructKCEnd(pdidx) =
 		    PT.Expr(PT.Call(PL.STR_NODE_KTH_CHILD_BODY_END,
-				    nil))
+				    [P.intX pdidx]))
 
   fun macroStructKCRet() =
 		    PT.Call(PL.STR_NODE_KTH_CHILD_RET,nil)
@@ -200,8 +201,8 @@ structure GenGalax = struct
 		      [PT.Id ty,P.intX n,PT.Id fieldTy,PT.Id fieldName]))
   fun macroStructSNDKCBegin(ty) =
       PT.Expr(PT.Call(PL.STR_SND_NODE_KTH_CHILD_BODY_BEGIN,[PT.Id ty]))
-  fun macroStructSNDKCEnd() =
-      PT.Expr(PT.Call(PL.STR_SND_NODE_KTH_CHILD_BODY_END,nil))
+  fun macroStructSNDKCEnd(pdidx) =
+      PT.Expr(PT.Call(PL.STR_SND_NODE_KTH_CHILD_BODY_END,[P.intX pdidx]))
   fun macroStructSNDKCRet() = 
       PT.Call(PL.STR_SND_NODE_KTH_CHILD_RET,nil)
 
@@ -211,9 +212,9 @@ structure GenGalax = struct
   fun macroStructPWBegin() =
       PT.Expr(PT.Call(PL.STR_NODE_PATH_WALK_BODY_BEGIN,nil))
 
-  fun macroStructPWEnd() =
+  fun macroStructPWEnd(pdidx) =
 		    PT.Expr(PT.Call(PL.STR_NODE_PATH_WALK_BODY_END,
-				    nil))
+				    [P.intX pdidx]))
 
   fun macroStructPWRet() =
 		    PT.Call(PL.STR_NODE_PATH_WALK_RET,nil)
@@ -512,7 +513,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  val bodySs = makeInvisibleDecls(name :: uniqueFieldTys, fieldNames)
 		       @ [macroStructSNDKCBegin(name)] 
 		       @ (List.map (makeSNDKCCase name) (enumerate fields)) 
-		       @ [macroStructSNDKCEnd(),   
+		       @ [macroStructSNDKCEnd(List.length fields),   
 			  P.returnS (macroStructSNDKCRet())] 
       in   
 	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
@@ -538,7 +539,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  val bodySs = makeInvisibleDecls(name :: uniqueFieldTys, fieldNames)
 		       @ [macroStructPWBegin()] 
 		       @ (List.map makePWCase (enumerate fields)) 
-		       @ [macroStructPWEnd(),   
+		       @ [macroStructPWEnd(List.length fields),   
 			  P.returnS (macroStructPWRet())] 
       in   
 	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)

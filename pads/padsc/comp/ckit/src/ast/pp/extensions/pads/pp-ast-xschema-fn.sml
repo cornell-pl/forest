@@ -720,7 +720,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	((newline pps
         ; ppXMLComplex pps (pdTyName,pdFields)
         ; newline pps
-	; ppXMLComplex pps (repName,((pdTyName,SOME "pd") :: repFields)) 
+	; ppXMLComplex pps (repName,(repFields @ [(pdTyName,SOME "pd")])) 
     	; newline pps
 	; ppTopElemIfPsource pps (ptyInfo,repName)
 	)						
@@ -747,10 +747,10 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; newline pps
       ; PPL.addStr pps "<xs:sequence>"
       ; newline pps
-      ; ppXMLHeader "<xs:element " "/>" pps (pdTyName,SOME "pd")
-      ; newline pps
       ; ppXMLChoiceFields pps uFields    		(* original union fields *)
       ; PPL.addStr pps "</xs:sequence>"
+      ; newline pps
+      ; ppXMLHeader "<xs:element " "/>" pps (pdTyName,SOME "pd")
       ; newline pps
       ; PPL.addStr pps "</xs:complexType>"
       ; newline pps
@@ -768,7 +768,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           val (repName, repFields) = structInfo tidtab tid
           val lengthField = List.hd repFields				(* takes only two fields = length & elts *) 
           val eltField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.hd (List.tl repFields)))
-          val Fields = eltField :: (pdTyName,SOME "pd") :: lengthField :: []
+          val Fields = eltField :: lengthField :: (pdTyName,SOME "pd") :: []
           val pd2Fields = List.take (pd1Fields,8)			(* eliminates RBuf_t field *) 
           val eltPdField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.last pd2Fields))
           val pdFields = List.take (pd2Fields,7) @ (eltPdField :: []) 

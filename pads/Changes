@@ -1,3 +1,17 @@
+October 19, 2004 - Mary
+
+  o Normalized occurrence of <pd> type for all P-types:
+    <pd> is now _last_ child element 
+    <pd> is only present if pd->nerr > 0
+    Required changes to kth-child and path-walk functions in:
+      padsc/comp/ckit/src/ast/extensions/pads/cnv-ext.sml
+      padsc/comp/ckit/src/ast/extensions/pads/gen-galax-sig.sml
+      padsc/comp/ckit/src/ast/extensions/pads/gen-galax.sml
+      padsc/include/pglx-codegen-macros.h
+      padsc/libpglx/path_walk.c
+      padsc/libpglx/pglx.c
+
+  o Updated regression tests
 
 October 16, 2004 - Kathleen
 
@@ -56,6 +70,7 @@ October 14, 2004 - Mary
       kth_childNamed and kth_child.
 
 October 14, 2004 - Mary
+  Dibbler example
   o Removed examples/p/{dibbler2.p,dibbler_manifest.p,dibbler_most_permissive.p}
   o Added examples/xml/tests/test_*_dibbler_notrailer
   o Added examples/data/dibbler.1 containing one record

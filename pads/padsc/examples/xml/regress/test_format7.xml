@@ -1,27 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PSource>
-  <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-    <id><pd><pstate>0</pstate><errCode>1</errCode></pd><val>1</val></id>
-    <ts><pd><pstate>0</pstate><errCode>1</errCode></pd><val>11</val></ts>
-  </elt>
-  <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-    <id><pd><pstate>0</pstate><errCode>1</errCode></pd><val>2</val></id>
-    <ts><pd><pstate>0</pstate><errCode>1</errCode></pd><val>22</val></ts>
-  </elt>
-  <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-    <id><pd><pstate>0</pstate><errCode>1</errCode></pd><val>3</val></id>
-    <ts><pd><pstate>0</pstate><errCode>1</errCode></pd><val>33</val></ts>
-  </elt>
-  <pd>
-    <pstate>0</pstate>
-    <nerr>0</nerr>
-    <errCode>1</errCode>
-    <neerr>0</neerr>
-    <firstError>0</firstError>
-  </pd>
+  <elt><id><val>1</val></id><ts><val>11</val></ts></elt>
+  <elt><id><val>2</val></id><ts><val>22</val></ts></elt>
+  <elt><id><val>3</val></id><ts><val>33</val></ts></elt>
   <length>3</length>
 </PSource>
 

@@ -175,26 +175,43 @@ PDCI_node_t * ty ## _node_kthChild(PDCI_node_t *node, childIndex idx) \
   /* the mk calls below raise an exception on alloc error */ \
   switch (idx) { \
     case 0: \
-      result = Pbase_pd_node_new(node, "pd",  pd,  PDCI_MacroArg2String(ty) "_node_kthChild"); \
+      if (pd->errCode == P_NO_ERR || pd->errCode == P_USER_CONSTRAINT_VIOLATION) \
+        result = ty ## _val_node_new(node, "val", pd, rep, PDCI_VAL_OFF,PDCI_MacroArg2String(ty) "_node_kthChild"); \
+      else \
+        result = Pbase_pd_node_new(node, "pd",  pd,  PDCI_MacroArg2String(ty) "_node_kthChild"); \
       break; \
     case 1: \
-      if (pd->errCode == P_NO_ERR || pd->errCode == P_USER_CONSTRAINT_VIOLATION) { \
-        result = ty ## _val_node_new(node, "val", pd, rep, PDCI_VAL_OFF,PDCI_MacroArg2String(ty) "_node_kthChild"); \
-      } \
+      if (pd->nerr > 0 && pd->errCode == P_USER_CONSTRAINT_VIOLATION) \
+        result = Pbase_pd_node_new(node, "pd",  pd,  PDCI_MacroArg2String(ty) "_node_kthChild"); \
       break; \
   } \
   return result; \
 } \
- \
+\
 PDCI_node_t * ty ## _node_kthChildNamed(PDCI_node_t *node, childIndex idx, const char *name) \
 { \
   PDCI_node_t *result = 0; \
+  ty        *rep = (ty*)node->rep; \
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
+\
   /* the only valid idx is 0  */ \
   if (idx) return result; \
   /* the mk calls below raise an exception on alloc error */ \
-  if (strcmp(name, "pd") == 0)          idx = 0; \
-  else if (strcmp(name, "val") == 0)    idx = 1; \
-  else return result; /* no such child */ \
+  /* Mary: The logic here is a bit convoluted, because the child name \
+     does not determine the index value.  Base types seem to be the only nodes \
+     for which child name alone does not determine index value. \
+\
+     name = "val" && (errCode == P_NO_ERR && P_USER_CONSTRAINT_VIOLATION) => index = 0 \
+     name = "pd" && \
+        errCode == P_USER_CONSTRAINT_VIOLATION => index = 1 \
+        otherwise => index = 0 \
+  */ \
+  if (strcmp(name, "val") == 0 &&  \
+      (pd->errCode == P_NO_ERR || pd->errCode == P_USER_CONSTRAINT_VIOLATION)) idx = 0; \
+  else if (strcmp(name, "pd") == 0) { \
+    if (pd->errCode == P_USER_CONSTRAINT_VIOLATION) idx = 1; \
+    else idx = 0; \
+  } else return result; /* no such child */ \
 \
   return (node->vt->kth_child)(node,idx); \
 } \
@@ -230,10 +247,6 @@ PDCI_node_t * ty ## _sndNode_kthChild(PDCI_node_t *node, childIndex idx) \
   /* the mk calls below raise an exception on alloc error */ \
   switch (idx) { \
     case 0: \
-      result = Pbase_pd_node_new(node, "pd",  pd,  PDCI_MacroArg2String(ty) "_sndNode_kthChild"); \
-      Pbase_pd_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);\
-      break; \
-    case 1: \
 \
       /* Make sure that the node is valid before attempting to access its contents. */ \
       PDCI_sndNode_validate(node);\
@@ -244,6 +257,15 @@ PDCI_node_t * ty ## _sndNode_kthChild(PDCI_node_t *node, childIndex idx) \
         result = ty ## _val_node_new(node, "val", pd, rep, PDCI_VAL_OFF, \
 				     PDCI_MacroArg2String(ty) "_sndNode_kthChild"); \
         ty ## _val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx); \
+      } else { \
+        result = Pbase_pd_node_new(node, "pd",  pd,  PDCI_MacroArg2String(ty) "_sndNode_kthChild"); \
+        Pbase_pd_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);\
+      } \
+      break; \
+    case 1: \
+      if (pd->nerr > 0  && pd->errCode == P_USER_CONSTRAINT_VIOLATION) { \
+        result = Pbase_pd_node_new(node, "pd",  pd,  PDCI_MacroArg2String(ty) "_sndNode_kthChild"); \
+        Pbase_pd_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);\
       } \
       break; \
   } \

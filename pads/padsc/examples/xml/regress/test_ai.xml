@@ -1,955 +1,291 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PSource>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <symbolic>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>foo</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>3</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>4</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>1</val></elt>
+        <elt><val>foo</val></elt>
+        <elt><val>3</val></elt>
+        <elt><val>4</val></elt>
         <length>4</length>
       </symbolic>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876974569</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876974569</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/amnesty/urgact/urgact.html</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>404</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>179</val>
-      </len>
-    </contentLength>
+    <response><val>404</val></response>
+    <contentLength><len><val>179</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <resolved>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>207</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>136</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>97</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>49</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>207</val></elt>
+        <elt><val>136</val></elt>
+        <elt><val>97</val></elt>
+        <elt><val>49</val></elt>
         <length>4</length>
       </resolved>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876966411</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876966411</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/turkey/amnty1.gif</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/turkey/amnty1.gif</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>200</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>3013</val>
-      </len>
-    </contentLength>
+    <response><val>200</val></response>
+    <contentLength><len><val>3013</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <resolved>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>207</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>136</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>97</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>49</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>207</val></elt>
+        <elt><val>136</val></elt>
+        <elt><val>97</val></elt>
+        <elt><val>49</val></elt>
         <length>4</length>
       </resolved>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876966411</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876966411</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/turkey/amnty1.gif</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/turkey/amnty1.gif</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>200</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>3013</val>
-      </len>
-    </contentLength>
+    <response><val>200</val></response>
+    <contentLength><len><val>3013</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <resolved>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>207</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>136</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>97</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>50</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>207</val></elt>
+        <elt><val>136</val></elt>
+        <elt><val>97</val></elt>
+        <elt><val>50</val></elt>
         <length>4</length>
       </resolved>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876966411</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876966411</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/turkey/amnty1.gif</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/turkey/amnty1.gif</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>200</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>3013</val>
-      </len>
-    </contentLength>
+    <response><val>200</val></response>
+    <contentLength><len><val>3013</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <resolved>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>207</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>136</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>97</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>50</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>207</val></elt>
+        <elt><val>136</val></elt>
+        <elt><val>97</val></elt>
+        <elt><val>50</val></elt>
         <length>4</length>
       </resolved>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876966411</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876966411</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/turkey/clear.gif</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/turkey/clear.gif</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>200</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len><pd><pstate>0</pstate><errCode>1</errCode></pd><val>76</val></len>
-    </contentLength>
+    <response><val>200</val></response>
+    <contentLength><len><val>76</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <symbolic>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>foo</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>3</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>4</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>1</val></elt>
+        <elt><val>foo</val></elt>
+        <elt><val>3</val></elt>
+        <elt><val>4</val></elt>
         <length>4</length>
       </symbolic>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876974569</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876974569</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/amnesty/urgact/urgact.html</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>404</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>179</val>
-      </len>
-    </contentLength>
+    <response><val>404</val></response>
+    <contentLength><len><val>179</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <symbolic>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>foo</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>3</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>4</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>1</val></elt>
+        <elt><val>foo</val></elt>
+        <elt><val>3</val></elt>
+        <elt><val>4</val></elt>
         <length>4</length>
       </symbolic>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876974569</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876974569</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/amnesty/urgact/urgact.html</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>404</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>179</val>
-      </len>
-    </contentLength>
+    <response><val>404</val></response>
+    <contentLength><len><val>179</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <symbolic>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>foo</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>3</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>3</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>1</val></elt>
+        <elt><val>foo</val></elt>
+        <elt><val>3</val></elt>
+        <elt><val>3</val></elt>
         <length>4</length>
       </symbolic>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876974569</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876974569</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/amnesty/urgact/urgact.html</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>404</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>179</val>
-      </len>
-    </contentLength>
+    <response><val>404</val></response>
+    <contentLength><len><val>179</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <symbolic>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>foo</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>3</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>3</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>1</val></elt>
+        <elt><val>foo</val></elt>
+        <elt><val>3</val></elt>
+        <elt><val>3</val></elt>
         <length>4</length>
       </symbolic>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876974569</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876974569</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/amnesty/urgact/urgact.html</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>404</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>179</val>
-      </len>
-    </contentLength>
+    <response><val>404</val></response>
+    <contentLength><len><val>179</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <symbolic>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>foo</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>3</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>4</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>1</val></elt>
+        <elt><val>foo</val></elt>
+        <elt><val>3</val></elt>
+        <elt><val>4</val></elt>
         <length>4</length>
       </symbolic>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876974569</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876974569</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/amnesty/urgact/urgact.html</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>404</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>179</val>
-      </len>
-    </contentLength>
+    <response><val>404</val></response>
+    <contentLength><len><val>179</val></len></contentLength>
   </elt>
   <elt>
-    <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
     <host>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
       <symbolic>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>foo</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>3</val>
-        </elt>
-        <elt>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>5</val>
-        </elt>
-        <pd>
-          <pstate>0</pstate>
-          <nerr>0</nerr>
-          <errCode>1</errCode>
-          <neerr>0</neerr>
-          <firstError>0</firstError>
-        </pd>
+        <elt><val>1</val></elt>
+        <elt><val>foo</val></elt>
+        <elt><val>3</val></elt>
+        <elt><val>5</val></elt>
         <length>4</length>
       </symbolic>
     </host>
     <remoteID>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
+      <unauthorized><base><val>-</val></base></unauthorized>
     </remoteID>
-    <auth>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <unauthorized>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <base>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>-</val>
-        </base>
-      </unauthorized>
-    </auth>
-    <my_date>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>876974569</val>
-    </my_date>
+    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
+    <my_date><val>876974569</val></my_date>
     <request>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <meth><pd><pstate>0</pstate><errCode>1</errCode></pd><val/></meth>
-      <req_uri>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>/amnesty/urgact/urgact.html</val>
-      </req_uri>
+      <meth><val>0</val></meth>
+      <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
       <version>
-        <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-        <major>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>1</val>
-        </major>
-        <minor>
-          <pd><pstate>0</pstate><errCode>1</errCode></pd>
-          <val>0</val>
-        </minor>
+        <major><val>1</val></major>
+        <minor><val>0</val></minor>
       </version>
     </request>
-    <response>
-      <pd><pstate>0</pstate><errCode>1</errCode></pd>
-      <val>404</val>
-    </response>
-    <contentLength>
-      <pd><pstate>0</pstate><nerr>0</nerr><errCode>1</errCode></pd>
-      <len>
-        <pd><pstate>0</pstate><errCode>1</errCode></pd>
-        <val>179</val>
-      </len>
-    </contentLength>
+    <response><val>404</val></response>
+    <contentLength><len><val>179</val></len></contentLength>
   </elt>
-  <pd>
-    <pstate>0</pstate>
-    <nerr>0</nerr>
-    <errCode>1</errCode>
-    <neerr>0</neerr>
-    <firstError>0</firstError>
-  </pd>
   <length>11</length>
 </PSource>
 

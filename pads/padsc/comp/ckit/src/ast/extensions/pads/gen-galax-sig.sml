@@ -108,7 +108,7 @@ signature GENGALAX = sig
   val macroTypKCRet : unit -> ParseTree.expression
 
   val macroStructKCBegin : string -> ParseTree.statement
-  val macroStructKCEnd : unit -> ParseTree.statement
+  val macroStructKCEnd : int -> ParseTree.statement
   val macroStructKCRet : unit -> ParseTree.expression
   val macroStructKCN : string * string list -> ParseTree.statement
   val macroStructKCNRet : unit -> ParseTree.expression
