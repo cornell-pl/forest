@@ -1,4 +1,4 @@
-/*@FILE @LEFT dibbler_library.tex  accumulator.tex */
+/*@FILE @LEFT dibbler_library.tex  accumulator.tex format_library.tex*/
 
 #ifndef __DIBBLER_NEW__H__
 #define __DIBBLER_NEW__H__
@@ -1121,23 +1121,27 @@ ssize_t entry_t_write2io (P_t *pads,Sfio_t *io,entry_t_pd *pd,entry_t *rep);
 /*@END dibbler_library.tex */
 
 
-ssize_t entry_t_fmt2buf_final (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *requestedOut,char const *delims,entry_t_m *m,entry_t_pd *pd,entry_t *rep);
-
-ssize_t entry_t_fmt2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,
-			 int *requestedOut,char const *delims,
-			 entry_t_m *m,entry_t_pd *pd,entry_t *rep);
 
 ssize_t entry_t_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,entry_t_pd *pd,entry_t *rep,char const *tag,int indent);
 
 
+/*@BEGIN format_library.tex*/
+ssize_t entry_t_fmt2buf_final (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,
+			       int *requestedOut,char const *delims,entry_t_m *m,
+			       entry_t_pd *pd,entry_t *rep);
 
+ssize_t entry_t_fmt2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,
+			 int *requestedOut,char const *delims,
+			 entry_t_m *m,entry_t_pd *pd,entry_t *rep);
+/*@END format_library.tex*/
 /*@BEGIN dibbler_library.tex */
 
 /* Formatting */
+/*@BEGIN format_library.tex*/
 ssize_t entry_t_fmt2io (P_t *pads,Sfio_t *io,int *requestedOut,
 			char const *delims,entry_t_m *m,entry_t_pd *pd,
 			entry_t *rep);
-/*@END dibbler_library.tex */
+/*@END dibbler_library.tex format_library.tex*/
 
 /*@BEGIN dibbler_library.tex */
 

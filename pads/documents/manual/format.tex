@@ -1,5 +1,17 @@
 \chapter{Formatting}
 \label{chap:formatting}
 \cutname{formatting.html}
+Formatting functions provide support for pretty printing \pads{}
+values in delimiter separated forms suitable for loading into
+relational databases.  For example,
+\figref{figure:clf-records-formatted} illustrates using generated
+formatting functions to convert the CLF data from
+\figref{figure:clf-records} into a pipe-delimited form.
 
-This chapter is under development.
+
+\section{Operations}
+\begin{figure}
+\inputCode{code/format_library}
+\caption{Formatting functions generated for the \texttt{entry\_t}  type.}
+\label{figure:formatting-functions}
+\end{figure}
