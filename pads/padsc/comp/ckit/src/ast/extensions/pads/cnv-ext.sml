@@ -1641,7 +1641,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
               fun emitRead  eds = emit (!(#outputRead(PInput.inputs)), eds)
               fun emitWrite eds = emit (!(#outputWrite(PInput.inputs)), eds)
               fun emitXML   eds = emit (!(#outputXML(PInput.inputs)), eds)
-	      fun emitPred  eds = []
+	      fun emitPred  eds = emitRead eds
 
               fun cnvCTy ctyED = 
 		  let val astdecls = cnvExternalDecl ctyED
@@ -2737,9 +2737,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     val tag = PNames.unionTag
 		     fun tgSuf s = s^"_tag"
 		     fun unSuf s = s^"_u"
-                     fun unionBranchX (base, name) = P.addrX(P.dotX(P.arrowX(PT.Id base, PT.Id value), PT.Id name))
+                     fun unionBranchX (base, name) = P.addrX(P.dotX(fieldX(base, value), PT.Id name))
 			
-		     val () = case postCond of NONE => () | SOME e => PE.warn "Pwhere clauses not yet implemented in Punions."
+		     val () = case postCond of NONE => () | SOME e => PE.error "Pwhere clauses are not supported in Punions."
 
 		     (* Functions for walking over list of variants *)
 		     fun mungeVariant f b m (PX.Full fd) = f fd
@@ -3083,8 +3083,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				 PL.readFunChkX(
 				     PL.P_ERROR, readFieldName, PT.Id pads, 
 				     P.addrX(fieldX(m,name)), args, 
-				     P.addrX(P.dotX(fieldX(pd,value), PT.Id name)),
-				     P.addrX(P.dotX(fieldX(rep,value), PT.Id name))),
+				     unionBranchX(pd, name),
+				     unionBranchX(rep, name)),
 				 notFoundSs,
 				 constraintChkS)]
 			 end
@@ -3239,7 +3239,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                      (* Generate is function union case *)
                      val isName = PNames.isPref name
                      val bodySs = 	
-			 let val agg = "aggregate"
+			 let val agg = "isValid"
+			     fun setAggSs to = PT.Compound[P.assignS(PT.Id agg, to), PT.Break]
 			     fun getConFull{pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 					    isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 					    pred: pcexp option, comment: string option} = 
@@ -3247,20 +3248,35 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				                       | SOME e => [e]
 					 val fieldXs = case lookupPred pty of NONE => []
 				                       | SOME fieldPred => 
-								  [PT.Call(PT.Id fieldPred, [getFieldX(rep,name)]@args)]
+								  [PT.Call(PT.Id fieldPred, [unionBranchX(rep,name)]@args)]
 					 val condX = P.andBools(predXs @ fieldXs)
 					 val aggS = [P.assignS(PT.Id agg, condX), PT.Break]
 				     in
 					 [PT.CaseLabel(PT.Id name, PT.Compound aggS)]
 				     end
+				 fun getConManifest {decl, comment} = 
+				     let val ctNoptEs = cnvDeclaration decl
+					 fun doOne (cty, nameOpt, exp) = 
+					     let val name = case nameOpt of NONE => "bogus" | SOME n => n  
+					     in
+						 [PT.CaseLabel(PT.Id name, setAggSs P.trueX)]
+					     end
+				     in
+					 List.concat(List.map doOne ctNoptEs)
+				     end
+
 			     val fieldConCases = mungeVariants getConFull (fn x=>[]) (fn x=>[]) variants
-			     val fieldConS = []
+			     val fieldConCases = fieldConCases @
+				                 [PT.CaseLabel(PT.Id (errSuf name), setAggSs P.falseX),
+						  PT.DefaultLabel(setAggSs P.falseX)]
+			     val fieldConS = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound fieldConCases)]
 			     val aggDecl = P.varDeclS'(P.int, agg)
-			     val whereConS = case postCond of NONE => [] | SOME e => [e]
+			     val whereConS = case postCond of NONE => [] | SOME e => [P.assignS(PT.Id agg, e)]
 			     val constraintSs = fieldConS @ whereConS
 			 in
-                            [aggDecl,
-			     PT.Return (PT.Id agg)]
+                              [aggDecl]
+			    @ constraintSs
+			    @ [PT.Return (PT.Id agg)]
 			 end
 
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
@@ -4677,6 +4693,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		 val bodySs = writeArraySs @ writeTermSs
 		 val writeFunEDs = genWriteFuns(writeName, isRecord, cParams, pdPCT, canonicalPCT, bodySs)
 
+                 (* Generate is function array case *)
+                 val isName = PNames.isPref name
+		 val bodySs = [PT.Return P.trueX]  (*XXX to be implemented *)
+                 val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs)]
 
                  (* Generate accumulator functions array case *) 
   	         (* -- generate accumulator reset, init, and cleanup function *)
@@ -4803,6 +4823,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		 @ mStructDecls
                  @ pdStructDecls
 		 @ (emitRead readEDs)
+		 @ (emitPred isFunEDs)
                  @ (emitAccum accumEDs)
                  @ (emitWrite writeFunEDs)
                  @ (emitXML galaxEDs)
@@ -4939,6 +4960,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			     @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
 
 
+                 (* Generate is function enum case *)
+                 val isName = PNames.isPref name
+		 val bodySs = [PT.Return P.trueX]  (*XXX to be implemented *)
+                 val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs)]
 
 
                   (* Generate Accumulator functions (enum case) *)
@@ -5020,6 +5045,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                 @ mDecls
                 @ pdDecls
                 @ (emitRead readEDs)
+                @ (emitPred isFunEDs)
                 @ (emitAccum accumEDs)
                 @ (emitWrite writeFunEDs)
                 @ (emitXML galaxEDs)

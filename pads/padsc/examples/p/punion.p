@@ -7,6 +7,8 @@ Pstruct test {
 Precord Punion test2 {
   test bigger;
   Pint32 two;
+} Pwhere{
+  (tag == bigger) && bigger.id > 0;
 };
 
 
