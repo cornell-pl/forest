@@ -19,7 +19,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   val printLocation = false (* internal flag - pretty print locations as comments *)
 
   fun ppLoc pps (SourceMap.LOC {srcFile, beginLine, beginCol, endLine, endCol}) =
-      if printLocation then ( PPL.addStr pps " /*["
+      if printLocation then ( PPL.addStr pps "/*["
 			    ; PPL.addStr pps (srcFile)
 			    ; PPL.addStr pps ":"
 			    ; PPL.addStr pps (Int.toString beginLine)
@@ -670,17 +670,18 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           ; PPL.addStr pps fieldName
           )
       end
+
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val edTid = #edTid ptyInfo
 	  val (edName, edFields) = structInfo tidtab edTid
           val (repName, repFields) = structInfo tidtab tid
       in
-	((PPL.addStr pps "Struct" 
+	((PPL.addStr pps "type" (* new: XQuery type notation, old: "Struct" *)
         ; space pps
         ; PPL.addStr pps repName
 	; newline pps
         ; PPL.ppList { pp=ppStrPairs
-		        , sep=","
+		        , sep="\n"
 		        , lDelim="{"
 		        , rDelim="}"
 		        } pps (repFields @ edFields)
