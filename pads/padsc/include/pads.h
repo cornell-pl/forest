@@ -880,12 +880,15 @@ struct Ploc_s {
   PerrCode_t  errCode; \
   Ploc_t      loc
 
-/* Function (macro actually) that initializes the first four fields of
+/* PD_COMMON_INIT: Function (macro actually) that initializes the first four fields of
  * any parse descriptor type: initializes pstate to 'not panic',
- * errCode to P_NO_ERR, nerr to 0, loc to all zeros.
+ * errCode to P_NOT_PARSED, nerr to 0, loc to all zeros.
+ *
+ * PD_COMMON_INIT_NO_ERR: like PD_COMMON_INIT, but initializes errCode to P_NO_ERR.
  */
 #ifdef FOR_CKIT
 void PD_COMMON_INIT(void *pd);
+void PD_COMMON_INIT_NO_ERR(void *pd);
 #endif
 
 /* type Pbase_pd: */
@@ -893,9 +896,10 @@ struct Pbase_pd_s {
   PD_COMMON_FIELDS;
 };
 
-/* This function (macro actually) invokes PD_COMMON_INIT on pd */
+/* These functions (macros actually) invoke PD_COMMON_INIT/PD_COMMON_INIT_NO_ERR on pd */
 #ifdef FOR_CKIT
 void Pbase_pd_init(Pbase_pd *pd);
+void Pbase_pd_init_no_err(Pbase_pd *pd);
 #endif
 
 /* string description of parse state */

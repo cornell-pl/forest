@@ -7,6 +7,6 @@ Punion branches(:Puint32 a:) {
 };
 
 Precord Pstruct choice{
-  Puint32       a; 
+  Puint32         a; 
   branches(:a:)   b; 
 };

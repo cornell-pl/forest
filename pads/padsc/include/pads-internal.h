@@ -805,6 +805,7 @@ do { \
 Ppos_t start_pos; \
 do { \
   PDCI_IO_GETPOS(pads, start_pos); \
+  pd->errCode = P_NO_ERR; \
 } while (0)
 
 #define PDCI_UNION_READ_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
@@ -817,6 +818,7 @@ do { \
     rep_init    (pads, rep); \
     pd_init     (pads, pd); \
   } \
+  pd->errCode = P_NO_ERR; \
 } while (0)
 
 /* falls through on error, goes to branches_done on success */
@@ -908,6 +910,7 @@ do { \
 do { \
   rep_init (pads, rep); \
   pd_init  (pads, pd); \
+  pd->errCode = P_NO_ERR; \
   if (P_ERR==P_io_checkpoint (pads, 1)) { \
     PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
   } \
@@ -932,6 +935,7 @@ do { \
 do { \
   rep_init (pads, rep); \
   pd_init  (pads, pd); \
+  pd->errCode = P_NO_ERR; \
   if (P_ERR==P_io_checkpoint (pads, 1)) { \
     PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
   } \
@@ -956,6 +960,7 @@ do { \
 do { \
   rep_init (pads, rep); \
   pd_init  (pads, pd); \
+  pd->errCode = P_NO_ERR; \
   if (P_ERR==P_io_checkpoint (pads, 1)) { \
     PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
   } \
@@ -978,6 +983,7 @@ do { \
 do { \
   rep_init (pads, rep); \
   pd_init  (pads, pd); \
+  pd->errCode = P_NO_ERR; \
   if (P_ERR==P_io_checkpoint (pads, 1)) { \
     PDCI_report_err (pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0); \
   } \
@@ -999,7 +1005,7 @@ do { \
 do { \
   rep->tag = the_tag; \
   pd->tag = the_tag; \
-  PD_COMMON_INIT(&(pd->val.the_tag)); \
+  PD_COMMON_INIT_NO_ERR(&(pd->val.the_tag)); \
   PDCI_IO_BEGINLOC(pads, pd->val.the_tag.loc); \
 } while (0)
 
@@ -1019,6 +1025,7 @@ do { \
 do { \
   rep_init(pads, rep); \
   pd_init (pads, pd); \
+  pd->errCode = P_NO_ERR; \
   PDCI_UNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init); \
 } while (0)
 
@@ -1027,6 +1034,7 @@ do { \
 do { \
   rep_init(pads, rep); \
   pd_init (pads, pd); \
+  pd->errCode = P_NO_ERR; \
   PDCI_UNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init); \
 } while (0)
 
@@ -1107,6 +1115,7 @@ do { \
     pd->tag  = err_tag; \
     goto branches_done; \
   } \
+  pd->errCode = P_NO_ERR; \
 } while (0)
 
 /* falls through on success, goto branches_done on failure */
@@ -1119,13 +1128,19 @@ do { \
 #define PDCI_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
 do { \
   PDCI_IO_BEGINLOC(pads, pd->loc); \
-  PDCI_UNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init); \
+  pd->errCode = P_NO_ERR; \
+  rep->tag = the_tag; \
+  pd->tag = the_tag; \
+  PD_COMMON_INIT_NO_ERR(&(pd->val.the_tag)); \
+  PDCI_IO_BEGINLOC(pads, pd->val.the_tag.loc); \
 } while (0)
 
 #define PDCI_SWUNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \
 do { \
   PDCI_IO_BEGINLOC(pads, pd->loc); \
-  PDCI_UNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init); \
+  pd->errCode = P_NO_ERR; \
+  rep->tag = the_tag; \
+  pd->tag = the_tag; \
 } while (0)
 
 #define PDCI_SWUNION_READ_MAN_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init) \

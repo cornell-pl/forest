@@ -28,7 +28,7 @@
 
 #define PDCI_READFN_PD_INIT(pads, pd)
 do {
-  Pbase_pd_init(pd);
+  Pbase_pd_init_no_err(pd);
   PDCI_IO_BEGINLOC(pads, (pd)->loc);
 } while (0)
 /* END_MACRO */
@@ -4754,7 +4754,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.125 2003-11-12 23:13:47 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.126 2003-11-13 16:21:06 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8032,7 +8032,7 @@ PDCI_cstr_lit_read(P_t *pads, const Pbase_m *m, const char *s,
 
   PDCI_IODISC_4P_CHECKS(whatfn, m, pd, s, s_out);
   P_STRING_INIT_CSTR(p_s, s);
-  /* Following call does a Pbase_pd_init(pd) */
+  /* Following call does a Pbase_pd_init_no_err(pd) */
   return PDCI_str_lit_read(pads, m, &p_s, pd, s_out, char_set, whatfn);
 }
 
@@ -8178,7 +8178,7 @@ PDCI_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
   P_TRACE3(pads->disc, "PDCI_date_read called, args: stopChar %s char_set %s, whatfn = %s",
 	     P_qfmt_char(stopChar), Pcharset2str(char_set), whatfn);
-  /* Following call does a Pbase_pd_init(pd) */
+  /* Following call does a Pbase_pd_init_no_err(pd) */
   if (P_ERR == PDCI_string_read(pads, m, stopChar, pd, s, char_set, whatfn)) {
     return P_ERR;
   }

@@ -59,6 +59,9 @@ MISC_TESTS_D = $(MISC_TESTS_O:%=%_d)
 MISC_TESTS = $(MISC_TESTS_O) $(MISC_TESTS_D)
 CLEANUP_TESTS = $(ALL_TESTS) $(MISC_TESTS)
 
+rcount:
+	@(cd ..; $(MAKE) regress) | $(PADS_HOME)/scripts/count_differs.pl
+
 regress: regress_o regress_d
 
 regress_o:  sanity_check \

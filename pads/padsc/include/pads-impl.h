@@ -70,13 +70,17 @@
 #define P_PS_unsetPanic(pd)    do { (pd)->pstate &= ~P_Panic; } while (0)
 #define P_PS_isPanic(pd)       ((pd)->pstate & P_Panic)
 
-/* Macro for initalizing a Pbase_pd */
-#define Pbase_pd_init(pd) do { \
+#define PD_COMMON_INIT(pd) do { \
+  memset((void*)(pd), 0, sizeof(Pbase_pd)); \
+} while (0)
+
+#define PD_COMMON_INIT_NO_ERR(pd) do { \
   memset((void*)(pd), 0, sizeof(Pbase_pd)); \
   (pd)->errCode = P_NO_ERR; \
 } while (0)
 
-#define PD_COMMON_INIT(pd) Pbase_pd_init(pd)
+#define Pbase_pd_init(pd) PD_COMMON_INIT(pd)
+#define Pbase_pd_init_no_err(pd) PD_COMMON_INIT_NO_ERR(pd)
 
 /* ================================================================================ */
 /* INTERNAL SCAN ROUTINES (helpers) */

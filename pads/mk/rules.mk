@@ -473,6 +473,17 @@ ifdef DEBUG_RULES_MK
 endif
 	@$(CCExec_DYNAMIC_D)
 
+rw_%_dd: $(GEN_DIR)/%_expanded.c rw_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule RW_DD"
+endif
+	@$(CCExec_DYNAMIC_D)
+
+rwxml_%_dd: $(GEN_DIR)/%_expanded.c rwxml_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule RWXML_DD"
+endif
+	@$(CCExec_DYNAMIC_D)
 endif # REGRESS_TESTS / _d rule
 
 ifdef BuildPADSLib

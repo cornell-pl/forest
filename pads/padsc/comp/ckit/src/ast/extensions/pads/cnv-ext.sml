@@ -1041,7 +1041,7 @@ structure CnvExt : CNVEXT = struct
                       val paramNames = [pads, m] @ cNames @ [pd, rep]
                       val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
 		      val innerInits = (if doInit
-					then [PT.Expr(PT.Call(PT.Id "PD_COMMON_INIT", [PT.Id pd]))]
+					then [PT.Expr(PT.Call(PT.Id "PD_COMMON_INIT_NO_ERR", [PT.Id pd]))]
 					else [])
 		      val returnTy =  PL.toolErrPCT
 		      val checkParamsSs = [PL.IODiscChecks3P(PT.String readName, PT.Id m, PT.Id pd, PT.Id rep)]
@@ -3247,8 +3247,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun modCheck (check, theTag) =
 			 let val mCheck = modCheckSubst(check, theTag)
 			     val () = expEqualTy(mCheck, CTintTys,
-					      fn s=> (" constraint for union branch "^
-						      theTag ^ " has type: " ^ s ^ ", expected type int"))
+					      fn s=> (" constraint for union branch with tag '"^
+						      theTag ^ "' has type: " ^ s ^ ", expected type int"))
 			 in
 			     mCheck
 			 end
@@ -3319,7 +3319,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				= PL.readFunX(readFieldName, PT.Id pads, P.addrX(fieldX(m, name)),
 					      args, getUnionBranchX(pd, name), getUnionBranchX(rep, name))
 			  in
-			      [P.mkCommentS ("Read branch with tag "^name)]
+			      [P.mkCommentS ("Read branch with tag '"^name^"'")]
 			      @ uRead(name, pred, readCall)
 			  end
 
@@ -3342,7 +3342,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					          assignS]]
 				          else [assignS]
 			 in
-			     [P.mkCommentS ("Pcompute branch with tag "^name)]
+			     [P.mkCommentS ("Pcompute branch with tag '"^name^"'")]
 			     @ uReadManPre(name, isVirtual) @ initSs @ uReadManPost(name, pred)
 			 end
 
@@ -3365,7 +3365,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val swPart = case eOpt of NONE => [PT.DefaultLabel(PT.Compound(readS))]
 						     | SOME e =>  [PT.CaseLabel(e, PT.Compound(readS))]
 			 in
-			     [P.mkCommentS ("Read branch with tag "^name)] @ swPart
+			     [P.mkCommentS ("Read branch with tag '"^name^"'")] @ swPart
 			 end
 
 		     fun genReadSwMan (eOpt, {tyname, name, args, isVirtual, expr=exp, pred, comment}) =
@@ -3388,7 +3388,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val swPart = case eOpt of NONE   => [PT.DefaultLabel(PT.Compound(readS))]
 						     | SOME e => [PT.CaseLabel(e, PT.Compound(readS))]
 			 in
-			     [P.mkCommentS ("Pcompute branch with tag "^name)] @ swPart
+			     [P.mkCommentS ("Pcompute branch with tag '"^name^"'")] @ swPart
 			 end
 
                      fun genSwDefaultIfAbsent () = [PT.DefaultLabel(PT.Compound(swReadFailed()))]
@@ -3453,18 +3453,18 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				     in
 					 [PT.CaseLabel(PT.Id name, PT.Compound aggS)]
 				     end
-				 fun getConManifest {decl, comment} = 
-				     let val ctNoptEs = cnvDeclaration decl
-					 fun doOne (cty, nameOpt, exp) = 
-					     let val name = case nameOpt of NONE => "bogus" | SOME n => n  
-					     in
-						 [PT.CaseLabel(PT.Id name, setAggSs P.trueX)]
-					     end
-				     in
-					 List.concat(List.map doOne ctNoptEs)
-				     end
+			     fun getConMan {decl, comment} =  (* XXX_TODO this is not done yet ??? *)
+				 let val ctNoptEs = cnvDeclaration decl
+				     fun doOne (cty, nameOpt, exp) = 
+					 let val name = case nameOpt of NONE => "bogus" | SOME n => n  
+					 in
+					     [PT.CaseLabel(PT.Id name, setAggSs P.trueX)]
+					 end
+				 in
+				     List.concat(List.map doOne ctNoptEs)
+				 end
 
-			     val fieldConCases = mungeVariants getConFull (fn x=>[]) (fn x=>[]) variants
+			     val fieldConCases = mungeVariants getConFull (fn x=>[]) (fn x=>[]) (* XXX_TODO getConMan *) variants
 			     val fieldConCases = fieldConCases @
 				                 [PT.CaseLabel(PT.Id(errSuf name), setAggSs P.falseX),
 						  PT.DefaultLabel(setAggSs P.falseX)]
@@ -3594,12 +3594,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                    @ [PT.Break]))]
 			    end
 		      fun genWriteBrief e = []
-		      fun genWriteMan _ = []     (* Manifest fields do not need to be written *)
+		      fun genWriteMan {tyname, name, args, isVirtual, expr, pred, comment} = 
+			  (* Manifest fields do not need to be written *)
+			  [PT.CaseLabel(PT.Id name,
+					PT.Compound([P.mkCommentS ("branch with tag '"^name^"': format-preserving write functions do not output Pcompute fields"),
+						     PT.Break]))]
 
 		      fun genXMLWriteFull {pty :PX.Pty, args:pcexp list, name:string, 
 					   isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
 					   pred:pcexp option, comment} = 
-			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
+			  if isVirtual
+			  then (* have no rep of virtual (omitted) fields, so can't print *)
+				   [PT.CaseLabel(PT.Id name,
+						 PT.Compound([P.mkCommentS ("branch with tag '"^name^"': write functions do not output Pomit fields"),
+							      PT.Break]))]
                           else
 			    let val writeXMLFieldName = (bufSuf o writeXMLSuf) (lookupWrite pty) 
 			    in
@@ -3609,7 +3617,23 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                    @ [PT.Break]))]
 			    end
 		      fun genXMLWriteBrief e = []
-		      fun genXMLWriteMan _ = []     (* Manifest fields do not need to be written *)
+		      fun genXMLWriteMan {tyname, name, args, isVirtual, expr, pred, comment} = 
+			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
+                          else
+			    let val pty = isPadsTy tyname
+			    in case isPadsTy tyname
+				of PTys.CTy => 
+				   [PT.CaseLabel(PT.Id name,
+						 PT.Compound([P.mkCommentS ("Pcompute branch with tag '"^name^"' has C type, XML write for C types not implemented (yet)"),
+							     PT.Break]))]
+				 | _ => let val writeXMLFieldName = (bufSuf o writeXMLSuf) (lookupWrite (getPadsName tyname))
+					in
+					    [PT.CaseLabel(PT.Id name,
+							  PT.Compound(
+							  writeXMLFieldSs(writeXMLFieldName, args@[getUnionBranchX(pd, name), getUnionBranchX(rep, name)], PT.String(name), true, true)
+							  @ [PT.Break]))]
+					end
+			    end
 
 		      val nameBranchSs = mungeVariants genWriteFull genWriteBrief genWriteMan variants
 		      val nameXMLBranchSs = mungeVariants genXMLWriteFull genXMLWriteBrief genXMLWriteMan variants
