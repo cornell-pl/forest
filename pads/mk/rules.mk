@@ -529,9 +529,15 @@ endef
 .SUFFIXES:
 .SUFFIXES: .c .o
 
-ifndef TRULES_MK
-
 ifdef GEN_DIR
+$(GEN_DIR)/%_expanded.c: $(GEN_DIR)/%.c
+	$(MKSRC_D) $< | $(PADS_HOME)/scripts/addnl.pl > $@
+endif
+
+
+ifndef TRULES_MK
+ifdef GEN_DIR
+
 ifdef GEN_WRITE
 
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
@@ -571,9 +577,6 @@ ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule RWXML_D"
 endif
 	@$(CCExec_DYNAMIC_D)
-
-$(GEN_DIR)/%_expanded.c: $(GEN_DIR)/%.c
-	$(MKSRC_D) $< | $(PADS_HOME)/scripts/addnl.pl > $@
 
 test_%_dd: $(GEN_DIR)/%_expanded.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
