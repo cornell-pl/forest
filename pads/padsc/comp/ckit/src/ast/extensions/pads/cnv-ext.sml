@@ -3856,13 +3856,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			baseTy: PX.Pty })=
 	      let val someTag = "some_"^name
 		  fun cvtDecon {var,some,none} = 
-		      P.condX(P.eqX(PT.Id "tag", PT.Id someTag), 
-			      (PTSub.substExps  [(var, P.dotX(PT.Id "val", PT.Id (someTag)))] some),
-			      case none of SOME x => x | NONE => P.trueX)
-		  val pred = 
-		      case pred of NONE => []
-		      | SOME(PX.Simple x) => [PX.General x]
- 	              | SOME(PX.Decon d) => [PX.General (cvtDecon d)]
+			      (SOME (PTSub.substExps  [(var, PT.Id (someTag))] some), none)
+		  val (predend, (predsome, prednone)) = 
+		      case pred of NONE => ([], (NONE, NONE))
+		      | SOME(PX.Simple x) => ([PX.General x], (NONE, NONE))
+ 	              | SOME(PX.Decon d) => ([], cvtDecon d)
 		  val some = PX.Full {pty = baseTy, 
 				      args = args,
 				      name = someTag, 
@@ -3871,7 +3869,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      isRecord = false,
 				      containsRecord = false,
 				      largeHeuristic = false,
-				      pred = NONE, 
+				      pred = predsome, 
 				      comment = SOME "value is present",
 				      optDecl =false,
 				      arrayDecl = false, 
@@ -3883,7 +3881,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      args   = [],
 				      isVirtual = true,
 				      expr = P.intX 0,
-				      pred = NONE,
+				      pred = prednone,
 				      comment = SOME "value was not present"}
 		   val branches = PX.Ordered [some,none]
 		   val unionVal = {name = name,
@@ -3894,7 +3892,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   containsRecord = false, (* dummies to be filled in later *)
 				   largeHeuristic = false, (* dummies to be filled in later *)
 				   variants = branches,
-				   postCond = pred,
+				   postCond = predend,
 				   fromOpt = true}
 	      in
 		  cnvPUnion unionVal
