@@ -1107,6 +1107,146 @@ structure CnvExt : CNVEXT = struct
 			      then SOME ty else NONE
 		      end
 
+	      (* Given a manifest field description, calculate shared properties *)
+	      fun genTyPropsMan {decl, comment:string option} =
+		  let val ctNoptEs = cnvDeclaration decl
+		      val (cty,nameOpt,_) = hd ctNoptEs
+		      val name = case nameOpt of NONE => "" | SOME n => (n^" ")
+		      val isStatic = CisStatic cty
+		      val () = if not isStatic then 
+			  PE.error ("Representation of manifest field "^name
+				    ^"contains a pointer.")
+			       else ()
+		  in
+		      [{diskSize = TyProps.Size (0,0), 
+			memChar = if isStatic 
+				      then TyProps.Static 
+				  else TyProps.Dynamic,
+				      endian = false, isRecord = false}]
+		  end
+
+	      (* Given a manifest field description, generate canonical representation *)
+	      fun genRepMan {decl, comment:string option} = 
+		  let val ctNoptEs = cnvDeclaration decl
+		      fun doOne (cty, nameOpt, exp) = 
+			  let val name = (case nameOpt of NONE =>
+					      (PE.error "Manifest fields must have a name."; "bogus")
+			                  | SOME n => n )
+			      val () = (case exp of PT.EmptyExpr =>
+					    PE.error "Manifest fields must have an initializing expression." 
+ 			                  | _ => ())
+			      val defStringOpt =  SOME(P.expToString exp)
+			      val fullCommentOpt = stringOptMerge(comment, defStringOpt)
+			      val ty = case reverseLookup cty 
+				       of NONE => CTtoPTct cty
+				       | SOME pty => (P.makeTypedefPCT(lookupTy(pty, repSuf, #repname)))
+			  in
+			      (name, ty, fullCommentOpt)
+			  end
+		  in
+		      List.map doOne ctNoptEs
+		  end
+	      
+	      (* Given representation of manifest field, generate accumulator representation. *)
+	      fun genAccMan {decl, comment:string option} = 
+		  let val ctNoptEs = cnvDeclaration decl
+		      fun doOne (cty, nameOpt, exp) = 
+			  let val name = case nameOpt of NONE => "bogus"
+			| SOME n => n  
+			      val defStringOpt = SOME(P.expToString exp)
+			      val fullCommentOpt = stringOptMerge(comment, defStringOpt)
+			  in
+			      case reverseLookup cty 
+				  of SOME pty => 
+				      [(name, P.makeTypedefPCT (valOf (lookupAcc pty)), fullCommentOpt)]
+				| NONE => []
+			  end
+		  in
+		      List.concat(List.map doOne ctNoptEs)
+		  end
+
+	      fun cnvPtyMan (theName, acc, name)  = 
+		  let val fieldX = P.addrX(P.arrowX(PT.Id acc, PT.Id name))
+		  in
+		      chk3Pfun (theName, fieldX)
+		  end
+
+              fun genAssignMan(cty, name, repX, exp) = 
+		  let fun assignS exp = 
+		      case exp 
+			  of PT.MARKexpression(loc,exp) => assignS exp
+			| PT.EmptyExpr => P.assignS(repX, P.zero)
+			| PT.InitList l => 
+			      PT.Compound[P.varDeclS(CTtoPTct cty, name, exp),
+					  P.assignS(repX, PT.Id name)]
+			| exp =>
+			      (expAssignTy(exp, [cty], 
+					   fn s=> ("Value for field "^
+						   name ^ " " ^
+						   "has type: "^s^", expected type "^
+						   (CTtoString cty)^".\n"));
+			       P.assignS(repX, exp))
+		  in
+		      assignS exp
+		  end
+
+	      (* Given manifest representation, generate accumulator functions(init,reset, cleanup *)
+	      fun genAccTheMan theSuf {decl, comment:string option} = 
+		  let val ctNoptEs = cnvDeclaration decl
+		      fun doOne(cty,nameOpt,exp) = 
+			  let val name= case nameOpt of NONE => "bogus" | SOME n => n
+			      val accPtyOpt = reverseLookup cty
+			  in
+			      case accPtyOpt of NONE => [] | 
+				   SOME pty => (case lookupAcc(pty) of NONE => []
+                                                | SOME a => cnvPtyMan(theSuf a, acc, name))
+			  end
+		  in
+		      List.concat(List.map doOne ctNoptEs)
+		  end
+
+	      (* Given manifest represetation, generate accumulator function *)
+
+	      fun cnvPtyForAdd (pty, name, errDescX) = 
+		  case lookupAcc(pty) of NONE => []
+		| SOME a => (
+			     let val addName = addSuf a
+				 fun gfieldX base = getFieldX(base,name)
+			     in
+				 [PT.IfThen(
+					    P.eqX(PL.PDC_ERROR, 
+						  PT.Call(PT.Id addName, 
+							  [PT.Id ts, gfieldX acc, errDescX, gfieldX rep])),
+					    PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
+			     end
+	      (* end accOpt SOME case *))
+
+
+	      (* Given manifest representatin, generate report function *)
+	      fun cnvPtyForReport(reportSuf, iSuf, pty, name) = 
+		  case lookupAcc(pty) of NONE => []
+		| SOME a => (
+			     let val reportName = reportSuf a
+				 fun gfieldX base = getFieldX(base,name)
+			     in
+				 genPrintPiece(iSuf reportName, name, P.zero, gfieldX acc,[])
+			     end
+	      (* end accOpt SOME case *))
+
+	      fun genAccReportMan (reportSuf, iSuf) {decl, comment:string option} = 
+		  let val ctNoptEs = cnvDeclaration decl
+		      fun doOne(cty,nameOpt,exp) = 
+			  let val name= case nameOpt of NONE => "bogus" | SOME n => n
+			      val accPtyOpt = reverseLookup cty
+			  in
+			      case accPtyOpt of NONE => [] 
+			    | SOME pty => (cnvPtyForReport(reportSuf, iSuf, pty,name))
+			  end
+		  in
+		      List.concat(List.map doOne ctNoptEs)
+		  end
+
+
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord,
 			        baseTy: PX.Pty, args: pcexp list, 
 			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
@@ -1331,23 +1471,6 @@ structure CnvExt : CNVEXT = struct
 			  else []
 		      fun genRepBrief e = []
 		      fun genRepEOR () = []
-		      fun genRepMan {decl, comment:string option} = 
-			  let val ctNoptEs = cnvDeclaration decl
-			      fun doOne (cty, nameOpt, exp) = 
-				  let val name = (case nameOpt of NONE =>
-				                   (PE.error "Manifest fields must have a name."; "bogus")
-						  | SOME n => n )
-				      val () = (case exp of PT.EmptyExpr =>
-					         PE.error "Manifest fields must have an initializing expression." 
-				                 | _ => ())
-				      val defStringOpt =  SOME(P.expToString exp)
-				      val fullCommentOpt = stringOptMerge(comment, defStringOpt)
-				  in
-				      (name, CTtoPTct cty, fullCommentOpt)
-				  end
-			  in
-			      List.map doOne ctNoptEs
-			  end
 		      val canonicalFields = mungeFields genRepFull genRepBrief genRepEOR genRepMan fields
 		      val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
 		      val canonicalDecls = cnvExternalDecl canonicalStructED 
@@ -1372,22 +1495,6 @@ structure CnvExt : CNVEXT = struct
 						endian = false, isRecord = false}]
 		      fun genTyPropsEOR () =  [{diskSize = TyProps.Size (0,1), memChar = TyProps.Static, 
 						endian = false, isRecord = true}]
-		      fun genTyPropsMan {decl, comment:string option} =
-			  let val ctNoptEs = cnvDeclaration decl
-			      val (cty,nameOpt,_) = hd ctNoptEs
-			      val name = case nameOpt of NONE => "" | SOME n => (n^" ")
-			      val isStatic = CisStatic cty
-			      val () = if not isStatic then 
-				             PE.error ("Representation of manifest field "^name
-						       ^"contains a pointer.")
-				       else ()
-			  in
-			                      [{diskSize = TyProps.Size (0,0), 
-						memChar = if isStatic 
-							      then TyProps.Static 
-							  else TyProps.Dynamic,
-						endian = false, isRecord = false}]
-			  end
 		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsEOR genTyPropsMan fields
 		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
                       val {diskSize,memChar,endian,isRecord=_} = 
@@ -1444,22 +1551,6 @@ structure CnvExt : CNVEXT = struct
 			  else []
 		      fun genAccBrief e = []
 		      fun genAccEOR () = []
-		      fun genAccMan {decl, comment:string option} = 
-			  let val ctNoptEs = cnvDeclaration decl
-			      fun doOne (cty, nameOpt, exp) = 
-				  let val name = case nameOpt of NONE => "bogus"
-						 | SOME n => n  
-				      val defStringOpt = SOME(P.expToString exp)
-				      val fullCommentOpt = stringOptMerge(comment, defStringOpt)
-				  in
-				      case reverseLookup cty 
-					of SOME pty => 
-					    [(name, P.makeTypedefPCT (valOf (lookupAcc pty)), fullCommentOpt)]
-					 | NONE => []
-				  end
-			  in
-			      List.concat(List.map doOne ctNoptEs)
-			  end
 		      val accFields = mungeFields genAccFull genAccBrief genAccEOR genAccMan fields
 		      val auxAccFields = [(nerr, PL.intAccPCT, NONE)]
 		      val accStructED = P.makeTyDefStructEDecl (auxAccFields @ accFields, accSuf name)
@@ -1671,39 +1762,25 @@ structure CnvExt : CNVEXT = struct
 				     @ (genPanicRecovery pTyName notPanicSs))])]
 			  end
 
-		      fun genReadMan {decl, comment} = 
-			  let val ctNoptEs = cnvDeclaration decl
-			      fun doOne (cty, nameOpt, exp) = 
-				  let val name = case nameOpt of NONE => "bogus"
-						  | SOME n => n  
-				      val repX = fieldX(rep, name)
-				      val () = addSub(name, repX) (* should this be here, or after the subst? *)
-				      val comment = ("Computing field: "^ name ^ ".")
-				      val commentS = P.mkCommentS (comment)
-                                      val exp = PTSub.substExps (!subList) exp
-				      fun assignS exp = 
-				       case exp 
-				       of PT.MARKexpression(loc,exp) => assignS exp
-				        | PT.EmptyExpr => P.assignS(repX, P.zero)
-					| PT.InitList l => 
-					    PT.Compound[P.varDeclS(CTtoPTct cty, name, exp),
-							P.assignS(repX, PT.Id name)]
-				       	       
-					| exp =>
-                                            (expAssignTy(exp, [cty], 
-							  fn s=> ("Value for field "^
-								  name ^ " " ^
-								  "has type: "^s^", expected type "^
-								  (CTtoString cty)^".\n"));
-					     P.assignS(repX, exp))
-				      val initS = assignS exp
-										  
-				  in
-                                      [commentS, initS]
-				  end
-			  in
-			      List.concat(List.map doOne ctNoptEs)
-			  end
+		     (* Given manifest representation, generate operations to set representation *)
+		     fun genReadMan {decl, comment} = 
+			 let val ctNoptEs = cnvDeclaration decl
+			     fun doOne (cty, nameOpt, exp) = 
+				 let val name = case nameOpt of NONE => "bogus"
+			       | SOME n => n  
+				     val repX = fieldX(rep, name)
+				     val () = addSub(name, repX) (* should this be here, or after the subst? *)
+				     val comment = ("Computing field: "^ name ^ ".")
+				     val commentS = P.mkCommentS (comment)
+				     val exp = PTSub.substExps (!subList) exp
+				     val initS = genAssignMan(cty,name,repX, exp)
+				 in
+				     [commentS, initS]
+				 end
+			 in
+			     List.concat(List.map doOne ctNoptEs)
+			 end
+
 
                       (* -- Assemble read function *)
 		      val _ = pushLocalEnv()                                        (* create new scope *)
@@ -1713,7 +1790,8 @@ structure CnvExt : CNVEXT = struct
 		      val cParams : (string * pcty) list = List.map mungeParam params
                       val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		      val readFields = mungeFields genReadFull genReadBrief 
-			                     (genReadEOR reportStructErrorSs) genReadMan fields  
+			                     (genReadEOR reportStructErrorSs) 
+					     genReadMan fields  
 		                                                                    (* does type checking *)
                       val readRecord = if isRecord then genReadEOR reportStructErrorSs () else []
 		      val _ = popLocalEnv()                                         (* remove scope *)
@@ -1732,37 +1810,20 @@ structure CnvExt : CNVEXT = struct
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
 			      val auxFields = chk3Pfun(theSuf PL.intAct, getFieldX(acc,nerr))
-			      fun cnvPty (pty,name)  = case lookupAcc(pty) of NONE => []
-				    | SOME a => (let val theName = theSuf a
-						     val fieldX = P.addrX(P.arrowX(PT.Id acc, PT.Id name))
-						 in
-						     chk3Pfun (theName, fieldX)
-						 end
-			                         (* end accOpt SOME case *))
 			      fun genAccTheFull {pty :PX.Pty, args:pcexp list, name:string, 
 						 isVirtual:bool, isEndian:bool, 
 						 pred:pcexp option, comment} = 
 				  if not isVirtual then
 				      case lookupAcc(pty) of NONE => []
-				    | SOME a => cnvPty (pty,name)
+				    | SOME a => cnvPtyMan(theSuf a,acc,name)
 				  else []
 			      fun genAccTheBrief e = []
 			      fun genAccTheEOR ()= []
-			      fun genAccTheMan {decl, comment:string option} = 
-				  let val ctNoptEs = cnvDeclaration decl
-				      fun doOne(cty,nameOpt,exp) = 
-					  let val name= case nameOpt of NONE => "bogus" | SOME n => n
-					      val accPtyOpt = reverseLookup cty
-					  in
-					      case accPtyOpt of NONE => [] | SOME pty => cnvPty(pty,name)
-					  end
-				  in
-				      List.concat(List.map doOne ctNoptEs)
-				  end
+
 
 			      val theDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
 			      val theFields = mungeFields genAccTheFull genAccTheBrief 
-				                 genAccTheEOR genAccTheMan fields
+				                 genAccTheEOR (genAccTheMan theSuf) fields
 			      val theReturnS = genReturnChk (PT.Id nerr)
 			      val theBodySs = theDeclSs @ auxFields @ theFields @ [theReturnS]
 			      val theFunED = gen3PFun(theFun, accPCT, theBodySs)
@@ -1780,19 +1841,6 @@ structure CnvExt : CNVEXT = struct
 		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), 
 						 P.arrowX(PT.Id ed, PT.Id errCode))]
 
-                      fun cnvPtyForAdd (pty, name, errDescX) = 
-			  case lookupAcc(pty) of NONE => []
-			      | SOME a => (
-				 let val addName = addSuf a
-				     fun gfieldX base = getFieldX(base,name)
-				 in
-				    [PT.IfThen(
-				      P.eqX(PL.PDC_ERROR, 
-					    PT.Call(PT.Id addName, 
-						    [PT.Id ts, gfieldX acc, errDescX, gfieldX rep])),
-                                      PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
-				 end
-                              (* end accOpt SOME case *))
 		      fun genAccAddFull {pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool, 
 					 pred:pcexp option, comment} = 
@@ -1807,12 +1855,12 @@ structure CnvExt : CNVEXT = struct
 				  in
 				      case accPtyOpt of NONE => [] 
 				    | SOME pty => (
-				       [PT.Compound(
-					    [P.varDeclS'(P.makeTypedefPCT(lookupTy(pty, edSuf, #edname)), ted),
-					     P.assignS(P.dotX(PT.Id ted,PT.Id errCode),
-						       P.arrowX(PT.Id ed, PT.Id errCode))]
-					   @ cnvPtyForAdd(pty,name, P.addrX(PT.Id ted)))]
-				        (* end case *))
+ 				       [PT.Compound(
+					 [P.varDeclS'(P.makeTypedefPCT(lookupTy(pty, edSuf, #edname)), ted),
+					  P.assignS(P.dotX(PT.Id ted,PT.Id errCode),
+						    P.arrowX(PT.Id ed, PT.Id errCode))]
+						    @ cnvPtyForAdd(pty,name, P.addrX(PT.Id ted)))]
+				  (* end case *))
 				  end
 			  in
 			      List.concat(List.map doOne ctNoptEs)
@@ -1838,37 +1886,16 @@ structure CnvExt : CNVEXT = struct
 		      val headerSs = [PL.sfprintf(PT.Id outstr, 
 						  PT.String "\n[Describing each field of %s]\n", 
 						  [PT.Id prefix])]
-		      fun cnvPtyForReport(pty,name) = 
-			  case lookupAcc(pty) of NONE => []
-			      | SOME a => (
-				 let val reportName = reportSuf a
-				     fun gfieldX base = getFieldX(base,name)
-				 in
-				     genPrintPiece(iSuf reportName, name, P.zero, gfieldX acc,[])
-				 end
-                              (* end accOpt SOME case *))
+
 		      fun genAccReportFull {pty :PX.Pty, args:pcexp list, name:string, 
 					    isVirtual:bool, isEndian:bool, 
 					    pred:pcexp option, comment} = 
-			  if not isVirtual then cnvPtyForReport(pty,name)
+			  if not isVirtual then cnvPtyForReport(reportSuf, iSuf, pty,name)
 			  else []
                       fun genAccReportBrief e = []
                       fun genAccReportEOR () = []
-                      fun genAccReportMan {decl, comment:string option} = 
-			  let val ctNoptEs = cnvDeclaration decl
-			      fun doOne(cty,nameOpt,exp) = 
-				  let val name= case nameOpt of NONE => "bogus" | SOME n => n
-				      val accPtyOpt = reverseLookup cty
-				  in
-				      case accPtyOpt of NONE => [] 
-				    | SOME pty => (cnvPtyForReport(pty,name))
-				  end
-			  in
-			      List.concat(List.map doOne ctNoptEs)
-			  end
-
 		      val reportFields = mungeFields genAccReportFull genAccReportBrief 
-			                  genAccReportEOR genAccReportMan fields
+			                  genAccReportEOR (genAccReportMan (reportSuf, iSuf)) fields
                       val reportFunEDs = genReportFuns(reportFun, "struct "^name, accPCT, 
 						       (* reportNerrSs @ *)headerSs @ reportFields)
 
@@ -1922,22 +1949,50 @@ structure CnvExt : CNVEXT = struct
 	      end
 
 	     fun cnvPUnion ({name:string, params: (pcty * pcdecr) list, 
-			     isRecord : bool, variants : (pdty, pcdecr, pcexp) PX.PSField list}) = 
+			     isRecord : bool, variants : (pdty, pcdecr, pcexp) PX.PBranches}) = 
 		 let (* Some useful names *)
 		     val unionName = name
                      val value = "val"
 		     val tag = "tag"
 		     fun tgSuf s = s^"_tag"
 		     fun unSuf s = s^"_u"
-
                      fun unionBranchX (name) = P.addrX(P.dotX(P.arrowX(PT.Id rep, PT.Id value), PT.Id name))
 
 		     (* Functions for walking over list of variants *)
-		     fun mungeVariant f b (PX.Full fd) = f fd
-		       | mungeVariant f b (PX.Brief e) = b e
-		       | mungeVariant f b _  = raise Fail "Illegal mode in union"
-		     fun mungeVariants f b  [] = []
-		       | mungeVariants f b  (x::xs) = (mungeVariant f b x) @ (mungeVariants f b xs)
+		     fun mungeVariant f b m (PX.Full fd) = f fd
+		       | mungeVariant f b m (PX.Brief e) = b e
+		       | mungeVariant f b m (PX.Manifest md)  = m md
+		       | mungeVariant f b m _  = raise Fail "Illegal mode in union"
+		     fun mungeVariants f b m [] = []
+		       | mungeVariants f b m (x::xs) = (mungeVariant f b m x) @ (mungeVariants f b m xs)
+
+                     (* Function for moving default clause to end of switched union branch list *)
+                     fun mungeBranches (cases, branches) = 
+                       let fun mB([],[], acs, abs, acds, abds) = 
+			          if (List.length acds >= 2) 
+				      then (PE.error ("Switched union "^ unionName ^" can have at most "^
+						      "one default clause.\n");
+					    ((List.rev acs)@[hd acds], (List.rev abs)@[hd abds]))
+					    
+				  else ((List.rev acs)@acds, (List.rev abs)@abds)
+                             | mB(NONE::cases, b::bs, acs,abs,acds,abds) = 
+					    mB(cases,bs, acs, abs, NONE::acds, b::abds)
+                             | mB(c::cases, b::bs, acs,abs,acds,abds) = 
+					    mB(cases,bs, c::acs, b::abs, acds, abds)
+		       in
+			   mB(cases,branches,[],[],[],[])
+		       end
+
+
+                     val branches = variants
+                     val (descOpt, cases, variants) = 
+				    case branches 
+			            of PX.Ordered v => (NONE, [], v)
+			            |  PX.Switched {descriminator, cases, branches} => 
+					    let val (cases,branches) = mungeBranches(cases,branches)
+					    in
+						(SOME descriminator, cases, branches)
+					    end
 
 		     (* Calculate and insert type properties into type table *)
 		     fun genTyPropsFull {pty :PX.Pty, args : pcexp list, name:string, 
@@ -1948,11 +2003,11 @@ structure CnvExt : CNVEXT = struct
 			      val isRecord = lookupRecord pty 
 			  in [{diskSize = ds, memChar = mc, endian = false, isRecord = isRecord}] end
 		     fun genTyPropsBrief e = [] (* not used in unions *)
-		     val tyProps = mungeVariants genTyPropsFull genTyPropsBrief variants
+		     val tyProps = mungeVariants genTyPropsFull genTyPropsBrief genTyPropsMan variants
                      (* check that all variants are records if any are *)
 		     val () = case tyProps of [] => ()
 			      | ({isRecord=first,...}::xs) => 
-			           (if List.exists (fn {isRecord,diskSize,memChar,endian}=> not (isRecord = first)) xs
+			           (if List.exists (fn {isRecord,diskSize,memChar,endian}=> not (isRecord = first)) xs 
 				    then PE.error "All branches of union must terminate record if any branch does."
 				    else ())
 					
@@ -1965,15 +2020,24 @@ structure CnvExt : CNVEXT = struct
                      (* generate enumerated type describing tags *)
 		     val tagVal = ref 0
 		     val firstTag = ref "bogus"
-		     fun genTagFull {pty :PX.Pty, args : pcexp list, name:string, 
-				     isVirtual:bool, isEndian:bool, 
-				     pred:pcexp option, comment:string option} = 
+		     fun chkTag(name) = 			 
 			 (if !tagVal = 0 then firstTag := name else ();
 			  tagVal := !tagVal + 1;
 			  [(name,P.intX(!tagVal),NONE)])
 
+		     fun genTagFull {pty :PX.Pty, args : pcexp list, name:string, 
+				     isVirtual:bool, isEndian:bool, 
+				     pred:pcexp option, comment:string option} = 
+			 chkTag(name)
 		     fun genTagBrief e = []
-		     val tagFields = mungeVariants genTagFull genTagBrief variants
+                     fun genTagMan {decl,comment} = 
+			 let val ctNoptEs = cnvDeclaration decl
+			     val (cty,nameOpt,_) = hd ctNoptEs
+			 in
+			     case nameOpt of NONE => [] | SOME n => chkTag n
+			 end
+
+		     val tagFields = mungeVariants genTagFull genTagBrief genTagMan variants
 		     val tagFieldsWithError = (errSuf name, P.zero, NONE) :: tagFields 
 		     val tagED = P.makeTyDefEnumEDecl(tagFieldsWithError, tgSuf name)
 		     val tagDecls = cnvExternalDecl tagED
@@ -1989,7 +2053,7 @@ structure CnvExt : CNVEXT = struct
 			     [(name,P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)), fullCommentOpt )]
 			 end
 		     fun genRepBrief e = (PE.error "Unions do not currently support brief fields.\n"; [])
-		     val canonicalVariants = mungeVariants genRepFull genRepBrief  variants
+		     val canonicalVariants = mungeVariants genRepFull genRepBrief genRepMan variants
 		     val unionED = P.makeTyDefUnionEDecl(canonicalVariants, unSuf name)
 		     val unionDecls = cnvExternalDecl unionED
                      val unionPCT = P.makeTypedefPCT(unSuf name)
@@ -2005,7 +2069,8 @@ structure CnvExt : CNVEXT = struct
 				    pred:pcexp option, comment} = 
 			 [(name,P.makeTypedefPCT(lookupTy (pty,emSuf,#emname)), NONE)]
 		     fun genEMBrief e = []
-		     val emFields = mungeVariants genEMFull genEMBrief variants
+		     fun genEMMan m = []
+		     val emFields = mungeVariants genEMFull genEMBrief genEMMan variants
 		     val emFirstPCT = getFirstEMPCT emFields
 		     val emStructED = P.makeTyDefStructEDecl (emFields, emSuf name)
 		     val emPCT = P.makeTypedefPCT (emSuf name)			  
@@ -2016,10 +2081,11 @@ structure CnvExt : CNVEXT = struct
 				    pred:pcexp option, comment} = 
 			 [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		     fun genEDBrief e = []
+		     fun genEDMan m = []
 		     val auxEDFields = [(nerr, P.int,NONE), (errCode, PL.errCodePCT, NONE),
 					(loc, PL.locPCT,NONE), (panic, P.int,NONE),
 					(tag, PL.base_edPCT,NONE)]
-		     val edFields = auxEDFields @ (mungeVariants genEDFull genEDBrief variants)
+		     val edFields = auxEDFields @ (mungeVariants genEDFull genEDBrief genEDMan variants)
 		     val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
 		     val edPCT = P.makeTypedefPCT (edSuf name)			  
 
@@ -2031,7 +2097,7 @@ structure CnvExt : CNVEXT = struct
 			 | SOME a => [(name,P.makeTypedefPCT a,NONE)]
 		     fun genAccBrief e = []
 		     val auxAccFields = [(tag, PL.intAccPCT, NONE)]
-		     val accFields = auxAccFields @ (mungeVariants genAccFull genAccBrief variants)
+		     val accFields = auxAccFields @ (mungeVariants genAccFull genAccBrief genAccMan variants)
 		     val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
 		     val accPCT = P.makeTypedefPCT (accSuf name)			  
 
@@ -2043,6 +2109,28 @@ structure CnvExt : CNVEXT = struct
 		     val readName = readSuf name
 
                      (* -- some helper functions *)
+		     val doDeallocOldSpaceSs = 
+			 [PT.Expr(PT.Call(PT.Id (cleanupSuf unionName), 
+					  [PT.Id ts, PT.Id (gMod rep)])),
+			  PT.Expr(PT.Call(PT.Id (initSuf unionName), 
+					  [PT.Id ts, PT.Id (gMod rep)])),
+			  PT.Expr(PT.Call(PT.Id ((cleanupSuf o edSuf) unionName), 
+					  [PT.Id ts, PT.Id (gMod ed)])),
+			  PT.Expr(PT.Call(PT.Id ((initSuf o edSuf) unionName), 
+					  [PT.Id ts, PT.Id (gMod ed)]))]
+		     val deallocOldSpaceSs = (* optimization for reusing if space if
+					      hits first tag again *)
+			 case #memChar unionProps of TyProps.Static => []
+		       | TyProps.Dynamic => 
+			     if name = !firstTag then 
+				 [PT.IfThen(
+					    P.neqX(fieldX(rep,tag), PT.Id (!firstTag)),
+					    PT.Compound doDeallocOldSpaceSs)]
+			     else doDeallocOldSpaceSs
+		     val returnSs = if isRecord then
+			 [P.assignS(PT.Id result, PL.PDC_OK),
+			  PT.Goto (findEORSuf unionName)]
+				    else [PT.Return PL.PDC_OK]
 
                      fun genReadFull{pty :PX.Pty, args:pcexp list, name:string, 
 				     isVirtual:bool, isEndian:bool, 
@@ -2058,11 +2146,10 @@ structure CnvExt : CNVEXT = struct
 						      fn s=> (" constraint for variant "^
 							      name ^ " has type: " ^ s ^
 							      ". Expected an int.")))
-			      val commentS = P.mkCommentS ("Reading field: "^ name )
+			      val commentS = P.mkCommentS ("Reading variant: "^ name )
 			      val foundItSs = PT.Compound(
 					       PL.commitS(PT.Id ts)
-					       @[P.assignS(PT.Id result, PL.PDC_OK),
-						 PT.Goto (findEORSuf unionName)])
+					       @returnSs)
 			      fun doConstraint predX = case predX of NONE => foundItSs
 				  | SOME constraint => PT.Compound[
                                           PT.IfThenElse(
@@ -2071,24 +2158,6 @@ structure CnvExt : CNVEXT = struct
 					   PT.Compound(PL.restoreS(PT.Id ts)),
 					   foundItSs
 					  )]
-			      val doDeallocOldSpaceSs = 
-				  [PT.Expr(PT.Call(PT.Id (cleanupSuf unionName), 
-						   [PT.Id ts, PT.Id (gMod rep)])),
-				   PT.Expr(PT.Call(PT.Id (initSuf unionName), 
-						   [PT.Id ts, PT.Id (gMod rep)])),
-				   PT.Expr(PT.Call(PT.Id ((cleanupSuf o edSuf) unionName), 
-						   [PT.Id ts, PT.Id (gMod ed)])),
-				   PT.Expr(PT.Call(PT.Id ((initSuf o edSuf) unionName), 
-						   [PT.Id ts, PT.Id (gMod ed)]))]
-                              val deallocOldSpaceSs = (* optimization for reusing if space if
-						         hits first tag again *)
-				   case #memChar unionProps of TyProps.Static => []
-				   | TyProps.Dynamic => 
-				       if name = !firstTag then 
-					   [PT.IfThen(
-					     P.neqX(fieldX(rep,tag), PT.Id (!firstTag)),
-					     PT.Compound doDeallocOldSpaceSs)]
-				       else doDeallocOldSpaceSs
 			      val readS = 
 				    PL.chkPtS(PT.Id ts)
 				  @ deallocOldSpaceSs 
@@ -2109,6 +2178,29 @@ structure CnvExt : CNVEXT = struct
                      fun genReadBrief _ = []
                      fun genReadUnionEOR _ = []
 
+		     (* Given manifest representation, generate operations to set representation *)
+		     fun genReadMan {decl, comment} = 
+			 let val ctNoptEs = cnvDeclaration decl
+			     fun doOne (cty, nameOpt, exp) = 
+				 let val name = case nameOpt of NONE => "bogus"
+			       | SOME n => n  
+				     val repX = P.dotX(fieldX(rep, value), PT.Id name)
+				     val comment = ("Computing variant: "^ name ^ ".")
+				     val commentS = P.mkCommentS (comment)
+				     val initS = genAssignMan(cty,name,repX, exp)
+				 in
+				      deallocOldSpaceSs
+				      @[commentS,
+				        P.assignS(fieldX(rep, tag), PT.Id name),
+				        initS]
+				      @ returnSs
+				 end
+			 in
+			     List.concat(List.map doOne ctNoptEs)
+			 end
+
+
+
 		     val cleanupSs =  [P.mkCommentS("We didn't match any branch")]
 			             @ reportErrorSs(true,
 					PL.PDC_UNION_MATCH_FAILURE,
@@ -2127,7 +2219,10 @@ structure CnvExt : CNVEXT = struct
 		     val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
 		     val cParams : (string * pcty) list = List.map mungeParam params
                      val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
-		     val readFields = mungeVariants genReadFull genReadBrief variants  (* does type checking *)
+		     val subList : (string * pcexp) list ref = ref []
+		     val readFields = mungeVariants genReadFull 
+			                genReadBrief genReadMan
+					variants  (* does type checking *)
 		     val _ = popLocalEnv()                                         (* remove scope *)
 		     val bodySs = [PT.Compound ([P.varDeclS(P.int, result, PL.PDC_ERROR)] @ readFields @ cleanupSs)]
 		     val readFunEDs = genReadFun(readName, cParams,emPCT,edPCT,canonicalPCT, 
@@ -2149,7 +2244,8 @@ structure CnvExt : CNVEXT = struct
 					     end
                                              (* end accOpt SOME case *))
 			      fun genAccTheBrief e = []
-			      val tagFields = mungeVariants genAccTheFull genAccTheBrief variants
+			      val tagFields = mungeVariants genAccTheFull genAccTheBrief 
+				              (genAccTheMan theSuf) variants
 			      val auxFields = chk3Pfun(theSuf PL.intAct, fieldX(acc,tag))
 			      val theFields = auxFields @ tagFields
 			      val theReturnS = genReturnChk (PT.Id nerr)
@@ -2173,21 +2269,45 @@ structure CnvExt : CNVEXT = struct
 		      val addTagSs = chkAddFun(addSuf PL.intAct, getFieldX(acc,tag), P.addrX(PT.Id ted), 
 						  PT.Cast(P.ptrPCT PL.intPCT, getFieldX(rep,tag)))
 		      fun fieldAddrX (base,name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
-		      fun genAccAddFull {pty :PX.Pty, args:pcexp list, name:string, 
-					 isVirtual:bool, isEndian:bool, 
-					 pred:pcexp option, comment} = 
+
+		      fun genCase (name,pty, initSs, edX) = 
 			  case lookupAcc(pty) of NONE => []
 			| SOME a => (let val funName = addSuf a
 					 val repX = unionBranchX(name)
 				     in 
 					 [PT.CaseLabel(PT.Id name, 
-						       PT.Compound (chkAddFun(funName, fieldAddrX(acc, name), 
-									       fieldAddrX(ed, name), repX)
+						       PT.Compound (initSs 
+								    @ chkAddFun(funName, fieldAddrX(acc, name), 
+										edX, repX)
 						                    @ [PT.Break]))]
 				     end
 		      (* end accOpt SOME case *))
+		      fun genAccAddFull {pty :PX.Pty, args:pcexp list, name:string, 
+					 isVirtual:bool, isEndian:bool, 
+					 pred:pcexp option, comment} = 
+			  genCase (name,pty, [], fieldAddrX(ed,name))
+
 		      fun genAccAddBrief e = []
-		      val addBranches = mungeVariants genAccAddFull genAccAddBrief variants
+		      fun genAccAddMan {decl, comment:string option} = 
+			  let val ctNoptEs = cnvDeclaration decl
+			      fun doOne(cty,nameOpt,exp) = 
+				  let val name= case nameOpt of NONE => "bogus" | SOME n => n
+				      val accPtyOpt = reverseLookup cty
+				  in
+				      case accPtyOpt of NONE => [] 
+				    | SOME pty => 
+				       let val initSs = 
+					  [P.varDeclS'(P.makeTypedefPCT(lookupTy(pty, edSuf, #edname)), ted),
+					   P.assignS(P.dotX(PT.Id ted,PT.Id errCode),
+						     P.arrowX(PT.Id ed, PT.Id errCode))] 
+				       in
+					  genCase(name,pty,initSs,P.addrX(PT.Id ted))
+				       end
+				  end
+			  in
+			      List.concat(List.map doOne  ctNoptEs)
+			  end
+		      val addBranches = mungeVariants genAccAddFull genAccAddBrief genAccAddMan variants
                       val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound addBranches)]
 		      val addReturnS = genReturnChk (PT.Id nerr)
                       val addBodySs = addDeclSs @ initTedSs @ addTagSs @ addVariantsSs @ [addReturnS]
@@ -2206,16 +2326,12 @@ structure CnvExt : CNVEXT = struct
 		      fun genAccReportFull {pty :PX.Pty, args:pcexp list, name:string, 
 					    isVirtual:bool, isEndian: bool, 
 					    pred:pcexp option, comment} = 
-			  case lookupAcc(pty) of NONE => []
-			      | SOME a => (
-				 let val reportName = reportSuf a
-				 in
-				    genPrintPiece(iSuf reportName, name, P.zero, getFieldX(acc,name),[])
-				 end
-                              (* end accOpt SOME case *))
+			  cnvPtyForReport(reportSuf, iSuf,pty,name)
                       fun genAccReportBrief e = []
-		      val reportVariants = mungeVariants genAccReportFull genAccReportBrief variants
-                      val reportFunEDs = genReportFuns(reportFun, "union "^name, accPCT, reportTags @ reportVariants)
+		      val reportVariants = mungeVariants genAccReportFull genAccReportBrief 
+			                      (genAccReportMan (reportSuf, iSuf))variants
+                      val reportFunEDs = genReportFuns(reportFun, "union "^name, 
+						       accPCT, reportTags @ reportVariants)
 
                       (* Generate init function, union case *)
 		      val initFunName = lookupMemFun (PX.Name name)
@@ -2234,7 +2350,9 @@ structure CnvExt : CNVEXT = struct
 							    unionBranchX(name)]))]
 					    end)]
 				   fun genInitBrief _ = [[]]
-				   val bodySs = case (mungeVariants genInitFull genInitBrief variants)
+				   fun genInitMan _ = []
+				   val bodySs = case (mungeVariants genInitFull 
+						      genInitBrief genInitMan variants)
 				                of [] => [] | (x::xs) => x
 			       in
 				   [genInitFun(initSuf initFunName, rep, canonicalPCT, bodySs)]
@@ -2254,7 +2372,8 @@ structure CnvExt : CNVEXT = struct
 							    P.addrX(P.arrowX(PT.Id ed, PT.Id name))]))]
 					 end
 				   fun genInitBrief _ = []
-				   val bodySs = mungeVariants genInitFull genInitBrief variants
+				   fun genInitMan _ = []
+				   val bodySs = mungeVariants genInitFull genInitBrief genInitMan variants
 			       in
 				   [genInitFun(suf initFunName, ed, edPCT, bodySs)]
 		               end
@@ -2279,7 +2398,9 @@ structure CnvExt : CNVEXT = struct
 					       PT.Break])]
 					 end
 				   fun genCleanupBrief _ = []
-				   val branchSs = mungeVariants genCleanupFull genCleanupBrief variants
+				   fun genCleanupMan _ = []
+				   val branchSs = mungeVariants genCleanupFull 
+				                   genCleanupBrief genCleanupMan variants
 				   val bodySs = [PT.Switch(P.arrowX(PT.Id rep, PT.Id tag), PT.Compound branchSs),
 						 PL.bzeroS(PT.Id rep, P.sizeofX canonicalPCT)]
 			       in
@@ -2974,7 +3095,6 @@ structure CnvExt : CNVEXT = struct
 			 val theDeclSs = [P.varDeclS(P.int, nerr, P.zero), P.varDeclS'(PL.base_edPCT, ted)]
 			 val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), 
 						    P.arrowX(PT.Id ed, PT.Id errCode))]
-			 fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
                          val doElems = 
 			     case lookupAcc baseTy of NONE => []
 			   | SOME a => (

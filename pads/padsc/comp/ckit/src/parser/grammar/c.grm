@@ -322,6 +322,9 @@ end
         | pArrayConstraint of (expression PX.PConstraint) 
         | pArrayConstraints of (expression PX.PConstraint) list
         | pArrayConstraintOpt of (expression PX.PConstraint) list
+        | pBranch of expression option * (decltype, declarator, expression) PX.PSField
+        | pBranchList of (expression option * (decltype, declarator, expression) PX.PSField) list
+        | pVariants of (decltype, declarator, expression) PX.PBranches
         | pUnion of externalDecl
         | pEnumField of string * expression option
         | pAnnotatedEnumField of string * expression option * string option
@@ -1107,11 +1110,28 @@ pArray:
 			      sizeSpec = pSizeSpec, constraints = pArrayConstraintOpt})
  )
 
+pBranch: 
+   CASE expr COLON pStructField    (SOME expr, pStructField)
+ | DEFAULT COLON pStructField      (NONE, pStructField)
+
+pBranchList:
+    pBranch                         ([pBranch])
+  | pBranch pBranchList		    (pBranch :: pBranchList)
+
+pVariants: 
+ SWITCH LPAREN expr RPAREN LCURLY pBranchList RCURLY 
+    (let val (cases,branches) = ListPair.unzip pBranchList
+     in PX.Switched{descriminator = expr,
+                 cases = cases,
+		 branches = branches}
+     end)
+ | pStructFieldList (PX.Ordered pStructFieldList)
+
 pUnion:
- pIsRecord PUNION pName pushScope pTyParams LCURLY pStructFieldList popScope
+ pIsRecord PUNION pName pushScope pTyParams LCURLY pVariants popScope
  ( makeTypeName pName;
    ExternalDeclExt(PX.PUnion {name = pName, params = pTyParams, 
-                              isRecord = pIsRecord, variants=pStructFieldList})
+                              isRecord = pIsRecord, variants=pVariants})
  ) 
 
 

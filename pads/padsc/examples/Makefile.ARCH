@@ -30,6 +30,7 @@ test_format6  :: test_format6.c   format6.c     -lpadsc
 accum_struct  :: testtwo.c        struct.c      -lpadsc
 accum_ai      :: http_clf_t.c     ai.c          -lpadsc
 
+manifest_union :: munion.c        punion-manifest.c -lpadsc
 test_struct   :: test_struct.c    struct.c      -lpadsc
 test_struct2  :: test_struct2.c   struct2.c     -lpadsc
 test_union2   :: test_punion2.c   punion2.c     -lpadsc
@@ -50,6 +51,7 @@ regress : regress_test_format1 \
           regress_test_format5 \
           regress_test_format6 \
           regress_test_readint \
+          regress_test_munion
           regress_test_ai
 
 regress_test_format1 : test_format1
@@ -86,6 +88,11 @@ regress_test_readint : test_readint
 	if [ -f tmp/tmp.test_readint ]; then $(RM) tmp/tmp.test_readint; fi
 	(./test_readint 2>&1) | ../../scripts/remove_junk.pl | grep error: | cat > tmp/tmp.test_readint
 	diff tmp/tmp.test_readint ../regress/test_readint.regress || echo TEST_READINT DIFFERS
+
+regress_test_munion : manifest_union
+	if [ -f tmp/tmp.manifest_union ]; then $(RM) tmp/tmp.manifest_union; fi
+	(./manifest_union <../data/union-manifest 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.manifest_union
+	diff tmp/tmp.manifest_union ../regress/munion.regress || echo TEST_MUNION DIFFERS
 
 regress_test_ai : test_ai
 	if [ -f tmp/tmp.test_ai ]; then $(RM) tmp/tmp.test_ai; fi

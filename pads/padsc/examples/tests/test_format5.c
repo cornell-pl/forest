@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     } else {
       printf("Record not okay:\t");
     }
-    printf("x = %d\t", cdata.x);
+    printf("x = %d\t", cdata.x.x);
     switch (cdata.pn.tag ){
     case code : 
 	printf("tagged as code: %d\n",cdata.pn.val.code );

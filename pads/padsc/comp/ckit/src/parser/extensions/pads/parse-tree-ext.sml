@@ -27,6 +27,12 @@ structure ParseTreeExt =
          | Term of 'exp
          | Forall of {index : string, range : 'exp PRange, body : 'exp}
          | General of 'exp
+
+        datatype ('dt, 'decr, 'exp) PBranches = 
+           Ordered of (('dt, 'decr, 'exp) PSField) list
+         | Switched of {descriminator : 'exp,
+			cases         : 'exp option list,
+			branches      : (('dt, 'decr, 'exp) PSField) list}
        
         datatype ('decr, 'ct, 'dt, 'exp) PExternal = 
            PTypedef of {name : string,
@@ -51,7 +57,7 @@ structure ParseTreeExt =
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
 		      isRecord : bool,
-		      variants : (('dt, 'decr, 'exp) PSField) list}
+		      variants : ('dt, 'decr, 'exp) PBranches}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
 		      isRecord : bool,
