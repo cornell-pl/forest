@@ -1,6 +1,6 @@
 #!/bin/tcsh
 
-set arch = `$PADS_HOME/ast-base/bin/package`
+set arch = `$PADS_HOME/ast-ast/bin/package`
 
 #set fname = ~/knb/perl/data/head50K
 set fname = /tmp/head1M

@@ -45,7 +45,7 @@ if (!(-d $PADS_HOME && -d $PADS_HOME/padsc && -d $PADS_HOME/lib && -d $PADS_HOME
   exit 0
 endif
 
-set arch = `$PADS_HOME/ast-base/bin/package`
+set arch = `$PADS_HOME/ast-ast/bin/package`
 
 set IMAGE = $PADS_HOME/lib/padsc
 set SMLBIN = $PADS_HOME/binlinks/smlruntime.$arch
@@ -163,6 +163,6 @@ else
   set add_incs = ""
 endif
 
-exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-base/arch/$arch/include/ast $add_incs \
+exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-ast/arch/$arch/include/ast $add_incs \
 $lua $lda < /dev/null
 

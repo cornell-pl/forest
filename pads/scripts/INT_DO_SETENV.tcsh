@@ -91,11 +91,11 @@ if ($_pads_status == OK) then
 endif
 
 if ($_pads_status == "OK") then
-  if (! (-e $PADS_HOME/ast-base/bin/package)) then
+  if (! (-e $PADS_HOME/ast-ast/bin/package)) then
     echo "##############################################################################"
     echo "# Invalid setting (?) : PADS_HOME = $PADS_HOME"
     echo "#"
-    echo "# Cannot find $PADS_HOME/ast-base/bin/package"
+    echo "# Cannot find $PADS_HOME/ast-ast/bin/package"
     echo "#"
     echo "# Set env var PADS_HOME correctly and then use $_pads_do_prog again."
     echo "##############################################################################"
@@ -106,10 +106,10 @@ endif
 
 if ($_pads_status == "OK") then
 
-  setenv AST_ARCH `$PADS_HOME/ast-base/bin/package`
+  setenv AST_ARCH `$PADS_HOME/ast-ast/bin/package`
 
   if (! $?_is_ast_home) then
-    setenv AST_HOME $PADS_HOME/ast-base/arch/$AST_ARCH
+    setenv AST_HOME $PADS_HOME/ast-ast/arch/$AST_ARCH
     if ($_pads_verbose != 0) then
       echo "##############################################################################"
       echo "# Setting env var AST_HOME to $AST_HOME"
@@ -121,7 +121,7 @@ if ($_pads_status == "OK") then
   endif
 
   if (! $?_is_installroot) then
-    setenv INSTALLROOT $PADS_HOME/ast-base/arch/$AST_ARCH
+    setenv INSTALLROOT $PADS_HOME/ast-ast/arch/$AST_ARCH
     if ($_pads_verbose != 0) then
       echo "##############################################################################"
       echo "# Setting env var INSTALLROOT to $INSTALLROOT"
