@@ -643,48 +643,39 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
        handle Option => NONE
       end
 
+  fun bind tidtab tid = 
+      let val binding : Bindings.tidBinding = valOf (Tidtab.find(tidtab,tid)) 
+      in 
+       binding
+      end
+
   fun structInfo tidtab tid =
-      let val bindingOpt = Tidtab.find(tidtab,tid)
-          val binding : Bindings.tidBinding = valOf bindingOpt
-          val name = valOf (#name binding)
+      let val binding = bind tidtab tid
 	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
 	  val (Ast.StructRef stid) = cty
-	  val sbindingOpt = Tidtab.find(tidtab,stid)
-       	  val sbinding : Bindings.tidBinding = valOf sbindingOpt 
-	  val Bindings.Struct(tid'',fields) = valOf(#ntype sbinding)
+	  val Bindings.Struct(tid'',fields) = valOf(#ntype (bind tidtab stid))
 	  fun cnvField (cty,memOpt : Ast.member option,_,_) = 
 	      let val fsym : Symbol.symbol = #name(valOf memOpt)
 	      in
 		  (getCTyName tidtab cty, SOME (Symbol.name fsym))
 	      end
       in
-	 (name,List.map cnvField fields)
-	 handle Match => (PError.bug "expected typedef to struct binding"; ("bogus", []))
-  	  handle Option => (PError.bug "expected SOME"; ("bogus", []))
+	 (#name binding,List.map cnvField fields)
+	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", []))
+  	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", []))
       end
 
   fun unionInfo tidtab tid = 
-      let val bindingOpt = Tidtab.find(tidtab,tid)
-	  val binding : Bindings.tidBinding = valOf bindingOpt     
-	  val name = valOf (#name binding)                             (* name *) 
-          val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
+      let val binding = bind tidtab tid
+	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
 	  val (Ast.StructRef stid) = cty
-	  val sbindingOpt = Tidtab.find(tidtab,stid)                 
-       	  val sbinding : Bindings.tidBinding = valOf sbindingOpt 
-          val sname = valOf (#name sbinding)                           (* name_s *)
-          val Bindings.Struct(tid'',fields) = valOf(#ntype sbinding)   (* first elem of list = tag *)
-          val value = List.hd(List.tl(fields))                         (* second elem of the list = val *)
+          val Bindings.Struct(tid'',fields) = valOf(#ntype (bind tidtab stid))   (* first field = tag *)
+          val value = List.hd(List.tl(fields))                                   (* second field = val *)
           fun valtid (uctype,_,_,_) = uctype
           val (Ast.TypeRef utid) = valtid value
-          val trbindingOpt = Tidtab.find(tidtab,utid)
-          val trbinding : Bindings.tidBinding = valOf trbindingOpt
-          val trname = valOf (#name trbinding)                         (* name_u Do I need it? *) 
-          val Bindings.Typedef(tid''',utype) = valOf(#ntype trbinding)
+          val Bindings.Typedef(tid''',utype) = valOf(#ntype (bind tidtab utid))
           val (Ast.UnionRef uutid) = utype
-          val ubindingOpt = Tidtab.find(tidtab,uutid)
-          val ubinding : Bindings.tidBinding = valOf ubindingOpt
-          val uuname = valOf (#name ubinding)                          (* name_u_u Do I need it? *)
-          val Bindings.Union(tid'''',ufields) = valOf(#ntype ubinding) (* union fields *)
+          val Bindings.Union(tid'''',ufields) = valOf(#ntype (bind tidtab uutid)) (* union fields *)
           fun cnvUField (cty,mem : Ast.member,_) =
               let val fsym : Symbol.symbol = #name mem
               in
@@ -695,29 +686,23 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	      in
 		  (getCTyName tidtab cty, SOME (Symbol.name fsym))
 	      end
-      in (name,sname,List.map cnvField fields,List.map cnvUField ufields)
+      in 
+	(#name binding,List.map cnvField fields,List.map cnvUField ufields)
+	handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", [], []))
+	handle Option => (PError.bug "expected SOME"; (SOME "bogus", [], []))
       end
 
   fun unionEdInfo tidtab tid =
-      let val bindingOpt = Tidtab.find(tidtab,tid)
-          val binding : Bindings.tidBinding = valOf bindingOpt     
-          val name = valOf (#name binding)                               (* name_ed? check it! *)
+      let val binding = bind tidtab tid
           val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
           val (Ast.StructRef stid) = cty
-          val sbindingOpt = Tidtab.find(tidtab,stid) 
-          val sbinding : Bindings.tidBinding = valOf sbindingOpt
-          val sname = valOf (#name sbinding)                              (* name_ed_s *)
-          val Bindings.Struct(tid'',edfields) = valOf(#ntype sbinding)    
+          val Bindings.Struct(tid'',edfields) = valOf(#ntype (bind tidtab stid))    
           val edfield = (List.last edfields)
           fun valtid (uctype,_,_,_) = uctype
           val (Ast.TypeRef edtid) = valtid edfield
-          val edbindingOpt = Tidtab.find(tidtab,edtid)
-          val edbinding : Bindings.tidBinding = valOf edbindingOpt
-          val Bindings.Typedef(tid''',uedtype) = valOf(#ntype edbinding)
+          val Bindings.Typedef(tid''',uedtype) = valOf(#ntype (bind tidtab edtid))
           val (Ast.UnionRef uedtid) = uedtype
-          val uedbindingOpt = Tidtab.find(tidtab,uedtid) 
-          val uedbinding : Bindings.tidBinding = valOf uedbindingOpt
-          val Bindings.Union(tid'''',uedfields) = valOf(#ntype uedbinding)   
+          val Bindings.Union(tid'''',uedfields) = valOf(#ntype (bind tidtab uedtid))   
           fun cnvField (cty,mem: Ast.member,_) =                            
               let val fsym : Symbol.symbol = #name mem
               in
@@ -728,68 +713,28 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	      in
 		  (getCTyName tidtab cty, SOME (Symbol.name fsym))
 	      end
-      in (name,List.map cnvEdField edfields,List.map cnvField uedfields)
-      end
-
-  fun ppStrPairs pps (tyNameOpt, fieldName) =
-      let val tyName = case tyNameOpt of NONE => "NoTypeName" | SOME name => name
       in
-          ( PPL.addStr pps tyName
-          ; space pps
-          ; PPL.addStr pps fieldName
-          )
+	 (#name binding,List.map cnvEdField edfields,List.map cnvField uedfields)
+	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", [], []))
+  	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", [], []))
       end
-
-  fun ppElemPair pps (tyNameOpt, fieldName) = (* XQuery types: element fieldName of type tyName *)
-      let val tyName = case tyNameOpt of NONE => "NoTypeName" | SOME name => name
-      in
-	  ( PPL.addStr pps "element"
-	  ; space pps
-	  ; PPL.addStr pps fieldName
-	  ; space pps
-          ; PPL.addStr pps "of type"
-	  ; space pps
-	  ; PPL.addStr pps tyName
-          )
-      end
-
-  fun ppElemOpt pps (eFields) =   (* new function, to pp an elem that is a union of elems *)
-      (PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
-		    , sep="|\n\t"
-		    , lDelim="("
-		    , rDelim=")"
-		    } pps eFields
-      ; newline pps) 
-
-  fun ppElemList pps (eName, eFields) =   (* new function, to pp an elem that is a list of elems *)
-      ( PPL.addStr pps "element"
-      ; space pps
-      ; PPL.addStr pps eName
-      ; space pps
-      ; PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
-		      , sep=",\n    "
-		      , lDelim="{\n    "
-		      , rDelim="\n  }"
-		      } pps eFields
-      ; newline pps) 
-
 
   (** PADS to XML Schema translation **)
 
-  fun ppXMLName pps (tyNameOpt, NameOpt) =     (* [name=NameOpt] [type=tyNameOpt] *)
+  fun ppXMLName pps (tyNameOpt,NameOpt) =     (* [name=NameOpt] [type=tyNameOpt] *)
       let val tyName = case tyNameOpt of NONE => "" | SOME name => (" type=\"" ^ name ^ "\"")
           val Name = case NameOpt of NONE => "" | SOME name => ("name=\"" ^ name ^ "\"")
       in
           PPL.addStr pps (Name ^ tyName)
       end
 
-  fun ppXMLElem pps (tyNameOpt, eNameOpt) =     (* <element name=eNameOpt [type=tyNameOpt]/> *)
-          ( PPL.addStr pps "<element " 
-          ; ppXMLName pps (tyNameOpt, eNameOpt)               
-          ; PPL.addStr pps "/>")
- 
+  fun ppXMLHeader str1 str2 pps pair =
+      ( PPL.addStr pps str1
+      ; ppXMLName pps pair
+      ; PPL.addStr pps str2)
+
   fun ppXMLList pps eFields = (* list of eFields w/o <seq> *)
-      ( PPL.ppList { pp=ppXMLElem (* must be a function that choose the actual pp function for each element *)
+      ( PPL.ppList { pp=ppXMLHeader "<element " "/>"  (* Elem could be a function that choose the actual ppXML... function for each kind of element *)
                       , sep="\n"
                       , lDelim=""
                       , rDelim=""
@@ -804,25 +749,20 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; newline pps)
 
   fun ppXMLComplex pps (eNameOpt,eFields) =   (* <complex [name=eName]> <seq> eFields </seq> </complex> *) 
-          ( PPL.addStr pps "<complexType " 
-          ; ppXMLName pps (NONE, eNameOpt)
-          ; PPL.addStr pps ">"
-          ; newline pps 
-          ; ppXMLSequence pps eFields
-          ; PPL.addStr pps "</complexType>"
-          ; newline pps)
+        ( ppXMLHeader "<complexType " ">" pps (NONE,eNameOpt)
+        ; newline pps 
+        ; ppXMLSequence pps eFields
+        ; PPL.addStr pps "</complexType>"
+        ; newline pps)
 
   fun ppXMLElemList pps (eNameOpt, eFields) =   (* <elem name=eName><complex><seq> eFields </seq></complex></elem> *)
-    let val eName = case eNameOpt of NONE => "" | SOME name => name
-    in
-      ( PPL.addStr pps ("<element name=\"" ^ eName ^ "\">")   (* it could be changed when ppXMLElem treat complex elems *)   
-      ; newline pps
+      ( ppXMLHeader "<element " ">" pps (NONE,eNameOpt) 
+      ; newline pps 
       ; ppXMLComplex pps (NONE,eFields)
       ; PPL.addStr pps "</element>"
       ; newline pps)
-    end
 
-  fun ppXMLUnionFields pps Fields =
+  fun ppXMLChoiceFields pps Fields =
       ( PPL.addStr pps "<choice>"
       ; newline pps
       ; ppXMLList pps Fields
@@ -831,23 +771,21 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; newline pps)
 
   fun ppXMLChoice pps (NameOpt, Fields) =
-      ( PPL.addStr pps "<complexType " 
-      ; ppXMLName pps (NONE, NameOpt)
-      ; PPL.addStr pps ">"
+      ( ppXMLHeader "<complexType " ">" pps (NONE,NameOpt)
       ; newline pps 
-      ; ppXMLUnionFields pps Fields
+      ; ppXMLChoiceFields pps Fields
       ; PPL.addStr pps "</complexType>"
       ; newline pps)
 
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val edTid = #edTid ptyInfo
-	  val (edName, edFields) = structInfo tidtab edTid
+	  val (edTyName, edFields) = structInfo tidtab edTid
           val (repName, repFields) = structInfo tidtab tid
       in
 	((newline pps
-        ; ppXMLComplex pps (SOME edName,edFields)
+        ; ppXMLComplex pps (edTyName,edFields)
         ; newline pps
-	; ppXMLComplex pps (SOME repName,((SOME edName,SOME "errDesc") :: repFields))
+	; ppXMLComplex pps (repName,((edTyName,SOME "errDesc") :: repFields))
     	; newline pps
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
@@ -856,25 +794,23 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
   fun ppPUnion (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...}) =
       let val edTid = #edTid ptyInfo
-          val (repName,sName,sFields,uFields) = unionInfo tidtab tid
-          val (edName,Fields,uEdFields) = unionEdInfo tidtab edTid (* uName when union2Info is used *)
-       in (* it seems that I don't need edName, uName, sName *)
+          val (repName,sFields,uFields) = unionInfo tidtab tid
+          val (edTyName,Fields,uEdFields) = unionEdInfo tidtab edTid 
+       in 
       ( newline pps
-      ; PPL.addStr pps ("<simpleType name=\"" ^ repName ^ "_tag\"> \n<restriction base=\"xsd:string\"/> \n</simpleType> \n")
+      ; ppXMLHeader "<simpleType " "_tag\"> \n<restriction base=\"xsd:string\"/> \n</simpleType> \n" pps (NONE,repName) 
       ; newline pps
-      ; ppXMLChoice pps (SOME (edName ^ "_u"),uEdFields)
+      ; ppXMLChoice pps (SOME ((valOf edTyName) ^ "_u"),uEdFields)
       ; newline pps
-      ; ppXMLComplex pps (SOME edName,Fields) 
+      ; ppXMLComplex pps (edTyName, Fields) 
       ; newline pps
-      ; PPL.addStr pps ("<complexType name=\"" ^ repName ^ "\">")
+      ; ppXMLHeader "<complexType " ">" pps (NONE,repName) 
       ; newline pps
       ; PPL.addStr pps "<sequence>"
       ; newline pps
-      ; ppXMLElem pps (SOME "errDesc", SOME edName) 
+      ; ppXMLHeader "<element " "/>" pps (edTyName,SOME "errDesc")
       ; newline pps
-      ; ppXMLElem pps (List.hd sFields) 		(* tag field *)
-      ; newline pps
-      ; ppXMLUnionFields pps uFields    		(* original union fields *)
+      ; ppXMLChoiceFields pps uFields    		(* original union fields *)
       ; PPL.addStr pps "</sequence>"
       ; newline pps
       ; PPL.addStr pps "</complexType>"
@@ -884,15 +820,23 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
     | ppPUnion ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
   fun ppPArray (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
-      let val edTid = #edTid ptyInfo
-	  val (edName, edFields) = structInfo tidtab edTid
+      let fun changeName newName (oldType,oldName) = (oldType, SOME newName) 
+          fun addType Facets (oldType,oldName) = (SOME ((valOf oldType) ^ Facets), oldName) 
+	  val edTid = #edTid ptyInfo
+	  val (edTyName, ed1Fields) = structInfo tidtab edTid
           val (repName, repFields) = structInfo tidtab tid
+          val lengthField = List.hd repFields			(* take the first two fields: length & elems *)
+          val elemsField = List.hd (List.tl repFields)
+          val elemField = changeName "elt" elemsField           
+          val ed2Fields = List.take (ed1Fields,8)		(* eliminates RBuf_t field *) 
+          val arrField = List.last ed2Fields
+          val edFields = List.take (ed2Fields,7) @ ((addType " minOccurs=\"0\" maxOccurs=\"unbounded\"" (changeName "elt" arrField)) :: []) 
       in
 	((newline pps
-        ; ppXMLComplex pps (SOME edName,edFields)
+        ; ppXMLComplex pps (edTyName,edFields)  (* minOccurs="0" maxOccurs="unbounded" *)
         ; newline pps
-	; ppXMLComplex pps (SOME repName,((SOME edName,SOME "errDesc") :: (List.take (repFields,2))))
-    	; newline pps
+	; ppXMLComplex pps (repName,((edTyName,SOME "errDesc") :: lengthField :: (addType " minOccurs=\"0\" maxOccurs=\"unbounded\"" elemField) :: []))
+    	; newline pps                                         (* adds errDesc field *) 
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
