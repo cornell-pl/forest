@@ -2,63 +2,59 @@ PADS: Processing Arbitrary Data Streams
 ---------------------------------------
 Joint work with [Kathleen Fisher|Bob Gruber]
 
-Data streams are the lifeblood of many highly valuable AT\&T Research
-projects.  Unfortunately, many streams are in legacy formats over
-which we have no control.  Understanding a new data feed and writing a
-suitable parser are difficult tasks, both tedious and error-prone.
-Often, the hard-won understanding of the data ends up embedded in
-parsing code, making long-term maintenance difficult for the original
-writer and sharing the knowledge with others nearly impossible.  
-After talking with data analysts such as Chris Volinsky and David
-Poole, and systems builders such as Glenn Fowler and Andrew Hume, and
-drawing on Kathleen's/my experiences with Hancock, we started the PADS
-project to simplify data stream processing.  
-The vision of the PADS project is to provide a declarative
-data-description language, from which we generate a C library with
-routines for reading, writing, and summarizing the data, and various
-high-level tools for manipulating and querying the data.
+Databases are good at manipulating structured data, while XML and its
+infrastructure can provide similar support for semi-structured data
+encoded in XML.  However many data sources, typified by those in the
+InfoLab, are in legacy formats over which data consumers have no
+control. Currently researchers deal with such data in an \textit{ad
+hoc} fashion, using Perl/shell scripts or hand-coded \C{} programs
+that are hard to maintain, extend, and share.
 
-We designed such a language, called PADSL, for describing ASCII,
-binary, and mixed data formats.  It is expressive enough to describe
-many data formats, including web log, Netflow, BGP, and Dibbler data. 
-We built a PADSL compiler (\texttt{padsc}) that generates a tunable C 
-library with functions for parsing, manipulating, and summarizing the
-data.  We plan to add functions for writing the data in various
-formats.  The generated code uses a core library (\texttt{libpadsc})
-that provides shared infrastructure.
+The \pads{} project aims to make it easy to manipulate such data,
+either programmatically or through high-level tools.  Central to
+\pads{} is a declarative data-description language, \padsl{},
+expressive enough to describe general data, including ASCII, binary,
+and mixed data formats.  A \padsl{} compiler (\texttt{padsc}) then
+generates a tunable \C{} library with functions for parsing,
+manipulating, and summarizing the data.  Examples of data currently
+handled are web log, Netflow, BGP, and Dibbler data.  In preliminary
+testing without a number of planned optimizations, \pads{} programs
+are roughly twice as fast as comparable Perl programs.
 
-Libraries generated from PADSL descriptions are immediately useful for
-people who write C programs to analyze data.  Even before implementing a
-number of planned optimizations, PADS programs are roughly twice as
-fast as comparable Perl programs.  Longer term, we will use the
-generated libraries to construct declarative interfaces
-to PADSL data sources.
+Longer term, we will use the generated libraries to construct
+declarative interfaces to arbitrary data sources. In addition, we plan
+to adapt tools designed for XML, such as Xquery, to work over legacy
+data by making the legacy data ``look'' like XML.  Together with the
+ability to generate \C{} interfaces, this approach allows application
+developers to mix and match data representations as needed
+to handle legacy system requirements while leveraging modern tools.
 
 The project provides a common meeting ground for integrating the tools
 and knowledge of many other researchers.  Some specific examples:
-
-  * We are working with Andrew Hume to generate programs that
-    characterize data files that have COBOL copybooks.  Hume is
-    writing a copybook to PADSL translator.
+\begin{itemize}
+    \item  We are working with Andrew Hume to generate programs that
+    characterize data files that have \cobol{} copybooks.  Hume is
+    writing a copybook to \padsl{} translator.
   
-  * We are working with Glenn Fowler and David Korn to support
-    command-line (\texttt{dss}) and scripting (\texttt{ksh}) interfaces to PADSL data. 
+    \item We are working with Glenn Fowler and David Korn to support
+    command-line (\texttt{dss}) and scripting (\texttt{ksh}) interfaces to \padsl{} data. 
 
-  * We are exploring with Mary Fernandez the use of XQuery to query
-    PADSL data \textit{without} materializing that data as XML.
+    \item  We are exploring with Mary Fernandez the use of XQuery to query
+    \padsl{} data \textit{without} materializing that data as XML.
 
-  * We are meeting with Ted Johnson (HB84) to explore incorporating his
+    \item  We are meeting with Ted Johnson (HB84) to explore incorporating his
     data summary and correlation work into our summarizers.
 
-  * We plan to work with David Poole to develop scripting tools so
+    \item We plan to work with David Poole to develop scripting tools so
     that data analysts can express queries and desired plots
     declaratively and get parsing, filtering, and aggregated input
     into S+ automatically, without any coding.
+\end{itemize}
 
 Finally, by providing a means to describe all of Research's incoming
 data streams in a common language, we open the possibility of
 correlating and integrating the data from these streams.
 
-We gave a cookie talk on 11/19 to get early feedback on the design of
-PADSL and the generated library.  
-
+R.~Gruber presented \pads{} at the AT\&T/UCSD retreat in September.
+I gave a cookie talk on 11/19 to get early feedback on the design of
+\padsl{} and the generated library.  
