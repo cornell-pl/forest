@@ -2790,7 +2790,8 @@ PDC_char_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, con
   dtdisc(a->dict,   &PDC_uint8_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %s", what, PDC_qfmt_char(a->min));
-  sfprintf(outstr, " max %s\n", PDC_qfmt_char(a->max));
+  sfprintf(outstr, " max %s", PDC_qfmt_char(a->max));
+  sfprintf(outstr, " (based on ASCII encoding)\n");
 
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
@@ -3032,7 +3033,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.70 2003-05-08 20:40:06 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.71 2003-05-09 14:04:06 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -3963,6 +3964,54 @@ PDC_string_ed_cleanup(PDC_t *pdc, PDC_base_ed *ed)
 {
   PDCI_DISC_INIT_CHECKS("PDC_string_ed_cleanup");
   return PDC_OK;
+}
+
+PDC_error_t
+PDC_string_ed_copy(PDC_t *pdc, PDC_base_ed *targ, const PDC_base_ed *src)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_string_ed_copy");
+  PDCI_NULLPARAM_CHECK("PDC_string_ed_copy", src);
+  PDCI_NULLPARAM_CHECK("PDC_string_ed_copy", targ);
+  (*targ) = (*src);
+  return PDC_OK;
+}
+
+/*
+ * The char read functions
+ */
+
+PDC_error_t
+PDC_a_char_read(PDC_t *pdc, PDC_base_em *em,
+		PDC_base_ed *ed, PDC_char *c_out)
+{
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  PDCI_IODISC_INIT_CHECKS("PDC_a_char_read");
+  return PDC_a_char_read_internal(pdc, em, ed, c_out);
+}
+
+PDC_error_t
+PDC_e_char_read(PDC_t *pdc, PDC_base_em *em,
+		PDC_base_ed *ed, PDC_char *c_out)
+{
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  PDCI_IODISC_INIT_CHECKS("PDC_e_char_read");
+  return PDC_e_char_read_internal(pdc, em, ed, c_out);
 }
 
 /*
@@ -5550,6 +5599,41 @@ PDC_e_date_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 
 /* ================================================================================ */
 /* INTERNAL VERSIONS OF EXTERNAL STRING READ FUNCTIONS */
+
+PDC_error_t
+PDC_a_char_read_internal(PDC_t *pdc, PDC_base_em *em,
+			 PDC_base_ed *ed, PDC_char *c_out)
+{
+  PDC_TRACE(pdc->disc, "PDC_a_char_read_internal called");
+  /* XXX_TODO should provide a sep impl ??? */
+  (pdc->inestlev)++;
+  if (PDC_ERR == PDC_b_uint8_read_internal(pdc, em, ed, c_out)) {
+    /* ed filled in already, IO cursor advanced if appropriate */
+    (pdc->inestlev)--;
+    PDCI_READFN_RET_EXIST_ERRCODE_WARN("[in PDC_a_char_read]", 0);
+  }
+  (pdc->inestlev)--;
+  /* so far so good, IO cursor has been advanced, ed->errCode set to PDC_NO_ERR */
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_e_char_read_internal(PDC_t *pdc, PDC_base_em *em,
+			 PDC_base_ed *ed, PDC_char *c_out)
+{
+  PDC_TRACE(pdc->disc, "PDC_e_char_read_internal called");
+  /* XXX_TODO should provide a sep impl ??? */
+  (pdc->inestlev)++;
+  if (PDC_ERR == PDC_b_uint8_read_internal(pdc, em, ed, c_out)) {
+    /* ed filled in already, IO cursor advanced if appropriate */
+    (pdc->inestlev)--;
+    PDCI_READFN_RET_EXIST_ERRCODE_WARN("[in PDC_e_char_read]", 0);
+  }
+  (pdc->inestlev)--;
+  /* so far so good, IO cursor has been advanced, ed->errCode set to PDC_NO_ERR */
+  (*c_out) = PDC_ea_tab[(int)(*c_out)];
+  return PDC_OK;
+}
 
 PDC_error_t
 PDC_a_string_FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,

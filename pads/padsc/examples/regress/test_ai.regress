@@ -177,14 +177,14 @@ Union tag: good vals:         11    bad vals:          0    pcnt-bad:    0.000
         SUMMING                     count:         11  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.remoteID]
 =====================================================================================================
-<top>.remoteID.unauthorized : uint8
+<top>.remoteID.unauthorized : char
 =====================================================================================================
 good vals:         11    bad vals:          0    pcnt-bad:    0.000
-  Characterizing uint8:  min 45 max 45 avg 45.000
+  Characterizing char:  min '-' max '-' (based on ASCII encoding)
     => distribution of top 1 values out of 1 distinct values:
-        val:         45 count:         11  pcnt-of-good-vals:  100.000
+        val:    '-' count:         11  pcnt-of-good-vals:  100.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:         11  pcnt-of-good-vals:  100.000
+        SUMMING     count:         11  pcnt-of-good-vals:  100.000
 =====================================================================================================
 <top>.remoteID.id : string
 =====================================================================================================
@@ -200,14 +200,14 @@ Union tag: good vals:         11    bad vals:          0    pcnt-bad:    0.000
         SUMMING                     count:         11  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.auth]
 =====================================================================================================
-<top>.auth.unauthorized : uint8
+<top>.auth.unauthorized : char
 =====================================================================================================
 good vals:         11    bad vals:          0    pcnt-bad:    0.000
-  Characterizing uint8:  min 45 max 45 avg 45.000
+  Characterizing char:  min '-' max '-' (based on ASCII encoding)
     => distribution of top 1 values out of 1 distinct values:
-        val:         45 count:         11  pcnt-of-good-vals:  100.000
+        val:    '-' count:         11  pcnt-of-good-vals:  100.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:         11  pcnt-of-good-vals:  100.000
+        SUMMING     count:         11  pcnt-of-good-vals:  100.000
 =====================================================================================================
 <top>.auth.id : string
 =====================================================================================================

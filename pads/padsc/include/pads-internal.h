@@ -90,6 +90,10 @@ PDC_error_t PDC_a_date_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopC
 PDC_error_t PDC_e_date_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 				     PDC_base_ed *ed, PDC_uint32 *res_out);
 
+PDC_error_t PDC_a_char_read_internal (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, PDC_char *c_out);
+
+PDC_error_t PDC_e_char_read_internal (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, PDC_char *c_out);
+
 PDC_error_t PDC_a_string_FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 					  PDC_base_ed *ed, PDC_string *s_out);
 

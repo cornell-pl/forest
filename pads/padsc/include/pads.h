@@ -299,6 +299,8 @@ typedef	struct { PDC_uint16 num; PDC_uint16 denom;} PDC_ufpoint16;
 typedef	struct { PDC_uint32 num; PDC_uint32 denom;} PDC_ufpoint32;
 typedef	struct { PDC_uint64 num; PDC_uint64 denom;} PDC_ufpoint64;
 
+typedef PDC_uint8 PDC_char;
+
 /* HELPERS: 
  *    PDC_FPOINT2FLT calculates num/denom as a float
  *    PDC_FPOINT2DBL calculates num/denom as a double
@@ -715,14 +717,33 @@ PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
 PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const PDC_string *src);
 
 /*
- * Type T with T_init/T_cleanup also must have T_ed_init/T_ed_cleanup.
- * For PDC_string_ed, these turn out to just be no-ops
- *    PDC_string_ed_init    : a no-op
- *    PDC_string_ed_cleanup : a no-op  
+ * A base type T with T_init/T_cleanup must also have T_ed_init/T_ed_cleanup.
+ * Similarly, if T has T_copy, it must also have T_ed_copy.
+ *
+ * For PDC_string_ed, which is just a PDC_base_ed, init and cleanup are no-ops,
+ * while copy has a trivial implementation (struct assignment).
  */
 
 PDC_error_t PDC_string_ed_init(PDC_t *pdc, PDC_base_ed *ed);
 PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_base_ed *ed);
+PDC_error_t PDC_string_ed_copy(PDC_t *pdc, PDC_base_ed *targ, const PDC_base_ed *src);
+
+/* ================================================================================
+ * ASCII CHAR READ FUNCTION
+ * 
+ *   Read an ASCII char.
+ *
+ *   If *em is PDC_Ignore or PDC_Check, simply skips one byte and returns PDC_OK.
+ *   If *em is PDC_CheckAndSet, sets (*c_out) to the byte at the current IO position
+ *   and advances one byte.
+ *
+ *   If a char is not available, the IO cursor is not advanced, and
+ *    if !em || *em < PDC_Ignore:
+ *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
+ *        + ed->loc begin/end set to the current IO position
+ */
+
+PDC_error_t PDC_a_char_read (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, PDC_char *c_out);
 
 /* ================================================================================
  * ASCII STRING READ FUNCTIONS
@@ -784,14 +805,24 @@ PDC_error_t PDC_a_string_CSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *sto
 				  PDC_base_ed *ed, PDC_string *s_out);
 
 /* ================================================================================
+ * EBCDIC CHAR READ FUNCTION
+ * 
+ *   Read an EBCDIC character and convert to ASCII.
+ *   The in-memory PDC_char representation always uses ASCII.
+ *   Otherwise behaves like PDC_a_char_read.
+ */
+
+PDC_error_t PDC_e_char_read (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, PDC_char *c_out);
+
+/* ================================================================================
  * EBCDIC STRING READ FUNCTIONS
  *
  * These functions behave exactly like the corresponding ASCII string read
  * functions, except the data being read is EBCDIC STRING encoded.
  *
  * N.B. ** Two important things to remember:
- *       1. The EBCDIC string data is converted to ASCII, thus the resulting
- *          string is an ASCII string.
+ *       1. The EBCDIC string data is converted to ASCII.
+ *          The in-memory PDC_string representation always uses ASCII.
  *       2. The stop char (stop regular expression) are specified
  *          using an ASCII character (ASCII string).
  *

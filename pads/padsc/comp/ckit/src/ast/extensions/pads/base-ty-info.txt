@@ -130,7 +130,7 @@ bcd_ufpoint64  PDC_ufpoint64 PDC_base_em   PDC_base_ed          PDC_bcd_ufpoint6
 bcd_fpoint64   PDC_fpoint64  PDC_base_em   PDC_base_ed          PDC_bcd_fpoint64_read_internal      -                  PDC_fpoint64_acc  8         S           Y
 
 # a_char is a single ASCII character on disk
-a_char         PDC_uint8     PDC_base_em   PDC_base_ed          PDC_b_uint8_read_internal           -                  PDC_uint8_acc     1         S           N
+a_char         PDC_char      PDC_base_em   PDC_base_ed          PDC_a_char_read_internal            -                  PDC_char_acc      1         S           N
 
 # The following string types are for a sequence of ASCII characters on disk; PDC_string in memory.
 # The difference is in how the extent of the string is specified. 
@@ -154,6 +154,7 @@ a_date         PDC_uint32    PDC_base_em   PDC_base_ed          PDC_a_date_read_
 
 # The following are the same as their ASCII counterparts, the only difference being the encoding
 # used on disk is EBCDIC characters.  The chars are converted to ASCII as they are parsed.
+e_char         PDC_char      PDC_base_em   PDC_base_ed          PDC_e_char_read_internal            -                  PDC_char_acc      1         S           N
 e_string       PDC_string    PDC_base_em   PDC_base_ed          PDC_e_string_read_internal          -                  PDC_string_acc    V         V           N
 e_string_FW    PDC_string    PDC_base_em   PDC_base_ed          PDC_e_string_FW_read_internal       -                  PDC_string_acc    P         V           N
 e_string_ME    PDC_string    PDC_base_em   PDC_base_ed          PDC_e_string_ME_read_internal       -                  PDC_string_acc    V         V           N

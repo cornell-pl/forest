@@ -124,14 +124,14 @@ Union tag: good vals:          5    bad vals:          0    pcnt-bad:    0.000
         SUMMING                     count:          5  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.user]
 =====================================================================================================
-<top>.user.unauthorized : uint8
+<top>.user.unauthorized : char
 =====================================================================================================
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
-  Characterizing uint8:  min 45 max 45 avg 45.000
+  Characterizing char:  min '-' max '-' (based on ASCII encoding)
     => distribution of top 1 values out of 1 distinct values:
-        val:         45 count:          2  pcnt-of-good-vals:  100.000
+        val:    '-' count:          2  pcnt-of-good-vals:  100.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          2  pcnt-of-good-vals:  100.000
+        SUMMING     count:          2  pcnt-of-good-vals:  100.000
 =====================================================================================================
 <top>.user.id : string
 =====================================================================================================
