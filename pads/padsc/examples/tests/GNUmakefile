@@ -18,8 +18,9 @@ PADS_HOME = ../../../..
 GEN_DIR = ../../gen
 GEN_WRITE = 1
 
-# Uncomment the following to use the -x option
+# Uncomment the following to use libpglx / the -x option
 PADSC_EXTRA = -x
+GEN_GALAX = 1
 
 # the following indicates that generated .c files should not be removed
 .PRECIOUS: $(GEN_DIR)/%.c 
@@ -36,11 +37,12 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH =  .. ../../p
 
+XML_TESTS = test_children
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_cpygen_crs test_enum test_from test_ai test_readint test_depends test_pswitch test_pswitch2 test_struct3 manifest_union
-ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) 
+ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%-g)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
 
@@ -219,6 +221,12 @@ count_dibbler-g: $(GEN_DIR)/dibbler-notrailer.c count_dibbler.c $(INCLUDE_DEPS) 
 test_dibbler1: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 test_dibbler1-g: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+test_children: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+test_children-g: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
  # End of rules that are run from the arch directory
