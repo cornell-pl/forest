@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin/env perl
 
 print "#include \"libpadsc-internal.h\"\n";
 print "#include <ctype.h>\n\n";
