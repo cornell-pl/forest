@@ -10,7 +10,7 @@
  *       PDC_bcd_ufpoint64_read
  */
 
-#include "libpadsc-internal.h" /* for testing - normally do not include internal */
+#include "padsc-internal.h" /* for testing - normally do not include internal */
 
 #define NEXT_REC do {\
   if (strncmp(argv1, "norec", 5) == 0) { \

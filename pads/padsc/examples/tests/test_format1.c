@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "format1.h"
 
 

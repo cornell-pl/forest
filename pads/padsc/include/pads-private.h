@@ -8,8 +8,8 @@
  * AT&T Labs Research
  */
 
-#ifndef __LIBPADSC_PRIVATE_H__
-#define __LIBPADSC_PRIVATE_H__
+#ifndef __PADSC_PRIVATE_H__
+#define __PADSC_PRIVATE_H__
 
 /* private string state used to manage string memory */
 #define PDC_STRING_PRIVATE_STATE \
@@ -77,4 +77,4 @@
   tmp->priv.next->prev = tmp; \
 } while (0)
 
-#endif  /*  __LIBPADSC_PRIVATE_H__  */
+#endif  /*  __PADSC_PRIVATE_H__  */

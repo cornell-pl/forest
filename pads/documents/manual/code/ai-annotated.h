@@ -1,7 +1,7 @@
 /*@FILE @LEFT ai.httpRequestRep.tex  ai.httpRequestCSM.tex ai.httpRequestED.tex ai.httpRequestPD.tex ai.httpRequestOps.tex */
 #ifndef __AI__H__
 #define __AI__H__
-#include "libpadsc.h"
+#include "padsc.h"
 typedef struct nIP_s nIP;
 typedef struct nIP_m_s nIP_m;
 typedef struct nIP_pd_s nIP_pd;

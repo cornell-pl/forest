@@ -1,4 +1,4 @@
-#include "libpadsc-internal.h"
+#include "padsc-internal.h"
 
 static const char* names[] = {
   "bob",

@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "struct_strings.h"
 #define FILENAME  "../../data/ex_data.struct_strings_write"
 

@@ -2,8 +2,8 @@
 #
 #   This file may be found in (~kfisher/p/padsc/ckit/src/extensions/pads/base-ty-info.txt).
 #
-#   The PDC types and function prototypes below are defined in libpadsc.h
-#     (~kfisher/padsc/include/libpadsc.h)
+#   The PDC types and function prototypes below are defined in padsc.h
+#     (~kfisher/padsc/include/padsc.h)
 #
 #   Note that the term 'on disk' below is meant to indicate the input data
 #   in some data stream -- data streams need not be disk-based.
@@ -217,7 +217,7 @@ Pe_char          0      PDC_char      PDC_base_m    PDC_base_pd          PDC_e_c
 #   *string_CME  : takes a Compiled Match Expression as parameter
 #   *string_SE   : takes a Stop Expression as parameter (a string containing a regular expression)
 #   *string_CSE  : takes a Compiled Stop Expression as parameter 
-#                  Note: libpadsc.h describes syntax of regular expressions -- currently quite limited --
+#                  Note: padsc.h describes syntax of regular expressions -- currently quite limited --
 #                        (see PDC_regexp_compile for regular expression compilation).
 
 Pstring          1      PDC_string    PDC_base_m    PDC_base_pd          PDC_string_read         -                     PDC_string_acc     V            V           N

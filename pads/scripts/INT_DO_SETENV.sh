@@ -27,11 +27,11 @@ if [ $_pads_status == "OK" ]; then
 fi
 
 if [ $_pads_status == "OK" ]; then
-  if [ ! -e $PADS_HOME/ast-ast/bin/package ]; then
+  if [ ! -e $PADS_HOME/ast-ast/bin/package.cvs ]; then
     echo "##############################################################################"
     echo "# Invalid setting (?) : PADS_HOME = $PADS_HOME"
     echo "#"
-    echo "# Cannot find $PADS_HOME/ast-ast/bin/package"
+    echo "# Cannot find $PADS_HOME/ast-ast/bin/package.cvs"
     echo "#"
     echo "# Set env var PADS_HOME correctly and then use DO_SETENV.tcsh again."
     echo "##############################################################################"
@@ -41,7 +41,7 @@ if [ $_pads_status == "OK" ]; then
 fi
 
 if [ $_pads_status == "OK" ]; then
-  AST_ARCH=`$PADS_HOME/ast-ast/bin/package`; export AST_ARCH
+  AST_ARCH=`$PADS_HOME/ast-ast/bin/package.cvs`; export AST_ARCH
 
   if [ "$AST_HOME"x == x ]; then
     AST_HOME=$PADS_HOME/ast-ast/arch/$AST_ARCH; export AST_HOME

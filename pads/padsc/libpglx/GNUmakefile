@@ -3,7 +3,7 @@
 
 PADS_HOME = ../..
 ifndef AST_ARCH
-  AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package)
+  AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
   export AST_ARCH
 endif
 

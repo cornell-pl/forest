@@ -160,7 +160,7 @@ structure Main : sig
 	let val srcFile = OS.FileSys.fullPath srcFile
             val compositeFile = tmp ".c"
             val includePrefix = ("#include <ckit-first.h>\n"^
-				 "#include <libpadsc-internal.h>\n"^
+				 "#include <padsc-internal.h>\n"^
 				 "#include <pglx-internal.h>\n"^
 				 "#include \""^baseTyFile^"\"\n"^
                                  "\n")
@@ -233,7 +233,7 @@ structure Main : sig
 		               then padsDir^compilerFileLoc^"accum_template_static"
 			       else padsDir^compilerFileLoc^"accum_template_dynamic"
 	in
-	    TextIO.output(aoutstream, "#include \"libpadsc.h\"\n");
+	    TextIO.output(aoutstream, "#include \"padsc.h\"\n");
 	    TextIO.output(aoutstream, "#include \""^headerFile^"\"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY "^repName^"\n");
 	    case repInit of NONE => ()
@@ -344,7 +344,7 @@ structure Main : sig
 	in
 	    TextIO.output(houtstream, "#ifndef "^ includeName ^"\n");
 	    TextIO.output(houtstream, "#define "^ includeName ^"\n");
-	    TextIO.output(houtstream, "#include \"libpadsc.h\"\n");
+	    TextIO.output(houtstream, "#include \"padsc.h\"\n");
 	    if (!xmlFlag) then 
 		TextIO.output(houtstream, "#include \"pglx-internal.h\"\n")
 	    else ();
@@ -352,7 +352,7 @@ structure Main : sig
 	    TextIO.output(houtstream, "#endif /*  "^ includeName ^"  */\n");
 	    TextIO.flushOut houtstream;
 	    TextIO.closeOut houtstream;
-	    TextIO.output(coutstream, "#include \"libpadsc-internal.h\"\n");
+	    TextIO.output(coutstream, "#include \"padsc-internal.h\"\n");
 	    if (!xmlFlag) then 
 		TextIO.output(coutstream, "#include \"pglx-internal.h\"\n")
 	    else ();

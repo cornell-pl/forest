@@ -1,4 +1,4 @@
-#include "libpadsc-internal.h"
+#include "padsc-internal.h"
 #include "readinttest.h"
 #include <error.h>
 

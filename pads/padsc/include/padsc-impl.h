@@ -4,14 +4,14 @@
 /*
  * padsc library interface: macro implementations of certain function calls
  *   
- * NOTE: C prototypes for these functions are given in libpadsc.h
+ * NOTE: C prototypes for these functions are given in padsc.h
  *
  * Kathleen Fisher, Robert Gruber
  * AT&T Labs Research
  */
 
-#ifndef __LIBPADSC_IMPL_H__
-#define __LIBPADSC_IMPL_H__
+#ifndef __PADSC_IMPL_H__
+#define __PADSC_IMPL_H__
 
 #ifndef FOR_CKIT
 
@@ -734,4 +734,4 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
 #endif /* PDC_CONFIG_WRITE_FUNCTIONS */
 
 #endif   /*   ! FOR_CKIT             */
-#endif   /*   ! __LIBPADSC_IMPL_H__  */
+#endif   /*   ! __PADSC_IMPL_H__  */

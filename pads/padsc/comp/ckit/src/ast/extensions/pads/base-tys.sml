@@ -164,8 +164,8 @@ structure PBaseTys = struct
           baseInfo := initBaseInfoMap(!baseInfoList);
 	  TextIO.output(outStrm, "#ifndef __PADS_INTERNAL__H__\n");
 	  TextIO.output(outStrm, "#define __PADS_INTERNAL__H__\n");
-	  TextIO.output(outStrm, "#include \"libpadsc.h\"\n");
-	  TextIO.output(outStrm, "#include \"libpadsc-internal.h\"\n");
+	  TextIO.output(outStrm, "#include \"padsc.h\"\n");
+	  TextIO.output(outStrm, "#include \"padsc-internal.h\"\n");
           TextIO.output(outStrm, "#ifdef sfstropen\n#undef sfstropen\n#endif\n");
           TextIO.output(outStrm, "Sfio_t *sfstropen();\n");
           TextIO.output(outStrm, "#ifdef sfstrclose\n#undef sfstrclose\n#endif\n");

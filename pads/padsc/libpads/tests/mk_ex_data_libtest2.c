@@ -1,4 +1,4 @@
-#include "libpadsc-internal.h" /* for testing - normally do not include internal */
+#include "padsc-internal.h" /* for testing - normally do not include internal */
 #include <stdio.h>
 
 int main(int argc, char** argv) {

@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "depends.h"
 #define PADS_TY line
 #define PADS_TY_INIT line_init

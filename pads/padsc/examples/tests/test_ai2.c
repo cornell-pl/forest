@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "ai2.h"
 #include <ast.h>
 #include <error.h>

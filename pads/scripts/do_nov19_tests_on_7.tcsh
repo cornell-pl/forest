@@ -1,7 +1,7 @@
 #!/bin/tcsh
 
 set processor_num = 7
-set arch = `$PADS_HOME/ast-ast/bin/package`
+set arch = `$PADS_HOME/ast-ast/bin/package.cvs`
 
 #set fname = ~/knb/perl/data/head50K
 #set fname = ~/dibbler/data/out_sum

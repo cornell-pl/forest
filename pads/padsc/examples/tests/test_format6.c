@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "format6.h"
 
 #define NO_NL 0|ERROR_PROMPT

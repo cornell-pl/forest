@@ -1,4 +1,4 @@
-#include "libpadsc-internal.h"
+#include "padsc-internal.h"
 #include "dibbler.h"
 PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint32_vbar_ed *moded,auint32_vbar *modrep)
 {

@@ -1,19 +1,19 @@
 ## This source file is run through srcgen.pl to produce 
 ## a number of generated files:
 ##
-##    libpadsc-macros-gen.h       : generally useful macros
-##    libpadsc-read-macros-gen.h  : macros that help implement read  functions
-##    libpadsc-write-macros-gen.h : macros that help implement write functions
-##    libpadsc-acc-macros-gen.h   : macros that help implement accum functions
-##    libpadsc-misc-macros-gen.h  : macros that help implement misc  functions
+##    padsc-macros-gen.h       : generally useful macros
+##    padsc-read-macros-gen.h  : macros that help implement read  functions
+##    padsc-write-macros-gen.h : macros that help implement write functions
+##    padsc-acc-macros-gen.h   : macros that help implement accum functions
+##    padsc-misc-macros-gen.h  : macros that help implement misc  functions
 ## 
-##    libpadsc-read-gen.c         : generated read  functions
-##    libpadsc-write-gen.c        : generated write functions
-##    libpadsc-acc-gen.c          : generated accum functions
-##    libpadsc-misc-gen.c         : generated misc  functions
-##    libpadsc-gen.c              : the rest of the libpadsc library
+##    padsc-read-gen.c         : generated read  functions
+##    padsc-write-gen.c        : generated write functions
+##    padsc-acc-gen.c          : generated accum functions
+##    padsc-misc-gen.c         : generated misc  functions
+##    padsc-gen.c              : the rest of the padsc library
 ##
-/* ********************* BEGIN_MACROS(libpadsc-macros-gen.h) ********************** */
+/* ********************* BEGIN_MACROS(padsc-macros-gen.h) ********************** */
 /*
  * Some generally useful macros
  * 
@@ -500,7 +500,7 @@ do {
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACROS ********************************** */
 
-/* ****************** BEGIN_MACROS(libpadsc-read-macros-gen.h) ******************** */
+/* ****************** BEGIN_MACROS(padsc-read-macros-gen.h) ******************** */
 /*
  * Macros that help implement read functions
  * 
@@ -508,7 +508,7 @@ do {
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-config.h"
+#gen_include "padsc-config.h"
 
 /* ********************************** END_HEADER ********************************** */
 
@@ -1062,7 +1062,7 @@ fn_name(PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits_or_bytes, PDC_uin
 #endif
 
 /* ********************************** END_MACROS ********************************** */
-/* ****************** BEGIN_MACROS(libpadsc-write-macros-gen.h) ******************* */
+/* ****************** BEGIN_MACROS(padsc-write-macros-gen.h) ******************* */
 /*
  * Macros that help implement write functions
  * 
@@ -1070,7 +1070,7 @@ fn_name(PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits_or_bytes, PDC_uin
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-config.h"
+#gen_include "padsc-config.h"
 
 /* ********************************** END_HEADER ********************************** */
 
@@ -1450,7 +1450,7 @@ fn_pref ## _write2io(PDC_t *pdc, Sfio_t *io, PDC_uint32 num_digits_or_bytes, PDC
 #endif
 
 /* ********************************** END_MACROS ********************************** */
-/* ****************** BEGIN_MACROS(libpadsc-acc-macros-gen.h) ********************* */
+/* ****************** BEGIN_MACROS(padsc-acc-macros-gen.h) ********************* */
 /*
  * Macros that help implement accum functions
  * 
@@ -1458,7 +1458,7 @@ fn_pref ## _write2io(PDC_t *pdc, Sfio_t *io, PDC_uint32 num_digits_or_bytes, PDC
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-config.h"
+#gen_include "padsc-config.h"
 
 /* ********************************** END_HEADER ********************************** */
 
@@ -2180,7 +2180,7 @@ fpoint_type ## _acc_report(PDC_t *pdc, const char *prefix, const char *what, int
 
 /* ********************************** END_MACROS ********************************** */
 
-/* ****************** BEGIN_MACROS(libpadsc-misc-macros-gen.h) ********************* */
+/* ****************** BEGIN_MACROS(padsc-misc-macros-gen.h) ********************* */
 /*
  * Macros that help implement accum functions
  * 
@@ -2188,7 +2188,7 @@ fpoint_type ## _acc_report(PDC_t *pdc, const char *prefix, const char *what, int
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-config.h"
+#gen_include "padsc-config.h"
 
 /* ********************************** END_HEADER ********************************** */
 
@@ -3555,7 +3555,7 @@ rev_fn_name ## _io (PDC_t *pdc, Sfio_t *io, targ_type u, PDC_uint32 num_bytes)
 
 /* ********************************** END_MACROS ********************************** */
 
-/* ********************** BEGIN_MACGEN(libpadsc-read-gen.c) *********************** */
+/* ********************** BEGIN_MACGEN(padsc-read-gen.c) *********************** */
 /*
  * Generated read functions
  * 
@@ -3563,11 +3563,11 @@ rev_fn_name ## _io (PDC_t *pdc, Sfio_t *io, targ_type u, PDC_uint32 num_bytes)
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-internal.h"
-#gen_include "libpadsc-macros-gen.h"
+#gen_include "padsc-internal.h"
+#gen_include "padsc-macros-gen.h"
 
 /* ********************************** END_HEADER ********************************** */
-#gen_include "libpadsc-read-macros-gen.h"
+#gen_include "padsc-read-macros-gen.h"
 
 /* ================================================================================ */
 /* VARIABLE-WIDTH ASCII INTEGER READ FUNCTIONS */
@@ -3789,7 +3789,7 @@ PDC_dummy_read(PDC_t *pdc, const PDC_base_m *m, PDC_int32 dummy_val, PDC_base_pd
 }
 
 /* ********************************** END_MACGEN ********************************** */
-/* ********************* BEGIN_MACGEN(libpadsc-write-gen.c) *********************** */
+/* ********************* BEGIN_MACGEN(padsc-write-gen.c) *********************** */
 /*
  * Generated write functions
  * 
@@ -3797,11 +3797,11 @@ PDC_dummy_read(PDC_t *pdc, const PDC_base_m *m, PDC_int32 dummy_val, PDC_base_pd
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-internal.h"
-#gen_include "libpadsc-macros-gen.h"
+#gen_include "padsc-internal.h"
+#gen_include "padsc-macros-gen.h"
 
 /* ********************************** END_HEADER ********************************** */
-#gen_include "libpadsc-write-macros-gen.h"
+#gen_include "padsc-write-macros-gen.h"
 
 /* ================================================================================ */
 /* ASCII INTEGER WRITE FUNCTIONS */
@@ -3969,7 +3969,7 @@ PDCI_SBH_FPOINT_WRITE_FN(PDC_sbh_ufpoint64, PDC_ufpoint64, PDCI_uint64_2sbh, "PD
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
-/* ********************** BEGIN_MACGEN(libpadsc-acc-gen.c) ************************ */
+/* ********************** BEGIN_MACGEN(padsc-acc-gen.c) ************************ */
 /*
  * Generated accumulator functions
  * 
@@ -3977,11 +3977,11 @@ PDCI_SBH_FPOINT_WRITE_FN(PDC_sbh_ufpoint64, PDC_ufpoint64, PDCI_uint64_2sbh, "PD
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-internal.h"
-#gen_include "libpadsc-macros-gen.h"
+#gen_include "padsc-internal.h"
+#gen_include "padsc-macros-gen.h"
 
 /* ********************************** END_HEADER ********************************** */
-#gen_include "libpadsc-acc-macros-gen.h"
+#gen_include "padsc-acc-macros-gen.h"
 
 /* PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, fold_test) */
 /* Always generate uint8, int32 and uint32 accumulator types */
@@ -4527,7 +4527,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 }
 
 /* ********************************** END_MACGEN ********************************** */
-/* ********************** BEGIN_MACGEN(libpadsc-misc-gen.c) *********************** */
+/* ********************** BEGIN_MACGEN(padsc-misc-gen.c) *********************** */
 /*
  * Generated misc functions
  * 
@@ -4535,8 +4535,8 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-internal.h"
-#gen_include "libpadsc-macros-gen.h"
+#gen_include "padsc-internal.h"
+#gen_include "padsc-macros-gen.h"
 
 /* ================================================================================ */
 /* USEFUL CONVERSION CONSTANTS */
@@ -4602,7 +4602,7 @@ static PDC_uint64 PDC_UMAX_FOR_NB[] = {
 };
 
 /* ********************************** END_HEADER ********************************** */
-#gen_include "libpadsc-misc-macros-gen.h"
+#gen_include "padsc-misc-macros-gen.h"
 
 
 /* PDCI_A2INT(fn_name, targ_type, int_min, int_max) */
@@ -4702,7 +4702,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
 
-/* DEFGEN(libpadsc-gen.c) */
+/* DEFGEN(padsc-gen.c) */
 /*
  * library routines for library that goes with padsc
  *
@@ -4710,10 +4710,10 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-internal.h"
-#gen_include "libpadsc-macros-gen.h"
+#gen_include "padsc-internal.h"
+#gen_include "padsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.98 2003-08-16 19:47:48 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.99 2003-09-09 13:54:57 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5058,7 +5058,7 @@ PDC_uint64 PDCI_10toThe[] = {
 };
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- * EXTERNAL FUNCTIONS (see libpadsc.h)
+ * EXTERNAL FUNCTIONS (see padsc.h)
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  */
 
@@ -6178,7 +6178,7 @@ PDC_swap_bytes(PDC_byte *bytes, size_t num_bytes)
 }
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- * INTERNAL FUNCTIONS (see libpadsc-internal.h)
+ * INTERNAL FUNCTIONS (see padsc-internal.h)
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 */
 
@@ -6248,19 +6248,19 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
       msg = "XXX Unexpected error (should not happen)";
       break;
     case PDC_BAD_PARAM:
-      msg = "Invalid argument value used in libpadsc library call";
+      msg = "Invalid argument value used in padsc library call";
       break;
     case PDC_SYS_ERR:
       msg = "System error";
       break;
     case PDC_CHKPOINT_ERR:
-      msg = "Checkpoint error (misuse of libpadsc IO checkpoint facility)";
+      msg = "Checkpoint error (misuse of padsc IO checkpoint facility)";
       break;
     case PDC_COMMIT_ERR:
-      msg = "Commit error (misuse of libpadsc IO checkpoint facility)";
+      msg = "Commit error (misuse of padsc IO checkpoint facility)";
       break;
     case PDC_RESTORE_ERR:
-      msg = "Restore error (misuse of libpadsc IO checkpoint facility)";
+      msg = "Restore error (misuse of padsc IO checkpoint facility)";
       break;
     case PDC_ALLOC_ERR:
       msg = "Memory alloc failure (out of space)";

@@ -3,7 +3,7 @@
  */
 
 
-#include "libpadsc-internal.h" /* for testing - normally do not include internal */
+#include "padsc-internal.h" /* for testing - normally do not include internal */
 #include <stdio.h>
 
 /* Remove comments to see classic example of a case where mixing binary data and newlines can fail */

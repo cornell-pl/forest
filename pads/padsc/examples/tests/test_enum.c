@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "enum.h"
 
 int main(int argc, char** argv) {

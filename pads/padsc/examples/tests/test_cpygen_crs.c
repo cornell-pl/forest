@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "cpygen_crs.h"
 
 /* declared in cpygen_crs.[ph], initialized here : */

@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "from.h"
 
 int main(int argc, char** argv) {

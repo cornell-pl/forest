@@ -100,11 +100,11 @@ if ($_pads_status == OK) then
 endif
 
 if ($_pads_status == "OK") then
-  if (! (-e $PADS_HOME/ast-ast/bin/package)) then
+  if (! (-e $PADS_HOME/ast-ast/bin/package.cvs)) then
     echo "##############################################################################"
     echo "# Invalid setting (?) : PADS_HOME = $PADS_HOME"
     echo "#"
-    echo "# Cannot find $PADS_HOME/ast-ast/bin/package"
+    echo "# Cannot find $PADS_HOME/ast-ast/bin/package.cvs"
     echo "#"
     echo "# Set env var PADS_HOME correctly and then use $_pads_do_prog again."
     echo "##############################################################################"
@@ -115,7 +115,7 @@ endif
 
 if ($_pads_status == "OK") then
 
-  setenv AST_ARCH `$PADS_HOME/ast-ast/bin/package`
+  setenv AST_ARCH `$PADS_HOME/ast-ast/bin/package.cvs`
 
   if (! $?_is_ast_home) then
     setenv AST_HOME $PADS_HOME/ast-ast/arch/$AST_ARCH

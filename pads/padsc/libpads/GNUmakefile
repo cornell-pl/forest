@@ -3,7 +3,7 @@
 
 PADS_HOME = ../..
 ifndef AST_ARCH
-  AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package)
+  AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
   export AST_ARCH
 endif
 
@@ -22,22 +22,22 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
 
-OBJS_O = rbuf.o default_io_disc.o libpadsc-gen.o libpadsc-acc-gen.o libpadsc-read-gen.o libpadsc-write-gen.o libpadsc-misc-gen.o
+OBJS_O = rbuf.o default_io_disc.o padsc-gen.o padsc-acc-gen.o padsc-read-gen.o padsc-write-gen.o padsc-misc-gen.o
 
 OBJS_D = $(OBJS_O:%.o=%-g.o)
 
-GEN_FILES = libpadsc-acc-gen.c \
-            libpadsc-misc-gen.c \
-            libpadsc-acc-macros-gen.h  \
-            libpadsc-misc-macros-gen.h \
-            libpadsc-gen.c             \
-            libpadsc-read-gen.c \
-            libpadsc-write-gen.c \
-            libpadsc-macros-gen.h      \
-            libpadsc-read-macros-gen.h \
-            libpadsc-write-macros-gen.h
+GEN_FILES = padsc-acc-gen.c \
+            padsc-misc-gen.c \
+            padsc-acc-macros-gen.h  \
+            padsc-misc-macros-gen.h \
+            padsc-gen.c             \
+            padsc-read-gen.c \
+            padsc-write-gen.c \
+            padsc-macros-gen.h      \
+            padsc-read-macros-gen.h \
+            padsc-write-macros-gen.h
 
-INSTALL_INCLUDES = libpadsc.h rbuf.h libpadsc-private.h pdc_io_disc.h
+INSTALL_INCLUDES = padsc.h rbuf.h padsc-private.h pdc_io_disc.h
 
 all :
 	@$(MAKE) -f ../GNUmakefile dogen
@@ -91,18 +91,18 @@ install : all
 		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALLROOT)/include/; \
 	done;)
 
-dogen : $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpadsc/libpadsc.c $(INCLUDE_DEPS)
+dogen : $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpadsc/padsc.c $(INCLUDE_DEPS)
 	@echo "Building generated source files"
-	$(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpadsc/libpadsc.c $(CURDIR) $(PADS_HOME)
+	$(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpadsc/padsc.c $(CURDIR) $(PADS_HOME)
 	touch dogen
 
-libpadsc-gen-g.o: libpadsc-gen.c $(INCLUDE_DEPS)
+padsc-gen-g.o: padsc-gen.c $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule A-mod-D"
 endif
 	$(COMPILE_D) -c $< -o $@
 
-libpadsc-gen.o: libpadsc-gen.c $(INCLUDE_DEPS)
+padsc-gen.o: padsc-gen.c $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule A-mod-O"
 endif

@@ -3,7 +3,7 @@
  */
 
 
-#include "libpadsc-internal.h" /* for testing - normally do not include internal */
+#include "padsc-internal.h" /* for testing - normally do not include internal */
 #ifndef PDCI_MacroArg2String
 #define PDCI_MacroArg2String(s) #s
 #endif

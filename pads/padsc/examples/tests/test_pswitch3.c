@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "pswitch3.h"
 #define PADS_TY choice
 #define PADS_TY_INIT choice_init

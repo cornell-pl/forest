@@ -1,7 +1,7 @@
-#include "libpadsc-internal.h" /* for testing - normally do not include internal */
+#include "padsc-internal.h" /* for testing - normally do not include internal */
 
 #if 0
-#include "libpadsc.h"
+#include "padsc.h"
 #include "format2.h"
 #endif
 

@@ -8,12 +8,12 @@
  * AT&T Labs Research
  */
 
-#ifndef __LIBPADSC_INTERNAL__
-#define __LIBPADSC_INTERNAL__
+#ifndef __PADSC_INTERNAL__
+#define __PADSC_INTERNAL__
 
 /* ================================================================================ */
 
-#include "libpadsc.h"
+#include "padsc.h"
 #include "pdc_out_macros.h"
 
 /* ================================================================================ */
@@ -958,4 +958,4 @@ PDC_byte *PDCI_findlast(const PDC_byte *begin, const PDC_byte *end, PDC_byte b);
 
 /* ================================================================================ */
 
-#endif /*  __LIBPADSC_INTERNAL__  */
+#endif /*  __PADSC_INTERNAL__  */

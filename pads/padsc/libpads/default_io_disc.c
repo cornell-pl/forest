@@ -30,8 +30,8 @@
  * AT&T Labs Research
  */
 
-#include "libpadsc-internal.h" /* XXX for debugging, should be libpadsc.h XXX */
-#include "libpadsc-macros-gen.h"
+#include "padsc-internal.h" /* XXX for debugging, should be padsc.h XXX */
+#include "padsc-macros-gen.h"
 #include "pdc_out_macros.h"
 #include <stdio.h>
 

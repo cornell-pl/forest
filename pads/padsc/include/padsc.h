@@ -8,8 +8,8 @@
  * AT&T Labs Research
  */
 
-#ifndef __LIBPADSC_H__
-#define __LIBPADSC_H__
+#ifndef __PADSC_H__
+#define __PADSC_H__
 
 #include <ast.h>
 #include <ast_common.h>
@@ -23,8 +23,8 @@
 #include <error.h>
 #include <math.h>
 #include "rbuf.h"
-#include "libpadsc-config.h"
-#include "libpadsc-private.h"
+#include "padsc-config.h"
+#include "padsc-private.h"
 
 /* ================================================================================
  * LIBRARY DISCIPLINE TYPES
@@ -3098,7 +3098,7 @@ PDC_error_t PDC_dummy_read(PDC_t *pdc, const PDC_base_m *m, PDC_int32 dummy_val,
 /* ================================================================================
  * INCLUDE MACRO IMPLS OF SOME OF THE FUNCTIONS DECLARED ABOVE
  */
-#include "libpadsc-impl.h"
+#include "padsc-impl.h"
 
 /* ================================================================================
  * INCLUDE THE IO DISCIPLINE DECLS
@@ -3107,4 +3107,4 @@ PDC_error_t PDC_dummy_read(PDC_t *pdc, const PDC_base_m *m, PDC_int32 dummy_val,
 
 /* ================================================================================ */
 
-#endif  /* __LIBPADSC_H__ */
+#endif  /* __PADSC_H__ */

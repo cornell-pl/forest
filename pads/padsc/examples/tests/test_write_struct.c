@@ -1,4 +1,4 @@
-#include "libpadsc.h"
+#include "padsc.h"
 #include "struct.h"
 /* #define FILENAME  "stdin" */
 #define FILENAME  "../../data/ex_data.struct_write" 

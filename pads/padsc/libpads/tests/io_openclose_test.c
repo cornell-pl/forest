@@ -3,7 +3,7 @@
  */
 
 
-#include "libpadsc-internal.h" /* for testing - normally do not include internal */
+#include "padsc-internal.h" /* for testing - normally do not include internal */
 
 int main(int argc, char** argv) {
   Sfio_t         *io;

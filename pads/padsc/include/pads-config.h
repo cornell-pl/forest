@@ -2,16 +2,16 @@
 #pragma prototyped
 #endif
 /*
- * CONFIG file for libpadsc
+ * CONFIG file for padsc
  *   
  * Kathleen Fisher, Robert Gruber
  * AT&T Labs Research
  */
 
-#ifndef __LIBPADSC_CONFIG_H__
-#define __LIBPADSC_CONFIG_H__
+#ifndef __PADSC_CONFIG_H__
+#define __PADSC_CONFIG_H__
 
-/* Normal users of the libpadsc library should not modify this file.
+/* Normal users of the padsc library should not modify this file.
  *
  * Power users worried about the footprint of the library can 
  * assign 0 to some of the following defines to obtain a smaller library.
@@ -71,4 +71,4 @@
 #define PDC_CONFIG_SBL_FPOINT       1 /* need SBL encoding fixed-points */ 
 #define PDC_CONFIG_SBH_FPOINT       1 /* need SBH encoding fixed-points */ 
 
-#endif   /*   ! __LIBPADSC_CONFIG_H__  */
+#endif   /*   ! __PADSC_CONFIG_H__  */

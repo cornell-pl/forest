@@ -11,7 +11,7 @@
 #ifndef __PGLX_INTERNAL_H__
 #define __PGLX_INTERNAL_H__
 
-#include "libpadsc-internal.h"
+#include "padsc-internal.h"
 
 #ifdef USE_GALAX
 

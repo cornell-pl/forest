@@ -8,8 +8,8 @@
  * AT&T Labs Research
  */
 
-#ifndef __LIBPADSC_H__
-#error "Do not include pdc_io_disc.h directly -- include libpadsc.h instead"
+#ifndef __PADSC_H__
+#error "Do not include pdc_io_disc.h directly -- include padsc.h instead"
 #endif
 
 #ifndef __PDC_IO_DISC_H__

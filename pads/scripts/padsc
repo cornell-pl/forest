@@ -45,7 +45,7 @@ if (!(-d $PADS_HOME && -d $PADS_HOME/padsc && -d $PADS_HOME/lib && -d $PADS_HOME
   exit 0
 endif
 
-set arch = `$PADS_HOME/ast-ast/bin/package`
+set arch = `$PADS_HOME/ast-ast/bin/package.cvs`
 
 set IMAGE = $PADS_HOME/lib/padsc
 set SMLBIN = $PADS_HOME/binlinks/smlruntime.$arch
