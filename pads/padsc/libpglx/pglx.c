@@ -36,6 +36,7 @@ void walk_children(void *n, int indent) {
 	  indent, walk_children_spaces, n_name);
     for (iter = children, child = *iter; child; child = *++iter) {
       walk_children(child, indent+4);
+      PGLX_node_free(child);
     }
     error(0, "%.*s</%s>",
 	  indent, walk_children_spaces, n_name);
@@ -95,8 +96,12 @@ const char* PGLX_generic_name(void *ocaml_n){
 
 void PGLX_node_free(void *ocaml_n)
 {
-  PDCI_node_t *n = (PDCI_node_t *) ocaml_n;
-  PDCI_FREE_NODE(n->pdc, n);
+  PDCI_FREE_NODE(ocaml_n);
+}
+
+void PGLX_nodelist_free(void **list)
+{
+  PDCI_FREE_NODE_PTR_LIST(list);
 }
 
 /* ================================================================================
@@ -111,7 +116,7 @@ PDCI_node_t ** ty ## _children(PDCI_node_t *self) \
   ty           *rep = (ty*)self->rep; \
   PDC_base_pd  *pd  = (PDC_base_pd*)self->pd; \
   PDCI_node_t **result; \
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 2))) { \
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(2))) { \
     failwith("ALLOC_ERROR: in " PDCI_MacroArg2String(ty) "_children"); \
   } \
   /* the following mk calls raise an exception on alloc error */ \
@@ -194,7 +199,7 @@ PDCI_node_t ** PDC_pos_t_children(PDCI_node_t *self)
 {
   PDC_pos_t *pos = (PDC_pos_t *) self->rep;
   PDCI_node_t **result;
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 3))) {
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(3))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   PDCI_MK_TNODE(result[0], &PDC_int32_val_vtable,   self, "byte",    &(pos->byte),     WHATFN);
@@ -210,7 +215,7 @@ PDCI_node_t ** PDC_loc_t_children(PDCI_node_t *self)
 {
   PDC_loc_t *loc = (PDC_loc_t *) self->rep;
   PDCI_node_t **result;
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 2))) {
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(2))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   PDCI_MK_TNODE(result[0], &PDC_pos_t_vtable,      self, "b",     &(loc->b),     WHATFN);
@@ -227,7 +232,7 @@ PDCI_node_t ** PDC_base_pd_children(PDCI_node_t *self)
   PDC_base_pd   *pd = (PDC_base_pd *) self->rep;
   PDCI_node_t  **result;
 
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 3))) {
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(3))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
@@ -249,7 +254,7 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
   PDCI_structured_pd  *pd = (PDCI_structured_pd *) self->rep;
   PDCI_node_t        **result;
 
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 4))) {
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(4))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
@@ -274,7 +279,7 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
   PDCI_sequenced_pd  *pd = (PDCI_sequenced_pd *) self->rep;
   PDCI_node_t       **result;
 
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 6))) {
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(6))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
@@ -297,7 +302,7 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
 PDCI_node_t ** PDCI_no_children(PDCI_node_t *self)
 {
   PDCI_node_t **result;
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 0))) {
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(0))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   return result;
