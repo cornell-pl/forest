@@ -80,6 +80,7 @@ struct
   val toolStatePCT = P.makeTypedefPCT "P_t"
   val toolDiscPCT  = P.makeTypedefPCT "Pdisc_t"
   val locPCT       = P.makeTypedefPCT "Ploc_t"
+  val posPCT       = P.makeTypedefPCT "Ppos_t"
   val errCodePCT   = P.makeTypedefPCT "PerrCode_t"
   val sizePCT      = P.makeTypedefPCT "size_t"
   val ssizePCT     = P.makeTypedefPCT "ssize_t"

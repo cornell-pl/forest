@@ -660,6 +660,7 @@ structure CnvExt : CNVEXT = struct
 	      val locBS     =  PL.getLocBeginS(PT.Id pads, P.addrX(fieldX(pd,loc)))
 	      val locES     =  PL.getLocEndS(PT.Id pads, P.addrX(fieldX(pd,loc)), ~2) 
 	      val locES1    =  PL.getLocEndS(PT.Id pads, P.addrX(fieldX(pd,loc)), ~1) 
+	      val locES0    =  PL.getLocEndS(PT.Id pads, P.addrX(fieldX(pd,loc)), 0) 
 
 	      fun getDynamicFunctions (name,memChar) = 
 		  case memChar of TyProps.Static => (NONE,NONE,NONE,NONE)
@@ -3634,14 +3635,18 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     end
 
                  fun chkPredConstraint (which, exp) = 
-		     let val subList = [(PNames.arrayLen,  fieldX(rep,length)), 
-					(PNames.arrayCur,  P.minusX(fieldX(rep,length), P.intX 1)), 
-					(name,             fieldX(rep,elts)),
-					(PNames.arrayElts, fieldX(rep,elts)),
-					(PNames.pdElts,    fieldX(pd,elts))]
+		     let val subList = [(PNames.arrayLen,   fieldX(rep,length)), 
+					(PNames.arrayCur,   P.minusX(fieldX(rep,length), P.intX 1)), 
+					(name,              fieldX(rep,elts)),
+					(PNames.arrayBegin, P.dotX(PT.Id tloc, PT.Id "b")), 
+					(PNames.elemBegin,  P.dotX(fieldX(pd,"loc"), PT.Id "b")), 
+					(PNames.elemEnd,    P.dotX(fieldX(pd,"loc"), PT.Id "e")), 
+					(PNames.arrayElts,  fieldX(rep,elts)),
+					(PNames.pdElts,     fieldX(pd,elts))]
 			 val subList = if which = "Pended"
 				       then (PNames.consume, PT.Id consumeFlag) :: subList
 				       else subList
+			 val needEndLoc = PTSub.isFreeInExp([PNames.elemEnd], exp)
 			 val modExpX = PTSub.substExps subList exp
 			 val errMsg = fn s => (which ^" expression for array "^
 					       name ^" has type"^s^". Expected type int.")
@@ -3650,12 +3655,15 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 ignore(insTempVar(length, PL.uint32PCT));
 			 ignore(insTempVar(PNames.arrayCur, PL.uint32PCT));
 			 ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
+			 ignore(insTempVar(PNames.arrayBegin, PL.posPCT)); 
+			 ignore(insTempVar(PNames.elemBegin, PL.posPCT)); 
+			 ignore(insTempVar(PNames.elemEnd, PL.posPCT)); 
 			 ignore(insTempVar(elts, P.ptrPCT elemRepPCT)); 
 			 ignore(insTempVar(PNames.pdElts, P.ptrPCT elemEdPCT)); 
 			 if which = "Pended" then ignore(insTempVar(PNames.consume, P.int)) else ();
 			 expEqualTy(exp, CTintTys, errMsg);
 			 popLocalEnv();
-			 modExpX
+			 (needEndLoc, modExpX)
 		     end
 
                  (* new scope needed for analysis of array constraints*)
@@ -4273,12 +4281,22 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		       readTerm (readFun, exp,NONE)]
 
                  fun genLastCheck NONE = []
-                   | genLastCheck (SOME exp) = 
+                   | genLastCheck (SOME (_, exp)) = 
                       [P.mkCommentS("Checking Plast predicate"),
 		       PT.IfThen(exp, PT.Compound[P.assignS(PT.Id lastSet, P.trueX)])]
 
+                 fun genEndedLocCalcSs (l,e) =
+                     let fun f(NONE) = [] 
+                           | f(SOME(true, _)) = [locES0]
+			   | f(SOME(false,_)) = []
+			 val last = f l
+			 val ended = case last of nil => f e | _ => last
+		     in
+			 ended
+		     end
+
                  fun genEndedCheck NONE = []
-                   | genEndedCheck (SOME exp) = 
+                   | genEndedCheck (SOME (_, exp)) = 
                       [P.mkCommentS("Checking Pended predicate"),
                        PT.Compound[
 			  P.varDeclS(P.int, "Ppredresult", exp),
@@ -4308,6 +4326,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                                  PT.Compound(
 				     [P.mkCommentS("Ready to read next element.")]
 				   @ readElementSs 
+                                   @ (genEndedLocCalcSs (lastXOpt, endedXOpt))
                                    @ (genEndedCheck endedXOpt)
 				   @ markErrorSs
 				   @ panicRecoverySs
