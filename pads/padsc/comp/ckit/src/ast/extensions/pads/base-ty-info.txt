@@ -62,25 +62,45 @@
 
 #PADS_name     inMemory      checkSetMask  errorDescription     readFunction               scanFunctionOpt             accumulatorOpt    DiskSize  Memory(S/V) Endian
 
-Puint8        PDC_uint8     PDC_base_csm  PDC_base_ed          PDC_a_uint8_read_internal           -                  PDC_uint8_acc     V         S           Y
-Pint8         PDC_int8      PDC_base_csm  PDC_base_ed          PDC_a_int8_read_internal            -                  PDC_int8_acc      V         S           Y
-Puint8_FW     PDC_uint8     PDC_base_csm  PDC_base_ed          PDC_a_uint8_FW_read_internal        -                  PDC_uint8_acc     P         S           Y
-Pint8_FW      PDC_int8      PDC_base_csm  PDC_base_ed          PDC_a_int8_FW_read_internal         -                  PDC_int8_acc      P         S           Y
+Puint8        PDC_uint8     PDC_base_csm  PDC_base_ed          PDC_uint8_read_internal             -                  PDC_uint8_acc     V         S           Y
+Pint8         PDC_int8      PDC_base_csm  PDC_base_ed          PDC_int8_read_internal              -                  PDC_int8_acc      V         S           Y
+Puint8_FW     PDC_uint8     PDC_base_csm  PDC_base_ed          PDC_uint8_FW_read_internal          -                  PDC_uint8_acc     P         S           Y
+Pint8_FW      PDC_int8      PDC_base_csm  PDC_base_ed          PDC_int8_FW_read_internal           -                  PDC_int8_acc      P         S           Y
 
-Puint16       PDC_uint16    PDC_base_csm  PDC_base_ed          PDC_a_uint16_read_internal          -                  PDC_uint16_acc    V         S           Y
-Pint16        PDC_int16     PDC_base_csm  PDC_base_ed          PDC_a_int16_read_internal           -                  PDC_int16_acc     V         S           Y
-Puint16_FW    PDC_uint16    PDC_base_csm  PDC_base_ed          PDC_a_uint16_FW_read_internal       -                  PDC_uint16_acc    P         S           Y
-Pint16_FW     PDC_int16     PDC_base_csm  PDC_base_ed          PDC_a_int16_FW_read_internal        -                  PDC_int16_acc     P         S           Y
+Puint16       PDC_uint16    PDC_base_csm  PDC_base_ed          PDC_uint16_read_internal            -                  PDC_uint16_acc    V         S           Y
+Pint16        PDC_int16     PDC_base_csm  PDC_base_ed          PDC_int16_read_internal             -                  PDC_int16_acc     V         S           Y
+Puint16_FW    PDC_uint16    PDC_base_csm  PDC_base_ed          PDC_uint16_FW_read_internal         -                  PDC_uint16_acc    P         S           Y
+Pint16_FW     PDC_int16     PDC_base_csm  PDC_base_ed          PDC_int16_FW_read_internal          -                  PDC_int16_acc     P         S           Y
 
-Puint32       PDC_uint32    PDC_base_csm  PDC_base_ed          PDC_a_uint32_read_internal          -                  PDC_uint32_acc    V         S           Y
-Pint32        PDC_int32     PDC_base_csm  PDC_base_ed          PDC_a_int32_read_internal           -                  PDC_int32_acc     V         S           Y
-Puint32_FW    PDC_uint32    PDC_base_csm  PDC_base_ed          PDC_a_uint32_FW_read_internal       -                  PDC_uint32_acc    P         S           Y
-Pint32_FW     PDC_int32     PDC_base_csm  PDC_base_ed          PDC_a_int32_FW_read_internal        -                  PDC_int32_acc     P         S           Y
+Puint32       PDC_uint32    PDC_base_csm  PDC_base_ed          PDC_uint32_read_internal            -                  PDC_uint32_acc    V         S           Y
+Pint32        PDC_int32     PDC_base_csm  PDC_base_ed          PDC_int32_read_internal             -                  PDC_int32_acc     V         S           Y
+Puint32_FW    PDC_uint32    PDC_base_csm  PDC_base_ed          PDC_uint32_FW_read_internal         -                  PDC_uint32_acc    P         S           Y
+Pint32_FW     PDC_int32     PDC_base_csm  PDC_base_ed          PDC_int32_FW_read_internal          -                  PDC_int32_acc     P         S           Y
 
-Puint64       PDC_uint64    PDC_base_csm  PDC_base_ed          PDC_a_uint64_read_internal          -                  PDC_uint64_acc    V         S           Y
-Pint64        PDC_int64     PDC_base_csm  PDC_base_ed          PDC_a_int64_read_internal           -                  PDC_int64_acc     V         S           Y
-Puint64_FW    PDC_uint64    PDC_base_csm  PDC_base_ed          PDC_a_uint64_FW_read_internal       -                  PDC_uint64_acc    P         S           Y
-Pint64_FW     PDC_int64     PDC_base_csm  PDC_base_ed          PDC_a_int64_FW_read_internal        -                  PDC_int64_acc     P         S           Y
+Puint64       PDC_uint64    PDC_base_csm  PDC_base_ed          PDC_uint64_read_internal            -                  PDC_uint64_acc    V         S           Y
+Pint64        PDC_int64     PDC_base_csm  PDC_base_ed          PDC_int64_read_internal             -                  PDC_int64_acc     V         S           Y
+Puint64_FW    PDC_uint64    PDC_base_csm  PDC_base_ed          PDC_uint64_FW_read_internal         -                  PDC_uint64_acc    P         S           Y
+Pint64_FW     PDC_int64     PDC_base_csm  PDC_base_ed          PDC_int64_FW_read_internal          -                  PDC_int64_acc     P         S           Y
+
+P_auint8      PDC_uint8     PDC_base_csm  PDC_base_ed          PDC_a_uint8_read_internal           -                  PDC_uint8_acc     V         S           Y
+P_aint8       PDC_int8      PDC_base_csm  PDC_base_ed          PDC_a_int8_read_internal            -                  PDC_int8_acc      V         S           Y
+P_auint8_FW   PDC_uint8     PDC_base_csm  PDC_base_ed          PDC_a_uint8_FW_read_internal        -                  PDC_uint8_acc     P         S           Y
+P_aint8_FW    PDC_int8      PDC_base_csm  PDC_base_ed          PDC_a_int8_FW_read_internal         -                  PDC_int8_acc      P         S           Y
+
+Pa_uint16     PDC_uint16    PDC_base_csm  PDC_base_ed          PDC_a_uint16_read_internal          -                  PDC_uint16_acc    V         S           Y
+Pa_int16      PDC_int16     PDC_base_csm  PDC_base_ed          PDC_a_int16_read_internal           -                  PDC_int16_acc     V         S           Y
+Pa_uint16_FW  PDC_uint16    PDC_base_csm  PDC_base_ed          PDC_a_uint16_FW_read_internal       -                  PDC_uint16_acc    P         S           Y
+Pa_int16_FW   PDC_int16     PDC_base_csm  PDC_base_ed          PDC_a_int16_FW_read_internal        -                  PDC_int16_acc     P         S           Y
+
+Pa_uint32     PDC_uint32    PDC_base_csm  PDC_base_ed          PDC_a_uint32_read_internal          -                  PDC_uint32_acc    V         S           Y
+Pa_int32      PDC_int32     PDC_base_csm  PDC_base_ed          PDC_a_int32_read_internal           -                  PDC_int32_acc     V         S           Y
+Pa_uint32_FW  PDC_uint32    PDC_base_csm  PDC_base_ed          PDC_a_uint32_FW_read_internal       -                  PDC_uint32_acc    P         S           Y
+Pa_int32_FW   PDC_int32     PDC_base_csm  PDC_base_ed          PDC_a_int32_FW_read_internal        -                  PDC_int32_acc     P         S           Y
+
+Pa_uint64     PDC_uint64    PDC_base_csm  PDC_base_ed          PDC_a_uint64_read_internal          -                  PDC_uint64_acc    V         S           Y
+Pa_int64      PDC_int64     PDC_base_csm  PDC_base_ed          PDC_a_int64_read_internal           -                  PDC_int64_acc     V         S           Y
+Pa_uint64_FW  PDC_uint64    PDC_base_csm  PDC_base_ed          PDC_a_uint64_FW_read_internal       -                  PDC_uint64_acc    P         S           Y
+Pa_int64_FW   PDC_int64     PDC_base_csm  PDC_base_ed          PDC_a_int64_FW_read_internal        -                  PDC_int64_acc     P         S           Y
 
 Pe_uint8       PDC_uint8     PDC_base_csm  PDC_base_ed          PDC_e_uint8_read_internal           -                  PDC_uint8_acc     V         S           Y
 Pe_int8        PDC_int8      PDC_base_csm  PDC_base_ed          PDC_e_int8_read_internal            -                  PDC_int8_acc      V         S           Y
