@@ -7,6 +7,45 @@ by end of Aug
 -------------
  * manual
 
+ * Pcompute fields should have associated mask
+
+ * should pd of Punion use union or struct
+      struct allows you to find out why all of the arms failed
+      but has higher space overhead
+
+ * for Penum, if you have something like this:
+
+Penum CMDLINE_discipline {
+  fwrec,
+  ctrec,
+  nlrec,
+  vlrec,
+  fwrec_noseek,
+  ctrec_noseek,
+  nlrec_noseek,
+  vlrec_noseek
+};
+
+Then the _noseek cases are never matched.
+For now, the compiler should issue a warning for each 'shadowed' enum val.
+Longer term, we should build a little DFA that does matching, rather
+than using strlit_read for each string, and we should allow
+the above. 
+
+Note that if the enum values for the above are the desired ones, then the
+rewrite would have to do:
+
+Penum CMDLINE_discipline {
+  fwrec_noseek = 4,
+  ctrec_noseek = 5,
+  nlrec_noseek = 6,
+  vlrec_noseek = 7,
+  fwrec = 0,
+  ctrec = 1,
+  nlrec = 2,
+  vlrec = 3
+};
+
  * Add base types whose in-memory rep is either PDC_float32 or PDC_float64
 
        Pfloat32, Pa_float32, Pe_float32, Pfloat64, Pa_float64, Pe_float64
@@ -14,12 +53,52 @@ by end of Aug
        Psbl_float32, Psbl_float64
        Psbh_float32, Psbh_float64
 
+ * Change the way we do file locations
+      1. get rid of descriptive string in each pos
+
+      2. each pos has three size_t (x,y,z) interpreted by io_disc, e.g.,
+         an io discipline might know that:
+              record in stream        = x
+              offset in record data   = y
+              raw offset in record    = z
+         whereas for another io_disc x,y,z could have very different meaning.
+         There must be a function to get the io_disc to describe the pos.
+         There should probably also be a function that gets the io_disc to
+         describe a loc, rather than having PDCI_report_err try to do it???
+
+      3. A pos also has an raw_off field that is the the raw offset
+         from the start of the IO stream.
+
+         If pos1.raw_off == pos2.raw_off, you can assume that
+         pos1.x == pos2.x, pos1.y == pos2.y, pos1.z == pos2.z
+         (thus raw_off gives the fastest equality check).
+
+      4. Each pos also has an 'after' flag which is normally 0... normally
+         the pos describes the location just before the specified byte,
+         but if after is 1 it describes the location just after the
+         specified byte.
+
+      5. Locations should be well formed, and loc's that we generate are
+         guaranteed to be well formed.  This means:
+              a. loc.b.raw_off <= loc.e.raw_off (e's byte is never before b's byte)
+              b. if loc.b.raw_off == loc.e.raw_off, then it is never the case that
+                   loc.b.after is 1 and loc.e.after is 0
+
+      The above changes mean that we no longer use 'fake' positions or the hack
+      where the end position is one less than the start position.
+
  * for most scripts, replace .tcsh with .sh
    or consider using perl (e.g., for padsc script)
    [Not everyone will have tcsh...]
 
  * for scripts designed to be sourced by csh/tcsh, 
    rename foo.tcsh to foo.csh
+
+NOT SURE WHEN
+-------------
+  * should array eat the Pterm char?  (no other term gets eaten)
+  * for every type that has a term should there be a way to declare
+       that the term should be eaten?
 
 DEFERRED
 --------
