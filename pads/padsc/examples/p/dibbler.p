@@ -1,3 +1,12 @@
+/* This file uses an omitted field as a parameter to a later type.
+   This means that the later type cannot be writtin out.
+   So this file generates a typing error if the -wnone flag is not 
+   supplied.  This is not ideal.  Possible fixes:
+   1. perform analysis to track dependencies and not omit fields 
+      that are required later, while issuing a warning.
+   2. improve error message so that problem is clear.
+   3. get rid of omit features in lieu of better transformation support. */
+
 Pstruct a_uint32_vbar {
   Pa_uint32 val; '|';
 };
