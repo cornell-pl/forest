@@ -5798,7 +5798,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					 pred, comment,...}:pfieldty) =  genCaseBranch (name, pty)
 		      fun genBranchBrief e = case getString e of NONE => [] | SOME s => [(s,NONE)]
 		      fun genBranchMan {tyname, name, args, isVirtual, expr, pred, comment}= 
-			  case isPadsTy tyname of PTys.CTy => [] | _ => genCaseBranch(name, getPadsName tyname)
+			  case isPadsTy tyname of PTys.CTy => [] | _ => 
+			      if isVirtual then [(name, NONE)] else genCaseBranch(name, getPadsName tyname)
 
 		      val branches : (string * string option) list = mungeFields genBranchFull genBranchBrief genBranchMan variants
  
