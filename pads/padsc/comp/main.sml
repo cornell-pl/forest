@@ -336,6 +336,9 @@ structure Main : sig
 	      TextIO.flushOut houtstream;
 	      TextIO.closeOut houtstream;
 	      TextIO.output(coutstream, "#include \"libpadsc-internal.h\"\n");
+              if (!xmlFlag) then 
+		  TextIO.output(coutstream, "#include \"pglx-internal.h\"\n")
+	      else ();
 	      TextIO.output(coutstream, ("#include \"" ^ houtname ^ "\"\n"));
 	      PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
 	      TextIO.flushOut coutstream;
