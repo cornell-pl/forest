@@ -604,7 +604,7 @@ PDC_error_t  PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io);
 
 PDC_error_t  PDCI_IO_needbytes (PDC_t *pdc,
 				PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,
-			        int *eor_out, int *eof_out, size_t *bytes_out);
+			        int *bor_out, int *eor_out, int *eof_out, size_t *bytes_out);
 PDC_error_t  PDCI_IO_morebytes (PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,
 				int *eor_out, int *eof_out, size_t *bytes_out);
 PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
@@ -653,6 +653,7 @@ extern int PDCI_ebcdic_is_space[];
 
 extern PDC_byte PDC_ea_tab[];
 extern PDC_byte PDC_ae_tab[];
+extern PDC_byte PDC_mod_ea_tab[];
 extern PDC_byte PDC_mod_ae_tab[];
 
 extern int PDCI_bcd_hilo_digits[];
@@ -944,17 +945,42 @@ ssize_t PDCI_uint32_2sbh_io(PDC_t *pdc, Sfio_t *io, PDC_uint32 u, PDC_uint32 num
 ssize_t PDCI_uint64_2sbh_io(PDC_t *pdc, Sfio_t *io, PDC_uint64 u, PDC_uint32 num_bytes);
 
 /* ================================================================================ */
-/* INTERNAL MISC ROUTINES */
+/* INTERNAL MISC TYPES + ROUTINES */
 
+/* XXX_REMOVE */
+/* #define DEBUG_REGEX 1 */
+
+/* type PDC_regexp_t: */
+struct PDC_regexp_s {
+  regflags_t  c_flags;
+  regflags_t  e_flags;
+  regex_t     preg;
+#ifdef DEBUG_REGEX
+  regmatch_t  match[100];
+#else
+  regmatch_t  match[1];
+#endif
+  PDC_byte   *prev_begin;
+  PDC_byte   *prev_end;
+
+  /* eventually hook EOR testing into gsf's stuff? */
+  int         or_eor;
+  int         just_eor;
+};
 
 /* Internal version of PDC_regexp_compile, takes whatfn */
 PDC_error_t
 PDCI_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, const char *whatfn);
 
-/*  PDCI_regexpMatch returns the number of characters in str that match regexp
- *  (or 0 if str does not match the regular expression).
+/*  PDCI_regexp_match returns 1 on matched, 0 on not matched.
+ *  On matched, it sets (*match_len_out) to the number of characters in str that match regexp.
+ *  The region to match against is bound by begin/end, where end-begin gives the number of
+ *  bytes in the region.  is_bor indicates whether begin is the first byte in a record;
+ *  is_eor indicates whether end is one beyond the last byte in a record.
  */
-size_t PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end, PDC_charset char_set);
+int PDCI_regexp_match(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end,
+		      int is_bor, int is_eor,
+		      PDC_charset char_set, size_t *match_len_out);
 
 /* Accum impl helpers:
  *

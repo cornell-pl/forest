@@ -379,6 +379,28 @@ do {
   } while (0)
 /* END_MACRO */
 
+/* copy and convert from EBCDIC to ASCII at same time.  Caller must provide fatal_alloc_err target */
+#define PDCI_E2A_STR_CPY(s, b, wdth)
+  do {
+    int i;
+    if (!(s)->rbuf) {
+      if (!((s)->rbuf = RMM_new_rbuf(pdc->rmm_nz))) {
+	goto fatal_alloc_err;
+      }
+    }
+    if (RBuf_reserve((s)->rbuf, (void**)&((s)->str), sizeof(char), (wdth)+1, PDCI_STRING_HINT)) {
+      goto fatal_alloc_err;
+    }
+    for (i = 0; i < wdth; i++) {
+      (s)->str[i] = PDC_mod_ea_tab[(int)((b)[i])];
+    }
+    (s)->str[wdth] = 0;
+    (s)->len = (wdth);
+    /* if ((s)->sharing) { PDC_WARN1(pdc->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(s)); } */
+    (s)->sharing = 0;
+  } while (0)
+/* END_MACRO */
+
 /* ================================================================================ */
 /* MACROS USED BY ACCUM FUNCTIONS */
  
@@ -520,12 +542,12 @@ fn_pref ## _read(PDC_t *pdc, const PDC_base_m *m,
 {
   targ_type       tmp;   /* tmp num */
   PDC_byte        *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_pref) "_read", m, pd, res_out);
   PDC_PS_init(pd);
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   if (bytes == 0) {
@@ -659,7 +681,7 @@ fn_name(PDC_t *pdc, const PDC_base_m *m, size_t width,
   targ_type       tmp;   /* tmp num */
   PDC_byte        ct;    /* char tmp */
   PDC_byte        *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
@@ -667,7 +689,7 @@ fn_name(PDC_t *pdc, const PDC_base_m *m, size_t width,
     PDC_WARN(pdc->disc, "UNEXPECTED PARAM VALUE: " PDCI_MacroArg2String(fn_name) " called with width <= 0");
     goto bad_param_err;
   }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (end-begin < width) {
@@ -776,11 +798,11 @@ fn_name(PDC_t *pdc, const PDC_base_m *m,
 	PDC_base_pd *pd, targ_type *res_out)
 {
   PDC_byte        *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   if (bytes == 0) {
@@ -815,11 +837,11 @@ fn_name(PDC_t *pdc, const PDC_base_m *m,
 	PDC_base_pd *pd, targ_type *res_out)
 {
   PDC_byte        *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (end-begin < width) {
@@ -867,11 +889,11 @@ fn_name(PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits_or_bytes,
 {
   targ_type       tmp;   /* tmp num */
   PDC_byte        *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (end-begin < width) {
@@ -4713,7 +4735,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
 #gen_include "padsc-internal.h"
 #gen_include "padsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.104 2003-09-15 19:13:44 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.105 2003-09-17 13:29:48 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -4793,7 +4815,7 @@ int PDCI_ascii_is_space[256] = {
  * ================================================================================ */
 
 /* not-sign 0xac -> circumflex 0x5e */
- /* non-spacing macron 0xaf -> tilde 0x7e */
+/* non-spacing macron 0xaf -> tilde 0x7e */
 PDC_byte PDC_ea_tab[256] =
 {
   /* 0x0? */ 0x00, 0x01, 0x02, 0x03, '?',  0x09, '?',  0x7f, '?',  '?',  '?',  0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
@@ -4834,10 +4856,35 @@ PDC_byte PDC_ae_tab[256] =
   /* 0xF? */ '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
 };
 
-/* replaced '?' with 0xff
- * '?' equals EBCDIC SUB (substitute) character, would rather
- * use 0xff which is unspecified
+/* Modified versions of the above tables.
+ * replaced '?' with 0xff
+ *    '?' is a valid character value ['?' ASCII char, EBCDIC SUB (substitute) character]
+ * would rather use 0xff which is unspecified
  */
+
+/* Note that both 0x05 and 0x19 map to ASCII 0x09.
+ * This results in one more ea mapping than ae mapping
+ */
+PDC_byte PDC_mod_ea_tab[256] =
+{
+  /* 0x0? */ 0x00, 0x01, 0x02, 0x03, 0xff, 0x09, 0xff, 0x7f, 0xff, 0xff, 0xff, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+  /* 0x1? */ 0x10, 0x11, 0x12, 0x13, 0xff, 0xff, 0x08, 0xff, 0x18, 0x09, 0xff, 0xff, 0x1c, 0x1d, 0x1e, 0x1f,
+  /* 0x2? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0x0a, 0x17, 0x1b, 0xff, 0xff, 0xff, 0xff, 0xff, 0x05, 0x06, 0x07,
+  /* 0x3? */ 0xff, 0xff, 0x16, 0xff, 0xff, 0xff, 0xff, 0x04, 0xff, 0xff, 0xff, 0xff, 0x14, 0x15, 0xff, 0x1a,
+  /* 0x4? */ 0x20, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x5b, 0x2e, 0x3c, 0x28, 0x2b, 0x21,
+  /* 0x5? */ 0x26, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x5d, 0x24, 0x2a, 0x29, 0x3b, 0x5e,
+  /* 0x6? */ 0x2d, 0x2f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7c, 0x2c, 0x25, 0x5f, 0x3e, 0x3f,
+  /* 0x7? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x60, 0x3a, 0x23, 0x40, 0x27, 0x3d, 0x22,
+  /* 0x8? */ 0xff, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  /* 0x9? */ 0xff, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  /* 0xA? */ 0xff, 0x7e, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  /* 0xB? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  /* 0xC? */ 0x7b, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  /* 0xD? */ 0x7d, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  /* 0xE? */ 0x5c, 0xff, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  /* 0xF? */ 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+};
+
 PDC_byte PDC_mod_ae_tab[256] =
 {
   /* 0x0? */ 0x00, 0x01, 0x02, 0x03, 0x37, 0x2d, 0x2e, 0x2f, 0x16, 0x19, 0x25, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 
@@ -5084,7 +5131,6 @@ PDC_disc_t PDC_default_disc = {
   (PDC_flags_t)PDC_NULL_CTL_FLAG,
   PDC_charset_ASCII,
   0, /* string read functions do not copy strings */
-  0, /* stop_regexp disabled    */
   0, /* no stop_maxlen (disabled) */
   PDC_errorf,
   PDC_errorRep_Max,
@@ -5997,15 +6043,6 @@ PDC_string_pd_copy(PDC_t *pdc, PDC_base_pd *targ, const PDC_base_pd *src)
 /* ================================================================================ */
 /* EXTERNAL REGULAR EXPRESSION SUPPORT */
 
-/* type PDC_regexp_t: */
-struct PDC_regexp_s {
-  int         invert;
-  size_t      min;     /* 0 means no min */
-  size_t      max;     /* 0 means no max */
-  int         or_eor;  /* regexp ended with '|EOR' ? */
-  char        charset[1];
-};
-
 PDC_error_t
 PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out)
 {
@@ -6533,14 +6570,15 @@ PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io)
 PDC_error_t
 PDCI_IO_needbytes(PDC_t *pdc,
 		  PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,
-		  int *eor_out, int *eof_out, size_t *bytes_out)
+		  int *bor_out, int *eor_out, int *eof_out, size_t *bytes_out)
 {
   PDCI_stkElt_t   *tp       = &(pdc->stack[pdc->top]);
   PDC_IO_elt_t    *elt      = tp->elt;
 
   PDC_TRACE(pdc->disc, "PDCI_IO_needbytes called");
   (*bytes_out) = tp->remain;
-  (*b_out) = (*p1_out) = (*p2_out) = (elt->end - tp->remain);
+  (*b_out)     = (*p1_out) = (*p2_out) = (elt->end - tp->remain);
+  (*bor_out)   = (elt->bor && (tp->remain == elt->len));
 
   while (!(elt->eor|elt->eof) && elt->next != pdc->head) {
     elt = elt->next;
@@ -6999,9 +7037,8 @@ PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
 		   PDC_char *c_out, size_t *offset_out, PDC_charset char_set, const char *whatfn)
 {
   PDC_byte       *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
-  int             matchlen = -1;
 
   PDCI_IODISC_0P_CHECKS(whatfn);
   PDC_TRACE6(pdc->disc, "PDCI_char_lit_scan args: c %s stop %s eat_c %d eat_s %d, char_set = %s, whatfn = %s",
@@ -7020,10 +7057,7 @@ PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
   if (offset_out) {
     (*offset_out) = 0;
   }
-  if (pdc->disc->stop_regexp) {
-    matchlen = pdc->disc->stop_regexp->max;
-  }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     return PDC_ERR;
   }
   while (1) {
@@ -7036,12 +7070,6 @@ PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
       }
       if (bytes == 0) {
 	break;
-      }
-      /* longer regexp match may work now */
-      if (matchlen == 0) { /* no limit on match size, back up all the way */
-	p1 = begin;
-      } else if (matchlen > 1) { 
-	p1 -= (matchlen - 1);
       }
       continue;
     }
@@ -7082,12 +7110,6 @@ PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
       }
       break;
     }
-    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end, char_set)) {
-      if (pdc->speclev == 0) {
-	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_regexp", whatfn);
-      }
-      break;
-    }
     p1++;
   }
   return PDC_ERR;
@@ -7108,9 +7130,9 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
 		  const char *whatfn) 
 {
   PDC_byte        *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
-  int             matchlen = -1;
+  size_t          max_matchlen = -1;
   PDC_string     *tmp_findStr = (PDC_string*)findStr;
   PDC_string     *tmp_stopStr = (PDC_string*)stopStr;
 
@@ -7124,6 +7146,13 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
   if (!tmp_findStr || tmp_findStr->len == 0) {
     PDC_WARN1(pdc->disc, "%s: null/empty findStr specified", whatfn);
     return PDC_ERR;
+  }
+  if (tmp_stopStr) {
+    max_matchlen = tmp_stopStr->len;
+    if (max_matchlen == 0) {
+      PDC_WARN1(pdc->disc, "%s: empty stopStr specified", whatfn);
+      return PDC_ERR;
+    }
   }
   switch (char_set)
     {
@@ -7140,13 +7169,7 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
     default:
       goto invalid_charset;
     }
-  if (pdc->disc->stop_regexp) {
-    matchlen = pdc->disc->stop_regexp->max;
-  }
-  if (matchlen != 0 && tmp_stopStr && matchlen < tmp_stopStr->len) {
-    matchlen = tmp_stopStr->len;
-  }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     return PDC_ERR;
   }
   while (1) {
@@ -7160,11 +7183,9 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
       if (bytes == 0) {
 	break;
       }
-      /* longer regexp match or stopStr match may work now */
-      if (matchlen == 0) { /* no limit on match size, back up all the way */
-	p1 = begin;
-      } else if (matchlen > tmp_findStr->len) {
-	p1 -= (matchlen - tmp_findStr->len);
+      /* stopStr match may work now */
+      if (max_matchlen > tmp_findStr->len) {
+	p1 -= (max_matchlen - tmp_findStr->len);
       }
       continue;
     }
@@ -7203,12 +7224,6 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
     if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       if (pdc->speclev == 0) {
 	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_maxlen", whatfn);
-      }
-      break;
-    }
-    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end, char_set)) {
-      if (pdc->speclev == 0) {
-	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_regexp", whatfn);
       }
       break;
     }
@@ -7272,7 +7287,7 @@ PDCI_char_lit_read(PDC_t *pdc, const PDC_base_m *m,
 		   const char *whatfn)
 {
   PDC_byte        *begin, *p1, *p2, *end;
-  int              eor, eof;
+  int              bor, eor, eof;
   size_t           bytes;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
@@ -7289,7 +7304,7 @@ PDCI_char_lit_read(PDC_t *pdc, const PDC_base_m *m,
     default:
       goto invalid_charset;
     }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   if (bytes == 0) {
@@ -7329,7 +7344,7 @@ PDCI_str_lit_read(PDC_t *pdc, const PDC_base_m *m,
 {
   PDC_byte        *begin, *p1, *p2, *end;
   PDC_string      *es;
-  int              eor, eof;
+  int              bor, eor, eof;
   size_t           bytes;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, s);
@@ -7352,7 +7367,7 @@ PDCI_str_lit_read(PDC_t *pdc, const PDC_base_m *m,
     PDC_WARN1(pdc->disc, "%s: UNEXPECTED PARAM VALUE: s->len <= 0", whatfn);
     goto bad_param_err;
   }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (end-begin < s->len) {
@@ -7424,10 +7439,8 @@ PDCI_countX(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
 {
   PDC_int32       count = 0;
   PDC_byte       *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
-  int             matchlen = -1;
-  PDC_byte       *tmp;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE4(pdc->disc, "PDCI_countX called, args: x = %s eor_required = %d, char_set %s, whatfn = %s",
@@ -7446,10 +7459,7 @@ PDCI_countX(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
     default:
       goto invalid_charset;
     }
-  if (pdc->disc->stop_regexp) {
-    matchlen = pdc->disc->stop_regexp->max;
-  }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (1) {
@@ -7463,19 +7473,6 @@ PDCI_countX(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
       if (bytes == 0) {
 	break;
       } 
-      /* longer regexp match may work now */
-      if (matchlen == 0) {
-	p1 = begin;
-	count = 0;
-      } else if (matchlen > 1) {
-	p1 -= (matchlen - 1);
-	/* fix count to avoid double-counting */
-	for (tmp = p1; tmp < (end-bytes); tmp++) {
-	  if (x == (*tmp)) {
-	    count--;
-	  }
-	}
-      }
       continue;
     }
     /* p1 < end */
@@ -7485,12 +7482,6 @@ PDCI_countX(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
     if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       if (pdc->speclev == 0) {
 	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_maxlen", whatfn);
-      }
-      break;
-    }
-    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end, char_set)) {
-      if (pdc->speclev == 0) {
-	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_regexp", whatfn);
       }
       break;
     }
@@ -7524,10 +7515,8 @@ PDCI_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
 {
   PDC_int32       count = 0;
   PDC_byte       *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
-  int             matchlen = -1;
-  PDC_byte       *tmp;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE4(pdc->disc, "PDCI_countXtoY called, args: x = %s y = %s, char_set %s, whatfn = %s",
@@ -7547,10 +7536,7 @@ PDCI_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
     default:
       goto invalid_charset;
     }
-  if (pdc->disc->stop_regexp) {
-    matchlen = pdc->disc->stop_regexp->max;
-  }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (1) {
@@ -7564,19 +7550,6 @@ PDCI_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
       if (bytes == 0) {
 	break;
       } 
-      /* longer regexp match may work now */
-      if (matchlen == 0) {
-	p1 = begin;
-	count = 0;
-      } else if (matchlen > 1) {
-	p1 -= (matchlen - 1);
-	/* fix count to avoid double-counting */
-	for (tmp = p1; tmp < (end-bytes); tmp++) {
-	  if (x == (*tmp)) {
-	    count--;
-	  }
-	}
-      }
       continue;
     }
     /* p1 < end */
@@ -7593,12 +7566,6 @@ PDCI_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
     if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       if (pdc->speclev == 0) {
 	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_maxlen", whatfn);
-      }
-      break;
-    }
-    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end, char_set)) {
-      if (pdc->speclev == 0) {
-	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_regexp", whatfn);
       }
       break;
     }
@@ -7661,14 +7628,14 @@ PDCI_char_read(PDC_t *pdc, const PDC_base_m *m,
 	       const char *whatfn)
 {
   PDC_byte       *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE2(pdc->disc, "PDCI_char_read called, char_set = %s, whatfn = %s",
 	     PDC_charset2str(char_set), whatfn);
   PDC_PS_init(pd);
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   if (bytes == 0) {
@@ -7714,7 +7681,7 @@ PDCI_string_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 		    const char *whatfn)
 {
   PDC_byte        *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
@@ -7726,7 +7693,7 @@ PDCI_string_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
     goto bad_param_err;
   }
   /* ensure there are width chars available */
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (end-begin < width) {
@@ -7787,9 +7754,8 @@ PDCI_string_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 		 const char *whatfn)
 {
   PDC_byte        *begin, *p1, *p2, *end;
-  int             eor, eof;
+  int             bor, eor, eof;
   size_t          bytes;
-  int             matchlen = -1;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE2(pdc->disc, "PDCI_string_read called, char_set = %s, whatfn = %s",
@@ -7805,10 +7771,7 @@ PDCI_string_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
     default:
       goto invalid_charset;
     }
-  if (pdc->disc->stop_regexp) {
-    matchlen = pdc->disc->stop_regexp->max;
-  }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (1) {
@@ -7822,12 +7785,6 @@ PDCI_string_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 	}
 	if (bytes == 0) {
 	  break;
-	}
-	/* longer regexp match may work now */
-	if (matchlen == 0) { /* no limit on match size, back up all the way */
-	  p1 = begin;
-	} else if (matchlen > 1) {
-	  p1 -= (matchlen - 1);
 	}
 	continue;
       }
@@ -7855,12 +7812,6 @@ PDCI_string_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
     if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       if (pdc->speclev == 0) {
 	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_maxlen", whatfn);
-      }
-      break;
-    }
-    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end, char_set)) {
-      if (pdc->speclev == 0) {
-	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_regexp", whatfn);
       }
       break;
     }
@@ -7916,23 +7867,15 @@ PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
 		     const char *whatfn)
 {
   PDC_byte        *begin, *p1, *p2, *end;
-  int             eor, eof;
-  size_t          bytes;
-  int             matchlen;
+  int             p1_at_bor, bor, eor, eof;
+  size_t          bytes, matchlen, max_matchlen;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, stopRegexp, pd);
   PDC_TRACE2(pdc->disc, "PDCI_string_CSE_read called, char_set = %s, whatfn = %s",
 	     PDC_charset2str(char_set), whatfn);
   PDC_PS_init(pd);
-  matchlen = stopRegexp->max;
-  if (matchlen && pdc->disc->stop_regexp) {
-    if (pdc->disc->stop_regexp->max == 0) {
-      matchlen = 0;
-    } else if (matchlen < pdc->disc->stop_regexp->max) {
-      matchlen = pdc->disc->stop_regexp->max;
-    }
-  }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+  max_matchlen = 0; /* stopRegexp->max; */ /* foofoofoo */
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
   while (1) {
@@ -7950,26 +7893,23 @@ PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
 	break;
       }
       /* longer regexp match may work now */
-      if (matchlen == 0) { /* no limit on match size, back up all the way */
+      if (max_matchlen == 0) { /* no limit on match size, back up all the way */
 	p1 = begin;
-      } else if (matchlen > 1) {
-	p1 -= (matchlen - 1);
+      } else if (max_matchlen > 1) {
+	p1 -= (max_matchlen - 1);
       }
       continue;
     }
     /* p1 < end */
-    if (PDCI_regexpMatch(pdc, stopRegexp, p1, end, char_set)) {
-      goto found;
+    if (!stopRegexp->just_eor) {
+      p1_at_bor = (bor && (p1 == begin));
+      if (PDCI_regexp_match(pdc, stopRegexp, p1, end, p1_at_bor, eor, char_set, &matchlen)) {
+	goto found;
+      }
     }
     if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
       if (pdc->speclev == 0) {
 	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_maxlen", whatfn);
-      }
-      break;
-    }
-    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end, char_set)) {
-      if (pdc->speclev == 0) {
-	PDC_WARN1(pdc->disc, "%s: scan terminated early due to disc->stop_regexp", whatfn);
       }
       break;
     }
@@ -8683,72 +8623,206 @@ PDC_error_t
 PDCI_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, const char *whatfn)
 {
   PDC_regexp_t *res;
-  size_t        last;
-  int           eor = 0, just_eor = 0;
+  size_t        len;
+  char          delim;
+  const char   *end, *rdelim, *regexp_end;
+  int           cret;
 
-  if (!(*regexp)) {
-    PDC_WARN1(pdc->disc, "%s, null regular expression specified", whatfn);
+  if (!(res = vmnewof(pdc->vm, 0, PDC_regexp_t, 1, 0))) {
+    PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_ALLOC_ERR, whatfn, "Memory alloc error");
     return PDC_ERR;
   }
-  last = strlen(regexp) - 1;
-  if (strcmp(regexp, "EOR") == 0) {
-    eor = just_eor = 1;
+  len = strlen(regexp);
+  if (len == 3 && regexp[0] == 'E' && regexp[1] == 'O' && regexp[2] == 'R') {
+    res->or_eor = res->just_eor = 1;
     goto done;
   }
-  /* check for [x]|EOR  */
-  if (last > 5 && regexp[last] == 'R' && regexp[last-1] == 'O' && regexp[last-2] == 'E' && regexp[last-3] == '|') {
-    eor = 1;
-    last -= 4;
+  if (len > 4 && regexp[len-4] == '|' && regexp[len-3] == 'E' && regexp[len-2] == 'O' && regexp[len-1] == 'R') {
+    res->or_eor = 1;
+    len -= 4;
   }
-  if (last < 2 || regexp[0] != '[' || regexp[last] != ']') {
-    PDC_WARN2(pdc->disc,
-	      "%s: Invalid regular expression: %s\n"
-	      "    currently only support the forms \"EOR\", \"[<chars>]\", and \"[<chars>]|EOR\"",
-	      whatfn, PDC_qfmt_Cstr(regexp, strlen(regexp)));
-    return PDC_ERR;
+  if (len < 3) {
+    PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_REGEXP, whatfn,
+		    "regular expression %s: expr of length %d cannot be a valid regexp",
+		    PDC_qfmt_Cstr(regexp, len), (int)len);
+    goto any_err;
   }
-
+  regexp_end = regexp + len - 1;
+  delim = regexp[0];
+  rdelim = 0;
+  for (end = regexp_end; end > regexp; end--) {
+    if (*end == delim) {
+      rdelim = end;
+      break;
+    }
+  }
+  if (!rdelim) {
+    PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_REGEXP, whatfn,
+		    "regular expression %s: beginning delimiter %s has no ending %s",
+		    PDC_qfmt_Cstr(regexp, len), PDC_qfmt_char(delim), PDC_qfmt_char(delim));
+    goto any_err;
+  }
+  if (rdelim - regexp == 1) {
+    PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_REGEXP, whatfn,
+		    "regular expression %s: invalid (empty pattern)",
+		    PDC_qfmt_Cstr(regexp, len));
+    goto any_err;
+  }
+  /* initalize c_flags */
+  cret = 0;
+  res->c_flags = REG_AUGMENTED|REG_EXTENDED|REG_DELIMITED|REG_MUSTDELIM|REG_LENIENT|REG_ESCAPE|REG_SPAN|REG_MULTIREF;
+  for (end = regexp_end; end > rdelim; end--) {
+    if (*end == 'i') {
+      /*
+       * Do case-insensitive pattern matching.
+       */
+      res->c_flags |= REG_ICASE;
+      continue;
+    }
+    if (*end == 'm') {
+      /* 
+       * Treat string as multiple lines.  That is, change "^"
+       * and "$" from matching the start or end of a record
+       * to matching the start or end of any line anywhere
+       * within the string.
+       */
+      res->c_flags |= REG_NEWLINE;
+      continue;
+    }
+#if 0
+    /* on by default since newlines not the same thing as records */
+    if (*end == 's') {
+      /*
+       * Treat string as single line.  That is, change "." to
+       * match any character whatsoever, even a newline, which
+       * normally it would not match.
+       */
+      res->c_flags |= REG_SPAN;
+      continue;
+    }
+#endif
+    if (*end == 'x') {
+      /*
+       * Extend your pattern's legibility by permitting whitespace
+       * and comments.
+       *
+       * Tells the regular expression parser to ignore whitespace that
+       * is neither backslashed nor within a character class You can
+       * use this to break up your regular expression into (slightly)
+       * more readable parts.  The "#" character is also treated as a
+       * metacharacter introducing a comment.  This also means that if
+       * you want real whitespace or "#" characters in the pattern
+       * (outside a character class, where they are unaffected by
+       * "/x"), you'll either have to escape them or encode them using
+       * octal or hex escapes.  Be careful not to include the pattern
+       * delimiter in the comment -- there is no way of knowing you
+       * did not intend to close the pattern early. 
+       */
+      res->c_flags |= REG_COMMENT;
+      continue;
+    }
+    if (*end == 'f') {
+      /*
+       * First match found will do. 
+       */
+      res->c_flags |= REG_FIRST;
+      continue;
+    }
+    if (*end == '?') {
+      /*
+       * Minimal match.
+       */
+      res->c_flags |= REG_MINIMAL;
+      continue;
+    }
+    if (*end == 'l') {
+      /*
+       * No operators (treat entire regexp as a literal).
+       */
+      res->c_flags |= REG_LITERAL;
+      continue;
+    }
+    PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_REGEXP, whatfn,
+		    "regular expression %s: bad pattern modifier char: %s",
+		    PDC_qfmt_Cstr(regexp, len), PDC_qfmt_char(*end));
+    cret = 1;
+  }
+  if (cret) goto any_err;
+  cret = regcomp(&(res->preg), regexp, res->c_flags);
+  if (cret) {
+    PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_REGEXP, whatfn,
+		    "regular expression %s: invalid", PDC_qfmt_Cstr(regexp, len));
+    goto any_err;
+  }
+  if (res->preg.re_nsub > 99) {
+    PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_REGEXP, whatfn,
+		    "regular expression %s: too many subexprs (limit: 99)", PDC_qfmt_Cstr(regexp, len));
+    goto any_err;
+  }
  done:
-  if (!(res = vmnewof(pdc->vm, 0, PDC_regexp_t, 1, last-1))) {
-    PDC_FATAL1(pdc->disc, "%s: Memory alloc error [regexp]", whatfn);
-    return PDC_ERR;
-  }
-  res->invert = 0;
-  res->min    = 1;
-  res->max    = 1;
-  res->or_eor = eor;
-  if (just_eor) {
-    res->charset[0] = 0;
-  } else {
-    strncpy(res->charset, regexp+1, last-1);
-    res->charset[last-1] = 0;
-  }
   (*regexp_out) = res;
   return PDC_OK;
+
+ any_err:
+  vmfree(pdc->vm, res);
+  return PDC_ERR;
 }
 
-size_t
-PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end, PDC_charset char_set)
+/*
+ * PDCI_regexp_match only does part of the regexp matching work:
+ *   the calling routine is responsible for handling
+ *   the regexp->just_eor and regexp->or_eor flags.
+ */
+int
+PDCI_regexp_match(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end,
+		  int is_bor, int is_eor,
+		  PDC_charset char_set, size_t *match_len_out)
 {
-  PDC_byte match_char; 
-  if (!begin || !begin[0]) {
-    return 0;
-  }
+  int           eret;
+  PDC_byte     *tmp_match_str = begin;
+  PDC_string   *tmp;
+
+  (*match_len_out) = 0;
   switch (char_set)
     {
     case PDC_charset_ASCII:
-      match_char = begin[0];
       break;
     case PDC_charset_EBCDIC:
-      match_char = PDC_ea_tab[(int)begin[0]];
+      /* alloc the ASCII-converted chars in a temporary space */
+      tmp = &pdc->stmp1;
+      PDCI_E2A_STR_CPY(tmp, begin, end-begin);
+      tmp_match_str = tmp->str;
       break;
     default:
       /* should not get here, calling function should already have vetted char_set */
       return 0;
     }
-  if (strchr(regexp->charset, match_char)) {
-    return 1; /* match length is 1 char */
+  /* initialize e_flags */
+  regexp->e_flags = REG_LEFT; /* pin matching to leftmost location even if REG_NOTBOL is set */
+  if (!is_bor) {
+    regexp->e_flags |= REG_NOTBOL; /* begin should not match ^ */
   }
+  if (!is_eor) {
+    regexp->e_flags |= REG_NOTEOL; /* end should not match $ */
+  }
+
+  /* execute the compiled re against match_str.str */
+#ifdef DEBUG_REGEX
+  eret = regnexec(&(regexp->preg), tmp_match_str, end-begin, regexp->preg.re_nsub+1, regexp->match, regexp->e_flags);
+#else
+  eret = regnexec(&(regexp->preg), tmp_match_str, end-begin, 1, regexp->match, regexp->e_flags);
+#endif
+  /* return result */
+  if (!eret) {
+    /* matched.  return the size of the match */
+    (*match_len_out) = regexp->match[0].rm_eo - regexp->match[0].rm_so;
+    return 1;
+  }
+  /* not matched */
+  return 0;
+
+ fatal_alloc_err:
+  PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_ALLOC_ERR, "PDCI_regexp_match", "Memory alloc error");
   return 0;
 }
 
