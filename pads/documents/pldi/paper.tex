@@ -1,0 +1,221 @@
+\documentclass{sig-alternate}
+\usepackage{times,url}
+\usepackage{code} 
+\input{defs}
+
+\begin{document}
+\title{PADS\\ A domain specific language for processing ad hoc data}
+\numberofauthors{2}
+
+\author{
+\alignauthor Kathleen Fisher\\
+       \affaddr{AT\&T Labs Research}\\
+       \affaddr{180 Park Ave., E244}\\
+       \affaddr{Florham Park, NJ}\\
+       \email{kfisher@research.att.com}
+\alignauthor Robert Gruber\titlenote{Work carried out while at AT\&T
+                                     Labs Research}\\
+       \affaddr{Google}\\
+       \affaddr{1600 Amphitheatre Pkwy}\\
+       \affaddr{Mountain View, CA}\\
+       \email{gruber@google.com}
+}
+
+\date{\today}
+\maketitle
+\begin{abstract}
+\pads{} is a declarative data description language that allows data
+analysts to describe both the physical layout of ad hoc data sources
+and semantic constraints over that data.  From such descriptions, the
+\pads{} compiler generates libraries and tools for manipulating the
+data, including parsing routines, statistical profiling tools,
+translation programs to produce well-behaved
+formats such as \xml{} or those required for loading relational
+databases, and an instance of the Galax data API, which permits
+running XQueries over raw \pads{} data sources.
+The descriptions are concise enough to serve as ``living'' documentation
+while flexible enough to describe most of the ASCII, binary, and
+EBCDIC formats that we have seen in practice.  The generated parsing
+library provides for robust and application-specific error handling.
+\end{abstract}
+
+\section{Introduction}
+
+
+Although traditional databases and \xml{} systems provide rich
+infrastructure for processing well-behaved data, vast amounts of
+useful data are stored and processed neither in databases nor in
+\xml{}, but rather in ad hoc data formats. 
+Examples include call detail data~\cite{kdd00}, 
+%compiler traces~\cite{chilimbi},
+web server logs~\cite{wpp}, 
+netflows capturing internet traffic\cite{netflow}, 
+log files characterizing IP backbone resource utilization,
+wire formats for legacy telecommunication billing systems, 
+etc{}. 
+Such data may simply require processing before it can be loaded into a
+data management system, or it may be too large or too transient to
+make such loading cost effective.
+
+Processing ad hoc data can be quite challenging, for a variety of
+reasons. First, ad hoc data typically arrives ``as is'': the analysts
+who receive it can only say ``thank you'' to the people sending the
+data, not request a more convenient format. 
+Second, documentation for the format may not exist at all, or it may be
+significantly out of date.  A common phenomenon is for a field in a
+data source to fall into disuse because the data is no longer
+relevant.  After a while though, people find an intereting new piece of
+information.  Compatibility issues prevent them from modifying the
+shape of the data, so instead they hijack the unused field, often
+failing to update the documentation in the process.
+
+Third, such data frequently contain errors, for a variety of
+reasons: malfunctioning equipment, race conditions on log
+entry~\cite{wpp}, non-standard values to indicate ``no data
+available,'' human error in entering data, undocumented data
+encodings, \etc{} The appropriate response to such errors is
+application-specific. Some applications require the data to be error free: 
+if an error is detected processing needs to stop immediately and a human
+needs to be alerted.  Other applications can repair the data, while still
+others can simply discard erroneous or unexpected values.  
+For some applications,
+errors in the data can be the most interesting part  because
+they can signal where two systems are failing to communicate.
+
+A fourth challenge is that such data sources can be high volume:
+AT\&T's call-detail stream contains roughly 300~million calls per day
+requiring approximately 7GBs of storage space. Although this data is
+eventually archived in a database, analysts mine it profitably before
+such archiving~\cite{kdd98,kdd99,kdd00}. The Ningaui project at AT\&T
+accumulates data related to provisioning business services at a rate
+of 250-300GB/day, with occasional spurts of 750GBs/day.  Netflow data
+arrives from Cisco routers at rates over a gigabyte per
+second~\cite{gigascope}. Such volumes mean it must be possible to
+process the data without loading it all into memory at once.
+
+Finally, before anything can be done with an ad hoc data source,
+someone has to produce a suitable parser for it, typically in \C{} or \perl{}. 
+Unfortunately, writing
+such parsers is tedious and error-prone. It is complicated by the lack
+of documentation, convoluted encodings designed to save space, 
+the need to produce efficient code to cope with the scale of the data,
+and the need to handle errors robustly to avoid corrupting precious data.
+In fact, such parsers tend to skip checking all possible errors
+because doing so requires writing so much extra code. 
+Often, the hard-won understanding of the data
+ends up embedded in parsing code, making long-term maintenance
+difficult for the original writer and sharing the knowledge with
+others nearly impossible.
+
+The \pads{} system facilitates ad hoc data processing by addressing
+each of these concerns.  It provides a declarative data description
+language that permits analysts to describe the physical layout of
+their data, \textit{as it is}.  The language also permits analysts to
+describe expected semantic properties of their data so deviations can
+be flagged as errors. The intent is to allow analysts to capture in a
+\pads{} description all that they know about a given data source.
+These descriptions are concise enough to
+serve as documentation and flexible enough to describe most of
+the data formats we have seen in practice, including ASCII, binary,
+EBCDIC, and mixed data formats.  The fact that useful software
+artifacts are generated from the descriptions provides strong
+incentive for keeping the descriptions current, allowing them to serve
+as living documentation.  
+
+From such a description, the \pads{} compiler produces tunable \C{} libraries
+and tools for parsing, manipulating, and summarizing the data,
+obviating the need for a hand-written parser and leveraging the
+declarative specification to produce additional useful tools. 
+The core \C{} library includes functions for reading the data, writing it 
+back out in its original form, writing it into a canonical \xml{} form, pretty printing
+it in forms suitable for loading into a relational database, and accumulating  
+statistical properties.  An auxiliary library provides 
+an instance of the data API for Galax~\cite{galax,galaxmanual}, an implementation of XQuery.  This 
+library allows users to query data with a \pads{} description as if the data were
+in \xml{} without materializing the data as \xml{}.  In addition to these libraries,
+the \pads{} system provides wrappers that build tools to 
+summarize the data, format it,  or convert it to \xml{}.
+
+The declarative nature of \pads{} descriptions facilitates error handling.
+The generated parsing code checks all possible error cases: system
+errors related to the input file, buffer, or socket; syntax errors
+related to deviations in the physical format; and semantic errors in
+which the data violates user constraints.  Because these checks appear
+in generated code, they do not clutter the high-level declarative
+description of the data source.
+In addition, the result of a parse is a pair consisting of a canonical in-memory
+representation of the data and a parse descriptor. The parse
+descriptor precisely characterizes both the syntactic and the semantic
+errors that occured during parsing.  This structure allows analysts
+to respond to errors in application-specific ways.  
+
+The \pads{} system addresses performance issues in a number of ways.
+First, we compile the \pads{} description rather than interpret it to reduce run-time overhead.
+The generated parser provides  multiple entry points, so the data consumer can choose 
+the appropriate level of granularity for reading the data into memory to accommodate very large data sources.
+We parameterize library functions by \textit{masks}, which allow data analysts to 
+choose which semantic conditions to check at run-time, permitting them to specify
+all known properties in the source description without forcing all users of that 
+description to pay the run-time cost of checking them.  
+
+
+\section{Example data sources}
+Before discussing the \pads{} design, we describe selected data sources, focussing on those we will use as running examples.  \figref{figure:data-sources}  summarizes some of the sources we have worked with.  They include binary, EBCDIC, and ASCII sources, with both fixed and variable-width records.  They range in size from relatively small files through network applications which process over a gigabyte per second.  Common errors include undocumented data, corrupted data, missing data, and multiple missing-value representations.  
+
+\begin{figure*}
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+Name                    &  Representation                               &    Size               & Common Errors \\ \hline
+Call detail             &  Fixed width binary   records         & ~7GB/day         &  Undocumented encodings\\  \hline 
+Web server logs  &  Fixed-column ASCII  records     & $\leq$12GB/week & Race conditions on log entry\\ \hline
+Netflow                  & Variable number fixed-width binary records & $\ge$1Gigabit/second & Missed packets\\ \hline
+Provisioning summary data & Variable-width ASCII records & 2.2GB/week & Unexpected values \\ 
+                                &                                                                        &                         & Corrupted data feeds \\ \hline
+IP backbone monitoring data  & Various & Feeds from ~15 sources      & Multiple missing-value representations \\ \hline
+                               &                                                                        & ~15 GB/day   & Undocumented data \\ \hline
+Raw provisioning data  & Variable-width EBCDIC records  & ~4000 files/day,    &  Unexpected values\\ 
+                                &                                                                        & 250-300GB/day    & Corrupted data feeds \\ \hline
+
+\end{tabular}
+\label{figure:data-sources}
+\caption{Selected ad hoc data sources.}
+\end{center}
+\end{figure*}
+
+\subsection{Common Log Format}
+Web servers use the Common Log Format (CLF) to log client requests~\cite{wpp}.  This ASCII format consists of a sequence of records, each of which has seven fields: the host name or IP address of the client making the request, the account associated with the request on the client side, the name the user provided for authentication, the time of the request, the actual request, the \textsc{http} response code, and the number of bytes returned as a result of the request.  The actual request has three parts: the request method (\eg, \texttt{GET}, \texttt{PUT}), the requested \textsc{uri}, and the protocol version.  
+In addition, the second and third fields are often recorded only as a '-' character to indicate the server didn't record the actual data.   \figref{figure:clf-records} shows a couple of typical records.
+
+\begin{figure*}
+\begin{small}
+\begin{verbatim}
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
+tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /scpt/dd@grp.org/confirm  HTTP/1.0" 200 941
+\end{verbatim}
+\label{figure:clf-records}
+\caption{Typical CLF records.}
+\end{small}
+\end{figure*}
+
+\subsection{Provisioning summary data}
+To track AT\&T's provisioning process, the Dibbler project builds ASCII summary data files containing one record per customer order.   Each order record contains a header followed by a sequence of events.  The header has 13 pipe separated fields: the order number, AT\&T's internal order number, the order version, four different telephone numbers associated with the order, the zip code of the order, a billing identifier, the order type, a measure of the complexity of the order, an unused field, and the source of the order data.  Many of these fields are optional, in which case nothing appears between the pipe characters.   The billing identifier may not be available at the time of processing, in which case the system generates a unique identifier, and prefixes this value with the string "no_ii" to indicate the number was generated. The event sequence represents the various states a service order goes through;  it is represented as a new-line terminated, pipe separated list of state, timestamp pairs.  
+There are over 400 distinct states that an order may go through during provisioning.  The sequence is sorted in order of increasing time stamps.
+%156 different states for one order
+%-rw-r--r--    1 angusm   dibbler   2187472314 Jun  9  2003 /fs/dibblerd/tlf/data/out_sum.stream
+%2171.364u 31.379s 40:41.54 90.2% 0+0k 2+0io 2pf+0w
+%53 had trailing t or } after zip code
+One thing that is apparent from these English descriptions, is that it is very difficult to be precise in English!
+
+
+\section{Pads Design}
+\section{Compiler output}
+\section{Example uses}
+\section{Implementation}
+\section{Performance}
+\section{Related work}
+\section{Conclusions}
+\bibliographystyle{abbrv}
+\bibliography{pads} 
+
+\end{document}
