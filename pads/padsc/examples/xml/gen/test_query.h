@@ -40,6 +40,11 @@ int main(int argc, char** argv) {
   }
 
   /* init -- must do this! */
+
+  /* Initialize NodeMM. */
+  pads->ext1 = NodeMM_newMM();
+  NodeMM_init((NodeMM_t *)pads->ext1);  
+  
   //P_INIT_ALL(pads, PADS_TY( ), rep, m, pd, P_CheckAndSet);
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
@@ -51,7 +56,7 @@ int main(int argc, char** argv) {
   PADS_TY(_m_init)(pads, &m, P_CheckAndSet);
 
   /* make the top-level node */
-  PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_vtable), pads, "doc", &m, &pd, &rep, "main");
+  PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "doc", &m, &pd, &rep, "main");
 
   /* Try to read entire file */
   PADS_TY(_read)(pads, &m, &pd, &rep);

@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   */
   galax_init();
 
-  if (argc != 2) { error(2, "Usage: test_load_XXX <XXX-data-file>\n"); exit(-1); }
+  if (argc != 3) { error(2, "Usage: test_load_XXX <XXX-data-file> <XXX-query> \n"); exit(-1); }
 
   if (P_ERR == P_open(&pads,&mydisc,0)) {
     error(2, "*** P_open failed ***");
@@ -86,12 +86,20 @@ int main(int argc, char** argv) {
   PADS_TY(_seqSmartNode_init)(smart_node, MAX_ELTS);
   //  PADS_TY(_dummySmartNode_init)(smart_node);
 
+  printf("1st Traversal.\n");
+
   err = padsDocument(argv[1], (nodeRep)smart_node, &doc);
   exit_on_error(err); 
 
-  docitems = itemlist_cons(doc, itemlist_empty()); 
+  err = galax_eval_statement_from_file_with_context_item_from_xml(doc, argv[2], &docitems);
+  exit_on_error(err); 
+  //docitems = itemlist_cons(doc, itemlist_empty()); 
   err = galax_serialize_to_stdout(docitems);
   exit_on_error(err);
+
+
+  /*
+  printf("2nd Traversal.\n");
 
   // create a second cursor over the data:
   err = padsDocument(argv[1], (nodeRep)smart_node, &doc2);
@@ -100,6 +108,8 @@ int main(int argc, char** argv) {
   docitems = itemlist_cons(doc, itemlist_empty()); 
   err = galax_serialize_to_stdout(docitems);
   exit_on_error(err);
+
+  */
 
   // P_CLEANUP_ALL(pads, PADS_TY_, rep, pd);
   if (P_ERR == PADS_TY(_cleanup)(pads, smart_node->rep)) {
