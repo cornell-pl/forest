@@ -4,7 +4,5 @@ under ast-ast/lib/package/tgz).
 
 Current source mods:
 
-(1) ast-ast/src/lib/libast/tm/tmscan.c
-       + mod supports %| alternation and %& default, allowing for the
-         default date input format such as "%m%d%y%|%m%d%Y%|%&"
+There are no current changes.
 
