@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 	error(0, "Read ascii integer of width 6: %ld", i1);
       }
     }
-    if (PDC_ERROR == PDC_char_lit_scan(pdc, '\n', 0, 0, 0, &my_disc)) {
+    if (PDC_ERROR == PDC_char_lit_scan(pdc, '\n', '\n', 0, 0, &my_disc)) {
       error(2, "Could not find newline, ending program");
       break;
     }

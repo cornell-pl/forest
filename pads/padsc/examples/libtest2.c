@@ -58,11 +58,13 @@ int main(int argc, char** argv) {
 
     if (PDC_ERROR == PDC_bint8_read(pdc, &em, &ed, &i1, &my_disc)) {
       PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+      goto check_newline;
     } else {
       error(0, "Read bint8  : %ld", i1);
     }
     if (PDC_ERROR == PDC_buint8_read(pdc, &em, &ed, &ui1, &my_disc)) {
       PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+      goto check_newline;
     } else {
       error(0, "Read buint8 : %lu", ui1);
     }
@@ -70,43 +72,51 @@ int main(int argc, char** argv) {
     if (rev == 0) {
       if (PDC_ERROR == PDC_bint16_norev_read(pdc, &em, &ed, &i2, &my_disc)) {
 	PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	goto check_newline;
       } else {
 	error(0, "Read bint16  : %ld", i2);
       }
       if (PDC_ERROR == PDC_buint16_norev_read(pdc, &em, &ed, &ui2, &my_disc)) {
 	PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	goto check_newline;
       } else {
 	error(0, "Read buint16 : %lu", ui2);
       }
       if (PDC_ERROR == PDC_bint32_norev_read(pdc, &em, &ed, &i4, &my_disc)) {
 	PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	goto check_newline;
       } else {
 	error(0, "Read bint32  : %ld", i4);
       }
       if (PDC_ERROR == PDC_buint32_norev_read(pdc, &em, &ed, &ui4, &my_disc)) {
 	PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	goto check_newline;
       } else {
 	error(0, "Read buint32 : %lu", ui4);
       }
       if (swap == 0) {
 	if (PDC_ERROR == PDC_bint64_norev_noswap_read(pdc, &em, &ed, &i8, &my_disc)) {
 	  PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	  goto check_newline;
 	} else {
 	  error(0, "Read bint64  : %lld", i8);
 	}
 	if (PDC_ERROR == PDC_buint64_norev_noswap_read(pdc, &em, &ed, &ui8, &my_disc)) {
 	  PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	  goto check_newline;
 	} else {
 	  error(0, "Read buint64 : %llu", ui8);
 	}
       } else {
 	if (PDC_ERROR == PDC_bint64_norev_swap_read(pdc, &em, &ed, &i8, &my_disc)) {
 	  PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	  goto check_newline;
 	} else {
 	  error(0, "Read bint64  : %lld", i8);
 	}
 	if (PDC_ERROR == PDC_buint64_norev_swap_read(pdc, &em, &ed, &ui8, &my_disc)) {
 	  PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	  goto check_newline;
 	} else {
 	  error(0, "Read buint64 : %llu", ui8);
 	}
@@ -114,33 +124,39 @@ int main(int argc, char** argv) {
     } else {
       if (PDC_ERROR == PDC_bint16_rev_read(pdc, &em, &ed, &i2, &my_disc)) {
 	PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	goto check_newline;
       } else {
 	error(0, "Read bint16  : %ld", i2);
       }
       if (PDC_ERROR == PDC_buint16_rev_read(pdc, &em, &ed, &ui2, &my_disc)) {
 	PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	goto check_newline;
       } else {
 	error(0, "Read buint16 : %lu", ui2);
       }
 
       if (PDC_ERROR == PDC_bint32_rev_read(pdc, &em, &ed, &i4, &my_disc)) {
 	PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	goto check_newline;
       } else {
 	error(0, "Read bint32  : %ld", i4);
       }
       if (PDC_ERROR == PDC_buint32_rev_read(pdc, &em, &ed, &ui4, &my_disc)) {
 	PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	goto check_newline;
       } else {
 	error(0, "Read buint32 : %lu", ui4);
       }
       if (swap == 0) { 
 	if (PDC_ERROR == PDC_bint64_rev_noswap_read(pdc, &em, &ed, &i8, &my_disc)) {
 	  PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	  goto check_newline;
 	} else {
 	  error(0, "Read bint64  : %lld", i8);
 	}
 	if (PDC_ERROR == PDC_buint64_rev_noswap_read(pdc, &em, &ed, &ui8, &my_disc)) {
 	  PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+	  goto check_newline;
 	} else {
 	  error(0, "Read buint64 : %llu", ui8);
 	}
@@ -149,10 +165,15 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (PDC_ERROR == PDC_char_lit_scan(pdc, '\n', 0, 0, 0, &my_disc)) {
+  check_newline:
+    PDC_get_loc(pdc, &ed.loc, &my_disc);
+    error(0, "Searching for newline char.  Start loc line %d char %d", ed.loc.beginLine, ed.loc.beginChar);
+    if (PDC_ERROR == PDC_char_lit_scan(pdc, '\n', '\n', 0, 0, &my_disc)) {
       error(2, "Could not find newline, ending program");
       break;
     }
+    PDC_get_loc(pdc, &ed.loc, &my_disc);
+    error(0, "Found newline.  Now loc line %d char %d", ed.loc.beginLine, ed.loc.beginChar);
   }
 
   if (PDC_ERROR == PDC_IO_fclose(pdc, &my_disc)) {
