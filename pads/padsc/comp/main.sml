@@ -307,8 +307,9 @@ structure Main : sig
 	if not (!xmlFlag) then () 
 	else
 	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xsd")		
+		val srcPath = OS.FileSys.fullPath(fileName)
 	    in
-		PPLib.ppToStrm((PPXSchemaAst.ppAst (SOME srcFile) paidtab) () tidtab) xoutstream ast;
+		PPLib.ppToStrm((PPXSchemaAst.ppAst (SOME srcPath) paidtab) () tidtab) xoutstream ast;
 		TextIO.flushOut xoutstream;
 		TextIO.closeOut xoutstream			
 	    end

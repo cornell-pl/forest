@@ -1814,7 +1814,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun checkFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				     isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				     pred: pcexp option, comment: string option} = 
-			  (if name = "pd" then PE.error ("Pstruct "^ structName ^" contains field with reserved name 'pd'.\n") 
+			  (if name = "pd" orelse name = "structLevel" 
+			       then PE.error ("Pstruct "^ structName ^" contains field with reserved name '"^name^"'.\n")  
 			   else (); 
 			   let val ty = P.makeTypedefPCT(lookupTy(pty, repSuf, #repname))
 			   in
