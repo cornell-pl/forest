@@ -86,7 +86,7 @@ A fourth challenge is that such data sources can be high volume:
 AT\&T's call-detail stream contains roughly 300~million calls per day
 requiring approximately 7GBs of storage space. Although this data is
 eventually archived in a database, analysts mine it profitably before
-such archiving~\cite{kdd98,kdd99,kdd00}. The Ningaui project at AT\&T
+such archiving~\cite{kdd98,kdd99}. The Ningaui project at AT\&T
 accumulates data related to provisioning business services at a rate
 of 250-300GB/day, with occasional spurts of 750GBs/day.  Netflow data
 arrives from Cisco routers at rates over a gigabyte per
@@ -160,57 +160,375 @@ description to pay the run-time cost of checking them.
 
 
 \section{Example data sources}
-Before discussing the \pads{} design, we describe selected data sources, focussing on those we will use as running examples.  \figref{figure:data-sources}  summarizes some of the sources we have worked with.  They include binary, EBCDIC, and ASCII sources, with both fixed and variable-width records.  They range in size from relatively small files through network applications which process over a gigabyte per second.  Common errors include undocumented data, corrupted data, missing data, and multiple missing-value representations.  
+
+Before discussing the \pads{} design, we describe selected data
+sources, focusing on those we will use as running examples.
+\figref{figure:data-sources} summarizes some of the sources we have
+worked with.  They include ASCII, binary, and Cobol data formats, with
+both fixed and variable-width records.  They range in size from
+relatively small files through network applications which process over
+a gigabyte per second.  Common errors include undocumented data,
+corrupted data, missing data, and multiple missing-value
+representations.
 
 \begin{figure*}
 \begin{center}
 \begin{tabular}{|l|l|l|l|l|}
 \hline
-Name                    &  Representation                               &    Size               & Common Errors \\ \hline
-Call detail             &  Fixed width binary   records         & ~7GB/day         &  Undocumented encodings\\  \hline 
-Web server logs  &  Fixed-column ASCII  records     & $\leq$12GB/week & Race conditions on log entry\\ \hline
-Netflow                  & Variable number fixed-width binary records & $\ge$1Gigabit/second & Missed packets\\ \hline
-Provisioning summary data & Variable-width ASCII records & 2.2GB/week & Unexpected values \\ 
-                                &                                                                        &                         & Corrupted data feeds \\ \hline
-IP backbone monitoring data  & Various & Feeds from ~15 sources      & Multiple missing-value representations \\ \hline
-                               &                                                                        & ~15 GB/day   & Undocumented data \\ \hline
-Raw provisioning data  & Variable-width EBCDIC records  & ~4000 files/day,    &  Unexpected values\\ 
-                                &                                                                        & 250-300GB/day    & Corrupted data feeds \\ \hline
+Name          &  Representation              &Size           & Common Errors \\ \hline\hline
+Call detail   &  Fixed width binary records  &\appr{}7GB/day &  Undocumented data\\  \hline 
+\textbf{Web server logs (CLF)} &  Fixed-column ASCII records & $\leq$12GB/week & Race conditions on log entry\\ \hline
+\textbf{AT\&T provisioning} & Variable-width ASCII records & 2.2GB/week & Unexpected values \\ 
+\textbf{summary data (Dibbler)} &                              &            & Corrupted data feeds \\ \hline
+AT\&T provisioning  & Various Cobol data formats  & \appr{}4000 files/day, & Unexpected values\\ 
+raw data            &                             & 250-300GB/day    & Corrupted data feeds \\ \hline
+IP backbone monitoring data  & ASCII  & Feeds from \appr{}15 sources  & Multiple missing-value representations \\
+                             &        & \appr{}15 GB/day              & Undocumented data \\ \hline
+Netflow       & Data-dependent number of     & $\ge$1Gigabit/second  & Missed packets\\ 
+              &  fixed-width binary record   &                       & \\ \hline
 
 \end{tabular}
 \label{figure:data-sources}
-\caption{Selected ad hoc data sources.}
+\caption{Selected ad hoc data sources.  We will use \textbf{bold} data sources in our examples. }
 \end{center}
 \end{figure*}
 
 \subsection{Common Log Format}
-Web servers use the Common Log Format (CLF) to log client requests~\cite{wpp}.  This ASCII format consists of a sequence of records, each of which has seven fields: the host name or IP address of the client making the request, the account associated with the request on the client side, the name the user provided for authentication, the time of the request, the actual request, the \textsc{http} response code, and the number of bytes returned as a result of the request.  The actual request has three parts: the request method (\eg, \texttt{GET}, \texttt{PUT}), the requested \textsc{uri}, and the protocol version.  
-In addition, the second and third fields are often recorded only as a '-' character to indicate the server didn't record the actual data.   \figref{figure:clf-records} shows a couple of typical records.
+Web servers use the Common Log Format (CLF) to log client
+requests~\cite{wpp}.  This ASCII format consists of a sequence of
+records, each of which has seven fields: the host name or IP address
+of the client making the request, the account associated with the
+request on the client side, the name the user provided for
+authentication, the time of the request, the actual request, the
+\textsc{http} response code, and the number of bytes returned as a
+result of the request.  The actual request has three parts: the
+request method (\eg, \texttt{GET}, \texttt{PUT}), the requested
+\textsc{uri}, and the protocol version.  In addition, the second and
+third fields are often recorded only as a '-' character to indicate
+the server didn't record the actual data.  \figref{figure:clf-records}
+shows a couple of typical records.
 
 \begin{figure*}
 \begin{small}
+\begin{center}
 \begin{verbatim}
 207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
 tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /scpt/dd@grp.org/confirm  HTTP/1.0" 200 941
 \end{verbatim}
 \label{figure:clf-records}
 \caption{Typical CLF records.}
+\end{center}
 \end{small}
 \end{figure*}
 
+
 \subsection{Provisioning summary data}
-To track AT\&T's provisioning process, the Dibbler project builds ASCII summary data files containing one record per customer order.   Each order record contains a header followed by a sequence of events.  The header has 13 pipe separated fields: the order number, AT\&T's internal order number, the order version, four different telephone numbers associated with the order, the zip code of the order, a billing identifier, the order type, a measure of the complexity of the order, an unused field, and the source of the order data.  Many of these fields are optional, in which case nothing appears between the pipe characters.   The billing identifier may not be available at the time of processing, in which case the system generates a unique identifier, and prefixes this value with the string "no_ii" to indicate the number was generated. The event sequence represents the various states a service order goes through;  it is represented as a new-line terminated, pipe separated list of state, timestamp pairs.  
-There are over 400 distinct states that an order may go through during provisioning.  The sequence is sorted in order of increasing time stamps.
+
+To track AT\&T's provisioning process, the Dibbler project compiles
+weekly summaries of the state of each order for phone service.  
+These ASCII summaries store the processing date and one record per order.
+Each order record contains a header followed by a sequence of events.
+The header has 13 pipe separated fields: the order number, AT\&T's
+internal order number, the order version, four different telephone
+numbers associated with the order, the zip code of the order, a
+billing identifier, the order type, a measure of the complexity of the
+order, an unused field, and the source of the order data.  Many of
+these fields are optional, in which case nothing appears between the
+pipe characters.  The billing identifier may not be available at the
+time of processing, in which case the system generates a unique
+identifier, and prefixes this value with the string "no\_ii" to
+indicate the number was generated. The event sequence represents the
+various states a service order goes through; it is represented as a
+new-line terminated, pipe separated list of state, timestamp pairs.
+There are over 400 distinct states that an order may go through during
+provisioning.  The sequence is sorted in order of increasing time
+stamps. \figref{figure:dibbler-records} shows a small example of
+this format.
 %156 different states for one order
 %-rw-r--r--    1 angusm   dibbler   2187472314 Jun  9  2003 /fs/dibblerd/tlf/data/out_sum.stream
 %2171.364u 31.379s 40:41.54 90.2% 0+0k 2+0io 2pf+0w
 %53 had trailing t or } after zip code
-One thing that is apparent from these English descriptions, is that it is very difficult to be precise in English!
+\begin{figure*}
+\begin{small}
+\begin{center}
+\begin{verbatim}
+0|1005022800
+9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
+\end{verbatim}
+\label{figure:dibbler-records}
+\caption{Sample provisioning summary data (vastly truncated).}
+\end{center}
+\end{small}
+\end{figure*}
+
+
+It may be apparent from these paragraphs that English is a poor
+language for describing data formats!
 
 
 \section{Pads Design}
-\section{Compiler output}
-\section{Example uses}
+\begin{figure}
+\input{wsl}
+\caption{\pads{} description for web server log data}
+\label{figure:wsl}
+\end{figure}
+
+\begin{figure}
+\input{dibbler_new}
+\caption{\pads{} description for telecom provisioning summary data}
+\label{figure:dibbler}
+\end{figure}
+
+
+A \pads{} description specifies the physical layout and 
+semantic properties of an ad hoc data source. 
+The language provides a type-based model:
+basic types describe atomic data such as integers, strings, dates, \etc{}, while
+structured types describe compound data built from simpler pieces.
+The \pads{} library provides a collection of broadly useful base types.
+In addition,  users can define their own base types to specify more
+specialized forms of atomic data.  Examples of built-in types include
+ASCII 32-bit integers (\cd{Pa_int32}), binary bytes (\cd{Pb_int8}), and
+EBCDIC characters (\cd{Pe_char}).  
+We also support base types that don't specify an explicit encoding, 
+\eg{} 64-bit integers (\cd{Pint64}).  
+During parsing, \pads{} uses the ambient encoding to interpret such
+types, which the library user can set at run-time.  
+We currently support ASCII, binary, and EBCDIC encodings.  
+By default, the ASCII encoding is selected.
+Semantic conditions for such base types include checking that the
+resulting number fits in the indicated space, \ie, 16-bits for
+\cd{Pint16}.  All built-in \pads{} types start with "\cd{P}".
+
+To described more complex data, \pads{} provides a collection of 
+structured types loosely based on \C{}'s type structure.
+In particular, \pads{} has 
+\kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s to describe
+record-like structures, alternatives, and sequences, respectively.
+\kw{Penum}s describe a fixed collection of literals, while \kw{Popt}s 
+provide convenient syntax for optional data.
+Each of these
+types can have an associated predicate that indicates whether a
+value calculated from the physical specification is indeed a legal
+value for the type.  For example, a predicate might require that two
+fields of a \kw{Pstruct} are related or that the elements
+of a sequence are in increasing order.  Programmers can specify such
+predicates using \pads{} expressions and functions, 
+written using a \C{}-like syntax.
+Finally, \pads{} \kw{Ptypedef}s can be used
+to define new types that add further constraints to existing types.
+
+\pads{} types can be parameterized by values.
+This mechanism
+serves both to reduce the number of base types and to permit the
+format and properties of later portions of the data to depend upon earlier portions.
+For example, 
+the base type \cd{Puint16_FW(:3:)} specifies an unsigned two byte integer
+physically represented by exactly 3 characters, while the type
+\cd{Pstring(:' ':)} 
+describes a string terminated by a space.  Parameters can be 
+used with compound types to specify the size of an array or which
+branch of a union should be taken.
+
+\figref{figure:wsl} gives the \pads{} description for CLF web server logs, 
+while \figref{figure:dibbler} gives the description for the Dibbler 
+provisioning data.  We will use these two examples to illustrate various 
+features of the \pads{} language. 
+
+\kw{Pstruct}s describe fixed sequences of data with unrelated types.
+In the CLF description, the type declaration for
+\cd{version_t} illustrates a simple \kw{Pstruct}. It starts with a 
+string literal that matches the constant \cd{HTTP/} in the data source.  It 
+then has two unsigned integers recording the major and minor version numbers
+separated by the literal character \kw{'.'}.  \pads{} supports character, string,
+and regular expression literals, which are interpreted with the ambient character 
+encoding. The type \cd{request_t} 
+similarly describes the user request portion of a CLF record.  In addition
+to physical format information, this \kw{Pstruct} includes a semantic constraint
+on the \cd{version} field.  Specifically, it requires that obsolete methods
+\cd{LINK} and \cd{UNLINK} occur only with under HTTP/1.1.  This constraint illustrates
+the use of predicate functions and the fact 
+that earlier fields are in scope during the processing of later fields, as the 
+constraint
+refers to both the \cd{meth} and \cd{version} fields in the \kw{Pstruct}.
+
+\kw{Punion}s describe variation in the data source.  For example, the
+\cd{client_t} type in the CLF description indicates that the first field 
+in a CLF record can be either an IP address or a hostname.  During parsing, 
+the branches of a \kw{Punion} are tried in order; the first branch that 
+parses without error is taken.  The \cd{auth_id_t} type illustrates the use
+of a constraint: the branch \cd{unauthorized} is chosen only if the parsed
+character is a dash.  
+
+\pads{} provides \kw{Parray}s to describe varying-length sequences of data all 
+with the same type.  The \cd{eventSeq_t} declaration in the Dibbler data description
+uses a \kw{Parray} to characterize the sequence of events an
+order goes through during processing.  This declaration indicates that the elements
+in the sequence have type \cd{event_t}.  It also specifies that the elements will
+be separated by vertical bars, and that the sequence will be terminated by 
+an end-of-record marker (\kw{Peor}).  In general, \pads{} provides a rich collection
+of array-termination conditions: reaching a maximum size, finding a terminating
+literal (including end-of-record and end-of-source),
+or satisfying a user-supplied predicate over the already-parsed portion of 
+the \kw{Parray}.  Finally, this type declaration includes a \kw{Pwhere} clause
+to specify that the sequence of time stamps must be in sorted order.
+It uses the \kw{Pforall} construct to express this constraint.
+In general, the body of a \kw{Pwhere} clause can be any boolean expression.
+In such a context for arrays, the pseudo-variable \cd{elts} is bound to the in-memory representation of the sequence and \cd{length} to its length.
+
+Returning to the CLF description, the \kw{Penum} \cd{method_t} describes
+a collection of data literals.  During parsing, \pads{} interprets these
+constants using the ambient character encoding.  The \kw{Ptypedef} 
+\cd{response_t} describes possible server response codes in CLF data by adding
+the constraint that the three-digit integer must be between 100 and 600.
+
+The \cd{order_header_t} type in the Dibbler data description contains several
+anonymous uses of the \kw{Popt} type.  This type is syntactic sugar for a 
+stylized use of a \kw{Punion} with two branches: the first with the indicated type, and
+the second with what might be thought of as the void type.  It always matches but
+never consumes any input.
+
+Finally, the \kw{Precord} and \kw{Psource} annotations deserve comment.  The first
+indicates that the annotated type constitutes a record,
+while the second means that the type constitutes the totality of a data source.  
+The notion of a record varies depending upon the data encoding.  
+ASCII data typically uses new-line characters to delimit 
+records, binary sources tend to have fixed-width records, while 
+COBOL sources usually store the length of each record before the actual data.
+\pads{} supports each of these encodings of records and allows users to define
+their own encodings.  By default, \pads{} assumes records are new-line terminated.
+Before parsing, however, the user can direct \pads{} to use a different record
+definition.
+
+\section{Generated library}
+From a \pads{} description, the \pads{} compiler generates a \C{} library
+for parsing and manipulating the associated data source.  We selected \C{}
+as the target language for pragmatic reasons: there were locally available
+libraries that made building the compiler and run-time libraries easier,
+our target users are comfortable wth \C{}, and it can serve most easily
+as a lingua franca in that essentially all languages have provisions for 
+calling \C{} libraries.  Nothing about the \pads{} language mandates compiling
+to \C{}, however, and we envision eventually building alternate bindings.
+
+From each type in a \pads{} description, the compiler generates 
+\C{} declarations for
+\begin{itemize}
+\item an in-memory representation, 
+\item a mask, which allows users to customize generated functions
+on a per-type basis,
+\item a parse descriptor, which we use to describe syntactic and
+semantic errors detected during parsing, 
+\item parsing and unparsing functions, and 
+\item a broad collection of utility functions.
+\end{itemize}
+\input{library}
+\figref{figure:library} includes selected portions of the generated 
+library for the Dibbler \cd{entry_t} declaration.
+
+The \C{} declarations for the in-memory representation, the mask, 
+and the parse descriptor all share the structure of the \pads{}
+type declaration.  The mapping to \C{} for each is straightforward: 
+\kw{Pstruct}s map to \C{} structs with appropriately mapped fields, 
+\kw{Punion}s map to tagged unions coded as \C{} structs with a tag field 
+and an embedded 
+union, \kw{Parray}s map to a \C{} struct with a length field and an 
+embedded sequence, \kw{Penums} map to \C{} enumerations, \kw{Poptions} 
+to tagged unions, and \kw{Ptypedef}s to \C{} typedefs.  Masks include
+auxiliary fields to control behavior at the level of a structured
+type, and parse descriptors include extra fields to record the 
+state of the parse, the number of detected errors, 
+the error code of the first detected error, and the location of that error.
+
+The parse function takes a mask, an
+in-memory representation, and a parse descriptor as arguments.  
+The mask allows the user to specify with fine granularity
+which constraints the parser should check and which portions of the
+in-memory representation it should fill in.  This control allows the
+description-writer to specify all known constraints about the data
+without worrying about the run-time cost of verifying potentially
+expensive constraints for time-critical applications.
+
+Appropriate error-handling can be as important as processing
+error-free data.  The parse descriptor marks which portions of the
+data contain errors and characterizes the detected errors.
+Depending upon the nature of the errors and the desired application,
+programmers can take the appropriate action: halting the program,
+discarding parts of the data, or repairing the errors.
+
+The parser maintains the invariant that if the mask requests
+that a data item be verified and set, and if the parse descriptor
+indicates no error, then the in-memory representation satisfies the
+semantic constraints on the data.
+
+By supporting multiple entry-point parsing, we accommodate larger-scale data.
+For a small file, programmers can define a \pads{} type that describes
+the entire file and use that type's parsing function to read the whole
+file with one call.  For larger-scale data, programmers can sequence
+calls to parsing functions that read manageable portions of the file,
+\eg{}, reading a record at a time in a loop.  The parsing code generated
+for \kw{Parrays} allows users to choose between reading the entire array
+at once or reading it one element at a time, again to support parsing
+and processing very large data sources.
+
+We discuss details of the generated library in the following section
+as we describe its uses.
+
+\section{Pads in practice}
+Because the \pads{} language is declarative, we can leverage \pads{}
+descriptions to build additional tools besides the core parsing/unparsing
+library.  As a result, \pads{} provides direct support for a number
+of different uses: computing with the data, developing a high-level
+understanding of the data through statistical summaries, converting the data into a more standard form, and querying.  
+
+\subsection{General programs}
+We start by showing a simple use of 
+the core library to filter and normalize Dibbler data
+in \figref{figure:dibbler-filter}. After initializing
+the \pads{} library handle and opening the data source, the code sets
+the mask to check all conditions in the Dibbler description except the
+sorting of the time stamps.  Omitted code reads and writes the header. 
+The code then echoes error records to one file and cleaned ones to another.
+The raw data has two different representations of unavailable phone numbers:
+simply omitting the number altogether, which corresponds to the \cd{NONE}
+branch of the \kw{Popt}, or having the value \cd{0} in the data.  
+The function \cd{cnvPhoneNumbers} unifies these two representations 
+by converting the zeroes into \cd{NONE}s.  The function \cd{entry_t_verify}
+ensures that our computation hasn't broken any of the semantic properties
+of the in-memory representation of the data.
+\begin{figure*}
+\begin{small}
+\begin{center}
+\input{dibbler_filter}
+\label{figure:dibbler-filter}
+\caption{Code fragment for filtering and normalizing Dibbler data.}
+\end{center}
+\end{small}
+\end{figure*}
+
+Another programmatic use of the core library is to define  
+Hancock streams.  Hancock is a domain-specific language for
+building persistent profiles of the entities described in transaction 
+streams~\cite{hancock-toplas}.  Data analysts at AT\&T use Hancock 
+applications to detect fraud and target marketing. 
+The observation that defining the transaction
+streams was one of the most difficult parts of writing Hancock programs
+motivated the \pads{} project. 
+
+
+\subsection{Statistical summaries}
+Before using a data source, analysts must develop an understanding 
+of the semantics of that source.  Because documentation is usually
+incomplete or out-of-date, this understanding must be developed 
+through playing with the data itself.  Typical questions include:
+how complete is my understanding of the syntax of the data source,
+how many different representations for "data not available" are there,
+what is the distribution of values for particular fields, \etc{}.
+To address this type of question, we added the notion of an accumulator
+to the generated library
+
+\subsection{Format Conversion}
+\subsection{Queries}
 \section{Implementation}
 \section{Performance}
 \section{Related work}

@@ -21,6 +21,7 @@ PADS_FLAGS=
 
 ## location of padsc executable.
 PADS=$(PADS_HOME)/scripts/padsc
+CCHECK=cc -I. -I.. -I$(PADS_HOME)/ast-ast/arch/darwin.ppc/include/ast -I/Users/kfisher/pads/padsc/include 
 
 ###############################################################################
 #  Documentation programs.
@@ -29,7 +30,7 @@ PADS=$(PADS_HOME)/scripts/padsc
 
 EXAMPLE_DIR= $(PADS_HOME)/padsc/examples/p
 PEXAMPLES= $(EXAMPLE_DIR)/wsl.p $(EXAMPLE_DIR)/dibbler_new.p
-CEXAMPLES= 
+CEXAMPLES= dibbler_new_annotated.h dibbler_new_xml_annotated.h $(PADS_HOME)/padsc/examples/tests/filter_dibbler.c
 EXAMPLES= $(PEXAMPLES) $(CEXAMPLES)
 
 CLEAN= 
@@ -48,6 +49,8 @@ clean:
 check:	$(PEXAMPLES) Makefile
 	echo Checking pads source code for paper
 	for i in $(PEXAMPLES) ; do $(PADS) -r $(OUTPUT) $$i; done
+	for i in $(CEXAMPLES) ; do $(CCHECK) $$i; done
+
 
 code:	$(EXAMPLES) Makefile
 	echo Generating code for paper
