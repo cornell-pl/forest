@@ -11,6 +11,16 @@
 #include <error.h>
 #include "rbuf-internal.h"
 
+/* ================================================================================ */
+/* IMPL CONSTANTS */
+
+/*
+ * On first alloc, if no hint is given as to likely max size, then
+ * we use the following as the hint.  This avoids allocating, e.g.,
+ * a single array element for the case where resize is called on each
+ * element (resize to 1, 2, 3, ....) but with no hint. 
+ */
+#define RBUF_DEFAULT_HINT 16
 
 /* ================================================================================ */
 /* RMM : default allin1 functions and disciplines */
@@ -171,40 +181,48 @@ RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
     error(2, "RBuf_reserve called with rbuf that has no mem mgr");
     return -1; /* failure - no manager */
   }
-  targ_size = (eltSize * numElts);
-  if (rbuf->buf && (targ_size <= rbuf->bufSize)) {
-    if (buf_out) {
-      *buf_out = rbuf->buf;
-    }
-    return 0; /* trivial success */
-  }
-  if (!rbuf->buf) {
-    if ((maxEltHint > numElts) && (maxEltHint <= 2*numElts)) {
-      new_size = eltSize * maxEltHint;
-    } else {
-      new_size = targ_size;
-    }
-  } else {
-    new_size = rbuf->bufSize;
-    while (new_size < targ_size) {
-      new_size *= 2;
-    }
-    /* adjust downward if hint tells us we would grow too much */
-    if (maxEltHint >= numElts) {
-      targ_size = eltSize * maxEltHint;
-      if (targ_size < new_size) {
-	new_size = targ_size;
-      }
-    }
-  }
-  if (!(rbuf->buf = mgr->fn(mgr->vm, rbuf->buf, new_size))) { /* resize buf */
-    error(2, "RBuf_reserve -- out of space");
-    return -2; /* failure - out of space */
-  }
-  rbuf->bufSize    = new_size;
   rbuf->eltSize    = eltSize;
   rbuf->numElts    = numElts;
   rbuf->maxEltHint = maxEltHint;
+  targ_size = eltSize * numElts;
+  error(-2, "XXX_REMOVE RBuf_reserve called with eltSize %d numElts %d maxEltHint %d", eltSize, numElts, maxEltHint);
+  if (rbuf->buf && (targ_size <= rbuf->bufSize)) {
+    /* trivial success */
+    if (buf_out) {
+      *buf_out = rbuf->buf;
+    }
+    return 0;
+  }
+  if (!(rbuf->buf) && maxEltHint == 0) {
+    /* on first alloc, avoid allocating too little space due to lack of a hint */
+    maxEltHint = RBUF_DEFAULT_HINT;
+  }
+  if (maxEltHint <= numElts) {
+    /* hint does not help */
+    if (rbuf->buf) { /* use doubling */
+      new_size = rbuf->bufSize;
+      while (new_size < targ_size) {
+	new_size *= 2;
+      }
+    } else { /* just use numElts */
+      new_size = targ_size;
+    }
+  } else { /* hint helps, so use it */
+    if (maxEltHint > 128 * numElts) {
+      maxEltHint = 128 * numElts; /* don't get too carried away */
+    }
+    new_size = eltSize * maxEltHint;
+  }
+  if (rbuf->buf) {
+    error(-2, "XXX_REMOVE RBuf_reserve: resizing buffer from %d to %d", rbuf->bufSize, new_size);
+  } else {
+    error(-2, "XXX_REMOVE RBuf_reserve: alloc buffer of size %d", new_size);
+  }
+  if (!(rbuf->buf = mgr->fn(mgr->vm, rbuf->buf, new_size))) { /* alloc or resize buf */
+    error(2, "RBuf_reserve -- out of space");
+    return -2; /* failure - out of space */
+  }
+  rbuf->bufSize = new_size;
   if (buf_out) {
     *buf_out = rbuf->buf;
   }

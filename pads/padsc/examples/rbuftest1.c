@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     exit(-1);
   }
   ar1 = (PDC_int32*)buf1;
-  if (err = RBuf_reserve(rbuf2, &buf2, sizeof(PDC_int8), 5, 11)) {
+  if (err = RBuf_reserve(rbuf2, &buf2, sizeof(PDC_int8), 5, 0)) {
     error(2, "*** rbuf2 reserve failed with err= %d ***", err);
     exit(-1);
   }
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
   }
   error(0, "Growing non-zerod array from 5 to 20 elts, one increment at a time");
   for (i = 5; i < 20; i++) {
-    if (err = RBuf_reserve(rbuf2, &buf2, sizeof(PDC_int8), i+1, 11)) {
+    if (err = RBuf_reserve(rbuf2, &buf2, sizeof(PDC_int8), i+1, 0)) {
       error(2, "*** rbuf2 reserve failed with err= %d ***", err);
       exit(-1);
     }

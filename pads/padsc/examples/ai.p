@@ -29,7 +29,7 @@ penum http_method_t {
     HEAD, 
     DELETE, 
     LINK,        /- Unused after http 1.1
-    UNLINK      /- Unused after http 1.1
+    UNLINK       /- Unused after http 1.1
 };
 
 int  checkVersion(http_v_t version, http_method_t meth) {

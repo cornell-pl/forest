@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.38 2002-10-18 20:10:39 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.39 2002-10-18 22:16:11 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -142,6 +142,14 @@ PDC_strtoull(const char* str, char** ptr, int base)
 /* END_MACRO */
 
 /*
+ * Starting alloc size for strings, even if initial string is smaller;
+ * saves on later alloc calls when PDC_string field is re-used many
+ * times with strings of different lengths.
+ */ 
+#define PDC_STRING_HINT 128
+/* END_MACRO */
+
+/*
  * If *em is CheckAndSet, create a string copy of the string
  * that goes from begin to end-1.  Must have a no_space label.
  */
@@ -155,7 +163,7 @@ PDC_strtoull(const char* str, char** ptr, int base)
 	  goto no_space;
 	}
       }
-      if (RBuf_reserve(s_out->rbuf, (void**)&buf, sizeof(char), wdth+1, 0)) {
+      if (RBuf_reserve(s_out->rbuf, (void**)&buf, sizeof(char), wdth+1, PDC_STRING_HINT)) {
        goto no_space;
       }
       memcpy(buf, begin, wdth);
