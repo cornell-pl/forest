@@ -30,6 +30,11 @@
 #define vmcpyoldof(v,p,t,n,x) \
   (t*)vmresize((v), (p), sizeof(t)*(n)+(x), (VM_RSMOVE|VM_RSCOPY) )
 
+#define PDCI_INTERNAL_CHARCLASS_SWITCH(pdc,fn_pre,fn_post,args) \
+ ((pdc->disc->def_charclass == PDC_charclass_ASCII) \
+    ?  fn_pre ## _a_ ## fn_post ## _internal args \
+    :  fn_pre ## _e_ ## fn_post ## _internal args)
+
 /* ================================================================================ */
 /* INTERNAL TYPE DEFINITIONS */
 
@@ -238,7 +243,55 @@ ssize_t      PDC_IO_rblk_close_write2buf_internal(PDC_t *pdc, PDC_byte *buf, siz
 #define PDC_e_string_CSE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
           PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charclass_EBCDIC, "[in PDC_e_string_CSE_read]")
 
+/* def_charclass read functions */
 
+#define PDC_int8_read_internal(pdc, csm, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int8_read, (pdc, csm, ed, res_out))
+
+#define PDC_int16_read_internal(pdc, csm, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int16_read, (pdc, csm, ed, res_out))
+
+#define PDC_int32_read_internal(pdc, csm, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int32_read, (pdc, csm, ed, res_out))
+
+#define PDC_int64_read_internal(pdc, csm, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int64_read, (pdc, csm, ed, res_out))
+
+#define PDC_uint8_read_internal(pdc, csm, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint8_read, (pdc, csm, ed, res_out))
+
+#define PDC_uint16_read_internal(pdc, csm, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint16_read, (pdc, csm, ed, res_out))
+
+#define PDC_uint32_read_internal(pdc, csm, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint32_read, (pdc, csm, ed, res_out))
+
+#define PDC_uint64_read_internal(pdc, csm, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint64_read, (pdc, csm, ed, res_out))
+
+#define PDC_int8_FW_read_internal(pdc, csm, width, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int8_FW_read, (pdc, csm, width, ed, res_out))
+
+#define PDC_int16_FW_read_internal(pdc, csm, width, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int16_FW_read, (pdc, csm, width, ed, res_out))
+
+#define PDC_int32_FW_read_internal(pdc, csm, width, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int32_FW_read, (pdc, csm, width, ed, res_out))
+
+#define PDC_int64_FW_read_internal(pdc, csm, width, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int64_FW_read, (pdc, csm, width, ed, res_out))
+
+#define PDC_uint8_FW_read_internal(pdc, csm, width, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint8_FW_read, (pdc, csm, width, ed, res_out))
+
+#define PDC_uint16_FW_read_internal(pdc, csm, width, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint16_FW_read, (pdc, csm, width, ed, res_out))
+
+#define PDC_uint32_FW_read_internal(pdc, csm, width, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint32_FW_read, (pdc, csm, width, ed, res_out))
+
+#define PDC_uint64_FW_read_internal(pdc, csm, width, ed, res_out) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint64_FW_read, (pdc, csm, width, ed, res_out))
 
 /* ================================================================================ */ 
 /* HELPER MACRO TO DECLARE FAMILY OF FUNCTIONS */
@@ -362,6 +415,54 @@ PDCI_DECL_FAMILY(int, PDC_sbh_, fpoint, _write2io_internal, val);
 #define PDCI_FIRST_ARGS PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_uint32 num_bytes, PDC_uint32 d_exp, PDC_base_ed *ed
 PDCI_DECL_FAMILY(int, PDC_sbl_, fpoint, _write2buf_internal, val);
 PDCI_DECL_FAMILY(int, PDC_sbh_, fpoint, _write2buf_internal, val);
+
+#define PDC_int8_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int8_write2io, (pdc, io, ed, val))
+
+#define PDC_int16_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int16_write2io, (pdc, io, ed, val))
+
+#define PDC_int32_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int32_write2io, (pdc, io, ed, val))
+
+#define PDC_int64_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int64_write2io, (pdc, io, ed, val))
+
+#define PDC_uint8_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint8_write2io, (pdc, io, ed, val))
+
+#define PDC_uint16_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint16_write2io, (pdc, io, ed, val))
+
+#define PDC_uint32_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint32_write2io, (pdc, io, ed, val))
+
+#define PDC_uint64_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint64_write2io, (pdc, io, ed, val))
+
+#define PDC_int8_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int8_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_int16_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int16_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_int32_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int32_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_int64_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, int64_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_uint8_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint8_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_uint16_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint16_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_uint32_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint32_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_uint64_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARCLASS_SWITCH(pdc, PDC, uint64_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
 
 /* ================================================================================ */ 
 /* INTERNAL VERSIONS OF ACCUM REPORTING FUNCTIONS */
