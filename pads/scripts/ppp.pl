@@ -135,6 +135,9 @@ LINE: while (<IFILE>) {
     print;
   }
 }
+$line++;
+print "# $line \"$ifilename\"\n";
+print "_Pdone\n";
 exit 0;
 
 usage:

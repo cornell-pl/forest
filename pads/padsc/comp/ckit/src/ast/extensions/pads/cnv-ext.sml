@@ -1171,6 +1171,19 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      copyFunED
 		  end
 
+              (* int is_foo(foo *rep) *)
+              fun genIsFun(funName, rep, argPCT, bodyX) = 
+		  let val paramTys = [P.ptrPCT argPCT]
+		      val paramNames = [rep]
+		      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
+		      val bodySs = [PT.Return bodyX]
+		      val returnTy =  P.int
+		      val isFunED = 
+			  P.mkFunctionEDecl(funName, formalParams, PT.Compound bodySs, returnTy)
+		  in
+		      isFunED
+		  end
+
               fun genInitTmpStrSs str = [P.varDeclS'(PL.sfioPCT, str),
 					 PT.IfThen(P.notX(P.assignX(PT.Id str, PL.sfstropen)),
 						   PT.Compound[PT.Return PL.P_ERROR])]
@@ -1703,8 +1716,6 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      val (canonicalDecls,canonicalTid) = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
                       val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
-
-
                       (* Generate Init function (typedef case) *)
 		      val baseFunName = lookupMemFun (PX.Name baseTyName)
 		      val initFunName = lookupMemFun (PX.Name name)
@@ -1808,6 +1819,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                       val readEDs = initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
 			          @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
 
+                      (* -- generate is function (typedef case) *)
+(*		      val isName = "foo
+		      val isFunEDs = genIsFun(isName, this, canonicalPCT, pred) *)
 
                       (* -- generate accumulator init, reset, and cleanup functions (typedef case) *)
 		      fun genResetInitCleanup theSuf = 
@@ -5045,13 +5059,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  val bodySs = [P.mkCommentS "Initialize character classes."]
 		               @ (CharClass.listClasses ())
 		  val initFunED = P.mkFunctionEDecl(PL.libInit,[],PT.Compound bodySs, P.void)
-		  fun cnvLoc ast = 
-		      case ast of (Ast.DECL (cdecl, aid,paid,SourceMap.LOC{srcFile, beginLine,beginCol,endLine,endCol}))=> 
-			  Ast.DECL(cdecl,aid,paid,SourceMap.LOC{srcFile="main.p", beginLine=beginLine,
-								beginCol=beginCol,endLine=endLine,endCol=endCol})
-		      | _ => ast
 	      in
-		  List.map cnvLoc (cnvExternalDecl initFunED)
+		  cnvExternalDecl initFunED
 	      end
 
 	  in

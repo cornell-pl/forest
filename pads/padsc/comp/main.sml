@@ -169,8 +169,7 @@ structure Main : sig
 				 "#include \""^baseTyFile^"\"\n"^
                                  "\n")
             val compositeProg = (includePrefix ^
-				 "#include \"" ^ppFile^"\"\n"^
-				 ";_Pdone foo {};\n")
+				 "#include \"" ^ppFile^"\"\n")
 	    val outStrm = TextIO.openOut compositeFile
             val () = (TextIO.output(outStrm, compositeProg);
 		      TextIO.closeOut outStrm)
@@ -382,6 +381,7 @@ structure Main : sig
        case typ of Pads =>
 	 let val () = stage := "Preprocessing"
 	     val ppoutFile = tmp ".c"
+	     val ppoutFile = "ppout.c"
 	     val status = preprocess(baseTyFile, fname, ppoutFile)
 	     val () = if status <> OS.Process.success 
 	              then err "Pre-processor failed."

@@ -3,7 +3,7 @@
 /* to define a new char class, we need an int->int predicate.
    want a class that just allows 'f', 'o', and digits */
 #include "regex.h"
-char is_foo(int c) { return (c == 'f') || (c == 'o') || isdigit(c); };
+int is_foo(int c) { return (c == 'f') || (c == 'o') || isdigit(c); };
 
 Pcharclass foo {is_foo};
 

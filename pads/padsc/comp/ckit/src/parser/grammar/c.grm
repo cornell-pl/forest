@@ -361,7 +361,6 @@ end
         | pEnum of externalDecl
 	| pSelect of externalDecl
 	| pCharClass of externalDecl
-	| pDone of externalDecl
 
 %pos int
 %verbose
@@ -445,7 +444,7 @@ externalDeclaration:
         | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,      pEnumleft,      RCURLYright)))
         | pSelect RCURLY                (SOME(markExternalDecl srcMap (pSelect,    pSelectleft,    RCURLYright)))
         | pCharClass RCURLY             (SOME(markExternalDecl srcMap (pCharClass, pCharClassleft, RCURLYright)))
-        | pDone RCURLY                  (SOME(markExternalDecl srcMap (pDone,      pDoneleft,      RCURLYright)))
+        | PDONE                         (SOME(markExternalDecl srcMap (ExternalDeclExt PX.PDone,      PDONEleft,      PDONEright)))
 (* PADS END *)
 
 statement:
@@ -1263,5 +1262,3 @@ pSelect:
 pCharClass:
  PCHARCLASS pName LCURLY expr (ExternalDeclExt(PX.PCharClass{name=pName, pred = expr}))
 
-pDone:
- PDONE pName LCURLY (ExternalDeclExt(PX.PDone))
