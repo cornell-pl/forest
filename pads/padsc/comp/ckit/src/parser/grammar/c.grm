@@ -222,8 +222,8 @@ end
  	| ASSOCIATIVE | TO | KWAND                                         (* D *)     
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
-        | LCOLON | RCOLON  | DOTDOT (* PADS *)
-        | PSTRUCT | PUNION | PARRAY | PSEP | PTERM | PFORALL | PIN (* PADS *)
+        | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
+        | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PSEP | PTERM | PFORALL | PIN (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -298,6 +298,7 @@ end
         | pOptActParams of expression list
         | pOptActParamList of expression list
         | pName of string
+        | pTypedef of externalDecl
         | pStruct of externalDecl
         | pStructFieldList of (expression PX.PSField) list
         | pStructField of expression PX.PSField
@@ -361,6 +362,7 @@ externalDeclaration:
 						   	               functionDefinitionleft,
 							               functionDefinitionright)))
 (* PADS: start external declarations *)
+        | pTypedef RCURLY               (SOME(markExternalDecl srcMap (pTypedef,pTypedefleft,RCURLYright)))
         | pStruct RCURLY                (SOME(markExternalDecl srcMap (pStruct,pStructleft,RCURLYright)))
         | pUnion  RCURLY                (SOME(markExternalDecl srcMap (pUnion, pUnionleft, RCURLYright)))
         | pArray  RCURLY                (SOME(markExternalDecl srcMap (pArray, pArrayleft, RCURLYright)))
@@ -982,6 +984,19 @@ pOptActParamList:
 
 pOptActParams: ([])
  | LCOLON pOptActParamList RCOLON ( List.rev pOptActParamList )
+
+pTypedef:
+ PTYPEDEF pName pOptActParams pName pushScope pTyParams COLONCOLON pName pName EQGT LCURLY expr popScope
+ (
+   ExternalDeclExt(PX.PTypedef {baseTy = PX.Name pName1, 
+                                args   = pOptActParams,
+                                name   = pName2, 
+				params = pTyParams,
+				predTy = PX.Name pName3,
+			        thisVar= pName4,
+			        pred = expr})
+ )
+
 
 pStructField: pName pOptActParams ID pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 

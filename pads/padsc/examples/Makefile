@@ -7,6 +7,7 @@ CCFLAGS = $(CC.DEBUG)
 test_format1 :: test_format1.c format1.c -lpadsc
 test_format3 :: test_format3.c format3.c -lpadsc
 test_format5 :: test_format5.c format5.c -lpadsc
+test_format6 :: test_format6.c format6.c -lpadsc
 
 
 libtest1 :: libtest1.c -lpadsc

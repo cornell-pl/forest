@@ -32,6 +32,7 @@ struct
   val PDC_STRUCT_FIELD_ERR               = PT.Id "PDC_STRUCT_FIELD_ERR"
   val PDC_UNION_MATCH_FAILURE            = PT.Id "PDC_UNION_MATCH_FAILURE"
   val PDC_ENUM_MATCH_FAILURE             = PT.Id "PDC_ENUM_MATCH_FAILURE"
+  val PDC_TYPEDEF_CONSTRAINT_ERR         = PT.Id "PDC_TYPEDEF_CONSTRAINT_ERR"
 
   val PDC_AT_EOF                         = PT.Id "PDC_AT_EOF"
   val PDC_RANGE                          = PT.Id "PDC_RANGE"

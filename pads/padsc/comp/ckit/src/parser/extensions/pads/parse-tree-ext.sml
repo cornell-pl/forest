@@ -25,7 +25,14 @@ structure ParseTreeExt =
          | General of 'exp
        
         datatype ('decr, 'ct, 'exp) PExternal = 
-           PStruct of {name : string, 
+           PTypedef of {name : string,
+			params: ('ct * 'decr) list, 
+                        baseTy: Pty,
+			args   : 'exp list, 
+                        predTy: Pty,
+			thisVar: string,
+			pred: 'exp}
+         | PStruct of {name : string, 
 		       params: ('ct * 'decr) list, 
 		       fields : ('exp PSField) list}
          | PArray  of {name : string, baseTy : Pty, 

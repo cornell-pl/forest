@@ -149,6 +149,13 @@ struct
               pctToPTyDefDT(makeEnumPCT(fields,SOME (tag^"_e"))),
               [(PT.VarDecr tag, PT.EmptyExpr)]))
 
+
+    fun makeTyDefEDecl (oldpct : PT.ctype, newName:string) =
+        PT.ExternalDecl(
+          PT.Declaration(
+              pctToPTyDefDT(oldpct),
+              [(PT.VarDecr newName, PT.EmptyExpr)]))
+
     fun mkFunctionEDecl(funName, paramList, bodyS, retTy:PT.ctype) =
            PT.FunctionDef
               {body = bodyS,

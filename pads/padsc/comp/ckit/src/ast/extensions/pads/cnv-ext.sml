@@ -619,6 +619,87 @@ structure CnvExt : CNVEXT = struct
                     @ printSs
 		  end
 
+	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, 
+			        baseTy: PX.Pty, args: pcexp list, 
+			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
+		  let val base = "base"
+		      val user = "user"
+		      (* Generate canonical representation: typedef to base representation *)
+		      val baseTyPCT = P.makeTypedefPCT(lookupTy(baseTy, repSuf, #repname))
+		      val canonicalStructED = P.makeTyDefEDecl (baseTyPCT, repSuf name)
+		      val canonicalDecls = cnvExternalDecl canonicalStructED 
+                      val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
+
+                      (* Generate error mask: typedef to base error mask *)
+		      val baseEMPCT = P.makeTypedefPCT(lookupTy(baseTy,emSuf, #emname))
+                      val emFields  = [(base, baseEMPCT, SOME "Base error mask"),
+				       (user, PL.base_emPCT, SOME "User constraint")]
+		      val emED      = P.makeTyDefStructEDecl (emFields, emSuf name)
+		      val emDecls   = cnvExternalDecl emED
+                      val emPCT     = P.makeTypedefPCT (emSuf name)		
+
+                      (* Generate error description: typedef to base error description  *)
+		      val baseEDPCT = P.makeTypedefPCT(lookupTy(baseTy,edSuf, #edname))
+                      val edFields  = [(nerr, P.int, NONE), (errCode, P.int, NONE),
+				       (loc, PL.locPCT,NONE), (panic, P.int, NONE),
+				       (base, baseEDPCT, SOME "Base error description")]
+		      val edED      = P.makeTyDefStructEDecl (edFields, edSuf name)
+		      val edDecls   = cnvExternalDecl edED
+                      val edPCT     = P.makeTypedefPCT (edSuf name)		
+
+                      (* Generate read function *)
+                      (* -- Some helper functions *)
+		      val readName = readSuf name
+                      val baseReadFun = lookupTy(baseTy, readSuf, #readname)
+		      val () = checkParamTys(name, baseReadFun, args, 2, 3)
+		      val modPredX = PTSub.substExp (thisVar, P.starX(PT.Id (gMod rep)), pred)
+
+                      fun genReadSs () = 
+			  let 
+			      val () = expEqualTy(modPredX, CTintTys, 				
+					  fn s=> (" constraint for typedef "^
+						  name ^ " has type: " ^ s ^
+						  ". Expected an int."))
+			      val readBaseSs = 
+				  [PT.IfThen( 
+					     PL.readFunChkX(PL.PDC_ERROR, 
+							    baseReadFun, 
+							    PT.Id ts, 
+							    P.addrX (fieldX(em,base)),
+							    args,
+							    P.addrX (fieldX(ed,base)),
+							    PT.Id (gMod rep), PT.Id disc),
+					     PT.Return PL.PDC_ERROR)]
+
+			      val checkConstraintSs = 
+				  [PT.IfThen(
+					     P.andX(P.lteX(fieldX(em,user), PL.EM_CHECK),
+						    P.notX modPredX),
+					     PT.Compound (reportErrorSs(PL.PDC_TYPEDEF_CONSTRAINT_ERR,
+									true,"", [])
+							  @ [PT.Return PL.PDC_ERROR])
+					     )]
+			      val okSs = [PT.Return PL.PDC_OK]
+		      in
+			  readBaseSs @ checkConstraintSs @ okSs
+		      end
+
+                      (* -- Assemble read function *)
+		      val _ = pushLocalEnv()                                        (* create new scope *)
+		      val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
+		      val cParams : (string * pcty) list = List.map mungeParam params
+                      val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
+		      val readFields = genReadSs ()                                   (* does type checking *)
+		      val _ = popLocalEnv()                                         (* remove scope *)
+		      val bodySs = readFields 
+		      val readFunED = genReadFun(readName, cParams, emPCT,edPCT,canonicalPCT, NONE, bodySs)
+		  in
+		        canonicalDecls
+                      @ emDecls
+                      @ edDecls
+                      @ cnvExternalDecl readFunED
+		  end
+
 	      fun cnvPStruct ({name:string, params: (pcty * pcdecr) list, fields : pcexp PX.PSField list}) = 
 	          let (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b (PX.Full fd) = f fd
@@ -924,7 +1005,7 @@ structure CnvExt : CNVEXT = struct
 		     val tagDecls = cnvExternalDecl tagED
 		     val tagPCT = P.makeTypedefPCT(tgSuf name)
 
-                     (* generate canoncical representation *)
+                     (* generate canonical representation *)
 		     fun genRepFull {pty :PX.Pty, args : pcexp list, 
 				     name:string, pred:pcexp option, comment:string option} = 
 			 let val predStringOpt = Option.map P.expToString pred
@@ -1627,7 +1708,8 @@ structure CnvExt : CNVEXT = struct
 
 	  in
 	      case decl 
-	      of PX.PStruct s => cnvPStruct s
+	      of PX.PTypedef t => cnvPTypedef t
+              |  PX.PStruct s => cnvPStruct s
               |  PX.PUnion  u => cnvPUnion  u
               |  PX.PArray  a => cnvPArray  a
 	  end

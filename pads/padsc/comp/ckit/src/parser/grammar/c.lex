@@ -228,6 +228,8 @@ directive = #(.)*\n;
 <INITIAL>"(:"		=> (Tokens.LCOLON(yypos,yypos+2)  (* PADS *));  
 <INITIAL>":)"		=> (Tokens.RCOLON(yypos,yypos+2));
 <INITIAL>".."		=> (Tokens.DOTDOT(yypos,yypos+2));
+<INITIAL>"::"		=> (Tokens.COLONCOLON(yypos,yypos+2));
+<INITIAL>"=>"		=> (Tokens.EQGT(yypos,yypos+2));
 
 
 <INITIAL>{octnum}	=> (Tokens.DECNUM(mkOctInt(yytext,yypos,yypos+size(yytext),errWarn),yypos, yypos+size(yytext)));

@@ -67,6 +67,7 @@ struct
 	      ("switch", Tokens.SWITCH),
 	      ("while", Tokens.WHILE)
 	      ] @ [  (* PADSC *)
+               ("ptypedef", Tokens.PTYPEDEF),
                ("pstruct", Tokens.PSTRUCT),
                ("parray", Tokens.PARRAY),
                ("punion", Tokens.PUNION),
