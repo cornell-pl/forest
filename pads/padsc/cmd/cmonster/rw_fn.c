@@ -27,1123 +27,1123 @@
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(int8_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int8 targ,
-		PDC_int8_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint8 targ,
+		Pint8_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int8_write2buf",
+		"Psbl_int8_write2buf",
 		1,
-		PDC_sbl_int8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_int8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(int16_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int16 targ,
-		PDC_int16_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint16 targ,
+		Pint16_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int16_write2buf",
+		"Psbl_int16_write2buf",
 		2,
-		PDC_sbl_int16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_int16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(int32_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_int32_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint32 targ,
+		Pint32_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(int64_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int64 targ,
-		PDC_int64_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint64 targ,
+		Pint64_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lld\n", (long long)targ),
-		"PDC_sbl_int64_write2buf",
+		"Psbl_int64_write2buf",
 		8,
-		PDC_sbl_int64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_int64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(uint8_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint8 targ,
-		PDC_uint8_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint8 targ,
+		Puint8_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint8_write2buf",
+		"Psbl_uint8_write2buf",
 		1,
-		PDC_sbl_uint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_uint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(uint16_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint16 targ,
-		PDC_uint16_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint16 targ,
+		Puint16_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint16_write2buf",
+		"Psbl_uint16_write2buf",
 		2,
-		PDC_sbl_uint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_uint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(uint32_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint32 targ,
-		PDC_uint32_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint32 targ,
+		Puint32_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lu\n", (unsigned long)targ),
-		"PDC_sbl_uint32_write2buf",
+		"Psbl_uint32_write2buf",
 		4,
-		PDC_sbl_uint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_uint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(uint64_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint64 targ,
-		PDC_uint64_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint64 targ,
+		Puint64_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %llu\n", (unsigned long long)targ),
-		"PDC_sbl_uint64_write2buf",
+		"Psbl_uint64_write2buf",
 		8,
-		PDC_sbl_uint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_uint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_int8_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int8 targ,
-		PDC_a_int8_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint8 targ,
+		Pa_int8_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int8_write2buf",
+		"Psbl_int8_write2buf",
 		1,
-		PDC_sbl_int8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_int8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_int16_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int16 targ,
-		PDC_a_int16_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint16 targ,
+		Pa_int16_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int16_write2buf",
+		"Psbl_int16_write2buf",
 		2,
-		PDC_sbl_int16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_int16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_int32_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_a_int32_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint32 targ,
+		Pa_int32_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_int64_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int64 targ,
-		PDC_a_int64_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint64 targ,
+		Pa_int64_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lld\n", (long long)targ),
-		"PDC_sbl_int64_write2buf",
+		"Psbl_int64_write2buf",
 		8,
-		PDC_sbl_int64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_int64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_uint8_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint8 targ,
-		PDC_a_uint8_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint8 targ,
+		Pa_uint8_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint8_write2buf",
+		"Psbl_uint8_write2buf",
 		1,
-		PDC_sbl_uint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_uint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_uint16_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint16 targ,
-		PDC_a_uint16_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint16 targ,
+		Pa_uint16_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint16_write2buf",
+		"Psbl_uint16_write2buf",
 		2,
-		PDC_sbl_uint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_uint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_uint32_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint32 targ,
-		PDC_a_uint32_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint32 targ,
+		Pa_uint32_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lu\n", (unsigned long)targ),
-		"PDC_sbl_uint32_write2buf",
+		"Psbl_uint32_write2buf",
 		4,
-		PDC_sbl_uint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_uint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_uint64_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint64 targ,
-		PDC_a_uint64_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint64 targ,
+		Pa_uint64_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %llu\n", (unsigned long long)targ),
-		"PDC_sbl_uint64_write2buf",
+		"Psbl_uint64_write2buf",
 		8,
-		PDC_sbl_uint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_uint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_int8_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int8 targ,
-		PDC_e_int8_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint8 targ,
+		Pe_int8_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int8_write2buf",
+		"Psbl_int8_write2buf",
 		1,
-		PDC_sbl_int8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_int8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_int16_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int16 targ,
-		PDC_e_int16_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint16 targ,
+		Pe_int16_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int16_write2buf",
+		"Psbl_int16_write2buf",
 		2,
-		PDC_sbl_int16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_int16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_int32_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_e_int32_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint32 targ,
+		Pe_int32_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_int64_FW),
 		CM_RW_FN_PARAMS,
-		PDC_int64 targ,
-		PDC_e_int64_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint64 targ,
+		Pe_int64_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lld\n", (long long)targ),
-		"PDC_sbl_int64_write2buf",
+		"Psbl_int64_write2buf",
 		8,
-		PDC_sbl_int64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_int64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_uint8_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint8 targ,
-		PDC_e_uint8_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint8 targ,
+		Pe_uint8_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint8_write2buf",
+		"Psbl_uint8_write2buf",
 		1,
-		PDC_sbl_uint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_uint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_uint16_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint16 targ,
-		PDC_e_uint16_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint16 targ,
+		Pe_uint16_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint16_write2buf",
+		"Psbl_uint16_write2buf",
 		2,
-		PDC_sbl_uint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_uint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_uint32_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint32 targ,
-		PDC_e_uint32_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint32 targ,
+		Pe_uint32_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lu\n", (unsigned long)targ),
-		"PDC_sbl_uint32_write2buf",
+		"Psbl_uint32_write2buf",
 		4,
-		PDC_sbl_uint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_uint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_uint64_FW),
 		CM_RW_FN_PARAMS,
-		PDC_uint64 targ,
-		PDC_e_uint64_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint64 targ,
+		Pe_uint64_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %llu\n", (unsigned long long)targ),
-		"PDC_sbl_uint64_write2buf",
+		"Psbl_uint64_write2buf",
 		8,
-		PDC_sbl_uint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_uint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(b_int8),
 		CM_RW_FN_PARAMS,
-		PDC_int8 targ,
-		PDC_b_int8_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
+		Pint8 targ,
+		Pb_int8_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int8_write2buf",
+		"Psbl_int8_write2buf",
 		1,
-		PDC_sbl_int8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_int8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(b_int16),
 		CM_RW_FN_PARAMS,
-		PDC_int16 targ,
-		PDC_b_int16_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
+		Pint16 targ,
+		Pb_int16_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int16_write2buf",
+		"Psbl_int16_write2buf",
 		2,
-		PDC_sbl_int16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_int16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(b_int32),
 		CM_RW_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_b_int32_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
+		Pint32 targ,
+		Pb_int32_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(b_int64),
 		CM_RW_FN_PARAMS,
-		PDC_int64 targ,
-		PDC_b_int64_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
+		Pint64 targ,
+		Pb_int64_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lld\n", (long long)targ),
-		"PDC_sbl_int64_write2buf",
+		"Psbl_int64_write2buf",
 		8,
-		PDC_sbl_int64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_int64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(b_uint8),
 		CM_RW_FN_PARAMS,
-		PDC_uint8 targ,
-		PDC_b_uint8_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
+		Puint8 targ,
+		Pb_uint8_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint8_write2buf",
+		"Psbl_uint8_write2buf",
 		1,
-		PDC_sbl_uint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_uint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(b_uint16),
 		CM_RW_FN_PARAMS,
-		PDC_uint16 targ,
-		PDC_b_uint16_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
+		Puint16 targ,
+		Pb_uint16_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint16_write2buf",
+		"Psbl_uint16_write2buf",
 		2,
-		PDC_sbl_uint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_uint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(b_uint32),
 		CM_RW_FN_PARAMS,
-		PDC_uint32 targ,
-		PDC_b_uint32_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
+		Puint32 targ,
+		Pb_uint32_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lu\n", (unsigned long)targ),
-		"PDC_sbl_uint32_write2buf",
+		"Psbl_uint32_write2buf",
 		4,
-		PDC_sbl_uint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_uint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(b_uint64),
 		CM_RW_FN_PARAMS,
-		PDC_uint64 targ,
-		PDC_b_uint64_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
+		Puint64 targ,
+		Pb_uint64_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %llu\n", (unsigned long long)targ),
-		"PDC_sbl_uint64_write2buf",
+		"Psbl_uint64_write2buf",
 		8,
-		PDC_sbl_uint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_uint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_int8),
 		CM_RW_FN_PARAMS,
-		PDC_int8 targ,
-		PDC_ebc_int8_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint8 targ,
+		Pebc_int8_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int8_write2buf",
+		"Psbl_int8_write2buf",
 		1,
-		PDC_sbl_int8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_int8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_int16),
 		CM_RW_FN_PARAMS,
-		PDC_int16 targ,
-		PDC_ebc_int16_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint16 targ,
+		Pebc_int16_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int16_write2buf",
+		"Psbl_int16_write2buf",
 		2,
-		PDC_sbl_int16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_int16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_int32),
 		CM_RW_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_ebc_int32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint32 targ,
+		Pebc_int32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_int64),
 		CM_RW_FN_PARAMS,
-		PDC_int64 targ,
-		PDC_ebc_int64_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint64 targ,
+		Pebc_int64_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lld\n", (long long)targ),
-		"PDC_sbl_int64_write2buf",
+		"Psbl_int64_write2buf",
 		8,
-		PDC_sbl_int64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_int64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_uint8),
 		CM_RW_FN_PARAMS,
-		PDC_uint8 targ,
-		PDC_ebc_uint8_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint8 targ,
+		Pebc_uint8_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint8_write2buf",
+		"Psbl_uint8_write2buf",
 		1,
-		PDC_sbl_uint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_uint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_uint16),
 		CM_RW_FN_PARAMS,
-		PDC_uint16 targ,
-		PDC_ebc_uint16_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint16 targ,
+		Pebc_uint16_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint16_write2buf",
+		"Psbl_uint16_write2buf",
 		2,
-		PDC_sbl_uint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_uint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_uint32),
 		CM_RW_FN_PARAMS,
-		PDC_uint32 targ,
-		PDC_ebc_uint32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint32 targ,
+		Pebc_uint32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lu\n", (unsigned long)targ),
-		"PDC_sbl_uint32_write2buf",
+		"Psbl_uint32_write2buf",
 		4,
-		PDC_sbl_uint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_uint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_uint64),
 		CM_RW_FN_PARAMS,
-		PDC_uint64 targ,
-		PDC_ebc_uint64_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint64 targ,
+		Pebc_uint64_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %llu\n", (unsigned long long)targ),
-		"PDC_sbl_uint64_write2buf",
+		"Psbl_uint64_write2buf",
 		8,
-		PDC_sbl_uint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_uint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_int8),
 		CM_RW_FN_PARAMS,
-		PDC_int8 targ,
-		PDC_bcd_int8_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint8 targ,
+		Pbcd_int8_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int8_write2buf",
+		"Psbl_int8_write2buf",
 		1,
-		PDC_sbl_int8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_int8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_int16),
 		CM_RW_FN_PARAMS,
-		PDC_int16 targ,
-		PDC_bcd_int16_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint16 targ,
+		Pbcd_int16_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int16_write2buf",
+		"Psbl_int16_write2buf",
 		2,
-		PDC_sbl_int16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_int16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_int32),
 		CM_RW_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_bcd_int32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint32 targ,
+		Pbcd_int32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_int64),
 		CM_RW_FN_PARAMS,
-		PDC_int64 targ,
-		PDC_bcd_int64_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint64 targ,
+		Pbcd_int64_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lld\n", (long long)targ),
-		"PDC_sbl_int64_write2buf",
+		"Psbl_int64_write2buf",
 		8,
-		PDC_sbl_int64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_int64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_uint8),
 		CM_RW_FN_PARAMS,
-		PDC_uint8 targ,
-		PDC_bcd_uint8_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint8 targ,
+		Pbcd_uint8_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint8_write2buf",
+		"Psbl_uint8_write2buf",
 		1,
-		PDC_sbl_uint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_uint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_uint16),
 		CM_RW_FN_PARAMS,
-		PDC_uint16 targ,
-		PDC_bcd_uint16_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint16 targ,
+		Pbcd_uint16_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint16_write2buf",
+		"Psbl_uint16_write2buf",
 		2,
-		PDC_sbl_uint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_uint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_uint32),
 		CM_RW_FN_PARAMS,
-		PDC_uint32 targ,
-		PDC_bcd_uint32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint32 targ,
+		Pbcd_uint32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lu\n", (unsigned long)targ),
-		"PDC_sbl_uint32_write2buf",
+		"Psbl_uint32_write2buf",
 		4,
-		PDC_sbl_uint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_uint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_uint64),
 		CM_RW_FN_PARAMS,
-		PDC_uint64 targ,
-		PDC_bcd_uint64_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint64 targ,
+		Pbcd_uint64_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %llu\n", (unsigned long long)targ),
-		"PDC_sbl_uint64_write2buf",
+		"Psbl_uint64_write2buf",
 		8,
-		PDC_sbl_uint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_uint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_int8),
 		CM_RW_FN_PARAMS,
-		PDC_int8 targ,
-		PDC_sbl_int8_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint8 targ,
+		Psbl_int8_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int8_write2buf",
+		"Psbl_int8_write2buf",
 		1,
-		PDC_sbl_int8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_int8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_int16),
 		CM_RW_FN_PARAMS,
-		PDC_int16 targ,
-		PDC_sbl_int16_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint16 targ,
+		Psbl_int16_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int16_write2buf",
+		"Psbl_int16_write2buf",
 		2,
-		PDC_sbl_int16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_int16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_int32),
 		CM_RW_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_sbl_int32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint32 targ,
+		Psbl_int32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_int64),
 		CM_RW_FN_PARAMS,
-		PDC_int64 targ,
-		PDC_sbl_int64_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint64 targ,
+		Psbl_int64_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lld\n", (long long)targ),
-		"PDC_sbl_int64_write2buf",
+		"Psbl_int64_write2buf",
 		8,
-		PDC_sbl_int64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_int64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_uint8),
 		CM_RW_FN_PARAMS,
-		PDC_uint8 targ,
-		PDC_sbl_uint8_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint8 targ,
+		Psbl_uint8_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint8_write2buf",
+		"Psbl_uint8_write2buf",
 		1,
-		PDC_sbl_uint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_uint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_uint16),
 		CM_RW_FN_PARAMS,
-		PDC_uint16 targ,
-		PDC_sbl_uint16_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint16 targ,
+		Psbl_uint16_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint16_write2buf",
+		"Psbl_uint16_write2buf",
 		2,
-		PDC_sbl_uint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_uint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_uint32),
 		CM_RW_FN_PARAMS,
-		PDC_uint32 targ,
-		PDC_sbl_uint32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint32 targ,
+		Psbl_uint32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lu\n", (unsigned long)targ),
-		"PDC_sbl_uint32_write2buf",
+		"Psbl_uint32_write2buf",
 		4,
-		PDC_sbl_uint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_uint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_uint64),
 		CM_RW_FN_PARAMS,
-		PDC_uint64 targ,
-		PDC_sbl_uint64_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint64 targ,
+		Psbl_uint64_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %llu\n", (unsigned long long)targ),
-		"PDC_sbl_uint64_write2buf",
+		"Psbl_uint64_write2buf",
 		8,
-		PDC_sbl_uint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_uint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_int8),
 		CM_RW_FN_PARAMS,
-		PDC_int8 targ,
-		PDC_sbh_int8_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint8 targ,
+		Psbh_int8_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int8_write2buf",
+		"Psbl_int8_write2buf",
 		1,
-		PDC_sbl_int8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_int8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_int16),
 		CM_RW_FN_PARAMS,
-		PDC_int16 targ,
-		PDC_sbh_int16_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint16 targ,
+		Psbh_int16_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %d\n", (int)targ),
-		"PDC_sbl_int16_write2buf",
+		"Psbl_int16_write2buf",
 		2,
-		PDC_sbl_int16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_int16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_int32),
 		CM_RW_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_sbh_int32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint32 targ,
+		Psbh_int32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_int64),
 		CM_RW_FN_PARAMS,
-		PDC_int64 targ,
-		PDC_sbh_int64_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Pint64 targ,
+		Psbh_int64_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lld\n", (long long)targ),
-		"PDC_sbl_int64_write2buf",
+		"Psbl_int64_write2buf",
 		8,
-		PDC_sbl_int64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_int64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_uint8),
 		CM_RW_FN_PARAMS,
-		PDC_uint8 targ,
-		PDC_sbh_uint8_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint8 targ,
+		Psbh_uint8_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint8_write2buf",
+		"Psbl_uint8_write2buf",
 		1,
-		PDC_sbl_uint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
+		Psbl_uint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_uint16),
 		CM_RW_FN_PARAMS,
-		PDC_uint16 targ,
-		PDC_sbh_uint16_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint16 targ,
+		Psbh_uint16_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %u\n", (unsigned int)targ),
-		"PDC_sbl_uint16_write2buf",
+		"Psbl_uint16_write2buf",
 		2,
-		PDC_sbl_uint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
+		Psbl_uint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_uint32),
 		CM_RW_FN_PARAMS,
-		PDC_uint32 targ,
-		PDC_sbh_uint32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint32 targ,
+		Psbh_uint32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %lu\n", (unsigned long)targ),
-		"PDC_sbl_uint32_write2buf",
+		"Psbl_uint32_write2buf",
 		4,
-		PDC_sbl_uint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_uint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_uint64),
 		CM_RW_FN_PARAMS,
-		PDC_uint64 targ,
-		PDC_sbh_uint64_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		PDC_NULL_STMT,
+		Puint64 targ,
+		Psbh_uint64_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val = %llu\n", (unsigned long long)targ),
-		"PDC_sbl_uint64_write2buf",
+		"Psbl_uint64_write2buf",
 		8,
-		PDC_sbl_uint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
+		Psbl_uint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_fpoint8),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint8 targ,
-		PDC_ebc_fpoint8_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint8 targ,
+		Pebc_fpoint8_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %d  denom = %u\n", (int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_fpoint8_write2buf",
+		"Psbl_fpoint8_write2buf",
 		1,
-		PDC_sbl_fpoint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_fpoint16),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint16 targ,
-		PDC_ebc_fpoint16_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint16 targ,
+		Pebc_fpoint16_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %d  denom = %u\n", (int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_fpoint16_write2buf",
+		"Psbl_fpoint16_write2buf",
 		2,
-		PDC_sbl_fpoint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_fpoint32),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint32 targ,
-		PDC_ebc_fpoint32_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint32 targ,
+		Pebc_fpoint32_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %ld  denom = %lu\n", (long)targ.num, (unsigned long)targ.denom),
-		"PDC_sbl_fpoint32_write2buf",
+		"Psbl_fpoint32_write2buf",
 		4,
-		PDC_sbl_fpoint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_fpoint64),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint64 targ,
-		PDC_ebc_fpoint64_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint64 targ,
+		Pebc_fpoint64_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %lld  denom = %llu\n", (long long)targ.num, (unsigned long long)targ.denom),
-		"PDC_sbl_fpoint64_write2buf",
+		"Psbl_fpoint64_write2buf",
 		8,
-		PDC_sbl_fpoint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_ufpoint8),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint8 targ,
-		PDC_ebc_ufpoint8_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint8 targ,
+		Pebc_ufpoint8_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %u  denom = %u\n", (unsigned int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_ufpoint8_write2buf",
+		"Psbl_ufpoint8_write2buf",
 		1,
-		PDC_sbl_ufpoint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_ufpoint16),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint16 targ,
-		PDC_ebc_ufpoint16_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint16 targ,
+		Pebc_ufpoint16_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %u  denom = %u\n", (unsigned int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_ufpoint16_write2buf",
+		"Psbl_ufpoint16_write2buf",
 		2,
-		PDC_sbl_ufpoint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_ufpoint32),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint32 targ,
-		PDC_ebc_ufpoint32_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint32 targ,
+		Pebc_ufpoint32_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %lu  denom = %lu\n", (unsigned long)targ.num, (unsigned long)targ.denom),
-		"PDC_sbl_ufpoint32_write2buf",
+		"Psbl_ufpoint32_write2buf",
 		4,
-		PDC_sbl_ufpoint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(ebc_ufpoint64),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint64 targ,
-		PDC_ebc_ufpoint64_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint64 targ,
+		Pebc_ufpoint64_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %llu  denom = %llu\n", (unsigned long long)targ.num, (unsigned long long)targ.denom),
-		"PDC_sbl_ufpoint64_write2buf",
+		"Psbl_ufpoint64_write2buf",
 		8,
-		PDC_sbl_ufpoint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_fpoint8),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint8 targ,
-		PDC_bcd_fpoint8_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint8 targ,
+		Pbcd_fpoint8_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %d  denom = %u\n", (int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_fpoint8_write2buf",
+		"Psbl_fpoint8_write2buf",
 		1,
-		PDC_sbl_fpoint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_fpoint16),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint16 targ,
-		PDC_bcd_fpoint16_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint16 targ,
+		Pbcd_fpoint16_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %d  denom = %u\n", (int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_fpoint16_write2buf",
+		"Psbl_fpoint16_write2buf",
 		2,
-		PDC_sbl_fpoint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_fpoint32),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint32 targ,
-		PDC_bcd_fpoint32_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint32 targ,
+		Pbcd_fpoint32_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %ld  denom = %lu\n", (long)targ.num, (unsigned long)targ.denom),
-		"PDC_sbl_fpoint32_write2buf",
+		"Psbl_fpoint32_write2buf",
 		4,
-		PDC_sbl_fpoint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_fpoint64),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint64 targ,
-		PDC_bcd_fpoint64_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint64 targ,
+		Pbcd_fpoint64_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %lld  denom = %llu\n", (long long)targ.num, (unsigned long long)targ.denom),
-		"PDC_sbl_fpoint64_write2buf",
+		"Psbl_fpoint64_write2buf",
 		8,
-		PDC_sbl_fpoint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_ufpoint8),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint8 targ,
-		PDC_bcd_ufpoint8_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint8 targ,
+		Pbcd_ufpoint8_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %u  denom = %u\n", (unsigned int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_ufpoint8_write2buf",
+		"Psbl_ufpoint8_write2buf",
 		1,
-		PDC_sbl_ufpoint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_ufpoint16),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint16 targ,
-		PDC_bcd_ufpoint16_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint16 targ,
+		Pbcd_ufpoint16_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %u  denom = %u\n", (unsigned int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_ufpoint16_write2buf",
+		"Psbl_ufpoint16_write2buf",
 		2,
-		PDC_sbl_ufpoint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_ufpoint32),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint32 targ,
-		PDC_bcd_ufpoint32_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint32 targ,
+		Pbcd_ufpoint32_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %lu  denom = %lu\n", (unsigned long)targ.num, (unsigned long)targ.denom),
-		"PDC_sbl_ufpoint32_write2buf",
+		"Psbl_ufpoint32_write2buf",
 		4,
-		PDC_sbl_ufpoint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(bcd_ufpoint64),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint64 targ,
-		PDC_bcd_ufpoint64_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint64 targ,
+		Pbcd_ufpoint64_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %llu  denom = %llu\n", (unsigned long long)targ.num, (unsigned long long)targ.denom),
-		"PDC_sbl_ufpoint64_write2buf",
+		"Psbl_ufpoint64_write2buf",
 		8,
-		PDC_sbl_ufpoint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_fpoint8),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint8 targ,
-		PDC_sbl_fpoint8_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint8 targ,
+		Psbl_fpoint8_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %d  denom = %u\n", (int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_fpoint8_write2buf",
+		"Psbl_fpoint8_write2buf",
 		1,
-		PDC_sbl_fpoint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_fpoint16),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint16 targ,
-		PDC_sbl_fpoint16_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint16 targ,
+		Psbl_fpoint16_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %d  denom = %u\n", (int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_fpoint16_write2buf",
+		"Psbl_fpoint16_write2buf",
 		2,
-		PDC_sbl_fpoint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_fpoint32),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint32 targ,
-		PDC_sbl_fpoint32_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint32 targ,
+		Psbl_fpoint32_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %ld  denom = %lu\n", (long)targ.num, (unsigned long)targ.denom),
-		"PDC_sbl_fpoint32_write2buf",
+		"Psbl_fpoint32_write2buf",
 		4,
-		PDC_sbl_fpoint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_fpoint64),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint64 targ,
-		PDC_sbl_fpoint64_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint64 targ,
+		Psbl_fpoint64_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %lld  denom = %llu\n", (long long)targ.num, (unsigned long long)targ.denom),
-		"PDC_sbl_fpoint64_write2buf",
+		"Psbl_fpoint64_write2buf",
 		8,
-		PDC_sbl_fpoint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_ufpoint8),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint8 targ,
-		PDC_sbl_ufpoint8_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint8 targ,
+		Psbl_ufpoint8_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %u  denom = %u\n", (unsigned int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_ufpoint8_write2buf",
+		"Psbl_ufpoint8_write2buf",
 		1,
-		PDC_sbl_ufpoint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_ufpoint16),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint16 targ,
-		PDC_sbl_ufpoint16_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint16 targ,
+		Psbl_ufpoint16_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %u  denom = %u\n", (unsigned int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_ufpoint16_write2buf",
+		"Psbl_ufpoint16_write2buf",
 		2,
-		PDC_sbl_ufpoint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_ufpoint32),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint32 targ,
-		PDC_sbl_ufpoint32_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint32 targ,
+		Psbl_ufpoint32_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %lu  denom = %lu\n", (unsigned long)targ.num, (unsigned long)targ.denom),
-		"PDC_sbl_ufpoint32_write2buf",
+		"Psbl_ufpoint32_write2buf",
 		4,
-		PDC_sbl_ufpoint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbl_ufpoint64),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint64 targ,
-		PDC_sbl_ufpoint64_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint64 targ,
+		Psbl_ufpoint64_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %llu  denom = %llu\n", (unsigned long long)targ.num, (unsigned long long)targ.denom),
-		"PDC_sbl_ufpoint64_write2buf",
+		"Psbl_ufpoint64_write2buf",
 		8,
-		PDC_sbl_ufpoint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_fpoint8),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint8 targ,
-		PDC_sbh_fpoint8_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint8 targ,
+		Psbh_fpoint8_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %d  denom = %u\n", (int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_fpoint8_write2buf",
+		"Psbl_fpoint8_write2buf",
 		1,
-		PDC_sbl_fpoint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_fpoint16),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint16 targ,
-		PDC_sbh_fpoint16_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint16 targ,
+		Psbh_fpoint16_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %d  denom = %u\n", (int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_fpoint16_write2buf",
+		"Psbl_fpoint16_write2buf",
 		2,
-		PDC_sbl_fpoint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_fpoint32),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint32 targ,
-		PDC_sbh_fpoint32_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint32 targ,
+		Psbh_fpoint32_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %ld  denom = %lu\n", (long)targ.num, (unsigned long)targ.denom),
-		"PDC_sbl_fpoint32_write2buf",
+		"Psbl_fpoint32_write2buf",
 		4,
-		PDC_sbl_fpoint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_fpoint64),
 		CM_RW_FN_PARAMS,
-		PDC_fpoint64 targ,
-		PDC_sbh_fpoint64_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pfpoint64 targ,
+		Psbh_fpoint64_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %lld  denom = %llu\n", (long long)targ.num, (unsigned long long)targ.denom),
-		"PDC_sbl_fpoint64_write2buf",
+		"Psbl_fpoint64_write2buf",
 		8,
-		PDC_sbl_fpoint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
+		Psbl_fpoint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_ufpoint8),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint8 targ,
-		PDC_sbh_ufpoint8_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint8 targ,
+		Psbh_ufpoint8_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %u  denom = %u\n", (unsigned int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_ufpoint8_write2buf",
+		"Psbl_ufpoint8_write2buf",
 		1,
-		PDC_sbl_ufpoint8_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint8_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 1, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_ufpoint16),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint16 targ,
-		PDC_sbh_ufpoint16_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint16 targ,
+		Psbh_ufpoint16_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %u  denom = %u\n", (unsigned int)targ.num, (unsigned int)targ.denom),
-		"PDC_sbl_ufpoint16_write2buf",
+		"Psbl_ufpoint16_write2buf",
 		2,
-		PDC_sbl_ufpoint16_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint16_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 2, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_ufpoint32),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint32 targ,
-		PDC_sbh_ufpoint32_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint32 targ,
+		Psbh_ufpoint32_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %lu  denom = %lu\n", (unsigned long)targ.num, (unsigned long)targ.denom),
-		"PDC_sbl_ufpoint32_write2buf",
+		"Psbl_ufpoint32_write2buf",
 		4,
-		PDC_sbl_ufpoint32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(sbh_ufpoint64),
 		CM_RW_FN_PARAMS,
-		PDC_ufpoint64 targ,
-		PDC_sbh_ufpoint64_read(cm->pdc, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
-		PDC_NULL_STMT,
+		Pufpoint64 targ,
+		Psbh_ufpoint64_read(cm->pads, &m, qy->params.elts[0], qy->params.elts[1], &pd, &targ),
+		P_NULL_STMT,
 		sfprintf(cm->errf, "  ==> val: num = %llu  denom = %llu\n", (unsigned long long)targ.num, (unsigned long long)targ.denom),
-		"PDC_sbl_ufpoint64_write2buf",
+		"Psbl_ufpoint64_write2buf",
 		8,
-		PDC_sbl_ufpoint64_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
+		Psbl_ufpoint64_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 8, qy->params.elts[1], &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(char),
 		CM_RW_FN_PARAMS,
-		PDC_char targ,
-		PDC_char_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
-		sfprintf(cm->errf, "  ==> val = %s\n", PDC_qfmt_char(targ)),
-		"PDC_a_char_write2buf",
+		Pchar targ,
+		Pchar_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
+		sfprintf(cm->errf, "  ==> val = %s\n", P_qfmt_char(targ)),
+		"Pa_char_write2buf",
 		1,
-		PDC_a_char_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, &pd, &targ)
+		Pa_char_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_char),
 		CM_RW_FN_PARAMS,
-		PDC_char targ,
-		PDC_a_char_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
-		sfprintf(cm->errf, "  ==> val = %s\n", PDC_qfmt_char(targ)),
-		"PDC_a_char_write2buf",
+		Pchar targ,
+		Pa_char_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
+		sfprintf(cm->errf, "  ==> val = %s\n", P_qfmt_char(targ)),
+		"Pa_char_write2buf",
 		1,
-		PDC_a_char_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, &pd, &targ)
+		Pa_char_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_char),
 		CM_RW_FN_PARAMS,
-		PDC_char targ,
-		PDC_e_char_read(cm->pdc, &m, &pd, &targ),
-		PDC_NULL_STMT,
-		sfprintf(cm->errf, "  ==> val = %s\n", PDC_qfmt_char(targ)),
-		"PDC_a_char_write2buf",
+		Pchar targ,
+		Pe_char_read(cm->pads, &m, &pd, &targ),
+		P_NULL_STMT,
+		sfprintf(cm->errf, "  ==> val = %s\n", P_qfmt_char(targ)),
+		"Pa_char_write2buf",
 		1,
-		PDC_a_char_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, &pd, &targ)
+		Pa_char_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(string_FW),
 		CM_RW_FN_PARAMS,
-		PDC_string *targp = &(cm->tmp1),
-		PDC_string_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, targp),
-		PDC_NULL_STMT,
-		sfprintf(cm->errf, "  ==> val = [%s]\n", PDC_qfmt_str(targp)),
-		"PDC_a_string_FW_write2buf",
+		Pstring *targp = &(cm->tmp1),
+		Pstring_FW_read(cm->pads, &m, qy->params.elts[0], &pd, targp),
+		P_NULL_STMT,
+		sfprintf(cm->errf, "  ==> val = [%s]\n", P_qfmt_str(targp)),
+		"Pa_string_FW_write2buf",
 		qy->params.elts[0],
-		PDC_a_string_FW_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, targp)
+		Pa_string_FW_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, targp)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_string_FW),
 		CM_RW_FN_PARAMS,
-		PDC_string *targp = &(cm->tmp1),
-		PDC_a_string_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, targp),
-		PDC_NULL_STMT,
-		sfprintf(cm->errf, "  ==> val = [%s]\n", PDC_qfmt_str(targp)),
-		"PDC_a_string_FW_write2buf",
+		Pstring *targp = &(cm->tmp1),
+		Pa_string_FW_read(cm->pads, &m, qy->params.elts[0], &pd, targp),
+		P_NULL_STMT,
+		sfprintf(cm->errf, "  ==> val = [%s]\n", P_qfmt_str(targp)),
+		"Pa_string_FW_write2buf",
 		qy->params.elts[0],
-		PDC_a_string_FW_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, targp)
+		Pa_string_FW_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, targp)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_string_FW),
 		CM_RW_FN_PARAMS,
-		PDC_string *targp = &(cm->tmp1),
-		PDC_e_string_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, targp),
-		PDC_NULL_STMT,
-		sfprintf(cm->errf, "  ==> val = [%s]\n", PDC_qfmt_str(targp)),
-		"PDC_a_string_FW_write2buf",
+		Pstring *targp = &(cm->tmp1),
+		Pe_string_FW_read(cm->pads, &m, qy->params.elts[0], &pd, targp),
+		P_NULL_STMT,
+		sfprintf(cm->errf, "  ==> val = [%s]\n", P_qfmt_str(targp)),
+		"Pa_string_FW_write2buf",
 		qy->params.elts[0],
-		PDC_a_string_FW_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, targp)
+		Pa_string_FW_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, targp)
 );
 

@@ -1,40 +1,40 @@
-#include "padsc.h"
+#include "pads.h"
 #include "format5.h"
 
 int main(int argc, char** argv) {
-  PDC_t*          pdc;
+  P_t*          pads;
   call_pd         cpd, cpdCpy;
   call            cdata, cdataCpy;
-  PDC_disc_t      mydisc = PDC_default_disc;
+  Pdisc_t      mydisc = Pdefault_disc;
   
-  mydisc.flags |= PDC_WSPACE_OK;
+  mydisc.flags |= P_WSPACE_OK;
 
-  /* Open pdc handle */
-  if (PDC_ERR == PDC_open(&pdc, &mydisc, 0)) {
-    error(2, "*** PDC_open failed ***");
+  /* Open pads handle */
+  if (P_ERR == P_open(&pads, &mydisc, 0)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
 
   /* Open output file */
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../data/ex_data.format5.cpy")) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../data/ex_data.format5.cpy")) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
 
   /*
    * Try to read each line of data
    */
-  while (!PDC_IO_at_EOF(pdc)) {
-    PDC_error_t res;
-    res= call_read(pdc, 0, &cpd, &cdata);
+  while (!P_io_at_eof(pads)) {
+    Perror_t res;
+    res= call_read(pads, 0, &cpd, &cdata);
 
-    if (res == PDC_OK) {
+    if (res == P_OK) {
       sfprintf(sfstdout, "Record okay:\t");
-      call_copy(pdc, &cdataCpy, &cdata);
+      call_copy(pads, &cdataCpy, &cdata);
     } else {
       sfprintf(sfstdout, "Record not okay:\t");
-      call_copy(pdc, &cdataCpy, &cdata);
-      call_pd_copy(pdc, &cpdCpy, &cpd);
+      call_copy(pads, &cdataCpy, &cdata);
+      call_pd_copy(pads, &cpdCpy, &cpd);
     }
     sfprintf(sfstdout, "x = %d\t", cdata.x.x);
     switch (cdata.pn.tag ){
@@ -50,13 +50,13 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_fclose failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
 

@@ -1,4 +1,4 @@
-warning: PDC_open: Installing default IO discipline : newline-terminated records
+warning: P_open: Installing default IO discipline : newline-terminated records
 init the accum
 calling test_read
 test_read returned: id 1  ts 11
@@ -23,7 +23,7 @@ test_read returned: error
 calling test_read
 test_read returned: id 7  ts 77
 calling test_read
-warning: Error [in PDC_a_int32_read]: at record 8 from char 1 to char 5: Invalid ASCII character encoding of a number 
+warning: Error [in Pa_int32_read]: at record 8 from char 1 to char 5: Invalid ASCII character encoding of a number 
 [record 8]>>>     <<<
 Note [in test_read]: record 8 char 1 : Resynching at EOR
 [record 8]>>>     <<<
@@ -31,13 +31,13 @@ test_read returned: error
 calling test_read
 test_read returned: id 8  ts 88
 calling test_read
-warning: Error [in PDC_a_int32_read]: at record 10 at char 1 : Invalid ASCII character encoding of a number 
+warning: Error [in Pa_int32_read]: at record 10 at char 1 : Invalid ASCII character encoding of a number 
 [record 10]>>>a<<<4|44
 warning: Error [in test_read]: record 10 char 4 : User constraint on field ts violated.
 [record 10]a4|>>>44<<<
 test_read returned: error
 calling test_read
-warning: Error [in PDC_a_int32_read]: at record 11 from char 1 to char 2: Invalid ASCII character encoding of a number 
+warning: Error [in Pa_int32_read]: at record 11 from char 1 to char 2: Invalid ASCII character encoding of a number 
 [record 11]>>> a<<<4|44
 warning: Error [in test_read]: record 11 char 5 : User constraint on field ts violated.
 [record 11] a4|>>>44<<<

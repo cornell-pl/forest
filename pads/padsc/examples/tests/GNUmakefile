@@ -199,7 +199,7 @@ clean:
 	$(RM) -f *~ *.o $(ALL_TESTS)
 
 veryclean: clean
-	$(RM) $(GEN_DIR)/*.[hc]
+	$(RM) $(GEN_DIR)/*.[hc] $(GEN_DIR)/*.xsd
 
 # This works for some but not all test cases
 

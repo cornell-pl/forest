@@ -2,302 +2,302 @@
 #pragma prototyped
 #endif
 /*
- * padsc library interface: macro implementations of certain function calls
+ * PADS library interface: macro implementations of certain function calls
  *   
- * NOTE: C prototypes for these functions are given in padsc.h
+ * NOTE: C prototypes for these functions are given in pads.h
  *
  * Kathleen Fisher, Robert Gruber
  * AT&T Labs Research
  */
 
-#ifndef __PADSC_IMPL_H__
-#define __PADSC_IMPL_H__
+#ifndef __PADS_IMPL_H__
+#define __PADS_IMPL_H__
 
 #ifndef FOR_CKIT
 
 /* ================================================================================
  * Helper Macro
  * 
- * PDC_DEF_CHARSET(pdc) : produces pdc->disc->def_charset (or PDC_charset_INVALID)
+ * P_DEF_CHARSET(pads) : produces pads->disc->def_charset (or Pcharset_INVALID)
  *
- * PDCI_CHARSET_SWITCH(pdc,fn_pre, fn_post, ,args) selects from a set of
- * functions based on pdc->disc->def_charset.  It inserts an appropriate
- * charset marker ("_a_", "_e_", etc.) between fn_pre and fn_post to form a
+ * PDCI_CHARSET_SWITCH(pads,fn_pre, fn_post, ,args) selects from a set of
+ * functions based on pads->disc->def_charset.  It inserts an appropriate
+ * charset marker ("a_", "e_", etc.) between fn_pre and fn_post to form a
  * function name, and calls that function with the specified args, which must be
  * given in parens.  If charset is not valid it will still choose one
  * of the possible functions -- that function should detect and report the problem.
  *
  * Example:
  *
- *    PDCI_CHARSET_SWITCH(pdc, my, fun, (pdc, x, y))
+ *    PDCI_CHARSET_SWITCH(pads, my, fun, (pads, x, y))
  *
  * Is converted to one of these forms:
  * 
- *    my_a_fun(pdc, x, y)
- *    my_e_fun(pdc, x, y)
+ *    mya_fun(pads, x, y)
+ *    mye_fun(pads, x, y)
  *    etc. 
  */
 
 #ifndef NDEBUG
 /* safe versions */
 
-#define PDCI_DEF_CHARSET(pdc) \
-  ((pdc && pdc->disc) ? (pdc->disc->def_charset) : PDC_charset_INVALID)
+#define PDCI_DEF_CHARSET(pads) \
+  ((pads && pads->disc) ? (pads->disc->def_charset) : Pcharset_INVALID)
 
-#define PDCI_CHARSET_SWITCH(pdc,fn_pre,fn_post,args) \
- ((pdc && pdc->disc && pdc->disc->def_charset == PDC_charset_ASCII) \
-    ?  fn_pre ## _a_ ## fn_post args \
-    :  fn_pre ## _e_ ## fn_post args)
+#define PDCI_CHARSET_SWITCH(pads,fn_pre,fn_post,args) \
+ ((pads && pads->disc && pads->disc->def_charset == Pcharset_ASCII) \
+    ?  fn_pre ## a_ ## fn_post args \
+    :  fn_pre ## e_ ## fn_post args)
 
 #else
 /* unsafe versions */
 
-#define PDCI_DEF_CHARSET(pdc) \
-   (pdc->disc->def_charset)
+#define PDCI_DEF_CHARSET(pads) \
+   (pads->disc->def_charset)
 
-#define PDCI_CHARSET_SWITCH(pdc,fn_pre,fn_post,args) \
- ((pdc->disc->def_charset == PDC_charset_ASCII) \
-    ?  fn_pre ## _a_ ## fn_post args \
-    :  fn_pre ## _e_ ## fn_post args)
+#define PDCI_CHARSET_SWITCH(pads,fn_pre,fn_post,args) \
+ ((pads->disc->def_charset == Pcharset_ASCII) \
+    ?  fn_pre ## a_ ## fn_post args \
+    :  fn_pre ## e_ ## fn_post args)
 
 #endif /* !NDEBUG */
 
 /* Macros for setting or testing parse state (PS) pd->pstate */
-/* These can be used with both PDC_base_pd and with generated structured parse descriptors */
+/* These can be used with both Pbase_pd and with generated structured parse descriptors */
 
-#define PDC_PS_init(pd)          do { (pd)->pstate = 0; } while (0)
-#define PDC_PS_setPanic(pd)      do { (pd)->pstate |= PDC_Panic; } while (0)
-#define PDC_PS_unsetPanic(pd)    do { (pd)->pstate &= ~PDC_Panic; } while (0)
-#define PDC_PS_isPanic(pd)       ((pd)->pstate & PDC_Panic)
+#define P_PS_init(pd)          do { (pd)->pstate = 0; } while (0)
+#define P_PS_setPanic(pd)      do { (pd)->pstate |= P_Panic; } while (0)
+#define P_PS_unsetPanic(pd)    do { (pd)->pstate &= ~P_Panic; } while (0)
+#define P_PS_isPanic(pd)       ((pd)->pstate & P_Panic)
 
-/* Macro for initalizing a PDC_base_pd */
-#define PDC_base_pd_init(pd) \
+/* Macro for initalizing a Pbase_pd */
+#define Pbase_pd_init(pd) \
 do { \
   (pd)->pstate  = 0; \
-  (pd)->errCode = PDC_NO_ERR; \
+  (pd)->errCode = P_NO_ERR; \
 } while (0)
 
 /* ================================================================================ */
 /* INTERNAL SCAN ROUTINES (helpers) */
 
-#if PDC_CONFIG_READ_FUNCTIONS > 0
+#if P_CONFIG_READ_FUNCTIONS > 0
 
-PDC_error_t PDCI_char_lit_scan1(PDC_t *pdc, PDC_char f, int eat_f, int panic,
-				size_t *offset_out, PDC_charset char_set,
+Perror_t PDCI_char_lit_scan1(P_t *pads, Pchar f, int eat_f, int panic,
+				size_t *offset_out, Pcharset char_set,
 				const char *whatfn);
 
-PDC_error_t PDCI_char_lit_scan2(PDC_t *pdc, PDC_char f, PDC_char s, int eat_f, int eat_s, int panic,
-				int *f_found_out, size_t *offset_out, PDC_charset char_set,
+Perror_t PDCI_char_lit_scan2(P_t *pads, Pchar f, Pchar s, int eat_f, int eat_s, int panic,
+				int *f_found_out, size_t *offset_out, Pcharset char_set,
 				const char *whatfn);
 
-PDC_error_t PDCI_str_lit_scan1(PDC_t *pdc, const PDC_string *f,
+Perror_t PDCI_str_lit_scan1(P_t *pads, const Pstring *f,
 			       int eat_f, int panic,
-			       size_t *offset_out, PDC_charset char_set,
+			       size_t *offset_out, Pcharset char_set,
 			       const char *whatfn);
 
-PDC_error_t PDCI_str_lit_scan2(PDC_t *pdc, const PDC_string *f, const PDC_string *s,
+Perror_t PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
 			       int eat_f, int eat_s, int panic,
-			       int *f_found_out, size_t *offset_out, PDC_charset char_set,
+			       int *f_found_out, size_t *offset_out, Pcharset char_set,
 			       const char *whatfn);
 
-PDC_error_t PDCI_Cstr_lit_scan1(PDC_t *pdc, const char *f,
+Perror_t PDCI_cstr_lit_scan1(P_t *pads, const char *f,
 				int eat_f, int panic,
-				size_t *offset_out, PDC_charset char_set,
+				size_t *offset_out, Pcharset char_set,
 				const char *whatfn);
 
-PDC_error_t PDCI_Cstr_lit_scan2(PDC_t *pdc, const char *f, const char *s,
+Perror_t PDCI_cstr_lit_scan2(P_t *pads, const char *f, const char *s,
 				int eat_f, int eat_s, int panic,
-				int *f_found_out, size_t *offset_out, PDC_charset char_set,
+				int *f_found_out, size_t *offset_out, Pcharset char_set,
 				const char *whatfn);
 
-PDC_error_t PDCI_RE_scan1(PDC_t *pdc, PDC_regexp_t *f,
+Perror_t PDCI_re_scan1(P_t *pads, Pregexp_t *f,
 			  int eat_f, int panic,
-			  size_t *offset_out, PDC_charset char_set,
+			  size_t *offset_out, Pcharset char_set,
 			  const char *whatfn);
 
-PDC_error_t PDCI_RE_scan2(PDC_t *pdc, PDC_regexp_t *f, PDC_regexp_t *s,
+Perror_t PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
 			  int eat_f, int eat_s, int panic,
-			  int *f_found_out, size_t *offset_out, PDC_charset char_set,
+			  int *f_found_out, size_t *offset_out, Pcharset char_set,
 			  const char *whatfn);
 
-#endif /* PDC_CONFIG_READ_FUNCTIONS */
+#endif /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================ */
 /* INTERNAL READ ROUTINES (helpers) */
 
-#if PDC_CONFIG_READ_FUNCTIONS > 0
+#if P_CONFIG_READ_FUNCTIONS > 0
 
-PDC_error_t PDCI_char_lit_read(PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd,
-			       PDC_char c, PDC_charset char_set,
+Perror_t PDCI_char_lit_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
+			       Pchar c, Pcharset char_set,
 			       const char* whatfn);
 
-PDC_error_t PDCI_str_lit_read(PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, const PDC_string *s,
-			      PDC_charset char_set, const char *whatfn);
+Perror_t PDCI_str_lit_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, const Pstring *s,
+			      Pcharset char_set, const char *whatfn);
 
-PDC_error_t PDCI_Cstr_lit_read(PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, const char *s,
-			      PDC_charset char_set, const char *whatfn);
+Perror_t PDCI_cstr_lit_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, const char *s,
+			      Pcharset char_set, const char *whatfn);
 
-PDC_error_t PDCI_countX(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required, size_t count_max,
-			PDC_base_pd *pd, PDC_int32 *res_out,
-			PDC_charset char_set, const char *whatfn);
-
-
-PDC_error_t PDCI_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y, size_t count_max,
-			   PDC_base_pd *pd, PDC_int32 *res_out,
-			   PDC_charset char_set, const char *whatfn);
-
-PDC_error_t PDCI_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
-			   PDC_base_pd *pd, PDC_uint32 *res_out,
-			   PDC_charset char_set, const char *whatfn);
-
-PDC_error_t PDCI_char_read(PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, PDC_char *c_out,
-			   PDC_charset char_set, const char *whatfn);
+Perror_t PDCI_countX_read(P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t count_max,
+			  Pbase_pd *pd, Pint32 *res_out,
+			  Pcharset char_set, const char *whatfn);
 
 
-PDC_error_t PDCI_string_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
-				PDC_base_pd *pd, PDC_string *s_out,
-				PDC_charset char_set, const char *whatfn);
+Perror_t PDCI_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t count_max,
+			     Pbase_pd *pd, Pint32 *res_out,
+			     Pcharset char_set, const char *whatfn);
 
-PDC_error_t PDCI_string_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
-			     PDC_base_pd *pd, PDC_string *s_out,
-			     PDC_charset char_set, const char *whatfn);
+Perror_t PDCI_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
+			   Pbase_pd *pd, Puint32 *res_out,
+			   Pcharset char_set, const char *whatfn);
 
-PDC_error_t PDCI_string_ME_read(PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
-				PDC_base_pd *pd, PDC_string *s_out,
-				PDC_charset char_set, const char *whatfn);
+Perror_t PDCI_char_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out,
+			   Pcharset char_set, const char *whatfn);
 
-PDC_error_t PDCI_string_CME_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
-				 PDC_base_pd *pd, PDC_string *s_out,
-				 PDC_charset char_set, const char *whatfn);
 
-PDC_error_t PDCI_string_SE_read(PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
-				PDC_base_pd *pd, PDC_string *s_out,
-				PDC_charset char_set, const char *whatfn);
+Perror_t PDCI_string_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+				Pbase_pd *pd, Pstring *s_out,
+				Pcharset char_set, const char *whatfn);
 
-PDC_error_t PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
-				 PDC_base_pd *pd, PDC_string *s_out,
-				 PDC_charset char_set, const char *whatfn);
+Perror_t PDCI_string_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
+			     Pbase_pd *pd, Pstring *s_out,
+			     Pcharset char_set, const char *whatfn);
 
-#endif  /* PDC_CONFIG_READ_FUNCTIONS */
+Perror_t PDCI_string_ME_read(P_t *pads, const Pbase_m *m, const char *matchRegexp,
+				Pbase_pd *pd, Pstring *s_out,
+				Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
+				 Pbase_pd *pd, Pstring *s_out,
+				 Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_string_SE_read(P_t *pads, const Pbase_m *m, const char *stopRegexp,
+				Pbase_pd *pd, Pstring *s_out,
+				Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
+				 Pbase_pd *pd, Pstring *s_out,
+				 Pcharset char_set, const char *whatfn);
+
+#endif  /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================ */
 /* INTERNAL WRITE ROUTINES (helpers) */
 
 
-#if PDC_CONFIG_WRITE_FUNCTIONS > 0
+#if P_CONFIG_WRITE_FUNCTIONS > 0
 
-ssize_t PDCI_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_char c,
-			       PDC_charset char_set, const char *whatfn);
+ssize_t PDCI_char_lit_write2io(P_t *pads, Sfio_t *io, Pchar c,
+			       Pcharset char_set, const char *whatfn);
 
-ssize_t PDCI_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char c,
-				PDC_charset char_set, const char *whatfn);
+ssize_t PDCI_char_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar c,
+				Pcharset char_set, const char *whatfn);
 
-ssize_t PDCI_str_lit_write2io(PDC_t *pdc, Sfio_t *io, const PDC_string *s,
-			      PDC_charset char_set, const char *whatfn);
+ssize_t PDCI_str_lit_write2io(P_t *pads, Sfio_t *io, const Pstring *s,
+			      Pcharset char_set, const char *whatfn);
 
-ssize_t PDCI_str_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_string *s,
-			       PDC_charset char_set, const char *whatfn);
+ssize_t PDCI_str_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const Pstring *s,
+			       Pcharset char_set, const char *whatfn);
 
-ssize_t PDCI_Cstr_lit_write2io(PDC_t *pdc, Sfio_t *io, const char *s,
-			       PDC_charset char_set, const char *whatfn);
+ssize_t PDCI_cstr_lit_write2io(P_t *pads, Sfio_t *io, const char *s,
+			       Pcharset char_set, const char *whatfn);
 
-ssize_t PDCI_Cstr_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const char *s,
-				PDC_charset char_set, const char *whatfn);
-#endif /* PDC_CONFIG_WRITE_FUNCTIONS */
+ssize_t PDCI_cstr_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const char *s,
+				Pcharset char_set, const char *whatfn);
+#endif /* P_CONFIG_WRITE_FUNCTIONS */
 
 /* ================================================================================ */
 /* INTERNAL char/string write FUNCTIONS (helpers) */
 
-#if PDC_CONFIG_WRITE_FUNCTIONS > 0
+#if P_CONFIG_WRITE_FUNCTIONS > 0
 
-ssize_t PDCI_char_write2io (PDC_t *pdc, Sfio_t *io, PDC_base_pd *pd,
-			    PDC_char *c, PDC_charset char_set, const char *whatfn);
-ssize_t PDCI_char_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_pd *pd,
-			    PDC_char *c, PDC_charset char_set, const char *whatfn);
-ssize_t PDCI_string_FW_write2io(PDC_t *pdc, Sfio_t *io, size_t width, PDC_base_pd *pd,
-				PDC_string *s, PDC_charset char_set, const char *whatfn);
-ssize_t PDCI_string_FW_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
-				 size_t width, PDC_base_pd *pd,
-				 PDC_string *s, PDC_charset char_set, const char *whatfn);
-ssize_t PDCI_string_write2io(PDC_t *pdc, Sfio_t *io, void *type_arg1, PDC_base_pd *pd,
-			     PDC_string *s, PDC_charset char_set, const char *inv_type, const char *whatfn);
-ssize_t PDCI_string_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
-			      void *type_arg1, PDC_base_pd *pd, PDC_string *s,
-			      PDC_charset char_set, const char *inv_type, const char *whatfn);
+ssize_t PDCI_char_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
+			    Pchar *c, Pcharset char_set, const char *whatfn);
+ssize_t PDCI_char_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd,
+			    Pchar *c, Pcharset char_set, const char *whatfn);
+ssize_t PDCI_string_FW_write2io(P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd,
+				Pstring *s, Pcharset char_set, const char *whatfn);
+ssize_t PDCI_string_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				 size_t width, Pbase_pd *pd,
+				 Pstring *s, Pcharset char_set, const char *whatfn);
+ssize_t PDCI_string_write2io(P_t *pads, Sfio_t *io, void *type_arg1, Pbase_pd *pd,
+			     Pstring *s, Pcharset char_set, const char *inv_type, const char *whatfn);
+ssize_t PDCI_string_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      void *type_arg1, Pbase_pd *pd, Pstring *s,
+			      Pcharset char_set, const char *inv_type, const char *whatfn);
 
-ssize_t PDCI_date_write2io(PDC_t *pdc, Sfio_t *io, void *type_arg1, PDC_base_pd *pd,
-			   PDC_uint32 *d, PDC_charset char_set, const char *inv_type, const char *whatfn);
-ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
-			    void *type_arg1, PDC_base_pd *pd, PDC_uint32 *d,
-			    PDC_charset char_set, const char *inv_type, const char *whatfn);
+ssize_t PDCI_date_write2io(P_t *pads, Sfio_t *io, void *type_arg1, Pbase_pd *pd,
+			   Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn);
+ssize_t PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			    void *type_arg1, Pbase_pd *pd, Puint32 *d,
+			    Pcharset char_set, const char *inv_type, const char *whatfn);
 
-#endif /* PDC_CONFIG_WRITE_FUNCTIONS */
+#endif /* P_CONFIG_WRITE_FUNCTIONS */
 
 /* ================================================================================
  * STRING COMPARISON
  */
 
-#define PDC_string_eq(str1, str2) \
+#define Pstring_eq(str1, str2) \
   ((str1)->len == (str2)->len && strncmp((str1)->str, (str2)->str, (str1)->len) == 0)
 
-#define PDC_string_eq_Cstr(PDCstr, Cstr) \
-  ((PDCstr)->len == strlen(Cstr) && strncmp((PDCstr)->str, (Cstr), (PDCstr)->len) == 0)
+#define Pstring_eq_cstr(PDcstr, cstr) \
+  ((PDcstr)->len == strlen(cstr) && strncmp((PDcstr)->str, (cstr), (PDcstr)->len) == 0)
 
 /* ================================================================================
- * PDC_STRING_FROM macros
+ * P_STRING_FROM macros
  */
 
-#define PDC_STRING_INIT_NULL(the_pdc_string) do { \
-  memset((void*)(&(the_pdc_string)), 0, sizeof(the_pdc_string)); \
+#define P_STRING_INIT_NULL(the_pads_string) do { \
+  memset((void*)(&(the_pads_string)), 0, sizeof(the_pads_string)); \
 } while (0)
 
-#define PDC_STRING_INIT_LIT(the_pdc_string, str_lit) do { \
-  (the_pdc_string).str     = (char*)(str_lit); \
-  (the_pdc_string).len     = sizeof(str_lit); \
-  (the_pdc_string).rbuf    = 0; \
-  (the_pdc_string).sharing = 1; \
+#define P_STRING_INIT_LIT(the_pads_string, str_lit) do { \
+  (the_pads_string).str     = (char*)(str_lit); \
+  (the_pads_string).len     = sizeof(str_lit); \
+  (the_pads_string).rbuf    = 0; \
+  (the_pads_string).sharing = 1; \
 } while (0)
 
-#define PDC_STRING_INIT_CSTR(the_pdc_string, char_ptr_expr) do { \
-  char *the_pdc_string_tmp = (char*)(char_ptr_expr); \
-  (the_pdc_string).str     = the_pdc_string_tmp; \
-  (the_pdc_string).len     = strlen(the_pdc_string_tmp); \
-  (the_pdc_string).rbuf    = 0; \
-  (the_pdc_string).sharing = 1; \
+#define P_STRING_INIT_CSTR(the_pads_string, char_ptr_expr) do { \
+  char *the_pads_string_tmp = (char*)(char_ptr_expr); \
+  (the_pads_string).str     = the_pads_string_tmp; \
+  (the_pads_string).len     = strlen(the_pads_string_tmp); \
+  (the_pads_string).rbuf    = 0; \
+  (the_pads_string).sharing = 1; \
 } while (0)
 
-#define PDC_STRING_INIT_CSTR_LEN(the_pdc_string, char_ptr_expr, length_expr) do { \
-  (the_pdc_string).str     = (char*)(char_ptr_expr); \
-  (the_pdc_string).len     = (length_expr); \
-  (the_pdc_string).rbuf    = 0; \
-  (the_pdc_string).sharing = 1; \
+#define P_STRING_INIT_CSTR_LEN(the_pads_string, char_ptr_expr, length_expr) do { \
+  (the_pads_string).str     = (char*)(char_ptr_expr); \
+  (the_pads_string).len     = (length_expr); \
+  (the_pads_string).rbuf    = 0; \
+  (the_pads_string).sharing = 1; \
 } while (0)
 
 /* ================================================================================
  * REGEXP functions
  */
 
-#define PDC_regexp_compile(pdc, regexp_str, regexp) \
-  PDCI_regexp_compile(pdc, regexp_str, regexp, "PDC_regexp_compile")
-#define PDC_regexp_compile_Cstr(pdc, regexp_str, regexp) \
-  PDCI_regexp_compile_Cstr(pdc, regexp_str, regexp, "PDC_regexp_compile_Cstr")
-#define PDC_regexp_cleanup(pdc, regexp) \
-  PDCI_regexp_cleanup(pdc, regexp, "PDC_regexp_cleanup")
+#define Pregexp_compile(pads, regexp_str, regexp) \
+  PDCI_regexp_compile(pads, regexp_str, regexp, "Pregexp_compile")
+#define Pregexp_compile_cstr(pads, regexp_str, regexp) \
+  PDCI_regexp_compile_cstr(pads, regexp_str, regexp, "Pregexp_compile_cstr")
+#define Pregexp_cleanup(pads, regexp) \
+  PDCI_regexp_cleanup(pads, regexp, "Pregexp_cleanup")
 
 /* ================================================================================
- * PDC_REGEXP macros
+ * P_REGEXP macros
  */
 
-#define PDC_REGEXP_LIT_FROM_CHAR(pdc, my_regexp, char_expr) do { \
-  sfstrset((pdc)->tmp2, 0);\
-  sfprintf((pdc)->tmp2, "/%c/l", (char_expr)); \
-  PDC_regexp_compile_Cstr(pdc, sfstruse(pdc->tmp2), &(my_regexp)); \
+#define P_REGEXP_LIT_FROM_CHAR(pads, my_regexp, char_expr) do { \
+  sfstrset((pads)->tmp2, 0);\
+  sfprintf((pads)->tmp2, "/%c/l", (char_expr)); \
+  Pregexp_compile_cstr(pads, sfstruse(pads->tmp2), &(my_regexp)); \
 } while (0)
 
-#define PDC_REGEXP_LIT_FROM_STR(pdc, my_regexp, str_expr) do { \
-  sfstrset((pdc)->tmp2, 0);\
-  sfprintf((pdc)->tmp2, "/%.*s/l", (str_expr)->len, (str_expr)->str); \
-  PDC_regexp_compile_Cstr(pdc, sfstruse(pdc->tmp2), &(my_regexp)); \
+#define P_REGEXP_LIT_FROM_STR(pads, my_regexp, str_expr) do { \
+  sfstrset((pads)->tmp2, 0);\
+  sfprintf((pads)->tmp2, "/%.*s/l", (str_expr)->len, (str_expr)->str); \
+  Pregexp_compile_cstr(pads, sfstruse(pads->tmp2), &(my_regexp)); \
 } while (0)
 
 
@@ -305,570 +305,570 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
  * CHAR/STRING SCAN FUNCTIONS
  */
 
-#if PDC_CONFIG_READ_FUNCTIONS > 0
+#if P_CONFIG_READ_FUNCTIONS > 0
 
-#define PDC_char_lit_scan1(pdc, c, eat_c, panic, offset_out) \
-  PDCI_char_lit_scan1(pdc, c, eat_c, panic, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_char_lit_scan1")
+#define Pchar_lit_scan1(pads, c, eat_c, panic, offset_out) \
+  PDCI_char_lit_scan1(pads, c, eat_c, panic, offset_out, PDCI_DEF_CHARSET(pads), "Pchar_lit_scan1")
 
-#define PDC_a_char_lit_scan1(pdc, c, eat_c, panic, offset_out) \
-  PDCI_char_lit_scan1(pdc, c, eat_c, panic, offset_out, PDC_charset_ASCII, "PDC_a_char_lit_scan1")
+#define Pa_char_lit_scan1(pads, c, eat_c, panic, offset_out) \
+  PDCI_char_lit_scan1(pads, c, eat_c, panic, offset_out, Pcharset_ASCII, "Pa_char_lit_scan1")
 
-#define PDC_e_char_lit_scan1(pdc, c, eat_c, panic, offset_out) \
-  PDCI_char_lit_scan1(pdc, c, eat_c, panic, offset_out, PDC_charset_EBCDIC, "PDC_e_char_lit_scan1")
+#define Pe_char_lit_scan1(pads, c, eat_c, panic, offset_out) \
+  PDCI_char_lit_scan1(pads, c, eat_c, panic, offset_out, Pcharset_EBCDIC, "Pe_char_lit_scan1")
 
-#define PDC_str_lit_scan1(pdc, f, eat_f, panic, offset_out) \
-  PDCI_str_lit_scan1(pdc, f, eat_f, panic, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_str_lit_scan1")
+#define Pstr_lit_scan1(pads, f, eat_f, panic, offset_out) \
+  PDCI_str_lit_scan1(pads, f, eat_f, panic, offset_out, PDCI_DEF_CHARSET(pads), "Pstr_lit_scan1")
 
-#define PDC_a_str_lit_scan1(pdc, f, eat_f, panic, offset_out) \
-  PDCI_str_lit_scan1(pdc, f, eat_f, panic, offset_out, PDC_charset_ASCII, "PDC_a_str_lit_scan1")
+#define Pa_str_lit_scan1(pads, f, eat_f, panic, offset_out) \
+  PDCI_str_lit_scan1(pads, f, eat_f, panic, offset_out, Pcharset_ASCII, "Pa_str_lit_scan1")
 
-#define PDC_e_str_lit_scan1(pdc, f, eat_f, panic, offset_out) \
-  PDCI_str_lit_scan1(pdc, f, eat_f, panic, offset_out, PDC_charset_EBCDIC, "PDC_e_str_lit_scan1")
+#define Pe_str_lit_scan1(pads, f, eat_f, panic, offset_out) \
+  PDCI_str_lit_scan1(pads, f, eat_f, panic, offset_out, Pcharset_EBCDIC, "Pe_str_lit_scan1")
 
-#define PDC_Cstr_lit_scan1(pdc, f, eat_f, panic, offset_out) \
-  PDCI_Cstr_lit_scan1(pdc, f, eat_f, panic, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_Cstr_lit_scan1")
+#define Pcstr_lit_scan1(pads, f, eat_f, panic, offset_out) \
+  PDCI_cstr_lit_scan1(pads, f, eat_f, panic, offset_out, PDCI_DEF_CHARSET(pads), "Pcstr_lit_scan1")
 
-#define PDC_a_Cstr_lit_scan1(pdc, f, eat_f, panic, offset_out) \
-  PDCI_Cstr_lit_scan1(pdc, f, eat_f, panic, offset_out, PDC_charset_ASCII, "PDC_a_Cstr_lit_scan1")
+#define Pa_cstr_lit_scan1(pads, f, eat_f, panic, offset_out) \
+  PDCI_cstr_lit_scan1(pads, f, eat_f, panic, offset_out, Pcharset_ASCII, "Pa_cstr_lit_scan1")
 
-#define PDC_e_Cstr_lit_scan1(pdc, f, eat_f, panic, offset_out) \
-  PDCI_Cstr_lit_scan1(pdc, f, eat_f, panic, offset_out, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_scan1")
+#define Pe_cstr_lit_scan1(pads, f, eat_f, panic, offset_out) \
+  PDCI_cstr_lit_scan1(pads, f, eat_f, panic, offset_out, Pcharset_EBCDIC, "Pe_cstr_lit_scan1")
 
-#define PDC_RE_scan1(pdc, f, eat_f, panic, offset_out) \
-  PDCI_RE_scan1(pdc, f, eat_f, panic, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_RE_scan1")
+#define Pre_scan1(pads, f, eat_f, panic, offset_out) \
+  PDCI_re_scan1(pads, f, eat_f, panic, offset_out, PDCI_DEF_CHARSET(pads), "Pre_scan1")
 
-#define PDC_a_RE_scan1(pdc, f, eat_f, panic, offset_out) \
-  PDCI_RE_scan1(pdc, f, eat_f, panic, offset_out, PDC_charset_ASCII, "PDC_a_RE_scan1")
+#define Pa_re_scan1(pads, f, eat_f, panic, offset_out) \
+  PDCI_re_scan1(pads, f, eat_f, panic, offset_out, Pcharset_ASCII, "Pa_re_scan1")
 
-#define PDC_e_RE_scan1(pdc, f, eat_f, panic, offset_out) \
-  PDCI_RE_scan1(pdc, f, eat_f, panic, offset_out, PDC_charset_EBCDIC, "PDC_e_RE_scan1")
+#define Pe_re_scan1(pads, f, eat_f, panic, offset_out) \
+  PDCI_re_scan1(pads, f, eat_f, panic, offset_out, Pcharset_EBCDIC, "Pe_re_scan1")
 
 
-#define PDC_char_lit_scan2(pdc, c, s, eat_c, eat_s, panic, f_found_out, offset_out) \
-  PDCI_char_lit_scan2(pdc, c, s, eat_c, eat_s, panic, f_found_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_char_lit_scan2")
+#define Pchar_lit_scan2(pads, c, s, eat_c, eat_s, panic, f_found_out, offset_out) \
+  PDCI_char_lit_scan2(pads, c, s, eat_c, eat_s, panic, f_found_out, offset_out, PDCI_DEF_CHARSET(pads), "Pchar_lit_scan2")
 
-#define PDC_a_char_lit_scan2(pdc, c, s, eat_c, eat_s, panic, f_found_out, offset_out) \
-  PDCI_char_lit_scan2(pdc, c, s, eat_c, eat_s, panic, f_found_out, offset_out, PDC_charset_ASCII, "PDC_a_char_lit_scan2")
+#define Pa_char_lit_scan2(pads, c, s, eat_c, eat_s, panic, f_found_out, offset_out) \
+  PDCI_char_lit_scan2(pads, c, s, eat_c, eat_s, panic, f_found_out, offset_out, Pcharset_ASCII, "Pa_char_lit_scan2")
 
-#define PDC_e_char_lit_scan2(pdc, c, s, eat_c, eat_s, panic, f_found_out, offset_out) \
-  PDCI_char_lit_scan2(pdc, c, s, eat_c, eat_s, panic, f_found_out, offset_out, PDC_charset_EBCDIC, "PDC_e_char_lit_scan2")
+#define Pe_char_lit_scan2(pads, c, s, eat_c, eat_s, panic, f_found_out, offset_out) \
+  PDCI_char_lit_scan2(pads, c, s, eat_c, eat_s, panic, f_found_out, offset_out, Pcharset_EBCDIC, "Pe_char_lit_scan2")
 
-#define PDC_str_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
-  PDCI_str_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_str_lit_scan2")
+#define Pstr_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
+  PDCI_str_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDCI_DEF_CHARSET(pads), "Pstr_lit_scan2")
 
-#define PDC_a_str_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
-  PDCI_str_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDC_charset_ASCII, "PDC_a_str_lit_scan2")
+#define Pa_str_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
+  PDCI_str_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out, Pcharset_ASCII, "Pa_str_lit_scan2")
 
-#define PDC_e_str_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
-  PDCI_str_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDC_charset_EBCDIC, "PDC_e_str_lit_scan2")
+#define Pe_str_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
+  PDCI_str_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out, Pcharset_EBCDIC, "Pe_str_lit_scan2")
 
-#define PDC_Cstr_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
-  PDCI_Cstr_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_Cstr_lit_scan2")
+#define Pcstr_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
+  PDCI_cstr_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDCI_DEF_CHARSET(pads), "Pcstr_lit_scan2")
 
-#define PDC_a_Cstr_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
-  PDCI_Cstr_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDC_charset_ASCII, "PDC_a_Cstr_lit_scan2")
+#define Pa_cstr_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
+  PDCI_cstr_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out, Pcharset_ASCII, "Pa_cstr_lit_scan2")
 
-#define PDC_e_Cstr_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
-  PDCI_Cstr_lit_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_scan2")
+#define Pe_cstr_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
+  PDCI_cstr_lit_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out, Pcharset_EBCDIC, "Pe_cstr_lit_scan2")
 
-#define PDC_RE_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
-  PDCI_RE_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_RE_scan2")
+#define Pre_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
+  PDCI_re_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDCI_DEF_CHARSET(pads), "Pre_scan2")
 
-#define PDC_a_RE_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
-  PDCI_RE_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDC_charset_ASCII, "PDC_a_RE_scan2")
+#define Pa_re_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
+  PDCI_re_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out, Pcharset_ASCII, "Pa_re_scan2")
 
-#define PDC_e_RE_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
-  PDCI_RE_scan2(pdc, f, s, eat_f, eat_s, panic, f_found_out, offset_out, PDC_charset_EBCDIC, "PDC_e_RE_scan2")
+#define Pe_re_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out) \
+  PDCI_re_scan2(pads, f, s, eat_f, eat_s, panic, f_found_out, offset_out, Pcharset_EBCDIC, "Pe_re_scan2")
 
-#endif /* PDC_CONFIG_READ_FUNCTIONS */
+#endif /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================
  * CHAR/STRING READ FUNCTIONS
  */
 
-#if PDC_CONFIG_READ_FUNCTIONS > 0
+#if P_CONFIG_READ_FUNCTIONS > 0
 
-#define PDC_char_lit_read(pdc, m, pd, c) \
-  PDCI_char_lit_read(pdc, m, pd, c, PDCI_DEF_CHARSET(pdc), "PDC_char_lit_read")
+#define Pchar_lit_read(pads, m, pd, c) \
+  PDCI_char_lit_read(pads, m, pd, c, PDCI_DEF_CHARSET(pads), "Pchar_lit_read")
 
-#define PDC_a_char_lit_read(pdc, m, pd, c) \
-  PDCI_char_lit_read(pdc, m, pd, c, PDC_charset_ASCII, "PDC_a_char_lit_read")
+#define Pa_char_lit_read(pads, m, pd, c) \
+  PDCI_char_lit_read(pads, m, pd, c, Pcharset_ASCII, "Pa_char_lit_read")
 
-#define PDC_e_char_lit_read(pdc, m, pd, c) \
-  PDCI_char_lit_read(pdc, m, pd, c, PDC_charset_EBCDIC, "PDC_e_char_lit_read")
+#define Pe_char_lit_read(pads, m, pd, c) \
+  PDCI_char_lit_read(pads, m, pd, c, Pcharset_EBCDIC, "Pe_char_lit_read")
 
-#define PDC_str_lit_read(pdc, m, pd, s) \
-  PDCI_str_lit_read(pdc, m, pd, s, PDCI_DEF_CHARSET(pdc), "PDC_str_lit_read")
+#define Pstr_lit_read(pads, m, pd, s) \
+  PDCI_str_lit_read(pads, m, pd, s, PDCI_DEF_CHARSET(pads), "Pstr_lit_read")
 
-#define PDC_a_str_lit_read(pdc, m, pd, s) \
-  PDCI_str_lit_read(pdc, m, pd, s, PDC_charset_ASCII, "PDC_a_str_lit_read")
+#define Pa_str_lit_read(pads, m, pd, s) \
+  PDCI_str_lit_read(pads, m, pd, s, Pcharset_ASCII, "Pa_str_lit_read")
 
-#define PDC_e_str_lit_read(pdc, m, pd, s) \
-  PDCI_str_lit_read(pdc, m, pd, s, PDC_charset_EBCDIC, "PDC_e_str_lit_read")
+#define Pe_str_lit_read(pads, m, pd, s) \
+  PDCI_str_lit_read(pads, m, pd, s, Pcharset_EBCDIC, "Pe_str_lit_read")
 
-#define PDC_Cstr_lit_read(pdc, m, pd, s) \
-  PDCI_Cstr_lit_read(pdc, m, pd, s, PDCI_DEF_CHARSET(pdc), "PDC_Cstr_lit_read")
+#define Pcstr_lit_read(pads, m, pd, s) \
+  PDCI_cstr_lit_read(pads, m, pd, s, PDCI_DEF_CHARSET(pads), "Pcstr_lit_read")
 
-#define PDC_a_Cstr_lit_read(pdc, m, pd, s) \
-  PDCI_Cstr_lit_read(pdc, m, pd, s, PDC_charset_ASCII, "PDC_a_Cstr_lit_read")
+#define Pa_cstr_lit_read(pads, m, pd, s) \
+  PDCI_cstr_lit_read(pads, m, pd, s, Pcharset_ASCII, "Pa_cstr_lit_read")
 
-#define PDC_e_Cstr_lit_read(pdc, m, pd, s) \
-  PDCI_Cstr_lit_read(pdc, m, pd, s, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_read")
+#define Pe_cstr_lit_read(pads, m, pd, s) \
+  PDCI_cstr_lit_read(pads, m, pd, s, Pcharset_EBCDIC, "Pe_cstr_lit_read")
 
-#define PDC_countX(pdc, m, x, eor_required, count_max, pd, res_out) \
-  PDCI_countX(pdc, m, x, eor_required, count_max, pd, res_out, PDCI_DEF_CHARSET(pdc), "PDC_countX")
+#define PcountX_read(pads, m, x, eor_required, count_max, pd, res_out) \
+  PDCI_countX_read(pads, m, x, eor_required, count_max, pd, res_out, PDCI_DEF_CHARSET(pads), "PcountX_read")
 
-#define PDC_a_countX(pdc, m, x, eor_required, count_max, pd, res_out) \
-  PDCI_countX(pdc, m, x, eor_required, count_max, pd, res_out, PDC_charset_ASCII, "PDC_a_countX")
+#define Pa_countX_read(pads, m, x, eor_required, count_max, pd, res_out) \
+  PDCI_countX_read(pads, m, x, eor_required, count_max, pd, res_out, Pcharset_ASCII, "Pa_countX_read")
 
-#define PDC_e_countX(pdc, m, x, eor_required, count_max, pd, res_out) \
-  PDCI_countX(pdc, m, x, eor_required, count_max, pd, res_out, PDC_charset_EBCDIC, "PDC_e_countX")
+#define Pe_countX_read(pads, m, x, eor_required, count_max, pd, res_out) \
+  PDCI_countX_read(pads, m, x, eor_required, count_max, pd, res_out, Pcharset_EBCDIC, "Pe_countX_read")
 
-#define PDC_countXtoY(pdc, m, x, y, count_max, pd, res_out) \
-  PDCI_countXtoY(pdc, m, x, y, pd, count_max, res_out, PDCI_DEF_CHARSET(pdc), "PDC_countXtoY")
+#define PcountXtoY_read(pads, m, x, y, count_max, pd, res_out) \
+  PDCI_countXtoY_read(pads, m, x, y, pd, count_max, res_out, PDCI_DEF_CHARSET(pads), "PcountXtoY_read")
 
-#define PDC_a_countXtoY(pdc, m, x, y, count_max, pd, res_out) \
-  PDCI_countXtoY(pdc, m, x, y, pd, count_max, res_out, PDC_charset_ASCII, "PDC_a_countXtoY")
+#define Pa_countXtoY_read(pads, m, x, y, count_max, pd, res_out) \
+  PDCI_countXtoY_read(pads, m, x, y, pd, count_max, res_out, Pcharset_ASCII, "Pa_countXtoY_read")
 
-#define PDC_e_countXtoY(pdc, m, x, y, count_max, pd, res_out) \
-  PDCI_countXtoY(pdc, m, x, y, pd, count_max, res_out, PDC_charset_EBCDIC, "PDC_e_countXtoY")
+#define Pe_countXtoY_read(pads, m, x, y, count_max, pd, res_out) \
+  PDCI_countXtoY_read(pads, m, x, y, pd, count_max, res_out, Pcharset_EBCDIC, "Pe_countXtoY_read")
 
-#define PDC_date_read(pdc, m, stopChar, pd, res_out) \
-  PDCI_date_read(pdc, m, stopChar, pd, res_out, PDCI_DEF_CHARSET(pdc), "PDC_date_read")
+#define Pdate_read(pads, m, stopChar, pd, res_out) \
+  PDCI_date_read(pads, m, stopChar, pd, res_out, PDCI_DEF_CHARSET(pads), "Pdate_read")
 
-#define PDC_a_date_read(pdc, m, stopChar, pd, res_out) \
-  PDCI_date_read(pdc, m, stopChar, pd, res_out, PDC_charset_ASCII, "PDC_a_date_read")
+#define Pa_date_read(pads, m, stopChar, pd, res_out) \
+  PDCI_date_read(pads, m, stopChar, pd, res_out, Pcharset_ASCII, "Pa_date_read")
 
-#define PDC_e_date_read(pdc, m, stopChar, pd, res_out) \
-  PDCI_date_read(pdc, m, stopChar, pd, res_out, PDC_charset_EBCDIC, "PDC_e_date_read")
+#define Pe_date_read(pads, m, stopChar, pd, res_out) \
+  PDCI_date_read(pads, m, stopChar, pd, res_out, Pcharset_EBCDIC, "Pe_date_read")
 
-#define PDC_char_read(pdc, m, pd, c_out) \
-  PDCI_char_read(pdc, m, pd, c_out, PDCI_DEF_CHARSET(pdc), "PDC_char_read")
+#define Pchar_read(pads, m, pd, c_out) \
+  PDCI_char_read(pads, m, pd, c_out, PDCI_DEF_CHARSET(pads), "Pchar_read")
 
-#define PDC_a_char_read(pdc, m, pd, c_out) \
-  PDCI_char_read(pdc, m, pd, c_out, PDC_charset_ASCII, "PDC_a_char_read")
+#define Pa_char_read(pads, m, pd, c_out) \
+  PDCI_char_read(pads, m, pd, c_out, Pcharset_ASCII, "Pa_char_read")
 
-#define PDC_e_char_read(pdc, m, pd, c_out) \
-  PDCI_char_read(pdc, m, pd, c_out, PDC_charset_EBCDIC, "PDC_e_char_read")
+#define Pe_char_read(pads, m, pd, c_out) \
+  PDCI_char_read(pads, m, pd, c_out, Pcharset_EBCDIC, "Pe_char_read")
 
-#define PDC_string_FW_read(pdc, m, width, pd, s_out) \
-  PDCI_string_FW_read(pdc, m, width, pd, s_out, PDCI_DEF_CHARSET(pdc), "PDC_string_FW_read")
+#define Pstring_FW_read(pads, m, width, pd, s_out) \
+  PDCI_string_FW_read(pads, m, width, pd, s_out, PDCI_DEF_CHARSET(pads), "Pstring_FW_read")
 
-#define PDC_a_string_FW_read(pdc, m, width, pd, s_out) \
-  PDCI_string_FW_read(pdc, m, width, pd, s_out, PDC_charset_ASCII, "PDC_a_string_FW_read")
+#define Pa_string_FW_read(pads, m, width, pd, s_out) \
+  PDCI_string_FW_read(pads, m, width, pd, s_out, Pcharset_ASCII, "Pa_string_FW_read")
 
-#define PDC_e_string_FW_read(pdc, m, width, pd, s_out) \
-  PDCI_string_FW_read(pdc, m, width, pd, s_out, PDC_charset_EBCDIC, "PDC_e_string_FW_read")
-
-
-#define PDC_string_read(pdc, m, stopChar, pd, s_out) \
-  PDCI_string_read(pdc, m, stopChar, pd, s_out, PDCI_DEF_CHARSET(pdc), "PDC_string_read")
-
-#define PDC_a_string_read(pdc, m, stopChar, pd, s_out) \
-  PDCI_string_read(pdc, m, stopChar, pd, s_out, PDC_charset_ASCII, "PDC_a_string_read")
-
-#define PDC_e_string_read(pdc, m, stopChar, pd, s_out) \
-  PDCI_string_read(pdc, m, stopChar, pd, s_out, PDC_charset_EBCDIC, "PDC_e_string_read")
+#define Pe_string_FW_read(pads, m, width, pd, s_out) \
+  PDCI_string_FW_read(pads, m, width, pd, s_out, Pcharset_EBCDIC, "Pe_string_FW_read")
 
 
-#define PDC_string_ME_read(pdc, m, matchRegexp, pd, s_out) \
-  PDCI_string_ME_read(pdc, m, matchRegexp, pd, s_out, PDCI_DEF_CHARSET(pdc), "PDC_string_ME_read")
+#define Pstring_read(pads, m, stopChar, pd, s_out) \
+  PDCI_string_read(pads, m, stopChar, pd, s_out, PDCI_DEF_CHARSET(pads), "Pstring_read")
 
-#define PDC_a_string_ME_read(pdc, m, matchRegexp, pd, s_out) \
-  PDCI_string_ME_read(pdc, m, matchRegexp, pd, s_out, PDC_charset_ASCII, "PDC_a_string_ME_read")
+#define Pa_string_read(pads, m, stopChar, pd, s_out) \
+  PDCI_string_read(pads, m, stopChar, pd, s_out, Pcharset_ASCII, "Pa_string_read")
 
-#define PDC_e_string_ME_read(pdc, m, matchRegexp, pd, s_out) \
-  PDCI_string_ME_read(pdc, m, matchRegexp, pd, s_out, PDC_charset_EBCDIC, "PDC_e_string_ME_read")
-
-
-#define PDC_string_CME_read(pdc, m, matchRegexp, pd, s_out) \
-  PDCI_string_CME_read(pdc, m, matchRegexp, pd, s_out, PDCI_DEF_CHARSET(pdc), "PDC_string_CME_read")
-
-#define PDC_a_string_CME_read(pdc, m, matchRegexp, pd, s_out) \
-  PDCI_string_CME_read(pdc, m, matchRegexp, pd, s_out, PDC_charset_ASCII, "PDC_a_string_CME_read")
-
-#define PDC_e_string_CME_read(pdc, m, matchRegexp, pd, s_out) \
-  PDCI_string_CME_read(pdc, m, matchRegexp, pd, s_out, PDC_charset_EBCDIC, "PDC_e_string_CME_read")
+#define Pe_string_read(pads, m, stopChar, pd, s_out) \
+  PDCI_string_read(pads, m, stopChar, pd, s_out, Pcharset_EBCDIC, "Pe_string_read")
 
 
-#define PDC_string_SE_read(pdc, m, stopRegexp, pd, s_out) \
-  PDCI_string_SE_read(pdc, m, stopRegexp, pd, s_out, PDCI_DEF_CHARSET(pdc), "PDC_string_SE_read")
+#define Pstring_ME_read(pads, m, matchRegexp, pd, s_out) \
+  PDCI_string_ME_read(pads, m, matchRegexp, pd, s_out, PDCI_DEF_CHARSET(pads), "Pstring_ME_read")
 
-#define PDC_a_string_SE_read(pdc, m, stopRegexp, pd, s_out) \
-  PDCI_string_SE_read(pdc, m, stopRegexp, pd, s_out, PDC_charset_ASCII, "PDC_a_string_SE_read")
+#define Pa_string_ME_read(pads, m, matchRegexp, pd, s_out) \
+  PDCI_string_ME_read(pads, m, matchRegexp, pd, s_out, Pcharset_ASCII, "Pa_string_ME_read")
 
-#define PDC_e_string_SE_read(pdc, m, stopRegexp, pd, s_out) \
-  PDCI_string_SE_read(pdc, m, stopRegexp, pd, s_out, PDC_charset_EBCDIC, "PDC_e_string_SE_read")
+#define Pe_string_ME_read(pads, m, matchRegexp, pd, s_out) \
+  PDCI_string_ME_read(pads, m, matchRegexp, pd, s_out, Pcharset_EBCDIC, "Pe_string_ME_read")
 
 
-#define PDC_string_CSE_read(pdc, m, stopRegexp, pd, s_out) \
-  PDCI_string_CSE_read(pdc, m, stopRegexp, pd, s_out, PDCI_DEF_CHARSET(pdc), "PDC_string_CSE_read")
+#define Pstring_CME_read(pads, m, matchRegexp, pd, s_out) \
+  PDCI_string_CME_read(pads, m, matchRegexp, pd, s_out, PDCI_DEF_CHARSET(pads), "Pstring_CME_read")
 
-#define PDC_a_string_CSE_read(pdc, m, stopRegexp, pd, s_out) \
-  PDCI_string_CSE_read(pdc, m, stopRegexp, pd, s_out, PDC_charset_ASCII, "PDC_a_string_CSE_read")
+#define Pa_string_CME_read(pads, m, matchRegexp, pd, s_out) \
+  PDCI_string_CME_read(pads, m, matchRegexp, pd, s_out, Pcharset_ASCII, "Pa_string_CME_read")
 
-#define PDC_e_string_CSE_read(pdc, m, stopRegexp, pd, s_out) \
-  PDCI_string_CSE_read(pdc, m, stopRegexp, pd, s_out, PDC_charset_EBCDIC, "PDC_e_string_CSE_read")
+#define Pe_string_CME_read(pads, m, matchRegexp, pd, s_out) \
+  PDCI_string_CME_read(pads, m, matchRegexp, pd, s_out, Pcharset_EBCDIC, "Pe_string_CME_read")
 
-#endif /* PDC_CONFIG_READ_FUNCTIONS */
+
+#define Pstring_SE_read(pads, m, stopRegexp, pd, s_out) \
+  PDCI_string_SE_read(pads, m, stopRegexp, pd, s_out, PDCI_DEF_CHARSET(pads), "Pstring_SE_read")
+
+#define Pa_string_SE_read(pads, m, stopRegexp, pd, s_out) \
+  PDCI_string_SE_read(pads, m, stopRegexp, pd, s_out, Pcharset_ASCII, "Pa_string_SE_read")
+
+#define Pe_string_SE_read(pads, m, stopRegexp, pd, s_out) \
+  PDCI_string_SE_read(pads, m, stopRegexp, pd, s_out, Pcharset_EBCDIC, "Pe_string_SE_read")
+
+
+#define Pstring_CSE_read(pads, m, stopRegexp, pd, s_out) \
+  PDCI_string_CSE_read(pads, m, stopRegexp, pd, s_out, PDCI_DEF_CHARSET(pads), "Pstring_CSE_read")
+
+#define Pa_string_CSE_read(pads, m, stopRegexp, pd, s_out) \
+  PDCI_string_CSE_read(pads, m, stopRegexp, pd, s_out, Pcharset_ASCII, "Pa_string_CSE_read")
+
+#define Pe_string_CSE_read(pads, m, stopRegexp, pd, s_out) \
+  PDCI_string_CSE_read(pads, m, stopRegexp, pd, s_out, Pcharset_EBCDIC, "Pe_string_CSE_read")
+
+#endif /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================
  * DEFAULT STRING TO INTEGER READ FUNCTIONS
  */
 
-#if PDC_CONFIG_READ_FUNCTIONS > 0
+#if P_CONFIG_READ_FUNCTIONS > 0
 
-#define PDC_int8_read(pdc, m, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int8_read, (pdc, m, pd, res_out))
+#define Pint8_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_read, (pads, m, pd, res_out))
 
-#define PDC_int16_read(pdc, m, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int16_read, (pdc, m, pd, res_out))
+#define Pint16_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_read, (pads, m, pd, res_out))
 
-#define PDC_int32_read(pdc, m, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int32_read, (pdc, m, pd, res_out))
+#define Pint32_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_read, (pads, m, pd, res_out))
 
-#define PDC_int64_read(pdc, m, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int64_read, (pdc, m, pd, res_out))
+#define Pint64_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_read, (pads, m, pd, res_out))
 
-#define PDC_uint8_read(pdc, m, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_read, (pdc, m, pd, res_out))
+#define Puint8_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_read, (pads, m, pd, res_out))
 
-#define PDC_uint16_read(pdc, m, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_read, (pdc, m, pd, res_out))
+#define Puint16_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_read, (pads, m, pd, res_out))
 
-#define PDC_uint32_read(pdc, m, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_read, (pdc, m, pd, res_out))
+#define Puint32_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_read, (pads, m, pd, res_out))
 
-#define PDC_uint64_read(pdc, m, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_read, (pdc, m, pd, res_out))
+#define Puint64_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_read, (pads, m, pd, res_out))
 
-#define PDC_int8_FW_read(pdc, m, width, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int8_FW_read, (pdc, m, width, pd, res_out))
+#define Pint8_FW_read(pads, m, width, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_FW_read, (pads, m, width, pd, res_out))
 
-#define PDC_int16_FW_read(pdc, m, width, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int16_FW_read, (pdc, m, width, pd, res_out))
+#define Pint16_FW_read(pads, m, width, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_FW_read, (pads, m, width, pd, res_out))
 
-#define PDC_int32_FW_read(pdc, m, width, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int32_FW_read, (pdc, m, width, pd, res_out))
+#define Pint32_FW_read(pads, m, width, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_FW_read, (pads, m, width, pd, res_out))
 
-#define PDC_int64_FW_read(pdc, m, width, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int64_FW_read, (pdc, m, width, pd, res_out))
+#define Pint64_FW_read(pads, m, width, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_FW_read, (pads, m, width, pd, res_out))
 
-#define PDC_uint8_FW_read(pdc, m, width, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_FW_read, (pdc, m, width, pd, res_out))
+#define Puint8_FW_read(pads, m, width, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_FW_read, (pads, m, width, pd, res_out))
 
-#define PDC_uint16_FW_read(pdc, m, width, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_FW_read, (pdc, m, width, pd, res_out))
+#define Puint16_FW_read(pads, m, width, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_FW_read, (pads, m, width, pd, res_out))
 
-#define PDC_uint32_FW_read(pdc, m, width, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_FW_read, (pdc, m, width, pd, res_out))
+#define Puint32_FW_read(pads, m, width, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_FW_read, (pads, m, width, pd, res_out))
 
-#define PDC_uint64_FW_read(pdc, m, width, pd, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_FW_read, (pdc, m, width, pd, res_out))
+#define Puint64_FW_read(pads, m, width, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_FW_read, (pads, m, width, pd, res_out))
 
-#endif /* PDC_CONFIG_READ_FUNCTIONS */
+#endif /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================
  * WRITE FUNCTIONS
  */
 
-#if PDC_CONFIG_WRITE_FUNCTIONS > 0
+#if P_CONFIG_WRITE_FUNCTIONS > 0
 
-#define PDC_a_char_lit_write2io(pdc, io, c) \
-  PDCI_char_lit_write2io(pdc, io, c, PDC_charset_ASCII, "PDC_a_char_lit_write2io")
+#define Pa_char_lit_write2io(pads, io, c) \
+  PDCI_char_lit_write2io(pads, io, c, Pcharset_ASCII, "Pa_char_lit_write2io")
 
-#define PDC_e_char_lit_write2io(pdc, io, c) \
-  PDCI_char_lit_write2io(pdc, io, c, PDC_charset_EBCDIC, "PDC_e_char_lit_write2io")
+#define Pe_char_lit_write2io(pads, io, c) \
+  PDCI_char_lit_write2io(pads, io, c, Pcharset_EBCDIC, "Pe_char_lit_write2io")
 
-#define PDC_char_lit_write2io(pdc, io, c) \
-  PDCI_char_lit_write2io(pdc, io, c, PDCI_DEF_CHARSET(pdc), "PDC_char_lit_write2io")
+#define Pchar_lit_write2io(pads, io, c) \
+  PDCI_char_lit_write2io(pads, io, c, PDCI_DEF_CHARSET(pads), "Pchar_lit_write2io")
 
-#define PDC_a_str_lit_write2io(pdc, io, s) \
-  PDCI_str_lit_write2io(pdc, io, s, PDC_charset_ASCII, "PDC_a_str_lit_write2io")
+#define Pa_str_lit_write2io(pads, io, s) \
+  PDCI_str_lit_write2io(pads, io, s, Pcharset_ASCII, "Pa_str_lit_write2io")
 
-#define PDC_e_str_lit_write2io(pdc, io, s) \
-  PDCI_str_lit_write2io(pdc, io, s, PDC_charset_EBCDIC, "PDC_e_str_lit_write2io")
+#define Pe_str_lit_write2io(pads, io, s) \
+  PDCI_str_lit_write2io(pads, io, s, Pcharset_EBCDIC, "Pe_str_lit_write2io")
 
-#define PDC_str_lit_write2io(pdc, io, s) \
-  PDCI_str_lit_write2io(pdc, io, s, PDCI_DEF_CHARSET(pdc), "PDC_str_lit_write2io")
+#define Pstr_lit_write2io(pads, io, s) \
+  PDCI_str_lit_write2io(pads, io, s, PDCI_DEF_CHARSET(pads), "Pstr_lit_write2io")
 
-#define PDC_a_Cstr_lit_write2io(pdc, io, s) \
-  PDCI_Cstr_lit_write2io(pdc, io, s, PDC_charset_ASCII, "PDC_a_Cstr_lit_write2io")
+#define Pa_cstr_lit_write2io(pads, io, s) \
+  PDCI_cstr_lit_write2io(pads, io, s, Pcharset_ASCII, "Pa_cstr_lit_write2io")
 
-#define PDC_e_Cstr_lit_write2io(pdc, io, s) \
-  PDCI_Cstr_lit_write2io(pdc, io, s, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_write2io")
+#define Pe_cstr_lit_write2io(pads, io, s) \
+  PDCI_cstr_lit_write2io(pads, io, s, Pcharset_EBCDIC, "Pe_cstr_lit_write2io")
 
-#define PDC_Cstr_lit_write2io(pdc, io, s) \
-  PDCI_Cstr_lit_write2io(pdc, io, s, PDCI_DEF_CHARSET(pdc), "PDC_Cstr_lit_write2io")
+#define Pcstr_lit_write2io(pads, io, s) \
+  PDCI_cstr_lit_write2io(pads, io, s, PDCI_DEF_CHARSET(pads), "Pcstr_lit_write2io")
 
-#define PDC_a_char_lit_write2buf(pdc, buf, buf_len, buf_full, c) \
-  PDCI_char_lit_write2buf(pdc, buf, buf_len, buf_full, c, PDC_charset_ASCII, "PDC_a_char_lit_write2buf")
+#define Pa_char_lit_write2buf(pads, buf, buf_len, buf_full, c) \
+  PDCI_char_lit_write2buf(pads, buf, buf_len, buf_full, c, Pcharset_ASCII, "Pa_char_lit_write2buf")
 
-#define PDC_e_char_lit_write2buf(pdc, buf, buf_len, buf_full, c) \
-  PDCI_char_lit_write2buf(pdc, buf, buf_len, buf_full, c, PDC_charset_EBCDIC, "PDC_e_char_lit_write2buf")
+#define Pe_char_lit_write2buf(pads, buf, buf_len, buf_full, c) \
+  PDCI_char_lit_write2buf(pads, buf, buf_len, buf_full, c, Pcharset_EBCDIC, "Pe_char_lit_write2buf")
 
-#define PDC_char_lit_write2buf(pdc, buf, buf_len, buf_full, c) \
-  PDCI_char_lit_write2buf(pdc, buf, buf_len, buf_full, c, PDCI_DEF_CHARSET(pdc), "PDC_char_lit_write2buf")
+#define Pchar_lit_write2buf(pads, buf, buf_len, buf_full, c) \
+  PDCI_char_lit_write2buf(pads, buf, buf_len, buf_full, c, PDCI_DEF_CHARSET(pads), "Pchar_lit_write2buf")
 
-#define PDC_a_str_lit_write2buf(pdc, buf, buf_len, buf_full, s) \
-  PDCI_str_lit_write2buf(pdc, buf, buf_len, buf_full, s, PDC_charset_ASCII, "PDC_a_str_lit_write2buf")
+#define Pa_str_lit_write2buf(pads, buf, buf_len, buf_full, s) \
+  PDCI_str_lit_write2buf(pads, buf, buf_len, buf_full, s, Pcharset_ASCII, "Pa_str_lit_write2buf")
 
-#define PDC_e_str_lit_write2buf(pdc, buf, buf_len, buf_full, s) \
-  PDCI_str_lit_write2buf(pdc, buf, buf_len, buf_full, s, PDC_charset_EBCDIC, "PDC_e_str_lit_write2buf")
+#define Pe_str_lit_write2buf(pads, buf, buf_len, buf_full, s) \
+  PDCI_str_lit_write2buf(pads, buf, buf_len, buf_full, s, Pcharset_EBCDIC, "Pe_str_lit_write2buf")
 
-#define PDC_str_lit_write2buf(pdc, buf, buf_len, buf_full, s) \
-  PDCI_str_lit_write2buf(pdc, buf, buf_len, buf_full, s, PDCI_DEF_CHARSET(pdc), "PDC_str_lit_write2buf")
+#define Pstr_lit_write2buf(pads, buf, buf_len, buf_full, s) \
+  PDCI_str_lit_write2buf(pads, buf, buf_len, buf_full, s, PDCI_DEF_CHARSET(pads), "Pstr_lit_write2buf")
 
-#define PDC_a_Cstr_lit_write2buf(pdc, buf, buf_len, buf_full, s) \
-  PDCI_Cstr_lit_write2buf(pdc, buf, buf_len, buf_full, s, PDC_charset_ASCII, "PDC_a_Cstr_lit_write2buf")
+#define Pa_cstr_lit_write2buf(pads, buf, buf_len, buf_full, s) \
+  PDCI_cstr_lit_write2buf(pads, buf, buf_len, buf_full, s, Pcharset_ASCII, "Pa_cstr_lit_write2buf")
 
-#define PDC_e_Cstr_lit_write2buf(pdc, buf, buf_len, buf_full, s) \
-  PDCI_Cstr_lit_write2buf(pdc, buf, buf_len, buf_full, s, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_write2buf")
+#define Pe_cstr_lit_write2buf(pads, buf, buf_len, buf_full, s) \
+  PDCI_cstr_lit_write2buf(pads, buf, buf_len, buf_full, s, Pcharset_EBCDIC, "Pe_cstr_lit_write2buf")
 
-#define PDC_Cstr_lit_write2buf(pdc, buf, buf_len, buf_full, s) \
-  PDCI_Cstr_lit_write2buf(pdc, buf, buf_len, buf_full, s, PDCI_DEF_CHARSET(pdc), "PDC_Cstr_lit_write2buf")
+#define Pcstr_lit_write2buf(pads, buf, buf_len, buf_full, s) \
+  PDCI_cstr_lit_write2buf(pads, buf, buf_len, buf_full, s, PDCI_DEF_CHARSET(pads), "Pcstr_lit_write2buf")
 
-#define PDC_char_write2io(pdc, io, pd, c) \
-  PDCI_char_write2io(pdc, io, pd, c, PDCI_DEF_CHARSET(pdc), "PDC_char_write2io")
+#define Pchar_write2io(pads, io, pd, c) \
+  PDCI_char_write2io(pads, io, pd, c, PDCI_DEF_CHARSET(pads), "Pchar_write2io")
 
-#define PDC_a_char_write2io(pdc, io, pd, c) \
-  PDCI_char_write2io(pdc, io, pd, c, pdc_charset_ASCII, "PDC_a_char_write2io")
+#define Pa_char_write2io(pads, io, pd, c) \
+  PDCI_char_write2io(pads, io, pd, c, Pcharset_ASCII, "Pa_char_write2io")
 
-#define PDC_e_char_write2io(pdc, io, pd, c) \
-  PDCI_char_write2io(pdc, io, pd, c, pdc_charset_EBCDIC, "PDC_e_char_write2io")
+#define Pe_char_write2io(pads, io, pd, c) \
+  PDCI_char_write2io(pads, io, pd, c, Pcharset_EBCDIC, "Pe_char_write2io")
 
-#define PDC_char_write2buf(pdc, buf, buf_len, buf_full, pd, c) \
-  PDCI_char_write2buf(pdc, buf, buf_len, buf_full, pd, c, PDCI_DEF_CHARSET(pdc), "PDC_char_write2buf")
+#define Pchar_write2buf(pads, buf, buf_len, buf_full, pd, c) \
+  PDCI_char_write2buf(pads, buf, buf_len, buf_full, pd, c, PDCI_DEF_CHARSET(pads), "Pchar_write2buf")
 
-#define PDC_a_char_write2buf(pdc, buf, buf_len, buf_full, pd, c) \
-  PDCI_char_write2buf(pdc, buf, buf_len, buf_full, pd, c, PDC_charset_ASCII, "PDC_a_char_write2buf")
+#define Pa_char_write2buf(pads, buf, buf_len, buf_full, pd, c) \
+  PDCI_char_write2buf(pads, buf, buf_len, buf_full, pd, c, Pcharset_ASCII, "Pa_char_write2buf")
 
-#define PDC_e_char_write2buf(pdc, buf, buf_len, buf_full, pd, c) \
-  PDCI_char_write2buf(pdc, buf, buf_len, buf_full, pd, c, PDC_charset_EBCDIC, "PDC_e_char_write2buf")
+#define Pe_char_write2buf(pads, buf, buf_len, buf_full, pd, c) \
+  PDCI_char_write2buf(pads, buf, buf_len, buf_full, pd, c, Pcharset_EBCDIC, "Pe_char_write2buf")
 
-#define PDC_string_FW_write2io(pdc, io, width, pd, s) \
-  PDCI_string_FW_write2io(pdc, io, width, pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_FW_write2io")
+#define Pstring_FW_write2io(pads, io, width, pd, s) \
+  PDCI_string_FW_write2io(pads, io, width, pd, s, PDCI_DEF_CHARSET(pads), "Pstring_FW_write2io")
 
-#define PDC_a_string_FW_write2io(pdc, io, width, pd, s) \
-  PDCI_string_FW_write2io(pdc, io, width, pd, s, PDC_charset_ASCII, "PDC_a_string_FW_write2io")
+#define Pa_string_FW_write2io(pads, io, width, pd, s) \
+  PDCI_string_FW_write2io(pads, io, width, pd, s, Pcharset_ASCII, "Pa_string_FW_write2io")
 
-#define PDC_e_string_FW_write2io(pdc, io, width, pd, s) \
-  PDCI_string_FW_write2io(pdc, io, width, pd, s, PDC_charset_EBCDIC, "PDC_e_string_FW_write2io")
+#define Pe_string_FW_write2io(pads, io, width, pd, s) \
+  PDCI_string_FW_write2io(pads, io, width, pd, s, Pcharset_EBCDIC, "Pe_string_FW_write2io")
 
-#define PDC_string_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, s) \
-  PDCI_string_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_FW_write2buf")
+#define Pstring_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, s) \
+  PDCI_string_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, s, PDCI_DEF_CHARSET(pads), "Pstring_FW_write2buf")
 
-#define PDC_a_string_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, s) \
-  PDCI_string_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, s, PDC_charset_ASCII, "PDC_a_string_FW_write2buf")
+#define Pa_string_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, s) \
+  PDCI_string_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, s, Pcharset_ASCII, "Pa_string_FW_write2buf")
 
-#define PDC_e_string_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, s) \
-  PDCI_string_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, s, PDC_charset_EBCDIC, "PDC_e_string_FW_write2buf")
+#define Pe_string_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, s) \
+  PDCI_string_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, s, Pcharset_EBCDIC, "Pe_string_FW_write2buf")
 
-#define PDC_string_write2io(pdc, io, stopChar, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(stopChar)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string", "PDC_string_write2io")
+#define Pstring_write2io(pads, io, stopChar, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(stopChar)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring", "Pstring_write2io")
 
-#define PDC_a_string_write2io(pdc, io, stopChar, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(stopChar)), pd, s, PDC_charset_ASCII, "PDC_string", "PDC_a_string_write2io")
+#define Pa_string_write2io(pads, io, stopChar, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(stopChar)), pd, s, Pcharset_ASCII, "Pstring", "Pa_string_write2io")
 
-#define PDC_e_string_write2io(pdc, io, stopChar, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(stopChar)), pd, s, PDC_charset_EBCDIC, "PDC_string", "PDC_e_string_write2io")
+#define Pe_string_write2io(pads, io, stopChar, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(stopChar)), pd, s, Pcharset_EBCDIC, "Pstring", "Pe_string_write2io")
 
-#define PDC_string_write2buf(pdc, buf, buf_len, buf_full, stopChar, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopChar)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string", "PDC_string_write2buf")
+#define Pstring_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopChar)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring", "Pstring_write2buf")
 
-#define PDC_a_string_write2buf(pdc, buf, buf_len, buf_full, stopChar, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopChar)), pd, s, PDC_charset_ASCII, "PDC_string", "PDC_a_string_write2buf")
+#define Pa_string_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopChar)), pd, s, Pcharset_ASCII, "Pstring", "Pa_string_write2buf")
 
-#define PDC_e_string_write2buf(pdc, buf, buf_len, buf_full, stopChar, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopChar)), pd, s, PDC_charset_EBCDIC, "PDC_string", "PDC_e_string_write2buf")
+#define Pe_string_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopChar)), pd, s, Pcharset_EBCDIC, "Pstring", "Pe_string_write2buf")
 
-#define PDC_string_ME_write2io(pdc, io, matchRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(matchRegexp)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_ME", "PDC_string_ME_write2io")
+#define Pstring_ME_write2io(pads, io, matchRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring_ME", "Pstring_ME_write2io")
 
-#define PDC_a_string_ME_write2io(pdc, io, matchRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_ASCII, "PDC_string_ME", "PDC_a_string_ME_write2io")
+#define Pa_string_ME_write2io(pads, io, matchRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_ASCII, "Pstring_ME", "Pa_string_ME_write2io")
 
-#define PDC_e_string_ME_write2io(pdc, io, matchRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_EBCDIC, "PDC_string_ME", "PDC_e_string_ME_write2io")
+#define Pe_string_ME_write2io(pads, io, matchRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_EBCDIC, "Pstring_ME", "Pe_string_ME_write2io")
 
-#define PDC_string_ME_write2buf(pdc, buf, buf_len, buf_full, matchRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_ME", "PDC_ME_string_write2buf")
+#define Pstring_ME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring_ME", "P_ME_string_write2buf")
 
-#define PDC_a_string_ME_write2buf(pdc, buf, buf_len, buf_full, matchRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, PDC_charset_ASCII, "PDC_string_ME", "PDC_a_string_ME_write2buf")
+#define Pa_string_ME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, Pcharset_ASCII, "Pstring_ME", "Pa_string_ME_write2buf")
 
-#define PDC_e_string_ME_write2buf(pdc, buf, buf_len, buf_full, matchRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, PDC_charset_EBCDIC, "PDC_string_ME", "PDC_e_string_ME_write2buf")
+#define Pe_string_ME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, Pcharset_EBCDIC, "Pstring_ME", "Pe_string_ME_write2buf")
 
-#define PDC_string_CME_write2io(pdc, io, matchRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(matchRegexp)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_CME", "PDC_string_CME_write2io")
+#define Pstring_CME_write2io(pads, io, matchRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring_CME", "Pstring_CME_write2io")
 
-#define PDC_a_string_CME_write2io(pdc, io, matchRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_ASCII, "PDC_string_CME", "PDC_a_string_CME_write2io")
+#define Pa_string_CME_write2io(pads, io, matchRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_ASCII, "Pstring_CME", "Pa_string_CME_write2io")
 
-#define PDC_e_string_CME_write2io(pdc, io, matchRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_EBCDIC, "PDC_string_CME", "PDC_e_string_CME_write2io")
+#define Pe_string_CME_write2io(pads, io, matchRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_EBCDIC, "Pstring_CME", "Pe_string_CME_write2io")
 
-#define PDC_string_CME_write2buf(pdc, buf, buf_len, buf_full, matchRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_CME", "PDC_CME_string_write2buf")
+#define Pstring_CME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring_CME", "P_CME_string_write2buf")
 
-#define PDC_a_string_CME_write2buf(pdc, buf, buf_len, buf_full, matchRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, PDC_charset_ASCII, "PDC_string_CME", "PDC_a_string_CME_write2buf")
+#define Pa_string_CME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, Pcharset_ASCII, "Pstring_CME", "Pa_string_CME_write2buf")
 
-#define PDC_e_string_CME_write2buf(pdc, buf, buf_len, buf_full, matchRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, PDC_charset_EBCDIC, "PDC_string_CME", "PDC_e_string_CME_write2buf")
+#define Pe_string_CME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, Pcharset_EBCDIC, "Pstring_CME", "Pe_string_CME_write2buf")
 
-#define PDC_string_SE_write2io(pdc, io, stopRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(stopRegexp)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_SE", "PDC_string_SE_write2io")
+#define Pstring_SE_write2io(pads, io, stopRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring_SE", "Pstring_SE_write2io")
 
-#define PDC_a_string_SE_write2io(pdc, io, stopRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_ASCII, "PDC_string_SE", "PDC_a_string_SE_write2io")
+#define Pa_string_SE_write2io(pads, io, stopRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_ASCII, "Pstring_SE", "Pa_string_SE_write2io")
 
-#define PDC_e_string_SE_write2io(pdc, io, stopRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_EBCDIC, "PDC_string_SE", "PDC_e_string_SE_write2io")
+#define Pe_string_SE_write2io(pads, io, stopRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_EBCDIC, "Pstring_SE", "Pe_string_SE_write2io")
 
-#define PDC_string_SE_write2buf(pdc, buf, buf_len, buf_full, stopRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_SE", "PDC_SE_string_write2buf")
+#define Pstring_SE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring_SE", "P_SE_string_write2buf")
 
-#define PDC_a_string_SE_write2buf(pdc, buf, buf_len, buf_full, stopRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, PDC_charset_ASCII, "PDC_string_SE", "PDC_a_string_SE_write2buf")
+#define Pa_string_SE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, Pcharset_ASCII, "Pstring_SE", "Pa_string_SE_write2buf")
 
-#define PDC_e_string_SE_write2buf(pdc, buf, buf_len, buf_full, stopRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, PDC_charset_EBCDIC, "PDC_string_SE", "PDC_e_string_SE_write2buf")
+#define Pe_string_SE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, Pcharset_EBCDIC, "Pstring_SE", "Pe_string_SE_write2buf")
 
-#define PDC_string_CSE_write2io(pdc, io, stopRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(stopRegexp)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_CSE", "PDC_string_CSE_write2io")
+#define Pstring_CSE_write2io(pads, io, stopRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring_CSE", "Pstring_CSE_write2io")
 
-#define PDC_a_string_CSE_write2io(pdc, io, stopRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_ASCII, "PDC_string_CSE", "PDC_a_string_CSE_write2io")
+#define Pa_string_CSE_write2io(pads, io, stopRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_ASCII, "Pstring_CSE", "Pa_string_CSE_write2io")
 
-#define PDC_e_string_CSE_write2io(pdc, io, stopRegexp, pd, s) \
-  PDCI_string_write2io(pdc, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_EBCDIC, "PDC_string_CSE", "PDC_e_string_CSE_write2io")
+#define Pe_string_CSE_write2io(pads, io, stopRegexp, pd, s) \
+  PDCI_string_write2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_EBCDIC, "Pstring_CSE", "Pe_string_CSE_write2io")
 
-#define PDC_string_CSE_write2buf(pdc, buf, buf_len, buf_full, stopRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, PDCI_DEF_CHARSET(pdc), "PDC_string_CSE", "PDC_CSE_string_write2buf")
+#define Pstring_CSE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, PDCI_DEF_CHARSET(pads), "Pstring_CSE", "P_CSE_string_write2buf")
 
-#define PDC_a_string_CSE_write2buf(pdc, buf, buf_len, buf_full, stopRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, PDC_charset_ASCII, "PDC_string_CSE", "PDC_a_string_CSE_write2buf")
+#define Pa_string_CSE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, Pcharset_ASCII, "Pstring_CSE", "Pa_string_CSE_write2buf")
 
-#define PDC_e_string_CSE_write2buf(pdc, buf, buf_len, buf_full, stopRegexp, pd, s) \
-  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, PDC_charset_EBCDIC, "PDC_string_CSE", "PDC_e_string_CSE_write2buf")
+#define Pe_string_CSE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s) \
+  PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, Pcharset_EBCDIC, "Pstring_CSE", "Pe_string_CSE_write2buf")
 
-#define PDC_date_write2io(pdc, io, stopChar, pd, d) \
-  PDCI_date_write2io(pdc, io, ((void*)(stopChar)), pd, d, PDCI_DEF_CHARSET(pdc), "PDC_date", "PDC_date_write2io")
+#define Pdate_write2io(pads, io, stopChar, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(stopChar)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate", "Pdate_write2io")
 
-#define PDC_a_date_write2io(pdc, io, stopChar, pd, d) \
-  PDCI_date_write2io(pdc, io, ((void*)(stopChar)), pd, d, PDC_charset_ASCII, "PDC_date", "PDC_a_date_write2io")
+#define Pa_date_write2io(pads, io, stopChar, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(stopChar)), pd, d, Pcharset_ASCII, "Pdate", "Pa_date_write2io")
 
-#define PDC_e_date_write2io(pdc, io, stopChar, pd, d) \
-  PDCI_date_write2io(pdc, io, ((void*)(stopChar)), pd, d, PDC_charset_EBCDIC, "PDC_date", "PDC_e_date_write2io")
+#define Pe_date_write2io(pads, io, stopChar, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(stopChar)), pd, d, Pcharset_EBCDIC, "Pdate", "Pe_date_write2io")
 
-#define PDC_date_write2buf(pdc, buf, buf_len, buf_full, stopChar, pd, d) \
-  PDCI_date_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopChar)), pd, d, PDCI_DEF_CHARSET(pdc), "PDC_date", "PDC_date_write2buf")
+#define Pdate_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopChar)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate", "Pdate_write2buf")
 
-#define PDC_a_date_write2buf(pdc, buf, buf_len, buf_full, stopChar, pd, d) \
-  PDCI_date_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopChar)), pd, d, PDC_charset_ASCII, "PDC_date", "PDC_a_date_write2buf")
+#define Pa_date_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopChar)), pd, d, Pcharset_ASCII, "Pdate", "Pa_date_write2buf")
 
-#define PDC_e_date_write2buf(pdc, buf, buf_len, buf_full, stopChar, pd, d) \
-  PDCI_date_write2buf(pdc, buf, buf_len, buf_full, ((void*)(stopChar)), pd, d, PDC_charset_EBCDIC, "PDC_date", "PDC_e_date_write2buf")
+#define Pe_date_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopChar)), pd, d, Pcharset_EBCDIC, "Pdate", "Pe_date_write2buf")
 
-#define PDC_int8_FW_write2io(pdc, io, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int8_FW_write2io, (pdc, io, width, pd, val))
+#define Pint8_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_FW_write2io, (pads, io, width, pd, val))
 
-#define PDC_int16_FW_write2io(pdc, io, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int16_FW_write2io, (pdc, io, width, pd, val))
+#define Pint16_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_FW_write2io, (pads, io, width, pd, val))
 
-#define PDC_int32_FW_write2io(pdc, io, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int32_FW_write2io, (pdc, io, width, pd, val))
+#define Pint32_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_FW_write2io, (pads, io, width, pd, val))
 
-#define PDC_int64_FW_write2io(pdc, io, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int64_FW_write2io, (pdc, io, width, pd, val))
+#define Pint64_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_FW_write2io, (pads, io, width, pd, val))
 
-#define PDC_uint8_FW_write2io(pdc, io, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_FW_write2io, (pdc, io, width, pd, val))
+#define Puint8_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_FW_write2io, (pads, io, width, pd, val))
 
-#define PDC_uint16_FW_write2io(pdc, io, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_FW_write2io, (pdc, io, width, pd, val))
+#define Puint16_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_FW_write2io, (pads, io, width, pd, val))
 
-#define PDC_uint32_FW_write2io(pdc, io, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_FW_write2io, (pdc, io, width, pd, val))
+#define Puint32_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_FW_write2io, (pads, io, width, pd, val))
 
-#define PDC_uint64_FW_write2io(pdc, io, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_FW_write2io, (pdc, io, width, pd, val))
+#define Puint64_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_FW_write2io, (pads, io, width, pd, val))
 
-#define PDC_int8_write2io(pdc, io, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int8_write2io, (pdc, io, pd, val))
+#define Pint8_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_write2io, (pads, io, pd, val))
 
-#define PDC_int16_write2io(pdc, io, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int16_write2io, (pdc, io, pd, val))
+#define Pint16_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_write2io, (pads, io, pd, val))
 
-#define PDC_int32_write2io(pdc, io, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int32_write2io, (pdc, io, pd, val))
+#define Pint32_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_write2io, (pads, io, pd, val))
 
-#define PDC_int64_write2io(pdc, io, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int64_write2io, (pdc, io, pd, val))
+#define Pint64_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_write2io, (pads, io, pd, val))
 
-#define PDC_uint8_write2io(pdc, io, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_write2io, (pdc, io, pd, val))
+#define Puint8_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_write2io, (pads, io, pd, val))
 
-#define PDC_uint16_write2io(pdc, io, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_write2io, (pdc, io, pd, val))
+#define Puint16_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_write2io, (pads, io, pd, val))
 
-#define PDC_uint32_write2io(pdc, io, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_write2io, (pdc, io, pd, val))
+#define Puint32_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_write2io, (pads, io, pd, val))
 
-#define PDC_uint64_write2io(pdc, io, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_write2io, (pdc, io, pd, val))
+#define Puint64_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_write2io, (pads, io, pd, val))
 
-#define PDC_int8_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int8_FW_write2buf, (pdc, buf, buf_len, buf_full, width, pd, val))
+#define Pint8_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
 
-#define PDC_int16_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int16_FW_write2buf, (pdc, buf, buf_len, buf_full, width, pd, val))
+#define Pint16_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
 
-#define PDC_int32_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int32_FW_write2buf, (pdc, buf, buf_len, buf_full, width, pd, val))
+#define Pint32_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
 
-#define PDC_int64_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int64_FW_write2buf, (pdc, buf, buf_len, buf_full, width, pd, val))
+#define Pint64_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
 
-#define PDC_uint8_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_FW_write2buf, (pdc, buf, buf_len, buf_full, width, pd, val))
+#define Puint8_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
 
-#define PDC_uint16_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_FW_write2buf, (pdc, buf, buf_len, buf_full, width, pd, val))
+#define Puint16_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
 
-#define PDC_uint32_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_FW_write2buf, (pdc, buf, buf_len, buf_full, width, pd, val))
+#define Puint32_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
 
-#define PDC_uint64_FW_write2buf(pdc, buf, buf_len, buf_full, width, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_FW_write2buf, (pdc, buf, buf_len, buf_full, width, pd, val))
+#define Puint64_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
 
-#define PDC_int8_write2buf(pdc, buf, buf_len, buf_full, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int8_write2buf, (pdc, buf, buf_len, buf_full, pd, val))
+#define Pint8_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_write2buf, (pads, buf, buf_len, buf_full, pd, val))
 
-#define PDC_int16_write2buf(pdc, buf, buf_len, buf_full, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int16_write2buf, (pdc, buf, buf_len, buf_full, pd, val))
+#define Pint16_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_write2buf, (pads, buf, buf_len, buf_full, pd, val))
 
-#define PDC_int32_write2buf(pdc, buf, buf_len, buf_full, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int32_write2buf, (pdc, buf, buf_len, buf_full, pd, val))
+#define Pint32_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_write2buf, (pads, buf, buf_len, buf_full, pd, val))
 
-#define PDC_int64_write2buf(pdc, buf, buf_len, buf_full, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int64_write2buf, (pdc, buf, buf_len, buf_full, pd, val))
+#define Pint64_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_write2buf, (pads, buf, buf_len, buf_full, pd, val))
 
-#define PDC_uint8_write2buf(pdc, buf, buf_len, buf_full, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_write2buf, (pdc, buf, buf_len, buf_full, pd, val))
+#define Puint8_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_write2buf, (pads, buf, buf_len, buf_full, pd, val))
 
-#define PDC_uint16_write2buf(pdc, buf, buf_len, buf_full, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_write2buf, (pdc, buf, buf_len, buf_full, pd, val))
+#define Puint16_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_write2buf, (pads, buf, buf_len, buf_full, pd, val))
 
-#define PDC_uint32_write2buf(pdc, buf, buf_len, buf_full, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_write2buf, (pdc, buf, buf_len, buf_full, pd, val))
+#define Puint32_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_write2buf, (pads, buf, buf_len, buf_full, pd, val))
 
-#define PDC_uint64_write2buf(pdc, buf, buf_len, buf_full, pd, val) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_write2buf, (pdc, buf, buf_len, buf_full, pd, val))
+#define Puint64_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_write2buf, (pads, buf, buf_len, buf_full, pd, val))
 
-#endif /* PDC_CONFIG_WRITE_FUNCTIONS */
+#endif /* P_CONFIG_WRITE_FUNCTIONS */
 
 #endif   /*   ! FOR_CKIT             */
-#endif   /*   ! __PADSC_IMPL_H__  */
+#endif   /*   ! __PADS_IMPL_H__  */

@@ -1,9 +1,9 @@
-#include "padsc-internal.h"
+#include "pads-internal.h"
 
 int main(int argc, char** argv) {
-  PDC_t*             pdc;
-  PDC_IO_disc_t*     io_disc;
-  PDC_disc_t         my_disc = PDC_default_disc;
+  P_t*             pads;
+  Pio_disc_t*     io_disc;
+  Pdisc_t         my_disc = Pdefault_disc;
   size_t             bytes_skipped;
   const char        *fname;
   int                blocked;
@@ -26,37 +26,37 @@ int main(int argc, char** argv) {
     } else goto usage;
   }
 
-  io_disc = PDC_vlrec_noseek_make(blocked, 0); /* no avg rlen hint */
+  io_disc = P_vlrec_noseek_make(blocked, 0); /* no avg rlen hint */
   if (!io_disc) {
     error(ERROR_FATAL, "\nFailed to install IO discipline vlrec_noseek");
   } else {
     error(0, "\nInstalled IO discipline vlrec_noseek");
   }
 
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
+    error(2, "*** P_open failed ***");
     return -1;
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, (char*)fname)) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, (char*)fname)) {
+    error(2, "*** P_io_fopen failed ***");
     return -1;
   }
 
   while (1) {
-    if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped)) {
+    if (P_ERR == P_io_next_rec(pads, &bytes_skipped)) {
       error(2, "no next record, ending program");
       goto done;
     }
   }
 
  done:
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     return -1;
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     return -1;
   }
 

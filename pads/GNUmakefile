@@ -29,8 +29,8 @@ padsc_comp:
 regress:
 	@(cd padsc; $(MAKE) regress)
 
-test_libpadsc:
-	@(cd padsc; $(MAKE) test_libpadsc)
+test_libpads:
+	@(cd padsc; $(MAKE) test_libpads)
 
 test_comp:
 	@(cd padsc; $(MAKE) test_comp)

@@ -1,31 +1,31 @@
-#include "padsc-internal.h" /* for testing - normally do not include internal */
+#include "pads-internal.h" /* for testing - normally do not include internal */
 
 #if 0
-#include "padsc.h"
+#include "pads.h"
 #include "format2.h"
 #endif
 
 int main(int argc, char** argv) {
-  PDC_IO_disc_t   *io_disc;
+  Pio_disc_t   *io_disc;
   int             ctr;
   size_t          n;
   int             f_found;
-  PDC_t*          pdc;
-  PDC_disc_t      my_disc = PDC_default_disc;
-  PDC_base_pd     pd = {0};
-  PDC_base_m      m  = PDC_CheckAndSet;
+  P_t*          pads;
+  Pdisc_t      my_disc = Pdefault_disc;
+  Pbase_pd     pd = {0};
+  Pbase_m      m  = P_CheckAndSet;
 
-  if (!(io_disc = PDC_norec_make(0))) {
-    error(2, "*** PDC_norec_make failed ***");
+  if (!(io_disc = P_norec_make(0))) {
+    error(2, "*** P_norec_make failed ***");
     return -1;
   } 
 
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
+    error(2, "*** P_open failed ***");
     return -1;
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format2")) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.format2")) {
+    error(2, "*** P_io_fopen failed ***");
     return -1;
   }
 
@@ -33,15 +33,15 @@ int main(int argc, char** argv) {
    * XXX Process the data here XXX
    */
   ctr = 0;
-  while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == PDC_a_char_lit_scan2(pdc, '|', '\n', 1, 1, 0, &f_found, &n)) {
+  while (!P_io_at_eof(pads)) {
+    if (P_OK == Pa_char_lit_scan2(pads, '|', '\n', 1, 1, 0, &f_found, &n)) {
       if (f_found) { 
 	ctr++;
-	PDC_IO_checkpoint(pdc, 1);
-	if (PDC_OK == PDC_a_char_lit_read(pdc, &m, &pd, 'a')) {
+	P_io_checkpoint(pads, 1);
+	if (P_OK == Pa_char_lit_read(pads, &m, &pd, 'a')) {
 	  error(2, "found an 'a' after a vbar");
 	}
-	PDC_IO_commit(pdc);
+	P_io_commit(pads);
       } else { /* found newline */
 	error(2, "Found %d vertical bars on line", ctr);
 	ctr = 0;
@@ -56,13 +56,13 @@ int main(int argc, char** argv) {
   }
   error(2, "Could not find newline, ending program");
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     return -1;
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     return -1;
   }
 

@@ -3,76 +3,76 @@
  */
 
 
-#include "padsc-internal.h" /* for testing - normally do not include internal */
+#include "pads-internal.h" /* for testing - normally do not include internal */
 
 int main(int argc, char** argv) {
   /* int             ctr; */
   /* size_t          n; */
   /* unsigned char   c; */
   /* int             i; */
-  PDC_string      s;
-  PDC_t*          pdc;
-  PDC_IO_disc_t*  io_disc;
-  PDC_base_m      m    = PDC_CheckAndSet;
-  PDC_base_pd     pd;
-  PDC_disc_t      my_disc = PDC_default_disc;
+  Pstring      s;
+  P_t*          pads;
+  Pio_disc_t*  io_disc;
+  Pbase_m      m    = P_CheckAndSet;
+  Pbase_pd     pd;
+  Pdisc_t      my_disc = Pdefault_disc;
   size_t          bytes_skipped;
   unsigned long   ultmp;
-  PDC_REGEXP_DECL_NULL(my_regexp);
+  P_REGEXP_DECL_NULL(my_regexp);
 
   error(0, "\nUsing PADSC IO discipline nlrec\n\n");
-  io_disc = PDC_nlrec_make(0);
+  io_disc = P_nlrec_make(0);
 
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.libtest4")) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.libtest4")) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_regexp_compile_Cstr(pdc, "/[X]|$/", &my_regexp)) {
+  if (P_ERR == Pregexp_compile_cstr(pads, "/[X]|$/", &my_regexp)) {
     error(2, "** unexpected regexp compile failure **");
     exit(-1);
   }
 
-  PDC_string_init(pdc, &s);
+  Pstring_init(pads, &s);
 
   /*
    * XXX Process the data here XXX
    */
   while (1) {
-    if (PDC_IO_at_EOF(pdc)) {
+    if (P_io_at_eof(pads)) {
       error(0, "Main program found eof");
       break;
     }
     /* try to read line with 2 strings term by vbar 1 string term by EOR */
-    if (PDC_ERR == PDC_a_string_read(pdc, &m, '|', &pd, &s)) {
+    if (P_ERR == Pa_string_read(pads, &m, '|', &pd, &s)) {
       goto find_EOR;
     } else {
-      error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
+      error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (PDC_ERR == PDC_a_char_lit_read(pdc, &m, &pd, '|')) {
-      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
+    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+      PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_a_string_read(pdc, &m, '|', &pd, &s)) {
+    if (P_ERR == Pa_string_read(pads, &m, '|', &pd, &s)) {
       goto find_EOR;
     } else {
-      error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
+      error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (PDC_ERR == PDC_a_char_lit_read(pdc, &m, &pd, '|')) {
-      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
+    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+      PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_a_string_CSE_read(pdc, &m, &my_regexp, &pd, &s)) {
+    if (P_ERR == Pa_string_CSE_read(pads, &m, &my_regexp, &pd, &s)) {
       break;
     } else {
-      error(0, "Read string term by EOR or X : %s (length %d)", PDC_fmt_str(&s), s.len);
+      error(0, "Read string term by EOR or X : %s (length %d)", P_fmt_str(&s), s.len);
     }
   find_EOR:
-    if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped)) {
+    if (P_ERR == P_io_next_rec(pads, &bytes_skipped)) {
       error(2, "Could not find EOR (newline), ending program");
       goto done;
     }
@@ -81,16 +81,16 @@ int main(int argc, char** argv) {
   }
 
  done:
-  PDC_string_cleanup(pdc, &s);
-  PDC_regexp_cleanup(pdc, &my_regexp);
+  Pstring_cleanup(pads, &s);
+  Pregexp_cleanup(pads, &my_regexp);
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
 

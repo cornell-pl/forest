@@ -30,6 +30,10 @@ debug: var_error
 
 install: var_error
 
+clean: var_error
+
+veryclean: var_error
+
 var_error:
 	@echo " "
 	@echo "ERROR: use one of the following"
@@ -96,13 +100,13 @@ install : all
 		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALLROOT)/include/; \
 	done;)
 
-endif # VAR_ERROR
-
 clean :
 	$(RM) $(STATIC_PGLXLIB_NM_O) $(SHARED_PGLXLIB_NM_O) $(STATIC_PGLXLIB_NM_D) $(SHARED_PGLXLIB_NM_D) *~ *.o ../*~
 
 veryclean : clean
 	(cd $(INSTALLROOT)/include; $(RM) $(INSTALL_INCLUDES); )
+
+endif # VAR_ERROR
 
  # End of rules that are run from the arch directory
 endif

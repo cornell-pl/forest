@@ -6,7 +6,7 @@ Pstruct a_uint64_vbar {
 };
 Pstruct just_vbar {
   '|';
-  Pcompute PDC_int32 d = 0;
+  Pcompute Pint32 d = 0;
 };
 Punion opt_a_uint32_vbar {
   a_uint32_vbar yes32;
@@ -18,7 +18,7 @@ Punion opt_a_uint64_vbar {
 };
 Pstruct no_pn_vbar {
   "no_TN|";
-  Pcompute PDC_int32 d = 0;
+  Pcompute Pint32 d = 0;
 };
 Punion dib_pn_vbar {
   a_uint64_vbar yesPN;
@@ -56,7 +56,7 @@ Pstruct out_sum_fixed2 {
 };
 Pstruct do_ev_count {
   Pomit PcountX(:'|',1,0:)  bars;
-  Pcompute PDC_int32        ev_count = getLen(bars);
+  Pcompute Pint32        ev_count = getLen(bars);
 };
 
 Precord Pstruct out_sum_data_line {

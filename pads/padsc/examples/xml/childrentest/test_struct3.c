@@ -4,7 +4,7 @@
  * For an example see: examples/data/struct3
  */
 
-#include "libpadsc.h"
+#include "pads.h"
 #include "struct3.h"
 #include "pglx.h"
 #include <stdio.h>

@@ -10,8 +10,8 @@ const char * behave_descr[] = {
  };
 
 int main(int argc, char** argv) {
-  PDC_t                    *pdc;
-  PDC_IO_disc_t            *io_disc;
+  P_t                    *pads;
+  Pio_disc_t            *io_disc;
   out_sum_header           header;
   out_sum_fixed1           f1;
   out_sum_fixed1_pd        f1_pd;
@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   behave                   b               = count_first21;
   unsigned long            good_21         = 0, good = 0, bad = 0;
   /* out_sum_fixed1_m         f1_m           = { 0 }; */
-  out_sum_fixed1_m         f1_m            = {PDC_Ignore,{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}}};
+  out_sum_fixed1_m         f1_m            = {P_Ignore,{P_Ignore,P_Ignore},{P_Ignore,P_Ignore},{{P_Ignore,P_Ignore},{P_Ignore,P_Ignore}},{{P_Ignore,P_Ignore},{P_Ignore,P_Ignore}},{P_Ignore,P_Ignore},{{P_Ignore,P_Ignore},{P_Ignore,P_Ignore}},{{P_Ignore,P_Ignore},{P_Ignore,P_Ignore}}};
 
   if (argc > 3) {
     goto usage;
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
   error(0, "\nUsing behavior %s", behave_descr[b]);
 #endif
 
-  io_disc = PDC_nlrec_noseek_make(0);
+  io_disc = P_nlrec_noseek_make(0);
 #ifndef FASTEST
   if (!io_disc) {
     error(ERROR_FATAL, "\nFailed to install IO discipline nlrec_noseek");
@@ -54,16 +54,16 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  if (PDC_ERR == PDC_open(&pdc, 0, io_disc)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, 0, io_disc)) {
+    error(2, "*** P_open failed ***");
     return -1;
   }
 #ifdef FASTEST
-  pdc->disc->errorf = 0;
+  pads->disc->errorf = 0;
 #endif
 
-  if (PDC_ERR == PDC_IO_fopen(pdc, fname)) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, fname)) {
+    error(2, "*** P_io_fopen failed ***");
     return -1;
   }
 
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
    * Try to read header
    */
 
-  if (PDC_OK == out_sum_header_read(pdc, 0, 0, &header)) {
+  if (P_OK == out_sum_header_read(pads, 0, 0, &header)) {
 #ifndef FASTEST
     error(0, "reading header returned: OK");
 #endif
@@ -84,11 +84,11 @@ int main(int argc, char** argv) {
    */
   switch (b) {
     case count_first21: {
-      while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_fixed1_read(pdc, &f1_m, &f1_pd, &f1)) {
-	  if (PDC_OK == event_read(pdc, 0, &ev_pd, &ev)) {
+      while (!P_io_at_eof(pads)) {
+	if (P_OK == out_sum_fixed1_read(pads, &f1_m, &f1_pd, &f1)) {
+	  if (P_OK == event_read(pads, 0, &ev_pd, &ev)) {
 	    good++;
-	    if (PDC_string_eq_Cstr(&(ev.state), "21")) {
+	    if (Pstring_eq_cstr(&(ev.state), "21")) {
 	      good_21++;
 	    } else {
 	      /*	      error(0, "first state = %.*s", ev.state.len, ev.state.str); */
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
 	  /*	  error(2, "data line read returned: error"); */
 	  bad++;
 	}
-	if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped)) {
+	if (P_ERR == P_io_next_rec(pads, &bytes_skipped)) {
 #ifndef FASTEST
 	  error(2, "Could not find EOR (newline), ending program");
 #endif
@@ -116,13 +116,13 @@ int main(int argc, char** argv) {
   }
 
   
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     return -1;
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     return -1;
   }
 

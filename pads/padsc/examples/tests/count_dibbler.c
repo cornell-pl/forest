@@ -2,8 +2,8 @@
 
 
 int main(int argc, char** argv) {
-  PDC_t                    *pdc;
-  PDC_IO_disc_t            *io_disc;
+  P_t                    *pads;
+  Pio_disc_t            *io_disc;
   out_sum_header           header;
   out_sum_data_line        dline;
   out_sum_data_line_pd     dline_pd;
@@ -16,25 +16,25 @@ int main(int argc, char** argv) {
   }
   error(0, "\nUsing input file %s", fname);
 
-  io_disc = PDC_nlrec_noseek_make(0);
+  io_disc = P_nlrec_noseek_make(0);
   if (!io_disc) {
     error(ERROR_FATAL, "\nFailed to install IO discipline nlrec_noseek");
   } else {
     error(0, "\nInstalled IO discipline nlrec_noseek");
   }
 
-  if (PDC_ERR == PDC_open(&pdc, 0, io_disc)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, 0, io_disc)) {
+    error(2, "*** P_open failed ***");
     return -1;
   }
 
   /* INIT dline -- must do this for all variable data types */
-  out_sum_data_line_init(pdc, &dline);
-  out_sum_data_line_pd_init(pdc, &dline_pd);
-  out_sum_data_line_acc_init(pdc, &acc);
-  out_sum_data_line_m_init(pdc, &dline_m, PDC_CheckAndSet);
-  if (PDC_ERR == PDC_IO_fopen(pdc, fname)) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  out_sum_data_line_init(pads, &dline);
+  out_sum_data_line_pd_init(pads, &dline_pd);
+  out_sum_data_line_acc_init(pads, &acc);
+  out_sum_data_line_m_init(pads, &dline_m, P_CheckAndSet);
+  if (P_ERR == P_io_fopen(pads, fname)) {
+    error(2, "*** P_io_fopen failed ***");
     return -1;
   }
 
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
    * Try to read header
    */
 
-  if (PDC_OK == out_sum_header_read(pdc, 0, 0, &header)) {
+  if (P_OK == out_sum_header_read(pads, 0, 0, &header)) {
     error(0, "reading header returned: OK");
   } else {
     error(2, "reading header returned: error");
@@ -51,20 +51,20 @@ int main(int argc, char** argv) {
   /*
    * Try to read each line of data
    */
-  while (!PDC_IO_at_EOF(pdc)) {
-    out_sum_data_line_read(pdc, &dline_m, &dline_pd, &dline);
-    out_sum_data_line_acc_add(pdc, &acc, &dline_pd, &dline);
+  while (!P_io_at_eof(pads)) {
+    out_sum_data_line_read(pads, &dline_m, &dline_pd, &dline);
+    out_sum_data_line_acc_add(pads, &acc, &dline_pd, &dline);
   }
       
-  out_sum_data_line_acc_report(pdc, "dline", 0, 0, &acc);
+  out_sum_data_line_acc_report(pads, "dline", 0, 0, &acc);
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     return -1;
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     return -1;
   }
 

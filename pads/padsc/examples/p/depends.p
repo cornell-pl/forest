@@ -7,7 +7,7 @@ Punion auth_id_t {
   Pstring(:' ':) id;                                  /- login supplied during authentication
 };
 
-int check(PDC_int32 t, auth_id_t user){
+int check(Pint32 t, auth_id_t user){
   switch (user.tag) {
   case unauthorized: 
     return t == 1;

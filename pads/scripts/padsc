@@ -2,7 +2,7 @@
 
 # file paths will be filled in by install script
 
-# padsc : front-end script to padsc compiler
+# padsc : front-end script to PADS compiler
 # 
 # features of this front-end script:
 #         1. If all the .p files are in the same dir P 

@@ -1,48 +1,48 @@
-#include "padsc.h"
+#include "pads.h"
 #include "format3.h"
 
 int main(int argc, char** argv) {
-  PDC_t           *pdc;
-  PDC_IO_disc_t   *io_disc;
-  PDC_disc_t       my_disc = PDC_default_disc;
+  P_t           *pads;
+  Pio_disc_t   *io_disc;
+  Pdisc_t       my_disc = Pdefault_disc;
   entry            f3data;
   entry_pd         f3pd;
   entry_m          f3m;
 
-  io_disc = PDC_norec_make(0);
+  io_disc = P_norec_make(0);
   if (!io_disc) {
     error(ERROR_FATAL, "\nFailed to install IO discipline norec");
   } else {
     error(0, "\nInstalled IO discipline norec");
   }
 
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
 
   /* INIT f3data, f3pd -- must do this for all variable data types */
-  entry_init   (pdc, &f3data);
-  entry_pd_init(pdc, &f3pd);
+  entry_init   (pads, &f3data);
+  entry_pd_init(pads, &f3pd);
 
   /* INIT mask -- must do this! */
-  entry_m_init(pdc, &f3m, PDC_CheckAndSet);
+  entry_m_init(pads, &f3m, P_CheckAndSet);
 
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format3")) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.format3")) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
 
   /*
    * Try to read each line of data
    */
-  while (!PDC_IO_at_EOF(pdc)) {
-    PDC_error_t res;
+  while (!P_io_at_eof(pads)) {
+    Perror_t res;
     int i;
     error(0, "\nCalling entry_read");
-    res= entry_read(pdc, &f3m, &f3pd, &f3data);
+    res= entry_read(pads, &f3m, &f3pd, &f3data);
 
-    if (res == PDC_OK) {
+    if (res == P_OK) {
       error(0|ERROR_PROMPT, "Record okay:\t");
       for (i = 0; i < f3data.i.length; i++){
 	error(0|ERROR_PROMPT, "%d", f3data.i.elts[i]);
@@ -57,13 +57,13 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
 

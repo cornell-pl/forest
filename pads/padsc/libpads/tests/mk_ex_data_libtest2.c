@@ -1,18 +1,18 @@
-#include "padsc-internal.h" /* for testing - normally do not include internal */
+#include "pads-internal.h" /* for testing - normally do not include internal */
 #include <stdio.h>
 
 int main(int argc, char** argv) {
   char fname[1000];
   char* h;
   Sfio_t* io;
-  PDC_int8    data1 = -2;
-  PDC_uint8   data2 = 2;
-  PDC_int16   data3 = -2;
-  PDC_uint16  data4 = 2;
-  PDC_int32   data5 = -2;
-  PDC_uint32  data6 = 2;
-  PDC_int64   data7 = -2;
-  PDC_uint64  data8 = 2;
+  Pint8    data1 = -2;
+  Puint8   data2 = 2;
+  Pint16   data3 = -2;
+  Puint16  data4 = 2;
+  Pint32   data5 = -2;
+  Puint32  data6 = 2;
+  Pint64   data7 = -2;
+  Puint64  data8 = 2;
 
   h = getenv("HOSTSHORT");
   sprintf(fname, "../../data/ex_data.libtest2.%s", h);

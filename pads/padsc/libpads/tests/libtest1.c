@@ -3,40 +3,40 @@
  */
 
 
-#include "padsc-internal.h" /* for testing - normally do not include internal */
+#include "pads-internal.h" /* for testing - normally do not include internal */
 
 int main(int argc, char** argv) {
   /* int             ctr; */
   /* size_t          n; */
   /* unsigned char   c; */
   int             i;
-  PDC_t*          pdc;
-  PDC_IO_disc_t*  io_disc;
-  PDC_int8        i1;
-  PDC_base_m      m    = PDC_CheckAndSet;
-  PDC_base_pd     pd;
-  PDC_disc_t      my_disc = PDC_default_disc;
+  P_t*          pads;
+  Pio_disc_t*  io_disc;
+  Pint8        i1;
+  Pbase_m      m    = P_CheckAndSet;
+  Pbase_pd     pd;
+  Pdisc_t      my_disc = Pdefault_disc;
   size_t          bytes_skipped;
   unsigned long   ultmp;
 
-  my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
+  my_disc.flags |= (Pflags_t)P_WSPACE_OK;
 
   if (argc != 2) {
     goto usage;
   }
 
   if (strcmp(argv[1], "fwrec") == 0) {
-    io_disc = PDC_fwrec_make(0, 24, 1); /* 4 6-char ints, newline */ 
+    io_disc = P_fwrec_make(0, 24, 1); /* 4 6-char ints, newline */ 
   } else if (strcmp(argv[1], "nlrec") == 0) {
-    io_disc = PDC_nlrec_make(0);
+    io_disc = P_nlrec_make(0);
   } else if (strcmp(argv[1], "norec") == 0) {
-    io_disc = PDC_norec_make(0);
+    io_disc = P_norec_make(0);
   } else if (strcmp(argv[1], "fwrec_noseek") == 0) {
-    io_disc = PDC_fwrec_noseek_make(0, 24, 1); /* 4 6-char ints, newline */ 
+    io_disc = P_fwrec_noseek_make(0, 24, 1); /* 4 6-char ints, newline */ 
   } else if (strcmp(argv[1], "nlrec_noseek") == 0) {
-    io_disc = PDC_nlrec_noseek_make(0);
+    io_disc = P_nlrec_noseek_make(0);
   } else if (strcmp(argv[1], "norec_noseek") == 0) {
-    io_disc = PDC_norec_noseek_make(0);
+    io_disc = P_norec_noseek_make(0);
   } else {
     goto usage;
   }
@@ -46,12 +46,12 @@ int main(int argc, char** argv) {
     error(0, "\nInstalled IO discipline %s", argv[1]);
   }
 
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.libtest1")) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.libtest1")) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
 
@@ -59,23 +59,23 @@ int main(int argc, char** argv) {
    * XXX Process the data here XXX
    */
   while (1) {
-    if (PDC_IO_at_EOF(pdc)) {
+    if (P_io_at_eof(pads)) {
       error(0, "Main program found eof");
       break;
     }
     /* try to read 4 fixed width integers (width 6) */
     for (i = 0; i < 4; i++) {
-      if (PDC_OK == PDC_a_int8_FW_read(pdc, &m, 6, &pd, &i1)) {
+      if (P_OK == Pa_int8_FW_read(pads, &m, 6, &pd, &i1)) {
 	error(0, "Read ascii integer of width 6: %ld", i1);
       }
     }
     if (strncmp(argv[1], "norec", 5) == 0) {
-      if (PDC_ERR == PDC_a_char_lit_scan1(pdc, '\n', 1, 0, &bytes_skipped)) {
+      if (P_ERR == Pa_char_lit_scan1(pads, '\n', 1, 0, &bytes_skipped)) {
 	error(2, "Could not find EOR (newline), ending program");
 	break;
       }
     } else {
-      if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped)) {
+      if (P_ERR == P_io_next_rec(pads, &bytes_skipped)) {
 	error(2, "Could not find EOR (newline), ending program");
 	break;
       }
@@ -84,13 +84,13 @@ int main(int argc, char** argv) {
     error(0, "next_rec returned bytes_skipped = %ld", ultmp);
   }
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
 

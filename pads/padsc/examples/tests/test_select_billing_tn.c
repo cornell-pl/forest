@@ -3,9 +3,9 @@
 #define TEST_VAL 9733608667ULL
 
 int main(int argc, char** argv) {
-  PDC_t                    *pdc;
-  PDC_disc_t               *disc;
-  PDC_IO_disc_t            *io_disc;
+  P_t                    *pads;
+  Pdisc_t               *disc;
+  Pio_disc_t            *io_disc;
   out_sum_header           header;
   out_sum_header_pd        header_pd;
   out_sum_header_m         header_m = { 0 };
@@ -17,8 +17,8 @@ int main(int argc, char** argv) {
 
   error(0, "\nUsing input file %s", fname);
 
-  disc = &PDC_default_disc;
-  io_disc = PDC_nlrec_noseek_make(0);
+  disc = &Pdefault_disc;
+  io_disc = P_nlrec_noseek_make(0);
 
   if (!io_disc) {
     error(ERROR_FATAL, "\nFailed to install IO discipline nlrec_noseek");
@@ -26,25 +26,25 @@ int main(int argc, char** argv) {
     error(0, "\nInstalled IO discipline nlrec_noseek");
   }
 
-  if (PDC_ERR == PDC_open(&pdc, disc, io_disc)) {
-    error(ERROR_FATAL, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, disc, io_disc)) {
+    error(ERROR_FATAL, "*** P_open failed ***");
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, fname)) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, fname)) {
+    error(2, "*** P_io_fopen failed ***");
     return -1;
   }
 
   /* INIT all data and pd types */
-  out_sum_header_init(pdc, &header);
-  out_sum_header_pd_init(pdc, &header_pd);
-  out_sum_data_line_init(pdc, &dline);
-  out_sum_data_line_pd_init(pdc, &dline_pd);
+  out_sum_header_init(pads, &header);
+  out_sum_header_pd_init(pads, &header_pd);
+  out_sum_data_line_init(pads, &dline);
+  out_sum_data_line_pd_init(pads, &dline_pd);
 
   /*
    * Try to read header
    */
 
-  if (PDC_OK == out_sum_header_read(pdc, &header_m, &header_pd, &header)) {
+  if (P_OK == out_sum_header_read(pads, &header_m, &header_pd, &header)) {
     error(0, "reading header returned: OK");
   } else {
     error(2, "reading header returned: error");
@@ -56,10 +56,10 @@ int main(int argc, char** argv) {
   /*
    * Try to read each line of data
    */
-  while (!PDC_IO_at_EOF(pdc)) {
-    PDC_IO_checkpoint(pdc, 0);
+  while (!P_io_at_eof(pads)) {
+    P_io_checkpoint(pads, 0);
     commit = 1;
-    out_sum_data_line_read(pdc, &dline_m, &dline_pd, &dline);
+    out_sum_data_line_read(pads, &dline_m, &dline_pd, &dline);
     /* Fields that contribute to the query expression must be error free, 
        even though entire order need not be error free.
        What does it mean if you say nothing about errors at all */
@@ -67,24 +67,24 @@ int main(int argc, char** argv) {
       if (dline.billing_tn.tag == yesPN) { /* should be dib_pn_vbar_yesPN ??? */
 	if (dline.billing_tn.val.yesPN.val == TEST_VAL) {
 	  /* could call a copy method here and add to list */
-	  /* PDC_IO_commit_dump(pdc, sfstdout); */
-	  PDC_IO_commit(pdc);
+	  /* P_io_commit_dump(pads, sfstdout); */
+	  P_io_commit(pads);
 	  commit = 0;
 	}
       }
     } else {
       /* skip it b/c billing_tn is invalid */
     }
-    if (commit) PDC_IO_commit(pdc);
+    if (commit) P_io_commit(pads);
   }
   
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     return -1;
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     return -1;
   }
 

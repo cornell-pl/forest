@@ -3,26 +3,26 @@
  */
 
 
-#include "padsc-internal.h" /* for testing - normally do not include internal */
+#include "pads-internal.h" /* for testing - normally do not include internal */
 
 int main(int argc, char** argv) {
-  PDC_t*          pdc;
-  PDC_IO_disc_t*  io_disc;
-  PDC_base_m      m = PDC_CheckAndSet;
-  PDC_base_pd     pd;
+  P_t*          pads;
+  Pio_disc_t*  io_disc;
+  Pbase_m      m = P_CheckAndSet;
+  Pbase_pd     pd;
   size_t          bytes_skipped;
   unsigned long   ultmp;
-  PDC_uint32      tm;
+  Puint32      tm;
 
   error(0, "\nUsing PADSC IO discipline nlrec\n\n");
-  io_disc = PDC_nlrec_make(0);
+  io_disc = P_nlrec_make(0);
 
-  if (PDC_ERR == PDC_open(&pdc, 0, io_disc)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, 0, io_disc)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.adate_test")) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.adate_test")) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
 
@@ -30,31 +30,31 @@ int main(int argc, char** argv) {
    * XXX Process the data here XXX
    */
   while (1) {
-    if (PDC_IO_at_EOF(pdc)) {
+    if (P_io_at_eof(pads)) {
       error(0, "Main program found eof");
       break;
     }
     /* try to read line with 1 date term by vbar, 1 date term by EOR */
-    if (PDC_ERR == PDC_a_date_read(pdc, &m, '|', &pd, &tm)) {
-      if (pd.errCode != PDC_INVALID_DATE) {
+    if (P_ERR == Pa_date_read(pads, &m, '|', &pd, &tm)) {
+      if (pd.errCode != P_INVALID_DATE) {
 	goto find_EOR;
       }
     } else {
       error(0, "Read date term by vbar: %s (secs = %lu)", fmttime("%K", (time_t)tm), (unsigned long)tm);
     }
-    if (PDC_ERR == PDC_a_char_lit_read(pdc, &m, &pd, '|')) {
-      PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
+    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+      PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_a_date_read(pdc, &m, 0, &pd, &tm)) {
-      if (pd.errCode != PDC_INVALID_DATE) {
+    if (P_ERR == Pa_date_read(pads, &m, 0, &pd, &tm)) {
+      if (pd.errCode != P_INVALID_DATE) {
 	goto find_EOR;
       }
     } else {
       error(0, "Read date term by NULL: %s (secs = %lu)", fmttime("%K", (time_t)tm), (unsigned long)tm);
     }
   find_EOR:
-    if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped)) {
+    if (P_ERR == P_io_next_rec(pads, &bytes_skipped)) {
       error(2, "Could not find EOR (newline), ending program");
       goto done;
     }
@@ -64,13 +64,13 @@ int main(int argc, char** argv) {
 
  done:
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
 

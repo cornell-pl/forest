@@ -1,4 +1,4 @@
-#include "padsc.h"
+#include "pads.h"
 #include "ai.h"
 #include <ast.h>
 #include <error.h>
@@ -7,7 +7,7 @@
 #define NO_PRINT 1
 
 int main(int argc, char** argv) {
-  PDC_t           *pdc;
+  P_t           *pads;
   http_clf_t_pd   pd;
   http_clf_t      ai;
   http_clf_t_acc  acc;
@@ -21,35 +21,35 @@ int main(int argc, char** argv) {
   }
   error(0, "Data file = %s\n", fileName);
 
-  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, 0, 0)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, fileName)) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, fileName)) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
-  if (PDC_ERR == http_clf_t_init(pdc, &ai)) {
+  if (P_ERR == http_clf_t_init(pads, &ai)) {
     error(2, "*** http_clt_t_init failed ***");
     exit(-1);
   }
-  if (PDC_ERR == http_clf_t_pd_init(pdc, &pd)) {
+  if (P_ERR == http_clf_t_pd_init(pads, &pd)) {
     error(2, "*** http_clt_t_pd_init failed ***");
     exit(-1);
   }
-  if (PDC_ERR == http_clf_t_acc_init(pdc, &acc)) {
+  if (P_ERR == http_clf_t_acc_init(pads, &acc)) {
     error(2, "*** http_clt_t_acc_init failed ***");
     exit(-1);
   }
 
   /* init mask -- must do this! */
-  http_clf_t_m_init(pdc, &m, PDC_CheckAndSet);
+  http_clf_t_m_init(pads, &m, P_CheckAndSet);
 
   /*
    * Try to read each line of data
    */
-  while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == http_clf_t_read(pdc, &m, &pd, &ai)) {
+  while (!P_io_at_eof(pads)) {
+    if (P_OK == http_clf_t_read(pads, &m, &pd, &ai)) {
       /* do something with the data */
 #ifndef NO_PRINT
       if (ai.host.tag == resolved) {
@@ -92,19 +92,19 @@ int main(int argc, char** argv) {
       error(2, "read returned: error");
     }
     /* accum both good and bad vals */
-    if (PDC_ERR == http_clf_t_acc_add(pdc, &acc, &pd, &ai)) {
+    if (P_ERR == http_clf_t_acc_add(pads, &acc, &pd, &ai)) {
       error(2, "*** http_clt_t_acc_add failed ***");
       exit(-1);
     }	
   }
-  http_clf_t_acc_report(pdc, "", 0, 0, &acc);
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  http_clf_t_acc_report(pads, "", 0, 0, &acc);
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
 

@@ -121,13 +121,13 @@ void PGLX_nodelist_free(nodeRepArray list)
 PDCI_node_t ** ty ## _children(PDCI_node_t *self) \
 { \
   ty           *rep = (ty*)self->rep; \
-  PDC_base_pd  *pd  = (PDC_base_pd*)self->pd; \
+  Pbase_pd  *pd  = (Pbase_pd*)self->pd; \
   PDCI_node_t **result; \
   if (!(result = PDCI_NEW_NODE_PTR_LIST(2))) { \
     failwith("PADS/Galax ALLOC_ERROR: in " PDCI_MacroArg2String(ty) "_children"); \
   } \
   /* the following mk calls raise an exception on alloc error */ \
-  PDCI_MK_TNODE(result[0], & PDC_base_pd_vtable,  self, "pd",  pd,  PDCI_MacroArg2String(ty) "_children"); \
+  PDCI_MK_TNODE(result[0], & Pbase_pd_vtable,  self, "pd",  pd,  PDCI_MacroArg2String(ty) "_children"); \
   PDCI_MK_TNODE(result[1], & ty ## _val_vtable,   self, "val", rep, PDCI_MacroArg2String(ty) "_children"); \
   return result; \
 } \
@@ -144,17 +144,17 @@ item ty ## _typed_value (PDCI_node_t *node) \
   /* For now, raise exception containing the value as as string. */ \
   item         res = 0; \
   ty           *r   = (ty*)node->rep; \
-  PDC_base_pd  *pd  = (PDC_base_pd*)node->pd; \
-  PDC_base_pd   tpd; \
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
+  Pbase_pd   tpd; \
   if (!pd) { \
     pd = &tpd; \
-    pd->errCode = PDC_NO_ERR; \
+    pd->errCode = P_NO_ERR; \
   } \
-  sfstrset(node->pdc->tmp2, 0); \
-  if (-1 == ty ## _write2io(node->pdc, node->pdc->tmp2, pd, r)) { \
+  sfstrset(node->pads->tmp2, 0); \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
     failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  if (glx_atomicUntyped(sfstruse(node->pdc->tmp2), &res)) { \
+  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
@@ -164,7 +164,7 @@ const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
 				         ty ## _typed_value, \
 				         0}
 
-/* For the case where a base type requires an arg, such as stop char for PDC_string */
+/* For the case where a base type requires an arg, such as stop char for Pstring */
 #define PDCI_IMPL_BASE_VAL_VT_ARG1(ty, ty_arg1) \
 /* node->rep is a pointer to a ty */ \
 item ty ## _typed_value (PDCI_node_t *node) \
@@ -173,17 +173,17 @@ item ty ## _typed_value (PDCI_node_t *node) \
   /* For now, raise exception containing the value as a string. */ \
   item         res = 0; \
   ty           *r   = (ty*)node->rep; \
-  PDC_base_pd  *pd  = (PDC_base_pd*)node->pd; \
-  PDC_base_pd   tpd; \
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
+  Pbase_pd   tpd; \
   if (!pd) { \
     pd = &tpd; \
-    pd->errCode = PDC_NO_ERR; \
+    pd->errCode = P_NO_ERR; \
   } \
-  sfstrset(node->pdc->tmp2, 0); \
-  if (-1 == ty ## _write2io(node->pdc, node->pdc->tmp2, ty_arg1, pd, r)) { \
+  sfstrset(node->pads->tmp2, 0); \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
     failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  if (glx_atomicUntyped(sfstruse(node->pdc->tmp2), &res)) { \
+  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
@@ -201,51 +201,51 @@ const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
 
 /* A pos_t has 3 children (byte, num, and unit) */
 #undef WHATFN
-#define WHATFN "PDC_pos_t_children"
-PDCI_node_t ** PDC_pos_t_children(PDCI_node_t *self)
+#define WHATFN "Ppos_t_children"
+PDCI_node_t ** Ppos_t_children(PDCI_node_t *self)
 {
-  PDC_pos_t *pos = (PDC_pos_t *) self->rep;
+  Ppos_t *pos = (Ppos_t *) self->rep;
   PDCI_node_t **result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(3))) {
     failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
-  PDCI_MK_TNODE(result[0], &PDC_int32_val_vtable,   self, "byte",    &(pos->byte),     WHATFN);
-  PDCI_MK_TNODE(result[1], &PDC_int32_val_vtable,   self, "num",     &(pos->num),      WHATFN);
-  PDCI_MK_TNODE(result[2], &PDCI_Cstr_val_vtable,   self, "unit",    (char*)pos->unit, WHATFN);
+  PDCI_MK_TNODE(result[0], &Pint32_val_vtable,   self, "byte",    &(pos->byte),     WHATFN);
+  PDCI_MK_TNODE(result[1], &Pint32_val_vtable,   self, "num",     &(pos->num),      WHATFN);
+  PDCI_MK_TNODE(result[2], &PDCI_cstr_val_vtable,   self, "unit",    (char*)pos->unit, WHATFN);
   return result;
 }
 
 /* A loc_t has 2 children (b and e) */
 #undef WHATFN
-#define WHATFN "PDC_loc_t_children"
-PDCI_node_t ** PDC_loc_t_children(PDCI_node_t *self)
+#define WHATFN "Ploc_t_children"
+PDCI_node_t ** Ploc_t_children(PDCI_node_t *self)
 {
-  PDC_loc_t *loc = (PDC_loc_t *) self->rep;
+  Ploc_t *loc = (Ploc_t *) self->rep;
   PDCI_node_t **result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(2))) {
     failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
-  PDCI_MK_TNODE(result[0], &PDC_pos_t_vtable,      self, "b",     &(loc->b),     WHATFN);
-  PDCI_MK_TNODE(result[1], &PDC_pos_t_vtable,      self, "e",     &(loc->e),     WHATFN);
+  PDCI_MK_TNODE(result[0], &Ppos_t_vtable,      self, "b",     &(loc->b),     WHATFN);
+  PDCI_MK_TNODE(result[1], &Ppos_t_vtable,      self, "e",     &(loc->e),     WHATFN);
   return result;
 }
 
 /* A base_pd has three children (pstate, errCode, loc) */
 #undef WHATFN
-#define WHATFN "PDC_base_pd_children"
-PDCI_node_t ** PDC_base_pd_children(PDCI_node_t *self)
+#define WHATFN "Pbase_pd_children"
+PDCI_node_t ** Pbase_pd_children(PDCI_node_t *self)
 {
   int            i = 0;
-  PDC_base_pd   *pd = (PDC_base_pd *) self->rep;
+  Pbase_pd   *pd = (Pbase_pd *) self->rep;
   PDCI_node_t  **result;
 
   if (!(result = PDCI_NEW_NODE_PTR_LIST(3))) {
     failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
   if (pd->errCode >= 100) {
-    PDCI_MK_TNODE(result[i], &PDC_loc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
+    PDCI_MK_TNODE(result[i], &Ploc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
   } else {
     result[i] = 0; i++;
   }
@@ -265,14 +265,14 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
     failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
   if (pd->errCode >= 100) {
-    PDCI_MK_TNODE(result[i], &PDC_loc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
+    PDCI_MK_TNODE(result[i], &Ploc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
   } else {
     result[i] = 0; i++;
   }
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN); i++;
   return result;
 }
 
@@ -290,16 +290,16 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
     failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",   &(pd->pstate),     WHATFN); i++;
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "errCode",  &(pd->errCode),    WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",   &(pd->pstate),     WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode",  &(pd->errCode),    WHATFN); i++;
   if (pd->errCode >= 100) {
-    PDCI_MK_TNODE(result[i], &PDC_loc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
+    PDCI_MK_TNODE(result[i], &Ploc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
   } else {
     result[i] = 0; i++;
   }
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN); i++;
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "neerr",    &(pd->neerr),      WHATFN); i++;
-  PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "neerr",    &(pd->neerr),      WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN); i++;
   return result;
 }
 
@@ -327,7 +327,7 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *self)
       failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
     }
     /* This is wrong, because the content of the node depends on its type. */
-    PDCI_MK_TEXTNODE(result[0], &PDCI_Cstr_val_vtable, self, WHATFN);
+    PDCI_MK_TEXTNODE(result[0], &PDCI_cstr_val_vtable, self, WHATFN);
   }
   return result;
 }
@@ -344,12 +344,12 @@ item PDCI_error_typed_value(PDCI_node_t *node)
 } 
 
 /* node->rep is a C-style string (const char *) */
-item PDCI_Cstr_typed_value(PDCI_node_t *node)
+item PDCI_cstr_typed_value(PDCI_node_t *node)
 {
   item        res = 0;
   char        *s   = (char *)node->rep;
   if (glx_atomicUntyped(s, &res)) {
-    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in PDC_Cstr_typed_value");
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in Pcstr_typed_value");
   }
   return res;
 }
@@ -367,86 +367,86 @@ PDCI_sequenced_pd_vtable = {PDCI_sequenced_pd_children,
 			    0};
 
 const PDCI_vtable_t
-PDC_base_pd_vtable = {PDC_base_pd_children,
+Pbase_pd_vtable = {Pbase_pd_children,
 		      PDCI_error_typed_value,
 		      0};
 
 const PDCI_vtable_t
-PDC_loc_t_vtable = {PDC_loc_t_children,
+Ploc_t_vtable = {Ploc_t_children,
 		    PDCI_error_typed_value,
 		    0};
 
 const PDCI_vtable_t
-PDC_pos_t_vtable = {PDC_pos_t_children,
+Ppos_t_vtable = {Ppos_t_children,
 		    PDCI_error_typed_value,
 		    0};
 
 const PDCI_vtable_t
-PDCI_Cstr_val_vtable = {PDCI_no_children,
-			PDCI_Cstr_typed_value,
+PDCI_cstr_val_vtable = {PDCI_no_children,
+			PDCI_cstr_typed_value,
 			0};
 
 /* Impl some base type children and typed_value functions and
    associated vtable/val_vtable pairs */
 
-PDCI_IMPL_BASE_VT(PDC_char);
-PDCI_IMPL_BASE_VAL_VT(PDC_char);
+PDCI_IMPL_BASE_VT(Pchar);
+PDCI_IMPL_BASE_VAL_VT(Pchar);
 
-PDCI_IMPL_BASE_VT(PDC_string);
-PDCI_IMPL_BASE_VAL_VT_ARG1(PDC_string, ' ');
+PDCI_IMPL_BASE_VT(Pstring);
+PDCI_IMPL_BASE_VAL_VT_ARG1(Pstring, ' ');
 
-PDCI_IMPL_BASE_VT(PDC_int8);
-PDCI_IMPL_BASE_VAL_VT(PDC_int8);
+PDCI_IMPL_BASE_VT(Pint8);
+PDCI_IMPL_BASE_VAL_VT(Pint8);
 
-PDCI_IMPL_BASE_VT(PDC_int16);
-PDCI_IMPL_BASE_VAL_VT(PDC_int16);
+PDCI_IMPL_BASE_VT(Pint16);
+PDCI_IMPL_BASE_VAL_VT(Pint16);
 
-PDCI_IMPL_BASE_VT(PDC_int32);
-PDCI_IMPL_BASE_VAL_VT(PDC_int32);
+PDCI_IMPL_BASE_VT(Pint32);
+PDCI_IMPL_BASE_VAL_VT(Pint32);
 
-PDCI_IMPL_BASE_VT(PDC_int64);
-PDCI_IMPL_BASE_VAL_VT(PDC_int64);
+PDCI_IMPL_BASE_VT(Pint64);
+PDCI_IMPL_BASE_VAL_VT(Pint64);
 
-PDCI_IMPL_BASE_VT(PDC_uint8);
-PDCI_IMPL_BASE_VAL_VT(PDC_uint8);
+PDCI_IMPL_BASE_VT(Puint8);
+PDCI_IMPL_BASE_VAL_VT(Puint8);
 
-PDCI_IMPL_BASE_VT(PDC_uint16);
-PDCI_IMPL_BASE_VAL_VT(PDC_uint16);
+PDCI_IMPL_BASE_VT(Puint16);
+PDCI_IMPL_BASE_VAL_VT(Puint16);
 
-PDCI_IMPL_BASE_VT(PDC_uint32);
-/* PDCI_IMPL_BASE_VAL_VT(PDC_uint32); */
+PDCI_IMPL_BASE_VT(Puint32);
+/* PDCI_IMPL_BASE_VAL_VT(Puint32); */
 
-PDCI_IMPL_BASE_VT(PDC_uint64);
-PDCI_IMPL_BASE_VAL_VT(PDC_uint64);
+PDCI_IMPL_BASE_VT(Puint64);
+PDCI_IMPL_BASE_VAL_VT(Puint64);
 
-/* XXX EXPANDED PDCI_IMPL_BASE_VAL_VT(PDC_uint32) here in case
+/* XXX EXPANDED PDCI_IMPL_BASE_VAL_VT(Puint32) here in case
  * XXX someone wants to play with doing a real implementation of
- * XXX PDC_uint32_typed_value
+ * XXX Puint32_typed_value
  */
 
-/* node->rep is a pointer to a PDC_uint32 */
-item PDC_uint32_typed_value (PDCI_node_t *node)
+/* node->rep is a pointer to a Puint32 */
+item Puint32_typed_value (PDCI_node_t *node)
 {
   item         res = 0;
-  PDC_uint32   *r   = (PDC_uint32*)node->rep;
-  PDC_base_pd  *pd  = (PDC_base_pd*)node->pd;
-  PDC_base_pd  tpd;
+  Puint32   *r   = (Puint32*)node->rep;
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd;
+  Pbase_pd  tpd;
   if (!pd) {
     pd = &tpd;
-    pd->errCode = PDC_NO_ERR;
+    pd->errCode = P_NO_ERR;
   }
-  sfstrset(node->pdc->tmp2, 0);
-  if (-1 == PDC_uint32_write2io(node->pdc, node->pdc->tmp2, pd, r)) {
+  sfstrset(node->pads->tmp2, 0);
+  if (-1 == Puint32_write2io(node->pads, node->pads->tmp2, pd, r)) {
     failwith("PADS/Galax UNEXPECTED_IO_FAILURE in base type typed_value function");
   }
-  if (glx_atomicUntyped(sfstruse(node->pdc->tmp2), &res)) {
-    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in PDC_uint32_typed_value");
+  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) {
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in Puint32_typed_value");
   }
   return res;
 }
 
-const PDCI_vtable_t PDC_uint32_val_vtable = {PDCI_no_children,
-					     PDC_uint32_typed_value,
+const PDCI_vtable_t Puint32_val_vtable = {PDCI_no_children,
+					     Puint32_typed_value,
 					     0};
 
 

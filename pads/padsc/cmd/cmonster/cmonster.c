@@ -20,9 +20,9 @@ int main(int argc, char **argv)
 {
   CM_t                    cm;
 
-  PDC_t                  *pdc;
-  PDC_disc_t              my_disc;
-  PDC_IO_disc_t          *io_disc;
+  P_t                  *pads;
+  Pdisc_t              my_disc;
+  Pio_disc_t          *io_disc;
 
   CM_dspec                dspec;
   CM_dspec_m              dspec_m;
@@ -35,10 +35,10 @@ int main(int argc, char **argv)
   Sfio_t                 *mem_io;
   size_t                  skipped_bytes = 0, rec_len;
   int                     c, eor = 0, eof = 0, skip_rec = 0, buf_full = 0;
-  PDC_byte               *begin = 0, *end = 0;
+  Pbyte               *begin = 0, *end = 0;
 
-  PDC_uint32              cmon;
-  PDC_base_pd             dummy_pd;
+  Puint32              cmon;
+  Pbase_pd             dummy_pd;
 
   const char             *cspec_str = 0, *dspec_str = 0; /* required */
   const char             *inf_str = 0, *outf_str = 0, *errf_str = 0, *padslf_str = 0; /* optional */
@@ -158,42 +158,42 @@ int main(int argc, char **argv)
     goto usage;
   }
 
-  io_disc = PDC_norec_make(0);
+  io_disc = P_norec_make(0);
   if (!io_disc) {
     sfprintf(cm.errf, "\n*** FATAL: Failed to install IO discipline to parse command line\n\n");
     return -1;
   }
 
-  my_disc = PDC_default_disc;
-  my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
+  my_disc = Pdefault_disc;
+  my_disc.flags |= (Pflags_t)P_WSPACE_OK;
 
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_open failed\n\n");
+  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
+    sfprintf(cm.errf, "\n*** FATAL: P_open failed\n\n");
     return -1;
   }
 
-  CM_dspec_init(pdc, &dspec);
-  CM_dspec_pd_init(pdc, &dspec_pd);
-  CM_dspec_m_init(pdc, &dspec_m, PDC_CheckAndSet);
+  CM_dspec_init(pads, &dspec);
+  CM_dspec_pd_init(pads, &dspec_pd);
+  CM_dspec_m_init(pads, &dspec_m, P_CheckAndSet);
 
-  CM_cspec_init(pdc, &cspec);
-  CM_cspec_pd_init(pdc, &cspec_pd);
-  CM_cspec_m_init(pdc, &cspec_m, PDC_CheckAndSet);
+  CM_cspec_init(pads, &cspec);
+  CM_cspec_pd_init(pads, &cspec_pd);
+  CM_cspec_m_init(pads, &cspec_m, P_CheckAndSet);
 
   if (!(mem_io = sfopen(NULL, dspec_str, "s"))) {
     sfprintf(cm.errf, "\n*** FATAL: Unexpected: sfopen(NULL, dspec_str, \"s\") failed\n\n");
     return -1;
   }
-  if (PDC_ERR == PDC_IO_set(pdc, mem_io)) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_IO_set failed\n\n");
+  if (P_ERR == P_io_set(pads, mem_io)) {
+    sfprintf(cm.errf, "\n*** FATAL: P_io_set failed\n\n");
     return -1;
   }
-  if (PDC_ERR == CM_dspec_read(pdc, &dspec_m, &dspec_pd, &dspec)) {
+  if (P_ERR == CM_dspec_read(pads, &dspec_m, &dspec_pd, &dspec)) {
     sfprintf(cm.errf, "\nCould not parse -d dspec argument\n");
     goto usage;
   }
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_IO_close failed\n\n");
+  if (P_ERR == P_io_close(pads)) {
+    sfprintf(cm.errf, "\n*** FATAL: P_io_close failed\n\n");
     return -1;
   }
   sfclose(mem_io);
@@ -202,21 +202,21 @@ int main(int argc, char **argv)
     sfprintf(cm.errf, "\n*** FATAL: Unexpected: sfopen(NULL, cspec_str, \"s\") failed\n\n");
     return -1;
   }
-  if (PDC_ERR == PDC_IO_set(pdc, mem_io)) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_IO_set failed\n\n");
+  if (P_ERR == P_io_set(pads, mem_io)) {
+    sfprintf(cm.errf, "\n*** FATAL: P_io_set failed\n\n");
     return -1;
   }
-  if (PDC_ERR == CM_cspec_read(pdc, &cspec_m, &cspec_pd, &cspec)) {
+  if (P_ERR == CM_cspec_read(pads, &cspec_m, &cspec_pd, &cspec)) {
     sfprintf(cm.errf, "\nCould not parse -c cspec argument\n");
     goto usage;
   }
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_IO_close failed\n\n");
+  if (P_ERR == P_io_close(pads)) {
+    sfprintf(cm.errf, "\n*** FATAL: P_io_close failed\n\n");
     return -1;
   }
   sfclose(mem_io);
-  if (PDC_ERR == PDC_close(pdc)) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_close failed\n\n");
+  if (P_ERR == P_close(pads)) {
+    sfprintf(cm.errf, "\n*** FATAL: P_close failed\n\n");
     return -1;
   }
   sfprintf(cm.errf, "XXX_REMOVE description of cookie\n");
@@ -231,23 +231,23 @@ int main(int argc, char **argv)
     sfprintf(cm.errf, "\nXXX_REMOVE Installed IO discipline %s\n", dspec_str);
   }
 
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_open failed\n\n");
+  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
+    sfprintf(cm.errf, "\n*** FATAL: P_open failed\n\n");
     return -1;
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "/dev/stdin")) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_IO_fopen failed\n\n");
+  if (P_ERR == P_io_fopen(pads, "/dev/stdin")) {
+    sfprintf(cm.errf, "\n*** FATAL: P_io_fopen failed\n\n");
     return -1;
   }
 
   /* initialize cm */
-  cm.pdc = pdc;
-  PDC_string_init(pdc, &(cm.tmp1));
+  cm.pads = pads;
+  Pstring_init(pads, &(cm.tmp1));
   cm.outbuf_sz = out_sz_cookie(&cspec);
   if (cm.outbuf_sz < 4) {
     cm.outbuf_sz = 4;
   }
-  if (!(cm.outbuf = vmoldof(cm.vm, 0, PDC_byte, cm.outbuf_sz, 1))) { /* alloc added space for newline */
+  if (!(cm.outbuf = vmoldof(cm.vm, 0, Pbyte, cm.outbuf_sz, 1))) { /* alloc added space for newline */
     sfprintf(cm.errf, "\n*** FATAL: Memory alloc failed\n\n");
     return -1;
   }
@@ -269,12 +269,12 @@ int main(int argc, char **argv)
    * In each case any bytes after byte 4 is zero.
    */
 
-  PDC_base_pd_init(&dummy_pd);
+  Pbase_pd_init(&dummy_pd);
   /* zero the output record before filling it in */
   memset(cm.outbuf, 0, cm.outbuf_sz);
   /* fill in cm.outbuf_sz */
-  if (4 != PDC_sbl_uint32_write2buf(pdc, cm.outbuf, cm.outbuf_sz, &buf_full, 4, &dummy_pd, &cm.outbuf_sz)) {
-    sfprintf(cm.errf, "\n*** FATAL: Unexpected error calling PDC_sbl_uint32_write2buf\n\n");
+  if (4 != Psbl_uint32_write2buf(pads, cm.outbuf, cm.outbuf_sz, &buf_full, 4, &dummy_pd, &cm.outbuf_sz)) {
+    sfprintf(cm.errf, "\n*** FATAL: Unexpected error calling Psbl_uint32_write2buf\n\n");
     return -1;
   }
   if (SFWRITE_SIZE != sfwrite(cm.outf, cm.outbuf, SFWRITE_SIZE)) {
@@ -287,8 +287,8 @@ int main(int argc, char **argv)
   /* fill in special cmon value */
   cmon = ('c' << 24) + ('m' << 16) + ('o' << 8) + 'n';
   sfprintf(cm.errf, "XXX_REMOVE cmon = %lu\n", (unsigned long)cmon);
-  if (4 != PDC_sbl_uint32_write2buf(pdc, cm.outbuf, cm.outbuf_sz, &buf_full, 4, &dummy_pd, &cmon)) {
-    sfprintf(cm.errf, "\n*** FATAL: Unexpected error calling PDC_sbl_uint32_write2buf\n\n");
+  if (4 != Psbl_uint32_write2buf(pads, cm.outbuf, cm.outbuf_sz, &buf_full, 4, &dummy_pd, &cmon)) {
+    sfprintf(cm.errf, "\n*** FATAL: Unexpected error calling Psbl_uint32_write2buf\n\n");
     return -1;
   }
   if (SFWRITE_SIZE != sfwrite(cm.outf, cm.outbuf, SFWRITE_SIZE)) {
@@ -298,8 +298,8 @@ int main(int argc, char **argv)
 
   /* read all input records, generate output records */
   while (1) {
-    if (PDC_ERR == PDCI_IO_need_rec_bytes(pdc, skip_rec, &begin, &end, &eor, &eof, &skipped_bytes)) {
-      sfprintf(cm.errf, "\nXXX_REMOVE need_rec_bytes returned PDC_ERR, break from while loop\n");
+    if (P_ERR == PDCI_io_need_rec_bytes(pads, skip_rec, &begin, &end, &eor, &eof, &skipped_bytes)) {
+      sfprintf(cm.errf, "\nXXX_REMOVE need_rec_bytes returned P_ERR, break from while loop\n");
       break;
     }
     skip_rec = 1;
@@ -317,13 +317,13 @@ int main(int argc, char **argv)
 	/* never happens */
 	continue; /* skip to next record without writing */
       case c_cookie:
-	if (PDC_ERR == rw_c_cookie(&cm, &(cspec.cookie.val.c_cookie), begin, end)) {
+	if (P_ERR == rw_c_cookie(&cm, &(cspec.cookie.val.c_cookie), begin, end)) {
 	  /* already reported error */
 	  continue; /* skip to next record without writing */
 	}
 	break;
       case s_cookie:
-	if (PDC_ERR == rw_s_cookie(&cm, &(cspec.cookie.val.s_cookie), begin, end)) {
+	if (P_ERR == rw_s_cookie(&cm, &(cspec.cookie.val.s_cookie), begin, end)) {
 	  /* already reported error */
 	  continue; /* skip to next record without writing */
 	}
@@ -336,25 +336,25 @@ int main(int argc, char **argv)
       }
     }
     if (eof) {
-      sfprintf(cm.errf, "\nXXX_REMOVE need_rec_bytes returned PDC_ERR, break from while loop\n");
+      sfprintf(cm.errf, "\nXXX_REMOVE need_rec_bytes returned P_ERR, break from while loop\n");
       break;
     }
   }
   /* done */
 
   /* cleanup cm */
-  PDC_string_cleanup(pdc, &(cm.tmp1));
+  Pstring_cleanup(pads, &(cm.tmp1));
   if (cm.vm) {
     vmclose(cm.vm); /* frees everything alloc'd using cm.vm */
   }
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_IO_close failed\n\n");
+  if (P_ERR == P_io_close(pads)) {
+    sfprintf(cm.errf, "\n*** FATAL: P_io_close failed\n\n");
     return -1;
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    sfprintf(cm.errf, "\n*** FATAL: PDC_close failed\n\n");
+  if (P_ERR == P_close(pads)) {
+    sfprintf(cm.errf, "\n*** FATAL: P_close failed\n\n");
     return -1;
   }
 

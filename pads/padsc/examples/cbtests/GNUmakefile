@@ -28,7 +28,7 @@ VPATH =  $(CPY_DIR)
 all: $(P_DIR)/cpygen_foo.p $(P_DIR)/cpygen_crs.p
 
 $(P_DIR)/cpygen_crs.p: $(P_DIR)/cpygen_crshdr.p $(P_DIR)/cpygen_crstlr.p $(P_DIR)/cpygen_crsdet.p
-	(echo ""; echo "extern PDC_uint64 num_recs;"; echo "") > $@
+	(echo ""; echo "extern P_uint64 num_recs;"; echo "") > $@
 	cat $^ | sed -e 's|Pstruct cpy_crshdr|Precord Pstruct cpy_crshdr|' \
 		     -e 's|XX_TOTAL_RECORDS_3;|XX_TOTAL_RECORDS_3 : XX_TOTAL_RECORDS_3 == num_recs ;|' >> $@
 	(echo "Precord Punion det_or_tlr {"; \

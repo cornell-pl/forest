@@ -37,13 +37,13 @@ const PDCI_vtable_t fooStruct_vtable = {fooStruct_children,
 PDCI_node_t** fooEnum_children(PDCI_node_t *self){
   char  *Cstr;
   fooEnum     *rep  = (fooEnum *)     self->rep;
-  PDC_base_pd *pd   = (PDC_base_pd *) self->pd;
+  P_base_pd *pd   = (P_base_pd *) self->pd;
   PDCI_node_t** result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 2))) {
     failwith("ALLOC_ERROR: in fooEnum_children");
   };
   /* parse descriptor child */
-  PDCI_MK_TNODE(result[0], &PDC_base_pd_vtable, self, "pd", pd, "fooEnum_children");
+  PDCI_MK_TNODE(result[0], &P_base_pd_vtable, self, "pd", pd, "fooEnum_children");
   /* string val child */
   Cstr = (char*)fooEnum2str(*rep);
   PDCI_MK_TNODE(result[0], &PDCI_Cstr_val_vtable, self, "val", Cstr, "fooEnum_children");
@@ -127,7 +127,7 @@ PDCI_node_t** fooArray_children(PDCI_node_t *self){
   };
   /* parse descriptor child */
   PDCI_MK_TNODE(result[0], &PDCI_sequenced_pd_vtable, self, "pd", pd, "fooArray_children");
-  PDCI_MK_TNODE(result[1], &PDC_uint32_val_vtable, self, "length", &(rep->length), "fooArray_children");  
+  PDCI_MK_TNODE(result[1], &P_uint32_val_vtable, self, "length", &(rep->length), "fooArray_children");  
   /* now do elements  */
   for (i = 0; i<rep->length; i++){
     PDCI_MK_NODE(result[i+2],&fooElement_vtable,self,

@@ -1,11 +1,11 @@
 Data file = standard in
-warning: PDC_open: Installing default IO discipline : newline-terminated records
+warning: P_open: Installing default IO discipline : newline-terminated records
 warning: Error [in line_read]: record 3 char 12 : User constraint on field a violated.
 [record 3]23|9|24|12.>>>5<<< - 2
 warning: Error [in line_read]: record 3 char 16 : User constraint on field t violated.
 [record 3]23|9|24|12.5 - >>>2<<<
 read returned error
-warning: Error [in PDC_a_int32_read]: record 4 char 15 : spaces not allowed in a_int field unless flag PDC_WSPACE_OK is set
+warning: Error [in Pa_int32_read]: record 4 char 15 : spaces not allowed in a_int field unless flag P_WSPACE_OK is set
 [record 4]12|23|9|24|12.>>> <<<ksf 1
 warning: Error [in line_read]: record 4 char 20 : User constraint on field t violated.
 [record 4]12|23|9|24|12. ksf >>>1<<<

@@ -6,7 +6,7 @@ Pstruct a_uint64_vbar {
 };
 Pstruct just_vbar {
   '|';
-  Pcompute PDC_int8 d = 0; /-- padsc should provide dummy field for 'empty' structs
+  Pcompute Pint8 d = 0; /-- padsc should provide dummy field for 'empty' structs
 };
 Punion opt_a_uint32_vbar {
   a_uint32_vbar yes32;
@@ -18,7 +18,7 @@ Punion opt_a_uint64_vbar {
 };
 Pstruct no_pn_vbar {
   "no_TN|";
-  Pcompute PDC_int8 d = 0; /-- padsc should provide dummy field for 'empty' structs
+  Pcompute Pint8 d = 0; /-- padsc should provide dummy field for 'empty' structs
 };
 Punion dib_pn_vbar {
   a_uint64_vbar yesPN;

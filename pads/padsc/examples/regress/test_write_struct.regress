@@ -1,4 +1,4 @@
-warning: PDC_open: Installing default IO discipline : newline-terminated records
+warning: P_open: Installing default IO discipline : newline-terminated records
 Data file = ../../data/ex_data.struct_write
 calling testtwo_read
 testtwo_read returned: id 1  ts 11  f 11 
@@ -15,7 +15,7 @@ warning: Error [in testtwo_read]: record 4 char 6 : User constraint on field f v
 testtwo_read returned: error
 3|33|77777
 calling testtwo_read
-warning: Error [in PDC_a_uint32_read]: at record 5 at char 1 : Invalid ASCII character encoding of a number 
+warning: Error [in Pa_uint32_read]: at record 5 at char 1 : Invalid ASCII character encoding of a number 
 [record 5]>>>a<<<|33|33
 testtwo_read returned: error
 99999|33|33

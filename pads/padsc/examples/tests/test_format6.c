@@ -1,37 +1,37 @@
-#include "padsc.h"
+#include "pads.h"
 #include "format6.h"
 
 #define NO_NL 0|ERROR_PROMPT
 
 int main(int argc, char** argv) {
-  PDC_t*          pdc;
+  P_t*          pads;
   defPN_pd        ppd;
   defPN           pdata;
   defPN_m         pm;
 
-  /* Open pdc handle */
-  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
-    error(2, "*** PDC_open failed ***");
+  /* Open pads handle */
+  if (P_ERR == P_open(&pads, 0, 0)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
 
   /* Open output file */
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format6")) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.format6")) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
 
   /* init mask -- must do this! */
-  defPN_m_init(pdc, &pm, PDC_CheckAndSet);
+  defPN_m_init(pads, &pm, P_CheckAndSet);
 
   /*
    * Try to read each line of data
    */
-  while (!PDC_IO_at_EOF(pdc)) {
-    PDC_error_t res;
-    res= defPN_read(pdc, &pm, 1999999999LL, 9999999999LL, &ppd, &pdata);
+  while (!P_io_at_eof(pads)) {
+    Perror_t res;
+    res= defPN_read(pads, &pm, 1999999999LL, 9999999999LL, &ppd, &pdata);
 
-    if (res == PDC_OK) {
+    if (res == P_OK) {
       error(NO_NL, "Record okay:\t");
     } else {
       error(NO_NL, "Record not okay:\t");
@@ -39,13 +39,13 @@ int main(int argc, char** argv) {
     error(NO_NL, "x = %llu\n", pdata.id);
   }
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
 

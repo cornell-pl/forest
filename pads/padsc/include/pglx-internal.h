@@ -11,7 +11,7 @@
 #ifndef __PGLX_INTERNAL_H__
 #define __PGLX_INTERNAL_H__
 
-#include "padsc-internal.h"
+#include "pads-internal.h"
 
 #ifdef USE_GALAX
 #include "glx.h"              /* Need to pack/unpack Galax atomic values */
@@ -120,7 +120,7 @@ void  PDCI_MK_NODE(PDCI_node_t *result,
 
 void  PDCI_MK_TOP_NODE(PDCI_node_t *result,
 		       const PDCI_vtable_t *vt,
-		       PDC_t *pdc,
+		       P_t *pads,
 		       const char *name, 
 		       void* m, void* pd,
 		       void* rep,
@@ -147,7 +147,7 @@ typedef const char *        (* PDCI_string_value_fn)  (PDCI_node_t *node);
 /* Type PDCI_node_t: */
 struct PDCI_node_s {
   const PDCI_vtable_t   *vt;
-  PDC_t                 *pdc;
+  P_t                 *pads;
   PDCI_node_t           *parent;
   void                  *m;
   void                  *pd;
@@ -168,9 +168,9 @@ struct PDCI_vtable_s {
 
 /* type PDCI_structured_pd: */
 struct PDCI_structured_pd_s {
-  PDC_flags_t     pstate;
-  PDC_errCode_t   errCode;
-  PDC_loc_t       loc;
+  Pflags_t     pstate;
+  PerrCode_t   errCode;
+  Ploc_t       loc;
   int             nerr;
 };
 
@@ -178,9 +178,9 @@ struct PDCI_structured_pd_s {
 
 /* Type PDCI_sequenced_pd_t: */
 struct PDCI_sequenced_pd_s {
-  PDC_flags_t    pstate;
-  PDC_errCode_t  errCode;
-  PDC_loc_t      loc;
+  Pflags_t    pstate;
+  PerrCode_t  errCode;
+  Ploc_t      loc;
   int            nerr;
   int            neerr;		        
   int            firstError;		
@@ -191,9 +191,9 @@ struct PDCI_sequenced_pd_s {
 
 /* Children functions */
 
-PDCI_node_t ** PDC_base_pd_children(PDCI_node_t *self);
-PDCI_node_t ** PDC_loc_t_children(PDCI_node_t *self);
-PDCI_node_t ** PDC_pos_t_children(PDCI_node_t *self);
+PDCI_node_t ** Pbase_pd_children(PDCI_node_t *self);
+PDCI_node_t ** Ploc_t_children(PDCI_node_t *self);
+PDCI_node_t ** Ppos_t_children(PDCI_node_t *self);
 
 PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self);
 PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self);
@@ -202,7 +202,7 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *self);
 /* Typed Value functions */
 
 item PDCI_error_typed_value(PDCI_node_t *node); /* Error function used for many cases */
-item PDCI_Cstr_typed_value (PDCI_node_t *node); /* node->rep is a C-style string (const char *) */
+item PDCI_cstr_typed_value (PDCI_node_t *node); /* node->rep is a C-style string (const char *) */
 
 /* ================================================================================
  * VTABLES */
@@ -212,104 +212,104 @@ item PDCI_Cstr_typed_value (PDCI_node_t *node); /* node->rep is a C-style string
 PDCI_DECL_VT(PDCI_structured_pd);
 PDCI_DECL_VT(PDCI_sequenced_pd);
 
-PDCI_DECL_VT(PDC_base_pd);
-PDCI_DECL_VT(PDC_loc_t);
-PDCI_DECL_VT(PDC_pos_t);
+PDCI_DECL_VT(Pbase_pd);
+PDCI_DECL_VT(Ploc_t);
+PDCI_DECL_VT(Ppos_t);
 
 /* Special val_vtables */
 
-PDCI_DECL_VAL_VT(PDCI_Cstr);
+PDCI_DECL_VAL_VT(PDCI_cstr);
 
 /* Base type vtables */
-PDCI_DECL_VT(PDC_char);
-PDCI_DECL_VT(PDC_a_char);
-PDCI_DECL_VT(PDC_e_char);
+PDCI_DECL_VT(Pchar);
+PDCI_DECL_VT(Pa_char);
+PDCI_DECL_VT(Pe_char);
 
-PDCI_DECL_VT(PDC_string);
-PDCI_DECL_VT(PDC_string_ME);
-PDCI_DECL_VT(PDC_string_CME);
-PDCI_DECL_VT(PDC_string_SE);
-PDCI_DECL_VT(PDC_string_CSE);
+PDCI_DECL_VT(Pstring);
+PDCI_DECL_VT(Pstring_ME);
+PDCI_DECL_VT(Pstring_CME);
+PDCI_DECL_VT(Pstring_SE);
+PDCI_DECL_VT(Pstring_CSE);
 
-PDCI_DECL_VT(PDC_a_string);
-PDCI_DECL_VT(PDC_a_string_ME);
-PDCI_DECL_VT(PDC_a_string_CME);
-PDCI_DECL_VT(PDC_a_string_SE);
-PDCI_DECL_VT(PDC_a_string_CSE);
+PDCI_DECL_VT(Pa_string);
+PDCI_DECL_VT(Pa_string_ME);
+PDCI_DECL_VT(Pa_string_CME);
+PDCI_DECL_VT(Pa_string_SE);
+PDCI_DECL_VT(Pa_string_CSE);
 
-PDCI_DECL_VT(PDC_e_string);
-PDCI_DECL_VT(PDC_e_string_ME);
-PDCI_DECL_VT(PDC_e_string_CME);
-PDCI_DECL_VT(PDC_e_string_SE);
-PDCI_DECL_VT(PDC_e_string_CSE);
+PDCI_DECL_VT(Pe_string);
+PDCI_DECL_VT(Pe_string_ME);
+PDCI_DECL_VT(Pe_string_CME);
+PDCI_DECL_VT(Pe_string_SE);
+PDCI_DECL_VT(Pe_string_CSE);
 
-PDCI_DECL_VT(PDC_int8);
-PDCI_DECL_VT(PDC_int16);
-PDCI_DECL_VT(PDC_int32);
-PDCI_DECL_VT(PDC_int64);
-PDCI_DECL_VT(PDC_uint8);
-PDCI_DECL_VT(PDC_uint16);
-PDCI_DECL_VT(PDC_uint32);
-PDCI_DECL_VT(PDC_uint64);
+PDCI_DECL_VT(Pint8);
+PDCI_DECL_VT(Pint16);
+PDCI_DECL_VT(Pint32);
+PDCI_DECL_VT(Pint64);
+PDCI_DECL_VT(Puint8);
+PDCI_DECL_VT(Puint16);
+PDCI_DECL_VT(Puint32);
+PDCI_DECL_VT(Puint64);
 
 /* We need one _val_vtable for each in-memory format.
    All of the PADS types that share an in-memory format 
    can share a vtable */
 
 /* The required _val_vtable */
-PDCI_DECL_VAL_VT(PDC_char);
-PDCI_DECL_VAL_VT(PDC_string);
-PDCI_DECL_VAL_VT(PDC_int8);
-PDCI_DECL_VAL_VT(PDC_int16);
-PDCI_DECL_VAL_VT(PDC_int32);
-PDCI_DECL_VAL_VT(PDC_int64);
-PDCI_DECL_VAL_VT(PDC_uint8);
-PDCI_DECL_VAL_VT(PDC_uint16);
-PDCI_DECL_VAL_VT(PDC_uint32);
-PDCI_DECL_VAL_VT(PDC_uint64);
+PDCI_DECL_VAL_VT(Pchar);
+PDCI_DECL_VAL_VT(Pstring);
+PDCI_DECL_VAL_VT(Pint8);
+PDCI_DECL_VAL_VT(Pint16);
+PDCI_DECL_VAL_VT(Pint32);
+PDCI_DECL_VAL_VT(Pint64);
+PDCI_DECL_VAL_VT(Puint8);
+PDCI_DECL_VAL_VT(Puint16);
+PDCI_DECL_VAL_VT(Puint32);
+PDCI_DECL_VAL_VT(Puint64);
 
 /* The cases where we can use vtable sharing */
 #ifdef FOR_CKIT
-PDCI_DECL_VAL_VT(PDC_a_char);
-PDCI_DECL_VAL_VT(PDC_e_char);
+PDCI_DECL_VAL_VT(Pa_char);
+PDCI_DECL_VAL_VT(Pe_char);
 
-PDCI_DECL_VAL_VT(PDC_string_ME);
-PDCI_DECL_VAL_VT(PDC_string_CME);
-PDCI_DECL_VAL_VT(PDC_string_SE);
-PDCI_DECL_VAL_VT(PDC_string_CSE);
+PDCI_DECL_VAL_VT(Pstring_ME);
+PDCI_DECL_VAL_VT(Pstring_CME);
+PDCI_DECL_VAL_VT(Pstring_SE);
+PDCI_DECL_VAL_VT(Pstring_CSE);
 
-PDCI_DECL_VAL_VT(PDC_a_string);
-PDCI_DECL_VAL_VT(PDC_a_string_ME);
-PDCI_DECL_VAL_VT(PDC_a_string_CME);
-PDCI_DECL_VAL_VT(PDC_a_string_SE);
-PDCI_DECL_VAL_VT(PDC_a_string_CSE);
+PDCI_DECL_VAL_VT(Pa_string);
+PDCI_DECL_VAL_VT(Pa_string_ME);
+PDCI_DECL_VAL_VT(Pa_string_CME);
+PDCI_DECL_VAL_VT(Pa_string_SE);
+PDCI_DECL_VAL_VT(Pa_string_CSE);
 
-PDCI_DECL_VAL_VT(PDC_e_string);
-PDCI_DECL_VAL_VT(PDC_e_string_ME);
-PDCI_DECL_VAL_VT(PDC_e_string_CME);
-PDCI_DECL_VAL_VT(PDC_e_string_SE);
-PDCI_DECL_VAL_VT(PDC_e_string_CSE);
+PDCI_DECL_VAL_VT(Pe_string);
+PDCI_DECL_VAL_VT(Pe_string_ME);
+PDCI_DECL_VAL_VT(Pe_string_CME);
+PDCI_DECL_VAL_VT(Pe_string_SE);
+PDCI_DECL_VAL_VT(Pe_string_CSE);
 
 #else
-#define PDC_a_char_val_vtable         PDC_char_val_vtable
-#define PDC_e_char_val_vtable         PDC_char_val_vtable
+#define Pa_char_val_vtable         Pchar_val_vtable
+#define Pe_char_val_vtable         Pchar_val_vtable
 
-#define PDC_string_ME_val_vtable      PDC_string_val_vtable
-#define PDC_string_CME_val_vtable     PDC_string_val_vtable
-#define PDC_string_SE_val_vtable      PDC_string_val_vtable
-#define PDC_string_CSE_val_vtable     PDC_string_val_vtable
+#define Pstring_ME_val_vtable      Pstring_val_vtable
+#define Pstring_CME_val_vtable     Pstring_val_vtable
+#define Pstring_SE_val_vtable      Pstring_val_vtable
+#define Pstring_CSE_val_vtable     Pstring_val_vtable
 
-#define PDC_a_string_val_vtable       PDC_string_val_vtable
-#define PDC_a_string_ME_val_vtable    PDC_string_val_vtable
-#define PDC_a_string_CME_val_vtable   PDC_string_val_vtable
-#define PDC_a_string_SE_val_vtable    PDC_string_val_vtable
-#define PDC_a_string_CSE_val_vtable   PDC_string_val_vtable
+#define Pa_string_val_vtable       Pstring_val_vtable
+#define Pa_string_ME_val_vtable    Pstring_val_vtable
+#define Pa_string_CME_val_vtable   Pstring_val_vtable
+#define Pa_string_SE_val_vtable    Pstring_val_vtable
+#define Pa_string_CSE_val_vtable   Pstring_val_vtable
 
-#define PDC_e_string_val_vtable       PDC_string_val_vtable
-#define PDC_e_string_ME_val_vtable    PDC_string_val_vtable
-#define PDC_e_string_CME_val_vtable   PDC_string_val_vtable
-#define PDC_e_string_SE_val_vtable    PDC_string_val_vtable
-#define PDC_e_string_CSE_val_vtable   PDC_string_val_vtable
+#define Pe_string_val_vtable       Pstring_val_vtable
+#define Pe_string_ME_val_vtable    Pstring_val_vtable
+#define Pe_string_CME_val_vtable   Pstring_val_vtable
+#define Pe_string_SE_val_vtable    Pstring_val_vtable
+#define Pe_string_CSE_val_vtable   Pstring_val_vtable
 
 #endif /* FOR_CKIT */
 

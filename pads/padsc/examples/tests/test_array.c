@@ -1,8 +1,8 @@
-#include "padsc.h"
+#include "pads.h"
 #include "array.h"
 
 int main(int argc, char** argv) {
-  PDC_t*             pdc;
+  P_t*             pads;
   intList            rep;
   intList_m          m;
   intList_pd         pd;
@@ -10,49 +10,49 @@ int main(int argc, char** argv) {
 
 
 
-  if (PDC_ERR == PDC_open(&pdc,0,0)) {
-    error(ERROR_FATAL, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads,0,0)) {
+    error(ERROR_FATAL, "*** P_open failed ***");
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/array")) {
-    error(ERROR_FATAL, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../../data/array")) {
+    error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
 
   error(0, "\ninit everything");
-  intList_init(pdc, &rep);
-  intList_m_init(pdc, &m, PDC_CheckAndSet);
-  intList_pd_init(pdc, &pd);
-  intList_acc_init(pdc, &accum);
+  intList_init(pads, &rep);
+  intList_m_init(pads, &m, P_CheckAndSet);
+  intList_pd_init(pads, &pd);
+  intList_acc_init(pads, &accum);
 
   /*
    * Try to read each line of data
    */
-  while (!PDC_IO_at_EOF(pdc)) {
+  while (!P_io_at_eof(pads)) {
     error(0, "\ncalling intList_read");
-    if (PDC_OK == intList_read(pdc, &m, &pd, &rep)) {
+    if (P_OK == intList_read(pads, &m, &pd, &rep)) {
       /* do something with the data */
       error(2, "intList_read returned array of length: %d", rep.length);
-      if (PDC_ERR == intList_acc_add(pdc, &accum, &pd, &rep)) {
+      if (P_ERR == intList_acc_add(pads, &accum, &pd, &rep)) {
 	error(0, "** accum_add failed **");
       }
     } else {
       error(2, "intList_read returned: error");
-      if (PDC_ERR == intList_acc_add(pdc, &accum, &pd, &rep)) {
+      if (P_ERR == intList_acc_add(pads, &accum, &pd, &rep)) {
 	error(0, "** accum_add failed **");
       }
     }
   }
   error(0, "\nFound eof");
   error(0, "\nDescribe the accum");
-  if (PDC_ERR == intList_acc_report(pdc, "top", 0, 0, &accum)) {
+  if (P_ERR == intList_acc_report(pads, "top", 0, 0, &accum)) {
     error(0, "** accum_report failed **");
   }
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(ERROR_FATAL, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(ERROR_FATAL, "*** P_io_close failed ***");
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(ERROR_FATAL, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(ERROR_FATAL, "*** P_close failed ***");
   }
 
   return 0;

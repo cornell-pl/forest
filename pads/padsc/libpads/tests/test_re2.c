@@ -5,7 +5,7 @@
 #include <regex.h>
 #include <error.h>
 
-#include "padsc-internal.h"
+#include "pads-internal.h"
 
 const char* false_true [] = { "TRUE", "FALSE" };
 
@@ -15,22 +15,22 @@ int is_foo(int c) { return c == 'f' || c == 'o' || isdigit(c); }
 void reg_foo() { regaddclass("foo", is_foo); }
 
 int main(int argc, char** argv) {
-  PDC_t          *pdc;
-  PDC_disc_t      my_disc = PDC_default_disc;
-  PDC_IO_disc_t  *io_disc;
-  PDC_REGEXP_DECL_NULL(regexp);
+  P_t          *pads;
+  Pdisc_t      my_disc = Pdefault_disc;
+  Pio_disc_t  *io_disc;
+  P_REGEXP_DECL_NULL(regexp);
   size_t          matchlen;
   int             i, n, eret, bor, eor, pin;
-  PDC_byte       *begin, *end;
+  Pbyte       *begin, *end;
   const char     *exp, *str;
   size_t          exp_len, str_len;
   regflags_t      e_flags;
 
   reg_foo();
 
-  io_disc = PDC_nlrec_make(0);
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
-    error(ERROR_FATAL, "*** PDC_open failed ***");
+  io_disc = P_nlrec_make(0);
+  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
+    error(ERROR_FATAL, "*** P_open failed ***");
   }
 
   if (argc != 3 && argc != 6) {
@@ -46,11 +46,11 @@ int main(int argc, char** argv) {
   str      = argv[2];
   exp_len  = strlen(exp);
   str_len  = strlen(str);
-  begin = (PDC_byte*)str;
-  end   = (PDC_byte*)(str + str_len);
+  begin = (Pbyte*)str;
+  end   = (Pbyte*)(str + str_len);
 
-  if (PDC_ERR == PDC_regexp_compile_Cstr(pdc, exp, &regexp)) {
-    error(ERROR_FATAL, "Failed to compile re %s", PDC_qfmt_Cstr(exp, exp_len));
+  if (P_ERR == Pregexp_compile_cstr(pads, exp, &regexp)) {
+    error(ERROR_FATAL, "Failed to compile re %s", P_qfmt_cstr(exp, exp_len));
   }
   error(0, "\ncompiled regexp, nsub = %d\n", regexp.preg.re_nsub);
 
@@ -58,10 +58,10 @@ int main(int argc, char** argv) {
   if (pin) { e_flags |= REG_LEFT; }
   if (!bor) { e_flags |= REG_NOTBOL; }
   if (!eor) { e_flags |= REG_NOTEOL; }
-  eret = PDCI_regexp_match(pdc, &regexp, begin, end, e_flags, PDC_charset_ASCII);
+  eret = PDCI_regexp_match(pads, &regexp, begin, end, e_flags, Pcharset_ASCII);
   matchlen = regexp.match[0].rm_eo - regexp.match[0].rm_so;
   error(0, "match of RE %s against string %s produced matchlen %d, res %s",
-	PDC_qfmt_Cstr(exp, exp_len), PDC_qfmt_Cstr(str, str_len), (int)matchlen, false_true[eret]);
+	P_qfmt_cstr(exp, exp_len), P_qfmt_cstr(str, str_len), (int)matchlen, false_true[eret]);
   if (!eret) {
 #ifdef DEBUG_REGEX
     n = regexp.preg.re_nsub;

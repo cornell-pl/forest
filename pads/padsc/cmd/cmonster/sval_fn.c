@@ -27,123 +27,123 @@
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(int32_FW),
 		CM_SVAL_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_int32_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pint32 targ,
+		Pint32_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(a_int32_FW),
 		CM_SVAL_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_a_int32_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pint32 targ,
+		Pa_int32_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(e_int32_FW),
 		CM_SVAL_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_e_int32_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pint32 targ,
+		Pe_int32_FW_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(ebc_int32),
 		CM_SVAL_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_ebc_int32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pint32 targ,
+		Pebc_int32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(bcd_int32),
 		CM_SVAL_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_bcd_int32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pint32 targ,
+		Pbcd_int32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(sbl_int32),
 		CM_SVAL_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_sbl_int32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pint32 targ,
+		Psbl_int32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(sbh_int32),
 		CM_SVAL_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_sbh_int32_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pint32 targ,
+		Psbh_int32_read(cm->pads, &m, qy->params.elts[0], &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(b_int32),
 		CM_SVAL_FN_PARAMS,
-		PDC_int32 targ,
-		PDC_b_int32_read(cm->pdc, &m, &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pint32 targ,
+		Pb_int32_read(cm->pads, &m, &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)targ),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, &targ)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(char),
 		CM_SVAL_FN_PARAMS,
-		PDC_char targ,
-		PDC_char_read(cm->pdc, &m, &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pchar targ,
+		Pchar_read(cm->pads, &m, &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)(*res_out)),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, res_out)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, res_out)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(a_char),
 		CM_SVAL_FN_PARAMS,
-		PDC_char targ,
-		PDC_a_char_read(cm->pdc, &m, &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pchar targ,
+		Pa_char_read(cm->pads, &m, &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)(*res_out)),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, res_out)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, res_out)
 );
 
 CM_RW_FN_IMPL(  CM_SVAL_FN_NM(e_char),
 		CM_SVAL_FN_PARAMS,
-		PDC_char targ,
-		PDC_e_char_read(cm->pdc, &m, &pd, &targ),
-		(*res_out) = (PDC_int32)targ,
+		Pchar targ,
+		Pe_char_read(cm->pads, &m, &pd, &targ),
+		(*res_out) = (Pint32)targ,
 		sfprintf(cm->errf, "  ==> switch val = %ld\n", (long)(*res_out)),
-		"PDC_sbl_int32_write2buf",
+		"Psbl_int32_write2buf",
 		4,
-		PDC_sbl_int32_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, res_out)
+		Psbl_int32_write2buf(cm->pads, cm->outbuf_cursor, remain_out, &buf_full, 4, &pd, res_out)
 );
 
 

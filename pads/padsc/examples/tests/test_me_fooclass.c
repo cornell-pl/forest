@@ -1,10 +1,10 @@
-#include "padsc.h"
+#include "pads.h"
 #include "me_fooclass.h"
 
 #define DAT_FILE "../../data/test_me.dat"
 
 #define PROC_DATA(t) do { \
-  error(2, "line contains: %s|%s|%s", PDC_fmt_str(&(t.id1)), PDC_fmt_str(&(t.id2)), PDC_fmt_str(&(t.id3))); \
+  error(2, "line contains: %s|%s|%s", P_fmt_str(&(t.id1)), P_fmt_str(&(t.id2)), P_fmt_str(&(t.id3))); \
 } while (0)
 
 #define SUF(x, s)     x ## s
@@ -12,33 +12,33 @@
 /* following is generic, can do sed -e 's/ T1 / T2 /' to use other type T2 */
 
 int main(int argc, char** argv) {
-  PDC_t*             pdc;
+  P_t*             pads;
   T1                 t;
   SUF( T1 , _m)      t_m;
   SUF( T1 , _pd)     t_pd;
 
   reg_foo();
 
-  PDC_open(&pdc, 0, 0);
-  if (PDC_ERR == PDC_IO_fopen(pdc, DAT_FILE)) {
-    error(ERROR_FATAL, "*** PDC_IO_fopen failed on file %s ***", DAT_FILE);
+  P_open(&pads, 0, 0);
+  if (P_ERR == P_io_fopen(pads, DAT_FILE)) {
+    error(ERROR_FATAL, "*** P_io_fopen failed on file %s ***", DAT_FILE);
   }
 
-  PDC_INIT_ALL(pdc, T1 , t, t_m, t_pd, PDC_CheckAndSet);
+  P_INIT_ALL(pads, T1 , t, t_m, t_pd, P_CheckAndSet);
 
   /*
    * Try to read each line of data
    */
 
-  while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == SUF( T1 , _read)(pdc, &t_m, &t_pd, &t)) {
+  while (!P_io_at_eof(pads)) {
+    if (P_OK == SUF( T1 , _read)(pads, &t_m, &t_pd, &t)) {
       /* do something with the data */
       PROC_DATA(t);
     }
   }
 
-  PDC_CLEANUP_ALL(pdc, T1 , t, t_pd);
-  PDC_IO_close(pdc);
-  PDC_close(pdc);
+  P_CLEANUP_ALL(pads, T1 , t, t_pd);
+  P_io_close(pads);
+  P_close(pads);
   return 0;
 }

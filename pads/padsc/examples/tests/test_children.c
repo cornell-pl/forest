@@ -1,10 +1,10 @@
-#include "padsc.h"
+#include "pads.h"
 #include "format1.h"
 #include "pglx.h"
 
 int main(int argc, char** argv) {
-  PDC_t*          pdc;
-  PDC_disc_t      mydisc = PDC_default_disc;
+  P_t*          pads;
+  Pdisc_t      mydisc = Pdefault_disc;
   test            rep;
   test_pd         pd ;
   test_m          m;
@@ -22,31 +22,31 @@ int main(int argc, char** argv) {
   glx_init(fake_argv);
 #endif
 
-  mydisc.flags |= PDC_WSPACE_OK;
+  mydisc.flags |= P_WSPACE_OK;
 
-  if (PDC_ERR == PDC_open(&pdc,&mydisc,0)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads,&mydisc,0)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format1.good")) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.format1.good")) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
 
-  test_init(pdc, &rep);
-  test_pd_init(pdc, &pd);
+  test_init(pads, &rep);
+  test_pd_init(pads, &pd);
   /* init mask -- must do this! */
-  test_m_init(pdc, &m, PDC_CheckAndSet);
+  test_m_init(pads, &m, P_CheckAndSet);
 
   /* make the top-level node */
-  PDCI_MK_TOP_NODE_NORET (top_node, &test_vtable, pdc, "top", &m, &pd, &rep, "main");
+  PDCI_MK_TOP_NODE_NORET (top_node, &test_vtable, pads, "top", &m, &pd, &rep, "main");
 
   /*
    * Try to read each line of data
    */
-  while (!PDC_IO_at_EOF(pdc)) {
+  while (!P_io_at_eof(pads)) {
     error(0, "\ncalling test_read");
-    if (PDC_OK == test_read(pdc, &m, &pd, &rep)) {
+    if (P_OK == test_read(pads, &m, &pd, &rep)) {
       /* do something with the data */
       error(2, "test_read returned: id %d  ts %d", rep.id, rep.ts);
       walk_children(top_node, 0);
@@ -60,13 +60,13 @@ int main(int argc, char** argv) {
   /* done with top-level node */
   PGLX_node_free(top_node);
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
 

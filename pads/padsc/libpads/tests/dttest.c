@@ -1,9 +1,9 @@
-#include "padsc-internal.h"
+#include "pads-internal.h"
 #include <dt.h>
 
 typedef struct int32_dt_elt_s {
-  PDC_int32    val;
-  PDC_uint32   cnt;
+  Pint32    val;
+  Puint32   cnt;
   Dtlink_t     link;
 } int32_dt_elt_t;
 
@@ -45,7 +45,7 @@ int32_dt_elt_free(Dt_t* dt, int32_dt_elt_t* a, Dtdisc_t* disc)
 }
 
 int main(int argc, char** argv) {
-  PDC_int32       key1;
+  Pint32       key1;
   Dt_t*           dict;
   Dtdisc_t        dt_disc;
   int32_dt_elt_t  insert_val;

@@ -5,7 +5,7 @@
  *                   examples/data/ai.big
  */
 
-#include "libpadsc.h"
+#include "pads.h"
 #include "ai.h"
 #include "pglx.h"
 #include <ast.h>

@@ -133,7 +133,7 @@ STEP 4B [OPTIONAL]: BUILD AND INSTALL THE PGLX LIBRARY
 
 STEP 5: TEST THE PADSC LIBRARY
 
-  > gmake test_libpadsc
+  > gmake test_libpads
 
   This causes a set of regression tests for the library to be built and
   run.  If you see a message of the form

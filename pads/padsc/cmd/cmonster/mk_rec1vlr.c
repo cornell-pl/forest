@@ -9,9 +9,9 @@
 #include "rec1.h"
 
 int main(int argc, char** argv) {
-  PDC_t                  *pdc;
-  PDC_disc_t              my_disc;
-  PDC_IO_disc_t          *in_io_disc, *out_io_disc;
+  P_t                  *pads;
+  Pdisc_t              my_disc;
+  Pio_disc_t          *in_io_disc, *out_io_disc;
 
   in_file                 rep;
   in_file_m               m;
@@ -24,49 +24,49 @@ int main(int argc, char** argv) {
   out_file               *out_rep = (out_file*)   &rep;
   out_file_pd            *out_pd  = (out_file_pd*)&pd;
 
-  in_io_disc = PDC_nlrec_make(0);
+  in_io_disc = P_nlrec_make(0);
   if (!in_io_disc) {
     error(ERROR_FATAL, "\nFailed to make IO discipline nlrec");
   }
-  out_io_disc = PDC_vlrec_make(0, 0);
+  out_io_disc = P_vlrec_make(0, 0);
   if (!out_io_disc) {
     error(ERROR_FATAL, "\nFailed to make IO discipline vlrec");
   }
 
-  my_disc = PDC_default_disc;
-  my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
+  my_disc = Pdefault_disc;
+  my_disc.flags |= (Pflags_t)P_WSPACE_OK;
   my_disc.copy_strings = 1; /* required because we read more than one record before processing them */
 
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, in_io_disc)) {
-    error(ERROR_FATAL, "\n*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, &my_disc, in_io_disc)) {
+    error(ERROR_FATAL, "\n*** P_open failed ***");
   }
 
-  in_file_init(pdc, in_rep);
-  in_file_m_init(pdc, in_m, PDC_CheckAndSet);
-  in_file_pd_init(pdc, in_pd);
+  in_file_init(pads, in_rep);
+  in_file_m_init(pads, in_m, P_CheckAndSet);
+  in_file_pd_init(pads, in_pd);
 
-  if (PDC_ERR == PDC_IO_fopen(pdc, "/dev/stdin")) {
-    error(ERROR_FATAL, "\n*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "/dev/stdin")) {
+    error(ERROR_FATAL, "\n*** P_io_fopen failed ***");
   }
 
-  if (PDC_ERR == in_file_read(pdc, in_m, in_pd, in_rep)) {
+  if (P_ERR == in_file_read(pads, in_m, in_pd, in_rep)) {
     error(ERROR_FATAL, "\n*** in_file_read failed ***");
   }
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(ERROR_FATAL, "\n*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(ERROR_FATAL, "\n*** P_io_close failed ***");
   }
 
-  if (PDC_ERR == PDC_set_IO_disc(pdc, out_io_disc)) {
-    error(ERROR_FATAL, "\n*** PDC_set_IO_disc failed ***");
+  if (P_ERR == P_set_io_disc(pads, out_io_disc)) {
+    error(ERROR_FATAL, "\n*** P_set_io_disc failed ***");
   }
 
-  out_file_write2io(pdc, sfstdout, out_pd, out_rep);
+  out_file_write2io(pads, sfstdout, out_pd, out_rep);
 
   /* done */
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(ERROR_FATAL, "\n*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(ERROR_FATAL, "\n*** P_close failed ***");
   }
 
   return 0;

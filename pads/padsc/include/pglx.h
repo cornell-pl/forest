@@ -13,7 +13,7 @@
 
 /* generic calls from galax to pads */
 
-#include "padsc.h"       /* Need to include ast stuff before caml stuff for some reason */
+#include "pads.h"       /* Need to include ast stuff before caml stuff for some reason */
 
 #ifdef USE_GALAX
 #include "pads_dm.h"  /* Need Pads-Galax IDL defns */

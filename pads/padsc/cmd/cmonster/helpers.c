@@ -10,13 +10,13 @@
 
 void describe_query(Sfio_t *io, CM_query *q)
 {
-  PDC_uint32 len = q->params.length;
+  Puint32 len = q->params.length;
   int ok_switch_type;
-  PDC_uint32 i;
+  Puint32 i;
 
   ok_switch_type = (q->entry->sval_fn) ? 1 : 0;
 
-  sfprintf(io, "%s = %s (", PDC_fmt_str(&(q->qy_id)), PDC_fmt_str(&(q->ty_id)));
+  sfprintf(io, "%s = %s (", P_fmt_str(&(q->qy_id)), P_fmt_str(&(q->ty_id)));
   for (i = 0; i < len; i++) {
     if (i) sfprintf(io, ",");
     sfprintf(io, "%lu", (unsigned long)q->params.elts[i]);
@@ -29,8 +29,8 @@ void describe_query(Sfio_t *io, CM_query *q)
 
 void describe_queries(Sfio_t *io, CM_queries *qs)
 {
-  PDC_uint32 len = qs->length;
-  PDC_uint32 i;
+  Puint32 len = qs->length;
+  Puint32 i;
   sfprintf(io, "          QUERIES:\n");
   for (i = 0; i < len; i++) {
     sfprintf(io, "            ");
@@ -46,8 +46,8 @@ void describe_c_cookie(Sfio_t *io, CM_c_cookie *c)
 
 void describe_s_cookie(Sfio_t *io, CM_s_cookie *s)
 {
-  PDC_uint32 len = s->arms.length;
-  PDC_uint32 i;
+  Puint32 len = s->arms.length;
+  Puint32 i;
   sfprintf(io, "  S_COOKIE (out_sz: %ld):\n", (long)s->out_sz);
   sfprintf(io, "    SWITCH:\n");
   sfprintf(io, "            ");
@@ -73,26 +73,26 @@ void describe_cookie(Sfio_t *io, CM_cspec *cspec)
   }
 }
 
-PDC_error_t rw_c_cookie(CM_t *cm, CM_c_cookie *c, PDC_byte *begin, PDC_byte *end)
+Perror_t rw_c_cookie(CM_t *cm, CM_c_cookie *c, Pbyte *begin, Pbyte *end)
 {
-  PDC_uint32 len = c->queries.length;
-  PDC_uint32 i;
+  Puint32 len = c->queries.length;
+  Puint32 i;
   for (i = 0; i < len; i++) {
-    if (PDC_ERR == c->queries.elts[i].entry->rw_fn(cm, &(c->queries.elts[i]), begin, end)) {
-      return PDC_ERR;
+    if (P_ERR == c->queries.elts[i].entry->rw_fn(cm, &(c->queries.elts[i]), begin, end)) {
+      return P_ERR;
     }
   }
-  return PDC_OK;
+  return P_OK;
 }
 
-PDC_error_t rw_s_cookie(CM_t *cm, CM_s_cookie *s, PDC_byte *begin, PDC_byte *end)
+Perror_t rw_s_cookie(CM_t *cm, CM_s_cookie *s, Pbyte *begin, Pbyte *end)
 {
-  PDC_uint32 len = s->arms.length;
-  PDC_uint32 i;
-  PDC_int32  sval;
-  if (PDC_ERR == s->s_qy.entry->sval_fn(cm, &(s->s_qy), begin, end, &sval)) {
+  Puint32 len = s->arms.length;
+  Puint32 i;
+  Pint32  sval;
+  if (P_ERR == s->s_qy.entry->sval_fn(cm, &(s->s_qy), begin, end, &sval)) {
     /* failed to read switch value */
-    return PDC_ERR;
+    return P_ERR;
   }
   for (i = 0; i < len; i++) {
     if (sval == s->arms.elts[i].s_val) {
@@ -101,7 +101,7 @@ PDC_error_t rw_s_cookie(CM_t *cm, CM_s_cookie *s, PDC_byte *begin, PDC_byte *end
     }
   }
   /* did not find matching switch arm.  not considered an error. */
-  return PDC_OK;
+  return P_OK;
 }
 
 size_t CM_sz_1(CM_query *qy)
@@ -134,21 +134,21 @@ size_t CM_sz_p1plus1div2(CM_query *qy)
   return (size_t)((qy->params.elts[0] + 1)/2);
 }
 
-CM_tmentry_t* CM_get_tmentry(PDC_string *s, int is_switch_qy)
+CM_tmentry_t* CM_get_tmentry(Pstring *s, int is_switch_qy)
 {
   CM_tmentry_t *e = &(tmap[0]);
   for (; e->tname; e++) {
-    if (PDC_string_eq_Cstr(s, e->tname)) {
+    if (Pstring_eq_cstr(s, e->tname)) {
       if (is_switch_qy && !e->sval_fn) {
 	sfprintf(error_cm->errf,
 	      "\n*** FATAL: type %s not a valid switch type (char type or int32 target type).\n"
-	      "    Use 'cmonster -h' for details.\n\n", PDC_fmt_str(s));
+	      "    Use 'cmonster -h' for details.\n\n", P_fmt_str(s));
 	abort();
       }
       return e;
     }
   }
-  sfprintf(error_cm->errf, "\n*** FATAL: unknown type: %s\n\n", PDC_fmt_str(s));
+  sfprintf(error_cm->errf, "\n*** FATAL: unknown type: %s\n\n", P_fmt_str(s));
   abort();
   return 0; /* control never gets here, but it may make compilers happy */
 }
@@ -161,7 +161,7 @@ int CM_finish_query(CM_query *q, int is_switch_qy, int is_out_val)
     sfprintf(error_cm->errf,
 	     "\n*** FATAL: type %s requires %d params, found %lu.\n"
 	     "    Use 'cmonster -h' for details.\n\n",
-	     PDC_fmt_str(&(q->ty_id)),
+	     P_fmt_str(&(q->ty_id)),
 	     q->entry->num_params, (unsigned long)q->params.length);
     abort();
   }
@@ -173,8 +173,8 @@ int CM_finish_query(CM_query *q, int is_switch_qy, int is_out_val)
 
 int CM_finish_c_cookie(CM_c_cookie *c)
 {
-  PDC_uint32    len = c->queries.length;
-  PDC_uint32    i;
+  Puint32    len = c->queries.length;
+  Puint32    i;
   CM_query     *q;
 
   for (i = 0; i < len; i++) {
@@ -187,8 +187,8 @@ int CM_finish_c_cookie(CM_c_cookie *c)
 
 int CM_finish_s_cookie(CM_s_cookie *s)
 {
-  PDC_uint32 len = s->arms.length;
-  PDC_uint32 i, tmp;
+  Puint32 len = s->arms.length;
+  Puint32 i, tmp;
 
   s->out_sz = s->arms.elts[0].cookie.out_sz;
   for (i = 1; i < len; i++) {

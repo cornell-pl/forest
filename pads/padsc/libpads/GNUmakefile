@@ -22,22 +22,22 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
 
-OBJS_O = rbuf.o default_io_disc.o padsc-gen.o padsc-acc-gen.o padsc-read-gen.o padsc-write-gen.o padsc-misc-gen.o
+OBJS_O = rbuf.o default_io_disc.o pads-gen.o pads-acc-gen.o pads-read-gen.o pads-write-gen.o pads-misc-gen.o
 
 OBJS_D = $(OBJS_O:%.o=%-g.o)
 
-GEN_FILES = padsc-acc-gen.c \
-            padsc-misc-gen.c \
-            padsc-acc-macros-gen.h  \
-            padsc-misc-macros-gen.h \
-            padsc-gen.c             \
-            padsc-read-gen.c \
-            padsc-write-gen.c \
-            padsc-macros-gen.h      \
-            padsc-read-macros-gen.h \
-            padsc-write-macros-gen.h
+GEN_FILES = pads-acc-gen.c \
+            pads-misc-gen.c \
+            pads-acc-macros-gen.h  \
+            pads-misc-macros-gen.h \
+            pads-gen.c             \
+            pads-read-gen.c \
+            pads-write-gen.c \
+            pads-macros-gen.h      \
+            pads-read-macros-gen.h \
+            pads-write-macros-gen.h
 
-INSTALL_INCLUDES = padsc.h rbuf.h padsc-private.h pdc_io_disc.h
+INSTALL_INCLUDES = pads.h rbuf.h pads-private.h io_disc.h
 
 all :
 	@$(MAKE) -f ../GNUmakefile dogen
@@ -91,18 +91,18 @@ install : all
 		$(PADS_HOME)/scripts/install-sh -c -m 444 $(PADS_HOME)/padsc/include/$$file $(INSTALLROOT)/include/; \
 	done;)
 
-dogen : $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpadsc/padsc.c $(INCLUDE_DEPS)
+dogen : $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(INCLUDE_DEPS)
 	@echo "Building generated source files"
-	$(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpadsc/padsc.c $(CURDIR) $(PADS_HOME)
+	$(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(CURDIR) $(PADS_HOME)
 	touch dogen
 
-padsc-gen-g.o: padsc-gen.c $(INCLUDE_DEPS)
+pads-gen-g.o: pads-gen.c $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule A-mod-D"
 endif
 	$(COMPILE_D) -c $< -o $@
 
-padsc-gen.o: padsc-gen.c $(INCLUDE_DEPS)
+pads-gen.o: pads-gen.c $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule A-mod-O"
 endif

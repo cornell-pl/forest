@@ -151,11 +151,12 @@ structure PBaseTys = struct
       PBST.listItemsi(!bRef)
 
   fun genTypedef strm (r:baseInfoTy) = 
+      if not (Atom.sameAtom (#repname(r), #padsname(r))) then
       (TextIO.output(strm, "typedef ");
        TextIO.output(strm, Atom.toString(#repname(r)));
        TextIO.output(strm, "\t");
        TextIO.output(strm, Atom.toString(#padsname(r)));
-       TextIO.output(strm, ";\n"))
+       TextIO.output(strm, ";\n")) else ()
 
   fun genPadsInternal(basePaths, filename) = 
       let val outStrm = TextIO.openOut(filename)
@@ -164,8 +165,8 @@ structure PBaseTys = struct
           baseInfo := initBaseInfoMap(!baseInfoList);
 	  TextIO.output(outStrm, "#ifndef __PADS_INTERNAL__H__\n");
 	  TextIO.output(outStrm, "#define __PADS_INTERNAL__H__\n");
-	  TextIO.output(outStrm, "#include \"padsc.h\"\n");
-	  TextIO.output(outStrm, "#include \"padsc-internal.h\"\n");
+	  TextIO.output(outStrm, "#include \"pads.h\"\n");
+	  TextIO.output(outStrm, "#include \"pads-internal.h\"\n");
           TextIO.output(outStrm, "#ifdef sfstropen\n#undef sfstropen\n#endif\n");
           TextIO.output(outStrm, "Sfio_t *sfstropen();\n");
           TextIO.output(outStrm, "#ifdef sfstrclose\n#undef sfstrclose\n#endif\n");

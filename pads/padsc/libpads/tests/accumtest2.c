@@ -1,206 +1,206 @@
-#include "padsc-internal.h"
+#include "pads-internal.h"
 
 int main(int argc, char** argv) {
   int                i;
-  PDC_t*             pdc;
-  PDC_int8_acc       accum8;
-  PDC_int8           key8;
-  PDC_int16_acc      accum16;
-  PDC_int16          key16;
-  PDC_int32_acc      accum32;
-  PDC_int32          key32;
-  PDC_int64_acc      accum64;
-  PDC_int64          key64;
+  P_t*             pads;
+  Pint8_acc       accum8;
+  Pint8           key8;
+  Pint16_acc      accum16;
+  Pint16          key16;
+  Pint32_acc      accum32;
+  Pint32          key32;
+  Pint64_acc      accum64;
+  Pint64          key64;
 
-  PDC_int8_acc       accum8min;
-  PDC_int8           key8min;
-  PDC_int16_acc      accum16min;
-  PDC_int16          key16min;
-  PDC_int32_acc      accum32min;
-  PDC_int32          key32min;
-  PDC_int64_acc      accum64min;
-  PDC_int64          key64min;
+  Pint8_acc       accum8min;
+  Pint8           key8min;
+  Pint16_acc      accum16min;
+  Pint16          key16min;
+  Pint32_acc      accum32min;
+  Pint32          key32min;
+  Pint64_acc      accum64min;
+  Pint64          key64min;
 
-  PDC_uint8_acc      accum8u;
-  PDC_uint8          key8u;
-  PDC_uint16_acc     accum16u;
-  PDC_uint16         key16u;
-  PDC_uint32_acc     accum32u;
-  PDC_uint32         key32u;
-  PDC_uint64_acc     accum64u;
-  PDC_uint64         key64u;
-  PDC_uint64_acc     accum64u20th;
-  PDC_uint64         key64u20th;
-  PDC_base_pd        pd = {0};
+  Puint8_acc      accum8u;
+  Puint8          key8u;
+  Puint16_acc     accum16u;
+  Puint16         key16u;
+  Puint32_acc     accum32u;
+  Puint32         key32u;
+  Puint64_acc     accum64u;
+  Puint64         key64u;
+  Puint64_acc     accum64u20th;
+  Puint64         key64u20th;
+  Pbase_pd        pd = {0};
 
-  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, 0, 0)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
   error(0, "\ninit all the accums");
-  if (PDC_ERR == PDC_int8_acc_init(pdc, &accum8)) {
+  if (P_ERR == Pint8_acc_init(pads, &accum8)) {
     error(2, "** accum8 init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_int16_acc_init(pdc, &accum16)) {
+  if (P_ERR == Pint16_acc_init(pads, &accum16)) {
     error(2, "** accum16 init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_int32_acc_init(pdc, &accum32)) {
+  if (P_ERR == Pint32_acc_init(pads, &accum32)) {
     error(2, "** accum32 init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_int64_acc_init(pdc, &accum64)) {
+  if (P_ERR == Pint64_acc_init(pads, &accum64)) {
     error(2, "** accum64 init failed **");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_int8_acc_init(pdc, &accum8min)) {
+  if (P_ERR == Pint8_acc_init(pads, &accum8min)) {
     error(2, "** accum8min init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_int16_acc_init(pdc, &accum16min)) {
+  if (P_ERR == Pint16_acc_init(pads, &accum16min)) {
     error(2, "** accum16min init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_int32_acc_init(pdc, &accum32min)) {
+  if (P_ERR == Pint32_acc_init(pads, &accum32min)) {
     error(2, "** accum32min init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_int64_acc_init(pdc, &accum64min)) {
+  if (P_ERR == Pint64_acc_init(pads, &accum64min)) {
     error(2, "** accum64min init failed **");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_uint8_acc_init(pdc, &accum8u)) {
+  if (P_ERR == Puint8_acc_init(pads, &accum8u)) {
     error(2, "** accum8u init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_uint16_acc_init(pdc, &accum16u)) {
+  if (P_ERR == Puint16_acc_init(pads, &accum16u)) {
     error(2, "** accum16u init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_uint32_acc_init(pdc, &accum32u)) {
+  if (P_ERR == Puint32_acc_init(pads, &accum32u)) {
     error(2, "** accum32u init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_uint64_acc_init(pdc, &accum64u)) {
+  if (P_ERR == Puint64_acc_init(pads, &accum64u)) {
     error(2, "** accum64u init failed **");
     exit(-1);
   }
-  if (PDC_ERR == PDC_uint64_acc_init(pdc, &accum64u20th)) {
+  if (P_ERR == Puint64_acc_init(pads, &accum64u20th)) {
     error(2, "** accum64u20th init failed **");
     exit(-1);
   }
 
   error(0, "\nadd MIN/MAX vals to all the accums");
-  pd.errCode = PDC_NO_ERR;
+  pd.errCode = P_NO_ERR;
   for (i = 0; i < 100000; i++) {
-    key8      = PDC_MAX_INT8;
-    key16     = PDC_MAX_INT16;
-    key32     = PDC_MAX_INT32;
-    key64     = PDC_MAX_INT64;
+    key8      = P_MAX_INT8;
+    key16     = P_MAX_INT16;
+    key32     = P_MAX_INT32;
+    key64     = P_MAX_INT64;
 
-    key8min   = PDC_MIN_INT8;
-    key16min  = PDC_MIN_INT16;
-    key32min  = PDC_MIN_INT32;
-    key64min  = PDC_MIN_INT64;
+    key8min   = P_MIN_INT8;
+    key16min  = P_MIN_INT16;
+    key32min  = P_MIN_INT32;
+    key64min  = P_MIN_INT64;
 
-    key8u     = PDC_MAX_UINT8;
-    key16u    = PDC_MAX_UINT16;
-    key32u    = PDC_MAX_UINT32;
-    key64u    = PDC_MAX_UINT64;
-    key64u20th = PDC_MAX_UINT64 / 20;
+    key8u     = P_MAX_UINT8;
+    key16u    = P_MAX_UINT16;
+    key32u    = P_MAX_UINT32;
+    key64u    = P_MAX_UINT64;
+    key64u20th = P_MAX_UINT64 / 20;
 
-    if (PDC_ERR == PDC_int8_acc_add(pdc, &accum8, &pd, &key8)) {
+    if (P_ERR == Pint8_acc_add(pads, &accum8, &pd, &key8)) {
       error(0, "** accum8 add failed **");
     }
-    if (PDC_ERR == PDC_int16_acc_add(pdc, &accum16, &pd, &key16)) {
+    if (P_ERR == Pint16_acc_add(pads, &accum16, &pd, &key16)) {
       error(0, "** accum16 add failed **");
     }
-    if (PDC_ERR == PDC_int32_acc_add(pdc, &accum32, &pd, &key32)) {
+    if (P_ERR == Pint32_acc_add(pads, &accum32, &pd, &key32)) {
       error(0, "** accum32 add failed **");
     }
-    if (PDC_ERR == PDC_int64_acc_add(pdc, &accum64, &pd, &key64)) {
+    if (P_ERR == Pint64_acc_add(pads, &accum64, &pd, &key64)) {
       error(0, "** accum64 add failed **");
     }
 
-    if (PDC_ERR == PDC_int8_acc_add(pdc, &accum8min, &pd, &key8min)) {
+    if (P_ERR == Pint8_acc_add(pads, &accum8min, &pd, &key8min)) {
       error(0, "** accum8min add failed **");
     }
-    if (PDC_ERR == PDC_int16_acc_add(pdc, &accum16min, &pd, &key16min)) {
+    if (P_ERR == Pint16_acc_add(pads, &accum16min, &pd, &key16min)) {
       error(0, "** accum16min add failed **");
     }
-    if (PDC_ERR == PDC_int32_acc_add(pdc, &accum32min, &pd, &key32min)) {
+    if (P_ERR == Pint32_acc_add(pads, &accum32min, &pd, &key32min)) {
       error(0, "** accum32min add failed **");
     }
-    if (PDC_ERR == PDC_int64_acc_add(pdc, &accum64min, &pd, &key64min)) {
+    if (P_ERR == Pint64_acc_add(pads, &accum64min, &pd, &key64min)) {
       error(0, "** accum64min add failed **");
     }
 
-    if (PDC_ERR == PDC_uint8_acc_add(pdc, &accum8u, &pd, &key8u)) {
+    if (P_ERR == Puint8_acc_add(pads, &accum8u, &pd, &key8u)) {
       error(0, "** accum8u add failed **");
     }
-    if (PDC_ERR == PDC_uint16_acc_add(pdc, &accum16u, &pd, &key16u)) {
+    if (P_ERR == Puint16_acc_add(pads, &accum16u, &pd, &key16u)) {
       error(0, "** accum16u add failed **");
     }
-    if (PDC_ERR == PDC_uint32_acc_add(pdc, &accum32u, &pd, &key32u)) {
+    if (P_ERR == Puint32_acc_add(pads, &accum32u, &pd, &key32u)) {
       error(0, "** accum32u add failed **");
     }
-    if (PDC_ERR == PDC_uint64_acc_add(pdc, &accum64u, &pd, &key64u)) {
+    if (P_ERR == Puint64_acc_add(pads, &accum64u, &pd, &key64u)) {
       error(0, "** accum64u add failed **");
     }
-    if (PDC_ERR == PDC_uint64_acc_add(pdc, &accum64u20th, &pd, &key64u20th)) {
+    if (P_ERR == Puint64_acc_add(pads, &accum64u20th, &pd, &key64u20th)) {
       error(0, "** accum64u20th add failed **");
     }
   }
   error(0, "\ndescribe the accums");
 
-  if (PDC_ERR == PDC_int8_acc_report(pdc, "int8max", 0, 0, &accum8)) {
+  if (P_ERR == Pint8_acc_report(pads, "int8max", 0, 0, &accum8)) {
     error(0, "** accum8 report failed **");
   }
-  if (PDC_ERR == PDC_int16_acc_report(pdc, "int16max", 0, 0, &accum16)) {
+  if (P_ERR == Pint16_acc_report(pads, "int16max", 0, 0, &accum16)) {
     error(0, "** accum16 report failed **");
   }
-  if (PDC_ERR == PDC_int32_acc_report(pdc, "int32max", 0, 0, &accum32)) {
+  if (P_ERR == Pint32_acc_report(pads, "int32max", 0, 0, &accum32)) {
     error(0, "** accum32 report failed **");
   }
-  if (PDC_ERR == PDC_int64_acc_report(pdc, "int64max", 0, 0, &accum64)) {
+  if (P_ERR == Pint64_acc_report(pads, "int64max", 0, 0, &accum64)) {
     error(0, "** accum64 report failed **");
   }
 
-  if (PDC_ERR == PDC_int8_acc_report(pdc, "int8min", 0, 0, &accum8min)) {
+  if (P_ERR == Pint8_acc_report(pads, "int8min", 0, 0, &accum8min)) {
     error(0, "** accum8min report failed **");
   }
-  if (PDC_ERR == PDC_int16_acc_report(pdc, "int16min", 0, 0, &accum16min)) {
+  if (P_ERR == Pint16_acc_report(pads, "int16min", 0, 0, &accum16min)) {
     error(0, "** accum16min report failed **");
   }
-  if (PDC_ERR == PDC_int32_acc_report(pdc, "int32min", 0, 0, &accum32min)) {
+  if (P_ERR == Pint32_acc_report(pads, "int32min", 0, 0, &accum32min)) {
     error(0, "** accum32min report failed **");
   }
-  if (PDC_ERR == PDC_int64_acc_report(pdc, "int64min", 0, 0, &accum64min)) {
+  if (P_ERR == Pint64_acc_report(pads, "int64min", 0, 0, &accum64min)) {
     error(0, "** accum64min report failed **");
   }
 
-  if (PDC_ERR == PDC_uint8_acc_report(pdc, "uint8", 0, 0, &accum8u)) {
+  if (P_ERR == Puint8_acc_report(pads, "uint8", 0, 0, &accum8u)) {
     error(0, "** accum8u report failed **");
   }
-  if (PDC_ERR == PDC_uint16_acc_report(pdc, "uint16", 0, 0, &accum16u)) {
+  if (P_ERR == Puint16_acc_report(pads, "uint16", 0, 0, &accum16u)) {
     error(0, "** accum16u report failed **");
   }
-  if (PDC_ERR == PDC_uint32_acc_report(pdc, "uint32", 0, 0, &accum32u)) {
+  if (P_ERR == Puint32_acc_report(pads, "uint32", 0, 0, &accum32u)) {
     error(0, "** accum32u report failed **");
   }
-  if (PDC_ERR == PDC_uint64_acc_report(pdc, "uint64", 0, 0, &accum64u)) {
+  if (P_ERR == Puint64_acc_report(pads, "uint64", 0, 0, &accum64u)) {
     error(0, "** accum64u report failed **");
   }
-  if (PDC_ERR == PDC_uint64_acc_report(pdc, "uint64u20th", 0, 0, &accum64u20th)) {
+  if (P_ERR == Puint64_acc_report(pads, "uint64u20th", 0, 0, &accum64u20th)) {
     error(0, "** accum64u20th report failed **");
   }
   error(0, "NB ==> u64 20th = %llu", key64u20th);
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
   return 0;

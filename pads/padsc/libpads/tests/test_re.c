@@ -5,7 +5,7 @@
 #include <regex.h>
 #include <error.h>
 
-#include "padsc.h"
+#include "pads.h"
 
 int main(int argc, char** argv) {
   regex_t          preg;
@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
   rdelim = strrchr(exp, delim);
   if (rdelim == exp) {
     error(ERROR_FATAL, "pattern beginning with a delimiter %s has no matching ending %s",
-	  PDC_qfmt_char(delim), PDC_qfmt_char(delim));
+	  P_qfmt_char(delim), P_qfmt_char(delim));
   }
   for (end = exp + strlen(exp) - 1; *end != delim; end--) {
     if (*end == 'i') {
@@ -52,16 +52,16 @@ int main(int argc, char** argv) {
       error(0, "** Added flag REG_LITERAL");
       continue;
     }
-    error(ERROR_FATAL, "Bad pattern modifier: %s ", PDC_qfmt_char(*end));
+    error(ERROR_FATAL, "Bad pattern modifier: %s ", P_qfmt_char(*end));
   }
   cret = regcomp(&preg, exp, c_flags);
   if (cret) {
-    error(ERROR_FATAL, "Failed to compile re %s, cret = %d", PDC_qfmt_Cstr(exp, strlen(exp)), cret);
+    error(ERROR_FATAL, "Failed to compile re %s, cret = %d", P_qfmt_cstr(exp, strlen(exp)), cret);
   }
-  error(0, "compiled %s, nsub = %d", PDC_qfmt_Cstr(exp, strlen(exp)), preg.re_nsub);
+  error(0, "compiled %s, nsub = %d", P_qfmt_cstr(exp, strlen(exp)), preg.re_nsub);
   eret = regexec(&preg, str, preg.re_nsub+1, match, e_flags);
   error(0, "match of RE %s against string %s produced %d",
-	PDC_qfmt_Cstr(exp, strlen(exp)), PDC_qfmt_Cstr(str, strlen(str)), eret);
+	P_qfmt_cstr(exp, strlen(exp)), P_qfmt_cstr(str, strlen(str)), eret);
   if (!eret) {
     for (i = 0; i <= preg.re_nsub; i++) {
       error(0, "      sub %d so %d eo %d = \"%.*s\"", i, match[i].rm_so, match[i].rm_eo, match[i].rm_eo - match[i].rm_so, str + match[i].rm_so);

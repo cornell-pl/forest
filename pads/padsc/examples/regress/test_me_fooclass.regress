@@ -1,4 +1,4 @@
-warning: PDC_open: Installing default IO discipline : newline-terminated records
+warning: P_open: Installing default IO discipline : newline-terminated records
 line contains: foo1|bar1|zot1
 line contains: foo2|bar2|zot2
 warning: Error [in T1_read]: record 3 char 10 : Missing literal: "|".

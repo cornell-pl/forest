@@ -11,7 +11,7 @@
 #ifndef __HELPERS_H__
 #define __HELPERS_H__
 
-#include "padsc-internal.h"
+#include "pads-internal.h"
 #include "cmdline.h"
 
 /* -------------------------------------------------------------------------------- */
@@ -26,8 +26,8 @@ void describe_cookie(Sfio_t *io, CM_cspec *cspec);
 
 size_t out_sz_cookie(CM_cspec *cspec);
 
-PDC_error_t rw_c_cookie(CM_t *cm, CM_c_cookie *c, PDC_byte *begin, PDC_byte *end);
-PDC_error_t rw_s_cookie(CM_t *cm, CM_s_cookie *c, PDC_byte *begin, PDC_byte *end);
+Perror_t rw_c_cookie(CM_t *cm, CM_c_cookie *c, Pbyte *begin, Pbyte *end);
+Perror_t rw_s_cookie(CM_t *cm, CM_s_cookie *c, Pbyte *begin, Pbyte *end);
 
 /* -------------------------------------------------------------------------------- */
 
@@ -108,9 +108,9 @@ USAGE \
 "\n  -----" \
 "\n  cspec" \
 "\n  -----" \
-"\n    Legal switch tags must fit in a PDC_int32, and the switch query must use" \
+"\n    Legal switch tags must fit in a Pint32, and the switch query must use" \
 "\n    a character type (Pchar, Pa_char, Pe_char) or a numeric type whose in-memory" \
-"\n    representation is PDC_int32 (Pint32_FW, Pa_int32_FW, Pe_int32_FW, Pb_int32," \
+"\n    representation is Pint32 (Pint32_FW, Pa_int32_FW, Pe_int32_FW, Pb_int32," \
 "\n    Pebc_int32, Pbcd_int32, Psbl_int32, Psbh_int32)." \
 "\n  " \
 "\n    TODO: describe cspec details" \

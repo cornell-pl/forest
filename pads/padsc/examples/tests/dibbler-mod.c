@@ -1,27 +1,27 @@
-#include "padsc-internal.h"
+#include "pads-internal.h"
 #include "dibbler.h"
-PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint32_vbar_ed *moded,auint32_vbar *modrep)
+Perror_t auint32_vbar_read_internal (P_t *pads,auint32_vbar_em *modem,auint32_vbar_ed *moded,auint32_vbar *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   /* XXX_OPT ************ Check short-circuit Ignore case ************* */
-  if (modem->val == PDC_Ignore) { /* all fields prior to delim are set to Ignore */
-    if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,0)) 
+  if (modem->val == P_Ignore) { /* all fields prior to delim are set to Ignore */
+    if (P_ERR!=Pa_char_lit_scan (pads,124,124,1,0,0)) 
       {
-	moded->errCode = PDC_NO_ERR;
-	return PDC_OK;
+	moded->errCode = P_NO_ERR;
+	return P_OK;
       }
     /* no vbar -- panic */
-    if (PDC_spec_level (pdc)) 
+    if (P_spec_level (pads)) 
       {
-	return PDC_ERR;
+	return P_ERR;
       }
-    PDC_IO_getLoc (pdc,&(moded->loc),0);
-    PDCI_report_err (pdc,PDC_LEV_INFO,&(moded->loc),PDC_MISSING_LITERAL,"Using scan (due to PDC_Ignore), cannot find separator (%s) forward of current IO loc.","|");
-    moded->errCode = PDC_MISSING_LITERAL;
+    P_io_getLoc (pads,&(moded->loc),0);
+    PDCI_report_err (pads,P_LEV_INFO,&(moded->loc),P_MISSING_LITERAL,"Using scan (due to P_Ignore), cannot find separator (%s) forward of current IO loc.","|");
+    moded->errCode = P_MISSING_LITERAL;
     moded->nerr = 1;
     moded->panic = 1;
-    return PDC_ERR;
+    return P_ERR;
   }
   /* ************ Reading field: val. ************* */
   /* XXX_OPT : NOT NEEDED */
@@ -29,18 +29,18 @@ PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint3
   if (moded->panic) 
     {
       (moded->val).panic = 1;
-      (moded->val).errCode = PDC_PANIC_SKIPPED;
-      PDC_IO_getLoc (pdc,&((moded->val).loc),0);
+      (moded->val).errCode = P_PANIC_SKIPPED;
+      P_io_getLoc (pads,&((moded->val).loc),0);
       (moded->nerr)+=1;
     }
   else
 #endif
     {
-      if (PDC_ERR==PDC_auint32_read_internal (pdc,&(modem->val),&(moded->val),&(modrep->val))) 
+      if (P_ERR==Pa_uint32_read_internal (pads,&(modem->val),&(moded->val),&(modrep->val))) 
         {
-          if (PDC_spec_level (pdc)) 
+          if (P_spec_level (pads)) 
             {
-              return PDC_ERR;
+              return P_ERR;
             }
           if ((moded->val).panic) 
             {
@@ -48,7 +48,7 @@ PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint3
             }
           if (0==(moded->nerr)) 
             {
-              moded->errCode = PDC_STRUCT_FIELD_ERR;
+              moded->errCode = P_STRUCT_FIELD_ERR;
               moded->loc = ((moded->val).loc);
             }
           (moded->nerr)+=1;
@@ -60,28 +60,28 @@ PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint3
   {
     /* ********* Reading delimiter field: | ********* */
     {
-      PDC_base_ed ted;
+      Pbase_ed ted;
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
+          if (P_ERR!=Pa_char_lit_scan (pads,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }
         }
       else
         {
-          PDC_base_em tem=PDC_Check;
-          if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
+          Pbase_em tem=P_Check;
+          if (P_ERR==Pchar_lit_read_internal (pads,&tem,&ted,124)) 
             {
-              if (PDC_spec_level (pdc)) 
+              if (P_spec_level (pads)) 
                 {
-                  return PDC_ERR;
+                  return P_ERR;
                 }
-              PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_MISSING_LITERAL,"Missing separator: %s.","|");
+              PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_MISSING_LITERAL,"Missing separator: %s.","|");
               if (0==(moded->nerr)) 
                 {
-                  moded->errCode = PDC_MISSING_LITERAL;
+                  moded->errCode = P_MISSING_LITERAL;
                   moded->loc = (ted.loc);
                 }
               (moded->nerr)+=1;
@@ -90,31 +90,31 @@ PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint3
         }
     }
   }
-  return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
+  return ((moded->nerr)==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint32_vbar_read (PDC_t *pdc,auint32_vbar_em *em,auint32_vbar_ed *ed,auint32_vbar *rep)
+Perror_t auint32_vbar_read (P_t *pads,auint32_vbar_em *em,auint32_vbar_ed *ed,auint32_vbar *rep)
 {
   auint32_vbar tmprep={0};
   auint32_vbar *modrep=rep;
-  auint32_vbar_em tmpem={(enum PDC_base_em_e) ((PDC_base_em) 0),(enum PDC_base_em_e) 0};
+  auint32_vbar_em tmpem={(enum Pbase_em_e) ((Pbase_em) 0),(enum Pbase_em_e) 0};
   auint32_vbar_em *modem=em;
-  auint32_vbar_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}};
+  auint32_vbar_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}};
   auint32_vbar_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"auint32_vbar_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"auint32_vbar_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"auint32_vbar_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"auint32_vbar_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"auint32_vbar_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"auint32_vbar_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"auint32_vbar_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"auint32_vbar_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -128,50 +128,50 @@ PDC_error_t auint32_vbar_read (PDC_t *pdc,auint32_vbar_em *em,auint32_vbar_ed *e
     {
       moded = (&tmped);
     }
-  return auint32_vbar_read_internal (pdc,modem,moded,modrep);
+  return auint32_vbar_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t auint32_vbar_acc_init (PDC_t *pdc,auint32_vbar_acc *acc)
+Perror_t auint32_vbar_acc_init (P_t *pads,auint32_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint32_acc_init (pdc,&(acc->val))) 
+  if (P_ERR==Puint32_acc_init (pads,&(acc->val))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint32_vbar_acc_reset (PDC_t *pdc,auint32_vbar_acc *acc)
+Perror_t auint32_vbar_acc_reset (P_t *pads,auint32_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint32_acc_reset (pdc,&(acc->val))) 
+  if (P_ERR==Puint32_acc_reset (pads,&(acc->val))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint32_vbar_acc_cleanup (PDC_t *pdc,auint32_vbar_acc *acc)
+Perror_t auint32_vbar_acc_cleanup (P_t *pads,auint32_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint32_acc_cleanup (pdc,&(acc->val))) 
+  if (P_ERR==Puint32_acc_cleanup (pads,&(acc->val))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint32_vbar_acc_add (PDC_t *pdc,auint32_vbar_acc *acc,auint32_vbar_ed *ed,auint32_vbar *rep)
+Perror_t auint32_vbar_acc_add (P_t *pads,auint32_vbar_acc *acc,auint32_vbar_ed *ed,auint32_vbar *rep)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint32_acc_add (pdc,&(acc->val),&(ed->val),&(rep->val))) 
+  if (P_ERR==Puint32_acc_add (pads,&(acc->val),&(ed->val),&(rep->val))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint32_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,auint32_vbar_acc *acc)
+Perror_t auint32_vbar_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,auint32_vbar_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -184,60 +184,60 @@ PDC_error_t auint32_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char con
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
   sfprintf (outstr,"\n[Describing each field of %s]\n",prefix);
   sfprintf (tmpstr,"%s.val",prefix);
-  if (PDC_ERR==PDC_uint32_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->val))) 
+  if (P_ERR==Puint32_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->val))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t auint32_vbar_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,auint32_vbar_acc *acc)
+Perror_t auint32_vbar_acc_report (P_t *pads,char const *prefix,char const *what,int nst,auint32_vbar_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = auint32_vbar_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = auint32_vbar_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
 }
-PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint64_vbar_ed *moded,auint64_vbar *modrep)
+Perror_t auint64_vbar_read_internal (P_t *pads,auint64_vbar_em *modem,auint64_vbar_ed *moded,auint64_vbar *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   /* XXX_OPT ************ Check short-circuit Ignore case ************* */
-  if (modem->val == PDC_Ignore) { /* all fields prior to delim are set to Ignore */
-    if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,0)) 
+  if (modem->val == P_Ignore) { /* all fields prior to delim are set to Ignore */
+    if (P_ERR!=Pa_char_lit_scan (pads,124,124,1,0,0)) 
       {
-	moded->errCode = PDC_NO_ERR;
-	return PDC_OK;
+	moded->errCode = P_NO_ERR;
+	return P_OK;
       }
     /* no vbar -- panic */
-    if (PDC_spec_level (pdc)) 
+    if (P_spec_level (pads)) 
       {
-	return PDC_ERR;
+	return P_ERR;
       }
-    PDC_IO_getLoc (pdc,&(moded->loc),0);
-    PDCI_report_err (pdc,PDC_LEV_INFO,&(moded->loc),PDC_MISSING_LITERAL,"Using scan (due to PDC_Ignore), cannot find separator (%s) forward of current IO loc.","|");
-    moded->errCode = PDC_MISSING_LITERAL;
+    P_io_getLoc (pads,&(moded->loc),0);
+    PDCI_report_err (pads,P_LEV_INFO,&(moded->loc),P_MISSING_LITERAL,"Using scan (due to P_Ignore), cannot find separator (%s) forward of current IO loc.","|");
+    moded->errCode = P_MISSING_LITERAL;
     moded->nerr = 1;
     moded->panic = 1;
-    return PDC_ERR;
+    return P_ERR;
   }
   /* ************ Reading field: val. ************* */
   /* XXX_OPT : NOT NEEDED */
@@ -245,18 +245,18 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
   if (moded->panic) 
     {
       (moded->val).panic = 1;
-      (moded->val).errCode = PDC_PANIC_SKIPPED;
-      PDC_IO_getLoc (pdc,&((moded->val).loc),0);
+      (moded->val).errCode = P_PANIC_SKIPPED;
+      P_io_getLoc (pads,&((moded->val).loc),0);
       (moded->nerr)+=1;
     }
   else
 #endif
     {
-      if (PDC_ERR==PDC_auint64_read_internal (pdc,&(modem->val),&(moded->val),&(modrep->val))) 
+      if (P_ERR==Pa_uint64_read_internal (pads,&(modem->val),&(moded->val),&(modrep->val))) 
         {
-          if (PDC_spec_level (pdc)) 
+          if (P_spec_level (pads)) 
             {
-              return PDC_ERR;
+              return P_ERR;
             }
           if ((moded->val).panic) 
             {
@@ -264,7 +264,7 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
             }
           if (0==(moded->nerr)) 
             {
-              moded->errCode = PDC_STRUCT_FIELD_ERR;
+              moded->errCode = P_STRUCT_FIELD_ERR;
               moded->loc = ((moded->val).loc);
             }
           (moded->nerr)+=1;
@@ -276,28 +276,28 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
   {
     /* ********* Reading delimiter field: | ********* */
     {
-      PDC_base_ed ted;
+      Pbase_ed ted;
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
+          if (P_ERR!=Pa_char_lit_scan (pads,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }
         }
       else
         {
-          PDC_base_em tem=PDC_Check;
-          if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
+          Pbase_em tem=P_Check;
+          if (P_ERR==Pchar_lit_read_internal (pads,&tem,&ted,124)) 
             {
-              if (PDC_spec_level (pdc)) 
+              if (P_spec_level (pads)) 
                 {
-                  return PDC_ERR;
+                  return P_ERR;
                 }
-              PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_MISSING_LITERAL,"Missing separator: %s.","|");
+              PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_MISSING_LITERAL,"Missing separator: %s.","|");
               if (0==(moded->nerr)) 
                 {
-                  moded->errCode = PDC_MISSING_LITERAL;
+                  moded->errCode = P_MISSING_LITERAL;
                   moded->loc = (ted.loc);
                 }
               (moded->nerr)+=1;
@@ -306,31 +306,31 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
         }
     }
   }
-  return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
+  return ((moded->nerr)==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint64_vbar_read (PDC_t *pdc,auint64_vbar_em *em,auint64_vbar_ed *ed,auint64_vbar *rep)
+Perror_t auint64_vbar_read (P_t *pads,auint64_vbar_em *em,auint64_vbar_ed *ed,auint64_vbar *rep)
 {
   auint64_vbar tmprep={0};
   auint64_vbar *modrep=rep;
-  auint64_vbar_em tmpem={(enum PDC_base_em_e) ((PDC_base_em) 0),(enum PDC_base_em_e) 0};
+  auint64_vbar_em tmpem={(enum Pbase_em_e) ((Pbase_em) 0),(enum Pbase_em_e) 0};
   auint64_vbar_em *modem=em;
-  auint64_vbar_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}};
+  auint64_vbar_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}};
   auint64_vbar_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"auint64_vbar_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"auint64_vbar_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"auint64_vbar_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"auint64_vbar_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"auint64_vbar_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"auint64_vbar_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"auint64_vbar_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"auint64_vbar_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -344,50 +344,50 @@ PDC_error_t auint64_vbar_read (PDC_t *pdc,auint64_vbar_em *em,auint64_vbar_ed *e
     {
       moded = (&tmped);
     }
-  return auint64_vbar_read_internal (pdc,modem,moded,modrep);
+  return auint64_vbar_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t auint64_vbar_acc_init (PDC_t *pdc,auint64_vbar_acc *acc)
+Perror_t auint64_vbar_acc_init (P_t *pads,auint64_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint64_acc_init (pdc,&(acc->val))) 
+  if (P_ERR==Puint64_acc_init (pads,&(acc->val))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint64_vbar_acc_reset (PDC_t *pdc,auint64_vbar_acc *acc)
+Perror_t auint64_vbar_acc_reset (P_t *pads,auint64_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint64_acc_reset (pdc,&(acc->val))) 
+  if (P_ERR==Puint64_acc_reset (pads,&(acc->val))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint64_vbar_acc_cleanup (PDC_t *pdc,auint64_vbar_acc *acc)
+Perror_t auint64_vbar_acc_cleanup (P_t *pads,auint64_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint64_acc_cleanup (pdc,&(acc->val))) 
+  if (P_ERR==Puint64_acc_cleanup (pads,&(acc->val))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint64_vbar_acc_add (PDC_t *pdc,auint64_vbar_acc *acc,auint64_vbar_ed *ed,auint64_vbar *rep)
+Perror_t auint64_vbar_acc_add (P_t *pads,auint64_vbar_acc *acc,auint64_vbar_ed *ed,auint64_vbar *rep)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint64_acc_add (pdc,&(acc->val),&(ed->val),&(rep->val))) 
+  if (P_ERR==Puint64_acc_add (pads,&(acc->val),&(ed->val),&(rep->val))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t auint64_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,auint64_vbar_acc *acc)
+Perror_t auint64_vbar_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,auint64_vbar_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -400,52 +400,52 @@ PDC_error_t auint64_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char con
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
   sfprintf (outstr,"\n[Describing each field of %s]\n",prefix);
   sfprintf (tmpstr,"%s.val",prefix);
-  if (PDC_ERR==PDC_uint64_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->val))) 
+  if (P_ERR==Puint64_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->val))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t auint64_vbar_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,auint64_vbar_acc *acc)
+Perror_t auint64_vbar_acc_report (P_t *pads,char const *prefix,char const *what,int nst,auint64_vbar_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = auint64_vbar_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = auint64_vbar_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
 }
-PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed *moded,just_vbar *modrep)
+Perror_t just_vbar_read_internal (P_t *pads,just_vbar_em *modem,just_vbar_ed *moded,just_vbar *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   {
     /* ********* Reading delimiter field: | ********* */
     {
-      PDC_base_ed ted;
+      Pbase_ed ted;
   /* XXX_OPT : NOT NEEDED */
 #if 0
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
+          if (P_ERR!=Pa_char_lit_scan (pads,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }
@@ -453,17 +453,17 @@ PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed
       else
 #endif
         {
-          PDC_base_em tem=PDC_Check;
-          if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
+          Pbase_em tem=P_Check;
+          if (P_ERR==Pchar_lit_read_internal (pads,&tem,&ted,124)) 
             {
-              if (PDC_spec_level (pdc)) 
+              if (P_spec_level (pads)) 
                 {
-                  return PDC_ERR;
+                  return P_ERR;
                 }
-              PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_MISSING_LITERAL,"Missing separator: %s.","|");
+              PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_MISSING_LITERAL,"Missing separator: %s.","|");
               if (0==(moded->nerr)) 
                 {
-                  moded->errCode = PDC_MISSING_LITERAL;
+                  moded->errCode = P_MISSING_LITERAL;
                   moded->loc = (ted.loc);
                 }
               (moded->nerr)+=1;
@@ -478,17 +478,17 @@ PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed
   if (moded->panic) 
     {
       (moded->d).panic = 1;
-      (moded->d).errCode = PDC_PANIC_SKIPPED;
-      PDC_IO_getLoc (pdc,&((moded->d).loc),0);
+      (moded->d).errCode = P_PANIC_SKIPPED;
+      P_io_getLoc (pads,&((moded->d).loc),0);
       (moded->nerr)+=1;
     }
   else
     {
-      if (PDC_ERR==PDC_dummy_read_internal (pdc,&(modem->d),0,&(moded->d),&(modrep->d))) 
+      if (P_ERR==Pdummy_read_internal (pads,&(modem->d),0,&(moded->d),&(modrep->d))) 
         {
-          if (PDC_spec_level (pdc)) 
+          if (P_spec_level (pads)) 
             {
-              return PDC_ERR;
+              return P_ERR;
             }
           if ((moded->d).panic) 
             {
@@ -496,7 +496,7 @@ PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed
             }
           if (0==(moded->nerr)) 
             {
-              moded->errCode = PDC_STRUCT_FIELD_ERR;
+              moded->errCode = P_STRUCT_FIELD_ERR;
               moded->loc = ((moded->d).loc);
             }
           (moded->nerr)+=1;
@@ -506,31 +506,31 @@ PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed
         }
     }
 #endif
-  return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
+  return ((moded->nerr)==0) ? P_OK : P_ERR;
 }
-PDC_error_t just_vbar_read (PDC_t *pdc,just_vbar_em *em,just_vbar_ed *ed,just_vbar *rep)
+Perror_t just_vbar_read (P_t *pads,just_vbar_em *em,just_vbar_ed *ed,just_vbar *rep)
 {
   just_vbar tmprep={0};
   just_vbar *modrep=rep;
-  just_vbar_em tmpem={(enum PDC_base_em_e) ((PDC_base_em) 0),(enum PDC_base_em_e) 0};
+  just_vbar_em tmpem={(enum Pbase_em_e) ((Pbase_em) 0),(enum Pbase_em_e) 0};
   just_vbar_em *modem=em;
-  just_vbar_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}};
+  just_vbar_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}};
   just_vbar_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"just_vbar_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"just_vbar_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"just_vbar_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"just_vbar_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"just_vbar_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"just_vbar_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"just_vbar_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"just_vbar_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -544,50 +544,50 @@ PDC_error_t just_vbar_read (PDC_t *pdc,just_vbar_em *em,just_vbar_ed *ed,just_vb
     {
       moded = (&tmped);
     }
-  return just_vbar_read_internal (pdc,modem,moded,modrep);
+  return just_vbar_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t just_vbar_acc_init (PDC_t *pdc,just_vbar_acc *acc)
+Perror_t just_vbar_acc_init (P_t *pads,just_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_init (pdc,&(acc->d))) 
+  if (P_ERR==Pint32_acc_init (pads,&(acc->d))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t just_vbar_acc_reset (PDC_t *pdc,just_vbar_acc *acc)
+Perror_t just_vbar_acc_reset (P_t *pads,just_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_reset (pdc,&(acc->d))) 
+  if (P_ERR==Pint32_acc_reset (pads,&(acc->d))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t just_vbar_acc_cleanup (PDC_t *pdc,just_vbar_acc *acc)
+Perror_t just_vbar_acc_cleanup (P_t *pads,just_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_cleanup (pdc,&(acc->d))) 
+  if (P_ERR==Pint32_acc_cleanup (pads,&(acc->d))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t just_vbar_acc_add (PDC_t *pdc,just_vbar_acc *acc,just_vbar_ed *ed,just_vbar *rep)
+Perror_t just_vbar_acc_add (P_t *pads,just_vbar_acc *acc,just_vbar_ed *ed,just_vbar *rep)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_add (pdc,&(acc->d),&(ed->d),&(rep->d))) 
+  if (P_ERR==Pint32_acc_add (pads,&(acc->d),&(ed->d),&(rep->d))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t just_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,just_vbar_acc *acc)
+Perror_t just_vbar_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,just_vbar_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -600,34 +600,34 @@ PDC_error_t just_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const 
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
   sfprintf (outstr,"\n[Describing each field of %s]\n",prefix);
   sfprintf (tmpstr,"%s.d",prefix);
-  if (PDC_ERR==PDC_int32_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->d))) 
+  if (P_ERR==Pint32_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->d))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t just_vbar_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,just_vbar_acc *acc)
+Perror_t just_vbar_acc_report (P_t *pads,char const *prefix,char const *what,int nst,just_vbar_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = just_vbar_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = just_vbar_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
@@ -647,83 +647,83 @@ char const *opt_auint32_vbar_tag2str (opt_auint32_vbar_tag which)
       return "* unknown meth *";
     }
 }
-PDC_error_t opt_auint32_vbar_read_internal (PDC_t *pdc,opt_auint32_vbar_em *modem,opt_auint32_vbar_ed *moded,opt_auint32_vbar *modrep)
+Perror_t opt_auint32_vbar_read_internal (P_t *pads,opt_auint32_vbar_em *modem,opt_auint32_vbar_ed *moded,opt_auint32_vbar *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   /* ************ Reading field: yes32 ************ */
-  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
+  if (P_ERR==P_io_checkpoint (pads,1)) 
     {
-      PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_CHKPOINT_ERR,0);
     }
   modrep->tag = yes32;
-  if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->yes32),&(moded->yes32),&((modrep->val).yes32))) 
+  if (P_ERR==auint32_vbar_read_internal (pads,&(modem->yes32),&(moded->yes32),&((modrep->val).yes32))) 
     {
-      if (PDC_ERR==PDC_IO_restore (pdc)) 
+      if (P_ERR==P_io_restore (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDC_IO_commit (pdc)) 
+      if (P_ERR==P_io_commit (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_COMMIT_ERR,0);
         }
-      return PDC_OK;
+      return P_OK;
     }
   /* ************ Reading field: no32 ************* */
-  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
+  if (P_ERR==P_io_checkpoint (pads,1)) 
     {
-      PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_CHKPOINT_ERR,0);
     }
   modrep->tag = no32;
-  if (PDC_ERR==just_vbar_read_internal (pdc,&(modem->no32),&(moded->no32),&((modrep->val).no32))) 
+  if (P_ERR==just_vbar_read_internal (pads,&(modem->no32),&(moded->no32),&((modrep->val).no32))) 
     {
-      if (PDC_ERR==PDC_IO_restore (pdc)) 
+      if (P_ERR==P_io_restore (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDC_IO_commit (pdc)) 
+      if (P_ERR==P_io_commit (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_COMMIT_ERR,0);
         }
-      return PDC_OK;
+      return P_OK;
     }
   /* ********* We didn't match any branch ********* */
   (moded->nerr)++;
-  moded->errCode = PDC_UNION_MATCH_ERR;
-  PDC_IO_getLoc (pdc,&(moded->loc),0);
-  PDCI_report_err (pdc,PDC_LEV_INFO,&(moded->loc),moded->errCode,"Did not match any branch of union opt_auint32_vbar.");
+  moded->errCode = P_UNION_MATCH_ERR;
+  P_io_getLoc (pads,&(moded->loc),0);
+  PDCI_report_err (pads,P_LEV_INFO,&(moded->loc),moded->errCode,"Did not match any branch of union opt_auint32_vbar.");
   moded->panic = 1;
-  return PDC_ERR;
+  return P_ERR;
 }
-PDC_error_t opt_auint32_vbar_read (PDC_t *pdc,opt_auint32_vbar_em *em,opt_auint32_vbar_ed *ed,opt_auint32_vbar *rep)
+Perror_t opt_auint32_vbar_read (P_t *pads,opt_auint32_vbar_em *em,opt_auint32_vbar_ed *ed,opt_auint32_vbar *rep)
 {
   opt_auint32_vbar tmprep={(enum opt_auint32_vbar_tag_e) 0,{{0}}};
   opt_auint32_vbar *modrep=rep;
-  opt_auint32_vbar_em tmpem={{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}};
+  opt_auint32_vbar_em tmpem={{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}};
   opt_auint32_vbar_em *modem=em;
-  opt_auint32_vbar_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}};
+  opt_auint32_vbar_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}};
   opt_auint32_vbar_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"opt_auint32_vbar_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"opt_auint32_vbar_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"opt_auint32_vbar_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"opt_auint32_vbar_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"opt_auint32_vbar_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"opt_auint32_vbar_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"opt_auint32_vbar_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"opt_auint32_vbar_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -737,65 +737,65 @@ PDC_error_t opt_auint32_vbar_read (PDC_t *pdc,opt_auint32_vbar_em *em,opt_auint3
     {
       moded = (&tmped);
     }
-  return opt_auint32_vbar_read_internal (pdc,modem,moded,modrep);
+  return opt_auint32_vbar_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t opt_auint32_vbar_acc_init (PDC_t *pdc,opt_auint32_vbar_acc *acc)
+Perror_t opt_auint32_vbar_acc_init (P_t *pads,opt_auint32_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_init (pdc,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_init (pads,&(acc->tag))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_init (pdc,&(acc->yes32))) 
+  if (P_ERR==auint32_vbar_acc_init (pads,&(acc->yes32))) 
     {
       nerr++;
     }
-  if (PDC_ERR==just_vbar_acc_init (pdc,&(acc->no32))) 
+  if (P_ERR==just_vbar_acc_init (pads,&(acc->no32))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t opt_auint32_vbar_acc_reset (PDC_t *pdc,opt_auint32_vbar_acc *acc)
+Perror_t opt_auint32_vbar_acc_reset (P_t *pads,opt_auint32_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_reset (pdc,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_reset (pads,&(acc->tag))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_reset (pdc,&(acc->yes32))) 
+  if (P_ERR==auint32_vbar_acc_reset (pads,&(acc->yes32))) 
     {
       nerr++;
     }
-  if (PDC_ERR==just_vbar_acc_reset (pdc,&(acc->no32))) 
+  if (P_ERR==just_vbar_acc_reset (pads,&(acc->no32))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t opt_auint32_vbar_acc_cleanup (PDC_t *pdc,opt_auint32_vbar_acc *acc)
+Perror_t opt_auint32_vbar_acc_cleanup (P_t *pads,opt_auint32_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_cleanup (pdc,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_cleanup (pads,&(acc->tag))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_cleanup (pdc,&(acc->yes32))) 
+  if (P_ERR==auint32_vbar_acc_cleanup (pads,&(acc->yes32))) 
     {
       nerr++;
     }
-  if (PDC_ERR==just_vbar_acc_cleanup (pdc,&(acc->no32))) 
+  if (P_ERR==just_vbar_acc_cleanup (pads,&(acc->no32))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t opt_auint32_vbar_acc_add (PDC_t *pdc,opt_auint32_vbar_acc *acc,opt_auint32_vbar_ed *ed,opt_auint32_vbar *rep)
+Perror_t opt_auint32_vbar_acc_add (P_t *pads,opt_auint32_vbar_acc *acc,opt_auint32_vbar_ed *ed,opt_auint32_vbar *rep)
 {
   int nerr=0;
-  PDC_base_ed ted;
-  ted.errCode = PDC_NO_ERR;
-  if (PDC_ERR==PDC_int32_acc_add (pdc,&(acc->tag),&ted,(PDC_int32 *) (&(rep->tag)))) 
+  Pbase_ed ted;
+  ted.errCode = P_NO_ERR;
+  if (P_ERR==Pint32_acc_add (pads,&(acc->tag),&ted,(Pint32 *) (&(rep->tag)))) 
     {
       nerr++;
     }
@@ -804,7 +804,7 @@ PDC_error_t opt_auint32_vbar_acc_add (PDC_t *pdc,opt_auint32_vbar_acc *acc,opt_a
       
     case 1: 
       {
-        if (PDC_ERR==auint32_vbar_acc_add (pdc,&(acc->yes32),&(ed->yes32),&((rep->val).yes32))) 
+        if (P_ERR==auint32_vbar_acc_add (pads,&(acc->yes32),&(ed->yes32),&((rep->val).yes32))) 
           {
             nerr++;
           }
@@ -813,21 +813,21 @@ PDC_error_t opt_auint32_vbar_acc_add (PDC_t *pdc,opt_auint32_vbar_acc *acc,opt_a
       
     case 2: 
       {
-        if (PDC_ERR==just_vbar_acc_add (pdc,&(acc->no32),&(ed->no32),&((rep->val).no32))) 
+        if (P_ERR==just_vbar_acc_add (pads,&(acc->no32),&(ed->no32),&((rep->val).no32))) 
           {
             nerr++;
           }
         break;
       }
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t opt_auint32_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,opt_auint32_vbar_acc *acc)
+Perror_t opt_auint32_vbar_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,opt_auint32_vbar_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -838,47 +838,47 @@ PDC_error_t opt_auint32_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char
       what = "union opt_auint32_vbar";
     }
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
-  if (PDC_ERR==PDC_int32_acc_report_map_internal (pdc,outstr,"Union tag","tag",-1,(PDC_int32_map_fn) opt_auint32_vbar_tag2str,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_report_map_internal (pads,outstr,"Union tag","tag",-1,(Pint32_map_fn) opt_auint32_vbar_tag2str,&(acc->tag))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (outstr,"\n[Describing each tag arm of %s]\n",prefix);
   sfprintf (tmpstr,"%s.yes32",prefix);
-  if (PDC_ERR==auint32_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->yes32))) 
+  if (P_ERR==auint32_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->yes32))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.no32",prefix);
-  if (PDC_ERR==just_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->no32))) 
+  if (P_ERR==just_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->no32))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t opt_auint32_vbar_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,opt_auint32_vbar_acc *acc)
+Perror_t opt_auint32_vbar_acc_report (P_t *pads,char const *prefix,char const *what,int nst,opt_auint32_vbar_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = opt_auint32_vbar_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = opt_auint32_vbar_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
@@ -898,83 +898,83 @@ char const *opt_auint64_vbar_tag2str (opt_auint64_vbar_tag which)
       return "* unknown meth *";
     }
 }
-PDC_error_t opt_auint64_vbar_read_internal (PDC_t *pdc,opt_auint64_vbar_em *modem,opt_auint64_vbar_ed *moded,opt_auint64_vbar *modrep)
+Perror_t opt_auint64_vbar_read_internal (P_t *pads,opt_auint64_vbar_em *modem,opt_auint64_vbar_ed *moded,opt_auint64_vbar *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   /* ************ Reading field: yes64 ************ */
-  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
+  if (P_ERR==P_io_checkpoint (pads,1)) 
     {
-      PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_CHKPOINT_ERR,0);
     }
   modrep->tag = yes64;
-  if (PDC_ERR==auint64_vbar_read_internal (pdc,&(modem->yes64),&(moded->yes64),&((modrep->val).yes64))) 
+  if (P_ERR==auint64_vbar_read_internal (pads,&(modem->yes64),&(moded->yes64),&((modrep->val).yes64))) 
     {
-      if (PDC_ERR==PDC_IO_restore (pdc)) 
+      if (P_ERR==P_io_restore (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDC_IO_commit (pdc)) 
+      if (P_ERR==P_io_commit (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_COMMIT_ERR,0);
         }
-      return PDC_OK;
+      return P_OK;
     }
   /* ************ Reading field: no64 ************* */
-  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
+  if (P_ERR==P_io_checkpoint (pads,1)) 
     {
-      PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_CHKPOINT_ERR,0);
     }
   modrep->tag = no64;
-  if (PDC_ERR==just_vbar_read_internal (pdc,&(modem->no64),&(moded->no64),&((modrep->val).no64))) 
+  if (P_ERR==just_vbar_read_internal (pads,&(modem->no64),&(moded->no64),&((modrep->val).no64))) 
     {
-      if (PDC_ERR==PDC_IO_restore (pdc)) 
+      if (P_ERR==P_io_restore (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDC_IO_commit (pdc)) 
+      if (P_ERR==P_io_commit (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_COMMIT_ERR,0);
         }
-      return PDC_OK;
+      return P_OK;
     }
   /* ********* We didn't match any branch ********* */
   (moded->nerr)++;
-  moded->errCode = PDC_UNION_MATCH_ERR;
-  PDC_IO_getLoc (pdc,&(moded->loc),0);
-  PDCI_report_err (pdc,PDC_LEV_INFO,&(moded->loc),moded->errCode,"Did not match any branch of union opt_auint64_vbar.");
+  moded->errCode = P_UNION_MATCH_ERR;
+  P_io_getLoc (pads,&(moded->loc),0);
+  PDCI_report_err (pads,P_LEV_INFO,&(moded->loc),moded->errCode,"Did not match any branch of union opt_auint64_vbar.");
   moded->panic = 1;
-  return PDC_ERR;
+  return P_ERR;
 }
-PDC_error_t opt_auint64_vbar_read (PDC_t *pdc,opt_auint64_vbar_em *em,opt_auint64_vbar_ed *ed,opt_auint64_vbar *rep)
+Perror_t opt_auint64_vbar_read (P_t *pads,opt_auint64_vbar_em *em,opt_auint64_vbar_ed *ed,opt_auint64_vbar *rep)
 {
   opt_auint64_vbar tmprep={(enum opt_auint64_vbar_tag_e) 0,{{0}}};
   opt_auint64_vbar *modrep=rep;
-  opt_auint64_vbar_em tmpem={{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}};
+  opt_auint64_vbar_em tmpem={{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}};
   opt_auint64_vbar_em *modem=em;
-  opt_auint64_vbar_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}};
+  opt_auint64_vbar_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}};
   opt_auint64_vbar_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"opt_auint64_vbar_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"opt_auint64_vbar_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"opt_auint64_vbar_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"opt_auint64_vbar_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"opt_auint64_vbar_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"opt_auint64_vbar_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"opt_auint64_vbar_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"opt_auint64_vbar_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -988,65 +988,65 @@ PDC_error_t opt_auint64_vbar_read (PDC_t *pdc,opt_auint64_vbar_em *em,opt_auint6
     {
       moded = (&tmped);
     }
-  return opt_auint64_vbar_read_internal (pdc,modem,moded,modrep);
+  return opt_auint64_vbar_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t opt_auint64_vbar_acc_init (PDC_t *pdc,opt_auint64_vbar_acc *acc)
+Perror_t opt_auint64_vbar_acc_init (P_t *pads,opt_auint64_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_init (pdc,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_init (pads,&(acc->tag))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint64_vbar_acc_init (pdc,&(acc->yes64))) 
+  if (P_ERR==auint64_vbar_acc_init (pads,&(acc->yes64))) 
     {
       nerr++;
     }
-  if (PDC_ERR==just_vbar_acc_init (pdc,&(acc->no64))) 
+  if (P_ERR==just_vbar_acc_init (pads,&(acc->no64))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t opt_auint64_vbar_acc_reset (PDC_t *pdc,opt_auint64_vbar_acc *acc)
+Perror_t opt_auint64_vbar_acc_reset (P_t *pads,opt_auint64_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_reset (pdc,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_reset (pads,&(acc->tag))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint64_vbar_acc_reset (pdc,&(acc->yes64))) 
+  if (P_ERR==auint64_vbar_acc_reset (pads,&(acc->yes64))) 
     {
       nerr++;
     }
-  if (PDC_ERR==just_vbar_acc_reset (pdc,&(acc->no64))) 
+  if (P_ERR==just_vbar_acc_reset (pads,&(acc->no64))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t opt_auint64_vbar_acc_cleanup (PDC_t *pdc,opt_auint64_vbar_acc *acc)
+Perror_t opt_auint64_vbar_acc_cleanup (P_t *pads,opt_auint64_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_cleanup (pdc,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_cleanup (pads,&(acc->tag))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint64_vbar_acc_cleanup (pdc,&(acc->yes64))) 
+  if (P_ERR==auint64_vbar_acc_cleanup (pads,&(acc->yes64))) 
     {
       nerr++;
     }
-  if (PDC_ERR==just_vbar_acc_cleanup (pdc,&(acc->no64))) 
+  if (P_ERR==just_vbar_acc_cleanup (pads,&(acc->no64))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t opt_auint64_vbar_acc_add (PDC_t *pdc,opt_auint64_vbar_acc *acc,opt_auint64_vbar_ed *ed,opt_auint64_vbar *rep)
+Perror_t opt_auint64_vbar_acc_add (P_t *pads,opt_auint64_vbar_acc *acc,opt_auint64_vbar_ed *ed,opt_auint64_vbar *rep)
 {
   int nerr=0;
-  PDC_base_ed ted;
-  ted.errCode = PDC_NO_ERR;
-  if (PDC_ERR==PDC_int32_acc_add (pdc,&(acc->tag),&ted,(PDC_int32 *) (&(rep->tag)))) 
+  Pbase_ed ted;
+  ted.errCode = P_NO_ERR;
+  if (P_ERR==Pint32_acc_add (pads,&(acc->tag),&ted,(Pint32 *) (&(rep->tag)))) 
     {
       nerr++;
     }
@@ -1055,7 +1055,7 @@ PDC_error_t opt_auint64_vbar_acc_add (PDC_t *pdc,opt_auint64_vbar_acc *acc,opt_a
       
     case 1: 
       {
-        if (PDC_ERR==auint64_vbar_acc_add (pdc,&(acc->yes64),&(ed->yes64),&((rep->val).yes64))) 
+        if (P_ERR==auint64_vbar_acc_add (pads,&(acc->yes64),&(ed->yes64),&((rep->val).yes64))) 
           {
             nerr++;
           }
@@ -1064,21 +1064,21 @@ PDC_error_t opt_auint64_vbar_acc_add (PDC_t *pdc,opt_auint64_vbar_acc *acc,opt_a
       
     case 2: 
       {
-        if (PDC_ERR==just_vbar_acc_add (pdc,&(acc->no64),&(ed->no64),&((rep->val).no64))) 
+        if (P_ERR==just_vbar_acc_add (pads,&(acc->no64),&(ed->no64),&((rep->val).no64))) 
           {
             nerr++;
           }
         break;
       }
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t opt_auint64_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,opt_auint64_vbar_acc *acc)
+Perror_t opt_auint64_vbar_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,opt_auint64_vbar_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -1089,67 +1089,67 @@ PDC_error_t opt_auint64_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char
       what = "union opt_auint64_vbar";
     }
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
-  if (PDC_ERR==PDC_int32_acc_report_map_internal (pdc,outstr,"Union tag","tag",-1,(PDC_int32_map_fn) opt_auint64_vbar_tag2str,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_report_map_internal (pads,outstr,"Union tag","tag",-1,(Pint32_map_fn) opt_auint64_vbar_tag2str,&(acc->tag))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (outstr,"\n[Describing each tag arm of %s]\n",prefix);
   sfprintf (tmpstr,"%s.yes64",prefix);
-  if (PDC_ERR==auint64_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->yes64))) 
+  if (P_ERR==auint64_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->yes64))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.no64",prefix);
-  if (PDC_ERR==just_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->no64))) 
+  if (P_ERR==just_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->no64))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t opt_auint64_vbar_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,opt_auint64_vbar_acc *acc)
+Perror_t opt_auint64_vbar_acc_report (P_t *pads,char const *prefix,char const *what,int nst,opt_auint64_vbar_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = opt_auint64_vbar_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = opt_auint64_vbar_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
 }
-PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar_ed *moded,no_pn_vbar *modrep)
+Perror_t no_pn_vbar_read_internal (P_t *pads,no_pn_vbar_em *modem,no_pn_vbar_ed *moded,no_pn_vbar *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   {
     /* ***** Reading delimiter field: "no_TN|" ****** */
     {
-      PDC_base_ed ted;
-      PDC_string strlit={"no_TN|",0,0,0};
+      Pbase_ed ted;
+      Pstring strlit={"no_TN|",0,0,0};
       strlit.len = 6;
   /* XXX_OPT : NOT NEEDED */
 #if 0
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_str_lit_scan (pdc,&strlit,&strlit,1,0,&n)) 
+          if (P_ERR!=Pstr_lit_scan (pads,&strlit,&strlit,1,0,&n)) 
             {
               moded->panic = 0;
             }
@@ -1157,17 +1157,17 @@ PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar
       else
 #endif
         {
-          PDC_base_em tem=PDC_Check;
-          if (PDC_ERR==PDC_str_lit_read_internal (pdc,&tem,&ted,&strlit)) 
+          Pbase_em tem=P_Check;
+          if (P_ERR==Pstr_lit_read_internal (pads,&tem,&ted,&strlit)) 
             {
-              if (PDC_spec_level (pdc)) 
+              if (P_spec_level (pads)) 
                 {
-                  return PDC_ERR;
+                  return P_ERR;
                 }
-              PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_MISSING_LITERAL,"Missing separator: %s.","\"no_TN|\"");
+              PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_MISSING_LITERAL,"Missing separator: %s.","\"no_TN|\"");
               if (0==(moded->nerr)) 
                 {
-                  moded->errCode = PDC_MISSING_LITERAL;
+                  moded->errCode = P_MISSING_LITERAL;
                   moded->loc = (ted.loc);
                 }
               (moded->nerr)+=1;
@@ -1182,17 +1182,17 @@ PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar
   if (moded->panic) 
     {
       (moded->d).panic = 1;
-      (moded->d).errCode = PDC_PANIC_SKIPPED;
-      PDC_IO_getLoc (pdc,&((moded->d).loc),0);
+      (moded->d).errCode = P_PANIC_SKIPPED;
+      P_io_getLoc (pads,&((moded->d).loc),0);
       (moded->nerr)+=1;
     }
   else
     {
-      if (PDC_ERR==PDC_dummy_read_internal (pdc,&(modem->d),0,&(moded->d),&(modrep->d))) 
+      if (P_ERR==Pdummy_read_internal (pads,&(modem->d),0,&(moded->d),&(modrep->d))) 
         {
-          if (PDC_spec_level (pdc)) 
+          if (P_spec_level (pads)) 
             {
-              return PDC_ERR;
+              return P_ERR;
             }
           if ((moded->d).panic) 
             {
@@ -1200,7 +1200,7 @@ PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar
             }
           if (0==(moded->nerr)) 
             {
-              moded->errCode = PDC_STRUCT_FIELD_ERR;
+              moded->errCode = P_STRUCT_FIELD_ERR;
               moded->loc = ((moded->d).loc);
             }
           (moded->nerr)+=1;
@@ -1210,31 +1210,31 @@ PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar
         }
     }
 #endif
-  return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
+  return ((moded->nerr)==0) ? P_OK : P_ERR;
 }
-PDC_error_t no_pn_vbar_read (PDC_t *pdc,no_pn_vbar_em *em,no_pn_vbar_ed *ed,no_pn_vbar *rep)
+Perror_t no_pn_vbar_read (P_t *pads,no_pn_vbar_em *em,no_pn_vbar_ed *ed,no_pn_vbar *rep)
 {
   no_pn_vbar tmprep={0};
   no_pn_vbar *modrep=rep;
-  no_pn_vbar_em tmpem={(enum PDC_base_em_e) ((PDC_base_em) 0),(enum PDC_base_em_e) 0};
+  no_pn_vbar_em tmpem={(enum Pbase_em_e) ((Pbase_em) 0),(enum Pbase_em_e) 0};
   no_pn_vbar_em *modem=em;
-  no_pn_vbar_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}};
+  no_pn_vbar_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}};
   no_pn_vbar_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"no_pn_vbar_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"no_pn_vbar_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"no_pn_vbar_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"no_pn_vbar_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"no_pn_vbar_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"no_pn_vbar_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"no_pn_vbar_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"no_pn_vbar_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -1248,50 +1248,50 @@ PDC_error_t no_pn_vbar_read (PDC_t *pdc,no_pn_vbar_em *em,no_pn_vbar_ed *ed,no_p
     {
       moded = (&tmped);
     }
-  return no_pn_vbar_read_internal (pdc,modem,moded,modrep);
+  return no_pn_vbar_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t no_pn_vbar_acc_init (PDC_t *pdc,no_pn_vbar_acc *acc)
+Perror_t no_pn_vbar_acc_init (P_t *pads,no_pn_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_init (pdc,&(acc->d))) 
+  if (P_ERR==Pint32_acc_init (pads,&(acc->d))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t no_pn_vbar_acc_reset (PDC_t *pdc,no_pn_vbar_acc *acc)
+Perror_t no_pn_vbar_acc_reset (P_t *pads,no_pn_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_reset (pdc,&(acc->d))) 
+  if (P_ERR==Pint32_acc_reset (pads,&(acc->d))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t no_pn_vbar_acc_cleanup (PDC_t *pdc,no_pn_vbar_acc *acc)
+Perror_t no_pn_vbar_acc_cleanup (P_t *pads,no_pn_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_cleanup (pdc,&(acc->d))) 
+  if (P_ERR==Pint32_acc_cleanup (pads,&(acc->d))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t no_pn_vbar_acc_add (PDC_t *pdc,no_pn_vbar_acc *acc,no_pn_vbar_ed *ed,no_pn_vbar *rep)
+Perror_t no_pn_vbar_acc_add (P_t *pads,no_pn_vbar_acc *acc,no_pn_vbar_ed *ed,no_pn_vbar *rep)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_add (pdc,&(acc->d),&(ed->d),&(rep->d))) 
+  if (P_ERR==Pint32_acc_add (pads,&(acc->d),&(ed->d),&(rep->d))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t no_pn_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,no_pn_vbar_acc *acc)
+Perror_t no_pn_vbar_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,no_pn_vbar_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -1304,34 +1304,34 @@ PDC_error_t no_pn_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
   sfprintf (outstr,"\n[Describing each field of %s]\n",prefix);
   sfprintf (tmpstr,"%s.d",prefix);
-  if (PDC_ERR==PDC_int32_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->d))) 
+  if (P_ERR==Pint32_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->d))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t no_pn_vbar_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,no_pn_vbar_acc *acc)
+Perror_t no_pn_vbar_acc_report (P_t *pads,char const *prefix,char const *what,int nst,no_pn_vbar_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = no_pn_vbar_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = no_pn_vbar_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
@@ -1351,83 +1351,83 @@ char const *dib_pn_vbar_tag2str (dib_pn_vbar_tag which)
       return "* unknown meth *";
     }
 }
-PDC_error_t dib_pn_vbar_read_internal (PDC_t *pdc,dib_pn_vbar_em *modem,dib_pn_vbar_ed *moded,dib_pn_vbar *modrep)
+Perror_t dib_pn_vbar_read_internal (P_t *pads,dib_pn_vbar_em *modem,dib_pn_vbar_ed *moded,dib_pn_vbar *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   /* ************ Reading field: yesPN ************ */
-  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
+  if (P_ERR==P_io_checkpoint (pads,1)) 
     {
-      PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_CHKPOINT_ERR,0);
     }
   modrep->tag = yesPN;
-  if (PDC_ERR==auint64_vbar_read_internal (pdc,&(modem->yesPN),&(moded->yesPN),&((modrep->val).yesPN))) 
+  if (P_ERR==auint64_vbar_read_internal (pads,&(modem->yesPN),&(moded->yesPN),&((modrep->val).yesPN))) 
     {
-      if (PDC_ERR==PDC_IO_restore (pdc)) 
+      if (P_ERR==P_io_restore (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDC_IO_commit (pdc)) 
+      if (P_ERR==P_io_commit (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_COMMIT_ERR,0);
         }
-      return PDC_OK;
+      return P_OK;
     }
   /* ************ Reading field: noPN ************* */
-  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
+  if (P_ERR==P_io_checkpoint (pads,1)) 
     {
-      PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_CHKPOINT_ERR,0);
     }
   modrep->tag = noPN;
-  if (PDC_ERR==no_pn_vbar_read_internal (pdc,&(modem->noPN),&(moded->noPN),&((modrep->val).noPN))) 
+  if (P_ERR==no_pn_vbar_read_internal (pads,&(modem->noPN),&(moded->noPN),&((modrep->val).noPN))) 
     {
-      if (PDC_ERR==PDC_IO_restore (pdc)) 
+      if (P_ERR==P_io_restore (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDC_IO_commit (pdc)) 
+      if (P_ERR==P_io_commit (pads)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_COMMIT_ERR,0);
         }
-      return PDC_OK;
+      return P_OK;
     }
   /* ********* We didn't match any branch ********* */
   (moded->nerr)++;
-  moded->errCode = PDC_UNION_MATCH_ERR;
-  PDC_IO_getLoc (pdc,&(moded->loc),0);
-  PDCI_report_err (pdc,PDC_LEV_INFO,&(moded->loc),moded->errCode,"Did not match any branch of union dib_pn_vbar.");
+  moded->errCode = P_UNION_MATCH_ERR;
+  P_io_getLoc (pads,&(moded->loc),0);
+  PDCI_report_err (pads,P_LEV_INFO,&(moded->loc),moded->errCode,"Did not match any branch of union dib_pn_vbar.");
   moded->panic = 1;
-  return PDC_ERR;
+  return P_ERR;
 }
-PDC_error_t dib_pn_vbar_read (PDC_t *pdc,dib_pn_vbar_em *em,dib_pn_vbar_ed *ed,dib_pn_vbar *rep)
+Perror_t dib_pn_vbar_read (P_t *pads,dib_pn_vbar_em *em,dib_pn_vbar_ed *ed,dib_pn_vbar *rep)
 {
   dib_pn_vbar tmprep={(enum dib_pn_vbar_tag_e) 0,{{0}}};
   dib_pn_vbar *modrep=rep;
-  dib_pn_vbar_em tmpem={{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}};
+  dib_pn_vbar_em tmpem={{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}};
   dib_pn_vbar_em *modem=em;
-  dib_pn_vbar_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}};
+  dib_pn_vbar_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}};
   dib_pn_vbar_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"dib_pn_vbar_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"dib_pn_vbar_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"dib_pn_vbar_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"dib_pn_vbar_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"dib_pn_vbar_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"dib_pn_vbar_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"dib_pn_vbar_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"dib_pn_vbar_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -1441,65 +1441,65 @@ PDC_error_t dib_pn_vbar_read (PDC_t *pdc,dib_pn_vbar_em *em,dib_pn_vbar_ed *ed,d
     {
       moded = (&tmped);
     }
-  return dib_pn_vbar_read_internal (pdc,modem,moded,modrep);
+  return dib_pn_vbar_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t dib_pn_vbar_acc_init (PDC_t *pdc,dib_pn_vbar_acc *acc)
+Perror_t dib_pn_vbar_acc_init (P_t *pads,dib_pn_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_init (pdc,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_init (pads,&(acc->tag))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint64_vbar_acc_init (pdc,&(acc->yesPN))) 
+  if (P_ERR==auint64_vbar_acc_init (pads,&(acc->yesPN))) 
     {
       nerr++;
     }
-  if (PDC_ERR==no_pn_vbar_acc_init (pdc,&(acc->noPN))) 
+  if (P_ERR==no_pn_vbar_acc_init (pads,&(acc->noPN))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t dib_pn_vbar_acc_reset (PDC_t *pdc,dib_pn_vbar_acc *acc)
+Perror_t dib_pn_vbar_acc_reset (P_t *pads,dib_pn_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_reset (pdc,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_reset (pads,&(acc->tag))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint64_vbar_acc_reset (pdc,&(acc->yesPN))) 
+  if (P_ERR==auint64_vbar_acc_reset (pads,&(acc->yesPN))) 
     {
       nerr++;
     }
-  if (PDC_ERR==no_pn_vbar_acc_reset (pdc,&(acc->noPN))) 
+  if (P_ERR==no_pn_vbar_acc_reset (pads,&(acc->noPN))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t dib_pn_vbar_acc_cleanup (PDC_t *pdc,dib_pn_vbar_acc *acc)
+Perror_t dib_pn_vbar_acc_cleanup (P_t *pads,dib_pn_vbar_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_cleanup (pdc,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_cleanup (pads,&(acc->tag))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint64_vbar_acc_cleanup (pdc,&(acc->yesPN))) 
+  if (P_ERR==auint64_vbar_acc_cleanup (pads,&(acc->yesPN))) 
     {
       nerr++;
     }
-  if (PDC_ERR==no_pn_vbar_acc_cleanup (pdc,&(acc->noPN))) 
+  if (P_ERR==no_pn_vbar_acc_cleanup (pads,&(acc->noPN))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t dib_pn_vbar_acc_add (PDC_t *pdc,dib_pn_vbar_acc *acc,dib_pn_vbar_ed *ed,dib_pn_vbar *rep)
+Perror_t dib_pn_vbar_acc_add (P_t *pads,dib_pn_vbar_acc *acc,dib_pn_vbar_ed *ed,dib_pn_vbar *rep)
 {
   int nerr=0;
-  PDC_base_ed ted;
-  ted.errCode = PDC_NO_ERR;
-  if (PDC_ERR==PDC_int32_acc_add (pdc,&(acc->tag),&ted,(PDC_int32 *) (&(rep->tag)))) 
+  Pbase_ed ted;
+  ted.errCode = P_NO_ERR;
+  if (P_ERR==Pint32_acc_add (pads,&(acc->tag),&ted,(Pint32 *) (&(rep->tag)))) 
     {
       nerr++;
     }
@@ -1508,7 +1508,7 @@ PDC_error_t dib_pn_vbar_acc_add (PDC_t *pdc,dib_pn_vbar_acc *acc,dib_pn_vbar_ed 
       
     case 1: 
       {
-        if (PDC_ERR==auint64_vbar_acc_add (pdc,&(acc->yesPN),&(ed->yesPN),&((rep->val).yesPN))) 
+        if (P_ERR==auint64_vbar_acc_add (pads,&(acc->yesPN),&(ed->yesPN),&((rep->val).yesPN))) 
           {
             nerr++;
           }
@@ -1517,21 +1517,21 @@ PDC_error_t dib_pn_vbar_acc_add (PDC_t *pdc,dib_pn_vbar_acc *acc,dib_pn_vbar_ed 
       
     case 2: 
       {
-        if (PDC_ERR==no_pn_vbar_acc_add (pdc,&(acc->noPN),&(ed->noPN),&((rep->val).noPN))) 
+        if (P_ERR==no_pn_vbar_acc_add (pads,&(acc->noPN),&(ed->noPN),&((rep->val).noPN))) 
           {
             nerr++;
           }
         break;
       }
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t dib_pn_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,dib_pn_vbar_acc *acc)
+Perror_t dib_pn_vbar_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,dib_pn_vbar_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -1542,52 +1542,52 @@ PDC_error_t dib_pn_vbar_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char cons
       what = "union dib_pn_vbar";
     }
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
-  if (PDC_ERR==PDC_int32_acc_report_map_internal (pdc,outstr,"Union tag","tag",-1,(PDC_int32_map_fn) dib_pn_vbar_tag2str,&(acc->tag))) 
+  if (P_ERR==Pint32_acc_report_map_internal (pads,outstr,"Union tag","tag",-1,(Pint32_map_fn) dib_pn_vbar_tag2str,&(acc->tag))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (outstr,"\n[Describing each tag arm of %s]\n",prefix);
   sfprintf (tmpstr,"%s.yesPN",prefix);
-  if (PDC_ERR==auint64_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->yesPN))) 
+  if (P_ERR==auint64_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->yesPN))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.noPN",prefix);
-  if (PDC_ERR==no_pn_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->noPN))) 
+  if (P_ERR==no_pn_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->noPN))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t dib_pn_vbar_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,dib_pn_vbar_acc *acc)
+Perror_t dib_pn_vbar_acc_report (P_t *pads,char const *prefix,char const *what,int nst,dib_pn_vbar_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = dib_pn_vbar_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = dib_pn_vbar_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
 }
-PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,event *modrep)
+Perror_t event_read_internal (P_t *pads,event_em *modem,event_ed *moded,event *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
@@ -1597,18 +1597,18 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
   if (moded->panic) 
     {
       (moded->state).panic = 1;
-      (moded->state).errCode = PDC_PANIC_SKIPPED;
-      PDC_IO_getLoc (pdc,&((moded->state).loc),0);
+      (moded->state).errCode = P_PANIC_SKIPPED;
+      P_io_getLoc (pads,&((moded->state).loc),0);
       (moded->nerr)+=1;
     }
   else
 #endif
     {
-      if (PDC_ERR==PDC_astring_read_internal (pdc,&(modem->state),124,&(moded->state),&(modrep->state))) 
+      if (P_ERR==Pa_string_read_internal (pads,&(modem->state),124,&(moded->state),&(modrep->state))) 
         {
-          if (PDC_spec_level (pdc)) 
+          if (P_spec_level (pads)) 
             {
-              return PDC_ERR;
+              return P_ERR;
             }
           if ((moded->state).panic) 
             {
@@ -1616,7 +1616,7 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
             }
           if (0==(moded->nerr)) 
             {
-              moded->errCode = PDC_STRUCT_FIELD_ERR;
+              moded->errCode = P_STRUCT_FIELD_ERR;
               moded->loc = ((moded->state).loc);
             }
           (moded->nerr)+=1;
@@ -1628,28 +1628,28 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
   {
     /* ********* Reading delimiter field: | ********* */
     {
-      PDC_base_ed ted;
+      Pbase_ed ted;
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
+          if (P_ERR!=Pa_char_lit_scan (pads,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }
         }
       else
         {
-          PDC_base_em tem=PDC_Check;
-          if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
+          Pbase_em tem=P_Check;
+          if (P_ERR==Pchar_lit_read_internal (pads,&tem,&ted,124)) 
             {
-              if (PDC_spec_level (pdc)) 
+              if (P_spec_level (pads)) 
                 {
-                  return PDC_ERR;
+                  return P_ERR;
                 }
-              PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_MISSING_LITERAL,"Missing separator: %s.","|");
+              PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_MISSING_LITERAL,"Missing separator: %s.","|");
               if (0==(moded->nerr)) 
                 {
-                  moded->errCode = PDC_MISSING_LITERAL;
+                  moded->errCode = P_MISSING_LITERAL;
                   moded->loc = (ted.loc);
                 }
               (moded->nerr)+=1;
@@ -1662,17 +1662,17 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
   if (moded->panic) 
     {
       (moded->tstamp).panic = 1;
-      (moded->tstamp).errCode = PDC_PANIC_SKIPPED;
-      PDC_IO_getLoc (pdc,&((moded->tstamp).loc),0);
+      (moded->tstamp).errCode = P_PANIC_SKIPPED;
+      P_io_getLoc (pads,&((moded->tstamp).loc),0);
       (moded->nerr)+=1;
     }
   else
     {
-      if (PDC_ERR==PDC_auint32_read_internal (pdc,&(modem->tstamp),&(moded->tstamp),&(modrep->tstamp))) 
+      if (P_ERR==Pa_uint32_read_internal (pads,&(modem->tstamp),&(moded->tstamp),&(modrep->tstamp))) 
         {
-          if (PDC_spec_level (pdc)) 
+          if (P_spec_level (pads)) 
             {
-              return PDC_ERR;
+              return P_ERR;
             }
           if ((moded->tstamp).panic) 
             {
@@ -1680,7 +1680,7 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
             }
           if (0==(moded->nerr)) 
             {
-              moded->errCode = PDC_STRUCT_FIELD_ERR;
+              moded->errCode = P_STRUCT_FIELD_ERR;
               moded->loc = ((moded->tstamp).loc);
             }
           (moded->nerr)+=1;
@@ -1692,28 +1692,28 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
   {
     /* ********* Reading delimiter field: | ********* */
     {
-      PDC_base_ed ted;
+      Pbase_ed ted;
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
+          if (P_ERR!=Pa_char_lit_scan (pads,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }
         }
       else
         {
-          PDC_base_em tem=PDC_Check;
-          if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
+          Pbase_em tem=P_Check;
+          if (P_ERR==Pchar_lit_read_internal (pads,&tem,&ted,124)) 
             {
-              if (PDC_spec_level (pdc)) 
+              if (P_spec_level (pads)) 
                 {
-                  return PDC_ERR;
+                  return P_ERR;
                 }
-              PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_MISSING_LITERAL,"Missing separator: %s.","|");
+              PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_MISSING_LITERAL,"Missing separator: %s.","|");
               if (0==(moded->nerr)) 
                 {
-                  moded->errCode = PDC_MISSING_LITERAL;
+                  moded->errCode = P_MISSING_LITERAL;
                   moded->loc = (ted.loc);
                 }
               (moded->nerr)+=1;
@@ -1722,31 +1722,31 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
         }
     }
   }
-  return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
+  return ((moded->nerr)==0) ? P_OK : P_ERR;
 }
-PDC_error_t event_read (PDC_t *pdc,event_em *em,event_ed *ed,event *rep)
+Perror_t event_read (P_t *pads,event_em *em,event_ed *ed,event *rep)
 {
   event tmprep={{0,0,0},0};
   event *modrep=rep;
-  event_em tmpem={(enum PDC_base_em_e) ((PDC_base_em) 0),(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0};
+  event_em tmpem={(enum Pbase_em_e) ((Pbase_em) 0),(enum Pbase_em_e) 0,(enum Pbase_em_e) 0};
   event_em *modem=em;
-  event_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}};
+  event_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}};
   event_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"event_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"event_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"event_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"event_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"event_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"event_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"event_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"event_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -1760,66 +1760,66 @@ PDC_error_t event_read (PDC_t *pdc,event_em *em,event_ed *ed,event *rep)
     {
       moded = (&tmped);
     }
-  return event_read_internal (pdc,modem,moded,modrep);
+  return event_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t event_acc_init (PDC_t *pdc,event_acc *acc)
+Perror_t event_acc_init (P_t *pads,event_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_string_acc_init (pdc,&(acc->state))) 
+  if (P_ERR==Pstring_acc_init (pads,&(acc->state))) 
     {
       nerr++;
     }
-  if (PDC_ERR==PDC_uint32_acc_init (pdc,&(acc->tstamp))) 
+  if (P_ERR==Puint32_acc_init (pads,&(acc->tstamp))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t event_acc_reset (PDC_t *pdc,event_acc *acc)
+Perror_t event_acc_reset (P_t *pads,event_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_string_acc_reset (pdc,&(acc->state))) 
+  if (P_ERR==Pstring_acc_reset (pads,&(acc->state))) 
     {
       nerr++;
     }
-  if (PDC_ERR==PDC_uint32_acc_reset (pdc,&(acc->tstamp))) 
+  if (P_ERR==Puint32_acc_reset (pads,&(acc->tstamp))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t event_acc_cleanup (PDC_t *pdc,event_acc *acc)
+Perror_t event_acc_cleanup (P_t *pads,event_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_string_acc_cleanup (pdc,&(acc->state))) 
+  if (P_ERR==Pstring_acc_cleanup (pads,&(acc->state))) 
     {
       nerr++;
     }
-  if (PDC_ERR==PDC_uint32_acc_cleanup (pdc,&(acc->tstamp))) 
+  if (P_ERR==Puint32_acc_cleanup (pads,&(acc->tstamp))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t event_acc_add (PDC_t *pdc,event_acc *acc,event_ed *ed,event *rep)
+Perror_t event_acc_add (P_t *pads,event_acc *acc,event_ed *ed,event *rep)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_string_acc_add (pdc,&(acc->state),&(ed->state),&(rep->state))) 
+  if (P_ERR==Pstring_acc_add (pads,&(acc->state),&(ed->state),&(rep->state))) 
     {
       nerr++;
     }
-  if (PDC_ERR==PDC_uint32_acc_add (pdc,&(acc->tstamp),&(ed->tstamp),&(rep->tstamp))) 
+  if (P_ERR==Puint32_acc_add (pads,&(acc->tstamp),&(ed->tstamp),&(rep->tstamp))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t event_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,event_acc *acc)
+Perror_t event_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,event_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -1832,88 +1832,88 @@ PDC_error_t event_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *pre
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
   sfprintf (outstr,"\n[Describing each field of %s]\n",prefix);
   sfprintf (tmpstr,"%s.state",prefix);
-  if (PDC_ERR==PDC_string_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->state))) 
+  if (P_ERR==Pstring_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->state))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.tstamp",prefix);
-  if (PDC_ERR==PDC_uint32_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->tstamp))) 
+  if (P_ERR==Puint32_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->tstamp))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t event_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,event_acc *acc)
+Perror_t event_acc_report (P_t *pads,char const *prefix,char const *what,int nst,event_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = event_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = event_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
 }
-PDC_error_t event_init (PDC_t *pdc,event *rep)
+Perror_t event_init (P_t *pads,event *rep)
 {
-  if ((!pdc)||(!rep)) 
-    return PDC_ERR;
-  PDC_string_init (pdc,&(rep->state));
-  return PDC_OK;
+  if ((!pads)||(!rep)) 
+    return P_ERR;
+  Pstring_init (pads,&(rep->state));
+  return P_OK;
 }
-PDC_error_t event_ed_init (PDC_t *pdc,event_ed *ed)
+Perror_t event_ed_init (P_t *pads,event_ed *ed)
 {
-  if ((!pdc)||(!ed)) 
-    return PDC_ERR;
-  PDC_string_ed_init (pdc,&(ed->state));
-  return PDC_OK;
+  if ((!pads)||(!ed)) 
+    return P_ERR;
+  Pstring_ed_init (pads,&(ed->state));
+  return P_OK;
 }
-PDC_error_t event_cleanup (PDC_t *pdc,event *rep)
+Perror_t event_cleanup (P_t *pads,event *rep)
 {
-  if ((!pdc)||(!rep)) 
-    return PDC_ERR;
-  PDC_string_cleanup (pdc,&(rep->state));
-  return PDC_OK;
+  if ((!pads)||(!rep)) 
+    return P_ERR;
+  Pstring_cleanup (pads,&(rep->state));
+  return P_OK;
 }
-PDC_error_t event_ed_cleanup (PDC_t *pdc,event_ed *ed)
+Perror_t event_ed_cleanup (P_t *pads,event_ed *ed)
 {
-  if ((!pdc)||(!ed)) 
-    return PDC_ERR;
-  PDC_string_ed_cleanup (pdc,&(ed->state));
-  return PDC_OK;
+  if ((!pads)||(!ed)) 
+    return P_ERR;
+  Pstring_ed_cleanup (pads,&(ed->state));
+  return P_OK;
 }
-PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,out_sum_header_ed *moded,out_sum_header *modrep)
+Perror_t out_sum_header_read_internal (P_t *pads,out_sum_header_em *modem,out_sum_header_ed *moded,out_sum_header *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   {
     /* ******* Reading delimiter field: "0|" ******** */
     {
-      PDC_base_ed ted;
-      PDC_string strlit={"0|",0,0,0};
+      Pbase_ed ted;
+      Pstring strlit={"0|",0,0,0};
       strlit.len = 2;
   /* XXX_OPT : NOT NEEDED */
 #if 0
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_str_lit_scan (pdc,&strlit,&strlit,1,0,&n)) 
+          if (P_ERR!=Pstr_lit_scan (pads,&strlit,&strlit,1,0,&n)) 
             {
               moded->panic = 0;
             }
@@ -1921,17 +1921,17 @@ PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,ou
       else
 #endif
         {
-          PDC_base_em tem=PDC_Check;
-          if (PDC_ERR==PDC_str_lit_read_internal (pdc,&tem,&ted,&strlit)) 
+          Pbase_em tem=P_Check;
+          if (P_ERR==Pstr_lit_read_internal (pads,&tem,&ted,&strlit)) 
             {
-              if (PDC_spec_level (pdc)) 
+              if (P_spec_level (pads)) 
                 {
-                  return PDC_ERR;
+                  return P_ERR;
                 }
-              PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_MISSING_LITERAL,"Missing separator: %s.","\"0|\"");
+              PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_MISSING_LITERAL,"Missing separator: %s.","\"0|\"");
               if (0==(moded->nerr)) 
                 {
-                  moded->errCode = PDC_MISSING_LITERAL;
+                  moded->errCode = P_MISSING_LITERAL;
                   moded->loc = (ted.loc);
                 }
               (moded->nerr)+=1;
@@ -1944,17 +1944,17 @@ PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,ou
   if (moded->panic) 
     {
       (moded->tstamp).panic = 1;
-      (moded->tstamp).errCode = PDC_PANIC_SKIPPED;
-      PDC_IO_getLoc (pdc,&((moded->tstamp).loc),0);
+      (moded->tstamp).errCode = P_PANIC_SKIPPED;
+      P_io_getLoc (pads,&((moded->tstamp).loc),0);
       (moded->nerr)+=1;
     }
   else
     {
-      if (PDC_ERR==PDC_auint32_read_internal (pdc,&(modem->tstamp),&(moded->tstamp),&(modrep->tstamp))) 
+      if (P_ERR==Pa_uint32_read_internal (pads,&(modem->tstamp),&(moded->tstamp),&(modrep->tstamp))) 
         {
-          if (PDC_spec_level (pdc)) 
+          if (P_spec_level (pads)) 
             {
-              return PDC_ERR;
+              return P_ERR;
             }
           if ((moded->tstamp).panic) 
             {
@@ -1962,7 +1962,7 @@ PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,ou
             }
           if (0==(moded->nerr)) 
             {
-              moded->errCode = PDC_STRUCT_FIELD_ERR;
+              moded->errCode = P_STRUCT_FIELD_ERR;
               moded->loc = ((moded->tstamp).loc);
             }
           (moded->nerr)+=1;
@@ -1973,72 +1973,72 @@ PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,ou
     }
   /* ******** Reading delimiter field: EOR ******** */
   {
-    PDC_base_ed ted;
+    Pbase_ed ted;
     size_t n;
-    PDC_IO_getLocB (pdc,&(ted.loc),0);
-    if (PDC_OK==PDC_IO_next_rec (pdc,&n)) 
+    P_io_getLocB (pads,&(ted.loc),0);
+    if (P_OK==P_io_next_rec (pads,&n)) 
       {
         if (n>0) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
-            PDC_IO_getLocE (pdc,&(ted.loc),0);
+            P_io_getLocE (pads,&(ted.loc),0);
             if (!(moded->panic)) 
               {
-                PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_EXTRA_BEFORE_EOR,0);
+                PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_EXTRA_BEFORE_EOR,0);
                 if (0==(moded->nerr)) 
                   {
-                    moded->errCode = PDC_EXTRA_BEFORE_EOR;
+                    moded->errCode = P_EXTRA_BEFORE_EOR;
                     moded->loc = (ted.loc);
                   }
                 (moded->nerr)+=1;
               }
             else
               {
-                PDC_IO_getLoc (pdc,&(ted.loc),0);
-                PDCI_report_err (pdc,PDC_LEV_ERR,&(ted.loc),PDC_NO_ERR,"Resynching at EOR");
+                P_io_getLoc (pads,&(ted.loc),0);
+                PDCI_report_err (pads,P_LEV_ERR,&(ted.loc),P_NO_ERR,"Resynching at EOR");
               }
           }
         moded->panic = 0;
       }
     else
       {
-        if (PDC_spec_level (pdc)) 
+        if (P_spec_level (pads)) 
           {
-            return PDC_ERR;
+            return P_ERR;
           }
         moded->panic = 0;
-        PDC_IO_getLocE (pdc,&(ted.loc),0);
-        PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_AT_EOR,"Found EOF when searching for EOR");
+        P_io_getLocE (pads,&(ted.loc),0);
+        PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_AT_EOR,"Found EOF when searching for EOR");
       }
   }
-  return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
+  return ((moded->nerr)==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_header_read (PDC_t *pdc,out_sum_header_em *em,out_sum_header_ed *ed,out_sum_header *rep)
+Perror_t out_sum_header_read (P_t *pads,out_sum_header_em *em,out_sum_header_ed *ed,out_sum_header *rep)
 {
   out_sum_header tmprep={0};
   out_sum_header *modrep=rep;
-  out_sum_header_em tmpem={(enum PDC_base_em_e) ((PDC_base_em) 0),(enum PDC_base_em_e) 0};
+  out_sum_header_em tmpem={(enum Pbase_em_e) ((Pbase_em) 0),(enum Pbase_em_e) 0};
   out_sum_header_em *modem=em;
-  out_sum_header_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}};
+  out_sum_header_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}};
   out_sum_header_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"out_sum_header_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"out_sum_header_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"out_sum_header_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"out_sum_header_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"out_sum_header_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"out_sum_header_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"out_sum_header_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"out_sum_header_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -2052,50 +2052,50 @@ PDC_error_t out_sum_header_read (PDC_t *pdc,out_sum_header_em *em,out_sum_header
     {
       moded = (&tmped);
     }
-  return out_sum_header_read_internal (pdc,modem,moded,modrep);
+  return out_sum_header_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t out_sum_header_acc_init (PDC_t *pdc,out_sum_header_acc *acc)
+Perror_t out_sum_header_acc_init (P_t *pads,out_sum_header_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint32_acc_init (pdc,&(acc->tstamp))) 
+  if (P_ERR==Puint32_acc_init (pads,&(acc->tstamp))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_header_acc_reset (PDC_t *pdc,out_sum_header_acc *acc)
+Perror_t out_sum_header_acc_reset (P_t *pads,out_sum_header_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint32_acc_reset (pdc,&(acc->tstamp))) 
+  if (P_ERR==Puint32_acc_reset (pads,&(acc->tstamp))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_header_acc_cleanup (PDC_t *pdc,out_sum_header_acc *acc)
+Perror_t out_sum_header_acc_cleanup (P_t *pads,out_sum_header_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint32_acc_cleanup (pdc,&(acc->tstamp))) 
+  if (P_ERR==Puint32_acc_cleanup (pads,&(acc->tstamp))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_header_acc_add (PDC_t *pdc,out_sum_header_acc *acc,out_sum_header_ed *ed,out_sum_header *rep)
+Perror_t out_sum_header_acc_add (P_t *pads,out_sum_header_acc *acc,out_sum_header_ed *ed,out_sum_header *rep)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_uint32_acc_add (pdc,&(acc->tstamp),&(ed->tstamp),&(rep->tstamp))) 
+  if (P_ERR==Puint32_acc_add (pads,&(acc->tstamp),&(ed->tstamp),&(rep->tstamp))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_header_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,out_sum_header_acc *acc)
+Perror_t out_sum_header_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,out_sum_header_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -2108,57 +2108,57 @@ PDC_error_t out_sum_header_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char c
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
   sfprintf (outstr,"\n[Describing each field of %s]\n",prefix);
   sfprintf (tmpstr,"%s.tstamp",prefix);
-  if (PDC_ERR==PDC_uint32_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->tstamp))) 
+  if (P_ERR==Puint32_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->tstamp))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t out_sum_header_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,out_sum_header_acc *acc)
+Perror_t out_sum_header_acc_report (P_t *pads,char const *prefix,char const *what,int nst,out_sum_header_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = out_sum_header_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = out_sum_header_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
 }
-PDC_error_t eventSeq_read_internal (PDC_t *pdc,eventSeq_em *modem,int size,eventSeq_ed *moded,eventSeq *modrep)
+Perror_t eventSeq_read_internal (P_t *pads,eventSeq_em *modem,int size,eventSeq_ed *moded,eventSeq *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   {
-    /*    PDC_base_em tem=PDC_Check; */
-    /*     PDC_base_ed ted; */
+    /*    Pbase_em tem=P_Check; */
+    /*     Pbase_ed ted; */
     int reachedLimit=0;
     modrep->length = 0;
-    if (((modem->array)<=PDC_Check)&&(size<0)) 
+    if (((modem->array)<=P_Check)&&(size<0)) 
       {
-        if (PDC_spec_level (pdc)) 
-          return PDC_ERR;
+        if (P_spec_level (pads)) 
+          return P_ERR;
         if (!(moded->nerr)) 
           {
             (moded->nerr)++;
-            moded->errCode = PDC_ARRAY_MAX_NEGATIVE;
-            PDC_IO_getLoc (pdc,&(moded->loc),0);
-            PDCI_report_err (pdc,PDC_LEV_INFO,&(moded->loc),moded->errCode,"Maximum value for the size of array eventSeq(%d) is negative.",size);
+            moded->errCode = P_ARRAY_MAX_NEGATIVE;
+            P_io_getLoc (pads,&(moded->loc),0);
+            PDCI_report_err (pads,P_LEV_INFO,&(moded->loc),moded->errCode,"Maximum value for the size of array eventSeq(%d) is negative.",size);
           }
         else
           {
@@ -2168,24 +2168,24 @@ PDC_error_t eventSeq_read_internal (PDC_t *pdc,eventSeq_em *modem,int size,event
       }
     if (0==(modrep->_internal)) 
       {
-        modrep->_internal = RMM_new_rbuf (PDC_rmm_zero (pdc));
+        modrep->_internal = RMM_new_rbuf (P_rmm_zero (pads));
         if (0==(modrep->_internal)) 
           {
-            PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_ALLOC_ERR,"");
+            PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,"");
           }
       }
     if (0==(moded->_internal)) 
       {
-        moded->_internal = RMM_new_rbuf (PDC_rmm_zero (pdc));
+        moded->_internal = RMM_new_rbuf (P_rmm_zero (pads));
         if (0==(moded->_internal)) 
           {
-            PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_ALLOC_ERR,"");
+            PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,"");
           }
       }
     /* 
  Reading input until we reach a termination condition 
  */
-    if ((!(moded->panic))&&(!PDC_IO_at_EOF (pdc))) 
+    if ((!(moded->panic))&&(!P_io_at_eof (pads))) 
       {
         if ((modrep->length)>=size) 
           {
@@ -2200,23 +2200,23 @@ PDC_error_t eventSeq_read_internal (PDC_t *pdc,eventSeq_em *modem,int size,event
                 reachedLimit = ((modrep->length)>=size);
                 if (0!=RBuf_reserve (modrep->_internal,(void **) (&(modrep->eventSeq)),sizeof(event),modrep->length,size)) 
                   {
-                    PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_ALLOC_ERR,0);
+                    PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,0);
                   }
                 if (0!=RBuf_reserve (moded->_internal,(void **) (&(moded->eventSeq)),sizeof(event_ed),modrep->length,size)) 
                   {
-                    PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_ALLOC_ERR,0);
+                    PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,0);
                   }
-                if (PDC_ERR==event_read_internal (pdc,&(modem->element),&(moded->eventSeq)[(modrep->length)-1],&(modrep->eventSeq)[(modrep->length)-1])) 
+                if (P_ERR==event_read_internal (pads,&(modem->element),&(moded->eventSeq)[(modrep->length)-1],&(modrep->eventSeq)[(modrep->length)-1])) 
                   {
-                    if (PDC_spec_level (pdc)) 
-                      return PDC_ERR;
-                    if ((modem->array)<=PDC_Check) 
+                    if (P_spec_level (pads)) 
+                      return P_ERR;
+                    if ((modem->array)<=P_Check) 
                       {
                         if (!(moded->nerr)) 
                           {
                             (moded->nerr)++;
-                            moded->errCode = PDC_ARRAY_ELEM_ERR;
-                            PDC_IO_getLoc (pdc,&(moded->loc),0);
+                            moded->errCode = P_ARRAY_ELEM_ERR;
+                            P_io_getLoc (pads,&(moded->loc),0);
                             /* *** Index of first element with an error. **** */
                             moded->firstError = ((modrep->length)-1);
                           }
@@ -2232,7 +2232,7 @@ PDC_error_t eventSeq_read_internal (PDC_t *pdc,eventSeq_em *modem,int size,event
                     }
                   }
                 /* ****** Have we finished reading array? ******* */
-                if (PDC_IO_at_EOF (pdc)||reachedLimit) 
+                if (P_io_at_eof (pads)||reachedLimit) 
                   {
                     break;
                   }
@@ -2240,32 +2240,32 @@ PDC_error_t eventSeq_read_internal (PDC_t *pdc,eventSeq_em *modem,int size,event
           }
       }
     moded->length = (modrep->length);
-    return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
+    return ((moded->nerr)==0) ? P_OK : P_ERR;
   }
 }
-PDC_error_t eventSeq_read (PDC_t *pdc,eventSeq_em *em,int size,eventSeq_ed *ed,eventSeq *rep)
+Perror_t eventSeq_read (P_t *pads,eventSeq_em *em,int size,eventSeq_ed *ed,eventSeq *rep)
 {
   eventSeq tmprep={0,0,0};
   eventSeq *modrep=rep;
-  eventSeq_em tmpem={{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},(enum PDC_base_em_e) 0};
+  eventSeq_em tmpem={{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},(enum Pbase_em_e) 0};
   eventSeq_em *modem=em;
-  eventSeq_ed tmped={0,(enum PDC_errCode_t_e) 0,0,{{0,0,0},{0,0,0}},0,0,0,0,0};
+  eventSeq_ed tmped={0,(enum PerrCode_t_e) 0,0,{{0,0,0},{0,0,0}},0,0,0,0,0};
   eventSeq_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"eventSeq_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"eventSeq_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"eventSeq_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"eventSeq_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"eventSeq_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"eventSeq_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"eventSeq_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"eventSeq_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -2279,16 +2279,16 @@ PDC_error_t eventSeq_read (PDC_t *pdc,eventSeq_em *em,int size,eventSeq_ed *ed,e
     {
       moded = (&tmped);
     }
-  return eventSeq_read_internal (pdc,modem,size,moded,modrep);
+  return eventSeq_read_internal (pads,modem,size,moded,modrep);
 }
-PDC_error_t eventSeq_acc_init (PDC_t *pdc,eventSeq_acc *acc)
+Perror_t eventSeq_acc_init (P_t *pads,eventSeq_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_init (pdc,&(acc->length))) 
+  if (P_ERR==Pint32_acc_init (pads,&(acc->length))) 
     {
       nerr++;
     }
-  if (PDC_ERR==event_acc_init (pdc,&(acc->array))) 
+  if (P_ERR==event_acc_init (pads,&(acc->array))) 
     {
       nerr++;
     }
@@ -2296,22 +2296,22 @@ PDC_error_t eventSeq_acc_init (PDC_t *pdc,eventSeq_acc *acc)
     int i;
     for (i = 0; i<10; i++)
       {
-        if (PDC_ERR==event_acc_init (pdc,&(acc->arrayDetail)[i])) 
+        if (P_ERR==event_acc_init (pads,&(acc->arrayDetail)[i])) 
           {
             nerr++;
           }
       }
   }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t eventSeq_acc_reset (PDC_t *pdc,eventSeq_acc *acc)
+Perror_t eventSeq_acc_reset (P_t *pads,eventSeq_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_reset (pdc,&(acc->length))) 
+  if (P_ERR==Pint32_acc_reset (pads,&(acc->length))) 
     {
       nerr++;
     }
-  if (PDC_ERR==event_acc_reset (pdc,&(acc->array))) 
+  if (P_ERR==event_acc_reset (pads,&(acc->array))) 
     {
       nerr++;
     }
@@ -2319,22 +2319,22 @@ PDC_error_t eventSeq_acc_reset (PDC_t *pdc,eventSeq_acc *acc)
     int i;
     for (i = 0; i<10; i++)
       {
-        if (PDC_ERR==event_acc_reset (pdc,&(acc->arrayDetail)[i])) 
+        if (P_ERR==event_acc_reset (pads,&(acc->arrayDetail)[i])) 
           {
             nerr++;
           }
       }
   }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t eventSeq_acc_cleanup (PDC_t *pdc,eventSeq_acc *acc)
+Perror_t eventSeq_acc_cleanup (P_t *pads,eventSeq_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==PDC_int32_acc_cleanup (pdc,&(acc->length))) 
+  if (P_ERR==Pint32_acc_cleanup (pads,&(acc->length))) 
     {
       nerr++;
     }
-  if (PDC_ERR==event_acc_cleanup (pdc,&(acc->array))) 
+  if (P_ERR==event_acc_cleanup (pads,&(acc->array))) 
     {
       nerr++;
     }
@@ -2342,20 +2342,20 @@ PDC_error_t eventSeq_acc_cleanup (PDC_t *pdc,eventSeq_acc *acc)
     int i;
     for (i = 0; i<10; i++)
       {
-        if (PDC_ERR==event_acc_cleanup (pdc,&(acc->arrayDetail)[i])) 
+        if (P_ERR==event_acc_cleanup (pads,&(acc->arrayDetail)[i])) 
           {
             nerr++;
           }
       }
   }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t eventSeq_acc_add (PDC_t *pdc,eventSeq_acc *acc,eventSeq_ed *ed,eventSeq *rep)
+Perror_t eventSeq_acc_add (P_t *pads,eventSeq_acc *acc,eventSeq_ed *ed,eventSeq *rep)
 {
   int nerr=0;
-  PDC_base_ed ted;
-  ted.errCode = PDC_NO_ERR;
-  if (PDC_ERR==PDC_int32_acc_add (pdc,&(acc->length),&ted,&(rep->length))) 
+  Pbase_ed ted;
+  ted.errCode = P_NO_ERR;
+  if (P_ERR==Pint32_acc_add (pads,&(acc->length),&ted,&(rep->length))) 
     {
       nerr++;
     }
@@ -2365,25 +2365,25 @@ PDC_error_t eventSeq_acc_add (PDC_t *pdc,eventSeq_acc *acc,eventSeq_ed *ed,event
       {
         if (i<10) 
           {
-            if (PDC_ERR==event_acc_add (pdc,&(acc->arrayDetail)[i],&(ed->eventSeq)[i],&(rep->eventSeq)[i])) 
+            if (P_ERR==event_acc_add (pads,&(acc->arrayDetail)[i],&(ed->eventSeq)[i],&(rep->eventSeq)[i])) 
               {
                 nerr++;
               }
           }
-        if (PDC_ERR==event_acc_add (pdc,&(acc->array),&(ed->eventSeq)[i],&(rep->eventSeq)[i])) 
+        if (P_ERR==event_acc_add (pads,&(acc->array),&(ed->eventSeq)[i],&(rep->eventSeq)[i])) 
           {
             nerr++;
           }
       }
   }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t eventSeq_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,eventSeq_acc *acc)
+Perror_t eventSeq_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,eventSeq_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -2394,132 +2394,132 @@ PDC_error_t eventSeq_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *
       what = "array eventSeq of event";
     }
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
-  if (PDC_ERR==PDC_int32_acc_report_internal (pdc,outstr,"Array lengths","lengths",-1,&(acc->length))) 
+  if (P_ERR==Pint32_acc_report_internal (pads,outstr,"Array lengths","lengths",-1,&(acc->length))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.allArrayElts",prefix);
-  if (PDC_ERR==event_acc_report_internal (pdc,outstr,sfstruse (tmpstr),"all array elements",nst,&(acc->array))) 
+  if (P_ERR==event_acc_report_internal (pads,outstr,sfstruse (tmpstr),"all array elements",nst,&(acc->array))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   {
     int i;
     for (i = 0; i<10; i++)
       {
         sfprintf (tmpstr,"%s.arrayDetail[%d]",prefix,i);
-        if (PDC_ERR==event_acc_report_internal (pdc,outstr,sfstruse (tmpstr),"array element",nst,&(acc->arrayDetail)[i])) 
+        if (P_ERR==event_acc_report_internal (pads,outstr,sfstruse (tmpstr),"array element",nst,&(acc->arrayDetail)[i])) 
           {
             sfstrclose (tmpstr);
-            return PDC_ERR;
+            return P_ERR;
           }
       }
   }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t eventSeq_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,eventSeq_acc *acc)
+Perror_t eventSeq_acc_report (P_t *pads,char const *prefix,char const *what,int nst,eventSeq_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = eventSeq_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = eventSeq_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
 }
-PDC_error_t eventSeq_init (PDC_t *pdc,eventSeq *rep)
+Perror_t eventSeq_init (P_t *pads,eventSeq *rep)
 {
-  if ((!pdc)||(!rep)) 
-    return PDC_ERR;
+  if ((!pads)||(!rep)) 
+    return P_ERR;
   rep->length = 0;
   rep->eventSeq = 0;
   rep->_internal = 0;
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t eventSeq_ed_init (PDC_t *pdc,eventSeq_ed *ed)
+Perror_t eventSeq_ed_init (P_t *pads,eventSeq_ed *ed)
 {
-  if ((!pdc)||(!ed)) 
-    return PDC_ERR;
+  if ((!pads)||(!ed)) 
+    return P_ERR;
   ed->length = 0;
   ed->eventSeq = 0;
   ed->_internal = 0;
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t eventSeq_cleanup (PDC_t *pdc,eventSeq *rep)
+Perror_t eventSeq_cleanup (P_t *pads,eventSeq *rep)
 {
-  if ((!pdc)||(!rep)) 
-    return PDC_ERR;
+  if ((!pads)||(!rep)) 
+    return P_ERR;
   rep->length = 0;
   rep->eventSeq = 0;
   if (rep->_internal) 
     {
       if (0!=RMM_free_rbuf (rep->_internal)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_ALLOC_ERR,"Couldn\'t free growable buffer");
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,"Couldn\'t free growable buffer");
         }
     }
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t eventSeq_ed_cleanup (PDC_t *pdc,eventSeq_ed *ed)
+Perror_t eventSeq_ed_cleanup (P_t *pads,eventSeq_ed *ed)
 {
-  if ((!pdc)||(!ed)) 
-    return PDC_ERR;
+  if ((!pads)||(!ed)) 
+    return P_ERR;
   ed->length = 0;
   ed->eventSeq = 0;
   if (ed->_internal) 
     {
       if (0!=RMM_free_rbuf (ed->_internal)) 
         {
-          PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_ALLOC_ERR,"Couldn\'t free growable buffer");
+          PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,"Couldn\'t free growable buffer");
         }
     }
-  return PDC_OK;
+  return P_OK;
 }
 int getLen (int numBars)
 {
   return (numBars-4)/2;
 }
-PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *modem,out_sum_data_line_ed *moded,out_sum_data_line *modrep)
+Perror_t out_sum_data_line_read_internal (P_t *pads,out_sum_data_line_em *modem,out_sum_data_line_ed *moded,out_sum_data_line *modrep)
 {
   moded->nerr = 0;
   moded->panic = 0;
   {
-    PDC_int32 bars;
+    Pint32 bars;
     /* ********* Reading field: order_num. ********** */
   /* XXX_OPT : NOT NEEDED */
 #if 0
     if (moded->panic) 
       {
         (moded->order_num).panic = 1;
-        (moded->order_num).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->order_num).loc),0);
+        (moded->order_num).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->order_num).loc),0);
         (moded->nerr)+=1;
       }
     else
 #endif
       {
-        if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->order_num),&(moded->order_num),&(modrep->order_num))) 
+        if (P_ERR==auint32_vbar_read_internal (pads,&(modem->order_num),&(moded->order_num),&(modrep->order_num))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->order_num).panic) 
               {
@@ -2527,7 +2527,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->order_num).loc);
               }
             (moded->nerr)+=1;
@@ -2540,17 +2540,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->order_item).panic = 1;
-        (moded->order_item).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->order_item).loc),0);
+        (moded->order_item).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->order_item).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->order_item),&(moded->order_item),&(modrep->order_item))) 
+        if (P_ERR==auint32_vbar_read_internal (pads,&(modem->order_item),&(moded->order_item),&(modrep->order_item))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->order_item).panic) 
               {
@@ -2558,7 +2558,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->order_item).loc);
               }
             (moded->nerr)+=1;
@@ -2571,17 +2571,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->servicen).panic = 1;
-        (moded->servicen).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->servicen).loc),0);
+        (moded->servicen).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->servicen).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==dib_pn_vbar_read_internal (pdc,&(modem->servicen),&(moded->servicen),&(modrep->servicen))) 
+        if (P_ERR==dib_pn_vbar_read_internal (pads,&(modem->servicen),&(moded->servicen),&(modrep->servicen))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->servicen).panic) 
               {
@@ -2589,7 +2589,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->servicen).loc);
               }
             (moded->nerr)+=1;
@@ -2602,17 +2602,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->billing_tn).panic = 1;
-        (moded->billing_tn).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->billing_tn).loc),0);
+        (moded->billing_tn).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->billing_tn).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==dib_pn_vbar_read_internal (pdc,&(modem->billing_tn),&(moded->billing_tn),&(modrep->billing_tn))) 
+        if (P_ERR==dib_pn_vbar_read_internal (pads,&(modem->billing_tn),&(moded->billing_tn),&(modrep->billing_tn))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->billing_tn).panic) 
               {
@@ -2620,7 +2620,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->billing_tn).loc);
               }
             (moded->nerr)+=1;
@@ -2633,17 +2633,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->zip_code).panic = 1;
-        (moded->zip_code).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->zip_code).loc),0);
+        (moded->zip_code).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->zip_code).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->zip_code),&(moded->zip_code),&(modrep->zip_code))) 
+        if (P_ERR==auint32_vbar_read_internal (pads,&(modem->zip_code),&(moded->zip_code),&(modrep->zip_code))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->zip_code).panic) 
               {
@@ -2651,7 +2651,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->zip_code).loc);
               }
             (moded->nerr)+=1;
@@ -2664,17 +2664,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->nlp_service_tn).panic = 1;
-        (moded->nlp_service_tn).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->nlp_service_tn).loc),0);
+        (moded->nlp_service_tn).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->nlp_service_tn).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==dib_pn_vbar_read_internal (pdc,&(modem->nlp_service_tn),&(moded->nlp_service_tn),&(modrep->nlp_service_tn))) 
+        if (P_ERR==dib_pn_vbar_read_internal (pads,&(modem->nlp_service_tn),&(moded->nlp_service_tn),&(modrep->nlp_service_tn))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->nlp_service_tn).panic) 
               {
@@ -2682,7 +2682,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->nlp_service_tn).loc);
               }
             (moded->nerr)+=1;
@@ -2695,17 +2695,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->nlp_billing_tn).panic = 1;
-        (moded->nlp_billing_tn).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->nlp_billing_tn).loc),0);
+        (moded->nlp_billing_tn).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->nlp_billing_tn).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==dib_pn_vbar_read_internal (pdc,&(modem->nlp_billing_tn),&(moded->nlp_billing_tn),&(modrep->nlp_billing_tn))) 
+        if (P_ERR==dib_pn_vbar_read_internal (pads,&(modem->nlp_billing_tn),&(moded->nlp_billing_tn),&(modrep->nlp_billing_tn))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->nlp_billing_tn).panic) 
               {
@@ -2713,7 +2713,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->nlp_billing_tn).loc);
               }
             (moded->nerr)+=1;
@@ -2726,17 +2726,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->bars).panic = 1;
-        (moded->bars).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->bars).loc),0);
+        (moded->bars).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->bars).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==PDC_countX_internal(pdc,&(modem->bars),124,1,&(moded->bars),&bars)) 
+        if (P_ERR==PcountX_internal(pads,&(modem->bars),124,1,&(moded->bars),&bars)) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->bars).panic) 
               {
@@ -2744,7 +2744,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->bars).loc);
               }
             (moded->nerr)+=1;
@@ -2757,17 +2757,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->events).panic = 1;
-        (moded->events).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->events).loc),0);
+        (moded->events).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->events).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==eventSeq_read_internal (pdc,&(modem->events),getLen (bars),&(moded->events),&(modrep->events))) 
+        if (P_ERR==eventSeq_read_internal (pads,&(modem->events),getLen (bars),&(moded->events),&(modrep->events))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->events).panic) 
               {
@@ -2775,7 +2775,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->events).loc);
               }
             (moded->nerr)+=1;
@@ -2788,17 +2788,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->siid).panic = 1;
-        (moded->siid).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->siid).loc),0);
+        (moded->siid).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->siid).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==opt_auint32_vbar_read_internal (pdc,&(modem->siid),&(moded->siid),&(modrep->siid))) 
+        if (P_ERR==opt_auint32_vbar_read_internal (pads,&(modem->siid),&(moded->siid),&(modrep->siid))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->siid).panic) 
               {
@@ -2806,7 +2806,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->siid).loc);
               }
             (moded->nerr)+=1;
@@ -2819,17 +2819,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->create_id).panic = 1;
-        (moded->create_id).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->create_id).loc),0);
+        (moded->create_id).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->create_id).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==opt_auint32_vbar_read_internal (pdc,&(modem->create_id),&(moded->create_id),&(modrep->create_id))) 
+        if (P_ERR==opt_auint32_vbar_read_internal (pads,&(modem->create_id),&(moded->create_id),&(modrep->create_id))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->create_id).panic) 
               {
@@ -2837,7 +2837,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->create_id).loc);
               }
             (moded->nerr)+=1;
@@ -2850,17 +2850,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->rampII).panic = 1;
-        (moded->rampII).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->rampII).loc),0);
+        (moded->rampII).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->rampII).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==opt_auint64_vbar_read_internal (pdc,&(modem->rampII),&(moded->rampII),&(modrep->rampII))) 
+        if (P_ERR==opt_auint64_vbar_read_internal (pads,&(modem->rampII),&(moded->rampII),&(modrep->rampII))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->rampII).panic) 
               {
@@ -2868,7 +2868,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->rampII).loc);
               }
             (moded->nerr)+=1;
@@ -2881,17 +2881,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->order_type).panic = 1;
-        (moded->order_type).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->order_type).loc),0);
+        (moded->order_type).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->order_type).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->order_type),&(moded->order_type),&(modrep->order_type))) 
+        if (P_ERR==auint32_vbar_read_internal (pads,&(modem->order_type),&(moded->order_type),&(modrep->order_type))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->order_type).panic) 
               {
@@ -2899,7 +2899,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->order_type).loc);
               }
             (moded->nerr)+=1;
@@ -2912,17 +2912,17 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
     if (moded->panic) 
       {
         (moded->parent_order).panic = 1;
-        (moded->parent_order).errCode = PDC_PANIC_SKIPPED;
-        PDC_IO_getLoc (pdc,&((moded->parent_order).loc),0);
+        (moded->parent_order).errCode = P_PANIC_SKIPPED;
+        P_io_getLoc (pads,&((moded->parent_order).loc),0);
         (moded->nerr)+=1;
       }
     else
       {
-        if (PDC_ERR==PDC_auint32_read_internal (pdc,&(modem->parent_order),&(moded->parent_order),&(modrep->parent_order))) 
+        if (P_ERR==Pa_uint32_read_internal (pads,&(modem->parent_order),&(moded->parent_order),&(modrep->parent_order))) 
           {
-            if (PDC_spec_level (pdc)) 
+            if (P_spec_level (pads)) 
               {
-                return PDC_ERR;
+                return P_ERR;
               }
             if ((moded->parent_order).panic) 
               {
@@ -2930,7 +2930,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
               }
             if (0==(moded->nerr)) 
               {
-                moded->errCode = PDC_STRUCT_FIELD_ERR;
+                moded->errCode = P_STRUCT_FIELD_ERR;
                 moded->loc = ((moded->parent_order).loc);
               }
             (moded->nerr)+=1;
@@ -2941,73 +2941,73 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       }
     /* ******** Reading delimiter field: EOR ******** */
     {
-      PDC_base_ed ted;
+      Pbase_ed ted;
       size_t n;
-      PDC_IO_getLocB (pdc,&(ted.loc),0);
-      if (PDC_OK==PDC_IO_next_rec (pdc,&n)) 
+      P_io_getLocB (pads,&(ted.loc),0);
+      if (P_OK==P_io_next_rec (pads,&n)) 
         {
           if (n>0) 
             {
-              if (PDC_spec_level (pdc)) 
+              if (P_spec_level (pads)) 
                 {
-                  return PDC_ERR;
+                  return P_ERR;
                 }
-              PDC_IO_getLocE (pdc,&(ted.loc),0);
+              P_io_getLocE (pads,&(ted.loc),0);
               if (!(moded->panic)) 
                 {
-                  PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_EXTRA_BEFORE_EOR,0);
+                  PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_EXTRA_BEFORE_EOR,0);
                   if (0==(moded->nerr)) 
                     {
-                      moded->errCode = PDC_EXTRA_BEFORE_EOR;
+                      moded->errCode = P_EXTRA_BEFORE_EOR;
                       moded->loc = (ted.loc);
                     }
                   (moded->nerr)+=1;
                 }
               else
                 {
-                  PDC_IO_getLoc (pdc,&(ted.loc),0);
-                  PDCI_report_err (pdc,PDC_LEV_ERR,&(ted.loc),PDC_NO_ERR,"Resynching at EOR");
+                  P_io_getLoc (pads,&(ted.loc),0);
+                  PDCI_report_err (pads,P_LEV_ERR,&(ted.loc),P_NO_ERR,"Resynching at EOR");
                 }
             }
           moded->panic = 0;
         }
       else
         {
-          if (PDC_spec_level (pdc)) 
+          if (P_spec_level (pads)) 
             {
-              return PDC_ERR;
+              return P_ERR;
             }
           moded->panic = 0;
-          PDC_IO_getLocE (pdc,&(ted.loc),0);
-          PDCI_report_err (pdc,PDC_LEV_INFO,&(ted.loc),PDC_AT_EOR,"Found EOF when searching for EOR");
+          P_io_getLocE (pads,&(ted.loc),0);
+          PDCI_report_err (pads,P_LEV_INFO,&(ted.loc),P_AT_EOR,"Found EOF when searching for EOR");
         }
     }
   }
-  return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
+  return ((moded->nerr)==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_data_line_read (PDC_t *pdc,out_sum_data_line_em *em,out_sum_data_line_ed *ed,out_sum_data_line *rep)
+Perror_t out_sum_data_line_read (P_t *pads,out_sum_data_line_em *em,out_sum_data_line_ed *ed,out_sum_data_line *rep)
 {
   out_sum_data_line tmprep={{0},{0},{(enum dib_pn_vbar_tag_e) 0,{{0}}},{(enum dib_pn_vbar_tag_e) 0,{{0}}},{0},{(enum dib_pn_vbar_tag_e) 0,{{0}}},{(enum dib_pn_vbar_tag_e) 0,{{0}}},{0,0,0},{(enum opt_auint32_vbar_tag_e) 0,{{0}}},{(enum opt_auint32_vbar_tag_e) 0,{{0}}},{(enum opt_auint64_vbar_tag_e) 0,{{0}}},{0},0};
   out_sum_data_line *modrep=rep;
-  out_sum_data_line_em tmpem={(enum PDC_base_em_e) ((PDC_base_em) 0),{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}},{{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}},{{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}},(enum PDC_base_em_e) 0,{{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},(enum PDC_base_em_e) 0},{{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}},{{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}},{{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0}},{(enum PDC_base_em_e) 0,(enum PDC_base_em_e) 0},(enum PDC_base_em_e) 0};
+  out_sum_data_line_em tmpem={(enum Pbase_em_e) ((Pbase_em) 0),{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}},{{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}},{{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}},(enum Pbase_em_e) 0,{{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},(enum Pbase_em_e) 0},{{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}},{{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}},{{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0}},{(enum Pbase_em_e) 0,(enum Pbase_em_e) 0},(enum Pbase_em_e) 0};
   out_sum_data_line_em *modem=em;
-  out_sum_data_line_ed tmped={0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}},{0,(enum PDC_errCode_t_e) 0,0,{{0,0,0},{0,0,0}},0,0,0,0,0},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PDC_errCode_t_e) 0,{{0,0,0},{0,0,0}}}};
+  out_sum_data_line_ed tmped={0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}},{0,(enum PerrCode_t_e) 0,0,{{0,0,0},{0,0,0}},0,0,0,0,0},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}},0,{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}},{0,(enum PerrCode_t_e) 0,{{0,0,0},{0,0,0}}}};
   out_sum_data_line_ed *moded=ed;
-  if (!pdc) 
+  if (!pads) 
     {
-      PDC_WARN (&PDC_default_disc,"out_sum_data_line_read: null pdc parameter.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"out_sum_data_line_read: null pads parameter.");
+      return P_ERR;
     }
-  if (!(pdc->disc)) 
+  if (!(pads->disc)) 
     {
-      PDC_WARN (&PDC_default_disc,"out_sum_data_line_read: null pdc->disc.");
-      return PDC_ERR;
+      P_WARN (&Pdefault_disc,"out_sum_data_line_read: null pads->disc.");
+      return P_ERR;
     }
-  PDC_TRACE (pdc->disc,"out_sum_data_line_read called.");
-  if (!((pdc->disc)->io_disc)) 
+  P_TRACE (pads->disc,"out_sum_data_line_read called.");
+  if (!((pads->disc)->io_disc)) 
     {
-      PDC_WARN (pdc->disc,"out_sum_data_line_read: IO discipline not installed.");
-      return PDC_ERR;
+      P_WARN (pads->disc,"out_sum_data_line_read: IO discipline not installed.");
+      return P_ERR;
     }
   if (!modrep) 
     {
@@ -3021,242 +3021,242 @@ PDC_error_t out_sum_data_line_read (PDC_t *pdc,out_sum_data_line_em *em,out_sum_
     {
       moded = (&tmped);
     }
-  return out_sum_data_line_read_internal (pdc,modem,moded,modrep);
+  return out_sum_data_line_read_internal (pads,modem,moded,modrep);
 }
-PDC_error_t out_sum_data_line_acc_init (PDC_t *pdc,out_sum_data_line_acc *acc)
+Perror_t out_sum_data_line_acc_init (P_t *pads,out_sum_data_line_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==auint32_vbar_acc_init (pdc,&(acc->order_num))) 
+  if (P_ERR==auint32_vbar_acc_init (pads,&(acc->order_num))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_init (pdc,&(acc->order_item))) 
+  if (P_ERR==auint32_vbar_acc_init (pads,&(acc->order_item))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_init (pdc,&(acc->servicen))) 
+  if (P_ERR==dib_pn_vbar_acc_init (pads,&(acc->servicen))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_init (pdc,&(acc->billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_init (pads,&(acc->billing_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_init (pdc,&(acc->zip_code))) 
+  if (P_ERR==auint32_vbar_acc_init (pads,&(acc->zip_code))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_init (pdc,&(acc->nlp_service_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_init (pads,&(acc->nlp_service_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_init (pdc,&(acc->nlp_billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_init (pads,&(acc->nlp_billing_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==eventSeq_acc_init (pdc,&(acc->events))) 
+  if (P_ERR==eventSeq_acc_init (pads,&(acc->events))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint32_vbar_acc_init (pdc,&(acc->siid))) 
+  if (P_ERR==opt_auint32_vbar_acc_init (pads,&(acc->siid))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint32_vbar_acc_init (pdc,&(acc->create_id))) 
+  if (P_ERR==opt_auint32_vbar_acc_init (pads,&(acc->create_id))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint64_vbar_acc_init (pdc,&(acc->rampII))) 
+  if (P_ERR==opt_auint64_vbar_acc_init (pads,&(acc->rampII))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_init (pdc,&(acc->order_type))) 
+  if (P_ERR==auint32_vbar_acc_init (pads,&(acc->order_type))) 
     {
       nerr++;
     }
-  if (PDC_ERR==PDC_uint32_acc_init (pdc,&(acc->parent_order))) 
+  if (P_ERR==Puint32_acc_init (pads,&(acc->parent_order))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_data_line_acc_reset (PDC_t *pdc,out_sum_data_line_acc *acc)
+Perror_t out_sum_data_line_acc_reset (P_t *pads,out_sum_data_line_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==auint32_vbar_acc_reset (pdc,&(acc->order_num))) 
+  if (P_ERR==auint32_vbar_acc_reset (pads,&(acc->order_num))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_reset (pdc,&(acc->order_item))) 
+  if (P_ERR==auint32_vbar_acc_reset (pads,&(acc->order_item))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_reset (pdc,&(acc->servicen))) 
+  if (P_ERR==dib_pn_vbar_acc_reset (pads,&(acc->servicen))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_reset (pdc,&(acc->billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_reset (pads,&(acc->billing_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_reset (pdc,&(acc->zip_code))) 
+  if (P_ERR==auint32_vbar_acc_reset (pads,&(acc->zip_code))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_reset (pdc,&(acc->nlp_service_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_reset (pads,&(acc->nlp_service_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_reset (pdc,&(acc->nlp_billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_reset (pads,&(acc->nlp_billing_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==eventSeq_acc_reset (pdc,&(acc->events))) 
+  if (P_ERR==eventSeq_acc_reset (pads,&(acc->events))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint32_vbar_acc_reset (pdc,&(acc->siid))) 
+  if (P_ERR==opt_auint32_vbar_acc_reset (pads,&(acc->siid))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint32_vbar_acc_reset (pdc,&(acc->create_id))) 
+  if (P_ERR==opt_auint32_vbar_acc_reset (pads,&(acc->create_id))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint64_vbar_acc_reset (pdc,&(acc->rampII))) 
+  if (P_ERR==opt_auint64_vbar_acc_reset (pads,&(acc->rampII))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_reset (pdc,&(acc->order_type))) 
+  if (P_ERR==auint32_vbar_acc_reset (pads,&(acc->order_type))) 
     {
       nerr++;
     }
-  if (PDC_ERR==PDC_uint32_acc_reset (pdc,&(acc->parent_order))) 
+  if (P_ERR==Puint32_acc_reset (pads,&(acc->parent_order))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_data_line_acc_cleanup (PDC_t *pdc,out_sum_data_line_acc *acc)
+Perror_t out_sum_data_line_acc_cleanup (P_t *pads,out_sum_data_line_acc *acc)
 {
   int nerr=0;
-  if (PDC_ERR==auint32_vbar_acc_cleanup (pdc,&(acc->order_num))) 
+  if (P_ERR==auint32_vbar_acc_cleanup (pads,&(acc->order_num))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_cleanup (pdc,&(acc->order_item))) 
+  if (P_ERR==auint32_vbar_acc_cleanup (pads,&(acc->order_item))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_cleanup (pdc,&(acc->servicen))) 
+  if (P_ERR==dib_pn_vbar_acc_cleanup (pads,&(acc->servicen))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_cleanup (pdc,&(acc->billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_cleanup (pads,&(acc->billing_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_cleanup (pdc,&(acc->zip_code))) 
+  if (P_ERR==auint32_vbar_acc_cleanup (pads,&(acc->zip_code))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_cleanup (pdc,&(acc->nlp_service_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_cleanup (pads,&(acc->nlp_service_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_cleanup (pdc,&(acc->nlp_billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_cleanup (pads,&(acc->nlp_billing_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==eventSeq_acc_cleanup (pdc,&(acc->events))) 
+  if (P_ERR==eventSeq_acc_cleanup (pads,&(acc->events))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint32_vbar_acc_cleanup (pdc,&(acc->siid))) 
+  if (P_ERR==opt_auint32_vbar_acc_cleanup (pads,&(acc->siid))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint32_vbar_acc_cleanup (pdc,&(acc->create_id))) 
+  if (P_ERR==opt_auint32_vbar_acc_cleanup (pads,&(acc->create_id))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint64_vbar_acc_cleanup (pdc,&(acc->rampII))) 
+  if (P_ERR==opt_auint64_vbar_acc_cleanup (pads,&(acc->rampII))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_cleanup (pdc,&(acc->order_type))) 
+  if (P_ERR==auint32_vbar_acc_cleanup (pads,&(acc->order_type))) 
     {
       nerr++;
     }
-  if (PDC_ERR==PDC_uint32_acc_cleanup (pdc,&(acc->parent_order))) 
+  if (P_ERR==Puint32_acc_cleanup (pads,&(acc->parent_order))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_data_line_acc_add (PDC_t *pdc,out_sum_data_line_acc *acc,out_sum_data_line_ed *ed,out_sum_data_line *rep)
+Perror_t out_sum_data_line_acc_add (P_t *pads,out_sum_data_line_acc *acc,out_sum_data_line_ed *ed,out_sum_data_line *rep)
 {
   int nerr=0;
-  if (PDC_ERR==auint32_vbar_acc_add (pdc,&(acc->order_num),&(ed->order_num),&(rep->order_num))) 
+  if (P_ERR==auint32_vbar_acc_add (pads,&(acc->order_num),&(ed->order_num),&(rep->order_num))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_add (pdc,&(acc->order_item),&(ed->order_item),&(rep->order_item))) 
+  if (P_ERR==auint32_vbar_acc_add (pads,&(acc->order_item),&(ed->order_item),&(rep->order_item))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_add (pdc,&(acc->servicen),&(ed->servicen),&(rep->servicen))) 
+  if (P_ERR==dib_pn_vbar_acc_add (pads,&(acc->servicen),&(ed->servicen),&(rep->servicen))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_add (pdc,&(acc->billing_tn),&(ed->billing_tn),&(rep->billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_add (pads,&(acc->billing_tn),&(ed->billing_tn),&(rep->billing_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_add (pdc,&(acc->zip_code),&(ed->zip_code),&(rep->zip_code))) 
+  if (P_ERR==auint32_vbar_acc_add (pads,&(acc->zip_code),&(ed->zip_code),&(rep->zip_code))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_add (pdc,&(acc->nlp_service_tn),&(ed->nlp_service_tn),&(rep->nlp_service_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_add (pads,&(acc->nlp_service_tn),&(ed->nlp_service_tn),&(rep->nlp_service_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==dib_pn_vbar_acc_add (pdc,&(acc->nlp_billing_tn),&(ed->nlp_billing_tn),&(rep->nlp_billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_add (pads,&(acc->nlp_billing_tn),&(ed->nlp_billing_tn),&(rep->nlp_billing_tn))) 
     {
       nerr++;
     }
-  if (PDC_ERR==eventSeq_acc_add (pdc,&(acc->events),&(ed->events),&(rep->events))) 
+  if (P_ERR==eventSeq_acc_add (pads,&(acc->events),&(ed->events),&(rep->events))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint32_vbar_acc_add (pdc,&(acc->siid),&(ed->siid),&(rep->siid))) 
+  if (P_ERR==opt_auint32_vbar_acc_add (pads,&(acc->siid),&(ed->siid),&(rep->siid))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint32_vbar_acc_add (pdc,&(acc->create_id),&(ed->create_id),&(rep->create_id))) 
+  if (P_ERR==opt_auint32_vbar_acc_add (pads,&(acc->create_id),&(ed->create_id),&(rep->create_id))) 
     {
       nerr++;
     }
-  if (PDC_ERR==opt_auint64_vbar_acc_add (pdc,&(acc->rampII),&(ed->rampII),&(rep->rampII))) 
+  if (P_ERR==opt_auint64_vbar_acc_add (pads,&(acc->rampII),&(ed->rampII),&(rep->rampII))) 
     {
       nerr++;
     }
-  if (PDC_ERR==auint32_vbar_acc_add (pdc,&(acc->order_type),&(ed->order_type),&(rep->order_type))) 
+  if (P_ERR==auint32_vbar_acc_add (pads,&(acc->order_type),&(ed->order_type),&(rep->order_type))) 
     {
       nerr++;
     }
-  if (PDC_ERR==PDC_uint32_acc_add (pdc,&(acc->parent_order),&(ed->parent_order),&(rep->parent_order))) 
+  if (P_ERR==Puint32_acc_add (pads,&(acc->parent_order),&(ed->parent_order),&(rep->parent_order))) 
     {
       nerr++;
     }
-  return (nerr==0) ? PDC_OK : PDC_ERR;
+  return (nerr==0) ? P_OK : P_ERR;
 }
-PDC_error_t out_sum_data_line_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,out_sum_data_line_acc *acc)
+Perror_t out_sum_data_line_acc_report_internal (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,out_sum_data_line_acc *acc)
 {
   Sfio_t *tmpstr;
   if (!(tmpstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
   if ((!prefix)||(0==(*prefix))) 
     {
@@ -3269,136 +3269,136 @@ PDC_error_t out_sum_data_line_acc_report_internal (PDC_t *pdc,Sfio_t *outstr,cha
   PDCI_nst_prefix_what (outstr,&nst,prefix,what);
   sfprintf (outstr,"\n[Describing each field of %s]\n",prefix);
   sfprintf (tmpstr,"%s.order_num",prefix);
-  if (PDC_ERR==auint32_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->order_num))) 
+  if (P_ERR==auint32_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->order_num))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.order_item",prefix);
-  if (PDC_ERR==auint32_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->order_item))) 
+  if (P_ERR==auint32_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->order_item))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.servicen",prefix);
-  if (PDC_ERR==dib_pn_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->servicen))) 
+  if (P_ERR==dib_pn_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->servicen))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.billing_tn",prefix);
-  if (PDC_ERR==dib_pn_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->billing_tn))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.zip_code",prefix);
-  if (PDC_ERR==auint32_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->zip_code))) 
+  if (P_ERR==auint32_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->zip_code))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.nlp_service_tn",prefix);
-  if (PDC_ERR==dib_pn_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->nlp_service_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->nlp_service_tn))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.nlp_billing_tn",prefix);
-  if (PDC_ERR==dib_pn_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->nlp_billing_tn))) 
+  if (P_ERR==dib_pn_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->nlp_billing_tn))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.events",prefix);
-  if (PDC_ERR==eventSeq_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->events))) 
+  if (P_ERR==eventSeq_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->events))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.siid",prefix);
-  if (PDC_ERR==opt_auint32_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->siid))) 
+  if (P_ERR==opt_auint32_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->siid))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.create_id",prefix);
-  if (PDC_ERR==opt_auint32_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->create_id))) 
+  if (P_ERR==opt_auint32_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->create_id))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.rampII",prefix);
-  if (PDC_ERR==opt_auint64_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->rampII))) 
+  if (P_ERR==opt_auint64_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->rampII))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.order_type",prefix);
-  if (PDC_ERR==auint32_vbar_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->order_type))) 
+  if (P_ERR==auint32_vbar_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->order_type))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfprintf (tmpstr,"%s.parent_order",prefix);
-  if (PDC_ERR==PDC_uint32_acc_report_internal (pdc,outstr,sfstruse (tmpstr),0,nst,&(acc->parent_order))) 
+  if (P_ERR==Puint32_acc_report_internal (pads,outstr,sfstruse (tmpstr),0,nst,&(acc->parent_order))) 
     {
       sfstrclose (tmpstr);
-      return PDC_ERR;
+      return P_ERR;
     }
   sfstrclose (tmpstr);
-  return PDC_OK;
+  return P_OK;
 }
-PDC_error_t out_sum_data_line_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,out_sum_data_line_acc *acc)
+Perror_t out_sum_data_line_acc_report (P_t *pads,char const *prefix,char const *what,int nst,out_sum_data_line_acc *acc)
 {
-  PDC_error_t result;
+  Perror_t result;
   Sfio_t *outstr;
   if (!(outstr = sfstropen ())) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (((!pdc)||(!acc))||(!(pdc->disc))) 
+  if (((!pads)||(!acc))||(!(pads->disc))) 
     {
-      return PDC_ERR;
+      return P_ERR;
     }
-  if (!((pdc->disc)->errorf)) 
+  if (!((pads->disc)->errorf)) 
     {
-      return PDC_OK;
+      return P_OK;
     }
-  result = out_sum_data_line_acc_report_internal (pdc,outstr,prefix,what,nst,acc);
-  if (PDC_OK==result) 
+  result = out_sum_data_line_acc_report_internal (pads,outstr,prefix,what,nst,acc);
+  if (P_OK==result) 
     {
-      ((pdc->disc)->errorf) (0,0,"%s",sfstruse (outstr));
+      ((pads->disc)->errorf) (0,0,"%s",sfstruse (outstr));
     }
   sfstrclose (outstr);
   return result;
 }
-PDC_error_t out_sum_data_line_init (PDC_t *pdc,out_sum_data_line *rep)
+Perror_t out_sum_data_line_init (P_t *pads,out_sum_data_line *rep)
 {
-  if ((!pdc)||(!rep)) 
-    return PDC_ERR;
-  eventSeq_init (pdc,&(rep->events));
-  return PDC_OK;
+  if ((!pads)||(!rep)) 
+    return P_ERR;
+  eventSeq_init (pads,&(rep->events));
+  return P_OK;
 }
-PDC_error_t out_sum_data_line_ed_init (PDC_t *pdc,out_sum_data_line_ed *ed)
+Perror_t out_sum_data_line_ed_init (P_t *pads,out_sum_data_line_ed *ed)
 {
-  if ((!pdc)||(!ed)) 
-    return PDC_ERR;
-  eventSeq_ed_init (pdc,&(ed->events));
-  return PDC_OK;
+  if ((!pads)||(!ed)) 
+    return P_ERR;
+  eventSeq_ed_init (pads,&(ed->events));
+  return P_OK;
 }
-PDC_error_t out_sum_data_line_cleanup (PDC_t *pdc,out_sum_data_line *rep)
+Perror_t out_sum_data_line_cleanup (P_t *pads,out_sum_data_line *rep)
 {
-  if ((!pdc)||(!rep)) 
-    return PDC_ERR;
-  eventSeq_cleanup (pdc,&(rep->events));
-  return PDC_OK;
+  if ((!pads)||(!rep)) 
+    return P_ERR;
+  eventSeq_cleanup (pads,&(rep->events));
+  return P_OK;
 }
-PDC_error_t out_sum_data_line_ed_cleanup (PDC_t *pdc,out_sum_data_line_ed *ed)
+Perror_t out_sum_data_line_ed_cleanup (P_t *pads,out_sum_data_line_ed *ed)
 {
-  if ((!pdc)||(!ed)) 
-    return PDC_ERR;
-  eventSeq_ed_cleanup (pdc,&(ed->events));
-  return PDC_OK;
+  if ((!pads)||(!ed)) 
+    return P_ERR;
+  eventSeq_ed_cleanup (pads,&(ed->events));
+  return P_OK;
 }
 

@@ -1,24 +1,24 @@
-#include "padsc.h"
+#include "pads.h"
 #include "enum.h"
 
 int main(int argc, char** argv) {
-  PDC_t*          pdc;
+  P_t*          pads;
   orderStates     enumdata;
 
-  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, 0, 0)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.enum")) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.enum")) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
 
   /*
    * Try to read each line of data
    */
-  while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == orderStates_read(pdc, 0, 0, &enumdata)) {
+  while (!P_io_at_eof(pads)) {
+    if (P_OK == orderStates_read(pads, 0, 0, &enumdata)) {
       /* do something with the data */
       error(2, "orderStates_read returned:  %d", enumdata);
     } else {
@@ -26,13 +26,13 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
 

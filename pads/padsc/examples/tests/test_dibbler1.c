@@ -13,8 +13,8 @@ const char * behave_descr[] = {
  };
 
 int main(int argc, char** argv) {
-  PDC_t                    *pdc;
-  PDC_IO_disc_t            *io_disc;
+  P_t                    *pads;
+  Pio_disc_t            *io_disc;
   out_sum_header           header;
   out_sum_data_line        dline;
   out_sum_data_line_pd     dline_pd;
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
   error(0, "\nUsing behavior %s", behave_descr[b]);
 #endif
 
-  io_disc = PDC_nlrec_noseek_make(0);
+  io_disc = P_nlrec_noseek_make(0);
 #ifndef FASTEST
   if (!io_disc) {
     error(ERROR_FATAL, "\nFailed to install IO discipline nlrec_noseek");
@@ -59,23 +59,23 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  if (PDC_ERR == PDC_open(&pdc, 0, io_disc)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, 0, io_disc)) {
+    error(2, "*** P_open failed ***");
     return -1;
   }
 #ifdef FASTEST
-  pdc->disc->errorf = 0;
+  pads->disc->errorf = 0;
 #endif
 
   /* INIT dline -- must do this for all variable data types */
-  out_sum_data_line_init(pdc, &dline);
-  out_sum_data_line_pd_init(pdc, &dline_pd);
+  out_sum_data_line_init(pads, &dline);
+  out_sum_data_line_pd_init(pads, &dline_pd);
   if (b == accum_all) {
-    out_sum_data_line_acc_init(pdc, &acc);
+    out_sum_data_line_acc_init(pads, &acc);
   }
 
-  if (PDC_ERR == PDC_IO_fopen(pdc, fname)) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, fname)) {
+    error(2, "*** P_io_fopen failed ***");
     return -1;
   }
 
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
    * Try to read header
    */
 
-  if (PDC_OK == out_sum_header_read(pdc, 0, 0, &header)) {
+  if (P_OK == out_sum_header_read(pads, 0, 0, &header)) {
 #ifndef FASTEST
     error(0, "reading header returned: OK");
 #endif
@@ -96,8 +96,8 @@ int main(int argc, char** argv) {
    */
   switch (b) {
     case count_all: {
-      while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_data_line_read(pdc, 0, &dline_pd, &dline)) {
+      while (!P_io_at_eof(pads)) {
+	if (P_OK == out_sum_data_line_read(pads, 0, &dline_pd, &dline)) {
 	  good++;
 	} else {
 	  bad++;
@@ -107,11 +107,11 @@ int main(int argc, char** argv) {
     } break;
 
     case accum_all: {
-      while (!PDC_IO_at_EOF(pdc)) {
-	out_sum_data_line_read(pdc, 0, &dline_pd, &dline);
-	out_sum_data_line_acc_add(pdc, &acc, &dline_pd, &dline);
+      while (!P_io_at_eof(pads)) {
+	out_sum_data_line_read(pads, 0, &dline_pd, &dline);
+	out_sum_data_line_acc_add(pads, &acc, &dline_pd, &dline);
       }
-      out_sum_data_line_acc_report(pdc, "dline", 0, 0, &acc);
+      out_sum_data_line_acc_report(pads, "dline", 0, 0, &acc);
     } break;
 
     case out_all: {
@@ -119,12 +119,12 @@ int main(int argc, char** argv) {
     } break;
 
     case count_first21: {
-      while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_data_line_read(pdc, 0, &dline_pd, &dline)) {
+      while (!P_io_at_eof(pads)) {
+	if (P_OK == out_sum_data_line_read(pads, 0, &dline_pd, &dline)) {
 	  /* do something with the data */
 	  /* 	  error(0, "data line read returned OK, number of events = %d", dline.events.length); */
 	  good++;
-	  if (dline.events.length && PDC_string_eq_Cstr(&(dline.events.eventSeq[0].state), "21")) {
+	  if (dline.events.length && Pstring_eq_cstr(&(dline.events.eventSeq[0].state), "21")) {
 	    good_21++;
 	  }
 	} else {
@@ -141,13 +141,13 @@ int main(int argc, char** argv) {
   }
 
   
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
+  if (P_ERR == P_io_close(pads)) {
+    error(2, "*** P_io_close failed ***");
     return -1;
   }
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     return -1;
   }
 

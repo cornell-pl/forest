@@ -1,4 +1,4 @@
-#include "padsc.h"
+#include "pads.h"
 #include "format7.h"
 #include "pglx.h"
 
@@ -21,8 +21,8 @@ int try_galax() {
 }
 
 int main(int argc, char** argv) {
-  PDC_t*          pdc;
-  PDC_disc_t      mydisc = PDC_default_disc;
+  P_t*          pads;
+  Pdisc_t      mydisc = Pdefault_disc;
   myfile          rep;
   myfile_pd       pd ;
   myfile_m        m;
@@ -51,26 +51,26 @@ int main(int argc, char** argv) {
   /* Try out some Galax functions first */
   /* try_galax(); */
 
-  mydisc.flags |= PDC_WSPACE_OK;
+  mydisc.flags |= P_WSPACE_OK;
 
-  if (PDC_ERR == PDC_open(&pdc,&mydisc,0)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads,&mydisc,0)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, argv[1])) {
-    error(2, "*** PDC_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pads, argv[1])) {
+    error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
 
   /* init -- must do this! */
-  PDC_INIT_ALL(pdc, myfile, rep, m, pd, PDC_CheckAndSet);
+  P_INIT_ALL(pads, myfile, rep, m, pd, P_CheckAndSet);
 
   /* make the top-level node */
-  PDCI_MK_TOP_NODE_NORET (doc_node, &myfile_vtable, pdc, "doc", &m, &pd, &rep, "main");
+  PDCI_MK_TOP_NODE_NORET (doc_node, &myfile_vtable, pads, "doc", &m, &pd, &rep, "main");
 
   /* Try to read entire file */
   error(0, "\ncalling myfile_read");
-  if (PDC_OK == myfile_read(pdc, &m, &pd, &rep)) {
+  if (P_OK == myfile_read(pads, &m, &pd, &rep)) {
     exit_on_error(padsDocument(argv[1], (nodeRep)doc_node, &doc)); 
     docitems = itemlist_cons(doc, itemlist_empty());
     err = glx_serialize_to_string(docitems, &str);
@@ -100,8 +100,8 @@ int main(int argc, char** argv) {
     error(0, "myfile_read returned: error");
   }
 
-  PDC_CLEANUP_ALL(pdc, myfile, rep, pd);
-  PDC_IO_close(pdc);
-  PDC_close(pdc);
+  P_CLEANUP_ALL(pads, myfile, rep, pd);
+  P_io_close(pads);
+  P_close(pads);
   return 0;
 }

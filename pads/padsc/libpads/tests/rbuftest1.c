@@ -2,11 +2,11 @@
  *  rbuftest1: Test rbufs
  */
 
-#include "padsc-internal.h" /* for testing - normally do not include internal */
+#include "pads-internal.h" /* for testing - normally do not include internal */
 
 int main(int argc, char** argv) {
   int             err, i;
-  PDC_t*          pdc;
+  P_t*          pads;
   RMM_t*          rmm_z;
   RMM_t*          rmm_nz;
   RMM_t*          mgr;
@@ -15,15 +15,15 @@ int main(int argc, char** argv) {
   void*           buf1;
   void*           buf2;
   void*           buf2b;
-  PDC_int32*      ar1;
-  PDC_int8*       ar2;
+  Pint32*      ar1;
+  Pint8*       ar2;
 
-  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
-    error(2, "*** PDC_open failed ***");
+  if (P_ERR == P_open(&pads, 0, 0)) {
+    error(2, "*** P_open failed ***");
     exit(-1);
   }
-  rmm_z = PDC_rmm_zero(pdc);
-  rmm_nz = PDC_rmm_nozero(pdc);
+  rmm_z = P_rmm_zero(pads);
+  rmm_nz = P_rmm_nozero(pads);
 
   if (!(rbuf1 = RMM_new_rbuf(rmm_z))) {
     error(2, "*** RMM_new_rbuf on rmm_z failed ***");
@@ -33,16 +33,16 @@ int main(int argc, char** argv) {
     error(2, "*** RMM_new_rbuf on rmm_nz failed ***");
     exit(-1);
   }
-  if ((err = RBuf_reserve(rbuf1, &buf1, sizeof(PDC_int32), 5, 10))) {
+  if ((err = RBuf_reserve(rbuf1, &buf1, sizeof(Pint32), 5, 10))) {
     error(2, "*** rbuf1 reserve failed with err= %d ***", err);
     exit(-1);
   }
-  ar1 = (PDC_int32*)buf1;
-  if ((err = RBuf_reserve(rbuf2, &buf2, sizeof(PDC_int8), 5, 0))) {
+  ar1 = (Pint32*)buf1;
+  if ((err = RBuf_reserve(rbuf2, &buf2, sizeof(Pint8), 5, 0))) {
     error(2, "*** rbuf2 reserve failed with err= %d ***", err);
     exit(-1);
   }
-  ar2 = (PDC_int8*)buf2;
+  ar2 = (Pint8*)buf2;
 
 
   error(0, "Walking zerod data array");
@@ -55,20 +55,20 @@ int main(int argc, char** argv) {
   }
   error(0, "Growing zerod array from 5 to 20 elts, one increment at a time");
   for (i = 5; i < 20; i++) {
-    if ((err = RBuf_reserve(rbuf1, &buf1, sizeof(PDC_int32), i+1, 10))) {
+    if ((err = RBuf_reserve(rbuf1, &buf1, sizeof(Pint32), i+1, 10))) {
       error(2, "*** rbuf1 reserve failed with err= %d ***", err);
       exit(-1);
     }
-    ar1 = (PDC_int32*)buf1;
+    ar1 = (Pint32*)buf1;
     error(0, "ar1[%d] = %d", i, ar1[i]);
   }
   error(0, "Growing non-zerod array from 5 to 20 elts, one increment at a time");
   for (i = 5; i < 20; i++) {
-    if ((err = RBuf_reserve(rbuf2, &buf2, sizeof(PDC_int8), i+1, 0))) {
+    if ((err = RBuf_reserve(rbuf2, &buf2, sizeof(Pint8), i+1, 0))) {
       error(2, "*** rbuf2 reserve failed with err= %d ***", err);
       exit(-1);
     }
-    ar2 = (PDC_int8*)buf2;
+    ar2 = (Pint8*)buf2;
     error(0, "ar2[%d] = %d", i, ar2[i]);
   }
   error(0, "Calling RMM_free on rbuf1 (should cause 2 mem frees)");
@@ -97,8 +97,8 @@ int main(int argc, char** argv) {
   err = RMM_free_buf(mgr, buf2b);
   error(0, "=> RMM_free_buf on rbuf2's buffer result: err= %d ***", err);
 
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
+  if (P_ERR == P_close(pads)) {
+    error(2, "*** P_close failed ***");
     exit(-1);
   }
   return 0;

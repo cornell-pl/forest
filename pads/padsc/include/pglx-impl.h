@@ -15,7 +15,7 @@
       failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
     } \
     resultIN->vt     = (vtIN); \
-    resultIN->pdc    = (parentIN)->pdc; \
+    resultIN->pads    = (parentIN)->pads; \
     resultIN->parent = (parentIN); \
     resultIN->m      = (void *)(mIN); \
     resultIN->pd     = (void *)(pdIN); \
@@ -24,13 +24,13 @@
     resultIN->kind   = "element"; \
   } while (0)
 
-#define PDCI_MK_TOP_NODE(resultIN, vtIN, pdcIN, nameIN, mIN, pdIN, repIN, whatfn) \
+#define PDCI_MK_TOP_NODE(resultIN, vtIN, padsIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
     if (!(resultIN = PDCI_NEW_NODE())) { \
       failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
     } \
     resultIN->vt     = (vtIN); \
-    resultIN->pdc    = pdcIN; \
+    resultIN->pads    = padsIN; \
     resultIN->parent = NULL; \
     resultIN->m      = (void *)(mIN); \
     resultIN->pd     = (void *)(pdIN); \
@@ -39,12 +39,12 @@
     resultIN->kind   = "document"; \
   } while (0)
 
-#define PDCI_MK_TOP_NODE_NORET(resultIN, vtIN, pdcIN, nameIN, mIN, pdIN, repIN, whatfn) \
+#define PDCI_MK_TOP_NODE_NORET(resultIN, vtIN, padsIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
     resultIN = PDCI_NEW_NODE(); \
     if (resultIN) { \
       resultIN->vt     = (vtIN); \
-      resultIN->pdc    = pdcIN; \
+      resultIN->pads    = padsIN; \
       resultIN->parent = NULL; \
       resultIN->m      = (void *)(mIN); \
       resultIN->pd     = (void *)(pdIN); \
@@ -91,8 +91,8 @@ do { \
 
 #else
 
-#define PDCI_NODE_CHECK(n, whatfn)      PDC_NULL_STMT
-#define PDCI_NODE_VT_CHECK(n, whatfn)   PDC_NULL_STMT
+#define PDCI_NODE_CHECK(n, whatfn)      P_NULL_STMT
+#define PDCI_NODE_VT_CHECK(n, whatfn)   P_NULL_STMT
 
 #endif
 

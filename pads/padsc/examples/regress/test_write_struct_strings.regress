@@ -1,4 +1,4 @@
-warning: PDC_open: Installing default IO discipline : newline-terminated records
+warning: P_open: Installing default IO discipline : newline-terminated records
 Data file = ../../data/ex_data.struct_strings_write
 calling testtwo_read
 test_read returned: s1 xabcdefghi  s2 abcdefg
@@ -9,7 +9,7 @@ warning: Error [in test_read]: record 2 char 12 : User constraint on field s2 vi
 test_read returned: error
 xabcdefghi|BAD_LEN|
 calling testtwo_read
-warning: Error [in PDC_string_read]: at record 3 from char 12 to char 18: Expected character literal not found 
+warning: Error [in Pstring_read]: at record 3 from char 12 to char 18: Expected character literal not found 
 [record 3]xabcdefghi|>>>abcdefg<<<
 Note [in test_read]: record 3 char 12 : Resynching at EOR
 [record 3]xabcdefghi|>>>abcdefg<<<
@@ -21,7 +21,7 @@ warning: Error [in test_read]: record 4 char 1 : User constraint on field s1 vio
 test_read returned: error
 xxxxxxxxxx|abcdefg|
 calling testtwo_read
-warning: Error [in PDC_string_FW_read]: at (partial: missing newline) record 5 at char 1 : Specified width not available (EOR/EOF encountered) 
+warning: Error [in Pstring_FW_read]: at (partial: missing newline) record 5 at char 1 : Specified width not available (EOR/EOF encountered) 
 [(partial: missing newline) record 5]>>> <<<
 warning: Error [in test_read]: (partial: missing newline) record 5 char 1 : Found EOF when searching for EOR
 [(partial: missing newline) record 5]>>> <<<

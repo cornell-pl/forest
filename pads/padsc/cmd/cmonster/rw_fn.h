@@ -12,12 +12,12 @@
 #define __RW_FN_H__
 
 #define CM_RW_FN_IMPL(fn_nm, params, targ_decl, read_call, assign_stmt, dbg_val_write, write2buf_nm, write_sz, write_call) \
-PDC_error_t fn_nm ( params ) \
+Perror_t fn_nm ( params ) \
 { \
   targ_decl; \
-  PDC_base_pd    pd; \
-  PDC_base_m     m = PDC_CheckAndSet; /* could optimize and just use PDC_Set */ \
-  PDC_error_t    er; \
+  Pbase_pd    pd; \
+  Pbase_m     m = P_CheckAndSet; /* could optimize and just use P_Set */ \
+  Perror_t    er; \
   int            buf_full; \
  \
   size_t avail_in   = end - (begin + qy->off); \
@@ -32,26 +32,26 @@ PDC_error_t fn_nm ( params ) \
 	  "  Error: qy requires %lu output bytes but outbuf has only %lu bytes\n" \
 	  "   remaining.  Skipping this data item.\n", \
 	  (unsigned long)qy->out_sz, (unsigned long)remain_out); \
-    return PDC_ERR; \
+    return P_ERR; \
   } \
   if (qy->in_sz > avail_in) { \
     sfprintf(cm->errf, \
 	  "  Error: qy requires %lu input bytes but input record has only %lu bytes\n\n" \
 	  "  available starting at offset %lu.  Skipping this data item.\n", \
 	  (unsigned long)qy->in_sz, (unsigned long)avail_in, (unsigned long)qy->off); \
-    return PDC_ERR; \
+    return P_ERR; \
   } \
-  PDC_IO_checkpoint(cm->pdc, 0); /* could use 1 to supress error msgs */ \
+  P_io_checkpoint(cm->pads, 0); /* could use 1 to supress error msgs */ \
   if (qy->off) { \
-    PDCI_IO_forward(cm->pdc, qy->off); \
+    PDCI_io_forward(cm->pads, qy->off); \
   } \
   er = read_call; \
-  PDC_IO_restore(cm->pdc); \
-  if (PDC_ERR == er) { \
+  P_io_restore(cm->pads); \
+  if (P_ERR == er) { \
     sfprintf(cm->errf, \
 	  "  Error: read function for type %s at offset %lu failed\n" \
 	  "  Skipping this data item.\n", (unsigned long)qy->off, qy->entry->tname); \
-    return PDC_ERR; \
+    return P_ERR; \
   } \
   assign_stmt; \
   dbg_val_write; \
@@ -63,7 +63,7 @@ PDC_error_t fn_nm ( params ) \
     sfprintf(cm->errf, "  advancing outbuf_cursor by %lu bytes\n", (unsigned long)qy->out_sz); \
     cm->outbuf_cursor += qy->out_sz; \
   } \
-  return PDC_OK; \
+  return P_OK; \
 }
 
 #endif  /*  !__RW_FN_H__  */

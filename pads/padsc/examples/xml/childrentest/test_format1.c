@@ -6,7 +6,7 @@
  * See README for changes made to format1.p
  */
 
-#include "libpadsc.h"
+#include "pads.h"
 #include "format1.h"
 #include "pglx.h"
 #include <stdio.h>
