@@ -1275,7 +1275,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                                        P.addrX(PT.Id (vTableSuf tyField)),
                                        PT.Id self, 
                                        nameField, 
-				       getField1, getField2, getField3,	
+				       getField1, getField2, getField3,
+				       PT.String "element",
                                        PT.String nameStruct])) 
 	
 		  (* const PDCI_vtable_t foo_vtable = {foo_children,PDCI_error_typed_value,0}; *)
@@ -4202,7 +4203,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                                               P.postIncX(indexId),
 					      macroNodeCall(returnName,P.plusX(indexId,P.intX 2),elemName,PT.String elt,
 							     getFieldX(m,element),P.addrX(P.subX(edBufferX,indexId)),
-                                     			     P.addrX(P.subX(edBufferX,indexId)),cnvName)),
+                                     			     P.addrX(P.subX(resBufferX,indexId)),cnvName)),
 				       P.returnS (returnName)]
                           in   
                             P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)

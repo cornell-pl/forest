@@ -9,7 +9,7 @@
 #define __PGLX_IMPL_H__
 
 
-#define PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, mIN, pdIN, repIN, whatfn) \
+#define PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, mIN, pdIN, repIN, kindIN, whatfn) \
   do {  \
     if (!(resultIN = PDCI_NEW_NODE())) { \
       failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
@@ -21,7 +21,7 @@
     resultIN->pd     = (void *)(pdIN); \
     resultIN->rep    = (repIN); \
     resultIN->name   = (nameIN); \
-    resultIN->kind   = "element"; \
+    resultIN->kind   = (kindIN); \
   } while (0)
 
 #define PDCI_MK_TOP_NODE(resultIN, vtIN, padsIN, nameIN, mIN, pdIN, repIN, whatfn) \
@@ -55,10 +55,10 @@
   } while (0)
 
 #define  PDCI_MK_TNODE(resultIN, vtIN, parentIN, nameIN, repIN, whatfn) \
-  PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, 0, 0, repIN, whatfn)
+  PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, 0, 0, repIN,           "element", whatfn)
 
 #define  PDCI_MK_TEXTNODE(resultIN, vtIN, parentIN, whatfn) \
-  PDCI_MK_NODE(resultIN, vtIN, parentIN, "", 0, 0, &((parentIN)->rep), whatfn); resultIN->kind = "text" 
+  PDCI_MK_NODE(resultIN, vtIN, parentIN, "",     0, 0, (parentIN)->rep, "text", whatfn)
 
 /* TODO: BASE TYPE: make macro for each base type */
 

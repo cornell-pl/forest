@@ -71,6 +71,9 @@ int main(int argc, char** argv) {
   /* Try to read entire file */
   error(0, "\ncalling myfile_read");
   if (P_OK == myfile_read(pads, &m, &pd, &rep)) {
+    for (i = 0; i < rep.length; i++) {
+      error(0, "line %d  id %d ts %d", i, rep.elts[i].id, rep.elts[i].ts); 
+    }
     exit_on_error(padsDocument(argv[1], (nodeRep)doc_node, &doc)); 
     docitems = itemlist_cons(doc, itemlist_empty());
     err = glx_serialize_to_string(docitems, &str);

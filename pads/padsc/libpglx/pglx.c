@@ -82,8 +82,7 @@ const char* PGLX_generic_string_value(nodeRep ocaml_n)
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   PDCI_NODE_CHECK(n, "PGLX_generic_string_value");
-  (n = n); /* XXX_REMOVE */
-  return "Not yet implemented";
+  return (n->vt->string_value)(n);
 }
 
 const char* PGLX_generic_name(nodeRep ocaml_n){
@@ -113,11 +112,12 @@ void PGLX_nodelist_free(nodeRepArray list)
 
 /* Helper macros  */
 
+
 #define PDCI_IMPL_BASE_VT(ty) \
 /* base types have two children, pd and val. */ \
 PDCI_node_t ** ty ## _children(PDCI_node_t *self) \
 { \
-  ty           *rep = (ty*)self->rep; \
+  ty        *rep = (ty*)self->rep; \
   Pbase_pd  *pd  = (Pbase_pd*)self->pd; \
   PDCI_node_t **result; \
   if (!(result = PDCI_NEW_NODE_PTR_LIST(2))) { \
@@ -125,20 +125,103 @@ PDCI_node_t ** ty ## _children(PDCI_node_t *self) \
   } \
   /* the following mk calls raise an exception on alloc error */ \
   PDCI_MK_TNODE(result[0], & Pbase_pd_vtable,  self, "pd",  pd,  PDCI_MacroArg2String(ty) "_children"); \
-  PDCI_MK_TNODE(result[1], & ty ## _val_vtable,   self, "val", rep, PDCI_MacroArg2String(ty) "_children"); \
+  if (pd->errCode == P_NO_ERR || pd->errCode == P_USER_CONSTRAINT_VIOLATION) { \
+    PDCI_MK_TNODE(result[1], & ty ## _val_vtable,   self, "val", rep, PDCI_MacroArg2String(ty) "_children"); \
+  } \
   return result; \
 } \
  \
 const PDCI_vtable_t ty ## _vtable = {ty ## _children, \
 				     PDCI_error_typed_value, \
-				     0}
+				     PDCI_not_impl_yet_string_value}
 
-#define PDCI_IMPL_BASE_VAL_VT(ty) \
-/* node->rep is a pointer to a ty */ \
+#define PDCI_IMPL_TYPED_VALUE(ty) \
 item ty ## _typed_value (PDCI_node_t *node) \
 { \
-  /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
-  /* For now, raise exception containing the value as as string. */ \
+  item         res = 0; \
+  ty           *r   = (ty*)node->rep; \
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
+  Pbase_pd   tpd; \
+  if (!pd) { \
+    pd = &tpd; \
+    pd->errCode = P_NO_ERR; \
+  } \
+  sfstrset(node->pads->tmp2, 0); \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
+    failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  return res; \
+}
+
+#define PDCI_IMPL_TYPED_VALUE_INT(ty) \
+item ty ## _typed_value (PDCI_node_t *node) \
+{ \
+  item       res = 0; \
+  int        r   = *((ty*)node->rep); \
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
+  Pbase_pd   tpd; \
+  if (!pd) { \
+    pd = &tpd; \
+    pd->errCode = P_NO_ERR; \
+  } \
+  if (glx_atomicInt(r, &res)) { \
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  return res; \
+}
+
+/* XXX should use long long */
+#define PDCI_IMPL_TYPED_VALUE_INTEGER(ty) \
+item ty ## _typed_value (PDCI_node_t *node) \
+{ \
+  item         res = 0; \
+  int          r   = *((ty*)node->rep); \
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
+  Pbase_pd   tpd; \
+  if (!pd) { \
+    pd = &tpd; \
+    pd->errCode = P_NO_ERR; \
+  } \
+  if (glx_atomicInteger(r, &res)) { \
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  return res; \
+}
+
+#define PDCI_IMPL_BASE_VAL_VT(ty) \
+/* val node has one child, a text node with no name */ \
+PDCI_node_t ** ty ## _val_children(PDCI_node_t *self) \
+{ \
+  PDCI_node_t **result; \
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(1))) { \
+    failwith("PADS/Galax ALLOC_ERROR: in " PDCI_MacroArg2String(ty) "_val_children"); \
+  } \
+  /* the following mk call raises an exception on alloc error */ \
+  PDCI_MK_TEXTNODE(result[0], & ty ## _text_vtable,  self, PDCI_MacroArg2String(ty) "_val_children"); \
+  return result; \
+} \
+ \
+const char * ty ## _string_value (PDCI_node_t *node) \
+{ \
+  ty        *r   = (ty*)node->rep; \
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
+  Pbase_pd   tpd; \
+  if (!pd) { \
+    pd = &tpd; \
+    pd->errCode = P_NO_ERR; \
+  } \
+  sfstrset(node->pads->tmp2, 0); \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
+    failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  return (sfstruse(node->pads->tmp2)); \
+} \
+ \
+item ty ## _text_typed_value (PDCI_node_t *node) \
+{ \
   item         res = 0; \
   ty           *r   = (ty*)node->rep; \
   Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
@@ -157,17 +240,68 @@ item ty ## _typed_value (PDCI_node_t *node) \
   return res; \
 } \
  \
-const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
+const PDCI_vtable_t ty ## _val_vtable = {ty ## _val_children, \
 				         ty ## _typed_value, \
-				         0}
+				         ty ## _string_value}; \
+ \
+const PDCI_vtable_t ty ## _text_vtable = {PDCI_no_children, \
+				          ty ## _text_typed_value, \
+				          ty ## _string_value}
 
 /* For the case where a base type requires an arg, such as stop char for Pstring */
-#define PDCI_IMPL_BASE_VAL_VT_ARG1(ty, ty_arg1) \
-/* node->rep is a pointer to a ty */ \
+
+#define PDCI_IMPL_TYPED_VALUE_ARG1(ty, ty_arg1) \
 item ty ## _typed_value (PDCI_node_t *node) \
 { \
-  /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
-  /* For now, raise exception containing the value as a string. */ \
+  item         res = 0; \
+  ty           *r   = (ty*)node->rep; \
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
+  Pbase_pd   tpd; \
+  if (!pd) { \
+    pd = &tpd; \
+    pd->errCode = P_NO_ERR; \
+  } \
+  sfstrset(node->pads->tmp2, 0); \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
+    failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  return res; \
+}
+
+#define PDCI_IMPL_BASE_VAL_VT_ARG1(ty, ty_arg1) \
+/* val node has one child, a text node with no name */ \
+PDCI_node_t ** ty ## _val_children(PDCI_node_t *self) \
+{ \
+  PDCI_node_t **result; \
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(1))) { \
+    failwith("PADS/Galax ALLOC_ERROR: in " PDCI_MacroArg2String(ty) "_val_children"); \
+  } \
+  /* the following mk call raises an exception on alloc error */ \
+  PDCI_MK_TEXTNODE(result[0], & ty ## _text_vtable,  self, PDCI_MacroArg2String(ty) "_val_children"); \
+  return result; \
+} \
+ \
+const char * ty ## _string_value (PDCI_node_t *node) \
+{ \
+  ty           *r   = (ty*)node->rep; \
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
+  Pbase_pd   tpd; \
+  if (!pd) { \
+    pd = &tpd; \
+    pd->errCode = P_NO_ERR; \
+  } \
+  sfstrset(node->pads->tmp2, 0); \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
+    failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  return (sfstruse(node->pads->tmp2)); \
+} \
+ \
+item ty ## _text_typed_value (PDCI_node_t *node) \
+{ \
   item         res = 0; \
   ty           *r   = (ty*)node->rep; \
   Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
@@ -186,9 +320,13 @@ item ty ## _typed_value (PDCI_node_t *node) \
   return res; \
 } \
  \
-const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
+const PDCI_vtable_t ty ## _val_vtable = {ty ## _val_children, \
 				         ty ## _typed_value, \
-				         0}
+				         ty ## _string_value}; \
+ \
+const PDCI_vtable_t ty ## _text_vtable = {PDCI_no_children, \
+				          ty ## _text_typed_value, \
+				          ty ## _string_value}
 
 /* HELPERS */
 
@@ -351,37 +489,46 @@ item PDCI_cstr_typed_value(PDCI_node_t *node)
   return res;
 }
 
+/* ---------------------------
+ * Some string_value functions
+ * --------------------------- */
+
+const char * PDCI_not_impl_yet_string_value(PDCI_node_t *node)
+{
+  return ""; /* not meaningful to concat the leaves of pads data? */
+}
+
 /* Helper vtables */
 
 const PDCI_vtable_t
 PDCI_structured_pd_vtable = {PDCI_structured_pd_children, 
 			     PDCI_error_typed_value,
-			     0};
+			     PDCI_not_impl_yet_string_value};
 
 const PDCI_vtable_t
 PDCI_sequenced_pd_vtable = {PDCI_sequenced_pd_children, 
 			    PDCI_error_typed_value,
-			    0};
+			    PDCI_not_impl_yet_string_value};
 
 const PDCI_vtable_t
 Pbase_pd_vtable = {Pbase_pd_children,
 		      PDCI_error_typed_value,
-		      0};
+		      PDCI_not_impl_yet_string_value};
 
 const PDCI_vtable_t
 Ploc_t_vtable = {Ploc_t_children,
 		    PDCI_error_typed_value,
-		    0};
+		    PDCI_not_impl_yet_string_value};
 
 const PDCI_vtable_t
 Ppos_t_vtable = {Ppos_t_children,
 		    PDCI_error_typed_value,
-		    0};
+		    PDCI_not_impl_yet_string_value};
 
 const PDCI_vtable_t
 PDCI_cstr_val_vtable = {PDCI_no_children,
 			PDCI_cstr_typed_value,
-			0};
+			PDCI_not_impl_yet_string_value};
 
 /* Impl some base type children and typed_value functions and
    associated vtable/val_vtable pairs */
@@ -393,52 +540,81 @@ PDCI_IMPL_BASE_VT(Pstring);
 PDCI_IMPL_BASE_VAL_VT_ARG1(Pstring, ' ');
 
 PDCI_IMPL_BASE_VT(Pint8);
+PDCI_IMPL_TYPED_VALUE_INT(Pint8);
 PDCI_IMPL_BASE_VAL_VT(Pint8);
 
 PDCI_IMPL_BASE_VT(Pint16);
+PDCI_IMPL_TYPED_VALUE_INT(Pint16);
 PDCI_IMPL_BASE_VAL_VT(Pint16);
 
 PDCI_IMPL_BASE_VT(Pint32);
+PDCI_IMPL_TYPED_VALUE_INTEGER(Pint32);
 PDCI_IMPL_BASE_VAL_VT(Pint32);
 
 PDCI_IMPL_BASE_VT(Pint64);
+PDCI_IMPL_TYPED_VALUE_INTEGER(Pint64);
 PDCI_IMPL_BASE_VAL_VT(Pint64);
 
 PDCI_IMPL_BASE_VT(Puint8);
+PDCI_IMPL_TYPED_VALUE_INT(Puint8);
 PDCI_IMPL_BASE_VAL_VT(Puint8);
 
 PDCI_IMPL_BASE_VT(Puint16);
+PDCI_IMPL_TYPED_VALUE_INT(Puint16);
 PDCI_IMPL_BASE_VAL_VT(Puint16);
 
 PDCI_IMPL_BASE_VT(Puint32);
-/* PDCI_IMPL_BASE_VAL_VT(Puint32); */
+PDCI_IMPL_TYPED_VALUE_INTEGER(Puint32);
+PDCI_IMPL_BASE_VAL_VT(Puint32);
 
 PDCI_IMPL_BASE_VT(Puint64);
+PDCI_IMPL_TYPED_VALUE_INTEGER(Puint64);
 PDCI_IMPL_BASE_VAL_VT(Puint64);
 
-/* XXX EXPANDED PDCI_IMPL_BASE_VAL_VT(Puint32) here in case
- * XXX someone wants to play with doing a real implementation of
- * XXX Puint32_typed_value
- */
-
-/* node->rep is a pointer to a Puint32 */
-item Puint32_typed_value (PDCI_node_t *node)
+item Pchar_typed_value (PDCI_node_t *node)
 {
   item         res = 0;
-  Puint32   *r   = (Puint32*)node->rep;
+  Pchar        c   = *((char*)node->rep);
   Pbase_pd  *pd  = (Pbase_pd*)node->pd;
-  Pbase_pd  tpd;
+  Pbase_pd   tpd;
   if (!pd) {
     pd = &tpd;
     pd->errCode = P_NO_ERR;
   }
-  if (glx_atomicInteger(*r, &res)) {
-    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in Puint32_typed_value");
+  sfstrset(node->pads->tmp2, 0);
+  sfprintf(node->pads->tmp2, "%c", c);
+  if (glx_atomicString(sfstruse(node->pads->tmp2), &res)) {
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in Pchar_typed_value");
   }
   return res;
 }
 
-const PDCI_vtable_t Puint32_val_vtable = {PDCI_no_children,
-					     Puint32_typed_value,
-					     0};
+item Pstring_typed_value (PDCI_node_t *node)
+{
+  item         res = 0;
+  Pstring *ps = (Pstring*)node->rep;
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd;
+  Pbase_pd   tpd;
+  if (!pd) {
+    pd = &tpd;
+    pd->errCode = P_NO_ERR;
+  }
+  sfstrset(node->pads->tmp2, 0);
+  sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str);
+  if (glx_atomicString(sfstruse(node->pads->tmp2), &res)) {
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in Pstring_typed_value");
+  }
+  return res;
+}
 
+/*
+
+ char,string -> atomicString
+
+Integer types:
+ everything < 32 is atomicInt
+ 32,64 are atomicInteger
+
+ fpoint,floats,doubles are atomicFloat
+
+*/

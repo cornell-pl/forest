@@ -44,8 +44,14 @@ void PDCI_MK_TNODE(PDCI_node_t *result,
 		   const PDCI_vtable_t *vt,
 		   PDCI_node_t *parent,
 		   const char *name, 
-		   void* val, /* PDCI_structured_pd* val, */
+		   void* val, /* rep* */
 		   const char *whatfn);
+
+void PDCI_MK_TEXTNODE(PDCI_node_t *result,
+		      const PDCI_vtable_t *vt,
+		      PDCI_node_t *parent,
+		      void* val, /* rep* */
+		      const char *whatfn);
 
 void  PDCI_MK_NODE(PDCI_node_t *result,
 		   const PDCI_vtable_t *vt,
@@ -53,6 +59,7 @@ void  PDCI_MK_NODE(PDCI_node_t *result,
 		   const char *name, 
 		   void* m, void* pd,
 		   void* rep,
+		   const char *kind,
 		   const char *whatfn);
 
 void  PDCI_MK_TOP_NODE(PDCI_node_t *result,
@@ -70,8 +77,11 @@ void  PDCI_MK_TOP_NODE(PDCI_node_t *result,
 extern const PDCI_vtable_t ty ## _vtable
 
 #define PDCI_DECL_VAL_VT(ty) \
-item ty ## typed_value(PDCI_node_t *node); \
-extern const PDCI_vtable_t ty ## _val_vtable
+PDCI_node_t ** ty ## _val_children(PDCI_node_t *node); \
+item ty ## _typed_value(PDCI_node_t *node); \
+const char * ty ## _string_value(PDCI_node_t *node); \
+extern const PDCI_vtable_t ty ## _val_vtable; \
+extern const PDCI_vtable_t ty ## _text_vtable
 
 /* ================================================================================
  * TYPES */
@@ -84,7 +94,7 @@ typedef const char *        (* PDCI_string_value_fn)  (PDCI_node_t *node);
 /* Type PDCI_node_t: */
 struct PDCI_node_s {
   const PDCI_vtable_t   *vt;
-  P_t                 *pads;
+  P_t                   *pads;
   PDCI_node_t           *parent;
   void                  *m;
   void                  *pd;
@@ -140,6 +150,9 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *self);
 
 item PDCI_error_typed_value(PDCI_node_t *node); /* Error function used for many cases */
 item PDCI_cstr_typed_value (PDCI_node_t *node); /* node->rep is a C-style string (const char *) */
+
+/* String Value functions */
+const char * PDCI_not_impl_yet_string_value(PDCI_node_t *node);
 
 /* ================================================================================
  * VTABLES */
