@@ -9,6 +9,21 @@
 #ifndef __LIBPADSC_CKIT_H__
 #define __LIBPADSC_CKIT_H__
 
+/* ================================================================================ */
+/* SIMPLE CONSTANTS */
+
+/* undef FOO, then declare FOO as an extern */
+
+#undef PDC_NULL_CTL_FLAG
+extern unsigned long PDC_NULL_CTL_FLAG;
+#undef PDC_WSPACE_OK
+extern unsigned long PDC_WSPACE_OK;
+
+/* ================================================================================ */
+/* OUTPUT MACROS AND RELATED CONSTS */
+
+/* first undefine all the output macros/defines */
+
 #undef PDC_LEV_INFO
 #undef PDC_LEV_WARN
 #undef PDC_LEV_ERR
@@ -58,8 +73,7 @@
 #undef PDC_FATAL4
 #undef PDC_FATAL5
 
-/* ================================================================================ */
-/* OUTPUT MACROS  */
+/* Now redeclare them as constants and functions */
 
 extern int PDC_LEV_INFO;
 extern int PDC_LEV_WARN;
