@@ -217,9 +217,13 @@ do {
   } while (0)
 /* END_MACRO */
 
+/* ----------------------------------------------------------- */
+/* The following cases either have a hard or soft goal for max */
+/* bytes (a soft goal means it is OK to produce more bytes if  */
+/* they happen to be available in the current elt).            */
+
 /* The following has to appear where variables can be declared */
-#define PDCI_IO_NEED_BYTES_SETUP_PREAMBLE(pads)
-  Perror_t          need_bytes_err  = P_OK;
+#define PDCI_IO_NEED_BYTES_SETUP_PREAMBLE
   PDCI_stkElt_t    *tp              = &(pads->stack[pads->top]);
   Pio_elt_t        *elt             = tp->elt;
   Pio_elt_t        *keep_elt;
@@ -228,13 +232,12 @@ do {
   Pbyte            *end;
   Pbyte            *goal;
   size_t            bytes           = tp->remain;
-  int               bor             = elt->bor && (bytes == elt->len);
   int               eor;
   int               eof
 /* END_MACRO */
 
 /* The following has to appear where variables can be declared */
-#define PDCI_IO_NEED_BYTES_SETUP_MATCH(pads)
+#define PDCI_IO_NEED_BYTES_SETUP_MATCH
   PDCI_IO_NEED_BYTES_SETUP_PREAMBLE;
   int               soft_goal       = 0;
   size_t            goal_bytes      = pads->disc->match_max;
@@ -267,6 +270,26 @@ do {
 /* END_MACRO */
 
 /* The following has to appear where variables can be declared */
+#define PDCI_IO_NEED_BYTES_SETUP_SCAN_OR_PANIC(panic)
+  PDCI_IO_NEED_BYTES_SETUP_PREAMBLE;
+  int               soft_goal       = 0;
+  size_t            goal_bytes;
+  if (panic) {
+    goal_bytes = pads->disc->panic_max;
+    if (!goal_bytes && !pads->disc->io_disc->rec_based) {
+      soft_goal  = 1;
+      goal_bytes = P_BUILTIN_PANIC_MAX;
+    }
+  } else {
+    goal_bytes = pads->disc->scan_max;
+    if (!goal_bytes && !pads->disc->io_disc->rec_based) {
+      soft_goal  = 1;
+      goal_bytes = P_BUILTIN_SCAN_MAX;
+    }
+  }
+/* END_MACRO */
+
+/* The following has to appear where variables can be declared */
 #define PDCI_IO_NEED_BYTES_SETUP_NUMERIC
   PDCI_IO_NEED_BYTES_SETUP_PREAMBLE;
   int               soft_goal       = 0;
@@ -277,14 +300,10 @@ do {
   }
 /* END_MACRO */
 
-/* The following has to appear where variables can be declared */
-#define PDCI_IO_NEED_BYTES_SETUP_SPECIFIC(specific)
-  PDCI_IO_NEED_BYTES_SETUP_PREAMBLE;
-  int               soft_goal       = 0;
-  size_t            goal_bytes      = specific;
-/* END_MACRO */
-
-#define PDCI_IO_NEED_SOME_BYTES
+/* The IOerrorSTMT statement must be/include goto or return; it */
+/* is assumed NOT to fall through.  Further, begin/end/etc are  */
+/* NOT set properly if IOerrorSTMT is used.                     */
+#define PDCI_IO_NEED_BYTES(IOerrorSTMT)
 do {
   while (!(elt->eor|elt->eof) && (soft_goal || !goal_bytes || bytes < goal_bytes)) {
     /* try for more bytes */
@@ -298,70 +317,133 @@ do {
     if (soft_goal && (bytes >= goal_bytes)) break;
     keep_elt = pads->stack[0].elt;
     if (P_ERR == pads->disc->io_disc->read_fn(pads, pads->disc->io_disc, keep_elt, &next_elt)) {
-      need_bytes_err = P_ERR;
-      break;
+      IOerrorSTMT;
     }
     elt = elt->next;
     bytes += elt->len;
   }
   begin = tp->elt->end - tp->remain;
-  if (P_OK == need_bytes_err) {
-    /* either we hit eor or eof, or we found >= goal_bytes bytes */
-    if (soft_goal && (bytes > goal_bytes)) {
-      /* adjust goal upwards rather than not returning all the bytes we found */
-      goal_bytes = bytes;
-    }
-    if (!goal_bytes || elt->eor) {
-      /* Goal was eor and we got eor|eof, OR goal was set but we found eor first,
-       * which is also acceptable as a goal. Either way, include all bytes found.
-       * Since this is record-based case, set goal > end if !eor
-       */
-      end = elt->end;
-      if (elt->eor) {
-	goal = elt->end;
-      } else if (goal_bytes) {
-	goal = begin + goal_bytes; /* Note goal > end */
-      } else {
-	goal = elt->end + PDCI_GOAL_HUGE; /* Note that goal > end */
-      }
-      eor = elt->eor;
-      eof = elt->eof;
-    } else {
-      /* had hard or soft goal_bytes (> 0) and eor not found.  eof may have been found */
-      eor = 0;
-      if (bytes > goal_bytes) {
-	/* found more than enough (end will be prior to any eof byte) */
-	end  = begin + goal_bytes;
-	goal = end;
-	eof  = 0;
-      } else if (bytes == goal_bytes) {
-	/* found exactly enough (not sure if end is at eof) */
-	end  = begin + goal_bytes;
-	goal = end;
-	eof  = (end == elt->end) ? elt->eof : 0;
-      } else {
-	/* did not find enough (must have hit eof) */
-	end  = elt->end;
-	goal = begin + goal_bytes; /* Note goal > end */
-	eof  = 1;
-      }
-    }
-  } else {
-    /* Error eof case.  Since goal not found, may as well return P_ERR even if bytes > 0 */
+  /* either we hit eor or eof, or we found >= goal_bytes bytes */
+  if (soft_goal && (bytes > goal_bytes)) {
+    /* adjust goal upwards rather than not returning all the bytes we found */
+    goal_bytes = bytes;
+  }
+  if (!goal_bytes || elt->eor) {
+    /* Goal was eor and we got eor|eof, OR goal was set but we found eor first,
+     * which is also acceptable as a goal. Either way, include all bytes found.
+     * Since this is record-based case, set goal > end if !eor
+     */
     end = elt->end;
-    if (goal_bytes) {
+    if (elt->eor) {
+      goal = elt->end;
+    } else if (goal_bytes) {
       goal = begin + goal_bytes; /* Note goal > end */
     } else {
-      goal = elt->end + PDCI_GOAL_HUGE; /* Note goal > end */
+      goal = elt->end + PDCI_GOAL_HUGE; /* Note that goal > end */
     }
-    eof = 1;
+    eor = elt->eor;
+    eof = elt->eof;
+  } else {
+    /* had hard or soft goal_bytes (> 0) and eor not found.  eof may have been found */
     eor = 0;
+    if (bytes > goal_bytes) {
+      /* found more than enough (end will be prior to any eof byte) */
+      end  = begin + goal_bytes;
+      goal = end;
+      eof  = 0;
+    } else if (bytes == goal_bytes) {
+      /* found exactly enough (not sure if end is at eof) */
+      end  = begin + goal_bytes;
+      goal = end;
+      eof  = (end == elt->end) ? elt->eof : 0;
+    } else {
+      /* did not find enough (must have hit eof) */
+      end  = elt->end;
+      goal = begin + goal_bytes; /* Note goal > end */
+      eof  = 1;
+    }
   }
 } while (0)
 /* END_MACRO */
 
+/* ----------------------------------------------------------- */
+/* For the case where we specify a specific max bytes          */
+/* greater than zero, which is a hard limit, or zero, which    */
+/* uses eor as the hard limit (must be record-based to use 0). */ 
+
 /* The following has to appear where variables can be declared */
-#define PDCI_IO_NEED_K_BYTES_PREAMBLE
+#define PDCI_IO_NEED_BYTES_SETUP_SPECIFIC
+  PDCI_IO_NEED_BYTES_SETUP_PREAMBLE
+/* END_MACRO */
+
+/* The IOerrorSTMT statement must be/include goto or return; it */
+/* is assumed NOT to fall through.  Further, begin/end/etc are  */
+/* NOT set properly if IOerrorSTMT is used.                     */
+#define PDCI_IO_NEED_BYTES_SPECIFIC(specific, IOerrorSTMT)
+do {
+  size_t goal_bytes = specific;
+  if (goal_bytes == 0) {
+    while (!(elt->eor|elt->eof)) {
+      /* try for more bytes */
+      if (elt->next != pads->head) { /* the easy case */
+	elt = elt->next;
+	bytes += elt->len;
+	continue;
+      }
+      /* elt->next is pads->head, getting more bytes requires use of read_fn */
+      keep_elt = pads->stack[0].elt;
+      if (P_ERR == pads->disc->io_disc->read_fn(pads, pads->disc->io_disc, keep_elt, &next_elt)) {
+	IOerrorSTMT;
+      }
+      elt = elt->next;
+      bytes += elt->len;
+    }
+    begin = tp->elt->end - tp->remain;
+    goal = end = elt->end;
+    eor  = elt->eor;
+    eof  = elt->eof;
+  } else {
+    /* goal_bytes > 0 */
+    while (!(elt->eor|elt->eof) && (bytes < goal_bytes)) {
+      /* try for more bytes */
+      if (elt->next != pads->head) { /* the easy case */
+	elt = elt->next;
+	bytes += elt->len;
+	continue;
+      }
+      /* elt->next is pads->head, getting more bytes requires use of read_fn */
+      keep_elt = pads->stack[0].elt;
+      if (P_ERR == pads->disc->io_disc->read_fn(pads, pads->disc->io_disc, keep_elt, &next_elt)) {
+	IOerrorSTMT;
+      }
+      elt = elt->next;
+      bytes += elt->len;
+    }
+    begin = tp->elt->end - tp->remain;
+    goal = end = begin + goal_bytes; /* Note end may be changed below */
+    if (bytes > goal_bytes) {
+      /* found more than enough (end will be prior any eor/eof) */
+      eor  = 0;
+      eof  = 0;
+    } else if (bytes == goal_bytes) {
+      /* may have hit eor or eof */
+      eor  = elt->eor;
+      eof  = elt->eof;
+    } else {
+      /* def hit eor or eof.  produce as many bytes as available */
+      end = elt->end; /* Note goal > end */
+      eor  = elt->eor;
+      eof  = elt->eof;
+    }
+  }
+} while (0)
+/* END_MACRO */
+
+/* ---------------------------------------------------------------- */
+/* For the case where we need exactly K bytes or there is an error. */
+
+/* The following has to appear where variables can be declared */
+#define PDCI_IO_NEED_K_BYTES_SETUP
   PDCI_stkElt_t    *tp              = &(pads->stack[pads->top]);
   Pio_elt_t        *elt             = tp->elt;
   Pio_elt_t        *keep_elt;
@@ -637,14 +719,12 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
 {
   targ_type    tmp;   /* tmp num */
   Pbyte        ct;    /* char tmp */
-  Pbyte       *begin, *p1, *end, *goal;
-  int          bor, eor, eof;
+  Pbyte       *p1;
+  PDCI_IO_NEED_BYTES_SETUP_NUMERIC;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_pref) "_read", m, pd, res_out);
   PDCI_READFN_PD_INIT(pads, pd);
-  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_numeric, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    goto fatal_nb_io_err;
-  }
+  PDCI_IO_NEED_BYTES(goto fatal_nb_io_err);
   if (begin == end) {
     goto at_eor_or_eof_err;
   }
@@ -746,7 +826,7 @@ fn_name(P_t *pads, const Pbase_m *m,
   targ_type    tmp;   /* tmp num */
   Pbyte        ct;    /* char tmp */
   Pbyte       *p1;
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -846,14 +926,12 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
 {
   targ_type    tmp;   /* tmp num */
   Pbyte        ct;    /* char tmp */
-  Pbyte       *begin, *p1, *end, *goal;
-  int          bor, eor, eof;
+  Pbyte       *p1;
+  PDCI_IO_NEED_BYTES_SETUP_NUMERIC;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_pref) "_read", m, pd, res_out);
   PDCI_READFN_PD_INIT(pads, pd);
-  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_numeric, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    goto fatal_nb_io_err;
-  }
+  PDCI_IO_NEED_BYTES(goto fatal_nb_io_err);
   if (begin == end) {
     goto at_eor_or_eof_err;
   }
@@ -982,7 +1060,7 @@ Perror_t
 fn_name(P_t *pads, const Pbase_m *m,
 	Pbase_pd *pd, targ_type *res_out)
 {
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -1015,7 +1093,7 @@ Perror_t
 fn_name(P_t *pads, const Pbase_m *m,
 	Pbase_pd *pd, targ_type *res_out)
 {
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -1053,7 +1131,7 @@ fn_name(P_t *pads, const Pbase_m *m, Pbase_pd *pd, targ_type *res_out, Puint32 n
 {
   targ_type     tmp;   /* tmp num */
   Pbyte        *p1;    /* available for use in bytes2num_args */
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -6511,7 +6589,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.175 2004-11-10 14:52:22 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.176 2004-11-11 06:52:38 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7706,7 +7784,7 @@ P_io_next_rec(P_t *pads, size_t *skipped_bytes_out) {
 Perror_t
 P_io_skip_bytes(P_t *pads, size_t width, size_t *skipped_bytes_out) {
   size_t            skipped;
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_1P_CHECKS("P_io_skip_bytes", skipped_bytes_out);
   if (width == 0) return P_OK;
@@ -8831,6 +8909,7 @@ PDCI_io_need_K_bytes(P_t *pads, size_t K,
 }
 #endif
 
+#if 0
 Perror_t
 PDCI_io_need_some_bytes(P_t *pads, PDCI_goal_t goal, size_t specific,
 			Pbyte **b_out, Pbyte **e_out, Pbyte **g_out,
@@ -8965,6 +9044,7 @@ PDCI_io_need_some_bytes(P_t *pads, PDCI_goal_t goal, size_t specific,
   (*eor_out)       = 0;
   return P_ERR;
 }
+#endif
 
 Perror_t
 PDCI_io_need_rec_bytes(P_t *pads, int skip_rec,
@@ -9385,9 +9465,8 @@ Perror_t
 PDCI_char_lit_scan1(P_t *pads, Pchar f, int eat_f, int panic,
 		    size_t *offset_out, Pcharset char_set, const char *whatfn)
 {
-  Pbyte       *begin, *p1, *end, *goal;
-  int          bor, eor, eof;
-  PDCI_goal_t  the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+  Pbyte       *p1;
+  PDCI_IO_NEED_BYTES_SETUP_SCAN_OR_PANIC(panic);
 
   PDCI_IODISC_1P_CHECKS(whatfn, offset_out);
   P_TRACE5(pads->disc, "PDCI_char_lit_scan1 args: f %s eat_f %d panic %d, char_set = %s, whatfn = %s",
@@ -9403,9 +9482,7 @@ PDCI_char_lit_scan1(P_t *pads, Pchar f, int eat_f, int panic,
       goto invalid_charset;
     }
   (*offset_out) = 0;
-  if (P_ERR == PDCI_io_need_some_bytes(pads, the_goal, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    return P_ERR;
-  }
+  PDCI_IO_NEED_BYTES(return P_ERR);
   p1 = begin;
   while (1) {
     if (p1 == end) return P_ERR;
@@ -9436,9 +9513,8 @@ Perror_t
 PDCI_char_lit_scan2(P_t *pads, Pchar f, Pchar s, int eat_f, int eat_s, int panic,
 		    int *f_found_out, size_t *offset_out, Pcharset char_set, const char *whatfn)
 {
-  Pbyte       *begin, *p1, *end, *goal;
-  int          bor, eor, eof;
-  PDCI_goal_t  the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+  Pbyte       *p1;
+  PDCI_IO_NEED_BYTES_SETUP_SCAN_OR_PANIC(panic);
 
   PDCI_IODISC_2P_CHECKS(whatfn, f_found_out, offset_out);
   P_TRACE7(pads->disc, "PDCI_char_lit_scan2 args: f %s s %s eat_f %d eat_s %d, panic %d, char_set = %s, whatfn = %s",
@@ -9455,9 +9531,7 @@ PDCI_char_lit_scan2(P_t *pads, Pchar f, Pchar s, int eat_f, int eat_s, int panic
       goto invalid_charset;
     }
   (*offset_out) = 0;
-  if (P_ERR == PDCI_io_need_some_bytes(pads, the_goal, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    return P_ERR;
-  }
+  PDCI_IO_NEED_BYTES(return P_ERR);
   p1 = begin;
   while (1) {
     if (p1 == end) return P_ERR;
@@ -9502,11 +9576,10 @@ PDCI_str_lit_scan1(P_t *pads, const Pstring *f,
 		   size_t *offset_out, Pcharset char_set,
 		   const char *whatfn) 
 {
-  Pbyte        *begin, *p1, *end, *goal;
-  int           bor, eor, eof;
-  PDCI_goal_t   the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
   Pstring      *tmp_f = (Pstring*)f;
   size_t        width;
+  Pbyte        *p1;
+  PDCI_IO_NEED_BYTES_SETUP_SCAN_OR_PANIC(panic);
 
   PDCI_IODISC_2P_CHECKS(whatfn, f, offset_out);
 
@@ -9533,9 +9606,7 @@ PDCI_str_lit_scan1(P_t *pads, const Pstring *f,
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_need_some_bytes(pads, the_goal, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    return P_ERR;
-  }
+  PDCI_IO_NEED_BYTES(return P_ERR);
   p1 = begin;
   while (1) {
     if (p1 + width > end) return P_ERR;
@@ -9572,12 +9643,11 @@ PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
 		   int *f_found_out, size_t *offset_out, Pcharset char_set,
 		   const char *whatfn) 
 {
-  Pbyte        *begin, *p1, *end, *goal;
-  int           bor, eor, eof;
-  PDCI_goal_t   the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
   Pstring      *tmp_f = (Pstring*)f;
   Pstring      *tmp_s = (Pstring*)s;
   size_t        fwidth, swidth;
+  Pbyte        *p1;
+  PDCI_IO_NEED_BYTES_SETUP_SCAN_OR_PANIC(panic);
 
   PDCI_IODISC_4P_CHECKS(whatfn, f, s, f_found_out, offset_out);
 
@@ -9613,9 +9683,7 @@ PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_need_some_bytes(pads, the_goal, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    return P_ERR;
-  }
+  PDCI_IO_NEED_BYTES(return P_ERR);
   p1 = begin;
   while (1) {
     if (p1 + fwidth > end) return P_ERR;
@@ -9665,10 +9733,11 @@ PDCI_re_scan1(P_t *pads, Pregexp_t *f,
 	      size_t *offset_out, Pcharset char_set,
 	      const char *whatfn) 
 {
-  Pbyte        *begin, *p1, *end, *goal;
-  int           bor, eor, eof;
-  PDCI_goal_t   the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
   regflags_t    e_flags;
+  Pbyte        *p1;
+  int           bor;
+  PDCI_IO_NEED_BYTES_SETUP_SCAN_OR_PANIC(panic);
+  bor = elt->bor && (bytes == elt->len);
 
   PDCI_IODISC_2P_CHECKS(whatfn, f, offset_out);
 
@@ -9681,9 +9750,7 @@ PDCI_re_scan1(P_t *pads, Pregexp_t *f,
     }
     return P_ERR;
   }
-  if (P_ERR == PDCI_io_need_some_bytes(pads, the_goal, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    return P_ERR;
-  }
+  PDCI_IO_NEED_BYTES(return P_ERR);
   if (end-begin == 0 && !eor) {
     /* must be at eof, do not want to match anything (not even /$/) */
     return P_ERR;
@@ -9716,10 +9783,11 @@ PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
 	      int *f_found_out, size_t *offset_out, Pcharset char_set,
 	      const char *whatfn) 
 {
-  Pbyte        *begin, *p1, *end, *goal;
-  int           bor, eor, eof;
-  PDCI_goal_t   the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
   regflags_t    e_flags;
+  Pbyte        *p1;
+  int           bor;
+  PDCI_IO_NEED_BYTES_SETUP_SCAN_OR_PANIC(panic);
+  bor = elt->bor && (bytes == elt->len);
 
   PDCI_IODISC_4P_CHECKS(whatfn, f, s, f_found_out, offset_out);
 
@@ -9738,9 +9806,7 @@ PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
     }
     return P_ERR;
   }
-  if (P_ERR == PDCI_io_need_some_bytes(pads, the_goal, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    return P_ERR;
-  }
+  PDCI_IO_NEED_BYTES(return P_ERR);
   if (end-begin == 0 && !eor) {
     /* must be at eof, do not want to match anything (not even /$/) */
     return P_ERR;
@@ -9835,7 +9901,7 @@ Perror_t
 PDCI_char_lit_match(P_t *pads, Pchar f, int eat_f,
 		    Pcharset char_set, const char *whatfn)
 {
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_0P_CHECKS(whatfn);
   P_TRACE4(pads->disc, "PDCI_char_lit_match args: f %s eat_f %d char_set = %s, whatfn = %s",
@@ -9880,7 +9946,7 @@ PDCI_str_lit_match(P_t *pads, const Pstring *f, int eat_f,
 {
   Pstring      *tmp_f = (Pstring*)f;
   size_t        width;
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_1P_CHECKS(whatfn, f);
 
@@ -9938,9 +10004,10 @@ Perror_t
 PDCI_re_match(P_t *pads, Pregexp_t *f, int eat_f,
 	      Pcharset char_set, const char *whatfn)
 {
-  Pbyte        *begin, *end, *goal;
-  int           bor, eor, eof;
   regflags_t    e_flags;
+  int           bor;
+  PDCI_IO_NEED_BYTES_SETUP_MATCH;
+  bor = elt->bor && (bytes == elt->len);
 
   PDCI_IODISC_1P_CHECKS(whatfn, f);
 
@@ -9952,9 +10019,7 @@ PDCI_re_match(P_t *pads, Pregexp_t *f, int eat_f,
     }
     return P_ERR;
   }
-  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_match, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    return P_ERR;
-  }
+  PDCI_IO_NEED_BYTES(return P_ERR);
   if (end-begin == 0 && !eor) {
     /* must be at eof, do not want to match anything (not even /$/) */
     return P_ERR;
@@ -10021,7 +10086,7 @@ PDCI_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c,
 		   Pbase_pd *pd, Pchar *c_out, Pcharset char_set,
 		   const char *whatfn)
 {
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, c_out);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -10074,7 +10139,7 @@ PDCI_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s,
 {
   Pstring      *es = (Pstring*)s;
   size_t        width;
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_4P_CHECKS(whatfn, m, pd, s, s_out);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -10155,8 +10220,8 @@ PDCI_countX_read(P_t *pads, const Pbase_m *m,
 		 Pbase_pd *pd, Pint32 *res_out, Pcharset char_set, const char *whatfn, Puint8 x, int eor_required, size_t count_max)
 {
   Pint32       count = 0;
-  Pbyte       *begin, *p1, *end, *goal;
-  int          bor, eor, eof;
+  Pbyte       *p1;
+  PDCI_IO_NEED_BYTES_SETUP_SPECIFIC;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -10176,9 +10241,7 @@ PDCI_countX_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_specific, count_max, &begin, &end, &goal, &bor, &eor, &eof)) {
-    goto fatal_nb_io_err;
-  }
+  PDCI_IO_NEED_BYTES_SPECIFIC(count_max, goto fatal_nb_io_err);
   p1 = begin;
   while (!(eor|eof)) {
     if (p1 == end) goto hit_limit;
@@ -10220,8 +10283,8 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m,
 		    Pbase_pd *pd, Pint32 *res_out, Pcharset char_set, const char *whatfn, Puint8 x, Puint8 y, size_t count_max)
 {
   Pint32       count = 0;
-  Pbyte       *begin, *p1, *end, *goal;
-  int          bor, eor, eof;
+  Pbyte       *p1;
+  PDCI_IO_NEED_BYTES_SETUP_SPECIFIC;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -10242,9 +10305,7 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_specific, count_max, &begin, &end, &goal, &bor, &eor, &eof)) {
-    goto fatal_nb_io_err;
-  }
+  PDCI_IO_NEED_BYTES_SPECIFIC(count_max, goto fatal_nb_io_err);
   p1 = begin;
   while (!(eor|eof)) {
     if (p1 == end) goto hit_limit;
@@ -10431,7 +10492,7 @@ PDCI_char_read(P_t *pads, const Pbase_m *m,
 	       Pbase_pd *pd, Pchar *c_out, Pcharset char_set,
 	       const char *whatfn)
 {
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -10478,7 +10539,7 @@ PDCI_string_FW_read(P_t *pads, const Pbase_m *m,
 		    Pbase_pd *pd, Pstring *s_out, Pcharset char_set,
 		    const char *whatfn, size_t width)
 {
-  PDCI_IO_NEED_K_BYTES_PREAMBLE;
+  PDCI_IO_NEED_K_BYTES_SETUP;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -10534,8 +10595,8 @@ PDCI_string_read(P_t *pads, const Pbase_m *m,
 		 Pbase_pd *pd, Pstring *s_out, Pcharset char_set,
 		 const char *whatfn, Pchar stopChar)
 {
-  Pbyte        *begin, *p1, *end, *goal;
-  int           bor, eor, eof;
+  Pbyte        *p1;
+  PDCI_IO_NEED_BYTES_SETUP_SCAN;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDCI_READFN_PD_INIT(pads, pd);
@@ -10551,9 +10612,7 @@ PDCI_string_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_scan, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    goto fatal_nb_io_err;
-  }
+  PDCI_IO_NEED_BYTES(goto fatal_nb_io_err);
   p1 = begin;
   while (1) {
     if (p1 == end) {
@@ -10628,17 +10687,17 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m,
 		     Pbase_pd *pd, Pstring *s_out, Pcharset char_set,
 		     const char *whatfn, Pregexp_t *matchRegexp)
 {
-  Pbyte       *begin, *p1, *end, *goal;
-  int          bor, eor, eof;
   regflags_t   e_flags;
+  Pbyte       *p1;
+  int           bor;
+  PDCI_IO_NEED_BYTES_SETUP_MATCH;
+  bor = elt->bor && (bytes == elt->len);
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, matchRegexp, pd);
   PDCI_READFN_PD_INIT(pads, pd);
   P_TRACE2(pads->disc, "PDCI_string_CME_read called, char_set = %s, whatfn = %s",
 	     Pcharset2str(char_set), whatfn);
-  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_match, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    goto fatal_nb_io_err;
-  }
+  PDCI_IO_NEED_BYTES(goto fatal_nb_io_err);
   if (end-begin == 0 && !eor) {
     /* must be at eof, do not want to match anything (not even /$/) */
     goto not_found;
@@ -10717,17 +10776,17 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m,
 		     Pbase_pd *pd, Pstring *s_out, Pcharset char_set,
 		     const char *whatfn, Pregexp_t *stopRegexp)
 {
-  Pbyte       *begin, *p1, *end, *goal;
-  int          bor, eor, eof;
   regflags_t   e_flags;
+  Pbyte       *p1;
+  int           bor;
+  PDCI_IO_NEED_BYTES_SETUP_SCAN;
+  bor = elt->bor && (bytes == elt->len);
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, stopRegexp, pd);
   PDCI_READFN_PD_INIT(pads, pd);
   P_TRACE2(pads->disc, "PDCI_string_CSE_read called, char_set = %s, whatfn = %s",
 	     Pcharset2str(char_set), whatfn);
-  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_scan, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
-    goto fatal_nb_io_err;
-  }
+  PDCI_IO_NEED_BYTES(goto fatal_nb_io_err);
   if (end-begin == 0 && !eor) {
     /* must be at eof, do not want to match anything (not even /$/) */
     goto not_found;

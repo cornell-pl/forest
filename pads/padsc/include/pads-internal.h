@@ -1289,7 +1289,7 @@ Perror_t PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
  *
  * PDCI_io_install_io:    XXX_TODOC
  * 
- * PDCI_io_need_K_bytes:
+ * PDCI_io_need_K_bytes:  XXX_REMOVE
  *
  *   Used when the calling function knows exactly K byte are required.
  *   need_K_bytes will either set (*b_out)/(*e_out) to cover exactly a K
@@ -1297,7 +1297,7 @@ Perror_t PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
  *   possible (due to hitting eor or eof).  Also sets (*bor_out) to status of
  *   begin byte, and (*eor_out)/(*eof_out) to status of the end byte.
  *
- * PDCI_io_need_some_bytes:
+ * PDCI_io_need_some_bytes:   XXX_REMOVE
  *
  *   Used when the calling function needs to determine the required byte scope
  *   based on the bytes themselves.  Has same out params as need_K_bytes, plus a
@@ -1379,13 +1379,19 @@ typedef enum P_goal_e {
 
 Perror_t  PDCI_io_install_io(P_t *pads, Sfio_t *io);
 
+#if 0
+XXX_REMOVE
 Perror_t  PDCI_io_need_K_bytes (P_t *pads, size_t K,
 				   Pbyte **b_out, Pbyte **e_out,
 				   int *bor_out, int *eor_out, int *eof_out);
+#endif
 
+#if 0
+XXX_REMOVE
 Perror_t  PDCI_io_need_some_bytes (P_t *pads, PDCI_goal_t goal, size_t specific,
 				      Pbyte **b_out, Pbyte **e_out, Pbyte **g_out,
 				      int *bor_out, int *eor_out, int *eof_out);
+#endif
 
 Perror_t  PDCI_io_forward   (P_t *pads, size_t num_bytes);
 
