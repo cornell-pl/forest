@@ -26,6 +26,12 @@
  *   norec_noseek: a version of norec that does not require that
  *                 the sfio stream be seekable
  *
+ * NB In the current implementations of record-based disciplines, each elt
+ * is anentire record (both bor and eor set) except possibly for the last
+ * elt which sometimes has bor but NOT eor set (e.g., for a partial fwrec
+ * or for a missing term char for ctrec).  Should we make this behavior a
+ * requirement?  That would get rid of the need for the 'bor' flag.
+ *
  * Kathleen Fisher, Robert Gruber
  * AT&T Labs Research
  */
@@ -282,6 +288,7 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   }
   elt->num = (data->num)++;
   if (readlen < data->block_size) { /* EOF case */
+    elt->bor = 1;
     elt->eor = 0;
     elt->eof = 1;
     data->eof = 1;
@@ -290,6 +297,7 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     iodata->eof_putback = readlen;
     elt->unit = "(EOF)";
   } else {
+    elt->bor = 1;
     elt->eor = 1;
     elt->eof = 0;
     elt->len = data->data_len;
@@ -616,6 +624,7 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     return PDC_ERR;
   }
 
+  elt->bor = 0; /* norec_noseek never uses bor */
   elt->eor = 0; /* norec_noseek never uses eor */
   elt->begin = data->dbuf_end;
   readlen = sfread(data->io, elt->begin, data->block_size);
@@ -971,8 +980,8 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     *(data->dbuf_end) = 0; /* null-terminate dbuf */
   }
 
-  bytes_read    = 0;
-  found_cterm = 0;
+  bytes_read      = 0;
+  found_cterm     = 0;
   while (1) { /* read blocks until find cterm or EOF */
     /* choose or alloc block to use */
     if (data->btail >= data->balloc) {
@@ -1029,6 +1038,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     elt->begin     = tmp;
     elt->end       = found_cterm;
     elt->len       = found_cterm - tmp;
+    elt->bor       = 1;
     elt->eor       = 1;
     elt->eof       = 0;
     elt->num       = (data->num)++;
@@ -1050,6 +1060,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   if (readlen < data->block_size) { /* put rest of bytes in EOF IO rec */
     elt = data->eof_elt;
     data->eof_elt  = 0;
+    elt->bor       = 1;
     elt->eor       = 0;
     elt->eof       = 1;
     data->eof      = 1;
@@ -1548,6 +1559,7 @@ PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   data->dbuf_end += readlen;
   elt->end       = data->dbuf_end;
   elt->len       = readlen;
+  elt->bor       = 1;
   elt->eor       = 1;
   elt->eof       = 0;
   elt->unit      = "record";
@@ -1560,6 +1572,7 @@ PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   elt->begin        = data->dbuf_end;
   elt->end          = data->dbuf_end;
   elt->len          = 0; /* ignore readlen except for putback (captured in dbuf_end) */
+  elt->bor          = 1;
   elt->eor          = 0;
   elt->eof          = 1;
   data->eof         = 1;
@@ -2000,7 +2013,8 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, PDC
   }
 
  done:
-  elt->eor = 0;
+  elt->bor = 0; /* norec never uses bor */
+  elt->eor = 0; /* norec never uses eor */
   elt->num = (data->num)++;
   elt->begin = new_data;
   elt->end   = new_data + readlen;

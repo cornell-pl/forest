@@ -124,6 +124,7 @@ struct PDC_IO_elt_s {
   PDC_byte         *begin;
   PDC_byte         *end;
   size_t           len;
+  int              bor;
   int              eor;
   int              eof;
   size_t           num;
