@@ -1,4 +1,4 @@
-/*@FILE @LEFT ai.httpRequestRep.tex  ai.httpRequestCSM.tex ai.httpRequestED.tex ai.httpRequestPD.tex */
+/*@FILE @LEFT ai.httpRequestRep.tex  ai.httpRequestCSM.tex ai.httpRequestED.tex ai.httpRequestPD.tex ai.httpRequestOps.tex */
 #ifndef __AI__H__
 #define __AI__H__
 #include "libpadsc.h"
@@ -548,6 +548,7 @@ struct http_request_t_s {
 };
 /*@END ai.httpRequestRep.tex*/
 
+/*@BEGIN ai.httpRequestOps.tex */
 PDC_error_t http_request_t_init (PDC_t *pdc,http_request_t *rep);
 
 PDC_error_t http_request_t_pd_init (PDC_t *pdc,http_request_t_pd *pd);
@@ -556,17 +557,25 @@ PDC_error_t http_request_t_cleanup (PDC_t *pdc,http_request_t *rep);
 
 PDC_error_t http_request_t_pd_cleanup (PDC_t *pdc,http_request_t_pd *pd);
 
-PDC_error_t http_request_t_copy (PDC_t *pdc,http_request_t *rep_dst,http_request_t *rep_src);
-
-PDC_error_t http_request_t_pd_copy (PDC_t *pdc,http_request_t_pd *pd_dst,http_request_t_pd *pd_src);
-
-PDC_error_t http_request_t_read (PDC_t *pdc,http_request_t_m *m,http_request_t_pd *pd,http_request_t *rep);
-
 void http_request_t_maskFill (PDC_t *pdc,http_request_t_m *mask,PDC_base_m baseMask);
 
-ssize_t http_request_t_write2buf (PDC_t *pdc,PDC_byte *buf,size_t buf_len,int *buf_full,http_request_t_pd *pd,http_request_t *rep);
+PDC_error_t http_request_t_copy (PDC_t *pdc,http_request_t *rep_dst,
+                                            http_request_t *rep_src);
 
-ssize_t http_request_t_write2io (PDC_t *pdc,Sfio_t *io,http_request_t_pd *pd,http_request_t *rep);
+PDC_error_t http_request_t_pd_copy (PDC_t *pdc,http_request_t_pd *pd_dst,
+                                              http_request_t_pd *pd_src);
+
+PDC_error_t http_request_t_read (PDC_t *pdc,http_request_t_m *m,
+                                 http_request_t_pd *pd,http_request_t *rep);
+
+
+ssize_t http_request_t_write2buf (PDC_t *pdc,PDC_byte *buf,size_t buf_len,
+                                  int *buf_full,http_request_t_pd *pd,
+                                  http_request_t *rep);
+
+ssize_t http_request_t_write2io (PDC_t *pdc,Sfio_t *io,http_request_t_pd *pd,
+                                 http_request_t *rep);
+/*@END ai.httpRequestOps.tex*/
 
 PDC_error_t http_request_t_acc_init (PDC_t *pdc,http_request_t_acc *acc);
 

@@ -1,6 +1,7 @@
 \chapter{Common features}
-In this chapter, we describe \PADSL{} features shared by all types. 
-Subsequent chapters describe features particular to various \PADSL{}
+\label{chap:common-features}
+In this chapter, we describe the \PADSL{} features shared by all types. 
+Subsequent chapters describe features particular to individual \PADSL{}
 types. 
 
 \section{\pads{} types}
@@ -48,7 +49,9 @@ appear only in particular locations in the grammar.  Syntactically,
 \noindent
 where \term{text} is a new-line terminated sequence of characters.
 \pads{} comments are reflected to the generated \texttt{.h} file as
-documentation. 
+documentation. We indicate where such comments may appear in the
+source as the locations arise in the descriptions of the various
+\padsl{} features. 
 
 
 
@@ -57,9 +60,9 @@ documentation.
 \pads{} descriptions permit the user to supply \term{predicates}
 for validating semantic properties of syntactically correct data. 
 Syntactically, such predicates are arbitrary \C{} expressions of
-integer type.  Predicates that evaluate to \cd{0} imply the data
-is valid, while all other values imply the data is
-invalid. Predicates are assumed to be side-effect free.
+integer type.  Predicates that evaluate to \cd{false} (\ie{}, \cd{0})
+imply the data is invalid, while all other values imply the data is
+valid. Predicates are assumed to be side-effect free.
 
 \section{Literals}
 \label{sec:common-literals}
@@ -69,19 +72,26 @@ literals, referred to in the \pads{} grammar as \term{char\_lit} and
 These literals may contain \C{} character escapes such as \cd{\\"} and
 \cd{\\'}. 
 
-Character and string literals are used to read external characters
-without storing any corresponding data in the resulting in-memory
-representation, \ie, they 'skip over' some expected character(s) in
+\cut{
+One use of character and string literals are used to read external
+characters without storing any corresponding data in the resulting in-memory
+representation, \ie, they ``skip over'' some expected character(s) in
 the external representation.
 They are typically used in \Pstruct{}s (\cf{}
 \secref{sec:structs-literal-fields}). 
+
+The above use in only one use of literals.  They are also used in
+arrays to describe separators and terminators and in enums to describe
+the branches.  In addition, they may be used as arguments to
+parameterized functions.}
 
 \section{Character Sets}
 \label{sec:common-character-sets}
 
 The library discipline contains a field \cd{def_charset} that
 indicates the expected character set of the external representation of
-character and string literals, as well as the external representation of all character and string
+character and string literals, as well as the external representation
+of all character and string 
 base types that do not explicitly name a character set.  Supported
 character sets include ASCII (\cd{PDC_charset_ASCII}) and EBCDIC
 (\cd{PDC_charset_EBCDIC}), where ASCII is the default character set.
@@ -113,8 +123,8 @@ where \nont{expression} is any \C{} expression. Formal parameter lists
 \nont{formals} are the same as in \C{}. 
 
 \subsection{Example}
-The \cd{formalParamExample} in the following \padsl{} fragment
-illustrates both declaring parameters to \pads{} types, while
+The \cd{formalParamExample} type declaration in the following \padsl{}
+fragment illustrates declaring parameters to \pads{} types, while
 the \cd{actualParamExample} illustrates passing parameters.
 \begin{code}
 \input{code/struct.parameters}
@@ -127,25 +137,61 @@ of \cd{limit} is passed as the actual parameter to the \cd{formalParamExample}
 \pstruct{}. 
 
 \section{\Precord{} modifier}
-\lable{sec:commong-precord}
+\label{sec:commong-precord}
 The \Precord{} modifier may be used as an annotation on any \pads{}
 type, indicating that the type describes a \textit{record} in the
 external representation of the data.  \pads{} supports a number of
 different interpretations of what constitutes a record:
 
-\textbf{Bob:? Fill in here.} 
+\begin{tabular}{ll}
+new-line terminated & End of record marked by new-line character\\
+fixed-width record  & Records contain a specified number of bytes\\
+ibm-style record    & Record header indicates size\\
+\end{tabular}
+
+\noindent
+\secref{??} describes how to set the appropriate record discipline for
+a data source. 
 
 
 \section{\Pfile{} modifier}
-\lable{sec:commong-pfile}
+\label{sec:common-pfile}
 The \Pfile{} modifier may be used as an annotation on any \pads{}
 type, indicating that the type in question describes the entirety of
 the external representation of the data.
 
 \section{Error model}
 \label{sec:common-error-model}
-During parsing, two different kinds of errors can occur, which can be
-intuitively classified as...
+During parsing, \pads{} read functions detect when the data does not
+conform to the given specification.  Detected violations fall into two
+classes, which differ in their severity.  The less severe of these,
+\textit{semantic} errors are those in which the parser detects a
+violation of the specified format but does not ``lose its place.''  A
+typical example of this kind of error is a violation of a
+user-specified constraint, such as a requirement that a given field be
+greater than a threshold value.  The more severe type of error,
+\textit{syntactic} errors, involve the parser finding raw data that
+cannot be reconciled with the physical aspects of the description.
+Typical examples include failing to find literals required by
+\Pstruct{} declarations or separators from \Parray{} declarations. We
+say that a read function enters \textit{panic} mode when it detects
+such an error. Read functions set the \cd{PDC\_Panic} flag in the
+\cd{pstate} field of the appropriate parse descriptor when entering
+panic mode (\secref{sec:common-parse-descriptor} describes the general
+role and structure of parse descriptors).
+
+\pads{} read functions attempt to recover from panic mode by scanning
+for possible synchronization points in the data source.
+For example, if the read function for a \pads{} type \cd{foo} annotated with
+the \Precord{} qualifier enters panic mode, it tries to
+recover by scanning to the end of the record.  If it succeeds in
+finding the record boundary, it lowers the panic flag in the \cd{foo}
+parse descriptor, although the nested parse descriptor for the portion
+of the data description that caused the panic will still be set.  The parse
+descriptions for all portions of the data description that were
+skipped during the scanning process will also have the panic flag set.
+Type-specific information regarding error-recovery appears in the
+corresponding chapter.
 
 
 
@@ -170,7 +216,7 @@ Masks allow the library user to customize operations on portions of
 the associated data.  The structure of the mask for a given \PADS{}
 type mirrors the structure of the representation type.  Details about
 the structure for various types
-appear in \secref{sec:base-types-masks}, \secref{sec:structs-masks},
+appear in \secref{sec:base-type-mask}, \secref{sec:structs-masks},
 \secref{sec:unions-masks}, \secref{sec:arrays-masks}, 
 \secref{sec:enums-masks}, and \secref{sec:typedefs-masks}.
 
@@ -185,7 +231,10 @@ fields:
  \cd{PDC\_uint32 pstate} & Flags that describe the state after parsing the
                            associated value.\\[1ex]
  \cd{PDC\_errCode\_t errCode} & A code indicating the nature of the 
-                               first detected error.\\[1ex]
+                               first detected error. 
+                               \appref{app:error-codes} contains a 
+                               list of all error codes and 
+			       describes their meanings. \\[1ex]
  \cd{PDC\_loc\_t loc}  & The location in the data source of the first 
                          error.\\[1ex]
  \cd{PDC\_uint32 nerr} & The number of errors detected during parsing
@@ -197,7 +246,8 @@ Field \cd{pstate} contains the following flags:
 \vskip 1ex
 \begin{tabular}{lp{3.5in}}
  \cd{PDC\_Panic} & Set if the parser was in panic mode during the
-                  parsing of the associated data.\\[1ex]
+                  parsing of the associated data.  See
+                  \secref{sec:common-error-model} for more information.\\[1ex]
 \end{tabular}
 
 \noindent
@@ -211,10 +261,8 @@ void PDC_PS_unsetPanic(void *pd);
 int  PDC_PS_isPanic(void *pd);      
 \end{code}
 
-\cd{errCode}: \appref{app:error-codes} contains a list of all error codes and
-describes their meanings.
 
-\cd{loc} : describe the structure of this data.
+\textbf{To Do:} Describe the structure of location data. 
 
 Details about how parse descriptors are customized for various \PADS{}
 types appear in
@@ -225,7 +273,7 @@ types appear in
 \section{Regular Expressions}
 \label{sec:regular-expressions}
 
-XXX TODO.  
+\textbf{To do:}
 
 Need to describe semantics currently supported.
 
@@ -238,7 +286,7 @@ Mention uses:  library discipline, read functions.
 \label{common-operations}
 For each \pads{} type, the generated library contains a collection of
 functions for manipulating the associated data.  For structured types,
-the \pads{} compiler generates these functions;  for base types, the
+the \pads{} compiler generates the functions;  for base types, the
 \pads{} library provides them.  This section describes the common
 features of such functions.  Type-specific information may be found in
 the appropriate chapter.
@@ -272,12 +320,12 @@ PDC_error_t foo_pd_cleanup (PDC_t *pdc, foo_pd *pd);
 \end{code}
 Because all masks have statically-known size, the library does not
 contain initialization and cleanup functions for masks.  
+Instead, it contains a function for setting all nested base masks 
+to a specified value:  
 \begin{code}
 void foo_m_init (PDC_t *pdc, foo_m *mask, PDC_base_m baseMask);
 \end{code}
-Instead, it
-contains a function for setting all nested base masks 
-to a specified value.  The function takes two parameters (in
+The function takes two parameters (in
 addition to the \pads{} handle): a pointer to allocated space for the
 mask and a base mask value.  Because mask initialization
 functions cannot fail, the return type is \cd{void} instead of
@@ -287,7 +335,7 @@ functions cannot fail, the return type is \cd{void} instead of
 Each type \cd{foo} comes equipped with copy functions for both the
 in-memory representation and the parse descriptor.  Both the source
 and destination pointers are assumed to point to allocated space.  In
-addition, the src pointers are assumed to point to initialized space.
+addition, the source pointers are assumed to point to initialized space.
 \begin{code}
 PDC_error_t foo_copy (PDC_t *pdc, foo *rep_dst, foo *rep_src);
 
@@ -298,8 +346,8 @@ PDC_error_t foo_pd_copy (PDC_t *pdc, foo_pd *pd_dst, foo_pd *pd_src);
 The read function for a \pads{} type \cd{foo} takes as an input parameter a
 pointer to a mask \cd{m} and returns as output parameters a pointer to
 a parse descriptor \cd{pd} and a pointer to an in-memory
-reprsentation \cd{rep}.  If any errors occurred during the parsing, the return
-value for the function is \cd{PDC_ERROR}.  Otherwise, the function
+reprsentation \cd{rep}.  If any errors occur during the parsing,
+the function will return \cd{PDC_ERROR}.  Otherwise, it
 will return \cd{PDC_OK}.  
 
 \begin{code}
@@ -316,7 +364,7 @@ three different ``knobs'' associated with each atomic element of a
 \begin{tabular}{ll}
 \cd{PDC_SynCheck} & Check syntactic constraints\\
 \cd{PDC_SymCheck} & Check semantic constraints\\
-\cd{PDC_Set}      & Set the in-memory reprsentation\\[1ex]
+\cd{PDC_Set}      & Set the in-memory representation\\[1ex]
 \end{tabular}
 
 \noindent
@@ -399,7 +447,7 @@ data include skipping white space
 \Pstruct{}s (\secref{sec:structs-qualifiers}). 
 
 Passing the \texttt{-wnone} flag to the \pads{} compiler suppresses
-the generation of these functions for structured types.
+the generation of write functions for structured types.
 
 We anticipate adding more write functions in the future.
 
