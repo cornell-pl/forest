@@ -10,9 +10,10 @@ make manual_html
 # install documentation
 mkdir ../../temp_docs
 for x in `cat take_list`; do cp $x ../../temp_docs; done
-cd ../..
+cd ../..  # now at pads
 rm -rf documents
 mv temp_docs documents
+
 
 # remove internal directories/files
 rm Changes
@@ -24,6 +25,7 @@ for x in `find . -name .cvsignore`; do rm $x ; done
 
 # clean example directory
 cd padsc/examples
+pwd
 #clean p directory
 echo cleaning p directory
 mkdir temp_p
@@ -45,17 +47,26 @@ for x in `cat data/take_list`; do cp data/$x temp_data; done
 rm -rf data 
 mv temp_data data
 
-cd .. # now in padsc directory
-# echo cleaning example directory
+cd ..  # now in pads/padsc
+echo cleaning example directory
+pwd
 mkdir temp_examples
 for x in `cat examples/take_list`; do mv examples/$x temp_examples; done
 rm -rf examples
 mv temp_examples examples
 
+cd .. # now in pads directory
+echo cleaning scripts directory
+mkdir temp_scripts
+for x in `cat scripts/RELEASE_SCRIPTS`; do mv scripts/$x temp_scripts; done
+rm -rf scripts
+mv temp_scripts scripts
+
+
+
 # add licenses!
 
 #okay, tar up the desired files
-cd ../..
-pwd
+cd ..  # now above pads directory
 echo building bundle
 tar cfz pads.tar.gz `cat pads/take_list`

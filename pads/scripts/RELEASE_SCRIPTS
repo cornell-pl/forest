@@ -2,7 +2,6 @@ DO_SETENV.sh
 DO_SETENV.tcsh 
 INT_DO_SETENV.sh 
 INT_DO_SETENV.tcsh 
-MAKE_SML_LINK.sh
 Q_DO_SETENV.sh 
 Q_DO_SETENV.tcsh 
 addnl.pl
