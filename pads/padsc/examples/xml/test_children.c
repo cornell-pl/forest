@@ -2,20 +2,20 @@
 #include "format7.h"
 #include "pglx.h"
 
-#define exit_on_error(_Expr) {err = _Expr; if (err != 0) {error(0, "%s\n", glx_error_string); exit(err);}}	
+#define exit_on_error(_Expr) {err = _Expr; if (err != 0) {error(0, "%s\n", galax_error_string); exit(err);}}	
 
 int try_galax() { 
   processing_context pc; 
   module_context sc;
   itemlist items;
-  glx_err err;
+  galax_err err;
   char *str;
 
-  err = glx_default_processing_context(&pc); 
-  err = glx_load_standard_library(pc, &sc); 
+  exit_on_error(galax_default_processing_context(&pc)); 
+  exit_on_error(galax_load_standard_library(pc, &sc)); 
 
-  err = glx_eval_statement_from_string(sc, "<a/>", &items);
-  err = glx_serialize_to_string(items, &str);
+  exit_on_error(galax_eval_statement_from_string(sc, "<a/>", &items));
+  exit_on_error(galax_serialize_to_string(items, &str));
   error(0, "%s\n", str); 
   return err;
 }
@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   myfile_m        m;
   PDCI_node_t    *doc_node;
 
-  glx_err err;
+  galax_err err;
   item doc;
   node n; 
   char *str = "";
@@ -37,19 +37,15 @@ int main(int argc, char** argv) {
   int i;
 
   /* When linking with the Galax library, which contains a custom O'Caml runtime system, 
-     it is necessary to call glx_init first, so the runtime is initialized and then 
+     it is necessary to call galax_init first, so the runtime is initialized and then 
      can delegate control back to the C program 
   */
-  char *fake_argv[2];
-
-  fake_argv[0] = "caml";
-  fake_argv[1] = 0;
-  glx_init(fake_argv);
+  galax_init();
 
   if (argc != 2) { error(2, "Usage: test_children <format7-data-file>\n"); exit(-1); }
 
   /* Try out some Galax functions first */
-  /* try_galax(); */
+  try_galax();
 
   mydisc.flags |= P_WSPACE_OK;
 
@@ -76,25 +72,25 @@ int main(int argc, char** argv) {
     }
     exit_on_error(padsDocument(argv[1], (nodeRep)doc_node, &doc)); 
     docitems = itemlist_cons(doc, itemlist_empty());
-    err = glx_serialize_to_string(docitems, &str);
+    exit_on_error(galax_serialize_to_string(docitems, &str));
     error(0, "%d: %s\n", strlen(str), str);  
-    exit_on_error(glx_serialize_to_output_channel(docitems));
+    exit_on_error(galax_serialize_to_stdout(docitems));
 
-    exit_on_error(glx_children(doc, &k)); 	
+    exit_on_error(galax_children(doc, &k)); 	
     for (i = 0; !is_empty(k); i++) {
       error(0, "%d...", i);
       n = items_first(k); 
-      exit_on_error(glx_node_kind(n, &str)); 
+      exit_on_error(galax_node_kind(n, &str)); 
       error(0, "%s\n", str);  
-      exit_on_error(glx_node_name(n, &av)); 
-      exit_on_error(glx_serialize_to_string(av, &str));
+      exit_on_error(galax_node_name(n, &av)); 
+      exit_on_error(galax_serialize_to_string(av, &str));
       error(0, "%s\n", str);  
       k = items_next(k); 
     }
-    exit_on_error(glx_node_kind(doc, &str)); 
+    exit_on_error(galax_node_kind(doc, &str)); 
     error(0, "%s\n", str);  
     /* 
-       exit_on_error(glx_serialize_to_string(k, &str));
+       exit_on_error(galax_serialize_to_string(k, &str));
     error(0, "%s\n", str); */
     /* 
     */

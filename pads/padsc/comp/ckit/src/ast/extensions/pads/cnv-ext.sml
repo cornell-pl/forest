@@ -2145,8 +2145,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					   ifGalaxChildren(returnName, P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
 					   macroTNode(returnName, PL.PDCI_structured_pd, pd, PT.Id pd, cnvName) @
 					   [P.mkCommentS "base child",
+                                            (* Mary: For a base type, the parse descriptor value should not be dereferenced *)
 					    macroNodeCall(returnName, P.intX 1, baseTypeName, PT.String base,
+				     			  getFieldX(m, base), PT.Id pd, PT.Id rep, cnvName),
+(*					    macroNodeCall(returnName, P.intX 1, baseTypeName, PT.String base,
 				     			  getFieldX(m, base), getFieldX(pd, base), PT.Id rep, cnvName),
+*)
 					    P.returnS (returnName)]
                               in   
                                P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
@@ -3822,7 +3826,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
 
 		      (***** union PADS-Galax *****)
-	
+	              (* In the XML representation of unions, each alternative is always the second child 
+                         (index 1), after the <pd> child. *)
 		      fun tagbranch (index, (nameField, typeField, isPcomputed)) =
  			  let val maskField = if isPcomputed then (P.intX 0) else (getFieldX(m, nameField)) 	
 			          (* if it's a Pcompute field, then the 'mask field' argument is NULL, by now *)
@@ -3831,7 +3836,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val pdArg = addrArg pd	
 			      val repArg = addrArg rep
 			      val resultArg = PT.Id result
-			      val i = P.intX index
+			      val i = P.intX 1
 			      val branchField = PT.Id "branch"
 			      val sentences = [macroNodeCall(resultArg, i, typeField, branchField, maskField,
 						             pdArg, repArg, childrenSuf name)]
