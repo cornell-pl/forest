@@ -1,5 +1,0 @@
-#!/bin/csh
-
-cc -g -Wall -I. -I.. -I${AST_HOME}/include/ast -I../../gen -I../../../../padsc/include ../../gen/$argv.c test_$argv.c -L ${AST_HOME}/lib -lpadsc-g -lpglx-g -last -o test_$argv
-
-

@@ -1,1 +1,0 @@
-padsc enum.p -x -r . -I. -I.. -DGALAXCOMPILE -DOLD_PGLX
