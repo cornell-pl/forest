@@ -362,7 +362,7 @@ Punion cache_directive_t {
   cache_response_directive_t cache_response_directive;
 };
 
-#define Plongest Pended(chkErr(pd->nerr, &consume))
+#define Plongest Pended(PparseCheck(chkErr(pd->nerr, &consume)))
 /* This is supposed to be a sequence of 1 or more cache_directive_t's,
    separated by commas and optional LWS */
 Parray cache_directive_seq_t {
