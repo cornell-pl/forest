@@ -2561,13 +2561,29 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun genFieldFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				      pred: pcexp option, comment: string option} = 
-			  [(name, lookupTy (pty,repSuf,#repname))]
+			  if isVirtual then [] else [(name, lookupTy (pty,repSuf,#repname),false)]
 		      fun genFieldBrief e = []
-		      fun genFieldMan m = []
+		      fun genFieldMan {decl, comment} =
+                          let val ctNoptEs = cnvDeclaration decl
+                              fun doOne (cty, nameOpt, exp) =
+                                  let val name = case nameOpt of NONE => "" | SOME n => n
+                                      val accPtyOpt = reverseLookup cty
+                                  in
+                                    case accPtyOpt of NONE => []
+                                                    | SOME pty => case lookupAcc(pty) of NONE   => []
+		                                               	       | SOME a => [(name,lookupBranch pty,true)]
+                                  end
+	 		  in
+                            List.concat (List.map doOne ctNoptEs)
+                          end
+
 		      val localFields = mungeFields genFieldFull genFieldBrief genFieldMan fields
 
 		      (* counting Full and Computed fields *)
-		      fun countFieldFull f = [1]
+		      fun countFieldFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool,
+                                      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+                                      pred: pcexp option, comment: string option} =
+			  if isVirtual then [] else [1]
 		      fun countFieldMan m = []
 		      fun countFieldBrief e = [1]
 		      val countFields = List.length (mungeFields countFieldFull countFieldMan countFieldBrief fields) 
@@ -2581,10 +2597,12 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                               val paramNames = [self]
                               val paramTys = [P.ptrPCT nodeRepTy]
                               val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
-		              fun macroNode (n,(nameField,tyField)) 
-					= macroNodeCall(returnName,P.intX n,tyField,PT.String nameField,
-							getFieldX(m,nameField),getFieldX(pd,nameField),
-      							getFieldX(rep,nameField),cnvName)
+		              fun macroNode (n,(nameField,tyField,isPcomputed)) =
+				  let val (maskField,pdField) = if isPcomputed then (P.intX 0,P.intX 0) 
+								else (getFieldX(m,nameField),getFieldX(pd,nameField))
+				  in macroNodeCall(returnName,P.intX n,tyField,PT.String nameField,
+						   maskField,pdField,getFieldX(rep,nameField),cnvName)
+				  end
 			      val numChildren = countFields + 1
  		              val bodySs = headerGalaxChildrenFun(name) @
 					   ifGalaxChildren(returnName,P.intX numChildren, "ALLOC_ERROR: in " ^ cnvName) @
