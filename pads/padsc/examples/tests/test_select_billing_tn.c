@@ -8,10 +8,10 @@ int main(int argc, char** argv) {
   PDC_IO_disc_t            *io_disc;
   out_sum_header           header;
   out_sum_header_ed        header_ed;
-  out_sum_header_em        header_em = { 0 };
+  out_sum_header_csm       header_csm = { 0 };
   out_sum_data_line        dline;
   out_sum_data_line_ed     dline_ed;
-  out_sum_data_line_em     dline_em = { 0 };
+  out_sum_data_line_csm    dline_csm = { 0 };
   char                    *fname = "../../data/ex_data.dibbler1";
   int                      commit;
 
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
    * Try to read header
    */
 
-  if (PDC_OK == out_sum_header_read(pdc, &header_em, &header_ed, &header)) {
+  if (PDC_OK == out_sum_header_read(pdc, &header_csm, &header_ed, &header)) {
     error(0, "reading header returned: OK");
   } else {
     error(2, "reading header returned: error");
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
   while (!PDC_IO_at_EOF(pdc)) {
     PDC_IO_checkpoint(pdc, 0);
     commit = 1;
-    out_sum_data_line_read(pdc, &dline_em, &dline_ed, &dline);
+    out_sum_data_line_read(pdc, &dline_csm, &dline_ed, &dline);
     /* Fields that contribute to the query expression must be error free, 
        even though entire order need not be error free.
        What does it mean if you say nothing about errors at all */

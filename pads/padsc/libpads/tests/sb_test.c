@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
   PDC_uint32      u32;
   PDC_uint64      u64;
   PDC_disc_t      my_disc = PDC_default_disc;
-  PDC_base_em     em = PDC_CheckAndSet;
+  PDC_base_csm    csm = PDC_CheckAndSet;
   PDC_base_ed     ed;
   size_t          bytes_skipped;
   unsigned long        ultmp;
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  if (PDC_OK == PDC_sbl_int8_read(pdc, &em, 1, &ed, &i8)) {
+  if (PDC_OK == PDC_sbl_int8_read(pdc, &csm, 1, &ed, &i8)) {
     error(0, "Read sbl integer: %ld", (long)i8);
     if (i8 != 0) {
       error(0, "XXX failure: should be %ld XXX", (long)0);
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_int8_read(pdc, &em, 1, &ed, &i8)) {
+  if (PDC_OK == PDC_sbl_int8_read(pdc, &csm, 1, &ed, &i8)) {
     error(0, "Read sbl integer: %ld", (long)i8);
     if (i8 != PDC_MIN_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT8);
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_int8_read(pdc, &em, 1, &ed, &i8)) {
+  if (PDC_OK == PDC_sbl_int8_read(pdc, &csm, 1, &ed, &i8)) {
     error(0, "Read sbl integer: %ld", (long)i8);
     if (i8 != PDC_MAX_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT8);
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_uint8_read(pdc, &em, 1, &ed, &u8)) {
+  if (PDC_OK == PDC_sbl_uint8_read(pdc, &csm, 1, &ed, &u8)) {
     error(0, "Read sbl integer: %lu", (unsigned long)u8);
     if (u8 != PDC_MAX_UINT8) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT8);
@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_int16_read(pdc, &em, 2, &ed, &i16)) {
+  if (PDC_OK == PDC_sbl_int16_read(pdc, &csm, 2, &ed, &i16)) {
     error(0, "Read sbl integer: %ld", (long)i16);
     if (i16 != PDC_MIN_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT16);
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_int16_read(pdc, &em, 2, &ed, &i16)) {
+  if (PDC_OK == PDC_sbl_int16_read(pdc, &csm, 2, &ed, &i16)) {
     error(0, "Read sbl integer: %ld", (long)i16);
     if (i16 != PDC_MAX_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT16);
@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_uint16_read(pdc, &em, 2, &ed, &u16)) {
+  if (PDC_OK == PDC_sbl_uint16_read(pdc, &csm, 2, &ed, &u16)) {
     error(0, "Read sbl integer: %lu", (unsigned long)u16);
     if (u16 != PDC_MAX_UINT16) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT16);
@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_int32_read(pdc, &em, 4, &ed, &i32)) {
+  if (PDC_OK == PDC_sbl_int32_read(pdc, &csm, 4, &ed, &i32)) {
     error(0, "Read sbl integer: %ld", (long)i32);
     if (i32 != PDC_MIN_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT32);
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_int32_read(pdc, &em, 4, &ed, &i32)) {
+  if (PDC_OK == PDC_sbl_int32_read(pdc, &csm, 4, &ed, &i32)) {
     error(0, "Read sbl integer: %ld", (long)i32);
     if (i32 != PDC_MAX_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT32);
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_uint32_read(pdc, &em, 4, &ed, &u32)) {
+  if (PDC_OK == PDC_sbl_uint32_read(pdc, &csm, 4, &ed, &u32)) {
     error(0, "Read sbl integer: %lu", (unsigned long)u32);
     if (u32 != PDC_MAX_UINT32) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT32);
@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_int64_read(pdc, &em, 8, &ed, &i64)) {
+  if (PDC_OK == PDC_sbl_int64_read(pdc, &csm, 8, &ed, &i64)) {
     error(0, "Read sbl integer: %lld", (long long)i64);
     if (i64 != PDC_MIN_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MIN_INT64);
@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_int64_read(pdc, &em, 8, &ed, &i64)) {
+  if (PDC_OK == PDC_sbl_int64_read(pdc, &csm, 8, &ed, &i64)) {
     error(0, "Read sbl integer: %lld", (long long)i64);
     if (i64 != PDC_MAX_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MAX_INT64);
@@ -184,7 +184,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbl_uint64_read(pdc, &em, 8, &ed, &u64)) {
+  if (PDC_OK == PDC_sbl_uint64_read(pdc, &csm, 8, &ed, &u64)) {
     error(0, "Read sbl integer: %llu", (unsigned long long)u64);
     if (u64 != PDC_MAX_UINT64) {
       error(0, "XXX failure: should be %llu XXX", (unsigned long long)PDC_MAX_UINT64);
@@ -193,7 +193,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_int8_read(pdc, &em, 1, &ed, &i8)) {
+  if (PDC_OK == PDC_sbh_int8_read(pdc, &csm, 1, &ed, &i8)) {
     error(0, "Read sbh integer: %ld", (long)i8);
     if (i8 != 0) {
       error(0, "XXX failure: should be %ld XXX", (long)0);
@@ -202,7 +202,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_int8_read(pdc, &em, 1, &ed, &i8)) {
+  if (PDC_OK == PDC_sbh_int8_read(pdc, &csm, 1, &ed, &i8)) {
     error(0, "Read sbh integer: %ld", (long)i8);
     if (i8 != PDC_MIN_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT8);
@@ -211,7 +211,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_int8_read(pdc, &em, 1, &ed, &i8)) {
+  if (PDC_OK == PDC_sbh_int8_read(pdc, &csm, 1, &ed, &i8)) {
     error(0, "Read sbh integer: %ld", (long)i8);
     if (i8 != PDC_MAX_INT8) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT8);
@@ -220,7 +220,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_uint8_read(pdc, &em, 1, &ed, &u8)) {
+  if (PDC_OK == PDC_sbh_uint8_read(pdc, &csm, 1, &ed, &u8)) {
     error(0, "Read sbh integer: %lu", (unsigned long)u8);
     if (u8 != PDC_MAX_UINT8) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT8);
@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_int16_read(pdc, &em, 2, &ed, &i16)) {
+  if (PDC_OK == PDC_sbh_int16_read(pdc, &csm, 2, &ed, &i16)) {
     error(0, "Read sbh integer: %ld", (long)i16);
     if (i16 != PDC_MIN_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT16);
@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_int16_read(pdc, &em, 2, &ed, &i16)) {
+  if (PDC_OK == PDC_sbh_int16_read(pdc, &csm, 2, &ed, &i16)) {
     error(0, "Read sbh integer: %ld", (long)i16);
     if (i16 != PDC_MAX_INT16) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT16);
@@ -247,7 +247,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_uint16_read(pdc, &em, 2, &ed, &u16)) {
+  if (PDC_OK == PDC_sbh_uint16_read(pdc, &csm, 2, &ed, &u16)) {
     error(0, "Read sbh integer: %lu", (unsigned long)u16);
     if (u16 != PDC_MAX_UINT16) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT16);
@@ -256,7 +256,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_int32_read(pdc, &em, 4, &ed, &i32)) {
+  if (PDC_OK == PDC_sbh_int32_read(pdc, &csm, 4, &ed, &i32)) {
     error(0, "Read sbh integer: %ld", (long)i32);
     if (i32 != PDC_MIN_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MIN_INT32);
@@ -265,7 +265,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_int32_read(pdc, &em, 4, &ed, &i32)) {
+  if (PDC_OK == PDC_sbh_int32_read(pdc, &csm, 4, &ed, &i32)) {
     error(0, "Read sbh integer: %ld", (long)i32);
     if (i32 != PDC_MAX_INT32) {
       error(0, "XXX failure: should be %ld XXX", (long)PDC_MAX_INT32);
@@ -274,7 +274,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_uint32_read(pdc, &em, 4, &ed, &u32)) {
+  if (PDC_OK == PDC_sbh_uint32_read(pdc, &csm, 4, &ed, &u32)) {
     error(0, "Read sbh integer: %lu", (unsigned long)u32);
     if (u32 != PDC_MAX_UINT32) {
       error(0, "XXX failure: should be %lu XXX", (unsigned long)PDC_MAX_UINT32);
@@ -283,7 +283,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_int64_read(pdc, &em, 8, &ed, &i64)) {
+  if (PDC_OK == PDC_sbh_int64_read(pdc, &csm, 8, &ed, &i64)) {
     error(0, "Read sbh integer: %lld", (long long)i64);
     if (i64 != PDC_MIN_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MIN_INT64);
@@ -292,7 +292,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_int64_read(pdc, &em, 8, &ed, &i64)) {
+  if (PDC_OK == PDC_sbh_int64_read(pdc, &csm, 8, &ed, &i64)) {
     error(0, "Read sbh integer: %lld", (long long)i64);
     if (i64 != PDC_MAX_INT64) {
       error(0, "XXX failure: should be %lld XXX", (long long)PDC_MAX_INT64);
@@ -301,7 +301,7 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
-  if (PDC_OK == PDC_sbh_uint64_read(pdc, &em, 8, &ed, &u64)) {
+  if (PDC_OK == PDC_sbh_uint64_read(pdc, &csm, 8, &ed, &u64)) {
     error(0, "Read sbh integer: %llu", (unsigned long long)u64);
     if (u64 != PDC_MAX_UINT64) {
       error(0, "XXX failure: should be %llu XXX", (unsigned long long)PDC_MAX_UINT64);

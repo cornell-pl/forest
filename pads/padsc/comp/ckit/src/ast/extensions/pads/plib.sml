@@ -45,9 +45,9 @@ struct
 
   val PDC_CHAR_LIT_NOT_FOUND             = PT.Id "PDC_CHAR_LIT_NOT_FOUND"
 
-  val EM_CHECK_AND_SET = PT.Id "PDC_CheckAndSet"
-  val EM_CHECK         = PT.Id "PDC_Check"
-  val EM_IGNORE        = PT.Id "PDC_Ignore"
+  val CSM_CHECK_AND_SET = PT.Id "PDC_CheckAndSet"
+  val CSM_CHECK         = PT.Id "PDC_Check"
+  val CSM_IGNORE        = PT.Id "PDC_Ignore"
 
   val PDC_littleEndian = PT.Id "PDC_littleEndian"
   val PDC_bigEndian    = PT.Id "PDC_bigEndian"
@@ -68,7 +68,7 @@ struct
   val rbufferPCT   = P.makeTypedefPCT "RBuf_t"
   val rMMPCT       = P.makeTypedefPCT "RMM_t"
 
-  val base_emPCT   = P.makeTypedefPCT "PDC_base_em"
+  val base_csmPCT  = P.makeTypedefPCT "PDC_base_csm"
   val base_edPCT   = P.makeTypedefPCT "PDC_base_ed"
   val bytePCT      = P.makeTypedefPCT "PDC_byte"
 
@@ -110,47 +110,47 @@ struct
   fun warnDefault(msg :string) =
     PT.Expr(PT.Call(PT.Id "PDC_WARN", [P.addrX (PT.Id "PDC_default_disc"), PT.String msg]))
 
-  fun userErrorS(ts:PT.expression, loc:PT.expression, errCode:PT.expression, 
+  fun userErrorS(pdc:PT.expression, loc:PT.expression, errCode:PT.expression, 
 		 whatFunction: string, format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_INFO, loc, errCode, 
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [pdc, ERROR_INFO, loc, errCode, 
 					      mkFName whatFunction, format]@args))
 
-  fun userWarnS(ts:PT.expression, loc:PT.expression,
+  fun userWarnS(pdc:PT.expression, loc:PT.expression,
                 whatFunction: string,  format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_ERROR, loc, PDC_NO_ERROR, 
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [pdc, ERROR_ERROR, loc, PDC_NO_ERROR, 
 					      mkFName whatFunction , format]@args))
 
-  fun userFatalErrorS(ts:PT.expression, loc:PT.expression, whatFunction: string,
+  fun userFatalErrorS(pdc:PT.expression, loc:PT.expression, whatFunction: string,
                  errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_FATAL, loc, errCode, mkFName whatFunction, format]@args))
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [pdc, ERROR_FATAL, loc, errCode, mkFName whatFunction, format]@args))
 
-  fun chkError(ts:PT.expression, argX :PT.expression, whatFun: string, errCode:PT.expression) =
+  fun chkError(pdc:PT.expression, argX :PT.expression, whatFun: string, errCode:PT.expression) =
     [ PT.IfThen(P.eqX(PDC_ERROR, argX),
        PT.Compound[
-         userFatalErrorS(ts, P.zero, whatFun, errCode, P.zero, [])
+         userFatalErrorS(pdc, P.zero, whatFun, errCode, P.zero, [])
        ])]
 
-  fun chkIntErrorSs(ts:PT.expression, argX :PT.expression,  whatFun : string, errCode:PT.expression) =
+  fun chkIntErrorSs(pdc:PT.expression, argX :PT.expression,  whatFun : string, errCode:PT.expression) =
      [PT.IfThen(P.neqX(P.zero, argX),
        PT.Compound[
-         userFatalErrorS(ts, P.zero, whatFun, errCode, P.zero, [])
+         userFatalErrorS(pdc, P.zero, whatFun, errCode, P.zero, [])
        ])]
 
-  fun errAccReport(ts, outStrmX, prefixX, whatX, nstX, fieldX) = 
-      PT.Call(PT.Id "PDC_nerr_acc_report_internal",[ts, outStrmX, prefixX, whatX, nstX, fieldX])
+  fun errAccReport(pdc, outStrmX, prefixX, whatX, nstX, fieldX) = 
+      PT.Call(PT.Id "PDC_nerr_acc_report_internal",[pdc, outStrmX, prefixX, whatX, nstX, fieldX])
 
 (* Growable buffers *)
-  fun zeroMM(ts:PT.expression) = 
-    PT.Call(PT.Id "PDC_rmm_zero", [ts])
-  fun nonZeroMM(ts:PT.expression) = 
-    PT.Call(PT.Id "PDC_rmm_nozero", [ts])
+  fun zeroMM(pdc:PT.expression) = 
+    PT.Call(PT.Id "PDC_rmm_zero", [pdc])
+  fun nonZeroMM(pdc:PT.expression) = 
+    PT.Call(PT.Id "PDC_rmm_nozero", [pdc])
 
   fun newRBufE(mm:PT.expression) = 
     PT.Call(PT.Id "RMM_new_rbuf", [mm])
 
   fun chkNewRBufS(whatFun, rBufV: PT.expression, zero: bool,
-		    ts:PT.expression) = 
-    let val rBufX = newRBufE(if zero then zeroMM(ts) else nonZeroMM(ts))
+		    pdc:PT.expression) = 
+    let val rBufX = newRBufE(if zero then zeroMM(pdc) else nonZeroMM(pdc))
     in
 	[PT.IfThen(
 	  P.eqX(P.zero, rBufV),
@@ -158,30 +158,30 @@ struct
 	   [ P.assignS(rBufV, rBufX),
 	     PT.IfThen(P.eqX(P.zero, rBufV),
 		       PT.Compound[
-			  userFatalErrorS(ts, P.zero, whatFun, PDC_ALLOC_FAILURE, PT.String "", [])
+			  userFatalErrorS(pdc, P.zero, whatFun, PDC_ALLOC_FAILURE, PT.String "", [])
 				   ])])]
     end
 
-  fun reserveE(ts:PT.expression, 
+  fun reserveE(pdc:PT.expression, 
 		rbuf:PT.expression, buf:PT.expression, sizeX:PT.expression, 
 		numElementsX:PT.expression,growHintX:PT.expression) = 
    PT.Call(PT.Id "RBuf_reserve", 
 	   [rbuf, PT.Cast(P.voidPtrPtr, buf), sizeX, numElementsX, growHintX ])
 
-  fun chkReserveSs(ts, whatFun, rbuf,buf,sizeX,numElementsX,growHintX) = 
-      let val reserveX = reserveE(ts,rbuf,buf,sizeX,numElementsX,growHintX)
+  fun chkReserveSs(pdc, whatFun, rbuf,buf,sizeX,numElementsX,growHintX) = 
+      let val reserveX = reserveE(pdc,rbuf,buf,sizeX,numElementsX,growHintX)
       in
-	  chkIntErrorSs(ts,reserveX,whatFun,PDC_ALLOC_FAILURE)
+	  chkIntErrorSs(pdc,reserveX,whatFun,PDC_ALLOC_FAILURE)
       end
 
-  fun freeRBufferE(ts, prbuf:PT.expression, ppbuf:PT.expression) = 
+  fun freeRBufferE(pdc, prbuf:PT.expression, ppbuf:PT.expression) = 
      PT.Call(PT.Id "RMM_free_rbuf_keep_buf", [prbuf, PT.Cast(P.voidPtrPtr, ppbuf), P.zero])
 
-  fun chkFreeRBufferS(ts, whatFun, prbuf:PT.expression, ppbuf:PT.expression) = 
+  fun chkFreeRBufferS(pdc, whatFun, prbuf:PT.expression, ppbuf:PT.expression) = 
     PT.IfThen(
-      P.neqX(P.zero,freeRBufferE(ts, prbuf,ppbuf)),
+      P.neqX(P.zero,freeRBufferE(pdc, prbuf,ppbuf)),
       PT.Compound[
-         userFatalErrorS(ts, P.zero, whatFun, PDC_ALLOC_FAILURE, 
+         userFatalErrorS(pdc, P.zero, whatFun, PDC_ALLOC_FAILURE, 
 			 PT.String "Couldn't free growable buffer.", [])]
     )
 
@@ -189,11 +189,11 @@ struct
    (* int       RMM_free_rbuf(RBuf_t* rbuf); *)
      PT.Call(PT.Id "RMM_free_rbuf", [prbuf])
 
-  fun chkCFreeRBufferS(ts, whatFun, prbuf:PT.expression) = 
+  fun chkCFreeRBufferS(pdc, whatFun, prbuf:PT.expression) = 
     PT.IfThen(
       P.neqX(P.zero,cfreeRBufferE(prbuf)),
       PT.Compound[
-         userFatalErrorS(ts, P.zero, whatFun, PDC_ALLOC_FAILURE, 
+         userFatalErrorS(pdc, P.zero, whatFun, PDC_ALLOC_FAILURE, 
 			 PT.String "Couldn't free growable buffer", [])]
     )
 
@@ -202,59 +202,59 @@ struct
     PT.Expr(PT.Call(PT.Id "RBuf_CPY_SRC2DEST", [psrcRbuf, pdstRbuf, destX, size, mm]))
 
 (* -- File manipulation routines *)
-  fun getLocS(ts:PT.expression, locAddr:PT.expression) = 
-    PT.Expr(PT.Call(PT.Id "PDC_IO_getLoc", [ts, locAddr, P.zero]))
+  fun getLocS(pdc:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDC_IO_getLoc", [pdc, locAddr, P.zero]))
 
-  fun getLocBeginS(ts:PT.expression, locAddr:PT.expression) = 
-    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocB", [ts, locAddr, P.zero]))
+  fun getLocBeginS(pdc:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocB", [pdc, locAddr, P.zero]))
 
-  fun getLocEndS(ts:PT.expression, locAddr:PT.expression, offset:int) = 
-    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocE", [ts, locAddr,P.intX offset]))
+  fun getLocEndS(pdc:PT.expression, locAddr:PT.expression, offset:int) = 
+    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocE", [pdc, locAddr,P.intX offset]))
 
-  fun isEofX(ts:PT.expression) = 
-    PT.Call(PT.Id "PDC_IO_at_EOF", [ts])
+  fun isEofX(pdc:PT.expression) = 
+    PT.Call(PT.Id "PDC_IO_at_EOF", [pdc])
 
-  fun isEorX(ts:PT.expression) = 
-    PT.Call(PT.Id "PDC_IO_at_EOR", [ts])
+  fun isEorX(pdc:PT.expression) = 
+    PT.Call(PT.Id "PDC_IO_at_EOR", [pdc])
 
 (* check point routines *)
-  fun chkPtS(ts:PT.expression, whatFun) =
-    chkError(ts, (PT.Call(PT.Id "PDC_IO_checkpoint", [ts, P.trueX])), (* always speculative *)
+  fun chkPtS(pdc:PT.expression, whatFun) =
+    chkError(pdc, (PT.Call(PT.Id "PDC_IO_checkpoint", [pdc, P.trueX])), (* always speculative *)
 	     whatFun,
 	     PDC_CHKPOINT_FAILURE)
 
-  fun getSpecLevelX(ts:PT.expression) =
-     PT.Call(PT.Id "PDC_spec_level", [ts])
+  fun getSpecLevelX(pdc:PT.expression) =
+     PT.Call(PT.Id "PDC_spec_level", [pdc])
 
-  fun commitS(ts:PT.expression, whatFun) =
-    chkError(ts, (PT.Call(PT.Id "PDC_IO_commit", [ts])),
+  fun commitS(pdc:PT.expression, whatFun) =
+    chkError(pdc, (PT.Call(PT.Id "PDC_IO_commit", [pdc])),
 	     whatFun,
 	     PDC_COMMIT_FAILURE)
 
-  fun restoreS(ts:PT.expression, whatFun) =
-    chkError(ts, (PT.Call(PT.Id "PDC_IO_restore", [ts])),
+  fun restoreS(pdc:PT.expression, whatFun) =
+    chkError(pdc, (PT.Call(PT.Id "PDC_IO_restore", [pdc])),
 	     whatFun,
 	     PDC_RESTORE_FAILURE)
 
 
-  fun readFunX(n:string, ts:PT.expression, loc:PT.expression, 
+  fun readFunX(n:string, pdc:PT.expression, loc:PT.expression, 
 	                 optArgs: PT.expression list,
 			 ed:PT.expression, 
 	                 res:PT.expression) = 
-      PT.Call(PT.Id n, [ts, loc] @ optArgs @[ed,res])
+      PT.Call(PT.Id n, [pdc, loc] @ optArgs @[ed,res])
 
   fun readFunChkX(expectedValX : PT.expression,
-		  n:string, ts:PT.expression, 
+		  n:string, pdc:PT.expression, 
 		  loc:PT.expression, optArgs:PT.expression list,
 		  ed:PT.expression, 
 	          res:PT.expression) = 
-      P.eqX(expectedValX, readFunX(n,ts,loc,optArgs,ed,res))
+      P.eqX(expectedValX, readFunX(n,pdc,loc,optArgs,ed,res))
 
-  fun scanFunX(n:string, ts:PT.expression, c : PT.expression, s : PT.expression,eatLit:PT.expression,
+  fun scanFunX(n:string, pdc:PT.expression, c : PT.expression, s : PT.expression,eatLit:PT.expression,
 	                res:PT.expression, offset:PT.expression) = 
-      PT.Call(PT.Id n, [ts,c,s,eatLit,res,offset])
+      PT.Call(PT.Id n, [pdc,c,s,eatLit,res,offset])
 
-  fun IONextRecX(ts, namp) = PT.Call(PT.Id "PDC_IO_next_rec", [ts, namp])
+  fun IONextRecX(pdc, namp) = PT.Call(PT.Id "PDC_IO_next_rec", [pdc, namp])
 
   fun nstPrefixWhat(outstr, pnst, prefix, what) = 
       PT.Expr(PT.Call(PT.Id "PDCI_nst_prefix_what", [outstr, pnst, prefix, what]))

@@ -3,7 +3,7 @@ structure PBaseTys =
 struct
    type baseInfoTy = {padsname : Atom.atom, 
 		      repname  : Atom.atom, 
-                      emname   : Atom.atom,
+                      csmname  : Atom.atom,
                       edname   : Atom.atom,
   		      readname : Atom.atom,
 		      scanname : Atom.atom option,
@@ -15,7 +15,7 @@ struct
 
    fun printEntry {padsname : Atom.atom, 
 		      repname  : Atom.atom, 
-                      emname   : Atom.atom,
+                      csmname  : Atom.atom,
                       edname   : Atom.atom,
   		      readname : Atom.atom,
 		      scanname : Atom.atom option,
@@ -25,7 +25,7 @@ struct
 		      endian   : bool} = (
     (print (String.concat["padsname = ", (Atom.toString padsname), "\n"]));
     (print (String.concat["repname = ", Atom.toString repname, "\n"]));
-    (print (String.concat["emname = ", Atom.toString emname, "\n"]));
+    (print (String.concat["csmname = ", Atom.toString csmname, "\n"]));
     (print (String.concat["edname = ", Atom.toString edname, "\n"]));
     (print (String.concat["readname = ", Atom.toString readname, "\n"]));
     (print (String.concat["scanname = ", case scanname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
@@ -49,7 +49,7 @@ struct
 	       val r = if (List.length fields >=10 ) then 
 	               [{padsname = Atom.atom(List.nth(fields,0)),
 			 repname  = Atom.atom(List.nth(fields,1)),
-			 emname   = Atom.atom(List.nth(fields,2)),
+			 csmname  = Atom.atom(List.nth(fields,2)),
 			 edname   = Atom.atom(List.nth(fields,3)),
 			 readname = Atom.atom(List.nth(fields,4)),
 			 scanname = if List.nth(fields,5) = "-" then NONE
