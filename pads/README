@@ -30,8 +30,8 @@ For sh/ksh/bash users:
   export PADS_HOME=/home/fred/pads
   . $PADS_HOME/scripts/Q_DO_SETENV.sh
 
-Install link to SML runtime environment:
-  Follow instructions in $(PADS_HOME)/binlinks/README
+Install link to SML runtime environment in $PADS_HOME/binlinks
+  Follow instructions in $PADS_HOME/binlinks/README
 
 STEP 2: BUILD AND INSTALL libast
 

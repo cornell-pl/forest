@@ -6,6 +6,21 @@ my $odir = $ARGV[1];
 my $pads_home = $ARGV[2];
 my $sdir = "$pads_home/scripts";
 
+my $cc;
+chomp($cc = $ENV{'CC'});
+if (length($cc) == 0) {
+  chomp($cc = `which gcc 2>/dev/null`);
+}
+if (length($cc) == 0) {
+  chomp($cc = `which cc 2>/dev/null`);
+}
+if (length($cc) == 0) {
+  print "\n** No environment variable CC, and no gcc or cc in your path.\n** Please fix and re-run make.\n\n";
+  exit -1;
+}
+
+my $cc_include =  "-I $pads_home/padsc/include";
+
 open(IFILE, $ifilename) || die "Could not open input file $ifilename\n";
 
 $defgen = 0;
@@ -53,7 +68,7 @@ top: while (<IFILE>) {
     die "BEGIN_TRAILER not found while building $mgenfile";
   begin_macgen_trailer:
     close(MGTMPFILE);
-    $cmd = "cc -E $odir/tmp2.$mgenfile | $sdir/addnl.pl | cat >> $odir/tmp1.$mgenfile 2>&1";
+    $cmd = "$cc -E $odir/tmp2.$mgenfile $cc_include | $sdir/addnl.pl | cat >> $odir/tmp1.$mgenfile 2>&1";
     $res = `$cmd`;
     if ($res =~ /ERROR/) {
       die "Error running command $cmd\n";
