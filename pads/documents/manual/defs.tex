@@ -178,10 +178,13 @@
 \newcommand{\sbLine}[1]{\padstype{Psbl\_#1} & \padstype{Psbh\_#1} \\[.1ex] \hline}
 \newcommand{\sbEnd}{\end{tabular}}
 
-\newcommand{\cBegin}{\begin{tabular}{|l|l|} \hline \mccb{EBC} & \mccb{BCD} \\[.1ex] \hline}
-\newcommand{\cLine}[1]{\padstype{Pebc\_#1} & \padstype{Pbcd\_#1} \\[.1ex] \hline}
-\newcommand{\cEnd}{\end{tabular}}
+\newcommand{\ebcBegin}{\begin{tabular}{|l|} \hline \mccb{EBC}  \\[.1ex] \hline}
+\newcommand{\ebcLine}[1]{\padstype{Pebc\_#1}  \\[.1ex] \hline}
+\newcommand{\ebcEnd}{\end{tabular}}
 
+\newcommand{\bcdBegin}{\begin{tabular}{|l|} \hline \mccb{BCD} \\[.1ex] \hline}
+\newcommand{\bcdLine}[1]{ \padstype{Pbcd\_#1} \\[.1ex] \hline}
+\newcommand{\bcdEnd}{\end{tabular}}
 
 
 \newcommand{\tskip}{\myvskip{1ex}}

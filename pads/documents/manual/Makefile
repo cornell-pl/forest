@@ -44,8 +44,9 @@ all:	docode manual
 
 all_check:	clean code
 
-clean:	
+clean:
 	rm -rf *.aux *.bbl *.log *.blg *.dvi *.ps *.pdf *.toc
+	cp logo.pdf.keep logo.pdf
 
 docode:	extract
 	echo Generating code for manual

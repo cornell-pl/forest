@@ -222,8 +222,6 @@ are used to specify letters A and B.
 \aedLine{countXtoY}
 \aedEnd{}
 
-{\bf TODO: format the type names and the param names.}
-
 Unlike all other base types, these counting base types
 never advance the IO cursor.  You can think of these types as
 ``peeking ahead'' to see how many occurrences of a given character
@@ -231,11 +229,11 @@ appear forward of the current IO cursor position.
 
 The PcountX types count the number of occurences of character X
 between the current IO cursor position and the fist EOR (end of
-record) or EOF (end of file).  They take three parameters, x,
-eor\_required, and count\_max.  x is the character to count.  If
-eor\_required is non-zero, then encountering EOF before EOR produces
-an error.  If count\_max is non-zero, EOR/EOF must be encountered
-before scanning count\_max characters, otherwise an error is returned.
+record) or EOF (end of file).  They take three parameters, \cd{x},
+\cd{eor_required}, and \cd{count_max}.  \cd{x} is the character to count.  If
+\cd{eor_required} is non-zero, then encountering EOF before EOR produces
+an error.  If \cd{count_max} is non-zero, EOR/EOF must be encountered
+before scanning \cd{count_max} characters, otherwise an error is returned.
 For example,
 
 \inputCode{code/countX}
@@ -603,8 +601,8 @@ read as ASCII chars.
 The expected input for these types is an optional sign character
 followed by a sequence of digits.  The number of characters that make
 the input is variable: after the first digit, the digits are read
-until (but not including) the first non-digit or EOF/EOF.
-If the \pads discipline field
+until (but not including) the first non-digit or EOR/EOF.
+If the \pads{} discipline field
 \cd{disc->flags} has the \cd{WSPACE\_OK} flag set, then
 leading whitespace is allowed.
 
@@ -653,7 +651,7 @@ in the data.  For example, consider this header definition:
 \noindent
 This \padsl{} description indicates the first value in the header
 is a 2-byte unsigned binary integer, \cd{version},
-whose value should be less than ten0.   The \cd {Pendian} annotation indicates that there
+whose value should be less than ten.   The \cd {Pendian} annotation indicates that there
 should be two attempts at reading the version field: once with the
 current \cd{disc->d\_endian} setting, and (if the read fails) once with the
 opposite \cd{disc->d\_endian} setting.  If the second read succeeds, then
@@ -679,30 +677,133 @@ setting, the result is a value that is much greater than ten. )
 \sbLine{uint64}
 \bEnd{}
 
+These types describe signed or unsigned binary integers
+that have been encoded with a specified number of bytes $K$.
+For the \cd{PPsbl\_} types, the first byte on the input
+stream is treated as the low-order byte of the $K$ byte value,
+For the \cd{PPsbh\_} types, the first byte on the input
+stream is treated as the high-order byte of the $K$ byte value,
+For example, \cd{Psbl\_int32(:3:)} describes a 3 byte
+binary encoding where the first byte encountered is the
+low-order byte.
 
-\subsection{EBC and BCD encoding}
+These types are more general than the simpler \cd{Pb\_} types because
+you explicitly specify the number of bytes (from 1 to 8) independently
+of the target in-memory type, allowing for types such as the
+\cd{Psbl\_int32(:3:)} type just described.  These types
+also explicitly specify the endian-ness of the data bytes,
+rather than using \cd{disc->d\_endian}.
 
-\cBegin{}
-\cLine{int8}
-\cLine{int16}
-\cLine{int32}
-\cLine{int64}
-\cLine{uint8}
-\cLine{uint16}
-\cLine{uint32}
-\cLine{uint64}
-\cEnd{}
+The following table shows those cases where serialized
+binary types have equivalent simple binary types.
 
+\begin{tabular}{l|l|l} \\ \hline
+{\bf Serialized}       & \multicolumn{2}{|c|}{\bf Equivalent type if} \\
+{\bf Binary}           & \multicolumn{2}{|c|}{\cd{disc->d\_endian} \bf is}  \\
+{\bf Type}             & {\bf PlittleEndian} & {\bf PbigEndian}       \\ \hline \hline
+\cd{Psbl\_int8(:1:)}   &                     & \cd{Pb\_int8}          \\ \hline
+\cd{Psbl\_int16(:2:)}  &                     & \cd{Pb\_int16}         \\ \hline
+\cd{Psbl\_int32(:4:)}  &                     & \cd{Pb\_int32}         \\ \hline
+\cd{Psbl\_int64(:8:)}  &                     & \cd{Pb\_int64}         \\ \hline
+\cd{Psbl\_uint8(:1:)}  &                     & \cd{Pb\_uint8}         \\ \hline
+\cd{Psbl\_uint16(:2:)} &                     & \cd{Pb\_uint16}        \\ \hline
+\cd{Psbl\_uint32(:4:)} &                     & \cd{Pb\_uint32}        \\ \hline
+\cd{Psbl\_uint64(:8:)} &                     & \cd{Pb\_uint64}        \\ \hline \hline
+
+\cd{Psbh\_int8(:1:)}   &  \cd{Pb\_int8}      &                        \\ \hline
+\cd{Psbh\_int16(:2:)}  &  \cd{Pb\_int16}     &                        \\ \hline
+\cd{Psbh\_int32(:4:)}  &  \cd{Pb\_int32}     &                        \\ \hline
+\cd{Psbh\_int64(:8:)}  &  \cd{Pb\_int64}     &                        \\ \hline
+\cd{Psbh\_uint8(:1:)}  &  \cd{Pb\_uint8}     &                        \\ \hline
+\cd{Psbh\_uint16(:2:)} &  \cd{Pb\_uint16}    &                        \\ \hline
+\cd{Psbh\_uint32(:4:)} &  \cd{Pb\_uint32}    &                        \\ \hline
+\cd{Psbh\_uint64(:8:)} &  \cd{Pb\_uint64}    &                        \\ \hline
+\end{tabular}
+
+\subsection{EBC encoding}
+
+\ebcBegin{}
+\ebcLine{int8}
+\ebcLine{int16}
+\ebcLine{int32}
+\ebcLine{int64}
+\ebcLine{uint8}
+\ebcLine{uint16}
+\ebcLine{uint32}
+\ebcLine{uint64}
+\ebcEnd{}
+
+These types describe signed or unsigned EBCDIC numeric encoded
+integers with a specified number of digits.  {\bf N.B.:} the specified
+number of digits must be odd if the value on disk can be negative.
+For example, \cd{Pebc_int32(:5:)} describes a 5 digit signed
+integer.
+
+Each byte on disk encodes one digit (using the low 4 bits).  For signed
+values, the final byte encodes the sign (high 4 bits \cd{==} \cd{0xD} for negative).
+E.g., a signed or unsigned 5 digit value is encoded in 5 bytes.
+
+The legal range of values for the number of digits, \cd{num_digits},
+depends on target type:
+\begin{tabular}{l|l|l} \\ \hline
+{\bf Type}    &  {\bf num\_digits} &  {\bf Min / Max values} \\ \hline \hline
+\cd{Pint8}    &  $1-3$             &  \cd{P_MIN_INT8}  / \cd{P_MAX_INT8}    \\ \hline
+\cd{Puint8}   &  $1-3$             &  \cd{0}           / \cd{P_MAX_UINT8}   \\ \hline
+\cd{Pint16}   &  $1-5$             &  \cd{P_MIN_INT16} / \cd{P_MAX_INT16}   \\ \hline
+\cd{Puint16}  &  $1-5$             &  \cd{0}           / \cd{P_MAX_UINT16}  \\ \hline
+\cd{Pint32}   &  $1-10$            &  \cd{P_MIN_INT32} / \cd{P_MAX_INT32}   \\ \hline
+\cd{Puint32}  &  $1-10$            &  \cd{0}           / \cd{P_MAX_UINT32}  \\ \hline
+\cd{Pint64}   &  $1-19$            &  \cd{P_MIN_INT64} / \cd{P_MAX_INT64}   \\ \hline
+\cd{Puint64}  &  $1-20$            &  \cd{0}           / \cd{P_MAX_UINT64}  \\ \hline
+\end{tabular}
+
+\subsection{BCD encoding}
+
+\bcdBegin{}
+\bcdLine{int8}
+\bcdLine{int16}
+\bcdLine{int32}
+\bcdLine{int64}
+\bcdLine{uint8}
+\bcdLine{uint16}
+\bcdLine{uint32}
+\bcdLine{uint64}
+\bcdEnd{}
+
+These types describe signed or unsigned BCD numeric encoded
+integers with a specified number of digits.  {\bf N.B.:} the specified
+number of digits must be odd if the value on disk can be negative.
+For example, \cd{Pbcd_int32(:5:)} describes a 5 digit signed
+integer.
+
+Each byte on disk encodes two digits, 4 bits per digit.  For signed
+values, a negative number is encoded by having number of digits be odd
+so that the remaining low 4 bits in the last byte are available for
+the sign.  (low 4 bits \cd{==} \cd{0xD} for negative).  A signed or
+unsigned 5 digit value is encoded in 3 bytes, where the unsigned value
+ignores the final 4 bits and the signed value uses them to get the
+sign.
+
+The legal range of values for the number of digits, \cd{num_digits},
+depends on target type:
+\begin{tabular}{l|l|l} \\ \hline
+{\bf Type}    &  {\bf num\_digits} &  {\bf Min / Max values} \\ \hline \hline
+\cd{Pint8}    &  $1-3$             &  \cd{P_MIN_INT8}  / \cd{P_MAX_INT8}    \\ \hline
+\cd{Puint8}   &  $1-3$             &  \cd{0}           / \cd{P_MAX_UINT8}   \\ \hline
+\cd{Pint16}   &  $1-5$             &  \cd{P_MIN_INT16} / \cd{P_MAX_INT16}   \\ \hline
+\cd{Puint16}  &  $1-5$             &  \cd{0}           / \cd{P_MAX_UINT16}  \\ \hline
+\cd{Pint32}   &  $1-11${\bf **}    &  \cd{P_MIN_INT32} / \cd{P_MAX_INT32}   \\ \hline
+\cd{Puint32}  &  $1-10$            &  \cd{0}           / \cd{P_MAX_UINT32}  \\ \hline
+\cd{Pint64}   &  $1-19$            &  \cd{P_MIN_INT64} / \cd{P_MAX_INT64}   \\ \hline
+\cd{Puint64}  &  $1-20$            &  \cd{0}           / \cd{P_MAX_UINT64}  \\ \hline
+\end{tabular}
+{\bf ** Note:} For type \cd{Pbcd_int32} only, even though the min and
+max int32 have 10 digits, we allow \cd{num_digits} \cd{== 11} due to the fact
+that 11 is required for a 10 digit negative value.  (An actual 11
+digit number would cause a range error, so the leading digit must be
+0.)
 
 \section{Floating Point Base Types}
-
-\subsection{Fixed-width character-based encoding}
-
-\aedBegin{}
-\aedLine{float32\_FW}
-\aedLine{float64\_FW}
-\aedEnd{}
-
 
 
 \subsection{Variable-width character-based encoding}
@@ -712,24 +813,40 @@ setting, the result is a value that is much greater than ten. )
 \aedLine{float64}
 \aedEnd{}
 
+These types describe ASCII or EBCDIC character-based encodings of floating point numbers.
+The input representation must have this form:
+\begin{centercode}
+    [+|-]DIGITS[.][DIGITS][(e|E)[+|-]DIGITS]
+\end{centercode}
+Where \cd{DIGITS} is a sequence of one or more digit characters,
+\cd{(e|E)} indicates either a lower- or upper-case letter 'E',
+and elements in square brackets are optional.  Note that there
+must be at least one digit before the (optional) dot (period) character.
 
-\subsection{Raw binary encoding}
-
-\bBegin{}
-\bLine{float32}
-\bLine{float64}
-\bEnd{}
-
-
-\subsection{Serialized binary encoding}
-
-\sbBegin{}
-\sbLine{float32}
-\sbLine{float64}
-\sbEnd{}
-
+If the input has a valid sequence of input characters that make up a float,
+then the float is converted to a \cd{Pfloat32} or \cd{Pfloat64}, according
+to the type.  For example, if you specify a \cd{Pa_float32} then
+a characters making up a float will be read from the input and converted
+to an in-memory \cd{Pfloat32}.
 
 \section{Fixed Point Base Types}
+
+The following types encode a numerator value on the input stream
+in different formats, as described below.  They all
+produce an in-memory \cd{Pfpoint} value whose denominator is
+determined from the second type argument, \cd{d_exp}, where the
+denominator is implicitly $10^{d_exp}$ and is not encoded on
+disk.
+
+The legal range of values for \cd{d_exp} depends on the target
+in-memory type:
+\begin{tabular}{l|l|r} \\ \hline
+{\bf Type}                 & {\bf d\_exp}  & {\bf Max denominator (min is 1)}   \\ \hline \hline
+\cd{Pfpoint8  /  ufpoint8} &   $0-2$   &                          \cd{100}  \\ \hline
+\cd{Pfpoint16 / ufpoint16} &   $0-4$   &                       \cd{10,000}  \\ \hline
+\cd{Pfpoint32 / ufpoint32} &   $0-9$   &                \cd{1,000,000,000}  \\ \hline
+\cd{Pfpoint64 / ufpoint64} &   $0-19$  &   \cd{10,000,000,000,000,000,000}  \\ \hline
+\end{tabular}
 
 \subsection{Serialized binary encoding}
 
@@ -744,17 +861,78 @@ setting, the result is a value that is much greater than ten. )
 \sbLine{ufpoint64}
 \bEnd{}
 
+These types describe fixed-point numbers where the numerator is
+encoded in serialized binary form on the input stream.  Serialized
+binary encodings are described above for the \cd{Psbl_} and \cd{Psbh_}
+integer types.  Like those integer types, the number of bytes on the
+input is specified as the first type argument.  The legal range
+of values for the number of bytes depends on target type, and follows
+the same rule specified for the \cd{Psbl_} and \cd{Psbh_} integer types.
 
-\subsection{EBC and BCD encoding}
+Each type takes a second argument,
+\cd{d_exp}, where the denominator value
+is implicitly $10^{d_exp}$ and is not encoded on disk.  For example,
+\cd{sbl_fpoint32(:3, 2:)} specifies that a numererator is encoded on the
+input as a three binary bytes with the low-order byte appearing first,
+where the resulting in-memory
+\cd{Pfpoint32} has the value read from the input as its numerator, and
+the number $10^2$ (i.e., $100$) as its denominator.
 
-\cBegin{}
-\cLine{fpoint8}
-\cLine{fpoint16}
-\cLine{fpoint32}
-\cLine{fpoint64}
-\cLine{ufpoint8}
-\cLine{ufpoint16}
-\cLine{ufpoint32}
-\cLine{ufpoint64}
-\cEnd{}
+\subsection{EBC encoding}
+
+\ebcBegin{}
+\ebcLine{fpoint8}
+\ebcLine{fpoint16}
+\ebcLine{fpoint32}
+\ebcLine{fpoint64}
+\ebcLine{ufpoint8}
+\ebcLine{ufpoint16}
+\ebcLine{ufpoint32}
+\ebcLine{ufpoint64}
+\ebcEnd{}
+
+These types describe fixed-point numbers where the numerator is
+encoded as EBCDIC numeric digits on the input stream.  This encoding
+is described above for the \cd{Pebc_} integer types.  Like those
+integer types, the number of digits on the input is specified as the first
+type argument.  The legal range of values for the number of
+digits depends on target type, and follows the same rule specified for
+the \cd{Pebc_} integer types.
+
+Each type takes a second argument,
+\cd{d_exp}, where the denominator value
+is implicitly $10^{d_exp}$ and is not encoded on disk.  For example,
+\cd{ebc_fpoint32(:3, 2:)} specifies that a numererator is encoded on the
+input as three EBCDIC digits, where the resulting in-memory
+\cd{Pfpoint32} has the value read from the input as its numerator, and
+the number $10^2$ (i.e., $100$) as its denominator.
+
+\subsection{BCD encoding}
+
+\bcdBegin{}
+\bcdLine{fpoint8}
+\bcdLine{fpoint16}
+\bcdLine{fpoint32}
+\bcdLine{fpoint64}
+\bcdLine{ufpoint8}
+\bcdLine{ufpoint16}
+\bcdLine{ufpoint32}
+\bcdLine{ufpoint64}
+\bcdEnd{}
+
+These types describe fixed-point numbers where the numerator is
+encoded as BCD numeric digits on the input stream.  This encoding
+is described above for the \cd{bcd_} integer types.  Like those
+integer types, the number of digits on the input is specified as the first
+type argument.  The legal range of values for the number of
+digits depends on target type, and follows the same rule specified for
+the \cd{bcd_} integer types.
+
+Each type takes a second argument,
+\cd{d_exp}, where the denominator value
+is implicitly $10^{d_exp}$ and is not encoded on disk.  For example,
+\cd{bcd_fpoint32(:3, 2:)} specifies that a numererator is encoded on the
+input as three BCD digits, where the resulting in-memory
+\cd{Pfpoint32} has the value read from the input as its numerator, and
+the number $10^2$ (i.e., $100$) as its denominator.
 
