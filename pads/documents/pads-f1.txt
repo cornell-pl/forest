@@ -2,37 +2,63 @@ PADS: Processing Arbitrary Data Streams
 ---------------------------------------
 Joint work with [Kathleen Fisher|Bob Gruber]
 
-Data feeds are the lifeblood of many highly valuable AT&T research
-projects.  The goal of the PADS project is to provide languages and
-tools for simplifying data stream processing.  We have a preliminary
-design of a declarative data-description language, PADSL, expressive
-enough to describe the data feeds used by AT&T, including ASCII,
-binary, and mixed data.  From PADSL we generate a tunable C library
-with functions for parsing, manipulating, and summarizing the data.
-The library is immediately useful for those who write C programs to
-analzye data.  Our next steps include using the library as input to
-tools that query and aggregate data.
+Data streams are the lifeblood of many highly valuable AT\&T Research
+projects.  Unfortunately, many streams are in legacy formats over
+which we have no control.  Understanding a new data feed and writing a
+suitable parser are difficult tasks, both tedious and error-prone.
+Often, the hard-won understanding of the data ends up embedded in
+parsing code, making long-term maintenance difficult for the original
+writer and sharing the knowledge with others nearly impossible.  
+After talking with data analysts such as Chris Volinsky and David
+Poole, and systems builders such as Glenn Fowler and Andrew Hume, and
+drawing on Kathleen's/my experiences with Hancock, we started the PADS
+project to simplify data stream processing.  
+The vision of the PADS project is to provide a declarative
+data-description language, from which we generate a C library with
+routines for reading, writing, and summarizing the data, and various
+high-level tools for manipulating and querying the data.
 
-The PADS project provides a common meeting ground to bring together
-the tools and knowledge of many other researchers.  Some specific
-examples:
+We designed such a language, called PADSL, for describing ASCII,
+binary, and mixed data formats.  It is expressive enough to describe
+many data formats, including web log, Netflow, BGP, and Dibbler data. 
+We built a PADSL compiler (\texttt{padsc}) that generates a tunable C 
+library with functions for parsing, manipulating, and summarizing the
+data.  We plan to add functions for writing the data in various
+formats.  The generated code uses a core library (\texttt{libpadsc})
+that provides shared infrastructure.
 
-  * We're working with Andrew Hume on fast characterization
-    of data files that have COBOL codebooks.  Hume is working on a
-    codebook to PADSL tool.
+Libraries generated from PADSL descriptions are immediately useful for
+people who write C programs to analyze data.  Even before implementing a
+number of planned optimizations, PADS programs are roughly twice as
+fast as comparable Perl programs.  Longer term, we will use the
+generated libraries to construct declarative interfaces
+to PADSL data sources.
 
-  * We plan to work with Mary Fernandez on querying PADS-parsed data
-    using XML-query, *without* materializing the data
-    as XML data.
+The project provides a common meeting ground for integrating the tools
+and knowledge of many other researchers.  Some specific examples:
 
-  * We are meeting with Ted Johnson (HB84) to explore incorporation of his
-    data summary and correlation work.
+  * We are working with Andrew Hume to generate programs that
+    characterize data files that have COBOL copybooks.  Hume is
+    writing a copybook to PADSL translator.
+  
+  * We are working with Glenn Fowler and David Korn to support
+    command-line (\texttt{dss}) and scripting (\texttt{ksh}) interfaces to PADSL data. 
 
-  * We plan to support statisticians such as David Poole with scripting
-    tools, so that they can express queries and desired plots declaratively,
-    in one place, and automatically get parsing, filtering, and input into S+
-    analysis and plotting -- no coding required.
+  * We are exploring with Mary Fernandez the use of XQuery to query
+    PADSL data \textit{without} materializing that data as XML.
 
-Finally, by providing a means of describing all of Research's incoming
-data streams using a common language, we open the possibility of
+  * We are meeting with Ted Johnson (HB84) to explore incorporating his
+    data summary and correlation work into our summarizers.
+
+  * We plan to work with David Poole to develop scripting tools so
+    that data analysts can express queries and desired plots
+    declaratively and get parsing, filtering, and aggregated input
+    into S+ automatically, without any coding.
+
+Finally, by providing a means to describe all of Research's incoming
+data streams in a common language, we open the possibility of
 correlating and integrating the data from these streams.
+
+We gave a cookie talk on 11/19 to get early feedback on the design of
+PADSL and the generated library.  
+
