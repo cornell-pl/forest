@@ -2,6 +2,8 @@
 
 use Getopt::Long;
 
+my @include_dirs = ();
+
 # =========================
 sub readFile
 {
@@ -12,6 +14,26 @@ sub readFile
     $data = <IN_FILE>;
     $/ = "\n";
     close( IN_FILE );
+    return $data;
+}
+
+# =========================
+sub expandFile
+{
+    my( $name ) = @_;
+    my $incs = "";
+    my $incs = "-I" . join(" -I", @include_dirs) if @include_dirs;
+    # print "\n\nXXX_REMOVE incs = $incs\n\n";
+    my $data = `cc -x c -E $name $incs` || "";
+    if ($data eq "") {
+      # print "\nXXX_REMOVE cc command failed\n\n";
+    }
+    # print "\nXXX_REMOVE data = [$data]\n\n";
+    $data =~ s/^\#\s+\d+\s+(.*)$//mg;
+    while ($data =~ m/\n\n\n/) {
+      $data =~ s/\n\n\n/\n\n/;
+    }
+    # print "\nXXX_REMOVE mod data = [$data]\n\n";
     return $data;
 }
 
@@ -27,6 +49,11 @@ if ($pads_home eq "") {
   print "    set PADS_HOME and try again\n\n";
   exit -1;
 }
+my $padsc_cmd = "$pads_home/scripts/padsc";
+my $template_dir = "$pads_home/scripts/templates";
+
+push(@include_dirs, $template_dir);
+push(@include_dirs, ".");
 
 my %opt = ();
 GetOptions( "usage"      => \$usage,
@@ -83,7 +110,7 @@ if (!(-e $pspec)) {
   exit -1;
 }
 
-my $ptext = &readFile($pspec);
+my $ptext = &expandFile($pspec);
 if ($ptext eq "") {
   print "  Could not open pspec file $pspec for reading\n\n";
   exit -1;
@@ -104,26 +131,37 @@ $prefix =~ s|^(.*)/||g;
 $prefix =~ s/.p$//;
 my $schema_trans_file = "$demodir$prefix" . "_schema.transform";
 my $funs_h_trans_file = "$demodir$prefix" . "_funs_h.transform";
+my $funs_c_trans_file = "$demodir$prefix" . "_funs_c.transform";
 my $schema_file = "$demodir$prefix" . ".schema";
 my $funs_h_file = "$demodir$prefix" . "_funs.h";
 my $funs_c_file = "$demodir$prefix" . "_funs.c";
 my $make_file = "$demodir$prefix" . ".mk";
+my $funs_h_file_nopath = $funs_h_file;
+$funs_h_file_nopath =~ s|^(.*)/||g;
 
-my $tfile = "$pads_home/scripts/templates/tr_schema_$template";
-my $ttext = &readFile($tfile);
+my $tfile = "$template_dir/tr_schema_$template";
+my $ttext = &expandFile($tfile);
 if ($ttext eq "") {
   print "  Could not find template file $tfile\n\n";
   exit -1;
 }
 
-$ttext =~ s/PSPEC_FILE/$pspec/g;
-$ttext =~ s/SCHEMA_FILE/$schema_file/g;
-$ttext =~ s/FUNS_H_FILE/$funs_h_file/g;
-$ttext =~ s/FUNS_C_FILE/$funs_c_file/g;
-$ttext =~ s/MAKE_FILE/$make_file/g;
-$ttext =~ s/REC_TYPE/$rectype/g;
-$ttext =~ s/HDR_TYPE/$hdrtype/g if $hdrtype;
+sub doSubs
+{
+  my ( $text ) = @_;
 
+  $text =~ s/PSPEC_FILE/$pspec/g;
+  $text =~ s/SCHEMA_FILE/$schema_file/g;
+  $text =~ s/FUNS_H_FILE/$funs_h_file/g;
+  $text =~ s/FUNS_H_FILE_NOPATH/$funs_h_file_nopath/g;
+  $text =~ s/FUNS_C_FILE/$funs_c_file/g;
+  $text =~ s/MAKE_FILE/$make_file/g;
+  $text =~ s/REC_TYPE/$rectype/g;
+  $text =~ s/HDR_TYPE/$hdrtype/g if $hdrtype;
+  return $text;
+}
+
+$ttext = &doSubs($ttext);
 print "\nCreating $schema_trans_file\n" if ($dbg);
 
 open (TRF, ">$schema_trans_file") or die "\nCould not open temporary file $schema_trans_file for writing\n\n";
@@ -131,26 +169,19 @@ print TRF $ttext;
 close (TRF);
 print "\nDone creating $schema_trans_file\n" if ($dbg);
 
+my $incs = "-I" . join(" -I", @include_dirs) if @include_dirs;
+
 print "\nInvoking padsc on $schema_trans_file\n" if ($dbg);
-my $res = `$pads_home/scripts/padsc -T $schema_trans_file $pspec`;
+my $res = `$padsc_cmd -T $schema_trans_file $incs $pspec`;
 print "\nDone invoking padsc on $schema_trans_file\n\nres=[$res]\n\n" if ($dbg);
 
-
-$tfile = "$pads_home/scripts/templates/tr_funs_h_$template";
-$ttext = &readFile($tfile);
+$tfile = "$template_dir/tr_funs_h_$template";
+$ttext = &expandFile($tfile);
 if ($ttext eq "") {
   print "  Could not find template file $tfile\n\n";
   exit -1;
 }
-
-$ttext =~ s/PSPEC_FILE/$pspec/g;
-$ttext =~ s/SCHEMA_FILE/$schema_file/g;
-$ttext =~ s/FUNS_H_FILE/$funs_h_file/g;
-$ttext =~ s/FUNS_C_FILE/$funs_c_file/g;
-$ttext =~ s/MAKE_FILE/$make_file/g;
-$ttext =~ s/REC_TYPE/$rectype/g;
-$ttext =~ s/HDR_TYPE/$hdrtype/g if $hdrtype;
-
+$ttext = &doSubs($ttext);
 print "\nCreating $funs_h_trans_file\n" if ($dbg);
 
 open (TRF, ">$funs_h_trans_file") or die "\nCould not open temporary file $funs_h_trans_file for writing\n\n";
@@ -159,79 +190,35 @@ close (TRF);
 print "\nDone creating $funs_h_trans_file\n" if ($dbg);
 
 print "\nInvoking padsc on $funs_h_trans_file\n" if ($dbg);
-my $res = `$pads_home/scripts/padsc -T $funs_h_trans_file $pspec`;
+my $res = `$padsc_cmd -T $funs_h_trans_file $incs $pspec`;
 print "\nDone invoking padsc on $funs_h_trans_file\n\nres=[$res]\n\n" if ($dbg);
+
+$tfile = "$template_dir/tr_funs_c_$template";
+$ttext = &expandFile($tfile);
+if ($ttext eq "") {
+  print "  Could not find template file $tfile\n\n";
+  exit -1;
+}
+$ttext = &doSubs($ttext);
+print "\nCreating $funs_c_trans_file\n" if ($dbg);
+
+open (TRF, ">$funs_c_trans_file") or die "\nCould not open temporary file $funs_c_trans_file for writing\n\n";
+print TRF $ttext;
+close (TRF);
+print "\nDone creating $funs_c_trans_file\n" if ($dbg);
+
+print "\nInvoking padsc on $funs_c_trans_file\n" if ($dbg);
+my $res = `$padsc_cmd -T $funs_c_trans_file $incs $pspec`;
+print "\nDone invoking padsc on $funs_c_trans_file\n\nres=[$res]\n\n" if ($dbg);
 
 exit 0;
 
 usage:
-print "\n  Usage:  gigascope_make.pl [options]
-
-    where options are:
-     -u/--usage             : output this usage message
-     -d/--demodir           : directory to write output files (default is current working dir)
-     -p/--pspec <file>      : specify PADS spec file (required)
-     -t/--template <name>   : specify template name (required), see template descriptions below
-     -r/--rectype <type>    : specify main record type (required)
-     -h/--hdrtype <type>    : specify header type (may be required, depends on template)
-     -n/--nrec <expr>       : expression giving # of records following a header
-                              (may be required, depends on template). Use variable global_hdr
-                              in the expression, as in: --nrec=global_hdr.count
-     -m/--maxrecs <#>       : specify max # of record to process (optional)
-     -i/--iodisc <iodisc>   : specify IO discipline (optional)
-                              default is norec, other choices: nlrec, ...
-
-    Template Descriptions
-    =====================
-
-         recs
-         ----
-         Input just contains a sequence of one or more records of type rectype,
-         terminated by end of input.
-
-         hdr_recs
-         --------
-         Input contains a single header of type hdrtype, followed by a sequence of one
-         or more records of type rectype.  If an nrec expression is given, it
-         should give the number of records which follow the header.  Use
-         variable global_hdr (of type hdrtype), as in: --nrec=global_hdr.count
-
-         If no nrec expression is given, the series of records following the
-         header is terminated by end of input.
-
-        hdr_recs_repeat
-        ---------------
-        Input contains one or more groupings, where each grouping consists of
-        a header followed by a sequence of records.  In other words, the input
-        pattern is  
-
-           <header><rec><rec> ... <header><rec><rec> ... <header><rec><rec> ... 
-
-        For this template, the -n/nrec option is required, so that the generated
-        code will know when it is time to read the next header.  Use
-        variable global_hdr (of type hdrtype), as in: --nrec=global_hdr.count
-
-    Output Files
-    ============
-
-        If pspec is foo.p, then the output files are:
-
-           foo.schema    : schema file
-           foo_funs.h    : C declarations of the get functions specified in foo.schema
-           foo_funs.c    : C implementations of the get functions specified in foo.schema
-                           plus the top-level driver functions PADS_INIT, PADS_INPUT_FILE,
-                           PADS_INPUT_BUF, PADS_CLEANUP, PADS_NEXT
-           foo.mk        : a GNUmakefile that builds libpads_foo.a
-
-    Limitations, Known Problems
-    ===========================
-
-        1. Currently, rectype and hdrtype must both be Pstruct types.
-
-        2. The only fields that are reflected in the schema are
-           simple base type fields.  In the future, we should expand
-           nested types and reflect all 'leaf' base type fields
-           as top-level fields in the schema.
-
-";
+$tfile = "$template_dir/gig_mk_usage";
+$ttext = &readFile($tfile);
+if ($ttext eq "") {
+  print "  Could not find usage file $tfile\n\n";
+  exit -1;
+}
+print $ttext;
 exit -1;
