@@ -27,11 +27,16 @@ buint32      PDC_uint32  PDC_base_em   PDC_base_ed          PDC_buint32_read    
 bint32       PDC_int32   PDC_base_em   PDC_base_ed          PDC_bint32_read            -                PDC_int32_acc   4         S
 buint64      PDC_uint64  PDC_base_em   PDC_base_ed          PDC_buint64_read           -                PDC_uint64_acc  8         S
 bint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_bint64_read            -                PDC_int64_acc   8         S
+
+achar        PDC_uint8   PDC_base_em   PDC_base_ed          PDC_buint8_read            -                PDC_uint8_acc   1         S
 astring      PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopChar_read   -                PDC_string_acc  V         V
-PDC_char_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_char_lit_read          PDC_char_lit_scan PDC_uint8_acc  1         S
-PDC_str_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_str_lit_read           PDC_str_lit_scan  PDC_string_acc P         V
 astringFW    PDC_string  PDC_base_em   PDC_base_ed          PDC_string_fw_read         -                 PDC_string_acc P         V
 astringSRE   PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopRegexp_read -                 PDC_string_acc V         V
+
 # adate rep and read function should be based on libast's clock = tmdate(s, &e, (time_t *)0);               
 adate        PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopChar_read   -                 -              V         V
 countXtoY    PDC_int32   PDC_base_em   PDC_base_ed          PDC_countXtoY              -                 -              V         S
+
+# internal only
+PDC_char_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_char_lit_read          PDC_char_lit_scan PDC_uint8_acc  1         S
+PDC_str_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_str_lit_read           PDC_str_lit_scan  PDC_string_acc P         V
