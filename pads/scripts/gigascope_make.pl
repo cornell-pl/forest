@@ -58,6 +58,7 @@ push(@include_dirs, ".");
 my %opt = ();
 GetOptions( "usage"      => \$usage,
             "demodir:s"  => \$demodir,
+            "gigdir:s"   => \$gigdir,
             "pspec:s"    => \$pspec,
 	    "template:s" => \$template,
 	    "rectype:s"  => \$rectype,
@@ -101,6 +102,7 @@ if (!defined($iodisc)) {
 
 if ($dbg) {
   print "  demodir  = $demodir\n"  if $demodir;
+  print "  gigdir   = $gigdir\n"   if $gigdir;
   print "  pspec    = $pspec\n"    if $pspec;
   print "  template = $template\n" if $template;
   print "  rectype  = $rectype\n"  if $rectype;
@@ -121,6 +123,13 @@ if (!defined($demodir)) {
 if ($demodir !~ m|/$|) {
   $demodir .= "/";
 }
+if (!defined($gigdir)) {
+  $gigdir = $demodir . "../../";
+}
+if ($gigdir !~ m|/$|) {
+  $gigdir .= "/";
+}
+my $make_includes = "-I$gigdir" . "include";
 
 if ($iodisc !~ /(norec|nlrec)/) {
   print "  Error: invalid iodisc\n\n" ;
@@ -181,11 +190,17 @@ my $funs_c_tmp_file    = "$demodir$prefix" . "_funs_tmp.c";
 
 my $temp_files = "$schema_trans_file $funs_h_trans_file $funs_c_trans_file $funs_h_tmp_file $funs_c_tmp_file";
 
-# target files
+# gen target files
 my $schema_file        = "$demodir$prefix" . ".schema";
 my $funs_h_file        = "$demodir$prefix" . "_funs.h";
 my $funs_c_file        = "$demodir$prefix" . "_funs.c";
 my $make_file          = "$demodir$prefix" . ".mk";
+
+# makefile target
+my $lib_target         = "libpads_$prefix.a";
+
+# makefile objects for target
+my $lib_target_objs    = $prefix . ".o $prefix" . "_funs.o";
 
 my $funs_h_file_nopath = $funs_h_file;
 $funs_h_file_nopath =~ s|^(.*)/||g;
@@ -205,24 +220,30 @@ sub doSubs
 {
   my ( $text ) = @_;
 
-  $text =~ s/PSPEC_H_FILE/$pspec_h_file/g;
-  $text =~ s/PSPEC_FILE/$pspec/g;
-  $text =~ s/SCHEMA_FILE/$schema_file/g;
-  $text =~ s/FUNS_H_FILE_NOPATH/$funs_h_file_nopath/g;
-  $text =~ s/FUNS_H_GUARD/$funs_h_guard/g;
-  $text =~ s/FUNS_H_FILE/$funs_h_tmp_file/g;
-  $text =~ s/FUNS_C_FILE/$funs_c_tmp_file/g;
-  $text =~ s/MAKE_FILE/$make_file/g;
-  $text =~ s/REC_TYPE/$rectype/g;
-  $text =~ s/HDR_TYPE/$hdrtype/g if $hdrtype;
-  $text =~ s/NREC_EXPR/$nrec/;
-  $text =~ s/MAX_RECS_DEFINE/$max_recs_define/;
-  $text =~ s/IO_DISC_MK_DEFINE/$io_disc_mk{$iodisc}/;
-  $text =~ s/PADS_TY_DEFINE/$pads_ty_define/;
-  $text =~ s/PADS_HDR_TY_DEFINE/$pads_hdr_ty_define/;
-  $text =~ s/TEMPLATE_DEFINE/$template_define/;
-  $text =~ s/WSPACE_OK_DEFINE/$wspace_ok_define/;
+  $text =~ s/=PSPEC_H_FILE=/$pspec_h_file/g;
+  $text =~ s/=PSPEC_FILE=/$pspec/g;
+  $text =~ s/=SCHEMA_FILE=/$schema_file/g;
+  $text =~ s/=FUNS_H_FILE_NOPATH=/$funs_h_file_nopath/g;
+  $text =~ s/=FUNS_H_GUARD=/$funs_h_guard/g;
+  $text =~ s/=FUNS_H_FILE=/$funs_h_tmp_file/g;
+  $text =~ s/=FUNS_C_FILE=/$funs_c_tmp_file/g;
+  $text =~ s/=MAKE_FILE=/$make_file/g;
+  $text =~ s/=REC_TYPE=/$rectype/g;
+  $text =~ s/=HDR_TYPE=/$hdrtype/g if $hdrtype;
+  $text =~ s/=NREC_EXPR=/$nrec/;
+  $text =~ s/=MAX_RECS_DEFINE=/$max_recs_define/;
+  $text =~ s/=IO_DISC_MK_DEFINE=/$io_disc_mk{$iodisc}/;
+  $text =~ s/=PADS_TY_DEFINE=/$pads_ty_define/;
+  $text =~ s/=PADS_HDR_TY_DEFINE=/$pads_hdr_ty_define/;
+  $text =~ s/=TEMPLATE_DEFINE=/$template_define/;
+  $text =~ s/=WSPACE_OK_DEFINE=/$wspace_ok_define/;
+  $text =~ s/=PADS_HOME=/$pads_home/g;
+  $text =~ s/=LIB_TARGET_OBJS=/$lib_target_objs/g;
+  $text =~ s/=LIB_TARGET=/$lib_target/g;
+  $text =~ s/=MAKE_INCLUDES=/$make_includes/g;
+
   $text =~ s/^\#add_include/\#include/mg;
+
   return $text;
 }
 
@@ -287,7 +308,7 @@ $pre = &doSubs($pre);
 
 $tfile = "$funs_h_tmp_file";
 my $mid = &readFile($tfile);
-if ($pre eq "") {
+if ($mid eq "") {
   print "  Could not read temp file $tfile\n\n";
   exit -1;
 }
@@ -319,7 +340,7 @@ $pre = &doSubs($pre);
 
 $tfile = "$funs_c_tmp_file";
 $mid = &readFile($tfile);
-if ($pre eq "") {
+if ($mid eq "") {
   print "  Could not read temp file $tfile\n\n";
   exit -1;
 }
@@ -340,6 +361,20 @@ print TRF $mid;
 print TRF $post;
 close (TRF);
 print "\nDone creating $funs_c_file\n" if ($dbg);
+
+my $tfile = "$template_dir/GNUmakefile.gigascope";
+$ttext = &readFile($tfile);
+if ($ttext eq "") {
+  print "  Could not read template file $tfile\n\n";
+  exit -1;
+}
+$ttext = &doSubs($ttext);
+
+print "\nCreating $make_file\n" if ($dbg);
+open (TRF, ">$make_file") or die "\nCould not open file $make_file for writing\n\n";
+print TRF $ttext;
+close (TRF);
+print "\nDone creating $make_file\n" if ($dbg);
 
 $res = `/bin/rm -f $temp_files > /dev/null 2>&1`;
 

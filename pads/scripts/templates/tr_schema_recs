@@ -1,13 +1,13 @@
-// Transform file, generated from PSPEC_FILE by gigascope_make.pl
-// Generates schema file SCHEMA_FILE
+// Transform file, generated from =PSPEC_FILE= by gigascope_make.pl
+// Generates schema file =SCHEMA_FILE=
 
-Output("SCHEMA_FILE");
+Output("=SCHEMA_FILE=");
 
 #include "tr_schema_inc"
 
 Transform Schema : TyDecl -> IO;
 
-Schema(Pstruct REC_TYPE)
+Schema(Pstruct =REC_TYPE=)
 Begin
  Pre:        -> "\n\
 PROTOCOL base {\n\
@@ -22,7 +22,7 @@ PROTOCOL udp_pads (base) {\n\
   uint    localPort      udp_pads_localPort;\n\
 }\n\
 \n\
-PROTOCOL pads_REC_TYPE (udp_pads) { "
+PROTOCOL pads_=REC_TYPE= (udp_pads) { "
  Each:  ty f -> "^Ty(^ty) pads_^f\tget_pads_^f;"
  Post:       -> "}"
 End;

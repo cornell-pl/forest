@@ -1,21 +1,22 @@
 
-#add_include "FUNS_H_FILE_NOPATH"
-#add_include "PSPEC_H_FILE"
+#add_include "pads-internal.h"
+#add_include "=FUNS_H_FILE_NOPATH="
+#add_include "=PSPEC_H_FILE="
 #add_include "pads_gigascope_macros.h"
 
-PADS_TY_DEFINE
-PADS_HDR_TY_DEFINE
-IO_DISC_MK_DEFINE
-MAX_RECS_DEFINE
-WSPACE_OK_DEFINE
+=PADS_TY_DEFINE=
+=PADS_HDR_TY_DEFINE=
+=IO_DISC_MK_DEFINE=
+=MAX_RECS_DEFINE=
+=WSPACE_OK_DEFINE=
 
-TEMPLATE_DEFINE
+=TEMPLATE_DEFINE=
 
 #ifdef TEMPLATE_hdr_recs_repeat
    // set up multi-hdr read (hdr-rec-rec-rec-hdr-rec-rec-rec)
    int       global_rec_remain = 0;
 #  define PADS_DO_READ_HEADER   (global_rec_remain == 0)
-#  define PADS_HEADER_READ      do { global_rec_remain = NREC_EXPR; } while (0)
+#  define PADS_HEADER_READ      do { global_rec_remain =  =NREC_EXPR= ; } while (0)
 #  define PADS_REC_READ         do { global_rec_remain--; } while (0)
 #endif
 

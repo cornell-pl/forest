@@ -1,0 +1,14 @@
+
+ # This is a GNU makefile.
+
+include =PADS_HOME=/mk/rules.mk
+
+COMPILE_O += =MAKE_INCLUDES=
+
+all: =LIB_TARGET=
+
+=LIB_TARGET=: =LIB_TARGET_OBJS=
+	$(STATIC_LIBTOOL) libpads_flowdata_v5.a $(STATIC_LIBTOOL_OPTS) =LIB_TARGET_OBJS=
+
+clean:
+	$(RM) $(LIB_TARGET) $(LIB_TARGET_OBJS)

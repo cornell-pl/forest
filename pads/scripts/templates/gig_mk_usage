@@ -4,6 +4,7 @@
     where options are:
      -u/--usage             : output this usage message
      -d/--demodir           : directory to write output files (default is current working dir)
+     -g/--gigdir            : gigascope top level directory (default is <demodir>/../..) 
      -p/--pspec <file>      : specify PADS spec file (required)
      -t/--template <name>   : specify template name (required), see template descriptions below
      -r/--rectype <type>    : specify main record type (required)
