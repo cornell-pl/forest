@@ -27,10 +27,10 @@ Pstruct order_header {
  '|';  Popt pn_t           nlp_billing_tn;
  '|';  Popt zip_t          zip_code;
  '|';  dib_ramp            ramp;
- '|';  Pstring(:'|':)      unknown1;
- '|';  Puint32             order_type;
- '|';  Pstring(:'|':)      unknown2;
- '|';  Pstring(:'|':)      unknown3;
+ '|';  Pstring(:'|':)      order_type;
+ '|';  Puint32             order_details;
+ '|';  Pstring(:'|':)      unused;
+ '|';  Pstring(:'|':)      stream;
  '|';
 };
 
@@ -41,6 +41,8 @@ Pstruct event {
 
 Parray eventSeq {
   event [] : Psep('|');
+} Pwhere {
+  Pforall (i Pin [0..length-2] : (elts[i].tstamp <= elts[i+1].tstamp));
 };
 
 
