@@ -25,35 +25,8 @@
 /* ================================================================================ */
 /* MACROS USED BY READ FUNCTIONS
  *
- * These macros assumes em and ed have been set up
+ * These macros assume em/ed have been set up
  */
-
-#define PDCI_READFN_INIT_CHECKS(prefix)
-  do {
-    if (!pdc)  {
-      PDC_WARN(&PDC_default_disc, prefix ": null pdc param");
-      if (*em < PDC_Ignore) {
-	ed->errCode = PDC_BAD_PARAM;
-      }
-      return PDC_ERR;
-    }
-    if (!pdc->disc) {
-      PDC_WARN(&PDC_default_disc, prefix ": null pdc->disc");
-      if (*em < PDC_Ignore) {
-	ed->errCode = PDC_BAD_PARAM;
-      }
-      return PDC_ERR;
-    }
-    PDC_TRACE(pdc->disc, prefix " called");
-    if (!pdc->disc->io_disc) {
-      PDC_WARN(pdc->disc, prefix ": IO discipline not installed");
-      if (*em < PDC_Ignore) {
-	ed->errCode = PDC_BAD_PARAM;
-      }
-      return PDC_ERR;
-    }
-  } while (0)
-/* END_MACRO */
 
 /* eoff is one byte beyond last error byte, so sub 1 */
 #define PDCI_READFN_SET_LOC_BE(boff, eoff)
@@ -67,7 +40,9 @@
   do {
     PDC_IO_getPos_internal(pdc, &(ed->loc.b), (boff));
     ed->loc.e = ed->loc.b;
-    (ed->loc.e.byte)--;
+    if (ed->loc.e.byte) {
+      (ed->loc.e.byte)--;
+    }
   } while (0)
 /* END_MACRO */
 
@@ -136,46 +111,6 @@
 /* END_MACRO */
 
 /* ================================================================================ */
-/* MACROS USED BY ACCUM FUNCTIONS */
- 
-/* Useful constants */
-
-#define PDCI_HALFMIN_INT64   -4611686018427387904LL
-#define PDCI_HALFMAX_INT64    4611686018427387903LL
-#define PDCI_HALFMAX_UINT64   9223372036854775807ULL
-/* END_MACRO */
-
-/* Fold Points : when should the running int64 / uint64 sum be folded into the average? */
-
-#define PDCI_FOLD_MIN_INT8    -9223372036854775680LL  /* PDC_MIN_INT64 - PDC_MIN_INT8  */
-#define PDCI_FOLD_MAX_INT8     9223372036854775680LL  /* PDC_MAX_INT64 - PDC_MAX_INT8  */
-#define PDCI_FOLD_MIN_INT16   -9223372036854743040LL  /* PDC_MIN_INT64 - PDC_MIN_INT16 */
-#define PDCI_FOLD_MAX_INT16    9223372036854743040LL  /* PDC_MAX_INT64 - PDC_MAX_INT16 */
-#define PDCI_FOLD_MIN_INT32   -9223372034707292160LL  /* PDC_MIN_INT64 - PDC_MIN_INT32 */
-#define PDCI_FOLD_MAX_INT32    9223372034707292160LL  /* PDC_MAX_INT64 - PDC_MAX_INT32 */
-
-#define PDCI_FOLD_MAX_UINT8   18446744073709551488ULL  /* PDC_MAX_UINT64 - PDC_MAX_UINT8  */
-#define PDCI_FOLD_MAX_UINT16  18446744073709518848ULL  /* PDC_MAX_UINT64 - PDC_MAX_UINT16 */
-#define PDCI_FOLD_MAX_UINT32  18446744069414584320ULL  /* PDC_MAX_UINT64 - PDC_MAX_UINT32 */
-/* END_MACRO */
-
-/* Macros that test whether folding should occur, given new val v and running sum s */
-
-#define PDCI_FOLDTEST_INT8(v, s)  (((s) < PDCI_FOLD_MIN_INT8)  || ((s) > PDCI_FOLD_MAX_INT8))
-#define PDCI_FOLDTEST_INT16(v, s) (((s) < PDCI_FOLD_MIN_INT16) || ((s) > PDCI_FOLD_MAX_INT16))
-#define PDCI_FOLDTEST_INT32(v, s) (((s) < PDCI_FOLD_MIN_INT32) || ((s) > PDCI_FOLD_MAX_INT32))
-#define PDCI_FOLDTEST_INT32(v, s) (((s) < PDCI_FOLD_MIN_INT32) || ((s) > PDCI_FOLD_MAX_INT32))
-#define PDCI_FOLDTEST_INT64(v, s) ( (((s) < 0) && ((v) < PDCI_HALFMIN_INT64)) ||
-				   (((v) < 0) && ((s) < PDCI_HALFMIN_INT64)) ||
-				   (((s) > 0) && ((v) > PDCI_HALFMAX_INT64)) ||
-				   (((v) > 0) && ((s) > PDCI_HALFMAX_INT64)) )
-#define PDCI_FOLDTEST_UINT8(v, s)  ((s) > PDCI_FOLD_MAX_UINT8)
-#define PDCI_FOLDTEST_UINT16(v, s) ((s) > PDCI_FOLD_MAX_UINT16)
-#define PDCI_FOLDTEST_UINT32(v, s) ((s) > PDCI_FOLD_MAX_UINT32)
-#define PDCI_FOLDTEST_UINT64(v, s) ( ((s) > PDCI_HALFMAX_UINT64) || ((v) > PDCI_HALFMAX_UINT64) )
-/* END_MACRO */
-
-/* ================================================================================ */
 /* MACROS USED BY OTHER FUNCTIONS
  * i.e., functions that do not have ed and em params
  */
@@ -220,6 +155,46 @@
       return PDC_ERR;
     }
   } while (0)
+/* END_MACRO */
+
+/* ================================================================================ */
+/* MACROS USED BY ACCUM FUNCTIONS */
+ 
+/* Useful constants */
+
+#define PDCI_HALFMIN_INT64   -4611686018427387904LL
+#define PDCI_HALFMAX_INT64    4611686018427387903LL
+#define PDCI_HALFMAX_UINT64   9223372036854775807ULL
+/* END_MACRO */
+
+/* Fold Points : when should the running int64 / uint64 sum be folded into the average? */
+
+#define PDCI_FOLD_MIN_INT8    -9223372036854775680LL  /* PDC_MIN_INT64 - PDC_MIN_INT8  */
+#define PDCI_FOLD_MAX_INT8     9223372036854775680LL  /* PDC_MAX_INT64 - PDC_MAX_INT8  */
+#define PDCI_FOLD_MIN_INT16   -9223372036854743040LL  /* PDC_MIN_INT64 - PDC_MIN_INT16 */
+#define PDCI_FOLD_MAX_INT16    9223372036854743040LL  /* PDC_MAX_INT64 - PDC_MAX_INT16 */
+#define PDCI_FOLD_MIN_INT32   -9223372034707292160LL  /* PDC_MIN_INT64 - PDC_MIN_INT32 */
+#define PDCI_FOLD_MAX_INT32    9223372034707292160LL  /* PDC_MAX_INT64 - PDC_MAX_INT32 */
+
+#define PDCI_FOLD_MAX_UINT8   18446744073709551488ULL  /* PDC_MAX_UINT64 - PDC_MAX_UINT8  */
+#define PDCI_FOLD_MAX_UINT16  18446744073709518848ULL  /* PDC_MAX_UINT64 - PDC_MAX_UINT16 */
+#define PDCI_FOLD_MAX_UINT32  18446744069414584320ULL  /* PDC_MAX_UINT64 - PDC_MAX_UINT32 */
+/* END_MACRO */
+
+/* Macros that test whether folding should occur, given new val v and running sum s */
+
+#define PDCI_FOLDTEST_INT8(v, s)  (((s) < PDCI_FOLD_MIN_INT8)  || ((s) > PDCI_FOLD_MAX_INT8))
+#define PDCI_FOLDTEST_INT16(v, s) (((s) < PDCI_FOLD_MIN_INT16) || ((s) > PDCI_FOLD_MAX_INT16))
+#define PDCI_FOLDTEST_INT32(v, s) (((s) < PDCI_FOLD_MIN_INT32) || ((s) > PDCI_FOLD_MAX_INT32))
+#define PDCI_FOLDTEST_INT32(v, s) (((s) < PDCI_FOLD_MIN_INT32) || ((s) > PDCI_FOLD_MAX_INT32))
+#define PDCI_FOLDTEST_INT64(v, s) ( (((s) < 0) && ((v) < PDCI_HALFMIN_INT64)) ||
+				   (((v) < 0) && ((s) < PDCI_HALFMIN_INT64)) ||
+				   (((s) > 0) && ((v) > PDCI_HALFMAX_INT64)) ||
+				   (((v) > 0) && ((s) > PDCI_HALFMAX_INT64)) )
+#define PDCI_FOLDTEST_UINT8(v, s)  ((s) > PDCI_FOLD_MAX_UINT8)
+#define PDCI_FOLDTEST_UINT16(v, s) ((s) > PDCI_FOLD_MAX_UINT16)
+#define PDCI_FOLDTEST_UINT32(v, s) ((s) > PDCI_FOLD_MAX_UINT32)
+#define PDCI_FOLDTEST_UINT64(v, s) ( ((s) > PDCI_HALFMAX_UINT64) || ((v) > PDCI_HALFMAX_UINT64) )
 /* END_MACRO */
  
 /* ********************************* BEGIN_TRAILER ******************************** */
@@ -336,7 +311,7 @@ fn_name(PDC_t *pdc, PDC_base_em *em,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
+  PDCI_IODISC_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
   return fn_name ## _internal (pdc, em, ed, res_out);
 }
 /* END_MACRO */
@@ -463,7 +438,7 @@ fn_name(PDC_t *pdc, PDC_base_em *em, size_t width,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
+  PDCI_IODISC_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
   return fn_name ## _internal (pdc, em, width, ed, res_out);
 }
 /* END_MACRO */
@@ -530,7 +505,7 @@ fn_name(PDC_t *pdc, PDC_base_em *em,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
+  PDCI_IODISC_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
   return fn_name ## _internal (pdc, em, ed, res_out);
 }
 /* END_MACRO */
@@ -1499,7 +1474,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.46 2002-11-14 20:31:38 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.47 2002-11-15 01:27:46 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -1798,8 +1773,13 @@ PDC_IO_getLoc(PDC_t *pdc, PDC_loc_t *loc, int offset)
   PDCI_DISC_INIT_CHECKS("PDC_IO_getLoc");
   PDCI_NULLPARAM_CHECK("PDC_IO_getLoc", loc);
   if (PDC_ERR == PDC_IO_getPos_internal(pdc, &(loc->b), offset)) {
-  } return PDC_ERR;
-  return PDC_IO_getPos_internal(pdc, &(loc->e), offset);
+    return PDC_ERR;
+  }
+  loc->e = loc->b;
+  if (loc->e.byte) {
+    (loc->e.byte)--;
+  }
+  return PDC_OK;
 }
 
 /* ================================================================================ */
@@ -1818,7 +1798,7 @@ PDC_char_lit_read(PDC_t *pdc, PDC_base_em *em,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_char_lit_read");
+  PDCI_IODISC_INIT_CHECKS("PDC_char_lit_read");
   return PDC_char_lit_read_internal(pdc, em, ed, c);
 }
 
@@ -1835,8 +1815,26 @@ PDC_str_lit_read(PDC_t *pdc, PDC_base_em *em,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_str_lit_read");
+  PDCI_IODISC_INIT_CHECKS("PDC_str_lit_read");
   return PDC_str_lit_read_internal(pdc, em, ed, s);
+}
+
+PDC_error_t
+PDC_countX(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eor_required,
+	   PDC_base_ed *ed, PDC_int32 *res_out)
+{
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  PDCI_IODISC_INIT_CHECKS("PDC_countX");
+  PDCI_NULLPARAM_CHECK("PDC_countX", res_out);
+  return PDC_countX_internal(pdc, em, x, eor_required, ed, res_out);
 }
 
 PDC_error_t
@@ -1852,9 +1850,8 @@ PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_countXtoY");
+  PDCI_IODISC_INIT_CHECKS("PDC_countXtoY");
   PDCI_NULLPARAM_CHECK("PDC_countXtoY", res_out);
-  PDCI_NULLPARAM_CHECK("PDC_countXtoY", x);
   return PDC_countXtoY_internal(pdc, em, x, y, ed, res_out);
 }
 
@@ -1874,7 +1871,7 @@ PDC_adate_read (PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_adate_read");
+  PDCI_IODISC_INIT_CHECKS("PDC_adate_read");
   return PDC_adate_read_internal(pdc, em, ed, res_out);
 }
 
@@ -1959,7 +1956,7 @@ PDC_astringFW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_astringFW_read");
+  PDCI_IODISC_INIT_CHECKS("PDC_astringFW_read");
   return PDC_astringFW_read_internal(pdc, em, width, ed, s_out);
 }
 
@@ -1975,7 +1972,7 @@ PDC_astring_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_astring_read");
+  PDCI_IODISC_INIT_CHECKS("PDC_astring_read");
   return PDC_astring_read_internal(pdc, em, stopChar, ed, s_out);
 }
 
@@ -1992,7 +1989,7 @@ PDC_astringSE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_astringSE_read");
+  PDCI_IODISC_INIT_CHECKS("PDC_astringSE_read");
   PDCI_NULLPARAM_CHECK("PDC_astringSE_read", stopRegexp);
   return PDC_astringSE_read_internal(pdc, em, stopRegexp, ed, s_out);
 }
@@ -2010,7 +2007,7 @@ PDC_astringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_astringCSE_read");
+  PDCI_IODISC_INIT_CHECKS("PDC_astringCSE_read");
   PDCI_NULLPARAM_CHECK("PDC_astringCSE_read", stopRegexp);
   return PDC_astringCSE_read_internal(pdc, em, stopRegexp, ed, s_out);
 }
@@ -2115,6 +2112,167 @@ PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes)
     return PDC_OK;
   }
   PDC_WARN1(pdc->disc, "PDC_swap_bytes: invalid num_bytes (%d), use 2, 4, or 8", num_bytes);
+  return PDC_ERR;
+}
+
+/* ================================================================================ */
+/* SCAN FUNCTIONS */
+
+PDC_error_t
+PDC_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
+		  unsigned char *c_out, size_t *offset_out)
+{
+  char            *begin, *p1, *p2, *end;
+  int             eor, eof;
+  size_t          bytes;
+  int             matchlen = -1;
+
+  PDCI_IODISC_INIT_CHECKS("PDC_char_lit_scan");
+  PDC_TRACE3(pdc->disc, "PDC_char_lit_scan args: c %s stop %s eat %d", PDCI_fmtQChar(c), PDCI_fmtQChar(s), eat_lit);
+  if (offset_out) {
+    (*offset_out) = 0;
+  }
+  if (pdc->disc->stop_regexp) {
+    matchlen = pdc->disc->stop_regexp->max;
+  }
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+    return PDC_ERR;
+  }
+  while (1) {
+    if (p1 == end) {
+      if (eor|eof) {
+	break;
+      }
+      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+	return PDC_ERR;
+      }
+      if (bytes == 0) {
+	break;
+      }
+      /* longer regexp match may work now */
+      if (matchlen == 0) { /* no limit on match size, back up all the way */
+	p1 = begin;
+      } else if (matchlen > 1) { 
+	p1 -= (matchlen - 1);
+      }
+      continue;
+    }
+    /* p1 < end */
+    if (c == (*p1) || s == (*p1)) {
+      if (c_out) {
+	(*c_out) = (*p1);
+      }
+      if (offset_out) {
+	(*offset_out) = (p1-begin);
+      }
+      if (eat_lit) {
+	p1++; /* advance beyond char found */
+      }
+      if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
+      }
+      return PDC_OK;
+    }
+    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
+      PDC_WARN(pdc->disc, "PDC_char_lit_scan: scan terminated early due to disc->stop_maxlen");
+      break;
+    }
+    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
+      PDC_WARN(pdc->disc, "PDC_char_lit_scan: scan terminated early due to disc->stop_regexp");
+      break;
+    }
+    p1++;
+  }
+  return PDC_ERR;
+}
+
+PDC_error_t
+PDC_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+		 PDC_string **str_out, size_t *offset_out) 
+{
+  char            *begin, *p1, *p2, *end;
+  int             eor, eof;
+  size_t          bytes;
+  int             matchlen = -1;
+
+  PDCI_IODISC_INIT_CHECKS("PDC_str_lit_scan");
+  PDC_TRACE3(pdc->disc, "PDC_str_lit_scan args: findStr = %s stopStre = %s eat = %d",
+	     PDCI_fmtQStr(findStr), PDCI_fmtQStr(stopStr), eat_lit);
+  if (offset_out) {
+    (*offset_out) = 0;
+  }
+  if (!findStr || findStr->len == 0) {
+    PDC_WARN(pdc->disc, "PDC_str_lit_scan : null/empty findStr specified");
+    return PDC_ERR;
+  }
+  if (pdc->disc->stop_regexp) {
+    matchlen = pdc->disc->stop_regexp->max;
+  }
+  if (matchlen != 0 && stopStr && matchlen < stopStr->len) {
+    matchlen = stopStr->len;
+  }
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+    return PDC_ERR;
+  }
+  while (1) {
+    if (p1 + findStr->len > end) {
+      if (eor|eof) {
+	break;
+      }
+      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+	return PDC_ERR;
+      }
+      if (bytes == 0) {
+	break;
+      }
+      /* longer regexp match or stopStr match may work now */
+      if (matchlen == 0) { /* no limit on match size, back up all the way */
+	p1 = begin;
+      } else if (matchlen > findStr->len) {
+	p1 -= (matchlen - findStr->len);
+      }
+      continue;
+    }
+    /* p1 + findStr->len <= end */
+    if (strncmp(p1, findStr->str, findStr->len) == 0) {
+      if (str_out) {
+	(*str_out) = (PDC_string*)findStr;
+      }
+      if (offset_out) {
+	(*offset_out) = (p1-begin);
+      }
+      if (eat_lit) {
+	p1 += findStr->len; /* advance beyond findStr */
+      }
+      if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
+      }
+      return PDC_OK;
+    }
+    if (stopStr && (p1 + stopStr->len <= end) &&
+	strncmp(p1, stopStr->str, stopStr->len) == 0) {
+      if (str_out) {
+	(*str_out) = (PDC_string*)stopStr;
+      }
+      if (offset_out) {
+	(*offset_out) = (p1-begin);
+      }
+      p1 += stopStr->len; /* advance beyond stopStr */
+      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
+      }
+      return PDC_OK;
+    }
+    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
+      PDC_WARN(pdc->disc, "PDC_str_lit_scan: scan terminated early due to disc->stop_maxlen");
+      break;
+    }
+    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
+      PDC_WARN(pdc->disc, "PDC_str_lit_scan: scan terminated early due to disc->stop_regexp");
+      break;
+    }
+    p1++;
+  }
   return PDC_ERR;
 }
 
@@ -2249,6 +2407,12 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
     case PDC_AT_EOR:
       msg = "Unexpected end of record (field too short?)";
       break;
+    case PDC_EXTRA_BEFORE_EOR:
+      msg = "Unexpected extra data before EOR";
+      break;
+    case PDC_EOF_BEFORE_EOR:
+      msg = "EOF encountered prior to expected EOR";
+      break;
     case PDC_RANGE:
       msg = "Number out of range error";
       break;
@@ -2367,163 +2531,6 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
   }
   pdc_errorf(NiL, level, "%s", sfstruse(pdc->tmp));
   return PDC_OK;
-}
-
-/* ================================================================================ */
-/* INTERNAL SCAN FUNCTIONS */
-
-PDC_error_t
-PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
-		   unsigned char *c_out, size_t *offset_out)
-{
-  char            *begin, *p1, *p2, *end;
-  int             eor, eof;
-  size_t          bytes;
-  int             matchlen = -1;
-
-  PDCI_IODISC_INIT_CHECKS("PDCI_char_lit_scan");
-  PDC_TRACE3(pdc->disc, "PDCI_char_lit_scan args: c %s stop %s eat %d", PDCI_fmtQChar(c), PDCI_fmtQChar(s), eat_lit);
-  if (offset_out) {
-    (*offset_out) = 0;
-  }
-  if (pdc->disc->stop_regexp) {
-    matchlen = pdc->disc->stop_regexp->max;
-  }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
-    return PDC_ERR;
-  }
-  while (1) {
-    if (p1 == end) {
-      if (eor|eof) {
-	break;
-      }
-      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
-	return PDC_ERR;
-      }
-      if (bytes == 0) {
-	break;
-      }
-      /* longer regexp match may work now */
-      if (matchlen == 0) { /* no limit on match size, back up all the way */
-	p1 = begin;
-      } else if (matchlen > 1) { 
-	p1 -= (matchlen - 1);
-      }
-      continue;
-    }
-    /* p1 < end */
-    if (c == (*p1) || s == (*p1)) {
-      if (c_out) {
-	(*c_out) = (*p1);
-      }
-      if (offset_out) {
-	(*offset_out) = (p1-begin);
-      }
-      if (eat_lit) {
-	p1++; /* advance beyond char found */
-      }
-      if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
-	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
-      }
-      return PDC_OK;
-    }
-    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
-      break;
-    }
-    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
-      break;
-    }
-    p1++;
-  }
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
-		  PDC_string **str_out, size_t *offset_out) 
-{
-  char            *begin, *p1, *p2, *end;
-  int             eor, eof;
-  size_t          bytes;
-  int             matchlen = -1;
-
-  PDCI_IODISC_INIT_CHECKS("PDCI_str_lit_scan");
-  PDC_TRACE3(pdc->disc, "PDCI_str_lit_scan args: findStr = %s stopStre = %s eat = %d",
-	     PDCI_fmtQStr(findStr), PDCI_fmtQStr(stopStr), eat_lit);
-  if (offset_out) {
-    (*offset_out) = 0;
-  }
-  if (!findStr || findStr->len == 0) {
-    PDC_WARN(pdc->disc, "PDC_str_lit_scan : null/empty findStr specified");
-    return PDC_ERR;
-  }
-  if (pdc->disc->stop_regexp) {
-    matchlen = pdc->disc->stop_regexp->max;
-  }
-  if (matchlen != 0 && stopStr && matchlen < stopStr->len) {
-    matchlen = stopStr->len;
-  }
-  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
-    return PDC_ERR;
-  }
-  while (1) {
-    if (p1 + findStr->len > end) {
-      if (eor|eof) {
-	break;
-      }
-      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
-	return PDC_ERR;
-      }
-      if (bytes == 0) {
-	break;
-      }
-      /* longer regexp match or stopStr match may work now */
-      if (matchlen == 0) { /* no limit on match size, back up all the way */
-	p1 = begin;
-      } else if (matchlen > findStr->len) {
-	p1 -= (matchlen - findStr->len);
-      }
-      continue;
-    }
-    /* p1 + findStr->len <= end */
-    if (strncmp(p1, findStr->str, findStr->len) == 0) {
-      if (str_out) {
-	(*str_out) = (PDC_string*)findStr;
-      }
-      if (offset_out) {
-	(*offset_out) = (p1-begin);
-      }
-      if (eat_lit) {
-	p1 += findStr->len; /* advance beyond findStr */
-      }
-      if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
-	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
-      }
-      return PDC_OK;
-    }
-    if (stopStr && (p1 + stopStr->len <= end) &&
-	strncmp(p1, stopStr->str, stopStr->len) == 0) {
-      if (str_out) {
-	(*str_out) = (PDC_string*)stopStr;
-      }
-      if (offset_out) {
-	(*offset_out) = (p1-begin);
-      }
-      p1 += stopStr->len; /* advance beyond stopStr */
-      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
-	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
-      }
-      return PDC_OK;
-    }
-    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
-      break;
-    }
-    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
-      break;
-    }
-    p1++;
-  }
-  return PDC_ERR;
 }
 
 /* ================================================================================ */
@@ -2683,7 +2690,7 @@ PDC_IO_getPos_internal(PDC_t *pdc, PDC_pos_t *pos, int offset)
     while (1) {
       if (remain > offset) {
 	remain -= offset;
-	goto done; /* only goes to done with remain > 0 */
+	goto done;
       }
       offset -= remain;
       while (1) {
@@ -2693,9 +2700,14 @@ PDC_IO_getPos_internal(PDC_t *pdc, PDC_pos_t *pos, int offset)
 	}
 	elt = elt->next;
 	if (elt == pdc->head) {
-	  goto not_found;
+	  pos->num = 0;
+	  pos->byte = 0;
+	  pos->unit = "*pos not found*";
+	  return PDC_ERR;
 	}
-	if (elt->len) break;
+	if (elt->len) {
+	  break;
+	}
       }
       remain = elt->len;
       /* now at first byte of next elt */
@@ -2712,9 +2724,14 @@ PDC_IO_getPos_internal(PDC_t *pdc, PDC_pos_t *pos, int offset)
       while (1) {
 	elt = elt->prev;
 	if (elt == pdc->head) {
-	  goto not_found;
+	  pos->num = 0;
+	  pos->byte = 0;
+	  pos->unit = "*pos not found*";
+	  return PDC_ERR;
 	}
-	if (elt->len) break;
+	if (elt->len) {
+	  break;
+	}
       }
       remain = 1;
       offset--;
@@ -2731,12 +2748,6 @@ PDC_IO_getPos_internal(PDC_t *pdc, PDC_pos_t *pos, int offset)
   }
   pos->unit = elt->unit;
   return PDC_OK;
-
- not_found:
-  pos->num = 0;
-  pos->byte = 0;
-  pos->unit = "*pos not found*";
-  return PDC_ERR;
 }
 
 /* ================================================================================ */
@@ -3067,6 +3078,83 @@ PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 }
 
 PDC_error_t
+PDC_countX_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eor_required,
+		    PDC_base_ed *ed, PDC_int32 *res_out)
+{
+  PDC_int32       count = 0;
+  char            *begin, *p1, *p2, *end;
+  int             eor, eof;
+  size_t          bytes;
+  int             matchlen = -1;
+  char            *tmp;
+
+  PDC_TRACE2(pdc->disc, "PDC_countX_internal called, args: x = %s eor_required = %d", PDCI_fmtQChar(x), eor_required);
+  (*res_out) = 0;
+  if (pdc->disc->stop_regexp) {
+    matchlen = pdc->disc->stop_regexp->max;
+  }
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+    goto fatal_nb_io_err;
+  }
+  while (1) {
+    if (p1 == end) {
+      if (eor|eof) {
+	break;
+      }
+      if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+	goto fatal_mb_io_err;
+      }
+      if (bytes == 0) {
+	break;
+      } 
+      /* longer regexp match may work now */
+      if (matchlen == 0) {
+	p1 = begin;
+	count = 0;
+      } else if (matchlen > 1) {
+	p1 -= (matchlen - 1);
+	/* fix count to avoid double-counting */
+	for (tmp = p1; tmp < (end-bytes); tmp++) {
+	  if (x == (*tmp)) {
+	    count--;
+	  }
+	}
+      }
+      continue;
+    }
+    /* p1 < end */
+    if (x == (*p1)) {
+      count++;
+    }
+    if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
+      PDC_WARN(pdc->disc, "PDC_countX: scan terminated early due to disc->stop_maxlen");
+      break;
+    }
+    if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
+      PDC_WARN(pdc->disc, "PDC_countX: scan terminated early due to disc->stop_regexp");
+      break;
+    }
+    p1++;
+  }
+  if (eor_required && !eor && eof) { /* EOF encountered first, error */
+    PDCI_READFN_SET_LOC_BE(0, p1-begin);
+    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_EOF_BEFORE_EOR);
+  }
+  /* hit EOR/EOF/stop restriction */
+  (*res_out) = count;
+  ed->errCode = PDC_NO_ERR;
+  return PDC_OK;
+
+ not_found:
+
+ fatal_nb_io_err:
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_countXtoY_internal (nb)", PDC_IO_ERR);
+
+ fatal_mb_io_err:
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_countXtoY_internal (mb)", PDC_IO_ERR);
+}
+
+PDC_error_t
 PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 		       PDC_base_ed *ed, PDC_int32 *res_out)
 {
@@ -3112,7 +3200,7 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
       continue;
     }
     /* p1 < end */
-    if (y && y == (*p1)) { /* success */
+    if (y == (*p1)) { /* success */
       (*res_out) = count;
       ed->errCode = PDC_NO_ERR;
       return PDC_OK;
@@ -3121,17 +3209,14 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
       count++;
     }
     if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
+      PDC_WARN(pdc->disc, "PDC_countXtoY: scan terminated early due to disc->stop_maxlen");
       break;
     }
     if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
+      PDC_WARN(pdc->disc, "PDC_countXtoY: scan terminated early due to disc->stop_regexp");
       break;
     }
     p1++;
-  }
-  if (!y && (eor|eof)) { /* EOR/EOF is target: success */
-    (*res_out) = count;
-    ed->errCode = PDC_NO_ERR;
-    return PDC_OK;
   }
   goto not_found; /* y not found */
 
@@ -3262,9 +3347,11 @@ PDC_astring_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
       return PDC_OK;
     }
     if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
+      PDC_WARN(pdc->disc, "PDC_astring_read: scan terminated early due to disc->stop_maxlen");
       break;
     }
     if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
+      PDC_WARN(pdc->disc, "PDC_astring_read: scan terminated early due to disc->stop_regexp");
       break;
     }
     p1++;
@@ -3361,9 +3448,11 @@ PDC_astringCSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRege
       return PDC_OK;
     }
     if (pdc->disc->stop_maxlen && ((p1-begin) >= pdc->disc->stop_maxlen)) {
+      PDC_WARN(pdc->disc, "PDC_astringCSE_read: scan terminated early due to disc->stop_maxlen");
       break;
     }
     if (pdc->disc->stop_regexp && PDCI_regexpMatch(pdc, pdc->disc->stop_regexp, p1, end)) {
+      PDC_WARN(pdc->disc, "PDC_astringCSE_read: scan terminated early due to disc->stop_regexp");
       break;
     }
     p1++;

@@ -79,7 +79,7 @@
  *          it is only safe to use lastelt->next if a non-NULL cur_io_elt
  *          is used.  */
 
-#include "pdc_io_disc.h"
+#include "libpadsc.h"
 #include "pdc_out_macros.h"
 
 #define PDC_NEED_AN_ELT(fn_name, elt, f_head, vm) \

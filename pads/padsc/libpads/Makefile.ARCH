@@ -12,7 +12,7 @@ $(INCLUDEDIR) :INSTALLPROTO: libpadsc.h libpadsc-internal.h rbuf.h
 	(cd ..; nmake gen)
 
 clean :
-	$(RM) -f libpadsc.* libpadsc-g.* *~
+	$(RM) -f libpadsc.* libpadsc-g.* *~ *.o
 
 veryclean : clean
 	$(RM) -f Makefile.ms Makefile.mo padsc.req
