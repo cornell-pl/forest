@@ -5,11 +5,11 @@ ifndef PADS_HOME
   export PADS_HOME=$(shell cd ../..; pwd)
 endif
 
-ARCH_N_HEAPOPSYS := $(shell $(PADS_HOME)/scripts/arch-n-heapopsys)
+ifndef PADS_SML
+  export PADS_SML=sml
+endif
 
-SML = $(PADS_HOME)/binlinks/sml.$(ARCH_N_HEAPOPSYS)
-
-SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
+SML_VER = $(shell $(PADS_SML) '@SMLversion' | sed -e 's|.* ||')
 SML_MINOR_VER = $(shell echo $(SML_VER) | sed -e 's|.*[.]||')
 ifeq ($(SML_VER),$(SML_MINOR_VER))
 SML_MINOR_VER = 0
@@ -25,6 +25,7 @@ endif
 all:	compiler
 
 foo:
+	@(echo SML = $(PADS_SML))
 	@(echo SML_VER = $(SML_VER))
 	@(echo SML_MINOR_VER = $(SML_MINOR_VER))
 	@(echo SML_MINOR_VER_TEST = $(SML_MINOR_VER_TEST))
@@ -32,7 +33,7 @@ foo:
 
 compiler:
 	echo Making compiler
-	$(SML) < $(BUILD_EXEC)
+	$(PADS_SML) < $(BUILD_EXEC)
 
 clean:
 	$(RM) $(PADS_HOME)/lib/padsc.$(ARCH_N_OPSYS)
