@@ -61,10 +61,10 @@ String lengths: good vals:          2    bad vals:          0    pcnt-bad:    0.
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING       count:          2  pcnt-of-good-vals:  100.000
 =====================================================================================================
-<top>.b.def : int32
+<top>.b.def : uint32
 =====================================================================================================
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
-  Characterizing int32:  min 3 max 3 avg 3.000
+  Characterizing uint32:  min 3 max 3 avg 3.000
     => distribution of top 1 values out of 1 distinct values:
         val:          3 count:          1  pcnt-of-good-vals:  100.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
