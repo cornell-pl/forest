@@ -1,4 +1,4 @@
-Group (../ckit-lib.cm)
+Group (../../ckit-lib.cm)
 is
 
 #if defined(NEW_CM)

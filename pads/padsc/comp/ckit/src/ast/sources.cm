@@ -53,6 +53,8 @@ Group is
 	pp/pp-ast-ext-sig.sml
 	pp/pp-ast-fn.sml
 
+	extensions/pads/transform/group.cm
+
 (* Not currently needed: current uses of ast-equality (in simplify-ast)
    just use polymorphic equality.  But this code may be useful in the future
    if the modifications to the ast types violate rules for eqtypes.
@@ -103,6 +105,8 @@ Group is
         extensions/pads/ast-ext.sml
         extensions/pads/cnv-ext.sml
         extensions/pads/pp-ast-ext-fn.sml
+ 
+        extensions/pads/transform/transform.sml
 
         extensions/pads/parse-tree-utils.sml
         extensions/pads/perror-sig.sml

@@ -35,5 +35,6 @@ Library
   structure PadsState
   structure PInput
   structure PBaseTys
+  structure Transform
 is 
   ast/group.cm
