@@ -1,4 +1,4 @@
-/*@FILE Pbcd_fpoint_app_1.tex Pbcd_fpoint_app_2.tex Pbcd_fpoint_app_3.tex Pbcd_fpoint_app_4.tex Pbcd_fpoint_app_5.tex Pbcd_fpoint_app_6.tex Pbcd_fpoint_app_7.tex Pbcd_fpoint_app_8.tex Pbcd_fpoint_app_9.tex Pbcd_fpoint_app_10.tex Pbcd_fpoint_app_11.tex Pbcd_fpoint_app_12.tex Pbcd_fpoint_app_13.tex*/
+/*@FILE Pbcd_int_app_1.tex Pbcd_int_app_2.tex Pbcd_int_app_3.tex Pbcd_int_app_4.tex Pbcd_int_app_5.tex Pbcd_int_app_6.tex Pbcd_int_app_7.tex Pbcd_int_app_8.tex Pbcd_int_app_9.tex Pbcd_int_app_10.tex Pbcd_int_app_11.tex Pbcd_int_app_12.tex Pbcd_int_app_13.tex*/
 #ifdef _USE_PROTO
 #pragma prototyped
 #endif
@@ -15,7 +15,7 @@
 #error Pbcd_int.h is intended to be included from pads.h, do not include it directly
 #endif
 
-/*@BEGIN Pbcd_fpoint_app_1.tex*/
+/*@BEGIN Pbcd_int_app_1.tex*/
 /* ================================================================================
  * READ
  */
@@ -34,8 +34,8 @@
  * value ignores the final 4 bits and the signed value uses them to
  * get the sign.
  */
-/*@END Pbcd_fpoint_app_1.tex*/
-/*@BEGIN Pbcd_fpoint_app_2.tex*/
+/*@END Pbcd_int_app_1.tex*/
+/*@BEGIN Pbcd_int_app_2.tex*/
 /*
  * The legal range of values for num_digits
  * depends on target type:
@@ -58,8 +58,8 @@
  * required for a 10 digit negative value (an actual 11 digit number
  * would cause a range error, so the leading digit must be 0).
  */
-/*@END Pbcd_fpoint_app_2.tex*/
-/*@BEGIN Pbcd_fpoint_app_3.tex*/
+/*@END Pbcd_int_app_2.tex*/
+/*@BEGIN Pbcd_int_app_3.tex*/
 /*
  * If the required number of bytes is NOT available:
  *    + pd->loc.b/e set to elt/char position of start/end of the
@@ -79,8 +79,8 @@
  *    + if P_Test_NotIgnore(*m), pd->errCode set to P_BAD_PARAM,
  *         pd->nerr set to 1, and an error is reported
  */
-/*@END Pbcd_fpoint_app_3.tex*/
-/*@BEGIN Pbcd_fpoint_app_4.tex*/
+/*@END Pbcd_int_app_3.tex*/
+/*@BEGIN Pbcd_int_app_4.tex*/
 /*
  * If the specified bytes make up an integer that does not fit in the
  * target type, or if the actual value is not in the min/max range,
@@ -97,11 +97,11 @@
  *       P_INVALID_BCD_NUM, pd->nerr set to 1,
  *       and an error is reported
  */
-/*@END Pbcd_fpoint_app_4.tex*/
+/*@END Pbcd_int_app_4.tex*/
 
 #if P_CONFIG_READ_FUNCTIONS > 0
-#if P_CONFIG_BCD_INT > 0 || P_CONFIG_BCD_FPOINT > 0
-/*@BEGIN Pbcd_fpoint_app_5.tex*/
+#if P_CONFIG_BCD_INT > 0 || P_CONFIG_BCD_INT > 0
+/*@BEGIN Pbcd_int_app_5.tex*/
 Perror_t Pbcd_int8_read   (P_t *pads, const Pbase_m *m,
 			   Pbase_pd *pd, Pint8 *res_out, Puint32 num_digits);
 Perror_t Pbcd_int16_read  (P_t *pads, const Pbase_m *m,
@@ -119,7 +119,7 @@ Perror_t Pbcd_uint32_read (P_t *pads, const Pbase_m *m,
 			   Pbase_pd *pd, Puint32 *res_out, Puint32 num_digits);
 Perror_t Pbcd_uint64_read (P_t *pads, const Pbase_m *m,
 			   Pbase_pd *pd, Puint64 *res_out, Puint32 num_digits);
-/*@END Pbcd_fpoint_app_5.tex*/
+/*@END Pbcd_int_app_5.tex*/
 #endif
 #endif
 
@@ -128,8 +128,8 @@ Perror_t Pbcd_uint64_read (P_t *pads, const Pbase_m *m,
  */
 
 #if P_CONFIG_WRITE_FUNCTIONS > 0
-#if P_CONFIG_BCD_INT > 0 || P_CONFIG_BCD_FPOINT > 0
-/*@BEGIN Pbcd_fpoint_app_6.tex*/
+#if P_CONFIG_BCD_INT > 0 || P_CONFIG_BCD_INT > 0
+/*@BEGIN Pbcd_int_app_6.tex*/
 ssize_t Pbcd_int8_write2io  (P_t *pads, Sfio_t *io, Pbase_pd *pd,
 			     Pint8   *val, Puint32 num_digits);
 ssize_t Pbcd_int16_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
@@ -147,9 +147,9 @@ ssize_t Pbcd_uint32_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
 			     Puint32 *val, Puint32 num_digits);
 ssize_t Pbcd_uint64_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
 			     Puint64 *val, Puint32 num_digits);
-/*@END Pbcd_fpoint_app_6.tex*/
+/*@END Pbcd_int_app_6.tex*/
 
-/*@BEGIN Pbcd_fpoint_app_7.tex*/
+/*@BEGIN Pbcd_int_app_7.tex*/
 ssize_t Pbcd_int8_write_xml_2io  (P_t *pads, Sfio_t *io, Pbase_pd *pd,
 				  Pint8   *val, const char *tag, int indent,
 				  Puint32 num_digits);
@@ -175,9 +175,9 @@ ssize_t Pbcd_uint32_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
 ssize_t Pbcd_uint64_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
 				  Puint64 *val, const char *tag, int indent,
 				  Puint32 num_digits);
-/*@END Pbcd_fpoint_app_7.tex*/
+/*@END Pbcd_int_app_7.tex*/
 
-/*@BEGIN Pbcd_fpoint_app_8.tex*/
+/*@BEGIN Pbcd_int_app_8.tex*/
 ssize_t Pbcd_int8_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 			      Pbase_pd *pd, Pint8   *val, Puint32 num_digits);
 ssize_t Pbcd_int16_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
@@ -195,9 +195,9 @@ ssize_t Pbcd_uint32_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_fu
 			      Pbase_pd *pd, Puint32 *val, Puint32 num_digits);
 ssize_t Pbcd_uint64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 			      Pbase_pd *pd, Puint64 *val, Puint32 num_digits);
-/*@END Pbcd_fpoint_app_8.tex*/
+/*@END Pbcd_int_app_8.tex*/
 
-/*@BEGIN Pbcd_fpoint_app_9.tex*/
+/*@BEGIN Pbcd_int_app_9.tex*/
 ssize_t Pbcd_int8_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len,
 				   int *buf_full, Pbase_pd *pd, Pint8   *val,
 				   const char *tag, int indent, Puint32 num_digits);
@@ -223,9 +223,9 @@ ssize_t Pbcd_uint32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
 ssize_t Pbcd_uint64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
 				   int *buf_full, Pbase_pd *pd, Puint64 *val,
 				   const char *tag, int indent, Puint32 num_digits);
-/*@END Pbcd_fpoint_app_9.tex*/
+/*@END Pbcd_int_app_9.tex*/
 
-/*@BEGIN Pbcd_fpoint_app_10.tex*/
+/*@BEGIN Pbcd_int_app_10.tex*/
 ssize_t Pbcd_int8_fmt2buf  (P_t *pads, Pbyte *buf, size_t buf_len,
 			    int *buf_full, int *requested_out,
 			    const char *delims, Pbase_m *m, Pbase_pd *pd,
@@ -258,9 +258,9 @@ ssize_t Pbcd_int64_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len,
 				  int *buf_full,int *requested_out, 
 				  const char *delims,Pbase_m *m, Pbase_pd *pd, 
 				  Pint64 *rep,Puint32 num_digits);
-/*@END Pbcd_fpoint_app_10.tex*/
+/*@END Pbcd_int_app_10.tex*/
 
-/*@BEGIN Pbcd_fpoint_app_11.tex*/
+/*@BEGIN Pbcd_int_app_11.tex*/
 ssize_t Pbcd_uint8_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len,
 			    int *buf_full, int *requested_out,
 			    const char *delims, Pbase_m *m, Pbase_pd *pd,
@@ -293,9 +293,9 @@ ssize_t Pbcd_uint64_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len,
 				  int *buf_full,int *requested_out, 
 				  const char *delims,Pbase_m *m, Pbase_pd *pd, 
 				  Puint64 *rep,Puint32 num_digits);
-/*@END Pbcd_fpoint_app_11.tex*/
+/*@END Pbcd_int_app_11.tex*/
 
-/*@BEGIN Pbcd_fpoint_app_12.tex*/
+/*@BEGIN Pbcd_int_app_12.tex*/
 ssize_t Pbcd_int8_fmt2io   (P_t *pads, Sfio_t *io, int *requested_out,
 			    const char *delims, Pbase_m *m, Pbase_pd *pd,
 			    Pint8  *rep, Puint32 num_digits);
@@ -308,9 +308,9 @@ ssize_t Pbcd_int32_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out,
 ssize_t Pbcd_int64_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out,
 			    const char *delims, Pbase_m *m, Pbase_pd *pd,
 			    Pint64 *rep, Puint32 num_digits);
-/*@END Pbcd_fpoint_app_12.tex*/
+/*@END Pbcd_int_app_12.tex*/
 
-/*@BEGIN Pbcd_fpoint_app_13.tex*/
+/*@BEGIN Pbcd_int_app_13.tex*/
 ssize_t Pbcd_uint8_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out,
 			    const char *delims, Pbase_m *m, Pbase_pd *pd,
 			    Puint8  *rep, Puint32 num_digits);
@@ -323,7 +323,7 @@ ssize_t Pbcd_uint32_fmt2io (P_t *pads, Sfio_t *io, int *requested_out,
 ssize_t Pbcd_uint64_fmt2io (P_t *pads, Sfio_t *io, int *requested_out,
 			    const char *delims, Pbase_m *m, Pbase_pd *pd,
 			    Puint64 *rep, Puint32 num_digits);
-/*@END Pbcd_fpoint_app_13.tex*/
+/*@END Pbcd_int_app_13.tex*/
 #endif
 #endif
 
