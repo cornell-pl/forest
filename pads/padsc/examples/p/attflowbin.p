@@ -2,7 +2,7 @@ Ptypedef Pb_uint32 My_ipaddr_t;
 Ptypedef Pb_uint32 My_time_t;
 
 Precord Pstruct attflow {
-  Pa_string_FW(:32:)             PopNm;      //- Analyzer POP name.
+  Pstring_FW(:32:  )             PopNm;      //- Analyzer POP name.
   Pb_uint64                      FlowID;     //- Flow id: [SourceIP+DestIP+SourcePort+DestPort+PROTOCOL].
   My_ipaddr_t                    AnalyzerIP; //- Analyzer IP address.
   Pb_uint32                      AnalyzerID; //- Analyzer ID.
@@ -17,3 +17,5 @@ Precord Pstruct attflow {
   Pb_uint32                      Flags;      //- Inclusive OR of flags for all packets in the flow. [MAP ipflags]
   Pb_uint32                      Protocol;   //- IP protocol. [MAP ipprotocol]
 };
+
+// length: 32 + 8 + 12*4 = 88 bytes 
