@@ -66,24 +66,24 @@ do_mk: mk_rec1vlr-g
 	./mk_rec1vlr-g < ../rec1nl.dat > ../rec1vlr.dat
 
 test_many: cmonster-g
-	./cmonster-g 'fwrec(:0,8,1:)'         'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
-	./cmonster-g 'fwrec_noseek(:0,8,1:)'  'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
-	./cmonster-g 'nlrec(:0:)'             'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
-	./cmonster-g 'nlrec_noseek(:0:)'      'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
-	./cmonster-g 'ctrec(:10,0:)'          'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
-	./cmonster-g 'ctrec_noseek(:10,0:)'   'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
-	./cmonster-g 'vlrec(:0,0:)'           'c{qy1=Pe_string_FW(:8:)[0]}' < ../rec1vlr.dat 
-	./cmonster-g 'vlrec_noseek(:0,0:)'    'c{qy1=Pe_string_FW(:8:)[0]}' < ../rec1vlr.dat 
+	./cmonster-g -d 'fwrec(:0,8,1:)'         -c 'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g -d 'fwrec_noseek(:0,8,1:)'  -c 'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g -d 'nlrec(:0:)'             -c 'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g -d 'nlrec_noseek(:0:)'      -c 'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g -d 'ctrec(:10,0:)'          -c 'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g -d 'ctrec_noseek(:10,0:)'   -c 'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g -d 'vlrec(:0,0:)'           -c 'c{qy1=Pe_string_FW(:8:)[0]}' < ../rec1vlr.dat 
+	./cmonster-g -d 'vlrec_noseek(:0,0:)'    -c 'c{qy1=Pe_string_FW(:8:)[0]}' < ../rec1vlr.dat 
 
 test1: cmonster-g
-	./cmonster-g 'fwrec(:0,8,1:)'         'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g -d 'fwrec(:0,8,1:)'         -c 'c{qy1=Pa_string_FW(:8:)[0]}' -o test1.dat < ../strfw8nl.dat
 
 test2: cmonster-g
-	./cmonster-g 'fwrec(:0,11,1:)'         's+{qyswitch=Pa_int32_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[0]}/0:c{qy2=Pa_string_FW(:7:)[1]}/1:c{qy3=Pa_string_FW(:2:)[2]|qy4=Pa_string_FW(:4:)[4]}}' < ../sw_aintfw3_astrfw8_nl.dat
+	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's+{qyswitch=Pa_int32_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[0]}/0:c{qy2=Pa_string_FW(:7:)[1]}/1:c{qy3=Pa_string_FW(:2:)[2]|qy4=Pa_string_FW(:4:)[4]}}' -o test2.dat < ../sw_aintfw3_astrfw8_nl.dat
 
  #  An error case: not a legal switch tye
 test3: cmonster-g
-	./cmonster-g 'fwrec(:0,11,1:)'         's-{qyswitch=Pa_string_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[0]}/0:c{qy2=Pa_string_FW(:7:)[1]}/1:c{qy3=Pa_string_FW(:6:)[2]}}' < ../sw_aintfw3_astrfw8_nl.dat
+	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's-{qyswitch=Pa_string_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[0]}/0:c{qy2=Pa_string_FW(:7:)[1]}/1:c{qy3=Pa_string_FW(:6:)[2]}}' -o test3.dat < ../sw_aintfw3_astrfw8_nl.dat
 
  # End of rules that are run from the arch directory
 endif

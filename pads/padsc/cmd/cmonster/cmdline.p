@@ -1,7 +1,7 @@
 /*
- * This file describes two kinds of command-line arguments, CM_ispec and CM_cspec
+ * This file describes two kinds of command-line arguments, CM_spec and CM_cspec
  * 
- * Some examples of valid CM_ispec:
+ * Some examples of valid CM_dspec:
  *
  *     fwrec(:80:)
  * OR
@@ -137,7 +137,7 @@ Penum CM_disc {
   vlrec
 };
 
-Pstruct CM_ispec {
+Pstruct CM_dspec {
   CM_disc                  disc;
   "(:";
   CM_params                params;

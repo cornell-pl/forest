@@ -7,7 +7,7 @@
 
 #include "helpers.h"
 
-void describe_query(CM_query *q)
+void describe_query(Sfio_t *io, CM_query *q)
 {
   PDC_uint32 len = q->params.length;
   int ok_switch_type;
@@ -15,61 +15,61 @@ void describe_query(CM_query *q)
 
   ok_switch_type = (q->entry->sval_fn) ? 1 : 0;
 
-  error(ERROR_PROMPT, "%s = %s (", PDC_fmt_str(&(q->qy_id)), PDC_fmt_str(&(q->ty_id)));
+  sfprintf(io, "%s = %s (", PDC_fmt_str(&(q->qy_id)), PDC_fmt_str(&(q->ty_id)));
   for (i = 0; i < len; i++) {
-    if (i) error(ERROR_PROMPT, ",");
-    error(ERROR_PROMPT, "%lu", (unsigned long)q->params.elts[i]);
+    if (i) sfprintf(io, ",");
+    sfprintf(io, "%lu", (unsigned long)q->params.elts[i]);
   }
-  error(ERROR_PROMPT, ") [offset: %lu]", (unsigned long)q->off);
-  error(ERROR_PROMPT, " type: %s, ok_switch_type: %d, in_sz: %lu out_sz: %lu\n",
+  sfprintf(io, ") [offset: %lu]", (unsigned long)q->off);
+  sfprintf(io, " type: %s, ok_switch_type: %d, in_sz: %lu out_sz: %lu\n",
 	q->entry->tname, ok_switch_type,
 	(unsigned long)q->in_sz, (unsigned long)q->out_sz);
 }
 
-void describe_queries(CM_queries *qs)
+void describe_queries(Sfio_t *io, CM_queries *qs)
 {
   PDC_uint32 len = qs->length;
   PDC_uint32 i;
-  error(ERROR_PROMPT, "          QUERIES:\n");
+  sfprintf(io, "          QUERIES:\n");
   for (i = 0; i < len; i++) {
-    error(ERROR_PROMPT, "            ");
-    describe_query(&(qs->elts[i]));
+    sfprintf(io, "            ");
+    describe_query(io, &(qs->elts[i]));
   }
 }
 
-void describe_c_cookie(CM_c_cookie *c)
+void describe_c_cookie(Sfio_t *io, CM_c_cookie *c)
 {
   size_t out_sz = out_sz_c_cookie(c);
-  error(ERROR_PROMPT, "        C_COOKIE (out_sz: %ld):\n", (long)out_sz);
-  describe_queries(&(c->queries));
+  sfprintf(io, "        C_COOKIE (out_sz: %ld):\n", (long)out_sz);
+  describe_queries(io, &(c->queries));
 }
 
-void describe_s_cookie(CM_s_cookie *s)
+void describe_s_cookie(Sfio_t *io, CM_s_cookie *s)
 {
   PDC_uint32 len = s->arms.length;
   PDC_uint32 i;
   size_t out_sz = out_sz_s_cookie(s);
-  error(ERROR_PROMPT, "  S_COOKIE (out_sz: %ld):\n", (long)out_sz);
-  error(ERROR_PROMPT, "    SWITCH:\n");
-  error(ERROR_PROMPT, "            ");
-  describe_query(&(s->s_qy));
+  sfprintf(io, "  S_COOKIE (out_sz: %ld):\n", (long)out_sz);
+  sfprintf(io, "    SWITCH:\n");
+  sfprintf(io, "            ");
+  describe_query(io, &(s->s_qy));
   for (i = 0; i < len; i++) {
-    error(ERROR_PROMPT, "      ARM %d:\n", (int)s->arms.elts[i].s_val);
-    describe_c_cookie(&(s->arms.elts[i].cookie));
+    sfprintf(io, "      ARM %d:\n", (int)s->arms.elts[i].s_val);
+    describe_c_cookie(io, &(s->arms.elts[i].cookie));
   }
 }
 
-void describe_cookie(CM_cspec *cspec)
+void describe_cookie(Sfio_t *io, CM_cspec *cspec)
 {
   switch (cspec->cookie.tag) {
   case CM_c_or_s_err:
-    error(ERROR_PROMPT, "  Invalid c_or_s tag\n");
+    sfprintf(io, "  Invalid c_or_s tag\n");
     break;
   case c_cookie:
-    describe_c_cookie(&(cspec->cookie.val.c_cookie));
+    describe_c_cookie(io, &(cspec->cookie.val.c_cookie));
     break;
   case s_cookie:
-    describe_s_cookie(&(cspec->cookie.val.s_cookie));
+    describe_s_cookie(io, &(cspec->cookie.val.s_cookie));
     break;
   }
 }

@@ -16,13 +16,13 @@
 
 /* -------------------------------------------------------------------------------- */
 
-void describe_params(CM_params *ps);
-void describe_query(CM_query *q);
-void describe_queries(CM_queries *qs);
-void describe_c_cookie(CM_c_cookie *c);
-void describe_arm(CM_arm *a);
-void describe_s_cookie(CM_s_cookie *s);
-void describe_cookie(CM_cspec *cspec);
+void describe_params(Sfio_t *io, CM_params *ps);
+void describe_query(Sfio_t *io, CM_query *q);
+void describe_queries(Sfio_t *io, CM_queries *qs);
+void describe_c_cookie(Sfio_t *io, CM_c_cookie *c);
+void describe_arm(Sfio_t *io, CM_arm *a);
+void describe_s_cookie(Sfio_t *io, CM_s_cookie *s);
+void describe_cookie(Sfio_t *io, CM_cspec *cspec);
 
 size_t out_sz_c_cookie(CM_c_cookie *c);
 size_t out_sz_s_cookie(CM_s_cookie *s);
@@ -34,17 +34,34 @@ PDC_error_t rw_s_cookie(CM_t *cm, CM_s_cookie *c, PDC_byte *begin, PDC_byte *end
 /* -------------------------------------------------------------------------------- */
 
 #define USAGE \
-"\n  Usage: cmonster ispec cspec" \
-"\n      where ispec specifies an IO discipline and its creation params" \
-"\n      and cpsec is a cookie specification that selects one or more data items" \
+"\n  Usage: cmonster [options] -d dspec -c cspec" \
+"\n      dspec   : specifies an IO discipline and its creation params" \
+"\n      cpsec   : a cookie specification that selects one or more data items" \
 "\n  " \
-"\n  Use 'cmonster -h' for details" \
-"\n"
+"\n  Where valid options are:" \
+"\n      -h         : print detailed help message to stdout exit" \
+"\n      -i inf     : where to read data input       (default /dev/stdin)" \
+"\n      -o outf    : where to write the data output (default /dev/stdout)" \
+"\n      -e errf    : where to append error messages (default /dev/stderr)" \
+"\n      -p padslf  : where to write PADSL description of output format" \
+"\n                   (default is not to write the PADSL description)" \
+"\n  " \
+"\n  Specify inf using using '/dev/stdin' or a file pathname." \
+"\n  Specify outf, errf, or padslf using '/dev/stdout', '/dev/stderr', or a file pathname." \
+"\n\n"
 
 #define DETAILED_USAGE \
-"\n  Usage: cmonster ispec cspec" \
-"\n      where ispec specifies an IO discipline and its creation params" \
-"\n      and cpsec is a cookie specification that selects one or more data items" \
+USAGE \
+  "  cmonster reads a record at a time using the specified IO discipline." \
+"\n  For each record that matches cspec, cspec is used to read" \
+"\n  one or more input data items and write corresponding data items to an" \
+"\n  output record.  Each output data item is written in a canonical" \
+"\n  (machine-independent) form." \
+"\n  " \
+"\n  One can learn about the format of the canonical output record for" \
+"\n  a given cspec by specify the -p option, which generates a PADSL" \
+"\n  description of the output format.  If -p is present then no" \
+"\n  record processing occurs." \
 "\n  " \
 "\n  -----" \
 "\n  ispec" \
@@ -99,8 +116,7 @@ PDC_error_t rw_s_cookie(CM_t *cm, CM_s_cookie *c, PDC_byte *begin, PDC_byte *end
 "\n    Pebc_int32, Pbcd_int32, Psbl_int32, Psbh_int32)." \
 "\n  " \
 "\n    TODO: describe cspec details" \
-"\n  " \
-"\n"
+"\n\n"
 
 /* -------------------------------------------------------------------------------- */
 

@@ -21,6 +21,10 @@
 struct CM_s {
   PDC_t           *pdc;
   Vmalloc_t       *vm;
+  Sfio_t          *inf;
+  Sfio_t          *outf;
+  Sfio_t          *errf;
+  Sfio_t          *padslf;
   size_t           outbuf_sz;
   PDC_byte        *outbuf;
   PDC_byte        *outbuf_end;
@@ -36,7 +40,7 @@ extern CM_tmentry_t tmap[];
 
 /* returns -1 on usage error, 0 otherwise */
 /* (*iodisc_out) set to result of iodisc open call (may be NULL) */
-int CM_open_iodisc(CM_ispec *ispec, PDC_IO_disc_t **iodisc_out);
+int CM_open_iodisc(CM_t *cm, CM_dspec *dspec, PDC_IO_disc_t **iodisc_out);
 
 /* -------------------------------------------------------------------------------- */
 /* helper macros */

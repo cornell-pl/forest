@@ -10,27 +10,27 @@
 #define CM_RW_FN_START \
   size_t avail_in   = end - (begin + qy->off); \
   size_t remain_out = cm->outbuf_end - cm->outbuf_cursor; \
-  error(0, "rw_fn for %s called", qy->entry->tname); \
-  error(0, "  outbuf has %lu bytes remaining", (unsigned long)remain_out); \
-  error(0, "  input has %lu bytes available starting at offset %lu", \
+  sfprintf(cm->errf, "rw_fn for %s called\n", qy->entry->tname); \
+  sfprintf(cm->errf, "  outbuf has %lu bytes remaining\n", (unsigned long)remain_out); \
+  sfprintf(cm->errf, "  input has %lu bytes available starting at offset %lu\n", \
 	(unsigned long)avail_in, (unsigned long)qy->off); \
   if (qy->out_sz > remain_out) { \
-    error(0, \
+    sfprintf(cm->errf, \
 	  "  Error: qy requires %lu output bytes but outbuf has only %lu bytes\n" \
-	  "   remaining.  Skipping this data item.", \
+	  "   remaining.  Skipping this data item.\n", \
 	  (unsigned long)qy->out_sz, (unsigned long)remain_out); \
     return PDC_ERR; \
   } \
   if (qy->in_sz > avail_in) { \
-    error(0, \
-	  "  Error: qy requires %lu input bytes but input record has only %lu bytes\n" \
-	  "  available starting at offset %lu.  Skipping this data item.", \
+    sfprintf(cm->errf, \
+	  "  Error: qy requires %lu input bytes but input record has only %lu bytes\n\n" \
+	  "  available starting at offset %lu.  Skipping this data item.\n", \
 	  (unsigned long)qy->in_sz, (unsigned long)avail_in, (unsigned long)qy->off); \
     return PDC_ERR; \
   }
 
 #define CM_RW_FN_END \
-  error(0, "  advancing outbuf_cursor by %lu bytes", (unsigned long)qy->out_sz); \
+  sfprintf(cm->errf, "  advancing outbuf_cursor by %lu bytes\n", (unsigned long)qy->out_sz); \
   cm->outbuf_cursor += qy->out_sz; \
   return PDC_OK
 
