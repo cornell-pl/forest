@@ -301,7 +301,7 @@ structure Main : sig
     fun generateXschema(fileName, srcFile, ast, tidtab,paidtab) =
 	if not (!xmlFlag) then () 
 	else
-	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xms")		
+	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xsd")		
 	    in
 		PPLib.ppToStrm((PPXSchemaAst.ppAst (SOME srcFile) paidtab) () tidtab) xoutstream ast;
 		TextIO.flushOut xoutstream;

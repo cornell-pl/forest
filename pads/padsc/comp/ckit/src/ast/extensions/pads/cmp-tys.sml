@@ -18,6 +18,7 @@ struct
 		  repRead  : string,
 		  repClean : string option,
 		  edName   : string,
+                  edTid    : Tid.uid,
 		  edInit   : string option,
 		  edClean  : string option,
 		  accName  : string,

@@ -642,7 +642,7 @@ structure CnvExt : CNVEXT = struct
 				      SOME ((initSuf o edSuf) name),
 				      SOME ((cleanupSuf o edSuf) name))
 
-              fun buildTyProps (name, kind, diskSize,memChar,endian,isRecord) = 
+              fun buildTyProps (name, kind, diskSize,memChar,endian,isRecord, edTid) = 
 		  let val (repInit, repClean, edInit, edClean) = getDynamicFunctions (name,memChar)
 		  in
 		      {kind = kind,
@@ -652,6 +652,7 @@ structure CnvExt : CNVEXT = struct
 		       repRead  = readSuf name, 
 		       repClean = repClean,
 		       edName   = edSuf name,
+		       edTid    = edTid,
 		       edInit   = edInit,
 		       edClean  = edClean,
 		       accName  = accSuf name,
@@ -1468,16 +1469,20 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      List.concat(List.map cnvExternalDecl eds)
 		  else []
 
-              fun cnvRep (canonicalED, padsInfo) = 
-		  let val astdecls = cnvExternalDecl canonicalED
-                      val astdecl as Ast.DECL(coreDecl, aid, paid, loc) = List.hd astdecls
-		      val paid' = bindPaid padsInfo
-		      val () = if not (List.length astdecls = 1) then (PE.bug "Expected no more than one external declaration")
-			       else ()
+              fun cnvCTy ctyED = 
+		  let val astdecls = cnvExternalDecl ctyED
 		  in
-                       [Ast.DECL(coreDecl, aid, paid', loc)] @ (List.tl astdecls) (* tail should be empty*)
-                       handle Empty => (PE.bug "Expected at least one external decl"; astdecls)
+		    (if not (List.length astdecls = 1) then (PE.bug "Expected no more than one external declaration") else ();
+		      case List.hd astdecls 
+                      of Ast.DECL(Ast.ExternalDecl (Ast.TypeDecl {shadow, tid}), aid, paid, loc) => (astdecls, tid)
+                      | _ => (PE.error "Expected ast declaration"; (astdecls, Tid.new())))
 		  end
+
+              fun cnvRep (canonicalED, padsInfo) = 
+		  case cnvCTy canonicalED 
+		  of (Ast.DECL(coreDecl, aid, paid,loc)::xs, tid) =>
+                       (Ast.DECL(coreDecl, aid, bindPaid padsInfo, loc) ::xs, tid)
+                  | _ => (PE.bug "Expected Ast declaration"; ([], Tid.new()))
 
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord,
 				isFile : bool, baseTy: PX.Pty, args: pcexp list, 
@@ -1485,20 +1490,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		  let val base = "base"
 		      val user = "user"
 		      val baseTyName = lookupTy(baseTy, fn s => s, #padsname)
-
-		      (* Insert type properties into type table *)
-                      val ds = lookupDiskSize baseTy
-                      val mc = lookupMemChar baseTy
-                      val endian = lookupEndian baseTy
-		      val isRecord = lookupRecord baseTy orelse isRecord
-		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, mc,endian,isRecord)
-                      val () = PTys.insert(Atom.atom name, typedefProps)
-
-		      (* Generate canonical representation: typedef to base representation *)
-		      val baseTyPCT = P.makeTypedefPCT(lookupTy(baseTy, repSuf, #repname))
-		      val canonicalED = P.makeTyDefEDecl (baseTyPCT, repSuf name)
-		      val canonicalDecls = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
-                      val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
                       (* Generate CheckSet mask *)
 		      val baseCSMPCT = P.makeTypedefPCT(lookupTy(baseTy,csmSuf, #csmname))
@@ -1514,7 +1505,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				       (loc, PL.locPCT,NONE), (panic, P.int, NONE),
 				       (base, baseEDPCT, SOME "Base error description")]
 		      val edED      = P.makeTyDefStructEDecl (edFields, edSuf name)
-		      val edDecls   = cnvExternalDecl edED
+		      val (edDecls,edTid)  = cnvCTy edED
                       val edPCT     = P.makeTypedefPCT (edSuf name)		
 
   		      (* Generate accumulator type *)
@@ -1528,6 +1519,21 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val accED     = P.makeTyDefEDecl (baseAccPCT, accSuf name)
 		      val accDecls  = cnvExternalDecl accED
 		      val accPCT    = P.makeTypedefPCT (accSuf name)		
+
+		      (* Insert type properties into type table *)
+                      val ds = lookupDiskSize baseTy
+                      val mc = lookupMemChar baseTy
+                      val endian = lookupEndian baseTy
+		      val isRecord = lookupRecord baseTy orelse isRecord
+		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, mc,endian,isRecord, edTid)
+                      val () = PTys.insert(Atom.atom name, typedefProps)
+
+
+		      (* Generate canonical representation: typedef to base representation *)
+		      val baseTyPCT = P.makeTypedefPCT(lookupTy(baseTy, repSuf, #repname))
+		      val canonicalED = P.makeTyDefEDecl (baseTyPCT, repSuf name)
+		      val (canonicalDecls,canonicalTid) = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
+                      val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
                       (* Generate read function *)
                       (* -- Some helper functions *)
@@ -1723,49 +1729,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun genLocMan m = []
 		      val localVars = mungeFields genLocFull genLocBrief genLocMan fields
 
-		      (* Struct: Calculate and insert type properties into type table *)
-		      fun genTyPropsFull {pty :PX.Pty, args : pcexp list, name:string, 
-					  isVirtual:bool,  isEndian : bool, 
-				          pred:pcexp option, comment:string option} = 
-			  let val mc = lookupMemChar pty
-			      val ds = lookupDiskSize pty
-                              val supportsEndian = lookupEndian pty
-			      val isE1 = if isEndian andalso not supportsEndian
-				         then (PE.error ("Endian annotation not supported on fields of type "
-							 ^(tyName pty)^".\n"); false)
-				         else true
-			      val isE2 = if isEndian andalso not (Option.isSome pred)
-				         then (PE.error ("Endian annotations require constraints ("^name^").\n"); false)
-				         else true
-			  in [{diskSize = ds, memChar = mc, endian = isEndian andalso isE1 andalso isE2, isRecord=false}] end
-		      fun genTyPropsBrief e = [{diskSize = TyProps.Size (1,0), memChar = TyProps.Static, 
-						endian = false, isRecord = false}]
-		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan fields
-		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
-                      val {diskSize,memChar,endian,isRecord=_} = 
-			  List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
-		      val structProps = buildTyProps(name, PTys.Struct, diskSize,memChar,endian,isRecord)
-                      val () = PTys.insert(Atom.atom name, structProps)
-
-
-		      (* Struct: Generate canonical representation *)
-		      fun genRepFull {pty :PX.Pty, args : pcexp list, name:string, 
-				      isVirtual:bool, isEndian:bool, 
-				      pred:pcexp option, comment:string option} = 
-			  if not isVirtual then 
-			    let val predStringOpt = Option.map P.expToString pred
-			        val fullCommentOpt = stringOptMerge(comment, predStringOpt)
-			    in
-			      [(name,P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)), fullCommentOpt )]
-			    end
-			  else []
-		      fun genRepBrief e = []
-		      val canonicalFields = mungeFields genRepFull genRepBrief genRepMan fields
-		      val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
-		      val canonicalDecls = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
-
-                      val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
-
 		       
 		      (* Generate CheckSet mask *)
 		      fun genCSMFull {pty :PX.Pty, args : pcexp list, name:string, 
@@ -1793,7 +1756,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					 (loc, PL.locPCT,NONE), (panic, P.int,NONE)]
 		      val edFields = auxEDFields @ (mungeFields genEDFull genEDBrief genCSMMan fields)
 		      val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
-		      val edDecls = cnvExternalDecl edStructED 
+		      val (edDecls,edTid) = cnvCTy edStructED 
                       val edPCT = P.makeTypedefPCT (edSuf name)			  
 
 		      (* Generate accumulator type *)
@@ -1816,6 +1779,49 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val accStructED = P.makeTyDefStructEDecl (auxAccFields @ accFields, accSuf name)
 		      val accDecls = cnvExternalDecl accStructED 
                       val accPCT = P.makeTypedefPCT (accSuf name)			 
+
+		      (* Struct: Calculate and insert type properties into type table *)
+		      fun genTyPropsFull {pty :PX.Pty, args : pcexp list, name:string, 
+					  isVirtual:bool,  isEndian : bool, 
+				          pred:pcexp option, comment:string option} = 
+			  let val mc = lookupMemChar pty
+			      val ds = lookupDiskSize pty
+                              val supportsEndian = lookupEndian pty
+			      val isE1 = if isEndian andalso not supportsEndian
+				         then (PE.error ("Endian annotation not supported on fields of type "
+							 ^(tyName pty)^".\n"); false)
+				         else true
+			      val isE2 = if isEndian andalso not (Option.isSome pred)
+				         then (PE.error ("Endian annotations require constraints ("^name^").\n"); false)
+				         else true
+			  in [{diskSize = ds, memChar = mc, endian = isEndian andalso isE1 andalso isE2, isRecord=false}] end
+		      fun genTyPropsBrief e = [{diskSize = TyProps.Size (1,0), memChar = TyProps.Static, 
+						endian = false, isRecord = false}]
+		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan fields
+		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
+                      val {diskSize,memChar,endian,isRecord=_} = 
+			  List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
+		      val structProps = buildTyProps(name, PTys.Struct, diskSize,memChar,endian,isRecord, edTid)
+                      val () = PTys.insert(Atom.atom name, structProps)
+
+
+		      (* Struct: Generate canonical representation *)
+		      fun genRepFull {pty :PX.Pty, args : pcexp list, name:string, 
+				      isVirtual:bool, isEndian:bool, 
+				      pred:pcexp option, comment:string option} = 
+			  if not isVirtual then 
+			    let val predStringOpt = Option.map P.expToString pred
+			        val fullCommentOpt = stringOptMerge(comment, predStringOpt)
+			    in
+			      [(name,P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)), fullCommentOpt )]
+			    end
+			  else []
+		      fun genRepBrief e = []
+		      val canonicalFields = mungeFields genRepFull genRepBrief genRepMan fields
+		      val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
+		      val (canonicalDecls, canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
+
+                      val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
                       (* Generate read function struct case *)
                       (* -- Some useful names *)
@@ -2418,32 +2424,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						(SOME descriminator, hasDefault, cases, branches)
 					    end
 
-		     (* Calculate and insert type properties into type table *)
-		     fun genTyPropsFull {pty :PX.Pty, args : pcexp list, name:string, 
-					 isVirtual:bool, isEndian:bool, 
-					 pred:pcexp option, comment:string option} = 
-			  let val mc = lookupMemChar pty
-			      val ds = lookupDiskSize pty
-			      val isRecord = lookupRecord pty 
-			      val () = if isVirtual 
-				       then PE.error ("Omitted fields not supported in punions ("^name ^"). ")
-				       else ()
-			  in [{diskSize = ds, memChar = mc, endian = false, isRecord = isRecord}] end
-		     fun genTyPropsBrief e = [] (* not used in unions *)
-		     val tyProps = mungeVariants genTyPropsFull genTyPropsBrief genTyPropsMan variants
-                     (* check that all variants are records if any are *)
-		     val () = case tyProps of [] => ()
-			      | ({isRecord=first,...}::xs) => 
-			           (if List.exists (fn {isRecord,diskSize,memChar,endian}=> not (isRecord = first)) xs 
-				    then PE.error "All branches of union must terminate record if any branch does."
-				    else ())
-					
-		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
-		     val {diskSize,memChar,endian,isRecord=_} = 
-			 List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
-		     val unionProps = buildTyProps(name,PTys.Union, diskSize,memChar,endian,isRecord)
-                     val () = PTys.insert(Atom.atom name, unionProps)
-
                      (* generate enumerated type describing tags *)
 		     val tagVal = ref 0
 		     val firstTag = ref "bogus"
@@ -2470,26 +2450,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val tagDecls = cnvExternalDecl tagED
 		     val tagPCT = P.makeTypedefPCT(tgSuf name)
 
-                     (* union: generate canonical representation *)
-		     fun genRepFull {pty :PX.Pty, args : pcexp list, name:string, 
-				     isVirtual:bool, isEndian:bool, 
-				     pred:pcexp option, comment:string option} = 
-			 let val predStringOpt = Option.map P.expToString pred
-			     val fullCommentOpt = stringOptMerge(comment, predStringOpt)
-			 in
-			     [(name,P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)), fullCommentOpt )]
-			 end
-		     fun genRepBrief e = (PE.error "Unions do not currently support brief fields.\n"; [])
-		     val canonicalVariants = mungeVariants genRepFull genRepBrief genRepMan variants
-		     val unionED = P.makeTyDefUnionEDecl(canonicalVariants, unSuf name)
-		     val unionDecls = cnvExternalDecl unionED
-                     val unionPCT = P.makeTypedefPCT(unSuf name)
-                     val structFields = [(tag, tagPCT, NONE),
-					 (value, unionPCT, NONE)]
-		     val canonicalStructED = P.makeTyDefStructEDecl (structFields, repSuf name)
-		     val canonicalDecls = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
-                     val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
-
 		      (* Generate CheckSet mask *)
 		     fun genCSMFull {pty :PX.Pty, args : pcexp list, name:string, 
 				    isVirtual:bool, isEndian:bool,
@@ -2510,7 +2470,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     fun genEDBrief e = []
 		     val edVariants = mungeVariants genEDFull genEDBrief genEDMan variants
 		     val unionED = P.makeTyDefUnionEDecl(edVariants, (unSuf o edSuf) name)
-		     val unionEDDecls = cnvExternalDecl unionED
+		     val (unionEDDecls, edTid) = cnvCTy unionED
 		     val unionEDPCT = P.makeTypedefPCT((unSuf o edSuf) name)
 		     val structEDFields = [(nerr, P.int,NONE), (errCode, PL.errCodePCT, NONE),
 				  	   (loc, PL.locPCT,NONE), (panic, P.int,NONE),
@@ -2529,6 +2489,52 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val accFields = auxAccFields @ (mungeVariants genAccFull genAccBrief genAccMan variants)
 		     val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
 		     val accPCT = P.makeTypedefPCT (accSuf name)			  
+
+		     (* Calculate and insert type properties into type table *)
+		     fun genTyPropsFull {pty :PX.Pty, args : pcexp list, name:string, 
+					 isVirtual:bool, isEndian:bool, 
+					 pred:pcexp option, comment:string option} = 
+			  let val mc = lookupMemChar pty
+			      val ds = lookupDiskSize pty
+			      val isRecord = lookupRecord pty 
+			      val () = if isVirtual 
+				       then PE.error ("Omitted fields not supported in punions ("^name ^"). ")
+				       else ()
+			  in [{diskSize = ds, memChar = mc, endian = false, isRecord = isRecord}] end
+		     fun genTyPropsBrief e = [] (* not used in unions *)
+		     val tyProps = mungeVariants genTyPropsFull genTyPropsBrief genTyPropsMan variants
+                     (* check that all variants are records if any are *)
+		     val () = case tyProps of [] => ()
+			      | ({isRecord=first,...}::xs) => 
+			           (if List.exists (fn {isRecord,diskSize,memChar,endian}=> not (isRecord = first)) xs 
+				    then PE.error "All branches of union must terminate record if any branch does."
+				    else ())
+					
+		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
+		     val {diskSize,memChar,endian,isRecord=_} = 
+			 List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
+		     val unionProps = buildTyProps(name,PTys.Union, diskSize,memChar,endian,isRecord, edTid)
+                     val () = PTys.insert(Atom.atom name, unionProps)
+
+                     (* union: generate canonical representation *)
+		     fun genRepFull {pty :PX.Pty, args : pcexp list, name:string, 
+				     isVirtual:bool, isEndian:bool, 
+				     pred:pcexp option, comment:string option} = 
+			 let val predStringOpt = Option.map P.expToString pred
+			     val fullCommentOpt = stringOptMerge(comment, predStringOpt)
+			 in
+			     [(name,P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)), fullCommentOpt )]
+			 end
+		     fun genRepBrief e = (PE.error "Unions do not currently support brief fields.\n"; [])
+		     val canonicalVariants = mungeVariants genRepFull genRepBrief genRepMan variants
+		     val unionED = P.makeTyDefUnionEDecl(canonicalVariants, unSuf name)
+		     val unionDecls = cnvExternalDecl unionED
+                     val unionPCT = P.makeTypedefPCT(unSuf name)
+                     val structFields = [(tag, tagPCT, NONE),
+					 (value, unionPCT, NONE)]
+		     val canonicalStructED = P.makeTyDefStructEDecl (structFields, repSuf name)
+		     val (canonicalDecls, canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
+                     val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
                      (* Generate tag to string function *)
 		     val toStringED = genEnumToStringFun(tgSuf name, tagPCT, tagFields)
@@ -3134,27 +3140,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		 val () = popLocalEnv()  (* remove scope with parameters used for type checking
 					  size specifications *)
 
-	         (* Calculate and insert type properties into type table *)
-                 val baseMemChar = lookupMemChar baseTy
-		 val arrayMemChar = TyProps.Dynamic (* at the moment, all arrays are dynamically allocated. *)
-                 val baseDiskSize = lookupDiskSize baseTy
-                 val arrayDiskSize = case (maxConstOpt, minConstOpt, baseDiskSize)
-		                     of (SOME min, SOME max, TyProps.Size (n,r)) => 
-					 if min = max then TyProps.Size(n * (IntInf.toInt max), r * (IntInf.toInt max))
-					 else TyProps.Variable
-				     | _ => TyProps.Variable
-                 val arrayProps = buildTyProps(name,PTys.Array,arrayDiskSize, arrayMemChar, false, isRecord)
-                 val () = PTys.insert(Atom.atom name, arrayProps)
-
-
-		 (* array: Generate canonical representation *)
-		 val canonicalFields = [(length, PL.intPCT, NONE), 
-				        (elts, P.ptrPCT elemRepPCT, NONE),
-					(internal, P.ptrPCT PL.rbufferPCT, NONE) ]
-		 val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
-		 val canonicalDecls = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
-		 val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
-
 	         (* Generate CheckSet mask *)
 		 val csmFields = [(element, P.makeTypedefPCT(lookupTy(baseTy, csmSuf, #csmname)),
 				  SOME "per-element checks"),
@@ -3175,8 +3160,44 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				 (elts, P.ptrPCT(elemEdPCT), NONE),
 				 (internal, P.ptrPCT PL.rbufferPCT, NONE)] 
 		 val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
-		 val edStructDecls = cnvExternalDecl edStructED 
+		 val (edStructDecls,edTid) = cnvCTy edStructED 
 		 val edPCT = P.makeTypedefPCT (edSuf name)			  
+
+		 (* Generate accumulator type (array case) *)
+                 val numElemsToTrack = case maxConstOpt of NONE => 10
+		                       | SOME x => Int.min(10,IntInf.toInt x)
+		 val baseFields = 
+		     case lookupAcc baseTy of NONE => [] 
+		     | SOME acc => 
+			 [(array, P.makeTypedefPCT acc, SOME "Accumulator for all array elements"),
+			  (arrayDetail, P.arrayPCT (P.intX numElemsToTrack, P.makeTypedefPCT acc), 
+			   SOME ("Accumulator for first "^(Int.toString numElemsToTrack)^" array elements"))]
+		 val accFields = (length, PL.intAccPCT, SOME "Accumulator for array length")::baseFields
+		 val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
+		 val accDecls = cnvExternalDecl accStructED 
+		 val accPCT = P.makeTypedefPCT (accSuf name)			
+
+
+	         (* Calculate and insert type properties into type table *)
+                 val baseMemChar = lookupMemChar baseTy
+		 val arrayMemChar = TyProps.Dynamic (* at the moment, all arrays are dynamically allocated. *)
+                 val baseDiskSize = lookupDiskSize baseTy
+                 val arrayDiskSize = case (maxConstOpt, minConstOpt, baseDiskSize)
+		                     of (SOME min, SOME max, TyProps.Size (n,r)) => 
+					 if min = max then TyProps.Size(n * (IntInf.toInt max), r * (IntInf.toInt max))
+					 else TyProps.Variable
+				     | _ => TyProps.Variable
+                 val arrayProps = buildTyProps(name,PTys.Array,arrayDiskSize, arrayMemChar, false, isRecord,edTid)
+                 val () = PTys.insert(Atom.atom name, arrayProps)
+
+
+		 (* array: Generate canonical representation *)
+		 val canonicalFields = [(length, PL.intPCT, NONE), 
+				        (elts, P.ptrPCT elemRepPCT, NONE),
+					(internal, P.ptrPCT PL.rbufferPCT, NONE) ]
+		 val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
+		 val (canonicalDecls,canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
+		 val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
 
 		 (* Array: Generate read function *)
@@ -3617,20 +3638,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					     NONE, true, bodySs)
                  val _ = popLocalEnv()
 
-		 (* Generate accumulator type (array case) *)
-                 val numElemsToTrack = case maxConstOpt of NONE => 10
-		                       | SOME x => Int.min(10,IntInf.toInt x)
-		 val baseFields = 
-		     case lookupAcc baseTy of NONE => [] 
-		     | SOME acc => 
-			 [(array, P.makeTypedefPCT acc, SOME "Accumulator for all array elements"),
-			  (arrayDetail, P.arrayPCT (P.intX numElemsToTrack, P.makeTypedefPCT acc), 
-			   SOME ("Accumulator for first "^(Int.toString numElemsToTrack)^" array elements"))]
-		 val accFields = (length, PL.intAccPCT, SOME "Accumulator for array length")::baseFields
-		 val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
-		 val accDecls = cnvExternalDecl accStructED 
-		 val accPCT = P.makeTypedefPCT (accSuf name)			
-
 		 (* Generate Write function array case *)
 		 val writeName = writeSuf name
 		 val writeBaseName = (iSuf o bufSuf o writeSuf) (lookupWrite baseTy) 
@@ -3859,6 +3866,23 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
  		                   | SOME e => (name, e, commentOpt)
 		  val enumFields = List.map mungeMembers members
 
+                  (* generate CheckSet mask *)
+		  val baseCSMPCT = P.makeTypedefPCT(lookupTy(baseTy,csmSuf, #csmname))
+		  val csmED      = P.makeTyDefEDecl (baseCSMPCT, csmSuf name)
+		  val csmDecls   = cnvExternalDecl csmED
+		  val csmPCT     = P.makeTypedefPCT (csmSuf name)		
+
+                  (* generate error description *)
+		  val baseEDPCT = P.makeTypedefPCT(lookupTy(baseTy,edSuf, #edname))
+		  val edED      = P.makeTyDefEDecl (baseEDPCT, edSuf name)
+		  val (edDecls,edTid) = cnvCTy edED
+		  val edPCT     = P.makeTypedefPCT (edSuf name)		
+
+		  (* Generate accumulator type *)
+		  val accED     = P.makeTyDefEDecl (PL.intAccPCT, accSuf name)
+		  val accDecls  = cnvExternalDecl accED
+		  val accPCT    = P.makeTypedefPCT (accSuf name)		
+
                   (* Calculate and insert type properties into type table for enums. *)
                   val labels = List.map #1 enumFields
 		  val ds = if List.length labels > 1 then
@@ -3869,30 +3893,13 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  else TyProps.Variable
 			      end
 			   else TyProps.Size (0,0)
-                  val enumProps = buildTyProps(name,PTys.Enum,ds,TyProps.Static, true, isRecord)
+                  val enumProps = buildTyProps(name,PTys.Enum,ds,TyProps.Static, true, isRecord,edTid)
 		  val () = PTys.insert(Atom.atom name, enumProps)
 
                   (* enums: generate canonical representation *)
 		  val canonicalED = P.makeTyDefEnumEDecl(enumFields, repSuf name)
-		  val canonicalDecls = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
+		  val (canonicalDecls,canonicalTid) = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
 		  val canonicalPCT = P.makeTypedefPCT(repSuf name)
-
-                  (* generate CheckSet mask *)
-		  val baseCSMPCT = P.makeTypedefPCT(lookupTy(baseTy,csmSuf, #csmname))
-		  val csmED      = P.makeTyDefEDecl (baseCSMPCT, csmSuf name)
-		  val csmDecls   = cnvExternalDecl csmED
-		  val csmPCT     = P.makeTypedefPCT (csmSuf name)		
-
-                  (* generate error description *)
-		  val baseEDPCT = P.makeTypedefPCT(lookupTy(baseTy,edSuf, #edname))
-		  val edED      = P.makeTyDefEDecl (baseEDPCT, edSuf name)
-		  val edDecls   = cnvExternalDecl edED
-		  val edPCT     = P.makeTypedefPCT (edSuf name)		
-
-		  (* Generate accumulator type *)
-		  val accED     = P.makeTyDefEDecl (PL.intAccPCT, accSuf name)
-		  val accDecls  = cnvExternalDecl accED
-		  val accPCT    = P.makeTypedefPCT (accSuf name)		
 
 		  (* Generate enum to string function *)
 		  val cnvFunED = genEnumToStringFun(name, canonicalPCT, members)

@@ -620,8 +620,29 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 		        , rDelim="}"
 		        } pps initExprs
 
+  fun getCTyName tidtab (cty:Ast.ctype) = 
+      let fun getName tid = 
+	  let val SOME (tyBinding : Bindings.tidBinding) = Tidtab.find(tidtab,tid)
+	  in
+	      #name tyBinding
+	  end
+         fun getIntName(intKind, signedness, signednessTag) =
+	     case (intKind, signedness) 
+	     of (Ast.INT, Ast.SIGNED) => SOME("xsd:int")
+             | _ => SOME ("ToBeImplemented")
+      in
+       (case cty 
+        of Qual(qual, ctype) => getCTyName tidtab ctype
+        |  Numeric(_,_,signedness,intKind,signednessTag) => getIntName (intKind, signedness, signednessTag)
+        |  StructRef tid => getName tid
+        |  UnionRef tid => getName tid
+        |  EnumRef tid => getName tid
+        |  TypeRef tid => getName tid
+        |  _ => NONE ) 
+       handle Option => NONE
+      end
 
-  fun ppPStruct tidtab pps (Ast.TypeDecl{tid,...})  = 
+  fun structInfo tidtab tid = 
       let val bindingOpt = Tidtab.find(tidtab,tid)
 	  val binding : Bindings.tidBinding = valOf bindingOpt 
 	  val name = valOf (#name binding)
@@ -630,25 +651,48 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  val sbindingOpt = Tidtab.find(tidtab,stid)
        	  val sbinding : Bindings.tidBinding = valOf sbindingOpt 
 	  val Bindings.Struct(tid'',fields) = valOf(#ntype sbinding)
-	  val (_,fstOpt,_,_) = List.hd fields
-          val fstMember : Ast.member = valOf fstOpt
-          val fstSymbol = #name fstMember
-          val fstName   = Symbol.name fstSymbol
+	  fun cnvField (cty,memOpt : Ast.member option,_,_) = 
+	      let val fsym : Symbol.symbol = #name(valOf memOpt)
+	      in
+		  (getCTyName tidtab cty, Symbol.name fsym)
+	      end
+      in
+	 (name,List.map cnvField fields)
+	 handle Match => (PError.bug "expected typedef to struct binding"; ("bogus", []))
+  	  handle Option => (PError.bug "expected SOME"; ("bogus", []))
+      end
+
+  fun ppStrPairs pps (tyNameOpt, fieldName) = 
+      let val tyName = case tyNameOpt of NONE => "NoTypeName" | SOME name => name
+      in
+	  ( PPL.addStr pps tyName
+	  ; space pps
+          ; PPL.addStr pps fieldName
+          )
+      end
+  fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
+      let val edTid = #edTid ptyInfo
+	  val (edName, edFields) = structInfo tidtab edTid
+          val (repName, repFields) = structInfo tidtab tid
       in
 	((PPL.addStr pps "Struct" 
         ; space pps
-        ; PPL.addStr pps name
+        ; PPL.addStr pps repName
 	; newline pps
-        ; PPL.addStr pps fstName
+        ; PPL.ppList { pp=ppStrPairs
+		        , sep=","
+		        , lDelim="{"
+		        , rDelim="}"
+		        } pps (repFields @ edFields)
         ; newline pps)
 	 handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
-    | ppPStruct tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+    | ppPStruct ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) tidtab pps decl = 
       case #kind ptyInfo
-      of PTys.Typedef => PPL.addStr pps "Typedef"
-      |  PTys.Struct => ppPStruct tidtab pps decl
+      of PTys.Typedef => PPL.addStr pps "foo Typedef"
+      |  PTys.Struct => ppPStruct ptyInfo tidtab pps decl
       |  PTys.Union => PPL.addStr pps "Union" 
       |  PTys.Array => PPL.addStr pps "Array" 
       |  PTys.Enum => PPL.addStr pps "Enum" 
