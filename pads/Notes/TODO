@@ -1,3 +1,6 @@
+Oct 21  Kathleen Fisher
+ remove _id entries from generated xschema
+
 Oct 15  Kathleen Fisher
 
 enumerations generate constants in xquery modules
@@ -9,7 +12,8 @@ naming convention: <pad-file>_module.xq
 new base types
   Pdate2: specify input format as parameter
   Puri
-  Pip
+  Pip 
+  Phostname
 
 *************************************************************
 Latest Compiler TODO
