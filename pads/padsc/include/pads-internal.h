@@ -17,6 +17,10 @@
 #include "pcgen-macros-gen.h"
 #include "out_macros.h"
 
+#ifdef USE_PZIP
+#include <pzip.h>
+#endif
+
 /* ================================================================================ */
 /* NOT SURE WHERE THESE MACROS BELONG */
 

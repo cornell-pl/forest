@@ -5047,7 +5047,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.135 2003-12-09 02:00:33 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.136 2004-01-02 19:41:48 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5896,7 +5896,11 @@ P_io_fopen(P_t *pads, const char *path)
   strcpy(pads->path, path);
   fopen_fn = (pads->disc->fopen_fn) ? pads->disc->fopen_fn : P_fopen;
   if (!(io = fopen_fn(path, "r"))) {
-    P_SYSERR1(pads->disc, "Failed to open file \"%s\"", path);
+    if (errno) {
+      P_SYSERR1(pads->disc, "Failed to open file \"%s\"", path);
+    } else {
+      P_WARN1(pads->disc, "Failed to open file \"%s\"", path);
+    }
     vmfree(pads->vm, pads->path);
     pads->path = 0;
     return P_ERR;
@@ -6610,12 +6614,15 @@ P_swap_bytes(Pbyte *bytes, size_t num_bytes)
 Sfio_t*
 P_fopen(const char* string, const char* mode)
 {
+  Sfio_t* io;
   if (strcmp(string, "/dev/stdin")  == 0) {
     if (strcmp(mode, "r")) {
       /* not simple read mode, let sfopen decide if mode can be applied to sfstdin */
-      return sfopen(sfstdin,  NiL, mode);
+      io = sfopen(sfstdin,  NiL, mode);
+      goto install_pzip;
     }
-    return sfstdin;
+    io = sfstdin;
+    goto install_pzip;
   }
   if (strcmp(string, "/dev/stdout") == 0) {
     if (strcmp(mode, "a")) {
@@ -6631,7 +6638,33 @@ P_fopen(const char* string, const char* mode)
     }
     return sfstderr;
   }
+  if (strchr(mode, 'r')) {
+    io = sfopen(NiL, string, mode);
+    goto install_pzip;
+  }
+  /* not a read mode */
   return sfopen(NiL, string, mode);
+
+ install_pzip:
+#ifdef USE_PZIP
+  {
+    struct stat	st;
+    static Pzdisc_t pzdisc;
+    if (!io) return 0;
+    if (sfsize(io) || !fstat(sffileno(io), &st) && S_ISFIFO(st.st_mode)) {
+      pzdisc.errorf = errorf; /* from <error.h> */
+      if (sfdcpzip(io, string, 0, &pzdisc) < 0) {
+	P_SYSERR1(&Pdefault_disc, "P_fopen for file \"%s\": decompression error", string);
+	sfclose(io);
+	errno = 0; /* already reported system error */
+	return 0;
+      }
+    }
+  }
+  return io;
+#else /* decompression libraries not included, do not attempt to inflate */
+  return io;
+#endif
 }
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
