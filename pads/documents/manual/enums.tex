@@ -6,8 +6,7 @@ integers in-memory.
 \section{Syntax}
 \begin{tabular}{rcl}
 \nont{p\_enum\_prefix}      & \is{}  & \kw{Pprefix} ( identifier ) \\
-\nont{p\_from}              & \is{}  & \pfrom{} ( identifier ) \\
-\nont{p\_raw\_enum\_field}  & \is{}  & identifier \opt{\nont{p\_from}} \opt{= expression } \\
+\nont{p\_raw\_enum\_field}  & \is{}  & \nont{p\_literal} \opt{= expression } \\
 \nont{p\_enum\_field}       & \is{}  & \nont{p\_raw\_enum\_field}, \opt{p\_comment}\\
 \nont{p\_last\_enum\_field} & \is{}  & \nont{p\_raw\_enum\_field} \opt{p\_comment}\\
 \nont{p\_enum\_fields}   & \is{}  & \nont{p\_last\_enum\_field} \\
@@ -16,24 +15,65 @@ integers in-memory.
 \end{tabular}
 
 \subsection{Example}
-If the on-disk representation consists of the following strings:\texttt{S\_init}, \texttt{S\_lec},
+If the physical representation consists of the following
+strings:\texttt{S\_init}, \texttt{S\_lec}, 
 \texttt{S\_care}, \texttt{S\_for}, \texttt{S\_if}, and
 \texttt{S\_tpv},
-we can use the specification: 
+then we can use the specification: 
 \input{code/enum.tex}
+to describe the data. 
+The labels in the enumeration correspond to the strings in the
+physical representation.  To support physical representations that are
+not valid \C{} identifiers, the \Pfrom{} clause allows the user to
+specify the physical string separately from the enumeration label,
+\eg{}, \texttt{my\_for} in place of \texttt{for}.  The argument 
+to the \Pfrom{} clause can be any character, string, or regular expression.
+The \Pprefix{} clause indicates that all the
+labels in the enumeration are prefixed by the specified string in the
+physical representation.  \pads{} assigns integer values to the labels
+in the enumeration in the same fashion that \C{} does, so the first
+label is given the value zero, and each successive label is given the
+next higher value.  The user can specify a value for a given label
+using the equal expression syntax.  The compiler does not check that
+all labels are given distinct values. An artifact of the embedding
+into \C{} is that all labels must be globally distinct.  If two
+different enumerations contain the same string, one of them must be
+differentiated using a \Pfrom{} clause.
+
 
 \section{Generated library}
+We use the \texttt{orderStates} example to illustrate the data
+structures and functions generatef for \Penum{}s.
 \subsection{In-memory representation}
 \label{sec:enums-rep}
+The following \C{} code is the generated in memory representation for
+the \texttt{orderStates} \Penum{}. The associated values are computed
+at \pads{} compile time and so the associated values must be
+compile-time constants, as in \C{}.
+\input{code/enumRep}
+
 \subsection{Mask}
 \label{sec:enums-masks}
+The mask for a \Penum{} is simply a base mask:
+\input{code/enumMask}
 \subsection{Parse descriptor}
 \label{sec:enums-parse-descriptors}
-
+The parse descriptor for a \Penum{} is simply a base parse descriptor:
+\input{code/enumPD}
 \subsection{Operations}
-init/cleanup rep
-init/cleanup ed
-\subsubsection{read}
-  error codes
-\subsubsection{Accumulator functions}
+The operations for \Penum{}s are those described in
+\chapref{chap:common-features}, with one addition.
+The \texttt{orderStates2str} function converts the integer
+representation of a \Penum{} into a \C{} string.
+\input{code/enumOps}
+\subsubsection{Read Function}
+The error codes for \Penum{}s are:
 
+\tskip{}
+\begin{tabular}{lp{4in}}
+ \cd{P_NO_ERR}                 & Indicates no error occurred\\[1ex]
+ \cd{P_ENUM_MATCH_ERR} & Indicates that the no branch of the enum matched.\\[1ex]
+\end{tabular}
+
+\subsubsection{Accumulator functions}
+Accumulator functions for \Penum{}s are described in \chapref{chap:accumulators}.
