@@ -6,7 +6,7 @@ Parray sIP{
   Pstring_SE(:"/[. ]/":) [] : Psep('.') && Pterm(Pnosep); 
 };
 
-Punion host_t  {
+Punion clihost_t {
   nIP resolved;    /- 135.207.23.32
   sIP symbolic;    /- www.research.att.com
 };
@@ -53,13 +53,13 @@ Pstruct http_request_t {
 };
 
 Precord Pstruct http_clf_t {
-        host_t host;                      /- IP address of client requesting service
+        clihost_t host;                   /- IP address of client requesting service
    ' '; auth_id_t remoteID;               /- Remote identity; '-' indicates not obtained.
    ' '; auth_id_t auth;                   /- Name of authenticated user.
    " [";
    Pdate(:']':) my_date;                  /- Timestamp of request.
    "] ";
-   http_request_t request;                 /- Request.
+   http_request_t request;                /- Request.
    ' ';  Puint16_FW(:3:) response;        /- 3-digit response code
    ' ';  contentOpt_t contentLength;      /- Number of bytes in request response.
 };

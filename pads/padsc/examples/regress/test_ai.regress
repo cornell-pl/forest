@@ -6,7 +6,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
 good vals:         11    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<top>.host : union host_t
+<top>.host : union clihost_t
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Union tag: good vals:         11    bad vals:          0    pcnt-bad:    0.000
   Characterizing tag values:  min resolved (    1)  max symbolic (    2)
