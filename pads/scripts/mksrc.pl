@@ -9,10 +9,12 @@ my $sdir = "$pads_home/scripts";
 my $cc;
 chomp($cc = $ENV{'CC'});
 if (length($cc) == 0) {
-  chomp($cc = `which gcc 2>/dev/null`);
+    chomp($cc = `type gcc 2>/dev/null`);
+    $cc =~ s/gcc is//;
 }
 if (length($cc) == 0) {
-  chomp($cc = `which cc 2>/dev/null`);
+  chomp($cc = `type cc 2>/dev/null`);
+    $cc =~ s/cc is//;
 }
 if (length($cc) == 0) {
   print "\n** No environment variable CC, and no gcc or cc in your path.\n** Please fix and re-run make.\n\n";
