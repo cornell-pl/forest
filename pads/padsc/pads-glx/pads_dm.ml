@@ -360,7 +360,8 @@ and padsTextNode docid nr' pnr' =
 let docid_gen = Nodeid.build_docid_gen()
 let uri_docid_table = Hashtbl.create 101
 
-let pads_document proc_ctxt uriopt nr = 
+(* Pass name of PADS-generated schema *)
+let pads_document proc_ctxt uriopt (* pads-schema-name *) nr = 
   start_monitor_call proc_ctxt Prolog "pads_document" ; 
   let docid =
     match uriopt with

@@ -1,3 +1,15 @@
+March 30, 2005 - Mary
+  o Representation of <pd>
+    - In pglx.c
+      Fixed insidious bug in node rep of text nodes : <pd> child was
+      missing for bulk & smart text nodes 
+    - PADX driver include/templates: 
+      Fixed templates/pglx_*.h so that XML is output even when errors
+      occur.
+    - Regression tests
+      In examples/xml/tests, "make regress" should now run without
+      error, although those tests all run on error-free data files
+
 January 24, 2005 - Mary
 
   o Changed rules.mk to fix incorrect definitions of cc/ld variables

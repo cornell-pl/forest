@@ -50,7 +50,7 @@ OTHER_TESTS  = test_array test_array_string test_record_enum test_struct1 test_s
                test_punion2 test_punion_manifest test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
                test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct_good rw_pendian rwxml_struct1 \
-               test_cpyrecgen_rps rwxml_cpyrecgen_rps
+               test_cpyrecgen_rps rwxml_cpyrecgen_rps rwxml_format7
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
@@ -212,6 +212,8 @@ regress_test_readint_d: test_readint_d
 regress_test_ai_o: test_ai
 	@(args=""; suf=""; $(RegressDef))
 regress_test_ai_d: test_ai_d
+	@(args=""; suf=""; $(RegressDef))
+regress_rwxml_ai_o: rwxml_ai
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_dns_o: test_dns

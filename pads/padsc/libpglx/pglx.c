@@ -532,9 +532,10 @@ PDCI_node_t * ty ## _val_node_kthChild(PDCI_node_t *node, childIndex idx) \
   PDCI_node_t *result = 0; \
   /* the only valid idx is 0  */ \
   if (idx) return 0; \
-  /* the following mk call raises an exception on alloc error */ \
-  /* PDCI_MK_TEXTNODE(result, & ty ## _text_vtable,  node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); */ \
-  result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); \
+  /* Old remark: the following mk call raises an exception on alloc error */ \
+  PDCI_MK_TEXTNODE(result, & ty ## _text_node_vtable,  node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); \
+  /* Mary: Calling this function directly, instead of through the above macro 
+  /* result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); */\ 
   return result; \
 } \
  \
@@ -568,7 +569,8 @@ PDCI_node_t * ty ## _val_sndNode_kthChild(PDCI_node_t *node, childIndex idx) \
   /* the only valid idx is 0  */ \
   if (idx) return 0; \
 \
-  result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_sndNode_kthChild"); \
+  PDCI_MK_TEXTNODE(result, & ty ## _text_sndNode_vtable,  node, PDCI_MacroArg2String(ty) "_val_sndNode_kthChild"); \
+ /*  result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_sndNode_kthChild"); */ \
   ty ## _text_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx); \
   return result; \
 }

@@ -288,8 +288,9 @@ int main(int argc, char** argv) {
       exit_on_error(galax_eval_prolog(cm->compiled_prolog, exc, &pp), "galax_eval_prolog");
       exit_on_error(galax_eval_statement(pp, File_Input, queryName, &docitems), "galax_eval_statement"); 
       
-      if (is_empty(docitems)) error(2, "*** Result is empty") ;
-      else {
+      /*      if (is_empty(docitems)) error(2, "*** Result is empty") ;
+	      else  */
+      {
 	char *result;
 	exit_on_error(galax_serialize_to_string(pc,docitems,&result), "galax_serialize_to_string");
 	fprintf(file_fp,"%s",result);

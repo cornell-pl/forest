@@ -118,9 +118,9 @@ regress_dns: regress_load_dns regress_bulk_dns
 
 regress_dibbler_notrailer: regress_load_dibbler_notrailer regress_bulk_dibbler_notrailer regress_smart_dibbler_notrailer
 
-#regress: $(REGRESS_TESTS)
+regress: $(REGRESS_TESTS)
 
-regress: regress_ai
+#regress: regress_ai
 
 clean:
 	$(RM) -f *~ *.o $(ALL_TESTS) 

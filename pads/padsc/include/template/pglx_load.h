@@ -240,11 +240,15 @@ int main(int argc, char** argv) {
       error(2, "read returned error");
 #endif
     }
-  else { 
+  /*  else  */
+
+  { 
     exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
     if (!P_PS_isPanic(&pd)) { 
       /* make the top-level node */
       PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
+
+      /*      walk_children(doc_node,0);  */
 
       exit_on_error((padsDocument(pc, inName, (nodeRep)doc_node, &doc)), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 

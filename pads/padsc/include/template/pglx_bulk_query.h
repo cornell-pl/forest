@@ -270,7 +270,9 @@ int main(int argc, char** argv) {
 #else
       error(2, "read returned error");
 #endif
-  } else { 
+  } 
+  /* else */
+  { 
     exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
     /*    time(&timer);  fprintf(stderr, "After read %s\n", ctime(&timer)); */
     if (!P_PS_isPanic(&pd)) {
@@ -294,8 +296,9 @@ int main(int argc, char** argv) {
       exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor"); 
       time(&timer);  fprintf(stderr, "After eval %s\n", ctime(&timer)); 
 
-      if (is_empty(docitems)) error(2, "*** Result is empty") ;
-      else {
+      /*      if (is_empty(docitems)) error(2, "*** Result is empty") ;
+	      else  */
+      { 
 	char *result;
 	exit_on_error(galax_serialize_to_string(pc,docitems,&result), "galax_serialize_to_string");
 	fprintf(file_fp,"%s",result);
