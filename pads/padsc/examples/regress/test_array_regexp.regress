@@ -1,9 +1,14 @@
 Data file = ../../data/array_regexp
 warning: P_open: Installing default IO discipline : newline-terminated records
+read reported no errors and passed predicate test.
 entry_read returned array of length: 3
+read reported no errors and passed predicate test.
 entry_read returned array of length: 1
+read reported no errors and passed predicate test.
 entry_read returned array of length: 3
+read reported no errors and passed predicate test.
 entry_read returned array of length: 0
+read reported no errors and passed predicate test.
 entry_read returned array of length: 1
 *****************************************************************************************************
 <top> : struct entry

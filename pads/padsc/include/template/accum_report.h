@@ -18,6 +18,8 @@
 #  define MAX_RECS 0
 #endif
 
+
+
 Puint64 num_recs = 0;
 
 int main(int argc, char** argv) {
@@ -114,6 +116,9 @@ int main(int argc, char** argv) {
     }
 #ifdef EXTRA_GOOD_READ_CODE
     else {
+      if (PPADS_TY(is_)(&(rep))) {  
+	error(2, "read reported no errors and passed predicate test.");  
+      } else {  error(2, "read reported no errors but failed predicate test.");  } 
       EXTRA_GOOD_READ_CODE;
     }
 #endif

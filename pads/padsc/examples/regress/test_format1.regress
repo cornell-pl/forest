@@ -1,7 +1,10 @@
 Data file = ../../data/ex_data.format1
 warning: P_open: Installing default IO discipline : newline-terminated records
+read reported no errors and passed predicate test.
 test_read returned: id 1  ts 11
+read reported no errors and passed predicate test.
 test_read returned: id 2  ts 22
+read reported no errors and passed predicate test.
 test_read returned: id 3  ts 33
 warning: Error [in test_read]: record 4 byte 2 : Extra data before char separator '|'
 [record 4]4>>>a<<<|44
@@ -14,12 +17,14 @@ warning: Error [in test_read]: record 6 byte 7 : Missing char separator '|'
 Note [in test_read]: record 6 byte 7 : Resynching at EOR
 [record 6]000006>>>a66b<<<
 test_read returned: error
+read reported no errors and passed predicate test.
 test_read returned: id 7  ts 77
 warning: Error [in Pa_int32_read]: at record 8 from byte 1 to byte 5: Invalid ASCII character encoding of a number 
 [record 8]>>>     <<<
 Note [in test_read]: record 8 byte 1 : Resynching at EOR
 [record 8]>>>     <<<
 test_read returned: error
+read reported no errors and passed predicate test.
 test_read returned: id 8  ts 88
 warning: Error [in Pa_int32_read]: at record 10 at byte 1 : Invalid ASCII character encoding of a number 
 [record 10]>>>a<<<4|44

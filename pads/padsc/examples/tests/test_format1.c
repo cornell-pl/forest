@@ -9,6 +9,7 @@
 } while (0)
 
 #define PADS_TY(suf) test ## suf
+#define PPADS_TY(pref) pref ## test 
 #define WSPACE_OK
 
 #include "format1.h"

@@ -1,10 +1,16 @@
 Data file = ../../data/array_skip2
 warning: P_open: Installing default IO discipline : newline-terminated records
+read reported no errors and passed predicate test.
 entry_read returned array of length: 2
+read reported no errors and passed predicate test.
 entry_read returned array of length: 5
+read reported no errors and passed predicate test.
 entry_read returned array of length: 2
+read reported no errors and passed predicate test.
 entry_read returned array of length: 2
+read reported no errors and passed predicate test.
 entry_read returned array of length: 2
+read reported no errors and passed predicate test.
 entry_read returned array of length: 2
 *****************************************************************************************************
 <top> : struct entry

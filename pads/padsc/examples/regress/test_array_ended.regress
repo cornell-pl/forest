@@ -1,5 +1,6 @@
 Data file = ../../data/array_ended
 warning: P_open: Installing default IO discipline : newline-terminated records
+read reported no errors and passed predicate test.
 entry_read returned array evens of length: 2
 entry_read returned array odds  of length: 3
 warning: Error [in eseq_t_read]: at record 2 at byte 3 : Unexpected extra data before array element separator 

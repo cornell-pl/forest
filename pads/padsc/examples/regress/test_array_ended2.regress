@@ -1,15 +1,21 @@
 Data file = ../../data/array_ended2
 warning: P_open: Installing default IO discipline : newline-terminated records
+read reported no errors and passed predicate test.
 entry_read returned array first of length: 1
 entry_read returned array second  of length: 0
+read reported no errors and passed predicate test.
 entry_read returned array first of length: 1
 entry_read returned array second  of length: 2
+read reported no errors and passed predicate test.
 entry_read returned array first of length: 3
 entry_read returned array second  of length: 2
+read reported no errors and passed predicate test.
 entry_read returned array first of length: 0
 entry_read returned array second  of length: 2
+read reported no errors and passed predicate test.
 entry_read returned array first of length: 0
 entry_read returned array second  of length: 1
+read reported no errors and passed predicate test.
 entry_read returned array first of length: 2
 entry_read returned array second  of length: 1
 warning: Error [in Pa_int32_read]: at record 7 just before byte 7: Unexpected end of record (field too short?)

@@ -9,6 +9,7 @@
 } while (0)
 
 #define PADS_TY(suf) orderStates ## suf
+#define PPADS_TY(pref) pref ## orderStates
 
 #include "record_enum.h"
 #include "template/accum_report.h"

@@ -9,6 +9,7 @@
 } while (0)
 
 #define PADS_TY(suf) test2 ## suf
+#define PPADS_TY(pref) pref ## test2 
 
 #include "punion2.h"
 #include "template/accum_report.h"

@@ -1,5 +1,6 @@
 Data file = ../../data/array_post
 warning: P_open: Installing default IO discipline : newline-terminated records
+read reported no errors and passed predicate test.
 intList_read returned array of length: 4
 warning: Error [in intList_read]: record 2 byte 1 : Pparsecheck constraint for array intList violated
 [record 2]>>>4|6|8|10<<<

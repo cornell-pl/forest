@@ -9,6 +9,7 @@
 } while (0)
 
 #define PADS_TY(suf) entry ## suf
+#define PPADS_TY(pref) pref ## entry
 
 #include "array_skip.h"
 #include "template/accum_report.h"

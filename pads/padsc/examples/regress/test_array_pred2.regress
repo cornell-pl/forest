@@ -4,6 +4,7 @@ offset = 1
 offset = 3
 offset = 5
 offset = 7
+read reported no errors and passed predicate test.
 entry_read returned array of length: 5
 offset = 1
 offset = 3

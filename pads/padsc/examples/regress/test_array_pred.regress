@@ -1,5 +1,6 @@
 Data file = ../../data/array_pred
 warning: P_open: Installing default IO discipline : newline-terminated records
+read reported no errors and passed predicate test.
 entry_read returned array of length: 5
 warning: Error [in seq_t_read]: record 2 byte 9 : Missing terminator
 [record 2]1|2|5|14>>><<<

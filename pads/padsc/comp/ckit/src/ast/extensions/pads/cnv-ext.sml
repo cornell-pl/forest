@@ -5157,12 +5157,18 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val elemCXs = 
                              case lookupPred baseTy of NONE => [] 
 		             | SOME elemPred => [PT.Call(PT.Id elemPred, [P.addrX elemX] @ args)]
+
+			 val needsConsume = case endedXOpt of SOME(_,_,SOME isPredX) =>
+			                          PTSub.isFreeInExp([PNames.consume], isPredX)
+					    | _ => false
 			 val genVars = [(PNames.arrayLen,   PL.uint32PCT,        fieldX(rep, length)), 
 					(name,              P.ptrPCT elemRepPCT, fieldX(rep, elts)),
 					(PNames.arrayElts,  P.ptrPCT elemRepPCT, fieldX(rep, elts)),
 					(PNames.arrayCur,   PL.uint32PCT,        indexX), 
-					(PNames.curElt,     elemRepPCT,          P.subX(fieldX(rep, elts), indexX)),
-    			                (PNames.consume,    P.int,               PT.Id consumeFlag)]
+					(PNames.curElt,     elemRepPCT,          P.subX(fieldX(rep, elts), indexX))]
+			               @ (if needsConsume then
+    			                     [(PNames.consume,    P.int,               PT.Id consumeFlag)]
+					  else [])
 			 val omitCXs = 
 			     case skipXOpt of NONE => []
 				  | SOME (_,_, NONE) => []
@@ -5200,7 +5206,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                        | _ => 
 			 [PT.Compound(
 			   [P.varDeclS'(P.int, index)]
- 		         @ (case endedXOpt of NONE => [] | _ => [P.varDeclS(P.int, consumeFlag, P.falseX)])
+ 		         @ (if needsConsume then [P.varDeclS(P.int, consumeFlag, P.falseX)] else [])
 			 @ [PT.For(P.assignX(PT.Id index, P.zero),
 				 P.andX(P.notX(PT.Id violated), P.ltX(PT.Id index, upperX)), 
 				 P.postIncX(PT.Id index),
@@ -5213,13 +5219,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 fun genPredClause c = 
 		     case c of 
                        PX.Forall      r   => genLoop r
-		     | PX.AGeneral    exp => [PT.IfThen(exp, PT.Compound[P.assignS(PT.Id violated, P.trueX)])]
+		     | PX.AGeneral    exp => [PT.IfThen(P.notX exp, PT.Compound[P.assignS(PT.Id violated, P.trueX)])]
                      | PX.AParseCheck exp => []
 		 val clausesSs = List.concat(List.map genPredClause postCond)
 		 val bodySs = [P.varDeclS(P.int, violated, P.falseX)]
 		             @ (genElemChecks ())
 		             @  clausesSs
-                             @ [PT.Return (PT.Id violated)]
+                             @ [PT.Return (P.notX(PT.Id violated))]
                  val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs)]
 
                  (* Generate accumulator functions array case *) 

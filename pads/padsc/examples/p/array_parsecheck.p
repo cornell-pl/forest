@@ -1,5 +1,7 @@
 Parray seq_t {
-  Pstring_ME(:"/[[:alnum:]]+/":) [] : Psep(Pre "/\\s+/") && 
+  Pstring_ME(:"/[[:alnum:]]+/":) [] : 
+    Psep(Pre "/\\s+/") && 
+    /*   Psep(" ") &&  */
     Plast(Pstring_eq_cstr(&elts[current], "end"));
 };
 

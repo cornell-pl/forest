@@ -8,7 +8,9 @@
   error(2, "pn_t_read returned: error"); \
 } while (0)
 
+
 #define PADS_TY(suf) pn_t ## suf
+#define PPADS_TY(pref) pref ## line
 #define EXTRA_READ_ARGS 0, 9999999999LL,
 #include "typedef.h"
 #include "template/accum_report.h"
