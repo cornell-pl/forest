@@ -392,10 +392,6 @@ RBuf_reserve_dbg(RBuf_t *rbuf, void **buf_out, size_t eltSize,
   rbuf->numElts    = numElts;
   rbuf->maxEltHint = maxEltHint;
   targ_size = eltSize * numElts;
-  error(2, "XXX[new at %s:%d NOW at %s:%d] RBuf_reserve (%s) called with eltSize %d numElts %d maxEltHint %d",
-	rbuf->new_file, rbuf->new_line,
-	file, line, which,
-	eltSize, numElts, maxEltHint);
   if (rbuf->buf && (targ_size <= rbuf->bufSize)) {
     /* trivial success */
     if (buf_out) {
@@ -434,17 +430,6 @@ RBuf_reserve_dbg(RBuf_t *rbuf, void **buf_out, size_t eltSize,
     new_size = eltSize * maxEltHint + 7;
     new_size = (new_size >> 3) << 3;
   }
-  if (rbuf->buf) {
-    error(0, "XXX[new at %s:%d NOW at %s:%d] RBuf_reserve: resizing buffer from %d to %d",
-	  rbuf->new_file, rbuf->new_line,
-	  file, line,
-	  rbuf->bufSize, new_size);
-  } else {
-    error(0, "XXX[new at %s:%d NOW at %s:%d] RBuf_reserve: alloc buffer of size %d",
-	  rbuf->new_file, rbuf->new_line,
-	  file, line,
-	  new_size);
-  }
   if (!(rbuf->buf = mgr->fn(mgr->vm, rbuf->buf, new_size))) { /* alloc or resize buf */
     error(2, "[new at %s:%d NOW at %s:%d] RBuf_reserve -- out of space",
 	  rbuf->new_file, rbuf->new_line,
@@ -476,6 +461,7 @@ RBuf_reserve_dbg(RBuf_t *rbuf, void **buf_out, size_t eltSize,
   return 0; /* success */
 }
 #endif
+
 
 /* ================================================================================ */
 /* RBuf : accessor functions */

@@ -7,8 +7,8 @@
 // Where the defaults are:
 
 #define SELECT_STATE       "10"
-#define CLEAN_INPUT_FILE   "/home/kfisher/esig/small_clean"
-#define OUTPUT_FILE        "/home/kfisher/esig/small_clean_selected_C"
+#define CLEAN_INPUT_FILE   "/home/kfisher/esig/dibbler_clean_big_C"
+#define OUTPUT_FILE        "/home/kfisher/esig/dibbler_selected_big_C"
 
 // dibber_select parses entry lines from CLEAN_INPUT_FILE according to
 // the spec in dibbler_new.p.  It does not do any error checking, and

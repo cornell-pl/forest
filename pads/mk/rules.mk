@@ -50,11 +50,13 @@
 # library routines in the profile
 # GPROF_FLAGS = -pg
 
-# uncomment this to use memory profiling with debug libaries/executables
+
+# uncomment this to use memory profiling with debug libraries/executables
 # WARNING: there seems to be a bug in the support for VM_RSZERO
 # (zero-fill allocating memory) when this flag is set, observed for
 # a case where the memory region shifted during a realloc
 # VM_FLAGS = -DVMFL=1
+
 
 # uncomment this to turn off loc setting for (most) reads
 # NOREAD_FLAGS = -DNO_READ_LOCS
