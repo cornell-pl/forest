@@ -9,8 +9,8 @@ int test_write (PDC_t *pdc,Sfio_t *io,test_ed *ed,test *rep)
   size_t buf_len;
 
   PDCI_DISC_INIT_CHECKS("test_write");
-  PDCI_NULLPARAM_CHECK( "test_write" , io );
-  PDCI_NULLPARAM_CHECK( "test_write" , rep );
+  PDCI_NULLPARAM_CHECK( "test_write" , (void *)io );
+  PDCI_NULLPARAM_CHECK( "test_write" , (void *)rep );
 
   if (!ed) 
     {

@@ -20,6 +20,7 @@ to decide
   * how to handle name conflicts for enums and unions
      how relates to name spaces and separate compilation
   * in-place parsing from buffers?
+  * translation specs: generate conversion from one pads type to another.
 
 data formats to write
 ---------------------
@@ -84,7 +85,14 @@ NEW
   * if a user-defined constraint involves a field that has errCode != PDC_NO_ERR,
     the error message should be something like
       "User constraint skipped due to error reading one of its parts"
-       and the error code should be, e.g., PDC_USER_CONSTRAINT_SKIPPED.
+       and the error code should be, e.g.,
+       PDC_USER_CONSTRAINT_SKIPPED.
+
+  * if checkset mask is ignore or no-check, then set error descriptor
+    to indicate that status.
+
+  * implement set but no check
+
 
 OLD (some of them are done)
   * make enum.p work (strings that match c keywordsk, etc)
@@ -108,11 +116,8 @@ OLD (some of them are done)
   * fix accumulator generation program to start from file type
   * add analysis to determine if checkset mask is plausible 
     given other constraints
-  * can we access the length of an array or the tag on a union
-    after we have parsed the associated data?
   * empty structs
   * change comment character to //-
-  * generate copy functions
   * generate write functions
         - original
         - xml (need canonical mapping)
