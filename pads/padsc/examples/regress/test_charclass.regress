@@ -1,0 +1,31 @@
+warning: P_open: Installing default IO discipline : newline-terminated records
+init the accum
+calling entry_read
+calling entry_read
+calling entry_read
+warning: Error [in entry_read]: record 3 byte 1 : Missing literal: "/[[:digit:]]+/".
+[record 3]>>><<<a
+entry_read returned: error
+calling entry_read
+Found eof
+*****************************************************************************************************
+entire struct : struct entry
+*****************************************************************************************************
+Errors: total vals:          4
+  Characterizing errors:  min 0 max 1 avg 0.250
+    => distribution of top 2 values out of 2 distinct values:
+        val:          0 count:          3 pcnt-of-total-vals:   75.000
+        val:          1 count:          1 pcnt-of-total-vals:   25.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          4 pcnt-of-total-vals:  100.000
+[Describing each field of entire struct]
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+entire struct.c : char
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+good vals:          4    bad vals:          0    pcnt-bad:    0.000
+  Characterizing char:  min 'a' max 'q' (based on ASCII encoding)
+    => distribution of top 2 values out of 2 distinct values:
+        val:    'a' count:          3  pcnt-of-good-vals:   75.000
+        val:    'q' count:          1  pcnt-of-good-vals:   25.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING     count:          4  pcnt-of-good-vals:  100.000

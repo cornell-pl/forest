@@ -1,5 +1,4 @@
 structure CnvExt : CNVEXT = struct
-
   structure PT   = ParseTree     (* the parse tree *)
   structure PX   = ParseTreeExt  (* Pads extensions *)
   structure P    = ParseTreeUtil (* Utility functions for manipulating the parse tree *)
@@ -255,6 +254,7 @@ structure CnvExt : CNVEXT = struct
     val isStructOrUnion     = TU.isStructOrUnion     ttab
     val getCoreType         = TU.getCoreType         ttab
     val equalType           = TU.equalType           ttab
+    val compatible          = TU.compatible          ttab
 
     fun sizeof ty = 
       LargeInt.fromInt (#bytes (Sizeof.byteSizeOf {sizes=Sizes.defaultSizes, err=error, warn=warn, bug=bug} ttab ty))
@@ -337,11 +337,16 @@ structure CnvExt : CNVEXT = struct
 			     Ast.SIGNDECLARED)
     val CTuint = Ast.Numeric (Ast.NONSATURATE,Ast.WHOLENUM,Ast.UNSIGNED,Ast.INT,
 			     Ast.SIGNDECLARED)
+    val CTshort = Ast.Numeric (Ast.NONSATURATE,Ast.WHOLENUM,Ast.SIGNED,Ast.SHORT,
+			     Ast.SIGNDECLARED)
+    val CTushort = Ast.Numeric (Ast.NONSATURATE,Ast.WHOLENUM,Ast.UNSIGNED,Ast.SHORT,
+			     Ast.SIGNDECLARED)
     val CTchar = Ast.Numeric (Ast.NONSATURATE,Ast.WHOLENUM,Ast.SIGNED,Ast.CHAR,
 			     Ast.SIGNASSUMED)
     val CTuchar = Ast.Numeric (Ast.NONSATURATE,Ast.WHOLENUM,Ast.UNSIGNED,Ast.CHAR,
 			     Ast.SIGNASSUMED)
-    val CTintTys = [CTint, CTuint, CTchar, CTuchar]
+    val CTintTys = [CTint, CTuint, CTshort, CTushort, CTchar, CTuchar]
+    val CTints   = [CTint, CTuint]
 
     val CTstring = Ast.Pointer CTuchar
 
@@ -376,7 +381,9 @@ structure CnvExt : CNVEXT = struct
     val CTisSInt = CTisNum (Ast.INT,Signed)
     val CTisUInt = CTisNum (Ast.INT,Unsigned)
 
-    fun CTisIntorChar cty = (CTisInt cty) orelse (CTisChar cty)
+    val CTisShort  = CTisNum (Ast.SHORT,Any)
+
+    fun CTisIntorChar cty = (CTisInt cty) orelse (CTisChar cty) orelse CTisShort cty
 
     val CTisPointer = TU.isPointer ttab
 
@@ -434,6 +441,7 @@ structure CnvExt : CNVEXT = struct
           of Ast.Qual (_,ty) => CTisEnum ty
            | (Ast.EnumRef tid) => SOME tid
            | _ => NONE
+
 
     fun expEqualTy(expPT, CTtys, genErrMsg) = 
 	let val (expTy, expAst) = cnvExpression expPT
@@ -1163,9 +1171,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  end
 
               (* int is_foo(foo *rep) *)
-              fun genIsFun(funName, rep, argPCT, bodySs) = 
-		  let val paramTys = [P.ptrPCT argPCT]
-		      val paramNames = [rep]
+              fun genIsFun(funName, cParams:(string *pcty) list, rep, argPCT, bodySs) = 
+		  let val (cNames, cTys) = ListPair.unzip cParams
+		      val paramTys = [P.ptrPCT argPCT] @ cTys
+		      val paramNames = [rep] @ cNames
 		      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
 		      val returnTy =  P.int
 		      val isFunED = 
@@ -1632,7 +1641,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
               fun emitRead  eds = emit (!(#outputRead(PInput.inputs)), eds)
               fun emitWrite eds = emit (!(#outputWrite(PInput.inputs)), eds)
               fun emitXML   eds = emit (!(#outputXML(PInput.inputs)), eds)
-	      fun emitPred  eds = emit (false, eds)
+	      fun emitPred  eds = emitRead eds
 
               fun cnvCTy ctyED = 
 		  let val astdecls = cnvExternalDecl ctyED
@@ -1816,7 +1825,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      val predX  = case lookupPred baseTy of NONE => modPredX
 			           | SOME basePred => P.andX(modPredX, PT.Call(PT.Id basePred, [PT.Id rep]))
 		      val bodySs = [PT.Return predX]
-		      val isFunEDs = [genIsFun(isName, rep, canonicalPCT, bodySs) ]
+		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
                       (* -- generate accumulator init, reset, and cleanup functions (typedef case) *)
 		      fun genResetInitCleanup theSuf = 
@@ -4941,49 +4950,54 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  val errorMsg = "Predicate for Pcharclass "^name^" has type: "^
 					  (CTtoString apredCT) ^". Expected type compatible "^
 					  "with int (*)(int)."
+		  fun rptError () = 
+		      let val done : bool ref = ref false
+		      in
+			  if not (!done) then (done := true; PE.error errorMsg) else ()
+		      end
+			 
 		  val (body, decls) = 
 		        case TU.getFunction ttab apredCT
 			of SOME(retCT, [argCT]) => (
-                             if not (equalType(CTint, retCT)) then PE.error errorMsg else ();
-                             if equalType(CTint, argCT) then (pred, []) before print "arg is int"
-                             else if equalType(CTchar, argCT) then
+                             if not (isAssignable(CTint, retCT,NONE)) then rptError() else ();
+                             if CTisInt argCT then (pred, []) 
+                             else if CTisIntorChar argCT then
 				  let val wrapperName = padsID(isPref name) 
 				      val formalParams = [P.mkParam(P.int, "i")]
-				      val bodySs = [P.varDeclS(P.char, "y", PT.Cast(P.char, PT.Id "i")),
+				      val argPT = CTtoPTct argCT
+				      val bodySs = [P.varDeclS(argPT, "y", PT.Cast(argPT, PT.Id "i")),
 						    PT.Return(P.andX(P.eqX(PT.Id "i", PT.Id "y"), 
 								     PT.Call(pred, [PT.Id "y"])))]
 				  in
 				      (PT.Id wrapperName, [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
-						    before print "arg is char"
 				  end
 			     else (case CTgetPtrBase argCT 
-				   of NONE => (PE.error errorMsg; (pred, [])) before print "not pointer type"
+				   of NONE => (PE.error errorMsg; (pred, [])) 
 				   |  SOME argPtrCT  => (
-				        if equalType(CTint, argPtrCT) then
+				        if CTisInt argPtrCT then
 				           let val wrapperName = padsID(isPref name) 
 					       val formalParams = [P.mkParam(P.int, "i")]
 					       val bodySs = [PT.Return( PT.Call(pred, [P.addrX(PT.Id "i")]))]
 					   in
 					       (PT.Id wrapperName, 
 					        [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
-							 before print "arg is int ptr"
 					   end
-					else if equalType(CTchar, argPtrCT) then
+					else if CTisIntorChar argPtrCT then
 					        let val wrapperName = padsID(isPref name) 
 						    val formalParams = [P.mkParam(P.int, "i")]
-						    val bodySs = [P.varDeclS(P.char, "y", PT.Cast(P.char, PT.Id "i")),
+						    val argPT = CTtoPTct argPtrCT
+						    val bodySs = [P.varDeclS(argPT, "y", PT.Cast(argPT, PT.Id "i")),
 								  PT.Return(P.andX(P.eqX(PT.Id "i", PT.Id "y"), 
 										   PT.Call(pred, [P.addrX(PT.Id "y")])))]
 						in
 						   (PT.Id wrapperName, 
 						    [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
-						   before print "arg is char ptr"
 						end				  
-					else (PE.error errorMsg; (pred,[]))
+					else (PE.error errorMsg; (pred,[])) 
                                        (*end some cty case *))
 				       (* end ptrbase case *))
 			       (* end Some singleton case *))
-                        | _ => (PE.error errorMsg; (pred, []))
+                        | _ => (PE.error errorMsg; (pred, [])) 
 		  val regS = PL.regexpCharClass(PT.String name, body)
 		  val () = CharClass.insert regS
 	      in

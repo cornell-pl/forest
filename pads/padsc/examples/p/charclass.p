@@ -1,13 +1,9 @@
 Ptypedef Pchar digit :: digit x => { x > '0' && x < '9'};
 
-int my_is_digit (char rep)
+float my_is_digit (float rep)
 {
-  return ((rep)>48)&&((rep)<57);
+  return 1.0;
 }
-
-
-Pcharclass digit {my_is_digit};
-
 
 Precord Pstruct entry{
   Pre "/[[:digit:]]+/";
