@@ -112,6 +112,21 @@
  *              of data files.  See io_disc.h for details.
  *              Also see 'Changing The IO Discipline' below.
  *
+ *  Default output formats
+ *  ----------------------
+ *  The formats field of the discipline allows one to specify
+ *  default output formats for some special types where there is 
+ *  in no 'obvious' default.  The only current entry is:
+ *
+ *     formats.date : a format string specifying the date format
+ *                    some examples:
+ *                        "%Y-%m-%d"  (default)
+ *                        "%m/%d/%Y"
+ *                        "%K" (which is the same as "%Y-%m-%d+%H:%M:%S")
+ *
+ *                     (See the documentation of the libast fmttime function
+ *                       for a description of the legal values for formats.date)
+ *
  *  Limiting the scope of scanning and pattern matching
  *  ---------------------------------------------------
  *
@@ -263,11 +278,12 @@
  *    error_fn:      P_error
  *    e_rep:         PerrorRep_Max
  *    d_endian:      PlittleEndian
- *    acc_max2track  1000
- *    acc_max2rep    10
- *    inv_valfn_map  NULL -- user must created and install a map
+ *    acc_max2track: 1000
+ *    acc_max2rep:   10
+ *    formats.date:  "%Y-%m-%d"
+ *    inv_valfn_map: NULL -- user must created and install a map
  *                           if inv_val functions need to be provided
- *    fmt_fn_map     NULL -- user must created and install a map
+ *    fmt_fn_map:    NULL -- user must created and install a map
  *                           if fmt functions need to be provided
  *    io_disc:       NULL -- a default IO discipline (newline-terminated records)
  *                     is installed on P_open if one is not installed beforehand
