@@ -679,10 +679,10 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	((PPL.addStr pps "type" (* new: XQuery type notation, old: "Struct" *)
         ; space pps
         ; PPL.addStr pps repName
-	(*; newline pps *)
+	; space pps
         ; PPL.ppList { pp=ppStrPairs
 		        , sep="\n\t"
-		        , lDelim="\n{  "
+		        , lDelim="{\n"
 		        , rDelim="\n}"
 		        } pps (edFields @ repFields) (* old: repFields @ edFields *)
         ; newline pps)
