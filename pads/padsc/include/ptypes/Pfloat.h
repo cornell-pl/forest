@@ -25,6 +25,54 @@
  * -----------------------------  -----------------------------  -----------------------------
  * Pfloat32_read                  Pa_float32_read                Pe_float32_read
  * Pfloat64_read                  Pa_float64_read                Pe_float64_read
+ *
+ * These types describe ASCII or EBCDIC character-based encodings of
+ * floating point numbers.  The input representation must have this
+ * form:
+ *
+ *   [+|-]DIGITS[.][DIGITS][(e|E)[+|-]DIGITS]
+ *
+ * Where DIGITS is a sequence of one or more
+ * digit characters, (e|E) indicates either a lower- or
+ * upper-case letter 'E', and elements in square brackets are
+ * optional.  Note that there must be at least one digit before the
+ * decimal point.
+ *
+ * If the input has a valid sequence of input characters that make up
+ * a float, then the float is converted to a Pfloat32 or
+ * Pfloat64, according to the type.  For example, if you specify
+ * a Pa_float32 then ASCII characters making up a float will be read
+ * from the input and converted to an in-memory Pfloat32.
+ *
+ * RETURN VALUE: Perror_t
+ *
+ * Upon success, P_OK returned: 
+ *   + the IO cursor is advanced to just beyond the last digit
+ *   + if P_Test_NotIngore(*m), the out param is assigned a value
+ *
+ * P_ERR is returned on error.
+ * Cursor advancement/err settings for different error cases:
+ *
+ * (1) If IO cursor is at EOF
+ *     + pd->loc.b/e set to EOF 'location'
+ *     + IO cursor remains at EOF
+ *     + if P_Test_NotIgnore(*), pd->errCode set to P_AT_EOF,
+ *         pd->nerr set to 1, and an error is reported
+ * (2a) There is leading white space and not (pads->disc->flags & P_WSPACE_OK)
+ * (2b) The target is unsigned and the first char is a -
+ * (2c) The first character is not a +, -, or in [0-9]
+ * (2d) First character is allowable + or -, following by a char that is not a digit
+ * For the above 4 cases:
+ *     + pd->loc.b/e set to the IO cursor position.
+ *     + IO cursor is not advanced
+ *     + if P_Test_NotIgnore(*m), pd->errCode set to P_INVALID_A_NUM/P_INVALID_E_NUM,
+ *         pd->nerr set to 1, and an error is reported
+ * (3) A valid ASCII/EBCDIC float is found, but it describes
+ *     a float that does not fit in the specified target type
+ *     + pd->loc.b/e set to elt/char position of start and end of the float
+ *     + IO cursor is advanced just beyond the last digit
+ *     + if P_Test_NotIgnore(*m), pd->errCode set to P_RANGE,
+ *         pd->nerr set to 1, and an error is reported
  */
 
 #if P_CONFIG_READ_FUNCTIONS > 0
