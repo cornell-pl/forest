@@ -1,4 +1,15 @@
 
+October 14, 2004 - Mary
+  o Removed examples/p/{dibbler2.p,dibbler_manifest.p,dibbler_most_permissive.p}
+  o Added examples/xml/tests/test_*_dibbler_notrailer
+  o Added examples/data/dibbler.1 containing one record
+
+  o Fixed bug in pglx_*.h templates : COPY_STRING must be defined in
+    all template header files 
+
+October 13, 2004 - Mary
+  o Added examples/xml/README
+
 October 12, 2004 - Mary
   PADS/Galax Interface:
 

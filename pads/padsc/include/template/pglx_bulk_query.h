@@ -14,6 +14,10 @@
 #define READ_MASK P_CheckAndSet
 #endif
 
+#ifndef COPY_STRINGS
+#  define COPY_STRINGS 1
+#endif
+
 #ifndef EXTRA_READ_ARGS
 #  define EXTRA_READ_ARGS
 #endif

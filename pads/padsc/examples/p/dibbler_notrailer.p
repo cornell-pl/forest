@@ -70,11 +70,12 @@ Precord Pstruct out_sum_data_line {
   eventSeq         events;
 };
 
-Parray entries_t {
+Psource Parray entries_t {
   out_sum_data_line[];
 }
-
+/*
 Psource Pstruct out_sum{
   out_sum_header h;
   entries_t      es;
 }
+*/
