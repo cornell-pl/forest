@@ -199,22 +199,46 @@ BEGIN {
 
 # -------------------- MAIN LOOP -----------------------------------
 $2 == "r"  {
-   if(redef[$4]){
-     # printf("XXX redef[%s] = %s\n", $3, redef[$4])>stderr;
-     redef[$3] = redef[$4]; # all redefs point to first def
-   }else{
-     # printf("XXX redef[%s] = %s\n", $3, $4)>stderr;
-     redef[$3] = $4; # $4 is the first def
-   }
-   if(mkunion[redef[$3]]){
-     mkunion[redef[$3]] = sprintf("%s|%s", mkunion[redef[$3]], $3)
-   }else{
+   if((!redef[$4]) && (!redef_anchor[$4])){
+     # $4 is the anchor of a redef chain
      num_unions++
-     mkunion[redef[$3]] = sprintf("%s|%s", redef[$3], $3)
-     mkunion_t_nm[redef[$3]] = sprintf("gen_union_%d_t", num_unions)
-     mkunion_f_nm[redef[$3]] = sprintf("GEN_UNION_%d", num_unions)
-     # printf("XXX mkunion_f_nm[%s] = %s\n", redef[$3], mkunion_f_nm[redef[$3]])>stderr;
+     t_nm = sprintf("gen_union_%d%s_t", num_unions, globalname)
+     f_nm[t_nm] = sprintf("GEN_UNION_%d%s", num_unions, globalname)
+     printf("XXX_REMOVE redef_anchor[%s] = %s\n", $4, t_nm)>stderr;
+     redef_anchor[$4] = t_nm
+     un_ln = last_fieldname[$4]
+     un_lf = last_nfield[$4]
+     un_fieldnames[t_nm] = un_ln
+     un_nfields[t_nm] = sprintf("%d",un_lf)
+     un_params[t_nm] = 0
+     if(var_len[un_ln,un_lf]){
+       un_params[t_nm] = 1
+       un_param_formals[t_nm] = "int p1"
+       un_param_actuals[t_nm] = var_len[un_ln,un_lf]
+     }else{
+       if(max_len[un_ln,un_lf] > 1){
+         un_params[t_nm] = 1
+         un_param_formals[t_nm] = "int p1"
+         un_param_actuals[t_nm] = sprintf("%s",max_len[un_ln,un_lf])
+       }
+     }
+     printf("XXX_REMOVE un_fieldnames[%s] = %s, un_nfields[%s] = %s\n", t_nm, un_fieldnames[t_nm], t_nm, un_nfields[t_nm])>stderr;
+     if(un_params[t_nm]>0){
+       printf("XXX_REMOVE un_param_formals[%s] = %s, un_param_actuals[%s] = %s\n", t_nm, un_param_formals[t_nm], t_nm, un_param_actuals[t_nm])>stderr;
+     }
+     if(attached_unions[last_fieldname[$4]]){
+	attached_unions[last_fieldname[$4]] = sprintf("%s|%s", attached_unions[last_fieldname[$4]], t_nm)
+     }else{
+	attached_unions[last_fieldname[$4]] = t_nm
+     }
+     printf("XXX_REMOVE attached_unions[%s] = %s\n", last_fieldname[$4], attached_unions[last_fieldname[$4]])>stderr;
    }
+   if(redef[$4]){
+     redef[$3] = redef[$4];
+   }else{
+     redef[$3] = $4;
+   }
+   printf("XXX_REMOVE redef[%s] = %s\n", $3, redef[$3])>stderr;
    next
 }
 
@@ -310,8 +334,30 @@ $2 == fieldlev  {       # add an element to current structure
 		if(NF > 5)
 			x = x  ", " $7	# fractional len if there
 		fmt[fieldname,nfield[fieldname]] = x
-		nfield[fieldname]++                  # incr field count of our parent 
-	}                                      # end for each occurance
+		last_fieldname[myname] = fieldname
+		last_nfield[myname] = nfield[fieldname]
+		if(redef[myname]){
+		  t_nm = redef_anchor[redef[myname]]
+		  un_fieldnames[t_nm] = sprintf("%s|%s", un_fieldnames[t_nm], fieldname)
+		  un_nfields[t_nm] = sprintf("%s|%s", un_nfields[t_nm], nfield[fieldname])
+		  if(var_len[fieldname,nfield[fieldname]]){
+		    un_params[t_nm]++
+		    un_param_formals[t_nm] = sprintf("%s, int p%d", un_param_formals[t_nm], un_params[t_nm])
+		    un_param_actuals[t_nm] = sprintf("%s, %s", un_param_actuals[t_nm], var_len[un_ln,un_lf])
+		  }else{
+		    if(max_len[fieldname,nfield[fieldname]] > 1){
+		      un_params[t_nm]++
+		      un_param_formals[t_nm] = sprintf("%s, int p%d", un_param_formals[t_nm], un_params[t_nm])
+		      un_param_actuals[t_nm] = sprintf("%s, %d", un_param_actuals[t_nm], max_len[un_ln,un_lf])
+		    }
+		  }
+		  printf("XXX_REMOVE un_fieldnames[%s] = %s, un_nfields[%s] = %s\n", t_nm, un_fieldnames[t_nm], t_nm, un_nfields[t_nm])>stderr;
+                  if(un_params[t_nm]>0){
+		    printf("XXX_REMOVE un_param_formals[%s] = %s, un_param_actuals[%s] = %s\n", t_nm, un_param_formals[t_nm], t_nm, un_param_actuals[t_nm])>stderr;
+		  }
+                }
+		nfield[fieldname]++             # incr field count of our parent
+	}                                       # end for each occurance
 
 	if($5 == "none"){			# new structure defined by this item
 		fieldname = $3 globalname	# we now are the "parent" struct
@@ -352,17 +398,15 @@ traverse(defn[0], 0)
 for(i = ndefn-1; i >= 0; i--){
 	d = defn[i]			# get next structure name
 
+        # first go through and issue any helper Parray declarations that are needed
 	for(j = 0; j < nfield[d]; j++){			# for each element in the structure
 		f = name[d,j]				# get next element (field) name
 		vlen = max_len[d,j]
 		if(dtype[f]){				# if element is a structure
                    if(vlen > 1 && !pads_ar_type[dtype[f]]){
 			cur_type = dtype[f]
-			if(redef[f]){
-			    cur_type = mkunion_t_nm[redef[f]]
-			}
 			pads_ar_type[cur_type] = sprintf("gen_parray_of_%s", cur_type);
-			printf("Parray %s (int len){\n\t%s [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads;
+			printf("Parray %s (:int len:){\n\t%s [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads;
                    }
                 }else{
 			s = typeof[substr(fmt[d,j], 1, index(fmt[d,j], ",")-1)]
@@ -371,30 +415,138 @@ for(i = ndefn-1; i >= 0; i--){
 			    if(!pads_ar_type[cur_type]){
 				pads_ar_type[cur_type] = sprintf("gen_parray_of_%s", cur_type);
 				if(padsargs[s] == "digsum"){
-					printf("Parray %s (int num_digits, int len){\n\t%s(:num_digits:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+					printf("Parray %s (:int num_digits, int len:){\n\t%s(:num_digits:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
 				if(padsargs[s] == "bytes"){
-					printf("Parray %s (int num_bytes, int len){\n\t%s(:num_bytes:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+					printf("Parray %s (:int num_bytes, int len:){\n\t%s(:num_bytes:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
 				if(padsargs[s] == "digsum_after_v"){
-					printf("Parray %s (int num_digits, int d_exp, int len){\n\t%s(:num_digits, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+					printf("Parray %s (:int num_digits, int d_exp, int len:){\n\t%s(:num_digits, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
 				if(padsargs[s] == "bytes_after_v"){
-					printf("Parray %s (int num_bytes, int d_exp, int len){\n\t%s(:num_bytes, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+					printf("Parray %s (:int num_bytes, int d_exp, int len:){\n\t%s(:num_bytes, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
 			    }
 			}
                 }
-		if(mkunion[f]){
-		    printf("Punion %s {\n", mkunion_t_nm[f]) >pads;
-		    num_uelts = split(mkunion[f], uelts , "|")
-		    for(u = 1; u <= num_uelts; u++){
-			arm_nm = sprintf("%s_arm", uelts[u])
-			printf("\t%-*s %s;\n", max_tlen, dtype[uelts[u]], arm_nm) >pads;
-		    }
-		    printf("};\n") >pads;
-		}
         }
+	# next generate any Punion declarations that are attached to this Pstruct
+	if(attached_unions[d]){
+	  num_unions = split(attached_unions[d], unions, "|")
+          for(nu = 1; nu <= num_unions; nu++){
+            t_nm = unions[nu]
+            if(un_params[t_nm]>0){
+  	      printf("Punion %s (:%s:) {\n", t_nm, un_param_formals[t_nm]) >pads;
+            }else{
+  	      printf("Punion %s {\n", t_nm) >pads;
+            }
+	    num_fields = split(un_fieldnames[t_nm], u_fieldname, "|")
+	    split(un_nfields[t_nm], u_nfield, "|")
+	    for (nf = 1; nf <= num_fields; nf++){
+              u_d = u_fieldname[nf]
+              u_j = u_nfield[nf]
+	      f = name[u_d,u_j]
+	      vlen = max_len[u_d,u_j]
+	      arm_nm = sprintf("%s_arm", f)
+	      if((!redef[f]) && (!redef_anchor[f])){
+	          printf("XXX_YIKES something is wrong!!! ( !redef[f] && !redef_anchor[f] ) \n");
+	      }else{
+		  if(dtype[f]){ # element is a structure
+		      cur_type = dtype[f];
+		      cur_field = f;
+		      if(vlen == 1){
+		          printf("\t%-*s %s;\n", max_tlen, cur_type, cur_field) >pads;
+		      }else{
+			  if(var_len[u_d,u_j]){
+			      xx = var_len[u_d,u_j];
+			      # printf("\t//- XXX_CHECK Type here should be an array of %s with %s elts\n", cur_type, xx) >pads
+			      ty_str = sprintf("%s(:%s:)", pads_ar_type[cur_type], xx);
+			      printf("\t%-*s %s;\n", max_tlen, ty_str, cur_field) >pads;
+			  }else{
+			      # printf("\t//- XXX_CHECK Type here should be an array of %s with %d elts\n", cur_type, vlen) >pads
+			      ty_str = sprintf("%s(:%d:)", pads_ar_type[cur_type], vlen);
+			      printf("\t%-*s %s;\n", max_tlen, ty_str, cur_field) >pads;
+			  }
+		      }
+		  }else{ # element is a primitive
+		      s = typeof[substr(fmt[u_d,u_j], 1, index(fmt[u_d,u_j], ",")-1)];
+		      if(padstype[s]){
+			  cur_type = padstype[s];
+			  if(padsargs[s] == "digsum"){
+			      if(vlen == 1){
+				      ty_str = sprintf("%s(:%d:)", cur_type, digits_summed[f]);
+				      printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+			      }else{
+				      if(var_len[u_d,u_j]){
+				          xx = var_len[u_d,u_j];
+					  # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %s elts\n", cur_type, digits_summed[f], xx) >pads
+					  ty_str = sprintf("%s(:%d,%s:)", pads_ar_type[cur_type], digits_summed[f], xx);
+					  printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+				      }else{
+				          # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %d elts\n", cur_type, digits_summed[f], vlen) >pads
+					  ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], digits_summed[f], vlen);
+					  printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+				      }
+			      }
+			  }
+			  if(padsargs[s] == "bytes"){
+			      if(vlen == 1){
+			          ty_str = sprintf("%s(:%d:)", cur_type, len[f]);
+				  printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+			      }else{
+			          if(var_len[u_d,u_j]){
+			              xx = var_len[u_d,u_j];
+				      # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %s elts\n", cur_type, len[f], xx) >pads
+				      ty_str = sprintf("%s(:%d,%s:)", pads_ar_type[cur_type], len[f], xx);
+				      printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+			          }else{
+				      # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %d elts\n", cur_type, len[f], vlen) >pads
+				      ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], len[f], vlen);
+				      printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+				  }
+			      }
+			  }
+			  if(padsargs[s] == "digsum_after_v"){
+		              if(vlen == 1){
+			          ty_str = sprintf("%s(:%d,%d:)", cur_type, digits_summed[f], digits_after_v[f]);
+				  printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+			      }else{
+				  if(var_len[u_d,u_j]){
+				      xx = var_len[u_d,u_j];
+				      # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %s elts\n", cur_type, digits_summed[f], digits_after_v[f], xx) >pads
+				      ty_str = sprintf("%s(:%d,%d,%s:)", pads_ar_type[cur_type], digits_summed[f], digits_after_v[f], xx);
+				      printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+				  }else{
+				      # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %d elts\n", cur_type, digits_summed[f], digits_after_v[f], vlen) >pads
+				      ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], digits_summed[f], digits_after_v[f], vlen);
+				      printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+				  }
+			      }
+			  }
+		          if(padsargs[s] == "bytes_after_v"){
+			      if(vlen == 1){
+			          ty_str = sprintf("%s(:%d,%d:)", cur_type, len[f], digits_after_v[f]);
+				  printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+			      }else{
+			          if(var_len[u_d,u_j]){
+			              xx = var_len[u_d,u_j];
+				      # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %s elts\n", cur_type, len[f], digits_after_v[f], xx) >pads
+				      ty_str = sprintf("%s(:%d,%d,%s:)", pads_ar_type[cur_type], len[f], digits_after_v[f], xx);
+				      printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+			          }else{
+				      # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %d elts\n", cur_type, len[f], digits_after_v[f], vlen) >pads
+					  ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], len[f], digits_after_v[f], vlen);
+					  printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads;
+				  }
+			      }
+			  }
+		      }
+		  }
+	      }
+	    }
+	    printf("};\n") >pads;
+          }
+	}
 
 	printf("struct %s {\n", d) >hdr
 	printf("Pstruct %s {\n", d) >pads
@@ -418,16 +570,19 @@ for(i = ndefn-1; i >= 0; i--){
 			if(vlen == 1) xx = ""; else xx = "[" vlen "]"
 			printf("\tstruct %s %s%s;   /* %d */\n", dtype[f], f, xx, x) >hdr
 			if(!redef[f]){
-			    cur_type = dtype[f]
-			    cur_field = f
-			    if(mkunion[f]){
-				cur_type = mkunion_t_nm[f]
-				cur_field = mkunion_f_nm[f]
-			    }
-			    if(vlen == 1){
+			    if(redef_anchor[f]){
+				cur_type = redef_anchor[f]
+				cur_field = f_nm[cur_type]
 				printf("\t%-*s %s;\n", max_tlen, cur_type, cur_field) >pads
+				printf("XXX_REMOVE redef_anchor found for f = %s, cur_field = %s\n", f, cur_field)>stderr
 			    }else{
-				if (var_len[d,j]){
+			        cur_type = dtype[f]
+			        cur_field = f
+				printf("XXX_REMOVE redef_anchor not found for f = %s\n", f)>stderr
+			        if(vlen == 1){
+				    printf("\t%-*s %s;\n", max_tlen, cur_type, cur_field) >pads
+			        }else{
+				    if(var_len[d,j]){
 					xx = var_len[d,j]
 					# printf("\t//- XXX_CHECK Type here should be an array of %s with %s elts\n", cur_type, xx) >pads
 					ty_str = sprintf("%s(:%s:)", pads_ar_type[cur_type], xx)
@@ -437,6 +592,7 @@ for(i = ndefn-1; i >= 0; i--){
 					ty_str = sprintf("%s(:%d:)", pads_ar_type[cur_type], vlen)
 					printf("\t%-*s %s;\n", max_tlen, ty_str, cur_field) >pads
 				    }
+			        }
 			    }
 			}
 
@@ -457,7 +613,7 @@ for(i = ndefn-1; i >= 0; i--){
      			 	printf("\t{int i; for(i = 0; i < %s; i++) pr_%s(indent, buf+%d+i*%d, out, tt);}\n", xx, dtype[f], y, mylen) >prt
 			}
 			offset[f] = y			# save for possible redefine of this field
-		}else{		# element is a primitive
+		}else{	# element is a primitive
 			if(redef[f]){			# if it is a redefine of another element 
 				fo = offset[redef[f]]	# get offset of real field
 			}else{
@@ -496,13 +652,21 @@ for(i = ndefn-1; i >= 0; i--){
 				}
 			}
 			if(padstype[s]){
-			    cur_type = padstype[s]
-			    if(padsargs[s] == "digsum"){
-				if(vlen == 1){
+			    if(!redef[f]){
+			      if(redef_anchor[f]){
+				cur_type = redef_anchor[f]
+				cur_field = f_nm[cur_type]
+				printf("\t%-*s %s;\n", max_tlen, cur_type, cur_field) >pads
+				printf("XXX_REMOVE redef_anchor found for f = %s, cur_field = %s\n", f, cur_field)>stderr
+			      }else{
+				printf("XXX_REMOVE redef_anchor not found for f = %s\n", f)>stderr
+			        cur_type = padstype[s]
+			        if(padsargs[s] == "digsum"){
+				  if(vlen == 1){
 					ty_str = sprintf("%s(:%d:)", cur_type, digits_summed[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
-				}else{
-					if (var_len[d,j]){
+				  }else{
+					if(var_len[d,j]){
 					    xx = var_len[d,j]
 					    # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %s elts\n", cur_type, digits_summed[f], xx) >pads
 					    ty_str = sprintf("%s(:%d,%s:)", pads_ar_type[cur_type], digits_summed[f], xx)
@@ -512,14 +676,14 @@ for(i = ndefn-1; i >= 0; i--){
 					    ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], digits_summed[f], vlen)
 					    printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 					}
-				}
-			    }
-			    if(padsargs[s] == "bytes"){
-				if(vlen == 1){
+				  }
+			        }
+			        if(padsargs[s] == "bytes"){
+				  if(vlen == 1){
 					ty_str = sprintf("%s(:%d:)", cur_type, len[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
-				}else{
-					if (var_len[d,j]){
+				  }else{
+					if(var_len[d,j]){
 					    xx = var_len[d,j]
 					    # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %s elts\n", cur_type, len[f], xx) >pads
 					    ty_str = sprintf("%s(:%d,%s:)", pads_ar_type[cur_type], len[f], xx)
@@ -529,14 +693,14 @@ for(i = ndefn-1; i >= 0; i--){
 					    ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], len[f], vlen)
 					    printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 					}
-				}
-			    }
-			    if(padsargs[s] == "digsum_after_v"){
-				if(vlen == 1){
+				  }
+			        }
+			        if(padsargs[s] == "digsum_after_v"){
+				  if(vlen == 1){
 					ty_str = sprintf("%s(:%d,%d:)", cur_type, digits_summed[f], digits_after_v[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
-				}else{
-					if (var_len[d,j]){
+				  }else{
+					if(var_len[d,j]){
 						xx = var_len[d,j]
 						# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %s elts\n", cur_type, digits_summed[f], digits_after_v[f], xx) >pads
 						ty_str = sprintf("%s(:%d,%d,%s:)", pads_ar_type[cur_type], digits_summed[f], digits_after_v[f], xx)
@@ -546,14 +710,14 @@ for(i = ndefn-1; i >= 0; i--){
 						ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], digits_summed[f], digits_after_v[f], vlen)
 						printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 					    }
-				}
-			    }
-			    if(padsargs[s] == "bytes_after_v"){
-				if(vlen == 1){
+				  }
+			        }
+			        if(padsargs[s] == "bytes_after_v"){
+				  if(vlen == 1){
 					ty_str = sprintf("%s(:%d,%d:)", cur_type, len[f], digits_after_v[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
-				}else{
-					if (var_len[d,j]){
+				  }else{
+					if(var_len[d,j]){
 						xx = var_len[d,j]
 						# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %s elts\n", cur_type, len[f], digits_after_v[f], xx) >pads
 						ty_str = sprintf("%s(:%d,%d,%s:)", pads_ar_type[cur_type], len[f], digits_after_v[f], xx)
@@ -563,10 +727,12 @@ for(i = ndefn-1; i >= 0; i--){
 						ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], len[f], digits_after_v[f], vlen)
 						printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 					}
-				}
-			    }
-			}
-		}
+				  }
+			      }
+			  }
+		      }
+                   }
+                }
 		if(dtype[f])			# assign length of defined type
 			len[f] = len[dtype[f]]
 
@@ -628,13 +794,13 @@ for(i = ndefn-1; i >= 0; i--){
 			# printf("YYY pathvar = %s pathvar_is_array = %s\n", pathvar, pathvar_is_array)>stderr
 			mod_off = offset[pathvar]
 			if(redef[pathvar]){
-			    # printf("YYY redef = %s mkunion_f_nm[redef] = %s\n", redef[pathvar], mkunion_f_nm[redef[pathvar]])>stderr
-			    mod_pathvar = mkunion_f_nm[redef[pathvar]] "." pathvar "_arm"
+			    # printf("YYY redef = %s f_nm[redef_anchor[redef]] = %s\n", redef[pathvar], f_nm[redef_anchor[redef[pathvar]]])>stderr
+			    mod_pathvar = f_nm[redef_anchor[redef[pathvar]]] "." pathvar "_arm"
 			    mod_off = offset[redef[pathvar]]
 			}else{
-			    if(mkunion_f_nm[pathvar]){
-				# printf("YYY redef root = %s mkunion_f_nm[root] = %s\n", pathvar, mkunion_f_nm[pathvar])>stderr
-				mod_pathvar = mkunion_f_nm[pathvar] "." pathvar "_arm"
+			    if(redef_anchor[pathvar]){
+				# printf("YYY redef root = %s f_nm[redef_anchor[root]] = %s\n", pathvar, f_nm[redef_anchor[pathvar]])>stderr
+				mod_pathvar = f_nm[redef_anchor[pathvar]] "." pathvar "_arm"
 			    }
 			}
 			if(pathvar_is_array){
