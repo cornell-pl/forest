@@ -8,13 +8,13 @@ int write_external(PDC_t *pdc, Sfio_t *io, <params>, ed, can){
   if !ed then {memset(&ted,0,sizeof(ted)); ed = &ted;};
 
   if !sfsetbuf(io, (Void_t *)1, 0)  {
-    sfsetbuf(io, pdc->outbuf, pdc->outbuflen);
+    sfsetbuf(io, pdc->outbuf, pdc->outbuf_len);
     setBuf = 1;
   }
-  buf = (PDC_byte *) sfreserve(io,pdc->outbufReserve, SF_LOCKR);
+  buf = (PDC_byte *) sfreserve(io,pdc->outbuf_res, SF_LOCKR);
   if (!buf) { report error; length = -1; goto write_External_done;};
 
-  length = write_internal(pdc, buf, pdc->outbufReserve, &bufferFull, <params>, ed, can);
+  length = write_internal(pdc, buf, pdc->outbuf_res, &bufferFull, <params>, ed, can);
   /* could check bufferFull and redo with bigger buffer, potentially in while loop */
   if (length >= 0) {
     length = sfwrite(io, (Void_t *)buf, length);
