@@ -39,13 +39,13 @@ void PDCI_FREE_NODE(PDC_t *pdc, PDCI_node_t *n);
 void PDCI_FREE_NODE_PTR_LIST(PDC_t *pdc, PDCI_node_t **list);
 
 void PDCI_MK_TNODE(PDCI_node_t *result,
-		   PDCI_vtable_t *vt,
+		   const PDCI_vtable_t *vt,
 		   PDCI_node_t *parent,
 		   const char *name, 
-		   PDCI_structured_pd* val,
+		   void* val, /* PDCI_structured_pd* val, */
 		   const char *whatfn);
 void  PDCI_MK_NODE(PDCI_node_t *result,
-		   PDCI_vtable_t *vt,
+		   const PDCI_vtable_t *vt,
 		   PDCI_node_t *parent,
 		   const char *name, 
 		   void* m, void* pd,
