@@ -17,23 +17,23 @@
 #PADS_name   inMemory    errorMaskName errorDescriptionName readFunction               scanFunctionOpt   accumulatorOpt  DiskSize  Memory(S/V) Endian
 auint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_auint8_read            -                 PDC_uint8_acc   V         S           Y
 aint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_aint8_read             -                 PDC_int8_acc    V         S           Y
-auint8FW     PDC_uint8   PDC_base_em   PDC_base_ed          PDC_auint8_fw_read         -                 PDC_uint8_acc   P         S           Y
-aint8FW      PDC_int8    PDC_base_em   PDC_base_ed          PDC_aint8_fw_read          -                 PDC_int8_acc    P         S           Y
+auint8FW     PDC_uint8   PDC_base_em   PDC_base_ed          PDC_auint8FW_read          -                 PDC_uint8_acc   P         S           Y
+aint8FW      PDC_int8    PDC_base_em   PDC_base_ed          PDC_aint8FW_read           -                 PDC_int8_acc    P         S           Y
 
 auint16      PDC_uint16  PDC_base_em   PDC_base_ed          PDC_auint16_read           -                 PDC_uint16_acc  V         S           Y
 aint16       PDC_int16   PDC_base_em   PDC_base_ed          PDC_aint16_read            -                 PDC_int16_acc   V         S           Y
-auint16FW    PDC_uint16  PDC_base_em   PDC_base_ed          PDC_auint16_fw_read        -                 PDC_uint16_acc  P         S           Y
-aint16FW     PDC_int16   PDC_base_em   PDC_base_ed          PDC_aint16_fw_read         -                 PDC_int16_acc   P         S           Y
+auint16FW    PDC_uint16  PDC_base_em   PDC_base_ed          PDC_auint16FW_read         -                 PDC_uint16_acc  P         S           Y
+aint16FW     PDC_int16   PDC_base_em   PDC_base_ed          PDC_aint16FW_read          -                 PDC_int16_acc   P         S           Y
 
 auint32      PDC_uint32  PDC_base_em   PDC_base_ed          PDC_auint32_read           -                 PDC_uint32_acc  V         S           Y
 aint32       PDC_int32   PDC_base_em   PDC_base_ed          PDC_aint32_read            -                 PDC_int32_acc   V         S           Y
-auint32FW    PDC_uint32  PDC_base_em   PDC_base_ed          PDC_auint32_fw_read        -                 PDC_uint32_acc  P         S           Y
-aint32FW     PDC_int32   PDC_base_em   PDC_base_ed          PDC_aint32_fw_read         -                 PDC_int32_acc   P         S           Y
+auint32FW    PDC_uint32  PDC_base_em   PDC_base_ed          PDC_auint32FW_read         -                 PDC_uint32_acc  P         S           Y
+aint32FW     PDC_int32   PDC_base_em   PDC_base_ed          PDC_aint32FW_read          -                 PDC_int32_acc   P         S           Y
 
 auint64      PDC_uint64  PDC_base_em   PDC_base_ed          PDC_auint64_read           -                 PDC_uint64_acc  V         S           Y
 aint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64_read            -                 PDC_int64_acc   V         S           Y
-auint64FW    PDC_uint64  PDC_base_em   PDC_base_ed          PDC_auint64_fw_read        -                 PDC_uint64_acc  P         S           Y
-aint64FW     PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64_fw_read         -                 PDC_int64_acc   P         S           Y
+auint64FW    PDC_uint64  PDC_base_em   PDC_base_ed          PDC_auint64FW_read         -                 PDC_uint64_acc  P         S           Y
+aint64FW     PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64FW_read          -                 PDC_int64_acc   P         S           Y
 
 buint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_buint8_read            -                 PDC_uint8_acc   1         S           Y
 bint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_bint8_read             -                 PDC_int8_acc    1         S           Y

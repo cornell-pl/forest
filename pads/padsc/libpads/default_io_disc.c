@@ -80,20 +80,84 @@
  *          is used.  */
 
 #include "libpadsc-internal.h" /* XXX for debugging, should be libpadsc.h XXX */
+#include "libpadsc-macros-gen.h"
 #include "pdc_out_macros.h"
 
-#define PDC_NEED_AN_ELT(fn_name, elt, f_head, vm) \
+#define IODISC_NEED_AN_ELT(fn_name, elt, f_head, vm) \
   do { \
     if (PDC_SOME_ELTS(f_head)) { \
-      elt = PDC_FIRST_ELT(f_head); \
+      (elt) = PDC_FIRST_ELT(f_head); \
       PDC_REMOVE_ELT(elt); \
     } else { \
-      if (!(elt = vmnewof((vm), 0, PDC_IO_elt_t, 1, 0))) { \
+      if (!((elt) = vmnewof((vm), 0, PDC_IO_elt_t, 1, 0))) { \
 	PDC_WARN(pdc->disc, fn_name ": could not alloc space for input record"); \
       } \
     } \
   } while (0)
 
+#define IODISC_NEED_AN_ELT_W_IODATA(fn_name, elt, f_head, vm, iodata_t, xtra_bytes) \
+  do { \
+    if (PDC_SOME_ELTS(f_head)) { \
+      (elt) = PDC_FIRST_ELT(f_head); \
+      PDC_REMOVE_ELT(elt); \
+    } else { \
+      if (!((elt) = vmnewof((vm), 0, PDC_IO_elt_t, 1, 0)) || \
+	  !((elt)->disc_ptr = vmoldof((vm), 0, iodata_t, 1, xtra_bytes))) { \
+	PDC_WARN(pdc->disc, fn_name ": could not alloc space for input record"); \
+      } \
+    } \
+  } while (0)
+
+#if 0
+#define IODISC_RELOC_DBG(diff) \
+  do { \
+    if (pdc->disc->errorf) { \
+      pdc->disc->errorf(NiL, 0, "XXX_REMOVE DATA SHIFTED BY %d BYTES", diff); \
+    } \
+  } while (0)
+#else
+#define IODISC_RELOC_DBG(diff)  PDC_NULL_STMT
+#endif
+
+#if 0
+#define IODISC_RELOC_DBG_ELT(elt) \
+  do { \
+    if (pdc->disc->errorf) { \
+      pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d disc_off %d) = AT NEW LOC =>\n[%s]", elt->unit, elt->num, elt->disc_off, PDC_fmt_Cstr(elt->begin, elt->len)); \
+    } \
+  } while (0)
+#else
+#define IODISC_RELOC_DBG_ELT(elt)          PDC_NULL_STMT
+#endif
+
+#define IODISC_RELOC_ELTS(fn_name, head, diff, tmpelt) \
+  do { \
+    IODISC_RELOC_DBG(diff); \
+    for (tmpelt = PDC_FIRST_ELT(head); tmpelt != (head); tmpelt = tmpelt->next) { \
+      (tmpelt->begin) += diff; \
+      (tmpelt->end)   += diff; \
+      IODISC_RELOC_DBG_ELT(tmpelt); \
+    } \
+  } while (0)
+
+/* remove all elts from list -- put them on the free list */
+#define IODISC_REMOVE_ALL_ELTS(head, f_head, tmpelt) \
+  do { \
+    while (PDC_SOME_ELTS(head)) { \
+      tmpelt = PDC_FIRST_ELT(head); \
+      PDC_REMOVE_ELT(tmpelt); \
+      PDC_APPEND_ELT((f_head), tmpelt); \
+    } \
+  } while (0)
+
+/* remove some elts from list -- put them on the free list */
+#define IODISC_REMOVE_SOME_ELTS(head, f_head, keepelt, tmpelt) \
+  do { \
+    while (PDC_SOME_ELTS(head) && (tmpelt = PDC_FIRST_ELT(head)) != (keepelt)) { \
+      PDC_REMOVE_ELT(tmpelt); \
+      PDC_APPEND_ELT((f_head), tmpelt); \
+    } \
+  } while (0)
 
 /* ================================================================================ */
 /* PDC_fwrec_noseek IMPLEMENTATION */
@@ -122,25 +186,6 @@ typedef struct PDC_fwrec_noseek_iodata_s {
 } PDC_fwrec_noseek_iodata_t;
 
 PDC_error_t
-PDC_fwrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
-{
-  PDC_fwrec_noseek_data_t   *data;
-
-  if (!pdc || !pdc->disc) {
-    return PDC_ERR;
-  }
-  if (!io_disc) {
-    PDC_WARN(pdc->disc, "PDC_fwrec_noseek_unmake: bad param(s)");
-    return PDC_ERR;
-  }
-  data = (PDC_fwrec_noseek_data_t*)io_disc->data;
-  if (data && data->disc_vm) {
-    vmclose(data->disc_vm);
-  }
-  return PDC_ERR;
-}
-
-PDC_error_t
 PDC_fwrec_noseek_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t *sfio, PDC_IO_elt_t *head)
 {
   PDC_fwrec_noseek_data_t *data;
@@ -161,12 +206,10 @@ PDC_fwrec_noseek_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t *sfio, PDC_IO
     PDC_WARN(pdc->disc, "PDC_fwrec_noseek_sfopen: not in a valid closed state");
     return PDC_ERR;
   }
-
   data->io       = sfio;
   data->eof      = 0;
   data->head     = head;
   data->num      = 1;
-
   return PDC_OK;
 }
 
@@ -216,17 +259,10 @@ PDC_fwrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
       }
     }
   }
-
   /* remove all elts from list -- put them on the free list */
-  while (PDC_SOME_ELTS(data->head)) {
-    elt = PDC_FIRST_ELT(data->head);
-    PDC_REMOVE_ELT(elt);
-    PDC_APPEND_ELT(data->f_head, elt);
-  }
-
+  IODISC_REMOVE_ALL_ELTS(data->head, data->f_head, elt);
   data->io      = 0;
   data->head    = 0; 
-
   return PDC_OK;
 }
 
@@ -260,22 +296,12 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     PDC_WARN(pdc->disc, "PDC_fwrec_noseek_read: io_cur_elt == head not a valid elt!");
     return PDC_ERR;
   }
-  keepelt = io_cur_elt ? io_cur_elt : data->head;
   /* move some elts to the free list */
-  while (PDC_SOME_ELTS(data->head) && PDC_FIRST_ELT(data->head) != keepelt) {
-    elt = PDC_FIRST_ELT(data->head);
-    PDC_REMOVE_ELT(elt);
-    PDC_APPEND_ELT(data->f_head, elt);
-  }
-  if (PDC_SOME_ELTS(data->f_head)) {
-    elt = PDC_FIRST_ELT(data->f_head);
-    PDC_REMOVE_ELT(elt);
-  } else {
-    if (!(elt = vmnewof(data->disc_vm, 0, PDC_IO_elt_t, 1, 0)) ||
-	!(elt->disc_ptr = vmoldof(data->disc_vm, 0, PDC_fwrec_noseek_iodata_t, 1, data->block_size))) {
-      PDC_WARN(pdc->disc, "PDC_fwrec_noseek_read: could not alloc space for input record");
-      return PDC_ERR;
-    }
+  keepelt = io_cur_elt ? io_cur_elt : data->head;
+  IODISC_REMOVE_SOME_ELTS(data->head, data->f_head, keepelt, elt);
+  IODISC_NEED_AN_ELT_W_IODATA("PDC_fwrec_noseek_read", elt, data->f_head, data->disc_vm, PDC_fwrec_noseek_iodata_t, data->block_size);
+  if (!elt) {
+    return PDC_ERR;
   }
   iodata = (PDC_fwrec_noseek_iodata_t*)elt->disc_ptr;
   if (data->leader_len) {
@@ -313,11 +339,36 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   PDC_APPEND_ELT(data->head, elt);
 #if 0
   if (pdc->disc->errorf) {
-    pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, fmtquote(elt->begin, NiL, NiL, elt->len, 0));
+    pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, PDC_fmt_Cstr(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
   return PDC_OK;
+}
+
+PDC_error_t
+PDC_fwrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
+{
+  PDC_fwrec_noseek_data_t   *data;
+
+  if (!pdc || !pdc->disc) {
+    return PDC_ERR;
+  }
+  if (!io_disc) {
+    PDC_WARN(pdc->disc, "PDC_fwrec_noseek_unmake: bad param(s)");
+    return PDC_ERR;
+  }
+  data = (PDC_fwrec_noseek_data_t*)io_disc->data;
+  if (data) {
+    if (data->io) {
+      PDC_WARN(pdc->disc, "PDC_fwrec_noseek_unmake: sfclose should have been called first, calling it now");
+      PDC_fwrec_noseek_sfclose(pdc, io_disc, 0, 0);
+    }
+    if (data->disc_vm) {
+      vmclose(data->disc_vm);
+    }
+  }
+  return PDC_ERR;
 }
 
 PDC_IO_disc_t *
@@ -389,8 +440,11 @@ PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len)
 
 /* when not specified, use blocks of this size (bytes): */
 #define PDC_NOREC_NOSEEK_DEF_BSIZE    512
+/* initial block alloc */
 #define PDC_NOREC_NOSEEK_INIT_BLOCKS   16
+/* once we can free at least this many blocks, do so */
 #define PDC_NOREC_NOSEEK_GC_AT_BLOCK    8
+/* if growth is necessary, add this many blocks at a time */
 #define PDC_NOREC_NOSEEK_ADD_BLOCKS     8
 
 /* private types */
@@ -412,25 +466,6 @@ typedef struct PDC_norec_noseek_data_s {
   size_t         btail;      /* idx of last block in use */
   size_t         gc_point;
 } PDC_norec_noseek_data_t;
-
-PDC_error_t
-PDC_norec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
-{
-  PDC_norec_noseek_data_t   *data;
-
-  if (!pdc | !pdc->disc) {
-    return PDC_ERR;
-  }
-  if (!io_disc) {
-    PDC_WARN(pdc->disc, "PDC_norec_noseek_unmake: bad param(s)");
-    return PDC_ERR;
-  }
-  data = (PDC_norec_noseek_data_t*)io_disc->data;
-  if (data && data->disc_vm) {
-    vmclose(data->disc_vm);
-  }
-  return PDC_ERR;
-}
 
 PDC_error_t
 PDC_norec_noseek_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t* sfio, PDC_IO_elt_t* head)
@@ -504,12 +539,7 @@ PDC_norec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
   }
 
   /* remove all elts from list -- put them on the free list */
-  while (PDC_SOME_ELTS(data->head)) {
-    elt = PDC_FIRST_ELT(data->head);
-    PDC_REMOVE_ELT(elt);
-    PDC_APPEND_ELT(data->f_head, elt);
-  }
-
+  IODISC_REMOVE_ALL_ELTS(data->head, data->f_head, elt);
   data->io      = 0;
   data->head    = 0; 
 
@@ -523,7 +553,7 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   PDC_IO_elt_t         *elt, *keepelt;
   size_t               keep_len;
   ssize_t              readlen  = 0;
-  char                 *tmp;
+  Sfoff_t              diff;
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -546,18 +576,9 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     PDC_WARN(pdc->disc, "PDC_norec_noseek_read: io_cur_elt == head not a valid elt!");
     return PDC_ERR;
   }
-  keepelt = io_cur_elt ? io_cur_elt : data->head;
   /* move some elts to the free list */
-  while (PDC_SOME_ELTS(data->head) && PDC_FIRST_ELT(data->head) != keepelt) {
-    elt = PDC_FIRST_ELT(data->head);
-    PDC_REMOVE_ELT(elt);
-    PDC_APPEND_ELT(data->f_head, elt);
-  }
-
-  PDC_NEED_AN_ELT("PDC_norec_noseek_read", elt, data->f_head, data->disc_vm);
-  if (!elt) {
-    return PDC_ERR;
-  }
+  keepelt = io_cur_elt ? io_cur_elt : data->head;
+  IODISC_REMOVE_SOME_ELTS(data->head, data->f_head, keepelt, elt);
 
   if (!io_cur_elt) {
     data->btail = 0; /* starting from scratch */
@@ -568,6 +589,7 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
       /* need space */
       if (io_cur_elt->begin - data->dbuf >= data->gc_point) {
 	/* garbage collect */
+	diff = data->dbuf - io_cur_elt->begin; /* data moving down - negative offset */
 	keep_len = data->dbuf_end - io_cur_elt->begin;
 	memmove((void*)data->dbuf, (const void*)io_cur_elt->begin, keep_len);
 	data->btail = (keep_len/data->block_size); /* # blocks copied => correct block index for next read */
@@ -582,21 +604,23 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
 	  (data->btail)--;
 	  return PDC_ERR;
 	}
+	diff           = dbuf_next - data->dbuf;
 	data->balloc   = balloc_next;
 	data->dbuf     = dbuf_next;
 	data->dbuf_end = dbuf_next + keep_len;
 	data->gc_point += (PDC_NOREC_NOSEEK_ADD_BLOCKS * data->block_size);
       }
-      /* data may have moved, so redo begin/end pointers */
-      tmp = data->dbuf;
-      for (elt = PDC_FIRST_ELT(data->head); elt != data->head; elt = elt->next) {
-	elt->begin = tmp;
-	tmp += elt->len;
-	elt->end = tmp;
+      if (diff) { /* data moved, redo begin/end pointers */
+	IODISC_RELOC_ELTS("PDC_norec_noseek_read", data->head, diff, elt);
       }
     } else {
       /* dbuf already had space at block btail */
     }
+  }
+
+  IODISC_NEED_AN_ELT("PDC_norec_noseek_read", elt, data->f_head, data->disc_vm);
+  if (!elt) {
+    return PDC_ERR;
   }
 
   elt->eor = 0; /* norec_noseek never uses eor */
@@ -626,11 +650,36 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   PDC_APPEND_ELT(data->head, elt);
 #if 0
   if (pdc->disc->errorf) {
-    pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, fmtquote(elt->begin, NiL, NiL, elt->len, 0));
+    pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, PDC_fmt_Cstr(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
   return PDC_OK;
+}
+
+PDC_error_t
+PDC_norec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
+{
+  PDC_norec_noseek_data_t   *data;
+
+  if (!pdc | !pdc->disc) {
+    return PDC_ERR;
+  }
+  if (!io_disc) {
+    PDC_WARN(pdc->disc, "PDC_norec_noseek_unmake: bad param(s)");
+    return PDC_ERR;
+  }
+  data = (PDC_norec_noseek_data_t*)io_disc->data;
+  if (data) {
+    if (data->io) {
+      PDC_WARN(pdc->disc, "PDC_norec_noseek_unmake: sfclose should have been called first, calling it now");
+      PDC_norec_noseek_sfclose(pdc, io_disc, 0, 0);
+    }
+    if (data->disc_vm) {
+      vmclose(data->disc_vm);
+    }
+  }
+  return PDC_ERR;
 }
 
 PDC_IO_disc_t *
@@ -704,9 +753,13 @@ PDC_norec_noseek_make(size_t block_size_hint)
 
 /* when not specified, use blocks of this size (bytes): */
 #define PDC_NLREC_NOSEEK_DEF_BSIZE     512
+/* initial block alloc */
 #define PDC_NLREC_NOSEEK_INIT_BLOCKS    16
+/* once we can free at least this many blocks, do so */
 #define PDC_NLREC_NOSEEK_GC_AT_BLOCK     8
+/* but only check if there are <= this many blocks left */
 #define PDC_NLREC_NOSEEK_GC_BLOCKS_LEFT  4
+/* if growth is necessary, add this many blocks at a time */
 #define PDC_NLREC_NOSEEK_ADD_BLOCKS      8
 
 /* private types */
@@ -730,21 +783,6 @@ typedef struct PDC_nlrec_noseek_data_s {
 } PDC_nlrec_noseek_data_t;
 
 PDC_error_t
-PDC_nlrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
-{
-  PDC_nlrec_noseek_data_t  *data;
-
-  if (!pdc || !pdc->disc) {
-    return PDC_ERR;
-  }
-  data = (PDC_nlrec_noseek_data_t*)io_disc->data;
-  if (data && data->disc_vm) {
-    vmclose(data->disc_vm);
-  }
-  return PDC_ERR;
-}
-
-PDC_error_t
 PDC_nlrec_noseek_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t* sfio, PDC_IO_elt_t* head)
 {
   PDC_nlrec_noseek_data_t  *data;
@@ -766,7 +804,7 @@ PDC_nlrec_noseek_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t* sfio, PDC_IO
     PDC_WARN(pdc->disc, "PDC_nlrec_noseek_sfopen: not in a valid closed state");
     return PDC_ERR;
   }
-  PDC_NEED_AN_ELT("PDC_nlrec_noseek_sfopen", elt, data->f_head, data->disc_vm);
+  IODISC_NEED_AN_ELT("PDC_nlrec_noseek_sfopen", elt, data->f_head, data->disc_vm);
   if (!elt) {
     return PDC_ERR;
   }
@@ -823,11 +861,7 @@ PDC_nlrec_noseek_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cu
   }
 
   /* remove all elts from list -- put them on the free list */
-  while (PDC_SOME_ELTS(data->head)) {
-    elt = PDC_FIRST_ELT(data->head);
-    PDC_REMOVE_ELT(elt);
-    PDC_APPEND_ELT(data->f_head, elt);
-  }
+  IODISC_REMOVE_ALL_ELTS(data->head, data->f_head, elt);
   if (data->eof_elt) {
     elt = data->eof_elt;
     data->eof_elt = 0;
@@ -845,10 +879,11 @@ PDC_nlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
 {
   PDC_nlrec_noseek_data_t    *data;
   PDC_IO_elt_t        *elt, *keepelt;
-  ssize_t             readlen, keep_len, bytes_read;
+  ssize_t             readlen, keep_len, discard_len, bytes_read;
   char                *tmp;
-  char                *first_save_byte;
   char                *found_newline;
+  Sfoff_t             diff;
+  /*  unsigned long       tmp_ul1, tmp_ul2, tmp_ul3; */ /* XXX_REMOVE */
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;
@@ -874,75 +909,81 @@ PDC_nlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   }
   keepelt = io_cur_elt ? io_cur_elt : data->head;
   /* move some elts to the free list */
-  while (PDC_SOME_ELTS(data->head) && PDC_FIRST_ELT(data->head) != keepelt) {
-    elt = PDC_FIRST_ELT(data->head);
-    PDC_REMOVE_ELT(elt);
-    PDC_APPEND_ELT(data->f_head, elt);
-  }
+  IODISC_REMOVE_SOME_ELTS(data->head, data->f_head, keepelt, elt);
   /*
    * garbage collect if <= PDC_NLREC_NOSEEK_GC_BLOCKS_LEFT and there is
    * a good chunk of data to be discarded
    */
-  first_save_byte = io_cur_elt ? io_cur_elt->begin :
-    (data->un_bytes ? (data->dbuf_end - data->block_size) : data->dbuf_end);
-  if ((data->balloc - data->btail < PDC_NLREC_NOSEEK_GC_BLOCKS_LEFT) && 
-      (first_save_byte - data->dbuf >= data->gc_point)) {
-    keep_len = data->dbuf_end - first_save_byte;
-    if (keep_len) {
-      memmove((void*)data->dbuf, (const void*)first_save_byte, keep_len);
-      first_save_byte = data->dbuf;
-      data->btail = (keep_len/data->block_size) - 1; /* # blocks copied - 1 => last block index */
-      data->dbuf_end = data->dbuf + keep_len;
-      /* redo begin/end pointers */
-      tmp = data->dbuf;
-      for (elt = PDC_FIRST_ELT(data->head); elt != data->head; elt = elt->next) {
-	elt->begin = tmp;
-	tmp += elt->len;
-	elt->end = tmp;
-	if (elt->eor) {
-	  tmp++; /* account for newline */
-	}
-      }
+  if (io_cur_elt) {
+    keep_len = data->dbuf_end - io_cur_elt->begin;
+    if (keep_len % data->block_size) { /* round up to nearest block size */
+      keep_len += (data->block_size - (keep_len % data->block_size));
     }
+  } else if (data->un_bytes) {
+    keep_len = data->block_size;
+  } else {
+    keep_len = 0;
   }
+  discard_len = (data->dbuf_end - data->dbuf) - keep_len;
+  if (keep_len) {
+    if (data->balloc - data->btail < PDC_NLREC_NOSEEK_GC_BLOCKS_LEFT && discard_len >= data->gc_point) {
+      /* garbage collect */
+      diff = - discard_len; /* data moving down - negative offset */
+      /* tmp_ul1 = keep_len; */    /* XXX_REMOVE */
+      /* tmp_ul2 = discard_len; */ /* XXX_REMOVE */
+      /* PDC_WARN2(pdc->disc, "XXX_REMOVE: about to memmove keep_len %lu bytes down by %d bytes", tmp_ul1, tmp_ul2); */
+      memmove((void*)data->dbuf, (const void*)(data->dbuf_end - keep_len), keep_len);
+      data->btail = keep_len/data->block_size; /* # blocks copied -> index of next block index */
+      /* tmp_ul1 = data->btail; */ /* XXX_REMOVE */
+      /* tmp_ul2 = keep_len;    */ /* XXX_REMOVE */
+      /* PDC_WARN2(pdc->disc, "XXX_REMOVE: btail set to %lu after memmove with keep_len %lu", tmp_ul1, tmp_ul2); */
+      data->dbuf_end = data->dbuf + keep_len;
+      /* redo begin/end ptrs */
+      IODISC_RELOC_ELTS("PDC_nlrec_noseek_read", data->head, diff, elt);
+      *(data->dbuf_end) = 0; /* null-terminate dbuf */
+    } /* keep everything -- postpone the memmove */
+  } else {
+    /* starting from scratch, no io_cur_elt or unread bytes */
+    data->btail = 0;
+    data->dbuf_end = data->dbuf;
+    *(data->dbuf_end) = 0; /* null-terminate dbuf */
+  }
+
   bytes_read    = 0;
   found_newline = 0;
   while (1) { /* read blocks until find newline or EOF */
-    if (first_save_byte == data->dbuf_end) {
-      data->btail = 0; /* starting from scratch */
-      data->dbuf_end = data->dbuf;
-    } else {
-      /* choose or alloc block to use */
-      if (++(data->btail) >= data->balloc) {
-	/* need space -- grow dbuf */
-	char* dbuf_next;
-	size_t balloc_next = data->balloc + PDC_NLREC_NOSEEK_ADD_BLOCKS;
-	keep_len = data->dbuf_end - data->dbuf;
-	if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, char, balloc_next * data->block_size, 1))) {
-	  PDC_WARN(pdc->disc, "PDC_nlrec_noseek_read: could not alloc space for input record");
-	  (data->btail)--;
-	  readlen = 0;
-	  break; /* continue after while to take care of earlier bytes_read, if any */
-	}
-	data->balloc   = balloc_next;
-	data->dbuf     = dbuf_next;
-	data->dbuf_end = dbuf_next + keep_len;
-	data->gc_point += (PDC_NLREC_NOSEEK_ADD_BLOCKS * data->block_size);
-	/* data may have moved, so redo begin/end pointers */
-	tmp = data->dbuf;
-	for (elt = PDC_FIRST_ELT(data->head); elt != data->head; elt = elt->next) {
-	  elt->begin = tmp;
-	  tmp += elt->len;
-	  elt->end = tmp;
-	  if (elt->eor) {
-	    tmp++; /* account for newline */
-	  }
-	}
-      } else {
-	/* dbuf already had space at block btail */
+    /* choose or alloc block to use */
+    if (data->btail >= data->balloc) {
+      /* need space -- grow dbuf */
+      char* dbuf_next;
+      size_t balloc_next = data->balloc + PDC_NLREC_NOSEEK_ADD_BLOCKS;
+      keep_len = data->dbuf_end - data->dbuf;
+      if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, char, balloc_next * data->block_size, 1))) {
+	PDC_WARN(pdc->disc, "PDC_nlrec_noseek_read: could not alloc space for input record");
+	readlen = 0;
+	break; /* continue after while to take care of earlier bytes_read, if any */
       }
+      diff           = dbuf_next - data->dbuf;
+      data->balloc   = balloc_next;
+      data->dbuf     = dbuf_next;
+      data->dbuf_end = dbuf_next + keep_len;
+      data->gc_point += (PDC_NLREC_NOSEEK_ADD_BLOCKS * data->block_size);
+      if (diff) { /* data moved, redo begin/end pointers */
+	IODISC_RELOC_ELTS("PDC_nlrec_noseek_read", data->head, diff, elt);
+      }
+      /* tmp_ul1 = data->btail; */   /* XXX_REMOVE */
+      /* tmp_ul2 = data->balloc; */  /* XXX_REMOVE */
+      /* PDC_WARN2(pdc->disc, "XXX_REMOVE: btail %lu, so GREW balloc to %lu", tmp_ul1, tmp_ul2); */
+    } else {
+      /* dbuf already had space at block index btail */
+      /* tmp_ul1 = data->btail;  */ /* XXX_REMOVE */
+      /* tmp_ul2 = data->balloc; */ /* XXX_REMOVE */
+      /* PDC_WARN2(pdc->disc, "XXX_REMOVE: btail %lu, so no need to grow balloc %lu", tmp_ul1, tmp_ul2); */
     }
-    first_save_byte = 0; /* prevents setting btail to zero multiple times throught loop */
+    /* tmp_ul1 = data->btail;                 */  /* XXX_REMOVE */
+    /* tmp_ul2 = data->dbuf_end - data->dbuf; */  /* XXX_REMOVE */
+    /* tmp_ul3 = tmp_ul2 / data->block_size;  */  /* XXX_REMOVE */
+    /* if (tmp_ul1 == tmp_ul3) {      PDC_WARN2(pdc->disc, "XXX_REMOVE: prior to sfread, balloc %lu, dbuf_end - dbuf = %lu [good btail]", tmp_ul1, tmp_ul2);    } else {      PDC_WARN3(pdc->disc, "XXX_REMOVE: prior to sfread, balloc %lu, dbuf_end - dbuf = %lu [btail SHOULD BE %lu]", tmp_ul1, tmp_ul2, tmp_ul3);    } */
     readlen = sfread(data->io, (Void_t*)data->dbuf_end, data->block_size);
     if (readlen < 0) {
       PDC_SYSERR(pdc->disc, "PDC_nlrec_noseek_read: Error reading IO stream");
@@ -952,6 +993,9 @@ PDC_nlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     if (readlen == 0) {
       break;
     }
+    (data->btail)++;
+    /* tmp_ul1 = data->btail;  */ /* XXX_REMOVE */
+    /* PDC_WARN1(pdc->disc, "XXX_REMOVE: after sfread, btail bumped to %lu", tmp_ul1); */
     bytes_read += readlen;
     tmp = data->dbuf_end;
     data->dbuf_end += readlen;
@@ -966,7 +1010,7 @@ PDC_nlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   tmp = data->dbuf_end - data->un_bytes;
   /* first add any EOR-based records */
   while (found_newline) {
-    PDC_NEED_AN_ELT("PDC_nlrec_noseek_read", elt, data->f_head, data->disc_vm);
+    IODISC_NEED_AN_ELT("PDC_nlrec_noseek_read", elt, data->f_head, data->disc_vm);
     if (!elt) { /* turn this error into an EOF case */
       readlen = 0;
       break;
@@ -983,7 +1027,7 @@ PDC_nlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     PDC_APPEND_ELT(data->head, elt);
 #if 0
     if (pdc->disc->errorf) {
-      pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, fmtquote(elt->begin, NiL, NiL, elt->len, 0));
+      pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, PDC_fmt_Cstr(elt->begin, elt->len));
     }
 #endif
     if (!(*next_elt_out)) {
@@ -1012,7 +1056,7 @@ PDC_nlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     PDC_APPEND_ELT(data->head, elt);
 #if 0
     if (pdc->disc->errorf) {
-      pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, fmtquote(elt->begin, NiL, NiL, elt->len, 0));
+      pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, PDC_fmt_Cstr(elt->begin, elt->len));
     }
 #endif
     if (!(*next_elt_out)) {
@@ -1020,6 +1064,27 @@ PDC_nlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     }
   } /* else found newline in a full block read */
   return PDC_OK;
+}
+
+PDC_error_t
+PDC_nlrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
+{
+  PDC_nlrec_noseek_data_t  *data;
+
+  if (!pdc || !pdc->disc) {
+    return PDC_ERR;
+  }
+  data = (PDC_nlrec_noseek_data_t*)io_disc->data;
+  if (data) {
+    if (data->io) {
+      PDC_WARN(pdc->disc, "PDC_nlrec_noseek_unmake: sfclose should have been called first, calling it now");
+      PDC_nlrec_noseek_sfclose(pdc, io_disc, 0, 0);
+    }
+    if (data->disc_vm) {
+      vmclose(data->disc_vm);
+    }
+  }
+  return PDC_ERR;
 }
 
 PDC_IO_disc_t *
@@ -1128,21 +1193,6 @@ typedef struct PDC_norec_data_s {
 } PDC_norec_data_t;
 
 PDC_error_t
-PDC_norec_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
-{
-  PDC_norec_data_t  *data;
-
-  if (!pdc || !pdc->disc) {
-    return PDC_ERR;
-  }
-  data = (PDC_norec_data_t*)io_disc->data;
-  if (data && data->disc_vm) {
-    vmclose(data->disc_vm);
-  }
-  return PDC_ERR;
-}
-
-PDC_error_t
 PDC_norec_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t *sfio, PDC_IO_elt_t *head)
 {
   PDC_norec_data_t *data;
@@ -1164,7 +1214,7 @@ PDC_norec_sfopen(PDC_t *pdc, PDC_IO_disc_t* io_disc, Sfio_t *sfio, PDC_IO_elt_t 
     PDC_WARN(pdc->disc, "PDC_norec_sfopen: not in a valid closed state");
     return PDC_ERR;
   }
-  PDC_NEED_AN_ELT("PDC_nlrec_noseek_sfopen", elt, data->f_head, data->disc_vm);
+  IODISC_NEED_AN_ELT("PDC_nlrec_noseek_sfopen", elt, data->f_head, data->disc_vm);
   if (!elt) {
     return PDC_ERR;
   }
@@ -1220,11 +1270,7 @@ PDC_norec_sfclose(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, 
   }
 
   /* remove all elts from list -- put them on the free list */
-  while (PDC_SOME_ELTS(data->head)) {
-    elt = PDC_FIRST_ELT(data->head);
-    PDC_REMOVE_ELT(elt);
-    PDC_APPEND_ELT(data->f_head, elt);
-  }
+  IODISC_REMOVE_ALL_ELTS(data->head, data->f_head, elt);
   if (data->eof_elt) {
     elt = data->eof_elt;
     data->eof_elt = 0;
@@ -1242,8 +1288,8 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
 {
   PDC_norec_data_t    *data;
   PDC_IO_elt_t         *elt, *firstelt, *keepelt;
-  ssize_t              readlen, to_keep, to_discard, to_reserve, diff;
-  Sfoff_t              new_data_off;
+  ssize_t              readlen, to_keep, to_discard, to_reserve;
+  Sfoff_t              new_data_off, diff;
   char                 *new_r_begin, *new_data;
 
   if (!pdc || !pdc->disc) {
@@ -1273,11 +1319,8 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
   }
   /* move some elts to the free list */
   keepelt = io_cur_elt ? io_cur_elt : data->head;
-  while (PDC_SOME_ELTS(data->head) && PDC_FIRST_ELT(data->head) != keepelt) {
-    elt = PDC_FIRST_ELT(data->head);
-    PDC_REMOVE_ELT(elt);
-    PDC_APPEND_ELT(data->f_head, elt);
-  }
+  IODISC_REMOVE_SOME_ELTS(data->head, data->f_head, keepelt, elt);
+
   firstelt = PDC_FIRST_ELT(data->head);
   if (firstelt == data->head) {
     to_keep = 0;
@@ -1311,38 +1354,9 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
     readlen -= to_keep; /* readlen now == the bytes that go in the new elt(s) */
     if (data->r_begin) {
       data->r_begin += to_discard; /* need this adjustment before we compute diff */
-      if (new_r_begin > data->r_begin) { /* data moved to higher memory loc */ 
-	diff = new_r_begin - data->r_begin;
-#if 0
-	if (pdc->disc->errorf) {
-	  pdc->disc->errorf(NiL, 0, "XXX_REMOVE DATA SHIFTED HIGHER BY %d BYTES", diff);
-	}
-#endif
-	for (elt = firstelt; elt != data->head; elt = elt->next) {
-	  elt->begin += diff;
-	  elt->end   += diff;
-#if 0
-	  if (pdc->disc->errorf) {
-	    pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d disc_off %d) = AT NEW LOC =>\n[%s]", elt->unit, elt->num, elt->disc_off, fmtquote(elt->begin, NiL, NiL, elt->len, 0));
-	  }
-#endif
-	}
-      } else if (data->r_begin > new_r_begin) { /* data moved to lower memory loc */
-	diff = data->r_begin - new_r_begin;
-#if 0
-	if (pdc->disc->errorf) {
-	  pdc->disc->errorf(NiL, 0, "XXX_REMOVE DATA SHIFTED LOWER BY %d BYTES", diff);
-	}
-#endif
-	for (elt = firstelt; elt != data->head; elt = elt->next) {
-	  elt->begin -= diff;
-	  elt->end   -= diff;
-#if 0
-	  if (pdc->disc->errorf) {
-	    pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d disc_off %d) = AT NEW LOC =>\n[%s]", elt->unit, elt->num, elt->disc_off, fmtquote(elt->begin, NiL, NiL, elt->len, 0));
-	  }
-#endif
-	}
+      diff = new_r_begin - data->r_begin;
+      if (diff) { /* data moved, redo begin/end pointers */
+	IODISC_RELOC_ELTS("PDC_norec_read", data->head, diff, elt);
       }
     }
     data->r_begin = new_r_begin;
@@ -1352,7 +1366,7 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
     *(data->r_end) = 0; /* null-terminate the data bytes -- note sfio's sfbuf must be allocated with extra byte */
   }
   if (readlen == data->block_size) { /* full block read */
-    PDC_NEED_AN_ELT("PDC_norec_read", elt, data->f_head, data->disc_vm);
+    IODISC_NEED_AN_ELT("PDC_norec_read", elt, data->f_head, data->disc_vm);
     if (!elt) {
       PDC_WARN(pdc->disc, "PDC_norec_read memory alloc error");
       goto eof_case;
@@ -1391,11 +1405,32 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
   PDC_APPEND_ELT(data->head, elt);
 #if 0
   if (pdc->disc->errorf) {
-    pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d disc_off %d)\n[%s]", elt->unit, elt->num, elt->disc_off, fmtquote(elt->begin, NiL, NiL, elt->len, 0));
+    pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d disc_off %d)\n[%s]", elt->unit, elt->num, elt->disc_off, PDC_fmt_Cstr(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
   return PDC_OK;
+}
+
+PDC_error_t
+PDC_norec_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
+{
+  PDC_norec_data_t  *data;
+
+  if (!pdc || !pdc->disc) {
+    return PDC_ERR;
+  }
+  data = (PDC_norec_data_t*)io_disc->data;
+  if (data) {
+    if (data->io) {
+      PDC_WARN(pdc->disc, "PDC_norec_unmake: sfclose should have been called first, calling it now");
+      PDC_norec_sfclose(pdc, io_disc, 0, 0);
+    }
+    if (data->disc_vm) {
+      vmclose(data->disc_vm);
+    }
+  }
+  return PDC_ERR;
 }
 
 PDC_IO_disc_t *

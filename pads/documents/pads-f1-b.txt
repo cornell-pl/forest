@@ -5,7 +5,7 @@ Joint work with Kathleen Fisher
 Currently, each new data analysis project builds its own
 infrastructure.  The grand vision of the PADS project is that we need
 shared tools and infrastructure to simplify data collection (e.g.,
-make it easy to "tap" a new data stream), reliabale data transport
+make it easy to "tap" a new data stream), reliable data transport
 (e.g., construct a proactive reliable stream framework), and
 distributed data processing (e.g., push queries to data sources,
 distribute query processing to free machines, an so on).  Pieces of
@@ -35,7 +35,7 @@ Perl programs. (Our plan is to be *much* faster than Perl.)
 
 Longer term, we will use the generated libraries to construct
 declarative interfaces to arbitrary data sources. In addition, we plan
-to adapt tools designed for XML, such as Xquery, to work over legacy
+to adapt tools designed for XML, such as XQuery, to work over legacy
 data by making the legacy data ``look'' like XML.  Together with the
 ability to generate C interfaces, this approach allows application
 developers to mix and match data representations as needed to handle

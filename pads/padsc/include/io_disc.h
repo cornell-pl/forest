@@ -76,10 +76,11 @@ PDC_IO_disc_t * PDC_norec_noseek_make(size_t block_size_hint);
  * that does not require that the sfio stream is seekable.
  */
 
-/* PDC_IO_elt_t: used for list of input records managed by the io discipline.
- * The io discipline maintains a doubly-linked list of these records using the
- * prev/next fields, where the head of the list is always a 'dummy' record
- * that is not used except as a placeholder for managing the list.
+/* PDC_IO_elt_t: used for list of input records managed by the io
+ * discipline.  The io discipline maintains a doubly-linked list of
+ * these records using the prev/next fields, where the head of the
+ * list is always a 'dummy' record that is not used except as a
+ * placeholder for managing the list. 
  *
  * There are two extra data fields:
  *   disc_ptr, disc_off: (optionally) used by the io discipline;
@@ -122,35 +123,6 @@ struct PDC_IO_disc_s {
   PDC_IO_sfclose_fn   sfclose_fn;  /* Sfio-based close */
   PDC_IO_read_fn      read_fn;     /* read */
 };
-
-/* ================================================================================ */
-/* Helper macros */
-
-#define PDC_SOME_ELTS(head) (head->next != head)
-#define PDC_FIRST_ELT(head) (head->next)
-#define PDC_LAST_ELT(head)  (head->prev)
-
-#define PDC_REMOVE_ELT(elt) do { \
-  PDC_IO_elt_t *tmp = (elt); \
-  tmp->prev->next = tmp->next; \
-  tmp->next->prev = tmp->prev; \
-} while (0)
-
-#define PDC_APPEND_ELT(head, elt) do { \
-  PDC_IO_elt_t *tmp = (elt); \
-  tmp->prev = head->prev; \
-  tmp->next = head; \
-  tmp->prev->next = tmp; \
-  tmp->next->prev = tmp; \
-} while (0)
-
-#define PDC_PREPEND_ELT(head, elt) do { \
-  PDC_IO_elt_t *tmp = (elt); \
-  tmp->prev = head; \
-  tmp->next = head->next; \
-  tmp->prev->next = tmp; \
-  tmp->next->prev = tmp; \
-} while (0)
 
 /* ================================================================================ */
 

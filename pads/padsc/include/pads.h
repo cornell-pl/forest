@@ -18,6 +18,8 @@
 #include <dt.h>
 #include <error.h>
 #include "rbuf.h"
+#include "libpadsc-private.h"
+
 /* XXX K: this should not be here, put it in hack include file XXX */
 extern void bzero(void *s, size_t n);
 
@@ -44,6 +46,18 @@ extern void bzero(void *s, size_t n);
  *                PDC_errorRep_Min  : minimal reporting: report errCode, IO elt num/char position
  *                PDC_errorRep_Med  : medium reporting:  like Min, but adds descriptive string
  *                PDC_errorRep_Max  : maximum reporting, like Med, but adds offending IO elt up to error position
+ *
+ *   copy_strings : if non-zero, the string read functions copy the strings found, otherwise they do not
+ *                  (instead the target PDC_string points to memory managed by the current IO discipline).
+ *                  copy_strings should only be set to zero when an IO checkpoint has been established to ensure
+ *                  that the referenced strings remain in memory.  For example, it is safe to set copy_strings
+ *                  to zero with this code pattern:
+ *
+ *                     PDC_IO_checkpoint(pdc);
+ *                     .. 
+ *                     PDC_astring_read(..);
+ *                     ..
+ *                     PDC_IO_commit(pdc);
  *
  *   m_endian  : machine endian-ness (PDC_bigEndian or PDC_littleEndian)
  *
@@ -76,6 +90,7 @@ extern void bzero(void *s, size_t n);
  * The default disc is PDC_default_disc.  It provides the following defaults:
  *    version:      PDC_VERSION (above) 
  *    flags:        0
+ *    copy_strings: 0
  *    stop_regexp:  0
  *    stop_maxlen:  0
  *    errorf:       PDC_errorf
@@ -251,8 +266,6 @@ typedef enum   PDC_endian_e        PDC_endian;
 typedef struct PDC_IO_elt_s        PDC_IO_elt_t;
 typedef struct PDC_IO_disc_s       PDC_IO_disc_t;
 
-extern PDC_disc_t PDC_default_disc;
-
 /* ================================================================================ */
 /* BASIC LIBRARY TYPES */
 
@@ -299,11 +312,21 @@ typedef PDC_base_ed            PDC_auint64_ed;
 
 typedef PDC_base_ed            PDC_string_ed;
 
-typedef struct PDC_string_s {
-  size_t    len;
-  char      *str;
-  RBuf_t    *rbuf;
-} PDC_string;
+
+/* PDC_string: PADS strings have a ptr and length;
+ *             required since they need not be null-terminated.
+ *             They also have some private state, which should
+ *             be ignored by users of the library.
+ */
+
+typedef struct PDC_string_s PDC_string;
+
+/* type PDC_string: */
+struct PDC_string_s {
+  char             *str;
+  size_t           len;
+  PDC_STRING_PRIVATE_STATE;
+};
 
 /* ================================================================================ */
 /* USEFUL CONSTANTS */
@@ -421,6 +444,7 @@ struct PDC_base_ed_s {
 struct PDC_disc_s {
   PDC_flags_t           version;      /* interface version */
   PDC_flags_t           flags;        /* control flags */
+  int                   copy_strings; /* if non-zero, astring read functions copy the strings found, otherwise not */
   PDC_regexp_t          *stop_regexp; /* scan stop pattern, use 0 to disable */
   size_t                stop_maxlen;  /* max scan distance, use 0 to disable */
   PDC_error_f           errorf;       /* error function using  ... */
@@ -430,18 +454,21 @@ struct PDC_disc_s {
   PDC_IO_disc_t         *io_disc;     /* sub-discipline for controlling IO */
 };
 
+extern PDC_disc_t PDC_default_disc;
+
 /* PARTIAL descriptionof type PDC_t:
- * It is safe to get the id and disc from a PDC_t* handle,
- * but other elements of the struct are only manipulated
- * by the internal library routines
+ * It is OK to get the id and disc from a PDC_t* handle,
+ * but other elements of the struct should only manipulated
+ * by the internal library routines.
  *
  */
+
+PDC_PRIVATE_DECLS;
+
 struct PDC_s {
   const char        *id;       /* interface id */
   PDC_disc_t        *disc;     /* discipline handle */
-#ifdef __LIBPADSC_INTERNAL__
-PDC_PRIVATE_STATE
-#endif
+  PDC_PRIVATE_STATE;
 };
 
 /* ================================================================================ */
@@ -632,18 +659,25 @@ PDC_error_t PDC_adate_read(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed,
 
 /* Related helper functions:
  *
- *    PDC_string_init : initialize to valid empty string (no dynamic memory allocated yet)
+ *    PDC_string_init    : initialize to valid empty string (no dynamic memory allocated yet)
  *    PDC_string_cleanup : free up the rbuf and any allocated space for the string
- *    PDC_string_copy : Copy len chars from string src into the PDC_string targ;
- *                      allocates RBuf and/or space for the copy, as necessary.
- *                      Although not strictly necessary, null-terminates targ->str.
+ *    PDC_string_share    : makes the PDC_string targ refer to the string specified by src/len,
+ *                          sharing the space with the original owner.
+ *    PDC_string_copy    : copy len chars from string src into the PDC_string targ;
+ *                         allocates RBuf and/or space for the copy, as necessary.
+ *                         Although not strictly necessary, null-terminates targ->str.
  *              string_copy returns PDC_ERR on bad arguments or on failure to alloc space,
  *              otherwise it returns PDC_OK
+ *    PDC_string_preserve : If the string is using space-sharing, make it use a private copy 
+ *                          instead, so that the (formerly) shared space can be discarded.
+ *                          It is safe to call preserve on any string.
  */
 
 PDC_error_t PDC_string_init(PDC_t *pdc, PDC_string *s);
 PDC_error_t PDC_string_cleanup(PDC_t *pdc, PDC_string *s);
+PDC_error_t PDC_string_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
 PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
+PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
 
 /*
  * Type T with T_init/T_cleanup also must have T_ed_init/T_ed_cleanup.
@@ -668,10 +702,12 @@ PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed);
  *
  * If an expected stop char/pattern/width is found, PDC_OK is returned.
  * If !em || *em == PDC_CheckAndSet, then:
- *   + if s_out is non-null, a null-terminated form the string is placed in the
- *     memory buffer managed by *s_out; *s_out should have been initialized
+ *   + if s_out is non-null, PDC_string_set is used with (*s_out) to copy/set
+ *     the string that is found, where pdc->disc->copy_strings controlls the copy arg.
+ *     *s_out should have been initialized
  *     at some point prior using PDC_string_init (it can be initialized once
- *     and re-used in string read calls many times).  The memory allocated by *s_out
+ *     and re-used in string read calls many times).  If pdc->disc->copy_strings is
+ *     non-zero, the memory allocated by *s_out
  *     should ultimately be freed using PDC_string_cleanup.
  *   + if l_out is non-null, *l_out is set to the length of the string
  *     (not including the null terminator).
@@ -794,30 +830,30 @@ PDC_error_t PDC_auint64_read(PDC_t *pdc, PDC_base_em *em,
  *        + ed->loc begin/end set to elt/char position of start/end of the 'too small' field
  */
 
-PDC_error_t PDC_aint8_fw_read (PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_int8 *res_out);
+PDC_error_t PDC_aint8FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
+			      PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_aint16_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_int16 *res_out);
+PDC_error_t PDC_aint16FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			      PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_aint32_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_int32 *res_out);
+PDC_error_t PDC_aint32FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			      PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_aint64_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_int64 *res_out);
+PDC_error_t PDC_aint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			      PDC_base_ed *ed, PDC_int64 *res_out);
 
 
-PDC_error_t PDC_auint8_fw_read (PDC_t *pdc, PDC_base_em *em, size_t width,
-				PDC_base_ed *ed, PDC_uint8 *res_out);
+PDC_error_t PDC_auint8FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
+			       PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_auint16_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-				PDC_base_ed *ed, PDC_uint16 *res_out);
+PDC_error_t PDC_auint16FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			       PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_auint32_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-				PDC_base_ed *ed, PDC_uint32 *res_out);
+PDC_error_t PDC_auint32FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			       PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_auint64_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-				PDC_base_ed *ed, PDC_uint64 *res_out);
+PDC_error_t PDC_auint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			       PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================ */
 /* BINARY INTEGER READ FUNCTIONS */
@@ -1089,6 +1125,24 @@ PDC_error_t PDC_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_st
   ((PDCstr)->len == strlen(Cstr) && strncmp((PDCstr)->str, (Cstr), (PDCstr)->len) == 0)
 
 /* ================================================================================ */
+/* IO CHECKPOINT API */
+
+/*
+ * The checkpoint API: if any of these return PDC_ERR, it is due to a space
+ * allocation problem or a non-balanced use of checkpoint/commit/restore.
+ * These are normally fatal errors -- the calling code should probably exit the program.
+ *
+ * If a non-zero speculative flag is passed to checkpoint, then the
+ * speculative nesting level  is incremented by one.  Once the checkpoint
+ * is removed by either commit or restore, the nesting level is
+ * decremented by one.  PDC_spec_level gives the current nesting level.
+ */
+PDC_error_t  PDC_IO_checkpoint (PDC_t *pdc, int speculative);
+PDC_error_t  PDC_IO_commit     (PDC_t *pdc);
+PDC_error_t  PDC_IO_restore    (PDC_t *pdc);
+unsigned int PDC_spec_level    (PDC_t *pdc);
+
+/* ================================================================================ */
 /* REGULAR EXPRESSION SUPPORT */
 
 /* PDC_regexp_compile: if regexp is a valid regular expression, this function
@@ -1110,10 +1164,27 @@ PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
 /* MISC ROUTINES */
 
 /*
+ *    PDC_fmt_char: produce a ptr to a string that is a pretty-print (escaped) formated for char c
+ *        N.B. Resulting string should be printed immediately then not used again, e.g.,
+ *        PDC_report_err( .. .. , "Missing separator: %s", PDC_fmt_Char(c)); 
+ * 
+ *    PDC_fmt_str   : same thing for a PDC_string
+ *    PDC_fmt_Cstr  : same thing for a C string (must specify a char* ptr and a length)
+ *
+ *    PDC_qfmt_char/PDC_qfmt_str/PDC_qfmt_Cstr : same as above, but quote marks are added
+ */
+char *PDC_fmt_char(char c);
+char *PDC_fmt_str(const PDC_string *s);
+char *PDC_fmt_Cstr(const char *s, size_t len);
+char *PDC_qfmt_char(char c);
+char *PDC_qfmt_str(const PDC_string *s);
+char *PDC_qfmt_Cstr(const char *s, size_t len);
+
+/*
  * PDC_swap_bytes: in-place memory byte order swap
  *    num_bytes should be oneof: 1, 2, 4, 8
  */
-PDC_error_t PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes);
+PDC_error_t PDC_swap_bytes(char *bytes, size_t num_bytes);
 
 /*
  * Going away eventually

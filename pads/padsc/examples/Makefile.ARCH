@@ -5,7 +5,7 @@
 if 0
 CCFLAGS = $(CC.DEBUG)
 end
-CCFLAGS = $(CC.OPTIMIZE)
+CCFLAGS = $(CC.OPTIMIZE) -DNDEBUG
 
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod

@@ -202,18 +202,18 @@ struct
 
 (* check point routines *)
   fun chkPtS(ts:PT.expression) =
-    chkError(ts, (PT.Call(PT.Id "PDCI_IO_checkpoint", [ts, P.trueX])), (* always speculative *)
+    chkError(ts, (PT.Call(PT.Id "PDC_IO_checkpoint", [ts, P.trueX])), (* always speculative *)
 	     PDC_CHKPOINT_FAILURE)
 
   fun getSpecLevelX(ts:PT.expression) =
-     PT.Call(PT.Id "PDCI_spec_level", [ts])
+     PT.Call(PT.Id "PDC_spec_level", [ts])
 
   fun commitS(ts:PT.expression) =
-    chkError(ts, (PT.Call(PT.Id "PDCI_IO_commit", [ts])),
+    chkError(ts, (PT.Call(PT.Id "PDC_IO_commit", [ts])),
 	     PDC_COMMIT_FAILURE)
 
   fun restoreS(ts:PT.expression) =
-    chkError(ts, (PT.Call(PT.Id "PDCI_IO_restore", [ts])),
+    chkError(ts, (PT.Call(PT.Id "PDC_IO_restore", [ts])),
 	     PDC_RESTORE_FAILURE)
 
 

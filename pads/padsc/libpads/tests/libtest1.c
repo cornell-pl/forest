@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     }
     /* try to read 4 fixed width integers (width 6) */
     for (i = 0; i < 4; i++) {
-      if (PDC_OK == PDC_aint8_fw_read(pdc, &em, 6, &ed, &i1)) {
+      if (PDC_OK == PDC_aint8FW_read(pdc, &em, 6, &ed, &i1)) {
 	error(0, "Read ascii integer of width 6: %ld", i1);
       }
     }

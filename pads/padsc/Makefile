@@ -10,6 +10,7 @@ redo_examples:
 	echo Redoing all the examples
 	./padsc examples/p/ai.p
 	./padsc examples/p/dibbler.p
+	./padsc examples/p/dibbler2.p
 	./padsc examples/p/format1.p
 	./padsc examples/p/format2.p
 	./padsc examples/p/format3.p

@@ -86,26 +86,60 @@
 #define PDCI_STRING_HINT 128
 /* END_MACRO */
 
-/*
- * If *em is CheckAndSet, create a string copy of the string
- * that goes from begin to end-1.  Must have a no_space label.
- */
- #define PDCI_STR_COPY(s_out, begin, end)
+/* PDC_string_copy -- inline version.  Caller must provide fatal_alloc_err target */
+#define PDCI_STR_CPY(s, b, wdth)
   do {
-    if (*em == PDC_CheckAndSet && s_out) {
-      size_t wdth = end-begin; 
-      char *buf;
-      if (!s_out->rbuf) {
-	if (!(s_out->rbuf = RMM_new_rbuf(pdc->rmm_nz))) {
-	  goto fatal_alloc_err;
-	}
+    if (!(s)->rbuf) {
+      if (!((s)->rbuf = RMM_new_rbuf(pdc->rmm_nz))) {
+	goto fatal_alloc_err;
       }
-      if (RBuf_reserve(s_out->rbuf, (void**)&buf, sizeof(char), wdth+1, PDCI_STRING_HINT)) {
-       goto fatal_alloc_err;
+    }
+    if (RBuf_reserve((s)->rbuf, (void**)&((s)->str), sizeof(char), (wdth)+1, PDCI_STRING_HINT)) {
+      goto fatal_alloc_err;
+    }
+    strncpy((s)->str, (b), (wdth));
+    (s)->len = (wdth);
+    /* if ((s)->sharing) { PDC_WARN1(pdc->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(s)); } */
+    (s)->sharing = 0;
+  } while (0)
+/* END_MACRO */
+
+/* PDC_string_preserve -- inline version.  Caller must provide fatal_alloc_err target */
+#define PDCI_STR_PRESERVE(s)
+  do {
+    char* shared_str;
+    /* PDC_WARN3(pdc->disc, "XXX_REMOVE [%s:%d] preserve called on shared string %p", __FILE__, __LINE__, (void*)(s)); */
+    /* if (!(s)->sharing) { PDC_WARN3(pdc->disc, "XXX_REMOVE [%s:%d] ... but string %p was not shared",__FILE__, __LINE__, (void*)(s)); } */
+    if ((s)->sharing) {
+      shared_str = (s)->str;
+      PDCI_STR_CPY((s), shared_str, (s)->len);
+    }
+  } while (0)
+/* END_MACRO */
+
+/* Set up str sharing */
+#define PDCI_STR_SHARE(s, b, wdth)
+  do {
+    (s)->str = (char*)(b);
+    (s)->len = wdth;
+    (s)->sharing = 1;
+    /* PDC_WARN1(pdc->disc, "XXX_REMOVE string %p is now sharing", (void*)(s)); */
+  } while (0)
+/* END_MACRO */
+
+/* If *em is CheckAndSet, point to or copy (depending on pdc->disc->copy_strings)
+ * the string that goes from b to e-1.
+ * Caller must provide fatal_alloc_err target
+ */
+#define PDCI_STR_SET(s, b, e)
+  do {
+    if (*em == PDC_CheckAndSet && (s)) {
+      size_t wdth = (e)-(b); 
+      if (pdc->disc->copy_strings) {
+	PDCI_STR_CPY((s), (b), wdth);
+      } else {
+	PDCI_STR_SHARE((s), (b), wdth);
       }
-      strncpy(buf, begin, wdth);
-      s_out->str = buf;
-      s_out->len = wdth;
     }
   } while (0)
 /* END_MACRO */
@@ -150,7 +184,7 @@
 /* Assumes pdc and disc already checked */
 #define PDCI_NULLPARAM_CHECK(prefix, param)
   do {
-    if (!param)  {
+    if (!(param))  {
       PDC_WARN(pdc->disc, prefix ": param " PDCI_MacroArg2String(param) " must not be NULL");
       return PDC_ERR;
     }
@@ -196,7 +230,40 @@
 #define PDCI_FOLDTEST_UINT32(v, s) ((s) > PDCI_FOLD_MAX_UINT32)
 #define PDCI_FOLDTEST_UINT64(v, s) ( ((s) > PDCI_HALFMAX_UINT64) || ((v) > PDCI_HALFMAX_UINT64) )
 /* END_MACRO */
- 
+
+/* ================================================================================ */
+/* DOUBLY-LINKED LIST HELPER MACROS */
+
+#define PDC_SOME_ELTS(head) ((head)->next != (head))
+#define PDC_FIRST_ELT(head) ((head)->next)
+#define PDC_LAST_ELT(head)  ((head)->prev)
+/* END_MACRO */
+
+#define PDC_REMOVE_ELT(elt)
+  do {
+    (elt)->prev->next = (elt)->next;
+    (elt)->next->prev = (elt)->prev;
+  } while (0)
+/* END_MACRO */
+
+#define PDC_APPEND_ELT(head, elt)
+  do {
+    (elt)->prev = (head)->prev;
+    (elt)->next = (head);
+    (elt)->prev->next = (elt);
+    (elt)->next->prev = (elt);
+  } while (0)
+/* END_MACRO */
+
+#define PDC_PREPEND_ELT(head, elt)
+  do {
+    (elt)->prev = (head);
+    (elt)->next = (head)->next;
+    (elt)->prev->next = (elt);
+    (elt)->next->prev = (elt);
+  } while (0)
+/* END_MACRO */
+
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACROS ********************************** */
 
@@ -790,7 +857,7 @@ int_type ## _acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix,
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
-    bad_pcnt = a->bad / (double)(a->good + a->bad);
+    bad_pcnt = 100.0 * (a->bad / (double)(a->good + a->bad));
   }
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
@@ -807,18 +874,18 @@ int_type ## _acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix,
   sfprintf(outstr, " avg %.3lf\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
-    track_pcnt = ((double)100.0 * a->tracked)/a->good;
+    track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
     elt = (int_type ## _dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
-    elt_pcnt = ((double)100.0 * elt->key.cnt)/a->good;
+    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
     sfprintf(outstr, "        val: %10" fmt, elt->key.val);
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
 
   }
-  cnt_sum_pcnt = ((double)100.0 * cnt_sum)/a->good;
+  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf\n",
 	   cnt_sum, cnt_sum_pcnt);
@@ -880,7 +947,7 @@ int_type ## _acc_report_map_internal(PDC_t *pdc, Sfio_t *outstr, const char *pre
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
-    bad_pcnt = a->bad / (double)(a->good + a->bad);
+    bad_pcnt = 100.0 * (a->bad / (double)(a->good + a->bad));
   }
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
@@ -899,7 +966,7 @@ int_type ## _acc_report_map_internal(PDC_t *pdc, Sfio_t *outstr, const char *pre
   sfprintf(outstr, ")\n");
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
-    track_pcnt = ((double)100.0 * a->tracked)/a->good;
+    track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   sz = rp = 0;
@@ -913,7 +980,7 @@ int_type ## _acc_report_map_internal(PDC_t *pdc, Sfio_t *outstr, const char *pre
   for (i = 0, velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
     elt = (int_type ## _dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
-    elt_pcnt = ((double)100.0 * elt->key.cnt)/a->good;
+    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
     mapped_val = fn(elt->key.val);
     sfprintf(outstr, "        val: %s (%5" fmt, mapped_val, elt->key.val);
     sfprintf(outstr, ") ");
@@ -922,7 +989,7 @@ int_type ## _acc_report_map_internal(PDC_t *pdc, Sfio_t *outstr, const char *pre
 	     "                                                                                ");
     sfprintf(outstr, "  count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
   }
-  cnt_sum_pcnt = ((double)100.0 * cnt_sum)/a->good;
+  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   sfprintf(outstr,   "%-.*s", rp,
 	   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .");
   sfprintf(outstr,   " . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n        SUMMING");
@@ -1009,25 +1076,25 @@ PDCI_AINT_READ_FN(PDC_auint64_read, PDC_uint64, unsigned long long, PDCI_strtoul
  * PDCI_AINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
  */
 
-PDCI_AINT_FW_READ_FN(PDC_aint8_fw_read,  PDC_int8,  long,      PDCI_strtol,  PDC_INVALID_AINT,
+PDCI_AINT_FW_READ_FN(PDC_aint8FW_read,  PDC_int8,  long,      PDCI_strtol,  PDC_INVALID_AINT,
  || tmp < PDC_MIN_INT8  || tmp > PDC_MAX_INT8);
 
-PDCI_AINT_FW_READ_FN(PDC_aint16_fw_read, PDC_int16, long,      PDCI_strtol,  PDC_INVALID_AINT,
+PDCI_AINT_FW_READ_FN(PDC_aint16FW_read, PDC_int16, long,      PDCI_strtol,  PDC_INVALID_AINT,
  || tmp < PDC_MIN_INT16 || tmp > PDC_MAX_INT16);
 
-PDCI_AINT_FW_READ_FN(PDC_aint32_fw_read, PDC_int32, long,      PDCI_strtol,  PDC_INVALID_AINT, );
+PDCI_AINT_FW_READ_FN(PDC_aint32FW_read, PDC_int32, long,      PDCI_strtol,  PDC_INVALID_AINT, );
 
-PDCI_AINT_FW_READ_FN(PDC_aint64_fw_read, PDC_int64, long long, PDCI_strtoll, PDC_INVALID_AINT, );
+PDCI_AINT_FW_READ_FN(PDC_aint64FW_read, PDC_int64, long long, PDCI_strtoll, PDC_INVALID_AINT, );
 
-PDCI_AINT_FW_READ_FN(PDC_auint8_fw_read,  PDC_uint8,  unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT,
+PDCI_AINT_FW_READ_FN(PDC_auint8FW_read,  PDC_uint8,  unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT,
  || tmp > PDC_MAX_UINT8);
 
-PDCI_AINT_FW_READ_FN(PDC_auint16_fw_read, PDC_uint16, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT,
+PDCI_AINT_FW_READ_FN(PDC_auint16FW_read, PDC_uint16, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT,
  || tmp > PDC_MAX_UINT16);
 
-PDCI_AINT_FW_READ_FN(PDC_auint32_fw_read, PDC_uint32, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, );
+PDCI_AINT_FW_READ_FN(PDC_auint32FW_read, PDC_uint32, unsigned long,      PDCI_strtoul,  PDC_INVALID_AUINT, );
 
-PDCI_AINT_FW_READ_FN(PDC_auint64_fw_read, PDC_uint64, unsigned long long, PDCI_strtoull, PDC_INVALID_AUINT, );
+PDCI_AINT_FW_READ_FN(PDC_auint64FW_read, PDC_uint64, unsigned long long, PDCI_strtoull, PDC_INVALID_AUINT, );
 
 /* ================================================================================ */
 /* BINARY INTEGER READ FUNCTIONS */
@@ -1327,22 +1394,22 @@ PDC_string_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, c
   sfprintf(outstr, "\n  Characterizing strings:\n");
   sfprintf(outstr, "    => distribution of top %d strings out of %d distinct strings:\n", rp, sz);
   if (sz == PDCI_ACC_MAX2TRACK && a->len_accum.good > a->tracked) {
-    track_pcnt = ((double)100.0 * a->tracked)/a->len_accum.good;
+    track_pcnt = 100.0 * (a->tracked/(double)a->len_accum.good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
     elt = (PDCI_string_dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
-    elt_pcnt = ((double)100.0 * elt->key.cnt)/a->len_accum.good;
+    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->len_accum.good);
     sfprintf(outstr, "        val: ");
-    sfprintf(outstr, "%-.*s", elt->key.len+2, PDCI_fmtQStrL(elt->key.str, elt->key.len));
+    sfprintf(outstr, "%-.*s", elt->key.len+2, PDC_qfmt_Cstr(elt->key.str, elt->key.len));
     sfprintf(outstr, "");
     pad = a->len_accum.max - elt->key.len;
     sfprintf(outstr, "%-.*s", pad,
 	     "                                                                                ");
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
   }
-  cnt_sum_pcnt = ((double)100.0 * cnt_sum)/a->len_accum.good;
+  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->len_accum.good);
   sfprintf(outstr, ". . . . . . . .");
   pad = a->len_accum.max;
   sfprintf(outstr, "%-.*s", pad,
@@ -1428,7 +1495,7 @@ PDC_char_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, con
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
-    bad_pcnt = a->bad / (double)(a->good + a->bad);
+    bad_pcnt = 100.0 * (a->bad / (double)(a->good + a->bad));
   }
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
@@ -1440,23 +1507,23 @@ PDC_char_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, con
   rp = (sz < PDCI_ACC_REPORT_K) ? sz : PDCI_ACC_REPORT_K;
   dtdisc(a->dict,   &PDC_uint8_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
-  sfprintf(outstr, "  Characterizing %s:  min %s", what, PDCI_fmtQChar(a->min));
-  sfprintf(outstr, " max %s\n", PDCI_fmtQChar(a->max));
+  sfprintf(outstr, "  Characterizing %s:  min %s", what, PDC_qfmt_char(a->min));
+  sfprintf(outstr, " max %s\n", PDC_qfmt_char(a->max));
 
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
-    track_pcnt = ((double)100.0 * a->tracked)/a->good;
+    track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
   for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
     elt = (PDC_uint8_dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
-    elt_pcnt = ((double)100.0 * elt->key.cnt)/a->good;
-    sfprintf(outstr, "        val: %6s", PDCI_fmtQChar(elt->key.val));
+    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
+    sfprintf(outstr, "        val: %6s", PDC_qfmt_char(elt->key.val));
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
 
   }
-  cnt_sum_pcnt = ((double)100.0 * cnt_sum)/a->good;
+  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING     count: %10llu  pcnt-of-good-vals: %8.3lf\n",
 	   cnt_sum, cnt_sum_pcnt);
@@ -1531,7 +1598,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.53 2002-11-18 21:59:03 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.54 2002-12-02 19:41:56 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -1564,6 +1631,7 @@ PDC_errorf(const char *libnm, int level, ...)
 PDC_disc_t PDC_default_disc = {
   PDC_VERSION,
   (PDC_flags_t)PDC_NULL_CTL_FLAG,
+  0, /* string read functinos do not copy strings */
   0, /* stop_regexp disabled    */
   0, /* no stop_maxlen disabled */
   PDC_errorf,
@@ -1581,7 +1649,7 @@ PDC_open(PDC_t **pdc_out, PDC_disc_t *disc, PDC_IO_disc_t *io_disc)
 
   PDC_TRACE(&PDC_default_disc, "PDC_open called");
   if (!pdc_out) {
-    PDC_WARN(&PDC_default_disc, "PDC_open called with null pdc_out");
+    PDC_WARN(&PDC_default_disc, "PDC_open: param pdc_out must not be NULL");
     return PDC_ERR;
   }
   if (!(vm = vmopen(Vmdcheap, Vmbest, 0))) {
@@ -1840,6 +1908,78 @@ PDC_IO_getLoc(PDC_t *pdc, PDC_loc_t *loc, int offset)
 }
 
 /* ================================================================================ */
+/* EXTERNAL IO CHECKPOINT API */
+
+PDC_error_t
+PDC_IO_checkpoint(PDC_t *pdc, int speculative)
+{
+  if (!pdc || !pdc->disc) { return PDC_ERR; }
+  PDC_TRACE(pdc->disc, "PDC_IO_checkpoint called");
+  if (++(pdc->top) >= pdc->salloc) {
+    PDCI_stkElt_t *stack_next;
+    size_t salloc_next = 2 * pdc->salloc;
+    /* PDC_DBG2(pdc->disc, "XXX_REMOVE Growing from %d to %d checkpoint stack slots", pdc->salloc, salloc_next); */
+    if (!(stack_next = vmnewof(pdc->vm, pdc->stack, PDCI_stkElt_t, salloc_next, 0))) {
+      PDC_FATAL(pdc->disc, "out of space [input cursor stack]");
+      return PDC_ERR;
+    }
+    pdc->stack  = stack_next;
+    pdc->salloc = salloc_next;
+  }
+  pdc->stack[pdc->top].elt     = pdc->stack[pdc->top - 1].elt;
+  pdc->stack[pdc->top].remain  = pdc->stack[pdc->top - 1].remain;
+  pdc->stack[pdc->top].spec    = speculative;
+  if (speculative) {
+    (pdc->speclev)++;
+  }
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_IO_restore(PDC_t *pdc)
+{
+  if (!pdc || !pdc->disc) { return PDC_ERR; }
+  PDC_TRACE(pdc->disc, "PDC_IO_restore called");
+  if (pdc->top <= 0) {
+    PDC_WARN(pdc->disc, "Internal error: PDC_IO_restore called when stack top <= 0");
+    return PDC_ERR;
+  }
+  if (pdc->stack[pdc->top].spec) {
+    (pdc->speclev)--;
+  }
+  /* this discards all changes since the latest checkpoint */ 
+  (pdc->top)--;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_IO_commit(PDC_t *pdc)
+{
+  if (!pdc || !pdc->disc) { return PDC_ERR; }
+  PDC_TRACE(pdc->disc, "PDC_IO_commit called");
+  if (pdc->top <= 0) {
+    PDC_WARN(pdc->disc, "Internal error: PDC_IO_commit called when stack top <= 0");
+    return PDC_ERR;
+  }
+  if (pdc->stack[pdc->top].spec) {
+    (pdc->speclev)--;
+  }
+  /* propagate changes to elt/remain up to next level */
+  pdc->stack[pdc->top - 1].elt    = pdc->stack[pdc->top].elt;
+  pdc->stack[pdc->top - 1].remain = pdc->stack[pdc->top].remain;
+  (pdc->top)--;
+  return PDC_OK;
+}
+
+unsigned int
+PDC_spec_level(PDC_t *pdc)
+{
+  if (!pdc || !pdc->disc) { return PDC_ERR; }
+  PDC_TRACE(pdc->disc, "PDC_spec_level called");
+  return pdc->speclev;
+}
+
+/* ================================================================================ */
 /* EXTERNAL LITERAL READ FUNCTIONS */
 
 PDC_error_t
@@ -1955,8 +2095,25 @@ PDC_string_cleanup(PDC_t *pdc, PDC_string *s)
   if (!s) {
     return PDC_ERR;
   }
+  /* if (s->sharing) { PDC_WARN1(pdc->disc, "XXX_REMOVE cleanup: string %p is no longer sharing", (void*)s); } */
+  s->sharing = 0;
   RMM_free_rbuf(s->rbuf);
   return PDC_OK;
+}
+
+PDC_error_t
+PDC_string_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_string_share");
+  PDCI_NULLPARAM_CHECK("PDC_string_share", src);
+  PDCI_NULLPARAM_CHECK("PDC_string_share", targ);
+  PDCI_STR_SHARE(targ, src, len);
+  return PDC_OK;
+
+ fatal_alloc_err:
+  /* share turned into copy, copy failed */
+  PDC_FATAL(pdc->disc, "PDC_string_copy: out of space");
+  return PDC_ERR;
 }
 
 PDC_error_t
@@ -1965,20 +2122,24 @@ PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
   PDCI_DISC_INIT_CHECKS("PDC_string_copy");
   PDCI_NULLPARAM_CHECK("PDC_string_copy", src);
   PDCI_NULLPARAM_CHECK("PDC_string_copy", targ);
-  if (!targ->rbuf) {
-    if (!(targ->rbuf = RMM_new_rbuf(pdc->rmm_nz))) {
-      goto fatal_alloc_err;
-    }
-  }
-  if (RBuf_reserve(targ->rbuf, (void**)&(targ->str), sizeof(char), len+1, 0)) {
-    goto fatal_alloc_err;
-  }
-  strncpy(targ->str, src, len);
-  targ->len = len;
+  PDCI_STR_CPY(targ, src, len);
   return PDC_OK;
 
  fatal_alloc_err:
   PDC_FATAL(pdc->disc, "PDC_string_copy: out of space");
+  return PDC_ERR;
+}
+
+PDC_error_t
+PDC_string_preserve(PDC_t *pdc, PDC_string *s)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_string_preserve");
+  PDCI_NULLPARAM_CHECK("PDC_string_preserve", s);
+  PDCI_STR_PRESERVE(s);
+  return PDC_OK;
+
+ fatal_alloc_err:
+  PDC_FATAL(pdc->disc, "PDC_string_preserve: out of space");
   return PDC_ERR;
 }
 
@@ -2112,7 +2273,7 @@ PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out)
     PDC_WARN1(pdc->disc,
 	      "PDC_regexp_compile: Invalid regular expression: %s\n"
 	      "    currently only support the forms \"EOR\", \"[<chars>]\", and \"[<chars>]|EOR\"",
-	      PDCI_fmtQStrL(regexp, strlen(regexp)));
+	      PDC_qfmt_Cstr(regexp, strlen(regexp)));
     return PDC_ERR;
   }
 
@@ -2147,15 +2308,55 @@ PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp)
 /* ================================================================================ */
 /* EXTERNAL MISC ROUTINES */
 
+/* helper for PDC_endian: */
+const char *
+PDC_Endian2String(PDC_endian e)
+{
+  return (e == PDC_bigEndian) ? "Big Endian" : "Little Endian";
+}
+
+char*
+PDC_fmt_char(char c) {
+  return fmtquote(&c, NiL, NiL, 1, 0);
+}
+
+char*
+PDC_qfmt_char(char c) {
+  return fmtquote(&c, "\'", "\'", 1, 1);
+}
+
+char*
+PDC_fmt_str(const PDC_string *s) {
+  return fmtquote(s->str, NiL, NiL, s->len, 0);
+}
+
+char*
+PDC_qfmt_str(const PDC_string *s) {
+  return fmtquote(s->str, "\"", "\"", s->len, 1);
+}
+
+char*
+PDC_fmt_Cstr(const char *s, size_t len) {
+  return fmtquote(s, NiL, NiL, len, 0);
+}
+
+char*
+PDC_qfmt_Cstr(const char *s, size_t len) {
+  return fmtquote(s, "\"", "\"", len, 1);
+}
+
 /*
  * Note: swapmem ops documented with binary read functions
  * Here we use in-place swap, which is safe with gsf's swapmem
  */
 
 PDC_error_t
-PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes)
+PDC_swap_bytes(char *bytes, size_t num_bytes)
 {
-  PDCI_DISC_INIT_CHECKS("PDC_swap_bytes");
+  if (!bytes) {
+    PDC_WARN(&PDC_default_disc, "PDC_swap_bytes: param bytes must not be NULL");
+    return PDC_ERR;
+  }
 
   switch (num_bytes) {
   case 2:
@@ -2168,7 +2369,7 @@ PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes)
     swapmem(7, bytes, bytes, num_bytes);
     return PDC_OK;
   }
-  PDC_WARN1(pdc->disc, "PDC_swap_bytes: invalid num_bytes (%d), use 2, 4, or 8", num_bytes);
+  PDC_WARN1(&PDC_default_disc, "PDC_swap_bytes: invalid num_bytes (%d), use 2, 4, or 8", num_bytes);
   return PDC_ERR;
 }
 
@@ -2206,7 +2407,7 @@ PDC_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
   int             matchlen = -1;
 
   PDCI_IODISC_INIT_CHECKS("PDC_char_lit_scan");
-  PDC_TRACE3(pdc->disc, "PDC_char_lit_scan args: c %s stop %s eat %d", PDCI_fmtQChar(c), PDCI_fmtQChar(s), eat_lit);
+  PDC_TRACE3(pdc->disc, "PDC_char_lit_scan args: c %s stop %s eat %d", PDC_qfmt_char(c), PDC_qfmt_char(s), eat_lit);
   if (offset_out) {
     (*offset_out) = 0;
   }
@@ -2275,7 +2476,7 @@ PDC_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopSt
 
   PDCI_IODISC_INIT_CHECKS("PDC_str_lit_scan");
   PDC_TRACE3(pdc->disc, "PDC_str_lit_scan args: findStr = %s stopStre = %s eat = %d",
-	     PDCI_fmtQStr(findStr), PDCI_fmtQStr(stopStr), eat_lit);
+	     PDC_qfmt_str(findStr), PDC_qfmt_str(stopStr), eat_lit);
   if (offset_out) {
     (*offset_out) = 0;
   }
@@ -2566,8 +2767,8 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 	} else {
 	  tmplen1 = loc->b.byte - 1;
 	  tmplen2 = elt1->len - tmplen1;
-	  tmpstr1 = PDCI_fmtStrL(elt1->begin,           tmplen1);
-	  tmpstr2 = PDCI_fmtStrL(elt1->begin + tmplen1, tmplen2);
+	  tmpstr1 = PDC_fmt_Cstr(elt1->begin,           tmplen1);
+	  tmpstr2 = PDC_fmt_Cstr(elt1->begin + tmplen1, tmplen2);
 	  sfprintf(pdc->tmp, "%s>>>%s", tmpstr1, tmpstr2);
 	}
       }
@@ -2582,8 +2783,8 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 	} else {
 	  tmplen1 = loc->e.byte;
 	  tmplen2 = elt2->len - tmplen1;
-	  tmpstr1 = PDCI_fmtStrL(elt2->begin,           tmplen1);
-	  tmpstr2 = PDCI_fmtStrL(elt2->begin + tmplen1, tmplen2);
+	  tmpstr1 = PDC_fmt_Cstr(elt2->begin,           tmplen1);
+	  tmpstr2 = PDC_fmt_Cstr(elt2->begin + tmplen1, tmplen2);
 	  sfprintf(pdc->tmp, "%s<<<%s", tmpstr1, tmpstr2);
 	}
       }
@@ -2595,16 +2796,16 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 	} else if (nullspan) {
 	  tmplen1 = loc->b.byte - 1;
 	  tmplen2 = elt1->len - tmplen1;
-	  tmpstr1 = PDCI_fmtStrL(elt1->begin,           tmplen1);
-	  tmpstr2 = PDCI_fmtStrL(elt1->begin + tmplen1, tmplen2);
+	  tmpstr1 = PDC_fmt_Cstr(elt1->begin,           tmplen1);
+	  tmpstr2 = PDC_fmt_Cstr(elt1->begin + tmplen1, tmplen2);
 	  sfprintf(pdc->tmp, "%s>>><<<%s", tmpstr1, tmpstr2);
 	} else {
 	  tmplen1 = loc->b.byte - 1;
 	  tmplen3 = elt1->len - loc->e.byte;
 	  tmplen2 = elt1->len - tmplen1 - tmplen3;
-	  tmpstr1 = PDCI_fmtStrL(elt1->begin,                     tmplen1);
-	  tmpstr2 = PDCI_fmtStrL(elt1->begin + tmplen1,           tmplen2);
-	  tmpstr3 = PDCI_fmtStrL(elt1->begin + tmplen1 + tmplen2, tmplen3);
+	  tmpstr1 = PDC_fmt_Cstr(elt1->begin,                     tmplen1);
+	  tmpstr2 = PDC_fmt_Cstr(elt1->begin + tmplen1,           tmplen2);
+	  tmpstr3 = PDC_fmt_Cstr(elt1->begin + tmplen1 + tmplen2, tmplen3);
 	  sfprintf(pdc->tmp, "%s>>>%s<<<%s", tmpstr1, tmpstr2, tmpstr3);
 	}
       }
@@ -2835,7 +3036,8 @@ PDC_IO_getPos_internal(PDC_t *pdc, PDC_pos_t *pos, int offset)
 /* PURELY INTERNAL IO FUNCTIONS */
 
 PDC_error_t
-PDCI_IO_needbytes(PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char **e_out,
+PDCI_IO_needbytes(PDC_t *pdc,
+		  char **b_out, char **p1_out, char **p2_out, char **e_out,
 		  int *eor_out, int *eof_out, size_t *bytes_out)
 {
   PDCI_stkElt_t   *tp       = &(pdc->stack[pdc->top]);
@@ -2978,79 +3180,11 @@ PDCI_IO_forward(PDC_t *pdc, size_t num_bytes)
 }
 
 PDC_error_t
-PDCI_IO_checkpoint(PDC_t *pdc, int speculative)
-{
-  PDC_TRACE(pdc->disc, "PDCI_IO_checkpoint called");
-  if (++(pdc->top) >= pdc->salloc) {
-    PDCI_stkElt_t *stack_next;
-    size_t salloc_next = 2 * pdc->salloc;
-    PDC_DBG2(pdc->disc, "XXX Growing from %d to %d checkpoint stack slots", pdc->salloc, salloc_next);
-    if (!(stack_next = vmnewof(pdc->vm, pdc->stack, PDCI_stkElt_t, salloc_next, 0))) {
-      PDC_FATAL(pdc->disc, "out of space [input cursor stack]");
-      return PDC_ERR;
-    }
-    pdc->stack  = stack_next;
-    pdc->salloc = salloc_next;
-  }
-  pdc->stack[pdc->top].elt     = pdc->stack[pdc->top - 1].elt;
-  pdc->stack[pdc->top].remain  = pdc->stack[pdc->top - 1].remain;
-  pdc->stack[pdc->top].spec    = speculative;
-  if (speculative) {
-    (pdc->speclev)++;
-  }
-  return PDC_OK;
-}
-
-PDC_error_t
-PDCI_IO_restore(PDC_t *pdc)
-{
-  PDC_TRACE(pdc->disc, "PDCI_IO_restore called");
-  if (pdc->top <= 0) {
-    PDC_WARN(pdc->disc, "Internal error: PDCI_IO_restore called when stack top <= 0");
-    return PDC_ERR;
-  }
-  if (pdc->stack[pdc->top].spec) {
-    (pdc->speclev)--;
-  }
-  /* this discards all changes since the latest checkpoint */ 
-  (pdc->top)--;
-  return PDC_OK;
-}
-
-PDC_error_t
-PDCI_IO_commit(PDC_t *pdc)
-{
-  PDC_TRACE(pdc->disc, "PDCI_IO_commit called");
-  if (pdc->top <= 0) {
-    PDC_WARN(pdc->disc, "Internal error: PDCI_IO_commit called when stack top <= 0");
-    return PDC_ERR;
-  }
-  if (pdc->stack[pdc->top].spec) {
-    (pdc->speclev)--;
-  }
-  /* propagate changes to elt/remain up to next level */
-  pdc->stack[pdc->top - 1].elt    = pdc->stack[pdc->top].elt;
-  pdc->stack[pdc->top - 1].remain = pdc->stack[pdc->top].remain;
-  (pdc->top)--;
-  return PDC_OK;
-}
-
-unsigned int
-PDCI_spec_level(PDC_t *pdc)
-{
-  PDC_TRACE(pdc->disc, "PDCI_spec_level called");
-  return pdc->speclev;
-}
-
-PDC_error_t
 PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out) {
   PDC_IO_elt_t *elt;
 
   PDC_TRACE(pdc->disc, "PDCI_IO_getElt called");
-  if (!elt_out) {
-    PDC_WARN(pdc->disc, "PDCI_IO_getElt called with null elt_out");
-    return PDC_ERR;
-  }
+  PDCI_NULLPARAM_CHECK("PDCI_IO_getElt", elt_out);
   for (elt = PDC_FIRST_ELT(pdc->head); elt != pdc->head; elt = elt->next) {
     if (elt->num == num) {
       (*elt_out) = elt;
@@ -3071,7 +3205,7 @@ PDC_char_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
   int             eor, eof;
   size_t          bytes;
 
-  PDC_TRACE1(pdc->disc, "PDC_char_lit_read_internal called, arg: %s", PDCI_fmtQChar(c));
+  PDC_TRACE1(pdc->disc, "PDC_char_lit_read_internal called, arg: %s", PDC_qfmt_char(c));
   if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
@@ -3113,7 +3247,7 @@ PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
   int             eor, eof;
   size_t          bytes;
 
-  PDC_TRACE1(pdc->disc, "PDC_str_lit_read_internal called, arg: %s", PDCI_fmtQStr(s));
+  PDC_TRACE1(pdc->disc, "PDC_str_lit_read_internal called, arg: %s", PDC_qfmt_str(s));
   if (s->len <= 0) {
     PDC_WARN(pdc->disc, "UNEXPECTED PARAM VALUE: PDC_str_lit_read called with s->len <= 0");
     goto bad_param_err;
@@ -3178,7 +3312,7 @@ PDC_countX_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eor_required,
   int             matchlen = -1;
   char            *tmp;
 
-  PDC_TRACE2(pdc->disc, "PDC_countX_internal called, args: x = %s eor_required = %d", PDCI_fmtQChar(x), eor_required);
+  PDC_TRACE2(pdc->disc, "PDC_countX_internal called, args: x = %s eor_required = %d", PDC_qfmt_char(x), eor_required);
   (*res_out) = 0;
   if (pdc->disc->stop_regexp) {
     matchlen = pdc->disc->stop_regexp->max;
@@ -3255,7 +3389,7 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
   int             matchlen = -1;
   char            *tmp;
 
-  PDC_TRACE2(pdc->disc, "PDC_countXtoY_internal called, args: x = %s y = %s", PDCI_fmtQChar(x), PDCI_fmtQChar(y));
+  PDC_TRACE2(pdc->disc, "PDC_countXtoY_internal called, args: x = %s y = %s", PDC_qfmt_char(x), PDC_qfmt_char(y));
   (*res_out) = 0;
   if (pdc->disc->stop_regexp) {
     matchlen = pdc->disc->stop_regexp->max;
@@ -3363,7 +3497,7 @@ PDC_astringFW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
   }
   /* end-begin >= width */
   end = begin + width;
-  PDCI_STR_COPY(s_out, begin, end);
+  PDCI_STR_SET(s_out, begin, end);
   if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
@@ -3429,7 +3563,7 @@ PDC_astring_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
     /* p1 < end */
     if (stopChar == (*p1)) {
       /* success */
-      PDCI_STR_COPY(s_out, begin, p1);
+      PDCI_STR_SET(s_out, begin, p1);
       if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	goto fatal_forward_err;
       }
@@ -3504,7 +3638,7 @@ PDC_astringCSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRege
   while (1) {
     if (p1 == end) {
       if (eor && stopRegexp->or_eor) { /* EOR is valid stop */
-	PDCI_STR_COPY(s_out, begin, p1);
+	PDCI_STR_SET(s_out, begin, p1);
 	if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	  goto fatal_forward_err;
 	}
@@ -3530,7 +3664,7 @@ PDC_astringCSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRege
     }
     /* p1 < end */
     if (PDCI_regexpMatch(pdc, stopRegexp, p1, end)) {
-      PDCI_STR_COPY(s_out, begin, p1);
+      PDCI_STR_SET(s_out, begin, p1);
       if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	goto fatal_forward_err;
       }
@@ -3631,37 +3765,6 @@ PDCI_strtoull(const char *str, char **ptr, int base)
 
 /* ================================================================================ */
 /* INTERNAL MISC ROUTINES */
-
-char*
-PDCI_fmtChar(char c) {
-  return fmtquote(&c, NiL, NiL, 1, 0);
-}
-
-char*
-PDCI_fmtQChar(char c) {
-  return fmtquote(&c, "\'", "\'", 1, 1);
-}
-
-char*
-PDCI_fmtStr(const PDC_string *s) {
-  return fmtquote(s->str, NiL, NiL, s->len, 0);
-}
-
-char*
-PDCI_fmtQStr(const PDC_string *s) {
-  return fmtquote(s->str, "\"", "\"", s->len, 1);
-}
-
-char*
-PDCI_fmtStrL(const char *s, size_t len) {
-  return fmtquote(s, NiL, NiL, len, 0);
-}
-
-char*
-PDCI_fmtQStrL(const char *s, size_t len) {
-  return fmtquote(s, "\"", "\"", len, 1);
-}
-
 
 size_t
 PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, char *begin, char *end)

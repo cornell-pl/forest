@@ -1371,7 +1371,7 @@ structure CnvExt : CNVEXT = struct
 				  else if CTisString expTy 
 				       then (PL.strlit,
 					     [P.varDeclS(PL.stringPCT, "strlit", 
-							 PT.InitList[P.zero, e]),
+							 PT.InitList[e, P.zero]),
 					      P.assignS(P.dotX(PT.Id "strlit", PT.Id "len"), getStrLen e)],
 					     P.addrX(PT.Id "strlit"), CExptoString expAst)
 				  else (PE.error ("Currently only characters and strings "^

@@ -12,7 +12,7 @@ PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint3
 	return PDC_OK;
       }
     /* no vbar -- panic */
-    if (PDCI_spec_level (pdc)) 
+    if (PDC_spec_level (pdc)) 
       {
 	return PDC_ERR;
       }
@@ -38,7 +38,7 @@ PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint3
     {
       if (PDC_ERR==PDC_auint32_read_internal (pdc,&(modem->val),&(moded->val),&(modrep->val))) 
         {
-          if (PDCI_spec_level (pdc)) 
+          if (PDC_spec_level (pdc)) 
             {
               return PDC_ERR;
             }
@@ -74,7 +74,7 @@ PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint3
           PDC_base_em tem=PDC_Check;
           if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
             {
-              if (PDCI_spec_level (pdc)) 
+              if (PDC_spec_level (pdc)) 
                 {
                   return PDC_ERR;
                 }
@@ -228,7 +228,7 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
 	return PDC_OK;
       }
     /* no vbar -- panic */
-    if (PDCI_spec_level (pdc)) 
+    if (PDC_spec_level (pdc)) 
       {
 	return PDC_ERR;
       }
@@ -254,7 +254,7 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
     {
       if (PDC_ERR==PDC_auint64_read_internal (pdc,&(modem->val),&(moded->val),&(modrep->val))) 
         {
-          if (PDCI_spec_level (pdc)) 
+          if (PDC_spec_level (pdc)) 
             {
               return PDC_ERR;
             }
@@ -290,7 +290,7 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
           PDC_base_em tem=PDC_Check;
           if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
             {
-              if (PDCI_spec_level (pdc)) 
+              if (PDC_spec_level (pdc)) 
                 {
                   return PDC_ERR;
                 }
@@ -456,7 +456,7 @@ PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed
           PDC_base_em tem=PDC_Check;
           if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
             {
-              if (PDCI_spec_level (pdc)) 
+              if (PDC_spec_level (pdc)) 
                 {
                   return PDC_ERR;
                 }
@@ -486,7 +486,7 @@ PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed
     {
       if (PDC_ERR==PDC_dummy_read_internal (pdc,&(modem->d),0,&(moded->d),&(modrep->d))) 
         {
-          if (PDCI_spec_level (pdc)) 
+          if (PDC_spec_level (pdc)) 
             {
               return PDC_ERR;
             }
@@ -652,42 +652,42 @@ PDC_error_t opt_auint32_vbar_read_internal (PDC_t *pdc,opt_auint32_vbar_em *mode
   moded->nerr = 0;
   moded->panic = 0;
   /* ************ Reading field: yes32 ************ */
-  if (PDC_ERR==PDCI_IO_checkpoint (pdc,1)) 
+  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
     {
       PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
     }
   modrep->tag = yes32;
   if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->yes32),&(moded->yes32),&((modrep->val).yes32))) 
     {
-      if (PDC_ERR==PDCI_IO_restore (pdc)) 
+      if (PDC_ERR==PDC_IO_restore (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDCI_IO_commit (pdc)) 
+      if (PDC_ERR==PDC_IO_commit (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
         }
       return PDC_OK;
     }
   /* ************ Reading field: no32 ************* */
-  if (PDC_ERR==PDCI_IO_checkpoint (pdc,1)) 
+  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
     {
       PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
     }
   modrep->tag = no32;
   if (PDC_ERR==just_vbar_read_internal (pdc,&(modem->no32),&(moded->no32),&((modrep->val).no32))) 
     {
-      if (PDC_ERR==PDCI_IO_restore (pdc)) 
+      if (PDC_ERR==PDC_IO_restore (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDCI_IO_commit (pdc)) 
+      if (PDC_ERR==PDC_IO_commit (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
         }
@@ -903,42 +903,42 @@ PDC_error_t opt_auint64_vbar_read_internal (PDC_t *pdc,opt_auint64_vbar_em *mode
   moded->nerr = 0;
   moded->panic = 0;
   /* ************ Reading field: yes64 ************ */
-  if (PDC_ERR==PDCI_IO_checkpoint (pdc,1)) 
+  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
     {
       PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
     }
   modrep->tag = yes64;
   if (PDC_ERR==auint64_vbar_read_internal (pdc,&(modem->yes64),&(moded->yes64),&((modrep->val).yes64))) 
     {
-      if (PDC_ERR==PDCI_IO_restore (pdc)) 
+      if (PDC_ERR==PDC_IO_restore (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDCI_IO_commit (pdc)) 
+      if (PDC_ERR==PDC_IO_commit (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
         }
       return PDC_OK;
     }
   /* ************ Reading field: no64 ************* */
-  if (PDC_ERR==PDCI_IO_checkpoint (pdc,1)) 
+  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
     {
       PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
     }
   modrep->tag = no64;
   if (PDC_ERR==just_vbar_read_internal (pdc,&(modem->no64),&(moded->no64),&((modrep->val).no64))) 
     {
-      if (PDC_ERR==PDCI_IO_restore (pdc)) 
+      if (PDC_ERR==PDC_IO_restore (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDCI_IO_commit (pdc)) 
+      if (PDC_ERR==PDC_IO_commit (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
         }
@@ -1142,7 +1142,7 @@ PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar
     /* ***** Reading delimiter field: "no_TN|" ****** */
     {
       PDC_base_ed ted;
-      PDC_string strlit={0,"no_TN|",0};
+      PDC_string strlit={"no_TN|",0,0,0};
       strlit.len = 6;
   /* XXX_OPT : NOT NEEDED */
 #if 0
@@ -1160,7 +1160,7 @@ PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar
           PDC_base_em tem=PDC_Check;
           if (PDC_ERR==PDC_str_lit_read_internal (pdc,&tem,&ted,&strlit)) 
             {
-              if (PDCI_spec_level (pdc)) 
+              if (PDC_spec_level (pdc)) 
                 {
                   return PDC_ERR;
                 }
@@ -1190,7 +1190,7 @@ PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar
     {
       if (PDC_ERR==PDC_dummy_read_internal (pdc,&(modem->d),0,&(moded->d),&(modrep->d))) 
         {
-          if (PDCI_spec_level (pdc)) 
+          if (PDC_spec_level (pdc)) 
             {
               return PDC_ERR;
             }
@@ -1356,42 +1356,42 @@ PDC_error_t dib_pn_vbar_read_internal (PDC_t *pdc,dib_pn_vbar_em *modem,dib_pn_v
   moded->nerr = 0;
   moded->panic = 0;
   /* ************ Reading field: yesPN ************ */
-  if (PDC_ERR==PDCI_IO_checkpoint (pdc,1)) 
+  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
     {
       PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
     }
   modrep->tag = yesPN;
   if (PDC_ERR==auint64_vbar_read_internal (pdc,&(modem->yesPN),&(moded->yesPN),&((modrep->val).yesPN))) 
     {
-      if (PDC_ERR==PDCI_IO_restore (pdc)) 
+      if (PDC_ERR==PDC_IO_restore (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDCI_IO_commit (pdc)) 
+      if (PDC_ERR==PDC_IO_commit (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
         }
       return PDC_OK;
     }
   /* ************ Reading field: noPN ************* */
-  if (PDC_ERR==PDCI_IO_checkpoint (pdc,1)) 
+  if (PDC_ERR==PDC_IO_checkpoint (pdc,1)) 
     {
       PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_CHKPOINT_ERR,0);
     }
   modrep->tag = noPN;
   if (PDC_ERR==no_pn_vbar_read_internal (pdc,&(modem->noPN),&(moded->noPN),&((modrep->val).noPN))) 
     {
-      if (PDC_ERR==PDCI_IO_restore (pdc)) 
+      if (PDC_ERR==PDC_IO_restore (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_RESTORE_ERR,0);
         }
     }
   else
     {
-      if (PDC_ERR==PDCI_IO_commit (pdc)) 
+      if (PDC_ERR==PDC_IO_commit (pdc)) 
         {
           PDCI_report_err (pdc,PDC_LEV_FATAL,0,PDC_COMMIT_ERR,0);
         }
@@ -1606,7 +1606,7 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
     {
       if (PDC_ERR==PDC_astring_read_internal (pdc,&(modem->state),124,&(moded->state),&(modrep->state))) 
         {
-          if (PDCI_spec_level (pdc)) 
+          if (PDC_spec_level (pdc)) 
             {
               return PDC_ERR;
             }
@@ -1642,7 +1642,7 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
           PDC_base_em tem=PDC_Check;
           if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
             {
-              if (PDCI_spec_level (pdc)) 
+              if (PDC_spec_level (pdc)) 
                 {
                   return PDC_ERR;
                 }
@@ -1670,7 +1670,7 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
     {
       if (PDC_ERR==PDC_auint32_read_internal (pdc,&(modem->tstamp),&(moded->tstamp),&(modrep->tstamp))) 
         {
-          if (PDCI_spec_level (pdc)) 
+          if (PDC_spec_level (pdc)) 
             {
               return PDC_ERR;
             }
@@ -1706,7 +1706,7 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
           PDC_base_em tem=PDC_Check;
           if (PDC_ERR==PDC_char_lit_read_internal (pdc,&tem,&ted,124)) 
             {
-              if (PDCI_spec_level (pdc)) 
+              if (PDC_spec_level (pdc)) 
                 {
                   return PDC_ERR;
                 }
@@ -1906,7 +1906,7 @@ PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,ou
     /* ******* Reading delimiter field: "0|" ******** */
     {
       PDC_base_ed ted;
-      PDC_string strlit={0,"0|",0};
+      PDC_string strlit={"0|",0,0,0};
       strlit.len = 2;
   /* XXX_OPT : NOT NEEDED */
 #if 0
@@ -1924,7 +1924,7 @@ PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,ou
           PDC_base_em tem=PDC_Check;
           if (PDC_ERR==PDC_str_lit_read_internal (pdc,&tem,&ted,&strlit)) 
             {
-              if (PDCI_spec_level (pdc)) 
+              if (PDC_spec_level (pdc)) 
                 {
                   return PDC_ERR;
                 }
@@ -1952,7 +1952,7 @@ PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,ou
     {
       if (PDC_ERR==PDC_auint32_read_internal (pdc,&(modem->tstamp),&(moded->tstamp),&(modrep->tstamp))) 
         {
-          if (PDCI_spec_level (pdc)) 
+          if (PDC_spec_level (pdc)) 
             {
               return PDC_ERR;
             }
@@ -1980,7 +1980,7 @@ PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,ou
       {
         if (n>0) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2005,7 +2005,7 @@ PDC_error_t out_sum_header_read_internal (PDC_t *pdc,out_sum_header_em *modem,ou
       }
     else
       {
-        if (PDCI_spec_level (pdc)) 
+        if (PDC_spec_level (pdc)) 
           {
             return PDC_ERR;
           }
@@ -2151,7 +2151,7 @@ PDC_error_t eventSeq_read_internal (PDC_t *pdc,eventSeq_em *modem,int size,event
     modrep->length = 0;
     if (((modem->array)<=PDC_Check)&&(size<0)) 
       {
-        if (PDCI_spec_level (pdc)) 
+        if (PDC_spec_level (pdc)) 
           return PDC_ERR;
         if (!(moded->nerr)) 
           {
@@ -2208,7 +2208,7 @@ PDC_error_t eventSeq_read_internal (PDC_t *pdc,eventSeq_em *modem,int size,event
                   }
                 if (PDC_ERR==event_read_internal (pdc,&(modem->element),&(moded->eventSeq)[(modrep->length)-1],&(modrep->eventSeq)[(modrep->length)-1])) 
                   {
-                    if (PDCI_spec_level (pdc)) 
+                    if (PDC_spec_level (pdc)) 
                       return PDC_ERR;
                     if ((modem->array)<=PDC_Check) 
                       {
@@ -2517,7 +2517,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->order_num),&(moded->order_num),&(modrep->order_num))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2548,7 +2548,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->order_item),&(moded->order_item),&(modrep->order_item))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2579,7 +2579,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==dib_pn_vbar_read_internal (pdc,&(modem->servicen),&(moded->servicen),&(modrep->servicen))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2610,7 +2610,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==dib_pn_vbar_read_internal (pdc,&(modem->billing_tn),&(moded->billing_tn),&(modrep->billing_tn))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2641,7 +2641,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->zip_code),&(moded->zip_code),&(modrep->zip_code))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2672,7 +2672,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==dib_pn_vbar_read_internal (pdc,&(modem->nlp_service_tn),&(moded->nlp_service_tn),&(modrep->nlp_service_tn))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2703,7 +2703,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==dib_pn_vbar_read_internal (pdc,&(modem->nlp_billing_tn),&(moded->nlp_billing_tn),&(modrep->nlp_billing_tn))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2732,9 +2732,9 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       }
     else
       {
-        if (PDC_ERR==PDC_countX (pdc,&(modem->bars),124,1,&(moded->bars),&bars)) 
+        if (PDC_ERR==PDC_countX_internal(pdc,&(modem->bars),124,1,&(moded->bars),&bars)) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2765,7 +2765,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==eventSeq_read_internal (pdc,&(modem->events),getLen (bars),&(moded->events),&(modrep->events))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2796,7 +2796,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==opt_auint32_vbar_read_internal (pdc,&(modem->siid),&(moded->siid),&(modrep->siid))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2827,7 +2827,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==opt_auint32_vbar_read_internal (pdc,&(modem->create_id),&(moded->create_id),&(modrep->create_id))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2858,7 +2858,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==opt_auint64_vbar_read_internal (pdc,&(modem->rampII),&(moded->rampII),&(modrep->rampII))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2889,7 +2889,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==auint32_vbar_read_internal (pdc,&(modem->order_type),&(moded->order_type),&(modrep->order_type))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2920,7 +2920,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
       {
         if (PDC_ERR==PDC_auint32_read_internal (pdc,&(modem->parent_order),&(moded->parent_order),&(modrep->parent_order))) 
           {
-            if (PDCI_spec_level (pdc)) 
+            if (PDC_spec_level (pdc)) 
               {
                 return PDC_ERR;
               }
@@ -2948,7 +2948,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
         {
           if (n>0) 
             {
-              if (PDCI_spec_level (pdc)) 
+              if (PDC_spec_level (pdc)) 
                 {
                   return PDC_ERR;
                 }
@@ -2973,7 +2973,7 @@ PDC_error_t out_sum_data_line_read_internal (PDC_t *pdc,out_sum_data_line_em *mo
         }
       else
         {
-          if (PDCI_spec_level (pdc)) 
+          if (PDC_spec_level (pdc)) 
             {
               return PDC_ERR;
             }

@@ -10,7 +10,7 @@
 #define __LIBPADSC_INTERNAL__
 
 /* ================================================================================ */
-/* THESE ARE REQUIRED FOR CKIT ON CERTAIN ARCHITECTURES ? */
+/* XXX THESE ARE REQUIRED FOR CKIT ON CERTAIN ARCHITECTURES ??? */
 
 #ifdef __PREPROCESSOR_FIXES
 typedef void * __builtin_va_list;
@@ -18,6 +18,11 @@ typedef void * __builtin_va_list;
 /* extern int ftruncate (int __fd, long int __length) ; */
 
 #endif
+
+/* ================================================================================ */
+
+#include "libpadsc.h"
+#include "pdc_out_macros.h"
 
 /* ================================================================================ */
 /* NOT SURE WHERE THESE MACROS BELONG */
@@ -32,29 +37,6 @@ typedef void * __builtin_va_list;
 
 #define vmcpyoldof(v,p,t,n,x) \
   (t*)vmresize((v), (p), sizeof(t)*(n)+(x), (VM_RSMOVE|VM_RSCOPY) )
-
-/* ================================================================================ */
-
-typedef struct PDCI_stkElt_s PDCI_stkElt_t;
-
-#define PDC_PRIVATE_STATE \
-  Vmalloc_t         *vm;       /* vm handle */ \
-  Sfio_t            *tmp;      /* tmp sfprintf area */ \
-  RMM_t             *rmm_z;    /* rbuf memory mgr -- zeroes allocated memory */  \
-  RMM_t             *rmm_nz;   /* rbuf memory mgr -- does not zero allocated memory */  \
-  /* The following are all related to IO state / checkpointing */ \
-  char              *path;     /* original path -- eventually want to support a set of input files */ \
-  Sfio_t            *io;       /* sfio stream */ \
-  char              *sfbuf;    /* buffer that is installed in any sfio that is opened */ \
-  PDC_IO_elt_t      *head;     /* head of list of input elts */ \
-  PDCI_stkElt_t     *stack;    /* stack - resized dynamically */ \
-  size_t            salloc;    /* total elts allocated for stack */ \
-  size_t            top;       /* index of top stack elt */ \
-  unsigned int      speclev;   /* speculative nesting level */ \
-  char              dummy[1];  /* used for error case */ \
-
-#include "libpadsc.h"
-#include "pdc_out_macros.h"
 
 /* ================================================================================ */
 /* INTERNAL TYPE DEFINITIONS */
@@ -138,30 +120,30 @@ PDC_error_t PDC_auint32_read_internal(PDC_t *pdc, PDC_base_em *em,
 PDC_error_t PDC_auint64_read_internal(PDC_t *pdc, PDC_base_em *em,
 				      PDC_base_ed *ed, PDC_uint64 *res_out);
 
-PDC_error_t PDC_aint8_fw_read_internal (PDC_t *pdc, PDC_base_em *em, size_t width,
-					PDC_base_ed *ed, PDC_int8 *res_out);
+PDC_error_t PDC_aint8FW_read_internal (PDC_t *pdc, PDC_base_em *em, size_t width,
+				       PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_aint16_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					PDC_base_ed *ed, PDC_int16 *res_out);
+PDC_error_t PDC_aint16FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+				       PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_aint32_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					PDC_base_ed *ed, PDC_int32 *res_out);
+PDC_error_t PDC_aint32FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+				       PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_aint64_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					PDC_base_ed *ed, PDC_int64 *res_out);
+PDC_error_t PDC_aint64FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+				       PDC_base_ed *ed, PDC_int64 *res_out);
 
 
-PDC_error_t PDC_auint8_fw_read_internal (PDC_t *pdc, PDC_base_em *em, size_t width,
-					 PDC_base_ed *ed, PDC_uint8 *res_out);
+PDC_error_t PDC_auint8FW_read_internal (PDC_t *pdc, PDC_base_em *em, size_t width,
+					PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_auint16_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					 PDC_base_ed *ed, PDC_uint16 *res_out);
+PDC_error_t PDC_auint16FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+					PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_auint32_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					 PDC_base_ed *ed, PDC_uint32 *res_out);
+PDC_error_t PDC_auint32FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+					PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_auint64_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
-					 PDC_base_ed *ed, PDC_uint64 *res_out);
+PDC_error_t PDC_auint64FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+					PDC_base_ed *ed, PDC_uint64 *res_out);
 
 
 PDC_error_t PDC_bint8_read_internal (PDC_t *pdc, PDC_base_em *em,
@@ -250,21 +232,6 @@ PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 /* ================================================================================ */
 /* PURELY INTERNAL IO FUNCTIONS */
 
-/*
- * The checkpoint API: if any of these return PDC_ERR, there is an
- * internal error -- the calling code should probably exit the program
- * as continuing could lead to unspecified behavior / crash.
- *
- * If a non-zero speculative flag is passed to checkpoint, then the
- * speculative nesting level  is incremented by one.  Once the checkpoint
- * is removed by either commit or restore, the nesting level is
- * decremented by one.  PDC_spec_level gives the current nesting level.
- */
-PDC_error_t  PDCI_IO_checkpoint (PDC_t *pdc, int speculative);
-PDC_error_t  PDCI_IO_commit     (PDC_t *pdc);
-PDC_error_t  PDCI_IO_restore    (PDC_t *pdc);
-unsigned int PDCI_spec_level    (PDC_t *pdc);
-
 /* 
  * Note: all of the following act on the IO cursor of the top checkpoint
  *
@@ -281,7 +248,8 @@ unsigned int PDCI_spec_level    (PDC_t *pdc);
  *   beyond an EOR/EOF marker or beyond the last in-memory data byte.
  */
 
-PDC_error_t  PDCI_IO_needbytes (PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char **e_out,
+PDC_error_t  PDCI_IO_needbytes (PDC_t *pdc,
+				char **b_out, char **p1_out, char **p2_out, char **e_out,
 			        int *eor_out, int *eof_out, size_t *bytes_out);
 PDC_error_t  PDCI_IO_morebytes (PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char **e_out,
 				int *eor_out, int *eof_out, size_t *bytes_out);
@@ -312,21 +280,6 @@ unsigned long long PDCI_stringtoull(const char *, char **, int);
 
 /* ================================================================================ */
 /* INTERNAL MISC ROUTINES */
-/*
- *    PDCI_fmtChar: produce a ptr to a string that is a pretty-print (escaped) formated for char c
- *        N.B. Resulting string should be printed immediately then not used again, e.g.,
- *        PDC_report_err( .. .. , "Missing separator: %s", PDC_fmtChar(010)); 
- * 
- *    PDCI_fmtStr   : same thing for a PDC_string
- *    PDCI_fmtStrL  : same thing for a char * string / length
- *    PDCI_fmtQChar/PDC_fmtQStr/PDC_fmtQStrL : adds quote marks
- */
-char *PDCI_fmtChar(char c);
-char *PDCI_fmtStr(const PDC_string *s);
-char *PDCI_fmtStrL(const char *s, size_t len);
-char *PDCI_fmtQChar(char c);
-char *PDCI_fmtQStr(const PDC_string *s);
-char *PDCI_fmtQStrL(const char *s, size_t len);
 
 /*  PDCI_regexpMatch returns the number of characters in str that match regexp
  *  (or 0 if str does not match the regular expression).
