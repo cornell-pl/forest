@@ -1,6 +1,6 @@
 pstruct Hdr_v1
 {
-  buint16    version : version == 1; //- PRAGMA CHECK_ENDIAN
+  endian buint16    version : version == 1; 
   buint16    count;
   buint32    uptime;
   buint32    sec;
@@ -9,7 +9,7 @@ pstruct Hdr_v1
 
 pstruct Hdr_v5
 {
-  buint16    version : version == 5; //- PRAGMA CHECK_ENDIAN
+  endian buint16    version : version == 5; 
   buint16    count;
   buint32    uptime;
   buint32    sec;
@@ -22,7 +22,7 @@ pstruct Hdr_v5
 
 pstruct Hdr_v7
 {
-  buint16    version : version == 7; //- PRAGMA CHECK_ENDIAN
+  endian buint16    version : version == 7;
   buint16    count;
   buint32    uptime;
   buint32    sec;
