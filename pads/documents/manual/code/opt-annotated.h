@@ -27,7 +27,7 @@ void Ty_m_init (P_t *pads,Ty_m *mask,Pbase_m baseMask);
 
 Perror_t Ty_read (P_t *pads,Ty_m *m,Ty_pd *pd,Ty *rep);
 
-int is_Ty (Ty *rep);
+int Ty_verify (Ty *rep);
 typedef Puint32_acc Ty_acc;
 
 Perror_t Ty_acc_init (P_t *pads,Ty_acc *acc);
@@ -126,7 +126,7 @@ ssize_t OptTy_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,
 
 ssize_t OptTy_write2io (P_t *pads,Sfio_t *io,OptTy_pd *pd,OptTy *rep);
 
-int is_OptTy (OptTy *rep);
+int OptTy_verify (OptTy *rep);
 /*@END opt.TyOptOps.tex */
 ssize_t OptTy_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,OptTy_pd *pd,OptTy *rep,char const *tag,int indent);
 
@@ -215,7 +215,7 @@ void OptTyTrans_m_init (P_t *pads,OptTyTrans_m *mask,Pbase_m baseMask);
 
 Perror_t OptTyTrans_read (P_t *pads,OptTyTrans_m *m,OptTyTrans_pd *pd,OptTyTrans *rep);
 
-int is_OptTyTrans (OptTyTrans *rep);
+int OptTyTrans_verify (OptTyTrans *rep);
 typedef struct OptTyTrans_acc_s OptTyTrans_acc;
 struct OptTyTrans_acc_s {
   Pint32_acc tag;

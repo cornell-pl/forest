@@ -36,7 +36,7 @@ void bid_t_m_init (P_t *pads,bid_t_m *mask,Pbase_m baseMask);
 
 Perror_t bid_t_read (P_t *pads,bid_t_m *m,bid_t_pd *pd,bid_t *rep);
 
-int is_bid_t (bid_t *rep);
+int bid_t_verify (bid_t *rep);
 /*@END typedef.TypedefOps.tex */
 
 typedef Puint32_acc bid_t_acc;
@@ -84,7 +84,7 @@ void pn_t_m_init (P_t *pads,pn_t_m *mask,Pbase_m baseMask);
 
 Perror_t pn_t_read (P_t *pads,pn_t_m *m,Puint64 lo,Puint64 hi,pn_t_pd *pd,pn_t *rep);
 
-int is_pn_t (pn_t *rep,Puint64 lo,Puint64 hi);
+int pn_t_verify (pn_t *rep,Puint64 lo,Puint64 hi);
 typedef Puint64_acc pn_t_acc;
 
 Perror_t pn_t_acc_init (P_t *pads,pn_t_acc *acc);

@@ -92,7 +92,7 @@ ssize_t branches_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,
 ssize_t branches_write2io (P_t *pads,Sfio_t *io,Puint32 which,
 			   branches_pd *pd,branches *rep);
 
-int is_branches (branches *rep,Puint32 which);
+int branches_verify (branches *rep,Puint32 which);
 /*@END union-impl-branches-ops.tex*/
 
 typedef struct branches_acc_s branches_acc;
@@ -159,7 +159,7 @@ void choice_m_init (P_t *pads,choice_m *mask,Pbase_m baseMask);
 
 Perror_t choice_read (P_t *pads,choice_m *m,choice_pd *pd,choice *rep);
 
-int is_choice (choice *rep);
+int choice_verify (choice *rep);
 typedef struct choice_acc_s choice_acc;
 struct choice_acc_s {
   Puint32_acc nerr;
@@ -240,7 +240,7 @@ void intOpt_m_init (P_t *pads,intOpt_m *mask,Pbase_m baseMask);
 
 Perror_t intOpt_read (P_t *pads,intOpt_m *m,Puint32 defVal,intOpt_pd *pd,intOpt *rep);
 
-int is_intOpt (intOpt *rep,Puint32 defVal);
+int intOpt_verify (intOpt *rep,Puint32 defVal);
 typedef struct intOpt_acc_s intOpt_acc;
 struct intOpt_acc_s {
   Pint32_acc tag;
@@ -307,7 +307,7 @@ void data_m_init (P_t *pads,data_m *mask,Pbase_m baseMask);
 
 Perror_t data_read (P_t *pads,data_m *m,data_pd *pd,data *rep);
 
-int is_data (data *rep);
+int data_verify (data *rep);
 typedef struct data_acc_s data_acc;
 struct data_acc_s {
   Puint32_acc nerr;

@@ -57,7 +57,7 @@ void nIP_m_init (P_t *pads,nIP_m *mask,Pbase_m baseMask);
 
 Perror_t nIP_read (P_t *pads,nIP_m *m,nIP_pd *pd,nIP *rep);
 
-int is_nIP (nIP *rep);
+int nIP_verify (nIP *rep);
 /*@END ai.arrayOps.tex */
 
 typedef struct nIP_acc_s nIP_acc;
@@ -127,7 +127,7 @@ void sIP_m_init (P_t *pads,sIP_m *mask,Pbase_m baseMask);
 
 Perror_t sIP_read (P_t *pads,sIP_m *m,sIP_pd *pd,sIP *rep);
 
-int is_sIP (sIP *rep);
+int sIP_verify (sIP *rep);
 typedef struct sIP_acc_s sIP_acc;
 struct sIP_acc_s {
   Puint32_acc length;		/* Accumulator for array length */
@@ -209,7 +209,7 @@ void host_t_m_init (P_t *pads,host_t_m *mask,Pbase_m baseMask);
 
 Perror_t host_t_read (P_t *pads,host_t_m *m,host_t_pd *pd,host_t *rep);
 
-int is_host_t (host_t *rep);
+int host_t_verify (host_t *rep);
 typedef struct host_t_acc_s host_t_acc;
 struct host_t_acc_s {
   Pint32_acc tag;
@@ -260,7 +260,7 @@ void unknown_t_m_init (P_t *pads,unknown_t_m *mask,Pbase_m baseMask);
 
 Perror_t unknown_t_read (P_t *pads,unknown_t_m *m,unknown_t_pd *pd,unknown_t *rep);
 
-int is_unknown_t (unknown_t *rep);
+int unknown_t_verify (unknown_t *rep);
 typedef Pchar_acc unknown_t_acc;
 
 Perror_t unknown_t_acc_init (P_t *pads,unknown_t_acc *acc);
@@ -337,7 +337,7 @@ void auth_id_t_m_init (P_t *pads,auth_id_t_m *mask,Pbase_m baseMask);
 
 Perror_t auth_id_t_read (P_t *pads,auth_id_t_m *m,auth_id_t_pd *pd,auth_id_t *rep);
 
-int is_auth_id_t (auth_id_t *rep);
+int auth_id_t_verify (auth_id_t *rep);
 typedef struct auth_id_t_acc_s auth_id_t_acc;
 struct auth_id_t_acc_s {
   Pint32_acc tag;
@@ -419,7 +419,7 @@ void contentOpt_t_m_init (P_t *pads,contentOpt_t_m *mask,Pbase_m baseMask);
 
 Perror_t contentOpt_t_read (P_t *pads,contentOpt_t_m *m,contentOpt_t_pd *pd,contentOpt_t *rep);
 
-int is_contentOpt_t (contentOpt_t *rep);
+int contentOpt_t_verify (contentOpt_t *rep);
 typedef struct contentOpt_t_acc_s contentOpt_t_acc;
 struct contentOpt_t_acc_s {
   Pint32_acc tag;
@@ -483,7 +483,7 @@ void http_v_t_m_init (P_t *pads,http_v_t_m *mask,Pbase_m baseMask);
 
 Perror_t http_v_t_read (P_t *pads,http_v_t_m *m,http_v_t_pd *pd,http_v_t *rep);
 
-int is_http_v_t (http_v_t *rep);
+int http_v_t_verify (http_v_t *rep);
 typedef struct http_v_t_acc_s http_v_t_acc;
 struct http_v_t_acc_s {
   Puint32_acc nerr;
@@ -541,7 +541,7 @@ void http_method_t_m_init (P_t *pads,http_method_t_m *mask,Pbase_m baseMask);
 
 Perror_t http_method_t_read (P_t *pads,http_method_t_m *m,http_method_t_pd *pd,http_method_t *rep);
 
-int is_http_method_t (http_method_t *rep);
+int http_method_t_verify (http_method_t *rep);
 typedef Pint32_acc http_method_t_acc;
 
 Perror_t http_method_t_acc_init (P_t *pads,http_method_t_acc *acc);
@@ -628,7 +628,7 @@ ssize_t http_request_t_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_f
 ssize_t http_request_t_write2io (P_t *pads,Sfio_t *io,
 				 http_request_t_pd *pd,http_request_t *rep);
 
-int is_http_request_t (http_request_t *rep);
+int http_request_t_verify (http_request_t *rep);
 /*@END ai.httpRequestOps.tex*/
 
 typedef struct http_request_t_acc_s http_request_t_acc;
@@ -710,7 +710,7 @@ void http_clf_t_m_init (P_t *pads,http_clf_t_m *mask,Pbase_m baseMask);
 
 Perror_t http_clf_t_read (P_t *pads,http_clf_t_m *m,http_clf_t_pd *pd,http_clf_t *rep);
 
-int is_http_clf_t (http_clf_t *rep);
+int http_clf_t_verify (http_clf_t *rep);
 typedef struct http_clf_t_acc_s http_clf_t_acc;
 struct http_clf_t_acc_s {
   Puint32_acc nerr;
@@ -782,7 +782,7 @@ void log_t_m_init (P_t *pads,log_t_m *mask,Pbase_m baseMask);
 
 Perror_t log_t_read (P_t *pads,log_t_m *m,log_t_pd *pd,log_t *rep);
 
-int is_log_t (log_t *rep);
+int log_t_verify (log_t *rep);
 typedef struct log_t_acc_s log_t_acc;
 struct log_t_acc_s {
   Puint32_acc length;		/* Accumulator for array length */
