@@ -905,6 +905,9 @@ Perror_t Pufpoint16_acc_report2io (PDCI_FIRST_ARGS, Pufpoint16_acc *a);
 Perror_t Pufpoint32_acc_report2io (PDCI_FIRST_ARGS, Pufpoint32_acc *a);
 Perror_t Pufpoint64_acc_report2io (PDCI_FIRST_ARGS, Pufpoint64_acc *a);
 
+Perror_t Pfloat32_acc_report2io  (PDCI_FIRST_ARGS, Pfloat32_acc *a);
+Perror_t Pfloat64_acc_report2io  (PDCI_FIRST_ARGS, Pfloat64_acc *a);
+
 #endif /* P_CONFIG_ACCUM_FUNCTIONS */
 
 /* ********************************************************************************
@@ -1107,10 +1110,10 @@ Pint16  PDCI_a2int16_norange (const Pbyte *bytes, Pbyte **ptr_out);
 Pint32  PDCI_a2int32_norange (const Pbyte *bytes, Pbyte **ptr_out);
 Pint64  PDCI_a2int64_norange (const Pbyte *bytes, Pbyte **ptr_out);
 
-Pint8   PDCI_a2int8_max_bytes  (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
-Pint16  PDCI_a2int16_max_bytes (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
-Pint32  PDCI_a2int32_max_bytes (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
-Pint64  PDCI_a2int64_max_bytes (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
+Pint8   PDCI_a2int8_max_bytes  (const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+Pint16  PDCI_a2int16_max_bytes (const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+Pint32  PDCI_a2int32_max_bytes (const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+Pint64  PDCI_a2int64_max_bytes (const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
 
 ssize_t PDCI_int8_2a_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint8  i);
 ssize_t PDCI_int16_2a_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pint16 i);
@@ -1142,10 +1145,10 @@ Puint16 PDCI_a2uint16_norange(const Pbyte *bytes, Pbyte **ptr_out);
 Puint32 PDCI_a2uint32_norange(const Pbyte *bytes, Pbyte **ptr_out);
 Puint64 PDCI_a2uint64_norange(const Pbyte *bytes, Pbyte **ptr_out);
 
-Puint8  PDCI_a2uint8_max_bytes (const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
-Puint16 PDCI_a2uint16_max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
-Puint32 PDCI_a2uint32_max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
-Puint64 PDCI_a2uint64_max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes);
+Puint8  PDCI_a2uint8_max_bytes (const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+Puint16 PDCI_a2uint16_max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+Puint32 PDCI_a2uint32_max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+Puint64 PDCI_a2uint64_max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
 
 ssize_t PDCI_uint8_2a_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint8  u);
 ssize_t PDCI_uint16_2a_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Puint16 u);
@@ -1433,6 +1436,53 @@ ssize_t PDCI_uint16_2sbh_io(P_t *pads, Sfio_t *io, Puint16 u, Puint32 num_bytes)
 ssize_t PDCI_uint32_2sbh_io(P_t *pads, Sfio_t *io, Puint32 u, Puint32 num_bytes);
 ssize_t PDCI_uint64_2sbh_io(P_t *pads, Sfio_t *io, Puint64 u, Puint32 num_bytes);
 
+/* a_float */
+
+Pfloat32 PDCI_a2float32           (const Pbyte *bytes, Pbyte **ptr_out);
+Pfloat32 PDCI_a2float32_norange   (const Pbyte *bytes, Pbyte **ptr_out);
+Pfloat32 PDCI_a2float32_max_bytes (const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+
+Pfloat64 PDCI_a2float64           (const Pbyte *bytes, Pbyte **ptr_out);
+Pfloat64 PDCI_a2float64_norange   (const Pbyte *bytes, Pbyte **ptr_out);
+Pfloat64 PDCI_a2float64_max_bytes (const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+
+ssize_t PDCI_float32_2a_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat32 f);
+ssize_t PDCI_float64_2a_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat64 f);
+
+ssize_t PDCI_float32_2a_io(P_t *pads, Sfio_t *io, Pfloat32 f);
+ssize_t PDCI_float64_2a_io(P_t *pads, Sfio_t *io, Pfloat64 f);
+
+ssize_t PDCI_float32_2a_FW_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat32 f, size_t width);
+ssize_t PDCI_float64_2a_FW_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat64 f, size_t width);
+
+ssize_t PDCI_float32_2a_FW_io(P_t *pads, Sfio_t *io, Pfloat32 f, size_t width);
+ssize_t PDCI_float64_2a_FW_io(P_t *pads, Sfio_t *io, Pfloat64 f, size_t width);
+
+ssize_t PDCI_float32_2e_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat32 f);
+ssize_t PDCI_float64_2e_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat64 f);
+
+/* e_float */
+
+Pfloat32 PDCI_e2float32           (const Pbyte *bytes, Pbyte **ptr_out);
+Pfloat32 PDCI_e2float32_norange   (const Pbyte *bytes, Pbyte **ptr_out);
+Pfloat32 PDCI_e2float32_max_bytes (const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+
+Pfloat64 PDCI_e2float64           (const Pbyte *bytes, Pbyte **ptr_out);
+Pfloat64 PDCI_e2float64_norange   (const Pbyte *bytes, Pbyte **ptr_out);
+Pfloat64 PDCI_e2float64_max_bytes (const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out);
+
+ssize_t PDCI_float32_2e_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat32 f);
+ssize_t PDCI_float64_2e_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat64 f);
+
+ssize_t PDCI_float32_2e_io(P_t *pads, Sfio_t *io, Pfloat32 f);
+ssize_t PDCI_float64_2e_io(P_t *pads, Sfio_t *io, Pfloat64 f);
+
+ssize_t PDCI_float32_2e_FW_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat32 f, size_t width);
+ssize_t PDCI_float64_2e_FW_buf(P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, Pfloat64 f, size_t width);
+
+ssize_t PDCI_float32_2e_FW_io(P_t *pads, Sfio_t *io, Pfloat32 f, size_t width);
+ssize_t PDCI_float64_2e_FW_io(P_t *pads, Sfio_t *io, Pfloat64 f, size_t width);
+
 /* MISC STRING CONSTANTS */
 extern const char *PDCI_spaces;
 
@@ -1503,6 +1553,11 @@ Pbyte *PDCI_findlast(const Pbyte *begin, const Pbyte *end, Pbyte b);
  */
 int PDCI_Plongest_chkErr(Puint32 nerr, int *consume);
 
+/*
+ * versions of sfsscanf that take a string length argument
+ */
+int sfsnscanf  (const char *s, size_t slen, const char *form, ...);
+int sfvsnscanf (const char *s, size_t slen, const char *form, va_list args);
 
 #define Peor Pre "/$/"
 

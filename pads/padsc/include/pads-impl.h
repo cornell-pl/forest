@@ -813,6 +813,12 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 #define Puint64_FW_read(pads, m, width, pd, res_out) \
   PDCI_CHARSET_SWITCH(pads, P, uint64_FW_read, (pads, m, width, pd, res_out))
 
+#define Pfloat32_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, float32_read, (pads, m, pd, res_out))
+
+#define Pfloat64_read(pads, m, pd, res_out) \
+  PDCI_CHARSET_SWITCH(pads, P, float64_read, (pads, m, pd, res_out))
+
 #endif /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================
@@ -1169,6 +1175,30 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 #define Puint64_write2buf(pads, buf, buf_len, buf_full, pd, val) \
   PDCI_CHARSET_SWITCH(pads, P, uint64_write2buf, (pads, buf, buf_len, buf_full, pd, val))
 
+#define Pfloat32_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, float32_FW_write2io, (pads, io, width, pd, val))
+
+#define Pfloat64_FW_write2io(pads, io, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, float64_FW_write2io, (pads, io, width, pd, val))
+
+#define Pfloat32_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, float32_write2io, (pads, io, pd, val))
+
+#define Pfloat64_write2io(pads, io, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, float64_write2io, (pads, io, pd, val))
+
+#define Pfloat32_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, float32_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
+
+#define Pfloat64_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, float64_FW_write2buf, (pads, buf, buf_len, buf_full, width, pd, val))
+
+#define Pfloat32_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, float32_write2buf, (pads, buf, buf_len, buf_full, pd, val))
+
+#define Pfloat64_write2buf(pads, buf, buf_len, buf_full, pd, val) \
+  PDCI_CHARSET_SWITCH(pads, P, float64_write2buf, (pads, buf, buf_len, buf_full, pd, val))
+
 /* _xml_ */
 
 #define Pa_char_lit_write_xml_2io(pads, io, c, tag, indent) \
@@ -1518,6 +1548,30 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 
 #define Puint64_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
   PDCI_CHARSET_SWITCH(pads, P, uint64_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
+
+#define Pfloat32_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, float32_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Pfloat64_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, float64_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Pfloat32_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, float32_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Pfloat64_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, float64_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Pfloat32_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, float32_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Pfloat64_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, float64_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Pfloat32_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, float32_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
+
+#define Pfloat64_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, float64_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 

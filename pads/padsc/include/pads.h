@@ -12,7 +12,8 @@
 #define __PADS_H__
 
 #include <ast.h>
-#include <ast_common.h>
+#include <ast_float.h>
+//#include <ast_common.h>
 #include <stdio.h>
 #include <swap.h>
 #include <tm.h>
@@ -449,6 +450,12 @@ const char *P_errCode2str(PerrCode_t code);
 #define P_MAX_INT64         9223372036854775807LL
 #define P_MAX_UINT64       18446744073709551615ULL
 
+#define P_MIN_FLOAT32      ((float)1e-37)
+#define P_MAX_FLOAT32      ((float)3.40282346638528860e+38)
+
+#define P_MIN_FLOAT64      ((double)4.94065645841246544e-324)
+#define P_MAX_FLOAT64      ((double)1.79769313486231470e+308)
+
 /* USEFUL ASCII AND EBCDIC CHAR CONSTANTS */
 
 #define P_ASCII_NEWLINE '\n'
@@ -464,6 +471,9 @@ const char *P_errCode2str(PerrCode_t code);
 #define P_ASCII_MINUS '-'
 #define P_EBCDIC_MINUS 0x60
 
+#define P_ASCII_DOT '.'
+#define P_EBCDIC_DOT 0x4b
+
 /* DEFAULT 'invalid value' VALUES */
 
 #define P_CHAR_DEF_INV_VAL     P_MAX_UINT8
@@ -476,7 +486,8 @@ const char *P_errCode2str(PerrCode_t code);
 #define P_UINT32_DEF_INV_VAL   P_MAX_UINT32
 #define P_INT64_DEF_INV_VAL    P_MIN_INT64
 #define P_UINT64_DEF_INV_VAL   P_MAX_UINT64
-
+#define P_FLOAT32_DEF_INV_VAL  P_MIN_FLOAT32
+#define P_FLOAT64_DEF_INV_VAL  P_MIN_FLOAT64
 
 /* ================================================================================
  * INTERFACE LIBRARY TYPES: FORWARD DECLS
@@ -543,8 +554,8 @@ typedef	struct { Puint64 num; Puint64 denom;} Pufpoint64;
 
 typedef Puint8 Pchar;
 
-typedef float   Pfloat32;
-typedef double  Pfloat64;
+typedef _ast_flt4_t   Pfloat32;
+typedef _ast_flt8_t   Pfloat64;
 
 /* HELPERS: 
  *    P_FPOINT2FLOAT32 calculates num/denom as a Pfloat32
@@ -680,6 +691,9 @@ Puint8   Pstring2uint8 (const Pstring *str);  /* returns P_MAX_UINT8 on error */
 Puint16  Pstring2uint16(const Pstring *str);  /* returns P_MAX_UINT16 on error */ 
 Puint32  Pstring2uint32(const Pstring *str);  /* returns P_MAX_UINT32 on error */ 
 Puint64  Pstring2uint64(const Pstring *str);  /* returns P_MAX_UINT64 on error */ 
+
+Pfloat32 Pstring2float32(const Pstring *str); /* returns P_MIN_FLOAT32 on error */
+Pfloat64 Pstring2float64(const Pstring *str); /* returns P_MIN_FLOAT64 on error */
 
 #ifdef FOR_CKIT
 int Pstring_eq(const Pstring *str1, const Pstring *str2);
@@ -2597,6 +2611,43 @@ Perror_t Psbh_ufpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, P
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
 
+/* ================================================================================
+ * CHARACTER-BASED FLOAT READ FUNCTIONS
+ * 
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * Pfloat32_read                  Pa_float32_read                Pe_float32_read
+ * Pfloat64_read                  Pa_float64_read                Pe_float64_read
+ */
+
+#if P_CONFIG_READ_FUNCTIONS > 0
+
+#if P_CONFIG_A_FLOAT > 0
+Perror_t Pa_float32_read(P_t *pads, const Pbase_m *m,
+			 Pbase_pd *pd, Pfloat32 *res_out);
+Perror_t Pa_float64_read(P_t *pads, const Pbase_m *m,
+			 Pbase_pd *pd, Pfloat64 *res_out);
+#endif
+
+#if P_CONFIG_E_FLOAT > 0
+Perror_t Pe_float32_read(P_t *pads, const Pbase_m *m,
+			 Pbase_pd *pd, Pfloat32 *res_out);
+Perror_t Pe_float64_read(P_t *pads, const Pbase_m *m,
+			 Pbase_pd *pd, Pfloat64 *res_out);
+#endif
+
+#ifdef FOR_CKIT
+#if P_CONFIG_A_FLOAT > 0 && P_CONFIG_E_FLOAT > 0
+Perror_t Pfloat32_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pfloat32 *res_out);
+Perror_t Pfloat64_read(P_t *pads, const Pbase_m *m,
+		       Pbase_pd *pd, Pfloat64 *res_out);
+#endif
+#endif
+
+#endif /* P_CONFIG_READ_FUNCTIONS */
+
+
 /* ********************************************************************************
  * WRITE FUNCTIONS: GENERAL NOTES
  * ********************************************************************************
@@ -3535,6 +3586,23 @@ ssize_t Psbh_ufpoint32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 ssize_t Psbh_ufpoint64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Puint32 num_bytes, Puint32 d_exp, Pbase_pd *pd, Pufpoint64 *val, const char *tag, int indent);
 #endif
 
+#if P_CONFIG_A_FLOAT > 0
+ssize_t Pa_float32_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val);
+ssize_t Pa_float64_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val);
+
+ssize_t Pa_float32_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val, const char *tag, int indent);
+ssize_t Pa_float64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val, const char *tag, int indent);
+#endif
+
+#if P_CONFIG_E_FLOAT > 0
+ssize_t Pe_float32_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val);
+ssize_t Pe_float64_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val);
+
+ssize_t Pe_float32_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val, const char *tag, int indent);
+ssize_t Pe_float64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val, const char *tag, int indent);
+#endif
+
+
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 
 /*
@@ -3629,6 +3697,20 @@ ssize_t Puint32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_f
 ssize_t Puint64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Puint64 *val, const char *tag, int indent);
 #endif
 
+#if P_CONFIG_A_FLOAT > 0 && P_CONFIG_E_FLOAT > 0
+ssize_t Pfloat32_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat32  *val);
+ssize_t Pfloat64_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat64  *val);
+
+ssize_t Pfloat32_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val);
+ssize_t Pfloat64_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val);
+
+ssize_t Pfloat32_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat32  *val, const char *tag, int indent);
+ssize_t Pfloat64_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat64  *val, const char *tag, int indent);
+
+ssize_t Pfloat32_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val, const char *tag, int indent);
+ssize_t Pfloat64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val, const char *tag, int indent);
+#endif
+
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 #endif /* FOR_CKIT */
 
@@ -3673,7 +3755,7 @@ ssize_t PcountXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *bu
  * BASE TYPE ACCUMULATORS
  *
  * For integer type T, accumulator functions P_T_acc_avg returns the running average
- * as a Pfloat64, while P_T_acc_ravg returns the average as a T value by roudning the
+ * as a Pfloat64, while P_T_acc_ravg returns the average as a T value by rounding the
  * Pfloat64 to the nearest T.
  *
  * Each report function takes the following params (in addition to pads/disc first/last args):
@@ -3696,8 +3778,8 @@ typedef struct Pint_acc_s {
   Pfloat64  pcnt2rep;
   Puint64   good;
   Puint64   bad;
-  Puint64   fold;
   Puint64   tracked;
+  Puint64   fold;
   Pint64    psum;
   Pfloat64  avg;
   Pint64    min;
@@ -3711,8 +3793,8 @@ typedef struct Puint_acc_s {
   Pfloat64  pcnt2rep;
   Puint64   good;
   Puint64   bad;
-  Puint64   fold;
   Puint64   tracked;
+  Puint64   fold;
   Puint64   psum;
   Pfloat64  avg;
   Puint64   min;
@@ -3854,71 +3936,53 @@ Perror_t Pchar_acc_report    (P_t *pads, const char *prefix, const char *what, i
 
 /*
  * fpoint/ufpoint accumulator types
- *
- *    Note that Pfloat64-based arithmetic is used for the fpoint64/ufpoint64 accumulators,
- *    while Pfloat32-based arithmetic is used for all other fpoint/ufpoint accumulators.
  */
 
-typedef struct Pfpoint_acc_flt_s {
+typedef struct Pfpoint_acc_s {
   Dt_t     *dict;
   Puint64   max2track;
   Puint64   max2rep;
   Pfloat64  pcnt2rep;
   Puint64   good;
   Puint64   bad;
-  Puint64   fold;
   Puint64   tracked;
+  Puint64   fold;
   Pfloat64  psum;
   Pfloat64  avg;
   Pfloat64  min;
   Pfloat64  max;
-} Pfpoint_acc_flt;
+} Pfpoint_acc;
 
-typedef struct Pfpoint_acc_dbl_s {
-  Dt_t     *dict;
-  Puint64   max2track;
-  Puint64   max2rep;
-  Pfloat64  pcnt2rep;
-  Puint64   good;
-  Puint64   bad;
-  Puint64   fold;
-  Puint64   tracked;
-  Pfloat64  psum;
-  Pfloat64  avg;
-  Pfloat64  min;
-  Pfloat64  max;
-} Pfpoint_acc_dbl;
+typedef Pfpoint_acc Pfpoint8_acc;
+typedef Pfpoint_acc Pfpoint16_acc;
+typedef Pfpoint_acc Pfpoint32_acc;
+typedef Pfpoint_acc Pfpoint64_acc;
 
-typedef Pfpoint_acc_flt Pfpoint8_acc;
-typedef Pfpoint_acc_flt Pfpoint16_acc;
-typedef Pfpoint_acc_flt Pfpoint32_acc;
-typedef Pfpoint_acc_dbl Pfpoint64_acc;
-
-typedef Pfpoint_acc_flt Pufpoint8_acc;
-typedef Pfpoint_acc_flt Pufpoint16_acc;
-typedef Pfpoint_acc_flt Pufpoint32_acc;
-typedef Pfpoint_acc_dbl Pufpoint64_acc;
+typedef Pfpoint_acc Pufpoint8_acc;
+typedef Pfpoint_acc Pufpoint16_acc;
+typedef Pfpoint_acc Pufpoint32_acc;
+typedef Pfpoint_acc Pufpoint64_acc;
 
 Perror_t Pfpoint8_acc_init    (P_t *pads, Pfpoint8_acc *a);
 Perror_t Pfpoint8_acc_reset   (P_t *pads, Pfpoint8_acc *a);
 Perror_t Pfpoint8_acc_cleanup (P_t *pads, Pfpoint8_acc *a);
 Perror_t Pfpoint8_acc_add     (P_t *pads, Pfpoint8_acc *a, const Pbase_pd *pd, const Pfpoint8 *val);
 Perror_t Pfpoint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint8_acc *a);
-Pfloat32 Pfpoint8_acc_avg     (P_t *pads, Pfpoint8_acc *a);
+Pfloat64 Pfpoint8_acc_avg     (P_t *pads, Pfpoint8_acc *a);
 
 Perror_t Pfpoint16_acc_init   (P_t *pads, Pfpoint16_acc *a);
 Perror_t Pfpoint16_acc_reset  (P_t *pads, Pfpoint16_acc *a);
 Perror_t Pfpoint16_acc_cleanup(P_t *pads, Pfpoint16_acc *a);
 Perror_t Pfpoint16_acc_add    (P_t *pads, Pfpoint16_acc *a, const Pbase_pd *pd, const Pfpoint16 *val);
 Perror_t Pfpoint16_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint16_acc *a);
-Pfloat32 Pfpoint16_acc_avg    (P_t *pads, Pfpoint16_acc *a);
+Pfloat64 Pfpoint16_acc_avg    (P_t *pads, Pfpoint16_acc *a);
 
 Perror_t Pfpoint32_acc_init   (P_t *pads, Pfpoint32_acc *a);
 Perror_t Pfpoint32_acc_reset  (P_t *pads, Pfpoint32_acc *a);
 Perror_t Pfpoint32_acc_cleanup(P_t *pads, Pfpoint32_acc *a);
 Perror_t Pfpoint32_acc_add    (P_t *pads, Pfpoint32_acc *a, const Pbase_pd *pd, const Pfpoint32 *val);
 Perror_t Pfpoint32_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint32_acc *a);
-Pfloat32 Pfpoint32_acc_avg    (P_t *pads, Pfpoint32_acc *a);
+Pfloat64 Pfpoint32_acc_avg    (P_t *pads, Pfpoint32_acc *a);
 
 Perror_t Pfpoint64_acc_init   (P_t *pads, Pfpoint64_acc *a);
 Perror_t Pfpoint64_acc_reset  (P_t *pads, Pfpoint64_acc *a);
@@ -3932,21 +3996,21 @@ Perror_t Pufpoint8_acc_reset   (P_t *pads, Pufpoint8_acc *a);
 Perror_t Pufpoint8_acc_cleanup (P_t *pads, Pufpoint8_acc *a);
 Perror_t Pufpoint8_acc_add     (P_t *pads, Pufpoint8_acc *a, const Pbase_pd *pd, const Pufpoint8 *val);
 Perror_t Pufpoint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint8_acc *a);
-Pfloat32 Pufpoint8_acc_avg     (P_t *pads, Pufpoint8_acc *a);
+Pfloat64 Pufpoint8_acc_avg     (P_t *pads, Pufpoint8_acc *a);
 
 Perror_t Pufpoint16_acc_init   (P_t *pads, Pufpoint16_acc *a);
 Perror_t Pufpoint16_acc_reset  (P_t *pads, Pufpoint16_acc *a);
 Perror_t Pufpoint16_acc_cleanup(P_t *pads, Pufpoint16_acc *a);
 Perror_t Pufpoint16_acc_add    (P_t *pads, Pufpoint16_acc *a, const Pbase_pd *pd, const Pufpoint16 *val);
 Perror_t Pufpoint16_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint16_acc *a);
-Pfloat32 Pufpoint16_acc_avg    (P_t *pads, Pufpoint16_acc *a);
+Pfloat64 Pufpoint16_acc_avg    (P_t *pads, Pufpoint16_acc *a);
 
 Perror_t Pufpoint32_acc_init   (P_t *pads, Pufpoint32_acc *a);
 Perror_t Pufpoint32_acc_reset  (P_t *pads, Pufpoint32_acc *a);
 Perror_t Pufpoint32_acc_cleanup(P_t *pads, Pufpoint32_acc *a);
 Perror_t Pufpoint32_acc_add    (P_t *pads, Pufpoint32_acc *a, const Pbase_pd *pd, const Pufpoint32 *val);
 Perror_t Pufpoint32_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint32_acc *a);
-Pfloat32 Pufpoint32_acc_avg    (P_t *pads, Pufpoint32_acc *a);
+Pfloat64 Pufpoint32_acc_avg    (P_t *pads, Pufpoint32_acc *a);
 
 Perror_t Pufpoint64_acc_init   (P_t *pads, Pufpoint64_acc *a);
 Perror_t Pufpoint64_acc_reset  (P_t *pads, Pufpoint64_acc *a);
@@ -3954,6 +4018,38 @@ Perror_t Pufpoint64_acc_cleanup(P_t *pads, Pufpoint64_acc *a);
 Perror_t Pufpoint64_acc_add    (P_t *pads, Pufpoint64_acc *a, const Pbase_pd *pd, const Pufpoint64 *val);
 Perror_t Pufpoint64_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint64_acc *a);
 Pfloat64 Pufpoint64_acc_avg    (P_t *pads, Pufpoint64_acc *a);
+
+typedef struct Pfloat_acc_s {
+  Dt_t     *dict;
+  Puint64   max2track;
+  Puint64   max2rep;
+  Pfloat64  pcnt2rep;
+  Puint64   good;
+  Puint64   bad;
+  Puint64   tracked;
+  Puint64   fold;
+  Pfloat64  psum;
+  Pfloat64  avg;
+  Pfloat64  min;
+  Pfloat64  max;
+} Pfloat_acc;
+
+typedef Pfloat_acc Pfloat32_acc;
+typedef Pfloat_acc Pfloat64_acc;
+
+Perror_t Pfloat32_acc_init    (P_t *pads, Pfloat32_acc *a);
+Perror_t Pfloat32_acc_reset   (P_t *pads, Pfloat32_acc *a);
+Perror_t Pfloat32_acc_cleanup (P_t *pads, Pfloat32_acc *a);
+Perror_t Pfloat32_acc_add     (P_t *pads, Pfloat32_acc *a, const Pbase_pd *pd, const Pfloat32 *val);
+Perror_t Pfloat32_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pfloat32_acc *a);
+Pfloat64 Pfloat32_acc_avg     (P_t *pads, Pfloat32_acc *a);
+
+Perror_t Pfloat64_acc_init    (P_t *pads, Pfloat64_acc *a);
+Perror_t Pfloat64_acc_reset   (P_t *pads, Pfloat64_acc *a);
+Perror_t Pfloat64_acc_cleanup (P_t *pads, Pfloat64_acc *a);
+Perror_t Pfloat64_acc_add     (P_t *pads, Pfloat64_acc *a, const Pbase_pd *pd, const Pfloat64 *val);
+Perror_t Pfloat64_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pfloat64_acc *a);
+Pfloat64 Pfloat64_acc_avg     (P_t *pads, Pfloat64_acc *a);
 
 #endif /* P_CONFIG_ACCUM_FUNCTIONS */
 

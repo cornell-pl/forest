@@ -328,6 +328,18 @@ do {
   } while (0)
 /* END_MACRO */
 
+#define PDCI_FMT_FLOAT_WRITE(writelen, iostr, fmt, t)
+  do {
+    writelen = sfprintf(iostr, fmt, t);
+  } while (0)
+/* END_MACRO */
+
+#define PDCI_WFMT_FLOAT_WRITE(writelen, iostr, wfmt, width, t)
+  do {
+    writelen = sfprintf(iostr, wfmt, ((t < 0) ? width-1 : width), t);
+  } while (0)
+/* END_MACRO */
+
 #define PDCI_BASELIT_XML_OUT(sfprintf_prefix, io, tag, def_tag, indent, outfmt, outval)
   do {
     if (!tag) { tag = def_tag; }
@@ -624,6 +636,141 @@ fn_name(P_t *pads, const Pbase_m *m, size_t width,
 }
 /* END_MACRO */
 
+#define PDCI_AE_FLOAT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn, dot_char, a_or_e_float)
+
+Perror_t
+fn_pref ## _read(P_t *pads, const Pbase_m *m,
+		 Pbase_pd *pd, targ_type *res_out)
+{
+  targ_type    tmp;   /* tmp num */
+  Pbyte        ct;    /* char tmp */
+  Pbyte       *begin, *p1, *end, *goal;
+  int          bor, eor, eof;
+
+  PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_pref) "_read", m, pd, res_out);
+  PDCI_READFN_PD_INIT(pads, pd);
+  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_numeric, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
+    goto fatal_nb_io_err;
+  }
+  if (begin == end) {
+    goto at_eor_or_eof_err;
+  }
+  p1 = begin;
+  if (P_Test_Ignore(*m)) {
+    /* move beyond anything that looks like an ascii float, return P_ERR if none such */
+    if (isspace_fn(*p1) && !(pads->disc->flags & P_WSPACE_OK)) {
+      return P_ERR;
+    }
+    while (isspace_fn(*p1)) { /* skip spaces, if any */
+      p1++;
+      if (p1 == end) return P_ERR; /* did not find digit */
+    }
+    if ('-' == (*p1) || '+' == (*p1)) { /* skip +/-, if any */
+      p1++;
+      if (p1 == end) return P_ERR; /* did not find a digit */
+    }
+    if (dot_char == (*p1)) { /* skip leading dot, if any */
+      p1++;
+      if (p1 == end) return P_ERR; /* did not find a digit */
+      if (!isdigit_fn(*p1)) {
+	return P_ERR; /* did not find a digit */
+      }
+      /* all set: skip digits, move IO cursor, and return P_OK */
+      while (isdigit_fn(*p1)) {
+	p1++;
+	if (p1 == end && !(eor|eof)) {
+	  /* did not find end of digits within P_BUILTIN_NUMERIC_MAX bytes */
+	  return P_ERR;
+	}
+      }
+    } else {
+      if (!isdigit_fn(*p1)) {
+	return P_ERR; /* did not find a digit */
+      }
+      /* all set: skip digits and up to one dot, move IO cursor, and return P_OK */
+      while (isdigit_fn(*p1)) {
+	p1++;
+	if (p1 == end && !(eor|eof)) {
+	  /* did not find end of digits within P_BUILTIN_NUMERIC_MAX bytes */
+	  return P_ERR;
+	}
+      }
+      if (dot_char == (*p1)) { /* skip dot */
+	p1++;
+	if (p1 == end && !(eor|eof)) {
+	  /* did not find end of digits within P_BUILTIN_NUMERIC_MAX bytes */
+	  return P_ERR;
+	}
+      }
+      while (isdigit_fn(*p1)) {
+	p1++;
+	if (p1 == end && !(eor|eof)) {
+	  /* did not find end of digits within P_BUILTIN_NUMERIC_MAX bytes */
+	  return P_ERR;
+	}
+      }
+    }
+    if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
+      goto fatal_forward_err;
+    }
+    return P_OK;
+
+  } else { /* !P_Test_Ignore(*m) */
+
+    if (isspace_fn(*p1) && !(pads->disc->flags & P_WSPACE_OK)) {
+      goto invalid_wspace;
+    }
+    ct = *end;    /* save */
+    *end = 0;     /* null */
+    if (P_Test_SemCheck(*m)) {
+      tmp = bytes2num_fn(begin, &p1);
+    } else {
+      tmp = bytes2num_fn ## _norange(begin, &p1);
+    }
+    *end = ct;    /* restore */
+    if (errno == EINVAL) {
+      if (p1 != end) p1++; /* move to just beyond offending char */
+      goto invalid;
+    }
+    if (errno == ERANGE) goto range_err;
+    /* success */
+    if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
+      goto fatal_forward_err;
+    }
+    if (P_Test_Set(*m)) {
+      (*res_out) = tmp;
+    }
+    return P_OK;
+  }
+
+ at_eor_or_eof_err:
+  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, eor ? P_AT_EOR : P_AT_EOF);
+
+ invalid_wspace:
+  PDCI_READFN_SET_LOC_BE(0, 1);
+  PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", "spaces not allowed in " a_or_e_float " field unless flag P_WSPACE_OK is set", invalid_err);
+
+ invalid:
+  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, invalid_err);
+
+ range_err:
+  /* range error still consumes the number */
+  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
+    goto fatal_forward_err;
+  }
+  PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, P_RANGE);
+
+ fatal_nb_io_err:
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_pref) "_read", *m, "IO error (nb)", P_IO_ERR);
+
+ fatal_forward_err:
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_pref) "_read", *m, "IO_forward error", P_FORWARD_ERR);
+}
+/* END_MACRO */
+
 #define PDCI_B1_INT_READ_FN_GEN(fn_name, targ_type)
 
 Perror_t
@@ -797,31 +944,31 @@ fn_name(P_t *pads, const Pbase_m *m, Puint32 num_digits_or_bytes, Puint32 d_exp,
 /* ********************************* BEGIN_TRAILER ******************************** */
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_A_INT > 0
-#  define PDCI_A_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn) \
-            PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn, "a_int")
+#  define PDCI_A_INT_READ_FN(fn_pref, targ_type, bytes2num_fn) \
+            PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit, "a_int")
 #else
-#  define PDCI_A_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
+#  define PDCI_A_INT_READ_FN(fn_pref, targ_type, bytes2num_fn)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_A_INT_FW > 0
-#  define PDCI_A_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn) \
-            PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn, "a_int")
+#  define PDCI_A_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn) \
+            PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, P_INVALID_A_NUM, PDCI_is_a_space, "a_int")
 #else
-#  define PDCI_A_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
+#  define PDCI_A_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_E_INT > 0
-#  define PDCI_E_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn) \
-            PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn, "e_int")
+#  define PDCI_E_INT_READ_FN(fn_pref, targ_type, bytes2num_fn) \
+            PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit, "e_int")
 #else
-#  define PDCI_E_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
+#  define PDCI_E_INT_READ_FN(fn_pref, targ_type, bytes2num_fn)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_E_INT_FW > 0
-#  define PDCI_E_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn) \
-            PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn, "e_int")
+#  define PDCI_E_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn) \
+            PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, P_INVALID_E_NUM, PDCI_is_e_space, "e_int")
 #else
-#  define PDCI_E_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
+#  define PDCI_E_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_B_INT > 0
@@ -835,60 +982,75 @@ fn_name(P_t *pads, const Pbase_m *m, Puint32 num_digits_or_bytes, Puint32 d_exp,
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && (P_CONFIG_EBC_INT > 0 || P_CONFIG_EBC_FPOINT > 0)
-#  define PDCI_EBC_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width, (begin, num_digits_or_bytes, &p1))
+#  define PDCI_EBC_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width) \
+            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, P_INVALID_EBC_NUM, width, (begin, num_digits_or_bytes, &p1))
 #else
-#  define PDCI_EBC_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_EBC_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && (P_CONFIG_BCD_INT > 0 || P_CONFIG_BCD_FPOINT > 0)
-#  define PDCI_BCD_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width, (begin, num_digits_or_bytes, &p1))
+#  define PDCI_BCD_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width) \
+            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, P_INVALID_BCD_NUM, width, (begin, num_digits_or_bytes, &p1))
 #else
-#  define PDCI_BCD_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_BCD_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && (P_CONFIG_SBL_INT > 0 || P_CONFIG_SBL_FPOINT > 0)
-#  define PDCI_SBL_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width, (pads, begin, num_digits_or_bytes, &p1))
+#  define PDCI_SBL_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width) \
+            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, P_UNEXPECTED_ERR, width, (pads, begin, num_digits_or_bytes, &p1))
 #else
-#  define PDCI_SBL_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_SBL_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && (P_CONFIG_SBH_INT > 0 || P_CONFIG_SBH_FPOINT > 0)
-#  define PDCI_SBH_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width, (pads, begin, num_digits_or_bytes, &p1))
+#  define PDCI_SBH_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width) \
+            PDCI_EBCBCDSB_INT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, P_UNEXPECTED_ERR, width, (pads, begin, num_digits_or_bytes, &p1))
 #else
-#  define PDCI_SBH_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_SBH_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_EBC_FPOINT > 0
-#  define PDCI_EBC_FPOINT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_FPOINT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_EBC_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max) \
+            PDCI_EBCBCDSB_FPOINT_READ_FN_GEN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
 #else
-#  define PDCI_EBC_FPOINT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_EBC_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_BCD_FPOINT > 0
-#  define PDCI_BCD_FPOINT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_FPOINT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_BCD_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max) \
+            PDCI_EBCBCDSB_FPOINT_READ_FN_GEN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
 #else
-#  define PDCI_BCD_FPOINT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_BCD_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_SBL_FPOINT > 0
-#  define PDCI_SBL_FPOINT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_FPOINT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_SBL_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max) \
+            PDCI_EBCBCDSB_FPOINT_READ_FN_GEN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
 #else
-#  define PDCI_SBL_FPOINT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_SBL_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_SBH_FPOINT > 0
-#  define PDCI_SBH_FPOINT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width) \
-            PDCI_EBCBCDSB_FPOINT_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_SBH_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max) \
+            PDCI_EBCBCDSB_FPOINT_READ_FN_GEN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
 #else
-#  define PDCI_SBH_FPOINT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+#  define PDCI_SBH_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
 #endif
+
+#if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_A_FLOAT > 0
+#  define PDCI_A_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn) \
+            PDCI_AE_FLOAT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit, P_ASCII_DOT, "a_float")
+#else
+#  define PDCI_A_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn)
+#endif
+
+#if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_E_FLOAT > 0
+#  define PDCI_E_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn) \
+            PDCI_AE_FLOAT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit, P_EBCDIC_DOT, "e_float")
+#else
+#  define PDCI_E_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn)
+#endif
+
 
 /* ********************************** END_MACROS ********************************** */
 /* ****************** BEGIN_MACROS(pads-write-macros-gen.h) ******************* */
@@ -1013,7 +1175,7 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, tar
 }
 /* END_MACRO */
 
-#define PDCI_A_INT_WRITE_FN_GEN(fn_pref, targ_type, fmt, inv_type, inv_val, sfpr_macro)
+#define PDCI_A_NUM_WRITE_FN_GEN(fn_pref, targ_type, fmt, inv_type, inv_val, sfpr_macro)
 
 ssize_t
 fn_pref ## _write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
@@ -1172,7 +1334,7 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, tar
 }
 /* END_MACRO */
 
-#define PDCI_E_INT_WRITE_FN_GEN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref)
+#define PDCI_E_NUM_WRITE_FN_GEN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref)
 
 ssize_t
 fn_pref ## _write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, targ_type *val)
@@ -1428,7 +1590,7 @@ fn_pref ## _write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
     return -1;
   }
   d = P_FPOINT2FLOAT64(*val);
-  PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%llf", d);
+  PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%I8f", d);
 }
 
 ssize_t
@@ -1459,7 +1621,7 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Puint32 num_digits_or_bytes, Pu
     return -1;
   }
   d = P_FPOINT2FLOAT64(*val);
-  PDCI_BASEVAL_XML_OUT2IO(inv_type, "%llf", d);
+  PDCI_BASEVAL_XML_OUT2IO(inv_type, "%I8f", d);
 }
 /* END_MACRO */
 
@@ -1474,7 +1636,7 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Puint32 num_digits_or_bytes, Pu
 
 #if P_CONFIG_WRITE_FUNCTIONS > 0 && P_CONFIG_A_INT > 0
 #  define PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, inv_val, sfpr_macro) \
-            PDCI_A_INT_WRITE_FN_GEN(fn_pref, targ_type, fmt, inv_type, inv_val, sfpr_macro)
+            PDCI_A_NUM_WRITE_FN_GEN(fn_pref, targ_type, fmt, inv_type, inv_val, sfpr_macro)
 #else
 #  define PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, inv_val, sfpr_macro)
 #endif
@@ -1488,7 +1650,7 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Puint32 num_digits_or_bytes, Pu
 
 #if P_CONFIG_WRITE_FUNCTIONS > 0 && P_CONFIG_E_INT > 0
 #  define PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref) \
-            PDCI_E_INT_WRITE_FN_GEN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref)
+            PDCI_E_NUM_WRITE_FN_GEN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref)
 #else
 #  define PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref)
 #endif
@@ -1554,6 +1716,20 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Puint32 num_digits_or_bytes, Pu
             PDCI_EBCBCDSB_FPOINT_WRITE_FN_GEN(fn_pref, targ_type, num2pre, inv_type, inv_val)
 #else
 #  define PDCI_SBH_FPOINT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, inv_val)
+#endif
+
+#if P_CONFIG_WRITE_FUNCTIONS > 0 && P_CONFIG_A_FLOAT > 0
+#  define PDCI_A_FLOAT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, inv_val, sfpr_macro) \
+            PDCI_A_NUM_WRITE_FN_GEN(fn_pref, targ_type, fmt, inv_type, inv_val, sfpr_macro)
+#else
+#  define PDCI_A_FLOAT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, inv_val, sfpr_macro)
+#endif
+
+#if P_CONFIG_WRITE_FUNCTIONS > 0 && P_CONFIG_E_FLOAT > 0
+#  define PDCI_E_FLOAT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref) \
+            PDCI_E_NUM_WRITE_FN_GEN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref)
+#else
+#  define PDCI_E_FLOAT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref)
 #endif
 
 /* ********************************** END_MACROS ********************************** */
@@ -1724,11 +1900,12 @@ int_type ## _acc_ravg(P_t *pads, int_type ## _acc *a) {
 Perror_t
 int_type ## _acc_add(P_t *pads, int_type ## _acc *a, const Pbase_pd *pd, const int_type *val)
 {
-  int_type               v          = (*val);
+  int_type               v;
   int_type ## _dt_elt_t  insert_elt;
   int_type ## _dt_key_t  lookup_key;
   int_type ## _dt_elt_t  *tmp1;
   PDCI_DISC_3P_CHECKS( PDCI_MacroArg2String(int_type) "_acc_add", a, pd, val);
+  v = (*val);
   if (!a->dict) {
     return P_ERR;
   }
@@ -1808,7 +1985,7 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
   } else {
     bad_pcnt = 100.0 * (a->bad / (Pfloat64)(a->good + a->bad));
   }
-  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3I8f\n",
 	   a->good, a->bad, bad_pcnt);
   if (a->good == 0) {
     sfprintf(outstr, "(No good %s values.)\n", what);
@@ -1826,30 +2003,30 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s values:  min %" mfmt, what, a->min);
   sfprintf(outstr, " max %" mfmt, a->max);
-  sfprintf(outstr, " avg %.3lf\n", a->avg);
+  sfprintf(outstr, " avg %.3I8f\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
-    sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
+    sfprintf(outstr, "        (* hit tracking limit, tracked %.3I8f pcnt of all values *) \n", track_pcnt);
   }
   for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
        velt && i < a->max2rep;
        velt = dtnext(a->dict, velt), i++) {
     if (cnt_sum_pcnt >= a->pcnt2rep) {
-      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2I8f pcnt limit on reported values ...]\n",
 	       rp-i, rp, a->pcnt2rep);
       break;
     }
     elt = (int_type ## _dt_elt_t*)velt;
     elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
     sfprintf(outstr, "        val: %10" fmt, elt->key.val);
-    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3I8f\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
   }
   dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
-  sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf\n",
+  sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3I8f\n",
 	   cnt_sum, cnt_sum_pcnt);
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
@@ -1926,7 +2103,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   } else {
     bad_pcnt = 100.0 * (a->bad / (Pfloat64)(a->good + a->bad));
   }
-  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3I8f\n",
 	   a->good, a->bad, bad_pcnt);
   if (a->good == 0) {
     sfprintf(outstr, "(No good %s values.)\n", what);
@@ -1951,7 +2128,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
-    sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
+    sfprintf(outstr, "        (* hit tracking limit, tracked %.3I8f pcnt of all values *) \n", track_pcnt);
   }
   sz = tmp = 0;
   for (i = 0, velt = dtfirst(a->dict); velt && i < a->max2rep; velt = dtnext(a->dict, velt), i++) {
@@ -1966,7 +2143,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
        velt && i < a->max2rep;
        velt = dtnext(a->dict, velt), i++) {
     if (cnt_sum_pcnt >= a->pcnt2rep) {
-      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2I8f pcnt limit on reported values ...]\n",
 	       rp-i, rp, a->pcnt2rep);
       break;
     }
@@ -1978,7 +2155,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
     sfprintf(outstr, ") ");
     pad = tmp-strlen(mapped_val);
     sfprintf(outstr, "%-.*s", pad, PDCI_spaces);
-    sfprintf(outstr, "  count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+    sfprintf(outstr, "  count: %10llu  pcnt-of-good-vals: %8.3I8f\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
   }
@@ -1986,7 +2163,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
 	   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .");
   sfprintf(outstr,   " . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n        SUMMING");
   sfprintf(outstr,   "%-.*s", tmp, PDCI_spaces);
-  sfprintf(outstr,   "         count: %10llu  pcnt-of-good-vals: %8.3lf\n", cnt_sum, cnt_sum_pcnt);
+  sfprintf(outstr,   "         count: %10llu  pcnt-of-good-vals: %8.3I8f\n", cnt_sum, cnt_sum_pcnt);
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
   dtdisc(a->dict,   &int_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
@@ -2015,11 +2192,11 @@ int_type ## _acc_map_report(P_t *pads, const char *prefix, const char *what, int
 }
 /* END_MACRO */
 
-#define PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64)
+#define PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr)
 
 typedef struct fpoint_type ## _dt_key_s {
-  float32or64  val;
-  Puint64     cnt;
+  Pfloat64     val;
+  Puint64      cnt;
 } fpoint_type ## _dt_key_t;
 
 typedef struct fpoint_type ## _dt_elt_s {
@@ -2082,7 +2259,7 @@ fpoint_type ## _dt_elt_free(Dt_t *dt, fpoint_type ## _dt_elt_t *a, Dtdisc_t *dis
 
 static Dtdisc_t fpoint_type ## _acc_dt_set_disc = {
   DTOFFSET(fpoint_type ## _dt_elt_t, key),     /* key     */
-  sizeof(float32or64),                       /* size    */
+  sizeof(Pfloat64),                            /* size    */
   DTOFFSET(fpoint_type ## _dt_elt_t, link),    /* link    */
   (Dtmake_f)fpoint_type ## _dt_elt_make,       /* makef   */
   (Dtfree_f)fpoint_type ## _dt_elt_free,       /* freef   */
@@ -2094,7 +2271,7 @@ static Dtdisc_t fpoint_type ## _acc_dt_set_disc = {
 
 static Dtdisc_t fpoint_type ## _acc_dt_oset_disc = {
   DTOFFSET(fpoint_type ## _dt_elt_t, key),     /* key     */
-  sizeof(float32or64),                       /* size    */
+  sizeof(Pfloat64),                            /* size    */
   DTOFFSET(fpoint_type ## _dt_elt_t, link),    /* link    */
   (Dtmake_f)fpoint_type ## _dt_elt_make,       /* makef   */
   (Dtfree_f)fpoint_type ## _dt_elt_free,       /* freef   */
@@ -2146,20 +2323,20 @@ fpoint_type ## _acc_cleanup(P_t *pads, fpoint_type ## _acc *a)
 
 void
 fpoint_type ## _acc_fold_psum(fpoint_type ## _acc *a) {
-  float32or64 pavg, navg;
+  Pfloat64 pavg, navg;
   Puint64 recent = a->good - a->fold;
   if (recent == 0) {
     return;
   }
-  pavg = a->psum / (float32or64)recent;
-  navg = ((a->avg * a->fold) + (pavg * recent))/(float32or64)a->good;
+  pavg = a->psum / (Pfloat64)recent;
+  navg = ((a->avg * a->fold) + (pavg * recent))/(Pfloat64)a->good;
   /* could test for change between a->avg and navg */
   a->avg = navg;
   a->psum = 0;
   a->fold += recent;
 }
 
-float32or64
+Pfloat64
 fpoint_type ## _acc_avg(P_t *pads, fpoint_type ## _acc *a) {
   fpoint_type ## _acc_fold_psum(a);
   return a->avg;
@@ -2168,11 +2345,12 @@ fpoint_type ## _acc_avg(P_t *pads, fpoint_type ## _acc *a) {
 Perror_t
 fpoint_type ## _acc_add(P_t *pads, fpoint_type ## _acc *a, const Pbase_pd *pd, const fpoint_type *val)
 {
-  float32or64             v          = fpoint2float32or64(*val);
+  Pfloat64                  v;
   fpoint_type ## _dt_elt_t  insert_elt;
   fpoint_type ## _dt_key_t  lookup_key;
   fpoint_type ## _dt_elt_t  *tmp1;
   PDCI_DISC_3P_CHECKS( PDCI_MacroArg2String(fpoint_type) "_acc_add", a, pd, val);
+  v = P_FPOINT2FLOAT64(*val);
   if (!a->dict) {
     return P_ERR;
   }
@@ -2217,13 +2395,13 @@ Perror_t
 fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst,
 			      fpoint_type ## _acc *a)
 {
-  int                   i, sz, rp;
-  Puint64            cnt_sum;
-  float32or64         cnt_sum_pcnt;
-  float32or64         bad_pcnt;
-  float32or64         track_pcnt;
-  float32or64         elt_pcnt;
-  Void_t                *velt;
+  int                       i, sz, rp;
+  Puint64                   cnt_sum;
+  Pfloat64                  cnt_sum_pcnt;
+  Pfloat64                  bad_pcnt;
+  Pfloat64                  track_pcnt;
+  Pfloat64                  elt_pcnt;
+  Void_t                   *velt;
   fpoint_type ## _dt_elt_t *elt;
 
   P_TRACE(pads->disc, PDCI_MacroArg2String(fpoint_type) "_acc_report2io called" );
@@ -2243,7 +2421,7 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
   }
   if (sz == 1 && a->bad == 0) {
     elt = (fpoint_type ## _dt_elt_t*)dtfirst(a->dict);
-    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %10.5lf\n",
+    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %10.5I8f\n",
 	     a->good, what, elt->key.val);
     dtnext(a->dict, 0); /* discard any iterator state */
     return P_OK;
@@ -2251,9 +2429,9 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
-    bad_pcnt = 100.0 * (a->bad / (float32or64)(a->good + a->bad));
+    bad_pcnt = 100.0 * (a->bad / (Pfloat64)(a->good + a->bad));
   }
-  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3I8f\n",
 	   a->good, a->bad, bad_pcnt);
   if (a->good == 0) {
     sfprintf(outstr, "(No good %s values.)\n", what);
@@ -2262,39 +2440,39 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
   /* check for 100% identical values */
   if (sz == 1) {
     elt = (fpoint_type ## _dt_elt_t*)dtfirst(a->dict);
-    sfprintf(outstr, "For good %s values, 100 pcnt identical: %10.5lf\n",
+    sfprintf(outstr, "For good %s values, 100 pcnt identical: %10.5I8f\n",
 	     what, elt->key.val);
     dtnext(a->dict, 0); /* discard any iterator state */
     return P_OK;
   }
   dtdisc(a->dict,   &fpoint_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
-  sfprintf(outstr, "  Characterizing %s values:  min %.5lf", what, a->min);
-  sfprintf(outstr, " max %.5lf", a->max);
-  sfprintf(outstr, " avg %.3lf\n", a->avg);
+  sfprintf(outstr, "  Characterizing %s values:  min %.5I8f", what, a->min);
+  sfprintf(outstr, " max %.5I8f", a->max);
+  sfprintf(outstr, " avg %.3I8f\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
-    track_pcnt = 100.0 * (a->tracked/(float32or64)a->good);
-    sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
+    track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+    sfprintf(outstr, "        (* hit tracking limit, tracked %.3I8f pcnt of all values *) \n", track_pcnt);
   }
   for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
        velt && i < a->max2rep;
        velt = dtnext(a->dict, velt), i++) {
     if (cnt_sum_pcnt >= a->pcnt2rep) {
-      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2I8f pcnt limit on reported values ...]\n",
 	       rp-i, rp, a->pcnt2rep);
       break;
     }
     elt = (fpoint_type ## _dt_elt_t*)velt;
-    elt_pcnt = 100.0 * (elt->key.cnt/(float32or64)a->good);
-    sfprintf(outstr, "        val: %10.5lf", elt->key.val);
-    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+    elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
+    sfprintf(outstr, "        val: %10.5I8f", elt->key.val);
+    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3I8f\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
-    cnt_sum_pcnt = 100.0 * (cnt_sum/(float32or64)a->good);
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
   }
   dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
-  sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf\n",
+  sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3I8f\n",
 	   cnt_sum, cnt_sum_pcnt);
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
@@ -2324,6 +2502,316 @@ fpoint_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int 
 }
 /* END_MACRO */
 
+#define PDCI_FLOAT_ACCUM_GEN(float_type, float_descr)
+
+typedef struct float_type ## _dt_key_s {
+  Pfloat64     val;
+  Puint64      cnt;
+} float_type ## _dt_key_t;
+
+typedef struct float_type ## _dt_elt_s {
+  float_type ## _dt_key_t key;
+  Dtlink_t link;
+} float_type ## _dt_elt_t;
+
+/*
+ * Order set comparison function: only used at the end to rehash
+ * the (formerly unordered) set.  Since same val only occurs
+ * once, ptr equivalence produces key equivalence.
+ *   different keys: sort keys by cnt field, break tie with vals
+ */
+int
+float_type ## _dt_elt_oset_cmp(Dt_t *dt, float_type ## _dt_key_t *a, float_type ## _dt_key_t *b, Dtdisc_t *disc)
+{
+  NoP(dt);
+  NoP(disc);
+  if (a == b) { /* same key */
+    return 0;
+  }
+  if (a->cnt == b->cnt) { /* same count, do val comparison */
+    return (a->val < b->val) ? -1 : 1;
+  }
+  /* different counts */
+  return (a->cnt > b->cnt) ? -1 : 1;
+}
+
+/*
+ * Unordered set comparison function: all that matters is val equality
+ * (0 => equal, 1 => not equal)
+ */
+int
+float_type ## _dt_elt_set_cmp(Dt_t *dt, float_type ## _dt_key_t *a, float_type ## _dt_key_t *b, Dtdisc_t *disc)
+{
+  NoP(dt);
+  NoP(disc);
+  if (a->val == b->val) {
+    return 0;
+  }
+  return 1;
+}
+
+void*
+float_type ## _dt_elt_make(Dt_t *dt, float_type ## _dt_elt_t *a, Dtdisc_t *disc)
+{
+  float_type ## _dt_elt_t *b;
+  if ((b = oldof(0, float_type ## _dt_elt_t, 1, 0))) {
+    b->key.val  = a->key.val;
+    b->key.cnt  = a->key.cnt;
+  }
+  return b;
+}
+
+void
+float_type ## _dt_elt_free(Dt_t *dt, float_type ## _dt_elt_t *a, Dtdisc_t *disc)
+{
+  free(a);
+}
+
+static Dtdisc_t float_type ## _acc_dt_set_disc = {
+  DTOFFSET(float_type ## _dt_elt_t, key),     /* key     */
+  sizeof(Pfloat64),                           /* size    */
+  DTOFFSET(float_type ## _dt_elt_t, link),    /* link    */
+  (Dtmake_f)float_type ## _dt_elt_make,       /* makef   */
+  (Dtfree_f)float_type ## _dt_elt_free,       /* freef   */
+  (Dtcompar_f)float_type ## _dt_elt_set_cmp,  /* comparf */
+  NiL,                                        /* hashf   */
+  NiL,                                        /* memoryf */
+  NiL                                         /* eventf  */
+};
+
+static Dtdisc_t float_type ## _acc_dt_oset_disc = {
+  DTOFFSET(float_type ## _dt_elt_t, key),     /* key     */
+  sizeof(Pfloat64),                           /* size    */
+  DTOFFSET(float_type ## _dt_elt_t, link),    /* link    */
+  (Dtmake_f)float_type ## _dt_elt_make,       /* makef   */
+  (Dtfree_f)float_type ## _dt_elt_free,       /* freef   */
+  (Dtcompar_f)float_type ## _dt_elt_oset_cmp, /* comparf */
+  NiL,                                        /* hashf   */
+  NiL,                                        /* memoryf */
+  NiL                                         /* eventf  */
+};
+
+Perror_t
+float_type ## _acc_init(P_t *pads, float_type ## _acc *a)
+{
+  PDCI_DISC_1P_CHECKS( PDCI_MacroArg2String(float_type) "_acc_init", a);
+  memset((void*)a, 0, sizeof(*a));
+  if (!(a->dict = dtopen(&float_type ## _acc_dt_set_disc, Dtset))) {
+    return P_ERR;
+  }
+  a->max2track  = pads->disc->acc_max2track;
+  a->max2rep    = pads->disc->acc_max2rep;
+  a->pcnt2rep   = pads->disc->acc_pcnt2rep;
+  return P_OK;
+}
+
+Perror_t
+float_type ## _acc_reset(P_t *pads, float_type ## _acc *a)
+{
+  Dt_t        *dict;
+
+  PDCI_DISC_1P_CHECKS( PDCI_MacroArg2String(float_type) "_acc_reset", a);
+  if (!(dict = a->dict)) {
+    return P_ERR;
+  }
+  memset((void*)a, 0, sizeof(*a));
+  dtclear(dict);
+  a->dict = dict;
+  return P_OK;
+}
+
+Perror_t
+float_type ## _acc_cleanup(P_t *pads, float_type ## _acc *a)
+{
+  PDCI_DISC_1P_CHECKS( PDCI_MacroArg2String(float_type) "_acc_cleanup", a);
+  if (a->dict) {
+    dtclose(a->dict);
+    a->dict = 0;
+  }
+  return P_OK;
+}
+
+void
+float_type ## _acc_fold_psum(float_type ## _acc *a) {
+  Pfloat64 pavg, navg;
+  Puint64 recent = a->good - a->fold;
+  if (recent == 0) {
+    return;
+  }
+  pavg = a->psum / (Pfloat64)recent;
+  navg = ((a->avg * a->fold) + (pavg * recent))/(Pfloat64)a->good;
+  /* could test for change between a->avg and navg */
+  a->avg = navg;
+  a->psum = 0;
+  a->fold += recent;
+}
+
+Pfloat64
+float_type ## _acc_avg(P_t *pads, float_type ## _acc *a) {
+  float_type ## _acc_fold_psum(a);
+  return a->avg;
+}
+
+Perror_t
+float_type ## _acc_add(P_t *pads, float_type ## _acc *a, const Pbase_pd *pd, const float_type *val)
+{
+  Pfloat64                 v;
+  float_type ## _dt_elt_t  insert_elt;
+  float_type ## _dt_key_t  lookup_key;
+  float_type ## _dt_elt_t  *tmp1;
+  PDCI_DISC_3P_CHECKS( PDCI_MacroArg2String(float_type) "_acc_add", a, pd, val);
+  v = (*val);
+  if (!a->dict) {
+    return P_ERR;
+  }
+  if (pd->errCode != P_NO_ERR) {
+    (a->bad)++;
+    return P_OK;
+  }
+  if ( (v > 0 && (v > PDCI_LARGE_POS_DBL || a->psum > PDCI_LARGE_POS_DBL)) ||
+       (v < 0 && (v < PDCI_LARGE_NEG_DBL || a->psum < PDCI_LARGE_NEG_DBL)) ) {
+    float_type ## _acc_fold_psum(a);
+  }
+  a->psum += v;
+  (a->good)++;
+  if (a->good == 1) {
+    a->min = a->max = v;
+  } else if (v < a->min) {
+    a->min = v;
+  } else if (v > a->max) {
+    a->max = v;
+  }
+  if (v == 0 || dtsize(a->dict) < a->max2track) {
+    insert_elt.key.val = v;
+    insert_elt.key.cnt = 0;
+    if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
+      P_WARN(pads->disc, "** PADSC internal error: dtinsert failed (out of memory?) **");
+      return P_ERR;
+    }
+    (tmp1->key.cnt)++;
+    (a->tracked)++;
+  } else {
+    lookup_key.val = v;
+    lookup_key.cnt = 0;
+    if ((tmp1 = dtmatch(a->dict, &lookup_key))) {
+      (tmp1->key.cnt)++;
+      (a->tracked)++;
+    }
+  }
+  return P_OK;
+}
+
+Perror_t
+float_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst,
+			     float_type ## _acc *a)
+{
+  int                      i, sz, rp;
+  Puint64                  cnt_sum;
+  Pfloat64                 cnt_sum_pcnt;
+  Pfloat64                 bad_pcnt;
+  Pfloat64                 track_pcnt;
+  Pfloat64                 elt_pcnt;
+  Void_t                  *velt;
+  float_type ## _dt_elt_t *elt;
+
+  P_TRACE(pads->disc, PDCI_MacroArg2String(float_type) "_acc_report2io called" );
+  if (!prefix || *prefix == 0) {
+    prefix = "<top>";
+  }
+  if (!what) {
+    what = float_descr;
+  }
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  float_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    sfprintf(outstr, "(No %s values.)\n", what);
+    return P_OK;
+  }
+  if (sz == 1 && a->bad == 0) {
+    elt = (float_type ## _dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %I810.5f\n",
+	     a->good, what, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
+  if (a->good == 0) {
+    bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
+  } else {
+    bad_pcnt = 100.0 * (a->bad / (Pfloat64)(a->good + a->bad));
+  }
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %I88.3f\n",
+	   a->good, a->bad, bad_pcnt);
+  if (a->good == 0) {
+    sfprintf(outstr, "(No good %s values.)\n", what);
+    return P_OK;
+  }
+  /* check for 100% identical values */
+  if (sz == 1) {
+    elt = (float_type ## _dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "For good %s values, 100 pcnt identical: %I810.5f\n",
+	     what, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
+  dtdisc(a->dict,   &float_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+  sfprintf(outstr, "  Characterizing %s values:  min %I8.5f", what, a->min);
+  sfprintf(outstr, " max %I8.5f", a->max);
+  sfprintf(outstr, " avg %I8.3f\n", a->avg);
+  sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
+  if (sz == a->max2track && a->good > a->tracked) {
+    track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+    sfprintf(outstr, "        (* hit tracking limit, tracked %I8.3f pcnt of all values *) \n", track_pcnt);
+  }
+  for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
+       velt && i < a->max2rep;
+       velt = dtnext(a->dict, velt), i++) {
+    if (cnt_sum_pcnt >= a->pcnt2rep) {
+      sfprintf(outstr, " [... %d of top %d values not reported due to %I8.2f pcnt limit on reported values ...]\n",
+	       rp-i, rp, a->pcnt2rep);
+      break;
+    }
+    elt = (float_type ## _dt_elt_t*)velt;
+    elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
+    sfprintf(outstr, "        val: %I810.5f", elt->key.val);
+    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %I88.3f\n", elt->key.cnt, elt_pcnt);
+    cnt_sum += elt->key.cnt;
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
+  }
+  dtnext(a->dict, 0); /* discard any iterator state */
+  sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
+  sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %I88.3f\n",
+	   cnt_sum, cnt_sum_pcnt);
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &float_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
+Perror_t
+float_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int nst,
+			  float_type ## _acc *a)
+{
+  Sfio_t *tmpstr;
+  Perror_t res;
+  PDCI_DISC_1P_CHECKS( PDCI_MacroArg2String(float_type) "_acc_report", a);
+  if (!pads->disc->error_fn) {
+    return P_OK;
+  }
+  if (!(tmpstr = sfstropen ())) { 
+    return P_ERR;
+  }
+  res = float_type ## _acc_report2io(pads, tmpstr, prefix, what, nst, a);
+  if (res == P_OK) {
+    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+  }
+  sfstrclose (tmpstr);
+  return res;
+}
+/* END_MACRO */
+
 /* ********************************* BEGIN_TRAILER ******************************** */
 
 #if P_CONFIG_ACCUM_FUNCTIONS > 0
@@ -2331,12 +2819,15 @@ fpoint_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int 
             PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, mfmt, fold_test)
 #  define PDCI_INT_ACCUM_MAP_REPORT(int_type, int_descr, fmt, mfmt) \
             PDCI_INT_ACCUM_MAP_REPORT_GEN(int_type, int_descr, fmt, mfmt)
-#  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64) \
-            PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64)
+#  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr) \
+            PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr)
+#  define PDCI_FLOAT_ACCUM(float_type, float_descr) \
+            PDCI_FLOAT_ACCUM_GEN(float_type, float_descr)
 #else
 #  define PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, mfmt, fold_test)
 #  define PDCI_INT_ACCUM_MAP_REPORT(int_type, int_descr, fmt, mfmt)
-#  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64)
+#  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr)
+#  define PDCI_FLOAT_ACCUM(float_type, float_descr)
 #endif
 
 /* ********************************** END_MACROS ********************************** */
@@ -2396,7 +2887,7 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes)
+fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
 {
   int digit;
   int  neg = 0, range_err = 0;
@@ -2450,7 +2941,7 @@ Pstring2int_fn(const Pstring *s)
   if (!s) return int_min;
   ptr = bytes = (Pbyte*)s->str;
   max_bytes = s->len;
-  res = fn_name ## _max_bytes(bytes, &ptr, max_bytes);
+  res = fn_name ## _max_bytes(bytes, max_bytes, &ptr);
   if (errno) return res;
   while (ptr - bytes < max_bytes && PDCI_is_a_space(*ptr)) {
     ptr++;
@@ -2537,7 +3028,7 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
 }
 
 targ_type
-fn_name ## _max_bytes(const Pbyte *bytes, Pbyte **ptr_out, size_t max_bytes)
+fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
 {
   int digit;
   int  range_err = 0;
@@ -2591,7 +3082,7 @@ Pstring2int_fn(const Pstring *s)
   if (!s) return int_max;
   ptr = bytes = (Pbyte*)s->str;
   max_bytes = s->len;
-  res = fn_name ## _max_bytes(bytes, &ptr, max_bytes);
+  res = fn_name ## _max_bytes(bytes, max_bytes, &ptr);
   if (errno) return res;
   while (ptr - bytes < max_bytes && PDCI_is_a_space(*ptr)) {
     ptr++;
@@ -2631,7 +3122,7 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 }
 /* END_MACRO */
 
-#define PDCI_INT2A_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
+#define PDCI_NUM2A_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
 ssize_t
 rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, targ_type i)
 {
@@ -2839,7 +3330,7 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 }
 /* END_MACRO */
 
-#define PDCI_INT2E_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
+#define PDCI_NUM2E_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
 ssize_t
 rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, targ_type i)
 {
@@ -3806,6 +4297,165 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
 }
 /* END_MACRO */
 
+#define PDCI_A2FLOAT_GEN(fn_name, targ_type, float_min, float_max, Pstring2float_fn)
+targ_type
+fn_name(const Pbyte *bytes, Pbyte **ptr_out)
+{
+  _ast_fltmax_t d;
+
+  errno = 0;
+  d = strtold(bytes, (char**)ptr_out);
+  if (d == LDBL_MAX || d > float_max) return float_max;
+  if (d == LDBL_MIN || d < float_min) return float_min;
+  return (targ_type)d;
+}
+
+/* there is no way to tell strtold to not do range checking, and 
+   at leat for now we decided not to implement our own routine */
+targ_type
+fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
+{
+  _ast_fltmax_t d;
+
+  errno = 0;
+  d = strtold(bytes, (char**)ptr_out);
+  if (d == LDBL_MAX || d > float_max) return float_max;
+  if (d == LDBL_MIN || d < float_min) return float_min;
+  return (targ_type)d;
+}
+
+targ_type
+fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
+{
+  _ast_fltmax_t d;
+
+  errno = 0;
+  d = strntold(bytes, max_bytes, (char**)ptr_out);
+  if (d == LDBL_MAX || d > float_max) return float_max;
+  if (d == LDBL_MIN || d < float_min) return float_min;
+  return (targ_type)d;
+}
+
+targ_type
+Pstring2float_fn(const Pstring *s)
+{
+  Pbyte *bytes, *ptr;
+  size_t max_bytes;
+  targ_type res;
+
+  if (!s) return float_min;
+  ptr = bytes = (Pbyte*)s->str;
+  max_bytes = s->len;
+  res = fn_name ## _max_bytes(bytes, max_bytes, &ptr);
+  if (errno) return res;
+  while (ptr - bytes < max_bytes && PDCI_is_a_space(*ptr)) {
+    ptr++;
+  }
+  if (ptr - bytes != max_bytes) {
+    errno = EINVAL;
+    return float_min;
+  }
+  return res;
+}
+/* END_MACRO */
+
+#define PDCI_E2FLOAT_GEN(fn_name, targ_type, float_min, float_max)
+targ_type
+fn_name(const Pbyte *bytes, Pbyte **ptr_out)
+{
+  Sfio_t        *tmpstr;
+  char          *ascii_bytes, *ascii_ptr;
+  _ast_fltmax_t  d;
+
+  if (!(tmpstr = sfstropen ())) { 
+    return float_min;
+  }
+  while (PDCI_is_e_space(*bytes)) {
+    bytes++;
+  }
+  while ((*bytes) == P_EBCDIC_PLUS || (*bytes) == P_EBCDIC_MINUS || (*bytes) == P_EBCDIC_DOT || PDCI_is_e_digit(*bytes)) {
+    sfputc(tmpstr, P_mod_ea_tab[(int)(*bytes)]);
+    bytes++;
+  }
+  ascii_bytes = sfstruse(tmpstr);
+  errno = 0;
+  d = strtold(bytes, &ascii_ptr);
+  if (ascii_ptr) {
+    (*ptr_out) = (Pbyte*)bytes + (ascii_ptr - ascii_bytes);
+  } else {
+    (*ptr_out) = 0;
+  }
+  sfstrclose(tmpstr);
+  if (d == LDBL_MAX || d > float_max) return float_max;
+  if (d == LDBL_MIN || d < float_min) return float_min;
+  return (targ_type)d;
+}
+
+/* there is no way to tell strtold to not do range checking, and 
+   at leat for now we decided not to implement our own routine */
+targ_type
+fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
+{
+  Sfio_t        *tmpstr;
+  char          *ascii_bytes, *ascii_ptr;
+  _ast_fltmax_t  d;
+
+  if (!(tmpstr = sfstropen ())) { 
+    return float_min;
+  }
+  while (PDCI_is_e_space(*bytes)) {
+    bytes++;
+  }
+  while ((*bytes) == P_EBCDIC_PLUS || (*bytes) == P_EBCDIC_MINUS || (*bytes) == P_EBCDIC_DOT || PDCI_is_e_digit(*bytes)) {
+    sfputc(tmpstr, P_mod_ea_tab[(int)(*bytes)]);
+    bytes++;
+  }
+  ascii_bytes = sfstruse(tmpstr);
+  errno = 0;
+  d = strtold(bytes, &ascii_ptr);
+  if (ascii_ptr) {
+    (*ptr_out) = (Pbyte*)bytes + (ascii_ptr - ascii_bytes);
+  } else {
+    (*ptr_out) = 0;
+  }
+  sfstrclose(tmpstr);
+  if (d == LDBL_MAX || d > float_max) return float_max;
+  if (d == LDBL_MIN || d < float_min) return float_min;
+  return (targ_type)d;
+}
+
+targ_type
+fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
+{
+  Sfio_t        *tmpstr;
+  char          *ascii_bytes, *ascii_ptr;
+  _ast_fltmax_t  d;
+
+  if (!(tmpstr = sfstropen ())) { 
+    return float_min;
+  }
+  while (PDCI_is_e_space(*bytes)) {
+    bytes++;
+  }
+  while ((*bytes) == P_EBCDIC_PLUS || (*bytes) == P_EBCDIC_MINUS || (*bytes) == P_EBCDIC_DOT || PDCI_is_e_digit(*bytes)) {
+    sfputc(tmpstr, P_mod_ea_tab[(int)(*bytes)]);
+    bytes++;
+  }
+  ascii_bytes = sfstruse(tmpstr);
+  errno = 0;
+  d = strntold(bytes, max_bytes, &ascii_ptr);
+  if (ascii_ptr) {
+    (*ptr_out) = (Pbyte*)bytes + (ascii_ptr - ascii_bytes);
+  } else {
+    (*ptr_out) = 0;
+  }
+  sfstrclose(tmpstr);
+  if (d == LDBL_MAX || d > float_max) return float_max;
+  if (d == LDBL_MIN || d < float_min) return float_min;
+  return (targ_type)d;
+}
+/* END_MACRO */
+
 /* ********************************* BEGIN_TRAILER ******************************** */
 
 /* We need conversion routines for helpers such as Pstring2int32 */
@@ -3815,7 +4465,7 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
 #  define PDCI_A2UINT(fn_name, targ_type, int_max, Pstring2int_fn) \
             PDCI_A2UINT_GEN(fn_name, targ_type, int_max, Pstring2int_fn)
 #  define PDCI_INT2A(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w) \
-            PDCI_INT2A_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
+            PDCI_NUM2A_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
 #else
 #  define PDCI_A2INT(fn_name, targ_type, int_min, int_max, Pstring2int_fn)
 #  define PDCI_A2UINT(fn_name, targ_type, int_max, Pstring2int_fn)
@@ -3828,7 +4478,7 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
 #  define PDCI_E2UINT(fn_name, targ_type, int_max) \
             PDCI_E2UINT_GEN(fn_name, targ_type, int_max)
 #  define PDCI_INT2E(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w) \
-            PDCI_INT2E_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
+            PDCI_NUM2E_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
 #else
 #  define PDCI_E2INT(fn_name, targ_type, int_min, int_max)
 #  define PDCI_E2UINT(fn_name, targ_type, int_max)
@@ -3885,6 +4535,26 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
 #  define PDCI_SBH2UINT(fn_name, rev_fn_name, targ_type, sb_endian, int_max, nb_max)
 #endif
 
+#if P_CONFIG_A_FLOAT > 0
+#  define PDCI_A2FLOAT(fn_name, targ_type, float_min, float_max, Pstring2float_fn) \
+            PDCI_A2FLOAT_GEN(fn_name, targ_type, float_min, float_max, Pstring2float_fn)
+#  define PDCI_FLOAT2A(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w) \
+            PDCI_NUM2A_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
+#else
+#  define PDCI_A2FLOAT(fn_name, targ_type, float_min, float_max, Pstring2float_fn)
+#  define PDCI_FLOAT2A(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
+#endif
+
+#if P_CONFIG_E_FLOAT > 0
+#  define PDCI_E2FLOAT(fn_name, targ_type, float_min, float_max) \
+            PDCI_E2FLOAT_GEN(fn_name, targ_type, float_min, float_max)
+#  define PDCI_FLOAT2E(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w) \
+            PDCI_NUM2E_GEN(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
+#else
+#  define PDCI_E2FLOAT(fn_name, targ_type, float_min, float_max)
+#  define PDCI_FLOAT2E(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w)
+#endif
+
 /* ********************************** END_MACROS ********************************** */
 
 /* ********************** BEGIN_MACGEN(pads-read-gen.c) *********************** */
@@ -3905,33 +4575,33 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
 /* VARIABLE-WIDTH ASCII INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_A_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
+ * PDCI_A_INT_READ_FN(fn_pref, targ_type, bytes2num_fn)
  */
 
-PDCI_A_INT_READ_FN(Pa_int8,   Pint8,   PDCI_a2int8,   P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit)
-PDCI_A_INT_READ_FN(Pa_int16,  Pint16,  PDCI_a2int16,  P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit)
-PDCI_A_INT_READ_FN(Pa_int32,  Pint32,  PDCI_a2int32,  P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit)
-PDCI_A_INT_READ_FN(Pa_int64,  Pint64,  PDCI_a2int64,  P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit)
-PDCI_A_INT_READ_FN(Pa_uint8,  Puint8,  PDCI_a2uint8,  P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit)
-PDCI_A_INT_READ_FN(Pa_uint16, Puint16, PDCI_a2uint16, P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit)
-PDCI_A_INT_READ_FN(Pa_uint32, Puint32, PDCI_a2uint32, P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit)
-PDCI_A_INT_READ_FN(Pa_uint64, Puint64, PDCI_a2uint64, P_INVALID_A_NUM, PDCI_is_a_space, PDCI_is_a_digit)
+PDCI_A_INT_READ_FN(Pa_int8,   Pint8,   PDCI_a2int8  )
+PDCI_A_INT_READ_FN(Pa_int16,  Pint16,  PDCI_a2int16 )
+PDCI_A_INT_READ_FN(Pa_int32,  Pint32,  PDCI_a2int32 )
+PDCI_A_INT_READ_FN(Pa_int64,  Pint64,  PDCI_a2int64 )
+PDCI_A_INT_READ_FN(Pa_uint8,  Puint8,  PDCI_a2uint8 )
+PDCI_A_INT_READ_FN(Pa_uint16, Puint16, PDCI_a2uint16)
+PDCI_A_INT_READ_FN(Pa_uint32, Puint32, PDCI_a2uint32)
+PDCI_A_INT_READ_FN(Pa_uint64, Puint64, PDCI_a2uint64)
 
 /* ================================================================================ */
 /* FIXED-WIDTH ASCII INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_A_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
+ * PDCI_A_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn)
  */
 
-PDCI_A_INT_FW_READ_FN(Pa_int8_FW_read,   Pint8,   PDCI_a2int8,   P_INVALID_A_NUM, PDCI_is_a_space)
-PDCI_A_INT_FW_READ_FN(Pa_int16_FW_read,  Pint16,  PDCI_a2int16,  P_INVALID_A_NUM, PDCI_is_a_space)
-PDCI_A_INT_FW_READ_FN(Pa_int32_FW_read,  Pint32,  PDCI_a2int32,  P_INVALID_A_NUM, PDCI_is_a_space)
-PDCI_A_INT_FW_READ_FN(Pa_int64_FW_read,  Pint64,  PDCI_a2int64,  P_INVALID_A_NUM, PDCI_is_a_space)
-PDCI_A_INT_FW_READ_FN(Pa_uint8_FW_read,  Puint8,  PDCI_a2uint8,  P_INVALID_A_NUM, PDCI_is_a_space)
-PDCI_A_INT_FW_READ_FN(Pa_uint16_FW_read, Puint16, PDCI_a2uint16, P_INVALID_A_NUM, PDCI_is_a_space)
-PDCI_A_INT_FW_READ_FN(Pa_uint32_FW_read, Puint32, PDCI_a2uint32, P_INVALID_A_NUM, PDCI_is_a_space)
-PDCI_A_INT_FW_READ_FN(Pa_uint64_FW_read, Puint64, PDCI_a2uint64, P_INVALID_A_NUM, PDCI_is_a_space)
+PDCI_A_INT_FW_READ_FN(Pa_int8_FW_read,   Pint8,   PDCI_a2int8  )
+PDCI_A_INT_FW_READ_FN(Pa_int16_FW_read,  Pint16,  PDCI_a2int16 )
+PDCI_A_INT_FW_READ_FN(Pa_int32_FW_read,  Pint32,  PDCI_a2int32 )
+PDCI_A_INT_FW_READ_FN(Pa_int64_FW_read,  Pint64,  PDCI_a2int64 )
+PDCI_A_INT_FW_READ_FN(Pa_uint8_FW_read,  Puint8,  PDCI_a2uint8 )
+PDCI_A_INT_FW_READ_FN(Pa_uint16_FW_read, Puint16, PDCI_a2uint16)
+PDCI_A_INT_FW_READ_FN(Pa_uint32_FW_read, Puint32, PDCI_a2uint32)
+PDCI_A_INT_FW_READ_FN(Pa_uint64_FW_read, Puint64, PDCI_a2uint64)
 
 /* ================================================================================ */
 /* BINARY INTEGER READ FUNCTIONS */
@@ -3967,88 +4637,88 @@ PDCI_B_INT_READ_FN(Pb_uint64_read, Puint64, 8, 7)
 /* VARIABLE-WIDTH EBCDIC CHAR ENCODING INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_E_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
+ * PDCI_E_INT_READ_FN(fn_pref, targ_type, bytes2num_fn)
  */
 
-PDCI_E_INT_READ_FN(Pe_int8,   Pint8,   PDCI_e2int8,   P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit)
-PDCI_E_INT_READ_FN(Pe_int16,  Pint16,  PDCI_e2int16,  P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit)
-PDCI_E_INT_READ_FN(Pe_int32,  Pint32,  PDCI_e2int32,  P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit)
-PDCI_E_INT_READ_FN(Pe_int64,  Pint64,  PDCI_e2int64,  P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit)
-PDCI_E_INT_READ_FN(Pe_uint8,  Puint8,  PDCI_e2uint8,  P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit)
-PDCI_E_INT_READ_FN(Pe_uint16, Puint16, PDCI_e2uint16, P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit)
-PDCI_E_INT_READ_FN(Pe_uint32, Puint32, PDCI_e2uint32, P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit)
-PDCI_E_INT_READ_FN(Pe_uint64, Puint64, PDCI_e2uint64, P_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit)
+PDCI_E_INT_READ_FN(Pe_int8,   Pint8,   PDCI_e2int8  )
+PDCI_E_INT_READ_FN(Pe_int16,  Pint16,  PDCI_e2int16 )
+PDCI_E_INT_READ_FN(Pe_int32,  Pint32,  PDCI_e2int32 )
+PDCI_E_INT_READ_FN(Pe_int64,  Pint64,  PDCI_e2int64 )
+PDCI_E_INT_READ_FN(Pe_uint8,  Puint8,  PDCI_e2uint8 )
+PDCI_E_INT_READ_FN(Pe_uint16, Puint16, PDCI_e2uint16)
+PDCI_E_INT_READ_FN(Pe_uint32, Puint32, PDCI_e2uint32)
+PDCI_E_INT_READ_FN(Pe_uint64, Puint64, PDCI_e2uint64)
 
 /* ================================================================================ */
 /* FIXED-WIDTH EBCDIC CHAR ENCODING INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_E_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
+ * PDCI_E_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn)
  */
 
-PDCI_E_INT_FW_READ_FN(Pe_int8_FW_read,   Pint8,   PDCI_e2int8,   P_INVALID_E_NUM, PDCI_is_e_space)
-PDCI_E_INT_FW_READ_FN(Pe_int16_FW_read,  Pint16,  PDCI_e2int16,  P_INVALID_E_NUM, PDCI_is_e_space)
-PDCI_E_INT_FW_READ_FN(Pe_int32_FW_read,  Pint32,  PDCI_e2int32,  P_INVALID_E_NUM, PDCI_is_e_space)
-PDCI_E_INT_FW_READ_FN(Pe_int64_FW_read,  Pint64,  PDCI_e2int64,  P_INVALID_E_NUM, PDCI_is_e_space)
-PDCI_E_INT_FW_READ_FN(Pe_uint8_FW_read,  Puint8,  PDCI_e2uint8,  P_INVALID_E_NUM, PDCI_is_e_space)
-PDCI_E_INT_FW_READ_FN(Pe_uint16_FW_read, Puint16, PDCI_e2uint16, P_INVALID_E_NUM, PDCI_is_e_space)
-PDCI_E_INT_FW_READ_FN(Pe_uint32_FW_read, Puint32, PDCI_e2uint32, P_INVALID_E_NUM, PDCI_is_e_space)
-PDCI_E_INT_FW_READ_FN(Pe_uint64_FW_read, Puint64, PDCI_e2uint64, P_INVALID_E_NUM, PDCI_is_e_space)
+PDCI_E_INT_FW_READ_FN(Pe_int8_FW_read,   Pint8,   PDCI_e2int8  )
+PDCI_E_INT_FW_READ_FN(Pe_int16_FW_read,  Pint16,  PDCI_e2int16 )
+PDCI_E_INT_FW_READ_FN(Pe_int32_FW_read,  Pint32,  PDCI_e2int32 )
+PDCI_E_INT_FW_READ_FN(Pe_int64_FW_read,  Pint64,  PDCI_e2int64 )
+PDCI_E_INT_FW_READ_FN(Pe_uint8_FW_read,  Puint8,  PDCI_e2uint8 )
+PDCI_E_INT_FW_READ_FN(Pe_uint16_FW_read, Puint16, PDCI_e2uint16)
+PDCI_E_INT_FW_READ_FN(Pe_uint32_FW_read, Puint32, PDCI_e2uint32)
+PDCI_E_INT_FW_READ_FN(Pe_uint64_FW_read, Puint64, PDCI_e2uint64)
 
 /* ================================================================================ */
 /* EBC, BCD, SBL, SBH NUMERIC ENCODING INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_EBC_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+ * PDCI_EBC_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width)
  */
 
-PDCI_EBC_INT_READ_FN(Pebc_int8_read,   Pint8,   PDCI_ebc2int8,   P_INVALID_EBC_NUM, num_digits_or_bytes)
-PDCI_EBC_INT_READ_FN(Pebc_int16_read,  Pint16,  PDCI_ebc2int16,  P_INVALID_EBC_NUM, num_digits_or_bytes)
-PDCI_EBC_INT_READ_FN(Pebc_int32_read,  Pint32,  PDCI_ebc2int32,  P_INVALID_EBC_NUM, num_digits_or_bytes)
-PDCI_EBC_INT_READ_FN(Pebc_int64_read,  Pint64,  PDCI_ebc2int64,  P_INVALID_EBC_NUM, num_digits_or_bytes)
-PDCI_EBC_INT_READ_FN(Pebc_uint8_read,  Puint8,  PDCI_ebc2uint8,  P_INVALID_EBC_NUM, num_digits_or_bytes)
-PDCI_EBC_INT_READ_FN(Pebc_uint16_read, Puint16, PDCI_ebc2uint16, P_INVALID_EBC_NUM, num_digits_or_bytes)
-PDCI_EBC_INT_READ_FN(Pebc_uint32_read, Puint32, PDCI_ebc2uint32, P_INVALID_EBC_NUM, num_digits_or_bytes)
-PDCI_EBC_INT_READ_FN(Pebc_uint64_read, Puint64, PDCI_ebc2uint64, P_INVALID_EBC_NUM, num_digits_or_bytes)
+PDCI_EBC_INT_READ_FN(Pebc_int8_read,   Pint8,   PDCI_ebc2int8,   num_digits_or_bytes)
+PDCI_EBC_INT_READ_FN(Pebc_int16_read,  Pint16,  PDCI_ebc2int16,  num_digits_or_bytes)
+PDCI_EBC_INT_READ_FN(Pebc_int32_read,  Pint32,  PDCI_ebc2int32,  num_digits_or_bytes)
+PDCI_EBC_INT_READ_FN(Pebc_int64_read,  Pint64,  PDCI_ebc2int64,  num_digits_or_bytes)
+PDCI_EBC_INT_READ_FN(Pebc_uint8_read,  Puint8,  PDCI_ebc2uint8,  num_digits_or_bytes)
+PDCI_EBC_INT_READ_FN(Pebc_uint16_read, Puint16, PDCI_ebc2uint16, num_digits_or_bytes)
+PDCI_EBC_INT_READ_FN(Pebc_uint32_read, Puint32, PDCI_ebc2uint32, num_digits_or_bytes)
+PDCI_EBC_INT_READ_FN(Pebc_uint64_read, Puint64, PDCI_ebc2uint64, num_digits_or_bytes)
 
 /*
- * PDCI_BCD_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+ * PDCI_BCD_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width)
  */
 
-PDCI_BCD_INT_READ_FN(Pbcd_int8_read,   Pint8,   PDCI_bcd2int8,   P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
-PDCI_BCD_INT_READ_FN(Pbcd_int16_read,  Pint16,  PDCI_bcd2int16,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
-PDCI_BCD_INT_READ_FN(Pbcd_int32_read,  Pint32,  PDCI_bcd2int32,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
-PDCI_BCD_INT_READ_FN(Pbcd_int64_read,  Pint64,  PDCI_bcd2int64,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
-PDCI_BCD_INT_READ_FN(Pbcd_uint8_read,  Puint8,  PDCI_bcd2uint8,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
-PDCI_BCD_INT_READ_FN(Pbcd_uint16_read, Puint16, PDCI_bcd2uint16, P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
-PDCI_BCD_INT_READ_FN(Pbcd_uint32_read, Puint32, PDCI_bcd2uint32, P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
-PDCI_BCD_INT_READ_FN(Pbcd_uint64_read, Puint64, PDCI_bcd2uint64, P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_int8_read,   Pint8,   PDCI_bcd2int8,   ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_int16_read,  Pint16,  PDCI_bcd2int16,  ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_int32_read,  Pint32,  PDCI_bcd2int32,  ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_int64_read,  Pint64,  PDCI_bcd2int64,  ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_uint8_read,  Puint8,  PDCI_bcd2uint8,  ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_uint16_read, Puint16, PDCI_bcd2uint16, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_uint32_read, Puint32, PDCI_bcd2uint32, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_uint64_read, Puint64, PDCI_bcd2uint64, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
 
 /*
- * PDCI_SBL_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+ * PDCI_SBL_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width)
  */
 
-PDCI_SBL_INT_READ_FN(Psbl_int8_read,   Pint8,   PDCI_sbl2int8,   P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBL_INT_READ_FN(Psbl_int16_read,  Pint16,  PDCI_sbl2int16,  P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBL_INT_READ_FN(Psbl_int32_read,  Pint32,  PDCI_sbl2int32,  P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBL_INT_READ_FN(Psbl_int64_read,  Pint64,  PDCI_sbl2int64,  P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBL_INT_READ_FN(Psbl_uint8_read,  Puint8,  PDCI_sbl2uint8,  P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBL_INT_READ_FN(Psbl_uint16_read, Puint16, PDCI_sbl2uint16, P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBL_INT_READ_FN(Psbl_uint32_read, Puint32, PDCI_sbl2uint32, P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBL_INT_READ_FN(Psbl_uint64_read, Puint64, PDCI_sbl2uint64, P_UNEXPECTED_ERR, num_digits_or_bytes)
+PDCI_SBL_INT_READ_FN(Psbl_int8_read,   Pint8,   PDCI_sbl2int8,   num_digits_or_bytes)
+PDCI_SBL_INT_READ_FN(Psbl_int16_read,  Pint16,  PDCI_sbl2int16,  num_digits_or_bytes)
+PDCI_SBL_INT_READ_FN(Psbl_int32_read,  Pint32,  PDCI_sbl2int32,  num_digits_or_bytes)
+PDCI_SBL_INT_READ_FN(Psbl_int64_read,  Pint64,  PDCI_sbl2int64,  num_digits_or_bytes)
+PDCI_SBL_INT_READ_FN(Psbl_uint8_read,  Puint8,  PDCI_sbl2uint8,  num_digits_or_bytes)
+PDCI_SBL_INT_READ_FN(Psbl_uint16_read, Puint16, PDCI_sbl2uint16, num_digits_or_bytes)
+PDCI_SBL_INT_READ_FN(Psbl_uint32_read, Puint32, PDCI_sbl2uint32, num_digits_or_bytes)
+PDCI_SBL_INT_READ_FN(Psbl_uint64_read, Puint64, PDCI_sbl2uint64, num_digits_or_bytes)
 
 /*
- * PDCI_SBH_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+ * PDCI_SBH_INT_READ_FN(fn_name, targ_type, bytes2num_fn, width)
  */
 
-PDCI_SBH_INT_READ_FN(Psbh_int8_read,   Pint8,   PDCI_sbh2int8,   P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBH_INT_READ_FN(Psbh_int16_read,  Pint16,  PDCI_sbh2int16,  P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBH_INT_READ_FN(Psbh_int32_read,  Pint32,  PDCI_sbh2int32,  P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBH_INT_READ_FN(Psbh_int64_read,  Pint64,  PDCI_sbh2int64,  P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBH_INT_READ_FN(Psbh_uint8_read,  Puint8,  PDCI_sbh2uint8,  P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBH_INT_READ_FN(Psbh_uint16_read, Puint16, PDCI_sbh2uint16, P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBH_INT_READ_FN(Psbh_uint32_read, Puint32, PDCI_sbh2uint32, P_UNEXPECTED_ERR, num_digits_or_bytes)
-PDCI_SBH_INT_READ_FN(Psbh_uint64_read, Puint64, PDCI_sbh2uint64, P_UNEXPECTED_ERR, num_digits_or_bytes)
+PDCI_SBH_INT_READ_FN(Psbh_int8_read,   Pint8,   PDCI_sbh2int8,   num_digits_or_bytes)
+PDCI_SBH_INT_READ_FN(Psbh_int16_read,  Pint16,  PDCI_sbh2int16,  num_digits_or_bytes)
+PDCI_SBH_INT_READ_FN(Psbh_int32_read,  Pint32,  PDCI_sbh2int32,  num_digits_or_bytes)
+PDCI_SBH_INT_READ_FN(Psbh_int64_read,  Pint64,  PDCI_sbh2int64,  num_digits_or_bytes)
+PDCI_SBH_INT_READ_FN(Psbh_uint8_read,  Puint8,  PDCI_sbh2uint8,  num_digits_or_bytes)
+PDCI_SBH_INT_READ_FN(Psbh_uint16_read, Puint16, PDCI_sbh2uint16, num_digits_or_bytes)
+PDCI_SBH_INT_READ_FN(Psbh_uint32_read, Puint32, PDCI_sbh2uint32, num_digits_or_bytes)
+PDCI_SBH_INT_READ_FN(Psbh_uint64_read, Puint64, PDCI_sbh2uint64, num_digits_or_bytes)
 
 /* ================================================================================ */
 /* EBC, BCD, SBL, SBH NUMERIC ENCODING FIXED POINT READ FUNCTIONS */
@@ -4105,6 +4775,26 @@ PDCI_SBH_FPOINT_READ_FN(Psbh_ufpoint16_read, Pufpoint16, Psbh_uint16_read, num_d
 PDCI_SBH_FPOINT_READ_FN(Psbh_ufpoint32_read, Pufpoint32, Psbh_uint32_read, num_digits_or_bytes,  9)
 PDCI_SBH_FPOINT_READ_FN(Psbh_ufpoint64_read, Pufpoint64, Psbh_uint64_read, num_digits_or_bytes, 19)
 
+/* ================================================================================ */
+/* VARIABLE-WIDTH ASCII FLOAT READ FUNCTIONS */
+
+/*
+ * PDCI_A_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn)
+ */
+
+PDCI_A_FLOAT_READ_FN(Pa_float32,  Pfloat32,  PDCI_a2float32 )
+PDCI_A_FLOAT_READ_FN(Pa_float64,  Pfloat64,  PDCI_a2float64 )
+
+/* ================================================================================ */
+/* VARIABLE-WIDTH EBCDIC FLOAT READ FUNCTIONS */
+
+/*
+ * PDCI_E_FLOAT_READ_FN(fn_pref, targ_type, bytes2num_fn)
+ */
+
+PDCI_E_FLOAT_READ_FN(Pe_float32,  Pfloat32,  PDCI_e2float32 )
+PDCI_E_FLOAT_READ_FN(Pe_float64,  Pfloat64,  PDCI_e2float64 )
+
 /* ********************************* BEGIN_TRAILER ******************************** */
 
 /*
@@ -4135,7 +4825,7 @@ Pdummy_read(P_t *pads, const Pbase_m *m, Pint32 dummy_val, Pbase_pd *pd, Pint32 
 #gen_include "pads-write-macros-gen.h"
 
 /* ================================================================================ */
-/* ASCII INTEGER WRITE FUNCTIONS */
+/* WRITE FUNCTIONS */
 
 /*
  * PDCI_A_INT_FW_WRITE_FN(fn_pref, targ_type, wfmt, inv_type, inv_val, sfpr_macro_w)
@@ -4164,9 +4854,6 @@ PDCI_A_INT_WRITE_FN(Pa_uint8,  Puint8,  "%I1u",   "Puint8",  P_UINT8_DEF_INV_VAL
 PDCI_A_INT_WRITE_FN(Pa_uint16, Puint16, "%I2u",   "Puint16", P_UINT16_DEF_INV_VAL, PDCI_FMT_UINT_WRITE)
 PDCI_A_INT_WRITE_FN(Pa_uint32, Puint32, "%I4u",   "Puint32", P_UINT32_DEF_INV_VAL, PDCI_FMT_UINT_WRITE)
 PDCI_A_INT_WRITE_FN(Pa_uint64, Puint64, "%I8u",   "Puint64", P_UINT64_DEF_INV_VAL, PDCI_FMT_UINT_WRITE)
-
-/* ================================================================================ */
-/* VARIABLE-WIDTH EBCDIC CHAR ENCODING INTEGER WRITE FUNCTIONS */
 
 /*
  * PDCI_E_INT_FW_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref)
@@ -4311,6 +4998,20 @@ PDCI_SBH_FPOINT_WRITE_FN(Psbh_ufpoint16, Pufpoint16, PDCI_uint16_2sbh, "Pufpoint
 PDCI_SBH_FPOINT_WRITE_FN(Psbh_ufpoint32, Pufpoint32, PDCI_uint32_2sbh, "Pufpoint32", P_UINT32_DEF_INV_VAL)
 PDCI_SBH_FPOINT_WRITE_FN(Psbh_ufpoint64, Pufpoint64, PDCI_uint64_2sbh, "Pufpoint64", P_UINT64_DEF_INV_VAL)
 
+/*
+ * PDCI_A_FLOAT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, inv_val)
+ */
+
+PDCI_A_FLOAT_WRITE_FN(Pa_float32,  Pfloat32,  "%I4f",   "Pfloat32",  P_FLOAT32_DEF_INV_VAL,  PDCI_FMT_FLOAT_WRITE)
+PDCI_A_FLOAT_WRITE_FN(Pa_float64,  Pfloat64,  "%I8f",   "Pfloat64",  P_FLOAT64_DEF_INV_VAL,  PDCI_FMT_FLOAT_WRITE)
+
+/*
+ * PDCI_E_FLOAT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, inv_val, a_fn_pref)
+ */
+
+PDCI_E_FLOAT_WRITE_FN(Pe_float32,  Pfloat32,  PDCI_float32_2e,  "Pfloat32",  P_FLOAT32_DEF_INV_VAL,  Pa_float32 )
+PDCI_E_FLOAT_WRITE_FN(Pe_float64,  Pfloat64,  PDCI_float64_2e,  "Pfloat64",  P_FLOAT64_DEF_INV_VAL,  Pa_float64 )
+
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
 /* ********************** BEGIN_MACGEN(pads-acc-gen.c) ************************ */
@@ -4346,16 +5047,20 @@ PDCI_INT_ACCUM(Puint64, "uint64", 8, "llu", "llu", PDCI_FOLDTEST_UINT64)
 /* Always generate this report function */  
 PDCI_INT_ACCUM_MAP_REPORT_GEN(Pint32, "int32", "ld", "lld")
 
-/* PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64) */
+/* PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr) */
 
-PDCI_FPOINT_ACCUM(Pfpoint8,   "fpoint8",   Pfloat32, P_FPOINT2FLOAT32)
-PDCI_FPOINT_ACCUM(Pufpoint8,  "ufpoint8",  Pfloat32, P_FPOINT2FLOAT32)
-PDCI_FPOINT_ACCUM(Pfpoint16,  "fpoint16",  Pfloat32, P_FPOINT2FLOAT32)
-PDCI_FPOINT_ACCUM(Pufpoint16, "ufpoint16", Pfloat32, P_FPOINT2FLOAT32)
-PDCI_FPOINT_ACCUM(Pfpoint32,  "fpoint32",  Pfloat32, P_FPOINT2FLOAT32)
-PDCI_FPOINT_ACCUM(Pufpoint32, "ufpoint32", Pfloat32, P_FPOINT2FLOAT32)
-PDCI_FPOINT_ACCUM(Pfpoint64,  "fpoint64",  Pfloat64, P_FPOINT2FLOAT64)
-PDCI_FPOINT_ACCUM(Pufpoint64, "ufpoint64", Pfloat64, P_FPOINT2FLOAT64)
+PDCI_FPOINT_ACCUM(Pfpoint8,   "fpoint8")
+PDCI_FPOINT_ACCUM(Pufpoint8,  "ufpoint8")
+PDCI_FPOINT_ACCUM(Pfpoint16,  "fpoint16")
+PDCI_FPOINT_ACCUM(Pufpoint16, "ufpoint16")
+PDCI_FPOINT_ACCUM(Pfpoint32,  "fpoint32")
+PDCI_FPOINT_ACCUM(Pufpoint32, "ufpoint32")
+PDCI_FPOINT_ACCUM(Pfpoint64,  "fpoint64")
+PDCI_FPOINT_ACCUM(Pufpoint64, "ufpoint64")
+
+/* PDCI_FLOAT_ACCUM(float_type, float_descr) */
+PDCI_FLOAT_ACCUM(Pfloat32,  "float32")
+PDCI_FLOAT_ACCUM(Pfloat64,  "float64")
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 
@@ -4617,13 +5322,13 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
   sfprintf(outstr, "    => distribution of top %d strings out of %d distinct strings:\n", rp, sz);
   if (sz == a->max2track && a->len_accum.good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->len_accum.good);
-    sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
+    sfprintf(outstr, "        (* hit tracking limit, tracked %.3I8f pcnt of all values *) \n", track_pcnt);
   }
   for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
        velt && i < a->max2rep;
        velt = dtnext(a->dict, velt), i++) {
     if (cnt_sum_pcnt >= a->pcnt2rep) {
-      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2I8f pcnt limit on reported values ...]\n",
 	       rp-i, rp, a->pcnt2rep);
       break;
     }
@@ -4634,7 +5339,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
     sfprintf(outstr, "");
     pad = a->len_accum.max - elt->key.len;
     sfprintf(outstr, "%-.*s", pad, PDCI_spaces);
-    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3I8f\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->len_accum.good);
   }
@@ -4647,7 +5352,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
 
   sfprintf(outstr, "        SUMMING");
   sfprintf(outstr, "%-.*s", pad, PDCI_spaces);
-  sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", cnt_sum, cnt_sum_pcnt);
+  sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3I8f\n", cnt_sum, cnt_sum_pcnt);
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
   dtdisc(a->dict, &PDCI_string_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
@@ -4738,7 +5443,7 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   } else {
     bad_pcnt = 100.0 * (a->bad / (Pfloat64)(a->good + a->bad));
   }
-  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3I8f\n",
 	   a->good, a->bad, bad_pcnt);
   if (a->good == 0) {
     sfprintf(outstr, "(No good %s values.)\n", what);
@@ -4761,26 +5466,26 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
-    sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
+    sfprintf(outstr, "        (* hit tracking limit, tracked %.3I8f pcnt of all values *) \n", track_pcnt);
   }
   for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
        velt && i < a->max2rep;
        velt = dtnext(a->dict, velt), i++) {
     if (cnt_sum_pcnt >= a->pcnt2rep) {
-      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2I8f pcnt limit on reported values ...]\n",
 	       rp-i, rp, a->pcnt2rep);
       break;
     }
     elt = (Puint8_dt_elt_t*)velt;
     elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
     sfprintf(outstr, "        val: %6s", P_qfmt_char(elt->key.val));
-    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3I8f\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
   }
   dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
-  sfprintf(outstr,   "        SUMMING     count: %10llu  pcnt-of-good-vals: %8.3lf\n",
+  sfprintf(outstr,   "        SUMMING     count: %10llu  pcnt-of-good-vals: %8.3I8f\n",
 	   cnt_sum, cnt_sum_pcnt);
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
@@ -4856,7 +5561,7 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
     nbad = a->good - ngood;
     bad_pcnt = 100.0 * (nbad / (Pfloat64)(a->good));
   }
-  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3I8f\n",
 	   ngood, nbad, bad_pcnt);
   if (nbad) {
     sz = dtsize(a->dict);
@@ -4866,30 +5571,30 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
     sfprintf(outstr, "  Characterizing number of errors PER READ CALL (nerr-per-read) :");
     sfprintf(outstr, " min %lld", a->min);
     sfprintf(outstr, " max %lld", a->max);
-    sfprintf(outstr, " avg %.3lf\n", a->avg);
+    sfprintf(outstr, " avg %.3I8f\n", a->avg);
     sfprintf(outstr, "    => distribution of top %d nerr-per-read values out of %d distinct nerr-per-read values:\n", rp, sz);
     if (sz == a->max2track && a->good > a->tracked) {
       track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
-      sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all nerr-per-read values *) \n", track_pcnt);
+      sfprintf(outstr, "        (* hit tracking limit, tracked %.3I8f pcnt of all nerr-per-read values *) \n", track_pcnt);
     }
     for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
 	 velt && i < a->max2rep;
 	 velt = dtnext(a->dict, velt), i++) {
       if (cnt_sum_pcnt >= a->pcnt2rep) {
-	sfprintf(outstr, " [... %d of top %d nerr-per-read values not reported due to %.2lf pcnt limit on reported values ...]\n",
+	sfprintf(outstr, " [... %d of top %d nerr-per-read values not reported due to %.2I8f pcnt limit on reported values ...]\n",
 		 rp-i, rp, a->pcnt2rep);
 	break;
       }
       elt = (Puint32_dt_elt_t*)velt;
       elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
       sfprintf(outstr, "        val: %10ld", elt->key.val);
-      sfprintf(outstr, " count: %10llu pcnt-of-total-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+      sfprintf(outstr, " count: %10llu pcnt-of-total-vals: %8.3I8f\n", elt->key.cnt, elt_pcnt);
       cnt_sum += elt->key.cnt;
       cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
     }
     dtnext(a->dict, 0); /* discard any iterator state */
     sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
-    sfprintf(outstr,   "        SUMMING         count: %10llu pcnt-of-total-vals: %8.3lf\n",
+    sfprintf(outstr,   "        SUMMING         count: %10llu pcnt-of-total-vals: %8.3I8f\n",
 	     cnt_sum, cnt_sum_pcnt);
     /* revert to unordered set in case more inserts will occur after this report */
     dtmethod(a->dict, Dtset); /* change to unordered set */
@@ -5133,6 +5838,22 @@ PDCI_SBH2UINT(PDCI_sbh2uint16, PDCI_uint16_2sbh, Puint16, PbigEndian, P_MAX_UINT
 PDCI_SBH2UINT(PDCI_sbh2uint32, PDCI_uint32_2sbh, Puint32, PbigEndian, P_MAX_UINT32, 4)
 PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT64, 8)
 
+/* PDCI_FLOAT2A(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w) */
+PDCI_FLOAT2A(PDCI_float32_2a,  Pfloat32,  "%I4f", "%0.*I4f", PDCI_FMT_FLOAT_WRITE,  PDCI_WFMT_FLOAT_WRITE)
+PDCI_FLOAT2A(PDCI_float64_2a,  Pfloat64,  "%I8f", "%0.*I8f", PDCI_FMT_FLOAT_WRITE,  PDCI_WFMT_FLOAT_WRITE)
+
+/* PDCI_A2FLOAT(fn_name, targ_type, float_min, float_max, Pstring2float_fn) */
+PDCI_A2FLOAT(PDCI_a2float32, Pfloat32, P_MIN_FLOAT32, P_MAX_FLOAT32, Pstring2float32)
+PDCI_A2FLOAT(PDCI_a2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64, Pstring2float64)
+
+/* PDCI_FLOAT2E(rev_fn_name, targ_type, fmt, wfmt, sfpr_macro, sfpr_macro_w) */
+PDCI_FLOAT2E(PDCI_float32_2e,  Pfloat32,  "%I4f", "%0.*I4f", PDCI_FMT_FLOAT_WRITE,  PDCI_WFMT_FLOAT_WRITE)
+PDCI_FLOAT2E(PDCI_float64_2e,  Pfloat64,  "%I8f", "%0.*I8f", PDCI_FMT_FLOAT_WRITE,  PDCI_WFMT_FLOAT_WRITE)
+
+/* PDCI_E2FLOAT(fn_name, targ_type, float_min, float_max) */
+PDCI_E2FLOAT(PDCI_e2float32, Pfloat32, P_MIN_FLOAT32, P_MAX_FLOAT32)
+PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
+
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
 
@@ -5147,7 +5868,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.152 2004-04-26 21:40:18 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.153 2004-05-11 20:21:35 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6736,7 +7457,7 @@ P_swap_bytes(Pbyte *bytes, size_t num_bytes)
 }
 
 Sfio_t*
-P_fopen(const char* string, const char* mode)
+P_fopen(const char *string, const char *mode)
 {
   Sfio_t* io;
   if (strcmp(string, "/dev/stdin")  == 0) {
@@ -6799,7 +7520,7 @@ P_fopen(const char* string, const char* mode)
 /* ================================================================================ */ 
 /* INTERNAL ERROR REPORTING FUNCTIONS */
 
-const char * P_pstate2str(Pflags_t pstate)
+const char *P_pstate2str(Pflags_t pstate)
 {
   if (pstate & P_Panic) return "Panic";
   if (pstate) return "*UnknownPStateFlags*";
@@ -8780,7 +9501,7 @@ PDCI_char_read(P_t *pads, const Pbase_m *m,
 	(*c_out) = *begin;
 	break;
       case Pcharset_EBCDIC:
-	(*c_out) = P_ea_tab[(int)(*begin)];
+	(*c_out) = P_mod_ea_tab[(int)(*begin)];
 	break;
       default:
 	goto invalid_charset;
@@ -10563,7 +11284,8 @@ PDCI_findlast(const Pbyte *begin, const Pbyte *end, Pbyte b)
 }
 
 int
-PDCI_Plongest_chkErr(Puint32 nerr, int *consume) {
+PDCI_Plongest_chkErr(Puint32 nerr, int *consume)
+{
   if (nerr) {
     *consume = 0;
     return 1;
