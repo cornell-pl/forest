@@ -134,7 +134,7 @@ if ($dbg) {
   print "  wspace_ok set"          if $wpace_ok;
   print "\n";
 }
-exit 0;
+
 if (!defined($maxrecs)) {
   $maxrecs = 0;
 }
