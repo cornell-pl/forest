@@ -55,9 +55,8 @@ test_write2io_internal (PDC_t *pdc, Sfio_t *io, test_ed *ed, test *rep)
   /* XXX CASE 2: test is static length 107; test not a record type */
   size_t       buf_len = 107;
   /* XXX CASE 3: test is static length 107, test is a record type */
-  size_t       buf_len = 107 + pdc->disc->io_disc->rec_bytes;
+  size_t       buf_len = 107 + pdc->disc->io_disc->rec_obytes + pdc->disc->io_disc->rec_cbytes;
 
-  length = -1;
   while (1) {
     set_buf  = 0;
     buf_full = 0;
