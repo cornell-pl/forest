@@ -70,6 +70,10 @@ if [ $_pads_status == "OK" ]; then
   if [ "$OCAML_LIB"x == x ]; then
     OCAML_LIB=/usr/common/lib/ocaml; export OCAML_LIB
   fi
+  if [ "$GALAX_HOME"x == x ]; then
+    GALAX_HOME=/home/mff/Galax-rh7; export GALAX_HOME
+  fi
+  GALAX_LIB=$GALAX_HOME/lib/c; export GALAX_LIB
 
   if [ ! -e $INSTALLROOT ]; then
     (mkdir -p $INSTALLROOT > /dev/null 2>&1) || _pads_status=FAILED
@@ -113,6 +117,9 @@ if [ $_pads_status == "OK" ]; then
   if [ -e $OCAML_LIB ]; then
     LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${OCAML_LIB} | $remove_dups`; export LD_LIBRARY_PATH
   fi
+  if [ -e $GALAX_LIB ]; then
+    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${GALAX_LIB} | $remove_dups`; export LD_LIBRARY_PATH
+  fi
 
   if [ "$_pads_use_nmake" != 0 ]; then
     ast_bin_dir=$AST_HOME/bin
@@ -129,6 +136,8 @@ if [ $_pads_status == "OK" ]; then
     echo "MANPATH=$MANPATH"
     echo "PATH=$PATH"
     echo "OCAML_LIB=$OCAML_LIB"
+    echo "GALAX_HOME=$GALAX_HOME"
+    echo "GALAX_LIB=$GALAX_LIB"
     echo " "
   fi
 fi

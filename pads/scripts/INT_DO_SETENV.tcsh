@@ -67,6 +67,15 @@ else
   endif
 endif
 
+set _is_galax_home
+if (! $?GALAX_HOME) then
+  unset _is_galax_home
+else
+  if ("$GALAX_HOME"x == x) then
+    unset _is_galax_home
+  endif
+endif
+
 set _pads_status = OK
 
 if (! $?_pads_verbose) then
@@ -178,6 +187,10 @@ if ($_pads_status == "OK") then
   if (! $?_is_ocaml_lib) then
     setenv OCAML_LIB /usr/common/lib/ocaml
   endif
+  if (! $?_is_galax_home) then
+    setenv GALAX_HOME /home/mff/Galax-rh7
+  endif
+  setenv GALAX_LIB $GALAX_HOME/lib/c
 
   setenv LD_LIBRARY_PATH `echo ${pads_lib_dir}:${ast_lib_dir}:${LD_LIBRARY_PATH} | $remove_dups`
   setenv SHLIB_PATH      `echo ${pads_lib_dir}:${ast_lib_dir}:${SHLIB_PATH} | $remove_dups`
@@ -186,6 +199,12 @@ if ($_pads_status == "OK") then
 
   if (-d $OCAML_LIB) then
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB} | $remove_dups`
+  endif
+  if (-d $OCAML_LIB) then
+    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB} | $remove_dups`
+  endif
+  if (-d $GALAX_LIB) then
+    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${GALAX_LIB} | $remove_dups`
   endif
 
   if ($_pads_use_nmake == 1) then
@@ -221,6 +240,8 @@ if ($_pads_status == "OK") then
     echo "MANPATH=$MANPATH"
     echo "PATH=$PATH"
     echo "OCAML_LIB=$OCAML_LIB"
+    echo "GALAX_HOME=$GALAX_HOME"
+    echo "GALAX_LIB=$GALAX_LIB"
     echo " "
   endif
 
@@ -240,3 +261,4 @@ unset _is_ld_library_path
 unset _is_shlib_path
 unset _is_manpath
 unset _is_ocaml_lib
+unset _is_galax_home
