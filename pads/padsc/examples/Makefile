@@ -1,19 +1,10 @@
 :PACKAGE: ast
 
-.SOURCE : .. ../include
+all :
+	echo "nmake in one of the architecture subdirs"
 
-CCFLAGS = $(CC.DEBUG)
+clean :
+	$(RM) -f *~ \#*
 
-test_format1 :: test_format1.c format1.c -lpadsc
-test_format3 :: test_format3.c format3.c -lpadsc
-test_format5 :: test_format5.c format5.c -lpadsc
-test_format6 :: test_format6.c format6.c -lpadsc
-
-
-libtest1 :: libtest1.c -lpadsc
-libtest2 :: libtest2.c -lpadsc
-libtest4 :: libtest4.c -lpadsc
-rbuftest1 :: rbuftest1.c -lpadsc
-
-mk_ex_data_libtest2 :: mk_ex_data_libtest2.c
-
+veryclean : clean
+	$(RM) -f Makefile.ms Makefile.mo

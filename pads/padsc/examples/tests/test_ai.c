@@ -5,11 +5,12 @@
 
 int main(int argc, char** argv) {
   int             i;
-  PDC_t*          pdc;
+  PDC_t           *pdc;
+  PDC_IO_disc_t   *io_disc;
   http_clf_t_ed   ed;
   http_clf_t      ai;
   http_clf_t_acc  acc;
-  char *          fileName = "../ex_data.ai";
+  char            *fileName = "../ex_data.ai";
   
   if (argc == 2) {
     fileName = argv[1];

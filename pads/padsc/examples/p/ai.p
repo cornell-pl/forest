@@ -64,6 +64,6 @@ pstruct http_clf_t {
    auint16FW(:3:) response;       /- 3-digit response code
    ' ';
    auint32 contentLength;         /- Number of bytes in request response.
-   '\n';
+   EOR;
 };
 
