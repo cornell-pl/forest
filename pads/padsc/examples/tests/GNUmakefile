@@ -49,7 +49,7 @@ WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_array test_array_string test_record_enum test_struct test_struct2 \
                test_punion2 test_punion_manifest test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
-               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct rw_pendian rwxml_struct \
+               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct_good rw_pendian rwxml_struct \
                test_cpyrecgen_rps rwxml_cpyrecgen_rps
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
@@ -99,7 +99,7 @@ regress_o:  sanity_check \
           regress_test_in_place_o \
           regress_test_opt_o \
           regress_test_charclass_o \
-          regress_rw_struct_o \
+          regress_rw_struct_good_o \
           regress_rw_pendian_o \
           regress_rwxml_struct_o \
           regress_rwxml_alt1_o
@@ -139,7 +139,7 @@ regress_d:  sanity_check \
           regress_test_in_place_d \
           regress_test_opt_d \
           regress_test_charclass_d \
-          regress_rw_struct_d \
+          regress_rw_struct_good_d \
           regress_rw_pendian_d \
           regress_rwxml_struct_d \
           regress_rwxml_alt1_d
@@ -332,11 +332,11 @@ regress_rw_dns_o: rw_dns
 regress_rw_dns_d: rw_dns_d
 	@(args=""; input="../../data/dns"; suf=""; $(RegressRW))
 
-regress_rw_struct_o: rw_struct
-	@(args=""; input="../../data/rw_struct"; suf=""; $(RegressRW))
+regress_rw_struct_good_o: rw_struct_good
+	@(args=""; input="../../data/struct_good"; suf=""; $(RegressRW))
 
-regress_rw_struct_d: rw_struct_d
-	@(args=""; input="../../data/rw_struct"; suf=""; $(RegressRW))
+regress_rw_struct_good_d: rw_struct_good_d
+	@(args=""; input="../../data/struct_good"; suf=""; $(RegressRW))
 
 regress_rw_pendian_o: rw_pendian
 	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(RegressRW))

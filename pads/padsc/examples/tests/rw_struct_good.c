@@ -1,4 +1,4 @@
-#define DEF_INPUT_FILE "../../data/rw_struct"
+#define DEF_INPUT_FILE "../../data/struct_good"
 #define PADS_TY(suf) testtwo ## suf
 #include "struct.h"
 #include "template/read_write.h"
