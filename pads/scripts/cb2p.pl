@@ -11,10 +11,13 @@ my %field_ids = ();
 my %fieldgen = ();
 my %altnm = ();
 my %arraynm = ();
+my %array_generated = ();
 my %elt_type = ();
 my %arr_count = ();
 my %is_str = ();
 my %redef = ();
+my %dlengths = ();
+my %dtylengths = ();
 
 # arrays
 my @lines;
@@ -23,7 +26,6 @@ my @defs;
 # these arrays act like stacks
 my @lev;
 my @rest;
-my @fields;
 my @arrays;
 my @dbytes;
 
@@ -32,7 +34,7 @@ my $nst = 0;
 my $altctr = 1;
 my $level = 1;
 my $get_top_id = 1;
-my ($id, $op, $id1, $id2, $line, $lineno, $the_rest);
+my ($id, $popid, $id1, $id2, $line, $lineno, $the_rest);
 my ($max, $array_param, $is_struct, $ty, $dlen);
 my ($tmp, $root, $field, $def);
 $lev[$nst] = -99;
@@ -60,8 +62,8 @@ my $padsfile = "$outdir/$cprefix" . "_gen.p";
 
 open(POUT, ">$padsfile") or die("failed to open $padsfile for writing\n");
 
-push(@lines, "0 -2 __THE_BEGINNING___0 1 none\n");
-push(@lines, "0 -1 __THE_TOP___0 1 none\n");
+push(@lines, "0 -2 __T_H_E_BEGINNING___0 1 none\n");
+push(@lines, "0 -1 __T_H_E_TOP___0 1 none\n");
 while (<CBIN>) {
   if ($get_top_id && /^\d+ \d+ (\S+)_\d+ /) {
     $id1 = $1;
@@ -70,10 +72,10 @@ while (<CBIN>) {
   }
   push(@lines, $_);
 }
-push(@lines, "999999999 -99 __THE_END___0 1 none\n");
+push(@lines, "999999999 -99 __T_H_E_END___0 1 none\n");
 close(CBIN) or die("failure while reading $cbook\n");
 
-$lines[1] =~ s/__THE_TOP__/$top_id/;
+$lines[1] =~ s/__T_H_E_TOP__/$top_id/;
 
 # remove extra numbers at end of IDs if they are unnecessary
 foreach $line (@lines) {
@@ -91,6 +93,7 @@ foreach $line (@lines) {
       $map_id{$id2} = $id1;
     } else { # more than one, use lineno
       $map_id{$id2} = $id1 . "_ln_$lineno";
+      print "XXX_REMOVE map_id{$id2} = $map_id{$id2}\n";
     }
   }
 }
@@ -111,11 +114,10 @@ foreach $line (@lines) {
     } else {
       $alt_ids{$root} .= "$root|$id1";
     }
-    print "Redefine:  $id1 is an alternate for previously-defined $id2\n";
-    print "  with root $root current alternatives: $alt_ids{$root}\n";
+    print "XXX_REMOVE Redefine:  $id1 is an alternate for previously-defined $id2\n";
+    print "XXX_REMOVE  with root $root current alternatives: $alt_ids{$root}\n";
   }
 }
-print "\n\n";
 foreach $line (@lines) {
   $_ = $line;
   if (/^(\d+) r (\S+) (\S+)/) {
@@ -125,28 +127,29 @@ foreach $line (@lines) {
     ($lineno, $level, $id1, $the_rest) = ($1, $2, $3, $4);
     $id1 = $map_id{$id1};
     if ($level <= $lev[$nst]) {
-      print "Changing from level $lev[$nst] to final level $level -- popping levels\n";
+      print "XXX_REMOVE Changing from level $lev[$nst] to final level $level -- popping levels\n";
       while ($nst && $level <= $lev[$nst]) {
-	print " -- popping nst $nst (lev $lev[$nst], id $id[$nst], rest $rest[$nst])\n";
-	if ($nst > 1 && $rest[$nst-1] !~ /none/) {
-	  die("something is wrong, parent is not structured");
-	}
-	# parent is a struct or alternate, add a field and possibly an array declaration
-	($max, $array_param, $is_struct, $ty, $dlen) = &eval_ty($id[$nst], $rest[$nst]);
-	if ($max > 1) {
-	  # add array, if neccessary
-	  if (defined($arraynm{$ty})) {
-	    $ty = $arraynm{$ty};
-	  } else {
-	    ($ty, $arraydef) = &add_array($ty);
-	    $arrays[$nst-1] .= "$arraydef#";
-	  }
-	  # final ty for array case
-	  $ty = sprintf("%s(:%s:)", $ty, $array_param);
-	} # else ty is OK as-is
-	$field = sprintf("    %-40s %s;\n", $ty, $id[$nst]);
+	$popid = $id[$nst];
+	print "XXX_REMOVE -- popping nst $nst (lev $lev[$nst], id $popid, rest $rest[$nst])\n";
 	if ($nst > 1) {
-	  $fields[$nst-1] .= $field;
+	  $parentid = $id[$nst-1];
+	  if ($rest[$nst-1] !~ /none/) {
+	    die("something is wrong, parent is not structured");
+	  }
+	  # parent is a struct or alternate, add a field and possibly an array declaration
+	  ($max, $array_param, $is_struct, $ty, $dlen) = &eval_ty($popid, $rest[$nst]);
+	  print "XXX_REMOVE popid $popid max is $max\n";
+	  if ($max > 1) {
+	    &add_array($ty);
+	    $ty = $arraynm{$ty};
+	    $aux_arrays{$parentid} .= "$ty#";
+	    print "XXX_REMOVE aux_arrays{$parentid} now = $aux_arrays{$parentid}\n";
+	    # final ty for array case
+	    $ty = sprintf("%s(:%s:)", $ty, $array_param);
+	  }			# else ty is OK as-is
+	  $field = sprintf("    %-40s %25s // Field length:  %4s\n", $ty, $popid . ";", $dlengths{$popid});
+	  $fieldgen{$popid} = $field;
+	  $field_ids{$parentid} .= "$popid#";
 	}
 	if ($rest[$nst] =~ /none/) {
 	  $arrays[$nst] =~ s/[\#]$//;
@@ -154,28 +157,21 @@ foreach $line (@lines) {
 	    print POUT "$a\n";
 	  }
 	  if ($nst > 1) {
-	    $fmt_arrarys{$id[$nst]} = "";
-	    $fmt_structs{$id[$nst]} = "";
-	    push(@defs, "$id[$nst]");
-	    $fields[$nst] =~ s/\n$//;
-	    print POUT "Pstruct $id[$nst]_T {\n";
-	    foreach my $f (split(/\n/, $fields[$nst])) {
-	      print POUT "$f\n";
-	    }
-	    print POUT "};\n";
+	    $fmt_arrays{$popid} = "";
+	    $fmt_structs{$popid} = "";
+	    push(@defs, "$popid");
 	  }
 	}
 	$nst--;
       }
     }
     if ($level != -99) {
-      print "Changing from level $lev[$nst] to $level\n";
+      print "XXX_REMOVE Changing from level $lev[$nst] to $level\n";
       $nst++;
-      print " -- pushed nst $nst (lev $level, id $id1, rest $the_rest)\n";
+      print "XXX_REMOVE -- pushed nst $nst (lev $level, id $id1, rest $the_rest)\n";
       $lev[$nst]    = $level;
       $id[$nst]     = $id1;
       $rest[$nst]   = $the_rest;
-      $fields[$nst] = "";
       $arrays[$nst] = "";
       $dbytes[$nst] = 0;
     }
@@ -283,7 +279,7 @@ sub padsbasety
 
 # ==============================
 # Subroutine: str_or_alt($id)
-#   returns type name to use for struct or alternate
+#   returns (type name to use for struct or alternate, "struct" or "alt")
 sub str_or_alt
 {
   my ($id) = @_;
@@ -291,9 +287,39 @@ sub str_or_alt
     if (!defined($altnm{$redef{$id}})) {
       $altnm{$redef{$id}} = sprintf("Alt_%d_T", $altctr++);
     }
-    return $altnm{$redef{$id}};
+    return ($altnm{$redef{$id}}, "alt");
   }
-  return $id . "_T";
+  return ($id . "_T", "struct");
+}
+
+# ==============================
+# Subroutine: add_dlen($dlen1, $dlen2)
+#
+sub add_dlen
+{
+  my ($dlen1, $dlen2) = @_;
+  return "var" if ($dlen1 eq "var" || $dlen2 eq "var");
+  return $dlen1 + $dlen2;
+}
+
+# ==============================
+# Subroutine: mul_dlen($dlen1, $dlen2)
+#
+sub mul_dlen
+{
+  my ($dlen1, $dlen2) = @_;
+  return "var" if ($dlen1 eq "var" || $dlen2 eq "var");
+  return $dlen1 * $dlen2;
+}
+
+# ==============================
+# Subroutine: max_dlen($dlen1, $dlen2)
+#
+sub max_dlen
+{
+  my ($dlen1, $dlen2) = @_;
+  return "var" if ($dlen1 eq "var" || $dlen2 eq "var");
+  return ($dlen1 > $dlen2) ? $dlen1 : $dlen2;
 }
 
 # ==============================
@@ -305,14 +331,15 @@ sub str_or_alt
 #    if $max is > 1, this elt is an array with elt type $ty
 #      (the array should be instantiated with $array_param)
 #    $dlen is only set for $is_struct == 0, and it is
-#       either "v" (variable) or the number of byte on disk
+#       either "var" or the number of byte on disk
 #       ($array_param * sizeof($ty))
 
 sub eval_ty
 {
   my ($id, $rest) = @_;
-  my ($max, $array_param, $is_struct, $ty, $dlen);
+  my ($max, $array_param, $is_struct, $ty, $dlen, $dtylen, $s_or_a);
   my ($num, $min, $var_name, $type, $p1, $p2, $tlen);
+  my ($fids, $fid, $aids, $aid);
 
   if ($rest =~ /(\S+) (\S+) (\S+) (\S+)/) {
     ($num, $type, $p1, $p2) = ($1, $2, $3, $4);
@@ -326,23 +353,48 @@ sub eval_ty
 
   # $num is either exact # or max!min!var_name
   my @aa = split(/[!]/, $num);
-  ($max, $min, $array_param) = ($aa[1], $aa[2], $aa[3]);
+  ($max, $min, $array_param) = ($aa[0], $aa[1], $aa[2]);
   if ($array_param eq "") {
     $array_param = $max;
+    $min = $max;
+  } elsif (defined($map_id{$array_param})) {
+    $array_param = $map_id{$array_param};
   }
   if ($type =~ /none/) {
+    $dtylen = 0;
     $is_struct = 1;
-    $ty = &str_or_alt($id);
+    ($ty, $s_or_a) = &str_or_alt($id);
+    if ($s_or_a eq "struct") {
+      $fids = $field_ids{$id};
+      $fids =~ s/[\#]$//;
+      foreach $fid (split(/[\#]/, $fids)) {
+	$dtylen = &add_dlen($dtylen, $dlengths{$fid});
+      }
+    } else {
+      $aids = $alt_ids{$id};
+      $aids =~ s/[\#]$//;
+      foreach $aid (split(/[\#]/, $aids)) {
+	$dtylen = &max_dlen($dtylen, $dlengths{$aid});
+      }
+    }
+    if ($min != $max) {
+      $dlen = "var";
+    } else {
+      $dlen = &mul_dlen($dtylen, $max);
+    }
+    $dtylengths{$id} = $dtylen;
   } else {
     $is_struct = 0;
     ($ty, $tlen) = &padsbasety($type, $p1, $p2);
-    if ($array_param eq $max) {
-      $dlen = $max * $tlen;
+    if ($min != $max) {
+      $dlen = "var";
     } else {
-      $dlen = "v";
+      $dlen = $max * $tlen;
     }
   }
+  $dlengths{$id} = $dlen;
 
+  print "XXX_REMOVE eval_ty(id $id, rest $rest) returning (max $max, array_param $array_param, is_struct $is_struct, ty $ty, dlen $dlen)\n";
   return ($max, $array_param, $is_struct, $ty, $dlen);
 }
 
@@ -404,12 +456,12 @@ sub padsgen_str
   foreach $fid (split(/[\#]/, $fids)) {
     print POUT $fieldgen{$fid};
   }
-  print POUT "};\n\n";
+  printf POUT "};                                                                     // Struct length: %4s\n\n", $dtylengths{$def};
 }
 
 # ==============================
 # Subroutine: padsgen_aux_arrays($def)
-#   emit aux Parray decls for $def, if necessary
+#   emit aux Parray decls that precede $def, if necessary
 
 sub padsgen_aux_arrays
 {
@@ -418,9 +470,12 @@ sub padsgen_aux_arrays
   $ars = $aux_arrays{$def};
   $ars =~ s/[\#]$//;
   foreach $ar (split(/[\#]/, $ars)) {
-    print  POUT "Parray $ar (:unsigned int len:) {\n";
-    printf POUT "    %-40s [len];\n", $elt_type{$ar};
-    print  POUT "};\n\n";
+    if (!defined($array_generated{$ar})) {
+      $array_generated{$ar} = 1;
+      print  POUT "Parray $ar (:unsigned int len:) {\n";
+      printf POUT "    %s [len];\n", $elt_type{$ar};
+      print  POUT "};\n\n";
+    }
   }
 }
 
@@ -432,11 +487,12 @@ sub add_array
 {
   my ($ty) = @_;
   return 0 if (defined($arraynm{$ty}));
-  my $anm = "array_of_$ty_T";
+  my $anm = "array_of_$ty";
   $anm =~ s/\s//g;
   $anm =~ s/[(][:]/_/g;
-  $anm =~ s/[)][:]//g;
+  $anm =~ s/[:][)]//g;
   $anm =~ s/[,]/_/g;
   $arraynm{$ty} = $anm;
+  $elt_type{$anm} = $ty;
   return 1;
 }
