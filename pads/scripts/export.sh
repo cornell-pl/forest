@@ -79,6 +79,16 @@ mv temp_scripts scripts
 
 
 echo taring up the desired files
-cd ..  # now above pads directory
+cd ..  # now above checked out pads directory
 echo building bundle
 tar cfz pads.tar.gz `cat pads/take_list`
+
+rm -rf pads/scripts
+mkdir pads/scripts
+cp scripts/gigascope_make.pl pads/scripts
+cp -r scripts/templates pads/scripts/
+rm -rf pads/scripts/templates/CVS
+
+tar cfz pads_gscp.tar.gz pads/scripts
+
+mv pads pads_remove_me
