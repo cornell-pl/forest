@@ -1,4 +1,6 @@
+#ifdef _USE_PROTO
 #pragma prototyped
+#endif
 /*
  * PDC ckit prototypes for output macros
  * 
@@ -8,6 +10,12 @@
 
 #ifndef __LIBPADSC_CKIT_H__
 #define __LIBPADSC_CKIT_H__
+
+/* ================================================================================ */
+/* MISC MACROS THAT NEED PROTOTYPES */
+
+#undef RBuf_CPY_SRC2DEST
+void RBuf_CPY_SRC2DEST(RBuf_t*, RBuf_t*, size_t, RMM_t*);
 
 /* ================================================================================ */
 /* SIMPLE CONSTANTS */
