@@ -698,8 +698,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; PPL.addStr pps eName
       ; space pps
       ; PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
-		      , sep=",\n\t\t"
-		      , lDelim="{\n\t"
+		      , sep=",\n    "
+		      , lDelim="{\n  "
 		      , rDelim="\n}"
 		      } pps eFields
       ; newline pps) 
@@ -716,8 +716,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	; PPL.addStr pps "{\n"
 (*-->*) ; ppElemList pps ("errDesc",edFields) 
         ; PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
-		        , sep="\n\t"
-		        , lDelim="\t" (*{\n*)
+		        , sep="\n  "
+		        , lDelim="  " (*{\n*)
 		        , rDelim="\n}"
 		        } pps (edFields)(* @ repFields)*) (* old: repFields @ edFields *)  (* must be ppElemList "errDesc" edFields *)
         ; newline pps)
