@@ -64,6 +64,9 @@ mk_rec1vlr-g: mk_rec1vlr.c rec1.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 do_mk: mk_rec1vlr-g
 	./mk_rec1vlr-g < ../rec1nl.dat > ../rec1vlr.dat
 
+print_test2out-g: print_test2out.c test2out.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
 test_many: cmonster-g
 	./cmonster-g -d 'fwrec(:0,8,1:)'         -c 'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
 	./cmonster-g -d 'fwrec_noseek(:0,8,1:)'  -c 'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
@@ -78,7 +81,7 @@ test1: cmonster-g
 	./cmonster-g -d 'fwrec(:0,8,1:)'         -c 'c{qy1=Pa_string_FW(:8:)[0]}' -o test1.dat < ../strfw8nl.dat
 
 test2: cmonster-g
-	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's+{qyswitch=Pa_int32_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[3]}/0:c{qy2=Pa_string_FW(:7:)[4]}/1:c{qy3=Pa_string_FW(:2:)[3]|qy4=Pa_string_FW(:4:)[5]}}' -o test2.dat < ../sw_aintfw3_astrfw8_nl.dat
+	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's+{qyswitch=Pa_int32_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[3]}/0:c{qy2=Pa_string_FW(:7:)[4]}/1:c{qy3=Pa_string_FW(:2:)[5]|qy4=Pa_string_FW(:4:)[7]}}' -o test2.dat < ../sw_aintfw3_astrfw8_nl.dat
 
  #  An error case: not a legal number of dpsec params 
 ertest1: cmonster-g

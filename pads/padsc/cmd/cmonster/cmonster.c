@@ -257,10 +257,13 @@ int main(int argc, char **argv)
    * (all records have this size)
    *
    * rec1: first 4 bytes contain cm.outbuf_sz encoded in SBL
+   *       this size is always >= 4.
    *      
-   * rec2: first 4 bytes contain the 'cmon' numeric value
-   *          = ('c' << 24) + ('m' << 16) + ('o' << 8) + 'n';
+   * rec2: first 4 bytes contain the cookie monster 'cmon' magic value
+   *          = ('c' << 24) + ('m' << 16) + ('o' << 8) + 'n'
+   *          = 1668116334
    *      encoded in SBL
+   *
    * In each case any bytes after byte 4 is zero.
    */
 
