@@ -40,7 +40,7 @@ same time, as in this sample code:
 void sample1(RMM_t* mgr) {
   char*  buf;
   RBuf_t* rbuf;
-  rbuf = RMM_alloc_rbuf(mgr);         -- heap alloc a new rbuf managed by mgr
+  rbuf = RMM_new_rbuf(mgr);         -- heap alloc a new rbuf managed by mgr
   RBuf_RESERVE(rbuf, buf, char, 12);  -- reserve space for 12 chars +
                                           store associated buffer ptr in buf
   sprintf(buf, "hello world");
@@ -55,7 +55,7 @@ and eventually free buf, as in this sample code:
 char* sample2_helper(RMM_t* mgr) {
   char*  buf;
   RBuf_t* rbuf;
-  rbuf = RMM_alloc_rbuf(mgr);
+  rbuf = RMM_new_rbuf(mgr);
   RBuf_RESERVE(rbuf, buf, char, 12);
   sprintf(buf, "hello world");
   RMM_free_rbuf_keep_buf(rbuf, 0, 0); -- frees rbuf but *not* associated buffer buf
@@ -175,7 +175,7 @@ int RBuf_reserve(Rbuf_t* rbuf, void** buf_out, size_t eltSize,
 
     char*  buf;
     RBuf_t* rbuf;
-    rbuf = RMM_alloc_rbuf(mgr);
+    rbuf = RMM_new_rbuf(mgr);
     RBuf_reserve(rbuf, (void**)&buf, sizeof(char), 12, 0, 0);
     sprintf(buf, "hello world");
     RBuf_reserve(rbuf, 0, sizeof(char), 20, 0, 0);  -- ERROR, should have passed in &buf since buf ptr can change!
@@ -192,9 +192,9 @@ RBuf_reserve(rbuf, (void**)&(buf_ptr), sizeof(type), numElts, 0, 0)
 For example, these 2 calls are equivalent:
 
   RBuf_RESERVE(rbuf, buf, char, 12);
-  RBuf_reserve(rbuf, (void**)&buf, sizeof(char), 12, 0, 0);
+  RBuf_reserve(rbuf, (void**)&buf, sizeof(char), 12, 0);
 
-Note that if you want to specify maxEltHint  you cannot use this macro.
+Note that if you want to specify maxEltHint you cannot use this macro.
 
 ================================================================================
 RBuf state access functions:
@@ -277,7 +277,7 @@ void*     RBuf_get_elt  (RBuf_t* rbuf, size_t index);
 /* MACROS */
 
 #define RBuf_RESERVE(rbuf, buf_ptr, type, numElts) \
-  RBuf_reserve((rbuf), (void**)&(buf_ptr), sizeof(type), (numElts), 0, 0)
+  RBuf_reserve((rbuf), (void**)&(buf_ptr), sizeof(type), (numElts), 0)
 
 #define RBuf_GET_BUF(rbuf, type) \
   (type)* RBuf_get_buf(rbuf)
