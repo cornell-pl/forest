@@ -215,9 +215,14 @@ res
       result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
  				    PDCI_MacroArg2String(ty)"_node_kthChild");
   } else if (idx == rep->length) {  /* index of rep->length indicates parse descriptor */
-    result = Puint32_val_node_new(self,"length",pd,&(rep->length),
+
+        result = Puint32_val_node_new(self,"pd",pd,&(rep->length),
 				  PDCI_LENGTH_OFF,
 				  PDCI_MacroArg2String(ty) "_node_kthChild");
+
+	/* Mary is here 
+	   result = PDCI_structured_pd_node_new(self,"pd", pd, PDCI_MacroArg2String(ty) "_node_kthChild"); */
+
   } else if (idx == rep->length + 1) { /* index of rep->length indicates length */
       result = Puint32_val_node_new(self,"length",pd,&(rep->length),
 	 			    PDCI_LENGTH_OFF,
