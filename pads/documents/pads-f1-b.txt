@@ -3,24 +3,15 @@ PADS: Processing Arbitrary Data Streams
 Joint work with [Kathleen Fisher|Bob Gruber]
 
 Currently, each new data analysis project builds its own
-infrastructure and tools.  The grand vision of the PADS project is
-that we need shared tools and infrastructure to simplify these tasks:
-
-   * Data collection: we need tools to make it easy to "tap" yet another 
-     data stream.
-
-   * Reliable data transport: we need a framework to monitor data stream
-     transport, restart failed processes, etc., to ensure reliable streams.
-     Howard Katseff's data stream monitor is a good
-     start, but there is much more to do.
-
-   * Distributed data processing: we need declarative query and aggregation
-     languages that can be mapped to distributed computations, so that
-     it is not necessary to bring all the data to one place.
-     IP packet monitoring (GIGASCOPE) is one domain where we
-     are pushing filtering to the data source, but
-     there are many other domains where this approach should be applied.
-
+infrastructure.  The grand vision of the PADS project is
+that we need shared tools and infrastructure to simplify data
+collection (e.g., make it easy to "tap" a new data stream), reliabale
+data transport (e.g., construct a proactive reliable stream
+framework), and distributed data processing (e.g., push queries to
+data sources, distribute query processing to free machines, an so on).
+Pieces of this grand vision exist, such as Howard Katseff's stream
+monitor and the way the GIGASCOPE project pushes filters to NIC cards,
+but most of the vision is still unrealized.
 
 We are attacking this grand vision from the ground up, starting with
 one of the core problems, the need to handle arbitrary data.  The
@@ -52,7 +43,15 @@ legacy system requirements while leveraging modern tools.  Ultimately,
 we will grow the tools into the "grand vision" distributed systems
 framework described above.
 
-The project provides a common meeting ground for integrating the tools
+The project makes good use of both of our skill sets: K. Fisher
+contributing language expertise and an understanding of data stream
+processing requirements from her Hancock work, R. Gruber contributing
+distributed systems building expertise as well as
+experience in new language design and the construction of efficient
+underlying systems support from his work on the Thor OODB project at
+MIT.
+
+PADS provides a common meeting ground for integrating the tools
 and knowledge of many other researchers.  Some specific examples:
 \begin{itemize}
     \item  We are working with Andrew Hume to generate programs that
@@ -78,6 +77,6 @@ Finally, by providing a means to describe all of Research's incoming
 data streams in a common language, we open the possibility of
 correlating and integrating the data from these streams.
 
-R.~Gruber presented \pads{} at the AT\&T/UCSD retreat in September.
-I gave a cookie talk on 11/19 to get early feedback on the design of
+K. Fisher gave a cookie talk on 11/19 to get early feedback on the design of
 \padsl{} and the generated library.  
+
