@@ -1,5 +1,5 @@
 /*
- *  io_openclsoe_test: Test io open/close functionality
+ *  io_openclose_test: Test io open/close functionality
  */
 
 
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
     }
     /* try to read 4 fixed width integers (width 6) */
     for (i = 0; i < 4; i++) {
-      if (P_OK == Pa_int8_FW_read(pads, &m, 6, &pd, &i1)) {
+      if (P_OK == Pa_int8_FW_read(pads, &m, &pd, &i1, 6)) {
 	error(0, "Read ascii integer of width 6: %ld", i1);
       }
     }
