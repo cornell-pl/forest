@@ -20,22 +20,19 @@
 
 /* ================================================================================
  * FIXED POINT READ FUNCTIONS
- * FOR EBC (ebc_), BCD (bcd_), SBL (sbl_), and SBH (sbh_) ENCODINGS
+ * SBL (sbl_), and SBH (sbh_) ENCODINGS
  *
- * An fpoint or ufpoint number is a signed or unsigned fixed-point
- * rational number with a numerator and denominator that both have the
- * same size.  For signed fpoint types, the numerator carries the sign, while
- * the denominator is always unsigned.  For example, type Pfpoint16
- * has a signed Pint16 numerator and an unsigned Puint16 denominator.
+ * An in-memory fpoint or ufpoint number is a signed or unsigned
+ * fixed-point rational number with a numerator and denominator that
+ * both have the same size.  For signed fpoint types, the numerator
+ * carries the sign, while the denominator is always unsigned.  For
+ * example, type Pfpoint16 has a signed Pint16 numerator and an
+ * unsigned Puint16 denominator.
  *
- * For the EBC and BCD fpoint read functions, num_digits is the
- * number of digits used to encode the numerator (on disk). The number
- * of bytes implied by num_digits is the same as specified above for the
- * EBC/BCD integer read functions.
- *
- * For the SBL and SBH fpoint read functions, num_bytes is the number of bytes on
- * disk used to encode the numerator, the encoding being the same as
- * for the SBL and SBH integer read functions, respectively.
+ * For the SBL and SBH fpoint read functions, num_bytes is the number
+ * of bytes on disk used to encode the numerator, the encoding being
+ * the same as for the SBL and SBH integer read functions,
+ * respectively.
  *
  * For all fpoint types, d_exp determines the denominator value,
  * which is implicitly 10^d_exp and is not encoded on disk.
@@ -48,20 +45,20 @@
  * Pfpoint32 / ufpoint32  0-9                   1,000,000,000
  * Pfpoint64 / ufpoint64  0-19     10,000,000,000,000,000,000
  *
- * The legal range of values for num_digits (for EBC/BCD) or num_bytes (for SBL/SBH)
- * depends on target type, and is the same as specified above for the
- * EBC/BCD/SBL/SBH integer read functions.
+ * The legal range of values for num_bytes
+ * depends on target type, and is the same as specified for the
+ * SBL/SBH integer read functions.
  *    
- * For all cases, if the specified number of bytes are NOT available:
+ * If the specified number of bytes are NOT available:
  *    + pd->loc.b/e set to elt/char position of start/end of the 'too small' field
  *    + IO cursor not advanced
  *    + if PD_Test_NotIgnore(*m), pd->errCode set to P_WIDTH_NOT_AVAILABLE,
  *         pd->nerr set to 1, and an error is reported
  *
- * Otherwise, the IO cursor is always advanced.  There are 3 error cases that
+ * Otherwise, the IO cursor is always advanced.  The error cases that
  * can occur even though the IO cursor advances:
  *
- * If num_digits, num_bytes, or d_exp is not in a legal choice for the target type
+ * If num_bytes or d_exp is not in a legal choice for the target type
  * and sign of the value:
  *    + pd->loc.b/e set to elt/char position at the start/end of the field
  *    + if PD_Test_NotIgnore(*m), pd->errCode set to P_BAD_PARAM,
@@ -71,12 +68,6 @@
  *    + pd->loc.b/e set to elt/char position at the start/end of the field
  *    + if PD_Test_NotIgnore(*m), pd->errCode set to P_RANGE,
  *         pd->nerr set to 1, and an error is reported
- *
- * If the specified bytes are not legal EBC/BCD integer bytes, then 
- *    + pd->loc.b/e set to elt/char position at the start/end of the field
- *    + if PD_Test_NotIgnore(*m), pd->errCode set to P_INVALID_EBC_NUM or P_INVALID_BCD_NUM,
- *         pd->nerr set to 1, and an error is reported
- *
  */
 
 #if P_CONFIG_READ_FUNCTIONS > 0
