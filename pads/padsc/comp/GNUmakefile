@@ -8,15 +8,37 @@ ifndef PADS_HOME
 forceabort2: ;
 endif
 
+
+
+
 ARCH_N_HEAPOPSYS := $(shell $(PADS_HOME)/scripts/arch-n-heapopsys)
 
 SML = $(PADS_HOME)/binlinks/sml.$(ARCH_N_HEAPOPSYS)
+SMLVER=$(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
 
 all:	compiler 
 
+ifeq ($(SMLVER),110)
+foo:
+	echo $(SMLVER)
+	$(SML) < build-exec.sml
+else
+foo:
+	echo $(SMLVER)
+	echo sml version is later than 110.0.7
+endif
+
+
+
 compiler:
 	echo Making compiler
+	echo $(SMLVER)
 	$(SML) < build-exec.sml
+
+compiler45:
+	echo Making compiler
+	echo $(SMLVER)
+	$(SML) < build-exec-45.sml
 
 clean:
 	$(RM) $(PADS_HOME)/lib/padsc.$(ARCH_N_OPSYS)
