@@ -1,0 +1,7 @@
+#define DEF_INPUT_FILE "../../data/opt"
+
+#define PADS_TY(suf) entry ## suf
+#define PPADS_TY(pref) pref ## entry
+
+#include "opt.h"
+#include "template/accum_report.h"
