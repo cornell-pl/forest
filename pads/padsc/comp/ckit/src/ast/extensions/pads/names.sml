@@ -27,6 +27,7 @@ struct
   val m         = "m" 
   val pd        = "pd"
   val acc       = "acc"
+  val sfstderr  = "sfstderr"
   fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
   fun mSuf   s = s^"_"^m
   fun mConSuf s = s^"_con"

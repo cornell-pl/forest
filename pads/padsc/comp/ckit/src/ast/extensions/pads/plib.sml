@@ -358,6 +358,12 @@ struct
   fun mTestNotSynCheckX(m) =
     PT.Call(PT.Id "P_Test_NotSynCheck", [m])
 
+  fun mTestDbgFailedArmX(m) =
+    PT.Call(PT.Id "P_Test_DbgFailedArm", [m])
+
+  fun mTestNotDbgFailedArmX(m) =
+    PT.Call(PT.Id "P_Test_NotDbgFailedArm", [m])
+
   fun mTestSemCheckX(m) =
     PT.Call(PT.Id "P_Test_SemCheck", [m])
 

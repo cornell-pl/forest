@@ -4365,16 +4365,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      (* Generate read function *)
 
                      (* -- Some useful names/ids *)
-		     val readName   = readSuf unionName
-		     val errTag     = PT.Id(errSuf unionName)
-		     val repInit    = PT.Id(initSuf unionName)
-		     val pdInit     = PT.Id((initSuf o pdSuf) unionName)
-		     val repCopy    = PT.Id(copySuf unionName)
-		     val pdCopy     = PT.Id((copySuf o pdSuf) unionName)
-		     val repCleanup = PT.Id(cleanupSuf unionName)
-		     val pdCleanup  = PT.Id((cleanupSuf o pdSuf) unionName)
-		     val addStat    = (if #memChar unionProps = TyProps.Static then "_STAT" else "")
-
+		     val readName      = readSuf unionName
+		     val writeName     = writeSuf name
+		     val writeXMLName  = writeXMLSuf name
+		     val errTag        = PT.Id(errSuf unionName)
+		     val repInit       = PT.Id(initSuf unionName)
+		     val pdInit        = PT.Id((initSuf o pdSuf) unionName)
+		     val repCopy       = PT.Id(copySuf unionName)
+		     val pdCopy        = PT.Id((copySuf o pdSuf) unionName)
+		     val repCleanup    = PT.Id(cleanupSuf unionName)
+		     val pdCleanup     = PT.Id((cleanupSuf o pdSuf) unionName)
+		     val addStat       = (if #memChar unionProps = TyProps.Static then "_STAT" else "")
 
                      (* -- Some helper functions *)
 
@@ -4388,14 +4389,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun uReadSetup (theTag)=
 			 [PT.Expr(PT.Call(PT.Id(macStart^"_SETUP"^addStat),
 					  [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy, pdCleanup, pdInit, pdCopy]))]
+		     val xmlwriteCall : ParseTree.expression ref = ref(PT.Id("placeholder"))
 		     fun uRead (theTag, predOpt, readCall) =
 			 case predOpt of
 			     NONE       => [PT.Expr(PT.Call(PT.Id(macStart^addSFNL(theTag)),
-							    [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy,
-							     pdCleanup,  pdInit, pdCopy, readCall]))]
+							    [PT.String readName, PT.String theTag, PT.Id theTag,
+							     repCleanup, repInit, repCopy,
+							     pdCleanup,  pdInit, pdCopy, readCall, !xmlwriteCall]))]
 			   | SOME check => [PT.Expr(PT.Call(PT.Id(macStart^addSFNL(theTag)^"_CHECK"),
-							    [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy,
-							     pdCleanup,  pdInit, pdCopy, readCall, check]))]
+							    [PT.String readName, PT.String theTag, PT.Id theTag,
+							     repCleanup, repInit, repCopy,
+							     pdCleanup,  pdInit, pdCopy, readCall, !xmlwriteCall, check]))]
 		     fun uReadManPre (theTag, isVirt) =
 			 [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addSFN(theTag)^addVirt(isVirt)^"_PRE"),
 					  [PT.String readName, PT.Id theTag, repInit, pdInit]))]
@@ -4499,7 +4503,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  case readBriefUtil e of 
 			      NONE => []
 			  | SOME (cmt, tag, readCall) => 
-			     [P.mkCommentS cmt] @ uRead(tag, NONE,readCall)
+			     [P.mkCommentS cmt] @ uRead(tag, NONE, readCall)
 
                      fun genReadUnionEOR _ = []
 
@@ -4640,6 +4644,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val () = ignore(insTempVar(rep, P.ptrPCT canonicalPCT))
 		     val () = if isLongestMatch then ignore(insTempVar(pcgenName("trep"), canonicalPCT)) else ()
 		     val cParams : (string * pcty) list = List.map mungeParam params
+		     val xtraParamNames = #1(ListPair.unzip cParams)
+		     val xtraParams = List.map PT.Id xtraParamNames
+		     val xmlwriteArgs = [PT.Id pads, PT.Id sfstderr] @ xtraParams @ [PT.Id pd, PT.Id rep, PT.String name, P.intX 4]
+		     val () = ignore(xmlwriteCall := PT.Call(PT.Id(ioSuf writeXMLName), xmlwriteArgs))
 		     val () = ignore(List.map insTempVar omitVars)                 (* insert virtuals into scope *)
                      val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
 		     val bodySs = buildReadFun() 
@@ -4831,8 +4839,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
                       (* Generate Write function union case *)
-		      val writeName = writeSuf name
-		      val writeXMLName = writeXMLSuf name
 		      fun genWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
 					pred:pcexp option, comment,...}:pfieldty) = 
@@ -4989,10 +4995,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	             @ cnvExternalDecl mStructED
                      @ unionPDDecls
 	             @ pdStructPDDecls
+                     @ (emitWrite writeFunEDs)
                      @ (emitRead readEDs)
 		     @ (emitPred isFunEDs)
 		     @ (emitAccum accumEDs)
-                     @ (emitWrite writeFunEDs)
                      @ (emitXML galaxEDs)
 		 end
 	  

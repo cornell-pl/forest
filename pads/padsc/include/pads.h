@@ -781,6 +781,7 @@ typedef Puint32 Pbase_m;
 extern Puint32 P_Set;
 extern Puint32 P_SynCheck;
 extern Puint32 P_SemCheck;
+extern Puint32 P_DbgRead;
 extern Puint32 P_Write;
 
 extern Puint32 P_CheckAndSet;
@@ -790,11 +791,13 @@ extern Puint32 P_Ignore;
 Puint32 P_Test_Set(Puint32 m);
 Puint32 P_Test_SynCheck(Puint32 m);
 Puint32 P_Test_SemCheck(Puint32 m);
+Puint32 P_Test_DbgRead(Puint32 m);
 Puint32 P_Test_Write(Puint32 m);
 
 Puint32 P_Test_NotSet(Puint32 m);
 Puint32 P_Test_NotSynCheck(Puint32 m);
 Puint32 P_Test_NotSemCheck(Puint32 m);
+Puint32 P_Test_NotDbgRead(Puint32 m);
 Puint32 P_Test_NotWrite(Puint32 m);
 
 Puint32 P_Test_CheckAndSet(Puint32 m);
@@ -808,11 +811,13 @@ Puint32 P_Test_NotIgnore(Puint32 m);
 void    P_Do_Set(Puint32 m);
 void    P_Do_SynCheck(Puint32 m);
 void    P_Do_SemCheck(Puint32 m);
+void    P_Do_DbgRead(Puint32 m);
 void    P_Do_Write(Puint32 m);
 
 void    P_Dont_Set(Puint32 m);
 void    P_Dont_SynCheck(Puint32 m);
 void    P_Dont_SemCheck(Puint32 m);
+void    P_Dont_DbgRead(Puint32 m);
 void    P_Dont_Write(Puint32 m);
 
 #else
@@ -822,9 +827,10 @@ void    P_Dont_Write(Puint32 m);
 #define P_Set                 0x0001
 #define P_SynCheck            0x0002
 #define P_SemCheck            0x0004
+#define P_DbgRead             0x0008
 
 /* Mask flags used with write functions */
-#define P_Write               0x0008
+#define P_Write               0x0010
 
 /* Useful Combinations of Mask Flags */
 #define P_CheckAndSet         0x0007     /* P_Set|P_SynCheck|P_SemCheck */
@@ -833,33 +839,37 @@ void    P_Dont_Write(Puint32 m);
 
 /* Useful macros for testing or modifying mask bits */
 
-#define P_Test_Set(m)            (m & P_Set)
-#define P_Test_SynCheck(m)       (m & P_SynCheck)
-#define P_Test_SemCheck(m)       (m & P_SemCheck)
-#define P_Test_Write(m)          (m & P_Write)
+#define P_Test_Set(m)              ((m) & P_Set)
+#define P_Test_SynCheck(m)         ((m) & P_SynCheck)
+#define P_Test_SemCheck(m)         ((m) & P_SemCheck)
+#define P_Test_DbgRead(m)          ((m) & P_DbgRead)
+#define P_Test_Write(m)            ((m) & P_Write)
 
-#define P_Test_NotSet(m)         (!P_Test_Set(m))
-#define P_Test_NotSynCheck(m)    (!P_Test_SynCheck(m))
-#define P_Test_NotSemCheck(m)    (!P_Test_SemCheck(m))
-#define P_Test_NotWrite(m)       (!P_Test_Write(m))
+#define P_Test_NotSet(m)           (!P_Test_Set(m))
+#define P_Test_NotSynCheck(m)      (!P_Test_SynCheck(m))
+#define P_Test_NotSemCheck(m)      (!P_Test_SemCheck(m))
+#define P_Test_NotDbgRead(m)       (!P_Test_DbgRead(m))
+#define P_Test_NotWrite(m)         (!P_Test_Write(m))
 
-#define P_Test_CheckAndSet(m)    ((m & P_CheckAndSet) == P_CheckAndSet)
-#define P_Test_BothCheck(m)      ((m & P_CheckAndSet) == P_BothCheck)
-#define P_Test_Ignore(m)         ((m & P_CheckAndSet) == P_Ignore)
+#define P_Test_CheckAndSet(m)      (((m) & P_CheckAndSet) == P_CheckAndSet)
+#define P_Test_BothCheck(m)        (((m) & P_CheckAndSet) == P_BothCheck)
+#define P_Test_Ignore(m)           (((m) & P_CheckAndSet) == P_Ignore)
 
-#define P_Test_NotCheckAndSet(m) ((m & P_CheckAndSet) != P_CheckAndSet)
-#define P_Test_NotBothCheck(m)   ((m & P_CheckAndSet) != P_BothCheck)
-#define P_Test_NotIgnore(m)      ((m & P_CheckAndSet) != P_Ignore)
+#define P_Test_NotCheckAndSet(m)   (((m) & P_CheckAndSet) != P_CheckAndSet)
+#define P_Test_NotBothCheck(m)     (((m) & P_CheckAndSet) != P_BothCheck)
+#define P_Test_NotIgnore(m)        (((m) & P_CheckAndSet) != P_Ignore)
 
-#define P_Do_Set(m)              (m |= P_Set)
-#define P_Do_SynCheck(m)         (m |= P_SynCheck)
-#define P_Do_SemCheck(m)         (m |= P_SemCheck)
-#define P_Do_Write(m)            (m |= P_Write)
+#define P_Do_Set(m)                ((m) |= P_Set)
+#define P_Do_SynCheck(m)           ((m) |= P_SynCheck)
+#define P_Do_SemCheck(m)           ((m) |= P_SemCheck)
+#define P_Do_DbgRead(m)            ((m) |= P_DbgRead)
+#define P_Do_Write(m)              ((m) |= P_Write)
 
-#define P_Dont_Set(m)            (m &= (~P_Set))
-#define P_Dont_SynCheck(m)       (m &= (~P_SynCheck))
-#define P_Dont_SemCheck(m)       (m &= (~P_SemCheck))
-#define P_Dont_Write(m)          (m &= (~P_Write))
+#define P_Dont_Set(m)              ((m) &= (~P_Set))
+#define P_Dont_SynCheck(m)         ((m) &= (~P_SynCheck))
+#define P_Dont_SemCheck(m)         ((m) &= (~P_SemCheck))
+#define P_Dont_DbgRead(m)          ((m) &= (~P_DbgRead))
+#define P_Dont_Write(m)            ((m) &= (~P_Write))
 
 #endif  /*  FOR_CKIT  */
 
