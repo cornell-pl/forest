@@ -65,7 +65,11 @@ if [ $_pads_status = "OK" ]; then
   fi
 
   if [ "$INSTALLROOT_FORCE"x = x ]; then
-    export INSTALLROOT=$PADS_HOME/ast-ast/arch/$AST_ARCH
+    if [ "$GIGASCOPE_HOME"x = x ]; then
+      export INSTALLROOT=$PADS_HOME/ast-ast/arch/$AST_ARCH
+    else
+      export INSTALLROOT=$GIGASCOPE_HOME
+    fi
     if [ "$_pads_verbose" != 0 ]; then
       echo "##############################################################################"
       echo "# Setting env var INSTALLROOT to $INSTALLROOT"

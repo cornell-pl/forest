@@ -184,7 +184,11 @@ if ($_pads_status == "OK") then
   endif
 
   if (! $?_is_installroot_force) then
-    setenv INSTALLROOT $PADS_HOME/ast-ast/arch/$AST_ARCH
+    if (! $?GIGASCOPE_HOME) then
+       setenv INSTALLROOT $PADS_HOME/ast-ast/arch/$AST_ARCH
+    else
+       setenv INSTALLROOT $GIGASCOPE_HOME
+    endif
     if ($_pads_verbose != 0) then
       echo "##############################################################################"
       echo "# Setting env var INSTALLROOT to $INSTALLROOT"
