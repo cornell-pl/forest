@@ -7,6 +7,8 @@ by end of Aug
 -------------
  * manual
 
+ * skipped fields should have their error fields set.
+
  * Pcompute fields should have associated mask
 
  * should pd of Punion use union or struct
