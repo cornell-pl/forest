@@ -1641,7 +1641,9 @@ Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
  *
  * The string read functions each has a different way of specifying
  * the extent of the string:
- *   + all string_FW_read functions specify a fixed width
+ *   + all string_FW_read functions specify a fixed width.
+ *     N.B.: width zero is allowed: the result is an empty string
+ *       (and the IO cursor does not move)
  *   + all string_read functions specify a single stop character.
  *       if 0 (NULL) is used, then this will match a NULL in the data,
  *       and eor/eof will ALSO successfully terminate the string 

@@ -116,6 +116,7 @@ void PDCI_IODISC_3P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, voi
 void PDCI_IODISC_4P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, void *p3, void *p4);
 
 void PDCI_READFN_WIDTH_CHECK(const char *whatfn, const char *elt_descr, size_t width);
+void PDCI_READFN_WIDTH_CHECK_ZERO_OK(const char *whatfn, const char *elt_descr, size_t width);
 
 Pinv_valfn PDCI_GET_INV_VALFN(P_t *, const char *);
 
@@ -419,6 +420,17 @@ do { \
   } \
 } while (0)
 
+#define PDCI_READFN_WIDTH_CHECK_ZERO_OK(whatfn, elt_descr, width) \
+do { \
+  if (width < 0) { \
+    if (pads->speclev == 0) { \
+      P_WARN2(pads->disc, "UNEXPECTED PARAM VALUE: %s called with %s width < 0", whatfn, elt_descr); \
+    } \
+    PDCI_READFN_SET_NULLSPAN_LOC(0); \
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_BAD_PARAM); \
+  } \
+} while (0)
+
 #else
 /* NO-DEBUG VERSIONS */
 
@@ -474,6 +486,7 @@ do { \
 #define PDCI_IODISC_4P_CHECKS_RET_SSIZE(whatfn, p1, p2, p3, p4)          P_NULL_STMT
 
 #define PDCI_READFN_WIDTH_CHECK(whatfn, elt_descr, width)                P_NULL_STMT
+#define PDCI_READFN_WIDTH_CHECK_ZERO_OK(whatfn, elt_descr, width)        P_NULL_STMT
 
 #endif /* !NDEBUG */
 

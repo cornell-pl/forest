@@ -4595,7 +4595,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.118 2003-10-17 19:44:57 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.119 2003-10-17 20:30:11 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8022,10 +8022,17 @@ PDCI_string_FW_read(P_t *pads, const Pbase_m *m, size_t width,
   P_PS_init(pd);
   P_TRACE2(pads->disc, "PDCI_string_FW_read called, char_set = %s, whatfn = %s",
 	     Pcharset2str(char_set), whatfn);
-  PDCI_READFN_WIDTH_CHECK(whatfn, "string", width);
+  PDCI_READFN_WIDTH_CHECK_ZERO_OK(whatfn, "string", width);
+
   /* ensure there are width chars available */
   if (P_ERR == PDCI_io_need_K_bytes(pads, width, &begin, &end, &bor, &eor, &eof)) {
     goto fatal_nb_io_err;
+  }
+  if (width == 0) {
+    s_out->str = begin;
+    s_out->len = 0;
+    pd->errCode = P_NO_ERR;
+    return P_OK;
   }
   if (end-begin != width) goto width_not_avail;
   switch (char_set)
