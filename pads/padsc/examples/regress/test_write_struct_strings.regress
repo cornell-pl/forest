@@ -1,4 +1,4 @@
-warning: Installing default IO discipline : newline-terminated records
+warning: PDC_open: Installing default IO discipline : newline-terminated records
 Data file = ../../data/ex_data.struct_strings_write
 calling testtwo_read
 test_read returned: s1 xabcdefghi  s2 abcdefg

@@ -1,4 +1,4 @@
-warning: Installing default IO discipline : newline-terminated records
+warning: PDC_open: Installing default IO discipline : newline-terminated records
 warning: Error [in pn_t_read]: at record 1 just before char 12: Typedef constraint error
 [record 1]20198543987>>><<<
 Record not okay:	x = 20198543987

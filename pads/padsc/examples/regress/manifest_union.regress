@@ -1,4 +1,4 @@
-warning: Installing default IO discipline : newline-terminated records
+warning: PDC_open: Installing default IO discipline : newline-terminated records
 Data file = standard in
 Initializing the accumulator
 Calling read function

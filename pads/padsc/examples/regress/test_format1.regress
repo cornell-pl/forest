@@ -1,4 +1,4 @@
-warning: Installing default IO discipline : newline-terminated records
+warning: PDC_open: Installing default IO discipline : newline-terminated records
 init the accum
 calling test_read
 test_read returned: id 1  ts 11

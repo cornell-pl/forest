@@ -1,5 +1,5 @@
 Data file = ../../data/ex_data.ai
-warning: Installing default IO discipline : newline-terminated records
+warning: PDC_open: Installing default IO discipline : newline-terminated records
 *****************************************************************************************************
 <top> : struct http_clf_t
 *****************************************************************************************************
