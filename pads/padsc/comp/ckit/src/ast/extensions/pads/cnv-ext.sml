@@ -1560,7 +1560,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					     PT.Goto (findEORSuf name))]
 
 			      val checkConstraintSs = 
-				  [PT.IfThen(P.andX(PL.mTestUserCheckX(modFieldX(m,user)),
+				  [PT.IfThen(P.andX(PL.mTestSemCheckX(modFieldX(m,user)),
 						    P.notX modPredX),
 					     PT.Compound (reportErrorSs([locS],locX,
 									true,
@@ -1924,7 +1924,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 							 @ reportErrSs))]
 					   in
 					       [PT.IfThen(
-                                                 P.andX(PL.mTestUserCheckX(getEMExp(modFieldX(m,name))),
+                                                 P.andX(PL.mTestSemCheckX(getEMExp(modFieldX(m,name))),
 							P.notX exp),
 						 PT.Compound
 					           (if isEndian then
@@ -2112,7 +2112,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				val condSs = 
 				       [P.mkCommentS ("Checking post constraint for pstruct "^ name ^".\n"),
 					PT.IfThen(
-                                           P.andX( PL.mTestWhereCheckX(modFieldX(m,all)), P.notX expr),
+                                           P.andX( PL.mTestSemCheckX(modFieldX(m,all)), P.notX expr),
 					   PT.Compound reportErrSs)]
 			    in
 			       ([strLocD,getBeginLocS], condSs)
@@ -2584,7 +2584,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				 in
 				     PT.Compound[
                                       PT.IfThenElse(
-                                         P.andX(PL.mTestUserCheckX(modFieldX(m,name)),
+                                         P.andX(PL.mTestSemCheckX(modFieldX(m,name)),
 						P.notX predX),
 					   notFoundSs,
 					   foundSs
@@ -3007,12 +3007,12 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
   
 
                  fun amCheckingBasicE(SOME testE) = 
-                     P.andX(PL.mTestBaseCheckX(modFieldX(m,array)), testE)
-                   | amCheckingBasicE(NONE) = PL.mTestBaseCheckX(modFieldX(m,array))
+                     P.andX(PL.mTestSynCheckX(modFieldX(m,array)), testE)
+                   | amCheckingBasicE(NONE) = PL.mTestSynCheckX(modFieldX(m,array))
 
                  fun amCheckingForallE(SOME testE) = 
-                     P.andX(PL.mTestForallCheckX(modFieldX(m,array)), testE)
-                   | amCheckingForallE(NONE) = PL.mTestForallCheckX(modFieldX(m,array))
+                     P.andX(PL.mTestSemCheckX(modFieldX(m,array)), testE)
+                   | amCheckingForallE(NONE) = PL.mTestSemCheckX(modFieldX(m,array))
 
 
                  (* Calculate bounds on array, generate statements for checking values *)
@@ -3447,7 +3447,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                           PT.Compound[
 			   PT.IfThen(PL.getSpecLevelX(PT.Id pdc),
 				     PT.Return PL.PDC_ERROR),
-			   PT.IfThen(PL.mTestNoBaseIgnoreX(modFieldX(m,array)),
+			   PT.IfThen(PL.mTestNotIgnoreX(modFieldX(m,array)),
 			     PT.Compound[
                               PT.IfThen(P.notX(modFieldX(ed,nerr)),
                                  PT.Compound (

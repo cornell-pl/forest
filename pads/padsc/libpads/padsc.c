@@ -53,7 +53,7 @@
 /* Assumes ed->loc has already been set */
 #define PDCI_READFN_RET_ERRCODE_WARN(whatfn, msg, errcode)
   do {
-    if (pdc->speclev == 0 && PDC_Test_NoBaseIgnore(*m)) {
+    if (pdc->speclev == 0 && PDC_Test_NotIgnore(*m)) {
       ed->errCode = (errcode);
       if (!pdc->inestlev) {
 	PDCI_report_err(pdc, PDC_WARN_FLAGS, &(ed->loc), (errcode), (whatfn), (msg));
@@ -66,7 +66,7 @@
 /* Assumes ed->loc and ed->errCode have already been set */
 #define PDCI_READFN_RET_EXIST_ERRCODE_WARN(whatfn, msg)
   do {
-    if (pdc->speclev == 0 && PDC_Test_NoBaseIgnore(*m)) {
+    if (pdc->speclev == 0 && PDC_Test_NotIgnore(*m)) {
       if (!pdc->inestlev) {
 	PDCI_report_err(pdc, PDC_WARN_FLAGS, &(ed->loc), ed->errCode, (whatfn), (msg));
       }
@@ -78,7 +78,7 @@
 /* Assumes ed->loc has already been set, warning already issued */
 #define PDCI_READFN_RET_ERRCODE_NOWARN(errcode)
   do {
-    if (pdc->speclev == 0 && PDC_Test_NoBaseIgnore(*m)) {
+    if (pdc->speclev == 0 && PDC_Test_NotIgnore(*m)) {
       ed->errCode = (errcode);
     }
     return PDC_ERR;
@@ -88,7 +88,7 @@
 /* Does not use ed->loc */
 #define PDCI_READFN_RET_ERRCODE_FATAL(whatfn, msg, errcode)
   do {
-    if (pdc->speclev == 0 && PDC_Test_NoBaseIgnore(*m)) {
+    if (pdc->speclev == 0 && PDC_Test_NotIgnore(*m)) {
       ed->errCode = (errcode);
       PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, (errcode), (whatfn), (msg));
     }
@@ -371,7 +371,7 @@ fn_pref ## _read_internal(PDC_t *pdc, const PDC_base_m *m,
   if (bytes == 0) {
     goto at_eor_or_eof_err;
   }
-  if (PDC_Test_BaseIgnore(*m)) {
+  if (PDC_Test_Ignore(*m)) {
     /* move beyond anything that looks like an ascii number, return PDC_ERR if none such */
     if (isspace_fn(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
       return PDC_ERR;
@@ -438,10 +438,10 @@ fn_pref ## _read_internal(PDC_t *pdc, const PDC_base_m *m,
     }
     /* Either eor|eof, or found non-digit before end.  Thus, */
     /* the range [begin, end] is now set up for bytes2num_fn */
-    if (PDC_Test_NoBaseCheck(*m)) {
-      tmp = bytes2num_fn ## _norange(pdc, begin, &p1);
-    } else {
+    if (PDC_Test_SemCheck(*m)) {
       tmp = bytes2num_fn(pdc, begin, &p1);
+    } else {
+      tmp = bytes2num_fn ## _norange(pdc, begin, &p1);
     }
     if (errno == EINVAL) {
       if (p1 != end) p1++; /* move to just beyond offending char */
@@ -540,17 +540,17 @@ fn_name ## _internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
     }
   }
   /* end-begin >= width */
-  if (PDC_Test_NoBaseIgnore(*m)) {
+  if (PDC_Test_NotIgnore(*m)) {
     end = begin + width;
     if (isspace_fn(*begin) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
       goto invalid_wspace;
     }
     ct = *end;    /* save */
     *end = 0;     /* null */
-    if (PDC_Test_NoBaseCheck(*m)) {
-      tmp = bytes2num_fn ## _norange(pdc, begin, &p1);
-    } else {
+    if (PDC_Test_SemCheck(*m)) {
       tmp = bytes2num_fn(pdc, begin, &p1);
+    } else {
+      tmp = bytes2num_fn ## _norange(pdc, begin, &p1);
     }
     *end = ct;    /* restore */
     if (errno == EINVAL) goto invalid;
@@ -803,11 +803,11 @@ fn_name ## _internal(PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits_or_b
     }
   }
   /* end-begin >= width */
-  if (PDC_Test_NoBaseIgnore(*m)) {
-    if (PDC_Test_NoBaseCheck(*m)) {
-      tmp = bytes2num_fn ## _norange(pdc, begin, num_digits_or_bytes, &p1);
-    } else {
+  if (PDC_Test_NotIgnore(*m)) {
+    if (PDC_Test_SemCheck(*m)) {
       tmp = bytes2num_fn(pdc, begin, num_digits_or_bytes, &p1);
+    } else {
+      tmp = bytes2num_fn ## _norange(pdc, begin, num_digits_or_bytes, &p1);
     }
     if (errno) goto invalid_range_dom;
   }
@@ -4510,7 +4510,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.87 2003-06-12 13:45:57 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.88 2003-06-17 01:42:01 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7018,7 +7018,7 @@ PDCI_char_lit_read(PDC_t *pdc, const PDC_base_m *m,
   if (bytes == 0) {
     goto at_eor_or_eof_err;
   }
-  if (PDC_Test_NoBaseCheck(*m) || (c == (*begin))) {
+  if (PDC_Test_NotSynCheck(*m) || (c == (*begin))) {
     if (PDC_ERR == PDCI_IO_forward(pdc, 1)) {
       goto fatal_forward_err;
     }
@@ -7098,7 +7098,7 @@ PDCI_str_lit_read(PDC_t *pdc, const PDC_base_m *m,
     }
   }
   /* end-begin >= s->len */
-  if (PDC_Test_NoBaseCheck(*m) || (strncmp((char*)begin, s->str, s->len) == 0)) {
+  if (PDC_Test_NotSynCheck(*m) || (strncmp((char*)begin, s->str, s->len) == 0)) {
     if (PDC_ERR == PDCI_IO_forward(pdc, s->len)) {
       goto fatal_forward_err;
     }
@@ -7117,10 +7117,7 @@ PDCI_str_lit_read(PDC_t *pdc, const PDC_base_m *m,
 
  width_not_avail:
   PDCI_READFN_SET_LOC_BE(0, end-begin);
-  if (PDC_Test_NoBaseIgnore(*m)) {
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, PDC_STR_LIT_NOT_FOUND);
-  }
-  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_STR_LIT_NOT_FOUND);
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, PDC_WIDTH_NOT_AVAILABLE);
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, s->len);

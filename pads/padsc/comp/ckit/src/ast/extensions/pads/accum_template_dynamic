@@ -2,6 +2,7 @@ int main(int argc, char** argv) {
   PDC_t           *pdc;
   PADS_TY         rep;
   PADS_TY_ED      ed;
+  PADS_TY_M       m;
   PADS_TY_ACC     acc;
   char            *fileName;
   
@@ -38,11 +39,14 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
+  /* init mask -- must do this! */
+  PADS_TY_M_INIT(pdc, &m, PDC_CheckAndSet);
+
   /*
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK != PADS_TY_READ(pdc, 0, &ed, &rep)) {
+    if (PDC_OK != PADS_TY_READ(pdc, &m, &ed, &rep)) {
       error(2, "read returned error");
     }
     /* accum both good and bad vals */

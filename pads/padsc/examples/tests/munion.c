@@ -6,16 +6,25 @@
 #define PADS_TY str2
 #define PADS_TY_READ str2_read
 #define PADS_TY_ED str2_ed
+#define PADS_TY_M str2_m
+#define PADS_TY_M_INIT str2_m_init
 #define PADS_TY_ACC str2_acc
 #define PADS_TY_ACC_INIT str2_acc_init
 #define PADS_TY_ACC_ADD str2_acc_add
 #define PADS_TY_ACC_REPORT str2_acc_report
 #define PADS_TY_ACC_CLEANUP str2_acc_cleanup
+
+/* XXX_REMOVE next 2 lines: */
+#include "libpadsc-internal.h"
+#define str2_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
+
 int main(int argc, char** argv) {
   PDC_t*             pdc;
   PADS_TY            rep;
   PADS_TY_ACC        accum;
   PADS_TY_ED         ed = {0};
+  PADS_TY_M          m;
+  char*              fileName = 0;
 
   if (PDC_ERR == PDC_open(&pdc,0,0)) {
     error(2, "*** PDC_open failed ***");
@@ -23,17 +32,16 @@ int main(int argc, char** argv) {
   }
 
   if (argc == 2) {
-    error(0, "Data file = %s\n", argv[1]);
-    if (PDC_ERR == PDC_IO_fopen(pdc, argv[1])) {
-      error(2, "*** PDC_IO_fopen failed ***");
-      exit(-1);
-    }
+    fileName = argv[1];
+    error(0, "Data file = %s\n", fileName);
   } else {
+    fileName = "/dev/stdin";
     error(0, "Data file = standard in\n");
-    if (PDC_ERR == PDC_IO_set(pdc, sfstdin)) {
-      error(2, "*** PDC_IO_set(sfstdin) failed ***");
-      exit(-1);
-    }
+  }
+
+  if (PDC_ERR == PDC_IO_fopen(pdc, fileName)) {
+    error(2, "*** PDC_IO_fopen failed ***");
+    exit(-1);
   }
 
   error(0, "\nInitializing the accumulator");
@@ -42,12 +50,15 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
+  /* init mask -- must do this! */
+  PADS_TY_M_INIT(pdc, &m, PDC_CheckAndSet);
+
   /*
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
     error(0, "\nCalling read function");
-    if (PDC_OK == PADS_TY_READ(pdc, 0, &ed, &rep)) {
+    if (PDC_OK == PADS_TY_READ(pdc, &m, &ed, &rep)) {
       if (PDC_ERR == PADS_TY_ACC_ADD(pdc, &accum, &ed, &rep)) {
 	error(0, "** accum_add failed **");
       }

@@ -82,6 +82,7 @@ DISCIPLINE:
 padsc compiler todo
 -------------------
 NEW
+  * error if sep and term are the same char
   * if a user-defined constraint involves a field that has errCode != PDC_NO_ERR,
     the error message should be something like
       "User constraint skipped due to error reading one of its parts"

@@ -3,6 +3,7 @@ int main(int argc, char** argv) {
   PADS_TY            rep;
   PADS_TY_ACC        accum;
   PADS_TY_ED         ed = {0};
+  PADS_TY_M          m;
   char*              fileName = 0;
 
   if (PDC_ERR == PDC_open(&pdc,0,0)) {
@@ -29,12 +30,15 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
+  /* init mask -- must do this! */
+  PADS_TY_M_INIT(pdc, &m, PDC_CheckAndSet);
+
   /*
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
     error(0, "\nCalling read function");
-    if (PDC_OK == PADS_TY_READ(pdc, 0, &ed, &rep)) {
+    if (PDC_OK == PADS_TY_READ(pdc, &m, &ed, &rep)) {
       if (PDC_ERR == PADS_TY_ACC_ADD(pdc, &accum, &ed, &rep)) {
 	error(0, "** accum_add failed **");
       }

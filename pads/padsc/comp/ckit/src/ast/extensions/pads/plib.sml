@@ -46,7 +46,7 @@ struct
   val PDC_CHAR_LIT_NOT_FOUND             = PT.Id "PDC_CHAR_LIT_NOT_FOUND"
 
   val M_CHECK_AND_SET = PT.Id "PDC_CheckAndSet"
-  val M_CHECK         = PT.Id "PDC_Check"
+  val M_CHECK         = PT.Id "PDC_BothCheck"
   val M_IGNORE        = PT.Id "PDC_Ignore"
 
   val PDC_littleEndian = PT.Id "PDC_littleEndian"
@@ -238,44 +238,44 @@ struct
   fun mTestSetX(m) =
     PT.Call(PT.Id "PDC_Test_Set", [m])
 
-  fun mTestNoSetX(m) =
-    PT.Call(PT.Id "PDC_Test_NoSet", [m])
+  fun mTestNotSetX(m) =
+    PT.Call(PT.Id "PDC_Test_NotSet", [m])
 
-  fun mTestBaseCheckX(m) =
-    PT.Call(PT.Id "PDC_Test_BaseCheck", [m])
+  fun mTestSynCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_SynCheck", [m])
 
-  fun mTestNoBaseCheckX(m) =
-    PT.Call(PT.Id "PDC_Test_NoBaseCheck", [m])
+  fun mTestNotSynCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_NotSynCheck", [m])
 
-  fun mTestUserCheckX(m) =
-    PT.Call(PT.Id "PDC_Test_UserCheck", [m])
+  fun mTestSemCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_SemCheck", [m])
 
-  fun mTestNoUserCheckX(m) =
-    PT.Call(PT.Id "PDC_Test_NoUserCheck", [m])
-
-  fun mTestWhereCheckX(m) =
-    PT.Call(PT.Id "PDC_Test_WhereCheck", [m])
-
-  fun mTestNoWhereCheckX(m) =
-    PT.Call(PT.Id "PDC_Test_NoWhereCheck", [m])
-
-  fun mTestForallCheckX(m) =
-    PT.Call(PT.Id "PDC_Test_ForallCheck", [m])
-
-  fun mTestNoForallCheckX(m) =
-    PT.Call(PT.Id "PDC_Test_NoForallCheck", [m])
+  fun mTestNotSemCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_NotSemCheck", [m])
 
   fun mTestWriteCheckX(m) =
     PT.Call(PT.Id "PDC_Test_WriteCheck", [m])
 
-  fun mTestNoWriteCheckX(m) =
-    PT.Call(PT.Id "PDC_Test_NoWriteCheck", [m])
+  fun mTestNotWriteCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_NotWriteCheck", [m])
 
-  fun mTestBaseIgnoreX(m) =
-    PT.Call(PT.Id "PDC_Test_BaseIgnore", [m])
+  fun mTestCheckAndSetX(m) =
+    PT.Call(PT.Id "PDC_Test_CheckAndSet", [m])
 
-  fun mTestNoBaseIgnoreX(m) =
-    PT.Call(PT.Id "PDC_Test_NoBaseIgnore", [m])
+  fun mTestNotCheckAndSet(m) =
+    PT.Call(PT.Id "PDC_Test_NotCheckAndSet", [m])
+
+  fun mTestBothCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_BothCheck", [m])
+
+  fun mTestNotBothCheck(m) =
+    PT.Call(PT.Id "PDC_Test_NotBothCheck", [m])
+
+  fun mTestIgnoreX(m) =
+    PT.Call(PT.Id "PDC_Test_Ignore", [m])
+
+  fun mTestNotIgnoreX(m) =
+    PT.Call(PT.Id "PDC_Test_NotIgnore", [m])
 
 (* -- File manipulation routines *)
   fun getLocS(pdc:PT.expression, locAddr:PT.expression) = 

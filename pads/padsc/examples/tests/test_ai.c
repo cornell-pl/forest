@@ -3,6 +3,10 @@
 #include <ast.h>
 #include <error.h>
 
+/* XXX_REMOVE NEXT 2 LINES: */
+#include "libpadsc-internal.h"
+#define http_clf_t_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
+
 #define NO_PRINT 1
 
 int main(int argc, char** argv) {
@@ -10,6 +14,7 @@ int main(int argc, char** argv) {
   http_clf_t_ed   ed;
   http_clf_t      ai;
   http_clf_t_acc  acc;
+  http_clf_t_m    m;
   char            *fileName;
   
   if (argc == 2) {
@@ -40,11 +45,14 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
+  /* init mask -- must do this! */
+  http_clf_t_m_init(pdc, &m, PDC_CheckAndSet);
+
   /*
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == http_clf_t_read(pdc, 0, &ed, &ai)) {
+    if (PDC_OK == http_clf_t_read(pdc, &m, &ed, &ai)) {
       /* do something with the data */
 #ifndef NO_PRINT
       if (ai.host.tag == resolved) {

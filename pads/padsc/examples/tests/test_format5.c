@@ -1,12 +1,17 @@
 #include "libpadsc.h"
 #include "format5.h"
 
+/* XXX_REMOVE NEXT 2 LINES: */
+#include "libpadsc-internal.h"
+#define call_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
+
 #define NO_NL 0|ERROR_PROMPT
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
   call_ed         ced = {0};
   call            cdata;
+  call_m          cm;
 
   /* Open pdc handle */
   if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
@@ -20,12 +25,15 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
+  /* Init mask -- must do this! */
+  call_m_init(pdc, &cm, PDC_CheckAndSet);
+
   /*
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
     PDC_error_t res;
-    res= call_read(pdc, 0, &ced, &cdata);
+    res= call_read(pdc, &cm, &ced, &cdata);
 
     if (res == PDC_OK) {
       error(NO_NL, "Record okay:\t");

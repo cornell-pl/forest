@@ -587,114 +587,88 @@ typedef PDC_uint32 PDC_base_m;
 
 #ifdef FOR_CKIT
 /* Declarations for CKIT */
-extern PDC_uint32 PDC_NoSet;
-extern PDC_uint32 PDC_NoBaseCheck;
-extern PDC_uint32 PDC_NoUserCheck;
-extern PDC_uint32 PDC_NoWhereCheck;
-extern PDC_uint32 PDC_NoForallCheck;
-extern PDC_uint32 PDC_NoWrite;
-extern PDC_uint32 PDC_NoChecks;
-extern PDC_uint32 PDC_AllNoFlags;
-extern PDC_uint32 PDC_CheckAndSet;
-extern PDC_uint32 PDC_Check;
 extern PDC_uint32 PDC_Set;
+extern PDC_uint32 PDC_SynCheck;
+extern PDC_uint32 PDC_SemCheck;
+extern PDC_uint32 PDC_Write;
+
+extern PDC_uint32 PDC_CheckAndSet;
+extern PDC_uint32 PDC_BothCheck;
 extern PDC_uint32 PDC_Ignore;
 
-PDC_uint32 PDC_Test_NoSet(PDC_uint32 m);
-PDC_uint32 PDC_Test_NoBaseCheck(PDC_uint32 m);
-PDC_uint32 PDC_Test_NoUserCheck(PDC_uint32 m);
-PDC_uint32 PDC_Test_NoWhereCheck(PDC_uint32 m);
-PDC_uint32 PDC_Test_NoForallCheck(PDC_uint32 m);
-PDC_uint32 PDC_Test_NoWrite(PDC_uint32 m);
-
 PDC_uint32 PDC_Test_Set(PDC_uint32 m);
-PDC_uint32 PDC_Test_BaseCheck(PDC_uint32 m);
-PDC_uint32 PDC_Test_UserCheck(PDC_uint32 m);
-PDC_uint32 PDC_Test_WhereCheck(PDC_uint32 m);
-PDC_uint32 PDC_Test_ForallCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_SynCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_SemCheck(PDC_uint32 m);
 PDC_uint32 PDC_Test_Write(PDC_uint32 m);
 
-PDC_uint32 PDC_Test_BaseIgnore(PDC_uint32 m);
-PDC_uint32 PDC_Test_NoBaseIgnore(PDC_uint32 m);
+PDC_uint32 PDC_Test_NotSet(PDC_uint32 m);
+PDC_uint32 PDC_Test_NotSynCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_NotSemCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_NotWrite(PDC_uint32 m);
+
+PDC_uint32 PDC_Test_CheckAndSet(PDC_uint32 m);
+PDC_uint32 PDC_Test_BothCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_Ignore(PDC_uint32 m);
+
+PDC_uint32 PDC_Test_NotCheckAndSet(PDC_uint32 m);
+PDC_uint32 PDC_Test_NotBothCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_NotIgnore(PDC_uint32 m);
 
 void       PDC_Do_Set(PDC_uint32 m);
-void       PDC_Do_BaseCheck(PDC_uint32 m);
-void       PDC_Do_UserCheck(PDC_uint32 m);
-void       PDC_Do_WhereCheck(PDC_uint32 m);
-void       PDC_Do_ForallCheck(PDC_uint32 m);
-void       PDC_Do_Checks(PDC_uint32 m);
+void       PDC_Do_SynCheck(PDC_uint32 m);
+void       PDC_Do_SemCheck(PDC_uint32 m);
 void       PDC_Do_Write(PDC_uint32 m);
 
 void       PDC_Dont_Set(PDC_uint32 m);
-void       PDC_Dont_BaseCheck(PDC_uint32 m);
-void       PDC_Dont_UserCheck(PDC_uint32 m);
-void       PDC_Dont_WhereCheck(PDC_uint32 m);
-void       PDC_Dont_ForallCheck(PDC_uint32 m);
-void       PDC_Dont_Checks(PDC_uint32 m);
+void       PDC_Dont_SynCheck(PDC_uint32 m);
+void       PDC_Dont_SemCheck(PDC_uint32 m);
 void       PDC_Dont_Write(PDC_uint32 m);
 
 #else
 /* The actual declarations */
 
 /* Mask flags used with read functions */
-#define PDC_NoSet                 (1 << 1)
-#define PDC_NoBaseCheck           (1 << 2)
-#define PDC_NoUserCheck           (1 << 3)
-#define PDC_NoWhereCheck          (1 << 4)
-#define PDC_NoForallCheck         (1 << 5)
+#define PDC_Set                 0x0001
+#define PDC_SynCheck            0x0002
+#define PDC_SemCheck            0x0004
 
 /* Mask flags used with write functions */
-#define PDC_NoWrite               PDC_NoSet  /* alias */
+#define PDC_Write               0x0008
 
 /* Useful Combinations of Mask Flags */
-
-/* 'No' combinations */
-#define PDC_NoChecks              (PDC_NoBaseCheck|PDC_NoUserCheck|PDC_NoForallCheck|PDC_NoWhereCheck)
-#define PDC_AllNoFlags            (PDC_NoSet|PDC_NoChecks)
-
-/* 'Yes' combinations */
-#define PDC_CheckAndSet           0
-#define PDC_Check                 PDC_NoSet
-#define PDC_Set                   PDC_NoChecks
-#define PDC_BaseIgnore            (PDC_NoSet|PDC_NoBaseCheck)
-#define PDC_Ignore                PDC_AllNoFlags
+#define PDC_CheckAndSet         0x0007     /* PDC_Set|PDC_SynCheck|PDC_SemCheck */
+#define PDC_BothCheck           0x0006     /* PDC_SynCheck|PDC_SemCheck */
+#define PDC_Ignore              0x0000     /* none of the checks, no set */
 
 /* Useful macros for testing or modifying mask bits */
 
-#define PDC_Test_NoSet(m)         (m & PDC_NoSet)
-#define PDC_Test_NoBaseCheck(m)   (m & PDC_NoBaseCheck)
-#define PDC_Test_NoUserCheck(m)   (m & PDC_NoUserCheck)
-#define PDC_Test_NoWhereCheck(m)  (m & PDC_NoWhereCheck)
-#define PDC_Test_NoForallCheck(m) (m & PDC_NoForallCheck)
-#define PDC_Test_NoWrite(m)       (m & PDC_NoWrite)
+#define PDC_Test_Set(m)            (m & PDC_Set)
+#define PDC_Test_SynCheck(m)       (m & PDC_SynCheck)
+#define PDC_Test_SemCheck(m)       (m & PDC_SemCheck)
+#define PDC_Test_Write(m)          (m & PDC_Write)
 
-#define PDC_Test_Set(m)           (!PDC_Test_NoSet(m))
-#define PDC_Test_BaseCheck(m)     (!PDC_Test_NoBaseCheck(m))
-#define PDC_Test_UserCheck(m)     (!PDC_Test_NoUserCheck(m))
-#define PDC_Test_WhereCheck(m)    (!PDC_Test_NoWhereCheck(m))
-#define PDC_Test_ForallCheck(m)   (!PDC_Test_NoForallCheck(m))
-#define PDC_Test_Write(m)         (!PDC_Test_NoWrite(m))
+#define PDC_Test_NotSet(m)         (!PDC_Test_Set(m))
+#define PDC_Test_NotSynCheck(m)    (!PDC_Test_SynCheck(m))
+#define PDC_Test_NotSemCheck(m)    (!PDC_Test_SemCheck(m))
+#define PDC_Test_NotWrite(m)       (!PDC_Test_Write(m))
 
-#define PDC_Test_BaseIgnore(m)    ((m & PDC_BaseIgnore) == PDC_BaseIgnore)
-#define PDC_Test_NoBaseIgnore(m)  ((m & PDC_BaseIgnore) != PDC_BaseIgnore)
+#define PDC_Test_CheckAndSet(m)    ((m & PDC_CheckAndSet) == PDC_CheckAndSet)
+#define PDC_Test_BothCheck(m)      ((m & PDC_CheckAndSet) == PDC_BothCheck)
+#define PDC_Test_Ignore(m)         ((m & PDC_CheckAndSet) == PDC_Ignore)
 
-#define PDC_Do_Set(m)             (m &= (~PDC_NoSet))
-#define PDC_Do_BaseCheck(m)       (m &= (~PDC_NoBaseCheck))
-#define PDC_Do_UserCheck(m)       (m &= (~PDC_NoUserCheck))
-#define PDC_Do_WhereCheck(m)      (m &= (~PDC_NoWhereCheck))
-#define PDC_Do_ForallCheck(m)     (m &= (~PDC_NoForallCheck))
-#define PDC_Do_Checks(m)          (m &= (~PDC_NoChecks))
-#define PDC_Do_Write(m)           (m &= (~PDC_NoWrite))
+#define PDC_Test_NotCheckAndSet(m) ((m & PDC_CheckAndSet) != PDC_CheckAndSet)
+#define PDC_Test_NotBothCheck(m)   ((m & PDC_CheckAndSet) != PDC_BothCheck)
+#define PDC_Test_NotIgnore(m)      ((m & PDC_CheckAndSet) != PDC_Ignore)
 
-#define PDC_Dont_Set(m)           (m |= PDC_NoSet)
-#define PDC_Dont_BaseCheck(m)     (m |= PDC_NoBaseCheck)
-#define PDC_Dont_UserCheck(m)     (m |= PDC_NoUserCheck)
-#define PDC_Dont_WhereCheck(m)    (m |= PDC_NoWhereCheck)
-#define PDC_Dont_ForallCheck(m)   (m |= PDC_NoForallCheck)
-#define PDC_Dont_Checks(m)        (m |= PDC_NoChecks)
-#define PDC_Dont_Write(m)         (m |= PDC_NoWrite)
+#define PDC_Do_Set(m)              (m |= PDC_Set)
+#define PDC_Do_SynCheck(m)         (m |= PDC_SynCheck)
+#define PDC_Do_SemCheck(m)         (m |= PDC_SemCheck)
+#define PDC_Do_Write(m)            (m |= PDC_Write)
 
-/* If PDC_Test_NoBaseIgnore(m), then at least one of PDC_NoSet or PDC_NoBaseCheck is zero */
+#define PDC_Dont_Set(m)            (m &= (~PDC_Set))
+#define PDC_Dont_SynCheck(m)       (m &= (~PDC_SynCheck))
+#define PDC_Dont_SemCheck(m)       (m &= (~PDC_SemCheck))
+#define PDC_Dont_Write(m)          (m &= (~PDC_Write))
 
 #endif  /*  FOR_CKIT  */
 
@@ -1092,7 +1066,7 @@ PDC_error_t PDC_e_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *sto
  * Mask flags control the behavior, as follows:
  *
  *
- * PDC_Test_BaseCheck(*m)              PDC_Test_NoBaseCheck(*m)
+ * PDC_Test_SynCheck(*m)              PDC_Test_NoSynCheck(*m)
  * ---------------------------------   ------------------------------
  * If IO cursor points to specified    Always advance cursor by length
  * literal, advance cursor by length   of literal, regardless of what

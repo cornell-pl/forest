@@ -63,6 +63,8 @@ void PDCI_NULLPARAM_CHECK_RET_SSIZE(char *, void *);
 
 PDC_inv_valfn PDCI_GET_INV_VALFN(PDC_t *, const char *);
 
+void PDCI_fill_mask(PDC_base_m* mask, PDC_base_m m, size_t mask_size);
+
 #else
 /* The actual impls */
 
@@ -143,6 +145,17 @@ PDC_inv_valfn PDCI_GET_INV_VALFN(PDC_t *, const char *);
 
 #define PDCI_GET_INV_VALFN(pdc,type_name) \
   (pdc->disc->inv_valfn_map ? PDC_get_inv_valfn_internal(pdc, pdc->disc->inv_valfn_map, type_name) : 0)
+
+#define PDCI_fill_mask(mask, m, sz) do { \
+  if ((m) == 0) { \
+    memset((void*)(mask), 0, (sz)); \
+  } else { \
+    int i; \
+    for (i = 0; i < (sz)/sizeof(PDC_base_m); i++) { \
+      ((PDC_base_m*)(mask))[i] = (m); \
+    } \
+  } \
+} while (0)
 
 #endif /* FOR_CKIT */
 
@@ -1659,6 +1672,9 @@ void PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const ch
 PDC_byte *PDCI_findfirst(const PDC_byte *begin, const PDC_byte *end, PDC_byte b);
 PDC_byte *PDCI_findlast(const PDC_byte *begin, const PDC_byte *end, PDC_byte b);
 
+#ifdef FOR_CKIT
+#else
+#endif
 
 /* ================================================================================ */
 

@@ -3,6 +3,10 @@
 /* #define FILENAME  "stdin" */
 #define FILENAME  "../../data/ex_data.struct_write" 
 
+/* XXX_REMOVE NEXT 2 LINES: */
+#include "libpadsc-internal.h"
+#define testtwo_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
+
 PDC_error_t my_uint32_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **type_args) {
   PDC_base_ed *ed  = (PDC_base_ed*)ed_void;
   PDC_uint32  *val = (PDC_uint32*)val_void;
@@ -18,6 +22,7 @@ int main(int argc, char** argv) {
   PDC_t*         pdc;
   testtwo        f1data;
   testtwo_ed     ed = {0};
+  testtwo_m      m;
   const char    *fname = FILENAME;
 
   if (argc == 2) {
@@ -45,12 +50,15 @@ int main(int argc, char** argv) {
     }
   }
 
+  /* init mask -- must do this! */
+  testtwo_m_init(pdc, &m, PDC_CheckAndSet);
+
   /*
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
     error(0, "\ncalling testtwo_read");
-    if (PDC_OK == testtwo_read(pdc, 0, &ed, &f1data)) {
+    if (PDC_OK == testtwo_read(pdc, &m, &ed, &f1data)) {
       /* do something with the data */
       error(2, "testtwo_read returned: id %d  ts %d  f %d ", f1data.header.id, f1data.header.ts, f1data.f);
       testtwo_write2io(pdc, sfstdout, &ed, &f1data);

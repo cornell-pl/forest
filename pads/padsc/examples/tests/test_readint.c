@@ -2,10 +2,15 @@
 #include "readinttest.h"
 #include <error.h>
 
+/* XXX_REMOVE NEXT 2 LINES: */
+#include "libpadsc-internal.h"
+#define rec_m_init(pdc, mask_ptr, base_mask) PDCI_fill_mask((PDC_base_m*)mask_ptr, base_mask, sizeof(*(mask_ptr)))
+
 int main(int argc, char** argv) {
   PDC_t*          pdc;
   rec             r;
   rec_ed          ed = {0};
+  rec_m           m;
 
   if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
     error(2, "*** PDC_open failed ***");
@@ -16,11 +21,14 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
+  /* init mask -- must do this! */
+  rec_m_init(pdc, &m, PDC_CheckAndSet);
+
   /*
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == rec_read(pdc, 0, &ed, &r)) {
+    if (PDC_OK == rec_read(pdc, &m, &ed, &r)) {
       /* do something with the data */
     } else {
       error(0, "rec_read returned: error");
