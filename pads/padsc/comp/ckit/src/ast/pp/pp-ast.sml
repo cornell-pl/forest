@@ -3,6 +3,7 @@
  *)
 
 local 
+
   structure PPAstAdornment : PPASTADORNMENT =
   struct
     type aidinfo = unit
