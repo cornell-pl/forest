@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.32 2002-10-10 20:45:53 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.33 2002-10-16 19:35:34 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -1515,6 +1515,21 @@ PDC_adate_read (PDC_t* pdc, PDC_base_em* em, PDC_base_ed* ed,
 /* STRING READ FUNCTIONS */
 
 /* related helper functions */
+
+PDC_error_t
+PDC_string_ed_init(PDC_t* pdc, PDC_string_ed* ed, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_string_ed_cleanup(PDC_t* pdc, PDC_string_ed* ed, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  return PDC_OK;
+}
+
 PDC_error_t
 PDC_string_init(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc)
 {

@@ -175,13 +175,14 @@ typedef PDC_auint64_rep        PDC_auint64;
 typedef PDC_base_em            PDC_auint64_em;
 typedef PDC_base_ed            PDC_auint64_ed;
 
-typedef char*                  PDC_string_NT;
+typedef PDC_base_ed            PDC_string_ed;
 
 typedef struct PDC_string_s {
   size_t    len;
   char*     str;
   RBuf_t*   rbuf;
 } PDC_string;
+
 
 /* ================================================================================ */
 /* USEFUL CONSTANTS */
@@ -318,9 +319,20 @@ PDC_error_t PDC_adate_read (PDC_t* pdc, PDC_base_em* em, PDC_base_ed* ed,
  *              string_copy returns PDC_ERROR on bad arguments or on failure to alloc space,
  *              otherwise it returns PDC_OK
  */
+
 PDC_error_t PDC_string_init(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc);
 PDC_error_t PDC_string_cleanup(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc);
 PDC_error_t PDC_string_copy(PDC_t* pdc, PDC_string* targ, const char* src, size_t len, PDC_disc_t* disc);
+
+/*
+ * Type T with T_init/T_cleanup also must have T_ed_init/T_ed_cleanup.
+ * For PDC_string_ed, these turn out to just be no-ops...
+ *    PDC_string_ed_init    : a no-op
+ *    PDC_string_ed_cleanup : a no-op  
+ */
+
+PDC_error_t PDC_string_ed_init(PDC_t* pdc, PDC_string_ed* ed, PDC_disc_t* disc);
+PDC_error_t PDC_string_ed_cleanup(PDC_t* pdc, PDC_string_ed* ed, PDC_disc_t* disc);
 
 /*
  * The string read functions each has a different way of specifying how much
