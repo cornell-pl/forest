@@ -18,6 +18,8 @@
 #  define MAX_RECS 0
 #endif
 
+Puint64 num_recs = 0;
+
 int main(int argc, char** argv) {
   P_t              *pads;
   Pdisc_t           my_disc = Pdefault_disc;
@@ -32,7 +34,6 @@ int main(int argc, char** argv) {
   PADS_HDR_TY(_m)       hdr_m;
 #endif /* PADS_HDR_TY */
   char             *fileName = 0;
-  Puint64           num_recs = 0;
 
 #ifdef WSPACE_OK
   my_disc.flags |= (Pflags_t)P_WSPACE_OK;
