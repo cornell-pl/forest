@@ -16,27 +16,27 @@ Pstruct ptr_t {
   chkPtr(&ptr1);
 };
 
-Punion label_or_pointer{
+Punion label_or_ptr{
   label_t label;
   ptr_t   ptr;
 };
 
-int check256(size_t s){
+int check256(size_t s, size_t offset) {
   if (s > 255) {
-    abort();
+    error(ERROR_FATAL, "domain_name beginning at offset %lx has size %lu > 256",(long)offset, (unsigned long)s);
   };
-  return 1;
+  return 0;
 }
 
-int pdebug(size_t s){
-  error(0, "offset = %x", s);
+int pdebug(size_t offset){
+  error(0, "domain_name begins at offset = %lx", (long)offset);
   return 1; 
 }
 
 Parray domain_name {
-  label_or_pointer [] : Plast(check256(eltEnd.offset - arrayBegin.offset) &&
-			      (elts[current].tag != label ||
-			       elts[current].val.label.length > 0)) ;
+  label_or_ptr [] : Plast(check256(eltEnd.offset - arrayBegin.offset, arrayBegin.offset)
+			      || elts[current].tag != label
+			      || elts[current].val.label.length == 0) ;
 } Pwhere {
   Pgeneral(pdebug(arrayBegin.offset));
 };
