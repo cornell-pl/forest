@@ -1,7 +1,6 @@
 #define IO_DISC_MK P_nlrec_noseek_make(0)
 #define COPY_STRINGS 1
 #define PADS_TY(suf) entry_t ## suf
-#define PPADS_TY(pref) pref ## entry_t
 #define TRACE 1
 
 #define EXTRA_DECLS int allocated, deallocated, moved

@@ -16,7 +16,6 @@
 
 
 #define PADS_TY(suf) entry ## suf
-#define PPADS_TY(pref) pref ## entry
 
 
 #include "array_parsecheck.h"

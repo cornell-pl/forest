@@ -3,6 +3,5 @@
 #define IO_DISC_MK P_vlrec_noseek_make(1, 3100)
 #define PADS_HDR_TY(suf) cpy_ijnltifh ## suf
 #define PADS_TY(suf) d_or_t ## suf
-#define PPADS_TY(pref) pref ## d_or_t 
 #include "ijnltif.h"
 #include "template/accum_report.h"

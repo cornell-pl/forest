@@ -129,6 +129,6 @@ struct
 
   fun aiInitSuf s = s^"_array_info_init"
 
-  fun isPref name = "is_"^name
+  fun isPref name = name^"_verify"
 
 end

@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
     }
 #ifdef EXTRA_GOOD_READ_CODE
     else {
-      if (PPADS_TY(is_)(&(rep) EXTRA_READ_ARGS ) ) {  
+      if (PADS_TY(_verify)(&(rep) EXTRA_READ_ARGS ) ) {  
 	error(2, "read reported no errors and passed predicate test.");  
       } else {  error(2, "read reported no errors but failed predicate test.");  } 
       EXTRA_GOOD_READ_CODE;

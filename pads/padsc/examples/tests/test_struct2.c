@@ -9,7 +9,6 @@
 } while (0)
 
 #define PADS_TY(suf) test ## suf
-#define PPADS_TY(pref) pref ## test
 #include "struct2.h"
 #include "template/accum_report.h"
 

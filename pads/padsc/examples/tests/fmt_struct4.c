@@ -10,7 +10,6 @@
 } while (0)
 
 #define PADS_TY(suf) testtwo ## suf
-#define PPADS_TY(pref) pref ## testtwo
 #define DELIMS ","
 #include "struct4.h"
 #include "template/read_format.h"

@@ -7,7 +7,6 @@
 } while (0)
 
 #define PADS_TY(suf) entry ## suf
-#define PPADS_TY(pref) pref ## entry
 
 #include "array_string.h"
 #include "template/accum_report.h"

@@ -9,7 +9,6 @@
 } while (0)
 
 #define PADS_TY(suf) test2 ## suf
-#define PPADS_TY(pref) pref ## test2
 #define DELIMS ":,"
 #define FMT_MASK P_Write | P_WriteMeta
 #include "punion2.h"

@@ -9,7 +9,6 @@
 } while (0)
 
 #define PADS_TY(suf) intList ## suf
-#define PPADS_TY(pref) pref ## intList
 
 #include "array_post.h"
 #include "template/accum_report.h"

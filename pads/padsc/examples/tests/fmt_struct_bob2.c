@@ -111,7 +111,6 @@ my_test_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len,
 
 #define WSPACE_OK 1
 #define PADS_TY(suf) testtwo ## suf
-#define PPADS_TY(pref) pref ## testtwo
 #define DELIMS "|,"
 #define FMT_ERROR_CASES 1
 #include "template/read_format.h"
