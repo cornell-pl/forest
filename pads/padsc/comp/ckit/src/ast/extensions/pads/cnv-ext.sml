@@ -552,6 +552,8 @@ structure CnvExt : CNVEXT = struct
               fun reportSuf s = s^"_report"
 	      fun mapSuf s = s^"_map"
 	      fun toStringSuf s = s^"2str"
+	      fun errSuf s = s^"_err"
+	      fun findEORSuf s = s^"_findEOR"
 	      fun gTemp base = "tmp"^base
 	      fun gMod  base = "mod"^base
 	      fun lookupTy (ty:pty, sufFun:string->string, fldSelect:PBTys.baseInfoTy ->Atom.atom) = 
@@ -649,6 +651,17 @@ structure CnvExt : CNVEXT = struct
 		      [P.assignS(fieldX(ed, errCode), code),
 		       P.assignS(fieldX(ed, loc), locX)]),
 		   P.plusAssignS(fieldX(ed,nerr), P.intX 1)]
+
+	      fun reportUnionErrorSs (code, locX) = 
+                 [PT.IfThen(
+		   P.eqX(PT.Id result, PL.PDC_OK), (* only report scanning error if correctly read field*)
+		   PT.Compound
+		    [PT.IfThen(
+		      P.eqX(P.zero, fieldX(ed,nerr)), 
+		      PT.Compound 
+		       [P.assignS(fieldX(ed, errCode), code),
+		        P.assignS(fieldX(ed, loc), locX)]),
+		     P.plusAssignS(fieldX(ed,nerr), P.intX 1)])]
 
 
 
@@ -1704,7 +1717,8 @@ structure CnvExt : CNVEXT = struct
 		     fun genTagBrief e = []
 		     fun genTagEOR e = []
 		     val tagFields = mungeVariants genTagFull genTagBrief genTagEOR variants
-		     val tagED = P.makeTyDefEnumEDecl(tagFields, tgSuf name)
+		     val tagFieldsWithError = (errSuf name, P.zero, NONE) :: tagFields 
+		     val tagED = P.makeTyDefEnumEDecl(tagFieldsWithError, tgSuf name)
 		     val tagDecls = cnvExternalDecl tagED
 		     val tagPCT = P.makeTypedefPCT(tgSuf name)
 
@@ -1746,7 +1760,8 @@ structure CnvExt : CNVEXT = struct
 		     fun genEDBrief e = []
 		     fun genEDEOR e = []
 		     val auxEDFields = [(nerr, P.int,NONE), (errCode, PL.errCodePCT, NONE),
-					(loc, PL.locPCT,NONE), (panic, P.int,NONE)]
+					(loc, PL.locPCT,NONE), (panic, P.int,NONE),
+					(tag, PL.base_edPCT,NONE)]
 		     val edFields = auxEDFields @ (mungeVariants genEDFull genEDBrief genEDEOR variants)
 		     val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
 		     val edPCT = P.makeTypedefPCT (edSuf name)			  
@@ -1788,8 +1803,8 @@ structure CnvExt : CNVEXT = struct
 			      val commentS = P.mkCommentS ("Reading field: "^ name )
 			      val foundItSs = PT.Compound(
 					       PL.commitS(PT.Id ts)
-					       @ (genReadEOR reportStructErrorSs ())
-					       @[PT.Return PL.PDC_OK])
+					       @[P.assignS(PT.Id result, PL.PDC_OK),
+						 PT.Goto (findEORSuf unionName)])
 			      fun doConstraint predX = case predX of NONE => foundItSs
 				  | SOME constraint => PT.Compound[
                                           PT.IfThenElse(
@@ -1807,7 +1822,8 @@ structure CnvExt : CNVEXT = struct
 						   [PT.Id ts, PT.Id (gMod ed)])),
 				   PT.Expr(PT.Call(PT.Id ((initSuf o edSuf) unionName), 
 						   [PT.Id ts, PT.Id (gMod ed)]))]
-                              val deallocOldSpaceSs = 
+                              val deallocOldSpaceSs = (* optimization for reusing if space if
+						         hits first tag again *)
 				   case #memChar unionProps of TyProps.Static => []
 				   | TyProps.Dynamic => 
 				       if name = !firstTag then 
@@ -1841,9 +1857,11 @@ structure CnvExt : CNVEXT = struct
 					true, 
 					("Did not match any branch of union "^name^"."),
 					[])
-			             @ [P.assignS(fieldX(ed,panic), P.trueX)]
-				     @ (genReadEOR (fn _ => []) ())
-				     @ [PT.Return PL.PDC_ERROR]
+			             @ [P.assignS(fieldX(rep,tag),PT.Id (errSuf name)),
+					P.assignS(fieldX(ed,panic), P.trueX)]
+			             @ [PT.Labeled(findEORSuf name, 
+						   PT.Compound (genReadEOR reportUnionErrorSs ()))]
+				     @ [PT.Return (PT.Id result)]
 
 
                      (* -- Assemble read function *)
@@ -1853,7 +1871,7 @@ structure CnvExt : CNVEXT = struct
                      val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		     val readFields = mungeVariants genReadFull genReadBrief genReadUnionEOR variants  (* does type checking *)
 		     val _ = popLocalEnv()                                         (* remove scope *)
-		     val bodySs = readFields @ cleanupSs
+		     val bodySs = [PT.Compound ([P.varDeclS(P.int, result, PL.PDC_ERROR)] @ readFields @ cleanupSs)]
 		     val readFunEDs = genReadFun(readName, cParams,emPCT,edPCT,canonicalPCT, 
 						 emFirstPCT, true, bodySs)
 
@@ -1890,7 +1908,10 @@ structure CnvExt : CNVEXT = struct
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* ) *)
 		      val addFun = (addSuf o accSuf) name
 		      val addDeclSs = [P.varDeclS(P.int, nerr, P.zero), P.varDeclS'(PL.base_edPCT, ted)]
-		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), PL.PDC_NO_ERROR)]
+		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), 
+						 P.condX(P.eqX(P.arrowX(PT.Id ed, PT.Id errCode),
+							       PL.PDC_UNION_MATCH_FAILURE),
+							 PL.PDC_UNION_MATCH_FAILURE, PL.PDC_OK))]
 		      fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
 		      val addTagSs = chkAddFun(addSuf PL.intAct, getFieldX(acc,tag), P.addrX(PT.Id ted), 
 						  PT.Cast(P.ptrPCT PL.intPCT, getFieldX(rep,tag)))
