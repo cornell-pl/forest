@@ -27,24 +27,24 @@ ends up embedded in parsing code, making long-term maintenance
 difficult for the original writer and sharing the knowledge with
 others nearly impossible.
 
-The goal of PADS is to provide languages and tools for
+The goal of \PADS{} is to provide languages and tools for
 simplifying data stream analysis.  We have a preliminary design of a
-declarative data-description language, \padsl{}, expressive enough to
+declarative data-description language, \PADSL{}, expressive enough to
 describe the data feeds we see at AT\&T in practice, including ASCII,
-binary, and mixed data formats.  From \padsl{} we generate a tunable \C{}
+binary, and mixed data formats.  From \PADSL{} we generate a tunable \C{}
 library with functions for parsing, manipulating, and summarizing the data.  
 
-\section{\pads{} language}
-Intuitively, a \padsl{} description specifies complete information
+\section{\PADS{} language}
+Intuitively, a \PADSL{} description specifies complete information
 about the physical layout and semantic constraints for the associated
-data stream.  Most type declarations in \padsl{} are analogous to type
+data stream.  Most type declarations in \PADSL{} are analogous to type
 declarations in \C{}.
-\padsl{} has an extensible set of base types that
+\PADSL{} has an extensible set of base types that
 specify how to read and verify atomic pieces of data such as ASCII
 32-bit integers (\cd{a_int32}) and binary bytes (\cd{b_int8}).
 Verification conditions for such base types include checking that the
 resulting number fits in the indicated space, \ie, 16-bits for
-\cd{a_int16}.  \padsl{} has 
+\cd{a_int16}.  \PADSL{} has 
 \kw{pstruct}s, \kw{punion}s, and \kw{parray}s to describe
 record-like structures, alternatives, and sequences, respectively.
 Each of these
@@ -53,11 +53,11 @@ value calculated from the physical specification is indeed a legal
 value for the type.  For example, a predicate might require that two
 fields of a \kw{pstruct} are related or that the elements
 of a sequence are in increasing order.  Programmers can specify such
-predicates using \padsl{} expressions or functions.
-\padsl{} \kw{typedef}s can be used
+predicates using \PADSL{} expressions or functions.
+\PADSL{} \kw{typedef}s can be used
 to define new types that add further constraints to existing types.
 
-In addition, \padsl{} types can be parameterized by values.
+In addition, \PADSL{} types can be parameterized by values.
 This mechanism
 serves both to reduce the number of base types and to permit the
 format of later portions of the data to depend upon earlier portions.
@@ -80,7 +80,7 @@ recording the IP address of the requester; either a dash or the owner
 of the TCP session; either a dash or the login of the requester; the
 date; the actual request, which consists of the HTTP method, the
 requested URL, the HTTP version number; a response code; and the
-number of bytes returned.  A \padsl{} type describing the request
+number of bytes returned.  A \PADSL{} type describing the request
 portion is
 \begin{code}
 \kw{pstruct} http_request_t \{
@@ -102,7 +102,7 @@ which ensures that obsolete HTTP methods \cd{LINK} and \cd{UNLINK}
 are only used with HTTP version \cd{1.0}.
 
 \section{Generated library}
-From each type in a \padsl{} description, we generate C declarations for
+From each type in a \PADSL{} description, we generate C declarations for
 (1) an in-memory representation, 
 (2) a mask, which allows users to specify which portions of the data
 are relevant to their applications, 
@@ -132,7 +132,7 @@ programmers can take the appropriate action: halting the program,
 discarding parts of the data, or repairing the errors.
 
 By supporting multiple entry-points, we accommodate larger-scale data.
-For a small file, programmers can define a \padsl{} type that describes
+For a small file, programmers can define a \PADSL{} type that describes
 the entire file and use that type's parsing function to read the whole
 file with one call.  For larger-scale data, programmers can sequence
 calls to parsing functions that read manageable portions of the file,
@@ -142,7 +142,7 @@ calls to parsing functions that read manageable portions of the file,
 There are many tools for describing data formats. For example,
 \textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl} are both
 systems for declaratively describing data and then generating
-libraries for manipulating that data.  In contrast to \pads{},
+libraries for manipulating that data.  In contrast to \PADS{},
 however, both these systems specify the {\em logical\/} representation
 and automatically generate a {\em physical\/} representation.
 Although useful for many purposes, this technology does not help
@@ -157,11 +157,11 @@ error-free or halt parsing if an error is detected.
 
 \section{Terminology}
 We use the term \textit{\external{}} to refer to the physical
-data characterized by a \pads{} description.  Such data might 
+data characterized by a \PADS{} description.  Such data might 
 come from disk or over-the-wire for network applications.
 
 \section{Notation}
-In describing the syntax of various \padsl{} expressions, we
+In describing the syntax of various \PADSL{} expressions, we
 adopt the following conventions:
 \begin{itemize}
 \item \kw{Keywords}
@@ -170,30 +170,30 @@ adopt the following conventions:
 \end{itemize}
 
 \section{How do I read this manual?}
-\chapref{chap:example} describes a sample use of the \pads{} system.
+\chapref{chap:example} describes a sample use of the \PADS{} system.
 Chapters \ref{chap:??} through \ref{chap:??} describe various
 constructs. 
 \chapref{chap:implementation} describes the implementation of the
 library. 
 
 
-\section{Getting the \pads{} system}
-Source code for \pads{} will be available for download with
+\section{Getting the \PADS{} system}
+Source code for \PADS{} will be available for download with
 a non-commercial use license from: 
 \begin{centercode}
 http://www.research.att.com/projects/pads
 \end{centercode}
 
-The PADS distribution contains:
+The \PADS{} distribution contains:
 \begin{itemize}
 \item this manual
 \item source code 
 \item README file describing installation procedure.
 \end{itemize}
 
-\section{Using the \pads{} compiler}
-This section describes how to use the \pads{} compiler \texttt{padsc}.
-The simplest use of \texttt{padsc} is to compile a \padsl{} source file
+\section{Using the \PADS{} compiler}
+This section describes how to use the \PADS{} compiler \texttt{padsc}.
+The simplest use of \texttt{padsc} is to compile a \PADSL{} source file
 to a C header and implementation file.  The command
 \begin{centercode}
 padsc my.p
@@ -206,5 +206,5 @@ picture linking generated library with core library and main.c to
 produce executable.
 
 \section{Practical notes}
-Please report any bugs in the \pads{} implementation or problems with
+Please report any bugs in the \PADS{} implementation or problems with
 this manual by electronic mail to \texttt{pads@research.att.com}.

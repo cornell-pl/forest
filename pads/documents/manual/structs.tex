@@ -1,32 +1,32 @@
-\chapter{PStructs}
+\chapter{Pstructs}
 \label{chap:structs}
-\pads{} \kw{pstructs} are used to describe sequences of values with
+\PADS{} \Pstruct{}s are used to describe sequences of values with
 potentially unrelated types.  Intuitively, they correspond to
 record-like structures \external ly and \C{}-\cd{structs} in memory.
 \section{Syntax}
 
 \begin{tabular}{rcl}
-\nont{qualifier}  & \is{} & \pomit{} \alt{} \pendian{}\\[1ex]
+\nont{qualifier}  & \is{} & \Pomit{} \alt{} \Pendian{}\\[1ex]
 \nont{qualifiers}  & \is{} & \nont{qualifier} \alt{} \nont{qualifier} \nont{qualifiers}\\[1ex]
 \nont{constraint} & \is{} & : \nont{predicate}\\[1ex]
 \nont{full\_field} & \is{} & \opt{\nont{qualifiers}}
      \nont{p\_ty} \opt{\nont{p\_actuals}} identifier 
        \opt{\nont{constraint}}; \opt{\nont{p\_comment}} \\[1ex]
 \nont{literal\_field} & \is{} & \term{char\_lit}; \alt{} \term{str\_lit};\\[1ex]
-\nont{comp\_field} & \is{} & \compute{} \nont{c\_ty} identifier \cd{=} \nont{expression};\\[1ex]
+\nont{comp\_field} & \is{} & \Pcompute{} \nont{c\_ty} identifier \cd{=} \nont{expression};\\[1ex]
 \nont{field} & \is{} & \nont{full\_field} \alt{} \nont{literal\_field}  \alt{} \nont{comp\_field}\\[1ex]
 \nont{fields} & \is{} & \nont{field} \alt{} \nont{field} \ \nont{fields}\\[1ex]
-\nont{struct\_ty} & \is{} &  \struct{} identifier \opt{\nont{formals}} \{\\
+\nont{struct\_ty} & \is{} &  \Pstruct{} identifier \opt{\nont{formals}} \{\\
 && \quad \nont{fields}\\
-&& \}\ \opt{ \where{} \ \{\ \nont{predicate}\ \}}; \\[4ex]
+&& \}\ \opt{ \Pwhere{} \ \{\ \nont{predicate}\ \}}; \\[4ex]
 \end{tabular}
 
 \noindent
 Predicates (\nont{predicate}) are described in \secref{sec:common-predicates}.
 Actual (\nont{p\_actuals}) and formal (\nont{formals}) parameter lists
 are described in \secref{sec:common-parameterization}.
-\pads{} types (\nont{p\_ty}) are listed in \secref{sec:common-overall}.
-\pads{} comments (\nont{p\_comment}) are described in \secref{sec:common-comments}.
+\PADS{} types (\nont{p\_ty}) are listed in \secref{sec:common-overall}.
+\PADS{} comments (\nont{p\_comment}) are described in \secref{sec:common-comments}.
 Character (\term{char\_lit}) and string (\term{str\_lit}) literals are described in
 \secref{sec:common-literals}.
 Expressions (\nont{expression}) represent any \C{} expression, 
@@ -34,14 +34,14 @@ while \nont{c\_ty} denotes any \C{} type.
 
 
 \subsection{Example}
-The following \pads{} \struct{} describes the request portion of a
+The following \PADS{} \Pstruct{} describes the request portion of a
 common-log format web-server log, an example of which is:
 \begin{verbatim}
-"GET /research.att.com/projects/pads/index.html HTTP/1.0"
+"GET /research.att.com/projects/PADS/index.html HTTP/1.0"
 \end{verbatim}
 \input{code/httpRequest}
 \noindent
-The \struct{} \cd{http\_request\_t} has full fields \cd{meth},
+The \Pstruct{} \cd{http\_request\_t} has full fields \cd{meth},
 \cd{req\_uri}, and \cd{version} that use the (omitted) auxiliary types
 \cd{http_method_t},
 \cd{Pstring}, and
@@ -57,10 +57,10 @@ to ensure that the obsolete HTTP methods
 \cd{LINK} and \cd{UNLINK} are only used with HTTP version \cd{1.0}.
 
 \subsection{Full fields}
-Each full field in a \struct{} must include the name of the field
+Each full field in a \Pstruct{} must include the name of the field
 and its type.  
 The name serves to document the data and to permit later reference.  
-The type determines how that piece of the \struct{} will be
+The type determines how that piece of the \Pstruct{} will be
 processed.  If the field type is parameterized 
 (\cf{} \secref{sec:common-parameterization}), the field type must be
 followed by appropriate actual parameters, as in the \cd{Pstring} type
@@ -70,8 +70,8 @@ Optionally, each full field may be followed by a constraint (\cf{}
 \secref{sec:common-predicates}).  Such a constraint is used to express
 the conditions under which a properly parsed value of the field type
 is a legal value for the field.  The field itself and all earlier
-fields in the \struct{} are in scope in the constraint, as are any
-parameters to the \struct{}.  As an example, the \cd{checkVersion}
+fields in the \Pstruct{} are in scope in the constraint, as are any
+parameters to the \Pstruct{}.  As an example, the \cd{checkVersion}
 predicate on the \cd{version} field uses the values of the \cd{meth}
 and \cd{version} fields to determine if the \cd{version} value is
 legal.  If the constraint associated with a field evaluates to false
@@ -79,21 +79,21 @@ legal.  If the constraint associated with a field evaluates to false
 the in-memory representation will indicate a user-constraint violation
 has occurred for the field.
 
-Each full field in a \struct{} may optionally be followed by a \padsl{}
-comment. Such comments are reflected by the \pads{} compiler into the
+Each full field in a \Pstruct{} may optionally be followed by a \PADSL{}
+comment. Such comments are reflected by the \PADS{} compiler into the
 output library as comments. 
 
 \subsubsection{Qualifiers}
 Each full field can take one or more qualifiers.
 \begin{description}
-\item[\pomit{}] This qualifier indicates that the field
+\item[\Pomit{}] This qualifier indicates that the field
   should not be included in the in-memory representation of the
-  \struct{}. 
-\item[\pendian{}] During initialization, the \pads{} library
+  \Pstruct{}. 
+\item[\Pendian{}] During initialization, the \PADS{} library
   determines the endian-ness of the underlying machine and stores the
   result in the library handle.  Each library handle discipline stores
   the endian-ness of the data being parsed, initially assuming the
-  endian-ness of the data matches that of the machine.  The \pendian{}
+  endian-ness of the data matches that of the machine.  The \Pendian{}
   qualifier directs the generated parser to check the endian-ness of
   the data; it can only be used in the presence of a user constraint.
   The qualifier causes the parser to read the field and check the
@@ -106,6 +106,7 @@ Each full field can take one or more qualifiers.
 \end{description}
 
 \subsection{Literal fields}
+\label{sec:structs-literal-fields}
 Literal fields can either be character or string literals.  They are
 written using the notation described in \secref{sec:common-literals}.  
 
@@ -122,42 +123,42 @@ that allow the library user to tune the extent of such scanning
 \subsection{Computed fields}
 Instead of being read from the external source, the value of a
 computed field is set from an initializing expression.  Such fields
-are marked by the \compute{} keyword.  Each such field gives its name
+are marked by the \Pcompute{} keyword.  Each such field gives its name
 and the \C{} type to be included in the in-memory representation.  It
 also gives a \C{} expression that must have the type declared for the
-field.  Previously read fields in the \struct{} and any parameters
-to the \kw{pstruct} are in scope in this expression.
+field.  Previously read fields in the \Pstruct{} and any parameters
+to the \Pstruct{} are in scope in this expression.
 
-The \cd{computeExample} \struct{} sets the value of its computed
+The \cd{computeExample} \Pstruct{} sets the value of its computed
 field \cd{index} from the full field \cd{base} and the \cd{offset}
 parameter. 
 
 \input{code/struct.computedfield}
 
-\subsection{Optional \texttt{where} clause}
-If given, a \where{} clause expresses constraints over the entirety
-of a \struct{} value.  The values of all previous fields and any
-parameters to the \struct{} are in scope.  If the predicate given in
-the \where{} clause evaluates to false (\ie{}, zero), the error code
+\subsection{Optional \texttt{Pwhere} clause}
+If given, a \Pwhere{} clause expresses constraints over the entirety
+of a \Pstruct{} value.  The values of all previous fields and any
+parameters to the \Pstruct{} are in scope.  If the predicate given in
+the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
 in the associated parse descriptor will indicate a user-constraint
 error has occurred.  
 
-The \where{} clause in the \cd{whereExample} \struct{} ensures
+The \Pwhere{} clause in the \cd{whereExample} \Pstruct{} ensures
 that the sum of the first two fields is less than the given limit.
 \input{code/struct.whereclause}
 
 \section{Generated library}
 \subsection{In-memory representation}
 \label{sec:structs-rep}
-The in-memory representation of a \struct{} is a \C{} struct of the
+The in-memory representation of a \Pstruct{} is a \C{} struct of the
 same name.  Each field of the \C{} struct corresponds to a full or
-computed field of the \struct{}.  The type of each full field in
-the \C{} struct is the in-memory representation of the \padsl{} type
+computed field of the \Pstruct{}.  The type of each full field in
+the \C{} struct is the in-memory representation of the \PADSL{} type
 associated with the field.  The type of each computed field is 
 the given \C{} type. 
 
 The \C{} type \cd{http\_request\_t} is the in-memory representation of
-the \padsl{} type of the same name.
+the \PADSL{} type of the same name.
 \input{code/ai.httpRequestRep}
 The type \cd{PDC\_string} is the in-memory representation of the base
 type \cd{Pstring} (\cf{} \chapref{chap:base-types}).  Note that literal fields
@@ -165,7 +166,7 @@ do not appear in the in-memory representation.
 
 \subsection{Mask}
 \label{sec:structs-masks}
-The mask of a \struct{} with name \cd{myStruct} is a \C{} struct 
+The mask of a \Pstruct{} with name \cd{myStruct} is a \C{} struct 
 with name \csmSuf{\cd myStruct}.  For each full field in
 \cd{myStruct}, there is a corresponding field in the mask struct, the
 type of which is the mask type for
@@ -180,7 +181,7 @@ following structure:
 
 \subsection{Parse descriptor}
 \label{sec:structs-parse-descriptors}
-The parse descriptor of a \struct{} with name \cd{myStruct} is a \C{}
+The parse descriptor of a \Pstruct{} with name \cd{myStruct} is a \C{}
 struct with name \pdSuf{myStruct}.  This struct has the fields
 described in \secref{sec:common-parse-descriptor}. In addition, for
 each full field in \cd{myStruct}, there is a corresponding field in

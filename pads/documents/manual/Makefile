@@ -40,7 +40,5 @@ docode:
 	(cd code; $(MAKE))
 
 manual:
-	bibtex manual
-	latex manual.tex; latex manual.tex; dvips manual.dvi -o manual.ps -t letter
+	latex manual.tex; latex manual.tex; bibtex manual; latex manual.tex; dvips manual.dvi -o manual.ps -t letter
 	ps2pdf manual.ps manual.pdf
-

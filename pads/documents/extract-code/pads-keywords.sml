@@ -49,23 +49,25 @@ structure PadsKeywords : sig
 	      ("return", T.Keyword),
 	      ("switch", T.Keyword),
 	      ("while", T.Keyword),
- 	       ("const", T.Keyword),
-               ("ptypedef", T.Keyword),
-               ("pstruct", T.Keyword),
-               ("parray", T.Keyword),
-               ("punion",T.Keyword),
-               ("penum", T.Keyword),
-               ("sep", T.Keyword),
-               ("term", T.Keyword),
-               ("forall", T.Keyword),
-               ("in", T.Keyword),
-               ("omit", T.Keyword),
-               ("endian",   T.Keyword),
-               ("compute",  T.Keyword),
-               ("precord", T.Keyword),
-               ("pfile", T.Keyword),
-               ("where",T.Keyword),
-               ("EOR", T.Keyword)
+ 	      ("const", T.Keyword),
+
+              (* PADS KEYWORDS *)
+
+              ("Ptypedef", T.Keyword),
+              ("Pstruct", T.Keyword),
+              ("Parray", T.Keyword),
+              ("Punion",T.Keyword),
+              ("Penum", T.Keyword),
+              ("Psep", T.Keyword),
+              ("Pterm", T.Keyword),
+              ("Pforall", T.Keyword),
+              ("Pin", T.Keyword),
+              ("Pomit", T.Keyword),
+              ("Pendian",   T.Keyword),
+              ("Pcompute",  T.Keyword),
+              ("Precord", T.Keyword),
+              ("Pfile", T.Keyword),
+              ("Pwhere",T.Keyword)
 			  ]
 	  end
 

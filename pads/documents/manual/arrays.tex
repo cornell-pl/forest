@@ -1,10 +1,10 @@
-\chapter{PArrays}
+\chapter{Parrays}
 \label{chap:arrays}
 \section{Syntax}
 To express repetitions.  
 
 \begin{verbatim}
-parray name ( param list ){
+Parray name ( param list ){
  basetype sizespec : [sep == char] && [term == char] && semantic constraint
 }
 sizespec 
@@ -20,7 +20,7 @@ semantic constraints
 
 name.length in scope after array
 
-parray recList(a_uint32 h, int x, int size) {
+Parray recList(a_uint32 h, int x, int size) {
   test(:h,x:) [size] : forall i in [0 .. length - 2]
        { recList[i].id < recList[i+1].id };
 };

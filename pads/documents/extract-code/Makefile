@@ -2,7 +2,7 @@ SHELL=/bin/ksh
 
 
 all:	
-	install
+	./install
 
 clean:
 	rm extract-code.x86-linux

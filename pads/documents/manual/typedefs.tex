@@ -1,10 +1,11 @@
-\chapter{Ptypedef}
+\chapter{Ptypedefs}
 \label{chap:typedef}
 \section{Syntax}
 To add a constraint to an existing type.
 \begin{verbatim}
 
-precord ptypedef a_uint64 pn_t(a_uint64 lo, a_uint64 hi) :: pn_t x => {x > lo && x <= hi};
+Precord Ptypedef a_uint64 pn_t(a_uint64 lo, a_uint64 hi) :: 
+  pn_t x => {x > lo && x <= hi};
 
 \end{verbatim}
 

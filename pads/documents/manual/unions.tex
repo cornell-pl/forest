@@ -1,10 +1,10 @@
-\chapter{PUnions}
+\chapter{Punions}
 \label{chap:unions}
 \section{Syntax}
 To express variations.  Two forms: in-place and switched.
 \subsection{in-place}
 \begin{verbatim}
-union name ( param list ){
+Punion name ( param list ){
  qualifier type name constraint comment
 ...
 }
@@ -16,8 +16,8 @@ element of the indicated type and satisifies the constraint.
 jumps to appropriate branch indicated by switch expression.
 switch must be of integral type. 
 \begin{verbatim}
-punion branches(a_uint32 a){
-  switch (a) {
+Punion branches(a_uint32 a){
+  Pswitch (a) {
   case 1 : a_int32  number : number % 2 == 0;
   case 2 : a_string_SE(:"EOR":) name;
   default: compute PDC_int32 def = 3; 
