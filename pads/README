@@ -1,0 +1,72 @@
+=========================================
+  Building, Intalling, and Testing
+   the PADSC Compiler and Library
+=========================================
+
+Note: these instructions use gmake.  We also support nmake builds:
+use NMAKE_SETENV instead of DO_SETENV, and use nmake instead of gmake.
+
+STEP 1: ENVIRONMENT SETUP
+
+Suppose you checked out the padsc module in /home/fred/padsc.  You
+must arrange to have env variable PADS_HOME set to this location
+before doing other steps.  Once PADS_HOME is set, you can source a
+DO_SETENV script that will set the other env variables that you will
+need.  DO_SETENV will also make your installation directories
+(rooted at $INSTALLROOT) if they do not exist yet.
+
+Below are instructions for different kinds of shells.
+You could do the following by hand, or add them to your shell init script.
+Note: setitng _pads_verbose to 0 suppresses some output messages
+which describe the env variables that are set up.  You do not need
+to set it to 0 if you are doing the steps by hand.
+
+For csh/tcsh users:
+  setenv PADS_HOME /home/fred/padsc
+  set _pads_verbose = 0
+  source $PADS_HOME/scripts/DO_SETENV.tcsh
+
+For sh/ksh/bash users:
+  export PADS_HOME=/home/fred/padsc
+  _pads_verbose=0
+  . $PADS_HOME/scripts/DO_SETENV.sh
+
+STEP 2: BUILD AND INSTALL THE PADSC LIBRARY
+
+> cd $PADS_HOME/libpadsc
+> gmake install
+
+STEP 3: TEST THE PADSC LIBRARY
+
+> cd $PADS_HOME/libpadsc/tests
+> gmake
+
+This causes a set of regression tests for the library
+to be built and run.  If you see a message of the form 
+
+    test_foo DIFFERS
+
+then there is a problem with the test_foo test.
+
+
+STEP 4: BUILD THE COMPILER
+
+> cd $PADS_HOME
+> gmake
+
+
+STEP 5: TEST THE COMPILER
+
+> cd $PADS_HOME/examples/tests
+> gmake
+
+This causes a set of regression tests for the compiler/library
+to be built and run. If you see a message of the form 
+
+    test_foo DIFFERS
+
+then there is a problem with the test_foo test.
+
+
+
+
