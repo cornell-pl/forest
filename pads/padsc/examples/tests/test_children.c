@@ -10,13 +10,25 @@ int main(int argc, char** argv) {
   test_m          m;
   PDCI_node_t    *top_node;
 
+#ifdef USE_GALAX
+  /* When linking with the Galax library, which contains a custom O'Caml runtime system, 
+     it is necessary to call glx_init first, so the runtime is initialized and then 
+     can delegate control back to the C program 
+  */
+  char *fake_argv[2];
+
+  fake_argv[0] = "caml";
+  fake_argv[1] = 0;
+  glx_init(fake_argv);
+#endif
+
   mydisc.flags |= PDC_WSPACE_OK;
 
   if (PDC_ERR == PDC_open(&pdc,&mydisc,0)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format1")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format1.good")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
