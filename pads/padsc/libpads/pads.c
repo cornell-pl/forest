@@ -6877,7 +6877,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.185 2005-02-14 19:36:06 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.186 2005-02-14 21:37:33 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7331,8 +7331,11 @@ Pdisc_t Pdefault_disc = {
 
   {
     /* default output formats */
+    "%K",            /* timestamp_explicit */
     "%K",            /* timestamp */
+    "%Y-%m-%d",      /* date_explicit */
     "%Y-%m-%d",      /* date */
+    "%H:%M:%S"       /* time_explicit */
     "%H:%M:%S"       /* time */
   },
 

@@ -93,22 +93,30 @@ int main(int argc, char** argv) {
   my_disc.copy_strings = 1;
 #endif
 
+#ifdef TIMESTAMP_IN_FMT
+  my_disc.in_formats.timestamp = TIMESTAMP_IN_FMT;
+#endif
 #ifdef DATE_IN_FMT
   my_disc.in_formats.date = DATE_IN_FMT;
 #endif
-#ifdef DATE_OUT_FMT
-  my_disc.out_formats.date = DATE_OUT_FMT;
+#ifdef TIME_IN_FMT
+  my_disc.in_formats.time = TIME_IN_FMT;
 #endif
 
-#ifdef TIMESTAMP_IN_FMT
-  my_disc.in_formats.timestamp = TIMESTAMP_IN_FMT;
+#ifdef TIMESTAMP_EXPLICIT_OUT_FMT
+  my_disc.out_formats.timestamp_explicit = TIMESTAMP_EXPLICIT_OUT_FMT;
 #endif
 #ifdef TIMESTAMP_OUT_FMT
   my_disc.out_formats.timestamp = TIMESTAMP_OUT_FMT;
 #endif
-
-#ifdef TIME_IN_FMT
-  my_disc.in_formats.time = TIME_IN_FMT;
+#ifdef DATE_EXPLICIT_OUT_FMT
+  my_disc.out_formats.date_explicit = DATE_EXPLICIT_OUT_FMT;
+#endif
+#ifdef DATE_OUT_FMT
+  my_disc.out_formats.date = DATE_OUT_FMT;
+#endif
+#ifdef TIME_EXPLICIT_OUT_FMT
+  my_disc.out_formats.time_explicit = TIME_EXPLICIT_OUT_FMT;
 #endif
 #ifdef TIME_OUT_FMT
   my_disc.out_formats.time = TIME_OUT_FMT;

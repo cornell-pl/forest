@@ -288,18 +288,30 @@ Pe_string_CSE    1      Pstring       Pbase_m    Pbase_pd             -         
 #    Format-based parsing is based on libast's tmdate function.
 #    Input format and input time zone are specified explicitly.
 #    The format used controls whether input is date and time, just date, or just time.
+#    Default output format is set via disc->out_formats.timestamp_explicit
+# *date_explicit*:
+#    Like *timestamp_explicit*, with explicit format and time zone argument.
+#    INTENDED to be used for just date, but format determines actual use.
+#    Default output format is set via disc->out_formats.date_explicit
+# *time_explicit*:
+#    Like *timestamp_explicit*, with explicit format and time zone argument.
+#    INTENDED to be used for just time, but format determines actual use.
+#    Default output format is set via disc->out_formats.time_explicit
 # *timestamp*:
 #    Like *timestamp_explicit*, but input format and input time zone are taken from
 #    disc->in_formats.timestamp and disc->in_time_zone.
 #    INTENDED to be used for both a date and time, but format determines actual use.
+#    Default output format is set via disc->out_formats.timestamp
 # *date*:
-#    Like *timestamp_explicit*, but input format and input time zone are taken from
+#    Like *date_explicit*, but input format and input time zone are taken from
 #    disc->in_formats.date and disc->in_time_zone.
 #    INTENDED to be used for just date, but format determines actual use.
+#    Default output format is set via disc->out_formats.date
 # *time*:
-#    Like *timestamp_explicit*, but input format and input time zone are taken from
+#    Like *time_explicit*, but input format and input time zone are taken from
 #    disc->in_formats.time and disc->in_time_zone.
 #    INTENDED to be used for just time, but format determines actual use.
+#    Default output format is set via disc->out_formats.time
 #
 
 Ptimestamp_explicit       3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N

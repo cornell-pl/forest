@@ -13,10 +13,12 @@
 
 #define VMFL 1
 
-// XXX remove _DISABLED below to enable
-// the use of ckit-replace.h
-#ifdef FOR_CKIT_DISABLED
-// include minimum set of defs for ckit
+// For now, we only use ckit-replace.h with cygwin.  With appropriate
+// changes it could be made to work with all operating systems.
+#if defined(FOR_CKIT) && (__CYGWIN__)
+// Include minimum set of defs for ckit, rather than having ckit
+// parse all the standard OS includes, which often contain a lot of
+// compiler-specific macros and pragmas.
 #include "ckit-replace.h"
 #else
 // normal includes
@@ -219,23 +221,35 @@
  *  default output formats for some special types where there is 
  *  in no 'obvious' default.  The current entries are:
  *
- *  out_formats.timestamp : a format string specifying the timestamp ouput format
- *     Some examples:
+ *  out_formats.timestamp_explicit
+ *  out_formats.timestamp
+ *    These two values specifying the default output formats for the Ptimestamp_explicit
+ *    and Ptimestamp families of types, respectively.  The normal use is for these formats
+ *    to describe both the date and time of day.  Some examples:
+ *
  *              "%Y%m%d|%H%M%S"
  *              "%m/%d/%Y %H:%M"
  *              "%K" (default -- %K is the same as "%Y-%m-%d+%H:%M:%S")
  *
  *     See the documentation of the libast fmttime function
- *     for a description of the legal values for out_formats.timestamp
+ *     for a description of the legal values for output formats.
  *
- *  out_formats.date : a format string specifying the date ouput format
- *     Some examples:
+ *  out_formats.date_explicit
+ *  out_formtas.date
+ *    These two values specify the default output formats for the Pdate_explicit
+ *    and Pdate families of types, respectively.  The normal use is for these
+ *    formats to describe the date, but not the time of day.  Some examples:
+ *
  *              "%Y%m%d"
  *              "%Y-%m-%d" (default)
  *              "%m/%d/%Y"
  *
- *  out_formats.time : a format string specifying the time ouput format
- *     Some examples:
+ *  out_formats.time_explicit
+ *  out_formats.time
+ *     These two values specify the default output formats for the Ptime_explicit
+ *     and Ptime families of types, respectively.  The normal use is for thes
+ *    formats to describe a time of day, but not the date.  Some examples:
+ *
  *              "%H:%M:%S" (default)
  *              "%H%M%S"
  *              "%H.%M"
@@ -397,9 +411,12 @@
  *    in_formats.timestamp: "%m%d%y|%H%M%S%|%m%d%y|%H%M%S%|%m%d%Y|%H%M%S%|%m%d%Y|%H%M%S%|%&"
  *    in_formats.date:    "%m%d%y%|%m%d%Y%|%&" 
  *    in_formats.time:    "%H%M%S%|%H:%M:%S%|%&"
- *    out_formats.timestamp:   "%K"
- *    out_formats.date:   "%Y-%m-%d"
- *    out_formats.time:   "%H:%M:%S"
+ *    out_formats.timestamp_explicit:   "%K"
+ *    out_formats.timestamp:            "%K"
+ *    out_formats.date_explicit:        "%Y-%m-%d"
+ *    out_formats.date:                 "%Y-%m-%d"
+ *    out_formats.time_explicit:        "%H:%M:%S"
+ *    out_formats.time:                 "%H:%M:%S"
  *    inv_val_fn_map:     NULL -- user must created and install a map
  *                         if inv_val functions need to be provided
  *    fmt_fn_map:         NULL -- user must created and install a map
@@ -1270,9 +1287,12 @@ struct Pin_formats_s {
 };
 /* type Pout_formats_t: */
 struct Pout_formats_s {
-  const char        *timestamp;     /* must be a non-NULL format string understood by fmttime */
-  const char        *date;          /* must be a non-NULL format string understood by fmttime */
-  const char        *time;          /* must be a non-NULL format string understood by fmttime */
+  const char        *timestamp_explicit;  /* must be a non-NULL format string understood by fmttime */
+  const char        *timestamp;           /* must be a non-NULL format string understood by fmttime */
+  const char        *date_explicit;       /* must be a non-NULL format string understood by fmttime */
+  const char        *date;                /* must be a non-NULL format string understood by fmttime */
+  const char        *time_explicit;       /* must be a non-NULL format string understood by fmttime */
+  const char        *time;                /* must be a non-NULL format string understood by fmttime */
 };
 
 /* type Pdisc_t: */
@@ -2090,19 +2110,24 @@ Perror_t Pip_acc_add     (P_t *pads, Pip_acc *a, const Pbase_pd *pd, Puint32 *va
 Perror_t Pip_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pip_acc *a);
 
 /*
- * Ptimestamp_explicit/Ptimestamp/Pdate/Ptime are Puint32s in memory.
+ * Ptimestamp_explicit/Pdate_ecplicit/Ptime_explicit/
+ * Ptimestamp/Pdate/Ptime are Puint32s in memory.
  * Accumulation for these types uses Puint32_acc, but each type
  * has a distinct report function.
  */
 
 #ifndef FOR_CKIT
 typedef Puint32 Ptimestamp_explicit;
+typedef Puint32 Pdate_explicit;
+typedef Puint32 Ptime_explicit;
 typedef Puint32 Ptimestamp;
 typedef Puint32 Pdate;
 typedef Puint32 Ptime;
 #endif
 
 typedef Puint32_acc Ptimestamp_explicit_acc;
+typedef Puint32_acc Pdate_explicit_acc;
+typedef Puint32_acc Ptime_explicit_acc;
 typedef Puint32_acc Ptimestamp_acc;
 typedef Puint32_acc Pdate_acc;
 typedef Puint32_acc Ptime_acc;
@@ -2112,6 +2137,16 @@ Perror_t Ptimestamp_explicit_acc_init    (P_t *pads, Ptimestamp_explicit_acc *a)
 Perror_t Ptimestamp_explicit_acc_reset   (P_t *pads, Ptimestamp_explicit_acc *a);
 Perror_t Ptimestamp_explicit_acc_cleanup (P_t *pads, Ptimestamp_explicit_acc *a);
 Perror_t Ptimestamp_explicit_acc_add     (P_t *pads, Ptimestamp_explicit_acc *a, const Pbase_pd *pd, Puint32 *val);
+
+Perror_t Pdate_explicit_acc_init    (P_t *pads, Pdate_explicit_acc *a);
+Perror_t Pdate_explicit_acc_reset   (P_t *pads, Pdate_explicit_acc *a);
+Perror_t Pdate_explicit_acc_cleanup (P_t *pads, Pdate_explicit_acc *a);
+Perror_t Pdate_explicit_acc_add     (P_t *pads, Pdate_explicit_acc *a, const Pbase_pd *pd, Puint32 *val);
+
+Perror_t Ptime_explicit_acc_init    (P_t *pads, Ptime_explicit_acc *a);
+Perror_t Ptime_explicit_acc_reset   (P_t *pads, Ptime_explicit_acc *a);
+Perror_t Ptime_explicit_acc_cleanup (P_t *pads, Ptime_explicit_acc *a);
+Perror_t Ptime_explicit_acc_add     (P_t *pads, Ptime_explicit_acc *a, const Pbase_pd *pd, Puint32 *val);
 
 Perror_t Ptimestamp_acc_init    (P_t *pads, Ptimestamp_acc *a);
 Perror_t Ptimestamp_acc_reset   (P_t *pads, Ptimestamp_acc *a);
@@ -2129,6 +2164,8 @@ Perror_t Ptime_acc_cleanup (P_t *pads, Ptime_acc *a);
 Perror_t Ptime_acc_add     (P_t *pads, Ptime_acc *a, const Pbase_pd *pd, Puint32 *val);
 
 Perror_t Ptimestamp_explicit_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Ptimestamp_explicit_acc *a);
+Perror_t Pdate_explicit_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pdate_explicit_acc *a);
+Perror_t Ptime_explicit_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Ptime_explicit_acc *a);
 Perror_t Ptimestamp_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Ptimestamp_acc *a);
 Perror_t Pdate_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pdate_acc *a);
 Perror_t Ptime_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Ptime_acc *a);

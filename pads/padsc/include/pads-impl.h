@@ -178,12 +178,28 @@ do { \
 #define Pip_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
 #define Pip_acc_add(pads, a, pd, val) Puint32_acc_add(pads, a, pd, val)
 
-/* Ptimestamp */
+/* Ptimestamp_explicit */
 
 #define Ptimestamp_explicit_acc_init(pads, a)         Puint32_acc_init(pads, a)
 #define Ptimestamp_explicit_acc_reset(pads, a)        Puint32_acc_reset(pads, a)
 #define Ptimestamp_explicit_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
 #define Ptimestamp_explicit_acc_add(pads, a, pd, val) Puint32_acc_add(pads, a, pd, val)
+
+/* Pdate_explicit */
+
+#define Pdate_explicit_acc_init(pads, a)         Puint32_acc_init(pads, a)
+#define Pdate_explicit_acc_reset(pads, a)        Puint32_acc_reset(pads, a)
+#define Pdate_explicit_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
+#define Pdate_explicit_acc_add(pads, a, pd, val) Puint32_acc_add(pads, a, pd, val)
+
+/* Ptime_explicit */
+
+#define Ptime_explicit_acc_init(pads, a)         Puint32_acc_init(pads, a)
+#define Ptime_explicit_acc_reset(pads, a)        Puint32_acc_reset(pads, a)
+#define Ptime_explicit_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
+#define Ptime_explicit_acc_add(pads, a, pd, val) Puint32_acc_add(pads, a, pd, val)
+
+/* Ptimestamp */
 
 #define Ptimestamp_acc_init(pads, a)         Puint32_acc_init(pads, a)
 #define Ptimestamp_acc_reset(pads, a)        Puint32_acc_reset(pads, a)
@@ -221,7 +237,19 @@ Perror_t PDCI_date_time_acc_report2io(P_t *pads, Sfio_t *outstr, const char *pre
 #define Ptimestamp_explicit_acc_report(pads, prefix, what, nst, a) \
   PDCI_date_time_acc_report(pads, prefix, what, nst, a, \
 			    "Ptimestamp_explicit_acc_report", "timestamp",  \
-			    pads->disc->out_formats.timestamp, "pads->disc->out_formats.timestamp", \
+			    pads->disc->out_formats.timestamp_explicit, "pads->disc->out_formats.timestamp_explicit", \
+                            pads->out_zone, "default output time zone")
+
+#define Pdate_explicit_acc_report(pads, prefix, what, nst, a) \
+  PDCI_date_time_acc_report(pads, prefix, what, nst, a, \
+			    "Pdate_explicit_acc_report", "date",  \
+			    pads->disc->out_formats.date_explicit, "pads->disc->out_formats.date_explicit", \
+                            pads->out_zone, "default output time zone")
+
+#define Ptime_explicit_acc_report(pads, prefix, what, nst, a) \
+  PDCI_date_time_acc_report(pads, prefix, what, nst, a, \
+			    "Ptime_explicit_acc_report", "time",  \
+			    pads->disc->out_formats.time_explicit, "pads->disc->out_formats.time_explicit", \
                             pads->out_zone, "default output time zone")
 
 #define Ptimestamp_acc_report(pads, prefix, what, nst, a) \
@@ -245,7 +273,19 @@ Perror_t PDCI_date_time_acc_report2io(P_t *pads, Sfio_t *outstr, const char *pre
 #define Ptimestamp_explicit_acc_report2io(pads, outstr, prefix, what, nst, a) \
   PDCI_date_time_acc_report2io(pads, outstr, prefix, what, nst, a,	\
 			       "Ptimestamp_explicit_acc_report2io", "timestamp", \
-			       pads->disc->out_formats.timestamp, "pads->disc->out_formats.timestamp", \
+			       pads->disc->out_formats.timestamp_explicit, "pads->disc->out_formats.timestamp_explicit", \
+			       pads->out_zone, "default output time zone")
+
+#define Pdate_explicit_acc_report2io(pads, outstr, prefix, what, nst, a) \
+  PDCI_date_time_acc_report2io(pads, outstr, prefix, what, nst, a,	\
+			       "Pdate_explicit_acc_report2io", "date", \
+			       pads->disc->out_formats.date_explicit, "pads->disc->out_formats.date_explicit", \
+			       pads->out_zone, "default output time zone")
+
+#define Ptime_explicit_acc_report2io(pads, outstr, prefix, what, nst, a) \
+  PDCI_date_time_acc_report2io(pads, outstr, prefix, what, nst, a,	\
+			       "Ptime_explicit_acc_report2io", "time", \
+			       pads->disc->out_formats.time_explicit, "pads->disc->out_formats.time_explicit", \
 			       pads->out_zone, "default output time zone")
 
 #define Ptimestamp_acc_report2io(pads, outstr, prefix, what, nst, a)	\
