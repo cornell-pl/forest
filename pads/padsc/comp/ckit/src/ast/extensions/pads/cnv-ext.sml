@@ -682,9 +682,9 @@ structure CnvExt : CNVEXT = struct
 	      val locX      =  P.addrX(locX')
               val locS      =  PL.getLocS(PT.Id pads, P.addrX(fieldX(pd, loc)))
 	      val locBS     =  PL.getLocBeginS(PT.Id pads, P.addrX(fieldX(pd, loc)))
-	      val locES     =  PL.getLocEndS(PT.Id pads, P.addrX(fieldX(pd, loc)), ~2) 
+	      val locES2    =  PL.getLocEndS(PT.Id pads, P.addrX(fieldX(pd, loc)), ~2)
 	      val locES1    =  PL.getLocEndS(PT.Id pads, P.addrX(fieldX(pd, loc)), ~1) 
-	      val locES0    =  PL.getLocEndS(PT.Id pads, P.addrX(fieldX(pd, loc)), 0) 
+	      val locES0    =  PL.getLocEndS(PT.Id pads, P.addrX(fieldX(pd, loc)), 0)
 
 	      fun getDynamicFunctions (name, memChar) = 
 		  case memChar of TyProps.Static => (NONE, NONE, NONE, NONE)
@@ -3765,7 +3765,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val elemMPCT  = P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname))
                  val elemReadName = lookupTy(baseTy, readSuf, #readname)
 		 val tLocX      =  P.addrX(PT.Id tloc)
-		 val tlocES     =  PL.getLocEndS(PT.Id pads, tLocX, ~1) 
+		 val tlocES1    =  PL.getLocEndS(PT.Id pads, tLocX, ~1) 
 		 val tlocES0    =  PL.getLocEndS(PT.Id pads, tLocX, 0) 
 
 
@@ -3836,7 +3836,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     if isSome minConstOpt then []
 			     else [PT.IfThen( (* if (minX<0) *)
 					     amCheckingBasicE(SOME (P.ltX(minX, P.zero))),
-					     recordArrayErrorS([tlocES], tLocX,
+					     recordArrayErrorS([tlocES1], tLocX,
 							       PL.P_ARRAY_MIN_NEGATIVE, true,
 							       readName,
 							       "Minimum value for the size of array "^
@@ -3847,7 +3847,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     if isSome maxConstOpt then []
 			     else [PT.IfThen( (* if (maxX<0) *)
 					     amCheckingBasicE(SOME(P.ltX(maxX, P.zero))),
-					     recordArrayErrorS([tlocES], tLocX,
+					     recordArrayErrorS([tlocES1], tLocX,
 							       PL.P_ARRAY_MAX_NEGATIVE, true, readName,
 							       "Maximum value for the size of array "^
 							       name ^  "(%d) " ^
@@ -3873,7 +3873,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                                   else [] (* no static error, no need for dynamic checks*)
 					     else ([PT.IfThen( (* if (minX > maxX) *)
 						     amCheckingBasicE(SOME(P.gtX(minX, maxX))), 
-						      recordArrayErrorS([tlocES], tLocX,
+						      recordArrayErrorS([tlocES1], tLocX,
 									PL.P_ARRAY_MIN_BIGGER_THAN_MAX_ERR,
                                                                         true, readName,
 									      "Mininum value for "^
@@ -4537,10 +4537,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     PT.IfThen(amCheckingBasicE NONE, 
 			      PT.Compound[(* if am checking *)
 			        PT.IfThen(PT.Id "offset",
-				    recordArrayErrorS([locES], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], false))])],
+				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], false))])],
                            PT.Compound[ (* else error in reading separator *)
 			      P.mkCommentS("Error reading separator"),
-			      recordArrayErrorS([locES], locX, PL.P_ARRAY_SEP_ERR, true, readName, "Missing separator", [], true),
+			      recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, "Missing separator", [], true),
 			      PT.Break])]]
 		      | (SOME(termX, scan2TermX, _, _, _, _, _), _) => 
                        [P.mkCommentS("Array not finished; read separator with recovery to terminator"),
@@ -4559,7 +4559,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                               PT.IfThen(amCheckingBasicE NONE, 
 	  		       PT.Compound[ (* if am checking *)
 			         PT.IfThenElse(P.andX(PT.Id "f_found", PT.Id "offset"),
-				    recordArrayErrorS([locES], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], false),
+				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], false),
                                     PT.Compound [PT.IfThen(P.notX(PT.Id "f_found"),
 					                   PT.Compound[recordArrayErrorS([locES1], locX,
 											 PL.P_ARRAY_EXTRA_BEFORE_TERM, true,
@@ -4568,7 +4568,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 								       PT.Break])] )])],
 			    PT.Compound[ (* else error in reading separator *)
 			      P.mkCommentS("Error reading separator"),
-			      recordArrayErrorS([locES], locX, PL.P_ARRAY_SEP_ERR, 
+			      recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, 
 						true, readName, "Missing separator", [], true),
 			      PT.Break])]]
 
@@ -4607,7 +4607,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			         PT.Compound[
                                     PT.IfThen(P.notX(fieldX(pd, nerr)),
                                        PT.Compound (
-	 			           (reportErrorSs([locES], locX, true, PL.P_ARRAY_ELEM_ERR, false, readName, "", []))
+	 			           (reportErrorSs([locES1], locX, true, PL.P_ARRAY_ELEM_ERR, false, readName, "", []))
                                          @ [P.mkCommentS("Index of first element with an error"),
 				            P.assignS(fieldX(pd, firstError), P.minusX(fieldX(rep, length), P.intX 1))])),
                                             P.postIncS(fieldX(pd, neerr))])])]
@@ -4775,7 +4775,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 recordArrayErrorS([locES1], locX, PL.P_ARRAY_EXTRA_BEFORE_TERM,
 						   true, readName,"", [], false),
 				 P.assignS(PT.Id foundTerm, P.trueX)])],
-			     recordArrayErrorS([locES], locX, PL.P_ARRAY_TERM_ERR, true, readName,
+			     recordArrayErrorS([locES1], locX, PL.P_ARRAY_TERM_ERR, true, readName,
 					       "Missing terminator", [], true))
 			 ])]
 
@@ -4796,7 +4796,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     in
 		      [P.mkCommentS("Checking that we read enough elements"),
 		       PT.IfThen(testX,
-			  recordArrayErrorS([tlocES], tLocX, PL.P_ARRAY_SIZE_ERR, true, readName,
+			  recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_SIZE_ERR, true, readName,
 			    ("Read %d element(s) for array "^name^"; required %d"),
 			    [fieldX(rep, length), minX], false))]
 		     end
@@ -4826,7 +4826,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                           [P.varDeclS(P.int, "violated", P.falseX)]
 			  @ genLoop forall
 			  @ [PT.IfThen(PT.Id "violated",
-				       recordArrayErrorS([tlocES], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
+				       recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
 							 ("Pforall constraint for array "^name^" violated"), [], false))])]
 
 
@@ -4835,7 +4835,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                         [PT.Compound(
 			   [P.mkCommentS "Checking PWhere constraint"]
 		           @ [PT.IfThen(P.notX exp,
-			           recordArrayErrorS([tlocES], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
+			           recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
 						     ("Pwhere constraint for array "^name^" violated"), [], false))])]
 
                  (* -- -- Check that the user's parse check predicate is satisfied *)
@@ -4844,7 +4844,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			   [P.mkCommentS "Checking Pparsecheck constraint"]
 			   @ (if needArrayEndExp then [tlocES0] else [])
 		           @ [PT.IfThen(P.notX exp,
-			           recordArrayErrorS([tlocES], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
+			           recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
 						     ("Pparsecheck constraint for array "^name^" violated"), [], false))])]
                  fun genWhereClause c = 
 		     case c of
@@ -4948,7 +4948,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val lengthX = P.arrowX(PT.Id rep, PT.Id length)
 		 fun elemX base = P.addrX(P.subX(P.arrowX(PT.Id base, PT.Id elts), PT.Id "i"))
                  val writeBaseSs = writeFieldSs(writeBaseName, args @[elemX pd, elemX rep], true)
-                 val writeXMLBaseSs = writeXMLFieldSs(writeXMLBaseName, args @[elemX pd, elemX rep], PT.Id tag, true, true)
+                 val writeXMLBaseSs = writeXMLFieldSs(writeXMLBaseName, args @[elemX pd, elemX rep], PT.String "elt", true, true)
 		 val writeLastBaseSs =  [PT.IfThen(P.neqX(lengthX, P.zero), PT.Compound(writeBaseSs))]
 		 fun writeLitSs litXOpt = 
 		     case litXOpt of NONE => [] 
@@ -4972,7 +4972,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  PT.Compound (writeXMLBaseSs))])]
 		 val writeTermSs = writeLitSs termXOpt
 		 val bodySs = writeArraySs @ writeTermSs
-		 val bodyXMLSs = writeXMLArraySs
+		 val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PDCI_TAG_OPEN_XML_OUT", [PT.String(name)])),
+				  PT.Expr(PT.Call(PT.Id "PDCI_ARRAY_PD_XML_OUT", []))]
+				 @ writeXMLArraySs
+				 @ [PT.Expr(PT.Call(PT.Id "PDCI_TAG_CLOSE_XML_OUT", []))]
 		 val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
 
                  (* Generate is function array case *)

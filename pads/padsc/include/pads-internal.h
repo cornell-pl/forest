@@ -1343,7 +1343,7 @@ do { \
 		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), (pd)->neerr, (pd)->firstError); \
     } else { /* location */ \
       tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n", \
-		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, (pd)->neerr, P_errCode2str((pd)->errCode), \
+		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), \
 		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset, \
 		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset, \
 		      (pd)->neerr, (pd)->firstError); \
