@@ -103,6 +103,7 @@ Group is
 (*        extensions/pads/ast-ext-sig.sml *)
         extensions/pads/input.sml
         extensions/pads/ast-ext.sml
+	extensions/pads/gen-galax.sml
         extensions/pads/cnv-ext.sml
         extensions/pads/pp-ast-ext-fn.sml
  

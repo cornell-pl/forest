@@ -1480,9 +1480,21 @@ let
 	  processDecls(rest, processDeclaration decl)
       end
 
-    | processDecls( (PT.MARKstatement (newloc,stmt)) :: rest, astdecls ) =
+    | processDecls(all as ((PT.MARKstatement (newloc,stmt)) :: rest), astdecls ) =
                 (pushLoc newloc;
-		 processDecls(stmt :: rest, astdecls)
+(*		 print "hello\n";
+		 case newloc of 
+		     SourceMap.UNKNOWN => ()
+		   | SourceMap.LOC r => 
+		     if (#srcFile r) = GenGalax.NEFName
+		     then (print ((#srcFile r) ^ "\n"))
+		     else (print "no\n");
+*)
+		 case processDecls([stmt], astdecls) of
+		     (* stmt was a declaration, so continue processing. *)
+		     (decls,nil) => processDecls(rest,[decls])
+                     (* stmt was not a declaration, so return the statement list unchanged. *)
+		   | (decls,s) => (decls,all)
 		 before popLoc ())
 
     | processDecls (rest, astdecls) = (List.concat(rev astdecls), rest)
