@@ -719,7 +719,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 		        , sep="\n  "
 		        , lDelim="  " (*{\n*)
 		        , rDelim="\n}"
-		        } pps (edFields)(* @ repFields)*) (* old: repFields @ edFields *)  (* must be ppElemList "errDesc" edFields *)
+		        } pps (repFields)(* edFields @ ... )*) (* old: repFields @ edFields *)  (* must be ppElemList "errDesc" edFields *)
         ; newline pps)
 	 handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
