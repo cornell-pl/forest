@@ -32,9 +32,215 @@ Punion method_t {
 
 Pstruct version_t {
   "HTTP/";
-  Puint8 major; '.';
-  Puint8 minor;           /- http minor mode
+  Puint8 major; /- should be 1*DIGIT
+  '.';
+  Puint8 minor; /- should be 1*DIGIT
 };
+
+Ptypedef Puchar reserved_t :: reserved_t(x) => {
+  (x == ';') ||
+  (x == '/') ||
+  (x == '?') ||
+  (x == ':') ||
+  (x == '@') ||
+  (x == '&') ||
+  (x == '=') ||
+  (x == '+') 
+}
+
+Ptypedef Puchar extra_t :: extra_t(x) => {
+  (x == '!') ||
+  (x == '*') ||
+  (x == '\'') ||
+  (x == '(') ||
+  (x == ')') ||
+  (x == ',')
+}
+
+Ptypedef Puchar safe_t :: safe_t(x) => {
+  (x == '$') ||
+  (x == '-') ||
+  (x == '_') ||
+  (x == '.')
+}
+
+Ptypedef Puchar ALPHA_t :: ALPHA_t(x) => {
+  ('A' >= x && x <= 'Z') ||
+  ('a' >= x && x <= 'z')
+}
+
+Ptypedef Puchar DIGIT_t :: DIGIT_t(x) => {
+  ('0' >= x && x <= '9')
+}
+
+Ptypedef Puchar HEX_t :: HEX_t(x) => {
+  ('A' >= x && x <= 'F') ||
+  ('a' >= x && x <= 'f') ||
+  DIGIT_t(x)
+}
+
+Ptypedef Puchar CTL_t :: CTL_t(x) => {
+  (x < 32)
+}
+
+Ptypedef Puchar SP_t :: SP_t(x) => {
+  (x == '_')
+}
+
+Ptypedef Puchar unsafe_t :: unsafe_t(x) => {
+  CTL_t(x) ||
+  SP_t(x) ||
+  (x == '\"') ||
+  (x == '#') ||
+  (x == '%') ||
+  (x == '<') ||
+  (x == '>')
+}
+
+Ptypedef Puchar national_t :: national_t(x) => {
+  !(ALPHA_t(x) ||
+    DIGIT_t(x) ||
+    reserved_t(x) ||
+    extra_t(x) ||
+    safe_t(x) ||
+    unsafe_t(x))
+}
+
+Ptypedef Puchar unreserved_t :: unreserved_t(x) => {
+  ALPHA_t(x) ||
+  DIGIT_t(x) ||
+  safe_t(x) ||
+  extra_t(x) ||
+  national_t(x)
+}
+
+Ptypedef Puchar uchar_t :: uchar_t(x) => {
+  unreserved_t(x) ||
+  escaped_t(x)
+}
+
+Ptypedef Puchar pchar_t :: pchar_t(x) => {
+  uchar_t(x) ||
+  (x == ':') ||
+  (x == '@') ||
+  (x == '&') ||
+  (x == '=') ||
+  (x == '+')
+}
+
+Ptypedef Puchar uchar_or_reserved_t :: uchar_or_reserved_t(x) => {
+  uchar_t(x) || reserved_t(x)
+}
+
+Parray uchar_or_reserved_array_t {
+  uchar_or_reserved_t[0:] ur : Pterm == ending;
+}
+
+Parray query_t {
+  uchar_or_reserved_t[0:] ur : Pterm == ending;
+}
+
+Parray fragment_t {
+  uchar_or_reserved_t[0:] ur : Pterm == ending;
+}
+
+Ptypedef Puchar scheme_char_t :: scheme_char_t(x) => {
+  ALPHA_t(x) ||
+  DIGIT_t(x) ||
+  (x == '+') ||
+  (x == '-') ||
+  (x == '.')
+}
+
+Parray scheme_t {
+  scheme_char_t[1:] sc : Pterm == ending;
+}
+
+Ptypedef Puchar net_loc_char_t :: net_loc_char_t(x) => {
+  pchar_t(x) ||
+  (x == ';') ||
+  (x == '?')
+}
+
+Parray net_loc_t {
+  net_loc_char_t[1:] sc : Pterm == ending;
+}
+
+Ptypedef Puchar param_char_t :: param_char_t(x) => {
+  pchar_t(x) ||
+  (x == '/')
+}
+
+Parray param_t {
+  param_char_t[0:] sc : Pterm == ending;
+}
+
+/* Common: sequences with separators.
+//params         = param *( ";" param ) 
+Parray params_t {
+  param_t[1:] ps: Pterm == ending;
+}
+*/
+
+Ptypedef Puchar absoluteURI_char_t :: absoluteURI_char_t(x) => {
+  uchar_t(x) || reserved_t(x)
+}
+
+Pstruct absoluteURI_t {
+  scheme_t                  scheme;
+  ":";
+  uchar_or_reserved_array_t rest;
+}
+
+Pstruct rel_path {
+/* Three optional parts!!
+  [path] [';' params] ['?' query]
+*/
+}
+
+Pstruct abs_path_t {
+  "/";
+  rel_path_t rel_path;
+}
+
+   // FIX: maybe use this below for request_uri field
+Punion Request_URI_t {
+  "*"           applies_to_server;
+  absoluteURI_t absoluteURI;
+  abs_path_t    abs_path;
+};
+
+
+/* It looks like RFC 2068 has mangled the definition of
+linear-white-space that is originally given in RFC 822.  In RFC 822
+we have:
+
+     LWSP-char   =  SPACE / HTAB                 ; semantics = SPACE
+
+     linear-white-space =  1*([CRLF] LWSP-char)  ; semantics = SPACE
+                                                 ; CRLF => folding 
+
+In RFC 2068 we have:
+
+   HTTP/1.1 headers can be folded onto multiple lines if the
+   continuation line begins with a space or horizontal tab. All linear
+   white space, including folding, has the same semantics as SP.
+
+          LWS            = [CRLF] 1*( SP | HT ) 
+
+In combination with the definition of TEXT:
+
+          TEXT           = <any OCTET except CTLs,
+                           but including LWS> 
+
+the 2068 definition makes no sense, while the 822 definition is
+sensible and means, "any octet except controls, or a sequence
+
+  [CRLF] LWSP-char
+
+that is interpreted as SP".
+
+*/
 
 #define LWS0 "[CRLF](' '|\t)"
 
