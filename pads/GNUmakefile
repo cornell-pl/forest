@@ -5,7 +5,7 @@ PADS_HOME = .
 
 include $(PADS_HOME)/mk/rules.mk
 
-TARGS = padsc_lib
+TARGS = ast_lib padsc_lib
 ifdef USE_GALAX
 TARGS += pglx_lib
 else

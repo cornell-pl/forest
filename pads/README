@@ -8,6 +8,19 @@
   proceeding.  All of the gmake commands below are issued from directory
   $PADS_HOME.
 
+  Once you have done the first two steps below, all the build
+  steps can be done with one command,
+
+  > gmake
+
+  and all of the test steps can be done with one command,
+
+  > gmake regress
+
+  The detailed build and test instructions (steps 3-7)
+  show you how to to build and test the library and compiler
+  separately.
+
 STEP 1: ENVIRONMENT SETUP
 
   Suppose you checked out the pads module in /home/fred/pads.  You must
@@ -142,29 +155,27 @@ STEP 7: TEST THE COMPILER
   Rebuilding the Compiler and Libraries
 =========================================
 
-  ** NOTE **
-  Steps 3, 4, and 6 can be done together using
+  As mentioned at the start, all of the build steps can be done
+  together using:
   
   > gmake
   
-  Steps 3, 4, 4b, and 6 can be done together using
-  one of the following:
+  and all of the test steps can be done together using:
   
+  > gmake regress
+
+  [OPTIONAL]: Or, for the PADS-Galax project only, use one of:
+
   > gmake GEN_GALAX=1
   > gmake USE_GALAX=1
   
-  If you are switching between the two, or if
-  you install new changes to the source, you may
-  need to do:
+  If you are switching between GEN_GALX and USE_GALAX, or
+  if you install a major upgrade to the source, you may need to do:
   
   > gmake veryclean
   
   before you do a new build.
   
-  Testing steps 5 and 7 can be done together using
-  
-  > gmake regress
-
 =========================================
   Using the PADSC Compiler and Library
 =========================================
