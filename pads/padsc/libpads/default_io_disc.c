@@ -310,6 +310,23 @@ PDC_fwrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   return PDC_OK;
 }
 
+ssize_t
+PDC_fwrec_noseek_rec_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *rec_start, size_t num_bytes)
+{
+  /* nothing to fill in */
+  return 0;
+}
+
+ssize_t
+PDC_fwrec_noseek_blk_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *blk_start, size_t num_bytes, PDC_uint32 num_recs)
+{
+  if (!pdc || !pdc->disc) {
+    return -1;
+  }
+  PDC_WARN(pdc->disc, "PDC_fwrec_noseek_blk_close: not a record-block-based discipline!");
+  return -1;
+}
+
 PDC_error_t
 PDC_fwrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
 {
@@ -381,10 +398,17 @@ PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len)
   io_disc->sfopen_fn    = PDC_fwrec_noseek_sfopen;
   io_disc->sfclose_fn   = PDC_fwrec_noseek_sfclose;
   io_disc->read_fn      = PDC_fwrec_noseek_read;
+  io_disc->rec_close_fn = PDC_fwrec_noseek_rec_close;
+  io_disc->blk_close_fn = PDC_fwrec_noseek_blk_close;
 
   io_disc->name         = "fwrec_noseek";
   io_disc->descr        = "an IO discipline for data with fixed-width records";
-  io_disc->uses_eor     = 1;
+  io_disc->rec_based    = 1;
+  io_disc->has_rblks    = 0;
+  io_disc->rec_obytes   = 0;
+  io_disc->rec_cbytes   = 0;
+  io_disc->blk_obytes   = 0;
+  io_disc->blk_cbytes   = 0;
   io_disc->data         = data;
 
   return io_disc;
@@ -626,6 +650,26 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   return PDC_OK;
 }
 
+ssize_t
+PDC_norec_noseek_rec_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *rec_start, size_t num_bytes)
+{
+  if (!pdc || !pdc->disc) {
+    return -1;
+  }
+  PDC_WARN(pdc->disc, "PDC_norec_noseek_rec_close: not a record-based discipline!");
+  return -1;
+}
+
+ssize_t
+PDC_norec_noseek_blk_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *blk_start, size_t num_bytes, PDC_uint32 num_recs)
+{
+  if (!pdc || !pdc->disc) {
+    return -1;
+  }
+  PDC_WARN(pdc->disc, "PDC_norec_noseek_blk_close: not a record-block-based discipline!");
+  return -1;
+}
+
 PDC_error_t
 PDC_norec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
 {
@@ -701,10 +745,17 @@ PDC_norec_noseek_make(size_t block_size_hint)
   io_disc->sfopen_fn    = PDC_norec_noseek_sfopen;
   io_disc->sfclose_fn   = PDC_norec_noseek_sfclose;
   io_disc->read_fn      = PDC_norec_noseek_read;
+  io_disc->rec_close_fn = PDC_norec_noseek_rec_close;
+  io_disc->blk_close_fn = PDC_norec_noseek_blk_close;
 
   io_disc->name         = "norec_noseek";
   io_disc->descr        = "a raw bytes IO discipline that does not use EOR";
-  io_disc->uses_eor     = 0;
+  io_disc->rec_based    = 0;
+  io_disc->has_rblks    = 0;
+  io_disc->rec_obytes   = 0;
+  io_disc->rec_cbytes   = 0;
+  io_disc->blk_obytes   = 0;
+  io_disc->blk_cbytes   = 0;
   io_disc->data         = data;
 
   return io_disc;
@@ -1030,6 +1081,33 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   return PDC_OK;
 }
 
+ssize_t
+PDC_ctrec_noseek_rec_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *rec_start, size_t num_bytes)
+{
+  PDC_ctrec_noseek_data_t  *data;
+
+  if (!pdc || !pdc->disc) {
+    return -1;
+  }
+  if (!io_disc || !io_disc->data || !buf || !rec_start) {
+    PDC_WARN(pdc->disc, "PDC_ctrec_noseek_rec_close: bad param(s)");
+    return -1;
+  }
+  data = (PDC_ctrec_noseek_data_t*)io_disc->data;
+  buf[num_bytes] = data->cterm;
+  return 1;
+}
+
+ssize_t
+PDC_ctrec_noseek_blk_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *blk_start, size_t num_bytes, PDC_uint32 num_recs)
+{
+  if (!pdc || !pdc->disc) {
+    return -1;
+  }
+  PDC_WARN(pdc->disc, "PDC_ctrec_noseek_blk_close: not a record-block-based discipline!");
+  return -1;
+}
+
 PDC_error_t
 PDC_ctrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
 {
@@ -1096,10 +1174,17 @@ PDC_ctrec_noseek_make(PDC_byte termChar, size_t block_size_hint)
   io_disc->sfopen_fn    = PDC_ctrec_noseek_sfopen;
   io_disc->sfclose_fn   = PDC_ctrec_noseek_sfclose;
   io_disc->read_fn      = PDC_ctrec_noseek_read;
+  io_disc->rec_close_fn = PDC_ctrec_noseek_rec_close;
+  io_disc->blk_close_fn = PDC_ctrec_noseek_blk_close;
 
   io_disc->name         = "ctrec_noseek";
   io_disc->descr        = data->descr;
-  io_disc->uses_eor     = 1;
+  io_disc->rec_based    = 1;
+  io_disc->has_rblks    = 0;
+  io_disc->rec_obytes   = 0;
+  io_disc->rec_cbytes   = 1;
+  io_disc->blk_obytes   = 0;
+  io_disc->blk_cbytes   = 0;
   io_disc->data         = data;
 
   return io_disc;
@@ -1485,6 +1570,54 @@ PDC_vlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   return PDC_OK;
 }
 
+ssize_t
+PDC_vlrec_noseek_rec_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *rec_start, size_t num_bytes)
+{
+  PDC_byte *ibytes;
+
+  if (!pdc || !pdc->disc) {
+    return -1;
+  }
+  if (!io_disc || !buf || !rec_start) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_rec_close: bad param(s)");
+    return -1;
+  }
+  /* num_bytes already equal to total bytes in record */
+  ibytes = (PDC_byte*)(&num_bytes);
+  if (pdc->m_endian == PDC_littleEndian) {
+    rec_start[0] = ibytes[0];
+    rec_start[1] = ibytes[1];
+  } else {
+    rec_start[1] = ibytes[0];
+    rec_start[0] = ibytes[1];
+  }
+  return 0; /* no bytes added at end */
+}
+
+ssize_t
+PDC_vlrec_noseek_blk_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *blk_start, size_t num_bytes, PDC_uint32 num_recs)
+{
+  PDC_byte *ibytes;
+
+  if (!pdc || !pdc->disc) {
+    return -1;
+  }
+  if (!io_disc || !io_disc->data) {
+    PDC_WARN(pdc->disc, "PDC_vlrec_noseek_blk_close: bad param(s)");
+    return -1;
+  }
+  /* num_bytes already equal to total bytes in block */
+  ibytes = (PDC_byte*)(&num_bytes);
+  if (pdc->m_endian == PDC_littleEndian) {
+    blk_start[0] = ibytes[0];
+    blk_start[1] = ibytes[1];
+  } else {
+    blk_start[1] = ibytes[0];
+    blk_start[0] = ibytes[1];
+  }
+  return 0; /* no bytes added at end */
+}
+
 PDC_error_t
 PDC_vlrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
 {
@@ -1556,10 +1689,17 @@ PDC_vlrec_noseek_make(int blocked, size_t avg_rlen_hint)
   io_disc->sfopen_fn    = PDC_vlrec_noseek_sfopen;
   io_disc->sfclose_fn   = PDC_vlrec_noseek_sfclose;
   io_disc->read_fn      = PDC_vlrec_noseek_read;
+  io_disc->rec_close_fn = PDC_vlrec_noseek_rec_close;
+  io_disc->blk_close_fn = PDC_vlrec_noseek_blk_close;
 
   io_disc->name         = "vlrec_noseek";
   io_disc->descr        = data->descr;
-  io_disc->uses_eor     = 1;
+  io_disc->rec_based    = 1;
+  io_disc->has_rblks    = 1;
+  io_disc->rec_obytes   = 4;
+  io_disc->rec_cbytes   = 0;
+  io_disc->blk_obytes   = 4;
+  io_disc->blk_cbytes   = 0;
   io_disc->data         = data;
 
   /* data->ed starts zeroed due to vmnewof */
@@ -1857,6 +1997,26 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
   return PDC_OK;
 }
 
+ssize_t
+PDC_norec_rec_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *rec_start, size_t num_bytes)
+{
+  if (!pdc || !pdc->disc) {
+    return -1;
+  }
+  PDC_WARN(pdc->disc, "PDC_norec_rec_close: not a record-based discipline!");
+  return -1;
+}
+
+ssize_t
+PDC_norec_blk_close(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf, PDC_byte *blk_start, size_t num_bytes, PDC_uint32 num_recs)
+{
+  if (!pdc || !pdc->disc) {
+    return -1;
+  }
+  PDC_WARN(pdc->disc, "PDC_norec_blk_close: not a record-block-based discipline!");
+  return -1;
+}
+
 PDC_error_t
 PDC_norec_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
 {
@@ -1921,10 +2081,17 @@ PDC_norec_make(size_t block_size_hint)
   io_disc->sfopen_fn    = PDC_norec_sfopen;
   io_disc->sfclose_fn   = PDC_norec_sfclose;
   io_disc->read_fn      = PDC_norec_read;
+  io_disc->rec_close_fn = PDC_norec_rec_close;
+  io_disc->blk_close_fn = PDC_norec_blk_close;
 
   io_disc->name         = "norec";
   io_disc->descr        = "a raw bytes IO discipline that does not use EOR";
-  io_disc->uses_eor     = 0;
+  io_disc->rec_based    = 0;
+  io_disc->has_rblks    = 0;
+  io_disc->rec_obytes   = 0;
+  io_disc->rec_cbytes   = 0;
+  io_disc->blk_obytes   = 0;
+  io_disc->blk_cbytes   = 0;
   io_disc->data         = data;
 
   return io_disc;

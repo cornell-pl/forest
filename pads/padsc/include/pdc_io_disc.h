@@ -90,7 +90,7 @@ PDC_IO_disc_t * PDC_vlrec_noseek_make(int blocked, size_t avg_rlen_hint);
 
 PDC_IO_disc_t * PDC_norec_make(size_t block_size_hint);
 /* Instantiates an instance of norec, a raw bytes discipline that
- * does not use EOR.  block_size_hint is a hint as to what block size
+ * does not use records.  block_size_hint is a hint as to what block size
  * to use, if the discipline chooses to do fixed block-sized reads
  * 'under the covers'.  It may be ignored by the discipline.
  */
@@ -108,7 +108,9 @@ PDC_IO_disc_t * PDC_norec_noseek_make(size_t block_size_hint);
  * discipline.  The io discipline maintains a doubly-linked list of
  * these records using the prev/next fields, where the head of the
  * list is always a 'dummy' record that is not used except as a
- * placeholder for managing the list. 
+ * placeholder for managing the list.
+ * 
+ * XXX_TODOC: begin, end, etc.
  *
  * There are two extra data fields:
  *   disc_ptr, disc_off: (optionally) used by the io discipline;
@@ -137,19 +139,30 @@ typedef PDC_error_t (*PDC_IO_sfopen_fn)    (PDC_t *pdc, PDC_IO_disc_t* io_disc, 
 typedef PDC_error_t (*PDC_IO_sfclose_fn)   (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain);
 typedef PDC_error_t (*PDC_IO_read_fn)      (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, size_t remain,
 					    PDC_IO_elt_t **next_elt_out);
+typedef ssize_t     (*PDC_IO_rec_close_fn) (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf,
+					    PDC_byte *rec_start, size_t num_bytes);
+typedef ssize_t     (*PDC_IO_blk_close_fn) (PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_byte *buf,
+					    PDC_byte *blk_start, size_t num_bytes, PDC_uint32 num_recs);
 
 /* type PDC_IO_disc_t: */
 struct PDC_IO_disc_s {
   /* state */
-  const char          *name;       /* short IO discipline name */
-  const char          *descr;      /* short IO discipline description */
-  int                 uses_eor;    /* discipline uses EOR? */
-  void                *data;       /* discipline-specific data */
+  const char           *name;          /* short IO discipline name */
+  const char           *descr;         /* short IO discipline description */
+  int                   rec_based;     /* discipline is record-based? */
+  int                   has_rblks;     /* discipline supports blocks of records? */
+  size_t                rec_obytes;    /* bytes used for record open marker (0 if not used) */
+  size_t                rec_cbytes;    /* bytes used for record close marker (0 if not used) */
+  size_t                blk_obytes;    /* bytes used for block open marker (0 if not used) */
+  size_t                blk_cbytes;    /* bytes used for block close marker (0 if not used) */
+  void                 *data;          /* discipline-specific data */
   /* functions */
-  PDC_IO_unmake_fn    unmake_fn;   /* pairs with this discipline's make routine */
-  PDC_IO_sfopen_fn    sfopen_fn;   /* Sfio-based open */
-  PDC_IO_sfclose_fn   sfclose_fn;  /* Sfio-based close */
-  PDC_IO_read_fn      read_fn;     /* read */
+  PDC_IO_unmake_fn      unmake_fn;     /* pairs with this discipline's make routine */
+  PDC_IO_sfopen_fn      sfopen_fn;     /* Sfio-based open */
+  PDC_IO_sfclose_fn     sfclose_fn;    /* Sfio-based close */
+  PDC_IO_read_fn        read_fn;       /* read */
+  PDC_IO_rec_close_fn   rec_close_fn;  /* fill in record markers for an output record */
+  PDC_IO_blk_close_fn   blk_close_fn;  /* fill in block markers for an output block */
 };
 
 /* ================================================================================ */

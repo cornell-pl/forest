@@ -42,7 +42,7 @@
 } while(0)
 
 #define WRITE1(int_type, ivar) do { \
-  if (-1 == PDC_a_ ## int_type ## _write(pdc, io, &ed, &ivar)) { \
+  if (-1 == PDC_a_ ## int_type ## _write2io(pdc, io, &ed, &ivar)) { \
     error(2|ERROR_FATAL, "Failed to write " PDCI_MacroArg2String(int_type)); \
   } \
   if (-1 == sfprintf(io, "\n")) { \

@@ -12,6 +12,15 @@
 #define __LIBPADSC_CKIT_H__
 
 /* ================================================================================ */
+/* XXX THESE ARE REQUIRED FOR CKIT ON CERTAIN ARCHITECTURES ??? */
+
+#ifdef __PREPROCESSOR_FIXES
+typedef void * __builtin_va_list;
+#define __THROW
+/* extern int ftruncate (int __fd, long int __length) ; */
+
+#endif
+/* ================================================================================ */
 /* MISC MACROS THAT NEED PROTOTYPES */
 
 #undef RBuf_CPY_SRC2DEST
@@ -29,6 +38,106 @@ extern unsigned long PDC_WSPACE_OK;
 
 /* ================================================================================ */
 /* MACROS IN libpadsc.h THAT NEED PROTOTYPES */
+
+#undef PDC_int8_read
+PDC_error_t PDC_int8_read (PDC_t *pdc, PDC_base_csm *csm,
+			    PDC_base_ed *ed, PDC_int8 *res_out);
+
+#undef PDC_int16_read
+PDC_error_t PDC_int16_read(PDC_t *pdc, PDC_base_csm *csm,
+			   PDC_base_ed *ed, PDC_int16 *res_out);
+
+#undef PDC_int32_read
+PDC_error_t PDC_int32_read(PDC_t *pdc, PDC_base_csm *csm,
+			   PDC_base_ed *ed, PDC_int32 *res_out);
+
+#undef PDC_int64_read
+PDC_error_t PDC_int64_read(PDC_t *pdc, PDC_base_csm *csm,
+			   PDC_base_ed *ed, PDC_int64 *res_out);
+
+#undef PDC_uint8_read
+PDC_error_t PDC_uint8_read (PDC_t *pdc, PDC_base_csm *csm,
+			    PDC_base_ed *ed, PDC_uint8 *res_out);
+
+#undef PDC_uint16_read
+PDC_error_t PDC_uint16_read(PDC_t *pdc, PDC_base_csm *csm,
+			    PDC_base_ed *ed, PDC_uint16 *res_out);
+
+#undef PDC_uint32_read
+PDC_error_t PDC_uint32_read(PDC_t *pdc, PDC_base_csm *csm,
+			    PDC_base_ed *ed, PDC_uint32 *res_out);
+
+#undef PDC_uint64_read
+PDC_error_t PDC_uint64_read(PDC_t *pdc, PDC_base_csm *csm,
+			    PDC_base_ed *ed, PDC_uint64 *res_out);
+
+#undef PDC_int8_FW_read
+PDC_error_t PDC_int8_FW_read (PDC_t *pdc, PDC_base_csm *csm, size_t width,
+			      PDC_base_ed *ed, PDC_int8 *res_out);
+
+#undef PDC_int16_FW_read
+PDC_error_t PDC_int16_FW_read(PDC_t *pdc, PDC_base_csm *csm, size_t width,
+			      PDC_base_ed *ed, PDC_int16 *res_out);
+
+#undef PDC_int32_FW_read
+PDC_error_t PDC_int32_FW_read(PDC_t *pdc, PDC_base_csm *csm, size_t width,
+			      PDC_base_ed *ed, PDC_int32 *res_out);
+
+#undef PDC_int64_FW_read
+PDC_error_t PDC_int64_FW_read(PDC_t *pdc, PDC_base_csm *csm, size_t width,
+			      PDC_base_ed *ed, PDC_int64 *res_out);
+
+#undef PDC_uint8_FW_read
+PDC_error_t PDC_uint8_FW_read (PDC_t *pdc, PDC_base_csm *csm, size_t width,
+			       PDC_base_ed *ed, PDC_uint8 *res_out);
+
+#undef PDC_uint16_FW_read
+PDC_error_t PDC_uint16_FW_read(PDC_t *pdc, PDC_base_csm *csm, size_t width,
+			       PDC_base_ed *ed, PDC_uint16 *res_out);
+
+#undef PDC_uint32_FW_read
+PDC_error_t PDC_uint32_FW_read(PDC_t *pdc, PDC_base_csm *csm, size_t width,
+			       PDC_base_ed *ed, PDC_uint32 *res_out);
+
+#undef PDC_uint64_FW_read
+PDC_error_t PDC_uint64_FW_read(PDC_t *pdc, PDC_base_csm *csm, size_t width,
+			       PDC_base_ed *ed, PDC_uint64 *res_out);
+
+#undef PDC_int8_write2io
+#undef PDC_int16_write2io
+#undef PDC_int32_write2io
+#undef PDC_int64_write2io
+int PDC_int8_write2io  (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int8   *val);
+int PDC_int16_write2io (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int16  *val);
+int PDC_int32_write2io (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int32  *val);
+int PDC_int64_write2io (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int64  *val);
+
+#undef PDC_uint8_write2io
+#undef PDC_uint16_write2io
+#undef PDC_uint32_write2io
+#undef PDC_uint64_write2io
+int PDC_uint8_write2io (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint8  *val);
+int PDC_uint16_write2io(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint16 *val);
+int PDC_uint32_write2io(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint32 *val);
+int PDC_uint64_write2io(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint64 *val);
+
+#undef PDC_int8_write2buf
+#undef PDC_int16_write2buf
+#undef PDC_int32_write2buf
+#undef PDC_int64_write2buf
+int PDC_int8_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int8   *val);
+int PDC_int16_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int16  *val);
+int PDC_int32_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int32  *val);
+int PDC_int64_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int64  *val);
+
+#undef PDC_uint8_write2buf
+#undef PDC_uint16_write2buf
+#undef PDC_uint32_write2buf
+#undef PDC_uint64_write2buf
+int PDC_uint8_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint8  *val);
+int PDC_uint16_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint16 *val);
+int PDC_uint32_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint32 *val);
+int PDC_uint64_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint64 *val);
 
 /* ================================================================================ */
 /* MACROS IN libpadsc-internal.h THAT NEED PROTOTYPES */

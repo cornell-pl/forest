@@ -1,3 +1,5 @@
+/* XXX: note: changed return value to ssize_t */
+
 /* predeclare internal routines */
 ssize_t test_write2io_internal (PDC_t *pdc, Sfio_t *io, <test_params>, test_ed *ed, test *rep);
 ssize_t test_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, <test_params>, test_ed *ed, test *rep)
@@ -7,12 +9,12 @@ test_write2io (PDC_t *pdc, Sfio_t *io, <test_params>, test_ed *ed, test *rep)
 {
   test_ed ted;
 
-  PDCI_IODISC_INIT_CHECKS("test_write2io");  /* use for record (must have io disc installed for record writes) */
+  PDCI_IODISC_INIT_CHECKS_RET_SSIZE("test_write2io");  /* use for record (must have io disc installed for record writes) */
      /* or */
-  PDCI_DISC_INIT_CHECKS("test_write2io");  /* can use for non-record */
+  PDCI_DISC_INIT_CHECKS_RET_SSIZE("test_write2io");  /* can use for non-record */
 
-  PDCI_NULLPARAM_CHECK( "test_write2io" , (void *)io );
-  PDCI_NULLPARAM_CHECK( "test_write2io" , (void *)rep );
+  PDCI_NULLPARAM_CHECK_RET_SSIZE( "test_write2io" , (void *)io );
+  PDCI_NULLPARAM_CHECK_RET_SSIZE( "test_write2io" , (void *)rep );
 
   if (!ed) {
     memset ((void *) (&ted),0,sizeof(test_ed));
@@ -26,13 +28,13 @@ test_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, <test_p
 {
   test_ed ted;
 
-  PDCI_IODISC_INIT_CHECKS("test_write2io");  /* use for record (must have io disc installed for record writes) */
+  PDCI_IODISC_INIT_CHECKS_RET_SSIZE("test_write2io");  /* use for record (must have io disc installed for record writes) */
      /* or */
-  PDCI_DISC_INIT_CHECKS("test_write2buf");  /* can use for non-record */
+  PDCI_DISC_INIT_CHECKS_RET_SSIZE("test_write2buf");  /* can use for non-record */
 
-  PDCI_NULLPARAM_CHECK( "test_write2buf" , (void *)buf );
-  PDCI_NULLPARAM_CHECK( "test_write2buf" , (void *)buf_full );
-  PDCI_NULLPARAM_CHECK( "test_write2buf" , (void *)rep );
+  PDCI_NULLPARAM_CHECK_RET_SSIZE( "test_write2buf" , (void *)buf );
+  PDCI_NULLPARAM_CHECK_RET_SSIZE( "test_write2buf" , (void *)buf_full );
+  PDCI_NULLPARAM_CHECK_RET_SSIZE( "test_write2buf" , (void *)rep );
 
   if (!ed) {
     memset ((void *) (&ted),0,sizeof(test_ed));
@@ -172,7 +174,7 @@ write_block_of_foo_using_tmpstr(PDC_t *pdc, Sfio_t *io, int num_foos, foo_ed **f
     }
     blk_data_len += tlen;
   }
-  blk_len = PDC_IO_rblk_write(pdc, io, sfstruse(tmpstr), blk_data_len, num_foos);
+  blk_len = PDC_IO_rblk_write2io(pdc, io, sfstruse(tmpstr), blk_data_len, num_foos);
   if (blk_len == -1) {
     /* report block write problem */
     goto error_case;
@@ -279,7 +281,7 @@ write_myrec_using_tmpstr(PDC_t* pdc, Sfio_t *io, t1_ed *t1_ed, t1 *t1_rep, t2_ed
     /* report t2 write problem */
     goto error_case;
   }
-  rec_len = PDC_IO_rec_write(pdc, io, sfstruse(tmpstr), rec_data_len);
+  rec_len = PDC_IO_rec_write2io(pdc, io, sfstruse(tmpstr), rec_data_len);
   if (rec_len == -1) {
     /* report record write problem */
     goto error_case;
