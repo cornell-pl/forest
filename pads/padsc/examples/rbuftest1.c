@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   PDC_int8*       ar2;
   PDC_disc_t      my_disc = PDC_default_disc;
 
-  if (PDC_ERROR == PDC_open(0, &pdc)) {
+  if (PDC_ERR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
   err = RMM_free_buf(mgr, buf2b);
   error(0, "=> RMM_free_buf on rbuf2's buffer result: err= %d ***", err);
 
-  if (PDC_ERROR == PDC_close(pdc, &my_disc)) {
+  if (PDC_ERR == PDC_close(pdc, &my_disc)) {
     error(2, "*** PDC_close failed ***");
     exit(-1);
   }

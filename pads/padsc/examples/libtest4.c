@@ -15,13 +15,24 @@ int main(int argc, char** argv) {
   PDC_base_em     em = PDC_CheckAndSet;
   PDC_base_ed     ed;
   PDC_disc_t      my_disc = PDC_default_disc;
+  size_t          bytes_skipped;
+  unsigned long   ultmp;
+  PDC_regexp_t    *my_regexp;
 
-  if (PDC_ERROR == PDC_open(0, &pdc)) {
+  printf("\nUsing PADSC IO discipline nlrec\n\n");
+  PDC_nlrec_install(&my_disc, 0);
+
+  if (PDC_ERR == PDC_open(&my_disc, &pdc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.libtest4", &my_disc)) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.libtest4", &my_disc)) {
     error(2, "*** PDC_IO_fopen failed ***");
+    exit(-1);
+  }
+
+  if (PDC_ERR == PDC_regexp_compile(pdc, "[X]|EOR", &my_regexp, &my_disc)) {
+    error(2, "** unexpected regexp compile failure **");
     exit(-1);
   }
 
@@ -29,50 +40,50 @@ int main(int argc, char** argv) {
    * XXX Process the data here XXX
    */
   while (1) {
-    if (PDC_IO_peek_EOF(pdc, &my_disc)) {
+    if (PDC_IO_at_EOF(pdc, &my_disc)) {
       error(0, "Main program found eof");
       break;
     }
-    /* try to read line with 2 strings term by vbar 1 string term by newline */
-    if (PDC_ERROR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s, &my_disc)) {
-      PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, "Cannot find vbar stop char");
-      goto find_newline;
+    /* try to read line with 2 strings term by vbar 1 string term by EOR */
+    if (PDC_ERR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s, &my_disc)) {
+      goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", s.str, s.len);
     }
-    if (PDC_ERROR == PDC_char_lit_read(pdc, &em, &ed, '|', 0)) {
-      PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
-      goto find_newline;
+    if (PDC_ERR == PDC_char_lit_read(pdc, &em, &ed, '|', 0)) {
+      PDCI_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+      goto find_EOR;
     }
-    if (PDC_ERROR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s, &my_disc)) {
-      PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, "Cannot find vbar stop char");
-      goto find_newline;
+    if (PDC_ERR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s, &my_disc)) {
+      goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", s.str, s.len);
     }
-    if (PDC_ERROR == PDC_char_lit_read(pdc, &em, &ed, '|', 0)) {
-      PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
-      goto find_newline;
+    if (PDC_ERR == PDC_char_lit_read(pdc, &em, &ed, '|', 0)) {
+      PDCI_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+      goto find_EOR;
     }
-    if (PDC_ERROR == PDC_string_stopRegexp_read(pdc, &em, "[\nX]", &ed, &s, &my_disc)) {
-      PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, "Cannot find newline or X stop chars, ending program");
+    if (PDC_ERR == PDC_string_stopRegexp_read(pdc, &em, my_regexp, &ed, &s, &my_disc)) {
       break;
     } else {
-      error(0, "Read string term by newline or X : %s (length %d)", s.str, s.len);
+      error(0, "Read string term by EOR or X : %s (length %d)", s.str, s.len);
     }
-  find_newline:
-    if (PDC_ERROR == PDC_char_lit_scan(pdc, '\n', '\n', 0, 0, &my_disc)) {
-      error(2, "Could not find newline, ending program");
-      break;
+  find_EOR:
+    if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped, &my_disc)) {
+      error(2, "Could not find EOR (newline), ending program");
+      goto done;
     }
+    ultmp = bytes_skipped;
+    error(0, "bytes_skipped to find EOR/newline = %ld", ultmp);
   }
 
-  if (PDC_ERROR == PDC_IO_fclose(pdc, &my_disc)) {
+ done:
+  if (PDC_ERR == PDC_IO_fclose(pdc, &my_disc)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);
   }
 
-  if (PDC_ERROR == PDC_close(pdc, &my_disc)) {
+  if (PDC_ERR == PDC_close(pdc, &my_disc)) {
     error(2, "*** PDC_close failed ***");
     exit(-1);
   }

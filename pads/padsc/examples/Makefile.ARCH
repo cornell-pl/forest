@@ -4,13 +4,17 @@
 
 CCFLAGS = $(CC.DEBUG)
 
-libtests : mk_ex_data_libtest2 libtest1 libtest2 libtest4 rbuftest1
+libtests : mk_ex_data_libtest2 libtest1-nlrec libtest1-norec libtest1-newrec libtest1-fwrec libtest2 libtest4 rbuftest1
+
+biglibtests : mkexlt1 biglibtest1-nlrec biglibtest1-norec biglibtest1-newrec biglibtest1-fwrec
 
 format_tests : test_format1 test_format3 test_format5 test_format6
 
 other_tests : test_readint test_ai test_dibbler1 
 
 all_tests : libtests format_tests other_tests
+
+mkexlt1 :: mkexlt1.c
 
 test_format1  :: test_format1.c   format1.c   -lpadsc
 test_format2  :: test_format2.c   format2.c   -lpadsc
@@ -24,10 +28,20 @@ test_ai       :: test_ai.c        ai.c        -lpadsc
 test_ai_bob   :: test_ai.c        ai_bob.c    -lpadsc
 test_dibbler1 :: test_dibbler1.c  dibbler.c   -lpadsc
 
-libtest1  :: libtest1.c   -lpadsc
-libtest2  :: libtest2.c   -lpadsc
-libtest4  :: libtest4.c   -lpadsc
-rbuftest1 :: rbuftest1.c  -lpadsc
+libtest1-nlrec   :: libtest1-nlrec.c    -lpadsc
+libtest1-fwrec   :: libtest1-fwrec.c    -lpadsc
+libtest1-norec   :: libtest1-norec.c    -lpadsc
+libtest1-newrec  :: libtest1-newrec.c   -lpadsc
+
+biglibtest1-nlrec   :: biglibtest1-nlrec.c    -lpadsc
+biglibtest1-fwrec   :: biglibtest1-fwrec.c    -lpadsc
+biglibtest1-norec   :: biglibtest1-norec.c    -lpadsc
+biglibtest1-newrec  :: biglibtest1-newrec.c   -lpadsc
+
+libtest2         :: libtest2.c          -lpadsc
+libtest4         :: libtest4.c          -lpadsc
+rbuftest1        :: rbuftest1.c         -lpadsc
+
 
 mk_ex_data_libtest2 :: mk_ex_data_libtest2.c
 

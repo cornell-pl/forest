@@ -18,23 +18,23 @@ int main(int argc, char** argv) {
   }
   error(0, "Data file = %s\n", fileName);
 
-  if (PDC_ERROR == PDC_open(0, &pdc)) {
+  if (PDC_ERR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.ai", 0)) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.ai", 0)) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
-  if (PDC_ERROR == http_clf_t_init(pdc, &ai, 0)) {
+  if (PDC_ERR == http_clf_t_init(pdc, &ai, 0)) {
     error(2, "*** http_clt_t_init failed ***");
     exit(-1);
   }
-  if (PDC_ERROR == http_clf_t_ed_init(pdc, &ed, 0)) {
+  if (PDC_ERR == http_clf_t_ed_init(pdc, &ed, 0)) {
     error(2, "*** http_clt_t_ed_init failed ***");
     exit(-1);
   }
-  if (PDC_ERROR == http_clf_t_acc_init(pdc, &acc, 0)) {
+  if (PDC_ERR == http_clf_t_acc_init(pdc, &acc, 0)) {
     error(2, "*** http_clt_t_acc_init failed ***");
     exit(-1);
   }
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
       error(0, "response: %u   contentLength: %u", ai.response, ai.contentLength);
       error(0, "");
 
-      if (PDC_ERROR == http_clf_t_acc_add(pdc, &acc, &ed, &ai, 0)) {
+      if (PDC_ERR == http_clf_t_acc_add(pdc, &acc, &ed, &ai, 0)) {
 	error(2, "*** http_clt_t_acc_add failed ***");
 	exit(-1);
       }	
@@ -90,12 +90,12 @@ int main(int argc, char** argv) {
     }
   }
   http_clf_t_acc_report(pdc, "", 0, 0, &acc, 0);
-  if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {
+  if (PDC_ERR == PDC_IO_fclose(pdc, 0)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);
   }
 
-  if (PDC_ERROR == PDC_close(pdc, 0)) {
+  if (PDC_ERR == PDC_close(pdc, 0)) {
     error(2, "*** PDC_close failed ***");
     exit(-1);
   }

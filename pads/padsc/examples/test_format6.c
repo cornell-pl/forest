@@ -8,13 +8,13 @@ int main(int argc, char** argv) {
   defPN           pdata;
 
   /* Open pdc handle */
-  if (PDC_ERROR == PDC_open(0, &pdc)) {
+  if (PDC_ERR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
 
   /* Open output file */
-  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.format6", 0)) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.format6", 0)) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -35,12 +35,12 @@ int main(int argc, char** argv) {
     printf("x = %llu\n", pdata.id);
   }
 
-  if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {
+  if (PDC_ERR == PDC_IO_fclose(pdc, 0)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);
   }
 
-  if (PDC_ERROR == PDC_close(pdc, 0)) {
+  if (PDC_ERR == PDC_close(pdc, 0)) {
     error(2, "*** PDC_close failed ***");
     exit(-1);
   }

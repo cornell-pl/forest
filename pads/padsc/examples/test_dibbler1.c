@@ -6,7 +6,7 @@ int main(int argc, char** argv) {
   out_sum_header_t    header;
   out_sum_data_line_t dline;
 
-  if (PDC_ERROR == PDC_open(0, &pdc)) {
+  if (PDC_ERR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   /* INIT dline -- must do this for all variable data types */
   out_sum_data_line_t_init   (pdc, &dline, 0);
 
-  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.dibbler1", 0)) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.dibbler1", 0)) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -42,12 +42,12 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {
+  if (PDC_ERR == PDC_IO_fclose(pdc, 0)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);
   }
 
-  if (PDC_ERROR == PDC_close(pdc, 0)) {
+  if (PDC_ERR == PDC_close(pdc, 0)) {
     error(2, "*** PDC_close failed ***");
     exit(-1);
   }

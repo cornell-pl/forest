@@ -5,11 +5,11 @@ int main(int argc, char** argv) {
   PDC_t*              pdc;
   out_sum_data_line_t d;
 
-  if (PDC_ERROR == PDC_open(0, &pdc)) {
+  if (PDC_ERR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.from", 0)) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.from", 0)) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -30,12 +30,12 @@ int main(int argc, char** argv) {
     printf("%d %d\n", d.order_item, d.create_id);
   }
 
-  if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {
+  if (PDC_ERR == PDC_IO_fclose(pdc, 0)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);
   }
 
-  if (PDC_ERROR == PDC_close(pdc, 0)) {
+  if (PDC_ERR == PDC_close(pdc, 0)) {
     error(2, "*** PDC_close failed ***");
     exit(-1);
   }
