@@ -14,8 +14,15 @@ local
 	ppCoreStmt aidinfo tidtab pps coreStmt
 
     fun ppExternalDeclAdornment ppCoreExternalDecl aidinfo tidtab pps
-	  (Ast.DECL (coreExtDecl,_,_)) = 
-	ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
+	  (Ast.DECL (coreExtDecl,_,loc:SourceMap.location)) = 
+(case loc of SourceMap.UNKNOWN => (print "unknown location\n";
+                                   ppCoreExternalDecl aidinfo tidtab pps coreExtDecl)
+           | SourceMap.LOC r => (print (concat ["Source: ", OS.Path.file (#srcFile r), "\n"]);
+				 let val fname = OS.Path.file (#srcFile r)
+				 in
+				 if fname = "padslib.h" orelse fname = "padslib-internal.h" then ()
+				 else ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
+				 end))
   end
 
 in
