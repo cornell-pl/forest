@@ -3518,9 +3518,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val coreSs = 
                                case descOpt of NONE => 
 			         let val readFields = mungeFields genReadFull genReadBrief genReadMan variants  (* does type checking *)
+				     val readBodySs = [PT.Compound(uReadSetup(!firstTag)
+								   @ readFields
+								   @ (uReadFailed())
+								   @ branchesDoneLabel()
+								   @ readWhereCheck()
+								   @ finalCheckLabel()
+								   @ eorCheck())]
 				 in
-				     uReadSetup(!firstTag) @ readFields @ (uReadFailed())
-				     @ branchesDoneLabel() @ readWhereCheck() @ finalCheckLabel() @ eorCheck()
+				     readBodySs
 				 end
 			       | SOME descriminator => buildSwitchRead(descriminator)
 			     val bodySs = localDeclSs @ localInitSs @ coreSs @ [stdReturnS]
