@@ -24,6 +24,7 @@
   PDC_string        stmp2;     /* tmp string 2 */ \
   RMM_t             *rmm_z;    /* rbuf memory mgr -- zeroes allocated memory */  \
   RMM_t             *rmm_nz;   /* rbuf memory mgr -- does not zero allocated memory */  \
+  PDC_endian         m_endian; /* endian-ness of the machine */ \
   /* The following are all related to IO state / checkpointing */ \
   char              *path;     /* original path -- eventually want to support a set of input files */ \
   Sfio_t            *io;       /* sfio stream */ \

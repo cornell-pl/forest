@@ -1007,7 +1007,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     tmp = data->dbuf_end;
     data->dbuf_end += readlen;
     *(data->dbuf_end) = 0; /* null-terminate dbuf -- note use of extra byte in vmoldof calls */
-    if ((found_cterm = (PDC_byte*)strchr((char*)tmp, data->cterm))) {
+    if ((found_cterm = PDCI_findfirst(tmp, data->dbuf_end, data->cterm))) {
       break;
     }
     /* read another block */
@@ -1041,7 +1041,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
       (*next_elt_out) = elt;
     }
     tmp = data->dbuf_end - data->un_bytes;
-    found_cterm = (PDC_byte*)strchr((char*)tmp, data->cterm);
+    found_cterm = PDCI_findfirst(tmp, data->dbuf_end, data->cterm);
   }
   if (readlen < data->block_size) { /* put rest of bytes in EOF IO rec */
     elt = data->eof_elt;

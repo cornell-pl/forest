@@ -4,6 +4,7 @@
 
 
 #include "libpadsc-internal.h" /* for testing - normally do not include internal */
+#include <stdio.h>
 
 /* Remove comments to see classic example of a case where mixing binary data and newlines can fail */
 /* #define USE_NLREC */
@@ -49,18 +50,19 @@ int main(int argc, char** argv) {
   }
   sprintf(fname, "../../data/ex_data.libtest2.%s", h);
   error(0, "fname = %s    rev = %d\n", fname, rev);
-  switch (my_disc.m_endian) {
+
+  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
+    error(2, "*** PDC_open failed ***");
+    exit(-1);
+  }
+
+  switch (pdc->m_endian) {
   case PDC_bigEndian:
     my_disc.d_endian = rev ? PDC_littleEndian : PDC_bigEndian;
     break;
   case PDC_littleEndian:
     my_disc.d_endian = rev ? PDC_bigEndian : PDC_littleEndian;
     break;
-  }
-
-  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
-    error(2, "*** PDC_open failed ***");
-    exit(-1);
   }
 
   if (PDC_ERR == PDC_IO_fopen(pdc, fname)) {
@@ -132,7 +134,9 @@ int main(int argc, char** argv) {
     error(0, "bytes_skipped to find EOR/newline = %ld", ultmp);
   }
 
+#ifdef USE_NLREC
  done:
+#endif
   if (PDC_ERR == PDC_IO_fclose(pdc)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);

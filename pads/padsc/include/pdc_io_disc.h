@@ -14,13 +14,6 @@
 #define __PDC_IO_DISC_H__
 
 /* ================================================================================ */
-/* IO DISCIPLINE CONSTANTS */
-
-#define PDC_ASCII_NEWLINE '\n'
-#define PDC_EBCDIC_NEWLINE 0x25
-/* N.B. EBCDIC 0x15 is used on some systems for LF, 0x25 on others */
-
-/* ================================================================================ */
 /* THE IO DISCIPLINE
  *
  * Type PDC_IO_disc_t is used to control the 'raw' reading of data

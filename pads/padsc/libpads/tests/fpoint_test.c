@@ -53,30 +53,11 @@ int main(int argc, char** argv) {
 
   my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
 
-  if (argc != 2) {
-    goto usage;
-  }
-
-  if (strcmp(argv[1], "fwrec") == 0) {
-    io_disc = PDC_fwrec_make(0, 20, 1); /* 1 20-echar int, newline */ 
-  } else if (strcmp(argv[1], "ctrec") == 0) {
-    io_disc = PDC_ctrec_make(PDC_EBCDIC_NEWLINE, 0);
-  } else if (strcmp(argv[1], "norec") == 0) {
-    io_disc = PDC_norec_make(0);
-  } else if (strcmp(argv[1], "fwrec_noseek") == 0) {
-    io_disc = PDC_fwrec_noseek_make(0, 20, 1); /* 1 20-echar int, newline */ 
-  } else if (strcmp(argv[1], "ctrec_noseek") == 0) {
-    io_disc = PDC_ctrec_noseek_make(PDC_EBCDIC_NEWLINE, 0);
-  } else if (strcmp(argv[1], "norec_noseek") == 0) {
-    io_disc = PDC_norec_noseek_make(0);
-  } else {
-    goto usage;
-  }
+  io_disc = PDC_norec_make(0);
   if (!io_disc) {
-    error(ERROR_FATAL, "\nFailed to install IO discipline %s", argv[1]);
-  } else {
-    error(0, "\nInstalled IO discipline %s", argv[1]);
+    error(ERROR_FATAL, "\nFailed to install IO discipline norec");
   }
+  error(0, "\nInstalled IO discipline norec");
 
   if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
     error(2, "*** PDC_open failed ***");
@@ -87,21 +68,115 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  /* read fpoint once for each legal n/d combo making up each legal width */
-  for (w = 1; w < 19; w++) {
-    for (n = w; n >= 0; n--) {
-      d = w-n;
-      if (PDC_OK == PDC_ufpoint_read(pdc, &em, n, d, &ed, &ufp)) {
-	error(0, "Read fpoint(%d, %d) with num = %llu denom = %llu", n, d, ufp.num, ufp.denom);
+  /* (1) EBC ENCODING */
+
+  /* read fpoint once for each legal n/d combo */
+  for (n = 1; n <= 18; n++) {
+    for (d = 0; d <= 19; d++) {
+      if (PDC_OK == PDC_ebc_fpoint64_read(pdc, &em, n, d, &ed, &fp)) {
+	error(0, "Read fpoint(%d, %d) with num = %ll denom = %llu", n, d, fp.num, fp.denom);
+	if (fp.denom != PDCI_10toThe[d]) {
+	  error(0, "XXX failure: denom should be %llu", PDCI_10toThe[d]);
+	  return -1;
+	} 
+      } else {
+	PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
+	return -1;
+      }
+      NEXT_REC;
+    }
+  }
+
+  /* read ufpoint once for each legal n/d combo */
+  for (n = 1; n <= 19; n++) {
+    for (d = 0; d <= 19; d++) {
+      if (PDC_OK == PDC_ebc_ufpoint64_read(pdc, &em, n, d, &ed, &ufp)) {
+	error(0, "Read ufpoint(%d, %d) with num = %llu denom = %llu", n, d, ufp.num, ufp.denom);
 	if (ufp.denom != PDCI_10toThe[d]) {
 	  error(0, "XXX failure: denom should be %llu", PDCI_10toThe[d]);
 	  return -1;
 	} 
-      } else { return -1; }
-      if (foo) { foo; }
+      } else {
+	PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
+	return -1;
+      }
       NEXT_REC;
     }
   }
+
+  /* (2) BCD ENCODING */
+
+  /* read fpoint once for each legal n/d combo */
+  for (n = 1; n <= 18; n++) {
+    for (d = 0; d <= 19; d++) {
+      if (PDC_OK == PDC_bcd_fpoint64_read(pdc, &em, n, d, &ed, &fp)) {
+	error(0, "Read fpoint(%d, %d) with num = %ll denom = %llu", n, d, fp.num, fp.denom);
+	if (fp.denom != PDCI_10toThe[d]) {
+	  error(0, "XXX failure: denom should be %llu", PDCI_10toThe[d]);
+	  return -1;
+	} 
+      } else {
+	PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
+	return -1;
+      }
+      NEXT_REC;
+    }
+  }
+
+  /* read ufpoint once for each legal n/d combo */
+  for (n = 1; n <= 19; n++) {
+    for (d = 0; d <= 19; d++) {
+      if (PDC_OK == PDC_bcd_ufpoint64_read(pdc, &em, n, d, &ed, &ufp)) {
+	error(0, "Read ufpoint(%d, %d) with num = %llu denom = %llu", n, d, ufp.num, ufp.denom);
+	if (ufp.denom != PDCI_10toThe[d]) {
+	  error(0, "XXX failure: denom should be %llu", PDCI_10toThe[d]);
+	  return -1;
+	} 
+      } else {
+	PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
+	return -1;
+      }
+      NEXT_REC;
+    }
+  }
+
+  /* (3) SB ENCODING */
+
+  /* read fpoint once for each legal n/d combo */
+  for (n = 1; n <= 18; n++) {
+    for (d = 0; d <= 19; d++) {
+      if (PDC_OK == PDC_sb_fpoint64_read(pdc, &em, n, d, &ed, &fp)) {
+	error(0, "Read fpoint(%d, %d) with num = %ll denom = %llu", n, d, fp.num, fp.denom);
+	if (fp.denom != PDCI_10toThe[d]) {
+	  error(0, "XXX failure: denom should be %llu", PDCI_10toThe[d]);
+	  return -1;
+	} 
+      } else {
+	PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
+	return -1;
+      }
+      NEXT_REC;
+    }
+  }
+
+  /* read ufpoint once for each legal n/d combo */
+  for (n = 1; n <= 19; n++) {
+    for (d = 0; d <= 19; d++) {
+      if (PDC_OK == PDC_ufpoint64_read(pdc, &em, n, d, &ed, &ufp)) {
+	error(0, "Read sb_ufpoint(%d, %d) with num = %llu denom = %llu", n, d, ufp.num, ufp.denom);
+	if (ufp.denom != PDCI_10toThe[d]) {
+	  error(0, "XXX failure: denom should be %llu", PDCI_10toThe[d]);
+	  return -1;
+	} 
+      } else {
+	PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
+	return -1;
+      }
+      NEXT_REC;
+    }
+  }
+
+  /* TODO : invalid cases */
 
  done:
   if (PDC_ERR == PDC_IO_fclose(pdc)) {
@@ -115,9 +190,4 @@ int main(int argc, char** argv) {
   }
 
   return 0;
-
- usage:
-  error(2, "\nUsage: %s <io-disc-name>\n\n\twhere <io-disc-name> is one of: fwrec, ctrec, norec,"
-	" fwrec_noseek, ctrec_noseek, norec_noseek\n", argv[0]);
-  return -1;
 }

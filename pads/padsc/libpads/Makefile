@@ -2,6 +2,8 @@
 
 .SOURCE : ../include
 
+PADS_HOME = ..
+
 CCFLAGS = $(CC.DEBUG) $(CC.DLL)
 
 all :

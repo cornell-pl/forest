@@ -302,7 +302,7 @@
 
 /* ********************************** END_HEADER ********************************** */
 
-#define PDCI_AE_INT_READ_FN(fn_name, targ_type, strtonum_fn, invalid_err, isspace_fn, isdigit_fn)
+#define PDCI_AE_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
 
 PDC_error_t
 fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
@@ -392,17 +392,9 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
       }
       /* Either eor|eof, or found non-digit before end.  Thus, */
       /* the range [begin, end] is now set up for the strtonum function */
-      tmp = strtonum_fn(begin, &p1);
-      if (p1==0 || p1==begin) {
-	p1 = begin;
-	while (isspace_fn(*p1)) { p1++; }
-	if ('-' == (*p1) || '+' == (*p1)) { p1++; }
-	while (isdigit_fn(*p1)) { p1++; }
-	goto invalid;
-      }
-      if (errno == ERANGE) {
-	goto range_err;
-      }
+      tmp = bytes2num_fn(pdc, begin, &p1);
+      if (errno == EINVAL) goto invalid;
+      if (errno == ERANGE) goto range_err;
       /* success */
       if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	goto fatal_forward_err;
@@ -463,7 +455,7 @@ fn_name(PDC_t *pdc, PDC_base_em *em,
 }
 /* END_MACRO */
 
-#define PDCI_AE_INT_FW_READ_FN(fn_name, targ_type, strtonum_fn, invalid_err, isspace_fn)
+#define PDCI_AE_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
 PDC_error_t
 fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
 		      PDC_base_ed *ed, targ_type *res_out)
@@ -491,29 +483,26 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
     }
   }
   /* end-begin >= width */
-  end = begin + width;
-  if (isspace_fn(*begin) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
-    goto invalid_wspace;
-  }
-  ct = *end;    /* save */
-  *end = 0;     /* null */
-  tmp = strtonum_fn(begin, &p1);
-  if (p1==0 || p1==begin) {
-    *end = ct;    /* restore */
-    goto invalid;
-  }
-  *end = ct;    /* restore */
-  if (p1 < end && isspace_fn(*p1)) {
-    if (!(pdc->disc->flags & PDC_WSPACE_OK)) {
+  if (*em == PDC_Check || *em == PDC_CheckAndSet) {
+    end = begin + width;
+    if (isspace_fn(*begin) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
       goto invalid_wspace;
     }
-    do { p1++; } while (p1 < end && isspace_fn(*p1));
-  }
-  if (p1 != end) {
-    goto invalid;
-  }
-  if (errno == ERANGE) {
-    goto range_err;
+    ct = *end;    /* save */
+    *end = 0;     /* null */
+    tmp = bytes2num_fn(pdc, begin, &p1);
+    *end = ct;    /* restore */
+    if (errno == EINVAL) goto invalid;
+    if (p1 < end && isspace_fn(*p1)) {
+      if (!(pdc->disc->flags & PDC_WSPACE_OK)) {
+	goto invalid_wspace;
+      }
+      do { p1++; } while (p1 < end && isspace_fn(*p1));
+    }
+    if (p1 != end) {
+      goto invalid;
+    }
+    if (errno == ERANGE) goto range_err;
   }
   /* success */
   if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
@@ -615,7 +604,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
   }
   /* end-begin >= width */
   if (res_out && *em == PDC_CheckAndSet) {
-    if (pdc->disc->m_endian != pdc->disc->d_endian) {
+    if (pdc->m_endian != pdc->disc->d_endian) {
       swapmem(swapmem_op, begin, res_out, width);
     } else {
       swapmem(0, begin, res_out, width);
@@ -656,6 +645,90 @@ fn_name(PDC_t *pdc, PDC_base_em *em,
   }
   PDCI_IODISC_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
   return fn_name ## _internal (pdc, em, ed, res_out);
+}
+/* END_MACRO */
+
+#define PDCI_EBCBCDSB_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+PDC_error_t
+fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits_or_bytes,
+		      PDC_base_ed *ed, targ_type *res_out)
+{
+  targ_type       tmp;   /* tmp num */
+  PDC_byte        *begin, *p1, *p2, *end;
+  int             eor, eof;
+  size_t          bytes;
+
+  PDC_TRACE(pdc->disc, PDCI_MacroArg2String(fn_name) "_internal called" );
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+    goto fatal_nb_io_err;
+  }
+  while (end-begin < width) {
+    if ((eor|eof) || bytes == 0) {
+      goto width_not_avail;
+    }
+    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+      goto fatal_mb_io_err;
+    }
+  }
+  /* end-begin >= width */
+  if (*em == PDC_Check || *em == PDC_CheckAndSet) {
+    tmp = bytes2num_fn(pdc, begin, num_digits_or_bytes, &p1);
+    if (errno) goto invalid_range_dom;
+  }
+  /* success */
+  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
+    goto fatal_forward_err;
+  }
+  if (res_out && *em == PDC_CheckAndSet) {
+    (*res_out) = (targ_type)tmp;
+  }
+  ed->errCode = PDC_NO_ERR;
+  return PDC_OK;
+
+ invalid_range_dom:
+  /* FW field: eat the space whether or not there is an error */
+  PDCI_READFN_SET_LOC_BE(0, width);
+  if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
+    goto fatal_forward_err;
+  }
+  switch (errno) {
+  case EINVAL:
+    PDCI_READFN_RET_ERRCODE_WARN(0, invalid_err);
+  case ERANGE:
+    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_RANGE);
+  case EDOM:
+    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_BAD_PARAM);
+  }
+
+ width_not_avail:
+  PDCI_READFN_SET_LOC_BE(0, end-begin);
+  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_WIDTH_NOT_AVAILABLE);
+
+ fatal_nb_io_err:
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (nb)", PDC_IO_ERR);
+
+ fatal_mb_io_err:
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (mb)", PDC_IO_ERR);
+
+ fatal_forward_err:
+  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in " PDCI_MacroArg2String(fn_name) "_internal", PDC_FORWARD_ERR);
+}
+
+PDC_error_t
+fn_name(PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits_or_bytes,
+	PDC_base_ed *ed, targ_type *res_out)
+{
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  PDCI_IODISC_INIT_CHECKS( PDCI_MacroArg2String(fn_name) );
+  return fn_name ## _internal (pdc, em, num_digits_or_bytes, ed, res_out);
 }
 /* END_MACRO */
 
@@ -1066,9 +1139,9 @@ int_type ## _acc_report_map(PDC_t *pdc, const char *prefix, const char *what, in
  */
 /* ********************************** END_HEADER ********************************** */
 
-#define PDCI_A2INT(fn_name, targ_type, int_min, int_max)
+#define PDCI_A2INT(fn_name, rev_fn_name, targ_type, int_min, int_max)
 targ_type
-fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out)
 {
   int digit;
   int  neg = 0, range_err = 0;
@@ -1111,11 +1184,18 @@ fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
   errno = 0;
   return neg ? res : - res;
 }
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i)
+{
+  errno = 0;
+  return sfprintf(io, "%I*d", sizeof(i), i);
+}
 /* END_MACRO */
 
-#define PDCI_A2UINT(fn_name, targ_type, int_max)
+#define PDCI_A2UINT(fn_name, rev_fn_name, targ_type, int_max)
 targ_type
-fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out)
 {
   int digit;
   int  range_err = 0;
@@ -1158,18 +1238,31 @@ fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
   errno = 0;
   return res;
 }
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type u)
+{
+  errno = 0;
+  return sfprintf(io, "%I*u", sizeof(u), u);
+}
 /* END_MACRO */
 
-#define PDCI_E2INT(fn_name, targ_type, int_min, int_max)
+#define PDCI_E2INT(fn_name, rev_fn_name, targ_type, int_min, int_max)
 targ_type
-fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out)
 {
   int digit;
-  int  neg = 1, range_err = 0;
+  int  neg = 0, range_err = 0;
   targ_type res = 0;
 
   while (PDCI_is_e_space(*bytes)) {
     bytes++;
+  }
+  if (*bytes == PDC_EBCDIC_PLUS) {
+    bytes++;
+  } else if (*bytes == PDC_EBCDIC_MINUS) {
+    bytes++;
+    neg = 1;
   }
   if (!PDCI_is_e_digit(*bytes)) {
     if (ptr_out) {
@@ -1189,10 +1282,6 @@ fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
     res -= digit;
     bytes++;
   }
-  if ((*(bytes-1) & 0xF0) != 0xD0) { /* sign nible; C,F >=0; D < 0 */
-    neg = 0;
-    res = - res;
-  }
   if (ptr_out) {
     (*ptr_out) = (PDC_byte*)bytes;
   }
@@ -1201,13 +1290,29 @@ fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
     return neg ? int_min : int_max;
   }
   errno = 0;
-  return res;
+  return neg ? res : - res;
+}
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i)
+{
+  int j, writelen;
+  char *buf;
+
+  errno = 0;
+  sfstrset(pdc->tmp, 0);
+  if (-1 == (writelen = sfprintf(pdc->tmp, "%I*d", sizeof(i), i))) return -1;
+  buf = sfstruse(pdc->tmp);
+  for (j = 0; j < writelen; j++) {
+    buf[j] = PDC_mod_ae_tab[(int)(buf[j])];
+  }
+  return sfwrite(io, buf, writelen);
 }
 /* END_MACRO */
 
-#define PDCI_E2UINT(fn_name, targ_type, int_max)
+#define PDCI_E2UINT(fn_name, rev_fn_name, targ_type, int_max)
 targ_type
-fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out)
 {
   int digit;
   int range_err = 0;
@@ -1215,6 +1320,12 @@ fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
 
   while (PDCI_is_e_space(*bytes)) {
     bytes++;
+  }
+  if (*bytes == PDC_EBCDIC_PLUS) {
+    bytes++;
+  } else if (*bytes == PDC_EBCDIC_MINUS) {
+    bytes++;
+    range_err = 1;
   }
   if (!PDCI_is_e_digit(*bytes)) {
     if (ptr_out) {
@@ -1234,9 +1345,6 @@ fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
     res += digit;
     bytes++;
   }
-  if ((*(bytes-1) & 0xF0) == 0xD0) { /* sign nible; C,F >=0; D < 0 */
-    range_err = 1;
-  }
   if (ptr_out) {
     (*ptr_out) = (PDC_byte*)bytes;
   }
@@ -1247,20 +1355,177 @@ fn_name(const PDC_byte *bytes, PDC_byte **ptr_out)
   errno = 0;
   return res;
 }
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type u)
+{
+  int j, writelen;
+  char *buf;
+
+  errno = 0;
+  sfstrset(pdc->tmp, 0);
+  if (-1 == (writelen = sfprintf(pdc->tmp, "%I*u", sizeof(u), u))) return -1;
+  buf = sfstruse(pdc->tmp);
+  for (j = 0; j < writelen; j++) {
+    buf[j] = PDC_mod_ae_tab[(int)(buf[j])];
+  }
+  return sfwrite(io, buf, writelen);
+}
 /* END_MACRO */
 
-/* XXX Check with Hume: For odd num_digits, the last half-byte is used for an optional sign ??? */
-/* XXX So we eat 2 whole bytes for num_digits = 3, right (rather than 1.5 bytes) ??? */
-#define PDCI_BCD2INT(fn_name, targ_type, int_min, int_max)
+#define PDCI_EBC2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max)
 targ_type
-fn_name(const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out)
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out)
+{
+  PDC_int32 n = num_digits;
+  targ_type res = 0;
+  int neg, digit;
+
+  if (ptr_out) {
+    (*ptr_out) = (PDC_byte*)bytes + n;
+  }
+  if (n == 0 || n > nd_max) {
+    errno = EDOM;
+    return int_min;
+  }
+  neg = ((bytes[n-1]&0xF0) == 0xD0); /* look at sign nibble; C,F >=0; D < 0 */
+  while (--n >= 0) {
+    if ((digit = (0xF & *bytes)) > 9) {
+      errno = EINVAL;
+      return int_min;
+    }
+    if (res < int_min ## _DIV10) {
+      goto range_err;
+    }
+    res = (res << 3) + (res << 1); /* res *= 10 */
+    if (res < int_min + digit) {
+      goto range_err;
+    }
+    res -= digit;
+    bytes++;
+  }
+  errno = 0;
+  return neg ? res : - res;
+ range_err:
+  errno = ERANGE;
+  return neg ? int_min : int_max;
+}
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_digits)
+{
+  PDC_int32 n = num_digits;
+  PDC_byte ebc[30];
+  int neg = (i < 0);
+
+  if (n == 0 || n > nd_max) {
+    errno = EDOM;
+    return -1;
+  }
+  if ((n < act_nd_max) && ((i >= PDCI_10toThe[n]) || ((-i) >= PDCI_10toThe[n]))) {
+    errno = ERANGE;
+    return -1;
+  }
+  if (neg) {
+    while (--n >= 0) {
+      ebc[n] = 0xF0 | (-(i % 10));
+      i /= 10;
+    }
+    ebc[num_digits-1] &= 0xDF; /* force sign nibble to negative */
+  } else {
+    while (--n >= 0) {
+      ebc[n] = 0xF0 | (i % 10);
+      i /= 10;
+    }
+  }
+  errno = 0;
+  return sfwrite(io, ebc, num_digits);
+}
+/* END_MACRO */
+
+#define PDCI_EBC2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max)
+targ_type
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out)
+{
+  PDC_int32 n = num_digits;
+  targ_type res = 0;
+  int digit;
+
+  if (ptr_out) {
+    (*ptr_out) = (PDC_byte*)bytes + n;
+  }
+  if (n == 0 || n > nd_max) {
+    errno = EDOM;
+    return int_max;
+  }
+  if ((bytes[n-1]&0xF0) == 0xD0) { /* look at sign nibble; C,F >=0; D < 0 */
+    goto range_err;
+  }
+  while (--n >= 0) {
+    if ((digit = (0xF & *bytes)) > 9) {
+      errno = EINVAL;
+      return int_max;
+    }
+    if (res > int_max ## _DIV10) {
+      goto range_err;
+    }
+    res = (res << 3) + (res << 1); /* res *= 10 */
+    if (res > int_max - digit) {
+      goto range_err;
+    }
+    res += digit;
+    bytes++;
+  }
+  errno = 0;
+  return res;
+ range_err:
+  errno = ERANGE;
+  return int_max;
+}
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type u, PDC_uint32 num_digits)
+{
+  PDC_int32 n = num_digits;
+  PDC_byte ebc[30];
+
+  if (n == 0 || n > nd_max) {
+    errno = EDOM;
+    return -1;
+  }
+  if ((n < nd_max) && (u >= PDCI_10toThe[n])) {
+    errno = ERANGE;
+    return -1;
+  }
+  while (--n >= 0) {
+    ebc[n] = 0xF0 | (u % 10);
+    u /= 10;
+  }
+  errno = 0;
+  return sfwrite(io, ebc, num_digits);
+}
+/* END_MACRO */
+
+
+#define PDCI_BCD2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max)
+targ_type
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out)
 {
   int  digit, two_digits;
-  int  neg = 1, range_err = 0;
+  int  neg = 0;
+  PDC_int32 num_bytes = ((num_digits+1) / 2);
   targ_type res = 0;
 
+  if (ptr_out) {
+    (*ptr_out) = (PDC_byte*)bytes + num_bytes;
+  }
+  neg = ((num_digits % 2 == 1) && ((bytes[num_bytes-1]&0xF) == 0xD)); /* look at sign nibble; C,F >=0; D < 0 */
+  if (num_digits == 0 || num_digits > nd_max) {
+    errno = EDOM;
+    return int_min;
+  }
   while (num_digits >= 2) {
-    if (-1 == (two_digits = PDCI_bcd_2digits[*bytes])) {
+    if (-1 == (two_digits = PDCI_bcd_hilo_digits[*bytes])) {
       if (ptr_out) {
 	(*ptr_out) = (PDC_byte*)bytes;
       }
@@ -1268,60 +1533,104 @@ fn_name(const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out)
       return int_min;
     }
     if (res < int_min ## _DIV100) {
-      range_err = 1;
+      goto range_err;
     }
     res *= 100;
     if (res < int_min + two_digits) {
-      range_err = 1;
+      goto range_err;
     }
     res -= two_digits;
     bytes++;
     num_digits -= 2;
   }
   if (num_digits) {
-    if (-1 == (digit = PDCI_bcd_1digit[*bytes])) {
-      if (ptr_out) {
-	(*ptr_out) = (PDC_byte*)bytes;
-      }
+    if (-1 == (digit = PDCI_bcd_hi_digit[*bytes])) {
       errno = EINVAL;
       return int_min;
     }
     if (res < int_min ## _DIV10) {
-      range_err = 1;
+      goto range_err;
     }
     res = (res << 3) + (res << 1); /* res *= 10 */
     if (res < int_min + digit) {
-      range_err = 1;
+      goto range_err;
     }
     res -= digit;
-    if (((*bytes)&0xF) != 0xD) { /* look at sign nibble; C,F >=0; D < 0 */
-      neg = 0;
-      res = - res;
-    }
     bytes++;
   }
-  if (ptr_out) {
-    (*ptr_out) = (PDC_byte*)bytes;
+  errno = 0;
+  return neg ? res : - res;
+ range_err:
+  errno = ERANGE;
+  return neg ? int_min : int_max;
+}
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_digits)
+{
+  PDC_byte bcd[30];
+  PDC_int32 num_bytes;
+  int x, n;
+  int neg = (i < 0);
+  int oddbytes = (num_digits % 2 == 1);
+
+  if (num_digits == 0 || num_digits > nd_max) {
+    errno = EDOM;
+    return -1;
   }
-  if (range_err) {
+  if ((num_digits < act_nd_max) && ((i >= PDCI_10toThe[num_digits]) || ((-i) >= PDCI_10toThe[num_digits]))) {
     errno = ERANGE;
-    return neg ? int_min : int_max;
+    return -1;
+  }
+  num_bytes = ((num_digits+1) / 2);
+  n = num_bytes - 1;
+  if (neg) {
+    if (!oddbytes) {  /* must use odd number of digits for negative number */
+      errno = EDOM;
+      return -1;
+    }
+    bcd[n] = ((-(i%10))<<4) | 0xD; /* force sign nibble to negative */
+    n--;
+    i /= 10;
+    while (n >= 0) {
+      x = -(i % 100);
+      i /= 100;
+      bcd[n--] = (x%10) | ((x/10)<<4);
+    }
+  } else { /* i positive */
+    if (oddbytes) {
+      bcd[n] = ((i%10)<<4);
+      n--;
+      i /= 10;
+    }
+    while (n >= 0) {
+      x = i % 100;
+      i /= 100;
+      bcd[n--] = (x%10) | ((x/10)<<4);
+    }
   }
   errno = 0;
-  return res;
+  return sfwrite(io, bcd, num_bytes);
 }
 /* END_MACRO */
 
-#define PDCI_BCD2UINT(fn_name, targ_type, int_max)
+#define PDCI_BCD2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max)
 targ_type
-fn_name(const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out)
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out)
 {
   int  digit, two_digits;
-  int  range_err = 0;
+  PDC_int32 num_bytes = ((num_digits+1) / 2);
   targ_type res = 0;
 
+  if (ptr_out) {
+    (*ptr_out) = (PDC_byte*)bytes + num_bytes;
+  }
+  if (num_digits == 0 || num_digits > nd_max) {
+    errno = EDOM;
+    return int_max;
+  }
   while (num_digits >= 2) {
-    if (-1 == (two_digits = PDCI_bcd_2digits[*bytes])) {
+    if (-1 == (two_digits = PDCI_bcd_hilo_digits[*bytes])) {
       if (ptr_out) {
 	(*ptr_out) = (PDC_byte*)bytes;
       }
@@ -1329,46 +1638,180 @@ fn_name(const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out)
       return int_max;
     }
     if (res > int_max ## _DIV100) {
-      range_err = 1;
+      goto range_err;
     }
     res *= 100;
     if (res > int_max - two_digits) {
-      range_err = 1;
+      goto range_err;
     }
     res += two_digits;
     bytes++;
     num_digits -= 2;
   }
   if (num_digits) {
-    if (-1 == (digit = PDCI_bcd_1digit[*bytes])) {
-      if (ptr_out) {
-	(*ptr_out) = (PDC_byte*)bytes;
-      }
+    if (-1 == (digit = PDCI_bcd_hi_digit[*bytes])) {
       errno = EINVAL;
       return int_max;
     }
     if (res > int_max ## _DIV10) {
-      range_err = 1;
+      goto range_err;
     }
     res = (res << 3) + (res << 1); /* res *= 10 */
     if (res > int_max - digit) {
-      range_err = 1;
+      goto range_err;
     }
     res += digit;
-    if (((*bytes)&0xF) == 0xD) { /* look at sign nibble; C,F >=0; D < 0 */
-      range_err = 1;
-    }
     bytes++;
-  }
-  if (ptr_out) {
-    (*ptr_out) = (PDC_byte*)bytes;
-  }
-  if (range_err) {
-    errno = ERANGE;
-    return int_max;
   }
   errno = 0;
   return res;
+ range_err:
+  errno = ERANGE;
+  return int_max;
+}
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type u, PDC_uint32 num_digits)
+{
+  PDC_byte bcd[30];
+  PDC_int32 num_bytes;
+  int x, n;
+
+  if (num_digits == 0 || num_digits > nd_max) {
+    errno = EDOM;
+    return -1;
+  }
+  if ((num_digits < nd_max) && (u >= PDCI_10toThe[num_digits])) {
+    errno = ERANGE;
+    return -1;
+  }
+  num_bytes = ((num_digits+1) / 2);
+  n = num_bytes - 1;
+  if (num_digits % 2 == 1) {
+    bcd[n--] = ((u%10)<<4);
+    u /= 10;
+  }
+  while (n >= 0) {
+    x = u % 100;
+    u /= 100;
+    bcd[n--] = (x%10) | ((x/10)<<4);
+  }
+  errno = 0;
+  return sfwrite(io, bcd, num_bytes);
+}
+/* END_MACRO */
+
+#define PDCI_SB2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nb_max)
+targ_type
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out)
+{
+  PDC_int32 n = num_bytes;
+  targ_type res = 0;
+  PDC_byte *resbytes = (PDC_byte*)(&res);
+
+  if (ptr_out) {
+    (*ptr_out) = (PDC_byte*)bytes + num_bytes;
+  }
+  if (n == 0 || n > nb_max) {
+    errno = EDOM;
+    return int_min;
+  }
+  if (pdc->m_endian == PDC_littleEndian) {
+    /* on-disk order same as in-memory rep */
+    memcpy(resbytes, bytes, n);
+  } else {
+    /* must reverse the order */
+    while (--n >= 0) {
+      resbytes[n] = *bytes++;
+    }
+  }
+  errno = 0;
+  return res;
+}
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_bytes)
+{
+  PDC_int32 n = num_bytes;
+  PDC_byte  sb[30];
+  PDC_byte *ibytes = (PDC_byte*)(&i);
+
+  if (n == 0 || n > 8) {
+    errno = EDOM;
+    return -1;
+  };
+  if (i > PDC_MAX_FOR_NB[n] || i < PDC_MIN_FOR_NB[n]) {
+    errno = ERANGE;
+    return -1;
+  }
+  if (pdc->m_endian == PDC_littleEndian) {
+    /* on-disk order same as in-memory rep */
+    memcpy(sb, ibytes, n);
+  } else {
+    /* must reverse the order */
+    while (--n >= 0) {
+      sb[n] = *ibytes++;
+    }
+  }
+  errno = 0;
+  return sfwrite(io, sb, num_bytes);
+}
+/* END_MACRO */
+
+#define PDCI_SB2UINT(fn_name, rev_fn_name, targ_type, int_max, nb_max)
+targ_type
+fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out)
+{
+  PDC_int32 n = num_bytes;
+  targ_type res = 0;
+  PDC_byte *resbytes = (PDC_byte*)(&res);
+
+  if (ptr_out) {
+    (*ptr_out) = (PDC_byte*)bytes + n;
+  }
+  if (n == 0 || n > nb_max) {
+    errno = EDOM;
+    return int_max;
+  }
+  if (pdc->m_endian == PDC_littleEndian) {
+    /* on-disk order same as in-memory rep */
+    memcpy(resbytes, bytes, n);
+  } else {
+    /* must reverse the order */
+    while (--n >= 0) {
+      resbytes[n] = *bytes++;
+    }
+  }
+  errno = 0;
+  return res;
+}
+
+int
+rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type u, PDC_uint32 num_bytes)
+{
+  PDC_int32 n = num_bytes;
+  PDC_byte sb[30];
+  PDC_byte *ubytes = (PDC_byte*)(&u);
+
+  if (n == 0 || n > 8) {
+    errno = EDOM;
+    return -1;
+  };
+  if (u > PDC_UMAX_FOR_NB[n]) {
+    errno = ERANGE;
+    return -1;
+  }
+  if (pdc->m_endian == PDC_littleEndian) {
+    /* on-disk order same as in-memory rep */
+    memcpy(sb, ubytes, n);
+  } else {
+    /* must reverse the order */
+    while (--n >= 0) {
+      sb[n] = *ubytes++;
+    }
+  }
+  errno = 0;
+  return sfwrite(io, sb, num_bytes);
 }
 /* END_MACRO */
 
@@ -1393,7 +1836,7 @@ fn_name(const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out)
 /* VARIABLE-WIDTH ASCII INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_AE_INT_READ_FN(fn_name, targ_type, strtonum_fn, invalid_err, isspace_fn, isdigit_fn)
+ * PDCI_AE_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
  */
 
 PDCI_AE_INT_READ_FN(PDC_a_int8_read,   PDC_int8,   PDCI_a2int8,   PDC_INVALID_A_NUM,  PDCI_is_a_space, PDCI_is_a_digit);
@@ -1409,7 +1852,7 @@ PDCI_AE_INT_READ_FN(PDC_a_uint64_read, PDC_uint64, PDCI_a2uint64, PDC_INVALID_A_
 /* FIXED-WIDTH ASCII INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_AE_INT_FW_READ_FN(fn_name, targ_type, strtonum_fn, invalid_err, isspace_fn)
+ * PDCI_AE_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
  */
 
 PDCI_AE_INT_FW_READ_FN(PDC_a_int8_FW_read,   PDC_int8,   PDCI_a2int8,   PDC_INVALID_A_NUM,  PDCI_is_a_space);
@@ -1422,10 +1865,10 @@ PDCI_AE_INT_FW_READ_FN(PDC_a_uint32_FW_read, PDC_uint32, PDCI_a2uint32, PDC_INVA
 PDCI_AE_INT_FW_READ_FN(PDC_a_uint64_FW_read, PDC_uint64, PDCI_a2uint64, PDC_INVALID_A_NUM, PDCI_is_a_space);
 
 /* ================================================================================ */
-/* VARIABLE-WIDTH EBCDIC INTEGER READ FUNCTIONS */
+/* VARIABLE-WIDTH EBCDIC CHAR ENCODING INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_AE_INT_READ_FN(fn_name, targ_type, strtonum_fn, invalid_err, isspace_fn, isdigit_fn)
+ * PDCI_AE_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
  */
 
 PDCI_AE_INT_READ_FN(PDC_e_int8_read,   PDC_int8,   PDCI_e2int8,   PDC_INVALID_E_NUM,  PDCI_is_e_space, PDCI_is_e_digit);
@@ -1438,10 +1881,10 @@ PDCI_AE_INT_READ_FN(PDC_e_uint32_read, PDC_uint32, PDCI_e2uint32, PDC_INVALID_E_
 PDCI_AE_INT_READ_FN(PDC_e_uint64_read, PDC_uint64, PDCI_e2uint64, PDC_INVALID_E_NUM, PDCI_is_e_space, PDCI_is_e_digit);
 
 /* ================================================================================ */
-/* FIXED-WIDTH EBCDIC INTEGER READ FUNCTIONS */
+/* FIXED-WIDTH EBCDIC CHAR ENCODING INTEGER READ FUNCTIONS */
 
 /*
- * PDCI_AE_INT_FW_READ_FN(fn_name, targ_type, strtonum_fn, invalid_err, isspace_fn)
+ * PDCI_AE_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
  */
 
 PDCI_AE_INT_FW_READ_FN(PDC_e_int8_FW_read,   PDC_int8,   PDCI_e2int8,   PDC_INVALID_E_NUM,  PDCI_is_e_space);
@@ -1468,20 +1911,61 @@ PDCI_AE_INT_FW_READ_FN(PDC_e_uint64_FW_read, PDC_uint64, PDCI_e2uint64, PDC_INVA
  */
 
 PDCI_B_INT_READ_FN(PDC_b_int8_read,   PDC_int8,   1, 0);
-
 PDCI_B_INT_READ_FN(PDC_b_uint8_read,  PDC_uint8,  1, 0);
-
 PDCI_B_INT_READ_FN(PDC_b_int16_read,  PDC_int16,  2, 1);
-
 PDCI_B_INT_READ_FN(PDC_b_uint16_read, PDC_uint16, 2, 1);
-
 PDCI_B_INT_READ_FN(PDC_b_int32_read,  PDC_int32,  4, 3);
-
 PDCI_B_INT_READ_FN(PDC_b_uint32_read, PDC_uint32, 4, 3);
-
 PDCI_B_INT_READ_FN(PDC_b_int64_read,  PDC_int64,  8, 7);
-
 PDCI_B_INT_READ_FN(PDC_b_uint64_read, PDC_uint64, 8, 7);
+
+/* ================================================================================ */
+/* EBC NUMERIC ENCODING INTEGER READ FUNCTIONS */
+
+/*
+ * PDCI_EBCBCDSB_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+ */
+
+PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_int8_read,   PDC_int8,   PDCI_ebc2int8,   PDC_INVALID_EBC_NUM, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_int16_read,  PDC_int16,  PDCI_ebc2int16,  PDC_INVALID_EBC_NUM, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_int32_read,  PDC_int32,  PDCI_ebc2int32,  PDC_INVALID_EBC_NUM, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_int64_read,  PDC_int64,  PDCI_ebc2int64,  PDC_INVALID_EBC_NUM, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_uint8_read,  PDC_uint8,  PDCI_ebc2uint8,  PDC_INVALID_EBC_NUM, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_uint16_read, PDC_uint16, PDCI_ebc2uint16, PDC_INVALID_EBC_NUM, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_uint32_read, PDC_uint32, PDCI_ebc2uint32, PDC_INVALID_EBC_NUM, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_ebc_uint64_read, PDC_uint64, PDCI_ebc2uint64, PDC_INVALID_EBC_NUM, num_digits_or_bytes);
+
+/* ================================================================================ */
+/* BCD NUMERIC ENCODING INTEGER READ FUNCTIONS */
+
+/*
+ * PDCI_EBCBCDSB_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+ */
+
+PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_int8_read,   PDC_int8,   PDCI_bcd2int8,   PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
+PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_int16_read,  PDC_int16,  PDCI_bcd2int16,  PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
+PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_int32_read,  PDC_int32,  PDCI_bcd2int32,  PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
+PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_int64_read,  PDC_int64,  PDCI_bcd2int64,  PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
+PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_uint8_read,  PDC_uint8,  PDCI_bcd2uint8,  PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
+PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_uint16_read, PDC_uint16, PDCI_bcd2uint16, PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
+PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_uint32_read, PDC_uint32, PDCI_bcd2uint32, PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
+PDCI_EBCBCDSB_INT_READ_FN(PDC_bcd_uint64_read, PDC_uint64, PDCI_bcd2uint64, PDC_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2));
+
+/* ================================================================================ */
+/* SB NUMERIC ENCODING INTEGER READ FUNCTIONS */
+
+/*
+ * PDCI_EBCBCDSB_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
+ */
+
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_int8_read,   PDC_int8,   PDCI_sb2int8,   PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_int16_read,  PDC_int16,  PDCI_sb2int16,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_int32_read,  PDC_int32,  PDCI_sb2int32,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_int64_read,  PDC_int64,  PDCI_sb2int64,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_uint8_read,  PDC_uint8,  PDCI_sb2uint8,  PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_uint16_read, PDC_uint16, PDCI_sb2uint16, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_uint32_read, PDC_uint32, PDCI_sb2uint32, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
+PDCI_EBCBCDSB_INT_READ_FN(PDC_sb_uint64_read, PDC_uint64, PDCI_sb2uint64, PDC_UNEXPECTED_ERR, num_digits_or_bytes);
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
@@ -1507,19 +1991,12 @@ PDCI_B_INT_READ_FN(PDC_b_uint64_read, PDC_uint64, 8, 7);
 /* PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, fold_test) */
 
 PDCI_INT_ACCUM(PDC_int8,   "int8",   1, "d",   PDCI_FOLDTEST_INT8);
-
 PDCI_INT_ACCUM(PDC_uint8,  "uint8",  1, "u",   PDCI_FOLDTEST_UINT8);
-
 PDCI_INT_ACCUM(PDC_int16,  "int16",  2, "d",   PDCI_FOLDTEST_INT16);
-
 PDCI_INT_ACCUM(PDC_uint16, "uint16", 2, "u",   PDCI_FOLDTEST_UINT16);
-
 PDCI_INT_ACCUM(PDC_int32,  "int32",  4, "ld",  PDCI_FOLDTEST_INT32);
-
 PDCI_INT_ACCUM(PDC_uint32, "uint32", 4, "lu",  PDCI_FOLDTEST_UINT32);
-
 PDCI_INT_ACCUM(PDC_int64,  "int64",  8, "lld", PDCI_FOLDTEST_INT64);
-
 PDCI_INT_ACCUM(PDC_uint64, "uint64", 8, "llu", PDCI_FOLDTEST_UINT64);
 
 
@@ -1561,7 +2038,7 @@ int
 PDCI_string_dt_elt_oset_cmp(Dt_t *dt, PDCI_string_dt_key_t *a, PDCI_string_dt_key_t *b, Dtdisc_t *disc)
 {
   size_t min_len;
-  int    res;
+  int res;
   NoP(dt);
   NoP(disc);
   if (a == b) { /* same key */
@@ -1983,44 +2460,104 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #define PDC_MAX_UINT64_DIV10  1844674407370955161ULL
 #define PDC_MAX_UINT64_DIV100  184467440737095516ULL
 
+static PDC_int64 PDC_MIN_FOR_NB[] = {
+  0,
+  PDC_MIN_INT8,
+  PDC_MIN_INT16,
+  PDC_MIN_INT24,
+  PDC_MIN_INT32,
+  PDC_MIN_INT40,
+  PDC_MIN_INT48,
+  PDC_MIN_INT56,
+  PDC_MIN_INT64
+};
+
+static PDC_int64 PDC_MAX_FOR_NB[] = {
+  0,
+  PDC_MAX_INT8,
+  PDC_MAX_INT16,
+  PDC_MAX_INT24,
+  PDC_MAX_INT32,
+  PDC_MAX_INT40,
+  PDC_MAX_INT48,
+  PDC_MAX_INT56,
+  PDC_MAX_INT64
+};
+
+static PDC_uint64 PDC_UMAX_FOR_NB[] = {
+  0,
+  PDC_MAX_UINT8,
+  PDC_MAX_UINT16,
+  PDC_MAX_UINT24,
+  PDC_MAX_UINT32,
+  PDC_MAX_UINT40,
+  PDC_MAX_UINT48,
+  PDC_MAX_UINT56,
+  PDC_MAX_UINT64
+};
+
 /* ********************************** END_HEADER ********************************** */
 #gen_include "libpadsc-misc-macros-gen.h"
 
-/* PDCI_A2INT(fn_name, targ_type, int_min, int_max) */
-PDCI_A2INT(PDCI_a2int8,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8)
-PDCI_A2INT(PDCI_a2int16, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16)
-PDCI_A2INT(PDCI_a2int32, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32)
-PDCI_A2INT(PDCI_a2int64, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64)
+/* PDCI_A2INT(fn_name, rev_fn_name, targ_type, int_min, int_max) */
+PDCI_A2INT(PDCI_a2int8,  PDCI_int8_2a,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8)
+PDCI_A2INT(PDCI_a2int16, PDCI_int16_2a, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16)
+PDCI_A2INT(PDCI_a2int32, PDCI_int32_2a, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32)
+PDCI_A2INT(PDCI_a2int64, PDCI_int64_2a, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64)
 
 /* PDCI_A2UINT(fn_name, targ_type, int_max) */
-PDCI_A2UINT(PDCI_a2uint8,  PDC_uint8,  PDC_MAX_UINT8)
-PDCI_A2UINT(PDCI_a2uint16, PDC_uint16, PDC_MAX_UINT16)
-PDCI_A2UINT(PDCI_a2uint32, PDC_uint32, PDC_MAX_UINT32)
-PDCI_A2UINT(PDCI_a2uint64, PDC_uint64, PDC_MAX_UINT64)
+PDCI_A2UINT(PDCI_a2uint8,  PDCI_uint8_2a,  PDC_uint8,  PDC_MAX_UINT8)
+PDCI_A2UINT(PDCI_a2uint16, PDCI_uint16_2a, PDC_uint16, PDC_MAX_UINT16)
+PDCI_A2UINT(PDCI_a2uint32, PDCI_uint32_2a, PDC_uint32, PDC_MAX_UINT32)
+PDCI_A2UINT(PDCI_a2uint64, PDCI_uint64_2a, PDC_uint64, PDC_MAX_UINT64)
 
-/* PDCI_E2INT(fn_name, targ_type, int_min, int_max) */
-PDCI_E2INT(PDCI_e2int8,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8)
-PDCI_E2INT(PDCI_e2int16, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16)
-PDCI_E2INT(PDCI_e2int32, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32)
-PDCI_E2INT(PDCI_e2int64, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64)
+/* PDCI_E2INT(fn_name, rev_fn_name, targ_type, int_min, int_max) */
+PDCI_E2INT(PDCI_e2int8,  PDCI_int8_2e,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8)
+PDCI_E2INT(PDCI_e2int16, PDCI_int16_2e, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16)
+PDCI_E2INT(PDCI_e2int32, PDCI_int32_2e, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32)
+PDCI_E2INT(PDCI_e2int64, PDCI_int64_2e, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64)
 
-/* PDCI_E2UINT(fn_name, targ_type, int_max) */
-PDCI_E2UINT(PDCI_e2uint8,  PDC_uint8,  PDC_MAX_UINT8)
-PDCI_E2UINT(PDCI_e2uint16, PDC_uint16, PDC_MAX_UINT16)
-PDCI_E2UINT(PDCI_e2uint32, PDC_uint32, PDC_MAX_UINT32)
-PDCI_E2UINT(PDCI_e2uint64, PDC_uint64, PDC_MAX_UINT64)
+/* PDCI_E2UINT(fn_name, rev_fn_name, targ_type, int_max) */
+PDCI_E2UINT(PDCI_e2uint8,  PDCI_uint8_2e,  PDC_uint8,  PDC_MAX_UINT8)
+PDCI_E2UINT(PDCI_e2uint16, PDCI_uint16_2e, PDC_uint16, PDC_MAX_UINT16)
+PDCI_E2UINT(PDCI_e2uint32, PDCI_uint32_2e, PDC_uint32, PDC_MAX_UINT32)
+PDCI_E2UINT(PDCI_e2uint64, PDCI_uint64_2e, PDC_uint64, PDC_MAX_UINT64)
 
-/* PDCI_BCD2INT(fn_name, targ_type, int_min, int_max) */
-PDCI_BCD2INT(PDCI_bcd2int8,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8)
-PDCI_BCD2INT(PDCI_bcd2int16, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16)
-PDCI_BCD2INT(PDCI_bcd2int32, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32)
-PDCI_BCD2INT(PDCI_bcd2int64, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64)
+/* PDCI_EBC2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max) */
+PDCI_EBC2INT(PDCI_ebc2int8,  PDCI_int8_2ebc,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8,   3, 3)
+PDCI_EBC2INT(PDCI_ebc2int16, PDCI_int16_2ebc, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16,  5, 5)
+PDCI_EBC2INT(PDCI_ebc2int32, PDCI_int32_2ebc, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32, 11, 10)
+PDCI_EBC2INT(PDCI_ebc2int64, PDCI_int64_2ebc, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64, 19, 19)
 
-/* PDCI_BCD2UINT(fn_name, targ_type, int_max) */
-PDCI_BCD2UINT(PDCI_bcd2uint8,  PDC_uint8,  PDC_MAX_UINT8)
-PDCI_BCD2UINT(PDCI_bcd2uint16, PDC_uint16, PDC_MAX_UINT16)
-PDCI_BCD2UINT(PDCI_bcd2uint32, PDC_uint32, PDC_MAX_UINT32)
-PDCI_BCD2UINT(PDCI_bcd2uint64, PDC_uint64, PDC_MAX_UINT64)
+/* PDCI_EBC2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max) */
+PDCI_EBC2UINT(PDCI_ebc2uint8,  PDCI_uint8_2ebc,  PDC_uint8,  PDC_MAX_UINT8,   3)
+PDCI_EBC2UINT(PDCI_ebc2uint16, PDCI_uint16_2ebc, PDC_uint16, PDC_MAX_UINT16,  5)
+PDCI_EBC2UINT(PDCI_ebc2uint32, PDCI_uint32_2ebc, PDC_uint32, PDC_MAX_UINT32, 10)
+PDCI_EBC2UINT(PDCI_ebc2uint64, PDCI_uint64_2ebc, PDC_uint64, PDC_MAX_UINT64, 20)
+
+/* PDCI_BCD2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max) */
+PDCI_BCD2INT(PDCI_bcd2int8,  PDCI_int8_2bcd,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8,   3, 3)
+PDCI_BCD2INT(PDCI_bcd2int16, PDCI_int16_2bcd, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16,  5, 5)
+PDCI_BCD2INT(PDCI_bcd2int32, PDCI_int32_2bcd, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32, 11, 10)
+PDCI_BCD2INT(PDCI_bcd2int64, PDCI_int64_2bcd, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64, 19, 19)
+
+/* PDCI_BCD2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max) */
+PDCI_BCD2UINT(PDCI_bcd2uint8,  PDCI_uint8_2bcd,  PDC_uint8,  PDC_MAX_UINT8,   3)
+PDCI_BCD2UINT(PDCI_bcd2uint16, PDCI_uint16_2bcd, PDC_uint16, PDC_MAX_UINT16,  5)
+PDCI_BCD2UINT(PDCI_bcd2uint32, PDCI_uint32_2bcd, PDC_uint32, PDC_MAX_UINT32, 10)
+PDCI_BCD2UINT(PDCI_bcd2uint64, PDCI_uint64_2bcd, PDC_uint64, PDC_MAX_UINT64, 20)
+
+/* PDCI_SB2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nb_max) */
+PDCI_SB2INT(PDCI_sb2int8,  PDCI_int8_2sb,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8,  1)
+PDCI_SB2INT(PDCI_sb2int16, PDCI_int16_2sb, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16, 2)
+PDCI_SB2INT(PDCI_sb2int32, PDCI_int32_2sb, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32, 4)
+PDCI_SB2INT(PDCI_sb2int64, PDCI_int64_2sb, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64, 8)
+
+/* PDCI_SB2UINT(fn_name, rev_fn_name, targ_type, int_max, nb_max) */
+PDCI_SB2UINT(PDCI_sb2uint8,  PDCI_uint8_2sb,  PDC_uint8,  PDC_MAX_UINT8,  1)
+PDCI_SB2UINT(PDCI_sb2uint16, PDCI_uint16_2sb, PDC_uint16, PDC_MAX_UINT16, 2)
+PDCI_SB2UINT(PDCI_sb2uint32, PDCI_uint32_2sb, PDC_uint32, PDC_MAX_UINT32, 4)
+PDCI_SB2UINT(PDCI_sb2uint64, PDCI_uint64_2sb, PDC_uint64, PDC_MAX_UINT64, 8)
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
@@ -2035,7 +2572,7 @@ PDCI_BCD2UINT(PDCI_bcd2uint64, PDC_uint64, PDC_MAX_UINT64)
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.61 2003-03-31 22:39:39 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.62 2003-04-08 02:59:29 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -2045,7 +2582,7 @@ static const char lib[] = "padsc";
 #define PDCI_initStkElts      8
 
 /* ================================================================================
- * ASCII TABLES
+ * ASCII CHAR TABLES
  */
 
 /* ASCII digits are 0x3[0-9] */
@@ -2109,80 +2646,51 @@ int PDCI_ascii_is_space[256] = {
 };
 
 /* ================================================================================
- * EBCDIC TABLES : tables for EBCDIC conversion -- from Andrew Hume (ng_ebcdic.c)
+ * EBCDIC CHAR TABLES : tables for EBCDIC char conversion
+ *   -- from Andrew Hume (ng_ebcdic.c)
  *
  * ================================================================================ */
 
+/* not-sign 0xac -> circumflex 0x5e */
+ /* non-spacing macron 0xaf -> tilde 0x7e */
 PDC_byte PDC_ea_tab[256] =
 {
-  0x00, 0x01, 0x02, 0x03, '?',  0x09, '?',  0x7f,
-  '?',  '?',  '?',  0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-  0x10, 0x11, 0x12, 0x13, '?',  '?',  0x08,'?',
-  0x18, 0x09, '?',  '?',  0x1c, 0x1d, 0x1e, 0x1f,
-  '?',  '?',  '?',  '?',  '?',  0x0a, 0x17, 0x1b,
-  '?',  '?',  '?',  '?',  '?',  0x05, 0x06, 0x07,
-  '?',  '?',  0x16, '?',  '?',  '?',  '?',  0x04,
-  '?',  '?',  '?',  '?',  0x14, 0x15, '?',  0x1a,
-  0x20, '?',  '?',  '?',  '?',  '?',  '?', '?',
-  '?',  '?',  0x5b, 0x2e, 0x3c, 0x28, 0x2b, 0x21,
-  0x26, '?',  '?',  '?',  '?',  '?',  '?', '?',
-  '?',  '?',  0x5d, 0x24, 0x2a, 0x29, 0x3b, 0x5e, /* not-sign 0xac -> circumflex 0x5e */
-  0x2d, 0x2f, '?',  '?',  '?',  '?',  '?', '?',
-  '?',  '?',  0x7c, 0x2c, 0x25, 0x5f, 0x3e, 0x3f,
-  '?',  '?',  '?',  '?',  '?',  '?',  '?', '?',
-  '?',  0x60, 0x3a, 0x23, 0x40, 0x27, 0x3d, 0x22,
-  '?',  0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
-  0x68, 0x69, '?',  '?',  '?',  '?',  '?', '?',
-  '?',  0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70,
-  0x71, 0x72, '?',  '?',  '?',  '?',  '?', '?',
-  '?',  0x7e, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, /* non-spacing macron 0xaf -> tilde 0x7e */
-  0x79, 0x7a, '?',  '?',  '?',  '?',  '?', '?',
-  '?',  '?',  '?',  '?',  '?',  '?',  '?', '?',
-  '?',  '?',  '?',  '?',  '?',  '?',  '?', '?',
-  0x7b, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
-  0x48, 0x49, '?',  '?',  '?',  '?',  '?', '?',
-  0x7d, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50,
-  0x51, 0x52, '?',  '?',  '?',  '?',  '?', '?',
-  0x5c, '?',  0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
-  0x59, 0x5a, '?',  '?',  '?',  '?',  '?', '?',
-  0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-  0x38, 0x39, '?',  '?',  '?',  '?',  '?', '?',
+  /* 0x0? */ 0x00, 0x01, 0x02, 0x03, '?',  0x09, '?',  0x7f, '?',  '?',  '?',  0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+  /* 0x1? */ 0x10, 0x11, 0x12, 0x13, '?',  '?',  0x08,'?',   0x18, 0x09, '?',  '?',  0x1c, 0x1d, 0x1e, 0x1f,
+  /* 0x2? */ '?',  '?',  '?',  '?',  '?',  0x0a, 0x17, 0x1b, '?',  '?',  '?',  '?',  '?',  0x05, 0x06, 0x07,
+  /* 0x3? */ '?',  '?',  0x16, '?',  '?',  '?',  '?',  0x04, '?',  '?',  '?',  '?',  0x14, 0x15, '?',  0x1a,
+  /* 0x4? */ 0x20, '?',  '?',  '?',  '?',  '?',  '?', '?',   '?',  '?',  0x5b, 0x2e, 0x3c, 0x28, 0x2b, 0x21,
+  /* 0x5? */ 0x26, '?',  '?',  '?',  '?',  '?',  '?', '?',   '?',  '?',  0x5d, 0x24, 0x2a, 0x29, 0x3b, 0x5e,
+  /* 0x6? */ 0x2d, 0x2f, '?',  '?',  '?',  '?',  '?', '?',   '?',  '?',  0x7c, 0x2c, 0x25, 0x5f, 0x3e, 0x3f,
+  /* 0x7? */ '?',  '?',  '?',  '?',  '?',  '?',  '?', '?',   '?',  0x60, 0x3a, 0x23, 0x40, 0x27, 0x3d, 0x22,
+  /* 0x8? */ '?',  0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, '?',  '?',  '?',  '?',  '?', '?',
+  /* 0x9? */ '?',  0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, '?',  '?',  '?',  '?',  '?', '?',
+  /* 0xA? */ '?',  0x7e, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, '?',  '?',  '?',  '?',  '?', '?',
+  /* 0xB? */ '?',  '?',  '?',  '?',  '?',  '?',  '?', '?',   '?',  '?',  '?',  '?',  '?',  '?',  '?', '?',
+  /* 0xC? */ 0x7b, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, '?',  '?',  '?',  '?',  '?', '?',
+  /* 0xD? */ 0x7d, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, '?',  '?',  '?',  '?',  '?', '?',
+  /* 0xE? */ 0x5c, '?',  0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, '?',  '?',  '?',  '?',  '?', '?',
+  /* 0xF? */ 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, '?',  '?',  '?',  '?',  '?', '?',
 };
 
 PDC_byte PDC_ae_tab[256] =
 {
-  0x00, 0x01, 0x02, 0x03, 0x37, 0x2d, 0x2e, 0x2f, 
-  0x16, 0x19, 0x25, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 
-  0x10, 0x11, 0x12, 0x13, 0x3c, 0x3d, 0x32, 0x26, 
-  0x18, '?',  0x3f, 0x27, 0x1c, 0x1d, 0x1e, 0x1f, 
-  0x40, 0x4f, 0x7f, 0x7b, 0x5b, 0x6c, 0x50, 0x7d, 
-  0x4d, 0x5d, 0x5c, 0x4e, 0x6b, 0x60, 0x4b, 0x61, 
-  0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 
-  0xf8, 0xf9, 0x7a, 0x5e, 0x4c, 0x7e, 0x6e, 0x6f, 
-  0x7c, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 
-  0xc8, 0xc9, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 
-  0xd7, 0xd8, 0xd9, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 
-  0xe7, 0xe8, 0xe9, 0x4a, 0xe0, 0x5a, 0x5f, 0x6d, 
-  0x79, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 
-  0x88, 0x89, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 
-  0x97, 0x98, 0x99, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 
-  0xa7, 0xa8, 0xa9, 0xc0, 0x6a, 0xd0, 0xa1, 0x07, 
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
-  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
+  /* 0x0? */ 0x00, 0x01, 0x02, 0x03, 0x37, 0x2d, 0x2e, 0x2f, 0x16, 0x19, 0x25, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 
+  /* 0x1? */ 0x10, 0x11, 0x12, 0x13, 0x3c, 0x3d, 0x32, 0x26, 0x18, '?',  0x3f, 0x27, 0x1c, 0x1d, 0x1e, 0x1f, 
+  /* 0x2? */ 0x40, 0x4f, 0x7f, 0x7b, 0x5b, 0x6c, 0x50, 0x7d, 0x4d, 0x5d, 0x5c, 0x4e, 0x6b, 0x60, 0x4b, 0x61, 
+  /* 0x3? */ 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0x7a, 0x5e, 0x4c, 0x7e, 0x6e, 0x6f, 
+  /* 0x4? */ 0x7c, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 
+  /* 0x5? */ 0xd7, 0xd8, 0xd9, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0x4a, 0xe0, 0x5a, 0x5f, 0x6d, 
+  /* 0x6? */ 0x79, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 
+  /* 0x7? */ 0x97, 0x98, 0x99, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xc0, 0x6a, 0xd0, 0xa1, 0x07, 
+  /* 0x8? */ '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
+  /* 0x9? */ '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
+  /* 0xA? */ '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
+  /* 0xB? */ '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
+  /* 0xC? */ '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
+  /* 0xD? */ '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
+  /* 0xE? */ '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
+  /* 0xF? */ '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',  
 };
 
 /* replaced '?' with 0xff
@@ -2191,38 +2699,22 @@ PDC_byte PDC_ae_tab[256] =
  */
 PDC_byte PDC_mod_ae_tab[256] =
 {
-  0x00, 0x01, 0x02, 0x03, 0x37, 0x2d, 0x2e, 0x2f, 
-  0x16, 0x19, 0x25, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 
-  0x10, 0x11, 0x12, 0x13, 0x3c, 0x3d, 0x32, 0x26, 
-  0x18, 0xff, 0x3f, 0x27, 0x1c, 0x1d, 0x1e, 0x1f, 
-  0x40, 0x4f, 0x7f, 0x7b, 0x5b, 0x6c, 0x50, 0x7d, 
-  0x4d, 0x5d, 0x5c, 0x4e, 0x6b, 0x60, 0x4b, 0x61, 
-  0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 
-  0xf8, 0xf9, 0x7a, 0x5e, 0x4c, 0x7e, 0x6e, 0x6f, 
-  0x7c, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 
-  0xc8, 0xc9, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 
-  0xd7, 0xd8, 0xd9, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 
-  0xe7, 0xe8, 0xe9, 0x4a, 0xe0, 0x5a, 0x5f, 0x6d, 
-  0x79, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 
-  0x88, 0x89, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 
-  0x97, 0x98, 0x99, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 
-  0xa7, 0xa8, 0xa9, 0xc0, 0x6a, 0xd0, 0xa1, 0x07, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  /* 0x0? */ 0x00, 0x01, 0x02, 0x03, 0x37, 0x2d, 0x2e, 0x2f, 0x16, 0x19, 0x25, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 
+  /* 0x1? */ 0x10, 0x11, 0x12, 0x13, 0x3c, 0x3d, 0x32, 0x26, 0x18, 0xff, 0x3f, 0x27, 0x1c, 0x1d, 0x1e, 0x1f, 
+  /* 0x2? */ 0x40, 0x4f, 0x7f, 0x7b, 0x5b, 0x6c, 0x50, 0x7d, 0x4d, 0x5d, 0x5c, 0x4e, 0x6b, 0x60, 0x4b, 0x61, 
+  /* 0x3? */ 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0x7a, 0x5e, 0x4c, 0x7e, 0x6e, 0x6f, 
+  /* 0x4? */ 0x7c, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 
+  /* 0x5? */ 0xd7, 0xd8, 0xd9, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0x4a, 0xe0, 0x5a, 0x5f, 0x6d, 
+  /* 0x6? */ 0x79, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 
+  /* 0x7? */ 0x97, 0x98, 0x99, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xc0, 0x6a, 0xd0, 0xa1, 0x07, 
+  /* 0x8? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  /* 0x9? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  /* 0xA? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  /* 0xB? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  /* 0xC? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  /* 0xD? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  /* 0xE? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  /* 0xF? */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
 };
 
 /* EBCDIC digits are 0xC[0-9], 0xD[0-9], 0XF[0-9] */
@@ -2287,70 +2779,98 @@ int PDCI_ebcdic_is_space[256] = {
 };
 
 /* ================================================================================
- * BCD TABLES : tables for BCD conversion -- from Andrew Hume (ng_bcd.c)
+ * BCD TABLES : tables for BCD conversion
+ *     -- from Andrew Hume (ng_bcd.c)
  *
  * ================================================================================ */
 
-int PDCI_bcd_2digits[256] = {
-   0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
-  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, -1, -1, -1, -1, -1, -1,
-  20, 21, 22, 23, 24, 25, 26, 27, 28, 29, -1, -1, -1, -1, -1, -1,
-  30, 31, 32, 33, 34, 35, 36, 37, 38, 39, -1, -1, -1, -1, -1, -1,
-  40, 41, 42, 43, 44, 45, 46, 47, 48, 49, -1, -1, -1, -1, -1, -1,
-  50, 51, 52, 53, 54, 55, 56, 57, 58, 59, -1, -1, -1, -1, -1, -1,
-  60, 61, 62, 63, 64, 65, 66, 67, 68, 69, -1, -1, -1, -1, -1, -1,
-  70, 71, 72, 73, 74, 75, 76, 77, 78, 79, -1, -1, -1, -1, -1, -1,
-  80, 81, 82, 83, 84, 85, 86, 87, 88, 89, -1, -1, -1, -1, -1, -1,
-  90, 91, 92, 93, 94, 95, 96, 97, 98, 99, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+int PDCI_bcd_hilo_digits[256] = {
+  /* 0x0? */  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
+  /* 0x1? */ 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, -1, -1, -1, -1, -1, -1,
+  /* 0x2? */ 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, -1, -1, -1, -1, -1, -1,
+  /* 0x3? */ 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, -1, -1, -1, -1, -1, -1,
+  /* 0x4? */ 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, -1, -1, -1, -1, -1, -1,
+  /* 0x5? */ 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, -1, -1, -1, -1, -1, -1,
+  /* 0x6? */ 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, -1, -1, -1, -1, -1, -1,
+  /* 0x7? */ 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, -1, -1, -1, -1, -1, -1,
+  /* 0x8? */ 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, -1, -1, -1, -1, -1, -1,
+  /* 0x9? */ 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, -1, -1, -1, -1, -1, -1,
+  /* 0xA? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xB? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xC? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xD? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xE? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xF? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
-int PDCI_bcd_1digit[256] = {
-   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-   2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,
-   3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
-   4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
-   5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
-   6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,
-   7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,
-   8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,
-   9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+int PDCI_bcd_hi_digit[256] = {
+  /* 0x0? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0x1? */  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+  /* 0x2? */  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,
+  /* 0x3? */  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
+  /* 0x4? */  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
+  /* 0x5? */  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
+  /* 0x6? */  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,
+  /* 0x7? */  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,
+  /* 0x8? */  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,
+  /* 0x9? */  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,
+  /* 0xA? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xB? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xC? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xD? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xE? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xF? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
 #if 0
 /* XXX the only valid 2nd nible is  C, D, or F, so an alternate
  * XXX form of the above would be: */
-int PDCI_bcd_1digit[256] = {
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0,  0, -1,  0,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1,  1, -1,  1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2,  2, -1,  2,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3,  3, -1,  3,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  4,  4, -1,  4,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5,  5, -1,  5,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6,  6, -1,  6,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7,  7, -1,  7,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8,  8, -1,  8,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  9,  9, -1,  9,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+int PDCI_bcd_hi_digit[256] = {
+  /* 0x0? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0,  0, -1,  0,
+  /* 0x1? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1,  1, -1,  1,
+  /* 0x2? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2,  2, -1,  2,
+  /* 0x3? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3,  3, -1,  3,
+  /* 0x4? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  4,  4, -1,  4,
+  /* 0x5? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5,  5, -1,  5,
+  /* 0x6? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6,  6, -1,  6,
+  /* 0x7? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7,  7, -1,  7,
+  /* 0x8? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8,  8, -1,  8,
+  /* 0x9? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  9,  9, -1,  9,
+  /* 0xA? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xB? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xC? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xD? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xE? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  /* 0xF? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 #endif
+
+/* ================================================================================
+ * MISC TABLES
+ * ================================================================================ */
+
+PDC_uint64 PDCI_10toThe[] = {
+  /* 10^0  = */                          1ULL,
+  /* 10^1  = */                         10ULL,
+  /* 10^2  = */                        100ULL,
+  /* 10^3  = */                       1000ULL,
+  /* 10^4  = */                      10000ULL,
+  /* 10^5  = */                     100000ULL,
+  /* 10^6  = */                    1000000ULL,
+  /* 10^7  = */                   10000000ULL,
+  /* 10^8  = */                  100000000ULL,
+  /* 10^9  = */                 1000000000ULL,
+  /* 10^10 = */                10000000000ULL,
+  /* 10^11 = */               100000000000ULL,
+  /* 10^12 = */              1000000000000ULL,
+  /* 10^13 = */             10000000000000ULL,
+  /* 10^14 = */            100000000000000ULL,
+  /* 10^15 = */           1000000000000000ULL,
+  /* 10^16 = */          10000000000000000ULL,
+  /* 10^17 = */         100000000000000000ULL,
+  /* 10^18 = */        1000000000000000000ULL,
+  /* 10^19 = */       10000000000000000000ULL
+};
 
 /********************************************************************************
  * EXTERNAL FUNCTIONS (see libpadsc.h)
@@ -2381,8 +2901,7 @@ PDC_disc_t PDC_default_disc = {
   0, /* no stop_maxlen disabled */
   PDC_errorf,
   PDC_errorRep_Max,
-  PDC_bigEndian,
-  PDC_bigEndian,
+  PDC_littleEndian,
   0 /* a default IO discipline is installed on PDC_open */
 };
 
@@ -2391,6 +2910,7 @@ PDC_open(PDC_t **pdc_out, PDC_disc_t *disc, PDC_IO_disc_t *io_disc)
 {
   Vmalloc_t    *vm;
   PDC_t        *pdc;
+  PDC_int32     testint = 2;
 
   PDC_TRACE(&PDC_default_disc, "PDC_open called");
   if (!pdc_out) {
@@ -2433,6 +2953,7 @@ PDC_open(PDC_t **pdc_out, PDC_disc_t *disc, PDC_IO_disc_t *io_disc)
   if (!(pdc->rmm_nz = RMM_open(RMM_nozero_disc_ptr))) {
     goto fatal_alloc_err;
   }
+  pdc->m_endian = (((char*)(&testint))[0]) ? PDC_littleEndian : PDC_bigEndian;
   pdc->id          = lib;
   pdc->vm          = vm;
   pdc->disc        = disc;
@@ -3070,216 +3591,6 @@ PDC_e_string_CSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
 }
 
 /* ================================================================================ */
-/* EXTERNAL EBC, BCD, SB INTEGER READ FUNCTIONS */
-
-PDC_error_t
-PDC_ebc_int64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
-		   PDC_base_ed *ed, PDC_int64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_ebc_int64_read");
-  return PDC_ebc_int64_read_internal(pdc, em, digits, ed, res_out);
-}
-
-PDC_error_t
-PDC_ebc_uint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
-		    PDC_base_ed *ed, PDC_uint64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_ebc_uint64_read");
-  return PDC_ebc_uint64_read_internal(pdc, em, digits, ed, res_out);
-}
-
-PDC_error_t
-PDC_bcd_int64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
-		   PDC_base_ed *ed, PDC_int64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_bcd_int64_read");
-  return PDC_bcd_int64_read_internal(pdc, em, digits, ed, res_out);
-}
-
-PDC_error_t
-PDC_bcd_uint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
-		    PDC_base_ed *ed, PDC_uint64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_bcd_uint64_read");
-  return PDC_bcd_uint64_read_internal(pdc, em, digits, ed, res_out);
-}
-
-PDC_error_t
-PDC_sb_int64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes,
-		  PDC_base_ed *ed, PDC_int64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_sb_int64_read");
-  return PDC_sb_int64_read_internal(pdc, em, bytes, ed, res_out);
-}
-
-PDC_error_t
-PDC_sb_uint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes,
-		   PDC_base_ed *ed, PDC_uint64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_sb_uint64_read");
-  return PDC_sb_uint64_read_internal(pdc, em, bytes, ed, res_out);
-}
-
-/* ================================================================================ */
-/* EXTERNAL EBC, BCD, SBIN FIXED POINT READ FUNCTIONS */
-
-PDC_error_t
-PDC_ebc_fpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
-		      PDC_base_ed *ed, PDC_fpoint64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_ebc_fpoint64_read");
-  return PDC_ebc_fpoint64_read(pdc, em, n_digits, d_digits, ed, res_out);
-}
-
-PDC_error_t
-PDC_ebc_ufpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
-		       PDC_base_ed *ed, PDC_ufpoint64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_ebc_ufpoint64_read");
-  return PDC_ebc_ufpoint64_read(pdc, em, n_digits, d_digits, ed, res_out);
-}
-
-PDC_error_t
-PDC_bcd_fpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
-		      PDC_base_ed *ed, PDC_fpoint64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_bcd_fpoint64_read");
-  return PDC_bcd_fpoint64_read(pdc, em, n_digits, d_digits, ed, res_out);
-}
-
-PDC_error_t
-PDC_bcd_ufpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
-		       PDC_base_ed *ed, PDC_ufpoint64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_bcd_ufpoint64_read");
-  return PDC_bcd_ufpoint64_read(pdc, em, n_digits, d_digits, ed, res_out);
-}
-
-PDC_error_t
-PDC_sb_fpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes, PDC_uint32 d_digits,
-		     PDC_base_ed *ed, PDC_fpoint64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_sb_fpoint64_read");
-  return PDC_sb_fpoint64_read(pdc, em, bytes, d_digits, ed, res_out);
-}
-
-PDC_error_t
-PDC_sb_ufpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes, PDC_uint32 d_digits,
-		      PDC_base_ed *ed, PDC_ufpoint64 *res_out)
-{
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  PDCI_IODISC_INIT_CHECKS("PDC_sb_ufpoint64_read");
-  return PDC_sb_ufpoint64_read(pdc, em, bytes, d_digits, ed, res_out);
-}
-
-/* ================================================================================ */
 /* EXTERNAL REGULAR EXPRESSION SUPPORT */
 
 /* type PDC_regexp_t: */
@@ -3742,6 +4053,9 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
     switch (errCode) {
     case PDC_NO_ERR:
       msg = "";
+      break;
+    case PDC_UNEXPECTED_ERR:
+      msg = "XXX Unexpected error (should not happen)";
       break;
     case PDC_BAD_PARAM:
       msg = "Invalid argument value used in libpadsc library call";
@@ -5142,108 +5456,6 @@ PDC_e_string_CSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRe
 
 
 /* ================================================================================ */
-/* INTERNAL VERSIONS OF EXTERNAL EBC, BCD, SB INTEGER READ FUNCTIONS */
-
-PDC_error_t
-PDC_ebc_int64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
-			    PDC_base_ed *ed, PDC_int64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_ebc_uint64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
-			     PDC_base_ed *ed, PDC_uint64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_bcd_int64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
-			    PDC_base_ed *ed, PDC_int64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_bcd_uint64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
-			     PDC_base_ed *ed, PDC_uint64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_sb_int64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes,
-			   PDC_base_ed *ed, PDC_int64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_sb_uint64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes,
-			    PDC_base_ed *ed, PDC_uint64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-/* ================================================================================ */
-/* INTERNAL VERSIONS OF EXTERNAL EBC, BCD, SBIN FIXED POINT READ FUNCTIONS */
-
-PDC_error_t
-PDC_ebc_fpoint64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
-			       PDC_base_ed *ed, PDC_fpoint64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_ebc_ufpoint64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
-				PDC_base_ed *ed, PDC_ufpoint64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_bcd_fpoint64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
-			       PDC_base_ed *ed, PDC_fpoint64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_bcd_ufpoint64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
-				PDC_base_ed *ed, PDC_ufpoint64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_sb_fpoint64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes, PDC_uint32 d_digits,
-			      PDC_base_ed *ed, PDC_fpoint64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-PDC_error_t
-PDC_sb_ufpoint64_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes, PDC_uint32 d_digits,
-			       PDC_base_ed *ed, PDC_ufpoint64 *res_out)
-{
-  /* XXX_TODO */
-  return PDC_ERR;
-}
-
-/* ================================================================================ */
 /* INTERNAL MISC ROUTINES */
 
 size_t
@@ -5256,6 +5468,25 @@ PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *en
   match_char = ebcdic ? PDC_ea_tab[(int)begin[0]] : begin[0];
   if (strchr(regexp->charset, match_char)) {
     return 1; /* match length is 1 char */
+  }
+  return 0;
+}
+
+PDC_byte*
+PDCI_findfirst(const PDC_byte *begin, const PDC_byte *end, PDC_byte b)
+{
+  begin--;
+  while (++begin < end) {
+    if (*begin == b) return (PDC_byte*)begin;
+  }
+  return 0;
+}
+
+PDC_byte*
+PDCI_findlast(const PDC_byte *begin, const PDC_byte *end, PDC_byte b)
+{
+  while (--end >= begin) {
+    if (*end == b) return (PDC_byte*)end;
   }
   return 0;
 }
