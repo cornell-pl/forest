@@ -3576,7 +3576,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  else PE.error ("Array name in bound expression ("^
 						 n^") does not match the name "^
 						 "of the array (must use '"^ name ^ "' or 'elts').")
-				      ); (P.zero, PT.Id length))
+				      ); (P.zero, P.minusX(PT.Id length, P.intX 1)))
 			      | PX.Bounds(lower, upper) => (lower,upper))
 			 val modBodyX = PTSub.substExps subList body
 			 val modLowerX = PTSub.substExps subList lower
