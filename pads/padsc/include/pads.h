@@ -317,6 +317,10 @@
  * Specifying what value to write during write calls when an invalid value is present
  * ----------------------------------------------------------------------------------
  *
+ * NB: write2io functions have the side effect of changing the value
+ * argument's rep when an error has occurred.  It sets the value's rep
+ * to the default invalid value for the type.
+ *
  * Write functions take a parse descriptor and a value.  The value is valid if the
  * parse descriptor's errCode is set P_NO_ERR.  The value has been filled in if the
  * errCode is P_USER_CONSTRAINT_VIOLATION.  For other errCodes, the value should be

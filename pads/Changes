@@ -1,3 +1,21 @@
+April 4, 2005 - Mary and Yitzhak
+  o More on representation of <pd>
+    - Isolated source of March 30 problems:
+
+      In pads.c, _write2io functions have *side effect* of updating a
+      value's rep when an error has occurred (effectively, this delays
+      computing a default invalid value until the data is
+      serialized/printed to output).
+
+      The pglx.c, the _string_value and _typed_value functions
+      delegate to _write2io functions for base types.  We call these
+      functions for _all_ elements in the XML view including the
+      PADS-only fields <length>, <pd> and subelements, etc.  And the
+      rep should never change for these elements. 
+
+      Solution: In pglx.c, call _write2io with idiom that guarantees
+      rep will not be changed. 
+
 March 30, 2005 - Mary
   o Representation of <pd>
     - In pglx.c

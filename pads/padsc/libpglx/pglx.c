@@ -301,14 +301,13 @@ item ty ## _typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
   ty           *r   = (ty*)node->rep; \
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
   Pbase_pd   tpd; \
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -321,20 +320,17 @@ item ty ## _sndNode_typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
   ty           *r;\
-  Pbase_pd  *pd;\
   Pbase_pd   tpd; \
 \
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
   r   = (ty*)node->rep; \
-  pd  = (Pbase_pd*)node->pd; \
-\
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -348,12 +344,6 @@ item ty ## _typed_value (PDCI_node_t *node) \
 { \
   item       res = 0; \
   int        r   = *((ty*)node->rep); \
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
-  Pbase_pd   tpd; \
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
   if (galax_atomicInt(r, &res)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
@@ -429,14 +419,13 @@ item ty ## _typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
   ty           *r   = (ty*)node->rep; \
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
   Pbase_pd   tpd; \
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -449,20 +438,17 @@ item ty ## _sndNode_typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
   ty           *r;\
-  Pbase_pd  *pd;\
   Pbase_pd   tpd; \
 \
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
   r   = (ty*)node->rep; \
-  pd  = (Pbase_pd*)node->pd; \
-\
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -532,10 +518,9 @@ PDCI_node_t * ty ## _val_node_kthChild(PDCI_node_t *node, childIndex idx) \
   PDCI_node_t *result = 0; \
   /* the only valid idx is 0  */ \
   if (idx) return 0; \
-  /* Old remark: the following mk call raises an exception on alloc error */ \
-  PDCI_MK_TEXTNODE(result, & ty ## _text_node_vtable,  node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); \
-  /* Mary: Calling this function directly, instead of through the above macro yields garbage in <pd> */ \
-  /* result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); */\ 
+  /* PDCI_MK_TEXTNODE(result, & ty ## _text_node_vtable,  node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); */ \ 
+  /* Mary: This function initializes the text node's pd: */ \
+  result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); \ 
   return result; \
 } \
  \
@@ -569,8 +554,8 @@ PDCI_node_t * ty ## _val_sndNode_kthChild(PDCI_node_t *node, childIndex idx) \
   /* the only valid idx is 0  */ \
   if (idx) return 0; \
 \
-  PDCI_MK_TEXTNODE(result, & ty ## _text_sndNode_vtable,  node, PDCI_MacroArg2String(ty) "_val_sndNode_kthChild"); \
- /*  result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_sndNode_kthChild"); */ \
+ /* PDCI_MK_TEXTNODE(result, & ty ## _text_sndNode_vtable,  node, PDCI_MacroArg2String(ty) "_val_sndNode_kthChild"); */\
+  result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_sndNode_kthChild"); \
   ty ## _text_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx); \
   return result; \
 }
@@ -629,14 +614,13 @@ PDCI_IMPL_BASE_VAL_FUNS(ty) \
 const char * ty ## _string_value (PDCI_node_t *node) \
 { \
   ty        *r   = (ty*)node->rep; \
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
   Pbase_pd   tpd; \
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
@@ -646,14 +630,13 @@ item ty ## _text_typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
   ty           *r   = (ty*)node->rep; \
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
   Pbase_pd   tpd; \
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -664,20 +647,18 @@ item ty ## _text_typed_value (PDCI_node_t *node) \
 const char * ty ## _sndNode_string_value (PDCI_node_t *node) \
 { \
   ty        *r;\
-  Pbase_pd  *pd;\
   Pbase_pd   tpd; \
 \
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
   r   = (ty*)node->rep; \
-  pd  = (Pbase_pd*)node->pd; \
 \
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
@@ -687,20 +668,17 @@ item ty ## _text_sndNode_typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
   ty           *r;\
-  Pbase_pd  *pd;\
   Pbase_pd   tpd; \
 \
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
   r   = (ty*)node->rep; \
-  pd  = (Pbase_pd*)node->pd; \
-\
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -716,14 +694,13 @@ PDCI_IMPL_BASE_VAL_FUNS(ty)\
 const char * ty ## _string_value (PDCI_node_t *node) \
 { \
   ty           *r   = (ty*)node->rep; \
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
   Pbase_pd   tpd; \
-  if (!pd) { /* Must be a parse-descriptor node */ \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
@@ -733,14 +710,13 @@ item ty ## _text_typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
   ty           *r   = (ty*)node->rep; \
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
   Pbase_pd   tpd; \
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -751,20 +727,17 @@ item ty ## _text_typed_value (PDCI_node_t *node) \
 const char * ty ## _sndNode_string_value (PDCI_node_t *node) \
 { \
   ty           *r;\
-  Pbase_pd  *pd;\
   Pbase_pd   tpd; \
 \
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
   r   = (ty*)node->rep; \
-  pd  = (Pbase_pd*)node->pd; \
-\
-  if (!pd) { /* Must be a parse-descriptor node */ \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
@@ -774,20 +747,17 @@ item ty ## _text_sndNode_typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
   ty           *r;\
-  Pbase_pd  *pd;\
   Pbase_pd   tpd; \
 \
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
   r   = (ty*)node->rep; \
-  pd  = (Pbase_pd*)node->pd; \
-\
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
+  tpd.errCode = P_NO_ERR; \
   sfstrseek(node->pads->tmp2, 0, SEEK_SET); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
+  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
+     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
+     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
