@@ -1,3 +1,7 @@
+PADS: Processing Arbitrary Data Streams
+---------------------------------------
+Joint work with [Kathleen Fisher|Bob Gruber]
+
 Data feeds are the lifeblood of many highly valuable AT&T research
 projects.  The goal of the PADS project is to provide languages and
 tools for simplifying data stream processing.  We have a preliminary
