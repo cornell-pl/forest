@@ -1,11 +1,12 @@
+#include "pglx.h"
 #include "pglx-internal.h"
+
 /* include mary's stuff for c to ocaml rep functions */
 /* ocaml header files can be found in /usr/common/lib/ocaml/caml */
 #include <caml/fail.h>      /* exception */
 
+/* pads-galex.h functions (The public api for Galax to call) */ 
 
-/* Generic functions */
-/* PDCI_node_rep_t ** PGLX_generic_children (PDCI_node_rep_t *node); */
 void** PGLX_generic_children (void *ocaml_n)
 {
   PDCI_node_rep_t *n = (PDCI_node_rep_t *) ocaml_n; 
@@ -20,11 +21,7 @@ void* PGLX_generic_parent (void *ocaml_n)
   return (void *)n->parent;
 }
 
-/* Return value is: 
-   1. atomicValue -- a Caml object or 
-   2. a union of PADS base types, which is converted
-      to a Caml object on the Caml side.
- */
+/* Return value TBD */
 
 value PGLX_generic_typed_value (void * ocaml_n)
 {
@@ -33,7 +30,8 @@ value PGLX_generic_typed_value (void * ocaml_n)
   return n->vt.typed_value(n);
 }
 
-const char* PGLX_generic_string_value(void *ocaml_n){
+const char* PGLX_generic_string_value(void *ocaml_n)
+{
   PDCI_node_rep_t *n = (PDCI_node_rep_t *) ocaml_n; 
   PDCI_NODE_CHECK(n, "PGLX_generic_string_value");
   return "Not yet implemented";
@@ -45,23 +43,25 @@ const char* PGLX_generic_name(void *ocaml_n){
   return n->name;
 }
 
-void        PGLX_node_free(void *node){
+void PGLX_node_free(void *node)
+{
   PDCI_NODE_FREE(node);
 }
-
 
 /* HELPERS */
 
 /* Helper functions */
 /* Error function used for many cases */
-value PDCI_error_typed_value(PDCI_node_rep_t *node){
+value PDCI_error_typed_value(PDCI_node_rep_t *node)
+{
   failwith("NOT_A_VALUE: typed_value called on structured type.");
   return 0;  /* will never get here*/
 } 
 
 /* Children functions for structured_pd, sequenced_pd */
 /* A structured_pd has four children (nerr, errCode, loc, panic) */
-PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_rep_t *self){
+PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_rep_t *self)
+{
   PDCI_structured_pd *pd = (PDCI_structured_pd *) self->rep;
   PDCI_node_rep_t **result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(pdc, 4))) {
@@ -77,7 +77,8 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_rep_t *self){
 
 /* A sequenced_pd has six children 
   (nerr, errCode, loc, panic, neerr, firstError) */
-PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_rep_t *self){
+PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_rep_t *self)
+{
   PDCI_sequenced_pd *pd = (PDCI_sequenced_pd *) self->rep;
   PDCI_node_rep_t **result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(pdc, 6))) {
