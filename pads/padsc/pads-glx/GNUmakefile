@@ -25,9 +25,13 @@ VPATH = ..
 
 # Caml object files
 
+pads_c.ml : pads_c.cmi
+pads_dm.ml : pads_c.mli
+pads_dm.mli : pads_c.mli
+
 CAML_OBJS=pads_c.cmo pads_dm.cmo $(GALAX_SRC)/galapi/c_api/galax_wrap.cmo
 CAML_OPTOBJS=$(CAML_OBJS:.cmo=.cmx)
-OCAML_FLAGS=-I . -I $(GALAX_HOME)/lib/caml-devel 
+OCAML_FLAGS=-I . -I $(VPATH) -I $(GALAX_HOME)/lib/caml-devel 
 
 # C object files
 OBJS_O=pads_dm_opt.o $(GALAX_SRC)/galapi/c_api/galax_util.o $(GALAX_SRC)/galapi/c_api/galax_stub.o $(GALAX_SRC)/galapi/c_api/itemlist.o pads_c_stubs.o pads_dm_stub.o pads_pglx.o
@@ -46,17 +50,14 @@ CHEADERS=pads_c.h pads_dm.h
 INSTALL_INCLUDES=$(CHEADERS) 
 
 # IDL 
-pads_c.h: pads_c.idl
+# Moving the generated files is a hack!
+pads_c.h : pads_c.idl
 	$(OCAML_BIN_DIR)/camlidl -header $<
-pads_c.mli: pads_c.idl
-	$(OCAML_BIN_DIR)/camlidl -header $<
-pads_c.ml: pads_c.idl
-	$(OCAML_BIN_DIR)/camlidl -header $<
-pads_c_stubs.c: pads_c.idl
-	$(OCAML_BIN_DIR)/camlidl -header $<
+	mv $(VPATH)/pads_c.h  $(VPATH)/pads_c.ml  $(VPATH)/pads_c.mli .
 
 # PADS Data model in Caml and C
 OPTLDFLAGS=-linkall nums.cmxa unix.cmxa str.cmxa -cclib -lunix -cclib -lstr $(GALAX_HOME)/lib/caml/galax.cmxa
+
 pads_dm_opt.o: $(CAML_OPTOBJS) $(GALAX_HOME)/lib/caml/galax.cmxa
 	$(OCAML_BIN_DIR)/ocamlopt -output-obj -o pads_dm_opt.o $(OPTLDFLAGS) $(CAML_OPTOBJS) 
 
@@ -73,14 +74,13 @@ debug : depend $(STATIC_GALAXLIB_D)
 	echo "Making debug in pads-glx"
 
 $(STATIC_GALAXLIB_O) : $(OBJS_O)
-	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_O) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/libasmrun.a
+	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_O) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
 
 $(SHARED_GALAXLIB_O) : $(OBJS_O)
 	$(SHARED_LIBTOOL) -o $(SHARED_GALAXLIB_O) $(SHARED_LIBTOOL_WHOLE_ARCHIVE) \
-        $(OBJS_O) $(SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE) $(SHARED_LIBTOOL_OPTS) $(OCAML_LIB_DIR)/libasmrun.a
-
+        $(OBJS_O) $(SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE) $(SHARED_LIBTOOL_OPTS) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
 $(STATIC_GALAXLIB_D) : $(OBJS_O)
-	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_D) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/libasmrun.a
+	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_D) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
 
 install : all
 	+@(set -x ; \
@@ -91,12 +91,12 @@ install : all
 		$(PADS_HOME)/scripts/install-sh -c -m 444 $(VPATH)/$$file $(INSTALL_INCDIR); \
 	done;)
 
-depend:
+depend: pads_c.h
 	$(OCAML_BIN_DIR)/ocamldep $(OCAML_FLAGS) -I $(VPATH) $(VPATH)/*.mli $(VPATH)/*.ml >.depend
 
 clean : 
 	$(RM) $(STATIC_GALAXLIB_O) $(STATIC_GALAXLIB_D) $(SHARED_GALAXLIB_O)  *~ *.o *.cmx *.cmo *.cmi ../*~ \
-	$(VPATH)/pads_c.ml* $(VPATH)/pads_c_stubs.c $(VPATH)/pads_c.h 
+	pads_c.ml* pads_c_stubs.c pads_c.h 
 
 veryclean : clean
 
@@ -107,6 +107,16 @@ include .depend
 endif
 
 .SUFFIXES: .ml .mli .mll .cmo .cmi .cmx
+
+# I don't know why I need a special rule for the generated pads_c files ...
+pads_c.cmx: pads_c.ml 
+	$(OCAML_BIN_DIR)/ocamlopt $(OCAML_FLAGS) -c $< 
+
+pads_c.cmo: pads_c.ml 
+	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c $< 
+
+pads_c.cmi: pads_c.mli
+	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c $< 
 
 .ml.cmo:
 	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c $< 
@@ -121,5 +131,6 @@ endif
 	mv $*.cmx $*.o .
 
 .c.o: $(CHEADERS)
-	$(CC) $(CFLAGS) -I . -I$(GALAX_HOME)/lib/c -c $<
+	$(CC) $(CFLAGS) -I . -I$(GALAX_HOME)/lib/c -c $(VPATH)/$<
+	mv $*.o .
 

@@ -389,7 +389,7 @@ ifdef USE_GALAX
 # Note: PCRE_LIB_DIR needs to be defined in 
 # any makefile using galax.
 DYNAMIC_LIBS_O += \
-  -L$(PADSGLX_LIB_DIR) -lpadsglxopt \
+  -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c -lpcre_stubs
 endif
@@ -420,7 +420,7 @@ DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
 # mff may need to change next line 
 DYNAMIC_LIBS_D += \
-  -L$(PADSGLX_LIB_DIR) -lpadsglxopt \
+  -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c -lpcre_stubs
 endif
@@ -455,7 +455,7 @@ INCLUDES += -I$(GEN_DIR)
 endif
 
 ifdef USE_GALAX
-INCLUDES +=  -I$(GALAX_HOME)/lib/c -I$(PADS_HOME)/padsc/pads-glx -I$(OCAML_LIB_DIR) 
+INCLUDES +=  -I$(GALAX_HOME)/lib/c -I$(PADS_HOME)/padsc/pads-glx -I$(PADS_HOME)/padsc/pads-glx/$(AST_ARCH) -I$(OCAML_LIB_DIR) 
 endif
 
 ifndef BuildAST4PADSLib
