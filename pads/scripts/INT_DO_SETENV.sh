@@ -41,10 +41,10 @@ if [ $_pads_status = "OK" ]; then
 fi
 
 if [ $_pads_status = "OK" ]; then
-  AST_ARCH=`$PADS_HOME/ast-ast/bin/package.cvs SHELL=$SHELL`; export AST_ARCH
+  export AST_ARCH=`$PADS_HOME/ast-ast/bin/package.cvs SHELL=$SHELL`
 
   if [ "$AST_HOME"x = x ]; then
-    AST_HOME=$PADS_HOME/ast-ast/arch/$AST_ARCH; export AST_HOME
+    export AST_HOME=$PADS_HOME/ast-ast/arch/$AST_ARCH
     if [ "$_pads_verbose" != 0 ]; then
       echo "##############################################################################"
       echo "# Setting env var AST_HOME to $AST_HOME"
@@ -56,7 +56,7 @@ if [ $_pads_status = "OK" ]; then
   fi
 
   if [ "$INSTALLROOT"x = x ]; then
-    INSTALLROOT=$PADS_HOME/ast-ast/arch/$AST_ARCH; export INSTALLROOT
+    export INSTALLROOT=$PADS_HOME/ast-ast/arch/$AST_ARCH
     if [ "$_pads_verbose" != 0 ]; then
       echo "##############################################################################"
       echo "# Setting env var INSTALLROOT to $INSTALLROOT"
@@ -68,16 +68,16 @@ if [ $_pads_status = "OK" ]; then
   fi
 
   if [ "$OCAML_LIB_DIR"x = x ]; then
-    OCAML_LIB_DIR=/usr/lib/ocaml; export OCAML_LIB_DIR
+    export OCAML_LIB_DIR=/usr/lib/ocaml
   fi
   if [ "$GALAX_HOME"x = x ]; then
-    GALAX_HOME=/home/mff/Galax; export GALAX_HOME
+    export GALAX_HOME=/home/mff/Galax
   fi
   if [ "$PADSGLX_HOME"x = x ]; then
-    PADSGLX_HOME=/home/mff/pads_glx/api; export PADSGLX_HOME
+    export PADSGLX_HOME=/home/mff/pads_glx/api
   fi
   if [ "$PCRE_LIB_DIR"x = x ]; then
-    PCRE_LIB_DIR=/home/mff/pcre-4.5-rh9/lib; export PCRE_LIB_DIR
+    export PCRE_LIB_DIR=/home/mff/pcre-4.5-rh9/lib
   fi
 
   if [ ! -e $INSTALLROOT ]; then
@@ -113,37 +113,46 @@ if [ $_pads_status = "OK" ]; then
   pads_man_dir=$INSTALLROOT/man
   pads_script_dir=$PADS_HOME/scripts
   remove_dups=$pads_script_dir/removedups.pl
+  remove_pads_parts=$pads_script_dir/removepadsparts.pl
 
-  DYLD_LIBRARY_PATH=`echo ${pads_lib_dir}:${ast_lib_dir}:${DYLD_LIBRARY_PATH} | $remove_dups`; export DYLD_LIBRARY_PATH
-  LD_LIBRARY_PATH=`echo ${pads_lib_dir}:${ast_lib_dir}:${LD_LIBRARY_PATH} | $remove_dups`; export LD_LIBRARY_PATH
-  SHLIB_PATH=`echo ${pads_lib_dir}:${ast_lib_dir}:${SHLIB_PATH} | $remove_dups`; export SHLIB_PATH
-  MANPATH=`echo ${pads_man_dir}:${ast_man_dir}:${MANPATH} | $remove_dups`; export MANPATH
-  PATH=`echo ${pads_bin_dir}:${pads_script_dir}:${PATH} | $remove_dups`; export PATH
+  # remove old PADS path components
+  export DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH} | $remove_pads_parts`
+  export LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH} | $remove_pads_parts`
+  export SHLIB_PATH=`echo ${SHLIB_PATH} | $remove_pads_parts`
+  export MANPATH=`echo ${MANPATH} | $remove_pads_parts`
+  export PATH=`echo ${PATH} | $remove_pads_parts`
+
+  # add new path components
+  export DYLD_LIBRARY_PATH=`echo ${pads_lib_dir}:${ast_lib_dir}:${DYLD_LIBRARY_PATH} | $remove_dups`
+  export LD_LIBRARY_PATH=`echo ${pads_lib_dir}:${ast_lib_dir}:${LD_LIBRARY_PATH} | $remove_dups`
+  export SHLIB_PATH=`echo ${pads_lib_dir}:${ast_lib_dir}:${SHLIB_PATH} | $remove_dups`
+  export MANPATH=`echo ${pads_man_dir}:${ast_man_dir}:${MANPATH} | $remove_dups`
+  export PATH=`echo ${pads_bin_dir}:${pads_script_dir}:${PATH} | $remove_dups`
 
   if [ -e $OCAML_LIB_DIR ]; then
-    DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`; export DYLD_LIBRARY_PATH
-    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`; export LD_LIBRARY_PATH
-    SHLIB_PATH=`echo ${SHLIB_PATH}:${OCAML_LIB_DIR} | $remove_dups`; export SHLIB_PATH
+    export DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
+    export LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
+    export SHLIB_PATH=`echo ${SHLIB_PATH}:${OCAML_LIB_DIR} | $remove_dups`
   fi
   if [ -e $GALAX_HOME/lib/c ]; then
-    DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`; export DYLD_LIBRARY_PATH
-    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`; export LD_LIBRARY_PATH
-    SHLIB_PATH=`echo ${SHLIB_PATH}:${GALAX_HOME}/lib/c | $remove_dups`; export SHLIB_PATH
+    export DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
+    export LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
+    export SHLIB_PATH=`echo ${SHLIB_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
   fi
   if [ -e $PADSGLX_HOME ]; then
-    DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`; export DYLD_LIBRARY_PATH
-    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`; export LD_LIBRARY_PATH
-    SHLIB_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`; export SHLIB_PATH
+    export DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
+    export LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
+    export SHLIB_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
   fi
   if [ -e $PCRE_LIB_DIR ]; then
-    DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`; export DYLD_LIBRARY_PATH
-    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`; export LD_LIBRARY_PATH
-    SHLIB_PATH=`echo ${LD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`; export SHLIB_PATH
+    export DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`
+    export LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`
+    export SHLIB_PATH=`echo ${LD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`
   fi
 
   if [ "$_pads_use_nmake" != 0 ]; then
     ast_bin_dir=$AST_HOME/bin
-     PATH=`echo ${ast_bin_dir}:${PATH} | $remove_dups`; export PATH
+    export PATH=`echo ${ast_bin_dir}:${PATH} | $remove_dups`
   fi
 
   if [ "$_pads_verbose" != 0 ]; then

@@ -201,6 +201,7 @@ if ($_pads_status == "OK") then
   set pads_man_dir    = $INSTALLROOT/man
   set pads_script_dir = $PADS_HOME/scripts
   set remove_dups     = $pads_script_dir/removedups.pl
+  set remove_pads_parts = $pads_script_dir/removepadsparts.pl
 
   if (! $?_is_dyld_library_path) then
     setenv DYLD_LIBRARY_PATH ""
@@ -227,6 +228,14 @@ if ($_pads_status == "OK") then
     setenv PCRE_LIB_DIR /home/mff/pcre-4.5-rh9/lib
   endif
 
+  # remove old PADS path components
+  setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH} | $remove_pads_parts`
+  setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH} | $remove_pads_parts`
+  setenv SHLIB_PATH      `echo ${SHLIB_PATH} | $remove_pads_parts`
+  setenv MANPATH         `echo ${MANPATH} | $remove_pads_parts`
+  setenv PATH            `echo ${PATH} | $remove_pads_parts`
+
+  # add new path components
   setenv DYLD_LIBRARY_PATH `echo ${pads_lib_dir}:${ast_lib_dir}:${DYLD_LIBRARY_PATH} | $remove_dups`
   setenv LD_LIBRARY_PATH `echo ${pads_lib_dir}:${ast_lib_dir}:${LD_LIBRARY_PATH} | $remove_dups`
   setenv SHLIB_PATH      `echo ${pads_lib_dir}:${ast_lib_dir}:${SHLIB_PATH} | $remove_dups`
