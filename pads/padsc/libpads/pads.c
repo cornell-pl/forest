@@ -4595,7 +4595,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.116 2003-10-13 21:52:21 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.117 2003-10-16 13:15:59 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -9106,7 +9106,8 @@ PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp,
   cret = regcomp(&(regexp->preg), regexp_str, c_flags);
   if (cret) {
     PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_REGEXP, whatfn,
-		    "%s regular expression %s: invalid", P_qfmt_cstr_n(regexp_str, len));
+		    "%s regular expression %s: invalid",
+		    err_prefix, P_qfmt_cstr_n(regexp_str, len));
     goto any_err;
   }
   regexp->valid = 1;
