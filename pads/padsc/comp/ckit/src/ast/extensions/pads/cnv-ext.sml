@@ -600,6 +600,15 @@ structure CnvExt : CNVEXT = struct
 						    (* end nested case *))
                                     |  SOME(b:PBTys.baseInfoTy) => (#endian b))
 
+              fun lookupRecord (ty:pty) = 
+                  case ty 
+                  of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
+				    of NONE => (case PTys.find(Atom.atom s)
+						of NONE => false
+						| SOME (b:PTys.pTyInfo) => (#isRecord b)
+						    (* end nested case *))
+                                    |  SOME(b:PBTys.baseInfoTy) => false)
+
               fun tyName (ty:pty) = case ty of PX.Name s => s
 
 
@@ -940,7 +949,8 @@ structure CnvExt : CNVEXT = struct
                       val ds = lookupDiskSize baseTy
                       val mc = lookupMemChar baseTy
                       val endian = lookupEndian baseTy
-		      val typedefProps = {diskSize=ds,memChar=mc, endian=endian}
+		      val isRecord = lookupRecord baseTy
+		      val typedefProps = {diskSize=ds,memChar=mc, endian=endian, isRecord=isRecord}
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
 		      (* Generate canonical representation: typedef to base representation *)
@@ -1115,7 +1125,7 @@ structure CnvExt : CNVEXT = struct
 		      @ (List.concat(List.map cnvExternalDecl cleanupEDEDs))
 		  end
 
-	      fun cnvPStruct ({name:string, params: (pcty * pcdecr) list, fields : pcexp PX.PSField list}) = 
+	      fun cnvPStruct ({name:string, isRecord, params: (pcty * pcdecr) list, fields : pcexp PX.PSField list}) = 
 	          let (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b r (PX.Full fd) = f fd
                         | mungeField f b r (PX.Brief e) = b e
@@ -1164,12 +1174,15 @@ structure CnvExt : CNVEXT = struct
 			      val () = if isEndian andalso not (Option.isSome pred)
 				       then PE.error ("Endian annotations require constraints ("^name^").\n")
 				       else ()
-			  in [{diskSize = ds, memChar = mc, endian = false}] end
-		      fun genTyPropsBrief e = [{diskSize = TyProps.Size (1,0), memChar = TyProps.Static, endian = false}]
-		      fun genTyPropsEOR () =  [{diskSize = TyProps.Size (0,1), memChar = TyProps.Static, endian = false}]
+			  in [{diskSize = ds, memChar = mc, endian = false, isRecord=false}] end
+		      fun genTyPropsBrief e = [{diskSize = TyProps.Size (1,0), memChar = TyProps.Static, 
+						endian = false, isRecord = false}]
+		      fun genTyPropsEOR () =  [{diskSize = TyProps.Size (0,1), memChar = TyProps.Static, 
+						endian = false, isRecord = true}]
 		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsEOR fields
-		      fun mergeStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
-                      val structProps = List.foldr (PTys.mergeTyInfo mergeStruct) PTys.minTyInfo tyProps
+		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
+                      val structProps = List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
+		      val structProps = PTys.setRecord structProps isRecord
                       val () = PTys.insert(Atom.atom name, structProps)
 
 		       
@@ -1493,10 +1506,11 @@ structure CnvExt : CNVEXT = struct
                       val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		      val readFields = mungeFields genReadFull genReadBrief genReadEOR fields  
 		                                                                    (* does type checking *)
+                      val readRecord = if isRecord then genReadEOR() else []
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val localDeclSs = List.map (P.varDeclS' o (fn(x,y) => (y,x))) localVars
-		      val bodySs = if 0 = List.length localVars then readFields 
-			          else [PT.Compound (localDeclSs @ readFields)]
+		      val bodySs = if 0 = List.length localVars then (readFields @ readRecord)
+			          else [PT.Compound (localDeclSs @ readFields @ readRecord)]
 		      val returnS = genReturnChk (P.arrowX(PT.Id (gMod(ed)), PT.Id nerr))
 		      val bodySs = bodySs @ [returnS]
 
@@ -1659,10 +1673,18 @@ structure CnvExt : CNVEXT = struct
 					 isVirtual:bool, isEndian:bool, pred:pcexp option, comment:string option} = 
 			  let val mc = lookupMemChar pty
 			      val ds = lookupDiskSize pty
-			  in [{diskSize = ds, memChar = mc, endian = false}] end
+			      val isRecord = lookupRecord pty
+			  in [{diskSize = ds, memChar = mc, endian = false, isRecord = isRecord}] end
 		     fun genTyPropsBrief e = [] (* not used in unions *)
 		     fun genTyPropsEOR e = [] (* not used in unions *)
 		     val tyProps = mungeVariants genTyPropsFull genTyPropsBrief genTyPropsEOR variants
+                     (* check that all variants are records if any are *)
+		     val () = case tyProps of [] => ()
+			      | ({isRecord=first,...}::xs) => 
+			           (if List.exists (fn {isRecord,diskSize,memChar,endian}=> not (isRecord = first)) xs
+				    then PE.error "All branches of union must terminate record if any branch does."
+				    else ())
+					
 		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
                      val unionProps = List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
                      val () = PTys.insert(Atom.atom name, unionProps)
@@ -2599,7 +2621,7 @@ structure CnvExt : CNVEXT = struct
 					 if min = max then TyProps.Size(n * (IntInf.toInt max), r * (IntInf.toInt max))
 					 else TyProps.Variable
 				     | _ => TyProps.Variable
-                 val arrayProps = {diskSize=arrayDiskSize, memChar = arrayMemChar, endian=false}
+                 val arrayProps = {diskSize=arrayDiskSize, memChar = arrayMemChar, endian=false, isRecord=false}
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
 
@@ -2801,7 +2823,7 @@ structure CnvExt : CNVEXT = struct
 				  else TyProps.Variable
 			      end
 			   else TyProps.Size (0,0)
-                  val enumProps = {diskSize = ds, memChar = TyProps.Static, endian=true}
+                  val enumProps = {diskSize = ds, memChar = TyProps.Static, endian=true, isRecord=false}
 		  val () = PTys.insert(Atom.atom name, enumProps)
 
                   (* generate canonical representation *)

@@ -37,6 +37,7 @@ structure ParseTreeExt =
 			pred: 'exp}
          | PStruct of {name : string, 
 		       params: ('ct * 'decr) list, 
+		       isRecord : bool,
 		       fields : ('exp PSField) list}
          | PArray  of {name : string, 
 		       baseTy : Pty, 

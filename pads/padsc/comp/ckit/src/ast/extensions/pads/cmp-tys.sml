@@ -3,14 +3,19 @@ structure PTys =
 struct
   type pTyInfo = {diskSize : TyProps.diskSize,
 		  memChar  : TyProps.memChar,
-		  endian   : bool}
+		  endian   : bool,
+                  isRecord : bool}
 
   fun mergeTyInfo f (r1 : pTyInfo, r2:pTyInfo) =
       {diskSize = TyProps.mergeDiskSize f (#diskSize r1, #diskSize r2),
        memChar  = TyProps.mergeMemChar(#memChar r1,   #memChar  r2),
-       endian   = #endian r1 andalso #endian r2}
+       endian   = #endian r1 andalso #endian r2,
+       isRecord = #isRecord r1}
 
-  val minTyInfo = {diskSize = TyProps.Size (0,0), memChar = TyProps.Static, endian = true}
+  fun setRecord {diskSize, memChar, endian, isRecord} state =
+      {diskSize=diskSize, memChar=memChar, endian=endian, isRecord=state} 
+
+  val minTyInfo = {diskSize = TyProps.Size (0,0), memChar = TyProps.Static, endian = true, isRecord = false}
 
   type pTyMap = pTyInfo PBaseTys.PBST.map
 

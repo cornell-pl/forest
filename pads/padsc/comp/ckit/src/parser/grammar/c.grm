@@ -232,7 +232,7 @@ end
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT | EOR (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PFORALL | PIN | PVIRTUAL | PENDIAN (* PADS *)
+	| PSEP | PTERM | PFORALL | PIN | PVIRTUAL | PENDIAN | PRECORD (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -307,6 +307,7 @@ end
         | pOptActParams of expression list
         | pActParamList of expression list
         | pName of string
+        | pIsRecord of bool
         | pTypedef of externalDecl
         | pStruct of externalDecl
         | pStructFieldList of (expression PX.PSField) list
@@ -974,6 +975,9 @@ pConstraintOpt: (NONE)
 pCommentOpt: (NONE)
   | PCOMMENT   (SOME PCOMMENT)
 
+pIsRecord : (false)
+  | PRECORD (true)
+
 pTyParamDeclaration:
   parameterDeclaration
 	(let val (dt,decr) = parameterDeclaration
@@ -1055,9 +1059,10 @@ pStructFieldList:
   | pStructField   pStructFieldList  (pStructField :: pStructFieldList)
 
 pStruct:
- PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
+ pIsRecord PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
  ( makeTypeName pName;
-   ExternalDeclExt(PX.PStruct {name = pName, params = pTyParams, fields = pStructFieldList})
+   ExternalDeclExt(PX.PStruct {isRecord = pIsRecord, name = pName, 
+                               params = pTyParams, fields = pStructFieldList})
  )
 
 pForAllRange : 
