@@ -3473,8 +3473,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     let val reOpt = getRE e
 			     in
 				 case reOpt of NONE => 
-				    (print "not a regular expresion";
-				     case extractString e of NONE => (print "extract returned none.\n"; NONE) (* error reported eariler *)
+				    (case extractString e of NONE => (print "extract returned none.\n"; NONE) (* error reported eariler *)
                                      | SOME s => 
 				         let val cmt = "Pliteral branch '"^s^"'.\n"
 					     val repX = unionRepX(rep, label, true)
