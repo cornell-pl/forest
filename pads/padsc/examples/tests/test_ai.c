@@ -1,8 +1,6 @@
 // Set the output time zone to the one where the ai data (web log) was
 // recorded (the data file has dates with a trailing -0700).  This
-// means date output will be consistent with the dates in the data
-// file.  If the default ("UTC") were used, the 7 hour time difference
-// produces a different day of the week for some timestamps.
+// means timestamp output will be consistent with the timestamps in the data.
 
 #define OUT_TIME_ZONE "-0700"
 
@@ -38,7 +36,7 @@ do { \
       } else { \
 	error(0, "authid: %-.*s", rep.auth.val.id.len, rep.auth.val.id.str); \
       } \
-      error(0, "date: %s", fmttime("%K", (time_t)rep.my_date)); \
+      error(0, "date: %s", fmttime("%K", (time_t)rep.ts)); \
       error(0, "request meth: %s  req_uri: %-.*s  version: %u.%u", \
 	    http_method_t2str(rep.request.meth), \
 	    rep.request.req_uri.len, rep.request.req_uri.str, \

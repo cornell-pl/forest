@@ -53,7 +53,7 @@ Precord Pstruct http_clf_t {
    ' '; auth_id_t remoteID;               /- Remote identity; '-' indicates not obtained.
    ' '; auth_id_t auth;                   /- Name of authenticated user.
    " [";
-   Pdate(:']':) my_date;                  /- Timestamp of request.
+   Ptimestamp(:']':) ts;                  /- Timestamp of request.
    "] ";
    http_request_t request;                /- Request.
    ' ';  Puint16_FW(:3:) response;        /- 3-digit response code
