@@ -6,4 +6,5 @@ struct
   val arrayElts = "elts"
   val pdElts    = "pds"
   val arrayCur  = "current"
+  val eatElt    = "eat"
 end

@@ -113,6 +113,7 @@ struct
     fun postIncX e        = PT.Unop(PT.PostInc, e)
     fun postIncS e        = PT.Expr(PT.Unop(PT.PostInc, e))
     fun postDecX e        = PT.Unop(PT.PostDec, e)
+    fun postDecS e        = PT.Expr(PT.Unop(PT.PostDec, e))
     fun starX e           = PT.Unop(PT.Star,e)
     fun sizeofX ct        = PT.Unop(PT.SizeofType(ct),PT.EmptyExpr)
     fun sizeofEX e        = PT.Unop(PT.Sizeof, e)

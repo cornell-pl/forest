@@ -249,7 +249,7 @@ end
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PLAST (* PADS *)
+	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PLAST | PENDED (* PADS *)
         | POMIT | PENDIAN | PCOMPUTE (* PADS *)
  	| PRECORD | PSOURCE | PWHERE | PAND (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT (* PADS*)
@@ -1175,6 +1175,7 @@ pArrayConstraint :
    PSEP LPAREN pREexpr RPAREN    (PX.Sep pREexpr)
  | PTERM LPAREN pTermExp RPAREN  (PX.Term pTermExp)
  | PLAST LPAREN expr RPAREN      (PX.Last expr)
+ | PENDED LPAREN expr RPAREN     (PX.Ended expr)
 
 pArrayConstraints : 
    pArrayConstraint ([pArrayConstraint])

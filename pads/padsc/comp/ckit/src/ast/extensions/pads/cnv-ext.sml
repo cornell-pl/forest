@@ -3632,14 +3632,14 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 {index=index, lower=modLowerX, upper=modUpperX, body=modBodyX}
 		     end
 
-                 fun chkLastConstraint exp = 
+                 fun chkPredConstraint (which, exp) = 
 		     let val subList = [(PNames.arrayLen, fieldX(rep,length)), 
 					(PNames.arrayCur, P.minusX(fieldX(rep,length), P.intX 1)), 
 					(name, fieldX(rep,elts)),
 					(PNames.arrayElts, fieldX(rep,elts)),
 					(PNames.pdElts,   fieldX(pd,elts))]
 			 val modExpX = PTSub.substExps subList exp
-			 val errMsg = fn s => ("Plast expression for array "^
+			 val errMsg = fn s => (which ^" expression for array "^
 					       name ^" has type"^s^". Expected type int.")
 		     in
 			 pushLocalEnv();
@@ -3679,7 +3679,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 (arrayXOpt, genXOpt)
 		     end
 
-                 val (sepXOpt, termXOpt, noSepIsTerm, lastXOpt,sepTermDynamicCheck, scan2Opt, stdeclSs, stinitSs, stcloseSs) = 
+                 val (sepXOpt, termXOpt, noSepIsTerm, lastXOpt, endedXOpt,
+		      sepTermDynamicCheck, scan2Opt, stdeclSs, stinitSs, stcloseSs) = 
                       let fun getFuns (which, exp) =
 			   let val (okay,expTy) = getExpEqualTy(exp, CTstring :: CTintTys,
 								fn s=>(which ^ " expression for array "^
@@ -3701,23 +3702,28 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 			  fun doOne (constr:pcexp PX.PConstraint) = 
                               case constr 
-                              of PX.Sep exp => (SOME (getFuns("Separator", exp)), NONE, NONE, NONE)
-                              |  PX.Term (PX.Expr exp) =>(NONE, SOME( getFuns("Terminator", exp)), NONE,NONE)
-                              |  PX.Term PX.noSep => (NONE, NONE, SOME (),NONE)
-                              |  PX.Last exp => (NONE, NONE, NONE, SOME exp)
+                              of PX.Sep   exp => (SOME (getFuns("Separator", exp)), NONE, NONE, NONE, NONE)
+                              |  PX.Term  (PX.Expr exp) =>(NONE, SOME( getFuns("Terminator", exp)), NONE,NONE,NONE)
+                              |  PX.Term  PX.noSep => (NONE, NONE, SOME (),NONE,NONE)
+                              |  PX.Last  exp => (NONE, NONE, NONE, SOME exp,NONE)
+                              |  PX.Ended exp => (NONE, NONE, NONE, NONE, SOME exp)
 			  val constrs = List.map doOne constraints
-                          fun mergeAll ((a,b,c,d),(ra,rb,rc,rd)) = 
-			      (mergeOpt "separator"  (a,ra), mergeOpt "terminator" (b,rb), 
-			       mergeOpt "terminator as no separator" (c,rc), mergeOpt "last" (d,rd))
-			  val (sepXOpt, termXOpt, termNoSepXOpt, lastXOpt ) = List.foldr mergeAll (NONE,NONE,NONE,NONE) constrs
+                          fun mergeAll ((a,b,c,d,e),(ra,rb,rc,rd,re)) = 
+			      (mergeOpt "Psep"  (a,ra), mergeOpt "Pterm" (b,rb), 
+			       mergeOpt "Pterm == Pnosep" (c,rc), 
+			       mergeOpt "Plast" (d,rd), mergeOpt "Pended" (e,re))
+			  val (sepXOpt, termXOpt, termNoSepXOpt, lastXOpt, endedXOpt ) = 
+			           List.foldr mergeAll (NONE,NONE,NONE,NONE,NONE) constrs
 
 			  val () = case (termXOpt, termNoSepXOpt) of 
-			             (SOME _, SOME _) => PE.error ("Multiple terminator clauses in array "^name^".")
+			             (SOME _, SOME _) => PE.error ("Multiple Pterm clauses in array "^name^".")
 				   | _ => ()
 			  val () = case (sepXOpt, termNoSepXOpt) of
-			              (NONE, SOME _) => PE.error ("Array "^name^
-								  " must have a separator for termination specification "^
-								  "of Pnosep to be valid.")
+			              (NONE, SOME _) => PE.error ("Array "^name^" must have a separator"^
+								  " for Pterm == Pnosep to be valid.")
+				   | _ => ()
+			  val () = case (lastXOpt, endedXOpt) of
+			             (SOME _, SOME _) => PE.error ("Array "^name^" cannot have both Plast and Pended clauses.")
 				   | _ => ()
 
                           fun compRegExp (which, endLabel, e) = 
@@ -3878,7 +3884,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			      |  (_,_) => []
 			      end
 		      in
-			  (sepXOpt, termXOpt, isSome termNoSepXOpt, lastXOpt,
+			  (sepXOpt, termXOpt, isSome termNoSepXOpt, lastXOpt, endedXOpt,
 			   sepTermDynamicCheck, scan2Opt, declSs, initSs, closeSs)
                       end
 		 val _ = popLocalEnv()
@@ -3919,7 +3925,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		 val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
                  val arrayXOpt = case arrayXOpt of NONE => NONE | SOME r => SOME (chkForallConstraint r)
-                 val lastXOpt  = case lastXOpt  of NONE => NONE | SOME r => SOME (chkLastConstraint   r)
+                 val lastXOpt  = case lastXOpt  of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Plast",  r))
+                 val endedXOpt = case endedXOpt of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Pended",  r))
 
 		 (* Generate init function, array case *)
 		 fun genInitEDs(suf, base, aPCT) = 
@@ -3999,6 +4006,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  val readName = readName (* defined above *)
                  val foundTerm    = "foundTerm"
 		 val lastSet      = "lastSet"
+		 val endedSet     = "endedSet"
 		 val reachedLimit = "reachedLimit"
 
 		 val resBufferX   = fieldX(rep, elts)
@@ -4013,12 +4021,16 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		 val () = checkParamTys(name, elemReadName, args, 2, 2)
                  (* -- Declare top-level variables and initialize them *)
                  val initSs =   stdeclSs
-			      @ [P.varDeclS'(PL.locPCT, tloc)] 
+			      @ [P.varDeclS'(PL.locPCT, tloc),
+				 P.varDeclS'(P.int, result)] 
                               @ (if Option.isSome termXOpt then             (* int foundTerm = false *)
                                    [P.varDeclS(P.int, foundTerm, P.falseX)] 
                                  else [])
                               @ (if Option.isSome lastXOpt then             (* int lastSet = false *)
                                    [P.varDeclS(P.int, lastSet, P.falseX)] 
+                                 else [])
+                              @ (if Option.isSome endedXOpt then             (* int endedSet = false *)
+                                   [P.varDeclS(P.int, endedSet, P.falseX)] 
                                  else [])
                               @ (if Option.isSome maxOpt then               (* int reachedLimit = false *)
 				   [P.varDeclS(P.int, reachedLimit, P.falseX)]
@@ -4034,39 +4046,58 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  (* -- code for checking if terminator is next in input *)
 
                  (* -- Code for checking termination conditions *)
-                 fun genBreakCheckX (termOpt, sizeOpt,lastOpt) = 
+                 fun genBreakCheckX (termOpt, sizeOpt,lastOpt, endedOpt) = 
 		     let val isEofX = PL.isEofX(PT.Id pads)
 			 val isEorX = PL.isEorX(PT.Id pads)
 			 val termFoundX = PT.Id foundTerm
 			 val lastSetX = PT.Id lastSet
+			 val endedSetX = PT.Id endedSet
 			 val limitReachedX = PT.Id reachedLimit
 		     in
-                        case (termOpt,sizeOpt,lastOpt,isRecord)
-			of (NONE,   NONE,  NONE,   _)    => P.orX(isEofX,isEorX)
-                        |  (NONE,   NONE,  SOME _, _)    => P.orX(P.orX(isEofX,isEorX),lastSetX)
-                        |  (NONE,   SOME _,NONE,  false) => P.orX(isEofX, limitReachedX)
-                        |  (NONE,   SOME _,SOME _,false) => P.orX(P.orX(isEofX, limitReachedX), lastSetX)
-                        |  (NONE,   SOME _,NONE,  true)  => P.orX(isEofX, P.orX(isEorX,limitReachedX))
-                        |  (NONE,   SOME _,SOME _,true)  => P.orX(P.orX(isEofX, P.orX(isEorX,limitReachedX)), lastSetX)
-                        |  (SOME _, NONE,  NONE,  false) => P.orX(isEofX, termFoundX)
-                        |  (SOME _, NONE,  SOME _,false) => P.orX(P.orX(isEofX, termFoundX), lastSetX)
-                        |  (SOME _, NONE,  NONE,  true)  => P.orX(isEofX, P.orX(isEorX, termFoundX))
-                        |  (SOME _, NONE,  SOME _,true)  => P.orX(P.orX(isEofX, P.orX(isEorX, termFoundX)), lastSetX)
-                        |  (SOME _, SOME _,NONE,  false) => P.orX(isEofX, 
-						            P.orX(termFoundX,limitReachedX))
-                        |  (SOME _, SOME _,SOME _,false) => P.orX(P.orX(isEofX, 
-							    P.orX(termFoundX,limitReachedX)), lastSetX)
-                        |  (SOME _, SOME _,NONE,  true)  => P.orX(isEofX, 
-							    P.orX(isEorX,
-							    P.orX(termFoundX,limitReachedX)))
-                        |  (SOME _, SOME _,SOME _, true) => P.orX(P.orX(isEofX, 
-							    P.orX(isEorX,
-						            P.orX(termFoundX,limitReachedX))), lastSetX)
+                        case (termOpt,sizeOpt,lastOpt,endedOpt, isRecord)
+			of (NONE,   NONE,  NONE,  NONE,   _)     => P.orX(isEofX,isEorX)
+                        |  (NONE,   NONE,  NONE,  SOME _, _)     => P.orX(P.orX(isEofX,isEorX), endedSetX)
+                        |  (NONE,   NONE,  SOME _,NONE,   _)     => P.orX(P.orX(isEofX,isEorX),lastSetX)
+                        |  (NONE,   NONE,  SOME _,SOME _, _)     => P.orX(P.orX(P.orX(isEofX,isEorX),lastSetX), endedSetX)
+                        |  (NONE,   SOME _,NONE,  NONE,   false) => P.orX(isEofX, limitReachedX)
+                        |  (NONE,   SOME _,NONE,  SOME _, false) => P.orX(P.orX(isEofX, limitReachedX), endedSetX)
+                        |  (NONE,   SOME _,SOME _,NONE,   false) => P.orX(P.orX(isEofX, limitReachedX), lastSetX)
+                        |  (NONE,   SOME _,SOME _,SOME _, false) => P.orX(P.orX(P.orX(isEofX, limitReachedX), lastSetX), endedSetX)
+                        |  (NONE,   SOME _,NONE,  NONE,   true)  => P.orX(isEofX, P.orX(isEorX,limitReachedX))
+                        |  (NONE,   SOME _,NONE,  SOME _, true)  => P.orX(P.orX(isEofX, P.orX(isEorX,limitReachedX)), endedSetX)
+                        |  (NONE,   SOME _,SOME _,NONE,   true)  => P.orX(P.orX(isEofX, P.orX(isEorX,limitReachedX)), lastSetX)
+                        |  (NONE,   SOME _,SOME _,SOME _, true)  => P.orX(P.orX(P.orX(isEofX, 
+								    P.orX(isEorX,limitReachedX)), lastSetX), endedSetX)
+                        |  (SOME _, NONE,  NONE,  NONE,   false) => P.orX(isEofX, termFoundX)
+                        |  (SOME _, NONE,  NONE,  SOME _, false) => P.orX(P.orX(isEofX, termFoundX), endedSetX)
+                        |  (SOME _, NONE,  SOME _,NONE,   false) => P.orX(P.orX(isEofX, termFoundX), lastSetX)
+                        |  (SOME _, NONE,  SOME _,SOME _, false) => P.orX(P.orX(P.orX(isEofX, termFoundX), lastSetX), endedSetX)
+                        |  (SOME _, NONE,  NONE,  NONE,   true)  => P.orX(isEofX, P.orX(isEorX, termFoundX))
+                        |  (SOME _, NONE,  NONE,  SOME _, true)  => P.orX(P.orX(isEofX, P.orX(isEorX, termFoundX)), endedSetX)
+                        |  (SOME _, NONE,  SOME _,NONE,   true)  => P.orX(P.orX(isEofX, P.orX(isEorX, termFoundX)), lastSetX)
+                        |  (SOME _, NONE,  SOME _,SOME _, true)  => P.orX(P.orX(P.orX(isEofX, 
+								    P.orX(isEorX, termFoundX)), lastSetX), endedSetX)
+                        |  (SOME _, SOME _,NONE,  NONE,   false) => P.orX(isEofX, 
+						                    P.orX(termFoundX,limitReachedX))
+                        |  (SOME _, SOME _,NONE,  SOME _, false) => P.orX(P.orX(isEofX, 
+								    P.orX(termFoundX,limitReachedX)), endedSetX)
+                        |  (SOME _, SOME _,SOME _,NONE,   false) => P.orX(P.orX(isEofX, 
+							            P.orX(termFoundX,limitReachedX)), lastSetX)
+                        |  (SOME _, SOME _,SOME _,SOME _, false) => P.orX(P.orX(P.orX(isEofX, 
+							            P.orX(termFoundX,limitReachedX)), lastSetX), endedSetX)
+                        |  (SOME _, SOME _,NONE,  NONE,   true)  => P.orX(isEofX, P.orX(isEorX,
+							            P.orX(termFoundX,limitReachedX)))
+                        |  (SOME _, SOME _,NONE,  SOME _, true)  => P.orX(P.orX(isEofX, P.orX(isEorX,
+							            P.orX(termFoundX,limitReachedX))), endedSetX)
+                        |  (SOME _, SOME _,SOME _,NONE,   true)  => P.orX(P.orX(isEofX, P.orX(isEorX,
+						                    P.orX(termFoundX,limitReachedX))), lastSetX)
+                        |  (SOME _, SOME _,SOME _, SOME _,true)  => P.orX(P.orX(P.orX(isEofX, P.orX(isEorX,
+						                    P.orX(termFoundX,limitReachedX))), lastSetX),endedSetX)
 		     end
 
-                 fun genBreakCheckSs (term,size,last) = 
+                 fun genBreakCheckSs (term,size,last, ended) = 
 		     [P.mkCommentS("Have we finished reading array?"),
-		      PT.IfThen(genBreakCheckX(term,size,last), PT.Compound[PT.Break])]
+		      PT.IfThen(genBreakCheckX(term,size,last,ended), PT.Compound[PT.Break])]
 		     
                  (* -- Check that we found separator on last loop. *)
                  fun genSepCheck NONE = []
@@ -4142,25 +4173,30 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     @ (PL.chkReserveSs(PT.Id pads, readName, pdRBufferX, 
 				     P.addrX edBufferX, P.sizeofX elemEdPCT,
 				     fieldX(rep,length),bufSugX))
-                     @ [PT.IfThen(
-                          PL.readFunChkX(PL.P_ERROR, elemReadName, 
-					               PT.Id pads, 
-					               P.addrX(fieldX(m,element)),
-						       args,
-						       P.addrX(edNext),
-						       P.addrX(resNext)),
-                          PT.Compound[
-			   PT.IfThen(PL.getSpecLevelX(PT.Id pads),
-				     PT.Return PL.P_ERROR),
-			   PT.IfThen(PL.mTestNotIgnoreX(fieldX(m,array)),
-			     PT.Compound[
-                              PT.IfThen(P.notX(fieldX(pd,nerr)),
-                                 PT.Compound (
-	 			   (reportErrorSs([locES],locX,true,PL.P_ARRAY_ELEM_ERR, false, readName, "", []))
-                                  @ [P.mkCommentS("Index of first element with an error."),
-				     P.assignS(fieldX(pd,firstError), P.minusX(fieldX(rep,length),P.intX 1))])),
-                              P.postIncS(fieldX(pd,neerr))
-                            ])])]
+		     @ (if Option.isSome endedXOpt  (* checkpoint if have ended predicate in play *)
+			then ( [PL.incNestLevS(PT.Id pads)]
+			     @ PL.chkPtS(PT.Id pads, readName)) else [])
+                     @ [P.assignS(PT.Id result, PL.readFunX(elemReadName, PT.Id pads, P.addrX(fieldX(m,element)),
+							    args, P.addrX(edNext),P.addrX(resNext)))]
+		 val markErrorSs = 
+		     let val baseX = P.eqX(PT.Id result,PL.P_ERROR) 
+			 val testX = case endedXOpt of 
+			               NONE   => baseX
+				     | SOME _ => P.andX(baseX, P.notX(PT.Id endedSet))
+		     in
+			 [PT.IfThen(testX,
+			   PT.Compound[
+			      PT.IfThen(PL.getSpecLevelX(PT.Id pads),
+				        PT.Return PL.P_ERROR),
+			      PT.IfThen(PL.mTestNotIgnoreX(fieldX(m,array)),
+			         PT.Compound[
+                                    PT.IfThen(P.notX(fieldX(pd,nerr)),
+                                       PT.Compound (
+	 			           (reportErrorSs([locES],locX,true,PL.P_ARRAY_ELEM_ERR, false, readName, "", []))
+                                         @ [P.mkCommentS("Index of first element with an error."),
+				            P.assignS(fieldX(pd,firstError), P.minusX(fieldX(rep,length),P.intX 1))])),
+                                            P.postIncS(fieldX(pd,neerr))])])]
+		     end
 
                  (* -- panic recovery code *)
 		 fun genPanicRecoveryS (sepXOpt, termXOpt, maxOpt) = 
@@ -4213,21 +4249,16 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  (* -- while loop for reading input *)
 
 		 fun readTerm (termRead, termX, bdyOpt) = 
-		     let val bodyS = case bdyOpt of NONE => 
-			                  PT.IfThen(P.eqX(PL.P_OK, PT.Id "result"),
-				           PT.Compound[P.assignS(PT.Id foundTerm, P.trueX)])
+		     let val rhsX = PL.matchFunX(termRead, PT.Id pads, termX, P.falseX(*do not eat lit"*))
+			 val bodyS = case bdyOpt of NONE => 
+			                  PT.IfThen(P.eqX(PL.P_OK, rhsX),
+						    PT.Compound[P.assignS(PT.Id foundTerm, P.trueX)])
 		                     | SOME bdyS => 
-			                  PT.IfThenElse(P.eqX(PL.P_OK, PT.Id result),
+			                  PT.IfThenElse(P.eqX(PL.P_OK, rhsX),
 							PT.Compound[P.assignS(PT.Id foundTerm, P.trueX)],
 							PT.Compound[bdyS])
 		     in
-			 PT.Compound
-			 ([P.varDeclS'(PL.toolErrPCT, "result"),
-			   PL.incNestLevS(PT.Id pads)]
-			  @ PL.chkPtS(PT.Id pads, readName)
-			  @ [P.assignS(PT.Id result, PL.matchFunX(termRead, PT.Id pads, termX, P.falseX(*do not eat lit"*)))] 
-			  @ PL.restoreS(PT.Id pads, readName)
-			  @ [PL.decNestLevS(PT.Id pads), bodyS])
+			 PT.Compound [bodyS]
 		     end
 
                  fun genTermCheck NONE = []
@@ -4237,8 +4268,22 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
                  fun genLastCheck NONE = []
                    | genLastCheck (SOME exp) = 
-                      [P.mkCommentS("Checking last predicate"),
+                      [P.mkCommentS("Checking Plast predicate"),
 		       PT.IfThen(exp, PT.Compound[P.assignS(PT.Id lastSet, P.trueX)])]
+
+                 fun genEndedCheck NONE = []
+                   | genEndedCheck (SOME exp) = 
+                      [P.mkCommentS("Checking Pended predicate"),
+                       PT.Compound[
+			  P.varDeclS(P.int, "Ppredresult", exp),
+		          PT.IfThenElse(P.notX (PT.Id "Ppredresult"),
+			     PT.Compound(PL.commitS(PT.Id pads, readName)),
+			     PT.Compound([P.assignS(PT.Id endedSet, P.trueX), 
+					  PT.IfThenElse(P.ltX(PT.Id "Ppredresult", P.zero),
+					     PT.Compound(PL.commitS(PT.Id pads, readName)),
+			                     PT.Compound(PL.restoreS(PT.Id pads, readName)
+							 @[P.postDecS(fieldX(rep,length))]))])),
+		          PL.decNestLevS(PT.Id pads)]]
 
                  val whileSs = 
 		     let fun insLengthChk bdyS = 
@@ -4252,18 +4297,17 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			    | (_,_) => bdyS
 
 
-			 fun insTermChk bdyS = 
-			     case termXOpt of NONE => PT.Compound[bdyS]
-			     | SOME (termX, _, _,_, termRead, _, _) => (readTerm (termRead, termX, SOME bdyS))
 			 val bdyS = 
 			     PT.While(P.trueX,  
                                  PT.Compound(
 				     [P.mkCommentS("Ready to read next element.")]
 				   @ readElementSs 
+                                   @ (genEndedCheck endedXOpt)
+				   @ markErrorSs
 				   @ panicRecoverySs
-                                   @ (genLastCheck lastXOpt)
-                                   @ (genTermCheck termXOpt)
-				   @ genBreakCheckSs (termXOpt,maxOpt,lastXOpt)
+                                   @ (genLastCheck  lastXOpt)
+                                   @ (genTermCheck  termXOpt)
+				   @ genBreakCheckSs (termXOpt,maxOpt,lastXOpt, endedXOpt)
                                    @ (genSepCheck sepXOpt)
                                  ))
 			 val termCondX = if isRecord then 
@@ -4271,11 +4315,13 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 						  P.notX(PL.isEorX(PT.Id pads)))
 					 else
 			                   P.notX(PL.isEofX(PT.Id pads))
+			 val lengthChkBdyS = insLengthChk bdyS
+			 val termChkBdyS = case termXOpt of NONE => PT.Compound[lengthChkBdyS]
+		                           | SOME (termX, _, _,_, termRead, _, _) => (readTerm (termRead, termX, SOME lengthChkBdyS))
+
 		     in 
 			 [P.mkCommentS("Reading input until we reach a termination condition"),
-                                PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd), 
-						 termCondX),
-					  insTermChk(insLengthChk bdyS))]
+                                PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd), termCondX), termChkBdyS)]
 		     end
 
                  (* -- Check if there was junk before trailing terminator *)

@@ -71,6 +71,7 @@ struct
                ("Pcase", Tokens.PCASE),
                ("Pcompute",  Tokens.PCOMPUTE),       
                ("Pdefault", Tokens.PDEFAULT),
+               ("Pended",   Tokens.PENDED),       
                ("Pendian",   Tokens.PENDIAN),       
                ("Penum", Tokens.PENUM),
                ("Pforall", Tokens.PFORALL),
