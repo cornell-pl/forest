@@ -17,6 +17,6 @@ Precord Pstruct test2 {
   Pint32 two;
 };
 
-Pfile Parray myfile {
+Psource Parray myfile {
   test [];
 };

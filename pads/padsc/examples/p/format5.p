@@ -1,4 +1,4 @@
-Precord Punion dibblerPN(int x){
+Precord Punion dibblerPN(:int x:){
   Puint32 code : code %x == 0;  
   Puint32 pn;  /- phone number
 };

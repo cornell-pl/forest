@@ -19,7 +19,7 @@ struct
                   isRecord : bool,
 		  containsRecord: bool,
 	          largeHeuristic: bool,
-		  isFile   : bool,
+		  isSource : bool,
 		  numArgs  : int,
 		  repName  : string,
 		  repInit  : string option,

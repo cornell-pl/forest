@@ -67,25 +67,26 @@ struct
 	      ("switch", Tokens.SWITCH),
 	      ("while", Tokens.WHILE)
 	      ] @ [  (* PADSC *)
-	       ("Pselect", Tokens.PSELECT),
-               ("Ptypedef", Tokens.PTYPEDEF),
-               ("Pstruct", Tokens.PSTRUCT),
                ("Parray", Tokens.PARRAY),
-               ("Punion", Tokens.PUNION),
                ("Pcase", Tokens.PCASE),
+               ("Pcompute",  Tokens.PCOMPUTE),       
                ("Pdefault", Tokens.PDEFAULT),
-               ("Pswitch", Tokens.PSWITCH),
+               ("Pendian",   Tokens.PENDIAN),       
                ("Penum", Tokens.PENUM),
-               ("Psep", Tokens.PSEP),
-               ("Pterm", Tokens.PTERM),
                ("Pforall", Tokens.PFORALL),
                ("Pin", Tokens.PIN),
                ("Pomit", Tokens.POMIT),
-               ("Pendian",   Tokens.PENDIAN),       
-               ("Pcompute",  Tokens.PCOMPUTE),       
+               ("Pre", Tokens.PRE),    
                ("Precord", Tokens.PRECORD),     
-               ("Pfile", Tokens.PFILE),     
-               ("Pwhere", Tokens.PWHERE)    
+	       ("Pselect", Tokens.PSELECT),
+               ("Psep", Tokens.PSEP),
+               ("Psource", Tokens.PSOURCE),     
+               ("Pstruct", Tokens.PSTRUCT),
+               ("Pswitch", Tokens.PSWITCH),
+               ("Pterm", Tokens.PTERM),
+               ("Ptypedef", Tokens.PTYPEDEF),
+               ("Punion", Tokens.PUNION),
+               ("Pwhere", Tokens.PWHERE)
               ])
 
 

@@ -43,7 +43,7 @@ structure ParseTreeExt =
 			isRecord : bool, 
                         containsRecord : bool, 
                         largeHeuristic : bool,
-			isFile : bool,
+			isSource : bool,
                         baseTy: Pty,
 			args   : 'exp list, 
                         predTy: Pty,
@@ -54,7 +54,7 @@ structure ParseTreeExt =
 		       isRecord : bool, 
                        containsRecord : bool, 
                        largeHeuristic : bool,
-		       isFile : bool,
+		       isSource : bool,
 		       fields : (('dt, 'decr, 'exp) PSField) list,
 		       postCond : 'exp option}
          | PArray  of {name : string, 
@@ -63,7 +63,7 @@ structure ParseTreeExt =
 		       isRecord : bool, 
                        containsRecord : bool, 
                        largeHeuristic : bool,
-		       isFile : bool,
+		       isSource : bool,
 		       args   : 'exp list, 
 		       sizeSpec : ('exp PSize) option, 
 		       constraints : ('exp PConstraint) list} 
@@ -72,14 +72,14 @@ structure ParseTreeExt =
 		      isRecord : bool, 
                       containsRecord : bool, 
                       largeHeuristic : bool,
-		      isFile   : bool,
+		      isSource   : bool,
 		      variants : ('dt, 'decr, 'exp) PBranches}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
 		      isRecord : bool, 
                       containsRecord : bool, 
                       largeHeuristic : bool,
-		      isFile   : bool,
+		      isSource   : bool,
                       members  : (string * 'exp option * string option) list}
          | PSelect of {selName : string,
 		       tyName  : string,

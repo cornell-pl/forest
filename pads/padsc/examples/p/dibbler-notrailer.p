@@ -74,7 +74,7 @@ Parray entries_t {
   out_sum_data_line[];
 }
 
-Pfile Pstruct out_sum{
+Psource Pstruct out_sum{
   out_sum_header h;
   entries_t      es;
 }

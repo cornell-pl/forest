@@ -64,6 +64,6 @@ Precord Pstruct http_clf_t {
    ' ';  contentOpt_t contentLength;      /- Number of bytes in request response.
 };
 
-Pfile Parray log_t {
+Psource Parray log_t {
   http_clf_t [];
 }

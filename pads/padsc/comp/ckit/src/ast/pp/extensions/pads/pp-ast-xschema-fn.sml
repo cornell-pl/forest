@@ -802,9 +802,9 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; PPL.addStr pps "</xs:complexType>"
       ; newline pps)
 
-  fun ppTopElemIfPfile pps (ptyInfo:PTys.pTyInfo,repNameOpt) =
-	if (#isFile ptyInfo) 
-	then ( ppXMLHeader "<xs:element " "/>" pps (repNameOpt,SOME "PFile")
+  fun ppTopElemIfPsource pps (ptyInfo:PTys.pTyInfo,repNameOpt) =
+	if (#isSource ptyInfo) 
+	then ( ppXMLHeader "<xs:element " "/>" pps (repNameOpt,SOME "PSource")
 	     ; newline pps)
 	else ()
 
@@ -818,7 +818,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; newline pps
 	; ppXMLComplex pps (repName,((pdTyName,SOME "pd") :: repFields)) 
     	; newline pps
-	; ppTopElemIfPfile pps (ptyInfo,repName)
+	; ppTopElemIfPsource pps (ptyInfo,repName)
 	)						
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
@@ -850,7 +850,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; newline pps
       ; PPL.addStr pps "</xs:complexType>"
       ; newline pps
-      ; ppTopElemIfPfile pps (ptyInfo,repName)
+      ; ppTopElemIfPsource pps (ptyInfo,repName)
       )
       handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
     end
@@ -874,7 +874,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; newline pps
 	; ppXMLComplex pps (repName,Fields)
     	; newline pps
-	; ppTopElemIfPfile pps (ptyInfo,repName)
+	; ppTopElemIfPsource pps (ptyInfo,repName)
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
@@ -888,7 +888,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
  	; ppXMLRestriction pps "xsd:int"
 	; PPL.addStr pps "</xs:simpleType>"
     	; newline pps
-        ; ppTopElemIfPfile pps (ptyInfo,repName)	
+        ; ppTopElemIfPsource pps (ptyInfo,repName)	
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
@@ -902,7 +902,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; ppXMLRestriction pps (valOf Ty)
         ; PPL.addStr pps "</xs:simpleType>"
         ; newline pps
-        ; ppTopElemIfPfile pps (ptyInfo,Name)
+        ; ppTopElemIfPsource pps (ptyInfo,Name)
         )
         handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end

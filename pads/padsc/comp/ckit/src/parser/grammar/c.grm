@@ -182,8 +182,8 @@ fun addComment ((name, expOpt), commentOpt) = (name, expOpt, commentOpt)
 
 fun addPostCond (decl,postCondOpt) = 
    (case decl of
-    (PX.PStruct{isRecord,isFile,containsRecord,largeHeuristic,name,params,fields,postCond}) => 
-      PX.PStruct{isRecord = isRecord, isFile = isFile, 
+    (PX.PStruct{isRecord,isSource,containsRecord,largeHeuristic,name,params,fields,postCond}) => 
+      PX.PStruct{isRecord = isRecord, isSource = isSource, 
 		 containsRecord = containsRecord, largeHeuristic = largeHeuristic,
                  name = name, params = params, fields = fields, postCond = postCondOpt} 
     | s => s)
@@ -240,8 +240,9 @@ end
         | PSELECT (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
 	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE (* PADS *)
- 	| PRECORD | PFILE | PWHERE (* PADS *)  
+ 	| PRECORD | PSOURCE | PWHERE (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT (* PADS*)
+        | PRE (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -317,7 +318,7 @@ end
         | pActParamList of expression list
         | pName of string
         | pIsRecord of bool
-        | pIsFile of bool
+        | pIsSource of bool
         | pTypedef of externalDecl
         | pStruct of (declarator, ctype, decltype, expression) PX.PExternal
         | pStructFieldList of ((decltype, declarator, expression) PX.PSField) list
@@ -1004,8 +1005,8 @@ pCommentOpt: (NONE)
 pIsRecord : (false)
   | PRECORD (true)
 
-pIsFile : (false)
-  | PFILE (true)
+pIsSource : (false)
+  | PSOURCE (true)
 
 (*pContainsRecord : (false)
   | PCONTAINSRECORD (true) *)
@@ -1030,7 +1031,7 @@ pTyParamList:
 
 pTyParams:
 	([])
- | LPAREN pTyParamList RPAREN ( List.rev pTyParamList )
+ | LCOLON pTyParamList RCOLON ( List.rev pTyParamList )
 
 pActParamList:
    expr ([expr])
@@ -1040,14 +1041,14 @@ pOptActParams: ([])
  | LCOLON pActParamList RCOLON ( List.rev pActParamList )
 
 pTypedef:
-  pIsRecord pIsFile PTYPEDEF pName pOptActParams pName pushScope pTyParams COLONCOLON pName pName EQGT LCURLY expr popScope
+  pIsRecord pIsSource PTYPEDEF pName pOptActParams pName pushScope pTyParams COLONCOLON pName pName EQGT LCURLY expr popScope
  ( makeTypeName pName2;
    ExternalDeclExt(PX.PTypedef {baseTy = PX.Name pName1, 
                                 args   = pOptActParams,
                                 name   = pName2, 
 				params = pTyParams,
 				isRecord = pIsRecord,
-				isFile = pIsFile,
+				isSource = pIsSource,
 				containsRecord = false,
 				largeHeuristic = false,
 				predTy = PX.Name pName3,
@@ -1118,9 +1119,9 @@ pStructFieldList:
 
 
 pStruct:
- pIsRecord pIsFile PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
+ pIsRecord pIsSource PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
  ( makeTypeName pName;
-   PX.PStruct {isRecord = pIsRecord, isFile = pIsFile, 
+   PX.PStruct {isRecord = pIsRecord, isSource = pIsSource, 
 	       containsRecord = false, largeHeuristic = false,
                name = pName, params = pTyParams, fields = pStructFieldList, postCond = NONE}	
  )
@@ -1153,9 +1154,9 @@ pSizeSpec:
  LBRACE pSizeOpt RBRACE  (pSizeOpt)
 
 pArray:
- pIsRecord pIsFile PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
+ pIsRecord pIsSource PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
  ( makeTypeName pName1;
-   ExternalDeclExt(PX.PArray {isRecord=pIsRecord, isFile = pIsFile, 
+   ExternalDeclExt(PX.PArray {isRecord=pIsRecord, isSource = pIsSource, 
 			      containsRecord = false, largeHeuristic = false,
 			      name = pName1, params = pTyParams, 
 			      args = pOptActParams, baseTy = PX.Name pName2, 
@@ -1180,11 +1181,11 @@ pVariants:
  | pStructFieldList (PX.Ordered pStructFieldList)
 
 pUnion:
- pIsRecord pIsFile PUNION pName pushScope pTyParams LCURLY pVariants popScope
+ pIsRecord pIsSource PUNION pName pushScope pTyParams LCURLY pVariants popScope
  ( makeTypeName pName;
    ExternalDeclExt(PX.PUnion {name = pName, params = pTyParams, 
 			      containsRecord = false, largeHeuristic = false,
-                              isRecord = pIsRecord, isFile = pIsFile, variants=pVariants})
+                              isRecord = pIsRecord, isSource = pIsSource, variants=pVariants})
  ) 
 
 
@@ -1204,11 +1205,11 @@ pEnumFieldList:
                                          (pAnnotatedEnumField :: pEnumFieldList)
 
 pEnum:
- pIsRecord pIsFile PENUM pName pushScope  LCURLY pEnumFieldList popScope
+ pIsRecord pIsSource PENUM pName pushScope  LCURLY pEnumFieldList popScope
  ( makeTypeName pName1;
    ExternalDeclExt(PX.PEnum {name = pName1, params = [], isRecord = pIsRecord, 
 		             containsRecord = false, largeHeuristic = false,
-			     isFile = pIsFile, members = pEnumFieldList})
+			     isSource = pIsSource, members = pEnumFieldList})
  ) 
 
 pSelect:

@@ -657,7 +657,7 @@ structure CnvExt : CNVEXT = struct
 				      SOME ((initSuf o pdSuf) name),
 				      SOME ((cleanupSuf o pdSuf) name))
 
-              fun buildTyProps (name,kind,diskSize,compoundDiskSize,memChar,endian,isRecord,containsRecord,largeHeuristic,isFile,pdTid, numArgs) = 
+              fun buildTyProps (name,kind,diskSize,compoundDiskSize,memChar,endian,isRecord,containsRecord,largeHeuristic,isSource,pdTid, numArgs) = 
      		  let val (repInit, repClean, pdInit, pdClean) = getDynamicFunctions (name,memChar)
 		  in
 		      {kind     = kind,
@@ -668,7 +668,7 @@ structure CnvExt : CNVEXT = struct
 		       isRecord = isRecord,
 		       containsRecord = containsRecord,
                        largeHeuristic = largeHeuristic, 
-		       isFile   = isFile,
+		       isSource   = isSource,
 		       numArgs  = numArgs,
 		       repName  = name, 
 		       repInit  = repInit,
@@ -1635,7 +1635,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 (*  Typedef case *)
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
-			        largeHeuristic,	isFile : bool, baseTy: PX.Pty, args: pcexp list, 
+			        largeHeuristic,	isSource : bool, baseTy: PX.Pty, args: pcexp list, 
 			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
 		  let val base = "base"
 		      val user = "user"
@@ -1680,7 +1680,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
  		      val lH = lookupHeuristic baseTy
 		      val numArgs = List.length params
 		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, TyProps.Typedef (ds, baseName, (paramNames, args)), mc, endian, 
-						      isRecord, contR, lH, isFile, pdTid, numArgs)
+						      isRecord, contR, lH, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
 
@@ -1894,7 +1894,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 
 
-	      fun cnvPStruct ({name: string, isRecord, containsRecord, largeHeuristic, isFile, 
+	      fun cnvPStruct ({name: string, isRecord, containsRecord, largeHeuristic, isSource, 
                                params: (pcty * pcdecr) list, fields: (pdty, pcdecr, pcexp) PX.PSField list, 
                                postCond}) = 
 	          let val structName = name
@@ -2030,7 +2030,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 									  (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
 		      val numArgs = List.length params
 		      val structProps = buildTyProps(name, PTys.Struct, diskSize, compoundDiskSize, memChar, endian, 
-                                                     isRecord, containsRecord, largeHeuristic, isFile, pdTid, numArgs)
+                                                     isRecord, containsRecord, largeHeuristic, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, structProps)
 
 		      (* Struct: Generate canonical representation *)
@@ -2644,7 +2644,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	      end
 
 	     fun cnvPUnion {name: string, params: (pcty * pcdecr) list, 
-			     isRecord: bool, containsRecord, largeHeuristic, isFile: bool, 
+			     isRecord: bool, containsRecord, largeHeuristic, isSource: bool, 
 			     variants: (pdty, pcdecr, pcexp) PX.PBranches} = 
 		 let (* Some useful names *)
 		     val unionName = name
@@ -2829,7 +2829,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     val numArgs = List.length params
 		     val unionProps = buildTyProps(name, PTys.Union, diskSize, compoundDiskSize, memChar, 
 						   endian, isRecord, containsRecord, 
-						   largeHeuristic, isFile, pdTid, numArgs)
+						   largeHeuristic, isSource, pdTid, numArgs)
                      val () = PTys.insert(Atom.atom name, unionProps)
 
                      (* union: generate canonical representation *)
@@ -3364,7 +3364,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		 end
 	  
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, 
-                            largeHeuristic, isFile : bool, args : pcexp list, baseTy:PX.Pty, 
+                            largeHeuristic, isSource : bool, args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
 	     let 
 		 val cParams : (string * pcty) list = List.map mungeParam params
@@ -3730,7 +3730,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 							    elem=baseDiskSize, sep = sepSize,
 							    term=termSize, length = arrayRep}
                  val arrayProps = buildTyProps(name, PTys.Array, arrayDiskSize, compoundArrayDiskSize,
-					       arrayMemChar,false,isRecord,contR,lH,isFile,pdTid, numArgs)
+					       arrayMemChar,false,isRecord,contR,lH,isSource,pdTid, numArgs)
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
 		 (* array: Generate canonical representation *)
@@ -4373,7 +4373,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	     end
 
 	  fun cnvPEnum  {name:string, params: (pcty * pcdecr) list, 
-			 isRecord, containsRecord, largeHeuristic, isFile,
+			 isRecord, containsRecord, largeHeuristic, isSource,
 			 members: (string * pcexp option * string option) list } =
 	      let val baseTy = PL.strlit
 		  val baseEM = mSuf baseTy
@@ -4415,7 +4415,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  val numArgs = List.length params
                   val enumProps = buildTyProps(name,PTys.Enum, ds, TyProps.Enum ds,
 					       TyProps.Static,true,isRecord,containsRecord,
-					       largeHeuristic,isFile,pdTid, numArgs)
+					       largeHeuristic,isSource,pdTid, numArgs)
 		  val () = PTys.insert(Atom.atom name, enumProps)
 
                   (* enums: generate canonical representation *)
