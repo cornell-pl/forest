@@ -565,6 +565,17 @@ structure CnvExt : CNVEXT = struct
 	    mungeTyDecr(ct', d)
 	end
 
+    fun unzip8' [] = ([],[],[],[],[],[],[],[])
+      | unzip8' ((b,c,d,e,f,g,h,i)::rest) = 
+	let val (bs,cs,ds,es,fs,gs,hs,is) = unzip8' rest
+	in
+	    (b@bs, c@cs, d@ds, e@es, f@fs, g@gs, h@hs, i@is)
+	end
+
+    fun zip8 ([], [], [],[], [], [],[],[]) = []
+      | zip8 (b::bs, c::cs, d::ds, e::es, f::fs, g::gs, h::hs, i::is) = (b, c, d,e,f,g,h,i) :: (zip8 (bs, cs, ds,es,fs,gs,hs,is))
+      | zip8 _ = raise Fail "Zipping unequal length lists"
+
     fun cnvDeclaration(dt, del: (ParseTree.declarator * pcexp) list ) = 
 	let val (ct', sc) = cnvType(false, dt)
 	    val (ds, es) = ListPair.unzip del
@@ -1745,20 +1756,27 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      (*           (name, unionDotBranchX(pcgenName("trep"), name))  -- for union longestMatch field   *)
 	      (*           (name, unionBranchX(rep, name))                   -- for union field                *)
 	      (*           (name, PT.Id tmpName)                             -- for omitted field              *)
-	      (*     5. A list of substitution pairs for post-read (Pwhere, is fn) constraint                  *)
+              (*     5. a list of substitution pairs for pd references within Parse check constraints,         *)
+              (*        of the same forms as the field constraints above.                                      *)
+	      (*     6. A list of substitution pairs for post-read (Pwhere, is fn) constraint                  *)
 	      (*        same as above except longestMatch is ignored, uses rep for all non-omitted cases       *)
-	      (*     6. A list of types                                                                        *)
-	      (*     7. A list of type names                                                                   *)
+	      (*     7. A list of types                                                                        *)
+	      (*     8. A list of type names                                                                   *)
 
 	      fun checkStructUnionFields (structOrUnion, structOrUnionName, isLongestMatch, fields) =
 		  let fun readMapping (name) =
 			  if structOrUnion = "Pstruct"
 			  then ( if isLongestMatch
-				 then [(name, P.dotX(pcgenId("trep"), PT.Id name))]
+				 then (PE.error ("Unexpected Plongest modifier on Pstruct"^structOrUnionName^".") ; 
+				       [(name, P.dotX(pcgenId("trep"), PT.Id name))])
 				 else [(name, P.fieldX(rep, name))] )
-			  else ( if isLongestMatch
-				 then [(name, unionDotBranchX(pcgenId("trep"), name))]
-				 else [(name, unionBranchX(rep, name))] )
+			  else [(name, unionRepX(rep, name, false, isLongestMatch))]
+		      fun pdMapping (name) =
+			  if structOrUnion = "Pstruct"
+			  then ( if isLongestMatch
+				 then  [(pdSuf name, P.dotX(pcgenId("tpd"), PT.Id name))]
+				 else [(pdSuf name, P.fieldX(pd, name))] )
+			  else [(pdSuf name, unionPdX(pd,name,false,isLongestMatch))]
 		      fun postReadMapping (name) =
 			  if structOrUnion = "Pstruct"
 			  then [(name, P.fieldX(rep, name))]
@@ -1769,7 +1787,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genLocFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				      pred, comment: string option, size,optDecl, arrayDecl,...}:pfieldty) = 
-			  ( if   name = PNames.pd orelse name = PNames.identifier orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
+			  ( if  name = PNames.pd orelse name = PNames.identifier orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
+				orelse String.isSuffix "_pd" name 
 			    then PE.error (structOrUnion^" "^structOrUnionName^" contains field with reserved name '"^name^"'\n")
 			    else ();
 			    let val tyName = lookupTy (pty, repSuf, #repname)
@@ -1783,8 +1802,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  else (ty,tyName)
 			    in
 				if isVirtual
-				then [( [name], [name], [(tmpName(name), ty)], tmpMapping(name),  tmpMapping(name),      [ty], [tyName] )]
-				else [( [name], [],     [],                    readMapping(name), postReadMapping(name), [ty], [tyName] )]
+				then [( [name], [name], [(tmpName(name), ty)], tmpMapping(name),  [],             tmpMapping(name),      [ty], [tyName] )]
+				else [( [name], [],     [],                    readMapping(name), pdMapping name, postReadMapping(name), [ty], [tyName] )]
 			    end
 			  )
 		      fun genLocBrief (r as (e,labelOpt)) = 
@@ -1813,8 +1832,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     case isPadsTy tyname
 			      of PTys.CTy =>
 				 if isVirtual
-				 then [( [name], [name], [(tmpName(name),tyname)], tmpMapping(name),  tmpMapping(name),      [tyname], ["bogus"] )]
-				 else [( [name], [],     [],                       readMapping(name), postReadMapping(name), [tyname], ["bogus"] )]
+				 then [( [name], [name], [(tmpName(name),tyname)], tmpMapping(name),  [],             tmpMapping(name),      [tyname], ["bogus"] )]
+				 else [( [name], [],     [],                       readMapping(name), pdMapping name, postReadMapping(name), [tyname], ["bogus"] )]
 			       | _        => 
 				 let val tyName = lookupTy ((getPadsName tyname), repSuf, #repname)
 				     val ty = P.makeTypedefPCT(tyName)
@@ -1824,20 +1843,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						else () )
 				 in
 				     if isVirtual
-				     then [( [name], [name], [(tmpName(name),ty)], tmpMapping(name),  tmpMapping(name),      [ty], [tyName] )]
-				     else [( [name], [],     [],                   readMapping(name), postReadMapping(name), [ty], [tyName] )]
+				     then [( [name], [name], [(tmpName(name),ty)], tmpMapping(name),  [],             tmpMapping(name),      [ty], [tyName] )]
+				     else [( [name], [],     [],                   readMapping(name), pdMapping name, postReadMapping(name), [ty], [tyName] )]
 				 end
 			 end
 		      val resall = mungeFields genLocFull genLocBrief genLocMan fields
-		      val res1 = List.concat (List.map (fn(r1, r2, r3, r4, r5, r6, r7) => r1) resall)
-		      val res2 = List.concat (List.map (fn(r1, r2, r3, r4, r5, r6, r7) => r2) resall)
-		      val res3 = List.concat (List.map (fn(r1, r2, r3, r4, r5, r6, r7) => r3) resall)
-		      val res4 = List.concat (List.map (fn(r1, r2, r3, r4, r5, r6, r7) => r4) resall)
-		      val res5 = List.concat (List.map (fn(r1, r2, r3, r4, r5, r6, r7) => r5) resall)
-		      val res6 = List.concat (List.map (fn(r1, r2, r3, r4, r5, r6, r7) => r6) resall)
-		      val res7 = List.concat (List.map (fn(r1, r2, r3, r4, r5, r6, r7) => r7) resall)
 		  in
-		      (res1, res2, res3, res4, res5, res6, res7)
+		     unzip8' resall
 		  end
 
 	      (* For an omitted field, generate init call if cty is a dynamic PADS type *)
@@ -1863,39 +1875,62 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
               (* see if any names after curName are free in expr *)
 
-	      fun checkStructFieldScope (structName, curName, names, expr) =
+	      fun checkStructFieldScope (structName, curName, names, expr, inParseCheck) =
 		  let val loc1 = nameLoc curName names
 		      fun checkOneField (checkName, loc2) =
-			  if curName = checkName then ()
-			  else if PTSub.isFreeInExp([checkName], expr) andalso (loc1 < loc2)
-			  then (PE.error("Illegal field reference in Pstruct "^structName^
-					 ":\n\t\tcontraint for field "^curName^" refers to later field "^checkName))
-			  else ()
+			  let val () = if curName = checkName then ()
+				       else if PTSub.isFreeInExp([checkName], expr) andalso (loc1 < loc2)
+				       then (PE.error("Illegal field reference in Pstruct "^structName^
+						      ":\n\t\tcontraint for field "^curName^" refers to later field "^checkName))
+				       else ()
+			  in
+			      let val pdFree = PTSub.isFreeInExp([pdSuf checkName], expr)
+			      in
+				  if not inParseCheck andalso pdFree 
+				      then (PE.error("Illegal parse descriptor reference in Pstruct "^structName^
+						     ":\n\t\tnon-parsecheck contraint for field "^curName^" refers to parse descriptor "^(pdSuf checkName)^"."))
+				  else if pdFree andalso (loc1 < loc2)
+					   then (PE.error("Illegal parse descriptor reference in Pstruct "^structName^
+							  ":\n\t\tcontraint for field "^curName^" refers to later parse descriptor "^(pdSuf checkName)))
+				  else ()
+			      end
+			  end
 		      val nmap = List.map (fn(x) => (x, nameLoc x names)) names
 		  in
 		      (List.map checkOneField nmap; ())
 		  end
 
-	      fun checkUnionFieldScope (unionName, curName, names, expr) =
-		  let val loc1 = nameLoc curName names
-		      fun checkOneField (checkName, loc2) =
-			  if curName = checkName then ()
-			  else if PTSub.isFreeInExp([checkName], expr)
-			  then (PE.error("Illegal branch reference in Punion "^unionName^
-					 ":\n\t\tcontraint for branch "^curName^" refers to value of branch  "^checkName))
-			  else ()
-		      val nmap = List.map (fn(x) => (x, nameLoc x names)) names
+	      fun checkUnionFieldScope (unionName, curName, names, expr, inParseCheck) =
+		  let fun checkOneField checkName =
+		          let val _ = if curName = checkName then ()
+				      else if PTSub.isFreeInExp([checkName], expr)
+				      then (PE.error("Illegal branch reference in Punion "^unionName^
+						     ":\n\t\tcontraint for branch "^curName^" refers to value of branch  "^checkName))
+				      else ()
+			  in
+			   if PTSub.isFreeInExp([pdSuf checkName], expr) 
+			    then
+			        if inParseCheck andalso curName = checkName then ()
+			        else if inParseCheck
+			        then (PE.error("Illegal parse descriptor reference in Punion "^unionName^
+					       ":\n\t\tcontraint for field "^curName^" refers to parse descriptor "^(pdSuf checkName)^"."))
+				else
+				        (PE.error("Illegal parse descriptor reference in Punion "^unionName^
+						  ":\n\t\tnon-parsecheck contraint for field "^curName^" refers to parse descriptor "^(pdSuf checkName)^"."))
+
+			   else()
+			  end
 		  in
-		      (List.map checkOneField nmap; ())
+		      (List.map checkOneField names; ())
 		  end
 
 
 	      fun modStructPred (structName, curName, names, pred, subList) =
-		  case pred of NONE => NONE
+		  case pred of NONE =>  NONE
 			     | SOME predList =>
 	                       let fun doOne subList exp = 
-				       let val exp = case exp of PX.General e => e | PX.ParseCheck e => e
-					   val ()     = checkStructFieldScope(structName, curName, names, exp)
+				       let val (exp,inParseCheck) = case exp of PX.General e => (e,false) | PX.ParseCheck e => (e,true)
+					   val ()     = checkStructFieldScope(structName, curName, names, exp,inParseCheck)
 					   val modExp = PTSub.substExps subList exp
 					   val ()     = expEqualTy(modExp, CTintTys,
 							   (fn(s) => ("Pstruct "^structName^": constraint for field '"^
@@ -1911,8 +1946,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  case pred of NONE => NONE
 			     | SOME predList =>
 	                       let fun doOne subList exp = 
-				      let val exp = case exp of  PX.General e => e | PX.ParseCheck e => e
-					  val ()     = checkUnionFieldScope(unionName, curName, names, exp)
+				      let val (exp,inParseCheck) = case exp of  PX.General e => (e,false) | PX.ParseCheck e => (e,true)
+					  val ()     = checkUnionFieldScope(unionName, curName, names, exp,inParseCheck)
 					  val modExp = PTSub.substExps subList exp
 					  val ()     = expEqualTy(modExp, CTintTys,
 							   (fn(s) => ("Punion "^unionName^": constraint for branch '"^
@@ -4703,9 +4738,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      val postReadSubList : (string * pcexp) list ref = ref []
                      fun addReadSub (a : string * pcexp) = readSubList := (a:: (!readSubList))
                      fun addPostReadSub (a : string * pcexp) = postReadSubList := (a:: (!postReadSubList))
-		     val (allVars, omitNames, omitVars, readSubs, postReadSubs, tys, tyNames) =
+		     val (allVars, omitNames, omitVars, readSubs, pdSubs, postReadSubs, tys, tyNames) =
 			 checkStructUnionFields("Punion", unionName, isLongestMatch, variants)
 		     val _ = List.map addReadSub readSubs
+		     val _ = List.map addReadSub pdSubs
 		     val _ = List.map addPostReadSub postReadSubs
 
 		     val dummy = "_dummy"
@@ -5357,6 +5393,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val _ = pushLocalEnv()                                        (* create new scope *)
 		     (* add rep, possibly temp-rep to scope *)
 		     val () = ignore(insTempVar(rep, P.ptrPCT canonicalPCT))
+		     val () = ignore(insTempVar(pd, P.ptrPCT pdPCT))
 		     val () = if isLongestMatch then ignore(insTempVar(pcgenName("trep"), canonicalPCT)) else ()
 		     val cParams : (string * pcty) list = List.map mungeParam params
 		     val xtraParamNames = #1(ListPair.unzip cParams)
@@ -5807,9 +5844,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val postReadSubList : (string * pcexp) list ref = ref []
                       fun addReadSub (a : string * pcexp) = readSubList := (a:: (!readSubList))
                       fun addPostReadSub (a : string * pcexp) = postReadSubList := (a:: (!postReadSubList))
-		      val (allVars, omitNames, omitVars, readSubs, postReadSubs, tys, tyNames) =
+		      val (allVars, omitNames, omitVars, readSubs, pdSubs, postReadSubs, tys, tyNames) =
 			  checkStructUnionFields("Pstruct", structName, false, fields)
 		      val _ = List.map addReadSub readSubs
+		      val _ = List.map addReadSub pdSubs
 		      val _ = List.map addPostReadSub postReadSubs
 		      val dummy = "_dummy"
 		      val cParams : (string * pcty) list = List.map mungeParam params
@@ -6311,6 +6349,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      (* -- Assemble read function *)
 		      val _ = pushLocalEnv()                                        (* create new scope *)
 		      val () = ignore (insTempVar(rep, P.ptrPCT canonicalPCT))      (* add rep to scope *)
+		      val () = ignore (insTempVar(pd, P.ptrPCT pdPCT))              (* add pd to scope *)
 		      val () = ignore (insTempVar(m,  P.ptrPCT mPCT))               (* add m to scope *)
 		      val () = ignore (List.map insTempVar omitVars)                (* insert virtuals into scope *)
                       val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)

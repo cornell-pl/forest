@@ -1,10 +1,14 @@
 Data file = ../../data/array_ended
 warning: P_open: Installing default IO discipline : newline-terminated records
+warning: Error [in even_read]: at record 1 from byte 7 to byte 8: Typedef constraint error 
+[record 1]12a24a>>>13<<<a15a17b
 read reported no errors and passed predicate test.
 entry_read returned array evens of length: 2
 entry_read returned array odds  of length: 3
 warning: Error [in eseq_t_read]: at record 2 at byte 3 : Unexpected extra data before array element separator 
 [record 2]12>>>b<<<a24a13a15a17b
+warning: Error [in even_read]: at record 2 from byte 8 to byte 9: Typedef constraint error 
+[record 2]12ba24a>>>13<<<a15a17b
 entry_read returned: error
 *****************************************************************************************************
 <top> : struct entry
