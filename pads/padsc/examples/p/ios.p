@@ -459,30 +459,30 @@ Penum D_elt_kind {
   watchdog_e
 };
 
-Punion D_elt_switch(: int kind :) {
+Punion D_elt_switch(: D_elt_kind kind :) {
   Pswitch (kind) {
-    Pcase (int)aaa_e:                D_aaa_elt                aaa_k;
-    Pcase (int)banner_e:             D_banner_elt             banner_k;
-    Pcase (int)bay_e:                D_bay_elt                bay_k;
-    Pcase (int)clock_e:              D_clock_elt              clock_k;
-    Pcase (int)crashdump_e:          D_crashdump_elt          crashdump_k;
-    Pcase (int)end_e:                D_end_elt                end_k;
-    Pcase (int)enable_e:             D_enable_elt             enable_k;
-    Pcase (int)default_te_metric_e:  D_default_te_metric_elt  default_te_metric_k;
-    Pcase (int)fabric_e:             D_fabric_elt             fabric_k;
-    Pcase (int)hostname_e:           C_hostname_elt           hostname_k;
-    Pcase (int)interface_e:          D_avici_interface_elt    interface_k;
-    Pcase (int)module_e:             D_avici_module_elt       module_k;
-    Pcase (int)mpls_e:               D_mpls_elt               mpls_k;
-    Pcase (int)package_file_e:       D_package_file_elt       package_file_k;
-    Pcase (int)sample_e:             D_sample_elt             sample_k;
-    Pcase (int)server_id_e:          D_server_id_elt          server_id_k;
-    Pcase (int)server_location_e:    D_server_location_elt    server_location_k;
-    Pcase (int)snmp_server_e:        D_snmp_server_elt        snmp_server_k;
-    Pcase (int)sntp_e:               D_sntp_elt               sntp_k;
-    Pcase (int)system_password_e:    D_system_password_elt    system_password_k;
-    Pcase (int)user_e:               D_user_elt               user_k;
-    Pcase (int)watchdog_e:           D_watchdog_elt           watchdog_k;
+    Pcase aaa_e:                D_aaa_elt                aaa_k;
+    Pcase banner_e:             D_banner_elt             banner_k;
+    Pcase bay_e:                D_bay_elt                bay_k;
+    Pcase clock_e:              D_clock_elt              clock_k;
+    Pcase crashdump_e:          D_crashdump_elt          crashdump_k;
+    Pcase end_e:                D_end_elt                end_k;
+    Pcase enable_e:             D_enable_elt             enable_k;
+    Pcase default_te_metric_e:  D_default_te_metric_elt  default_te_metric_k;
+    Pcase fabric_e:             D_fabric_elt             fabric_k;
+    Pcase hostname_e:           C_hostname_elt           hostname_k;
+    Pcase interface_e:          D_avici_interface_elt    interface_k;
+    Pcase module_e:             D_avici_module_elt       module_k;
+    Pcase mpls_e:               D_mpls_elt               mpls_k;
+    Pcase package_file_e:       D_package_file_elt       package_file_k;
+    Pcase sample_e:             D_sample_elt             sample_k;
+    Pcase server_id_e:          D_server_id_elt          server_id_k;
+    Pcase server_location_e:    D_server_location_elt    server_location_k;
+    Pcase snmp_server_e:        D_snmp_server_elt        snmp_server_k;
+    Pcase sntp_e:               D_sntp_elt               sntp_k;
+    Pcase system_password_e:    D_system_password_elt    system_password_k;
+    Pcase user_e:               D_user_elt               user_k;
+    Pcase watchdog_e:           D_watchdog_elt           watchdog_k;
   }
 };
 // XXX Pswitch: should be able to pass D_elt_kind as the param, and
@@ -492,7 +492,7 @@ Pstruct D_known_elt {
   opt_no                                no;
   D_elt_kind                            kind;
   EAT_SPACES;
-  D_elt_switch(: (int)kind :)           elt;
+  D_elt_switch(: kind :)           elt;
 };
 
 Punion D_elt {
