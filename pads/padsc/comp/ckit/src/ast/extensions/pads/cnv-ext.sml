@@ -3171,14 +3171,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       containsRecord=contR, largeHeuristic=lH, 
 			       labels = [SOME (name, ftyName, (paramNames, args))]}] 
 			  end
+		     (* Not storing strings read via RE yet, so Static for now *) 
 		     fun genTyPropsBrief (e, labelOpt) = case extractString e 
                            of NONE =>  (* either regular expression or error case; error reported elsewhere *)
-			        [{diskSize=TyProps.Variable, memChar=TyProps.Dynamic, endian=false, isRecord=false, 
+			        [{diskSize=TyProps.Variable, memChar=TyProps.Static, endian=false, isRecord=false, 
 				  containsRecord=false, largeHeuristic=false, 
 				  labels = [NONE]}] 
 		           | SOME s => 
 			     let val  ds = TyProps.Size(IntInf.fromInt (String.size s), IntInf.fromInt 0)
-			     in [{diskSize=ds, memChar=TyProps.Dynamic, endian=false, isRecord=false, 
+			     in [{diskSize=ds, memChar=TyProps.Static, endian=false, isRecord=false, 
 				  containsRecord=false, largeHeuristic=false, 
 				  labels = [NONE]}] 
 			     end
