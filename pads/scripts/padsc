@@ -20,7 +20,17 @@
 #            the script fails and reports an error.
 #
 
+set _pads_status = OK
+
 if (! $?PADS_HOME) then
+  set _pads_status = FAILED
+else
+  if ("$PADS_HOME"x == x) then
+    set _pads_status = FAILED
+  endif
+endif
+
+if ($_pads_status == "FAILED") then
   echo "\n##############################################################################"
   echo "# Set env var PADS_HOME and then use padsc again."
   echo "##############################################################################\n"
@@ -54,7 +64,6 @@ set retarg = ""
 set retarg_OK = 1
 set help = 0
 
-#set echo
 foreach x ($*)
     switch ($x)
     case -r:
@@ -132,6 +141,28 @@ else
   endif
 endif
 
-exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-base/arch/$arch/include/ast -I /usr/common/lib/ocaml \
+set _ocaml_status = OK
+
+if (! $?OCAML_LIB_DIR) then
+  set _ocaml_status = FAILED
+else
+  if ("$OCAML_LIB_DIR"x == x) then
+    set _ocaml_status = FAILED
+  endif
+endif
+
+if ($_ocaml_status == "FAILED") then
+  set ocaml_lib_dir = /usr/common/lib/ocaml
+else
+  set ocaml_lib_dir = $OCAML_LIB_DIR
+endif
+
+if (-d $ocaml_lib_dir) then
+  set add_incs = "-I $ocaml_lib_dir"
+else
+  set add_incs = ""
+endif
+
+exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-base/arch/$arch/include/ast $add_incs \
 $lua $lda < /dev/null
 
