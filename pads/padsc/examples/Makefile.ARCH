@@ -43,6 +43,7 @@ test_pswitch  :: test_pswitch.c   pswitch.c     -lpadsc
 manifest_union :: munion.c        punion-manifest.c -lpadsc
 test_struct   :: test_struct.c    struct.c      -lpadsc
 test_struct2  :: test_struct2.c   struct2.c     -lpadsc
+test_struct3  :: test_struct3.c   struct3.c     -lpadsc
 test_union2   :: test_punion2.c   punion2.c     -lpadsc
 test_array    :: test_array.c     array.c       -lpadsc
 test_typedef  :: test_typedef.c   typedef.c     -lpadsc
@@ -58,7 +59,7 @@ test_fast_dib_mod :: test_fast_dib_mod.c  dibbler2-mod.c    -lpadsc
 test_depends  :: test_depends.c   depends.c     -lpadsc
 
 genp    : format1 format2 format3 format4 format5 format6 punion-manifest ai readinttest pswitch pswitch2 \
-          depends
+          depends struct3
 
 format1 : format1.p
 	  $(PADSC) ../p/format1.p $(RES_SPEC)
@@ -96,6 +97,9 @@ pswitch2 : pswitch2.p
 depends : depends.p
 	  $(PADSC) ../p/depends.p $(RES_SPEC)
 
+struct3 : struct3.p
+	  $(PADSC) ../p/struct3.p $(RES_SPEC)
+
 regress : genp\
 	  regress_test_format1 \
           regress_test_format2 \
@@ -107,7 +111,8 @@ regress : genp\
           regress_test_ai \
 	  regress_test_pswitch \
 	  regress_test_pswitch2 \
-	  regress_test_depends
+	  regress_test_depends \
+	  regress_test_struct3
 
 regress_test_format1 : test_format1
 	if [ -f tmp/tmp.test_format1 ]; then $(RM) tmp/tmp.test_format1; fi
@@ -168,6 +173,11 @@ regress_test_depends : test_depends
 	if [ -f tmp/tmp.depends ]; then $(RM) tmp/tmp.depends; fi
 	(./test_depends <../data/depends 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.depends
 	diff tmp/tmp.depends ../regress/depends.regress || echo TEST_DEPENDS DIFFERS
+
+regress_test_struct3 : test_struct3
+	if [ -f tmp/tmp.struct3 ]; then $(RM) tmp/tmp.struct3; fi
+	(./test_struct3 <../data/struct3 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.struct3
+	diff tmp/tmp.struct3 ../regress/struct3.regress || echo TEST_STRUCT3 DIFFERS
 
 clean :
 	$(RM) -f *~ *.o $(ALL_TESTS)

@@ -48,7 +48,8 @@ structure ParseTreeExt =
 		       params: ('ct * 'decr) list, 
 		       isRecord : bool,
 		       isFile : bool,
-		       fields : (('dt, 'decr, 'exp) PSField) list}
+		       fields : (('dt, 'decr, 'exp) PSField) list,
+		       postCond : 'exp option}
          | PArray  of {name : string, 
 		       baseTy : Pty, 
 		       params : ('ct * 'decr) list, 

@@ -81,6 +81,7 @@ struct
                ("compute",  Tokens.PCOMPUTE),       
                ("precord", Tokens.PRECORD),     
                ("pfile", Tokens.PFILE),     
+               ("where", Tokens.PWHERE),     
                ("EOR", Tokens.EOR)	       
               ])
 

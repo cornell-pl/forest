@@ -1,0 +1,173 @@
+Data file = standard in
+warning: Installing default IO discipline : newline-terminated records
+Error : line 3 char 12 : User constraint on field a violated.
+[line 3]23|9|24|12.>>>5<<< - 2 6
+Error : line 3 char 16 : User constraint on field t violated.
+[line 3]23|9|24|12.5 - >>>2<<< 6
+read returned error
+warning: Error : line 4 char 15 : spaces not allowed in a_int field unless flag PDC_WSPACE_OK is set
+[line 4]12|23|9|24|12.>>> <<<ksf 1 1
+Error : line 4 char 20 : User constraint on field t violated.
+[line 4]12|23|9|24|12. ksf >>>1<<< 1
+Error : line 4 char 1 : Post condition for pstruct line violated.
+[line 4]>>>12|23|9|24|12. ksf 1 1<<<
+read returned error
+Error : line 5 char 1 : Post condition for pstruct line violated.
+[line 5]>>>3|4.2 bobg 2 17<<<
+read returned error
+*****************************************************************************************************
+<top> : struct line
+*****************************************************************************************************
+Errors: good vals:          2    bad vals:          3    pcnt-bad:   60.000
+  Characterizing errors:  min 0 max 0 avg 0.000
+    => distribution of top 1 values out of 1 distinct values:
+        val:          0 count:          2  pcnt-of-good-vals:  100.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          2  pcnt-of-good-vals:  100.000
+[Describing each field of <top>]
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.f : array intList of a_int32
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Array lengths: good vals:          5    bad vals:          0    pcnt-bad:    0.000
+  Characterizing lengths:  min 2 max 5 avg 4.000
+    => distribution of top 3 values out of 3 distinct values:
+        val:          4 count:          2  pcnt-of-good-vals:   40.000
+        val:          5 count:          2  pcnt-of-good-vals:   40.000
+        val:          2 count:          1  pcnt-of-good-vals:   20.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          5  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.f.allArrayElts : all array elements
+=====================================================================================================
+good vals:         20    bad vals:          0    pcnt-bad:    0.000
+  Characterizing all array elements:  min 3 max 24 avg 15.150
+    => distribution of top 6 values out of 6 distinct values:
+        val:         12 count:          6  pcnt-of-good-vals:   30.000
+        val:          9 count:          4  pcnt-of-good-vals:   20.000
+        val:         23 count:          4  pcnt-of-good-vals:   20.000
+        val:         24 count:          4  pcnt-of-good-vals:   20.000
+        val:          3 count:          1  pcnt-of-good-vals:    5.000
+        val:          4 count:          1  pcnt-of-good-vals:    5.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:         20  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.f.arrayDetail[0] : array element
+=====================================================================================================
+good vals:          5    bad vals:          0    pcnt-bad:    0.000
+  Characterizing array element:  min 3 max 23 avg 12.400
+    => distribution of top 3 values out of 3 distinct values:
+        val:         12 count:          3  pcnt-of-good-vals:   60.000
+        val:          3 count:          1  pcnt-of-good-vals:   20.000
+        val:         23 count:          1  pcnt-of-good-vals:   20.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          5  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.f.arrayDetail[1] : array element
+=====================================================================================================
+good vals:          5    bad vals:          0    pcnt-bad:    0.000
+  Characterizing array element:  min 4 max 23 avg 16.400
+    => distribution of top 3 values out of 3 distinct values:
+        val:         23 count:          3  pcnt-of-good-vals:   60.000
+        val:          4 count:          1  pcnt-of-good-vals:   20.000
+        val:          9 count:          1  pcnt-of-good-vals:   20.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          5  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.f.arrayDetail[2] : array element
+=====================================================================================================
+good vals:          4    bad vals:          0    pcnt-bad:    0.000
+  Characterizing array element:  min 9 max 24 avg 12.750
+    => distribution of top 2 values out of 2 distinct values:
+        val:          9 count:          3  pcnt-of-good-vals:   75.000
+        val:         24 count:          1  pcnt-of-good-vals:   25.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          4  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.f.arrayDetail[3] : array element
+=====================================================================================================
+good vals:          4    bad vals:          0    pcnt-bad:    0.000
+  Characterizing array element:  min 12 max 24 avg 21.000
+    => distribution of top 2 values out of 2 distinct values:
+        val:         24 count:          3  pcnt-of-good-vals:   75.000
+        val:         12 count:          1  pcnt-of-good-vals:   25.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          4  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.f.arrayDetail[4] : array element
+=====================================================================================================
+good vals:          2    bad vals:          0    pcnt-bad:    0.000
+  Characterizing array element:  min 12 max 12 avg 12.000
+    => distribution of top 1 values out of 1 distinct values:
+        val:         12 count:          2  pcnt-of-good-vals:  100.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          2  pcnt-of-good-vals:  100.000
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.a : int32
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+good vals:          3    bad vals:          2    pcnt-bad:   40.000
+  Characterizing int32:  min 2 max 5 avg 3.667
+    => distribution of top 3 values out of 3 distinct values:
+        val:          2 count:          1  pcnt-of-good-vals:   33.333
+        val:          4 count:          1  pcnt-of-good-vals:   33.333
+        val:          5 count:          1  pcnt-of-good-vals:   33.333
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          3  pcnt-of-good-vals:  100.000
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.user : union auth_id_t
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Union tag: good vals:          5    bad vals:          0    pcnt-bad:    0.000
+  Characterizing tag:  min unauthorized (    1)  max id (    2)
+    => distribution of top 2 values out of 2 distinct values:
+        val: id (    2)             count:          3  pcnt-of-good-vals:   60.000
+        val: unauthorized (    1)   count:          2  pcnt-of-good-vals:   40.000
+. . . . . .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING                     count:          5  pcnt-of-good-vals:  100.000
+[Describing each tag arm of <top>.user]
+=====================================================================================================
+<top>.user.unauthorized : uint8
+=====================================================================================================
+good vals:          2    bad vals:          0    pcnt-bad:    0.000
+  Characterizing uint8:  min 45 max 45 avg 45.000
+    => distribution of top 1 values out of 1 distinct values:
+        val:         45 count:          2  pcnt-of-good-vals:  100.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          2  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.user.id : string
+=====================================================================================================
+String lengths: good vals:          3    bad vals:          0    pcnt-bad:    0.000
+  Characterizing lengths:  min 3 max 4 avg 3.333
+    => distribution of top 2 values out of 2 distinct values:
+        val:          3 count:          2  pcnt-of-good-vals:   66.667
+        val:          4 count:          1  pcnt-of-good-vals:   33.333
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          3  pcnt-of-good-vals:  100.000
+  Characterizing strings:
+    => distribution of top 2 strings out of 2 distinct strings:
+        val: "ksf"  count:          2  pcnt-of-good-vals:   66.667
+        val: "bobg" count:          1  pcnt-of-good-vals:   33.333
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING     count:          3  pcnt-of-good-vals:  100.000
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.t : int32
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+good vals:          3    bad vals:          2    pcnt-bad:   40.000
+  Characterizing int32:  min 1 max 2 avg 1.667
+    => distribution of top 2 values out of 2 distinct values:
+        val:          2 count:          2  pcnt-of-good-vals:   66.667
+        val:          1 count:          1  pcnt-of-good-vals:   33.333
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          3  pcnt-of-good-vals:  100.000
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.s : int32
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+good vals:          5    bad vals:          0    pcnt-bad:    0.000
+  Characterizing int32:  min 1 max 17 avg 7.200
+    => distribution of top 5 values out of 5 distinct values:
+        val:          1 count:          1  pcnt-of-good-vals:   20.000
+        val:          5 count:          1  pcnt-of-good-vals:   20.000
+        val:          6 count:          1  pcnt-of-good-vals:   20.000
+        val:          7 count:          1  pcnt-of-good-vals:   20.000
+        val:         17 count:          1  pcnt-of-good-vals:   20.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          5  pcnt-of-good-vals:  100.000

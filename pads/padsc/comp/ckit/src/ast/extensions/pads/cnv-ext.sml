@@ -575,6 +575,7 @@ structure CnvExt : CNVEXT = struct
 	      val rep = "rep"
 	      val ted = "ted"
 	      val tem = "tem"
+	      val tloc = "tloc"
 	      val all = "structLevel"
 	      val prefix = "prefix"
 	      val what = "what"
@@ -1469,7 +1470,7 @@ structure CnvExt : CNVEXT = struct
 		  end
 
 	      fun cnvPStruct ({name:string, isRecord, isFile, params: (pcty * pcdecr) list, 
-			       fields : (pdty, pcdecr, pcexp) PX.PSField list}) = 
+			       fields : (pdty, pcdecr, pcexp) PX.PSField list, postCond}) = 
 	          let (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b r m (PX.Full fd) = f fd
                         | mungeField f b r m (PX.Brief e) = b e
@@ -1841,6 +1842,37 @@ structure CnvExt : CNVEXT = struct
 			     List.concat(List.map doOne ctNoptEs)
 			 end
 
+		     fun genCheckPostConstraint postCon = 
+			 case postCon of NONE => ([],[])  (* get begin loc for struct, check constraint*)
+                         | SOME expr => (
+                            let val strLocD = P.varDeclS'(PL.locPCT, tloc)
+				val locX = PT.Id tloc
+				val getBeginLocS = PL.getLocBeginS(PT.Id ts, P.addrX locX)
+				val getEndLocSs = [PL.getLocEndS(PT.Id ts, P.addrX locX, ~1)]
+				val expr = PTSub.substExps (!subList) expr
+				val () = expEqualTy(expr, CTintTys, 
+						    fn s=> ("Post condition for pstruct "^
+							    name ^ " " ^
+							    "does not have integer type."))
+				val reportErrSs = 
+				       getEndLocSs
+				     @ reportStructErrorSs(PL.PDC_USER_CONSTRAINT_VIOLATION, false, locX)
+				     @ [PL.userErrorS(PT.Id ts,
+						      P.addrX(locX),
+						      fieldX(ed,errCode),
+						      PT.String("Post condition for pstruct "^
+								name ^ " " ^
+								"violated."), [])]
+				val condSs = 
+				       [P.mkCommentS ("Checking post constraint for pstruct "^ name ^".\n"),
+					PT.IfThen(
+                                           P.andX( P.lteX(fieldX(em,all), PL.EM_CHECK), P.notX expr),
+					   PT.Compound reportErrSs)]
+			    in
+			       ([strLocD,getBeginLocS], condSs)
+			    end (* end some case *))
+				 
+			     
 
                       (* -- Assemble read function *)
 		      val _ = pushLocalEnv()                                        (* create new scope *)
@@ -1853,11 +1885,13 @@ structure CnvExt : CNVEXT = struct
 			                     (genReadEOR reportStructErrorSs) 
 					     genReadMan fields  
 		                                                                    (* does type checking *)
-                      val readRecord = if isRecord then genReadEOR reportStructErrorSs () else []
+		      val (postLocSs, postCondSs) = genCheckPostConstraint postCond
+                      val readRecord = if isRecord  then genReadEOR reportStructErrorSs () else []
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val localDeclSs = List.map (P.varDeclS' o (fn(x,y) => (y,x))) localVars
-		      val bodySs = if 0 = List.length localVars then (readFields @ readRecord)
-			          else [PT.Compound (localDeclSs @ readFields @ readRecord)]
+		      val bodyS = localDeclSs @ postLocSs @ readFields @ postCondSs @ readRecord
+		      val bodySs = if 0 = List.length localDeclSs andalso not (Option.isSome postCond)
+				       then bodyS else [PT.Compound bodyS]
 		      val returnS = genReturnChk (P.arrowX(PT.Id (gMod(ed)), PT.Id nerr))
 		      val bodySs = bodySs @ [returnS]
 

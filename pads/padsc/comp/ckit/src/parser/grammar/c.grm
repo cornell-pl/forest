@@ -180,7 +180,11 @@ fun insertParams params =
 
 fun addComment ((name, expOpt), commentOpt) = (name, expOpt, commentOpt)
 
-
+fun addPostCond (decl,postCondOpt) = 
+   (case decl of
+    (PX.PStruct{isRecord,isFile,name,params,fields,postCond}) => 
+      PX.PStruct{isRecord=isRecord,isFile=isFile,name=name,params=params,fields=fields,postCond=postCondOpt} 
+    | s => s)
 
 (* PADS*)
 
@@ -232,7 +236,7 @@ end
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT | EOR (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE | PRECORD | PFILE (* PADS *)
+	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE | PRECORD | PFILE | PWHERE (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -310,9 +314,10 @@ end
         | pIsRecord of bool
         | pIsFile of bool
         | pTypedef of externalDecl
-        | pStruct of externalDecl
+        | pStruct of (declarator, ctype, decltype, expression) PX.PExternal
         | pStructFieldList of ((decltype, declarator, expression) PX.PSField) list
         | pStructField of (decltype, declarator, expression) PX.PSField
+	| pPostCondOpt of expression option
         | pManifestField of decltype * (declarator * expression) list
         | pConstraintOpt of expression option
         | pCommentOpt of string option
@@ -373,6 +378,11 @@ tu:
 					(emptySeq)
 	| tu externalDeclaration	(addOptToEnd(externalDeclaration, tu))
 
+(* PADS *)
+pPostCondOpt: (NONE)
+ | PWHERE LCURLY expr SEMICOLON RCURLY  (SOME expr)
+(* PADS END *)
+
 externalDeclaration:
 	  declaration			(SOME(markExternalDecl srcMap (ExternalDecl declaration,
 						                       declarationleft,
@@ -383,7 +393,11 @@ externalDeclaration:
 							               functionDefinitionright)))
 (* PADS: start external declarations *)
         | pTypedef RCURLY               (SOME(markExternalDecl srcMap (pTypedef,pTypedefleft,RCURLYright)))
-        | pStruct RCURLY                (SOME(markExternalDecl srcMap (pStruct,pStructleft,RCURLYright)))
+        | pStruct RCURLY pPostCondOpt   (let val augPStruct = addPostCond(pStruct, pPostCondOpt)
+                                             val structDecl = ExternalDeclExt augPStruct
+	                                 in
+					   SOME(markExternalDecl srcMap (structDecl,pStructleft,pPostCondOptright))
+				         end)
         | pUnion  RCURLY                (SOME(markExternalDecl srcMap (pUnion, pUnionleft, RCURLYright)))
         | pArray  RCURLY                (SOME(markExternalDecl srcMap (pArray, pArrayleft, RCURLYright)))
         | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,  pEnumleft,  RCURLYright)))
@@ -1073,11 +1087,12 @@ pStructFieldList:
     pStructField                     ([pStructField])
   | pStructField   pStructFieldList  (pStructField :: pStructFieldList)
 
+
 pStruct:
  pIsRecord pIsFile PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
  ( makeTypeName pName;
-   ExternalDeclExt(PX.PStruct {isRecord = pIsRecord, isFile = pIsFile, name = pName, 
-                               params = pTyParams, fields = pStructFieldList})
+   PX.PStruct {isRecord = pIsRecord, isFile = pIsFile, name = pName, 
+               params = pTyParams, fields = pStructFieldList, postCond = NONE}	
  )
 
 pForAllRange : 
