@@ -143,6 +143,6 @@ endif
 #set firstout = ""
 #exit 0
 
-exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/include -I /home/gsf/arch/$arch/include/ast \
+exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/include -I /home/gsf/arch/$arch/include/ast -I/usr/common/lib/ocaml \
 $lua $lda < /dev/null
 
