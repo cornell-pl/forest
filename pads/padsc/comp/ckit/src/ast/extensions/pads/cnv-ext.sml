@@ -810,8 +810,9 @@ structure CnvExt : CNVEXT = struct
 			  let val subList = ListPair.zip(formals, args)
 			      val rExp = PTSub.substExps subList exp
 			      val rrecExp = PTSub.substExps subList recExp
+			      val boundVars = "strlen" :: cFormals
 			  in
-      			      if  (PTSub.expIsClosed(cFormals, rExp)) andalso (PTSub.expIsClosed(cFormals, rrecExp)) then
+      			      if  (PTSub.expIsClosed(boundVars, rExp)) andalso (PTSub.expIsClosed(boundVars, rrecExp)) then
 				  let val cval = evalExprNoErrs rExp
 				      val crecval = evalExprNoErrs rrecExp
 				  in
@@ -2005,6 +2006,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan fields
                       val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic,labels} = 
  			               List.foldl (PTys.mergeTyInfo TyProps.add) PTys.minTyInfo tyProps
+
 		      val compoundDiskSize = TyProps.Struct ((ListPair.zip(List.rev labels, 
 									  (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
 		      val numArgs = List.length params
@@ -2761,14 +2763,15 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					 pred: pcexp option, comment: string option} = 
 			  let val PX.Name ftyName = pty
 			      val mc = lookupMemChar pty
-			      val ds = lookupDiskSize pty
+			      val ds = computeDiskSize(name, paramNames,pty,args)
 			      val contR = lookupContainsRecord pty	 
 			      val lH = lookupHeuristic pty 
 			      val () = if isVirtual 
 				       then PE.error ("Omitted fields not supported in punions ("^name ^"). ")
 				       else ()
 			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isRecord, 
-			       containsRecord=contR, largeHeuristic=lH, labels = [SOME (name,ftyName,(paramNames,args))]}] 
+			       containsRecord=contR, largeHeuristic=lH, 
+			       labels = [SOME (name,ftyName,(paramNames,args))]}] 
 			  end
 		     fun genTyPropsBrief e = [] (* not used in unions *)
 		     val tyProps = mungeVariants genTyPropsFull genTyPropsBrief genTyPropsMan variants
@@ -2780,12 +2783,19 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				    then PE.error "All branches of union must terminate record if any branch does."
 				    else ())
 					
-		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
 		     val {diskSize,memChar,endian,isRecord=_,containsRecord,largeHeuristic, labels} = 
-			 List.foldr (PTys.mergeTyInfo (TyProps.mergeDiskSize mUnion)) PTys.minTyInfo tyProps
+			 List.foldl (PTys.mergeTyInfo (fn (x,y) => x) ) PTys.minTyInfo tyProps
+		     fun computeUnionDiskSize tyProps = 
+			 case tyProps of [] => TyProps.mkSize(0,0)
+			 | [r:PTys.sTyInfo] => #diskSize r
+			 | (r::rs) => TyProps.overlay(#diskSize r,  computeUnionDiskSize rs   )
+		     val diskSize = computeUnionDiskSize tyProps
+		     val compoundDiskSize = TyProps.Union ((ListPair.zip(List.rev labels, 
+									  (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
 		     val numArgs = List.length params
-		     val unionProps = buildTyProps(name, PTys.Union, diskSize, TyProps.Union [], memChar, 
-						   endian, isRecord, containsRecord, largeHeuristic, isFile, pdTid, numArgs)
+		     val unionProps = buildTyProps(name, PTys.Union, diskSize, compoundDiskSize, memChar, 
+						   endian, isRecord, containsRecord, 
+						   largeHeuristic, isFile, pdTid, numArgs)
                      val () = PTys.insert(Atom.atom name, unionProps)
 
                      (* union: generate canonical representation *)
@@ -4505,8 +4515,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 	  fun cnvPSelect {selName,tyName, varName, path} = 
 	      let val (Select.Id root):: path = Select.sexprToPath(P.stripExp path)
 		  val () = if root = varName then ()
-			       else raise Fail ("Select parameter ("^varName^")and root of path expression ("^root^") don't match.")
-		  val errS = "Request "^selName^" ill-typed."
+			       else raise Fail (selName^": parameter ("^varName^
+						") and root of path expression ("^root^") don't match.")
+		  val errS = selName^": ill-typed path expression."
 		  fun getPos(tyName,path,accumSize,args) = 
 		      let val cds = lookupCompoundDiskSize (PX.Name tyName)
 			            handle Fail s => raise Fail (s^" Required for " ^selName^" request.")
@@ -4515,7 +4526,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			  of TyProps.Base ds => (tyName, accumSize, reduceCDSize(args, ds), args)
                           |  TyProps.Struct dsl => 
 			      let val (f,path) = case path of ((Select.Dot f)::path) => (f,path) | _ => raise Fail errS
-				  val () = print "In struct case\n"
 				  fun findField ([], accum) = raise Fail errS
 				    | findField((sOpt, diskSize)::ss, accum) = 
 				      let val closedDS = reduceCDSize(args,diskSize)
@@ -4525,9 +4535,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					     if not (l = f) then 
 						 findField(ss, TyProps.add(closedDS,accum))
 					     else if (tyName = "Pcompute") then
-						 raise Fail ("Ill-formed request: Computed field "^l^
+						 raise Fail (selName ^ ": ill-formed request: Computed field "^l^
 							     " has no external representation.")
-					     else getPos(tyName,path,accum,reduceArgList(args,sargs))
+					     else
+						  getPos(tyName,path,accum,reduceArgList(args,sargs))
+
 				      end
 			      in
 				  findField(dsl,accumSize)
@@ -4546,7 +4558,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				 val prelimClosed = reduceCDSize(args, prelimSize)
 				 val accum = TyProps.add(accumSize, prelimClosed)
 			     in
-				 getPos(baseTy, path, accum, reduceArgList(args,arrayArgs))
+				  getPos(baseTy, path, accum, reduceArgList(args,arrayArgs))
 			     end
                           |  _ => raise Fail "Not yet implemented"
 		      end

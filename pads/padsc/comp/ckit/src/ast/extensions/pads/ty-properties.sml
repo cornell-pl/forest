@@ -2,17 +2,18 @@ structure TyProps =
 
 struct
    structure P = ParseTreeUtil
+   structure PT = ParseTree
 
    datatype diskSize =  Size of IntInf.int * IntInf.int  (* number of bytes, number of EOR markers *)
-                      | Param of string list * string option * ParseTree.expression * ParseTree.expression
+                      | Param of string list * string option * PT.expression * PT.expression
                       | Variable
 
-   type argList = string list * ParseTree.expression list
+   type argList = string list * PT.expression list
    type labelInfo = string * string * argList (* label name, label type, supplied arguments *)
 
    datatype compoundSize =  Base of diskSize | Typedef of diskSize 
                           | Struct of (labelInfo option * diskSize) list 
-                          | Union of diskSize list 
+                          | Union of (labelInfo option * diskSize) list 
                           | Array of {baseTy : string, args : argList,
 				      elem : diskSize, sep : diskSize, term : diskSize, length : diskSize}
                           | Enum of diskSize
@@ -34,22 +35,37 @@ struct
    fun add (Variable, _ ) = Variable 
      | add (_, Variable ) = Variable 
      | add (Size(x1,y1), Size(x2,y2)) = Size(IntInf.+(x1, x2), IntInf.+(y1, y2))
-     | add (Size(x1,y1), Param(ps, s, ebytes, erecs)) = Param(ps, s, P.plusX(ParseTree.IntConst x1, ebytes),
-							             P.plusX(ParseTree.IntConst y1, erecs))
-     | add (Param(ps, s, ebytes, erecs), Size(x2,y2)) = Param(ps, s, P.plusX(ebytes, ParseTree.IntConst x2),
-							             P.plusX(erecs, ParseTree.IntConst y2))
+     | add (Size(x1,y1), Param(ps, s, ebytes, erecs)) = Param(ps, s, P.plusX(PT.IntConst x1, ebytes),
+							             P.plusX(PT.IntConst y1, erecs))
+     | add (Param(ps, s, ebytes, erecs), Size(x2,y2)) = Param(ps, s, P.plusX(ebytes, PT.IntConst x2),
+							             P.plusX(erecs, PT.IntConst y2))
      | add (Param(ps1,s1,ebytes1, erecs1), Param(ps2,s2,ebytes2,erecs2)) = 
              Param(ps1, NONE, P.plusX(ebytes1, ebytes2), P.plusX(erecs1, erecs2))
+
+
+   val dynamicValue = PLib.strLen(PT.String "Non-static-length")
+   fun merge (e1,e2) =  P.condX(P.eqX(e1, e2), e2, dynamicValue)
+
+   fun overlay (Variable, _ ) = Variable 
+     | overlay (_, Variable ) = Variable 
+     | overlay (r as Size(x1,y1), Size(x2,y2)) = 
+       if x1 = x2 andalso y1 = y2 then  r else Variable
+     | overlay (Size(x1,y1), Param(ps, s, ebytes, erecs)) = 
+	   Param(ps, s, merge(PT.IntConst x1, ebytes), merge(PT.IntConst y1, erecs))
+     | overlay (Param(ps, s, ebytes, erecs), Size(x2,y2)) = 
+	   Param(ps, s, merge(ebytes, PT.IntConst x2), merge(erecs, PT.IntConst y2))
+     | overlay (Param(ps1,s1,ebytes1, erecs1), Param(ps2,s2,ebytes2,erecs2)) = 
+             Param(ps1, NONE, merge(ebytes1, ebytes2), merge(erecs1, erecs2))
 
    (* scale first argument by first first component of second;
       using byte size to represent array repetition. *)
    fun scale (Variable, _ ) = Variable 
      | scale (_, Variable ) = Variable 
      | scale (Size(x1,y1), Size(rep,_)) = Size(IntInf.*(x1, rep), IntInf.*(y1, rep))
-     | scale (Size(x1,y1), Param(ps, s, rep, _)) = Param(ps, s, P.timesX(ParseTree.IntConst x1, rep),
-							        P.timesX(ParseTree.IntConst y1, rep))
-     | scale (Param(ps, s, rep, _), Size(x2,y2)) = Param(ps, s, P.timesX(rep, ParseTree.IntConst x2),
-							          P.timesX(rep, ParseTree.IntConst y2))
+     | scale (Size(x1,y1), Param(ps, s, rep, _)) = Param(ps, s, P.timesX(PT.IntConst x1, rep),
+							        P.timesX(PT.IntConst y1, rep))
+     | scale (Param(ps, s, rep, _), Size(x2,y2)) = Param(ps, s, P.timesX(rep, PT.IntConst x2),
+							          P.timesX(rep, PT.IntConst y2))
      | scale (Param(ps1,s1,ebytes1, erecs1), Param(ps2,s2,rep,_)) = 
              Param(ps1, NONE, P.timesX(ebytes1, rep), P.plusX(erecs1, rep))
 
