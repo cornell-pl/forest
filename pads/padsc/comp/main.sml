@@ -161,7 +161,7 @@ structure Main : sig
             val compositeFile = tmp ".c"
             val includePrefix = ("#include <ckit-first.h>\n"^
 				 "#include <pads-internal.h>\n"^
-				 "#include <pglx-internal.h>\n"^
+				 (if !xmlFlag then "#include <pglx-internal.h>\n" else "") ^ 
 				 "#include \""^baseTyFile^"\"\n"^
                                  "\n")
             val compositeProg = (includePrefix ^
