@@ -17,11 +17,10 @@ punion auth_id_t {
 };
 
 pstruct http_v_t {
-  "HTTP//";
+  "HTTP/";
   auint8 major; '.';
   auint8 minor;           /- http minor mode
 };
-
 
 penum http_method_t {
     GET, 
@@ -41,12 +40,11 @@ int  checkVersion(http_v_t version, http_method_t meth) {
   return 1;
 }
 
-
 pstruct http_request_t {
   '\"';
   http_method_t meth;             /- Method used during request
   ' ';
-  http_method_t req_uri;          /- Requested uri.
+  astring(:' ':) req_uri;         /- Requested uri.
   ' ';
   http_v_t       version : checkVersion(version, meth);
                                   /- HTTP version number of request 
@@ -55,7 +53,6 @@ pstruct http_request_t {
 
 pstruct http_clf_t {
    host_t host;                   /- IP address of client requesting service
-   ' ';
    auth_id_t remoteID;            /- Remote identity; '-' indicates not obtained.
    ' ';
    auth_id_t auth;                /- Name of authenticated user.

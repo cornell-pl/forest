@@ -1,6 +1,28 @@
 #include "libpadsc.h"
 #include "ai.h"
 
+static const char* meth2str(http_method_t meth) {
+  switch(meth) {
+  case GET:
+    return "GET";
+  case PUT:
+    return "PUT";
+  case POST:
+    return "POST";
+  case HEAD:
+    return "HEAD";
+  case DELETE:
+    return "DELETE";
+  case LINK:
+    return "LINK";
+  case UNLINK:
+    return "UNLINK";
+  default:
+    break;
+  }
+  return "* unknown meth *";
+}
+
 int main(int argc, char** argv) {
   int             i;
   PDC_t*          pdc;
@@ -38,9 +60,9 @@ int main(int argc, char** argv) {
 	}
       }
       if (ai.remoteID.tag == unauthorized) {
-	error(0, "authid: -");
+	error(0, "remoteID: -");
       } else {
-	error(0, "authid: %-.*s", ai.remoteID.val.id.len, ai.remoteID.val.id.str);
+	error(0, "remoteID: %-.*s", ai.remoteID.val.id.len, ai.remoteID.val.id.str);
       }
       if (ai.auth.tag == unauthorized) {
 	error(0, "authid: -");
@@ -48,8 +70,8 @@ int main(int argc, char** argv) {
 	error(0, "authid: %-.*s", ai.auth.val.id.len, ai.auth.val.id.str);
       }
       error(0, "date: %-.*s", ai.date.len, ai.date.str);
-      error(0, "request meth: %-.*s  req_uri: %-.*s  version: %u.%u",
-	    ai.request.meth.len, ai.request.meth.str,
+      error(0, "request meth: %s  req_uri: %-.*s  version: %u.%u",
+	    meth2str(ai.request.meth),
 	    ai.request.req_uri.len, ai.request.req_uri.str,
 	    ai.request.version.major,
 	    ai.request.version.minor);
