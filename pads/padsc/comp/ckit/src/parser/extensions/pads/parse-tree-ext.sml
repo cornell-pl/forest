@@ -72,6 +72,12 @@ structure ParseTreeExt =
                         baseTy: Pty,
 			args   : 'exp list, 
 			pred : ('exp PPredicate) option}
+         | Popt of     {name : string,
+			params: ('ct * 'decr) list, 
+			args   : 'exp list,
+			isRecord : bool, 
+			isSource : bool,
+                        baseTy: Pty}
          | PStruct of {isAlt : bool,
 		       name : string, 
 		       params: ('ct * 'decr) list, 

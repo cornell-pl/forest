@@ -5863,6 +5863,43 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                 @ (emitXML galaxEDs)
 	      end
 
+
+          fun cnvPOpt ({name : string, params: (pcty * pcdecr) list, isRecord,
+			isSource : bool, baseTy: PX.Pty, args: pcexp list})=
+	      let val some = PX.Full { pty = baseTy, 
+				      args = args,
+				      name = "some_"^name, 
+				      isVirtual = false,
+				      isEndian = false,
+				      isRecord = false,
+				      containsRecord = false,
+				      largeHeuristic = false,
+				      pred = NONE, 
+				      comment = SOME "value is present",
+				      arrayDecl = false, 
+				      size = NONE,
+				      arraypred = []}
+		   val none =  PX.Manifest 
+				    { tyname = PL.uint32PCT,
+				      name   = "none_"^name,
+				      args   = [],
+				      isVirtual = true,
+				      expr = P.intX 0,
+				      pred = NONE,
+				      comment = SOME "value was not present"}
+		   val branches = PX.Ordered [some,none]
+		   val unionVal = {name = name,
+				   params = params,
+				   isRecord = isRecord,
+				   isSource = isSource,
+				   containsRecord = false, (* dummies to be filled in later *)
+				   largeHeuristic = false, (* dummies to be filled in later *)
+				   variants = branches,
+				   postCond = []}
+	      in
+		  cnvPUnion unionVal
+	      end
+
 	  fun cnvPCharClass {name, pred} = 
 	      let val _ = pushLocalEnv()
 		  val (apredCT, _ ) = cnvExpression pred
@@ -6034,6 +6071,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	  in
 	      case decl 
 	      of PX.PTypedef     t => cnvPTypedef   t
+              |  PX.Popt         p => cnvPOpt       p
               |  PX.PStruct      s => cnvPStruct    s
               |  PX.PUnion       u => cnvPUnion     u
               |  PX.PArray       a => cnvPArray     a

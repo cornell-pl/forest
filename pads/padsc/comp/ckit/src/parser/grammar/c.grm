@@ -282,7 +282,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, 
         | PSELECT | PCHARCLASS (* PADS *)
         | PTYPEDEF | PSTRUCT | PALTERNATES | PUNION  | PARRAY | PENUM (* PADS *)
 	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
-        | POMIT | PENDIAN | PCOMPUTE (* PADS *)
+        | POPT | POMIT | PENDIAN | PCOMPUTE (* PADS *)
         | PFROM  (*PADS*)
  	| PRECORD | PSOURCE | PWHERE  (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT | PPREFIX (* PADS*)
@@ -365,6 +365,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, 
         | pIsSource of bool
         | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
+	| pOpt of externalDecl
         | pREexpr of expression
         | pOmitOpt of bool
         | pStruct of (declarator, ctype, decltype, expression) PX.PExternal
@@ -500,6 +501,7 @@ externalDeclaration:
 							               functionDefinitionright)))
 (* PADS: start external declarations *)
         | pTypedef                      (SOME(markExternalDecl srcMap (pTypedef,pTypedefleft,pTypedefright)))
+        | pOpt                          (SOME(markExternalDecl srcMap (pOpt,pOptleft,pOptright)))
         | pStruct RCURLY pPostCondOpt   (let val augPStruct = addStructPostCond(pStruct, pPostCondOpt)
                                              val structDecl = ExternalDeclExt augPStruct
 	                                 in
@@ -1174,6 +1176,16 @@ pTypedef:
 				containsRecord = false,
 				largeHeuristic = false,
 				pred = pTypedefPredOpt}) )
+
+pOpt:
+ pIsSource pIsRecord POPT pName pOptActParams pName pushScope pTyParams 
+  (makeTypeName pName2;
+   ExternalDeclExt(PX.Popt {baseTy   = PX.Name pName1,
+			    args     = pOptActParams,
+			    params   = pTyParams,
+			    name     = pName2,
+			    isRecord = pIsRecord,
+			    isSource = pIsSource}))
 
 pREexpr :
    PRE expr                     (ExprExt(PX.Pregexp expr))
