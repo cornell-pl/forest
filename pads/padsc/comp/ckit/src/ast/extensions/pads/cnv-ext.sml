@@ -958,7 +958,7 @@ structure CnvExt : CNVEXT = struct
 			              [P.assignS(P.arrowX(PT.Id pd, PT.Id nerr), P.zero)]
 				      else []
 		      val innerInitDecls = incNerrSs
-				     @ [PL.unsetPanicS(PT.Id pd),
+				     @ [PL.initParseStateS(PT.Id pd),
 					P.assignS(P.arrowX(PT.Id pd, PT.Id errCode), PL.PDC_NO_ERROR)]
 		      val returnTy =  PL.toolErrPCT
 		      val checkParamsSs = [PL.IODiscChecks3P(PT.String readName, PT.Id m, PT.Id pd, PT.Id rep)]
