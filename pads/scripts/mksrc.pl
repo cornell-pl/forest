@@ -12,7 +12,9 @@ my $cc_include =  "-I $pads_home/padsc/include";
 open(IFILE, $ifilename) || die "Could not open input file $ifilename\n";
 
 $defgen = 0;
+my $lines = 0;
 top: while (<IFILE>) {
+  $lines++;
   s/\#gen_include/\#include/g;
   if (/DEFGEN\((.*)\)/) {
     $defgenfile = $1;
@@ -146,10 +148,28 @@ top: while (<IFILE>) {
   } else {
     if (/\#\#/) {
       # comment line at the top -- do nothing
+    } elsif ($lines == 1 && m|^\s*/\*(.*)$|) {
+      # If the very first line starts with an old-style C comment,
+      # then eat lines until end of the old-style comment found.
+      # Note that if a line has
+      #    /* foo */ bar
+      # then bar is totally ignored, so do not start your files that way.
+      # Useful for skipping past auto-inserted copyright notices.
+      my $rest = $1;
+      # print "Skipping line $lines\n";
+      if ($rest !~ m|\*/|) {
+	while (<IFILE>) {
+	  $lines++;
+	  # print "Skipping line $lines\n";
+	  if (m|\*/|) {
+	    next top;
+	  }
+	}
+      }
     } else {
       chomp;
       if (length($_) > 0) {
-	print "Warning: DEFGEN not specified, so this line has no home:\n$_\n";
+	print "Warning: line $lines has no target gen file\n";
       }
     }
   }
