@@ -1,4 +1,5 @@
-#!/home/gsf/arch/linux.i386/bin/ksh
+#!/usr/common/ast/bin/ksh
+#   used to be: /home/gsf/arch/linux.i386/bin/ksh
 # Mnemonic:  cb2pads
 # Abstract:  This script will cause a copy book to be parsed and converted into
 #            various C and header files that can be used to process data that
@@ -61,6 +62,7 @@ fi
 
 name=${1%%.*}
 name=${name##*/}		# reduce to the copybook name
+echo "name = $name"
 
 # Preparse the copy book (fixup) and then work on the preparser output
 # to generate C code and header files.

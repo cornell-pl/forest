@@ -53,7 +53,8 @@ WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_array test_array_string test_record_enum test_struct test_struct2 \
                test_punion2 test_punion_manifest test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
-               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct rw_pendian rwxml_struct
+               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct rw_pendian rwxml_struct \
+               test_cpyrecgen_rps rwxml_cpyrecgen_rps
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
@@ -309,6 +310,18 @@ regress_rwxml_struct_o: rwxml_struct
 
 regress_rwxml_struct_d: rwxml_struct_d
 	@(args=""; input="../../data/ex_data.struct"; suf=""; $(RegressInput))
+
+regress_test_cpyrecgen_rps_o: test_cpyrecgen_rps_o
+	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(RegressInput))
+
+regress_test_cpyrecgen_rps_d: test_cpyrecgen_rps_d
+	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(RegressInput))
+
+regress_rwxml_cpyrecgen_rps_o: rwxml_cpyrecgen_rps_o
+	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(RegressInput))
+
+regress_rwxml_cpyrecgen_rps_d: rwxml_cpyrecgen_rps_d
+	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(RegressInput))
 
 clean:
 	$(RM) -f *~ *.o $(CLEANUP_TESTS)

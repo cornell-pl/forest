@@ -140,14 +140,14 @@ Pebc_int32       1      Pint32        Pbase_m    Pbase_pd             -         
 Pebc_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P(p1)        S           Y
 Pebc_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P(p1)        S           Y
 
-Pbcd_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P((p1+1)/2)  S           Y
-Pbcd_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P((p1+1)/2)  S           Y
-Pbcd_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P((p1+1)/2)  S           Y
-Pbcd_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P((p1+1)/2)  S           Y
-Pbcd_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P((p1+1)/2)  S           Y
-Pbcd_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P((p1+1)/2)  S           Y
-Pbcd_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P((p1+1)/2)  S           Y
-Pbcd_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P((p1+1)/2)  S           Y
+Pbcd_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P((p1+2)/2)  S           Y
+Pbcd_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P((p1+2)/2)  S           Y
+Pbcd_uint16      1      Puint16       Pbase_m    Pbase_pd             -                    -                     Puint16_acc     P((p1+2)/2)  S           Y
+Pbcd_int16       1      Pint16        Pbase_m    Pbase_pd             -                    -                     Pint16_acc      P((p1+2)/2)  S           Y
+Pbcd_uint32      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Puint32_acc     P((p1+2)/2)  S           Y
+Pbcd_int32       1      Pint32        Pbase_m    Pbase_pd             -                    -                     Pint32_acc      P((p1+2)/2)  S           Y
+Pbcd_uint64      1      Puint64       Pbase_m    Pbase_pd             -                    -                     Puint64_acc     P((p1+2)/2)  S           Y
+Pbcd_int64       1      Pint64        Pbase_m    Pbase_pd             -                    -                     Pint64_acc      P((p1+2)/2)  S           Y
 
 Psbl_uint8       1      Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      P(p1)        S           Y
 Psbl_int8        1      Pint8         Pbase_m    Pbase_pd             -                    -                     Pint8_acc       P(p1)        S           Y
@@ -176,14 +176,14 @@ Pebc_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -         
 Pebc_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P(p1)        S           Y
 Pebc_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P(p1)        S           Y
 
-Pbcd_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P((p1+1)/2)  S           Y
-Pbcd_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P((p1+1)/2)  S           Y
-Pbcd_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P((p1+1)/2)  S           Y
-Pbcd_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P((p1+1)/2)  S           Y
-Pbcd_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P((p1+1)/2)  S           Y
-Pbcd_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P((p1+1)/2)  S           Y
-Pbcd_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P((p1+1)/2)  S           Y
-Pbcd_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P((p1+1)/2)  S           Y
+Pbcd_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P((p1+2)/2)  S           Y
+Pbcd_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P((p1+2)/2)  S           Y
+Pbcd_ufpoint16   2      Pufpoint16    Pbase_m    Pbase_pd             -                    -                     Pufpoint16_acc  P((p1+2)/2)  S           Y
+Pbcd_fpoint16    2      Pfpoint16     Pbase_m    Pbase_pd             -                    -                     Pfpoint16_acc   P((p1+2)/2)  S           Y
+Pbcd_ufpoint32   2      Pufpoint32    Pbase_m    Pbase_pd             -                    -                     Pufpoint32_acc  P((p1+2)/2)  S           Y
+Pbcd_fpoint32    2      Pfpoint32     Pbase_m    Pbase_pd             -                    -                     Pfpoint32_acc   P((p1+2)/2)  S           Y
+Pbcd_ufpoint64   2      Pufpoint64    Pbase_m    Pbase_pd             -                    -                     Pufpoint64_acc  P((p1+2)/2)  S           Y
+Pbcd_fpoint64    2      Pfpoint64     Pbase_m    Pbase_pd             -                    -                     Pfpoint64_acc   P((p1+2)/2)  S           Y
 
 Psbl_ufpoint8    2      Pufpoint8     Pbase_m    Pbase_pd             -                    -                     Pufpoint8_acc   P(p1)        S           Y
 Psbl_fpoint8     2      Pfpoint8      Pbase_m    Pbase_pd             -                    -                     Pfpoint8_acc    P(p1)        S           Y

@@ -2857,7 +2857,7 @@ rev_fn_name ## _io(P_t *pads, Sfio_t *io, targ_type i)
 }
 /* END_MACRO */
 
-#define PDCI_EBC2INT_GEN(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max)
+#define PDCI_EBC2INT_GEN(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max)
 targ_type
 fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
@@ -2920,11 +2920,12 @@ fn_name ## _norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **p
 }
 
 ssize_t
-rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, targ_type i, Puint32 num_digits)
+rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, targ_type i_in, Puint32 num_digits)
 {
   Pint32 n = num_digits;
   Pbyte  ebc[30];
   targ_type lim;
+  higher_targ_type     i      = i_in;
 
   if (num_digits > outbuf_len) {
     if (outbuf_full) { (*outbuf_full) = 1; }
@@ -2961,11 +2962,12 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
 }
 
 ssize_t
-rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i, Puint32 num_digits)
+rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i_in, Puint32 num_digits)
 {
   Pint32 n = num_digits;
   Pbyte  ebc[30];
   targ_type lim;
+  higher_targ_type i     = i_in;
 
   if (n == 0 || n > nd_max) {
     errno = EDOM;
@@ -3118,13 +3120,13 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_digits)
 }
 /* END_MACRO */
 
-#define PDCI_BCD2INT_GEN(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max)
+#define PDCI_BCD2INT_GEN(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max)
 targ_type
 fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   int  digit, two_digits;
   int  neg = 0;
-  Pint32 num_bytes = ((num_digits+1) / 2);
+  Pint32 num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
   targ_type res = 0;
 
   (*ptr_out) = (Pbyte*)bytes + num_bytes;
@@ -3177,7 +3179,7 @@ fn_name ## _norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **p
 {
   int  digit, two_digits;
   int  neg = 0;
-  Pint32 num_bytes = ((num_digits+1) / 2);
+  Pint32 num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
   targ_type res = 0;
 
   (*ptr_out) = (Pbyte*)bytes + num_bytes;
@@ -3211,15 +3213,16 @@ fn_name ## _norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **p
 }
 
 ssize_t
-rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, targ_type i, Puint32 num_digits)
+rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_full, targ_type i_in, Puint32 num_digits)
 {
   Pbyte  bcd[30];
   Pint32 num_bytes;
   int       x, n;
-  int       oddbytes = (num_digits % 2 == 1);
+  int       odd_digits = (num_digits % 2 == 1);
   targ_type lim;
+  higher_targ_type i     = i_in;
 
-  num_bytes = ((num_digits+1) / 2);
+  num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
   if (num_bytes > outbuf_len) {
     if (outbuf_full) { (*outbuf_full) = 1; }
     errno = EDOM;
@@ -3238,13 +3241,12 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
   }
   n = num_bytes - 1;
   if (i < 0) {
-    if (!oddbytes) {  /* must use odd number of digits for negative number */
+    if (!odd_digits) {  /* must use odd number of digits for negative number */
       errno = EDOM;
       return -1;
     }
     i = -i;
-    bcd[n] = ((i%10)<<4) | 0xD; /* force sign nibble to negative */
-    n--;
+    bcd[n--] = ((i%10)<<4) | 0xD; /* force sign nibble to negative */
     i /= 10;
     while (n >= 0) {
       x = i % 100;
@@ -3252,10 +3254,11 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
       bcd[n--] = (x%10) | ((x/10)<<4);
     }
   } else { /* i positive */
-    if (oddbytes) {
-      bcd[n] = ((i%10)<<4);
-      n--;
+    if (odd_digits) {
+      bcd[n--] = ((i%10)<<4);
       i /= 10;
+    } else { /* for even number of digits, last byte is not used; set it to zero to be safe */
+      bcd[n--] = 0;
     }
     while (n >= 0) {
       x = i % 100;
@@ -3269,13 +3272,14 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
 }
 
 ssize_t
-rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i, Puint32 num_digits)
+rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i_in, Puint32 num_digits)
 {
   Pbyte  bcd[30];
   Pint32 num_bytes;
   int       x, n;
-  int       oddbytes = (num_digits % 2 == 1);
+  int       odd_digits = (num_digits % 2 == 1);
   targ_type lim;
+  higher_targ_type i     = i_in;
 
   if (num_digits == 0 || num_digits > nd_max) {
     errno = EDOM;
@@ -3288,16 +3292,15 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i, Puint32 num_digits)
       return -1;
     }
   }
-  num_bytes = ((num_digits+1) / 2);
+  num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
   n = num_bytes - 1;
   if (i < 0) {
-    if (!oddbytes) {  /* must use odd number of digits for negative number */
+    if (!odd_digits) {  /* must use odd number of digits for negative number */
       errno = EDOM;
       return -1;
     }
     i = -i;
-    bcd[n] = ((i%10)<<4) | 0xD; /* force sign nibble to negative */
-    n--;
+    bcd[n--] = ((i%10)<<4) | 0xD; /* force sign nibble to negative */
     i /= 10;
     while (n >= 0) {
       x = i % 100;
@@ -3305,10 +3308,11 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i, Puint32 num_digits)
       bcd[n--] = (x%10) | ((x/10)<<4);
     }
   } else { /* i positive */
-    if (oddbytes) {
-      bcd[n] = ((i%10)<<4);
-      n--;
+    if (odd_digits) {
+      bcd[n--] = ((i%10)<<4);
       i /= 10;
+    } else { /* for even number of digits, last byte is not used; set it to zero to be safe */
+      bcd[n--] = 0;
     }
     while (n >= 0) {
       x = i % 100;
@@ -3326,7 +3330,7 @@ targ_type
 fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   int  digit, two_digits;
-  Pint32 num_bytes = ((num_digits+1) / 2);
+  Pint32 num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
   targ_type res = 0;
 
   (*ptr_out) = (Pbyte*)bytes + num_bytes;
@@ -3377,7 +3381,7 @@ targ_type
 fn_name ## _norange(P_t *pads, const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
 {
   int  digit, two_digits;
-  Pint32 num_bytes = ((num_digits+1) / 2);
+  Pint32 num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
   targ_type res = 0;
 
   (*ptr_out) = (Pbyte*)bytes + num_bytes;
@@ -3417,7 +3421,7 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
   int       x, n;
   targ_type lim;
 
-  num_bytes = ((num_digits+1) / 2);
+  num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
   if (num_bytes > outbuf_len) {
     if (outbuf_full) { (*outbuf_full) = 1; }
     errno = EDOM;
@@ -3438,6 +3442,8 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
   if (num_digits % 2 == 1) {
     bcd[n--] = ((u%10)<<4);
     u /= 10;
+  } else { /* for even number of digits, last byte is not used; set it to zero to be safe */
+    bcd[n--] = 0;
   }
   while (n >= 0) {
     x = u % 100;
@@ -3468,11 +3474,13 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_digits)
       return -1;
     }
   }
-  num_bytes = ((num_digits+1) / 2);
+  num_bytes = ((num_digits+2)/2); /* XXX_CHECK */
   n = num_bytes - 1;
   if (num_digits % 2 == 1) {
     bcd[n--] = ((u%10)<<4);
     u /= 10;
+  } else { /* for even number of digits, last byte is not used; set it to zero to be safe */
+    bcd[n--] = 0;
   }
   while (n >= 0) {
     x = u % 100;
@@ -3699,22 +3707,22 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
 #endif
 
 #if P_CONFIG_EBC_INT > 0 || P_CONFIG_EBC_FPOINT > 0
-#  define PDCI_EBC2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max) \
-            PDCI_EBC2INT_GEN(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max)
+#  define PDCI_EBC2INT(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max) \
+            PDCI_EBC2INT_GEN(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max)
 #  define PDCI_EBC2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max) \
             PDCI_EBC2UINT_GEN(fn_name, rev_fn_name, targ_type, int_max, nd_max)
 #else
-#  define PDCI_EBC2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max)
+#  define PDCI_EBC2INT(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max)
 #  define PDCI_EBC2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max)
 #endif
 
 #if P_CONFIG_BCD_INT > 0 || P_CONFIG_BCD_FPOINT > 0
-#  define PDCI_BCD2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max) \
-            PDCI_BCD2INT_GEN(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max)
+#  define PDCI_BCD2INT(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max) \
+            PDCI_BCD2INT_GEN(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max)
 #  define PDCI_BCD2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max) \
             PDCI_BCD2UINT_GEN(fn_name, rev_fn_name, targ_type, int_max, nd_max)
 #else
-#  define PDCI_BCD2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max)
+#  define PDCI_BCD2INT(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max)
 #  define PDCI_BCD2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max)
 #endif
 
@@ -3868,14 +3876,14 @@ PDCI_EBC_INT_READ_FN(Pebc_uint64_read, Puint64, PDCI_ebc2uint64, P_INVALID_EBC_N
  * PDCI_BCD_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
  */
 
-PDCI_BCD_INT_READ_FN(Pbcd_int8_read,   Pint8,   PDCI_bcd2int8,   P_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2))
-PDCI_BCD_INT_READ_FN(Pbcd_int16_read,  Pint16,  PDCI_bcd2int16,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2))
-PDCI_BCD_INT_READ_FN(Pbcd_int32_read,  Pint32,  PDCI_bcd2int32,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2))
-PDCI_BCD_INT_READ_FN(Pbcd_int64_read,  Pint64,  PDCI_bcd2int64,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2))
-PDCI_BCD_INT_READ_FN(Pbcd_uint8_read,  Puint8,  PDCI_bcd2uint8,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2))
-PDCI_BCD_INT_READ_FN(Pbcd_uint16_read, Puint16, PDCI_bcd2uint16, P_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2))
-PDCI_BCD_INT_READ_FN(Pbcd_uint32_read, Puint32, PDCI_bcd2uint32, P_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2))
-PDCI_BCD_INT_READ_FN(Pbcd_uint64_read, Puint64, PDCI_bcd2uint64, P_INVALID_BCD_NUM, ((num_digits_or_bytes+1)/2))
+PDCI_BCD_INT_READ_FN(Pbcd_int8_read,   Pint8,   PDCI_bcd2int8,   P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_int16_read,  Pint16,  PDCI_bcd2int16,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_int32_read,  Pint32,  PDCI_bcd2int32,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_int64_read,  Pint64,  PDCI_bcd2int64,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_uint8_read,  Puint8,  PDCI_bcd2uint8,  P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_uint16_read, Puint16, PDCI_bcd2uint16, P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_uint32_read, Puint32, PDCI_bcd2uint32, P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
+PDCI_BCD_INT_READ_FN(Pbcd_uint64_read, Puint64, PDCI_bcd2uint64, P_INVALID_BCD_NUM, ((num_digits_or_bytes+2)/2)) /* XXX_CHECK */
 
 /*
  * PDCI_SBL_INT_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, width)
@@ -3923,14 +3931,14 @@ PDCI_EBC_FPOINT_READ_FN(Pebc_ufpoint64_read, Pufpoint64, Pebc_uint64_read, num_d
  * PDCI_BCD_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
  */
 
-PDCI_BCD_FPOINT_READ_FN(Pbcd_fpoint8_read,   Pfpoint8,   Pbcd_int8_read,   ((num_digits_or_bytes+1)/2),  2)
-PDCI_BCD_FPOINT_READ_FN(Pbcd_fpoint16_read,  Pfpoint16,  Pbcd_int16_read,  ((num_digits_or_bytes+1)/2),  4)
-PDCI_BCD_FPOINT_READ_FN(Pbcd_fpoint32_read,  Pfpoint32,  Pbcd_int32_read,  ((num_digits_or_bytes+1)/2),  9)
-PDCI_BCD_FPOINT_READ_FN(Pbcd_fpoint64_read,  Pfpoint64,  Pbcd_int64_read,  ((num_digits_or_bytes+1)/2), 19)
-PDCI_BCD_FPOINT_READ_FN(Pbcd_ufpoint8_read,  Pufpoint8,  Pbcd_uint8_read,  ((num_digits_or_bytes+1)/2),  2)
-PDCI_BCD_FPOINT_READ_FN(Pbcd_ufpoint16_read, Pufpoint16, Pbcd_uint16_read, ((num_digits_or_bytes+1)/2),  4)
-PDCI_BCD_FPOINT_READ_FN(Pbcd_ufpoint32_read, Pufpoint32, Pbcd_uint32_read, ((num_digits_or_bytes+1)/2),  9)
-PDCI_BCD_FPOINT_READ_FN(Pbcd_ufpoint64_read, Pufpoint64, Pbcd_uint64_read, ((num_digits_or_bytes+1)/2), 19)
+PDCI_BCD_FPOINT_READ_FN(Pbcd_fpoint8_read,   Pfpoint8,   Pbcd_int8_read,   ((num_digits_or_bytes+2)/2),  2) /* XXX_CHECK */
+PDCI_BCD_FPOINT_READ_FN(Pbcd_fpoint16_read,  Pfpoint16,  Pbcd_int16_read,  ((num_digits_or_bytes+2)/2),  4) /* XXX_CHECK */
+PDCI_BCD_FPOINT_READ_FN(Pbcd_fpoint32_read,  Pfpoint32,  Pbcd_int32_read,  ((num_digits_or_bytes+2)/2),  9) /* XXX_CHECK */
+PDCI_BCD_FPOINT_READ_FN(Pbcd_fpoint64_read,  Pfpoint64,  Pbcd_int64_read,  ((num_digits_or_bytes+2)/2), 19) /* XXX_CHECK */
+PDCI_BCD_FPOINT_READ_FN(Pbcd_ufpoint8_read,  Pufpoint8,  Pbcd_uint8_read,  ((num_digits_or_bytes+2)/2),  2) /* XXX_CHECK */
+PDCI_BCD_FPOINT_READ_FN(Pbcd_ufpoint16_read, Pufpoint16, Pbcd_uint16_read, ((num_digits_or_bytes+2)/2),  4) /* XXX_CHECK */
+PDCI_BCD_FPOINT_READ_FN(Pbcd_ufpoint32_read, Pufpoint32, Pbcd_uint32_read, ((num_digits_or_bytes+2)/2),  9) /* XXX_CHECK */
+PDCI_BCD_FPOINT_READ_FN(Pbcd_ufpoint64_read, Pufpoint64, Pbcd_uint64_read, ((num_digits_or_bytes+2)/2), 19) /* XXX_CHECK */
 
 /*
  * PDCI_SBL_FPOINT_READ_FN(fn_name, targ_type, internal_numerator_read_fn, width, dexp_max)
@@ -4880,11 +4888,11 @@ PDCI_INT2B  (PDCI_uint16_2b, Puint16, 2)
 PDCI_INT2B  (PDCI_uint32_2b, Puint32, 4)
 PDCI_INT2B  (PDCI_uint64_2b, Puint64, 8)
 
-/* PDCI_EBC2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max) */
-PDCI_EBC2INT(PDCI_ebc2int8,  PDCI_int8_2ebc,  Pint8,  P_MIN_INT8,  P_MAX_INT8,   3, 3)
-PDCI_EBC2INT(PDCI_ebc2int16, PDCI_int16_2ebc, Pint16, P_MIN_INT16, P_MAX_INT16,  5, 5)
-PDCI_EBC2INT(PDCI_ebc2int32, PDCI_int32_2ebc, Pint32, P_MIN_INT32, P_MAX_INT32, 10, 10)
-PDCI_EBC2INT(PDCI_ebc2int64, PDCI_int64_2ebc, Pint64, P_MIN_INT64, P_MAX_INT64, 19, 19)
+/* PDCI_EBC2INT(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max) */
+PDCI_EBC2INT(PDCI_ebc2int8,  PDCI_int8_2ebc,  Pint8,  Pint16,  P_MIN_INT8,  P_MAX_INT8,   3, 3)
+PDCI_EBC2INT(PDCI_ebc2int16, PDCI_int16_2ebc, Pint16, Pint32, P_MIN_INT16, P_MAX_INT16,  5, 5)
+PDCI_EBC2INT(PDCI_ebc2int32, PDCI_int32_2ebc, Pint32, Pint64, P_MIN_INT32, P_MAX_INT32, 10, 10)
+PDCI_EBC2INT(PDCI_ebc2int64, PDCI_int64_2ebc, Pint64, Pint64, P_MIN_INT64, P_MAX_INT64, 19, 19)
 
 /* PDCI_EBC2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max) */
 PDCI_EBC2UINT(PDCI_ebc2uint8,  PDCI_uint8_2ebc,  Puint8,  P_MAX_UINT8,   3)
@@ -4892,11 +4900,11 @@ PDCI_EBC2UINT(PDCI_ebc2uint16, PDCI_uint16_2ebc, Puint16, P_MAX_UINT16,  5)
 PDCI_EBC2UINT(PDCI_ebc2uint32, PDCI_uint32_2ebc, Puint32, P_MAX_UINT32, 10)
 PDCI_EBC2UINT(PDCI_ebc2uint64, PDCI_uint64_2ebc, Puint64, P_MAX_UINT64, 20)
 
-/* PDCI_BCD2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max) */
-PDCI_BCD2INT(PDCI_bcd2int8,  PDCI_int8_2bcd,  Pint8,  P_MIN_INT8,  P_MAX_INT8,   3, 3)
-PDCI_BCD2INT(PDCI_bcd2int16, PDCI_int16_2bcd, Pint16, P_MIN_INT16, P_MAX_INT16,  5, 5)
-PDCI_BCD2INT(PDCI_bcd2int32, PDCI_int32_2bcd, Pint32, P_MIN_INT32, P_MAX_INT32, 11, 10)
-PDCI_BCD2INT(PDCI_bcd2int64, PDCI_int64_2bcd, Pint64, P_MIN_INT64, P_MAX_INT64, 19, 19)
+/* PDCI_BCD2INT(fn_name, rev_fn_name, targ_type, higher_targ_type, int_min, int_max, nd_max, act_nd_max) */
+PDCI_BCD2INT(PDCI_bcd2int8,  PDCI_int8_2bcd,  Pint8,  Pint16, P_MIN_INT8,  P_MAX_INT8,   3, 3)
+PDCI_BCD2INT(PDCI_bcd2int16, PDCI_int16_2bcd, Pint16, Pint32, P_MIN_INT16, P_MAX_INT16,  5, 5)
+PDCI_BCD2INT(PDCI_bcd2int32, PDCI_int32_2bcd, Pint32, Pint64, P_MIN_INT32, P_MAX_INT32, 11, 10)
+PDCI_BCD2INT(PDCI_bcd2int64, PDCI_int64_2bcd, Pint64, Pint64, P_MIN_INT64, P_MAX_INT64, 19, 19)
 
 /* PDCI_BCD2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max) */
 PDCI_BCD2UINT(PDCI_bcd2uint8,  PDCI_uint8_2bcd,  Puint8,  P_MAX_UINT8,   3)
@@ -4942,7 +4950,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.129 2003-11-19 18:28:25 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.130 2003-11-21 18:09:32 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

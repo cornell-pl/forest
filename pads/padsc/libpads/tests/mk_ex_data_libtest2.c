@@ -1,6 +1,8 @@
 #include "pads-internal.h" /* for testing - normally do not include internal */
 #include <stdio.h>
 
+P_NOGEN
+
 int main(int argc, char** argv) {
   char fname[1000];
   char* h;

@@ -16,12 +16,12 @@ next_rec returned bytes_skipped = 17
 Read bcd integer: -2147483647
 next_rec returned bytes_skipped = 14
 Read bcd integer: 2147483647
-next_rec returned bytes_skipped = 15
+next_rec returned bytes_skipped = 14
 Read bcd integer: 4294967295
-next_rec returned bytes_skipped = 15
+next_rec returned bytes_skipped = 14
 Read bcd integer: -9223372036854775807
 next_rec returned bytes_skipped = 10
 Read bcd integer: 9223372036854775807
 next_rec returned bytes_skipped = 10
 Read bcd integer: 18446744073709551615
-next_rec returned bytes_skipped = 10
+next_rec returned bytes_skipped = 9

@@ -30,7 +30,7 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH =  $(CPY_DIR)
 
-all: $(P_DIR)/cpygen_foo.p $(P_DIR)/cpygen_crs.p
+all: $(P_DIR)/cpyrecgen_rps.p $(P_DIR)/cpygen_foo.p $(P_DIR)/cpygen_crs.p
 
 $(P_DIR)/cpygen_crs.p: $(P_DIR)/cpygen_crshdr.p $(P_DIR)/cpygen_crstlr.p $(P_DIR)/cpygen_crsdet.p
 	(echo ""; echo "extern P_uint64 num_recs;"; echo "") > $@
@@ -53,6 +53,9 @@ $(P_DIR)/cpygen_crsdet.p: crsdet.cpy
 	echo $(GENPROG) $< $$LABEL $(P_DIR) 11,12,15,24,41,42; \
 	$(GENPROG) $< $$LABEL $(P_DIR) 11,12,15,24,41,42; \
 	$(RM) $(P_DIR)/c_$$LABEL.c $(P_DIR)/p_$$LABEL.c $(P_DIR)/cpy_$$LABEL.c $(P_DIR)/cpy_$$LABEL.h)
+
+$(P_DIR)/cpyrecgen_%.p: $(P_DIR)/cpygen_%.p
+	$(PADS_HOME)/scripts/mk_last_prec.pl < $^ > $@
 
 $(P_DIR)/cpygen_%.p: %.cpy
 	@(LABEL=$(patsubst %.cpy,%,$(notdir $<)); \

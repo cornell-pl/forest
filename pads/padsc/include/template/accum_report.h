@@ -10,6 +10,10 @@
 #  define DEF_INPUT_FILE "/dev/stdin"
 #endif
 
+#ifndef MAX_RECS
+#  define MAX_RECS 0
+#endif
+
 int main(int argc, char** argv) {
   P_t              *pads;
   Pdisc_t           my_disc = Pdefault_disc;
@@ -19,6 +23,7 @@ int main(int argc, char** argv) {
   PADS_TY(_m)       m;
   PADS_TY(_acc)     acc;
   char             *fileName = 0;
+  Puint64           num_recs = 0;
 
 #ifdef WSPACE_OK
   my_disc.flags |= (Pflags_t)P_WSPACE_OK;
@@ -66,7 +71,7 @@ int main(int argc, char** argv) {
   /*
    * Try to read each line of data
    */
-  while (!P_io_at_eof(pads)) {
+  while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     if (P_OK != PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep)) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;

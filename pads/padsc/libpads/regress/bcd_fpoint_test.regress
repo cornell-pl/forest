@@ -16,12 +16,12 @@ next_rec returned bytes_skipped = 17
 Read bcd fpoint: num -2147483647 denom 1000000000
 next_rec returned bytes_skipped = 14
 Read bcd fpoint: num 2147483647 denom 1000000000
-next_rec returned bytes_skipped = 15
+next_rec returned bytes_skipped = 14
 Read bcd ufpoint: num 4294967295 denom 1000000000
-next_rec returned bytes_skipped = 15
+next_rec returned bytes_skipped = 14
 Read bcd fpoint: num -9223372036854775807 denom 10000000000000000000
 next_rec returned bytes_skipped = 10
 Read bcd fpoint: num 9223372036854775807 denom 10000000000000000000
 next_rec returned bytes_skipped = 10
 Read bcd ufpoint: num 18446744073709551615 denom 10000000000000000000
-next_rec returned bytes_skipped = 10
+next_rec returned bytes_skipped = 9

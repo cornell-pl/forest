@@ -23,56 +23,56 @@ int main(int argc, char** argv) {
   printf("fname = %s\n", fname);
   io = sfopen(0, fname, "w");
 
-  if (2 != PDCI_int8_2bcd(pads, io, 0, 3))  goto write_err;
-  sfwrite(io, tmp, 18);
+  if (2 != (len = PDCI_int8_2bcd_io(pads, io, 0, 3)))  goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (2 != PDCI_int8_2bcd(pads, io, P_MIN_INT8, 3)) goto write_err;
-  sfwrite(io, tmp, 18);
+  if (2 != (len = PDCI_int8_2bcd_io(pads, io, P_MIN_INT8, 3))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (2 != PDCI_int8_2bcd(pads, io, P_MAX_INT8, 3)) goto write_err;
-  sfwrite(io, tmp, 18);
+  if (2 != (len = PDCI_int8_2bcd_io(pads, io, P_MAX_INT8, 3))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (2 != PDCI_uint8_2bcd(pads, io, P_MAX_UINT8, 3)) goto write_err;
-  sfwrite(io, tmp, 18);
+  if (2 != (len = PDCI_uint8_2bcd_io(pads, io, P_MAX_UINT8, 3))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (3 != PDCI_int16_2bcd(pads, io, P_MIN_INT16, 5)) goto write_err;
-  sfwrite(io, tmp, 17);
+  if (3 != (len = PDCI_int16_2bcd_io(pads, io, P_MIN_INT16, 5))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (3 != PDCI_int16_2bcd(pads, io, P_MAX_INT16, 5)) goto write_err;
-  sfwrite(io, tmp, 17);
+  if (3 != (len = PDCI_int16_2bcd_io(pads, io, P_MAX_INT16, 5))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (3 != PDCI_uint16_2bcd(pads, io, P_MAX_UINT16, 5)) goto write_err;
-  sfwrite(io, tmp, 17);
+  if (3 != (len = PDCI_uint16_2bcd_io(pads, io, P_MAX_UINT16, 5))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (6 != PDCI_int32_2bcd(pads, io, P_MIN_INT32, 11)) goto write_err;
-  sfwrite(io, tmp, 14);
+  if (6 != (len = PDCI_int32_2bcd_io(pads, io, P_MIN_INT32, 11))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (5 != PDCI_int32_2bcd(pads, io, P_MAX_INT32, 10)) goto write_err;
-  sfwrite(io, tmp, 15);
+  if (6 != (len = PDCI_int32_2bcd_io(pads, io, P_MAX_INT32, 10))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (5 != PDCI_uint32_2bcd(pads, io, P_MAX_UINT32, 10)) goto write_err;
-  sfwrite(io, tmp, 15);
+  if (6 != (len = PDCI_uint32_2bcd_io(pads, io, P_MAX_UINT32, 10))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (10 != PDCI_int64_2bcd(pads, io, P_MIN_INT64, 19)) goto write_err;
-  sfwrite(io, tmp, 10);
+  if (10 != (len = PDCI_int64_2bcd_io(pads, io, P_MIN_INT64, 19))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (10 != PDCI_int64_2bcd(pads, io, P_MAX_INT64, 19)) goto write_err;
-  sfwrite(io, tmp, 10);
+  if (10 != (len = PDCI_int64_2bcd_io(pads, io, P_MAX_INT64, 19))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
-  if (10 != PDCI_uint64_2bcd(pads, io, P_MAX_UINT64, 20)) goto write_err;
-  sfwrite(io, tmp, 10);
+  if (11 != (len = PDCI_uint64_2bcd_io(pads, io, P_MAX_UINT64, 20))) goto write_err;
+  sfwrite(io, tmp, 20-len);
   sfputc(io, 0xFF);
 
   sfclose(io);

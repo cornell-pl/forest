@@ -1,9 +1,12 @@
+#include "pads-internal.h" /* for testing - normally do not include internal */
 #include <stdio.h>
 #include <stdlib.h>
 
 const char* line1 = "%04d   %04d   %04d%04d  \n";
 const char* line2 = " %04d   %04d%04d   %04d \n";
 const char* line3 = "  %04d%04d   %04d   %04d\n";
+
+P_NOGEN
 
 int main(int argc, char** argv) {
   int i, lines, num_lines;
