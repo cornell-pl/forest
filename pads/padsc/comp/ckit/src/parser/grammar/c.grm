@@ -217,17 +217,24 @@ with val emptySeq = SEQ nil
      fun seqToList(SEQ yl) = List.rev yl
 end
 
+datatype ConstraintKind = 
+         SimpleStructCon of expression option
+       | OptStructCon    of expression PX.OptPredicate
+
+
 datatype FieldDesc = 
          PTArray of string * (expression PX.PSize) option * (expression PX.PConstraint) list
-       | PTStruct of string * (expression option)
+       | PTStruct of string * ConstraintKind
+
 
 fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersOpt, (* isVirtual, isEndian,*) comment) = 
     let val (isVirtual, isEndian, isOpt) = case qualifiersOpt of NONE => (false,false,false)
 	                                   | SOME s => s
-	val (fName, pred, arraypred, sizeOpt,isArray) = 
+	val (fName, pred, optPred, arraypred, sizeOpt,isArray) = 
 	case compoundField 
-        of   PTStruct(fName, pred)              => (fName, pred, [], NONE,false)
-	|    PTArray(fName, sizeOpt, arrayPred) => (fName, NONE, arrayPred, sizeOpt,true)
+        of   PTStruct(fName, SimpleStructCon pred) => (fName, pred, NONE, [], NONE,false)
+        |    PTStruct(fName, OptStructCon pred)    => (fName, NONE, SOME pred, [], NONE,false)
+	|    PTArray(fName, sizeOpt, arrayPred)    => (fName, NONE, NONE, arrayPred, sizeOpt,true)
     in
     (PX.Full {pty = PX.Name tyName, name = fName, 
 	      args = tyParams,
@@ -239,6 +246,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
 	      pred = pred,
 	      comment = comment,
 	      optDecl = isOpt,
+	      optPred = optPred,
 	      arrayDecl = isArray,
 	      arraypred = arraypred,
 	      size = sizeOpt
@@ -370,8 +378,11 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
 	| pOptNone of expression option
+	| pOptSome of (string * expression) option
+        | pOptDecon of expression PX.OptPredicate
         | pOptPred of expression PX.OptPredicate
         | pOptPredOpt of (expression PX.OptPredicate) option
+        | pStructConstraintOpt of ConstraintKind
 	| pOpt of externalDecl
         | pREexpr of expression
         | pOmitOpt of bool
@@ -1183,13 +1194,21 @@ pTypedef:
 				largeHeuristic = false,
 				pred = pTypedefPredOpt}) )
 
-pOptNone : (NONE)
-| BAR PNONE EQGT LCURLY expr RCURLY (SOME expr)
+pOptNone : 
+ PNONE EQGT LCURLY exprWComma RCURLY (SOME exprWComma)
+
+pOptSome : 
+ PSOME ID EQGT LCURLY exprWComma RCURLY (SOME(ID, exprWComma))
+
+pOptDecon : 
+  pOptSome BAR pOptNone (PX.Decon{some = pOptSome, none = pOptNone})
+| pOptNone BAR pOptSome (PX.Decon{some = pOptSome, none = pOptNone})
+| pOptNone              (PX.Decon{some = NONE,     none = pOptNone})
+| pOptSome              (PX.Decon{some = pOptSome, none = NONE})
 
 pOptPred : 
   LCURLY expr RCURLY (PX.Simple expr)
-| PSOME ID EQGT LCURLY expr RCURLY pOptNone
-               (PX.Decon{var = ID, some = expr1, none = pOptNone})
+| pOptDecon           (pOptDecon)
 
 pOptPredOpt : (NONE)
  | COLON pOptPred (SOME pOptPred)
@@ -1240,9 +1259,12 @@ pStructQualifiers:
 					    in 
 						merge (pStructQualifier,pStructQualifiers)
 					end)
+pStructConstraintOpt : 
+  pConstraintOpt (SimpleStructCon pConstraintOpt)
+| COLON pOptDecon (OptStructCon    pOptDecon)
 
 pCompoundField: 
-  ID pConstraintOpt (PTStruct (ID, pConstraintOpt))
+  ID pStructConstraintOpt (PTStruct (ID, pStructConstraintOpt))
 | LBRACE  pSizeOpt   RBRACE ID pArrayConstraintOpt  (PTArray(ID, pSizeOpt, pArrayConstraintOpt))
 
 pStructField: pStructQualifiers  pName pOptActParams pCompoundField SEMICOLON pCommentOpt 

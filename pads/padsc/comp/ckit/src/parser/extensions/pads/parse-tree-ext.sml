@@ -19,6 +19,9 @@ structure ParseTreeExt =
          | Ended of 'exp PPostCond list 
          | Skip  of 'exp PPostCond list 
 
+        datatype 'exp  OptPredicate = Simple of 'exp 
+	                        | Decon of {some : (string * 'exp) option, none : 'exp option}
+       
         datatype ('ct, 'dt, 'decr, 'exp) PSField = 
            Full of {    pty : Pty, 
 		       args : 'exp list, 
@@ -31,6 +34,7 @@ structure ParseTreeExt =
 		       pred : 'exp option, 
 		    comment : string option,
 		    optDecl : bool,
+                    optPred : ('exp OptPredicate) option,
 		  arrayDecl : bool, 
 		       size : ('exp PSize) option,
 		  arraypred : ('exp PConstraint) list}
@@ -62,9 +66,6 @@ structure ParseTreeExt =
 			branches      : (('ct, 'dt, 'decr, 'exp) PSField) list}
 
         type 'exp  PPredicate =  {predTy: Pty, thisVar : string, pred : 'exp}
-        datatype 'exp  OptPredicate = Simple of 'exp 
-	                        | Decon of {var : string, some : 'exp, none : 'exp option}
-       
         datatype ('decr, 'ct, 'dt, 'exp) PExternal = 
            PTypedef of {name : string,
 			params: ('ct * 'decr) list, 

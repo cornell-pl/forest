@@ -90,6 +90,7 @@ structure CnvExt : CNVEXT = struct
        largeHeuristic : bool,
        pred : pcexp option, 
        comment : string option,
+       optPred : (pcexp PX.OptPredicate) option,
        optDecl : bool, 
        arrayDecl : bool,
        size : (pcexp PX.PSize) option,
@@ -271,9 +272,13 @@ structure CnvExt : CNVEXT = struct
     fun enumConstDefined enumConst = 
 	let val sym = SYM.enumConst enumConst
 	in
-	    case lookLocalScope sym of 
-		SOME _ => (print ( enumConst ^ "already defined.\n"); true)
-	    | NONE => false
+	    Option.isSome (lookLocalScope sym)
+	end
+
+    fun tyNameDefined tyName = 
+	let val sym = SYM.typedef tyName
+	in
+	    Option.isSome (lookLocalScope sym)
 	end
 
 (* Error Reporting  **********************************************************)
@@ -1710,6 +1715,24 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      fun structRepX (base, name, isVirt) =
 		  if isVirt then tmpId(name) else fieldX(rep, name)
 
+	      fun genFreshName testFn base suff = 
+		  let val name0 = base^suff
+		  in
+		      if not (testFn name0) then name0
+		      else let fun getname base next suff = 
+			  let val n = base^"_"^(Int.toString next)^suff
+			  in
+			      if not (testFn n) then n
+			      else getname base (next + 1) suff
+			  end
+			   in
+			       getname base 0 suff
+			   end
+		  end
+
+
+
+
 	      (* Does some checks, produces tuple with 4 lists:                                                *)
 	      (*     1. A list of all of the field names in order that they occur                              *)
 	      (*     2. A list of just the names of the virtual fields                                         *)
@@ -1752,7 +1775,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				val ty = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
 				val () = ( CTcnvType ty  (* ensure that the type has been defined *) ; () )
 				val (ty,tyName) = if arrayDecl orelse optDecl then 
-				                    let val tyName = padsID name 
+				                    let val tyName = name^"_t"
+							val tyName = genFreshName tyNameDefined name "_t"
 						    in (P.makeTypedefPCT tyName, tyName) 
 						    end 
 						  else (ty,tyName)
@@ -3842,11 +3866,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			isRecord, isSource : bool, pred : (pcexp PX.OptPredicate) option, 
 			baseTy: PX.Pty })=
 	      let val someTag = "some_"^name
-		  fun cvtDecon {var,some,none} = 
-			      (SOME (PTSub.substExps  [(var, PT.Id (someTag))] some), none)
+		  fun cvtDecon {some,none} = 
+		      case some of NONE => (NONE, none)
+		      | SOME (var, expr) => (SOME (PTSub.substExps  [(var, PT.Id (someTag))] expr), none)
 		  val (predend, (predsome, prednone)) = 
 		      case pred of NONE => ([], (NONE, NONE))
-		      | SOME(PX.Simple x) => ([PX.General x], (NONE, NONE))
+		      | SOME(PX.Simple x) => (PE.error ("Form of constraint on "^name^ " opt is currently not supported.");
+					      ([PX.General x], (NONE, NONE)))
  	              | SOME(PX.Decon d) => ([], cvtDecon d)
 		  val some = PX.Full {pty = baseTy, 
 				      args = args,
@@ -3859,6 +3885,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      pred = predsome, 
 				      comment = SOME "value is present",
 				      optDecl =false,
+				      optPred = NONE,
 				      arrayDecl = false, 
 				      size = NONE,
 				      arraypred = []}
@@ -4923,7 +4950,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                         | findOffset p (x::xs) n = if p x then SOME (n, x) else findOffset p xs (n+1)
 
                        fun cvtInPlaceFULL (f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,
-						 optDecl, arrayDecl,...}:pfieldty) = 
+						 optPred, optDecl, arrayDecl,...}:pfieldty) = 
 			   if not (arrayDecl orelse optDecl) then [([], PX.Full f)]
 			   else
 			      let val (offset, declName) = 
@@ -4948,16 +4975,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  fun doOpt () = 
 				      let val doSub = PTSub.substExps modRelSubs
 					  val modpred = Option.map doSub pred
+					  val () = case modpred of NONE => () | _ => PE.error ("The form of constraint "^
+											       "on opt field " ^name^
+											       " is not currently supported.")
 					  val modArgs = List.map doSub args
 					  val optPX = {name     = declName, params   = params, args     = modArgs,
-						       isRecord = false, isSource = false, pred = NONE (* fix this *), baseTy   = pty}
+						       isRecord = false, isSource = false, pred = optPred, baseTy   = pty}
 				      in
 					   (cnvPOpt optPX, modpred)
 				      end
 				  val (newAsts,modpred) = if arrayDecl then doArray() else doOpt ()
 				  val sfield = {pty=PX.Name declName, args=(List.map (fn x=> PT.Id x) paramNames)@otherArgs, 
 						name=name, isVirtual=isVirtual, isEndian=isEndian,
-						isRecord=false, containsRecord=false, largeHeuristic=false, pred=modpred,comment=comment,
+						isRecord=false, containsRecord=false, largeHeuristic=false, pred=modpred,
+						comment=comment,optPred = NONE,
 						optDecl = false, arrayDecl = false, size=NONE, arraypred=[]} : pfieldty
 			      in
 				  [(newAsts, PX.Full sfield)]
