@@ -23,18 +23,25 @@ sub expandFile
     my( $name ) = @_;
     my $incs = "";
     my $incs = "-I" . join(" -I", @include_dirs) if @include_dirs;
-    # print "\n\nXXX_REMOVE incs = $incs\n\n";
     my $data = `cc -x c -E $name $incs` || "";
     if ($data eq "") {
-      # print "\nXXX_REMOVE cc command failed\n\n";
+      print "\nUnexpected error: use of cc as preprocessor failed\n\n";
+      exit -1;
     }
-    # print "\nXXX_REMOVE data = [$data]\n\n";
     $data =~ s/^\#\s+\d+\s+(.*)$//mg;
     while ($data =~ m/\n\n\n/) {
       $data =~ s/\n\n\n/\n\n/;
     }
-    # print "\nXXX_REMOVE mod data = [$data]\n\n";
     return $data;
+}
+
+# =========================
+sub cleanupStr
+{
+    my( $txt ) = @_;
+    chomp($txt);
+    $txt =~ s/\s//g;
+    return $txt;
 }
 
 # =========================
@@ -45,8 +52,22 @@ my $dbg=1;
 print "\n";
 my $pads_home = $ENV{"PADS_HOME"};
 if ($pads_home eq "") {
-  print "    env variable PADS_HOME must be set\n";
-  print "    set PADS_HOME and try again\n\n";
+  # try to find PADS_HOME from script path
+  if ($0 =~ m|/gigascope_make.pl$|) {
+    my $path = $0;
+    $path =~ s|/gigascope_make.pl$||;
+    $path .= "/..";
+    $pads_home = `(cd $path; pwd)` || "";
+    $pads_home = &cleanupStr($pads_home);
+    print "\n*** Guessing PADS_HOME = [$pads_home]\n\n" if ($dbg);
+  }
+}
+if ($pads_home eq "") {
+  print "\n    Error: either env variable PADS_HOME must be set
+           OR the invocation of this script must have a path component
+           so that the script can figure out PADS_HOME
+
+    Set PADS_HOME or use a relative or absolute path to the script and try again\n\n";
   exit -1;
 }
 my $padsc_cmd = "$pads_home/scripts/padsc";
@@ -113,7 +134,7 @@ if ($dbg) {
   print "  wspace_ok set"          if $wpace_ok;
   print "\n";
 }
-
+exit 0;
 if (!defined($maxrecs)) {
   $maxrecs = 0;
 }
@@ -176,31 +197,25 @@ if ($wspace_ok) {
   $wspace_ok_define = "#define WSPACE_OK 1";
 }
 
-my $prefix = $pspec;
-$prefix =~ s|^(.*)/||g;
-$prefix =~ s/.p$//;
-my $pspec_h_file = "$prefix" . ".h";
+my $pspec_nopath = $pspec;
+$pspec_nopath =~ s|^(.*)/||g;
+$pspec_nopath =~ s/.p$//;
+my $pspec_h_file = "$pspec_nopath" . ".h";
 
 # temp files
-my $schema_trans_file  = "$demodir$prefix" . "_schema.transform";
-my $funs_h_trans_file  = "$demodir$prefix" . "_funs_h.transform";
-my $funs_c_trans_file  = "$demodir$prefix" . "_funs_c.transform";
-my $funs_h_tmp_file    = "$demodir$prefix" . "_funs_tmp.h";
-my $funs_c_tmp_file    = "$demodir$prefix" . "_funs_tmp.c";
+my $schema_trans_file  = "$demodir$pspec_nopath" . "_schema.transform";
+my $funs_h_trans_file  = "$demodir$pspec_nopath" . "_funs_h.transform";
+my $funs_c_trans_file  = "$demodir$pspec_nopath" . "_funs_c.transform";
+my $funs_h_tmp_file    = "$demodir$pspec_nopath" . "_funs_tmp.h";
+my $funs_c_tmp_file    = "$demodir$pspec_nopath" . "_funs_tmp.c";
 
 my $temp_files = "$schema_trans_file $funs_h_trans_file $funs_c_trans_file $funs_h_tmp_file $funs_c_tmp_file";
 
 # gen target files
-my $schema_file        = "$demodir$prefix" . ".schema";
-my $funs_h_file        = "$demodir$prefix" . "_funs.h";
-my $funs_c_file        = "$demodir$prefix" . "_funs.c";
-my $make_file          = "$demodir$prefix" . ".mk";
-
-# makefile target
-my $lib_target         = "libpads_$prefix.a";
-
-# makefile objects for target
-my $lib_target_objs    = $prefix . ".o $prefix" . "_funs.o";
+my $schema_file        = "$demodir$pspec_nopath" . ".schema";
+my $funs_h_file        = "$demodir$pspec_nopath" . "_funs.h";
+my $funs_c_file        = "$demodir$pspec_nopath" . "_funs.c";
+my $make_file          = "$demodir$pspec_nopath" . ".mk";
 
 my $funs_h_file_nopath = $funs_h_file;
 $funs_h_file_nopath =~ s|^(.*)/||g;
@@ -220,6 +235,7 @@ sub doSubs
 {
   my ( $text ) = @_;
 
+  $text =~ s/=PSPEC_NOPATH=/$pspec_nopath/g;
   $text =~ s/=PSPEC_H_FILE=/$pspec_h_file/g;
   $text =~ s/=PSPEC_FILE=/$pspec/g;
   $text =~ s/=SCHEMA_FILE=/$schema_file/g;
@@ -238,8 +254,6 @@ sub doSubs
   $text =~ s/=TEMPLATE_DEFINE=/$template_define/;
   $text =~ s/=WSPACE_OK_DEFINE=/$wspace_ok_define/;
   $text =~ s/=PADS_HOME=/$pads_home/g;
-  $text =~ s/=LIB_TARGET_OBJS=/$lib_target_objs/g;
-  $text =~ s/=LIB_TARGET=/$lib_target/g;
   $text =~ s/=MAKE_INCLUDES=/$make_includes/g;
 
   $text =~ s/^\#add_include/\#include/mg;
