@@ -1,14 +1,12 @@
-# N.B.: At the top of each Makefile, define the variable PADS_HOME using a
-#       relative path, then include this rules.mk file.  Example:
+# N.B.: At the top of each Makefile, define the variable PADS_HOME
+#       OR set an env variable PADS_HOME, before doing:
 #
-#   PADS_HOME = ../../..
 #   include $(PADS_HOME)/mk/rules.mk
 #
 # and set VPATH to location(s) of source files.
 #
 # If you are building the PADSL library, use:
 #
-#   PADS_HOME = ../../..
 #   BuildPADSLib = 1
 #   include $(PADS_HOME)/mk/rules.mk
 #
@@ -43,13 +41,6 @@
 # uncomment this once we build a shared ast library
 # HAVE_SHARED_ASTLIB = 1
 
-ifndef INSTALLROOT
-%: forceabort2
-	@echo "ERROR: env variable INSTALLROOT must be defined"
-	@exit 1
-forceabort2: ;
-endif
-
 ifdef USE_GALAX
 ifndef GALAX_HOME
 %: forceabort2
@@ -65,14 +56,18 @@ forceabort2: ;
 endif
 endif
 
-LIBDIR = $(INSTALLROOT)/lib
-
 ifndef AST_ARCH
 AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
 export AST_ARCH
 endif
 
-FORCE_RESULT := $(shell $(PADS_HOME)/scripts/getprobeinfo.tcsh)
+ifndef INSTALLROOT
+INSTALLROOT = $(PADS_HOME)/ast-ast/arch/$(AST_ARCH)
+endif
+
+LIBDIR = $(INSTALLROOT)/lib
+
+FORCE_RESULT := $(shell $(PADS_HOME)/scripts/getprobeinfo.pl)
 include $(PADS_HOME)/mk/rules.arch.$(AST_ARCH).mk
 
 ifndef AST_HOME
