@@ -17,12 +17,12 @@ struct3
 me
 me_fooclass
 write_struct1
-struct_strings
+write_struct_strings
 struct_regexp
 array_regexp
 array_nosep
 array_pred
-array_pred2xo
+array_pred2
 array_ended
 array_ended2
 array_post

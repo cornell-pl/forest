@@ -20,35 +20,42 @@ rm -rf GIGASCOPE_README
 rm -rf Notes
 
 #remove .cvs files
-for x in `find . -name .cvsignore`; rm $x ; done
+for x in `find . -name .cvsignore`; do rm $x ; done
 
 # clean example directory
 cd padsc/examples
 #clean p directory
+echo cleaning p directory
 mkdir temp_p
 for x in `cat p/RELEASE_PFILES`; do cp p/$x temp_p; done
 rm -rf p
 mv temp_p p
 
 #clean test directory
+echo cleaning test directory
 mkdir temp_tests
-for x in `cat p/RELEASE_TESTS`; do cp p/$x temp_tests; done
+for x in `cat tests/RELEASE_TESTS`; do cp tests/$x temp_tests; done
 rm -rf tests
 mv temp_tests tests
 
 #clean data directory
+echo cleaning data directory
 mkdir temp_data
 for x in `cat data/take_list`; do cp data/$x temp_data; done
 rm -rf data 
 mv temp_data data
 
 cd .. # now in padsc directory
-mkdir temp_example
-for x in `cat example/take_list`; do mv example/$x temp_example; done
-rm -rf example
-mv temp_example example
+# echo cleaning example directory
+mkdir temp_examples
+for x in `cat examples/take_list`; do mv examples/$x temp_examples; done
+rm -rf examples
+mv temp_examples examples
 
 # add licenses!
 
 #okay, tar up the desired files
+cd ../..
+pwd
+echo building bundle
 tar cfz pads.tar.gz `cat pads/take_list`
