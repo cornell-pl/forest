@@ -27,6 +27,9 @@ test_format4  :: test_format4.c   format4.c     -lpadsc
 test_format5  :: test_format5.c   format5.c     -lpadsc
 test_format6  :: test_format6.c   format6.c     -lpadsc
 
+accum_struct  :: testtwo.c        struct.c      -lpadsc
+accum_ai      :: http_clf_t.c     ai.c          -lpadsc
+
 test_struct   :: test_struct.c    struct.c      -lpadsc
 test_struct2  :: test_struct2.c   struct2.c     -lpadsc
 test_union2   :: test_punion2.c   punion2.c     -lpadsc

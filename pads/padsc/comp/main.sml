@@ -29,9 +29,13 @@ structure Main : sig
     val stage = ref ""
 
     (* Values/Flags supplied by user at command line *)
+    val compilerFileLoc = "/ckit/src/ast/extensions/pads/"
+
+
     datatype ArgType = Pads | Unknown
     val srcFiles = ref [] : (ArgType * string) list ref 
     val baseTables  = ref [] : string list ref  (* paths to user defined base ty info tables *)
+    val accumulators  = ref [] : string list ref  (* type names for which we should generate accumulators *)
 
     val includes    = ref ""  (* paths user listed as include paths with -I flag *)
     val defines     = ref ""  (* symbols user defined with -U flag *)
@@ -53,6 +57,7 @@ structure Main : sig
     fun addUnknownFile s = srcFiles := ((Unknown,s) :: !srcFiles)
 
     fun addBaseTable s = baseTables := (s :: !baseTables)
+    fun addAccumulator s = accumulators := (s :: !accumulators)
 
     fun addInclude i = (includes := (" -I "^i^(!includes)))
     fun addDefine  i = (defines := (" -D"^i^(!defines)))
@@ -78,6 +83,7 @@ structure Main : sig
     val flags_release = [
          ("h", "output header file",      PCL.String (setHeaderOutputFile, false)),
          ("c", "output code file",        PCL.String (setCOutputFile, false)),
+         ("a", "generate accumulator",    PCL.String (addAccumulator, true)),
          ("p", "output directory",        PCL.String (setOutputDir, false)),
          ("s", "send output to standard out", PCL.BoolSet(stdoutFlag)),
          ("b", "add base type table",         PCL.String (addBaseTable, false)),
@@ -180,18 +186,32 @@ structure Main : sig
        in (setPrintDepth(); 
 	   raise DebugExn(Parse tree))
        end
+  
+    fun echoFile(srcName:string, destStrm:TextIO.outstream) = 
+	let val srcStrm = TextIO.openIn srcName
+	    fun loop(s) = if s = "" then ()
+		          else (TextIO.output (destStrm,s); 
+				loop(TextIO.inputLine srcStrm))
+	in
+	    loop(TextIO.inputLine srcStrm) before (TextIO.closeIn srcStrm)
+	end
 
-    fun getOutStream(destFile, from, to) : string * TextIO.outstream = 
-	let val name = valOf (mungeFileName(destFile, from, to))
-	    val name' = if !outputDirFlag 
+    fun getAccStream(name) : TextIO.outstream = 
+        let val name' = if !outputDirFlag 
 			then OS.Path.joinDirFile {dir = (!outputDir),
 						  file = OS.Path.file name}
 			else name
 	in
-	    (OS.Path.file name', TextIO.openOut name')
+            TextIO.openOut name'
 	    handle Io => err ("Couldn't open output file: " ^ name' ^ ".")
-	end
+	end 
 
+    fun getOutStream(destFile, from, to) : string * TextIO.outstream = 
+	let val name = valOf (mungeFileName(destFile, from, to))
+	in
+	    (OS.Path.file name, getAccStream name)
+	end
+	
     fun buildIncludeName fileName = 
         let val {base,ext} = OS.Path.splitBaseExt(OS.Path.file fileName)
             val upper = String.translate (String.str o Char.toUpper) base
@@ -199,7 +219,50 @@ structure Main : sig
 	    "__"^upper^"__H__"
 	end
 
-    fun generateOutput (astInfo : BuildAst.astBundle, fileName) =
+    fun generateAccum (homeDir, fileName, headerFile) = 
+	let val p = PTys.pTys
+	    fun doOne(name : string) = 
+	        case PTys.find(Atom.atom name)
+		  of NONE => err("File "^fileName^" does not contain a type "^name^". "^
+				 "Could not generate accumlator program.\n")
+		   | SOME {memChar, repName,repInit,repRead,repClean,edName,edInit,edClean,
+			   accName,accInit,accAdd,accReport,accClean,...} =>
+		      let val aname = name^".c"
+			  val aoutstream = getAccStream(aname)
+			  val templateName = if memChar = TyProps.Static then
+			                      homeDir^compilerFileLoc^"accum_template_static"
+					     else
+			                      homeDir^compilerFileLoc^"accum_template_dynamic"
+		      in
+			  TextIO.output(aoutstream, "#include \"libpadsc.h\"\n");
+			  TextIO.output(aoutstream, "#include \""^headerFile^"\"\n");
+			  TextIO.output(aoutstream, "#define PADS_TY "^repName^"\n");
+			  case repInit of NONE => ()
+			     | SOME repInit =>TextIO.output(aoutstream, "#define PADS_TY_INIT "^repInit^"\n");
+			  TextIO.output(aoutstream, "#define PADS_TY_READ "^repRead^"\n");
+			  case repClean of NONE => ()
+			     | SOME repClean =>TextIO.output(aoutstream, "#define PADS_TY_CLEANUP "^repClean^"\n");
+			  TextIO.output(aoutstream, "#define PADS_TY_ED "^edName^"\n");
+			  case edInit of NONE => ()
+			     | SOME edInit =>TextIO.output(aoutstream, "#define PADS_TY_ED_INIT "^edInit^"\n");
+			  case edClean of NONE => ()
+			     | SOME edClean =>TextIO.output(aoutstream, 
+							    "#define PADS_TY_ED_CLEANUP "^edClean^"\n");
+			  TextIO.output(aoutstream, "#define PADS_TY_ACC "^accName^"\n");
+			  TextIO.output(aoutstream, "#define PADS_TY_ACC_INIT "^accInit^"\n");
+			  TextIO.output(aoutstream, "#define PADS_TY_ACC_ADD "^accAdd^"\n");
+			  TextIO.output(aoutstream, "#define PADS_TY_ACC_REPORT "^accReport^"\n");
+			  TextIO.output(aoutstream, "#define PADS_TY_ACC_CLEANUP "^accClean^"\n");
+			  echoFile(templateName,aoutstream);
+
+			  TextIO.flushOut aoutstream;
+			  TextIO.closeOut aoutstream
+		      end
+	in
+	    List.app doOne (!accumulators)
+	end
+
+    fun generateOutput (homeDir, astInfo : BuildAst.astBundle, fileName) =
       let val {ast,tidtab,errorCount,warningCount,...} = astInfo
 	  val srcFile = OS.Path.file fileName
       in
@@ -226,11 +289,12 @@ structure Main : sig
 		   TextIO.output(coutstream, ("#include \"" ^ houtname ^ "\"\n"));
 		   PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
 		   TextIO.flushOut coutstream;
-		   TextIO.closeOut coutstream
+		   TextIO.closeOut coutstream;
+		   generateAccum(homeDir, fileName, houtname)
 	       end
       end
 	    
-    fun doFile baseTyFile (typ, fname) = 
+    fun doFile (homeDir, baseTyFile) (typ, fname) = 
       (curFile := fname;
        case typ of Pads =>
 	 let val () = stage := "Preprocessing"
@@ -246,7 +310,7 @@ structure Main : sig
              val () = if (!astOnlyFlag) then (setPrintDepth(); raise DebugExn(Ast ast)) else ()
 	     val () = stage := "Generating output"
 	 in
-	     generateOutput(astInfo, fname)
+	     generateOutput(homeDir, astInfo, fname)
 	 end
       | _ => error "Unrecognized file type")
 
@@ -275,12 +339,12 @@ structure Main : sig
            (* At this point, flag booleans have been set from command-line *)
            (* Generate base type typedefs from base description file *)
            val baseTyDefsFile = tmp ".h"
-	   val internalBaseTysPath = [homeDir^"/ckit/src/ast/extensions/pads/base-ty-info.txt",
-				      homeDir^"/ckit/src/ast/extensions/pads/internal-base-ty-info.txt"]
+	   val internalBaseTysPath = [homeDir^compilerFileLoc^"base-ty-info.txt",
+				      homeDir^compilerFileLoc^"internal-base-ty-info.txt"]
 	                             @(!baseTables)
        in
          PBaseTys.genPadsInternal(internalBaseTysPath, baseTyDefsFile);	   
-         app (doFile baseTyDefsFile) (!srcFiles); 
+         app (doFile (homeDir, baseTyDefsFile)) (!srcFiles); 
          rmTmp();
          if !anyErrors 
 	     then  OS.Process.exit(OS.Process.failure)

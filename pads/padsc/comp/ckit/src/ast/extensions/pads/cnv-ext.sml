@@ -141,6 +141,7 @@ structure CnvExt : CNVEXT = struct
 
 (* Utility functions ********************************************************)
 
+
     fun formatComment s = 
 	let val s = " "^s^" "
 	    val len = String.size s
@@ -606,6 +607,32 @@ structure CnvExt : CNVEXT = struct
 	      fun findEORSuf s = s^"_findEOR"
 	      fun gTemp base = "tmp"^base
 	      fun gMod  base = "mod"^base
+
+	      fun getDynamicFunctions (name,memChar) = 
+		  case memChar of TyProps.Static => (NONE,NONE,NONE,NONE)
+		| TyProps.Dynamic => (SOME (initSuf name),
+				      SOME (cleanupSuf name),
+				      SOME ((initSuf o edSuf) name),
+				      SOME ((cleanupSuf o edSuf) name))
+
+              fun buildTyProps (name, diskSize,memChar,endian,isRecord) = 
+		  let val (repInit, repClean, edInit, edClean) = getDynamicFunctions (name,memChar)
+		  in
+		      {diskSize=diskSize,memChar=memChar,endian=endian, isRecord=isRecord,
+		       repName  = name, 
+		       repInit  = repInit,
+		       repRead  = readSuf name, 
+		       repClean = repClean,
+		       edName   = edSuf name,
+		       edInit   = edInit,
+		       edClean  = edClean,
+		       accName  = accSuf name,
+		       accInit  = (initSuf o accSuf) name,
+		       accAdd   = (addSuf o accSuf) name,
+		       accReport= (reportSuf o accSuf) name,
+		       accClean = (cleanupSuf o accSuf) name}
+		  end
+
 	      fun lookupTy (ty:pty, sufFun:string->string, fldSelect:PBTys.baseInfoTy ->Atom.atom) = 
                   case ty 
                   of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s) 
@@ -1092,7 +1119,7 @@ structure CnvExt : CNVEXT = struct
                       val mc = lookupMemChar baseTy
                       val endian = lookupEndian baseTy
 		      val isRecord = lookupRecord baseTy orelse isRecord
-		      val typedefProps = {diskSize=ds,memChar=mc, endian=endian, isRecord=isRecord}
+		      val typedefProps = buildTyProps(name, ds, mc,endian,isRecord)
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
 		      (* Generate canonical representation: typedef to base representation *)
@@ -1363,8 +1390,9 @@ structure CnvExt : CNVEXT = struct
 			  end
 		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsEOR genTyPropsMan fields
 		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
-                      val structProps = List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
-		      val structProps = PTys.setRecord structProps isRecord
+                      val {diskSize,memChar,endian,isRecord=_} = 
+			  List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
+		      val structProps = buildTyProps(name,diskSize,memChar,endian,isRecord)
                       val () = PTys.insert(Atom.atom name, structProps)
 
 		       
@@ -1929,8 +1957,9 @@ structure CnvExt : CNVEXT = struct
 				    else ())
 					
 		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
-                     val unionProps = List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
-		     val unionProps = PTys.setRecord unionProps isRecord
+		     val {diskSize,memChar,endian,isRecord=_} = 
+			 List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
+		     val unionProps = buildTyProps(name,diskSize,memChar,endian,isRecord)
                      val () = PTys.insert(Atom.atom name, unionProps)
 
                      (* generate enumerated type describing tags *)
@@ -2887,8 +2916,7 @@ structure CnvExt : CNVEXT = struct
 					 if min = max then TyProps.Size(n * (IntInf.toInt max), r * (IntInf.toInt max))
 					 else TyProps.Variable
 				     | _ => TyProps.Variable
-                 val arrayProps = {diskSize=arrayDiskSize, memChar = arrayMemChar, 
-				   endian=false, isRecord=isRecord}
+                 val arrayProps = buildTyProps(name,arrayDiskSize, arrayMemChar, false, isRecord)
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
 
@@ -3091,7 +3119,7 @@ structure CnvExt : CNVEXT = struct
 				  else TyProps.Variable
 			      end
 			   else TyProps.Size (0,0)
-                  val enumProps = {diskSize = ds, memChar = TyProps.Static, endian=true, isRecord=isRecord}
+                  val enumProps = buildTyProps(name,ds,TyProps.Static, true, isRecord)
 		  val () = PTys.insert(Atom.atom name, enumProps)
 
                   (* generate canonical representation *)
