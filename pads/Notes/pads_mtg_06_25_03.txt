@@ -1,0 +1,64 @@
+
+25 June 2003
+
+Strategy:
+
+  Phase I:
+  Galax over "in-memory" PADS description (no streams-access)
+
+  Phase II:
+  Galax over "streams-access" PADS description
+
+Phase I:
+Data model interface: 
+
+1. Jerome & Mary 
+
+    - Specify new OO data-model interface
+    - Migrate Galax data model to new OO data model
+    - Migrate Galax interpreter to use new data model
+
+  *** Write up OO API (Friday)
+
+  Mary, Kathleen, Ricardo 
+
+    - Specify PADS/C interface for data-model 
+
+    - How to implement every Data model operator
+      elements, 
+      marshalling atomic values
+
+    - Implement Caml/C glue code
+      Use Caml-IDL Xavier Leroy
+
+      Write Caml program to call PADS library
+
+Phase II:
+Streams access: 
+
+1. PADS/Galax : 
+
+    - Schema type annotations 
+
+2. Mary (Jerome) : 
+
+    - Carry type annotations into XQuery types
+    - Annotations to Core & Algebra
+  
+3. Kathleen/Bob - 
+ 
+    - Functions for "streaming" over arrays and structs: start-stream,
+      peek, next
+
+4. Galax
+
+    - Stream Operators
+
+    - Rewriting step : Core to 
+
+    - Data model operators 
+
+    - API: 
+
+      eval_query_as_stream
+
