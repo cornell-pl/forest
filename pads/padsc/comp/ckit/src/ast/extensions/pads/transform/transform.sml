@@ -112,23 +112,20 @@ end = struct
 		fm l 0 []
 	    end
 	  fun cvtTr'  l = 
-          let val () = print ("called cvtTr' with argument: "^ (String.implode l)^".\n") 
-	      fun finish cs = Str(String.implode(List.rev cs))
+          let fun finish cs = Str(String.implode(List.rev cs))
 	      fun getStr nil acc = (finish acc, [])
                 | getStr (c::cs) acc = 
 		                       if c = #"^"  then ((finish acc), c::cs) 
 				       else getStr cs (c::acc)
               fun getDeref (seq : char list)= 
 		  let val seqS = String.implode seq
-		      val () = List.app (fn x => print ("var = "^x^"\n")) [ty,field]
 		  in
 		  case (List.find (fn var => String.isPrefix var seqS) [ty, field])
 		  of NONE => (print ("Unexpected variable name: "^ seqS ^".\n"); (Str "", []))
-                  | SOME which => (print ("Found deref: "^which^"\n" ); (Deref which, List.drop(seq, String.size which)))
+                  | SOME which =>(Deref which, List.drop(seq, String.size which))
 		  end
               fun getApp seq = 
 		  let val stfs = Map.listItemsi (!simpletfs)
-		      val () = print ("Called getApp with sequence: "^(String.implode seq)^".\n")
 		  in
 		      case List.find (fn (key,tfs) => String.isPrefix (Atom.toString key) 
 				                       (String.implode (List.take(seq, 
@@ -144,11 +141,9 @@ end = struct
 				     (print ("Expected '(' after string transform "^tStr^".\n");
 				      (Str "", []))
 				 else let val (argS, rest) = findMatching tStr cs
-				          val ()=  print ("arg string = "^(String.implode argS)^".\n")
 					  val (argT, rest') = cvtTr' argS
 					  val () = if not (List.null rest') then print "unexpected material in arg.\n" 
 						   else()
-					  val () = print ("finished app. rest = "^(String.implode rest)^".\n")
 				      in
 					  (App(tStr, argT), rest)
 				      end
@@ -159,9 +154,7 @@ end = struct
                 | getMeta (seq as c::cs) = if Char.isUpper c then getApp seq else getDeref seq
               fun getFirst nil = (Str "", [])
                 | getFirst (str as (c::cs)) = 
-	(	  print ("head = "^(Char.toString c) ^".\n");
-		   if (c = #"^") then getMeta cs
-	           else (print("Getting str: "^(String.implode (c::cs))^".\n"); getStr str []))
+		   if (c = #"^") then getMeta cs else getStr str []
 	      val (first, rawR) = getFirst l
 	  in
               if List.null rawR then (first, rawR)
@@ -237,7 +230,6 @@ end = struct
 
   fun doFile (ast,tidtab, paidtab) f  = 
       let val errorState = Error.mkErrState TextIO.stdErr
-	  val () = print ("transform spec: "^f^".\n")
           val tedecls = TParser.parseFile errorState f
 	  val () = List.app processEDecl tedecls
 	  val outputName = case (!output) of NONE => (print "Failed to specify output file.\n"; raise IO)
