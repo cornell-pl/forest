@@ -349,6 +349,30 @@ define LibSanityCheck
 )
 endef
 
+ifdef GEN_GALAX
+INCLUDES += -I /home/mff/ocaml-3.06-rh7/lib/ocaml
+DYNAMIC_LIBS_O += -lpglx -last
+DYNAMIC_LIBS_D += -lpglx-g -last
+
+STATIC_LIBS_O += $(STATIC_PGLXLIB_O)
+STATIC_LIBS_D += $(STATIC_PGLXLIB_D)
+
+DYNAMIC_OCAML_LIBS_D = -L/home/mff/Galax-rh7/lib/c -L/home/mff/ocaml-3.06-rh7/lib/ocaml -lglxopt -lnums -lm -ldl -lcurses -lunix -lstr
+DYNAMIC_OCAML_LIBS_O = $(DYNAMIC_OCAML_LIBS_D)
+
+ifdef USE_GALAX
+DYNAMIC_LIBS_D += $(DYNAMIC_OCAML_LIBS_D)
+DYNAMIC_LIBS_O += $(DYNAMIC_OCAML_LIBS_O)
+endif
+
+#STATIC_OCAML_LIBS_D = -L/home/mff/Galax-rh7/lib/c -L/home/mff/ocaml-3.06-rh7/lib/ocaml -lglxopt -lnums -lm -ldl -lcurses -lunix -lstr
+#STATIC_OCAML_LIBS_O = $(DYNAMIC_OCAML_LIBS_D)
+ifdef USE_GALAX
+STATIC_LIBS_D += $(STATIC_OCAML_LIBS_D)
+STATIC_LIBS_O += $(STATIC_OCAML_LIBS_O)
+endif
+endif
+
 define CCExec_DYNAMIC_D
 (set -x; \
  $(RM) $@; \
