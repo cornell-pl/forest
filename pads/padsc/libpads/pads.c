@@ -4595,7 +4595,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.114 2003-10-07 20:52:10 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.115 2003-10-09 17:52:28 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8930,27 +8930,33 @@ PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 /* MISC WRITE FUNCTIONS */
 
 ssize_t
-PcountX_write2io(P_t *pads, Sfio_t *io, Puint8 x, int eor_required, Pbase_pd *pd, Pint32  *val)
+PDCI_countX_write2io(P_t *pads, Sfio_t *io,
+		     Puint8 x, int eor_required, size_t count_max,
+		     Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn)
 {
   return 0;
 }
 
 ssize_t
-PcountX_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Puint8 x, int eor_required,
-		     Pbase_pd *pd, Pint32  *val)
+PDCI_countX_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+		      Puint8 x, int eor_required, size_t count_max,
+		      Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn)
 {
   return 0;
 }
 
 ssize_t
-PcountXtoY_write2io(P_t *pads, Sfio_t *io, Puint8 x, Puint8 y, Pbase_pd *pd, Pint32  *val)
+PDCI_countXtoY_write2io(P_t *pads, Sfio_t *io,
+			Puint8 x, Puint8 y, size_t count_max,
+			Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn)
 {
   return 0;
 }
 
 ssize_t
-PcountXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Puint8 x, Puint8 y,
-			Pbase_pd *pd, Pint32  *val)
+PDCI_countXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			 Puint8 x, Puint8 y, size_t count_max,
+			 Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn)
 {
   return 0;
 

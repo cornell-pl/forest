@@ -245,6 +245,19 @@ ssize_t PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			    void *type_arg1, Pbase_pd *pd, Puint32 *d,
 			    Pcharset char_set, const char *inv_type, const char *whatfn);
 
+ssize_t PDCI_countX_write2io(P_t *pads, Sfio_t *io,
+			     Puint8 x, int eor_required, size_t count_max,
+			     Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn);
+ssize_t PDCI_countX_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      Puint8 x, int eor_required, size_t countx,
+			      Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn);
+ssize_t PDCI_countXtoY_write2io(P_t *pads, Sfio_t *io,
+				Puint8 x, Puint8 y, size_t count_max,
+				Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn);
+ssize_t PDCI_countXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				 Puint8 x, Puint8 y, size_t count_max,
+				 Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn);
+
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 
 /* ================================================================================
@@ -853,6 +866,42 @@ ssize_t PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 #define Pe_date_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, d) \
   PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopChar)), pd, d, Pcharset_EBCDIC, "Pdate", "Pe_date_write2buf")
+
+#define PcountX_write2io(pads, io, x, eor_required, count_max, pd, val) \
+  PDCI_countX_write2io(pads, io, x, eor_required, count_max, pd, val, PDCI_DEF_CHARSET(pads), "PcountX_write2io")
+
+#define Pa_countX_write2io(pads, io, x, eor_required, count_max, pd, val) \
+  PDCI_countX_write2io(pads, io, x, eor_required, count_max, pd, val, Pcharset_ASCII, "Pa_countX_write2io")
+
+#define Pe_countX_write2io(pads, io, x, eor_required, count_max, pd, val) \
+  PDCI_countX_write2io(pads, io, x, eor_required, count_max, pd, val, Pcharset_EBCDIC, "Pe_countX_write2io")
+
+#define PcountX_write2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val) \
+  PDCI_countX_write2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val, PDCI_DEF_CHARSET(pads), "PcountX_write2buf")
+
+#define Pa_countX_write2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val) \
+  PDCI_countX_write2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val, Pcharset_ASCII, "Pa_countX_write2buf")
+
+#define Pe_countX_write2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val) \
+  PDCI_countX_write2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val, Pcharset_EBCDIC, "Pe_countX_write2buf")
+
+#define PcountXtoY_write2io(pads, io, x, y, count_max, pd, val) \
+  PDCI_countXtoY_write2io(pads, io, x, y, count_max, pd, val, PDCI_DEF_CHARSET(pads), "PcountXtoY_write2io")
+
+#define Pa_countXtoY_write2io(pads, io, x, y, count_max, pd, val) \
+  PDCI_countXtoY_write2io(pads, io, x, y, count_max, pd, val, Pcharset_ASCII, "Pa_countXtoY_write2io")
+
+#define Pe_countXtoY_write2io(pads, io, x, y, count_max, pd, val) \
+  PDCI_countXtoY_write2io(pads, io, x, y, count_max, pd, val, Pcharset_EBCDIC, "Pe_countXtoY_write2io")
+
+#define PcountXtoY_write2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val) \
+  PDCI_countXtoY_write2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val, PDCI_DEF_CHARSET(pads), "PcountXtoY_write2buf")
+
+#define Pa_countXtoY_write2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val) \
+  PDCI_countXtoY_write2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val, Pcharset_ASCII, "Pa_countXtoY_write2buf")
+
+#define Pe_countXtoY_write2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val) \
+  PDCI_countXtoY_write2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val, Pcharset_EBCDIC, "Pe_countXtoY_write2buf")
 
 #define Pint8_FW_write2io(pads, io, width, pd, val) \
   PDCI_CHARSET_SWITCH(pads, P, int8_FW_write2io, (pads, io, width, pd, val))

@@ -1492,10 +1492,10 @@ Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m, const char *s, Pbase_pd *
  * as ASCII chars.  They are converted to EBCDIC if the EBCDIC form is used or
  * if the default form is used and pads->disc->def->charset is Pcharset_EBCDIC.
  *
- * If parameter scan_max is non-zero, then the count functions also stop counting
- * after scanning scan_max characters, in which case an error is returned.
- * If the IO discipline is not record-based and scan_max is zero, an error is
- * returned immediately:  you *must* specify a scan_max > 0 when using an IO discipline
+ * If parameter count_max is non-zero, then the count functions also stop counting
+ * after scanning count_max characters, in which case an error is returned.
+ * If the IO discipline is not record-based and count_max is zero, an error is
+ * returned immediately:  you *must* specify a count_max > 0 when using an IO discipline
  * that has no records.
  *
  * For countX, if param eor_required is non-zero, then encountering EOF
@@ -1549,23 +1549,23 @@ Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m, const char *s, Pbase_pd *
 #if P_CONFIG_READ_FUNCTIONS > 0
 
 #if P_CONFIG_A_CHAR_STRING > 0
-Perror_t Pa_countX_read   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t scan_max,
+Perror_t Pa_countX_read   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t count_max,
 			   Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pa_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t scan_max,
+Perror_t Pa_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t count_max,
 			   Pbase_pd *pd, Pint32 *res_out);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
-Perror_t Pe_countX_read   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t scan_max,
+Perror_t Pe_countX_read   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t count_max,
 			   Pbase_pd *pd, Pint32 *res_out);
-Perror_t Pe_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t scan_max,
+Perror_t Pe_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t count_max,
 			   Pbase_pd *pd, Pint32 *res_out);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
-Perror_t PcountX_read     (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t scan_max,
+Perror_t PcountX_read     (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t count_max,
 			   Pbase_pd *pd, Pint32 *res_out);
-Perror_t PcountXtoY_read (P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t scan_max,
+Perror_t PcountXtoY_read (P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t count_max,
 			  Pbase_pd *pd, Pint32 *res_out);
 #endif
 
@@ -3026,14 +3026,18 @@ ssize_t Puint64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, 
  */
 
 #if P_CONFIG_WRITE_FUNCTIONS > 0
-ssize_t PcountX_write2io    (P_t *pads, Sfio_t *io, Puint8 x, int eor_required,
+ssize_t PcountX_write2io    (P_t *pads, Sfio_t *io,
+			     Puint8 x, int eor_required, size_t count_max,
 			     Pbase_pd *pd, Pint32  *val);
-ssize_t PcountX_write2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Puint8 x, int eor_required,
+ssize_t PcountX_write2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			     Puint8 x, int eor_required, size_t count_max,
 			     Pbase_pd *pd, Pint32  *val);
 
-ssize_t PcountXtoY_write2io (P_t *pads, Sfio_t *io, Puint8 x, Puint8 y,
+ssize_t PcountXtoY_write2io (P_t *pads, Sfio_t *io,
+			     Puint8 x, Puint8 y, size_t count_max,
 			     Pbase_pd *pd, Pint32  *val);
-ssize_t PcountXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Puint8 x, Puint8 y,
+ssize_t PcountXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			     Puint8 x, Puint8 y, size_t count_max,
 			     Pbase_pd *pd, Pint32  *val);
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 
