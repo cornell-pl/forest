@@ -260,6 +260,8 @@ ifdef USE_GALAX
 DYNAMIC_LIB_DEPS_D += $(STATIC_GALAXLIB_D) $(STATIC_OCAMLLIB_D)
 endif
 
+TRIV_LIBS = -L $(LIBDIR) $(SHARED_ASTLIB_D)
+
 INCLUDES =  -I. -I.. -I$(AST_HOME)/include/ast
 ifdef GEN_DIR
 INCLUDES += -I$(GEN_DIR)
@@ -323,6 +325,20 @@ define LibSanityCheck
       exit 1; \
     fi; \
   done; \
+)
+endef
+
+define TrivCCExec_O
+(set -x; \
+ $(RM) $@; \
+ $(COMPILE_O) $^ $(TRIV_LIBS) -o $@; \
+)
+endef
+
+define TrivCCExec_D
+(set -x; \
+ $(RM) $@; \
+ $(COMPILE_D) $^ $(TRIV_LIBS) -o $@; \
 )
 endef
 
