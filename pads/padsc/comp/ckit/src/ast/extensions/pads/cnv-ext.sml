@@ -2413,9 +2413,11 @@ structure CnvExt : CNVEXT = struct
 					P.assignS(modFieldX(ed, tag),PT.Id (errSuf name))]
 
 		     fun genCleanupSs (s,locS) =  (genErrorSs (s,locS))
-			             @ [P.assignS(modFieldX(ed,panic), P.trueX),
-					PT.Labeled(findEORSuf name, 
+			             @ [P.assignS(modFieldX(ed,panic), P.trueX)]
+				     @ (if isRecord then
+			                 [PT.Labeled(findEORSuf name, 
 						   PT.Compound (genReadEOR (readName, reportUnionErrorSs) ()))]
+				        else [])
 				     @ [PT.Return (PT.Id result)]
                      
 		     fun chkCaseLabel eOpt = 
