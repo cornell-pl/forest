@@ -11,7 +11,7 @@ for another project to augment my PADS research.
            (DGB asked for AT&T in-house use before release).
          + Finish writing the manual.
    b) Work with Trevor Jim on using PADS for automatically generating
-        parsers based on IETF specs (http, dns, etc.).
+        parsers based on IETF specs (http, DNS, etc.).
    c) Do extensive performance testing and tuning.
    d) Continue to work with Mary Fernandez on PADS/Galax (XQuery) integretation; 
       the next big step is to develop and use a Galax streaming model.
@@ -19,4 +19,9 @@ for another project to augment my PADS research.
 
 2. Professional development
    a) Submit papers based on PADS work.
+
+3. Objectives
+   a) Continue to support Ken Lyons use of CORBA to access ECIP3 LEC gateway services.
+   b) New project: support Howard Katseff use of CORBA to access MSAG address validation services.
+
 
