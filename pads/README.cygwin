@@ -1,0 +1,24 @@
+
+PADS under CYGWIN
+-----------------
+
+The good news is that PADS seems to work just fine under cygwin. 
+
+So far we have only had time to play with static linking.  We believe
+that dynamic linking can be made to work, we just haven't had time to
+set it up properly.
+
+To force static linking (which you MUST do until we figure out dynamic
+linking) edit the file $PADS_HOME/mk/rules.mk and change this:
+
+# uncomment this to force static builds
+# FORCE_STATIC = 1
+
+to be this:
+
+# uncomment this to force static builds
+FORCE_STATIC = 1
+
+
+
+
