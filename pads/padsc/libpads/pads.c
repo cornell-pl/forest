@@ -1904,7 +1904,7 @@ int_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int nst
   Perror_t res;
   PDCI_DISC_1P_CHECKS( PDCI_MacroArg2String(int_type) "_acc_report", a);
 
-  if (!pads->disc->errorf) {
+  if (!pads->disc->error_fn) {
     return P_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
@@ -1912,7 +1912,7 @@ int_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int nst
   }
   res = int_type ## _acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -2017,7 +2017,7 @@ int_type ## _acc_map_report(P_t *pads, const char *prefix, const char *what, int
   Sfio_t *tmpstr;
   Perror_t res;
   PDCI_DISC_1P_CHECKS( PDCI_MacroArg2String(int_type) "_acc_map_report", a);
-  if (!pads->disc->errorf) {
+  if (!pads->disc->error_fn) {
     return P_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
@@ -2025,7 +2025,7 @@ int_type ## _acc_map_report(P_t *pads, const char *prefix, const char *what, int
   }
   res = int_type ## _acc_map_report2io(pads, tmpstr, prefix, what, nst, fn, a);
   if (res == P_OK) {
-    pads->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -2305,7 +2305,7 @@ fpoint_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int 
   Sfio_t *tmpstr;
   Perror_t res;
   PDCI_DISC_1P_CHECKS( PDCI_MacroArg2String(fpoint_type) "_acc_report", a);
-  if (!pads->disc->errorf) {
+  if (!pads->disc->error_fn) {
     return P_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
@@ -2313,7 +2313,7 @@ fpoint_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int 
   }
   res = fpoint_type ## _acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -4477,7 +4477,7 @@ Pstring_acc_report(P_t *pads, const char *prefix, const char *what, int nst, Pst
   Sfio_t *tmpstr;
   Perror_t res;
   PDCI_DISC_1P_CHECKS("Pstring_acc_report", a);
-  if (!pads->disc->errorf) {
+  if (!pads->disc->error_fn) {
     return P_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
@@ -4485,7 +4485,7 @@ Pstring_acc_report(P_t *pads, const char *prefix, const char *what, int nst, Pst
   }
   res = Pstring_acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -4591,7 +4591,7 @@ Pchar_acc_report(P_t *pads, const char *prefix, const char *what, int nst,
   Sfio_t *tmpstr;
   Perror_t res;
   PDCI_DISC_1P_CHECKS("Pchar_acc_report", a);
-  if (!pads->disc->errorf) {
+  if (!pads->disc->error_fn) {
     return P_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
@@ -4599,7 +4599,7 @@ Pchar_acc_report(P_t *pads, const char *prefix, const char *what, int nst,
   }
   res = Pchar_acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -4701,7 +4701,7 @@ P_nerr_acc_report(P_t *pads, const char *prefix, const char *what, int nst,
   Perror_t res;
   PDCI_DISC_1P_CHECKS("P_nerr_acc_report", a);
 
-  if (!pads->disc->errorf) {
+  if (!pads->disc->error_fn) {
     return P_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
@@ -4709,7 +4709,7 @@ P_nerr_acc_report(P_t *pads, const char *prefix, const char *what, int nst,
   }
   res = P_nerr_acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -4942,7 +4942,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.128 2003-11-19 13:45:30 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.129 2003-11-19 18:28:25 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5327,7 +5327,7 @@ const char *PDCI_spaces = "                                                     
 /* EXTERNAL ERROR REPORTING FUNCTIONS */
 
 int
-Perrorf(const char *libnm, int level, ...)
+P_error(const char *libnm, int level, ...)
 {
   va_list ap;
   va_start(ap, level);
@@ -5349,7 +5349,8 @@ Pdisc_t Pdefault_disc = {
   0, /* numeric_max: 0 means end-of-record / soft limit for non-record-based IO disciplines */
   0, /* scan_max:    0 means end-of-record / soft limit for non-record-based IO disciplines */
   0, /* panic_max:   0 means end-of-record / soft limit for non-record-based IO disciplines */
-  Perrorf,
+  P_fopen,
+  P_error,
   PerrorRep_Max,
   PlittleEndian,
   1000, /* default max2track */
@@ -5760,7 +5761,7 @@ P_io_set(P_t *pads, Sfio_t *io)
       P_DBG(pads->disc, "P_io_set: same io installed more than once, ignoring this call");
       return P_OK;
     }
-    if (pads->path) {
+    if (pads->path && strcmp(pads->path, "/dev/stdin")) {
       P_WARN(pads->disc, "IO_set called with previous installed io due to fopen; closing");
     }
     P_io_close(pads);
@@ -5773,24 +5774,23 @@ Perror_t
 P_io_fopen(P_t *pads, const char *path)
 {
   Sfio_t           *io; 
+  Pfopen_fn         fopen_fn;
 
   PDCI_IODISC_1P_CHECKS("P_io_fopen", path);
   if (pads->io) {
-    if (pads->path) {
+    if (pads->path && strcmp(pads->path, "/dev/stdin")) {
       P_WARN(pads->disc, "IO_fopen called while previous file still open; closing");
     }
     P_io_close(pads);
     /* path and io are no longer set */
-  }
-  if (strcmp(path, "/dev/stdin") == 0) {
-    return P_io_set(pads, sfstdin);
   }
   if (!(pads->path = vmnewof(pads->vm, 0, char, strlen(path) + 1, 0))) {
     P_FATAL(pads->disc, "out of space [string to record file path]");
     return P_ERR;
   }
   strcpy(pads->path, path);
-  if (!(io = sfopen(NiL, path, "r"))) {
+  fopen_fn = (pads->disc->fopen_fn) ? pads->disc->fopen_fn : P_fopen;
+  if (!(io = fopen_fn(path, "r"))) {
     P_SYSERR1(pads->disc, "Failed to open file \"%s\"", path);
     vmfree(pads->vm, pads->path);
     pads->path = 0;
@@ -5818,7 +5818,7 @@ P_io_close(P_t *pads)
   if (pads->disc->io_disc) {
     pads->disc->io_disc->sfclose_fn(pads, pads->disc->io_disc, io_elt, io_remain);
   }
-  if (pads->path) {
+  if (pads->path && strcmp(pads->path, "/dev/stdin")) {
     sfclose(pads->io);
   }
   if (pads->vm && pads->path) {
@@ -6478,6 +6478,33 @@ P_swap_bytes(Pbyte *bytes, size_t num_bytes)
   return P_ERR;
 }
 
+Sfio_t*
+P_fopen(const char* string, const char* mode)
+{
+  if (strcmp(string, "/dev/stdin")  == 0) {
+    if (strcmp(mode, "r")) {
+      /* not simple read mode, let sfopen decide if mode can be applied to sfstdin */
+      return sfopen(sfstdin,  NiL, mode);
+    }
+    return sfstdin;
+  }
+  if (strcmp(string, "/dev/stdout") == 0) {
+    if (strcmp(mode, "a")) {
+      /* not simple append mode, let sfopen decide if mode can be applied to sfstdout */
+      return sfopen(sfstdout,  NiL, mode);
+    }
+    return sfstdout;
+  }
+  if (strcmp(string, "/dev/stderr") == 0) {
+    if (strcmp(mode, "a")) {
+      /* not simple append mode, let sfopen decide if mode can be applied to sfstderr */
+      return sfopen(sfstderr,  NiL, mode);
+    }
+    return sfstderr;
+  }
+  return sfopen(NiL, string, mode);
+}
+
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * INTERNAL FUNCTIONS (see pads-internal.h)
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -6554,7 +6581,7 @@ Perror_t
 PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
 		PerrCode_t errCode, const char *whatfn, const char *format, ...)
 {
-  Perror_f    pdc_errorf;
+  Perror_fn   pdc_errorf;
   char       *severity = "Error";
   char       *msg      = "** unknown error code **";
   char       *infn, *tmpstr1, *tmpstr2, *tmpstr3;
@@ -6570,11 +6597,11 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
     sfprintf(pads->tmp2, "[in %s]", whatfn);
     infn = sfstruse(pads->tmp2);
   }
-  pdc_errorf = pads->disc->errorf;
+  pdc_errorf = pads->disc->error_fn;
   if (P_GET_LEV(level) == P_LEV_FATAL) {
     severity = "FATAL error";
     if (!pdc_errorf) { /* need an error function anyway for fatal case */
-      pdc_errorf = Perrorf;
+      pdc_errorf = P_error;
     }
   } else if (pads->speclev > 0 || pads->disc->e_rep == PerrorRep_None || !pdc_errorf) {
     return P_OK;

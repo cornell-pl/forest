@@ -69,8 +69,8 @@
 #if 0
 #define IODISC_RELOC_DBG(diff) \
   do { \
-    if (pads->disc->errorf) { \
-      pads->disc->errorf(NiL, 0, "XXX_REMOVE DATA SHIFTED BY %d BYTES", diff); \
+    if (pads->disc->error_fn) { \
+      pads->disc->error_fn(NiL, 0, "XXX_REMOVE DATA SHIFTED BY %d BYTES", diff); \
     } \
   } while (0)
 #else
@@ -80,8 +80,8 @@
 #if 0
 #define IODISC_RELOC_DBG_ELT(elt) \
   do { \
-    if (pads->disc->errorf) { \
-      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d offset %d) = AT NEW LOC =>\n[%s]", elt->unit, elt->num, elt->offset, P_fmt_cstr_n(elt->begin, elt->len)); \
+    if (pads->disc->error_fn) { \
+      pads->disc->error_fn(NiL, 0, "XXX_REMOVE(%s %d offset %d) = AT NEW LOC =>\n[%s]", elt->unit, elt->num, elt->offset, P_fmt_cstr_n(elt->begin, elt->len)); \
     } \
   } while (0)
 #else
@@ -139,7 +139,7 @@ PDCI_iodisc_report_partial(P_t *pads, Pio_elt_t *elt, int missing_term, size_t r
   char       *infn, *tmpstr1;
   Ploc_t loc;
 
-  if (!pads->disc->errorf || pads->disc->e_rep == PerrorRep_None) return;
+  if (!pads->disc->error_fn || pads->disc->e_rep == PerrorRep_None) return;
 
   loc.b.num   = elt->num;
   loc.b.byte  = 1;
@@ -152,7 +152,7 @@ PDCI_iodisc_report_partial(P_t *pads, Pio_elt_t *elt, int missing_term, size_t r
   sfstrset(pads->tmp1, 0);
 
   if (pads->disc->e_rep == PerrorRep_Min) {
-    pads->disc->errorf(NiL, P_LEV_WARN, "%s %s: %s %d byte %d: errCode %d",
+    pads->disc->error_fn(NiL, P_LEV_WARN, "%s %s: %s %d byte %d: errCode %d",
 		       severity, infn, elt->unit, loc.b.num, loc.b.byte, P_EOF_BEFORE_EOR);
     return;
   }
@@ -185,7 +185,7 @@ PDCI_iodisc_report_partial(P_t *pads, Pio_elt_t *elt, int missing_term, size_t r
       sfprintf(pads->tmp1, ">>>%s<<<", tmpstr1);
     }
   }
-  pads->disc->errorf(NiL, P_LEV_WARN, "%s", sfstruse(pads->tmp1));
+  pads->disc->error_fn(NiL, P_LEV_WARN, "%s", sfstruse(pads->tmp1));
 }
 
 /* ================================================================================ */
@@ -399,8 +399,8 @@ P_fwrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
   *(elt->end) = 0; /* null-terminate the bytes read */
   P_APPEND_ELT(data->head, elt);
 #if 0
-  if (pads->disc->errorf) {
-    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
+  if (pads->disc->error_fn) {
+    pads->disc->error_fn(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
@@ -755,8 +755,8 @@ P_norec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
   }
   P_APPEND_ELT(data->head, elt);
 #if 0
-  if (pads->disc->errorf) {
-    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
+  if (pads->disc->error_fn) {
+    pads->disc->error_fn(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
@@ -1167,8 +1167,8 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     elt->begin[elt->len] = 0; /* null-terminate the record, replaces cterm with NULL */
     P_APPEND_ELT(data->head, elt);
 #if 0
-    if (pads->disc->errorf) {
-      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
+    if (pads->disc->error_fn) {
+      pads->disc->error_fn(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
     }
 #endif
     if (!(*next_elt_out)) {
@@ -1202,8 +1202,8 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     elt->begin[elt->len] = 0; /* null-terminate the record */
     P_APPEND_ELT(data->head, elt);
 #if 0
-    if (pads->disc->errorf) {
-      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
+    if (pads->disc->error_fn) {
+      pads->disc->error_fn(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
     }
 #endif
     if (!(*next_elt_out)) {
@@ -1730,8 +1730,8 @@ P_vlrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
   elt->begin[elt->len] = 0; /* null-terminate the record */
   P_APPEND_ELT(data->head, elt);
 #if 0
-  if (pads->disc->errorf) {
-    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
+  if (pads->disc->error_fn) {
+    pads->disc->error_fn(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
@@ -2174,8 +2174,8 @@ P_norec_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_elt_t **
   elt->offset = new_data_off;
   P_APPEND_ELT(data->head, elt);
 #if 0
-  if (pads->disc->errorf) {
-    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d offset %d)\n[%s]", elt->unit, elt->num, elt->offset, P_fmt_cstr_n(elt->begin, elt->len));
+  if (pads->disc->error_fn) {
+    pads->disc->error_fn(NiL, 0, "XXX_REMOVE(%s %d offset %d)\n[%s]", elt->unit, elt->num, elt->offset, P_fmt_cstr_n(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
