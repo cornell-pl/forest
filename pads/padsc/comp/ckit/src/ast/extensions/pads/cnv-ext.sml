@@ -1797,7 +1797,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val accDecls = cnvExternalDecl accStructED 
                       val accPCT = P.makeTypedefPCT (accSuf name)			 
 
-                      (* Generate read function *)
+                      (* Generate read function struct case *)
                       (* -- Some useful names *)
 		      val readName = readSuf name
 
@@ -2135,7 +2135,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
                           else
 			    let val writeFieldName = (iSuf o bufSuf o writeSuf) (lookupWrite pty) 
-				val () = addSub(name, getFieldX(rep,name))
+				val () = addSub(name, fieldX(rep,name))
 				val modArgs = List.map(PTSub.substExps (!subList)) args
 				val adjustLengths = not (matchesLast(PX.Full f, lastField) andalso not isRecord)
 			    in
