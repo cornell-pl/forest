@@ -57,6 +57,13 @@ struct
   val ERROR_ERROR = PT.Id "PDC_LEV_ERR"
   val ERROR_FATAL = PT.Id "PDC_LEV_FATAL"
 
+  val PDCI_MK_TNODE = PT.Id "PDCI_MK_TNODE"	
+  val PDCI_MK_NODE = PT.Id "PDCI_MK_NODE"	
+  val PDCI_NEW_NODE_PTR_LIST = PT.Id "PDCI_NEW_NODE_PTR_LIST"
+  val nodeT = P.makeTypedefPCT "PDCI_node_t"
+  val PDCI_structured_pd = "PDCI_structured_pd"
+  val PDCI_Cstr_val = "PDCI_Cstr_val"
+
   val toolErrPCT   = P.makeTypedefPCT "PDC_error_t"
   val toolStatePCT = P.makeTypedefPCT "PDC_t"
   val toolDiscPCT  = P.makeTypedefPCT "PDC_disc_t"
