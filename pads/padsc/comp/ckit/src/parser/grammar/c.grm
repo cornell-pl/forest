@@ -1074,7 +1074,7 @@ pName:
  | TYPE_NAME (TYPE_NAME)
 
 pConstraintOpt: (NONE)
-  | COLON expr (SOME expr)
+  | COLON exprWComma (SOME exprWComma)
 
 pCommentOpt: (NONE)
   | PCOMMENT   (SOME PCOMMENT)
