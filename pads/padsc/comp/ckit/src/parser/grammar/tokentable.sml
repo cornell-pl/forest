@@ -85,7 +85,7 @@ struct
     case (AtomTable.find keywords name)
       of (SOME tokFn) => tokFn(pos, endPos)
        | NONE => 
-	   (if TypeDefs.checkTdef(s) = true then 
+	   (if TypeDefs.checkTdef(s) then 
 	      Tokens.TYPE_NAME(s,pos,endPos)
 	    else Tokens.ID(s,pos,endPos))
   (* end case *)

@@ -8,7 +8,7 @@ pstruct test {
 
 #define RECLIST_SIZE 10
 parray recList {
-  test [RECLIST_SIZE] : forall i in recList { i == length-1 || recList[i].id < recList[i+1].id };
+  test [RECLIST_SIZE] : forall i in [0..length-2] { recList[i].id < recList[i+1].id };
 };
 
 
@@ -28,7 +28,7 @@ parray recListtwo{
 #define MAX 5
 parray intList {
   auint32 [MIN : MAX] : sep == '|' && term == '\n' &&
-		   forall i in intList { i == length-1 || intList[i] < intList[i+1]};
+		   forall i in [0 .. length -2] {intList[i] < intList[i+1]};
 };
 
 

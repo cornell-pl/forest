@@ -8,65 +8,66 @@ struct
   		      readname : Atom.atom,
 		      scanname : Atom.atom option}
 
-   val baseInfo : baseInfoTy list = [
-	  {padsname = Atom.atom "auint8", 
-	   repname  = Atom.atom "uint8", 
-	   emname   = Atom.atom "base_em", 
-	   edname   = Atom.atom "base_ed", 
-	   readname = Atom.atom "auint8_read",
-           scanname = NONE},
+   fun printEntry {padsname : Atom.atom, 
+		      repname  : Atom.atom, 
+                      emname   : Atom.atom,
+                      edname   : Atom.atom,
+  		      readname : Atom.atom,
+		      scanname : Atom.atom option} = (
+    (print (String.concat["padsname = ", (Atom.toString padsname), "\n"]));
+    (print (String.concat["repname = ", Atom.toString repname, "\n"]));
+    (print (String.concat["emname = ", Atom.toString emname, "\n"]));
+    (print (String.concat["edname = ", Atom.toString edname, "\n"]));
+    (print (String.concat["readname = ", Atom.toString readname, "\n"]));
+    (print (String.concat["scanname = ", case scanname of NONE => "-" | SOME n =>  Atom.toString n, "\n\n"])))
 
-	  {padsname = Atom.atom "aint8", 
-	   repname  = Atom.atom "PDC_int8", 
-	   emname   = Atom.atom "PDC_base_em", 
-	   edname   = Atom.atom "PDC_base_ed", 
-	   readname = Atom.atom "PDC_aint8_read",
-           scanname = NONE},
+   fun processLine s = 
+       if String.isPrefix "#" s then [] 
+       else 
+	   let val fields = String.tokens (fn c => c = #" " orelse c = #"\n") s
+	       val r = if (List.length fields = 6) then 
+	               [{padsname = Atom.atom(List.nth(fields,0)),
+			 repname  = Atom.atom(List.nth(fields,1)),
+			 emname   = Atom.atom(List.nth(fields,2)),
+			 edname   = Atom.atom(List.nth(fields,3)),
+			 readname = Atom.atom(List.nth(fields,4)),
+			 scanname = if List.nth(fields,5) = "-" then NONE
+				    else SOME (Atom.atom(List.nth(fields,5)))}]
+		       else []
+	   in
+	       r
+	   end
 
-	  {padsname = Atom.atom "auint32", 
-	   repname  = Atom.atom "PDC_uint32", 
-	   emname   = Atom.atom "PDC_base_em", 
-	   edname   = Atom.atom "PDC_base_ed", 
-	   readname = Atom.atom "PDC_auint32_read",
-           scanname = NONE},
+   fun buildBaseInfo () = 
+       let val strm = TextIO.openIn("ckit/src/ast/extensions/pads/base-ty-info.txt")
+           fun loop(s) = if s = ""
+	                 then []
+                         else processLine(s) @ (loop(TextIO.inputLine strm))
+       in
+           loop(TextIO.inputLine strm)
+       end
 
-	  {padsname = Atom.atom "aint32", 
-	   repname  = Atom.atom "PDC_int32", 
-	   emname   = Atom.atom "PDC_base_em", 
-	   edname   = Atom.atom "PDC_base_ed", 
-	   readname = Atom.atom "PDC_aint32_read",
-           scanname = NONE},
+  val baseInfoList = buildBaseInfo()
 
-	  {padsname = Atom.atom "PDC_char_lit", 
-	   repname  = Atom.atom "PDC_uint8", 
-	   emname   = Atom.atom "PDC_base_em", 
-	   edname   = Atom.atom "PDC_base_ed", 
-	   readname = Atom.atom "PDC_char_lit_read",
-           scanname = SOME(Atom.atom "PDC_char_lit_scan")},
-
-	  {padsname = Atom.atom "astring", 
-	   repname  = Atom.atom "PDC_string", 
-	   emname   = Atom.atom "PDC_base_em", 
-	   edname   = Atom.atom "PDC_base_ed", 
-	   readname = Atom.atom "PDC_string_stopChar_read",
-           scanname = NONE},
-
-	  {padsname = Atom.atom "astringFW", 
-	   repname  = Atom.atom "PDC_string", 
-	   emname   = Atom.atom "PDC_base_em", 
-	   edname   = Atom.atom "PDC_base_ed", 
-	   readname = Atom.atom "PDC_string_fw_read",
-           scanname = NONE},
-
-	  {padsname = Atom.atom "astringSRE", 
-	   repname  = Atom.atom "PDC_string", 
-	   emname   = Atom.atom "PDC_base_em", 
-	   edname   = Atom.atom "PDC_base_ed", 
-	   readname = Atom.atom "PDC_string_stopRegexp_read",
-           scanname = NONE}
-
-       ]
-
+  fun genTypedef strm (r:baseInfoTy) = 
+      (TextIO.output(strm, "typedef ");
+       TextIO.output(strm, Atom.toString(#repname(r)));
+       TextIO.output(strm, "\t");
+       TextIO.output(strm, Atom.toString(#padsname(r)));
+       TextIO.output(strm, ";\n"))
+      
+  fun genPadsInternal(filename) = 
+      let val outStrm = TextIO.openOut(filename)
+      in
+	  TextIO.output(outStrm, "#ifndef __PADS_INTERNAL__H__\n");
+	  TextIO.output(outStrm, "#define __PADS_INTERNAL__H__\n");
+	  TextIO.output(outStrm, "#include \"libpadsc.h\"\n");
+	  TextIO.output(outStrm, "#include \"libpadsc-internal.h\"\n");
+          List.app (genTypedef outStrm) baseInfoList;
+	  TextIO.output(outStrm, "#endif /*  __PADS_INTERNAL__H__  */\n");
+	  TextIO.flushOut outStrm;
+	  TextIO.closeOut outStrm
+      end
 
   structure PBST = RedBlackMapFn(
                      struct type ord_key = Atom.atom
@@ -79,8 +80,9 @@ struct
       let fun ins m []  = m
             | ins m ((b:baseInfoTy)::bs) = ins (PBST.insert (m, #padsname b, b)) bs 
       in
-	  ins PBST.empty baseInfo
+	  ins PBST.empty baseInfoList
       end
 
   val find : (baseTyMap * Atom.atom) -> baseInfoTy option = PBST.find
+
 end

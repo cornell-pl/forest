@@ -17,14 +17,16 @@ structure ParseTreeExt =
         datatype 'exp PConstraint = 
            Sep of 'exp
          | Term of 'exp
-         | Forall of {index : string, arrayName : string, body : 'exp}
+         | Forall of {index : string, lower : 'exp, upper : 'exp, body : 'exp}
          | General of 'exp
        
         datatype ('decr, 'ct, 'exp) PExternal = 
            PStruct of {name : string, 
-		       params: (Pty * string) list, 
+		       params: ('ct * 'decr) list, 
 		       fields : ('exp PSField) list}
          | PArray  of {name : string, baseTy : Pty, 
+		       params : ('ct * 'decr) list, 
+		       args   : 'exp list, 
 		       sizeSpec : ('exp PSize) option, 
 		       constraints : ('exp PConstraint) list} 
 

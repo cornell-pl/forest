@@ -323,7 +323,14 @@ structure CnvExt : CNVEXT = struct
 		    | _ => ct)
 	   | _ => ct)
 
-
+    fun CTgetTyName ct = 
+	(case ct of 
+	     Ast.TypeRef tid =>
+		 (case lookTid tid of
+		      SOME {name,ntype = SOME (B.Typedef (_,ct)),...} => name
+		    | NONE => (PE.bug "Ill-formed type table."; SOME "bogus")
+		    | _ => NONE)
+	   | _ => NONE)
 
     fun CTisEnum ty = 
         case CTreduce ty
@@ -486,7 +493,7 @@ structure CnvExt : CNVEXT = struct
 	      val tem = "tem"
 
 	      (* Some useful functions *)
-	      fun repSuf  s = s^"_rep"
+	      fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
               fun emSuf   s = s^"_em"
               fun edSuf   s = s^"_ed"
               fun readSuf s = s^"_read"
@@ -502,10 +509,20 @@ structure CnvExt : CNVEXT = struct
                   of PX.Name s => ( case PTys.find(PTys.baseInfo, Atom.atom s)
 				    of NONE => NONE
                                     |  SOME(b:PTys.baseInfoTy) => #scanname b)
-              fun mungeParam(pty:pty, name:string) : string * pcty = 
-		  let val pcty = lookupTy (pty, repSuf, #repname)
+              fun mungeParam(pcty:pcty, decr:pcdecr) : string * pcty = 
+		  let val (act, nOpt) = CTcnvDecr(pcty, decr)
+                      (* convert padsc name to c name, if a pads typedef *)
+                      val pct = case CTgetTyName act
+			        of NONE => CTtoPTct act
+                                | SOME tyName => 
+				    P.makeTypedefPCT(lookupTy(PX.Name tyName, repSuf, #repname))
+
+                      val name = case nOpt
+			         of NONE => (PE.error "Parameters to PADSC data types must have names.\n"; 
+					     "bogus")
+				 | SOME n => n
 		  in
-                      (name, P.makeTypedefPCT pcty)
+                      (name, pct)
 		  end
 	      fun fieldX (bsName, fName) = P.arrowX(PT.Id(gMod bsName), PT.Id fName)
 	      fun genLocTemp (pcty, paramName, firstTyopt) = 
@@ -584,7 +601,7 @@ structure CnvExt : CNVEXT = struct
                     @ printSs
 		  end
 
-	      fun cnvPStruct ({name:string, params: (pty * string) list, fields : pcexp PX.PSField list}) = 
+	      fun cnvPStruct ({name:string, params: (pcty * pcdecr) list, fields : pcexp PX.PSField list}) = 
 	          let (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b (PX.Full fd) = f fd
                         | mungeField f b (PX.Brief e) = b e
@@ -844,7 +861,7 @@ structure CnvExt : CNVEXT = struct
                  @ cnvExternalDecl readFunED
 	      end
 	  
-             fun cnvPArray {name:string, baseTy:PX.Pty, 
+             fun cnvPArray {name:string, params : (pcty * pcdecr) list, args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
 	     let val length = "length"
 		 val element = "element"
@@ -908,7 +925,12 @@ structure CnvExt : CNVEXT = struct
 		 val edRBuffer    = "edRBuffer"
                  val edBuffer     = "edBuffer"
  		 val edNext       = P.subX(PT.Id edBuffer, indexX)
-        
+          
+                 (* add local variables, ie, parameters,  to scope *)
+		 val _ = pushLocalEnv()                                        (* create new scope *)
+		 val cParams : (string * pcty) list = List.map mungeParam params
+		 val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
+		 (* scope is removed at end of cnvPArray *)
 
                  (* -- Check size specification for array *)
                  val (minOpt, maxOpt, chkBoundsSs) = 
@@ -1047,25 +1069,29 @@ structure CnvExt : CNVEXT = struct
 				   (NONE, SOME (exp,readFun,scanFun), NONE, NONE)
                                  end
                               (* end Term case *))
-                              |  PX.Forall (r as {index,arrayName,body}) => (
+                              |  PX.Forall (r as {index,lower, upper,body}) => (
                                  let val subList = [(length, fieldX(rep,length)), 
-						    (arrayName, fieldX(rep,arrayName))]
+						    (name, fieldX(rep,name))]
 				     val modBodyX = PTSub.substExps subList body
+				     val modLowerX = PTSub.substExps subList lower
+				     val modUpperX = PTSub.substExps subList upper
+				     fun errMsg which = (fn s => 
+							  (which^" bound for forall expression for array "^
+						           name ^" has type"^s^". Expected type int."))
 				 in
-				   if not (arrayName = name) then
-                                     PE.error ("Name of array in forall clause ("^arrayName^
-					       ") does not equal name of array ("^name^").")
-				   else ();
 				   pushLocalEnv();
 				   ignore(insTempVar(index, P.int));
 				   ignore(insTempVar(length, P.int));
-				   ignore(insTempVar(arrayName, P.ptrPCT elemRepPCT)); 
+				   ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
+				   expEqualTy(lower, CTintTys, errMsg "Lower");
+				   expEqualTy(lower, CTintTys, errMsg "Upper");
 				   expEqualTy(body, CTintTys, fn s=>("Forall expression for array "^
 								   name ^" has type "^s^". Expected "^
 								   "type int."));
 
 				   popLocalEnv();
-                                   (NONE,NONE,SOME {index=index, arrayName=arrayName, body=modBodyX}, NONE)
+                                   (NONE,NONE,SOME {index=index, lower=modLowerX, 
+						    upper=modUpperX, body=modBodyX}, NONE)
 				 end
                               (* end Array case *))
 			      |  PX.General exp => (
@@ -1089,7 +1115,10 @@ structure CnvExt : CNVEXT = struct
 		      in
 			  List.foldr mergeAll (NONE,NONE,NONE,NONE) constrs
                       end
-			  
+
+                 (* -- Check parameters to base type read function *)
+		 val () = checkParamTys(name, elemReadName, args, 2, 3)
+
                  (* -- Declare top-level variables and initialize them *)
                  val initSs = [P.varDeclS(PL.base_emPCT, tem, PL.EM_CHECK), (* base_em tem = CHECK; *)
                                P.varDeclS'(PL.base_edPCT, ted)]             (* base_ed ted; *)
@@ -1201,7 +1230,7 @@ structure CnvExt : CNVEXT = struct
                           PL.readFunChkX(PL.PDC_ERROR, elemReadName, 
 					               PT.Id ts, 
 					               P.addrX(fieldX(em,element)),
-						       [],
+						       args,
 						       P.addrX(edNext),
 						       P.addrX(resNext),
 						       PT.Id disc),
@@ -1340,13 +1369,14 @@ structure CnvExt : CNVEXT = struct
 			    [fieldX(rep,length), minX], false))]
 		     end
                  (* -- -- Check that the user's whole array constraint is satisfied. *)
-                 fun genArrayConstraintSs {index:string, arrayName:string, body:PT.expression}  = 
+                 fun genArrayConstraintSs {index:string, lower, upper, body:PT.expression}  = 
 		     [P.mkCommentS "Checking user's array constraint.",
                       PT.Compound[
                        P.varDeclS'(P.int, index),
                        P.varDeclS(P.int, "violated", P.falseX),
-		       PT.For(P.assignX(PT.Id index, P.zero),
-			      P.ltX(PT.Id index, fieldX(rep,length)),
+		       PT.For(P.assignX(PT.Id index, lower),
+			      P.andX(P.lteX(PT.Id index, upper), 
+				     P.ltX(PT.Id index, fieldX(rep,length))),
 			      P.postIncX(PT.Id index),
                               PT.Compound[
                                PT.IfThen(P.notX(body),
@@ -1385,8 +1415,8 @@ structure CnvExt : CNVEXT = struct
 				@ setDataFieldsSs
 				@ arrayConstraintsSs
                                 @ [returnS])]
-                 val readFunED = genReadFun(readName, [], emPCT,edPCT,canonicalPCT, NONE, bodySs)
-
+                 val readFunED = genReadFun(readName, cParams, emPCT,edPCT,canonicalPCT, NONE, bodySs)
+                 val _ = popLocalEnv()
 	     in
 		   canonicalDecls
 		 @ cnvExternalDecl emStructED

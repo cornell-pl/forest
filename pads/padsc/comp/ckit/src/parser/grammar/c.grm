@@ -222,7 +222,7 @@ end
  	| ASSOCIATIVE | TO | KWAND                                         (* D *)     
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
-        | LCOLON | RCOLON (* PADS *)
+        | LCOLON | RCOLON  | DOTDOT (* PADS *)
         | PSTRUCT | PARRAY | PSEP | PTERM | PFORALL | PIN (* PADS *)
 
 %nonterm 
@@ -292,9 +292,9 @@ end
         | popScope of unit
         | strings of string
 (* PADS:start *)
-        | pTyParamDeclaration of (PX.Pty * string)
-        | pTyParamList of (PX.Pty * string) list
-        | pTyParams of (PX.Pty * string) list
+        | pTyParamDeclaration of (ctype * declarator)
+        | pTyParamList of (ctype * declarator)  list
+        | pTyParams of (ctype * declarator) list
         | pOptActParams of expression list
         | pOptActParamList of expression list
         | pName of string
@@ -305,6 +305,7 @@ end
         | pCommentOpt of string option
         | pArray of externalDecl
         | pSizeOpt of (expression PX.PSize) option
+        | pSizeSpec of (expression PX.PSize) option
         | pArrayConstraint of (expression PX.PConstraint) 
         | pArrayConstraints of (expression PX.PConstraint) list
         | pArrayConstraintOpt of (expression PX.PConstraint) list
@@ -954,7 +955,15 @@ pCommentOpt: (NONE)
   | PCOMMENT   (SOME PCOMMENT)
 
 pTyParamDeclaration:
-  pName ID   (PX.Name pName, ID)
+  parameterDeclaration
+	(let val (dt,decr) = parameterDeclaration
+	     val ct = { specifiers = #specifiers dt, 
+		        qualifiers = #qualifiers dt }
+         in
+	    insertParams [parameterDeclaration];	
+	    (ct,decr)
+	 end)
+
 
 pTyParamList:
    pTyParamDeclaration	( [pTyParamDeclaration] )
@@ -990,7 +999,8 @@ pStruct:
 pArrayConstraint : 
    PSEP EQ expr  (PX.Sep expr)
  | PTERM EQ expr (PX.Term expr)
- | PFORALL pName PIN pName LCURLY expr RCURLY (PX.Forall {index = pName1, arrayName = pName2, body = expr})
+ | PFORALL pName PIN LBRACE expr DOTDOT expr RBRACE LCURLY expr RCURLY 
+   (PX.Forall {index = pName1, lower = expr1, upper = expr2, body = expr3})
  | expr         (PX.General expr)
 
 pArrayConstraints : 
@@ -1006,9 +1016,13 @@ pSizeOpt:            (NONE)
  | expr COLON expr   (SOME(PX.SizeInfo{min = SOME expr1, max = SOME expr2, maxTight = false}))
  | COLON expr        (SOME(PX.SizeInfo{min = NONE, max = SOME expr, maxTight = false}))
  
+pSizeSpec: 
+ LBRACE pSizeOpt RBRACE  (pSizeOpt)
+
 pArray:
- PARRAY pName pushScope LCURLY pName LBRACE pSizeOpt RBRACE pArrayConstraintOpt SEMICOLON popScope
+ PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
  (
-   ExternalDeclExt(PX.PArray {name = pName1, baseTy = PX.Name pName2, 
-			      sizeSpec = pSizeOpt, constraints = pArrayConstraintOpt})
+   ExternalDeclExt(PX.PArray {name = pName1, params = pTyParams, 
+			      args = pOptActParams, baseTy = PX.Name pName2, 
+			      sizeSpec = pSizeSpec, constraints = pArrayConstraintOpt})
  )

@@ -141,10 +141,11 @@ structure Main : sig
 	 OS.Process.system s)
 
     (* Run preprocessor ********************************************)
-    fun preprocess(srcFile, destFile) = 
+    fun preprocess(baseTyFile, srcFile, destFile) = 
 	let val srcFile = OS.FileSys.fullPath srcFile
             val compositeFile = tmp ".c"
             val includePrefix = ("#include <libpadsc-internal.h>\n"^
+				 "#include \""^baseTyFile^"\"\n"^
                                  "\n")
             val compositeProg = (includePrefix ^
 				   ("#include \"" ^srcFile^"\"\n"))
@@ -222,12 +223,12 @@ structure Main : sig
 	       end
       end
 	    
-    fun doFile (typ, fname) = 
+    fun doFile baseTyFile (typ, fname) = 
       (curFile := fname;
        case typ of Pads =>
 	 let val () = stage := "Preprocessing"
 	     val ppoutFile = tmp ".c"
-	     val status = preprocess(fname, ppoutFile)
+	     val status = preprocess(baseTyFile, fname, ppoutFile)
 	     val () = if status <> OS.Process.success 
 	              then err "Pre-processor failed."
 		      else ()
@@ -265,8 +266,12 @@ structure Main : sig
            val () = PCL.parseArgs(arguments, flags, addUnknownFile, banner)
            val () = checkFlags()
            (* At this point, flag booleans have been set from command-line *)
+           (* Generate base type typedefs from base description file *)
+           val baseTyDefsFile = tmp ".h"
+           val () = PBaseTys.genPadsInternal baseTyDefsFile
        in
-         app doFile (!srcFiles); 
+         app (doFile baseTyDefsFile) (!srcFiles); 
+         rmTmp();
          if !anyErrors 
 	     then  OS.Process.exit(OS.Process.failure)
 	 else  OS.Process.exit(OS.Process.success)
