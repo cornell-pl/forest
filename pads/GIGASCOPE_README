@@ -1,0 +1,28 @@
+Suppose <GTOP> is the top-level Gigascope directory,
+and <GTOP>/src/pads is where pads gets checked out.
+
+(1) building PADS
+
+First, you need to define GIGASCOPE_HOME, as in
+   > setenv GIGASCOPE_HOME <GTOP>           (csh/tcsh)
+or 
+   > export GIGASCOPE_HOME=<GTOP>           (sh/bash) 
+
+(or I think you can pass GIGASCOPE_HOME=<GTOP> as a make arg)
+
+From directory $GIGASCOPE_HOME/src/pads, if you do
+   gmake install
+
+it should install everything necessary,
+in $GIGASCOPE_HOME/bin, $GIGASCOPE_HOME/lib, and $GIGASCOPE_HOME/include
+
+(2) building in a demo dir
+
+
+
+
+
+
+
+
+
