@@ -1093,9 +1093,9 @@ pSizeSpec:
  LBRACE pSizeOpt RBRACE  (pSizeOpt)
 
 pArray:
- PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
+ pIsRecord PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
  ( makeTypeName pName1;
-   ExternalDeclExt(PX.PArray {name = pName1, params = pTyParams, 
+   ExternalDeclExt(PX.PArray {isRecord=pIsRecord, name = pName1, params = pTyParams, 
 			      args = pOptActParams, baseTy = PX.Name pName2, 
 			      sizeSpec = pSizeSpec, constraints = pArrayConstraintOpt})
  )

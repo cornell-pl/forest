@@ -42,6 +42,7 @@ structure ParseTreeExt =
          | PArray  of {name : string, 
 		       baseTy : Pty, 
 		       params : ('ct * 'decr) list, 
+		       isRecord : bool,
 		       args   : 'exp list, 
 		       sizeSpec : ('exp PSize) option, 
 		       constraints : ('exp PConstraint) list} 

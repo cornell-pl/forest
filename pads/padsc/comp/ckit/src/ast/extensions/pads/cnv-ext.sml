@@ -666,7 +666,7 @@ structure CnvExt : CNVEXT = struct
 
 
               fun genReadEOR (reportErrorSs) () = 
-		  [P.mkCommentS ("Reading delimiter field: EOR"),
+		  [P.mkCommentS ("Reading to EOR"),
 		    PT.Compound[
 			   P.varDeclS'(PL.base_edPCT, ted),
 			   P.varDeclS'(PL.sizePCT, "n"),
@@ -2053,7 +2053,7 @@ structure CnvExt : CNVEXT = struct
                      @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 		 end
 	  
-             fun cnvPArray {name:string, params : (pcty * pcdecr) list, args : pcexp list, baseTy:PX.Pty, 
+             fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
 	     let val length = "length"
                  val internal = "_internal"
@@ -2242,8 +2242,10 @@ structure CnvExt : CNVEXT = struct
 				    val posMaxCheckSs = genPosMaxCheckSs(maxConstOpt, maxX)
 				    val allocSizeX = P.intX (IntInf.toInt(valOf (#1(evalExpr maxX))))
 						     handle Option => P.zero
+				    val (minXOpt, minConstOpt) = if maxTight then (SOME maxX, maxConstOpt)
+						                 else (NONE, NONE)
 				in
-				   (NONE, SOME maxX, NONE, maxConstOpt, 
+				   (minXOpt, SOME maxX, minConstOpt, maxConstOpt, 
 				    posMaxCheckSs @ allocBuffs(allocSizeX))
 				end
                               (* end NONE, SOME maxX *))
@@ -2363,15 +2365,21 @@ structure CnvExt : CNVEXT = struct
                  (* -- Code for checking termination conditions *)
                  fun genBreakCheckX (termOpt, sizeOpt) = 
 		     let val isEofX = PL.isEofX(PT.Id ts)
+			 val isEorX = PL.isEorX(PT.Id ts)
 			 val termFoundX = PT.Id foundTerm
 			 val limitReachedX = PT.Id reachedLimit
 		     in
-                        case (termOpt,sizeOpt)
-			of (NONE,NONE) => isEofX
-                        |  (NONE, SOME _)  => P.orX(isEofX, limitReachedX)
-                        |  (SOME _, NONE)  => P.orX(isEofX, termFoundX)
-                        |  (SOME _, SOME _)  => P.orX(isEofX, 
+                        case (termOpt,sizeOpt,isRecord)
+			of (NONE,NONE,_) => P.orX(isEofX,isEorX)
+                        |  (NONE, SOME _,false)    => P.orX(isEofX, limitReachedX)
+                        |  (NONE, SOME _,true)     => P.orX(isEofX, P.orX(isEorX,limitReachedX))
+                        |  (SOME _, NONE,false)    => P.orX(isEofX, termFoundX)
+                        |  (SOME _, NONE,true)     => P.orX(isEofX, P.orX(isEorX, termFoundX))
+                        |  (SOME _, SOME _, false) => P.orX(isEofX, 
 						      P.orX(termFoundX,limitReachedX))
+                        |  (SOME _, SOME _,true)   => P.orX(isEofX, 
+						      P.orX(isEorX,
+						      P.orX(termFoundX,limitReachedX)))
 			    
 		     end
 
@@ -2538,10 +2546,15 @@ structure CnvExt : CNVEXT = struct
 				   @ genBreakCheckSs (termXOpt,maxOpt)
                                    @ (genSepCheck sepXOpt)
                                  ))
+			 val termCondX = if isRecord then 
+			                   P.andX(P.notX(PL.isEofX(PT.Id ts)),
+						  P.notX(PL.isEorX(PT.Id ts)))
+					 else
+			                   P.notX(PL.isEofX(PT.Id ts))
 		     in 
 			 [P.mkCommentS("Reading input until we reach a termination condition"),
                                 PT.IfThen(P.andX(P.notX(fieldX(ed,panic)), 
-						 P.notX(PL.isEofX(PT.Id ts))),
+						 termCondX),
 					  PT.Compound[insTermChk (insLengthChk bdyS)])]
 		     end
 
@@ -2566,6 +2579,7 @@ structure CnvExt : CNVEXT = struct
 			     recordArrayErrorS(PL.PDC_ARRAY_TERM_ERR, true, "Missing terminator.",[],true))
 			 ])]
 
+		 val readEORSs = if isRecord then genReadEOR reportStructErrorSs () else []
                  (* -- Set data fields in canonical rep and ed from growable buffers *)
                  val setDataFieldsSs = 
                      [
@@ -2632,6 +2646,7 @@ structure CnvExt : CNVEXT = struct
                                 @ chkBoundsSs
                                 @ whileSs
 				@ trailingJunkChkSs
+				@ readEORSs
 				@ setDataFieldsSs
 				@ arrayConstraintsSs
                                 @ [returnS])]
@@ -2704,7 +2719,8 @@ structure CnvExt : CNVEXT = struct
 		     let val theSuf = addSuf
 			 val theFun = (theSuf o accSuf) name
 			 val theDeclSs = [P.varDeclS(P.int, nerr, P.zero), P.varDeclS'(PL.base_edPCT, ted)]
-			 val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), PL.PDC_NO_ERROR)]
+			 val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), 
+						    P.arrowX(PT.Id ed, PT.Id errCode))]
 			 fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
                          val doElems = 
 			     case lookupAcc baseTy of NONE => []

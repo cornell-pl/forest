@@ -200,6 +200,9 @@ struct
   fun isEofX(ts:PT.expression) = 
     PT.Call(PT.Id "PDC_IO_at_EOF", [ts])
 
+  fun isEorX(ts:PT.expression) = 
+    PT.Call(PT.Id "PDC_IO_at_EOR", [ts])
+
 (* check point routines *)
   fun chkPtS(ts:PT.expression) =
     chkError(ts, (PT.Call(PT.Id "PDC_IO_checkpoint", [ts, P.trueX])), (* always speculative *)

@@ -38,6 +38,9 @@ IO STUFF:
 ACCUM STUFF:
   * accums should keep track of bad values, they are
       sometimes even more interesting than the good values
+  * sort error codes into parser versus semantic errors
+     include in accumulator bad values with error codes 
+     that indicate semantic rather than parser level errors
 
 DISCIPLINE:
  * slurp white space.
