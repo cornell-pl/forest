@@ -47,9 +47,6 @@ for x in `cat data/take_list`; do cp data/$x temp_data; done
 rm -rf data 
 mv temp_data data
 
-#delete xml directory for now
-rm -rf xml
-
 cd ..  # now in pads/padsc
 echo cleaning example directory
 pwd
@@ -57,6 +54,7 @@ mkdir temp_examples
 for x in `cat examples/take_list`; do mv examples/$x temp_examples; done
 rm -rf examples
 mv temp_examples examples
+
 
 cd .. # now in pads directory
 echo cleaning scripts directory
