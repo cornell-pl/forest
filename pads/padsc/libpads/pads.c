@@ -29,31 +29,9 @@
 #define PDCI_READFN_PD_INIT(pads, pd)
 do {
   Pbase_pd_init_no_err(pd);
-  PDCI_IO_BEGINLOC(pads, (pd)->loc);
+  PDCI_READFN_BEGINLOC(pads, (pd)->loc);
   PD_PGLX_INIT(pads,pd);
 } while (0)
-/* END_MACRO */
-
-/*
- * These macros assume m/ed have been set up
- */
-
-/* eoff is one byte beyond last error byte, so sub 1 */
-#define PDCI_READFN_SET_LOC_BE(boff, eoff)
-  do {
-    P_io_getPos(pads, &(pd->loc.b), (boff));
-    P_io_getPos(pads, &(pd->loc.e), (eoff)-1);
-  } while (0)
-/* END_MACRO */
-
-#define PDCI_READFN_SET_NULLSPAN_LOC(boff)
-  do {
-    P_io_getPos(pads, &(pd->loc.b), (boff));
-    pd->loc.e = pd->loc.b;
-    if (pd->loc.e.byte) {
-      (pd->loc.e.byte)--;
-    }
-  } while (0)
 /* END_MACRO */
 
 #define PDCI_FINISH_DATE_READ
@@ -69,7 +47,8 @@ do {
   tmset(pads->in_zone);
   tm = tmscan(s->str, (char**)&tmp, pads->disc->in_formats.date, &tmp_t, &now, 0L);
   if (!tmp_t || *tmp_t || !tmp || *tmp) {
-    PDCI_READFN_SET_LOC_BE(-(s->len), 0);
+    PDCI_READFN_BEGINLOC_MINUSK(pads, pd->loc, s->len);
+    PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
     PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_DATE);
   }
   (*res_out) = tm;
@@ -538,20 +517,23 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
   }
 
  at_eor_or_eof_err:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, eor ? P_AT_EOR : P_AT_EOF);
 
  invalid_wspace:
-  PDCI_READFN_SET_LOC_BE(0, 1);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", "spaces not allowed in " a_or_e_int " field unless flag P_WSPACE_OK is set", invalid_err);
 
  invalid:
-  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, invalid_err);
 
  range_err:
   /* range error still consumes the number */
-  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
     goto fatal_forward_err;
   }
@@ -623,7 +605,8 @@ fn_name(P_t *pads, const Pbase_m *m,
 
  width_not_avail:
   /* FW field: eat the space whether or not there is an error */
-  PDCI_READFN_SET_LOC_BE(0, end-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   if (P_ERR == PDCI_io_forward(pads, end-begin)) {
     goto fatal_forward_err;
   }
@@ -631,7 +614,8 @@ fn_name(P_t *pads, const Pbase_m *m,
 
  invalid:
   /* FW field: eat the space whether or not there is an error */
-  PDCI_READFN_SET_LOC_BE(0, width);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, width-1);
   if (P_ERR == PDCI_io_forward(pads, width)) {
     goto fatal_forward_err;
   }
@@ -639,7 +623,8 @@ fn_name(P_t *pads, const Pbase_m *m,
 
  invalid_wspace:
   /* FW field: eat the space whether or not there is an error */
-  PDCI_READFN_SET_LOC_BE(0, width);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, width-1);
   if (P_ERR == PDCI_io_forward(pads, width)) {
     goto fatal_forward_err;
   }
@@ -647,7 +632,8 @@ fn_name(P_t *pads, const Pbase_m *m,
 
  range_err:
   /* FW field: eat the space whether or not there is an error */
-  PDCI_READFN_SET_LOC_BE(0, width);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, width-1);
   if (P_ERR == PDCI_io_forward(pads, width)) {
     goto fatal_forward_err;
   }
@@ -772,20 +758,23 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
   }
 
  at_eor_or_eof_err:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, eor ? P_AT_EOR : P_AT_EOF);
 
  invalid_wspace:
-  PDCI_READFN_SET_LOC_BE(0, 1);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", "spaces not allowed in " a_or_e_float " field unless flag P_WSPACE_OK is set", invalid_err);
 
  invalid:
-  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, invalid_err);
 
  range_err:
   /* range error still consumes the number */
-  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
     goto fatal_forward_err;
   }
@@ -825,7 +814,8 @@ fn_name(P_t *pads, const Pbase_m *m,
   return P_OK;
 
  width_not_avail:
-  PDCI_READFN_SET_LOC_BE(0, end-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
@@ -864,7 +854,8 @@ fn_name(P_t *pads, const Pbase_m *m,
   return P_OK;
 
  width_not_avail:
-  PDCI_READFN_SET_LOC_BE(0, end-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
@@ -914,7 +905,8 @@ fn_name(P_t *pads, const Pbase_m *m, Pbase_pd *pd, targ_type *res_out, Puint32 n
 
  invalid_range_dom:
   /* FW field: eat the space whether or not there is an error */
-  PDCI_READFN_SET_LOC_BE(0, width);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, width-1);
   if (P_ERR == PDCI_io_forward(pads, width)) {
     goto fatal_forward_err;
   }
@@ -928,7 +920,8 @@ fn_name(P_t *pads, const Pbase_m *m, Pbase_pd *pd, targ_type *res_out, Puint32 n
   }
 
  width_not_avail:
-  PDCI_READFN_SET_LOC_BE(0, end-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
@@ -958,7 +951,8 @@ fn_name(P_t *pads, const Pbase_m *m,
   (pads->inestlev)--;
   /* so far so good, IO cursor has been advanced, pd->errCode set to P_NO_ERR */
   if (d_exp > dexp_max) {
-    PDCI_READFN_SET_LOC_BE(-width, 0);
+    PDCI_READFN_BEGINLOC_MINUSK(pads, pd->loc, width);
+    PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
     PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_BAD_PARAM);
   }
   if (P_Test_Set(*m)) {
@@ -6339,7 +6333,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.173 2004-10-10 03:44:28 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.174 2004-11-09 06:51:55 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7582,153 +7576,66 @@ P_io_at_eor_OR_EOF(P_t *pads) {
 Perror_t
 P_io_getPos(P_t *pads, Ppos_t *pos, int offset)
 {
-  PDCI_stkElt_t    *tp;
-  Pio_elt_t        *elt;
-  size_t            remain;
-  size_t            avail;
-#ifndef NDEBUG
-  Ppos_t            tpos; /* XXX_REMOVE */
-  int               toffset = offset; /* XXX_REMOVE */
-#endif
-
+  Perror_t res = P_OK;
   PDCI_DISC_1P_CHECKS("P_io_getPos", pos);
-  tp        = &(pads->stack[pads->top]);
-  elt       = tp->elt;
-  remain    = tp->remain;
-
-  /* invariant: remain should be in range [1, elt->len]; should only be 0 if elt->len is 0 */
-  if (offset > 0) {
-    while (1) {
-      if (remain > offset) {
-	remain -= offset;
-	goto done;
-      }
-      offset -= remain;
-      while (1) {
-	if (elt->eof) {
-	  remain = 0;
-	  goto done;
-	}
-	elt = elt->next;
-	if (elt == pads->head) {
-	  pos->num         = 0;
-	  pos->byte        = 0;
-	  pos->offset = 0;
-#ifndef NDEBUG
-	  goto err_check; /* XXX_REMOVE */
-#else
-	  return P_ERR;
-#endif
-	}
-	if (elt->len) {
-	  break;
-	}
-      }
-      remain = elt->len;
-      /* now at first byte of next elt */
-    }
-  } else if (offset < 0) {
-    offset = - offset;
-    while (1) {
-      avail = elt->len - remain;
-      if (avail >= offset) {
-	remain += offset;
-	goto done;
-      }
-      offset -= avail; /* note offset still > 0 */
-      while (1) {
-	elt = elt->prev;
-	if (elt == pads->head) {
-	  pos->num         =  0;
-	  pos->byte        =  0;
-	  pos->offset = -1;
-#ifndef NDEBUG
-	  goto err_check; /* XXX_REMOVE */
-#else
-	  return P_ERR;
-#endif
-	}
-	if (elt->len) {
-	  break;
-	}
-      }
-      remain = 1;
-      offset--;
-      /* now at last byte of prev elt */
-    }
-  }
-
- done:
-  pos->num  = elt->num;
-  if (elt->len) {
-    size_t pos_offset = elt->len - remain;
-    pos->byte         = pos_offset + 1;
-    pos->offset  = elt->offset + pos_offset;
+  if (offset == 0) {
+    PDCI_ALWAYS_GETPOS_CHECKED(pads, *pos, res);
+  } else if (offset > 0) {
+    PDCI_ALWAYS_GETPOS_PLUS_CHECKED(pads, *pos, offset, res);
   } else {
-    pos->byte         = 0;
-    pos->offset  = elt->offset;
+    int noffset = -1 * offset;
+    PDCI_ALWAYS_GETPOS_MINUS_CHECKED(pads, *pos, noffset, res);
   }
-#ifndef NDEBUG
-  /* XXX_REMOVE */
-  if (toffset == 0) {
-    PDCI_IO_GETPOS(pads, tpos);
-  } else if (toffset > 0) {
-    PDCI_IO_GETPOS_PLUS(pads, tpos, toffset);
-  } else {
-    PDCI_IO_GETPOS_MINUS(pads, tpos, (-1*toffset));
-  }
-  if (!P_POS_EQ(*pos, tpos)) {
-    P_FATAL(pads->disc, "XXX_REMOVE (1) Internal error, PDCI_IO_POSfoo macro not computing the right thing???");
-  }
-#endif
-  return P_OK;
-
-#ifndef NDEBUG
- err_check:
-  /* XXX_REMOVE */
-  if (toffset == 0) {
-    PDCI_IO_GETPOS(pads, tpos);
-  } else if (toffset > 0) {
-    PDCI_IO_GETPOS_PLUS(pads, tpos, toffset);
-  } else {
-    PDCI_IO_GETPOS_MINUS(pads, tpos, (-1*toffset));
-  }
-  if (!P_POS_EQ(*pos, tpos)) {
-    P_FATAL(pads->disc, "XXX_REMOVE (2) Internal error, PDCI_IO_GETPOSfoo macro not computing the right thing???");
-  }
-  return P_ERR;
-#endif
+  return res;
 }
 
 Perror_t
 P_io_getLocB(P_t *pads, Ploc_t *loc, int offset)
 {
+  Perror_t res = P_OK;
   PDCI_DISC_1P_CHECKS("P_io_getLocB", loc);
-  return P_io_getPos(pads, &(loc->b), offset);
+  if (offset == 0) {
+    PDCI_ALWAYS_GETPOS_CHECKED(pads, loc->b, res);
+  } else if (offset > 0) {
+    PDCI_ALWAYS_GETPOS_PLUS_CHECKED(pads, loc->b, offset, res);
+  } else {
+    int noffset = -1 * offset;
+    PDCI_ALWAYS_GETPOS_MINUS_CHECKED(pads, loc->b, noffset, res);
+  }
+  return res;
 }
 
 Perror_t
 P_io_getLocE(P_t *pads, Ploc_t *loc, int offset)
 {
+  Perror_t res = P_OK;
   PDCI_DISC_1P_CHECKS("P_io_getLocE", loc);
-  return P_io_getPos(pads, &(loc->e), offset);
+  if (offset == 0) {
+    PDCI_ALWAYS_GETPOS_CHECKED(pads, loc->e, res);
+  } else if (offset > 0) {
+    PDCI_ALWAYS_GETPOS_PLUS_CHECKED(pads, loc->e, offset, res);
+  } else {
+    int noffset = -1 * offset;
+    PDCI_ALWAYS_GETPOS_MINUS_CHECKED(pads, loc->e, noffset, res);
+  }
+  return res;
 }
 
 Perror_t
 P_io_getLoc(P_t *pads, Ploc_t *loc, int offset)
 {
+  Perror_t res = P_OK;
   PDCI_DISC_1P_CHECKS("P_io_getLoc", loc);
-  if (P_ERR == P_io_getPos(pads, &(loc->b), offset)) {
-    return P_ERR;
+  if (offset == 0) {
+    PDCI_ALWAYS_GETPOS_CHECKED(pads, loc->b, res);
+  } else if (offset > 0) {
+    PDCI_ALWAYS_GETPOS_PLUS_CHECKED(pads, loc->b, offset, res);
+  } else {
+    int noffset = -1 * offset;
+    PDCI_ALWAYS_GETPOS_MINUS_CHECKED(pads, loc->b, noffset, res);
   }
-  loc->e = loc->b;
-  if (loc->e.byte) {
-    (loc->e.byte)--;
-    if (loc->e.offset > 0) {
-      (loc->e.offset)--;
-    }
-  }
-  return P_OK;
+  PDCI_ALWAYS_ENDLOC_SPAN0(pads, *loc);
+  return res;
 }
 
 #if P_CONFIG_WRITE_FUNCTIONS > 0
@@ -9962,15 +9869,16 @@ PDCI_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c,
   goto not_found;
 
  invalid_charset:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  at_eor_or_eof_err:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);
 
  not_found:
-  PDCI_READFN_SET_LOC_BE(0, 1);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
@@ -10030,15 +9938,17 @@ PDCI_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s,
   goto not_found;
 
  invalid_charset:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  width_not_avail:
-  PDCI_READFN_SET_LOC_BE(0, end-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_WIDTH_NOT_AVAILABLE);
 
  not_found:
-  PDCI_READFN_SET_LOC_BE(0, width);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, width-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_STR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
@@ -10101,7 +10011,8 @@ PDCI_countX_read(P_t *pads, const Pbase_m *m,
     p1++;
   }
   if (!eor && eor_required) { /* EOF encountered first, error */
-    PDCI_READFN_SET_LOC_BE(0, p1-begin);
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
     PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_EOF_BEFORE_EOR);
   }
   (*res_out) = count;
@@ -10111,15 +10022,16 @@ PDCI_countX_read(P_t *pads, const Pbase_m *m,
   if (pads->speclev == 0) {
     P_WARN1(pads->disc, "%s: countX_read must have scan_max > 0 with a non-record-based IO discipline", whatfn);
   }
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_BAD_PARAM);
 
  hit_limit:
-  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_COUNT_MAX_LIMIT);
 
  invalid_charset:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  fatal_nb_io_err:
@@ -10174,19 +10086,21 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m,
   if (pads->speclev == 0) {
     P_WARN1(pads->disc, "%s: countXtoY_read must have scan_max > 0 with a non-record-based IO discipline", whatfn);
   }
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_BAD_PARAM);
 
  hit_limit:
-  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_COUNT_MAX_LIMIT);
 
  invalid_charset:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
@@ -10322,7 +10236,8 @@ PDCI_ipaddr_read(P_t *pads, const Pbase_m *m,
   width = s->len;
   r = strtoip4(s->str, (char**)&tmp, &addr, NiL);
   if (r || !tmp || (char*)tmp - s->str != width) {
-    PDCI_READFN_SET_LOC_BE(-width, 0);
+    PDCI_READFN_BEGINLOC_MINUSK(pads, pd->loc, width);
+    PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
     PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_IPADDR);
   }
   (*res_out) = addr;
@@ -10369,11 +10284,12 @@ PDCI_char_read(P_t *pads, const Pbase_m *m,
   return P_OK;
 
  invalid_charset:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  width_not_avail:
-  PDCI_READFN_SET_LOC_BE(0, 0);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
@@ -10424,11 +10340,12 @@ PDCI_string_FW_read(P_t *pads, const Pbase_m *m,
   return P_OK;
 
  invalid_charset:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  width_not_avail:
-  PDCI_READFN_SET_LOC_BE(0, end-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_alloc_err:
@@ -10494,11 +10411,12 @@ PDCI_string_read(P_t *pads, const Pbase_m *m,
   return P_OK;
 
  invalid_charset:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  PDCI_READFN_SET_LOC_BE(0, p1-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
 
  fatal_alloc_err:
@@ -10529,7 +10447,7 @@ PDCI_string_ME_read(P_t *pads, const Pbase_m *m,
   return res;
 
  bad_exp:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   /* regexp_compile already issued a warning */
   PDCI_READFN_RET_ERRCODE_NOWARN(P_INVALID_REGEXP);
 }
@@ -10582,11 +10500,12 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m,
   return P_OK;
 
  invalid_charset:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  PDCI_READFN_SET_LOC_BE(0, end-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
 
  fatal_alloc_err:
@@ -10617,7 +10536,7 @@ PDCI_string_SE_read(P_t *pads, const Pbase_m *m,
   return res;
 
  bad_exp:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   /* regexp_compile already issued a warning */
   PDCI_READFN_RET_ERRCODE_NOWARN(P_INVALID_REGEXP);
 }
@@ -10669,11 +10588,12 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m,
   return P_OK;
 
  invalid_charset:
-  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  PDCI_READFN_SET_LOC_BE(0, end-begin);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
 
  fatal_alloc_err:

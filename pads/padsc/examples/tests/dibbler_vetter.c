@@ -6,7 +6,8 @@
 //
 // Where the defaults are:
 
-#define INPUT_FILE  "../../data/dibbler_short"
+#define INPUT_FILE  "../../data/dibbler.10001"
+//#define INPUT_FILE  "../../data/dibbler_short"
 #define SEQ_MASK    P_CheckAndSet 
 #define CLEAN_FILE  "/home/kfisher/esig/dibbler_clean_C"
 #define ERROR_FILE  "/home/kfisher/esig/dibbler_errors_C"

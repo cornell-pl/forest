@@ -44,6 +44,15 @@
 # uncomment this to force static builds
 # FORCE_STATIC = 1
 
+# uncomment this to use gprof with debug libaries/executables
+# (only works with GNU compilers)
+# you should also uncomment FORCE_STATIC to include pads
+# library routines in the profile
+# GPROF_FLAGS = -pg
+
+# uncomment this to turn off loc setting for (most) reads
+# NOREAD_FLAGS = -DNO_READ_LOCS
+
 ifdef USE_GALAX
 ifndef GALAX_HOME
 %: forceabort2
@@ -54,6 +63,12 @@ endif
 ifndef PADSGLX_HOME
 %: forceabort2
 	@echo "ERROR: env variable PADSGLX_HOME must be defined when building with USE_GALAX defined"
+	@exit 1
+forceabort2: ;
+endif
+ifdef NO_READ_LOCS
+%: forceabort2
+	@echo "ERROR: GALAX requires read locations -- cannot use both USE_GALAX and NO_READ_LOCS"
 	@exit 1
 forceabort2: ;
 endif
@@ -317,6 +332,7 @@ endif
 # mff may need to change next two defns
 STATIC_GALAXLIB_D = $(PADSGLX_LIB_DIR)/libpadsglxopt$(mam_cc_SUFFIX_ARCHIVE)
 STATIC_OCAMLLIB_D = $(STATIC_OCAMLLIB_O) # no debug versions available
+
 ifdef USE_GALAX
 STATIC_LIBS_D = $(STATIC_PGLXLIB_D)
 endif
@@ -450,7 +466,9 @@ else
 SHAREDEFS =
 endif
 
-CFLAGS_D = $(CDBGFLAGS) $(CARCHFLAGS) $(INCLUDES)
+DEFS += $(NOREAD_FLAGS)
+
+CFLAGS_D = $(GPROF_FLAGS) $(CDBGFLAGS) $(CARCHFLAGS) $(INCLUDES)
 COMPILE_D = $(CC) $(CSHAREFLAGS) $(CFLAGS_D) $(DEFS) $(SHAREDEFS)
 MKSRC_D = $(CC) -E $(CFLAGS_D)
 

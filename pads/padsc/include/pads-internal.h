@@ -156,15 +156,42 @@ void PDCI_READFN_RET_ERRCODE_FATAL(const char *whatfn, Pbase_m the_m, const char
 void PDCI_READFN_WIDTH_CHECK(const char *whatfn, const char *elt_descr, size_t width);
 void PDCI_READFN_WIDTH_CHECK_ZERO_OK(const char *whatfn, const char *elt_descr, size_t width);
 
-void PDCI_IO_GETOFFSET(P_t *pads, Sfoff_t offset);
-void PDCI_IO_GETPOS(P_t *pads, Ppos_t pos);
-void PDCI_IO_GETPOS_PLUS(P_t *pads, Ppos_t pos, size_t k);
-void PDCI_IO_GETPOS_MINUS(P_t *pads, Ppos_t pos, size_t k);
-void PDCI_IO_BEGINLOC(P_t *pads, Ploc_t loc);
-void PDCI_IO_ENDLOC_SPAN0(P_t *pads, Ploc_t loc);
-void PDCI_IO_ENDLOC_SPAN1(P_t *pads, Ploc_t loc);
-void PDCI_IO_GETLOC_SPAN0(P_t *pads, Ploc_t loc);
-void PDCI_IO_GETLOC_SPAN1(P_t *pads, Ploc_t loc);
+void PDCI_ALWAYS_GETOFFSET(P_t *pads, Sfoff_t offset);
+void PDCI_ALWAYS_GETPOS(P_t *pads, Ppos_t pos);
+void PDCI_ALWAYS_GETPOS_PLUS(P_t *pads, Ppos_t pos, size_t k);
+void PDCI_ALWAYS_GETPOS_MINUS(P_t *pads, Ppos_t pos, size_t k);
+void PDCI_ALWAYS_GETPOS_PLUS_CHECKED(P_t *pads, Ppos_t pos, size_t k, int res);
+void PDCI_ALWAYS_GETPOS_MINUS_CHECKED(P_t *pads, Ppos_t pos, size_t k, int res);
+void PDCI_ALWAYS_BEGINLOC(P_t *pads, Ploc_t loc);
+void PDCI_ALWAYS_BEGINLOC_PLUSK(P_t *pads, Ploc_t loc, size_t k);
+void PDCI_ALWAYS_BEGINLOC_MINUSK(P_t *pads, Ploc_t loc, size_t k);
+void PDCI_ALWAYS_ENDLOC(P_t *pads, Ploc_t loc);
+void PDCI_ALWAYS_ENDLOC_PLUS1(P_t *pads, Ploc_t loc);
+void PDCI_ALWAYS_ENDLOC_PLUSK(P_t *pads, Ploc_t loc, size_t k);
+void PDCI_ALWAYS_ENDLOC_MINUS1(P_t *pads, Ploc_t loc);
+void PDCI_ALWAYS_ENDLOC_MINUS2(P_t *pads, Ploc_t loc);
+void PDCI_ALWAYS_ENDLOC_MINUSK(P_t *pads, Ploc_t loc, size_t k);
+void PDCI_ALWAYS_ENDLOC_SPAN0(P_t *pads, Ploc_t loc);
+void PDCI_ALWAYS_ENDLOC_SPAN1(P_t *pads, Ploc_t loc);
+void PDCI_ALWAYS_GETLOC_SPAN0(P_t *pads, Ploc_t loc);
+void PDCI_ALWAYS_GETLOC_SPAN1(P_t *pads, Ploc_t loc);
+
+void PDCI_READFN_GETPOS(P_t *pads, Ppos_t pos);
+void PDCI_READFN_GETPOS_PLUS(P_t *pads, Ppos_t pos, size_t k);
+void PDCI_READFN_GETPOS_MINUS(P_t *pads, Ppos_t pos, size_t k);
+void PDCI_READFN_BEGINLOC(P_t *pads, Ploc_t loc);
+void PDCI_READFN_BEGINLOC_PLUSK(P_t *pads, Ploc_t loc, size_t k);
+void PDCI_READFN_BEGINLOC_MINUSK(P_t *pads, Ploc_t loc, size_t k);
+void PDCI_READFN_ENDLOC(P_t *pads, Ploc_t loc);
+void PDCI_READFN_ENDLOC_PLUS1(P_t *pads, Ploc_t loc);
+void PDCI_READFN_ENDLOC_PLUSK(P_t *pads, Ploc_t loc, size_t k);
+void PDCI_READFN_ENDLOC_MINUS1(P_t *pads, Ploc_t loc);
+void PDCI_READFN_ENDLOC_MINUS2(P_t *pads, Ploc_t loc);
+void PDCI_READFN_ENDLOC_MINUSK(P_t *pads, Ploc_t loc, size_t k);
+void PDCI_READFN_ENDLOC_SPAN0(P_t *pads, Ploc_t loc);
+void PDCI_READFN_ENDLOC_SPAN1(P_t *pads, Ploc_t loc);
+void PDCI_READFN_GETLOC_SPAN0(P_t *pads, Ploc_t loc);
+void PDCI_READFN_GETLOC_SPAN1(P_t *pads, Ploc_t loc);
 
 Pinv_val_fn PDCI_GET_INV_VAL_FN(P_t *, const char *);
 Pfmt_fn     PDCI_GET_FMT_FN(P_t *, const char *);
@@ -666,7 +693,7 @@ do { \
     if (pads->speclev == 0) { \
       P_WARN2(pads->disc, "UNEXPECTED PARAM VALUE: %s called with %s width <= 0", whatfn, elt_descr); \
     } \
-    PDCI_READFN_SET_NULLSPAN_LOC(0); \
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc); \
     PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_BAD_PARAM); \
   } \
 } while (0)
@@ -680,7 +707,7 @@ do { \
     if (pads->speclev == 0) { \
       P_WARN2(pads->disc, "UNEXPECTED PARAM VALUE: %s called with %s width < 0", whatfn, elt_descr); \
     } \
-    PDCI_READFN_SET_NULLSPAN_LOC(0); \
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc); \
     PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_BAD_PARAM); \
   } \
 } while (0)
@@ -773,7 +800,7 @@ do { \
 
 #endif /* !NDEBUG */
 
-#define PDCI_IO_GETOFFSET(pads, offsetIN) \
+#define PDCI_ALWAYS_GETOFFSET(pads, offsetIN) \
 do { \
   PDCI_stkElt_t    *tp        = &((pads)->stack[(pads)->top]); \
   Pio_elt_t        *elt       = tp->elt; \
@@ -786,7 +813,7 @@ do { \
   } \
 } while (0)
 
-#define PDCI_IO_GETPOS(pads, pos) \
+#define PDCI_ALWAYS_GETPOS(pads, pos) \
 do { \
   PDCI_stkElt_t    *tp        = &((pads)->stack[(pads)->top]); \
   Pio_elt_t        *elt       = tp->elt; \
@@ -803,12 +830,12 @@ do { \
 } while (0)
 
 /* k must be > 0 */
-#define PDCI_IO_GETPOS_PLUS(pads, pos, k) \
+#define PDCI_ALWAYS_GETPOS_PLUS(pads, pos, k) \
 do { \
   PDCI_stkElt_t   *tp        = &(pads->stack[pads->top]); \
   Pio_elt_t       *elt       = tp->elt; \
   size_t           remain    = tp->remain; \
-  size_t           offset    = k; \
+  size_t           offset    = (k); \
   /* invariant: remain should be in range [1, elt->len] */ \
   if (remain > offset) { \
     remain -= offset; \
@@ -830,7 +857,7 @@ do { \
     (pos).num         =  0; \
     (pos).byte        =  0; \
     (pos).offset      = -1; \
-    P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_PLUS called with bad offset"); \
+    P_WARN(pads->disc, "XXX_REMOVE PDCI_ALWAYS_GETPOS_PLUS called with bad offset"); \
   } else { \
     size_t pos_offset = elt->len - remain; \
     (pos).num         = elt->num; \
@@ -840,12 +867,12 @@ do { \
 } while (0)
 
 /* k must be > 0 */
-#define PDCI_IO_GETPOS_MINUS(pads, pos, k) \
+#define PDCI_ALWAYS_GETPOS_MINUS(pads, pos, k) \
 do { \
   PDCI_stkElt_t    *tp        = &(pads->stack[pads->top]); \
   Pio_elt_t        *elt       = tp->elt; \
   size_t            remain    = tp->remain; \
-  size_t            offset    = k; \
+  size_t            offset    = (k); \
   size_t            avail; \
   /* invariant: remain should be in range [1, elt->len] */ \
   avail = elt->len - remain; \
@@ -872,7 +899,7 @@ do { \
     (pos).num         =  0; \
     (pos).byte        =  0; \
     (pos).offset      = -1; \
-    P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_MINUS called with bad offset"); \
+    P_WARN(pads->disc, "XXX_REMOVE PDCI_ALWAYS_GETPOS_MINUS called with bad offset"); \
   } else { \
     size_t pos_offset = elt->len - remain; \
     (pos).num         = elt->num; \
@@ -881,38 +908,161 @@ do { \
   } \
 } while (0)
 
-#define PDCI_IO_BEGINLOC(pads, loc) PDCI_IO_GETPOS(pads, (loc).b)
-#define PDCI_IO_ENDLOC(pads, loc)   PDCI_IO_GETPOS(pads, (loc).e)
-#define PDCI_IO_ENDLOC_MINUS1(pads, loc)   PDCI_IO_GETPOS_MINUS(pads, (loc).e, 1)
-#define PDCI_IO_ENDLOC_MINUS2(pads, loc)   PDCI_IO_GETPOS_MINUS(pads, (loc).e, 2)
+#define PDCI_ALWAYS_GETPOS_CHECKED(pads, pos, res) \
+  PDCI_ALWAYS_GETPOS(pads, pos)
 
-#define PDCI_IO_ENDLOC_SPAN0(pads, loc) \
+/* k must be > 0 */
+#define PDCI_ALWAYS_GETPOS_PLUS_CHECKED(pads, pos, k, res) \
+do { \
+  PDCI_stkElt_t   *tp        = &(pads->stack[pads->top]); \
+  Pio_elt_t       *elt       = tp->elt; \
+  size_t           remain    = tp->remain; \
+  size_t           offset    = (k); \
+  /* invariant: remain should be in range [1, elt->len] */ \
+  if (remain > offset) { \
+    remain -= offset; \
+  } else { \
+    while (1) { \
+      offset -= remain; \
+      elt = elt->next; \
+      if (elt == pads->head) break; \
+      remain = elt->len; \
+      /* now at first byte of next elt */ \
+      if (remain > offset) { \
+	remain -= offset; \
+	break; \
+      } \
+    } \
+  } \
+  /* either we hit pads->head or we got to the proper spot */ \
+  if (elt == pads->head) { \
+    (pos).num         =  0; \
+    (pos).byte        =  0; \
+    (pos).offset      = -1; \
+    res = P_ERR; \
+  } else { \
+    size_t pos_offset = elt->len - remain; \
+    (pos).num         = elt->num; \
+    (pos).byte        = pos_offset + 1; \
+    (pos).offset      = elt->offset + pos_offset; \
+  } \
+} while (0)
+
+/* k must be > 0 */
+#define PDCI_ALWAYS_GETPOS_MINUS_CHECKED(pads, pos, k, res) \
+do { \
+  PDCI_stkElt_t    *tp        = &(pads->stack[pads->top]); \
+  Pio_elt_t        *elt       = tp->elt; \
+  size_t            remain    = tp->remain; \
+  size_t            offset    = (k); \
+  size_t            avail; \
+  /* invariant: remain should be in range [1, elt->len] */ \
+  avail = elt->len - remain; \
+  if (avail >= offset) { \
+    remain += offset; \
+  } else { \
+    while (1) { \
+      offset -= avail; /* note offset still > 0 */ \
+      elt = elt->prev; \
+      if (elt == pads->head) break; \
+      if (!elt->len) { avail = 0; continue; } \
+      remain = 1; \
+      offset--; \
+      avail = elt->len - 1; \
+      /* now at last byte of prev elt */ \
+      if (avail >= offset) { \
+	remain += offset; \
+	break; \
+      } \
+    } \
+  } \
+  /* either we hit pads->head or we got to the proper spot */ \
+  if (elt == pads->head) { \
+    (pos).num         =  0; \
+    (pos).byte        =  0; \
+    (pos).offset      = -1; \
+    res = P_ERR; \
+  } else { \
+    size_t pos_offset = elt->len - remain; \
+    (pos).num         = elt->num; \
+    (pos).byte        = pos_offset + 1; \
+    (pos).offset      = elt->offset + pos_offset; \
+  } \
+} while (0)
+
+#define PDCI_ALWAYS_BEGINLOC(pads, loc)           PDCI_ALWAYS_GETPOS(pads, (loc).b)
+#define PDCI_ALWAYS_BEGINLOC_PLUSK(pads, loc, k)  PDCI_ALWAYS_GETPOS_PLUS(pads, (loc).b, k)
+#define PDCI_ALWAYS_BEGINLOC_MINUSK(pads, loc, k) PDCI_ALWAYS_GETPOS_MINUS(pads, (loc).b, k)
+#define PDCI_ALWAYS_ENDLOC(pads, loc)             PDCI_ALWAYS_GETPOS(pads, (loc).e)
+#define PDCI_ALWAYS_ENDLOC_PLUS1(pads, loc)       PDCI_ALWAYS_GETPOS_PLUS(pads, (loc).e, 1)
+#define PDCI_ALWAYS_ENDLOC_PLUSK(pads, loc, k)    PDCI_ALWAYS_GETPOS_PLUS(pads, (loc).e, k)
+#define PDCI_ALWAYS_ENDLOC_MINUS1(pads, loc)      PDCI_ALWAYS_GETPOS_MINUS(pads, (loc).e, 1)
+#define PDCI_ALWAYS_ENDLOC_MINUS2(pads, loc)      PDCI_ALWAYS_GETPOS_MINUS(pads, (loc).e, 2)
+#define PDCI_ALWAYS_ENDLOC_MINUSK(pads, loc, k)   PDCI_ALWAYS_GETPOS_MINUS(pads, (loc).e, k)
+
+#define PDCI_ALWAYS_ENDLOC_SPAN0(pads, loc) \
 do { \
   (loc).e = (loc).b; \
   if ((loc).e.byte) { \
     ((loc).e.byte)--; \
-    if ((loc).e.offset > 0) { \
+    if ((loc).e.offset) { \
       ((loc).e.offset)--; \
     } \
   } \
 } while (0)
 
-#define PDCI_IO_ENDLOC_SPAN1(pads, loc) \
+#define PDCI_ALWAYS_ENDLOC_SPAN1(pads, loc) \
 do { \
   (loc).e = (loc).b; \
 } while (0)
 
-#define PDCI_IO_GETLOC_SPAN0(pads, loc) \
+#define PDCI_ALWAYS_GETLOC_SPAN0(pads, loc) \
 do { \
-  PDCI_IO_BEGINLOC(pads, loc); \
-  PDCI_IO_ENDLOC_SPAN0(pads, loc); \
+  PDCI_ALWAYS_BEGINLOC(pads, loc); \
+  PDCI_ALWAYS_ENDLOC_SPAN0(pads, loc); \
 } while (0)
 
-#define PDCI_IO_GETLOC_SPAN1(pads, loc) \
+#define PDCI_ALWAYS_GETLOC_SPAN1(pads, loc) \
 do { \
-  PDCI_IO_BEGINLOC(pads, loc); \
-  PDCI_IO_ENDLOC_SPAN1(pads, loc); \
+  PDCI_ALWAYS_BEGINLOC(pads, loc); \
+  PDCI_ALWAYS_ENDLOC_SPAN1(pads, loc); \
 } while (0)
+
+#ifndef NO_READ_LOCS
+#  define PDCI_READFN_GETPOS(pads, pos)             PDCI_ALWAYS_GETPOS(pads, pos)
+#  define PDCI_READFN_GETPOS_PLUS(pads, pos, k)     PDCI_ALWAYS_GETPOS_PLUS(pads, pos, k)
+#  define PDCI_READFN_GETPOS_MINUS(pads, pos, k)    PDCI_ALWAYS_GETPOS_MINUS(pads, pos, k)
+#  define PDCI_READFN_BEGINLOC(pads, loc)           PDCI_ALWAYS_BEGINLOC(pads, loc)
+#  define PDCI_READFN_BEGINLOC_PLUSK(pads, loc, k)  PDCI_ALWAYS_BEGINLOC_PLUSK(pads, loc, k)
+#  define PDCI_READFN_BEGINLOC_MINUSK(pads, loc, k) PDCI_ALWAYS_BEGINLOC_MINUSK(pads, loc, k)
+#  define PDCI_READFN_ENDLOC(pads, loc)             PDCI_ALWAYS_ENDLOC(pads, loc)
+#  define PDCI_READFN_ENDLOC_PLUS1(pads, loc)       PDCI_ALWAYS_ENDLOC_PLUS1(pads, loc)
+#  define PDCI_READFN_ENDLOC_PLUSK(pads, loc, k)    PDCI_ALWAYS_ENDLOC_PLUSK(pads, loc, k)
+#  define PDCI_READFN_ENDLOC_MINUS1(pads, loc)      PDCI_ALWAYS_ENDLOC_MINUS1(pads, loc)
+#  define PDCI_READFN_ENDLOC_MINUS2(pads, loc)      PDCI_ALWAYS_ENDLOC_MINUS2(pads, loc)
+#  define PDCI_READFN_ENDLOC_MINUSK(pads, loc, k)   PDCI_ALWAYS_ENDLOC_MINUSK(pads, loc, k)
+#  define PDCI_READFN_ENDLOC_SPAN0(pads, loc)       PDCI_ALWAYS_ENDLOC_SPAN0(pads, loc)
+#  define PDCI_READFN_ENDLOC_SPAN1(pads, loc)       PDCI_ALWAYS_ENDLOC_SPAN1(pads, loc)
+#  define PDCI_READFN_GETLOC_SPAN0(pads, loc)       PDCI_ALWAYS_GETLOC_SPAN0(pads, loc)
+#  define PDCI_READFN_GETLOC_SPAN1(pads, loc)       PDCI_ALWAYS_GETLOC_SPAN1(pads, loc)
+#else
+#  define PDCI_READFN_GETPOS(pads, pos)             P_NULL_STMT
+#  define PDCI_READFN_GETPOS_PLUS(pads, pos, k)     P_NULL_STMT
+#  define PDCI_READFN_GETPOS_MINUS(pads, pos, k)    P_NULL_STMT
+#  define PDCI_READFN_BEGINLOC(pads, loc)           P_NULL_STMT
+#  define PDCI_READFN_BEGINLOC_PLUSK(pads, loc, k)  P_NULL_STMT
+#  define PDCI_READFN_BEGINLOC_MINUSK(pads, loc, k) P_NULL_STMT
+#  define PDCI_READFN_ENDLOC(pads, loc)             P_NULL_STMT
+#  define PDCI_READFN_ENDLOC_PLUS1(pads, loc)       P_NULL_STMT
+#  define PDCI_READFN_ENDLOC_PLUSK(pads, loc, k)    P_NULL_STMT
+#  define PDCI_READFN_ENDLOC_MINUS1(pads, loc)      P_NULL_STMT
+#  define PDCI_READFN_ENDLOC_MINUS2(pads, loc)      P_NULL_STMT
+#  define PDCI_READFN_ENDLOC_MINUSK(pads, loc, k)   P_NULL_STMT
+#  define PDCI_READFN_ENDLOC_SPAN0(pads, loc)       P_NULL_STMT
+#  define PDCI_READFN_ENDLOC_SPAN1(pads, loc)       P_NULL_STMT
+#  define PDCI_READFN_GETLOC_SPAN0(pads, loc)       P_NULL_STMT
+#  define PDCI_READFN_GETLOC_SPAN1(pads, loc)       P_NULL_STMT
+#endif
 
 #define PDCI_GET_INV_VAL_FN(pads,type_name) \
   (pads->disc->inv_val_fn_map ? P_get_inv_val_fn(pads, pads->disc->inv_val_fn_map, type_name) : 0)

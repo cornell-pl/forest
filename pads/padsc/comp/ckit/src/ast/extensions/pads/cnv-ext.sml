@@ -783,11 +783,11 @@ structure CnvExt : CNVEXT = struct
 	      val m_endianX =  P.arrowX(PT.Id pads, PT.Id PL.m_endian)
 	      val locX'     =  P.fieldX(pd, loc)
 	      val locX      =  P.addrX(locX')
-              val locS      =  PL.getLocS(PT.Id pads, P.addrX(P.fieldX(pd, loc)))
-	      val locBS     =  PL.getLocBeginS(PT.Id pads, P.addrX(P.fieldX(pd, loc)))
-	      val locES2    =  PL.getLocEndS(PT.Id pads, P.addrX(P.fieldX(pd, loc)), ~2)
-	      val locES1    =  PL.getLocEndS(PT.Id pads, P.addrX(P.fieldX(pd, loc)), ~1) 
-	      val locES0    =  PL.getLocEndS(PT.Id pads, P.addrX(P.fieldX(pd, loc)), 0)
+              val locS      =  PL.getLocS(PT.Id pads, P.fieldX(pd, loc))
+	      val locBS     =  PL.getLocBeginS(PT.Id pads, P.fieldX(pd, loc))
+	      val locES2    =  PL.getLocEndMinus2S(PT.Id pads, P.fieldX(pd, loc))
+	      val locES1    =  PL.getLocEndMinus1S(PT.Id pads, P.fieldX(pd, loc)) 
+	      val locES0    =  PL.getLocEndS(PT.Id pads, P.fieldX(pd, loc))
 
 	      fun mkCase (swval, rest) =
 		  case rest
@@ -1137,7 +1137,7 @@ structure CnvExt : CNVEXT = struct
 
 	      fun reportStructErrorSs (code, shouldGetLoc, locX) = 
 		  let val setLocSs = if shouldGetLoc 
-				     then [PL.getLocEndS(PT.Id pads, P.addrX(locX), ~1)]
+				     then [PL.getLocEndMinus1S(PT.Id pads, locX)]
 				     else []
 		  in
 		  [PT.IfThen(
@@ -1171,7 +1171,7 @@ structure CnvExt : CNVEXT = struct
 		    PT.Compound[
 			   P.varDeclS'(PL.base_pdPCT, tpd),
 			   P.varDeclS'(PL.sizePCT, "bytes_skipped"),
-			   PL.getLocBeginS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc))),
+			   PL.getLocBeginS(PT.Id pads, P.dotX(PT.Id tpd, PT.Id loc)),
                            PT.IfThenElse(
 			      P.eqX(PL.P_OK, 
 				    PL.IOReadNextRecX(PT.Id pads, P.addrX (PT.Id "bytes_skipped"))),
@@ -1180,7 +1180,7 @@ structure CnvExt : CNVEXT = struct
 				 PT.Id "bytes_skipped",
 				 PT.Compound
                                   [P.mkCommentS "in genReadEOR1",
-				   PL.getLocEndS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc)), ~1),
+				   PL.getLocEndMinus1S(PT.Id pads, P.dotX(PT.Id tpd, PT.Id loc)),
 				   PT.IfThenElse(
 				     PL.testNotPanicX(PT.Id pd),
 				     PT.Compound(
@@ -1191,7 +1191,7 @@ structure CnvExt : CNVEXT = struct
 						      [])]
 				       @ reportErrorSs(PL.P_EXTRA_BEFORE_EOR, true, P.dotX(PT.Id tpd, PT.Id loc))),
 				     PT.Compound
-					[PL.getLocEndS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc)), ~1),
+					[PL.getLocEndMinus1S(PT.Id pads, P.dotX(PT.Id tpd, PT.Id loc)),
 					 PL.userInfoS(PT.Id pads, 
 						       P.addrX(P.dotX(PT.Id tpd, PT.Id loc)),
 						       readName,
@@ -1202,7 +1202,7 @@ structure CnvExt : CNVEXT = struct
 			      PT.Compound
 			       [P.mkCommentS "in genReadEOR2",
 				PL.unsetPanicS(PT.Id pd),
-				PL.getLocEndS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc)), ~1),
+				PL.getLocEndMinus1S(PT.Id pads, P.dotX(PT.Id tpd, PT.Id loc)),
 				PL.userErrorS(PT.Id pads, 
 					      P.addrX(P.dotX(PT.Id tpd, PT.Id loc)),
 					      PL.P_AT_EOR,
@@ -2473,17 +2473,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val elemEdPCT  = P.makeTypedefPCT(lookupTy(baseTy, pdSuf, #pdname))
                  val elemMPCT  = P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname))
                  val elemReadName = lookupTy(baseTy, readSuf, #readname)
-		 (* 
-		  val tLocX      =  P.addrX(PT.Id tloc) 
-		  val tLocBX     = P.dotX(PT.Id tloc, PT.Id "b")
-		  val tLocEX     = P.dotX(PT.Id tloc, PT.Id "e")
-		  *)
 		 val tLocX      =  PT.Id locPtr
-		 val tLocBX     = P.arrowX(tLocX, PT.Id "b")
-		 val tLocEX     = P.arrowX(tLocX, PT.Id "e")				  
-		 val tlocES1    =  PL.getLocEndS(PT.Id pads, tLocX, ~1) 
-		 val tlocES0    =  PL.getLocEndS(PT.Id pads, tLocX, 0) 
-
+ 		 val tLocBX     =  P.arrowX(tLocX, PT.Id "b")
+		 val tLocEX     =  P.arrowX(tLocX, PT.Id "e")				  
+		 val tlocES1    =  PL.getLocEndMinus1S(PT.Id pads, P.starX(tLocX)) 
+		 val tlocES0    =  PL.getLocEndS(PT.Id pads, P.starX(tLocX)) 
 
                  (* Some useful functions *)
 (*                 fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic, endSpec) = 
@@ -3231,7 +3225,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  P.assignS(P.fieldX(pd, firstError), P.zero),
 				  P.assignS(P.fieldX(pd, numRead), P.zero)]		              
 				@ stinitSs
-		 val initGetLocSs = [ PL.getLocBeginS(PT.Id pads, tLocX)]      
+		 val initGetLocSs = [ PL.getLocBeginS(PT.Id pads, P.starX(tLocX))]
 
 		 val initSs = initDecSs @ initAssignSs @ initGetLocSs 
 
@@ -3384,10 +3378,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val prevOffsetX = P.minusX(P.fieldX(rep,length), P.intX 1)
 			 val curOffsetX = P.fieldX(rep,length)
 		     in
-			 [PT.IfThen(P.gtX(P.fieldX(rep,length), P.intX 1),
-			   PT.Compound
-			    [PL.getLocBeginS(PT.Id pads, P.addrX(getBloc curOffsetX)),
-			     PT.IfThen(PL.PosEq(getBpos prevOffsetX, getBpos curOffsetX),
+			 [PL.alwaysGetLocBeginS(PT.Id pads, getBloc curOffsetX),
+			  PT.IfThen(P.gtX(P.fieldX(rep,length), P.intX 1),
+			  PT.Compound
+			    [PT.IfThen(PL.PosEq(getBpos prevOffsetX, getBpos curOffsetX),
 				       PT.Compound
 				         [P.mkCommentS "array termination from lack of progress",
 					  P.minusAssignS(P.fieldX(rep,length), P.intX 2),
@@ -5319,7 +5313,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val initSs = if needsPosition
 					  then [PT.Compound[
 					      	  P.varDeclS'(PL.posPCT, pos),
-						  PL.getPosS(PT.Id pads, P.addrX(PT.Id pos)),
+						  PL.alwaysGetPosS(PT.Id pads, PT.Id pos),
 					          assignS]]
 				          else [assignS]
 			     val commentSs = [P.mkCommentS ("Pcompute branch '"^name^"'")]
@@ -5383,7 +5377,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val initSs = if needsPosition
 					  then [PT.Compound[
 					      	  P.varDeclS'(PL.posPCT, pos),
-						  PL.getPosS(PT.Id pads, P.addrX(PT.Id pos)),
+						  PL.alwaysGetPosS(PT.Id pads, PT.Id pos),
 					          assignS]]
 				          else [assignS]
 			     val readS = swReadManPre(name, isVirtual) @ initSs @ swReadManPost(name, modPred)
@@ -6338,7 +6332,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val initSs = if needsPosition
 					   then [PT.Compound([
 						 P.varDeclS'(PL.posPCT, pos),
-						 PL.getPosS(PT.Id pads, P.addrX(PT.Id pos))] @ assignSs)]
+						 PL.alwaysGetPosS(PT.Id pads, PT.Id pos)] @ assignSs)]
 					   else assignSs
 			      val commentSs = [P.mkCommentS ("Pcompute field '"^name^"'")]
 			  in
@@ -6375,8 +6369,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val locX = PT.Id tloc
 			      val condXs = List.map (checkPostConstraint tloc) postCon
 			      val condX = P.andBools condXs
-			      val getBeginLocS = PL.getLocBeginS(PT.Id pads, P.addrX (locX))
-			      val getEndLocSs = [PL.getLocEndS(PT.Id pads, P.addrX locX, ~1)]
+			      val getBeginLocS = PL.getLocBeginS(PT.Id pads, locX)
+			      val getEndLocSs = [PL.getLocEndMinus1S(PT.Id pads, locX)]
 			      val initSs = if (List.length condXs) > 0 then [strLocD, getBeginLocS] else []
 			      val reportErrSs = getEndLocSs
 						@ reportStructErrorSs(PL.P_USER_CONSTRAINT_VIOLATION, false, locX)

@@ -58,7 +58,7 @@ Pstruct event_t {
 };
 
 Parray eventSeq {
-  event_t[] : Psep('|') && Pterm(Peor);
+  event_t[] : Psep('|') /* && Pterm(Peor) */;
 } Pwhere {
   Pforall (i Pin [0..length-2] : 
            (elts[i].tstamp <= elts[i+1].tstamp));

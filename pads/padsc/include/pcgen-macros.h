@@ -258,10 +258,10 @@ do {
   size_t bytes_skipped_PCGEN_;
   int no_panic_PCGEN_ = !P_PS_isPanic(pd);
   P_PS_unsetPanic(pd);
-  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  PDCI_READFN_BEGINLOC(pads, tpd_PCGEN_.loc);
   if (P_OK == P_io_next_rec(pads, &bytes_skipped_PCGEN_)) {
     if (bytes_skipped_PCGEN_) {
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
       if (no_panic_PCGEN_) {
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_EXTRA_BEFORE_EOR, fn_nm, "Unexpected data before EOR");
 	(pd->nerr)++;
@@ -275,7 +275,7 @@ do {
       }
     }
   } else {
-    PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+    PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
     PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_EOF_BEFORE_EOR, fn_nm, "Found EOF when searching for EOR");
     (pd->nerr)++;
     if (pd->nerr == 1) {
@@ -292,7 +292,7 @@ do {
 do {
   (pd->nerr)++;
   pd->errCode = ecode;
-  PDCI_IO_ENDLOC_MINUS1(pads, pd->loc);
+  PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
   PDCI_report_err(pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, msg);
 } while (0)
 /* END_MACRO */
@@ -310,7 +310,7 @@ do {
 do {
   (elt_pd).nerr = 1;
   (elt_pd).errCode = elt_ecode;
-  PDCI_IO_ENDLOC_MINUS1(pads, (elt_pd).loc);
+  PDCI_READFN_ENDLOC_MINUS1(pads, (elt_pd).loc);
   PDCI_report_err(pads, P_LEV_WARN, &((elt_pd).loc), (elt_pd).errCode, fn_nm, msg);
   (pd->nerr)++;
   if (pd->nerr == 1) {
@@ -371,7 +371,7 @@ do {
 #define PCGEN_STRUCT_READ_PRE(fn_nm, the_field)
 do {
   pd->the_field.errCode = P_NO_ERR;
-  PDCI_IO_BEGINLOC(pads, pd->the_field.loc);
+  PDCI_READFN_BEGINLOC(pads, pd->the_field.loc);
 } while (0)
 /* END_MACRO */
 
@@ -386,7 +386,7 @@ do {
 #define PCGEN_STRUCT_READ_POST_CHECK_ENDIAN(fn_nm, the_field, usercheck, swap_call)
 do {
   if (P_Test_SemCheck(m->the_field ## _con) && (!(usercheck))) {
-    PDCI_IO_ENDLOC_MINUS1(pads, pd->the_field.loc);
+    PDCI_READFN_ENDLOC_MINUS1(pads, pd->the_field.loc);
     swap_call;
     if (usercheck) {
        PerrorRep erep_PCGEN_ = pads->disc->e_rep;
@@ -404,17 +404,17 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PDCI_IO_ENDLOC_SET(loc)  PDCI_IO_ENDLOC(pads, loc)
+#define PDCI_READFN_ENDLOC_SET(loc)  PDCI_READFN_ENDLOC(pads, loc)
 /* END_MACRO */
 
-#define PDCI_IO_ENDLOC_NOOP(loc) P_NULL_STMT
+#define PDCI_READFN_ENDLOC_NOOP(loc) P_NULL_STMT
 /* END_MACRO */
 
 #define PDCI_STRUCT_READ_FIELD(fn_nm, the_field, read_call, doEnd)
   Perror_t res;
-  PDCI_IO_BEGINLOC(pads, pd->the_field.loc);
+  PDCI_READFN_BEGINLOC(pads, pd->the_field.loc);
   res = read_call;
-  PDCI_IO_ENDLOC##doEnd(pd->the_field.loc);
+  PDCI_READFN_ENDLOC##doEnd(pd->the_field.loc);
   if (P_ERR == res) {
     if (P_PS_isPanic(&(pd->the_field))) {
       P_PS_setPanic(pd);
@@ -432,7 +432,7 @@ do {
   P_PS_setPanic(&(pd->the_field));
   pd->the_field.errCode = P_PANIC_SKIPPED;
   pd->the_field.nerr = 1;
-  PDCI_IO_GETLOC_SPAN0(pads, pd->the_field.loc);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->the_field.loc);
   (pd->nerr)++;
 /* END_MACRO */
 
@@ -492,13 +492,13 @@ do {
 do {
   Pbase_pd tpd_PCGEN_;
   size_t toffset_PCGEN_;
-  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  PDCI_READFN_BEGINLOC(pads, tpd_PCGEN_.loc);
   if (P_OK == Pchar_lit_scan1(pads, char_lit, 1, 0, &toffset_PCGEN_)) {
     if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	PDCI_READFN_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
 	pd->loc = tpd_PCGEN_.loc;
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before char separator %s", P_qfmt_char(char_lit));
@@ -510,7 +510,7 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
       pd->loc = tpd_PCGEN_.loc;
       PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing char separator %s", P_qfmt_char(char_lit));
@@ -539,13 +539,13 @@ do {
 do {
   Pbase_pd tpd_PCGEN_;
   size_t toffset_PCGEN_;
-  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  PDCI_READFN_BEGINLOC(pads, tpd_PCGEN_.loc);
   if (P_OK == Pstr_lit_scan1(pads, pads_str_lit, 1, 0, &toffset_PCGEN_)) {
     if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	PDCI_READFN_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
 	pd->loc = tpd_PCGEN_.loc;
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before string separator %s", P_qfmt_str(pads_str_lit));
@@ -557,7 +557,7 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
       pd->loc = tpd_PCGEN_.loc;
       PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing string separator %s", P_qfmt_str(pads_str_lit));
@@ -591,7 +591,7 @@ do {
   Perror_t terr_PCGEN_;
   Pbase_pd tpd_PCGEN_;
   size_t   toffset_PCGEN_;
-  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  PDCI_READFN_BEGINLOC(pads, tpd_PCGEN_.loc);
   terr_PCGEN_ = Pre_scan1(pads, regexp, 1, 0, &toffset_PCGEN_);
   Pregexp_cleanup(pads, regexp);
   if (terr_PCGEN_ == P_OK) {
@@ -599,7 +599,7 @@ do {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	PDCI_READFN_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
 	pd->loc = tpd_PCGEN_.loc;
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before regexp separator Pre %s", P_qfmt_cstr(regexp_str));
@@ -611,7 +611,7 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
       pd->loc = tpd_PCGEN_.loc;
       PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing regexp separator Pre %s", P_qfmt_cstr(regexp_str));
@@ -669,7 +669,7 @@ do {
   int no_panic_PCGEN_ = 0, moved_pos_PCGEN_ = 0;
   Perror_t res;
   do {
-    PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
+    PDCI_ALWAYS_GETPOS(pads, start_pos_PCGEN_);
     max_pos_PCGEN_    = start_pos_PCGEN_;
     if (P_ERR == P_io_checkpoint(pads, 0)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
@@ -707,7 +707,7 @@ do {
 #define PDCI_ALT_READ_FIELD_POST(fn_nm)
   if (!P_PS_isPanic(pd)) {
     no_panic_PCGEN_ = 1;
-    PDCI_IO_GETPOS(pads, cur_pos_PCGEN_);
+    PDCI_ALWAYS_GETPOS(pads, cur_pos_PCGEN_);
     error(0, "XXX_REMOVE cur_pos_PCGEN_.offset %lu max_pos_PCGEN_.offset %lu",
 	  (unsigned long)cur_pos_PCGEN_.offset, (unsigned long)max_pos_PCGEN_.offset); 
     if (P_POS_GT(cur_pos_PCGEN_, max_pos_PCGEN_)) {
@@ -722,7 +722,7 @@ do {
 #define PCGEN_ALT_READ_PRE(fn_nm, the_field)
 do {
   pd->the_field.errCode = P_NO_ERR;
-  PDCI_IO_BEGINLOC(pads, pd->the_field.loc);
+  PDCI_READFN_BEGINLOC(pads, pd->the_field.loc);
   P_PS_unsetPanic(pd);
 } while (0)
 /* END_MACRO */
@@ -738,7 +738,7 @@ do {
 #define PCGEN_ALT_READ_POST_CHECK_ENDIAN(fn_nm, the_field, usercheck, swap_call)
 do {
   if (P_Test_SemCheck(m->the_field ## _con) && (!(usercheck))) {
-    PDCI_IO_ENDLOC_MINUS1(pads, pd->the_field.loc);
+    PDCI_READFN_ENDLOC_MINUS1(pads, pd->the_field.loc);
     swap_call;
     if (usercheck) {
        PerrorRep erep_PCGEN_ = pads->disc->e_rep;
@@ -757,9 +757,9 @@ do {
 /* END_MACRO */
 
 #define PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call,doEnd)
-  PDCI_IO_BEGINLOC(pads, pd->the_field.loc);
+  PDCI_READFN_BEGINLOC(pads, pd->the_field.loc);
   res = read_call;
-  PDCI_IO_ENDLOC ## doEnd(pd->the_field.loc);
+  PDCI_READFN_ENDLOC ## doEnd(pd->the_field.loc);
   if (P_ERR == res) {
     if (P_PS_isPanic(&(pd->the_field))) {
       P_PS_setPanic(pd);
@@ -802,13 +802,13 @@ do {
 do {
   Pbase_pd tpd_PCGEN_;
   size_t toffset_PCGEN_;
-  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  PDCI_READFN_BEGINLOC(pads, tpd_PCGEN_.loc);
   if (P_OK == Pchar_lit_scan1(pads, char_lit, 1, 0, &toffset_PCGEN_)) {
     if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	PDCI_READFN_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
 	pd->loc = tpd_PCGEN_.loc;
         PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before char separator %s", P_qfmt_char(char_lit));
@@ -819,7 +819,7 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
       pd->loc = tpd_PCGEN_.loc;
       PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing char separator %s", P_qfmt_char(char_lit));
@@ -840,13 +840,13 @@ do {
 do {
   Pbase_pd tpd_PCGEN_;
   size_t toffset_PCGEN_;
-  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  PDCI_READFN_BEGINLOC(pads, tpd_PCGEN_.loc);
   if (P_OK == Pstr_lit_scan1(pads, pads_str_lit, 1, 0, &toffset_PCGEN_)) {
     if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	PDCI_READFN_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
 	pd->loc = tpd_PCGEN_.loc;
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before string separator %s", P_qfmt_str(pads_str_lit));
@@ -857,7 +857,7 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
       pd->loc = tpd_PCGEN_.loc;
       PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing string separator %s", P_qfmt_str(pads_str_lit));
@@ -880,7 +880,7 @@ do {
   Perror_t terr_PCGEN_;
   Pbase_pd tpd_PCGEN_;
   size_t   toffset_PCGEN_;
-  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  PDCI_READFN_BEGINLOC(pads, tpd_PCGEN_.loc);
   terr_PCGEN_ = Pre_scan1(pads, regexp, 1, 0, &toffset_PCGEN_);
   Pregexp_cleanup(pads, regexp);
   if (terr_PCGEN_ == P_OK) {
@@ -888,7 +888,7 @@ do {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	PDCI_READFN_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
 	pd->loc = tpd_PCGEN_.loc;
 	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before regexp separator Pre %s", P_qfmt_cstr(regexp_str));
@@ -899,7 +899,7 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
       pd->loc = tpd_PCGEN_.loc;
       PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing regexp separator Pre %s", P_qfmt_cstr(regexp_str));
@@ -951,7 +951,7 @@ do {
 #define PCGEN_UNION_READ_SETUP_STAT(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
 Ppos_t start_pos_PCGEN_;
 do {
-  PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
+  PDCI_READFN_GETPOS(pads, start_pos_PCGEN_);
   pd->errCode = P_NO_ERR;
 } while (0)
 /* END_MACRO */
@@ -959,7 +959,7 @@ do {
 #define PCGEN_UNION_READ_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
 Ppos_t start_pos_PCGEN_;
 do {
-  PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
+  PDCI_READFN_GETPOS(pads, start_pos_PCGEN_);
   if (rep->tag != the_tag) {
     PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
     rep_cleanup(pads, rep);
@@ -980,7 +980,7 @@ do{
   reptag = the_tag;
   pdtag  = the_tag;
   read_res_PCGEN_ = read_call;
-  PDCI_IO_ENDLOC##doEnd((pd->val).the_tag.loc);
+  PDCI_READFN_ENDLOC##doEnd((pd->val).the_tag.loc);
 } while (0);
 /* END_MACRO */
 
@@ -1157,7 +1157,7 @@ do {
   rep->tag = the_tag;
   pd->tag = the_tag;
   PD_COMMON_INIT_NO_ERR(&(pd->val.the_tag));
-  PDCI_IO_BEGINLOC(pads, pd->val.the_tag.loc);
+  PDCI_READFN_BEGINLOC(pads, pd->val.the_tag.loc);
 } while (0)
 /* END_MACRO */
 
@@ -1245,7 +1245,7 @@ do {
 
 #define PDCI_UNION_READ_WHERE_END_CHECK(fn_nm, usercheck, isOpt)
 do {
-    PDCI_IO_ENDLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC(pads, pd->loc);
     PCGEN_UNION_READ_WHERE_CHECK(fn_nm, usercheck, isOpt);
 } while (0)
 /* END_MACRO */
@@ -1256,7 +1256,7 @@ do {
   (pd->nerr)++;
   pd->errCode = P_UNION_MATCH_ERR;
   pd->loc.b = start_pos_PCGEN_;
-  PDCI_IO_ENDLOC_MINUS1(pads, pd->loc);
+  PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
   PDCI_report_err(pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match any branch of union " nm);
   rep->tag = err_tag;
   pd->tag = err_tag;
@@ -1269,7 +1269,7 @@ do {
 Ppos_t      start_pos_PCGEN_, end_pos_PCGEN_;
 ssize_t     longest_PCGEN_ = -1;
 do {
-  PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
+  PDCI_ALWAYS_GETPOS(pads, start_pos_PCGEN_);
   memset((void*)&trep_PCGEN_, 0, sizeof(trep_PCGEN_));
   memset((void*)&tpd_PCGEN_, 0, sizeof(tpd_PCGEN_));
   tpd_PCGEN_.errCode = P_NO_ERR;
@@ -1280,7 +1280,7 @@ do {
 Ppos_t      start_pos_PCGEN_, end_pos_PCGEN_;
 ssize_t     longest_PCGEN_ = -1;
 do {
-  PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
+  PDCI_ALWAYS_GETPOS(pads, start_pos_PCGEN_);
   rep_init(pads, &trep_PCGEN_);
   pd_init(pads, &tpd_PCGEN_);
   tpd_PCGEN_.errCode = P_NO_ERR;
@@ -1289,7 +1289,7 @@ do {
 
 #define PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT
 do {
-    PDCI_IO_GETPOS(pads, end_pos_PCGEN_);
+    PDCI_ALWAYS_GETPOS(pads, end_pos_PCGEN_);
     if (end_pos_PCGEN_.offset - start_pos_PCGEN_.offset > longest_PCGEN_) {
       PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
       longest_PCGEN_ = end_pos_PCGEN_.offset - start_pos_PCGEN_.offset;
@@ -1304,7 +1304,7 @@ do {
 
 #define PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy)
 do {
-    PDCI_IO_GETPOS(pads, end_pos_PCGEN_);
+    PDCI_ALWAYS_GETPOS(pads, end_pos_PCGEN_);
     if (end_pos_PCGEN_.offset - start_pos_PCGEN_.offset > longest_PCGEN_) {
       PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
       longest_PCGEN_ = end_pos_PCGEN_.offset - start_pos_PCGEN_.offset;
@@ -1536,7 +1536,7 @@ do {
     (pd->nerr)++;
     pd->errCode = P_UNION_MATCH_ERR;
     pd->loc.b = start_pos_PCGEN_;
-    PDCI_IO_ENDLOC_MINUS1(pads, pd->loc);
+    PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
     PDCI_report_err(pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match any branch of union " nm);
     rep->tag = err_tag;
     pd->tag = err_tag;
@@ -1566,11 +1566,11 @@ do {
 #define PCGEN_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, doEnd)
 do {
   Perror_t read_res_PCGEN_;
-  PDCI_IO_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
   rep->tag = the_tag;
   pd->tag  = the_tag;
   read_res_PCGEN_ = read_call;
-  PDCI_IO_ENDLOC##doEnd(pd->loc);
+  PDCI_READFN_ENDLOC##doEnd(pd->loc);
   if (P_ERR == read_res_PCGEN_) {
     pd->nerr = 1;
     pd->errCode = P_UNION_MATCH_ERR;
@@ -1592,12 +1592,12 @@ do {
 
 #define PCGEN_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
 do {
-  PDCI_IO_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
   pd->errCode = P_NO_ERR;
   rep->tag = the_tag;
   pd->tag = the_tag;
   PD_COMMON_INIT_NO_ERR(&(pd->val.the_tag));
-  PDCI_IO_BEGINLOC(pads, pd->val.the_tag.loc);
+  PDCI_READFN_BEGINLOC(pads, pd->val.the_tag.loc);
 } while (0)
 /* END_MACRO */
 
@@ -1634,7 +1634,7 @@ do {
 do {
   (pd->nerr)++;
   pd->errCode = P_UNION_MATCH_ERR;
-  PDCI_IO_GETLOC_SPAN0(pads, pd->loc);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_report_err(pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Switch value failed to match any branch of switched union " nm);
   rep->tag = err_tag;
   pd->tag = err_tag;
@@ -1652,7 +1652,7 @@ do {
 
 #define PCGEN_SWUNION_READ_WHERE_END_CHECK(fn_nm, usercheck, isOpt)
 do {
-    PDCI_IO_ENDLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC(pads, pd->loc);
     PCGEN_SWUNION_READ_WHERE_CHECK(fn_nm, usercheck, isOpt);
 } while (0)
 /* END_MACRO */
@@ -2179,7 +2179,7 @@ do{
           {
             (pd->nerr)++;
             pd->errCode = P_ARRAY_MIN_BIGGER_THAN_MAX_ERR;
-            P_io_getLocE (pads,&tloc,-1);
+            PDCI_READFN_ENDLOC_MINUS1(pads, tloc);
             PDCI_report_err (pads,P_LEV_WARN,&tloc,pd->errCode,(#ty "_read"),
 			     "Mininum value for the size of array " #ty "(%d) is greater than its maximum size (%d)",min,max);
           }
@@ -2272,13 +2272,13 @@ do{
 
 #define PCGEN_ARRAY_GET_BEGIN_LOC()
 do{
-  P_io_getLocB (pads,&beginLoc,0);
+  PDCI_READFN_BEGINLOC(pads, beginLoc);
 }while(0)
 /* END_MACRO */
 
 #define PCGEN_ARRAY_TEST_FC_SOURCE_ADVANCE(bIN,eIN)
 do{
-  P_io_getLocB (pads,&(eIN),0);
+  PDCI_ALWAYS_BEGINLOC(pads,(eIN));
   if (P_POS_EQ ((bIN).b, (eIN).b)) 
     {
       /*  array termination from lack of progress */
@@ -2335,7 +2335,7 @@ do{
     {
       (pd->nerr)++;
       pd->errCode = (errCodeIN);
-      P_io_getLocE (pads,&tloc,-1);
+      PDCI_READFN_ENDLOC_MINUS1(pads, tloc);
       PDCI_report_err (pads,P_LEV_WARN,&tloc,pd->errCode,WHATFN,ERRMSG);
     }
   else
@@ -2359,7 +2359,7 @@ do{
 	    {
 	      (pd->nerr)++;
 	      pd->errCode = P_ARRAY_ELEM_ERR;
-	      P_io_getLocE (pads,&(pd->loc),-1);
+	      PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
 	      /*  Index of first element with an error */
 	      pd->firstError = ((rep->length)-1);
 	    }
@@ -2418,7 +2418,7 @@ do{
 do{
   int sepFound;
   size_t offset;
-  P_io_getLocB (pads,&(pd->loc),0);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
   if (P_OK==(funIN) (pads,(sepIN),(termIN),(eat_fIN),(eat_sIN),(panicIN),&sepFound,&offset)) 
     {
       if (!sepFound) 
@@ -2433,7 +2433,7 @@ do{
 		{
 		  (pd->nerr)++;
 		  pd->errCode = P_ARRAY_EXTRA_BEFORE_SEP;
-		  P_io_getLocE (pads,&(pd->loc),-2);
+		  PDCI_READFN_ENDLOC_MINUS2(pads, pd->loc);
 		  PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read",0);
 		}
 	      else
@@ -2451,7 +2451,7 @@ do{
 		    {
 		      (pd->nerr)++;
 		      pd->errCode = P_ARRAY_EXTRA_BEFORE_TERM;
-		      P_io_getLocE (pads,&(pd->loc),-1);
+		      PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
 		      PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read",0);
 		    }
 		  else
@@ -2474,7 +2474,7 @@ do{
 	  {
 	    (pd->nerr)++;
 	    pd->errCode = P_ARRAY_SEP_ERR;
-	    P_io_getLocE (pads,&(pd->loc),-1);
+	    PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
 	    PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read","Missing separator");
 	  }
 	else
@@ -2493,7 +2493,7 @@ do{
 #define PCGEN_ARRAY_SCAN_SEP(ty,funIn,sepIN,eat_fIN,panicIN)
 do{
   size_t offset;
-  P_io_getLocB (pads,&(pd->loc),0);
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
   if (P_OK== (funIn) (pads,(sepIN),(eat_fIN),(panicIN),&offset)) 
     {
       if (P_Test_SynCheck (m->compoundLevel)) 
@@ -2504,7 +2504,7 @@ do{
 		{
 		  (pd->nerr)++;
 		  pd->errCode = P_ARRAY_EXTRA_BEFORE_SEP;
-		  P_io_getLocE (pads,&(pd->loc),-2);
+		  PDCI_READFN_ENDLOC_MINUS2(pads, pd->loc);
 		  PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read",0);
 		}
 	      else
@@ -2524,7 +2524,7 @@ do{
 	  {
 	    (pd->nerr)++;
 	    pd->errCode = P_ARRAY_SEP_ERR;
-	    P_io_getLocE (pads,&(pd->loc),-1);
+	    PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
 	    PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read","Missing separator");
 	  }
 	else
@@ -2546,7 +2546,7 @@ do{
     if ((!P_PS_isPanic (pd))&&(!foundTerm)) 
       {
         size_t offset;
-        P_io_getLocB (pads,&(pd->loc),0);
+        PDCI_READFN_BEGINLOC(pads, pd->loc);
         if (P_OK == funIN(pads,(termIN),0,0,&offset)) 
           {
             if (P_Test_SynCheck (m->compoundLevel)) 
@@ -2556,7 +2556,7 @@ do{
                     {
                       (pd->nerr)++;
                       pd->errCode = P_ARRAY_EXTRA_BEFORE_TERM;
-                      P_io_getLocE (pads,&(pd->loc),-1);
+                      PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
                       PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read",0);
                     }
                   else
@@ -2575,7 +2575,7 @@ do{
               {
                 (pd->nerr)++;
                 pd->errCode = P_ARRAY_TERM_ERR;
-                P_io_getLocE (pads,&(pd->loc),-1);
+                PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
                 PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read","Missing terminator");
               }
             else
@@ -2598,27 +2598,27 @@ do{
   /*  Read to EOR */
   Pbase_pd tpd;
   size_t bytes_skipped;
-  P_io_getLocB (pads,&(tpd.loc),0);
+  PDCI_READFN_BEGINLOC(pads, tpd.loc);
   if (P_OK==P_io_next_rec (pads,&bytes_skipped)) 
     {
       if (bytes_skipped) 
 	{
 	  /*  in genReadEOR1 */
-	  P_io_getLocE (pads,&(tpd.loc),-1);
+	  PDCI_READFN_ENDLOC_MINUS1(pads, tpd.loc);
 	  if (!P_PS_isPanic (pd)) 
 	    {
 	      PDCI_report_err (pads,P_LEV_WARN,&(tpd.loc),P_EXTRA_BEFORE_EOR,"list_read","Unexpected data before EOR");
 	      if (0==(pd->nerr)) 
 		{
 		  pd->errCode = P_EXTRA_BEFORE_EOR;
-		  P_io_getLocE (pads,&(tpd.loc),-1);
+		  PDCI_READFN_ENDLOC_MINUS1(pads, tpd.loc);
 		  pd->loc = (tpd.loc);
 		}
 	      (pd->nerr)+=1;
 	    }
 	  else
 	    {
-	      P_io_getLocE (pads,&(tpd.loc),-1);
+	      PDCI_READFN_ENDLOC_MINUS1(pads, tpd.loc);
 	      PDCI_report_err (pads,P_LEV_INFO,&(tpd.loc),P_NO_ERR,#ty "_read","Resynching at EOR");
 	    }
 	  if (P_spec_level (pads)) 
@@ -2630,7 +2630,7 @@ do{
     {
       /*  in genReadEOR2 */
       P_PS_unsetPanic (pd);
-      P_io_getLocE (pads,&(tpd.loc),-1);
+      PDCI_READFN_ENDLOC_MINUS1(pads, tpd.loc);
       PDCI_report_err (pads,P_LEV_WARN,&(tpd.loc),P_AT_EOR,#ty "_read","Found EOF when searching for EOR");
       if (P_spec_level (pads)) 
 	return P_READ_ERR;

@@ -6,7 +6,7 @@
 //
 // Where the defaults are:
 
-#define SELECT_STATE       "21"
+#define SELECT_STATE       "10"
 #define CLEAN_INPUT_FILE   "/home/kfisher/esig/dibbler_clean_C"
 #define OUTPUT_FILE        "/home/kfisher/esig/dibbler_selected_C"
 
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 
   summary_header_t_init(pads, &header);
   summary_header_t_pd_init(pads, &header_pd);
-  summary_header_t_m_init(pads, &header_m, P_Ignore);
+  summary_header_t_m_init(pads, &header_m, P_Set);
 
   // INIT entry -- must do this for all variable data types
   entry_t_init(pads, &entry);

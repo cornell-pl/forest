@@ -151,7 +151,7 @@ do{ \
 
 #define PD_COMMON_READ_INIT(padsIN,pdIN) \
 do { \
-  PDCI_IO_BEGINLOC(padsIN,(pdIN)->loc); \
+  PDCI_READFN_BEGINLOC(padsIN,(pdIN)->loc); \
   PD_PGLX_INIT(padsIN,pdIN);\
 } while (0)
 

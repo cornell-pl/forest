@@ -566,17 +566,44 @@ struct
     PT.Call(PT.Id "P_Test_NotIgnore", [m])
 
 (* -- File manipulation routines *)
+
+(* -- These versions produce macro calls that are disabled by -DNO_READ_LOCS *)
+  fun getPosS(pads:PT.expression, posAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_READFN_GETPOS", [pads, posAddr]))
+
   fun getLocS(pads:PT.expression, locAddr:PT.expression) = 
-    PT.Expr(PT.Call(PT.Id "P_io_getLoc", [pads, locAddr, P.zero]))
+    PT.Expr(PT.Call(PT.Id "PDCI_READFN_GETLOC_SPAN0", [pads, locAddr]))
 
   fun getLocBeginS(pads:PT.expression, locAddr:PT.expression) = 
-    PT.Expr(PT.Call(PT.Id "P_io_getLocB", [pads, locAddr, P.zero]))
+    PT.Expr(PT.Call(PT.Id "PDCI_READFN_BEGINLOC", [pads, locAddr]))
 
-  fun getLocEndS(pads:PT.expression, locAddr:PT.expression, offset:int) = 
-    PT.Expr(PT.Call(PT.Id "P_io_getLocE", [pads, locAddr,P.intX offset]))
+  fun getLocEndS(pads:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_READFN_ENDLOC", [pads, locAddr]))
 
-  fun getPosS(pads:PT.expression, posAddr:PT.expression) = 
-    PT.Expr(PT.Call(PT.Id "P_io_getPos", [pads, posAddr, P.zero]))
+  fun getLocEndMinus1S(pads:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_READFN_ENDLOC_MINUS1", [pads, locAddr]))
+
+  fun getLocEndMinus2S(pads:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_READFN_ENDLOC_MINUS2", [pads, locAddr]))
+
+(* -- These versions produce macro calls that always get a location/pos *)
+  fun alwaysGetPosS(pads:PT.expression, posAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_ALWAYS_GETPOS", [pads, posAddr]))
+
+  fun alwaysGetLocS(pads:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_ALWAYS_GETLOC_SPAN0", [pads, locAddr]))
+
+  fun alwaysGetLocBeginS(pads:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_ALWAYS_BEGINLOC", [pads, locAddr]))
+
+  fun alwaysGetLocEndS(pads:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_ALWAYS_ENDLOC", [pads, locAddr]))
+
+  fun alwaysGetLocEndMinus1S(pads:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_ALWAYS_ENDLOC_MINUS1", [pads, locAddr]))
+
+  fun alwaysGetLocEndMinus2S(pads:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_ALWAYS_ENDLOC_MINUS2", [pads, locAddr]))
 
   fun isEofX(pads:PT.expression) = 
     PT.Call(PT.Id "P_io_at_eof", [pads])
