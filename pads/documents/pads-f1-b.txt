@@ -1,0 +1,83 @@
+PADS: Processing Arbitrary Data Streams
+---------------------------------------
+Joint work with [Kathleen Fisher|Bob Gruber]
+
+Currently, each new data analysis project builds its own
+infrastructure and tools.  The grand vision of the PADS project is
+that we need shared tools and infrastructure to simplify these tasks:
+
+   * Data collection: we need tools to make it easy to "tap" yet another 
+     data stream.
+
+   * Reliable data transport: we need a framework to monitor data stream
+     transport, restart failed processes, etc., to ensure reliable stream.
+     Howard Katseff's data stream monitor is a good
+     start, but there is much to do here.
+
+   * Distributed data processing: we need declarative query and aggregation
+     languages that can be mapped to distributed computations, so that
+     it is not necessary to bring all the data to one place.
+     IP packet monitoring (GIGASCOPE) is one domain where we
+     are pushing filtering to the data source, but
+     there are many other domains where this approach should be applied.
+
+Furthermore, this shared infrastructure should work not just
+with databases and XML data, but with *arbitrary* data streams.  Many
+data sources, typified by those in the InfoLab, are in legacy formats
+over which data consumers have no control. Currently researchers deal
+with such data in an \textit{ad hoc} fashion, using Perl/shell scripts
+or hand-coded \C{} programs that are hard to maintain, extend, and
+share.
+
+We are attacking this grand vision from the ground up, starting
+with one of the core problems, the need to handle arbitrary data.
+The \pads{} project aims to make it easy to manipulate such data,
+either programmatically or through high-level tools.  Central to
+\pads{} is a declarative data-description language, \padsl{},
+expressive enough to describe general data, including ASCII, binary,
+and mixed data formats.  A \padsl{} compiler (\texttt{padsc}) then
+generates a tunable \C{} library with functions for parsing,
+manipulating, and summarizing the data.  Examples of data currently
+handled are web log, Netflow, BGP, and Dibbler data.  In preliminary
+testing without a number of planned optimizations, \pads{} programs
+are roughly twice as fast as comparable Perl programs.
+
+Longer term, we will use the generated libraries to construct
+declarative interfaces to arbitrary data sources. In addition, we plan
+to adapt tools designed for XML, such as Xquery, to work over legacy
+data by making the legacy data ``look'' like XML.  Together with the
+ability to generate \C{} interfaces, this approach allows application
+developers to mix and match data representations as needed to handle
+legacy system requirements while leveraging modern tools.  Ultimately,
+we will grow the tools into the "grand vision" distributed systems
+framework described above.
+
+The project provides a common meeting ground for integrating the tools
+and knowledge of many other researchers.  Some specific examples:
+\begin{itemize}
+    \item  We are working with Andrew Hume to generate programs that
+    characterize data files that have \cobol{} copybooks.  Hume is
+    writing a copybook to \padsl{} translator.
+  
+    \item We are working with Glenn Fowler and David Korn to support
+    command-line (\texttt{dss}) and scripting (\texttt{ksh}) interfaces to \padsl{} data. 
+
+    \item  We are exploring with Mary Fernandez the use of XQuery to query
+    \padsl{} data \textit{without} materializing that data as XML.
+
+    \item  We are meeting with Ted Johnson (HB84) to explore incorporating his
+    data summary and correlation work into our summarizers.
+
+    \item We plan to work with David Poole to develop scripting tools so
+    that data analysts can express queries and desired plots
+    declaratively and get parsing, filtering, and aggregated input
+    into S+ automatically, without any coding.
+\end{itemize}
+
+Finally, by providing a means to describe all of Research's incoming
+data streams in a common language, we open the possibility of
+correlating and integrating the data from these streams.
+
+R.~Gruber presented \pads{} at the AT\&T/UCSD retreat in September.
+I gave a cookie talk on 11/19 to get early feedback on the design of
+\padsl{} and the generated library.  
