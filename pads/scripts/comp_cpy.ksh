@@ -151,18 +151,18 @@ BEGIN {
   typeof["b8"] = "T_UNIMPLEMENTED"
   typeof["b4"] = "T_UNIMPLEMENTED"
 
-  padstype["T_CHARS"]          = "e_string_FW"
-  padstype["T_NUM"]            = "ebc_uint64"
-  padstype["T_SNUM"]           = "ebc_int64"
-  padstype["T_BCD"]            = "bcd_uint64"
-  padstype["T_SBCD"]           = "bcd_int64"
-  padstype["T_FIXEDPOINT"]     = "ebc_ufpoint64"
-  padstype["T_SFIXEDPOINT"]    = "ebc_fpoint64"
-  padstype["T_SBCDFIXEDPOINT"] = "bcd_fpoint64"
-  padstype["T_BINARY"]         = "sbh_int64"
-  padstype["T_UBINARY"]        = "sbh_uint64"
-  padstype["T_UBINFIXEDPOINT"] = "sbh_ufpoint64"
-  padstype["T_SBINFIXEDPOINT"] = "sbh_fpoint64"
+  padstype["T_CHARS"]          = "Pe_string_FW"
+  padstype["T_NUM"]            = "Pebc_uint64"
+  padstype["T_SNUM"]           = "Pebc_int64"
+  padstype["T_BCD"]            = "Pbcd_uint64"
+  padstype["T_SBCD"]           = "Pbcd_int64"
+  padstype["T_FIXEDPOINT"]     = "Pebc_ufpoint64"
+  padstype["T_SFIXEDPOINT"]    = "Pebc_fpoint64"
+  padstype["T_SBCDFIXEDPOINT"] = "Pbcd_fpoint64"
+  padstype["T_BINARY"]         = "Psbh_int64"
+  padstype["T_UBINARY"]        = "Psbh_uint64"
+  padstype["T_UBINFIXEDPOINT"] = "Psbh_ufpoint64"
+  padstype["T_SBINFIXEDPOINT"] = "Psbh_fpoint64"
 
   padsargs["T_CHARS"]          = "digsum"
   padsargs["T_NUM"]            = "digsum"
@@ -303,7 +303,7 @@ for(i = ndefn-1; i >= 0; i--){
 			    cur_type = mkunion_t_nm[redef[f]]
 			}
 			pads_ar_type[cur_type] = sprintf("gen_parray_of_%s", cur_type);
-			printf("parray %s (int len) {\n\t%s [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads;
+			printf("Parray %s (int len) {\n\t%s [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads;
                    }
                 } else {
 			s = typeof[substr(fmt[d,j], 1, index(fmt[d,j], ",")-1)]
@@ -312,22 +312,22 @@ for(i = ndefn-1; i >= 0; i--){
 			    if (!pads_ar_type[cur_type]) {
 				pads_ar_type[cur_type] = sprintf("gen_parray_of_%s", cur_type);
 				if (padsargs[s] == "digsum") {
-					printf("parray %s (int num_digits, int len) {\n\t%s(:num_digits:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+					printf("Parray %s (int num_digits, int len) {\n\t%s(:num_digits:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
 				if (padsargs[s] == "bytes"){
-					printf("parray %s (int num_bytes, int len) {\n\t%s(:num_bytes:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+					printf("Parray %s (int num_bytes, int len) {\n\t%s(:num_bytes:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
 				if (padsargs[s] == "digsum_after_v"){
-					printf("parray %s (int num_digits, int d_exp, int len) {\n\t%s(:num_digits, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+					printf("Parray %s (int num_digits, int d_exp, int len) {\n\t%s(:num_digits, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
 				if (padsargs[s] == "bytes_after_v"){
-					printf("parray %s (int num_bytes, int d_exp, int len) {\n\t%s(:num_bytes, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
+					printf("Parray %s (int num_bytes, int d_exp, int len) {\n\t%s(:num_bytes, d_exp:) [len];\n};\n", pads_ar_type[cur_type], cur_type) >pads
 				}
 			    }
 			}
                 }
 		if(mkunion[f]) {
-		    printf("punion %s {\n", mkunion_t_nm[f]) >pads;
+		    printf("Punion %s {\n", mkunion_t_nm[f]) >pads;
 		    num_uelts = split(mkunion[f], uelts , "|")
 		    for(u = 1; u <= num_uelts; u++){
 			arm_nm = sprintf("%s_arm", uelts[u])
@@ -338,7 +338,7 @@ for(i = ndefn-1; i >= 0; i--){
         }
 
 	printf("struct %s {\n", d) >hdr
-	printf("pstruct %s {\n", d) >pads
+	printf("Pstruct %s {\n", d) >pads
 	printf("static void\ndo_%s(ng_byte *buf, struct %s *t, struct cpy%s *tt)\n{\n", d, d, globalname) >src
 	printf("static void\npr_%s(char *indent, ng_byte *buf, Sfio_t *out, struct cpy%s *tt)\n{\n", d, globalname) >prt
 	printf("\tsfprintf(out, \"%%s%s >>>>>>aggr\\n\", indent--);\n", d) >prt

@@ -26,16 +26,16 @@ all: $(P_DIR)/cpygen_foo.p $(P_DIR)/cpygen_crs.p
 
 $(P_DIR)/cpygen_crs.p: $(P_DIR)/cpygen_crshdr.p $(P_DIR)/cpygen_crstlr.p $(P_DIR)/cpygen_crsdet.p
 	(echo ""; echo "extern PDC_uint64 num_recs;"; echo "") > $@
-	cat $^ | sed -e 's|pstruct cpy_crshdr|precord pstruct cpy_crshdr|' \
+	cat $^ | sed -e 's|Pstruct cpy_crshdr|Precord Pstruct cpy_crshdr|' \
 		     -e 's|XX_TOTAL_RECORDS_3;|XX_TOTAL_RECORDS_3 : XX_TOTAL_RECORDS_3 == num_recs ;|' >> $@
-	(echo "precord punion det_or_tlr {"; \
+	(echo "Precord Punion det_or_tlr {"; \
 	 echo "	cpy_crstlr                                         is_tlr;"; \
 	 echo "	cpy_crsdet                                         is_det;"; \
 	 echo "};"; echo ""; \
-	 echo "parray det_tlr_array {"; \
+	 echo "Parray det_tlr_array {"; \
 	 echo "	det_or_tlr [];"; \
 	 echo "};"; echo ""; \
-	 echo "pfile pstruct crs_file {"; \
+	 echo "Pfile Pstruct crs_file {"; \
 	 echo "	cpy_crshdr                                         is_hdr;"; \
 	 echo "	det_tlr_array                                      is_rest;"; \
 	 echo "};"; echo ""; ) >> $@
