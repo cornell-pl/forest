@@ -2,7 +2,9 @@
 
 /* to define a new char class, we need an int->int predicate.
    want a class that just allows 'f', 'o', and digits */
-#include "regex.h"
+
+#undef isdigit
+
 int is_foo(char c) { return (c == 'f') || (c == 'o') || isdigit(c); };
 
 Pcharclass foo {is_foo};

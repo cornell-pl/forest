@@ -3,7 +3,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
 warning: Error [in branches_read]: record 3 byte 2 : Switch value failed to match any branch of switched union branches
 [record 3]3>>><<<
 read returned error
-warning: Error [in branches_read]: record 4 byte 2 : User constraint check failed for branch number
+warning: Error [in branches_read]: record 4 byte 2 : User constraint on branch number violated
 [record 4]1>>> 23<<<
 read returned error
 *****************************************************************************************************

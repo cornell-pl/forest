@@ -1,6 +1,6 @@
 Data file = ../../data/pswitch
 warning: P_open: Installing default IO discipline : newline-terminated records
-warning: Error [in branches_read]: record 4 byte 2 : User constraint check failed for branch number
+warning: Error [in branches_read]: record 4 byte 2 : User constraint on branch number violated
 [record 4]1>>> 23<<<
 read returned error
 *****************************************************************************************************
