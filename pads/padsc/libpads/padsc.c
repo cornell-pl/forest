@@ -1489,7 +1489,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.43 2002-11-13 17:33:29 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.44 2002-11-14 00:49:07 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -2344,7 +2344,7 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 /* INTERNAL SCAN FUNCTIONS */
 
 PDC_error_t
-PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s,
+PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
 		   unsigned char *c_out, size_t *offset_out)
 {
   char            *begin, *p1, *p2, *end;
@@ -2353,7 +2353,7 @@ PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s,
   int             matchlen = -1;
 
   PDCI_IODISC_INIT_CHECKS("PDCI_char_lit_scan");
-  PDC_TRACE2(pdc->disc, "PDCI_char_lit_scan args: c %s stop %s", PDCI_fmtQChar(c), PDCI_fmtQChar(s));
+  PDC_TRACE3(pdc->disc, "PDCI_char_lit_scan args: c %s stop %s eat %d", PDCI_fmtQChar(c), PDCI_fmtQChar(s), eat_lit);
   if (offset_out) {
     (*offset_out) = 0;
   }
@@ -2390,8 +2390,10 @@ PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s,
       if (offset_out) {
 	(*offset_out) = (p1-begin);
       }
-      p1++; /* advance beyond char found */
-      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+      if (eat_lit) {
+	p1++; /* advance beyond char found */
+      }
+      if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
       }
       return PDC_OK;
@@ -2408,7 +2410,7 @@ PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s,
 }
 
 PDC_error_t
-PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
+PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
 		  PDC_string **str_out, size_t *offset_out) 
 {
   char            *begin, *p1, *p2, *end;
@@ -2417,8 +2419,8 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
   int             matchlen = -1;
 
   PDCI_IODISC_INIT_CHECKS("PDCI_str_lit_scan");
-  PDC_TRACE2(pdc->disc, "PDCI_str_lit_scan args: findStr = %s stopStre = %s",
-	     PDCI_fmtQStr(findStr), PDCI_fmtQStr(stopStr));
+  PDC_TRACE3(pdc->disc, "PDCI_str_lit_scan args: findStr = %s stopStre = %s eat = %d",
+	     PDCI_fmtQStr(findStr), PDCI_fmtQStr(stopStr), eat_lit);
   if (offset_out) {
     (*offset_out) = 0;
   }
@@ -2462,8 +2464,10 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
       if (offset_out) {
 	(*offset_out) = (p1-begin);
       }
-      p1 += findStr->len; /* advance beyond findStr */
-      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+      if (eat_lit) {
+	p1 += findStr->len; /* advance beyond findStr */
+      }
+      if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	PDC_FATAL(pdc->disc, "Internal error : unexpected failure of PDCI_IO_forward");
       }
       return PDC_OK;
