@@ -50,6 +50,8 @@ sub regress_run {
    # Generate XML output from PADS executable
    $cmd = "cat $pcode/html/sources/$a/data/sample | linux.i386/rwxml_$a > linux.i386/pads.$a.xml";
    $rslt = `$cmd 2>&1`;
+   $cmd = "cat $pcode/html/sources/$a/data/bad.sample | linux.i386/rwxml_$a > linux.i386/bad.pads.$a.xml";
+   $rslt = `$cmd 2>&1`;
 
    # copy needed C program and header file
    print "regression: generating PADX XML from source $b\n";
@@ -61,6 +63,8 @@ sub regress_run {
    $rslt = `$cmd 2>&1`;
 
    $cmd = "linux.i386/test_bulk_$a $pcode/html/sources/$a/data/sample $pcode/html/sources/$a/queries/dot.xq";
+   $rslt = `$cmd 2>&1`;
+   $cmd = "linux.i386/test_bulk_$a $pcode/html/sources/$a/data/bad.sample $pcode/html/sources/$a/queries/dot.xq -output-xml linux.i386/bad.test_bulk_$a.xml";
    $rslt = `$cmd 2>&1`;
 
    # now clean up afterwards
