@@ -3,32 +3,8 @@ structure ParseTreeExt =
         datatype Pty = 
            Name of string
 
-        datatype ('ct, 'dt, 'decr, 'exp) PSField = 
-           Full of {    pty : Pty, 
-		       args : 'exp list, 
-		       name : string, 
-		  isVirtual : bool,
-		   isEndian : bool,
-                   isRecord : bool,
-             containsRecord : bool,
-             largeHeuristic : bool,
-		       pred : 'exp option, 
-		    comment : string option}
-	 | Manifest of {tyname : 'ct,
-			name   : string,
-			 args  : 'exp list,
-	             isVirtual : bool,
-			 expr  : 'exp,
-			 pred  : 'exp option,
-                      comment  : string option}
-         | Brief of 'exp * string option
-
         datatype 'exp PSize = 
            SizeInfo of {min : 'exp option, max : 'exp option, maxTight : bool}
-
-        datatype 'exp PRange = 
-           ArrayName of string
-         | Bounds of 'exp * 'exp
 
         datatype 'exp PTermExp = Expr of 'exp | noSep
 
@@ -42,6 +18,34 @@ structure ParseTreeExt =
          | Last  of 'exp PPostCond list 
          | Ended of 'exp PPostCond list 
          | Skip  of 'exp PPostCond list 
+
+        datatype ('ct, 'dt, 'decr, 'exp) PSField = 
+           Full of {    pty : Pty, 
+		       args : 'exp list, 
+		       name : string, 
+		  isVirtual : bool,
+		   isEndian : bool,
+                   isRecord : bool,
+             containsRecord : bool,
+             largeHeuristic : bool,
+		       pred : 'exp option, 
+		    comment : string option,
+		       size : ('exp PSize) option,
+		  arraypred : ('exp PConstraint) list}
+	 | Manifest of {tyname : 'ct,
+			name   : string,
+			 args  : 'exp list,
+	             isVirtual : bool,
+			 expr  : 'exp,
+			 pred  : 'exp option,
+                      comment  : string option}
+         | Brief of 'exp * string option
+
+
+        datatype 'exp PRange = 
+           ArrayName of string
+         | Bounds of 'exp * 'exp
+
 
         datatype 'exp PArrayPostCond = 
            Forall of {index : string, range : 'exp PRange, body : 'exp}

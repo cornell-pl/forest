@@ -217,6 +217,30 @@ with val emptySeq = SEQ nil
      fun seqToList(SEQ yl) = List.rev yl
 end
 
+datatype FieldDesc = 
+         PTArray of string * (expression PX.PSize) option * (expression PX.PConstraint) list
+       | PTStruct of string * (expression option)
+
+fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, isEndian, comment) = 
+    let val (fName, pred, arraypred, sizeOpt) = 
+	case compoundField 
+        of   PTStruct(fName, pred)              => (fName, pred, [], NONE)
+	|    PTArray(fName, sizeOpt, arrayPred) => (fName, NONE, arrayPred, sizeOpt)
+    in
+    (PX.Full {pty = PX.Name tyName, name = fName, 
+	      args = tyParams,
+	      isVirtual = isVirtual,
+	      isEndian  = isEndian,
+	      isRecord = false, 
+	      containsRecord = false, 
+	      largeHeuristic = false,
+	      pred = pred,
+	      comment = comment,
+	      arraypred = arraypred,
+	      size = sizeOpt
+	      })	
+    end
+
 %%
 
 %header (functor LrValsFun(structure Token : TOKEN 
@@ -346,6 +370,7 @@ end
         | pAlternates of (declarator, ctype, decltype, expression) PX.PExternal
         | pStructFieldList of ((ctype, decltype, declarator, expression) PX.PSField) list
         | pStructField of (ctype, decltype, declarator, expression) PX.PSField
+	| pCompoundField of FieldDesc
         | pPC of (expression PX.PPostCond)
         | pPCList of (expression PX.PPostCond) list
         | pConstraints of (expression PX.PPostCond) list
@@ -1183,61 +1208,29 @@ pManifestField:
 		      expr    = expr,
 		      pred    = pConstraintOpt, 
 		      comment = pCommentOpt})
-			              (* fill in when add constraints *)                           
+			              (* fill in when add constraints
+  *)                           
 
-pStructField:                   pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
-                                      (PX.Full {pty = PX.Name pName, name = ID, 
-				                args = pOptActParams,
-						isVirtual = false,
-				                isEndian  = false,
-						isRecord = false, 
-						containsRecord = false, 
-						largeHeuristic = false,
-						pred = pConstraintOpt,
-                                                comment = pCommentOpt})	
-pStructField: POMIT          pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
-                                      (PX.Full {pty = PX.Name pName, name = ID, 
-				                args = pOptActParams,
-						isVirtual = true,
-				                isEndian  = false,
-						isRecord = false, 
-						containsRecord = false, 
-						largeHeuristic = false,
-						pred = pConstraintOpt,
-                                                comment = pCommentOpt})	
-pStructField: PENDIAN           pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
-                                      (PX.Full {pty = PX.Name pName, name = ID, 
-				                args = pOptActParams,
-						isVirtual = false,
-				                isEndian  = true,
-						isRecord = false, 
-						containsRecord = false, 
-						largeHeuristic = false,
-						pred = pConstraintOpt,
-                                                comment = pCommentOpt})	
-pStructField: PENDIAN  POMIT pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
-                                      (PX.Full {pty = PX.Name pName, name = ID, 
-				                args = pOptActParams,
-						isVirtual = true,
-						isRecord = false, 
-						containsRecord = false, 
-						largeHeuristic = false,
-				                isEndian  = true,
-						pred = pConstraintOpt,
-                                                comment = pCommentOpt})	
-pStructField: POMIT  PENDIAN pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
-                                      (PX.Full {pty = PX.Name pName, name = ID, 
-				                args = pOptActParams,
-						isVirtual = true,
-						isRecord = false, 
-						containsRecord = false, 
-						largeHeuristic = false,
-				                isEndian  = true,
-						pred = pConstraintOpt,
-                                                comment = pCommentOpt})	
+pCompoundField: 
+  ID pConstraintOpt (PTStruct (ID, pConstraintOpt))
+| LBRACE pSizeOpt RBRACE ID pArrayConstraintOpt  (PTArray(ID, pSizeOpt, pArrayConstraintOpt))
+
+
+pStructField:                   pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, false, false, pCommentOpt))
+pStructField: POMIT             pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true, false, pCommentOpt))
+pStructField: PENDIAN           pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, false, true, pCommentOpt))
+pStructField: PENDIAN  POMIT    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true, true, pCommentOpt))
+pStructField: POMIT  PENDIAN    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true, true, pCommentOpt))
   | PCOMPUTE pManifestField           (pManifestField)
   | pREexpr SEMICOLON                 (PX.Brief (pREexpr, NONE))
-  | pName PFROM LPAREN pREexpr RPAREN SEMICOLON (PX.Brief (pREexpr, SOME pName))
+  | pName PFROM LPAREN pREexpr RPAREN SEMICOLON (PX.Brief (pREexpr,
+                                      SOME pName))
+  
 
 pStructFieldList: 
     pStructField                     ([pStructField])
