@@ -16,9 +16,9 @@ is
   smlnj-lib.cm
   pp-lib.cm
 #if defined(NEW_CM)
-  /home/kfisher/knb/padsc/ckit/src/ckit-lib.cm(bind:(anchor:smlnj-lib.cm value:$smlnj-lib.cm))
+  ckit/src/ckit-lib.cm(bind:(anchor:smlnj-lib.cm value:$smlnj-lib.cm))
 #else
-  /home/kfisher/knb/padsc/ckit/src/ckit-lib.cm
+  ckit/src/ckit-lib.cm
 #endif
   ckit/src/sources.cm
   util/sources.cm
