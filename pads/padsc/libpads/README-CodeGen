@@ -1,3 +1,5 @@
+## Note: the srcgen program has been replaced by the mksrc program.
+
 A srcgen 'input file' contains:
 
   1. "normal stuff" which is passed through to the default generated
