@@ -766,16 +766,28 @@ structure CnvExt : CNVEXT = struct
                                                 | SOME (b:PTys.pTyInfo) => (#largeHeuristic b)
                                                     (* end nested case *)) 
                                     |  SOME(b:PBTys.baseInfoTy) => false)(* ???? *)
+
+	      fun lookupCompoundDiskSize (ty:pty) =
+		  case ty
+		  of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
+                                    of SOME(b:PBTys.baseInfoTy) => TyProps.Base(#diskSize b)
+		                    |  NONE => (case PTys.find(Atom.atom s)
+                                                of NONE => raise Fail ("Type "^s^" not defined.")
+                                                |  SOME (b:PTys.pTyInfo) => (#compoundDiskSize b)
+                                                    (* end nested case *))) 
  
               fun tyName (ty:pty) = case ty of PX.Name s => s
 
-              fun computeDiskSize (cName, cFormals, pty, args) = 
-		  let val sizeSpec = lookupDiskSize pty
-		      fun g (formals, exp, recExp) = 
-			  let val () = if not (List.length formals = List.length args) then
-				  PE.error ("Number of arguments does not match specified number of args in type: "^cName^".\n")
-				       else ()
-			      val subList = ListPair.zip(formals, args)
+	      fun reduceArgList(args, (params, bodies):TyProps.argList)=
+		  let val subList = ListPair.zip(params,args)
+		      val results = List.map (PTSub.substExps subList) bodies
+		  in
+		      results
+		  end
+
+              fun reduceSizeSpec (cFormals, args, sizeSpec) = 
+		  let fun g (formals, exp, recExp) = 
+			  let val subList = ListPair.zip(formals, args)
 			      val rExp = PTSub.substExps subList exp
 			      val rrecExp = PTSub.substExps subList recExp
 			  in
@@ -789,21 +801,31 @@ structure CnvExt : CNVEXT = struct
 				  in
 				      case (cval, crecval)
 			              of (NONE,NONE) => TyProps.Param(cFormals, NONE, rExp,rrecExp)
-			              | (NONE, SOME e) => TyProps.Param(cFormals, NONE, rExp, P.intX (IntInf.toInt e))
-				      | (SOME e, NONE) => TyProps.Param(cFormals, NONE, P.intX (IntInf.toInt e), rrecExp)
+			              | (NONE, SOME e) => TyProps.Param(cFormals, NONE, rExp, PT.IntConst e)
+				      | (SOME e, NONE) => TyProps.Param(cFormals, NONE, PT.IntConst e, rrecExp)
 				      | (SOME e1, SOME e2) => 
-(*					  (print ("Converted parameterized field "^cName^" to "^(IntInf.toString e1)^" bytes "); 
-					   print ("and "^(IntInf.toString e2)^" newlines.\n");  *)
-					   TyProps.Size(IntInf.toInt e1, IntInf.toInt e2)
-(*)*)
+					   TyProps.Size(e1, e2)
 				  end
 			      else TyProps.Variable  (* must have a dependency on an earlier portion of data *)
-(*				  before print "data dependency deteced.\n" *)
 			  end
 		  in
 		      case sizeSpec 
 		      of TyProps.Param(formals,_,exp,recExp) => g (formals,exp, recExp)
                       |  x => x
+		  end
+
+	      fun reduceCDSize(args, sizeSpec) = reduceSizeSpec([],args,sizeSpec)
+
+	      fun computeDiskSize(cName, cFormals, pty, args) =
+		  let val sizeSpec = lookupDiskSize pty
+		      val () = case sizeSpec of TyProps.Param(formals, _,_,_) =>
+			          if not (List.length formals = List.length args) then
+				     PE.error ("Number of arguments does not match "^
+					       "specified number of args in type: "^cName^".\n")
+				  else ()
+			       | _ => ()
+		  in
+		      reduceSizeSpec(cFormals, args, sizeSpec)
 		  end
 
               fun mungeParam(pcty:pcty, decr:pcdecr) : string * pcty = 
@@ -1402,12 +1424,12 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				    ^"contains a pointer.")
 			       else ()
 		  in
-		      [{diskSize = TyProps.Size (0,0), 
+		      [{diskSize = TyProps.mkSize (0,0), 
 			memChar = if isStatic 
 				      then TyProps.Static 
 				  else TyProps.Dynamic,
 			endian = false, isRecord = false, 
-                        containsRecord = false, largeHeuristic = false}]
+                        containsRecord = false, largeHeuristic = false, labels = [SOME (name, "Pcompute",([],[]))]}]
 		  end
 
 	      (* Given a manifest field description, generate canonical representation *)
@@ -1928,11 +1950,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 		      (* Struct: Calculate and insert type properties into type table *)
 		      fun genTyPropsFull {pty: PX.Pty, args: pcexp list, name: string, 
-					  isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				          pred: pcexp option, comment:string option} = 
-			  let val mc = lookupMemChar pty
+					  isVirtual: bool, isEndian: bool, isRecord, containsRecord, 
+					  largeHeuristic: bool, pred: pcexp option, comment:string option} = 
+			  let val PX.Name ftyName = pty
+			      val mc = lookupMemChar pty
 			      val ds = computeDiskSize (name, paramNames, pty, args)
-(*			      val () = TyProps.printSize ds *)
                               val supportsEndian = lookupEndian pty
 			      val isE1 = if isEndian andalso not supportsEndian
 				         then (PE.error ("Endian annotation not supported on fields of type "
@@ -1944,17 +1966,28 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      val contR = lookupContainsRecord pty 
 			      val lH = lookupHeuristic pty
 			  in [{diskSize = ds, memChar = mc, endian = isEndian andalso isE1 andalso isE2, 
-                               isRecord = isRecord, containsRecord = contR, largeHeuristic = lH}] 
+                               isRecord = isRecord, containsRecord = contR, 
+			       largeHeuristic = lH, labels = [SOME (name, ftyName, (paramNames,args))]}] 
                           end
-(* KSF: fix calculation of brief disk size: depends on type of literal *)
-		      fun genTyPropsBrief e = [{diskSize = TyProps.Size (1,0), memChar = TyProps.Static, 
-						endian = false, isRecord = false, 
-						containsRecord = false, largeHeuristic = false}]
+		      fun genTyPropsBrief e = 
+			  (* assume field is correct; error checking done in genReadBrief below *)
+                          (* conservative analysis: variable expresions with type char could also lead to size of 1,0*)
+			  let fun getStaticSize eX =
+			          case eX of PT.MARKexpression(l,e) => getStaticSize e
+				  | PT.String s => TyProps.mkSize(String.size s, 0)
+				  | PT.IntConst i => TyProps.mkSize(1,0)
+				  | _ => TyProps.Variable
+			      val diskSize = getStaticSize e
+			  in
+			      [{diskSize = diskSize, memChar = TyProps.Static, 
+				endian = false, isRecord = false, 
+				containsRecord = false, largeHeuristic = false, labels = [NONE]}]
+		          end
 		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan fields
-                      val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic} = 
+                      val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic,labels} = 
  			               List.foldl (PTys.mergeTyInfo TyProps.add) PTys.minTyInfo tyProps
-		      val compoundDiskSize = TyProps.Struct (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps)
-(*		      val () = TyProps.printSize diskSize *)
+		      val compoundDiskSize = TyProps.Struct ((ListPair.zip(List.rev labels, 
+									  (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
 		      val numArgs = List.length params
 		      val structProps = buildTyProps(name, PTys.Struct, diskSize, compoundDiskSize, memChar, endian, 
                                                      isRecord, containsRecord, largeHeuristic, isFile, pdTid, numArgs)
@@ -2560,6 +2593,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			     variants: (pdty, pcdecr, pcexp) PX.PBranches}) = 
 		 let (* Some useful names *)
 		     val unionName = name
+		     val cParams : (string * pcty) list = List.map mungeParam params
+		     val paramNames = #1(ListPair.unzip cParams)
                      val value = PNames.unionVal
 		     val tag = PNames.unionTag
 		     fun tgSuf s = s^"_tag"
@@ -2705,7 +2740,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					 isVirtual: bool, isEndian: bool, 
 					 isRecord, containsRecord, largeHeuristic: bool,
 					 pred: pcexp option, comment: string option} = 
-			  let val mc = lookupMemChar pty
+			  let val PX.Name ftyName = pty
+			      val mc = lookupMemChar pty
 			      val ds = lookupDiskSize pty
 			      val contR = lookupContainsRecord pty	 
 			      val lH = lookupHeuristic pty 
@@ -2713,7 +2749,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				       then PE.error ("Omitted fields not supported in punions ("^name ^"). ")
 				       else ()
 			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isRecord, 
-			       containsRecord=contR, largeHeuristic=lH}] 
+			       containsRecord=contR, largeHeuristic=lH, labels = [SOME (name,ftyName,(paramNames,args))]}] 
 			  end
 		     fun genTyPropsBrief e = [] (* not used in unions *)
 		     val tyProps = mungeVariants genTyPropsFull genTyPropsBrief genTyPropsMan variants
@@ -2721,12 +2757,12 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val () = case tyProps of [] => ()
 			      | ({isRecord=first,...}::xs) => 
 			           (if List.exists (fn {isRecord,diskSize,memChar,endian,
-							containsRecord,largeHeuristic} => not (isRecord = first)) xs 
+							containsRecord,largeHeuristic,labels} => not (isRecord = first)) xs 
 				    then PE.error "All branches of union must terminate record if any branch does."
 				    else ())
 					
 		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
-		     val {diskSize,memChar,endian,isRecord=_,containsRecord,largeHeuristic} = 
+		     val {diskSize,memChar,endian,isRecord=_,containsRecord,largeHeuristic, labels} = 
 			 List.foldr (PTys.mergeTyInfo (TyProps.mergeDiskSize mUnion)) PTys.minTyInfo tyProps
 		     val numArgs = List.length params
 		     val unionProps = buildTyProps(name, PTys.Union, diskSize, TyProps.Union [], memChar, 
@@ -3462,7 +3498,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  val baseDiskSize = lookupDiskSize baseTy
                  val arrayDiskSize = case (maxConstOpt, minConstOpt, baseDiskSize)
 		                     of (SOME min, SOME max, TyProps.Size (n,r)) => 
-					 if min = max then TyProps.Size(n * (IntInf.toInt max), r * (IntInf.toInt max))
+					 if min = max then TyProps.Size(IntInf.*(n, max), IntInf.*(r, max))
 					 else TyProps.Variable
 				     | _ => TyProps.Variable
 		 val contR = lookupContainsRecord baseTy 
@@ -4247,10 +4283,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		              let val len = String.size (hd labels)
 			      in
 				  if List.all (fn s => len = String.size s) labels
-				      then TyProps.Size (len, 0)
+				      then TyProps.mkSize (len, 0)
 				  else TyProps.Variable
 			      end
-			   else TyProps.Size (0,0)
+			   else TyProps.mkSize (0,0)
 		  val numArgs = List.length params
                   val enumProps = buildTyProps(name,PTys.Enum, ds, TyProps.Enum ds,
 					       TyProps.Static,true,isRecord,containsRecord,
@@ -4431,14 +4467,70 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                 @ (emitXML galaxEDs)
 	      end
 
-	  fun cnvPSelect {tyName, varName, path} = (
-               print "Converting Select: TyName = ";
-               print tyName;
-               print (". VarName = "^ varName ^".\n Path = ");
-               print (P.expToString path);
-               print "\n"; 
-               Select.insert(Select.Select{tyName = tyName, offset = 0, size = 4});
-	       [])
+	  fun cnvPSelect {tyName, varName, path} = 
+	      let val (Select.Id root):: path = Select.sexprToPath(P.stripExp path)
+		  val () = if root = varName then ()
+			       else raise Fail ("Select name ("^varName^")and root of path expression ("^root^") don't match.")
+		  val errS = "Request "^varName^" ill-typed."
+		  fun getPos(tyName,path,accumSize,args) = 
+		      let val cds = lookupCompoundDiskSize (PX.Name tyName)
+			            handle Fail s => raise Fail (s^" Required for " ^varName^" request.")
+fun printArgs [exp] = print ((P.expToString exp)^".\n")
+  | printArgs (e::es) = (print ((P.expToString e)^", "); printArgs es)
+  | printArgs [] = print "No arguments.\n"
+val () = printArgs args
+		      in
+			  case cds
+			  of TyProps.Base ds => 
+(			      print "Base type:";
+ print "orig size:";
+			      TyProps.printSize (ds);
+ print "reduced by args size:";
+			      TyProps.printSize (reduceCDSize(args,ds));
+			      print "Result: ";
+			      TyProps.printSize (TyProps.add(accumSize, reduceCDSize(args,ds)));
+(tyName, accumSize, reduceCDSize(args, ds)))
+                          |  TyProps.Struct dsl => 
+			      let val (f,path) = case path of ((Select.Dot f)::path) => (f,path) | _ => raise Fail errS
+				  val () = print "In struct case\n"
+				  fun findField ([], accum) = raise Fail errS
+				    | findField((sOpt, diskSize)::ss, accum) = 
+				      let val closedDS = reduceCDSize(args,diskSize)
+				      in
+				         case sOpt of NONE => findField(ss, TyProps.add(closedDS,accum)) (* literal*)
+                                         | SOME (l,tyName,sargs:TyProps.argList) => 
+					     if not (l = f) then 
+						 (print ("did field "^l^".\nSize:"); 
+						  TyProps.printSize 
+						  (TyProps.add(closedDS,accum));
+						 findField(ss, TyProps.add(closedDS,accum)))
+					     else if (tyName = "Pcompute") then
+						 raise Fail ("Ill-formed request: Computed field "^l^
+							     " has no external representation.")
+					     else (print ("found field "^l^".\nSize:"); 
+							 TyProps.printSize  accum;
+						  getPos(tyName,path,accum,reduceArgList(args,sargs)))
+				      end
+			      in
+				  findField(dsl,accumSize)
+			      end (* struct case *)
+                          |  _ => raise Fail "Not yet implemented"
+		      end
+		  val (itemType, offset, size) = getPos(tyName, path, TyProps.mkSize(0,0),[](* top level must be closed *))
+	      in
+		((case offset
+		  of TyProps.Variable => PE.error ("Location of "^varName^" request depends on data.\n") 
+                  |  TyProps.Param(_) => PE.error ("Location of "^varName^" request depends on parameters.\n") 
+                  |  TyProps.Size(location,nr) => 
+		      (case size 
+		       of TyProps.Variable => PE.error ("Size of "^varName^" request depends on data.\n") 
+		       |  TyProps.Param(_) => PE.error ("Size of "^varName^" request depends on parameters.\n") 
+                       |  TyProps.Size(n,nr) => 
+			   Select.insert(Select.Select{tyName = itemType, offset = location, size = n})
+		      (* end case size *))
+	        (* end case offset*));
+		[] (* return no AST decls *))
+	      end handle Fail s => (PE.error s; [])
 
 	  in
 	      case decl 

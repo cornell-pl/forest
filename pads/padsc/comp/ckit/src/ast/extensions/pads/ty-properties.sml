@@ -3,15 +3,22 @@ structure TyProps =
 struct
    structure P = ParseTreeUtil
 
-   datatype diskSize =  Size of int * int  (* number of bytes, number of EOR markers *)
+   datatype diskSize =  Size of IntInf.int * IntInf.int  (* number of bytes, number of EOR markers *)
                       | Param of string list * string option * ParseTree.expression * ParseTree.expression
                       | Variable
 
-   datatype compoundSize =  Base of diskSize | Typedef of diskSize | Struct of diskSize list | Union of diskSize list 
+   type argList = string list * ParseTree.expression list
+   type labelInfo = string * string * argList 
+
+   datatype compoundSize =  Base of diskSize | Typedef of diskSize 
+                          | Struct of (labelInfo option * diskSize) list 
+                          | Union of diskSize list 
                           | Array of {elem : diskSize, sep : diskSize, term : diskSize, length : diskSize}
                           | Enum of diskSize
 
    datatype memChar = Static | Dynamic
+
+   fun mkSize (n1,n2) = Size(IntInf.fromInt n1, IntInf.fromInt n2)
 
    fun printStrList [] = ""
      | printStrList (x::xs) = (x^", "^( printStrList xs))
@@ -21,15 +28,15 @@ struct
           print ("Parameterized:\n Vars: "^(printStrList params)^
 		 "\nNumber of bytes expression: "^(P.expToString exp1)^
 		 "\nNumber of records expresion: "^(P.expToString exp2)^".\n")
-     | printSize (Size(n1,n2)) = print ("Fixed size: bytes = "^(Int.toString n1)^" records = "^(Int.toString n2)^".\n")
+     | printSize (Size(n1,n2)) = print ("Fixed size: bytes = "^(IntInf.toString n1)^" records = "^(IntInf.toString n2)^".\n")
 
    fun add (Variable, _ ) = Variable 
      | add (_, Variable ) = Variable 
-     | add (Size(x1,y1), Size(x2,y2)) = Size(x1 + x2, y1 + y2)
-     | add (Size(x1,y1), Param(ps, s, ebytes, erecs)) = Param(ps, s, P.plusX(P.intX x1, ebytes),
-							             P.plusX(P.intX y1, erecs))
-     | add (Param(ps, s, ebytes, erecs), Size(x2,y2)) = Param(ps, s, P.plusX(ebytes, P.intX x2),
-							             P.plusX(erecs, P.intX y2))
+     | add (Size(x1,y1), Size(x2,y2)) = Size(IntInf.+(x1, x2), IntInf.+(y1, y2))
+     | add (Size(x1,y1), Param(ps, s, ebytes, erecs)) = Param(ps, s, P.plusX(ParseTree.IntConst x1, ebytes),
+							             P.plusX(ParseTree.IntConst y1, erecs))
+     | add (Param(ps, s, ebytes, erecs), Size(x2,y2)) = Param(ps, s, P.plusX(ebytes, ParseTree.IntConst x2),
+							             P.plusX(erecs, ParseTree.IntConst y2))
      | add (Param(ps1,s1,ebytes1, erecs1), Param(ps2,s2,ebytes2,erecs2)) = 
              Param(ps1, NONE, P.plusX(ebytes1, ebytes2), P.plusX(erecs1, erecs2))
 

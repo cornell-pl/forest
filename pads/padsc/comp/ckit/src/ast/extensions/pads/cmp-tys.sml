@@ -8,7 +8,8 @@ struct
 		  endian   : bool,
                   isRecord : bool,
 		  containsRecord : bool,
-		  largeHeuristic : bool} 
+		  largeHeuristic : bool,
+		  labels   : TyProps.labelInfo option list} 
 
   type pTyInfo = {kind     : PKind,
 		  diskSize : TyProps.diskSize,
@@ -40,14 +41,17 @@ struct
        endian   = #endian r1 andalso #endian r2,
        isRecord = #isRecord r1 orelse #isRecord r2,
        containsRecord = #containsRecord r1 orelse #containsRecord r2,
-       largeHeuristic = #largeHeuristic r1 orelse #largeHeuristic r2}
+       largeHeuristic = #largeHeuristic r1 orelse #largeHeuristic r2,
+       labels = (#labels r1) @ (#labels r2)}
 
-  val minTyInfo = {diskSize = TyProps.Size (0,0), 
+  val minTyInfo : sTyInfo = 
+                  {diskSize = TyProps.Size (IntInf.fromInt 0,IntInf.fromInt 0), 
                     memChar = TyProps.Static, 
                      endian = true, 
                    isRecord = false, 
              containsRecord = false,
-             largeHeuristic = false}
+             largeHeuristic = false, 
+		     labels = []}
 
   type pTyMap = pTyInfo PBaseTys.PBST.map
 

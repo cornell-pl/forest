@@ -1,11 +1,26 @@
 structure Select =
-
 struct
-   structure AtomMap = PBaseTys.PBST
-   datatype selectInfo = Select of {tyName : string, offset : int, size : int}
+   structure PT = ParseTree
 
-   fun selectToString (Select {tyName : string, offset : int, size : int}) =
-       tyName^"("^(Int.toString offset)^","^(Int.toString size)^")"
+   datatype selectInfo = Select of {tyName : string, offset : IntInf.int, size : IntInf.int}
+
+   datatype pathNode = Id of string | Dot of string | Sub of IntInf.int 
+   type path = pathNode list
+
+   fun sexprToPath (p) : path = 
+       let fun cnvExp (exp, accumP) = 
+	       case exp
+	       of PT.Id s => (Id s):: accumP
+	       |  PT.Binop (PT.Dot, e1, PT.Id f) => cnvExp(e1, (Dot f) :: accumP)
+	       |  PT.Binop (PT.Sub, e1, PT.IntConst i)  => cnvExp(e1, (Sub  i) :: accumP)
+	       |  p => raise Fail "Ill-formed path expression."
+       in
+	   cnvExp(p, [])
+       end
+
+
+   fun selectToString (Select {tyName, offset, size}) =
+       tyName^"("^(IntInf.toString offset)^","^(IntInf.toString size)^")"
 
    fun selectListToString sl = 
        let fun h sl = 
@@ -18,40 +33,26 @@ struct
        end
 
    fun cmp (Select {tyName=tyName1, offset=offset1, size=size1}, Select {tyName=tyName2, offset=offset2, size=size2})  = 
-       if offset1 < offset2 then LESS
-       else if offset1 > offset2 then GREATER
-       else if size1 < size2 then LESS
-       else if size1 > size2 then GREATER
+       if IntInf.< (offset1, offset2) then LESS
+       else if IntInf.>(offset1, offset2) then GREATER
+       else if IntInf.<(size1, size2) then LESS
+       else if IntInf.>(size1, size2) then GREATER
        else EQUAL
 
-   fun itemLeq ((offset1, size1), (offset2, size2))  = 
-       if offset1 < offset2 then true
-       else if offset1 > offset2 then false
-       else if size1 < size2 then true
-       else if size1 > size2 then false
-       else true
+   structure SelectMap = RedBlackMapFn(
+			     struct type ord_key = selectInfo
+			     val compare = cmp
+		         end) 
 
-   type selectMapTy = (int * int) list AtomMap.map
-   val selectMap : selectMapTy ref = ref AtomMap.empty
 
-   fun insert (Select s : selectInfo) = 
-       let val key = Atom.atom (#tyName s)
-	   val newitem = (#offset s, #size s)
-	   val prevEntryOpt = AtomMap.find(!selectMap, key)
-	   fun ins [] = [newitem] 
-             | ins (l as (e::es)) = 
-                 if itemLeq(newitem, e) then newitem :: l
-                 else (e :: (ins es))
-	   val newentry = case prevEntryOpt of NONE => [newitem] | SOME l => ins l
-       in
-	   selectMap := AtomMap.insert(!selectMap, key, newentry) 
-       end
-  
-   fun listSelections () = []
+   type selectMapTy = unit SelectMap.map
+   val selectMap : selectMapTy ref = ref SelectMap.empty
 
-(* Atom.listKeys (!selectMap) *)
+   fun insert (s : selectInfo) = 
+       selectMap := SelectMap.insert(!selectMap, s, ())
+   fun listSelections () = SelectMap.listKeys (!selectMap)
 
-   fun isSelection () = not (AtomMap.isEmpty (!selectMap))
+   fun isSelection () = not (SelectMap.isEmpty (!selectMap))
 
 
 end

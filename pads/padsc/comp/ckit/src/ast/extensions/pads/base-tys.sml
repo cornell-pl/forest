@@ -34,7 +34,7 @@ structure PBaseTys = struct
     (print (String.concat["scanname = ", case scanname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
     (print (String.concat["accname = ", case accname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
     (print (String.concat["diskSize = ", 
-			  case diskSize of TyProps.Size (n,r) => Int.toString n 
+			  case diskSize of TyProps.Size (n,r) => IntInf.toString n 
                                          | TyProps.Param (params, SOME s, exp, _) =>  ("P"^s)
                                          | TyProps.Param (params, NONE, exp,_) =>  ("P")
                                          | TyProps.Variable => "V", "\n"]));
@@ -102,7 +102,7 @@ structure PBaseTys = struct
 				       else if str = "V" then TyProps.Variable
 				       else case Int.fromString str
 					    of NONE => TyProps.Variable
-					    | SOME n => TyProps.Size (n,0)
+					    | SOME n => TyProps.mkSize (n,0)
 				    end,
 			 memChar  = if "S" =  List.nth(fields,9) then TyProps.Static else TyProps.Dynamic,
 		         endian   = if "Y" =  List.nth(fields,10) then true else false}]

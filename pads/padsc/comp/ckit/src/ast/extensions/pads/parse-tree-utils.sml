@@ -172,6 +172,17 @@ struct
                krParams = [],
                retType = pctToPDT retTy}
 
+    fun stripExp p =
+        case p
+        of PT.MARKexpression (loc,e) => stripExp e
+        |  PT.Unop (rator,exp) => PT.Unop (rator, stripExp exp)
+        |  PT.Binop (rator, e1,e2)  => PT.Binop (rator, stripExp e1, stripExp e2)
+        |  PT.QuestionColon (e1,e2,e3) => PT.QuestionColon (stripExp e1,stripExp e2, stripExp e3)
+        |  PT.Call (e,es) => PT.Call (stripExp e, List.map stripExp es)
+        |  PT.Cast(ct,e) => PT.Cast(ct, stripExp e)
+        |  PT.InitList es => PT.InitList (List.map stripExp es)
+        |  p => p
+
     fun expToString p =
         case p
         of PT.EmptyExpr => ""
@@ -209,6 +220,8 @@ struct
         |  PT.Gte => (expToString exp1)^ " >= " ^(expToString exp2)
         |  PT.Lte => (expToString exp1)^ " <= " ^(expToString exp2)
         |  PT.Eq => (expToString exp1)^ " == " ^(expToString exp2)
+        |  PT.Dot => (expToString exp1)^ "." ^(expToString exp2)
+        |  PT.Sub => (expToString exp1)^ "[" ^(expToString exp2)^ "]" 
         |  _ => (expToString exp1) ^ "binop"  ^ (expToString exp2)
 
     and printExpList s [] = ""
