@@ -129,7 +129,7 @@ struct
 
   val str          = "str"
   val len          = "len"
-  val errorf       = "errorf"
+  val errorf       = "error_fn"
   val disc         = "disc"
   val io_disc      = "io_disc"
   val outbuf       = "outbuf"
@@ -519,7 +519,8 @@ struct
   fun strCmp(s1:PT.expression, s2: PT.expression )= PT.Call(PT.Id "strcmp", [s1,s2])
 
 (* -- Other helper functions *)
-  fun swapBytesS(exp) = PT.Expr(PT.Call(PT.Id "P_swap_bytes",
-					[PT.Cast(P.ptrPCT bytePCT, P.addrX exp), PT.Cast(P.uint,P.sizeofEX exp)]))
+  fun swapBytesX(exp) = PT.Call(PT.Id "P_swap_bytes",
+				[PT.Cast(P.ptrPCT bytePCT, P.addrX exp), PT.Cast(P.uint,P.sizeofEX exp)])
+  fun swapBytesS(exp) = PT.Expr(swapBytesX(exp))
   fun end2StringX(endian) = PT.Call(PT.Id "Pendian2str", [endian])
 end
