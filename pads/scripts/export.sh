@@ -88,7 +88,8 @@ mkdir pads/scripts
 cp scripts/gigascope_make.pl pads/scripts
 cp -r scripts/templates pads/scripts/
 rm -rf pads/scripts/templates/CVS
+cp GIGASCOPE_README pads/
 
-tar cfz pads_gscp.tar.gz pads/scripts
+tar cfz pads_gscp.tar.gz pads/scripts pads/GIGASCOPE_README
 
 mv pads pads_remove_me

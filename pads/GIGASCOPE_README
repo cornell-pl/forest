@@ -51,6 +51,12 @@ PADS library
 demo dir
 --------
 
+A clean demo dir is on gs1,
+/home/gruber/gscpv1/demos/padstest_clean
+
+The one I built in most recently is
+/home/gruber/gscpv1/demos/padstest3.
+
 1. pads.mk
 
    This makefile builds libgscppads.a from flowdata_v5.p
