@@ -529,6 +529,8 @@ endef
 .SUFFIXES:
 .SUFFIXES: .c .o
 
+ifndef TRULES_MK
+
 ifdef GEN_DIR
 ifdef GEN_WRITE
 
@@ -680,3 +682,4 @@ endif
 
 endif # BuildPadsLib / non _d rules
 
+endif # !TRULES_MK
