@@ -1,0 +1,22 @@
+// Transform file, generated from PSPEC_FILE by gigascope_make.pl
+// Generates schema file FUNS_H_FILE
+
+Output("FUNS_H_FILE");
+
+Transform Ty : TyName -> String;
+
+Ty(Pstring)     = "String";
+Ty(Pb_uint8)    = "ushort";
+Ty(Pb_uint16)   = "ushort";
+Ty(Pb_uint32)   = "uint  ";
+Ty(ipaddrtype)  = "IP    ";
+
+Transform Schema : TyDecl -> IO;
+
+Schema(Pstruct REC_TYPE)
+Begin
+ Pre:        -> "\n\
+struct packet;\n\
+"
+ Each:  ty f -> "int get_pads_^f (struct packet *p, ^Ty(^ty) r);"
+End;

@@ -102,11 +102,14 @@ if ($hdrtype && $ptext !~ /Pstruct\s+$hdrtype/) {
 my $prefix = $pspec;
 $prefix =~ s|^(.*)/||g;
 $prefix =~ s/.p$//;
-my $trfile = "$demodir$prefix" . ".transform";
-my $scfile = "$demodir$prefix" . ".schema";
-my $mkfile = "$demodir$prefix" . ".make";
+my $schema_trans_file = "$demodir$prefix" . "_schema.transform";
+my $funs_h_trans_file = "$demodir$prefix" . "_funs_h.transform";
+my $schema_file = "$demodir$prefix" . ".schema";
+my $funs_h_file = "$demodir$prefix" . "_funs.h";
+my $funs_c_file = "$demodir$prefix" . "_funs.c";
+my $make_file = "$demodir$prefix" . ".mk";
 
-my $tfile = "$pads_home/scripts/templates/tr_$template";
+my $tfile = "$pads_home/scripts/templates/tr_schema_$template";
 my $ttext = &readFile($tfile);
 if ($ttext eq "") {
   print "  Could not find template file $tfile\n\n";
@@ -114,20 +117,50 @@ if ($ttext eq "") {
 }
 
 $ttext =~ s/PSPEC_FILE/$pspec/g;
-$ttext =~ s/SCHEMA_FILE/$scfile/g;
+$ttext =~ s/SCHEMA_FILE/$schema_file/g;
+$ttext =~ s/FUNS_H_FILE/$funs_h_file/g;
+$ttext =~ s/FUNS_C_FILE/$funs_c_file/g;
+$ttext =~ s/MAKE_FILE/$make_file/g;
 $ttext =~ s/REC_TYPE/$rectype/g;
 $ttext =~ s/HDR_TYPE/$hdrtype/g if $hdrtype;
 
-print "\nCreating $trfile\n" if ($dbg);
+print "\nCreating $schema_trans_file\n" if ($dbg);
 
-open (TRF, ">$trfile") or die "\nCould not open temporary file $trfile for writing\n\n";
+open (TRF, ">$schema_trans_file") or die "\nCould not open temporary file $schema_trans_file for writing\n\n";
 print TRF $ttext;
 close (TRF);
-print "\nDone creating $trfile\n" if ($dbg);
+print "\nDone creating $schema_trans_file\n" if ($dbg);
 
-print "\nInvoking padsc on $trfile\n" if ($dbg);
-my $res = `$pads_home/scripts/padsc -T $trfile $pspec`;
-print "\nDone invoking padsc on $trfile\n\nres=[$res]\n\n" if ($dbg);
+print "\nInvoking padsc on $schema_trans_file\n" if ($dbg);
+my $res = `$pads_home/scripts/padsc -T $schema_trans_file $pspec`;
+print "\nDone invoking padsc on $schema_trans_file\n\nres=[$res]\n\n" if ($dbg);
+
+
+$tfile = "$pads_home/scripts/templates/tr_funs_h_$template";
+$ttext = &readFile($tfile);
+if ($ttext eq "") {
+  print "  Could not find template file $tfile\n\n";
+  exit -1;
+}
+
+$ttext =~ s/PSPEC_FILE/$pspec/g;
+$ttext =~ s/SCHEMA_FILE/$schema_file/g;
+$ttext =~ s/FUNS_H_FILE/$funs_h_file/g;
+$ttext =~ s/FUNS_C_FILE/$funs_c_file/g;
+$ttext =~ s/MAKE_FILE/$make_file/g;
+$ttext =~ s/REC_TYPE/$rectype/g;
+$ttext =~ s/HDR_TYPE/$hdrtype/g if $hdrtype;
+
+print "\nCreating $funs_h_trans_file\n" if ($dbg);
+
+open (TRF, ">$funs_h_trans_file") or die "\nCould not open temporary file $funs_h_trans_file for writing\n\n";
+print TRF $ttext;
+close (TRF);
+print "\nDone creating $funs_h_trans_file\n" if ($dbg);
+
+print "\nInvoking padsc on $funs_h_trans_file\n" if ($dbg);
+my $res = `$pads_home/scripts/padsc -T $funs_h_trans_file $pspec`;
+print "\nDone invoking padsc on $funs_h_trans_file\n\nres=[$res]\n\n" if ($dbg);
 
 exit 0;
 
@@ -186,6 +219,9 @@ print "\n  Usage:  gigascope_make.pl [options]
            foo.schema    : schema file
            foo_funs.h    : C declarations of the get functions specified in foo.schema
            foo_funs.c    : C implementations of the get functions specified in foo.schema
+                           plus the top-level driver functions PADS_INIT, PADS_INPUT_FILE,
+                           PADS_INPUT_BUF, PADS_CLEANUP, PADS_NEXT
+           foo.mk        : a GNUmakefile that builds libpads_foo.a
 
     Limitations, Known Problems
     ===========================
