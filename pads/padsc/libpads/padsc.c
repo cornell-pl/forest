@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.28 2002-10-02 16:50:09 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.29 2002-10-02 17:42:47 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -171,7 +171,7 @@ PDC_strtoull(const char* str, char** ptr, int base)
 
 #define PDC_HALFMIN_INT64   -4611686018427387904LL
 #define PDC_HALFMAX_INT64    4611686018427387903LL
-#define PDC_HALFMAX_UINT64   9223372036854775807LL
+#define PDC_HALFMAX_UINT64   9223372036854775807ULL
 /* END_MACRO */
 
 /* Fold Points : when should the running int64 / uint64 sum be folded into the average? */
@@ -183,9 +183,9 @@ PDC_strtoull(const char* str, char** ptr, int base)
 #define PDC_FOLD_MIN_INT32   -9223372034707292160LL  /* PDC_MIN_INT64 - PDC_MIN_INT32 */
 #define PDC_FOLD_MAX_INT32    9223372034707292160LL  /* PDC_MAX_INT64 - PDC_MAX_INT32 */
 
-#define PDC_FOLD_MAX_UINT8   18446744073709551488LL  /* PDC_MAX_UINT64 - PDC_MAX_UINT8  */
-#define PDC_FOLD_MAX_UINT16  18446744073709518848LL  /* PDC_MAX_UINT64 - PDC_MAX_UINT16 */
-#define PDC_FOLD_MAX_UINT32  18446744069414584320LL  /* PDC_MAX_UINT64 - PDC_MAX_UINT32 */
+#define PDC_FOLD_MAX_UINT8   18446744073709551488ULL  /* PDC_MAX_UINT64 - PDC_MAX_UINT8  */
+#define PDC_FOLD_MAX_UINT16  18446744073709518848ULL  /* PDC_MAX_UINT64 - PDC_MAX_UINT16 */
+#define PDC_FOLD_MAX_UINT32  18446744069414584320ULL  /* PDC_MAX_UINT64 - PDC_MAX_UINT32 */
 /* END_MACRO */
 
 /* Macros that test whether folding should occur, given new val v and running sum s */
