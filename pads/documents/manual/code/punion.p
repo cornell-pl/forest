@@ -1,4 +1,4 @@
-/*@FILE @LEFT union.switch.tex */
+/*@FILE @LEFT union.switch.tex union.option.tex*/
 
 /*@BEGIN union.switch.tex */
 Punion branches(Puint32 which) {
@@ -14,3 +14,19 @@ Precord Pstruct choice{
   branches(:which:) branch; 
 }
 /*@END union.switch.tex */
+
+/*@BEGIN union.option.tex */
+Punion intOpt(Puint32 defVal) {
+  Puint32           val;
+  Pcompute Puint32  def = defVal; 
+}
+
+Pstruct data {
+        intOpt(:0:)  field1;
+  '|';  intOpt(:0:)  field2;
+  '|';  intOpt(:-1:) field3;
+/*@INSERT
+     ...
+*/
+}
+/*@END union.option.tex */

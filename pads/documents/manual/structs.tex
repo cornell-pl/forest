@@ -235,11 +235,11 @@ If multiple errors occur during the parsing of a \Pstruct{}, the
 descriptors for nested pieces will describe any errors detected while
 reading those pieces.
 
-\textbf{Warning:} at the moment, read functions do not check that all
+\warning{At the moment, read functions do not check that all
 referenced data in constraint expressions are meaningful before
 checking the constraint.  Referenced data might be meaningless either
 because there was an error parsing earlier data or because the
-supplied mask directed the read function to skip the field.
+supplied mask directed the read function to skip the field.}
 
 \subsubsection{Accumulator functions}
 Accumulator functions for \Pstruct{}s are described in
