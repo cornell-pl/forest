@@ -451,6 +451,7 @@ structure CnvExt : CNVEXT = struct
 	    else PE.error (genErrMsg (CTtoString expTy)) 
 	end
 
+
     fun getExpEqualTy(expPT, CTtys, genErrMsg) = 
 	let val (expTy, expAst) = cnvExpression expPT
 	in
@@ -3207,7 +3208,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                      
 		     fun chkCaseLabel eOpt = 
 			 case eOpt of NONE => ()
-		       | SOME e => expEqualTy(e, CTintTys, 
+		       | SOME e => expAssignTy(e, CTintTys, 
 					      fn s=> (" case label for variant "^
 						      name ^ " has type: " ^ s ^
 						      ". Expected an int."))
@@ -3244,7 +3245,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 end
 
                      fun buildSwitchRead (descriminator) = 
-			     let val () = expEqualTy(descriminator, CTintTys, 
+			     let val () = expAssignTy(descriminator, CTintTys, 
 						     fn s=> (" Descriminator for union "^
 							     name ^ " has type: " ^ s ^
 							     ". Expected an int."))
