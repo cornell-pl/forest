@@ -1,6 +1,71 @@
-#!/bin/tcsh
+#!/bin/echo You should SOURCE rather than execute
 # INT_DO_SETENV.tcsh is a helper script.
 # See DO_SETENV.tcsh and Q_DO_SETENV.tcsh.
+
+# First figure out what env variables are set
+
+set _is_pads_home
+if (! $?PADS_HOME) then
+  unset _is_pads_home
+else
+  if ("$PADS_HOME"x == x) then
+    unset _is_pads_home
+  endif
+endif
+
+set _is_ast_home
+if (! $?AST_HOME) then
+  unset _is_ast_home
+else
+  if ("$AST_HOME"x == x) then
+    unset _is_ast_home
+  endif
+endif
+
+set _is_installroot
+if (! $?INSTALLROOT) then
+  unset _is_installroot
+else
+  if ("$INSTALLROOT"x == x) then
+    unset _is_installroot
+  endif
+endif
+
+set _is_ld_library_path
+if (! $?LD_LIBRARY_PATH) then
+  unset _is_ld_library_path
+else
+  if ("$LD_LIBRARY_PATH"x == x) then
+    unset _is_ld_library_path
+  endif
+endif
+
+set _is_shlib_path
+if (! $?SHLIB_PATH) then
+  unset _is_shlib_path
+else
+  if ("$SHLIB_PATH"x == x) then
+    unset _is_shlib_path
+  endif
+endif
+
+set _is_manpath
+if (! $?MANPATH) then
+  unset _is_manpath
+else
+  if ("$MANPATH"x == x) then
+    unset _is_manpath
+  endif
+endif
+
+set _is_ocaml_lib
+if (! $?OCAML_LIB) then
+  unset _is_ocaml_lib
+else
+  if ("$OCAML_LIB"x == x) then
+    unset _is_ocaml_lib
+  endif
+endif
 
 set _pads_status = OK
 
@@ -16,7 +81,7 @@ if ($_pads_status == OK) then
   if ($_pads_verbose != 0) then
     echo " "
   endif
-  if ("$PADS_HOME"x == x) then
+  if (! $?_is_pads_home) then
     echo "##############################################################################"
     echo "# Set env var PADS_HOME and then use $_pads_do_prog again."
     echo "##############################################################################"
@@ -43,7 +108,7 @@ if ($_pads_status == "OK") then
 
   setenv AST_ARCH `$PADS_HOME/ast-base/bin/package`
 
-  if ("$AST_HOME"x == x) then
+  if (! $?_is_ast_home) then
     setenv AST_HOME $PADS_HOME/ast-base/arch/$AST_ARCH
     if ($_pads_verbose != 0) then
       echo "##############################################################################"
@@ -55,7 +120,7 @@ if ($_pads_status == "OK") then
     endif
   endif
 
-  if ("$INSTALLROOT"x == x) then
+  if (! $?_is_installroot) then
     setenv INSTALLROOT $PADS_HOME/ast-base/arch/$AST_ARCH
     if ($_pads_verbose != 0) then
       echo "##############################################################################"
@@ -101,16 +166,16 @@ if ($_pads_status == "OK") then
   set pads_script_dir = $PADS_HOME/scripts
   set remove_dups     = $pads_script_dir/removedups.pl
 
-  if ("$LD_LIBRARY_PATH"x == x) then
+  if (! $?_is_ld_library_path) then
     setenv LD_LIBRARY_PATH ""
   endif
-  if ("$SHLIB_PATH"x == x) then
+  if (! $?_is_shlib_path) then
     setenv SHLIB_PATH ""
   endif
-  if ("$MANPATH"x == x) then
+  if (! $?_is_manpath) then
     setenv MANPATH ""
   endif
-  if ("$OCAML_LIB"x == x) then
+  if (! $?_is_ocaml_lib) then
     setenv OCAML_LIB /usr/common/lib/ocaml
   endif
 
@@ -159,4 +224,19 @@ if ($_pads_status == "OK") then
     echo " "
   endif
 
+  unset ast_lib_dir
+  unset ast_man_dir
+  unset pads_bin_dir
+  unset pads_lib_dir
+  unset pads_man_dir
+  unset pads_scripts_dir
+  unset remove_dups
 endif
+
+unset _is_pads_home
+unset _is_ast_home
+unset _is_installroot
+unset _is_ld_library_path
+unset _is_shlib_path
+unset _is_manpath
+unset _is_ocaml_lib

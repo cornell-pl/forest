@@ -1,4 +1,5 @@
-#!/bin/tcsh -f
+#!/bin/echo You should SOURCE rather than execute
+#
 # Q_DO_SETENV.tcsh is for use with csh/tcsh
 # It is the 'quite' version of DO_SETENV.tcsh
 # From the same directory as Q_DO_SETENV.tcsh, do:

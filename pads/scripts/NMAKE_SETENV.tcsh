@@ -1,4 +1,5 @@
-#!/bin/tcsh
+#!/bin/echo You should SOURCE rather than execute
+#
 # NMAKE_SETENV.tcsh is for use with csh/tcsh
 # From the same directory as NMAKE_SETENV.tcsh, do:
 #      source NMAKE_SETENV.tcsh
