@@ -173,6 +173,9 @@ RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
   }
   targ_size = (eltSize * numElts);
   if (rbuf->buf && (targ_size <= rbuf->bufSize)) {
+    if (buf_out) {
+      *buf_out = rbuf->buf;
+    }
     return 0; /* trivial success */
   }
   if (!rbuf->buf) {
