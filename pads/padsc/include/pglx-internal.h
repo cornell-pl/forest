@@ -1,4 +1,5 @@
 #include "libpadsc-internal.h"
+#include "caml/mlvalues.h"  /* Need value */
 #ifndef FOR_CKIT
 #  include "pglx-impl.h"
 #endif
