@@ -57,7 +57,7 @@ of tools for reading, querying, and transforming \xml{}.  However,
 network administrators,
 data analysts, computer scientists,
 biologists, chemists, and physicists deal with ad hoc
-data in a miriad of complex formats on a day to day basis.
+data in a myriad of complex formats on a daily basis.
 This data, which is often unpredictable, poorly documented,
 filled with errors (malicious and benign) and unwieldy,
 poses tremendous challenges to its users and the software
@@ -88,9 +88,9 @@ data processing platform.  There are many commonly-used
 data formats \pads{} cannot currently handle.  We propose
 a number of innovative ways of extending the \pads{} description language
 and compiler to alleviate these deficiencies.
-\item The current \pads{} tool generation infrastructure is brittle and
+\item The current \pads{} tool-generation infrastructure is brittle and
 inflexible, and the generated tools have sub-par performance.  We propose
-to improve the tool generation infrastructure by augmenting \pads{}
+to improve the tool-generation infrastructure by augmenting \pads{}
 with a system of user-defined attributes that can communicate
 semantic information to the tool generator and implementing a mechanism for 
 application-specific customization.
@@ -125,7 +125,7 @@ software architects who deal with ad hoc data regularly, and it will
 improve the security and reliability of the software they produce.
 Finally, our research will also have a broad impact on research in the
 natural sciences, where ad hoc data is pervasive, and on
-interdisciplinary computer science and natural science education.
+interdisciplinary computer science.
 
 In the rest of this introduction, we will explain the immense
 challenges and risks posed by ad hoc data in more detail.  We will
@@ -140,7 +140,7 @@ traditional computer science and on interdisciplinary education.
 
 There are vast amounts of useful data stored in
 traditional databases and \xml{} formats, but there is just as much in
-ad hoc formats.  \figref{figure:data-sources} provide some information
+ad hoc formats.  \figref{figure:data-sources} provides some information
 on ad hoc data formats from the networking and telecommunications domain.  
 They include ASCII, binary, and Cobol data formats, with
 both fixed and variable-width records, ranging in size from
@@ -508,7 +508,7 @@ taken.
 
 %\figref{figure:wsl} gives the \pads{} description for CLF web server logs, 
 \figref{figure:dibbler} gives the \pads{} description for the \dibbler{} 
-provisioning data.  We will use this examples to illustrate the main 
+provisioning data.  We will use this example to illustrate the main 
 features of the current
 \pads{} language.  In \pads{} descriptions, types are declared before they are used, 
 so the type that describes the totality of the data source appears at the bottom of 
@@ -534,7 +534,7 @@ Each field is separated by a \cd{|} character in the data source.
 
 
 \kw{Punion}s describe variation in the data source.  For example, the
-\cd{dib_ramp_t} type in the sirius description indicates the possibility that
+\cd{dib_ramp_t} type in the Sirius description indicates the possibility that
 the data may either be a 64-bit integer (\cd{ramp}) or a
 \cd{no_ramp_t}, which was discussed above.  During parsing, 
 the branches of a \kw{Punion} are tried in order; the first branch that 
