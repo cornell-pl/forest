@@ -232,7 +232,7 @@ end
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT | EOR (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PFORALL | PIN | PVIRTUAL | PENDIAN | PRECORD (* PADS *)
+	| PSEP | PTERM | PFORALL | PIN | PVIRTUAL | PENDIAN | PMANIFEST | PRECORD (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -310,8 +310,9 @@ end
         | pIsRecord of bool
         | pTypedef of externalDecl
         | pStruct of externalDecl
-        | pStructFieldList of (expression PX.PSField) list
-        | pStructField of expression PX.PSField
+        | pStructFieldList of ((decltype, declarator, expression) PX.PSField) list
+        | pStructField of (decltype, declarator, expression) PX.PSField
+        | pManifestField of decltype * (declarator * expression) list
         | pConstraintOpt of expression option
         | pCommentOpt of string option
         | pArray of externalDecl
@@ -1017,6 +1018,10 @@ pTypedef:
 			        pred = expr})
  )
 
+pManifestField: 
+  declarationSpecifiers initDeclaratorList
+	        (declarationSpecifiers, seqToList initDeclaratorList)
+
 pStructField:                   pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 
 				                args = pOptActParams,
@@ -1052,6 +1057,7 @@ pStructField: PVIRTUAL  PENDIAN pName pOptActParams ID  pConstraintOpt SEMICOLON
 				                isEndian  = true,
 						pred = pConstraintOpt,
                                                 comment = pCommentOpt})	
+  | PMANIFEST pManifestField SEMICOLON pCommentOpt   (PX.Manifest{decl = pManifestField, comment=pCommentOpt})
   | EOR  SEMICOLON                    (PX.EOR)
   | expr SEMICOLON                    (PX.Brief expr)
 

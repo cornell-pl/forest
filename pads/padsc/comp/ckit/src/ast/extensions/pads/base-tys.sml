@@ -103,6 +103,8 @@ struct
   val find : (baseTyMap ref * Atom.atom) -> baseInfoTy option = 
       fn (bRef, a) => PBST.find(!bRef, a)
 
+  fun listItemsi(bRef : baseTyMap ref) : (Atom.atom * baseInfoTy) list = 
+      PBST.listItemsi(!bRef)
 
   fun genTypedef strm (r:baseInfoTy) = 
       (TextIO.output(strm, "typedef ");

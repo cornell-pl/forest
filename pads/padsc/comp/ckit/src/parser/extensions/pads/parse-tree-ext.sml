@@ -3,7 +3,7 @@ structure ParseTreeExt =
         datatype Pty = 
            Name of string
 
-        datatype 'exp PSField = 
+        datatype ('dt, 'decr, 'exp) PSField = 
            Full of {    pty : Pty, 
 		       args : 'exp list, 
 		       name : string, 
@@ -11,6 +11,7 @@ structure ParseTreeExt =
 		   isEndian : bool,
 		       pred : 'exp option, 
 		    comment : string option}
+	 | Manifest of { decl : 'dt * ('decr * 'exp) list, comment : string option}
          | Brief of 'exp
          | EOR
 
@@ -27,7 +28,7 @@ structure ParseTreeExt =
          | Forall of {index : string, range : 'exp PRange, body : 'exp}
          | General of 'exp
        
-        datatype ('decr, 'ct, 'exp) PExternal = 
+        datatype ('decr, 'ct, 'dt, 'exp) PExternal = 
            PTypedef of {name : string,
 			params: ('ct * 'decr) list, 
 			isRecord : bool,
@@ -39,7 +40,7 @@ structure ParseTreeExt =
          | PStruct of {name : string, 
 		       params: ('ct * 'decr) list, 
 		       isRecord : bool,
-		       fields : ('exp PSField) list}
+		       fields : (('dt, 'decr, 'exp) PSField) list}
          | PArray  of {name : string, 
 		       baseTy : Pty, 
 		       params : ('ct * 'decr) list, 
@@ -50,7 +51,7 @@ structure ParseTreeExt =
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
 		      isRecord : bool,
-		      variants : ('exp PSField) list}
+		      variants : (('dt, 'decr, 'exp) PSField) list}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
 		      isRecord : bool,
@@ -77,7 +78,7 @@ structure ParseTreeExt =
 	    declarationExt = unit
 
 	type ('spec,'decr,'ct,'dt,'oper,'exp,'stmt) 
-	    externalDeclExt = ('decr, 'ct, 'exp) PExternal 
+	    externalDeclExt = ('decr, 'ct, 'dt, 'exp) PExternal 
     end
 
 

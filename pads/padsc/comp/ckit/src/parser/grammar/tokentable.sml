@@ -78,6 +78,7 @@ struct
                ("in", Tokens.PIN),
                ("pvirtual", Tokens.PVIRTUAL),
                ("endian",   Tokens.PENDIAN),       
+               ("manifest",  Tokens.PMANIFEST),       
                ("record", Tokens.PRECORD),     
                ("EOR", Tokens.EOR)	       
               ])
