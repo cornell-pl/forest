@@ -669,7 +669,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val binding = bind tidtab tid
 	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
 	  val (Ast.StructRef stid) = cty
-          val Bindings.Struct(tid'',fields) = valOf(#ntype (bind tidtab stid))   (* first field = tag *)
+          val Bindings.Struct(tid'',fields) = valOf(#ntype (bind tidtab stid))   (* first field = tag  *)
           val value = List.hd(List.tl(fields))                                   (* second field = val *)
           fun valtid (uctype,_,_,_) = uctype
           val (Ast.TypeRef utid) = valtid value
@@ -681,15 +681,10 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
               in
                   (getCTyName tidtab cty, SOME (Symbol.name fsym))
               end
-	  fun cnvField (cty,memOpt : Ast.member option,_,_) = 
-	      let val fsym : Symbol.symbol = #name(valOf memOpt)
-	      in
-		  (getCTyName tidtab cty, SOME (Symbol.name fsym))
-	      end
       in 
-	(#name binding,List.map cnvField fields,List.map cnvUField ufields)
-	handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", [], []))
-	handle Option => (PError.bug "expected SOME"; (SOME "bogus", [], []))
+	(#name binding,List.map cnvUField ufields)
+	handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", []))
+	handle Option => (PError.bug "expected SOME"; (SOME "bogus", []))
       end
 
   fun unionPdInfo tidtab tid =
@@ -831,7 +826,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
   fun ppPUnion (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...}) =
       let val pdTid = #pdTid ptyInfo
-          val (repName,sFields,uFields) = unionInfo tidtab tid
+          val (repName,uFields) = unionInfo tidtab tid
           val (pdTyName,Fields,uPdFields) = unionPdInfo tidtab pdTid
 	  val tagName = SOME (valOf repName ^ "_tag")  
        in 
