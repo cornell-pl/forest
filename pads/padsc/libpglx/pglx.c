@@ -8,7 +8,7 @@
 
 #include "pglx.h"
 #include "pglx-internal.h"
-
+#include <stdio.h>
 
 /* ocaml header files can be found in /usr/common/lib/ocaml/caml */
 
@@ -124,19 +124,22 @@ value ty ## _typed_value (PDCI_node_t *node) \
 { \
   /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
   /* For now, raise exception containing the value as as string. */ \
-  ty          *r   = (ty*)node->rep; \
-  PDC_base_pd *pd  = (PDC_base_pd*)node->pd; \
-  PDC_base_pd  tpd; \
+  value         res = 0; \
+  ty           *r   = (ty*)node->rep; \
+  PDC_base_pd  *pd  = (PDC_base_pd*)node->pd; \
+  PDC_base_pd   tpd; \
   if (!pd) { \
     pd = &tpd; \
     pd->errCode = PDC_NO_ERR; \
   } \
   sfstrset(node->pdc->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pdc, node->pdc->tmp2, pd, r)) { \
-    failwith("UNEXPECTED_IO_FAILURE in base type typed_value function"); \
+    failwith("UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  failwith(sfstruse(node->pdc->tmp2)); \
-  return 0;  /* will never get here*/ \
+  if (glx_atomicString(sfstruse(node->pdc->tmp2), &res)) { \
+    failwith("UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  return res; \
 } \
  \
 const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
@@ -150,19 +153,22 @@ value ty ## _typed_value (PDCI_node_t *node) \
 { \
   /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
   /* For now, raise exception containing the value as a string. */ \
-  ty          *r   = (ty*)node->rep; \
-  PDC_base_pd *pd  = (PDC_base_pd*)node->pd; \
-  PDC_base_pd  tpd; \
+  value         res = 0; \
+  ty           *r   = (ty*)node->rep; \
+  PDC_base_pd  *pd  = (PDC_base_pd*)node->pd; \
+  PDC_base_pd   tpd; \
   if (!pd) { \
     pd = &tpd; \
     pd->errCode = PDC_NO_ERR; \
   } \
   sfstrset(node->pdc->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pdc, node->pdc->tmp2, ty_arg1, pd, r)) { \
-    failwith("UNEXPECTED_IO_FAILURE in base type typed_value function"); \
+    failwith("UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  failwith(sfstruse(node->pdc->tmp2)); \
-  return 0;  /* will never get here*/ \
+  if (glx_atomicString(sfstruse(node->pdc->tmp2), &res)) { \
+    failwith("UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  } \
+  return res; \
 } \
  \
 const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
@@ -305,15 +311,12 @@ value PDCI_error_typed_value(PDCI_node_t *node)
 /* node->rep is a C-style string (const char *) */
 value PDCI_Cstr_typed_value(PDCI_node_t *node)
 {
-  const char * s = (const char *)node->rep;
-  /* XXX_TODO: invoke Galax-provided macro for producing a value containing a Galax string */
-  /* For now, raise exception containing the value as a string. */
-  sfstrset(node->pdc->tmp1, 0);
-  if (-1 == sfprintf(node->pdc->tmp1, "%s", s)) {
-    failwith("UNEXPECTED_IO_FAILURE in PDCI_Cstr_typed_value");
+  value        res = 0;
+  char        *s   = (char *)node->rep;
+  if (glx_atomicString(s, &res)) {
+    failwith("UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in PDC_Cstr_typed_value");
   }
-  failwith(sfstruse(node->pdc->tmp1));
-  return 0;  /* will never get here*/
+  return res;
 }
 
 /* Helper vtables */
@@ -389,10 +392,9 @@ PDCI_IMPL_BASE_VAL_VT(PDC_uint64);
 /* node->rep is a pointer to a PDC_uint32 */
 value PDC_uint32_typed_value (PDCI_node_t *node)
 {
-  /* XXX_TODO: invoke Galax-provided macro for producing a value containing an unsigned int */
-  /* For now, raise exception containing the value as a string */
-  PDC_uint32  *r   = (PDC_uint32*)node->rep;
-  PDC_base_pd *pd  = (PDC_base_pd*)node->pd;
+  value         res = 0;
+  PDC_uint32   *r   = (PDC_uint32*)node->rep;
+  PDC_base_pd  *pd  = (PDC_base_pd*)node->pd;
   PDC_base_pd  tpd;
   if (!pd) {
     pd = &tpd;
@@ -402,11 +404,97 @@ value PDC_uint32_typed_value (PDCI_node_t *node)
   if (-1 == PDC_uint32_write2io(node->pdc, node->pdc->tmp2, pd, r)) {
     failwith("UNEXPECTED_IO_FAILURE in base type typed_value function");
   }
-  failwith(sfstruse(node->pdc->tmp2));
-  return 0;  /* will never get here*/
+  if (glx_atomicString(sfstruse(node->pdc->tmp2), &res)) {
+    failwith("UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in PDC_uint32_typed_value");
+  }
+  return res;
 }
 
 const PDCI_vtable_t PDC_uint32_val_vtable = {PDCI_no_children,
 					     PDC_uint32_typed_value,
 					     0};
 
+
+
+/*
+ * These will go away some day.
+ * They all leak memory, but they are just used for simple testing so that is OK.
+ */
+glx_err
+fake_glx_atomicString(char *s, atomicString *outval)
+{
+  char *buf = (char*)malloc(strlen(s) + 1);
+  strcpy(buf, s); 
+  (*outval) = buf;
+  return 0;
+}
+
+glx_err
+fake_glx_atomicBoolean(int b, atomicBoolean *outval)
+{
+  char *buf = (char*)malloc(5);
+  strcpy(buf, b ? "true" : "false");
+  (*outval) = buf;
+  return 0;
+}
+
+glx_err
+fake_glx_atomicInt(int i, atomicInt *outval)
+{
+  char *buf = (char*)malloc(40);
+  snprintf(buf, 39, "%d", i);
+  (*outval) = buf;
+  return 0;
+}
+ 
+glx_err
+fake_glx_atomicInteger(int i, atomicInteger *outval)
+{
+  char *buf = (char*)malloc(40);
+  snprintf(buf, 39, "%d", i);
+  (*outval) = buf;
+  return 0;
+}
+ 
+glx_err
+fake_glx_atomicDecimal(int i, atomicDecimal *outval)
+{
+  char *buf = (char*)malloc(40);
+  snprintf(buf, 39, "%d", i);
+  (*outval) = buf;
+  return 0;
+}
+ 
+glx_err
+fake_glx_atomicFloat(double f, atomicFloat *outval)
+{
+  char *buf = (char*)malloc(40);
+  snprintf(buf, 39, "%f", f);
+  (*outval) = buf;
+  return 0;
+}
+ 
+glx_err
+fake_glx_atomicDouble(double f, atomicDouble *outval)
+{
+  char *buf = (char*)malloc(40);
+  snprintf(buf, 39, "%lf", f);
+  (*outval) = buf;
+  return 0;
+}
+ 
+glx_err
+fake_glx_atomicAnyURI(char* u, atomicAnyURI *outval)
+{
+  char *buf = (char*)malloc(strlen(u) + 1);
+  strcpy(buf, u);
+  (*outval) = buf;
+  return 0;
+}
+
+glx_err
+fake_glx_string_of_atomicValue(atomicValue v, char **outval)
+{
+  (*outval) = (char*)v;
+  return 0;
+}
