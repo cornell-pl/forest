@@ -20,9 +20,9 @@ SML_MINOR_VER = $(shell echo $(SML_VER) | sed -e 's|.*[.]||')
 ifeq ($(SML_VER),$(SML_MINOR_VER))
 SML_MINOR_VER = 0
 endif
-SML_MINOR_VER_TEST=$(shell test $(SML_MINOR_VER) -gt 39 && echo GT40)
+SML_MINOR_VER_TEST=$(shell test $(SML_MINOR_VER) -gt 39 && echo GT39)
 
-ifeq ($(SML_MINOR_VER_TEST),GT40)
+ifeq ($(SML_MINOR_VER_TEST),GT39)
 BUILD_EXEC = build-exec-45.sml
 else
 BUILD_EXEC = build-exec.sml

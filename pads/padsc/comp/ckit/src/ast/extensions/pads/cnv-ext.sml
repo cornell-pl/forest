@@ -618,7 +618,7 @@ structure CnvExt : CNVEXT = struct
 	   | Ast.Array (iopt, ct') =>
 		 let val e = (case iopt of 
 				  NONE => PT.EmptyExpr
-				| SOME (i, _) => P.int32X i) (* XXX: should get expression but it is an AST expression. *)
+				| SOME (i, _) => PT.IntConst i) (* XXX: should get expression but it is an AST expression. *)
 		     val ct'' = CTtoPTct ct'
 		 in
 		     P.makePCT [PT.Array(e, ct'')]
@@ -642,7 +642,7 @@ structure CnvExt : CNVEXT = struct
 			 val e = 
 			     case iopt of
 				 NONE => PT.EmptyExpr
-			       | SOME i => P.int32X i
+			       | SOME i => PT.IntConst i
 		     in
 			 (ct', [(dr, e)], commentOpt)
 		     end
@@ -677,7 +677,7 @@ structure CnvExt : CNVEXT = struct
 		 end
 	   | Ast.EnumRef t =>
 		 let fun procMem ({name,...}:Ast.member, i, commentOpt) = 
-		     (SYM.name name, P.int32X i, commentOpt)
+		     (SYM.name name, PT.IntConst i, commentOpt)
 		 in case lookTid t of
 		     SOME {name=SOME n, ntype=NONE,...} => 
 			 P.makePCT [PT.EnumTag n]

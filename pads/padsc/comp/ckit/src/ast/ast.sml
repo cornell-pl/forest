@@ -82,7 +82,7 @@ struct
     | Do of expression * statement
     | For of expression option * expression option * expression option * statement
     | Labeled of label * statement
-    | CaseLabel of LargeInt.int * expression option * statement
+    | CaseLabel of IntInf.int * expression option * statement
     | DefaultLabel of statement
     | Goto of label
     | Break
@@ -116,7 +116,7 @@ struct
     | Unop of unop * expression
     | Cast of ctype * expression
     | Id of id
-    | EnumId of member * LargeInt.int
+    | EnumId of member * IntInf.int
     | SizeOf of ctype  (* not used in compiler mode; sizeof expr becomes sizeof (typeof expr)  *)
     | ExprExt of (expression, statement, binop, unop) AstExt.expressionExt
     | ErrorExpr
@@ -131,7 +131,7 @@ struct
     | Qual of qualifier * ctype
     | Numeric of (* D *) saturatedness * (* D *) fractionality * signedness * intKind 
                                        * signednessTag
-    | Array of (LargeInt.int * expression) option * ctype
+    | Array of (IntInf.int * expression) option * ctype
     | Pointer of ctype
     | Function of ctype * ctype list
     | StructRef of tid (* reference to a tid bound by a struct decl *)
@@ -151,7 +151,7 @@ struct
   and memberKind
     = STRUCTmem
     | UNIONmem
-    | ENUMmem of LargeInt.int
+    | ENUMmem of IntInf.int
 
   withtype member =
     {name: Symbol.symbol,  (* the name of the member *)

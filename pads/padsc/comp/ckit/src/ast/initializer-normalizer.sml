@@ -58,7 +58,7 @@ let
 
   (* padding out with zero (via scalarNorm) when too few initializers.
    * as per [ISO-C, p.72-73] *)
-  fun arrNorm (arrType, Ast.Qual (_,ctype), maxOp) origInits = (* strip qual *)
+  fun arrNorm (arrType, Ast.Qual (_,ctype), maxOp : IntInf.int option) origInits = (* strip qual *)
             arrNorm (arrType, ctype, maxOp) origInits 
     | arrNorm (arrType, Ast.TypeRef tid, maxOp) origInits = (* dereference type ref *)
 	    (case lookTid tid
@@ -69,13 +69,13 @@ let
               (Simple(EXPR(StringConst s,aid,loc))::rest) =
        (* special case for character arrays initialized w/strings *)
        let val len = (String.size s) + 1 (* size of c string *)
-	   val max = case maxOp of SOME l => Int32.toInt l | _ => len
+	   val max = case maxOp of SOME l => IntInf.toInt l | _ => len
 	   val nullOpt = if len = max + 1 then NONE else SOME #"\000"
 	   val charInits = mkChrs (nullOpt, explode s)
 	in norm(arrType, (Aggregate charInits)::rest)
        end
     | arrNorm (arrType, baseType, maxOp) origInits =
-       let val max = case maxOp of SOME l => Int32.toInt l | _ => length origInits
+       let val max = case maxOp of SOME l => IntInf.toInt l | _ => length origInits
 	   fun loop(i, inits) = 
 	       if (i=max) then ([], inits)
 	       else let val (elemInit,remainder) = norm(baseType, inits)

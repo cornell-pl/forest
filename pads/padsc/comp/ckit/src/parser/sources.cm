@@ -1,20 +1,47 @@
 Group is
 
 #if defined(NEW_CM)
+#if (SMLNJ_VERSION * 100 + SMLNJ_MINOR_VERSION >= 11029)
         (* standard basis *)
-        basis.cm  
-        (* Compiler, up through 110.25 *)
-        host-compiler.cm
-#endif
+        $/basis.cm
+
+        (* Compiler *)
+	$smlnj/compiler.cm
+
+	(* standard library *)
+	$/smlnj-lib.cm
 
 	(* ml-yacc *)
-	ml-yacc-lib.cm
+	$/ml-yacc-lib.cm
+
+	(* pretty printer library *)
+	$/pp-lib.cm
+#else
+        (* standard basis *)
+	basis.cm
+
+        (* Compiler *)
+        host-compiler.cm
 
 	(* standard library *)
 	smlnj-lib.cm
 
+	(* ml-yacc *)
+	ml-yacc-lib.cm
+
 	(* pretty printer library *)
         pp-lib.cm
+#endif
+#else
+	(* standard library *)
+	smlnj-lib.cm
+
+	(* ml-yacc *)
+	ml-yacc-lib.cm
+
+	(* pretty printer library *)
+        pp-lib.cm
+#endif
 
         (* configuration *)
         ../variants/sources.cm

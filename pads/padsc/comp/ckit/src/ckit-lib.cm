@@ -25,5 +25,15 @@ Library
   signature TYPECHECKCONTROL
   signature CONFIG
   structure Config
+
+  structure Error
+  structure Select
+  structure PTys
+  structure PPLib
+  structure PPXSchemaAst
+  structure BuildAst
+  structure PadsState
+  structure PInput
+  structure PBaseTys
 is 
-  ast/sources.cm
+  ast/group.cm

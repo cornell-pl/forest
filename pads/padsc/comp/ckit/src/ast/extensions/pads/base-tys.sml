@@ -118,11 +118,13 @@ structure PBaseTys = struct
 
    fun buildBaseInfo path = 
        let val strm = TextIO.openIn path
-           fun loop(s) = if s = ""
-	                 then []
-                         else processLine(s) @ (loop(TextIO.inputLine strm))
+	   val data : String.string = TextIO.inputAll strm
+           fun isNewline c = c = #"\n"
+           val lines = String.tokens isNewline data
+           val entries = List.concat(List.map processLine lines)
+	   val () = TextIO.closeIn strm
        in
-           loop(TextIO.inputLine strm) before (TextIO.closeIn strm)
+	   entries
        end
 
   fun buildBaseInfoList (paths) = 

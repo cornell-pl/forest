@@ -196,15 +196,6 @@ structure Main : sig
 	   raise DebugExn(Parse tree))
        end
   
-    fun echoFile(srcName:string, destStrm:TextIO.outstream) = 
-	let val srcStrm = TextIO.openIn srcName
-	    fun loop(s) = if s = "" then ()
-		          else (TextIO.output (destStrm,s); 
-				loop(TextIO.inputLine srcStrm))
-	in
-	    loop(TextIO.inputLine srcStrm) before (TextIO.closeIn srcStrm)
-	end
-
     fun getAccStream(name) : TextIO.outstream = 
         let val name' = if !outputDirFlag 
 			then OS.Path.joinDirFile {dir = (!outputDir),

@@ -87,7 +87,7 @@ struct
 			 if TypeCheckControl.allow_enum_bitfields then ()
 			 else err "Enum not permitted in bitfield."
 		   | _ => err "Bitfield must be numeric (char, short, int)"
-	    val i = LargeInt.toInt li
+	    val i = IntInf.toInt li
 	    val {bits, align,...} = process sizesErrWarnBug tidtab ctype
 	 in if i > bits then err "Width of field exceeds its type" else ();
 	    {memberOpt=memberOpt, bitfield=SOME i, size=bits, align=align}
@@ -329,7 +329,7 @@ struct
 	 | Ast.Qual (_,ty) => process sizesErrWarnBug tidtab ty
 	 | Ast.Array (SOME(n, _) ,ty) =>
 	     let val {tabOpt, bits=sz, align} = process sizesErrWarnBug tidtab ty
-	     in {tabOpt=NONE, bits = (LargeInt.toInt n) * sz, align=align} end
+	     in {tabOpt=NONE, bits = (IntInf.toInt n) * sz, align=align} end
 	 | Ast.Array(NONE,ty) => 
 	     ( err "taking sizeof array whose size is unspecified: assuming unit size.\n"
 	     ; let val {bits,align,...} = process sizesErrWarnBug tidtab ty

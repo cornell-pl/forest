@@ -75,7 +75,7 @@ sig
    * member of that enum
    *)
 
-  val lookupEnum : (LargeInt.int option) type_mem_util
+  val lookupEnum : (IntInf.int option) type_mem_util
   (* if type can be considered an enumerated type and id is a member of
    * that enum, return the value of that member; 
    * otherwise raise a type error

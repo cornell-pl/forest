@@ -344,7 +344,7 @@ let
       (case (TU.lookupEnum ttab v)
 	 of SOME x => x
 	  | NONE => (bug "lookupEnum: invalid enum type";
-		     LargeInt.fromInt 0))
+		     IntInf.fromInt 0))
 
   val equalType = TU.equalType ttab
   val isScalar = TU.isScalar ttab
@@ -447,7 +447,7 @@ let
 	   end
 
   fun sizeof ty = 
-      LargeInt.fromInt (#bytes (Sizeof.byteSizeOf {sizes=sizes, err=error, warn=warn, bug=bug} ttab ty))
+      IntInf.fromInt (#bytes (Sizeof.byteSizeOf {sizes=sizes, err=error, warn=warn, bug=bug} ttab ty))
 
   fun isLval (expr, ty) = 
       case expr
@@ -619,12 +619,12 @@ let
   fun TCInitializer(ctype as (Ast.TypeRef _ | Ast.Qual _), expr) =
         TCInitializer(getCoreType ctype, expr)  (* the following TCInitializer cases expect coretypes *)
     | TCInitializer (Ast.Array(opt, ctype), Ast.Aggregate exprs) = 
-	(case (opt, Int32.fromInt(List.length exprs))
+	(case (opt, IntInf.fromInt(List.length exprs))
 	   of (NONE, _) =>
 	       bug "TCInitializer: array size should be filled in by now?"
 	    | (SOME(x, _), y) =>
 	       if x = y then ()   (* Int32 equality *)
-	       else if x < y then
+	       else if IntInf.<(x, y) then
 		 error "TCInitializer: badly formed array initializer: \
 	                \too many initializers"
 	       else error "TCInitializer: badly formed array initializer: \
@@ -715,7 +715,7 @@ let
 				val (_, expr) = wrapEXPR(stdInt, Ast.IntConst (IntInf.fromInt len))
 			      in
 				if len=0 then warn "Array has zero size." else ();
-				Ast.Array(SOME(LargeInt.fromInt len, expr), ctype)
+				Ast.Array(SOME(IntInf.fromInt len, expr), ctype)
 			      end
 			     | _ => (error
 				       "badly formed array initializer: missing \"{\"";
@@ -1061,16 +1061,16 @@ let
 	 | PT.ArrayDecr (decr,sz) => 
 	  let val (i, aexpr) = case evalExpr sz  (* cannot be EmptyExpr *)
 	    of
-	      (SOME i, _, aexpr, _) => (let val i' = (IntInf.toLarge i)
+	      (SOME i, _, aexpr, _) => (let val i' = i
 					    handle OverFlow => (error ("Too large int "^
 									        "in array.\n ");
-									       0)
+									       IntInf.fromInt 0)
 					in
-					  if i'=0 then warn "Array has zero size." else ();
+					  if i'= (IntInf.fromInt 0) then warn "Array has zero size." else ();
 					      (i', aexpr)
 					end)
 	    | (NONE, _, aexpr, _) => (error "Array must have constant size.";
-				      (0, aexpr))
+				      (IntInf.fromInt 0, aexpr))
 	  in
   	    mungeTyDecr(Ast.Array (SOME(i, aexpr), ty), decr)
 	  end
@@ -1567,13 +1567,13 @@ let
 		       (if sizeofFl andalso not(!reduce_sizeof)
 			  then warn("sizeof in case label not preserved in source-to-source mode.")
 			else ();
-		        ((IntInf.toLarge i), SOME (#2 (cnvExpression expr))) (* PADS *)
+		        ((IntInf.toInt i), SOME (#2 (cnvExpression expr))) (* PADS *)
                         handle OverFlow => (error("Case label too large.");  (0, NONE)))
 		   | (NONE, _, _, _) => (error "Non-constant case label."; (0, NONE)))
-	   in case addSwitchLabel n
+	   in case addSwitchLabel (Int32.fromInt  n)
 	     of NONE => ()
 	   | SOME msg => error msg;
-	   wrapSTMT(Ast.CaseLabel (n, symbolic, (cnvStatement stmt)))
+	   wrapSTMT(Ast.CaseLabel (IntInf.fromInt n, symbolic, (cnvStatement stmt)))
 	   end
 	| PT.DefaultLabel stmt => 
 	   let val stmt = cnvStatement stmt
@@ -1737,12 +1737,12 @@ let
 	    mkUnopExp((ty1, ty1), expr1, assignOp) (* result type is (getCoreType ty1) *)
 	end
       
-      and scaleExpr (size: LargeInt.int, expr as Ast.EXPR(_, adorn, _)) =
+      and scaleExpr (size: IntInf.int, expr as Ast.EXPR(_, adorn, _)) =
 	let 
 	  val ty1 = lookAid adorn
 	  val expr1 = expr
 	  val ty2 = stdInt
-	  val (_, expr2) = wrapEXPR(ty2, Ast.IntConst (IntInf.fromLarge size))
+	  val (_, expr2) = wrapEXPR(ty2, Ast.IntConst size)
 	in
 	  processBinop(ty1, expr1, ty2, expr2, PT.Times)
 	end
@@ -2003,7 +2003,7 @@ let
 		   else error "Cannot take sizeof an expression of unknown size."
 		  else ();
 		  if !reduce_sizeof then
-		    let val ast = Ast.IntConst(IntInf.fromLarge(sizeof ty))
+		    let val ast = Ast.IntConst (sizeof ty)
 		    in wrapEXPR(Ast.Numeric (Ast.NONSATURATE,Ast.WHOLENUM,Ast.UNSIGNED,Ast.INT,Ast.SIGNASSUMED),
 				ast)
 		    end
@@ -2032,7 +2032,7 @@ let
 				"Cannot take sizeof an expression of unknown size."
 		       else ();
 		       if !reduce_sizeof then
-			 let val ast = Ast.IntConst(IntInf.fromLarge(sizeof ty))
+			 let val ast = Ast.IntConst(sizeof ty)
 			 in
 			   wrapEXPR(Ast.Numeric (Ast.NONSATURATE,Ast.WHOLENUM,Ast.UNSIGNED,Ast.INT,Ast.SIGNASSUMED), ast)
 			 end
@@ -2487,14 +2487,15 @@ end old code ******)
 		       PT.EmptyExpr => NONE
 		     | _ => (case evalExpr expr of  (* cannot be EmptyExpr *)
 			       (SOME i, _, expr', _) =>
-				 (let val i' = (IntInf.toLarge i ) 
-				                handle Overflow => (error "Array size too large.\n"; 0)
+				 (let val i' = i
+				                handle Overflow => (error "Array size too large.\n"; 
+								    IntInf.fromInt 0)
 				  in
-				      if i'=0 then warn "Array has zero size." else ();
+				      if i'= IntInf.fromInt 0 then warn "Array has zero size." else ();
 				      SOME(i', expr')
 				  end)
 			     | (NONE, _, expr', _) => (error "Array size must be constant expression.";
-						      SOME(0, expr'))) 
+						      SOME(IntInf.fromInt 0, expr'))) 
 		     val ty' = cnvCtype (false, ty)
 		   in Ast.Array (opt, ty')
 		   end
@@ -2621,7 +2622,7 @@ end old code ******)
                          gives
 			    enum {e1=0,e2=1,e3=4,e4=5};
                        *)
-		      fun process prevVal nil = nil
+		      fun process (prevVal:IntInf.int) nil = nil
 			| process prevVal ((name,e,cOpt) :: l) =
 			  let val constValOpt = 
 			    case e of
@@ -2632,15 +2633,15 @@ end old code ******)
 					   then warn("sizeof in enum value " ^
 						     "not preserved in source-to-source mode.")
 					 else ();
-					 SOME ((IntInf.toLarge i) handle OverFlow => 
-					       (error "Enum constant too large."; 0)))
+					 SOME (i handle OverFlow => 
+					       (error "Enum constant too large."; IntInf.fromInt 0)))
 				    | (NONE, _, _, _) =>
                                         (error "Enum value must be constant expression.";
 					 NONE))
 			      val constVal =
 				  case constValOpt
 				    of SOME n => n
-				     | NONE => prevVal + 1
+				     | NONE => IntInf.+ (prevVal, IntInf.fromInt 1)
 			      val sym = Sym.enumConst name
 			      val ty = Ast.EnumRef tid
 			      val _ = checkNonIdRebinding(sym, ty, "enum constant ")
@@ -2656,7 +2657,7 @@ end old code ******)
 			  end
 		  in if alreadyDefined then ()
 		     else 
-			 let val idIntList = process (LargeInt.fromInt ~1) enumerators
+			 let val idIntList = process (IntInf.fromInt ~1) enumerators
 			     val namedTy = B.Enum (tid,idIntList)
 			  in bindTid (tid, {name=tagOpt, ntype=SOME namedTy,
 					   global=topLevel(), location=getLoc()});
@@ -2743,7 +2744,7 @@ end old code ******)
 			  let
 			    val ty = cnvCtype (false, ct)
 			    fun process2 (decr,expr)
-				 : Ast.ctype * Ast.member option * Int32.int option * string option = 
+				 : Ast.ctype * Ast.member option * IntInf.int option * string option = 
 			      let
 				val (ty', memNameOpt) = mungeTyDecr (ty, decr)
 				val sizeOpt = 
@@ -2759,10 +2760,7 @@ end old code ******)
 					  | (NONE, _, _, _) => 
 						 (error "Bitfield size must be constant expression";
 						  NONE))
-				fun toLargeInt i = (IntInf.toLarge i) 
-				                   handle OverFlow => (error "Bit field too large."; 
-								       Int.toLarge 0)
-				val sizeOpt =  Option.map toLargeInt sizeOpt
+
 				val memberOpt : Ast.member option = 
 				    (case memNameOpt
 				       of SOME id' => 
@@ -2799,7 +2797,7 @@ end old code ******)
 
 		      (* union members are more restricted than struct members *)
 		      fun checkUnionMember (ty: Ast.ctype, NONE: Ast.member option,
-					    _ : Int32.int option, s : string option(*PADS*)) =
+					    _ : IntInf.int option, s : string option(*PADS*)) =
 			  (error "union member has no name";
 			   (ty,bogusMember(Sym.member(tid,"<noname>")),s))
 			| checkUnionMember (ty,SOME m,SOME _, s(*PADS*)) =
@@ -2970,9 +2968,9 @@ end old code ******)
 		    else warn "evalExpr: cast not handled yet";
 		    evalAstExpr e
 		end
-	     | Ast.EnumId (_, i) => SOME (IntInf.fromLarge i)
+	     | Ast.EnumId (_, i) => SOME i
              | Ast.SizeOf ct => (encounteredSizeof := true;
-				 SOME(IntInf.fromLarge(sizeof ct)))
+				 SOME(sizeof ct))
 	     | _ => NONE
 
       and evalBinaryOp (binop, e, e') =

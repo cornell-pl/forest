@@ -95,7 +95,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
     | KNR of Ast.id list
 
   datatype ctStkItem
-    = Arr of (LargeInt.int * Ast.expression) option
+    = Arr of (IntInf.int * Ast.expression) option
     | Qua of Ast.qualifier
     | Fun of Ast.ctype list * params
     | Ptr 
@@ -310,7 +310,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	    )
     in case nct
 	 of B.Struct (tid,members) =>
-	      let fun ppLI' pps li = (addStr pps ":"; ppLI pps li)
+	      let fun ppLI' pps li = (addStr pps ":"; ppLI pps (IntInf.toLarge li))
 
 		  fun ppMember pps (ct, memberOpt, LIOpt, strOpt) = (* strOpt is PADS *)
 		    (ppDecl0 aidinfo tidtab pps (Option.map MEMBER memberOpt,EMPTY,ct)
@@ -342,7 +342,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	        let fun ppMemberInt pps (member,li,commentOpt) =  (* commentOpt is PADS *)
 		      (ppMember pps member
 		      ;addStr pps "="
-		      ;ppLI pps li
+		      ;ppLI pps (IntInf.toLarge li)
 		      )
 		    fun ppTrail pps (member,li,commentOpt) = 
 			(case commentOpt of SOME s => addStr pps ("\t\t/* "^ s ^" */")
@@ -499,7 +499,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	   ( PPL.bBlock pps PP.INCONSISTENT ~2
 	   ; PPL.newline pps
 	   ; PPL.addStr pps "case "
-	   ; (case expOpt of NONE => PPL.ppLI pps li
+	   ; (case expOpt of NONE => PPL.ppLI pps (IntInf.toLarge li)
 	                  | SOME exp => (ppExpr {nested=false} aidinfo tidtab) pps exp)
 	   ; PPL.addStr pps ": "
 	   ; PPL.eBlock pps
