@@ -3386,6 +3386,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		 val paramNames = #1(ListPair.unzip cParams)
 		 val length = PNames.arrayLen
                  val elts = PNames.arrayElts
+		 val consumeFlag = PNames.consume
                  val internal = "_internal"
 		 val element = "element"
 		 val elt = "elt"
@@ -3633,11 +3634,14 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     end
 
                  fun chkPredConstraint (which, exp) = 
-		     let val subList = [(PNames.arrayLen, fieldX(rep,length)), 
-					(PNames.arrayCur, P.minusX(fieldX(rep,length), P.intX 1)), 
-					(name, fieldX(rep,elts)),
+		     let val subList = [(PNames.arrayLen,  fieldX(rep,length)), 
+					(PNames.arrayCur,  P.minusX(fieldX(rep,length), P.intX 1)), 
+					(name,             fieldX(rep,elts)),
 					(PNames.arrayElts, fieldX(rep,elts)),
-					(PNames.pdElts,   fieldX(pd,elts))]
+					(PNames.pdElts,    fieldX(pd,elts))]
+			 val subList = if which = "Pended"
+				       then (PNames.consume, PT.Id consumeFlag) :: subList
+				       else subList
 			 val modExpX = PTSub.substExps subList exp
 			 val errMsg = fn s => (which ^" expression for array "^
 					       name ^" has type"^s^". Expected type int.")
@@ -3648,6 +3652,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
 			 ignore(insTempVar(elts, P.ptrPCT elemRepPCT)); 
 			 ignore(insTempVar(PNames.pdElts, P.ptrPCT elemEdPCT)); 
+			 if which = "Pended" then ignore(insTempVar(PNames.consume, P.int)) else ();
 			 expEqualTy(exp, CTintTys, errMsg);
 			 popLocalEnv();
 			 modExpX
@@ -4030,7 +4035,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                                    [P.varDeclS(P.int, lastSet, P.falseX)] 
                                  else [])
                               @ (if Option.isSome endedXOpt then             (* int endedSet = false *)
-                                   [P.varDeclS(P.int, endedSet, P.falseX)] 
+                                   [P.varDeclS(P.int, endedSet, P.falseX),
+				    P.varDeclS(P.int, consumeFlag,  P.falseX)]   (* default is to return last element *)
                                  else [])
                               @ (if Option.isSome maxOpt then               (* int reachedLimit = false *)
 				   [P.varDeclS(P.int, reachedLimit, P.falseX)]
@@ -4279,7 +4285,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		          PT.IfThenElse(P.notX (PT.Id "Ppredresult"),
 			     PT.Compound(PL.commitS(PT.Id pads, readName)),
 			     PT.Compound([P.assignS(PT.Id endedSet, P.trueX), 
-					  PT.IfThenElse(P.ltX(PT.Id "Ppredresult", P.zero),
+					  PT.IfThenElse(PT.Id consumeFlag,
 					     PT.Compound(PL.commitS(PT.Id pads, readName)),
 			                     PT.Compound(PL.restoreS(PT.Id pads, readName)
 							 @[P.postDecS(fieldX(rep,length))]))])),

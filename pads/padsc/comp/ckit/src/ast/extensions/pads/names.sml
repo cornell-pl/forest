@@ -6,5 +6,5 @@ struct
   val arrayElts = "elts"
   val pdElts    = "pds"
   val arrayCur  = "current"
-  val eatElt    = "eat"
+  val consume   = "consume"
 end

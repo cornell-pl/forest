@@ -46,7 +46,7 @@ XML_TESTS = test_children
 endif
 
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 test_struct-regexp test_array-regexp \
-               test_array-nosep test_array-pred test_array-ended
+               test_array-nosep test_array-pred test_array-ended test_array-ended2
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_cpygen_crs test_enum test_from test_ai test_readint test_depends test_pswitch test_pswitch2 test_struct3 manifest_union
@@ -78,7 +78,9 @@ regress_o:  sanity_check \
           regress_test_array-regexp_o \
           regress_test_array-nosep_o \
           regress_test_array-pred_o  \
-          regress_test_array-ended_o 
+          regress_test_array-ended_o \
+          regress_test_array-ended2_o 
+
 	@echo " "; echo "DONE"; echo " "
 
 regress_d:  sanity_check \
@@ -103,7 +105,8 @@ regress_d:  sanity_check \
           regress_test_array-regexp_d \
           regress_test_array-nosep_d \
           regress_test_array-pred_d \
-          regress_test_array-ended_d 
+          regress_test_array-ended_d  \
+          regress_test_array-ended2_d 
 	@echo " "; echo "DONE"; echo " "
 
 dib_tests: sanity_check $(DIB_TESTS)
@@ -229,6 +232,11 @@ regress_test_array-pred_d: test_array-pred-g
 regress_test_array-ended_o: test_array-ended
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array-ended_d: test_array-ended-g
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_array-ended2_o: test_array-ended2
+	@(args=""; suf=""; $(RegressDef))
+regress_test_array-ended2_d: test_array-ended2-g
 	@(args=""; suf=""; $(RegressDef))
 
 clean:
