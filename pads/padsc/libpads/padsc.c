@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.35 2002-10-17 17:10:43 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.36 2002-10-17 19:01:27 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -646,6 +646,7 @@ PDC_error_t
 int_type ## _acc_report_map_internal(PDC_t* pdc, const char* prefix1, const char* prefix2,
 				     int_type ## _map_fn fn, int_type ## _acc* a, PDC_disc_t* disc)
 {
+  const char*           mapped_val;
   const char*           cmt = ""; 
   int                   i, sz, rp;
   PDC_uint64            cnt_sum = 0;
@@ -669,8 +670,8 @@ int_type ## _acc_report_map_internal(PDC_t* pdc, const char* prefix1, const char
   sfstrset(pdc->tmp, 0);
   sfprintf(pdc->tmp, "%s: good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   prefix1, a->good, a->bad, (a->bad / (double)(a->good + a->bad)));
-  sfprintf(pdc->tmp, "  Characterizing %s: (" MacroArg2String(int_type) ") min %" fmt " (%s) max %" fmt " (%s)\n",
-	   prefix2, a->min, fn(a->min), a->max, fn(a->max));
+  sfprintf(pdc->tmp, "  Characterizing %s: (" MacroArg2String(int_type) ") min %" fmt, prefix2, a->min);
+  sfprintf(pdc->tmp, " (%s) max %" fmt " (%s)\n",             fn(a->min), a->max, fn(a->max));
   sfprintf(pdc->tmp, "    => distribution of top %d values out of %d distinct values%s:\n",
 	   rp, sz, cmt);
   sz = rp = 0;
@@ -685,8 +686,9 @@ int_type ## _acc_report_map_internal(PDC_t* pdc, const char* prefix1, const char
     elt = (int_type ## _dt_elt_t*)velt;
     cnt_sum += elt->key.cnt;
     elt_pcnt = (100.0 * elt->key.cnt)/a->good;
+    mapped_val = fn(elt->key.val);
     sfprintf(pdc->tmp, "        val: %5" fmt " => %s%-.*s  count: %10llu  pcnt-of-good-vals: %8.3lf\n",
-	     elt->key.val, fn(elt->key.val), rp-strlen(fn(elt->key.val)),
+	     elt->key.val, mapped_val, rp-strlen(mapped_val),
 	     "                                                                                ",
 	     elt->key.cnt, elt_pcnt);
   }
