@@ -7,7 +7,6 @@ setenv MANPATH `echo $MANPATH | sed -e 's|^[^:]*knb[^:]*:||g' -e 's|:/[^:]*knb[^
 set gsfarch = `/home/gsf/bin/package`
 set gsfarchdir = /home/gsf/arch/$gsfarch
 set knbarchdir = ~/knb/arch/$gsfarch
-set knbscriptdir = ~/knb/padsc/scripts
 set gsfincdir = $gsfarchdir/include/ast
 set gsfbindir = $gsfarchdir/bin
 set gsflibdir = $gsfarchdir/lib
@@ -26,7 +25,7 @@ endsw
 
 
 setenv MANPATH ${gsfmandir}:$MANPATH
-setenv PATH ${knbbindir}:${gsfbindir}:${knbscriptdir}:$PATH
+setenv PATH ${knbbindir}:${gsfbindir}:$PATH
 setenv SHLIB_PATH $LD_LIBRARY_PATH
 setenv INSTALLROOT ~/knb/arch/$gsfarch
 setenv CCcGSF "cc -c -I$gsfincdir -I../include"

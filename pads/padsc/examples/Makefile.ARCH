@@ -132,7 +132,7 @@ regress_test_munion : manifest_union
 
 regress_test_ai : test_ai
 	if [ -f tmp/tmp.test_ai ]; then $(RM) tmp/tmp.test_ai; fi
-	(./test_ai 2>&1) | ../../scripts/remove_junk.pl | grep error: | cat > tmp/tmp.test_ai
+	(./test_ai 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.test_ai
 	diff tmp/tmp.test_ai ../regress/test_ai.regress || echo TEST_AI DIFFERS
 
 clean :

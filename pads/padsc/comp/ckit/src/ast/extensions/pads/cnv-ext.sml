@@ -614,7 +614,7 @@ structure CnvExt : CNVEXT = struct
 	      val locX      =  P.addrX(fieldX(ed,loc))
               val locS      =  PL.getLocS(PT.Id ts,P.addrX(fieldX(ed,loc)))
 	      val locBS     =  PL.getLocBeginS(PT.Id ts, P.addrX(fieldX(ed,loc)))
-	      val locES     =  PL.getLocEndS(PT.Id ts, P.addrX(fieldX(ed,loc)))
+	      val locES     =  PL.getLocEndS(PT.Id ts, P.addrX(fieldX(ed,loc)), ~2) (* ksf: why ~2? *)
 
 	      fun getDynamicFunctions (name,memChar) = 
 		  case memChar of TyProps.Static => (NONE,NONE,NONE,NONE)
@@ -788,7 +788,7 @@ structure CnvExt : CNVEXT = struct
 				    PL.getSpecLevelX(PT.Id ts),
 				    PT.Compound
 				     [PT.Return PL.PDC_ERROR]),
-				   PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
+				   PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc)), ~1),
 				   PT.IfThenElse(
 				     P.notX(fieldX(ed,panic)),
 				     PT.Compound(
@@ -799,7 +799,7 @@ structure CnvExt : CNVEXT = struct
 						      [])]
 				       @ reportErrorSs(PL.PDC_EXTRA_BEFORE_EOR, P.dotX(PT.Id ted,PT.Id loc))),
 				     PT.Compound
-					[PL.getLocS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
+					[PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc)), ~1),
 					 PL.userWarnS(PT.Id ts, 
 						       P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
 						       PT.String "Resynching at EOR", 
@@ -810,7 +810,7 @@ structure CnvExt : CNVEXT = struct
 				 PL.getSpecLevelX(PT.Id ts),
 				 PT.Compound[PT.Return PL.PDC_ERROR]),
 				P.assignS(fieldX(ed,panic), P.zero),
-				PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
+				PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc)), ~1),
 				PL.userErrorS(PT.Id ts, 
 					      P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
 					      PL.PDC_AT_EOR,
@@ -1714,19 +1714,21 @@ structure CnvExt : CNVEXT = struct
 						           commentV)
                               (* base_ed ted; *)
 			      val tedDecl = P.varDeclS'(PL.base_edPCT, ted)
+			      val offsetDecl = P.varDeclS'(PL.sizePCT, "n")
+
+			      val scanFieldNameOpt = 
+				  case PBTys.find(PBTys.baseInfo, Atom.atom pTyName)
+				      of NONE => NONE
+				    | SOME (b:PBTys.baseInfoTy) => (#scanname b)
 			      fun genPanicRecovery (pTyName:string) : pcstmt list -> pcstmt list = 
-                                  case PBTys.find(PBTys.baseInfo, Atom.atom pTyName)
+                                  case scanFieldNameOpt 
                                   of NONE => (fn id => id)     (* don't know how to recover *)
-                                  | SOME(b:PBTys.baseInfoTy) => (
-                                      case (#scanname b) 
-                                      of NONE => (fn id => id) (* don't know how to recover *)
-                                      | SOME a => 
+                                  |  SOME a => 
                                         (fn elseSs =>
                                            [PT.IfThenElse((* if (moded->panic) *)
                                               fieldX(ed,panic),
 					      PT.Compound [
                                                 (* base_em tmask = Ignore; *)
-						P.varDeclS'(PL.sizePCT, "n"),
 						PT.IfThen(
 						 P.neqX(PL.PDC_ERROR,
 						       PL.scanFunX(Atom.toString a, PT.Id ts, 
@@ -1737,11 +1739,46 @@ structure CnvExt : CNVEXT = struct
 						 PT.Compound[P.assignS(fieldX(ed,panic),P.falseX)])
                                               ], 
                                               PT.Compound elseSs
-                                           )]
-				        (* end SOME a *))
-                                      (* end SOME b *))
+                                           )])
+
 			      val readFieldName = lookupTy(PX.Name pTyName, iSuf o readSuf, #readname)
-                              val notPanicSs = 
+			      fun reportBriefErrorSs (code, msg, offset) = 
+				  let val locX = P.dotX(PT.Id ted, PT.Id loc)
+				  in
+				   [PT.IfThen(
+				      PL.getSpecLevelX(PT.Id ts),
+				      PT.Compound[PT.Return PL.PDC_ERROR]),
+				    PT.IfThen(
+				      P.eqX(P.zero, fieldX(ed,nerr)), 
+				      PT.Compound 
+				       [P.assignS(fieldX(ed, errCode), code),
+					PL.getLocEndS(PT.Id ts, P.addrX(locX), offset),
+					P.assignS(fieldX(ed, loc), locX),
+					PL.userErrorS(PT.Id ts, 
+						      P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
+						      code,
+						      PT.String (msg^": %s."), 
+						      [PL.fmtStr(commentV)])]),
+				    P.plusAssignS(fieldX(ed,nerr), P.intX 1)]
+				  end
+			      fun notPanicSsScan scanName= 
+				  [PL.getLocBeginS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
+				   PT.IfThenElse(
+				      P.eqX(PL.PDC_OK,
+					    PL.scanFunX(Atom.toString scanName, 
+							PT.Id ts, expr, expr, P.trueX,
+							P.zero, P.addrX (PT.Id "n"))),
+				      PT.Compound(
+					 [PT.IfThen(
+                                           P.gtX(PT.Id "n", P.zero),
+					   PT.Compound(
+						  reportBriefErrorSs (PL.PDC_STRUCT_EXTRA_BEFORE_SEP, 
+						                     "Extra data before separator", ~2)))]),
+				      PT.Compound(reportBriefErrorSs (PL.PDC_MISSING_LITERAL,
+						                       "Missing literal", ~1)
+                                                  @[P.assignS(fieldX(ed,panic),P.trueX)]))]
+
+                              val notPanicSsNoScan = 
                                   [(* base_em tem = Check *)
 				   P.varDeclS(PL.base_emPCT, tem, PL.EM_CHECK),
                                    PT.IfThen( (* PDC_ERROR == readFieldName(ts, &tem, &ted, e) *)
@@ -1762,11 +1799,14 @@ structure CnvExt : CNVEXT = struct
 						      [PL.fmtStr(commentV)])]
 					@ reportStructErrorSs(PL.PDC_MISSING_LITERAL, P.dotX(PT.Id ted,PT.Id loc))
 					@[P.assignS(fieldX(ed,panic),P.trueX)]))]
+			      val notPanicSs = case scanFieldNameOpt of NONE => notPanicSsNoScan
+				               | SOME s => notPanicSsScan s
 			  in
 			      [PT.Compound(
                                    [commentS, 
 				    PT.Compound(
 				     tedDecl 
+				     :: offsetDecl
 				     :: litdecls
 				     @ (genPanicRecovery pTyName notPanicSs))])]
 			  end
@@ -1903,10 +1943,10 @@ structure CnvExt : CNVEXT = struct
 			  else []
                       fun genAccReportBrief e = []
                       fun genAccReportEOR () = []
-		      val reportFields = mungeFields genAccReportFull genAccReportBrief 
-			                  genAccReportEOR (genAccReportMan (reportSuf, iSuf)) fields
+		      val reportFields = (mungeFields genAccReportFull genAccReportBrief 
+			                  genAccReportEOR (genAccReportMan (reportSuf, iSuf)) fields)
                       val reportFunEDs = genReportFuns(reportFun, "struct "^name, accPCT, 
-						       (* reportNerrSs @ *)headerSs @ reportFields)
+						        reportNerrSs @ headerSs @ reportFields)
 
                       (* Generate Init Function struct case *)
 		      val initFunName = lookupMemFun (PX.Name name)

@@ -41,11 +41,8 @@ int main(int argc, char** argv) {
     }
   }
   error(0, "\nFound eof");
-  error(0, "\nDescribe the accum");
-  if (PDC_ERR == PDC_int32_acc_report(pdc, "id", 0, 0, &(accum.id))) {
-    error(0, "** accum_report failed **");
-  }
-  if (PDC_ERR == PDC_int32_acc_report(pdc, "ts", 0, 0, &(accum.ts))) {
+
+  if (PDC_ERR == test_acc_report(pdc, "entire struct", 0, 0, &accum)) {
     error(0, "** accum_report failed **");
   }
 

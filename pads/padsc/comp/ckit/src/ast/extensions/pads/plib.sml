@@ -198,8 +198,8 @@ struct
   fun getLocBeginS(ts:PT.expression, locAddr:PT.expression) = 
     PT.Expr(PT.Call(PT.Id "PDC_IO_getLocB", [ts, locAddr, P.zero]))
 
-  fun getLocEndS(ts:PT.expression, locAddr:PT.expression) = 
-    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocE", [ts, locAddr,P.intX ~2]))
+  fun getLocEndS(ts:PT.expression, locAddr:PT.expression, offset:int) = 
+    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocE", [ts, locAddr,P.intX offset]))
 
   fun isEofX(ts:PT.expression) = 
     PT.Call(PT.Id "PDC_IO_at_EOF", [ts])

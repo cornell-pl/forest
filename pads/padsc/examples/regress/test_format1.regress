@@ -7,29 +7,35 @@ test_read returned: id 2  ts 22
 calling test_read
 test_read returned: id 3  ts 33
 calling test_read
-Error : line 4 char 2 : Missing separator: |.
+Error : line 4 char 2 : Extra data before separator: |.
 [line 4]4>>>a<<<|44
-Note : line 5 char 1 : Resynching at EOR
-[line 5]>>><<<5|55a
 test_read returned: error
 calling test_read
-Error from line 5 char 5 to line 6 char 1: Unexpected extra data before EOR 
-[line 5]5|55>>>a
-[line 6]0<<<00006a66b
+Error at line 5 from char 5 to char 6: Unexpected extra data before EOR 
+[line 5]5|55>>>ab<<<
 test_read returned: error
 calling test_read
-Error : line 6 char 7 : Missing separator: |.
-[line 6]000006>>>a<<<66b
-Note : line 7 char 1 : Resynching at EOR
-[line 7]>>><<<7|77
+Error : line 6 char 7 : Missing literal: |.
+[line 6]000006>>><<<a66b
+Note : line 6 char 7 : Resynching at EOR
+[line 6]000006>>>a66b<<<
 test_read returned: error
 calling test_read
 test_read returned: id 7  ts 77
 Found eof
-Describe the accum
 *****************************************************************************************************
-id : int32
+entire struct : struct test
 *****************************************************************************************************
+Errors: good vals:          4    bad vals:          3    pcnt-bad:   42.857
+  Characterizing errors:  min 0 max 0 avg 0.000
+    => distribution of top 1 values out of 1 distinct values:
+        val:          0 count:          4  pcnt-of-good-vals:  100.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          4  pcnt-of-good-vals:  100.000
+[Describing each field of entire struct]
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+entire struct.id : int32
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          7    bad vals:          0    pcnt-bad:    0.000
   Characterizing int32:  min 1 max 7 avg 4.000
     => distribution of top 7 values out of 7 distinct values:
@@ -42,16 +48,17 @@ good vals:          7    bad vals:          0    pcnt-bad:    0.000
         val:          7 count:          1  pcnt-of-good-vals:   14.286
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          7  pcnt-of-good-vals:  100.000
-*****************************************************************************************************
-ts : int32
-*****************************************************************************************************
-good vals:          5    bad vals:          2    pcnt-bad:   28.571
-  Characterizing int32:  min 11 max 77 avg 39.600
-    => distribution of top 5 values out of 5 distinct values:
-        val:         11 count:          1  pcnt-of-good-vals:   20.000
-        val:         22 count:          1  pcnt-of-good-vals:   20.000
-        val:         33 count:          1  pcnt-of-good-vals:   20.000
-        val:         55 count:          1  pcnt-of-good-vals:   20.000
-        val:         77 count:          1  pcnt-of-good-vals:   20.000
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+entire struct.ts : int32
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+good vals:          6    bad vals:          1    pcnt-bad:   14.286
+  Characterizing int32:  min 11 max 77 avg 40.333
+    => distribution of top 6 values out of 6 distinct values:
+        val:         11 count:          1  pcnt-of-good-vals:   16.667
+        val:         22 count:          1  pcnt-of-good-vals:   16.667
+        val:         33 count:          1  pcnt-of-good-vals:   16.667
+        val:         44 count:          1  pcnt-of-good-vals:   16.667
+        val:         55 count:          1  pcnt-of-good-vals:   16.667
+        val:         77 count:          1  pcnt-of-good-vals:   16.667
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          5  pcnt-of-good-vals:  100.000
+        SUMMING         count:          6  pcnt-of-good-vals:  100.000
