@@ -16,7 +16,8 @@ struct
         Tid.uid * (Ast.ctype * Ast.member option * LargeInt.int option * string option) list
         (* PADS string option is comment *)
         (* pid is optional because of anonymous bit fields *)
-    | Union of Tid.uid * (Ast.ctype * Ast.member) list
+    | Union of Tid.uid * (Ast.ctype * Ast.member * string option) list
+        (* PADS string option is comment *)
         (* pid is mandatory for unions *)
     | Enum of Tid.uid * (Ast.member * LargeInt.int * string option (*PADS *)) list
     | Typedef of Tid.uid * Ast.ctype

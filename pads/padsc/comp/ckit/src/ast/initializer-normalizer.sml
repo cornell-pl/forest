@@ -106,7 +106,7 @@ let
       case fields
 	of [] => (warn "Empty union type, initializing to {}";
 		  (Aggregate [], origInits))
-         | (fieldCtype,member)::_ =>
+         | (fieldCtype,member,s(*PADS*))::_ =>
 	     let val (fieldInit,remainder) = norm(fieldCtype, origInits)
 	      in (Aggregate [fieldInit], remainder)
 	     end

@@ -47,7 +47,7 @@ pstruct out_sum_data_line {
   auint32_vbar             zip_code;
   dib_pn_vbar              nlp_service_tn;
   dib_pn_vbar              nlp_billing_tn;
-  pvirtual countX(:'|',1:) bars;
+  omit countX(:'|',1:) bars;
   eventSeq(:getLen(bars):) events;
   opt_auint32_vbar         siid;
   opt_auint32_vbar         create_id;

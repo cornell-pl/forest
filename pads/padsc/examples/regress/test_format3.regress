@@ -10,15 +10,12 @@ Error : (last: partial) 512B Block 1 char 22 : Read 1 element(s) for array intLi
 [(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n>>><<<12|24|45|56|77|99\n12a|23|34\n12|24|34\n12|24|34\n24|34\n
 Record not okay
 Calling intList_read
-Error at (last: partial) 512B Block 1 just before char 39: Unexpected extra data before array element terminator
-[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77|99>>><<<\n12a|23|34\n12|24|34\n12|24|34\n24|34\n
+Error at (last: partial) 512B Block 1 from char 36 to char 38: Unexpected extra data before array element terminator 
+[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77>>>|99<<<\n12a|23|34\n12|24|34\n12|24|34\n24|34\n
 Record not okay
 Calling intList_read
-Error : (last: partial) 512B Block 1 char 40 : Read 0 element(s) for array intList; required 2.
-[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77|99\n>>><<<12a|23|34\n12|24|34\n12|24|34\n24|34\n
-Calling intList_read
-Error at (last: partial) 512B Block 1 just before char 44: Unexpected extra data before array element separator
-[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77|99\n12a|>>><<<23|34\n12|24|34\n12|24|34\n24|34\n
+Error at (last: partial) 512B Block 1 at char 42 : Unexpected extra data before array element separator 
+[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77|99\n12>>>a<<<|23|34\n12|24|34\n12|24|34\n24|34\n
 Record not okay
 Calling intList_read
 Record okay:	12|24|34

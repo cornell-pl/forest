@@ -232,7 +232,7 @@ end
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT | EOR (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PFORALL | PIN | PVIRTUAL | PENDIAN | PMANIFEST | PRECORD (* PADS *)
+	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE | PRECORD (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -1032,7 +1032,7 @@ pStructField:                   pName pOptActParams ID  pConstraintOpt SEMICOLON
 				                isEndian  = false,
 						pred = pConstraintOpt,
                                                 comment = pCommentOpt})	
-pStructField: PVIRTUAL          pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
+pStructField: POMIT          pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 
 				                args = pOptActParams,
 						isVirtual = true,
@@ -1046,21 +1046,21 @@ pStructField: PENDIAN           pName pOptActParams ID  pConstraintOpt SEMICOLON
 				                isEndian  = true,
 						pred = pConstraintOpt,
                                                 comment = pCommentOpt})	
-pStructField: PENDIAN  PVIRTUAL pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
+pStructField: PENDIAN  POMIT pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 
 				                args = pOptActParams,
 						isVirtual = true,
 				                isEndian  = true,
 						pred = pConstraintOpt,
                                                 comment = pCommentOpt})	
-pStructField: PVIRTUAL  PENDIAN pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
+pStructField: POMIT  PENDIAN pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 
 				                args = pOptActParams,
 						isVirtual = true,
 				                isEndian  = true,
 						pred = pConstraintOpt,
                                                 comment = pCommentOpt})	
-  | PMANIFEST pManifestField SEMICOLON pCommentOpt   (PX.Manifest{decl = pManifestField, comment=pCommentOpt})
+  | PCOMPUTE pManifestField SEMICOLON pCommentOpt   (PX.Manifest{decl = pManifestField, comment=pCommentOpt})
   | EOR  SEMICOLON                    (PX.EOR)
   | expr SEMICOLON                    (PX.Brief expr)
 

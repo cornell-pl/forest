@@ -45,7 +45,6 @@ structure Main : sig
     val traceFlag = ref true
     val parseTreeOnlyFlag = ref false
     val astOnlyFlag = ref false
-    val stdoutFlag = ref false
     val outputHeaderFileName = ref ""
     val outputHeaderFileFlag = ref false
     val outputCFileName = ref ""
@@ -66,12 +65,10 @@ structure Main : sig
   
     fun setHeaderOutputFile s = (
         outputHeaderFileName := s; 
-	stdoutFlag := false; 
         outputHeaderFileFlag := true)
 
     fun setCOutputFile s = (
         outputCFileName := s; 
-	stdoutFlag := false; 
         outputCFileFlag := true)
   
     fun setOutputDir s = (
@@ -85,8 +82,7 @@ structure Main : sig
          ("h", "output header file",      PCL.String (setHeaderOutputFile, false)),
          ("c", "output code file",        PCL.String (setCOutputFile, false)),
          ("a", "generate accumulator program",    PCL.String (addAccumulator, true)),
-         ("p", "output directory",        PCL.String (setOutputDir, false)),
-         ("s", "send output to standard out", PCL.BoolSet(stdoutFlag)),
+         ("r", "output directory",        PCL.String (setOutputDir, false)),
          ("b", "add base type table",         PCL.String (addBaseTable, false)),
 	 ("I", "augment include path",        PCL.String (addInclude, true)),
 	 ("D", "add definition",              PCL.String (addDefine, true)),
@@ -215,7 +211,8 @@ structure Main : sig
 	
     fun buildIncludeName fileName = 
         let val {base,ext} = OS.Path.splitBaseExt(OS.Path.file fileName)
-            val upper = String.translate (String.str o Char.toUpper) base
+            fun cvt c = if Char.isAlphaNum c then (String.str o Char.toUpper) c else "_"
+            val upper = String.translate (cvt) base
 	in
 	    "__"^upper^"__H__"
 	end
@@ -300,33 +297,30 @@ structure Main : sig
       let val {ast,tidtab,errorCount,warningCount,...} = astInfo
 	  val srcFile = OS.Path.file fileName
       in
-          if !stdoutFlag then 
-             PPLib.ppToStrm ((PPAst.ppAst PPAst.ALL (SOME srcFile)) () tidtab) TextIO.stdOut ast
-          else let 
-	        val (houtname, houtstream) = 
-		    if !outputHeaderFileFlag then 
-			(OS.Path.file (!outputHeaderFileName), TextIO.openOut (!outputHeaderFileName))
-		    else getOutStream(fileName, "p", "h")
-	        val (coutname, coutstream) = 
-		    if !outputCFileFlag then 
-			(OS.Path.file(!outputCFileName), TextIO.openOut (!outputCFileName))
-		    else getOutStream(fileName, "p", "c")
-		val includeName = buildIncludeName fileName
-	       in
-		   TextIO.output(houtstream, "#ifndef "^ includeName ^"\n");
-		   TextIO.output(houtstream, "#define "^ includeName ^"\n");
-		   TextIO.output(houtstream, "#include \"libpadsc.h\"\n");
-		   PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER (SOME srcFile)) () tidtab) houtstream ast;
-		   TextIO.output(houtstream, "#endif /*  "^ includeName ^"  */\n");
-		   TextIO.flushOut houtstream;
-		   TextIO.closeOut houtstream;
-		   TextIO.output(coutstream, "#include \"libpadsc-internal.h\"\n");
-		   TextIO.output(coutstream, ("#include \"" ^ houtname ^ "\"\n"));
-		   PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
-		   TextIO.flushOut coutstream;
-		   TextIO.closeOut coutstream;
-		   generateAccum(homeDir, fileName, houtname, coutname)
-	       end
+          let val (houtname, houtstream) = 
+	      if !outputHeaderFileFlag then 
+		  (OS.Path.file (!outputHeaderFileName), TextIO.openOut (!outputHeaderFileName))
+	      else getOutStream(fileName, "p", "h")
+	      val (coutname, coutstream) = 
+		  if !outputCFileFlag then 
+		      (OS.Path.file(!outputCFileName), TextIO.openOut (!outputCFileName))
+		  else getOutStream(fileName, "p", "c")
+	      val includeName = buildIncludeName fileName
+	  in
+	      TextIO.output(houtstream, "#ifndef "^ includeName ^"\n");
+	      TextIO.output(houtstream, "#define "^ includeName ^"\n");
+	      TextIO.output(houtstream, "#include \"libpadsc.h\"\n");
+	      PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER (SOME srcFile)) () tidtab) houtstream ast;
+	      TextIO.output(houtstream, "#endif /*  "^ includeName ^"  */\n");
+	      TextIO.flushOut houtstream;
+	      TextIO.closeOut houtstream;
+	      TextIO.output(coutstream, "#include \"libpadsc-internal.h\"\n");
+	      TextIO.output(coutstream, ("#include \"" ^ houtname ^ "\"\n"));
+	      PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
+	      TextIO.flushOut coutstream;
+	      TextIO.closeOut coutstream;
+	      generateAccum(homeDir, fileName, houtname, coutname)
+	  end
       end
 	    
     fun doFile (homeDir, baseTyFile) (typ, fname) = 
@@ -350,16 +344,7 @@ structure Main : sig
       | _ => error "Unrecognized file type")
 
     fun checkFlags _ = (* Check that the user didn't supply bogus flag combinations. *)
-        let val () = if (!stdoutFlag) 
-	             then if ((!outputHeaderFileFlag) orelse (!outputCFileFlag))
-			  then error "Cannot specify both standard out and output file."
-		          else if (!outputDirFlag)
-			       then error "Cannot specify both standard out and output directory."
-		               else ()
-                     else ()
-        in
-           ()
-	end
+	()
 
     fun main release (cmd, args) = 
       (stage := "Command-line processing";

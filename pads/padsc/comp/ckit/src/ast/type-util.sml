@@ -149,7 +149,7 @@ struct
 	(case Tidtab.find (tidtab,tid)
 	   of SOME{ntype=SOME(B.Union (_,fields)),...} => 
 	       List.all
-	         (fn (ty, _) => (hasKnownStorageSize tidtab ty))
+	         (fn (ty, _, _(*PADS*)) => (hasKnownStorageSize tidtab ty))
 		 fields
 	    | _ => false)
        | Ast.TypeRef tid => hasKnownStorageSize tidtab (reduceTypedef tidtab ty)

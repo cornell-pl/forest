@@ -6,7 +6,7 @@ pstruct auint64_vbar {
 };
 pstruct just_vbar {
   '|';
-  manifest PDC_int32 d = 0;
+  compute PDC_int32 d = 0;
 };
 punion opt_auint32_vbar {
   auint32_vbar yes32;
@@ -18,7 +18,7 @@ punion opt_auint64_vbar {
 };
 pstruct no_pn_vbar {
   "no_TN|";
-  manifest PDC_int32 d = 0;
+  compute PDC_int32 d = 0;
 };
 punion dib_pn_vbar {
   auint64_vbar yesPN;
@@ -56,8 +56,8 @@ pstruct out_sum_fixed2 {
   auint32                  parent_order;
 };
 pstruct do_ev_count {
-  pvirtual countX(:'|',1:) bars;
-  manifest PDC_int32 ev_count = getLen(bars);
+  omit countX(:'|',1:) bars;
+  compute PDC_int32 ev_count = getLen(bars);
 };
 
 record pstruct out_sum_data_line {

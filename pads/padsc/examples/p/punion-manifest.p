@@ -6,7 +6,7 @@ pstruct str1 {
 
 punion choice {
   str1 bigger;
-  manifest aint32 first = 12; //- default value
+  compute aint32 first = 12; //- default value
   aint32 two;
 };
 
@@ -14,7 +14,7 @@ record pstruct str2{
   choice c;
   ' ';
   aint32 t;
-  manifest aint32 v = 11; //- struct manifest field
+  compute aint32 v = 11; //- struct manifest field
 }
 
 

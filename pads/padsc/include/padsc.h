@@ -215,6 +215,7 @@ typedef enum PDC_errCode_t_e {
   PDC_ARRAY_EXTRA_BEFORE_TERM       =  119,
 
   PDC_STRUCT_FIELD_ERR              =  120,
+  PDC_STRUCT_EXTRA_BEFORE_SEP       =  121,
   PDC_UNION_MATCH_ERR               =  130,
   PDC_ENUM_MATCH_ERR                =  140,
   PDC_TYPEDEF_CONSTRAINT_ERR        =  150,

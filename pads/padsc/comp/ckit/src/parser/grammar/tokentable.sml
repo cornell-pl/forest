@@ -76,9 +76,9 @@ struct
                ("term", Tokens.PTERM),
                ("forall", Tokens.PFORALL),
                ("in", Tokens.PIN),
-               ("pvirtual", Tokens.PVIRTUAL),
+               ("omit", Tokens.POMIT),
                ("endian",   Tokens.PENDIAN),       
-               ("manifest",  Tokens.PMANIFEST),       
+               ("compute",  Tokens.PCOMPUTE),       
                ("record", Tokens.PRECORD),     
                ("EOR", Tokens.EOR)	       
               ])

@@ -97,7 +97,7 @@ struct
 	 in {memberOpt=memberOpt, bitfield=NONE, size=bits, align=align}
 	end
 
-  and fieldSizeUnion sizesErrWarnBug tidtab (ctype, member) = 
+  and fieldSizeUnion sizesErrWarnBug tidtab (ctype, member, s(*PADS*)) = 
 	let val {bits, align,...} = process sizesErrWarnBug tidtab ctype
 	 in {bits=bits, align=align}
 	end

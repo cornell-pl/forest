@@ -91,7 +91,7 @@ pstruct out_sum_data_line {
   auint32_field       zip_code;
   dib_pn_field        nlp_service_tn;
   dib_pn_field        nlp_billing_tn;
-  pvirtual countX(:'|', 1:) vbars;
+  omit countX(:'|', 1:) vbars;
   eventSeq(:getLength(vbars):)  events;
   auint32_field       siid;
   auint32_field       create_id;

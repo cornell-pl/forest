@@ -2031,7 +2031,7 @@ PDCI_BCD2UINT(PDCI_bcd2uint64, PDC_uint64, PDC_MAX_UINT64)
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.59 2003-03-21 19:49:25 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.60 2003-03-25 22:17:51 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -3678,6 +3678,9 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
       break;
     case PDC_ARRAY_EXTRA_BEFORE_TERM:
       msg = "Unexpected extra data before array element terminator";
+      break;
+    case PDC_STRUCT_EXTRA_BEFORE_SEP:
+      msg = "Unexpected extra data before field separator in struct";
       break;
     case PDC_STRUCT_FIELD_ERR:
       msg = "Structure field error";

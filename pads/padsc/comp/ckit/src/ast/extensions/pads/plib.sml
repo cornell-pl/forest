@@ -31,6 +31,7 @@ struct
   val PDC_ARRAY_EXTRA_BEFORE_TERM        = PT.Id "PDC_ARRAY_EXTRA_BEFORE_TERM"   
 
   val PDC_STRUCT_FIELD_ERR               = PT.Id "PDC_STRUCT_FIELD_ERR"
+  val PDC_STRUCT_EXTRA_BEFORE_SEP        = PT.Id "PDC_STRUCT_EXTRA_BEFORE_SEP"
   val PDC_UNION_MATCH_FAILURE            = PT.Id "PDC_UNION_MATCH_ERR"
   val PDC_ENUM_MATCH_FAILURE             = PT.Id "PDC_ENUM_MATCH_ERR"
   val PDC_TYPEDEF_CONSTRAINT_ERR         = PT.Id "PDC_TYPEDEF_CONSTRAINT_ERR"
@@ -95,7 +96,7 @@ struct
    PT.Call(PT.Id "PDC_fmtChar", [chr])
 
   fun fmtStr s =
-   PT.Call(PT.Id "PDC_qfmt_Cstr", [PT.String s, P.intX (String.size s)] )
+   PT.Call(PT.Id "PDC_fmt_Cstr", [PT.String s, P.intX (String.size s)] )
 
 (* error functions *)
   fun trace(disc: PT.expression, msg:string) =
@@ -198,7 +199,7 @@ struct
     PT.Expr(PT.Call(PT.Id "PDC_IO_getLocB", [ts, locAddr, P.zero]))
 
   fun getLocEndS(ts:PT.expression, locAddr:PT.expression) = 
-    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocE", [ts, locAddr,P.zero]))
+    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocE", [ts, locAddr,P.intX ~2]))
 
   fun isEofX(ts:PT.expression) = 
     PT.Call(PT.Id "PDC_IO_at_EOF", [ts])

@@ -1,16 +1,21 @@
 :PACKAGE: ast
 
-.SOURCE : ../../include ../tests ../gen
+.SOURCE : ../../include ../tests ../gen ../p
 
 if 0
 CCFLAGS = $(CC.OPTIMIZE) -DNDEBUG
 end
 CCFLAGS = $(CC.DEBUG)
 
+PADSC = ../../padsc
+RES_SPEC = -r ../gen
+
+PADS_TESTS = format1 format2 format3 format4 format5 format6 punion-manifest \
+             readinttest ai
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 OTHER_TESTS  = test_enum test_from test_ai test_readint
-ALL_TESTS = $(FORMAT_TESTS) $(DIB_TESTS) $(OTHER_TESTS)
+ALL_TESTS = $(FORMAT_TESTS) $(DIB_TESTS) $(OTHER_TESTS) 
 
 dib_tests : $(DIB_TESTS)
 
@@ -45,13 +50,44 @@ test_dibbler1 :: test_dibbler1.c  dibbler.c     -lpadsc
 test_dibbler1_mod :: test_dibbler1_mod.c  dibbler-mod.c     -lpadsc
 test_fast_dib :: test_fast_dib.c  dibbler2.c    -lpadsc
 test_fast_dib_mod :: test_fast_dib_mod.c  dibbler2-mod.c    -lpadsc
-regress : regress_test_format1 \
+
+
+genp    : format1 format2 format3 format4 format5 format6 punion-manifest ai readinttest
+format1 : format1.p
+	  $(PADSC) ../p/format1.p $(RES_SPEC)
+
+format2 : format2.p
+	  $(PADSC) ../p/format2.p $(RES_SPEC)
+
+format3 : format3.p
+	  $(PADSC) ../p/format3.p $(RES_SPEC)
+
+format4 : format4.p
+	  $(PADSC) ../p/format4.p $(RES_SPEC)
+
+format5 : format5.p
+	  $(PADSC) ../p/format5.p $(RES_SPEC)
+
+format6 : format6.p
+	  $(PADSC) ../p/format6.p $(RES_SPEC)
+
+punion-manifest : punion-manifest.p
+	  $(PADSC) ../p/punion-manifest.p $(RES_SPEC)
+
+readinttest : readinttest.p
+	  $(PADSC) ../p/readinttest.p $(RES_SPEC)
+
+ai : ai.p
+	  $(PADSC) ../p/ai.p $(RES_SPEC)
+
+regress : genp\
+	  regress_test_format1 \
           regress_test_format2 \
           regress_test_format3 \
           regress_test_format5 \
           regress_test_format6 \
           regress_test_readint \
-          regress_test_munion
+          regress_test_munion  \
           regress_test_ai
 
 regress_test_format1 : test_format1
@@ -101,3 +137,4 @@ regress_test_ai : test_ai
 
 clean :
 	$(RM) -f *~ *.o $(ALL_TESTS)
+

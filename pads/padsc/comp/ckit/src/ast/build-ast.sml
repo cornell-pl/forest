@@ -643,7 +643,7 @@ let
 	  | _ => error "TCInitializer: ill-formed StructRef type")
     | TCInitializer (Ast.UnionRef tid, Ast.Aggregate exprs) =
       (case lookTid tid
-	 of SOME{ntype=SOME(B.Union(tid,(fieldTy, _)::fields)),...} =>
+	 of SOME{ntype=SOME(B.Union(tid,(fieldTy, _,_(*PADS*))::fields)),...} =>
 	      (case exprs
 	         of [expr] => TCInitializer(fieldTy, expr)
 		  | _ ::  _ =>
@@ -2791,13 +2791,13 @@ end old code ******)
 
 		      (* union members are more restricted than struct members *)
 		      fun checkUnionMember (ty: Ast.ctype, NONE: Ast.member option,
-					    _ : Int32.int option, _(*PADS*)) =
+					    _ : Int32.int option, s : string option(*PADS*)) =
 			  (error "union member has no name";
-			   (ty,bogusMember(Sym.member(tid,"<noname>"))))
-			| checkUnionMember (ty,SOME m,SOME _, _(*PADS*)) =
+			   (ty,bogusMember(Sym.member(tid,"<noname>")),s))
+			| checkUnionMember (ty,SOME m,SOME _, s(*PADS*)) =
 			  (error "union member has size spec";
-			   (ty,m))
-			| checkUnionMember (ty,SOME m,NONE,_(*PADS*)) = (ty,m)
+			   (ty,m,s))
+			| checkUnionMember (ty,SOME m,NONE,s(*PADS*)) = (ty,m,s)
 
 		   in if alreadyDefined then ()
 		      else

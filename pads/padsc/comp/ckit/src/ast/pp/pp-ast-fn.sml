@@ -288,6 +288,17 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	    ;newline pps
 	    ;addStr pps "}"
 	    )
+	fun pseparate (ppElt, sep, ppTrail) pps [] = ()
+          | pseparate (ppElt, sep, ppTrail) pps [x] = (ppElt pps x; ppTrail pps x)
+	  | pseparate (ppElt, sep, ppTrail) pps (x::xs) = 
+              (ppElt pps x; sep pps; ppTrail pps x; pseparate(ppElt,sep,ppTrail) pps xs)
+	fun ppOptList2 ppElt sep ppTrail [] = ()
+	  | ppOptList2 ppElt sep ppTrail l = 
+	    (addStr pps "{"
+	    ;blockify 2 (pseparate (ppElt,fn pps => (addStr pps sep), 
+				    fn pps => (fn x => (ppTrail pps x; newline pps)))) pps l
+	    ;addStr pps "}"
+	    )
     in case nct
 	 of B.Struct (tid,members) =>
 	      let fun ppLI' pps li = (addStr pps ":"; ppLI pps li)
@@ -307,9 +318,11 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	      end
 	  | B.Union (tid,members) =>
 	      let 
-		  fun ppMember pps (ct, member) =
+		  fun ppMember pps (ct, member,strOpt) =
 		    (ppDecl0 aidinfo tidtab pps (SOME(MEMBER member),EMPTY,ct)
 		    ;addStr pps ";"
+		    ;(case strOpt of SOME s => addStr pps ("\t\t/* "^ s ^" */")
+			          | NONE => () (* PADS *))
 		    )
 	      in addStr pps "union "
 		;ppTid tidtab pps tid
@@ -321,14 +334,14 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 		      (ppMember pps member
 		      ;addStr pps "="
 		      ;ppLI pps li
-                      ;addStr pps ","                           (* PADS:slight changes from orig*)
-                      ;(case commentOpt of SOME s => addStr pps ("\t\t/* "^ s ^" */")
-			          | NONE => () (* PADS *))
 		      )
+		    fun ppTrail pps (member,li,commentOpt) = 
+			(case commentOpt of SOME s => addStr pps ("\t\t/* "^ s ^" */")
+			          | NONE => () (* PADS *))
 		in (addStr pps "enum "
 		   ;ppTid tidtab pps tid
 		   ;space pps
-		   ;ppOptList ppMemberInt "" members
+		   ;ppOptList2 ppMemberInt "," ppTrail members
 		   )
 		end
 	  | B.Typedef (tid,ctype) =>

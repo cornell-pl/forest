@@ -56,7 +56,7 @@ pstruct out_sum_fixed2 {
   auint32                  parent_order;
 };
 pstruct do_ev_count {
-  pvirtual countX(:'|',1:) bars;
+  omit countX(:'|',1:) bars;
   dummy(:getLen(bars):) ev_count;
 };
 pstruct out_sum_data_line {

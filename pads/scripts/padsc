@@ -62,8 +62,9 @@ set help = 0
 #set echo
 foreach x ($*)
     switch ($x)
-    case -p:
+    case -r:
       set retarg_OK = 0
+      breaksw
     case -help:
     case --help:
       set help = 1
@@ -71,8 +72,9 @@ foreach x ($*)
       set opts = "$opts $x"
       breaksw
     default:
-      set y = `basename $x .p`
-      if ($x == $y) then
+      set tltmp = $x:t
+      set y = `basename $tltmp .p`
+      if ($tltmp == $y) then
         set opts = "$opts $x"
       else
         set pfiles = "$pfiles $x"
@@ -123,12 +125,12 @@ end # forech
 if ($help) then
   set cmd = "-help"
 else
-  if ($pfiles == "") then
+  if ("$pfiles" == "") then
     echo $firstout"No .p files specified.  Usage:  $0 <options> <.p files>\n\tUse --help for all available options.\n"
     exit -1
   endif
   if ($retarg_OK) then
-      set cmd = "-p $retarg $opts $pfiles"
+      set cmd = "-r $retarg $opts $pfiles"
       echo $firstout"Chose target dir $retarg\n"
       set firstout = ""
   else
