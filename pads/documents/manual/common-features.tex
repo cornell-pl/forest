@@ -27,8 +27,8 @@ have the following form:
 & \alt{} & \nont{struct\_ty}           & (* \chapref{chap:structs} *)\\[1ex]
 & \alt{} & \nont{union\_ty}            & (* \chapref{chap:unions} *)\\[1ex]
 & \alt{} & \nont{array\_ty}            & (* \chapref{chap:arrays}*)\\[1ex]
-& \alt{} & \nont{opt\_ty}              & (* \chapref{chap:opts} *)\\[1ex]
 & \alt{} & \nont{enum\_ty}             & (* \chapref{chap:enums} *)\\[1ex]
+& \alt{} & \nont{opt\_ty}              & (* \chapref{chap:opts} *)\\[1ex]
 & \alt{} & \nont{typedef\_ty}          & (* \chapref{chap:typedefs} *)\\[1ex]
 \end{tabular}
 
@@ -198,7 +198,7 @@ ibm-style record    & Record header indicates size\\
 \end{tabular}
 
 \noindent
-\secref{??} describes how to set the appropriate record discipline for
+\secref{sec:library-customization-character-encodings} describes how to set the appropriate record discipline for
 a data source. 
 
 
@@ -363,7 +363,7 @@ the appropriate chapter.
 All operations take a pointer to an
 initialized \pads{} handle as their first parameter.  Information
 about how to manage \pads{} library handles appears in
-\chapref{chap:using-library}. 
+\chapref{chap:library-use}. 
 
 Many of the operations that can fail return a value of type
 \cd{Perror_t} to indicate success or failure.  This type has two

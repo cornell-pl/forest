@@ -4,24 +4,108 @@ In this chapter, we use examples to give an overview of \pads{}.
 
 \section{CLF: Common log format}
 \label{sec:example:common-log-format}
-The Common Log Format (CLF) \cite{clf} for web proxy/servers is used
-to describe client request/server response pairs.  Such logs consist
-of a sequence of entries, each of which contains information about a
-single request/response.  In particular, each entry specifies the IP
-address/hostname of the client, the owner of the TCP connection if
-known, the authenticated user makeing the request if known, the time
-of the request, the HTTP method used, the requested URL, the HTTP
-version, a three-digit response code, and the number of bytes
-returned. 
+Web servers use the Common Log Format (CLF) to log client
+requests~\cite{wpp}.  Researchers use such logs to measure
+properties of web workloads and to evaluate protocol changes
+by "replaying" the user activity recorded in the log.
+This ASCII format consists of a sequence of
+records, each of which has seven fields: the host name or IP address
+of the client making the request, the account associated with the
+request on the client side, the name the user provided for
+authentication, the time of the request, the actual request, the
+\textsc{http} response code, and the number of bytes returned as a
+result of the request.  The actual request has three parts: the
+request method (\eg, \texttt{GET}, \texttt{PUT}), the requested
+\textsc{uri}, and the protocol version.  In addition, the second and
+third fields are often recorded only as a '-' character to indicate
+the server did not record the actual data.  \figref{figure:clf-records}
+shows a couple of typical records.
 
-\begin{verbatim}
-207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
-include other record formats here.
-\end{verbatim}
+\begin{figure*}[t!]
+\begin{small}
+\begin{center}
+\begin{code}
+\input{../../padsc/examples/data/ai.paper}
+\end{code}
+\vskip -2ex
+\caption{Tiny example of web server log data.}
+\label{figure:clf-records}
+\end{center}
+\end{small}
+\end{figure*}
+
+\begin{figure}
+\input{../pldi/wsl}
+\caption{\pads{} description for web server log data.}
+\label{figure:wsl}
+\end{figure}
+
 
 \section{\padsl{} description}
 \label{sec:example:padsl-description}
-Include top-down presentation of pads description
+\figref{figure:wsl} gives the \pads{} description for CLF web server logs.  
+We will use this example to illustrate various features of the \pads{}
+language.  In \pads{} descriptions, types are declared before they are
+used, so the type that describes the totality of the data source
+appears at the bottom of the description. 
+
+\kw{Pstruct}s describe fixed sequences of data with unrelated types.
+In the CLF description, the type declaration for \cd{version_t}
+illustrates a simple \kw{Pstruct}. It starts with a string literal
+that matches the constant \cd{HTTP/} in the data source.  It then has
+two unsigned integers recording the major and minor version numbers
+separated by the literal character \kw{'.'}.  \pads{} supports
+character, string, and regular expression literals, which are
+interpreted with the ambient character encoding. The type
+\cd{request_t} similarly describes the request portion of a CLF
+record.  In addition to physical format information, this \kw{Pstruct}
+includes a semantic constraint on the \cd{version} field.
+Specifically, it requires that obsolete methods \cd{LINK} and
+\cd{UNLINK} occur only under HTTP/1.1.  This constraint illustrates
+the use of predicate functions and the fact that earlier fields are in
+scope during the processing of later fields, as the constraint refers
+to both the \cd{meth} and \cd{version} fields in the \kw{Pstruct}.
+\chapref{chap:structs} describes \kw{Pstruct}s in detail.
+
+\kw{Punion}s describe variation in the data source.  For example, the
+\cd{client_t} type in the CLF description indicates that the first
+field in a CLF record can be either an IP address or a hostname.
+During parsing, the branches of a \kw{Punion} are tried in order; the
+first branch that parses without error is taken.  The \cd{auth_id_t}
+type illustrates the use of a constraint: the branch \cd{unauthorized}
+is chosen only if the parsed character is a dash.  \pads{} also
+supports a \textit{switched} union that uses a selection expression to
+determine the branch to parse.  Typically, this expression depends
+upon already-parsed portions of the data source.
+
+\pads{} provides \kw{Parray}s to describe varying-length sequences of data all 
+with the same type.  The \cd{eventSeq_t} declaration in the \dibbler{} data description
+uses a \kw{Parray} to characterize the sequence of events an
+order goes through during processing.  This declaration indicates that the elements
+in the sequence have type \cd{event_t}.  It also specifies that the elements will
+be separated by vertical bars, and that the sequence will be terminated by 
+an end-of-record marker (\kw{Peor}).  In general, \pads{} provides a rich collection
+of array-termination conditions: reaching a maximum size, finding a terminating
+literal (including end-of-record and end-of-source),
+or satisfying a user-supplied predicate over the already-parsed portion of 
+the \kw{Parray}.  Finally, this type declaration includes a \kw{Pwhere} clause
+to specify that the sequence of timestamps must be in sorted order.
+It uses the \kw{Pforall} construct to express this constraint.
+In general, the body of a \kw{Pwhere} clause can be any boolean expression.
+In such a context for arrays, the pseudo-variable \cd{elts} is bound to the in-memory representation of the sequence and \cd{length} to its length.
+
+Returning to the CLF description in \figref{figure:wsl}, the \kw{Penum} type \cd{method_t} describes
+a collection of data literals.  During parsing, \pads{} interprets these
+constants using the ambient character encoding.  The \kw{Ptypedef} 
+\cd{response_t} describes possible server response codes in CLF data by adding
+the constraint that the three-digit integer must be between 100 and 600.
+
+The \cd{order_header_t} type in the \dibbler{} data description contains several
+anonymous uses of the \kw{Popt} type.  This type is syntactic sugar for a 
+stylized use of a \kw{Punion} with two branches: the first with the indicated type, and the second with the ``void'' type, which  
+always matches but never consumes any input.
+
+
 
 \section{Generated library}
 \label{sec:example:generated-library}
