@@ -37,14 +37,7 @@ self
 /* END_MACRO */
 
 #define SND_NODE_INIT_BODY(ty)
-   /* Setup the virtual table */              
-  self->vt = & ty ## _sndNode_vtable;
-					      
-  /* Setup node-type specific fields  */      
-  self->manager = manager;		      
-  self->ancestor_idx = ancestor_idx;
-  self->ptr_gen = gen;
-  self->idx = idx
+  PDCI_SND_INIT(ty,manager,ancestor_idx,gen,idx)
 /* END_MACRO */
 
 #define SND_NODE_INIT_RET()

@@ -970,10 +970,14 @@ struct Ploc_s {
  * errCode to P_NOT_PARSED, nerr to 0, loc to all zeros.
  *
  * PD_COMMON_INIT_NO_ERR: like PD_COMMON_INIT, but initializes errCode to P_NO_ERR.
+ *
+ * PD_COMMON_READ_INIT: Macros that initializes the loc.b field to the current io 
+ * position.
  */
 #ifdef FOR_CKIT
 void PD_COMMON_INIT(void *pd);
 void PD_COMMON_INIT_NO_ERR(void *pd);
+void PD_COMMON_READ_INIT(P_t *pads,void *pd);
 #endif
 
 /* type Pbase_pd: */
@@ -4970,6 +4974,12 @@ do { \
   T ## _cleanup (pads, &t); \
   T ## _pd_cleanup (pads, &t_pd); \
 } while (0)
+
+typedef enum Pread_result_t_e{
+  STATUS_ONGOING,
+  STATUS_DONE,
+  STATUS_ALREADY_DONE
+} Pread_result_t;
 
 /* ================================================================================
  * INCLUDE MACRO IMPLS OF SOME OF THE FUNCTIONS DECLARED ABOVE

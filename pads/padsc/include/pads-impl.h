@@ -94,6 +94,10 @@ Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
   (pd)->errCode = P_NO_ERR; \
 } while (0)
 
+#define PD_COMMON_READ_INIT(padsIN,pdIN) do { \
+  PDCI_IO_BEGINLOC(padsIN,(pdIN)->loc); \
+} while (0)
+
 #define Pbase_pd_init(pd) PD_COMMON_INIT(pd)
 #define Pbase_pd_init_no_err(pd) PD_COMMON_INIT_NO_ERR(pd)
 

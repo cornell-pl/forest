@@ -2164,6 +2164,561 @@ do {
 } while (0)
 /* END_MACRO */
 
+/************
+ * 
+ *
+ ***********/
+#define AR_TEST_MIN_GT_MAX(ty)
+do{
+    if (P_Test_SynCheck (m->compoundLevel)&&(min>max)) 
+      {
+        if (!(pd->nerr)) 
+          {
+            (pd->nerr)++;
+            pd->errCode = P_ARRAY_MIN_BIGGER_THAN_MAX_ERR;
+            P_io_getLocE (pads,&tloc,-1);
+            PDCI_report_err (pads,P_LEV_WARN,&tloc,pd->errCode,(#ty "_read"),
+			     "Mininum value for the size of array " #ty "(%d) is greater than its maximum size (%d)",min,max);
+          }
+        else
+          {
+            (pd->nerr)++;
+          }
+        if (P_spec_level (pads)) 
+          return STATUS_DONE;
+      }
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_NEW_RBUF_ZERO(ty,vIN)
+do{
+    if (0==((vIN)->_internal)) 
+      {
+        (vIN)->_internal = RMM_new_rbuf (P_rmm_zero (pads));
+        if (0==((vIN)->_internal)) 
+          {
+            PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_read","");
+          }
+      }
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_NEW_RBUF_NOZERO(ty,vIN)
+do{
+    if (0==((vIN)->_internal)) 
+      {
+        (vIN)->_internal = RMM_new_rbuf (P_rmm_nozero (pads));
+        if (0==((vIN)->_internal)) 
+          {
+            PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_read","");
+          }
+      }
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_FC_PANIC()
+do{
+  if (P_PS_isPanic (pd)){
+    goto do_final_checks;
+  }      
+}while(0)
+/* END_MACRO */   
+
+#define AR_TEST_FC_REACHED_END()
+do{
+  if (P_io_at_eof (pads)|| P_io_at_eor (pads)){
+    goto do_final_checks;
+  }
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_FC_MATCH_TERM(funIn,termIN,eat_fIN,panicIN)
+do{
+  if (P_OK== (funIN) (pads,(termIN),(eat_fIN),(panicIN),&offset))
+    {
+      foundTerm = 1;
+      goto do_final_checks;
+    } 
+}while(0)
+/* END_MACRO */
+
+
+#define AR_TEST_FC_REACHED_MAX(maxIN)
+do{
+  if((rep->length)==(maxIN)){
+    goto do_final_checks;
+  }
+  if((rep->length)>(maxIN))
+    PDCI_report_err(...);
+}while(0)
+/* END_MACRO */
+
+
+#define AR_RESERVE_SPACE(ty,elRepTy,elPdTy,hintIN)
+do{
+  if (0!=RBuf_reserve (rep->_internal,(void **) (&(rep->elts)),sizeof(elRepTy),rep->length + 1,hintIN)) 
+    {
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_read",0);
+    }
+  if (0!=RBuf_reserve (pd->_internal,(void **) (&(pd->elts)),sizeof(elPdTy),rep->length + 1,hintIN)) 
+    {
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_read",0);
+    }
+}while(0)
+/* END_MACRO */
+
+#define AR_GET_BEGIN_LOC()
+do{
+  P_io_getLocB (pads,&beginLoc,0);
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_FC_SOURCE_ADVANCE(bIN,eIN)
+do{
+  P_io_getLocB (pads,&(eIN),0);
+  if (P_POS_EQ ((bIN).b, (eIN).b)) 
+    {
+      /*  array termination from lack of progress */
+      (rep->length) -= 1;
+      goto do_final_checks;
+    }
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_FC_SOURCE_ADVANCE2()
+do{
+  AR_TEST_FC_SOURCE_ADVANCE(beginLoc,endLoc);
+}while(0)
+/* END_MACRO */
+
+#define AR_CHECKPOINT(ty)
+do{
+  (pads->inestlev)++;
+  if (P_ERR==P_io_checkpoint (pads,1)) 
+    {
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_CHKPOINT_ERR, #ty "_read",0);
+    }
+}while(0)
+/* END_MACRO */
+
+#define AR_READ_ELEM(readCallIN)
+do{
+  result = (readCallIN);
+  (pd->numRead)++;
+  (rep->length)++;
+}while(0)
+/* END_MACRO */
+
+#define AR_RECORD_ERROR(errCodeIN,WHATFN,ERRMSG...)
+do{
+  if (!(pd->nerr)) 
+    {
+      (pd->nerr)++;
+      pd->errCode = (errCodeIN);
+      P_io_getLocE (pads,&tloc,-1);
+      PDCI_report_err (pads,P_LEV_WARN,&tloc,pd->errCode,WHATFN,ERRMSG);
+    }
+  else
+    {
+      (pd->nerr)++;
+    }
+  if (P_spec_level (pads)) 
+    return STATUS_DONE;
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_READ_ERR(addTest1IN, addTest2IN)
+do{
+  if (result==P_ERR && (addTest1IN) && (addTest2IN)) 
+    {
+      /*  in markErrorSs */
+      if (P_Test_NotIgnore (m->compoundLevel)) 
+	{
+	  (pd->neerr)++;
+	  if (!(pd->nerr)) 
+	    {
+	      (pd->nerr)++;
+	      pd->errCode = P_ARRAY_ELEM_ERR;
+	      P_io_getLocE (pads,&(pd->loc),-1);
+	      /*  Index of first element with an error */
+	      pd->firstError = ((rep->length)-1);
+	    }
+	  if (P_spec_level (pads)) 
+	    return STATUS_DONE;
+	}
+    }
+  
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_FC_PANIC_RECOVER1(pdIN,addTestIN,sepIN,termIN)
+do{
+  if (P_PS_isPanic (&(pdIN)) && (addTestIN)) 
+    {
+      size_t offset;
+      /*  Try to recover to separator and/or terminator */
+      if (P_OK==Pchar_lit_scan1 (pads,(sepIN),(termIN),1,1,&offset)) 
+	{
+	  /*  We recovered; restored invariant */
+	}
+      else
+	{
+	  /*  Recovery failed */
+	  P_PS_setPanic (pd);
+	  goto do_final_checks;
+	}
+  }
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_FC_PANIC_RECOVER2(pdIN,addTestIN,sepIN,termIN)
+do{
+  if (P_PS_isPanic (&(pdIN)) && (addTestIN)) 
+    {
+      {
+	int f_found;
+	size_t offset;
+	/*  Try to recover to separator and/or terminator */
+	if (P_OK==Pchar_lit_scan2 (pads,(sepIN),(termIN),1,0,1,&f_found,&offset)) 
+	  {
+	    /*  We recovered; restored invariant */
+	  }
+	else
+	  {
+	    /*  Recovery failed */
+	    P_PS_setPanic (pd);
+	    goto do_final_checks;
+	  }
+      }
+    }
+}while(0)
+/* END_MACRO */
+
+#define AR_FC_SCAN_SEP_TERM(ty,funIn,sepIN,termIN,eat_fIN,eat_sIN,panicIN)
+do{
+  int sepFound;
+  size_t offset;
+  P_io_getLocB (pads,&(pd->loc),0);
+  if (P_OK==(funIN) (pads,(sepIN),(termIN),(eat_fIN),(eat_sIN),(panicIN),&sepFound,&offset)) 
+    {
+      if (!sepFound) 
+	{
+	  foundTerm = 1;
+	}
+      if (P_Test_SynCheck (m->compoundLevel)) 
+	{
+	  if (sepFound && offset) 
+	    {
+	      if (!(pd->nerr)) 
+		{
+		  (pd->nerr)++;
+		  pd->errCode = P_ARRAY_EXTRA_BEFORE_SEP;
+		  P_io_getLocE (pads,&(pd->loc),-2);
+		  PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read",0);
+		}
+	      else
+		{
+		  (pd->nerr)++;
+		}
+	      if (P_spec_level (pads)) 
+		return STATUS_DONE;
+	    }
+	  else
+	    {
+	      if (!sepFound) 
+		{
+		  if (!(pd->nerr)) 
+		    {
+		      (pd->nerr)++;
+		      pd->errCode = P_ARRAY_EXTRA_BEFORE_TERM;
+		      P_io_getLocE (pads,&(pd->loc),-1);
+		      PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read",0);
+		    }
+		  else
+		    {
+		      (pd->nerr)++;
+		    }
+
+		  if (P_spec_level (pads)) 
+		    return STATUS_DONE;
+		}
+	      goto do_final_checks;
+	    }
+	}
+    }
+  else
+    {
+      /*  Error reading separator */
+      {
+	if (!(pd->nerr)) 
+	  {
+	    (pd->nerr)++;
+	    pd->errCode = P_ARRAY_SEP_ERR;
+	    P_io_getLocE (pads,&(pd->loc),-1);
+	    PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read","Missing separator");
+	  }
+	else
+	  {
+	    (pd->nerr)++;
+	  }
+	if (P_spec_level (pads)) 
+	  return STATUS_DONE;
+	P_PS_setPanic (pd);
+      }
+      goto do_final_checks;
+    }
+}while(0)
+/* END_MACRO */
+
+#define AR_SCAN_SEP(ty,funIn,sepIN,eat_fIN,panicIN)
+do{
+  size_t offset;
+  P_io_getLocB (pads,&(pd->loc),0);
+  if (P_OK== (funIn) (pads,(sepIN),(eat_fIN),(panicIN),&offset)) 
+    {
+      if (P_Test_SynCheck (m->compoundLevel)) 
+	{
+	  if (offset) 
+	    {
+	      if (!(pd->nerr)) 
+		{
+		  (pd->nerr)++;
+		  pd->errCode = P_ARRAY_EXTRA_BEFORE_SEP;
+		  P_io_getLocE (pads,&(pd->loc),-2);
+		  PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read",0);
+		}
+	      else
+		{
+		  (pd->nerr)++;
+		}
+	      if (P_spec_level (pads)) 
+		return STATUS_DONE;
+	    }
+	}
+    }
+  else
+    {
+      /*  Error reading separator */
+      {
+	if (!(pd->nerr)) 
+	  {
+	    (pd->nerr)++;
+	    pd->errCode = P_ARRAY_SEP_ERR;
+	    P_io_getLocE (pads,&(pd->loc),-1);
+	    PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read","Missing separator");
+	  }
+	else
+	  {
+	    (pd->nerr)++;
+	  }
+	if (P_spec_level (pads)) 
+	  return STATUS_DONE;
+	P_PS_setPanic (pd);
+      }
+      goto do_final_checks;
+    }
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_TRAILING_JUNK(ty,funIN,termIN)
+do{
+  /* End of loop. Read trailing terminator if there was trailing junk */
+    if ((!P_PS_isPanic (pd))&&(!foundTerm)) 
+      {
+        size_t offset;
+        P_io_getLocB (pads,&(pd->loc),0);
+        if (P_OK == funIN(pads,(termIN),0,0,&offset)) 
+          {
+            if (P_Test_SynCheck (m->compoundLevel)) 
+              {
+                {
+                  if (!(pd->nerr)) 
+                    {
+                      (pd->nerr)++;
+                      pd->errCode = P_ARRAY_EXTRA_BEFORE_TERM;
+                      P_io_getLocE (pads,&(pd->loc),-1);
+                      PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read",0);
+                    }
+                  else
+                    {
+                      (pd->nerr)++;
+                    }
+                  if (P_spec_level (pads)) 
+                    return STATUS_DONE;
+                }
+                foundTerm = 1;
+              }
+          }
+        else
+          {
+            if (!(pd->nerr)) 
+              {
+                (pd->nerr)++;
+                pd->errCode = P_ARRAY_TERM_ERR;
+                P_io_getLocE (pads,&(pd->loc),-1);
+                PDCI_report_err (pads,P_LEV_WARN,&(pd->loc),pd->errCode,#ty "_read","Missing terminator");
+              }
+            else
+              {
+                (pd->nerr)++;
+              }
+            if (P_spec_level (pads)) 
+              return STATUS_DONE;
+            P_PS_setPanic (pd);
+          }
+      }
+}while(0)
+/* END_MACRO */
+
+#define AR_TEST_TRAILING_JUNK_C(ty,funIN,termIN) AR_TEST_TRAILING_JUNK(ty,funIN,termIN)
+#define AR_TEST_TRAILING_JUNK_P(ty,funIN,termIN) AR_TEST_TRAILING_JUNK(ty,funIN,termIN)
+
+#define AR_READ_EOR(ty)
+do{
+  /*  Read to EOR */
+  Pbase_pd tpd;
+  size_t bytes_skipped;
+  P_io_getLocB (pads,&(tpd.loc),0);
+  if (P_OK==P_io_next_rec (pads,&bytes_skipped)) 
+    {
+      if (bytes_skipped) 
+	{
+	  /*  in genReadEOR1 */
+	  P_io_getLocE (pads,&(tpd.loc),-1);
+	  if (!P_PS_isPanic (pd)) 
+	    {
+	      PDCI_report_err (pads,P_LEV_WARN,&(tpd.loc),P_EXTRA_BEFORE_EOR,"list_read","Unexpected data before EOR");
+	      if (0==(pd->nerr)) 
+		{
+		  pd->errCode = P_EXTRA_BEFORE_EOR;
+		  P_io_getLocE (pads,&(tpd.loc),-1);
+		  pd->loc = (tpd.loc);
+		}
+	      (pd->nerr)+=1;
+	    }
+	  else
+	    {
+	      P_io_getLocE (pads,&(tpd.loc),-1);
+	      PDCI_report_err (pads,P_LEV_INFO,&(tpd.loc),P_NO_ERR,#ty "_read","Resynching at EOR");
+	    }
+	  if (P_spec_level (pads)) 
+	    return STATUS_DONE;
+	}
+      P_PS_unsetPanic (pd);
+    }
+  else
+    {
+      /*  in genReadEOR2 */
+      P_PS_unsetPanic (pd);
+      P_io_getLocE (pads,&(tpd.loc),-1);
+      PDCI_report_err (pads,P_LEV_WARN,&(tpd.loc),P_AT_EOR,#ty "_read","Found EOF when searching for EOR");
+      if (P_spec_level (pads)) 
+	return STATUS_DONE;
+    }
+}while(0)
+/* END_MACRO */
+
+#define AR_CHK_ENOUGH_ELEMENTS(ty)
+do{
+  if ((!reachedLimit)&&((rep->length)<min)) 
+    AR_RECORD_ERROR(P_ARRAY_SIZE_ERR,#ty "_read","Read %d element(s) for array " #ty "; required %d",rep->length,min);
+}while(0)
+/* END_MACRO */
+
+#define AR_CFORALL_LOOP(indexIN,lowerIN,upperIN,bodyIN)
+do{
+  int indexIN;
+  if (!((0<=(lowerIN))&&((upperIN)<(rep->length)))) 
+    {
+      violated = 1;
+    }
+  for (indexIN = 0; !violated && indexIN <= (upperIN); indexIN++)
+    {
+      if (!(bodyIN)) 
+	{
+	  violated = 1;
+	}
+    }
+}while(0)
+/* END_MACRO */
+
+/* 
+ * Must preceed this call with a phantom declaration of indexIN.
+ */
+#define AR_CHK_FORALL_CONSTRAINT(ty,indexIN,lowerIN,upperIN,bodyIN)
+do{
+  int violated=0;
+  {
+    AR_CFORALL_LOOP(indexIN,lowerIN,upperIN,bodyIN);
+  }
+  if (violated) 
+    {
+      AR_RECORD_ERROR(P_ARRAY_USER_CONSTRAINT_ERR,#ty "_read","Pforall constraint for array " #ty " violated");
+    }
+}while(0)
+/* END_MACRO */
+
+#define AR_STD_RETURN()
+((pd->nerr)==0) ? P_OK : P_ERR
+/* END_MACRO */
+
+#define AR_TEST_ALREADY_DONE()
+do{
+  if (!P_PS_isPartial(pd))
+    return STATUS_ALREADY_DONE;
+}while(0)
+/* END_MACRO */
+
+#define AR_DO_FINAL_CHECKS()
+do{
+  goto do_final_checks;
+}while(0)
+/* END_MACRO */
+
+#define AR_RO_DECS()
+  int result;
+  Ploc_t beginLoc, endLoc
+/* END_MACRO */
+
+#define AR_LBL_FINAL_CHECKS()
+ do_final_checks:
+/* END_MACRO */
+
+#define AR_RET_ONGOING()
+STATUS_ONGOING
+/* END_MACRO */
+
+#define AR_RET_DONE()
+STATUS_DONE
+/* END_MACRO */
+
+#define AR_SET_PARTIAL()
+do{
+  P_PS_setPartial(pd);  
+}while(0)
+/* END_MACRO */
+
+#define AR_UNSET_PARTIAL()
+do{
+  P_PS_unsetPartial(pd);  
+}while(0)
+/* END_MACRO */
+
+
+#define AR_READ_ALL(allocCallIN,readCallIN,incIN,WHATFN)
+do{
+    allocCallIN;
+    result = readCallIN;
+    incIN;
+}while(result == STATUS_ONGOING)
+/*
+  if (result == STATUS_ALREADY_DONE){
+    PDCI_report_err(pads,P_LEV_FATAL,P_NO_ERR,WHATFN,
+		      "attempting to read into a completed array.");
+  }
+*/
+/* END_MACRO */
+
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 #endif /* FOR_CKIT */

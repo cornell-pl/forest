@@ -76,8 +76,6 @@ void  PDCI_MK_TOP_NODE(PDCI_node_t *result,
 		       void* m, void* pd,
 		       void* rep,
 		       const char *whatfn);
-typedef int type_t;
-typedef int field_t;
 
 void NODE_NEW_BODY(type_t ty);
 PDCI_node_t *NODE_NEW_RET();

@@ -165,7 +165,46 @@ void PDCI_REGEXP_FROM_CSTR(P_t *pads, Pregexp_t my_regexp, const char *str_expr,
 void PDCI_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr,
 			  const char *err_prefix, const char *whatfn);
 
+typedef int type_t;
+typedef int field_t;
+typedef int var_t;
 
+void AR_TEST_MIN_GT_MAX(type_t ty);
+void AR_TEST_NEW_RBUF_ZERO(type_t ty,void *vIN);
+void AR_TEST_NEW_RBUF_NOZERO(type_t ty,void *vIN);
+void AR_TEST_FC_PANIC();
+void AR_TEST_FC_REACHED_END();
+void AR_TEST_FC_MATCH_TERM(void *funIn,char termIN,int eat_fIN,int panicIN);
+void AR_TEST_FC_REACHED_MAX(int maxIN);
+int  AR_RESERVE_SPACE(type_t ty,type_t elRepTy,type_t elPdTy,int hintIN);
+void AR_GET_BEGIN_LOC();
+void AR_TEST_FC_SOURCE_ADVANCE(Ploc_t bIN,Ploc_t eIN);
+void AR_TEST_FC_SOURCE_ADVANCE2();
+void AR_CHECKPOINT(type_t ty);
+void AR_READ_ELEM(Perror_t readCallIN);
+void AR_TEST_READ_ERR(int addTest1IN, int addTest2IN);
+void AR_TEST_FC_PANIC_RECOVER1(void *pdIN,int addTestIN,void *sepIN, void *termIN);
+void AR_TEST_FC_PANIC_RECOVER2(void *pdIN,int addTestIN,void *sepIN, void *termIN);
+void AR_FC_SCAN_SEP_TERM(type_t ty,void *funIn,void *sepIN,void *termIN,int eat_fIN,int eat_sIN,int panicIN);
+void AR_SCAN_SEP(type_t ty,void *funIn,void *sepIN,int eat_fIN,int panicIN);
+void AR_TEST_TRAILING_JUNK_C(type_t ty,void *funIn,char termIN);
+void AR_TEST_TRAILING_JUNK_P(type_t ty,void *funIn,void *termIN);
+void AR_READ_EOR(type_t ty);
+void AR_RECORD_ERROR(int errCodeIN,char *whatfn,...);
+void AR_CHK_ENOUGH_ELEMENTS(type_t ty);
+void AR_CFORALL_LOOP(var_t indexIN, int lowerIN,int upperIN, int bodyIN);
+void AR_CHK_FORALL_CONSTRAINT(type_t ty,var_t indexIN, int lowerIN,int upperIN, int bodyIN);
+Perror_t AR_STD_RETURN();
+void AR_TEST_ALREADY_DONE();
+void AR_DO_FINAL_CHECKS();
+void AR_RO_DECS();
+void AR_LBL_FINAL_CHECKS();
+//int  AR_RET_FINAL_CHECKS();
+int  AR_RET_ONGOING();
+int  AR_RET_DONE();
+void AR_SET_PARTIAL();
+void AR_UNSET_PARTIAL();
+void AR_READ_ALL(int allocCall, Perror_t readCall, int incX, const char* whatfn);
 #else
 /* The actual impls */
 
