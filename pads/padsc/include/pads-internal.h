@@ -58,7 +58,7 @@ struct PDC_s {
   RMM_t*            rmm_nz;  /* rbuf memory mgr -- does not zero allocated memory */ 
   /* The following are all IO state */
   Sfio_t*           io;      /* io stream */
-  int               eof;     /* hit eof? */ 
+  int               eof;     /* found eof? */ 
   size_t            lnum;    /* last line # read */ 
   char*             path;    /* original path -- eventually want to support a set of input files */
   char*             sfbuf;   /* sfio buffer ptr returned from sfgetr */
@@ -74,7 +74,7 @@ struct PDC_s {
 };
 
 /* ================================================================================ */
-/* INTERNAL PDC FUNCTIONS */
+/* RMM FUNCTIONS */
 
 RMM_t* PDC_rmm_zero  (PDC_t* pdc, PDC_disc_t* disc);  /* get rbuf memory mgr that zeroes allocated memory */
 RMM_t* PDC_rmm_nozero(PDC_t* pdc, PDC_disc_t* disc);  /* get rbuf memory mgr that does not zero allocated memory */
@@ -94,7 +94,11 @@ PDC_error_t  PDC_IO_restore     (PDC_t* pdc, PDC_disc_t* disc);
 /* 
  * Note: all of the following act on the IO cursor of the top checkpoint
  */
-PDC_error_t  PDC_get_loc        (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc);
+PDC_error_t  PDC_get_loc        (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); /* sets l begin/end pos to current IO pos */
+PDC_error_t  PDC_get_loc2end    (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); /* sets l begin pos to current IO pos and
+										 l end pos to end of line pos */
+PDC_error_t  PDC_get_beginLoc   (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); /* sets l begin pos to current IO pos */
+PDC_error_t  PDC_get_endLoc     (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); /* sets l end pos to current IO pos */
 int          PDC_IO_is_EOF      (PDC_t* pdc, PDC_disc_t* disc);
 int          PDC_IO_peek_EOF    (PDC_t* pdc, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_getchar     (PDC_t* pdc, unsigned char* ct, int obeyPanicStop, PDC_disc_t* disc);
@@ -153,11 +157,15 @@ int           PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...);
  * EFFECT:  scan for either goal character c or stop character s,
  *          move IO cursor just beyond.  Discipline controls maximum
  *          scan distance.  Hitting eof considered to be an error.
+ *          N.B. If there is mixed binary and ascii data, scanning
+ *          can 'find' an ascii char in a binary field.  Be careful!
+ *          Do not use 0 to mean EOF.  If there is no stop char,
+ *          use the same char for both the c and s params.
  *
  * RETURNS: PDC_error_t
  *             OK    => goal/stop char found, IO cursor now points just beyond char
- *                      *c_out set to the char that was found
- *                      *offset_out set to the distance scanned to find that char
+ *                      if c_out, *c_out set to the char that was found
+ *                      if offset_out, *offset_out set to the distance scanned to find that char
  *                      (0 means the IO cursor was pointing at the found char)
  *             ERROR => char not found, IO cursor unchanged
  */
