@@ -671,6 +671,19 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           )
       end
 
+  fun ppElemPairs pps (tyNameOpt, fieldName) = 
+      let val tyName = case tyNameOpt of NONE => "NoTypeName" | SOME name => name
+      in
+	  ( PPL.addStr pps "element"
+	  ; space pps
+	  ; PPL.addStr pps fieldName
+	  ; space pps
+          ; PPL.addStr pps "of type"
+	  ; space pps
+	  ; PPL.addStr pps tyName
+          )
+      end
+
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val edTid = #edTid ptyInfo
 	  val (edName, edFields) = structInfo tidtab edTid
@@ -680,9 +693,9 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; space pps
         ; PPL.addStr pps repName
 	; space pps
-        ; PPL.ppList { pp=ppStrPairs
+        ; PPL.ppList { pp=ppElemPairs
 		        , sep="\n\t"
-		        , lDelim="{\n"
+		        , lDelim="{\n\t"
 		        , rDelim="\n}"
 		        } pps (edFields @ repFields) (* old: repFields @ edFields *)
         ; newline pps)
