@@ -643,11 +643,11 @@ structure CnvExt : CNVEXT = struct
 				      SOME ((initSuf o edSuf) name),
 				      SOME ((cleanupSuf o edSuf) name))
 
-              fun buildTyProps (name, kind, diskSize,memChar,endian,isRecord, edTid) = 
+              fun buildTyProps (name, kind, diskSize,memChar,endian,isRecord, isFile, edTid) = 
 		  let val (repInit, repClean, edInit, edClean) = getDynamicFunctions (name,memChar)
 		  in
 		      {kind = kind,
-		       diskSize=diskSize,memChar=memChar,endian=endian, isRecord=isRecord,
+		       diskSize=diskSize,memChar=memChar,endian=endian, isRecord=isRecord, isFile=isFile,
 		       repName  = name, 
 		       repInit  = repInit,
 		       repRead  = readSuf name, 
@@ -1500,14 +1500,15 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                        (Ast.DECL(coreDecl, aid, bindPaid padsInfo, loc) ::xs, tid)
                   | _ => (PE.bug "Expected Ast declaration"; ([], Tid.new()))
 
+(*  Typedef case *)
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord,
 				isFile : bool, baseTy: PX.Pty, args: pcexp list, 
 			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
 		  let val base = "base"
 		      val user = "user"
-		      val baseTyName = lookupTy(baseTy, fn s => s, #padsname)
+		      val baseTyName = lookupTy(baseTy, repSuf, #padsname)
 
-                      (* Generate CheckSet mask *)
+                      (* Generate CheckSet mask typedef case*)
 		      val baseMPCT = P.makeTypedefPCT(lookupTy(baseTy,mSuf, #mname))
                       val mFields  = [(base, baseMPCT, SOME "Base mask"),
 				       (user, PL.base_mPCT, SOME "Typedef mask")]
@@ -1541,7 +1542,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val mc = lookupMemChar baseTy
                       val endian = lookupEndian baseTy
 		      val isRecord = lookupRecord baseTy orelse isRecord
-		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, mc,endian,isRecord, edTid)
+		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, mc,endian,isRecord, isFile, edTid)
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
 
@@ -1592,7 +1593,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			  [PT.Compound (resDeclSs @ readBaseSs @ checkConstraintSs @ endSs)]
 		      end
 
-                      (* -- Assemble read function *)
+                      (* -- Assemble read function typedef case *)
 		      val _ = pushLocalEnv()                                        (* create new scope *)
 		      val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
 		      val cParams : (string * pcty) list = List.map mungeParam params
@@ -1731,6 +1732,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 		  end
 
+
+
 	      fun cnvPStruct ({name:string, isRecord, isFile, params: (pcty * pcdecr) list, 
 			       fields : (pdty, pcdecr, pcexp) PX.PSField list, postCond}) = 
 	          let val dummy = "_dummy"
@@ -1824,7 +1827,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
                       val {diskSize,memChar,endian,isRecord=_} = 
 			  List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
-		      val structProps = buildTyProps(name, PTys.Struct, diskSize,memChar,endian,isRecord, edTid)
+		      val structProps = buildTyProps(name, PTys.Struct, diskSize,memChar,endian,isRecord, isFile, edTid)
                       val () = PTys.insert(Atom.atom name, structProps)
 
 
@@ -2545,7 +2548,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
 		     val {diskSize,memChar,endian,isRecord=_} = 
 			 List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
-		     val unionProps = buildTyProps(name,PTys.Union, diskSize,memChar,endian,isRecord, edTid)
+		     val unionProps = buildTyProps(name,PTys.Union, diskSize,memChar,endian,isRecord, isFile, edTid)
                      val () = PTys.insert(Atom.atom name, unionProps)
 
                      (* union: generate canonical representation *)
@@ -3228,7 +3231,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					 if min = max then TyProps.Size(n * (IntInf.toInt max), r * (IntInf.toInt max))
 					 else TyProps.Variable
 				     | _ => TyProps.Variable
-                 val arrayProps = buildTyProps(name,PTys.Array,arrayDiskSize, arrayMemChar, false, isRecord,edTid)
+                 val arrayProps = buildTyProps(name,PTys.Array,arrayDiskSize, arrayMemChar, false, isRecord,isFile,edTid)
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
 
@@ -3954,7 +3957,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  else TyProps.Variable
 			      end
 			   else TyProps.Size (0,0)
-                  val enumProps = buildTyProps(name,PTys.Enum,ds,TyProps.Static, true, isRecord,edTid)
+                  val enumProps = buildTyProps(name,PTys.Enum,ds,TyProps.Static, true, isRecord,isFile,edTid)
 		  val () = PTys.insert(Atom.atom name, enumProps)
 
                   (* enums: generate canonical representation *)
@@ -4126,4 +4129,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 	   CNVDeclaration = CNVDeclaration}
       end
 end
+
+
+
 

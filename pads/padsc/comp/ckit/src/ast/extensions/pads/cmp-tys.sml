@@ -13,6 +13,7 @@ struct
 		  memChar  : TyProps.memChar,
 		  endian   : bool,
                   isRecord : bool,
+		  isFile   : bool,
 		  repName  : string,
 		  repInit  : string option,
 		  repRead  : string,
