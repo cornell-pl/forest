@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   }
 
   /* init mask -- must do this! */
-  defPN_maskFill(pdc, &pm, PDC_CheckAndSet);
+  defPN_m_init(pdc, &pm, PDC_CheckAndSet);
 
   /*
    * Try to read each line of data

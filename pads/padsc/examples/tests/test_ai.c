@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   }
 
   /* init mask -- must do this! */
-  http_clf_t_maskFill(pdc, &m, PDC_CheckAndSet);
+  http_clf_t_m_init(pdc, &m, PDC_CheckAndSet);
 
   /*
    * Try to read each line of data

@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
   test_init(pdc, &f1data);
   test_pd_init(pdc, &pd);
   /* init mask -- must do this! */
-  test_maskFill(pdc, &m, PDC_CheckAndSet);
+  test_m_init(pdc, &m, PDC_CheckAndSet);
 
   error(0, "\ninit the accum");
   if (PDC_ERR == test_acc_init(pdc, &accum)) {

@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
   out_sum_data_line_init(pdc, &dline);
   out_sum_data_line_pd_init(pdc, &dline_pd);
   out_sum_data_line_acc_init(pdc, &acc);
-  out_sum_data_line_maskFill(pdc, &dline_m, PDC_CheckAndSet);
+  out_sum_data_line_m_init(pdc, &dline_m, PDC_CheckAndSet);
   if (PDC_ERR == PDC_IO_fopen(pdc, fname)) {
     error(2, "*** PDC_IO_fopen failed ***");
     return -1;

@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   intList_pd_init(pdc, &f3pd);
 
   /* INIT mask -- must do this! */
-  intList_maskFill(pdc, &f3m, PDC_CheckAndSet);
+  intList_m_init(pdc, &f3m, PDC_CheckAndSet);
 
   if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format3")) {
     error(2, "*** PDC_IO_fopen failed ***");

@@ -6,7 +6,7 @@
 #define PADS_TY_CLEANUP choice_cleanup
 #define PADS_TY_PD choice_pd
 #define PADS_TY_M choice_m
-#define PADS_TY_M_INIT choice_maskFill
+#define PADS_TY_M_INIT choice_m_init
 #define PADS_TY_PD_INIT choice_pd_init
 #define PADS_TY_PD_CLEANUP choice_pd_cleanup
 #define PADS_TY_ACC choice_acc

@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
   }
 
   /* init mask -- must do this! */
-  test_maskFill(pdc, &m, PDC_CheckAndSet);
+  test_m_init(pdc, &m, PDC_CheckAndSet);
 
   /*
    * Try to read each line of data

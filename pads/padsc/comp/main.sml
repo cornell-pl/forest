@@ -241,7 +241,7 @@ structure Main : sig
 	       | SOME repClean =>TextIO.output(aoutstream, "#define PADS_TY_CLEANUP "^repClean^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_PD "^pdName^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_M "^repName^"_m\n");
-	    TextIO.output(aoutstream, "#define PADS_TY_M_INIT "^repName^"_maskFill\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_M_INIT "^repName^"_m_init\n");
 	    case pdInit of NONE => ()
 	       | SOME pdInit =>TextIO.output(aoutstream, "#define PADS_TY_PD_INIT "^pdInit^"\n");
 	    case pdClean of NONE => ()

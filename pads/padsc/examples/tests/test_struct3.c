@@ -6,7 +6,7 @@
 #define PADS_TY_CLEANUP line_cleanup
 #define PADS_TY_PD line_pd
 #define PADS_TY_M line_m
-#define PADS_TY_M_INIT line_maskFill
+#define PADS_TY_M_INIT line_m_init
 #define PADS_TY_PD_INIT line_pd_init
 #define PADS_TY_PD_CLEANUP line_pd_cleanup
 #define PADS_TY_ACC line_acc

@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   }
 
   /* init mask -- must do this! */
-  testtwo_maskFill(pdc, &m, PDC_CheckAndSet);
+  testtwo_m_init(pdc, &m, PDC_CheckAndSet);
 
   /*
    * Try to read each line of data

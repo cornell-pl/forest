@@ -608,7 +608,7 @@ structure CnvExt : CNVEXT = struct
               fun dstSuf s = s^"_dst"
               fun addSuf  s = s^"_add"
               fun readSuf s = s^"_read"
-              fun maskFillSuf s = s^"_maskFill"
+              fun maskInitSuf s = s^"_m_init"
               fun writeSuf s = s^"_write"
 	      fun ioSuf s = s^"2io"
 	      fun bufSuf s = s^"2buf"
@@ -1023,7 +1023,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      initFunED
 		  end
 
-	      fun genMaskFillFun(funName, maskPCT) = 
+	      fun genMaskInitFun(funName, maskPCT) = 
 		  let val mask = "mask"
 		      val baseMask = "baseMask"
 		      val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT maskPCT, PL.base_mPCT]
@@ -1031,11 +1031,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val formalParams = List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 		      val bodySs = [PL.fillMaskS(PT.Id mask, PT.Id baseMask, maskPCT)]
 		      val returnTy =  P.void
-		      val maskFillFunED = 
+		      val maskInitFunED = 
 			  P.mkFunctionEDecl(funName, formalParams, 
 					    PT.Compound bodySs, returnTy)
 		  in
-		      [maskFillFunED]
+		      [maskInitFunED]
 		  end
 
               (* PDC_error_t foo_copy(PDC_t* pdc, foo *dst, foo* src) *)
@@ -1640,9 +1640,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						  NONE, true, bodySs)
 
 
-                      (* Generate MaskFill function typedef case *)
-                      val maskFillName = maskFillSuf name 
-                      val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+                      (* Generate m_init function typedef case *)
+                      val maskInitName = maskInitSuf name 
+                      val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
 
 	              (***** typedef PADS-Galax *****)
 
@@ -2254,9 +2254,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val readFunEDs = genReadFun(readName, cParams, mPCT,pdPCT,canonicalPCT, 
 						  mFirstPCT, true, bodySs)
 
-                      (* Generate MaskFill function struct case *)
-                      val maskFillName = maskFillSuf name 
-                      val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+                      (* Generate m_init function struct case *)
+                      val maskInitName = maskInitSuf name 
+                      val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
 
 		      (***** struct PADS-Galax *****)
 
@@ -2950,9 +2950,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val readFunEDs = genReadFun(readName, cParams,mPCT,pdPCT,canonicalPCT, 
 						 mFirstPCT, true, bodySs)
 
-                      (* Generate MaskFill function union case *)
-                      val maskFillName = maskFillSuf name 
-                      val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+                      (* Generate m_init function union case *)
+                      val maskInitName = maskInitSuf name 
+                      val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
 
 
 		      (***** union PADS-Galax *****)
@@ -3946,9 +3946,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					     NONE, true, bodySs)
                  val _ = popLocalEnv()
 
-                 (* Generate MaskFill function array case *)
-                 val maskFillName = maskFillSuf name 
-                 val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+                 (* Generate m_init function array case *)
+                 val maskInitName = maskInitSuf name 
+                 val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
 
                  (***** array PADS-Galax *****)
 
@@ -4307,9 +4307,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		  val readFunEDs = genReadFun(readName, cParams, 
 					      mPCT,pdPCT,canonicalPCT, NONE, false, bodySs)
 
-                  (* Generate MaskFill function enum case *)
-                  val maskFillName = maskFillSuf name 
-                  val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
+                  (* Generate m_init function enum case *)
+                  val maskInitName = maskInitSuf name 
+                  val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
 
 	          (***** enum PADS-Galax *****)
 

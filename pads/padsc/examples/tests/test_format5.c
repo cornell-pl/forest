@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   }
 
   /* Init mask -- must do this! */
-  call_maskFill(pdc, &cm, PDC_CheckAndSet);
+  call_m_init(pdc, &cm, PDC_CheckAndSet);
 
   /*
    * Try to read each line of data
