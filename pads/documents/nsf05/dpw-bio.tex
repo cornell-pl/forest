@@ -1,0 +1,384 @@
+\documentclass[11pt]{article}
+        % Use font 11pt Roman.
+%\documentstyle{article}
+
+%\def\references{\newpage\section*{References}}
+%\newcounter{refcount}
+%\def\lit#1{~[\ref{#1}]}
+%\def\cit#1#2#3#4{#1\quad#2\quad{\it #3}\quad #4\vskip.15in }
+%\def\citb#1#2#3{#1\quad{\it #2}.\quad#3.}
+%\def\citu#1#2{#1\quad#2.}
+
+
+\newcommand{\comment}[1]{}
+
+
+% No header or foot; top 2.0in, left 0.6in, right 0.9in, bottom 0.5in
+
+%\pagestyle{empty}
+%\topmargin=-.5in
+%\textheight=8.8in
+%\leftmargin=-1.0in
+%\oddsidemargin=.25in
+%\oddsidemargin=.25in
+%\textwidth=6.2in
+
+\setlength{\textheight}{22.8true cm}
+%\setlength{\textwidth}{15.4true cm}
+\setlength{\textwidth}{15.9true cm}
+\setlength{\oddsidemargin}{.55true cm}
+\setlength{\evensidemargin}{.55true cm}
+\setlength{\topmargin}{-1.0cm}
+\pagestyle{empty}
+
+\newlength{\oldparindent}
+\setlength{\oldparindent}{\parindent}
+\setlength{\parindent}{0pt}
+
+% No indentation at the beginning of paragraphs.
+
+% Don't hyphenate.
+%\hyphenpenalty=10000
+
+
+% Rsection: a resume section environment.
+\newenvironment{Rsection}[1]{
+  \noindent{\bf #1}
+  \begin{list}{}{\topsep=-\parskip
+                 \leftmargin=-0.0in}
+    \item[]
+}{
+  \end{list}
+%  \vspace \baselineskip
+}
+                           
+% Section: a resume section environment.
+\newenvironment{Section}[1]{
+  \centerline{\bf #1}
+  \begin{list}{}{\topsep=-\parskip
+                 \leftmargin=-0.5in}
+    \item[]
+}{
+  \end{list}
+%  \vspace \baselineskip
+}
+
+% edlist: a resume education list environment.
+\newenvironment{edlist}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemsep=0.5\baselineskip
+                 \leftmargin=0.25in}
+}{
+  \end{list}
+}
+
+
+% edlist2: a resume education list environment.
+\newenvironment{edlist2}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemsep=0.5\baselineskip
+                 \leftmargin=0.25in
+                 \setlength{\rightmargin}{\leftmargin}
+                 \textwidth=4in}
+}{
+  \end{list}
+}
+                           
+
+% honorlist: a resume honor list environment.
+\newenvironment{honor2list}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemindent=-0.in
+                 \itemsep=0.0\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{list}
+}  
+
+\newenvironment{honor2enum}{
+  \begin{enumerate}{}{\topsep=-\parskip
+                 \itemindent=-0.in
+                 \itemsep=0.0\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{enumerate}
+}  
+
+\newenvironment{honor3enum}{
+  \begin{enumerate}{}{\topsep=-\parskip
+                 \itemindent=-0in
+                 \itemsep=0.0\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{enumerate}
+}  
+
+
+
+% honorlist: a resume honor list environment.
+\newenvironment{honorlist}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemindent=-0.in
+                 \itemsep=0.2\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{list}
+}  
+
+
+% joblist: a resume job list environment.
+\newenvironment{joblist}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemsep=0.5\baselineskip
+                 \leftmargin=0.5in}
+}{
+  \end{list}
+}
+
+                                      
+% job: a job entry for a joblist environment
+\newcommand{\job}[3]{
+  \item[]
+  \begin{tabbing}
+    \hspace{-0.5in}\=\hspace{1.5in}\=\kill
+    \>    {\it #1:}       \> #2   \\
+    \>                    \> #3   \\
+  \end{tabbing}
+  \vspace{-\baselineskip}
+}
+
+              
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\leftmargin=-1in
+\begin{document}
+
+
+\centerline{\Large \bf {\LARGE \bf D}AVID {\LARGE \bf W}ALKER}
+\vskip .3in
+
+\normalsize
+\it
+\begin{tabular}{@{\hspace{0in}}l@{\hspace{1.4in}}l}
+35 Olden Street   & Phone: (609) 258--7654  \\
+Princeton University   & Email: {\rm dpw@cs.princeton.edu} \\
+Princeton, NJ 08544
+
+\end{tabular}
+\rm
+\vskip.3in
+
+\begin{Rsection}{\Large \bf {Professional Preparation}}
+\vskip.1in
+\begin{edlist}
+
+\item {\bf Queens University, Kingston, Ontario, Canada }
+  \begin{honor2list}
+  \item {Computer Science, B.Sc. Honors, 1995.}  
+
+  \end{honor2list}
+\item {\bf Cornell University}
+\begin{honor2list}
+\item {Computer Science, M.S. 1999.}
+\item {Computer Science, Ph.D. 2001.}
+\end{honor2list}
+\end{edlist}
+\end{Rsection}
+
+
+\vskip.3in
+\begin{Rsection}{\Large \bf {Appointments}}
+\vskip.1in
+\begin{edlist}
+\item {\bf Princeton University}\\
+{\bf  Department of Computer Science} \\
+%\vskip .05in
+\vspace{-1ex}
+\begin{honor2list}
+\item Assistant Professor, Feb. 2002--present.
+\end{honor2list}
+
+\item {\bf Carnegie Mellon University}\\
+{\bf  Department of Computer Science} \\ 
+%\vskip .05in
+\vspace{-1ex}
+\begin{honor2list}
+\item Postdoctoral Fellow, Oct. 2000--Oct. 2001
+\end{honor2list}
+
+
+%\newpage
+\end{edlist}
+\end{Rsection}
+
+
+\vskip.3in
+\begin{Rsection}{{\Large \bf {Selected Publications}} 
+}
+\vskip.1in
+\begin{edlist}
+
+\item {\bf Selected papers of greatest relevance (in chronological order)}
+\begin{honor2enum}
+\vskip .1in
+
+\item Harmless advice.  Daniel S. Dantas and David Walker.
+To appear in Workshop on
+Foundations of Object-oriented
+programming.  January 2005.
+
+\item Edit Automata: Enforcement Mechanisms for Run-time Security Policies.  Jay Ligatti, Lujo Bauer and David Walker.  
+International Journal of Information Security. 2004
+
+\item A Theory of Aspects.  David Walker, Steve Zdancewic and Jay Ligatti.  In the ACM SIGPLAN International Conference on Functional Programming, August 2003. 
+
+\item Types and Effects for Non-interfering Program Monitors.  
+Lujo Bauer, Jarred Ligatti and David Walker.  
+International Symposium on Software Security.  Tokyo, November, 2002.  
+
+\item A Type System for Expressive Security Policies.  David Walker. 
+Twenty-Seventh ACM SIGPLAN Symposium on Principles of Programming Languages. 
+pages 254-267, Boston, January 2000
+
+%
+
+
+\end{honor2enum}
+\item {\bf Selected other publications (in chronological order):}
+\begin{honor2enum}
+
+\item Substructural type systems.  David Walker.
+Chapter 1 of Benjamin Pierce, ed.,
+Advanced Topics in Type Systems for Programming Language.  
+To appear January 2005.
+
+\item An Effective Theory of Type Refinements.  Yitzhak Mandelbaum, David Walker and Robert Harper.  In the ACM SIGPLAN International Conference on Functional Programming, August 2003. 
+
+\item 
+Greg Morrisett, Karl Crary, Neal Glew, and David Walker. Stack-based
+Typed Assembly Language.  Journal on Functional Programming,
+12(1):43-88, January 2002.
+
+\item 
+David Walker, Karl Crary, and Greg Morrisett. Typed Memory Management
+via Static Capabilities. ACM Transactions on Programming Languages and
+Systems, 22(4):701-771, July 2000.   A previous version of this paper
+appeared in the 26th ACM Symposium on Principles of Programming Languages.
+
+\item 
+Greg Morrisett, David Walker, Karl Crary, and Neal Glew. From System F
+to Typed Assembly Language. ACM Transactions on Programming Languages
+and Systems, 21(3):528-569, May 1999.  A previous version of this paper
+appeared in the 25th ACM Symposium on Principles of Programming Languages.
+
+
+\end{honor2enum}
+
+\end{edlist}
+\end{Rsection}
+
+
+
+\vskip.3in
+\begin{Rsection}{\Large \bf {Synergistic Activities}}
+\begin{honor2list}
+\vskip .1in
+\item Program Chair, Workshop on Foundations of Aspect-Oriented
+programming languages.  March 2005.
+\item Alfred P. Sloan Fellow.  Sept 2004-Sept 2006. 
+\item Program Committee,  ACM SIGPLAN International Conference
+on Functional Programming.  September 2004.
+\item Program Committee,  Workshop on Foundations of Aspect-Oriented
+programming languages.  March 2004.
+\item ACM SIGPLAN Summer School on Software Security.  Chair.  June 2004.
+\item 
+CAREER:  Programming Languages for Secure and Reliable Component Software Systems.  NSF Career Grant, CCR-0238328,  PI.  July 2003-June 2008.  
+\item Publicity chair and executive committee for ACM Symposium on
+Principles of Programming Languages, 2003--2006.
+
+
+
+
+\end{honor2list}
+\end{Rsection}
+\vskip.3in
+\begin{Rsection}{\Large \bf {Collaborators and Other Affiliations}}
+\begin{itemize}
+\vskip .1in
+\item Collaborators: 
+Amal Ahmed (Harvard University),
+%Andrew Appel (Princeton University),
+Zena Ariola (University of Oregon),
+Lujo Bauer (Carnegie Mellon University),
+Iliano Cervesato,
+Karl Crary (Carnegie Mellon University),
+%Daniel Dantas (Princeton University),
+%Ed Felten (Princeton University),
+Kathleen Fisher (AT\&T),
+Neal Glew (Intel),
+Daniel Grossman (University of Washington),
+Robert Harper (Carnegie Mellon University),
+%Limin Jia (Princeton University),
+%Jarred Ligatti (Princeton University),
+%Yitzhak Mandelbaum (Princeton University),
+Greg Morrisett (Harvard University),
+Benjamin Pierce (University of Pennsylvania),
+Frank Pfenning (Carnegie Mellon University),
+Fred Smith (MathWorks),
+%Frances Spalding (Princeton University),
+%Daniel Wang (Princeton University),
+Geoff Washburn (University of Pennsylvania),
+Kevin Watkins (Carnegie Mellon University),
+Stephanie Weirich (University of Pennsylvania),
+Steve Zdancewic (University of Pennsylvania)
+
+\item Graduate (Ph.D.) Advisor: 
+Greg Morrisett (Cornell University, now Harvard University)
+\item Thesis Advisees (graduated): none
+\item Thesis Advisees (current): Dan Dantas, Limin Jia, Jarred Ligatti, 
+Yitzhak Mandelbaum, Frances Spalding
+\end{itemize}
+\end{Rsection}
+
+
+
+% \iffalse
+% \vskip.3in
+% \begin{Rsection}{\Large \bf {Selected Awards and Fellowships}}
+% \begin{itemize}
+% \vskip .1in
+% \end{itemize}
+% \end{Rsection}
+% \fi
+
+
+
+
+%\newpage
+
+%\newpage
+
+
+
+
+
+%%%%%$$^{\ref{fn:second}}$
+
+
+
+
+
+
+
+%\vskip.3in
+
+
+
+
+\end{document}
+
