@@ -342,14 +342,15 @@ end
         | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
         | pREexpr of expression
+        | pOmitOpt of bool
         | pStruct of (declarator, ctype, decltype, expression) PX.PExternal
-        | pStructFieldList of ((decltype, declarator, expression) PX.PSField) list
-        | pStructField of (decltype, declarator, expression) PX.PSField
+        | pStructFieldList of ((ctype, decltype, declarator, expression) PX.PSField) list
+        | pStructField of (ctype, decltype, declarator, expression) PX.PSField
         | pPC of (expression PX.PPostCond)
         | pPCList of (expression PX.PPostCond) list
         | pConstraints of (expression PX.PPostCond) list
 	| pPostCondOpt of (expression PX.PPostCond) list
-        | pManifestField of (decltype, declarator, expression) PX.PSField
+        | pManifestField of (ctype, decltype, declarator, expression) PX.PSField
         | pConstraintOpt of expression option
         | pCommentOpt of string option
         | pArray of (declarator, ctype, decltype, expression) PX.PExternal
@@ -364,9 +365,9 @@ end
         | pArrayPCorForList of (expression PX.PArrayPostCond) list
         | pArrayPostConstraints of (expression PX.PArrayPostCond) list
         | pArrayPostConds of (expression PX.PArrayPostCond) list
-        | pBranch of expression option * (decltype, declarator, expression) PX.PSField
-        | pBranchList of (expression option * (decltype, declarator, expression) PX.PSField) list
-        | pVariants of (decltype, declarator, expression) PX.PBranches
+        | pBranch of expression option * (ctype, decltype, declarator, expression) PX.PSField
+        | pBranchList of (expression option * (ctype,decltype, declarator, expression) PX.PSField) list
+        | pVariants of (ctype, decltype, declarator, expression) PX.PBranches
         | pUnion of (declarator, ctype, decltype, expression) PX.PExternal
         | pFromOpt   of string option
         | pEnumField of string * string option * expression option
@@ -1123,7 +1124,7 @@ pTypedefPredOpt :
  | COLONCOLON pName pName EQGT LCURLY expr popScope RCURLY (SOME{predTy=PX.Name pName1, thisVar=pName2, pred=expr})
 
 pTypedef:
-  pIsRecord pIsSource PTYPEDEF pName pOptActParams pName pushScope pTyParams pTypedefPredOpt
+  pIsSource pIsRecord PTYPEDEF pName pOptActParams pName pushScope pTyParams pTypedefPredOpt
  ( makeTypeName pName2;
    ExternalDeclExt(PX.PTypedef {baseTy = PX.Name pName1, 
                                 args   = pOptActParams,
@@ -1139,14 +1140,37 @@ pREexpr :
    PRE expr (ExprExt(PX.Pregexp expr))
  | expr     (expr) 
 
+pOmitOpt : (false)
+ | POMIT (true)
+
+(*
+pQualifier : 
+   POMIT     ({omit = true,  compute = false, isEndian = false})
+ | PCOMPUTE  ({omit = false, compute = true,  isEndian = false})
+ | PENDIAN   ({omit = false, compute = false, isEndian = true})
+
+pQualifiers : []
+ pQualifier pQualifiers (let fun merge {omit=omit1, compute = compute1, isEndian = isEndian1}
+                                       {omit=omit2, compute = compute2, isEndian = isEndian2}	    
+				    =  {omit=omit1 andalso omit2, 
+				        compute = compute1 andalso compute2, 
+					isEndian = isEndian1 andalso isEndian2}
+			 in	 
+			    merge pQualifier (List.foldl merge {omit=false, compute=false, isEndian=false})
+                         end)
+
+*)
+
 pManifestField: 
-  pName pOptActParams ID EQUALS expr SEMICOLON pCommentOpt  
-         (PX.Manifest{tyname  = pName,
+  pOmitOpt typeName pOptActParams ID EQUALS expr SEMICOLON pCommentOpt  
+         (PX.Manifest{tyname  = typeName,
 	              name    = ID,
 	              args    = pOptActParams,
+		      isVirtual = pOmitOpt,
 		      expr    = expr,
+		      pred    = NONE, 
 		      comment = pCommentOpt})
-			                                         
+			              (* fill in when add constraints *)                           
 
 pStructField:                   pName pOptActParams ID  pConstraintOpt SEMICOLON pCommentOpt 
                                       (PX.Full {pty = PX.Name pName, name = ID, 
@@ -1207,7 +1231,7 @@ pStructFieldList:
 
 
 pStruct:
- pIsRecord pIsSource PSTRUCT pName  pTyParams LCURLY pStructFieldList 
+ pIsSource pIsRecord  PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
  ( makeTypeName pName;
    PX.PStruct {isRecord = pIsRecord, isSource = pIsSource, 
 	       containsRecord = false, largeHeuristic = false,
@@ -1245,7 +1269,7 @@ pSizeSpec:
  LBRACE pSizeOpt RBRACE  (pSizeOpt)
 
 pArray:
- pIsRecord pIsSource PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
+ pIsSource pIsRecord PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
  ( PX.PArray {isRecord=pIsRecord, isSource = pIsSource, 
 	      containsRecord = false, largeHeuristic = false,
 	      name = pName1, params = pTyParams, 
@@ -1272,7 +1296,7 @@ pVariants:
  | pStructFieldList (PX.Ordered pStructFieldList)
 
 pUnion:
- pIsRecord pIsSource PUNION pName pushScope pTyParams LCURLY pVariants popScope
+  pIsSource pIsRecord PUNION pName pushScope pTyParams LCURLY pVariants popScope
  ( makeTypeName pName;
    PX.PUnion {name = pName, params = pTyParams, 
 	      containsRecord = false, largeHeuristic = false,
@@ -1306,7 +1330,7 @@ pEnumPrefixOpt:
 
 
 pEnum:
- pIsRecord pIsSource PENUM pName pushScope  pTyParams pEnumPrefixOpt LCURLY pEnumFieldList popScope
+ pIsSource pIsRecord PENUM pName pushScope  pTyParams pEnumPrefixOpt LCURLY pEnumFieldList popScope
  ( makeTypeName pName1;
    ExternalDeclExt(PX.PEnum {name = pName1, params = [], isRecord = pIsRecord, 
 		             containsRecord = false, largeHeuristic = false,

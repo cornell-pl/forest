@@ -3,7 +3,7 @@ structure ParseTreeExt =
         datatype Pty = 
            Name of string
 
-        datatype ('dt, 'decr, 'exp) PSField = 
+        datatype ('ct, 'dt, 'decr, 'exp) PSField = 
            Full of {    pty : Pty, 
 		       args : 'exp list, 
 		       name : string, 
@@ -14,10 +14,12 @@ structure ParseTreeExt =
              largeHeuristic : bool,
 		       pred : 'exp option, 
 		    comment : string option}
-	 | Manifest of {tyname : string,
+	 | Manifest of {tyname : 'ct,
 			name   : string,
 			 args  : 'exp list,
+	             isVirtual : bool,
 			 expr  : 'exp,
+			 pred  : 'exp option,
                       comment  : string option}
          | Brief of 'exp  
 
@@ -45,11 +47,11 @@ structure ParseTreeExt =
            General of 'exp
          | ParseCheck of 'exp
 
-        datatype ('dt, 'decr, 'exp) PBranches = 
-           Ordered of (('dt, 'decr, 'exp) PSField) list
+        datatype ('ct,'dt, 'decr, 'exp) PBranches = 
+           Ordered of (('ct, 'dt, 'decr, 'exp) PSField) list
          | Switched of {descriminator : 'exp,
 			cases         : 'exp option list,
-			branches      : (('dt, 'decr, 'exp) PSField) list}
+			branches      : (('ct, 'dt, 'decr, 'exp) PSField) list}
 
         type 'exp  PPredicate =  {predTy: Pty, thisVar : string, pred : 'exp}
        
@@ -69,7 +71,7 @@ structure ParseTreeExt =
                        containsRecord : bool, 
                        largeHeuristic : bool,
 		       isSource : bool,
-		       fields : (('dt, 'decr, 'exp) PSField) list,
+		       fields : (('ct, 'dt, 'decr, 'exp) PSField) list,
 		       postCond : ('exp PPostCond) list}
          | PArray  of {name : string, 
 		       baseTy : Pty, 
@@ -88,7 +90,7 @@ structure ParseTreeExt =
 		      isSource   : bool,
                       containsRecord : bool, 
                       largeHeuristic : bool,
-		      variants : ('dt, 'decr, 'exp) PBranches,
+		      variants : ('ct,'dt, 'decr, 'exp) PBranches,
 		      postCond : ('exp PPostCond) list}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,

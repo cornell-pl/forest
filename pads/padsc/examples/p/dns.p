@@ -208,11 +208,17 @@ Pstruct DS_t(:Puint16 rdlength:) {
   Psbh_uint8(:1:) digest_type;
   domain_name signers_name;
   Pcompute size_t middle = position.offset;
-  Pcompute Pint32 x = ((rdlength > middle - start) ? 1 : (abort(),0)); 
-  // PADS ISSUE: Should be able to use C base type on lhs
-  // PADS ISSUE:constraints on Pcompute fields
-  // PADS ISSUE:Pabort(predicate) to abort program if constraint failure
-  // PADS ISSUE:Pomit on Pcompute
+  Pcompute int x = ((rdlength > middle - start) ? 1 : (abort(),0)); 
+  // PADS ISSUE:Pabort(predicate) to abort program if constraint failure: i'm not sure this is a good idea.
+  // PADS ISSUE:Pomit on Pcompute: what about in unions? coded, but not tested
+  // TODO: allow POMIT to precede PCOMPUTE: this requires changing the structure of the parser
+  //       and unifying the representation of manifest and normal fields
+  // TODO: allow predicates to be given in PCOMPUTEs (syntactic)
+  // TODO: add code to check pcompute predicates 
+  // TODO: ask BOB about countFieldMan
+  // What happens if a union omits a field?
+  //   part way through adding code to support this usage.
+  // check that union branch names can appear in where clauses
   Pa_string_FW(:rdlength-(middle-start):) digest;
 };
 
