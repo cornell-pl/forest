@@ -7,8 +7,6 @@
 \usepackage{epsfig}
 \usepackage{latexsym}
 
-\input{defs}
-
 \input{slidemacros}
 
 \newcommand{\scream}[1]{\textbf{#1}}
@@ -25,136 +23,156 @@
 
 % Title slide
 \begin{slide}
-\begin{center}\LARGE\color{blue}
-The PADS-Galax Project: \\
-Enabling XQuery over  Ad-hoc Data Sources
+\begin{center}\Large\color{blue}
+PADX\\Enabling XQuery over Ad-hoc Data Sources
 
-Yitzhak Mandelbaum
+\large\color{black}
+\begin{center}
+Mary Fern\'andez, AT\&T Labs Research\\
+Kathleen Fisher, AT\&T Labs Research\\
+Bob Gruber, Google Inc.\\
+Yitzhak Mandelbaum, Princeton University
+\end{center}
 \end{center}
 \end{slide}
 
 \begin{Slide}{Existing Technologies}
   
   \vspace*{1cm}
-  \bb What is PADS?\\
+  \bb PADS\\
   \bbb Declarative data-stream description language\\
-  \bbb Syntax \& semantics of \blue{semi-structured}, legacy data sources \\
-  \bbb Compiler generates data-parsing library from description\\
-  \bbb Library detects \& recovers from non-fatal errors in data
+  \bbb Syntax \& semantics of \emph{\blue{semi-structured}}, ad hoc data sources \\
+  \bbb From description, compiler generates\\
+  \bbbb Parsing library with error detection \& recovery\\
+  \bbbb In-memory representation of data
 
-  \bb What is Galax?\\
-  \bbb Complete, extensible implementation of XQuery 1.0 
-
-  \bb What is XQuery?\\
+  \bb XQuery\\
   \bbb Functional, strongly typed XML query language \\
-  \bbb Well-suited to querying \blue{semi-structured} sources
+  \bbb Well-suited to querying \emph{\blue{semi-structured}} sources
+
+  \bb Galax\\
+  \bbb Complete, extensible, efficient implementation of XQuery
 
 \end{Slide}
 
 \begin{Slide}{Describing HTTP Common Log Format}
 
-  \bb Data
+  \bb Example HTTP CLF Data
 
 {\small
 \begin{alltt}
-\blue{207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30}
+\blue{100.222.33.44 - - [15/Oct/1997:18:46:51 -0700] "GET /foo/bar.txt HTTP/1.0" 200 30}
 \end{alltt}
 }
   \bb PADS Description
 
 {\small
 \begin{alltt}
-\kw{Pstruct} http_request_t \{
-  '\verb|\"|'; http_method_t    meth;           /- Method used during request
-  ' ';  Pa_string(:' ':) req_uri;        /- Requested uri.
-  ' ';  http_v_t         version : checkVersion(version, meth);
-                                         /- HTTP version number of request 
-  '\verb|\"|';
+Pstruct http_clf_t \{
+        clihost_t \textbf{host};              /- IP address of client requesting service
+   ' '; auth_id_t \textbf{remoteID};          /- Remote identity; '-' means not obtained
+   ' '; auth_id_t \textbf{auth};              /- Name of authenticated user
+   " [";
+   Pdate(:']':) \textbf{my_date};             /- Timestamp of request
+   "] ";
+   http_request_t \textbf{request};           /- Request
+   ' ';  Puint16_FW(:3:) \textbf{response};   /- 3-digit response code
+   ' ';  contentOpt_t \textbf{contentLength}; /- Number of bytes in request response
 \};
-\end{alltt}
-}
+\end{alltt}}
+
+\bb Parsing library called from host application
+
+{\small
+\begin{alltt}
+  http_clf_t http_clf;        /* In-memory representation */
+                              /* Read procedures */  
+  Perror_t http_clf_t_read(..., &http_clf, ...); 
+\end{alltt}}
+
 
 \end{Slide}
 
 \begin{Slide}{Viewing \& Querying HTTP CLF}
 
-  \bb Virtual XML Data
-{\tiny
+  \bb Virtual XML view 
+{\small
 \begin{alltt}
 \blue{<http-clf>
-  <host>207.136.97.49</host>
-  <remoteID>-</remoteID>
-  <auth>-</auth>
+  <\textbf{host}>100.222.33.44</host>
+  <\textbf{remoteID}><unauthorized/></remoteID>
+  <auth><unauthorized/></auth>
   <mydate>15/Oct/1997:18:46:51 -0700</mydate>
-  <request><meth>GET</meth><req_uri>/tk/p.txt</req_uri><version>HTTP/1.0 ...
+  <request>
+    <meth>GET</meth>
+    <req_uri>/foo/bar.txt</req_uri>
+    <version><major>1</major><minor>0</minor></version>
   <response>200</response>
   <contentLength>30</contentLength>
 <http-clf>}
 \end{alltt}
 }
 
-\bb Selection \& projection using XQuery\\
-\bbb Return hosts of CLF records with content length greater than 2K
+\bb Using XQuery to explore data\\
+\bbb Hosts of records with content length greater than 2K
 
 {\small
 \begin{alltt}
-\blue{\$pads-doc/http-clf[contentLength > 2048]/host}
+\blue{./PSource/http-clf[contentLength > 2048]/host}
 \end{alltt}}
 
-\bb Vet errors in data using XQuery \\
-\bbb Return locations of records with error in content-length field
+\bbb Locations of records with error in content-length field
 
 {\small
 \begin{alltt}
-\blue{\$pads-doc/http-clf[contentLength/@pads:errCode]/@pads:loc}
+\blue{./PSource/http-clf[contentLength/pd/errCode]/pd/loc}
 \end{alltt}}
+\end{Slide}
+
+\begin{Slide}{PADX Architecture} 
+  \centerline{\psfig{file=pads-galax-overview-yitzhak.pdf}}
 \end{Slide}
 
 \begin{Slide}{Technical Challenges}
 
-  \bb Define mapping from PADS description to XML Schema 
+  \bb Natural mapping from PADS description to XML Schema 
 
   \bb Materialize PADS data as virtual XML \\
-  \bbb Galax has extensible data model \\
-  \bbb Implement Galax's abstract data model on top of PADS 
+  \bbb Implement Galax's abstract tree data model on top of PADS 
 
   \bb Memory management of PADS records \\
   \bbb Data exceeding memory limits requires clever MM\\
   \bbb PADS program typically reads records sequentially \\
-  \bbb Galax may not access records sequentially 
+  \bbb Galax may not access records sequentially \\
+  \bbb Harkens back to MM in object-oriented databases
 
   \bb User-friendly interface\\
   \bbb Describe PADS data, compile library, write \& execute queries
+\end{Slide}
+
+\begin{Slide}{Project Status}
+
+\bb PADS
+
+\bb Galax
+
+\bb PADX
+
+\bb Integration effort successful 
+
+\bb More thorough regression testing
+
+\bb Demonstrate to potential users
+
+\bb Research problems\\
+\bbb Extending Galax's data model to leverage streams access\\
+\bbb More efficient meta-data structures in PADS 
 
 \end{Slide}
 
-\begin{Slide}{Technical Challenges \& Solutions}
-
-  \bb Define mapping from PADS description to XML Schema \\
-  \bbb Canonical mapping defined Summer 2003
-
-  \bb Materialize PADS data as virtual XML \\
-  \bbb Started Summer 2003 but incomplete \\
-  \bbb Align with current Galax Data Model
-
-  \bb Memory management of PADS records \\
-  \bbb Focus in Summer 2004
-
-  \bb User-friendly interface\\
-  \bbb Room for improvement
-
-\end{Slide}
-
-\begin{Slide}{PADS-Galax Architecture} 
-
-  \vspace*{1cm}
-  \centerline{\psfig{file=pads-galax-overview-yitzhak.pdf}}
-\end{Slide}
-
-\begin{Slide}{Abstract Node Interface}
-
-  \vspace*{1cm}
-\bb Fragment of Galax's abstract XML node interface\\
+\begin{Slide}{Abstract Tree Data Model}
+\vspace*{1cm}
+\bb Fragment of Galax's abstract tree data model\\
 \bbb Full navigation of XML tree\\
 \bbb Access to atomic values
 
@@ -187,60 +205,6 @@ Yitzhak Mandelbaum
   \bbb Choose record as read granularity \\
   \bbb Read record on demand \\
   \bbb Maintain meta-data for fast re-retrieval
-
-%   \bb paging, with element as page granularity
-%   \bb tmap, page-table for elements 
-%   \bb (for finer granularity, group
-%     elements into fixed-size arrays)
-\end{Slide}
-
-\begin{Slide}{smart arrays - weak references}
-
-  \bb data references can't be trusted
-  \bb challenge: irregular structure of elements. 
-
-    \bbb finding element is not enough.
-    \bbb store pointers in page members.
-    \bbb guard with gen.
-    \bbb gen invalidated when elt. evicted.
-
-\end{Slide}
-
-\begin{Slide}{Rereading an element}
-
-  \bb Pads elements are read in full.
-  \bb Designed incremental read function.
-  \bb non trivial due to the complexity of the array termination semantics.
-  \bb reread can't modify parse-descriptor.
-
-\end{Slide}
-
-\begin{Slide}{Project Status}
-
-\bb Integration effort successful 
-
-\bb More thorough regression testing
-
-\bb Demonstrate to potential users
-
-\bb Research problems\\
-\bbb Extending Galax's data model to leverage streams access\\
-\bbb More efficient meta-data structures in PADS 
-
-\end{Slide}
-
-% \begin{Slide}{Demo slide}
-%   , showing commands needed to get up and running.
-% \end{Slide}
-
-
-% \begin{Slide}{Project Challenges}
-%   \bb learning all the pieces
-%   \bb dividing between macros and compiler
-%   \bb dividing between type-specific code and polymorphic macros.
-% \end{Slide}
-
-\begin{Slide}{thanks to Kathleen, Bob, and Mary!}
 \end{Slide}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
