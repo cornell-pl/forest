@@ -13,7 +13,7 @@
 #include "libpadsc-internal.h" /* for testing - normally do not include internal */
 
 #define NEXT_REC do {\
-  if (strncmp(argv[1], "norec", 5) == 0) { \
+  if (strncmp(argv1, "norec", 5) == 0) { \
     if (PDC_ERR == PDC_e_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) { \
       error(2, "Could not find EOR (newline), ending program"); \
       goto done; \
@@ -44,32 +44,38 @@ int main(int argc, char** argv) {
   PDC_base_ed     ed;
   size_t          bytes_skipped;
   unsigned long   ultmp;
+  const char     *argv1;
 
   my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
 
-  if (argc != 2) {
+  if ((argc != 1) && (argc != 2)) {
     goto usage;
   }
 
-  if (strcmp(argv[1], "fwrec") == 0) {
-    io_disc = PDC_fwrec_make(0, 20, 1); /* 1 20-echar int, newline */ 
-  } else if (strcmp(argv[1], "ctrec") == 0) {
+  if (argc == 1) {
+    argv1 = "fwrec_noseek";
+  } else {
+    argv1 = argv[1];
+  }
+  if (strcmp(argv1, "fwrec") == 0) {
+    io_disc = PDC_fwrec_make(0, 25, 1);
+  } else if (strcmp(argv1, "ctrec") == 0) {
     io_disc = PDC_ctrec_make(PDC_EBCDIC_NEWLINE, 0);
-  } else if (strcmp(argv[1], "norec") == 0) {
+  } else if (strcmp(argv1, "norec") == 0) {
     io_disc = PDC_norec_make(0);
-  } else if (strcmp(argv[1], "fwrec_noseek") == 0) {
-    io_disc = PDC_fwrec_noseek_make(0, 20, 1); /* 1 20-echar int, newline */ 
-  } else if (strcmp(argv[1], "ctrec_noseek") == 0) {
+  } else if (strcmp(argv1, "fwrec_noseek") == 0) {
+    io_disc = PDC_fwrec_noseek_make(0, 25, 1);
+  } else if (strcmp(argv1, "ctrec_noseek") == 0) {
     io_disc = PDC_ctrec_noseek_make(PDC_EBCDIC_NEWLINE, 0);
-  } else if (strcmp(argv[1], "norec_noseek") == 0) {
+  } else if (strcmp(argv1, "norec_noseek") == 0) {
     io_disc = PDC_norec_noseek_make(0);
   } else {
     goto usage;
   }
   if (!io_disc) {
-    error(ERROR_FATAL, "\nFailed to install IO discipline %s", argv[1]);
+    error(ERROR_FATAL, "\nFailed to install IO discipline %s", argv1);
   } else {
-    error(0, "\nInstalled IO discipline %s", argv[1]);
+    error(0, "\nInstalled IO discipline %s", argv1);
   }
 
   if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
@@ -80,6 +86,12 @@ int main(int argc, char** argv) {
     error(2, "*** PDC_IO_fopen failed ***");
     return -1;
   }
+
+  if (PDC_OK == PDC_ebc_fpoint8_read(pdc, &em, 3, 4, &ed, &f8) || ed.errCode != PDC_BAD_PARAM) {
+    error(0, "XXX failure: did not get expected BAD_PARAM error XXX");
+    return -1;
+  }
+  NEXT_REC;
 
   if (PDC_OK == PDC_ebc_fpoint8_read(pdc, &em, 3, 0, &ed, &f8)) {
     error(0, "Read ebc fpoint: num %ld denom %lu", (long)f8.num, (unsigned long)f8.denom);
@@ -92,6 +104,12 @@ int main(int argc, char** argv) {
       return -1;
     } 
   } else { return -1; } 
+  NEXT_REC;
+
+  if (PDC_OK == PDC_ebc_fpoint8_read(pdc, &em, 0, 1, &ed, &f8) || ed.errCode != PDC_BAD_PARAM) {
+    error(0, "XXX failure: did not get expected BAD_PARAM error XXX");
+    return -1;
+  }
   NEXT_REC;
 
   if (PDC_OK == PDC_ebc_fpoint8_read(pdc, &em, 3, 1, &ed, &f8)) {
@@ -107,6 +125,12 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
+  if (PDC_OK == PDC_ebc_fpoint8_read(pdc, &em, 3, 2, &ed, &f8) || ed.errCode != PDC_RANGE) {
+    error(0, "XXX failure: did not get expected RANGE error XXX");
+    return -1;
+  }
+  NEXT_REC;
+
   if (PDC_OK == PDC_ebc_fpoint8_read(pdc, &em, 3, 2, &ed, &f8)) {
     error(0, "Read ebc fpoint: num %ld denom %lu", (long)f8.num, (unsigned long)f8.denom);
     if (f8.num != PDC_MAX_INT8) {
@@ -118,6 +142,12 @@ int main(int argc, char** argv) {
       return -1;
     } 
   } else { return -1; } 
+  NEXT_REC;
+
+  if (PDC_OK == PDC_ebc_ufpoint8_read(pdc, &em, 3, 2, &ed, &uf8) || ed.errCode != PDC_RANGE) {
+    error(0, "XXX failure: did not get expected RANGE error XXX");
+    return -1;
+  }
   NEXT_REC;
 
   if (PDC_OK == PDC_ebc_ufpoint8_read(pdc, &em, 3, 2, &ed, &uf8)) {
@@ -133,6 +163,12 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
+  if (PDC_OK == PDC_ebc_fpoint16_read(pdc, &em, 5, 5, &ed, &f16) || ed.errCode != PDC_BAD_PARAM) {
+    error(0, "XXX failure: did not get expected BAD_PARAM error XXX");
+    return -1;
+  }
+  NEXT_REC;
+
   if (PDC_OK == PDC_ebc_fpoint16_read(pdc, &em, 5, 4, &ed, &f16)) {
     error(0, "Read ebc fpoint: num %ld denom %lu", (long)f16.num, (unsigned long)f16.denom);
     if (f16.num != PDC_MIN_INT16) {
@@ -144,6 +180,12 @@ int main(int argc, char** argv) {
       return -1;
     } 
   } else { return -1; } 
+  NEXT_REC;
+
+  if (PDC_OK == PDC_ebc_fpoint16_read(pdc, &em, 10, 2, &ed, &f16) || ed.errCode != PDC_BAD_PARAM) {
+    error(0, "XXX failure: did not get expected BAD_PARAM error XXX");
+    return -1;
+  }
   NEXT_REC;
 
   if (PDC_OK == PDC_ebc_fpoint16_read(pdc, &em, 5, 4, &ed, &f16)) {
@@ -159,6 +201,12 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
+  if (PDC_OK == PDC_ebc_ufpoint16_read(pdc, &em, 5, 4, &ed, &uf16) || ed.errCode != PDC_RANGE) {
+    error(0, "XXX failure: did not get expected RANGE error XXX");
+    return -1;
+  }
+  NEXT_REC;
+
   if (PDC_OK == PDC_ebc_ufpoint16_read(pdc, &em, 5, 4, &ed, &uf16)) {
     error(0, "Read ebc ufpoint: num %lu denom %lu", (unsigned long)uf16.num, (unsigned long)uf16.denom);
     if (uf16.num != PDC_MAX_UINT16) {
@@ -170,6 +218,12 @@ int main(int argc, char** argv) {
       return -1;
     } 
   } else { return -1; } 
+  NEXT_REC;
+
+  if (PDC_OK == PDC_ebc_fpoint32_read(pdc, &em, 11, 9, &ed, &f32) || ed.errCode != PDC_BAD_PARAM) {
+    error(0, "XXX failure: did not get expected BAD_PARAM error XXX");
+    return -1;
+  }
   NEXT_REC;
 
   if (PDC_OK == PDC_ebc_fpoint32_read(pdc, &em, 10, 9, &ed, &f32)) {
@@ -185,6 +239,12 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
+  if (PDC_OK == PDC_ebc_fpoint32_read(pdc, &em, 10, 29, &ed, &f32) || ed.errCode != PDC_BAD_PARAM) {
+    error(0, "XXX failure: did not get expected BAD_PARAM error XXX");
+    return -1;
+  }
+  NEXT_REC;
+
   if (PDC_OK == PDC_ebc_fpoint32_read(pdc, &em, 10, 9, &ed, &f32)) {
     error(0, "Read ebc fpoint: num %ld denom %lu", (long)f32.num, (unsigned long)f32.denom);
     if (f32.num != PDC_MAX_INT32) {
@@ -196,6 +256,12 @@ int main(int argc, char** argv) {
       return -1;
     } 
   } else { return -1; } 
+  NEXT_REC;
+
+  if (PDC_OK == PDC_ebc_ufpoint32_read(pdc, &em, 11, 9, &ed, &uf32) || ed.errCode != PDC_BAD_PARAM) {
+    error(0, "XXX failure: did not get expected BAD_PARAM error XXX");
+    return -1;
+  }
   NEXT_REC;
 
   if (PDC_OK == PDC_ebc_ufpoint32_read(pdc, &em, 10, 9, &ed, &uf32)) {
@@ -211,6 +277,12 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
+  if (PDC_OK == PDC_ebc_fpoint64_read(pdc, &em, 19, 19, &ed, &f64) || ed.errCode != PDC_RANGE) {
+    error(0, "XXX failure: did not get expected RANGE error XXX");
+    return -1;
+  }
+  NEXT_REC;
+
   if (PDC_OK == PDC_ebc_fpoint64_read(pdc, &em, 19, 19, &ed, &f64)) {
     error(0, "Read ebc fpoint: num %lld denom %llu", (long long)f64.num, (unsigned long long)f64.denom);
     if (f64.num != PDC_MIN_INT64) {
@@ -224,6 +296,12 @@ int main(int argc, char** argv) {
   } else { return -1; } 
   NEXT_REC;
 
+  if (PDC_OK == PDC_ebc_fpoint64_read(pdc, &em, 0, 19, &ed, &f64) || ed.errCode != PDC_BAD_PARAM) {
+    error(0, "XXX failure: did not get expected BAD_PARAM error XXX");
+    return -1;
+  }
+  NEXT_REC;
+
   if (PDC_OK == PDC_ebc_fpoint64_read(pdc, &em, 19, 19, &ed, &f64)) {
     error(0, "Read ebc fpoint: num %lld denom %llu", (long long)f64.num, (unsigned long long)f64.denom);
     if (f64.num != PDC_MAX_INT64) {
@@ -235,6 +313,12 @@ int main(int argc, char** argv) {
       return -1;
     } 
   } else { return -1; } 
+  NEXT_REC;
+
+  if (PDC_OK == PDC_ebc_ufpoint64_read(pdc, &em, 21, 19, &ed, &uf64) || ed.errCode != PDC_BAD_PARAM) {
+    error(0, "XXX failure: did not get expected BAD_PARAM error XXX");
+    return -1;
+  }
   NEXT_REC;
 
   if (PDC_OK == PDC_ebc_ufpoint64_read(pdc, &em, 20, 19, &ed, &uf64)) {

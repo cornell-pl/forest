@@ -72,10 +72,7 @@ regress : regress_libtest1 \
           regress_ebc_test \
           regress_bcd_test \
           regress_sb_test \
-
-
-regress_not_yet: regress_ebc_fpoint_test \
-
+          regress_ebc_fpoint_test \
 
 regress_libtest1 : libtest1
 	if [ -f tmp/tmp.libtest1 ]; then $(RM) tmp/tmp.libtest1; fi
