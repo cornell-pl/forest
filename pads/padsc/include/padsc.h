@@ -24,6 +24,14 @@
 extern void bzero(void *s, size_t n);
 
 /* ================================================================================
+ * XXX BACKWARDS COMPATIBILITY DEFINITIONS:
+ *
+ * THESE MACROS WILL EVENTUALLY GO AWAY.  USE THE NEW FUNCTION NAMES!
+ */
+
+#define PDC_IO_fclose PDC_IO_close
+
+/* ================================================================================
  * LIBRARY DISCIPLINE TYPES
  *
  * The Main Discipline Type
@@ -501,28 +509,32 @@ RMM_t * PDC_rmm_nozero(PDC_t *pdc);
 /* ================================================================================ */
 /* TOP-LEVEL IO FUNCTIONS */
 
-/* PDC_IO_fopen    : open a file for reading
- *                   uses disc->fopen_fn, if present, otherwise default PDC_fopen
- *                   returns PDC_OK on success, PDC_ERR on error
+/* 
+ * PDC_IO_set      : Initialize or change the current sfio stream used for input.
  *
- * PDC_IO_fclose   : close the previously opened file
- *                   uses disc->fclose_fn, if present, otherwise default PDC_fclose
- *                   returns PDC_OK on success, PDC_ERR on error
+ * PDC_IO_fopen    : Open a file for reading (a higher-level alternative to io_set).
+ *                   Uses disc->fopen_fn, if present, otherwise default PDC_fopen.
+ *                   Returns PDC_OK on success, PDC_ERR on error
  *
- * PDC_IO_next_rec : advances current IO position to start of the next record, if any.
- *                   returns PDC_OK on success, PDC_ERR on failure. 
- *                   (failure includes hitting EOF before EOR)
+ * PDC_IO_close    : Close the current sfio stream.
+ *                   Uses disc->fclose_fn, if present, otherwise default PDC_fclose.
+ *                   Returns PDC_OK on success, PDC_ERR on error.
+ *
+ * PDC_IO_next_rec : Advances current IO position to start of the next record, if any.
+ *                   Returns PDC_OK on success, PDC_ERR on failure 
+ *                   (failure includes hitting EOF before EOR).
  *                   For PDC_OK case, sets (*skipped_bytes_out) to the number of
  *                   data bytes that were passed over while searching for EOR.
  *
- * PDC_IO_at_EOR   : returns 1 if the current IO position is at EOR, otherwise 0
+ * PDC_IO_at_EOR   : Returns 1 if the current IO position is at EOR, otherwise 0.
  *
- * PDC_IO_at_EOF   : returns 1 if current IO position is at EOF, otherwise 0
+ * PDC_IO_at_EOF   : Returns 1 if current IO position is at EOF, otherwise 0.
  *
- * PDC_IO_getPos   : fill in (*pos) with IO position
- * PDC_IO_getLocB  : fill in loc->b with IO position
- * PDC_IO_getLocE  : fill in loc->e with IO position
- * PDC_IO_getLoc   : fill in both loc->b and loc->e with IO position
+ * PDC_IO_getPos   : Fill in (*pos) with IO position.
+ * PDC_IO_getLocB  : Fill in loc->b with IO position.
+ * PDC_IO_getLocE  : Fill in loc->e with IO position.
+ * PDC_IO_getLoc   : Fill in both loc->b and loc->e with IO position.
+ *
  *   All of these above take an offset.  If offset is 0, the current IO position is
  *   used, otherwise the position used is K bytes from the current IO position
  *   (offset == K ... offset is an int, and can be positive or negative).
@@ -532,8 +544,9 @@ RMM_t * PDC_rmm_nozero(PDC_t *pdc);
  *   based on offset -- offset only refers to data bytes.
  */
 
+PDC_error_t  PDC_IO_set      (PDC_t *pdc, Sfio_t *io);
 PDC_error_t  PDC_IO_fopen    (PDC_t *pdc, char *path);
-PDC_error_t  PDC_IO_fclose   (PDC_t *pdc);
+PDC_error_t  PDC_IO_close    (PDC_t *pdc);
 PDC_error_t  PDC_IO_next_rec (PDC_t *pdc, size_t *skipped_bytes_out);
 
 int          PDC_IO_at_EOR   (PDC_t *pdc);

@@ -57,8 +57,9 @@ struct PDCI_stkElt_s {
 /* ================================================================================ */
 /* INTERNAL VERSIONS OF EXTERNAL IO FUNCTIONS */
 
+PDC_error_t  PDC_IO_set_internal      (PDC_t *pdc, Sfio_t *io);
 PDC_error_t  PDC_IO_fopen_internal    (PDC_t *pdc, char *path);
-PDC_error_t  PDC_IO_fclose_internal   (PDC_t *pdc);
+PDC_error_t  PDC_IO_close_internal    (PDC_t *pdc);
 PDC_error_t  PDC_IO_next_rec_internal (PDC_t *pdc, size_t *skipped_bytes_out);
 
 int          PDC_IO_at_EOR_internal   (PDC_t *pdc);

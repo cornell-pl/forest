@@ -2031,7 +2031,7 @@ PDCI_BCD2UINT(PDCI_bcd2uint64, PDC_uint64, PDC_MAX_UINT64)
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.58 2002-12-11 16:10:50 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.59 2003-03-21 19:49:25 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -2576,6 +2576,14 @@ PDC_rmm_nozero(PDC_t *pdc)
 /* EXTERNAL IO FUNCTIONS */
 
 PDC_error_t
+PDC_IO_set(PDC_t *pdc, Sfio_t *io)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_IO_set");
+  PDCI_NULLPARAM_CHECK("PDC_IO_set", io);
+  return PDC_IO_set_internal(pdc, io);
+}
+
+PDC_error_t
 PDC_IO_fopen(PDC_t *pdc, char *path)
 {
   PDCI_DISC_INIT_CHECKS("PDC_IO_fopen");
@@ -2584,10 +2592,10 @@ PDC_IO_fopen(PDC_t *pdc, char *path)
 }
 
 PDC_error_t
-PDC_IO_fclose(PDC_t *pdc)
+PDC_IO_close(PDC_t *pdc)
 {
-  PDCI_DISC_INIT_CHECKS("PDC_IO_fclose");
-  return PDC_IO_fclose_internal(pdc);
+  PDCI_DISC_INIT_CHECKS("PDC_IO_close");
+  return PDC_IO_close_internal(pdc);
 }
 
 PDC_error_t
@@ -3846,34 +3854,17 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 /* INTERNAL VERSIONS OF EXTERNAL IO FUNCTIONS */
 
 PDC_error_t
-PDC_IO_fopen_internal(PDC_t *pdc, char *path)
+PDC_IO_set_internal(PDC_t *pdc, Sfio_t *io)
 {
   PDCI_stkElt_t    *tp        = &(pdc->stack[0]);
   PDC_IO_elt_t     *next_elt;
 
-  PDC_TRACE(pdc->disc, "PDC_IO_fopen_internal called");
-  if (pdc->io) {
-    PDC_WARN(pdc->disc, "fopen called while previous file still open");
-    return PDC_ERR;
-  }
-  if (!pdc->disc->io_disc) {
-    PDC_WARN(pdc->disc, "fopen called with no IO discipline installed");
-    return PDC_ERR;
-  }
-  if (!(pdc->io = sfopen(NiL, path, "r"))) {
-    PDC_SYSERR1(pdc->disc, "Failed to open file \"%s\"", path);
-    return PDC_ERR;
-  }
+  /* XXX_TODO handle case where pdc->io is already set, io_discipline already open, etc */
+  pdc->io = io;
 #if 1
   /* tell sfio to use pdc->sfbuf but only let it know about 1 MB of space */
   sfsetbuf(pdc->io, (Void_t*)pdc->sfbuf, 1024 * 1024);
 #endif
-  if (!(pdc->path = vmnewof(pdc->vm, 0, char, strlen(path) + 1, 0))) {
-    PDC_FATAL(pdc->disc, "out of space [string to record file path]");
-    PDC_IO_fclose(pdc);
-    return PDC_ERR;
-  }
-  strcpy(pdc->path, path);
 
   /* set state to nothing read/no checkpoints */
   pdc->top        = 0;
@@ -3889,16 +3880,42 @@ PDC_IO_fopen_internal(PDC_t *pdc, char *path)
   }
   tp->elt = PDC_FIRST_ELT(pdc->head);
   if (tp->elt == pdc->head || tp->elt != next_elt) {
-    PDC_FATAL(pdc->disc, "Internal error : IO read function failure in PDC_IO_fopen_internal");
+    PDC_FATAL(pdc->disc, "Internal error : IO read function failure in PDC_IO_set_internal");
   }
   tp->remain = tp->elt->len;
   return PDC_OK;
 }
 
 PDC_error_t
-PDC_IO_fclose_internal(PDC_t *pdc)
+PDC_IO_fopen_internal(PDC_t *pdc, char *path)
 {
-  PDC_TRACE(pdc->disc, "PDC_IO_fclose_internal called");
+  Sfio_t           *io; 
+
+  PDC_TRACE(pdc->disc, "PDC_IO_fopen_internal called");
+  if (pdc->io) {
+    PDC_WARN(pdc->disc, "fopen called while previous file still open");
+    return PDC_ERR;
+  }
+  if (!pdc->disc->io_disc) {
+    PDC_WARN(pdc->disc, "fopen called with no IO discipline installed");
+    return PDC_ERR;
+  }
+  if (!(pdc->path = vmnewof(pdc->vm, 0, char, strlen(path) + 1, 0))) {
+    PDC_FATAL(pdc->disc, "out of space [string to record file path]");
+    return PDC_ERR;
+  }
+  strcpy(pdc->path, path);
+  if (!(io = sfopen(NiL, path, "r"))) {
+    PDC_SYSERR1(pdc->disc, "Failed to open file \"%s\"", path);
+    return PDC_ERR;
+  }
+  return PDC_IO_set_internal(pdc, io);
+}
+
+PDC_error_t
+PDC_IO_close_internal(PDC_t *pdc)
+{
+  PDC_TRACE(pdc->disc, "PDC_IO_close_internal called");
   if (!pdc->io) {
     return PDC_ERR;
   }
