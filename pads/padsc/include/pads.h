@@ -186,19 +186,19 @@ typedef struct PDC_string_s {
 
 #define PDC_MIN_INT8                        -128
 #define PDC_MAX_INT8                         127
-#define PDC_MAX_UINT8                        255
+#define PDC_MAX_UINT8                        255U
 
 #define PDC_MIN_INT16                     -32768
 #define PDC_MAX_INT16                      32767
-#define PDC_MAX_UINT16                     65535
+#define PDC_MAX_UINT16                     65535U
 
 #define PDC_MIN_INT32                -2147483648L
 #define PDC_MAX_INT32                 2147483647L
-#define PDC_MAX_UINT32                4294967295L
+#define PDC_MAX_UINT32                4294967295UL
 
 #define PDC_MIN_INT64       -9223372036854775808LL
 #define PDC_MAX_INT64        9223372036854775807LL
-#define PDC_MAX_UINT64      18446744073709551615LL
+#define PDC_MAX_UINT64      18446744073709551615ULL
 
 /* ================================================================================ */ 
 /* ERROR REPORTING FUNCTIONS */
