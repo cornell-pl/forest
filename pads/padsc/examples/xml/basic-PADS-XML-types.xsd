@@ -1,0 +1,139 @@
+
+<xs:schema targetNamespace="http://www.w3.org/1999/xhtml"
+	   xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<simpleType name="PDC_char">
+  <restriction base="xsd:string">
+    <maxLength value="1"/>
+  </restriction>
+</simpleType>
+
+<simpleType name="PDC_string">
+  <restriction base="xsd:string"/>
+</simpleType>
+
+<simpleType name="PDC_int8">
+  <restriction base="xsd:byte"/>
+</simpleType>
+
+<simpleType name="PDC_int16">
+  <restriction base="xsd:short"/>
+</simpleType>
+
+<simpleType name="PDC_int32">
+  <restriction base="xsd:int"/>
+</simpleType>
+
+<simpleType name="PDC_int64">
+  <restriction base="xsd:long"/>
+</simpleType>
+
+<simpleType name="PDC_uint8">
+  <restriction base="xsd:unsignedByte"/>
+</simpleType>
+
+<simpleType name="PDC_uint16">
+  <restriction base="xsd:unsignedShort"/>
+</simpleType>
+
+<simpleType name="PDC_uint32">
+  <restriction base="xsd:unsignedInt"/>
+</simpleType>
+
+<simpleType name="PDC_uint64">
+  <restriction base="xsd:unsignedLong"/>
+</simpleType>
+
+<simpleType name="PDC_fpoint8">
+  <restriction base="xsd:float">
+    <minInclusive value="-128"/>
+    <maxInclusive value="127"/> 
+  </restriction>
+</simpleType>
+
+<simpleType name="PDC_fpoint16">
+  <restriction base="xsd:float">
+    <minInclusive value="-32768"/>
+    <maxInclusive value="32767"/> 
+  </restriction>
+</simpleType>
+
+<simpleType name="PDC_fpoint32">
+  <restriction base="xsd:float">
+    <minInclusive value="-2147483647"/>
+    <maxInclusive value="2147483647"/> 
+  </restriction>
+</simpleType>
+
+<simpleType name="PDC_fpoint64">
+  <restriction base="xsd:float">
+    <minInclusive value="-9223372036854775807"/>
+    <maxInclusive value="9223372036854775807"/> 
+  </restriction>
+</simpleType>
+
+<simpleType name="PDC_ufpoint8">
+  <restriction base="xsd:float">
+    <minInclusive value="0"/>
+    <maxInclusive value="255"/> 
+  </restriction>
+</simpleType>
+
+<simpleType name="PDC_ufpoint16">
+  <restriction base="xsd:float">
+    <minInclusive value="0"/>
+    <maxInclusive value="65535"/> 
+  </restriction>
+</simpleType>
+
+<simpleType name="PDC_ufpoint32">
+  <restriction base="xsd:float">
+    <minInclusive value="0"/>
+    <maxInclusive value="4294967295"/> 
+  </restriction>
+</simpleType>
+
+<simpleType name="PDC_ufpoint64">
+  <restriction base="xsd:float">
+    <minInclusive value="0"/>
+    <maxInclusive value="18446744073709551615"/> 
+  </restriction>
+</simpleType>
+
+
+<simpleType name="size_t" type="xsd:integer"/>
+
+<complexType name="PDC_flags_t">
+ <choice>
+  <element name="Panic"/>
+ </choice>
+</complexType>
+
+<complexType name="PDC_pos_t"> 
+ <sequence>
+  <element name="byte" type="size_t"/>
+  <element name="num" type="size_t"/>
+  <element name="unit" type="xsd:string"/> <!-- string??? -->
+ </sequence>
+</complexType>
+
+<complexType name="PDC_loc_t"> 
+ <sequence>
+  <element name="b" type="PDC_pos_t"/>
+  <element name="e" type="PDC_pos_t"/>
+ </sequence>
+</complexType>
+
+<simpleType name="PDC_errCode_t">
+  <restriction base="xsd:string"/>  
+</simpleType>
+
+<complexType name="PDC_base_ed">
+ <sequence>
+  <element name="panic" type="xsd:integer"/>
+  <element name="errCode" type="PDC_errCode_t"/>
+  <element name="loc" type="PDC_loc_t"/>
+ </sequence>
+</complexType>
+
+</xs:schema>
