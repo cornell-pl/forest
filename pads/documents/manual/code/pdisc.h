@@ -1,4 +1,4 @@
-/*@FILE pdisc.tex pinformats.tex poutformats.tex timestamp-format.tex date-format.tex time-format.tex timestamp-output-format.tex date-output-format.tex time-output-format.tex*/
+/*@FILE pdisc.tex pinformats.tex poutformats.tex timestamp-format.tex date-format.tex time-format.tex timestamp-output-format.tex date-output-format.tex time-output-format.tex pfopen_fn.tex*/
 
 /*@BEGIN pinformats.tex*/
 typedef struct Pin_formats_s {
@@ -91,3 +91,7 @@ const char *tout =
  "%H.%M"
  "%H:%M:%S" /* default */
 /*@END time-output-format.tex */
+
+/*@BEGIN pfopen_fn.tex*/
+typedef Sfio_t* (*Pfopen_fn)(const char *source, const char *mode);
+/*@END pfopen_fn.tex*/
