@@ -43,8 +43,7 @@ struct CMR_tmentry_s {
   CMR_rwfn         rwfn;
 };
 
-/* Include the static tmap decl */
-#include "tmap.h"
+extern CMR_tmentry_t tmap[];
 
 #endif  /* __CMONSTER_H__  */
 

@@ -30,6 +30,8 @@ CMR_D = cmonster-g
 
 ALL_PROGS = $(CMR_O) $(CMR_D)
 
+C_FILES = $(GEN_DIR)/cmdline.c rwfn.c tmap.c cmonster.c
+
 all: sanity_check $(ALL_PROGS)
 
 sanity_check:
@@ -41,10 +43,10 @@ clean:
 veryclean: clean
 	$(RM) cmdline.h cmdline.c
 
-cmonster: $(GEN_DIR)/cmdline.c rwfn.c cmonster.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+cmonster: $(C_FILES) $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-cmonster-g: $(GEN_DIR)/cmdline.c rwfn.c cmonster.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+cmonster-g: $(C_FILES) $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
  # End of rules that are run from the arch directory

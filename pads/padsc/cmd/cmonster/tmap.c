@@ -1,6 +1,3 @@
-#ifdef _USE_PROTO
-#pragma prototyped
-#endif
 /*
  * Map from type name to read and write functions for cmonster.
  * This file is included directly by cmonster.h
@@ -9,10 +6,9 @@
  * AT&T Labs Research
  */
 
-#ifndef __TMAP_H__
-#define __TMAP_H__
-
 /* Declare all of the rwfn: */
+
+#include "cmonster.h"
 
 #define CMR_RW_DECL(fn) \
 PDC_error_t fn(CMR_t *cmr, CMR_cookie_t *cookie, PDC_byte *begin)
@@ -38,6 +34,4 @@ CMR_tmentry_t tmap[] = {
   /* END MARKER */
   { 0, 0 }
 };
-
-#endif  /* __TMAP_H__  */
 
