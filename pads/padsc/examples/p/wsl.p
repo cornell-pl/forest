@@ -1,14 +1,14 @@
-Parray ip_t {
+Parray Pip {
   Puint8 [4] : Psep('.') && Pterm(Pnosep);          
 };
 
-Parray hostname_t{
+Parray Phostname{
   Pstring_SE(:"/[. ]/":) [] : Psep('.') && Pterm(Pnosep); 
 };
 
 Punion client_t {
-  ip_t       ip;      /- 135.207.23.32
-  hostname_t host;    /- www.research.att.com
+  Pip       ip;      /- 135.207.23.32
+  Phostname host;    /- www.research.att.com
 };
 
 Punion auth_id_t {
