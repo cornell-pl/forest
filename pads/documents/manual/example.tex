@@ -1,4 +1,4 @@
-\chapter{Example}
+\chapter{Tutorial}
 \label{chap:example}
 In this chapter, we use examples to give an overview of \pads{}.
 
@@ -21,33 +21,85 @@ third fields are often recorded only as a '-' character to indicate
 the server did not record the actual data.  \figref{figure:clf-records}
 shows a couple of typical records.
 
+\section{Provisioning data}
+
+In the telecommunications industry, the term \textit{provisioning}
+refers to the steps necessary to convert an order for phone service
+into the actual service.  To track AT\&T's provisioning process, the
+\dibbler{} project compiles weekly summaries of the state of certain
+types of phone service orders.  These ASCII summaries store the
+summary date and one record per order.  Each order record contains a
+header followed by a sequence of events.  The header has 13 pipe
+separated fields: the order number, AT\&T's internal order number, the
+order version, four different telephone numbers associated with the
+order, the zip code of the order, a billing identifier, the order
+type, a measure of the complexity of the order, an unused field, and
+the source of the order data.  Many of these fields are optional, in
+which case nothing appears between the pipe characters.  The billing
+identifier may not be available at the time of processing, in which
+case the system generates a unique identifier, and prefixes this value
+with the string ``no\_ii'' to indicate the number was generated. The
+event sequence represents the various states a service order goes
+through; it is represented as a new-line terminated, pipe separated
+list of state, timestamp pairs.  There are over 400 distinct states
+that an order may go through during provisioning.  The sequence is
+sorted in order of increasing
+timestamps. \figref{figure:dibbler-records} shows a small example of
+this format.
+
+
 \begin{figure*}[t!]
-\begin{small}
-\begin{center}
+\begin{tiny}
 \begin{code}
 \input{../../padsc/examples/data/ai.paper}
 \end{code}
 \vskip -2ex
 \caption{Tiny example of web server log data.}
 \label{figure:clf-records}
+\end{tiny}
+\end{figure*}
+
+\begin{figure*}
+\begin{small}
+\begin{center}
+\begin{verbatim}
+0|1005022800
+9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
+\end{verbatim}
+\caption{Tiny example of \dibbler{} provisioning data.}
+\label{figure:dibbler-records}
 \end{center}
 \end{small}
 \end{figure*}
 
 \begin{figure}
+\begin{tiny}
 \input{../pldi/wsl}
 \caption{\pads{} description for web server log data.}
 \label{figure:wsl}
+\end{tiny}
 \end{figure}
+
+\begin{figure}
+\begin{footnotesize}
+\input{../pldi/dibbler_new}
+\caption{\pads{} description for \dibbler{} provisioning data.}
+\label{figure:dibbler}
+\end{footnotesize}
+\end{figure}
+
 
 
 \section{\padsl{} description}
 \label{sec:example:padsl-description}
-\figref{figure:wsl} gives the \pads{} description for CLF web server logs.  
-We will use this example to illustrate various features of the \pads{}
-language.  In \pads{} descriptions, types are declared before they are
-used, so the type that describes the totality of the data source
-appears at the bottom of the description. 
+\figref{figure:wsl} gives the \pads{} description for CLF web server
+logs,  while \figref{figure:dibbler} gives the description for the
+\dibbler{} provisioning data.  We will use these example to illustrate
+various features of the \pads{} language.  In \pads{} descriptions,
+types are declared before they are used, so the type that describes
+the totality of the data source appears at the bottom of the
+description.
 
 \kw{Pstruct}s describe fixed sequences of data with unrelated types.
 In the CLF description, the type declaration for \cd{version_t}
@@ -78,38 +130,133 @@ supports a \textit{switched} union that uses a selection expression to
 determine the branch to parse.  Typically, this expression depends
 upon already-parsed portions of the data source.
 
-\pads{} provides \kw{Parray}s to describe varying-length sequences of data all 
-with the same type.  The \cd{eventSeq_t} declaration in the \dibbler{} data description
-uses a \kw{Parray} to characterize the sequence of events an
-order goes through during processing.  This declaration indicates that the elements
-in the sequence have type \cd{event_t}.  It also specifies that the elements will
-be separated by vertical bars, and that the sequence will be terminated by 
-an end-of-record marker (\kw{Peor}).  In general, \pads{} provides a rich collection
-of array-termination conditions: reaching a maximum size, finding a terminating
-literal (including end-of-record and end-of-source),
-or satisfying a user-supplied predicate over the already-parsed portion of 
-the \kw{Parray}.  Finally, this type declaration includes a \kw{Pwhere} clause
-to specify that the sequence of timestamps must be in sorted order.
-It uses the \kw{Pforall} construct to express this constraint.
-In general, the body of a \kw{Pwhere} clause can be any boolean expression.
-In such a context for arrays, the pseudo-variable \cd{elts} is bound to the in-memory representation of the sequence and \cd{length} to its length.
+\pads{} provides \kw{Parray}s to describe varying-length sequences of
+data all with the same type.  The \cd{eventSeq_t} declaration in the
+\dibbler{} data description uses a \kw{Parray} to characterize the
+sequence of events an order goes through during processing.  This
+declaration indicates that the elements in the sequence have type
+\cd{event_t}.  It also specifies that the elements will be separated
+by vertical bars, and that the sequence will be terminated by an
+end-of-record marker (\kw{Peor}).  In general, \pads{} provides a rich
+collection of array-termination conditions: reaching a maximum size,
+finding a terminating literal (including end-of-record and
+end-of-source), or satisfying a user-supplied predicate over the
+already-parsed portion of the \kw{Parray}.  Finally, this type
+declaration includes a \kw{Pwhere} clause to specify that the sequence
+of timestamps must be in sorted order.  It uses the \kw{Pforall}
+construct to express this constraint.  In general, the body of a
+\kw{Pwhere} clause can be any boolean expression.  In such a context
+for arrays, the pseudo-variable \cd{elts} is bound to the in-memory
+representation of the sequence and \cd{length} to its length.
 
-Returning to the CLF description in \figref{figure:wsl}, the \kw{Penum} type \cd{method_t} describes
-a collection of data literals.  During parsing, \pads{} interprets these
-constants using the ambient character encoding.  The \kw{Ptypedef} 
-\cd{response_t} describes possible server response codes in CLF data by adding
-the constraint that the three-digit integer must be between 100 and 600.
+Returning to the CLF description in \figref{figure:wsl}, the
+\kw{Penum} type \cd{method_t} describes a collection of data literals.
+During parsing, \pads{} interprets these constants using the ambient
+character encoding.  The \kw{Ptypedef} \cd{response_t} describes
+possible server response codes in CLF data by adding the constraint
+that the three-digit integer must be between 100 and 600.
 
-The \cd{order_header_t} type in the \dibbler{} data description contains several
-anonymous uses of the \kw{Popt} type.  This type is syntactic sugar for a 
-stylized use of a \kw{Punion} with two branches: the first with the indicated type, and the second with the ``void'' type, which  
-always matches but never consumes any input.
+The \cd{order_header_t} type in the \dibbler{} data description
+contains several anonymous uses of the \kw{Popt} type.  This type is
+syntactic sugar for a stylized use of a \kw{Punion} with two branches:
+the first with the indicated type, and the second with the ``void''
+type, which always matches but never consumes any input.
 
 
 
-\section{Generated library}
+\subsection{Generated library}
 \label{sec:example:generated-library}
-Explain selected outputs of library.
+From a description, the \pads{} compiler generates a \C{} library
+for parsing and manipulating the associated data source.  We chose \C{}
+as the target language for pragmatic reasons: there were 
+libraries that made building the compiler and run-time libraries easier,
+our target users are comfortable with \C{}, and it can serve 
+as a lingua franca in that essentially all languages have provisions for 
+calling \C{} libraries.  Nothing about the \pads{} language mandates compiling
+to \C{}, however, and we envision eventually building alternate bindings.
 
-\section{Example library use}
+From each type in a \pads{} description, the compiler generates 
+\begin{itemize}
+\setlength{\itemsep}{0ex plus0.2ex}
+\item an in-memory representation, 
+\item a mask, which allows users to customize generated functions,
+\item a parse descriptor, which describes syntactic and
+semantic errors detected during parsing, 
+\item parsing and printing functions, and 
+\item a broad collection of utility functions.
+\end{itemize}
+%
+\setcounter{totalnumber}{1}
+\setcounter{dbltopnumber}{1}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+\begin{figure*}
+\begin{tiny}
+\input{library}
+\caption{Selected portions of the library generated for the \texttt{entry\_t}
+  declaration from \dibbler{} data description.}
+\label{figure:library}
+\end{tiny}
+\end{figure*}
+To give a feeling for the library that \pads{} generates, 
+\figref{figure:library} includes selected portions of the generated 
+library for the \dibbler{} \cd{entry_t} declaration.
+
+The \C{} declarations for the in-memory representation, the mask, 
+and the parse descriptor all share the structure of the \pads{}
+type declaration.  The mapping to \C{} for each is straightforward: 
+\kw{Pstruct}s map to \C{} structs with appropriately mapped fields, 
+\kw{Punion}s map to tagged unions coded as \C{} structs with a tag field 
+and an embedded 
+union, \kw{Parray}s map to a \C{} struct with a length field and an 
+embedded sequence, \kw{Penums} map to \C{} enumerations, \kw{Poptions} 
+to tagged unions, and \kw{Ptypedef}s to \C{} typedefs.  Masks include
+auxiliary fields to control behavior at the level of a structured
+type, and parse descriptors include extra fields to record the 
+state of the parse, the number of detected errors, 
+the error code of the first detected error, and the location of that error.
+
+The parser takes a mask as an argument and returns an
+in-memory representation and a parse descriptor.  
+The mask allows the user to specify 
+which constraints the parser should check and which portions of the
+in-memory representation it should fill in.  This control allows the
+description-writer to specify all known constraints about the data
+without worrying about the run-time cost of verifying potentially
+expensive constraints for time-critical applications.
+
+Appropriate error-handling can be as important as processing
+error-free data.  The parse descriptor marks which portions of the
+data contain errors and characterizes the detected errors.
+Depending upon the nature of the errors and the desired application,
+programmers can take the appropriate action: halting the program,
+discarding parts of the data, or repairing the errors.
+If the mask requests
+that a data item be verified and set, and if the parse descriptor
+indicates no error, then the in-memory representation satisfies the
+semantic constraints on the data.
+
+Because we generate a parsing function for each type in a \pads{} description,
+we support multiple-entry point parsing, which allows us to 
+accommodate larger-scale data.
+For a small file, programmers can define a \pads{} type that describes
+the entire file and use that type's parsing function to read the whole
+file with one call.  For larger-scale data, programmers can sequence
+calls to parsing functions that read manageable portions of the file,
+\eg{}, reading a record at a time in a loop.  The parsing code generated
+for \kw{Parrays} allows users to choose between reading the entire array
+at once or reading it one element at a time, again to support parsing
+and processing very large data sources.
+
+The ratio of the size of the data description to the size of the generated code gives a rough measure of the leverage of the
+declarative description.  For the 
+68~line \dibbler{} data description, the compiler yields a 1432~\texttt{.h} file
+and a 6471~\texttt{.c} file.  This expansion comes from the extensive error checking in the generated parser and the number of generated utility functions.
+
+We discuss details of the generated library in the following section
+as we describe its uses.
+
+
+\subsection{Example library use}
 \label{sec:example:library-use}

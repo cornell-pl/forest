@@ -230,14 +230,21 @@ which ensures that obsolete HTTP methods \cd{LINK} and \cd{UNLINK}
 are only used with HTTP version \cd{1.0}.
 
 \section{Generated library}
+\figHeight{pictures/architecture}{Architecture of \pads{} system.}{fig:architecture}{2.25in}
+
 From a description, the \pads{} compiler generates a \C{} library
-for parsing and manipulating the associated data source.  We chose \C{}
-as the target language for pragmatic reasons: there were 
-libraries that made building the compiler and run-time libraries easier,
-our target users are comfortable with \C{}, and it can serve 
-as a lingua franca in that essentially all languages have provisions for 
-calling \C{} libraries.  Nothing about the \pads{} language mandates compiling
-to \C{}, however, and we envision eventually building alternate bindings.
+for parsing and manipulating the associated data source.  
+\figref{fig:architecture} shows the architecture of the \pads{}
+system.  The output of the \pads{} compiler is linked with the \pads{}
+standard library and user code to form an executable.
+
+We chose \C{} as the target language for pragmatic reasons: there were
+libraries that made building the compiler and run-time libraries
+easier, our target users are comfortable with \C{}, and it can serve
+as a lingua franca in that essentially all languages have provisions
+for calling \C{} libraries.  Nothing about the \pads{} language
+mandates compiling to \C{}, however, and we envision eventually
+building alternate bindings.
 
 From each type in a \pads{} description, the compiler generates 
 \begin{itemize}
@@ -385,25 +392,29 @@ subdirectory.  Otherwise, it will put them in the same directory as
 the \texttt{my.p} file.
 
 \subsection{Commaind-line switches}
+\begin{figure}
+\begin{center}
 \begin{verbatim}
-padsc  [-wnone] [-anone] [-x] [-r <string>] [-b <string>] 
-       [-I <string> ...] [-D <string> ...] [-U <string> ...] [-t] [--help]
+padsc  [-wnone] [-anone] [-r <string>] 
+       [-I <string> ...] [-D <string> ...] [-U <string> ...] 
+       [-t] [--help]
 -wnone	suppress write function generation
 -anone	suppress accumulator generation
--x	output Galax Data API
 -r	output directory
--b	add base type table
 -I	augment include path
 -D	add definition
 -U	remove definition
 -t	trace system commands
 .p	PADS files
 \end{verbatim}
+\caption{Command-line switches understood by the \pads{} compiler.}
+\label{figure:intro-switches}
+\end{center}
+\end{figure}
+\figref{figure:intro-switches} lists the command-line options
+supported by the \pads{} compiler.
 
 
-picture linking generated library with core library and main.c to
-produce executable.
-\figHeight{pictures/architecture}{Architecture of \pads{} system.}{fig:architecture}{2.25in}
 
 \section{Practical notes}
 \pads{} uses the \texttt{Sfio} library for managing I/O

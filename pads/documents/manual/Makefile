@@ -51,5 +51,6 @@ extract: ../extract-code/pads-keywords.sml
 manual:
 	pdflatex manual.tex
 
-manual-all:
-	pdflatex manual.tex; pdflatex manual.tex; bibtex manual; pdflatex manual.pdf
+manual-all: docode
+	pdflatex manual.tex; bibtex manual
+	pdflatex manual.tex; pdflatex manual.tex
