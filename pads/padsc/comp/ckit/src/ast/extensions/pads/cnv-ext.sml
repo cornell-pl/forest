@@ -1154,9 +1154,9 @@ structure CnvExt : CNVEXT = struct
 		  in
 		      List.map doOne ctNoptEs
 		  end
-	      
-	      (* Given representation of manifest field, generate accumulator representation. *)
-	      fun genAccMan {decl, comment:string option} = 
+
+              (* Given manifest field, use f to generate struct field declaration from pads pty*)
+	      fun genMan f {decl, comment:string option} = 
 		  let val ctNoptEs = cnvDeclaration decl
 		      fun doOne (cty, nameOpt, exp) = 
 			  let val name = case nameOpt of NONE => "bogus"
@@ -1166,11 +1166,26 @@ structure CnvExt : CNVEXT = struct
 			  in
 			      case reverseLookup cty 
 				  of SOME pty => 
-				      [(name, P.makeTypedefPCT (valOf (lookupAcc pty)), fullCommentOpt)]
+				      [(name, P.makeTypedefPCT (f pty), fullCommentOpt)]
 				| NONE => []
 			  end
 		  in
 		      List.concat(List.map doOne ctNoptEs)
+		  end
+              
+	      
+	      (* Given representation of manifest field, generate accumulator representation. *)
+	      fun genAccMan m = 
+		  let fun f pty = valOf (lookupAcc pty)
+		  in
+		      genMan f m
+		  end
+
+	      (* Given representation of manifest field, generate error descriptor representation. *)
+	      fun genEDMan m = 
+		  let fun f pty = lookupTy(pty, edSuf, #edname)
+		  in
+		      genMan f m
 		  end
 
 	      fun cnvPtyMan (theName, acc, name)  = 
@@ -1537,7 +1552,6 @@ structure CnvExt : CNVEXT = struct
 			  [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		      fun genEDBrief e = []
 		      fun genEDEOR () = []
-		      fun genEDMan () = []
 		      val auxEDFields = [(nerr, P.int,NONE), (errCode, PL.errCodePCT, NONE),
 					 (loc, PL.locPCT,NONE), (panic, P.int,NONE)]
 		      val edFields = auxEDFields @ (mungeFields genEDFull genEDBrief genEDEOR genEMMan fields)
@@ -2143,7 +2157,6 @@ structure CnvExt : CNVEXT = struct
 				    pred:pcexp option, comment} = 
 			 [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		     fun genEDBrief e = []
-		     fun genEDMan m = []
 		     val edVariants = mungeVariants genEDFull genEDBrief genEDMan variants
 		     val unionED = P.makeTyDefUnionEDecl(edVariants, (unSuf o edSuf) name)
 		     val unionEDDecls = cnvExternalDecl unionED
@@ -2349,7 +2362,7 @@ structure CnvExt : CNVEXT = struct
 			     in
 				 [PT.Compound ([P.varDeclS(P.int, result, PL.PDC_ERROR),
 						locBS] 
-					       @ readFields @ cleanupSs)]
+					       @ deallocOldSpaceSs @ readFields @ cleanupSs)]
 			     end
                          | SOME descriminator => buildSwitchRead(descriminator)
 
@@ -2436,7 +2449,7 @@ structure CnvExt : CNVEXT = struct
 					   P.assignS(P.dotX(PT.Id ted,PT.Id errCode),
 						     P.arrowX(PT.Id ed, PT.Id errCode))] 
 				       in
-					  genCase(name,pty,initSs,P.addrX(PT.Id ted))
+					  genCase(name,pty,initSs,unionBranchX(ed,name))
 				       end
 				  end
 			  in
@@ -2470,20 +2483,21 @@ structure CnvExt : CNVEXT = struct
 
                       (* Generate init function, union case *)
 		      val initFunName = lookupMemFun (PX.Name name)
-                      val initRepEDs = case #memChar unionProps
+                      fun genInitEDs (suf, var, varPCT) = 
+			  case #memChar unionProps
 			  of TyProps.Static => 
-			      [genInitFun(initSuf initFunName, rep, canonicalPCT, [],true)]
+			      [genInitFun(suf initFunName, var, varPCT, [],true)]
 			   | TyProps.Dynamic => 
 			       let fun genInitFull {pty as PX.Name tyName :PX.Pty, args : pcexp list, 
 						    name:string, isVirtual:bool, isEndian:bool,
 						    pred:pcexp option, comment:string option} = 
-				  [ [ P.assignS(P.arrowX(PT.Id rep, PT.Id tag), PT.Id name)]
+				  [ [ P.assignS(P.arrowX(PT.Id var, PT.Id tag), PT.Id name)]
 				    @ (if TyProps.Static = lookupMemChar pty then []
 				       else let val baseFunName = lookupMemFun (PX.Name tyName)
 					    in [PT.Expr(
-					           PT.Call(PT.Id (initSuf baseFunName),
+					           PT.Call(PT.Id (suf baseFunName),
 							   [PT.Id ts, 
-							    unionBranchX(rep, name)]))]
+							    unionBranchX(var, name)]))]
 					    end)]
 				   fun genInitBrief _ = [[]]
 				   fun genInitMan _ = []
@@ -2491,36 +2505,17 @@ structure CnvExt : CNVEXT = struct
 						      genInitBrief genInitMan variants)
 				                of [] => [] | (x::xs) => x
 			       in
-				   [genInitFun(initSuf initFunName, rep, canonicalPCT, bodySs,false)]
+				   [genInitFun(suf initFunName, var, varPCT, bodySs,false)]
 		               end
-
-                      fun genInitEDEDs suf = case #memChar unionProps
-			  of TyProps.Static => 
-				   [genInitFun(suf initFunName, ed, edPCT, [],true)]
-			   | TyProps.Dynamic => 
-			       let fun genInitFull {pty as PX.Name tyName :PX.Pty, args : pcexp list, 
-						    name:string, isVirtual:bool, isEndian:bool,
-						    pred:pcexp option, comment:string option} = 
-				    if TyProps.Static = lookupMemChar pty then []
-				    else let val baseFunName = lookupMemFun (PX.Name tyName)
-					 in [PT.Expr(
-					      PT.Call(PT.Id (suf baseFunName),
-							   [PT.Id ts, 
-							    unionBranchX(ed,name)]))]
-					 end
-				   fun genInitBrief _ = []
-				   fun genInitMan _ = []
-				   val bodySs = mungeVariants genInitFull genInitBrief genInitMan variants
-			       in
-				   [genInitFun(suf initFunName, ed, edPCT, bodySs, false)]
-		               end
-		      val initEDEDs = genInitEDEDs (initSuf o edSuf)
+                      val initRepEDs = genInitEDs (initSuf, rep, canonicalPCT)
+		      val initEDEDs = genInitEDs((initSuf o edSuf), ed, edPCT)
 
                       (* Generate cleanup function, union case *)
 		      val cleanupFunName = lookupMemFun (PX.Name name)
-                      val cleanupRepEDs = case #memChar unionProps
+		      fun genCleanupEDs (suf, var, varPCT) = 
+			  case #memChar unionProps
 			  of TyProps.Static => 
-			      [genInitFun(cleanupSuf cleanupFunName,rep,canonicalPCT,[],true)]
+			      [genInitFun(suf cleanupFunName,var,varPCT,[],true)]
 			   | TyProps.Dynamic => 
 			       let fun genCleanupFull {pty as PX.Name tyName :PX.Pty, args : pcexp list, 
 						    name:string, isVirtual:bool, isEndian:bool,
@@ -2530,21 +2525,23 @@ structure CnvExt : CNVEXT = struct
 					 in [PT.CaseLabel(PT.Id name,
 					      PT.Compound[
 					       PT.Expr(
-					           PT.Call(PT.Id (cleanupSuf baseFunName),
+					           PT.Call(PT.Id (suf baseFunName),
 							   [PT.Id ts, 
-							    unionBranchX(rep,name)])), 
+							    unionBranchX(var,name)])), 
 					       PT.Break])]
 					 end
 				   fun genCleanupBrief _ = []
 				   fun genCleanupMan _ = []
 				   val branchSs = mungeVariants genCleanupFull 
 				                   genCleanupBrief genCleanupMan variants
-				   val bodySs = [PT.Switch(P.arrowX(PT.Id rep, PT.Id tag), PT.Compound branchSs),
-						 PL.bzeroS(PT.Id rep, P.sizeofX canonicalPCT)]
+				   val bodySs = [PT.Switch(P.arrowX(PT.Id var, PT.Id tag), PT.Compound branchSs),
+						 PL.bzeroS(PT.Id var, P.sizeofX varPCT)]
 			       in
-				   [genInitFun(cleanupSuf cleanupFunName, rep, canonicalPCT, bodySs, false)]
+				   [genInitFun(suf cleanupFunName, var, varPCT, bodySs, false)]
 		               end
-		      val cleanupEDEDs = genInitEDEDs(cleanupSuf o edSuf)
+			   
+		      val cleanupRepEDs = genCleanupEDs(cleanupSuf, rep, canonicalPCT)
+		      val cleanupEDEDs = genCleanupEDs(cleanupSuf o edSuf, ed, edPCT)
 		 in
 		       tagDecls
 		     @ unionDecls

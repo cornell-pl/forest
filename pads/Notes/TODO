@@ -10,11 +10,14 @@ to decide
         either individual bits or collections of them.
   * padsl pragmas for specifying record-type, endian, slurp mode
   * add struct predicates to calculuate properties of entire struct
+	- consider adding an overlay ability here, which would
+	  reinterpret something of buffer type
   * allow union arms with no variable names by specifying a tag name
   * more convenient ways of specying error-mask settings.
   * support for optional fields?
   * how to handle name conflicts for enums and unions
      how relates to name spaces and separate compilation
+  * in-place parsing from buffers?
 
 data formats to write
 ---------------------
@@ -29,6 +32,7 @@ to document
 library todo
 ------------
  * add nerr to padsc base types
+ * buffer data source
 
 MORE BASE TYPES:
  * adate
@@ -83,4 +87,8 @@ padsc compiler todo
   * fix accumulator generation program to start from file type
   * add analysis to determine if checkset mask is plausible 
     given other constraints
-
+  * can we access the length of an array or the tag on a union
+    after we have parsed the associated data?
+  * empty structs
+done
+----
