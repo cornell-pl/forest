@@ -1,4 +1,4 @@
- # This is a GNU makefile.  See Makefile for the nmake version.
+ # This is a GNU makefile.
 
 .SUFFIXES:
  

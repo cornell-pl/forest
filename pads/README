@@ -3,8 +3,9 @@
    the PADSC Compiler and Library
 =========================================
 
-Note: these instructions use gmake.  We also support nmake builds:
-use NMAKE_SETENV instead of DO_SETENV, and use nmake instead of gmake.
+Note: these instructions use GNU make (often called gmake or make).
+Be sure that the make program you are using is GNU make before
+proceeding.
 
 STEP 1: ENVIRONMENT SETUP
 
