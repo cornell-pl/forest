@@ -1333,7 +1333,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      in
 			  cnvFunED
 		      end
-			 
+
 
 
              (*  Perror_t T_acc_name(P_t* , T_acc* ) *)
@@ -5042,8 +5042,11 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
                  (* Generate is function enum case *)
                  val isName = PNames.isPref name
-		 val bodySs = [PT.Return P.trueX]  (*XXX to be implemented *)
-                 val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs)]
+		 fun cnvOneBranch(bname,_,_) = [PT.CaseLabel(PT.Id bname, PT.Return P.trueX)]
+		 val defBranch = [PT.DefaultLabel(PT.Return P.falseX)]
+		 val branches  = (List.concat(List.map cnvOneBranch members)) @ defBranch
+		 val bodySs    = [PT.Switch (P.starX(PT.Id rep), PT.Compound branches), PT.Return P.trueX]
+                 val isFunEDs  = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs)]
 
 
                   (* Generate Accumulator functions (enum case) *)
