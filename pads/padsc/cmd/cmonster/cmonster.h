@@ -56,6 +56,7 @@ struct CM_tmentry_s {
   CM_sval_fn       sval_fn;
   CM_in_sz_fn      in_sz_fn;
   CM_out_sz_fn     out_sz_fn;
+  int              num_params;
 };
 
 /* -------------------------------------------------------------------------------- */

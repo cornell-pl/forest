@@ -141,14 +141,14 @@ CM_tmentry_t* CM_get_tmentry(PDC_string *s, int is_switch_qy)
     if (PDC_string_eq_Cstr(s, e->tname)) {
       if (is_switch_qy && !e->sval_fn) {
 	sfprintf(error_cm->errf,
-	      "\n*** FATAL: type %.*s not a valid switch type (char type or int32 target type).\n"
-	      "    Use 'cmonster -h' for details.\n\n", s->len, s->str);
+	      "\n*** FATAL: type %s not a valid switch type (char type or int32 target type).\n"
+	      "    Use 'cmonster -h' for details.\n\n", PDC_fmt_str(s));
 	abort();
       }
       return e;
     }
   }
-  sfprintf(error_cm->errf, "\n*** FATAL: unknown type: %.*s\n\n", s->len, s->str);
+  sfprintf(error_cm->errf, "\n*** FATAL: unknown type: %s\n\n", PDC_fmt_str(s));
   abort();
   return 0; /* control never gets here, but it may make compilers happy */
 }
@@ -157,6 +157,14 @@ CM_tmentry_t* CM_get_tmentry(PDC_string *s, int is_switch_qy)
 int CM_finish_query(CM_query *q, int is_switch_qy, int is_out_val)
 {
   q->entry = CM_get_tmentry(&(q->ty_id), is_switch_qy); /* aborts on error */
+  if (q->entry->num_params != q->params.length) {
+    sfprintf(error_cm->errf,
+	     "\n*** FATAL: type %s requires %d params, found %lu.\n"
+	     "    Use 'cmonster -h' for details.\n\n",
+	     PDC_fmt_str(&(q->ty_id)),
+	     q->entry->num_params, (unsigned long)q->params.length);
+    abort();
+  }
   q->in_sz = q->entry->in_sz_fn(q);
   if (!is_out_val) return 1; /* leave q->out_sz == 0 */
   q->out_sz = q->entry->out_sz_fn(q);

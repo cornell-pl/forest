@@ -80,8 +80,16 @@ test1: cmonster-g
 test2: cmonster-g
 	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's+{qyswitch=Pa_int32_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[3]}/0:c{qy2=Pa_string_FW(:7:)[4]}/1:c{qy3=Pa_string_FW(:2:)[3]|qy4=Pa_string_FW(:4:)[5]}}' -o test2.dat < ../sw_aintfw3_astrfw8_nl.dat
 
- #  An error case: not a legal switch tye
-test3: cmonster-g
+ #  An error case: not a legal number of dpsec params 
+ertest1: cmonster-g
+	./cmonster-g -d 'fwrec(:0,8:)'         -c 'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+
+ #  An error case: not a legal number of ipsec params 
+ertest2: cmonster-g
+	./cmonster-g -d 'fwrec(:0,8,1:)'         -c 'c{qy1=Pa_string_FW(:8,10:)[0]}' < ../strfw8nl.dat
+
+ #  An error case: not a legal switch type
+ertest3: cmonster-g
 	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's-{qyswitch=Pa_string_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[3]}/0:c{qy2=Pa_string_FW(:7:)[4]}/1:c{qy3=Pa_string_FW(:6:)[3]}}' -o test3.dat < ../sw_aintfw3_astrfw8_nl.dat
 
  # End of rules that are run from the arch directory
