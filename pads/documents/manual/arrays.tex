@@ -1,6 +1,7 @@
 \chapter{Parrays}
 \label{chap:arrays}
 \Parray{}s are used to describe sequences of values of the same type.
+We call the repeated type the \textit{base type} of the sequence.
 \section{Syntax}
 \label{sec:arrays-syntax}
 The syntax for \Parray{}s is given by the following BNF grammar fragment:
@@ -11,7 +12,7 @@ The syntax for \Parray{}s is given by the following BNF grammar fragment:
 \nont{p\_term\_expression} & \is{} & \Pnosep{} \alt{} \nont{p\_expression}\\[1ex]
 \nont{p\_array\_constraint} & \is{}  & \Psep{}(\nont{p\_expression})  \alt{} \Pterm{}(\nont{p\_term\_expression})\\
                             & \alt{} & \Plast{}(\nont{predicate}) \alt{} \Pended{}(\nont{predicate})\\
-                            & \alt{} & \Pomit{}(\nont{predicate})\\[1ex]
+                            & \alt{} & \Plongest{}  \alt{} \Pomit{}(\nont{predicate})\\[1ex]
 \nont{p\_array\_constraints} & \is{} & \nont{p\_array\_constraint} 
 \alt{} \nont{p\_array\_constraint} \&\& \nont{p\_array\_constraints}\\[1ex]
 \\
@@ -41,6 +42,8 @@ indicate they appear in the grammer, rather than as a meta-notation
 for optionality.
 
 \subsection{Examples}
+In this section, we illustrate various uses of \Parray{}s.
+\subsubsection{Resolved IP address}
 To describe a resolved IP address in ASCII, an example of which is:
 \begin{center}
 \begin{verbatim}
@@ -60,6 +63,7 @@ maximum size (4) and a terminator (a space).  Parsing will terminate
 when either condition is satisified.  An error will be reported if the
 other condition is not also satisifed.
 
+\subsubsection{Binary sequence of integers}
 As another example, the \Parray{} \cd{seq_t}
 \input{code/seq_t}
 \noindent
@@ -71,6 +75,7 @@ recently read element.  If the expression within the \Plast{} clause
 evaluates to true, parsing for the array terminates.  The current
 element is then the last element in the array.
 
+\subsubsection{Sorted sequence of structs}
 In the next example, the \Parray{} \cd{sorted_t} uses a \Pwhere{}
 clause to check that the elements of the sequence were sorted by the
 \cd{id} field of the element type..
@@ -83,29 +88,57 @@ range value in the body.
 \label{sec:special-variables}
 Within the various expression contexts of \Parray{} declarations, a
 number of variables are in scope.  The following table lists the
-variables and their bindings.
+variables, their types, and their bindings.
 \vskip 1ex
-\begin{tabular}{|l|l|l|}
+\begin{tabular}{|l|l|l|l|}
 \hline
-Variable & Contexts & Binding \\\hline \hline
-numRead & all & Number of elements read from source. \\ \hline
-length  & all & Length of in-memory representation of sequence.\\ \hline
-elts    & all & In-memory representation of element sequence. \\ \hline
-pds     & all & In-memory representation of parse descriptor sequence. \\ \hline
-current & all & Index into in-memory representation of most recently read element.  \\ \hline
-elt     & all & Most recently read element of sequence. \\ \hline
-pd      & all & Most recently set  parse descriptor. \\ \hline
-consume & \Pended{} & See \Pended{} section for explanation. \\ \hline
-begin   & \Pparsecheck{} & Position in input source before reading sequence. \\ \hline
-end     & \Pparsecheck{} & Position in input source after reading sequence. \\ \hline
-elemBegin   & \Pparsecheck{} & Position in input source before reading element. \\ \hline
-elemEnd     & \Pparsecheck{} & Position in input source after reading element. \\ \hline
+Variable & Type & Contexts & Binding \\\hline \hline
+\texttt{numRead}  & \texttt{int}     & all & Number of elements read from source. \\ \hline
+\texttt{length}   & \texttt{int}     & all & Length of in-memory representation of sequence.\\ \hline
+\texttt{elts}     & \texttt{rep\_t *}& all & In-memory representation of element sequence. \\ \hline
+\texttt{pds}      & \texttt{pd\_t *} & all & In-memory representation of parse descriptor sequence. \\ \hline
+\texttt{current}  & \texttt{int}     & all & Index of most recently read element.  \\ \hline
+\texttt{elt}      & \texttt{rep\_t}  & all & Most recently read element of sequence. \\ \hline
+\texttt{pd}       & \texttt{pd\_t}   & \Pparsecheck{} & Most recently set  parse descriptor. \\ \hline
+\texttt{consume}  & \texttt{int}     & \Pended{} & See \Pended{} section for explanation. \\ \hline
+\texttt{begin}    & \PDCpost{}       & \Pparsecheck{} & Position in input source before reading sequence. \\ \hline
+\texttt{end}      & \PDCpost{}       & \Pparsecheck{} & Position in input source after reading sequence. \\ \hline
+\texttt{elemBegin}& \PDCpost{}       & \Pparsecheck{} & Position in input source before reading element. \\ \hline
+\texttt{elemEnd}  & \PDCpost{}       & \Pparsecheck{} & Position in input source after reading element. \\ \hline
 \end{tabular}
 \vskip 1ex
 
 \noindent
-In addition, the name of the array type is in scope in every context;
-it is bound to the in-memory representation of the sequence.
+In the table, we use \texttt{rep\_t} to denote the type of the
+in-memory representation of the base type of the sequence \ie{},
+\texttt{rep\_t} is the base type for the sequence.  Similarly,
+\texttt{pd\_t} denotes the type of the parse descriptor for the base
+type of the sequence.
+
+In addition to these variables, the name of the array type is in scope
+in every context; it is a synonym for the special variable \texttt{elts}.
+
+
+\subsection{Size specifications}
+There are five different kinds of size specifications possible:
+
+\begin{tabular}{ll}
+  \texttt{[]}         & unbounded \\
+  \texttt{[n]}        & exactly size \texttt{n}\\
+  \texttt{[low:high]} & at least \texttt{low}, at most \texttt{high}\\
+  \texttt{[low:]}     & at least \texttt{low}, no upper bound\\
+  \texttt{[:high]}    & at most  \texttt{high}, no lower bound\\
+\end{tabular}
+
+\noindent
+As an example, the following specification describes an integer
+sequence of length at least \texttt{min} and at most \texttt{max}:
+
+\input{code/size}
+
+A maximum size specification constitutes a termination condition for
+reading the array.  It is an error for the lower bound to be greater
+than the upper bound.
 
 \subsection{\Psep}
 The \Psep{} constraint is used to specify separators, \ie{} data in
@@ -132,16 +165,44 @@ element in the array.  If it evaluates to true, array parsing
 terminates. \secref{sec:special-variables} lists the variables that
 are in scope within the predicate.
 
+The following description uses a \Plast{} predicate to 
+terminate array parsing if the number of input bytes consumed by
+reading the sequence is greater than a specified amount.
+\input{code/last}
+
+
+\subsection{\Plongest{}}
+The \Plongest{} specifier indicates that the sequence continues
+until an element is read that contains an error.  The parser returns the
+erroneous value to the input.  If the array declaration includes a
+separator, the separator preceding the returned element
+is also returned to the input.  The following \pads{} code describes a
+non-empty sequence of even integers separated by the character
+\cd('a'), followed by a character \cd('a'), followed by a non-empty
+sequence of odd integers, separated by the character \cd('a') and
+terminated by the character \cd('b'):
+\input{code/longest}
+
 \subsection{\Pended}
 The \Pended{} clause is similar to \Plast{}, except that it allows 
 the specification writer to indicate whether to consume the terminating
-element.   As with \Plast{}, \Pended takes a predicate and has the
-variables in scope describd in \secref{sec:special-variables}.  When the
+element.   As with \Plast{}, \Pended{} takes a predicate and has in
+scope the variables describd in \secref{sec:special-variables}.  When the
 predicate returns true, the array terminates.  By default, the
-terminating element is returned to the input, to be read by some other
-parsing function.  To indicate that the terminating element should
+terminating element is returned to the input, as is any preceeding
+separator.  To indicate that the terminating element should 
 instead be considered part of the array, the predicate can set the
-special variable \texttt{consume} to true as a side-effect.
+special variable \texttt{consume} to true as a side-effect. 
+
+The following specification describes a sequence of comma-separated
+integers.  The \cd{isDone} function in the \Pended{} clause examines
+the most recently read value and the parse descriptor to determine if
+the sequence has terminated.  Because the function takes the parse
+descriptor as an argument, it must be within the scope of a
+\Pparsecheck{} clause.
+
+\input{code/ended}
+
 
 \subsection{\Pomit}
 Like \Plast{} and \Pended{}, the \Pomit{} clause takes a predicate and
@@ -155,16 +216,18 @@ predicate that the special variables \texttt{numRead} and
 indicates the total number of possible elements that have been read,
 while \texttt{length} indicates the number that have been stored into
 the array.  Consequently, \texttt{numRead} will always be greater than
-or equal to \texttt{length}.
+or equal to \texttt{length}.  
+
+
+The following code reads a sequence of up to 4 space-separated, signed
+integers terminated by the end of the record.  It omits each of the
+negative numbers from the in-memory representation.
+\input{code/array-omit}
 
 \subsection{Optional \Pwhere{} clause}
 If given, a \Pwhere{} clause expresses constraints over the entirety
 of a \Parray{} value.  The special variables that are in scope are
 described in \secref{sec:special-variables}
-Within the context of a 
-\Pparsecheck{} clause, constants \cd{begin} and \cd{end}, each of type 
-\PDCpost{} are available.  Constant \cd{begin} is bound to the input
-position of the beginning of the \Parray{}; \cd{end} is bound to its end.
 If the predicate given in
 the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
 in the associated parse descriptor will indicate a user-constraint
@@ -174,17 +237,6 @@ error has occurred.
 \subsection{\Pparsecheck}
 \subsection{\Pforall}
 \begin{verbatim}
-Parray name ( param list ){
- basetype sizespec : [sep == char] && [term == char] && semantic constraint
-}
-sizespec 
-  []  : unbounded
-  [n] : exactly size n
-  [low:high] : at least low, at most high
-  [low:] : at least low, no upper bound
-  [:high] : at most high, no lower bound
-optional separation specifier
-optional termination specifier
 
 semantic constraints
 

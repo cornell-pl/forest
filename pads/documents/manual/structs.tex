@@ -15,7 +15,7 @@ The syntax for \Pstruct{}s is given by the following BNF grammar fragment:
 \nont{full\_field} & \is{} & \opt{\nont{qualifiers}}
      \nont{p\_ty}  identifier \opt{\nont{constraint}}; \opt{\nont{p\_comment}} \\[1ex]
 \nont{comp\_field} & \is{} & \Pcompute{} \opt{\Pomit{}} \nont{ty} identifier \cd{=} \nont{expression} \opt{\nont{constraint}};\\[1ex]
-\nont{literal\_field} & \is{} & \nont{p\_literal};\\[1ex]
+\nont{literal\_field} & \is{} & \nont{p\_coreliteral};\\[1ex]
 \nont{field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field}  \\[1ex]
 \nont{fields} & \is{} & \nont{field} \alt{} \nont{field} \ \nont{fields}\\[1ex]
 \nont{struct\_ty} & \is{} &  \Pstruct{} identifier \opt{\nont{p\_formals}} \{\\
@@ -31,7 +31,7 @@ Predicates (\nont{predicate}) are described in \secref{sec:common-predicates}.
 \padsl{} types (\nont{p\_ty}) and formal parameters (\nont{p\_formals})
 are described in \secref{sec:common-parameterization}.
 \PADS{} comments (\nont{p\_comment}) are described in \secref{sec:common-comments}.
-Literals (\nont{p\_literal})  are described in
+Core literals (\nont{p\_coreliteral})  are described in
 \secref{sec:common-literals}.
 Expressions (\nont{expression}) represent any \C{} expression, 
 while \nont{c\_ty} denotes any \C{} type.

@@ -95,13 +95,24 @@ literals, referred to in the \pads{} grammar as \term{char\_lit} and
 \term{str\_lit}, respectively.  
 These literals may contain \C{} character escapes such as \cd{\\"} and
 \cd{\\'}.  \PADSL{} also supports regular expression literals,
-described in more detail in \secref{sec:regular-expressions}.  We use
+described in more detail in \secref{sec:regular-expressions}, and the
+special literal \Peor{}, which denotes the end of a record.  We use
 the non-terminal \term{regexp\_lit} to refer to regular expressions.
 Syntactically, 
 \vskip 1ex
 \begin{tabular}{rcl}
-\nont{p\_literal} & \is{} & \term{char\_lit} \alt{} \nont{str\_lit} \alt{} \Pre{} \nont{regexp\_lit} \\[1ex]
+\nont{p\_coreliteral}& \is{} & \term{char\_lit} \alt{} \nont{str\_lit} 
+                            \alt{} \Pre{} \nont{regexp\_lit} 
+			    \alt{} \Peor{} \\[1ex]
+\nont{p\_literal}    & \is{} & \nont{p\_coreliteral} 
+                            \alt{} \term{C\_identifer} \Pfrom{} (\nont{p\_coreliteral})\\[1ex]
 \end{tabular}
+
+Literals (as opposed to core literals) also support a renaming form.
+The supplied \C{} identifier gives the programmatic name for the
+literal, while the core literal supplied in the \Pfrom{} clause
+describes the on-disk representation.  Renaming can useful when the
+literal is not a valid \C{} identifier.
 
 \cut{
 One use of character and string literals are used to read external

@@ -9,7 +9,7 @@ present.  In this case, the read code tries the branches in order
 until it finds one which parses without any errors.
 \section{Syntax}
 \begin{tabular}{rcl}
-\nont{union\_field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field}\\[1ex]
+\nont{union\_field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field}\\[1ex]
 \nont{branch}     & \is{} & \Pcase{} \nont{expression} : \nont{union\_field}
                     \alt{}  \Pdefault : \nont{union\_field}\\[1ex]
 \nont{branches}   & \is{} & \nont{branch} \alt{} \nont{branch} \nont{branches} \\[1ex]
@@ -29,7 +29,9 @@ defined previously, as follows.
 Full fields (\nont{full\_field}) 
 appear in \secref{sec:structs-full-fields}, 
 computed fields (\nont{comp\_field}) in
-\secref{sec:structs-computed-fields}, and
+\secref{sec:structs-computed-fields}, 
+literals (\nont{literal\_fields}) in \secref{sec:common-literals}
+and
 \padsl{} parameter lists (\nont{p\_formals}) in \secref{sec:common-parameterization}.
 Expressions (\nont{expression}) represent any \C{} expression. 
 
@@ -97,13 +99,23 @@ matches, the \Pdefault{} expression (if present) matches instead.
 The body of each branch in a switched \Punion{} is a \nont{union\_field},
 while the body of each in-place \Punion{} is a non-empty sequence of
 such fields. 
-There are two varieties of union fields, borrowed from \Pstruct{}s: 
+There are three varieties of union fields: 
 full fields (\secref{sec:structs-full-fields}) 
-and computed fields (\secref{sec:structs-computed-fields}).  
-The only semantic change is that in \Pstruct{}s, the values of earlier
+and computed fields (\secref{sec:structs-computed-fields}), borrowed from \Pstruct{}s, and 
+literal fields.
+The only semantic change for full and computed is that in \Pstruct{}s,
+the values of earlier 
 fields are in scope for the constraints of later fields, while in
 \Punion{}s, fields do not cascade because only one branch of a union
-can be active at a time.  
+can be active at a time.  For literal fields, the parser tries to find
+the literal in the source.  
+
+The name of a branch in either kind of union is the name of the
+declared identifier for full and computed fields.  For literal fields,
+it is the literal itself, unless the programmer specifies a different
+name using the \Pfrom{} form.  The \Pfrom{} form must be used when the
+literal is not a valid \C{} identifier.
+
 
 Optional fields in data sources can be described using an in-place
 \Punion{} with a computed field.  For example, suppose a data source
@@ -144,16 +156,16 @@ the \pads{} compiler generates an extra type
 declaration for every \Punion{}: a enumerated type with one component
 for each branch in the union, plus an extra component corresponding to
 a match failure.  The names of the tags correspond to the names of the
-branches in the union.  The name of the tag enumeration is the name of
+branches in the union, unless that name
+has already been defined 
+elsewhere.  In this case, the name of the tag is 
+\texttt{unionName\_branchName}.  
+The name of the tag enumeration is the name of
 the \pads{} specification with the \cd{\_tag} suffix.
 For example, the generated enumeration type
 for the \Punion{} \cd{branches} is the following:
 \input{code/union-impl-branches-tag}
 %
-\warning{Because of limitations inherited from \C{} enumerations, all
-  components of unions must have globally distinct names.  We plan
-  eventually to add a pragma to allow users to turn on name-mangling
-  to circumvent this restriction. }
 
 
 \subsection{In-memory representation}
@@ -162,7 +174,7 @@ The in-memory representation of both forms of \Punion{} is
 a \C{} struct containing a \cd{tag} field to indicate which branch of the
 union has been populated followed by a \cd{val} field storing the union
 itself.  We represent unions as \C{} unions, with one component per
-branch of the union.  
+non-literal branch of the union.  
 The representation-related type declarations for
 the \Punion{} \cd{branches} appear in \figref{fig:punion-rep}.
 
