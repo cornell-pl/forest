@@ -60,6 +60,7 @@ $cprefix =~ s/[.](.*)//;
 my $padsfile = "$outdir/$cprefix" . "_gen.p";
 
 open(POUT, ">$padsfile") or die("failed to open $padsfile for writing\n");
+print POUT "//\n// This PADS file was generated from COBOL copybook $cbook\n//\n\n";
 
 push(@lines, "0 -2 __T_H_E_BEGINNING___0 1 none\n");
 push(@lines, "0 -1 __T_H_E_TOP___0 1 none\n");
@@ -118,7 +119,9 @@ foreach $line (@lines) {
   }
   if ($line =~ /\d+[!]\d+[!](\S+) /) {
     $id1 = $1;
-    $controls_array{$id1} = 1;
+    $id1 = $map_id{$id1};
+    $controls_array{$id1} = $id1 . "_glob";
+    printf POUT "Puint32 $controls_array{$id1} = 0;\n\n";
     print "XXX_REMOVE controls_array{$id1} = 1\n" if ($dbg);
   }
 }
@@ -347,7 +350,7 @@ sub eval_ty
     $array_param = $max;
     $min = $max;
   } elsif (defined($map_id{$array_param})) {
-    $array_param = $map_id{$array_param};
+    $array_param = $controls_array{$map_id{$array_param}};
   }
   if ($type =~ /none/) {
     $ty = $id . "_t";
@@ -418,9 +421,9 @@ sub padsgen
 {
   my ($def) = @_;
   if ($is_alt{$def}) {
-    &padsgen_alt($def);
+    &padsgen_helper($def, "Palternates");
   } else {
-    &padsgen_struct($def);
+    &padsgen_helper($def, "Pstruct");
   }
 }
 
@@ -432,66 +435,47 @@ sub padsgen
 sub shorten_more
 {
   my ($fid, $fids) = @_;
-  if (!defined($controls_array{$fid}) && $fid =~ /_ln_/) {
+  if ($fid =~ /_ln_/) {
     my $sfid = $fid;
     $sfid =~ s/_ln_\d+$//;
     for my $fid2 (split(/[\#]/, $fids)) {
-      print "XXX_REMOVE comparing $fid and $fid2\n";
       if (!($fid eq $fid2) && $fid2 =~ /_ln_/) {
 	my $sfid2 = $fid2;
 	$sfid2 =~ s/_ln_\d+$//;
 	if ($sfid eq $sfid2) {
-	  print "XXX_REMOVE cannot shorten because of $fid, $fid2\n";
 	  return $fid;
 	}
       }
     }
-    print "XXX_REMOVE shortening $fid to $sfid\n";
     return $sfid;
   }
   return $fid;
 }
 
 # ==============================
-# Subroutine: padsgen_struct($def)
-#   emit Pstruct decl for $def
+# Subroutine: padsgen_helper($def, $what)
+#   emit Pstruct/Palternates decl for $def
 #   (preceded by any aux arrays)
 
-sub padsgen_struct
+sub padsgen_helper
 {
-  my ($def) = @_;
-  my ($fids, $fid);
+  my ($def, $what) = @_;
+  my ($fids, $fid, $field, $fshort);
   &padsgen_aux_arrays($def);
-  printf POUT "Pstruct %s_t \{\n", $def;
+  printf POUT "$what %s_t \{\n", $def;
   $fids = $field_ids{$def};
   $fids =~ s/[\#]$//;
   foreach $fid (split(/[\#]/, $fids)) {
-    my $fshort = &shorten_more($fid, $fids);
-    my $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fshort . ";", $dfieldlength{$fid});
+    $fshort = &shorten_more($fid, $fids);
+    if (defined($controls_array{$fid})) {
+      $field = sprintf("    %-40s %29s : ($controls_array{$fid} = $fshort, 1);\n                                                                            // Field length:  %4s\n",
+		       $fieldty{$fid}, $fshort, $dfieldlength{$fid});
+    } else {
+      $field = sprintf("    %-40s %30s // Field length:  %4s\n", $fieldty{$fid}, $fshort . ";", $dfieldlength{$fid});
+    }
     print POUT $field;
   }
-  printf POUT "};                                                                     // Total length: %5s\n\n", $dtylength{$def};
-}
-
-# ==============================
-# Subroutine: padsgen_alt($def)
-#   emit Palternates decl for $def
-#   (preceded by any aux arrays)
-
-sub padsgen_alt
-{
-  my ($def) = @_;
-  my ($fids, $fid);
-  &padsgen_aux_arrays($def);
-  printf POUT "Palternates %s_t \{\n", $def;
-  $fids = $field_ids{$def};
-  $fids =~ s/[\#]$//;
-  foreach $fid (split(/[\#]/, $fids)) {
-    my $fshort = &shorten_more($fid, $fids);
-    my $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fshort . ";", $dfieldlength{$fid});
-    print POUT $field;
-  }
-  printf POUT "};                                                                     // Total length: %5s\n\n", $dtylength{$def};
+  printf POUT "};                                                                          // Total length: %5s\n\n", $dtylength{$def};
 }
 
 # ==============================
