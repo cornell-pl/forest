@@ -529,7 +529,11 @@ let
 		    ";\n   previously declared as tag at " ^
 		    SM.locToString loc))
 	 | NONE => () (* not previously bound in local scope *)
-	 | _ => bug "checkNonIdRebinding: unexpected binding"
+         | SOME(B.ID {location=loc,...}) => 
+	    (error ("illegal redeclaration of " ^ kind ^ (Sym.name sym) ^
+		    ";\nPreviously declared as id at " ^
+		    SM.locToString loc))
+(*	 | _ => bug "checkNonIdRebinding: unexpected binding" *)
 
 
   (* checks for illegal rebinding within current local scope
