@@ -55,6 +55,14 @@ int main(int argc, char** argv) {
 #ifdef COPY_STRINGS
   my_disc.copy_strings = 1;
 #endif
+#ifdef IN_TIME_ZONE
+  my_disc.in_time_zone = IN_TIME_ZONE;
+  error(0, "Note: set my_disc.in_time_zone to \"%s\"\n", IN_TIME_ZONE);
+#endif
+#ifdef OUT_TIME_ZONE
+  my_disc.out_time_zone = OUT_TIME_ZONE;
+  error(0, "Note: set my_disc.out_time_zone to \"%s\"\n", OUT_TIME_ZONE);
+#endif
 #ifdef DATE_IN_FMT
   my_disc.in_formats.date = DATE_IN_FMT;
 #endif

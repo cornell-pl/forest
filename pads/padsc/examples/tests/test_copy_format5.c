@@ -5,12 +5,12 @@ int main(int argc, char** argv) {
   P_t*          pads;
   call_pd         cpd, cpdCpy;
   call            cdata, cdataCpy;
-  Pdisc_t      mydisc = Pdefault_disc;
+  Pdisc_t      my_disc = Pdefault_disc;
   
-  mydisc.flags |= P_WSPACE_OK;
+  my_disc.flags |= P_WSPACE_OK;
 
   /* Open pads handle */
-  if (P_ERR == P_open(&pads, &mydisc, 0)) {
+  if (P_ERR == P_open(&pads, &my_disc, 0)) {
     error(2, "*** P_open failed ***");
     exit(-1);
   }

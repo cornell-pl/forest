@@ -57,6 +57,8 @@
   size_t            outbuf_res;  /* space to reserve per top-level write call */ \
   /* The following are all related to IO state / checkpointing */ \
   char             *path;        /* original path -- eventually want to support a set of input files */ \
+  Tm_zone_t        *in_zone;     /* input time zone */ \
+  Tm_zone_t        *out_zone;    /* output time zone */ \
   Sfio_t           *io;          /* sfio stream */ \
   Pbyte            *sfbuf;       /* buffer that is installed in any sfio that is opened */ \
   Pio_elt_t        *head;        /* head of list of input elts */ \

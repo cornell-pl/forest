@@ -41,15 +41,6 @@ int main(int argc, char** argv) {
   PADS_HDR_TY(_m)   hdr_m;
 #endif /* PADS_HDR_TY */
   char             *fileName = 0;
-#ifdef DEFAULT_TIME_ZONE
-  char              tzbuf[1024];
-#endif
-
-#ifdef DEFAULT_TIME_ZONE
-  sprintf(tzbuf, "TZ=%s", DEFAULT_TIME_ZONE);
-  error(0, "\nNote: doing setenv %s\n\n", tzbuf);
-  putenv((char*)tzbuf);
-#endif
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -59,6 +50,14 @@ int main(int argc, char** argv) {
 #endif
 #ifdef COPY_STRINGS
   my_disc.copy_strings = 1;
+#endif
+#ifdef IN_TIME_ZONE
+  my_disc.in_time_zone = IN_TIME_ZONE;
+  error(0, "Note: set my_disc.in_time_zone to \"%s\"\n", IN_TIME_ZONE);
+#endif
+#ifdef OUT_TIME_ZONE
+  my_disc.out_time_zone = OUT_TIME_ZONE;
+  error(0, "Note: set my_disc.out_time_zone to \"%s\"\n", OUT_TIME_ZONE);
 #endif
 #ifdef DATE_IN_FMT
   my_disc.in_formats.date = DATE_IN_FMT;

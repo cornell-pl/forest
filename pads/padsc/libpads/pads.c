@@ -66,12 +66,15 @@ do {
   PDCI_STR_PRESERVE(s); /* this ensures s.str is null terminated */
   now = time(NiL);
   /* tm = tmdate(s->str, (char**)&tmp, NiL); */
+  tmset(pads->in_zone);
   tm = tmscan(s->str, (char**)&tmp, pads->disc->in_formats.date, &tmp_t, &now, 0L);
   if (!tmp_t || *tmp_t || !tmp || *tmp) {
     PDCI_READFN_SET_LOC_BE(-(s->len), 0);
     PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_DATE);
   }
   (*res_out) = tm;
+  /* normally we do a tmset(pads->out_zone) before using fmttime, */
+  /* but here for debugging purposes we output using the in_zone set above */ 
   P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %ld)",
 	 whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (long)tm);
   return P_OK;
@@ -5741,6 +5744,7 @@ Pdate_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   const char        *date_fmt;
 
   P_TRACE(pads->disc, "Pdate_acc_report2io called");
+  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime calls below
   date_fmt = (pads->disc->out_formats.date) ?  pads->disc->out_formats.date : "%Y-%m-%d";
   if (!prefix || *prefix == 0) {
     prefix = "<top>";
@@ -6335,7 +6339,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.172 2004-09-22 01:06:09 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.173 2004-10-10 03:44:28 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6775,10 +6779,11 @@ Pdisc_t Pdefault_disc = {
   P_error,
   PerrorRep_Max,
   PlittleEndian,
-  1000, /* default max2track */
-  10,   /* default max2rep   */
-  100,  /* default pcnt2rep  */
-
+  1000,   /* default max2track */
+  10,     /* default max2rep   */
+  100,    /* default pcnt2rep  */
+  "UTC",  /* in_time_zone      */
+  "UTC",  /* out_time_zone     */
   {
     /* default input formats */
     "%m%d%y%|%m%d%Y%|%&"      /* default date input format */
@@ -6793,6 +6798,59 @@ Pdisc_t Pdefault_disc = {
   0,    /* by default, no fmt_fn map */
   0     /* a default IO discipline is installed on P_open */
 };
+
+
+Perror_t
+PDCI_set_in_time_zone(P_t *pads, const char *new_in_time_zone, const char *whatfn)
+{
+  char    *end;
+  size_t   expected_len, actual_len;
+  PDCI_DISC_1P_CHECKS(whatfn, new_in_time_zone);
+  expected_len = strlen(new_in_time_zone);
+  if (!(pads->in_zone = tmzone(new_in_time_zone, &end, 0, 0))) {
+    P_WARN2(pads->disc, "%s: failed to parse time zone '%s'", whatfn, new_in_time_zone);
+    return P_ERR;
+  }
+  actual_len = end - new_in_time_zone;
+  if (actual_len < expected_len) {
+    P_WARN5(pads->disc, "%s: ignoring extra characters at end of time zone string: %.*s>>%.*s<<",
+	    whatfn, actual_len, new_in_time_zone, expected_len - actual_len, new_in_time_zone + actual_len);
+  }
+  pads->disc->in_time_zone = new_in_time_zone;
+  return P_OK;
+}
+
+Perror_t
+PDCI_set_out_time_zone(P_t *pads, const char *new_out_time_zone, const char *whatfn)
+{
+  char    *end;
+  size_t   expected_len, actual_len;
+  PDCI_DISC_1P_CHECKS(whatfn, new_out_time_zone);
+  expected_len = strlen(new_out_time_zone);
+  if (!(pads->out_zone = tmzone(new_out_time_zone, &end, 0, 0))) {
+    P_WARN2(pads->disc, "%s: failed to parse time zone '%s'", whatfn, new_out_time_zone);
+    return P_ERR;
+  }
+  actual_len = end - new_out_time_zone;
+  if (actual_len < expected_len) {
+    P_WARN5(pads->disc, "%s: ignoring extra characters at end of time zone string: %.*s>>%.*s<<",
+	    whatfn, actual_len, new_out_time_zone, expected_len - actual_len, new_out_time_zone + actual_len);
+  }
+  pads->disc->out_time_zone = new_out_time_zone;
+  return P_OK;
+}
+
+Perror_t
+P_set_in_time_zone(P_t *pads, const char *new_in_time_zone)
+{
+  return PDCI_set_in_time_zone(pads, new_in_time_zone, "P_set_in_time_zone");
+}
+
+Perror_t
+P_set_out_time_zone(P_t *pads, const char *new_out_time_zone)
+{
+  return PDCI_set_out_time_zone(pads, new_out_time_zone, "P_set_out_time_zone");
+}
 
 Perror_t
 PDCI_libopen(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc, int iodisc_required, const char *whatfn)
@@ -6877,6 +6935,24 @@ PDCI_libopen(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc, int iodisc_requ
    */
   (*pads_out) = pads;
   P_lib_init();
+  if (!(pads->disc->in_time_zone)) {
+    P_WARN1(pads->disc, "%s: pads->disc->in_time_zone is null, replacing with 'UTC'", whatfn);
+    pads->disc->in_time_zone = "UTC";
+  }
+  if (P_ERR == PDCI_set_in_time_zone(pads, pads->disc->in_time_zone, whatfn)) {
+    P_WARN1(pads->disc, "%s: pads->disc->in_time_zone invalid, replacing with 'UTC'", whatfn);
+    pads->disc->in_time_zone = "UTC";
+    PDCI_set_in_time_zone(pads, pads->disc->in_time_zone, whatfn);
+  }
+  if (!(pads->disc->out_time_zone)) {
+    P_WARN1(pads->disc, "%s: pads->disc->out_time_zone is null, replacing with 'UTC'", whatfn);
+    pads->disc->out_time_zone = "UTC";
+  }
+  if (P_ERR == PDCI_set_out_time_zone(pads, pads->disc->out_time_zone, whatfn)) {
+    P_WARN1(pads->disc, "%s: pads->disc->out_time_zone invalid, replacing with 'UTC'", whatfn);
+    pads->disc->out_time_zone = "UTC";
+    PDCI_set_out_time_zone(pads, pads->disc->out_time_zone, whatfn);
+  }
   return P_OK;
 
  fatal_alloc_err:
@@ -11347,6 +11423,8 @@ PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
   P_TRACE2(pads->disc, "PDCI_date_FW_write2io args: char_set = %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
 
+  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
     if (!fn || (P_ERR == P_invoke_inv_val_fn(fn, pads, (void*)pd, (void*)d, width))) {
@@ -11422,6 +11500,8 @@ PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
   P_TRACE2(pads->disc, "PDCI_date_FW_write2buf args: char_set = %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
 
+  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
     if (!fn || (P_ERR == P_invoke_inv_val_fn(fn, pads, (void*)pd, (void*)d, width))) {
@@ -11487,6 +11567,9 @@ PDCI_date_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
   PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE2(pads->disc, "PDCI_date_write2io args: char_set = %s, whatfn = %s",
 	     Pcharset2str(char_set), whatfn);
+
+  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
     va_start(type_args, whatfn);
@@ -11543,6 +11626,9 @@ PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
   PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE2(pads->disc, "PDCI_date_write2buf args: char_set = %s, whatfn = %s",
 	     Pcharset2str(char_set), whatfn);
+
+  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
     va_start(type_args, whatfn);
@@ -11593,6 +11679,9 @@ PDCI_date_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
   PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE1(pads->disc, "PDCI_date_write2io args: whatfn = %s", whatfn);
+
+  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
     va_start(type_args, whatfn);
@@ -11621,6 +11710,9 @@ PDCI_date_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
   PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
   P_TRACE1(pads->disc, "PDCI_date_write_xml_2buf args: whatfn = %s", whatfn);
+
+  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
     va_start(type_args, whatfn);

@@ -1,4 +1,4 @@
-Note: set my_disc.def_time_zone to "-0700"
+Note: set my_disc.out_time_zone to "-0700"
 Data file = ../../data/ai
 warning: P_open: Installing default IO discipline : newline-terminated records
 *****************************************************************************************************

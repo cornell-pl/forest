@@ -33,14 +33,27 @@ int main(int argc, char** argv) {
   itemlist docitems;
 
   Sfio_t       *io;
-  Pdisc_t       mydisc; 
+  Pdisc_t       my_disc; 
 
-  mydisc = Pdefault_disc; 
-  mydisc.copy_strings = 1; 
+  my_disc = Pdefault_disc; 
+  my_disc.copy_strings = 1; 
 #ifdef WSPACE_OK
-  mydisc.flags |= (Pflags_t)P_WSPACE_OK;
+  my_disc.flags |= (Pflags_t)P_WSPACE_OK;
 #endif
-
+#ifdef IN_TIME_ZONE
+  my_disc.in_time_zone = IN_TIME_ZONE;
+  error(0, "Note: set my_disc.in_time_zone to \"%s\"\n", IN_TIME_ZONE);
+#endif
+#ifdef OUT_TIME_ZONE
+  my_disc.out_time_zone = OUT_TIME_ZONE;
+  error(0, "Note: set my_disc.out_time_zone to \"%s\"\n", OUT_TIME_ZONE);
+#endif
+#ifdef DATE_IN_FMT
+  my_disc.in_formats.date = DATE_IN_FMT;
+#endif
+#ifdef DATE_OUT_FMT
+  my_disc.out_formats.date = DATE_OUT_FMT;
+#endif
 
   /* When linking with the Galax library, which contains a custom O'Caml runtime system, 
      it is necessary to call galax_init first, so the runtime is initialized and then 
@@ -50,7 +63,7 @@ int main(int argc, char** argv) {
 
   if (argc != 4) { error(2, "Usage: test_load_XXX <XXX-data-file> <XXX-query> <XXX_child-name> \n"); exit(-1); }
 
-  if (P_ERR == P_open(&pads,&mydisc,0)) {
+  if (P_ERR == P_open(&pads,&my_disc,0)) {
     error(2, "*** P_open failed ***");
     exit(-1);
   }

@@ -112,6 +112,50 @@
  *              of data files.  See io_disc.h for details.
  *              Also see 'Changing The IO Discipline' below.
  *
+ *   in_time_zone :
+ *              The default time zone for string-based Pdate input, used for input date strings
+ *              that do not have time zone information in them.     For example, the date
+ *                        15/Oct/1997:18:46:51
+ *              has no time zone information.  If in_time_zone is set  to "UTC",
+ *              then this date/time would be assumed to be a UTC time.
+ *
+ *              In contrast, regardless of the in_time_zone setting, the date
+ *                        15/Oct/1997:18:46:51 -0700
+ *              will always be interpreted as being in a time zone seven hours
+ *              earlier than UTC time.
+ * 
+ *              in_time_zone is passed to the tmzone function, so it must be a time
+ *              zone description that tmzone understands.
+ *
+ *              N.B. disc->in_time_zone can be initialized directly before calling
+ *              P_open.  After calling P_open, however, it must be changed by passing
+ *              the pads handle and a time zone string to P_set_in_time_zone, e.g.,
+ *
+ *                         P_set_in_time_zone(pads, "PDT");
+ *
+ *              This will set pads->disc->in_time_zone, and will also update
+ *              an internal representation of this time zone maintained as part of
+ *              the pads state.
+ *
+ *   output_time_zone : The output time zone for formatted Pdate output.
+ *              Regardless of the time zone used to read in a Pdate,
+ *              disc->output_time_zone controls which time zone is used when
+ *              formatting the date for output.  For example, a Pdate that is read as 6am UTC time
+ *              would be formatted as 1am if the output_time_zone is "-0500".
+ *              Note that in the normal case you should use the same time zone
+ *              for both input and output, unless you are intentially translating
+ *              times from one time zone to another one.
+ *              
+ *              N.B. disc->output_time_zone can be initialized directly before calling
+ *              P_open.  After calling P_open, however, it must be changed by passing
+ *              the pads handle and a time zone string to P_set_output_time_zone, e.g.,
+ *
+ *                         P_set_output_time_zone(pads, "PDT");
+ *
+ *              This will set pads->disc->output_time_zone, and will also update
+ *              an internal representation of this time zone maintained as part of
+ *              the pads state.
+ *
  *  Default input formats
  *  ---------------------
  *  The in_formats field of the discipline allows one to specify
@@ -289,27 +333,29 @@
  * ----------------------
  * 
  * The default disc is Pdefault_disc.  It provides the following defaults:
- *    version:        P_VERSION (above) 
- *    flags:          0
- *    def_charset:    Pcharset_ASCII
- *    copy_strings:   0
- *    match_max:      0
- *    scan_max:       0
- *    panic_max:      0
- *    fopen_fn:       P_fopen
- *    error_fn:       P_error
- *    e_rep:          PerrorRep_Max
- *    d_endian:       PlittleEndian
- *    acc_max2track:  1000
- *    acc_max2rep:    10
+ *    version:            P_VERSION (above) 
+ *    flags:              0
+ *    def_charset:        Pcharset_ASCII
+ *    copy_strings:       0
+ *    match_max:          0
+ *    scan_max:           0
+ *    panic_max:          0
+ *    fopen_fn:           P_fopen
+ *    error_fn:           P_error
+ *    e_rep:              PerrorRep_Max
+ *    d_endian:           PlittleEndian
+ *    acc_max2track:      1000
+ *    acc_max2rep:        10
+ *    in_time_zone:       "UTC"
+ *    out_time_zone:      "UTC"
  *    in_formats.date:    "%m%d%y%|%m%d%Y%|%&" 
  *    out_formats.date:   "%Y-%m-%d"
- *    inv_val_fn_map: NULL -- user must created and install a map
- *                           if inv_val functions need to be provided
- *    fmt_fn_map:     NULL -- user must created and install a map
- *                           if fmt functions need to be provided
- *    io_disc:        NULL -- a default IO discipline (newline-terminated records)
- *                     is installed on P_open if one is not installed beforehand
+ *    inv_val_fn_map:     NULL -- user must created and install a map
+ *                         if inv_val functions need to be provided
+ *    fmt_fn_map:         NULL -- user must created and install a map
+ *                         if fmt functions need to be provided
+ *    io_disc:            NULL -- a default IO discipline (newline-terminated records)
+ *                         is installed on P_open if one is not installed beforehand
  *
  *
  * Initializing a PADS handle
@@ -1191,6 +1237,8 @@ struct Pdisc_s {
   Puint64             acc_max2track;  /* default maximum distinct values for accumulators to track */
   Puint64             acc_max2rep;    /* default maximum number of tracked values to describe in detail in report */
   Pfloat64            acc_pcnt2rep;   /* default maximum percent of values to describe in detail in report */
+  const char         *in_time_zone;   /* default time zone for Pdate input, specified as a string */ 
+  const char         *out_time_zone;  /* default time zone for Pdate formatted output, specified as a string */ 
   Pin_formats_t       in_formats;     /* default input formats */
   Pout_formats_t      out_formats;    /* default output formats */
   Pinv_val_fn_map_t  *inv_val_fn_map; /* map types to inv_val_fn for write functions */
@@ -1285,12 +1333,20 @@ extern void P_lib_init(void);
  *                 which is non-zero indicates that the old IO discipline
  *                 should not be unmade; in this case it CAN be used again, e.g., in a future
  *                 P_set_io_disc call. 
+ *
+ * P_set_in_time_zone:
+ * P_set_out_time_zone:
+ *                 See the comments above under the descriptions of the discipline
+ *                 fields in_time_zone and out_time_zone. 
  */
 
 Pdisc_t * P_get_disc   (P_t *pads);
 Perror_t  P_set_disc   (P_t *pads, Pdisc_t *new_disc, int xfer_io);
 Perror_t  P_set_io_disc(P_t* pads, Pio_disc_t* new_io_disc);
 Perror_t  P_set_io_disc_keep_old(P_t* pads, Pio_disc_t* new_io_disc, int keep_old_io_disc);
+
+Perror_t  P_set_in_time_zone(P_t *pads, const char *new_in_time_zone);
+Perror_t  P_set_out_time_zone(P_t *pads, const char *new_out_time_zone);
 
 /* P_rmm_zero    : get rbuf memory manager that zeroes allocated memory
  * P_rmm_nozero  : get rbuf memory manager that does not zero allocated memory

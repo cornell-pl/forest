@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv) {
   P_t*          pads;
-  Pdisc_t      mydisc = Pdefault_disc;
+  Pdisc_t      my_disc = Pdefault_disc;
   test            rep;
   test_pd         pd ;
   test_m          m;
@@ -22,9 +22,9 @@ int main(int argc, char** argv) {
   glx_init(fake_argv);
 #endif
 
-  mydisc.flags |= P_WSPACE_OK;
+  my_disc.flags |= P_WSPACE_OK;
 
-  if (P_ERR == P_open(&pads,&mydisc,0)) {
+  if (P_ERR == P_open(&pads,&my_disc,0)) {
     error(2, "*** P_open failed ***");
     exit(-1);
   }
