@@ -809,9 +809,6 @@ int_type ## _acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix,
   if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
     track_pcnt = ((double)100.0 * a->tracked)/a->good;
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
-  } else if (sz == PDCI_ACC_MAX2TRACK) {
-    track_pcnt = ((double)100.0 * a->tracked)/a->good;
-    sfprintf(outstr, "        (* hit tracking limit, but tracked %.3lf pcnt of all values anyway *) \n", track_pcnt);
   }
   for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
     elt = (int_type ## _dt_elt_t*)velt;
@@ -1534,7 +1531,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.52 2002-11-18 21:58:30 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.53 2002-11-18 21:59:03 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
