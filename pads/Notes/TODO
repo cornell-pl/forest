@@ -1,0 +1,77 @@
+to decide
+---------
+  * design & implement tagged unions
+  * allow union arms with no variable names by specifying a tag name
+  * more convenient ways of specying error-mask settings.
+  * fields with computed values (instead of read)
+  * support for optional fields?
+  * how to handle name conflicts for enums and unions
+     how relates to name spaces and separate compilation
+
+
+to document
+-----------
+  * write documentation to allow users to define new base types.
+
+library todo
+------------
+
+
+MORE BASE TYPES:
+ * adate
+ * echar, estring, estringFW, estringSE, estringCSE
+ * afloat32, afloat64, bfloat32, bfloat64
+ * BCD (numeric), rational numbers (fixed point, unsigned fixed point)
+ * astringME, estringME (low priority)
+
+IO STUFF:
+ * PDCI_IO_commit_sfwrite : writes all bytes from start of checkpoint
+                            to the current IO cursor that is being committed
+                            to the sfio stream provided
+           => requires support from io disciplines, a fun call that gives    
+                start and end positions for an sfio write and also gives
+                a new io_cur_elt/io_remain to allow cleanup after write
+
+ACCUM STUFF:
+  * accums should keep track of bad values, they are
+      sometimes even more interesting than the good values
+
+DISCIPLINE:
+ * slurp white space.
+
+padsc compiler todo
+-------------------
+  * don't complain about extra spaces if in slurp mode
+  * generated accum types should have some top-level state
+     as well as per-field accums.  one idea is to accum the nerr
+     field so that one could report the distribution of error
+     cases, as in struct example:
+            0 elt errors         88% of time
+            1 elt errors         10% of time
+            3 elt errors          2% of time
+     More basic thing would just be number of good/bad values
+  * implement compiler optimizations mentioned in talk
+      - call internal functions if available
+      - glomming ignores (see examples/gen/dibbler2-mod.c)
+      - first field in a struct should not check for panic mode.
+  * change basety structure to allow additional tables
+
+very minor:
+ *  format char literal / str lit in err msgs
+    (e.g., rather than "|", use PDCI_fmtQStrL("|", 1)
+    important for newline, null char, etc.
+
+ * instead of doing PDC_getLocB/E(0) can do:
+   PDC_IO_getPos_internal(pdc, &(loc->b), 0);
+   PDC_IO_getPos_internal(pdc, &(loc->e), -1);
+    -1 is normal case because the last char
+    of interest is normally just to the left of the IO cursor
+
+ * for array code, could remember begin loc, as in
+    PDC_pos_t array_begin;
+    PDC_IO_getPos_internal(pdc, &array_begin, 0);
+   and use it for the 'end case' errors where the
+   error applies to the whole array span.
+   
+   similarly for term missing end case, prior to scanning for
+   it could do   
