@@ -422,6 +422,11 @@ dibbler_select: $(GEN_DIR)/dibbler_new.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_
 dibbler_select_d: $(GEN_DIR)/dibbler_new.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
+pads_count_lines: pads_count_lines.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+pads_count_lines_d: pads_count_lines.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
 ifdef GEN_DIR
 $(GEN_DIR)/dibbler_select_expanded.c: $(GEN_DIR)/dibbler_select_expanded.c
 	$(MKSRC_D) $< | $(PADS_HOME)/scripts/addnl.pl > $@
