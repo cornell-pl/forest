@@ -72,5 +72,3 @@ Psource Pstruct out_sum{
   summary_header_t  h;
   entries_t         es;
 };
-
-

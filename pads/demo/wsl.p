@@ -62,4 +62,3 @@ Precord Pstruct entry_t {
 Psource Parray clt_t {
   entry_t [];
 }
-
