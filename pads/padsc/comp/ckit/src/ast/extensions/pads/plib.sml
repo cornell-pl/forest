@@ -206,6 +206,7 @@ struct
   val ssizePCT     = P.makeTypedefPCT "ssize_t"
   val regexpPCT    = P.makeTypedefPCT "Pregexp_t"
   val readResPCT   = P.makeTypedefPCT "Pread_res_t"
+  val fmtfnPCT     = P.makeTypedefPCT "Pfmt_fn"
 
   val rbufferPCT   = P.makeTypedefPCT "RBuf_t"
   val rMMPCT       = P.makeTypedefPCT "RMM_t"
@@ -434,35 +435,44 @@ struct
   fun nullCheck(prefix, ptrX) =
     PT.Expr(PT.Call(PT.Id "PDCI_NULLPARAM_CHECK", [prefix, PT.Cast(P.voidPtr, ptrX)]))
 
-  fun fmtInit(fnNameX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_INIT", [fnNameX]))
+  fun fmtfnLookupX(tyName) =
+      PT.Call(PT.Id "PDCI_GET_FMT_FN", [PT.Id "pads", PT.String tyName])
 
-  fun fmtInitTypedef(fnNameX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_INIT_TYPEDEF", [fnNameX]))
+  fun fmtfnInvokeX(fnName, args) =
+      PT.Call(PT.Id "P_invoke_fmt_fn", [PT.Id fnName] @ args)
 
-  fun fmtInitEnum(fnNameX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_INIT_ENUM", [fnNameX]))
+  fun fmtInitStandardOrEnum(standardOrEnum, fnNameX, assignX, callX) =
+    PT.Expr(PT.Call(PT.Id("PCGEN_"^standardOrEnum^"_FMT2BUF_INIT"), [fnNameX, assignX, callX]))
+
+  fun fmtFinalInitStruct(fnNameX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_FMT2BUF_FINAL_INIT", [fnNameX]))
+
+  fun fmtFinalInitTypedef(fnNameX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_FMT2BUF_FINAL_INIT", [fnNameX]))
+
+  fun fmtFinalInitEnum(fnNameX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_ENUM_FMT2BUF_FINAL_INIT", [fnNameX]))
 
   fun fmtStruct(fnNameX, callX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_STRUCT_FIELD", [fnNameX, callX]))
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT2BUF_STRUCT_FIELD", [fnNameX, callX]))
 
   fun fmtArray(fnNameX, callX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_ARRAY", [fnNameX, callX]))
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT2BUF_ARRAY", [fnNameX, callX]))
 
   fun fmtUnion(fnNameX, callX, tagNameX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_UNION", [fnNameX, callX, tagNameX]))
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT2BUF_UNION", [fnNameX, callX, tagNameX]))
 
   fun fmtTypedef(callX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_TYPEDEF", [callX]))
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT2BUF_TYPEDEF", [callX]))
 
   fun fmtEnum(fnNameX, enumX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_ENUM", [fnNameX, enumX]))
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT2BUF_ENUM", [fnNameX, enumX]))
 
   fun fmtFixLast() = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_FIX_LAST", []))
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT2BUF_FIX_LAST", []))
 
   fun fmtRecord(fnNameX) = 
-    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_RECORD", [fnNameX]))
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT2BUF_RECORD", [fnNameX]))
 
   fun discChecksSizeRet(prefix) = 
     PT.Expr(PT.Call(PT.Id "PDCI_DISC_INIT_CHECKS_RET_SSIZE", [prefix]))

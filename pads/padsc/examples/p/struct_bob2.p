@@ -8,7 +8,7 @@ Pstruct test {
   Puint32 ts : ts == 11 * id;   /- time stamp
 };
 
-Precord Pstruct testtwo{
+Precord Pstruct testtwo {
   test header;
   '|';
   Puint32_FW(:4:) f : f == header.ts;   

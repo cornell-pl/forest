@@ -3939,6 +3939,13 @@ ssize_t Pe_float64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *b
 /* fmt2buf/fmt2io functions */
 
 #if P_CONFIG_A_CHAR_STRING > 0
+ssize_t Pa_char_fmt2buf      (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+ssize_t Pa_char_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+ssize_t Pa_char_fmt2io       (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+
 ssize_t Pa_string_FW_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
 			      Pbase_m *m, Pbase_pd *pd, Pstring *rep, size_t width);
 ssize_t Pa_string_FW_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
@@ -3979,6 +3986,13 @@ ssize_t Pa_string_CSE_fmt2io (P_t *pads, Sfio_t *io, int *requested_out, const c
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
+ssize_t Pe_char_fmt2buf      (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+ssize_t Pe_char_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+ssize_t Pe_char_fmt2io       (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+
 ssize_t Pe_string_FW_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
 			      Pbase_m *m, Pbase_pd *pd, Pstring *rep, size_t width);
 ssize_t Pe_string_FW_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
@@ -4019,6 +4033,13 @@ ssize_t Pe_string_CSE_fmt2io (P_t *pads, Sfio_t *io, int *requested_out, const c
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 || P_CONFIG_E_CHAR_STRING > 0
+ssize_t Pchar_fmt2buf      (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+ssize_t Pchar_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+ssize_t Pchar_fmt2io       (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+
 ssize_t Pstring_FW_fmt2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
 			      Pbase_m *m, Pbase_pd *pd, Pstring *rep, size_t width);
 ssize_t Pstring_FW_fmt2buf_final   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,

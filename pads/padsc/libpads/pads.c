@@ -5164,6 +5164,7 @@ PDCI_E_FLOAT_WRITE_FN(Pe_float64,  Pfloat64,  PDCI_float64_2e,  "Pfloat64",  P_F
  */
 
 #if P_CONFIG_A_CHAR_STRING > 0
+PDCI_FMT_FN      (Pa_char,        Pa_char,        Pchar,                    "Pa_char")
 PDCI_FMT_FN_XTRA1(Pa_string,      Pa_string,      Pstring,  Pchar,          "Pstring")
 PDCI_FMT_FN_XTRA1(Pa_string_FW,   Pa_string_FW,   Pstring,  size_t,         "Pstring_FW")
 PDCI_FMT_FN_XTRA1(Pa_string_ME,   Pa_string_ME,   Pstring,  const char *,   "Pstring_ME")
@@ -5173,6 +5174,7 @@ PDCI_FMT_FN_XTRA1(Pa_string_CSE,  Pa_string_CSE,  Pstring,  Pregexp_t *,    "Pst
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
+PDCI_FMT_FN      (Pe_char,        Pa_char,        Pchar,                    "Pe_char")
 PDCI_FMT_FN_XTRA1(Pe_string,      Pa_string,      Pstring,  Pchar,          "Pe_string")
 PDCI_FMT_FN_XTRA1(Pe_string_FW,   Pa_string_FW,   Pstring,  size_t,         "Pe_string_FW")
 PDCI_FMT_FN_XTRA1(Pe_string_ME,   Pa_string_ME,   Pstring,  const char *,   "Pe_string_ME")
@@ -5182,6 +5184,7 @@ PDCI_FMT_FN_XTRA1(Pe_string_CSE,  Pa_string_CSE,  Pstring,  Pregexp_t *,    "Pe_
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 || P_CONFIG_E_CHAR_STRING > 0
+PDCI_FMT_FN      (Pchar,        Pa_char,        Pchar,                      "Pchar")
 PDCI_FMT_FN_XTRA1(Pstring,      Pa_string,      Pstring,  Pchar,            "Pstring")
 PDCI_FMT_FN_XTRA1(Pstring_FW,   Pa_string_FW,   Pstring,  size_t,           "Pstring_FW")
 PDCI_FMT_FN_XTRA1(Pstring_ME,   Pa_string_ME,   Pstring,  const char *,     "Pstring_ME")
@@ -6211,7 +6214,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.169 2004-09-17 04:24:58 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.170 2004-09-20 04:29:22 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

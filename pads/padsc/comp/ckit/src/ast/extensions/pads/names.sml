@@ -77,6 +77,7 @@ struct
   fun fmtSuf s = s^"_fmt"
   fun ioSuf s = s^"2io"
   fun bufSuf s = s^"2buf"
+  fun bufFinalSuf s = s^"2buf_final"
   fun reportSuf s = s^"_report"
   fun mapSuf s = s^"_map"
   fun toStringSuf s = s^"2str"
