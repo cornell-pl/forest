@@ -30,6 +30,7 @@ if (! -d $pcode) {
 &regress_run("simple", "Simple");
 &regress_run("wsl", "WSL");
 &regress_run("sirius", "Sirius");
+&regress_run("hostname", "Hostname");
 
 sub regress_run {
 
