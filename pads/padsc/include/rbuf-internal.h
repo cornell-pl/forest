@@ -1,4 +1,6 @@
+#ifdef _USE_PROTO
 #pragma prototyped
+#endif
 /*
  * rbuf interface - internal
  * 

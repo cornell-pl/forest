@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   intList_init   (pdc, &f3data);
   intList_ed_init(pdc, &f3ed);
 
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../data/ex_data.format3")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format3")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -52,8 +52,8 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

@@ -42,13 +42,13 @@ int getLen(int numBars){ return (numBars - 4)/2; }
 pstruct out_sum_data_line {
   a_uint32_vbar             order_num;
   a_uint32_vbar             order_item;
-  dib_pn_vbar              servicen;
-  dib_pn_vbar              billing_tn;
+  dib_pn_vbar               servicen;
+  dib_pn_vbar               billing_tn;
   a_uint32_vbar             zip_code;
-  dib_pn_vbar              nlp_service_tn;
-  dib_pn_vbar              nlp_billing_tn;
-  omit countX(:'|',1:) bars;
-  eventSeq(:getLen(bars):) events;
+  dib_pn_vbar               nlp_service_tn;
+  dib_pn_vbar               nlp_billing_tn;
+  omit countX(:'|',1:)      bars;
+  eventSeq(:getLen(bars):)  events;
   opt_a_uint32_vbar         siid;
   opt_a_uint32_vbar         create_id;
   opt_a_uint64_vbar         rampII;

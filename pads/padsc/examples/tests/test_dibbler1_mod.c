@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   out_sum_data_line        dline;
   out_sum_data_line_ed     dline_ed;
   out_sum_data_line_acc    acc;
-  char                     *fname = "../data/ex_data.dibbler1";
+  char                     *fname = "../../data/ex_data.dibbler1";
   behave                   b = count_first21;
   unsigned long            good_21 = 0, good = 0, bad = 0;
   out_sum_data_line_em dline_em={PDC_Ignore,{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},PDC_Ignore,{{PDC_Ignore,PDC_Ignore,PDC_Ignore},PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},PDC_Ignore};
@@ -145,8 +145,8 @@ int main(int argc, char** argv) {
   }
 
   
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     return -1;
   }
 

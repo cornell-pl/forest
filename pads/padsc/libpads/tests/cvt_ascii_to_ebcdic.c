@@ -79,4 +79,5 @@ int main(int argc, char** argv) {
     c = ae_tab[c];
     sfputc(sfstdout, c);
   }
+  return 0;
 }

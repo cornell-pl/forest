@@ -13,37 +13,38 @@
 #            is already present, or if some .p files
 #            are in different locations.
 #
-#         2. The script needs to determine $PADSCDIR, the location
+#         2. The script needs to determine $PADS_HOME, the location
 #            of the PADS installation, so that it can find
-#            $PADSCDIR/include and $PADSCDIR/lib.
-#            If environment variable PADSCDIR is set, then
+#            $PADS_HOME/include and $PADS_HOME/lib.
+#            If environment variable PADS_HOME is set, then
 #            this is used, otherwise the script guess the
 #            location based on argument 0, e.g., if you invoke
 #            the script using path ../foo/padsc, then it
-#            sets PADSCDIR to ../foo 
+#            sets PADS_HOME to ../foo 
+
 
 set firstout = "\n"
 
-set arch = `/home/gsf/bin/package`
-
-if (!($?PADSCDIR)) then
+if (!($?PADS_HOME)) then
   if ($0:h == $0:t) then
-    set PADSCDIR = .
+    set PADS_HOME = .
   else
-    set PADSCDIR = $0:h
+    set PADS_HOME = $0:h
   endif
-  echo $firstout"env variable PADSCDIR not set, guessing value $PADSCDIR based on invocation path\n"
+  echo $firstout"env variable PADS_HOME not set, guessing value $PADS_HOME based on invocation path\n"
   set firstout = ""
 endif
-if (!(-d $PADSCDIR && -d $PADSCDIR/lib && -d $PADSCDIR/include && -e $PADSCDIR/padsc)) then
-  echo $firstout"Directory $PADSCDIR does not appear to be a valid PADS installation dir."
-  echo "Set env variable PADSCDIR to the correct location and try again"
+
+if (!(-d $PADS_HOME && -d $PADS_HOME/lib && -d $PADS_HOME/include && -e $PADS_HOME/padsc)) then
+  echo $firstout"Directory $PADS_HOME does not appear to be a valid PADS installation dir."
+  echo "Set env variable PADS_HOME to the correct location and try again"
   exit 0
 endif
 
+set arch = `$PADS_HOME/scripts/package`
 
-set IMAGE = $PADSCDIR/lib/padsc
-set SMLBIN = $PADSCDIR/binlinks/smlruntime.$arch
+set IMAGE = $PADS_HOME/lib/padsc
+set SMLBIN = $PADS_HOME/binlinks/smlruntime.$arch
 
 if ($arch == linux.i386) then 
     set lua = -U__GNUC__
@@ -142,6 +143,6 @@ endif
 #set firstout = ""
 #exit 0
 
-exec $SMLBIN @SMLload=$IMAGE $PADSCDIR $cmd -I $PADSCDIR/include -I /home/gsf/arch/$arch/include/ast \
+exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/include -I /home/gsf/arch/$arch/include/ast \
 $lua $lda < /dev/null
 

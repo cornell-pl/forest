@@ -12,32 +12,33 @@
 #define PADS_TY_ACC_ADD choice_acc_add
 #define PADS_TY_ACC_REPORT choice_acc_report
 #define PADS_TY_ACC_CLEANUP choice_acc_cleanup
+
 int main(int argc, char** argv) {
   PDC_t           *pdc;
   PDC_disc_t      my_disc = PDC_default_disc;
   PADS_TY         rep;
   PADS_TY_ED      ed;
   PADS_TY_ACC     acc;
-  char            *fileName;
 
   my_disc.flags |= (PDC_flags_t)PDC_WSPACE_OK;
     
-  if (argc == 2) {
-    fileName = argv[1];
-    error(0, "Data file = %s\n", fileName);
-  } else {
-    fileName = "/dev/stdin";
-    error(0, "Data file = standard in\n");
-  }
-
   if (PDC_ERR == PDC_open(&pdc, &my_disc, 0)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_IO_fopen(pdc, fileName)) {
-    error(2, "*** PDC_IO_fopen failed ***");
-    exit(-1);
+  if (argc == 2) {
+    error(0, "Data file = %s\n", argv[1]);
+    if (PDC_ERR == PDC_IO_fopen(pdc, argv[1])) {
+      error(2, "*** PDC_IO_fopen failed ***");
+      exit(-1);
+    }
+  } else {
+    error(0, "Data file = standard in\n");
+    if (PDC_ERR == PDC_IO_set(pdc, sfstdin)) {
+      error(2, "*** PDC_IO_set(sfstdin) failed ***");
+      exit(-1);
+    }
   }
 
   if (PDC_ERR == PADS_TY_INIT(pdc, &rep)) {
@@ -72,8 +73,8 @@ int main(int argc, char** argv) {
     error(0, "** accum_report failed **");
   }
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

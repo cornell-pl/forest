@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   if (argc == 2) {
     fileName = argv[1];
   } else {
-    fileName = "../data/ex_data.ai";
+    fileName = "../../data/ex_data.ai";
   }
   error(0, "Data file = %s\n", fileName);
 
@@ -93,8 +93,8 @@ int main(int argc, char** argv) {
     }	
   }
   http_clf_t_acc_report(pdc, "", 0, 0, &acc);
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

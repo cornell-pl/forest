@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../data/typedef")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/typedef")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
     error(0, "** accum_report failed **");
   }
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

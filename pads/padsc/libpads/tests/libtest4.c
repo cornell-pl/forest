@@ -83,8 +83,8 @@ int main(int argc, char** argv) {
  done:
   PDC_string_cleanup(pdc, &s);
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

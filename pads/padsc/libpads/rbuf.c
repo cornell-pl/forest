@@ -1,4 +1,3 @@
-#pragma prototyped
 /*
  * rbuf implementation
  * 

@@ -1,0 +1,14 @@
+.INIT : .check.arch .clear.args
+
+.check.arch : .VIRTUAL .FORCE .ALWAYS
+	if	$(SILENT) test "" = "$(PWD:N=*/$(CC.HOSTTYPE))"
+	then	$(SILENT) test -d $(CC.HOSTTYPE) || mkdir $(CC.HOSTTYPE)
+		cd $(CC.HOSTTYPE)
+		$(MAKE) --file=../$(MAKEFILE) $(-) --errorid=$(CC.HOSTTYPE) MAKEPATH=$(MAKEPATH) $(=:V:N!=MAKEPATH=*) $(.RECURSE.ARGS.)
+	fi
+
+.clear.args : .VIRTUAL .FORCE .MAKE
+	if ! "$(PWD:N=*/$(CC.HOSTTYPE))"
+		.ARGS : .CLEAR .
+	end
+

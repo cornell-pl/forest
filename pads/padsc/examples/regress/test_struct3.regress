@@ -1,5 +1,5 @@
-Data file = standard in
 warning: Installing default IO discipline : newline-terminated records
+Data file = standard in
 Error [in line_read]: line 3 char 12 : User constraint on field a violated.
 [line 3]23|9|24|12.>>>5<<< - 2 6
 Error [in line_read]: line 3 char 16 : User constraint on field t violated.

@@ -1,4 +1,6 @@
+#ifdef _USE_PROTO
 #pragma prototyped
+#endif
 /*
  * padc library interface -- private types : should be ignored by users of the library
  * 

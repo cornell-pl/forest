@@ -1,10 +1,9 @@
-:PACKAGE: ast
 
-all :
-	echo "nmake in one of the architecture subdirs"
+ # This is an nmake file.  See GNUmakefile for the gmake version.
+ 
+%: forceabort
 
-clean :
-	$(RM) -f *~ \#*
+forceabort: 
+	silent echo "nmake in tests dir"
+	silent exit 1
 
-veryclean : clean
-	$(RM) -f Makefile.ms Makefile.mo

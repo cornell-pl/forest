@@ -1,6 +1,8 @@
 #include "libpadsc.h"
 #include "format6.h"
 
+#define NO_NL 0|ERROR_PROMPT
+
 int main(int argc, char** argv) {
   PDC_t*          pdc;
   defPN_ed        ped;
@@ -13,7 +15,7 @@ int main(int argc, char** argv) {
   }
 
   /* Open output file */
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../data/ex_data.format6")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format6")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -26,15 +28,15 @@ int main(int argc, char** argv) {
     res= defPN_read(pdc, 0, 1999999999LL, 9999999999LL, &ped, &pdata);
 
     if (res == PDC_OK) {
-      printf("Record okay:\t");
+      error(NO_NL, "Record okay:\t");
     } else {
-      printf("Record not okay:\t");
+      error(NO_NL, "Record not okay:\t");
     }
-    printf("x = %llu\n", pdata.id);
+    error(NO_NL, "x = %llu\n", pdata.id);
   }
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

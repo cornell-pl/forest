@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# DO_SUPERCLEAN: set up architecture build dirs.  Usage:
+#      ./DO_SUPERCLEAN
+#
+
+set -x
+_status=OK
+
+if ( test "$PADS_HOME"x == "x" || test "$AST_HOME"x == "x" || test "$INSTALLROOT"x == "x" ); then
+  echo " "
+  echo "##############################################################################"
+  echo "# Source DO_SETENV.tcsh or DO_SETENV.sh and make sure you are happy"
+  echo "# with the resulting env var settings before using DO_SUPERCLEAN"
+  echo "##############################################################################"
+  echo " "
+  _status=FAILED
+fi
+
+if [ $_status == "OK" ]; then
+  ast_arch=`$PADS_HOME/scripts/package`
+  for dir in $PADS_HOME/libpadsc $PADS_HOME/libpadsc/tests $PADS_HOME/examples/tests; do
+    if [ -e $dir/$ast_arch ]; then
+      (cd $dir/$ast_arch; /bin/rm -rf *; mkdir tmp)
+    fi
+  done
+  for dir in $INSTALLROOT/bin $INSTALLROOT/lib $INSTALLROOT/include $INSTALLROOT/man; do
+    if [ -e $dir ]; then
+      (cd $dir; /bin/rm -rf *)
+    fi
+  done
+fi

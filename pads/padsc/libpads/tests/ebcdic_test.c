@@ -209,8 +209,8 @@ int main(int argc, char** argv) {
   NEXT_REC;
 
   /* close and re-open the file */
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     return -1;
   }
   if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.ebcdic_test")) {
@@ -337,8 +337,8 @@ int main(int argc, char** argv) {
   NEXT_REC;
 
  done:
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     return -1;
   }
 

@@ -1,4 +1,6 @@
+#ifdef _USE_PROTO
 #pragma prototyped
+#endif
 /*
  * padsc library interface
  * 
@@ -24,14 +26,6 @@
 
 /* XXX K: this should not be here, put it in hack include file XXX */
 extern void bzero(void *s, size_t n);
-
-/* ================================================================================
- * XXX BACKWARDS COMPATIBILITY DEFINITIONS:
- *
- * THESE MACROS WILL EVENTUALLY GO AWAY.  USE THE NEW FUNCTION NAMES!
- */
-
-#define PDC_IO_fclose PDC_IO_close
 
 /* ================================================================================
  * LIBRARY DISCIPLINE TYPES
@@ -687,25 +681,27 @@ PDC_error_t PDC_a_date_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 /* ================================================================================
  * STRING HELPER FUNCTIONS
  *
- *    PDC_string_init    : initialize to valid empty string (no dynamic memory allocated yet)
- *    PDC_string_cleanup : free up the rbuf and any allocated space for the string
- *    PDC_string_share   : makes the PDC_string targ refer to the string specified by src/len,
- *                          sharing the space with the original owner.
- *    PDC_string_copy    : copy len chars from string src into the PDC_string targ;
- *                         allocates RBuf and/or space for the copy, as necessary.
- *                         Although not strictly necessary, null-terminates targ->str.
- *              string_copy returns PDC_ERR on bad arguments or on failure to alloc space,
- *              otherwise it returns PDC_OK
- *    PDC_string_preserve : If the string is using space-sharing, make it use a private copy 
+ *    PDC_string_init     : initialize to valid empty string (no dynamic memory allocated yet)
+ *    PDC_string_cleanup  : free up the rbuf and any allocated space for the string
+ *    PDC_string_mk_share : makes the PDC_string targ refer to the string specified by src/len,
+ *                           sharing the space with the original owner.
+ *    PDC_string_mk_copy  : copy len chars from string src into the PDC_string targ;
+ *                           allocates RBuf and/or space for the copy, as necessary.
+ *                           Although not strictly necessary, null-terminates targ->str.
+ *                           string_mk_copy returns PDC_ERR on bad arguments or on failure to
+ *                           alloc space, otherwise it returns PDC_OK
+ *    PDC_string_preserve : If the string is using space-sharing, force it use a private copy 
  *                          instead, so that the (formerly) shared space can be discarded.
- *                          It is safe to call preserve on any string.
+ *                          It is safe to call preserve on any PDC_string.
+ *    PDC_string_copy     : Copy src PDC_string into targ PDC_string; sharing is not used.
  */
 
 PDC_error_t PDC_string_init(PDC_t *pdc, PDC_string *s);
 PDC_error_t PDC_string_cleanup(PDC_t *pdc, PDC_string *s);
-PDC_error_t PDC_string_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
-PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
+PDC_error_t PDC_string_mk_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
+PDC_error_t PDC_string_mk_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len);
 PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
+PDC_error_t PDC_string_copy(PDC_t *pdc, PDC_string *targ, const PDC_string *src);
 
 /*
  * Type T with T_init/T_cleanup also must have T_ed_init/T_ed_cleanup.

@@ -102,7 +102,7 @@
 #define PDCI_STRING_HINT 128
 /* END_MACRO */
 
-/* PDC_string_copy -- inline version.  Caller must provide fatal_alloc_err target */
+/* PDC_string_mk_copy -- inline version.  Caller must provide fatal_alloc_err target */
 #define PDCI_STR_CPY(s, b, wdth)
   do {
     if (!(s)->rbuf) {
@@ -2697,7 +2697,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.64 2003-04-09 02:13:11 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.65 2003-04-18 04:26:43 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -3187,7 +3187,7 @@ PDC_set_IO_disc(PDC_t* pdc, PDC_IO_disc_t* new_io_disc)
     return PDC_ERR;
   }
   if (pdc->io && pdc->disc->io_disc) {
-    /* do an clean sfclose */
+    /* do a clean sfclose */
     if (PDC_ERR == pdc->disc->io_disc->sfclose_fn(pdc, pdc->disc->io_disc, io_elt, io_remain)) {
       /* XXX perhaps it was not open?? */
     }
@@ -3522,26 +3522,26 @@ PDC_string_cleanup(PDC_t *pdc, PDC_string *s)
 }
 
 PDC_error_t
-PDC_string_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
+PDC_string_mk_share(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
 {
-  PDCI_DISC_INIT_CHECKS("PDC_string_share");
-  PDCI_NULLPARAM_CHECK("PDC_string_share", src);
-  PDCI_NULLPARAM_CHECK("PDC_string_share", targ);
+  PDCI_DISC_INIT_CHECKS("PDC_string_mk_share");
+  PDCI_NULLPARAM_CHECK("PDC_string_mk_share", src);
+  PDCI_NULLPARAM_CHECK("PDC_string_mk_share", targ);
   PDCI_STR_SHARE(targ, src, len);
   return PDC_OK;
 }
 
 PDC_error_t
-PDC_string_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
+PDC_string_mk_copy(PDC_t *pdc, PDC_string *targ, const char *src, size_t len)
 {
-  PDCI_DISC_INIT_CHECKS("PDC_string_copy");
-  PDCI_NULLPARAM_CHECK("PDC_string_copy", src);
-  PDCI_NULLPARAM_CHECK("PDC_string_copy", targ);
+  PDCI_DISC_INIT_CHECKS("PDC_string_mk_copy");
+  PDCI_NULLPARAM_CHECK("PDC_string_mk_copy", src);
+  PDCI_NULLPARAM_CHECK("PDC_string_mk_copy", targ);
   PDCI_STR_CPY(targ, src, len);
   return PDC_OK;
 
  fatal_alloc_err:
-  PDC_FATAL(pdc->disc, "PDC_string_copy: out of space");
+  PDC_FATAL(pdc->disc, "PDC_string_mk_copy: out of space");
   return PDC_ERR;
 }
 
@@ -3555,6 +3555,20 @@ PDC_string_preserve(PDC_t *pdc, PDC_string *s)
 
  fatal_alloc_err:
   PDC_FATAL(pdc->disc, "PDC_string_preserve: out of space");
+  return PDC_ERR;
+}
+
+PDC_error_t
+PDC_string_copy(PDC_t *pdc, PDC_string *targ, const PDC_string *src)
+{
+  PDCI_DISC_INIT_CHECKS("PDC_string_copy");
+  PDCI_NULLPARAM_CHECK("PDC_string_copy", src);
+  PDCI_NULLPARAM_CHECK("PDC_string_copy", targ);
+  PDCI_STR_CPY(targ, src->str, src->len);
+  return PDC_OK;
+
+ fatal_alloc_err:
+  PDC_FATAL(pdc->disc, "PDC_string_copy: out of space");
   return PDC_ERR;
 }
 
@@ -4395,7 +4409,7 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 /* INTERNAL VERSIONS OF EXTERNAL IO FUNCTIONS */
 
 PDC_error_t
-PDC_IO_set_internal(PDC_t *pdc, Sfio_t *io)
+PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io)
 {
   PDCI_stkElt_t    *tp        = &(pdc->stack[0]);
   PDC_IO_elt_t     *next_elt;
@@ -4428,18 +4442,39 @@ PDC_IO_set_internal(PDC_t *pdc, Sfio_t *io)
 }
 
 PDC_error_t
+PDC_IO_set_internal(PDC_t *pdc, Sfio_t *io)
+{
+  PDC_TRACE(pdc->disc, "PDC_IO_set_internal called");
+  if (!pdc->disc->io_disc) {
+    PDC_WARN(pdc->disc, "IO_set called with no IO discipline installed");
+    return PDC_ERR;
+  }
+  if (pdc->io) {
+    if (pdc->path) {
+      PDC_WARN(pdc->disc, "IO_set called with previous installed io due to fopen; closing");
+    }
+    PDC_IO_close_internal(pdc);
+    /* path and io are no longer set */
+  }
+  return PDCI_IO_install_io(pdc, io);
+}
+
+PDC_error_t
 PDC_IO_fopen_internal(PDC_t *pdc, char *path)
 {
   Sfio_t           *io; 
 
   PDC_TRACE(pdc->disc, "PDC_IO_fopen_internal called");
-  if (pdc->io) {
-    PDC_WARN(pdc->disc, "fopen called while previous file still open");
+  if (!pdc->disc->io_disc) {
+    PDC_WARN(pdc->disc, "IO_fopen called with previous installed io due to fopen; closing");
     return PDC_ERR;
   }
-  if (!pdc->disc->io_disc) {
-    PDC_WARN(pdc->disc, "fopen called with no IO discipline installed");
-    return PDC_ERR;
+  if (pdc->io) {
+    if (pdc->path) {
+      PDC_WARN(pdc->disc, "IO_fopen called while previous file still open; closing");
+    }
+    PDC_IO_close_internal(pdc);
+    /* path and io are no longer set */
   }
   if (!(pdc->path = vmnewof(pdc->vm, 0, char, strlen(path) + 1, 0))) {
     PDC_FATAL(pdc->disc, "out of space [string to record file path]");
@@ -4448,9 +4483,11 @@ PDC_IO_fopen_internal(PDC_t *pdc, char *path)
   strcpy(pdc->path, path);
   if (!(io = sfopen(NiL, path, "r"))) {
     PDC_SYSERR1(pdc->disc, "Failed to open file \"%s\"", path);
+    vmfree(pdc->vm, pdc->path);
+    pdc->path = 0;
     return PDC_ERR;
   }
-  return PDC_IO_set_internal(pdc, io);
+  return PDCI_IO_install_io(pdc, io);
 }
 
 PDC_error_t
@@ -4464,14 +4501,13 @@ PDC_IO_close_internal(PDC_t *pdc)
   if (pdc->disc->io_disc) {
     pdc->disc->io_disc->sfclose_fn(pdc, pdc->disc->io_disc, 0, 0); /* do not both returning bytes to io stream */
   }
-  if (pdc->io) {
+  if (pdc->io && pdc->path) {
     sfclose(pdc->io);
     pdc->io = 0;
   }
-  if (!pdc->vm || !pdc->path) {
-    return PDC_ERR;
+  if (pdc->vm && pdc->path) {
+    vmfree(pdc->vm, pdc->path);
   }
-  vmfree(pdc->vm, pdc->path);
   pdc->path = 0;
   return PDC_OK;
 }

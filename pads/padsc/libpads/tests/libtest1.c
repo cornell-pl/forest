@@ -84,8 +84,8 @@ int main(int argc, char** argv) {
     error(0, "next_rec returned bytes_skipped = %ld", ultmp);
   }
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

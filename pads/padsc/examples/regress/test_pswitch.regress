@@ -1,5 +1,5 @@
-Data file = standard in
 warning: Installing default IO discipline : newline-terminated records
+Data file = standard in
 Error [in branches_read]: line 4 char 2 : Failed to match branch number.
 [line 4]1>>> 23<<<
 *****************************************************************************************************

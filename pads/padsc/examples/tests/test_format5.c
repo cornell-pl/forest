@@ -1,6 +1,8 @@
 #include "libpadsc.h"
 #include "format5.h"
 
+#define NO_NL 0|ERROR_PROMPT
+
 int main(int argc, char** argv) {
   PDC_t*          pdc;
   call_ed         ced = {0};
@@ -13,7 +15,7 @@ int main(int argc, char** argv) {
   }
 
   /* Open output file */
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../data/ex_data.format5")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format5")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -26,26 +28,26 @@ int main(int argc, char** argv) {
     res= call_read(pdc, 0, &ced, &cdata);
 
     if (res == PDC_OK) {
-      printf("Record okay:\t");
+      error(NO_NL, "Record okay:\t");
     } else {
-      printf("Record not okay:\t");
+      error(NO_NL, "Record not okay:\t");
     }
-    printf("x = %d\t", cdata.x.x);
+    error(NO_NL, "x = %d\t", cdata.x.x);
     switch (cdata.pn.tag ){
     case code : 
-	printf("tagged as code: %d\n",cdata.pn.val.code );
+	error(0, "tagged as code: %d",cdata.pn.val.code );
 	break;
     case pn :
-	printf("tagged as phone number: %d\n", cdata.pn.val.pn);
+	error(0, "tagged as phone number: %d", cdata.pn.val.pn);
 	break;
     default:
-	printf("bogus tag. \n");
+	error(0, "bogus tag. ");
 	break;      
     }
   }
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

@@ -1,4 +1,6 @@
+#ifdef _USE_PROTO
 #pragma prototyped
+#endif
 /*
  * padc library interface
  * 
@@ -236,6 +238,7 @@ PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 /* 
  * Note: all of the following act on the IO cursor of the top checkpoint
  *
+ * PDCI_IO_install_io:    XXX_TODOC
  * PDCI_IO_needbytes:     XXX_TODOC
  * PDCI_IO_morebytes:     XXX_TODOC
  *
@@ -248,6 +251,8 @@ PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
  *   bytes have been observed.  Causes fatal error if K would move
  *   beyond an EOR/EOF marker or beyond the last in-memory data byte.
  */
+
+PDC_error_t  PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io);
 
 PDC_error_t  PDCI_IO_needbytes (PDC_t *pdc,
 				PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,

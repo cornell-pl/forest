@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     error(2, "*** PDC_open failed ***");
     return -1;
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../data/ex_data.format2")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format2")) {
     error(2, "*** PDC_IO_fopen failed ***");
     return -1;
   }
@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
   }
   error(2, "Could not find newline, ending program");
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     return -1;
   }
 

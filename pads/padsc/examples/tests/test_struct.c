@@ -1,7 +1,7 @@
 #include "libpadsc.h"
 #include "struct.h"
-#define FILENAME  "/dev/stdin"
-// #define FILENAME  "../data/ex_data.struct"
+#define FILENAME  "stdin"
+// #define FILENAME  "../../data/ex_data.struct"
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
@@ -13,9 +13,19 @@ int main(int argc, char** argv) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, FILENAME)) {
-    error(2, "*** PDC_IO_fopen failed ***");
-    exit(-1);
+
+  if (strcasecmp(FILENAME, "stdin") == 0) {
+    error(0, "Data file = standard in\n");
+    if (PDC_ERR == PDC_IO_set(pdc, sfstdin)) {
+      error(2, "*** PDC_IO_set(sfstdin) failed ***");
+      exit(-1);
+    }
+  } else {
+    error(0, "Data file = %s\n", FILENAME);
+    if (PDC_ERR == PDC_IO_fopen(pdc, FILENAME)) {
+      error(2, "*** PDC_IO_fopen failed ***");
+      exit(-1);
+    }
   }
 
   error(0, "\ninit the accum");
@@ -49,8 +59,8 @@ int main(int argc, char** argv) {
     error(0, "** accum_report failed **");
   }
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

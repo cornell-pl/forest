@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   event                    ev;
   event_ed                 ev_ed;
   size_t                   bytes_skipped;
-  char                     *fname          = "../data/ex_data.dibbler1";
+  char                     *fname          = "../../data/ex_data.dibbler1";
   behave                   b               = count_first21;
   unsigned long            good_21         = 0, good = 0, bad = 0;
   /* out_sum_fixed1_em        f1_em           = { 0 }; */
@@ -116,8 +116,8 @@ int main(int argc, char** argv) {
   }
 
   
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     return -1;
   }
 

@@ -16,7 +16,6 @@ int main(int argc, char** argv) {
   PADS_TY            rep;
   PADS_TY_ACC        accum;
   PADS_TY_ED         ed = {0};
-  char*              fileName = 0;
 
   if (PDC_ERR == PDC_open(&pdc,0,0)) {
     error(2, "*** PDC_open failed ***");
@@ -24,16 +23,17 @@ int main(int argc, char** argv) {
   }
 
   if (argc == 2) {
-    fileName = argv[1];
-    error(0, "Data file = %s\n", fileName);
+    error(0, "Data file = %s\n", argv[1]);
+    if (PDC_ERR == PDC_IO_fopen(pdc, argv[1])) {
+      error(2, "*** PDC_IO_fopen failed ***");
+      exit(-1);
+    }
   } else {
-    fileName = "/dev/stdin";
     error(0, "Data file = standard in\n");
-  }
-
-  if (PDC_ERR == PDC_IO_fopen(pdc, fileName)) {
-    error(2, "*** PDC_IO_fopen failed ***");
-    exit(-1);
+    if (PDC_ERR == PDC_IO_set(pdc, sfstdin)) {
+      error(2, "*** PDC_IO_set(sfstdin) failed ***");
+      exit(-1);
+    }
   }
 
   error(0, "\nInitializing the accumulator");
@@ -69,8 +69,8 @@ int main(int argc, char** argv) {
     error(0, "** accumulator cleanup failed **");
   }
 
-  if (PDC_ERR == PDC_IO_fclose(pdc)) {
-    error(2, "*** PDC_IO_fclose failed ***");
+  if (PDC_ERR == PDC_IO_close(pdc)) {
+    error(2, "*** PDC_IO_close failed ***");
     exit(-1);
   }
 

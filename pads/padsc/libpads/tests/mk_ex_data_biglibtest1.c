@@ -29,4 +29,5 @@ int main(int argc, char** argv) {
     if (++lines >= num_lines) break;
   }
   fclose(f);
+  return 0;
 }
