@@ -1,6 +1,12 @@
 
 Sanity Check for PADS-Galax Interface
 =====================================
+0. Set environment variable
+
+   setenv USE_GALAX 1 
+
+   This will make sure the -x option is used when generating the PADS
+   *.{ch} files.
 
 1. If the PADS Compiler has changed, then in pads/padsc/examples/xml
 
