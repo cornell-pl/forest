@@ -412,6 +412,16 @@ filter_dibbler: $(GEN_DIR)/dibbler_new.c filter_dibbler.c $(INCLUDE_DEPS) $(LIB_
 filter_dibbler_d: $(GEN_DIR)/dibbler_new.c filter_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
+dibbler_vetter: $(GEN_DIR)/dibbler_new.c dibbler_vetter.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+dibbler_vetter_d: $(GEN_DIR)/dibbler_new.c dibbler_vetter.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+dibbler_select: $(GEN_DIR)/dibbler_new.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+dibbler_select_d: $(GEN_DIR)/dibbler_new.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
 test_dibbler1: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 test_dibbler1_d: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_D)

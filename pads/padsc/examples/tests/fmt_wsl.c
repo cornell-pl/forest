@@ -34,18 +34,24 @@ my_Phostname_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len,
 {
   Phostname  *t_rep = (Phostname*)    rep;
   Sfio_t     *tmpstr;
-  ssize_t     res;
+  ssize_t     res = 0;
+  int         i;
 
   (*requested_out) = 1;
   if (!(tmpstr = sfstropen ())) { 
     return -1;
-  }
-  res = sfprintf(tmpstr, "%s.%s.%s.%s", t_rep->elts[0].str, t_rep->elts[1].str,
-		 t_rep->elts[2].str,t_rep->elts[3].str);
-  if (res > buf_len) { // not enough space in buffer
-    (*buf_full) = 1;
-    return -1;
-  }
+  };
+  for (i = 0; i < t_rep->length - 1; i++){
+    Pstring_preserve(pads, &t_rep->elts[i]);
+    res += sfprintf(tmpstr, "%s.", t_rep->elts[i].str);
+    if (res > buf_len) { // not enough space in buffer
+      (*buf_full) = 1;
+      return -1;
+    };
+  };
+  Pstring_preserve(pads, &t_rep->elts[t_rep->length - 1]);
+  res += sfprintf(tmpstr, "%s", t_rep->elts[t_rep->length -1].str);
+
   memcpy(buf, sfstruse(tmpstr), res);
   return res;
 }
@@ -61,7 +67,7 @@ my_Phostname_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len,
 
 //#define DATE_OUT_FMT "%K"
 
-#define DATE_OUT_FMT "%m%d%Y:%T"
+#define DATE_OUT_FMT "%D:%T"
 #define PADS_TY(suf) entry_t ## suf
 #define DELIMS "|"
 #include "template/read_format.h"

@@ -1,4 +1,4 @@
-/*@FILE @LEFT dibbler_filter.tex */
+/*@FILE @CENTER dibbler_filter.tex */
 #include "dibbler_new.h"
 #define SEQ_MASK P_CheckAndSet
 #define ERR_FILE sfstderr
@@ -30,10 +30,10 @@ void cnvNLPBillingTN(nlp_billing_tn_t *stn){
   return;
 }
 void cnvPhoneNumbers(entry_t *entry){
-  cnvServiceTN(&entry->h.service_tn);
-  cnvBillingTN(&entry->h.billing_tn);
-  cnvNLPServiceTN(&entry->h.nlp_service_tn);
-  cnvNLPBillingTN(&entry->h.nlp_billing_tn);
+  cnvServiceTN(&entry->header.service_tn);
+  cnvBillingTN(&entry->header.billing_tn);
+  cnvNLPServiceTN(&entry->header.nlp_service_tn);
+  cnvNLPBillingTN(&entry->header.nlp_billing_tn);
 }
 
 int main(int argc, char** argv) {
