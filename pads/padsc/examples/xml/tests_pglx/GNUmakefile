@@ -41,47 +41,25 @@ else
 XML_TESTS = test_children
 endif
 
-OTHER_TESTS  = test_record_enum test_typedef \
-               test_enum test_from
-ALL_TESTS_O = $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
+ALL_TESTS_O = $(WRITE_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
 
-# do not build MISC tests when building 'all'
-MISC_TESTS_O = test_ios 
-MISC_TESTS_D = $(MISC_TESTS_O:%=%_d)
-MISC_TESTS = $(MISC_TESTS_O) $(MISC_TESTS_D)
-CLEANUP_TESTS = $(ALL_TESTS) $(MISC_TESTS)
-
-rcount:
-	@(cd ..; $(MAKE) regress) | $(PADS_HOME)/scripts/count_differs.pl
+CLEANUP_TESTS = $(ALL_TESTS)
 
 regress: regress_o regress_d
 
-regress_o:  sanity_check \
-          regress_test_opt_o
+regress_o:  sanity_check
 
 	@echo " "; echo "DONE"; echo " "
 
-regress_d:  sanity_check \
-          regress_test_opt_d
+regress_d:  sanity_check
 	@echo " "; echo "DONE"; echo " "
 
-other_tests: sanity_check $(OTHER_TESTS)
 all_tests: sanity_check $(ALL_TESTS)
 
 sanity_check:
 	@$(SanityCheck)
-
-regress_test_opt_o: test_opt
-	@(args=""; suf=""; $(RegressDef))
-regress_test_opt_d: test_opt_d
-	@(args=""; suf=""; $(RegressDef))
-
-regress_test_ios_o: test_ios
-	@(args=""; input="../../data/small_ios_config"; suf=""; pp="$(PADS_HOME)/scripts/ios_pp.pl"; $(RegressInputPP))
-regress_test_ios_d: test_ios_d
-	@(args=""; input="../../data/small_ios_config"; suf=""; pp="$(PADS_HOME)/scripts/ios_pp.pl"; $(RegressInputPP))
 
 clean:
 	$(RM) -f *~ *.o $(CLEANUP_TESTS)
@@ -92,11 +70,6 @@ veryclean: clean
 # This works for some but not all test cases
 
 # These cases do not fit the usual pattern
-
-pads_count_lines: pads_count_lines.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
-	@$(CCExec_DYNAMIC_O)
-pads_count_lines_d: pads_count_lines.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
-	@$(CCExec_DYNAMIC_D)
 
 ifdef GEN_DIR
 endif

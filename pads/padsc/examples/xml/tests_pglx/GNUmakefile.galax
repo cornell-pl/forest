@@ -46,22 +46,14 @@ endif
 
 # DEP_myenum =
 
-LOAD_TESTS=test_load_ai
 BULK_QUERY_TESTS=test_bulk_ai
 REGRESS_TESTS=regress_ai
 
-ALL_TESTS_O = $(LOAD_TESTS) $(BULK_QUERY_TESTS)
+ALL_TESTS_O = $(BULK_QUERY_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
 
 .PHONY: pglx_lib clean
-# Test bulk load
-test_load_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/test_load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_D) 
-	@$(CCExec_DYNAMIC_D)
-
-test_load_%: $(GEN_DIR)/%.c  $(CODE_DIR)/test_%.h $(CODE_DIR)/test_load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
-	@$(CCExec_DYNAMIC_O)
-
 # Test bulk load & query
 test_bulk_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/test_bulk_%.c $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
@@ -76,15 +68,11 @@ pglx_lib:
 compare_files:
 	(cmp $${S} $${T} && echo "*** OK: $${N} PASSED") || echo "*** ERROR: $${N} FAILED" 
 
-regress_load_%: test_load_% 
-	./$? 
-	$(MAKE) -f ../GNUmakefile -k -s N=test_load_$* S=test_load_$*.xml T=../../regress/test_$*.xml compare_files
-
 regress_bulk_%: test_bulk_% 
 	./$? 
 	$(MAKE) -f ../GNUmakefile -k -s N=test_bulk_$* S=test_bulk_$*.xml T=../../regress/test_$*.xml compare_files
 
-regress_ai: regress_load_ai regress_bulk_ai
+regress_ai: regress_bulk_ai
 
 #regress: $(REGRESS_TESTS)
 
