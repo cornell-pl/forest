@@ -24,7 +24,7 @@ pstruct event_t {
 pstruct out_sum_header_t {
   "0|";
   auint32      tstamp;
-  '\n';
+  EOR;
 };
 
 parray eventSeq(int size) {
@@ -43,13 +43,13 @@ pstruct out_sum_data_line_t {
   zip5_t              zip_code;             '|';
   dib_pn_t            nlp_service_tn;       '|';
   dib_pn_t            nlp_billing_tn;       '|';
-  pvirtual countXtoY(:'|', '\n':)vbars;
+  pvirtual countX(:'|', 1:) vbars;
   eventSeq(:getLength(vbars):)  events;     '|';
   auint32             siid;                 '|';  //- why did kf omit
   auint32             create_id;            '|';
   auint64             rampII;               '|';
   auint32             order_type;           '|';
-  auint32             parent_order;         '\n';
+  auint32             parent_order;         EOR;
 };
 parray records { out_sum_data_line_t [];};
 pstruct out_sum_file_t {

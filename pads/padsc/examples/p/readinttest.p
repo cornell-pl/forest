@@ -9,9 +9,7 @@ pstruct line {
   auint64  ui64;
 };
 
-pstruct record {
+pstruct rec {
   line l;
-  '\n';
+  EOR;
 };
-
-

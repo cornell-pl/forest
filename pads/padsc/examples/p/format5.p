@@ -4,8 +4,8 @@ punion dibblerPN(int x){
 };
 
 pstruct call{
-  auint32 x; '\n';
-  dibblerPN(:x:) pn; '\n';
+  auint32 x; EOR;
+  dibblerPN(:x:) pn; EOR;
 }	    
 
 

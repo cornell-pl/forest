@@ -2,13 +2,19 @@
 #include "format3.h"
 
 int main(int argc, char** argv) {
-  PDC_t*          pdc;
+  PDC_t           *pdc;
+  PDC_IO_disc_t   *io_disc;
   intList         f3data;
   intList_ed      f3ed;
-  intList_em      f3em = {0};
 
+  io_disc = PDC_norec_make(0);
+  if (!io_disc) {
+    error(ERROR_FATAL, "\nFailed to install IO discipline norec");
+  } else {
+    error(0, "\nInstalled IO discipline norec");
+  }
 
-  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
+  if (PDC_ERR == PDC_open(&pdc, 0, io_disc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
@@ -17,7 +23,7 @@ int main(int argc, char** argv) {
   intList_init   (pdc, &f3data);
   intList_ed_init(pdc, &f3ed);
 
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.format3")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../data/ex_data.format3")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -28,7 +34,7 @@ int main(int argc, char** argv) {
   while (!PDC_IO_at_EOF(pdc)) {
     PDC_error_t res;
     int i;
-    res= intList_read(pdc, &f3em, &f3ed, &f3data);
+    res= intList_read(pdc, 0, &f3ed, &f3data);
 
     if (res == PDC_OK) {
       printf("Record okay:\t");

@@ -10,14 +10,13 @@ int main(int argc, char** argv) {
   size_t          n;
   unsigned char   c;
   PDC_t*          pdc;
-  PDC_base_em     em = {0};
   PDC_base_ed     ed = {0};
 
   if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.format2")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../data/ex_data.format2")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -29,7 +28,7 @@ int main(int argc, char** argv) {
     ctr = 0;
     while (PDC_OK == PDCI_char_lit_scan(pdc, '|', '|', 1, &c, &n)) {
       ctr++;
-      if (PDC_OK == PDC_char_lit_read(pdc, &em, &ed, 'a')) {
+      if (PDC_OK == PDC_char_lit_read(pdc, 0, &ed, 'a')) {
 	error(2, "found an 'a' after a vbar");
       }
     }
