@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
   */
   galax_init();
 
-  if (argc != 2) { error(2, "Usage: test_load_XXX <XXX-data-file>\n"; exit(-1); }
+  if (argc != 2) { error(2, "Usage: test_load_XXX <XXX-data-file>\n"); exit(-1); }
 
   if (P_ERR == P_open(&pads,&mydisc,0)) {
     error(2, "*** P_open failed ***");

@@ -33,16 +33,19 @@ PDCI_node_t *bar_kth_child_named (PDCI_node_t *self, PDCI_childIndex_t idx, cons
   bar_pd *pd=(bar_pd *) (self->pd);
   bar_m *m=(bar_m *) (self->m);
   PDCI_node_t *result = 0;
-  PDCI_childIndex_t count = 0;
 
-  if (GLX_STR_MATCH(name,"pd") && count++ == idx){
+  // The index must be 0 as all field names are unique.
+  if (idx != 0)
+    return result;
+
+  if (GLX_STR_MATCH(name,"pd")){
     // parse descriptor child  
     PDCI_MK_TNODE (result,&PDCI_structured_pd_vtable,self,"pd",pd,"bar_children");
-  }else if (GLX_STR_MATCH(name,"f1") && count++ == idx){
+  }else if (GLX_STR_MATCH(name,"f1")){
     PDCI_MK_NODE (result,&Pint16_vtable,self,"f1",&(m->f1),&(pd->f1),&(rep->f1),"element","bar_children");
-  }else if (GLX_STR_MATCH(name,"f2") && count++ == idx){
+  }else if (GLX_STR_MATCH(name,"f2")){
     PDCI_MK_NODE (result,&Pint32_vtable,self,"f2",&(m->f2),&(pd->f2),&(rep->f2),"element","bar_children");
-  }else if (GLX_STR_MATCH(name,"f3") && count++ == idx){
+  }else if (GLX_STR_MATCH(name,"f3")){
     PDCI_MK_NODE (result,&Pchar_vtable,self,"f3",&(m->f3),&(pd->f3),&(rep->f3),"element","bar_children");
   }
 
@@ -81,18 +84,14 @@ PDCI_node_t *barArray_kth_child_named (PDCI_node_t *self, PDCI_childIndex_t idx,
   barArray_pd *pd=(barArray_pd *) (self->pd);
   barArray_m *m=(barArray_m *) (self->m);
   PDCI_node_t *result = 0;
-  PDCI_childIndex_t count = 0;
 
-  if (GLX_STR_MATCH(name,"pd") && count++ == idx){
+  if (GLX_STR_MATCH(name,"pd") && idx == 0){
   // parse descriptor child
   PDCI_MK_TNODE (result,&PDCI_sequenced_pd_vtable,self,"pd",pd,"barArray_children");
-  }else if(GLX_STR_MATCH(name,"length") && count++ == idx){
+  }else if(GLX_STR_MATCH(name,"length") && idx == 0){
     PDCI_MK_TNODE (result,&Puint32_val_vtable,self,"length",&(rep->length),"barArray_children");
   }else if(GLX_STR_MATCH(name,"elt") && idx < rep->length){
-    // We don't check the value of 'count' because we know that the name "elt" is unique w.r. to 
-    // the other children ("pd", "length"), and hence was never previously encountered. The 
-    // i-th child with name "elt" *must* be the i-th element of the array.
-	PDCI_MK_NODE (result,&bar_vtable,self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element","barArray_children");
+    PDCI_MK_NODE (result,&bar_vtable,self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element","barArray_children");
   }
   return result;
 }
