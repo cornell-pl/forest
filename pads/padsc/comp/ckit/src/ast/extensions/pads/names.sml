@@ -11,14 +11,17 @@ struct
   val arrayEnd    = "arrayEnd"    (* tloc.e     : Ppos_t *)
   val elemBegin   = "eltBegin"    (* pd->loc.b  : Ppos_t *)
   val elemEnd     = "eltEnd"      (* pd->loc.e  : Ppos_t *)
+
   val structLevel = "structLevel"
   val unionLevel  = "unionLevel"
+  val arrayLevel  = "arrayLevel"
 
   val m         = "m" 
   val pd        = "pd"
   val acc       = "acc"
   fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
   fun mSuf   s = s^"_"^m
+  fun mConSuf s = s^"_con"
   fun pdSuf   s = s^"_"^pd
   fun accSuf  s = s^"_"^acc
   fun initSuf s = s^"_init"

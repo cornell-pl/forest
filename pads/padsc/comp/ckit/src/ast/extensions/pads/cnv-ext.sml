@@ -628,7 +628,6 @@ structure CnvExt : CNVEXT = struct
 	      val tm        = "tm"
 	      val tloc      = "tloc"
 	      val tlen      = "tlen"
-	      val all       = PNames.structLevel
 	      val prefix    = "prefix"
 	      val what      = "what"
 	      val nst       = "nst"
@@ -1457,12 +1456,6 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                     @ printSs
 		  end
 
-              fun getEMExp(exp:pcexp) = 
-		  let val (expTy,_) = cnvExpression exp
-		  in
-		      if CTisStruct expTy then P.dotX(exp, PT.Id all)
-		      else exp
-		  end
 
               (* handles problem if first element of an initializer is an enumerated type *)
               fun getFirstEMPCT emFields = 
@@ -1672,8 +1665,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
                       (* Generate CheckSet mask typedef case*)
 		      val baseMPCT = P.makeTypedefPCT(lookupTy(baseTy,mSuf, #mname))
-                      val mFields  = [(base, baseMPCT, SOME "Base mask"),
-				       (user, PL.base_mPCT, SOME "Typedef mask")]
+                      val mFields  = [(base, baseMPCT,          SOME "Base mask"),
+				      (user, PL.base_mPCT,      SOME "Typedef mask")]
 		      val mED      = P.makeTyDefStructEDecl (mFields, mSuf name)
 		      val mDecls   = cnvExternalDecl mED
                       val mPCT     = P.makeTypedefPCT (mSuf name)		
@@ -1950,7 +1943,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      fun checkFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				     isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				     pred: pcexp option, comment: string option} = 
-			  (if name = PNames.pd orelse name = all
+			  (if name = PNames.pd orelse name = PNames.structLevel
 			       then PE.error ("Pstruct "^ structName ^" contains field with reserved name '"^name^"'.\n")  
 			   else (); 
 			   let val ty = P.makeTypedefPCT(lookupTy(pty, repSuf, #repname))
@@ -1978,11 +1971,12 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      fun genMFull {pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				     pred:pcexp option, comment} = 
-			  [(name,P.makeTypedefPCT(lookupTy (pty,mSuf,#mname)), NONE)]
+			  [(name,P.makeTypedefPCT(lookupTy (pty,mSuf,#mname)), SOME "nested constraints")]
+			  @ (case pred of NONE => [] | SOME _ =>  [(mConSuf name, PL.base_mPCT, SOME "struct constraints")])
 		      fun genMBrief e = []
 		      fun genMMan m = []
 		      val mFieldsNested = mungeFields genMFull genMBrief genMMan fields
-		      val auxMFields = [(all, PL.base_mPCT, NONE)]
+		      val auxMFields = [(PNames.structLevel, PL.base_mPCT, NONE)]
 		      val mFields = auxMFields @ mFieldsNested
 
 		      val mFirstPCT = getFirstEMPCT mFields
@@ -2271,7 +2265,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 							 @ reportErrSs))]
 					   in
 					       [PT.IfThen(
-                                                 P.andX(PL.mTestSemCheckX(getEMExp(fieldX(m,name))),
+                                                 P.andX(PL.mTestSemCheckX(fieldX(m,mConSuf name)),
 							P.notX exp),
 						 PT.Compound
 					           (if isEndian then
@@ -2431,7 +2425,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				val condSs = 
 				       [P.mkCommentS ("Checking Pwhere for Pstruct "^ name ^"."),
 					PT.IfThen(
-                                           P.andX( PL.mTestSemCheckX(fieldX(m,all)), P.notX expr),
+                                           P.andX( PL.mTestSemCheckX(fieldX(m,PNames.structLevel)), P.notX expr),
 					   PT.Compound reportErrSs)]
 			    in
 			       ([strLocD,getBeginLocS], condSs)
@@ -2735,7 +2729,6 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     val paramNames = #1(ListPair.unzip cParams)
                      val value = PNames.unionVal
 		     val tag = PNames.unionTag
-		     val all = PNames.unionLevel
 		     fun tgSuf s = s^"_tag"
 		     fun unSuf s = s^"_u"
                      fun unionBranchX (base, name) = P.dotX(fieldX(base, value), PT.Id name)
@@ -2837,11 +2830,12 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				    isVirtual: bool, isEndian: bool, 
                                     isRecord, containsRecord, largeHeuristic: bool,
 				    pred: pcexp option, comment} = 
-			 [(name,P.makeTypedefPCT(lookupTy (pty,mSuf,#mname)), NONE)]
+			 [(name,P.makeTypedefPCT(lookupTy (pty,mSuf,#mname)), SOME "nested constriaints")]
+			 @ (case pred of NONE => [] | SOME _ => [(mConSuf name,PL.base_mPCT, SOME "union constraints")])
 		     fun genMBrief e = []
 		     fun genMMan m = []
 		     val mFieldsNested = mungeVariants genMFull genMBrief genMMan variants
-		     val auxMFields    = [(all, PL.base_mPCT, NONE)]
+		     val auxMFields    = [(PNames.unionLevel, PL.base_mPCT, NONE)]
                      val mFields = auxMFields @ mFieldsNested
 		     val mFirstPCT = getFirstEMPCT mFields
 		     val mStructED = P.makeTyDefStructEDecl (mFields, mSuf name)
@@ -3085,7 +3079,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				 in
 				     PT.Compound[
                                       PT.IfThenElse(
-                                         P.andX(PL.mTestSemCheckX(fieldX(m,name)),
+                                         P.andX(PL.mTestSemCheckX(fieldX(m,mConSuf name)),
 						P.notX predX),
 					   notFoundSs,
 					   foundSs
@@ -3102,7 +3096,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				                   @[P.assignS(PT.Id result, PL.P_ERROR)]
 			     in
 			     [P.mkCommentS "Checking Pwhere clause",
-			      PT.IfThen(P.andX(PL.mTestSemCheckX(fieldX(m,all)), P.notX predX),
+			      PT.IfThen(P.andX(PL.mTestSemCheckX(fieldX(m,PNames.unionLevel)), P.notX predX),
 					PT.Compound reportErrSs)]
 
 			     end
@@ -3540,7 +3534,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  val internal = "_internal"
 		 val element = "element"
 		 val elt = "elt"
-                 val array = "array"
+                 val array = PNames.arrayLevel
                  val arrayDetail = "arrayDetail"
                  val neerr = "neerr"
                  val firstError = "firstError"
@@ -3711,8 +3705,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 					  size specifications *)
 
 	         (* Generate CheckSet mask *)
-		 val mFields = [(element, P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname)),
-				  SOME "per-element"),
+		 val mFields = [(element, P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname)), SOME "per-element"),
 				 (array,   PL.base_mPCT, SOME "entire array")]
 		 val mStructED = P.makeTyDefStructEDecl (mFields, mSuf name)
 		 val mStructDecls = cnvExternalDecl mStructED 
