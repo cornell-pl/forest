@@ -1348,6 +1348,17 @@ void PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const ch
 Pbyte *PDCI_findfirst(const Pbyte *begin, const Pbyte *end, Pbyte b);
 Pbyte *PDCI_findlast(const Pbyte *begin, const Pbyte *end, Pbyte b);
 
+/*
+ * PDCI_Plongest_chkErr: if nerr, set *consume to 0 and return 1; if nerr==0, return 0
+ */
+int PDCI_Plongest_chkErr(Puint32 nerr, int *consume);
+
+/* 
+ * Plongest: can only be used as an array constraint, forces array to terminate
+ *           if there is an element error (does not consume the error elt)
+ */
+#define Plongest Pended(Pparsecheck(PDCI_Plongest_chkErr(pds[current].nerr, &consume)))
+
 /* ================================================================================ */
 
 #endif /*  __PADS_INTERNAL__  */

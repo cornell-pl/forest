@@ -1,11 +1,3 @@
-int PDCI_Plongest_chkErr(Puint32 nerr, int *consume) {
-  if (nerr) {
-    *consume = 0;
-    return 1;
-  };
-  return 0;
-};
-#define Plongest Pended(Pparsecheck(PDCI_Plongest_chkErr(pds[current].nerr, &consume)))
 #define Pvoid(label) Pcompute Pomit Puint32 label = 0
 int is_digit(char x) { return
   (x == 48)
