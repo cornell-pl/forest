@@ -87,6 +87,12 @@ AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
 export AST_ARCH
 endif
 
+ifeq ($(AST_ARCH),cygwin.i386)
+# Until we have time to figure out dynamic linking rules for cygwin,
+# we need to force static linking.
+FORCE_STATIC = 1
+endif
+
 ifndef INSTALLROOT
 INSTALLROOT = $(PADS_HOME)/ast-ast/arch/$(AST_ARCH)
 endif

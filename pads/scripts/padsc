@@ -85,6 +85,12 @@ if (-e $archmk) {
   $cc = $ccline if (length($ccline));
 }
 
+if ($ast_arch =~ /cygwin/) {
+  # For cygwin, we do not need lua/lda fixes -- we use ckit-replace.h instead
+  $lua = "";
+  $lda = "";
+}
+
 if (length($cc) == 0) {
   chomp($cc = $ENV{'CC'});
 }
