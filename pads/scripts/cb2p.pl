@@ -31,13 +31,13 @@ my @arrays;
 my @dbytes;
 
 # scalars
-my $dbg = 1;
+my $dbg = 0;
 my $nst = 0;
 my $altctr = 1;
 my $level = 1;
 my $get_top_id = 1;
-my ($id, $popid, $id1, $id2, $line, $lineno, $the_rest);
-my ($max, $array_param, $is_struct, $ty, $dlen);
+my ($popid, $id1, $id2, $line, $lineno, $the_rest);
+my ($max, $array_param, $ty);
 my ($tmp, $the_alt, $field, $def);
 my ($targetid, $parentid);
 $lev[$nst] = -99;
@@ -152,7 +152,7 @@ foreach $line (@lines) {
 	    die("something is wrong, parent is not structured");
 	  }
 	  # parent is a struct, add a field and possibly an array declaration
-	  ($max, $array_param, $is_struct, $ty, $dlen) = &eval_ty($popid, $rest[$nst]);
+	  ($max, $array_param, $ty) = &eval_ty($popid, $rest[$nst]);
 	  print "XXX_REMOVE popid $popid max is $max\n" if ($dbg);
 	  if ($max > 1) {
 	    &add_array($ty);
@@ -328,20 +328,17 @@ sub dlen_max
 
 # ==============================
 # Subroutine: eval_ty($id, $rest)
-#   returns ($max, $array_param, $is_struct, $ty, $dlen)
+#   returns ($max, $array_param, $ty)
 #
-#    if $is_struct == 1, $ty is a structured type
-#      otherwise $ty is an instantiated PADS base type
+#    $ty is a struct type name
+#      or an instantiated PADS base type
 #    if $max is > 1, this elt is an array with elt type $ty
 #      (the array should be instantiated with $array_param)
-#    $dlen is only set for $is_struct == 0, and it is
-#       either "var" or the number of byte on disk
-#       ($array_param * sizeof($ty))
 
 sub eval_ty
 {
   my ($id, $rest) = @_;
-  my ($max, $array_param, $is_struct, $ty, $dlen, $dtylen, $s_or_a);
+  my ($max, $array_param, $ty, $dlen, $dtylen, $s_or_a);
   my ($num, $min, $var_name, $type, $p1, $p2, $tlen);
   my ($fids, $fid, $aids, $aid);
 
@@ -365,7 +362,6 @@ sub eval_ty
     $array_param = $map_id{$array_param};
   }
   if ($type =~ /none/) {
-    $is_struct = 1;
     $ty = $id . "_t";
     $dtylen = &calc_struct_length($id);
     if ($min != $max) {
@@ -375,7 +371,6 @@ sub eval_ty
       print "XXX_REMOVE id $id dtylen $dtylen dlen $dlen\n" if ($dbg);
     }
   } else {
-    $is_struct = 0;
     ($ty, $tlen) = &padsbasety($type, $p1, $p2);
     if ($min != $max) {
       $dlen = "var";
@@ -385,8 +380,8 @@ sub eval_ty
   }
   $dfieldlength{$id} = $dlen;
 
-  print "XXX_REMOVE eval_ty(id $id, rest $rest) returning (max $max, array_param $array_param, is_struct $is_struct, ty $ty, dlen $dlen)\n" if ($dbg);
-  return ($max, $array_param, $is_struct, $ty, $dlen);
+  print "XXX_REMOVE eval_ty(id $id, rest $rest) returning (max $max, array_param $array_param, ty $ty)\n" if ($dbg);
+  return ($max, $array_param, $ty);
 }
 
 # ==============================
