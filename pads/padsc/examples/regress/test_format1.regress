@@ -34,9 +34,9 @@ test_read returned: error
 *****************************************************************************************************
 <top> : struct test
 *****************************************************************************************************
-Errors: total vals:         11
-  Characterizing errors:  min 0 max 3 avg 1.182
-    => distribution of top 4 values out of 4 distinct values:
+good vals:          5    bad vals:          6    pcnt-bad:   54.545
+  Characterizing number of errors PER READ CALL (nerr-per-read) : min 0 max 3 avg 1.182
+    => distribution of top 4 nerr-per-read values out of 4 distinct nerr-per-read values:
         val:          0 count:          5 pcnt-of-total-vals:   45.455
         val:          3 count:          3 pcnt-of-total-vals:   27.273
         val:          1 count:          2 pcnt-of-total-vals:   18.182

@@ -1747,7 +1747,7 @@ int_type ## _acc_add(P_t *pads, int_type ## _acc *a, const Pbase_pd *pd, const i
   } else if (v > a->max) {
     a->max = v;
   }
-  if (dtsize(a->dict) < a->max2track) {
+  if (v == 0 || dtsize(a->dict) < a->max2track) {
     insert_elt.key.val = v;
     insert_elt.key.cnt = 0;
     if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
@@ -2149,7 +2149,7 @@ fpoint_type ## _acc_add(P_t *pads, fpoint_type ## _acc *a, const Pbase_pd *pd, c
   } else if (v > a->max) {
     a->max = v;
   }
-  if (dtsize(a->dict) < a->max2track) {
+  if (v == 0 || dtsize(a->dict) < a->max2track) {
     insert_elt.key.val = v;
     insert_elt.key.cnt = 0;
     if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
@@ -4217,7 +4217,7 @@ Pstring_acc_add(P_t *pads, Pstring_acc *a, const Pbase_pd *pd, const Pstring *va
   if (pd->errCode != P_NO_ERR) {
     return P_OK;
   }
-  if (dtsize(a->dict) < a->max2track) {
+  if (val->len == 0 || dtsize(a->dict) < a->max2track) {
     insert_elt.key.str = val->str;
     insert_elt.key.len = val->len;
     insert_elt.key.cnt = 0;
@@ -4453,13 +4453,16 @@ Perror_t
 P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst,
 		       Puint32_acc *a)
 {
-  int                   i, sz, rp;
+  int                i, sz, rp;
+  Puint64            ngood, nbad;
   Puint64            cnt_sum;
-  double                cnt_sum_pcnt;
-  double                track_pcnt;
-  double                elt_pcnt;
-  Void_t                *velt;
-  Puint32_dt_elt_t   *elt;
+  double             bad_pcnt;
+  double             cnt_sum_pcnt;
+  double             track_pcnt;
+  double             elt_pcnt;
+  Void_t            *velt;
+  Puint32_dt_elt_t  *elt;
+  Puint32_dt_key_t   lookup_key;
 
   P_TRACE(pads->disc, "P_nerr_acc_report2io called");
   if (!prefix || *prefix == 0) {
@@ -4468,50 +4471,67 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
   if (!what) {
     what = "nerr";
   }
-  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
-  sfprintf(outstr, "total vals: %10llu\n", a->good);
+  // XXX_REMOVE PDCI_nst_prefix_what(outstr, &nst, prefix, what);
 #ifndef NDEBUG
   if (a->bad) {
     P_WARN(pads->disc, "** UNEXPECTED: P_nerr_acc_report called with bad values (all nerr are valid).  Ignoring bad.");
   }
 #endif
   if (a->good == 0) {
+    sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n", 0, 0, 0);
     return P_OK;
   }
   Puint32_acc_fold_psum(a);
-  sz = dtsize(a->dict);
-  rp = (sz < a->max2rep) ? sz : a->max2rep;
-  dtdisc(a->dict,   &Puint32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
-  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
-  sfprintf(outstr, "  Characterizing %s:  min %ld", what, a->min);
-  sfprintf(outstr, " max %ld", a->max);
-  sfprintf(outstr, " avg %.3lf\n", a->avg);
-  sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
-  if (sz == a->max2track && a->good > a->tracked) {
-    track_pcnt = 100.0 * (a->tracked/(double)a->good);
-    sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
+  lookup_key.val = 0;
+  lookup_key.cnt = 0;
+  if (!(elt = dtmatch(a->dict, &lookup_key))) {
+    /* there were no good values */
+    ngood = 0;
+    nbad = a->good;
+    bad_pcnt = 100.0; 
+  } else {
+    ngood = elt->key.cnt;
+    nbad = a->good - ngood;
+    bad_pcnt = 100.0 * (nbad / (double)(a->good));
   }
-  for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
-       velt && i < a->max2rep;
-       velt = dtnext(a->dict, velt), i++) {
-    if (cnt_sum_pcnt >= a->pcnt2rep) {
-      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
-	       rp-i, rp, a->pcnt2rep);
-      break;
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+	   ngood, nbad, bad_pcnt);
+  if (nbad) {
+    sz = dtsize(a->dict);
+    rp = (sz < a->max2rep) ? sz : a->max2rep;
+    dtdisc(a->dict,   &Puint32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+    dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+    sfprintf(outstr, "  Characterizing number of errors PER READ CALL (nerr-per-read) :");
+    sfprintf(outstr, " min %ld", a->min);
+    sfprintf(outstr, " max %ld", a->max);
+    sfprintf(outstr, " avg %.3lf\n", a->avg);
+    sfprintf(outstr, "    => distribution of top %d nerr-per-read values out of %d distinct nerr-per-read values:\n", rp, sz);
+    if (sz == a->max2track && a->good > a->tracked) {
+      track_pcnt = 100.0 * (a->tracked/(double)a->good);
+      sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all nerr-per-read values *) \n", track_pcnt);
     }
-    elt = (Puint32_dt_elt_t*)velt;
-    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
-    sfprintf(outstr, "        val: %10ld", elt->key.val);
-    sfprintf(outstr, " count: %10llu pcnt-of-total-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
-    cnt_sum += elt->key.cnt;
-    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
+    for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
+	 velt && i < a->max2rep;
+	 velt = dtnext(a->dict, velt), i++) {
+      if (cnt_sum_pcnt >= a->pcnt2rep) {
+	sfprintf(outstr, " [... %d of top %d nerr-per-read values not reported due to %.2lf pcnt limit on reported values ...]\n",
+		 rp-i, rp, a->pcnt2rep);
+	break;
+      }
+      elt = (Puint32_dt_elt_t*)velt;
+      elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
+      sfprintf(outstr, "        val: %10ld", elt->key.val);
+      sfprintf(outstr, " count: %10llu pcnt-of-total-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+      cnt_sum += elt->key.cnt;
+      cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
+    }
+    sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
+    sfprintf(outstr,   "        SUMMING         count: %10llu pcnt-of-total-vals: %8.3lf\n",
+	     cnt_sum, cnt_sum_pcnt);
+    /* revert to unordered set in case more inserts will occur after this report */
+    dtmethod(a->dict, Dtset); /* change to unordered set */
+    dtdisc(a->dict,   &Puint32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
   }
-  sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
-  sfprintf(outstr,   "        SUMMING         count: %10llu pcnt-of-total-vals: %8.3lf\n",
-	   cnt_sum, cnt_sum_pcnt);
-  /* revert to unordered set in case more inserts will occur after this report */
-  dtmethod(a->dict, Dtset); /* change to unordered set */
-  dtdisc(a->dict,   &Puint32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
   return P_OK;
 }
 
@@ -4754,7 +4774,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.126 2003-11-13 16:21:06 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.127 2003-11-17 21:07:12 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

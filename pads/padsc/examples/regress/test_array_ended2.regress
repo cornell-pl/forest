@@ -18,9 +18,9 @@ entry_read returned: error
 *****************************************************************************************************
 <top> : struct entry
 *****************************************************************************************************
-Errors: total vals:          7
-  Characterizing errors:  min 0 max 1 avg 0.143
-    => distribution of top 2 values out of 2 distinct values:
+good vals:          6    bad vals:          1    pcnt-bad:   14.286
+  Characterizing number of errors PER READ CALL (nerr-per-read) : min 0 max 1 avg 0.143
+    => distribution of top 2 nerr-per-read values out of 2 distinct nerr-per-read values:
         val:          0 count:          6 pcnt-of-total-vals:   85.714
         val:          1 count:          1 pcnt-of-total-vals:   14.286
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .

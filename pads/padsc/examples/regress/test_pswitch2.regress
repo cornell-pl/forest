@@ -3,15 +3,15 @@ warning: P_open: Installing default IO discipline : newline-terminated records
 warning: Error [in branches_read]: record 3 byte 2 : Switch value failed to match any branch of switched union branches
 [record 3]3>>><<<
 read returned error
-warning: Error [in branches_read]: record 4 byte 2 : User constraint check failed for branch with tag number
+warning: Error [in branches_read]: record 4 byte 2 : User constraint check failed for branch number
 [record 4]1>>> 23<<<
 read returned error
 *****************************************************************************************************
 <top> : struct choice
 *****************************************************************************************************
-Errors: total vals:          4
-  Characterizing errors:  min 0 max 1 avg 0.500
-    => distribution of top 2 values out of 2 distinct values:
+good vals:          2    bad vals:          2    pcnt-bad:   50.000
+  Characterizing number of errors PER READ CALL (nerr-per-read) : min 0 max 1 avg 0.500
+    => distribution of top 2 nerr-per-read values out of 2 distinct nerr-per-read values:
         val:          0 count:          2 pcnt-of-total-vals:   50.000
         val:          1 count:          2 pcnt-of-total-vals:   50.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .

@@ -8,12 +8,7 @@ entry_read returned array of length: 1
 *****************************************************************************************************
 <top> : struct entry
 *****************************************************************************************************
-Errors: total vals:          5
-  Characterizing errors:  min 0 max 0 avg 0.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:          5 pcnt-of-total-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          5 pcnt-of-total-vals:  100.000
+good vals:          5    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.seq : array seq_t of Pint32

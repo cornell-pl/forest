@@ -3,12 +3,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
 *****************************************************************************************************
 <top> : struct str2
 *****************************************************************************************************
-Errors: total vals:          4
-  Characterizing errors:  min 0 max 0 avg 0.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:          4 pcnt-of-total-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          4 pcnt-of-total-vals:  100.000
+good vals:          4    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.c : union choice
@@ -24,12 +19,7 @@ Union tag: good vals:          4    bad vals:          0    pcnt-bad:    0.000
 =====================================================================================================
 <top>.c.bigger : struct str1
 =====================================================================================================
-Errors: total vals:          2
-  Characterizing errors:  min 0 max 0 avg 0.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:          2 pcnt-of-total-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          2 pcnt-of-total-vals:  100.000
+good vals:          2    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.c.bigger]
 -----------------------------------------------------------------------------------------------------
 <top>.c.bigger.id : int32

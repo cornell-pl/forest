@@ -1124,7 +1124,7 @@ do { \
     pd->nerr = 1; \
     pd->errCode = P_UNION_MATCH_ERR; \
     pd->loc = pd->val.the_tag.loc; \
-    PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match branch with tag " PDCI_MacroArg2String(the_tag)); \
+    PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match branch " PDCI_MacroArg2String(the_tag)); \
     goto branches_done; \
   } \
   pd->errCode = P_NO_ERR; \
@@ -1171,7 +1171,7 @@ do { \
 #define PDCI_SWUNION_READ_POST_CHECK(fn_nm, the_tag, err_tag, usercheck) \
 do { \
   if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) { \
-    PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->val.the_tag, P_USER_CONSTRAINT_VIOLATION, P_UNION_MATCH_ERR, "User constraint check failed for branch with tag " PDCI_MacroArg2String(the_tag)); \
+    PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->val.the_tag, P_USER_CONSTRAINT_VIOLATION, P_UNION_MATCH_ERR, "User constraint check failed for branch " PDCI_MacroArg2String(the_tag)); \
     goto branches_done; \
   } \
 } while (0)

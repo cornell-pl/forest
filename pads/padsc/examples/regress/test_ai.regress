@@ -3,12 +3,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
 *****************************************************************************************************
 <top> : struct http_clf_t
 *****************************************************************************************************
-Errors: total vals:         11
-  Characterizing errors:  min 0 max 0 avg 0.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:         11 pcnt-of-total-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:         11 pcnt-of-total-vals:  100.000
+good vals:         11    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.host : union host_t
@@ -221,12 +216,7 @@ String lengths: good vals:          0    bad vals:          0    pcnt-bad:    0.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.request : struct http_request_t
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Errors: total vals:         11
-  Characterizing errors:  min 0 max 0 avg 0.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:         11 pcnt-of-total-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:         11 pcnt-of-total-vals:  100.000
+good vals:         11    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.request]
 =====================================================================================================
 <top>.request.meth : enum http_method_t
@@ -261,12 +251,7 @@ String lengths: good vals:         11    bad vals:          0    pcnt-bad:    0.
 =====================================================================================================
 <top>.request.version : struct http_v_t
 =====================================================================================================
-Errors: total vals:         11
-  Characterizing errors:  min 0 max 0 avg 0.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:         11 pcnt-of-total-vals:  100.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:         11 pcnt-of-total-vals:  100.000
+good vals:         11    bad vals:          0    pcnt-bad:    0.000
 [Describing each field of <top>.request.version]
 -----------------------------------------------------------------------------------------------------
 <top>.request.version.major : uint8

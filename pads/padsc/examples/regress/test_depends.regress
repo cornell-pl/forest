@@ -13,9 +13,9 @@ read returned error
 *****************************************************************************************************
 <top> : struct line
 *****************************************************************************************************
-Errors: total vals:          4
-  Characterizing errors:  min 0 max 2 avg 1.000
-    => distribution of top 2 values out of 2 distinct values:
+good vals:          2    bad vals:          2    pcnt-bad:   50.000
+  Characterizing number of errors PER READ CALL (nerr-per-read) : min 0 max 2 avg 1.000
+    => distribution of top 2 nerr-per-read values out of 2 distinct nerr-per-read values:
         val:          0 count:          2 pcnt-of-total-vals:   50.000
         val:          2 count:          2 pcnt-of-total-vals:   50.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .

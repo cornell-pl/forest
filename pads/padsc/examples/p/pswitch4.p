@@ -11,8 +11,8 @@ Punion branches(:Pa_uint32 a, int line_number:) {
     // omitted fields
     Pcase 11 : Pomit Pa_int32                   omit_normal_static_w_check : omit_normal_static_w_check % 2 == 0;
     Pcase 12 : Pomit Pa_int32                   omit_normal_static;
-    Pcase 13 : Pomit Pa_string_SE(:"/(.*)X$/":) omit_normal_dynamic_w_check : omit_normal_dynamic_w_check.len > 4;
-    Pcase 14 : Pomit Pa_string_SE(:"/(.*)X$/":) omit_normal_dynamic;
+    Pcase 13 : Pomit Pa_string_ME(:"/(.*)X$/":) omit_normal_dynamic_w_check : omit_normal_dynamic_w_check.len > 4;
+    Pcase 14 : Pomit Pa_string_ME(:"/(.*)X$/":) omit_normal_dynamic;
     Pcase 15 : Pcompute Pomit Pa_int32          omit_computed_static_w_check = line_number : omit_computed_static_w_check % 2 == 1;
     Pcase 16 : Pcompute Pomit Pa_int32          omit_computed_static         = line_number;
   }
