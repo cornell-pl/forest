@@ -5,7 +5,7 @@
 
 #undef isdigit
 
-int is_foo(char c) { return (c == 'f') || (c == 'o') || isdigit(c); };
+int is_foo(char c) { return (c == 'f') || (c == 'o') || isdigit((int)c); };
 
 Pcharclass foo {is_foo};
 
