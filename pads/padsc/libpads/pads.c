@@ -6921,7 +6921,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.187 2005-02-15 18:49:31 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.188 2005-02-15 22:25:54 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7379,7 +7379,7 @@ Pdisc_t Pdefault_disc = {
     "%K",            /* timestamp */
     "%Y-%m-%d",      /* date_explicit */
     "%Y-%m-%d",      /* date */
-    "%H:%M:%S"       /* time_explicit */
+    "%H:%M:%S",      /* time_explicit */
     "%H:%M:%S"       /* time */
   },
 
@@ -12127,10 +12127,16 @@ PDCI_date_time_FW_write2io(P_t *pads,
   }
   s.str = fmttime(format, (time_t)(*d));
   s.len = strlen(s.str);
+#if 0
+  /* XXX_TODO: output format can differ from input format, so we cannot check if */
+  /* output width is equal to input width, unless (1) the input and output formats are identical */
+  /* and (2) the input format has no alternations.  At the moment, however, we are */
+  /* not passed the input format, so we cannot do any check at all */
   if (tmp_s->len > width) { /* format does not fit in width, give up */
     PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_WIDTH, whatfn, 0);
     return -1;
   }
+#endif
   switch (char_set)
     {
     case Pcharset_ASCII:
@@ -12152,6 +12158,9 @@ PDCI_date_time_FW_write2io(P_t *pads,
     }
     return -1;
   }
+#if 0
+  /* if format does not fill the FW, add spaces. */
+  /* does not make sense to do this since the out format may have nothing to do with the FW */
   while (n < width) {
     if (-1 == sfputc(io, space)) {
       P_WARN1(pads->disc, "%s: low-level sfputc failure", whatfn);
@@ -12162,6 +12171,7 @@ PDCI_date_time_FW_write2io(P_t *pads,
     }
     n++;
   }
+#endif
   return n;
 
  invalid_charset:
@@ -12192,7 +12202,6 @@ PDCI_date_time_FW_write2buf(P_t *pads,
 {
   Pstring       s;
   Pstring      *tmp_s = &s;
-  Pbyte        *buf2, *buf_end;
   Pbyte         space;
   Pinv_val_fn   fn;
   va_list       type_args;
@@ -12200,7 +12209,7 @@ PDCI_date_time_FW_write2buf(P_t *pads,
   PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
   PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  P_TRACE4(pads->disc, "PDCI_date_FW_write2buf args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
+  P_TRACE4(pads->disc, "PDCI_date_time_FW_write2buf args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
 	   Pcharset2str(char_set), whatfn, format, tzone_descr);
 
   tmset(tzone);
@@ -12217,11 +12226,17 @@ PDCI_date_time_FW_write2buf(P_t *pads,
   }
   s.str = fmttime(format, (time_t)(*d));
   s.len = strlen(s.str);
+#if 0
+  /* XXX_TODO: output format can differ from input format, so we cannot check if */
+  /* output width is equal to input width, unless (1) the input and output formats are identical */
+  /* and (2) the input format has no alternations.  At the moment, however, we are */
+  /* not passed the input format, so we cannot do any check at all */
   if (tmp_s->len > width) { /* format does not fit in width, give up */
     PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_WIDTH, whatfn, 0);
     return -1;
   }
-  if (width > buf_len) {
+#endif
+  if (tmp_s->len > buf_len) {
     (*buf_full) = 1;
     return -1;
   }
@@ -12239,12 +12254,19 @@ PDCI_date_time_FW_write2buf(P_t *pads,
       goto invalid_charset;
     }
   memcpy(buf, tmp_s->str, tmp_s->len);
-  buf2 = buf + tmp_s->len;
-  buf_end = buf + width;
-  while (buf2 < buf_end) {
-    *buf2++ = space;
+#if 0
+  {
+    Pbyte *buf2, *buf_end;
+    /* if format does not fill the FW, add spaces. */
+    /* does not make sense to do this since the out format may have nothing to do with the FW */
+    buf2 = buf + tmp_s->len;
+    buf_end = buf + width;
+    while (buf2 < buf_end) {
+      *buf2++ = space;
+    }
   }
-  return width;
+#endif
+  return tmp_s->len;
 
  invalid_charset:
   PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_CHARSET, whatfn, 0);
@@ -12278,7 +12300,7 @@ PDCI_date_time_write2io(P_t *pads,
   PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
   PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  P_TRACE4(pads->disc, "PDCI_date_write2io args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
+  P_TRACE4(pads->disc, "PDCI_date_time_write2io args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
 	   Pcharset2str(char_set), whatfn, format, tzone_descr);
 
   tmset(tzone);
@@ -12349,7 +12371,7 @@ PDCI_date_time_write2buf(P_t *pads,
   PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
   PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  P_TRACE4(pads->disc, "PDCI_date_write2buf args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
+  P_TRACE4(pads->disc, "PDCI_date_time_write2buf args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
 	   Pcharset2str(char_set), whatfn, format, tzone_descr);
 
   tmset(tzone);
@@ -12415,7 +12437,7 @@ PDCI_date_time_write_xml_2io(P_t *pads,
   PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
   PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  P_TRACE3(pads->disc, "PDCI_date_write2io args: whatfn = %s, format = %s, tzone = %s",
+  P_TRACE3(pads->disc, "PDCI_date_time_write2io args: whatfn = %s, format = %s, tzone = %s",
 	   whatfn, format, tzone_descr);
 
   tmset(tzone);
@@ -12460,7 +12482,7 @@ PDCI_date_time_write_xml_2buf(P_t *pads,
   PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
   PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  P_TRACE3(pads->disc, "PDCI_date_write_xml_2buf args: whatfn = %s, format = %s, tzone = %s",
+  P_TRACE3(pads->disc, "PDCI_date_time_write_xml_2buf args: whatfn = %s, format = %s, tzone = %s",
 	   whatfn, format, tzone_descr);
 
   tmset(tzone);
