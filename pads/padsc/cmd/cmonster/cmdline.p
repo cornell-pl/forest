@@ -48,7 +48,6 @@ typedef struct CM_s_cookie_s CM_s_cookie_t;    /* aka CM_s_cookie */
 int CM_finish_c_cookie(CM_c_cookie_t *c);
 int CM_finish_s_cookie(CM_s_cookie_t *s);
 
-/* note that this array 'eats' the terminating colon */
 Parray CM_params {
   Pa_uint32 [] : Psep == ',' && Pterm == ':';
 };
@@ -59,7 +58,7 @@ Pstruct CM_query {
   Pa_string(:'(':)         ty_id;
   "(:";
   CM_params                params;
-  ")[";
+  ":)[";
   Pa_uint32                off;
   ']';
   /* additional (non-parsed) state */
@@ -68,7 +67,6 @@ Pstruct CM_query {
   Pcompute Puint32         out_sz = 0;
 };
 
-/* note that this array 'eats' the terminating curly */
 Parray CM_queries {
   CM_query [1:] : Psep == '|' && Pterm == '}' ;
 };
@@ -76,6 +74,7 @@ Parray CM_queries {
 Pstruct CM_c_cookie {
   "c{";
   CM_queries               queries;
+  "}";
   /* additional (non-parsed) state */
   Pcompute Puint32         out_sz = 0;
 } Pwhere {
@@ -131,5 +130,5 @@ Pstruct CM_dspec {
   CM_disc                  disc;
   "(:";
   CM_params                params;
-  ")";
+  ":)";
 };
