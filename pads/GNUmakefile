@@ -50,15 +50,14 @@ veryveryclean: veryclean
 	@($(RM) ./mk/rules.arch.`ast-ast/bin/package`.mk)
 
 WHERE_NMAKE := $(shell (type nmake 2>/dev/null) | grep -v 'not found')
-ifeq ($(WHERE_NMAKE),)
+
+PATH_FIX = echo -n 
+ifneq ($(WHERE_NMAKE),)
+PATH_FIX = export PATH=$(PADS_HOME)/scripts/nmake_fix:$$PATH 
+endif
+
 $(AST_LIB) : ast-ast/lib/package/tgz/*.tgz
 	@(if [ ! -f ast-ast/bin/package ]; then cp ast-ast/bin/package.cvs ast-ast/bin/package; fi)
-	@(cd ast-ast; ./bin/package read)
-	@(cd ast-ast; ./bin/package make)
-else
-$(AST_LIB) : ast-ast/lib/package/tgz/ast-ast*.tgz
-	@(echo " "; echo "*** To build ast_lib, nmake must NOT be in your path."; \
-		echo "      (\`type nmake\` ==> $(WHERE_NMAKE))"; \
-		echo "    Change your PATH env variable and try again."; echo " ")
-	@(exit -1)
-endif
+	@( $(PATH_FIX) ; cd ast-ast; ./bin/package read SHELL=$(SHELL) )
+	@( $(PATH_FIX) ; cd ast-ast; ./bin/package make SHELL=$(SHELL) )
+
