@@ -46,9 +46,9 @@ FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_array test_array_string test_record_enum test_struct test_struct2 \
-               test_punion2 test_typedef \
+               test_punion2 test_punion_manifest test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
-               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct rwxml_struct
+               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct rw_pendian rwxml_struct
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
@@ -288,6 +288,14 @@ regress_rw_struct_o: rw_struct
 
 regress_rw_struct_d: rw_struct_d
 	@(args=""; input="../../data/rw_struct"; suf=""; $(RegressRW))
+
+regress_rw_pendian_o: rw_pendian
+	@(args=""; input="../../data/endian.delenn"; suf=""; $(RegressRW))
+	@(args=""; input="../../data/endian.raptor"; suf=""; $(RegressRW))
+
+regress_rw_pendian_d: rw_pendian_d
+	@(args=""; input="../../data/endian.delenn"; suf=""; $(RegressRW))
+	@(args=""; input="../../data/endian.raptor"; suf=""; $(RegressRW))
 
 regress_rwxml_struct_o: rwxml_struct
 	@(args=""; input="../../data/ex_data.struct"; suf=""; $(RegressInput))

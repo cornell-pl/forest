@@ -24,7 +24,7 @@ padsc_comp:
 	@(cd comp; $(MAKE) all)
 
 regress:
-	@(cd libpads/tests; $(MAKE); cd ../../examples/tests; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd libpads/tests; $(MAKE) regress; cd ../../examples/tests; $(MAKE) regress) | $(PADS_HOME)/scripts/count_differs.pl
 
 test_libpads:
 	@(cd libpads/tests; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
