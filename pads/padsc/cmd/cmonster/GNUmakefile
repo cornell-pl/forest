@@ -24,7 +24,6 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
 
-
 GEN_SRC = $(GEN_DIR)/cmdline.c
 GEN_OBJ_O = $(GEN_SRC:$(GEN_DIR)/%.c=%.o)
 GEN_OBJ_D = $(GEN_SRC:$(GEN_DIR)/%.c=%-g.o)
@@ -79,11 +78,11 @@ test1: cmonster-g
 	./cmonster-g -d 'fwrec(:0,8,1:)'         -c 'c{qy1=Pa_string_FW(:8:)[0]}' -o test1.dat < ../strfw8nl.dat
 
 test2: cmonster-g
-	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's+{qyswitch=Pa_int32_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[0]}/0:c{qy2=Pa_string_FW(:7:)[1]}/1:c{qy3=Pa_string_FW(:2:)[2]|qy4=Pa_string_FW(:4:)[4]}}' -o test2.dat < ../sw_aintfw3_astrfw8_nl.dat
+	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's+{qyswitch=Pa_int32_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[3]}/0:c{qy2=Pa_string_FW(:7:)[4]}/1:c{qy3=Pa_string_FW(:2:)[3]|qy4=Pa_string_FW(:4:)[5]}}' -o test2.dat < ../sw_aintfw3_astrfw8_nl.dat
 
  #  An error case: not a legal switch tye
 test3: cmonster-g
-	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's-{qyswitch=Pa_string_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[0]}/0:c{qy2=Pa_string_FW(:7:)[1]}/1:c{qy3=Pa_string_FW(:6:)[2]}}' -o test3.dat < ../sw_aintfw3_astrfw8_nl.dat
+	./cmonster-g -d 'fwrec(:0,11,1:)'         -c 's-{qyswitch=Pa_string_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[3]}/0:c{qy2=Pa_string_FW(:7:)[4]}/1:c{qy3=Pa_string_FW(:6:)[3]}}' -o test3.dat < ../sw_aintfw3_astrfw8_nl.dat
 
  # End of rules that are run from the arch directory
 endif
