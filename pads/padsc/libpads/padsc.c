@@ -4397,7 +4397,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.93 2003-08-04 20:48:16 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.94 2003-08-05 21:39:24 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5964,6 +5964,9 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
       break;
     case PDC_ARRAY_SIZE_ERR:
       msg = "Array size error";
+      break;
+    case PDC_ARRAY_SEP_TERM_SAME_ERR:
+      msg = "Array terminator/separator value error";
       break;
     case PDC_ARRAY_USER_CONSTRAINT_ERR:
       msg = "Array user constraint violation";

@@ -232,6 +232,7 @@ structure Main : sig
 			       else
 				   homeDir^compilerFileLoc^"accum_template_dynamic"
 	in
+print ("generating accumulator");
 	    TextIO.output(aoutstream, "#include \"libpadsc.h\"\n");
 	    TextIO.output(aoutstream, "#include \""^headerFile^"\"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY "^repName^"\n");
@@ -243,7 +244,7 @@ structure Main : sig
 	       | SOME repClean =>TextIO.output(aoutstream, "#define PADS_TY_CLEANUP "^repClean^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_PD "^pdName^"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY_M "^repName^"_m\n");
-	    TextIO.output(aoutstream, "#define PADS_TY_M_INIT "^repName^"_m_init\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_M_INIT "^repName^"_maskFill\n");
 	    case pdInit of NONE => ()
 	       | SOME pdInit =>TextIO.output(aoutstream, "#define PADS_TY_PD_INIT "^pdInit^"\n");
 	    case pdClean of NONE => ()
