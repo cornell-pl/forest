@@ -38,7 +38,7 @@ Yitzhak Mandelbaum, Princeton University
 \end{center}
 \end{slide}
 
-\begin{Slide}{Existing Technologies}
+\begin{Slide}{The Marriage of PADS and Galax}
   
   \vspace*{1cm}
   \bb PADS\\
@@ -71,15 +71,15 @@ Yitzhak Mandelbaum, Princeton University
 {\small
 \begin{alltt}
 \kw{Pstruct} http_clf_t \{
-        clihost_t \blue{host};              /- IP address of client requesting service
-   ' '; auth_id_t \blue{remoteID};          /- Remote identity; '-' means not obtained
-   ' '; auth_id_t \blue{auth};              /- Name of authenticated user
+        \darkgreen{clihost_t} \blue{host};              /- IP address of client requesting service
+   ' '; \darkgreen{auth_id_t} \blue{remoteID};          /- Remote identity; '-' means not obtained
+   ' '; \darkgreen{auth_id_t} \blue{auth};              /- Name of authenticated user
    " [";
-   Pdate(:']':) \blue{my_date};             /- Timestamp of request
+   \darkgreen{Pdate(:']':)} \blue{my_date};             /- Timestamp of request
    "] ";
-   http_request_t \blue{request};           /- Request
-   ' ';  Puint16_FW(:3:) \blue{response};   /- 3-digit response code
-   ' ';  contentOpt_t \blue{contentLength}; /- Number of bytes in request response
+   \darkgreen{http_request_t} \blue{request};           /- Request
+   ' ';  \darkgreen{Puint16_FW(:3:)} \blue{response};   /- 3-digit response code
+   ' ';  \darkgreen{contentOpt_t} \blue{contentLength}; /- Number of bytes in request response
 \};
 \end{alltt}}
 
