@@ -190,10 +190,7 @@ void PDCI_sndNode_validate(PDCI_node_t *node){
   if (!PDCI_sndNode_is_valid(node) 
       && P_ERR == PDCI_sndNode_make_valid(node))
     {
-      PDCI_smart_elt_info_t *ancestor = PDCI_get_ancestor(node);
-      PDCI_smart_node_t *sn = ancestor->parent->snExt;
-      sn->handle_failure(node->pads,sn,ancestor,
-			 ERROR_FATAL,
-			 "Failed to page node into memory in " WHATFN);
+      PGLX_report_err(node->pads,P_LEV_FATAL,0,P_SMART_NODE_ERR,
+		      WHATFN,"Failed to page node into memory.");
     }
 }

@@ -1210,7 +1210,8 @@ PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *node, childIndex idx)
     case 2:
       /* We need to know the value of errCode, so force validation. */
       if (P_ERR == PDCI_sndNode_make_valid(node)){
-	PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax failed to page node into memory in "); 
+	PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, 
+			WHATFN,"PADS/Galax failed to page node into memory"); 
       }
       pd = node->rep;
 
@@ -1243,6 +1244,34 @@ PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *node, childIndex idx)
     }
   }
   return result;
+}
+
+#undef WHATFN
+#define WHATFN "Pbase_pd_sndNode_kthChildNamed"
+PDCI_node_t * Pbase_pd_sndNode_kthChildNamed(PDCI_node_t *node, childIndex idx, const char *name)
+{
+  Pbase_pd     *pd = (Pbase_pd *) node->rep;
+  PDCI_node_t  *result = 0;
+
+  /* the only valid idx is 0 */
+  if (idx) return 0;
+
+  if (strcmp(name, "pstate") == 0)           idx = 0;
+  else if (strcmp(name, "errCode") == 0)     idx = 1;
+  else if (strcmp(name, "loc") == 0){
+    /* We need to know the value of errCode, so force validation. */
+    if (P_ERR == PDCI_sndNode_make_valid(node)){
+      PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, 
+		      WHATFN,"PADS/Galax failed to page node into memory"); 
+    }
+    pd = (Pbase_pd *) node->rep;
+    
+    if (pd->errCode >= 100) idx = 2;
+    else return 0;
+  } 
+  else return result;
+
+  return (node->vt->kth_child)(node,idx);
 }
 
 /* A structured_pd has four children (pstate, nerr, errCode, loc) */
@@ -1284,7 +1313,6 @@ PDCI_node_t * PDCI_structured_pd_node_kthChild(PDCI_node_t *node, childIndex idx
   /* the following mk calls raise an exception on alloc error */
   switch (idx) {
   case 0:
-    // PDCI_MK_TNODE(result, &Puint32_val_node_vtable, node, "pstate",  &(pd->pstate),  WHATFN);
     result = Puint32_val_node_new(node, "pstate",  pd, &(pd->pstate),  
 				  node->id_offset + PDCI_PSTATE_OFF, WHATFN);
     break;
@@ -1293,13 +1321,11 @@ PDCI_node_t * PDCI_structured_pd_node_kthChild(PDCI_node_t *node, childIndex idx
 				  node->id_offset + PDCI_NERR_OFF, WHATFN);
     break;
   case 2:
-    //    PDCI_MK_TNODE(result, &Puint32_val_node_vtable, node, "errCode", &(pd->errCode), WHATFN);
     result = Puint32_val_node_new(node, "errCode", pd, &(pd->errCode),    
 				  node->id_offset + PDCI_ERRCODE_OFF, WHATFN);
     break;
   case 3:
     if (pd->errCode >= 100) {
-      // PDCI_MK_TNODE(result, &Ploc_t_node_vtable,    node, "loc",     &(pd->loc),     WHATFN);
       result = Ploc_t_node_new(node, "loc",   pd,  &(pd->loc),     
 			       node->id_offset + PDCI_LOC_OFF, WHATFN);
     }
@@ -1385,7 +1411,8 @@ PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *node, childIndex 
     case 3:
       /* We need to know the value of errCode, so force validation. */
       if (P_ERR == PDCI_sndNode_make_valid(node)){
-	PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax failed to page node into memory in "); 
+	PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, 
+			WHATFN,"PADS/Galax failed to page node into memory"); 
       }
       pd = node->rep;
 
@@ -1423,6 +1450,35 @@ PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *node, childIndex 
     }
   }
   return result;
+}
+
+#undef WHATFN
+#define WHATFN "PDCI_structured_pd_sndNode_kthChildNamed"
+PDCI_node_t * PDCI_structured_pd_sndNode_kthChildNamed(PDCI_node_t *node, childIndex idx, const char * name)
+{
+  PDCI_structured_pd  *pd = (PDCI_structured_pd *) node->rep;
+
+  /* the only valid idx is 0 */
+  if (idx) return 0;
+
+  /* the following mk calls raise an exception on alloc error */
+  if (strcmp(name, "pstate") == 0)            idx = 0;
+  else if (strcmp(name, "nerr") == 0)         idx = 1;
+  else if (strcmp(name, "errCode") == 0)      idx = 2;
+  else if (strcmp(name, "loc") == 0){
+      /* We need to know the value of errCode, so force validation. */
+      if (P_ERR == PDCI_sndNode_make_valid(node)){
+	PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, 
+			WHATFN,"PADS/Galax failed to page node into memory"); 
+      }
+      pd = (PDCI_structured_pd *)node->rep;
+
+      if (pd->errCode >= 100)  idx = 3;
+      else return 0;
+  }         
+  else return 0;
+
+  return (node->vt->kth_child)(node,idx);
 }
 
 /* A sequenced_pd has six children 
@@ -1464,33 +1520,56 @@ PDCI_node_t * PDCI_sequenced_pd_node_kthChild(PDCI_node_t *node, childIndex idx)
   PDCI_sequenced_pd  *pd = (PDCI_sequenced_pd *) node->rep;
   PDCI_node_t        *result = 0;
 
-  switch (idx) {
-  case 0:
-    result = Puint32_val_node_new(node, "pstate",   pd, &(pd->pstate),     
-				  node->id_offset + PDCI_PSTATE_OFF, WHATFN);
-    break;
-  case 1:
-    result = Puint32_val_node_new(node, "nerr",     pd, &(pd->nerr),       
-				  node->id_offset + PDCI_NERR_OFF, WHATFN);
-    break;
-  case 2:
-    result = Puint32_val_node_new(node, "errCode",  pd, &(pd->errCode),    
-				  node->id_offset + PDCI_ERRCODE_OFF, WHATFN);
-    break;
-  case 3:
-    result = Puint32_val_node_new(node, "neerr",    pd, &(pd->neerr),      
-				  node->id_offset + PDCI_NEERR_OFF, WHATFN);
-    break;
-  case 4:
-    result = Puint32_val_node_new(node, "firstError", pd, &(pd->firstError), 
-				  node->id_offset + PDCI_FIRSTERROR_OFF, WHATFN);
-    break;
-  case 5:
-    if (pd->errCode >= 100) { /* return loc as child */
-      result = Ploc_t_node_new(     node, "loc",      pd, &(pd->loc),        
-				    node->id_offset + PDCI_LOC_OFF, WHATFN);
+  if (pd->errCode >= 100) { /* return loc as child */
+    switch (idx) {
+    case 0:
+      result = Puint32_val_node_new(node, "pstate",   pd, &(pd->pstate),     
+				    node->id_offset + PDCI_PSTATE_OFF, WHATFN);
+      break;
+    case 1:
+      result = Puint32_val_node_new(node, "nerr",     pd, &(pd->nerr),       
+				    node->id_offset + PDCI_NERR_OFF, WHATFN);
+      break;
+    case 2:
+      result = Puint32_val_node_new(node, "errCode",  pd, &(pd->errCode),    
+				    node->id_offset + PDCI_ERRCODE_OFF, WHATFN);
+      break;
+    case 3:
+      result = Ploc_t_node_new(node, "loc",      pd, &(pd->loc),        
+			       node->id_offset + PDCI_LOC_OFF, WHATFN);
+      break;
+    case 4:
+      result = Puint32_val_node_new(node, "neerr",    pd, &(pd->neerr),      
+				    node->id_offset + PDCI_NEERR_OFF, WHATFN);
+      break;
+    case 5:
+      result = Puint32_val_node_new(node, "firstError", pd, &(pd->firstError), 
+				    node->id_offset + PDCI_FIRSTERROR_OFF, WHATFN);
+      break;
     }
-    break;
+  }else{
+    switch (idx) {
+    case 0:
+      result = Puint32_val_node_new(node, "pstate",   pd, &(pd->pstate),     
+				    node->id_offset + PDCI_PSTATE_OFF, WHATFN);
+      break;
+    case 1:
+      result = Puint32_val_node_new(node, "nerr",     pd, &(pd->nerr),       
+				    node->id_offset + PDCI_NERR_OFF, WHATFN);
+      break;
+    case 2:
+      result = Puint32_val_node_new(node, "errCode",  pd, &(pd->errCode),    
+				    node->id_offset + PDCI_ERRCODE_OFF, WHATFN);
+      break;
+    case 3:
+      result = Puint32_val_node_new(node, "neerr",    pd, &(pd->neerr),      
+				    node->id_offset + PDCI_NEERR_OFF, WHATFN);
+      break;
+    case 4:
+      result = Puint32_val_node_new(node, "firstError", pd, &(pd->firstError), 
+				    node->id_offset + PDCI_FIRSTERROR_OFF, WHATFN);
+      break;
+    }
   }
   return result;
 }
@@ -1505,15 +1584,22 @@ PDCI_node_t * PDCI_sequenced_pd_node_kthChildNamed(PDCI_node_t *node, childIndex
   /* the only valid idx is 0 */
   if (idx) return 0;
 
-  if (strcmp(name, "pstate") == 0)            idx = 0;
-  else if (strcmp(name, "nerr") == 0)         idx = 1;
-  else if (strcmp(name, "errCode") == 0)      idx = 2;
-  else if (strcmp(name, "neerr") == 0)        idx = 3;
-  else if (strcmp(name, "firstError") == 0)     idx = 4;
-  else if (pd->errCode >= 100 
-	   && strcmp(name, "loc") == 0)       idx = 5;
-  else return result;
-
+  if (pd->errCode >= 100){
+    if (strcmp(name, "pstate") == 0)            idx = 0;
+    else if (strcmp(name, "nerr") == 0)         idx = 1;
+    else if (strcmp(name, "errCode") == 0)      idx = 2;
+    else if (strcmp(name, "loc") == 0)          idx = 3;
+    else if (strcmp(name, "neerr") == 0)        idx = 4;
+    else if (strcmp(name, "firstError") == 0)   idx = 5;
+    else return result;
+  }else{
+    if (strcmp(name, "pstate") == 0)            idx = 0;
+    else if (strcmp(name, "nerr") == 0)         idx = 1;
+    else if (strcmp(name, "errCode") == 0)      idx = 2;
+    else if (strcmp(name, "neerr") == 0)        idx = 3;
+    else if (strcmp(name, "firstError") == 0)   idx = 4;
+    else return result;
+  }
   return (node->vt->kth_child)(node,idx);
 }
 
@@ -1546,53 +1632,47 @@ PDCI_node_t *  PDCI_sequenced_pd_cachedNode_kthChild(PDCI_node_t *node, childInd
 #define WHATFN "PDCI_sequenced_pd_sndNode_kthChild"
 PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *node, childIndex idx)
 {
-  PDCI_sequenced_pd  *pd = (PDCI_sequenced_pd *) node->rep;
+  PDCI_sequenced_pd  *pd;
   PDCI_node_t        *result = 0;
 
-  // check the validaty of the data
-  if (pd == NULL || !PDCI_sndNode_is_valid(node)){
-    // in case the right-side of the || got us here:
-    node->rep = NULL;  
-    node->pd  = NULL;
-
+  /* We need to know the value of errCode, so force validation. */
+  if (P_ERR == PDCI_sndNode_make_valid(node)){
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, WHATFN,
+		    "PADS/Galax failed to page node into memory"); 
+  }
+  pd = (PDCI_sequenced_pd *)node->rep;
+  
+  if (pd->errCode >= 100) {
     switch (idx) {
     case 0:
-      result = Puint32_val_node_new(node, "pstate",   NULL, NULL,     
+      result = Puint32_val_node_new(node, "pstate",   pd, &(pd->pstate),     
 				    node->id_offset + PDCI_PSTATE_OFF, WHATFN);
       Puint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
       break;
     case 1:
-      result = Puint32_val_node_new(node, "nerr",     NULL, NULL,       
+      result = Puint32_val_node_new(node, "nerr",     pd, &(pd->nerr),       
 				    node->id_offset + PDCI_NERR_OFF, WHATFN);
       Puint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
       break;
     case 2:
-      result = Puint32_val_node_new(node, "errCode",  NULL, NULL,    
+      result = Puint32_val_node_new(node, "errCode",  pd, &(pd->errCode),    
 				    node->id_offset + PDCI_ERRCODE_OFF, WHATFN);
       Puint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
       break;
     case 3:
-      result = Puint32_val_node_new(node, "neerr",    NULL, NULL,      
+	result = Ploc_t_node_new(node, "loc", pd, &(pd->loc),        
+				 node->id_offset + PDCI_LOC_OFF, WHATFN);
+	Ploc_t_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
+      break;
+    case 4:
+      result = Puint32_val_node_new(node, "neerr",    pd, &(pd->neerr),      
 				    node->id_offset + PDCI_NEERR_OFF, WHATFN);
       Puint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
       break;
-    case 4:
-      result = Puint32_val_node_new(node, "firstError", NULL, NULL, 
+    case 5:
+      result = Puint32_val_node_new(node, "firstError", pd, &(pd->firstError), 
 				    node->id_offset + PDCI_FIRSTERROR_OFF, WHATFN);
       Puint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
-      break;
-    case 5:
-      /* We need to know the value of errCode, so force validation. */
-      if (P_ERR == PDCI_sndNode_make_valid(node)){
-	PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, WHATFN,"PADS/Galax failed to page node into memory in "); 
-      }
-      pd = node->rep;
-
-      if (pd->errCode >= 100) {
-	result = Ploc_t_node_new(     node, "loc",pd, &(pd->loc),        
-				      node->id_offset + PDCI_LOC_OFF, WHATFN);
-	Ploc_t_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
-      }
       break;
     }
   }else{
@@ -1622,16 +1702,46 @@ PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *node, childIndex i
 				    node->id_offset + PDCI_FIRSTERROR_OFF, WHATFN);
       Puint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
       break;
-    case 5:
-      if (pd->errCode >= 100) { /* return loc as child */
-	result = Ploc_t_node_new(     node, "loc",      pd, &(pd->loc),        
-				      node->id_offset + PDCI_LOC_OFF, WHATFN);
-	Ploc_t_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
-      }
-      break;
     }
   }
   return result;
+}
+
+#undef WHATFN
+#define WHATFN "PDCI_sequenced_pd_sndNode_kthChildNamed"
+PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChildNamed(PDCI_node_t *node, childIndex idx, const char* name)
+{
+  PDCI_sequenced_pd  *pd;
+  PDCI_node_t        *result = 0;
+
+  /* the only valid idx is 0 */
+  if (idx) return 0;
+
+  /* We need to know the value of errCode, so force validation. */
+  if (P_ERR == PDCI_sndNode_make_valid(node)){
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, WHATFN,
+		    "PADS/Galax failed to page node into memory"); 
+  }
+  pd = (PDCI_sequenced_pd *) node->rep;
+  
+  if (pd->errCode >= 100){
+    if (strcmp(name, "pstate") == 0)            idx = 0;
+    else if (strcmp(name, "nerr") == 0)         idx = 1;
+    else if (strcmp(name, "errCode") == 0)      idx = 2;
+    else if (strcmp(name, "loc") == 0)          idx = 3;
+    else if (strcmp(name, "neerr") == 0)        idx = 4;
+    else if (strcmp(name, "firstError") == 0)   idx = 5;
+    else return result;
+  }else{
+    if (strcmp(name, "pstate") == 0)            idx = 0;
+    else if (strcmp(name, "nerr") == 0)         idx = 1;
+    else if (strcmp(name, "errCode") == 0)      idx = 2;
+    else if (strcmp(name, "neerr") == 0)        idx = 3;
+    else if (strcmp(name, "firstError") == 0)   idx = 4;
+    else return result;
+  }
+
+  return (node->vt->kth_child)(node,idx);
 }
 
 /* Used for any node with no children */
@@ -1889,7 +1999,7 @@ const char * PDCI_not_impl_yet_string_value(PDCI_node_t *node)
 
 /* Helper vtables */
 
-#define PDCI_DEF_HELPER_VT(ty) \
+#define PDCI_DEF_HELPER_VT(ty,sndKCN) \
 const PDCI_vtable_t \
 ty ## _node_vtable = {ty ## _cachedNode_init, \
 			     ty ## _node_kthChild, \
@@ -1911,17 +2021,17 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 const PDCI_vtable_t \
 ty ## _sndNode_vtable = {PDCI_error_cachedNode_init,\
 			     ty ## _sndNode_kthChild, \
-			     ty ## _node_kthChildNamed, \
+			     ty ## _ ## sndKCN ## _kthChildNamed, \
                              PDCI_node_free, \
 			     PDCI_sndNode_getId,\
 			     PDCI_error_typed_value, \
 			     PDCI_not_impl_yet_string_value}
 
-PDCI_DEF_HELPER_VT(PDCI_structured_pd);
-PDCI_DEF_HELPER_VT(PDCI_sequenced_pd);
-PDCI_DEF_HELPER_VT(Pbase_pd);
-PDCI_DEF_HELPER_VT(Ploc_t);
-PDCI_DEF_HELPER_VT(Ppos_t);
+PDCI_DEF_HELPER_VT(PDCI_structured_pd,sndNode);
+PDCI_DEF_HELPER_VT(PDCI_sequenced_pd,sndNode);
+PDCI_DEF_HELPER_VT(Pbase_pd,sndNode);
+PDCI_DEF_HELPER_VT(Ploc_t,node);
+PDCI_DEF_HELPER_VT(Ppos_t,node);
 
 PDCI_NO_CHILD_CN_INIT_DEF(PDCI_cstr_val)
 
