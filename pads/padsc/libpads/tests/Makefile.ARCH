@@ -4,6 +4,8 @@
 
 CCFLAGS = $(CC.DEBUG)
 
+myrand :: myrand.c
+
 libtests : mk_ex_data_libtest2 libtest1 libtest2 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1
 
 accumtests : accumtest accumtest2 accumtest_s
