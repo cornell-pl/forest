@@ -3270,14 +3270,17 @@ structure CnvExt : CNVEXT = struct
 		 val cleanupFunED = genResetInitCleanup cleanupSuf
                  val addFunED = genAdd()
 
-		 (* -- generate report function array *)
+		 (* -- generate accumulator report function array *)
 		 (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix  ) *)
                  fun genReport () = 
 		     let val reportFun = (reportSuf o accSuf) name
-			 val lengthX = P.addrX(P.arrowX(PT.Id acc, PT.Id length))
+			 val lengthX = P.arrowX(PT.Id acc, PT.Id length)
 			 val doLengthSs = [chkPrint(
 					     callIntPrint((iSuf o reportSuf) PL.intAct, PT.String "Array lengths", 
-						 	 PT.String "lengths", P.intX ~1, lengthX)) ]
+						 	 PT.String "lengths", P.intX ~1, P.addrX lengthX)) ]
+			 val maxX = P.dotX(lengthX, PT.Id "max")
+			 val limitX = PT.QuestionColon(P.ltX(maxX,P.intX 10), maxX, P.intX 10)
+						 
                          val doElems = 
 			     case lookupAcc baseTy of NONE => []
 			   | SOME a => (
@@ -3289,7 +3292,7 @@ structure CnvExt : CNVEXT = struct
 					PT.Compound
 					 [P.varDeclS'(P.int, "i"),
 					  PT.For(P.assignX(PT.Id "i",P.zero),
-						 P.ltX(PT.Id "i", P.intX numElemsToTrack),
+						 P.ltX(PT.Id "i", limitX),
 						 P.postIncX (PT.Id "i"),
 						 PT.Compound (doOne (arrayDetail^"[%d]", PT.String "array element", 
 								     fieldX, [PT.Id "i"]))
