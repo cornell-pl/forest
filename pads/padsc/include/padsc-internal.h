@@ -54,6 +54,7 @@ struct PDC_s {
   const char*       id;     /* interface id */
   PDC_disc_t*       disc;   /* user-supplied discipline (can be null) */
   Vmalloc_t*        vm;     /* vm handle */
+  Sfio_t*           tmp;    /* tmp sfprintf area */
   /* The following are all IO state */
   Sfio_t*           io;      /* io stream */
   int               eof;     /* hit eof? */ 
@@ -103,7 +104,14 @@ PDC_error_t  PDC_IO_getchar     (PDC_t* pdc, unsigned char* ct, int panicking, P
 PDC_error_t  PDC_IO_back        (PDC_t* pdc, size_t num_chars, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_refill      (PDC_t* pdc, PDC_disc_t* disc);
 
+/*
+ * Other IO routines:
+ *    PDC_IO_getLineBuf: if the specified line is currently in an in-memory buffer,
+ *                       sets *buf_out to point to first char of line in that buffer
+ *                       and returns PDC_OK, otherwise returns PDC_ERROR.
+ */
 
+PDC_error_t PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* RBUF: RESIZABLE ALLLOC'D SPACE */
@@ -122,20 +130,31 @@ PDC_error_t   PDC_freeBuf      (PDC_t* pdc, void* buf, PDC_disc_t* disc);
 
 /*
  * PDC_report_err: Report a parse error that occurred at location loc;
+ *
+ * level should be one of:
+ *      -K : negative # is used for debugging messages
+ *       ERROR_INFO  : informative, no prefixes appended to message
+ *       ERROR_ERROR : warning message, program library name is added as prefix
+ *       ERROR_FATAL : fatal error, program should exit 
+ * One can or in the following flags (as in ERROR_INFO|ERROR_PROMPT):
+ *       ERROR_PROMPT : do not emit a newline
+ *  
  *   XXX errCode's type should be an enum that describes the kind of error XXX ???
- *   The varargs are for a printf-style format, arg1, ... 
- *   (printf-style) description that augments the default
- *   description based on errCode.
- * N.B. This call does nothing if either (disc && !disc->errorf) or
- * or if (!disc && !pdc->disc->errorf).
+ *
+ * The <format, ...> args are for a printf-style description that augments
+ * the default description based on errCode. 
+ *
+ * N.B. This call does nothing if either there is no discipline error function
+ *      or if the discipline e_rep is PDC_errorRep_None
  */
-PDC_error_t   PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc, int errCode, /* format, args */ ...);
+
+PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errCode,
+			   const char* format, ... );
 
 /*
- *  PDC_errorf, PDC_errorvf: error reporting impls
+ *  PDC_errorf: default discipline error reporting routine
  */
 int           PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...);
-int           PDC_errorvf(PDC_t* pdc, PDC_disc_t* disc, int level, va_list ap);
 
 /* ================================================================================ */
 /* SCAN FUNCTIONS */
@@ -171,6 +190,15 @@ PDC_error_t PDC_char_lit_scan(PDC_t* pdc, PDC_base_em* em,
 
 PDC_error_t PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
 			      PDC_base_ed* ed, unsigned char c, PDC_disc_t* disc);
+
+/* ================================================================================ */
+/* MISC ROUTINES */
+/*
+ *    PDC_fmtChar: produce a ptr to a string that is a pretty-print (escaped) formated for char c
+ *        N.B. Resulting string should be printed immediately then not used again, e.g.,
+ *        PDC_report_err( ..xxx.. , "Missing separator: %s", PDC_fmtChar(010)); 
+ */
+char*       PDC_fmtChar(char c);
 
 /* ================================================================================ */
 /* OUTPUT MACROS  */

@@ -9,7 +9,7 @@
 #include "libpadsc-internal.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.3 2002-08-20 02:33:11 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.4 2002-08-22 16:44:31 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -22,16 +22,6 @@ static const char lib[] = "padsc";
 
 /* ================================================================================ */ 
 /* INTERNAL ERROR REPORTING FUNCTIONS */
-
-int
-PDC_errorvf(PDC_t* pdc, PDC_disc_t* disc, int level, va_list ap)
-{
-  if (!disc) {
-    disc = pdc->disc;
-  }
-  errorv((disc && pdc) ? *((char**)pdc) : (char*)pdc, (disc || level < 0) ? level : (level | ERROR_LIBRARY), ap);
-  return 0;
-}
 
 int
 PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...)
@@ -47,73 +37,93 @@ PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...)
 }
 
 PDC_error_t
-PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc, int errCode, ...)
+PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errCode, const char* format, ...)
 {
-  va_list ap;
-  const char* msg = "** unknown error code **";
-
   if (!disc) {
     disc = pdc->disc;
   }
   TRACE(pdc, "PDC_report_err called");
-  if (!disc->errorf || !disc->errorvf) {
+  if (disc->e_rep == PDC_errorRep_None || !disc->errorf) {
     return PDC_OK;
   }
-  switch (errCode) {
-  case PDC_USER_CONSTRAINT_VIOLATION:
-    msg = "User constraint violation";
-    break;
-  case PDC_MISSING_LITERAL:
-    msg = "Missing literal";
-    break;
-  case PDC_ARRAY_ELEM_ERR:
-    msg = "Array element error";
-    break;
-  case PDC_ARRAY_SEP_ERR:
-    msg = "Arrey seperator error";
-    break;
-  case PDC_ARRAY_TERM_ERR:
-    msg = "Arrey terminator error";
-    break;
-  case PDC_ARRAY_SIZE_ERR:
-    msg = "Array size error";
-    break;
-  case PDC_ARRAY_USER_CONSTRAINT_ERR:
-    msg = "Array user constraint violation";
-    break;
-  case PDC_ARRAY_MIN_BIGGER_THAN_MAX_ERR:
-    msg = "Array min bigger than array max";
-    break;
-  case PDC_STRUCT_FIELD_ERR:
-    msg = "Structure field error";
-    break;
-  case PDC_UNION_MATCH_FAILURE:
-    msg = "Union match failure";
-    break;
-  case PDC_ENUM_MATCH_FAILURE:
-    msg = "Enum match failure";
-    break;
-  case PDC_AT_EOF:
-    msg = "Unexpected EOF failure";
-    break;
-  case PDC_RANGE:
-    msg = "Number out of range error";
-    break;
-  case PDC_INVALID_AINT:
-    msg = "Invalid ascii integer";
-    break;
-  case PDC_INVALID_AUINT:
-    msg = "Invalid ascii unsigned integer";
-    break;
-  case PDC_CHAR_LIT_NOT_FOUND:
-    msg = "Expected character literal not found";
-    break;
+  if (disc->e_rep == PDC_errorRep_Min) {
+    disc->errorf(pdc, disc, level, "line %d char %d errCode %d", loc->beginLine, loc->beginChar, errCode);
+    return PDC_OK;
   }
-  disc->errorf(pdc, disc, 2, "XXX_REMOVE beginLine %d beginChar %d endLine %d endChar %d errCode = %s",
-	       loc->beginLine, loc->beginChar, loc->endLine, loc->endChar, msg);
-  va_start(ap, errCode);
-  disc->errorvf(pdc, disc, 2, ap);
-  va_end(ap);
+  if (format && strlen(format)) {
+    va_list ap;
+    sfprintf(pdc->tmp, "line %d char %d : ", loc->beginLine, loc->beginChar);
+    va_start(ap, format);
+    sfvprintf(pdc->tmp, format, ap);
+    va_end(ap);
+  } else {
+    const char* msg = "** unknown error code **";
+
+    switch (errCode) {
+    case PDC_USER_CONSTRAINT_VIOLATION:
+      msg = "User constraint violation";
+      break;
+    case PDC_MISSING_LITERAL:
+      msg = "Missing literal";
+      break;
+    case PDC_ARRAY_ELEM_ERR:
+      msg = "Array element error";
+      break;
+    case PDC_ARRAY_SEP_ERR:
+      msg = "Arrey seperator error";
+      break;
+    case PDC_ARRAY_TERM_ERR:
+      msg = "Arrey terminator error";
+      break;
+    case PDC_ARRAY_SIZE_ERR:
+      msg = "Array size error";
+      break;
+    case PDC_ARRAY_USER_CONSTRAINT_ERR:
+      msg = "Array user constraint violation";
+      break;
+    case PDC_ARRAY_MIN_BIGGER_THAN_MAX_ERR:
+      msg = "Array min bigger than array max";
+      break;
+    case PDC_STRUCT_FIELD_ERR:
+      msg = "Structure field error";
+      break;
+    case PDC_UNION_MATCH_FAILURE:
+      msg = "Union match failure";
+      break;
+    case PDC_ENUM_MATCH_FAILURE:
+      msg = "Enum match failure";
+      break;
+    case PDC_AT_EOF:
+      msg = "Unexpected EOF failure";
+      break;
+    case PDC_RANGE:
+      msg = "Number out of range error";
+      break;
+    case PDC_INVALID_AINT:
+      msg = "Invalid ascii integer";
+      break;
+    case PDC_INVALID_AUINT:
+      msg = "Invalid ascii unsigned integer";
+      break;
+    case PDC_CHAR_LIT_NOT_FOUND:
+      msg = "Expected character literal not found";
+      break;
+    }
+    sfprintf(pdc->tmp, "line %d char %d : %s ", loc->beginLine, loc->beginChar, msg);
+  }
+  if (disc->e_rep == PDC_errorRep_Max) {
+    char* buf;
+    if (PDC_OK == PDC_IO_getLineBuf(pdc, loc->endLine, &buf, disc)) {
+      size_t minc = (loc->beginLine == loc->endLine) ? loc->beginChar : 1;
+      size_t maxc = loc->endChar;
+      if (minc < maxc) {
+	sfprintf(pdc->tmp, "\n[LINE %d]%-.*s>>>%-.*s<<<", loc->endLine, minc-1, buf, maxc-minc+1, buf+minc-1);
+      } else {
+	sfprintf(pdc->tmp, "\n[LINE %d]%-.*s<<<", loc->endLine, maxc, buf);
+      }
+    }
+  }
+  disc->errorf(pdc, disc, level, "%s", sfstruse(pdc->tmp));
   return PDC_OK;
 }
 
@@ -565,6 +575,27 @@ PDC_IO_commit(PDC_t* pdc, PDC_disc_t* disc)
   return PDC_OK;
 }
 
+PDC_error_t
+PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, PDC_disc_t* disc) {
+  char* base;
+  int i;
+
+  if (!disc) {
+    disc = pdc->disc;
+  }
+  TRACE(pdc, "PDC_IO_getLineBuf called");
+  for (i = 0; i <= pdc->itail; i++) {
+    if (pdc->ilines[i].lnum == line) {
+      base = (i == pdc->itail) ? pdc->sfbuf : pdc->buf;
+      (*buf_out) = base + pdc->ilines[i].boffset;
+      return PDC_OK;
+    }
+  }
+  return PDC_ERROR;
+}
+
+
+
 /* ================================================================================ */
 /* TOP-LEVEL LIBRARY FUNCTIONS */
 
@@ -572,7 +603,7 @@ PDC_IO_commit(PDC_t* pdc, PDC_disc_t* disc)
 static PDC_disc_t PDC_default_disc = {
   PDC_VERSION,
   PDC_errorf,
-  PDC_errorvf,
+  PDC_errorRep_Max,
   PDC_Line_Stop
 };
 
@@ -592,6 +623,11 @@ PDC_open(PDC_disc_t* disc, PDC_t** pdc_out)
   }
   if (!(pdc = vmnewof(vm, 0, PDC_t, 1, 0))) {
     WARN(NiL, "out of space [padsc library data]");
+    vmclose(vm);
+    return PDC_ERROR;
+  }
+  if (!(pdc->tmp = sfstropen())) {
+    WARN(NiL, "out of space [sfstr]");
     vmclose(vm);
     return PDC_ERROR;
   }
@@ -636,6 +672,17 @@ PDC_close(PDC_t* pdc, PDC_disc_t* disc)
   }
   vmclose(pdc->vm); /* frees everything alloc'd using vm */
   return PDC_OK;
+}
+
+/* ================================================================================ */
+/* MISC ROUTINES */
+
+char*
+PDC_fmtChar(char c) {
+  char buf[2];
+  buf[0] = c;
+  buf[1] = 0;
+  return (fmtesc(buf));
 }
 
 /* ================================================================================ */

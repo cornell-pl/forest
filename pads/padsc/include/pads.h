@@ -20,6 +20,10 @@
 #define PDC_OK                              0
 #define PDC_ERROR                          -1
 
+#define PDC_CHKPOINT_FAILURE                1
+#define PDC_COMMIT_FAILURE                  2
+#define PDC_RESTORE_FAILURE                 3
+#define PDC_ALLOC_FAILURE                   4
 #define PDC_PANIC_SKIPPED                  10
 
 #define PDC_USER_CONSTRAINT_VIOLATION     100
@@ -53,6 +57,12 @@
  *
  * Members of PDC_disc_t:
  *
+ *   e_rep : error reporting, one of:
+ *              PDC_errorRep_None : do not generate descriptive error reports
+ *              PDC_errorRep_Min  : minimal reporting: report errCode, error line/char position
+ *              PDC_errorRep_Med  : medium reporting:  like Min, but adds descriptive string
+ *  [default]   PDC_errorRep_Max  : maximum reporting, like Med, but adds offending line up to error position
+ *
  *   p_stop: panic stop 
  *             When searching for a character or string literal (or for some other
  *             target that allows resynching the input stream after a parse error),
@@ -67,8 +77,9 @@ typedef struct PDC_s               PDC_t;
 typedef struct PDC_disc_s          PDC_disc_t;
 typedef struct PDC_loc_s           PDC_loc_t;
 typedef struct PDC_base_ed_s       PDC_base_ed;
-typedef enum   PDC_panicStop_em_e  PDC_panicStop_em;
 typedef enum   PDC_base_em_e       PDC_base_em;
+typedef enum   PDC_panicStop_e     PDC_panicStop;
+typedef enum   PDC_errorRep_e      PDC_errorRep;
 
 /* ================================================================================ */
 /* BASIC LIBRARY TYPES */
@@ -114,14 +125,15 @@ typedef unsigned long          PDC_flags_t;
  * 
  */
 typedef int (*PDC_error_f)(PDC_t* pdc, PDC_disc_t* disc, int level, ...);
-typedef int (*PDC_errorv_f)(PDC_t* pdc, PDC_disc_t* disc, int level, va_list ap);
 
 /* ================================================================================ */
 /* LIBRARY TYPES */
 
 enum PDC_base_em_e { PDC_CheckAndSet, PDC_Check, PDC_Ignore };
 
-enum PDC_panicStop_em_e { PDC_Line_Stop /* , PDC_EOF_Stop */ };    /* At the moment, only PDC_Line_Stop is supported */
+enum PDC_panicStop_e { PDC_Line_Stop /* , PDC_EOF_Stop */ };    /* At the moment, only PDC_Line_Stop is supported */
+
+enum PDC_errorRep_e { PDC_errorRep_Max, PDC_errorRep_Med, PDC_errorRep_Min, PDC_errorRep_None };
 
 /* A position has a beginning and an ending: it marks the first and last
  * character where something interesting happened, e.g., a field with
@@ -146,8 +158,8 @@ struct PDC_base_ed_s {
 struct PDC_disc_s {
   PDC_flags_t           version;   /* interface version */
   PDC_error_f           errorf;    /* error function using  ... */
-  PDC_errorv_f          errorvf;   /* error function using va_args */
-  PDC_panicStop_em      p_stop;
+  PDC_errorRep          e_rep;     /* controls error reporting */
+  PDC_panicStop         p_stop;    /* controls scope of panic */
 };
 
 /* ================================================================================ */
