@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
-    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
+    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
       error(ERROR_FATAL, "header read returned error");
     }
   }
@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
    */
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
-    PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep);
+    PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS);
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");

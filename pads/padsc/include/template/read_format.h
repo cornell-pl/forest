@@ -160,10 +160,10 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
-    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
+    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
       error(ERROR_FATAL, "header read returned error");
     }
-    if (P_ERR == PADS_HDR_TY(_fmt2io)(pads, io, &requestedOut, DELIMS, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
+    if (P_ERR == PADS_HDR_TY(_fmt2io)(pads, io, &requestedOut, DELIMS, &hdr_m,&hdr_pd, &hdr_rep  EXTRA_HDR_READ_ARGS )) {
       error(ERROR_FATAL, "*** IO error during header write");
     }
   }
@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
    */
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
-    err = PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep);
+    err = PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS );
     if (err == P_ERR) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
       error(2, "read returned error");
 #endif
     }
-    if ((err == P_OK || fmt_error_cases) && (P_ERR == PADS_TY(_fmt2io)(pads, io, &requestedOut, DELIMS, &m, EXTRA_READ_ARGS &pd, &rep))) {
+    if ((err == P_OK || fmt_error_cases) && (P_ERR == PADS_TY(_fmt2io)(pads, io, &requestedOut, DELIMS, &m, &pd, &rep EXTRA_READ_ARGS ))) {
       error(ERROR_FATAL, "*** IO error during format");
     }
 #ifdef EXTRA_GOOD_READ_CODE

@@ -120,12 +120,12 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
-    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
+    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
       error(2, "<note>header read returned error</note>");
     } else {
       error(2, "<note>header read returned OK</note>");
     }
-    if (P_ERR == PADS_HDR_TY(_write_xml_2io)(pads, io, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep, (const char*)0, 0)) {
+    if (P_ERR == PADS_HDR_TY(_write_xml_2io)(pads, io, &hdr_pd, &hdr_rep, (const char*)0, 0) EXTRA_HDR_READ_ARGS ) {
       error(ERROR_FATAL, "*** IO error during header write");
     }
   }
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
     }
 #endif
     P_io_getPos(pads, &bpos, 0);
-    if (P_OK != PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep)) {
+    if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
       error(2, "<note>read returned error</note>");
     } else {
       error(2, "<note>read returned OK</note>");
@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
       error(2, "<note>read call did not advance IO cursor, stopping read loop</note>");
       break;
     }
-    if (P_ERR == PADS_TY(_write_xml_2io)(pads, io, EXTRA_READ_ARGS &pd, &rep, (const char*)0, 0)) {
+    if (P_ERR == PADS_TY(_write_xml_2io)(pads, io, &pd, &rep, (const char*)0, 0) EXTRA_READ_ARGS ) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
 #ifdef POST_SKIP_BYTES

@@ -152,12 +152,12 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
-    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
+    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
       error(2, "<note>header read returned error</note>");
     } else {
       error(2, "<note>header read returned OK</note>");
     }
-    if (P_ERR == PADS_HDR_TY(_write_xml_2io)(pads, io, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep, (const char*)0, 0)) {
+    if (P_ERR == PADS_HDR_TY(_write_xml_2io)(pads, io, &hdr_pd, &hdr_rep, (const char*)0, 0 EXTRA_HDR_READ_ARGS )) {
       error(ERROR_FATAL, "*** IO error during header write");
     }
   }
@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
     }
 #endif
     P_io_getPos(pads, &bpos, 0);
-    if (P_OK != test_rwxml(pads, out1, out2, &m, EXTRA_READ_ARGS &pd, &rep)) {
+    if (P_OK != test_rwxml(pads, out1, out2, &m, &pd, &rep EXTRA_READ_ARGS )) {
       error(2, "<note>test_rwxml returned error</note>");
     } else {
       error(2, "<note>test_rwxml returned OK</note>");
@@ -280,8 +280,8 @@ Perror_t test_rwxml (P_t *pads,Sfio_t *out1, Sfio_t *out2, PADS_TY(_m) *m,PADS_T
 	P_io_getLocE (pads,&loc,0);
 
 	if (P_READ_VALID == result){
-	  if (P_ERR == PADS_ELT_TY(_write_xml_2io)(pads, out1, EXTRA_READ_ARGS 
-						   &(pd->elts)[i], &(rep->elts)[i], (const char*)0, 0)) {
+	  if (P_ERR == PADS_ELT_TY(_write_xml_2io)(pads, out1,  
+						   &(pd->elts)[i], &(rep->elts)[i], (const char*)0, 0) EXTRA_READ_ARGS) {
 	    error(ERROR_FATAL, "*** write xml call failed");
 	  }
 
@@ -290,8 +290,8 @@ Perror_t test_rwxml (P_t *pads,Sfio_t *out1, Sfio_t *out2, PADS_TY(_m) *m,PADS_T
 	  P_io_seek(pads,loc.e.offset);
 
 	  if (r2 == P_READ_VALID){
-	    if (P_ERR == PADS_ELT_TY(_write_xml_2io)(pads, out2, EXTRA_READ_ARGS 
-						     &(pd->elts)[i], &(rep->elts)[i], (const char*)0, 0)) {
+	    if (P_ERR == PADS_ELT_TY(_write_xml_2io)(pads, out2, 
+						     &(pd->elts)[i], &(rep->elts)[i], (const char*)0, 0) EXTRA_READ_ARGS ) {
 	      error(ERROR_FATAL, "*** write xml call failed");
 	    }
 	  }else{

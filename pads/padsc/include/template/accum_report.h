@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
-    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
+    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS)) {
       error(ERROR_FATAL, "Note: header read returned error");
     } else {
       error(2, "Note: header read returned OK");
@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
    */
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
-    if (P_OK != PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep)) {
+    if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
     }
 #ifdef EXTRA_GOOD_READ_CODE
     else {
-      if (PPADS_TY(is_)(&(rep))) {  
+      if (PPADS_TY(is_)(&(rep) EXTRA_READ_ARGS ) ) {  
 	error(2, "read reported no errors and passed predicate test.");  
       } else {  error(2, "read reported no errors but failed predicate test.");  } 
       EXTRA_GOOD_READ_CODE;

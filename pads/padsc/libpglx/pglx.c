@@ -414,7 +414,7 @@ item ty ## _typed_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   sfstrset(node->pads->tmp2, 0); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -440,7 +440,7 @@ item ty ## _sndNode_typed_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   sfstrset(node->pads->tmp2, 0); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -697,7 +697,7 @@ const char * ty ## _string_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   sfstrset(node->pads->tmp2, 0); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
@@ -714,7 +714,7 @@ item ty ## _text_typed_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   sfstrset(node->pads->tmp2, 0); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
@@ -738,7 +738,7 @@ const char * ty ## _sndNode_string_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   sfstrset(node->pads->tmp2, 0); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   return (sfstruse(node->pads->tmp2)); \
@@ -761,7 +761,7 @@ item ty ## _text_sndNode_typed_value (PDCI_node_t *node) \
     pd->errCode = P_NO_ERR; \
   } \
   sfstrset(node->pads->tmp2, 0); \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
+  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r, ty_arg1)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
   } \
   if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \

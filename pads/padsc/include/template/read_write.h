@@ -120,10 +120,10 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
-    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
+    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
       error(ERROR_FATAL, "header read returned error");
     }
-    if (P_ERR == PADS_HDR_TY(_write2io)(pads, io, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
+    if (P_ERR == PADS_HDR_TY(_write2io)(pads, io, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
       error(ERROR_FATAL, "*** IO error during header write");
     }
   }
@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
    */
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
-    if (P_OK != PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep)) {
+    if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
 #endif
     }
     else {
-      if (P_ERR == PADS_TY(_write2io)(pads, io, EXTRA_READ_ARGS &pd, &rep)) {
+      if (P_ERR == PADS_TY(_write2io)(pads, io, &pd, &rep EXTRA_READ_ARGS )) {
         error(ERROR_FATAL, "*** IO error during write");
       }
 #ifdef EXTRA_GOOD_READ_CODE
