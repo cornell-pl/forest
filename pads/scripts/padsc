@@ -24,8 +24,7 @@
 
 set firstout = "\n"
 
-set gsfarch = `/home/gsf/bin/package`
-set knbarchdir = /home/gruber/knb/arch/$gsfarch
+set arch = `/home/gsf/bin/package`
 
 if (!($?PADSCDIR)) then
   if ($0:h == $0:t) then
@@ -42,11 +41,11 @@ if (!(-d $PADSCDIR && -d $PADSCDIR/lib && -d $PADSCDIR/include && -e $PADSCDIR/p
   exit 0
 endif
 
-set SMLBIN = $knbarchdir/bin/smlruntime
 
 set IMAGE = $PADSCDIR/lib/padsc
+set SMLBIN = $PADSCDIR/binlinks/smlruntime.$arch
 
-if ($gsfarch == linux.i386) then 
+if ($arch == linux.i386) then 
     set lua = -U__GNUC__
     set lda = -D__PREPROCESSOR_FIXES
 else 
@@ -141,6 +140,6 @@ endif
 #set firstout = ""
 #exit 0
 
-exec $SMLBIN @SMLload=$IMAGE $PADSCDIR $cmd -I $PADSCDIR/include -I /home/gsf/arch/$gsfarch/include/ast \
+exec $SMLBIN @SMLload=$IMAGE $PADSCDIR $cmd -I $PADSCDIR/include -I /home/gsf/arch/$arch/include/ast \
 $lua $lda < /dev/null
 
