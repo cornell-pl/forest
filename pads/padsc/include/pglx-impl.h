@@ -1,48 +1,48 @@
-#define PDCI_MK_NODE(result, vt, parent, name, m, pd, rep) \
+
+#define PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
-    if (!(result = PDCI_NEW_NODE(parent->pdc))) { \
-      failwith("ALLOC_ERROR: in PDCI_MK_NODE"); \
+    if (!(resultIN = PDCI_NEW_NODE((parentIN)->pdc))) { \
+      failwith("ALLOC_ERROR: in " whatfn); \
     } \
-    result->vt     = vt; \
-    result->pdc    = parent->pdc; \
-    result->parent = parent; \
-    result->m      = (void *)m; \
-    result->pd     = (void *)pd; \
-    result->rep    = rep; \
-    result->name   = name; \
+    resultIN->vt     = (vtIN); \
+    resultIN->pdc    = (parentIN)->pdc; \
+    resultIN->parent = (parentIN); \
+    resultIN->m      = (void *)(mIN); \
+    resultIN->pd     = (void *)(pdIN); \
+    resultIN->rep    = (repIN); \
+    resultIN->name   = (nameIN); \
   } while (0)
 
-
-#define  PDCI_MK_TNODE(result, vt, parent, name, rep) \
-   PDCI_MK_NODE(result, vt, parent, name, 0,0,rep)
+#define  PDCI_MK_TNODE(resultIN, vtIN, parentIN, nameIN, repIN, whatfn) \
+  PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, 0, 0, repIN, whatfn)
 
 /* TODO: BASE TYPE: make macro for each base type */
 
 #define PDCI_NEW_NODE(pdc) \
-  vmnewof(pdc->vm, 0, PDCI_node_t, 1, 0)
+  vmnewof((pdc)->vm, 0, PDCI_node_t, 1, 0)
 
 #define PDCI_NEW_NODE_PTR_LIST(pdc, num) \
-  vmnewof(pdc->vm, 0, PDCI_node_t*, num +1, 0)
+  vmnewof((pdc)->vm, 0, PDCI_node_t*, (num)+1, 0)
 
 #define PDCI_FREE_NODE(pdc, n) \
-  vmfree(pdc->vm, n)
+  vmfree((pdc)->vm, n)
 
 #define PDCI_FREE_NODE_PTR_LIST(pdc, list) \
-  vmfree(pdc->vm, list)
+  vmfree((pdc)->vm, list)
 
 #ifndef NDEBUG
 #define PDCI_NODE_CHECK(n, whatfn) \
 do { \
-  if (!n) \
-    failwith("INVALID_PARAM: n null in " whatfn); \
+  if (!(n)) \
+    failwith("INVALID_PARAM: " PDCI_MacroArg2String(n) " null in " whatfn); \
 } while (0)
 
 #define PDCI_NODE_VT_CHECK(n, whatfn) \
 do { \
   if (!n) \
-    failwith("INVALID_PARAM: n null in " whatfn); \
+    failwith("INVALID_PARAM: " PDCI_MacroArg2String(n) " null in " whatfn); \
   if (!n->vt) \
-    failwith("INVALID_PARAM: n->vt null in " whatfn); \
+    failwith("INVALID_PARAM: " PDCI_MacroArg2String(n) "->vt null in " whatfn); \
 } while (0)
 
 #else

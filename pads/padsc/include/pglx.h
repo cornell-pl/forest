@@ -1,9 +1,7 @@
 /* generic calls from galax to pads */
-#if 0 /* XXX_REMOVE */
-#include <caml/mlvalues.h>  /* value type */
-#else
-typedef long value; /* XXX_REMOVE */
-#endif
+
+#include "libpadsc.h"       /* Need to include ast stuff before caml stuff for some reason */
+#include "caml/mlvalues.h"  /* Need value */
 
 void**      PGLX_generic_children    (void *ocaml_n);
 void*       PGLX_generic_parent      (void *ocaml_n);

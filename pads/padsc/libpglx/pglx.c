@@ -1,15 +1,12 @@
 #include "pglx.h"
 #include "pglx-internal.h"
 
-/* include mary's stuff for c to ocaml rep functions */
 /* ocaml header files can be found in /usr/common/lib/ocaml/caml */
-#if 0 /* XXX_REMOVE */
-#include <caml/fail.h>      /* exception */
-#else
-extern void failwith(const char *); /* XXX_REMOVE */
-#endif
+#include "caml/fail.h"      /* exception */
+/* include mary's stuff for c to ocaml rep functions */
 
-/* pads-galex.h functions (The public api for Galax to call) */ 
+/* ================================================================================
+ * PUBLIC GALAX->PADS CALLS (see pglx.h) */ 
 
 void** PGLX_generic_children (void *ocaml_n)
 {
@@ -42,6 +39,7 @@ const char* PGLX_generic_string_value(void *ocaml_n)
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   PDCI_NODE_CHECK(n, "PGLX_generic_string_value");
+  (n = n); /* XXX_REMOVE */
   return "Not yet implemented";
 }
 
@@ -57,6 +55,9 @@ void PGLX_node_free(void *ocaml_n)
   PDCI_FREE_NODE(n->pdc, n);
 }
 
+/* ================================================================================
+ * INTERNAL */
+
 /* HELPERS */
 
 /* Helper functions */
@@ -69,6 +70,8 @@ value PDCI_error_typed_value(PDCI_node_t *node)
 
 /* Children functions for structured_pd, sequenced_pd */
 /* A structured_pd has four children (nerr, errCode, loc, panic) */
+#undef WHATFN
+#define WHATFN "PDCI_structured_pd_children"
 PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
 {
   PDCI_structured_pd *pd = (PDCI_structured_pd *) self->rep;
@@ -76,16 +79,32 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
   if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 4))) {
     failwith("ALLOC_ERROR: in PDCI_structured_pd_children");
   }
+  
   /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr", &(pd->nerr));
-  PDCI_MK_TNODE(result[1], &PDC_errCode_t_vtable, self,"errCode", &(pd->errCode));
-  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable, self, "loc", &(pd->loc));
-  PDCI_MK_TNODE(result[3], &PDC_int32_val_vtable, self, "panic", &(pd->panic));
+  do {
+    if (!(result[0] = PDCI_NEW_NODE((self)->pdc))) {
+      failwith("ALLOC_ERROR: in " WHATFN);
+    }
+    result[0]->vt     = (&PDC_uint32_val_vtable);
+    result[0]->pdc    = (self)->pdc;
+    result[0]->parent = (self);
+    result[0]->m      = (void *)(0);
+    result[0]->pd     = (void *)(0);
+    result[0]->rep    = (&(pd->nerr));
+    result[0]->name   = ("nerr");
+  } while (0);
+  PDCI_MK_NODE(result[0], (&PDC_uint32_val_vtable), self, "nerr", 0, 0, &(pd->nerr), WHATFN);
+  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr", &(pd->nerr), WHATFN);
+  PDCI_MK_TNODE(result[1], &PDC_errCode_t_vtable, self,"errCode", &(pd->errCode), WHATFN);
+  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable, self, "loc", &(pd->loc), WHATFN);
+  PDCI_MK_TNODE(result[3], &PDC_int32_val_vtable, self, "panic", &(pd->panic), WHATFN);
   return result;
 }
 
 /* A sequenced_pd has six children 
   (nerr, errCode, loc, panic, neerr, firstError) */
+#undef WHATFN
+#define WHATFN "PDCI_sequenced_pd_children"
 PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
 {
   PDCI_sequenced_pd *pd = (PDCI_sequenced_pd *) self->rep;
@@ -94,15 +113,14 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
     failwith("ALLOC_ERROR: in PDCI_sequenced_pd_children");
   }
   /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr", &(pd->nerr));
-  PDCI_MK_TNODE(result[1], &PDC_errCode_t_vtable, self,"errCode", &(pd->errCode));
-  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable, self, "loc",   &(pd->loc));
-  PDCI_MK_TNODE(result[3], &PDC_int32_val_vtable, self, "panic", &(pd->panic));
-  PDCI_MK_TNODE(result[4], &PDC_int32_val_vtable, self, "neerr", &(pd->neerr));
-  PDCI_MK_TNODE(result[5], &PDC_int32_val_vtable, self, "firstErr", &(pd->firstError));
+  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr", &(pd->nerr), WHATFN);
+  PDCI_MK_TNODE(result[1], &PDC_errCode_t_vtable, self,"errCode", &(pd->errCode), WHATFN);
+  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable, self, "loc",   &(pd->loc), WHATFN);
+  PDCI_MK_TNODE(result[3], &PDC_int32_val_vtable, self, "panic", &(pd->panic), WHATFN);
+  PDCI_MK_TNODE(result[4], &PDC_int32_val_vtable, self, "neerr", &(pd->neerr), WHATFN);
+  PDCI_MK_TNODE(result[5], &PDC_int32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN);
   return result;
 }
-
 
 /* Helper vtables */
 const PDCI_vtable_t
@@ -139,5 +157,6 @@ value PDC_uint32_typed_value (void * ocaml_n)
   ...
   */
   /* XXX_TODO */
+  r = r; /* XXX_REMOVE */
   return 0;
 }
