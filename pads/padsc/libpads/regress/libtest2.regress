@@ -2,7 +2,6 @@
 Using PADSC IO discipline norec
 
 
-fname = ../../data/ex_data.libtest2.raptor    rev = 0
 
 Read bint8  : -2
 Read buint8 : 2
