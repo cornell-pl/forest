@@ -82,6 +82,9 @@ if [ $_pads_status = "OK" ]; then
   if [ "$PCRE_LIB_DIR"x = x ]; then
     export PCRE_LIB_DIR=/home/mff/pcre-4.5-rh9/lib
   fi
+  if [ "$PADSGLX_LIB_DIR"x = x ]; then
+    export PADSGLX_LIB_DIR=$PADS_HOME/padsc/pads-glx/$AST_ARCH
+  fi
 
   if [ ! -e $INSTALLROOT ]; then
     (mkdir -p $INSTALLROOT > /dev/null 2>&1) || _pads_status=FAILED

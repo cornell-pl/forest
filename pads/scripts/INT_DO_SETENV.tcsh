@@ -112,6 +112,15 @@ else
   endif
 endif
 
+set _is_padsglx_lib_dir
+if (! $?PADSGLX_LIB_DIR) then
+  unset _is_padsglx_lib_dir
+else
+  if ("$PADSGLX_LIB_DIR"x == x) then
+    unset _is_padsglx_lib_dir
+  endif
+endif
+
 set _pads_status = OK
 
 if (! $?_pads_verbose) then
@@ -238,6 +247,9 @@ if ($_pads_status == "OK") then
   endif
   if (! $?_is_pcre_lib_dir) then
     setenv PCRE_LIB_DIR /home/mff/pcre-4.5-rh9/lib
+  endif
+  if (! $?_is_padsglx_lib_dir) then
+    setenv PADSGLX_LIB_DIR $PADS_HOME/padsc/pads-glx/$AST_ARCH
   endif
 
   # remove old PADS path components
