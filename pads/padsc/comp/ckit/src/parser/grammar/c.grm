@@ -330,6 +330,7 @@ end
         | pIsRecord of bool
         | pIsSource of bool
         | pTypedef of externalDecl
+        | pREexpr of expression
         | pStruct of (declarator, ctype, decltype, expression) PX.PExternal
         | pStructFieldList of ((decltype, declarator, expression) PX.PSField) list
         | pStructField of (decltype, declarator, expression) PX.PSField
@@ -1086,6 +1087,10 @@ pTypedef:
 			        pred = expr})
  )
 
+pREexpr :
+   PRE expr (ExprExt(PX.Pregexp expr))
+ | expr     (expr) 
+
 pManifestField: 
   declarationSpecifiers initDeclaratorList
 	        (declarationSpecifiers, seqToList initDeclaratorList)
@@ -1141,8 +1146,7 @@ pStructField: POMIT  PENDIAN pName pOptActParams ID  pConstraintOpt SEMICOLON pC
 						pred = pConstraintOpt,
                                                 comment = pCommentOpt})	
   | PCOMPUTE pManifestField SEMICOLON pCommentOpt   (PX.Manifest{decl = pManifestField, comment=pCommentOpt})
-  | expr SEMICOLON                    (PX.Brief expr)
-  | PRE expr SEMICOLON                (PX.Brief (ExprExt(PX.Pregexp expr)))
+  | pREexpr SEMICOLON                 (PX.Brief (pREexpr))
 
 pStructFieldList: 
     pStructField                     ([pStructField])
@@ -1161,13 +1165,14 @@ pForAllRange :
    LBRACE expr DOTDOT expr RBRACE   (PX.Bounds(expr1, expr2))
  | pName		            (PX.ArrayName pName)
 
+
 pArrayConstraint : 
-   PSEP EQ expr  (PX.Sep expr)
- | PTERM EQ expr (PX.Term expr)
+   PSEP EQ pREexpr  (PX.Sep pREexpr)
+ | PTERM EQ pREexpr (PX.Term pREexpr)
 
 pArrayConstraints : 
    pArrayConstraint ([pArrayConstraint])
- | pArrayConstraint AND pArrayConstraints  (pArrayConstraint :: pArrayConstraints)
+ | pArrayConstraint PAND pArrayConstraints  (pArrayConstraint :: pArrayConstraints)
 
 pArrayConstraintOpt: ([])
  | COLON pArrayConstraints ( pArrayConstraints )

@@ -1,5 +1,5 @@
 Parray intList {
-  Pa_int32 [] : Psep == '|' && Pterm == '.' ;
+  Pa_int32 [] : Psep == '|' Pand Pterm == '.' ;
 };
 
 Punion auth_id_t {

@@ -93,19 +93,33 @@ struct
   val bytePCT      = P.makeTypedefPCT "Pbyte"
   val bytePtr      = P.ptrPCT(bytePCT)
   val VoidPtr      = P.ptrPCT(P.makeTypedefPCT "Void_t")
-
-  val charlit      = "Pa_char_lit"
-  val charlitScan1 = "Pchar_lit_scan1"
-  val charlitScan2 = "Pchar_lit_scan2"
-  val strlit       = "Pa_str_lit"
-  val strlitRead   = "Pcstr_lit_read"
-  val strlitScan1  = "Pstr_lit_scan1"
-  val strlitScan2  = "Pstr_lit_scan2"
-  val strlitWrite  = "Pa_cstr_lit"
-  val strlitWriteBuf  = "Pa_cstr_lit_write2buf"
   val stringPCT    = P.makeTypedefPCT "Pstring"
-  val relitScan1   = "Pre_scan1"
-  val relitScan2   = "Pre_scan2"
+
+  val charlit         = "Pchar_lit"
+  val charlitMatch    = "Pchar_lit_match"
+  val charlitScan1    = "Pchar_lit_scan1"
+  val charlitScan2    = "Pchar_lit_scan2"
+  val charlitWriteBuf = "Pchar_lit_write2buf"
+
+  val cstrlit         = "Pcstr_lit"
+  val cstrlitMatch    = "Pcstr_lit_match"
+  val cstrlitScan1    = "Pcstr_lit_scan1"
+  val cstrlitScan2    = "Pcstr_lit_scan2"
+  val cstrlitWrite    = "Pcstr_lit"
+  val cstrlitWriteBuf = "Pcstr_lit_write2buf"
+
+  val strlit         = "Pstr_lit"
+  val strlitMatch    = "Pstr_lit_match"
+  val strlitScan1    = "Pstr_lit_scan1"
+  val strlitScan2    = "Pstr_lit_scan2"
+  val strlitWrite    = "Pstr_lit"
+  val strlitWriteBuf = "Pstr_lit_write2buf"
+
+  val reMatch    = "Pre_match"
+  val reWriteBuf = cstrlitWriteBuf (* not yet implemented.  what should go here?*)
+  val reScan1    = "Pre_scan1"
+  val reScan2    = "Pre_scan2"
+
   val str          = "str"
   val len          = "len"
   val errorf       = "errorf"
@@ -394,6 +408,11 @@ struct
 	     whatFun,
 	     P_RESTORE_FAILURE)
 
+  fun matchFunX(n:string, pads:PT.expression, res:PT.expression, eatX) = 
+      PT.Call(PT.Id n, [pads, res, eatX])
+
+  fun matchFunChkX(expectedValX, n, pads, res,eatX) = 
+      P.eqX(expectedValX, matchFunX(n,pads,res,eatX))
 
   fun readFunX(n:string, pads:PT.expression, loc:PT.expression, 
 	                 optArgs: PT.expression list,
