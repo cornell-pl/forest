@@ -4727,11 +4727,14 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                      | SOME _ => [P.mkCommentS "Don't currently support writing regular expressions."]
 		 val writeSepSs = writeLitSs sepXOpt
 		 val writeArraySs = [PT.Compound (
-				     [P.varDeclS'(P.int, "i"),
-				      PT.For(P.assignX(PT.Id "i",P.zero),
-					     P.ltX(PT.Id "i", P.minusX(lengthX, P.intX 1)),
-					     P.postIncX (PT.Id "i"),
-					     PT.Compound (writeBaseSs @ writeSepSs) )] @ writeLastBaseSs)]
+				     [P.varDeclS(P.int, "i", P.zero),
+				      PT.IfThen(P.gtX(lengthX, P.intX 1),
+						PT.Compound[
+					           PT.For(P.assignX(PT.Id "i",P.zero),
+							  P.ltX(PT.Id "i", P.minusX(lengthX, P.intX 1)),
+							  P.postIncX (PT.Id "i"),
+							  PT.Compound (writeBaseSs @ writeSepSs))])]
+                                     @ writeLastBaseSs)]
 		 val writeTermSs = writeLitSs termXOpt
 		 val bodySs = writeArraySs @ writeTermSs
 		 val writeFunEDs = genWriteFuns(writeName, isRecord, cParams, pdPCT, canonicalPCT, bodySs)
