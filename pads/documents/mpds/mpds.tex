@@ -60,8 +60,9 @@ The goal of the PADS project is to provide languages and tools for
 simplifying data stream analysis.  We have a preliminary design of a
 declarative data-description language, \padsl{}, expressive enough to
 describe the data feeds we see at AT\&T in practice, including ASCII,
-binary, and mixed data formats.  From \padsl{} we generate a tunable \C{}
-library with functions for parsing, manipulating, and summarizing the data.  
+binary, EBCDIC, Cobol, and mixed data formats.  From
+\padsl{} we generate a tunable \C{} library with functions for
+parsing, manipulating, and summarizing the data.   
 
 \smallerend{}
 \section{\pads{} language}
@@ -193,8 +194,8 @@ error-free or halt parsing if an error is detected.
 \smallerend{}
 \section{Conclusion}
 \smallersp
-Source code for \pads{} will be available for download shortly with
-a non-commercial use license from: 
+Further information and a source-code distribution of \pads{} is
+available from:
 \begin{centercode}
 http://www.research.att.com/projects/pads
 \end{centercode}
