@@ -7,9 +7,10 @@
  */
 
 #include "libpadsc-internal.h"
+#include "libpadsc-read-macros.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.13 2002-09-09 20:35:00 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.14 2002-09-10 20:59:33 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -77,6 +78,12 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
     case PDC_NO_ERROR:
       msg = "(errcode indicates no error)";
       break;
+    case PDC_OUT_OF_MEMORY:
+      msg = "Failed to allocate memory";
+      break;
+    case PDC_SYS_ERROR:
+      msg = "System error";
+      break;
     case PDC_CHKPOINT_FAILURE:
       msg = "Checkpoint failure (misuse of libpadsc IO checkpoint facility)";
       break;
@@ -140,8 +147,8 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
     case PDC_AT_EOF:
       msg = "Unexpected end of file (field too short?) failure";
       break;
-    case PDC_AT_EOL:
-      msg = "Unexpected end of line (field too short?) failure";
+    case PDC_AT_EOR:
+      msg = "Unexpected end of record (field too short?) failure";
       break;
     case PDC_RANGE:
       msg = "Number out of range error";
@@ -161,8 +168,14 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
     case PDC_CHAR_LIT_NOT_FOUND:
       msg = "Expected character literal not found";
       break;
+    case PDC_REGEXP_NOT_FOUND:
+      msg = "Match for regular expression not found";
+      break;
     case PDC_INVALID_REGEXP:
       msg = "Invalid regular expression";
+      break;
+    case PDC_WIDTH_NOT_AVAILABLE:
+      msg = "Specified width not available (EOR/EOF encountered)";
       break;
     }
     if (loc) {
@@ -214,19 +227,19 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
     disc = pdc->disc;
   }
   TRACE1(pdc, "PDC_char_lit_scan called for char = %s", PDC_fmtChar(c));
-  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
-    return PDC_ERROR; /* XXX out of space -- unrecoverable error */
-  }
   if (offset_out) {
     (*offset_out) = 0;
   }
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+    return PDC_ERROR; /* XXX out of space -- unrecoverable error */
+  }
   while (PDC_OK == PDC_IO_getchar(pdc, &ct, 1, disc)) { /* 1 means obey panicStop */
     if ((c == ct) || (s == ct)) {
-      if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
-	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
-      }
       if (c_out) {
 	(*c_out) = ct;
+      }
+      if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
+	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
       }
       return PDC_OK;  /* IO cursor is one beyond c/s */
     }
@@ -236,7 +249,7 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
   }
   /* restore IO cursor to original position and return error */
   if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
-    return PDC_ERROR; /* XXX internal error -- unrecoverable error */
+    /* XXX unrecoverable error -- should call discipline unrecov error handler */
   }
   return PDC_ERROR;
 }
@@ -250,7 +263,7 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
 {
   unsigned char   ct;
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -269,24 +282,33 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
     /* wrong char -- put it back */
     PDC_IO_back(pdc, 1, disc);
   }
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_CHAR_LIT_NOT_FOUND;
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_CHAR_LIT_NOT_FOUND);
 }
 
 /* ================================================================================ */
 /* STRING READ FUNCTIONS */
 
+/* related helper function */
+PDC_error_t
+PDC_free_string(PDC_t* pdc, char* str, PDC_disc_t* disc)
+{
+  if (!disc) {
+    disc = pdc->disc;
+  }
+  TRACE(pdc, "PDC_free_string called");
+  if (0 == RMM_free_buf(pdc->rmm_nz, (void*)str)) {
+    return PDC_OK;
+  }
+  return PDC_ERROR;
+}
+
 PDC_error_t
 PDC_string_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
-		   PDC_base_ed* ed, char** b_out, char** e_out, PDC_disc_t* disc)
+		   PDC_base_ed* ed, char** s_out, size_t* l_out, PDC_disc_t* disc)
 {
-  char*           begin; /* cursor at beginning of call */
-  char*           end;   /* cursor just beyond width chars */
+  char            *begin, *end;
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -300,52 +322,32 @@ PDC_string_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
   }
   if (width <= 0) {
     WARN(pdc, "UNEXPECTED PARAM VALUE: PDC_string_fw_read called with width <= 0");
-    return PDC_ERROR; /* XXX mis-use of API -- unrecoverable/panic/advance cursor ??? */
+    goto width_not_avail;
   }
   /* ensure there are width chars available */
   if (PDC_ERROR == PDC_IO_getchars(pdc, width, &begin, &end, disc)) {
-    if (PDC_IO_peek_EOF(pdc, disc)) {
-      goto at_eof_err;
-    }
-    goto at_eol_err;
+    goto width_not_avail;
   }
   /* success */
-  if (b_out) {
-    *b_out = begin;
-  }
-  if (e_out) {
-    *e_out = end;
-  }
+  PDC_STR_COPY(s_out, l_out, begin, end);
   return PDC_OK;
 
- at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+ width_not_avail:
+  HANDLE_ERR_CUR2ENDPOS(PDC_WIDTH_NOT_AVAILABLE);
 
- at_eol_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOL;
-    /* set loc begin/end to current IO pos = 1 past end of line */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+ no_space:
+  HANDLE_ERR_CURPOS(PDC_OUT_OF_MEMORY);
 }
 
 PDC_error_t
 PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
-			 PDC_base_ed* ed, char** b_out, char** e_out,  PDC_disc_t* disc)
+			 PDC_base_ed* ed, char** s_out, size_t* l_out,  PDC_disc_t* disc)
 {
   PDC_stkElt_t*   tp;
   PDC_IO_line_t*  tpline;
-  char*           begin; /* cursor at beginning of call */
-  char*           end;   /* cursor just beyond width chars */
-  char*           ptr;   /* tmp ptr */ 
+  char            *begin, *end, *ptr;
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -357,12 +359,12 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
   if (!ed) {
     ed = &edt;
   }
-  if (!disc) {
-    disc = pdc->disc;
-  }
   /* peek at first char -- ensures we are on line with at least one char to parse */
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+    goto no_space;
+  }
   if (PDC_ERROR == PDC_IO_getchar(pdc, 0, 0, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
+    goto not_found;
   }
   PDC_IO_back(pdc, 1, disc);
   tp      = &(pdc->stack[pdc->top]);
@@ -373,53 +375,36 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
   for (ptr = begin; ptr < end; ptr++, tp->cur++) {
     if (*ptr == stopChar) {
       /* success */
-      if (b_out) {
-	*b_out = begin;
-      }
-      if (e_out) {
-	*e_out = ptr;
+      PDC_STR_COPY(s_out, l_out, begin, ptr);
+      if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
+	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
       }
       return PDC_OK;
     }
   }
-  /* hit EOF/EOL before hitting stopChar */
-  /* XXX not supporting multi-line strings yet XXX */
-  if (PDC_IO_peek_EOF(pdc, disc)) {
-    goto at_eof_err;
-  }
-  goto at_eol_err;
+  /* hit EOF/EOR before hitting stopChar */
 
- at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
+ not_found:
+  if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
+    /* XXX unrecoverable error -- should call discipline unrecov error handler */
   }
-  return PDC_ERROR;
+  HANDLE_ERR_CUR2ENDPOS(PDC_CHAR_LIT_NOT_FOUND);
 
- at_eol_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOL;
-    /* set loc begin/end to current IO pos = 1 past end of line */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+ no_space:
+  HANDLE_ERR_CURPOS(PDC_OUT_OF_MEMORY);
 }
 
 PDC_error_t
 PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
-			   PDC_base_ed* ed, char** b_out, char** e_out,  PDC_disc_t* disc)
+			   PDC_base_ed* ed, char** s_out, size_t* l_out,  PDC_disc_t* disc)
 {
   int             len;
-  char*           stopReg = (char*)stopRegexp;
-  char*           stopCharSet;
+  char            *begin, *end, *ptr;
+  const char      *stopCharSetBegin, *stopCharSetEnd, *ptr2;
   PDC_stkElt_t*   tp;
   PDC_IO_line_t*  tpline;
-  char*           begin; /* cursor at beginning of call */
-  char*           end;   /* cursor just beyond width chars */
-  char*           ptr;   /* tmp ptr */ 
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -445,73 +430,46 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
   end = begin + tpline->eoffset;
   begin += tp->cur;
 
-  if (!stopReg) {
+  if (!stopRegexp) {
     WARN(pdc, "astringSRE : null regexp specified");
-    if (*em < PDC_Ignore) {
-      ed->errCode = PDC_INVALID_REGEXP;
-      PDC_get_loc(pdc, &(ed->loc), disc);
-    }
-    return PDC_ERROR;
+    HANDLE_ERR_CURPOS(PDC_INVALID_REGEXP);
   }
-  len = strlen(stopReg);
-  if ((len < 2) || stopReg[0] != '[' || stopReg[len-1] != ']') {
-    WARN1(pdc, "astringSRE : invalid regexp: %s, currently only support a stopRegexp of the form [<chars>], i.e., a simple stop char set", stopReg);
-    if (*em < PDC_Ignore) {
-      ed->errCode = PDC_INVALID_REGEXP;
-      PDC_get_loc(pdc, &(ed->loc), disc);
-    }
-    return PDC_ERROR;
+  len = strlen(stopRegexp);
+  if ((len < 3) || stopRegexp[0] != '[' || stopRegexp[len-1] != ']') {
+    WARN1(pdc, "astringSRE : invalid regexp: %s, currently only support a stopRegexp of the form [<chars>], i.e., a simple stop char set", stopRegexp);
+    HANDLE_ERR_CURPOS(PDC_INVALID_REGEXP);
   }
-  stopReg[len-1] = 0;
-  stopCharSet = stopReg + 1;
+  stopCharSetBegin = stopRegexp + 1;          /* first stop char */
+  stopCharSetEnd   = stopRegexp + (len - 1);  /* one past last stop char */
   for (ptr = begin; ptr < end; ptr++, tp->cur++) {
-    if (strchr(stopCharSet, *ptr)) {
-      /* success */
-      if (b_out) {
-	*b_out = begin;
+    for (ptr2 = stopCharSetBegin; ptr2 < stopCharSetEnd;  ptr2++) {
+      if (*ptr == *ptr2) { /* success */
+	PDC_STR_COPY(s_out, l_out, begin, ptr);
+	return PDC_OK;
       }
-      if (e_out) {
-	*e_out = ptr;
-      }
-      stopReg[len-1] = ']';
-      return PDC_OK;
     }
   }
-  stopReg[len-1] = ']';
-  /* hit EOF/EOL before hitting stopChar */
+  /* hit EOF/EOR before hitting stopChar */
   /* XXX not supporting multi-line strings yet XXX */
-  if (PDC_IO_peek_EOF(pdc, disc)) {
+  if (PDC_IO_is_EOF(pdc, disc)) {
 #if 0
     if (eofStop) {
-      /* eof is OK stop char -- success */
-      if (b_out) {
-	*b_out = begin;
-      }
-      if (e_out) {
-	*e_out = ptr;
-      }
+      PDC_STR_COPY(s_out, l_out, begin, ptr);
       return PDC_OK;
     }
 #endif
     goto at_eof_err;
   }
-  goto at_eol_err;
+  goto at_eor_err;
 
  at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
 
- at_eol_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOL;
-    /* set loc begin/end to current IO pos = 1 past end of line */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+ at_eor_err:
+  HANDLE_ERR_CURPOS(PDC_AT_EOR);
+
+ no_space:
+  HANDLE_ERR_CURPOS(PDC_OUT_OF_MEMORY);
 }
 
 /* ================================================================================ */
@@ -527,7 +485,7 @@ PDC_aint8_read(PDC_t* pdc, PDC_base_em* em,
   char*           tcp;   /* tmp char* */
   char*           begin; /* IO cursor at beginning of call */
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -560,33 +518,18 @@ PDC_aint8_read(PDC_t* pdc, PDC_base_em* em,
   }
   /* success */
   if (res_out && *em == PDC_CheckAndSet) {
-    *res_out = (PDC_int8)tl;
+    (*res_out) = (PDC_int8)tl;
   }
   return PDC_OK;
 
  at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
 
  bad_prefix_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_INVALID_AINT;
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_INVALID_AINT);
 
  range_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_RANGE;
-    PDC_get_loc(pdc, &(ed->loc), disc);  /* set loc begin/end to current IO pos */
-    ed->loc.beginChar -= (tcp - begin);  /* move loc begin to start of number */ 
-    ed->loc.endChar--;                   /* move loc end to end of number */ 
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
 }
 
 PDC_error_t
@@ -599,7 +542,7 @@ PDC_aint16_read(PDC_t* pdc, PDC_base_em* em,
   char*           tcp;   /* tmp char* */
   char*           begin; /* IO cursor at beginning of call */
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -632,33 +575,18 @@ PDC_aint16_read(PDC_t* pdc, PDC_base_em* em,
   }
   /* success */
   if (res_out && *em == PDC_CheckAndSet) {
-    *res_out = (PDC_int16)tl;
+    (*res_out) = (PDC_int16)tl;
   }
   return PDC_OK;
 
  at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
 
  bad_prefix_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_INVALID_AINT;
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_INVALID_AINT);
 
  range_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_RANGE;
-    PDC_get_loc(pdc, &(ed->loc), disc);  /* set loc begin/end to current IO pos */
-    ed->loc.beginChar -= (tcp - begin);  /* move loc begin to start of number */ 
-    ed->loc.endChar--;                   /* move loc end to end of number */ 
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
 }
 
 PDC_error_t
@@ -671,7 +599,7 @@ PDC_aint32_read(PDC_t* pdc, PDC_base_em* em,
   char*           tcp;   /* tmp char* */
   char*           begin; /* IO cursor at beginning of call */
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -704,33 +632,18 @@ PDC_aint32_read(PDC_t* pdc, PDC_base_em* em,
   }
   /* success */
   if (res_out && *em == PDC_CheckAndSet) {
-    *res_out = (PDC_int32)tl;
+    (*res_out) = (PDC_int32)tl;
   }
   return PDC_OK;
 
  at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_AT_EOF);
 
  bad_prefix_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_INVALID_AINT;
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_INVALID_AINT);
 
  range_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_RANGE;
-    PDC_get_loc(pdc, &(ed->loc), disc);  /* set loc begin/end to current IO pos */
-    ed->loc.beginChar -= (tcp - begin);  /* move loc begin to start of number */ 
-    ed->loc.endChar--;                   /* move loc end to end of number */ 
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
 }
 
 PDC_error_t
@@ -743,7 +656,7 @@ PDC_aint64_read(PDC_t* pdc, PDC_base_em* em,
   char*           tcp;   /* tmp char* */
   char*           begin; /* IO cursor at beginning of call */
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -776,33 +689,18 @@ PDC_aint64_read(PDC_t* pdc, PDC_base_em* em,
   }
   /* success */
   if (res_out && *em == PDC_CheckAndSet) {
-    *res_out = (PDC_int64)tll;
+    (*res_out) = (PDC_int64)tll;
   }
   return PDC_OK;
 
  at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
 
  bad_prefix_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_INVALID_AINT;
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_INVALID_AINT);
 
  range_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_RANGE;
-    PDC_get_loc(pdc, &(ed->loc), disc);  /* set loc begin/end to current IO pos */
-    ed->loc.beginChar -= (tcp - begin);  /* move loc begin to start of number */ 
-    ed->loc.endChar--;                   /* move loc end to end of number */ 
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
 }
 
 PDC_error_t
@@ -815,7 +713,7 @@ PDC_auint8_read(PDC_t* pdc, PDC_base_em* em,
   char*           tcp;   /* tmp char* */
   char*           begin; /* IO cursor at beginning of call */
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -848,33 +746,18 @@ PDC_auint8_read(PDC_t* pdc, PDC_base_em* em,
   }
   /* success */
   if (res_out && *em == PDC_CheckAndSet) {
-    *res_out = (PDC_uint8)tul;
+    (*res_out) =(PDC_uint8)tul;
   }
   return PDC_OK;
 
  at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_AT_EOF);
 
  bad_prefix_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_INVALID_AUINT;
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_INVALID_AUINT);
 
  range_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_RANGE;
-    PDC_get_loc(pdc, &(ed->loc), disc);  /* set loc begin/end to current IO pos */
-    ed->loc.beginChar -= (tcp - begin);  /* move loc begin to start of number */ 
-    ed->loc.endChar--;                   /* move loc end to end of number */ 
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
 }
 
 PDC_error_t
@@ -887,7 +770,7 @@ PDC_auint16_read(PDC_t* pdc, PDC_base_em* em,
   char*           tcp;   /* tmp char* */
   char*           begin; /* IO cursor at beginning of call */
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -920,33 +803,18 @@ PDC_auint16_read(PDC_t* pdc, PDC_base_em* em,
   }
   /* success */
   if (res_out && *em == PDC_CheckAndSet) {
-    *res_out = (PDC_uint16)tul;
+    (*res_out) =(PDC_uint16)tul;
   }
   return PDC_OK;
 
  at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_AT_EOF);
 
  bad_prefix_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_INVALID_AUINT;
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_INVALID_AUINT);
 
  range_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_RANGE;
-    PDC_get_loc(pdc, &(ed->loc), disc);  /* set loc begin/end to current IO pos */
-    ed->loc.beginChar -= (tcp - begin);  /* move loc begin to start of number */ 
-    ed->loc.endChar--;                   /* move loc end to end of number */ 
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
 }
 
 PDC_error_t
@@ -959,7 +827,7 @@ PDC_auint32_read(PDC_t* pdc, PDC_base_em* em,
   char*           tcp;   /* tmp char* */
   char*           begin; /* IO cursor at beginning of call */
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -992,33 +860,18 @@ PDC_auint32_read(PDC_t* pdc, PDC_base_em* em,
   }
   /* success */
   if (res_out && *em == PDC_CheckAndSet) {
-    *res_out = (PDC_uint32)tul;
+    (*res_out) =(PDC_uint32)tul;
   }
   return PDC_OK;
 
  at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
 
  bad_prefix_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_INVALID_AUINT;
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_INVALID_AUINT);
 
  range_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_RANGE;
-    PDC_get_loc(pdc, &(ed->loc), disc);  /* set loc begin/end to current IO pos */
-    ed->loc.beginChar -= (tcp - begin);  /* move loc begin to start of number */ 
-    ed->loc.endChar--;                   /* move loc end to end of number */ 
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
 }
 
 PDC_error_t
@@ -1031,7 +884,7 @@ PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
   char*           tcp;   /* tmp char* */
   char*           begin; /* IO cursor at beginning of call */
   PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt = {0};
+  PDC_base_ed     edt;
 
   if (!disc) {
     disc = pdc->disc;
@@ -1064,33 +917,18 @@ PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
   }
   /* success */
   if (res_out && *em == PDC_CheckAndSet) {
-    *res_out = (PDC_uint64)tull;
+    (*res_out) =(PDC_uint64)tull;
   }
   return PDC_OK;
 
  at_eof_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_AT_EOF;
-    /* set loc begin/end to current IO pos = 1 past end char */
-    PDC_get_loc(pdc, &(ed->loc), disc);
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
 
  bad_prefix_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_INVALID_AUINT;
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_CURPOS(PDC_INVALID_AUINT);
 
  range_err:
-  if (*em < PDC_Ignore) {
-    ed->errCode = PDC_RANGE;
-    PDC_get_loc(pdc, &(ed->loc), disc);  /* set loc begin/end to current IO pos */
-    ed->loc.beginChar -= (tcp - begin);  /* move loc begin to start of number */ 
-    ed->loc.endChar--;                   /* move loc end to end of number */ 
-  }
-  return PDC_ERROR;
+  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
 }
 
 /* ================================================================================ */
@@ -1099,9 +937,7 @@ PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
 /*
  * PDC_IO_refill: only call either to initialize IO during fopen
  * or when all prior input has been parsed.  Returns PDC_ERROR
- * if there is an error condition on the stream.  This means
- * the caller must check EOF status after then call, as
- * a PDC_OK result does not indicate the EOF status.
+ * if there is an error condition on the stream / stream is at eof.
  */
 PDC_error_t
 PDC_IO_refill(PDC_t* pdc, PDC_disc_t* disc)
@@ -1128,7 +964,7 @@ PDC_IO_refill(PDC_t* pdc, PDC_disc_t* disc)
   }
 #endif
   if (pdc->eof) {
-    return PDC_OK;
+    return PDC_ERROR;
   }
   if (pdc->top == 0) {
     /* can revert to state where ilines has only 1 line */
@@ -1141,8 +977,7 @@ PDC_IO_refill(PDC_t* pdc, PDC_disc_t* disc)
       pdc->ialloc *= 2;
       if (!(pdc->ilines = vmnewof(pdc->vm, pdc->ilines, PDC_IO_line_t, pdc->ialloc, 0))) {
 	WARN(pdc, "out of space [input line tracking]");
-	pdc->eof = 1;
-	return PDC_ERROR;
+	goto at_eof; /* pretend we hit eof */
       }
     }
     if (pdc->bchars + (latestline->eoffset - latestline->boffset) > pdc->balloc) {
@@ -1151,8 +986,7 @@ PDC_IO_refill(PDC_t* pdc, PDC_disc_t* disc)
       }
       if (!(pdc->buf = vmnewof(pdc->vm, pdc->buf, char, pdc->balloc, 0))) {
 	WARN(pdc, "out of space [shadow buf]");
-	pdc->eof = 1;
-	return PDC_ERROR;
+	goto at_eof; /* pretend we hit eof */
       }
     }
     memcpy(pdc->buf + pdc->bchars, pdc->sfbuf, latestline->eoffset - latestline->boffset);
@@ -1169,27 +1003,34 @@ PDC_IO_refill(PDC_t* pdc, PDC_disc_t* disc)
   readlen = sfvalue(pdc->io);
   if (sferror(pdc->io)) {
     SYSERR(pdc, "Error reading IO stream");
-    pdc->eof = 1;
-    return PDC_ERROR;
+    goto at_eof;
   }
   if (!pdc->sfbuf) { /* check for partial read */
     pdc->sfbuf = sfgetr(pdc->io, 0, SF_LASTR);
     if (sferror(pdc->io)) {
       SYSERR(pdc, "Error reading IO stream");
-      pdc->eof = 1;
-      return PDC_ERROR;
+      goto at_eof; /* pretend we hit eof */
     }
-    if (!pdc->sfbuf || readlen == 0) {
-      /* hit EOF */
-      pdc->eof = 1;
-      return PDC_ERROR;
+    if (!pdc->sfbuf || readlen == 0) {      /* hit EOF */
+      goto at_eof;
     }
+    pdc->eof = 1; /* cursor not at eof, but no need to read another line */
   }
   readline->boffset = tp->cur = 0;
   readline->eoffset = readlen;
   if (*(pdc->sfbuf + readlen - 1) == '\n') { readlen--; } /* XXX_REMOVE */
   WARN3(pdc, "XXX_REMOVE line %d: %-.*s", pdc->lnum, readlen, pdc->sfbuf);
   return PDC_OK;
+
+ at_eof:
+  pdc->eof = 1;
+  if (pdc->itail > 0) { /* better to point to end of a real line than start of zero-length line */
+    pdc->itail--; /* drop zero length line */
+    tp->idx    = pdc->itail;
+    readline   = &(pdc->ilines[pdc->itail]);
+    tp->cur    = readline->eoffset; /* point to end of line */
+  }
+  return PDC_ERROR;
 }
 
 PDC_error_t
@@ -1207,6 +1048,61 @@ PDC_get_loc(PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc)
   }
   l->beginLine = l->endLine = tpline->lnum;
   l->beginChar = l->endChar = (tp->cur - tpline->boffset) + 1;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_get_loc2end(PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc)
+{
+  PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
+  PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
+
+  if (!disc) {
+    disc = pdc->disc;
+  }
+  if (!l) {
+    WARN(pdc, "PDC_get_loc2end called with null loc ptr");
+    return PDC_ERROR;
+  }
+  l->beginLine = l->endLine = tpline->lnum;
+  l->beginChar = (tp->cur - tpline->boffset) + 1;
+  l->endChar = tpline->eoffset - tpline->boffset;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_get_beginLoc(PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc)
+{
+  PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
+  PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
+
+  if (!disc) {
+    disc = pdc->disc;
+  }
+  if (!l) {
+    WARN(pdc, "PDC_get_beginLoc called with null loc ptr");
+    return PDC_ERROR;
+  }
+  l->beginLine = tpline->lnum;
+  l->beginChar = (tp->cur - tpline->boffset) + 1;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_get_endLoc(PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc)
+{
+  PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
+  PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
+
+  if (!disc) {
+    disc = pdc->disc;
+  }
+  if (!l) {
+    WARN(pdc, "PDC_getEnd_loc called with null loc ptr");
+    return PDC_ERROR;
+  }
+  l->endLine = tpline->lnum;
+  l->endChar = (tp->cur - tpline->boffset) + 1;
   return PDC_OK;
 }
 
@@ -1292,8 +1188,7 @@ PDC_IO_getchars(PDC_t* pdc, size_t num_chars, char** b_out, char** e_out, PDC_di
 
   }
   if (tp->cur + num_chars > tpline->eoffset) {
-    /* not enough chars left on line; advance to end of line and return error */
-    tp->cur = tpline->eoffset;
+    /* not enough chars left on line; leave IO cursor as-is  */
     return PDC_ERROR;
   }
   /* set *b_out, *e_out to beginning and just past ending of requested num_chars */

@@ -2,6 +2,83 @@
 #define MacroArg2String(s) #s
 #endif
 
+/* ================================================================================ */ 
+/* PRELIMINARY HELPER MACROS */
+
+/* set loc begin/end to current IO pos */ \
+#define HANDLE_ERR_CURPOS(errcode) \
+  do { \
+    if (*em < PDC_Ignore) { \
+      ed->errCode = errcode; \
+      PDC_get_loc(pdc, &(ed->loc), disc); \
+    } \
+    return PDC_ERROR; \
+  } while (0)
+
+/* set loc begin to current IO pos, end pos to end of current line */ \
+#define HANDLE_ERR_CUR2ENDPOS(errcode) \
+  do { \
+    if (*em < PDC_Ignore) { \
+      ed->errCode = errcode; \
+      PDC_get_loc2end(pdc, &(ed->loc), disc); \
+    } \
+    return PDC_ERROR; \
+  } while (0)
+
+/* set loc end to current IO pos */
+#define HANDLE_ERR_ENDPOS(errcode) \
+  do { \
+    if (*em < PDC_Ignore) { \
+      ed->errCode = errcode; \
+      PDC_get_endLoc(pdc, &(ed->loc), disc); \
+    } \
+    return PDC_ERROR; \
+  } while (0)
+
+/* move begin/end positions backwards by specified amounts */
+#define HANDLE_ERR_MODPOS(errcode, adj1, adj2) \
+  do { \
+    if (*em < PDC_Ignore) { \
+      ed->errCode = errcode; \
+      PDC_get_loc(pdc, &(ed->loc), disc); \
+      ed->loc.beginChar -= (adj1); \
+      ed->loc.endChar   -= (adj2); \
+    } \
+    return PDC_ERROR; \
+  } while (0)
+
+/*
+ * If *em is CheckAndSet, create a string copy of the string
+ * that goes from begin to end-1.  Must have a no_space label.
+ */
+#define PDC_STR_COPY(s_out, l_out, begin, end) \
+  do { \
+    if (*em == PDC_CheckAndSet) { \
+      size_t wdth = end-begin;  \
+      if (s_out) { \
+        char* buf; \
+        RBuf_t* rbuf; \
+        if (!(rbuf = RMM_new_rbuf(pdc->rmm_nz))) { \
+          goto no_space; \
+        } \
+        if (RBuf_RESERVE(rbuf, buf, char, wdth+1)) { \
+         RMM_free_rbuf(rbuf); \
+         goto no_space; \
+        } \
+        memcpy(buf, begin, wdth); \
+        buf[wdth] = 0; \
+        RMM_free_rbuf_keep_buf(rbuf, 0, 0); \
+        (*(s_out)) = buf; \
+      } \
+      if (l_out) { \
+        (*(l_out)) = wdth; \
+      } \
+    } \
+  } while (0)
+
+/* ================================================================================ */ 
+/* READ MACROS */
+
 #define PDC_AINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test) \
 PDC_error_t \
 fn_name(PDC_t* pdc, PDC_base_em* em, size_t width, \
@@ -31,10 +108,7 @@ fn_name(PDC_t* pdc, PDC_base_em* em, size_t width, \
   } \
   /* ensure there are width chars available */ \
   if (PDC_ERROR == PDC_IO_getchars(pdc, width, &begin, &end, disc)) { \
-    if (PDC_IO_peek_EOF(pdc, disc)) { \
-      goto at_eof_err; \
-    } \
-    goto at_eol_err; \
+    goto width_not_avail; \
   } \
   if (!(disc->flags & PDC_WSPACE_OK) && isspace(*begin)) { \
     goto wspace_err; \
@@ -61,41 +135,16 @@ fn_name(PDC_t* pdc, PDC_base_em* em, size_t width, \
   } \
   return PDC_OK; \
  \
- at_eof_err: \
-  if (*em < PDC_Ignore) { \
-    ed->errCode = PDC_AT_EOF; \
-    /* set loc begin/end to current IO pos = 1 past end char */ \
-    PDC_get_loc(pdc, &(ed->loc), disc); \
-  } \
-  return PDC_ERROR; \
- \
- at_eol_err: \
-  if (*em < PDC_Ignore) { \
-    ed->errCode = PDC_AT_EOL; \
-    /* set loc begin/end to current IO pos = 1 past end of line */ \
-    PDC_get_loc(pdc, &(ed->loc), disc); \
-  } \
-  return PDC_ERROR; \
+ width_not_avail: \
+  HANDLE_ERR_CUR2ENDPOS(PDC_WIDTH_NOT_AVAILABLE); \
  \
  wspace_err: \
  bad_prefix_err: \
  bad_suffix_err: \
-  if (*em < PDC_Ignore) { \
-    ed->errCode = invalid_err; \
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */ \
-    ed->loc.beginChar -= width;         /* move loc begin to start of number */  \
-    ed->loc.endChar--;                  /* move loc end to end of number */  \
-  } \
-  return PDC_ERROR; \
+  HANDLE_ERR_MODPOS(invalid_err, width, 1); /* mod pos to start/end of number */ \
  \
  range_err: \
-  if (*em < PDC_Ignore) { \
-    ed->errCode = PDC_RANGE; \
-    PDC_get_loc(pdc, &(ed->loc), disc); /* set loc begin/end to current IO pos */ \
-    ed->loc.beginChar -= width;         /* move loc begin to start of number */  \
-    ed->loc.endChar--;                  /* move loc end to end of number */  \
-  } \
-  return PDC_ERROR; \
+  HANDLE_ERR_MODPOS(PDC_RANGE, width, 1); /* mod pos to start/end of number */ \
 }
 
 #define PDC_BINT_READ_FN(fn_name, targ_type, width, swapmem_op) \
@@ -119,10 +168,7 @@ fn_name(PDC_t* pdc, PDC_base_em* em, \
   } \
   /* ensure there are width chars available */ \
   if (PDC_ERROR == PDC_IO_getchars(pdc, width, &begin, 0, disc)) { \
-    if (PDC_IO_peek_EOF(pdc, disc)) { \
-      goto at_eof_err; \
-    } \
-    goto at_eol_err; \
+    goto width_not_avail; \
   } \
   /* success */ \
   if (res_out && *em == PDC_CheckAndSet) { \
@@ -130,19 +176,6 @@ fn_name(PDC_t* pdc, PDC_base_em* em, \
   } \
   return PDC_OK; \
  \
- at_eof_err: \
-  if (*em < PDC_Ignore) { \
-    ed->errCode = PDC_AT_EOF; \
-    /* set loc begin/end to current IO pos = 1 past end char */ \
-    PDC_get_loc(pdc, &(ed->loc), disc); \
-  } \
-  return PDC_ERROR; \
- \
- at_eol_err: \
-  if (*em < PDC_Ignore) { \
-    ed->errCode = PDC_AT_EOL; \
-    /* set loc begin/end to current IO pos = 1 past end of line */ \
-    PDC_get_loc(pdc, &(ed->loc), disc); \
-  } \
-  return PDC_ERROR; \
+ width_not_avail: \
+  HANDLE_ERR_CUR2ENDPOS(PDC_WIDTH_NOT_AVAILABLE); \
 }
