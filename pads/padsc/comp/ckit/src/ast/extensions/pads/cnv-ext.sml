@@ -5163,16 +5163,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 [PT.Expr(PT.Call(PT.Id(macStart^"_SETUP"^addStat),
 					  [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy, pdCleanup, pdInit, pdCopy]))]
 		     val xmlwriteCall : ParseTree.expression ref = ref(PT.Id("placeholder"))
+		     val setEndArg = PT.Id(if hasParseCheck then setEndID else noopID)
 		     fun uRead (theTag, predOpt, readCall) =
 			 case predOpt of
 			     NONE       => [PT.Expr(PT.Call(PT.Id(macStart^addSFNL(theTag)),
 							    [PT.String readName, PT.String theTag, PT.Id theTag,
 							     repCleanup, repInit, repCopy,
-							     pdCleanup,  pdInit, pdCopy, readCall, !xmlwriteCall]))]
+							     pdCleanup,  pdInit, pdCopy, readCall, !xmlwriteCall, setEndArg]))]
 			   | SOME check => [PT.Expr(PT.Call(PT.Id(macStart^addSFNL(theTag)^"_CHECK"),
 							    [PT.String readName, PT.String theTag, PT.Id theTag,
 							     repCleanup, repInit, repCopy,
-							     pdCleanup,  pdInit, pdCopy, readCall, !xmlwriteCall, check]))]
+							     pdCleanup,  pdInit, pdCopy, readCall, !xmlwriteCall, setEndArg, check]))]
 		     fun uReadManPre (theTag, isVirt) =
 			 [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addSFN(theTag)^addVirt(isVirt)^"_PRE"),
 					  [PT.String readName, PT.Id theTag, repInit, pdInit]))]
@@ -5194,7 +5195,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun swRead (theTag, predOpt, readCall) =
 			 [PT.Expr(PT.Call(PT.Id("PCGEN_SWUNION_READ"^addStat),
 					  [PT.String readName, PT.Id theTag, errTag, repCleanup, repInit, repCopy,
-					   pdCleanup, pdInit, pdCopy, readCall]))]
+					   pdCleanup, pdInit, pdCopy, readCall, setEndArg]))]
 			 @ swReadPostCheck(theTag, predOpt) @ [PT.Break]
 		     fun swReadManPre (theTag, isVirt) =
 			 [PT.Expr(PT.Call(PT.Id("PCGEN_SWUNION_READ_MAN"^addStat^addVirt(isVirt)^"_PRE"),
@@ -5424,6 +5425,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val () = ignore(xmlwriteCall := PT.Call(PT.Id(ioSuf writeXMLName), xmlwriteArgs))
 		     val () = ignore(List.map insTempVar omitVars)                 (* insert virtuals into scope *)
                      val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
+                     val () = ignore (insTempVar(setEndID, P.int))                   (* add phantom arg to conrol setting end location
+										       to scope to fake out type checker. *)
+		     val () = ignore (insTempVar(noopID, P.int))                   
 		     val bodySs = buildReadFun() 
 		     val readFunEDs = genReadFun(readName, cParams, mPCT, pdPCT, canonicalPCT, 
 						 mFirstPCT, true, bodySs)
@@ -5837,17 +5841,28 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		                      G.makeNodeVtable(name),
 		                      G.makeCachedNodeVtable(name),
 		                      G.makeSNDNodeVtable(name)] 
+		      val initAsts = 		
+			  asts
+			  @ tagDecls
+			  @ unionDecls
+			  @ canonicalDecls
+			  @ cnvExternalDecl mStructED
+			  @ unionPDDecls
+			  @ pdStructPDDecls
+			  @ (emitWrite writeFunEDs)
+		      val readAsts = 
+		          let val () = pushLocalEnv()
+			      val () = ignore (insTempVar(setEndID, P.int))                   (* add phantom arg to conrol setting end location
+											       to scope to fake out type checker. *)
+			      val () = ignore (insTempVar(noopID, P.int))                   
+			      val readDecls = (emitRead readEDs)
+			      val () = popLocalEnv()
+			  in
+			      readDecls
+			  end
 
 		 in
-		     asts
-                     @ tagDecls
-		     @ unionDecls
-		     @ canonicalDecls
-	             @ cnvExternalDecl mStructED
-                     @ unionPDDecls
-	             @ pdStructPDDecls
-                     @ (emitWrite writeFunEDs)
-                     @ (emitRead readEDs)
+                     initAsts @ readAsts
 		     @ (emitPred isFunEDs)
 		     @ (emitAccum accumEDs)
  		     @ (emitExperiment experFmtFunEDs)

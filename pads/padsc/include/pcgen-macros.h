@@ -60,7 +60,7 @@ void PCGEN_ALT_READ_REGEXP(const char *fn_nm, const char *regexp_str);
 #define PDCI_UNION_READ_ARGS          const char *fn_nm, const char *the_tag_nm, int the_tag, \
                                       void *rep_cleanup, void *rep_init, void *rep_copy, \
                                       void *pd_cleanup, void *pd_init, void *pd_copy, \
-                                      Perror_t read_call, Perror_t xmlwrite_call
+                                      Perror_t read_call, Perror_t xmlwrite_call, int setEnd
 
 #define PDCI_UNION_READ_MAN_PRE_ARGS  const char *fn_nm, int the_tag, \
                                       void *rep_init, void *pd_init
@@ -135,7 +135,7 @@ void PCGEN_UNION_READ_LONGEST_WHERE_END_CHECK (const char *fn_nm, int usercheck,
 
 #define PDCI_SWUNION_READ_ARGS          const char *fn_nm, int the_tag, int err_tag, \
                                         void *rep_cleanup, void *rep_init, void *rep_copy, \
-                                        void *pd_cleanup, void *pd_init, void *pd_copy, Perror_t read_call
+                                        void *pd_cleanup, void *pd_init, void *pd_copy, Perror_t read_call, int setEnd
 
 #define PDCI_SWUNION_READ_MAN_PRE_ARGS  const char *fn_nm, int the_tag, \
                                         void *rep_cleanup, void *rep_init, void *rep_copy, \
@@ -968,15 +968,36 @@ do {
 } while (0)
 /* END_MACRO */
 
-/* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_STAT(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call)
-do {
+#define PCGEN_UNION_READ_SETUP_COMMON(reptag, pdtag, fn_nm, the_tag, read_call, doEnd)
+do{
   if (P_ERR == P_io_checkpoint(pads, 1)) {
     PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
   }
-  rep->tag = the_tag;
-  pd->tag  = the_tag;
-  if (P_OK == read_call) {
+  reptag = the_tag;
+  pdtag  = the_tag;
+  read_res_PCGEN_ = read_call;
+  PDCI_IO_ENDLOC##doEnd((pd->val).the_tag.loc);
+} while (0);
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_FIELD_SETUP(reptag, pdtag, fn_nm, the_tag, read_call, doEnd)
+  Perror_t read_res_PCGEN_;
+  PCGEN_UNION_READ_SETUP_COMMON(reptag, pdtag, fn_nm, the_tag, read_call,doEnd);
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_FIELD_SETUP(rep, pd, errCode, fn_nm, the_tag, read_call, doEnd, rep_init, pd_init)
+  Perror_t read_res_PCGEN_;
+  rep_init(pads, rep);
+  pd_init(pads, pd);
+  errCode = P_NO_ERR;
+  PCGEN_UNION_READ_SETUP_COMMON(rep->tag, pd->tag, fn_nm, the_tag, read_call, doEnd);   
+/* END_MACRO */
+
+/* falls through on error, goes to branches_done on success */
+#define PCGEN_UNION_READ_STAT(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call,doEnd)
+do {
+  PCGEN_UNION_READ_FIELD_SETUP(rep->tag, pd->tag, fn_nm, the_tag, read_call, doEnd);
+  if (P_OK == read_res_PCGEN_) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
@@ -991,15 +1012,9 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_STAT_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, usercheck)
+#define PCGEN_UNION_READ_STAT_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd, usercheck)
 do {
-  Perror_t read_res_PCGEN_;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  rep->tag = the_tag;
-  pd->tag  = the_tag;
-  read_res_PCGEN_ = read_call;
+  PCGEN_UNION_READ_FIELD_SETUP(rep->tag, pd->tag, fn_nm, the_tag, read_call, doEnd);
   if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
@@ -1015,14 +1030,10 @@ do {
 /* END_MACRO */
 
 /* goes to branches_done on success, falls through on failure */
-#define PCGEN_UNION_READ_FIRST(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call)
+#define PCGEN_UNION_READ_FIRST(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd)
 do {
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  rep->tag = the_tag;
-  pd->tag  = the_tag;
-  if (P_OK == read_call) {
+  PCGEN_UNION_READ_FIELD_SETUP(rep->tag, pd->tag, fn_nm, the_tag, read_call, doEnd);
+  if (P_OK == read_res_PCGEN_) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
@@ -1039,15 +1050,10 @@ do {
 /* END_MACRO */
 
 /* goes to branches_done on success, falls through on failure */
-#define PCGEN_UNION_READ_FIRST_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, usercheck)
+
+#define PCGEN_UNION_READ_FIRST_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd, usercheck)
 do {
-  Perror_t read_res_PCGEN_;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  rep->tag = the_tag;
-  pd->tag  = the_tag;
-  read_res_PCGEN_ = read_call;
+  PCGEN_UNION_READ_FIELD_SETUP(rep->tag, pd->tag,fn_nm, the_tag, read_call, doEnd);
   if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
@@ -1065,17 +1071,10 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_NEXT(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call)
+#define PCGEN_UNION_READ_NEXT(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call,doEnd)
 do {
-  rep_init (pads, rep);
-  pd_init  (pads, pd);
-  pd->errCode = P_NO_ERR;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  rep->tag = the_tag;
-  pd->tag  = the_tag;
-  if (P_OK == read_call) {
+  PCGEN_UNION_READ_LONGEST_FIELD_SETUP(rep, pd, pd->errCode, fn_nm, the_tag, read_call, doEnd, rep_init, pd_init);
+  if (P_OK == read_res_PCGEN_) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
@@ -1092,18 +1091,9 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_NEXT_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, usercheck)
+#define PCGEN_UNION_READ_NEXT_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd,usercheck)
 do {
-  Perror_t read_res_PCGEN_;
-  rep_init (pads, rep);
-  pd_init  (pads, pd);
-  pd->errCode = P_NO_ERR;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  rep->tag = the_tag;
-  pd->tag  = the_tag;
-  read_res_PCGEN_ = read_call;
+  PCGEN_UNION_READ_LONGEST_FIELD_SETUP(rep, pd, pd->errCode, fn_nm, the_tag, read_call, doEnd, rep_init, pd_init);
   if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
@@ -1121,17 +1111,10 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_LAST(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call)
+#define PCGEN_UNION_READ_LAST(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd)
 do {
-  rep_init (pads, rep);
-  pd_init  (pads, pd);
-  pd->errCode = P_NO_ERR;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  rep->tag = the_tag;
-  pd->tag  = the_tag;
-  if (P_OK == read_call) {
+  PCGEN_UNION_READ_LONGEST_FIELD_SETUP(rep, pd, pd->errCode, fn_nm,the_tag, read_call, doEnd, rep_init, pd_init);
+  if (P_OK == read_res_PCGEN_) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
@@ -1146,18 +1129,9 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_LAST_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, usercheck)
+#define PCGEN_UNION_READ_LAST_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd, usercheck)
 do {
-  Perror_t read_res_PCGEN_;
-  rep_init (pads, rep);
-  pd_init  (pads, pd);
-  pd->errCode = P_NO_ERR;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  rep->tag = the_tag;
-  pd->tag  = the_tag;
-  read_res_PCGEN_ = read_call;
+  PCGEN_UNION_READ_LONGEST_FIELD_SETUP(rep, pd, pd->errCode, fn_nm,the_tag, read_call, doEnd, rep_init, pd_init);
   if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
@@ -1330,14 +1304,10 @@ do {
 /* END_MACRO */
 
 /* always falls through */
-#define PCGEN_UNION_READ_LONGEST_STAT(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call)
+#define PCGEN_UNION_READ_LONGEST_STAT(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd)
 do {
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  trep_PCGEN_.tag = the_tag;
-  tpd_PCGEN_.tag  = the_tag;
-  if (P_OK == read_call) {
+  PCGEN_UNION_READ_FIELD_SETUP(trep_PCGEN_.tag, tpd_PCGEN_.tag, fn_nm, the_tag, read_call, doEnd);
+  if (P_OK == read_res_PCGEN_) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT;
   }
   PDCI_UNION_ARM_FAILED(fn_nm, the_tag_nm, xmlwrite_call, P_ERR);
@@ -1348,15 +1318,9 @@ do {
 /* END_MACRO */
 
 /* always falls through */
-#define PCGEN_UNION_READ_LONGEST_STAT_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, usercheck)
+#define PCGEN_UNION_READ_LONGEST_STAT_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd, usercheck)
 do {
-  Perror_t read_res_PCGEN_;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  trep_PCGEN_.tag = the_tag;
-  tpd_PCGEN_.tag  = the_tag;
-  read_res_PCGEN_ = read_call;
+  PCGEN_UNION_READ_FIELD_SETUP(trep_PCGEN_.tag, tpd_PCGEN_.tag,fn_nm, the_tag, read_call, doEnd);
   if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT;
   }
@@ -1368,14 +1332,10 @@ do {
 /* END_MACRO */
 
 /* always falls through */
-#define PCGEN_UNION_READ_LONGEST_FIRST(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call)
+#define PCGEN_UNION_READ_LONGEST_FIRST(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd)
 do {
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  trep_PCGEN_.tag = the_tag;
-  tpd_PCGEN_.tag  = the_tag;
-  if (P_OK == read_call) {
+  PCGEN_UNION_READ_FIELD_SETUP(trep_PCGEN_.tag, tpd_PCGEN_.tag, fn_nm, the_tag, read_call, doEnd);
+  if (P_OK == read_res_PCGEN_) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
   PDCI_UNION_ARM_FAILED(fn_nm, the_tag_nm, xmlwrite_call, P_ERR);
@@ -1388,15 +1348,9 @@ do {
 /* END_MACRO */
 
 /* always falls through */
-#define PCGEN_UNION_READ_LONGEST_FIRST_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, usercheck)
+#define PCGEN_UNION_READ_LONGEST_FIRST_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd, usercheck)
 do {
-  Perror_t read_res_PCGEN_;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  trep_PCGEN_.tag = the_tag;
-  tpd_PCGEN_.tag  = the_tag;
-  read_res_PCGEN_ = read_call;
+  PCGEN_UNION_READ_FIELD_SETUP(trep_PCGEN_.tag, tpd_PCGEN_.tag, fn_nm, the_tag, read_call, doEnd);
   if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
@@ -1410,17 +1364,10 @@ do {
 /* END_MACRO */
 
 /* always falls through */
-#define PCGEN_UNION_READ_LONGEST_NEXT(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call)
+#define PCGEN_UNION_READ_LONGEST_NEXT(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd)
 do {
-  rep_init  (pads, &trep_PCGEN_);
-  pd_init   (pads, &tpd_PCGEN_);
-  tpd_PCGEN_.errCode = P_NO_ERR;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  trep_PCGEN_.tag = the_tag;
-  tpd_PCGEN_.tag  = the_tag;
-  if (P_OK == read_call) {
+  PCGEN_UNION_READ_LONGEST_FIELD_SETUP(&trep_PCGEN_, &tpd_PCGEN_, tpd_PCGEN_.errCode, fn_nm,the_tag, read_call, doEnd, rep_init, pd_init);
+  if (P_OK == read_res_PCGEN_) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
   PDCI_UNION_ARM_FAILED(fn_nm, the_tag_nm, xmlwrite_call, P_ERR);
@@ -1433,18 +1380,9 @@ do {
 /* END_MACRO */
 
 /* always falls through */
-#define PCGEN_UNION_READ_LONGEST_NEXT_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, usercheck)
+#define PCGEN_UNION_READ_LONGEST_NEXT_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd,  usercheck)
 do {
-  Perror_t read_res_PCGEN_;
-  rep_init  (pads, &trep_PCGEN_);
-  pd_init   (pads, &tpd_PCGEN_);
-  tpd_PCGEN_.errCode = P_NO_ERR;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  trep_PCGEN_.tag = the_tag;
-  tpd_PCGEN_.tag  = the_tag;
-  read_res_PCGEN_ = read_call;
+  PCGEN_UNION_READ_LONGEST_FIELD_SETUP(&trep_PCGEN_, &tpd_PCGEN_, tpd_PCGEN_.errCode, fn_nm,the_tag, read_call, doEnd, rep_init, pd_init);
   if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
@@ -1458,17 +1396,10 @@ do {
 /* END_MACRO */
 
 /* always falls through */
-#define PCGEN_UNION_READ_LONGEST_LAST(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call)
+#define PCGEN_UNION_READ_LONGEST_LAST(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, doEnd, xmlwrite_call)
 do {
-  rep_init  (pads, &trep_PCGEN_);
-  pd_init   (pads, &tpd_PCGEN_);
-  tpd_PCGEN_.errCode = P_NO_ERR;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  trep_PCGEN_.tag = the_tag;
-  tpd_PCGEN_.tag  = the_tag;
-  if (P_OK == read_call) {
+  PCGEN_UNION_READ_LONGEST_FIELD_SETUP(&trep_PCGEN_, &tpd_PCGEN_, tpd_PCGEN_.errCode, fn_nm,the_tag, read_call, doEnd, rep_init, pd_init);
+  if (P_OK ==  read_res_PCGEN_) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
   PDCI_UNION_ARM_FAILED(fn_nm, the_tag_nm, xmlwrite_call, P_ERR);
@@ -1481,18 +1412,9 @@ do {
 /* END_MACRO */
 
 /* always falls through */
-#define PCGEN_UNION_READ_LONGEST_LAST_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, usercheck)
+#define PCGEN_UNION_READ_LONGEST_LAST_CHECK(fn_nm, the_tag_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, xmlwrite_call, doEnd, usercheck)
 do {
-  Perror_t read_res_PCGEN_;
-  rep_init  (pads, &trep_PCGEN_);
-  pd_init   (pads, &tpd_PCGEN_);
-  tpd_PCGEN_.errCode = P_NO_ERR;
-  if (P_ERR == P_io_checkpoint(pads, 1)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
-  }
-  trep_PCGEN_.tag = the_tag;
-  tpd_PCGEN_.tag  = the_tag;
-  read_res_PCGEN_ = read_call;
+  PCGEN_UNION_READ_FIELD_LONGEST_SETUP(&trep_PCGEN_, &tpd_PCGEN_, tpd_PCGEN_.errCode, fn_nm,the_tag, read_call, doEnd);
   if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
@@ -1625,12 +1547,15 @@ do {
 /* END_MACRO */
 
 /* falls through on success, goto branches_done on failure */
-#define PCGEN_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
+#define PCGEN_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, doEnd)
 do {
+  Perror_t read_res_PCGEN_;
   PDCI_IO_BEGINLOC(pads, pd->loc);
   rep->tag = the_tag;
   pd->tag  = the_tag;
-  if (P_ERR == read_call) {
+  read_res_PCGEN_ = read_call;
+  PDCI_IO_ENDLOC##doEnd(pd->loc);
+  if (P_ERR == read_res_PCGEN_) {
     pd->nerr = 1;
     pd->errCode = P_UNION_MATCH_ERR;
     pd->loc = pd->val.the_tag.loc;
@@ -1642,10 +1567,10 @@ do {
 /* END_MACRO */
 
 /* falls through on success, goto branches_done on failure */
-#define PCGEN_SWUNION_READ(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
+#define PCGEN_SWUNION_READ(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, doEnd)
 do {
   PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy);
-  PCGEN_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call);
+  PCGEN_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, doEnd);
 } while (0)
 /* END_MACRO */
 
