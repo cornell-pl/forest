@@ -34,11 +34,15 @@ typedef enum PDC_error_t_e {
 
 typedef enum PDC_errCode_t_e {
   PDC_NO_ERROR                      =    0,
-  PDC_CHKPOINT_FAILURE              =    1,
-  PDC_COMMIT_FAILURE                =    2,
-  PDC_RESTORE_FAILURE               =    3,
-  PDC_ALLOC_FAILURE                 =    4,
-  PDC_PANIC_SKIPPED                 =   10,
+
+  PDC_OUT_OF_MEMORY                 =    1,
+  PDC_SYS_ERROR                     =    2,
+
+  PDC_CHKPOINT_FAILURE              =   11,
+  PDC_COMMIT_FAILURE                =   12,
+  PDC_RESTORE_FAILURE               =   13,
+  PDC_ALLOC_FAILURE                 =   14,
+  PDC_PANIC_SKIPPED                 =   20,
 
   PDC_USER_CONSTRAINT_VIOLATION     =  100,
   PDC_MISSING_LITERAL               =  101,
@@ -58,14 +62,16 @@ typedef enum PDC_errCode_t_e {
   PDC_ENUM_MATCH_FAILURE            =  140,
 
   PDC_AT_EOF                        =  150,
-  PDC_AT_EOL                        =  160,
+  PDC_AT_EOR                        =  160,
   PDC_RANGE                         =  170,
   PDC_INVALID_AINT                  =  180,
   PDC_INVALID_AUINT                 =  181,
   PDC_INVALID_BINT                  =  182,
   PDC_INVALID_BUINT                 =  183,
   PDC_CHAR_LIT_NOT_FOUND            =  190,
-  PDC_INVALID_REGEXP                =  200
+  PDC_REGEXP_NOT_FOUND              =  200,
+  PDC_INVALID_REGEXP                =  210,
+  PDC_WIDTH_NOT_AVAILABLE           =  220
 } PDC_errCode_t;
 
 /* ================================================================================ */
@@ -214,49 +220,49 @@ PDC_error_t  PDC_IO_fclose     (PDC_t* pdc, PDC_disc_t* disc);
 /* ================================================================================ */
 /* STRING READ FUNCTIONS */
 
+/* related helper function: free string allocated by a string read function */
+PDC_error_t PDC_free_string(PDC_t* pdc, char* str, PDC_disc_t* disc);
+
 /*
  * The string read functions each has a different way of specifying how much
  * to read: string_fw_read specifies a fixed width, string_stopChar_read specifies
  * a single stop character (can be 0 to specify eof as the stop character),
- * and string_stopCharSet_read specifies a string containing a set of stop
- * characters, plus a param eofStop which indicates whether eof is also an
- * expected stopChar.
- * 
- * If the expected stop char (or expected width) is found, PDC_OK is returned
- * after assigning *b_out and *e_out to point to the beginning and just past
- * the end of the string that was read.  This means that **e_out will be the
- * stop char (or null on eof).  The resulting length is *e_out - *b_out.
- * Note that if the IO cursor is already at a stop character, then
- * both *b_out and *e_out will point to the current character position,
- * representing a result of a string of length zero.
- * 
- * PDC_ERROR is returned on error.
- * Cursor advancement/err settings for different error cases:
+ * and string_stopRegexp_read specifies a string containing a regular expression**,
+ * where a match of the regular expression stops the string.  The stop char(s)
+ * are not included in the string.
  *
- * (1) If no stop condition is encountered before EOF
- *     (and EOF is not an expected stop character)
- *     => IO cursor advances to EOF
- *     => If !em || *em < PDC_Ignore:
- *           + ed->errCode set to PDC_AT_EOF
- *           + ed->loc begin/end set to EOF 'location'
- *             (last line number, 1 past last char in line)
- * (2) If no stop condition is encountered before EOL
- *     and the discipline indicates strings should not span lines
- *     => IO cursor advances to EOL
- *     => If !em || *em < PDC_Ignore:
- *           + ed->errCode set to PDC_AT_EOL
- *           + ed->loc begin/end set to EOL 'location'
- *             (line number, 1 past last char in line)
+ *   ** At the moment, the only legal regular expression has the form
+ *               [<chars>]
+ *      i.e., a set of stop chars can be specified.
+ * 
+ * If an expected stop char/pattern/width is found, PDC_OK is returned.
+ * If !em || *em == PDC_CheckAndSet, then:
+ *   + if s_out is non-null, a null-terminated form the string is placed in a
+ *     newly-allocated memory buffer and *s_out is set to point to this string copy.
+ *     The buffer should eventually be freed using PDC_free_string, as in:
+ *         PDC_free_string(pdc, string_ptr, 0);
+ *   + if l_out is non-null, *l_out is set to the length of the string
+ *     (not including the null terminator).
+ *
+ * Note that if the IO cursor is already at a stop character, then
+ * a string of length zero results.
+ * 
+ * If an expected stop condition is not encountered, the
+ * IO cursor position is unchanged.  Error codes used:
+ *     PDC_WIDTH_NOT_AVAILABLE
+ *     PDC_STOPCHAR_NOT_FOUND
+ *     PDC_STOPREGEXP_NOT_FOUND
+ *     PDC_INVALID_REGEXP
  */
 
 PDC_error_t PDC_string_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
-			       PDC_base_ed* ed, char** b_out, char** e_out, PDC_disc_t* disc);
+			       PDC_base_ed* ed, char** s_out, size_t* l_out, PDC_disc_t* disc);
 
 PDC_error_t PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
-				     PDC_base_ed* ed, char** b_out, char** e_out,  PDC_disc_t* disc);
+				     PDC_base_ed* ed, char** s_out, size_t* l_out,  PDC_disc_t* disc);
 
 PDC_error_t PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
-				       PDC_base_ed* ed, char** b_out, char** e_out,  PDC_disc_t* disc);
+				       PDC_base_ed* ed, char** s_out, size_t* l_out,  PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* ASCII INTEGER READ FUNCTIONS */
@@ -348,9 +354,14 @@ PDC_error_t PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
  *    for fixed width 4, input ' 1  ' is not an error is wpace_ok is 1
  *    (trailing white space is not an issue for variable-width routines)
  *
- * 3. The specified width is always consumed, even if there is an error.
- *    For any error except eof, the location begin/end is set to the first and
- *    last character of the specified fixed-width field.
+ * 3. If the specified width is available, it is always consumed, even if there is an error.
+ *    In this case the location begin/end is set to the first and last character of the
+ *    specified fixed-width field. 
+ *
+ *    If the specified width is *not* available (EOR/EOF hit), IO cursor is not advanced and
+ *      if !em || *em < PDC_Ignore:
+ *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
+ *        + ed->loc begin/end set to line/char position of start/end of the 'too small' field
  */
 
 PDC_error_t PDC_fw_aint8_read(PDC_t* pdc, PDC_base_em* em, size_t width,
@@ -385,12 +396,11 @@ PDC_error_t PDC_fw_auint64_read(PDC_t* pdc, PDC_base_em* em, size_t width,
  * The number of functions required for a given target size varies, so
  * each set of functions is documented below.
  *
- * For all cases, the specified number of bytes is always read, unless eof is hit.
- * If the bytes read do not correspond to an integer of the
- * specified type, an error occurs, where:
+ * For all cases, if the specified number of bytes is available, it is always read.
+ * If the width is not available, the IO cursor is not advanced, and
  *    if !em || *em < PDC_Ignore:
- *      + ed->errCode set to PDC_INVALID_BINT / PDC_INVALID_BUINT
- *      + ed->loc begin/end set to line/char position of start and end of the binary integer
+ *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
+ *        + ed->loc begin/end set to line/char position of start/end of the 'too small' field
  */
 
 /* 8-bit read functions:
