@@ -1,43 +1,32 @@
 warning: Installing default IO discipline : newline-terminated records
-
 init the accum
-
 calling test_read
 test_read returned: id 1  ts 11
-
 calling test_read
 test_read returned: id 2  ts 22
-
 calling test_read
 test_read returned: id 3  ts 33
-
 calling test_read
 Error : line 4 char 2 : Missing separator: |.
 [line 4]4>>>a<<<|44
 Note : line 5 char 1 : Resynching at EOR
 [line 5]>>><<<5|55a
 test_read returned: error
-
 calling test_read
 Error from line 5 char 5 to line 6 char 1: Unexpected extra data before EOR 
 [line 5]5|55>>>a
 [line 6]0<<<00006a66b
 test_read returned: error
-
 calling test_read
 Error : line 6 char 7 : Missing separator: |.
 [line 6]000006>>>a<<<66b
 Note : line 7 char 1 : Resynching at EOR
 [line 7]>>><<<7|77
 test_read returned: error
-
 calling test_read
 test_read returned: id 7  ts 77
-
 Found eof
-
 Describe the accum
-
 *****************************************************************************************************
 id : int32
 *****************************************************************************************************
@@ -53,8 +42,6 @@ good vals:          7    bad vals:          0    pcnt-bad:    0.000
         val:          7 count:          1  pcnt-of-good-vals:   14.286
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          7  pcnt-of-good-vals:  100.000
-
-
 *****************************************************************************************************
 ts : int32
 *****************************************************************************************************

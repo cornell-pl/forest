@@ -27,7 +27,7 @@
   /* The following are all related to IO state / checkpointing */ \
   char              *path;     /* original path -- eventually want to support a set of input files */ \
   Sfio_t            *io;       /* sfio stream */ \
-  char              *sfbuf;    /* buffer that is installed in any sfio that is opened */ \
+  PDC_byte          *sfbuf;    /* buffer that is installed in any sfio that is opened */ \
   PDC_IO_elt_t      *head;     /* head of list of input elts */ \
   PDCI_stkElt_t     *stack;    /* stack - resized dynamically */ \
   size_t            salloc;    /* total elts allocated for stack */ \

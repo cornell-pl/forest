@@ -186,7 +186,7 @@ typedef struct PDC_fwrec_noseek_data_s {
 
 typedef struct PDC_fwrec_noseek_iodata_s {
   size_t eor_putback;
-  char dbuf[1]; /* actual size : block_size+1 */
+  PDC_byte dbuf[1]; /* actual size : block_size+1 */
 } PDC_fwrec_noseek_iodata_t;
 
 PDC_error_t
@@ -464,8 +464,8 @@ typedef struct PDC_norec_noseek_data_s {
   size_t         num;        /* record/block number */
   char           unit[100];  /* unit description when reading blocks */
   char           punit[100]; /* ditto -- partial read case */
-  char           *dbuf;      /* resizable data buffer */
-  char           *dbuf_end;  /* 1 beyond last byte read */
+  PDC_byte       *dbuf;      /* resizable data buffer */
+  PDC_byte       *dbuf_end;  /* 1 beyond last byte read */
   size_t         balloc;     /* # blocks allocated */
   size_t         btail;      /* idx of last block in use */
   size_t         gc_point;
@@ -600,10 +600,10 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
 	data->dbuf_end = data->dbuf + keep_len;
       } else {
 	/* grow dbuf */
-	char* dbuf_next;
+	PDC_byte *dbuf_next;
 	size_t balloc_next = data->balloc + PDC_NOREC_NOSEEK_ADD_BLOCKS;
 	keep_len = data->dbuf_end - data->dbuf;
-	if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, char, balloc_next * data->block_size, 1))) {
+	if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, PDC_byte, balloc_next * data->block_size, 1))) {
 	  PDC_WARN(pdc->disc, "PDC_norec_noseek_read: could not alloc space for input record");
 	  (data->btail)--;
 	  return PDC_ERR;
@@ -693,7 +693,7 @@ PDC_norec_noseek_make(size_t block_size_hint)
   PDC_norec_noseek_data_t   *data;
   PDC_IO_disc_t             *io_disc;
   PDC_IO_elt_t              *f_head;
-  char                      *dbuf;
+  PDC_byte                  *dbuf;
   size_t                    block_size;
 
   block_size = (block_size_hint) ? block_size_hint : PDC_NOREC_NOSEEK_DEF_BSIZE;
@@ -710,7 +710,7 @@ PDC_norec_noseek_make(size_t block_size_hint)
   if (!(f_head = vmnewof(disc_vm, 0, PDC_IO_elt_t, 1, 0))) {
     goto alloc_err;
   }
-  if (!(dbuf = vmoldof(disc_vm, 0, char, PDC_NOREC_NOSEEK_INIT_BLOCKS * block_size, 1))) {
+  if (!(dbuf = vmoldof(disc_vm, 0, PDC_byte, PDC_NOREC_NOSEEK_INIT_BLOCKS * block_size, 1))) {
     goto alloc_err;
   }
 
@@ -769,7 +769,7 @@ PDC_norec_noseek_make(size_t block_size_hint)
 /* private types */
 typedef struct PDC_ctrec_noseek_data_s {
   /* configuration fields */
-  unsigned char  cterm;
+  PDC_byte       cterm;
   size_t         block_size;
   /* other fields */
   Vmalloc_t      *disc_vm;    /* lifetime: make/unmake pairing */
@@ -779,8 +779,8 @@ typedef struct PDC_ctrec_noseek_data_s {
   Sfio_t         *io;         /* Sfio stream to read from */
   int            eof;         /* hit EOF? */
   size_t         num;         /* line number */
-  char           *dbuf;       /* resizable data buffer */
-  char           *dbuf_end;   /* 1 beyond last byte read */ 
+  PDC_byte       *dbuf;       /* resizable data buffer */
+  PDC_byte       *dbuf_end;   /* 1 beyond last byte read */ 
   size_t         un_bytes;    /* unread bytes: # bytes not yet part of IO rec list */
   size_t         balloc;      /* # blocks allocated */
   size_t         btail;       /* idx of last block in use */
@@ -886,8 +886,8 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
   PDC_ctrec_noseek_data_t    *data;
   PDC_IO_elt_t        *elt, *keepelt;
   ssize_t             readlen, keep_len, discard_len, bytes_read;
-  char                *tmp;
-  char                *found_cterm;
+  PDC_byte            *tmp;
+  PDC_byte            *found_cterm;
   Sfoff_t             diff;
   /*  unsigned long       tmp_ul1, tmp_ul2, tmp_ul3; */ /* XXX_REMOVE */
 
@@ -961,10 +961,10 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     /* choose or alloc block to use */
     if (data->btail >= data->balloc) {
       /* need space -- grow dbuf */
-      char* dbuf_next;
+      PDC_byte *dbuf_next;
       size_t balloc_next = data->balloc + PDC_CTREC_NOSEEK_ADD_BLOCKS;
       keep_len = data->dbuf_end - data->dbuf;
-      if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, char, balloc_next * data->block_size, 1))) {
+      if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, PDC_byte, balloc_next * data->block_size, 1))) {
 	PDC_WARN(pdc->disc, "PDC_ctrec_noseek_read: could not alloc space for input record");
 	readlen = 0;
 	break; /* continue after while to take care of earlier bytes_read, if any */
@@ -1006,7 +1006,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     tmp = data->dbuf_end;
     data->dbuf_end += readlen;
     *(data->dbuf_end) = 0; /* null-terminate dbuf -- note use of extra byte in vmoldof calls */
-    if ((found_cterm = strchr(tmp, data->cterm))) {
+    if ((found_cterm = (PDC_byte*)strchr((char*)tmp, data->cterm))) {
       break;
     }
     /* read another block */
@@ -1040,7 +1040,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
       (*next_elt_out) = elt;
     }
     tmp = data->dbuf_end - data->un_bytes;
-    found_cterm = strchr(tmp, data->cterm);
+    found_cterm = (PDC_byte*)strchr((char*)tmp, data->cterm);
   }
   if (readlen < data->block_size) { /* put rest of bytes in EOF IO rec */
     elt = data->eof_elt;
@@ -1098,13 +1098,13 @@ PDC_ctrec_noseek_unmake(PDC_t *pdc, PDC_IO_disc_t* io_disc)
 }
 
 PDC_IO_disc_t *
-PDC_ctrec_noseek_make(unsigned char termChar, size_t block_size_hint)
+PDC_ctrec_noseek_make(PDC_byte termChar, size_t block_size_hint)
 {
   Vmalloc_t         *disc_vm = 0;
   PDC_ctrec_noseek_data_t  *data;
   PDC_IO_disc_t     *io_disc;
   PDC_IO_elt_t      *f_head;
-  char              *dbuf;
+  PDC_byte          *dbuf;
   size_t            block_size;
 
   block_size = (block_size_hint) ? block_size_hint : PDC_CTREC_NOSEEK_DEF_BSIZE;
@@ -1121,7 +1121,7 @@ PDC_ctrec_noseek_make(unsigned char termChar, size_t block_size_hint)
   if (!(f_head = vmnewof(disc_vm, 0, PDC_IO_elt_t, 1, 0))) {
     goto alloc_err;
   }
-  if (!(dbuf = vmoldof(disc_vm, 0, char, PDC_CTREC_NOSEEK_INIT_BLOCKS * block_size, 1))) {
+  if (!(dbuf = vmoldof(disc_vm, 0, PDC_byte, PDC_CTREC_NOSEEK_INIT_BLOCKS * block_size, 1))) {
     goto alloc_err;
   }
 
@@ -1172,7 +1172,7 @@ PDC_fwrec_make(size_t leader_len, size_t data_len, size_t trailer_len)
 /* PDC_ctrec IMPLEMENTATION */
 
 PDC_IO_disc_t *
-PDC_ctrec_make(unsigned char termChar, size_t block_size_hint)
+PDC_ctrec_make(PDC_byte termChar, size_t block_size_hint)
 {
   /* XXX_TODO */
   return 0;
@@ -1196,12 +1196,12 @@ typedef struct PDC_norec_data_s {
   Sfio_t         *io;        /* Sfio stream to read from */
   int            eof;        /* hit EOF? */
   size_t         num;        /* record/block number */
-  char           dummy[1];   /* for immediate EOF error */
+  PDC_byte       dummy[1];   /* for immediate EOF error */
   char           unit[100];  /* unit description when reading blocks */
   char           punit[100]; /* ditto -- partial read case */
-  char           *r_begin;   /* begin of reserved sfio bytes */
-  char           *r_end;     /* 1 byte past end of reserved sfio bytes */
-  unsigned char  saved_byte; /* we NULL *(r_end) after each sfreserve, restore it prior to next sfreserve */
+  PDC_byte       *r_begin;   /* begin of reserved sfio bytes */
+  PDC_byte       *r_end;     /* 1 byte past end of reserved sfio bytes */
+  PDC_byte       saved_byte; /* we NULL *(r_end) after each sfreserve, restore it prior to next sfreserve */
   Sfoff_t        tail_off;   /* tail offset (obtained after each sfreserve call) */
 } PDC_norec_data_t;
 
@@ -1303,7 +1303,7 @@ PDC_norec_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_elt, siz
   PDC_IO_elt_t         *elt, *firstelt, *keepelt;
   ssize_t              readlen, to_keep, to_discard, to_reserve;
   Sfoff_t              new_data_off, diff;
-  char                 *new_r_begin, *new_data;
+  PDC_byte             *new_r_begin, *new_data;
 
   if (!pdc || !pdc->disc) {
     return PDC_ERR;

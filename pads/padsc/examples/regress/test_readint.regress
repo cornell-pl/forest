@@ -1,92 +1,92 @@
-i8 error: error at record 3 char 1 : Number out of range error 
-i8 error: error at record 4 char 1 : Number out of range error 
-ui8 error: error at record 4 char 17 : Number out of range error 
-i8 error: error at record 5 char 1 : Number out of range error 
-i16 error: error at record 5 char 7 : Number out of range error 
-ui8 error: error at record 5 char 25 : Number out of range error 
-i8 error: error at record 6 char 1 : Number out of range error 
-i16 error: error at record 6 char 7 : Number out of range error 
-ui8 error: error at record 6 char 25 : Number out of range error 
-ui16 error: error at record 6 char 31 : Number out of range error 
-i8 error: error at record 7 char 1 : Number out of range error 
-i16 error: error at record 7 char 12 : Number out of range error 
-i32 error: error at record 7 char 23 : Number out of range error 
-ui8 error: error at record 7 char 45 : Number out of range error 
-ui16 error: error at record 7 char 56 : Number out of range error 
-i8 error: error at record 8 char 1 : Number out of range error 
-i16 error: error at record 8 char 12 : Number out of range error 
-i32 error: error at record 8 char 23 : Number out of range error 
-ui8 error: error at record 8 char 45 : Number out of range error 
-ui16 error: error at record 8 char 56 : Number out of range error 
-ui32 error: error at record 8 char 67 : Number out of range error 
-i8 error: error at record 9 char 1 : Number out of range error 
-i16 error: error at record 9 char 21 : Number out of range error 
-i32 error: error at record 9 char 41 : Number out of range error 
-i64 error: error at record 9 char 61 : Number out of range error 
-ui8 error: error at record 9 char 81 : Number out of range error 
-ui16 error: error at record 9 char 101 : Number out of range error 
-ui32 error: error at record 9 char 121 : Number out of range error 
-i8 error: error at record 10 char 1 : Number out of range error 
-i16 error: error at record 10 char 22 : Number out of range error 
-i32 error: error at record 10 char 43 : Number out of range error 
-i64 error: error at record 10 char 64 : Number out of range error 
-ui8 error: error at record 10 char 85 : Number out of range error 
-ui16 error: error at record 10 char 106 : Number out of range error 
-ui32 error: error at record 10 char 127 : Number out of range error 
-ui64 error: error at record 10 char 148 : Number out of range error 
-ui8 error: error at record 11 char 13 : Number out of range error 
-ui16 error: error at record 11 char 16 : Number out of range error 
-ui32 error: error at record 11 char 19 : Number out of range error 
-ui64 error: error at record 11 char 22 : Number out of range error 
-i8 error: error at record 12 char 1 : Number out of range error 
-ui8 error: error at record 12 char 21 : Number out of range error 
-ui16 error: error at record 12 char 26 : Number out of range error 
-ui32 error: error at record 12 char 31 : Number out of range error 
-ui64 error: error at record 12 char 36 : Number out of range error 
-i8 error: error at record 13 char 1 : Number out of range error 
-ui8 error: error at record 13 char 21 : Number out of range error 
-ui16 error: error at record 13 char 26 : Number out of range error 
-ui32 error: error at record 13 char 31 : Number out of range error 
-ui64 error: error at record 13 char 36 : Number out of range error 
-i8 error: error at record 14 char 1 : Number out of range error 
-i16 error: error at record 14 char 8 : Number out of range error 
-ui8 error: error at record 14 char 29 : Number out of range error 
-ui16 error: error at record 14 char 36 : Number out of range error 
-ui32 error: error at record 14 char 43 : Number out of range error 
-ui64 error: error at record 14 char 50 : Number out of range error 
-i8 error: error at record 15 char 1 : Number out of range error 
-i16 error: error at record 15 char 8 : Number out of range error 
-ui8 error: error at record 15 char 29 : Number out of range error 
-ui16 error: error at record 15 char 36 : Number out of range error 
-ui32 error: error at record 15 char 43 : Number out of range error 
-ui64 error: error at record 15 char 50 : Number out of range error 
-i8 error: error at record 16 char 1 : Number out of range error 
-i16 error: error at record 16 char 13 : Number out of range error 
-i32 error: error at record 16 char 25 : Number out of range error 
-ui8 error: error at record 16 char 49 : Number out of range error 
-ui16 error: error at record 16 char 61 : Number out of range error 
-ui32 error: error at record 16 char 73 : Number out of range error 
-ui64 error: error at record 16 char 85 : Number out of range error 
-i8 error: error at record 17 char 1 : Number out of range error 
-i16 error: error at record 17 char 13 : Number out of range error 
-i32 error: error at record 17 char 25 : Number out of range error 
-ui8 error: error at record 17 char 49 : Number out of range error 
-ui16 error: error at record 17 char 61 : Number out of range error 
-ui32 error: error at record 17 char 73 : Number out of range error 
-ui64 error: error at record 17 char 85 : Number out of range error 
-i8 error: error at record 18 char 1 : Number out of range error 
-i16 error: error at record 18 char 22 : Number out of range error 
-i32 error: error at record 18 char 43 : Number out of range error 
-i64 error: error at record 18 char 64 : Number out of range error 
-ui8 error: error at record 18 char 85 : Number out of range error 
-ui16 error: error at record 18 char 106 : Number out of range error 
-ui32 error: error at record 18 char 127 : Number out of range error 
-ui64 error: error at record 18 char 148 : Number out of range error 
-i8 error: error at record 19 char 1 : Number out of range error 
-i16 error: error at record 19 char 23 : Number out of range error 
-i32 error: error at record 19 char 45 : Number out of range error 
-i64 error: error at record 19 char 67 : Number out of range error 
-ui8 error: error at record 19 char 89 : Number out of range error 
-ui16 error: error at record 19 char 111 : Number out of range error 
-ui32 error: error at record 19 char 133 : Number out of range error 
-ui64 error: error at record 19 char 155 : Number out of range error 
+i8 error: Error at line 3 from char 1 to char 3: Number out of range error 
+i8 error: Error at line 4 from char 1 to char 3: Number out of range error 
+ui8 error: Error at line 4 from char 17 to char 19: Number out of range error 
+i8 error: Error at line 5 from char 1 to char 5: Number out of range error 
+i16 error: Error at line 5 from char 7 to char 11: Number out of range error 
+ui8 error: Error at line 5 from char 25 to char 29: Number out of range error 
+i8 error: Error at line 6 from char 1 to char 5: Number out of range error 
+i16 error: Error at line 6 from char 7 to char 11: Number out of range error 
+ui8 error: Error at line 6 from char 25 to char 29: Number out of range error 
+ui16 error: Error at line 6 from char 31 to char 35: Number out of range error 
+i8 error: Error at line 7 from char 1 to char 10: Number out of range error 
+i16 error: Error at line 7 from char 12 to char 21: Number out of range error 
+i32 error: Error at line 7 from char 23 to char 32: Number out of range error 
+ui8 error: Error at line 7 from char 45 to char 54: Number out of range error 
+ui16 error: Error at line 7 from char 56 to char 65: Number out of range error 
+i8 error: Error at line 8 from char 1 to char 10: Number out of range error 
+i16 error: Error at line 8 from char 12 to char 21: Number out of range error 
+i32 error: Error at line 8 from char 23 to char 32: Number out of range error 
+ui8 error: Error at line 8 from char 45 to char 54: Number out of range error 
+ui16 error: Error at line 8 from char 56 to char 65: Number out of range error 
+ui32 error: Error at line 8 from char 67 to char 76: Number out of range error 
+i8 error: Error at line 9 from char 1 to char 19: Number out of range error 
+i16 error: Error at line 9 from char 21 to char 39: Number out of range error 
+i32 error: Error at line 9 from char 41 to char 59: Number out of range error 
+i64 error: Error at line 9 from char 61 to char 79: Number out of range error 
+ui8 error: Error at line 9 from char 81 to char 99: Number out of range error 
+ui16 error: Error at line 9 from char 101 to char 119: Number out of range error 
+ui32 error: Error at line 9 from char 121 to char 139: Number out of range error 
+i8 error: Error at line 10 from char 1 to char 20: Number out of range error 
+i16 error: Error at line 10 from char 22 to char 41: Number out of range error 
+i32 error: Error at line 10 from char 43 to char 62: Number out of range error 
+i64 error: Error at line 10 from char 64 to char 83: Number out of range error 
+ui8 error: Error at line 10 from char 85 to char 104: Number out of range error 
+ui16 error: Error at line 10 from char 106 to char 125: Number out of range error 
+ui32 error: Error at line 10 from char 127 to char 146: Number out of range error 
+ui64 error: Error at line 10 from char 148 to char 167: Number out of range error 
+ui8 error: Error at line 11 from char 13 to char 14: Number out of range error 
+ui16 error: Error at line 11 from char 16 to char 17: Number out of range error 
+ui32 error: Error at line 11 from char 19 to char 20: Number out of range error 
+ui64 error: Error at line 11 from char 22 to char 23: Number out of range error 
+i8 error: Error at line 12 from char 1 to char 4: Number out of range error 
+ui8 error: Error at line 12 from char 21 to char 24: Number out of range error 
+ui16 error: Error at line 12 from char 26 to char 29: Number out of range error 
+ui32 error: Error at line 12 from char 31 to char 34: Number out of range error 
+ui64 error: Error at line 12 from char 36 to char 39: Number out of range error 
+i8 error: Error at line 13 from char 1 to char 4: Number out of range error 
+ui8 error: Error at line 13 from char 21 to char 24: Number out of range error 
+ui16 error: Error at line 13 from char 26 to char 29: Number out of range error 
+ui32 error: Error at line 13 from char 31 to char 34: Number out of range error 
+ui64 error: Error at line 13 from char 36 to char 39: Number out of range error 
+i8 error: Error at line 14 from char 1 to char 6: Number out of range error 
+i16 error: Error at line 14 from char 8 to char 13: Number out of range error 
+ui8 error: Error at line 14 from char 29 to char 34: Number out of range error 
+ui16 error: Error at line 14 from char 36 to char 41: Number out of range error 
+ui32 error: Error at line 14 from char 43 to char 48: Number out of range error 
+ui64 error: Error at line 14 from char 50 to char 55: Number out of range error 
+i8 error: Error at line 15 from char 1 to char 6: Number out of range error 
+i16 error: Error at line 15 from char 8 to char 13: Number out of range error 
+ui8 error: Error at line 15 from char 29 to char 34: Number out of range error 
+ui16 error: Error at line 15 from char 36 to char 41: Number out of range error 
+ui32 error: Error at line 15 from char 43 to char 48: Number out of range error 
+ui64 error: Error at line 15 from char 50 to char 55: Number out of range error 
+i8 error: Error at line 16 from char 1 to char 11: Number out of range error 
+i16 error: Error at line 16 from char 13 to char 23: Number out of range error 
+i32 error: Error at line 16 from char 25 to char 35: Number out of range error 
+ui8 error: Error at line 16 from char 49 to char 59: Number out of range error 
+ui16 error: Error at line 16 from char 61 to char 71: Number out of range error 
+ui32 error: Error at line 16 from char 73 to char 83: Number out of range error 
+ui64 error: Error at line 16 from char 85 to char 95: Number out of range error 
+i8 error: Error at line 17 from char 1 to char 11: Number out of range error 
+i16 error: Error at line 17 from char 13 to char 23: Number out of range error 
+i32 error: Error at line 17 from char 25 to char 35: Number out of range error 
+ui8 error: Error at line 17 from char 49 to char 59: Number out of range error 
+ui16 error: Error at line 17 from char 61 to char 71: Number out of range error 
+ui32 error: Error at line 17 from char 73 to char 83: Number out of range error 
+ui64 error: Error at line 17 from char 85 to char 95: Number out of range error 
+i8 error: Error at line 18 from char 1 to char 20: Number out of range error 
+i16 error: Error at line 18 from char 22 to char 41: Number out of range error 
+i32 error: Error at line 18 from char 43 to char 62: Number out of range error 
+i64 error: Error at line 18 from char 64 to char 83: Number out of range error 
+ui8 error: Error at line 18 from char 85 to char 104: Number out of range error 
+ui16 error: Error at line 18 from char 106 to char 125: Number out of range error 
+ui32 error: Error at line 18 from char 127 to char 146: Number out of range error 
+ui64 error: Error at line 18 from char 148 to char 167: Number out of range error 
+i8 error: Error at line 19 from char 1 to char 21: Number out of range error 
+i16 error: Error at line 19 from char 23 to char 43: Number out of range error 
+i32 error: Error at line 19 from char 45 to char 65: Number out of range error 
+i64 error: Error at line 19 from char 67 to char 87: Number out of range error 
+ui8 error: Error at line 19 from char 89 to char 109: Number out of range error 
+ui16 error: Error at line 19 from char 111 to char 131: Number out of range error 
+ui32 error: Error at line 19 from char 133 to char 153: Number out of range error 
+ui64 error: Error at line 19 from char 155 to char 175: Number out of range error 

@@ -70,7 +70,7 @@ PDC_error_t  PDC_IO_getPos_internal   (PDC_t *pdc, PDC_pos_t *pos, int offset);
 /* INTERNAL VERSIONS OF ALL BASE TYPE READ FUNCTIONS */
 
 PDC_error_t PDC_char_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
-				       PDC_base_ed *ed, unsigned char c);
+				       PDC_base_ed *ed, PDC_byte c);
 
 PDC_error_t PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 				      PDC_base_ed *ed, const PDC_string *s);
@@ -81,13 +81,13 @@ PDC_error_t PDC_countX_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eo
 PDC_error_t PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 				   PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+PDC_error_t PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 				    PDC_base_ed *ed, PDC_uint32 *res_out);
 
 PDC_error_t PDC_astringFW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 					PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_astring_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+PDC_error_t PDC_astring_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 				      PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_astringSE_read_internal(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
@@ -99,7 +99,7 @@ PDC_error_t PDC_astringCSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp
 PDC_error_t PDC_estringFW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 					PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_estring_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+PDC_error_t PDC_estring_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 				      PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_estringSE_read_internal(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
@@ -227,6 +227,26 @@ PDC_error_t PDC_buint32_read_internal(PDC_t *pdc, PDC_base_em *em,
 
 PDC_error_t PDC_buint64_read_internal(PDC_t *pdc, PDC_base_em *em,
 				      PDC_base_ed *ed, PDC_uint64 *res_out);
+/* ================================================================================ */ 
+/* INTERNAL VERSIONS OF FIXED POINT READ FUNCTIONS */
+
+PDC_error_t PDC_fpoint_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+				     PDC_base_ed *ed, PDC_fpoint *res_out);
+
+PDC_error_t PDC_ufpoint_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+				      PDC_base_ed *ed, PDC_ufpoint *res_out);
+
+PDC_error_t PDC_fpointBCD_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+					PDC_base_ed *ed, PDC_fpoint *res_out);
+
+PDC_error_t PDC_ufpointBCD_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+					 PDC_base_ed *ed, PDC_ufpoint *res_out);
+
+PDC_error_t PDC_fpointB_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+				      PDC_base_ed *ed, PDC_fpoint *res_out);
+
+PDC_error_t PDC_ufpointB_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+				       PDC_base_ed *ed, PDC_ufpoint *res_out);
 
 /* ================================================================================ */ 
 /* INTERNAL VERSIONS OF ACCUM REPORTING FUNCTIONS */
@@ -307,9 +327,9 @@ PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
  */
 
 PDC_error_t  PDCI_IO_needbytes (PDC_t *pdc,
-				char **b_out, char **p1_out, char **p2_out, char **e_out,
+				PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,
 			        int *eor_out, int *eof_out, size_t *bytes_out);
-PDC_error_t  PDCI_IO_morebytes (PDC_t *pdc, char **b_out, char **p1_out, char **p2_out, char **e_out,
+PDC_error_t  PDCI_IO_morebytes (PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,
 				int *eor_out, int *eof_out, size_t *bytes_out);
 PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
 
@@ -323,29 +343,52 @@ PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
 PDC_error_t PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out);
 
 /* ================================================================================ */
-/* INTERNAL EBCDIC ROUTINES */
+/* INTERNAL ASCII/EBCDIC/BCD ROUTINES */
 
-int is_e_digit(unsigned char c);
-int is_e_space(unsigned char c);
+extern int PDCI_ascii_digit[];
+extern int PDCI_ascii_is_digit[];
+extern int PDCI_ascii_is_space[];
+#define PDCI_is_a_digit(c) PDCI_ascii_is_digit[c]
+#define PDCI_is_a_space(c) PDCI_ascii_is_space[c]
 
-long PDCI_estrtol(const char *str, char **ptr, int base);
-long long PDCI_estrtoll(const char *str, char **ptr, int base);
-unsigned long PDCI_estrtoul(const char *str, char **ptr, int base);
-unsigned long long PDCI_estrtoull(const char *str, char **ptr, int base);
+PDC_int8   PDCI_a2int8  (const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int16  PDCI_a2int16 (const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int32  PDCI_a2int32 (const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int64  PDCI_a2int64 (const PDC_byte *bytes, PDC_byte **ptr_out);
 
-/* ================================================================================ */
-/* INTERNAL MODIFIED CONVERSION ROUTINES */
+PDC_uint8  PDCI_a2uint8 (const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint16 PDCI_a2uint16(const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint32 PDCI_a2uint32(const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint64 PDCI_a2uint64(const PDC_byte *bytes, PDC_byte **ptr_out);
 
-/*
- * Wrappers for conversion routines that set errno to zero before
- * making the real call.  The unsigned wrappers also check for
- * "-<digits>" pattern and produce range error, rather than relying
- * on the real call to do the right thing.
- */
-long PDCI_stringtol (const char *, char **, int);
-long long PDCI_stringtoll(const char *, char **, int);
-unsigned long PDCI_stringtoul (const char *, char **, int);
-unsigned long long PDCI_stringtoull(const char *, char **, int);
+extern int PDCI_ebcdic_digit[];
+extern int PDCI_ebcdic_is_digit[];
+extern int PDCI_ebcdic_is_space[];
+#define PDCI_is_e_digit(c) PDCI_ebcdic_is_digit[c]
+#define PDCI_is_e_space(c) PDCI_ebcdic_is_space[c]
+
+PDC_int8   PDCI_e2int8  (const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int16  PDCI_e2int16 (const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int32  PDCI_e2int32 (const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int64  PDCI_e2int64 (const PDC_byte *bytes, PDC_byte **ptr_out);
+
+PDC_uint8  PDCI_e2uint8 (const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint16 PDCI_e2uint16(const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint32 PDCI_e2uint32(const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint64 PDCI_e2uint64(const PDC_byte *bytes, PDC_byte **ptr_out);
+
+extern int PDCI_bcd_1digit[];
+extern int PDCI_bcd_2digits[];
+
+PDC_int8   PDCI_bcd2int8  (const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_int16  PDCI_bcd2int16 (const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_int32  PDCI_bcd2int32 (const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_int64  PDCI_bcd2int64 (const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+
+PDC_uint8  PDCI_bcd2uint8 (const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_uint16 PDCI_bcd2uint16(const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_uint32 PDCI_bcd2uint32(const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_uint64 PDCI_bcd2uint64(const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 
 /* ================================================================================ */
 /* INTERNAL MISC ROUTINES */
@@ -355,7 +398,7 @@ unsigned long long PDCI_stringtoull(const char *, char **, int);
  *  chars between begin and end are EBCDIC chars, otherwise they are ASCII chars.
  */
 
-size_t PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, char *begin, char *end, int ebcdic);
+size_t PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end, int ebcdic);
 
 /* Accum impl helpers:
  *

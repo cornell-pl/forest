@@ -222,12 +222,20 @@ typedef enum PDC_errCode_t_e {
   PDC_INVALID_EUINT                 =  183,
   PDC_INVALID_BINT                  =  184,
   PDC_INVALID_BUINT                 =  185,
-  PDC_CHAR_LIT_NOT_FOUND            =  190,
-  PDC_STR_LIT_NOT_FOUND             =  200,
-  PDC_REGEXP_NOT_FOUND              =  210,
-  PDC_INVALID_REGEXP                =  220,
-  PDC_WIDTH_NOT_AVAILABLE           =  230,
-  PDC_INVALID_DATE                  =  240
+
+  PDC_INVALID_FPOINT                =  190,
+  PDC_INVALID_UFPOINT               =  191,
+  PDC_INVALID_FPOINT_BCD            =  192,
+  PDC_INVALID_UFPOINT_BCD           =  193,
+  PDC_INVALID_FPOINT_B              =  194,
+  PDC_INVALID_UFPOINT_B             =  195,
+
+  PDC_CHAR_LIT_NOT_FOUND            =  200,
+  PDC_STR_LIT_NOT_FOUND             =  210,
+  PDC_REGEXP_NOT_FOUND              =  220,
+  PDC_INVALID_REGEXP                =  230,
+  PDC_WIDTH_NOT_AVAILABLE           =  240,
+  PDC_INVALID_DATE                  =  250
 } PDC_errCode_t;
 
 /* ================================================================================ */
@@ -268,6 +276,8 @@ typedef struct PDC_IO_disc_s       PDC_IO_disc_t;
 /* ================================================================================ */
 /* BASIC LIBRARY TYPES */
 
+typedef unsigned char          PDC_byte;
+
 typedef signed _ast_int1_t     PDC_int8;
 typedef signed _ast_int2_t     PDC_int16;
 typedef signed _ast_int4_t     PDC_int32; 
@@ -278,40 +288,10 @@ typedef unsigned _ast_int2_t   PDC_uint16;
 typedef unsigned _ast_int4_t   PDC_uint32;
 typedef unsigned _ast_int8_t   PDC_uint64;
 
-typedef PDC_int8               PDC_aint8_rep;
-typedef PDC_aint8_rep          PDC_aint8;
+typedef	struct { PDC_int64  num; PDC_uint64 denom;} PDC_fpoint;
+typedef	struct { PDC_uint64 num; PDC_uint64 denom;} PDC_ufpoint;
 
-typedef PDC_base_em            PDC_aint8_em;
-typedef PDC_base_ed            PDC_int8_ed;
-
-typedef PDC_uint8              PDC_auint8_rep;
-typedef PDC_auint8_rep         PDC_auint8;
-typedef PDC_base_em            PDC_auint8_em;
-typedef PDC_base_ed            PDC_auint8_ed;
-
-typedef PDC_int32              PDC_aint32_rep;
-typedef PDC_aint32_rep         PDC_aint32;
-typedef PDC_base_em            PDC_aint32_em;
-typedef PDC_base_ed            PDC_aint32_ed;
-
-typedef PDC_uint32             PDC_auint32_rep;
-typedef PDC_auint32_rep        PDC_auint32;
-typedef PDC_base_em            PDC_auint32_em;
-typedef PDC_base_ed            PDC_auint32_ed;
-
-typedef PDC_int64              PDC_aint64_rep;
-typedef PDC_aint64_rep         PDC_aint64;
-typedef PDC_base_em            PDC_aint64_em;
-typedef PDC_base_ed            PDC_aint64_ed;
-
-typedef PDC_uint64             PDC_auint64_rep;
-typedef PDC_auint64_rep        PDC_auint64;
-typedef PDC_base_em            PDC_auint64_em;
-typedef PDC_base_ed            PDC_auint64_ed;
-
-typedef PDC_base_ed            PDC_string_ed;
-
-
+/* ================================================================================ */
 /* PDC_string: PADS strings have a ptr and length;
  *             required since they need not be null-terminated.
  *             They also have some private state, which should
@@ -330,21 +310,25 @@ struct PDC_string_s {
 /* ================================================================================ */
 /* USEFUL CONSTANTS */
 
-#define PDC_MIN_INT8                        -128
-#define PDC_MAX_INT8                         127
-#define PDC_MAX_UINT8                        255U
+#define PDC_MAX_INT8                             127
+#define PDC_MIN_INT8                            -128
 
-#define PDC_MIN_INT16                     -32768
-#define PDC_MAX_INT16                      32767
-#define PDC_MAX_UINT16                     65535U
+#define PDC_MAX_UINT8                           255U
 
-#define PDC_MIN_INT32                -2147483647L
-#define PDC_MAX_INT32                 2147483647L
-#define PDC_MAX_UINT32                4294967295UL
+#define PDC_MAX_INT16                          32767
+#define PDC_MIN_INT16                         -32768
 
-#define PDC_MIN_INT64       -9223372036854775807LL
-#define PDC_MAX_INT64        9223372036854775807LL
-#define PDC_MAX_UINT64      18446744073709551615ULL
+#define PDC_MAX_UINT16                        65535U
+
+#define PDC_MAX_INT32                    2147483647L
+#define PDC_MIN_INT32                   -2147483647L
+
+#define PDC_MAX_UINT32                  4294967295UL
+
+#define PDC_MAX_INT64          9223372036854775807LL
+#define PDC_MIN_INT64         -9223372036854775807LL
+
+#define PDC_MAX_UINT64       18446744073709551615ULL
 
 /* ================================================================================ */ 
 /* DISC FUNCTION FOR ERROR REPORTING */
@@ -582,7 +566,7 @@ PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset);
  */
 
 PDC_error_t PDC_achar_lit_read(PDC_t *pdc, PDC_base_em *em,
-			       PDC_base_ed *ed, unsigned char c);
+			       PDC_base_ed *ed, PDC_byte c);
 
 PDC_error_t PDC_astr_lit_read(PDC_t *pdc, PDC_base_em *em,
 			      PDC_base_ed *ed, const PDC_string *s);
@@ -651,7 +635,7 @@ PDC_error_t PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
  *   + returns PDC_ERR
  */
 
-PDC_error_t PDC_adate_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+PDC_error_t PDC_adate_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 			   PDC_base_ed *ed, PDC_uint32 *res_out);
 
 /* ================================================================================ */
@@ -684,8 +668,8 @@ PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
  *    PDC_string_ed_cleanup : a no-op  
  */
 
-PDC_error_t PDC_string_ed_init(PDC_t *pdc, PDC_string_ed *ed);
-PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed);
+PDC_error_t PDC_string_ed_init(PDC_t *pdc, PDC_base_ed *ed);
+PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_base_ed *ed);
 
 /* ================================================================================ */
 /* ASCII STRING READ FUNCTIONS */
@@ -721,7 +705,7 @@ PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed);
  *     PDC_INVALID_REGEXP
  */
 
-PDC_error_t PDC_astring_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+PDC_error_t PDC_astring_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 			     PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_astringFW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
@@ -758,7 +742,7 @@ PDC_error_t PDC_astringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopR
  *         matters if the special output version of PDC_IO_commit is used.
  */
 
-PDC_error_t PDC_estring_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+PDC_error_t PDC_estring_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 			     PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_estringFW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
@@ -1014,6 +998,44 @@ PDC_error_t PDC_buint64_read(PDC_t *pdc, PDC_base_em *em,
 			     PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================ */
+/* FIXED POINT READ FUNCTIONS */
+ 
+/* For these read functions, arg n is the number of digits before
+ * the decimal place, and arg d is digits after the decimal place.
+ * There are thus n+d digits total, forming the numerator,
+ * while the denominator is 10^d.
+ *
+ *   PDC_fpoint_read:  read a signed fixed point value encoded in EBCDIC format
+ *   PDC_ufpoint_read: read an unsigned fixed point value encoded in EBCDIC format.
+ * 
+ *   PDC_fpointBCD_read:  read a signed fixed point value encoded in BCD format
+ *   PDC_ufpointBCD_read: read an unsigned fixed point value encoded in BCD format.
+ *
+ *   PDC_fpointB_read:  read a signed fixed point value encoded in binary format
+ *   PDC_ufpointB_read:  read a signed fixed point value encoded in binary format
+ *
+ * For the binary read functions, the number of bytes on disk must be (n+d)/2
+ */
+
+PDC_error_t PDC_fpoint_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+			    PDC_base_ed *ed, PDC_fpoint *res_out);
+
+PDC_error_t PDC_ufpoint_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+			     PDC_base_ed *ed, PDC_ufpoint *res_out);
+
+PDC_error_t PDC_fpointBCD_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+			       PDC_base_ed *ed, PDC_fpoint *res_out);
+
+PDC_error_t PDC_ufpointBCD_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+				PDC_base_ed *ed, PDC_ufpoint *res_out);
+
+PDC_error_t PDC_fpointB_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+			     PDC_base_ed *ed, PDC_fpoint *res_out);
+
+PDC_error_t PDC_ufpointB_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
+			      PDC_base_ed *ed, PDC_ufpoint *res_out);
+
+/* ================================================================================ */
 /* BASE TYPE ACCUMULATORS */
 
 /*
@@ -1204,8 +1226,8 @@ PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char 
  * was found.  On PDC_ERR, the IO cursor is unchanged. 
  */
 
-PDC_error_t PDC_achar_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
-			       unsigned char *c_out, size_t *offset_out);
+PDC_error_t PDC_achar_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
+			       PDC_byte *c_out, size_t *offset_out);
 
 PDC_error_t PDC_astr_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
 			      PDC_string **str_out, size_t *offset_out);
@@ -1220,16 +1242,16 @@ PDC_error_t PDC_astr_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_s
  *    and converted to EBCDIC by the read or scan routine.  
  */
 
-PDC_error_t PDC_achar_lit_read(PDC_t *pdc, PDC_base_em *em,
-			       PDC_base_ed *ed, unsigned char c);
+PDC_error_t PDC_echar_lit_read(PDC_t *pdc, PDC_base_em *em,
+			       PDC_base_ed *ed, PDC_byte c);
 
-PDC_error_t PDC_astr_lit_read(PDC_t *pdc, PDC_base_em *em,
+PDC_error_t PDC_estr_lit_read(PDC_t *pdc, PDC_base_em *em,
 			      PDC_base_ed *ed, const PDC_string *s);
 
-PDC_error_t PDC_achar_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
-			       unsigned char *c_out, size_t *offset_out);
+PDC_error_t PDC_echar_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
+			       PDC_byte *c_out, size_t *offset_out);
 
-PDC_error_t PDC_astr_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+PDC_error_t PDC_estr_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
 			      PDC_string **str_out, size_t *offset_out);
 
 
@@ -1286,10 +1308,10 @@ PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
 /*
  *    PDC_fmt_char: produce a ptr to a string that is a pretty-print (escaped) formated for char c
  *        N.B. Resulting string should be printed immediately then not used again, e.g.,
- *        PDC_report_err( .. .. , "Missing separator: %s", PDC_fmt_Char(c)); 
+ *        PDC_errorf(0, 0, "Missing separator: %s", PDC_fmt_Char(c)); 
  * 
  *    PDC_fmt_str   : same thing for a PDC_string
- *    PDC_fmt_Cstr  : same thing for a C string (must specify a char* ptr and a length)
+ *    PDC_fmt_Cstr  : same thing for a C string (must specify a char * ptr and a length)
  *
  *    PDC_qfmt_char/PDC_qfmt_str/PDC_qfmt_Cstr : same as above, but quote marks are added
  */
@@ -1304,7 +1326,7 @@ char *PDC_qfmt_Cstr(const char *s, size_t len);
  * PDC_swap_bytes: in-place memory byte order swap
  *    num_bytes should be oneof: 1, 2, 4, 8
  */
-PDC_error_t PDC_swap_bytes(char *bytes, size_t num_bytes);
+PDC_error_t PDC_swap_bytes(PDC_byte *bytes, size_t num_bytes);
 
 /*
  * Going away eventually

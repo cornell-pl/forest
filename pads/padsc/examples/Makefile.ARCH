@@ -46,37 +46,37 @@ regress : regress_test_format1 \
 
 regress_test_format1 : test_format1
 	if [ -f tmp/tmp.test_format1 ]; then $(RM) tmp/tmp.test_format1; fi
-	(./test_format1 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format1
+	(./test_format1 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.test_format1
 	diff tmp/tmp.test_format1 ../regress/test_format1.regress || echo TEST_FORMAT1 DIFFERS
 
 regress_test_format2 : test_format2
 	if [ -f tmp/tmp.test_format2 ]; then $(RM) tmp/tmp.test_format2; fi
-	(./test_format2 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format2
+	(./test_format2 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.test_format2
 	diff tmp/tmp.test_format2 ../regress/test_format2.regress || echo TEST_FORMAT2 DIFFERS
 
 regress_test_format3 : test_format3
 	if [ -f tmp/tmp.test_format3 ]; then $(RM) tmp/tmp.test_format3; fi
-	(./test_format3 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format3
+	(./test_format3 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.test_format3
 	diff tmp/tmp.test_format3 ../regress/test_format3.regress || echo TEST_FORMAT3 DIFFERS
 
 regress_test_format4 : test_format4
 	if [ -f tmp/tmp.test_format4 ]; then $(RM) tmp/tmp.test_format4; fi
-	(./test_format4 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format4
+	(./test_format4 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.test_format4
 	diff tmp/tmp.test_format4 ../regress/test_format4.regress || echo TEST_FORMAT4 DIFFERS
 
 regress_test_format5 : test_format5
 	if [ -f tmp/tmp.test_format5 ]; then $(RM) tmp/tmp.test_format5; fi
-	(./test_format5 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format5
+	(./test_format5 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.test_format5
 	diff tmp/tmp.test_format5 ../regress/test_format5.regress || echo TEST_FORMAT5 DIFFERS
 
 regress_test_format6 : test_format6
 	if [ -f tmp/tmp.test_format6 ]; then $(RM) tmp/tmp.test_format6; fi
-	(./test_format6 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format6
+	(./test_format6 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.test_format6
 	diff tmp/tmp.test_format6 ../regress/test_format6.regress || echo TEST_FORMAT6 DIFFERS
 
 regress_test_readint : test_readint
 	if [ -f tmp/tmp.test_readint ]; then $(RM) tmp/tmp.test_readint; fi
-	(./test_readint 2>&1) | grep -v XXX_REMOVE | grep error: | cat > tmp/tmp.test_readint
+	(./test_readint 2>&1) | ../../scripts/remove_junk.pl | grep error: | cat > tmp/tmp.test_readint
 	diff tmp/tmp.test_readint ../regress/test_readint.regress || echo TEST_READINT DIFFERS
 
 clean :

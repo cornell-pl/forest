@@ -53,7 +53,7 @@ PDC_IO_disc_t * PDC_fwrec_make(size_t leader_len, size_t data_len, size_t traile
  * of the 3 arguments.  
  */
 
-PDC_IO_disc_t * PDC_ctrec_make(unsigned char termChar, size_t block_size_hint);
+PDC_IO_disc_t * PDC_ctrec_make(PDC_byte termChar, size_t block_size_hint);
 /* Instantiates an instance of ctrec, a discipline for
  * character-terminated variable-width records. termChar is the
  * character that marks the end of a record. block_size_hint is a
@@ -78,7 +78,7 @@ PDC_IO_disc_t * PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t
  * that does not require that the sfio stream is seekable.
  */
 
-PDC_IO_disc_t * PDC_ctrec_noseek_make(unsigned char termChar, size_t block_size_hint);
+PDC_IO_disc_t * PDC_ctrec_noseek_make(PDC_byte termChar, size_t block_size_hint);
 /* Instantiates an instance of ctrec_noseek, a version of norec
  * that does not require that the sfio stream is seekable.
  */
@@ -107,8 +107,8 @@ PDC_IO_disc_t * PDC_norec_noseek_make(size_t block_size_hint);
 struct PDC_IO_elt_s {
   PDC_IO_elt_t     *prev;
   PDC_IO_elt_t     *next;
-  char             *begin;
-  char             *end;
+  PDC_byte         *begin;
+  PDC_byte         *end;
   size_t           len;
   int              eor;
   int              eof;

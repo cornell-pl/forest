@@ -1,15 +1,12 @@
-error at record 1 char 12 : Typedef constraint error 
-[RECORD 1]20198543987<<<
-error at record 2 char 4 : Typedef constraint error 
-[RECORD 2]123<<<
-error at record 3 char 11 : Typedef constraint error 
-[RECORD 3]9739843167<<<
-error at record 4 char 13 : Typedef constraint error 
-[RECORD 4]119739843167<<<
-error at record 5 char 11 : Typedef constraint error 
-[RECORD 5]9733608077<<<
-Record not okay:	x = 18446744072433259123
+warning: Installing default IO discipline : newline-terminated records
+Error at line 1 just before char 12: Typedef constraint error
+[line 1]20198543987>>><<<
+Error at line 2 just before char 4: Typedef constraint error
+[line 2]123>>><<<
+Error at line 4 just before char 13: Typedef constraint error
+[line 4]119739843167>>><<<
+Record not okay:	x = 20198543987
 Record not okay:	x = 123
-Record not okay:	x = 1149908575
-Record not okay:	x = 18446744073190310495
-Record not okay:	x = 1143673485
+Record okay:	x = 9739843167
+Record not okay:	x = 119739843167
+Record okay:	x = 9733608077

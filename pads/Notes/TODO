@@ -1,3 +1,10 @@
+testing
+-------
+  * is test_format3 producing the right output? 
+   should the line:
+         12a|23|34
+   produce a zero-element array?
+
 to decide
 ---------
   * design & implement tagged unions

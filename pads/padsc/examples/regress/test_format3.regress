@@ -1,17 +1,28 @@
-error at record 2 char 10 : User constraint for array intList violated.
-[RECORD 2]34|24|12<<<
-error at record 3 char 4 : Read 1 element(s) for array intList; required 2.
-[RECORD 3]23<<<
-error at record 4 char 19 : Unexpected extra data before array element terminator 
-[RECORD 4]12|24|45|56|77|99<<<
-error at record 5 char 5 : Unexpected extra data before array element separator 
-[RECORD 5]12a|2<<<
-error at record 6 char 2 : Read 0 element(s) for array intList; required 2.
-[RECORD 6](**EMPTY**)
-error at record 7 char 2 : Read 0 element(s) for array intList; required 2.
-[RECORD 7](**EMPTY**)
+Installed IO discipline norec
+Calling intList_read
 Record okay:	12|24|34
-Record not okay:	34|24|12
-Record not okay:	23
-Record not okay:	12|24|45|56|77
-Record not okay:	12|23|34
+Calling intList_read
+Error : (last: partial) 512B Block 1 char 19 : User constraint for array intList violated.
+[(last: partial) 512B Block 1]12|24|34\n34|24|12\n>>><<<23\n12|24|45|56|77|99\n12a|23|34\n12|24|34\n12|24|34\n24|34\n
+Record not okay
+Calling intList_read
+Error : (last: partial) 512B Block 1 char 22 : Read 1 element(s) for array intList; required 2.
+[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n>>><<<12|24|45|56|77|99\n12a|23|34\n12|24|34\n12|24|34\n24|34\n
+Record not okay
+Calling intList_read
+Error at (last: partial) 512B Block 1 just before char 39: Unexpected extra data before array element terminator
+[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77|99>>><<<\n12a|23|34\n12|24|34\n12|24|34\n24|34\n
+Record not okay
+Calling intList_read
+Error : (last: partial) 512B Block 1 char 40 : Read 0 element(s) for array intList; required 2.
+[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77|99\n>>><<<12a|23|34\n12|24|34\n12|24|34\n24|34\n
+Calling intList_read
+Error at (last: partial) 512B Block 1 just before char 44: Unexpected extra data before array element separator
+[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77|99\n12a|>>><<<23|34\n12|24|34\n12|24|34\n24|34\n
+Record not okay
+Calling intList_read
+Record okay:	12|24|34
+Calling intList_read
+Record okay:	12|24|34
+Calling intList_read
+Record okay:	24|34
