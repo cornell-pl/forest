@@ -1,4 +1,4 @@
-$(PADS_HOME)/padsc/libpglx/*.c
-$(PADS_HOME)/padsc/pads-glx/*.c
-$(PADS_HOME)/padsc/pads-glx/*.idl
-$(PADS_HOME)/padsc/pads-glx/*.h
+padsc/libpglx/*.c
+padsc/pads-glx/*.c
+padsc/pads-glx/*.idl
+padsc/pads-glx/*.h

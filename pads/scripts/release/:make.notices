@@ -8,16 +8,18 @@ do
   for f in `find $p -type f`
   do
 	echo Updating $f
-	proto -l  $(PADS_HOME)/scripts/release/pads.lic -hpr -c"$2" -o author=$3 $f
+	proto -l  scripts/release/pads.lic -hpr -c"$2" -o author=$3 $f
   done
 done
 }
 
-insertCR $(PADS_HOME)/scripts/release/sml.files  '(*)' kfisher+gruber+yitzhak
-insertCR $(PADS_HOME)/scripts/release/caml.files '(*)' mff
-insertCR $(PADS_HOME)/scripts/release/pads.files '/*/' gruber+kfisher+yitzhak
-insertCR $(PADS_HOME)/scripts/release/padx.files '/*/' mff+gruber+yitzhak+kfisher
-insertCR $(PADS_HOME)/scripts/release/sh.files   '#'   kfisher+gruber
+echo inserting notices
+pwd
+insertCR scripts/release/sml.files  '(*)' kfisher+gruber+yitzhak
+insertCR scripts/release/caml.files '(*)' mff
+insertCR scripts/release/pads.files '/*/' gruber+kfisher+yitzhak
+insertCR scripts/release/padx.files '/*/' mff+gruber+yitzhak+kfisher
+insertCR scripts/release/sh.files   '#'   kfisher+gruber
 
     
 

@@ -1,7 +1,7 @@
-$(PADS_HOME)/padsc/comp/*.sml
-$(PADS_HOME)/padsc/comp/*.cm
-$(PADS_HOME)/padsc/comp/util/*
-$(PADS_HOME)/padsc/comp/ckit/src/parser/extensions/pads/*
-$(PADS_HOME)/padsc/comp/ckit/src/ast/pp/extensions/pads/*
-$(PADS_HOME)/padsc/comp/ckit/src/ast/extensions/pads/*.sml
-$(PADS_HOME)/padsc/comp/ckit/src/ast/extensions/pads/transform/*
+padsc/comp/*.sml
+padsc/comp/*.cm
+padsc/comp/util/*
+padsc/comp/ckit/src/parser/extensions/pads/*
+padsc/comp/ckit/src/ast/pp/extensions/pads/*
+padsc/comp/ckit/src/ast/extensions/pads/*.sml
+padsc/comp/ckit/src/ast/extensions/pads/transform/*
