@@ -14,6 +14,10 @@ warning: Error [in intList_read]: at (last: partial) 512B Block 1 from char 36 t
 [(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77>>>|99<<<\n12a|23|34\n12|24|34\n12|24|34\n24|34\n
 Record not okay
 Calling entry_read
+warning: Error [in intList_read]: at (last: partial) 512B Block 1 at char 42 : Unexpected extra data before array element separator 
+[(last: partial) 512B Block 1]12|24|34\n34|24|12\n23\n12|24|45|56|77|99\n12>>>a<<<|23|34\n12|24|34\n12|24|34\n24|34\n
+Record not okay
+Calling entry_read
 Record okay:	12|24|34
 Calling entry_read
 Record okay:	12|24|34

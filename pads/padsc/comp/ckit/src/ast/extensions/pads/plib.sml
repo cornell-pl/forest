@@ -94,7 +94,8 @@ struct
   val charlit      = "PDC_a_char_lit"
   val strlit       = "PDC_a_str_lit"
   val strlitRead   = "PDC_Cstr_lit_read"
-  val strlitScan   = "PDC_Cstr_lit_scan"
+  val strlitScan1  = "PDC_Cstr_lit_scan1"
+  val strlitScan2  = "PDC_Cstr_lit_scan2"
   val strlitWrite  = "PDC_a_Cstr_lit"
   val strlitWriteBuf  = "PDC_a_Cstr_lit_write2buf"
   val stringPCT    = P.makeTypedefPCT "PDC_string"
@@ -402,15 +403,23 @@ struct
 	          res:PT.expression) = 
       P.eqX(expectedValX, readFunX(n,pdc,loc,optArgs,pd,res))
 
-  fun scanFunX(n: string, pdc: PT.expression, c: PT.expression, s: PT.expression,
-	       eatLit: PT.expression, eatStop: PT.expression, panic: PT.expression,
-	       res: PT.expression, offset: PT.expression) = 
+  fun scan1FunX(n: string, pdc: PT.expression, c: PT.expression,
+	        eatLit: PT.expression, panic: PT.expression,
+	        offset: PT.expression) = 
+      PT.Call(PT.Id n, [pdc,c,eatLit,panic,offset])
+
+  fun scan2FunX(n: string, pdc: PT.expression, c: PT.expression, s: PT.expression,
+	        eatLit: PT.expression, eatStop: PT.expression, panic: PT.expression,
+	        res: PT.expression, offset: PT.expression) = 
       PT.Call(PT.Id n, [pdc,c,s,eatLit,eatStop,panic,res,offset])
 
+(* --- OBSOLETE ? ----
   fun scanFunChkX(expectedValX, n: string, pdc: PT.expression, c: PT.expression, s: PT.expression,
 		  eatLit: PT.expression, eatStop: PT.expression, panic: PT.expression,
 		  res: PT.expression, offset: PT.expression) = 
-      P.eqX(expectedValX, scanFunX(n,pdc,c,s,eatLit,eatStop,panic,res,offset))
+      P.eqX(expectedValX, scan2FunX(n,pdc,c,s,eatLit,eatStop,panic,res,offset))
+
+*)
 
   fun nstPrefixWhat(outstr, pnst, prefix, what) = 
       PT.Expr(PT.Call(PT.Id "PDCI_nst_prefix_what", [outstr, pnst, prefix, what]))

@@ -4664,7 +4664,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
 #gen_include "padsc-internal.h"
 #gen_include "padsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.108 2003-09-19 18:29:22 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.109 2003-09-21 00:36:40 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7078,16 +7078,72 @@ PDCI_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf
 /* CHARSET INTERNAL SCAN FUNCTIONS */
 
 #if PDC_CONFIG_READ_FUNCTIONS > 0
+
 PDC_error_t
-PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s, int panic,
-		   PDC_char *c_out, size_t *offset_out, PDC_charset char_set, const char *whatfn)
+PDCI_char_lit_scan1(PDC_t *pdc, PDC_char c, int eat_c, int panic,
+		    size_t *offset_out, PDC_charset char_set, const char *whatfn)
 {
   PDC_byte       *begin, *p1, *end, *goal;
   int             bor, eor, eof;
   PDCI_goal_t     the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
 
   PDCI_IODISC_0P_CHECKS(whatfn);
-  PDC_TRACE7(pdc->disc, "PDCI_char_lit_scan args: c %s stop %s eat_c %d eat_s %d, panic %d, char_set = %s, whatfn = %s",
+  PDC_TRACE5(pdc->disc, "PDCI_char_lit_scan1 args: c %s eat_c %d panic %d, char_set = %s, whatfn = %s",
+	     PDC_qfmt_char(c), eat_c, panic, PDC_charset2str(char_set), whatfn);
+  switch (char_set)
+    {
+    case PDC_charset_ASCII:
+      break;
+    case PDC_charset_EBCDIC:
+      c = PDC_mod_ae_tab[(int)c]; /* convert to EBCDIC char */
+      break;
+    default:
+      goto invalid_charset;
+    }
+  if (offset_out) {
+    (*offset_out) = 0;
+  }
+  if (PDC_ERR == PDCI_IO_need_some_bytes(pdc, the_goal, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
+    return PDC_ERR;
+  }
+  p1 = begin;
+  while (1) {
+    if (p1 == end) return PDC_ERR;
+    /* p1 < end */
+    if (c == (*p1)) {
+      if (offset_out) {
+	(*offset_out) = (p1-begin);
+      }
+      if (eat_c) {
+	p1++; /* advance beyond char found */
+      }
+      if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	goto fatal_forward_err;
+      }
+      return PDC_OK;
+    }
+    p1++;
+  }
+
+ invalid_charset:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_CHARSET, whatfn, 0);
+  return PDC_ERR;
+
+ fatal_forward_err:
+  PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_FORWARD_ERR, whatfn, "IO_forward error");
+  return PDC_ERR;
+}
+
+PDC_error_t
+PDCI_char_lit_scan2(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s, int panic,
+		    PDC_char *c_out, size_t *offset_out, PDC_charset char_set, const char *whatfn)
+{
+  PDC_byte       *begin, *p1, *end, *goal;
+  int             bor, eor, eof;
+  PDCI_goal_t     the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+
+  PDCI_IODISC_0P_CHECKS(whatfn);
+  PDC_TRACE7(pdc->disc, "PDCI_char_lit_scan2 args: c %s stop %s eat_c %d eat_s %d, panic %d, char_set = %s, whatfn = %s",
 	     PDC_qfmt_char(c), PDC_qfmt_char(s), eat_c, eat_s, panic, PDC_charset2str(char_set), whatfn);
   switch (char_set)
     {
@@ -7153,10 +7209,78 @@ PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s, int
 }
 
 PDC_error_t
-PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
-		  int eat_findStr, int eat_stopStr, int panic,
-		  PDC_string **str_out, size_t *offset_out, PDC_charset char_set,
-		  const char *whatfn) 
+PDCI_str_lit_scan1(PDC_t *pdc, const PDC_string *findStr,
+		   int eat_findStr, int panic,
+		   size_t *offset_out, PDC_charset char_set,
+		   const char *whatfn) 
+{
+  PDC_byte        *begin, *p1, *end, *goal;
+  int             bor, eor, eof;
+  PDCI_goal_t     the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+  PDC_string     *tmp_findStr = (PDC_string*)findStr;
+
+  PDCI_IODISC_1P_CHECKS(whatfn, findStr);
+
+  PDC_TRACE5(pdc->disc, "PDCI_str_lit_scan args: findStr = %s eat_findStr = %d panic %d, char_set = %s, whatfn = %s",
+	     PDC_qfmt_str(findStr), eat_findStr, panic, PDC_charset2str(char_set), whatfn);
+  if (offset_out) {
+    (*offset_out) = 0;
+  }
+  if (!tmp_findStr || tmp_findStr->len == 0) {
+    PDC_WARN1(pdc->disc, "%s: null/empty findStr specified", whatfn);
+    return PDC_ERR;
+  }
+  switch (char_set)
+    {
+    case PDC_charset_ASCII:
+      break;
+    case PDC_charset_EBCDIC:
+      tmp_findStr = &pdc->stmp1;
+      PDCI_A2E_STR_CPY(tmp_findStr, findStr->str, findStr->len);
+      break;
+    default:
+      goto invalid_charset;
+    }
+  if (PDC_ERR == PDCI_IO_need_some_bytes(pdc, the_goal, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
+    return PDC_ERR;
+  }
+  p1 = begin;
+  while (1) {
+    if (p1 + tmp_findStr->len > end) return PDC_ERR;
+    /* p1 + tmp_findStr->len <= end */
+    if (strncmp((char*)p1, tmp_findStr->str, tmp_findStr->len) == 0) {
+      if (offset_out) {
+	(*offset_out) = (p1-begin);
+      }
+      if (eat_findStr) {
+	p1 += tmp_findStr->len; /* advance beyond findStr */
+      }
+      if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	goto fatal_forward_err;
+      }
+      return PDC_OK;
+    }
+    p1++;
+  }
+
+ invalid_charset:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_CHARSET, whatfn, 0);
+  return PDC_ERR;
+
+ fatal_forward_err:
+  PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_FORWARD_ERR, whatfn, "IO_forward error");
+  return PDC_ERR;
+
+ fatal_alloc_err:
+  PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_ALLOC_ERR, whatfn, "Memory alloc error");
+  return PDC_ERR;
+}
+
+PDC_error_t
+PDCI_str_lit_scan2(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
+		   int eat_findStr, int eat_stopStr, int panic,
+		   PDC_string **str_out, size_t *offset_out, PDC_charset char_set,
+		   const char *whatfn) 
 {
   PDC_byte        *begin, *p1, *end, *goal;
   int             bor, eor, eof;
@@ -7245,10 +7369,27 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
 }
 
 PDC_error_t
-PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr,
-		   int eat_findStr, int eat_stopStr, int panic,
-		   const char **str_out, size_t *offset_out, PDC_charset char_set,
-		   const char *whatfn)
+PDCI_Cstr_lit_scan1(PDC_t *pdc, const char *findStr,
+		    int eat_findStr, int panic,
+		    size_t *offset_out, PDC_charset char_set,
+		    const char *whatfn)
+{
+  PDC_string findS;
+  PDC_string *findS_ptr = 0;
+
+  if (findStr) {
+    findS.str = (char*)findStr;
+    findS.len = strlen(findStr);
+    findS_ptr = &findS;
+  }
+  return PDCI_str_lit_scan1(pdc, findS_ptr, eat_findStr, panic, offset_out, char_set, whatfn);
+}
+
+PDC_error_t
+PDCI_Cstr_lit_scan2(PDC_t *pdc, const char *findStr, const char *stopStr,
+		    int eat_findStr, int eat_stopStr, int panic,
+		    const char **str_out, size_t *offset_out, PDC_charset char_set,
+		    const char *whatfn)
 {
   PDC_string findS, stopS;
   PDC_string *findS_ptr = 0, *stopS_ptr = 0;
@@ -7265,13 +7406,13 @@ PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr,
     stopS_ptr = &stopS;
   }
   if (str_out) {
-    if (PDC_ERR == PDCI_str_lit_scan(pdc, findS_ptr, stopS_ptr, eat_findStr, eat_stopStr, panic, &outS_ptr, offset_out, char_set, whatfn)) {
+    if (PDC_ERR == PDCI_str_lit_scan2(pdc, findS_ptr, stopS_ptr, eat_findStr, eat_stopStr, panic, &outS_ptr, offset_out, char_set, whatfn)) {
       return PDC_ERR;
     }
     (*str_out) = (outS_ptr == findS_ptr) ? findStr : stopStr;
     return PDC_OK;
   }
-  return PDCI_str_lit_scan(pdc, findS_ptr, stopS_ptr, eat_findStr, eat_stopStr, panic, 0, offset_out, char_set, whatfn);
+  return PDCI_str_lit_scan2(pdc, findS_ptr, stopS_ptr, eat_findStr, eat_stopStr, panic, 0, offset_out, char_set, whatfn);
 }
 
 #endif /* PDC_CONFIG_READ_FUNCTIONS */

@@ -620,7 +620,8 @@ structure CnvExt : CNVEXT = struct
               fun dstSuf s = s^"_dst"
               fun addSuf  s = s^"_add"
               fun readSuf s = s^"_read"
-              fun scanSuf s = s^"_scan"
+              fun scan1Suf s = s^"_scan1"
+              fun scan2Suf s = s^"_scan2"
               fun maskInitSuf s = s^"_m_init"
               fun writeSuf s = s^"_write"
 	      fun ioSuf s = s^"2io"
@@ -2277,7 +2278,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      val tpdDecl = P.varDeclS'(PL.base_pdPCT, tpd)
 			      val offsetDecl = P.varDeclS'(PL.sizePCT, "n")
 
-			      val scanFieldName = scanSuf pTyName
+			      val scanFieldName = scan2Suf pTyName
 
 			      fun genPanicRecovery (pTyName:string) : pcstmt list -> pcstmt list = 
                                         fn elseSs =>
@@ -2287,11 +2288,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                                 (* base_m tmask = Ignore; *)
 						PT.IfThen(
 						 P.neqX(PL.PDC_ERROR,
-						       PL.scanFunX(scanFieldName, PT.Id pdc, 
-								   expr, expr, P.trueX, P.trueX,
-								   P.trueX, (* panic=1 *)
-								   P.zero,
-                                                                   P.addrX (PT.Id "n"))),
+						       PL.scan2FunX(scanFieldName, PT.Id pdc, 
+								    expr, expr, P.trueX, P.trueX,
+								    P.trueX, (* panic=1 *)
+								    P.zero,
+                                                                    P.addrX (PT.Id "n"))),
 						 (* PDC_PS_unsetPanic(pd) *)
 						 PT.Compound[PL.unsetPanicS(PT.Id pd)])
                                               ], 
@@ -2323,10 +2324,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  [PL.getLocBeginS(PT.Id pdc, P.addrX(P.dotX(PT.Id tpd, PT.Id loc))),
 				   PT.IfThenElse(
 				      P.eqX(PL.PDC_OK,
-					    PL.scanFunX(scanFieldName, 
-							PT.Id pdc, expr, expr, P.trueX, P.trueX,
-							P.falseX, (* panic=0 *)
-							P.zero, P.addrX (PT.Id "n"))),
+					    PL.scan2FunX(scanFieldName, 
+							 PT.Id pdc, expr, expr, P.trueX, P.trueX,
+							 P.falseX, (* panic=0 *)
+							 P.zero, P.addrX (PT.Id "n"))),
 				      PT.Compound(
 					 [PT.IfThen(
                                            P.gtX(PT.Id "n", P.zero),
@@ -3628,9 +3629,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				     val isString = okay andalso equalType(expTy, CTstring)
 				     val (readFun,scanFun,writeFun) = 
 					     if isString then
-						 (PL.strlitRead, PL.strlitScan, PL.strlitWriteBuf)
+						 (PL.strlitRead, PL.strlitScan2, PL.strlitWriteBuf)
 					     else
-						 (readSuf PL.charlit, scanSuf PL.charlit, lookupLitWrite PL.charlit)
+						 (readSuf PL.charlit, scan2Suf PL.charlit, lookupLitWrite PL.charlit)
 				     val (valOpt,_,_,_) = evalExpr exp
 				 in
 				    (SOME (exp, valOpt, isString, readFun, scanFun, writeFun), NONE,NONE,NONE)
@@ -3645,9 +3646,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				     val isString = okay andalso equalType(expTy, CTstring)
 				     val (readFun,scanFun,writeFun) = 
 					     if isString then
-						 (PL.strlitRead, PL.strlitScan, PL.strlitWriteBuf)
+						 (PL.strlitRead, PL.strlitScan2, PL.strlitWriteBuf)
 					     else
-						 (readSuf PL.charlit, scanSuf PL.charlit, lookupLitWrite PL.charlit)
+						 (readSuf PL.charlit, scan2Suf PL.charlit, lookupLitWrite PL.charlit)
 				     val (valOpt,_,_,_) = evalExpr exp
 				 in
 				   (NONE, SOME (exp,valOpt, isString, readFun,scanFun,writeFun), NONE, NONE)
@@ -3890,7 +3891,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  let val chkTermSs = 
 				      [PT.IfThen(eqTest(isString, PT.Id "c", termX),
 					 PT.Compound[
-				          recordArrayErrorS([locES], locX,
+				          recordArrayErrorS([locES1], locX,
 							    PL.PDC_ARRAY_EXTRA_BEFORE_TERM,true,
 							    readName,"",[],false),
 					  P.assignS(PT.Id foundTerm, P.trueX),
@@ -3909,11 +3910,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			 locBS,
 		         PT.IfThenElse(
 			    P.eqX(PL.PDC_OK,
-				  PL.scanFunX(scanSep, PT.Id pdc, 
-					      sepX, scanStopX, P.trueX, P.falseX,
-					      P.falseX, (* panic=0 *)
-					      P.addrX (PT.Id "c"),
-					      P.addrX (PT.Id "n"))),
+				  PL.scan2FunX(scanSep, PT.Id pdc, 
+					       sepX, scanStopX, P.trueX, P.falseX,
+					       P.falseX, (* panic=0 *)
+					       P.addrX (PT.Id "c"),
+					       P.addrX (PT.Id "n"))),
 			    PT.Compound[
                               PT.IfThen(amCheckingBasicE NONE, 
 	  		       PT.Compound[ (* if am checking *)
@@ -3969,13 +3970,13 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                      let val panicSs = [PL.setPanicS(PT.Id pd), PT.Break]
                          val recoveryFailedSs = P.mkCommentS("Recovery failed.") :: panicSs
 			 val noRecoverySs = P.mkCommentS("No recovery possible.") :: panicSs
-			 fun recoverToCharSs (which, scan, forX, stopX) = [
+			 fun recoverToCharSs (which, scan, forX, stopX, eatForX, eatStopX) = [
 				  P.mkCommentS("Try to recover to " ^ which ^"."),
 				  PT.IfThenElse(P.eqX(PL.PDC_OK,
-						   PL.scanFunX(scan, PT.Id pdc, 
-							       forX, stopX, P.trueX, P.falseX,
-							       P.trueX, (* panic=1 *)
-							       P.zero, P.zero)),
+						   PL.scan2FunX(scan, PT.Id pdc, 
+							        forX, stopX, eatForX, eatStopX,
+							        P.trueX, (* panic=1 *)
+							        P.zero, P.zero)),
                                     PT.Compound[
 				     P.mkCommentS("We recovered; restored invariant.")],
 				    PT.Compound(recoveryFailedSs)
@@ -3984,16 +3985,16 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			 case (sepXOpt, termXOpt, maxOpt) 
                          of (NONE,NONE,_) => noRecoverySs
                          |  (SOME (sepX, _, _,_, sepScan, _), NONE, NONE) => 
-                               recoverToCharSs("separator", sepScan, sepX, P.intX 0)
+                               recoverToCharSs("separator", sepScan, sepX, P.intX 0, P.trueX, P.falseX)
                          |  (SOME (sepX, _,_,_, sepScan, _), NONE, SOME _) => 
 			       [PT.IfThenElse(PT.Id reachedLimit,
 				 PT.Compound(noRecoverySs), 
-				 PT.Compound(recoverToCharSs ("separator", sepScan, sepX, P.intX 0)))]
+				 PT.Compound(recoverToCharSs ("separator", sepScan, sepX, P.intX 0, P.trueX, P.falseX)))]
                          |  (NONE, SOME(termX, _,_, _, termScan, _), _ ) => 
-			       recoverToCharSs("terminator", termScan, termX, P.intX 0)
+			       recoverToCharSs("terminator", termScan, termX, P.intX 0, P.falseX, P.falseX)
                          |  (SOME (sepX, _, _, _, sepScan, _), SOME(termX, _, _,_, termScan,_), _ ) =>
 			      (if sepScan = termScan
-			       then recoverToCharSs("separator and/or terminator", termScan, sepX,termX)
+			       then recoverToCharSs("separator and/or terminator", termScan, sepX, termX, P.trueX, P.falseX)
                                else (PE.error ("Currently, separators and terminators must both be characters or both be strings.");
 					      noRecoverySs))
 		     in
@@ -4076,14 +4077,14 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			   locBS,
 		           PT.IfThenElse(
 			     P.eqX(PL.PDC_OK,
-				  PL.scanFunX(termScan, PT.Id pdc, 
-					      termX, termX, P.trueX, P.falseX,
-					      P.falseX, (* panic=0 *)
-					      P.zero, P.zero)),
+				  PL.scan2FunX(termScan, PT.Id pdc, 
+					       termX, termX, P.falseX, P.falseX,
+					       P.falseX, (* panic=0 *)
+					       P.zero, P.zero)),
                              PT.Compound[
 			      PT.IfThen(amCheckingBasicE NONE, 
 			        PT.Compound[
-				 recordArrayErrorS([locES],locX, PL.PDC_ARRAY_EXTRA_BEFORE_TERM,
+				 recordArrayErrorS([locES1],locX, PL.PDC_ARRAY_EXTRA_BEFORE_TERM,
 						   true,readName,"",[],false),
 				 P.assignS(PT.Id foundTerm, P.trueX)])],
 			     recordArrayErrorS([locES],locX,PL.PDC_ARRAY_TERM_ERR, true, readName,

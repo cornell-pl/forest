@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
       goto done;
     }
 #else
-    if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 1, 0, 0, &bytes_skipped)) {
+    if (PDC_ERR == PDC_a_char_lit_scan1(pdc, '\n', 1, 0, &bytes_skipped)) {
       error(2, "Could not find newline, ending program");
       break;
     }
