@@ -3679,14 +3679,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  fun genLoop {index:string, range, body:PT.expression}  = 
 		     let val (lower, upper) = case range of PX.Bounds(lower, upper) => (lower, upper)
 			                      | _ => (PE.bug "unexpected array name"; (P.zero, P.zero)  (* not possible *))
+			 val supper = pcgenName "supper"
+			 val slength = pcgenName "slength"
 		     in
 			 [PT.Compound
 			 [P.varDeclS'(P.int, index),
+			  P.varDeclS(PL.ssizePCT, supper, PT.Cast(PL.ssizePCT, upper)),
+			  P.varDeclS(PL.ssizePCT, slength, PT.Cast(PL.ssizePCT, P.fieldX(rep, length))),
 			  PT.IfThen(P.notX(P.andX(P.lteX(P.zero, lower),
-						  P.ltX(upper, P.fieldX(rep, length)))),
+						  P.ltX(PT.Id supper, PT.Id slength))),
 				    PT.Compound[P.assignS(PT.Id violated, P.trueX)]),
 			  PT.For(P.assignX(PT.Id index, lower),
-				 P.andX(P.notX(PT.Id violated), P.lteX(PT.Id index, upper)), 
+				 P.andX(P.notX(PT.Id violated), 
+					P.andX(P.gteX(PT.Id supper, P.zero),
+					       P.lteX(PT.Id index, upper))), 
 				 P.postIncX(PT.Id index),
 				 PT.Compound[
                                    PT.IfThen(P.notX(body),
