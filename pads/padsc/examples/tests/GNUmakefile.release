@@ -20,7 +20,7 @@ GEN_DIR = ../../gen
 GEN_WRITE = 1
 
 # the following indicates that generated .c files should not be removed
-.PRECIOUS: $(GEN_DIR)/%.c  $(GEN_DIR)/%_expanded.c 
+.PRECIOUS: $(GEN_DIR)/%.c  $(GEN_DIR)/%_expanded.c %_expanded.c
 
 # need to set this before including rules.mk
 REGRESS_TESTS = 1
