@@ -1,4 +1,6 @@
 Using PADSC IO discipline ctrec with cterm P_EBCDIC_NEWLINE
+warning: Error [in P_ctrec_noseek_read]: at record 5 from byte 1 to byte 10: Final record not terminated properly, missing terminating char
+[record 5]\206\226\226\365j\202\201\231\365j>>><<<
 Read string term by vbar: foo1 (length 4)
 Read string term by vbar: bar1 (length 4)
 Read string term by EOR or X : zot1 (length 4)
@@ -8,7 +10,7 @@ Read string term by vbar: bar2 (length 4)
 Read string term by EOR or X : zot2 (length 4)
 bytes_skipped to find EOR/newline = 0
 Read string term by vbar: foo3 (length 4)
-warning: Error [in Pe_string_read]: at record 3 from char 6 to char 14: Expected character literal not found 
+warning: Error [in Pe_string_read]: at record 3 from byte 6 to byte 14: Expected character literal not found 
 [record 3]\206\226\226\363j>>>\202\201\231\363@\251\226\243\363<<<
 bytes_skipped to find EOR/newline = 9
 Read string term by vbar: foo4 (length 4)
@@ -17,5 +19,5 @@ Read string term by EOR or X : zot4 (length 4)
 bytes_skipped to find EOR/newline = 1
 Read string term by vbar: foo5 (length 4)
 Read string term by vbar: bar5 (length 4)
-warning: Error [in Pe_string_CSE_read]: at (partial: missing record terminator) record 5 just before char 11: Match for regular expression not found
-[(partial: missing record terminator) record 5]\206\226\226\365j\202\201\231\365j>>><<<
+warning: Error [in Pe_string_CSE_read]: at record 5 just before byte 11: Match for regular expression not found
+[record 5]\206\226\226\365j\202\201\231\365j>>><<<

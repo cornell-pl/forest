@@ -29,25 +29,27 @@
 #define PDCI_IO_GETPOS(pads, pos)
 do {
   PDCI_stkElt_t    *tp        = &((pads)->stack[(pads)->top]);
-  Pio_elt_t     *elt       = tp->elt;
+  Pio_elt_t        *elt       = tp->elt;
 
   (pos).num = elt->num;
   if (elt->len) {
-    (pos).byte = elt->len - tp->remain + 1;
+    size_t pos_offset = elt->len - tp->remain;
+    (pos).byte        = pos_offset + 1;
+    (pos).sfio_offset = elt->sfio_offset + pos_offset;
   } else {
-    (pos).byte = 0;
+    (pos).byte        = 0;
+    (pos).sfio_offset = elt->sfio_offset;
   }
-  (pos).unit = elt->unit;
 } while (0)
 /* END_MACRO */ 
 
 /* k must be > 0 */
 #define PDCI_IO_GETPOS_PLUS(pads, pos, k)
 do {
-  PDCI_stkElt_t    *tp        = &(pads->stack[pads->top]);
-  Pio_elt_t     *elt       = tp->elt;
-  size_t           remain     = tp->remain;
-  size_t           offset     = k;
+  PDCI_stkElt_t   *tp        = &(pads->stack[pads->top]);
+  Pio_elt_t       *elt       = tp->elt;
+  size_t           remain    = tp->remain;
+  size_t           offset    = k;
   /* invariant: remain should be in range [1, elt->len] */
   if (remain > offset) {
     remain -= offset;
@@ -68,14 +70,15 @@ do {
   }
   /* either we hit pads->head or we got to the proper spot */
   if (elt == pads->head) {
-    (pos).num = 0;
-    (pos).byte = 0;
-    (pos).unit = "*pos not found*";
+    (pos).num         =  0;
+    (pos).byte        =  0;
+    (pos).sfio_offset = -1;
     P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_PLUS called with bad offset");
   } else {
-    (pos).num  = elt->num;
-    (pos).unit = elt->unit;
-    (pos).byte = elt->len - remain + 1;
+    size_t pos_offset = elt->len - remain;
+    (pos).num         = elt->num;
+    (pos).byte        = pos_offset + 1;
+    (pos).sfio_offset = elt->sfio_offset + pos_offset;
   }
 } while (0)
 /* END_MACRO */ 
@@ -84,10 +87,10 @@ do {
 #define PDCI_IO_GETPOS_MINUS(pads, pos, k)
 do {
   PDCI_stkElt_t    *tp        = &(pads->stack[pads->top]);
-  Pio_elt_t     *elt       = tp->elt;
-  size_t           remain     = tp->remain;
-  size_t           offset     = k;
-  size_t           avail;
+  Pio_elt_t        *elt       = tp->elt;
+  size_t            remain    = tp->remain;
+  size_t            offset    = k;
+  size_t            avail;
   /* invariant: remain should be in range [1, elt->len] */
   avail = elt->len - remain;
   if (avail >= offset) {
@@ -110,37 +113,30 @@ do {
   }
   /* either we hit pads->head or we got to the proper spot */
   if (elt == pads->head) {
-    (pos).num = 0;
-    (pos).byte = 0;
-    (pos).unit = "*pos not found*";
+    (pos).num         =  0;
+    (pos).byte        =  0;
+    (pos).sfio_offset = -1;
     P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_MINUS called with bad offset");
   } else {
-    (pos).num  = elt->num;
-    (pos).unit = elt->unit;
-    (pos).byte = elt->len - remain + 1;
+    size_t pos_offset = elt->len - remain;
+    (pos).num         = elt->num;
+    (pos).byte        = pos_offset + 1;
+    (pos).sfio_offset = elt->sfio_offset + pos_offset;
   }
 } while (0)
 /* END_MACRO */ 
 
-#define PDCI_IO_BEGINLOC(pads, loc)
-do {
-  PDCI_stkElt_t    *tp        = &((pads)->stack[(pads)->top]);
-  Pio_elt_t     *elt       = tp->elt;
-
-  (loc).b.num = elt->num;
-  if (elt->len) {
-    (loc).b.byte = elt->len - tp->remain + 1;
-  } else {
-    (loc).b.byte = 0;
-  }
-  (loc).b.unit = elt->unit;
-} while (0)
-/* END_MACRO */ 
+#define PDCI_IO_BEGINLOC(pads, loc) PDCI_IO_GETPOS(pads, (loc).b)
 
 #define PDCI_IO_ENDLOC_SPAN0(pads, loc)
 do {
   (loc).e = (loc).b;
-  if ((loc).e.byte) ((loc).e.byte)--;
+  if ((loc).e.byte) {
+    ((loc).e.byte)--;
+    if ((loc).e.sfio_offset > 0) {
+      ((loc).e.sfio_offset)--;
+    }
+  }
 } while (0)
 /* END_MACRO */ 
 
@@ -156,32 +152,15 @@ do {
 
 #define PDCI_IO_GETLOC_SPAN0(pads, loc)
 do {
-  PDCI_stkElt_t    *tp        = &((pads)->stack[(pads)->top]);
-  Pio_elt_t     *elt       = tp->elt;
-
-  (loc).b.num = (loc).e.num = elt->num;
-  if (elt->len) {
-    (loc).e.byte = elt->len - tp->remain;
-    (loc).b.byte = (loc).e.byte + 1;
-  } else {
-    (loc).b.byte = (loc).e.byte = 0;
-  }
-  (loc).b.unit = (loc).e.unit = elt->unit;
+  PDCI_IO_BEGINLOC(pads, loc);
+  PDCI_IO_ENDLOC_SPAN0(pads, loc);
 } while (0)
 /* END_MACRO */ 
 
 #define PDCI_IO_GETLOC_SPAN1(pads, loc)
 do {
-  PDCI_stkElt_t    *tp        = &((pads)->stack[(pads)->top]);
-  Pio_elt_t     *elt       = tp->elt;
-
-  (loc).b.num = (loc).e.num = elt->num;
-  if (elt->len) {
-    (loc).b.byte = (loc).e.byte = elt->len - tp->remain + 1;
-  } else {
-    (loc).b.byte = (loc).e.byte = 0;
-  }
-  (loc).b.unit = (loc).e.unit = elt->unit;
+  PDCI_IO_BEGINLOC(pads, loc);
+  PDCI_IO_ENDLOC_SPAN1(pads, loc);
 } while (0)
 /* END_MACRO */ 
 
@@ -4608,7 +4587,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.112 2003-10-02 15:11:06 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.113 2003-10-07 00:11:44 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5365,6 +5344,13 @@ P_set_inv_valfn(P_t* pads, Pinv_valfn_map_t *map, const char *type_name, Pinv_va
 /* ================================================================================ */
 /* EXTERNAL IO FUNCTIONS */
 
+const char *
+P_io_read_unit(P_t *pads)
+{
+  PDCI_IODISC_INIT_CHECKS_RET_0("P_io_read_unit");
+  return pads->disc->io_disc->read_unit_fn(pads, pads->disc->io_disc);
+}
+
 Perror_t
 P_io_set(P_t *pads, Sfio_t *io)
 {
@@ -5446,8 +5432,8 @@ P_io_close(P_t *pads)
 Perror_t
 P_io_next_rec(P_t *pads, size_t *skipped_bytes_out) {
   PDCI_stkElt_t    *tp;
-  Pio_elt_t     *keep_elt;
-  Pio_elt_t     *next_elt;
+  Pio_elt_t        *keep_elt;
+  Pio_elt_t        *next_elt;
   int               prev_eor;
 
   PDCI_IODISC_1P_CHECKS("P_io_next_rec", skipped_bytes_out);
@@ -5523,12 +5509,12 @@ Perror_t
 P_io_getPos(P_t *pads, Ppos_t *pos, int offset)
 {
   PDCI_stkElt_t    *tp;
-  Pio_elt_t     *elt;
-  size_t           remain;
-  size_t           avail;
+  Pio_elt_t        *elt;
+  size_t            remain;
+  size_t            avail;
 #ifndef NDEBUG
-  Ppos_t        tpos; /* XXX_REMOVE */
-  int              toffset = offset; /* XXX_REMOVE */
+  Ppos_t            tpos; /* XXX_REMOVE */
+  int               toffset = offset; /* XXX_REMOVE */
 #endif
 
   PDCI_DISC_1P_CHECKS("P_io_getPos", pos);
@@ -5551,9 +5537,9 @@ P_io_getPos(P_t *pads, Ppos_t *pos, int offset)
 	}
 	elt = elt->next;
 	if (elt == pads->head) {
-	  pos->num = 0;
-	  pos->byte = 0;
-	  pos->unit = "*pos not found*";
+	  pos->num         = 0;
+	  pos->byte        = 0;
+	  pos->sfio_offset = 0;
 #ifndef NDEBUG
 	  goto err_check; /* XXX_REMOVE */
 #else
@@ -5579,9 +5565,9 @@ P_io_getPos(P_t *pads, Ppos_t *pos, int offset)
       while (1) {
 	elt = elt->prev;
 	if (elt == pads->head) {
-	  pos->num = 0;
-	  pos->byte = 0;
-	  pos->unit = "*pos not found*";
+	  pos->num         =  0;
+	  pos->byte        =  0;
+	  pos->sfio_offset = -1;
 #ifndef NDEBUG
 	  goto err_check; /* XXX_REMOVE */
 #else
@@ -5601,11 +5587,13 @@ P_io_getPos(P_t *pads, Ppos_t *pos, int offset)
  done:
   pos->num  = elt->num;
   if (elt->len) {
-    pos->byte = elt->len - remain + 1;
+    size_t pos_offset = elt->len - remain;
+    pos->byte         = pos_offset + 1;
+    pos->sfio_offset  = elt->sfio_offset + pos_offset;
   } else {
-    pos->byte = 0;
+    pos->byte         = 0;
+    pos->sfio_offset  = elt->sfio_offset;
   }
-  pos->unit = elt->unit;
 #ifndef NDEBUG
   /* XXX_REMOVE */
   if (toffset == 0) {
@@ -5662,6 +5650,9 @@ P_io_getLoc(P_t *pads, Ploc_t *loc, int offset)
   loc->e = loc->b;
   if (loc->e.byte) {
     (loc->e.byte)--;
+    if (loc->e.sfio_offset > 0) {
+      (loc->e.sfio_offset)--;
+    }
   }
   return P_OK;
 }
@@ -6099,12 +6090,13 @@ Perror_t
 PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
 		PerrCode_t errCode, const char *whatfn, const char *format, ...)
 {
-  Perror_f pdc_errorf;
-  char    *severity = "Error";
-  char    *msg      = "** unknown error code **";
-  char    *infn, *tmpstr1, *tmpstr2, *tmpstr3;
-  size_t  tmplen1, tmplen2, tmplen3;
-  int     nullspan = 0;
+  Perror_f    pdc_errorf;
+  char       *severity = "Error";
+  char       *msg      = "** unknown error code **";
+  char       *infn, *tmpstr1, *tmpstr2, *tmpstr3;
+  const char *unit;
+  size_t      tmplen1, tmplen2, tmplen3;
+  int         nullspan = 0;
 
   P_TRACE(pads->disc, "PDCI_report_err called");
   if (!whatfn) {
@@ -6130,11 +6122,14 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
   if (loc && ((loc->e.num < loc->b.num) || (loc->b.num == loc->e.num && loc->e.byte < loc->b.byte))) {
     nullspan = 1;
   }
+  if (!(unit = P_io_read_unit(pads))) {
+    unit = "";
+  }
   sfstrset(pads->tmp1, 0);
   if (pads->disc->e_rep == PerrorRep_Min) {
     if (loc) {
-      pdc_errorf(NiL, level, "%s %s: %s %d char %d: errCode %d",
-		 severity, infn, loc->b.unit, loc->b.num, loc->b.byte, errCode);
+      pdc_errorf(NiL, level, "%s %s: %s %d byte %d: errCode %d",
+		 severity, infn, unit, loc->b.num, loc->b.byte, errCode);
     } else {
       pdc_errorf(NiL, level, "%s %s: errCode %d", severity, infn, errCode);
     }
@@ -6143,7 +6138,7 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
   if (format && strlen(format)) {
     va_list ap;
     if (loc) {
-      sfprintf(pads->tmp1, "%s %s: %s %d char %d : ", severity, infn, loc->b.unit, loc->b.num, loc->b.byte);
+      sfprintf(pads->tmp1, "%s %s: %s %d byte %d : ", severity, infn, unit, loc->b.num, loc->b.byte);
     } else {
       sfprintf(pads->tmp1, "%s %s: ", severity, infn);
     }
@@ -6294,25 +6289,25 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
     }
     if (loc) {
       if (loc->b.num < loc->e.num) {
-	sfprintf(pads->tmp1, "%s %s: from %s %d char %d to %s %d char %d: %s ",
+	sfprintf(pads->tmp1, "%s %s: from %s %d byte %d to %s %d byte %d: %s ",
 		 severity, infn,
-		 loc->b.unit, loc->b.num, loc->b.byte, 
-		 loc->e.unit, loc->e.num, loc->e.byte,
+		 unit, loc->b.num, loc->b.byte, 
+		 unit, loc->e.num, loc->e.byte,
 		 msg);
       } else if (nullspan) {
-	sfprintf(pads->tmp1, "%s %s: at %s %d just before char %d: %s",
+	sfprintf(pads->tmp1, "%s %s: at %s %d just before byte %d: %s",
 		 severity, infn,
-		 loc->b.unit, loc->b.num, loc->b.byte,
+		 unit, loc->b.num, loc->b.byte,
 		 msg);
       } else if (loc->b.byte == loc->e.byte) {
-	sfprintf(pads->tmp1, "%s %s: at %s %d at char %d : %s ",
+	sfprintf(pads->tmp1, "%s %s: at %s %d at byte %d : %s ",
 		 severity, infn,
-		 loc->b.unit, loc->b.num, loc->b.byte,
+		 unit, loc->b.num, loc->b.byte,
 		 msg);
       } else {
-	sfprintf(pads->tmp1, "%s %s: at %s %d from char %d to char %d: %s ",
+	sfprintf(pads->tmp1, "%s %s: at %s %d from byte %d to byte %d: %s ",
 		 severity, infn,
-		 loc->b.unit, loc->b.num, loc->b.byte, loc->e.byte,
+		 unit, loc->b.num, loc->b.byte, loc->e.byte,
 		 msg);
       }
     } else {
@@ -6323,7 +6318,7 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
     Pio_elt_t *elt1, *elt2;
     if (loc->b.num < loc->e.num) {
       if (P_OK == PDCI_io_getElt(pads, loc->b.num, &elt1)) {
-	sfprintf(pads->tmp1, "\n[%s %d]", loc->b.unit, loc->b.num);
+	sfprintf(pads->tmp1, "\n[%s %d]", unit, loc->b.num);
 	if (elt1->len == 0) {
 	  sfprintf(pads->tmp1, "(**EMPTY**)>>>");
 	} else {
@@ -6337,9 +6332,9 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
       if (P_OK == PDCI_io_getElt(pads, loc->e.num, &elt2)) {
 	if (!elt1) {
 	  sfprintf(pads->tmp1, "\n[%s %d]: ... >>>(char pos %d) ...",
-		   loc->b.unit, loc->b.num, loc->b.byte);
+		   unit, loc->b.num, loc->b.byte);
 	}
-	sfprintf(pads->tmp1, "\n[%s %d]", loc->e.unit, loc->e.num);
+	sfprintf(pads->tmp1, "\n[%s %d]", unit, loc->e.num);
 	if (elt2->len == 0) {
 	  sfprintf(pads->tmp1, "(**EMPTY**)<<<");
 	} else {
@@ -6352,7 +6347,7 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
       }
     } else { /* same elt */
       if (P_OK == PDCI_io_getElt(pads, loc->b.num, &elt1)) {
-	sfprintf(pads->tmp1, "\n[%s %d]", loc->b.unit, loc->b.num);
+	sfprintf(pads->tmp1, "\n[%s %d]", unit, loc->b.num);
 	if (elt1->len == 0) {
 	  sfprintf(pads->tmp1, ">>>(**EMPTY**)<<<");
 	} else if (nullspan) {

@@ -540,7 +540,7 @@ typedef Puint8 Pchar;
 #define P_FPOINT2DBL(fp) ((fp).num/(double)(fp).denom)
 
 /* flags are Puint32 values */
-typedef Puint32          Pflags_t;
+typedef Puint32 Pflags_t;
 
 #ifdef FOR_CKIT
 extern Puint32 P_NULL_CTL_FLAG;
@@ -656,9 +656,11 @@ Perror_t Pstring_cstr_share(P_t *pads, Pstring *targ, const char *src, size_t le
 Perror_t Pstring_copy(P_t *pads, Pstring *targ, const Pstring *src);
 Perror_t Pstring_cstr_copy(P_t *pads, Pstring *targ, const char *src, size_t len);
 Perror_t Pstring_preserve(P_t *pads, Pstring *s);
+
 #ifdef FOR_CKIT
 int Pstring_eq(const Pstring *str1, const Pstring *str2);
 int Pstring_eq_cstr(const Pstring *str, const char *cstr);
+
 void P_STRING_INIT_NULL(Pstring my_str);
 void P_STRING_INIT_LIT(Pstring my_str, const char *lit);
 void P_STRING_INIT_CSTR(Pstring my_str, const char *expr);
@@ -756,15 +758,15 @@ Puint32 P_Test_NotCheckAndSet(Puint32 m);
 Puint32 P_Test_NotBothCheck(Puint32 m);
 Puint32 P_Test_NotIgnore(Puint32 m);
 
-void       P_Do_Set(Puint32 m);
-void       P_Do_SynCheck(Puint32 m);
-void       P_Do_SemCheck(Puint32 m);
-void       P_Do_Write(Puint32 m);
+void    P_Do_Set(Puint32 m);
+void    P_Do_SynCheck(Puint32 m);
+void    P_Do_SemCheck(Puint32 m);
+void    P_Do_Write(Puint32 m);
 
-void       P_Dont_Set(Puint32 m);
-void       P_Dont_SynCheck(Puint32 m);
-void       P_Dont_SemCheck(Puint32 m);
-void       P_Dont_Write(Puint32 m);
+void    P_Dont_Set(Puint32 m);
+void    P_Dont_SynCheck(Puint32 m);
+void    P_Dont_SemCheck(Puint32 m);
+void    P_Dont_Write(Puint32 m);
 
 #else
 /* The actual declarations */
@@ -830,8 +832,11 @@ const char *Pendian2str   (Pendian_t  e);
 const char *Pcharset2str  (Pcharset   e); 
 /* Note: For Pbase_m2str, result should be used/copied prior to further library calls */
 
-/* A Ppos_t (IO position) has a byte position within the num'th read element
- * where unit describes the element kind (e.g., "line", "1K Block", etc.)
+/* A Ppos_t (IO position) has a byte position within the num'th read unit,
+ * where the read unit is determined by the IO discipline.  A description
+ * of the read unit (e.g., "record", "1K Block", etc.) can be obtained
+ * using P_io_read_unit.  There is also an sfio_offset field which gives the 
+ * absolute offset of the location within the currently installed IO stream.
  *
  * A Ploc_t (IO location) has two positions, b and e, marking the
  * first byte and the last byte where something interesting
@@ -849,11 +854,12 @@ const char *Pcharset2str  (Pcharset   e);
 struct Ppos_s {
   size_t       byte;
   size_t       num;
-  const char  *unit;
+  Sfoff_t      sfio_offset;
 };
 
 /* HELPER: P_POS_EQ tests whether pos1 is the same IO position as pos2 */
-#define P_POS_EQ(pos1, pos2) ((pos1).num == (pos2).num && (pos1).byte == (pos2).byte)
+/* #define P_POS_EQ(pos1, pos2) ((pos1).num == (pos2).num && (pos1).byte == (pos2).byte) */
+#define P_POS_EQ(pos1, pos2) ((pos1).sfio_offset == (pos2).sfio_offset)
 
 /* type Ploc_t: */
 struct Ploc_s {
@@ -892,18 +898,18 @@ struct Pdisc_s {
   Pflags_t           version;       /* interface version */
   Pflags_t           flags;         /* control flags */
   Pcharset           def_charset;   /* default char set */ 
-  int                   copy_strings;  /* if non-zero,  ASCII string read functions copy the strings found, otherwise not */
+  int                copy_strings;  /* if non-zero,  ASCII string read functions copy the strings found, otherwise not */
   /* For the next four values, 0 means end-of-record / soft limit for non-record-based IO disciplines */
-  size_t                match_max;     /* max match distance */ 
-  size_t                numeric_max;   /* max numeric value distance */
-  size_t                scan_max;      /* max normal scan distance */
-  size_t                panic_max;     /* max panic scan distance */
+  size_t             match_max;     /* max match distance */ 
+  size_t             numeric_max;   /* max numeric value distance */
+  size_t             scan_max;      /* max normal scan distance */
+  size_t             panic_max;     /* max panic scan distance */
   Perror_f           errorf;        /* error function using  ... */
   PerrorRep          e_rep;         /* controls error reporting */
   Pendian_t          d_endian;      /* endian-ness of the data */ 
   Puint64            acc_max2track; /* default maximum distinct values for accumulators to track */
   Puint64            acc_max2rep;   /* default maximum number of tracked values to describe in detail in report */
-  double                acc_pcnt2rep;  /* default maximum percent of values to describe in detail in report */
+  double             acc_pcnt2rep;  /* default maximum percent of values to describe in detail in report */
   Pinv_valfn_map_t  *inv_valfn_map; /* map types to inv_valfn for write functions */
   Pio_disc_t        *io_disc;       /* sub-discipline for controlling IO */
 };
@@ -920,7 +926,7 @@ extern Pdisc_t Pdefault_disc;
 P_PRIVATE_DECLS;
 
 struct P_s {
-  const char        *id;       /* interface id */
+  const char     *id;       /* interface id */
   Pdisc_t        *disc;     /* discipline handle */
   P_PRIVATE_STATE;
 };
@@ -929,8 +935,8 @@ struct P_s {
  * LIBRARY HANDLE OPEN/CLOSE FUNCTIONS
  */
 
-Perror_t  P_open          (P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc);
-Perror_t  P_close         (P_t *pads); 
+Perror_t  P_open  (P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc);
+Perror_t  P_close (P_t *pads); 
 
 /* ================================================================================
  * TOP-LEVEL GET/SET FUNCTIONS
@@ -1006,7 +1012,7 @@ Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
  *                   When an IO is installed via P_io_set, it is up to the
  *                   the program that opened to installed io to close it
  *                   (*after* calling P_io_close).
- *
+ * 
  * P_io_next_rec : Advances current IO position to start of the next record, if any.
  *                   Returns P_OK on success, P_ERR on failure 
  *                   (failure includes hitting EOF before EOR).
@@ -1030,6 +1036,9 @@ Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
  *   EOR marker bytes (if any) are ignored when moving forward or back
  *   based on offset -- offset only refers to data bytes.
  *
+ * P_io_read_unit : Provides a description of the read unit used in Ppos_t
+ *                  (e.g., "line", "1K block", etc.). Returns NULL on error
+ *                  (if there is no installed IO discipline).
  *
  * P_io_write_start:   Alloc a buffer buf associated with an output Sfio stream io
  *                       that can be filled in using the write2buf functions.
@@ -1111,29 +1120,31 @@ Perror_t  P_io_fopen    (P_t *pads, const char *path);
 Perror_t  P_io_close    (P_t *pads);
 Perror_t  P_io_next_rec (P_t *pads, size_t *skipped_bytes_out);
 
-int          P_io_at_eor        (P_t *pads);
-int          P_io_at_eof        (P_t *pads);
-int          P_io_at_eor_or_eof (P_t *pads);
+int       P_io_at_eor        (P_t *pads);
+int       P_io_at_eof        (P_t *pads);
+int       P_io_at_eor_or_eof (P_t *pads);
 
 Perror_t  P_io_getPos   (P_t *pads, Ppos_t *pos, int offset); 
 Perror_t  P_io_getLocB  (P_t *pads, Ploc_t *loc, int offset); 
 Perror_t  P_io_getLocE  (P_t *pads, Ploc_t *loc, int offset); 
 Perror_t  P_io_getLoc   (P_t *pads, Ploc_t *loc, int offset); 
 
+const char * P_io_read_unit(P_t *pads);
+
 #if P_CONFIG_WRITE_FUNCTIONS > 0
 Pbyte*    P_io_write_start (P_t *pads, Sfio_t *io, size_t *buf_len, int *set_buf);
-ssize_t      P_io_write_commit(P_t *pads, Sfio_t *io, Pbyte *buf, int set_buf, size_t num_bytes);
-void         P_io_write_abort (P_t *pads, Sfio_t *io, Pbyte *buf, int set_buf);
+ssize_t   P_io_write_commit(P_t *pads, Sfio_t *io, Pbyte *buf, int set_buf, size_t num_bytes);
+void      P_io_write_abort (P_t *pads, Sfio_t *io, Pbyte *buf, int set_buf);
 
-ssize_t      P_io_rec_write2io(P_t *pads, Sfio_t *io, Pbyte *buf, size_t rec_data_len);
-ssize_t      P_io_rec_open_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full);
-ssize_t      P_io_rec_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-					Pbyte *rec_start, size_t num_bytes);
+ssize_t   P_io_rec_write2io(P_t *pads, Sfio_t *io, Pbyte *buf, size_t rec_data_len);
+ssize_t   P_io_rec_open_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full);
+ssize_t   P_io_rec_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   Pbyte *rec_start, size_t num_bytes);
 
-ssize_t      P_io_rblk_write2io(P_t *pads, Sfio_t *io, Pbyte *buf, size_t blk_data_len, Puint32 num_recs);
-ssize_t      P_io_rblk_open_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full);
-ssize_t      P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-					 Pbyte *blk_start, size_t num_bytes, Puint32 num_recs);
+ssize_t   P_io_rblk_write2io(P_t *pads, Sfio_t *io, Pbyte *buf, size_t blk_data_len, Puint32 num_recs);
+ssize_t   P_io_rblk_open_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full);
+ssize_t   P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				    Pbyte *blk_start, size_t num_bytes, Puint32 num_recs);
 #endif
 
 /* ================================================================================
@@ -1263,17 +1274,17 @@ Perror_t Pa_cstr_lit_scan1 (P_t *pads, const char *f,       int eat_f, int panic
 Perror_t Pa_re_scan1       (P_t *pads, Pregexp_t *f,     int eat_f, int panic, size_t *offset_out);
 
 Perror_t Pa_char_lit_scan2 (P_t *pads, Pchar f, Pchar s,
-				  int eat_f, int eat_s, int panic,
-				  int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 Perror_t Pa_str_lit_scan2  (P_t *pads, const Pstring *f, const Pstring *s,
-				  int eat_f, int eat_s, int panic,
-			          int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 Perror_t Pa_cstr_lit_scan2 (P_t *pads, const char *f, const char *s,
-				  int eat_f, int eat_s, int panic,
-				  int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 Perror_t Pa_re_scan2       (P_t *pads, Pregexp_t *f, Pregexp_t *s,
-				  int eat_f, int eat_s, int panic,
-				  int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
@@ -1283,17 +1294,17 @@ Perror_t Pe_cstr_lit_scan1 (P_t *pads, const char *f,       int eat_f, int panic
 Perror_t Pe_re_scan1       (P_t *pads, Pregexp_t *f,     int eat_f, int panic, size_t *offset_out);
 
 Perror_t Pe_char_lit_scan2 (P_t *pads, Pchar f, Pchar s,
-				  int eat_f, int eat_s, int panic,
-				  int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 Perror_t Pe_str_lit_scan2  (P_t *pads, const Pstring *f, const Pstring *s,
-				  int eat_f, int eat_s, int panic,
-			          int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 Perror_t Pe_cstr_lit_scan2 (P_t *pads, const char *f, const char *s,
-				  int eat_f, int eat_s, int panic,
-				  int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 Perror_t Pe_re_scan2       (P_t *pads, Pregexp_t *f, Pregexp_t *s,
-				  int eat_f, int eat_s, int panic,
-				  int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
@@ -1303,17 +1314,17 @@ Perror_t Pcstr_lit_scan1   (P_t *pads, const char *f,       int eat_f, int panic
 Perror_t Pre_scan1         (P_t *pads, Pregexp_t *f,     int eat_f, int panic, size_t *offset_out);
 
 Perror_t Pchar_lit_scan2   (P_t *pads, Pchar f, Pchar s,
-				  int eat_f, int eat_s, int panic,
-			          int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 Perror_t Pstr_lit_scan2    (P_t *pads, const Pstring *f, const Pstring *s,
-				  int eat_f, int eat_s, int panic,
-			          int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 Perror_t Pcstr_lit_scan2   (P_t *pads, const char *f, const char *s,
-				  int eat_f, int eat_s, int panic,
-				  int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 Perror_t Pre_scan2         (P_t *pads, Pregexp_t *f, Pregexp_t *s,
-				  int eat_f, int eat_s, int panic,
-				  int *f_found_out, size_t *offset_out);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -1355,29 +1366,29 @@ Perror_t Pre_scan2         (P_t *pads, Pregexp_t *f, Pregexp_t *s,
 
 #if P_CONFIG_A_CHAR_STRING > 0
 Perror_t Pa_char_lit_read(P_t *pads, const Pbase_m *m,
-				Pbase_pd *pd, Pchar c);
+			  Pbase_pd *pd, Pchar c);
 Perror_t Pa_str_lit_read (P_t *pads, const Pbase_m *m,
-			        Pbase_pd *pd, const Pstring *s);
+			  Pbase_pd *pd, const Pstring *s);
 Perror_t Pa_cstr_lit_read(P_t *pads, const Pbase_m *m,
-				Pbase_pd *pd, const char *s);
+			  Pbase_pd *pd, const char *s);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
 Perror_t Pe_char_lit_read(P_t *pads, const Pbase_m *m,
-				Pbase_pd *pd, Pchar c);
+			  Pbase_pd *pd, Pchar c);
 Perror_t Pe_str_lit_read (P_t *pads, const Pbase_m *m,
-			        Pbase_pd *pd, const Pstring *s);
+			  Pbase_pd *pd, const Pstring *s);
 Perror_t Pe_cstr_lit_read(P_t *pads, const Pbase_m *m,
-				Pbase_pd *pd, const char *s);
+			  Pbase_pd *pd, const char *s);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
 Perror_t Pchar_lit_read  (P_t *pads, const Pbase_m *m,
-			        Pbase_pd *pd, Pchar c);
+			  Pbase_pd *pd, Pchar c);
 Perror_t Pstr_lit_read   (P_t *pads, const Pbase_m *m,
-			        Pbase_pd *pd, const Pstring *s);
+			  Pbase_pd *pd, const Pstring *s);
 Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m,
-			        Pbase_pd *pd, const char *s);
+			  Pbase_pd *pd, const char *s);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -1455,23 +1466,23 @@ Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m,
 
 #if P_CONFIG_A_CHAR_STRING > 0
 Perror_t Pa_countX_read   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t scan_max,
-			    Pbase_pd *pd, Pint32 *res_out);
+			   Pbase_pd *pd, Pint32 *res_out);
 Perror_t Pa_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t scan_max,
-			    Pbase_pd *pd, Pint32 *res_out);
+			   Pbase_pd *pd, Pint32 *res_out);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
 Perror_t Pe_countX_read   (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t scan_max,
-			    Pbase_pd *pd, Pint32 *res_out);
+			   Pbase_pd *pd, Pint32 *res_out);
 Perror_t Pe_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t scan_max,
-			    Pbase_pd *pd, Pint32 *res_out);
+			   Pbase_pd *pd, Pint32 *res_out);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
 Perror_t PcountX_read     (P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t scan_max,
-		            Pbase_pd *pd, Pint32 *res_out);
+			   Pbase_pd *pd, Pint32 *res_out);
 Perror_t PcountXtoY_read (P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t scan_max,
-		            Pbase_pd *pd, Pint32 *res_out);
+			  Pbase_pd *pd, Pint32 *res_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -1582,47 +1593,47 @@ Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
 
 #if P_CONFIG_A_CHAR_STRING > 0
 Perror_t Pa_string_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pa_string_read    (P_t *pads, const Pbase_m *m, Pchar stopChar,
-			          Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pa_string_ME_read (P_t *pads, const Pbase_m *m, const char *matchRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pa_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pa_string_SE_read (P_t *pads, const Pbase_m *m, const char *stopRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pa_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
 Perror_t Pe_string_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pe_string_read    (P_t *pads, const Pbase_m *m, Pchar stopChar,
-			          Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pe_string_ME_read (P_t *pads, const Pbase_m *m, const char *matchRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pe_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pe_string_SE_read (P_t *pads, const Pbase_m *m, const char *stopRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pe_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
 Perror_t Pstring_FW_read   (P_t *pads, const Pbase_m *m, size_t width,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pstring_read      (P_t *pads, const Pbase_m *m, Pchar stopChar,
-			          Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pstring_ME_read   (P_t *pads, const Pbase_m *m, const char *matchRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pstring_CME_read  (P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pstring_SE_read   (P_t *pads, const Pbase_m *m, const char *stopRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 Perror_t Pstring_CSE_read  (P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
-				  Pbase_pd *pd, Pstring *s_out);
+			    Pbase_pd *pd, Pstring *s_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -1658,17 +1669,17 @@ Perror_t Pstring_CSE_read  (P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
 
 #if P_CONFIG_A_CHAR_STRING > 0
 Perror_t Pa_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
-			    Pbase_pd *pd, Puint32 *res_out);
+		      Pbase_pd *pd, Puint32 *res_out);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
 Perror_t Pe_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
-			    Pbase_pd *pd, Puint32 *res_out);
+		      Pbase_pd *pd, Puint32 *res_out);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
 Perror_t Pdate_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
-			    Pbase_pd *pd, Puint32 *res_out);
+		      Pbase_pd *pd, Puint32 *res_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -1720,29 +1731,29 @@ Perror_t Pdate_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
 
 #if P_CONFIG_A_INT > 0
 Perror_t Pa_int8_read (P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint8 *res_out);
+		       Pbase_pd *pd, Pint8 *res_out);
 
 Perror_t Pa_int16_read(P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint16 *res_out);
+		       Pbase_pd *pd, Pint16 *res_out);
 
 Perror_t Pa_int32_read(P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint32 *res_out);
+		       Pbase_pd *pd, Pint32 *res_out);
 
 Perror_t Pa_int64_read(P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint64 *res_out);
+		       Pbase_pd *pd, Pint64 *res_out);
 
 
 Perror_t Pa_uint8_read (P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint8 *res_out);
+			Pbase_pd *pd, Puint8 *res_out);
 
 Perror_t Pa_uint16_read(P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint16 *res_out);
+			Pbase_pd *pd, Puint16 *res_out);
 
 Perror_t Pa_uint32_read(P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint32 *res_out);
+			Pbase_pd *pd, Puint32 *res_out);
 
 Perror_t Pa_uint64_read(P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint64 *res_out);
+			Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -1779,29 +1790,29 @@ Perror_t Pa_uint64_read(P_t *pads, const Pbase_m *m,
 
 #if P_CONFIG_A_INT_FW > 0
 Perror_t Pa_int8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-				Pbase_pd *pd, Pint8 *res_out);
+			  Pbase_pd *pd, Pint8 *res_out);
 
 Perror_t Pa_int16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				Pbase_pd *pd, Pint16 *res_out);
+			  Pbase_pd *pd, Pint16 *res_out);
 
 Perror_t Pa_int32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				Pbase_pd *pd, Pint32 *res_out);
+			  Pbase_pd *pd, Pint32 *res_out);
 
 Perror_t Pa_int64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				Pbase_pd *pd, Pint64 *res_out);
+			  Pbase_pd *pd, Pint64 *res_out);
 
 
 Perror_t Pa_uint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-				 Pbase_pd *pd, Puint8 *res_out);
+			   Pbase_pd *pd, Puint8 *res_out);
 
 Perror_t Pa_uint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				 Pbase_pd *pd, Puint16 *res_out);
+			   Pbase_pd *pd, Puint16 *res_out);
 
 Perror_t Pa_uint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				 Pbase_pd *pd, Puint32 *res_out);
+			   Pbase_pd *pd, Puint32 *res_out);
 
 Perror_t Pa_uint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				 Pbase_pd *pd, Puint64 *res_out);
+			   Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -1820,54 +1831,54 @@ Perror_t Pa_uint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
 
 #if P_CONFIG_E_INT > 0
 Perror_t Pe_int8_read (P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint8 *res_out);
+		       Pbase_pd *pd, Pint8 *res_out);
 
 Perror_t Pe_int16_read(P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint16 *res_out);
+		       Pbase_pd *pd, Pint16 *res_out);
 
 Perror_t Pe_int32_read(P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint32 *res_out);
+		       Pbase_pd *pd, Pint32 *res_out);
 
 Perror_t Pe_int64_read(P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint64 *res_out);
+		       Pbase_pd *pd, Pint64 *res_out);
 
 Perror_t Pe_uint8_read (P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint8 *res_out);
+			Pbase_pd *pd, Puint8 *res_out);
 
 Perror_t Pe_uint16_read(P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint16 *res_out);
+			Pbase_pd *pd, Puint16 *res_out);
 
 Perror_t Pe_uint32_read(P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint32 *res_out);
+			Pbase_pd *pd, Puint32 *res_out);
 
 Perror_t Pe_uint64_read(P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint64 *res_out);
+			Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #if P_CONFIG_E_INT_FW > 0
 Perror_t Pe_int8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-				Pbase_pd *pd, Pint8 *res_out);
+			  Pbase_pd *pd, Pint8 *res_out);
 
 Perror_t Pe_int16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				Pbase_pd *pd, Pint16 *res_out);
+			  Pbase_pd *pd, Pint16 *res_out);
 
 Perror_t Pe_int32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				Pbase_pd *pd, Pint32 *res_out);
+			  Pbase_pd *pd, Pint32 *res_out);
 
 Perror_t Pe_int64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				Pbase_pd *pd, Pint64 *res_out);
+			  Pbase_pd *pd, Pint64 *res_out);
 
 Perror_t Pe_uint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-				 Pbase_pd *pd, Puint8 *res_out);
+			   Pbase_pd *pd, Puint8 *res_out);
 
 Perror_t Pe_uint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				 Pbase_pd *pd, Puint16 *res_out);
+			   Pbase_pd *pd, Puint16 *res_out);
 
 Perror_t Pe_uint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				 Pbase_pd *pd, Puint32 *res_out);
+			   Pbase_pd *pd, Puint32 *res_out);
 
 Perror_t Pe_uint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				 Pbase_pd *pd, Puint64 *res_out);
+			   Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -1894,41 +1905,42 @@ Perror_t Pe_uint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
 
 #if P_CONFIG_A_INT > 0 && P_CONFIG_E_INT > 0
 Perror_t Pint8_read (P_t *pads, const Pbase_m *m,
-			    Pbase_pd *pd, Pint8 *res_out);
+		     Pbase_pd *pd, Pint8 *res_out);
 Perror_t Pint16_read(P_t *pads, const Pbase_m *m,
-			   Pbase_pd *pd, Pint16 *res_out);
+		     Pbase_pd *pd, Pint16 *res_out);
 Perror_t Pint32_read(P_t *pads, const Pbase_m *m,
-			   Pbase_pd *pd, Pint32 *res_out);
+		     Pbase_pd *pd, Pint32 *res_out);
 Perror_t Pint64_read(P_t *pads, const Pbase_m *m,
-			   Pbase_pd *pd, Pint64 *res_out);
+		     Pbase_pd *pd, Pint64 *res_out);
 Perror_t Puint8_read (P_t *pads, const Pbase_m *m,
-			    Pbase_pd *pd, Puint8 *res_out);
+		      Pbase_pd *pd, Puint8 *res_out);
 Perror_t Puint16_read(P_t *pads, const Pbase_m *m,
-			    Pbase_pd *pd, Puint16 *res_out);
+		      Pbase_pd *pd, Puint16 *res_out);
 Perror_t Puint32_read(P_t *pads, const Pbase_m *m,
-			    Pbase_pd *pd, Puint32 *res_out);
+		      Pbase_pd *pd, Puint32 *res_out);
 Perror_t Puint64_read(P_t *pads, const Pbase_m *m,
-			    Pbase_pd *pd, Puint64 *res_out);
+		      Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #if P_CONFIG_A_INT_FW > 0 && P_CONFIG_E_INT_FW > 0
 Perror_t Pint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			      Pbase_pd *pd, Pint8 *res_out);
+			Pbase_pd *pd, Pint8 *res_out);
 Perror_t Pint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			      Pbase_pd *pd, Pint16 *res_out);
+			Pbase_pd *pd, Pint16 *res_out);
 Perror_t Pint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			      Pbase_pd *pd, Pint32 *res_out);
+			Pbase_pd *pd, Pint32 *res_out);
 Perror_t Pint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			      Pbase_pd *pd, Pint64 *res_out);
+			Pbase_pd *pd, Pint64 *res_out);
 Perror_t Puint8_FW_read (P_t *pads, const Pbase_m *m, size_t width,
-			       Pbase_pd *pd, Puint8 *res_out);
+			 Pbase_pd *pd, Puint8 *res_out);
 Perror_t Puint16_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			       Pbase_pd *pd, Puint16 *res_out);
+			 Pbase_pd *pd, Puint16 *res_out);
 Perror_t Puint32_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-			       Pbase_pd *pd, Puint32 *res_out);
+			 Pbase_pd *pd, Puint32 *res_out);
 Perror_t Puint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			 Pbase_pd *pd, Puint64 *res_out);
 #endif
-			       Pbase_pd *pd, Puint64 *res_out);
+
 #endif /* P_CONFIG_READ_FUNCTIONS */
 #endif /* FOR_CKIT */
 
@@ -1976,28 +1988,28 @@ Perror_t Puint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
 
 #if P_CONFIG_B_INT > 0
 Perror_t Pb_int8_read (P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint8 *res_out);
+		       Pbase_pd *pd, Pint8 *res_out);
 
 Perror_t Pb_int16_read(P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint16 *res_out);
+		       Pbase_pd *pd, Pint16 *res_out);
 
 Perror_t Pb_int32_read(P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint32 *res_out);
+		       Pbase_pd *pd, Pint32 *res_out);
 
 Perror_t Pb_int64_read(P_t *pads, const Pbase_m *m,
-			     Pbase_pd *pd, Pint64 *res_out);
+		       Pbase_pd *pd, Pint64 *res_out);
 
 Perror_t Pb_uint8_read (P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint8 *res_out);
+			Pbase_pd *pd, Puint8 *res_out);
 
 Perror_t Pb_uint16_read(P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint16 *res_out);
+			Pbase_pd *pd, Puint16 *res_out);
 
 Perror_t Pb_uint32_read(P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint32 *res_out);
+			Pbase_pd *pd, Puint32 *res_out);
 
 Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
-			      Pbase_pd *pd, Puint64 *res_out);
+			Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -2100,82 +2112,82 @@ Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
 
 #if P_CONFIG_EBC_INT > 0  || P_CONFIG_EBC_FPOINT > 0
 Perror_t Pebc_int8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Pint8 *res_out);
+			   Pbase_pd *pd, Pint8 *res_out);
 Perror_t Pebc_int16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Pint16 *res_out);
+			   Pbase_pd *pd, Pint16 *res_out);
 Perror_t Pebc_int32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Pint32 *res_out);
+			   Pbase_pd *pd, Pint32 *res_out);
 Perror_t Pebc_int64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Pint64 *res_out);
+			   Pbase_pd *pd, Pint64 *res_out);
 
 Perror_t Pebc_uint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Puint8 *res_out);
+			   Pbase_pd *pd, Puint8 *res_out);
 Perror_t Pebc_uint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Puint16 *res_out);
+			   Pbase_pd *pd, Puint16 *res_out);
 Perror_t Pebc_uint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Puint32 *res_out);
+			   Pbase_pd *pd, Puint32 *res_out);
 Perror_t Pebc_uint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Puint64 *res_out);
+			   Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #if P_CONFIG_BCD_INT > 0 || P_CONFIG_BCD_FPOINT > 0
 Perror_t Pbcd_int8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Pint8 *res_out);
+			   Pbase_pd *pd, Pint8 *res_out);
 Perror_t Pbcd_int16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Pint16 *res_out);
+			   Pbase_pd *pd, Pint16 *res_out);
 Perror_t Pbcd_int32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Pint32 *res_out);
+			   Pbase_pd *pd, Pint32 *res_out);
 Perror_t Pbcd_int64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Pint64 *res_out);
+			   Pbase_pd *pd, Pint64 *res_out);
 
 Perror_t Pbcd_uint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Puint8 *res_out);
+			   Pbase_pd *pd, Puint8 *res_out);
 Perror_t Pbcd_uint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Puint16 *res_out);
+			   Pbase_pd *pd, Puint16 *res_out);
 Perror_t Pbcd_uint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Puint32 *res_out);
+			   Pbase_pd *pd, Puint32 *res_out);
 Perror_t Pbcd_uint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits,
-				 Pbase_pd *pd, Puint64 *res_out);
+			   Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #if P_CONFIG_SBL_INT > 0 || P_CONFIG_SBL_FPOINT > 0
 Perror_t Psbl_int8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			         Pbase_pd *pd, Pint8 *res_out);
+			    Pbase_pd *pd, Pint8 *res_out);
 Perror_t Psbl_int16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			         Pbase_pd *pd, Pint16 *res_out);
+			    Pbase_pd *pd, Pint16 *res_out);
 Perror_t Psbl_int32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			         Pbase_pd *pd, Pint32 *res_out);
+			    Pbase_pd *pd, Pint32 *res_out);
 Perror_t Psbl_int64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			         Pbase_pd *pd, Pint64 *res_out);
+			    Pbase_pd *pd, Pint64 *res_out);
 
 Perror_t Psbl_uint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			 	 Pbase_pd *pd, Puint8 *res_out);
+			    Pbase_pd *pd, Puint8 *res_out);
 Perror_t Psbl_uint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			 	 Pbase_pd *pd, Puint16 *res_out);
+			    Pbase_pd *pd, Puint16 *res_out);
 Perror_t Psbl_uint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			 	 Pbase_pd *pd, Puint32 *res_out);
+			    Pbase_pd *pd, Puint32 *res_out);
 Perror_t Psbl_uint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			 	 Pbase_pd *pd, Puint64 *res_out);
+			    Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #if P_CONFIG_SBH_INT > 0 || P_CONFIG_SBH_FPOINT > 0
 Perror_t Psbh_int8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			         Pbase_pd *pd, Pint8 *res_out);
+			    Pbase_pd *pd, Pint8 *res_out);
 Perror_t Psbh_int16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			         Pbase_pd *pd, Pint16 *res_out);
+			    Pbase_pd *pd, Pint16 *res_out);
 Perror_t Psbh_int32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			         Pbase_pd *pd, Pint32 *res_out);
+			    Pbase_pd *pd, Pint32 *res_out);
 Perror_t Psbh_int64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			         Pbase_pd *pd, Pint64 *res_out);
+			    Pbase_pd *pd, Pint64 *res_out);
 
 Perror_t Psbh_uint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			 	 Pbase_pd *pd, Puint8 *res_out);
+			    Pbase_pd *pd, Puint8 *res_out);
 Perror_t Psbh_uint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			 	 Pbase_pd *pd, Puint16 *res_out);
+			    Pbase_pd *pd, Puint16 *res_out);
 Perror_t Psbh_uint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			 	 Pbase_pd *pd, Puint32 *res_out);
+			    Pbase_pd *pd, Puint32 *res_out);
 Perror_t Psbh_uint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
-			 	 Pbase_pd *pd, Puint64 *res_out);
+			    Pbase_pd *pd, Puint64 *res_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -2244,82 +2256,82 @@ Perror_t Psbh_uint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
 
 #if P_CONFIG_EBC_FPOINT > 0
 Perror_t Pebc_fpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint8 *res_out);
+			      Pbase_pd *pd, Pfpoint8 *res_out);
 Perror_t Pebc_fpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint16 *res_out);
+			      Pbase_pd *pd, Pfpoint16 *res_out);
 Perror_t Pebc_fpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint32 *res_out);
+			      Pbase_pd *pd, Pfpoint32 *res_out);
 Perror_t Pebc_fpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint64 *res_out);
+			      Pbase_pd *pd, Pfpoint64 *res_out);
 
 Perror_t Pebc_ufpoint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint8 *res_out);
+			      Pbase_pd *pd, Pufpoint8 *res_out);
 Perror_t Pebc_ufpoint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint16 *res_out);
+			      Pbase_pd *pd, Pufpoint16 *res_out);
 Perror_t Pebc_ufpoint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint32 *res_out);
+			      Pbase_pd *pd, Pufpoint32 *res_out);
 Perror_t Pebc_ufpoint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint64 *res_out);
+			      Pbase_pd *pd, Pufpoint64 *res_out);
 #endif
 
 #if P_CONFIG_BCD_FPOINT > 0
 Perror_t Pbcd_fpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint8 *res_out);
+			      Pbase_pd *pd, Pfpoint8 *res_out);
 Perror_t Pbcd_fpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint16 *res_out);
+			      Pbase_pd *pd, Pfpoint16 *res_out);
 Perror_t Pbcd_fpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint32 *res_out);
+			      Pbase_pd *pd, Pfpoint32 *res_out);
 Perror_t Pbcd_fpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint64 *res_out);
+			      Pbase_pd *pd, Pfpoint64 *res_out);
 
 Perror_t Pbcd_ufpoint8_read  (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint8 *res_out);
+			      Pbase_pd *pd, Pufpoint8 *res_out);
 Perror_t Pbcd_ufpoint16_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint16 *res_out);
+			      Pbase_pd *pd, Pufpoint16 *res_out);
 Perror_t Pbcd_ufpoint32_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint32 *res_out);
+			      Pbase_pd *pd, Pufpoint32 *res_out);
 Perror_t Pbcd_ufpoint64_read (P_t *pads, const Pbase_m *m, Puint32 num_digits, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint64 *res_out);
+			      Pbase_pd *pd, Pufpoint64 *res_out);
 #endif
 
 #if P_CONFIG_SBL_FPOINT > 0
 Perror_t Psbl_fpoint8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint8 *res_out);
+			       Pbase_pd *pd, Pfpoint8 *res_out);
 Perror_t Psbl_fpoint16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint16 *res_out);
+			       Pbase_pd *pd, Pfpoint16 *res_out);
 Perror_t Psbl_fpoint32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint32 *res_out);
+			       Pbase_pd *pd, Pfpoint32 *res_out);
 Perror_t Psbl_fpoint64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint64 *res_out);
+			       Pbase_pd *pd, Pfpoint64 *res_out);
 
 Perror_t Psbl_ufpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint8 *res_out);
+			       Pbase_pd *pd, Pufpoint8 *res_out);
 Perror_t Psbl_ufpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint16 *res_out);
+			       Pbase_pd *pd, Pufpoint16 *res_out);
 Perror_t Psbl_ufpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint32 *res_out);
+			       Pbase_pd *pd, Pufpoint32 *res_out);
 Perror_t Psbl_ufpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint64 *res_out);
+			       Pbase_pd *pd, Pufpoint64 *res_out);
 #endif
 
 #if P_CONFIG_SBH_FPOINT > 0
 Perror_t Psbh_fpoint8_read    (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint8 *res_out);
+			       Pbase_pd *pd, Pfpoint8 *res_out);
 Perror_t Psbh_fpoint16_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint16 *res_out);
+			       Pbase_pd *pd, Pfpoint16 *res_out);
 Perror_t Psbh_fpoint32_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint32 *res_out);
+			       Pbase_pd *pd, Pfpoint32 *res_out);
 Perror_t Psbh_fpoint64_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pfpoint64 *res_out);
+			       Pbase_pd *pd, Pfpoint64 *res_out);
 
 Perror_t Psbh_ufpoint8_read   (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint8 *res_out);
+			       Pbase_pd *pd, Pufpoint8 *res_out);
 Perror_t Psbh_ufpoint16_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint16 *res_out);
+			       Pbase_pd *pd, Pufpoint16 *res_out);
 Perror_t Psbh_ufpoint32_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint32 *res_out);
+			       Pbase_pd *pd, Pufpoint32 *res_out);
 Perror_t Psbh_ufpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, Puint32 d_exp,
-				    Pbase_pd *pd, Pufpoint64 *res_out);
+			       Pbase_pd *pd, Pufpoint64 *res_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -2432,61 +2444,61 @@ ssize_t Pchar_write2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 #if P_CONFIG_A_CHAR_STRING > 0
 ssize_t Pa_string_FW_write2io  (P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_FW_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   size_t width, Pbase_pd *pd, Pstring *s);
+				size_t width, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_write2io     (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_write2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_ME_write2io  (P_t *pads, Sfio_t *io, const char *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_ME_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   const char *matchRegexp, Pbase_pd *pd, Pstring *s);
+				const char *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_CME_write2io (P_t *pads, Sfio_t *io, Pregexp_t *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_CME_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 				   Pregexp_t *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_SE_write2io  (P_t *pads, Sfio_t *io, const char *stopRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_SE_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   const char *stopRegexp, Pbase_pd *pd, Pstring *s);
+				const char *stopRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_CSE_write2io (P_t *pads, Sfio_t *io, Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pa_string_CSE_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *s);
+				Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *s);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
 ssize_t Pe_string_FW_write2io  (P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_FW_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   size_t width, Pbase_pd *pd, Pstring *s);
+				size_t width, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_write2io     (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_write2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_ME_write2io  (P_t *pads, Sfio_t *io, const char *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_ME_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   const char *matchRegexp, Pbase_pd *pd, Pstring *s);
+				const char *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_CME_write2io (P_t *pads, Sfio_t *io, Pregexp_t *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_CME_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   Pregexp_t *matchRegexp, Pbase_pd *pd, Pstring *s);
+				Pregexp_t *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_SE_write2io  (P_t *pads, Sfio_t *io, const char *stopRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_SE_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   const char *stopRegexp, Pbase_pd *pd, Pstring *s);
+				const char *stopRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_CSE_write2io (P_t *pads, Sfio_t *io, Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pe_string_CSE_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *s);
+				Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *s);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
 ssize_t Pstring_FW_write2io    (P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_FW_write2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   size_t width, Pbase_pd *pd, Pstring *s);
+				size_t width, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_write2io       (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_write2buf      (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_ME_write2io    (P_t *pads, Sfio_t *io, const char *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_ME_write2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   const char *matchRegexp, Pbase_pd *pd, Pstring *s);
+				const char *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_CME_write2io   (P_t *pads, Sfio_t *io, Pregexp_t *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_CME_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   Pregexp_t *matchRegexp, Pbase_pd *pd, Pstring *s);
+				Pregexp_t *matchRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_SE_write2io    (P_t *pads, Sfio_t *io, const char *stopRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_SE_write2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   const char *stopRegexp, Pbase_pd *pd, Pstring *s);
+				const char *stopRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_CSE_write2io   (P_t *pads, Sfio_t *io, Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *s);
 ssize_t Pstring_CSE_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				   Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *s);
+				Pregexp_t *stopRegexp, Pbase_pd *pd, Pstring *s);
 #endif
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
@@ -2931,14 +2943,14 @@ ssize_t Puint64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, 
 
 #if P_CONFIG_WRITE_FUNCTIONS > 0
 ssize_t PcountX_write2io    (P_t *pads, Sfio_t *io, Puint8 x, int eor_required,
-				Pbase_pd *pd, Pint32  *val);
+			     Pbase_pd *pd, Pint32  *val);
 ssize_t PcountX_write2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Puint8 x, int eor_required,
-				Pbase_pd *pd, Pint32  *val);
+			     Pbase_pd *pd, Pint32  *val);
 
 ssize_t PcountXtoY_write2io (P_t *pads, Sfio_t *io, Puint8 x, Puint8 y,
-				Pbase_pd *pd, Pint32  *val);
+			     Pbase_pd *pd, Pint32  *val);
 ssize_t PcountXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Puint8 x, Puint8 y,
-				Pbase_pd *pd, Pint32  *val);
+			     Pbase_pd *pd, Pint32  *val);
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 
 /* ================================================================================
@@ -2962,31 +2974,31 @@ ssize_t PcountXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_ful
  */
 
 typedef struct Pint_acc_s {
-  Dt_t        *dict;
+  Dt_t     *dict;
   Puint64   max2track;
   Puint64   max2rep;
-  double       pcnt2rep;
+  double    pcnt2rep;
   Puint64   good;
   Puint64   bad;
   Puint64   fold;
   Puint64   tracked;
   Pint64    psum;
-  double       avg;
+  double    avg;
   Pint64    min;
   Pint64    max;
 } Pint_acc;
 
 typedef struct Puint_acc_s {
-  Dt_t        *dict;
+  Dt_t     *dict;
   Puint64   max2track;
   Puint64   max2rep;
-  double       pcnt2rep;
+  double    pcnt2rep;
   Puint64   good;
   Puint64   bad;
   Puint64   fold;
   Puint64   tracked;
   Puint64   psum;
-  double       avg;
+  double    avg;
   Puint64   min;
   Puint64   max;
 } Puint_acc;
@@ -3010,18 +3022,16 @@ Perror_t Pint32_acc_init    (P_t *pads, Pint32_acc *a);
 Perror_t Pint32_acc_reset   (P_t *pads, Pint32_acc *a);
 Perror_t Pint32_acc_cleanup (P_t *pads, Pint32_acc *a);
 Perror_t Pint32_acc_add     (P_t *pads, Pint32_acc *a, const Pbase_pd *pd, const Pint32 *val);
-Perror_t Pint32_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				   Pint32_acc *a);
-double      Pint32_acc_avg     (P_t *pads, Pint32_acc *a);
+Perror_t Pint32_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pint32_acc *a);
+double   Pint32_acc_avg     (P_t *pads, Pint32_acc *a);
 Pint32   Pint32_acc_ravg    (P_t *pads, Pint32_acc *a);
 
 Perror_t Puint32_acc_init    (P_t *pads, Puint32_acc *a);
 Perror_t Puint32_acc_reset   (P_t *pads, Puint32_acc *a);
 Perror_t Puint32_acc_cleanup (P_t *pads, Puint32_acc *a);
 Perror_t Puint32_acc_add     (P_t *pads, Puint32_acc *a, const Pbase_pd *pd, const Puint32 *val);
-Perror_t Puint32_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				    Puint32_acc *a);
-double      Puint32_acc_avg     (P_t *pads, Puint32_acc *a);
+Perror_t Puint32_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Puint32_acc *a);
+double   Puint32_acc_avg     (P_t *pads, Puint32_acc *a);
 Puint32  Puint32_acc_ravg    (P_t *pads, Puint32_acc *a);
 
 /*
@@ -3030,7 +3040,7 @@ Puint32  Puint32_acc_ravg    (P_t *pads, Puint32_acc *a);
  * string values.  
  */
 Perror_t Pint32_acc_map_report(P_t *pads, const char *prefix, const char *what, int nst,
-				     Pint32_map_fn  fn, Pint32_acc *a);
+			       Pint32_map_fn  fn, Pint32_acc *a);
 
 /*
  * P_nerr_acc_report is used to report on the accumulation of the nerr field
@@ -3039,7 +3049,7 @@ Perror_t Pint32_acc_map_report(P_t *pads, const char *prefix, const char *what, 
  * different formatting since no bad values are expected.
  */
 Perror_t P_nerr_acc_report(P_t *pads, const char *prefix, const char *what, int nst,
-				Puint32_acc *a);
+			   Puint32_acc *a);
 
 /* Remaining accumulator types: only if configured */ 
 #if P_CONFIG_ACCUM_FUNCTIONS > 0
@@ -3053,10 +3063,10 @@ typedef Puint_acc Puint16_acc;
 typedef Puint_acc Puint64_acc;
 
 typedef struct Pstring_acc_s {
-  Dt_t           *dict;
+  Dt_t        *dict;
   Puint64      max2track;
   Puint64      max2rep;
-  double          pcnt2rep;
+  double       pcnt2rep;
   Puint64      tracked;
   Puint32_acc  len_accum; /* used for length distribution and good/bad accounting */
 } Pstring_acc;
@@ -3065,62 +3075,55 @@ Perror_t Pint8_acc_init    (P_t *pads, Pint8_acc *a);
 Perror_t Pint8_acc_reset   (P_t *pads, Pint8_acc *a);
 Perror_t Pint8_acc_cleanup (P_t *pads, Pint8_acc *a);
 Perror_t Pint8_acc_add     (P_t *pads, Pint8_acc *a, const Pbase_pd *pd, const Pint8 *val);
-Perror_t Pint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				  Pint8_acc *a);
-double      Pint8_acc_avg     (P_t *pads, Pint8_acc *a);
+Perror_t Pint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pint8_acc *a);
+double   Pint8_acc_avg     (P_t *pads, Pint8_acc *a);
 Pint8    Pint8_acc_ravg    (P_t *pads, Pint8_acc *a);
 
 Perror_t Pint16_acc_init    (P_t *pads, Pint16_acc *a);
 Perror_t Pint16_acc_reset   (P_t *pads, Pint16_acc *a);
 Perror_t Pint16_acc_cleanup (P_t *pads, Pint16_acc *a);
 Perror_t Pint16_acc_add     (P_t *pads, Pint16_acc *a, const Pbase_pd *pd, const Pint16 *val);
-Perror_t Pint16_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				   Pint16_acc *a);
-double      Pint16_acc_avg     (P_t *pads, Pint16_acc *a);
+Perror_t Pint16_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pint16_acc *a);
+double   Pint16_acc_avg     (P_t *pads, Pint16_acc *a);
 Pint16   Pint16_acc_ravg    (P_t *pads, Pint16_acc *a);
 
 Perror_t Pint64_acc_init    (P_t *pads, Pint64_acc *a);
 Perror_t Pint64_acc_reset   (P_t *pads, Pint64_acc *a);
 Perror_t Pint64_acc_cleanup (P_t *pads, Pint64_acc *a);
 Perror_t Pint64_acc_add     (P_t *pads, Pint64_acc *a, const Pbase_pd *pd, const Pint64 *val);
-Perror_t Pint64_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				   Pint64_acc *a);
-double      Pint64_acc_avg     (P_t *pads, Pint64_acc *a);
+Perror_t Pint64_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pint64_acc *a);
+double   Pint64_acc_avg     (P_t *pads, Pint64_acc *a);
 Pint64   Pint64_acc_ravg    (P_t *pads, Pint64_acc *a);
 
 Perror_t Puint8_acc_init    (P_t *pads, Puint8_acc *a);
 Perror_t Puint8_acc_reset   (P_t *pads, Puint8_acc *a);
 Perror_t Puint8_acc_cleanup (P_t *pads, Puint8_acc *a);
 Perror_t Puint8_acc_add     (P_t *pads, Puint8_acc *a, const Pbase_pd *pd, const Puint8 *val);
-Perror_t Puint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				   Puint8_acc *a);
-double      Puint8_acc_avg     (P_t *pads, Puint8_acc *a);
+Perror_t Puint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Puint8_acc *a);
+double   Puint8_acc_avg     (P_t *pads, Puint8_acc *a);
 Puint8   Puint8_acc_ravg    (P_t *pads, Puint8_acc *a);
 
 Perror_t Puint16_acc_init    (P_t *pads, Puint16_acc *a);
 Perror_t Puint16_acc_reset   (P_t *pads, Puint16_acc *a);
 Perror_t Puint16_acc_cleanup (P_t *pads, Puint16_acc *a);
 Perror_t Puint16_acc_add     (P_t *pads, Puint16_acc *a, const Pbase_pd *pd, const Puint16 *val);
-Perror_t Puint16_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				    Puint16_acc *a);
-double      Puint16_acc_avg     (P_t *pads, Puint16_acc *a);
+Perror_t Puint16_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Puint16_acc *a);
+double   Puint16_acc_avg     (P_t *pads, Puint16_acc *a);
 Puint16  Puint16_acc_ravg    (P_t *pads, Puint16_acc *a);
 
 Perror_t Puint64_acc_init    (P_t *pads, Puint64_acc *a);
 Perror_t Puint64_acc_reset   (P_t *pads, Puint64_acc *a);
 Perror_t Puint64_acc_cleanup (P_t *pads, Puint64_acc *a);
 Perror_t Puint64_acc_add     (P_t *pads, Puint64_acc *a, const Pbase_pd *pd, const Puint64 *val);
-Perror_t Puint64_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				    Puint64_acc *a);
-double      Puint64_acc_avg     (P_t *pads, Puint64_acc *a);
+Perror_t Puint64_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Puint64_acc *a);
+double   Puint64_acc_avg     (P_t *pads, Puint64_acc *a);
 Puint64  Puint64_acc_ravg    (P_t *pads, Puint64_acc *a);
 
 Perror_t Pstring_acc_init    (P_t *pads, Pstring_acc *a);
 Perror_t Pstring_acc_reset   (P_t *pads, Pstring_acc *a);
 Perror_t Pstring_acc_cleanup (P_t *pads, Pstring_acc *a);
 Perror_t Pstring_acc_add     (P_t *pads, Pstring_acc *a, const Pbase_pd *pd, const Pstring* val);
-Perror_t Pstring_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				    Pstring_acc *a);
+Perror_t Pstring_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pstring_acc *a);
 
 /*
  * char_acc is just like uint8_acc except a different report is generated
@@ -3131,8 +3134,7 @@ Perror_t Pchar_acc_init      (P_t *pads, Pchar_acc *a);
 Perror_t Pchar_acc_reset     (P_t *pads, Pchar_acc *a);
 Perror_t Pchar_acc_cleanup   (P_t *pads, Pchar_acc *a);
 Perror_t Pchar_acc_add       (P_t *pads, Pchar_acc *a, const Pbase_pd *pd, const Puint8 *val);
-Perror_t Pchar_acc_report    (P_t *pads, const char *prefix, const char *what, int nst,
-				    Pchar_acc *a);
+Perror_t Pchar_acc_report    (P_t *pads, const char *prefix, const char *what, int nst, Pchar_acc *a);
 
 /*
  * fpoint/ufpoint accumulator types
@@ -3142,33 +3144,33 @@ Perror_t Pchar_acc_report    (P_t *pads, const char *prefix, const char *what, i
  */
 
 typedef struct Pfpoint_acc_flt_s {
-  Dt_t        *dict;
+  Dt_t     *dict;
   Puint64   max2track;
   Puint64   max2rep;
-  double       pcnt2rep;
+  double    pcnt2rep;
   Puint64   good;
   Puint64   bad;
   Puint64   fold;
   Puint64   tracked;
-  double       psum;
-  double       avg;
-  double       min;
-  double       max;
+  double    psum;
+  double    avg;
+  double    min;
+  double    max;
 } Pfpoint_acc_flt;
 
 typedef struct Pfpoint_acc_dbl_s {
-  Dt_t        *dict;
+  Dt_t     *dict;
   Puint64   max2track;
   Puint64   max2rep;
-  double       pcnt2rep;
+  double    pcnt2rep;
   Puint64   good;
   Puint64   bad;
   Puint64   fold;
   Puint64   tracked;
-  double       psum;
-  double       avg;
-  double       min;
-  double       max;
+  double    psum;
+  double    avg;
+  double    min;
+  double    max;
 } Pfpoint_acc_dbl;
 
 typedef Pfpoint_acc_flt Pfpoint8_acc;
@@ -3185,65 +3187,57 @@ Perror_t Pfpoint8_acc_init    (P_t *pads, Pfpoint8_acc *a);
 Perror_t Pfpoint8_acc_reset   (P_t *pads, Pfpoint8_acc *a);
 Perror_t Pfpoint8_acc_cleanup (P_t *pads, Pfpoint8_acc *a);
 Perror_t Pfpoint8_acc_add     (P_t *pads, Pfpoint8_acc *a, const Pbase_pd *pd, const Pfpoint8 *val);
-Perror_t Pfpoint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				     Pfpoint8_acc *a);
-float       Pfpoint8_acc_avg     (P_t *pads, Pfpoint8_acc *a);
+Perror_t Pfpoint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint8_acc *a);
+float    Pfpoint8_acc_avg     (P_t *pads, Pfpoint8_acc *a);
 
 Perror_t Pfpoint16_acc_init   (P_t *pads, Pfpoint16_acc *a);
 Perror_t Pfpoint16_acc_reset  (P_t *pads, Pfpoint16_acc *a);
 Perror_t Pfpoint16_acc_cleanup(P_t *pads, Pfpoint16_acc *a);
 Perror_t Pfpoint16_acc_add    (P_t *pads, Pfpoint16_acc *a, const Pbase_pd *pd, const Pfpoint16 *val);
-Perror_t Pfpoint16_acc_report (P_t *pads, const char *prefix, const char *what, int nst,
-				     Pfpoint16_acc *a);
-float       Pfpoint16_acc_avg    (P_t *pads, Pfpoint16_acc *a);
+Perror_t Pfpoint16_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint16_acc *a);
+float    Pfpoint16_acc_avg    (P_t *pads, Pfpoint16_acc *a);
 
 Perror_t Pfpoint32_acc_init   (P_t *pads, Pfpoint32_acc *a);
 Perror_t Pfpoint32_acc_reset  (P_t *pads, Pfpoint32_acc *a);
 Perror_t Pfpoint32_acc_cleanup(P_t *pads, Pfpoint32_acc *a);
 Perror_t Pfpoint32_acc_add    (P_t *pads, Pfpoint32_acc *a, const Pbase_pd *pd, const Pfpoint32 *val);
-Perror_t Pfpoint32_acc_report (P_t *pads, const char *prefix, const char *what, int nst,
-				     Pfpoint32_acc *a);
-float       Pfpoint32_acc_avg    (P_t *pads, Pfpoint32_acc *a);
+Perror_t Pfpoint32_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint32_acc *a);
+float    Pfpoint32_acc_avg    (P_t *pads, Pfpoint32_acc *a);
 
 Perror_t Pfpoint64_acc_init   (P_t *pads, Pfpoint64_acc *a);
 Perror_t Pfpoint64_acc_reset  (P_t *pads, Pfpoint64_acc *a);
 Perror_t Pfpoint64_acc_cleanup(P_t *pads, Pfpoint64_acc *a);
 Perror_t Pfpoint64_acc_add    (P_t *pads, Pfpoint64_acc *a, const Pbase_pd *pd, const Pfpoint64 *val);
-Perror_t Pfpoint64_acc_report (P_t *pads, const char *prefix, const char *what, int nst,
-				     Pfpoint64_acc *a);
-double      Pfpoint64_acc_avg    (P_t *pads, Pfpoint64_acc *a);
+Perror_t Pfpoint64_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint64_acc *a);
+double   Pfpoint64_acc_avg    (P_t *pads, Pfpoint64_acc *a);
 
 Perror_t Pufpoint8_acc_init    (P_t *pads, Pufpoint8_acc *a);
 Perror_t Pufpoint8_acc_reset   (P_t *pads, Pufpoint8_acc *a);
 Perror_t Pufpoint8_acc_cleanup (P_t *pads, Pufpoint8_acc *a);
 Perror_t Pufpoint8_acc_add     (P_t *pads, Pufpoint8_acc *a, const Pbase_pd *pd, const Pufpoint8 *val);
-Perror_t Pufpoint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst,
-				     Pufpoint8_acc *a);
-float       Pufpoint8_acc_avg     (P_t *pads, Pufpoint8_acc *a);
+Perror_t Pufpoint8_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint8_acc *a);
+float    Pufpoint8_acc_avg     (P_t *pads, Pufpoint8_acc *a);
 
 Perror_t Pufpoint16_acc_init   (P_t *pads, Pufpoint16_acc *a);
 Perror_t Pufpoint16_acc_reset  (P_t *pads, Pufpoint16_acc *a);
 Perror_t Pufpoint16_acc_cleanup(P_t *pads, Pufpoint16_acc *a);
 Perror_t Pufpoint16_acc_add    (P_t *pads, Pufpoint16_acc *a, const Pbase_pd *pd, const Pufpoint16 *val);
-Perror_t Pufpoint16_acc_report (P_t *pads, const char *prefix, const char *what, int nst,
-				     Pufpoint16_acc *a);
-float       Pufpoint16_acc_avg    (P_t *pads, Pufpoint16_acc *a);
+Perror_t Pufpoint16_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint16_acc *a);
+float    Pufpoint16_acc_avg    (P_t *pads, Pufpoint16_acc *a);
 
 Perror_t Pufpoint32_acc_init   (P_t *pads, Pufpoint32_acc *a);
 Perror_t Pufpoint32_acc_reset  (P_t *pads, Pufpoint32_acc *a);
 Perror_t Pufpoint32_acc_cleanup(P_t *pads, Pufpoint32_acc *a);
 Perror_t Pufpoint32_acc_add    (P_t *pads, Pufpoint32_acc *a, const Pbase_pd *pd, const Pufpoint32 *val);
-Perror_t Pufpoint32_acc_report (P_t *pads, const char *prefix, const char *what, int nst,
-				     Pufpoint32_acc *a);
-float       Pufpoint32_acc_avg    (P_t *pads, Pufpoint32_acc *a);
+Perror_t Pufpoint32_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint32_acc *a);
+float    Pufpoint32_acc_avg    (P_t *pads, Pufpoint32_acc *a);
 
 Perror_t Pufpoint64_acc_init   (P_t *pads, Pufpoint64_acc *a);
 Perror_t Pufpoint64_acc_reset  (P_t *pads, Pufpoint64_acc *a);
 Perror_t Pufpoint64_acc_cleanup(P_t *pads, Pufpoint64_acc *a);
 Perror_t Pufpoint64_acc_add    (P_t *pads, Pufpoint64_acc *a, const Pbase_pd *pd, const Pufpoint64 *val);
-Perror_t Pufpoint64_acc_report (P_t *pads, const char *prefix, const char *what, int nst,
-				     Pufpoint64_acc *a);
-double      Pufpoint64_acc_avg    (P_t *pads, Pufpoint64_acc *a);
+Perror_t Pufpoint64_acc_report (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint64_acc *a);
+double   Pufpoint64_acc_avg    (P_t *pads, Pufpoint64_acc *a);
 
 #endif /* P_CONFIG_ACCUM_FUNCTIONS */
 

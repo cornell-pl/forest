@@ -110,53 +110,53 @@ Pio_disc_t * P_norec_noseek_make(size_t block_size_hint);
  * list is always a 'dummy' record that is not used except as a
  * placeholder for managing the list.
  * 
- * XXX_TODOC: begin, end, etc.
+ * XXX_TODOC: sfio_offset, begin, end, etc.
  *
- * There are two extra data fields:
- *   disc_ptr, disc_off: (optionally) used by the io discipline;
- *                        ignored by the main library code
+ * There is an extra data fields, disc_ptr, which is optionally used by
+ * the io discipline and ignored by the main library code.
  */
 
 /* type Pio_elt_t: */
 struct Pio_elt_s {
   Pio_elt_t     *prev;
   Pio_elt_t     *next;
+  Sfoff_t        sfio_offset;
   Pbyte         *begin;
   Pbyte         *end;
-  size_t           len;
-  int              bor;
-  int              eor;
-  int              eof;
-  size_t           num;
-  const char       *unit;
-  void             *disc_ptr;
-  Sfoff_t          disc_off;
+  size_t         len;
+  int            bor;
+  int            eor;
+  int            eof;
+  size_t         num;
+  const char    *unit;
+  void          *disc_ptr;
 };
 
 /* Function types needed for the IO discipline: */
 
-typedef Perror_t (*P_io_unmake_fn)    (P_t *pads, Pio_disc_t* io_disc);
-typedef Perror_t (*P_io_sfopen_fn)    (P_t *pads, Pio_disc_t* io_disc, Sfio_t *sfio, Pio_elt_t *head);
-typedef Perror_t (*P_io_sfclose_fn)   (P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t remain);
-typedef Perror_t (*P_io_read_fn)      (P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt,
-					    Pio_elt_t **next_elt_out);
-typedef ssize_t     (*P_io_rec_close_fn) (P_t *pads, Pio_disc_t* io_disc, Pbyte *buf,
-					    Pbyte *rec_start, size_t num_bytes);
-typedef ssize_t     (*P_io_blk_close_fn) (P_t *pads, Pio_disc_t* io_disc, Pbyte *buf,
-					    Pbyte *blk_start, size_t num_bytes, Puint32 num_recs);
+typedef Perror_t     (*P_io_unmake_fn)    (P_t *pads, Pio_disc_t* io_disc);
+typedef Perror_t     (*P_io_sfopen_fn)    (P_t *pads, Pio_disc_t* io_disc, Sfio_t *sfio, Pio_elt_t *head);
+typedef Perror_t     (*P_io_sfclose_fn)   (P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t remain);
+typedef Perror_t     (*P_io_read_fn)      (P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt,
+					   Pio_elt_t **next_elt_out);
+typedef ssize_t      (*P_io_rec_close_fn) (P_t *pads, Pio_disc_t* io_disc, Pbyte *buf,
+					   Pbyte *rec_start, size_t num_bytes);
+typedef ssize_t      (*P_io_blk_close_fn) (P_t *pads, Pio_disc_t* io_disc, Pbyte *buf,
+					   Pbyte *blk_start, size_t num_bytes, Puint32 num_recs);
+typedef const char * (*P_io_read_unit_fn) (P_t *pads, Pio_disc_t* io_disc);
 
 /* type Pio_disc_t: */
 struct Pio_disc_s {
   /* state */
-  const char           *name;          /* short IO discipline name */
-  const char           *descr;         /* short IO discipline description */
-  int                   rec_based;     /* discipline is record-based? */
-  int                   has_rblks;     /* discipline supports blocks of records? */
-  size_t                rec_obytes;    /* bytes used for record open marker (0 if not used) */
-  size_t                rec_cbytes;    /* bytes used for record close marker (0 if not used) */
-  size_t                blk_obytes;    /* bytes used for block open marker (0 if not used) */
-  size_t                blk_cbytes;    /* bytes used for block close marker (0 if not used) */
-  void                 *data;          /* discipline-specific data */
+  const char         *name;          /* short IO discipline name */
+  const char         *descr;         /* short IO discipline description */
+  int                 rec_based;     /* discipline is record-based? */
+  int                 has_rblks;     /* discipline supports blocks of records? */
+  size_t              rec_obytes;    /* bytes used for record open marker (0 if not used) */
+  size_t              rec_cbytes;    /* bytes used for record close marker (0 if not used) */
+  size_t              blk_obytes;    /* bytes used for block open marker (0 if not used) */
+  size_t              blk_cbytes;    /* bytes used for block close marker (0 if not used) */
+  void               *data;          /* discipline-specific data */
   /* functions */
   P_io_unmake_fn      unmake_fn;     /* pairs with this discipline's make routine */
   P_io_sfopen_fn      sfopen_fn;     /* Sfio-based open */
@@ -164,6 +164,7 @@ struct Pio_disc_s {
   P_io_read_fn        read_fn;       /* read */
   P_io_rec_close_fn   rec_close_fn;  /* fill in record markers for an output record */
   P_io_blk_close_fn   blk_close_fn;  /* fill in block markers for an output block */
+  P_io_read_unit_fn   read_unit_fn;  /* return description of read unit */
 };
 
 /* ================================================================================ */
