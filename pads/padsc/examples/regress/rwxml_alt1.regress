@@ -1,4 +1,4 @@
-Input file = /dev/stdin
+Input file = ../../data/alt1
 Output file = /dev/stdout
 warning: P_open: Installing default IO discipline : newline-terminated records
 <foo>

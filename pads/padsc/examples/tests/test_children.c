@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     error(2, "*** P_open failed ***");
     exit(-1);
   }
-  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.format1.good")) {
+  if (P_ERR == P_io_fopen(pads, "../../data/format1.good")) {
     error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }

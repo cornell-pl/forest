@@ -1,4 +1,4 @@
-#define DEF_INPUT_FILE "../../data/pswitch"
+#define DEF_INPUT_FILE "../../data/pswitch2"
 #define PADS_TY(suf) choice ## suf
 #define PPADS_TY(pref) pref ## choice
 #define WSPACE_OK 1

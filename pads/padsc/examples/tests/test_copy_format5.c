@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   }
 
   /* Open output file */
-  if (P_ERR == P_io_fopen(pads, "../data/ex_data.format5.cpy")) {
+  if (P_ERR == P_io_fopen(pads, "../data/format5.cpy")) {
     error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }

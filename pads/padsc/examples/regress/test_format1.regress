@@ -1,4 +1,4 @@
-Data file = ../../data/ex_data.format1
+Data file = ../../data/format1
 warning: P_open: Installing default IO discipline : newline-terminated records
 read reported no errors and passed predicate test.
 test_read returned: id 1  ts 11

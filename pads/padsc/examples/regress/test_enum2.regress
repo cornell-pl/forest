@@ -1,4 +1,4 @@
-Data file = ../../data/ex_data.enum2
+Data file = ../../data/enum2
 
 warning: P_open: Installing default IO discipline : newline-terminated records
 

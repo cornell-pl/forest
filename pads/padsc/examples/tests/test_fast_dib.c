@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   event                    ev;
   event_pd                 ev_pd;
   size_t                   bytes_skipped;
-  char                     *fname          = "../../data/ex_data.dibbler1";
+  char                     *fname          = "../../data/dibbler1";
   behave                   b               = count_first21;
   unsigned long            good_21         = 0, good = 0, bad = 0;
   /* out_sum_fixed1_m         f1_m           = { 0 }; */

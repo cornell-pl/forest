@@ -44,7 +44,7 @@ do { \
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define DEF_INPUT_FILE "../../data/ex_data.ai"
+#define DEF_INPUT_FILE "../../data/ai"
 #define PADS_TY(suf) http_clf_t ## suf
 #define PPADS_TY(pref) pref ## http_clf_t
 #include "ai.h"

@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   /* INIT mask -- must do this! */
   entry_m_init(pads, &f3m, P_CheckAndSet);
 
-  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.format3")) {
+  if (P_ERR == P_io_fopen(pads, "../../data/format3")) {
     error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }

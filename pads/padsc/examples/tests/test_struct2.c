@@ -1,4 +1,4 @@
-// example invocation:  cat "../../data/ex_data.struct2" | ./test_struct2
+// example invocation:  cat "../../data/struct2" | ./test_struct2
 
 #define EXTRA_GOOD_READ_CODE do { \
   error(2, "test_read returned: id %d  ts %d  nums %d ", rep.id, rep.ts, rep.nums); \

@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
   out_sum_data_line        dline;
   out_sum_data_line_pd     dline_pd;
   out_sum_data_line_m      dline_m = { 0 };
-  char                    *fname = "../../data/ex_data.dibbler1";
+  char                    *fname = "../../data/dibbler1";
   int                      commit;
 
   error(0, "\nUsing input file %s", fname);

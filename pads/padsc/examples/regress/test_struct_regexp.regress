@@ -1,4 +1,4 @@
-Data file = ../../data/ex_data.struct_regexp
+Data file = ../../data/struct_regexp
 warning: P_open: Installing default IO discipline : newline-terminated records
 warning: Error [in line_read]: record 1 byte 3 : Extra data before regexp separator Pre "/a+/"
 [record 1]12>>>faaa<<<a13b4cat11AAaa

@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   out_sum_data_line        dline;
   out_sum_data_line_pd     dline_pd;
   out_sum_data_line_acc    acc;
-  char                     *fname = "../../data/ex_data.dibbler1";
+  char                     *fname = "../../data/dibbler1";
   behave                   b = count_first21;
   unsigned long            good_21 = 0, good = 0, bad = 0;
 

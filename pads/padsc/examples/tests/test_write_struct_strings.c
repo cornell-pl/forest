@@ -1,6 +1,6 @@
 #include "pads.h"
 #include "struct_strings.h"
-#define FILENAME  "../../data/ex_data.struct_strings_write"
+#define FILENAME  "../../data/write_struct_strings"
 
 
 Perror_t my_string_inv_val(P_t *pads, void *pd_void, void *val_void, void **type_args) {

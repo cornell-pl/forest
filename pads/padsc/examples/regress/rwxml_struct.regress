@@ -1,4 +1,4 @@
-Input file = ../../data/ex_data.struct
+Input file = ../../data/struct
 Output file = /dev/stdout
 warning: P_open: Installing default IO discipline : newline-terminated records
 <testtwo>

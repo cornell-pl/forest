@@ -1,7 +1,7 @@
 #include "pads.h"
 #include "struct.h"
 /* #define FILENAME  "stdin" */
-#define FILENAME  "../../data/ex_data.struct_write" 
+#define FILENAME  "../../data/write_struct" 
 
 
 Perror_t my_uint32_inv_val(P_t *pads, void *pd_void, void *val_void, void **type_args) {

@@ -1,4 +1,4 @@
-Data file = ../../data/union_manifest
+Data file = ../../data/punion_manifest
 warning: P_open: Installing default IO discipline : newline-terminated records
 *****************************************************************************************************
 <top> : struct str2

@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     error(2, "*** P_open failed ***");
     return -1;
   }
-  if (P_ERR == P_io_fopen(pads, "../../data/ex_data.format2")) {
+  if (P_ERR == P_io_fopen(pads, "../../data/format2")) {
     error(2, "*** P_io_fopen failed ***");
     return -1;
   }
