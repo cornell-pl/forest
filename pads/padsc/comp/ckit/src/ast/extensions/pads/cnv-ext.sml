@@ -1497,10 +1497,14 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      List.concat(List.map doOne ctNoptEs)
 		  end
 
-              fun emitWrites eds = 
-		  if #outputWrites(!PInput.inputs) then 
+	      fun emit (condition, eds) = 
+		  if condition then 
 		      List.concat(List.map cnvExternalDecl eds)
 		  else []
+
+              fun emitWrites eds = emit (!(#outputWrites(PInput.inputs)), eds)
+
+              fun emitXML eds = emit (!(#outputXML(PInput.inputs)), eds)
 
               fun cnvCTy ctyED = 
 		  let val astdecls = cnvExternalDecl ctyED
@@ -2475,7 +2479,7 @@ in function...
                  @ (List.concat(List.map cnvExternalDecl copyPDEDs))
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
                  @ (List.concat(List.map cnvExternalDecl maskFunEDs))
- 		 @ (List.concat(List.map cnvExternalDecl galaxEDs))
+                 @ (emitXML galaxEDs)
 		 @ (emitWrites writeFunEDs)
                  @ cnvExternalDecl initFunED
                  @ cnvExternalDecl resetFunED
@@ -3162,7 +3166,7 @@ in function...
 		     @ (List.concat(List.map cnvExternalDecl copyPDEDs))
 	             @ (List.concat (List.map cnvExternalDecl readFunEDs))
 	             @ (List.concat (List.map cnvExternalDecl maskFunEDs))
-	             @ (List.concat (List.map cnvExternalDecl galaxEDs))
+                     @ (emitXML galaxEDs)
                      @ (emitWrites writeFunEDs)
 	             @ cnvExternalDecl initFunED
 	             @ cnvExternalDecl resetFunED
@@ -4291,7 +4295,7 @@ in function...
 		@ (List.concat(List.map cnvExternalDecl copyPDEDs))
                 @ (List.concat(List.map cnvExternalDecl readFunEDs))
                 @ (List.concat(List.map cnvExternalDecl maskFunEDs))
-                @ (List.concat (List.map cnvExternalDecl galaxEDs))
+		@ (emitXML galaxEDs)
                 @ (emitWrites writeFunEDs)
                 @ cnvExternalDecl initFunED
                 @ cnvExternalDecl resetFunED

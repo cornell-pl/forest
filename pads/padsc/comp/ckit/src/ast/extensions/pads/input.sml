@@ -1,14 +1,14 @@
 structure PInput = 
 struct
 
-type PinputTy = {outputWrites : bool}
+type PinputTy = {outputWrites : bool ref,
+		 outputXML    : bool ref}
 
-val defaults : PinputTy = 
-    { outputWrites = true } 
 
-val inputs : PinputTy ref = ref defaults
+val inputs : PinputTy = {outputWrites = ref true,
+			 outputXML    = ref false}
 
-(* eventually generalize to allow partial customization *)
-fun init (ins : PinputTy) = inputs := ins
 
+fun emitWrites (status) = (#outputWrites inputs) := status
+fun emitXML (status) = (#outputXML inputs) := status
 end

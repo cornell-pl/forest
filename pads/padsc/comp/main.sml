@@ -365,8 +365,9 @@ structure Main : sig
     fun checkFlags _ = (* Check that the user didn't supply bogus flag combinations. *)
 	()
     fun initState() = (* more customization in the future *)
-	if !writeNoneFlag then PInput.init({outputWrites = false}
-	) else ()
+	if !writeNoneFlag then PInput.emitWrites false
+        else if !xmlFlag then PInput.emitXML true
+	else ()
 
     fun main release (cmd, args) = 
       (stage := "Command-line processing";
