@@ -55,53 +55,6 @@ do {
   } while (0)
 /* END_MACRO */
 
-/* Assumes pd->loc has already been set */
-#define PDCI_READFN_RET_ERRCODE_WARN(whatfn, msg, errcode)
-  do {
-    if (P_Test_NotIgnore(*(m))) {
-      pd->errCode = (errcode);
-      pd->nerr = 1;
-      if (!pads->inestlev) {
-	PDCI_report_err(pads, P_WARN_FLAGS, &(pd->loc), (errcode), (whatfn), (msg));
-      }
-    }
-    return P_ERR;
-  } while (0)
-/* END_MACRO */
-
-/* Assumes pd->loc and pd->errCode have already been set */
-#define PDCI_READFN_RET_EXIST_ERRCODE_WARN(whatfn, msg)
-  do {
-    if (pads->speclev == 0 && P_Test_NotIgnore(*(m)) && (!pads->inestlev) ) {
-	PDCI_report_err(pads, P_WARN_FLAGS, &(pd->loc), pd->errCode, (whatfn), (msg));
-    }
-    return P_ERR;
-  } while (0)
-/* END_MACRO */
-
-/* Assumes pd->loc has already been set, warning already issued */
-#define PDCI_READFN_RET_ERRCODE_NOWARN(errcode)
-  do {
-    if (P_Test_NotIgnore(*(m))) {
-      pd->errCode = (errcode);
-      pd->nerr = 1;
-    }
-    return P_ERR;
-  } while (0)
-/* END_MACRO */
-
-/* Does not use pd->loc */
-#define PDCI_READFN_RET_ERRCODE_FATAL(whatfn, msg, errcode)
-  do {
-    if ( P_Test_NotIgnore(*(m))) {
-      pd->errCode = (errcode);
-      pd->nerr = 1;
-      PDCI_report_err(pads, P_FATAL_FLAGS, 0, (errcode), (whatfn), (msg));
-    }
-    return P_ERR;
-  } while (0)
-/* END_MACRO */
-
 /*
  * Starting alloc size for strings, even if initial string is smaller;
  * saves on later alloc calls when Pstring field is re-used many
@@ -565,10 +518,10 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", 0, P_RANGE);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_pref) "_read", "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_pref) "_read", *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_pref) "_read", "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_pref) "_read", *m, "IO_forward error", P_FORWARD_ERR);
 }
 /* END_MACRO */
 
@@ -661,13 +614,13 @@ fn_name(P_t *pads, const Pbase_m *m, size_t width,
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_RANGE);
 
   /* fatal_alloc_err:
-     PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), "Memory alloc err", P_ALLOC_ERR); */
+     PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), *m, "Memory alloc err", P_ALLOC_ERR); */
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), *m, "IO_forward error", P_FORWARD_ERR);
 }
 /* END_MACRO */
 
@@ -701,10 +654,10 @@ fn_name(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), *m, "IO_forward error", P_FORWARD_ERR);
 }
 /* END_MACRO */
 
@@ -740,10 +693,10 @@ fn_name(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), *m, "IO_forward error", P_FORWARD_ERR);
 }
 /* END_MACRO */
 
@@ -804,10 +757,10 @@ fn_name(P_t *pads, const Pbase_m *m, Puint32 num_digits_or_bytes, Pbase_pd *pd, 
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), *m, "IO_forward error", P_FORWARD_ERR);
 }
 /* END_MACRO */
 
@@ -5179,7 +5132,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.142 2004-02-16 21:48:22 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.143 2004-02-17 19:02:40 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8461,10 +8414,10 @@ PDCI_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO_forward error", P_FORWARD_ERR);
 }
 
 Perror_t
@@ -8529,13 +8482,13 @@ PDCI_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_STR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO_forward error", P_FORWARD_ERR);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "Memory alloc error", P_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
 }
 
 Perror_t
@@ -8610,7 +8563,7 @@ PDCI_countX_read(P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
 }
 
 Perror_t
@@ -8677,7 +8630,7 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t coun
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
 }
 
 Perror_t
@@ -8709,7 +8662,7 @@ PDCI_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
   return P_OK;
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "Memory alloc error", P_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
 }
 
 Perror_t
@@ -8742,7 +8695,7 @@ PDCI_ipaddr_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
   return P_OK;
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "Memory alloc error", P_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
 }
 
 Perror_t
@@ -8788,10 +8741,10 @@ PDCI_char_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO_forward error", P_FORWARD_ERR);
 }
 
 Perror_t
@@ -8843,13 +8796,13 @@ PDCI_string_FW_read(P_t *pads, const Pbase_m *m, size_t width,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "Memory alloc error", P_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO_forward error", P_FORWARD_ERR);
 }
 
 Perror_t
@@ -8913,13 +8866,13 @@ PDCI_string_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "Memory alloc error", P_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO_forward error", P_FORWARD_ERR);
 }
 
 Perror_t
@@ -9001,13 +8954,13 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "Memory alloc error", P_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO_forward error", P_FORWARD_ERR);
 }
 
 Perror_t
@@ -9088,13 +9041,13 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "Memory alloc error", P_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", P_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO_forward error", P_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO_forward error", P_FORWARD_ERR);
 }
 
 #endif /* P_CONFIG_READ_FUNCTIONS */

@@ -100,6 +100,7 @@ structure ParseTreeExt =
 		       postCond : ('exp PArrayPostCond) list} 
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
+		      isLongestMatch : bool, 
 		      isRecord : bool, 
 		      isSource   : bool,
                       containsRecord : bool, 

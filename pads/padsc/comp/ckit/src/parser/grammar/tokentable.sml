@@ -87,6 +87,7 @@ struct
 	       ("Pparsecheck", Tokens.PPARSECHECK),
                ("Pprefix", Tokens.PPREFIX),     
                ("Pre", Tokens.PRE),    
+               ("PlongestMatch", Tokens.PLONGESTMATCH),     
                ("Precord", Tokens.PRECORD),     
 	       ("Pselect", Tokens.PSELECT),
                ("Psep", Tokens.PSEP),

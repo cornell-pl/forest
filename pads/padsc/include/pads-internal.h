@@ -120,6 +120,10 @@ void PDCI_IODISC_2P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2);
 void PDCI_IODISC_3P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, void *p3);
 void PDCI_IODISC_4P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, void *p3, void *p4);
 
+void PDCI_READFN_RET_ERRCODE_WARN(const char *whatfn, const char *msg, PerrCode_t errcode);
+void PDCI_READFN_RET_EXIST_ERRCODE_WARN(const char *whatfn, const char *msg);
+void PDCI_READFN_RET_ERRCODE_NOWARN(PerrCode_t errcode);
+void PDCI_READFN_RET_ERRCODE_FATAL(const char *whatfn, Pbase_m the_m, const char *msg, PerrCode_t errcode);
 void PDCI_READFN_WIDTH_CHECK(const char *whatfn, const char *elt_descr, size_t width);
 void PDCI_READFN_WIDTH_CHECK_ZERO_OK(const char *whatfn, const char *elt_descr, size_t width);
 
@@ -144,6 +148,53 @@ void PDCI_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr,
 			  const char *err_prefix, const char *whatfn);
 #else
 /* The actual impls */
+
+/* Assumes pd->loc has already been set */
+#define PDCI_READFN_RET_ERRCODE_WARN(whatfn, msg, errcode) \
+  do { \
+    if (P_Test_NotIgnore(*(m))) { \
+      pd->errCode = (errcode); \
+      pd->nerr = 1; \
+      if (!pads->inestlev) { \
+	PDCI_report_err(pads, P_WARN_FLAGS, &(pd->loc), (errcode), (whatfn), (msg)); \
+      } \
+    } \
+    return P_ERR; \
+  } while (0)
+/* END_MACRO */
+
+/* Assumes pd->loc and pd->errCode have already been set */
+#define PDCI_READFN_RET_EXIST_ERRCODE_WARN(whatfn, msg) \
+  do { \
+    if (pads->speclev == 0 && P_Test_NotIgnore(*(m)) && (!pads->inestlev) ) { \
+	PDCI_report_err(pads, P_WARN_FLAGS, &(pd->loc), pd->errCode, (whatfn), (msg)); \
+    } \
+    return P_ERR; \
+  } while (0)
+/* END_MACRO */
+
+/* Assumes pd->loc has already been set, warning already issued */
+#define PDCI_READFN_RET_ERRCODE_NOWARN(errcode) \
+  do { \
+    if (P_Test_NotIgnore(*(m))) { \
+      pd->errCode = (errcode); \
+      pd->nerr = 1; \
+    } \
+    return P_ERR; \
+  } while (0)
+/* END_MACRO */
+
+/* Does not use pd->loc */
+#define PDCI_READFN_RET_ERRCODE_FATAL(whatfn, the_m, msg, errcode) \
+  do { \
+    if ( P_Test_NotIgnore(the_m) ) { \
+      pd->errCode = (errcode); \
+      pd->nerr = 1; \
+      PDCI_report_err(pads, P_FATAL_FLAGS, 0, (errcode), (whatfn), (msg)); \
+    } \
+    return P_ERR; \
+  } while (0)
+/* END_MACRO */
 
 #ifndef NDEBUG
 /* DEBUG VERSIONS */
@@ -1309,11 +1360,6 @@ PDCI_INT_ACCUM_DT_TYPES(Puint64);
 /* ================================================================================ */
 /* INTERNAL MISC TYPES + ROUTINES */
 
-Perror_t PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp,
-				  const char *err_prefix, const char *whatfn);
-Perror_t PDCI_regexp_compile(P_t *pads, const Pstring *regexp_str, Pregexp_t *regexp,
-			     const char *err_prefix, const char *whatfn);
-Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
 int         PDCI_regexp_match(P_t *pads, Pregexp_t *regexp, Pbyte *begin, Pbyte *end,
 			      regflags_t e_flags, Pcharset char_set);
 

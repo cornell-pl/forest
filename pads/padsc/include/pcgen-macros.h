@@ -53,12 +53,19 @@ void PCGEN_ALT_READ_CHAR_LIT(const char *fn_nm, Pchar char_lit);
 void PCGEN_ALT_READ_STR_LIT(const char *fn_nm, const char *str_lit, size_t str_len_expr);
 void PCGEN_ALT_READ_REGEXP(const char *fn_nm, const char *regexp_str);
 
-void PCGEN_UNION_READ_SETUP_STAT(const char *fn_nm, int the_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup, void *pd_init);
-void PCGEN_UNION_READ_SETUP(const char *fn_nm, int the_tag, void *rep_cleanup, void *rep_init, void *pd_cleanup, void *pd_init);
+#define PDCI_UNION_READ_SETUP_ARGS    const char *fn_nm, int the_tag, \
+                                      void *rep_cleanup, void *rep_init, void *rep_copy, \
+                                      void *pd_cleanup, void *pd_init, void *pd_copy
 
-#define PDCI_UNION_READ_ARGS const char *fn_nm, int the_tag, \
-                             void *rep_cleanup, void *rep_init, \
-                             void *pd_cleanup, void *pd_init, Perror_t read_call
+#define PDCI_UNION_READ_ARGS          const char *fn_nm, int the_tag, \
+                                      void *rep_cleanup, void *rep_init, void *rep_copy, \
+                                      void *pd_cleanup, void *pd_init, void *pd_copy, Perror_t read_call
+
+#define PDCI_UNION_READ_MAN_PRE_ARGS  const char *fn_nm, int the_tag, \
+                                      void *rep_init, void *pd_init
+
+void PCGEN_UNION_READ_SETUP_STAT(PDCI_UNION_READ_SETUP_ARGS);
+void PCGEN_UNION_READ_SETUP(PDCI_UNION_READ_SETUP_ARGS);
 
 void PCGEN_UNION_READ_STAT        (PDCI_UNION_READ_ARGS);
 void PCGEN_UNION_READ_FIRST       (PDCI_UNION_READ_ARGS);
@@ -70,8 +77,6 @@ void PCGEN_UNION_READ_FIRST_CHECK (PDCI_UNION_READ_ARGS, int usercheck);
 void PCGEN_UNION_READ_NEXT_CHECK  (PDCI_UNION_READ_ARGS, int usercheck);
 void PCGEN_UNION_READ_LAST_CHECK  (PDCI_UNION_READ_ARGS, int usercheck);
 
-#define PDCI_UNION_READ_MAN_PRE_ARGS const char *fn_nm, int the_tag, void *rep_init, void *pd_init
-
 void PCGEN_UNION_READ_MAN_STAT_PRE       (PDCI_UNION_READ_MAN_PRE_ARGS);
 void PCGEN_UNION_READ_MAN_FIRST_PRE      (PDCI_UNION_READ_MAN_PRE_ARGS);
 void PCGEN_UNION_READ_MAN_NEXT_PRE       (PDCI_UNION_READ_MAN_PRE_ARGS);
@@ -80,25 +85,59 @@ void PCGEN_UNION_READ_MAN_STAT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
 void PCGEN_UNION_READ_MAN_FIRST_VIRT_PRE (PDCI_UNION_READ_MAN_PRE_ARGS);
 void PCGEN_UNION_READ_MAN_NEXT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
 
-void PCGEN_UNION_READ_MAN_STAT_POST       (const char *fn_nm);
-void PCGEN_UNION_READ_MAN_POST            (const char *fn_nm);
-void PCGEN_UNION_READ_MAN_STAT_POST_CHECK (const char *fn_nm, void *rep_cleanup, void *pd_cleanup, int usercheck);
-void PCGEN_UNION_READ_MAN_POST_CHECK      (const char *fn_nm, void *rep_cleanup, void *pd_cleanup, int usercheck);
+void PCGEN_UNION_READ_MAN_STAT_POST       (const char *fn_nm, void *rep_copy, void *pd_copy);
+void PCGEN_UNION_READ_MAN_POST            (const char *fn_nm, void *rep_copy, void *pd_copy);
+void PCGEN_UNION_READ_MAN_STAT_POST_CHECK (const char *fn_nm, void *rep_copy, void *rep_cleanup,
+					   void *pd_copy, void *pd_cleanup, int usercheck);
+void PCGEN_UNION_READ_MAN_POST_CHECK      (const char *fn_nm, void *rep_copy, void *rep_cleanup,
+					   void *pd_copy, void *pd_cleanup, int usercheck);
 
-void PCGEN_UNION_READ_FAILED      (const char *fn_nm, const char *nm, int err_tag);
-void PCGEN_UNION_READ_WHERE_CHECK (const char *fn_nm, int usercheck);
+void PCGEN_UNION_READ_CHECK_FAILED    (const char *fn_nm, const char *nm, int err_tag);
+void PCGEN_UNION_READ_WHERE_CHECK     (const char *fn_nm, int usercheck);
 void PCGEN_UNION_READ_WHERE_END_CHECK (const char *fn_nm, int usercheck);
 
-#define PDCI_SWUNION_READ_ARGS const char *fn_nm, int the_tag, int err_tag, \
-                               void *rep_cleanup, void *rep_init, \
-                               void *pd_cleanup, void *pd_init, Perror_t read_call
+void PCGEN_UNION_READ_LONGEST_SETUP_STAT(PDCI_UNION_READ_SETUP_ARGS);
+void PCGEN_UNION_READ_LONGEST_SETUP(PDCI_UNION_READ_SETUP_ARGS);
+
+void PCGEN_UNION_READ_LONGEST_STAT        (PDCI_UNION_READ_ARGS);
+void PCGEN_UNION_READ_LONGEST_FIRST       (PDCI_UNION_READ_ARGS);
+void PCGEN_UNION_READ_LONGEST_NEXT        (PDCI_UNION_READ_ARGS);
+void PCGEN_UNION_READ_LONGEST_LAST        (PDCI_UNION_READ_ARGS);
+
+void PCGEN_UNION_READ_LONGEST_STAT_CHECK  (PDCI_UNION_READ_ARGS, int usercheck);
+void PCGEN_UNION_READ_LONGEST_FIRST_CHECK (PDCI_UNION_READ_ARGS, int usercheck);
+void PCGEN_UNION_READ_LONGEST_NEXT_CHECK  (PDCI_UNION_READ_ARGS, int usercheck);
+void PCGEN_UNION_READ_LONGEST_LAST_CHECK  (PDCI_UNION_READ_ARGS, int usercheck);
+
+void PCGEN_UNION_READ_LONGEST_MAN_STAT_PRE       (PDCI_UNION_READ_MAN_PRE_ARGS);
+void PCGEN_UNION_READ_LONGEST_MAN_FIRST_PRE      (PDCI_UNION_READ_MAN_PRE_ARGS);
+void PCGEN_UNION_READ_LONGEST_MAN_NEXT_PRE       (PDCI_UNION_READ_MAN_PRE_ARGS);
+
+void PCGEN_UNION_READ_LONGEST_MAN_STAT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
+void PCGEN_UNION_READ_LONGEST_MAN_FIRST_VIRT_PRE (PDCI_UNION_READ_MAN_PRE_ARGS);
+void PCGEN_UNION_READ_LONGEST_MAN_NEXT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
+
+void PCGEN_UNION_READ_LONGEST_MAN_STAT_POST       (const char *fn_nm, void *rep_copy, void *pd_copy);
+void PCGEN_UNION_READ_LONGEST_MAN_POST            (const char *fn_nm, void *rep_copy, void *pd_copy);
+void PCGEN_UNION_READ_LONGEST_MAN_STAT_POST_CHECK (const char *fn_nm, void *rep_copy, void *rep_cleanup,
+						   void *pd_copy, void *pd_cleanup, int usercheck);
+void PCGEN_UNION_READ_LONGEST_MAN_POST_CHECK      (const char *fn_nm, void *rep_copy, void *rep_cleanup,
+						   void *pd_copy, void *pd_cleanup, int usercheck);
+
+void PCGEN_UNION_READ_LONGEST_CHECK_FAILED    (const char *fn_nm, const char *nm, int err_tag);
+void PCGEN_UNION_READ_LONGEST_WHERE_CHECK     (const char *fn_nm, int usercheck);
+void PCGEN_UNION_READ_LONGEST_WHERE_END_CHECK (const char *fn_nm, int usercheck);
+
+#define PDCI_SWUNION_READ_ARGS          const char *fn_nm, int the_tag, int err_tag, \
+                                        void *rep_cleanup, void *rep_init, void *rep_copy, \
+                                        void *pd_cleanup, void *pd_init, void *pd_copy, Perror_t read_call
+
+#define PDCI_SWUNION_READ_MAN_PRE_ARGS  const char *fn_nm, int the_tag, \
+                                        void *rep_cleanup, void *rep_init, void *rep_copy, \
+                                        void *pd_cleanup, void *pd_init, void *pd_copy
 
 void PCGEN_SWUNION_READ_STAT (PDCI_SWUNION_READ_ARGS);
 void PCGEN_SWUNION_READ      (PDCI_SWUNION_READ_ARGS);
-
-#define PDCI_SWUNION_READ_MAN_PRE_ARGS const char *fn_nm, int the_tag, \
-                                       void *rep_cleanup, void *rep_init, \
-                                       void *pd_cleanup, void *pd_init
 
 void PCGEN_SWUNION_READ_MAN_STAT_PRE      (PDCI_SWUNION_READ_MAN_PRE_ARGS);
 void PCGEN_SWUNION_READ_MAN_STAT_VIRT_PRE (PDCI_SWUNION_READ_MAN_PRE_ARGS);
@@ -137,33 +176,33 @@ void PCGEN_ENUM_XML_OUT(const char *def_tag, const char *(rep2str_fn)(int));
 
 #define PCGEN_FIND_EOR(fn_nm)
 do {
-  Pbase_pd tpd;
-  size_t bytes_skipped;
-  int no_panic = !P_PS_isPanic(pd);
+  Pbase_pd tpd_PCGEN_;
+  size_t bytes_skipped_PCGEN_;
+  int no_panic_PCGEN_ = !P_PS_isPanic(pd);
   P_PS_unsetPanic(pd);
-  PDCI_IO_BEGINLOC(pads, tpd.loc);
-  if (P_OK == P_io_next_rec(pads, &bytes_skipped)) {
-    if (bytes_skipped) {
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
-      if (no_panic) {
-	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_EXTRA_BEFORE_EOR, fn_nm, "Unexpected data before EOR");
+  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  if (P_OK == P_io_next_rec(pads, &bytes_skipped_PCGEN_)) {
+    if (bytes_skipped_PCGEN_) {
+      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      if (no_panic_PCGEN_) {
+	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_EXTRA_BEFORE_EOR, fn_nm, "Unexpected data before EOR");
 	(pd->nerr)++;
 	if (pd->nerr == 1) {
 	  pd->errCode = P_EXTRA_BEFORE_EOR;
-	  pd->loc = tpd.loc;
+	  pd->loc = tpd_PCGEN_.loc;
 	  if (P_spec_level(pads)) return P_ERR;
 	}
       } else {
-	PDCI_report_err(pads, P_LEV_INFO, &(tpd.loc), P_NO_ERR, fn_nm, "Resynching at EOR");
+	PDCI_report_err(pads, P_LEV_INFO, &(tpd_PCGEN_.loc), P_NO_ERR, fn_nm, "Resynching at EOR");
       }
     }
   } else {
-    PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
-    PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_EOF_BEFORE_EOR, fn_nm, "Found EOF when searching for EOR");
+    PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+    PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_EOF_BEFORE_EOR, fn_nm, "Found EOF when searching for EOR");
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_EOF_BEFORE_EOR;
-      pd->loc = tpd.loc;
+      pd->loc = tpd_PCGEN_.loc;
       if (P_spec_level(pads)) return P_ERR;
     }
   }
@@ -176,6 +215,14 @@ do {
   (pd->nerr)++;
   pd->errCode = ecode;
   PDCI_IO_ENDLOC_MINUS1(pads, pd->loc);
+  PDCI_report_err(pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, msg);
+} while (0)
+/* END_MACRO */
+
+#define PDCI_CONSTRAINT_ERR_LOC_ALREADY_SET(fn_nm, ecode, msg)
+do {
+  (pd->nerr)++;
+  pd->errCode = ecode;
   PDCI_report_err(pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, msg);
 } while (0)
 /* END_MACRO */
@@ -353,17 +400,17 @@ do {
 
 #define PDCI_STRUCT_READ_CHAR_LIT(fn_nm, char_lit)
 do {
-  Pbase_pd tpd;
-  size_t toffset;
-  PDCI_IO_BEGINLOC(pads, tpd.loc);
-  if (P_OK == Pchar_lit_scan1(pads, char_lit, 1, 0, &toffset)) {
-    if (toffset) {
+  Pbase_pd tpd_PCGEN_;
+  size_t toffset_PCGEN_;
+  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  if (P_OK == Pchar_lit_scan1(pads, char_lit, 1, 0, &toffset_PCGEN_)) {
+    if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
-	pd->loc = tpd.loc;
-	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
+	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	pd->loc = tpd_PCGEN_.loc;
+	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before char separator %s", P_qfmt_char(char_lit));
 	if (P_spec_level(pads)) return P_ERR;
       }
@@ -373,9 +420,9 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
-      pd->loc = tpd.loc;
-      PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
+      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      pd->loc = tpd_PCGEN_.loc;
+      PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing char separator %s", P_qfmt_char(char_lit));
       if (P_spec_level(pads)) return P_ERR;
     }
@@ -390,8 +437,8 @@ do {
 #define PCGEN_STRUCT_READ_NEXT_CHAR_LIT(fn_nm, char_lit)
 do {
   if (P_PS_isPanic(pd)) {
-    size_t toffset;
-    if (P_ERR != Pchar_lit_scan1(pads, char_lit, 1, 1, &toffset)) {
+    size_t toffset_PCGEN_;
+    if (P_ERR != Pchar_lit_scan1(pads, char_lit, 1, 1, &toffset_PCGEN_)) {
       P_PS_unsetPanic(pd);
     }
   } else PDCI_STRUCT_READ_CHAR_LIT(fn_nm, char_lit);
@@ -400,17 +447,17 @@ do {
 
 #define PDCI_STRUCT_READ_STR_LIT(fn_nm, pads_str_lit)
 do {
-  Pbase_pd tpd;
-  size_t toffset;
-  PDCI_IO_BEGINLOC(pads, tpd.loc);
-  if (P_OK == Pstr_lit_scan1(pads, pads_str_lit, 1, 0, &toffset)) {
-    if (toffset) {
+  Pbase_pd tpd_PCGEN_;
+  size_t toffset_PCGEN_;
+  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  if (P_OK == Pstr_lit_scan1(pads, pads_str_lit, 1, 0, &toffset_PCGEN_)) {
+    if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
-	pd->loc = tpd.loc;
-	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
+	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	pd->loc = tpd_PCGEN_.loc;
+	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before string separator %s", P_qfmt_str(pads_str_lit));
 	if (P_spec_level(pads)) return P_ERR;
       }
@@ -420,9 +467,9 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
-      pd->loc = tpd.loc;
-      PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
+      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      pd->loc = tpd_PCGEN_.loc;
+      PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing string separator %s", P_qfmt_str(pads_str_lit));
       if (P_spec_level(pads)) return P_ERR;
     }
@@ -441,8 +488,8 @@ do {
 do {
   P_STRING_DECL_CSTR_LEN(tstr, str_lit, str_len_expr);
   if (P_PS_isPanic(pd)) {
-    size_t toffset;
-    if (P_ERR != Pstr_lit_scan1(pads, &tstr, 1, 1, &toffset)) {
+    size_t toffset_PCGEN_;
+    if (P_ERR != Pstr_lit_scan1(pads, &tstr, 1, 1, &toffset_PCGEN_)) {
       P_PS_unsetPanic(pd);
     }
   } else PDCI_STRUCT_READ_STR_LIT(fn_nm, &tstr);
@@ -451,20 +498,20 @@ do {
 
 #define PDCI_STRUCT_READ_REGEXP(fn_nm, regexp, regexp_str)
 do {
-  Perror_t terr;
-  Pbase_pd tpd;
-  size_t   toffset;
-  PDCI_IO_BEGINLOC(pads, tpd.loc);
-  terr = Pre_scan1(pads, regexp, 1, 0, &toffset);
+  Perror_t terr_PCGEN_;
+  Pbase_pd tpd_PCGEN_;
+  size_t   toffset_PCGEN_;
+  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  terr_PCGEN_ = Pre_scan1(pads, regexp, 1, 0, &toffset_PCGEN_);
   Pregexp_cleanup(pads, regexp);
-  if (terr == P_OK) {
-    if (toffset) {
+  if (terr_PCGEN_ == P_OK) {
+    if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
-	pd->loc = tpd.loc;
-	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
+	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	pd->loc = tpd_PCGEN_.loc;
+	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before regexp separator Pre %s", P_qfmt_cstr(regexp_str));
 	if (P_spec_level(pads)) return P_ERR;
       }
@@ -474,9 +521,9 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
-      pd->loc = tpd.loc;
-      PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
+      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      pd->loc = tpd_PCGEN_.loc;
+      PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing regexp separator Pre %s", P_qfmt_cstr(regexp_str));
       if (P_spec_level(pads)) return P_ERR;
     }
@@ -508,11 +555,11 @@ do {
     P_PS_setPanic(pd);
   } else {
     if (P_PS_isPanic(pd)) {
-      Perror_t terr;
-      size_t toffset;
-      terr = Pre_scan1(pads, &tregexp, 1, 1, &toffset);
+      Perror_t terr_PCGEN_;
+      size_t toffset_PCGEN_;
+      terr_PCGEN_ = Pre_scan1(pads, &tregexp, 1, 1, &toffset_PCGEN_);
       Pregexp_cleanup(pads, &tregexp);
-      if (terr == P_OK) {
+      if (terr_PCGEN_ == P_OK) {
 	P_PS_unsetPanic(pd);
       }
     } else {
@@ -528,11 +575,11 @@ do {
 /* END_MACRO */
 
 #define PCGEN_ALT_READ_BEGIN(fn_nm)
-  Ppos_t start_pos, cur_pos, max_pos;
-  int no_panic = 0, moved_pos = 0;
+  Ppos_t start_pos_PCGEN_, cur_pos_PCGEN_, max_pos_PCGEN_;
+  int no_panic_PCGEN_ = 0, moved_pos_PCGEN_ = 0;
   do {
-    PDCI_IO_GETPOS(pads, start_pos);
-    max_pos = start_pos;
+    PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
+    max_pos_PCGEN_ = start_pos_PCGEN_;
     if (P_ERR == P_io_checkpoint(pads, 0)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
     }
@@ -541,13 +588,13 @@ do {
 
 #define PCGEN_ALT_READ_END(fn_nm)
 do {
-  if (no_panic) {
+  if (no_panic_PCGEN_) {
     P_PS_unsetPanic(pd);
   } else {
     P_PS_setPanic(pd);
   }
-  if (moved_pos) {
-    if (P_ERR == P_io_commit_pos(pads, max_pos)) {
+  if (moved_pos_PCGEN_) {
+    if (P_ERR == P_io_commit_pos(pads, max_pos_PCGEN_)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
   } else {
@@ -568,14 +615,14 @@ do {
 
 #define PDCI_ALT_READ_FIELD_POST(fn_nm)
   if (!P_PS_isPanic(pd)) {
-    no_panic = 1;
-    PDCI_IO_GETPOS(pads, cur_pos);
-    error(0, "XXX_REMOVE cur_pos.offset %lu max_pos.offset %lu",
-	  (unsigned long)cur_pos.offset, (unsigned long)max_pos.offset); 
-    if (P_POS_GT(cur_pos, max_pos)) {
-      max_pos = cur_pos;
-      moved_pos = 1;
-      error(0, "XXX_REMOVE modified max_pos");
+    no_panic_PCGEN_ = 1;
+    PDCI_IO_GETPOS(pads, cur_pos_PCGEN_);
+    error(0, "XXX_REMOVE cur_pos_PCGEN_.offset %lu max_pos_PCGEN_.offset %lu",
+	  (unsigned long)cur_pos_PCGEN_.offset, (unsigned long)max_pos_PCGEN_.offset); 
+    if (P_POS_GT(cur_pos_PCGEN_, max_pos_PCGEN_)) {
+      max_pos_PCGEN_ = cur_pos_PCGEN_;
+      moved_pos_PCGEN_ = 1;
+      error(0, "XXX_REMOVE modified max_pos_PCGEN_");
     }
   }
   if (P_ERR == P_io_restore(pads)) {
@@ -659,17 +706,17 @@ do {
 
 #define PDCI_ALT_READ_CHAR_LIT(fn_nm, char_lit)
 do {
-  Pbase_pd tpd;
-  size_t toffset;
-  PDCI_IO_BEGINLOC(pads, tpd.loc);
-  if (P_OK == Pchar_lit_scan1(pads, char_lit, 1, 0, &toffset)) {
-    if (toffset) {
+  Pbase_pd tpd_PCGEN_;
+  size_t toffset_PCGEN_;
+  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  if (P_OK == Pchar_lit_scan1(pads, char_lit, 1, 0, &toffset_PCGEN_)) {
+    if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
-	pd->loc = tpd.loc;
-        PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
+	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	pd->loc = tpd_PCGEN_.loc;
+        PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before char separator %s", P_qfmt_char(char_lit));
       }
     }
@@ -678,9 +725,9 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
-      pd->loc = tpd.loc;
-      PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
+      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      pd->loc = tpd_PCGEN_.loc;
+      PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing char separator %s", P_qfmt_char(char_lit));
     }
   }
@@ -697,17 +744,17 @@ do {
 
 #define PDCI_ALT_READ_STR_LIT(fn_nm, pads_str_lit)
 do {
-  Pbase_pd tpd;
-  size_t toffset;
-  PDCI_IO_BEGINLOC(pads, tpd.loc);
-  if (P_OK == Pstr_lit_scan1(pads, pads_str_lit, 1, 0, &toffset)) {
-    if (toffset) {
+  Pbase_pd tpd_PCGEN_;
+  size_t toffset_PCGEN_;
+  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  if (P_OK == Pstr_lit_scan1(pads, pads_str_lit, 1, 0, &toffset_PCGEN_)) {
+    if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
-	pd->loc = tpd.loc;
-	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
+	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	pd->loc = tpd_PCGEN_.loc;
+	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before string separator %s", P_qfmt_str(pads_str_lit));
       }
     }
@@ -716,9 +763,9 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
-      pd->loc = tpd.loc;
-      PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
+      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      pd->loc = tpd_PCGEN_.loc;
+      PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing string separator %s", P_qfmt_str(pads_str_lit));
     }
   }
@@ -736,20 +783,20 @@ do {
 
 #define PDCI_ALT_READ_REGEXP(fn_nm, regexp, regexp_str)
 do {
-  Perror_t terr;
-  Pbase_pd tpd;
-  size_t   toffset;
-  PDCI_IO_BEGINLOC(pads, tpd.loc);
-  terr = Pre_scan1(pads, regexp, 1, 0, &toffset);
+  Perror_t terr_PCGEN_;
+  Pbase_pd tpd_PCGEN_;
+  size_t   toffset_PCGEN_;
+  PDCI_IO_BEGINLOC(pads, tpd_PCGEN_.loc);
+  terr_PCGEN_ = Pre_scan1(pads, regexp, 1, 0, &toffset_PCGEN_);
   Pregexp_cleanup(pads, regexp);
-  if (terr == P_OK) {
-    if (toffset) {
+  if (terr_PCGEN_ == P_OK) {
+    if (toffset_PCGEN_) {
       (pd->nerr)++;
       if (pd->nerr == 1) {
 	pd->errCode = P_STRUCT_EXTRA_BEFORE_SEP;
-	PDCI_IO_ENDLOC_MINUS2(pads, tpd.loc);
-	pd->loc = tpd.loc;
-	PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
+	PDCI_IO_ENDLOC_MINUS2(pads, tpd_PCGEN_.loc);
+	pd->loc = tpd_PCGEN_.loc;
+	PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_STRUCT_EXTRA_BEFORE_SEP, fn_nm,
 			"Extra data before regexp separator Pre %s", P_qfmt_cstr(regexp_str));
       }
     }
@@ -758,9 +805,9 @@ do {
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_MISSING_LITERAL;
-      PDCI_IO_ENDLOC_MINUS1(pads, tpd.loc);
-      pd->loc = tpd.loc;
-      PDCI_report_err(pads, P_LEV_WARN, &(tpd.loc), P_MISSING_LITERAL, fn_nm,
+      PDCI_IO_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
+      pd->loc = tpd_PCGEN_.loc;
+      PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_MISSING_LITERAL, fn_nm,
 		      "Missing regexp separator Pre %s", P_qfmt_cstr(regexp_str));
     }
   }
@@ -783,18 +830,18 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_SETUP_STAT(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init)
-Ppos_t start_pos;
+#define PCGEN_UNION_READ_SETUP_STAT(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
+Ppos_t start_pos_PCGEN_;
 do {
-  PDCI_IO_GETPOS(pads, start_pos);
+  PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
   pd->errCode = P_NO_ERR;
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init)
-Ppos_t start_pos;
+#define PCGEN_UNION_READ_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
+Ppos_t start_pos_PCGEN_;
 do {
-  PDCI_IO_GETPOS(pads, start_pos);
+  PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
   if (rep->tag != the_tag) {
     rep_cleanup (pads, rep);
     pd_cleanup  (pads, pd);
@@ -806,7 +853,7 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_STAT(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call)
+#define PCGEN_UNION_READ_STAT(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
 do {
   if (P_ERR == P_io_checkpoint(pads, 1)) {
     PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
@@ -817,7 +864,7 @@ do {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
   if (P_ERR == P_io_restore(pads)) {
@@ -827,7 +874,7 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_STAT_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call, usercheck)
+#define PCGEN_UNION_READ_STAT_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, usercheck)
 do {
   if (P_ERR == P_io_checkpoint(pads, 1)) {
     PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
@@ -838,7 +885,7 @@ do {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
   if (P_ERR == P_io_restore(pads)) {
@@ -848,7 +895,7 @@ do {
 /* END_MACRO */
 
 /* goes to branches_done on success, falls through on failure */
-#define PCGEN_UNION_READ_FIRST(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call)
+#define PCGEN_UNION_READ_FIRST(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
 do {
   if (P_ERR == P_io_checkpoint(pads, 1)) {
     PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
@@ -859,7 +906,7 @@ do {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
   if (P_ERR == P_io_restore(pads)) {
@@ -871,7 +918,7 @@ do {
 /* END_MACRO */
 
 /* goes to branches_done on success, falls through on failure */
-#define PCGEN_UNION_READ_FIRST_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call, usercheck)
+#define PCGEN_UNION_READ_FIRST_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, usercheck)
 do {
   if (P_ERR == P_io_checkpoint(pads, 1)) {
     PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
@@ -882,7 +929,7 @@ do {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
   if (P_ERR == P_io_restore(pads)) {
@@ -894,7 +941,7 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_NEXT(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call)
+#define PCGEN_UNION_READ_NEXT(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
 do {
   rep_init (pads, rep);
   pd_init  (pads, pd);
@@ -908,7 +955,7 @@ do {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
   if (P_ERR == P_io_restore(pads)) {
@@ -920,7 +967,7 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_NEXT_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call, usercheck)
+#define PCGEN_UNION_READ_NEXT_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, usercheck)
 do {
   rep_init (pads, rep);
   pd_init  (pads, pd);
@@ -934,7 +981,7 @@ do {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
   if (P_ERR == P_io_restore(pads)) {
@@ -946,7 +993,7 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_LAST(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call)
+#define PCGEN_UNION_READ_LAST(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
 do {
   rep_init (pads, rep);
   pd_init  (pads, pd);
@@ -960,7 +1007,7 @@ do {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
   if (P_ERR == P_io_restore(pads)) {
@@ -970,7 +1017,7 @@ do {
 /* END_MACRO */
 
 /* falls through on error, goes to branches_done on success */
-#define PCGEN_UNION_READ_LAST_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call, usercheck)
+#define PCGEN_UNION_READ_LAST_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, usercheck)
 do {
   rep_init (pads, rep);
   pd_init  (pads, pd);
@@ -984,7 +1031,7 @@ do {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
   if (P_ERR == P_io_restore(pads)) {
@@ -1033,33 +1080,33 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_MAN_STAT_POST(fn_nm)
+#define PCGEN_UNION_READ_MAN_STAT_POST(fn_nm, rep_copy, pd_copy)
 do {
-  pd->loc.b = start_pos;
+  pd->loc.b = start_pos_PCGEN_;
   goto branches_done;
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_MAN_POST(fn_nm)
+#define PCGEN_UNION_READ_MAN_POST(fn_nm, rep_copy, pd_copy)
 do {
-  pd->loc.b = start_pos;
+  pd->loc.b = start_pos_PCGEN_;
   goto branches_done;
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_MAN_STAT_POST_CHECK(fn_nm, rep_cleanup, pd_cleanup, usercheck)
+#define PCGEN_UNION_READ_MAN_STAT_POST_CHECK(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup, usercheck)
 do {
   if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) {
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_MAN_POST_CHECK(fn_nm, rep_cleanup, pd_cleanup, usercheck)
+#define PCGEN_UNION_READ_MAN_POST_CHECK(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup, usercheck)
 do {
   if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) {
-    pd->loc.b = start_pos;
+    pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
   rep_cleanup(pads, rep);
@@ -1070,7 +1117,7 @@ do {
 #define PCGEN_UNION_READ_WHERE_CHECK(fn_nm, usercheck)
 do {
     if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
-      pd->loc.b = start_pos;
+      pd->loc.b = start_pos_PCGEN_;
       PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation");
     }
 } while (0)
@@ -1084,11 +1131,11 @@ do {
 /* END_MACRO */
 
 /* XXX why was K codegen using -2 below ??? XXX */
-#define PCGEN_UNION_READ_FAILED(fn_nm, nm, err_tag)
+#define PCGEN_UNION_READ_CHECK_FAILED(fn_nm, nm, err_tag)
 do {
   (pd->nerr)++;
   pd->errCode = P_UNION_MATCH_ERR;
-  pd->loc.b = start_pos;
+  pd->loc.b = start_pos_PCGEN_;
   PDCI_IO_ENDLOC_MINUS1(pads, pd->loc);
   PDCI_report_err(pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match any branch of union " nm);
   rep->tag = err_tag;
@@ -1098,7 +1145,317 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init)
+#define PCGEN_UNION_READ_LONGEST_SETUP_STAT(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
+Ppos_t start_pos_PCGEN_, end_pos_PCGEN_;
+ssize_t longest_PCGEN_ = -1;
+do {
+  PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
+  tpd_PCGEN_.errCode = P_NO_ERR;
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
+Ppos_t start_pos_PCGEN_, end_pos_PCGEN_;
+ssize_t longest_PCGEN_ = -1;
+do {
+  PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
+  rep_init  (pads, &trep_PCGEN_);
+  pd_init   (pads, &tpd_PCGEN_);
+  tpd_PCGEN_.errCode = P_NO_ERR;
+} while (0)
+/* END_MACRO */
+
+#define PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT
+do {
+    PDCI_IO_GETPOS(pads, end_pos_PCGEN_);
+    if (end_pos_PCGEN_.offset - start_pos_PCGEN_.offset > longest_PCGEN_) {
+      longest_PCGEN_ = end_pos_PCGEN_.offset - start_pos_PCGEN_.offset;
+      memcpy(rep, &trep_PCGEN_, sizeof(trep_PCGEN_));
+      memcpy(pd,  &tpd_PCGEN_,  sizeof(tpd_PCGEN_));
+      pd->loc.b = start_pos_PCGEN_;
+      pd->loc.e = end_pos_PCGEN_;
+    }
+} while (0)
+/* END_MACRO */
+
+#define PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy)
+do {
+    PDCI_IO_GETPOS(pads, end_pos_PCGEN_);
+    if (end_pos_PCGEN_.offset - start_pos_PCGEN_.offset > longest_PCGEN_) {
+      longest_PCGEN_ = end_pos_PCGEN_.offset - start_pos_PCGEN_.offset;
+      rep_copy(pads, rep, &trep_PCGEN_);
+      pd_copy (pads, pd,  &tpd_PCGEN_);
+      pd->loc.b = start_pos_PCGEN_;
+      pd->loc.e = end_pos_PCGEN_;
+    }
+} while (0)
+/* END_MACRO */
+
+/* always falls through */
+#define PCGEN_UNION_READ_LONGEST_STAT(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
+do {
+  if (P_ERR == P_io_checkpoint(pads, 1)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
+  }
+  trep_PCGEN_.tag = the_tag;
+  tpd_PCGEN_.tag  = the_tag;
+  if (P_OK == read_call) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT;
+  }
+  if (P_ERR == P_io_restore(pads)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0);
+  }
+} while (0)
+/* END_MACRO */
+
+/* always falls through */
+#define PCGEN_UNION_READ_LONGEST_STAT_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, usercheck)
+do {
+  if (P_ERR == P_io_checkpoint(pads, 1)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
+  }
+  trep_PCGEN_.tag = the_tag;
+  tpd_PCGEN_.tag  = the_tag;
+  if ((P_OK == read_call) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT;
+  }
+  if (P_ERR == P_io_restore(pads)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0);
+  }
+} while (0)
+/* END_MACRO */
+
+/* always falls through */
+#define PCGEN_UNION_READ_LONGEST_FIRST(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
+do {
+  if (P_ERR == P_io_checkpoint(pads, 1)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
+  }
+  trep_PCGEN_.tag = the_tag;
+  tpd_PCGEN_.tag  = the_tag;
+  if (P_OK == read_call) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
+  }
+  if (P_ERR == P_io_restore(pads)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0);
+  }
+  rep_cleanup (pads, &trep_PCGEN_);
+  pd_cleanup  (pads, &tpd_PCGEN_);
+} while (0)
+/* END_MACRO */
+
+/* always falls through */
+#define PCGEN_UNION_READ_LONGEST_FIRST_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, usercheck)
+do {
+  if (P_ERR == P_io_checkpoint(pads, 1)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
+  }
+  trep_PCGEN_.tag = the_tag;
+  tpd_PCGEN_.tag  = the_tag;
+  if ((P_OK == read_call) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
+  }
+  if (P_ERR == P_io_restore(pads)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0);
+  }
+  rep_cleanup (pads, &trep_PCGEN_);
+  pd_cleanup  (pads, &tpd_PCGEN_);
+} while (0)
+/* END_MACRO */
+
+/* always falls through */
+#define PCGEN_UNION_READ_LONGEST_NEXT(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
+do {
+  rep_init  (pads, &trep_PCGEN_);
+  pd_init   (pads, &tpd_PCGEN_);
+  pd->errCode = P_NO_ERR;
+  if (P_ERR == P_io_checkpoint(pads, 1)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
+  }
+  trep_PCGEN_.tag = the_tag;
+  tpd_PCGEN_.tag  = the_tag;
+  if (P_OK == read_call) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
+  }
+  if (P_ERR == P_io_restore(pads)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0);
+  }
+  rep_cleanup (pads, &trep_PCGEN_);
+  pd_cleanup  (pads, &tpd_PCGEN_);
+} while (0)
+/* END_MACRO */
+
+/* always falls through */
+#define PCGEN_UNION_READ_LONGEST_NEXT_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, usercheck)
+do {
+  rep_init  (pads, &trep_PCGEN_);
+  pd_init   (pads, &tpd_PCGEN_);
+  pd->errCode = P_NO_ERR;
+  if (P_ERR == P_io_checkpoint(pads, 1)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
+  }
+  trep_PCGEN_.tag = the_tag;
+  tpd_PCGEN_.tag  = the_tag;
+  if ((P_OK == read_call) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
+  }
+  if (P_ERR == P_io_restore(pads)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0);
+  }
+  rep_cleanup (pads, &trep_PCGEN_);
+  pd_cleanup  (pads, &tpd_PCGEN_);
+} while (0)
+/* END_MACRO */
+
+/* always falls through */
+#define PCGEN_UNION_READ_LONGEST_LAST(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
+do {
+  rep_init  (pads, &trep_PCGEN_);
+  pd_init   (pads, &tpd_PCGEN_);
+  pd->errCode = P_NO_ERR;
+  if (P_ERR == P_io_checkpoint(pads, 1)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
+  }
+  trep_PCGEN_.tag = the_tag;
+  tpd_PCGEN_.tag  = the_tag;
+  if (P_OK == read_call) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
+  }
+  if (P_ERR == P_io_restore(pads)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0);
+  }
+  rep_cleanup (pads, &trep_PCGEN_);
+  pd_cleanup  (pads, &tpd_PCGEN_);
+} while (0)
+/* END_MACRO */
+
+/* always falls through */
+#define PCGEN_UNION_READ_LONGEST_LAST_CHECK(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call, usercheck)
+do {
+  rep_init  (pads, &trep_PCGEN_);
+  pd_init   (pads, &tpd_PCGEN_);
+  pd->errCode = P_NO_ERR;
+  if (P_ERR == P_io_checkpoint(pads, 1)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
+  }
+  trep_PCGEN_.tag = the_tag;
+  tpd_PCGEN_.tag  = the_tag;
+  if ((P_OK == read_call)&& (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
+  }
+  if (P_ERR == P_io_restore(pads)) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0);
+  }
+  rep_cleanup (pads, &trep_PCGEN_);
+  pd_cleanup  (pads, &tpd_PCGEN_);
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init) 
+do {
+  trep_PCGEN_.tag = the_tag;
+  tpd_PCGEN_.tag = the_tag;
+  PD_COMMON_INIT_NO_ERR(&(tpd_PCGEN_.val.the_tag));
+  tpd_PCGEN_.val.the_tag.loc.b = start_pos_PCGEN_;
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init) 
+  PCGEN_UNION_READ_LONGEST_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_MAN_FIRST_PRE(fn_nm, the_tag, rep_init, pd_init) 
+  PCGEN_UNION_READ_LONGEST_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_MAN_FIRST_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init) 
+  PCGEN_UNION_READ_LONGEST_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_MAN_NEXT_PRE(fn_nm, the_tag, rep_init, pd_init) 
+do {
+  rep_init  (pads, &trep_PCGEN_);
+  pd_init   (pads, &tpd_PCGEN_);
+  tpd_PCGEN_.errCode = P_NO_ERR;
+  PCGEN_UNION_READ_LONGEST_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init);
+} while (0)
+/* END_MACRO */
+
+/* not sure that the init calls are needed */
+#define PCGEN_UNION_READ_LONGEST_MAN_NEXT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init) 
+do {
+  rep_init  (pads, &trep_PCGEN_);
+  pd_init   (pads, &tpd_PCGEN_);
+  tpd_PCGEN_.errCode = P_NO_ERR;
+  PCGEN_UNION_READ_LONGEST_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init);
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_MAN_STAT_POST(fn_nm, rep_copy, pd_copy)
+do {
+  PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT;
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_MAN_POST(fn_nm, rep_copy, pd_copy)
+do {
+  PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
+  rep_cleanup (pads, &trep_PCGEN_);
+  pd_cleanup  (pads, &tpd_PCGEN_);
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_MAN_STAT_POST_CHECK(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup, usercheck)
+do {
+  if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT;
+  }
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_MAN_POST_CHECK(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup, usercheck)
+do {
+  if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) {
+    PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
+  }
+  rep_cleanup (pads, &trep_PCGEN_);
+  pd_cleanup  (pads, &tpd_PCGEN_);
+} while (0)
+/* END_MACRO */
+
+/* pd->loc already set by CHECK_LONGEST macros */
+#define PCGEN_UNION_READ_LONGEST_WHERE_CHECK(fn_nm, usercheck)
+do {
+    if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
+      PDCI_CONSTRAINT_ERR_LOC_ALREADY_SET(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation");
+    }
+} while (0)
+/* END_MACRO */
+
+#define PDCI_UNION_LONGEST_READ_WHERE_END_CHECK(fn_nm, usercheck)
+    PCGEN_UNION_READ_LONGEST_WHERE_CHECK(fn_nm, usercheck)
+/* END_MACRO */
+
+#define PCGEN_UNION_READ_LONGEST_CHECK_FAILED(fn_nm, nm, err_tag)
+do {
+  if (longest_PCGEN_ == -1) {
+    (pd->nerr)++;
+    pd->errCode = P_UNION_MATCH_ERR;
+    pd->loc.b = start_pos_PCGEN_;
+    PDCI_IO_ENDLOC_MINUS1(pads, pd->loc);
+    PDCI_report_err(pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, "Failed to match any branch of union " nm);
+    rep->tag = err_tag;
+    pd->tag = err_tag;
+    P_PS_setPanic(pd);
+    goto final_check;
+  }
+  if (P_ERR == PDCI_io_forward(pads, longest_PCGEN_)) {
+    PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), m->unionLevel, "IO_forward error", P_FORWARD_ERR);
+  }
+} while (0)
+/* END_MACRO */
+
+#define PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
 do {
   if ((rep->tag) != the_tag) {
     rep_cleanup (pads, rep);
@@ -1110,7 +1467,7 @@ do {
 /* END_MACRO */
 
 /* falls through on success, goto branches_done on failure */
-#define PCGEN_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call)
+#define PCGEN_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
 do {
   PDCI_IO_BEGINLOC(pads, pd->loc);
   rep->tag = the_tag;
@@ -1127,14 +1484,14 @@ do {
 /* END_MACRO */
 
 /* falls through on success, goto branches_done on failure */
-#define PCGEN_SWUNION_READ(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call)
+#define PCGEN_SWUNION_READ(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call)
 do {
-  PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init);
-  PCGEN_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, pd_cleanup, pd_init, read_call);
+  PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy);
+  PCGEN_SWUNION_READ_STAT(fn_nm, the_tag, err_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy, read_call);
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init)
+#define PCGEN_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
 do {
   PDCI_IO_BEGINLOC(pads, pd->loc);
   pd->errCode = P_NO_ERR;
@@ -1145,21 +1502,21 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_SWUNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init)
-  PCGEN_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init)
+#define PCGEN_SWUNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
+  PCGEN_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
 /* END_MACRO */
 
-#define PCGEN_SWUNION_READ_MAN_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init)
+#define PCGEN_SWUNION_READ_MAN_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
 do {
-  PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init);
-  PCGEN_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init);
+  PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy);
+  PCGEN_SWUNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy);
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_SWUNION_READ_MAN_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init)
+#define PCGEN_SWUNION_READ_MAN_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
 do {
-  PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init);
-  PCGEN_SWUNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, pd_cleanup, pd_init);
+  PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy);
+  PCGEN_SWUNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy);
 } while (0)
 /* END_MACRO */
 
@@ -1224,13 +1581,13 @@ do {
 
 #define PCGEN_ARRAY_ACC_REP_NOVALS()
 do {
-  int dtsz = dtsize(acc->length.dict);
-  if (dtsz == 0) {
+  int dtsz_PCGEN_ = dtsize(acc->length.dict);
+  if (dtsz_PCGEN_ == 0) {
     sfprintf(outstr, "(No %s values.)", what);
     sfstrclose(tmpstr);
     return P_OK;
   }
-  if (dtsz == 1) {
+  if (dtsz_PCGEN_ == 1) {
     Puint32_dt_key_t   lookup_key;
     lookup_key.val = 0;
     lookup_key.cnt = 0;
@@ -1254,101 +1611,101 @@ do {
 
 #define PCGEN_TYPEDEF_ACC_REP2IO(default_what, basety_nm, base_acc_call)
 do {
-  Perror_t res;
-  Sfio_t *tmpstr;
-  if (!(tmpstr = sfstropen())) {
+  Perror_t res_PCGEN_;
+  Sfio_t *tmpstr_PCGEN_;
+  if (!(tmpstr_PCGEN_ = sfstropen())) {
     return P_ERR;
   }
   if (!what) {
-    sfprintf (tmpstr, "%s [--> %s]", default_what, basety_nm);
-    what = sfstruse(tmpstr);
+    sfprintf (tmpstr_PCGEN_, "%s [--> %s]", default_what, basety_nm);
+    what = sfstruse(tmpstr_PCGEN_);
   } else {
-    sfprintf (tmpstr, "%s [%s --> %s]", what, default_what, basety_nm);
-    what = sfstruse(tmpstr);
+    sfprintf (tmpstr_PCGEN_, "%s [%s --> %s]", what, default_what, basety_nm);
+    what = sfstruse(tmpstr_PCGEN_);
   }
-  res = base_acc_call;
-  sfstrclose(tmpstr);
-  return res;
+  res_PCGEN_ = base_acc_call;
+  sfstrclose(tmpstr_PCGEN_);
+  return res_PCGEN_;
 } while (0)
 /* END_MACRO */
 
 /* function body for a write2io function that has params pads, io, pd, rep */
 /* always precede with decls for buf, buf_len, and buf_full and always follow with 'return -1' */
 #define PCGEN_WRITE2IO_USE_WRITE2BUF(fn_nm, write2buf_call)
-  int set_buf;
-  ssize_t length;
+  int set_buf_PCGEN_;
+  ssize_t length_PCGEN_;
   PDCI_IODISC_2P_CHECKS_RET_SSIZE(fn_nm, io, rep);
   buf_len = pads->outbuf_res;
   while (1) {
-    set_buf  = 0;
+    set_buf_PCGEN_  = 0;
     buf_full = 0;
-    buf = PDCI_io_write_start(pads, io, &buf_len, &set_buf, fn_nm);
+    buf = PDCI_io_write_start(pads, io, &buf_len, &set_buf_PCGEN_, fn_nm);
     if (!buf)  {
       /* Don't have to abort because start failed. */
       return -1;
     }
-    length = write2buf_call;
+    length_PCGEN_ = write2buf_call;
     if (buf_full)  {
       /* Try again with a bigger buffer */
-      PDCI_io_write_abort(pads, io, buf, set_buf, fn_nm);
+      PDCI_io_write_abort(pads, io, buf, set_buf_PCGEN_, fn_nm);
       buf_len*=2;
       continue;
     }
     break;
   }
-  if (length>=0) {
-    return PDCI_io_write_commit(pads, io, buf, set_buf, length, fn_nm);
+  if (length_PCGEN_>=0) {
+    return PDCI_io_write_commit(pads, io, buf, set_buf_PCGEN_, length_PCGEN_, fn_nm);
   }
-  PDCI_io_write_abort(pads, io, buf, set_buf, fn_nm)
+  PDCI_io_write_abort(pads, io, buf, set_buf_PCGEN_, fn_nm)
 /* END_MACRO */
 
 #define PCGEN_TLEN_UPDATES()
 do {
-  if (tlen<0) {
+  if (tlen_PCGEN_<0) {
     return -1;
   }
-  length     += tlen;
-  buf_cursor += tlen;
-  buf_len    -= tlen;
+  length_PCGEN_      += tlen_PCGEN_;
+  buf_cursor_PCGEN_  += tlen_PCGEN_;
+  buf_len            -= tlen_PCGEN_;
 } while (0)
 /* END_MACRO */
 
 #define PCGEN_FINAL_TLEN_UPDATES()
 do {
-  if (tlen<0) {
+  if (tlen_PCGEN_<0) {
     return -1;
   }
-  length += tlen;
+  length_PCGEN_ += tlen_PCGEN_;
 } while (0)
 /* END_MACRO */
 
 #define PDCI_TMP4_TLEN_UPDATES()
 do {
-  if (tlen <= 0) {
+  if (tlen_PCGEN_ <= 0) {
     return -1;
   }
-  if (tlen > buf_len) {
+  if (tlen_PCGEN_ > buf_len) {
     (*buf_full) = 1;
     return -1;
   }
-  memcpy(buf_cursor, sfstruse(pads->tmp4), tlen);
-  length     += tlen;
-  buf_cursor += tlen;
-  buf_len    -= tlen;
+  memcpy(buf_cursor_PCGEN_, sfstruse(pads->tmp4), tlen_PCGEN_);
+  length_PCGEN_     += tlen_PCGEN_;
+  buf_cursor_PCGEN_ += tlen_PCGEN_;
+  buf_len    -= tlen_PCGEN_;
 } while (0)
 /* END_MACRO */
 
 #define PDCI_FINAL_TMP4_TLEN_UPDATES()
 do {
-  if (tlen <= 0) {
+  if (tlen_PCGEN_ <= 0) {
     return -1;
   }
-  if (tlen > buf_len) {
+  if (tlen_PCGEN_ > buf_len) {
     (*buf_full) = 1;
     return -1;
   }
-  memcpy(buf_cursor, sfstruse(pads->tmp4), tlen);
-  length += tlen;
+  memcpy(buf_cursor_PCGEN_, sfstruse(pads->tmp4), tlen_PCGEN_);
+  length_PCGEN_ += tlen_PCGEN_;
 } while (0)
 /* END_MACRO */
 
@@ -1357,7 +1714,7 @@ do {
   indent = (indent > 128) ? 128 : indent;
   if (!tag) { tag = def_tag; }
   sfstrset(pads->tmp4, 0);
-  tlen = sfprintf(pads->tmp4, "%.*s<%s>\n", indent, PDCI_spaces, tag);
+  tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s>\n", indent, PDCI_spaces, tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
 /* END_MACRO */
@@ -1365,16 +1722,16 @@ do {
 #define PCGEN_TAG_CLOSE_XML_OUT()
 do {
   sfstrset(pads->tmp4, 0);
-  tlen = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, tag);
+  tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, tag);
   PDCI_FINAL_TMP4_TLEN_UPDATES();
 } while (0)
 /* END_MACRO */
 
 #define PDCI_UNION_TAG_XML_OUT(tag)
 do {
-  int tag_indent = (indent > 126) ? 128 : indent+2;
+  int tag_indent_PCGEN_ = (indent > 126) ? 128 : indent+2;
   sfstrset(pads->tmp4, 0);
-  tlen = sfprintf(pads->tmp4, "%.*s<tag>%s</>\n", tag_indent, PDCI_spaces, tag);
+  tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<tag>%s</>\n", tag_indent_PCGEN_, PDCI_spaces, tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
 /* END_MACRO */
@@ -1385,12 +1742,12 @@ do {
   indent = ((indent) > 128) ? 128 : indent;
   sfstrset(pads->tmp4, 0);
   if ((pd)->errCode == P_NO_ERR) { /* no error */
-    tlen = sfprintf(pads->tmp4, "%.*s<%s><val>%s</></>\n", indent, PDCI_spaces, tag, rep2str_fn(*rep));
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><val>%s</></>\n", indent, PDCI_spaces, tag, rep2str_fn(*rep));
   } else if ((pd)->errCode < 100) { /* error, no location */
-    tlen = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd></%s>\n",
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd></%s>\n",
 		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), tag);
   } else { /* error, location */
-    tlen = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc></pd></%s>\n",
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc></pd></%s>\n",
 		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
 		    (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
 		    (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset,
@@ -1403,14 +1760,14 @@ do {
 #define PCGEN_STRUCT_PD_XML_OUT()
 do {
   if ((pd)->errCode != P_NO_ERR) {
-    int pd_indent = ((indent) > 126) ? 128 : (indent)+2;
+    int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
     sfstrset(pads->tmp4, 0);
     if ((pd)->errCode < 100) { /* no location */
-      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd>\n",
-		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode));
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd>\n",
+		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode));
     } else { /* location */
-      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc></pd>\n",
-		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc></pd>\n",
+		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
 		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
 		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset);
     }
@@ -1425,14 +1782,14 @@ do {
 #define PCGEN_ARRAY_PD_XML_OUT()
 do {
   if ((pd)->errCode != P_NO_ERR) {
-    int pd_indent = ((indent) > 126) ? 128 : (indent)+2;
+    int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
     sfstrset(pads->tmp4, 0);
     if ((pd)->errCode < 100) { /* no location */
-      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
-		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), (pd)->neerr, (pd)->firstError);
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
+		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), (pd)->neerr, (pd)->firstError);
     } else { /* location */
-      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
-		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
+		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
 		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
 		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset,
 		      (pd)->neerr, (pd)->firstError);

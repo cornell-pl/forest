@@ -189,8 +189,8 @@ fun addStructPostCond (decl,postCondOpt) =
 
 fun addUnionPostCond (decl,postCondOpt) = 
    (case decl of
-    (PX.PUnion{isRecord,isSource,containsRecord,largeHeuristic,name,params,variants,postCond}) => 
-      PX.PUnion{isRecord = isRecord, isSource = isSource, 
+    (PX.PUnion{isLongestMatch,isRecord,isSource,containsRecord,largeHeuristic,name,params,variants,postCond}) => 
+      PX.PUnion{isLongestMatch = isLongestMatch, isRecord = isRecord, isSource = isSource, 
 		 containsRecord = containsRecord, largeHeuristic = largeHeuristic,
                  name = name, params = params, variants = variants, postCond = postCondOpt} 
     | s => s)
@@ -284,7 +284,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, 
 	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
         | POPT | POMIT | PENDIAN | PCOMPUTE (* PADS *)
         | PFROM  (*PADS*)
- 	| PRECORD | PSOURCE | PWHERE  (* PADS *)  
+ 	| PLONGESTMATCH | PRECORD | PSOURCE | PWHERE  (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT | PPREFIX (* PADS*)
         | PRE | PDONE (* PADS *)
 
@@ -362,6 +362,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, 
         | pActParamList of expression list
         | pName of string
         | pIsRecord of bool
+        | pIsLongestMatch of bool
         | pIsSource of bool
         | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
@@ -1124,6 +1125,9 @@ pCommentOpt: (NONE)
 pIsRecord : (false)
   | PRECORD (true)
 
+pIsLongestMatch : (false)
+  | PLONGESTMATCH (true)
+
 pIsSource : (false)
   | PSOURCE (true)
 
@@ -1329,11 +1333,11 @@ pVariants:
  | pStructFieldList (PX.Ordered pStructFieldList)
 
 pUnion:
-  pIsSource pIsRecord PUNION pName pushScope pTyParams LCURLY pVariants popScope
+  pIsSource pIsRecord pIsLongestMatch PUNION pName pushScope pTyParams LCURLY pVariants popScope
  ( makeTypeName pName;
    PX.PUnion {name = pName, params = pTyParams, 
 	      containsRecord = false, largeHeuristic = false,
-              isRecord = pIsRecord, isSource = pIsSource, variants=pVariants, postCond = []}
+              isLongestMatch = pIsLongestMatch, isRecord = pIsRecord, isSource = pIsSource, variants=pVariants, postCond = []}
  ) 
 
 pFromOpt:

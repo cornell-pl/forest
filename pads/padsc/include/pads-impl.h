@@ -416,6 +416,12 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
  * REGEXP functions
  */
 
+Perror_t PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp,
+				  const char *err_prefix, const char *whatfn);
+Perror_t PDCI_regexp_compile(P_t *pads, const Pstring *regexp_str, Pregexp_t *regexp,
+			     const char *err_prefix, const char *whatfn);
+Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
+
 #define Pregexp_compile(pads, regexp_str, regexp) \
   PDCI_regexp_compile(pads, regexp_str, regexp, "", "Pregexp_compile")
 #define Pregexp_compile_cstr(pads, regexp_str, regexp) \
