@@ -1,4 +1,4 @@
-SHELL=/bin/ksh
+SHELL=/bin/sh
 
 
 all:	
