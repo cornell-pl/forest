@@ -48,7 +48,7 @@ WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_array test_array_string test_record_enum test_struct test_struct2 \
                test_punion2 test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
-               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns
+               test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct rwxml_struct
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
@@ -87,7 +87,9 @@ regress_o:  sanity_check \
           regress_test_array_ended_o \
           regress_test_array_ended2_o \
           regress_test_array_post_o \
-          regress_test_charclass_o
+          regress_test_charclass_o \
+          regress_rw_struct_o \
+          regress_rwxml_struct_o
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -117,7 +119,9 @@ regress_d:  sanity_check \
           regress_test_array_ended_d  \
           regress_test_array_ended2_d \
           regress_test_array_post_d \
-          regress_test_charclass_d 
+          regress_test_charclass_d \
+          regress_rw_struct_d \
+          regress_rwxml_struct_d
 	@echo " "; echo "DONE"; echo " "
 
 dib_tests: sanity_check $(DIB_TESTS)
@@ -265,10 +269,28 @@ regress_test_charclass_o: test_charclass
 regress_test_charclass_d: test_charclass_d
 	@(args=""; input="../../data/charclass"; suf=""; $(RegressInput))
 
-regress_test_ios: test_ios
+regress_test_ios_o: test_ios
 	@(args=""; input="../../data/small_ios_config"; suf=""; pp="$(PADS_HOME)/scripts/ios_pp.pl"; $(RegressInputPP))
 regress_test_ios_d: test_ios_d
 	@(args=""; input="../../data/small_ios_config"; suf=""; pp="$(PADS_HOME)/scripts/ios_pp.pl"; $(RegressInputPP))
+
+regress_rw_dns_o: rw_dns
+	@(args=""; input="../../data/dns"; suf=""; $(RegressRW))
+
+regress_rw_dns_d: rw_dns_d
+	@(args=""; input="../../data/dns"; suf=""; $(RegressRW))
+
+regress_rw_struct_o: rw_struct
+	@(args=""; input="../../data/rw_struct"; suf=""; $(RegressRW))
+
+regress_rw_struct_d: rw_struct_d
+	@(args=""; input="../../data/rw_struct"; suf=""; $(RegressRW))
+
+regress_rwxml_struct_o: rwxml_struct
+	@(args=""; input="../../data/ex_data.struct"; suf=""; $(RegressInput))
+
+regress_rwxml_struct_d: rwxml_struct_d
+	@(args=""; input="../../data/ex_data.struct"; suf=""; $(RegressInput))
 
 clean:
 	$(RM) -f *~ *.o $(CLEANUP_TESTS)

@@ -41,6 +41,7 @@ struct
   fun scan2Suf s = s^"_scan2"
   fun maskInitSuf s = s^"_m_init"
   fun writeSuf s = s^"_write"
+  fun writeXMLSuf s = s^"_write_xml_"
   fun ioSuf s = s^"2io"
   fun bufSuf s = s^"2buf"
   fun reportSuf s = s^"_report"

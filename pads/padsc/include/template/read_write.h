@@ -61,23 +61,18 @@ int main(int argc, char** argv) {
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(ERROR_FATAL, "*** P_open failed ***");
   }
-
   if (P_ERR == P_io_fopen(pads, inName)) {
     error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
-
   if (!(io = sfopen(NiL, outName, "w"))) {
     P_SYSERR1(pads->disc, "Failed to open output file \"%s\" for writing", outName);
   }
-
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
   }
-
   if (P_ERR == PADS_TY(_pd_init)(pads, &pd)) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
-
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, P_CheckAndSet);
 

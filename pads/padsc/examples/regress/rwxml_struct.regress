@@ -1,0 +1,49 @@
+Input file = /dev/stdin
+Output file = /dev/stdout
+warning: P_open: Installing default IO discipline : newline-terminated records
+<testtwo>
+  <header>
+    <id><val>1</></>
+    <ts><val>11</></>
+  </header>
+  <f><val>11</></>
+</testtwo>
+<testtwo>
+  <header>
+    <id><val>2</></>
+    <ts><val>22</></>
+  </header>
+  <f><val>22</></>
+</testtwo>
+warning: Error [in test_read]: record 3 byte 2 : Extra data before separator: |.
+[record 3]3>>>a<<<|33|33
+<testtwo>
+  <pd><pstate>Normal</pstate><errCode>P_STRUCT_FIELD_ERR</errCode><loc><b><num>3</><byte>2</><offset>17</></b><e><num>3</><byte>2</><offset>17</></e></loc><nerr>1</nerr></pd>
+  <header>
+    <pd><pstate>Normal</pstate><errCode>P_STRUCT_EXTRA_BEFORE_SEP</errCode><loc><b><num>3</><byte>2</><offset>17</></b><e><num>3</><byte>2</><offset>17</></e></loc><nerr>1</nerr></pd>
+    <id><val>3</></>
+    <ts><val>33</></>
+  </header>
+  <f><val>33</></>
+</testtwo>
+warning: Error [in test_read]: record 4 byte 3 : User constraint on field ts violated.
+[record 4]4|>>>23<<<|23
+<testtwo>
+  <pd><pstate>Normal</pstate><errCode>P_STRUCT_FIELD_ERR</errCode><loc><b><num>4</><byte>3</><offset>27</></b><e><num>4</><byte>4</><offset>28</></e></loc><nerr>1</nerr></pd>
+  <header>
+    <pd><pstate>Normal</pstate><errCode>P_STRUCT_FIELD_ERR</errCode><loc><b><num>4</><byte>3</><offset>27</></b><e><num>4</><byte>4</><offset>28</></e></loc><nerr>1</nerr></pd>
+    <id><val>4</></>
+    <ts><pd><pstate>Normal</pstate><errCode>P_USER_CONSTRAINT_VIOLATION</errCode><loc><b><num>4</><byte>3</><offset>27</></b><e><num>4</><byte>4</><offset>28</></e></loc></pd><val>23</val></ts>
+  </header>
+  <f><val>23</></>
+</testtwo>
+warning: Error [in testtwo_read]: record 5 byte 6 : User constraint on field f violated.
+[record 5]5|55|>>>65<<<
+<testtwo>
+  <pd><pstate>Normal</pstate><errCode>P_STRUCT_FIELD_ERR</errCode><loc><b><num>5</><byte>6</><offset>38</></b><e><num>5</><byte>7</><offset>39</></e></loc><nerr>1</nerr></pd>
+  <header>
+    <id><val>5</></>
+    <ts><val>55</></>
+  </header>
+  <f><pd><pstate>Normal</pstate><errCode>P_USER_CONSTRAINT_VIOLATION</errCode><loc><b><num>5</><byte>6</><offset>38</></b><e><num>5</><byte>7</><offset>39</></e></loc></pd><val>65</val></f>
+</testtwo>

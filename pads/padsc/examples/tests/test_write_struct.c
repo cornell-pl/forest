@@ -16,7 +16,7 @@ Perror_t my_uint32_inv_val(P_t *pads, void *pd_void, void *val_void, void **type
 }
 
 int main(int argc, char** argv) {
-  P_t*         pads;
+  P_t*           pads;
   testtwo        f1data;
   testtwo_pd     pd = {0};
   testtwo_m      m;

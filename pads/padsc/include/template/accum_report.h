@@ -48,23 +48,18 @@ int main(int argc, char** argv) {
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(ERROR_FATAL, "*** P_open failed ***");
   }
-
   if (P_ERR == P_io_fopen(pads, fileName)) {
     error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
-
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
   }
-
   if (P_ERR == PADS_TY(_pd_init)(pads, &pd)) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
-
   if (P_ERR == PADS_TY(_acc_init)(pads, &acc)) {
     error(ERROR_FATAL, "*** accumulator initialization failed ***");
   }
-
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, P_CheckAndSet);
 
@@ -92,26 +87,20 @@ int main(int argc, char** argv) {
   if (P_ERR == PADS_TY(_acc_report)(pads, "", 0, 0, &acc)) {
     error(ERROR_FATAL, "** accum_report failed **");
   }
-
   if (P_ERR == P_io_close(pads)) {
     error(ERROR_FATAL, "*** P_io_close failed ***");
   }
-
   if (P_ERR == PADS_TY(_cleanup)(pads, &rep)) {
     error(ERROR_FATAL, "** representation cleanup failed **");
   }
-
   if (P_ERR == PADS_TY(_pd_cleanup)(pads, &pd)) {
     error(ERROR_FATAL, "** parse descriptor cleanup failed **");
   }
-
   if (P_ERR == PADS_TY(_acc_cleanup)(pads, &acc)) {
     error(ERROR_FATAL, "** accumulator cleanup failed **");
   }
-
   if (P_ERR == P_close(pads)) {
     error(ERROR_FATAL, "*** P_close failed ***");
   }
-
   return 0;
 }

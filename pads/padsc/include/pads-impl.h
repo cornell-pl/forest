@@ -217,6 +217,25 @@ ssize_t PDCI_cstr_lit_write2io(P_t *pads, Sfio_t *io, const char *s,
 
 ssize_t PDCI_cstr_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const char *s,
 				Pcharset char_set, const char *whatfn);
+
+ssize_t PDCI_char_lit_write_xml_2io(P_t *pads, Sfio_t *io, Pchar c,
+				    const char *tag, int indent, const char *whatfn);
+
+ssize_t PDCI_char_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar c,
+				     const char *tag, int indent, const char *whatfn);
+
+ssize_t PDCI_str_lit_write_xml_2io(P_t *pads, Sfio_t *io, const Pstring *s,
+				   const char *tag, int indent, const char *whatfn);
+
+ssize_t PDCI_str_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const Pstring *s,
+				    const char *tag, int indent, const char *whatfn);
+
+ssize_t PDCI_cstr_lit_write_xml_2io(P_t *pads, Sfio_t *io, const char *s,
+				    const char *tag, int indent, const char *whatfn);
+
+ssize_t PDCI_cstr_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const char *s,
+				     const char *tag, int indent, const char *whatfn);
+
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 
 /* ================================================================================ */
@@ -270,6 +289,53 @@ ssize_t PDCI_countXtoY_write2io(P_t *pads, Sfio_t *io,
 ssize_t PDCI_countXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 				 Puint8 x, Puint8 y, size_t count_max,
 				 Pbase_pd *pd, Pint32  *val, Pcharset char_set, const char *whatfn);
+
+ssize_t PDCI_char_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
+				 Pchar *c, const char* tag, int indent, const char *whatfn);
+ssize_t PDCI_char_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd,
+				 Pchar *c, const char* tag, int indent, const char *whatfn);
+ssize_t PDCI_string_FW_write_xml_2io(P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd,
+				     Pstring *s, const char* tag, int indent, const char *whatfn);
+ssize_t PDCI_string_FW_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				      size_t width, Pbase_pd *pd,
+				      Pstring *s, const char* tag, int indent, const char *whatfn);
+
+ssize_t PDCI_string_write_xml_2io(P_t *pads, Sfio_t *io, void* type_arg1, Pbase_pd *pd,
+				  Pstring *s, const char* tag, int indent, const char *inv_type, const char *whatfn);
+ssize_t PDCI_string_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   void* type_arg1, Pbase_pd *pd, Pstring *s,
+				   const char* tag, int indent, const char *inv_type, const char *whatfn);
+
+ssize_t PDCI_string_write_xml_2io_chararg(P_t *pads, Sfio_t *io, Pchar type_arg1, Pbase_pd *pd,
+					  Pstring *s, const char* tag, int indent, const char *inv_type, const char *whatfn);
+ssize_t PDCI_string_write_xml_2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+					   Pchar type_arg1, Pbase_pd *pd, Pstring *s,
+					   const char* tag, int indent, const char *inv_type, const char *whatfn);
+
+ssize_t PDCI_date_write_xml_2io(P_t *pads, Sfio_t *io,  void *type_arg1, Pbase_pd *pd,
+				Puint32 *d, const char* tag, int indent, const char *inv_type, const char *whatfn);
+ssize_t PDCI_date_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				 void *type_arg1, Pbase_pd *pd, Puint32 *d,
+				 const char* tag, int indent, const char *inv_type, const char *whatfn);
+
+ssize_t PDCI_date_write_xml_2io_chararg(P_t *pads, Sfio_t *io,  Pchar type_arg1, Pbase_pd *pd,
+					Puint32 *d, const char* tag, int indent, const char *inv_type, const char *whatfn);
+ssize_t PDCI_date_write_xml_2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+					 Pchar type_arg1, Pbase_pd *pd, Puint32 *d,
+					 const char* tag, int indent, const char *inv_type, const char *whatfn);
+
+ssize_t PDCI_countX_write_xml_2io(P_t *pads, Sfio_t *io,
+				  Puint8 x, int eor_required, size_t count_max,
+				  Pbase_pd *pd, Pint32  *val, const char* tag, int indent, const char *whatfn);
+ssize_t PDCI_countX_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   Puint8 x, int eor_required, size_t countx,
+				   Pbase_pd *pd, Pint32  *val, const char* tag, int indent, const char *whatfn);
+ssize_t PDCI_countXtoY_write_xml_2io(P_t *pads, Sfio_t *io,
+				     Puint8 x, Puint8 y, size_t count_max,
+				     Pbase_pd *pd, Pint32  *val, const char* tag, int indent, const char *whatfn);
+ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				      Puint8 x, Puint8 y, size_t count_max,
+				      Pbase_pd *pd, Pint32  *val, const char* tag, int indent, const char *whatfn);
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 
@@ -1011,6 +1077,338 @@ ssize_t PDCI_countXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf
 
 #define Puint64_write2buf(pads, buf, buf_len, buf_full, pd, val) \
   PDCI_CHARSET_SWITCH(pads, P, uint64_write2buf, (pads, buf, buf_len, buf_full, pd, val))
+
+/* _xml_ */
+
+#define Pa_char_lit_write_xml_2io(pads, io, c, tag, indent) \
+  PDCI_char_lit_write_xml_2io(pads, io, c, tag, indent, "Pa_char_lit_write_xml_2io")
+
+#define Pe_char_lit_write_xml_2io(pads, io, c, tag, indent) \
+  PDCI_char_lit_write_xml_2io(pads, io, c, tag, indent, "Pe_char_lit_write_xml_2io")
+
+#define Pchar_lit_write_xml_2io(pads, io, c, tag, indent) \
+  PDCI_char_lit_write_xml_2io(pads, io, c, tag, indent, "Pchar_lit_write_xml_2io")
+
+#define Pa_str_lit_write_xml_2io(pads, io, s, tag, indent) \
+  PDCI_str_lit_write_xml_2io(pads, io, s, tag, indent, "Pa_str_lit_write_xml_2io")
+
+#define Pe_str_lit_write_xml_2io(pads, io, s, tag, indent) \
+  PDCI_str_lit_write_xml_2io(pads, io, s, tag, indent, "Pe_str_lit_write_xml_2io")
+
+#define Pstr_lit_write_xml_2io(pads, io, s, tag, indent) \
+  PDCI_str_lit_write_xml_2io(pads, io, s, tag, indent, "Pstr_lit_write_xml_2io")
+
+#define Pa_cstr_lit_write_xml_2io(pads, io, s, tag, indent) \
+  PDCI_cstr_lit_write_xml_2io(pads, io, s, tag, indent, "Pa_cstr_lit_write_xml_2io")
+
+#define Pe_cstr_lit_write_xml_2io(pads, io, s, tag, indent) \
+  PDCI_cstr_lit_write_xml_2io(pads, io, s, tag, indent, "Pe_cstr_lit_write_xml_2io")
+
+#define Pcstr_lit_write_xml_2io(pads, io, s, tag, indent) \
+  PDCI_cstr_lit_write_xml_2io(pads, io, s, tag, indent, "Pcstr_lit_write_xml_2io")
+
+#define Pa_char_lit_write_xml_2buf(pads, buf, buf_len, buf_full, c, tag, indent) \
+  PDCI_char_lit_write_xml_2buf(pads, buf, buf_len, buf_full, c, tag, indent, "Pa_char_lit_write_xml_2buf")
+
+#define Pe_char_lit_write_xml_2buf(pads, buf, buf_len, buf_full, c, tag, indent) \
+  PDCI_char_lit_write_xml_2buf(pads, buf, buf_len, buf_full, c, tag, indent, "Pe_char_lit_write_xml_2buf")
+
+#define Pchar_lit_write_xml_2buf(pads, buf, buf_len, buf_full, c, tag, indent) \
+  PDCI_char_lit_write_xml_2buf(pads, buf, buf_len, buf_full, c, tag, indent, "Pchar_lit_write_xml_2buf")
+
+#define Pa_str_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent) \
+  PDCI_str_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent, "Pa_str_lit_write_xml_2buf")
+
+#define Pe_str_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent) \
+  PDCI_str_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent, "Pe_str_lit_write_xml_2buf")
+
+#define Pstr_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent) \
+  PDCI_str_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent, "Pstr_lit_write_xml_2buf")
+
+#define Pa_cstr_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent) \
+  PDCI_cstr_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent, "Pa_cstr_lit_write_xml_2buf")
+
+#define Pe_cstr_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent) \
+  PDCI_cstr_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent, "Pe_cstr_lit_write_xml_2buf")
+
+#define Pcstr_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent) \
+  PDCI_cstr_lit_write_xml_2buf(pads, buf, buf_len, buf_full, s, tag, indent, "Pcstr_lit_write_xml_2buf")
+
+#define Pchar_write_xml_2io(pads, io, pd, c, tag, indent) \
+  PDCI_char_write_xml_2io(pads, io, pd, c, tag, indent, "Pchar_write_xml_2io")
+
+#define Pa_char_write_xml_2io(pads, io, pd, c, tag, indent) \
+  PDCI_char_write_xml_2io(pads, io, pd, c, tag, indent, "Pa_char_write_xml_2io")
+
+#define Pe_char_write_xml_2io(pads, io, pd, c, tag, indent) \
+  PDCI_char_write_xml_2io(pads, io, pd, c, tag, indent, "Pe_char_write_xml_2io")
+
+#define Pchar_write_xml_2buf(pads, buf, buf_len, buf_full, pd, c, tag, indent) \
+  PDCI_char_write_xml_2buf(pads, buf, buf_len, buf_full, pd, c, tag, indent, "Pchar_write_xml_2buf")
+
+#define Pa_char_write_xml_2buf(pads, buf, buf_len, buf_full, pd, c, tag, indent) \
+  PDCI_char_write_xml_2buf(pads, buf, buf_len, buf_full, pd, c, tag, indent, "Pa_char_write_xml_2buf")
+
+#define Pe_char_write_xml_2buf(pads, buf, buf_len, buf_full, pd, c, tag, indent) \
+  PDCI_char_write_xml_2buf(pads, buf, buf_len, buf_full, pd, c, tag, indent, "Pe_char_write_xml_2buf")
+
+#define Pstring_FW_write_xml_2io(pads, io, width, pd, s, tag, indent) \
+  PDCI_string_FW_write_xml_2io(pads, io, width, pd, s, tag, indent, "Pstring_FW_write_xml_2io")
+
+#define Pa_string_FW_write_xml_2io(pads, io, width, pd, s, tag, indent) \
+  PDCI_string_FW_write_xml_2io(pads, io, width, pd, s, tag, indent, "Pa_string_FW_write_xml_2io")
+
+#define Pe_string_FW_write_xml_2io(pads, io, width, pd, s, tag, indent) \
+  PDCI_string_FW_write_xml_2io(pads, io, width, pd, s, tag, indent, "Pe_string_FW_write_xml_2io")
+
+#define Pstring_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, s, tag, indent) \
+  PDCI_string_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, s, tag, indent, "Pstring_FW_write_xml_2buf")
+
+#define Pa_string_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, s, tag, indent) \
+  PDCI_string_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, s, tag, indent, "Pa_string_FW_write_xml_2buf")
+
+#define Pe_string_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, s, tag, indent) \
+  PDCI_string_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, s, tag, indent, "Pe_string_FW_write_xml_2buf")
+
+#define Pstring_write_xml_2io(pads, io, stopChar, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io_chararg(pads, io, stopChar, pd, s, tag, indent, "Pstring", "Pstring_write_xml_2io")
+
+#define Pa_string_write_xml_2io(pads, io, stopChar, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io_chararg(pads, io, stopChar, pd, s, tag, indent, "Pstring", "Pa_string_write_xml_2io")
+
+#define Pe_string_write_xml_2io(pads, io, stopChar, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io_chararg(pads, io, stopChar, pd, s, tag, indent, "Pstring", "Pe_string_write_xml_2io")
+
+#define Pstring_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, s, tag, indent, "Pstring", "Pstring_write_xml_2buf")
+
+#define Pa_string_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, s, tag, indent, "Pstring", "Pa_string_write_xml_2buf")
+
+#define Pe_string_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, s, tag, indent, "Pstring", "Pe_string_write_xml_2buf")
+
+#define Pstring_ME_write_xml_2io(pads, io, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, s, tag, indent, "Pstring_ME", "Pstring_ME_write_xml_2io")
+
+#define Pa_string_ME_write_xml_2io(pads, io, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_ASCII, tag, indent, "Pstring_ME", "Pa_string_ME_write_xml_2io")
+
+#define Pe_string_ME_write_xml_2io(pads, io, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_EBCDIC, tag, indent, "Pstring_ME", "Pe_string_ME_write_xml_2io")
+
+#define Pstring_ME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, tag, indent, "Pstring_ME", "P_ME_string_write_xml_2buf")
+
+#define Pa_string_ME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, tag, indent, "Pstring_ME", "Pa_string_ME_write_xml_2buf")
+
+#define Pe_string_ME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, tag, indent, "Pstring_ME", "Pe_string_ME_write_xml_2buf")
+
+#define Pstring_CME_write_xml_2io(pads, io, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, s, tag, indent, "Pstring_CME", "Pstring_CME_write_xml_2io")
+
+#define Pa_string_CME_write_xml_2io(pads, io, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_ASCII, tag, indent, "Pstring_CME", "Pa_string_CME_write_xml_2io")
+
+#define Pe_string_CME_write_xml_2io(pads, io, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, s, PDCI_charset_EBCDIC, tag, indent, "Pstring_CME", "Pe_string_CME_write_xml_2io")
+
+#define Pstring_CME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, tag, indent, "Pstring_CME", "P_CME_string_write_xml_2buf")
+
+#define Pa_string_CME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, tag, indent, "Pstring_CME", "Pa_string_CME_write_xml_2buf")
+
+#define Pe_string_CME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, s, tag, indent, "Pstring_CME", "Pe_string_CME_write_xml_2buf")
+
+#define Pstring_SE_write_xml_2io(pads, io, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, s, tag, indent, "Pstring_SE", "Pstring_SE_write_xml_2io")
+
+#define Pa_string_SE_write_xml_2io(pads, io, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_ASCII, tag, indent, "Pstring_SE", "Pa_string_SE_write_xml_2io")
+
+#define Pe_string_SE_write_xml_2io(pads, io, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_EBCDIC, tag, indent, "Pstring_SE", "Pe_string_SE_write_xml_2io")
+
+#define Pstring_SE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, tag, indent, "Pstring_SE", "P_SE_string_write_xml_2buf")
+
+#define Pa_string_SE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, tag, indent, "Pstring_SE", "Pa_string_SE_write_xml_2buf")
+
+#define Pe_string_SE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, tag, indent, "Pstring_SE", "Pe_string_SE_write_xml_2buf")
+
+#define Pstring_CSE_write_xml_2io(pads, io, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, s, tag, indent, "Pstring_CSE", "Pstring_CSE_write_xml_2io")
+
+#define Pa_string_CSE_write_xml_2io(pads, io, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_ASCII, tag, indent, "Pstring_CSE", "Pa_string_CSE_write_xml_2io")
+
+#define Pe_string_CSE_write_xml_2io(pads, io, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, s, PDCI_charset_EBCDIC, tag, indent, "Pstring_CSE", "Pe_string_CSE_write_xml_2io")
+
+#define Pstring_CSE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, tag, indent, "Pstring_CSE", "P_CSE_string_write_xml_2buf")
+
+#define Pa_string_CSE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, tag, indent, "Pstring_CSE", "Pa_string_CSE_write_xml_2buf")
+
+#define Pe_string_CSE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s, tag, indent) \
+  PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, tag, indent, "Pstring_CSE", "Pe_string_CSE_write_xml_2buf")
+
+#define Pdate_write_xml_2io(pads, io, stopChar, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io_chararg(pads, io, stopChar, pd, d, tag, indent, "Pdate", "Pdate_write_xml_2io")
+
+#define Pa_date_write_xml_2io(pads, io, stopChar, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io_chararg(pads, io, stopChar, pd, d, tag, indent, "Pdate", "Pa_date_write_xml_2io")
+
+#define Pe_date_write_xml_2io(pads, io, stopChar, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io_chararg(pads, io, stopChar, pd, d, tag, indent, "Pdate", "Pe_date_write_xml_2io")
+
+#define Pdate_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent, "Pdate", "Pdate_write_xml_2buf")
+
+#define Pa_date_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent, "Pdate", "Pa_date_write_xml_2buf")
+
+#define Pe_date_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent, "Pdate", "Pe_date_write_xml_2buf")
+
+#define PcountX_write_xml_2io(pads, io, x, eor_required, count_max, pd, val, tag, indent) \
+  PDCI_countX_write_xml_2io(pads, io, x, eor_required, count_max, pd, val, tag, indent, "PcountX_write_xml_2io")
+
+#define Pa_countX_write_xml_2io(pads, io, x, eor_required, count_max, pd, val, tag, indent) \
+  PDCI_countX_write_xml_2io(pads, io, x, eor_required, count_max, pd, val, tag, indent, "Pa_countX_write_xml_2io")
+
+#define Pe_countX_write_xml_2io(pads, io, x, eor_required, count_max, pd, val, tag, indent) \
+  PDCI_countX_write_xml_2io(pads, io, x, eor_required, count_max, pd, val, tag, indent, "Pe_countX_write_xml_2io")
+
+#define PcountX_write_xml_2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val, tag, indent) \
+  PDCI_countX_write_xml_2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val, tag, indent, "PcountX_write_xml_2buf")
+
+#define Pa_countX_write_xml_2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val, tag, indent) \
+  PDCI_countX_write_xml_2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val, tag, indent, "Pa_countX_write_xml_2buf")
+
+#define Pe_countX_write_xml_2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val, tag, indent) \
+  PDCI_countX_write_xml_2buf(pads, buf, len, buf_full, x, eor_required, count_max, pd, val, tag, indent, "Pe_countX_write_xml_2buf")
+
+#define PcountXtoY_write_xml_2io(pads, io, x, y, count_max, pd, val, tag, indent) \
+  PDCI_countXtoY_write_xml_2io(pads, io, x, y, count_max, pd, val, tag, indent, "PcountXtoY_write_xml_2io")
+
+#define Pa_countXtoY_write_xml_2io(pads, io, x, y, count_max, pd, val, tag, indent) \
+  PDCI_countXtoY_write_xml_2io(pads, io, x, y, count_max, pd, val, tag, indent, "Pa_countXtoY_write_xml_2io")
+
+#define Pe_countXtoY_write_xml_2io(pads, io, x, y, count_max, pd, val, tag, indent) \
+  PDCI_countXtoY_write_xml_2io(pads, io, x, y, count_max, pd, val, tag, indent, "Pe_countXtoY_write_xml_2io")
+
+#define PcountXtoY_write_xml_2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val, tag, indent) \
+  PDCI_countXtoY_write_xml_2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val, tag, indent, "PcountXtoY_write_xml_2buf")
+
+#define Pa_countXtoY_write_xml_2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val, tag, indent) \
+  PDCI_countXtoY_write_xml_2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val, tag, indent, "Pa_countXtoY_write_xml_2buf")
+
+#define Pe_countXtoY_write_xml_2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val, tag, indent) \
+  PDCI_countXtoY_write_xml_2buf(pads, buf, buf_len, buf_full, x, y, count_max, pd, val, tag, indent, "Pe_countXtoY_write_xml_2buf")
+
+#define Pint8_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Pint16_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Pint32_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Pint64_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Puint8_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Puint16_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Puint32_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Puint64_FW_write_xml_2io(pads, io, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_FW_write_xml_2io, (pads, io, width, pd, val, tag, indent))
+
+#define Pint8_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Pint16_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Pint32_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Pint64_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Puint8_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Puint16_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Puint32_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Puint64_write_xml_2io(pads, io, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_write_xml_2io, (pads, io, pd, val, tag, indent))
+
+#define Pint8_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Pint16_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Pint32_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Pint64_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Puint8_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Puint16_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Puint32_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Puint64_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_FW_write_xml_2buf, (pads, buf, buf_len, buf_full, width, pd, val, tag, indent))
+
+#define Pint8_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int8_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
+
+#define Pint16_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int16_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
+
+#define Pint32_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int32_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
+
+#define Pint64_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, int64_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
+
+#define Puint8_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint8_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
+
+#define Puint16_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint16_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
+
+#define Puint32_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint32_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
+
+#define Puint64_write_xml_2buf(pads, buf, buf_len, buf_full, pd, val, tag, indent) \
+  PDCI_CHARSET_SWITCH(pads, P, uint64_write_xml_2buf, (pads, buf, buf_len, buf_full, pd, val, tag, indent))
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 

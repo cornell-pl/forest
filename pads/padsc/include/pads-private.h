@@ -37,17 +37,19 @@
 /* PADS handle private state */
 #define P_PRIVATE_STATE \
   Vmalloc_t        *vm;          /* vm handle */ \
-  Sfio_t           *tmp1;        /* tmp sfprintf area 1 */ \
+  Sfio_t           *tmp1;        /* tmp sfprintf area 1: used for many things, including numeric formatting that is part of higher-level formatting */ \
   Sfio_t           *tmp2;        /* tmp sfprintf area 2 */ \
+  Sfio_t           *tmp3;        /* tmp sfprintf area 3: used for base type xml output formatting */ \
+  Sfio_t           *tmp4;        /* tmp sfprintf area 4: used for structured type xml output formatting */ \
   const char       *tmp1_cstr;   /* C string used in tmp1 construction */ \
   const char       *tmp2_cstr;   /* C string used in tmp2 construction */ \
   Pstring          *tmp1_pstr;   /* Pstring* used in tmp1 construction */ \
   Pstring          *tmp2_pstr;   /* Pstring* used in tmp2 construction */ \
-  Pstring        stmp1;       /* tmp string 1 */ \
-  Pstring        stmp2;       /* tmp string 2 */ \
+  Pstring           stmp1;       /* tmp string 1 */ \
+  Pstring           stmp2;       /* tmp string 2 */ \
   RMM_t            *rmm_z;       /* rbuf memory mgr -- zeroes allocated memory */  \
   RMM_t            *rmm_nz;      /* rbuf memory mgr -- does not zero allocated memory */  \
-  Pendian_t        m_endian;    /* endian-ness of the machine */ \
+  Pendian_t         m_endian;    /* endian-ness of the machine */ \
   /* The following are used for write functions */ \
   Void_t           *outbuf;      /* tmp buf to use with sfio out stream (alloc outbuf_len + 1) */ \
   size_t            outbuf_len;  /* len of outbuf */ \
@@ -55,8 +57,8 @@
   /* The following are all related to IO state / checkpointing */ \
   char             *path;        /* original path -- eventually want to support a set of input files */ \
   Sfio_t           *io;          /* sfio stream */ \
-  Pbyte         *sfbuf;       /* buffer that is installed in any sfio that is opened */ \
-  Pio_elt_t     *head;        /* head of list of input elts */ \
+  Pbyte            *sfbuf;       /* buffer that is installed in any sfio that is opened */ \
+  Pio_elt_t        *head;        /* head of list of input elts */ \
   PDCI_stkElt_t    *stack;       /* stack - resized dynamically */ \
   size_t            salloc;      /* total elts allocated for stack */ \
   size_t            top;         /* index of top stack elt */ \

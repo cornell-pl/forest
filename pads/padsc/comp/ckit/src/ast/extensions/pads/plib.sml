@@ -103,6 +103,7 @@ struct
   val charlitScan1    = "Pchar_lit_scan1"
   val charlitScan2    = "Pchar_lit_scan2"
   val charlitWriteBuf = "Pchar_lit_write2buf"
+  val charlitWriteXMLBuf = "Pchar_lit_write_xml_2buf"
 
   val cstrlit         = "Pcstr_lit"
   val cstrlitMatch    = "Pcstr_lit_match"
@@ -110,6 +111,7 @@ struct
   val cstrlitScan2    = "Pcstr_lit_scan2"
   val cstrlitWrite    = "Pcstr_lit"
   val cstrlitWriteBuf = "Pcstr_lit_write2buf"
+  val cstrlitWriteXMLBuf = "Pcstr_lit_write_xml_2buf"
 
   val strlit         = "Pstr_lit"
   val strlitMatch    = "Pstr_lit_match"
@@ -117,9 +119,11 @@ struct
   val strlitScan2    = "Pstr_lit_scan2"
   val strlitWrite    = "Pstr_lit"
   val strlitWriteBuf = "Pstr_lit_write2buf"
+  val strlitWriteXMLBuf = "Pstr_lit_write_xml_2buf"
 
   val reMatch    = "Pre_match"
   val reWriteBuf = cstrlitWriteBuf (* not yet implemented.  what should go here?*)
+  val reWriteXMLBuf = cstrlitWriteXMLBuf (* not yet implemented.  what should go here?*)
   val reScan1    = "Pre_scan1"
   val reScan2    = "Pre_scan2"
 
