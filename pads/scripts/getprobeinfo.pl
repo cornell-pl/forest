@@ -51,7 +51,7 @@ if ($pads_home eq "") {
 my $ast_arch = `$pads_home/ast-ast/bin/package.cvs`;
 $ast_arch = &cleanupStr($ast_arch);
 my $ast_home = "$pads_home/ast-ast/arch/$ast_arch";
-my $targ = "$pads_home/mk/foo.rules.arch.$ast_arch.mk";
+my $targ = "$pads_home/mk/rules.arch.$ast_arch.mk";
 
 if ($dbg) {
   print "   ast_arch = $ast_arch\n";
