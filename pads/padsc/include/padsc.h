@@ -308,6 +308,10 @@ typedef enum PDC_errCode_t_e {
   PDC_INVALID_DATE                  =  250
 } PDC_errCode_t;
 
+/* parse state flags */
+#define PDC_Panic               0x0001
+/* more flags will be added later to support partial-read functionality */ 
+ 
 /*
  * Other useful constants
  */
@@ -724,10 +728,18 @@ struct PDC_loc_s {
 
 /* type PDC_base_pd: */
 struct PDC_base_pd_s {
-  int            panic;
+  PDC_flags_t    pstate; /* parse state */
   PDC_errCode_t  errCode;
   PDC_loc_t      loc;
 };
+
+/* Functions (macros actually) for setting or testing parse state (PS) pd->pstate */
+#ifdef FOR_CKIT
+void PDC_PS_init(void *pd);         /* init pd->pstate */
+void PDC_PS_setPanic(void *pd);     /* set PDC_Panic in pd->pstate */
+void PDC_PS_unsetPanic(void *pd);   /* unset PDC_Panic in pd->pstate */
+int  PDC_PS_isPanic(void *pd);      /* test whether PDC_Panic is set in pd->pstate */
+#endif
 
 /* PDC_inv_valfn: type of a pointer to an invalid val function */
 typedef PDC_error_t (*PDC_inv_valfn)(PDC_t *pdc, void *pd_void, void *val_void, void **type_args);

@@ -566,34 +566,34 @@ structure CnvExt : CNVEXT = struct
 (* Conversions ***************************************************************)
       fun pcnvExternalDecl decl = 
 	  let (* Some useful names *)
-              val nerr      = "nerr"
+              val pstate    = "pstate"
               val errCode   = "errCode"
               val loc       = "loc"
-              val panic     = "panic"
-	      val pdc = "pdc"
-	      val m = "m" 
-	      val pd = "pd"
-	      val acc = "acc"
-	      val rep = "rep"
-	      val io  = "io"
-	      val buf  = "buf"
-	      val bufLen = "buf_len"
-	      val bufFull = "buf_full"
+              val nerr      = "nerr"
+	      val pdc       = "pdc"
+	      val m         = "m" 
+	      val pd        = "pd"
+	      val acc       = "acc"
+	      val rep       = "rep"
+	      val io        = "io"
+	      val buf       = "buf"
+	      val bufLen    = "buf_len"
+	      val bufFull   = "buf_full"
 	      val bufCursor = "buf_cursor"
-	      val length = "length"
-	      val tpd = "tpd"
-	      val tm = "tm"
-	      val tloc = "tloc"
-	      val tlen = "tlen"
-	      val all = "structLevel"
-	      val prefix = "prefix"
-	      val what = "what"
-	      val nst = "nst"
-	      val tmpstr = "tmpstr"
-	      val outstr = "outstr"
-	      val result = "result"
-	      val errorf = "errorf"
-	      val self = "self"
+	      val length    = "length"
+	      val tpd       = "tpd"
+	      val tm        = "tm"
+	      val tloc      = "tloc"
+	      val tlen      = "tlen"
+	      val all       = "structLevel"
+	      val prefix    = "prefix"
+	      val what      = "what"
+	      val nst       = "nst"
+	      val tmpstr    = "tmpstr"
+	      val outstr    = "outstr"
+	      val result    = "result"
+	      val errorf    = "errorf"
+	      val self      = "self"
 
 	      (* Some useful functions *)
 	      fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
@@ -833,7 +833,7 @@ structure CnvExt : CNVEXT = struct
 				     [PT.Return PL.PDC_ERROR]),
 				   PL.getLocEndS(PT.Id pdc, P.addrX(P.dotX(PT.Id tpd, PT.Id loc)), ~1),
 				   PT.IfThenElse(
-				     P.notX(fieldX(pd,panic)),
+				     PL.testNotPanicX(PT.Id pd),
 				     PT.Compound(
 				       [PL.userErrorS(PT.Id pdc, 
 						      P.addrX(P.dotX(PT.Id tpd, PT.Id loc)),
@@ -848,12 +848,12 @@ structure CnvExt : CNVEXT = struct
 						       readName,
 						       PT.String "Resynching at EOR", 
 						       [])])]),
-				P.assignS(fieldX(pd,panic), P.zero)],
+				PL.unsetPanicS(PT.Id pd)],
 			      PT.Compound
 			       [PT.IfThen(
 				 PL.getSpecLevelX(PT.Id pdc),
 				 PT.Compound[PT.Return PL.PDC_ERROR]),
-				P.assignS(fieldX(pd,panic), P.zero),
+				PL.unsetPanicS(PT.Id pd),
 				PL.getLocEndS(PT.Id pdc, P.addrX(P.dotX(PT.Id tpd, PT.Id loc)), ~1),
 				PL.userErrorS(PT.Id pdc, 
 					      P.addrX(P.dotX(PT.Id tpd, PT.Id loc)),
@@ -875,7 +875,7 @@ structure CnvExt : CNVEXT = struct
 			              [P.assignS(P.arrowX(PT.Id pd, PT.Id nerr), P.zero)]
 				      else []
 		      val innerInitDecls = incNerrSs
-				     @ [P.assignS(P.arrowX(PT.Id pd, PT.Id panic), P.falseX),
+				     @ [PL.unsetPanicS(PT.Id pd),
 					P.assignS(P.arrowX(PT.Id pd, PT.Id errCode), PL.PDC_NO_ERROR)]
 		      val returnTy =  PL.toolErrPCT
 		      val checkParamsSs = [PL.IODiscChecks3P(PT.String readName, PT.Id m, PT.Id pd, PT.Id rep)]
@@ -1575,8 +1575,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
                       (* Generate parse description *)
 		      val baseEDPCT = P.makeTypedefPCT(lookupTy(baseTy,pdSuf, #pdname))
-                      val pdFields  = [(nerr, PL.uint32, NONE), (errCode, PL.errCodePCT, NONE),
-				       (loc, PL.locPCT,NONE), (panic, PL.uint32, NONE),
+                      val pdFields  = [(pstate, PL.flags_t, NONE), (errCode, PL.errCodePCT, NONE),
+				       (loc, PL.locPCT,NONE), (nerr, PL.uint32, NONE),
 				       (base, baseEDPCT, SOME "Base parse description")]
 		      val pdED      = P.makeTyDefStructEDecl (pdFields, pdSuf name)
 		      val (pdDecls,pdTid)  = cnvCTy pdED
@@ -1882,8 +1882,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				     pred:pcexp option, comment} = 
 			  [(name,P.makeTypedefPCT(lookupTy (pty,pdSuf,#pdname)),NONE)]
 		      fun genEDBrief e = []
-		      val auxEDFields = [(nerr, PL.uint32,NONE), (errCode, PL.errCodePCT, NONE),
-					 (loc, PL.locPCT,NONE), (panic, PL.uint32,NONE)]
+		      val auxEDFields = [(pstate, PL.flags_t, NONE), (errCode, PL.errCodePCT, NONE),
+					 (loc, PL.locPCT, NONE), (nerr, PL.uint32, NONE)]
 		      val pdFields = auxEDFields @ (mungeFields genEDFull genEDBrief genMMan fields)
 		      val pdStructED = P.makeTyDefStructEDecl (pdFields, pdSuf name)
 		      val (pdDecls,pdTid) = cnvCTy pdStructED 
@@ -1990,8 +1990,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					     (if isEndian then ". Doing endian check." else "."))
 			      val commentS = P.mkCommentS (comment)
 			      val ifPanicSs = 
-				  PT.Compound 
-                                   [P.assignS(P.dotX(modEdNameX, PT.Id panic),P.trueX),  
+				  PT.Compound
+                                   [PL.setPanicS(P.addrX(modEdNameX)),
 				    P.assignS(P.dotX(modEdNameX, PT.Id errCode),PL.PDC_PANIC_SKIPPED),  
                                     PL.getLocS(PT.Id pdc, P.addrX locX),
 				    P.plusAssignS(fieldX (pd,nerr),P.intX 1)]
@@ -2009,8 +2009,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				     PT.Compound( (* error reading field *)
 				      [PT.IfThen(PL.getSpecLevelX(PT.Id pdc),
 						 PT.Compound[PT.Return PL.PDC_ERROR]),
-                                       PT.IfThen(P.dotX(fieldX(pd, name), PT.Id panic),
-				                 PT.Compound[P.assignS(fieldX(pd,panic), P.trueX)])]
+                                       PT.IfThen(PL.testPanicX(P.addrX(fieldX(pd, name))),
+				                 PT.Compound[PL.setPanicS(PT.Id pd)])]
 				      @reportStructErrorSs(PL.PDC_STRUCT_FIELD_ERR, true, locX)),
 				     PT.Compound(* else no error reading field *)
                                       (* If user supplied constraint, check that constraint *)
@@ -2069,7 +2069,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      fun addLocDecl s = PT.Compound (locDecls @ s)
 			      val readS = if !first then (first:= false; addLocDecl [ifNoPanicSs])
 					  else addLocDecl(
-					       [PT.IfThenElse(fieldX(pd,panic), ifPanicSs, ifNoPanicSs)])
+					       [PT.IfThenElse(PL.testPanicX(PT.Id pd), ifPanicSs, ifNoPanicSs)])
 			  in
 			      [commentS, readS]
 			  end
@@ -2114,8 +2114,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                   of NONE => (fn id => id)     (* don't know how to recover *)
                                   |  SOME a => 
                                         (fn elseSs =>
-                                           [PT.IfThenElse((* if (moded->panic) *)
-                                              fieldX(pd,panic),
+                                           [PT.IfThenElse((* if (PDC_PS_isPanic(pd) *)
+                                              PL.testPanicX(PT.Id pd),
 					      PT.Compound [
                                                 (* base_m tmask = Ignore; *)
 						PT.IfThen(
@@ -2124,8 +2124,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 								   expr, expr, P.trueX,
 								   P.zero,
                                                                    P.addrX (PT.Id "n"))),
-						 (* moded->panic = false *)
-						 PT.Compound[P.assignS(fieldX(pd,panic),P.falseX)])
+						 (* PDC_PS_unsetPanic(pd) *)
+						 PT.Compound[PL.unsetPanicS(PT.Id pd)])
                                               ], 
                                               PT.Compound elseSs
                                            )])
@@ -2166,7 +2166,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						                     "Extra data before separator", ~2)))]),
 				      PT.Compound(reportBriefErrorSs (PL.PDC_MISSING_LITERAL,
 						                       "Missing literal", ~1)
-                                                  @[P.assignS(fieldX(pd,panic),P.trueX)]))]
+                                                  @[PL.setPanicS(PT.Id pd)]))]
 
                               val notPanicSsNoScan = 
                                   [(* base_m tm = Check *)
@@ -2189,7 +2189,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						      PT.String "Missing separator: %s.", 
 						      [PL.fmtStr(commentV)])]
 					@ reportStructErrorSs(PL.PDC_MISSING_LITERAL, true,P.dotX(PT.Id tpd,PT.Id loc))
-					@[P.assignS(fieldX(pd,panic),P.trueX)]))]
+					@[PL.setPanicS(PT.Id pd)]))]
 			      val notPanicSs = case scanFieldNameOpt of NONE => notPanicSsNoScan
 				               | SOME s => notPanicSsScan s
 			  in
@@ -2689,9 +2689,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val unionPD = P.makeTyDefUnionEDecl(pdVariants, (unSuf o pdSuf) name)
 		     val (unionPDDecls, updTid) = cnvCTy unionPD
 		     val unionPDPCT = P.makeTypedefPCT((unSuf o pdSuf) name)
-		     val structEDFields = [(nerr, PL.uint32,NONE), (errCode, PL.errCodePCT, NONE),
-				  	   (loc, PL.locPCT,NONE), (panic, PL.uint32,NONE),
-					   (tag, tagPCT,NONE), (value, unionPDPCT,NONE)]
+		     val structEDFields = [(pstate, PL.flags_t, NONE), (errCode, PL.errCodePCT, NONE),
+				  	   (loc, PL.locPCT, NONE), (nerr, PL.uint32, NONE),
+					   (tag, tagPCT, NONE), (value, unionPDPCT, NONE)]
 		     val pdStructED = P.makeTyDefStructEDecl (structEDFields, pdSuf name)
 		     val (pdStructPDDecls, pdTid) = cnvCTy pdStructED
 		     val pdPCT = P.makeTypedefPCT (pdSuf name)			  
@@ -2868,7 +2868,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				        initS,
 				        P.assignS(fieldX(pd, tag), PT.Id name),
 					P.assignS(P.dotX(pdX, PT.Id errCode), PL.PDC_NO_ERROR),
-					P.assignS(P.dotX(pdX, PT.Id panic), P.falseX), 
+					PL.initParseStateS(P.addrX(pdX)),
 					PL.getLocS(PT.Id pdc,P.addrX(P.dotX(pdX,PT.Id loc)))]
 				      @ returnSs
 				 end
@@ -2885,7 +2885,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					P.assignS(fieldX(pd, tag),PT.Id (errSuf name))]
 
 		     fun genCleanupSs (s,locS) =  (genErrorSs (s,locS))
-			             @ [P.assignS(fieldX(pd,panic), P.trueX)]
+			             @ [PL.setPanicS(PT.Id pd)]
 				     @ (if isRecord then
 			                 [PT.Labeled(findEORSuf name, 
 						   PT.Compound (genReadEOR (readName, reportUnionErrorSs) ()))]
@@ -3280,7 +3280,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
   		       PT.IfThenElse(P.notX(fieldX(pd,nerr)),
 			  PT.Compound (reportErrorSs(getLocSs,locX, true,errCodeC,shouldPrint,whatFun,msg,args)),
 			  PT.Compound[P.postIncS(fieldX(pd,nerr))])]
-                       @ (if setPanic then [P.assignS(fieldX(pd,panic),P.trueX)] else []))
+                       @ (if setPanic then [PL.setPanicS(PT.Id pd)] else []))
   
 
                  fun amCheckingBasicE(SOME testE) = 
@@ -3438,11 +3438,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		 val mPCT = P.makeTypedefPCT (mSuf name)			  
 
 	         (* Generate parse description *)
-                 val pdFields = [(nerr, PL.uint32,    SOME "Number of array errors"), 
+                 val pdFields = [(pstate, PL.flags_t, NONE), 
 				 (errCode, PL.errCodePCT, NONE),
-				 (neerr, PL.uint32,   SOME "Number of element errors"), 
 				 (loc, PL.locPCT, NONE), 
-				 (panic, PL.uint32,   NONE),
+				 (nerr, PL.uint32,    SOME "Number of array errors"),
+				 (neerr, PL.uint32,   SOME "Number of element errors"),
 				 (firstError, PL.uint32, 
 				    SOME "if errCode == ARRAY_ELEM_ERR, index of first error"),
 				 (length, PL.uint32, NONE),
@@ -3759,7 +3759,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
                  (* -- panic recovery code *)
 		 fun genPanicRecoveryS (sepXOpt, termXOpt, maxOpt) = 
-                     let val panicSs = [P.assignS(fieldX(pd,panic), P.trueX), PT.Break]
+                     let val panicSs = [PL.setPanicS(PT.Id pd), PT.Break]
                          val recoveryFailedSs = P.mkCommentS("Recovery failed.") :: panicSs
 			 val noRecoverySs = P.mkCommentS("No recovery possible.") :: panicSs
 			 fun recoverToCharSs (which, scan, forX, stopX) = [
@@ -3801,7 +3801,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     in
 			 PT.Compound recoverSs
 		     end
-                 val panicRecoverySs = [PT.IfThen(P.dotX(edNext, PT.Id panic), 
+                 val panicRecoverySs = [PT.IfThen(PL.testPanicX(P.addrX(edNext)),
 					   PT.Compound[genPanicRecoveryS(sepXOpt, termXOpt, maxOpt)])]
 
                  (* -- while loop for reading input *)
@@ -3847,7 +3847,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			                   P.notX(PL.isEofX(PT.Id pdc))
 		     in 
 			 [P.mkCommentS("Reading input until we reach a termination condition"),
-                                PT.IfThen(P.andX(P.notX(fieldX(pd,panic)), 
+                                PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd), 
 						 termCondX),
 					  insTermChk(insLengthChk bdyS))]
 		     end
@@ -3858,7 +3858,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                      | SOME (termX, _, _, NONE, _) => (PE.error "Expected a scan function"; [])
 		     | SOME (termX, _, _, SOME termScan,_) => 
 			 [P.mkCommentS("End of loop. Read trailing terminator if there was trailing junk."),
-			  PT.IfThen(P.andX(P.notX(fieldX(pd,panic)),P.notX(PT.Id foundTerm)),
+			  PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd),P.notX(PT.Id foundTerm)),
 			   PT.Compound[
 			   locBS,
 		           PT.IfThenElse(
@@ -3922,14 +3922,14 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  val arrayConstraintsSs = 
 		     let fun condWrapBase bdySs = 
 			 [P.mkCommentS "Checking basic array constraints",
-			  PT.IfThen(amCheckingBasicE(SOME(P.notX (fieldX(pd,panic)))),
+			  PT.IfThen(amCheckingBasicE(SOME(PL.testNotPanicX(PT.Id pd))),
 				    PT.Compound bdySs)]
                          fun condWrapUser bdySs = 
 			 [P.mkCommentS "Checking user-defined array constraints",
-			  PT.IfThen(amCheckingForallE(SOME(P.notX (fieldX(pd,panic)))),
+			  PT.IfThen(amCheckingForallE(SOME(PL.testNotPanicX(PT.Id pd))),
 				    PT.Compound bdySs)]
                          fun condWrapBoth (bdySs1, bdySs2) = 
-			 [PT.IfThen(P.notX (fieldX(pd,panic)),
+			 [PT.IfThen(PL.testNotPanicX(PT.Id pd),
 				PT.Compound[P.mkCommentS "Checking basic array constraints",
 				            PT.IfThen(amCheckingBasicE NONE,
 					              PT.Compound bdySs1),
@@ -4303,7 +4303,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					readName,
 					("Did not match any branch of enum "^name^"."),
 					[])
-			         @ [P.assignS(fieldX(pd,panic), P.trueX),
+			         @ [PL.setPanicS(PT.Id pd),
 				    P.assignS(PT.Id result, PL.PDC_ERROR)]
 		  val slurpToEORSs = if isRecord then genReadEOR (readName, reportBaseErrorSs) () else []
                   val gotoSs = [PT.Labeled(findEORSuf name,

@@ -62,6 +62,14 @@
 
 #endif /* !NDEBUG */
 
+/* Macros for setting or testing parse state (PS) pd->pstate */
+/* These can be used with both PDC_base_pd and with generated structured parse descriptors */
+
+#define PDC_PS_init(pd)          do { (pd)->pstate = 0; } while (0)
+#define PDC_PS_setPanic(pd)      do { (pd)->pstate |= PDC_Panic; } while (0)
+#define PDC_PS_unsetPanic(pd)    do { (pd)->pstate &= ~PDC_Panic; } while (0)
+#define PDC_PS_isPanic(pd)       ((pd)->pstate & PDC_Panic)
+
 /* ================================================================================ */
 /* INTERNAL SCAN ROUTINES (helpers) */
 

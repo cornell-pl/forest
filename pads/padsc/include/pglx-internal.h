@@ -97,22 +97,22 @@ struct PDCI_vtable_s {
 
 /* type PDCI_structured_pd: */
 struct PDCI_structured_pd_s {
-  int nerr;
-  PDC_errCode_t errCode;
-  PDC_loc_t loc;
-  int panic;
+  PDC_flags_t     pstate;
+  PDC_errCode_t   errCode;
+  PDC_loc_t       loc;
+  int             nerr;
 };
 
 /* NB all generated sequenced pd types must BEGIN with the declarations given here: */
 
 /* Type PDCI_sequenced_pd_t: */
 struct PDCI_sequenced_pd_s {
-  int nerr;
-  PDC_errCode_t errCode;
-  PDC_loc_t loc;
-  int panic;
-  int neerr;		        
-  int firstError;		
+  PDC_flags_t    pstate;
+  PDC_errCode_t  errCode;
+  PDC_loc_t      loc;
+  int            nerr;
+  int            neerr;		        
+  int            firstError;		
 };
 
 /* ================================================================================

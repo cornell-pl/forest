@@ -178,7 +178,7 @@ PDCI_node_t ** PDCI_loc_t_children(PDCI_node_t *self)
   return result;
 }
 
-/* A base_pd has three children (errCode, loc, panic) */
+/* A base_pd has three children (pstate, errCode, loc) */
 #undef WHATFN
 #define WHATFN "PDCI_base_pd_children"
 PDCI_node_t ** PDCI_base_pd_children(PDCI_node_t *self)
@@ -188,13 +188,13 @@ PDCI_node_t ** PDCI_base_pd_children(PDCI_node_t *self)
   if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 3))) {
     failwith("ALLOC_ERROR: in " WHATFN);
   }
+  PDCI_MK_TNODE(result[2], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN);
   PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN);
   PDCI_MK_TNODE(result[1], &PDC_loc_t_vtable,      self, "loc",     &(pd->loc),     WHATFN);
-  PDCI_MK_TNODE(result[2], &PDC_uint32_val_vtable, self, "panic",   &(pd->panic),   WHATFN);
   return result;
 }
 
-/* A structured_pd has four children (nerr, errCode, loc, panic) */
+/* A structured_pd has four children (pstate, errCode, loc, nerr) */
 #undef WHATFN
 #define WHATFN "PDCI_structured_pd_children"
 PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
@@ -205,15 +205,15 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN);
+  PDCI_MK_TNODE(result[3], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN);
   PDCI_MK_TNODE(result[1], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN);
   PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable,      self, "loc",     &(pd->loc),     WHATFN);
-  PDCI_MK_TNODE(result[3], &PDC_uint32_val_vtable, self, "panic",   &(pd->panic),   WHATFN);
+  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN);
   return result;
 }
 
 /* A sequenced_pd has six children 
-  (nerr, errCode, loc, panic, neerr, firstError) */
+  (pstate, errCode, loc, nerr, neerr, firstError) */
 #undef WHATFN
 #define WHATFN "PDCI_sequenced_pd_children"
 PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
@@ -224,10 +224,10 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
     failwith("ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN);
+  PDCI_MK_TNODE(result[3], &PDC_uint32_val_vtable, self, "pstate",   &(pd->pstate),     WHATFN);
   PDCI_MK_TNODE(result[1], &PDC_uint32_val_vtable, self, "errCode",  &(pd->errCode),    WHATFN);
   PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable,      self, "loc",      &(pd->loc),        WHATFN);
-  PDCI_MK_TNODE(result[3], &PDC_uint32_val_vtable, self, "panic",    &(pd->panic),      WHATFN);
+  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN);
   PDCI_MK_TNODE(result[4], &PDC_uint32_val_vtable, self, "neerr",    &(pd->neerr),      WHATFN);
   PDCI_MK_TNODE(result[5], &PDC_uint32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN);
   return result;

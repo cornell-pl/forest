@@ -111,6 +111,7 @@ struct
   val bigEndian    = PDC_bigEndian
   val uint32       = P.makeTypedefPCT "PDC_uint32"
   val intAct       = "PDC_int32_acc"
+  val flags_t      = P.makeTypedefPCT "PDC_flags_t"
   val intCvtPCT    = P.makeTypedefPCT "PDC_int32_map_fn"
   val intAccPCT    = P.makeTypedefPCT "PDC_int32_acc"
   val intPCT       = P.makeTypedefPCT "PDC_int32"
@@ -278,6 +279,23 @@ struct
 
   fun decNestLevS(pdc) =
     PT.Expr(P.postDecX (P.arrowX(pdc, PT.Id "inestlev")))
+
+(* -- Parse state check/manipulation routines *)
+
+  fun initParseStateS(pd) =
+    PT.Expr(PT.Call(PT.Id "PDC_PS_init", [pd]))
+
+  fun testPanicX(pd) =
+    PT.Call(PT.Id "PDC_PS_isPanic", [pd])
+
+  fun testNotPanicX(pd) =
+    P.notX(PT.Call(PT.Id "PDC_PS_isPanic", [pd]))
+
+  fun setPanicS(pd) =
+    PT.Expr(PT.Call(PT.Id "PDC_PS_setPanic", [pd]))
+
+  fun unsetPanicS(pd) =
+    PT.Expr(PT.Call(PT.Id "PDC_PS_unsetPanic", [pd]))
 
 (* -- Mask check/manipulation routines *)
 
