@@ -3439,32 +3439,49 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      val isName = PNames.isPref name
                      val bodySs = 	
 			 let val agg = "isValid"
-			     fun setAggSs to = PT.Compound[P.assignS(PT.Id agg, to), PT.Break]
+			     fun setAgg to   = P.assignS(PT.Id agg, to)
+			     fun setAggSs to = PT.Compound[setAgg(to), PT.Break]
+			     fun setAggCommentSs(to, comment) = PT.Compound[P.mkCommentS(comment), setAgg(to), PT.Break]
+			     fun mkPadsIsCase(pty, args, name, pred) =
+			         let val predXs  = case pred of NONE   => [] 
+							      | SOME e => [modCheckSubst(e, name)]
+				     val fieldXs = case lookupPred pty of NONE           => []
+									| SOME fieldPred => 
+									  [PT.Call(PT.Id fieldPred, [getUnionBranchX(rep, name)]@args)]
+				     val condX = P.andBools(predXs @ fieldXs)
+				     val aggS = [P.assignS(PT.Id agg, condX), PT.Break]
+				 in
+				     [PT.CaseLabel(PT.Id name, PT.Compound aggS)]
+				 end
+			     fun mkCtyIsCase(tyname, args, name, pred) =
+			             let val predXs  = case pred of NONE => [] 
+				                       | SOME e => [modCheckSubst(e, name)]
+					 val condX = P.andBools(predXs)
+					 val aggS = [P.assignS(PT.Id agg, condX), PT.Break]
+				     in
+					 [PT.CaseLabel(PT.Id name,
+						       PT.Compound ([P.mkCommentS("XXX_DBG: Pcompute branch with tag '"^name^"' has C type")] @ aggS))]
+				     end
+			     fun mkVirtIsCase(name, pred) =
+				 let val addCmt = (case pred of NONE => "" | SOME e => " (cannot check user constraint)")
+				 in
+				     [PT.CaseLabel(PT.Id name,
+						   setAggCommentSs(P.trueX,
+								   "Pomit branch with tag '"^name^"'"^addCmt))]
+				 end
 			     fun getConFull{pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 					    isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 					    pred: pcexp option, comment: string option} = 
-			             let val predXs  = case pred of NONE => [] 
-				                       | SOME e => [modCheckSubst(e, name)]
-					 val fieldXs = case lookupPred pty of NONE => []
-				                       | SOME fieldPred => 
-								  [PT.Call(PT.Id fieldPred, [getUnionBranchX(rep, name)]@args)]
-					 val condX = P.andBools(predXs @ fieldXs)
-					 val aggS = [P.assignS(PT.Id agg, condX), PT.Break]
-				     in
-					 [PT.CaseLabel(PT.Id name, PT.Compound aggS)]
-				     end
-			     fun getConMan {decl, comment} =  (* XXX_TODO this is not done yet ??? *)
-				 let val ctNoptEs = cnvDeclaration decl
-				     fun doOne (cty, nameOpt, exp) = 
-					 let val name = case nameOpt of NONE => "bogus" | SOME n => n  
-					 in
-					     [PT.CaseLabel(PT.Id name, setAggSs P.trueX)]
-					 end
-				 in
-				     List.concat(List.map doOne ctNoptEs)
-				 end
-
-			     val fieldConCases = mungeVariants getConFull (fn x=>[]) (fn x=>[]) (* XXX_TODO getConMan *) variants
+				 if isVirtual
+				 then mkVirtIsCase(name, pred)
+				 else mkPadsIsCase(pty, args, name, pred)
+			     fun getConMan {tyname, name, args, isVirtual, expr, pred, comment} =
+				 if isVirtual
+				 then mkVirtIsCase(name, pred)
+				 else case isPadsTy tyname
+				       of PTys.CTy => mkCtyIsCase(tyname, args, name, pred)
+					| _        => mkPadsIsCase(getPadsName tyname, args, name, pred)
+			     val fieldConCases = mungeVariants getConFull (fn x=>[]) getConMan variants
 			     val fieldConCases = fieldConCases @
 				                 [PT.CaseLabel(PT.Id(errSuf name), setAggSs P.falseX),
 						  PT.DefaultLabel(setAggSs P.falseX)]
