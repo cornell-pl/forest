@@ -311,7 +311,6 @@ structure CnvExt : CNVEXT = struct
     fun sizeof ty = 
       LargeInt.fromInt (#bytes (Sizeof.byteSizeOf {sizes=Sizes.defaultSizes, err=error, warn=warn, bug=bug} ttab ty))
 
-
     fun isAssignable (t1, t2, rhsOpt) = 
 	let val isRhs0 = 
 	    case rhsOpt of
@@ -705,6 +704,7 @@ structure CnvExt : CNVEXT = struct
               val errCode   = "errCode"
               val loc       = "loc"
               val nerr      = "nerr"
+              val nerrPCGEN = pcgenName("nerr")
 	      val pads      = "pads"
               val rep       = "rep"
               val io        = "io"
@@ -1297,15 +1297,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
               (* Perror_t foo_init/foo_clear(P_t* pads, foo *r) *)
-              fun genInitFun(funName, argName, argPCT, bodySs, dummy) = 
+              fun genInitFun(funName, argName, argPCT, bodySs, noParamChecks) = 
 		  let val paramTys = [P.ptrPCT PL.toolStatePCT, 
 				      P.ptrPCT argPCT]
 		      val paramNames = [pads, argName]
 		      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
-		      val chkTSSs = if dummy then [] 
-				    else [PT.IfThen(P.orX(P.notX(PT.Id pads), (P.notX(PT.Id argName))), 
-						   PT.Return PL.P_ERROR)]
-		      val bodySs = chkTSSs @ bodySs @ [PT.Return PL.P_OK]
+		      val chkTSSs = if noParamChecks then [] 
+				    else [PT.Expr(PT.Call(PT.Id "PDCI_DISC_1P_CHECKS",
+							  [PT.String funName, PT.Id argName]))]
+		      val bodySs = chkTSSs @ bodySs
 		      val returnTy =  PL.toolErrPCT
 		      val initFunED = 
 			  P.mkFunctionEDecl(funName, formalParams, 
@@ -1330,17 +1330,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  end
 
               (* Perror_t foo_copy(P_t* pads, foo *dst, foo* src) *)
-              fun genCopyFun(funName, dst, src, argPCT, bodySs, static) = 
+              fun genCopyFun(funName, dst, src, argPCT, bodySs, noParamChecks) = 
 		  let val paramTys = [P.ptrPCT PL.toolStatePCT, 
 				      P.ptrPCT argPCT,
 				      P.ptrPCT argPCT]
 		      val paramNames = [pads, dst, src]
 		      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
-		      val chkTSSs = if static then [] 
-				    else [PT.IfThen(P.orX(P.notX(PT.Id pads),
-							  P.orX(P.notX(PT.Id src), P.notX(PT.Id dst))),
-						   PT.Return PL.P_ERROR)]
-		      val bodySs = chkTSSs @ bodySs @ [PT.Return PL.P_OK]
+		      val chkTSSs = if noParamChecks then []
+				    else [PT.Expr(PT.Call(PT.Id "PDCI_DISC_2P_CHECKS",
+							  [PT.String funName, PT.Id src, PT.Id dst]))]
+		      val bodySs = chkTSSs @ bodySs
 		      val returnTy =  PL.toolErrPCT
 		      val copyFunED = 
 			  P.mkFunctionEDecl(funName, formalParams, 
@@ -2052,6 +2051,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                        (Ast.DECL(coreDecl, aid, bindPaid padsInfo, loc) ::xs, tid)
                   | _ => (PE.bug "Expected ast declaration"; ([], Tid.new()))
 
+
               (*  Typedef case *)
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
 			        largeHeuristic,	isSource : bool, baseTy: PX.Pty, args: pcexp list, 
@@ -2111,9 +2111,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val initFunName = lookupMemFun (PX.Name name)
                       fun genInitEDs (suf, argName, aPCT) = case #memChar typedefProps
                           of TyProps.Static => 
-				  [genInitFun(suf initFunName, argName, aPCT, [], true)]
+				  [genInitFun(suf initFunName, argName, aPCT, [PT.Return PL.P_OK], true)]
                            | TyProps.Dynamic =>
-			      let val bodySs = [PL.bzeroS(PT.Id argName, P.sizeofX(aPCT))]
+			      let val bodySs = [PL.bzeroS(PT.Id argName, P.sizeofX(aPCT)),PT.Return PL.P_OK]
 			      in
 				  [genInitFun(suf initFunName, argName, aPCT, bodySs, false)]
 			      end
@@ -2121,13 +2121,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val initPDEDs  = genInitEDs ((initSuf o pdSuf), pd, pdPCT)
                       fun genCleanupEDs (suf, argName, aPCT) = case #memChar typedefProps
                           of TyProps.Static => 
-				  [genInitFun(suf initFunName, argName, aPCT, [], true)]
+				  [genInitFun(suf initFunName, argName, aPCT, [PT.Return PL.P_OK], true)]
                            | TyProps.Dynamic =>
 			      let val argX = PT.Id argName
 				  val bodySs = 
-				  [PT.Expr(
-				    PT.Call(PT.Id(suf baseFunName),
-					    [PT.Id pads, argX]))]
+				  [PT.Return(PT.Call(PT.Id(suf baseFunName),
+						     [PT.Id pads, argX]))]
 			      in
 				  [genInitFun(suf initFunName, argName, aPCT, bodySs, false)]
 			      end
@@ -2142,11 +2141,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val nestedCopyFunName = suf baseFunName
 			      val bodySs = 
 				  case #memChar typedefProps
-				   of TyProps.Static => [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT)]
-				   | _ => [PT.Expr(PT.Call(PT.Id nestedCopyFunName, 
-							    [PT.Id pads, PT.Id dst, PT.Id src]))]
+				   of TyProps.Static => [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT),
+							 PT.Return PL.P_OK]
+				   | _ => [PT.Return (PT.Call(PT.Id nestedCopyFunName, 
+							      [PT.Id pads, PT.Id dst, PT.Id src]))]
 			  in
-			      [genCopyFun(copyFunName, dst, src, aPCT, bodySs, false)]
+			      [genCopyFun(copyFunName, dst, src, aPCT, bodySs, true)]
 			  end
 		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT)
 		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  pdPCT)
@@ -2318,6 +2318,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       @ (emitWrite writeFunEDs)
   		      @ (emitXML galaxEDs)
 		  end
+
 
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, 
                             largeHeuristic, isSource : bool, args : pcexp list, baseTy:PX.Pty, 
@@ -2952,9 +2953,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 (* Generate init function, array case *)
 		 fun genInitEDs(suf, base, aPCT) = 
 		   case #memChar arrayProps
-		   of TyProps.Static => [genInitFun(suf name, base, aPCT, [], true)]
+		   of TyProps.Static => [genInitFun(suf name, base, aPCT, [PT.Return PL.P_OK], true)]
 		   |  TyProps.Dynamic => 
-			 let val bodySs =  [PL.bzeroS(PT.Id base, P.sizeofX(aPCT))]
+			 let val bodySs =  [PL.bzeroS(PT.Id base, P.sizeofX(aPCT)),PT.Return PL.P_OK]
 			 in
 			     [genInitFun(suf name, base, aPCT, bodySs, false)]
 			 end
@@ -2964,56 +2965,41 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		 (* Generate cleanup function, array case *)
 		 fun genCleanupEDs(suf, base, aPCT) = 
-		     let val funName = suf name
-		     in case #memChar arrayProps
-		        of TyProps.Static => 
-			      [genInitFun(suf name, base, aPCT, [], true)]
-		        |  TyProps.Dynamic => 
-			      let val bodySs = 
-				  [P.assignS(P.arrowX(PT.Id base, PT.Id length), P.zero),
-			           P.assignS(P.arrowX(PT.Id base, PT.Id elts), P.zero),
-				   PT.IfThen(
-				      P.arrowX(PT.Id base, PT.Id internal),
-			              PT.Compound[
-			              PL.chkCFreeRBufferS(PT.Id pads, funName,
-						          P.arrowX(PT.Id base, PT.Id internal))])]
-			 in
-			     [genInitFun(funName, base, aPCT, bodySs, false)]
-			 end
+		     let val cleanupFunName = suf name
+			 val cleanupEltFun = PT.Id(suf(lookupMemFun(baseTy)))
+			 val arrayStat = (if arrayMemChar = TyProps.Static then "_AR_STAT" else "_AR_DYN")
+			 val eltStat = (if baseMemChar = TyProps.Static then "_ELT_STAT" else "_ELT_DYN")
+			 val xArgs = (if baseMemChar = TyProps.Static then [] else [cleanupEltFun])
+			 val bodySs = [PT.Compound[P.varDeclS(PL.uint32PCT, nerrPCGEN, P.zero),
+						   PT.Expr(PT.Call(PT.Id("PCGEN_ARRAY_CLEANUP"^arrayStat^eltStat),
+								   [PT.String(cleanupFunName), PT.Id base] @ xArgs)),
+						   genReturnChk(PT.Id nerrPCGEN)]]
+		     in 
+			 [genInitFun(cleanupFunName, base, aPCT, bodySs, false)]
 		     end
 		 val cleanupRepEDs = genCleanupEDs(cleanupSuf, rep, canonicalPCT)
 		 val cleanupPDEDs = genCleanupEDs(cleanupSuf o pdSuf, pd, pdPCT)
 
 		 (* Generate copy function, array case *)
-		 fun genCopyEDs(suf, base, aPCT, elemPCT) = 
+		 fun genCopyEDs(suf, csuf, base, aPCT, elemPCT) =
 		     let val copyFunName = suf name
+			 val copyEltFun = PT.Id(suf(lookupMemFun(baseTy)))
+			 val cleanupEltFun = PT.Id(csuf(lookupMemFun(baseTy)))
+			 val arrayStat = (if arrayMemChar = TyProps.Static then "_AR_STAT" else "_AR_DYN")
+			 val eltStat = (if baseMemChar = TyProps.Static then "_ELT_STAT" else "_ELT_DYN")
 			 val dst = dstSuf base
 			 val src = srcSuf base
-			 val lengthX = fieldX(src, length)
-			 val arraySizeX = P.timesX(lengthX, P.sizeofX elemPCT)
-			 val varSizeX = P.plusX(P.sizeofX (P.ptrPCT elemPCT), P.sizeofX(P.ptrPCT PL.rbufferPCT))
-			 val fixedSizeX = P.minusX(P.sizeofX aPCT, varSizeX)
-			 val copyLenSs = [PL.memcpyS(PT.Id dst, PT.Id src, fixedSizeX)]
-			 val copyRBufSs = [PL.rbufCopyS(fieldX(dst, internal), fieldX(src, internal),
-							fieldX(dst, elts),
-							arraySizeX, PL.nonZeroMM(PT.Id pads))]
-			 val (copyElemsSs, isStatic) = 
-			     case baseMemChar
-			     of TyProps.Static => 
-				 ([PL.memcpyS(fieldX(dst, elts), fieldX(src, elts), arraySizeX)], true)
-			     |  TyProps.Dynamic => 
-				 let val bodySs = 
-				     []
-				 in
-				     ([], false)
-				 end
-			 val bodySs = copyLenSs @ copyRBufSs @ copyElemsSs
+			 val xArgs = (if baseMemChar = TyProps.Static then [] else [copyEltFun, cleanupEltFun])
+			 val bodySs = [PT.Compound[P.varDeclS(PL.uint32PCT, nerrPCGEN, P.zero),
+						   PT.Expr(PT.Call(PT.Id("PCGEN_ARRAY_COPY"^arrayStat^eltStat),
+								   [PT.String(copyFunName), PT.Id(src), PT.Id(dst)] @ xArgs)),
+						   genReturnChk(PT.Id nerrPCGEN)]]
 		     in
-			 [genCopyFun(copyFunName, dst, src, aPCT, bodySs, isStatic)]
+			 [genCopyFun(copyFunName, dst, src, aPCT, bodySs, false)]
 		     end
 
-		 val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT, elemRepPCT)
-		 val copyPDEDs = genCopyEDs(copySuf o pdSuf, pd, pdPCT, elemEdPCT)
+		 val copyRepEDs = genCopyEDs(copySuf o repSuf, cleanupSuf o repSuf, rep, canonicalPCT, elemRepPCT)
+		 val copyPDEDs = genCopyEDs(copySuf o pdSuf, cleanupSuf o pdSuf, pd, pdPCT, elemEdPCT)
 
                  (* Generate m_init function array case *)
                  val maskInitName = maskInitSuf name 
@@ -3851,6 +3837,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  @ (emitXML galaxEDs)
 	     end
 
+
           fun cnvPOpt ({name : string, params: (pcty * pcdecr) list, args: pcexp list,
 			isRecord, isSource : bool, pred : (pcexp PX.OptPredicate) option, 
 			baseTy: PX.Pty })=
@@ -3897,7 +3884,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      in
 		  cnvPUnion unionVal
 	      end
-
 
 
 	     and cnvPUnion {name: string, params: (pcty * pcdecr) list, isLongestMatch: bool,
@@ -4199,9 +4185,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       fun genInitEDs (suf, var, varPCT) = 
 			  case #memChar unionProps
 			  of TyProps.Static => 
-			      [genInitFun(suf baseFunName, var, varPCT, [], true)]
+			      [genInitFun(suf baseFunName, var, varPCT, [PT.Return PL.P_OK], true)]
 			   | TyProps.Dynamic => 
-			       let val zeroSs = [PL.bzeroS(PT.Id var, P.sizeofX(varPCT))]
+			       let val zeroSs = [PL.bzeroS(PT.Id var, P.sizeofX(varPCT)),PT.Return PL.P_OK]
 			       in
 				   [genInitFun(suf baseFunName, var, varPCT, zeroSs, false)]
 		               end
@@ -4210,7 +4196,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                       (* Generate cleanup function, union case *)
 		      fun genCleanupEDs (suf, var, varPCT) = case #memChar unionProps
-			  of TyProps.Static => [genInitFun(suf baseFunName, var, varPCT, [], true)]
+			  of TyProps.Static => [genInitFun(suf baseFunName, var, varPCT, [PT.Return PL.P_OK], true)]
 			   | TyProps.Dynamic => 
 			       let fun genCleanupFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
 						    name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
@@ -4227,7 +4213,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   val branchSs = mungeFields genCleanupFull 
 				                   genCleanupBrief genCleanupMan variants
 				   val allBranchSs = branchSs @ mkDefBreakCase(NONE)
-				   val bodySs = [PT.Switch(P.arrowX(PT.Id var, PT.Id tag), PT.Compound allBranchSs)]
+				   val bodySs = [PT.Switch(P.arrowX(PT.Id var, PT.Id tag), PT.Compound allBranchSs),PT.Return PL.P_OK]
 			       in
 				   [genInitFun(suf baseFunName, var, varPCT, bodySs, false)]
 		               end
@@ -4236,41 +4222,52 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val cleanupPDEDs = genCleanupEDs(cleanupSuf o pdSuf, pd, pdPCT)
 
                       (* Generate Copy Function union case *)
-                      fun genCopyEDs(suf, base, aPCT) = 
+                      fun genCopyEDs(suf, csuf, pdOpt, base, aPCT) = 
 			  let val copyFunName = suf baseFunName
+			      val cleanupFunName = csuf baseFunName
 			      val dst = dstSuf base
 			      val src = srcSuf base
-			      val copySs = [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT)]
 			  in
 			      case #memChar unionProps
-			       of TyProps.Static => [genCopyFun(copyFunName, dst, src, aPCT, copySs, true)]
+			       of TyProps.Static =>
+				  let val copySs = [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT), PT.Return PL.P_OK]
+				  in [genCopyFun(copyFunName, dst, src, aPCT, copySs, false)]
+				  end
 				|  TyProps.Dynamic => 
 			           let fun genCopyFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
 							name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
 							pred:pcexp option, comment:string option,...}:pfieldty) = 
 					   let val nestedCopyFunName = suf (lookupMemFun pty)
 					   in
-					       if (isVirtual andalso base = rep) orelse (TyProps.Static = lookupMemChar pty)
-					       then
-						   []
-					       else
-						   mkBreakCase(PT.Id name,
-							       SOME [PT.Expr(PT.Call(PT.Id(nestedCopyFunName),
-										     [PT.Id pads, 
-										      getUnionBranchX(dst, name),
-										      getUnionBranchX(src, name)]))])
+					       if (isVirtual andalso base = rep) 
+					       then []
+					       else (if (TyProps.Static = lookupMemChar pty)
+						     then [PT.CaseLabel(PT.Id name,
+									PT.Compound([PL.memcpyS(getUnionBranchX(dst, name),
+												getUnionBranchX(src, name),
+												P.sizeofEX(unionBranchX(src, name))),
+										     PT.Return PL.P_OK]))]
+						     else [PT.CaseLabel(PT.Id name,
+									PT.Return(PT.Call(PT.Id(nestedCopyFunName),
+											  [PT.Id pads, 
+											   getUnionBranchX(dst, name),
+											   getUnionBranchX(src, name)])))]
+						    )
 					   end
 				       fun genCopyBrief e  = []
 				       fun noop _ = []
 				       val branchSs = mungeFields genCopyFull genCopyBrief noop variants
 				       val branchSs = branchSs @ mkDefBreakCase(NONE)
-				       val bodySs = [PT.Switch (P.arrowX(PT.Id src, PT.Id tag), PT.Compound branchSs)]
+				       val bodySs = [PT.Expr(PT.Call(PT.Id("PCGEN_UNION_"^pdOpt^"COPY_PRE"),
+								     [PT.String(copyFunName), PT.Id(cleanupFunName)])),
+						     PT.Switch (P.arrowX(PT.Id src, PT.Id tag), PT.Compound branchSs),
+						     PT.Return PL.P_OK]
 				   in
-				       [genCopyFun(copyFunName, dst, src, aPCT, copySs @ bodySs, false)]
+				       [genCopyFun(copyFunName, dst, src, aPCT, bodySs, false)]
 				   end
 			  end
-		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT)
-		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  pdPCT)
+		      val copyRepEDs = genCopyEDs(copySuf o repSuf, cleanupSuf o repSuf, "", rep, canonicalPCT)
+		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf, cleanupSuf o pdSuf, "PD_", pd,  pdPCT)
 
                      (* Generate read function *)
 
@@ -4312,7 +4309,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun uReadManPost (theTag, predOpt) =
 			 case predOpt of
 			     NONE       => [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addStat^"_POST"),
-							    [PT.String readName, repCopy, pdCopy]))]
+							    [PT.String readName, repCopy, repCleanup, pdCopy, pdCleanup]))]
 			   | SOME check => [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addStat^"_POST_CHECK"),
 							    [PT.String readName, repCopy, repCleanup, pdCopy, pdCleanup, check]))]
 		     fun uReadFailed () =
@@ -4520,10 +4517,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						     P.varDeclS'(pdPCT, pcgenName("tpd"))] 
 						    @ omitVarDecls(omitVars)
 					       else omitVarDecls(omitVars)
-			     val localInitSs = if isLongestMatch
-					       then [PT.Expr(PT.Call(PT.Id "PD_COMMON_INIT_NO_ERR", [P.addrX(pcgenId("tpd"))]))]
-						    @ omitVarInits(omitVars)
-					       else omitVarInits(omitVars)
+			     val localInitSs = omitVarInits(omitVars)
 			     val coreSs = 
                                case descOpt of NONE => 
 			         let val readFields = mungeFields genReadFull genReadBrief genReadMan variants  (* does type checking *)
@@ -5114,9 +5108,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							  (* Generate Init Function struct case *)
 		      val baseFunName = lookupMemFun (PX.Name name)
                       fun genInitEDs(suf, base, aPCT) = case #memChar structProps
-							 of TyProps.Static => [genInitFun(suf baseFunName, base, aPCT, [], true)]
+							 of TyProps.Static => [genInitFun(suf baseFunName, base, aPCT, [PT.Return PL.P_OK], true)]
 							  | TyProps.Dynamic => 
-							    let val zeroSs = [PL.bzeroS(PT.Id base, P.sizeofX(aPCT))]
+							    let val zeroSs = [PL.bzeroS(PT.Id base, P.sizeofX(aPCT)),PT.Return PL.P_OK]
 							    in
 								[genInitFun(suf baseFunName, base, aPCT, zeroSs, false)]
 							    end
@@ -5124,7 +5118,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val initPDEDs  = genInitEDs (initSuf o pdSuf,  pd, pdPCT)
                       fun genCleanupEDs isPD (suf, base, aPCT) = 
 			  case #memChar structProps
-			      of TyProps.Static => [genInitFun(suf baseFunName, base, aPCT, [], true)]
+			      of TyProps.Static => [genInitFun(suf baseFunName, base, aPCT, [PT.Return PL.P_OK], true)]
 			    | TyProps.Dynamic => 
 				  let fun doDynamic (isVirtual, pty, name) = 
 				      if not isVirtual then
@@ -5150,7 +5144,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					  else (case isPadsTy tyname 
 						    of PTys.CTy => [] 
 						  | _ =>  doDynamic(isVirtual, getPadsName tyname, name))
-				      val bodySs = mungeFields genInitFull genInitBrief genInitMan fields
+				      val eltSs = mungeFields genInitFull genInitBrief genInitMan fields
+				      val bodySs = eltSs @ [PT.Return PL.P_OK]
 				  in
 				      [genInitFun(suf baseFunName, base, aPCT, bodySs, false)]
 				  end
@@ -5162,16 +5157,48 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  let val copyFunName = suf baseFunName
 			      val dst = dstSuf base
 			      val src = srcSuf base
-			      val copySs = [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT)]
+			      val copySs = [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT),
+					    PT.Return PL.P_OK]
 			  in
 			      case #memChar structProps
-			       of TyProps.Static => [genCopyFun(copyFunName, dst, src, aPCT, copySs, true)]
+			       of TyProps.Static => [genCopyFun(copyFunName, dst, src, aPCT, copySs, false)]
 				|  TyProps.Dynamic => 
-			           let fun doCopy (isVirtual, pty, name) = 
-					   if isVirtual then [] 
+			           let val haveMemcpy : bool ref = ref false
+				       val multiField : bool ref = ref false
+				       val memcpySrcLoc : ParseTree.expression ref = ref(PT.Id("placeholder"))
+				       val memcpyDstLoc : ParseTree.expression ref = ref(PT.Id("placeholder"))
+				       val memcpySize   : ParseTree.expression ref = ref(PT.Id("placeholder"))
+				       val cmtStr       : string ref = ref "" 
+				       fun addMemcpyField(s) = 
+					   if !haveMemcpy
+					   then ignore(memcpySize := (P.plusX(!memcpySize, P.sizeofEX(fieldX(src, s)))),
+						       cmtStr     := !cmtStr^", "^s,
+						       multiField := true)
+					   else ignore(haveMemcpy := true,
+						       memcpySrcLoc  := getFieldX(src, s),
+						       memcpyDstLoc  := getFieldX(dst, s),
+						       memcpySize    := P.sizeofEX(fieldX(src, s)),
+						       cmtStr        := s)
+				       fun genMemcpy() =
+					   if !haveMemcpy
+					   then let val mcpy  = PL.memcpyS(!memcpyDstLoc, !memcpySrcLoc,!memcpySize)
+						    val multi = !multiField
+						    val _    = (haveMemcpy := false, multiField := false)
+						in if multi
+						   then [P.mkCommentS("Copy fields "^(!cmtStr)),
+							 mcpy]
+						   else [mcpy]
+						end
+					   else []
+				       fun doCopy (isVirtual, pty, name) = 
+					   if isVirtual then []
 					   else let val nestedCopyFunName = suf (lookupMemFun pty)
-						in if TyProps.Static = lookupMemChar pty then []
-						   else 
+						in if TyProps.Static = lookupMemChar pty then
+						       let val _ = ignore(addMemcpyField(name))
+						       in []
+						       end
+						   else
+						       genMemcpy() @
 						       [PT.Expr(
 							PT.Call(PT.Id(nestedCopyFunName),
 								[PT.Id pads, 
@@ -5189,13 +5216,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					   case isPadsTy tyname 
 					    of PTys.CTy => [] 
                                              | _ =>  doCopy(isVirtual, getPadsName tyname, name)
-				       val bodySs = mungeFields genCopyFull noop genCopyMan fields
+				       val fieldCpySs = mungeFields genCopyFull noop genCopyMan fields
+				       val bodySs = fieldCpySs @ genMemcpy() @ [PT.Return PL.P_OK]
 				   in
-				       [genCopyFun(copyFunName, dst, src, aPCT, copySs @ bodySs, false)]
+				       [genCopyFun(copyFunName, dst, src, aPCT, bodySs, false)]
 				   end
 			  end
 		      val copyRepEDs = genCopyEDs false (copySuf o repSuf, rep, canonicalPCT)
-		      val copyPDEDs  = genCopyEDs true (copySuf o pdSuf,  pd,  pdPCT)
+		      val copyPDEDs  = genCopyEDs true (copySuf o pdSuf, pd,  pdPCT)
 
 
 						  (* Generate m_init function struct case *)
@@ -5818,7 +5846,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		   (* Generate Init function (enum case) *)
 		   val initFunName = lookupMemFun (PX.Name name)
 		   fun genInitEDs (suf, argName, aPCT) =  (* always static *)
-		       [genInitFun(suf initFunName, argName, aPCT, [], true)]
+		       [genInitFun(suf initFunName, argName, aPCT, [PT.Return PL.P_OK], true)]
 		   val initRepEDs = genInitEDs (initSuf, rep, canonicalPCT)
 		   val initPDEDs  = genInitEDs ((initSuf o pdSuf), pd, pdPCT)
 		   val cleanupRepEDs = genInitEDs (cleanupSuf, rep, canonicalPCT)
@@ -5829,7 +5857,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		       let val copyFunName = suf initFunName
 			   val dst = dstSuf base
 			   val src = srcSuf base
-			   val bodySs = [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT)]
+			   val bodySs = [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT),
+					 PT.Return PL.P_OK]
 		       in
 			   [genCopyFun(copyFunName, dst, src, aPCT, bodySs, false)]
 		       end
@@ -6049,6 +6078,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  emitRead decls
 	      end
 
+
 	  fun cnvPSelect {selName, tyName, varName, path} = 
 	      let val (Select.Id root):: path = Select.sexprToPath(P.stripExp path)
 		  val () = if root = varName then ()
@@ -6147,6 +6177,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	        (* end case offset*));
 		[] (* return no AST decls *))
 	      end handle Fail s => (PE.error s; [])
+
 
 	  fun cnvPDone () = 
 	      let val () = (if !seenDone then PE.error ("Unexpected Pdone declaration") else (); seenDone := true)

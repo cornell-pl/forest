@@ -85,8 +85,10 @@ void PCGEN_UNION_READ_MAN_STAT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
 void PCGEN_UNION_READ_MAN_FIRST_VIRT_PRE (PDCI_UNION_READ_MAN_PRE_ARGS);
 void PCGEN_UNION_READ_MAN_NEXT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
 
-void PCGEN_UNION_READ_MAN_STAT_POST       (const char *fn_nm, void *rep_copy, void *pd_copy);
-void PCGEN_UNION_READ_MAN_POST            (const char *fn_nm, void *rep_copy, void *pd_copy);
+void PCGEN_UNION_READ_MAN_STAT_POST       (const char *fn_nm, void *rep_copy, void *rep_cleanup,
+					   void *pd_copy, void *pd_cleanup);
+void PCGEN_UNION_READ_MAN_POST            (const char *fn_nm, void *rep_copy, void *rep_cleanup,
+					   void *pd_copy, void *pd_cleanup);
 void PCGEN_UNION_READ_MAN_STAT_POST_CHECK (const char *fn_nm, void *rep_copy, void *rep_cleanup,
 					   void *pd_copy, void *pd_cleanup, int usercheck);
 void PCGEN_UNION_READ_MAN_POST_CHECK      (const char *fn_nm, void *rep_copy, void *rep_cleanup,
@@ -117,8 +119,10 @@ void PCGEN_UNION_READ_LONGEST_MAN_STAT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
 void PCGEN_UNION_READ_LONGEST_MAN_FIRST_VIRT_PRE (PDCI_UNION_READ_MAN_PRE_ARGS);
 void PCGEN_UNION_READ_LONGEST_MAN_NEXT_VIRT_PRE  (PDCI_UNION_READ_MAN_PRE_ARGS);
 
-void PCGEN_UNION_READ_LONGEST_MAN_STAT_POST       (const char *fn_nm, void *rep_copy, void *pd_copy);
-void PCGEN_UNION_READ_LONGEST_MAN_POST            (const char *fn_nm, void *rep_copy, void *pd_copy);
+void PCGEN_UNION_READ_LONGEST_MAN_STAT_POST       (const char *fn_nm, void *rep_copy, void *rep_cleanup,
+						   void *pd_copy, void *pd_cleanup);
+void PCGEN_UNION_READ_LONGEST_MAN_POST            (const char *fn_nm, void *rep_copy, void *rep_cleanup,
+						   void *pd_copy, void *pd_cleanup);
 void PCGEN_UNION_READ_LONGEST_MAN_STAT_POST_CHECK (const char *fn_nm, void *rep_copy, void *rep_cleanup,
 						   void *pd_copy, void *pd_cleanup, int usercheck);
 void PCGEN_UNION_READ_LONGEST_MAN_POST_CHECK      (const char *fn_nm, void *rep_copy, void *rep_cleanup,
@@ -149,7 +153,21 @@ void PCGEN_SWUNION_READ_FAILED      (const char *fn_nm, const char *nm, int err_
 void PCGEN_SWUNION_READ_WHERE_CHECK (const char *fn_nm, int usercheck, int isOpt);
 void PCGEN_SWUNION_READ_WHERE_END_CHECK (const char *fn_nm, int usercheck, int isOpt);
 
+void PCGEN_UNION_COPY_PRE(const char *fn_nm, void *rep_cleanup);
+void PCGEN_UNION_PD_COPY_PRE(const char *fn_nm, void *pd_cleanup);
+
+void PCGEN_ARRAY_COPY_AR_STAT_ELT_STAT(const char *fn_nm, void *src, void *dst);
+void PCGEN_ARRAY_COPY_AR_DYN_ELT_STAT(const char *fn_nm, void *src, void *dst);
+void PCGEN_ARRAY_COPY_AR_STAT_ELT_DYN(const char *fn_nm, void *src, void *dst, void *elt_copy_fn, void *elt_cleanup_fn);
+void PCGEN_ARRAY_COPY_AR_DYN_ELT_DYN(const char *fn_nm, void *src, void *dst, void *elt_copy_fn, void *elt_cleanup_fn);
+
+void PCGEN_ARRAY_CLEANUP_AR_STAT_ELT_STAT(const char *fn_nm, void *a);
+void PCGEN_ARRAY_CLEANUP_AR_DYN_ELT_STAT(const char *fn_nm, void *a);
+void PCGEN_ARRAY_CLEANUP_AR_STAT_ELT_DYN(const char *fn_nm, void *a, void *elt_cleanup_fn);
+void PCGEN_ARRAY_CLEANUP_AR_DYN_ELT_DYN(const char *fn_nm, void *a, void *elt_cleanup_fn);
+
 void PCGEN_FIND_EOR(const char *fn_nm);
+
 
 void PCGEN_STRUCT_ACC_REP_NOVALS();
 void PCGEN_UNION_ACC_REP_NOVALS();
@@ -1080,14 +1098,14 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_MAN_STAT_POST(fn_nm, rep_copy, pd_copy)
+#define PCGEN_UNION_READ_MAN_STAT_POST(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup)
 do {
   pd->loc.b = start_pos_PCGEN_;
   goto branches_done;
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_MAN_POST(fn_nm, rep_copy, pd_copy)
+#define PCGEN_UNION_READ_MAN_POST(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup)
 do {
   pd->loc.b = start_pos_PCGEN_;
   goto branches_done;
@@ -1154,6 +1172,8 @@ Ppos_t start_pos_PCGEN_, end_pos_PCGEN_;
 ssize_t longest_PCGEN_ = -1;
 do {
   PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
+  memset((void*)&trep_PCGEN_, 0, sizeof(trep_PCGEN_));
+  memset((void*)&tpd_PCGEN_, 0, sizeof(tpd_PCGEN_));
   tpd_PCGEN_.errCode = P_NO_ERR;
 } while (0)
 /* END_MACRO */
@@ -1272,7 +1292,7 @@ do {
 do {
   rep_init  (pads, &trep_PCGEN_);
   pd_init   (pads, &tpd_PCGEN_);
-  pd->errCode = P_NO_ERR;
+  tpd_PCGEN_.errCode = P_NO_ERR;
   if (P_ERR == P_io_checkpoint(pads, 1)) {
     PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
   }
@@ -1294,7 +1314,7 @@ do {
 do {
   rep_init  (pads, &trep_PCGEN_);
   pd_init   (pads, &tpd_PCGEN_);
-  pd->errCode = P_NO_ERR;
+  tpd_PCGEN_.errCode = P_NO_ERR;
   if (P_ERR == P_io_checkpoint(pads, 1)) {
     PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
   }
@@ -1316,7 +1336,7 @@ do {
 do {
   rep_init  (pads, &trep_PCGEN_);
   pd_init   (pads, &tpd_PCGEN_);
-  pd->errCode = P_NO_ERR;
+  tpd_PCGEN_.errCode = P_NO_ERR;
   if (P_ERR == P_io_checkpoint(pads, 1)) {
     PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
   }
@@ -1338,7 +1358,7 @@ do {
 do {
   rep_init  (pads, &trep_PCGEN_);
   pd_init   (pads, &tpd_PCGEN_);
-  pd->errCode = P_NO_ERR;
+  tpd_PCGEN_.errCode = P_NO_ERR;
   if (P_ERR == P_io_checkpoint(pads, 1)) {
     PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
   }
@@ -1395,13 +1415,13 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_LONGEST_MAN_STAT_POST(fn_nm, rep_copy, pd_copy)
+#define PCGEN_UNION_READ_LONGEST_MAN_STAT_POST(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup)
 do {
   PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT;
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_LONGEST_MAN_POST(fn_nm, rep_copy, pd_copy)
+#define PCGEN_UNION_READ_LONGEST_MAN_POST(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup)
 do {
   PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   rep_cleanup (pads, &trep_PCGEN_);
@@ -1566,6 +1586,121 @@ do {
 } while (0)
 /* END_MACRO */
 
+#define PDCI_UNION_COPY_PRE(fn_nm, cleanup_fn, src, dst)
+do {
+  if (src->tag != dst->tag) {
+    cleanup_fn(pads, dst);
+    memset((void*)(&(dst->val)), 0, sizeof(dst->val));
+    memcpy((void*)(dst), (void*)(src), sizeof(*dst) - sizeof(dst->val));
+  }
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_UNION_COPY_PRE(fn_nm, rep_cleanup)
+  PDCI_UNION_COPY_PRE(fn_nm, rep_cleanup, rep_src, rep_dst)
+/* END_MACRO */
+
+#define PCGEN_UNION_PD_COPY_PRE(fn_nm, pd_cleanup)
+  PDCI_UNION_COPY_PRE(fn_nm, pd_cleanup, pd_src, pd_dst)
+/* END_MACRO */
+
+/* the ARRAY_COPY macros should bracketed by
+       Puint32 nerr_PCGEN_ = 0;
+       ...
+       return (nerr_PCGEN_ == 0) ? P_OK : P_ERR;
+ */
+
+#define PCGEN_ARRAY_COPY_AR_STAT_ELT_STAT(fn_nm, src, dst)
+do {
+  memcpy((void*)dst, (void*)src, sizeof(*dst));
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_COPY_AR_DYN_ELT_STAT(fn_nm, src, dst)
+do {
+  memcpy((void*)dst, (void*)src, sizeof(*dst) - (2*sizeof(void*)));
+  RBuf_CPY_SRC2DEST(src->_internal, dst->_internal, dst->elts, src->length * sizeof(src->elts[0]), P_rmm_nozero (pads));
+} while (0);
+/* END_MACRO */
+
+#define PCGEN_ARRAY_COPY_AR_STAT_ELT_DYN(fn_nm, src, dst, elt_copy_fn, elt_cleanup_fn)
+do {
+  XXX TODO;
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_COPY_AR_DYN_ELT_DYN(fn_nm, src, dst, elt_copy_fn, elt_cleanup_fn)
+do {
+  Puint32 i_PCGEN_;
+  if (src->length == 0) {
+    if (dst->length) {
+      for (i_PCGEN_ = 0; i_PCGEN_ < dst->length; i_PCGEN_++) {
+	elt_cleanup_fn(pads, &(dst->elts[i_PCGEN_]));
+      }
+    }
+    memcpy((void*)dst, (void*)src, sizeof(*dst) - (2*sizeof(void*)));
+    return P_OK;
+  }
+  if (!(dst->_internal) && !(dst->_internal = RMM_new_rbuf(P_rmm_zero(pads)))) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0 ,P_ALLOC_ERR, fn_nm, 0);
+  }
+  if (src->length > dst->length) {
+    if (0 != RBuf_reserve(dst->_internal, (void**)(&(dst->elts)), sizeof(dst->elts[0]), src->length, 0)) {
+      PDCI_report_err(pads, P_LEV_FATAL, 0, P_ALLOC_ERR, fn_nm, 0);
+    }
+    /* memset((void*)(&(dst->elts[dst->length])), 0, (src->length - dst->length)*sizeof(dst->elts[0])); */
+  }
+  /* leave extra elements in place for re-use by future array elts
+     else if (src->length < dst->length) {
+       for (i_PCGEN_ = src->length; i_PCGEN_ < dst->length; i_PCGEN_++) {
+       elt_cleanup_fn(pads, &(dst->elts[i_PCGEN_]));
+      }
+  } */
+  for (i_PCGEN_ = 0; i_PCGEN_ < src->length; i_PCGEN_++) {
+    if (P_ERR == elt_copy_fn(pads, &(dst->elts[i_PCGEN_]), &(src->elts[i_PCGEN_]))) nerr_PCGEN_++;
+  }
+  memcpy((void*)dst, (void*)src, sizeof(*dst) - (2*sizeof(void*)));
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_CLEANUP_AR_STAT_ELT_STAT(fn_nm, a)
+do { } while (0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_CLEANUP_AR_DYN_ELT_STAT(fn_nm, a)
+do {
+  if (a->_internal) {
+    if (0 != RMM_free_rbuf (a->_internal)) {
+      PDCI_report_err(pads, P_LEV_FATAL, 0, P_ALLOC_ERR, fn_nm, "Couldn\'t free growable buffer");
+    }
+    a->_internal = 0;
+  }
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_CLEANUP_AR_STAT_ELT_DYN(fn_nm, a, elt_cleanup_fn)
+do {
+  Puint32 i_PCGEN_;
+  for (i_PCGEN_ = 0; i_PCGEN_ < a->length; i_PCGEN_++) {
+    if (P_ERR == elt_cleanup_fn(pads, &(a->elts[i_PCGEN_]))) nerr_PCGEN_++;
+  }
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_CLEANUP_AR_DYN_ELT_DYN(fn_nm, a, elt_cleanup_fn)
+do {
+  Puint32 i_PCGEN_;
+  for (i_PCGEN_ = 0; i_PCGEN_ < a->length; i_PCGEN_++) {
+    if (P_ERR == elt_cleanup_fn(pads, &(a->elts[i_PCGEN_]))) nerr_PCGEN_++;
+  }
+  if (a->_internal) {
+    if (0 != RMM_free_rbuf (a->_internal)) {
+      PDCI_report_err(pads, P_LEV_FATAL, 0, P_ALLOC_ERR, fn_nm, "Couldn\'t free growable buffer");
+    }
+    a->_internal = 0;
+  }
+} while (0)
+/* END_MACRO */
 
 #define PCGEN_STRUCT_ACC_REP_NOVALS()
 do {

@@ -80,9 +80,24 @@ void PDCI_IODISC_INIT_CHECKS_RET_VOID(char * whatfn);
 void PDCI_IODISC_INIT_CHECKS_RET_SSIZE(char * whatfn);
 
 void PDCI_NULLPARAM_CHECK(char *, void *);
+void PDCI_NULLPARAM_CHECK2(char *, void *, void*);
+void PDCI_NULLPARAM_CHECK3(char *, void *, void*, void*);
+void PDCI_NULLPARAM_CHECK4(char *, void *, void*, void*, void *);
+
 void PDCI_NULLPARAM_CHECK_RET_0(char *, void *);
+void PDCI_NULLPARAM_CHECK2_RET_0(char *, void *, void *);
+void PDCI_NULLPARAM_CHECK3_RET_0(char *, void *, void *, void *);
+void PDCI_NULLPARAM_CHECK4_RET_0(char *, void *, void *, void *, void *);
+
 void PDCI_NULLPARAM_CHECK_RET_VOID(char *, void *);
+void PDCI_NULLPARAM_CHECK2_RET_VOID(char *, void *, void *);
+void PDCI_NULLPARAM_CHECK3_RET_VOID(char *, void *, void *, void *);
+void PDCI_NULLPARAM_CHECK4_RET_VOID(char *, void *, void *, void *, void *);
+
 void PDCI_NULLPARAM_CHECK_RET_SSIZE(char *, void *);
+void PDCI_NULLPARAM_CHECK2_RET_SSIZE(char *, void *, void *);
+void PDCI_NULLPARAM_CHECK3_RET_SSIZE(char *, void *, void *, void *);
+void PDCI_NULLPARAM_CHECK4_RET_SSIZE(char *, void *, void *, void *, void *);
 
 void PDCI_DISC_0P_CHECKS(const char *whatfn);
 void PDCI_DISC_1P_CHECKS(const char *whatfn, void *p1);
@@ -262,17 +277,89 @@ void PDCI_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr,
     } \
   } while (0)
 
+#define PDCI_NULLPARAM_CHECK2_RET(whatfn, param1, param2, ret) \
+  do { \
+    if (!(param1))  { \
+      P_WARN1(pads->disc, "%s: param " PDCI_MacroArg2String(param1) " must not be NULL", whatfn); \
+      ret; \
+    } \
+    if (!(param2))  { \
+      P_WARN1(pads->disc, "%s: param " PDCI_MacroArg2String(param2) " must not be NULL", whatfn); \
+      ret; \
+    } \
+  } while (0)
+
+#define PDCI_NULLPARAM_CHECK3_RET(whatfn, param1, param2, param3, ret) \
+  do { \
+    if (!(param1))  { \
+      P_WARN1(pads->disc, "%s: param " PDCI_MacroArg2String(param1) " must not be NULL", whatfn); \
+      ret; \
+    } \
+    if (!(param2))  { \
+      P_WARN1(pads->disc, "%s: param " PDCI_MacroArg2String(param2) " must not be NULL", whatfn); \
+      ret; \
+    } \
+    if (!(param3))  { \
+      P_WARN1(pads->disc, "%s: param " PDCI_MacroArg2String(param3) " must not be NULL", whatfn); \
+      ret; \
+    } \
+  } while (0)
+
+#define PDCI_NULLPARAM_CHECK4_RET(whatfn, param1, param2, param3, param4, ret) \
+  do { \
+    if (!(param1))  { \
+      P_WARN1(pads->disc, "%s: param " PDCI_MacroArg2String(param1) " must not be NULL", whatfn); \
+      ret; \
+    } \
+    if (!(param2))  { \
+      P_WARN1(pads->disc, "%s: param " PDCI_MacroArg2String(param2) " must not be NULL", whatfn); \
+      ret; \
+    } \
+    if (!(param3))  { \
+      P_WARN1(pads->disc, "%s: param " PDCI_MacroArg2String(param3) " must not be NULL", whatfn); \
+      ret; \
+    } \
+    if (!(param4))  { \
+      P_WARN1(pads->disc, "%s: param " PDCI_MacroArg2String(param4) " must not be NULL", whatfn); \
+      ret; \
+    } \
+  } while (0)
+
 #define PDCI_NULLPARAM_CHECK(whatfn, param) \
      PDCI_NULLPARAM_CHECK_RET(whatfn, param, return P_ERR)
+#define PDCI_NULLPARAM_CHECK2(whatfn, param1, param2) \
+     PDCI_NULLPARAM_CHECK2_RET(whatfn, param1, param2, return P_ERR)
+#define PDCI_NULLPARAM_CHECK3(whatfn, param1, param2, param3) \
+     PDCI_NULLPARAM_CHECK3_RET(whatfn, param1, param2, param3, return P_ERR)
+#define PDCI_NULLPARAM_CHECK4(whatfn, param1, param2, param3, param4) \
+     PDCI_NULLPARAM_CHECK4_RET(whatfn, param1, param2, param3, param4, return P_ERR)
 
 #define PDCI_NULLPARAM_CHECK_RET_0(whatfn, param) \
      PDCI_NULLPARAM_CHECK_RET(whatfn, param, return 0)
+#define PDCI_NULLPARAM_CHECK2_RET_0(whatfn, param1, param2) \
+     PDCI_NULLPARAM_CHECK2_RET(whatfn, param1, param2, return 0)
+#define PDCI_NULLPARAM_CHECK3_RET_0(whatfn, param1, param2, param3) \
+     PDCI_NULLPARAM_CHECK3_RET(whatfn, param1, param2, param3, return 0)
+#define PDCI_NULLPARAM_CHECK4_RET_0(whatfn, param1, param2, param3, param4) \
+     PDCI_NULLPARAM_CHECK4_RET(whatfn, param1, param2, param3, param4, return 0)
 
 #define PDCI_NULLPARAM_CHECK_RET_VOID(whatfn, param) \
      PDCI_NULLPARAM_CHECK_RET(whatfn, param, return)
+#define PDCI_NULLPARAM_CHECK2_RET_VOID(whatfn, param1, param2) \
+     PDCI_NULLPARAM_CHECK2_RET(whatfn, param1, param2, return)
+#define PDCI_NULLPARAM_CHECK3_RET_VOID(whatfn, param1, param2, param3) \
+     PDCI_NULLPARAM_CHECK3_RET(whatfn, param1, param2, param3, return)
+#define PDCI_NULLPARAM_CHECK4_RET_VOID(whatfn, param1, param2, param3, param4) \
+     PDCI_NULLPARAM_CHECK4_RET(whatfn, param1, param2, param3, param4, return)
 
 #define PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, param) \
      PDCI_NULLPARAM_CHECK_RET(whatfn, param, return -1)
+#define PDCI_NULLPARAM_CHECK2_RET_SSIZE(whatfn, param1, param2) \
+     PDCI_NULLPARAM_CHECK2_RET(whatfn, param1, param2, return -1)
+#define PDCI_NULLPARAM_CHECK3_RET_SSIZE(whatfn, param1, param2, param3) \
+     PDCI_NULLPARAM_CHECK3_RET(whatfn, param1, param2, param3, return -1)
+#define PDCI_NULLPARAM_CHECK4_RET_SSIZE(whatfn, param1, param2, param3, param4) \
+     PDCI_NULLPARAM_CHECK4_RET(whatfn, param1, param2, param3, param4, return -1)
 
 #define PDCI_DISC_0P_CHECKS(whatfn) \
      PDCI_DISC_INIT_CHECKS(whatfn)
@@ -510,10 +597,25 @@ do { \
 #define PDCI_IODISC_INIT_CHECKS_RET_VOID(whatfn)               P_NULL_STMT
 #define PDCI_IODISC_INIT_CHECKS_RET_SSIZE(whatfn)              P_NULL_STMT
 
-#define PDCI_NULLPARAM_CHECK(whatfn, param)                    P_NULL_STMT
-#define PDCI_NULLPARAM_CHECK_RET_0(whatfn, param)              P_NULL_STMT
-#define PDCI_NULLPARAM_CHECK_RET_VOID(whatfn, param)           P_NULL_STMT
-#define PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, param)          P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK(whatfn, param)                                     P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK2(whatfn, param1, param2)                           P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK3(whatfn, param1, param2, param3)                   P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK4(whatfn, param1, param2, param3, param4)           P_NULL_STMT
+
+#define PDCI_NULLPARAM_CHECK_RET_0(whatfn, param)                               P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK2_RET_0(whatfn, param1, param2)                     P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK3_RET_0(whatfn, param1, param2, param3)             P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK4_RET_0(whatfn, param1, param2, param3, param4)     P_NULL_STMT
+
+#define PDCI_NULLPARAM_CHECK_RET_VOID(whatfn, param)                            P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK2_RET_VOID(whatfn, param1, param2)                  P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK3_RET_VOID(whatfn, param1, param2, param3)          P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK4_RET_VOID(whatfn, param1, param2, param3, param4)  P_NULL_STMT
+
+#define PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, param)                           P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK2_RET_SSIZE(whatfn, param1, param2)                 P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK3_RET_SSIZE(whatfn, param1, param2, param3)         P_NULL_STMT
+#define PDCI_NULLPARAM_CHECK4_RET_SSIZE(whatfn, param1, param2, param3, param4) P_NULL_STMT
 
 #define PDCI_DISC_0P_CHECKS(whatfn)                            P_NULL_STMT
 #define PDCI_DISC_1P_CHECKS(whatfn, p1)                        P_NULL_STMT
