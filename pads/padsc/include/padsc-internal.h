@@ -9,12 +9,31 @@
 #ifndef __LIBPADSC_INTERNAL__
 #define __LIBPADSC_INTERNAL__
 
+/* ================================================================================ */
+/* THESE ARE REQUIRED FOR CKIT ON CERTAIN ARCHITECTURES ? */
+
 #ifdef __PREPROCESSOR_FIXES
 typedef void * __builtin_va_list;
 #define __THROW
 /* extern int ftruncate (int __fd, long int __length) ; */
 
 #endif
+
+/* ================================================================================ */
+/* NOT SURE WHERE THESE MACROS BELONG */
+
+/* vmalloc macros:
+ *   vmnewof copies existing bytes and zeroes extension
+ *   vmoldof does not copy existing bytes and does not zero extension
+ *   vmcpyoldof copies existing bytes but does not zero extension
+ *
+ * The first 2 are provided, the last one is here:
+ */
+
+#define vmcpyoldof(v,p,t,n,x) \
+  (t*)vmresize((v), (p), sizeof(t)*(n)+(x), (VM_RSMOVE|VM_RSCOPY) )
+
+/* ================================================================================ */
 
 typedef struct PDCI_stkElt_s PDCI_stkElt_t;
 
