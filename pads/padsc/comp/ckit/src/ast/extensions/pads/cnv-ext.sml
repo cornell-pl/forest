@@ -3597,9 +3597,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
           
                  (* -- process constriants *)
                  fun chkForallConstraint (r as {index, range, body}) = 
-		     let val subList = [(length, fieldX(rep,length)), 
+		     let val subList = [(PNames.arrayLen, fieldX(rep,length)), 
 					(name, fieldX(rep,elts)),
-					(elts, fieldX(rep,elts))]
+					(PNames.arrayElts, fieldX(rep,elts)),
+					(PNames.pdElts,   fieldX(pd,elts))]
 			 val (lower, upper) = 
 			     (case range 
 			      of PX.ArrayName n => (
@@ -3621,6 +3622,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 ignore(insTempVar(length, PL.uint32PCT));
 			 ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
 			 ignore(insTempVar(elts, P.ptrPCT elemRepPCT)); 
+			 ignore(insTempVar(PNames.pdElts, P.ptrPCT elemEdPCT)); 
 			 expEqualTy(lower, CTintTys, errMsg "Lower");
 			 expEqualTy(lower, CTintTys, errMsg "Upper");
 			 expEqualTy(body, CTintTys, fn s=>("Forall expression for array "^

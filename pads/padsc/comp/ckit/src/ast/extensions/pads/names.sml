@@ -4,4 +4,5 @@ struct
   val unionTag = "tag"
   val arrayLen = "length"
   val arrayElts = "elts"
+  val pdElts    = "pds"
 end
