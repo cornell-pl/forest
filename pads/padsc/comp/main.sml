@@ -30,6 +30,7 @@ structure Main : sig
 
     (* Values/Flags supplied by user at command line *)
     val compilerFileLoc = "/ckit/src/ast/extensions/pads/"
+    val makefileLoc     = "/config/locs.mk"
 
 
     datatype ArgType = Pads | Unknown
@@ -83,7 +84,7 @@ structure Main : sig
     val flags_release = [
          ("h", "output header file",      PCL.String (setHeaderOutputFile, false)),
          ("c", "output code file",        PCL.String (setCOutputFile, false)),
-         ("a", "generate accumulator",    PCL.String (addAccumulator, true)),
+         ("a", "generate accumulator program",    PCL.String (addAccumulator, true)),
          ("p", "output directory",        PCL.String (setOutputDir, false)),
          ("s", "send output to standard out", PCL.BoolSet(stdoutFlag)),
          ("b", "add base type table",         PCL.String (addBaseTable, false)),
@@ -218,46 +219,79 @@ structure Main : sig
 	in
 	    "__"^upper^"__H__"
 	end
+    fun generateAccumProgram (homeDir, headerFile, name,
+			      {memChar, repName,repInit,repRead,repClean,edName,edInit,edClean,
+			       accName,accInit,accAdd,accReport,accClean,...}:PTys.pTyInfo) =
+	let val aname = name^".c"
+	    val aoutstream = getAccStream(aname)
+	    val templateName = if memChar = TyProps.Static then
+		homeDir^compilerFileLoc^"accum_template_static"
+			       else
+				   homeDir^compilerFileLoc^"accum_template_dynamic"
+	in
+	    TextIO.output(aoutstream, "#include \"libpadsc.h\"\n");
+	    TextIO.output(aoutstream, "#include \""^headerFile^"\"\n");
+	    TextIO.output(aoutstream, "#define PADS_TY "^repName^"\n");
+	    case repInit of NONE => ()
+  	       | SOME repInit =>
+	    TextIO.output(aoutstream, "#define PADS_TY_INIT "^repInit^"\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_READ "^repRead^"\n");
+	    case repClean of NONE => ()
+	       | SOME repClean =>TextIO.output(aoutstream, "#define PADS_TY_CLEANUP "^repClean^"\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_ED "^edName^"\n");
+	    case edInit of NONE => ()
+	       | SOME edInit =>TextIO.output(aoutstream, "#define PADS_TY_ED_INIT "^edInit^"\n");
+	    case edClean of NONE => ()
+	       | SOME edClean =>TextIO.output(aoutstream, 
+					      "#define PADS_TY_ED_CLEANUP "^edClean^"\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_ACC "^accName^"\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_ACC_INIT "^accInit^"\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_ACC_ADD "^accAdd^"\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_ACC_REPORT "^accReport^"\n");
+	    TextIO.output(aoutstream, "#define PADS_TY_ACC_CLEANUP "^accClean^"\n");
+	    echoFile(templateName,aoutstream);
 
-    fun generateAccum (homeDir, fileName, headerFile) = 
+	    TextIO.flushOut aoutstream;
+	    TextIO.closeOut aoutstream
+	end
+
+    fun generateMakeFile(homeDir, headerFile, genLibFile, makeFileName, name) = 
+	let val moutstream = getAccStream(makeFileName)
+	    val execName = name^".exe"
+	    val programName = name^".c"
+	    val locs = OS.FileSys.fullPath (homeDir^makefileLoc)
+	in
+	    TextIO.output(moutstream, "include "^locs^"\n\n\n");
+	    TextIO.output(moutstream, execName^":\t"^programName^" "^headerFile^" "^genLibFile^"\n");
+	    TextIO.output(moutstream, "\t$(CC) $(CCFLAGS) "^programName^" "^genLibFile);
+	    TextIO.output(moutstream, " $(OBJ) $(LDFLAGS) -o "^execName^"\n");
+	    TextIO.flushOut moutstream;
+	    TextIO.closeOut moutstream
+	end
+    fun compileAccum(homeDir, makeFileName) = 
+	let val () = print "Building accumulator program.\n"
+	    val command = "cd "^(OS.FileSys.fullPath (!outputDir))^"; make -f " ^makeFileName
+	    val () = print (command ^"\n")
+	    val status = exec command
+	    val command = "cd -"
+	    val () = print (command ^"\n")
+	in
+	    if status = OS.Process.failure then
+		        print "Build of accumulator program failed.\n"
+			else ()
+	end
+    fun generateAccum (homeDir, fileName, headerFile, genLibFile) = 
 	let val p = PTys.pTys
 	    fun doOne(name : string) = 
 	        case PTys.find(Atom.atom name)
 		  of NONE => err("File "^fileName^" does not contain a type "^name^". "^
 				 "Could not generate accumlator program.\n")
-		   | SOME {memChar, repName,repInit,repRead,repClean,edName,edInit,edClean,
-			   accName,accInit,accAdd,accReport,accClean,...} =>
-		      let val aname = name^".c"
-			  val aoutstream = getAccStream(aname)
-			  val templateName = if memChar = TyProps.Static then
-			                      homeDir^compilerFileLoc^"accum_template_static"
-					     else
-			                      homeDir^compilerFileLoc^"accum_template_dynamic"
-		      in
-			  TextIO.output(aoutstream, "#include \"libpadsc.h\"\n");
-			  TextIO.output(aoutstream, "#include \""^headerFile^"\"\n");
-			  TextIO.output(aoutstream, "#define PADS_TY "^repName^"\n");
-			  case repInit of NONE => ()
-			     | SOME repInit =>TextIO.output(aoutstream, "#define PADS_TY_INIT "^repInit^"\n");
-			  TextIO.output(aoutstream, "#define PADS_TY_READ "^repRead^"\n");
-			  case repClean of NONE => ()
-			     | SOME repClean =>TextIO.output(aoutstream, "#define PADS_TY_CLEANUP "^repClean^"\n");
-			  TextIO.output(aoutstream, "#define PADS_TY_ED "^edName^"\n");
-			  case edInit of NONE => ()
-			     | SOME edInit =>TextIO.output(aoutstream, "#define PADS_TY_ED_INIT "^edInit^"\n");
-			  case edClean of NONE => ()
-			     | SOME edClean =>TextIO.output(aoutstream, 
-							    "#define PADS_TY_ED_CLEANUP "^edClean^"\n");
-			  TextIO.output(aoutstream, "#define PADS_TY_ACC "^accName^"\n");
-			  TextIO.output(aoutstream, "#define PADS_TY_ACC_INIT "^accInit^"\n");
-			  TextIO.output(aoutstream, "#define PADS_TY_ACC_ADD "^accAdd^"\n");
-			  TextIO.output(aoutstream, "#define PADS_TY_ACC_REPORT "^accReport^"\n");
-			  TextIO.output(aoutstream, "#define PADS_TY_ACC_CLEANUP "^accClean^"\n");
-			  echoFile(templateName,aoutstream);
-
-			  TextIO.flushOut aoutstream;
-			  TextIO.closeOut aoutstream
-		      end
+		   | SOME s => (let val makeFileName = name^".mk"
+				in
+				    generateAccumProgram (homeDir,headerFile,name, s);
+				    generateMakeFile (homeDir,headerFile,genLibFile,makeFileName, name);
+				    compileAccum(homeDir,makeFileName)
+				end)
 	in
 	    List.app doOne (!accumulators)
 	end
@@ -273,9 +307,10 @@ structure Main : sig
 		    if !outputHeaderFileFlag then 
 			(OS.Path.file (!outputHeaderFileName), TextIO.openOut (!outputHeaderFileName))
 		    else getOutStream(fileName, "p", "h")
-	        val coutstream = 
-		    if !outputCFileFlag then TextIO.openOut (!outputCFileName)
-		    else #2(getOutStream(fileName, "p", "c"))
+	        val (coutname, coutstream) = 
+		    if !outputCFileFlag then 
+			(OS.Path.file(!outputCFileName), TextIO.openOut (!outputCFileName))
+		    else getOutStream(fileName, "p", "c")
 		val includeName = buildIncludeName fileName
 	       in
 		   TextIO.output(houtstream, "#ifndef "^ includeName ^"\n");
@@ -290,7 +325,7 @@ structure Main : sig
 		   PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
 		   TextIO.flushOut coutstream;
 		   TextIO.closeOut coutstream;
-		   generateAccum(homeDir, fileName, houtname)
+		   generateAccum(homeDir, fileName, houtname, coutname)
 	       end
       end
 	    
