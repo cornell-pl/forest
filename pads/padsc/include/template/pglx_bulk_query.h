@@ -92,12 +92,28 @@ int main(int argc, char** argv) {
 #ifdef COPY_STRINGS
   my_disc.copy_strings = 1;
 #endif
+
 #ifdef DATE_IN_FMT
   my_disc.in_formats.date = DATE_IN_FMT;
 #endif
 #ifdef DATE_OUT_FMT
   my_disc.out_formats.date = DATE_OUT_FMT;
 #endif
+
+#ifdef TIMESTAMP_IN_FMT
+  my_disc.in_formats.timestamp = TIMESTAMP_IN_FMT;
+#endif
+#ifdef TIMESTAMP_OUT_FMT
+  my_disc.out_formats.timestamp = TIMESTAMP_OUT_FMT;
+#endif
+
+#ifdef TIME_IN_FMT
+  my_disc.in_formats.time = TIME_IN_FMT;
+#endif
+#ifdef TIME_OUT_FMT
+  my_disc.out_formats.time = TIME_OUT_FMT;
+#endif
+
 #ifdef IN_TIME_ZONE
   my_disc.in_time_zone = IN_TIME_ZONE;
   error(0, "Note: set my_disc.in_time_zone to \"%s\"\n", IN_TIME_ZONE);

@@ -12,15 +12,16 @@ int main(int argc, char** argv) {
   /* size_t          n; */
   /* unsigned char   c; */
   /* int             i; */
-  Pstring      s;
-  P_t*          pads;
-  Pio_disc_t*  io_disc;
-  Pbase_m      m    = P_CheckAndSet;
-  Pbase_pd     pd;
-  Pdisc_t      my_disc = Pdefault_disc;
+  Pstring         s;
+  P_t*            pads;
+  Pio_disc_t*     io_disc;
+  Pbase_m         m    = P_CheckAndSet;
+  Pbase_pd        pd;
+  Pdisc_t         my_disc = Pdefault_disc;
   size_t          bytes_skipped;
   unsigned long   ultmp;
-  Pregexp_t   *my_regexp;
+  Pregexp_t      *my_regexp;
+  Pchar           lit;
 
   error(0, "\nUsing PADSC IO discipline nlrec\n\n");
   io_disc = P_nlrec_make(0);
@@ -55,7 +56,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pa_char_lit_read(pads, &m, '|', &pd, &lit)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
@@ -64,7 +65,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pa_char_lit_read(pads, &m, '|', &pd, &lit)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }

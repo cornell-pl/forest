@@ -8,17 +8,18 @@
 P_NOGEN
 
 int main(int argc, char** argv) {
-  Pstring      s1, s2, s3, s4, s5, s6;
-  Pstring      *str1, *str2, *str3;
-  P_t*          pads;
-  Pio_disc_t*  io_disc;
-  Pbase_m      m = P_CheckAndSet;
-  Pbase_pd     pd;
+  Pstring         s1, s2, s3, s4, s5, s6;
+  Pstring        *str1, *str2, *str3;
+  P_t*            pads;
+  Pio_disc_t*     io_disc;
+  Pbase_m         m = P_CheckAndSet;
+  Pbase_pd        pd;
   size_t          bytes_skipped;
   unsigned long   ultmp;
-  Pregexp_t    *my_regexp;
+  Pregexp_t      *my_regexp;
   int             ctr = 0;
   int             norec = 0; 
+  Pchar           lit;
 
   if (argc != 2) {
     goto usage;
@@ -102,7 +103,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(str1), str1->len);
     }
-    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pa_char_lit_read(pads, &m, '|', &pd, &lit)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
@@ -111,7 +112,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(str2), str2->len);
     }
-    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pa_char_lit_read(pads, &m, '|', &pd, lit)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }

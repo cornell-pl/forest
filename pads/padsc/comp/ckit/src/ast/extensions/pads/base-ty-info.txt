@@ -283,7 +283,74 @@ Pstring_CSE      1      Pstring       Pbase_m    Pbase_pd             -         
 Pa_string_CSE    1      Pstring       Pbase_m    Pbase_pd             -                    -                     Pstring_acc     V            V           N
 Pe_string_CSE    1      Pstring       Pbase_m    Pbase_pd             -                    -                     Pstring_acc     V            V           N
 
-# *date: Converts ASCII/EBCDIC char date description into seconds since Midnight Jan 1, 1970.  Based on libast's tmdate function.
+# *timestamp_explicit*: 
+#    Converts ASCII/EBCDIC char date/time description into seconds since Midnight Jan 1, 1970.
+#    Format-based parsing is based on libast's tmdate function.
+#    Input format and input time zone are specified explicitly.
+#    The format used controls whether input is date and time, just date, or just time.
+# *timestamp*:
+#    Like *timestamp_explicit*, but input format and input time zone are taken from
+#    disc->in_formats.timestamp and disc->in_time_zone.
+#    INTENDED to be used for both a date and time, but format determines actual use.
+# *date*:
+#    Like *timestamp_explicit*, but input format and input time zone are taken from
+#    disc->in_formats.date and disc->in_time_zone.
+#    INTENDED to be used for just date, but format determines actual use.
+# *time*:
+#    Like *timestamp_explicit*, but input format and input time zone are taken from
+#    disc->in_formats.time and disc->in_time_zone.
+#    INTENDED to be used for just time, but format determines actual use.
+#
+
+Ptimestamp_explicit       3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pa_timestamp_explicit     3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pe_timestamp_explicit     3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+
+Ptimestamp_explicit_FW    3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  P(p1) S         N
+Pa_timestamp_explicit_FW  3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  P(p1) S         N
+Pe_timestamp_explicit_FW  3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  P(p1) S         N
+
+Ptimestamp_explicit_ME    3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pa_timestamp_explicit_ME  3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pe_timestamp_explicit_ME  3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+
+Ptimestamp_explicit_CME   3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pa_timestamp_explicit_CME 3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pe_timestamp_explicit_CME 3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+
+Ptimestamp_explicit_SE    3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pa_timestamp_explicit_SE  3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pe_timestamp_explicit_SE  3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+
+Ptimestamp_explicit_CSE   3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pa_timestamp_explicit_CSE 3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+Pe_timestamp_explicit_CSE 3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
+
+
+Ptimestamp       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pa_timestamp     1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pe_timestamp     1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+
+Ptimestamp_FW    1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  P(p1)        S           N
+Pa_timestamp_FW  1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  P(p1)        S           N
+Pe_timestamp_FW  1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  P(p1)        S           N
+
+Ptimestamp_ME    1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pa_timestamp_ME  1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pe_timestamp_ME  1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+
+Ptimestamp_CME   1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pa_timestamp_CME 1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pe_timestamp_CME 1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+
+Ptimestamp_SE    1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pa_timestamp_SE  1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pe_timestamp_SE  1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+
+Ptimestamp_CSE   1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pa_timestamp_CSE 1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+Pe_timestamp_CSE 1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
+
 
 Pdate            1      Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_acc       V            S           N
 Pa_date          1      Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_acc       V            S           N
@@ -309,11 +376,36 @@ Pdate_CSE        1      Puint32       Pbase_m    Pbase_pd             -         
 Pa_date_CSE      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_acc       V            S           N
 Pe_date_CSE      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_acc       V            S           N
 
-# *ipaddr: Converts ASCII/EBCDIC numeric IP address (dotted form) into a Puint32.  Based on libast's strtoip4 function.
 
-Pipaddr          1      Puint32       Pbase_m    Pbase_pd             -                    -                     -                  V            S           N
-Pa_ipaddr        1      Puint32       Pbase_m    Pbase_pd             -                    -                     -                  V            S           N
-Pe_ipaddr        1      Puint32       Pbase_m    Pbase_pd             -                    -                     -                  V            S           N
+Ptime            1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pa_time          1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pe_time          1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+
+Ptime_FW         1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       P(p1)        S           N
+Pa_time_FW       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       P(p1)        S           N
+Pe_time_FW       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       P(p1)        S           N
+
+Ptime_ME         1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pa_time_ME       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pe_time_ME       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+
+Ptime_CME        1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pa_time_CME      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pe_time_CME      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+
+Ptime_SE         1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pa_time_SE       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pe_time_SE       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+
+Ptime_CSE        1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pa_time_CSE      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+Pe_time_CSE      1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_acc       V            S           N
+
+# *ip: Converts ASCII/EBCDIC numeric IP address (dotted form) into a Puint32.
+
+Pip              0      Puint32       Pbase_m    Pbase_pd             -                    -                     Pip_acc         V            S           N
+Pa_ip            0      Puint32       Pbase_m    Pbase_pd             -                    -                     Pip_acc         V            S           N
+Pe_ip            0      Puint32       Pbase_m    Pbase_pd             -                    -                     Pip_acc         V            S           N
 
 # *countX   is a counter data type that is parameterized by an ASCII count char (X)
 #           and represents the number of ASCII/EBCDIC X chars between the current IO position and the first EOR/EOF

@@ -46,7 +46,8 @@ LIBTESTS_O = rwtest1 \
            rbuftest1 \
            mk_ex_data_biglibtest1 \
            biglibtest1 \
-           string_share_test
+           string_share_test \
+           a_ip_test
 
 LIBTESTS_D = $(LIBTESTS_O:%=%_d)
 LIBTESTS = $(LIBTESTS_O) $(LIBTESTS_D) 
@@ -75,7 +76,8 @@ regress_o: sanity_check \
           regress_ebc_fpoint_test_o \
           regress_re_scan_test_o \
           regress_rwtest1_o \
-          regress_recrwtest1_o
+          regress_recrwtest1_o \
+          regress_a_ip_test_o
 	@echo " "; echo "DONE"; echo " "
 
 regress_d: sanity_check \
@@ -92,7 +94,8 @@ regress_d: sanity_check \
           regress_ebc_fpoint_test_d \
           regress_re_scan_test_d \
           regress_rwtest1_d \
-          regress_recrwtest1_d
+          regress_recrwtest1_d \
+          regress_a_ip_test_d
 	@echo " "; echo "DONE"; echo " "
 
 libtests: sanity_check $(LIBTESTS)
@@ -184,6 +187,11 @@ regress_bcd_fpoint_test_o: bcd_fpoint_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
 regress_bcd_fpoint_test_d: bcd_fpoint_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+
+regress_a_ip_test_o: a_ip_test
+	@(args=""; suf=""; $(RegressDef))
+regress_a_ip_test_d: a_ip_test_d
+	@(args=""; suf=""; $(RegressDef))
 
 clean:
 	$(RM) $(ALL_PROGS) *.o *~ tmp/*

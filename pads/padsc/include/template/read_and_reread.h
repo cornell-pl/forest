@@ -71,11 +71,26 @@ int main(int argc, char** argv) {
   my_disc.out_time_zone = OUT_TIME_ZONE;
   error(0, "Note: set my_disc.out_time_zone to \"%s\"\n", OUT_TIME_ZONE);
 #endif
+
 #ifdef DATE_IN_FMT
   my_disc.in_formats.date = DATE_IN_FMT;
 #endif
 #ifdef DATE_OUT_FMT
   my_disc.out_formats.date = DATE_OUT_FMT;
+#endif
+
+#ifdef TIMESTAMP_IN_FMT
+  my_disc.in_formats.timestamp = TIMESTAMP_IN_FMT;
+#endif
+#ifdef TIMESTAMP_OUT_FMT
+  my_disc.out_formats.timestamp = TIMESTAMP_OUT_FMT;
+#endif
+
+#ifdef TIME_IN_FMT
+  my_disc.in_formats.time = TIME_IN_FMT;
+#endif
+#ifdef TIME_OUT_FMT
+  my_disc.out_formats.time = TIME_OUT_FMT;
 #endif
 
 #ifdef IO_DISC_MK

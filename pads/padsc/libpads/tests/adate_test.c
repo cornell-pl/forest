@@ -8,13 +8,14 @@
 P_NOGEN
 
 int main(int argc, char** argv) {
-  P_t*          pads;
-  Pio_disc_t*  io_disc;
-  Pbase_m      m = P_CheckAndSet;
-  Pbase_pd     pd;
+  P_t*            pads;
+  Pio_disc_t*     io_disc;
+  Pbase_m         m = P_CheckAndSet;
+  Pbase_pd        pd;
   size_t          bytes_skipped;
   unsigned long   ultmp;
-  Puint32      tm;
+  Puint32         tm;
+  Pchar           lit;
 
   error(0, "\nUsing PADSC IO discipline nlrec\n\n");
   io_disc = P_nlrec_make(0);
@@ -44,7 +45,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read date term by vbar: %s (secs = %lu)", fmttime("%K", (time_t)tm), (unsigned long)tm);
     }
-    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pa_char_lit_read(pads, &m,  '|', &pd, &lit)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }

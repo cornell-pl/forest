@@ -74,16 +74,6 @@ void PDCI_DISC_INIT_CHECKS_RET_0(char * whatfn);
 void PDCI_DISC_INIT_CHECKS_RET_VOID(char * whatfn);
 void PDCI_DISC_INIT_CHECKS_RET_SSIZE(char * whatfn);
 
-void PDCI_DATE_IN_FMT_CHECK(char * whatfn);
-void PDCI_DATE_IN_FMT_CHECK_RET_0(char * whatfn);
-void PDCI_DATE_IN_FMT_CHECK_RET_VOID(char * whatfn);
-void PDCI_DATE_IN_FMT_CHECK_RET_SSIZE(char * whatfn);
-
-void PDCI_DATE_OUT_FMT_CHECK(char * whatfn);
-void PDCI_DATE_OUT_FMT_CHECK_RET_0(char * whatfn);
-void PDCI_DATE_OUT_FMT_CHECK_RET_VOID(char * whatfn);
-void PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(char * whatfn);
-
 void PDCI_DELIMS_CHECK_RET_SSIZE(const char *whatfn, const char *delims);
 
 void PDCI_IODISC_INIT_CHECKS(char * whatfn);
@@ -110,6 +100,11 @@ void PDCI_NULLPARAM_CHECK_RET_SSIZE(char *, void *);
 void PDCI_NULLPARAM_CHECK2_RET_SSIZE(char *, void *, void *);
 void PDCI_NULLPARAM_CHECK3_RET_SSIZE(char *, void *, void *, void *);
 void PDCI_NULLPARAM_CHECK4_RET_SSIZE(char *, void *, void *, void *, void *);
+
+void PDCI_ARG_OR_DISC_ELT_CHECK(void *ptr, const char *descr, char * whatfn);
+void PDCI_ARG_OR_DISC_ELT_CHECK_RET_0(void *ptr, const char *descr, char * whatfn);
+void PDCI_ARG_OR_DISC_ELT_CHECK_RET_VOID(void *ptr, const char *descr, char * whatfn);
+void PDCI_ARG_OR_DISC_ELT_CHECK_RET_SSIZE(void *ptr, const char *descr, char * whatfn);
 
 void PDCI_DISC_0P_CHECKS(const char *whatfn);
 void PDCI_DISC_1P_CHECKS(const char *whatfn, void *p1);
@@ -288,45 +283,26 @@ void PDCI_STANDARD_FMT2IO_INIT(Pbase_m m, int *requestedOut);
 #define PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn) \
      PDCI_DISC_INIT_CHECKS_RET(whatfn, return -1)
 
-#define PDCI_DATE_IN_FMT_CHECK_RET(whatfn, ret) \
+#define PDCI_ARG_OR_DISC_ELT_CHECK_RET(ptr, descr, whatfn, ret)	\
   do { \
-    if (!pads->disc->in_formats.date)  { \
-      P_WARN1(pads->disc, "%s: null pads->disc->in_formats.date", whatfn); \
+    if (!(ptr))  { \
+      P_WARN2(pads->disc, "%s: null %s", whatfn, descr); \
       ret; \
     } \
   } while (0)
 
-#define PDCI_DATE_IN_FMT_CHECK(whatfn) \
-     PDCI_DATE_IN_FMT_CHECK_RET(whatfn, return P_ERR)
+#define PDCI_ARG_OR_DISC_ELT_CHECK(ptr, descr, whatfn) \
+     PDCI_ARG_OR_DISC_ELT_CHECK_RET(ptr, descr, whatfn, return P_ERR)
 
-#define PDCI_DATE_IN_FMT_CHECK_RET_0(whatfn) \
-     PDCI_DATE_IN_FMT_CHECK_RET(whatfn, return 0)
+#define PDCI_ARG_OR_DISC_ELT_CHECK_RET_0(ptr, descr, whatfn) \
+     PDCI_ARG_OR_DISC_ELT_CHECK_RET(ptr, descr, whatfn, return 0)
 
-#define PDCI_DATE_IN_FMT_CHECK_RET_VOID(whatfn) \
-     PDCI_DATE_IN_FMT_CHECK_RET(whatfn, return)
+#define PDCI_ARG_OR_DISC_ELT_CHECK_RET_VOID(ptr, descr, whatfn) \
+     PDCI_ARG_OR_DISC_ELT_CHECK_RET(ptr, descr, whatfn, return)
 
-#define PDCI_DATE_IN_FMT_CHECK_RET_SSIZE(whatfn) \
-     PDCI_DATE_IN_FMT_CHECK_RET(whatfn, return -1)
+#define PDCI_ARG_OR_DISC_ELT_CHECK_RET_SSIZE(ptr, descr, whatfn) \
+     PDCI_ARG_OR_DISC_ELT_CHECK_RET(ptr, descr, whatfn, return -1)
 
-#define PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, ret) \
-  do { \
-    if (!pads->disc->out_formats.date)  { \
-      P_WARN1(pads->disc, "%s: null pads->disc->out_formats.date", whatfn); \
-      ret; \
-    } \
-  } while (0)
-
-#define PDCI_DATE_OUT_FMT_CHECK(whatfn) \
-     PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, return P_ERR)
-
-#define PDCI_DATE_OUT_FMT_CHECK_RET_0(whatfn) \
-     PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, return 0)
-
-#define PDCI_DATE_OUT_FMT_CHECK_RET_VOID(whatfn) \
-     PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, return)
-
-#define PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn) \
-     PDCI_DATE_OUT_FMT_CHECK_RET(whatfn, return -1)
 
 #define PDCI_DELIMS_CHECK_RET_SSIZE(whatfn, delims) \
 do { \
@@ -720,15 +696,10 @@ do { \
 #define PDCI_DISC_INIT_CHECKS_RET_VOID(whatfn)                 P_NULL_STMT
 #define PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn)                P_NULL_STMT
 
-#define PDCI_DATE_IN_FMT_CHECK(whatfn)                         P_NULL_STMT
-#define PDCI_DATE_IN_FMT_CHECK_RET_0(whatfn)                   P_NULL_STMT
-#define PDCI_DATE_IN_FMT_CHECK_RET_VOID(whatfn)                P_NULL_STMT
-#define PDCI_DATE_IN_FMT_CHECK_RET_SSIZE(whatfn)               P_NULL_STMT
-
-#define PDCI_DATE_OUT_FMT_CHECK(whatfn)                        P_NULL_STMT
-#define PDCI_DATE_OUT_FMT_CHECK_RET_0(whatfn)                  P_NULL_STMT
-#define PDCI_DATE_OUT_FMT_CHECK_RET_VOID(whatfn)               P_NULL_STMT
-#define PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn)              P_NULL_STMT
+#define PDCI_ARG_OR_DISC_ELT_CHECK(ptr, descr, whatfn)            P_NULL_STMT
+#define PDCI_ARG_OR_DISC_ELT_CHECK_RET_0(ptr, descr, whatfn)      P_NULL_STMT
+#define PDCI_ARG_OR_DISC_ELT_CHECK_RET_VOID(ptr, descr, whatfn)   P_NULL_STMT
+#define PDCI_ARG_OR_DISC_ELT_CHECK_RET_SSIZE(ptr, descr, whatfn)  P_NULL_STMT
 
 #define PDCI_DELIMS_CHECK_RET_SSIZE(whatfn, delims)            P_NULL_STMT
 
@@ -1233,7 +1204,6 @@ Perror_t Puint16_acc_report2io (PDCI_FIRST_ARGS, Puint16_acc *a);
 Perror_t Puint64_acc_report2io (PDCI_FIRST_ARGS, Puint64_acc *a);
 
 Perror_t Pstring_acc_report2io (PDCI_FIRST_ARGS, Pstring_acc *a);
-Perror_t Pdate_acc_report2io   (PDCI_FIRST_ARGS, Puint32_acc *a);
 Perror_t Pchar_acc_report2io   (PDCI_FIRST_ARGS, Pchar_acc *a);
 
 Perror_t Pfpoint8_acc_report2io   (PDCI_FIRST_ARGS, Pfpoint8_acc *a);
@@ -1247,6 +1217,13 @@ Perror_t Pufpoint64_acc_report2io (PDCI_FIRST_ARGS, Pufpoint64_acc *a);
 
 Perror_t Pfloat32_acc_report2io  (PDCI_FIRST_ARGS, Pfloat32_acc *a);
 Perror_t Pfloat64_acc_report2io  (PDCI_FIRST_ARGS, Pfloat64_acc *a);
+
+#ifdef FOR_CKIT
+Perror_t Ptimestamp_explicit_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
+Perror_t Ptimestamp_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
+Perror_t Pdate_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
+Perror_t Ptime_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
+#endif /* FOR_CKIT */
 
 #endif /* P_CONFIG_ACCUM_FUNCTIONS */
 

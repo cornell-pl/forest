@@ -34,7 +34,7 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PDCI_FINISH_DATE_READ
+#define PDCI_FINISH_DATE_TIME_READ(format_IN, tzone_IN, errcode_IN, just_time_IN)
 do {
   time_t       tm;
   Pbyte       *tmp;
@@ -42,18 +42,18 @@ do {
   time_t       now;
 
   PDCI_STR_PRESERVE(s); /* this ensures s.str is null terminated */
-  now = time(NiL);
+  now = (just_time_IN) ? 0 : time(NiL);
   /* tm = tmdate(s->str, (char**)&tmp, NiL); */
-  tmset(pads->in_zone);
-  tm = tmscan(s->str, (char**)&tmp, pads->disc->in_formats.date, &tmp_t, &now, 0L);
+  tmset(tzone_IN);
+  tm = tmscan(s->str, (char**)&tmp, format_IN, &tmp_t, &now, 0L);
   if (!tmp_t || *tmp_t || !tmp || *tmp) {
     PDCI_READFN_BEGINLOC_MINUSK(pads, pd->loc, s->len);
     PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_DATE);
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, errcode_IN);
   }
   (*res_out) = tm;
   /* normally we do a tmset(pads->out_zone) before using fmttime, */
-  /* but here for debugging purposes we output using the in_zone set above */ 
+  /* but here for debugging purposes we output using tzone_IN */ 
   P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %ld)",
 	 whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (long)tm);
   return P_OK;
@@ -1354,6 +1354,8 @@ fn_name(P_t *pads, const Pbase_m *m,
 
 /* ********************************** END_HEADER ********************************** */
 
+/* The following macros implement fmt2buf_final, fmt2buf, and fmt2io using a write2buf call */
+
 #define PDCI_FMT_FN_GEN(fn_pref, afn_pref, rep_ty, lookup_ty)
 ssize_t
 fn_pref ## _fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
@@ -1516,6 +1518,61 @@ fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims
   }
   (*requested_out) = 1;
   return afn_pref ## _write2io(pads, io, pd, rep);
+}
+/* END_MACRO */
+
+#define PDCI_FMT_FN_XTRA3_IGNORE_LAST2_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty)
+ssize_t
+fn_pref ## _fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+			  Pbase_m *m, Pbase_pd *pd, rep_ty *rep, xtra_ty1 x1, xtra_ty2 x2, xtra_ty3 x3)
+{
+  PDCI_DISC_4P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf_final", buf, buf_full, requested_out, delims);
+  PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf_final", m, pd, rep);
+
+  PDCI_STANDARD_FMT2BUF_INIT(*m, requested_out);
+
+  (*requested_out) = 1;
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1);
+}
+
+ssize_t
+fn_pref ## _fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
+		    Pbase_m *m, Pbase_pd *pd, rep_ty *rep, xtra_ty1 x1, xtra_ty2 x2, xtra_ty3 x3)
+{
+  Pfmt_fn   fn;
+
+  PDCI_DISC_4P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf", buf, buf_full, requested_out, delims);
+  PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2buf", m, pd, rep);
+
+  PDCI_STANDARD_FMT2BUF_INIT(*m, requested_out);
+
+  if ((fn = PDCI_GET_FMT_FN(pads, lookup_ty))) {
+    return P_invoke_fmt_fn(fn, pads, buf, buf_len, buf_full, requested_out, delims, m, pd, rep, x1, x2, x3);
+  }
+  (*requested_out) = 1;
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1);
+}
+
+ssize_t
+fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+		   Pbase_m *m, Pbase_pd *pd, rep_ty *rep, xtra_ty1 x1, xtra_ty2 x2, xtra_ty3 x3)
+{
+  Pfmt_fn   fn;
+
+  PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2io", io, requested_out, delims);
+  PDCI_DISC_3P_CHECKS_RET_SSIZE( PDCI_MacroArg2String(fn_pref) "_fmt2io", m, pd, rep);
+
+  PDCI_STANDARD_FMT2IO_INIT(*m, requested_out);
+
+  if ((fn = PDCI_GET_FMT_FN(pads, lookup_ty))) {
+    ssize_t length;
+    Pbyte *buf;
+    int buf_full;
+    size_t buf_len;
+    PDCI_FMT2IO_USE_FMT2BUF_FN(PDCI_MacroArg2String(fn_pref) "_fmt2io", length=P_invoke_fmt_fn(fn, pads, buf, buf_len, &buf_full, requested_out, delims, m, pd, rep, x1, x2, x3));
+  }
+  (*requested_out) = 1;
+  return afn_pref ## _write2io(pads, io, pd, rep, x1);
 }
 /* END_MACRO */
 
@@ -2137,10 +2194,13 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io,
             PDCI_FMT_FN_XTRA1_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty)
 #  define PDCI_FMT_FN_XTRA1_IGNORE(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty) \
             PDCI_FMT_FN_XTRA1_IGNORE_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty)
+#  define PDCI_FMT_FN_XTRA3_IGNORE_LAST2(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty) \
+            PDCI_FMT_FN_XTRA3_IGNORE_LAST2_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty)
 #else
 #  define PDCI_FMT_FN(fn_pref, afn_pref, rep_ty, lookup_ty)
 #  define PDCI_FMT_FN_XTRA1(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty)
 #  define PDCI_FMT_FN_XTRA1_IGNORE(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty)
+#  define PDCI_FMT_FN_XTRA3_IGNORE_LAST2(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty)
 #endif
 
 /* ********************************** END_MACROS ********************************** */
@@ -5458,30 +5518,106 @@ PDCI_FMT_FN_XTRA1(Pstring_CSE,  Pa_string_CSE,  Pstring,  Pregexp_t *,      "Pst
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0
+
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit,      Pa_timestamp,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pa_timestamp_explicit")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_FW,   Pa_timestamp_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pa_timestamp_FW")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_ME,   Pa_timestamp_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_timestamp_ME")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_CME,  Pa_timestamp_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_timestamp_CME")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_SE,   Pa_timestamp_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_timestamp_SE")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_CSE,  Pa_timestamp_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_timestamp_CSE")
+
+PDCI_FMT_FN_XTRA1(Pa_timestamp,      Pa_timestamp,      Puint32,  Pchar,              "Pa_timestamp")
+PDCI_FMT_FN_XTRA1(Pa_timestamp_FW,   Pa_timestamp_FW,   Puint32,  size_t,             "Pa_timestamp_FW")
+PDCI_FMT_FN_XTRA1(Pa_timestamp_ME,   Pa_timestamp_ME,   Puint32,  const char *,       "Pa_timestamp_ME")
+PDCI_FMT_FN_XTRA1(Pa_timestamp_CME,  Pa_timestamp_CME,  Puint32,  Pregexp_t *,        "Pa_timestamp_CME")
+PDCI_FMT_FN_XTRA1(Pa_timestamp_SE,   Pa_timestamp_SE,   Puint32,  const char *,       "Pa_timestamp_SE")
+PDCI_FMT_FN_XTRA1(Pa_timestamp_CSE,  Pa_timestamp_CSE,  Puint32,  Pregexp_t *,        "Pa_timestamp_CSE")
+
 PDCI_FMT_FN_XTRA1(Pa_date,      Pa_date,      Puint32,  Pchar,              "Pa_date")
 PDCI_FMT_FN_XTRA1(Pa_date_FW,   Pa_date_FW,   Puint32,  size_t,             "Pa_date_FW")
 PDCI_FMT_FN_XTRA1(Pa_date_ME,   Pa_date_ME,   Puint32,  const char *,       "Pa_date_ME")
 PDCI_FMT_FN_XTRA1(Pa_date_CME,  Pa_date_CME,  Puint32,  Pregexp_t *,        "Pa_date_CME")
 PDCI_FMT_FN_XTRA1(Pa_date_SE,   Pa_date_SE,   Puint32,  const char *,       "Pa_date_SE")
 PDCI_FMT_FN_XTRA1(Pa_date_CSE,  Pa_date_CSE,  Puint32,  Pregexp_t *,        "Pa_date_CSE")
+
+PDCI_FMT_FN_XTRA1(Pa_time,      Pa_time,      Puint32,  Pchar,              "Pa_time")
+PDCI_FMT_FN_XTRA1(Pa_time_FW,   Pa_time_FW,   Puint32,  size_t,             "Pa_time_FW")
+PDCI_FMT_FN_XTRA1(Pa_time_ME,   Pa_time_ME,   Puint32,  const char *,       "Pa_time_ME")
+PDCI_FMT_FN_XTRA1(Pa_time_CME,  Pa_time_CME,  Puint32,  Pregexp_t *,        "Pa_time_CME")
+PDCI_FMT_FN_XTRA1(Pa_time_SE,   Pa_time_SE,   Puint32,  const char *,       "Pa_time_SE")
+PDCI_FMT_FN_XTRA1(Pa_time_CSE,  Pa_time_CSE,  Puint32,  Pregexp_t *,        "Pa_time_CSE")
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit,      Pa_timestamp,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pe_timestamp_explicit")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_FW,   Pa_timestamp_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pe_timestamp_FW")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_ME,   Pa_timestamp_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_timestamp_ME")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_CME,  Pa_timestamp_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_timestamp_CME")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_SE,   Pa_timestamp_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_timestamp_SE")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_CSE,  Pa_timestamp_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_timestamp_CSE")
+
+PDCI_FMT_FN_XTRA1(Pe_timestamp,      Pa_timestamp,      Puint32,  Pchar,              "Pe_timestamp")
+PDCI_FMT_FN_XTRA1(Pe_timestamp_FW,   Pa_timestamp_FW,   Puint32,  size_t,             "Pe_timestamp_FW")
+PDCI_FMT_FN_XTRA1(Pe_timestamp_ME,   Pa_timestamp_ME,   Puint32,  const char *,       "Pe_timestamp_ME")
+PDCI_FMT_FN_XTRA1(Pe_timestamp_CME,  Pa_timestamp_CME,  Puint32,  Pregexp_t *,        "Pe_timestamp_CME")
+PDCI_FMT_FN_XTRA1(Pe_timestamp_SE,   Pa_timestamp_SE,   Puint32,  const char *,       "Pe_timestamp_SE")
+PDCI_FMT_FN_XTRA1(Pe_timestamp_CSE,  Pa_timestamp_CSE,  Puint32,  Pregexp_t *,        "Pe_timestamp_CSE")
+
 PDCI_FMT_FN_XTRA1(Pe_date,      Pa_date,      Puint32,  Pchar,              "Pe_date")
 PDCI_FMT_FN_XTRA1(Pe_date_FW,   Pa_date_FW,   Puint32,  size_t,             "Pe_date_FW")
 PDCI_FMT_FN_XTRA1(Pe_date_ME,   Pa_date_ME,   Puint32,  const char *,       "Pe_date_ME")
 PDCI_FMT_FN_XTRA1(Pe_date_CME,  Pa_date_CME,  Puint32,  Pregexp_t *,        "Pe_date_CME")
 PDCI_FMT_FN_XTRA1(Pe_date_SE,   Pa_date_SE,   Puint32,  const char *,       "Pe_date_SE")
 PDCI_FMT_FN_XTRA1(Pe_date_CSE,  Pa_date_CSE,  Puint32,  Pregexp_t *,        "Pe_date_CSE")
+
+PDCI_FMT_FN_XTRA1(Pe_time,      Pa_time,      Puint32,  Pchar,              "Pe_time")
+PDCI_FMT_FN_XTRA1(Pe_time_FW,   Pa_time_FW,   Puint32,  size_t,             "Pe_time_FW")
+PDCI_FMT_FN_XTRA1(Pe_time_ME,   Pa_time_ME,   Puint32,  const char *,       "Pe_time_ME")
+PDCI_FMT_FN_XTRA1(Pe_time_CME,  Pa_time_CME,  Puint32,  Pregexp_t *,        "Pe_time_CME")
+PDCI_FMT_FN_XTRA1(Pe_time_SE,   Pa_time_SE,   Puint32,  const char *,       "Pe_time_SE")
+PDCI_FMT_FN_XTRA1(Pe_time_CSE,  Pa_time_CSE,  Puint32,  Pregexp_t *,        "Pe_time_CSE")
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 || P_CONFIG_E_CHAR_STRING > 0
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit,      Pa_timestamp,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Ptimestamp_explicit")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_FW,   Pa_timestamp_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Ptimestamp_FW")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_ME,   Pa_timestamp_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Ptimestamp_ME")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_CME,  Pa_timestamp_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Ptimestamp_CME")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_SE,   Pa_timestamp_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Ptimestamp_SE")
+PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_CSE,  Pa_timestamp_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Ptimestamp_CSE")
+
+PDCI_FMT_FN_XTRA1(Ptimestamp,      Pa_timestamp,      Puint32,  Pchar,                "Ptimestamp")
+PDCI_FMT_FN_XTRA1(Ptimestamp_FW,   Pa_timestamp_FW,   Puint32,  size_t,               "Ptimestamp_FW")
+PDCI_FMT_FN_XTRA1(Ptimestamp_ME,   Pa_timestamp_ME,   Puint32,  const char *,         "Ptimestamp_ME")
+PDCI_FMT_FN_XTRA1(Ptimestamp_CME,  Pa_timestamp_CME,  Puint32,  Pregexp_t *,          "Ptimestamp_CME")
+PDCI_FMT_FN_XTRA1(Ptimestamp_SE,   Pa_timestamp_SE,   Puint32,  const char *,         "Ptimestamp_SE")
+PDCI_FMT_FN_XTRA1(Ptimestamp_CSE,  Pa_timestamp_CSE,  Puint32,  Pregexp_t *,          "Ptimestamp_CSE")
+
 PDCI_FMT_FN_XTRA1(Pdate,      Pa_date,      Puint32,  Pchar,                "Pdate")
 PDCI_FMT_FN_XTRA1(Pdate_FW,   Pa_date_FW,   Puint32,  size_t,               "Pdate_FW")
 PDCI_FMT_FN_XTRA1(Pdate_ME,   Pa_date_ME,   Puint32,  const char *,         "Pdate_ME")
 PDCI_FMT_FN_XTRA1(Pdate_CME,  Pa_date_CME,  Puint32,  Pregexp_t *,          "Pdate_CME")
 PDCI_FMT_FN_XTRA1(Pdate_SE,   Pa_date_SE,   Puint32,  const char *,         "Pdate_SE")
 PDCI_FMT_FN_XTRA1(Pdate_CSE,  Pa_date_CSE,  Puint32,  Pregexp_t *,          "Pdate_CSE")
+
+PDCI_FMT_FN_XTRA1(Ptime,      Pa_time,      Puint32,  Pchar,                "Ptime")
+PDCI_FMT_FN_XTRA1(Ptime_FW,   Pa_time_FW,   Puint32,  size_t,               "Ptime_FW")
+PDCI_FMT_FN_XTRA1(Ptime_ME,   Pa_time_ME,   Puint32,  const char *,         "Ptime_ME")
+PDCI_FMT_FN_XTRA1(Ptime_CME,  Pa_time_CME,  Puint32,  Pregexp_t *,          "Ptime_CME")
+PDCI_FMT_FN_XTRA1(Ptime_SE,   Pa_time_SE,   Puint32,  const char *,         "Ptime_SE")
+PDCI_FMT_FN_XTRA1(Ptime_CSE,  Pa_time_CSE,  Puint32,  Pregexp_t *,          "Ptime_CSE")
+#endif
+
+#if P_CONFIG_A_INT > 0
+PDCI_FMT_FN(Pa_ip,   Pa_ip,      Puint32,         "Pa_ip"  )
+#endif
+
+#if P_CONFIG_E_INT > 0
+PDCI_FMT_FN(Pe_ip,   Pa_ip,      Puint32,         "Pe_ip"  )
+#endif
+
+#if P_CONFIG_A_INT > 0 || P_CONFIG_E_INT > 0
+PDCI_FMT_FN(Pip,     Pa_ip,      Puint32,         "Pip"    )
 #endif
 
 #if P_CONFIG_A_INT > 0
@@ -5876,7 +6012,7 @@ Pstring_acc_add(P_t *pads, Pstring_acc *a, const Pbase_pd *pd, const Pstring *va
 
 Perror_t
 Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst,
-			 Pstring_acc *a)
+		      Pstring_acc *a)
 {
   size_t                 pad;
   int                    i, sz, len_sz, rp;
@@ -5993,8 +6129,11 @@ Pstring_acc_report(P_t *pads, const char *prefix, const char *what, int nst, Pst
 }
 
 Perror_t
-Pdate_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst,
-		    Puint32_acc *a)
+PDCI_date_time_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix,
+			     const char *what, int nst, Puint32_acc *a,
+			     const char *whatfn, const char *def_what,
+			     const char *format, const char *format_descr,
+			     Tm_zone_t *tzone, const char *tzone_descr)
 {
   int                i, sz, rp;
   Puint64            cnt_sum;
@@ -6005,21 +6144,26 @@ Pdate_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   Void_t            *velt;
   Puint32_dt_elt_t  *elt;
   const char        *xtra;
-  const char        *date_fmt;
 
-  P_TRACE(pads->disc, "Pdate_acc_report2io called");
-  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime calls below
-  date_fmt = (pads->disc->out_formats.date) ?  pads->disc->out_formats.date : "%Y-%m-%d";
+  P_TRACE2(pads->disc, "PDCI_date_time_acc_report2io called, whatfn = %s, out format = %s",
+	   whatfn, format);
+  tmset(tzone);
   if (!prefix || *prefix == 0) {
     prefix = "<top>";
   }
   if (!what) {
-    what = "date";
+    what = def_what;
   }
-  xtra = "\
-    ** N.B. Dates are recorded internally as seconds since the epoch\n\
-       (midnight 1-jan-1970). The following summary is in terms\n\
-       of this internal Puint32 representation";
+  if (strcmp(def_what, "time") == 0) {
+    xtra = "\
+    ** N.B. times are reported in # of seconds, and also as formatted strings (using the default time output format)";
+  } else if (strcmp(def_what, "date") == 0) {
+    xtra = "\
+    ** N.B. dates are reported in # of seconds since midnight 1-jan-1970, and also as formatted strings (using the default date output format)";
+  } else {
+    xtra = "\
+    ** N.B. timestamps are reported in # of seconds since midnight 1-jan-1970, and also as formatted strings (using the default timestamp output format)";
+  }
   PDCI_nst_prefix_what(outstr, &nst, prefix, what, xtra);
   Puint32_acc_fold_psum(a);
   sz = dtsize(a->dict);
@@ -6030,8 +6174,9 @@ Pdate_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   }
   if (sz == 1 && a->bad == 0) {
     elt = (Puint32_dt_elt_t*)dtfirst(a->dict);
-    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %10lu\n",
-	     a->good, what, elt->key.val);
+    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %10lu (%s)\n",
+	     a->good, what, elt->key.val,
+	     fmttime(format, (time_t)elt->key.val));
     dtnext(a->dict, 0); /* discard any iterator state */
     return P_OK;
   }
@@ -6049,15 +6194,16 @@ Pdate_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   /* check for 100% identical values */
   if (sz == 1) {
     elt = (Puint32_dt_elt_t*)dtfirst(a->dict);
-    sfprintf(outstr, "For good %s values, 100 pcnt identical: %10lu\n",
-	     what, elt->key.val);
+    sfprintf(outstr, "For good %s values, 100 pcnt identical: %10lu (%s)\n",
+	     what, elt->key.val,
+	     fmttime(format, (time_t)elt->key.val));
     dtnext(a->dict, 0); /* discard any iterator state */
     return P_OK;
   }
   dtdisc(a->dict,   &Puint32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
-  sfprintf(outstr, "  Characterizing %s values:  min %llu (%s)", what, a->min, fmttime(date_fmt, (time_t)a->min));
-  sfprintf(outstr, " max %llu (%s)", a->max, fmttime(date_fmt, (time_t)a->max));
+  sfprintf(outstr, "  Characterizing %s values:  min %llu (%s)", what, a->min, fmttime(format, (time_t)a->min));
+  sfprintf(outstr, " max %llu (%s)", a->max, fmttime(format, (time_t)a->max));
   sfprintf(outstr, " avg %.3I8f\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
@@ -6074,7 +6220,7 @@ Pdate_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
     }
     elt = (Puint32_dt_elt_t*)velt;
     elt_pcnt = 100.0 * (elt->key.cnt/(Pfloat64)a->good);
-    sfprintf(outstr, "        val: %10lu (%s)", elt->key.val, fmttime(date_fmt, (time_t)elt->key.val));
+    sfprintf(outstr, "        val: %10lu (%s)", elt->key.val, fmttime(format, (time_t)elt->key.val));
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3I8f\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(Pfloat64)a->good);
@@ -6090,25 +6236,32 @@ Pdate_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
 }
 
 Perror_t
-Pdate_acc_report(P_t *pads, const char *prefix, const char *what, int nst, Puint32_acc *a)
+PDCI_date_time_acc_report(P_t *pads, const char *prefix, const char *what, int nst, Puint32_acc *a,
+			  const char *whatfn, const char *def_what,
+			  const char *format, const char *format_descr,
+			  Tm_zone_t *tzone, const char *tzone_descr)
 {
   Sfio_t *tmpstr;
   Perror_t res;
-  PDCI_DISC_1P_CHECKS("Pdate_acc_report", a);
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
+  PDCI_DISC_1P_CHECKS(whatfn, a);
   if (!pads->disc->error_fn) {
     return P_OK;
   }
   if (!(tmpstr = sfstropen ())) { 
     return P_ERR;
   }
-  res = Pdate_acc_report2io(pads, tmpstr, prefix, what, nst, a);
+  res = PDCI_date_time_acc_report2io(pads, tmpstr, prefix, what, nst, a,
+				     whatfn, def_what,
+				     format, format_descr,
+				     tzone, tzone_descr);
   if (res == P_OK) {
     pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
 }
-
 
 
 Perror_t
@@ -6227,7 +6380,7 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
 
 Perror_t
 Pchar_acc_report(P_t *pads, const char *prefix, const char *what, int nst,
-		    Pchar_acc *a)
+		 Pchar_acc *a)
 {
   Sfio_t *tmpstr;
   Perror_t res;
@@ -6250,7 +6403,7 @@ Pchar_acc_report(P_t *pads, const char *prefix, const char *what, int nst,
 
 Perror_t
 P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst,
-		       Puint32_acc *a)
+		     Puint32_acc *a)
 {
   int                i, sz, rp;
   Puint64            ngood, nbad;
@@ -6603,7 +6756,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.183 2005-01-26 16:22:30 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.184 2005-02-12 22:41:36 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7050,12 +7203,16 @@ Pdisc_t Pdefault_disc = {
   "UTC",  /* out_time_zone     */
   {
     /* default input formats */
-    "%m%d%y%|%m%d%Y%|%&"      /* default date input format */
+    "%m%d%y+%H%M%S%|%m%d%y+%H:%M:%S%|%m%d%Y+%H%M%S%|%m%d%Y+%H:%M:%S%|%&",    /* timestamp */
+    "%m%d%y%|%m%d%Y%|%&",      /* date */
+    "%H%M%S%|%H:%M:%S%|%&"     /* time */
   },
 
   {
     /* default output formats */
-    "%Y-%m-%d"      /* default date output format */
+    "%K",            /* timestamp */
+    "%Y-%m-%d",      /* date */
+    "%H:%M:%S"       /* time */
   },
 
   0,    /* by default, no inv_val_fn map */
@@ -7064,21 +7221,39 @@ Pdisc_t Pdefault_disc = {
 };
 
 
+Tm_zone_t*
+PDCI_cstr2timezone(P_t *pads, const char *zone_str, const char *whatfn)
+{
+  size_t   expected_len, actual_len;
+  char    *end;
+  Tm_zone_t *res;
+
+  PDCI_NULLPARAM_CHECK_RET_0("P_cstr2timezone", zone_str);
+  expected_len = strlen(zone_str);
+  res = tmzone(zone_str, &end, 0, 0);
+  if (!res) {
+    P_WARN2(pads ? pads->disc : &Pdefault_disc, "%s: failed to parse time zone '%s'", whatfn, zone_str);
+    return NULL;
+  }
+  actual_len = end - zone_str;
+  if (actual_len != expected_len) {
+    P_WARN5(pads ? pads->disc : &Pdefault_disc, "%s: ignoring extra characters at end of time zone string: %.*s>>%.*s<<",
+	    whatfn, actual_len, zone_str, expected_len - actual_len, zone_str + actual_len);
+  }
+  return res;
+}
+
+Tm_zone_t*
+P_cstr2timezone(const char *zone_str)
+{
+  return PDCI_cstr2timezone(NULL, zone_str, "P_cstr2timezone");
+}
+
 Perror_t
 PDCI_set_in_time_zone(P_t *pads, const char *new_in_time_zone, const char *whatfn)
 {
-  char    *end;
-  size_t   expected_len, actual_len;
-  PDCI_DISC_1P_CHECKS(whatfn, new_in_time_zone);
-  expected_len = strlen(new_in_time_zone);
-  if (!(pads->in_zone = tmzone(new_in_time_zone, &end, 0, 0))) {
-    P_WARN2(pads->disc, "%s: failed to parse time zone '%s'", whatfn, new_in_time_zone);
+  if (!(pads->in_zone = PDCI_cstr2timezone(pads, new_in_time_zone, whatfn))) {
     return P_ERR;
-  }
-  actual_len = end - new_in_time_zone;
-  if (actual_len < expected_len) {
-    P_WARN5(pads->disc, "%s: ignoring extra characters at end of time zone string: %.*s>>%.*s<<",
-	    whatfn, actual_len, new_in_time_zone, expected_len - actual_len, new_in_time_zone + actual_len);
   }
   pads->disc->in_time_zone = new_in_time_zone;
   return P_OK;
@@ -7087,18 +7262,8 @@ PDCI_set_in_time_zone(P_t *pads, const char *new_in_time_zone, const char *whatf
 Perror_t
 PDCI_set_out_time_zone(P_t *pads, const char *new_out_time_zone, const char *whatfn)
 {
-  char    *end;
-  size_t   expected_len, actual_len;
-  PDCI_DISC_1P_CHECKS(whatfn, new_out_time_zone);
-  expected_len = strlen(new_out_time_zone);
-  if (!(pads->out_zone = tmzone(new_out_time_zone, &end, 0, 0))) {
-    P_WARN2(pads->disc, "%s: failed to parse time zone '%s'", whatfn, new_out_time_zone);
+  if (!(pads->out_zone = PDCI_cstr2timezone(pads, new_out_time_zone, whatfn))) {
     return P_ERR;
-  }
-  actual_len = end - new_out_time_zone;
-  if (actual_len < expected_len) {
-    P_WARN5(pads->disc, "%s: ignoring extra characters at end of time zone string: %.*s>>%.*s<<",
-	    whatfn, actual_len, new_out_time_zone, expected_len - actual_len, new_out_time_zone + actual_len);
   }
   pads->disc->out_time_zone = new_out_time_zone;
   return P_OK;
@@ -8500,9 +8665,11 @@ const char *P_errCode2str(PerrCode_t code)
   case P_REGEXP_NOT_FOUND: return "P_REGEXP_NOT_FOUND";
   case P_INVALID_REGEXP: return "P_INVALID_REGEXP";
   case P_WIDTH_NOT_AVAILABLE: return "P_WIDTH_NOT_AVAILABLE";
+  case P_INVALID_TIMESTAMP: return "P_INVALID_TIMESTAMP";
   case P_INVALID_DATE: return "P_INVALID_DATE";
-  case P_INVALID_DATE_WIDTH: return "P_INVALID_DATE_WIDTH";
-  case P_INVALID_IPADDR: return "P_INVALID_IPADDR";
+  case P_INVALID_TIME: return "P_INVALID_TIME";
+  case P_INVALID_IP: return "P_INVALID_IP";
+  case P_INVALID_IP_RANGE: return "P_INVALID_IP_RANGE";
   default: break;
   }
   return "*UNKNOWN_ERRCODE*";
@@ -8702,14 +8869,20 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
     case P_WIDTH_NOT_AVAILABLE:
       msg = "Specified width not available (EOR/EOF encountered)";
       break;
+    case P_INVALID_TIMESTAMP:
+      msg = "Invalid timestamp";
+      break;
     case P_INVALID_DATE:
       msg = "Invalid date";
       break;
-    case P_INVALID_DATE_WIDTH:
-      msg = "Invalid date width";
+    case P_INVALID_TIME:
+      msg = "Invalid time";
       break;
-    case P_INVALID_IPADDR:
+    case P_INVALID_IP:
       msg = "Invalid IP address";
+      break;
+    case P_INVALID_IP_RANGE:
+      msg = "Invalid IP address, numbers must be between 0 and 255";
       break;
     default:
       sfprintf(pads->tmp1, "** unknown error code: %d **", errCode);
@@ -10351,145 +10524,336 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m,
 }
 
 Perror_t
-PDCI_date_FW_read(P_t *pads, const Pbase_m *m,
-		  Pbase_pd *pd, Puint32 *res_out,
-		  Pcharset char_set, const char *whatfn, size_t width)
+PDCI_date_time_FW_read(P_t *pads,
+		       const Pbase_m *m,
+		       Pbase_pd *pd,
+		       Puint32 *res_out,
+		       Pcharset char_set,
+		       const char *whatfn,
+		       const char *format_descr,
+		       const char *tzone_descr,
+		       PerrCode_t errCode,
+		       int just_time,
+		       const char *format,
+		       Tm_zone_t *tzone,
+		       size_t width)
 {
   Pstring     *s;
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
-  PDCI_DATE_IN_FMT_CHECK(whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   s = &pads->stmp1;
-  P_TRACE2(pads->disc, "PDCI_date_FW_read called, args: char_set %s, whatfn = %s",
-	   Pcharset2str(char_set), whatfn);
+  P_TRACE4(pads->disc, "PDCI_date_time_FW_read called, args: char_set %s, whatfn = %s, format = %s, tzone = %s",
+	   Pcharset2str(char_set), whatfn, format, tzone_descr);
   /* Following call does a Pbase_pd_init_no_err(pd) */
   if (P_ERR == PDCI_string_FW_read(pads, m, pd, s, char_set, whatfn, width)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_READ;
+  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
 }
 
 Perror_t
-PDCI_date_read(P_t *pads, const Pbase_m *m,
-	       Pbase_pd *pd, Puint32 *res_out, Pcharset char_set, const char *whatfn, Pchar stopChar)
+PDCI_date_time_read(P_t *pads,
+		    const Pbase_m *m,
+		    Pbase_pd *pd,
+		    Puint32 *res_out,
+		    Pcharset char_set,
+		    const char *whatfn,
+		    const char *format_descr,
+		    const char *tzone_descr,
+		    PerrCode_t errCode,
+		    int just_time,
+		    const char *format,
+		    Tm_zone_t *tzone,
+		    Pchar stopChar)
 {
   Pstring     *s;
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
-  PDCI_DATE_IN_FMT_CHECK(whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   s = &pads->stmp1;
-  P_TRACE3(pads->disc, "PDCI_date_read called, args: stopChar %s char_set %s, whatfn = %s",
-	   P_qfmt_char(stopChar), Pcharset2str(char_set), whatfn);
+  P_TRACE5(pads->disc, "PDCI_date_time_read called, args: stopChar %s char_set %s, whatfn = %s, format = %s, tzone = %s",
+	   P_qfmt_char(stopChar), Pcharset2str(char_set), whatfn, format, tzone_descr);
   /* Following call does a Pbase_pd_init_no_err(pd) */
   if (P_ERR == PDCI_string_read(pads, m, pd, s, char_set, whatfn, stopChar)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_READ;
+  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
 }
 
 Perror_t
-PDCI_date_ME_read(P_t *pads, const Pbase_m *m,
-		  Pbase_pd *pd, Puint32 *res_out,
-		  Pcharset char_set, const char *whatfn, const char *matchRegexp)
+PDCI_date_time_ME_read(P_t *pads,
+		       const Pbase_m *m,
+		       Pbase_pd *pd,
+		       Puint32 *res_out,
+		       Pcharset char_set,
+		       const char *whatfn,
+		       const char *format_descr,
+		       const char *tzone_descr,
+		       PerrCode_t errCode,
+		       int just_time,
+		       const char *format,
+		       Tm_zone_t *tzone,
+		       const char *matchRegexp)
 {
   Pstring     *s;
   PDCI_IODISC_4P_CHECKS(whatfn, m, matchRegexp, pd, res_out);
-  PDCI_DATE_IN_FMT_CHECK(whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   s = &pads->stmp1;
-  P_TRACE2(pads->disc, "PDCI_date_ME_read called, args: char_set %s, whatfn = %s",
-	   Pcharset2str(char_set), whatfn);
+  P_TRACE4(pads->disc, "PDCI_date_time_ME_read called, args: char_set %s, whatfn = %s, format = %s, tzone = %s",
+	   Pcharset2str(char_set), whatfn, format, tzone_descr);
   /* Following call does a Pbase_pd_init_no_err(pd) */
   if (P_ERR == PDCI_string_ME_read(pads, m, pd, s, char_set, whatfn, matchRegexp)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_READ;
+  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
 }
 
 Perror_t
-PDCI_date_CME_read(P_t *pads, const Pbase_m *m,
-		   Pbase_pd *pd, Puint32 *res_out,
-		   Pcharset char_set, const char *whatfn, Pregexp_t *matchRegexp)
+PDCI_date_time_CME_read(P_t *pads,
+			const Pbase_m *m,
+			Pbase_pd *pd,
+			Puint32 *res_out,
+			Pcharset char_set,
+			const char *whatfn,
+			const char *format_descr,
+			const char *tzone_descr,
+			PerrCode_t errCode,
+			int just_time,
+			const char *format,
+			Tm_zone_t *tzone,
+			Pregexp_t *matchRegexp)
 {
   Pstring     *s;
   PDCI_IODISC_4P_CHECKS(whatfn, m, matchRegexp, pd, res_out);
-  PDCI_DATE_IN_FMT_CHECK(whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   s = &pads->stmp1;
-  P_TRACE2(pads->disc, "PDCI_date_CME_read called, args: char_set %s, whatfn = %s",
-	   Pcharset2str(char_set), whatfn);
+  P_TRACE4(pads->disc, "PDCI_date_time_CME_read called, args: char_set %s, whatfn = %s, format = %s, tzone = %s",
+	   Pcharset2str(char_set), whatfn, format, tzone_descr);
   /* Following call does a Pbase_pd_init_no_err(pd) */
   if (P_ERR == PDCI_string_CME_read(pads, m, pd, s, char_set, whatfn, matchRegexp)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_READ;
+  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
 }
 
 Perror_t
-PDCI_date_SE_read(P_t *pads, const Pbase_m *m,
-		  Pbase_pd *pd, Puint32 *res_out,
-		  Pcharset char_set, const char *whatfn, const char *stopRegexp)
+PDCI_date_time_SE_read(P_t *pads,
+		       const Pbase_m *m,
+		       Pbase_pd *pd,
+		       Puint32 *res_out,
+		       Pcharset char_set,
+		       const char *whatfn,
+		       const char *format_descr,
+		       const char *tzone_descr,
+		       PerrCode_t errCode,
+		       int just_time,
+		       const char *format,
+		       Tm_zone_t *tzone,
+		       const char *stopRegexp)
 {
   Pstring     *s;
   PDCI_IODISC_4P_CHECKS(whatfn, m, stopRegexp, pd, res_out);
-  PDCI_DATE_IN_FMT_CHECK(whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   s = &pads->stmp1;
-  P_TRACE2(pads->disc, "PDCI_date_SE_read called, args: char_set %s, whatfn = %s",
-	   Pcharset2str(char_set), whatfn);
+  P_TRACE4(pads->disc, "PDCI_date_time_SE_read called, args: char_set %s, whatfn = %s, format = %s, tzone = %s",
+	   Pcharset2str(char_set), whatfn, format, tzone_descr);
   /* Following call does a Pbase_pd_init_no_err(pd) */
   if (P_ERR == PDCI_string_SE_read(pads, m, pd, s, char_set, whatfn, stopRegexp)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_READ;
+  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
 }
 
 Perror_t
-PDCI_date_CSE_read(P_t *pads, const Pbase_m *m,
-		   Pbase_pd *pd, Puint32 *res_out,
-		   Pcharset char_set, const char *whatfn, Pregexp_t *stopRegexp)
+PDCI_date_time_CSE_read(P_t *pads,
+			const Pbase_m *m,
+			Pbase_pd *pd,
+			Puint32 *res_out,
+			Pcharset char_set,
+			const char *whatfn,
+			const char *format_descr,
+			const char *tzone_descr,
+			PerrCode_t errCode,
+			int just_time,
+			const char *format,
+			Tm_zone_t *tzone,
+			Pregexp_t *stopRegexp)
 {
   Pstring     *s;
   PDCI_IODISC_4P_CHECKS(whatfn, m, stopRegexp, pd, res_out);
-  PDCI_DATE_IN_FMT_CHECK(whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   s = &pads->stmp1;
-  P_TRACE2(pads->disc, "PDCI_date_CSE_read called, args: char_set %s, whatfn = %s",
-	   Pcharset2str(char_set), whatfn);
+  P_TRACE4(pads->disc, "PDCI_date_time_CSE_read called, args: char_set %s, whatfn = %s, format = %s, tzone = %s",
+	   Pcharset2str(char_set), whatfn, format, tzone_descr);
   /* Following call does a Pbase_pd_init_no_err(pd) */
   if (P_ERR == PDCI_string_CSE_read(pads, m, pd, s, char_set, whatfn, stopRegexp)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_READ;
+  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
 }
 
 Perror_t
-PDCI_ipaddr_read(P_t *pads, const Pbase_m *m,
-		 Pbase_pd *pd, Puint32 *res_out, Pcharset char_set, const char *whatfn, Pchar stopChar)
+PDCI_ip_read(P_t *pads, const Pbase_m *m,
+	     Pbase_pd *pd, Puint32 *res_out, Pcharset char_set, const char *whatfn)
 {
-  Pstring     *s;
-  Puint32      addr;
-  Pbyte       *tmp;
-  size_t       width;
-  int          r;
+  Puint32      addr = 0;
+  Pbyte       *p1;
+  Pbyte       *part_start;
+  Pbyte       *range_err_start = 0;
+  Pbyte       *range_err_end   = 0;
+  int          zero = '0', nine = '9', dot = '.';
+  int          digits;
+  int          byte = 0;
+  int          parts = 0;
+  PDCI_IO_NEED_BYTES_SETUP_MATCH;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
-  s = &pads->stmp1;
-  P_TRACE3(pads->disc, "PDCI_ipaddr_read called, args: stopChar %s char_set %s, whatfn = %s",
-	   P_qfmt_char(stopChar), Pcharset2str(char_set), whatfn);
-  /* Following call does a Pbase_pd_init_no_err(pd) */
-  if (P_ERR == PDCI_string_read(pads, m, pd, s, char_set, whatfn, stopChar)) {
-    return P_ERR;
-  }
-  PDCI_STR_PRESERVE(s); /* this ensures s.str is null terminated */
-  width = s->len;
-  r = strtoip4(s->str, (char**)&tmp, &addr, NiL);
-  if (r || !tmp || (char*)tmp - s->str != width) {
-    PDCI_READFN_BEGINLOC_MINUSK(pads, pd->loc, width);
-    PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_IPADDR);
-  }
-  (*res_out) = addr;
-  P_DBG3(pads->disc, "%s: converted string %s => %lu",
-	 whatfn, P_qfmt_str(s), (unsigned long)addr);
-  return P_OK;
+  P_TRACE2(pads->disc, "PDCI_ip_read called, args: char_set %s, whatfn = %s",
+	   Pcharset2str(char_set), whatfn);
+  PDCI_READFN_PD_INIT(pads, pd);
 
- fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
+  switch (char_set)
+    {
+    case Pcharset_ASCII:
+      break;
+    case Pcharset_EBCDIC:
+      zero = P_mod_ae_tab[zero]; /* convert to EBCDIC char */
+      nine = P_mod_ae_tab[nine]; /* convert to EBCDIC char */
+      dot  = P_mod_ae_tab[dot];  /* convert to EBCDIC char */
+      break;
+    default:
+      goto invalid_charset;
+    }
+
+  PDCI_IO_NEED_BYTES(goto fatal_nb_io_err);
+  if (begin == end) {
+    goto at_eor_or_eof_err;
+  }
+  p1 = begin;
+  if (P_Test_Ignore(*m)) {
+    /* move beyond anything that looks like an ip address, return P_ERR if none such */
+    if (!((*p1) >= zero && (*p1) <= nine)) {
+      return P_ERR; /* did not find an ip address */
+    }
+    /* skip up to four parts with up to 3 digits each, move IO cursor, return P_OK */
+    while (parts < 4) {
+      parts++;
+      digits = 0;
+      while (((*p1) >= zero && (*p1) <= nine) && digits < 3) {
+	p1++;
+	digits++;
+	if (p1 == end && !(eor|eof)) {
+	  /* did not find end of ip address within goal_bytes (normally P_BUILTIN_MATCH_MAX) */
+	  return P_ERR;
+	}
+      }
+      if ((*p1) != dot) break;
+      // found a dot after some digits, skip it
+      p1++;
+      if (!((*p1) >= zero && (*p1) <= nine)) break;
+      // found another part, continue loop
+    }
+    // successfully skipped over up to four parts and optional trailing dot
+    PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
+    return P_OK;
+
+  } else { /* !P_Test_Ignore(*m) */
+
+    if (!((*p1) >= zero && (*p1) <= nine)) {
+      p1++;  /* include first char as the error loc */
+      goto invalid; /* did not find an ip address */
+    }
+    /* parse up to four parts with up to 3 digits each, move IO cursor, return P_OK */
+    while (parts < 4) {
+      part_start = p1;
+      if (parts > 0) {
+	// byte is folded in after each loop iter completes
+	// including just after while loop
+	addr = addr << 8;
+	addr += byte;
+      }
+      parts++;
+      byte = 0;
+      digits = 0;
+      while (((*p1) >= zero && (*p1) <= nine) && digits < 3) {
+	byte *= 10;
+	byte += (*p1) - zero;
+	p1++;
+	digits++;
+	if (p1 == end && !(eor|eof)) {
+	  /* did not find end of ip address within goal_bytes (normally P_BUILTIN_MATCH_MAX) */
+	  goto invalid;
+	}
+      }
+      if (byte > 255 && !range_err_start) {
+	range_err_start = part_start;
+	range_err_end   = p1;
+	byte = 255;
+      }
+      if ((*p1) != dot) break;
+      // found a dot after some digits, skip it
+      p1++;
+      if (!((*p1) >= zero && (*p1) <= nine)) break;
+      // found another part, continue loop
+    }
+    // Successfully skipped over up to four parts and optional trailing dot.
+    // The final byte has not been added to addr yet.
+    // TODO: unless it is the first part,
+    // we think it is added at the end, but we are not sure.
+    switch (parts) {
+    case 1:
+      addr = byte;
+      addr = addr << 24;
+      break;
+    case 2:
+      addr = addr << 24;
+      addr += byte;
+      break;
+    case 3:
+      addr = addr << 16;
+      addr += byte;
+      break;
+    case 4:
+      addr = addr << 8;
+      addr += byte;
+      break;
+    }
+    PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
+    if (range_err_start && P_Test_SemCheck(*m)) goto invalid_range;
+    if (P_Test_Set(*m)) {
+      (*res_out) = addr;
+    }
+    return P_OK;
+  }
+
+ invalid_charset:
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
+
+ at_eor_or_eof_err:
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);
+
+ invalid:
+  PDCI_READFN_BEGINLOC(pads, pd->loc);
+  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_IP);
+
+ invalid_range:
+  PDCI_READFN_BEGINLOC_MINUSK(pads, pd->loc, p1 - range_err_start);
+  PDCI_READFN_ENDLOC_MINUSK(pads, pd->loc, (p1 - range_err_end) + 1);
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_IP_RANGE);
+
+ fatal_nb_io_err:
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO error (nb)", P_IO_ERR);
+
+ fatal_forward_err:
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "IO_forward error", P_FORWARD_ERR);
 }
 
 Perror_t
@@ -11554,37 +11918,49 @@ PDCI_string_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 }
 
 ssize_t
-PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
-		      Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn, size_t width)
+PDCI_date_time_FW_write2io(P_t *pads,
+			   Sfio_t *io,
+			   Pbase_pd *pd,
+			   Puint32 *d,
+			   Pcharset char_set,
+			   const char *inv_type,
+			   const char *whatfn,
+			   const char *format_descr,
+			   const char *tzone_descr,
+			   const char *format,
+			   Tm_zone_t *tzone,
+			   size_t width,
+			   ...)
 {
   ssize_t       n;
   Pstring       s;
   Pstring      *tmp_s = &s;
   Pbyte         space;
   Pinv_val_fn   fn;
+  va_list       type_args;
 
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
-  P_TRACE2(pads->disc, "PDCI_date_FW_write2io args: char_set = %s, whatfn = %s",
-	   Pcharset2str(char_set), whatfn);
+  P_TRACE4(pads->disc, "PDCI_date_time_FW_write2io args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
+	   Pcharset2str(char_set), whatfn, format, tzone_descr);
 
-  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+  tmset(tzone);
 
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
-    if (!fn || (P_ERR == P_invoke_inv_val_fn(fn, pads, (void*)pd, (void*)d, width))) {
+    va_start(type_args, width);
+    if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
       if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {
 	(*d) = 0;
       }
     }
+    va_end(type_args);
   }
-  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
+  s.str = fmttime(format, (time_t)(*d));
   s.len = strlen(s.str);
-  if (tmp_s->len > 8 && tmp_s->len > width) {
-    tmp_s->len -= 8; /* remove +%H:%M:%S */
-  }
-  if (tmp_s->len > width) { /* %Y-%m-%d does not fit in width, give up */
-    PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_DATE_WIDTH, whatfn, 0);
+  if (tmp_s->len > width) { /* format does not fit in width, give up */
+    PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_WIDTH, whatfn, 0);
     return -1;
   }
   switch (char_set)
@@ -11630,38 +12006,51 @@ PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
 }
 
 ssize_t
-PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-		       Pbase_pd *pd,
-		       Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn, size_t width)
+PDCI_date_time_FW_write2buf(P_t *pads,
+			    Pbyte *buf,
+			    size_t buf_len,
+			    int *buf_full,
+			    Pbase_pd *pd,
+			    Puint32 *d,
+			    Pcharset char_set,
+			    const char *inv_type,
+			    const char *whatfn,
+			    const char *format_descr,
+			    const char *tzone_descr,
+			    const char *format,
+			    Tm_zone_t *tzone,
+			    size_t width,
+			    ...)
 {
   Pstring       s;
   Pstring      *tmp_s = &s;
   Pbyte        *buf2, *buf_end;
   Pbyte         space;
   Pinv_val_fn   fn;
+  va_list       type_args;
 
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
-  P_TRACE2(pads->disc, "PDCI_date_FW_write2buf args: char_set = %s, whatfn = %s",
-	   Pcharset2str(char_set), whatfn);
+  P_TRACE4(pads->disc, "PDCI_date_FW_write2buf args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
+	   Pcharset2str(char_set), whatfn, format, tzone_descr);
 
-  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+  tmset(tzone);
 
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
-    if (!fn || (P_ERR == P_invoke_inv_val_fn(fn, pads, (void*)pd, (void*)d, width))) {
+    va_start(type_args, width);
+    if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
       if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {
 	(*d) = 0;
       }
     }
+    va_end(type_args);
   }
-  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
+  s.str = fmttime(format, (time_t)(*d));
   s.len = strlen(s.str);
-  if (tmp_s->len > 8 && tmp_s->len > width) {
-    tmp_s->len -= 8; /* remove +%H:%M:%S */
-  }
-  if (tmp_s->len > width) { /* %Y-%m-%d does not fit in width, give up */
-    PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_DATE_WIDTH, whatfn, 0);
+  if (tmp_s->len > width) { /* format does not fit in width, give up */
+    PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_WIDTH, whatfn, 0);
     return -1;
   }
   if (width > buf_len) {
@@ -11699,8 +12088,18 @@ PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 }
 
 ssize_t
-PDCI_date_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
-		   Pcharset char_set, const char *inv_type, const char *whatfn, ...)
+PDCI_date_time_write2io(P_t *pads,
+			Sfio_t *io,
+			Pbase_pd *pd,
+			Puint32 *d,
+			Pcharset char_set,
+			const char *inv_type,
+			const char *whatfn,
+			const char *format_descr,
+			const char *tzone_descr,
+			const char *format,
+			Tm_zone_t *tzone,
+			...)
 {
   ssize_t       n;
   Pstring       s;
@@ -11708,16 +12107,17 @@ PDCI_date_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
   Pinv_val_fn   fn;
   va_list       type_args;
 
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
-  P_TRACE2(pads->disc, "PDCI_date_write2io args: char_set = %s, whatfn = %s",
-	     Pcharset2str(char_set), whatfn);
+  P_TRACE4(pads->disc, "PDCI_date_write2io args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
+	   Pcharset2str(char_set), whatfn, format, tzone_descr);
 
-  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+  tmset(tzone);
 
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
-    va_start(type_args, whatfn);
+    va_start(type_args, tzone);
     if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
       if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {
 	(*d) = 0;
@@ -11725,7 +12125,7 @@ PDCI_date_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
     }
     va_end(type_args);
   }
-  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
+  s.str = fmttime(format, (time_t)(*d));
   s.len = strlen(s.str);
   switch (char_set)
     {
@@ -11758,25 +12158,37 @@ PDCI_date_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
 }
 
 ssize_t
-PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-		    Pbase_pd *pd, Puint32 *d,
-		    Pcharset char_set, const char *inv_type, const char *whatfn, ...)
+PDCI_date_time_write2buf(P_t *pads,
+			 Pbyte *buf,
+			 size_t buf_len,
+			 int *buf_full,
+			 Pbase_pd *pd,
+			 Puint32 *d,
+			 Pcharset char_set,
+			 const char *inv_type,
+			 const char *whatfn,
+			 const char *format_descr,
+			 const char *tzone_descr,
+			 const char *format,
+			 Tm_zone_t *tzone,
+			 ...)
 {
   Pstring       s;
   Pstring      *tmp_s = &s;
   Pinv_val_fn   fn;
   va_list       type_args;
 
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
-  P_TRACE2(pads->disc, "PDCI_date_write2buf args: char_set = %s, whatfn = %s",
-	     Pcharset2str(char_set), whatfn);
+  P_TRACE4(pads->disc, "PDCI_date_write2buf args: char_set = %s, whatfn = %s, format = %s, tzone = %s",
+	   Pcharset2str(char_set), whatfn, format, tzone_descr);
 
-  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+  tmset(tzone);
 
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
-    va_start(type_args, whatfn);
+    va_start(type_args, tzone);
     if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
       if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {
 	(*d) = 0;
@@ -11784,7 +12196,7 @@ PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
     }
     va_end(type_args);
   }
-  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
+  s.str = fmttime(format, (time_t)(*d));
   s.len = strlen(s.str);
   if (tmp_s->len > buf_len) {
     (*buf_full) = 1;
@@ -11814,22 +12226,35 @@ PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 }
 
 ssize_t
-PDCI_date_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
-			const char *tag, int indent, const char *inv_type, const char *whatfn, ...)
+PDCI_date_time_write_xml_2io(P_t *pads,
+			     Sfio_t *io,
+			     Pbase_pd *pd,
+			     Puint32 *d,
+			     const char *tag,
+			     int indent,
+			     const char *inv_type,
+			     const char *whatfn,
+			     const char *format_descr,
+			     const char *tzone_descr,
+			     const char *format,
+			     Tm_zone_t *tzone,
+			     ...)
 {
   Pstring       s;
   Pinv_val_fn   fn;
   va_list       type_args;
 
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
-  P_TRACE1(pads->disc, "PDCI_date_write2io args: whatfn = %s", whatfn);
+  P_TRACE3(pads->disc, "PDCI_date_write2io args: whatfn = %s, format = %s, tzone = %s",
+	   whatfn, format, tzone_descr);
 
-  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+  tmset(tzone);
 
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
-    va_start(type_args, whatfn);
+    va_start(type_args, tzone);
     if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
       if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {
 	(*d) = 0;
@@ -11837,30 +12262,44 @@ PDCI_date_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
     }
     va_end(type_args);
   }
-  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
+  s.str = fmttime(format, (time_t)(*d));
   s.len = strlen(s.str);
   PDCI_BASEVAL_XML_OUT2IO(inv_type, "%s", P_fmt_str(&s));
 }
 
 ssize_t
-PDCI_date_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			 Pbase_pd *pd, Puint32 *d,
-			 const char *tag, int indent, const char *inv_type, const char *whatfn, ...)
+PDCI_date_time_write_xml_2buf(P_t *pads,
+			      Pbyte *buf,
+			      size_t buf_len,
+			      int *buf_full,
+			      Pbase_pd *pd,
+			      Puint32 *d,
+			      const char *tag,
+			      int indent,
+			      const char *inv_type,
+			      const char *whatfn,
+			      const char *format_descr,
+			      const char *tzone_descr,
+			      const char *format,
+			      Tm_zone_t *tzone,
+			      ...)
 {
   ssize_t       writelen;
   Pstring       s;
   Pinv_val_fn   fn;
   va_list       type_args;
 
+  PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
+  PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  PDCI_DATE_OUT_FMT_CHECK_RET_SSIZE(whatfn);
-  P_TRACE1(pads->disc, "PDCI_date_write_xml_2buf args: whatfn = %s", whatfn);
+  P_TRACE3(pads->disc, "PDCI_date_write_xml_2buf args: whatfn = %s, format = %s, tzone = %s",
+	   whatfn, format, tzone_descr);
 
-  tmset(pads->out_zone); // use out_zone as the time zone for the fmttime call below
+  tmset(tzone);
 
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
-    va_start(type_args, whatfn);
+    va_start(type_args, tzone);
     if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
       if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {
 	(*d) = 0;
@@ -11868,14 +12307,14 @@ PDCI_date_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
     }
     va_end(type_args);
   }
-  s.str = fmttime(pads->disc->out_formats.date, (time_t)(*d));
+  s.str = fmttime(format, (time_t)(*d));
   s.len = strlen(s.str);
   PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%s", P_fmt_str(&s));
 }
 
 ssize_t
-PDCI_ipaddr_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
-		     Pcharset char_set, const char *inv_type, const char *whatfn, ...)
+PDCI_ip_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
+		 Pcharset char_set, const char *inv_type, const char *whatfn, ...)
 {
   ssize_t       n;
   Pstring       s;
@@ -11884,7 +12323,7 @@ PDCI_ipaddr_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
   va_list       type_args;
 
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  P_TRACE2(pads->disc, "PDCI_ipaddr_write2io args: char_set = %s, whatfn = %s",
+  P_TRACE2(pads->disc, "PDCI_ip_write2io args: char_set = %s, whatfn = %s",
 	   Pcharset2str(char_set), whatfn);
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
@@ -11929,9 +12368,9 @@ PDCI_ipaddr_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
 }
 
 ssize_t
-PDCI_ipaddr_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-		      Pbase_pd *pd, Puint32 *d,
-		      Pcharset char_set, const char *inv_type, const char *whatfn, ...)
+PDCI_ip_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+		  Pbase_pd *pd, Puint32 *d,
+		  Pcharset char_set, const char *inv_type, const char *whatfn, ...)
 {
   Pstring       s;
   Pstring      *tmp_s = &s;
@@ -11939,7 +12378,7 @@ PDCI_ipaddr_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
   va_list       type_args;
 
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  P_TRACE2(pads->disc, "PDCI_ipaddr_write2buf args: char_set = %s, whatfn = %s",
+  P_TRACE2(pads->disc, "PDCI_ip_write2buf args: char_set = %s, whatfn = %s",
 	     Pcharset2str(char_set), whatfn);
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
@@ -11981,15 +12420,15 @@ PDCI_ipaddr_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 }
 
 ssize_t
-PDCI_ipaddr_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
-			const char *tag, int indent, const char *inv_type, const char *whatfn, ...)
+PDCI_ip_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
+		      const char *tag, int indent, const char *inv_type, const char *whatfn, ...)
 {
   Pstring       s;
   Pinv_val_fn   fn;
   va_list       type_args;
 
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  P_TRACE1(pads->disc, "PDCI_ipaddr_write2io args: whatfn = %s", whatfn);
+  P_TRACE1(pads->disc, "PDCI_ip_write2io args: whatfn = %s", whatfn);
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
     va_start(type_args, whatfn);
@@ -12006,9 +12445,9 @@ PDCI_ipaddr_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
 }
 
 ssize_t
-PDCI_ipaddr_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			   Pbase_pd *pd, Puint32 *d,
-			   const char *tag, int indent, const char *inv_type, const char *whatfn, ...)
+PDCI_ip_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+		       Pbase_pd *pd, Puint32 *d,
+		       const char *tag, int indent, const char *inv_type, const char *whatfn, ...)
 {
   ssize_t       writelen;
   Pstring       s;
@@ -12016,7 +12455,7 @@ PDCI_ipaddr_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
   va_list       type_args;
 
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
-  P_TRACE1(pads->disc, "PDCI_ipaddr_write_xml_2buf args: whatfn = %s", whatfn);
+  P_TRACE1(pads->disc, "PDCI_ip_write_xml_2buf args: whatfn = %s", whatfn);
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
     va_start(type_args, whatfn);
