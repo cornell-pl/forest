@@ -134,15 +134,15 @@ PDC_error_t PDC_e_string_CSE_read_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_re
 /* HELPER MACRO TO DECLARE FAMILY OF FUNCTIONS */
 /* N.B. First you must declare PDCI_FIRST_ARGS and PDCI_LAST_ARGS.  Follow macro with a semi */
 
-#define PDCI_DECL_FAMILY(ret_type, fn_prefix, typ, fn_suffix) \
-ret_type fn_prefix ## typ ## 8 ## fn_suffix (PDCI_FIRST_ARGS, PDC_ ## typ ## 8 *res_out PDCI_LAST_ARGS); \
-ret_type fn_prefix ## typ ## 16 ## fn_suffix(PDCI_FIRST_ARGS, PDC_ ## typ ## 16 *res_out PDCI_LAST_ARGS); \
-ret_type fn_prefix ## typ ## 32 ## fn_suffix(PDCI_FIRST_ARGS, PDC_ ## typ ## 32 *res_out PDCI_LAST_ARGS); \
-ret_type fn_prefix ## typ ## 64 ## fn_suffix(PDCI_FIRST_ARGS, PDC_ ## typ  ## 64 *res_out PDCI_LAST_ARGS); \
-ret_type fn_prefix ## u ## typ ## 8 ## fn_suffix (PDCI_FIRST_ARGS, PDC_u ## typ ## 8 *res_out PDCI_LAST_ARGS); \
-ret_type fn_prefix ## u ## typ ## 16 ## fn_suffix(PDCI_FIRST_ARGS, PDC_u ## typ ## 16 *res_out PDCI_LAST_ARGS); \
-ret_type fn_prefix ## u ## typ ## 32 ## fn_suffix(PDCI_FIRST_ARGS, PDC_u ## typ ## 32 *res_out PDCI_LAST_ARGS); \
-ret_type fn_prefix ## u ## typ ## 64 ## fn_suffix(PDCI_FIRST_ARGS, PDC_u ## typ ## 64 *res_out PDCI_LAST_ARGS) \
+#define PDCI_DECL_FAMILY(ret_type, fn_prefix, typ, fn_suffix, lastnm) \
+ret_type fn_prefix ## typ ## 8 ## fn_suffix (PDCI_FIRST_ARGS, PDC_ ## typ ## 8 *lastnm PDCI_LAST_ARGS); \
+ret_type fn_prefix ## typ ## 16 ## fn_suffix(PDCI_FIRST_ARGS, PDC_ ## typ ## 16 *lastnm PDCI_LAST_ARGS); \
+ret_type fn_prefix ## typ ## 32 ## fn_suffix(PDCI_FIRST_ARGS, PDC_ ## typ ## 32 *lastnm PDCI_LAST_ARGS); \
+ret_type fn_prefix ## typ ## 64 ## fn_suffix(PDCI_FIRST_ARGS, PDC_ ## typ  ## 64 *lastnm PDCI_LAST_ARGS); \
+ret_type fn_prefix ## u ## typ ## 8 ## fn_suffix (PDCI_FIRST_ARGS, PDC_u ## typ ## 8 *lastnm PDCI_LAST_ARGS); \
+ret_type fn_prefix ## u ## typ ## 16 ## fn_suffix(PDCI_FIRST_ARGS, PDC_u ## typ ## 16 *lastnm PDCI_LAST_ARGS); \
+ret_type fn_prefix ## u ## typ ## 32 ## fn_suffix(PDCI_FIRST_ARGS, PDC_u ## typ ## 32 *lastnm PDCI_LAST_ARGS); \
+ret_type fn_prefix ## u ## typ ## 64 ## fn_suffix(PDCI_FIRST_ARGS, PDC_u ## typ ## 64 *lastnm PDCI_LAST_ARGS) \
 
 /* ================================================================================ */ 
 /* Declarations of function families */
@@ -152,57 +152,67 @@ ret_type fn_prefix ## u ## typ ## 64 ## fn_suffix(PDCI_FIRST_ARGS, PDC_u ## typ 
 
 #undef PDCI_FIRST_ARGS
 #define PDCI_FIRST_ARGS PDC_t *pdc, PDC_base_csm *csm, PDC_base_ed *ed
-PDCI_DECL_FAMILY(PDC_error_t, PDC_a_, int, _read_internal);
-PDCI_DECL_FAMILY(PDC_error_t, PDC_e_, int, _read_internal);
-PDCI_DECL_FAMILY(PDC_error_t, PDC_b_, int, _read_internal);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_a_, int, _read_internal, res_out);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_e_, int, _read_internal, res_out);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_b_, int, _read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
 #define PDCI_FIRST_ARGS PDC_t *pdc, PDC_base_csm *csm, size_t width, PDC_base_ed *ed
-PDCI_DECL_FAMILY(PDC_error_t, PDC_a_, int, _FW_read_internal);
-PDCI_DECL_FAMILY(PDC_error_t, PDC_e_, int, _FW_read_internal);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_a_, int, _FW_read_internal, res_out);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_e_, int, _FW_read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
-#define PDCI_FIRST_ARGS PDC_t *pdc, PDC_base_csm *csm, PDC_uint32 digits, PDC_base_ed *ed
-PDCI_DECL_FAMILY(PDC_error_t, PDC_ebc_, int, _read_internal);
-PDCI_DECL_FAMILY(PDC_error_t, PDC_bcd_, int, _read_internal);
+#define PDCI_FIRST_ARGS PDC_t *pdc, PDC_base_csm *csm, PDC_uint32 num_digits, PDC_base_ed *ed
+PDCI_DECL_FAMILY(PDC_error_t, PDC_ebc_, int, _read_internal, res_out);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_bcd_, int, _read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
 #define PDCI_FIRST_ARGS PDC_t *pdc, PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_base_ed *ed
-PDCI_DECL_FAMILY(PDC_error_t, PDC_sbl_, int, _read_internal);
-PDCI_DECL_FAMILY(PDC_error_t, PDC_sbh_, int, _read_internal);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_sbl_, int, _read_internal, res_out);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_sbh_, int, _read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
 #define PDCI_FIRST_ARGS PDC_t *pdc, PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp, PDC_base_ed *ed
-PDCI_DECL_FAMILY(PDC_error_t, PDC_ecb_, fpoint, _read_internal);
-PDCI_DECL_FAMILY(PDC_error_t, PDC_bcd_, fpoint, _read_internal);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_ecb_, fpoint, _read_internal, res_out);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_bcd_, fpoint, _read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
 #define PDCI_FIRST_ARGS PDC_t *pdc, PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp, PDC_base_ed *ed
-PDCI_DECL_FAMILY(PDC_error_t, PDC_sbl_, fpoint, _read_internal);
-PDCI_DECL_FAMILY(PDC_error_t, PDC_sbh_, fpoint, _read_internal);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_sbl_, fpoint, _read_internal, res_out);
+PDCI_DECL_FAMILY(PDC_error_t, PDC_sbh_, fpoint, _read_internal, res_out);
 
-/* ================================================================================ */ 
 /* INTERNAL VERSIONS OF WRITE FUNCTIONS */
 
-int PDC_a_int8_write_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int8   *val);
-int PDC_a_int16_write_internal (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int16  *val);
-int PDC_a_int32_write_internal (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int32  *val);
-int PDC_a_int64_write_internal (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int64  *val);
+#undef PDCI_FIRST_ARGS
+#define PDCI_FIRST_ARGS PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed
+PDCI_DECL_FAMILY(int, PDC_a_, int, _write_internal, val);
+PDCI_DECL_FAMILY(int, PDC_e_, int, _write_internal, val);
+PDCI_DECL_FAMILY(int, PDC_b_, int, _write_internal, val);
 
-int PDC_a_uint8_write_internal (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint8  *val);
-int PDC_a_uint16_write_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint16 *val);
-int PDC_a_uint32_write_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint32 *val);
-int PDC_a_uint64_write_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint64 *val);
+#undef PDCI_FIRST_ARGS
+#define PDCI_FIRST_ARGS PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, size_t width, PDC_base_ed *ed
+PDCI_DECL_FAMILY(int, PDC_a_, int, _FW_write_internal, val);
+PDCI_DECL_FAMILY(int, PDC_e_, int, _FW_write_internal, val);
 
-int PDC_e_int8_write_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int8   *val);
-int PDC_e_int16_write_internal (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int16  *val);
-int PDC_e_int32_write_internal (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int32  *val);
-int PDC_e_int64_write_internal (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_int64  *val);
+#undef PDCI_FIRST_ARGS
+#define PDCI_FIRST_ARGS PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_uint32 num_digits, PDC_base_ed *ed
+PDCI_DECL_FAMILY(int, PDC_ebc_, int, _write_internal, val);
+PDCI_DECL_FAMILY(int, PDC_bcd_, int, _write_internal, val);
 
-int PDC_e_uint8_write_internal (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint8  *val);
-int PDC_e_uint16_write_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint16 *val);
-int PDC_e_uint32_write_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint32 *val);
-int PDC_e_uint64_write_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed, PDC_uint64 *val);
+#undef PDCI_FIRST_ARGS
+#define PDCI_FIRST_ARGS PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_uint32 num_bytes, PDC_base_ed *ed
+PDCI_DECL_FAMILY(int, PDC_sbl_, int, _write_internal, val);
+PDCI_DECL_FAMILY(int, PDC_sbh_, int, _write_internal, val);
+
+#undef PDCI_FIRST_ARGS
+#define PDCI_FIRST_ARGS PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_uint32 num_digits, PDC_uint32 d_exp, PDC_base_ed *ed
+PDCI_DECL_FAMILY(int, PDC_ebc_, fpoint, _write_internal, val);
+PDCI_DECL_FAMILY(int, PDC_bcd_, fpoint, _write_internal, val);
+
+#undef PDCI_FIRST_ARGS
+#define PDCI_FIRST_ARGS PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_uint32 num_bytes, PDC_uint32 d_exp, PDC_base_ed *ed
+PDCI_DECL_FAMILY(int, PDC_sbl_, fpoint, _write_internal, val);
+PDCI_DECL_FAMILY(int, PDC_sbh_, fpoint, _write_internal, val);
 
 /* ================================================================================ */ 
 /* INTERNAL VERSIONS OF ACCUM REPORTING FUNCTIONS */
