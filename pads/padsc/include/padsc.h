@@ -563,7 +563,7 @@ typedef struct PDC_string_s PDC_string;
 /* type PDC_string: */
 struct PDC_string_s {
   char             *str;
-  size_t           len;
+  size_t            len;
   PDC_STRING_PRIVATE_STATE;
 };
 
@@ -605,6 +605,48 @@ struct PDC_string_s {
  *    PDC_string_eq_Cstr   : compare PDC_string str to a C-style string Cstr.
  *                            returns 0 if str equals Cstr, a negative # if str < Cstr,
  *                            and a positive # if str > Cstr.
+ *
+ * ----------------------------
+ * HELPER MACROS for PDC_string
+ * ----------------------------
+ * PDC_string helper macros have 2 forms.  The INIT forms are used to
+ * initialize a a PDC_string that has already been declared but has not been
+ * initialized.  The DECL forms are used to both declare a new PDC_string and
+ * to initialize it.  The DECL forms produce C variabled declarations, and
+ * must appear at the beginning of a C scope with other variable declarations
+ * (before any normal code).  The arguments to the DECL forms must be
+ * valid for use in a C struct initializing declaration.
+ *
+ * PDC_STRING_INIT_NULL(my_str);
+ *
+ * ==> Initializes my_str to a valid null state, where my_str is assumed to have
+ * been declared but not yet initialized.
+ *
+ * PDC_STRING_INIT_LIT(my_str, "foo");
+ *
+ * ==> Initializes PDC_string my_str to refer to a string literal.  It uses
+ * string-sharing mode so that the string will not attempt to free the string
+ * literal on cleanup.
+ *
+ * PDC_STRING_INIT_CSTR(my_str, char_ptr_expr);
+ *
+ * ==> Initializes my_str to contain the C string produced by char_ptr_expr.
+ * String-sharing mode is used so that my_str will not attempt free the string
+ * referred to by char_ptr_expr.
+ *
+ * PDC_STRING_INIT_CSTR_LEN(my_str, char_ptr_expr, length_expr);
+ *
+ * ==> Like the previous macro except that my_str.len is set to the value of
+ * length_expr instead of using strlen(char_ptr_expr) to obtain the length.  The
+ * _LEN form is useful when the character(s) to be shared are not
+ * null-terminated.
+ *
+ * The corresponding DECL forms are:
+ *
+ * PDC_STRING_DECL_NULL(my_str);
+ * PDC_STRING_DECL_LIT(my_str, "foo");
+ * PDC_STRING_DECL_CSTR(my_str, char_ptr_expr);
+ * PDC_STRING_DECL_CSTR_LEN(my_str, char_ptr_expr, length_expr);
  */
 
 PDC_error_t PDC_string_init(PDC_t *pdc, PDC_string *s);
@@ -617,8 +659,11 @@ PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
 #ifdef FOR_CKIT
 int PDC_string_eq(const PDC_string *str1, const PDC_string *str2);
 int PDC_string_eq_Cstr(const PDC_string *str, const char *Cstr);
+void PDC_STRING_INIT_NULL(PDC_string my_str);
+void PDC_STRING_INIT_LIT(PDC_string my_str, const char *lit);
+void PDC_STRING_INIT_CSTR(PDC_string my_str, const char *expr);
+void PDC_STRING_INIT_CSTR_LEN(PDC_string my_str, char *expr, size_t length_expr);
 #endif /* FOR_CKIT */
-
 
 /*
  * A base type T with T_init/T_cleanup must also have T_pd_init/T_pd_cleanup.
@@ -1092,13 +1137,15 @@ ssize_t      PDC_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_l
 #endif
 
 /* ================================================================================
- * LITERAL SCAN FUNCTIONS
+ * SCAN FUNCTIONS
  *
- * Scan functions are used to 'find' a location that is forward of the
- * current IO position.  They are normally used by other library routines
- * or by generated code, but are exposed here because they are generally useful.
- * N.B. Use the char_lit_read functions for cases where
- * a literal is known to be at the current IO position.
+ * Scan functions are used to 'find' a location that is forward of the current
+ * IO position.  They are normally used by library routines or by generated
+ * code, but are exposed here because they are generally useful.
+ *
+ * ================================
+ * CHARACTER LITERAL SCAN FUNCTIONS
+ * ================================
  *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
@@ -1109,49 +1156,51 @@ ssize_t      PDC_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_l
  *
  * The scan1 functions:
  *
- *  Scans for either goal character c.  The char is specified as an ASCII
+ *  Scans for find character f.  The char is specified as an ASCII
  *  character, and is converted to EBCDIC if the EBCDIC form is used or if the
  *  DEFAULT form is used and pdc->disc->def_charset is PDC_charset_EBCDIC.
  *
- *  If a goal char is found, then if the corresponding 'eat' param (eat_c)
- *  is non-zero the IO points to just beyond the char, otherwise it points to the char.
- *  If panic is set, pdc->disc->panic_max controls the scope of the scan, otherwise
+ *  If f is found, then if eat_f is non-zero the IO points to just beyond the
+ *  char, otherwise it points to the char.  If panic is set,
+ *  pdc->disc->panic_max controls the scope of the scan, otherwise
  *  pdc->disc->scan_max controls the scope of the scan.  Hitting eor or eof
  *  considered to be an error.  N.B. If there is mixed binary and ascii data,
  *  scanning can 'find' an ascii char in a binary field.  Be careful!
  *
  * RETURNS: PDC_error_t
- *         PDC_OK    => goal char found, IO cursor now points to just beyond char
- *                      (eat param non-zero) or to the char (eat param zero).
- *                      if offset_out, *offset_out set to the distance scanned to find that char
- *                      (0 means the IO cursor was already pointing at the found char)
- *         PDC_ERR   => char not found, IO cursor unchanged
+ *         PDC_OK    => f found, IO cursor now points to just beyond char
+ *                      (eat_f param non-zero) or to the char (eat_f zero).
+ *                      Sets (*offset_out) to the distance scanned to find f
+ *                      (0 means the IO cursor was already pointing at f)
+ *         PDC_ERR   => f not found, IO cursor unchanged
  * 
  * The scan2 functions:
  *
- *  Scans for either goal character c or stop character s.  The chars are
+ *  Scans for either find character f or stop character s.  The chars are
  *  specified as ASCII characters, and are converted to EBCDIC if the EBCDIC
  *  form is used or if the DEFAULT form is used and pdc->disc->def_charset is
  *  PDC_charset_EBCDIC.
  *
- *  If a goal char is found, then if the corresponding 'eat' param (eat_c if c
+ *  If f or s is found, then if the corresponding 'eat' param (eat_f if f
  *  is found, eat_s if s is found) is non-zero the IO points to just beyond the
  *  char, otherwise it points to the char.  If panic is set,
  *  pdc->disc->panic_max controls the scope of the scan, otherwise
  *  pdc->disc->scan_max controls the scope of the scan.  Hitting eor or eof
  *  considered to be an error.  N.B. If there is mixed binary and ascii data,
- *  scanning can 'find' an ascii char in a binary field.  Be careful!  Do not
- *  use 0 to mean EOR/EOF.  If there is no distinct stop char, use the same char
- *  for both the c and s params.
+ *  scanning can 'find' an ascii char in a binary field.  Be careful!
  *
  * RETURNS: PDC_error_t
- *         PDC_OK    => goal/stop char found, IO cursor now points to just beyond char
+ *         PDC_OK    => f/s found, IO cursor now points to just beyond char
  *                      (corresponding eat param non-zero) or to the char (eat param zero).
- *                      if c_out, *c_out set to the ASCII version of the char that was found
- *                      if offset_out, *offset_out set to the distance scanned to find that char
- *                      (0 means the IO cursor was already pointing at the found char)
+ *                      Sets (*f_found_out) to 1 if f was found, 0 if s was found.
+ *                      Sets (*offset_out) to the distance scanned to find the char
+ *                      (0 means the IO cursor was already pointing at the char).
  *         PDC_ERR   => char not found, IO cursor unchanged
  * 
+ * =============================
+ * STRING LITERAL SCAN FUNCTIONS
+ * =============================
+ *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
  * PDC_str_lit_scan1              PDC_a_str_lit_scan1            PDC_e_str_lit_scan1
@@ -1160,87 +1209,118 @@ ssize_t      PDC_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_l
  * PDC_str_lit_scan2              PDC_a_str_lit_scan2            PDC_e_str_lit_scan2
  * PDC_Cstr_lit_scan2             PDC_a_Cstr_lit_scan2           PDC_e_Cstr_lit_scan2
  *
- * These functions are similar to the character scan functions, except ASCII goal
- * and stop strings are given.  These strings are converted to EBCDIC if an EBCDIC form
- * is used or if a DEFAULT form is used and pdc->disc->def_charset is PDC_charset_EBCDIC.
+ * These functions are similar to the character scan functions, except ASCII find
+ * and stop strings f and s are given.  String literals are passed as arguments in one of
+ * two ways:
+ *    + The str_lit  scan functions take type PDC_string*
+ *    + The Cstr_lit scan functions take type const char*
  *
- * If there is no stop string, a NULL stop string should be used.  For the scan2
- * functions, on PDC_OK, if str_out is set then (*str_out) points to the
- * original ASCII version of either findStr or stopStr, depending on which was
- * found.  For both scan1 and scan2 functions, if offset is set then
- * (*offset_out) is set to the distance scanned to find the string (0 means the
- * IO cursor was already pointing at the string). If the corresponding eat param
- * is non-zero (eat_findStr for findStr, eat_stopStr for stopStr), the IO cursor
- * points just beyond the string literal that was found, otherwise it points to
- * the start of the string that was found.  On PDC_ERR, the IO cursor is
- * unchanged. 
+ * The input strings are converted internally to EBCDIC if an EBCDIC form
+ * is used or if a DEFAULT form is used and pdc->disc->def_charset is PDC_charset_EBCDIC.
+ * (The input args are unchanged.)
+ *
+ * If there is no stop string, a scan1 function should be used.  For the scan2
+ * functions, on PDC_OK, sets (*f_found_out) to 1 if f was found, to 0 is s was
+ * found.  For both scan1 and scan2 functions, sets (*offset_out) to the
+ * distance scanned to find the string (0 means the IO cursor was already
+ * pointing at the string). If the corresponding eat param is non-zero (eat_f
+ * for f, eat_s for s), the IO cursor points just beyond the string literal that
+ * was found, otherwise it points to the start of the string that was found.  On
+ * PDC_ERR, the IO cursor is unchanged.
+ *
+ * =================================
+ * REGULAR EXPRESSION SCAN FUNCTIONS
+ * =================================
+ *
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * PDC_RE_scan1                   PDC_a_RE_scan1                 PDC_e_RE_scan1
+ * PDC_RE_scan2                   PDC_a_RE_scan2                 PDC_e_RE_scan2
+ *
+ * These functions are similar to the string literal scan functions except they
+ * take a find regular expresssion f and (for scan2) a stop regular expression s.
+ * The RE scan functions all have PDC_regexp_t* regular expression arguments.
+ * See the section 'REGULAR EXPRESSION MACROS' below for convenient ways to
+ * initialize PDC_regexp_t values.
+ * 
+ * If there is no stop case, a scan1 function should be used.  For the scan2
+ * functions, on PDC_OK, sets (*f_found_out) to 1 if f was found, to 0 if s was
+ * found.  For both scan1 and scan2 functions, sets (*offset_out) to the
+ * distance scanned to find the start of the match (0 means the matching
+ * characters begin at the current IO cursor position). If the corresponding eat
+ * param is non-zero (eat_f for f, eat_s for s), the IO cursor points just
+ * beyond the set of matching characters, otherwise it points to the first
+ * matching character.  On PDC_ERR, the IO cursor is unchanged.
  */
 
 #ifdef FOR_CKIT
 #if PDC_CONFIG_READ_FUNCTIONS > 0
 
 #if PDC_CONFIG_A_CHAR_STRING > 0
-PDC_error_t PDC_a_char_lit_scan1 (PDC_t *pdc, PDC_char c, int eat_c, int panic,
-				  size_t *offset_out);
-PDC_error_t PDC_a_str_lit_scan1  (PDC_t *pdc, const PDC_string *findStr,
-				  int eat_findStr, int panic,
-			          size_t *offset_out);
-PDC_error_t PDC_a_Cstr_lit_scan1 (PDC_t *pdc, const char *findStr,
-				  int eat_findStr, int panic,
-				  size_t *offset_out);
+PDC_error_t PDC_a_char_lit_scan1 (PDC_t *pdc, PDC_char f,          int eat_f, int panic, size_t *offset_out);
+PDC_error_t PDC_a_str_lit_scan1  (PDC_t *pdc, const PDC_string *f, int eat_f, int panic, size_t *offset_out);
+PDC_error_t PDC_a_Cstr_lit_scan1 (PDC_t *pdc, const char *f,       int eat_f, int panic, size_t *offset_out);
+PDC_error_t PDC_a_RE_scan1       (PDC_t *pdc, PDC_regexp_t *f,     int eat_f, int panic, size_t *offset_out);
 
-PDC_error_t PDC_a_char_lit_scan2 (PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s, int panic,
-				  PDC_char *c_out, size_t *offset_out);
-PDC_error_t PDC_a_str_lit_scan2  (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
-				  int eat_findStr, int eat_stopStr, int panic,
-			          PDC_string **str_out, size_t *offset_out);
-PDC_error_t PDC_a_Cstr_lit_scan2 (PDC_t *pdc, const char *findStr, const char *stopStr,
-				  int eat_findStr, int eat_stopStr, int panic,
-				  const char **str_out, size_t *offset_out);
+PDC_error_t PDC_a_char_lit_scan2 (PDC_t *pdc, PDC_char f, PDC_char s,
+				  int eat_f, int eat_s, int panic,
+				  int *f_found_out, size_t *offset_out);
+PDC_error_t PDC_a_str_lit_scan2  (PDC_t *pdc, const PDC_string *f, const PDC_string *s,
+				  int eat_f, int eat_s, int panic,
+			          int *f_found_out, size_t *offset_out);
+PDC_error_t PDC_a_Cstr_lit_scan2 (PDC_t *pdc, const char *f, const char *s,
+				  int eat_f, int eat_s, int panic,
+				  int *f_found_out, size_t *offset_out);
+PDC_error_t PDC_a_RE_scan2       (PDC_t *pdc, PDC_regexp_t *f, PDC_regexp_t *s,
+				  int eat_f, int eat_s, int panic,
+				  int *f_found_out, size_t *offset_out);
 #endif
 
 #if PDC_CONFIG_E_CHAR_STRING > 0
-PDC_error_t PDC_e_char_lit_scan1 (PDC_t *pdc, PDC_char c, int eat_c, int panic,
-				  size_t *offset_out);
-PDC_error_t PDC_e_str_lit_scan1  (PDC_t *pdc, const PDC_string *findStr,
-				  int eat_findStr, int panic,
-			          size_t *offset_out);
-PDC_error_t PDC_e_Cstr_lit_scan1 (PDC_t *pdc, const char *findStr,
-				  int eat_findStr, int panic,
-				  size_t *offset_out);
+PDC_error_t PDC_e_char_lit_scan1 (PDC_t *pdc, PDC_char f,          int eat_f, int panic, size_t *offset_out);
+PDC_error_t PDC_e_str_lit_scan1  (PDC_t *pdc, const PDC_string *f, int eat_f, int panic, size_t *offset_out);
+PDC_error_t PDC_e_Cstr_lit_scan1 (PDC_t *pdc, const char *f,       int eat_f, int panic, size_t *offset_out);
+PDC_error_t PDC_e_RE_scan1       (PDC_t *pdc, PDC_regexp_t *f,     int eat_f, int panic, size_t *offset_out);
 
-PDC_error_t PDC_e_char_lit_scan2 (PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s, int panic,
-				  PDC_char *c_out, size_t *offset_out);
-PDC_error_t PDC_e_str_lit_scan2  (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
-				  int eat_findStr, int eat_stopStr, int panic,
-			          PDC_string **str_out, size_t *offset_out);
-PDC_error_t PDC_e_Cstr_lit_scan2 (PDC_t *pdc, const char *findStr, const char *stopStr,
-				  int eat_findStr, int eat_stopStr, int panic,
-				  const char **str_out, size_t *offset_out);
+PDC_error_t PDC_e_char_lit_scan2 (PDC_t *pdc, PDC_char f, PDC_char s,
+				  int eat_f, int eat_s, int panic,
+				  int *f_found_out, size_t *offset_out);
+PDC_error_t PDC_e_str_lit_scan2  (PDC_t *pdc, const PDC_string *f, const PDC_string *s,
+				  int eat_f, int eat_s, int panic,
+			          int *f_found_out, size_t *offset_out);
+PDC_error_t PDC_e_Cstr_lit_scan2 (PDC_t *pdc, const char *f, const char *s,
+				  int eat_f, int eat_s, int panic,
+				  int *f_found_out, size_t *offset_out);
+PDC_error_t PDC_e_RE_scan2       (PDC_t *pdc, PDC_regexp_t *f, PDC_regexp_t *s,
+				  int eat_f, int eat_s, int panic,
+				  int *f_found_out, size_t *offset_out);
 #endif
 
 #if PDC_CONFIG_A_CHAR_STRING > 0 && PDC_CONFIG_E_CHAR_STRING > 0
-PDC_error_t PDC_char_lit_scan1   (PDC_t *pdc, PDC_char c, int eat_c, int panic,
-			          size_t *offset_out);
-PDC_error_t PDC_str_lit_scan1    (PDC_t *pdc, const PDC_string *findStr,
-				  int eat_findStr, int panic,
-			          size_t *offset_out);
-PDC_error_t PDC_Cstr_lit_scan1   (PDC_t *pdc, const char *findStr,
-				  int eat_findStr, int panic,
-				  size_t *offset_out);
+PDC_error_t PDC_char_lit_scan1   (PDC_t *pdc, PDC_char f,          int eat_f, int panic, size_t *offset_out);
+PDC_error_t PDC_str_lit_scan1    (PDC_t *pdc, const PDC_string *f, int eat_f, int panic, size_t *offset_out);
+PDC_error_t PDC_Cstr_lit_scan1   (PDC_t *pdc, const char *f,       int eat_f, int panic, size_t *offset_out);
+PDC_error_t PDC_RE_scan1         (PDC_t *pdc, PDC_regexp_t *f,     int eat_f, int panic, size_t *offset_out);
 
-PDC_error_t PDC_char_lit_scan2   (PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s, int panic,
-			          PDC_char *c_out, size_t *offset_out);
-PDC_error_t PDC_str_lit_scan2    (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
-				  int eat_findStr, int eat_stopStr, int panic,
-			          PDC_string **str_out, size_t *offset_out);
-PDC_error_t PDC_Cstr_lit_scan2   (PDC_t *pdc, const char *findStr, const char *stopStr,
-				  int eat_findStr, int eat_stopStr, int panic,
-				  const char **str_out, size_t *offset_out);
+PDC_error_t PDC_char_lit_scan2   (PDC_t *pdc, PDC_char f, PDC_char s,
+				  int eat_f, int eat_s, int panic,
+			          int *f_found_out, size_t *offset_out);
+PDC_error_t PDC_str_lit_scan2    (PDC_t *pdc, const PDC_string *f, const PDC_string *s,
+				  int eat_f, int eat_s, int panic,
+			          int *f_found_out, size_t *offset_out);
+PDC_error_t PDC_Cstr_lit_scan2   (PDC_t *pdc, const char *f, const char *s,
+				  int eat_f, int eat_s, int panic,
+				  int *f_found_out, size_t *offset_out);
+PDC_error_t PDC_RE_scan2         (PDC_t *pdc, PDC_regexp_t *f, PDC_regexp_t *s,
+				  int eat_f, int eat_s, int panic,
+				  int *f_found_out, size_t *offset_out);
 #endif
 
 #endif /* PDC_CONFIG_READ_FUNCTIONS */
 #endif /* FOR_CKIT */
+
+
+
 
 /* ================================================================================
  * LITERAL READ FUNCTIONS
@@ -1344,9 +1424,8 @@ PDC_error_t PDC_Cstr_lit_read  (PDC_t *pdc, const PDC_base_m *m,
  *           + pd->errCode set to PDC_COUNT_MAX_LIMIT
  *           + pd->loc begin/end set to current IO cursor location
  *     PDC_ERR returned
- *   4. EOR is encountered, or EOF is encounterd and eor_required is zero
- *     if res_out, *res_out is set to the number of occurrences of x
- *     from the IO cursor to EOR/EOF.
+ *   4. EOR is encountered, or EOF is encounterd and eor_required is zero.
+ *     (*res_out) is set to the number of occurrences of x from the IO cursor to EOR/EOF.
  *     PDC_OK returned
  *
  * countXtoY outcomes:
@@ -1366,7 +1445,7 @@ PDC_error_t PDC_Cstr_lit_read  (PDC_t *pdc, const PDC_base_m *m,
  *           + pd->loc begin/end set to current IO cursor location
  *     PDC_ERR returned
  *   4. Char y is found
- *     if res_out, *res_out is set to the number of occurrences of x
+ *     (*res_out) is set to the number of occurrences of x
  *     from the IO cursor to first y.
  *     PDC_OK returned
  */
@@ -1473,13 +1552,13 @@ PDC_error_t PDC_char_read   (PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, P
  *
  * If an expected stop char/pattern/width is found, PDC_OK is returned.
  * If !m || *m == PDC_CheckAndSet, then:
- *   + if s_out is non-null it is set to contain an in-memory string.
+ *   + (*s_out) is set to contain an in-memory string.
  *     If the original data is ASCII, then s_out will either share the string or contain a
  *     copy of the string, depending on pdc->disc->copy_strings.  If the original data is
  *     EBCDIC, s_out always contains a copy of the string that has been converted to ASCII.
  *     N.B. : (*s_out) should have been initialized
- *     at some point prior using PDC_string_init (it can be initialized once
- *     and re-used in string read calls many times).
+ *     at some point prior using PDC_string_init or one of the initializing PDC_STRING macros.
+ *     (It can be initialized once and re-used in string read calls many times.)
  * 
  * Cleanup note: If copy_strings is non-zero, the memory allocated by *s_out should
  *               ultimately be freed using PDC_string_cleanup.
@@ -1566,7 +1645,7 @@ PDC_error_t PDC_string_CSE_read  (PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t 
  * ASCII chars.
  *
  * If the current IO cursor position points to a valid date string:
- *   + if res_out, sets *res_out to the resulting date in seconds since the epoch
+ *   + Sets (*res_out) to the resulting date in seconds since the epoch
  *   + advances the IO cursor position to just after the last legal character
  *     in the date string
  *   + returns PDC_OK
@@ -3188,18 +3267,6 @@ unsigned int PDC_spec_level    (PDC_t *pdc);
 /* ================================================================================
  * REGULAR EXPRESSION SUPPORT
  *
- * PDC_regexp_compile: if regexp is a valid regular expression, this function
- * allocates a new compiled regular expression obj, assigns a handle to the obj
- * to (*regexp_out), and returns PDC_OK.  If regexp_out is NULL or regexp is
- * not valid, it returns PDC_ERR.
- *
- * PDC_regexp_free takes a handle to a compiled regexp obj and frees the obj.
- */
-
-PDC_error_t PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out);
-PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
-
-/*
  * PADS regular expressions support the full posix regex specification,
  * and also support many of the Perl extensions.  For the complete details,
  * see the PADS manual (not yet!).   If you have Perl installed, you can use
@@ -3348,6 +3415,124 @@ PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
  * use that class in regular expressions that occur later in the file.  See
  * the PADS manual for details.
  */
+
+/* PDC_regexp_t: COMPILED REGULAR EXPRESSIONS
+ *
+ * The scan and read functions that take regular expressions as arguments
+ * require pointers to compiled regular expressions, type PDC_regexp_t*.
+ *
+ * A PDC_regexp_t contains two things:
+ *    1. a boolean, valid, which indicates whether the PDC_regexp_t
+ *       contains a valid compiled regular expression.
+ *    2. some private state (an internal represention of the compiled regular expression)
+ *       which should be ignored by the users of the library.
+ *
+ * Here is the type decl:
+ */
+
+/* type PDC_regexp_t: */
+struct PDC_regexp_s {
+  int                  valid;
+  PDC_REGEXP_T_PRIVATE_STATE;
+};
+
+/* If my_regexp.valid is non-zero, then my_regexp requires cleanup when no longer needed.
+ *
+ * Upon declaring a PDC_regexp_t, one should set valid to 0.
+ * You can do this directly, as in:
+ *
+ *     PDC_regexp_t my_regexp = { 0 };
+ *
+ * or you can use the preferred method, which is to use the following macro:
+ *
+ *     PDC_REGEXP_DECL_NULL(my_regexp);
+ *
+ * When through with a PDC_regexp_t, one should call PDC_regexp_cleanup, as in:
+ *
+ *      PDC_regexp_cleanup(pdc, &my_regexp);
+ * 
+ * to clean up any private state that may have been allocated.
+ *
+ * The following functions are used to compile a string into a PDC_regexp_t
+ * and to cleanup a PDC_regexp_t when it is no longer needed.  They should
+ * passed a pointer to a properly initialized (null or valid) PDC_regexp_t.
+ *
+ * PDC_regexp_compile: if regexp_str is a string containing a valid regular
+ * expression, this function fills in (*regexp) and returns PDC_OK.
+ * If the string is not a valid regular expression, it returns PDC_ERR.
+ *
+ * PDC_regexp_compile_Cstr: like PDC_regexp_compile, but takes a
+ * const char* argument rather than a const PDC_string* argument.
+ *
+ * Both compile functions will perform a cleanup action if regexp->valid is
+ * non-zero prior to doing the compilation, and they both set regexp->valid
+ * to 0 if the compilation fails and to 1 if it succeeds.  Thus, if a 
+ * only
+ *
+ * Note that if you use a PDC_regexp_t to hold more than one compiled
+ * regular expression over time, you only need to call PDC_regexp_cleanup
+ * after the final use.   Here is an example of correct usage:
+ *
+ *     PDC_REGEXP_DECL_NULL(my_regexp);
+ *     ...
+ *     // use my_regexp to hold regular expression /aaa/ :
+ *     PDC_regexp_compile_Cstr(pdc, "/aaa/", &my_regexp);
+ *     PDC_string_ME_read(pdc, ..., &my_regexp, ...);
+ *     // done using my_regexp for /aaa/
+ *
+ *     // use my_regexp to hold regular expression /bbb/ :
+ *     PDC_regexp_compile_Cstr(pdc, "/bbb/", &my_regexp);
+ *     PDC_string_ME_read(pdc, ..., &my_regexp, ...);
+ *     // done using my_regexp for /bbb/
+ *
+ *     // done using my_regexp, do a final cleanup step:
+ *     PDC_regexp_cleanup(pdc, &my_regexp);
+ */
+
+#ifdef FOR_CKIT
+PDC_error_t PDC_regexp_compile(PDC_t *pdc, const PDC_string *regexp_str, PDC_regexp_t *regexp);
+PDC_error_t PDC_regexp_compile_Cstr(PDC_t *pdc, const char *regexp_str, PDC_regexp_t *regexp);
+PDC_error_t PDC_regexp_cleanup(PDC_t *pdc, PDC_regexp_t *regexp);
+#endif
+
+/* REGULAR EXPRESSION MACROS
+ * -------------------------
+ * The PDC_REGEXP_FROM macros convert various simple forms into regular expression
+ * strings and then compile those strings into an existing PDC_regexp_t, my_regexp.
+ * my_regexp must already have been declared.  All of these macros translate into
+ * compile calls, thus one can check my_regexp.valid after any of these calls to 
+ * check whether the result is a valid compiled regular expression.  (For example,
+ * the macros that turn strings into regular expressions will fail if the string has
+ * length zero.)
+ *
+ * PDC_REGEXP_LIT_FROM_CHAR(pdc, my_regexp, char_expr);
+ *
+ * ==> Constructs a compiled regular expression that will match one character ==
+ * the value of char_expr.  Suppose char_expr is 'a'.  The regular
+ * expression string that is compiled into my_regexp has the form:
+ *
+ *     "/a/l" ==> trivial match of character 'a'
+ *
+ * PDC_REGEXP_LIT_FROM_STR(pdc, my_regexp, str_expr);
+ *
+ * ==> Constructs a compiled regular expression that will match the value of
+ * str_expr, a PDC_string*.  Suppose str_expr refers to string
+ * "baz".  The regular expression string that is compiled into my_regexp has the
+ * form:
+ *
+ *    "/baz/l"  ==> trival match of string "baz"
+ *
+ * PDC_REGEXP_LIT_FROM_CSTR(pdc, my_regexp, str_expr);
+ *
+ * This form is like PDC_REGEXP_LIT_FROM_STR, except str_expr is a const char*
+ * (a C string) rather than a PDC_string*.
+ */
+
+#ifdef FOR_CKIT
+void PDC_REGEXP_LIT_FROM_CHAR(PDC_t *pdc, PDC_regexp_t my_regexp, PDC_char char_expr);
+void PDC_REGEXP_LIT_FROM_STR(PDC_t *pdc, PDC_regexp_t my_regexp, PDC_string *str_expr);
+void PDC_REGEXP_LIT_FROM_CSTR(PDC_t *pdc, PDC_regexp_t my_regexp, const char *str_expr);
+#endif
 
 /* ================================================================================
  * MISC ROUTINES

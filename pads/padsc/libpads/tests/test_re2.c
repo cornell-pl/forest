@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   PDC_t          *pdc;
   PDC_disc_t      my_disc = PDC_default_disc;
   PDC_IO_disc_t  *io_disc;
-  PDC_regexp_t   *regexp;
+  PDC_REGEXP_DECL_NULL(regexp);
   size_t          matchlen;
   int             i, n, eret, bor, eor, pin;
   PDC_byte       *begin, *end;
@@ -49,32 +49,32 @@ int main(int argc, char** argv) {
   begin = (PDC_byte*)str;
   end   = (PDC_byte*)(str + str_len);
 
-  if (PDC_ERR == PDC_regexp_compile(pdc, exp, &regexp)) {
+  if (PDC_ERR == PDC_regexp_compile_Cstr(pdc, exp, &regexp)) {
     error(ERROR_FATAL, "Failed to compile re %s", PDC_qfmt_Cstr(exp, exp_len));
   }
-  error(0, "\ncompiled regexp, nsub = %d\n", regexp->preg.re_nsub);
+  error(0, "\ncompiled regexp, nsub = %d\n", regexp.preg.re_nsub);
 
   e_flags = 0;
   if (pin) { e_flags |= REG_LEFT; }
   if (!bor) { e_flags |= REG_NOTBOL; }
   if (!eor) { e_flags |= REG_NOTEOL; }
-  eret = PDCI_regexp_match(pdc, regexp, begin, end, e_flags, PDC_charset_ASCII);
-  matchlen = regexp->match[0].rm_eo - regexp->match[0].rm_so;
+  eret = PDCI_regexp_match(pdc, &regexp, begin, end, e_flags, PDC_charset_ASCII);
+  matchlen = regexp.match[0].rm_eo - regexp.match[0].rm_so;
   error(0, "match of RE %s against string %s produced matchlen %d, res %s",
 	PDC_qfmt_Cstr(exp, exp_len), PDC_qfmt_Cstr(str, str_len), (int)matchlen, false_true[eret]);
   if (!eret) {
 #ifdef DEBUG_REGEX
-    n = regexp->preg.re_nsub;
+    n = regexp.preg.re_nsub;
 #else
     n = 0;
 #endif
     for (i = 0; i <= n; i++) {
       error(0, "      sub %d so %d eo %d = \"%.*s\"",
 	    i,
-	    regexp->match[i].rm_so,
-	    regexp->match[i].rm_eo,
-	    regexp->match[i].rm_eo - regexp->match[i].rm_so,
-	    str + regexp->match[i].rm_so);
+	    regexp.match[i].rm_so,
+	    regexp.match[i].rm_eo,
+	    regexp.match[i].rm_eo - regexp.match[i].rm_so,
+	    str + regexp.match[i].rm_so);
     }
   }
   error(0, "");

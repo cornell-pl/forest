@@ -44,5 +44,5 @@ veryclean:
 # This should only be done once
 ast_lib:
 	@(cp ast-ast/bin/package.cvs ast-ast/bin/package)
-	@(cd ast-ast; ./bin/package read; ./bin/package read ./mods/*.tgz)
+	@(cd ast-ast; ./bin/package read)
 	@(cd ast-ast; ./bin/package make)

@@ -919,14 +919,14 @@ structure CnvExt : CNVEXT = struct
 		  [P.mkCommentS ("Reading to EOR"),
 		    PT.Compound[
 			   P.varDeclS'(PL.base_pdPCT, tpd),
-			   P.varDeclS'(PL.sizePCT, "n"),
+			   P.varDeclS'(PL.sizePCT, "bytes_skipped"),
 			   PL.getLocBeginS(PT.Id pdc, P.addrX(P.dotX(PT.Id tpd, PT.Id loc))),
                            PT.IfThenElse(
 			      P.eqX(PL.PDC_OK, 
-				    PL.IOReadNextRecX(PT.Id pdc, P.addrX (PT.Id "n"))),
+				    PL.IOReadNextRecX(PT.Id pdc, P.addrX (PT.Id "bytes_skipped"))),
 			      PT.Compound
 			       [PT.IfThen(
-				 P.gtX(PT.Id "n", P.zero),
+				 PT.Id "bytes_skipped",
 				 PT.Compound
                                   [PT.IfThen(
 				    PL.getSpecLevelX(PT.Id pdc),
@@ -2276,9 +2276,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						           commentV)
                               (* base_pd tpd; *)
 			      val tpdDecl = P.varDeclS'(PL.base_pdPCT, tpd)
-			      val offsetDecl = P.varDeclS'(PL.sizePCT, "n")
-
 			      val scanFieldName = scan2Suf pTyName
+			      val offsetDecl = P.varDeclS'(PL.sizePCT, "offset")
+			      val fFoundDecl = P.varDeclS'(P.int, "f_found")
 
 			      fun genPanicRecovery (pTyName:string) : pcstmt list -> pcstmt list = 
                                         fn elseSs =>
@@ -2291,8 +2291,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						       PL.scan2FunX(scanFieldName, PT.Id pdc, 
 								    expr, expr, P.trueX, P.trueX,
 								    P.trueX, (* panic=1 *)
-								    P.zero,
-                                                                    P.addrX (PT.Id "n"))),
+								    P.addrX (PT.Id "f_found"),
+                                                                    P.addrX (PT.Id "offset"))),
 						 (* PDC_PS_unsetPanic(pd) *)
 						 PT.Compound[PL.unsetPanicS(PT.Id pd)])
                                               ], 
@@ -2327,10 +2327,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					    PL.scan2FunX(scanFieldName, 
 							 PT.Id pdc, expr, expr, P.trueX, P.trueX,
 							 P.falseX, (* panic=0 *)
-							 P.zero, P.addrX (PT.Id "n"))),
+							 P.addrX (PT.Id "f_found"),
+							 P.addrX (PT.Id "offset"))),
 				      PT.Compound(
 					 [PT.IfThen(
-                                           P.gtX(PT.Id "n", P.zero),
+                                           PT.Id "offset",
 					   PT.Compound(
 						  reportBriefErrorSs (PL.PDC_STRUCT_EXTRA_BEFORE_SEP, 
 						                     "Extra data before separator", ~2)))]),
@@ -2344,6 +2345,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				    PT.Compound(
 				     tpdDecl 
 				     :: offsetDecl
+				     :: fFoundDecl
 				     :: litdecls
 				     @ (genPanicRecovery pTyName notPanicSs))])]
 			  end
@@ -2418,7 +2420,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val returnS = genReturnChk (P.arrowX(PT.Id pd, PT.Id nerr))
 		      val bodySs = bodySs @ [returnS]
 
-		      val readFunEDs = genReadFun(readName, cParams, mPCT,pdPCT,canonicalPCT, 
+		      val readFunEDs = genReadFun(readName, cParams, mPCT, pdPCT, canonicalPCT, 
 						  mFirstPCT, true, bodySs)
 
                       val readEDs = initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
@@ -3821,10 +3823,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  val foundTerm    = "foundTerm"
 		 val reachedLimit = "reachedLimit"
 
-                 fun eqTest (isString, e1, e2) = if isString 
-						     then P.eqX(P.zero, PL.strCmp(e1,e2))
-						 else P.eqX(e1,e2)
-
 		 val resBufferX   = fieldX(rep, elts)
 		 val indexX       = P.minusX(fieldX(rep,length), P.intX 1)
 		 val resNext      = P.subX(resBufferX, indexX)
@@ -3889,7 +3887,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      case termXOpt of NONE => (P.intX 0, [])
 			    | SOME(termX,cTermX,_,_,_,_) => 
 				  let val chkTermSs = 
-				      [PT.IfThen(eqTest(isString, PT.Id "c", termX),
+				      [PT.IfThen(P.notX(PT.Id "f_found"),
 					 PT.Compound[
 				          recordArrayErrorS([locES1], locX,
 							    PL.PDC_ARRAY_EXTRA_BEFORE_TERM,true,
@@ -3899,26 +3897,23 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  in
 				    (termX, chkTermSs)
 				  end
-			  val gapDecl = if isString then P.varDeclS'(P.ccharPtr, "c")
-					else P.varDeclS'(P.uchar, "c")
-
 		      in
                        [P.mkCommentS("Array not finished; read separator."),
                          PT.Compound[
-                         gapDecl,
-		 	 P.varDeclS'(PL.sizePCT, "n"),
+			 P.varDeclS'(P.int, "f_found"),
+			 P.varDeclS'(PL.sizePCT, "offset"),
 			 locBS,
 		         PT.IfThenElse(
 			    P.eqX(PL.PDC_OK,
 				  PL.scan2FunX(scanSep, PT.Id pdc, 
 					       sepX, scanStopX, P.trueX, P.falseX,
 					       P.falseX, (* panic=0 *)
-					       P.addrX (PT.Id "c"),
-					       P.addrX (PT.Id "n"))),
+					       P.addrX (PT.Id "f_found"),
+					       P.addrX (PT.Id "offset"))),
 			    PT.Compound[
                               PT.IfThen(amCheckingBasicE NONE, 
 	  		       PT.Compound[ (* if am checking *)
-			         PT.IfThenElse(P.andX(eqTest(isString, PT.Id "c", sepX),P.gtX(PT.Id "n", P.zero)),
+			         PT.IfThenElse(P.andX(PT.Id "f_found", PT.Id "offset"),
 				    recordArrayErrorS([locES],locX,PL.PDC_ARRAY_EXTRA_BEFORE_SEP, true,
 						      readName,"", [],false),
                                     PT.Compound (chkTermSs))])],
@@ -3971,12 +3966,15 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                          val recoveryFailedSs = P.mkCommentS("Recovery failed.") :: panicSs
 			 val noRecoverySs = P.mkCommentS("No recovery possible.") :: panicSs
 			 fun recoverToCharSs (which, scan, forX, stopX, eatForX, eatStopX) = [
+			          P.varDeclS'(P.int, "f_found"),
+			          P.varDeclS'(PL.sizePCT, "offset"),
 				  P.mkCommentS("Try to recover to " ^ which ^"."),
 				  PT.IfThenElse(P.eqX(PL.PDC_OK,
 						   PL.scan2FunX(scan, PT.Id pdc, 
 							        forX, stopX, eatForX, eatStopX,
 							        P.trueX, (* panic=1 *)
-							        P.zero, P.zero)),
+							        P.addrX (PT.Id "f_found"),
+					                        P.addrX (PT.Id "offset"))),
                                     PT.Compound[
 				     P.mkCommentS("We recovered; restored invariant.")],
 				    PT.Compound(recoveryFailedSs)
@@ -4074,13 +4072,16 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			 [P.mkCommentS("End of loop. Read trailing terminator if there was trailing junk."),
 			  PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd),P.notX(PT.Id foundTerm)),
 			   PT.Compound[
+			   P.varDeclS'(P.int, "f_found"),
+			   P.varDeclS'(PL.sizePCT, "offset"),
 			   locBS,
 		           PT.IfThenElse(
 			     P.eqX(PL.PDC_OK,
 				  PL.scan2FunX(termScan, PT.Id pdc, 
 					       termX, termX, P.falseX, P.falseX,
 					       P.falseX, (* panic=0 *)
-					       P.zero, P.zero)),
+					       P.addrX (PT.Id "f_found"),
+					       P.addrX (PT.Id "offset"))),
                              PT.Compound[
 			      PT.IfThen(amCheckingBasicE NONE, 
 			        PT.Compound[

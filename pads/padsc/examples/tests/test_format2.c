@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
   PDC_IO_disc_t   *io_disc;
   int             ctr;
   size_t          n;
-  unsigned char   c;
+  int             f_found;
   PDC_t*          pdc;
   PDC_disc_t      my_disc = PDC_default_disc;
   PDC_base_pd     pd = {0};
@@ -34,8 +34,8 @@ int main(int argc, char** argv) {
    */
   ctr = 0;
   while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == PDC_a_char_lit_scan2(pdc, '|', '\n', 1, 1, 0, &c, &n)) {
-      if (c == '|') { 
+    if (PDC_OK == PDC_a_char_lit_scan2(pdc, '|', '\n', 1, 1, 0, &f_found, &n)) {
+      if (f_found) { 
 	ctr++;
 	PDC_IO_checkpoint(pdc, 1);
 	if (PDC_OK == PDC_a_char_lit_read(pdc, &m, &pd, 'a')) {

@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   PDC_disc_t      my_disc = PDC_default_disc;
   size_t          bytes_skipped;
   unsigned long   ultmp;
-  PDC_regexp_t    *my_regexp;
+  PDC_REGEXP_DECL_NULL(my_regexp);
 
   error(0, "\nUsing PADSC IO discipline nlrec\n\n");
   io_disc = PDC_nlrec_make(0);
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_regexp_compile(pdc, "/[X]|$/", &my_regexp)) {
+  if (PDC_ERR == PDC_regexp_compile_Cstr(pdc, "/[X]|$/", &my_regexp)) {
     error(2, "** unexpected regexp compile failure **");
     exit(-1);
   }
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
       PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_a_string_CSE_read(pdc, &m, my_regexp, &pd, &s)) {
+    if (PDC_ERR == PDC_a_string_CSE_read(pdc, &m, &my_regexp, &pd, &s)) {
       break;
     } else {
       error(0, "Read string term by EOR or X : %s (length %d)", PDC_fmt_str(&s), s.len);
@@ -82,6 +82,7 @@ int main(int argc, char** argv) {
 
  done:
   PDC_string_cleanup(pdc, &s);
+  PDC_regexp_cleanup(pdc, &my_regexp);
 
   if (PDC_ERR == PDC_IO_close(pdc)) {
     error(2, "*** PDC_IO_close failed ***");

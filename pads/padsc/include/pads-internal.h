@@ -38,6 +38,37 @@
 #define PDCI_MacroArg2String(s) #s
 #endif
 
+/* ----------------------
+ * PDC_REGEXP_DECL macros
+ * ----------------------
+ */
+
+#define PDC_REGEXP_DECL_NULL(my_regexp) \
+  PDC_regexp_t my_regexp = { 0 }
+
+/* ----------------------
+ * PDC_STRING_DECL macros
+ * ----------------------
+ * (note final args 0, 1 ==> initial null rbuf ptr, sharing set)
+ */
+
+#define PDC_STRING_DECL_NULL(var_nm) \
+  PDC_string var_nm = { 0, 0, 0, 0 }
+
+#define PDC_STRING_DECL_LIT(var_nm, str_lit) \
+  PDC_string var_nm = { str_lit, sizeof(str_lit), 0, 1 }
+
+#define PDC_STRING_DECL_CSTR(var_nm, Cstr_expr) \
+  PDC_string var_nm = { Cstr_expr, strlen(Cstr_expr), 0, 1 }
+
+#define PDC_STRING_DECL_CSTR_LEN(var_nm, char_ptr_expr, length_expr) \
+  PDC_string var_nm = { char_ptr_expr, length_expr, 0, 1 }
+
+/* --------------------------------
+ * Macros that need CKIT prototypes
+ * --------------------------------
+ */
+
 #ifdef FOR_CKIT
 /* Prototypes for CKIT */
 
@@ -1041,26 +1072,11 @@ ssize_t PDCI_uint64_2sbh_io(PDC_t *pdc, Sfio_t *io, PDC_uint64 u, PDC_uint32 num
 /* ================================================================================ */
 /* INTERNAL MISC TYPES + ROUTINES */
 
-/* XXX_REMOVE */
-/* #define DEBUG_REGEX 1 */
-
-/* type PDC_regexp_t: */
-struct PDC_regexp_s {
-  regflags_t  c_flags;
-  regflags_t  e_flags;
-  regex_t     preg;
-#ifdef DEBUG_REGEX
-  regmatch_t  match[100];
-#else
-  regmatch_t  match[1];
-#endif
-  PDC_byte   *prev_begin;
-  PDC_byte   *prev_end;
-};
-
-/* Internal version of PDC_regexp_compile, takes whatfn */
-PDC_error_t
-PDCI_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, const char *whatfn);
+PDC_error_t PDCI_regexp_compile_Cstr(PDC_t *pdc, const char *regexp_str, PDC_regexp_t *regexp, const char *whatfn);
+PDC_error_t PDCI_regexp_compile(PDC_t *pdc, const PDC_string *regexp_str, PDC_regexp_t *regexp, const char *whatfn);
+PDC_error_t PDCI_regexp_cleanup(PDC_t *pdc, PDC_regexp_t *regexp, const char *whatfn);
+int         PDCI_regexp_match(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end,
+			      regflags_t e_flags, PDC_charset char_set);
 
 /*  PDCI_regexp_match returns 0 on success (match), non-zero on failure.
  *  On success, the offset of the matched characters is given by:
@@ -1075,8 +1091,6 @@ PDCI_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, c
  *        set REG_NOTBOL  if begin is not at bor (beginning of record)
  *        set REG_NOTEOL  if end is not at eor (end of record)
  */
-int PDCI_regexp_match(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end,
-		      regflags_t e_flags, PDC_charset char_set);
 
 /* Accum impl helpers:
  *

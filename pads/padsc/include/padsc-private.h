@@ -14,7 +14,23 @@
 /* private string state used to manage string memory */
 #define PDC_STRING_PRIVATE_STATE \
   RBuf_t       *rbuf; \
-  int          sharing
+  int           sharing
+
+
+/* private PDC_regexp_t state */
+
+/* XXX_REMOVE */
+/* #define DEBUG_REGEX 1 */
+
+#ifdef DEBUG_REGEX
+#define PDCI_REGEXP_MATCH_SZ 100
+#else
+#define PDCI_REGEXP_MATCH_SZ 1
+#endif
+
+#define PDC_REGEXP_T_PRIVATE_STATE \
+  regex_t     preg; \
+  regmatch_t  match[PDCI_REGEXP_MATCH_SZ]
 
 #define PDC_PRIVATE_DECLS typedef struct PDCI_stkElt_s PDCI_stkElt_t
 

@@ -23,6 +23,7 @@ HELPERS = myrand cvt_ebcdic_to_ascii cvt_ascii_to_ebcdic dttest
 
 LIBTESTS_O = rwtest1 \
            recrwtest1 \
+           re_scan_test \
            io_openclose_test \
            ebcdic_test \
            cobol_ebc_test \
@@ -66,6 +67,7 @@ regress_o : sanity_check \
           regress_sb_test_o \
           regress_bcd_fpoint_test_o \
           regress_ebc_fpoint_test_o \
+          regress_re_scan_test_o \
           regress_rwtest1_o \
           regress_recrwtest1_o
 	@echo " "; echo "DONE"; echo " "
@@ -82,6 +84,7 @@ regress_d : sanity_check \
           regress_sb_test_d \
           regress_bcd_fpoint_test_d \
           regress_ebc_fpoint_test_d \
+          regress_re_scan_test_d \
           regress_rwtest1_d \
           regress_recrwtest1_d
 	@echo " "; echo "DONE"; echo " "
@@ -127,6 +130,11 @@ regress_libtest4_d : libtest4-g
 regress_ebcdic_libtest4_o : ebcdic_libtest4
 	@(args=""; suf=""; $(RegressDef))
 regress_ebcdic_libtest4_d : ebcdic_libtest4-g
+	@(args=""; suf=""; $(RegressDef))
+
+regress_re_scan_test_o : re_scan_test
+	@(args=""; suf=""; $(RegressDef))
+regress_re_scan_test_d : re_scan_test-g
 	@(args=""; suf=""; $(RegressDef))
 
 regress_ebcdic_test_o : ebcdic_test
