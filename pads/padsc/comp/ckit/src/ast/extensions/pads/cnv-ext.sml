@@ -1157,18 +1157,21 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                  PT.Expr(PT.Call(PT.Id "failwith",[PT.String errorString])))]
 	
 		  (* PDCI_MK_TNODE: common in foo_children function *)
-		  fun macroTNode (returnName, structId, valStr, valId, cnvName) = 
-		      [P.mkCommentS "parse descriptor child",
-		       PT.Expr(PT.Call(PL.PDCI_MK_TNODE,	
-                                       [P.subX(returnName,P.intX 0), 
+		  fun macroTNodeCall (returnName, index, structId, valStr, valId, cnvName) = 
+		       [PT.Expr(PT.Call(PL.PDCI_MK_TNODE,	
+                                       [P.subX(returnName,index), 
                                         P.addrX(PT.Id (vTableSuf structId)),
                                         PT.Id self, 
                                         PT.String valStr, 
-                                        PT.Id valId,
+                                        valId,
                                         PT.String cnvName]))]
 
+		  fun macroTNode (returnName, structId, valStr, valId, cnvName) = 
+		      (P.mkCommentS "parse descriptor child")::
+		       macroTNodeCall(returnName,P.zero,structId,valStr,valId,cnvName)
+
 		  (* PDCI_MK_NODE: common in foo_children function *)
-		  fun macroNodeCall' (returnName,n,tyField,nameField,getField1,getField2,getField3,nameStruct) = 
+		  fun macroNodeCall (returnName,n,tyField,nameField,getField1,getField2,getField3,nameStruct) = 
 	  	      PT.Expr(PT.Call(PL.PDCI_MK_NODE,
                                       [P.subX(returnName,n), 
                                        P.addrX(PT.Id (vTableSuf tyField)),
@@ -1176,35 +1179,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                        PT.String nameField, 
 				       getField1, getField2, getField3,	
                                        PT.String nameStruct])) 
-
-		  fun macroNodeCall (returnName,n,tyField,nameField,nameStruct) = (* for Struct *)
-                      macroNodeCall'(returnName,n,tyField,nameField,
-				     getFieldX(m,nameField),
-                                     getFieldX(pd,nameField),
-                                     getFieldX(rep,nameField),
-				     nameStruct)
-
-		  fun macroNodeCall1 (returnName,n,tyField,nameField,nameStruct) = (* for Union *)
-                      macroNodeCall'(returnName,n,tyField,nameField,
-				     getFieldX(m,nameField),
-                                     getFieldX(pd,"val."^nameField),
-                                     getFieldX(rep,"val."^nameField),
-				     nameStruct)
 	
-		  fun macroNodeCall2 (returnName,n,tyField,nameField,nameStruct) = (* for Typedef *)
-                      macroNodeCall'(returnName,n,tyField,nameField,
-				     getFieldX(m,nameField),
-                                     getFieldX(pd,nameField),
-                                     PT.Id rep,
-				     nameStruct)
-
-		  fun macroNodeCall3 (returnName,n,tyField,nameField,nameElem,nameElts,nameStruct) = (* for Array *)
-                      macroNodeCall'(returnName,n,tyField,nameField,
-				     getFieldX(m,nameElem),
-                                     getFieldX(pd,nameElts),
-                                     getFieldX(rep,nameElts),
-				     nameStruct)
-
 		  (* const PDCI_vtable_t foo_vtable = {foo_children,PDCI_error_typed_value,0}; *)
                   fun genGalaxVtable(name) =
 		      PT.ExternalDecl(PT.Declaration({specifiers=[PL.PDCI_vtable_t],qualifiers=[PT.CONST],storage=[]},
@@ -1544,8 +1519,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
               fun cnvCTy ctyED = 
 		  let val astdecls = cnvExternalDecl ctyED
 		  in
-		    (if not (List.length astdecls = 1) then (PE.bug "Expected no more than one external declaration") else ();
-		      case List.hd astdecls 
+		    (if not (List.length astdecls = 1) then (PE.bug "Expected no more than one external declaration") 
+                                                       else ();
+		     case List.hd astdecls 
                       of Ast.DECL(Ast.ExternalDecl (Ast.TypeDecl {shadow, tid}), aid, paid, loc) => (astdecls, tid)
                       | _ => (PE.error "Expected ast declaration"; (astdecls, Tid.new())))
 		  end
@@ -1562,8 +1538,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
 		  let val base = "base"
 		      val user = "user"
-		      val baseTyName = lookupTy(baseTy, repSuf, #padsname)
-
+		      val baseTyName = lookupTy(baseTy,repSuf,#padsname)		
+		      val baseTypeName = lookupTy(baseTy,repSuf,#repname)		
 
                       (* Generate CheckSet mask typedef case*)
 		      val baseMPCT = P.makeTypedefPCT(lookupTy(baseTy,mSuf, #mname))
@@ -1683,10 +1659,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      val baseType = P.ptrPCT(PL.base_pdPCT)
  		              val bodySs = headerGalaxChildrenFun(name) @
 					   ifGalaxChildren(returnName,P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
-					   macroTNode(returnName,PL.PDCI_structured_pd,pd,pd,cnvName) @
+					   macroTNode(returnName,PL.PDCI_structured_pd,pd,PT.Id pd,cnvName) @
 					   [P.mkCommentS "base child",
- 				 	   macroNodeCall2(returnName,P.intX 1,baseTyName,"base",cnvName),
-					   P.returnS (returnName)]
+					    macroNodeCall(returnName,P.intX 1,baseTypeName,base,
+				     			  getFieldX(m,base),getFieldX(pd,base),PT.Id rep,cnvName),
+					    P.returnS (returnName)]
                               in   
                                P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
                               end
@@ -1956,6 +1933,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val canonicalFields = if List.length canonicalFields = 0 
 			                    then (PE.warn ("PStruct "^structName^" does not contain any non-omitted fields.\n");
 						 [(dummy, PL.uint32, SOME "Dummy field inserted to avoid empty struct")])
+
 					    else canonicalFields
 		      val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
 		      val (canonicalDecls, canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
@@ -2312,12 +2290,14 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                               val paramNames = [self]
                               val paramTys = [P.ptrPCT nodeRepTy]
                               val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
-		              fun macroNode (n,(nameField,f)) = 
-					macroNodeCall(returnName,P.intX n,f,nameField,cnvName)
+		              fun macroNode (n,(nameField,tyField)) 
+					= macroNodeCall(returnName,P.intX n,tyField,nameField,
+							getFieldX(m,nameField),getFieldX(pd,nameField),
+      							getFieldX(rep,nameField),cnvName)
 			      val numChildren = countFields + 1
  		              val bodySs = headerGalaxChildrenFun(name) @
 					   ifGalaxChildren(returnName,P.intX numChildren, "ALLOC_ERROR: in " ^ cnvName) @
-					   macroTNode(returnName,PL.PDCI_structured_pd,pd,pd,cnvName) @
+					   macroTNode(returnName,PL.PDCI_structured_pd,pd,PT.Id pd,cnvName) @
 				 	   (List.map macroNode (enumerate localFields)) @
 					   [P.returnS (returnName)]
                           in   
@@ -2986,10 +2966,12 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val localBranches = mungeVariants genBranchFull genBranchBrief genBranchMan variants		
 
 		      fun tagbranches [] = []
-		  	| tagbranches ((m,(n,f))::ps) = 
+		  	| tagbranches ((i,(n,f))::ps) = 
 				(PT.CaseLabel(PT.Id n,
-				              PT.Compound ([macroNodeCall1(PT.Id result,
-(* check out 'branch' in Macro Call*)			    P.intX m,f,n,childrenSuf name),
+				              PT.Compound ([macroNodeCall(PT.Id result,P.intX i,f,n,getFieldX(m,n),
+							       P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
+(* check out 'branch' in Macro Call*)	   		       P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
+							       childrenSuf name),
 						            PT.Break])))::(tagbranches ps)
 
 		      fun switchTag xs = PT.Switch (P.arrowX(PT.Id rep, PT.Id tag),
@@ -3009,7 +2991,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					   [P.varDeclS(P.ccharPtr,"branch",
                                                        PT.Call(PT.Id (toStringSuf (tgSuf name)),[fieldX(rep,tag)]))] @
 					   ifGalaxChildren(returnName,P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
-					   macroTNode(returnName,PL.PDCI_structured_pd,pd,pd,cnvName) @
+					   macroTNode(returnName,PL.PDCI_structured_pd,pd,PT.Id pd,cnvName) @
 				 	   [switchTag localBranches] @
 					   [P.returnS (returnName)]
                           in   
@@ -3978,20 +3960,23 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                          val paramNames = [self]
                          val paramTys = [P.ptrPCT nodeRepTy]
                          val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
-		         val length = "length"
-			 val i = "i"
+			 val elemName = lookupTy(baseTy,repSuf,#repname)
+		         val index = "i"
+			 val indexId = PT.Id index
 		         val bodySs = headerGalaxChildrenFun(name) @
-				      [P.varDeclS'(P.int, i)] @
+				      [P.varDeclS'(P.int, index)] @
 				      ifGalaxChildren(returnName,P.plusX(fieldX(rep,length),P.intX 2), 
 						      "ALLOC_ERROR: in " ^ cnvName) @
-				      macroTNode(returnName,PL.PDCI_sequenced_pd,pd,pd,cnvName) @
-				      macroTNode(returnName,"PDCI_uint32_val",length,"(rep->length)",cnvName) @
+				      macroTNode(returnName,PL.PDCI_sequenced_pd,pd,PT.Id pd,cnvName) @
+				      macroTNodeCall(returnName,P.intX 1,"PDC_uint32_val",length,
+						     P.addrX(fieldX(rep,length)),cnvName) @
 				      [P.mkCommentS "now do elements",
-                                       PT.For(P.assignX(PT.Id i,P.intX 0),
-                                              P.ltX(PT.Id i,fieldX(rep,length)),
-                                              P.postIncX(PT.Id i),
-                                              macroNodeCall3(returnName,P.plusX(PT.Id i,P.intX 2),
-                                                             elemReadName,"elt",element,"elts[i]",cnvName)),
+                                       PT.For(P.assignX(indexId,P.zero),
+                                              P.ltX(indexId,fieldX(rep,length)),
+                                              P.postIncX(indexId),
+					      macroNodeCall(returnName,P.plusX(indexId,P.intX 2),elemName,"elt",
+							     getFieldX(m,element),P.addrX(P.subX(edBufferX,indexId)),
+                                     			     P.addrX(P.subX(edBufferX,indexId)),cnvName)),
 				       P.returnS (returnName)]
                           in   
                             P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
@@ -4344,12 +4329,12 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					P.varDeclS(baseType,pd,PT.Cast(baseType,fieldX(self,pd))),
                                         P.varDeclS'(P.ptrPCT (P.ptrPCT nodeRepTy), result)] @
 				        ifGalaxChildren(returnName,P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
-					macroTNode(returnName,PL.PDC_base_pd,pd,pd,cnvName) @
+					macroTNode(returnName,PL.PDC_base_pd,pd,PT.Id pd,cnvName) @
 					[P.mkCommentS "string val child",
 					P.assignS(PT.Id Cstr,PT.Cast(P.charPtr,PT.Call(PT.Id (toStringSuf name),
-										       [PT.Id ("* "^rep)])))] @ 
+										       [P.starX (PT.Id rep)])))] @ 
 											(* problem with *rep *)
-					macroTNode(returnName,PL.PDCI_Cstr_val,"val",Cstr,cnvName) @
+					macroTNode(returnName,PL.PDCI_Cstr_val,"val",PT.Id Cstr,cnvName) @
 					[P.returnS (returnName)]
                       in   
                         P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
