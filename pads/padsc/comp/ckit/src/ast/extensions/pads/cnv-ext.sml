@@ -423,6 +423,12 @@ structure CnvExt : CNVEXT = struct
 		    | _ => NONE)
 	   | _ => NONE)
 
+    fun CTgetPtrBase ct = 
+	case CTreduce ct
+          of Ast.Qual(_,ty) => CTgetPtrBase ty
+           | Ast.Pointer cty => SOME cty
+           | _ => NONE 
+
     fun CTisEnum ty = 
         case CTreduce ty
           of Ast.Qual (_,ty) => CTisEnum ty
@@ -4929,27 +4935,18 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	      end
 
 	  fun cnvPCharClass {name,pred} = 
-	      let val intpredPTct = P.ptrPCT(P.func P.int [P.int])
-		  val (intpredCT,_) = CTcnvType intpredPTct
-		  val intPtrpredPTct = P.ptrPCT(P.func P.int [P.intPtr])
-		  val (intPtrpredCT,_) = CTcnvType intPtrpredPTct
-		  val charpredPTct = P.ptrPCT(P.func P.int [P.char])
-		  val (charpredCT,_) = CTcnvType charpredPTct
-		  val charPtrpredPTct = P.ptrPCT(P.func P.int [P.charPtr])
-		  val (charPtrpredCT,_) = CTcnvType charPtrpredPTct
-		  val _ = pushLocalEnv()
+	      let val _ = pushLocalEnv()
 		  val (apredCT, _ ) = cnvExpression pred
 		  val _ = popLocalEnv()
+		  val errorMsg = "Predicate for Pcharclass "^name^" has type: "^
+					  (CTtoString apredCT) ^". Expected type compatible "^
+					  "with int (*)(int)."
 		  val (body, decls) = 
-		              if isAssignable(intpredCT, apredCT, NONE) then (pred, [])
-			      else if isAssignable(intPtrpredCT, apredCT, NONE) then
-				  let val wrapperName = padsID(isPref name) 
-				      val formalParams = [P.mkParam(P.int, "i")]
-				      val bodySs = [PT.Return( PT.Call(pred, [P.addrX(PT.Id "i")]))]
-				  in
-				      (PT.Id wrapperName, [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
-				  end
-		              else if isAssignable(charpredCT, apredCT, NONE) then
+		        case TU.getFunction ttab apredCT
+			of SOME(retCT, [argCT]) => (
+                             if not (equalType(CTint, retCT)) then PE.error errorMsg else ();
+                             if equalType(CTint, argCT) then (pred, []) before print "arg is int"
+                             else if equalType(CTchar, argCT) then
 				  let val wrapperName = padsID(isPref name) 
 				      val formalParams = [P.mkParam(P.int, "i")]
 				      val bodySs = [P.varDeclS(P.char, "y", PT.Cast(P.char, PT.Id "i")),
@@ -4957,19 +4954,36 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 								     PT.Call(pred, [PT.Id "y"])))]
 				  in
 				      (PT.Id wrapperName, [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
+						    before print "arg is char"
 				  end
-			      else if isAssignable(charPtrpredCT, apredCT, NONE) then
-				  let val wrapperName = padsID(isPref name) 
-				      val formalParams = [P.mkParam(P.int, "i")]
-				      val bodySs = [P.varDeclS(P.char, "y", PT.Cast(P.char, PT.Id "i")),
-						    PT.Return(P.andX(P.eqX(PT.Id "i", PT.Id "y"), 
-								     PT.Call(pred, [P.addrX(PT.Id "y")])))]
-				  in
-				      (PT.Id wrapperName, [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
-				  end				  
-		              else (PE.error ("Predicate for Pcharclass "^name^" has type: "^
-					  (CTtoString apredCT) ^". Expected type compatible "^
-					  "with int (*)(int).");(pred,[]))
+			     else (case CTgetPtrBase argCT 
+				   of NONE => (PE.error errorMsg; (pred, [])) before print "not pointer type"
+				   |  SOME argPtrCT  => (
+				        if equalType(CTint, argPtrCT) then
+				           let val wrapperName = padsID(isPref name) 
+					       val formalParams = [P.mkParam(P.int, "i")]
+					       val bodySs = [PT.Return( PT.Call(pred, [P.addrX(PT.Id "i")]))]
+					   in
+					       (PT.Id wrapperName, 
+					        [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
+							 before print "arg is int ptr"
+					   end
+					else if equalType(CTchar, argPtrCT) then
+					        let val wrapperName = padsID(isPref name) 
+						    val formalParams = [P.mkParam(P.int, "i")]
+						    val bodySs = [P.varDeclS(P.char, "y", PT.Cast(P.char, PT.Id "i")),
+								  PT.Return(P.andX(P.eqX(PT.Id "i", PT.Id "y"), 
+										   PT.Call(pred, [P.addrX(PT.Id "y")])))]
+						in
+						   (PT.Id wrapperName, 
+						    [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
+						   before print "arg is char ptr"
+						end				  
+					else (PE.error errorMsg; (pred,[]))
+                                       (*end some cty case *))
+				       (* end ptrbase case *))
+			       (* end Some singleton case *))
+                        | _ => (PE.error errorMsg; (pred, []))
 		  val regS = PL.regexpCharClass(PT.String name, body)
 		  val () = CharClass.insert regS
 	      in

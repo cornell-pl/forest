@@ -1,8 +1,8 @@
 Ptypedef Pchar digit :: digit x => { x > '0' && x < '9'};
 
-int my_is_digit (int *rep)
+int my_is_digit (char rep)
 {
-  return ((*rep)>48)&&((*rep)<57);
+  return ((rep)>48)&&((rep)<57);
 }
 
 
