@@ -30,10 +30,10 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH =  $(CPY_DIR)
 
-all: $(P_DIR)/cpyrecgen_rps.p $(P_DIR)/cpygen_foo.p $(P_DIR)/cpygen_crs.p
+all: $(P_DIR)/cpygen_ijnltifh.p $(P_DIR)/cpygen_ijnltif.p $(P_DIR)/cpygen_ijnltift.p $(P_DIR)/ijnltif.p $(P_DIR)/cpyrecgen_rps.p $(P_DIR)/cpygen_foo.p $(P_DIR)/cpygen_crs.p
 
 $(P_DIR)/cpygen_crs.p: $(P_DIR)/cpygen_crshdr.p $(P_DIR)/cpygen_crstlr.p $(P_DIR)/cpygen_crsdet.p
-	(echo ""; echo "extern P_uint64 num_recs;"; echo "") > $@
+	(echo ""; echo "extern Puint64 num_recs;"; echo "") > $@
 	cat $^ | sed -e 's|Pstruct cpy_crshdr|Precord Pstruct cpy_crshdr|' \
 		     -e 's|XX_TOTAL_RECORDS_3;|XX_TOTAL_RECORDS_3 : XX_TOTAL_RECORDS_3 == num_recs ;|' >> $@
 	(echo "Precord Punion det_or_tlr {"; \
@@ -43,9 +43,25 @@ $(P_DIR)/cpygen_crs.p: $(P_DIR)/cpygen_crshdr.p $(P_DIR)/cpygen_crstlr.p $(P_DIR
 	 echo "Parray det_tlr_array {"; \
 	 echo "	det_or_tlr [];"; \
 	 echo "};"; echo ""; \
-	 echo "Pfile Pstruct crs_file {"; \
+	 echo "Psource Pstruct crs_file {"; \
 	 echo "	cpy_crshdr                                         is_hdr;"; \
 	 echo "	det_tlr_array                                      is_rest;"; \
+	 echo "};"; echo ""; ) >> $@
+
+$(P_DIR)/ijnltif.p: $(P_DIR)/cpygen_ijnltifh.p $(P_DIR)/cpygen_ijnltif.p $(P_DIR)/cpygen_ijnltift.p
+	(echo ""; echo "extern Puint64 num_recs;"; echo "") > $@
+	cat $^ | sed -e 's|Pstruct cpy_ijnltifh|Precord Pstruct cpy_ijnltifh|' \
+		     -e 's|XX_TRL_SMS_CNT_7;|XX_TRL_SMS_CNT_7 : XX_TRL_SMS_CNT_7 == num_recs ;|' >> $@
+	(echo "Precord Punion d_or_t {"; \
+	 echo "	cpy_ijnltift                                       is_t;"; \
+	 echo "	cpy_ijnltif                                        is_d;"; \
+	 echo "};"; echo ""; \
+	 echo "Parray d_or_t_array {"; \
+	 echo "	d_or_t [];"; \
+	 echo "};"; echo ""; \
+	 echo "Psource Pstruct ijnltif_file {"; \
+	 echo "	cpy_ijnltifh                                       hdr;"; \
+	 echo "	d_or_t                                             rest;"; \
 	 echo "};"; echo ""; ) >> $@
 
 $(P_DIR)/cpygen_crsdet.p: crsdet.cpy
