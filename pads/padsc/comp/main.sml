@@ -381,7 +381,6 @@ structure Main : sig
        case typ of Pads =>
 	 let val () = stage := "Preprocessing"
 	     val ppoutFile = tmp ".c"
-	     val ppoutFile = "ppout.c"
 	     val status = preprocess(baseTyFile, fname, ppoutFile)
 	     val () = if status <> OS.Process.success 
 	              then err "Pre-processor failed."

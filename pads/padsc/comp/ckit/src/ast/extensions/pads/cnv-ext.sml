@@ -239,6 +239,13 @@ structure CnvExt : CNVEXT = struct
 
     val bug = Error.bug errorState
     val seenDone : bool ref = ref false
+    val nextId : int ref = ref 0
+    fun padsID s = 
+	let val res = s^"_"^(Int.toString (!nextId))
+	in
+	    nextId := !nextId + 1;
+	    res
+	end
 
 (* AST help functions ********************************************************)
 
@@ -646,6 +653,7 @@ structure CnvExt : CNVEXT = struct
 	      fun gTemp base = "tmp"^base
               fun childrenSuf name = name^"_children" 
               fun vTableSuf name = name^"_vtable"
+	      fun isPref name = "is_"^name
 		
 	      fun fieldX (bsName, fName) = P.arrowX(PT.Id bsName, PT.Id fName)
 	      fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
@@ -4939,20 +4947,31 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 	      end
 
 	  fun cnvPCharClass {name,pred} = 
-	      let val regS = PL.regexpCharClass(PT.String name, pred)
-		  val predPTct = P.ptrPCT(P.func P.int [P.int])
-		  val (predCT,_) = CTcnvType predPTct
+	      let val intpredPTct = P.ptrPCT(P.func P.int [P.int])
+		  val (intpredCT,_) = CTcnvType intpredPTct
+		  val charpredPTct = P.ptrPCT(P.func P.int [P.char])
+		  val (charpredCT,_) = CTcnvType charpredPTct
 		  val _ = pushLocalEnv()
 		  val (apredCT, _ ) = cnvExpression pred
 		  val _ = popLocalEnv()
-		  val () = if isAssignable(predCT, apredCT, NONE) then ()
-		           else PE.error ("Predicate for Pcharclass "^name^" has type: "^
+		  val (body, decls) = 
+		              if isAssignable(intpredCT, apredCT, NONE) then (pred, [])
+		              else if isAssignable(charpredCT, apredCT, NONE) then
+				  let val wrapperName = padsID(isPref name) 
+				      val formalParams = [P.mkParam(P.int, "i")]
+				      val bodySs = [P.varDeclS(P.char, "y", PT.Cast(P.char, PT.Id "i")),
+						    PT.Return(P.andX(P.eqX(PT.Id "i", PT.Id "y"), 
+								     PT.Call(pred, [PT.Id "y"])))]
+				  in
+				      (PT.Id wrapperName, [P.mkFunctionEDecl(wrapperName, formalParams, PT.Compound bodySs, P.int)])
+				  end
+		              else (PE.error ("Predicate for Pcharclass "^name^" has type: "^
 					  (CTtoString apredCT) ^". Expected type compatible "^
-					  "with int (*)(int).")
-		  val () = () (* add type checking *)
+					  "with int (*)(int).");(pred,[]))
+		  val regS = PL.regexpCharClass(PT.String name, body)
 		  val () = CharClass.insert regS
 	      in
-		  []
+		  emitRead decls
 	      end
 
 	  fun cnvPSelect {selName,tyName, varName, path} = 
