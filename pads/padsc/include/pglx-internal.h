@@ -12,8 +12,16 @@
 #define __PGLX_INTERNAL_H__
 
 #include "libpadsc-internal.h"
-#include "caml/mlvalues.h"  /* Need value */
-#include "caml/fail.h"
+
+/* XXX_RESTORE: */
+/* #include "caml/mlvalues.h"  */ /* Need value */
+
+/* XXX_REMOVE next 4 lines: */
+#ifndef CAML_VALUE
+#define CAML_VALUE
+typedef void* value;
+#endif
+
 #ifndef FOR_CKIT
 #  include "pglx-impl.h"
 #endif
