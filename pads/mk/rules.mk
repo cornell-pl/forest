@@ -41,6 +41,9 @@
 # uncomment this once we build a shared ast library
 # HAVE_SHARED_ASTLIB = 1
 
+# uncomment this to force static builds
+# FORCE_STATIC = 1
+
 ifdef USE_GALAX
 ifndef GALAX_HOME
 %: forceabort2
@@ -208,7 +211,7 @@ endif
 ifeq ($(ARCH_N_OPSYS),x86-freebsd)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 # XXX why doesn't mamake figure this out ???
-OS_SPEC_XTRA_LIBS += -liconv
+# OS_SPEC_XTRA_LIBS += -liconv
 endif
 
 ifeq ($(OPSYS),solaris)
@@ -284,6 +287,22 @@ STATIC_LIBS_D += $(STATIC_GALAXLIB_D) $(STATIC_OCAMLLIB_D)
 endif
 LIB_DEPS_D = $(STATIC_LIBS_D)
 
+################################################################################
+ifdef FORCE_STATIC
+
+SHARED_ASTLIB_O       = $(STATIC_ASTLIB_O)
+DYNAMIC_LIBS_O        = $(STATIC_LIBS_O)
+DYNAMIC_LIB_DEPS_O    =
+
+SHARED_ASTLIB_D       = $(STATIC_ASTLIB_D)
+DYNAMIC_LIBS_D        = $(STATIC_LIBS_D)
+DYNAMIC_LIB_DEPS_D    =
+
+TRIV_LIBS             = $(STATIC_ASTLIB_D)
+
+################################################################################
+else # (not FORCE_STATIC)
+
 ifdef HAVE_SHARED_ASTLIB
 ifdef USE_PZIP
 SHARED_ASTLIB_O = -lpz -lz -lbz -ldll -last
@@ -356,6 +375,10 @@ DYNAMIC_LIB_DEPS_D += $(SHARED_DLL_LIB_DEP_D) $(SHARED_BZLIB_DEP_D) $(SHARED_ZLI
 endif
 
 TRIV_LIBS = -L$(LIBDIR) $(SHARED_ASTLIB_D)
+
+################################################################################
+endif # FORCE_STATIC
+################################################################################
 
 INCLUDES =  -I. -I.. -I$(AST_HOME)/include/ast
 ifdef GEN_DIR
@@ -571,6 +594,12 @@ ifdef DEBUG_RULES_MK
 endif
 	@$(CCExec_DYNAMIC_D)
 
+fmt_%_d: $(GEN_DIR)/%.c fmt_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule FMT_D"
+endif
+	@$(CCExec_DYNAMIC_D)
+
 rw_%_d: $(GEN_DIR)/%.c rw_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule RW_D"
@@ -586,6 +615,12 @@ endif
 test_%_dd: $(GEN_DIR)/%_expanded.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule R_DD"
+endif
+	@$(CCExec_DYNAMIC_D)
+
+fmt_%_dd: $(GEN_DIR)/%_expanded.c fmt_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule FMT_DD"
 endif
 	@$(CCExec_DYNAMIC_D)
 
@@ -642,6 +677,12 @@ ifdef REGRESS_TESTS
 test_%: $(GEN_DIR)/%.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule R_O"
+endif
+	@$(CCExec_DYNAMIC_O)
+
+fmt_%: $(GEN_DIR)/%.c fmt_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule FMT_O"
 endif
 	@$(CCExec_DYNAMIC_O)
 
