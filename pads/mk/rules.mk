@@ -72,10 +72,11 @@ ifndef GALAX_HOME
 GALAX_HOME := /home/mff/Galax-rh7
 export GALAX_HOME
 endif
+GALAX_LIB_DIR = $(GALAX_HOME)/lib/c
 
-ifndef OCAML_HOME
-OCAML_HOME = /usr/common
-export OCAML_HOME
+ifndef OCAML_LIB_DIR
+OCAML_LIB_DIR = /usr/common/lib/ocaml
+export OCAML_LIB_DIR
 endif
 
 ifndef USR_LIB_DIR
@@ -85,9 +86,6 @@ endif
 ifdef USE_GALAX
 GEN_GALAX = 1
 endif
-
-GALAX_LIB_DIR = $(GALAX_HOME)/lib/c
-OCAML_LIB_DIR = $(OCAML_HOME)/lib/ocaml
 
 ARCH_N_OPSYS = $(shell $(PADS_HOME)/scripts/arch-n-opsys)
 OPSYS = $(shell $(PADS_HOME)/scripts/opsys)
@@ -225,7 +223,7 @@ STATIC_PADSLIB_D = $(LIB_DIR)/$(STATIC_PADSLIB_NM_D)
 STATIC_PGLXLIB_D = $(LIB_DIR)/$(STATIC_PGLXLIB_NM_D)
 STATIC_ASTLIB_D = $(LIB_DIR)/$(STATIC_ASTLIB_NM_D)
 # mff may need to change next two defns
-STATIC_GALAXLIB_D = $(GALAX_LIB_DIR)/libglx.a
+STATIC_GALAXLIB_D = $(GALAX_LIB_DIR)/libglxopt.a
 STATIC_OCAMLLIB_D = $(STATIC_OCAMLLIB_O) # no debug versions available
 ifdef GEN_GALAX
 STATIC_LIBS_D = $(STATIC_PADSLIB_D) $(STATIC_PGLXLIB_D) $(STATIC_ASTLIB_D) 
@@ -245,7 +243,6 @@ endif
 ifdef USE_GALAX
 # mff may need to change next line
 DYNAMIC_LIBS_O += -L $(GALAX_LIB_DIR) -lglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
-# XXX what about -lcamlrun ?
 endif
 SHARED_PADSLIB_DEP_O = $(LIB_DIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(LIB_DIR)/$(SHARED_PGLXLIB_NM_O)
@@ -266,7 +263,7 @@ else
 DYNAMIC_LIBS_D = -L $(LIB_DIR) -lpadsc-g -last
 endif
 ifdef USE_GALAX
-# mff may need to change next line  ?? using -lglx does not work below
+# mff may need to change next line 
 DYNAMIC_LIBS_D += -L $(GALAX_LIB_DIR) -lglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
 # XXX what about -lcamlrun ?
 endif
@@ -348,30 +345,6 @@ define LibSanityCheck
   done; \
 )
 endef
-
-ifdef GEN_GALAX
-INCLUDES += -I /home/mff/ocaml-3.06-rh7/lib/ocaml
-DYNAMIC_LIBS_O += -lpglx -last
-DYNAMIC_LIBS_D += -lpglx-g -last
-
-STATIC_LIBS_O += $(STATIC_PGLXLIB_O)
-STATIC_LIBS_D += $(STATIC_PGLXLIB_D)
-
-DYNAMIC_OCAML_LIBS_D = -L/home/mff/Galax-rh7/lib/c -L/home/mff/ocaml-3.06-rh7/lib/ocaml -lglxopt -lnums -lm -ldl -lcurses -lunix -lstr
-DYNAMIC_OCAML_LIBS_O = $(DYNAMIC_OCAML_LIBS_D)
-
-ifdef USE_GALAX
-DYNAMIC_LIBS_D += $(DYNAMIC_OCAML_LIBS_D)
-DYNAMIC_LIBS_O += $(DYNAMIC_OCAML_LIBS_O)
-endif
-
-#STATIC_OCAML_LIBS_D = -L/home/mff/Galax-rh7/lib/c -L/home/mff/ocaml-3.06-rh7/lib/ocaml -lglxopt -lnums -lm -ldl -lcurses -lunix -lstr
-#STATIC_OCAML_LIBS_O = $(DYNAMIC_OCAML_LIBS_D)
-ifdef USE_GALAX
-STATIC_LIBS_D += $(STATIC_OCAML_LIBS_D)
-STATIC_LIBS_O += $(STATIC_OCAML_LIBS_O)
-endif
-endif
 
 define CCExec_DYNAMIC_D
 (set -x; \
