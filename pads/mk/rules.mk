@@ -196,8 +196,12 @@ space:=$(empty) $(empty)
 
 ifeq ($(OPSYS),irix)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
+ifeq ($(PADS_CC_IS_GNU),1)
+# do not use woff
+else
 CDBGFLAGS += -woff 47,1174,3201,3434,3421
 COPTFLAGS += -woff 47,1174,3201,3434,3421
+endif
 endif
 
 ifeq ($(OPSYS),linux)
