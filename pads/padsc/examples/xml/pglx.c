@@ -33,10 +33,16 @@ value PGLX_generic_typed_value (void * ocaml_n)
   return n->vt.typed_value(n);
 }
 
-const char* PGLX_generic_string_value(void *ocaml_nn){
+const char* PGLX_generic_string_value(void *ocaml_n){
   PDCI_node_rep_t *n = (PDCI_node_rep_t *) ocaml_n; 
   PDCI_NODE_CHECK(n, "PGLX_generic_string_value");
   return "Not yet implemented";
+}
+
+const char* PGLX_generic_name(void *ocaml_n){
+  PDCI_node_rep_t *n = (PDCI_node_rep_t *) ocaml_n; 
+  PDCI_NODE_CHECK(n, "PGLX_generic_name");
+  return n->name;
 }
 
 void        PGLX_node_free(void *node){

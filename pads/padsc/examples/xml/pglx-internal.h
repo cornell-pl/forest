@@ -2,6 +2,26 @@
 #ifndef FOR_CKIT
 #include "pglx-impl.h"
 #endif
+typedef PDCI_node_rep_t ** (* PDCI_childrenVT) (PDCI_node_rep_t *node); 
+typedef value              (* PDCI_typeValueVT) (PDCI_node_rep_t *node); 
+typedef const char *       (* PDCI_stringValueVT) (PDCI_node_rep_t *node);
+
+typedef struct PDCI_vtable_s {
+  PDCI_childrenVT      children;
+  PDCI_typedValueVT    typed_value;
+  PDCI_stringValueVT   string_value;
+} PDCI_vtable_t;
+
+typedef struct PDCI_node_rep_s PDCI_node_rep_t;
+struct PDCI_node_rep_s {
+  PDCI_vtable_t   *vt;
+  PDC_t           *pdc;
+  PDCI_node_rep_t *parent;
+  void            *m;
+  void            *pd;
+  void            *rep;
+  const char      *name;
+};
 
 #ifdef FOR_CKIT
 void PDCI_NODE_CHECK(PDCI_node_rep_t *n, const char *whatfn);
@@ -24,28 +44,6 @@ void  PDCI_MK_NODE(PDCI_node_rep_t *result,
 		   void* rep);
 
 #endif
-
-typedef struct PDCI_node_rep_s PDCI_node_rep_t;
-
-struct PDCI_node_rep_s {
-  PDCI_vtable_t   *vt;
-  PDC_t           *pdc;
-  PDCI_node_rep_t *parent;
-  void            *m;
-  void            *pd;
-  void            *rep;
-  const char      *name;
-};
-
-typedef PDCI_node_rep_t ** (* PDCI_childrenVT) (PDCI_node_rep_t *node); 
-typedef value (* PDCI_typeValueVT) (PDCI_node_rep_t *node); 
-typedef const char * (* PDCI_stringValueVT) (PDCI_node_rep_t *node);
-
-typedef struct PDCI_vtable_s {
-  PDCI_childrenVT      children;
-  PDCI_typedValueVT    typed_value;
-  PDCI_stringValueVT   string_value;
-} PDCI_vtable_t;
 
 
 /* PARSE DESCRIPTOR SUPPORT */
@@ -75,6 +73,9 @@ typedef struct PDCI_sequenced_pd_s {
 value PDCI_error_typed_value(PDCI_node_rep_t *node);
 PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_rep_t *self);
 PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_rep_t *self);
+
+PDCI_node_t ** PDCI_Cstring_children(PDCI_node_rep_t *self);
+
 
 /* Helper vtables */
 extern const PDCI_vtable_t PDCI_structured_pd_vtable;
