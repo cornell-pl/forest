@@ -17,12 +17,14 @@ Punion branches(:Pa_uint32 a, int line_number:) {
   /* Pcase 15 : */ Pcompute Pomit Pa_int32          omit_computed_static_w_check = line_number : a == 15 && omit_computed_static_w_check % 2 == 1;
   /* Pcase 16 : */ Pcompute Pomit Pa_int32          omit_computed_static_wc2     = line_number : a == 16;
 
+#if 0
   /* Pcase  2 : */ Pa_int32                         inc_normal_static;
   /* Pcase  4 : */ Pa_string_ME(:"/(.*)X$/":)       inc_normal_dynamic;
   /* Pcase  6 : */ Pcompute Pa_int32                inc_computed_static         = line_number;
   /* Pcase 12 : */ Pomit Pa_int32                   omit_normal_static;
   /* Pcase 14 : */ Pomit Pa_string_ME(:"/(.*)X$/":) omit_normal_dynamic;
   /* Pcase 16 : */ Pcompute Pomit Pa_int32          omit_computed_static        = line_number;
+#endif
 } 
 
 Precord Pstruct choice{
