@@ -4304,21 +4304,21 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
   _ast_fltmax_t d;
 
   errno = 0;
-  d = strtold(bytes, (char**)ptr_out);
+  d = strtold((const char *)bytes, (char**)ptr_out);
   if (d == LDBL_MAX || d > float_max) return float_max;
   if (d == LDBL_MIN || d < float_min) return float_min;
   return (targ_type)d;
 }
 
 /* there is no way to tell strtold to not do range checking, and 
-   at leat for now we decided not to implement our own routine */
+   at least for now we decided not to implement our own routine */
 targ_type
 fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 {
   _ast_fltmax_t d;
 
   errno = 0;
-  d = strtold(bytes, (char**)ptr_out);
+  d = strtold((const char *)bytes, (char**)ptr_out);
   if (d == LDBL_MAX || d > float_max) return float_max;
   if (d == LDBL_MIN || d < float_min) return float_min;
   return (targ_type)d;
@@ -4330,7 +4330,7 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
   _ast_fltmax_t d;
 
   errno = 0;
-  d = strntold(bytes, max_bytes, (char**)ptr_out);
+  d = strntold((const char *)bytes, max_bytes, (char**)ptr_out);
   if (d == LDBL_MAX || d > float_max) return float_max;
   if (d == LDBL_MIN || d < float_min) return float_min;
   return (targ_type)d;
@@ -4379,7 +4379,7 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
   }
   ascii_bytes = sfstruse(tmpstr);
   errno = 0;
-  d = strtold(bytes, &ascii_ptr);
+  d = strtold((const char *)bytes, &ascii_ptr);
   if (ascii_ptr) {
     (*ptr_out) = (Pbyte*)bytes + (ascii_ptr - ascii_bytes);
   } else {
@@ -4392,7 +4392,7 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
 }
 
 /* there is no way to tell strtold to not do range checking, and 
-   at leat for now we decided not to implement our own routine */
+   at least for now we decided not to implement our own routine */
 targ_type
 fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 {
@@ -4412,7 +4412,7 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
   }
   ascii_bytes = sfstruse(tmpstr);
   errno = 0;
-  d = strtold(bytes, &ascii_ptr);
+  d = strtold((const char *)bytes, &ascii_ptr);
   if (ascii_ptr) {
     (*ptr_out) = (Pbyte*)bytes + (ascii_ptr - ascii_bytes);
   } else {
@@ -4443,7 +4443,7 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
   }
   ascii_bytes = sfstruse(tmpstr);
   errno = 0;
-  d = strntold(bytes, max_bytes, &ascii_ptr);
+  d = strntold((const char *)bytes, max_bytes, &ascii_ptr);
   if (ascii_ptr) {
     (*ptr_out) = (Pbyte*)bytes + (ascii_ptr - ascii_bytes);
   } else {
@@ -5870,7 +5870,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.155 2004-06-07 00:30:57 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.156 2004-06-07 01:52:15 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
