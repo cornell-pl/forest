@@ -6912,7 +6912,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.189 2005-03-07 04:26:50 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.190 2005-04-04 03:46:18 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8016,10 +8016,6 @@ P_io_set(P_t *pads, Sfio_t *io)
 {
   PDCI_IODISC_1P_CHECKS("P_io_set", io);
   if (pads->io) {
-    if (pads->io == io) {
-      P_DBG(pads->disc, "P_io_set: same io installed more than once, ignoring this call");
-      return P_OK;
-    }
     if (pads->path && strcmp(pads->path, "/dev/stdin")) {
       P_WARN(pads->disc, "IO_set called with previous installed io due to fopen; closing");
     }
