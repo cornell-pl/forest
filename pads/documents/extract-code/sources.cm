@@ -1,13 +1,15 @@
-(* sources.cm
- *
- * COPYRIGHT (c) 2002 Bell Labs, Lucent Technologies.
- *)
-
 Library
   structure Main
 is
 
-smlnj-lib.cm
+#if defined(NEW_CM)
+  $/basis.cm
+  $/smlnj-lib.cm
+  $/pp-lib.cm
+#else
+  smlnj-lib.cm
+  pp-lib.cm
+#endif
 
 pads-keywords.sml
 pads-lexer : MLLex
