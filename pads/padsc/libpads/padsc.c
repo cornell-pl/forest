@@ -525,6 +525,7 @@ fn_pref ## _read(PDC_t *pdc, const PDC_base_m *m,
   size_t          bytes;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_pref) "_read", m, pd, res_out);
+  pd->panic = 0;
   if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
@@ -3348,6 +3349,7 @@ PDC_error_t
 PDC_dummy_read(PDC_t *pdc, const PDC_base_m *m, PDC_int32 dummy_val, PDC_base_pd *pd, PDC_int32 *res_out)
 {
   PDCI_DISC_3P_CHECKS("PDC_dummy_read", m, pd, res_out);
+  pd->panic = 0;
   (*res_out) = dummy_val;
   pd->errCode = PDC_NO_ERR;
   return PDC_OK;
@@ -4395,7 +4397,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.92 2003-08-04 18:22:15 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.93 2003-08-04 20:48:16 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6827,6 +6829,7 @@ PDCI_char_lit_read(PDC_t *pdc, const PDC_base_m *m,
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE3(pdc->disc, "PDCI_char_lit_read called, arg: %s, char_set %s, whatfn = %s",
 	     PDC_qfmt_char(c), PDC_charset2str(char_set), whatfn);
+  pd->panic = 0;
   switch (char_set)
     {
     case PDC_charset_ASCII:
@@ -6883,6 +6886,7 @@ PDCI_str_lit_read(PDC_t *pdc, const PDC_base_m *m,
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, s);
   PDC_TRACE3(pdc->disc, "PDCI_str_lit_read called, arg: %s, char_set %s, whatfn = %s",
 	     PDC_qfmt_str(s), PDC_charset2str(char_set), whatfn);
+  pd->panic = 0;
   switch (char_set)
     {
     case PDC_charset_ASCII:
@@ -6961,6 +6965,7 @@ PDCI_Cstr_lit_read(PDC_t *pdc, const PDC_base_m *m,
     p_s.len = strlen(s);
     p_s_ptr = &p_s;
   }
+  /* Following call sets pd->panic = 0 */
   return PDCI_str_lit_read(pdc, m, pd, p_s_ptr, char_set, whatfn);
 }
 
@@ -6978,6 +6983,7 @@ PDCI_countX(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE4(pdc->disc, "PDCI_countX called, args: x = %s eor_required = %d, char_set %s, whatfn = %s",
 	     PDC_qfmt_char(x), eor_required, PDC_charset2str(char_set), whatfn);
+  pd->panic = 0;
   if (res_out) {
     (*res_out) = 0;
   }
@@ -7077,6 +7083,7 @@ PDCI_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE4(pdc->disc, "PDCI_countXtoY called, args: x = %s y = %s, char_set %s, whatfn = %s",
 	     PDC_qfmt_char(x), PDC_qfmt_char(y), PDC_charset2str(char_set), whatfn);
+  pd->panic = 0;
   if (res_out) {
     (*res_out) = 0;
   }
@@ -7177,6 +7184,7 @@ PDCI_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE3(pdc->disc, "PDCI_date_read called, args: stopChar %s char_set %s, whatfn = %s",
 	     PDC_qfmt_char(stopChar), PDC_charset2str(char_set), whatfn);
+  /* Following call sets pd->panic = 0 */
   if (PDC_ERR == PDCI_string_read(pdc, m, stopChar, pd, s, char_set, whatfn)) {
     return PDC_ERR;
   }
@@ -7210,6 +7218,7 @@ PDCI_char_read(PDC_t *pdc, const PDC_base_m *m,
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE2(pdc->disc, "PDCI_char_read called, char_set = %s, whatfn = %s",
 	     PDC_charset2str(char_set), whatfn);
+  pd->panic = 0;
   if (PDC_ERR == PDCI_IO_needbytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
     goto fatal_nb_io_err;
   }
@@ -7262,6 +7271,7 @@ PDCI_string_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE2(pdc->disc, "PDCI_string_FW_read called, char_set = %s, whatfn = %s",
 	     PDC_charset2str(char_set), whatfn);
+  pd->panic = 0;
   if (width <= 0) {
     PDC_WARN1(pdc->disc, "%s: UNEXPECTED PARAM VALUE: width <= 0", whatfn);
     goto bad_param_err;
@@ -7335,6 +7345,7 @@ PDCI_string_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   PDC_TRACE2(pdc->disc, "PDCI_string_read called, char_set = %s, whatfn = %s",
 	     PDC_charset2str(char_set), whatfn);
+  pd->panic = 0;
   switch (char_set)
     {
     case PDC_charset_ASCII:
@@ -7437,6 +7448,7 @@ PDCI_string_SE_read(PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
   PDC_regexp_t   *compiled_exp;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, stopRegexp, pd);
+  pd->panic = 0;
   if (PDC_ERR == PDCI_regexp_compile(pdc, stopRegexp, &compiled_exp, whatfn)) {
     goto bad_exp;
   }
@@ -7462,6 +7474,7 @@ PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
   PDCI_IODISC_3P_CHECKS(whatfn, m, stopRegexp, pd);
   PDC_TRACE2(pdc->disc, "PDCI_string_CSE_read called, char_set = %s, whatfn = %s",
 	     PDC_charset2str(char_set), whatfn);
+  pd->panic = 0;
   matchlen = stopRegexp->max;
   if (matchlen && pdc->disc->stop_regexp) {
     if (pdc->disc->stop_regexp->max == 0) {
