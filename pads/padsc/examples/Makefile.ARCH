@@ -11,7 +11,7 @@ PADSC = ../../padsc
 RES_SPEC = -r ../gen
 
 PADS_TESTS = format1 format2 format3 format4 format5 format6 punion-manifest \
-             readinttest ai
+             readinttest ai pswitch
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 OTHER_TESTS  = test_enum test_from test_ai test_readint
@@ -35,6 +35,7 @@ test_format6  :: test_format6.c   format6.c     -lpadsc
 accum_struct  :: testtwo.c        struct.c      -lpadsc
 accum_ai      :: http_clf_t.c     ai.c          -lpadsc
 
+test_pswitch  :: test_pswitch.c   pswitch.c     -lpadsc
 manifest_union :: munion.c        punion-manifest.c -lpadsc
 test_struct   :: test_struct.c    struct.c      -lpadsc
 test_struct2  :: test_struct2.c   struct2.c     -lpadsc
@@ -52,7 +53,7 @@ test_fast_dib :: test_fast_dib.c  dibbler2.c    -lpadsc
 test_fast_dib_mod :: test_fast_dib_mod.c  dibbler2-mod.c    -lpadsc
 
 
-genp    : format1 format2 format3 format4 format5 format6 punion-manifest ai readinttest
+genp    : format1 format2 format3 format4 format5 format6 punion-manifest ai readinttest pswitch
 format1 : format1.p
 	  $(PADSC) ../p/format1.p $(RES_SPEC)
 
@@ -79,6 +80,9 @@ readinttest : readinttest.p
 
 ai : ai.p
 	  $(PADSC) ../p/ai.p $(RES_SPEC)
+
+pswitch : pswitch.p
+	  $(PADSC) ../p/pswitch.p $(RES_SPEC)
 
 regress : genp\
 	  regress_test_format1 \
@@ -134,6 +138,11 @@ regress_test_ai : test_ai
 	if [ -f tmp/tmp.test_ai ]; then $(RM) tmp/tmp.test_ai; fi
 	(./test_ai 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.test_ai
 	diff tmp/tmp.test_ai ../regress/test_ai.regress || echo TEST_AI DIFFERS
+
+regress_test_pswitch : test_pswitch
+	if [ -f tmp/tmp.pswitch ]; then $(RM) tmp/tmp.pswitch; fi
+	(./test_pswitch <../data/pswitch 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.pswitch
+	diff tmp/tmp.pswitch ../regress/pswitch.regress || echo TEST_PSWITCH DIFFERS
 
 clean :
 	$(RM) -f *~ *.o $(ALL_TESTS)

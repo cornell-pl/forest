@@ -1,0 +1,71 @@
+Data file = standard in
+warning: Installing default IO discipline : newline-terminated records
+Error : line 4 char 2 : Failed to match branch number.
+[line 4]1>>> 23<<<
+*****************************************************************************************************
+<top> : struct choice
+*****************************************************************************************************
+Errors: good vals:          4    bad vals:          0    pcnt-bad:    0.000
+  Characterizing errors:  min 0 max 0 avg 0.000
+    => distribution of top 1 values out of 1 distinct values:
+        val:          0 count:          4  pcnt-of-good-vals:  100.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          4  pcnt-of-good-vals:  100.000
+[Describing each field of <top>]
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.a : uint32
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+good vals:          4    bad vals:          0    pcnt-bad:    0.000
+  Characterizing uint32:  min 1 max 3 avg 1.750
+    => distribution of top 3 values out of 3 distinct values:
+        val:          1 count:          2  pcnt-of-good-vals:   50.000
+        val:          2 count:          1  pcnt-of-good-vals:   25.000
+        val:          3 count:          1  pcnt-of-good-vals:   25.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          4  pcnt-of-good-vals:  100.000
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.b : union branches
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Union tag: good vals:          3    bad vals:          1    pcnt-bad:   25.000
+  Characterizing tag:  min number (    1)  max def (    3)
+    => distribution of top 3 values out of 3 distinct values:
+        val: number (    1)   count:          1  pcnt-of-good-vals:   33.333
+        val: name (    2)     count:          1  pcnt-of-good-vals:   33.333
+        val: def (    3)      count:          1  pcnt-of-good-vals:   33.333
+. . .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING               count:          3  pcnt-of-good-vals:  100.000
+[Describing each tag arm of <top>.b]
+=====================================================================================================
+<top>.b.number : int32
+=====================================================================================================
+good vals:          1    bad vals:          0    pcnt-bad:    0.000
+  Characterizing int32:  min 4 max 4 avg 4.000
+    => distribution of top 1 values out of 1 distinct values:
+        val:          4 count:          1  pcnt-of-good-vals:  100.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          1  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.b.name : string
+=====================================================================================================
+String lengths: good vals:          2    bad vals:          0    pcnt-bad:    0.000
+  Characterizing lengths:  min 0 max 6 avg 3.000
+    => distribution of top 2 values out of 2 distinct values:
+        val:          0 count:          1  pcnt-of-good-vals:   50.000
+        val:          6 count:          1  pcnt-of-good-vals:   50.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          2  pcnt-of-good-vals:  100.000
+  Characterizing strings:
+    => distribution of top 2 strings out of 2 distinct strings:
+        val: ""       count:          1  pcnt-of-good-vals:   50.000
+        val: " hello" count:          1  pcnt-of-good-vals:   50.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING       count:          2  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.b.def : int32
+=====================================================================================================
+good vals:          1    bad vals:          0    pcnt-bad:    0.000
+  Characterizing int32:  min 3 max 3 avg 3.000
+    => distribution of top 1 values out of 1 distinct values:
+        val:          3 count:          1  pcnt-of-good-vals:  100.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          1  pcnt-of-good-vals:  100.000

@@ -13,9 +13,12 @@
 \date{\today}
 \author{
   Kathleen Fisher\\
-  Robert Gruber\\
   AT\&T Labs --- Research \\
-  \small\texttt{\{kfisher,gruber\}@research.att.com}
+  \small\texttt{kfisher@research.att.com}
+\and
+  Robert E. Gruber \\
+  AT\&T Labs --- Research \\
+  \small\texttt{gruber@research.att.com}
 }
 
 \begin{document}
@@ -24,13 +27,13 @@
 \thispagestyle{empty}
 
 \section{Introduction}
-Transactional data streams, such as stock-market buy/sell orders,
+Transactional data streams, such as sequences of stock-market buy/sell orders,
 credit-card purchase records, web server entries, and electronic fund
 transfer orders, can be mined very profitably.  As an example,
 researchers at AT\&T have extracted information from streams of
 call-detail records to significant effect~\cite{kdd98,kdd99,kdd00}.   
 
-Often such streams are high-volume: the call-detail stream contains
+Often such streams are high-volume: AT\&T's call-detail stream contains
 roughly 300~million calls per day requiring approximately 7GBs of
 storage space.  Typically, such stream data arrives ``as is'' in
 \textit{ad hoc} formats with poor documentation.  In addition, the
@@ -54,34 +57,40 @@ others nearly impossible.
 The goal of the PADS project is to provide languages and tools for
 simplifying data stream analysis.  We have a preliminary design of a
 declarative data-description language, \padsl{}, expressive enough to
-describe the data feeds we see at AT\&T in practice, including both ASCII,
-binary, and mixed data.  From \padsl{} we generate a tunable C library with
-functions for parsing, manipulating, and summarizing the data.  
+describe the data feeds we see at AT\&T in practice, including ASCII,
+binary, and mixed data formats.  From \padsl{} we generate a tunable \C{}
+library with functions for parsing, manipulating, and summarizing the data.  
 
 \section{\pads{} language}
-Intuitively, a \pads{} description specifies complete information
+Intuitively, a \padsl{} description specifies complete information
 about the physical layout and semantic constraints for the associated
-data stream.  Most type declarations in \padsl{} are based on analogous type declarations in \C{}.
-\pads{} has an extensible set of base types that
+data stream.  Most type declarations in \padsl{} are analogous to type
+declarations in \C{}.
+\padsl{} has an extensible set of base types that
 specify how to read and verify atomic pieces of data such as ASCII
-integers (\cd{aint32}) and binary bytes (\cd{bint8}).
+32-bit integers (\cd{a_int32}) and binary bytes (\cd{b_int8}).
 Verification conditions for such base types include checking that the
-number produced fits in the indicated space, \ie, 32-bits for
-\cd{aint32}.  \pads{}
-\kw{pstruct}s allow users to describe record-like structures, 
-\kw{punion}s alternatives, and \kw{parray}s sequences.  Each of these
-types can have a predicate associated with it that indicates whether a
+resulting number fits in the indicated space, \ie, 16-bits for
+\cd{a_int16}.  \padsl{} has 
+\kw{pstruct}s, \kw{punion}s, and \kw{parray}s to describe
+record-like structures, alternatives, and sequences, respectively.
+Each of these
+types can have an associated predicate that indicates whether a
 value calculated from the physical specification is indeed a legal
-value for the type.  Such conditions might require that two fields of a
-\cd{pstruct} are related via a particular function or that the elements
-of a sequence are in increasing order.  \pads{} \cd{typedef}s can be used
+value for the type.  For example, the predicate might require that two
+fields of a 
+\kw{pstruct} are related via a particular function or that the elements
+of a sequence are in increasing order.  \padsl{} \kw{typedef}s can be used
 to define new types that add further constraints to existing types.
 
-In addition, each of these types can be parameterized by values, which
-serves both to reduce the number of base types and permit later
-portions of the data to depend upon earlier portions.  For example,
-base type \cd{auint32FW(:3:)} specifies an unsigned ASCII integer
-represented on disk with 3 characters, while \cd{astring(:' ':)}
+In addition, each of these types can be parameterized by values.
+This mechanism
+serves both to reduce the number of base types and to permit the
+format of later portions of the data to depend upon earlier portions.
+For example, 
+the base type \cd{a_uint32_FW(:3:)} specifies an unsigned integer
+physically represented by exactly 3 ASCII characters, while the type
+\cd{a_string(:' ':)} 
 describes an ASCII string terminated by a space.  Parameters can be 
 used with compound types to specify the size of an array or which
 branch of a union should be taken.
@@ -89,63 +98,77 @@ branch of a union should be taken.
 As an example, consider the common log format for web server logs.  A
 typical record looks like the following:
 \begin{verbatim}
-207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.gif HTTP/1.0" 200 30
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
 \end{verbatim}
 recording the IP address of the requester; either a dash or the owner
 of the TCP session; either a dash or the login of the requester; the
 date; the actual request, which consists of the HTTP method, the
-requested URL, the HTTP version number; a response code, and the
-number of bytes returned.  A \pads{} type describing a request is
+requested URL, the HTTP version number; a response code; and the
+number of bytes returned.  A \padsl{} type describing the request
+portion is
 \begin{code}
 \kw{pstruct} http_request_t \{
-  '\\"'; http_method_t  meth;            /- Method used during request
-  ' ';  astring(:' ':) req_uri;         /- Requested uri.
-  ' ';  http_v_t       version : checkVersion(version, meth);
+  '\\"'; http_method_t   meth;           /- Method used during request
+  ' ';  a_string(:' ':) req_uri;        /- Requested uri.
+  ' ';  http_v_t        version : checkVersion(version, meth);
                                         /- HTTP version number of request 
   '\\"';
 \};
 \end{code}
-This \cd{pstruct} uses other already-defined types.
-Its \cd{version} field has a constraint predicate
-which ensures that obsolte HTTP methods \cd{LINK} and \cd{UNLINK} 
+This \kw{pstruct} uses (omitted) auxiliary types \cd{http_method_t} and
+\cd{http_v_t} to describe
+the HTTP method and version formats, respectively.
+It uses character literals (\cd{'\\"'} and \cd{' '}) to consume
+the quotes and 
+spaces from the physical representation. 
+The \cd{version} field has a constraint predicate \cd{checkVersion}
+which ensures that obsolete HTTP methods \cd{LINK} and \cd{UNLINK} 
 are only used with HTTP version \cd{1.0}.
 
-\section{Generated Library}
-From each type in a \pads{} description, we generate C declarations for
+\section{Generated library}
+From each type in a \padsl{} description, we generate C declarations for
 (1) an in-memory representation, 
-(2) a {\em checkset}\/-mask, which allows users to specify at fine granularity
-whether to check constraints and whether to fill in the in-memory representation,
-allowing users to tune which constraints and which portions of the data are relevant to their applications,
+(2) a {\em checkset}\/-mask, which allows users to specify 
+which portions of the data are relevant to their applications,
 (3) an error-description, which we use to describe physical and
 semantic errors detected during parsing, 
 (4) a parse function, and 
 (5) utility functions.
-The parse function takes as arguments pointers to a checkset-mask, in-memory representation, and
-error-description.  It uses the checkset mask to guide constraint checking and in-memory setting
-as it fills in the in-memory representation and error-description.
-The function maintains this invariant: if the checkset-mask
-requests a data item be both checked and set, and the error description indicates no
-error for that item, then the in-memory representation of the item has been filled in and
-satisfies all of the semantic constraints of the data. 
+The parse function takes as arguments  pointers to a checkset-mask, an
+in-memory representation, and an
+error-description.  
+The generated library maintains the invariant that 
+if the checkset-mask requests that a data item be verified and set, 
+and if the error description indicates no
+error, then the in-memory representation satisfies the semantic
+constraints on the data. 
 
-By supporting multiple entry-points, we accomodate larger-scale data.
-For a small file, the user can define a \padsl{} type that describes
-the entire file, and use that type's parse function to parse the whole
-file with one call.  For larger-scale data, the user would sequence
-calls to parse functions that read manageable portions of the file,
-parsing each record in a file in a loop, for example.
+The checkset-mask allows the user to specify with
+fine granularity which constraints the parser should check and which
+portions of the in-memory representation it should fill in.  This
+control allows the description-writer to specify all known constraints
+about the data without worrying about the run-time cost of verifying
+potentially expensive constraints for time-critical applications.
+
+By supporting multiple entry-points, we accommodate larger-scale data.
+For a small file, programmers can define a \padsl{} type that describes
+the entire file and use that type's parsing function to read the whole
+file with one call.  For larger-scale data, programmers can sequence
+calls to parsing functions that read manageable portions of the file,
+\eg{}, reading a record at a time in a loop.
 
 \section{Related work}
+There are many tools for describing data formats. For example,
 \textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl} are both
-systems for describing data declaratively and then generating
+systems for declaratively describing data and then generating
 libraries for manipulating that data.  In contrast to \pads{},
-however, both these systems specify the logical representation and
-automatically generate a physical representation.  Although useful for
-many purposes, this technology does not help process data that arrives
-in an already-determined format that does not conform to
-any standard. 
+however, both these systems specify the {\em logical\/} representation
+and automatically generate a {\em physical\/} representation.
+Although useful for many purposes, this technology does not help
+process data that arrives in predetermined, \textit{ad hoc} formats.
 
-More closely related work allows declarative descriptions of binary
+
+More closely related work allows declarative descriptions of physical
 data~\cite{sigcomm00,erlang-bit-syntax,gpce02}, motivated by parsing
 \textsc{TCP/IP} packets and \java{} jar-files.  In contrast to our
 work, these systems only handle binary data and assume the data is

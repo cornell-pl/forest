@@ -614,7 +614,8 @@ structure CnvExt : CNVEXT = struct
 	      val locX      =  P.addrX(fieldX(ed,loc))
               val locS      =  PL.getLocS(PT.Id ts,P.addrX(fieldX(ed,loc)))
 	      val locBS     =  PL.getLocBeginS(PT.Id ts, P.addrX(fieldX(ed,loc)))
-	      val locES     =  PL.getLocEndS(PT.Id ts, P.addrX(fieldX(ed,loc)), ~2) (* ksf: why ~2? *)
+	      val locES     =  PL.getLocEndS(PT.Id ts, P.addrX(fieldX(ed,loc)), ~2) 
+	      val locES1    =  PL.getLocEndS(PT.Id ts, P.addrX(fieldX(ed,loc)), ~1) 
 
 	      fun getDynamicFunctions (name,memChar) = 
 		  case memChar of TyProps.Static => (NONE,NONE,NONE,NONE)
@@ -2212,8 +2213,7 @@ structure CnvExt : CNVEXT = struct
                      fun readVariant(pred,name,args,readFieldName,foundSs,notFoundSs) = 
 			 let val constraintChkS = doConstraint(pred,name,foundSs,notFoundSs)
 			 in
-			     deallocOldSpaceSs 
-			   @ [P.assignS(fieldX(rep,tag),PT.Id name),
+			     [P.assignS(fieldX(rep,tag),PT.Id name),
 			      PT.IfThenElse(
 				 PL.readFunChkX(
 				     PL.PDC_ERROR, readFieldName, PT.Id ts, 
@@ -2264,13 +2264,13 @@ structure CnvExt : CNVEXT = struct
 			 end
 
 
-                     fun genErrorSs s = [P.mkCommentS s]
+                     fun genErrorSs (s,locS) = [P.mkCommentS s]
 			             @ reportErrorSs([locS],true,
 					PL.PDC_UNION_MATCH_FAILURE,
 					true, s, [])
 			             @ [P.assignS(fieldX(rep,tag),PT.Id (errSuf name))]
 
-		     fun genCleanupSs s =  (genErrorSs s)
+		     fun genCleanupSs (s,locS) =  (genErrorSs (s,locS))
 			             @ [P.assignS(fieldX(ed,panic), P.trueX),
 					PT.Labeled(findEORSuf name, 
 						   PT.Compound (genReadEOR reportUnionErrorSs ()))]
@@ -2291,7 +2291,8 @@ structure CnvExt : CNVEXT = struct
 			     val () = chkCaseLabel eOpt
 			     val commentS = P.mkCommentS("Reading variant " ^ name^".")
 			     val foundSs = PT.Compound returnSs
-			     val notFoundSs = PT.Compound (genErrorSs ("Failed to match branch "^ name^"."))
+			     val notFoundSs = PT.Compound (
+						genErrorSs ("Failed to match branch "^ name^".", locES1))
 			     val readS = PT.Compound (readVariant(pred,name,args,readFieldName,foundSs,notFoundSs))
 			 in
 			     case eOpt of NONE => [PT.DefaultLabel(readS)]
@@ -2314,18 +2315,22 @@ structure CnvExt : CNVEXT = struct
 				 val readFields = mungeBVs genReadSwFull genReadBrief genReadSwMan cases variants
 				 val bodyS = PT.Switch(descriminator, PT.Compound readFields)
 			     in
-				 [PT.Compound ([P.varDeclS(P.int, result, PL.PDC_ERROR), 
-						bodyS,
-						PT.Return (PT.Id result)])]
+				 [PT.Compound (  [P.varDeclS(P.int, result, PL.PDC_ERROR)] 
+					       @ deallocOldSpaceSs 
+                                               @ [locBS,
+						  bodyS,
+						  PT.Return (PT.Id result)])]
 			     end
 
                      fun buildReadFun () = 
 			 case descOpt of NONE => 
 			     let val readFields = mungeVariants genReadFull genReadBrief genReadMan
  					           variants  (* does type checking *)
-				 val cleanupSs = genCleanupSs ("Failed to match any branch of union"^name^".")
+				 val cleanupSs = genCleanupSs ("Failed to match any branch of union"^name^".",
+							       locES)
 			     in
-				 [PT.Compound ([P.varDeclS(P.int, result, PL.PDC_ERROR)] 
+				 [PT.Compound ([P.varDeclS(P.int, result, PL.PDC_ERROR),
+						locBS] 
 					       @ readFields @ cleanupSs)]
 			     end
                          | SOME descriminator => buildSwitchRead(descriminator)
