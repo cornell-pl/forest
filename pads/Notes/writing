@@ -1,0 +1,53 @@
+int write_external(PDC_t *pdc, Sfio_t *io, <params>, ed, can){
+  int length = -1;
+  PDC_byte * buf = 0;
+  int setBuf = 0;  
+  int bufferFull = 0;
+  ted 
+  if !(pdc and io and can) {report error; goto write_External_done;};
+  if !ed then {memset(&ted,0,sizeof(ted)); ed = &ted;};
+
+  if !sfsetbuf(io, (Void_t *)1, 0)  {
+    sfsetbuf(io, pdc->outbuf, pdc->outbuflen);
+    setBuf = 1;
+  }
+  buf = (PDC_byte *) sfreserve(io,pdc->outbufReserve, SF_LOCKR);
+  if (!buf) { report error; length = -1; goto write_External_done;};
+
+  length = write_internal(pdc, buf, pdc->outbufReserve, &bufferFull, <params>, ed, can);
+  /* could check bufferFull and redo with bigger buffer, potentially in while loop */
+  if (length >= 0) {
+    length = sfwrite(io, (Void_t *)buf, length);
+  } else {
+    sfwrite(io, (Void_t *)buf, 0);  /* ??? how do we release sfreserve buffer if
+                                      don't want to write*/
+  }
+
+write_External_done:
+  if (setBuf) {
+    sfsetbuf(io, (Void_t *)0, 0);
+  }
+  return length;
+};
+
+int write_internal(PDC_t *pdc, PDC_byte *buf, size_t remain, int * bufferFull, <params>,ed, can){
+  int length = 0;
+  int tlen;
+  
+  tlen = write_foo_internal(pdc, buf, remain, bufferFull, <params>, &ed->field, &can->field);
+  if (tlen < 0) {
+    return -1;
+  };
+  length += tlen;
+  remain -= tlen;
+  tlen = write_literal_internal(pdc, buf, remain, bufferFull, <params>, "-");
+  if (tlen < 0) {
+    return -1;
+  };
+  length += tlen;
+  remain -= tlen;
+  /* ... repeat for all pieces of the struct ... */
+  return length;
+}  
+
+
