@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
   end   = (Pbyte*)(str + str_len);
 
   if (P_ERR == Pregexp_compile_cstr(pads, exp, &regexp)) {
-    error(ERROR_FATAL, "Failed to compile re %s", P_qfmt_cstr(exp, exp_len));
+    error(ERROR_FATAL, "Failed to compile re %s", P_qfmt_cstr_n(exp, exp_len));
   }
   error(0, "\ncompiled regexp, nsub = %d\n", regexp.preg.re_nsub);
 
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
   eret = PDCI_regexp_match(pads, &regexp, begin, end, e_flags, Pcharset_ASCII);
   matchlen = regexp.match[0].rm_eo - regexp.match[0].rm_so;
   error(0, "match of RE %s against string %s produced matchlen %d, res %s",
-	P_qfmt_cstr(exp, exp_len), P_qfmt_cstr(str, str_len), (int)matchlen, false_true[eret]);
+	P_qfmt_cstr_n(exp, exp_len), P_qfmt_cstr_n(str, str_len), (int)matchlen, false_true[eret]);
   if (!eret) {
 #ifdef DEBUG_REGEX
     n = regexp.preg.re_nsub;

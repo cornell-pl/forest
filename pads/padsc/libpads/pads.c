@@ -4142,7 +4142,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
     elt = (PDCI_string_dt_elt_t*)velt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->len_accum.good);
     sfprintf(outstr, "        val: ");
-    sfprintf(outstr, "%-.*s", elt->key.len+2, P_qfmt_cstr(elt->key.str, elt->key.len));
+    sfprintf(outstr, "%-.*s", elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len));
     sfprintf(outstr, "");
     pad = a->len_accum.max - elt->key.len;
     sfprintf(outstr, "%-.*s", pad,
@@ -4608,7 +4608,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.111 2003-10-01 19:17:55 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.112 2003-10-02 15:11:06 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6038,13 +6038,23 @@ P_qfmt_str(const Pstring *s) {
 }
 
 char*
-P_fmt_cstr(const char *s, size_t len) {
+P_fmt_cstr_n(const char *s, size_t len) {
   return fmtquote(s, NiL, NiL, len, 0);
 }
 
 char*
-P_qfmt_cstr(const char *s, size_t len) {
+P_fmt_cstr(const char *s) {
+  return fmtquote(s, NiL, NiL, strlen(s), 0);
+}
+
+char*
+P_qfmt_cstr_n(const char *s, size_t len) {
   return fmtquote(s, "\"", "\"", len, 1);
+}
+
+char*
+P_qfmt_cstr(const char *s) {
+  return fmtquote(s, "\"", "\"", strlen(s), 1);
 }
 
 /*
@@ -6319,8 +6329,8 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
 	} else {
 	  tmplen1 = loc->b.byte - 1;
 	  tmplen2 = elt1->len - tmplen1;
-	  tmpstr1 = P_fmt_cstr((char*)elt1->begin,           tmplen1);
-	  tmpstr2 = P_fmt_cstr((char*)elt1->begin + tmplen1, tmplen2);
+	  tmpstr1 = P_fmt_cstr_n((char*)elt1->begin,           tmplen1);
+	  tmpstr2 = P_fmt_cstr_n((char*)elt1->begin + tmplen1, tmplen2);
 	  sfprintf(pads->tmp1, "%s>>>%s", tmpstr1, tmpstr2);
 	}
       }
@@ -6335,8 +6345,8 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
 	} else {
 	  tmplen1 = loc->e.byte;
 	  tmplen2 = elt2->len - tmplen1;
-	  tmpstr1 = P_fmt_cstr((char*)elt2->begin,           tmplen1);
-	  tmpstr2 = P_fmt_cstr((char*)elt2->begin + tmplen1, tmplen2);
+	  tmpstr1 = P_fmt_cstr_n((char*)elt2->begin,           tmplen1);
+	  tmpstr2 = P_fmt_cstr_n((char*)elt2->begin + tmplen1, tmplen2);
 	  sfprintf(pads->tmp1, "%s<<<%s", tmpstr1, tmpstr2);
 	}
       }
@@ -6348,16 +6358,16 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
 	} else if (nullspan) {
 	  tmplen1 = loc->b.byte - 1;
 	  tmplen2 = elt1->len - tmplen1;
-	  tmpstr1 = P_fmt_cstr((char*)elt1->begin,           tmplen1);
-	  tmpstr2 = P_fmt_cstr((char*)elt1->begin + tmplen1, tmplen2);
+	  tmpstr1 = P_fmt_cstr_n((char*)elt1->begin,           tmplen1);
+	  tmpstr2 = P_fmt_cstr_n((char*)elt1->begin + tmplen1, tmplen2);
 	  sfprintf(pads->tmp1, "%s>>><<<%s", tmpstr1, tmpstr2);
 	} else {
 	  tmplen1 = loc->b.byte - 1;
 	  tmplen3 = elt1->len - loc->e.byte;
 	  tmplen2 = elt1->len - tmplen1 - tmplen3;
-	  tmpstr1 = P_fmt_cstr((char*)elt1->begin,                     tmplen1);
-	  tmpstr2 = P_fmt_cstr((char*)elt1->begin + tmplen1,           tmplen2);
-	  tmpstr3 = P_fmt_cstr((char*)elt1->begin + tmplen1 + tmplen2, tmplen3);
+	  tmpstr1 = P_fmt_cstr_n((char*)elt1->begin,                     tmplen1);
+	  tmpstr2 = P_fmt_cstr_n((char*)elt1->begin + tmplen1,           tmplen2);
+	  tmpstr3 = P_fmt_cstr_n((char*)elt1->begin + tmplen1 + tmplen2, tmplen3);
 	  sfprintf(pads->tmp1, "%s>>>%s<<<%s", tmpstr1, tmpstr2, tmpstr3);
 	}
       }
@@ -7920,7 +7930,7 @@ PDCI_string_ME_read(P_t *pads, const Pbase_m *m, const char *matchRegexp,
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, matchRegexp, pd);
   P_PS_init(pd);
-  if (P_ERR == PDCI_regexp_compile_cstr(pads, matchRegexp, &compiled_exp, whatfn)) {
+  if (P_ERR == PDCI_regexp_compile_cstr(pads, matchRegexp, &compiled_exp, "Pstring_ME arg", whatfn)) {
     goto bad_exp;
   }
   res = PDCI_string_CME_read(pads, m, &compiled_exp, pd, s_out, char_set, whatfn);
@@ -8009,7 +8019,7 @@ PDCI_string_SE_read(P_t *pads, const Pbase_m *m, const char *stopRegexp,
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, stopRegexp, pd);
   P_PS_init(pd);
-  if (P_ERR == PDCI_regexp_compile_cstr(pads, stopRegexp, &compiled_exp, whatfn)) {
+  if (P_ERR == PDCI_regexp_compile_cstr(pads, stopRegexp, &compiled_exp, "Pstring_SE arg", whatfn)) {
     goto bad_exp;
   }
   res = PDCI_string_CSE_read(pads, m, &compiled_exp, pd, s_out, char_set, whatfn);
@@ -8237,7 +8247,7 @@ PDCI_cstr_lit_write2io(P_t *pads, Sfio_t *io, const char *s,
 
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, s);
   P_TRACE3(pads->disc, "PDCI_cstr_lit_write2io args: s %s, char_set = %s, whatfn = %s",
-	     P_qfmt_cstr(s, strlen(s)), Pcharset2str(char_set), whatfn);
+	     P_qfmt_cstr(s), Pcharset2str(char_set), whatfn);
   stack_s.str = (char*)s;
   stack_s.len = strlen(s);
   switch (char_set)
@@ -8279,7 +8289,7 @@ PDCI_cstr_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, co
 
   PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, s);
   P_TRACE3(pads->disc, "PDCI_cstr_lit_write2buf args: s %s, char_set = %s, whatfn = %s",
-	     P_qfmt_cstr(s, strlen(s)), Pcharset2str(char_set), whatfn);
+	     P_qfmt_cstr(s), Pcharset2str(char_set), whatfn);
   stack_s.str = (char*)s;
   stack_s.len = strlen(s);
   if (stack_s.len > buf_len) {
@@ -8751,7 +8761,8 @@ PcountXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Puint
 /* INTERNAL MISC ROUTINES */
 
 Perror_t
-PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp, const char *whatfn)
+PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp,
+			 const char *err_prefix, const char *whatfn)
 {
   regflags_t    c_flags;
   size_t        len;
@@ -8768,22 +8779,22 @@ PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp, c
   regexp_end = regexp_str + len - 1;
   if (len < 3) {
     PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_REGEXP, whatfn,
-		    "regular expression %s: expr of length %d cannot be a valid regexp",
-		    P_qfmt_cstr(regexp_str, len), (int)len);
+		    "%s regular expression %s: expr of length %d cannot be a valid regexp",
+		    err_prefix, P_qfmt_cstr_n(regexp_str, len), (int)len);
     goto any_err;
   }
   delim = regexp_str[0];
   if (delim == regexp_str[1]) {
     PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_REGEXP, whatfn,
-		    "regular expression %s: invalid (empty pattern)",
-		    P_qfmt_cstr(regexp_str, len));
+		    "%s regular expression %s: invalid (empty pattern)",
+		    err_prefix, P_qfmt_cstr_n(regexp_str, len));
     goto any_err;
   }
   for (rdelim = regexp_end; *rdelim != delim; rdelim--);
   if (rdelim == regexp_str) {
     PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_REGEXP, whatfn,
-		    "regular expression %s: beginning delimiter %s has no ending %s",
-		    P_qfmt_cstr(regexp_str, len), P_qfmt_char(delim), P_qfmt_char(delim));
+		    "%s regular expression %s: beginning delimiter %s has no ending %s",
+		    err_prefix, P_qfmt_cstr_n(regexp_str, len), P_qfmt_char(delim), P_qfmt_char(delim));
     goto any_err;
   }
   /* initalize c_flags */
@@ -8867,15 +8878,15 @@ PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp, c
       continue;
     }
     PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_REGEXP, whatfn,
-		    "regular expression %s: bad pattern modifier char: %s",
-		    P_qfmt_cstr(regexp_str, len), P_qfmt_char(*end));
+		    "%s regular expression %s: bad pattern modifier char: %s",
+		    err_prefix, P_qfmt_cstr_n(regexp_str, len), P_qfmt_char(*end));
     cret = 1;
   }
   if (cret) goto any_err;
   cret = regcomp(&(regexp->preg), regexp_str, c_flags);
   if (cret) {
     PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_REGEXP, whatfn,
-		    "regular expression %s: invalid", P_qfmt_cstr(regexp_str, len));
+		    "%s regular expression %s: invalid", P_qfmt_cstr_n(regexp_str, len));
     goto any_err;
   }
   regexp->valid = 1;
@@ -8888,12 +8899,13 @@ PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp, c
 
 /* XXX_FIX change this when gsf provides a regncomp */
 Perror_t
-PDCI_regexp_compile(P_t *pads, const Pstring *regexp_str, Pregexp_t *regexp, const char *whatfn)
+PDCI_regexp_compile(P_t *pads, const Pstring *regexp_str, Pregexp_t *regexp,
+		    const char *err_prefix, const char *whatfn)
 {
   PDCI_DISC_2P_CHECKS(whatfn, regexp_str, regexp);
   sfstrset((pads)->tmp2, 0);
   sfprintf((pads)->tmp2, "%.*s", regexp_str->len, regexp_str->str);
-  return PDCI_regexp_compile_cstr(pads, sfstruse(pads->tmp2), regexp, whatfn);
+  return PDCI_regexp_compile_cstr(pads, sfstruse(pads->tmp2), regexp, err_prefix, whatfn);
 }
 
 Perror_t

@@ -129,6 +129,14 @@ Pinv_valfn PDCI_GET_INV_VALFN(P_t *, const char *);
 
 void PDCI_fill_mask(Pbase_m* mask, Pbase_m m, size_t mask_size);
 
+void PDCI_REGEXP_FROM_CHAR(P_t *pads, Pregexp_t my_regexp, Pchar char_expr,
+			   const char *err_prefix, const char *whatfn);
+void PDCI_REGEXP_FROM_CSTR(P_t *pads, Pregexp_t my_regexp, const char *str_expr,
+			   const char *err_prefix, const char *whatfn);
+void PDCI_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr,
+			  const char *err_prefix, const char *whatfn);
+
+
 #else
 /* The actual impls */
 
@@ -1072,8 +1080,10 @@ ssize_t PDCI_uint64_2sbh_io(P_t *pads, Sfio_t *io, Puint64 u, Puint32 num_bytes)
 /* ================================================================================ */
 /* INTERNAL MISC TYPES + ROUTINES */
 
-Perror_t PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp, const char *whatfn);
-Perror_t PDCI_regexp_compile(P_t *pads, const Pstring *regexp_str, Pregexp_t *regexp, const char *whatfn);
+Perror_t PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp,
+				  const char *err_prefix, const char *whatfn);
+Perror_t PDCI_regexp_compile(P_t *pads, const Pstring *regexp_str, Pregexp_t *regexp,
+			     const char *err_prefix, const char *whatfn);
 Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
 int         PDCI_regexp_match(P_t *pads, Pregexp_t *regexp, Pbyte *begin, Pbyte *end,
 			      regflags_t e_flags, Pcharset char_set);

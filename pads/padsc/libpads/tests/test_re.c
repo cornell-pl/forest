@@ -56,12 +56,12 @@ int main(int argc, char** argv) {
   }
   cret = regcomp(&preg, exp, c_flags);
   if (cret) {
-    error(ERROR_FATAL, "Failed to compile re %s, cret = %d", P_qfmt_cstr(exp, strlen(exp)), cret);
+    error(ERROR_FATAL, "Failed to compile re %s, cret = %d", P_qfmt_cstr(exp), cret);
   }
-  error(0, "compiled %s, nsub = %d", P_qfmt_cstr(exp, strlen(exp)), preg.re_nsub);
+  error(0, "compiled %s, nsub = %d", P_qfmt_cstr(exp), preg.re_nsub);
   eret = regexec(&preg, str, preg.re_nsub+1, match, e_flags);
   error(0, "match of RE %s against string %s produced %d",
-	P_qfmt_cstr(exp, strlen(exp)), P_qfmt_cstr(str, strlen(str)), eret);
+	P_qfmt_cstr(exp), P_qfmt_cstr(str), eret);
   if (!eret) {
     for (i = 0; i <= preg.re_nsub; i++) {
       error(0, "      sub %d so %d eo %d = \"%.*s\"", i, match[i].rm_so, match[i].rm_eo, match[i].rm_eo - match[i].rm_so, str + match[i].rm_so);

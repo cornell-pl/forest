@@ -130,7 +130,7 @@ struct
    PT.Call(PT.Id "P_fmtChar", [chr])
 
   fun fmtStr s =
-   PT.Call(PT.Id "P_fmt_cstr", [PT.String s, P.intX (String.size s)] )
+   PT.Call(PT.Id "P_fmt_cstr_n", [PT.String s, P.intX (String.size s)] )
 
 (* error functions *)
   fun mkFName s = PT.String (s)

@@ -3497,41 +3497,41 @@ Perror_t Pregexp_cleanup(P_t *pads, Pregexp_t *regexp);
 
 /* REGULAR EXPRESSION MACROS
  * -------------------------
- * The P_REGEXP_FROM macros convert various simple forms into regular expression
- * strings and then compile those strings into an existing Pregexp_t, my_regexp.
- * my_regexp must already have been declared.  All of these macros translate into
- * compile calls, thus one can check my_regexp.valid after any of these calls to 
- * check whether the result is a valid compiled regular expression.  (For example,
- * the macros that turn strings into regular expressions will fail if the string has
- * length zero.)
+ * The P_RE_STRING_FROM macros convert their char or string args into
+ * strings containing regular expressions that match exactly the
+ * specified character or string. * The string result is in temporary
+ * storage, so it should be used immediately (e.g., in a
+ * Pregexp_compile_cstr call).
  *
- * P_REGEXP_LIT_FROM_CHAR(pads, my_regexp, char_expr);
+ * P_RE_STRING_FROM_CHAR(pads, char_expr);
+ *   ==> Produces a regular expression string that matches a single character.
+ *       Example:  P_RE_STRING_FROM_CHAR(pads, 'a') returns string "/[a]/"
  *
- * ==> Constructs a compiled regular expression that will match one character ==
- * the value of char_expr.  Suppose char_expr is 'a'.  The regular
- * expression string that is compiled into my_regexp has the form:
+ * P_RE_STRING_FROM_CSTR(pads, cstr_expr);
+ *   ==> Produces a regular expression string that matches a string.
+ *       Example:  P_RE_STRING_FROM_CSTR(pads, "abc") returns string "/abc/l"
  *
- *     "/a/l" ==> trivial match of character 'a'
+ * P_RE_STRING_FROM_STR(pads, pstr_expr);
+ *   ==> Same as above, but takes a Pstring* rather than a const char*.
  *
- * P_REGEXP_LIT_FROM_STR(pads, my_regexp, str_expr);
+ * The P_REGEXP_FROM macros do the above conversions, and then do the added step
+ * of compiling the result into Pregexp my_regexp.  In each case below,
+ * one can check my_regexp.valid after the macro call to check whether the result
+ * is a valid compiled regular expression.
  *
- * ==> Constructs a compiled regular expression that will match the value of
- * str_expr, a Pstring*.  Suppose str_expr refers to string
- * "baz".  The regular expression string that is compiled into my_regexp has the
- * form:
- *
- *    "/baz/l"  ==> trival match of string "baz"
- *
- * P_REGEXP_LIT_FROM_CSTR(pads, my_regexp, str_expr);
- *
- * This form is like P_REGEXP_LIT_FROM_STR, except str_expr is a const char*
- * (a C string) rather than a Pstring*.
+ * P_REGEXP_FROM_CHAR(pads, my_regexp, char_expr);
+ * P_REGEXP_FROM_CSTR(pads, my_regexp, cstr_expr);
+ * P_REGEXP_FROM_STR(pads, my_regexp, pstr_expr);
  */
 
 #ifdef FOR_CKIT
-void P_REGEXP_LIT_FROM_CHAR(P_t *pads, Pregexp_t my_regexp, Pchar char_expr);
-void P_REGEXP_LIT_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr);
-void P_REGEXP_LIT_FROM_CSTR(P_t *pads, Pregexp_t my_regexp, const char *str_expr);
+const char* P_RE_STRING_FROM_CHAR(P_t *pads, Pchar char_expr);
+const char* P_RE_STRING_FROM_CSTR(P_t *pads, const char *str_expr);
+const char* P_RE_STRING_FROM_STR(P_t *pads, Pstring *str_expr);
+
+void P_REGEXP_FROM_CHAR(P_t *pads, Pregexp_t my_regexp, Pchar char_expr);
+void P_REGEXP_FROM_CSTR(P_t *pads, Pregexp_t my_regexp, const char *str_expr);
+void P_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr);
 #endif
 
 /* ================================================================================
@@ -3541,17 +3541,20 @@ void P_REGEXP_LIT_FROM_CSTR(P_t *pads, Pregexp_t my_regexp, const char *str_expr
  *        N.B. Resulting string should be printed immediately then not used again, e.g.,
  *        Perrorf(0, 0, "Missing separator: %s", P_fmt_Char(c)); 
  * 
- *    P_fmt_str   : same thing for a Pstring
- *    P_fmt_cstr  : same thing for a C string (must specify a char * ptr and a length)
+ *    P_fmt_str    : same thing for a Pstring
+ *    P_fmt_cstr   : same thing for a C string (specify a char * ptr)
+ *    P_fmt_cstr_n : same thing for a C string (specify a char * ptr and a length)
  *
- *    P_qfmt_char/P_qfmt_str/P_qfmt_cstr : same as above, but quote marks are added
+ *    P_qfmt_char/P_qfmt_str/P_qfmt_cstr/P_qfmt_cstr_n : same as above, but quote marks are added
  */
 char *P_fmt_char(char c);
 char *P_fmt_str(const Pstring *s);
-char *P_fmt_cstr(const char *s, size_t len);
+char *P_fmt_cstr(const char *s);
+char *P_fmt_cstr_n(const char *s, size_t len);
 char *P_qfmt_char(char c);
 char *P_qfmt_str(const Pstring *s);
-char *P_qfmt_cstr(const char *s, size_t len);
+char *P_qfmt_cstr(const char *s);
+char *P_qfmt_cstr_n(const char *s, size_t len);
 
 /*
  * P_swap_bytes: in-place memory byte order swap

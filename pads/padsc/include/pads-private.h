@@ -39,6 +39,10 @@
   Vmalloc_t        *vm;          /* vm handle */ \
   Sfio_t           *tmp1;        /* tmp sfprintf area 1 */ \
   Sfio_t           *tmp2;        /* tmp sfprintf area 2 */ \
+  const char       *tmp1_cstr;   /* C string used in tmp1 construction */ \
+  const char       *tmp2_cstr;   /* C string used in tmp2 construction */ \
+  Pstring          *tmp1_pstr;   /* Pstring* used in tmp1 construction */ \
+  Pstring          *tmp2_pstr;   /* Pstring* used in tmp2 construction */ \
   Pstring        stmp1;       /* tmp string 1 */ \
   Pstring        stmp2;       /* tmp string 2 */ \
   RMM_t            *rmm_z;       /* rbuf memory mgr -- zeroes allocated memory */  \

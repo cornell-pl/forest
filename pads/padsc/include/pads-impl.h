@@ -253,7 +253,7 @@ ssize_t PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 #define P_STRING_INIT_LIT(the_pads_string, str_lit) do { \
   (the_pads_string).str     = (char*)(str_lit); \
-  (the_pads_string).len     = sizeof(str_lit); \
+  (the_pads_string).len     = sizeof(str_lit)-1; \
   (the_pads_string).rbuf    = 0; \
   (the_pads_string).sharing = 1; \
 } while (0)
@@ -278,9 +278,9 @@ ssize_t PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
  */
 
 #define Pregexp_compile(pads, regexp_str, regexp) \
-  PDCI_regexp_compile(pads, regexp_str, regexp, "Pregexp_compile")
+  PDCI_regexp_compile(pads, regexp_str, regexp, "", "Pregexp_compile")
 #define Pregexp_compile_cstr(pads, regexp_str, regexp) \
-  PDCI_regexp_compile_cstr(pads, regexp_str, regexp, "Pregexp_compile_cstr")
+  PDCI_regexp_compile_cstr(pads, regexp_str, regexp, "", "Pregexp_compile_cstr")
 #define Pregexp_cleanup(pads, regexp) \
   PDCI_regexp_cleanup(pads, regexp, "Pregexp_cleanup")
 
@@ -288,18 +288,39 @@ ssize_t PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
  * P_REGEXP macros
  */
 
-#define P_REGEXP_LIT_FROM_CHAR(pads, my_regexp, char_expr) do { \
-  sfstrset((pads)->tmp2, 0);\
-  sfprintf((pads)->tmp2, "/%c/l", (char_expr)); \
-  Pregexp_compile_cstr(pads, sfstruse(pads->tmp2), &(my_regexp)); \
-} while (0)
+#define P_RE_STRING_FROM_CHAR(pads, char_expr) \
+  ( sfstrset((pads)->tmp2, 0), \
+    sfprintf((pads)->tmp2, "/[%c]/", (char_expr)), \
+    sfstruse((pads)->tmp2) )
 
-#define P_REGEXP_LIT_FROM_STR(pads, my_regexp, str_expr) do { \
-  sfstrset((pads)->tmp2, 0);\
-  sfprintf((pads)->tmp2, "/%.*s/l", (str_expr)->len, (str_expr)->str); \
-  Pregexp_compile_cstr(pads, sfstruse(pads->tmp2), &(my_regexp)); \
-} while (0)
+#define P_RE_STRING_FROM_STR(pads, str_expr) \
+  ( (pads)->tmp2_pstr = (str_expr), \
+    sfstrset((pads)->tmp2, 0), \
+    sfprintf((pads)->tmp2, "/%.*s/l", (pads)->tmp2_pstr->len, (pads)->tmp2_pstr->str), \
+    sfstruse((pads)->tmp2) )
 
+#define P_RE_STRING_FROM_CSTR(pads, str_expr) \
+  ( sfstrset((pads)->tmp2, 0), \
+    sfprintf((pads)->tmp2, "/%s/l", (str_expr)), \
+    sfstruse((pads)->tmp2) )
+
+#define PDCI_REGEXP_FROM_CHAR(pads, my_regexp, char_expr, err_prefix, whatfn) \
+  PDCI_regexp_compile_cstr(pads, P_RE_STRING_FROM_CHAR(pads, char_expr), &(my_regexp), err_prefix, whatfn)
+
+#define PDCI_REGEXP_FROM_STR(pads, my_regexp, str_expr, err_prefix, whatfn) \
+  PDCI_regexp_compile_cstr(pads, P_RE_STRING_FROM_STR(pads, str_expr), &(my_regexp), err_prefix, whatfn)
+
+#define PDCI_REGEXP_FROM_CSTR(pads, my_regexp, str_expr, err_prefix, whatfn) \
+  PDCI_regexp_compile_cstr(pads, P_RE_STRING_FROM_CSTR(pads, str_expr), &(my_regexp), err_prefix, whatfn)
+
+#define P_REGEXP_FROM_CHAR(pads, my_regexp, char_expr) \
+  PDCI_REGEXP_FROM_CHAR(pads, my_regexp, char_expr, "", "P_REGEXP_FROM_CHAR")
+
+#define P_REGEXP_FROM_STR(pads, my_regexp, str_expr) \
+  PDCI_REGEXP_FROM_STR(pads, my_regexp, str_expr, "", "P_REGEXP_FROM_STR")
+
+#define P_REGEXP_FROM_CSTR(pads, my_regexp, str_expr) \
+  PDCI_REGEXP_FROM_CSTR(pads, my_regexp, str_expr, "", "P_REGEXP_FROM_CSTR")
 
 /* ================================================================================
  * CHAR/STRING SCAN FUNCTIONS

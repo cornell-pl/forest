@@ -6,7 +6,7 @@
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
 int main(int argc, char** argv) {
-  Pstring      s;
+  P_STRING_DECL_NULL(stmp);
   P_t*          pads;
   Pio_disc_t*  io_disc;
   Pdisc_t      my_disc = Pdefault_disc;
@@ -29,15 +29,31 @@ int main(int argc, char** argv) {
       error(ERROR_FATAL, "*** P_io_fopen failed ***");
     }
 
+#if 0
+    error(0, "XXX Changed char a into %s", P_fmt_cstr(P_RE_STRING_FROM_CHAR(pads, 'a')));
+    error(0, "XXX Changed char 001 into %s", P_fmt_cstr(P_RE_STRING_FROM_CHAR(pads, '\001')));
+    error(0, "XXX Changed string abc into %s", P_fmt_cstr(P_RE_STRING_FROM_CSTR(pads, "abc")));
+    error(0, "XXX Changed string a001c into %s", P_fmt_cstr(P_RE_STRING_FROM_CSTR(pads, "a\001c")));
+
+    P_STRING_INIT_LIT(stmp, "a\001c");
+    error(0, "XXX length of stmp is %d", stmp.len);
+    error(0, "XXX Changed string %s into %s", P_fmt_str(&stmp), P_fmt_cstr(P_RE_STRING_FROM_STR(pads, &stmp)));
+
+    P_REGEXP_FROM_STR(pads, my_regexp_f, &stmp);
+    if (!my_regexp_f.valid) { error(ERROR_FATAL, "not valid 1"); }
+    P_REGEXP_FROM_CHAR(pads, my_regexp_f, 'a');
+    if (!my_regexp_f.valid) { error(ERROR_FATAL, "not valid 2"); }
+    P_REGEXP_FROM_CSTR(pads, my_regexp_f, "a\001c");
+    if (!my_regexp_f.valid) { error(ERROR_FATAL, "not valid 2"); }
+#endif
+
     if (P_ERR == Pregexp_compile_cstr(pads, "/[|]+/", &my_regexp_f)) {
       error(ERROR_FATAL, "** unexpected regexp compile failure **");
     }
-
     if (P_ERR == Pregexp_compile_cstr(pads, "/([X]+)?$/", &my_regexp_s)) {
       error(ERROR_FATAL, "** unexpected regexp compile failure **");
     }
 
-    Pstring_init(pads, &s);
 
   /*
    * XXX Process the data here XXX
@@ -113,7 +129,7 @@ int main(int argc, char** argv) {
     }
 
   done:
-    Pstring_cleanup(pads, &s);
+    Pstring_cleanup(pads, &stmp);
     Pregexp_cleanup(pads, &my_regexp_f);
     Pregexp_cleanup(pads, &my_regexp_s);
 

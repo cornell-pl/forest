@@ -81,7 +81,7 @@
 #define IODISC_RELOC_DBG_ELT(elt) \
   do { \
     if (pads->disc->errorf) { \
-      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d disc_off %d) = AT NEW LOC =>\n[%s]", elt->unit, elt->num, elt->disc_off, P_fmt_cstr(elt->begin, elt->len)); \
+      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d disc_off %d) = AT NEW LOC =>\n[%s]", elt->unit, elt->num, elt->disc_off, P_fmt_cstr_n(elt->begin, elt->len)); \
     } \
   } while (0)
 #else
@@ -311,7 +311,7 @@ P_fwrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
   P_APPEND_ELT(data->head, elt);
 #if 0
   if (pads->disc->errorf) {
-    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr(elt->begin, elt->len));
+    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
@@ -652,7 +652,7 @@ P_norec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
   P_APPEND_ELT(data->head, elt);
 #if 0
   if (pads->disc->errorf) {
-    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr(elt->begin, elt->len));
+    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
@@ -1048,7 +1048,7 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     P_APPEND_ELT(data->head, elt);
 #if 0
     if (pads->disc->errorf) {
-      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr(elt->begin, elt->len));
+      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
     }
 #endif
     if (!(*next_elt_out)) {
@@ -1082,7 +1082,7 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     P_APPEND_ELT(data->head, elt);
 #if 0
     if (pads->disc->errorf) {
-      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr(elt->begin, elt->len));
+      pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
     }
 #endif
     if (!(*next_elt_out)) {
@@ -1584,7 +1584,7 @@ P_vlrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
   P_APPEND_ELT(data->head, elt);
 #if 0
   if (pads->disc->errorf) {
-    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr(elt->begin, elt->len));
+    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
@@ -2023,7 +2023,7 @@ P_norec_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_elt_t **
   P_APPEND_ELT(data->head, elt);
 #if 0
   if (pads->disc->errorf) {
-    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d disc_off %d)\n[%s]", elt->unit, elt->num, elt->disc_off, P_fmt_cstr(elt->begin, elt->len));
+    pads->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d disc_off %d)\n[%s]", elt->unit, elt->num, elt->disc_off, P_fmt_cstr_n(elt->begin, elt->len));
   }
 #endif
   (*next_elt_out) = elt;
