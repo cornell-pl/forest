@@ -1,4 +1,6 @@
-#!/bin/tcsh
+#!/usr/bin/env perl
+#                                                                        -*- mode: perl; -*-
+use Getopt::Long;
 
 # file paths will be filled in by install script
 
@@ -13,210 +15,187 @@
 #            is already present, or if some .p files
 #            are in different locations.
 #
-#         2. The script needs to determine $PADS_HOME, the location
+#         2. The script needs to determine $pads_home, the location
 #            of the PADS installation, so that it can find
-#            $PADS_HOME/padsc/include and $PADS_HOME/padsc/lib.
+#            $pads_home/padsc/include and $pads_home/padsc/lib.
 #            If environment variable PADS_HOME is not set,
-#            the script fails and reports an error.
+#            or if the path to the script does not help us find
+#            pads_home, the script fails and reports an error.
 #
 
-set _pads_status = OK
+# =========================
+sub cleanupStr
+{
+    my( $txt ) = @_;
+    chomp($txt);
+    $txt =~ s/\s//g;
+    return $txt;
+}
 
-if (! $?PADS_HOME) then
-  set _pads_status = FAILED
-else
-  if ("$PADS_HOME"x == x) then
-    set _pads_status = FAILED
-  endif
-endif
+# =========================
+# main program
 
-if ($_pads_status == "FAILED") then
-  echo "\n##############################################################################"
-  echo "# Set env var PADS_HOME and then use padsc again."
-  echo "##############################################################################\n"
-  exit 0
-endif
+my $dbg=0;
 
-if (!(-d $PADS_HOME && -d $PADS_HOME/padsc && -d $PADS_HOME/lib && -d $PADS_HOME/padsc/include)) then
-  echo "\n##############################################################################"
-  echo "# Directory $PADS_HOME does not appear to be a valid PADS installation dir."
-  echo "# Set env var PADS_HOME to correct location and then use padsc again."
-  echo "##############################################################################\n"
-  exit 0
-endif
+my $pads_home = $ENV{"PADS_HOME"};
+if ($pads_home eq "") {
+  # try to find pads_home from script path
+  if ($0 =~ m|/padsc(?:.pl)?$|) {
+    my $path = $0;
+    $path =~ s|/padsc(?:.pl)?$||;
+    $path .= "/..";
+    $pads_home = `(cd $path; pwd)` || "";
+    $pads_home = &cleanupStr($pads_home);
+    print "\n*** Guessing pads_home = [$pads_home]\n\n" if ($dbg);
+  }
+}
+if ($pads_home eq "") {
+  print "\n    Error: either env variable PADS_HOME must be set
+           OR the invocation of this script must have a path component
+           so that the script can figure out where PADS is
 
-set _ast_arch = `$PADS_HOME/ast-ast/bin/package.cvs`
-set _arch_n_opsys = `$PADS_HOME/scripts/arch-n-opsys`
+    Set PADS_HOME or use a relative or absolute path to the script and try again\n\n";
+  exit -1;
+}
 
-set IMAGE = $PADS_HOME/lib/padsc
-set SMLBIN = $PADS_HOME/binlinks/smlruntime.$_arch_n_opsys
+my $ast_arch = `$pads_home/ast-ast/bin/package.cvs` || "";
+$ast_arch = &cleanupStr($ast_arch);
+my $arch_n_opsys = `$pads_home/scripts/arch-n-opsys` || "";
+$arch_n_opsys = &cleanupStr($arch_n_opsys);
 
-set lua =
-set lda = 
-set archmk = $PADS_HOME/mk/rules.arch.$AST_ARCH.mk
-if (-e $archmk) then
-  set gnutst = `grep GNU $archmk`
-  if ("$gnutst"x != x) then
-    set lua = -U__GNUC__
-    set lda = -D__LINUX_PREPROCESSOR_FIXES
-  endif
-endif
+my $image  = "$pads_home/lib/padsc";
+my $smlbin = "$pads_home/binlinks/smlruntime.$arch_n_opsys";
 
-set opts = ""
-set pfiles = ""
-set retarg = ""
-set retarg_OK = 1
-set help = 0
-set optx = 0
+my $lua = "";
+my $lda = "";
+my $archmk = "$pads_home/mk/rules.arch.$ast_arch.mk";
 
-foreach x ($*)
-    switch ($x)
-    case -r:
-      set retarg_OK = 0
-      breaksw
-    case -h:
-    case --help:
-      set help = 1
-      breaksw
-    case -x:
-      set opts = "$opts $x"
-      set optx = 1
-      breaksw
-    case -*:
-      set opts = "$opts $x"
-      breaksw
-    default:
-      set tltmp = $x:t
-      set y = `basename $tltmp .p`
-      if ($tltmp == $y) then
-        set opts = "$opts $x"
-      else
-        set pfiles = "$pfiles $x"
-        set zh = $x:h
-        set zt = $x:t
-        if ($zh == $zt) then
-          set pdir = "."
-          set tdir = "../gen"
-        else
-          set pdir = $zh
-          set zhh = $zh:h
-          set zht = $zh:t
-          if ($zhh == $zht) then
-            set tdir = "./gen"
-          else
-            set tdir = $zhh/gen
-          endif
-	  if (!(-d $tdir)) then
-	    set tdir = $pdir/../gen
-	  endif
-        endif
-        if (-d $pdir && -d $tdir) then
-          if ($retarg == "") then
-            set retarg = $tdir
-            #echo "initial retarg $retarg"
-          else
-            #echo "checking another tdir against retarg"
-            if ($tdir != $retarg) then
-              #echo "tdir $tdir != retarg $retarg"
-              set retarg_OK = 0
-            endif
-          endif
-        else
-          #echo "pdir $pdir or tdir $tdir are not dirs"
-          set retarg_OK = 0
-        endif
-      endif
-      breaksw
-    endsw
-end # forech
+if (-e $archmk) {
+  my $gnutst = `grep -l GNU $archmk`;
+  $gnutst = &cleanupStr($gnutst); 
+  if ($gnutst ne "") {
+    $lua = "-U__GNUC__";
+    $lda = "-D__LINUX_PREPROCESSOR_FIXES";
+  }
+}
 
-#echo "full_args = $*"
-#echo "pfiles    = $pfiles"
-#echo "opts      = $opts"
-#echo "retarg_OK = $retarg_OK"
-#echo "retarg    = $retarg"
+my $opts = "";      # all options other than pfiles
+my $pfiles = "";    # all pfiles
+my $retarg = "";    # detected gen dir, if found
+my $retarg_OK = 1;  # OK to use retarg
+my $help = 0;       # -h/--help option used
+my $optx = 0;       # -x option used
 
-if ($help) then
-  set cmd = "-help"
-else
-  if ("$pfiles" == "") then
-    echo "\nNo .p files specified.  Usage:  $0 <options> <.p files>\n\tUse --help for all available options.\n"
-    exit -1
-  endif
-  if ($retarg_OK) then
-      set cmd = "-r $retarg $opts $pfiles"
-      echo "\nChose target dir $retarg\n"
-  else
-      set cmd = "$*"
-  endif
-endif
+my $full_args = join(" ", @ARGV);
+foreach $x (@ARGV) {
+  if ($x eq "-r") {
+    $retarg_OK = 0;
+    $opts = "$opts $x";
+  } elsif  ($x eq "-h" || $x eq "--help") {
+    $help = 1;
+  } elsif ($x eq "-x") {
+    $optx = 1;
+    $opts = "$opts $x";
+  } elsif ($x !~ /^-/ && $x =~ /[.]p$/) {
+    # not an option of some kind, ends in .p, ergo a .p file
+    $pfiles = "$pfiles $x";
+    if ($retarg_OK) {
+      my $trydir = "../gen";
+      if ($x =~ m|^(.*)/[^/]+$|) {
+	$trydir = $1 . "/../gen";
+      }
+      if (-d $trydir) {
+	my $possible_retarg = `(cd $trydir; pwd)` || "oops";
+	$possible_retarg = &cleanupStr($possible_retarg);
+	if ($retarg eq "") {
+	  $retarg = $possible_retarg;
+	} elsif ($retarg ne $possible_retarg) {
+	  # two different gen dirs found
+	  $retarg_OK = 0;
+	}
+      } else {
+	# possible_retarg not a dir
+	$retarg_OK = 0;
+      }
+    }
+  } else {
+    $opts = "$opts $x";
+  }
+}
 
-set _ocaml_status = OK
-set _galaxlib_status = OK
-set _padsglxlib_status = OK
+if ($dbg) {
+  print "full_args = $full_args\n";
+  print "pfiles    = $pfiles\n";
+  print "opts      = $opts\n";
+  print "retarg_OK = $retarg_OK\n";
+  print "retarg    = $retarg\n";
+}
 
-if (! $?OCAML_LIB_DIR) then
-  set _ocaml_status = FAILED
-else
-  if ("$OCAML_LIB_DIR"x == x) then
-    set _ocaml_status = FAILED
-  endif
-endif
+my $cmd = "$smlbin \@SMLload=$image $pads_home";
+if ($help) {
+  $cmd .= " -help";
+} else {
+  if ($pfiles eq "") {
+    print "\nNo .p files specified.  Usage:  $0 <options> <.p files>\n\tUse --help for all available options.\n\n";
+    exit -1;
+  }
+  my $args = $full_args;
+  if ($retarg_OK) {
+    $args = "-r $retarg $opts $pfiles";
+    print "\nAuto-selecting target dir $retarg\n\n";
+  }
+  my @incs = ();
+  if ($optx) {
+    my $ocaml_lib_dir = $ENV{"OCAML_LIB_DIR"};
+    if ($ocaml_lib_dir eq "") {
+      $ocaml_lib_dir = "/usr/common/lib/ocaml";
+    }
+    $ocaml_lib_dir =~ s|/$||;
+    if (-d $ocaml_lib_dir) {
+      push(@incs, "-I $ocaml_lib_dir");
+    } else {
+      print "\nWarning: expected dir $ocaml_lib_dir not found, check your OCAML_LIB_DIR env var setting\n\n";
+      exit -1;
+    }
+    
+    my $galax_home = $ENV{"GALAX_HOME"};
+    if ($galax_home eq "") {
+      print "\nEnv variable GALAX_HOME must be set to use -x option\n\n";
+      exit -1;
+    }
+    if ($galax_home !~ m|/$|) {
+      $galax_home .= "/";
+    }
+    my $galax_lib_dir = $galax_home . "lib/c";
+    $galax_lib_dir =~ s|/$||;
+    if (-d $galax_lib_dir) {
+      push(@incs, "-I $galax_lib_dir");
+    } else {
+      print "\nWarning: expected dir $galax_lib_dir not found, check your GALAX_HOME env var setting\n\n";
+      exit -1;
+    }
+    
+    my $padsglx_home = $ENV{"PADSGLX_HOME"};
+    if ($padsglx_home eq "") {
+      print "\nEnv variable PADSGLX_HOME must be set to use -x option\n\n";
+      exit -1;
+    }
+    my $padsglx_lib_dir = $padsglx_home;
+    $padsglx_lib_dir =~ s|/$||;
+    if (-d $padsglx_lib_dir) {
+      push(@incs, "-I $padsglx_lib_dir");
+    } else {
+      print "\nWarning: expected dir $padsglx_lib_dir not found, check your PADSGLX_HOME env var setting\n\n";
+      exit -1;
+    }
+  }
+  my $add_incs = join(" ", @incs);
+  $cmd .= " $args $lua $lda -I $pads_home/padsc/include -I $pads_home/ast-ast/arch/$ast_arch/include/ast $add_incs";
+}
 
-if ($_ocaml_status == "FAILED") then
-  set ocaml_lib_dir = /usr/common/lib/ocaml
-else
-  set ocaml_lib_dir = $OCAML_LIB_DIR
-endif
+while ($cmd =~ /\s\s/) {
+  $cmd =~ s/\s\s/ /g;
+}
 
-if (-d $ocaml_lib_dir) then
-  set add_incs = "-I $ocaml_lib_dir"
-else
-  set add_incs = ""
-endif
-
-if ($optx) then
-  if (! $?GALAX_HOME) then
-    set _galaxlib_status = FAILED
-  else
-    if ("$GALAX_HOME"x == x) then
-      set _galaxlib_status = FAILED
-    endif
-  endif
-
-  if ($_galaxlib_status == "FAILED") then
-    echo "Env variable GALAX_HOME must be set to use -x option"
-    exit(-1)
-  endif
-  set galax_lib_dir = $GALAX_HOME/lib/c
-  if (-d $galax_lib_dir) then
-    set add_incs = "$add_incs -I $galax_lib_dir"
-  else
-    echo "Warning: expected directory $galax_lib_dir not found, check your GALAX_HOME env variable settting"
-    exit(-1)
-  endif
-
-  if (! $?PADSGLX_HOME) then
-    set _padsglxlib_status = FAILED
-  else
-    if ("$PADSGLX_HOME"x == x) then
-      set _padsglxlib_status = FAILED
-    endif
-  endif
-
-  if ($_padsglxlib_status == "FAILED") then
-    echo "Env variable PADSGLX_HOME must be set to use -x option"
-    exit(-1)
-  endif
-  set padsglx_lib_dir = $PADSGLX_HOME
-
-  if (-d $padsglx_lib_dir) then
-    set add_incs = "$add_incs -I $padsglx_lib_dir"
-  else
-    echo "Warning: expected directory $padsglx_lib_dir not found, check your PADSGLX_HOME env variable settting"
-    exit(-1)
-  endif
-endif
-
-exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd $lua $lda -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-ast/arch/$_ast_arch/include/ast $add_incs
-
+print "\nexec $cmd\n\n" if ($dbg);
+exec $cmd;
