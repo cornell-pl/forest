@@ -12,7 +12,7 @@ punion host_t  {
 };
 
 punion auth_id_t {
-  auint8 unauthorized : unauthorized == '-';   /- non-authenticated http session
+  achar unauthorized : unauthorized == '-';    /- non-authenticated http session
   astring(:' ':) id;                           /- login supplied during authentication
 };
 
