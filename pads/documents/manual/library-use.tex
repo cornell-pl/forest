@@ -1,6 +1,149 @@
 \chapter{Using the generated library}
 \label{chap:library-use}
 \cutname{library_use.html}
-Explain the various library routines to initialize handle, etc.
+In this chapter, we describe various functions provided by the core
+\pads{} library for manipulating \pads{} handles.
+\figref{figure:sirius-filter} shows a simple example of library use:
+the call to \cd{P\_open} initializes the \pads{} handle, in this case
+with a default \pads{} discipline and a default IO discipline;
+the call to \cd{P\_io\_fopen} indicates that the input data may be
+found in the file located at path \cd{\literal{ "data/sirius"}}; 
+the function \cd{P_io_at_eof} tests if the file has been exhausted;
+the call to \cd{P\_io\_close} closes the input file; and finally,
+the call to \cd{P\_close} closes the \pads{} handle.
 
-Give example and/or refer back to example in \chapref{chap:example}
+\begin{description}
+\item[\small{\cd{Perror\_t  P\_open  (P\_t **pads\_out, Pdisc\_t
+      *disc, Pio\_disc\_t *io\_disc)}}]
+This function creates a \pads{} handle, which is returned in the space
+supplied by the first parameter.  The second and third arguments are
+input parameters pointing to a \pads{} discipline and an IO discipline
+to use in the handle.  Either or both of these may be \cd{NULL}, in
+which case default disciplines are used.
+
+\item[\small{\cd{Perror\_t  P\_close (P\_t *pads)}}]
+This function deallocates a \pads{} handle, freeing all associated resources.
+If there is an installed IO discipline,
+it is unmade; after this point it should NOT be used any more.
+
+\item[\small{\cd{Perror\_t  P\_close\_keep\_io\_disc(P\_t *pads, \kw{int} keep\_io\_disc)}}]
+This function is Like \cd{P\_close}, except takes an extra argument, \cd{keep\_io\_disc}, which
+if non-zero indicates the installed IO discipline (if any) should not be unmade;
+in this case it CAN be used again, \cd{}, in a future \cd{P\_open}
+      call.
+
+\item[\small{\cd{Pdisc\_t * P\_get\_disc(P\_t *pads)}}]
+This function returns \cd{NULL} on error; otherwise, it returns a
+pointer to the installed discipline.
+
+\item[\small{\cd{Perror\_t  P\_set\_disc(P\_t *pads, Pdisc\_t
+      *new\_disc, \kw{int} xfer\_io)}}]
+This function installs a different discipline handle.  If the
+parameter \cd{xfer\_io} is non-zero, then the IO discipline from the 
+old handle is moved to the new handle.
+
+\item[\small{\cd{Perror\_t  P\_set\_io\_disc(P\_t* pads, Pio\_disc\_t* new\_io\_disc)}}]
+This function installs a different IO discipline into the
+main discipline.  If there is an open SFIO stream,
+it is transferred to the new IO discipline after closing the old IO
+discipline in a way that returns all bytes beyond the current IO cursor to 
+the stream.  The old IO discipline (if any) is unmade.   After this
+point the old IO discipine should NOT be re-used.  
+
+\item[\small{\cd{Perror\_t  P\_set\_io\_disc\_keep\_old(P\_t* pads, Pio\_disc\_t* new\_io\_disc, \kw{int} keep\_old)}}]
+This function is like \cd{P\_set\_io\_disc}, except it takes an extra argument, \cd{keep\_old},
+which if non-zero indicates that the old IO discipline
+should not be unmade; in this case it CAN be used again, \eg{}, in a future
+\cd{P\_set\_io\_disc} call. 
+
+\item[\small{\cd{Tm\_zone\_t *P\_cstr2timezone(const char *tzone\_str)}}]
+Utility function for converting a \C{} string to a time zone pointer.
+It returns \cd{NULL} if the string is an invalid time zone string.
+
+\item[\small{\cd{Perror\_t  P\_set\_in\_time\_zone(P\_t *pads, const char *new\_in\_time\_zone)}}]
+\item[\small{\cd{Perror\_t  P\_set\_out\_time\_zone(P\_t *pads, const char *new\_out\_time\_zone)}}]
+These functions set the  input and output time zones, respectively.  
+See \secref{sec:library-customization-input-time-zone} and
+\secref{sec:library-customization-output-time-zone} for more information.
+
+\item[\small{\cd{Perror\_t  P\_io\_set (P\_t *pads, Sfio\_t *io)}}]
+This function initializes or changes the current SFIO stream used for input.
+If there is already an installed SFIO stream, \cd{P\_io\_close} is
+implicitly called first.
+
+\item[\small{\cd{Perror\_t  P\_io\_fopen(P\_t *pads, const char
+      *path)}}]
+This function opens a file for reading (a higher-level alternative to \cd{io\_set}).
+It uses \cd{pads->disc->fopen\_fn} if that value is non-null;
+otherwise, it  uses \cd{P\_fopen}.  It always opens files with mode
+\cd{\literal{"r"}}.  The function returns \cd{P\_OK} on success, and
+\cd{P\_ERR} on error.
+
+\item[\small{\cd{Perror\_t  P\_io\_close(P\_t *pads)}}]
+This function cleans up the IO discipline state.  It attempts to return bytes that were
+read from the underlying SFIO stream but not consumed by the parse
+back to the stream.
+
+If the underlying SFIO stream arose from a file open via \cd{P\_io\_fopen},
+the file is closed.  If the underlying Sfio stream was installed via
+\cd{P\_io\_set}, it is not closed. In this case, it is up to the
+program that opened the installed SFIO stream to close it
+(\textit{after} calling \cd{P\_io\_close}). 
+
+\item[\small{\cd{Perror\_t  P\_io\_next\_rec  (P\_t *pads, size\_t *skipped\_bytes\_out)}}]
+This function advances the current IO position to start of the next record, if any.
+It returns \cd{P\_OK} on success, \cd{P\_ERR} on failure, which
+includes hitting \cd{EOF} before \cd{EOR}.
+For the \cd{P\_OK} case, the function sets \cd{*skipped_bytes_out} to the number of
+data bytes that were passed over while searching for \cd{EOR}.
+
+\item[\small{\cd{Perror\_t  P\_io\_skip\_bytes(P\_t *pads, size\_t width, size\_t *skipped\_bytes\_out)}}]
+This function advances the current IO position by specified number of bytes, or if that many
+bytes cannot be skipped, then by as many bytes as available.
+It sets \cd{*bytes_skipped_out} to the number of bytes skipped.
+It returns \cd{P\_OK} if the requested bytes were skipped, \cd{P\_ERR} if fewer
+than the requested bytes were skipped.  For record-based 
+disciplines, the function does NOT advance the IO position beyond the
+current record.
+
+\item[\small{\cd{\kw{int} P\_io\_at\_eor(P\_t *pads)}}]
+This function returns \cd{\literal{1}} if the current IO position is
+at \cd{EOR}; otherwise it returns \cd{\literal{0}}.
+
+\item[\small{\cd{\kw{int} P\_io\_at\_eof(P\_t *pads)}}]
+This function returns \cd{\literal{1}} if the current IO position is
+at \cd{EOF}; otherwise it returns \cd{\literal{0}}.
+
+\item[\small{\cd{\kw{int} P\_io\_at\_eor\_or\_eof(P\_t *pads)}}]
+This function returns \cd{\literal{1}} if the current IO position is
+at \cd{EOR} or \cd{EOF}; otherwise it returns \cd{\literal{0}}.
+
+\item[\small{\cd{Perror\_t  P\_io\_getPos(P\_t *pads, Ppos\_t *pos,
+      \kw{int} offset)}}]
+This function fills in \cd{*pos} with the current IO position.
+If \cd{offset} is zero, the current IO position is
+used, otherwise the position used is \cd{offset} bytes from the
+current IO position.  
+The current IO position does not change.  \cd{P\_ERR} is returned if
+information about the specified position cannot be determined. 
+\cd{EOR} marker bytes (if any) are ignored when moving forward or back
+based on \cd{offset}: \cd{offset} only refers to data bytes.
+
+\item[\small{\cd{Perror\_t  P\_io\_getLocB(P\_t *pads, Ploc\_t *loc,
+      \kw{int} offset)}}]
+This function fills in \cd{loc->b} with the IO position.
+See the description of \cd{P\_io\_getPos} for a description of the
+\cd{offset} parameter.
+
+\item[\small{\cd{Perror\_t  P\_io\_getLocE(P\_t *pads, Ploc\_t *loc,
+      \kw{int} offset)}}]
+This function fills in \cd{loc->e} with the IO position.
+See the description of \cd{P\_io\_getPos} for a description of the
+\cd{offset} parameter.
+ 
+\item[\small{\cd{Perror\_t  P\_io\_getLoc(P\_t *pads, Ploc\_t *loc,
+      \kw{int} offset)}}]
+This function fills in both \cd{loc->b} and \cd{loc->e} with the IO
+position. See the description of \cd{P\_io\_getPos} for a description of the
+\cd{offset} parameter.
+\end{description}
