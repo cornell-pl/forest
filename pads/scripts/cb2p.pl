@@ -10,41 +10,37 @@ my %first_alt = ();
 my %last_alt = ();
 my %aux_arrays = ();
 my %field_ids = ();
-# my %fieldgen = ();
 my %arraynm = ();
 my %array_generated = ();
 my %elt_type = ();
-my %arr_count = ();
-my %is_str = ();
 my %redef = ();
 my %dfieldlength = ();
 my %dtylength = ();
+my %rest = ();
 
 # arrays
 my @lines;
 my @defs;
 
-# these arrays act like stacks
+# these arrays act like a single stack (indexed by $nst)
 my @lev;
-my @rest;
-my @arrays;
-my @dbytes;
+my @id;
+$lev[0] = -99;
 
 # scalars
 my $dbg = 0;
 my $nst = 0;
 my $altctr = 1;
-my $level = 1;
 my $get_top_id = 1;
-my ($popid, $id1, $id2, $line, $lineno, $the_rest);
+
+my ($id1, $id2);
+my ($line, $lineno, $level, $the_rest);
+my ($popid, $parentid, $targetid);
 my ($max, $array_param, $ty);
-my ($tmp, $the_alt, $field, $def);
-my ($targetid, $parentid);
-$lev[$nst] = -99;
+my ($the_alt, $def);
 
 goto usage if ($#ARGV != 1);
-my $cbook  = $ARGV[0];
-my $outdir = $ARGV[1];
+my ($cbook, $outdir)  = ($ARGV[0], $ARGV[1]);
 $outdir =~ s:[/]$::;
 
 chomp($pads_home = $ENV{'PADS_HOME'});
@@ -75,23 +71,22 @@ while (<CBIN>) {
   }
   push(@lines, $_);
 }
-push(@lines, "999999999 -99 __T_H_E_END___0 1 none\n");
 close(CBIN) or die("failure while reading $cbook\n");
-
+push(@lines, "999999999 -99 __T_H_E_END___0 1 none\n");
 $lines[1] =~ s/__T_H_E_TOP__/$top_id/;
 
-# remove extra numbers at end of IDs if they are unnecessary
+# count occurrences of IDs
 foreach $line (@lines) {
-  $_ = $line;
-  if (/^\d+ [-]?\d+ (\S+)_\d+ /) {
+  if ($line =~ /^\d+ [-]?\d+ (\S+)_\d+ /) {
     $id1 = $1;
     $orig_ids{$id1}++;
   }
 }
 
+# remove extra number at end of ID if unnecessary,
+# otherwise switch to a lineno naming scheme
 foreach $line (@lines) {
-  $_ = $line;
-  if (/^(\d+) [-]?\d+ ((\S+)_\d+) /) {
+  if ($line =~ /^(\d+) [-]?\d+ ((\S+)_\d+) /) {
     ($lineno, $id1, $id2) = ($1, $3, $2);
     if ($orig_ids{$id1} == 1) { # only one, remove the extension
       $map_id{$id2} = $id1;
@@ -104,8 +99,7 @@ foreach $line (@lines) {
 }
 
 foreach $line (@lines) {
-  $_ = $line;
-  if (/^(\d+) r (\S+) (\S+)/) {
+  if ($line =~ /^(\d+) r (\S+) (\S+)/) {
     ($lineno, $id1, $id2) = ($1, $2, $3);
     $id1 = $map_id{$id1};
     $id2 = $map_id{$id2};
@@ -122,7 +116,7 @@ foreach $line (@lines) {
     $redef{$id1} = $the_alt;
     print "XXX_REMOVE Redefine:  $id1 is an alternate for previously-defined $id2, alt = $the_alt\n" if ($dbg);
   }
-  if (/\d+[!]\d+[!](\S+) /) {
+  if ($line =~ /\d+[!]\d+[!](\S+) /) {
     $id1 = $1;
     $controls_array{$id1} = 1;
     print "XXX_REMOVE controls_array{$id1} = 1\n" if ($dbg);
@@ -130,29 +124,30 @@ foreach $line (@lines) {
 }
 
 foreach $line (@lines) {
-  $_ = $line;
-  if (/^(\d+) r (\S+) (\S+)/) {
+  if ($line =~ /^(\d+) r (\S+) (\S+)/) {
     next;
   }
-  if (/^(\d+) ([-]?\d+) (\S+)\s?(.*)/) {
+  if ($line =~ /^(\d+) ([-]?\d+) (\S+)\s?(.*)/) {
     ($lineno, $level, $id1, $the_rest) = ($1, $2, $3, $4);
     $id1 = $map_id{$id1};
+    $rest{$id1} = $the_rest;
+    print "XXX_REMOVE rest{$id1} = $rest{$id1}\n" if ($dbg);
     if ($level <= $lev[$nst]) {
       print "XXX_REMOVE Changing from level $lev[$nst] to final level $level -- popping levels\n" if ($dbg);
       while ($nst && $level <= $lev[$nst]) {
 	$popid = $id[$nst];
-	print "XXX_REMOVE -- popping nst $nst (lev $lev[$nst], id $popid, rest $rest[$nst])\n" if ($dbg);
+	print "XXX_REMOVE -- popping nst $nst (lev $lev[$nst], id $popid, rest $rest{$popid})\n" if ($dbg);
 	if ($nst > 1) {
 	  $parentid = $id[$nst-1];
 	  $targetid = $parentid;
 	  if (defined($redef{$popid})) {
 	    $targetid = $redef{$popid};
 	  }
-	  if ($rest[$nst-1] !~ /none/) {
+	  if ($rest{$parentid} !~ /none/) {
 	    die("something is wrong, parent is not structured");
 	  }
 	  # parent is a struct, add a field and possibly an array declaration
-	  ($max, $array_param, $ty) = &eval_ty($popid, $rest[$nst]);
+	  ($max, $array_param, $ty) = &eval_ty($popid, $rest{$popid});
 	  print "XXX_REMOVE popid $popid max is $max\n" if ($dbg);
 	  if ($max > 1) {
 	    &add_array($ty);
@@ -163,24 +158,18 @@ foreach $line (@lines) {
 	    $ty = sprintf("%s(:%s:)", $ty, $array_param);
 	  }			# else ty is OK as-is
 	  $fieldty{$popid} = $ty;
-	  # $field = sprintf("    %-40s %25s // Field length:  %4s\n", $ty, $popid . ";", $dfieldlength{$popid});
-	  # $fieldgen{$popid} = $field;
 	  $field_ids{$targetid} .= "$popid#";
 	  if ($first_alt{$targetid} eq $popid) {
 	    $ty = $targetid . "_t";
 	    $fieldty{$targetid} = $ty;
-	    # $field = sprintf("    %-40s %25s // Field length:  %4s\n", $ty, $targetid . ";", $dfieldlength{$targetid});
-	    # $fieldgen{$targetid} = $field;
 	    $field_ids{$parentid} .= "$targetid#";
 	  }
 	}
-	if ($rest[$nst] =~ /none/) {
-	  if ($nst > 1) {
-	    push(@defs, "$popid");
-	    if (defined($last_alt{$targetid}) && $last_alt{$targetid} eq $popid) {
-	      push(@defs, "$targetid");
-	      &calc_alt_lengths($targetid);
-	    }
+	if ($nst > 1 && $rest{$popid} =~ /none/) {
+	  push(@defs, "$popid");
+	  if (defined($last_alt{$targetid}) && $last_alt{$targetid} eq $popid) {
+	    push(@defs, "$targetid");
+	    &calc_alt_lengths($targetid);
 	  }
 	}
 	$nst--;
@@ -192,10 +181,9 @@ foreach $line (@lines) {
       print "XXX_REMOVE -- pushed nst $nst (lev $level, id $id1, rest $the_rest)\n" if ($dbg);
       $lev[$nst]    = $level;
       $id[$nst]     = $id1;
-      $rest[$nst]   = $the_rest;
     }
   } else {
-    die("unexpected input: $_");
+    die("unexpected input: $line");
   }
 }
 
@@ -450,7 +438,7 @@ sub padsgen_struct
   $fids = $field_ids{$def};
   $fids =~ s/[\#]$//;
   foreach $fid (split(/[\#]/, $fids)) {
-    $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fid . ";", $dfieldlength{$fid});
+    my $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fid . ";", $dfieldlength{$fid});
     print POUT $field;
   }
   printf POUT "};                                                                     // Total length: %5s\n\n", $dtylength{$def};
@@ -470,7 +458,7 @@ sub padsgen_alt
   $fids = $field_ids{$def};
   $fids =~ s/[\#]$//;
   foreach $fid (split(/[\#]/, $fids)) {
-    $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fid . ";", $dfieldlength{$fid});
+    my $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fid . ";", $dfieldlength{$fid});
     print POUT $field;
   }
   printf POUT "};                                                                     // Total length: %5s\n\n", $dtylength{$def};
