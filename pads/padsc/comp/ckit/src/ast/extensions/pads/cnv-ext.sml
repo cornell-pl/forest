@@ -685,6 +685,16 @@ structure CnvExt : CNVEXT = struct
 					   [PT.Id ts, accX, edX, repX, PT.Id disc])),
 			     PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
 
+              fun genPrintPiece(reportName, fieldDescriptor, fieldX, extraArgsXs) = 
+		  [PL.sfprintf(PT.Id tmpstr, PT.String ("%s."^fieldDescriptor),[PT.Id prefix]@extraArgsXs),
+		   PT.IfThen(
+		      P.eqX(PL.PDC_ERROR, 
+			    PT.Call(PT.Id reportName, 
+				    [PT.Id ts, PL.sfstruse (PT.Id tmpstr),  
+				     fieldX,  PT.Id disc])),
+			     PT.Compound[PL.sfstrclose (PT.Id tmpstr),
+					 PT.Return PL.PDC_ERROR])]
+
 	      fun checkParamTys (fieldName, functionName, extraargs, numBefore, numAfter) = 
 		  let val (eaty, _) = cnvExpression (PT.Id functionName)
 		      val fargtysOpt = case eaty
@@ -876,6 +886,16 @@ structure CnvExt : CNVEXT = struct
 
                           (* end SOME case *)
                       val addFunED = genAdd (lookupAcc baseTy)
+
+                      (* -- generate report function ptypedef *)
+                      (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
+		      val reportFun = (reportSuf o accSuf) name
+		      val reportFields = 
+			  case lookupAcc(baseTy) of NONE => []
+                             | SOME a => (
+				 genPrintPiece(reportSuf a, name, PT.Id acc,[])
+		             (* end accOpt SOME case *))
+                      val reportFunED = genReportFun(reportFun, accPCT, reportFields)
 		  in
 		        canonicalDecls
                       @ emDecls
@@ -886,6 +906,7 @@ structure CnvExt : CNVEXT = struct
                       @ cnvExternalDecl resetFunED
                       @ cnvExternalDecl cleanupFunED
                       @ cnvExternalDecl addFunED
+ 		      @ cnvExternalDecl reportFunED
 		  end
 
 	      fun cnvPStruct ({name:string, params: (pcty * pcdecr) list, fields : pcexp PX.PSField list}) = 
@@ -1197,8 +1218,10 @@ structure CnvExt : CNVEXT = struct
 		      val readFields = mungeFields genReadFull genReadBrief fields  (* does type checking *)
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val localDeclSs = List.map (P.varDeclS' o (fn(x,y) => (y,x))) localVars
+		      val bodySs = if 0 = List.length localVars then readFields 
+			          else [PT.Compound (localDeclSs @ readFields)]
 		      val returnS = genReturnChk (P.arrowX(PT.Id (gMod(ed)), PT.Id nerr))
-		      val bodySs = localDeclSs @ readFields @ [returnS]
+		      val bodySs = bodySs @ [returnS]
 
 		      val readFunEDs = genReadFun(readName, cParams, emPCT,edPCT,canonicalPCT, 
 						  emFirstPCT, true, bodySs)
@@ -1258,7 +1281,7 @@ structure CnvExt : CNVEXT = struct
                       val addBodySs = addDeclSs @ addFields @ [addReturnS]
                       val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
 
-                      (* -- generate report function *)
+                      (* -- generate report function pstruct *)
                       (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
 		      val reportFun = (reportSuf o accSuf) name
 		      fun genAccReportFull {pty :PX.Pty, args:pcexp list,
@@ -1268,14 +1291,7 @@ structure CnvExt : CNVEXT = struct
 				 let val reportName = reportSuf a
 				     fun gfieldX base = P.addrX(P.arrowX(PT.Id base, PT.Id name))
 				 in
-				    [PL.sfprintf(PT.Id tmpstr, PT.String (prefix^"."^name),[]),
-				     PT.IfThen(
-				      P.eqX(PL.PDC_ERROR, 
-					    PT.Call(PT.Id reportName, 
-						    [PT.Id ts, PL.sfstruse (PT.Id tmpstr),  
-						     gfieldX acc, PT.Id disc])),
-                                      PT.Compound[PL.sfstrclose (PT.Id tmpstr),
-						  PT.Return PL.PDC_ERROR])]
+				    genPrintPiece(reportName, name, gfieldX acc,[])
 				 end
                               (* end accOpt SOME case *))
                       fun genAccReportBrief e = []
@@ -1496,6 +1512,23 @@ structure CnvExt : CNVEXT = struct
                       val addBodySs = addDeclSs @ initTedSs @ addTagSs @ addVariantsSs @ [addReturnS]
                       val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
 
+                      (* -- generate report function punion *)
+                      (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
+		      val reportFun = (reportSuf o accSuf) name
+		      fun gfieldX (base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
+		      fun genAccReportFull {pty :PX.Pty, args:pcexp list,
+					    name:string, isVirtual:bool, pred:pcexp option, comment} = 
+			  case lookupAcc(pty) of NONE => []
+			      | SOME a => (
+				 let val reportName = reportSuf a
+				 in
+				    genPrintPiece(reportName, name, gfieldX(acc,name),[])
+				 end
+                              (* end accOpt SOME case *))
+                      fun genAccReportBrief e = []
+		      val reportVariants = mungeVariants genAccReportFull genAccReportBrief variants
+                      val reportTags = genPrintPiece(reportSuf PL.intAct, tag, gfieldX(acc,tag),[])
+                      val reportFunED = genReportFun(reportFun, accPCT, reportTags @ reportVariants)
 		 in
 		       tagDecls
 		     @ unionDecls
@@ -1508,6 +1541,7 @@ structure CnvExt : CNVEXT = struct
 	             @ cnvExternalDecl resetFunED
 	             @ cnvExternalDecl cleanupFunED
 	             @ cnvExternalDecl addFunED
+	             @ cnvExternalDecl reportFunED
 		 end
 	  
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, args : pcexp list, baseTy:PX.Pty, 
@@ -2140,7 +2174,7 @@ structure CnvExt : CNVEXT = struct
 			 theFunED
 		     end
 
-  	         (* -- generate accumulator reset, init, and cleanup function *)
+  	         (* -- generate accumulator add function *)
                  fun genAdd () = 
 		     let val theSuf = addSuf
 			 val theFun = (theSuf o accSuf) name
@@ -2184,6 +2218,38 @@ structure CnvExt : CNVEXT = struct
 		 val resetFunED = genResetInitCleanup resetSuf
 		 val cleanupFunED = genResetInitCleanup cleanupSuf
                  val addFunED = genAdd()
+
+		 (* -- generate report function array *)
+		 (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
+                 fun genReport () = 
+		     let val reportFun = (reportSuf o accSuf) name
+                         val doElems = 
+			     case lookupAcc baseTy of NONE => []
+			   | SOME a => (
+			       let val elemFunName = reportSuf a
+				   fun doOne (s,eX,extraArgXs) = genPrintPiece (elemFunName, s, eX,extraArgXs)
+				   val fieldX = P.addrX(P.subX(P.arrowX(PT.Id acc, PT.Id arrayDetail), PT.Id "i"))
+				   val doArrayDetailSs = [
+					PT.Compound
+					 [P.varDeclS'(P.int, "i"),
+					  PT.For(P.assignX(PT.Id "i",P.zero),
+						 P.ltX(PT.Id "i", P.intX numElemsToTrack),
+						 P.postIncX (PT.Id "i"),
+						 PT.Compound (doOne (arrayDetail^"[%d]", fieldX, [PT.Id "i"]))
+						 )]]
+				   val arrayX = P.addrX(P.arrowX(PT.Id acc, PT.Id array))
+				   val doArraySs = doOne (array, arrayX, [])
+			       in
+				   doArraySs @ doArrayDetailSs
+			       end(* end SOME acc case *))
+			 val lengthX = P.addrX(P.arrowX(PT.Id acc, PT.Id length))
+			 val doLength = genPrintPiece(reportSuf PL.intAct, length, lengthX,[])
+			 val theBodySs = doLength @ doElems 
+			 val theFunED = genReportFun(reportFun, accPCT, theBodySs)
+		     in
+			 theFunED
+		     end
+                 val reportFunED = genReport()
 	     in
 		   canonicalDecls
 		 @ emStructDecls
@@ -2194,6 +2260,7 @@ structure CnvExt : CNVEXT = struct
                  @ cnvExternalDecl resetFunED 
                  @ cnvExternalDecl cleanupFunED 
                  @ cnvExternalDecl addFunED
+                 @ cnvExternalDecl reportFunED
 	     end
 
 	  fun cnvPEnum  {name:string, params : (pcty * pcdecr) list, 
@@ -2292,10 +2359,10 @@ structure CnvExt : CNVEXT = struct
 		   val addBodySs =  [addReturnS]
 		   val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
 
-		   (* -- generate report function *)
+		   (* -- generate report function enum *)
 		   (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , PDC_disc_t* ) *)
 		   val reportFun = (reportSuf o accSuf) name
-		   val reportFields = []
+		   val reportFields = genPrintPiece(reportSuf PL.intAct, "branchDistribution", PT.Id acc,[])
 		   val reportFunED = genReportFun(reportFun, accPCT, reportFields)
 
 
@@ -2325,6 +2392,7 @@ structure CnvExt : CNVEXT = struct
                 @ cnvExternalDecl resetFunED
                 @ cnvExternalDecl cleanupFunED
                 @ cnvExternalDecl addFunED
+                @ cnvExternalDecl reportFunED
                 @ cnvExternalDecl cnvFunED
 	      end
 

@@ -4,7 +4,7 @@
 int main(int argc, char** argv) {
   int             i;
   PDC_t*          pdc;
-  http_clt_t_ed   ed;
+  http_clf_t_ed   ed;
   http_clf_t      ai;
   http_clf_t_acc  acc;
 
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	    ai.request.version.minor);
       error(0, "response: %u   contentLength: %u", ai.response, ai.contentLength);
       printf("\n");
-      if (PDC_ERROR == http_clf_t_acc_add(pdc, &acc, &ed, &ai0)) {
+      if (PDC_ERROR == http_clf_t_acc_add(pdc, &acc, &ed, &ai, 0)) {
 	error(2, "*** http_clt_t_acc_add failed ***");
 	exit(-1);
       }	
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
       error(2, "read returned: error");
     }
   }
-
+  http_clf_t_acc_report(pdc, "",&acc, 0);
   if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);
