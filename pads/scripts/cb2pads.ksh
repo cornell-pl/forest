@@ -427,9 +427,16 @@ for(i = ndefn-1; i >= 0; i--){
 			    if(vlen == 1){
 				printf("\t%-*s %s;\n", max_tlen, cur_type, cur_field) >pads
 			    }else{
-				# printf("\t//- XXX_CHECK Type here should be an array of %s with %d elts\n", cur_type, vlen) >pads
-				ty_str = sprintf("%s(:%d:)", pads_ar_type[cur_type], vlen)
-				printf("\t%-*s %s;\n", max_tlen, ty_str, cur_field) >pads
+				if (var_len[d,j]){
+					xx = var_len[d,j]
+					# printf("\t//- XXX_CHECK Type here should be an array of %s with %s elts\n", cur_type, xx) >pads
+					ty_str = sprintf("%s(:%s:)", pads_ar_type[cur_type], xx)
+					printf("\t%-*s %s;\n", max_tlen, ty_str, cur_field) >pads
+				    }else{
+					# printf("\t//- XXX_CHECK Type here should be an array of %s with %d elts\n", cur_type, vlen) >pads
+					ty_str = sprintf("%s(:%d:)", pads_ar_type[cur_type], vlen)
+					printf("\t%-*s %s;\n", max_tlen, ty_str, cur_field) >pads
+				    }
 			    }
 			}
 
@@ -495,9 +502,16 @@ for(i = ndefn-1; i >= 0; i--){
 					ty_str = sprintf("%s(:%d:)", cur_type, digits_summed[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 				}else{
-					# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %d elts\n", cur_type, digits_summed[f], vlen) >pads
-					ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], digits_summed[f], vlen)
-					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					if (var_len[d,j]){
+					    xx = var_len[d,j]
+					    # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %s elts\n", cur_type, digits_summed[f], xx) >pads
+					    ty_str = sprintf("%s(:%d,%s:)", pads_ar_type[cur_type], digits_summed[f], xx)
+					    printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					}else{
+					    # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %d elts\n", cur_type, digits_summed[f], vlen) >pads
+					    ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], digits_summed[f], vlen)
+					    printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					}
 				}
 			    }
 			    if(padsargs[s] == "bytes"){
@@ -505,9 +519,16 @@ for(i = ndefn-1; i >= 0; i--){
 					ty_str = sprintf("%s(:%d:)", cur_type, len[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 				}else{
-					# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %d elts\n", cur_type, len[f], vlen) >pads
-					ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], len[f], vlen)
-					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					if (var_len[d,j]){
+					    xx = var_len[d,j]
+					    # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %s elts\n", cur_type, len[f], xx) >pads
+					    ty_str = sprintf("%s(:%d,%s:)", pads_ar_type[cur_type], len[f], xx)
+					    printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					}else{
+					    # printf("\t//- XXX_CHECK Type here should be an array of %s(:%d:) with %d elts\n", cur_type, len[f], vlen) >pads
+					    ty_str = sprintf("%s(:%d,%d:)", pads_ar_type[cur_type], len[f], vlen)
+					    printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					}
 				}
 			    }
 			    if(padsargs[s] == "digsum_after_v"){
@@ -515,9 +536,16 @@ for(i = ndefn-1; i >= 0; i--){
 					ty_str = sprintf("%s(:%d,%d:)", cur_type, digits_summed[f], digits_after_v[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 				}else{
-					# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %d elts\n", cur_type, digits_summed[f], digits_after_v[f], vlen) >pads
-					ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], digits_summed[f], digits_after_v[f], vlen)
-					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					if (var_len[d,j]){
+						xx = var_len[d,j]
+						# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %s elts\n", cur_type, digits_summed[f], digits_after_v[f], xx) >pads
+						ty_str = sprintf("%s(:%d,%d,%s:)", pads_ar_type[cur_type], digits_summed[f], digits_after_v[f], xx)
+						printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					    }else{
+						# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %d elts\n", cur_type, digits_summed[f], digits_after_v[f], vlen) >pads
+						ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], digits_summed[f], digits_after_v[f], vlen)
+						printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					    }
 				}
 			    }
 			    if(padsargs[s] == "bytes_after_v"){
@@ -525,9 +553,16 @@ for(i = ndefn-1; i >= 0; i--){
 					ty_str = sprintf("%s(:%d,%d:)", cur_type, len[f], digits_after_v[f])
 					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
 				}else{
-					# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %d elts\n", cur_type, len[f], digits_after_v[f], vlen) >pads
-					ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], len[f], digits_after_v[f], vlen)
-					printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					if (var_len[d,j]){
+						xx = var_len[d,j]
+						# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %s elts\n", cur_type, len[f], digits_after_v[f], xx) >pads
+						ty_str = sprintf("%s(:%d,%d,%s:)", pads_ar_type[cur_type], len[f], digits_after_v[f], xx)
+						printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					}else{
+						# printf("\t//- XXX_CHECK Type here should be an array of %s(:%d,%d:) with %d elts\n", cur_type, len[f], digits_after_v[f], vlen) >pads
+						ty_str = sprintf("%s(:%d,%d,%d:)", pads_ar_type[cur_type], len[f], digits_after_v[f], vlen)
+						printf("\t%-*s %s;\n", max_tlen, ty_str, f) >pads
+					}
 				}
 			    }
 			}
