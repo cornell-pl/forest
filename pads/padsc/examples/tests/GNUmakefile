@@ -61,6 +61,10 @@ MISC_TESTS_D = $(MISC_TESTS_O:%=%_d)
 MISC_TESTS = $(MISC_TESTS_O) $(MISC_TESTS_D)
 CLEANUP_TESTS = $(ALL_TESTS) $(MISC_TESTS)
 
+# XXX removed these 2 for now (compilation very slow?)
+#           regress_test_dns_o \
+#           regress_test_dns_d \
+
 rcount:
 	@(cd ..; $(MAKE) regress) | $(PADS_HOME)/scripts/count_differs.pl
 
@@ -77,7 +81,6 @@ regress_o:  sanity_check \
           regress_test_punion_manifest_o \
 	  regress_rwxml_punion_literal2_o \
           regress_test_ai_o \
-          regress_test_dns_o \
 	  regress_test_pswitch_o \
 	  regress_test_pswitch2_o \
 	  regress_test_depends_o \
@@ -117,7 +120,6 @@ regress_d:  sanity_check \
           regress_test_punion_manifest_d \
 	  regress_rwxml_punion_literal2_d \
           regress_test_ai_d \
-          regress_test_dns_d \
 	  regress_test_pswitch_d \
 	  regress_test_pswitch2_d \
 	  regress_test_depends_d \
@@ -403,6 +405,11 @@ test_copy_ai_d: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 count_dibbler: $(GEN_DIR)/dibbler_notrailer.c count_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 count_dibbler_d: $(GEN_DIR)/dibbler_notrailer.c count_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+filter_dibbler: $(GEN_DIR)/dibbler_new.c filter_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+filter_dibbler_d: $(GEN_DIR)/dibbler_new.c filter_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 test_dibbler1: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_O)

@@ -1,4 +1,4 @@
-#define DEF_INPUT_FILE "../../data/dibbler.10001"
+// #define DEF_INPUT_FILE "../../data/dibbler.10001"
 
 #define PADS_HDR_TY(suf) summary_header ## suf
 #define PADS_TY(suf) entry ## suf
