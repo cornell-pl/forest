@@ -240,7 +240,7 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
     return PDC_ERR;
   }
   /* ************ Reading field: val. ************* */
-  /* XXX_OPT : not needed */
+  /* XXX_OPT : NOT NEEDED */
 #if 0
   if (moded->panic) 
     {
@@ -473,6 +473,8 @@ PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed
     }
   }
   /* ************* Reading field: d. ************** */
+  /* XXX_OPT: DO NOT DO DUMMY STUFF */
+#if 0
   if (moded->panic) 
     {
       (moded->d).panic = 1;
@@ -503,6 +505,7 @@ PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed
         {
         }
     }
+#endif
   return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
 }
 PDC_error_t just_vbar_read (PDC_t *pdc,just_vbar_em *em,just_vbar_ed *ed,just_vbar *rep)
@@ -1174,6 +1177,8 @@ PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar
     }
   }
   /* ************* Reading field: d. ************** */
+  /* XXX_OPT: DO NOT DO DUMMY STUFF */
+#if 0
   if (moded->panic) 
     {
       (moded->d).panic = 1;
@@ -1204,6 +1209,7 @@ PDC_error_t no_pn_vbar_read_internal (PDC_t *pdc,no_pn_vbar_em *modem,no_pn_vbar
         {
         }
     }
+#endif
   return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
 }
 PDC_error_t no_pn_vbar_read (PDC_t *pdc,no_pn_vbar_em *em,no_pn_vbar_ed *ed,no_pn_vbar *rep)
@@ -2139,8 +2145,8 @@ PDC_error_t eventSeq_read_internal (PDC_t *pdc,eventSeq_em *modem,int size,event
   moded->nerr = 0;
   moded->panic = 0;
   {
-    PDC_base_em tem=PDC_Check;
-    PDC_base_ed ted;
+    /*     PDC_base_em tem=PDC_Check; */
+    /*    PDC_base_ed ted; */
     int reachedLimit=0;
     modrep->length = 0;
     if (((modem->array)<=PDC_Check)&&(size<0)) 
@@ -3389,6 +3395,9 @@ PDC_error_t do_ev_count_read_internal (PDC_t *pdc,do_ev_count_em *modem,do_ev_co
           }
       }
     /* ********** Reading field: ev_count. ********** */
+  /* XXX_OPT: DO NOT DO DUMMY STUFF */
+    modrep->ev_count = getLen (bars); /* XXX_OPT JUST DO THIS */
+#if 0
     if (moded->panic) 
       {
         (moded->ev_count).panic = 1;
@@ -3419,6 +3428,7 @@ PDC_error_t do_ev_count_read_internal (PDC_t *pdc,do_ev_count_em *modem,do_ev_co
           {
           }
       }
+#endif
   }
   return ((moded->nerr)==0) ? PDC_OK : PDC_ERR;
 }

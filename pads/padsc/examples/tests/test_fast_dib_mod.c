@@ -58,6 +58,9 @@ int main(int argc, char** argv) {
     error(2, "*** PDC_open failed ***");
     return -1;
   }
+#ifdef FASTEST
+  pdc->disc->errorf = 0;
+#endif
 
   if (PDC_ERR == PDC_IO_fopen(pdc, fname)) {
     error(2, "*** PDC_IO_fopen failed ***");
@@ -90,6 +93,8 @@ int main(int argc, char** argv) {
 	    } else {
 	      /*	      error(0, "first state = %.*s", ev.state.len, ev.state.str); */
 	    }
+	  } else {
+	    bad++;
 	  }
 	} else {
 	  /*	  error(2, "data line read returned: error"); */

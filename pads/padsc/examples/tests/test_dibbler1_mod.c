@@ -22,6 +22,10 @@ int main(int argc, char** argv) {
   char                     *fname = "../data/ex_data.dibbler1";
   behave                   b = count_first21;
   unsigned long            good_21 = 0, good = 0, bad = 0;
+  out_sum_data_line_em dline_em={PDC_Ignore,{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},PDC_Ignore,{{PDC_Ignore,PDC_Ignore,PDC_Ignore},PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},PDC_Ignore};
+
+  /* all we are interested in is the state field: */
+  dline_em.events.element.state = PDC_CheckAndSet;
 
   if (argc > 3) {
     goto usage;
@@ -97,7 +101,7 @@ int main(int argc, char** argv) {
   switch (b) {
     case count_all: {
       while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_data_line_read(pdc, 0, &dline_ed, &dline)) {
+	if (PDC_OK == out_sum_data_line_read (pdc, 0, &dline_ed, &dline)) {
 	  good++;
 	} else {
 	  bad++;
@@ -120,7 +124,7 @@ int main(int argc, char** argv) {
 
     case count_first21: {
       while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_data_line_read(pdc, 0, &dline_ed, &dline)) {
+	if (PDC_OK == out_sum_data_line_read_internal (pdc, &dline_em, &dline_ed, &dline)) {
 	  /* do something with the data */
 	  /* 	  error(0, "data line read returned OK, number of events = %d", dline.events.length); */
 	  good++;
@@ -132,7 +136,7 @@ int main(int argc, char** argv) {
 	  bad++;
 	}
       }
-      error(0, "\ntest_dibbler1: good_21: %lu  tot_good: %lu  tot_bad: %lu", good_21, good, bad);
+      error(0, "\ntest_dibbler1_mod: good_21: %lu  tot_good: %lu  tot_bad: %lu", good_21, good, bad);
     } break;
 
     case out_first21: {
