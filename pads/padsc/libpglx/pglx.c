@@ -10,9 +10,10 @@
 #include "pglx-internal.h"
 #include <stdio.h>
 
-/* ocaml header files can be found in /usr/common/lib/ocaml/caml */
+/* pads-galax interface generated from IDL: */
+#include "pads_c.h"
 
-/* include mary's stuff for c to ocaml rep functions */
+/* ocaml header files can be found in /usr/common/lib/ocaml/caml */
 
 /*
  * XXX TEMPORARY:
@@ -53,34 +54,34 @@ void walk_children(void *n, int indent) {
 /* ================================================================================
  * PUBLIC GALAX->PADS CALLS (see pglx.h) */ 
 
-void** PGLX_generic_children (void *ocaml_n)
+nodeRepArray PGLX_generic_children (nodeRep ocaml_n)
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   if (!n)
-    failwith("INVALID_PARAM: n null in " "PGLX_generic_children");
+    failwith("PADS/Galax INVALID_PARAM: n null in " "PGLX_generic_children");
   if (!n->vt)
-    failwith("INVALID_PARAM: n->vt null in " "PGLX_generic_children");
+    failwith("PADS/Galax INVALID_PARAM: n->vt null in " "PGLX_generic_children");
   PDCI_NODE_VT_CHECK(n, "PGLX_generic_children");
-  return (void **) ((n->vt->children)(n));
+  return (nodeRepArray) ((n->vt->children)(n));
 }
 
-void* PGLX_generic_parent (void *ocaml_n)
+nodeRep PGLX_generic_parent (nodeRep ocaml_n)
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   PDCI_NODE_CHECK(n, "PGLX_generic_parent");
-  return (void *) (n->parent);
+  return (nodeRep ) (n->parent);
 }
 
 /* Return value TBD */
 
-item PGLX_generic_typed_value (void * ocaml_n)
+item PGLX_generic_typed_value (nodeRep  ocaml_n)
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   PDCI_NODE_VT_CHECK(n, "PGLX_generic_typed_value");
   return (n->vt->typed_value)(n);
 }
 
-const char* PGLX_generic_string_value(void *ocaml_n)
+const char* PGLX_generic_string_value(nodeRep ocaml_n)
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   PDCI_NODE_CHECK(n, "PGLX_generic_string_value");
@@ -88,18 +89,24 @@ const char* PGLX_generic_string_value(void *ocaml_n)
   return "Not yet implemented";
 }
 
-const char* PGLX_generic_name(void *ocaml_n){
+const char* PGLX_generic_name(nodeRep ocaml_n){
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   PDCI_NODE_CHECK(n, "PGLX_generic_name");
   return n->name;
 }
 
-void PGLX_node_free(void *ocaml_n)
+const char* PGLX_generic_kind(nodeRep ocaml_n){
+  PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
+  PDCI_NODE_CHECK(n, "PGLX_generic_kind");
+  return n->kind;
+}
+
+void PGLX_node_free(nodeRep ocaml_n)
 {
   PDCI_FREE_NODE(ocaml_n);
 }
 
-void PGLX_nodelist_free(void **list)
+void PGLX_nodelist_free(nodeRepArray list)
 {
   PDCI_FREE_NODE_PTR_LIST(list);
 }
@@ -117,7 +124,7 @@ PDCI_node_t ** ty ## _children(PDCI_node_t *self) \
   PDC_base_pd  *pd  = (PDC_base_pd*)self->pd; \
   PDCI_node_t **result; \
   if (!(result = PDCI_NEW_NODE_PTR_LIST(2))) { \
-    failwith("ALLOC_ERROR: in " PDCI_MacroArg2String(ty) "_children"); \
+    failwith("PADS/Galax ALLOC_ERROR: in " PDCI_MacroArg2String(ty) "_children"); \
   } \
   /* the following mk calls raise an exception on alloc error */ \
   PDCI_MK_TNODE(result[0], & PDC_base_pd_vtable,  self, "pd",  pd,  PDCI_MacroArg2String(ty) "_children"); \
@@ -145,10 +152,10 @@ item ty ## _typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pdc->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pdc, node->pdc->tmp2, pd, r)) { \
-    failwith("UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+    failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  if (glx_atomicString(sfstruse(node->pdc->tmp2), &res)) { \
-    failwith("UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  if (glx_atomicUntyped(sfstruse(node->pdc->tmp2), &res)) { \
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
 } \
@@ -174,10 +181,10 @@ item ty ## _typed_value (PDCI_node_t *node) \
   } \
   sfstrset(node->pdc->tmp2, 0); \
   if (-1 == ty ## _write2io(node->pdc, node->pdc->tmp2, ty_arg1, pd, r)) { \
-    failwith("UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+    failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  if (glx_atomicString(sfstruse(node->pdc->tmp2), &res)) { \
-    failwith("UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
+  if (glx_atomicUntyped(sfstruse(node->pdc->tmp2), &res)) { \
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
 } \
@@ -200,7 +207,7 @@ PDCI_node_t ** PDC_pos_t_children(PDCI_node_t *self)
   PDC_pos_t *pos = (PDC_pos_t *) self->rep;
   PDCI_node_t **result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(3))) {
-    failwith("ALLOC_ERROR: in " WHATFN);
+    failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
   PDCI_MK_TNODE(result[0], &PDC_int32_val_vtable,   self, "byte",    &(pos->byte),     WHATFN);
   PDCI_MK_TNODE(result[1], &PDC_int32_val_vtable,   self, "num",     &(pos->num),      WHATFN);
@@ -216,7 +223,7 @@ PDCI_node_t ** PDC_loc_t_children(PDCI_node_t *self)
   PDC_loc_t *loc = (PDC_loc_t *) self->rep;
   PDCI_node_t **result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(2))) {
-    failwith("ALLOC_ERROR: in " WHATFN);
+    failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
   PDCI_MK_TNODE(result[0], &PDC_pos_t_vtable,      self, "b",     &(loc->b),     WHATFN);
   PDCI_MK_TNODE(result[1], &PDC_pos_t_vtable,      self, "e",     &(loc->e),     WHATFN);
@@ -233,7 +240,7 @@ PDCI_node_t ** PDC_base_pd_children(PDCI_node_t *self)
   PDCI_node_t  **result;
 
   if (!(result = PDCI_NEW_NODE_PTR_LIST(3))) {
-    failwith("ALLOC_ERROR: in " WHATFN);
+    failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
   PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
   PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
@@ -255,7 +262,7 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
   PDCI_node_t        **result;
 
   if (!(result = PDCI_NEW_NODE_PTR_LIST(4))) {
-    failwith("ALLOC_ERROR: in " WHATFN);
+    failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
   PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
@@ -280,7 +287,7 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
   PDCI_node_t       **result;
 
   if (!(result = PDCI_NEW_NODE_PTR_LIST(6))) {
-    failwith("ALLOC_ERROR: in " WHATFN);
+    failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
   }
   /* the following mk calls raise an exception on alloc error */
   PDCI_MK_TNODE(result[i], &PDC_uint32_val_vtable, self, "pstate",   &(pd->pstate),     WHATFN); i++;
@@ -297,13 +304,30 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
 }
 
 /* Used for any node with no children */
+/* 
+   We have to accommodate Galax here.  For nodes that contain only typed values, 
+   Galax expects children() to return a text node containing the typed
+   value as a string.  This may be onerous, but necessary for the moment.
+*/
 #undef WHATFN
 #define WHATFN "PDCI_no_children"
 PDCI_node_t ** PDCI_no_children(PDCI_node_t *self)
 {
   PDCI_node_t **result;
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(0))) {
-    failwith("ALLOC_ERROR: in " WHATFN);
+
+  printf("IN PDCI_no_children: %s\n", self->name); 
+
+  if (self->kind = "text") { 
+    if (!(result = PDCI_NEW_NODE_PTR_LIST(0))) {
+      failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
+    }
+  }
+  else {
+    if (!(result = PDCI_NEW_NODE_PTR_LIST(1))) {
+      failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
+    }
+    /* This is wrong, because the content of the node depends on its type. */
+    PDCI_MK_TEXTNODE(result[0], &PDCI_Cstr_val_vtable, self, WHATFN);
   }
   return result;
 }
@@ -315,7 +339,7 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *self)
 /* Error function used for many cases */
 item PDCI_error_typed_value(PDCI_node_t *node)
 {
-  failwith("NOT_A_VALUE: typed_value called on structured type.");
+  failwith("PADS/Galax NOT_A_VALUE: typed_value called on structured type.");
   return 0;  /* will never get here*/
 } 
 
@@ -324,8 +348,8 @@ item PDCI_Cstr_typed_value(PDCI_node_t *node)
 {
   item        res = 0;
   char        *s   = (char *)node->rep;
-  if (glx_atomicString(s, &res)) {
-    failwith("UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in PDC_Cstr_typed_value");
+  if (glx_atomicUntyped(s, &res)) {
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in PDC_Cstr_typed_value");
   }
   return res;
 }
@@ -413,10 +437,10 @@ item PDC_uint32_typed_value (PDCI_node_t *node)
   }
   sfstrset(node->pdc->tmp2, 0);
   if (-1 == PDC_uint32_write2io(node->pdc, node->pdc->tmp2, pd, r)) {
-    failwith("UNEXPECTED_IO_FAILURE in base type typed_value function");
+    failwith("PADS/Galax UNEXPECTED_IO_FAILURE in base type typed_value function");
   }
-  if (glx_atomicString(sfstruse(node->pdc->tmp2), &res)) {
-    failwith("UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in PDC_uint32_typed_value");
+  if (glx_atomicUntyped(sfstruse(node->pdc->tmp2), &res)) {
+    failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in PDC_uint32_typed_value");
   }
   return res;
 }

@@ -50,10 +50,10 @@ veryclean: clean
 # This works for some but not all test cases
 
 # These cases do not fit the usual pattern
-test_children: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+test_children: $(GEN_DIR)/format7.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-test_children-g: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_children-g: $(GEN_DIR)/format7.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
  # End of rules that are run from the arch directory

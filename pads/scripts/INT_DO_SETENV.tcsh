@@ -59,10 +59,10 @@ else
 endif
 
 set _is_ocaml_lib
-if (! $?OCAML_LIB) then
+if (! $?OCAML_LIB_DIR) then
   unset _is_ocaml_lib
 else
-  if ("$OCAML_LIB"x == x) then
+  if ("$OCAML_LIB_DIR"x == x) then
     unset _is_ocaml_lib
   endif
 endif
@@ -185,7 +185,7 @@ if ($_pads_status == "OK") then
     setenv MANPATH ""
   endif
   if (! $?_is_ocaml_lib) then
-    setenv OCAML_LIB_LIB /usr/lib/ocaml
+    setenv OCAML_LIB_DIR /usr/lib/ocaml
   endif
   if (! $?_is_galax_home) then
     setenv GALAX_HOME /home/mff/Galax
@@ -197,11 +197,11 @@ if ($_pads_status == "OK") then
   setenv MANPATH         `echo ${pads_man_dir}:${ast_man_dir}:${MANPATH} | $remove_dups`
   setenv PATH            `echo ${pads_bin_dir}:${pads_script_dir}:${PATH} | $remove_dups`
 
-  if (-d $OCAML_LIB) then
-    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB} | $remove_dups`
+  if (-d $OCAML_LIB_DIR) then
+    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
   endif
-  if (-d $OCAML_LIB) then
-    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB} | $remove_dups`
+  if (-d $OCAML_LIB_DIR) then
+    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
   endif
   if (-d $GALAX_LIB) then
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${GALAX_LIB} | $remove_dups`
@@ -239,7 +239,7 @@ if ($_pads_status == "OK") then
     echo "SHLIB_PATH=$SHLIB_PATH"
     echo "MANPATH=$MANPATH"
     echo "PATH=$PATH"
-    echo "OCAML_LIB=$OCAML_LIB"
+    echo "OCAML_LIB_DIR=$OCAML_LIB_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
     echo "GALAX_LIB=$GALAX_LIB"
     echo " "

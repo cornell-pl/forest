@@ -1254,7 +1254,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      [PT.IfThen(P.notX(P.assignX(returnName,
 			       			  PT.Call(PL.PDCI_NEW_NODE_PTR_LIST, 
 					                  [number]))),		
-                                 PT.Expr(PT.Call(PT.Id "failwith",[PT.String errorString])))]
+                                 PT.Expr(PT.Call(PT.Id "failwith",[PT.String ("PADS/Galax " ^ errorString)])))]
 	
 		  (* PDCI_MK_TNODE: common in foo_children function *)
 		  fun macroTNodeCall (returnName, index, structId, valStr, valId, cnvName) = 

@@ -114,8 +114,8 @@ if [ $_pads_status == "OK" ]; then
   MANPATH=`echo ${pads_man_dir}:${ast_man_dir}:${MANPATH} | $remove_dups`; export MANPATH
   PATH=`echo ${pads_bin_dir}:${pads_script_dir}:${PATH} | $remove_dups`; export PATH
 
-  if [ -e $OCAML_LIB ]; then
-    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${OCAML_LIB} | $remove_dups`; export LD_LIBRARY_PATH
+  if [ -e $OCAML_LIB_DIR ]; then
+    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`; export LD_LIBRARY_PATH
   fi
   if [ -e $GALAX_LIB ]; then
     LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${GALAX_LIB} | $remove_dups`; export LD_LIBRARY_PATH
@@ -135,7 +135,7 @@ if [ $_pads_status == "OK" ]; then
     echo "SHLIB_PATH=$SHLIB_PATH"
     echo "MANPATH=$MANPATH"
     echo "PATH=$PATH"
-    echo "OCAML_LIB=$OCAML_LIB"
+    echo "OCAML_LIB_DIR=$OCAML_LIB_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
     echo "GALAX_LIB=$GALAX_LIB"
     echo " "

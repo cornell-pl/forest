@@ -16,9 +16,7 @@
 #include "padsc.h"       /* Need to include ast stuff before caml stuff for some reason */
 
 #ifdef USE_GALAX
-
-#include "glx.h"  /* Need Galax item definition */
-
+#include "pads_dm.h"  /* Need Pads-Galax IDL defns */
 #else
 
 /* XXX_REMOVE next 4 lines: */
@@ -34,14 +32,15 @@ typedef void* item;
  */
 void walk_children(void *n, int indent);
 
-void**      PGLX_generic_children    (void *ocaml_n);
-void*       PGLX_generic_parent      (void *ocaml_n);
-item        PGLX_generic_typed_value (void *ocaml_n);
-const char* PGLX_generic_string_value(void *ocaml_n);
-const char* PGLX_generic_name        (void *ocaml_n);
+nodeRepArray PGLX_generic_children    (nodeRep ocaml_n);
+nodeRep      PGLX_generic_parent      (nodeRep ocaml_n);
+item         PGLX_generic_typed_value (nodeRep ocaml_n);
+const char*  PGLX_generic_string_value(nodeRep ocaml_n);
+const char*  PGLX_generic_name        (nodeRep ocaml_n);
+const char*  PGLX_generic_kind        (nodeRep ocaml_n);
 
-void        PGLX_node_free           (void *ocaml_n);     /* free node ocaml_n */
-void        PGLX_nodelist_free       (void **child_list); /* free a void ** list returned from generic_children */
+void        PGLX_node_free           (nodeRep ocaml_n);     /* free node ocaml_n */
+void        PGLX_nodelist_free       (nodeRepArray child_list); /* free a void ** list returned from generic_children */
 /* Note: PGLX_nodelist_free does not free the child nodes, just the list that refers to them */
 
 #endif  /*   __PGLX_H__   */

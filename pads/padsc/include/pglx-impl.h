@@ -12,7 +12,7 @@
 #define PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
     if (!(resultIN = PDCI_NEW_NODE())) { \
-      failwith("ALLOC_ERROR: in " whatfn); \
+      failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
     } \
     resultIN->vt     = (vtIN); \
     resultIN->pdc    = (parentIN)->pdc; \
@@ -21,12 +21,13 @@
     resultIN->pd     = (void *)(pdIN); \
     resultIN->rep    = (repIN); \
     resultIN->name   = (nameIN); \
+    resultIN->kind   = "element"; \
   } while (0)
 
 #define PDCI_MK_TOP_NODE(resultIN, vtIN, pdcIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
     if (!(resultIN = PDCI_NEW_NODE())) { \
-      failwith("ALLOC_ERROR: in " whatfn); \
+      failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
     } \
     resultIN->vt     = (vtIN); \
     resultIN->pdc    = pdcIN; \
@@ -35,6 +36,7 @@
     resultIN->pd     = (void *)(pdIN); \
     resultIN->rep    = (repIN); \
     resultIN->name   = (nameIN); \
+    resultIN->kind   = "document"; \
   } while (0)
 
 #define PDCI_MK_TOP_NODE_NORET(resultIN, vtIN, pdcIN, nameIN, mIN, pdIN, repIN, whatfn) \
@@ -48,11 +50,15 @@
       resultIN->pd     = (void *)(pdIN); \
       resultIN->rep    = (repIN); \
       resultIN->name   = (nameIN); \
+      resultIN->kind   = "document"; \
     } \
   } while (0)
 
 #define  PDCI_MK_TNODE(resultIN, vtIN, parentIN, nameIN, repIN, whatfn) \
   PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, 0, 0, repIN, whatfn)
+
+#define  PDCI_MK_TEXTNODE(resultIN, vtIN, parentIN, whatfn) \
+  PDCI_MK_NODE(resultIN, vtIN, parentIN, "", 0, 0, &((parentIN)->rep), whatfn); resultIN->kind = "text" 
 
 /* TODO: BASE TYPE: make macro for each base type */
 
@@ -72,15 +78,15 @@
 #define PDCI_NODE_CHECK(n, whatfn) \
 do { \
   if (!(n)) \
-    failwith("INVALID_PARAM: " PDCI_MacroArg2String(n) " null in " whatfn); \
+    failwith("PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null in " whatfn); \
 } while (0)
 
 #define PDCI_NODE_VT_CHECK(n, whatfn) \
 do { \
   if (!n) \
-    failwith("INVALID_PARAM: " PDCI_MacroArg2String(n) " null in " whatfn); \
+    failwith("PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) " null in " whatfn); \
   if (!n->vt) \
-    failwith("INVALID_PARAM: " PDCI_MacroArg2String(n) "->vt null in " whatfn); \
+    failwith("PADS/Galax INVALID_PARAM: " PDCI_MacroArg2String(n) "->vt null in " whatfn); \
 } while (0)
 
 #else

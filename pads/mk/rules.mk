@@ -87,13 +87,19 @@ export AST_HOME
 endif
 
 ifndef GALAX_HOME
-GALAX_HOME := /home/mff/Galax-rh7
+GALAX_HOME := /home/mff/Galax
 export GALAX_HOME
 endif
 GALAX_LIB_DIR = $(GALAX_HOME)/lib/c
 
+ifndef PADSGLX_HOME
+PADSGLX_HOME := /home/mff/pads-glx/api
+export PADSGLX_HOME
+endif
+PADSGLX_LIB_DIR = $(PADSGLX_HOME)
+
 ifndef OCAML_LIB_DIR
-OCAML_LIB_DIR = /usr/common/lib/ocaml
+OCAML_LIB_DIR = /usr/lib/ocaml
 export OCAML_LIB_DIR
 endif
 
@@ -197,7 +203,7 @@ STATIC_PADSLIB_O = $(LIBDIR)/$(STATIC_PADSLIB_NM_O)
 STATIC_PGLXLIB_O = $(LIBDIR)/$(STATIC_PGLXLIB_NM_O)
 STATIC_ASTLIB_O = $(LIBDIR)/$(STATIC_ASTLIB_NM_O)
 # mff may need to change next two defns
-STATIC_GALAXLIB_O = $(GALAX_LIB_DIR)/libglxopt$(mam_cc_SUFFIX_ARCHIVE)
+STATIC_GALAXLIB_O = $(PADSGLX_LIB_DIR)/libpadsglxopt$(mam_cc_SUFFIX_ARCHIVE)
 STATIC_OCAMLLIB_O = \
   $(OCAML_LIB_DIR)/libnums$(mam_cc_SUFFIX_ARCHIVE) \
   $(USR_LIB_DIR)/libm$(mam_cc_SUFFIX_ARCHIVE) \
@@ -220,7 +226,7 @@ STATIC_PADSLIB_D = $(LIBDIR)/$(STATIC_PADSLIB_NM_D)
 STATIC_PGLXLIB_D = $(LIBDIR)/$(STATIC_PGLXLIB_NM_D)
 STATIC_ASTLIB_D = $(LIBDIR)/$(STATIC_ASTLIB_NM_D)
 # mff may need to change next two defns
-STATIC_GALAXLIB_D = $(GALAX_LIB_DIR)/libglxopt$(mam_cc_SUFFIX_ARCHIVE)
+STATIC_GALAXLIB_D = $(PADSGLX_LIB_DIR)/libpadsglxopt$(mam_cc_SUFFIX_ARCHIVE)
 STATIC_OCAMLLIB_D = $(STATIC_OCAMLLIB_O) # no debug versions available
 ifdef GEN_GALAX
 STATIC_LIBS_D = $(STATIC_PGLXLIB_D)
@@ -246,7 +252,7 @@ endif
 DYNAMIC_LIBS_O += -lpadsc $(SHARED_ASTLIB_O)
 ifdef USE_GALAX
 # mff may need to change next line
-DYNAMIC_LIBS_O += -L $(GALAX_LIB_DIR) -lglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
+DYNAMIC_LIBS_O += -L $(PADSGLX_LIB_DIR) -lpadsglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
 endif
 SHARED_PADSLIB_DEP_O = $(LIBDIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(LIBDIR)/$(SHARED_PGLXLIB_NM_O)
@@ -268,7 +274,7 @@ endif
 DYNAMIC_LIBS_D += -lpadsc-g  $(SHARED_ASTLIB_D)
 ifdef USE_GALAX
 # mff may need to change next line 
-DYNAMIC_LIBS_D += -L $(GALAX_LIB_DIR) -lglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
+DYNAMIC_LIBS_D += -L $(PADSGLX_LIB_DIR) -lpadsglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
 # XXX what about -lcamlrun ?
 endif
 SHARED_PADSLIB_DEP_D = $(LIBDIR)/$(SHARED_PADSLIB_NM_D)
@@ -289,7 +295,7 @@ INCLUDES += -I$(GEN_DIR)
 endif
 
 ifdef USE_GALAX
-INCLUDES +=  -I$(GALAX_LIB_DIR) -I$(OCAML_LIB_DIR)
+INCLUDES +=  -I$(GALAX_LIB_DIR) -I$(PADSGLX_LIB_DIR) -I$(OCAML_LIB_DIR)
 endif
 
 ifndef BuildAST4PADSLib

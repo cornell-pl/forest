@@ -14,12 +14,7 @@
 #include "padsc-internal.h"
 
 #ifdef USE_GALAX
-
-/* #include "caml/mlvalues.h"    Need value      */
-
-/* #include "caml/fail.h"        Need failwith                          */
 #include "glx.h"              /* Need to pack/unpack Galax atomic values */
-
 #else
 
 #ifndef FAKE_CAML_VALUE
@@ -158,10 +153,7 @@ struct PDCI_node_s {
   void                  *pd;
   void                  *rep;
   const char            *name;
-  /* the following are only used by base type nodes */
-  const PDCI_vtable_t   *base_vt;
-  PDC_base_pd           *base_pd;
-  void                  *base_val;
+  const char            *kind;
 };
 
 /* Type PDCI_vtable_t: */

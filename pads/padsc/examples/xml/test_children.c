@@ -1,14 +1,40 @@
 #include "padsc.h"
-#include "format1.h"
+#include "format7.h"
 #include "pglx.h"
+
+#define exit_on_error(_Expr) {err = _Expr; if (err != 0) {printf("%s\n", glx_error_string); exit(err);}}	
+
+int try_galax() { 
+  processing_context pc; 
+  module_context sc;
+  itemlist items;
+  glx_err err;
+  char *str;
+
+  err = glx_default_processing_context(&pc); 
+  err = glx_load_standard_library(pc, &sc); 
+
+  err = glx_eval_statement_from_string(sc, "<a/>", &items);
+  err = glx_serialize_to_string(items, &str);
+  printf("%s\n", str); 
+  return err;
+}
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
   PDC_disc_t      mydisc = PDC_default_disc;
-  test            rep;
-  test_pd         pd ;
-  test_m          m;
-  PDCI_node_t    *top_node;
+  myfile          rep;
+  myfile_pd       pd ;
+  myfile_m        m;
+  PDCI_node_t    *doc_node;
+
+  glx_err err;
+  item doc;
+  node n; 
+  char *str = "";
+  itemlist k, docitems;
+  atomicValue_list av;
+  int i;
 
   /* When linking with the Galax library, which contains a custom O'Caml runtime system, 
      it is necessary to call glx_init first, so the runtime is initialized and then 
@@ -20,8 +46,10 @@ int main(int argc, char** argv) {
   fake_argv[1] = 0;
   glx_init(fake_argv);
 
-  printf("This program tests data that conforms to examples/p/format1.p\n");
-  if (argc != 2) { error(2, "Usage: test_children <format1-data-file>\n"); exit(-1); }
+  if (argc != 2) { error(2, "Usage: test_children <format7-data-file>\n"); exit(-1); }
+
+  /* Try out some Galax functions first */
+  /* try_galax(); */
 
   mydisc.flags |= PDC_WSPACE_OK;
 
@@ -34,39 +62,46 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
-  test_init(pdc, &rep);
-  test_pd_init(pdc, &pd);
-  /* init mask -- must do this! */
-  test_m_init(pdc, &m, PDC_CheckAndSet);
+  /* init -- must do this! */
+  PDC_INIT_ALL(pdc, myfile, rep, m, pd, PDC_CheckAndSet);
 
   /* make the top-level node */
-  PDCI_MK_TOP_NODE_NORET (top_node, &test_vtable, pdc, "top", &m, &pd, &rep, "main");
+  PDCI_MK_TOP_NODE_NORET (doc_node, &myfile_vtable, pdc, "doc", &m, &pd, &rep, "main");
 
-  /*
-   * Try to read each line of data
-   */
-  while (!PDC_IO_at_EOF(pdc)) {
-    error(0, "\ncalling test_read");
-    if (PDC_OK == test_read(pdc, &m, &pd, &rep)) {
-      /* do something with the data */
-      error(2, "test_read returned: id %d  ts %d", rep.id, rep.ts);
-      walk_children(top_node, 0);
-    } else {
-      error(2, "test_read returned: error");
-      walk_children(top_node, 0);
+  /* Try to read entire file */
+  error(0, "\ncalling myfile_read");
+  if (PDC_OK == myfile_read(pdc, &m, &pd, &rep)) {
+    exit_on_error(padsDocument(argv[1], (nodeRep)doc_node, &doc)); 
+    docitems = itemlist_cons(doc, itemlist_empty());
+    err = glx_serialize_to_string(docitems, &str);
+    printf("%d: %s\n", strlen(str), str);  
+    exit_on_error(glx_serialize_to_output_channel(docitems));
+
+    exit_on_error(glx_children(doc, &k)); 	
+    for (i = 0; !is_empty(k); i++) {
+      printf("%d...", i);
+      n = items_first(k); 
+      exit_on_error(glx_node_kind(n, &str)); 
+      printf("%s\n", str);  
+      exit_on_error(glx_node_name(n, &av)); 
+      exit_on_error(glx_serialize_to_string(av, &str));
+      printf("%s\n", str);  
+      k = items_next(k); 
     }
+    exit_on_error(glx_node_kind(doc, &str)); 
+    printf("%s\n", str);  
+    /* 
+       exit_on_error(glx_serialize_to_string(k, &str));
+    printf("%s\n", str); */
+    /* 
+    */
+    error(0, "\nmyfile_read returned: ok");
+  } else {
+    error(0, "myfile_read returned: error");
   }
-  error(0, "\nFound eof");
 
-  if (PDC_ERR == PDC_IO_close(pdc)) {
-    error(2, "*** PDC_IO_close failed ***");
-    exit(-1);
-  }
-
-  if (PDC_ERR == PDC_close(pdc)) {
-    error(2, "*** PDC_close failed ***");
-    exit(-1);
-  }
-
+  PDC_CLEANUP_ALL(pdc, myfile, rep, pd);
+  PDC_IO_close(pdc);
+  PDC_close(pdc);
   return 0;
 }
