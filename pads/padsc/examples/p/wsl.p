@@ -1,4 +1,8 @@
 /*@FILE @LEFT wsl.tex */
+typedef int bool;
+#define true 1
+#define false 0
+
 Parray Pip {
   Puint8 [4] : Psep('.') && Pterm(Pnosep);          
 };
@@ -14,49 +18,53 @@ Punion client_t {
 };
 
 Punion auth_id_t {
-  Pchar unauthorized : unauthorized == '-'; /- non-authenticated http session
-  Pstring(:' ':) id;                        /- login supplied during authentication
+  Pchar unauthorized : unauthorized == '-'; 
+  Pstring(:' ':) id;                        
 };
 
 Pstruct version_t {
   "HTTP/";
   Puint8 major; '.';
-  Puint8 minor;           /- http minor mode
+  Puint8 minor;          
 };
 
 Penum method_t {
-    GET,     PUT,     POST,     HEAD,     DELETE,     LINK,     UNLINK 
+    GET,    PUT,  POST,  HEAD,     
+    DELETE, LINK, UNLINK 
 };
 
-int  checkVersion(version_t version, method_t meth) {
-  if ((version.major == 1) && (version.minor == 1)) return 1;
-  if ((meth == LINK)  || (meth == UNLINK )) return 0;
-  return 1;
+bool chkVersion(version_t v, method_t m) {
+  if ((v.major == 1) && (v.minor == 1)) return true;
+  if ((m == LINK) || (m == UNLINK)) return false;
+  return true;
 }
 
 Pstruct request_t {
-  '\"';   method_t       meth;             /- Method used during request
-  ' ';    Pstring(:' ':) req_uri;          /- Requested uri.
-  ' ';    version_t      version : checkVersion(version, meth); 
+  '\"';   method_t       meth;     
+  ' ';    Pstring(:' ':) req_uri;  
+  ' ';    version_t      version : 
+                  chkVersion(version, meth); 
   '\"';
 };
 
-Ptypedef Puint16_FW(:3:) response_t : response_t x => { 100 <= x && x < 600};
+Ptypedef Puint16_FW(:3:) response_t : 
+         response_t x => { 100 <= x && x < 600};
 
+/*@END wsl.tex */
 //Punion length_t {
 //  Pchar unavailable : unavailable == '-';
 //  Puint32 len;    
 // };
 
-
+/*@BEGIN wsl.tex */
 Precord Pstruct entry_t {
-         client_t       client;          /- Host/IP address of client requesting service
-   ' ';  auth_id_t      remoteID;        /- Remote identity; '-' indicates not obtained.
-   ' ';  auth_id_t      auth;            /- Name of authenticated user.
-   " ["; Pdate(:']':)   date;            /- Timestamp of request.
-   "] "; request_t      request;         /- Request.
-   ' ';  response_t     response;        /- 3-digit response code
-   ' ';  Puint32        length;          /- Number of bytes in request response.
+         client_t       client;          
+   ' ';  auth_id_t      remoteID;        
+   ' ';  auth_id_t      auth;            
+   " ["; Pdate(:']':)   date;            
+   "] "; request_t      request;         
+   ' ';  response_t     response;        
+   ' ';  Puint32        length;          
 };
 
 Psource Parray clt_t {

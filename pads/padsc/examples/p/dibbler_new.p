@@ -1,7 +1,25 @@
+/*@FILE @LEFT dibbler_new.tex */
+
 /* add these as a Pase base type */
 Ptypedef Puint64 pn_t;
 
-Precord Pstruct header_t {
+Ptypedef Pchar zipSep_t : 
+   zipSep_t x => {x == '-' || x == '/' || x == ' '};
+
+Pstruct extended_zip_t{
+  Puint32 zip;
+  zipSep_t sep;
+  Puint32 suffix;
+};
+
+Punion Pzip{
+  extended_zip_t extendedZip;
+  Puint32        smallZip;
+  Puint64        largeZip;
+};
+
+/*@BEGIN dibbler_new.tex */
+Precord Pstruct summary_header_t {
   "0|";
   Puint32       tstamp;
 };
@@ -16,19 +34,6 @@ Punion dib_ramp_t {
   no_ramp_t  genRamp;
 };
 
-Ptypedef Pchar zipSep_t : zipSep_t x => {x == '-' || x == '/' || x == ' '};
-
-Pstruct extended_zip_t{
-  Puint32 zip;
-  zipSep_t sep;
-  Puint32 suffix;
-};
-
-Punion zip_code_t{
-  extended_zip_t extendedZip;
-  Puint32        smallZip;
-  Puint64        largeZip;
-};
 
 Pstruct order_header_t {
        Puint32             order_num;
@@ -38,7 +43,7 @@ Pstruct order_header_t {
  '|';  Popt pn_t           billing_tn;
  '|';  Popt pn_t           nlp_service_tn;
  '|';  Popt pn_t           nlp_billing_tn;
- '|';  Popt zip_code_t     zip_code;
+ '|';  Popt Pzip           zip_code;
  '|';  dib_ramp_t          ramp;
  '|';  Pstring(:'|':)      order_type;
  '|';  Puint32             order_details;
@@ -47,15 +52,16 @@ Pstruct order_header_t {
  '|';
 };
 
-Pstruct event {
+Pstruct event_t {
   Pstring(:'|':) state;   '|';
   Puint32        tstamp;
 };
 
 Parray eventSeq {
-  event[] : Psep('|');
+  event_t[] : Psep('|') && Pterm(Peor);
 } Pwhere {
-  Pforall (i Pin [0..length-2] : (elts[i].tstamp <= elts[i+1].tstamp));
+  Pforall (i Pin [0..length-2] : 
+           (elts[i].tstamp <= elts[i+1].tstamp));
 };
 
 
@@ -66,12 +72,12 @@ Precord Pstruct entry_t {
 
 Parray entries_t {
   entry_t[];
-}
+};
 
 Psource Pstruct out_sum{
-  header_t   h;
-  entries_t  es;
-}
-
+  summary_header_t  h;
+  entries_t         es;
+};
+/*@END dibbler_new.tex */
 
 
