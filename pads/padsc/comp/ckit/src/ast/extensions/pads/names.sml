@@ -28,6 +28,7 @@ struct
 
   val m         = "m" 
   val pd        = "pd"
+  val rep       = "rep"
   val acc       = "acc"
   val sfstderr  = "sfstderr"
   fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
@@ -57,9 +58,33 @@ struct
   fun findEORSuf s = s^"_findpostlude"
   fun findEndSuf s = s^"_end"
   fun gTemp base = "tmp"^base
+
+
   fun childrenSuf name = name^"_children" 
-  fun kthChildSuf name = name^"_kth_child" 
+  fun kthChildSuf name = name^"_kthChild" 
+  fun kthChildNamedSuf name = name^"_kthChildNamed" 
+  fun pathWalkSuf name = name^"_pathWalk" 
   fun vTableSuf name = name^"_vtable"
+  fun cnInitSuf name = name^"_cachedNode_init"
+  fun sndInitSuf name = name^"_sndNode_init"
+
+  fun nodeSuf name = name^"_node"
+  fun cnSuf name = name^"_cachedNode"  
+  fun sndSuf name = name^"_sndNode"  
+
+  fun nodeNewSuf name = (nodeSuf name)^"_new" 
+  fun nodeKCSuf name = kthChildSuf (nodeSuf name)
+  fun nodeKCNSuf name = kthChildNamedSuf (nodeSuf name)
+  fun nodePWSuf name = pathWalkSuf (nodeSuf name)  
+  fun nodeVTableSuf name = vTableSuf (nodeSuf name)
+
+  fun cnKCSuf name = kthChildSuf (cnSuf name)
+  fun cnVTableSuf name = vTableSuf (cnSuf name)
+
+  fun sndKCSuf name = kthChildSuf (sndSuf name)
+  fun sndKCNSuf name = kthChildNamedSuf (sndSuf name)
+  fun sndVTableSuf name = vTableSuf (sndSuf name)
+
   fun isPref name = "is_"^name
 
 end

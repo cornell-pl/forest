@@ -130,6 +130,9 @@ struct
     val emptyS            = (PT.Expr PT.EmptyExpr)
     fun returnS e         = PT.Return(e) 
     fun condX (e1,e2,e3)  = PT.QuestionColon(e1,e2,e3)
+    fun fieldX (base, field) = arrowX(PT.Id base, PT.Id field)
+    fun getFieldX (base, field) = addrX(fieldX(base,field))
+
 
     fun declS (dt : PT.decltype,
 	       decr : PT.declarator,

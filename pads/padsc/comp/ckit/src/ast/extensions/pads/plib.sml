@@ -70,15 +70,72 @@ struct
   val PDCI_MK_TNODE = PT.Id "PDCI_MK_TNODE"	
   val PDCI_MK_NODE = PT.Id "PDCI_MK_NODE"	
   val PDCI_NEW_NODE_PTR_LIST = PT.Id "PDCI_NEW_NODE_PTR_LIST"
+
+  (* pads-galax function generation macros *)
+  val NODE_NEW_BODY = PT.Id "NODE_NEW_BODY"
+  val NODE_NEW_RET = PT.Id "NODE_NEW_RET"
+			       
+  val CACHED_NODE_INIT_BODY = PT.Id "CACHED_NODE_INIT_BODY"
+  val CACHED_NODE_INIT_RET = PT.Id "CACHED_NODE_INIT_RET"
+			       
+  val CACHED_NODE_KTH_CHILD_BODY = PT.Id "CACHED_NODE_KTH_CHILD_BODY"
+  val CACHED_NODE_KTH_CHILD_RET = PT.Id "CACHED_NODE_KTH_CHILD_RET"
+			       
+  val STR_NODE_KTH_CHILD_BODY_BEGIN = PT.Id "STR_NODE_KTH_CHILD_BODY_BEGIN"
+  val STR_NODE_KTH_CHILD_BODY_END = PT.Id "STR_NODE_KTH_CHILD_BODY_END"
+  val STR_NODE_KTH_CHILD_RET = PT.Id "STR_NODE_KTH_CHILD_RET"
+
+  val NODE_KC_CASE = PT.Id "NODE_KC_CASE"
+  val NODE_KC_CASE_COMP = PT.Id "NODE_KC_CASE_COMP"
+
+  val STR_NODE_KTH_CHILD_NAMED_BODY = PT.Id "STR_NODE_KTH_CHILD_NAMED_BODY"
+  val STR_NODE_KTH_CHILD_NAMED_RET = PT.Id "STR_NODE_KTH_CHILD_NAMED_RET"
+
+  val ARR_NODE_KTH_CHILD_BODY = PT.Id "ARR_NODE_KTH_CHILD_BODY"
+  val ARR_NODE_KTH_CHILD_RET = PT.Id "ARR_NODE_KTH_CHILD_RET"
+
+  val ARR_NODE_KTH_CHILD_NAMED_BODY = PT.Id "ARR_NODE_KTH_CHILD_NAMED_BODY"
+  val ARR_NODE_KTH_CHILD_NAMED_RET = PT.Id "ARR_NODE_KTH_CHILD_NAMED_RET"
+
+  val ARR_SND_NODE_KTH_CHILD_BODY= PT.Id "ARR_SND_NODE_KTH_CHILD_BODY"
+  val ARR_SND_NODE_KTH_CHILD_RET = PT.Id "ARR_SND_NODE_KTH_CHILD_RET"
+
+  val ARR_NODE_PATH_WALK_BODY= PT.Id "ARR_NODE_PATH_WALK_BODY"
+  val ARR_NODE_PATH_WALK_RET = PT.Id "ARR_NODE_PATH_WALK_RET"
+
+  val ARR_LENGTH = PT.Id "ARR_LENGTH"
+
+  val SND_NODE_INIT_BODY = PT.Id "SND_NODE_INIT_BODY"
+  val SND_NODE_INIT_RET = PT.Id "SND_NODE_INIT_RET"
+  val STR_SND_NODE_KTH_CHILD_BODY_BEGIN = PT.Id "STR_SND_NODE_KTH_CHILD_BODY_BEGIN"
+  val STR_SND_NODE_KTH_CHILD_BODY_END = PT.Id "STR_SND_NODE_KTH_CHILD_BODY_END"
+  val STR_SND_NODE_KTH_CHILD_RET = PT.Id "STR_SND_NODE_KTH_CHILD_RET"
+  val SND_NODE_KC_CASE = PT.Id "SND_NODE_KC_CASE"
+  val SND_NODE_KC_CASE_COMP = PT.Id "SND_NODE_KC_CASE_COMP"
+
+  val STR_NODE_PATH_WALK_BODY_BEGIN = PT.Id "STR_NODE_PATH_WALK_BODY_BEGIN"
+  val STR_NODE_PATH_WALK_BODY_END = PT.Id "STR_NODE_PATH_WALK_BODY_END"
+  val STR_NODE_PATH_WALK_RET = PT.Id "STR_NODE_PATH_WALK_RET"
+
+  val NODE_PW_CASE = PT.Id "NODE_PW_CASE"
+  val NODE_PW_CASE_COMP = PT.Id "NODE_PW_CASE_COMP"
+
   val nodeT = P.makeTypedefPCT "PDCI_node_t"
   val childIndexT = P.makeTypedefPCT "PDCI_childIndex_t"
+  val smartEltInfoT = P.makeTypedefPCT "PDCI_smart_elt_info_t"
+  val genT = P.makeTypedefPCT "PDCI_gen_t"
+  val pathT = P.makeTypedefPCT "PDCI_path_t"
+  
+
   val PDCI_structured_pd = "PDCI_structured_pd"
   val PDCI_sequenced_pd = "PDCI_sequenced_pd"
   val PDCI_cstr_val = "PDCI_cstr_val"
   val Pbase_pd = "Pbase_pd"
+  val PDCI_node_free = PT.Id "PDCI_node_free"
+  val PDCI_cachedNode_free = PT.Id "PDCI_cachedNode_free"
   val PDCI_error_typed_value = PT.Id "PDCI_error_typed_value"
+  val PDCI_error_cachedNode_init = PT.Id "PDCI_error_cachedNode_init"
   val PDCI_vtable_t = PT.TypedefName "PDCI_vtable_t"
-
 
   val toolErrPCT   = P.makeTypedefPCT "Perror_t"
   val toolStatePCT = P.makeTypedefPCT "P_t"
