@@ -15,7 +15,6 @@ LIBDIR=$(INSTALLROOT)/lib
 LIBS = $(LIBDIR)/libpads.a $(LIBDIR)/libast.a
 INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 
-
 ###############################################################################
 #  Documentation programs.
 ###############################################################################
@@ -24,7 +23,9 @@ INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 EXAMPLE_DIR= $(PADS_HOME)/documents/manual/code
 PEXAMPLES= ai.p pstruct.p punion.p parray.p opt.p ptypedef.p enum2.p wsl.p sirius.p char.p pendian.p
 CEXAMPLES= ai-annotated.h punion-annotated.h opt-annotated.h typedef-annotated.h enum2-annotated.h sirius-filter.c wsl-accum.c wsl-fmt.c sirius-xml.c dibbler_new_annotated.h parse-state.h library.h strings.h limits.h fixedpoint.h accum.c pdisc.h scan-limits.h
-CEXAMPLES += Pstring.h
+
+PTYPES_DIR = $(PADS_HOME)/padsc/include/ptypes
+PTYPES = $(shell cd $(PTYPES_DIR); ls *.h)
 
 EXAMPLES = $(PEXAMPLES) $(CEXAMPLES)
 
@@ -50,11 +51,13 @@ clean:
 	rm -rf gen/*
 
 
-code:	$(EXAMPLES) Makefile 
+code:	$(EXAMPLES) Makefile
 	for i in $(EXAMPLES) ; do $(EXTRACT) $$i; done
 	for i in $(EXAMPLES) ; do $(EXTRACT) -hevea $$i; done
+	for i in $(PTYPES) ; do $(EXTRACT) $(PTYPES_DIR)/$$i; done
+	for i in $(PTYPES) ; do $(EXTRACT) -hevea $(PTYPES_DIR)/$$i; done
+
 	for i in *_app_*.tex ; do sed -i -e 's/centercode/tinycode/' $$i; done
 
 accum:	accum.c
 	$(CC) $(INCLUDES) -I$(PADS_HOME)/demo accum.c $(PADS_HOME)/demo/wsl.c $(LIBS) -o wsl-accum
-
