@@ -18,7 +18,7 @@ redo_examples:
 	./padsc examples/format6.p
 	./padsc examples/netflow.p
 	./padsc examples/readinttest.p
+	./padsc examples/from.p
 
 error_examples:
 	./padsc examples/enum.p
-	./padsc examples/from.p

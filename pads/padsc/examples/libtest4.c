@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
       break;
     }
     /* try to read line with 2 strings term by vbar 1 string term by EOR */
-    if (PDC_ERR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s)) {
+    if (PDC_ERR == PDC_astring_read(pdc, &em, '|', &ed, &s)) {
       goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", s.str, s.len);
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
       PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s)) {
+    if (PDC_ERR == PDC_astring_read(pdc, &em, '|', &ed, &s)) {
       goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", s.str, s.len);
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
       PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_string_stopRegexp_read(pdc, &em, my_regexp, &ed, &s)) {
+    if (PDC_ERR == PDC_astringCSE_read(pdc, &em, my_regexp, &ed, &s)) {
       break;
     } else {
       error(0, "Read string term by EOR or X : %s (length %d)", s.str, s.len);

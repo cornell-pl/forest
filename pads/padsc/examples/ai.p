@@ -3,7 +3,7 @@ parray nIP {
 };
 
 parray sIP{
-  astringSRE(:"[. ]":) [] : sep == '.' && term == ' '; 
+  astringSE(:"[. ]":) [] : sep == '.' && term == ' '; 
 }
 
 punion host_t  {
