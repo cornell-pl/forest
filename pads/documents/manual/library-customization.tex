@@ -3,9 +3,26 @@
 \cutname{library_customization.html}
 The \pads{} core library is parameterized by a main discpline and by
 an IO discipline that allow users to customize the behavior of the
-system.
+core system and the IO subsystem, respectively.  One aspect of
+controlling IO is choosing what constitues a \textit{Precord} in the
+data source.
 
-\section{The IO Discpline and Defining Records}
+\section{The \pads{} discipline}
+\subsection{Skipping white space}
+\label{sec:library-customization-white-space}
+Describe how to set various white space skipping modes.
+
+\subsection{Scanning extent}
+\label{sec:library-customization-scanning-extent}
+
+\subsection{Endian-ness}
+\label{sec:library-customization-endian}
+
+\subsection{Character encodings}
+\label{sec:library-customization-character-encodings}
+how set discipline to ascii, ibcdic.
+
+\section{The IO Discpline}
 IO discipline values, which have type \cd{Pio\_disc\_t}, control the
 'raw' reading of data from a file or from some other data source.  
 The \pads{} system provides a collection of functions for generating
@@ -22,83 +39,78 @@ discipline is then installed by passing it as an argument to either
 
 \begin{description}
 \item
-[\cd{Pio\_disc\_t * P\_fwrec\_make(size\_t leader\_len, size\_t data\_len, size\_t trailer\_len)}]
- Instantiates an instance of \texttt{fwrec}, a discipline for fixed-width
+[\small{\cd{Pio\_disc\_t * P\_fwrec\_make(size\_t leader\_len, size\_t data\_len, size\_t trailer\_len)}}]
+ Instantiates an instance of \cd{fwrec}, a discipline for fixed-width
  records.  The parameter \cd{data\_len} specifies the number of data bytes per record,
  while \cd{leader\_len} and \cd{trailer\_len} specify the number of bytes that
  occur before and after the data bytes within each record (either or
  both can be zero).  Thus the total record size in bytes is the sum
  of the three arguments.  
 
-\item[\cd{Pio\_disc\_t * P\_fwrec\_noseek\_make(size\_t leader\_len, 
-          size\_t data\_len, size\_t trailer\_len)}]
+\item[\small{\cd{Pio\_disc\_t * P\_fwrec\_noseek\_make(size\_t leader\_len,
+       size\_t data\_len, size\_t trailer\_len)}}]
 Instantiates an instance of \texttt{fwrec\_noseek}, a version of \texttt{norec}
 that does not require that the SFIO stream is seekable.
 
+\item[\small{\cd{Pio\_disc\_t * P\_ctrec\_make(Pbyte termChar, size\_t block\_size\_hint);}}]
+Instantiates an instance of \cd{ctrec}, a discipline for
+character-terminated variable-width records. Argument \texttt{termChar} is the
+character that marks the end of a record. Argument
+\texttt{block\_size\_hint} suggests a block size to use, if the
+discipline chooses to do fixed block-sized reads 'under the covers'.
+It may be ignored by the discipline.
+For ASCII newline-terminated records use, \literal{\cd{'\\n'}} or
+\cd{P\_ASCII\_NEWLINE} 
+as the term character.  For \cd{EBCDIC} newline-terminated records, use
+\cd{P\_EBCDIC\_NEWLINE} as the term character.
+
+
+\item[\small{\cd{Pio\_disc\_t * P\_ctrec\_noseek\_make(Pbyte termChar,
+      size\_t block\_size\_hint)}}] 
+Instantiates an instance of \cd{ctrec\_noseek}, a version of \cd{norec}
+that does not require that the SFIO stream is seekable.
+
+\item[\small{\cd{Pio\_disc\_t * P\_nlrec\_make(size\_t block\_size\_hint)}}]
+Shorthand for calling the corresponding \cd{ctrec} make function with
+\literal{\cd{'\\n'}} as \cd{termChar}.
+
+\item[\small{\cd{Pio\_disc\_t * P\_nlrec\_noseek\_make(size\_t block\_size\_hint)}}]
+Shorthand for calling the corresponding \cd{ctrec} make function with
+\literal{\cd{'\\n'}} as \cd{termChar}.
+
+
+
+\item[\small{\cd{Pio\_disc\_t * P\_vlrec\_make(int blocked, size\_t avg\_rlen\_hint)}}]
+ Instantiates an instance of \cd{vlrec}, a discipline for IBM-style
+ variable-length records with record length specified at the start
+ of each record.  If blocked is set (\cd{!= 0}) then the records are
+ grouped into blocks, where each block has a length given at the
+ start of each block.  Argument \cd{avg\_rlen\_hint} is a hint as to what the
+ average record length is, to help the discipline allocate memory.
+ It should include the four bytes at the start of each record used for
+ the record length.  It may be ignored by the discipline.
+ 
+
+\item[\small{\cd{Pio\_disc\_t * P\_vlrec\_noseek\_make(int blocked,
+ size\_t avg\_rlen\_hint)}}] Instantiates an instance of
+ \cd{vlrec\_noseek}, a version of \cd{vlrec} that does not require
+ that the SFIO stream is seekable.
+
+
+\item[\small{\cd{Pio\_disc\_t * P\_norec\_make(size\_t block\_size\_hint)}}]
+Instantiates an instance of \cd{norec}, a raw bytes discipline that
+does not use records.  Argument \cd{block\_size\_hint} is a hint as to what block size
+to use, if the discipline chooses to do fixed block-sized reads
+'under the covers'.  It may be ignored by the discipline.
+
+
+\item[\small{\cd{Pio\_disc\_t * P\_norec\_noseek\_make(size\_t block\_size\_hint)}}]
+Instantiates an instance of \cd{norec\_noseek}, a version of \cd{norec}
+that does not require that the SFIO stream is seekable.
+
+
 \end{description}
-\begin{verbatim}
-Pio_disc_t * P_ctrec_make(Pbyte termChar, size_t block_size_hint);
-/* Instantiates an instance of ctrec, a discipline for
- * character-terminated variable-width records. termChar is the
- * character that marks the end of a record. block_size_hint is a
- * hint as to what block size to use, if the discipline chooses to do
- * fixed block-sized reads 'under the covers'.  It may be ignored by
- * the discipline.
- * 
- * For ASCII newline-terminated records use, '\n' or P_ASCII_NEWLINE
- * as the term character.  For EBCDIC newline-terminated records, use
- * P_EBCDIC_NEWLINE as the term character.
- */
 
-Pio_disc_t * P_ctrec_noseek_make(Pbyte termChar, size_t block_size_hint);
-/* Instantiates an instance of ctrec_noseek, a version of norec
- * that does not require that the sfio stream is seekable.
- */
-
-Pio_disc_t * P_vlrec_make(int blocked, size_t avg_rlen_hint);
-/* Instantiates an instance of vlrec, a discipline for IBM-style
- * variable-length records with record length specified at the start
- * of each record.  If blocked is set (!= 0) then the records are
- * grouped into blocks, where each block has a length given at the
- * start of each block.  avg_rlen_hint is a hint as to what the
- * average record length is, to help the discipline allocate memory.
- * It should include the 4 bytes at the start of each record used for
- * the record length.  It may be ignored by the discipline.
- */
-
-Pio_disc_t * P_vlrec_noseek_make(int blocked, size_t avg_rlen_hint);
-/* Instantiates an instance of vlrec_noseek, a version of vlrec
- * that does not require that the sfio stream is seekable.
- */
-
-Pio_disc_t * P_norec_make(size_t block_size_hint);
-/* Instantiates an instance of norec, a raw bytes discipline that
- * does not use records.  block_size_hint is a hint as to what block size
- * to use, if the discipline chooses to do fixed block-sized reads
- * 'under the covers'.  It may be ignored by the discipline.
- */
-
-Pio_disc_t * P_norec_noseek_make(size_t block_size_hint);
-/* Instantiates an instance of norec_noseek, a version of norec
- * that does not require that the sfio stream is seekable.
- */
-
-/* Shorthands for calling corresponding ctrec make functions with '\n' as termChar: */
-#define P_nlrec_make(block_size_hint)         P_ctrec_make('\n', block_size_hint)
-#define P_nlrec_noseek_make(block_size_hint)  P_ctrec_noseek_make('\n', block_size_hint)
-
-/* Pio_elt_t: used for list of input records managed by the io
- * discipline.  The io discipline maintains a doubly-linked list of
- * these records using the prev/next fields, where the head of the
- * list is always a 'dummy' record that is not used except as a
- * placeholder for managing the list.
- * 
- * XXX_TODOC: offset, begin, end, etc.
- *
- * There is an extra data fields, disc_ptr, which is optionally used by
- * the io discipline and ignored by the main library code.
- */
-\end{verbatim}
 
 
 \subsection{Closing an IO discipline}
@@ -119,19 +131,6 @@ Implementations of the standard IO disciplines can be found in
 discipline should consult \texttt{default\_io\_disc.c}.
 
 
-\section{Skipping white space}
-\label{sec:library-customization-white-space}
-Describe how to set various white space skipping modes.
-
-\section{Scanning extent}
-\label{sec:library-customization-scanning-extent}
-
-\section{Endian-ness}
-\label{sec:library-customization-endian}
-
-\section{Character encodings}
-\label{sec:library-customization-character-encodings}
-how set discipline to ascii, ibcdic.
 
 \section{Adding new base types}
 \label{sec:library-adding-new-base-types}
