@@ -469,7 +469,7 @@ do {
 
 /* ********************************** END_HEADER ********************************** */
 
-#define PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
+#define PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn, a_or_e_int)
 
 Perror_t
 fn_pref ## _read(P_t *pads, const Pbase_m *m,
@@ -552,7 +552,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
 
  invalid_wspace:
   PDCI_READFN_SET_LOC_BE(0, 1);
-  PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", "spaces not allowed in a_int field unless flag P_WSPACE_OK is set", invalid_err);
+  PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_pref) "_read", "spaces not allowed in " a_or_e_int " field unless flag P_WSPACE_OK is set", invalid_err);
 
  invalid:
   PDCI_READFN_SET_LOC_BE(0, p1-begin);
@@ -574,7 +574,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
 }
 /* END_MACRO */
 
-#define PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
+#define PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn, a_or_e_int)
 
 Perror_t
 fn_name(P_t *pads, const Pbase_m *m, size_t width,
@@ -652,7 +652,7 @@ fn_name(P_t *pads, const Pbase_m *m, size_t width,
   if (P_ERR == PDCI_io_forward(pads, width)) {
     goto fatal_forward_err;
   }
-  PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), "spaces not allowed in a_int field unless flag P_WSPACE_OK is set", invalid_err);
+  PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), "spaces not allowed in " a_or_e_int " field unless flag P_WSPACE_OK is set", invalid_err);
 
  range_err:
   /* FW field: eat the space whether or not there is an error */
@@ -847,28 +847,28 @@ fn_name(P_t *pads, const Pbase_m *m, Puint32 num_digits_or_bytes, Puint32 d_exp,
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_A_INT > 0
 #  define PDCI_A_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn) \
-            PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
+            PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn, "a_int")
 #else
 #  define PDCI_A_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_A_INT_FW > 0
 #  define PDCI_A_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn) \
-            PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
+            PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn, "a_int")
 #else
 #  define PDCI_A_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_E_INT > 0
 #  define PDCI_E_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn) \
-            PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
+            PDCI_AE_INT_READ_FN_GEN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn, "e_int")
 #else
 #  define PDCI_E_INT_READ_FN(fn_pref, targ_type, bytes2num_fn, invalid_err, isspace_fn, isdigit_fn)
 #endif
 
 #if P_CONFIG_READ_FUNCTIONS > 0 && P_CONFIG_E_INT_FW > 0
 #  define PDCI_E_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn) \
-            PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
+            PDCI_AE_INT_FW_READ_FN_GEN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn, "e_int")
 #else
 #  define PDCI_E_INT_FW_READ_FN(fn_name, targ_type, bytes2num_fn, invalid_err, isspace_fn)
 #endif
@@ -5181,7 +5181,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.138 2004-01-20 23:14:47 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.139 2004-02-03 21:05:59 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
