@@ -30,7 +30,7 @@ returns both the in-memory representation of the associated data and
 an error descriptor.  When the parser encounters a bug in the
 values in the data, it simply sets the appropriate error descriptor
 and continues processing.  This ability to continue is crucial when
-processing Gigabyte files that contain some small percentage of
+processing massive data files that contain some small percentage of
 errors. 
 
 We are currently working with Andrew Hume to convert Cobol copy-books
@@ -42,11 +42,11 @@ Possible future directions include:
  - Generating DSS modules (Glenn Fowler) from PADSL descriptions.
    Such a module would enable some declarative querying of the data
    source with no programming required on the part of the data analyst.
- - Exploring generating an XML interface to allow XML query tools to access data.
+ - Exploring on-the-fly translation of input records to XML data
+   to enable use of XML query tools over arbitrary input data formats.
  - Generating Hancock stream descriptions and event functions from PADSL
-   descriptions and auxiliary information.
- - Exploring customizing the PADSL library generating process with auxiliary
-   information. 
+   descriptions and auxiliary information to enable new signature
+   applications over many different kinds of data feeds.
  - Exploring implementations of the library functions that avoid
    copying, making the functions suitable for IP packet
    processing. Trevor Jim has expressed interest in this usage. 
