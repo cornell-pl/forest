@@ -4,11 +4,13 @@
 \usepackage{code} 
 \input{defs}
 \setlength{\textwidth}{6.5in}
+\setlength{\textheight}{9in}
 \setlength{\oddsidemargin}{0in}
 \setlength{\evensidemargin}{0in}
 \setlength{\parskip}{5pt}
 
-\title{PADS: Processing Arbitrary Data Streams}
+
+\title{\vskip -1in \pads{}: Processing Arbitrary Data Streams}
 \date{\today}
 \author{
   Kathleen Fisher\\
@@ -26,52 +28,78 @@
 \thispagestyle{empty}
 
 \section{Introduction}
-  stock market transactions, credit card records, call-detail records
-  electronic fund transfers, web server logs, provisioning records.
-information in such streams can be mined very profitably 
-\cite{kdd98,kdd99,kdd00}
-high volume: sizes of dibbler, call detail streams
-but, often arrives "as is" and in ad hoc formats:
-  people mining the data typically cannot control format of data
-  ascii based, binary, cobol-based, ibm
+Transactional data streams, such as stock-market buy/sell orders,
+credit-card purchase records, web server entries, and electronic fund
+transfer orders, can be mined very profitably.  As an example,
+researchers at AT\&T have extracted information from streams of
+call-detail records to significant effect~\cite{kdd98,kdd99,kdd00}.   
 
-data often contains errors:
- errors may be the most interesting part of data, 
- but complicates parsing.
+Often such streams are high-volume: the call-detail stream contains
+roughly 300~million calls per day requiring approximately 7GBs of
+storage space.  Typically, such stream data arrives ``as is'' in
+\textit{ad hoc} formats with poor documentation.  In addition, the
+data frequently contains errors.  The appropriate response to such
+errors is application-specific. Some applications can simply discard
+unexpected or erroneous values and continue processing.  For other
+applications, however, errors in the data can be the most interesting
+part of the data.  
 
-Understanding a new data stream and writing a suitable
-parser are difficult tasks, both tedious and error-prone.
-Often, the hard-won understanding of the data ends
-up embedded in parsing code, making long-term maintenance difficult
-for the original writer and sharing the knowledge with others 
-nearly impossible.
+Understanding a new data stream and producing a suitable parser are
+crucial first steps in any use of stream data.  Unfortunately, writing
+parsers for such data is a difficult task, both tedious and
+error-prone. It is complicated by lack of documentation, convoluted
+encodings designed to save disk space, the need to handle errors
+robustly, and the need to produce efficient code to cope with the
+scale of the stream.  Often, the hard-won understanding of the data
+ends up embedded in parsing code, making long-term maintenance
+difficult for the original writer and sharing the knowledge with
+others nearly impossible.
 
 The goal of the PADS project is to provide languages and tools for
 simplifying data stream analysis.  We have a preliminary design of a
 declarative data-description language, PADSL, expressive enough to
 describe the data feeds we see at AT\&T in practice, including both ASCII,
 binary, and mixed data.  From PADSL we generate a tunable C library with
-functions for parsing, manipulating, and summarizing the data.  The
-library is immediately useful for those who write C programs to
-manipulate data streams.  
+functions for parsing, manipulating, and summarizing the data.  
 
 \section{\pads{} language}
-use as an example common-log format records (describe):
+Intuitively, a \pads{} description specifies complete information
+about the physical layout and semantic constraints for the associated
+data stream.  The structure of the language is analogous to \C{}'s
+type structure.  \pads{} has an extensible set of base types that
+specify how to read and verify atomic pieces of data such as ASCII
+integers (\cd{aint32}) and binary bytes (\cd{bint8}).
+Verification conditions for such base types include checking that the
+number produced fits in the indicated space, \ie, 32-bits for
+\cd{aint32}.  \pads{}
+\kw{pstruct}s allow users to describe record-like structures, 
+\kw{punion}s alternatives, and \kw{array}s sequences.  Each of these
+types can have a predicate associated with it that indicates whether a
+value calculated from the physical specification is indeed a legal
+value for the type.  Such conditions might be that two fields of a
+\cd{pstruct} are related via a particular function or that the elements
+of a sequence are in increasing order.  \pads{} \cd{typedef}s allow
+users to add additional constraints to existing types. 
+
+In addition, each of these types can be parameterized by values, which
+serves both to reduce the number of base types and permit later
+portions of the data to depend upon earlier portions.  For example,
+base type \cd{auint32FW(:3:)} specifies an unsigned ASCII integer
+represented on disk with 3 characters, while \cd{astring(:' ':)}
+describes an ASCII string terminated by a space.  Parameters can be 
+used with compound types to specify the size of an array or which
+branch of a union should be taken.
+
+As an example, consider the common log format for web server logs.  A
+typical record looks like the following:
 \begin{verbatim}
-207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/am.gif HTTP/1.0" 200 3013
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.gif HTTP/1.0" 200 30
 \end{verbatim}
-
-specification:
- include complete information about data stream
- physical layout and semantic constraints
- rough analogy to C type structure:
-   extensible set of base types for reading atomic data
-   structs for record-like structure
-   unions for alternatives (in-place, switched)
-   arrays for sequences
-
-   examples
-
+recording the IP address of the requester; either a dash or the owner
+of the TCP session; either a dash or the login of the requester; the
+date; the actual request, which consists of the HTTP method, the
+requested URL, the HTTP version number; a response code, and the
+number of bytes returned.  The \pads{} description of the request is 
 \begin{code}
 \kw{pstruct} http_request_t \{
   '\\"'; http_method_t  meth;            /- Method used during request
@@ -80,63 +108,56 @@ specification:
                                         /- HTTP version number of request 
   '\\"';
 \};
-
-\kw{punion} auth_id_t \{
-  achar unauthorized : unauthorized == '-';  /- non-authenticated http session
-  astring(:' ':) id;                   /- login supplied during authentication
-\};
 \end{code}
-what gets generated for each type in pads description:
-\begin{itemize}
-\item in-memory representation
-\item error mask
-\item error description
-\item read functions (and more)
-\end{itemize}
-Notes:
- multiple entry points to accomodate large scale data
-   file-level for small files
-   read-header while more-records, read-record, read trailer
-parse functions take error mask as argument,
-error mask allows user to turn off checking.
-parse functions return in-memory rep and error description,
-high-bit saying if any error occurred during parsing.
+The \cd{version} field of this \cd{pstruct} has a constraint predicate
+which ensures that obsolte versions \cd{LINK} and \cd{UNLINK} do not
+appear after HTTP version \cd{1.0}.
 
-Our next steps include using the library as
-input to tools that query and aggregate data.  Our ultimate goal is
-for data analysts to write just the declarative description of the
-data and declarative queries -- no coding required.  Further, by
-providing a means of describing all of Research's incoming data
-streams using a common language, we open the possibility of
-correlating and integrating the data from these streams.
+\section{Generated Library}
+From each type in a \pads{} description, we generate 
+1) an in-memory representation, 
+2) an error-mask, which allows users to specify
+which portions of the data are relevant to their applications,
+3) an error-description, which we use to describe physical and
+semantic errors detected during parsing, 
+4) a parsing function, and 
+5) utility functions.
+Each parse function takes as an argument an error mask and returns
+both an error description and the in-memory representation of the
+physical data.  
+The invariant maintained by the library is that if the error mask
+requests a portion of the data and the error description indicates no
+error, then the in-memory representation satisfies all of the semantic
+constraints of the data. 
+
+By supporting multiple entry-points, we accomodate larger-scale data.
+For a small file, the user can call a single parse-function that will
+read the entire contents of a file.  For larger-scale data, programmers
+can sequence calls to parser functions for portions of the data,
+perhaps parsing each record in a file in a loop, for example. 
 
 
 \section{Related work}
- xml
- traditional databases
- ASN.1 (flip side: describe logical, generate physical and tools for 
-        reading/pretty printing in a number of different languages)
- \cite{asn}
- \cite{asdl}
+\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl} are both
+systems for describing data declaratively and then generating
+libraries for manipulating that data.  In contrast to \pads{},
+however, both these systems specify the logical representation and
+automatically generate a physical representation.  Although useful for
+many purposes, this technology does not help process data that arrives
+in an already-determined format. 
 
- Satish (\cite{sigcomm00})
- trevor's email(\cite{erlang-bit-syntax})
- Godmar (\cite{gpce02}):
-  bit/binary layout with constraints
-  use of overlays
-  treatment of errors
+More closely related work allows declarative descriptions of binary
+data~\cite{sigcomm00,erlang-bit-syntax,gpce02}, motivated by parsing
+\textsc{TCP/IP} packets and \java{} jar-files.  In contrast to our
+work, these systems only handle binary data and assume the data is
+error-free or halt parsing if an error is detected. 
 
 \section{Conclusion}
-Available for download with non-commercial use license from:
-\texttt{http://www.research.att.com/projects/pads}
+Source code for \pads{} will be available for download shortly with
+a non-commercial use license from: 
+\begin{centercode}
+http://www.research.att.com/projects/pads
+\end{centercode}
 \bibliographystyle{jhr-alpha} 
 \bibliography{mpds}
 \end{document}
-*****************************************
-Questions:
- 1. should we generate a isFoo predicate for each PADS type foo?
-
-Other issues
-
-??queries are often ad hoc & transient:
-  ??what is happening this week? next week a different question.
