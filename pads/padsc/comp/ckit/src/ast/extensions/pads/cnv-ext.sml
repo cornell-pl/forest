@@ -3131,6 +3131,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                            (* end case (min,max) *))
                          (* END size case *))
 		     end
+		 val () = popLocalEnv()  (* remove scope with parameters used for type checking
+					  size specifications *)
 
 	         (* Calculate and insert type properties into type table *)
                  val baseMemChar = lookupMemChar baseTy
@@ -3191,6 +3193,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 		 val edBufferX    = modFieldX(ed, elts)
  		 val edNext       = P.subX(edBufferX, indexX)
+
+		 val _ = pushLocalEnv()                                        (* create new scope *)
+		 val cParams : (string * pcty) list = List.map mungeParam params
+		 val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
+		 (* scope is removed at end of cnvPArray *)
           
 
                  (* -- process constriants *)
