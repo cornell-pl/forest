@@ -21,7 +21,7 @@ Group is
 
 	(* utilitities *)
 	util/old-pp.sml
-	util/ascii.sml
+(*	util/ascii.sml*)
 	util/sourcemap-sig.sml
 	util/sourcemap.sml
 	util/error-sig.sml
@@ -38,7 +38,7 @@ Group is
 	parse-tree.sml
 
         (* extensions *)
-        extensions/pads/parse-tree-ext-sig.sml
+(*        extensions/pads/parse-tree-ext-sig.sml*)
         extensions/pads/parse-tree-ext.sml        
         extensions/pads/parse-tree-subst-sig.sml
         extensions/pads/parse-tree-subst.sml        

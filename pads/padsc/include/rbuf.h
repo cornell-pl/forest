@@ -288,14 +288,14 @@ void*     RBuf_get_elt  (RBuf_t* rbuf, size_t index);
 #define RBuf_GET_ELT(rbuf, index, type) \
   (type)* RBuf_get_elt(rbuf, index)
 
-#define RBuf_CPY_SRC2DEST(src, dest, bytes, mgr) do { \
-  void *src_buf, *dest_buf; \
+#define RBuf_CPY_SRC2DEST(src, dest, dest_buf, bytes, mgr) do { \
+  void *src_buf; \
   if (!(dest)) { \
     (dest) = RMM_new_rbuf(mgr); \
   } \
-  RBuf_reserve((dest), &dest_buf, 1, (bytes), (bytes)); \
+  RBuf_reserve((dest), (void **)&(dest_buf), 1, (bytes), (bytes)); \
   src_buf = RBuf_get_buf(src); \
-  memcpy(dest_buf, src_buf, (bytes)); \
+  memcpy((dest_buf), src_buf, (bytes)); \
 } while (0)
 
 #endif  /*  __RBUF_H__  */

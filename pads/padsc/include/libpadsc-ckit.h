@@ -15,7 +15,7 @@
 /* MISC MACROS THAT NEED PROTOTYPES */
 
 #undef RBuf_CPY_SRC2DEST
-void RBuf_CPY_SRC2DEST(RBuf_t*, RBuf_t*, size_t, RMM_t*);
+void RBuf_CPY_SRC2DEST(RBuf_t*, RBuf_t*, void *, size_t, RMM_t*);
 
 /* ================================================================================ */
 /* SIMPLE CONSTANTS */

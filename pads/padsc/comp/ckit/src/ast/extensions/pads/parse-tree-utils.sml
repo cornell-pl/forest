@@ -113,6 +113,7 @@ struct
     fun sizeofEX e        = PT.Unop(PT.Sizeof, e)
     fun strIsNonNull name = PT.Binop(PT.Neq,PT.Id name,zero)
     fun subX(e1,e2)       = PT.Binop(PT.Sub, e1, e2)
+    fun timesX(e1,e2)     = PT.Binop(PT.Times, e1, e2)
     val emptyS            = (PT.Expr PT.EmptyExpr)
     fun returnS e         = PT.Return(e) 
     fun condX (e1,e2,e3)  = PT.QuestionColon(e1,e2,e3)

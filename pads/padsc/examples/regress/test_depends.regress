@@ -13,12 +13,13 @@ read returned error
 *****************************************************************************************************
 <top> : struct line
 *****************************************************************************************************
-Errors: good vals:          2    bad vals:          2    pcnt-bad:   50.000
-  Characterizing errors:  min 0 max 0 avg 0.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:          2  pcnt-of-good-vals:  100.000
+Errors: total vals:          4
+  Characterizing errors:  min 0 max 2 avg 1.000
+    => distribution of top 2 values out of 2 distinct values:
+        val:          0 count:          2 pcnt-of-total-vals:   50.000
+        val:          2 count:          2 pcnt-of-total-vals:   50.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          2  pcnt-of-good-vals:  100.000
+        SUMMING         count:          4 pcnt-of-total-vals:  100.000
 [Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.f : array intList of a_int32

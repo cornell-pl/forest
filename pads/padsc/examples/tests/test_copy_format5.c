@@ -5,9 +5,12 @@ int main(int argc, char** argv) {
   PDC_t*          pdc;
   call_ed         ced, cedCpy;
   call            cdata, cdataCpy;
+  PDC_disc_t      mydisc = PDC_default_disc;
+  
+  mydisc.flags |= PDC_WSPACE_OK;
 
   /* Open pdc handle */
-  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
+  if (PDC_ERR == PDC_open(&pdc, &mydisc, 0)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }

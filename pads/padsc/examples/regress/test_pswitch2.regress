@@ -8,12 +8,13 @@ Error [in branches_read]: record 4 char 2 : Failed to match branch number.
 *****************************************************************************************************
 <top> : struct choice
 *****************************************************************************************************
-Errors: good vals:          3    bad vals:          1    pcnt-bad:   25.000
-  Characterizing errors:  min 0 max 0 avg 0.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:          3  pcnt-of-good-vals:  100.000
+Errors: total vals:          4
+  Characterizing errors:  min 0 max 1 avg 0.250
+    => distribution of top 2 values out of 2 distinct values:
+        val:          0 count:          3 pcnt-of-total-vals:   75.000
+        val:          1 count:          1 pcnt-of-total-vals:   25.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          3  pcnt-of-good-vals:  100.000
+        SUMMING         count:          4 pcnt-of-total-vals:  100.000
 [Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.a : uint32

@@ -93,6 +93,10 @@ test_dibbler1_mod :: test_dibbler1_mod.c  dibbler-mod.c     -lpadsc
 test_fast_dib :: test_fast_dib.c  dibbler2.c    -lpadsc
 test_fast_dib_mod :: test_fast_dib_mod.c  dibbler2-mod.c    -lpadsc
 test_depends  :: test_depends.c   depends.c     -lpadsc
+test_copy     :: test_copy.c	  format1.c	-lpadsc
+test_copy_format3     :: test_copy_format3.c	  format3.c	-lpadsc
+test_copy_format5     :: test_copy_format5.c	  format5.c	-lpadsc
+
 
 regress_test_format1 : test_format1
 	(set +x; test -d tmp || mkdir tmp)

@@ -109,6 +109,9 @@ test_readint: $(GEN_DIR)/readinttest.c test_readint.c $(INCLUDE_DEPS) $(LIB_DEPS
 manifest_union: $(GEN_DIR)/punion-manifest.c munion.c $(INCLUDE_DEPS) $(LIB_DEPS)
 	@$(CCExec_DYNAMIC)
 
+test_copy_format5: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LIB_DEPS)
+	@$(CCExec_DYNAMIC)
+
  # End of rules that are run from the arch directory
 endif
 

@@ -46,12 +46,15 @@ Found eof
 *****************************************************************************************************
 entire struct : struct test
 *****************************************************************************************************
-Errors: good vals:          5    bad vals:          6    pcnt-bad:   54.545
-  Characterizing errors:  min 0 max 0 avg 0.000
-    => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:          5  pcnt-of-good-vals:  100.000
+Errors: total vals:         11
+  Characterizing errors:  min 0 max 3 avg 1.182
+    => distribution of top 4 values out of 4 distinct values:
+        val:          0 count:          5 pcnt-of-total-vals:   45.455
+        val:          3 count:          3 pcnt-of-total-vals:   27.273
+        val:          1 count:          2 pcnt-of-total-vals:   18.182
+        val:          2 count:          1 pcnt-of-total-vals:    9.091
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          5  pcnt-of-good-vals:  100.000
+        SUMMING         count:         11 pcnt-of-total-vals:  100.000
 [Describing each field of entire struct]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 entire struct.id : int32

@@ -136,6 +136,8 @@ struct
          userFatalErrorS(ts, P.zero, whatFun, errCode, P.zero, [])
        ])]
 
+  fun errAccReport(ts, outStrmX, prefixX, whatX, nstX, fieldX) = 
+      PT.Call(PT.Id "PDC_nerr_acc_report_internal",[ts, outStrmX, prefixX, whatX, nstX, fieldX])
 
 (* Growable buffers *)
   fun zeroMM(ts:PT.expression) = 
@@ -194,6 +196,10 @@ struct
          userFatalErrorS(ts, P.zero, whatFun, PDC_ALLOC_FAILURE, 
 			 PT.String "Couldn't free growable buffer", [])]
     )
+
+  fun rbufCopyS(pdstRbuf, psrcRbuf, destX, size, mm) = 
+      (*void RBuf_CPY_SRC2DEST(RBuf_t*, RBuf_t*, void * dest, size_t, RMM_t* ); *)
+    PT.Expr(PT.Call(PT.Id "RBuf_CPY_SRC2DEST", [psrcRbuf, pdstRbuf, destX, size, mm]))
 
 (* -- File manipulation routines *)
   fun getLocS(ts:PT.expression, locAddr:PT.expression) = 
@@ -269,6 +275,10 @@ struct
 (* -- C helper functions *)
   fun bzeroX (spX, sizeX) = PT.Call(PT.Id "memset",[PT.Cast(P.voidPtr, spX), P.zero, sizeX])
   fun bzeroS (spX, sizeX) = PT.Expr(bzeroX(spX,sizeX))
+  fun memcpyX (dstX, srcX, sizeX) = PT.Call(PT.Id "memcpy", 
+					   [PT.Cast(P.voidPtr, dstX), 
+					    PT.Cast(P.voidPtr, srcX), sizeX])
+  fun memcpyS (dstX, srcX, sizeX) = PT.Expr(memcpyX(dstX, srcX,sizeX))
   fun strLen(s:PT.expression)= PT.Call(PT.Id "strlen", [s])
 
 (* -- Other helper functions *)
