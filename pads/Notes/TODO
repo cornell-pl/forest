@@ -31,8 +31,14 @@ to document
 
 library todo
 ------------
+ * accum config params in disc
+ * accum for char
+ * print routine for nerr accum
  * add nerr to padsc base types
  * buffer data source
+ * io_commit hack that outputs the raw bytes to an sfio stream
+ * alias to PDC_IO_dump_start, PDC_IO_dump_end
+ * non-preserving write functions for base types
 
 MORE BASE TYPES:
 
@@ -72,6 +78,13 @@ DISCIPLINE:
 
 padsc compiler todo
 -------------------
+NEW
+  * if a user-defined constraint involves a field that has errCode != PDC_NO_ERR,
+    the error message should be something like
+      "User constraint skipped due to error reading one of its parts"
+       and the error code should be, e.g., PDC_USER_CONSTRAINT_SKIPPED.
+
+OLD (some of them are done)
   * make enum.p work (strings that match c keywordsk, etc)
   * don't complain about extra spaces if in slurp mode
   * generated accum types should have some top-level state
