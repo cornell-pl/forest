@@ -59,7 +59,7 @@ SHARED_COBOL_PADSLIB_NM_ALT1 = libpadsc-cobol.so.1
 SHARED_COBOL_PADSLIB_NM_ALT2 = libpadsc-cobol.so
 STATIC_LIBTOOL = ar r
 STATIC_LIBTOOL_OPTS =
-SHARED_LIBTOOL = /usr/bin/cc -shared -nostartfiles
+SHARED_LIBTOOL = $(CC) -shared -nostartfiles
 SHARED_LIBTOOL_PRE_PADSLIB = -Wl,-whole-archive
 SHARED_LIBTOOL_PRE_ASTLIB  = -Wl,-no-whole-archive
 SHARED_LIBTOOL_OPTS = -lc
@@ -90,7 +90,7 @@ SHARED_COBOL_PADSLIB_NM_ALT1 = libpadsc-cobol.so.1
 SHARED_COBOL_PADSLIB_NM_ALT2 = libpadsc-cobol.so
 STATIC_LIBTOOL = ar r
 STATIC_LIBTOOL_OPTS =
-SHARED_LIBTOOL = /usr/bin/cc -shared -update_registry $(INSTALLROOT)/lib/registry.ld
+SHARED_LIBTOOL = $(CC) -shared -update_registry $(INSTALLROOT)/lib/registry.ld
 SHARED_LIBTOOL_PRE_PADSLIB = -all
 SHARED_LIBTOOL_PRE_ASTLIB  = -notall
 SHARED_LIBTOOL_OPTS =
@@ -271,9 +271,15 @@ endif
 endif
 
 ifdef GEN_DIR
+ifdef GEN_WRITE
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 	@echo "Using rule P"
+	$(PADSC) $< -r $(GEN_DIR) -I . -I ..
+else
+$(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
+	@echo "Using rule P-nowrite"
 	$(PADSC) $< -r $(GEN_DIR) -wnone -I . -I ..
+endif
 endif
 
 # Notes: 

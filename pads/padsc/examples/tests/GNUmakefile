@@ -16,6 +16,7 @@ else
 
 PADS_HOME = ../../..
 GEN_DIR = ../../gen
+GEN_WRITE = 1
 include $(PADS_HOME)/mk/rules.mk
 
 VPATH =  .. ../../p
@@ -26,24 +27,6 @@ OTHER_TESTS  = test_cpygen_crs test_enum test_from test_ai test_readint test_dep
 ALL_TESTS = $(FORMAT_TESTS) $(DIB_TESTS) $(OTHER_TESTS) 
 
 regress:  sanity_check \
-          regress_test_format1 \
-          regress_test_format2 \
-          regress_test_format3 \
-          regress_test_format5 \
-          regress_test_format6 \
-          regress_test_readint \
-          regress_test_ai \
-	  regress_test_pswitch2 \
-	  regress_test_depends \
-	  regress_test_struct3
-	@echo " "; echo "DONE"; echo " "
-
-problem_regress:  sanity_check \
-          regress_test_munion  \
-	  regress_test_pswitch
-	@echo " "; echo "DONE"; echo " "
-
-full_regress:  sanity_check \
           regress_test_format1 \
           regress_test_format2 \
           regress_test_format3 \
@@ -141,4 +124,3 @@ test_copy_ai: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS)
 
  # End of rules that are run from the arch directory
 endif
-

@@ -151,16 +151,8 @@
  * "PDC_int32" to specify an invalid val function for all of these types: PDC_int32,
  * PDC_a_int32, PDC_e_int32.
  *
- * N.B. "PDC_string_FW" is mapped to these 3 types:
- *           PDC_string_FW             PDC_a_string_FW           PDC_e_string_FW
- * while "PDC_string" is mapped to all of these types:
- *           PDC_string                PDC_a_string              PDC_e_string
- *           PDC_string_ME             PDC_a_string_ME           PDC_e_string_ME
- *           PDC_string_CME            PDC_a_string_CME          PDC_e_string_CME
- *           PDC_string_SE             PDC_a_string_SE           PDC_e_string_SE
- *           PDC_string_CSE            PDC_a_string_CSE          PDC_e_string_CSE
- * One should use PDC_string_copy, PDC_string_Cstr_copy, PDC_string_share, or
- * PDC_string_Cstr_share to fill in the value of a PDC_string* param.
+ * N.B. An inv_valfn for a string type should use PDC_string_copy, PDC_string_Cstr_copy,
+ * PDC_string_share, or PDC_string_Cstr_share to fill in the value of the PDC_string* param.
  * 
  * The default disc is PDC_default_disc.  It provides the following defaults:
  *    version:       PDC_VERSION (above) 
@@ -1998,6 +1990,25 @@ ssize_t PDC_e_string_CSE_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, in
 #endif /* FOR_CKIT */
 
 /* ================================================================================
+ * DATE WRITE FUNCTIONS
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * PDC_date_write2io              PDC_a_date_write2io            PDC_e_date_write2io 
+ *
+ * PDC_date_write2buf             PDC_a_date_write2buf           PDC_e_date_write2buf
+ */
+
+#ifdef FOR_CKIT
+ssize_t PDC_date_write2io   (PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_uint32 *d);
+ssize_t PDC_a_date_write2io (PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_uint32 *d);
+ssize_t PDC_e_date_write2io (PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_uint32 *d);
+
+ssize_t PDC_date_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char stopChar, const PDC_base_ed *ed, PDC_uint32 *d);
+ssize_t PDC_a_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char stopChar, const PDC_base_ed *ed, PDC_uint32 *d);
+ssize_t PDC_e_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char stopChar, const PDC_base_ed *ed, PDC_uint32 *d);
+#endif
+
+/* ================================================================================
  * INTEGER/FPOINT WRITE FUNCTIONS
  * 
  * For each integer or fpoint read function there is a corresponding write2io
@@ -2292,6 +2303,16 @@ ssize_t PDC_sbh_ufpoint64_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, i
  */
 
 #ifdef FOR_CKIT
+ssize_t PDC_int8_FW_write2io  (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, const PDC_int8   *val);
+ssize_t PDC_int16_FW_write2io (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, const PDC_int16  *val);
+ssize_t PDC_int32_FW_write2io (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, const PDC_int32  *val);
+ssize_t PDC_int64_FW_write2io (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, const PDC_int64  *val);
+
+ssize_t PDC_uint8_FW_write2io (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, const PDC_uint8  *val);
+ssize_t PDC_uint16_FW_write2io(PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, const PDC_uint16 *val);
+ssize_t PDC_uint32_FW_write2io(PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, const PDC_uint32 *val);
+ssize_t PDC_uint64_FW_write2io(PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, const PDC_uint64 *val);
+
 ssize_t PDC_int8_write2io  (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const PDC_int8   *val);
 ssize_t PDC_int16_write2io (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const PDC_int16  *val);
 ssize_t PDC_int32_write2io (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const PDC_int32  *val);
@@ -2301,6 +2322,16 @@ ssize_t PDC_uint8_write2io (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const
 ssize_t PDC_uint16_write2io(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const PDC_uint16 *val);
 ssize_t PDC_uint32_write2io(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const PDC_uint32 *val);
 ssize_t PDC_uint64_write2io(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const PDC_uint64 *val);
+
+ssize_t PDC_int8_FW_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, size_t width, const PDC_base_ed *ed, const PDC_int8   *val);
+ssize_t PDC_int16_FW_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, size_t width, const PDC_base_ed *ed, const PDC_int16  *val);
+ssize_t PDC_int32_FW_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, size_t width, const PDC_base_ed *ed, const PDC_int32  *val);
+ssize_t PDC_int64_FW_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, size_t width, const PDC_base_ed *ed, const PDC_int64  *val);
+
+ssize_t PDC_uint8_FW_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, size_t width, const PDC_base_ed *ed, const PDC_uint8  *val);
+ssize_t PDC_uint16_FW_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, size_t width, const PDC_base_ed *ed, const PDC_uint16 *val);
+ssize_t PDC_uint32_FW_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, size_t width, const PDC_base_ed *ed, const PDC_uint32 *val);
+ssize_t PDC_uint64_FW_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, size_t width, const PDC_base_ed *ed, const PDC_uint64 *val);
 
 ssize_t PDC_int8_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, const PDC_int8   *val);
 ssize_t PDC_int16_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, const PDC_int16  *val);
