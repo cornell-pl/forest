@@ -2,11 +2,14 @@
 
 .SOURCE : .. ../../../include
 
+if 0
+CCFLAGS = $(CC.OPTIMIZE)
+end
 CCFLAGS = $(CC.DEBUG)
 
 myrand :: myrand.c
 
-libtests : mk_ex_data_libtest2 libtest1 libtest2 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1
+libtests : mk_ex_data_libtest2 libtest1 libtest2 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1 string_share_test
 
 accumtests : accumtest accumtest2 accumtest_s
 
@@ -22,6 +25,8 @@ dttest         :: dttest.c        -lpadsc
 accumtest      :: accumtest.c     -lpadsc
 accumtest2     :: accumtest2.c    -lpadsc
 accumtest_s    :: accumtest_s.c   -lpadsc
+
+string_share_test   :: string_share_test.c          -lpadsc
 
 mk_ex_data_biglibtest1 :: mk_ex_data_biglibtest1.c
 mk_ex_data_libtest2    :: mk_ex_data_libtest2.c
