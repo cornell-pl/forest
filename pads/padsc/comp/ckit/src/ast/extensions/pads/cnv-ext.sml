@@ -1607,7 +1607,7 @@ structure CnvExt : CNVEXT = struct
 			  let val readFieldName = lookupTy(pty, iSuf o readSuf, #readname)
                               val modEdNameX = fieldX(ed,name)
 			      val repX = if isVirtual then PT.Id name else fieldX(rep,name)
-			      val locX = if isVirtual then PT.Id loc else P.dotX(modEdNameX, PT.Id loc)
+			      val locX = if isVirtual then PT.Id tloc else P.dotX(modEdNameX, PT.Id loc)
                               val () = if not isVirtual 
 					   then addSub(name, fieldX(rep,name))  (* record additional binding *)
 				       else ()
@@ -1693,10 +1693,11 @@ structure CnvExt : CNVEXT = struct
 						    else reportErrSs))]
 					   end
                                       (* end case pred *) ) )])
-			      val readS = if !first then (first:= false; ifNoPanicSs)
-					  else PT.IfThenElse
-					      (fieldX(ed,panic), (* if moded->panic *)
-					       ifPanicSs, ifNoPanicSs)
+			      fun addLocDecl s = PT.Compound 
+					      ([P.varDeclS'(PL.locPCT,tloc)] @ s)
+			      val readS = if !first then (first:= false; addLocDecl [ifNoPanicSs])
+					  else addLocDecl(
+					       [PT.IfThenElse(fieldX(ed,panic), ifPanicSs, ifNoPanicSs)])
 			  in
 			      [commentS, readS]
 			  end
