@@ -542,12 +542,15 @@ typedef	struct { Puint64 num; Puint64 denom;} Pufpoint64;
 
 typedef Puint8 Pchar;
 
+typedef float   Pfloat32;
+typedef double  Pfloat64;
+
 /* HELPERS: 
- *    P_FPOINT2FLT calculates num/denom as a float
- *    P_FPOINT2DBL calculates num/denom as a double
+ *    P_FPOINT2FLOAT32 calculates num/denom as a Pfloat32
+ *    P_FPOINT2FLOAT64 calculates num/denom as a Pfloat64
  */
-#define P_FPOINT2FLT(fp) ((fp).num/(float)(fp).denom)
-#define P_FPOINT2DBL(fp) ((fp).num/(double)(fp).denom)
+#define P_FPOINT2FLOAT32(fp) ((fp).num/(Pfloat32)(fp).denom)
+#define P_FPOINT2FLOAT64(fp) ((fp).num/(Pfloat64)(fp).denom)
 
 /* flags are Puint32 values */
 typedef Puint32 Pflags_t;
