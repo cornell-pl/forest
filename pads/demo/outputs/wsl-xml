@@ -5,12 +5,7 @@ Output file = /dev/stdout
 <note>read returned OK</note>
 <entry_t>
   <client>
-    <ip>
-      <p:elt><p:val>207</p:val></p:elt>
-      <p:elt><p:val>136</p:val></p:elt>
-      <p:elt><p:val>97</p:val></p:elt>
-      <p:elt><p:val>49</p:val></p:elt>
-    </ip>
+    <ip><p:val>207.136.97.49</p:val></ip>
   </client>
   <remoteID>
     <unauthorized><p:val>-</p:val></unauthorized>
@@ -28,7 +23,9 @@ Output file = /dev/stdout
     </version>
   </request>
   <response><p:val>200</p:val></response>
-  <length><p:val>30</p:val></length>
+  <length>
+    <len><p:val>30</p:val></len>
+  </length>
 </entry_t>
 <note>read returned OK</note>
 <entry_t>
@@ -37,7 +34,8 @@ Output file = /dev/stdout
       <p:elt><p:val>tj62</p:val></p:elt>
       <p:elt><p:val>aol</p:val></p:elt>
       <p:elt><p:val>com</p:val></p:elt>
-    </host>
+      <p:len>3</p:len>
+      </host>
   </client>
   <remoteID>
     <unauthorized><p:val>-</p:val></unauthorized>
@@ -55,5 +53,7 @@ Output file = /dev/stdout
     </version>
   </request>
   <response><p:val>200</p:val></response>
-  <length><p:val>941</p:val></length>
+  <length>
+    <len><p:val>941</p:val></len>
+  </length>
 </entry_t>
