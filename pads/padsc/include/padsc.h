@@ -60,9 +60,10 @@ typedef enum PDC_errCode_t_e {
   PDC_STRUCT_FIELD_ERR              =  120,
   PDC_UNION_MATCH_FAILURE           =  130,
   PDC_ENUM_MATCH_FAILURE            =  140,
+  PDC_TYPEDEF_CONSTRAINT_ERR        =  150,
 
-  PDC_AT_EOF                        =  150,
-  PDC_AT_EOR                        =  160,
+  PDC_AT_EOF                        =  160,
+  PDC_AT_EOR                        =  161,
   PDC_RANGE                         =  170,
   PDC_INVALID_AINT                  =  180,
   PDC_INVALID_AUINT                 =  181,
