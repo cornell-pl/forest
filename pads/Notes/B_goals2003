@@ -1,0 +1,47 @@
+
+         2003 GOALS/OBJECTIVES
+         ROBERT GRUBER --- HB8680000
+
+1. P4P
+   a) Build prototype p4p server with support for one protocol (gnutella).
+   b) Work with people from UFMG (Brazil) to:
+        - Add other protocols.
+        - Deploy in Brazil network, gather statistics.
+        - Improve prototype.
+
+2. PADS
+   a) Add write functions (original, binary, XML) to generated libraries.
+   b) Evolve language design, including adding support for switched unions.
+   c) Work with other analysts to prototype some significant applications.
+   d) Query tools:
+      - Finish automatic generation of programs to compute
+        accumulation statistics.
+      - Develop C-based querying infrastructure.
+      - Integrate with XQuery (with Mary Fernandez).
+   e) Build tool to generate Hancock stream descriptions from PADS
+      descriptions.
+
+3. Professional development
+   a) Attend WORDS'03.
+   b) Submit papers based on PADS and P4P work.
+
+
+
+
+
+
+
+
+-------------------------------               ----------------
+Employee Signature                            Date
+
+
+
+-------------------------------               ----------------
+R. Schlichting - Division Mgr                 Date
+
+
+
+-------------------------------               ----------------
+D. Belanger - Director                        Date
+

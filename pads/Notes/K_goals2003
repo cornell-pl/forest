@@ -1,0 +1,67 @@
+                2003 GOALS/OBJECTIVES
+                KATHLEEN FISHER --- HB8630000
+Business Goals:
+
+Career:
+  Develop abstractions and supporting tools to help people
+  solve large-scale programming problems more quickly and more
+  reliably.
+
+  For example, the abstractions in the domain-specific
+  language Hancock allow data analysts to develop
+  signature programs more quickly and at two orders of
+  magnitude larger scale than previously possible.
+
+  My work on Moby allows programmers to use object-oriented
+  abstractions in a language with a powerful module
+  mechanism and highly scalable concurrency primitives.
+  This combination will make it easier for programmers to
+  write large, highly concurrent programs.
+
+Annual:
+1. PADS
+   a) Add write functions (original, binary, XML) to generated libraries.
+   b) Evolve language design, including adding support for switched unions.
+   c) Work with other analysts to prototype some significant applications.
+   d) Query tools:
+      - Finish automatic generation of programs to compute
+        accumulation statistics.
+      - Develop C-based querying infrastructure.
+      - Integrate with XQuery (with Mary Fernandez).
+   e) Build tool to generate Hancock stream descriptions from PADS
+      descriptions.
+   f) Explore representation transformation issues.
+
+2. Hancock
+   a) Explore adding support for variable-width stream data.
+
+3. Moby
+   a) Write journal paper describing design of language.
+   b) Write journal paper describing internal support for concurrency.
+   c) Develop formal model of higher-order modules in a context
+      with subtyping.  Implement these features in compiler.
+
+4. Professional development
+   a) Serve on ACM's SIGPLAN executive committee.
+   b) Run the New Jersey Programming Languages Seminar.
+   c) Chair FCRC's Educator's Travel Grant program.
+   d) Attend the POPL conference.
+
+
+
+-------------------------               ----------------
+Employee Signature                      Date
+
+
+
+-------------------------               ----------------
+K.P. Vo - Division Mgr                  Date
+
+
+
+-------------------------               ----------------
+D.G. Belanger - Director                Date
+
+
+
+
