@@ -10,9 +10,72 @@
 #gen_include "libpadsc-macros-gen.h"
 #gen_include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.24 2002-10-01 03:53:07 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.25 2002-10-01 16:33:27 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
+
+/* ================================================================================ */
+/* MODIFIED CONVERSION ROUTINES */
+
+long
+PDC_strtol(const char* str, char** ptr, int base)
+{
+  errno = 0;
+  return strtol(str, ptr, base);
+}
+
+long long
+PDC_strtoll(const char* str, char** ptr, int base)
+{
+  errno = 0;
+  return strtoll(str, ptr, base);
+}
+
+unsigned long
+PDC_strtoul(const char* str, char** ptr, int base)
+{
+  const char* tmp = str;
+  errno = 0;
+  while (isspace(*tmp)) {
+    tmp++;
+  }
+  if (*tmp++ == '-') {
+    if (isdigit(*tmp)) { /* treat as range error */
+      while (isdigit(*tmp)) {
+	tmp++;
+      }
+      (*ptr) = (char*)tmp;
+      errno = ERANGE;
+      return 0;
+    }
+    (*ptr) = 0; /* indicates prefix error */
+    return 0;
+  }
+  return strtoul(str, ptr, base);
+}
+
+unsigned long
+PDC_strtoull(const char* str, char** ptr, int base)
+{
+  const char* tmp = str;
+  errno = 0;
+  while (isspace(*tmp)) {
+    tmp++;
+  }
+  if (*tmp++ == '-') {
+    if (isdigit(*tmp)) { /* treat as range error */
+      while (isdigit(*tmp)) {
+	tmp++;
+      }
+      (*ptr) = (char*)tmp;
+      errno = ERANGE;
+      return 0;
+    }
+    (*ptr) = 0; /* indicates prefix error */
+    return 0;
+  }
+  return strtoull(str, ptr, base);
+}
 
 /* ********************* BEGIN_MACROS(libpadsc-macros-gen.h) ********************** */
 /*
@@ -154,6 +217,7 @@ fn_name(PDC_t* pdc, PDC_base_em* em,
   if (res_out && *em == PDC_CheckAndSet) {
     (*res_out) = (targ_type)tmp;
   }
+  ed->errCode = PDC_NO_ERROR;
   return PDC_OK;
 
  at_eof_err:
@@ -219,6 +283,7 @@ fn_name(PDC_t* pdc, PDC_base_em* em, size_t width,
   if (res_out && *em == PDC_CheckAndSet) {
     (*res_out) = (targ_type)tmp;
   }
+  ed->errCode = PDC_NO_ERROR;
   return PDC_OK;
 
  width_not_avail:
@@ -266,6 +331,7 @@ fn_name(PDC_t* pdc, PDC_base_em* em,
       swapmem(0, begin, res_out, width);
     }
   }
+  ed->errCode = PDC_NO_ERROR;
   return PDC_OK;
 
  width_not_avail:
@@ -506,25 +572,25 @@ int_type ## _acc_report(PDC_t* pdc, const char* prefix, int_type ## _acc* a, PDC
  * PDC_AINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
  */
 
-PDC_AINT_READ_FN(PDC_aint8_read,  PDC_int8,  long,      strtol,  PDC_INVALID_AINT,
+PDC_AINT_READ_FN(PDC_aint8_read,  PDC_int8,  long,      PDC_strtol,  PDC_INVALID_AINT,
  || tmp < PDC_MIN_INT8  || tmp > PDC_MAX_INT8);
 
-PDC_AINT_READ_FN(PDC_aint16_read, PDC_int16, long,      strtol,  PDC_INVALID_AINT,
+PDC_AINT_READ_FN(PDC_aint16_read, PDC_int16, long,      PDC_strtol,  PDC_INVALID_AINT,
  || tmp < PDC_MIN_INT16 || tmp > PDC_MAX_INT16);
 
-PDC_AINT_READ_FN(PDC_aint32_read, PDC_int32, long,      strtol,  PDC_INVALID_AINT, );
+PDC_AINT_READ_FN(PDC_aint32_read, PDC_int32, long,      PDC_strtol,  PDC_INVALID_AINT, );
 
-PDC_AINT_READ_FN(PDC_aint64_read, PDC_int64, long long, strtoll, PDC_INVALID_AINT, );
+PDC_AINT_READ_FN(PDC_aint64_read, PDC_int64, long long, PDC_strtoll, PDC_INVALID_AINT, );
 
-PDC_AINT_READ_FN(PDC_auint8_read,  PDC_uint8,  unsigned long,      strtoul,  PDC_INVALID_AUINT,
+PDC_AINT_READ_FN(PDC_auint8_read,  PDC_uint8,  unsigned long,      PDC_strtoul,  PDC_INVALID_AUINT,
  || tmp > PDC_MAX_UINT8);
 
-PDC_AINT_READ_FN(PDC_auint16_read, PDC_uint16, unsigned long,      strtoul,  PDC_INVALID_AUINT,
+PDC_AINT_READ_FN(PDC_auint16_read, PDC_uint16, unsigned long,      PDC_strtoul,  PDC_INVALID_AUINT,
  || tmp > PDC_MAX_UINT16);
 
-PDC_AINT_READ_FN(PDC_auint32_read, PDC_uint32, unsigned long,      strtoul,  PDC_INVALID_AUINT, );
+PDC_AINT_READ_FN(PDC_auint32_read, PDC_uint32, unsigned long,      PDC_strtoul,  PDC_INVALID_AUINT, );
 
-PDC_AINT_READ_FN(PDC_auint64_read, PDC_uint64, unsigned long long, strtoull, PDC_INVALID_AUINT, );
+PDC_AINT_READ_FN(PDC_auint64_read, PDC_uint64, unsigned long long, PDC_strtoull, PDC_INVALID_AUINT, );
 
 /* ================================================================================ */
 /* FIXED-WIDTH ASCII INTEGER READ FUNCTIONS */
@@ -533,25 +599,25 @@ PDC_AINT_READ_FN(PDC_auint64_read, PDC_uint64, unsigned long long, strtoull, PDC
  * PDC_AINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
  */
 
-PDC_AINT_FW_READ_FN(PDC_aint8_fw_read,  PDC_int8,  long,      strtol,  PDC_INVALID_AINT,
+PDC_AINT_FW_READ_FN(PDC_aint8_fw_read,  PDC_int8,  long,      PDC_strtol,  PDC_INVALID_AINT,
  || tmp < PDC_MIN_INT8  || tmp > PDC_MAX_INT8);
 
-PDC_AINT_FW_READ_FN(PDC_aint16_fw_read, PDC_int16, long,      strtol,  PDC_INVALID_AINT,
+PDC_AINT_FW_READ_FN(PDC_aint16_fw_read, PDC_int16, long,      PDC_strtol,  PDC_INVALID_AINT,
  || tmp < PDC_MIN_INT16 || tmp > PDC_MAX_INT16);
 
-PDC_AINT_FW_READ_FN(PDC_aint32_fw_read, PDC_int32, long,      strtol,  PDC_INVALID_AINT, );
+PDC_AINT_FW_READ_FN(PDC_aint32_fw_read, PDC_int32, long,      PDC_strtol,  PDC_INVALID_AINT, );
 
-PDC_AINT_FW_READ_FN(PDC_aint64_fw_read, PDC_int64, long long, strtoll, PDC_INVALID_AINT, );
+PDC_AINT_FW_READ_FN(PDC_aint64_fw_read, PDC_int64, long long, PDC_strtoll, PDC_INVALID_AINT, );
 
-PDC_AINT_FW_READ_FN(PDC_auint8_fw_read,  PDC_uint8,  unsigned long,      strtoul,  PDC_INVALID_AUINT,
+PDC_AINT_FW_READ_FN(PDC_auint8_fw_read,  PDC_uint8,  unsigned long,      PDC_strtoul,  PDC_INVALID_AUINT,
  || tmp > PDC_MAX_UINT8);
 
-PDC_AINT_FW_READ_FN(PDC_auint16_fw_read, PDC_uint16, unsigned long,      strtoul,  PDC_INVALID_AUINT,
+PDC_AINT_FW_READ_FN(PDC_auint16_fw_read, PDC_uint16, unsigned long,      PDC_strtoul,  PDC_INVALID_AUINT,
  || tmp > PDC_MAX_UINT16);
 
-PDC_AINT_FW_READ_FN(PDC_auint32_fw_read, PDC_uint32, unsigned long,      strtoul,  PDC_INVALID_AUINT, );
+PDC_AINT_FW_READ_FN(PDC_auint32_fw_read, PDC_uint32, unsigned long,      PDC_strtoul,  PDC_INVALID_AUINT, );
 
-PDC_AINT_FW_READ_FN(PDC_auint64_fw_read, PDC_uint64, unsigned long long, strtoull, PDC_INVALID_AUINT, );
+PDC_AINT_FW_READ_FN(PDC_auint64_fw_read, PDC_uint64, unsigned long long, PDC_strtoull, PDC_INVALID_AUINT, );
 
 /* ================================================================================ */
 /* BINARY INTEGER READ FUNCTIONS */
@@ -623,80 +689,6 @@ PDC_INT_ACCUM(PDC_uint64, "llu");
 #define PDC_initStkElts      8
 #define PDC_initInpBufs      8
 #define PDC_initBufSize   1024
-
-/* ================================================================================ */ 
-/* INTERNAL FUNCTIONS */
-
-PDC_error_t
-PDC_Internal_IO_needchar(PDC_t* pdc, int obeyPanicStop, PDC_stkElt_t** tp_out, PDC_IO_line_t** tpline_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp      = &(pdc->stack[pdc->top]);
-  PDC_IO_line_t*  tpline  = &(pdc->ilines[tp->idx]);
-
-  TRACE(pdc, "PDC_Internal_IO_needchar called");
-  while (1) {
-    if (PDC_IO_is_EOF(pdc, disc)) { /* already hit EOF */
-      return PDC_ERROR;
-    }
-    if (tp->cur < tpline->eoffset) { /* still more chars on current line */
-      break;
-    }
-    if (obeyPanicStop && (disc->p_stop == PDC_Line_Stop)) {
-      /* do not move beyond newline char / line end */
-      return PDC_ERROR;
-    }
-    if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
-      tp->idx++;
-      tp->cur = 0;
-      tpline = &(pdc->ilines[tp->idx]);
-    } else {
-      /* hit end of in-memory input lines, must get next line */
-      if (PDC_ERROR == PDC_IO_refill(pdc, disc)) {
-	return PDC_ERROR;
-      }
-    }
-    /* go to top of loop to do eof/eol checks again */
-  }
-  (*tp_out) = tp;
-  (*tpline_out) = tpline;
-  return PDC_OK;
-}
-
-PDC_error_t
-PDC_Internal_IO_needchars(PDC_t* pdc, int obeyPanicStop, char** b_out, char** e_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp      = &(pdc->stack[pdc->top]);
-  PDC_IO_line_t*  tpline  = &(pdc->ilines[tp->idx]);
-
-  TRACE(pdc, "PDC_Internal_IO_needchars called");
-  while (1) {
-    if (PDC_IO_is_EOF(pdc, disc)) { /* already hit EOF */
-      return PDC_ERROR;
-    }
-    if (tp->cur < tpline->eoffset) { /* still more chars on current line */
-      break;
-    }
-    if (obeyPanicStop && (disc->p_stop == PDC_Line_Stop)) {
-      /* do not move beyond newline char / line end */
-      return PDC_ERROR;
-    }
-    if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
-      tp->idx++;
-      tp->cur = 0;
-      tpline = &(pdc->ilines[tp->idx]);
-    } else {
-      /* hit end of in-memory input lines, must get next line */
-      if (PDC_ERROR == PDC_IO_refill(pdc, disc)) {
-	return PDC_ERROR;
-      }
-    }
-    /* go to top of loop to do eof/eol checks again */
-  }
-  (*b_out) = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  (*e_out) = (*b_out) + tpline->eoffset;
-  (*b_out) += tp->cur;
-  return PDC_OK;
-}
 
 /* ================================================================================ */ 
 /* ERROR REPORTING FUNCTIONS */
@@ -1026,6 +1018,7 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
   }
   if (PDC_OK == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     if ((c == ct) || (*em == PDC_Ignore)) {
+      ed->errCode = PDC_NO_ERROR;
       return PDC_OK;  /* IO cursor is one beyond c */
     }
     /* wrong char -- put it back */
@@ -1058,6 +1051,7 @@ PDC_str_lit_read(PDC_t* pdc, PDC_base_em* em,
     goto not_found;
   }
   if ((*em == PDC_Ignore) || (strncmp(begin, s->str, s->len) == 0)) {
+    ed->errCode = PDC_NO_ERROR;
     return PDC_OK;    /* found it */
   }
   /* string did not match */
@@ -1124,6 +1118,7 @@ PDC_string_fw_read(PDC_t* pdc, PDC_base_em* em, size_t width,
   }
   /* success */
   PDC_STR_COPY(s_out, begin, end);
+  ed->errCode = PDC_NO_ERROR;
   return PDC_OK;
 
  width_not_avail:
@@ -1163,6 +1158,7 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
       if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
 	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
       }
+      ed->errCode = PDC_NO_ERROR;
       return PDC_OK;
     }
   }
@@ -1222,6 +1218,7 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
 	if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
 	  return PDC_ERROR; /* XXX internal error -- unrecoverable error */
 	}
+	ed->errCode = PDC_NO_ERROR;
 	return PDC_OK;
       }
     }
@@ -1239,6 +1236,50 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
 
  invalid_regexp:
   HANDLE_ERR_CURPOS(PDC_INVALID_REGEXP);
+}
+
+/* ================================================================================ */
+/* MISC READ ROUTINES */
+
+PDC_error_t
+PDC_countXtoY(PDC_t* pdc, PDC_base_em* em, PDC_uint8 x, PDC_uint8 y,
+	      PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc)
+{
+  unsigned char   ct;
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  PDC_DISC_INIT_CHECKS;
+  TRACE2(pdc, "PDC_countXtoY called for x = %s y = %s", PDC_fmtChar(x), PDC_fmtChar(y));
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  if (res_out) {
+    (*res_out) = 0;
+  }
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+    HANDLE_ERR_CURPOS(PDC_OUT_OF_MEMORY);
+  }
+  while (PDC_OK == PDC_IO_getchar(pdc, 1, &ct, disc)) { /* 1 means obey panicStop */
+    if (y == ct) { /* success */
+      if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
+	HANDLE_ERR_CURPOS(PDC_INTERNAL_ERROR);
+      }
+      ed->errCode = PDC_NO_ERROR;
+      return PDC_OK;
+    }
+    if (x == ct && res_out) {
+      (*res_out)++;
+    }
+  }
+  /* y not found */
+  if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
+    HANDLE_ERR_CURPOS(PDC_INTERNAL_ERROR);
+  }
+  HANDLE_ERR_CURPOS(PDC_CHAR_LIT_NOT_FOUND);
 }
 
 /* ================================================================================ */
@@ -1692,6 +1733,80 @@ PDC_IO_initialize(PDC_t* pdc, PDC_disc_t* disc)
   return PDC_OK;
 }
 
+/* ================================================================================ */ 
+/* INTERNAL IO FUNCTIONS */
+
+PDC_error_t
+PDC_Internal_IO_needchar(PDC_t* pdc, int obeyPanicStop, PDC_stkElt_t** tp_out, PDC_IO_line_t** tpline_out, PDC_disc_t* disc)
+{
+  PDC_stkElt_t*   tp      = &(pdc->stack[pdc->top]);
+  PDC_IO_line_t*  tpline  = &(pdc->ilines[tp->idx]);
+
+  TRACE(pdc, "PDC_Internal_IO_needchar called");
+  while (1) {
+    if (PDC_IO_is_EOF(pdc, disc)) { /* already hit EOF */
+      return PDC_ERROR;
+    }
+    if (tp->cur < tpline->eoffset) { /* still more chars on current line */
+      break;
+    }
+    if (obeyPanicStop && (disc->p_stop == PDC_Line_Stop)) {
+      /* do not move beyond newline char / line end */
+      return PDC_ERROR;
+    }
+    if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
+      tp->idx++;
+      tp->cur = 0;
+      tpline = &(pdc->ilines[tp->idx]);
+    } else {
+      /* hit end of in-memory input lines, must get next line */
+      if (PDC_ERROR == PDC_IO_refill(pdc, disc)) {
+	return PDC_ERROR;
+      }
+    }
+    /* go to top of loop to do eof/eol checks again */
+  }
+  (*tp_out) = tp;
+  (*tpline_out) = tpline;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_Internal_IO_needchars(PDC_t* pdc, int obeyPanicStop, char** b_out, char** e_out, PDC_disc_t* disc)
+{
+  PDC_stkElt_t*   tp      = &(pdc->stack[pdc->top]);
+  PDC_IO_line_t*  tpline  = &(pdc->ilines[tp->idx]);
+
+  TRACE(pdc, "PDC_Internal_IO_needchars called");
+  while (1) {
+    if (PDC_IO_is_EOF(pdc, disc)) { /* already hit EOF */
+      return PDC_ERROR;
+    }
+    if (tp->cur < tpline->eoffset) { /* still more chars on current line */
+      break;
+    }
+    if (obeyPanicStop && (disc->p_stop == PDC_Line_Stop)) {
+      /* do not move beyond newline char / line end */
+      return PDC_ERROR;
+    }
+    if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
+      tp->idx++;
+      tp->cur = 0;
+      tpline = &(pdc->ilines[tp->idx]);
+    } else {
+      /* hit end of in-memory input lines, must get next line */
+      if (PDC_ERROR == PDC_IO_refill(pdc, disc)) {
+	return PDC_ERROR;
+      }
+    }
+    /* go to top of loop to do eof/eol checks again */
+  }
+  (*b_out) = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
+  (*e_out) = (*b_out) + tpline->eoffset;
+  (*b_out) += tp->cur;
+  return PDC_OK;
+}
+
 /* ================================================================================ */
 /* TOP-LEVEL LIBRARY FUNCTIONS */
 
@@ -1804,49 +1919,6 @@ RMM_t*
 PDC_rmm_nozero(PDC_t* pdc, PDC_disc_t* disc)
 {
   return pdc->rmm_nz;
-}
-
-/* ================================================================================ */
-/* MISC ROUTINES -- EXTERNAL */
-
-PDC_error_t
-PDC_countXtoY(PDC_t* pdc, PDC_base_em* em, PDC_uint8 x, PDC_uint8 y,
-	      PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc)
-{
-  unsigned char   ct;
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  PDC_DISC_INIT_CHECKS;
-  TRACE2(pdc, "PDC_countXtoY called for x = %s y = %s", PDC_fmtChar(x), PDC_fmtChar(y));
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  if (res_out) {
-    (*res_out) = 0;
-  }
-  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
-    HANDLE_ERR_CURPOS(PDC_OUT_OF_MEMORY);
-  }
-  while (PDC_OK == PDC_IO_getchar(pdc, 1, &ct, disc)) { /* 1 means obey panicStop */
-    if (y == ct) { /* success */
-      if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
-	HANDLE_ERR_CURPOS(PDC_INTERNAL_ERROR);
-      }
-      return PDC_OK;
-    }
-    if (x == ct && res_out) {
-      (*res_out)++;
-    }
-  }
-  /* y not found */
-  if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
-    HANDLE_ERR_CURPOS(PDC_INTERNAL_ERROR);
-  }
-  HANDLE_ERR_CURPOS(PDC_CHAR_LIT_NOT_FOUND);
 }
 
 /* ================================================================================ */

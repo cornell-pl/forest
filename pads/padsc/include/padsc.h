@@ -9,6 +9,7 @@
 #ifndef __LIBPADSC_H__
 #define __LIBPADSC_H__
 
+#include <ast.h>
 #include <ast_common.h>
 #include <dt.h>
 

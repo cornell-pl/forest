@@ -4,6 +4,10 @@
 
 CCFLAGS = $(CC.DEBUG) $(CC.DLL)
 
-padsc 1.0 :LIBRARY: rbuf.c libpadsc-acc-gen.c libpadsc-read-gen.c libpadsc-gen.c
+padsc 1.0 :LIBRARY: libpadsc-gen.c rbuf.c libpadsc-acc-gen.c libpadsc-read-gen.c
 
 $(INCLUDEDIR) :INSTALLPROTO: libpadsc.h libpadsc-internal.h rbuf.h
+
+../libpadsc-gen.c : ../libpadsc.c
+	(cd ..; nmake)
+

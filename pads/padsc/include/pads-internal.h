@@ -198,6 +198,17 @@ char*       PDC_fmtChar(char c);
 char*       PDC_fmtStr(const PDC_string* s);
 char*       PDC_fmtStrL(const char* s, size_t len);
 
+/*
+ * Wrappers for conversion routines that set errno to zero before
+ * making the real call.  The unsigned wrappers also check for
+ * "-<digits>" pattern and produce range error, rather than relying
+ * on the real call to do the right thing.
+ */
+long PDC_stringtol (const char*, char**, int);
+long long PDC_stringtoll(const char*, char**, int);
+unsigned long PDC_stringtoul (const char*, char**, int);
+unsigned long long PDC_stringtoull(const char*, char**, int);
+
 /* ================================================================================ */
 /* OUTPUT MACROS  */
 
