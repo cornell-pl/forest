@@ -642,6 +642,62 @@ structure CnvExt : CNVEXT = struct
 
               fun genReturnChk e =  P.returnS (P.condX(P.eqX(e,P.zero), PL.PDC_OK, PL.PDC_ERROR))
 
+	      fun reportStructErrorSs (code, locX) = 
+		  [PT.IfThen(
+		     P.eqX(P.zero, fieldX(ed,nerr)), 
+		     PT.Compound 
+		      [P.assignS(fieldX(ed, errCode), code),
+		       P.assignS(fieldX(ed, loc), locX)]),
+		   P.plusAssignS(fieldX(ed,nerr), P.intX 1)]
+
+
+
+              fun genReadEOR (reportErrorSs) () = 
+		  [P.mkCommentS ("Reading delimiter field: EOR"),
+		    PT.Compound[
+			   P.varDeclS'(PL.base_edPCT, ted),
+			   P.varDeclS'(PL.sizePCT, "n"),
+			   PL.getLocBeginS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
+                           PT.IfThenElse(
+			      P.eqX(PL.PDC_OK, 
+				    PL.IONextRecX(PT.Id ts, P.addrX (PT.Id "n"))),
+			      PT.Compound
+			       [PT.IfThen(
+				 P.gtX(PT.Id "n", P.zero),
+				 PT.Compound
+                                  [PT.IfThen(
+				    PL.getSpecLevelX(PT.Id ts),
+				    PT.Compound
+				     [PT.Return PL.PDC_ERROR]),
+				   PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
+				   PT.IfThenElse(
+				     P.notX(fieldX(ed,panic)),
+				     PT.Compound(
+				       [PL.userErrorS(PT.Id ts, 
+						      P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
+						      PL.PDC_EXTRA_BEFORE_EOR,
+						      P.zero, 
+						      [])]
+				       @ reportErrorSs(PL.PDC_EXTRA_BEFORE_EOR, P.dotX(PT.Id ted,PT.Id loc))),
+				     PT.Compound
+					[PL.getLocS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
+					 PL.userWarnS(PT.Id ts, 
+						       P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
+						       PT.String "Resynching at EOR", 
+						       [])])]),
+				P.assignS(fieldX(ed,panic), P.zero)],
+			      PT.Compound
+			       [PT.IfThen(
+				 PL.getSpecLevelX(PT.Id ts),
+				 PT.Compound[PT.Return PL.PDC_ERROR]),
+				P.assignS(fieldX(ed,panic), P.zero),
+				PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
+				PL.userErrorS(PT.Id ts, 
+					      P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
+					      PL.PDC_AT_EOR,
+					      PT.String "Found EOF when searching for EOR", 
+					      [])])]]
+
 
 	      fun genReadFun (readName, cParams:(string * pcty)list, 
 			      emPCT,edPCT,canonicalPCT, emFirstPCT, hasNErr, bodySs) = 
@@ -1251,14 +1307,6 @@ structure CnvExt : CNVEXT = struct
                       fun addSub (a : string * pcexp) = subList := (a:: (!subList))
 
                       (* -- Some helper functions *)
-                      fun reportStructErrorSs (code, locX) = 
-			  [PT.IfThen(
-			    P.eqX(P.zero, fieldX(ed,nerr)), 
-			    PT.Compound 
-			     [P.assignS(fieldX(ed, errCode), code),
-			      P.assignS(fieldX(ed, loc), locX)]),
-			   P.plusAssignS(fieldX(ed,nerr), P.intX 1)]
-
 		      fun genReadFull {pty :PX.Pty, args:pcexp list, name:string, 
 				       isVirtual:bool, isEndian:bool,
 				       pred:pcexp option, comment} = 
@@ -1451,52 +1499,6 @@ structure CnvExt : CNVEXT = struct
 				     @ (genPanicRecovery pTyName notPanicSs))])]
 			  end
 
-                      fun genReadEOR () = 
-			[P.mkCommentS ("Reading delimiter field: EOR"),
-			 PT.Compound[
-			   P.varDeclS'(PL.base_edPCT, ted),
-			   P.varDeclS'(PL.sizePCT, "n"),
-			   PL.getLocBeginS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
-                           PT.IfThenElse(
-			      P.eqX(PL.PDC_OK, 
-				    PL.IONextRecX(PT.Id ts, P.addrX (PT.Id "n"))),
-			      PT.Compound
-			       [PT.IfThen(
-				 P.gtX(PT.Id "n", P.zero),
-				 PT.Compound
-                                  [PT.IfThen(
-				    PL.getSpecLevelX(PT.Id ts),
-				    PT.Compound
-				     [PT.Return PL.PDC_ERROR]),
-				   PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
-				   PT.IfThenElse(
-				     P.notX(fieldX(ed,panic)),
-				     PT.Compound(
-				       [PL.userErrorS(PT.Id ts, 
-						      P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
-						      PL.PDC_EXTRA_BEFORE_EOR,
-						      P.zero, 
-						      [])]
-				       @ reportStructErrorSs(PL.PDC_EXTRA_BEFORE_EOR, P.dotX(PT.Id ted,PT.Id loc))),
-				     PT.Compound
-					[PL.getLocS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
-					 PL.userWarnS(PT.Id ts, 
-						       P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
-						       PT.String "Resynching at EOR", 
-						       [])])]),
-				P.assignS(fieldX(ed,panic), P.zero)],
-			      PT.Compound
-			       [PT.IfThen(
-				 PL.getSpecLevelX(PT.Id ts),
-				 PT.Compound[PT.Return PL.PDC_ERROR]),
-				P.assignS(fieldX(ed,panic), P.zero),
-				PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc))),
-				PL.userErrorS(PT.Id ts, 
-					      P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
-					      PL.PDC_AT_EOR,
-					      PT.String "Found EOF when searching for EOR", 
-					      [])])]]
-
                       (* -- Assemble read function *)
 		      val _ = pushLocalEnv()                                        (* create new scope *)
 		      val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
@@ -1504,9 +1506,9 @@ structure CnvExt : CNVEXT = struct
 		      val () = ignore(List.map insTempVar localVars)                (* insert virtuals into scope *)
 		      val cParams : (string * pcty) list = List.map mungeParam params
                       val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
-		      val readFields = mungeFields genReadFull genReadBrief genReadEOR fields  
+		      val readFields = mungeFields genReadFull genReadBrief (genReadEOR reportStructErrorSs) fields  
 		                                                                    (* does type checking *)
-                      val readRecord = if isRecord then genReadEOR() else []
+                      val readRecord = if isRecord then genReadEOR reportStructErrorSs () else []
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val localDeclSs = List.map (P.varDeclS' o (fn(x,y) => (y,x))) localVars
 		      val bodySs = if 0 = List.length localVars then (readFields @ readRecord)
@@ -1651,7 +1653,8 @@ structure CnvExt : CNVEXT = struct
                  @ (List.concat(List.map cnvExternalDecl cleanupEDEDs))
 	      end
 
-	     fun cnvPUnion ({name:string, params: (pcty * pcdecr) list, variants : pcexp PX.PSField list}) = 
+	     fun cnvPUnion ({name:string, params: (pcty * pcdecr) list, 
+			     isRecord : bool, variants : pcexp PX.PSField list}) = 
 		 let (* Some useful names *)
 		     val unionName = name
                      val value = "val"
@@ -1768,6 +1771,7 @@ structure CnvExt : CNVEXT = struct
 		     val readName = readSuf name
 
                      (* -- some helper functions *)
+
                      fun genReadFull{pty :PX.Pty, args:pcexp list, name:string, 
 				     isVirtual:bool, isEndian:bool, pred:pcexp option, comment} = 
 			  let val readFieldName = lookupTy(pty, iSuf o readSuf, #readname)
@@ -1784,6 +1788,7 @@ structure CnvExt : CNVEXT = struct
 			      val commentS = P.mkCommentS ("Reading field: "^ name )
 			      val foundItSs = PT.Compound(
 					       PL.commitS(PT.Id ts)
+					       @ (genReadEOR reportStructErrorSs ())
 					       @[PT.Return PL.PDC_OK])
 			      fun doConstraint predX = case predX of NONE => foundItSs
 				  | SOME constraint => PT.Compound[
@@ -1828,7 +1833,7 @@ structure CnvExt : CNVEXT = struct
 			  end
 
                      fun genReadBrief _ = []
-                     fun genReadEOR _ = []
+                     fun genReadUnionEOR _ = []
 
 		     val cleanupSs =  [P.mkCommentS("We didn't match any branch")]
 			             @ reportErrorSs(true,
@@ -1836,8 +1841,9 @@ structure CnvExt : CNVEXT = struct
 					true, 
 					("Did not match any branch of union "^name^"."),
 					[])
-			             @ [P.assignS(fieldX(ed,panic), P.trueX),
-					PT.Return PL.PDC_ERROR]
+			             @ [P.assignS(fieldX(ed,panic), P.trueX)]
+				     @ (genReadEOR (fn _ => []) ())
+				     @ [PT.Return PL.PDC_ERROR]
 
 
                      (* -- Assemble read function *)
@@ -1845,7 +1851,7 @@ structure CnvExt : CNVEXT = struct
 		     val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
 		     val cParams : (string * pcty) list = List.map mungeParam params
                      val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
-		     val readFields = mungeVariants genReadFull genReadBrief genReadEOR variants  (* does type checking *)
+		     val readFields = mungeVariants genReadFull genReadBrief genReadUnionEOR variants  (* does type checking *)
 		     val _ = popLocalEnv()                                         (* remove scope *)
 		     val bodySs = readFields @ cleanupSs
 		     val readFunEDs = genReadFun(readName, cParams,emPCT,edPCT,canonicalPCT, 

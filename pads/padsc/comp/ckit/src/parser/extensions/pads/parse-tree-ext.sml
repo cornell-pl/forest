@@ -47,6 +47,7 @@ structure ParseTreeExt =
 		       constraints : ('exp PConstraint) list} 
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
+		      isRecord : bool,
 		      variants : ('exp PSField) list}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,

@@ -1101,9 +1101,10 @@ pArray:
  )
 
 pUnion:
- PUNION pName pushScope pTyParams LCURLY pStructFieldList popScope
+ pIsRecord PUNION pName pushScope pTyParams LCURLY pStructFieldList popScope
  ( makeTypeName pName;
-   ExternalDeclExt(PX.PUnion {name = pName, params = pTyParams, variants=pStructFieldList})
+   ExternalDeclExt(PX.PUnion {name = pName, params = pTyParams, 
+                              isRecord = pIsRecord, variants=pStructFieldList})
  ) 
 
 
