@@ -19,34 +19,67 @@ else
 GEN_DIR = ../../gen
 GEN_WRITE = 1
 
+CODE_DIR = ../gen
+
 USE_GALAX = 1
 
 # the following indicates that generated .c files should not be removed
-.PRECIOUS: $(GEN_DIR)/%.c 
+.PRECIOUS: $(GEN_DIR)/%.c  $(GEN_DIR)/%_expanded.c 
 
 # need to give these rules before including rules.mk
 REGRESS_TESTS = 1
 
-test_load_%-g: $(GEN_DIR)/%.c gen/test_load_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
-	@$(CCExec_DYNAMIC_D)
-
-test_load_%: $(GEN_DIR)/%.c gen/test_load_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
-	@$(CCExec_DYNAMIC_O)
-
-test_walk_%: $(GEN_DIR)/%.c gen/test_walk_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
-	@$(CCExec_DYNAMIC_O)
-
-test_query_%-g: $(GEN_DIR)/%.c gen/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
-	@$(CCExec_DYNAMIC_D)
-
-test_query_%: $(GEN_DIR)/%.c gen/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
-	@$(CCExec_DYNAMIC_O)
+INCLUDES += -I ../gen
 
 include $(PADS_HOME)/mk/rules.mk
+
 ifdef GALAXCOMPILE
 CDBGFLAGS += -DGALAXCOMPILE
 COPTFLAGS += -DGALAXCOMPILE
 endif
+
+# DEP_myenum =
+
+.PHONY: current pglx_lib
+
+pglx_lib:
+	@(cd $(PADS_HOME)/padsc; $(MAKE) pglx_lib)
+
+current: test_smart_myenum-g
+
+test_load_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_load_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D) 
+	@$(CCExec_DYNAMIC_D)
+
+test_load_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_load_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+	@$(CCExec_DYNAMIC_O)
+
+test_smart_%-d: $(GEN_DIR)/%_expanded.c $(CODE_DIR)/test_smart_%.c $(CODE_DIR)/test_smart.h $(INCLUDE_DEPS) $(LIB_DEPS_D)  
+	@$(CCExec_DYNAMIC_D)
+
+test_smart_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_smart_%.c $(CODE_DIR)/test_smart.h $(INCLUDE_DEPS) $(LIB_DEPS_D)  
+	@$(CCExec_DYNAMIC_D)
+
+test_smart_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_smart_%.c $(CODE_DIR)/test_smart.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+	@$(CCExec_DYNAMIC_O)
+
+test_kth_child_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_kth_child_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+	@$(CCExec_DYNAMIC_O)
+
+test_kth_child_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_kth_child_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)  
+	@$(CCExec_DYNAMIC_D)
+
+test_walk_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_walk_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+test_query_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+test_query_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+$(CODE_DIR)/%_myenum.c: $(CODE_DIR)/enum_kth.c $(CODE_DIR)/enum_kth.h
+	touch $(CODE_DIR)/$*_myenum.c
+
 
 ifdef WITH_KTH
 CDBGFLAGS += -DWITH_KTH
@@ -85,8 +118,6 @@ $(GEN_DIR)/myenum.c: enum.c enum.h enum_kth.c enum_kth.h
 test_load_myenum: $(GEN_DIR)/myenum.c gen/test_load_myenum.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-test_kth_child_myenum: $(GEN_DIR)/myenum.c gen/test_kth_child_myenum.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
-	@$(CCExec_DYNAMIC_O)
 
  # End of rules that are run from the arch directory
 endif
