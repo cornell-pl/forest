@@ -1,12 +1,5 @@
-warning: P_open: Installing default IO discipline : newline-terminated records
 Data file = standard in
-Initializing the accumulator
-Calling read function
-Calling read function
-Calling read function
-Calling read function
-Found eof
-Describe the accumulator
+warning: P_open: Installing default IO discipline : newline-terminated records
 *****************************************************************************************************
 <top> : struct str2
 *****************************************************************************************************

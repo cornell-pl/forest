@@ -42,7 +42,7 @@
  *      enum value... I want to add _e to each one, so that clock -> clock_e.
  *      Another is the ability to give a string that the enum value 
  *      comes from, as in
- *          package_file from "package-file"
+ *          package_file Pfrom "package-file"
  *      so that you can convert external values that are not legal C 
  *      identifiers (package-file) into the specied C enum value (package_file).
  *      XXX Once Penum can do the above, the following are not needed

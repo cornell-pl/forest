@@ -214,9 +214,9 @@ regress_test_struct3_d: test_struct3-g
 	@(args=""; input="../../data/struct3"; suf=""; $(RegressInput))
 
 regress_test_struct-regexp_o: test_struct-regexp
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/ex_data.struct-regexp"; suf=""; $(RegressInput))
 regress_test_struct-regexp_d: test_struct-regexp-g
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/ex_data.struct-regexp"; suf=""; $(RegressInput))
 
 regress_test_array-regexp_o: test_array-regexp
 	@(args=""; suf=""; $(RegressDef))
