@@ -35,7 +35,6 @@ typedef struct PDCI_stkElt_s PDCI_stkElt_t;
   char              dummy[1];  /* used for error case */ \
 
 #include "libpadsc.h"
-#include "pdc_io_disc.h"
 #include "pdc_out_macros.h"
 
 /* ================================================================================ */
@@ -74,6 +73,9 @@ PDC_error_t PDC_char_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 
 PDC_error_t PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 				      PDC_base_ed *ed, const PDC_string *s);
+
+PDC_error_t PDC_countX_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eor_required,
+				PDC_base_ed *ed, PDC_int32 *res_out);
 
 PDC_error_t PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 				   PDC_base_ed *ed, PDC_int32 *res_out);
@@ -225,46 +227,6 @@ PDC_error_t PDC_char_acc_report_internal   (PDC_t *pdc, Sfio_t *outstr, const ch
 
 PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
 			    PDC_errCode_t errCode, const char *format, ... );
-
-/* ================================================================================ */
-/* INTERNAL SCAN FUNCTIONS */
-
-/* PDCI_char_lit_scan:
- *
- * EFFECT: 
- *  Scans for either goal character c or stop character s.  If a gloal
- *  char is found, then if eat_lit is non-zero the IO points to just
- *  beyond the char, otherwise it points to the char.  disc controls
- *  maximum scan distance.  Hitting eor or eof considered to be an
- *  error.  N.B. If there is mixed binary and ascii data, scanning can
- *  'find' an ascii char in a binary field.  Be careful!  Do not use 0
- *  to mean EOF.  If there is no stop char, use the same char for both
- *  the c and s params.
- *
- * RETURNS: PDC_error_t
- *         PDC_OK    => goal/stop char found, IO cursor now points to just beyond char
- *                      (eat_lit non-zero) or to the char (eat_lit zero).
- *                      if c_out, *c_out set to the char that was found
- *                      if offset_out, *offset_out set to the distance scanned to find that char
- *                      (0 means the IO cursor was already pointing at the found char)
- *         PDC_ERR   => char not found, IO cursor unchanged
- * 
- * PDCI_string_lit_scan: same as char_lit_scan execpt a goal string
- * and stop string are given.  In this case, if there is no stop
- * string, a NULL stop string should be used.  On PDC_OK, *str_out
- * points to either findStr or stopStr (depending on which was found),
- * *offset_out is the distance scanned to find the string (0 means
- * the IO cursor was already pointing at the string).  If eat_lit
- * is non-zero, the IO cursor points just beyond the string literal
- * that was found, otherwise it points to the start of the string that
- * was found.  On PDC_ERR, the IO cursor is unchanged. 
- */
-
-PDC_error_t PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
-			       unsigned char *c_out, size_t *offset_out);
-
-PDC_error_t PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
-			      PDC_string **str_out, size_t *offset_out);
 
 /* ================================================================================ */
 /* PURELY INTERNAL IO FUNCTIONS */

@@ -6,10 +6,12 @@
  * AT&T Labs Research
  */
 
+#ifndef __LIBPADSC_H__
+#error "Do not include pdc_io_disc.h directly -- include libpadsc.h instead"
+#endif
+
 #ifndef __PDC_IO_DISC_H__
 #define __PDC_IO_DISC_H__
-
-#include "libpadsc.h"
 
 /* ================================================================================ */
 /* THE IO DISCIPLINE

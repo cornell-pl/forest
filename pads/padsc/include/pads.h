@@ -158,16 +158,10 @@ extern void bzero(void *s, size_t n);
 
 #define PDC_VERSION                  20020815L
 
+/* flags are unsigned long values */
 typedef unsigned long          PDC_flags_t;
-
-/*
- * The following flags are defined using an enum to make them appear in ckit output,
- * but we will want to OR these together so cast as (PDC_flags_t) when using.
- */
-typedef enum PDC_ctl_flag_enum_e {
-  PDC_NULL_CTL_FLAG                 =    0,
-  PDC_WSPACE_OK                     =    1
-} PDC_ctl_flag_enum;
+#define PDC_NULL_CTL_FLAG      0UL
+#define PDC_WSPACE_OK          1UL
 
 typedef enum PDC_error_t_e {
   PDC_OK                            =    0,
@@ -209,6 +203,7 @@ typedef enum PDC_errCode_t_e {
   PDC_AT_EOF                        =  160,
   PDC_AT_EOR                        =  161,
   PDC_EXTRA_BEFORE_EOR              =  162,
+  PDC_EOF_BEFORE_EOR                =  163,
   PDC_RANGE                         =  170,
   PDC_INVALID_AINT                  =  180,
   PDC_INVALID_AUINT                 =  181,
@@ -540,6 +535,53 @@ PDC_error_t  PDC_IO_getLocE  (PDC_t *pdc, PDC_loc_t *loc, int offset);
 PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset); 
 
 /* ================================================================================ */
+/* INTERNAL SCAN FUNCTIONS */
+
+/* Scan functions are used to 'find' a location that is forward of the
+ * current IO position.  They are normally used for error recovery purposes,
+ * but are exposed here because they are generally useful.
+ * N.B. Use PDC_char_lit_read / PDC_string_lit_read for cases where
+ * a literal is known to be at the current IO position.
+ */
+
+/* PDC_char_lit_scan:
+ *
+ * EFFECT: 
+ *  Scans for either goal character c or stop character s.  If a gloal
+ *  char is found, then if eat_lit is non-zero the IO points to just
+ *  beyond the char, otherwise it points to the char.  disc controls
+ *  maximum scan distance.  Hitting eor or eof considered to be an
+ *  error.  N.B. If there is mixed binary and ascii data, scanning can
+ *  'find' an ascii char in a binary field.  Be careful!  Do not use 0
+ *  to mean EOF.  If there is no stop char, use the same char for both
+ *  the c and s params.
+ *
+ * RETURNS: PDC_error_t
+ *         PDC_OK    => goal/stop char found, IO cursor now points to just beyond char
+ *                      (eat_lit non-zero) or to the char (eat_lit zero).
+ *                      if c_out, *c_out set to the char that was found
+ *                      if offset_out, *offset_out set to the distance scanned to find that char
+ *                      (0 means the IO cursor was already pointing at the found char)
+ *         PDC_ERR   => char not found, IO cursor unchanged
+ * 
+ * PDC_string_lit_scan: same as char_lit_scan execpt a goal string
+ * and stop string are given.  In this case, if there is no stop
+ * string, a NULL stop string should be used.  On PDC_OK, *str_out
+ * points to either findStr or stopStr (depending on which was found),
+ * *offset_out is the distance scanned to find the string (0 means
+ * the IO cursor was already pointing at the string).  If eat_lit
+ * is non-zero, the IO cursor points just beyond the string literal
+ * that was found, otherwise it points to the start of the string that
+ * was found.  On PDC_ERR, the IO cursor is unchanged. 
+ */
+
+PDC_error_t PDC_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
+			      unsigned char *c_out, size_t *offset_out);
+
+PDC_error_t PDC_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+			     PDC_string **str_out, size_t *offset_out);
+
+/* ================================================================================ */
 /* LITERAL READ FUNCTIONS */
 
 /* PDC_char_lit_read / str_lit_read:
@@ -560,24 +602,48 @@ PDC_error_t PDC_char_lit_read(PDC_t *pdc, PDC_base_em *em,
 PDC_error_t PDC_str_lit_read(PDC_t *pdc, PDC_base_em *em,
 			     PDC_base_ed *ed, const PDC_string *s);
 
-/* PDC_countXtoY: count occurrences of char x until char y
- * Uses disc->p_stop to determine how far to scan for y.
+/* PDC_countX : count occurrences of char x between the
+ * current IO cursor and the first EOR or EOF.  If param
+ * eor_required is non-zero, then encountering EOF
+ * before EOR produces an error.
  * Does not modify the IO cursor position.  Cases:
- *   1. IO cursor is at EOF 
+ *   1. IO cursor is already at EOF and eor_required is non-zero
  *     => If !em || *em < PDC_Ignore:
  *           + ed->errCode set to PDC_AT_EOF
  *           + ed->loc begin/end set to EOF 'location'
- *             (last elt number, 1 past last char in elt)
  *     PDC_ERR returned   
- *   2. Char y is not found
+ *   2. EOF is encountered before EOR and eor_required is non-zero
+ *     => If !em || *em < PDC_Ignore:
+ *           + ed->errCode set to PDC_EOF_BEFORE_EOR
+ *           + ed->loc begin/end set to current IO cursor location
+ *     PDC_ERR returned   
+ *   3. EOR is encountered, or EOF is encounterd and eor_required is zero
+ *     if res_out, *res_out is set to the number of occurrences of x
+ *     from the IO cursor to EOR/EOF.
+ *     PDC_OK returned
+ *
+ * PDC_countXtoY: count occurrences of char x between the
+ * current IO cursor and the first occurrence of char y.
+ * Does not modify the IO cursor position.  Cases:
+ *   1. IO cursor is already at EOF
+ *     => If !em || *em < PDC_Ignore:
+ *           + ed->errCode set to PDC_AT_EOF
+ *           + ed->loc begin/end set to EOF 'location'
+ *     PDC_ERR returned   
+ *   2. y is not found
  *     => If !em || *em < PDC_Ignore:
  *           + ed->errCode set to PDC_CHAR_LIT_NOT_FOUND
  *           + ed->loc begin/end set to current IO cursor location
  *     PDC_ERR returned   
- *   3. Char y found
+ *   3. Char y is found
  *     if res_out, *res_out is set to the number of occurrences of x
+ *     from the IO cursor to first y.
  *     PDC_OK returned
+ *
  */
+
+PDC_error_t PDC_countX(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eor_required,
+		       PDC_base_ed *ed, PDC_int32 *res_out);
 
 PDC_error_t PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 		          PDC_base_ed *ed, PDC_int32 *res_out);
@@ -717,7 +783,6 @@ PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
  *     => If !em || *em < PDC_Ignore:
  *           + ed->errCode set to PDC_AT_EOF
  *           + ed->loc begin/end set to EOF 'location'
- *             (last elt number, 1 past last char in elt)
  * (2a) There is leading white space and not (disc flags & PDC_WSPACE_OK)
  * (2b) The target is unsigned and the first char is a -
  * (2c) The first character is not a +, -, or in [0-9]
@@ -1031,5 +1096,11 @@ PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char 
  *    num_bytes should be oneof: 1, 2, 4, 8
  */
 PDC_error_t PDC_swap_bytes(PDC_t *pdc, char *bytes, size_t num_bytes);
+
+/* ================================================================================ */
+/* INCLUDE THE IO DISCIPLINE DECLS */
+#include "pdc_io_disc.h"
+
+/* ================================================================================ */
 
 #endif  /* __LIBPADSC_H__ */
