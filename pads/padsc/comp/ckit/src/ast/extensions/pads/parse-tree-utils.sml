@@ -193,6 +193,15 @@ struct
         |  PT.InitList es => PT.InitList (List.map stripExp es)
         |  p => p
 
+    fun getString e = 
+        case e
+        of PT.EmptyExpr => NONE
+        |  PT.IntConst i => (SOME ( String.str(Char.chr (IntInf.toInt i))) handle _ => NONE)
+        |  PT.RealConst r => NONE
+        |  PT.String s => SOME s
+        |  PT.MARKexpression (loc,e) => getString e
+        |  _ => NONE
+
     fun expToString p =
         case p
         of PT.EmptyExpr => ""
@@ -206,7 +215,7 @@ struct
                                           (expToString e2)^ " : " ^
                                           (expToString e3)
         |  PT.Call (e,es) => (expToString e)^"("^(printExpList "," es) ^")"
-        | PT.MARKexpression (loc,e) => expToString e
+        |  PT.MARKexpression (loc,e) => expToString e
         |  _ => ""
 
     and printUnopExp (rator, exp) =

@@ -120,6 +120,8 @@ struct
   val strlitWrite    = "Pstr_lit"
   val strlitWriteBuf = "Pstr_lit_write2buf"
   val strlitWriteXMLBuf = "Pstr_lit_write_xml_2buf"
+  val strlitPDCleanup = "Pstring_pd_cleanup"
+  val strlitPDCopy = "Pstring_pd_copy"
 
   val reMatch    = "Pre_match"
   val reWriteBuf = cstrlitWriteBuf (* not yet implemented.  what should go here?*)
