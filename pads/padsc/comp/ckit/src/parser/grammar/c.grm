@@ -1236,7 +1236,8 @@ pStructField: POMIT  PENDIAN pName pOptActParams ID  pConstraintOpt SEMICOLON pC
 						pred = pConstraintOpt,
                                                 comment = pCommentOpt})	
   | PCOMPUTE pManifestField           (pManifestField)
-  | pREexpr SEMICOLON                 (PX.Brief (pREexpr))
+  | pREexpr SEMICOLON                 (PX.Brief (pREexpr, NONE))
+  | pName PFROM LPAREN pREexpr RPAREN SEMICOLON (PX.Brief (pREexpr, SOME pName))
 
 pStructFieldList: 
     pStructField                     ([pStructField])

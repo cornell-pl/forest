@@ -21,7 +21,7 @@ structure ParseTreeExt =
 			 expr  : 'exp,
 			 pred  : 'exp option,
                       comment  : string option}
-         | Brief of 'exp  
+         | Brief of 'exp * string option
 
         datatype 'exp PSize = 
            SizeInfo of {min : 'exp option, max : 'exp option, maxTight : bool}
