@@ -10,6 +10,7 @@ sig
      errorCount: int,
      warningCount: int,
      auxiliaryInfo: {aidtab: Tables.aidtab,
+		     paidtab : Tables.paidtab,
 	             implicits: Tables.aidtab,
                      env: State.symtab}}
 

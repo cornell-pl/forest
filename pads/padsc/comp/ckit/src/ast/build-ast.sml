@@ -59,6 +59,7 @@ struct
      errorCount: int,
      warningCount: int,
      auxiliaryInfo: {aidtab: Tables.aidtab,
+		     paidtab: Tables.paidtab,
 	             implicits: Tables.aidtab,
                      env: State.symtab}}
 
@@ -69,6 +70,7 @@ struct
   structure Aid = Aid
   structure Tid = Tid
   structure Pid = Pid
+  structure Paid = Paid
 	
   structure PT = ParseTree
   structure Sym = Symbol
@@ -79,6 +81,7 @@ struct
   structure TU = TypeUtil
   structure TT = Tidtab
   structure AT = Aidtab
+  structure PAT = Paidtab
   structure TypeCheckControl = Config.TypeCheckControl
 
   (* local structures *)
@@ -96,6 +99,7 @@ struct
      errorCount: int,
      warningCount: int,
      auxiliaryInfo: {aidtab: Tables.aidtab,
+		     paidtab : Tables.paidtab,
 	             implicits: Tables.aidtab,
                      env: State.symtab}}
 
@@ -225,7 +229,7 @@ let
           then (Error.noMoreErrors errorState; Error.noMoreWarnings errorState)
 	  else ()
 
-  val globalState as {uidTables={ttab,atab,implicits},...} =
+  val globalState as {uidTables={ttab,atab,implicits,ptab},...} =
       S.initGlobal(stateInfo, errorState)
 
   val localState = S.initLocal ()
@@ -242,7 +246,7 @@ let
 	{topLevel, pushLocalEnv, popLocalEnv, lookSym, bindSym,
 	 lookSymGlobal, bindSymGlobal, lookLocalScope, getGlobalEnv},
        uidTabFuns =
-	{bindAid, lookAid=lookAid0, bindTid, lookTid},
+	{bindAid, lookAid=lookAid0, bindTid, lookTid, bindPaid, lookPaid},
        funFuns =
 	{newFunction, getReturnTy, checkLabels, addLabel, addGoto}, 
        switchFuns =
@@ -3080,7 +3084,7 @@ end old code ******)
 	  val warningCount = Error.warningCount errorState
        in
 	  {ast=astExtDecls, tidtab=ttab, errorCount=errorCount, warningCount=warningCount, 
-	   auxiliaryInfo = {aidtab=atab, implicits=implicits, env=getGlobalEnv()}}
+	   auxiliaryInfo = {aidtab=atab, paidtab = ptab, implicits=implicits, env=getGlobalEnv()}}
           (* DBM: will we want to reuse errorState? *)
       end (* fun makeAst' *)
 

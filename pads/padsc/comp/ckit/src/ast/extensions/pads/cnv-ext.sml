@@ -121,7 +121,7 @@ structure CnvExt : CNVEXT = struct
 	 {topLevel, pushLocalEnv, popLocalEnv, lookSym, bindSym,
 	  lookSymGlobal, bindSymGlobal, lookLocalScope, getGlobalEnv},
 	 uidTabFuns =
-	 {bindAid, lookAid=lookAid0, bindTid, lookTid},
+	 {bindAid, lookAid=lookAid0, bindTid, lookTid, bindPaid, lookPaid},
 	 funFuns =
 	 {newFunction, getReturnTy, checkLabels, addLabel, addGoto}, 
 	 switchFuns =
@@ -1367,9 +1367,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 	      
 	      (* Given representation of manifest field, generate accumulator representation. *)
 	      fun genAccMan m = 
-		  let fun f pty = valOf (lookupAcc pty)
+		  let fun getName (PX.Name n) = n
+		      fun f pty = 
+		        valOf (lookupAcc pty) handle x => (PE.error ("Failed to find accumulator:" ^(getName pty)); "foo")
 		  in
-		      genMan f m
+		     genMan f m
 		  end
 
 	      (* Given representation of manifest field, generate error descriptor representation. *)
@@ -1459,6 +1461,11 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		  in
 		      List.concat(List.map doOne ctNoptEs)
 		  end
+
+              fun emitWrites eds = 
+		  if #outputWrites(!PInput.inputs) then 
+		      List.concat(List.map cnvExternalDecl eds)
+		  else []
 
 
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord,
@@ -1678,7 +1685,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      @ (List.concat(List.map cnvExternalDecl copyRepEDs))
 		      @ (List.concat(List.map cnvExternalDecl copyEDEDs))
                       @ (List.concat(List.map cnvExternalDecl readFunEDs))
-                      @ (List.concat(List.map cnvExternalDecl writeFunEDs))
+                      @ (emitWrites writeFunEDs)
 		      @ cnvExternalDecl initFunED
                       @ cnvExternalDecl resetFunED
                       @ cnvExternalDecl cleanupFunED
@@ -2332,7 +2339,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  @ (List.concat(List.map cnvExternalDecl copyRepEDs))
                  @ (List.concat(List.map cnvExternalDecl copyEDEDs))
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
-                 @ (List.concat(List.map cnvExternalDecl writeFunEDs))
+		 @ (emitWrites writeFunEDs)
                  @ cnvExternalDecl initFunED
                  @ cnvExternalDecl resetFunED
                  @ cnvExternalDecl cleanupFunED
@@ -2730,7 +2737,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun genWriteBrief e = []
 		      fun genWriteMan _ = []     (* Manifest fields do not need to be written *)
 		      val nameBranchSs = mungeVariants genWriteFull genWriteBrief genWriteMan variants
-		      val errBranchSs = [PT.CaseLabel(PT.Id (errSuf name), PT.Break)]
+		      val errBranchSs = [PT.DefaultLabel  PT.Break]
 		      val writeBranchSs = nameBranchSs @ errBranchSs
                       val writeVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound writeBranchSs)]
 		      val bodySs = writeVariantsSs 
@@ -2937,7 +2944,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     @ (List.concat(List.map cnvExternalDecl copyRepEDs))
 		     @ (List.concat(List.map cnvExternalDecl copyEDEDs))
 	             @ (List.concat (List.map cnvExternalDecl readFunEDs))
- 	             @ (List.concat(List.map cnvExternalDecl writeFunEDs))
+                     @ (emitWrites writeFunEDs)
 	             @ cnvExternalDecl initFunED
 	             @ cnvExternalDecl resetFunED
 	             @ cnvExternalDecl cleanupFunED
@@ -3809,7 +3816,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  @ (List.concat(List.map cnvExternalDecl copyRepEDs))
                  @ (List.concat(List.map cnvExternalDecl copyEDEDs))
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
-                 @ (List.concat(List.map cnvExternalDecl writeFunEDs))
+                 @ (emitWrites writeFunEDs)
                  @ cnvExternalDecl initFunED
                  @ cnvExternalDecl resetFunED 
                  @ cnvExternalDecl cleanupFunED 
@@ -3985,7 +3992,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		@ (List.concat(List.map cnvExternalDecl copyRepEDs))
 		@ (List.concat(List.map cnvExternalDecl copyEDEDs))
                 @ (List.concat(List.map cnvExternalDecl readFunEDs))
-                @ (List.concat(List.map cnvExternalDecl writeFunEDs))
+                @ (emitWrites writeFunEDs)
                 @ cnvExternalDecl initFunED
                 @ cnvExternalDecl resetFunED
                 @ cnvExternalDecl cleanupFunED

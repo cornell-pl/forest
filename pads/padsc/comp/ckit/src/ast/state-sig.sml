@@ -37,6 +37,7 @@ sig
   type uidTables =
     {ttab : Tables.tidtab,     (* type name table *)
      atab : Tables.aidtab,     (* adornment table *)
+     ptab : Tables.paidtab,    (* PADS: tracks pads info *)
      implicits : Tables.aidtab}   (* "optional" adornment table -- for special casts *)
 
   type envContext =
@@ -153,8 +154,12 @@ sig
          (* lookup adornment identifier in state aidtab *)
        bindTid : Tid.uid * Bindings.tidBinding -> unit,
          (* insert a type identifier into the type symbol table *)
-       lookTid : Tid.uid -> Bindings.tidBinding option},
+       lookTid : Tid.uid -> Bindings.tidBinding option,
          (* lookup a type identifier in the type symbol table *)
+       bindPaid : PTys.pTyInfo -> Paid.uid,
+         (* PADS: insert a new pads identiifer and bind it to the pads information structure *)
+       lookPaid : Paid.uid -> PTys.pTyInfo option},
+         (* PADS: lookup a pads identifier in the pads info table *)
 
      funFuns :  (* manipulate current function context *)
       {newFunction : Ast.ctype -> unit,

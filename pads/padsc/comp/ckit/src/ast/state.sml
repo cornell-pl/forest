@@ -8,9 +8,11 @@ struct
   structure Pid = Pid
   structure Tid = Tid
   structure Aid = Aid
+  structure Paid = Paid (* PADS *)
   (* imperative uid tables (hashtables) *)
   structure TT = Tidtab
   structure AT = Aidtab  (* was TypeAddornmentTab *)
+  structure PAT = Paidtab  (* PADS *)
 
   (* symbol table binary maps *)
   structure ST = BinaryMapFn (struct 
@@ -35,6 +37,7 @@ struct
   type uidTables =
     {ttab : Tables.tidtab,     (* type name table *)
      atab : Tables.aidtab,     (* adornment table *)
+     ptab : Tables.paidtab,    (* PADS: tracks pads info *)
      implicits : Tables.aidtab}   (* "optional" adornment table -- for special casts *)
 
   type envContext =
@@ -128,7 +131,9 @@ struct
       {bindAid : Ast.ctype -> Aid.uid,
        lookAid : Aid.uid -> Ast.ctype option,
        bindTid : Tid.uid * Bindings.tidBinding -> unit,
-       lookTid : Tid.uid -> Bindings.tidBinding option},
+       lookTid : Tid.uid -> Bindings.tidBinding option,
+       bindPaid : PTys.pTyInfo -> Paid.uid,
+       lookPaid : Paid.uid -> PTys.pTyInfo option},
 
      funFuns :
       {newFunction : Ast.ctype -> unit,
@@ -167,16 +172,18 @@ fun initGlobal(INITIAL, errorState: Error.errorState) : globalState =
     {uidTables =
       {ttab = TT.uidtab(),
        atab = AT.uidtab(),
-       implicits = AT.uidtab()},
+       implicits = AT.uidtab(),
+       ptab = PAT.uidtab()},
      envContext =
       {globalEnv = ref ST.empty,
        localEnv = ref []},
      errorState = errorState}
 
-  | initGlobal(STATE({ttab,atab,implicits},globalEnv), errorState) =
+  | initGlobal(STATE({ttab,atab,implicits,ptab},globalEnv), errorState) =
     {uidTables =
       {ttab = ttab,
        atab = atab,
+       ptab = ptab,
        implicits = implicits},
      envContext =
       {globalEnv = ref(globalEnv),
@@ -300,7 +307,7 @@ local val {switchLabels} = switchContext in
 end (* switchContext *)
 
 (* identifier table functions *******************************************)
-local val {ttab,atab,...} = uidTables in
+local val {ttab,atab,ptab,...} = uidTables in
 
   (* generate a new aid, bind it to ty in atab, and return it *)
   fun bindAid ty =
@@ -309,11 +316,20 @@ local val {ttab,atab,...} = uidTables in
 	  aid
       end
 
-  fun lookAid aid = AT.find (atab,aid)
+  fun lookAid (aid : Aid.uid) = AT.find (atab,aid)
 
-  fun bindTid (tid, binding) = TT.insert(ttab,tid,binding)
+  fun bindTid (tid : Tid.uid, binding) = TT.insert(ttab,tid,binding)
 
-  fun lookTid tid = TT.find (ttab,tid)
+  fun lookTid (tid : Tid.uid) = TT.find (ttab,tid)
+
+  fun bindPaid (pty : PTys.pTyInfo) : Paid.uid =
+      let val paid = Paid.new ()
+       in PAT.insert(ptab,paid,pty);
+	  paid
+      end
+
+  fun lookPaid (paid : Paid.uid) : PTys.pTyInfo option = PAT.find (ptab,paid)
+
 
 end (* identifier functions *)
 
@@ -485,7 +501,9 @@ in (* state function package *)
      {bindAid = bindAid,
       lookAid = lookAid,
       bindTid = bindTid,
-      lookTid = lookTid},
+      lookTid = lookTid,
+      bindPaid = bindPaid,
+      lookPaid = lookPaid},
 
     funFuns =
      {newFunction = newFunction,

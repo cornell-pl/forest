@@ -18,6 +18,7 @@ sig
 	  (* types associated with implicit argument conversions.
 	   * See, e.g. "usual unary" and "usual binary" conversions
            * in Harbison & Steele *)
+        paidtab : Tables.paidtab, (*PADS: pads information collected during translation *)
 	env: State.symtab}} (* symbol table generated during elaboration *)
 
   val progToState : astBundle -> State.stateInfo

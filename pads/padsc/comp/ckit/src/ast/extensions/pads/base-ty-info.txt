@@ -257,11 +257,11 @@ Pe_date        PDC_uint32    PDC_base_csm  PDC_base_ed          PDC_e_date_read_
 # *countXtoY is a counter data type that is parameterized by ASCII count char (X) and terminating char (Y),
 #           and represents the number of ASCII/EBCDIC X chars between the current IO position and the first Y char
 #
-PcountX        PDC_int32     PDC_base_csm  PDC_base_ed          PDC_countX_internal                  -                  -                0         S           N
-Pa_countX      PDC_int32     PDC_base_csm  PDC_base_ed          PDC_a_countX_internal                -                  -                0         S           N
-Pe_countX      PDC_int32     PDC_base_csm  PDC_base_ed          PDC_e_countX_internal                -                  -                0         S           N
+PcountX        PDC_int32     PDC_base_csm  PDC_base_ed          PDC_countX_internal                  -                  PDC_int32_acc    0         S           N
+Pa_countX      PDC_int32     PDC_base_csm  PDC_base_ed          PDC_a_countX_internal                -                  PDC_int32_acc    0         S           N
+Pe_countX      PDC_int32     PDC_base_csm  PDC_base_ed          PDC_e_countX_internal                -                  PDC_int32_acc    0         S           N
 
-PcountXtoY     PDC_int32     PDC_base_csm  PDC_base_ed          PDC_countXtoY_internal               -                  -                0         S           N
-Pa_countXtoY   PDC_int32     PDC_base_csm  PDC_base_ed          PDC_a_countXtoY_internal             -                  -                0         S           N
-Pe_countXtoY   PDC_int32     PDC_base_csm  PDC_base_ed          PDC_e_countXtoY_internal             -                  -                0         S           N
+PcountXtoY     PDC_int32     PDC_base_csm  PDC_base_ed          PDC_countXtoY_internal               -                  PDC_int32_acc    0         S           N
+Pa_countXtoY   PDC_int32     PDC_base_csm  PDC_base_ed          PDC_a_countXtoY_internal             -                  PDC_int32_acc    0         S           N
+Pe_countXtoY   PDC_int32     PDC_base_csm  PDC_base_ed          PDC_e_countXtoY_internal             -                  PDC_int32_acc    0         S           N
 

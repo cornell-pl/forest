@@ -43,15 +43,17 @@ structure Main : sig
     val undefines   = ref ""  (* symbols user undefined with -D flag *)
 
     val traceFlag = ref true
+    val xmlFlag   = ref true
     val parseTreeOnlyFlag = ref false
     val astOnlyFlag = ref false
     val outputHeaderFileName = ref ""
-    val outputHeaderFileFlag = ref false
+    val outputHeaderFileFlag = ref false 
     val outputCFileName = ref ""
     val outputCFileFlag = ref false
     val outputDir = ref ""
     val outputDirFlag = ref false
 
+    val writeNoneFlag = ref false
 
     fun addPadsFile s =    srcFiles := ((Pads,s) :: !srcFiles)
     fun addUnknownFile s = srcFiles := ((Unknown,s) :: !srcFiles)
@@ -81,7 +83,9 @@ structure Main : sig
     val flags_release = [
          ("h", "output header file",      PCL.String (setHeaderOutputFile, false)),
          ("c", "output code file",        PCL.String (setCOutputFile, false)),
+	 ("wnone", "suppress write function generation", PCL.BoolSet writeNoneFlag),
          ("a", "generate accumulator program",    PCL.String (addAccumulator, true)),
+         ("x", "output XSchema",          PCL.BoolSet xmlFlag),
          ("r", "output directory",        PCL.String (setOutputDir, false)),
          ("b", "add base type table",         PCL.String (addBaseTable, false)),
 	 ("I", "augment include path",        PCL.String (addInclude, true)),
@@ -294,6 +298,16 @@ structure Main : sig
 	    List.app doOne (!accumulators)
 	end
 
+    fun generateXschema(fileName, srcFile, ast, tidtab) =
+	if not (!xmlFlag) then () 
+	else
+	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xms")		
+	    in
+		PPLib.ppToStrm((PPXSchemaAst.ppAst (SOME srcFile)) () tidtab) xoutstream ast;
+		TextIO.flushOut xoutstream;
+		TextIO.closeOut xoutstream			
+	    end
+
     fun generateOutput (homeDir, astInfo : BuildAst.astBundle, fileName) =
       let val {ast,tidtab,errorCount,warningCount,...} = astInfo
 	  val srcFile = OS.Path.file fileName
@@ -320,7 +334,8 @@ structure Main : sig
 	      PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
 	      TextIO.flushOut coutstream;
 	      TextIO.closeOut coutstream;
-	      generateAccum(homeDir, fileName, houtname, coutname)
+	      generateAccum(homeDir, fileName, houtname, coutname);
+	      generateXschema(fileName, srcFile, ast,tidtab)
 	  end
       end
 	    
@@ -346,6 +361,9 @@ structure Main : sig
 
     fun checkFlags _ = (* Check that the user didn't supply bogus flag combinations. *)
 	()
+    fun initState() = (* more customization in the future *)
+	if !writeNoneFlag then PInput.init({outputWrites = false}
+	) else ()
 
     fun main release (cmd, args) = 
       (stage := "Command-line processing";
@@ -365,6 +383,7 @@ structure Main : sig
 	                             @(!baseTables)
        in
          PBaseTys.genPadsInternal(internalBaseTysPath, baseTyDefsFile);	   
+         initState();
          app (doFile (homeDir, baseTyDefsFile)) (!srcFiles); 
          rmTmp();
          if !anyErrors 

@@ -148,7 +148,7 @@ COMPILE = $(CC) $(CSHAREFLAGS) $(CFLAGS) $(DEFS) $(SHAREDEFS)
 MKSRC = $(CC) -E $(CFLAGS)
 LINK = $(LINKER) $(LINKOPTS)
 
-PADSC = $(PADS_HOME)/padsc
+PADSC = $(PADS_HOME)/padsc 
 PADSC_REAL = $(PADS_HOME)/lib/padsc.$(ARCH_N_OPSYS)
 
 define SanityCheck
@@ -273,7 +273,7 @@ endif
 ifdef GEN_DIR
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 	@echo "Using rule P"
-	$(PADSC) $< -r $(GEN_DIR) -I . -I ..
+	$(PADSC) $< -r $(GEN_DIR) -wnone -I . -I ..
 endif
 
 # Notes: 

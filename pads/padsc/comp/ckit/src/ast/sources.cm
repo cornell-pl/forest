@@ -26,7 +26,8 @@ Group is
 
 	(* abstract syntax *)
 	aid.sml  (* was adornment.sml *)
-	pid.sml
+        pid.sml
+	extensions/pads/paid.sml
 	tid.sml
 	ast-sig.sml
 	ast.sml
@@ -40,8 +41,9 @@ Group is
 	uidtabimp-fn.sml
         aidtab.sml
 (*	pidtab.sml*)
+	extensions/pads/paidtab.sml
 	tidtab.sml
-	tables.sml (* type abbreviations for pidtab, tidtab, aidtab *)
+	tables.sml (* type abbreviations for paidtab, tidtab, aidtab *)
 
 	(* pretty-printers *)
 	pp/pp-lib.sml
@@ -71,6 +73,11 @@ Group is
 
         bindings.sml
 
+        (* state-related extensions *)
+        extensions/pads/ty-properties.sml
+        extensions/pads/base-tys.sml
+        extensions/pads/cmp-tys.sml
+
 	state-sig.sml
 	state.sml
 
@@ -89,6 +96,7 @@ Group is
 
         (* extensions *)
 (*        extensions/pads/ast-ext-sig.sml *)
+        extensions/pads/input.sml
         extensions/pads/ast-ext.sml
         extensions/pads/cnv-ext.sml
         extensions/pads/pp-ast-ext-fn.sml
@@ -97,8 +105,9 @@ Group is
         extensions/pads/perror-sig.sml
         extensions/pads/perror.sml
 
-        extensions/pads/ty-properties.sml
-        extensions/pads/base-tys.sml
-        extensions/pads/cmp-tys.sml
         extensions/pads/plib.sml
-       
+
+	(* pretty printer extensions *)
+	pp/extensions/pads/pp-ast-xschema-sig.sml       
+	pp/extensions/pads/pp-ast-xschema-fn.sml       
+	pp/extensions/pads/pp-ast-xschema.sml       

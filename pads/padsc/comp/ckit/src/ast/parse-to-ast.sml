@@ -9,11 +9,12 @@ struct
      errorCount: int,
      warningCount: int,
      auxiliaryInfo: {aidtab: Tables.aidtab,
+		     paidtab : Tables.paidtab,
 	             implicits: Tables.aidtab,
                      env: State.symtab}}
 
-  fun progToState ({tidtab, auxiliaryInfo={aidtab, implicits, env}, ...} : astBundle) =
-      State.STATE({ttab=tidtab,atab=aidtab,implicits=implicits},env)
+  fun progToState ({tidtab, auxiliaryInfo={aidtab, paidtab,implicits, env}, ...} : astBundle) =
+      State.STATE({ttab=tidtab,atab=aidtab,ptab = paidtab, implicits=implicits},env)
 
   fun fileToAst' errStrm (sizes: Sizes.sizes, stateInfo: State.stateInfo) inFile
          : astBundle = 
