@@ -249,7 +249,7 @@ end
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE (* PADS *)
+	| PSEP | PTERM | PNOSEP | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE (* PADS *)
  	| PRECORD | PSOURCE | PWHERE | PAND (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT (* PADS*)
         | PRE (* PADS *)
@@ -342,6 +342,7 @@ end
         | pSizeOpt of (expression PX.PSize) option
         | pSizeSpec of (expression PX.PSize) option
         | pForAllRange of (expression PX.PRange)
+	| pTermExp of (expression PX.PTermExp)
         | pArrayConstraint of (expression PX.PConstraint) 
         | pArrayConstraints of (expression PX.PConstraint) list
         | pArrayConstraintOpt of (expression PX.PConstraint) list
@@ -1165,10 +1166,13 @@ pForAllRange :
    LBRACE expr DOTDOT expr RBRACE   (PX.Bounds(expr1, expr2))
  | pName		            (PX.ArrayName pName)
 
+pTermExp : 
+   PNOSEP  (PX.noSep)
+ | pREexpr (PX.Expr pREexpr)
 
 pArrayConstraint : 
-   PSEP EQ pREexpr  (PX.Sep pREexpr)
- | PTERM EQ pREexpr (PX.Term pREexpr)
+   PSEP EQ pREexpr   (PX.Sep pREexpr)
+ | PTERM EQ pTermExp (PX.Term pTermExp)
 
 pArrayConstraints : 
    pArrayConstraint ([pArrayConstraint])

@@ -1,6 +1,6 @@
 
 Parray seq_t {
-  Pint32 [] : Psep ==  Pre "/a/" Pand Pterm == "b";
+  Pint32 [] : Psep ==  Pre "/a/" :&&: Pterm == "b";
 }
 
 Precord Pstruct entry{

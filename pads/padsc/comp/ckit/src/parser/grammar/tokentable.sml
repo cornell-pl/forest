@@ -67,7 +67,6 @@ struct
 	      ("switch", Tokens.SWITCH),
 	      ("while", Tokens.WHILE)
 	      ] @ [  (* PADSC *)
-               ("Pand", Tokens.PAND),
                ("Parray", Tokens.PARRAY),
                ("Pcase", Tokens.PCASE),
                ("Pcompute",  Tokens.PCOMPUTE),       
@@ -76,6 +75,7 @@ struct
                ("Penum", Tokens.PENUM),
                ("Pforall", Tokens.PFORALL),
                ("Pin", Tokens.PIN),
+               ("Pnosep", Tokens.PNOSEP),
                ("Pomit", Tokens.POMIT),
                ("Pre", Tokens.PRE),    
                ("Precord", Tokens.PRECORD),     

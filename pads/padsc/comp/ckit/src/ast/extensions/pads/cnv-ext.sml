@@ -3656,7 +3656,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 (arrayXOpt, genXOpt)
 		     end
 
-                 val (sepXOpt, termXOpt, sepTermDynamicCheck, scan2Opt, stdeclSs, stinitSs, stcloseSs) = 
+                 val (sepXOpt, termXOpt, noSepIsTerm, sepTermDynamicCheck, scan2Opt, stdeclSs, stinitSs, stcloseSs) = 
                       let fun getFuns (which, exp) =
 			   let val (okay,expTy) = getExpEqualTy(exp, CTstring :: CTintTys,
 								fn s=>(which ^ " expression for array "^
@@ -3678,11 +3678,17 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 			  fun doOne (constr:pcexp PX.PConstraint) = 
                               case constr 
-                              of PX.Sep exp => (SOME (getFuns("Separator", exp)), NONE)
-                              |  PX.Term exp =>(NONE, SOME( getFuns("Terminator", exp)))
+                              of PX.Sep exp => (SOME (getFuns("Separator", exp)), NONE, NONE)
+                              |  PX.Term (PX.Expr exp) =>(NONE, SOME( getFuns("Terminator", exp)), NONE)
+                              |  PX.Term PX.noSep => (NONE, NONE, SOME ())
 			  val constrs = List.map doOne constraints
-                          fun mergeAll ((a,b),(ra,rb)) = (mergeOpt "separator"  (a,ra), mergeOpt "terminator" (b,rb))
-			  val (sepXOpt, termXOpt) = List.foldr mergeAll (NONE,NONE) constrs
+                          fun mergeAll ((a,b,c),(ra,rb,rc)) = 
+			      (mergeOpt "separator"  (a,ra), mergeOpt "terminator" (b,rb), mergeOpt "terminator as no separator" (c,rc))
+			  val (sepXOpt, termXOpt, termNoSepXOpt) = List.foldr mergeAll (NONE,NONE,NONE) constrs
+
+			  val () = case (termXOpt, termNoSepXOpt) of 
+			             (SOME _, SOME _) => PE.error ("Multiple terminator clauses in array "^name^".")
+				   | _ => ()
 
                           fun compRegExp (which, endLabel, e) = 
 			      let val regName = which^"_regexp"
@@ -3842,7 +3848,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			      |  (_,_) => []
 			      end
 		      in
-			  (sepXOpt, termXOpt, sepTermDynamicCheck, scan2Opt, declSs, initSs, closeSs)
+			  (sepXOpt, termXOpt, isSome termNoSepXOpt, sepTermDynamicCheck, scan2Opt, declSs, initSs, closeSs)
                       end
 		 val _ = popLocalEnv()
 
@@ -4018,8 +4024,14 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  (* -- Check that we found separator on last loop. *)
                  fun genSepCheck NONE = []
                    | genSepCheck (SOME (sepX, scan2SepX, cSepX, typ, matchSep,scan1Sep, writeSep)) = 
-		      case termXOpt of 
-                        NONE => 
+		      case (termXOpt,noSepIsTerm) of 
+                        (NONE, true) => 
+                        [P.mkCommentS("Checking for separator."),
+			 PT.IfThen(P.eqX(PL.P_ERROR, PL.matchFunX(matchSep, PT.Id pads, sepX, P.trueX (* eatlit *))),
+				   PT.Compound[
+				       P.mkCommentS("No separator. Therefore array is finished."),
+				       PT.Break])]
+                      | (NONE, false) => 
                         [P.mkCommentS("Array not finished; reading separator."),
 			 PT.Compound[
 			  P.varDeclS'(PL.sizePCT, "offset"),
@@ -4037,7 +4049,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			      P.mkCommentS("Error reading separator"),
 			      recordArrayErrorS([locES],locX,PL.P_ARRAY_SEP_ERR, true, readName, "Missing separator.",[],true),
 			      PT.Break])]]
-		      | SOME(termX,scan2TermX,_,_,_,_,_) => 
+		      | (SOME(termX,scan2TermX,_,_,_,_,_), _) => 
                        [P.mkCommentS("Array not finished; read separator with recovery to terminator."),
                          PT.Compound[
 			 P.varDeclS'(P.int, "f_found"),

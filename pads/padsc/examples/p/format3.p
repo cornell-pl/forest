@@ -28,7 +28,7 @@ Parray recListtwo{
 #define MIN 2
 #define MAX 5
 Parray intList {
-  Puint32 [MIN : MAX] : Psep == '|' Pand Pterm == '\n';
+  Puint32 [MIN : MAX] : Psep == '|' :&&: Pterm == '\n';
 } Pwhere {
   Pforall i Pin [0 .. length -2] {intList[i] < intList[i+1]};
 };
