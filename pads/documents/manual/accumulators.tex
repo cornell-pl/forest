@@ -44,12 +44,148 @@ values seen in the data source and report the frequency
 of the top ten values.  In this particular run, 99.552\%
 of all values were tracked. 
 
-\figref{figure:accumulators} shows the collection of accumulator
-functions provided for each \pads{} type.
+\section{Operations}
+\figref{figure:accumulators} shows the accumulator type
+declaration and associated functions for a \pads{} type.
 \begin{figure}
 \inputCode{code/accumulator}
 \caption{Accumulator functions generated for the \texttt{entry\_t}  type.}
 \label{figure:accumulators}
 \end{figure}
 %
+These functions have the following behaviors:
+\begin{description}
+\item[\cd{entry\_t\_acc\_init}] Initializes accumulator data
+  structure. This function must be called before any data can be added
+  to the accumulator.
+\item[\cd{entry\_t\_acc\_reset}] Reinitializes accumulator data
+  structure, erasing all information previously stored.
+\item[\cd{entry\_t\_acc\_cleanup}] Deallocates all memory associated
+  with accumulator.
+\item[\cd{entry\_t\_acc\_add}] Inserts argument in-memory
+  representation and parse descriptor into argument
+  accumulator.  The parse descriptor allows the accumulator to track
+  errors as well as legal values.
+\item[\cd{entry\_t\_acc\_report2io}] Writes summary report for
+  accumulator \cd{acc} to open
+  SFIO stream \cd{outstr}.  The argument \cd{prefix} is a descriptive
+  string, usually the path to the data being accumulated. If
+  \cd{NULL}, the string \literal{\cd{"<top>"}} is used. In
+  the accumulator snippet in \figref{figure:wsl-accum-report-2}, this
+  path is \texttt{<top>.length}.  The argument \cd{what} is a string
+  describing the kind of data.  If \cd{NULL}, a short for of the
+  accumulator is used as a default, \eg{} \cd{uint32} for
+  \cd{Puint32}. The argument \cd{nst} indicates the nesting
+  level. Level zero should be used for a top-level call.  Reporting
+  routines bump the nesting level for recrsive report calls that
+  describe sub-parts.  Nesting level \literal{\cd{-1}} indicates a
+  minimal prefix header should be output, \ie{}, just the prefix
+  without any adornment.
+  
+\item[\cd{entry\_t\_acc\_report}] Writes summary report for
+  accumulator \cd{acc} to standard error.  The other arguments are the
+  same as for \cd{entry\_t\_acc\_report2io}
+\end{description}
+\figref{figure:wsl-accum-hand} illustrates a sample use of accumulator
+functions for printing a summary of CLF \cd{entry_t}s.  
+\begin{figure}
+\inputCode{code/wsl-accum-hand}
+\caption{Simple use of  accumulator functions for the
+  \texttt{entry\_t} type from CLF data.}
+\label{figure:wsl-accum-hand}
+\end{figure}
 
+\section{Customization}
+The \pads{} discpline allows users to customize various aspects of
+accumulation by setting the appropriate field in the discpline.  If
+\cd{pads} is an active \pads{} handle, then \cd{pads->disc} provides
+access to the discipline, which contains the following accumulator
+related fields: 
+
+\begin{description}
+\item[\cd{acc\_max2track}] is a \cd{Puint64} denoting the default maximum number of distinct values
+   for accumulators to track. Setting this field to \cd{P\_MAX_UINT64}
+   indicates no limit. Note that the higher the value, the more memory
+   accumulators will consume.  By default, the \pads{} system sets
+   this value to \cd{1000}. When an \cd{acc\_init} function is
+   called on a base-type accumulator \cd{a}, the field
+   \cd{a.max2track} is set to \cd{pads->disc->acc_max2track}.
+   The value \cd{a.max2track} may be modified by hand after this call
+   to force the accumulator \cd{a} to use a non-default value.
+
+\item[\cd{acc\_max2rep}] is a \cd{Puint64} denoting the default number of tracked values for
+  accumulators to describe in detail in the generated report. Setting
+  this field to \cd{P\_MAX\_UINT64} indicates no limit on the tracked values
+  to display. By default, the \pads{} system sets this value to
+  ten. When an \cd{acc\_init} function is called on a 
+  base-type accumulator \cd{a}, \cd{a.max2rep} is set to
+  \cd{pads->disc->acc\_max2rep}. The value \cd{a.max2rep} can be 
+  modified by hand after this call to force the accumulator \cd{a} to
+  use a non-default value. 
+
+\item[\cd{acc\_pcnt2rep}] is a \cd{Pfloat} denoting the default percent of values for
+  accumulators to describe in detail in the generated report. Setting this field to \cd{100.0}
+  indicates no limit on the set of tracked values to display.  By
+  default, \pads{} sets this value to \cd{100.0}.
+  Upon calling an \cd{acc\_init} function on some base-type accumulator \cd{a},
+  \cd{a.pcnt2rep} is set to \cd{pads->disc->acc_pcnt2rep}.
+  \cd{a.pcnt2rep} can be modified by hand after this call to force
+  the accumulator \cd{a} to use a non-default value. 
+
+\end{description}
+
+Note that both \cd{acc\_max2rep} and \cd{acc\_pcnt2rep} set a limit on
+the number of tracked values to display.  The reporting stops when
+either limit occurs.
+
+Generated accumulators have components that are base-type
+accumulators.  Thus, after initializing some generated accumulator
+\cd{a}, one could modify \cd{a.foo.bar.max2track} or
+\cd{a.foo.bar.max2rep} to change the tracking or reporting of the
+\cd{foo.bar} component \cd{a}.
+
+\section{Template Program}
+Because generating an accumulator report from a \pads{} description is
+a very routine task, \pads{} provides a template program to automate
+the task for common data formats.  In particular, the template applies
+to data that can be viewed as an optional header followed by a
+sequence of records.  Note that any data source that can be read
+entirely into memory fits this pattern by considering the source to
+have no header and a single body record.
+
+When instantiated, the template program takes an optional command-line
+argument specifying the path to the data source. If no argument is
+given, it uses a default location for the data specified by the
+template user.
+The template first reads the optional header, then
+reads each record and inserts the resulting value into an
+accumulator until the data source is exhuasted, at which point it
+prints the accumulator report to standard error.
+The code in \figref{figure:wsl-accum}
+illustrates using the accumulator template
+\cd{template/accum\_report.h}. This template is a \C{} header file
+parameterized by a number of macros that permit the user to customize
+the template by defining appropriate values for these macros.  For
+example, in the code in \figref{figure:wsl-accum}, the user defines the
+macros \cd{DEF\_INPUT\_FILE}, \cd{PADS\_TY}, and \cd{IO\_DISC\_MK} to
+indicate the default input file, the type of the repeated record in
+the data source, and the IO discipline.
+The following list describes these and the other macros used by the
+accumulator template:
+
+\begin{description}
+\item[\cd{DEF\_INPUT\_FILE}] If defined, this macros specifies a
+  string representation of the path to the default data source.  If no
+  path to the data is supplied at the command-line, this is the
+  location used for input data.
+\item[\cd{PADS\_TY}]  Intuitively, this macro defines the 
+  type of the repeated record in the data source, \ie{}, the type of
+  the value to be accumulated.  This macro must be defined to use the
+  accumulator template.  It defines a function used by the template
+  program to generate the various function and type names derived from
+  the name of the record type, \ie{}, the type of the associated
+  in-memory representation, mask, parse descriptor, read function,
+  \etc{}
+\item[\cd{IO\_DISC\_MK}] If defined, this macro specifies a function
+  for generating an IO discipline.  
+\end{description}

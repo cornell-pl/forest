@@ -1099,15 +1099,12 @@ typedef struct  {
 /*@BEGIN accumulator.tex */
 Perror_t entry_t_acc_init (P_t *pads,entry_t_acc *acc);
 /*@END dibbler_library.tex */
-
 Perror_t entry_t_acc_reset (P_t *pads,entry_t_acc *acc);
-
 Perror_t entry_t_acc_cleanup (P_t *pads,entry_t_acc *acc);
 /*@BEGIN dibbler_library.tex */
 Perror_t entry_t_acc_add (P_t *pads,entry_t_acc *acc,
 			  entry_t_pd *pd,entry_t *rep);
 /*@END dibbler_library.tex */
-
 Perror_t entry_t_acc_report2io (P_t *pads,Sfio_t *outstr,char const *prefix,
 				char const *what,int nst,entry_t_acc *acc);
 /*@BEGIN dibbler_library.tex */

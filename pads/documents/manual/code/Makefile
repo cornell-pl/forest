@@ -7,7 +7,14 @@ SHELL= /bin/sh
 # Default environment variables.
 ###############################################################################
 
-PADSC= $(PADS_HOME)/scripts/padsc
+# These variables should not need to change
+PADSC=$(PADS_HOME)/scripts/padsc
+AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
+INSTALLROOT=$(PADS_HOME)/ast-ast/arch/$(AST_ARCH)
+LIBDIR=$(INSTALLROOT)/lib
+LIBS = $(LIBDIR)/libpads.a $(LIBDIR)/libast.a
+INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
+
 
 ###############################################################################
 #  Documentation programs.
@@ -16,7 +23,7 @@ PADSC= $(PADS_HOME)/scripts/padsc
 
 EXAMPLE_DIR= $(PADS_HOME)/documents/manual/code
 PEXAMPLES= ai.p pstruct.p punion.p parray.p opt.p ptypedef.p enum2.p wsl.p sirius.p char.p pendian.p
-CEXAMPLES= ai-annotated.h punion-annotated.h opt-annotated.h typedef-annotated.h enum2-annotated.h sirius-filter.c wsl-accum.c wsl-fmt.c sirius-xml.c dibbler_new_annotated.h parse-state.h library.h strings.h limits.h fixedpoint.h
+CEXAMPLES= ai-annotated.h punion-annotated.h opt-annotated.h typedef-annotated.h enum2-annotated.h sirius-filter.c wsl-accum.c wsl-fmt.c sirius-xml.c dibbler_new_annotated.h parse-state.h library.h strings.h limits.h fixedpoint.h accum.c
 
 EXAMPLES = $(PEXAMPLES) $(CEXAMPLES)
 
@@ -45,3 +52,6 @@ clean:
 code:	$(EXAMPLES) Makefile 
 	for i in $(EXAMPLES) ; do $(EXTRACT) $$i; done
 	for i in $(EXAMPLES) ; do $(EXTRACT) -hevea $$i; done
+
+accum:	accum.c
+	$(CC) $(INCLUDES) -I$(PADS_HOME)/demo accum.c $(PADS_HOME)/demo/wsl.c $(LIBS) -o wsl-accum
