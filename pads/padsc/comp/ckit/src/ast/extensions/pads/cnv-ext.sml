@@ -3144,12 +3144,13 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 if List.length whereReadXs = 0 then []
 			 else
 			     let val errorMsg = "Pwhere clause violation"
-				 val reportErrSs = reportErrorSs([], locX, true, 
+				 val getLocS = PL.getLocEndS(PT.Id pads, locX, ~1)
+				 val reportErrSs = reportErrorSs([getLocS], locX, true, 
 								 PL.P_USER_CONSTRAINT_VIOLATION, true, readName, errorMsg, [])
 				                   @[P.assignS(PT.Id result, PL.P_ERROR)]
 			     in
 			     [P.mkCommentS "Checking Pwhere clause",
-			      PL.getLocEndS(PT.Id pads, locX, ~1),
+			      PL.getLocEndS(PT.Id pads, locX, 0),
 			      PT.IfThen(P.andX(PL.mTestSemCheckX(fieldX(m,PNames.unionLevel)), P.notX (P.andBools whereReadXs)),
 					PT.Compound reportErrSs)]
 
