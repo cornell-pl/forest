@@ -32,7 +32,7 @@ STEP 1: ENVIRONMENT SETUP
   arrange to have env variable PADS_HOME set to this location before
   doing other steps.  Once PADS_HOME is set, you can source a DO_SETENV
   script that will set the other env variables that you will need
-  (INSTALLROOT, PATH, LD_LIBRARY_PATH, etc.).  DO_SETENV will also make
+  (INSTALLROOT,  PATH, LD_LIBRARY_PATH, etc.).  DO_SETENV will also make
   your installation directories (rooted at INSTALLROOT) if they do not
   exist yet.
   
@@ -52,7 +52,7 @@ STEP 1: ENVIRONMENT SETUP
 [OPTIONAL]: For the PADS-Galax project only, you may wish to set
    the following env variables to override their default values.
 
-   OCAML_LIB     (default:  /usr/common/lib/ocaml)
+   OCAML_LIB_DIR (default:  /usr/common/lib/ocaml)
    GALAX_HOME    (default:  /home/mff/Galax-rh7)
   
 STEP 2: INSTALL SML RUNTIME
