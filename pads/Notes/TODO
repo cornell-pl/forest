@@ -2,15 +2,10 @@ by 8/6
 ------
 accum disc. knobs
 panic -> status flags and macros
-ints -> PDC_uint32
-const?
 skipped error codes: PDC_SKIPPED (library and generated code)
-pd illegal name
 PDC_NOT_PARSED errCode
-error if separator equals terminator
 
 manual
-separate ast and pads trees
 
 testing
 -------
@@ -76,15 +71,15 @@ DISCIPLINE:
 padsc compiler todo
 -------------------
 NEW
-  * pd needs to be illegal for struct/union field names, enum labels
-  * set parse descriptor errCode to PDC_NotParsed in initialization function
-  * set parse descriptor errCode to PDC_Skipped if skipped
+  * set parse descriptor errCode to PDC_NotParsed in initialization
+    function 
+      -- can't do this as no requirement that init function will be called.
+      -- also, might reuse parse descriptor multiple times.
+      -- this issue really comes into play when we support partial reads.
   * set parse descriptor errCode to PDC_NoError if read successfully
   * if checkset mask is ignore or no-check, then set error descriptor
     to indicate that status: PDC_Skipped
-  * error if sep and term are the same char
-  * generate better error message if field type is non-existent.
-  * empty structs (create dummy field of type PDC_char)
+
 
 DEFER
   * if a user-defined constraint involves a field that has errCode != PDC_NO_ERR,
