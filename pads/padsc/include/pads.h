@@ -963,44 +963,58 @@ Sfio_t *P_fopen(const char* source, const char* mode);
 
 /* ================================================================================
  * DISC FUNCTION FOR ERROR REPORTING
+ * 
+ * The discipline error function, disc->error_fn, 
+ * must have the following interface:
+ */
+
+typedef int (*Perror_fn)(const char *libnm, int level, ...);
+
+/* If you do not override it, the default is for PADS to use this function: */
+
+int P_error(const char *libnm, int level, ...);
+
+/*
+ * Error functions are a lot like the standard printf funtion, with
+ * two additional arguments, "libnm" and "level".  For example, where
+ * one might use printf as follows:
+ * 
+ *     printf("count: %d\n", 10);
  *
- * A Perror_fn function is an output function that output a
- * formatted error message, where level should be one of:
- *      -K : negative # is used for debugging messages
- *       P_LEV_INFO  : informative, no prefixes appended to message
- *       P_LEV_WARN  : warning
- *       P_LEV_ERR   : soft error
- *       P_LEV_FATAL : fatal error, program should exit 
+ * one would can do the same thing with P_error using:
+ *
+ *     P_error(NULL, P_LEV_INFO, "count: %d", 10);
+ *
+ * Note that P_error automatically adds a newline, so we did not
+ * have to include a "\n" in the format string, as we did with
+ * the printf example.
+ *
+ * The first argument to an error function, "libnm",  is normally
+ * NULL (it is for the name of the library calling the error
+ * function).
+ *
+ * The second argument, "level", is used to specify the severity of
+ * the error.  Level P_LEV_INFO is used for an informative (non-error)
+ * message, P_LEV_WARN is used for a warning, P_LEVL_ERR for a
+ * non-fatal error, and P_LEV_FATAL for a fatal error.
  * One can 'or' in the following flags (as in P_LEV_WARN|P_FLG_PROMPT):
+ *
  *       P_FLG_PROMPT  : do not emit a newline
- *       P_FLG_SYSERR  : add a description of errno (errno should be a system error)
+ *       P_FLG_SYSERR  : add a description of errno (should be a system error)
  *       P_FLG_LIBRARY : error is from library
- * Given a level lev that may include flags, one can use:
- *   P_GET_LEV(lev) : just the level   example: P_GET_LEV(lev) == P_LEV_FATAL
- *   P_GET_FLG(lev) : just the flags   example: P_GET_FLG(lev) & P_FLG_PROMPT
  *
  * LIBRARY messages are forced if env variable ERROR_OPTIONS includes 'library'
  * SYSERR (errno) messages are forced if it includes 'system'
- * Debug messages at level >= -K enabled if it includes 'trace=K'.
- *
- * Thus, to enable debugging message >= level -4, library messages, and
- * system errno text:
- *
- *    export ERROR_OPTIONS="trace=4 library system"   -- for sh/ksh/bash/etc
- *    setenv ERROR_OPTIONS "trace=4 library system"   -- for csh/tcsh/etc
  *
  * Note: For convenience, if the first arg, library name libnm, is non-NULL,
  * then flag P_FLG_LIBRARY is automatically or'd into level.  In the normal
  * case, a null libnm should be used. 
  */
 
-typedef int (*Perror_fn)(const char *libnm, int level, ...);
 
 /*
  * The default implementation:
  */
-
-int P_error(const char *libnm, int level, ...);
 
 /* ================================================================================
  * LIBRARY TYPES
