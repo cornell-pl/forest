@@ -663,7 +663,7 @@ Ptypedef Pstring_ME(:"/" RE_chunk_extension "/":) chunk_extension_t;
 Ptypedef Pstring_ME(:"/" RE_chunk_size "/":) chunk_size_t;
 #define RE_chunk_data "(" RE_chunk_size "" RE_ws "" RE_OCTET ")"
 Ptypedef Pstring_ME(:"/" RE_chunk_data "/":) chunk_data_t;
-#define RE_chunk "(" RE_chunk_size "" RE_ws "" RE_chunk_extension "?" RE_ws "" RE_CRLF "" RE_ws "" RE_chunk_data "" RE_ws "" RE_CRLF ")"
+#define RE_chunk "(" RE_chunk_size "" RE_chunk_extension "?" RE_CRLF "" RE_chunk_data "" RE_CRLF ")"
 Ptypedef Pstring_ME(:"/" RE_chunk "/":) chunk_t;
 #define RE_cnonce "(cnonce" RE_ws "\\=" RE_ws "" RE_cnonce_value ")"
 Ptypedef Pstring_ME(:"/" RE_cnonce "/":) cnonce_t;
@@ -757,19 +757,19 @@ Ptypedef Pstring_ME(:"/" RE_byte_range_spec "/":) byte_range_spec_t;
 Ptypedef Pstring_ME(:"/" RE_content_range_spec "/":) content_range_spec_t;
 #define RE_Content_Range "(Content\\-Range" RE_ws "\\:" RE_ws "" RE_content_range_spec ")"
 Ptypedef Pstring_ME(:"/" RE_Content_Range "/":) Content_Range_t;
-#define RE_last_chunk "(0(" RE_ws "0)*" RE_ws "" RE_chunk_extension "?" RE_ws "" RE_CRLF ")"
+#define RE_last_chunk "(0+" RE_chunk_extension "?" RE_CRLF ")"
 Ptypedef Pstring_ME(:"/" RE_last_chunk "/":) last_chunk_t;
 #define RE_message_body RE_entity_body
 Ptypedef Pstring_ME(:"/" RE_message_body "/":) message_body_t;
 Punion _bnf_0_t {
   field_value_t field_value;
-  Pvoid(_bnf_141);
+  Pvoid(_bnf_129);
 };
 Pstruct message_header_t {
   field_name_t field_name;
   ws_t ws;
   ":";
-  ws_t _bnf_142;
+  ws_t _bnf_130;
   _bnf_0_t _bnf_0;
 };
 Ptypedef message_header_t extension_header_t;
@@ -777,15 +777,15 @@ Pstruct message_qop_t {
   "qop";
   ws_t ws;
   "=";
-  ws_t _bnf_143;
+  ws_t _bnf_131;
   qop_value_t qop_value;
 };
-Pstruct _bnf_144_t {
+Pstruct _bnf_132_t {
   ws_t ws;
   LHEX_t LHEX;
 };
 Parray _bnf_2_t {
-  _bnf_144_t[7];
+  _bnf_132_t[7];
 };
 Pstruct _bnf_1_t {
   LHEX_t LHEX;
@@ -793,48 +793,48 @@ Pstruct _bnf_1_t {
 };
 Punion nc_value_t {
   _bnf_1_t _bnf_1;
-  Pvoid(_bnf_145);
+  Pvoid(_bnf_133);
 };
 Pstruct nonce_t {
   "nonce";
   ws_t ws;
   "=";
-  ws_t _bnf_146;
+  ws_t _bnf_134;
   nonce_value_t nonce_value;
 };
 Pstruct nonce_count_t {
   "nc";
   ws_t ws;
   "=";
-  ws_t _bnf_147;
+  ws_t _bnf_135;
   nc_value_t nc_value;
 };
 Pstruct opaque_t {
   "opaque";
   ws_t ws;
   "=";
-  ws_t _bnf_148;
+  ws_t _bnf_136;
   quoted_string_t quoted_string;
 };
 Pstruct parameter_t {
   attribute_t attribute;
   ws_t ws;
   "=";
-  ws_t _bnf_149;
+  ws_t _bnf_137;
   value_t value;
 };
 Pstruct _bnf_4_t {
   type_t type;
   ws_t ws;
   "/";
-  ws_t _bnf_150;
+  ws_t _bnf_138;
   "*";
 };
 Pstruct _bnf_5_t {
   type_t type;
   ws_t ws;
   "/";
-  ws_t _bnf_151;
+  ws_t _bnf_139;
   subtype_t subtype;
 };
 Punion _bnf_3_t {
@@ -842,14 +842,14 @@ Punion _bnf_3_t {
   _bnf_4_t _bnf_4;
   _bnf_5_t _bnf_5;
 };
-Pstruct _bnf_152_t {
+Pstruct _bnf_140_t {
   ws_t ws;
   ";";
-  ws_t _bnf_153;
+  ws_t _bnf_141;
   parameter_t parameter;
 };
 Parray _bnf_8_t {
-  _bnf_152_t[] : Plongest;
+  _bnf_140_t[] : Plongest;
 };
 Pstruct _bnf_7_t {
   ";";
@@ -859,21 +859,21 @@ Pstruct _bnf_7_t {
 };
 Punion _bnf_6_t {
   _bnf_7_t _bnf_7;
-  Pvoid(_bnf_154);
+  Pvoid(_bnf_142);
 };
 Pstruct media_range_t {
   _bnf_3_t _bnf_3;
   ws_t ws;
   _bnf_6_t _bnf_6;
 };
-Pstruct _bnf_155_t {
+Pstruct _bnf_143_t {
   ws_t ws;
   ";";
-  ws_t _bnf_156;
+  ws_t _bnf_144;
   parameter_t parameter;
 };
 Parray _bnf_11_t {
-  _bnf_155_t[] : Plongest;
+  _bnf_143_t[] : Plongest;
 };
 Pstruct _bnf_10_t {
   ";";
@@ -883,40 +883,40 @@ Pstruct _bnf_10_t {
 };
 Punion _bnf_9_t {
   _bnf_10_t _bnf_10;
-  Pvoid(_bnf_157);
+  Pvoid(_bnf_145);
 };
 Pstruct media_type_t {
   type_t type;
   ws_t ws;
   "/";
-  ws_t _bnf_158;
+  ws_t _bnf_146;
   subtype_t subtype;
-  ws_t _bnf_159;
+  ws_t _bnf_147;
   _bnf_9_t _bnf_9;
 };
 Pstruct Content_Type_t {
   "Content-Type";
   ws_t ws;
   ":";
-  ws_t _bnf_160;
+  ws_t _bnf_148;
   media_type_t media_type;
 };
 Punion pragma_directive_t {
   no_cache Pfrom("no-cache");
   extension_pragma_t extension_pragma;
 };
-Pstruct _bnf_161_t {
+Pstruct _bnf_149_t {
   commas_t commas;
   pragma_directive_t pragma_directive;
 };
 Parray _bnf_12_t {
-  _bnf_161_t[] : Plongest;
+  _bnf_149_t[] : Plongest;
 };
 Pstruct Pragma_t {
   "Pragma";
   ws_t ws;
   ":";
-  ws_t _bnf_162;
+  ws_t _bnf_150;
   pragma_directive_t pragma_directive;
   _bnf_12_t _bnf_12;
 };
@@ -927,7 +927,7 @@ Pstruct _bnf_14_t {
 };
 Punion _bnf_13_t {
   _bnf_14_t _bnf_14;
-  Pvoid(_bnf_163);
+  Pvoid(_bnf_151);
 };
 Pstruct product_t {
   token_t token;
@@ -939,68 +939,68 @@ Punion _bnf_15_t {
   comment_t comment;
 };
 Punion _bnf_17_t {
-  product_t _bnf_164;
-  comment_t _bnf_165;
+  product_t _bnf_152;
+  comment_t _bnf_153;
 };
-Pstruct _bnf_166_t {
+Pstruct _bnf_154_t {
   ws_t ws;
   _bnf_17_t _bnf_17;
 };
 Parray _bnf_16_t {
-  _bnf_166_t[] : Plongest;
+  _bnf_154_t[] : Plongest;
 };
 Pstruct Server_t {
   "Server";
   ws_t ws;
   ":";
-  ws_t _bnf_167;
+  ws_t _bnf_155;
   _bnf_15_t _bnf_15;
   _bnf_16_t _bnf_16;
 };
-Pstruct _bnf_168_t {
+Pstruct _bnf_156_t {
   commas_t commas;
   product_t product;
 };
 Parray _bnf_18_t {
-  _bnf_168_t[] : Plongest;
+  _bnf_156_t[] : Plongest;
 };
 Pstruct Upgrade_t {
   "Upgrade";
   ws_t ws;
   ":";
-  ws_t _bnf_169;
+  ws_t _bnf_157;
   product_t product;
   _bnf_18_t _bnf_18;
 };
 Punion _bnf_19_t {
-  product_t _bnf_170;
-  comment_t _bnf_171;
+  product_t _bnf_158;
+  comment_t _bnf_159;
 };
 Punion _bnf_21_t {
-  product_t _bnf_172;
-  comment_t _bnf_173;
+  product_t _bnf_160;
+  comment_t _bnf_161;
 };
-Pstruct _bnf_174_t {
+Pstruct _bnf_162_t {
   ws_t ws;
   _bnf_21_t _bnf_21;
 };
 Parray _bnf_20_t {
-  _bnf_174_t[] : Plongest;
+  _bnf_162_t[] : Plongest;
 };
 Pstruct User_Agent_t {
   "User-Agent";
   ws_t ws;
   ":";
-  ws_t _bnf_175;
+  ws_t _bnf_163;
   _bnf_19_t _bnf_19;
   _bnf_20_t _bnf_20;
 };
-Pstruct _bnf_176_t {
+Pstruct _bnf_164_t {
   ws_t ws;
   DIGIT_t DIGIT;
 };
 Parray _bnf_27_t {
-  _bnf_176_t[0:2];
+  _bnf_164_t[0:2];
 };
 Pstruct _bnf_26_t {
   DIGIT_t DIGIT;
@@ -1008,7 +1008,7 @@ Pstruct _bnf_26_t {
 };
 Punion _bnf_25_t {
   _bnf_26_t _bnf_26;
-  Pvoid(_bnf_177);
+  Pvoid(_bnf_165);
 };
 Pstruct _bnf_24_t {
   ".";
@@ -1017,19 +1017,19 @@ Pstruct _bnf_24_t {
 };
 Punion _bnf_23_t {
   _bnf_24_t _bnf_24;
-  Pvoid(_bnf_178);
+  Pvoid(_bnf_166);
 };
 Pstruct _bnf_22_t {
   "0";
   ws_t ws;
   _bnf_23_t _bnf_23;
 };
-Pstruct _bnf_179_t {
+Pstruct _bnf_167_t {
   ws_t ws;
   "0";
 };
 Parray _bnf_33_t {
-  _bnf_179_t[0:2];
+  _bnf_167_t[0:2];
 };
 Pstruct _bnf_32_t {
   "0";
@@ -1037,7 +1037,7 @@ Pstruct _bnf_32_t {
 };
 Punion _bnf_31_t {
   _bnf_32_t _bnf_32;
-  Pvoid(_bnf_180);
+  Pvoid(_bnf_168);
 };
 Pstruct _bnf_30_t {
   ".";
@@ -1046,7 +1046,7 @@ Pstruct _bnf_30_t {
 };
 Punion _bnf_29_t {
   _bnf_30_t _bnf_30;
-  Pvoid(_bnf_181);
+  Pvoid(_bnf_169);
 };
 Pstruct _bnf_28_t {
   "1";
@@ -1065,52 +1065,110 @@ Pstruct _bnf_36_t {
   ";";
   ws_t ws;
   "q";
-  ws_t _bnf_182;
+  ws_t _bnf_170;
   "=";
-  ws_t _bnf_183;
+  ws_t _bnf_171;
   qvalue_t qvalue;
 };
 Punion _bnf_35_t {
   _bnf_36_t _bnf_36;
-  Pvoid(_bnf_184);
+  Pvoid(_bnf_172);
 };
 Punion _bnf_38_t {
-  charset_t _bnf_185;
-  _bnf_186 Pfrom("*");
+  charset_t _bnf_173;
+  _bnf_174 Pfrom("*");
 };
 Pstruct _bnf_40_t {
   ";";
   ws_t ws;
   "q";
-  ws_t _bnf_187;
+  ws_t _bnf_175;
   "=";
-  ws_t _bnf_188;
+  ws_t _bnf_176;
   qvalue_t qvalue;
 };
 Punion _bnf_39_t {
   _bnf_40_t _bnf_40;
-  Pvoid(_bnf_189);
+  Pvoid(_bnf_177);
 };
-Pstruct _bnf_190_t {
+Pstruct _bnf_178_t {
   commas_t commas;
   _bnf_38_t _bnf_38;
   ws_t ws;
   _bnf_39_t _bnf_39;
 };
 Parray _bnf_37_t {
-  _bnf_190_t[] : Plongest;
+  _bnf_178_t[] : Plongest;
 };
 Pstruct Accept_Charset_t {
   "Accept-Charset";
   ws_t ws;
   ":";
-  ws_t _bnf_191;
+  ws_t _bnf_179;
   _bnf_34_t _bnf_34;
-  ws_t _bnf_192;
+  ws_t _bnf_180;
   _bnf_35_t _bnf_35;
   _bnf_37_t _bnf_37;
 };
 Pstruct _bnf_42_t {
+  ";";
+  ws_t ws;
+  "q";
+  ws_t _bnf_181;
+  "=";
+  ws_t _bnf_182;
+  qvalue_t qvalue;
+};
+Punion _bnf_41_t {
+  _bnf_42_t _bnf_42;
+  Pvoid(_bnf_183);
+};
+Pstruct _bnf_45_t {
+  ";";
+  ws_t ws;
+  "q";
+  ws_t _bnf_184;
+  "=";
+  ws_t _bnf_185;
+  qvalue_t qvalue;
+};
+Punion _bnf_44_t {
+  _bnf_45_t _bnf_45;
+  Pvoid(_bnf_186);
+};
+Pstruct _bnf_187_t {
+  commas_t commas;
+  codings_t codings;
+  ws_t ws;
+  _bnf_44_t _bnf_44;
+};
+Parray _bnf_43_t {
+  _bnf_187_t[] : Plongest;
+};
+Pstruct Accept_Encoding_t {
+  "Accept-Encoding";
+  ws_t ws;
+  ":";
+  ws_t _bnf_188;
+  codings_t codings;
+  ws_t _bnf_189;
+  _bnf_41_t _bnf_41;
+  _bnf_43_t _bnf_43;
+};
+Pstruct _bnf_47_t {
+  ";";
+  ws_t ws;
+  "q";
+  ws_t _bnf_190;
+  "=";
+  ws_t _bnf_191;
+  qvalue_t qvalue;
+};
+Punion _bnf_46_t {
+  _bnf_47_t _bnf_47;
+  Pvoid(_bnf_192);
+};
+Pstruct _bnf_50_t {
   ";";
   ws_t ws;
   "q";
@@ -1119,93 +1177,35 @@ Pstruct _bnf_42_t {
   ws_t _bnf_194;
   qvalue_t qvalue;
 };
-Punion _bnf_41_t {
-  _bnf_42_t _bnf_42;
-  Pvoid(_bnf_195);
-};
-Pstruct _bnf_45_t {
-  ";";
-  ws_t ws;
-  "q";
-  ws_t _bnf_196;
-  "=";
-  ws_t _bnf_197;
-  qvalue_t qvalue;
-};
-Punion _bnf_44_t {
-  _bnf_45_t _bnf_45;
-  Pvoid(_bnf_198);
-};
-Pstruct _bnf_199_t {
-  commas_t commas;
-  codings_t codings;
-  ws_t ws;
-  _bnf_44_t _bnf_44;
-};
-Parray _bnf_43_t {
-  _bnf_199_t[] : Plongest;
-};
-Pstruct Accept_Encoding_t {
-  "Accept-Encoding";
-  ws_t ws;
-  ":";
-  ws_t _bnf_200;
-  codings_t codings;
-  ws_t _bnf_201;
-  _bnf_41_t _bnf_41;
-  _bnf_43_t _bnf_43;
-};
-Pstruct _bnf_47_t {
-  ";";
-  ws_t ws;
-  "q";
-  ws_t _bnf_202;
-  "=";
-  ws_t _bnf_203;
-  qvalue_t qvalue;
-};
-Punion _bnf_46_t {
-  _bnf_47_t _bnf_47;
-  Pvoid(_bnf_204);
-};
-Pstruct _bnf_50_t {
-  ";";
-  ws_t ws;
-  "q";
-  ws_t _bnf_205;
-  "=";
-  ws_t _bnf_206;
-  qvalue_t qvalue;
-};
 Punion _bnf_49_t {
   _bnf_50_t _bnf_50;
-  Pvoid(_bnf_207);
+  Pvoid(_bnf_195);
 };
-Pstruct _bnf_208_t {
+Pstruct _bnf_196_t {
   commas_t commas;
   language_range_t language_range;
   ws_t ws;
   _bnf_49_t _bnf_49;
 };
 Parray _bnf_48_t {
-  _bnf_208_t[] : Plongest;
+  _bnf_196_t[] : Plongest;
 };
 Pstruct Accept_Language_t {
   "Accept-Language";
   ws_t ws;
   ":";
-  ws_t _bnf_209;
+  ws_t _bnf_197;
   language_range_t language_range;
-  ws_t _bnf_210;
+  ws_t _bnf_198;
   _bnf_46_t _bnf_46;
   _bnf_48_t _bnf_48;
 };
-Pstruct _bnf_211_t {
+Pstruct _bnf_199_t {
   ws_t ws;
   accept_extension_t accept_extension;
 };
 Parray _bnf_53_t {
-  _bnf_211_t[] : Plongest;
+  _bnf_199_t[] : Plongest;
 };
 Pstruct _bnf_52_t {
   accept_extension_t accept_extension;
@@ -1213,35 +1213,35 @@ Pstruct _bnf_52_t {
 };
 Punion _bnf_51_t {
   _bnf_52_t _bnf_52;
-  Pvoid(_bnf_212);
+  Pvoid(_bnf_200);
 };
 Pstruct accept_params_t {
   ";";
   ws_t ws;
   "q";
-  ws_t _bnf_213;
+  ws_t _bnf_201;
   "=";
-  ws_t _bnf_214;
+  ws_t _bnf_202;
   qvalue_t qvalue;
-  ws_t _bnf_215;
+  ws_t _bnf_203;
   _bnf_51_t _bnf_51;
 };
 Punion _bnf_56_t {
   accept_params_t accept_params;
-  Pvoid(_bnf_216);
+  Pvoid(_bnf_204);
 };
 Punion _bnf_58_t {
-  accept_params_t _bnf_217;
-  Pvoid(_bnf_218);
+  accept_params_t _bnf_205;
+  Pvoid(_bnf_206);
 };
-Pstruct _bnf_219_t {
+Pstruct _bnf_207_t {
   commas_t commas;
   media_range_t media_range;
   ws_t ws;
   _bnf_58_t _bnf_58;
 };
 Parray _bnf_57_t {
-  _bnf_219_t[] : Plongest;
+  _bnf_207_t[] : Plongest;
 };
 Pstruct _bnf_55_t {
   media_range_t media_range;
@@ -1251,20 +1251,20 @@ Pstruct _bnf_55_t {
 };
 Punion _bnf_54_t {
   _bnf_55_t _bnf_55;
-  Pvoid(_bnf_220);
+  Pvoid(_bnf_208);
 };
 Pstruct Accept_t {
   "Accept";
   ws_t ws;
   ":";
-  ws_t _bnf_221;
+  ws_t _bnf_209;
   _bnf_54_t _bnf_54;
 };
 Pstruct realm_t {
   "realm";
   ws_t ws;
   "=";
-  ws_t _bnf_222;
+  ws_t _bnf_210;
   realm_value_t realm_value;
 };
 Pstruct _bnf_61_t {
@@ -1274,7 +1274,7 @@ Pstruct _bnf_61_t {
 };
 Punion _bnf_60_t {
   _bnf_61_t _bnf_61;
-  Pvoid(_bnf_223);
+  Pvoid(_bnf_211);
 };
 Pstruct _bnf_59_t {
   host_t host;
@@ -1292,7 +1292,7 @@ Pstruct _bnf_63_t {
 };
 Punion _bnf_62_t {
   _bnf_63_t _bnf_63;
-  Pvoid(_bnf_224);
+  Pvoid(_bnf_212);
 };
 Pstruct received_protocol_t {
   _bnf_62_t _bnf_62;
@@ -1300,42 +1300,42 @@ Pstruct received_protocol_t {
   protocol_version_t protocol_version;
 };
 Punion _bnf_64_t {
-  comment_t _bnf_225;
-  Pvoid(_bnf_226);
+  comment_t _bnf_213;
+  Pvoid(_bnf_214);
 };
 Punion _bnf_66_t {
-  comment_t _bnf_227;
-  Pvoid(_bnf_228);
+  comment_t _bnf_215;
+  Pvoid(_bnf_216);
 };
-Pstruct _bnf_229_t {
+Pstruct _bnf_217_t {
   commas_t commas;
   received_protocol_t received_protocol;
   ws_t ws;
   received_by_t received_by;
-  ws_t _bnf_230;
+  ws_t _bnf_218;
   _bnf_66_t _bnf_66;
 };
 Parray _bnf_65_t {
-  _bnf_229_t[] : Plongest;
+  _bnf_217_t[] : Plongest;
 };
 Pstruct Via_t {
   "Via";
   ws_t ws;
   ":";
-  ws_t _bnf_231;
+  ws_t _bnf_219;
   received_protocol_t received_protocol;
-  ws_t _bnf_232;
+  ws_t _bnf_220;
   received_by_t received_by;
-  ws_t _bnf_233;
+  ws_t _bnf_221;
   _bnf_64_t _bnf_64;
   _bnf_65_t _bnf_65;
 };
-Pstruct _bnf_234_t {
+Pstruct _bnf_222_t {
   ws_t ws;
   LHEX_t LHEX;
 };
 Parray _bnf_69_t {
-  _bnf_234_t[31];
+  _bnf_222_t[31];
 };
 Pstruct _bnf_68_t {
   LHEX_t LHEX;
@@ -1343,98 +1343,83 @@ Pstruct _bnf_68_t {
 };
 Punion _bnf_67_t {
   _bnf_68_t _bnf_68;
-  Pvoid(_bnf_235);
+  Pvoid(_bnf_223);
 };
 Pstruct request_digest_t {
   "\"";
   ws_t ws;
   _bnf_67_t _bnf_67;
-  ws_t _bnf_236;
+  ws_t _bnf_224;
   "\"";
 };
 Pstruct response_t {
   "response";
   ws_t ws;
   "=";
-  ws_t _bnf_237;
+  ws_t _bnf_225;
   request_digest_t request_digest;
 };
 Punion start_line_t {
   Request_Line_t Request_Line;
   Status_Line_t Status_Line;
 };
-Pstruct _bnf_238_t {
-  ws_t ws;
+Pstruct _bnf_226_t {
   message_header_t message_header;
-  ws_t _bnf_239;
   CRLF_t CRLF;
 };
-Parray _bnf_72_t {
-  _bnf_238_t[] : Plongest;
+Parray _bnf_70_t {
+  _bnf_226_t[] : Plongest;
 };
-Pstruct _bnf_71_t {
-  message_header_t message_header;
-  ws_t ws;
-  CRLF_t CRLF;
-  _bnf_72_t _bnf_72;
-};
-Punion _bnf_70_t {
-  _bnf_71_t _bnf_71;
-  Pvoid(_bnf_240);
-};
-Punion _bnf_73_t {
+Punion _bnf_71_t {
   message_body_t message_body;
-  Pvoid(_bnf_241);
+  Pvoid(_bnf_227);
 };
 Pstruct generic_message_t {
   start_line_t start_line;
-  ws_t ws;
   _bnf_70_t _bnf_70;
-  ws_t _bnf_242;
   CRLF_t CRLF;
-  ws_t _bnf_243;
-  _bnf_73_t _bnf_73;
+  _bnf_71_t _bnf_71;
 };
-Pstruct _bnf_244_t {
+Pstruct _bnf_228_t {
   ws_t ws;
   DIGIT_t DIGIT;
 };
-Parray _bnf_74_t {
-  _bnf_244_t[] : Plongest;
+Parray _bnf_72_t {
+  _bnf_228_t[] : Plongest;
 };
 Pstruct suffix_length_t {
   DIGIT_t DIGIT;
-  _bnf_74_t _bnf_74;
+  _bnf_72_t _bnf_72;
 };
 Pstruct suffix_byte_range_spec_t {
   "-";
   ws_t ws;
   suffix_length_t suffix_length;
 };
-Punion _bnf_75_t {
+Punion _bnf_73_t {
   byte_range_spec_t byte_range_spec;
   suffix_byte_range_spec_t suffix_byte_range_spec;
 };
-Punion _bnf_77_t {
-  byte_range_spec_t _bnf_245;
-  suffix_byte_range_spec_t _bnf_246;
+Punion _bnf_75_t {
+  byte_range_spec_t _bnf_229;
+  suffix_byte_range_spec_t _bnf_230;
 };
-Pstruct _bnf_247_t {
+Pstruct _bnf_231_t {
   commas_t commas;
-  _bnf_77_t _bnf_77;
+  _bnf_75_t _bnf_75;
 };
-Parray _bnf_76_t {
-  _bnf_247_t[] : Plongest;
+Parray _bnf_74_t {
+  _bnf_231_t[] : Plongest;
 };
 Pstruct byte_range_set_t {
-  _bnf_75_t _bnf_75;
-  _bnf_76_t _bnf_76;
+  _bnf_73_t _bnf_73;
+  _bnf_74_t _bnf_74;
 };
 Pstruct byte_ranges_specifier_t {
   bytes_unit_t bytes_unit;
   ws_t ws;
   "=";
-  ws_t _bnf_248;
+  ws_t _bnf_232;
   byte_range_set_t byte_range_set;
 };
 Ptypedef byte_ranges_specifier_t ranges_specifier_t;
@@ -1442,83 +1427,83 @@ Pstruct Range_t {
   "Range";
   ws_t ws;
   ":";
-  ws_t _bnf_249;
+  ws_t _bnf_233;
   ranges_specifier_t ranges_specifier;
 };
-Pstruct _bnf_250_t {
+Pstruct _bnf_234_t {
   ws_t ws;
   DIGIT_t DIGIT;
 };
-Parray _bnf_80_t {
-  _bnf_250_t[1];
+Parray _bnf_78_t {
+  _bnf_234_t[1];
 };
-Pstruct _bnf_79_t {
+Pstruct _bnf_77_t {
   DIGIT_t DIGIT;
-  _bnf_80_t _bnf_80;
-};
-Punion _bnf_78_t {
-  _bnf_79_t _bnf_79;
-  Pvoid(_bnf_251);
-};
-Pstruct _bnf_252_t {
-  ws_t ws;
-  DIGIT_t DIGIT;
-};
-Parray _bnf_83_t {
-  _bnf_252_t[1];
-};
-Pstruct _bnf_82_t {
-  DIGIT_t DIGIT;
-  _bnf_83_t _bnf_83;
-};
-Punion _bnf_81_t {
-  _bnf_82_t _bnf_82;
-  Pvoid(_bnf_253);
-};
-Pstruct _bnf_254_t {
-  ws_t ws;
-  DIGIT_t DIGIT;
-};
-Parray _bnf_86_t {
-  _bnf_254_t[1];
-};
-Pstruct _bnf_85_t {
-  DIGIT_t DIGIT;
-  _bnf_86_t _bnf_86;
-};
-Punion _bnf_84_t {
-  _bnf_85_t _bnf_85;
-  Pvoid(_bnf_255);
-};
-Pstruct time_http_t {
   _bnf_78_t _bnf_78;
+};
+Punion _bnf_76_t {
+  _bnf_77_t _bnf_77;
+  Pvoid(_bnf_235);
+};
+Pstruct _bnf_236_t {
   ws_t ws;
-  ":";
-  ws_t _bnf_256;
+  DIGIT_t DIGIT;
+};
+Parray _bnf_81_t {
+  _bnf_236_t[1];
+};
+Pstruct _bnf_80_t {
+  DIGIT_t DIGIT;
   _bnf_81_t _bnf_81;
-  ws_t _bnf_257;
-  ":";
-  ws_t _bnf_258;
+};
+Punion _bnf_79_t {
+  _bnf_80_t _bnf_80;
+  Pvoid(_bnf_237);
+};
+Pstruct _bnf_238_t {
+  ws_t ws;
+  DIGIT_t DIGIT;
+};
+Parray _bnf_84_t {
+  _bnf_238_t[1];
+};
+Pstruct _bnf_83_t {
+  DIGIT_t DIGIT;
   _bnf_84_t _bnf_84;
 };
-Ptypedef Pstring_ME(:"/[[:DIGIT:]]{4}/":) _bnf_87_t;
+Punion _bnf_82_t {
+  _bnf_83_t _bnf_83;
+  Pvoid(_bnf_239);
+};
+Pstruct time_http_t {
+  _bnf_76_t _bnf_76;
+  ws_t ws;
+  ":";
+  ws_t _bnf_240;
+  _bnf_79_t _bnf_79;
+  ws_t _bnf_241;
+  ":";
+  ws_t _bnf_242;
+  _bnf_82_t _bnf_82;
+};
+Ptypedef Pstring_ME(:"/[[:DIGIT:]]{4}/":) _bnf_85_t;
 Pstruct asctime_date_t {
   wkday_t wkday;
   SP_t SP;
   date3_t date3;
-  SP_t _bnf_259;
+  SP_t _bnf_243;
   time_http_t time_http;
-  SP_t _bnf_260;
-  _bnf_87_t _bnf_87;
+  SP_t _bnf_244;
+  _bnf_85_t _bnf_85;
 };
 Pstruct rfc1123_date_t {
   wkday_t wkday;
   ",";
   SP_t SP;
   date1_t date1;
-  SP_t _bnf_261;
+  SP_t _bnf_245;
   time_http_t time_http;
-  SP_t _bnf_262;
+  SP_t _bnf_246;
   "GMT";
 };
 Pstruct rfc850_date_t {
@@ -1526,9 +1511,9 @@ Pstruct rfc850_date_t {
   ",";
   SP_t SP;
   date2_t date2;
-  SP_t _bnf_263;
+  SP_t _bnf_247;
   time_http_t time_http;
-  SP_t _bnf_264;
+  SP_t _bnf_248;
   "GMT";
 };
 Punion HTTP_date_t {
@@ -1540,24 +1525,24 @@ Pstruct Date_t {
   "Date";
   ws_t ws;
   ":";
-  ws_t _bnf_265;
+  ws_t _bnf_249;
   HTTP_date_t HTTP_date;
 };
 Pstruct Expires_t {
   "Expires";
   ws_t ws;
   ":";
-  ws_t _bnf_266;
+  ws_t _bnf_250;
   HTTP_date_t HTTP_date;
 };
 Pstruct If_Modified_Since_t {
   "If-Modified-Since";
   ws_t ws;
   ":";
-  ws_t _bnf_267;
+  ws_t _bnf_251;
   HTTP_date_t HTTP_date;
 };
-Punion _bnf_88_t {
+Punion _bnf_86_t {
   entity_tag_t entity_tag;
   HTTP_date_t HTTP_date;
 };
@@ -1565,33 +1550,33 @@ Pstruct If_Range_t {
   "If-Range";
   ws_t ws;
   ":";
-  ws_t _bnf_268;
-  _bnf_88_t _bnf_88;
+  ws_t _bnf_252;
+  _bnf_86_t _bnf_86;
 };
 Pstruct If_Unmodified_Since_t {
   "If-Unmodified-Since";
   ws_t ws;
   ":";
-  ws_t _bnf_269;
+  ws_t _bnf_253;
   HTTP_date_t HTTP_date;
 };
 Pstruct Last_Modified_t {
   "Last-Modified";
   ws_t ws;
   ":";
-  ws_t _bnf_270;
+  ws_t _bnf_254;
   HTTP_date_t HTTP_date;
 };
-Punion _bnf_89_t {
-  HTTP_date_t _bnf_271;
+Punion _bnf_87_t {
+  HTTP_date_t _bnf_255;
   delta_seconds_t delta_seconds;
 };
 Pstruct Retry_After_t {
   "Retry-After";
   ws_t ws;
   ":";
-  ws_t _bnf_272;
-  _bnf_89_t _bnf_89;
+  ws_t _bnf_256;
+  _bnf_87_t _bnf_87;
 };
 Punion entity_header_t {
   Allow_t Allow;
@@ -1617,245 +1602,218 @@ Punion response_header_t {
   Vary_t Vary;
   WWW_Authenticate_t WWW_Authenticate;
 };
-Pstruct _bnf_273_t {
-  ws_t ws;
+Pstruct _bnf_257_t {
   entity_header_t entity_header;
-  ws_t _bnf_274;
   CRLF_t CRLF;
 };
-Parray _bnf_91_t {
-  _bnf_273_t[] : Plongest;
+Parray trailer_t {
+  _bnf_257_t[] : Plongest;
 };
-Pstruct _bnf_90_t {
-  entity_header_t entity_header;
-  ws_t ws;
-  CRLF_t CRLF;
-  _bnf_91_t _bnf_91;
-};
-Punion trailer_t {
-  _bnf_90_t _bnf_90;
-  Pvoid(_bnf_275);
-};
-Pstruct _bnf_276_t {
-  ws_t ws;
-  chunk_t chunk;
-};
-Parray _bnf_94_t {
-  _bnf_276_t[] : Plongest;
-};
-Pstruct _bnf_93_t {
-  chunk_t chunk;
-  _bnf_94_t _bnf_94;
-};
-Punion _bnf_92_t {
-  _bnf_93_t _bnf_93;
-  Pvoid(_bnf_277);
+Parray _bnf_88_t {
+  chunk_t[] : Plongest;
 };
 Pstruct Chunked_Body_t {
-  _bnf_92_t _bnf_92;
-  ws_t ws;
+  _bnf_88_t _bnf_88;
   last_chunk_t last_chunk;
-  ws_t _bnf_278;
   trailer_t trailer;
-  ws_t _bnf_279;
   CRLF_t CRLF;
 };
-Pstruct _bnf_280_t {
+Pstruct _bnf_258_t {
   ws_t ws;
   ";";
-  ws_t _bnf_281;
+  ws_t _bnf_259;
   parameter_t parameter;
 };
-Parray _bnf_97_t {
-  _bnf_280_t[] : Plongest;
+Parray _bnf_91_t {
+  _bnf_258_t[] : Plongest;
 };
-Pstruct _bnf_96_t {
+Pstruct _bnf_90_t {
   ";";
   ws_t ws;
   parameter_t parameter;
-  _bnf_97_t _bnf_97;
+  _bnf_91_t _bnf_91;
 };
-Punion _bnf_95_t {
-  _bnf_96_t _bnf_96;
-  Pvoid(_bnf_282);
+Punion _bnf_89_t {
+  _bnf_90_t _bnf_90;
+  Pvoid(_bnf_260);
 };
 Pstruct transfer_extension_t {
   token_t token;
   ws_t ws;
-  _bnf_95_t _bnf_95;
+  _bnf_89_t _bnf_89;
 };
-Punion _bnf_99_t {
-  accept_params_t _bnf_283;
-  Pvoid(_bnf_284);
+Punion _bnf_93_t {
+  accept_params_t _bnf_261;
+  Pvoid(_bnf_262);
 };
-Pstruct _bnf_98_t {
+Pstruct _bnf_92_t {
   transfer_extension_t transfer_extension;
   ws_t ws;
-  _bnf_99_t _bnf_99;
+  _bnf_93_t _bnf_93;
 };
 Punion t_codings_t {
   "trailers";
-  _bnf_98_t _bnf_98;
+  _bnf_92_t _bnf_92;
 };
-Pstruct _bnf_285_t {
+Pstruct _bnf_263_t {
   commas_t commas;
   t_codings_t t_codings;
 };
-Parray _bnf_102_t {
-  _bnf_285_t[] : Plongest;
+Parray _bnf_96_t {
+  _bnf_263_t[] : Plongest;
 };
-Pstruct _bnf_101_t {
+Pstruct _bnf_95_t {
   t_codings_t t_codings;
-  _bnf_102_t _bnf_102;
+  _bnf_96_t _bnf_96;
 };
-Punion _bnf_100_t {
-  _bnf_101_t _bnf_101;
-  Pvoid(_bnf_286);
+Punion _bnf_94_t {
+  _bnf_95_t _bnf_95;
+  Pvoid(_bnf_264);
 };
 Pstruct TE_t {
   "TE";
   ws_t ws;
   ":";
-  ws_t _bnf_287;
-  _bnf_100_t _bnf_100;
+  ws_t _bnf_265;
+  _bnf_94_t _bnf_94;
 };
 Punion transfer_coding_t {
   "chunked";
   transfer_extension_t transfer_extension;
 };
-Pstruct _bnf_288_t {
+Pstruct _bnf_266_t {
   commas_t commas;
   transfer_coding_t transfer_coding;
 };
-Parray _bnf_103_t {
-  _bnf_288_t[] : Plongest;
+Parray _bnf_97_t {
+  _bnf_266_t[] : Plongest;
 };
 Pstruct Transfer_Encoding_t {
   "Transfer-Encoding";
   ws_t ws;
   ":";
-  ws_t _bnf_289;
+  ws_t _bnf_267;
   transfer_coding_t transfer_coding;
-  _bnf_103_t _bnf_103;
+  _bnf_97_t _bnf_97;
 };
 Pstruct username_t {
   "username";
   ws_t ws;
   "=";
-  ws_t _bnf_290;
+  ws_t _bnf_268;
   username_value_t username_value;
 };
-Punion _bnf_105_t {
+Punion _bnf_99_t {
   algorithm_t algorithm;
-  Pvoid(_bnf_291);
+  Pvoid(_bnf_269);
 };
-Punion _bnf_106_t {
+Punion _bnf_100_t {
   cnonce_t cnonce;
-  Pvoid(_bnf_292);
+  Pvoid(_bnf_270);
 };
-Punion _bnf_107_t {
+Punion _bnf_101_t {
   opaque_t opaque;
-  Pvoid(_bnf_293);
+  Pvoid(_bnf_271);
 };
-Punion _bnf_108_t {
+Punion _bnf_102_t {
   message_qop_t message_qop;
-  Pvoid(_bnf_294);
+  Pvoid(_bnf_272);
 };
-Punion _bnf_109_t {
+Punion _bnf_103_t {
   nonce_count_t nonce_count;
-  Pvoid(_bnf_295);
-};
-Punion _bnf_110_t {
-  auth_param_t auth_param;
-  Pvoid(_bnf_296);
+  Pvoid(_bnf_273);
 };
 Punion _bnf_104_t {
+  auth_param_t auth_param;
+  Pvoid(_bnf_274);
+};
+Punion _bnf_98_t {
   username_t username;
   realm_t realm;
   nonce_t nonce;
   digest_uri_t digest_uri;
   response_t response;
-  _bnf_105_t _bnf_105;
-  _bnf_106_t _bnf_106;
+  _bnf_99_t _bnf_99;
+  _bnf_100_t _bnf_100;
+  _bnf_101_t _bnf_101;
+  _bnf_102_t _bnf_102;
+  _bnf_103_t _bnf_103;
+  _bnf_104_t _bnf_104;
+};
+Punion _bnf_107_t {
+  algorithm_t _bnf_275;
+  Pvoid(_bnf_276);
+};
+Punion _bnf_108_t {
+  cnonce_t _bnf_277;
+  Pvoid(_bnf_278);
+};
+Punion _bnf_109_t {
+  opaque_t _bnf_279;
+  Pvoid(_bnf_280);
+};
+Punion _bnf_110_t {
+  message_qop_t _bnf_281;
+  Pvoid(_bnf_282);
+};
+Punion _bnf_111_t {
+  nonce_count_t _bnf_283;
+  Pvoid(_bnf_284);
+};
+Punion _bnf_112_t {
+  auth_param_t _bnf_285;
+  Pvoid(_bnf_286);
+};
+Punion _bnf_106_t {
+  username_t _bnf_287;
+  realm_t _bnf_288;
+  nonce_t _bnf_289;
+  digest_uri_t _bnf_290;
+  response_t _bnf_291;
   _bnf_107_t _bnf_107;
   _bnf_108_t _bnf_108;
   _bnf_109_t _bnf_109;
   _bnf_110_t _bnf_110;
-};
-Punion _bnf_113_t {
-  algorithm_t _bnf_297;
-  Pvoid(_bnf_298);
-};
-Punion _bnf_114_t {
-  cnonce_t _bnf_299;
-  Pvoid(_bnf_300);
-};
-Punion _bnf_115_t {
-  opaque_t _bnf_301;
-  Pvoid(_bnf_302);
-};
-Punion _bnf_116_t {
-  message_qop_t _bnf_303;
-  Pvoid(_bnf_304);
-};
-Punion _bnf_117_t {
-  nonce_count_t _bnf_305;
-  Pvoid(_bnf_306);
-};
-Punion _bnf_118_t {
-  auth_param_t _bnf_307;
-  Pvoid(_bnf_308);
-};
-Punion _bnf_112_t {
-  username_t _bnf_309;
-  realm_t _bnf_310;
-  nonce_t _bnf_311;
-  digest_uri_t _bnf_312;
-  response_t _bnf_313;
-  _bnf_113_t _bnf_113;
-  _bnf_114_t _bnf_114;
-  _bnf_115_t _bnf_115;
-  _bnf_116_t _bnf_116;
-  _bnf_117_t _bnf_117;
-  _bnf_118_t _bnf_118;
-};
-Pstruct _bnf_314_t {
-  commas_t commas;
+  _bnf_111_t _bnf_111;
   _bnf_112_t _bnf_112;
 };
-Parray _bnf_111_t {
-  _bnf_314_t[] : Plongest;
+Pstruct _bnf_292_t {
+  commas_t commas;
+  _bnf_106_t _bnf_106;
+};
+Parray _bnf_105_t {
+  _bnf_292_t[] : Plongest;
 };
 Pstruct digest_response_t {
-  _bnf_104_t _bnf_104;
-  _bnf_111_t _bnf_111;
+  _bnf_98_t _bnf_98;
+  _bnf_105_t _bnf_105;
 };
-Pstruct _bnf_119_t {
+Pstruct _bnf_113_t {
   "Basic";
   ws_t ws;
   basic_credentials_t basic_credentials;
 };
-Pstruct _bnf_120_t {
+Pstruct _bnf_114_t {
   "Digest";
   ws_t ws;
   digest_response_t digest_response;
 };
 Punion credentials_t {
-  _bnf_119_t _bnf_119;
-  _bnf_120_t _bnf_120;
+  _bnf_113_t _bnf_113;
+  _bnf_114_t _bnf_114;
 };
 Pstruct Authorization_t {
   "Authorization";
   ws_t ws;
   ":";
-  ws_t _bnf_315;
+  ws_t _bnf_293;
   credentials_t credentials;
 };
 Pstruct Proxy_Authorization_t {
   "Proxy-Authorization";
   ws_t ws;
   ":";
-  ws_t _bnf_316;
+  ws_t _bnf_294;
   credentials_t credentials;
 };
 Punion request_header_t {
@@ -1879,76 +1837,76 @@ Punion request_header_t {
   TE_t TE;
   User_Agent_t User_Agent;
 };
-Pstruct _bnf_123_t {
+Pstruct _bnf_117_t {
   ":";
   ws_t ws;
   port_t port;
 };
-Punion _bnf_122_t {
-  _bnf_123_t _bnf_123;
-  Pvoid(_bnf_317);
+Punion _bnf_116_t {
+  _bnf_117_t _bnf_117;
+  Pvoid(_bnf_295);
 };
-Pstruct _bnf_121_t {
+Pstruct _bnf_115_t {
   host_t host;
   ws_t ws;
-  _bnf_122_t _bnf_122;
+  _bnf_116_t _bnf_116;
 };
 Punion warn_agent_t {
-  _bnf_121_t _bnf_121;
-  pseudonym_t _bnf_318;
+  _bnf_115_t _bnf_115;
+  pseudonym_t _bnf_296;
 };
-Pstruct _bnf_319_t {
+Pstruct _bnf_297_t {
   ws_t ws;
   DIGIT_t DIGIT;
 };
-Parray _bnf_125_t {
-  _bnf_319_t[2];
+Parray _bnf_119_t {
+  _bnf_297_t[2];
 };
-Pstruct _bnf_124_t {
+Pstruct _bnf_118_t {
   DIGIT_t DIGIT;
-  _bnf_125_t _bnf_125;
+  _bnf_119_t _bnf_119;
 };
 Punion warn_code_t {
-  _bnf_124_t _bnf_124;
-  Pvoid(_bnf_320);
+  _bnf_118_t _bnf_118;
+  Pvoid(_bnf_298);
 };
 Pstruct warn_date_t {
   "\"";
   ws_t ws;
   HTTP_date_t HTTP_date;
-  ws_t _bnf_321;
+  ws_t _bnf_299;
   "\"";
 };
-Pstruct _bnf_127_t {
+Pstruct _bnf_121_t {
   SP_t SP;
   warn_date_t warn_date;
 };
-Punion _bnf_126_t {
-  _bnf_127_t _bnf_127;
-  Pvoid(_bnf_322);
+Punion _bnf_120_t {
+  _bnf_121_t _bnf_121;
+  Pvoid(_bnf_300);
 };
 Pstruct warning_value_t {
   warn_code_t warn_code;
   SP_t SP;
   warn_agent_t warn_agent;
-  SP_t _bnf_323;
+  SP_t _bnf_301;
   warn_text_t warn_text;
-  _bnf_126_t _bnf_126;
+  _bnf_120_t _bnf_120;
 };
-Pstruct _bnf_324_t {
+Pstruct _bnf_302_t {
   commas_t commas;
   warning_value_t warning_value;
 };
-Parray _bnf_128_t {
-  _bnf_324_t[] : Plongest;
+Parray _bnf_122_t {
+  _bnf_302_t[] : Plongest;
 };
 Pstruct Warning_t {
   "Warning";
   ws_t ws;
   ":";
-  ws_t _bnf_325;
+  ws_t _bnf_303;
   warning_value_t warning_value;
-  _bnf_128_t _bnf_128;
+  _bnf_122_t _bnf_122;
 };
 Punion general_header_t {
   Cache_Control_t Cache_Control;
@@ -1961,89 +1919,49 @@ Punion general_header_t {
   Via_t Via;
   Warning_t Warning;
 };
-Punion _bnf_131_t {
+Punion _bnf_124_t {
   general_header_t general_header;
   request_header_t request_header;
   entity_header_t entity_header;
 };
-Punion _bnf_133_t {
-  general_header_t _bnf_326;
-  request_header_t _bnf_327;
-  entity_header_t _bnf_328;
-};
-Pstruct _bnf_329_t {
-  ws_t ws;
-  _bnf_133_t _bnf_133;
-  ws_t _bnf_330;
+Pstruct _bnf_304_t {
+  _bnf_124_t _bnf_124;
   CRLF_t CRLF;
 };
-Parray _bnf_132_t {
-  _bnf_329_t[] : Plongest;
+Parray _bnf_123_t {
+  _bnf_304_t[] : Plongest;
 };
-Pstruct _bnf_130_t {
-  _bnf_131_t _bnf_131;
-  ws_t ws;
-  CRLF_t CRLF;
-  _bnf_132_t _bnf_132;
-};
-Punion _bnf_129_t {
-  _bnf_130_t _bnf_130;
-  Pvoid(_bnf_331);
-};
-Punion _bnf_134_t {
-  message_body_t _bnf_332;
-  Pvoid(_bnf_333);
+Punion _bnf_125_t {
+  message_body_t _bnf_305;
+  Pvoid(_bnf_306);
 };
 Pstruct Request_t {
   Request_Line_t Request_Line;
-  ws_t ws;
-  _bnf_129_t _bnf_129;
-  ws_t _bnf_334;
+  _bnf_123_t _bnf_123;
   CRLF_t CRLF;
-  ws_t _bnf_335;
-  _bnf_134_t _bnf_134;
+  _bnf_125_t _bnf_125;
 };
-Punion _bnf_137_t {
-  general_header_t _bnf_336;
+Punion _bnf_127_t {
+  general_header_t _bnf_307;
   response_header_t response_header;
-  entity_header_t _bnf_337;
+  entity_header_t _bnf_308;
 };
-Punion _bnf_139_t {
-  general_header_t _bnf_338;
-  response_header_t _bnf_339;
-  entity_header_t _bnf_340;
-};
-Pstruct _bnf_341_t {
-  ws_t ws;
-  _bnf_139_t _bnf_139;
-  ws_t _bnf_342;
+Pstruct _bnf_309_t {
+  _bnf_127_t _bnf_127;
   CRLF_t CRLF;
 };
-Parray _bnf_138_t {
-  _bnf_341_t[] : Plongest;
+Parray _bnf_126_t {
+  _bnf_309_t[] : Plongest;
 };
-Pstruct _bnf_136_t {
-  _bnf_137_t _bnf_137;
-  ws_t ws;
-  CRLF_t CRLF;
-  _bnf_138_t _bnf_138;
-};
-Punion _bnf_135_t {
-  _bnf_136_t _bnf_136;
-  Pvoid(_bnf_343);
-};
-Punion _bnf_140_t {
-  message_body_t _bnf_344;
-  Pvoid(_bnf_345);
+Punion _bnf_128_t {
+  message_body_t _bnf_310;
+  Pvoid(_bnf_311);
 };
 Pstruct Response_t {
   Status_Line_t Status_Line;
-  ws_t ws;
-  _bnf_135_t _bnf_135;
-  ws_t _bnf_346;
+  _bnf_126_t _bnf_126;
   CRLF_t CRLF;
-  ws_t _bnf_347;
-  _bnf_140_t _bnf_140;
+  _bnf_128_t _bnf_128;
 };
 Punion HTTP_message_t {
   Request_t Request;
