@@ -61,6 +61,7 @@ int main(int argc, char** argv) {
 	    ai.request.version.minor);
       error(0, "response: %u   contentLength: %u", ai.response, ai.contentLength);
       printf("\n");
+
       if (PDC_ERROR == http_clf_t_acc_add(pdc, &acc, &ed, &ai, 0)) {
 	error(2, "*** http_clt_t_acc_add failed ***");
 	exit(-1);
