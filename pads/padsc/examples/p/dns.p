@@ -457,6 +457,6 @@ Pstruct dns_msg {
    resource_records(:header.arcount:) additional;
 };
 
-Psource Parray dns_msg{
+Psource Parray dns_msg_array {
   dns_msg[];
 }
