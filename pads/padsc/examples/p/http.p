@@ -9,7 +9,7 @@ Ptypedef Pchar CR_t :: CR_t x => { is_CR(x) };
 Pcharclass CR {is_CR};
 #define RE_CR "[[:CR:]]"
 int is_CTL(Pchar x) { return
-  ((0 >= x) && (x <= 31))
+  ((x >= 0) && (x <= 31))
   || (x == 127)
   ;
 };
@@ -85,10 +85,10 @@ Ptypedef Pchar LOALPHA_t :: LOALPHA_t x => { is_LOALPHA(x) };
 Pcharclass LOALPHA {is_LOALPHA};
 #define RE_LOALPHA "[[:LOALPHA:]]"
 int is_NO_WS_CTL(Pchar x) { return
-  ((1 >= x) && (x <= 8))
+  ((x >= 1) && (x <= 8))
   || (x == 11)
   || (x == 12)
-  || ((14 >= x) && (x <= 31))
+  || ((x >= 14) && (x <= 31))
   || (x == 127)
   ;
 };
@@ -100,8 +100,8 @@ Ptypedef Pchar OCTET_t :: OCTET_t x => { is_OCTET(x) };
 Pcharclass OCTET {is_OCTET};
 #define RE_OCTET "[[:OCTET:]]"
 int is_Reason_Phrase(Pchar x) { return
-  ((32 >= x) && (x <= 126))
-  || ((128 >= x) && (x <= 255))
+  ((x >= 32) && (x <= 126))
+  || ((x >= 128) && (x <= 255))
   ;
 };
 Ptypedef Pchar Reason_Phrase_t :: Reason_Phrase_t x => { is_Reason_Phrase(x) };
@@ -114,8 +114,8 @@ Pcharclass SP {is_SP};
 #define RE_LWS "(" RE_CRLF "?(" RE_SP "|" RE_HT ")+)"
 Ptypedef Pstring_ME(:"/" RE_LWS "/":) LWS_t;
 int is_TEXT(Pchar x) { return
-  ((32 >= x) && (x <= 126))
-  || ((128 >= x) && (x <= 255))
+  ((x >= 32) && (x <= 126))
+  || ((x >= 128) && (x <= 255))
   ;
 };
 Ptypedef Pchar TEXT_t :: TEXT_t x => { is_TEXT(x) };
@@ -179,9 +179,9 @@ Ptypedef Pstring_ME(:"/" RE_comment "/":) comment_t;
 #define RE_comment_mailbox "XX"
 Ptypedef Pstring_ME(:"/" RE_comment_mailbox "/":) comment_mailbox_t;
 int is_ctext(Pchar x) { return
-  ((32 >= x) && (x <= 39))
-  || ((42 >= x) && (x <= 126))
-  || ((128 >= x) && (x <= 255))
+  ((x >= 32) && (x <= 39))
+  || ((x >= 42) && (x <= 126))
+  || ((x >= 128) && (x <= 255))
   ;
 };
 Ptypedef Pchar ctext_t :: ctext_t x => { is_ctext(x) };
@@ -189,9 +189,9 @@ Pcharclass ctext {is_ctext};
 #define RE_ctext "[[:ctext:]]"
 int is_ctext_mailbox(Pchar x) { return
   is_NO_WS_CTL(x)
-  || ((33 >= x) && (x <= 39))
-  || ((42 >= x) && (x <= 91))
-  || ((93 >= x) && (x <= 126))
+  || ((x >= 33) && (x <= 39))
+  || ((x >= 42) && (x <= 91))
+  || ((x >= 93) && (x <= 126))
   ;
 };
 Ptypedef Pchar ctext_mailbox_t :: ctext_mailbox_t x => { is_ctext_mailbox(x) };
@@ -223,8 +223,8 @@ Ptypedef Pstring_ME(:"/" RE_IPv4address "/":) IPv4address_t;
 Ptypedef Pstring_ME(:"/" RE_dot_atom_text "/":) dot_atom_text_t;
 int is_dtext(Pchar x) { return
   is_NO_WS_CTL(x)
-  || ((33 >= x) && (x <= 90))
-  || ((94 >= x) && (x <= 126))
+  || ((x >= 33) && (x <= 90))
+  || ((x >= 94) && (x <= 126))
   ;
 };
 Ptypedef Pchar dtext_t :: dtext_t x => { is_dtext(x) };
@@ -319,10 +319,10 @@ Ptypedef Pstring_ME(:"/" RE_atom "/":) atom_t;
 #define RE_dot_atom "(" RE_CFWS "?" RE_dot_atom_text "" RE_CFWS "?)"
 Ptypedef Pstring_ME(:"/" RE_dot_atom "/":) dot_atom_t;
 int is_obs_char(Pchar x) { return
-  ((0 >= x) && (x <= 9))
+  ((x >= 0) && (x <= 9))
   || (x == 11)
   || (x == 12)
-  || ((14 >= x) && (x <= 127))
+  || ((x >= 14) && (x <= 127))
   ;
 };
 Ptypedef Pchar obs_char_t :: obs_char_t x => { is_obs_char(x) };
@@ -341,8 +341,8 @@ Ptypedef Pstring_ME(:"/" RE_primary_tag "/":) primary_tag_t;
 int is_qtext(Pchar x) { return
   is_NO_WS_CTL(x)
   || (x == 33)
-  || ((35 >= x) && (x <= 91))
-  || ((93 >= x) && (x <= 126))
+  || ((x >= 35) && (x <= 91))
+  || ((x >= 93) && (x <= 126))
   ;
 };
 Ptypedef Pchar qtext_t :: qtext_t x => { is_qtext(x) };
@@ -423,15 +423,15 @@ Ptypedef Pstring_ME(:"/" RE_opaque_tag "/":) opaque_tag_t;
 Ptypedef Pstring_ME(:"/" RE_realm_value "/":) realm_value_t;
 int is_token_char(Pchar x) { return
   (x == 33)
-  || ((35 >= x) && (x <= 39))
-  || ((42 >= x) && (x <= 43))
-  || ((45 >= x) && (x <= 46))
-  || ((48 >= x) && (x <= 57))
+  || ((x >= 35) && (x <= 39))
+  || ((x >= 42) && (x <= 43))
+  || ((x >= 45) && (x <= 46))
+  || ((x >= 48) && (x <= 57))
   || (x == 63)
-  || ((65 >= x) && (x <= 90))
-  || ((94 >= x) && (x <= 122))
+  || ((x >= 65) && (x <= 90))
+  || ((x >= 94) && (x <= 122))
   || (x == 124)
-  || ((126 >= x) && (x <= 127))
+  || ((x >= 126) && (x <= 127))
   ;
 };
 Ptypedef Pchar token_char_t :: token_char_t x => { is_token_char(x) };
