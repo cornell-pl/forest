@@ -800,7 +800,7 @@ P_OK;
  *      Otherwise, after each reread we would have to return to the head of the stream, which is
  *      inefficient if the next reread will continue where the previous left off.
  */
-#define SN_ELT_READ_BODY(ty,eltTy,eltPdTy,smartNodeIN,padsIN,infoIN,ST_PARAMS,C_PARAMS)
+#define SN_ELT_READ_BODY(ty,eltTy,eltPdTy,smartNodeIN,padsIN,infoIN,C_PARAMS,ST_PARAMS)
   PDCI_IODISC_2P_CHECKS (#ty "_smartNode_eltRead",(smartNodeIN),(infoIN));
   {
     PDCI_smart_node_t *sn  = (smartNodeIN)->snExt;

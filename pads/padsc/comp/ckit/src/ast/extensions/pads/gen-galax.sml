@@ -716,10 +716,10 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	PT.Call(PL.SN_WRAP_PARAMS, P.zero :: List.map macroRoParam params) 	    
     fun macroWrapParams'(params) =
 	PT.Call(PL.SN_WRAP_PARAMS, P.zero :: List.map PT.Id params) 	    
-    fun macroEltReadBody(ty,eltTy,eltPdTy,smartNode,pads,info,wrapstX,wrapcX) = 
+    fun macroEltReadBody(ty,eltTy,eltPdTy,smartNode,pads,info,wrapcX,wrapstX) = 
 	PT.Expr(PT.Call(PL.SN_ELT_READ_BODY, map PT.Id [ty,eltTy,eltPdTy]
 						 @ map PT.Id [smartNode,pads,info]
-						 @ [wrapstX,wrapcX]))
+						 @ [wrapcX,wrapstX]))
     fun macroEltReadRet() =            			       
 	PT.Call(PL.SN_ELT_READ_RET,[])  
     fun macroEltFreeBody(ty,pads,info) =
@@ -784,7 +784,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 
 	    val bodySs = makeInvisibleDecls([ty,eltTy,eltPdTy],stNames @ cpNames)
 			 @ [macroEltReadBody(ty,eltTy,eltPdTy,smartNode,pads,
-					     info,wrapstX,wrapcX)]  
+					     info,wrapcX,wrapstX)]  
 			 @ [P.returnS (macroEltReadRet())]              
 	in   
 	    P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
@@ -818,7 +818,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	    P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
 	end
 
-      fun makeArrayInfoInitFun(ty,cparams,stparams) =
+      fun makeArrayInfoInitFun(ty,cparams) =
 	let val returnTy = P.ptrPCT PL.smartArrayInfoT
 	    val cnvName = PN.aiInitSuf ty
 	    val paramTys = [padsTy,uintTy]
@@ -913,7 +913,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	   makeEltReadFun(ty, eltTy, eltPdTy, cparams, stparams),
 	   makeEltFreeFun(ty),
 	   makeEltPathWalkFun(ty,eltTy,eltPdTy,eltMaskTy),
-	   makeArrayInfoInitFun(ty,cparams,stparams),
+	   makeArrayInfoInitFun(ty,cparams),
 	   makeInitFun(ty,cparams,stparams),
            makeKthChildFun(ty,eltTy),
            makeKthChildNamedFun(ty),

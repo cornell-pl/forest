@@ -47,7 +47,7 @@ signature GENGALAX = sig
       val makeEltFreeFun :  string -> ParseTree.externalDecl
       val makeEltPathWalkFun : string * string * string * string ->
 			       ParseTree.externalDecl
-      val makeArrayInfoInitFun : string * cparams * stparams -> 
+      val makeArrayInfoInitFun : string * cparams -> 
 				 ParseTree.externalDecl
       val makeInitFun : string * cparams * stparams ->
 			ParseTree.externalDecl

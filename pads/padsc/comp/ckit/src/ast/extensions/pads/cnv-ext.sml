@@ -1994,7 +1994,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  else ()
 		    | _ => (let val modArgs = List.map (PTSub.substExps subList) args
 			    in
-				checkParamTys(name, (lookupTy(getPadsName tyname, readSuf, #readname)), modArgs, 2, 2)
+				checkParamTys(name, (lookupTy(getPadsName tyname, readSuf, #readname)), modArgs, 4, 0)
 			    end)
 
 	      fun manComment (name, comment, expr, pred) =
@@ -2257,7 +2257,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val modPredXOpt = case pred of NONE => NONE
 			             | SOME {predTy, thisVar, pred} => SOME (PTSub.substExp (thisVar, P.starX(PT.Id rep), pred))
 		      fun chk () = 
-			  (checkParamTys(name, baseReadFun, args, 2, 2);
+			  (checkParamTys(name, baseReadFun, args, 4, 0);
 			   case modPredXOpt of NONE => ()
                            | SOME modPredX => 
 			       expEqualTy(modPredX, CTintTys, 				
@@ -3188,7 +3188,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val notFirstElt  = "notFirstElt"				    
 
                  (* -- Check parameters to base type read function *)
-		 val () = checkParamTys(name, elemReadName, args, 2, 2)
+		 val () = checkParamTys(name, elemReadName, args, 4, 0)
                  (* -- Declare top-level variables and initialize them *)
                  val initDecSs =   stdeclSs
 			      @ [P.varDeclS'(PL.locPCT, tloc),
@@ -3896,9 +3896,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val paramNames = [pads, m,pd, rep, locPtr]
 
 			 val formalParams = List.map P.mkParam 
-						     (stparams @ 
-						      (ListPair.zip (paramTys @ cTys ,
-								    paramNames @ cNames )))
+						     ((ListPair.zip (paramTys, paramNames)) @ 
+						      stparams @ 
+						      (ListPair.zip (cTys, cNames )))
 			 val innerInits = ([PT.Expr(PT.Call(PT.Id "PD_COMMON_INIT_NO_ERR", [PT.Id pd])),
 					    PT.Expr(PT.Call(PT.Id "PD_COMMON_READ_INIT", [PT.Id pads,PT.Id pd]))])
 
@@ -3920,11 +3920,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT mPCT,
 					 P.ptrPCT pdPCT, P.ptrPCT canonicalPCT, P.ptrPCT PL.locPCT,
 					 P.ptrPCT elemPdPCT, P.ptrPCT elemCanonicalPCT]
-					@ cTys
 
-			 val paramNames = [pads, m, pd, rep, locPtr, elt_pd, elt_rep] @ cNames 
+			 val paramNames = [pads, m, pd, rep, locPtr, elt_pd, elt_rep]
 
-			 val formalParams = List.map P.mkParam (stparams @ (ListPair.zip (paramTys, paramNames)))
+			 val formalParams = List.map P.mkParam ( (ListPair.zip (paramTys, paramNames)) @
+								stparams @ 
+								(ListPair.zip (cTys, cNames)))
 
 			 val returnTy =  PL.readResPCT
 			 val checkParamsSs = [PL.IODiscChecks3P(PT.String readName, PT.Id m, PT.Id pd, PT.Id rep),
@@ -5225,7 +5226,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
 			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
 			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
-                             val () = checkParamTys(name, readFieldName, modArgs, 2, 2)
+                             val () = checkParamTys(name, readFieldName, modArgs, 4, 0)
 			     val () = pushLocalEnv()
 			     val readCall
 			       = PL.readFunX(readFieldName, PT.Id pads, P.addrX(P.fieldX(m, name)),
@@ -5314,7 +5315,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
 			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
 			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
-			     val () = checkParamTys(name, readFieldName, modArgs, 2, 2)
+			     val () = checkParamTys(name, readFieldName, modArgs, 4, 0)
 			     val () = pushLocalEnv()
 			     val readCall = PL.readFunX(readFieldName, PT.Id pads, P.addrX(P.fieldX(m, name)),
 							modArgs, P.addrX(pdX), P.addrX(repX))
@@ -6242,7 +6243,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val readFieldName = lookupTy(pty, readSuf, #readname)
 			      val repX = structRepX(rep, name, isVirtual)
 			      val modArgs = List.map (PTSub.substExps (!readSubList)) args
-                              val () = checkParamTys(name, readFieldName, modArgs, 2, 2)
+                              val () = checkParamTys(name, readFieldName, modArgs, 4, 0)
 			      val comment = ("Read field '"^name^"'"^ 
 					     (if isEndian then ", doing endian check" else ""))
 			      val commentS = P.mkCommentS (comment)
