@@ -225,49 +225,100 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
   if (bytes == 0) {
     goto at_eor_or_eof_err;
   }
-  if (isspace(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
-    goto invalid_wspace;
-  }
-  while (!(eor|eof)) { /* find a non-space */ 
-    while (isspace(*p1)) { p1++; }
-    if (p1 < end) { break; } 
-    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
-      goto fatal_mb_io_err;
+  switch (*em) {
+  case PDC_Ignore:
+    {
+      /* move beyond anything that looks like an ascii number, return PDC_ERR if none such */
+      if (isspace(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
+	return PDC_ERR;
+      }
+      while (isspace(*p1)) { /* skip spaces, if any */
+	p1++;
+	if (p1 == end) {
+	  if (eor|eof) { return PDC_ERR; } /* did not find a digit */
+	  if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+	    goto fatal_mb_io_err;
+	  }
+	  if (bytes == 0) { return PDC_ERR; } /* all spaces, did not find a digit */
+	}
+      }
+      if ('-' == (*p1) || '+' == (*p1)) { /* skip +/-, if any */
+	p1++;
+	if (p1 == end) {
+	  if (eor|eof) { return PDC_ERR; } /* did not find a digit */
+	  if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+	    goto fatal_mb_io_err;
+	  }
+	  if (bytes == 0) { return PDC_ERR; } /* did not find a digit */
+	}
+      }
+      if (!isdigit(*p1)) {
+	return PDC_ERR; /* did not find a digit */
+      }
+      /* all set: skip digits, move IO cursor, and return PDC_OK */
+      while (isdigit(*p1)) {
+	p1++;
+	if (p1 == end && !(eor|eof)) {
+	  if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+	    goto fatal_mb_io_err;
+	  }
+	  if (bytes == 0) { break; }
+	}
+      }
+      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	goto fatal_forward_err;
+      }
+      ed->errCode = PDC_NO_ERR;
+      return PDC_OK;
     }
-    if (bytes == 0) { /* all spaces! */
-      goto invalid;
+  case PDC_Check:
+  case PDC_CheckAndSet:
+    {
+      if (isspace(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
+	goto invalid_wspace;
+      }
+      while (!(eor|eof)) { /* find a non-space */ 
+	while (isspace(*p1)) { p1++; }
+	if (p1 < end) { break; } 
+	if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+	  goto fatal_mb_io_err;
+	}
+	if (bytes == 0) { /* all spaces! */
+	  goto invalid;
+	}
+      }
+      if (!(eor|eof) && ('-' == (*p1) || '+' == (*p1))) { p1++; }
+      while (!(eor|eof)) { /* find a non-digit */
+	while (isdigit(*p1)) { p1++; }
+	if (p1 < end) { break; }
+	if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
+	  goto fatal_mb_io_err;
+	}
+      }
+      /* Either eor|eof, or found non-digit before end.  Thus, */
+      /* the range [begin, end] is now set up for the strtonum function */
+      tmp = strtonum_fn(begin, &p1, 10);
+      if (p1==0 || p1==begin) {
+	p1 = begin;
+	while (isspace(*p1)) { p1++; }
+	if ('-' == (*p1) || '+' == (*p1)) { p1++; }
+	while (isdigit(*p1)) { p1++; }
+	goto invalid;
+      }
+      if (errno==ERANGE opt_tmp_test) {
+	goto range_err;
+      }
+      /* success */
+      if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	goto fatal_forward_err;
+      }
+      if (res_out && *em == PDC_CheckAndSet) {
+	(*res_out) = (targ_type)tmp;
+      }
+      ed->errCode = PDC_NO_ERR;
+      return PDC_OK;
     }
   }
-  if (!(eor|eof) && ('-' == (*p1) || '+' == (*p1))) { p1++; }
-  while (!(eor|eof)) { /* find a non-digit */
-    while (isdigit(*p1)) { p1++; }
-    if (p1 < end) { break; }
-    if (PDC_ERR == PDCI_IO_morebytes(pdc, &begin, &p1, &p2, &end, &eor, &eof, &bytes)) {
-      goto fatal_mb_io_err;
-    }
-  }
-  /* Either eor|eof, or found non-digit before end.  Thus, */
-  /* the range [begin, end] is now set up for the strtonum function */
-  tmp = strtonum_fn(begin, &p1, 10);
-  if (p1==0 || p1==begin) {
-    p1 = begin;
-    while (isspace(*p1)) { p1++; }
-    if ('-' == (*p1) || '+' == (*p1)) { p1++; }
-    while (isdigit(*p1)) { p1++; }
-    goto invalid;
-  }
-  if (errno==ERANGE opt_tmp_test) {
-    goto range_err;
-  }
-  /* success */
-  if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
-    goto fatal_forward_err;
-  }
-  if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) = (targ_type)tmp;
-  }
-  ed->errCode = PDC_NO_ERR;
-  return PDC_OK;
 
  at_eor_or_eof_err:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
@@ -1476,7 +1527,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.50 2002-11-18 19:32:59 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.51 2002-11-18 19:36:49 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
