@@ -1221,6 +1221,8 @@ Perror_t Pfloat64_acc_report2io  (PDCI_FIRST_ARGS, Pfloat64_acc *a);
 
 #ifdef FOR_CKIT
 Perror_t Ptimestamp_explicit_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
+Perror_t Pdate_explicit_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
+Perror_t Ptime_explicit_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
 Perror_t Ptimestamp_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
 Perror_t Pdate_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
 Perror_t Ptime_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
