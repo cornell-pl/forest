@@ -9,8 +9,13 @@
   $PADS_HOME.
 
   Once you have done the first two steps below, all the build
-  steps can be done with one command,
+  steps can be done with one command.
 
+    * NB: Make sure you do *not* have an 'nmake' program in your path.
+      If you do, you should temporarily modify your PATH environment
+      variable to remove the dir(s) that have nmake.  After performing
+      the above gmake you can restore your PATH to its previous setting.
+  
   > gmake
 
   and all of the test steps can be done with one command,
@@ -96,10 +101,6 @@ STEP 3: BUILD AND INSTALL libast.a
       If you do, you should temporarily modify your PATH environment
       variable to remove the dir(s) that have nmake.  After performing
       this step, restore your PATH to its previous setting.
-  
-    * Make sure the 'gunzip' and 'tar' utilities are in your PATH.
-        + If you do not have 'gunzip', see http://www.gzip.org
-        + If you do not have 'tar', see http://www.gnu.org/software/tar/
   
   Now issue the following gmake command:
   
