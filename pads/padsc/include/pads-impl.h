@@ -221,9 +221,29 @@ Perror_t PDCI_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, si
 			     Pbase_pd *pd, Pint32 *res_out,
 			     Pcharset char_set, const char *whatfn);
 
+Perror_t PDCI_date_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+			   Pbase_pd *pd, Puint32 *d_out,
+			   Pcharset char_set, const char *whatfn);
+
 Perror_t PDCI_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
-			Pbase_pd *pd, Puint32 *res_out,
+			Pbase_pd *pd, Puint32 *d_out,
 			Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_date_ME_read(P_t *pads, const Pbase_m *m, const char *matchRegexp,
+			   Pbase_pd *pd, Puint32 *d_out,
+			   Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_date_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
+			    Pbase_pd *pd, Puint32 *d_out,
+			    Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_date_SE_read(P_t *pads, const Pbase_m *m, const char *stopRegexp,
+			   Pbase_pd *pd, Puint32 *d_out,
+			   Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_date_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
+			    Pbase_pd *pd, Puint32 *d_out,
+			    Pcharset char_set, const char *whatfn);
 
 Perror_t PDCI_ipaddr_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
 			  Pbase_pd *pd, Puint32 *res_out,
@@ -231,7 +251,6 @@ Perror_t PDCI_ipaddr_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
 
 Perror_t PDCI_char_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out,
 			Pcharset char_set, const char *whatfn);
-
 
 Perror_t PDCI_string_FW_read(P_t *pads, const Pbase_m *m, size_t width,
 			     Pbase_pd *pd, Pstring *s_out,
@@ -312,6 +331,7 @@ ssize_t PDCI_char_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
 			    Pchar *c, Pcharset char_set, const char *whatfn);
 ssize_t PDCI_char_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd,
 			    Pchar *c, Pcharset char_set, const char *whatfn);
+
 ssize_t PDCI_string_FW_write2io(P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd,
 				Pstring *s, Pcharset char_set, const char *whatfn);
 ssize_t PDCI_string_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
@@ -329,6 +349,12 @@ ssize_t PDCI_string_write2io_chararg(P_t *pads, Sfio_t *io, Pchar type_arg1, Pba
 ssize_t PDCI_string_write2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 				      Pchar type_arg1, Pbase_pd *pd, Pstring *s,
 				      Pcharset char_set, const char *inv_type, const char *whatfn);
+
+ssize_t PDCI_date_FW_write2io(P_t *pads, Sfio_t *io,  void *type_arg1, size_t width, Pbase_pd *pd,
+			      Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn);
+ssize_t PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, void *type_arg1,
+			       size_t width, Pbase_pd *pd,
+			       Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn);
 
 ssize_t PDCI_date_write2io(P_t *pads, Sfio_t *io,  void *type_arg1, Pbase_pd *pd,
 			   Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn);
@@ -715,14 +741,64 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 #define Pe_countXtoY_read(pads, m, x, y, count_max, pd, res_out) \
   PDCI_countXtoY_read(pads, m, x, y, pd, count_max, res_out, Pcharset_EBCDIC, "Pe_countXtoY_read")
 
-#define Pdate_read(pads, m, stopChar, pd, res_out) \
-  PDCI_date_read(pads, m, stopChar, pd, res_out, PDCI_DEF_CHARSET(pads), "Pdate_read")
+#define Pdate_FW_read(pads, m, width, pd, d_out) \
+  PDCI_date_FW_read(pads, m, width, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_FW_read")
 
-#define Pa_date_read(pads, m, stopChar, pd, res_out) \
-  PDCI_date_read(pads, m, stopChar, pd, res_out, Pcharset_ASCII, "Pa_date_read")
+#define Pa_date_FW_read(pads, m, width, pd, d_out) \
+  PDCI_date_FW_read(pads, m, width, pd, d_out, Pcharset_ASCII, "Pa_date_FW_read")
 
-#define Pe_date_read(pads, m, stopChar, pd, res_out) \
-  PDCI_date_read(pads, m, stopChar, pd, res_out, Pcharset_EBCDIC, "Pe_date_read")
+#define Pe_date_FW_read(pads, m, width, pd, d_out) \
+  PDCI_date_FW_read(pads, m, width, pd, d_out, Pcharset_EBCDIC, "Pe_date_FW_read")
+
+
+#define Pdate_read(pads, m, stopChar, pd, d_out) \
+  PDCI_date_read(pads, m, stopChar, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_read")
+
+#define Pa_date_read(pads, m, stopChar, pd, d_out) \
+  PDCI_date_read(pads, m, stopChar, pd, d_out, Pcharset_ASCII, "Pa_date_read")
+
+#define Pe_date_read(pads, m, stopChar, pd, d_out) \
+  PDCI_date_read(pads, m, stopChar, pd, d_out, Pcharset_EBCDIC, "Pe_date_read")
+
+
+#define Pdate_ME_read(pads, m, matchRegexp, pd, d_out) \
+  PDCI_date_ME_read(pads, m, matchRegexp, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_ME_read")
+
+#define Pa_date_ME_read(pads, m, matchRegexp, pd, d_out) \
+  PDCI_date_ME_read(pads, m, matchRegexp, pd, d_out, Pcharset_ASCII, "Pa_date_ME_read")
+
+#define Pe_date_ME_read(pads, m, matchRegexp, pd, d_out) \
+  PDCI_date_ME_read(pads, m, matchRegexp, pd, d_out, Pcharset_EBCDIC, "Pe_date_ME_read")
+
+
+#define Pdate_CME_read(pads, m, matchRegexp, pd, d_out) \
+  PDCI_date_CME_read(pads, m, matchRegexp, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_CME_read")
+
+#define Pa_date_CME_read(pads, m, matchRegexp, pd, d_out) \
+  PDCI_date_CME_read(pads, m, matchRegexp, pd, d_out, Pcharset_ASCII, "Pa_date_CME_read")
+
+#define Pe_date_CME_read(pads, m, matchRegexp, pd, d_out) \
+  PDCI_date_CME_read(pads, m, matchRegexp, pd, d_out, Pcharset_EBCDIC, "Pe_date_CME_read")
+
+
+#define Pdate_SE_read(pads, m, stopRegexp, pd, d_out) \
+  PDCI_date_SE_read(pads, m, stopRegexp, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_SE_read")
+
+#define Pa_date_SE_read(pads, m, stopRegexp, pd, d_out) \
+  PDCI_date_SE_read(pads, m, stopRegexp, pd, d_out, Pcharset_ASCII, "Pa_date_SE_read")
+
+#define Pe_date_SE_read(pads, m, stopRegexp, pd, d_out) \
+  PDCI_date_SE_read(pads, m, stopRegexp, pd, d_out, Pcharset_EBCDIC, "Pe_date_SE_read")
+
+
+#define Pdate_CSE_read(pads, m, stopRegexp, pd, d_out) \
+  PDCI_date_CSE_read(pads, m, stopRegexp, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_CSE_read")
+
+#define Pa_date_CSE_read(pads, m, stopRegexp, pd, d_out) \
+  PDCI_date_CSE_read(pads, m, stopRegexp, pd, d_out, Pcharset_ASCII, "Pa_date_CSE_read")
+
+#define Pe_date_CSE_read(pads, m, stopRegexp, pd, d_out) \
+  PDCI_date_CSE_read(pads, m, stopRegexp, pd, s_out, Pcharset_EBCDIC, "Pe_date_CSE_read")
 
 #define Pipaddr_read(pads, m, stopChar, pd, res_out) \
   PDCI_ipaddr_read(pads, m, stopChar, pd, res_out, PDCI_DEF_CHARSET(pads), "Pipaddr_read")
@@ -1051,6 +1127,24 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 #define Pe_string_CSE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s) \
   PDCI_string_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, Pcharset_EBCDIC, "Pstring_CSE", "Pe_string_CSE_write2buf")
 
+#define Pdate_FW_write2io(pads, io, width, pd, d) \
+  PDCI_date_FW_write2io(pads, io, width, pd, d, PDCI_DEF_CHARSET(pads), "Pdate_FW_write2io")
+
+#define Pa_date_FW_write2io(pads, io, width, pd, d) \
+  PDCI_date_FW_write2io(pads, io, width, pd, d, Pcharset_ASCII, "Pa_date_FW_write2io")
+
+#define Pe_date_FW_write2io(pads, io, width, pd, d) \
+  PDCI_date_FW_write2io(pads, io, width, pd, d, Pcharset_EBCDIC, "Pe_date_FW_write2io")
+
+#define Pdate_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d) \
+  PDCI_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d, PDCI_DEF_CHARSET(pads), "Pdate_FW_write2buf")
+
+#define Pa_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d) \
+  PDCI_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d, Pcharset_ASCII, "Pa_date_FW_write2buf")
+
+#define Pe_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d) \
+  PDCI_date_FW_write2buf(pads, buf, buf_len, buf_full, width, pd, d, Pcharset_EBCDIC, "Pe_date_FW_write2buf")
+
 #define Pdate_write2io(pads, io, stopChar, pd, d) \
   PDCI_date_write2io_chararg(pads, io, stopChar, pd, d, PDCI_DEF_CHARSET(pads), "Pdate", "Pdate_write2io")
 
@@ -1068,6 +1162,78 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 
 #define Pe_date_write2buf(pads, buf, buf_len, buf_full, stopChar, pd, d) \
   PDCI_date_write2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, Pcharset_EBCDIC, "Pdate", "Pe_date_write2buf")
+
+#define Pdate_ME_write2io(pads, io, matchRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(matchRegexp)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate_ME", "Pdate_ME_write2io")
+
+#define Pa_date_ME_write2io(pads, io, matchRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(matchRegexp)), pd, d, Pcharset_ASCII, "Pdate_ME", "Pa_date_ME_write2io")
+
+#define Pe_date_ME_write2io(pads, io, matchRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(matchRegexp)), pd, d, Pcharset_EBCDIC, "Pdate_ME", "Pe_date_ME_write2io")
+
+#define Pdate_ME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate_ME", "P_ME_date_write2buf")
+
+#define Pa_date_ME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, Pcharset_ASCII, "Pdate_ME", "Pa_date_ME_write2buf")
+
+#define Pe_date_ME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, Pcharset_EBCDIC, "Pdate_ME", "Pe_date_ME_write2buf")
+
+#define Pdate_CME_write2io(pads, io, matchRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(matchRegexp)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate_CME", "Pdate_CME_write2io")
+
+#define Pa_date_CME_write2io(pads, io, matchRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(matchRegexp)), pd, d, Pcharset_ASCII, "Pdate_CME", "Pa_date_CME_write2io")
+
+#define Pe_date_CME_write2io(pads, io, matchRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(matchRegexp)), pd, d, Pcharset_EBCDIC, "Pdate_CME", "Pe_date_CME_write2io")
+
+#define Pdate_CME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate_CME", "P_CME_date_write2buf")
+
+#define Pa_date_CME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, Pcharset_ASCII, "Pdate_CME", "Pa_date_CME_write2buf")
+
+#define Pe_date_CME_write2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, Pcharset_EBCDIC, "Pdate_CME", "Pe_date_CME_write2buf")
+
+#define Pdate_SE_write2io(pads, io, stopRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(stopRegexp)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate_SE", "Pdate_SE_write2io")
+
+#define Pa_date_SE_write2io(pads, io, stopRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(stopRegexp)), pd, d, Pcharset_ASCII, "Pdate_SE", "Pa_date_SE_write2io")
+
+#define Pe_date_SE_write2io(pads, io, stopRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(stopRegexp)), pd, d, Pcharset_EBCDIC, "Pdate_SE", "Pe_date_SE_write2io")
+
+#define Pdate_SE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate_SE", "P_SE_date_write2buf")
+
+#define Pa_date_SE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, Pcharset_ASCII, "Pdate_SE", "Pa_date_SE_write2buf")
+
+#define Pe_date_SE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, Pcharset_EBCDIC, "Pdate_SE", "Pe_date_SE_write2buf")
+
+#define Pdate_CSE_write2io(pads, io, stopRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(stopRegexp)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate_CSE", "Pdate_CSE_write2io")
+
+#define Pa_date_CSE_write2io(pads, io, stopRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(stopRegexp)), pd, d, Pcharset_ASCII, "Pdate_CSE", "Pa_date_CSE_write2io")
+
+#define Pe_date_CSE_write2io(pads, io, stopRegexp, pd, d) \
+  PDCI_date_write2io(pads, io, ((void*)(stopRegexp)), pd, d, Pcharset_EBCDIC, "Pdate_CSE", "Pe_date_CSE_write2io")
+
+#define Pdate_CSE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, PDCI_DEF_CHARSET(pads), "Pdate_CSE", "P_CSE_date_write2buf")
+
+#define Pa_date_CSE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, Pcharset_ASCII, "Pdate_CSE", "Pa_date_CSE_write2buf")
+
+#define Pe_date_CSE_write2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d) \
+  PDCI_date_write2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, Pcharset_EBCDIC, "Pdate_CSE", "Pe_date_CSE_write2buf")
 
 #define Pipaddr_write2io(pads, io, stopChar, pd, d) \
   PDCI_ipaddr_write2io_chararg(pads, io, stopChar, pd, d, PDCI_DEF_CHARSET(pads), "Pipaddr", "Pipaddr_write2io")
@@ -1425,6 +1591,24 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 #define Pe_string_CSE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, s, tag, indent) \
   PDCI_string_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, s, tag, indent, "Pstring_CSE", "Pe_string_CSE_write_xml_2buf")
 
+#define Pdate_FW_write_xml_2io(pads, io, width, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_FW", "Pdate_FW_write_xml_2io")
+
+#define Pa_date_FW_write_xml_2io(pads, io, width, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, pd, d, tag, indent, "Pa_date_FW", "Pa_date_FW_write_xml_2io")
+
+#define Pe_date_FW_write_xml_2io(pads, io, width, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, pd, d, tag, indent, "Pe_date_FW", "Pe_date_FW_write_xml_2io")
+
+#define Pdate_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, pd, d, tag, indent, "Pdate_FW", "Pdate_FW_write_xml_2buf")
+
+#define Pa_date_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, pd, d, tag, indent, "Pa_date_FW", "Pa_date_FW_write_xml_2buf")
+
+#define Pe_date_FW_write_xml_2buf(pads, buf, buf_len, buf_full, width, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, pd, d, tag, indent, "Pe_date_FW", "Pe_date_FW_write_xml_2buf")
+
 #define Pdate_write_xml_2io(pads, io, stopChar, pd, d, tag, indent) \
   PDCI_date_write_xml_2io_chararg(pads, io, stopChar, pd, d, tag, indent, "Pdate", "Pdate_write_xml_2io")
 
@@ -1442,6 +1626,78 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 
 #define Pe_date_write_xml_2buf(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent) \
   PDCI_date_write_xml_2buf_chararg(pads, buf, buf_len, buf_full, stopChar, pd, d, tag, indent, "Pdate", "Pe_date_write_xml_2buf")
+
+#define Pdate_ME_write_xml_2io(pads, io, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, d, tag, indent, "Pdate_ME", "Pdate_ME_write_xml_2io")
+
+#define Pa_date_ME_write_xml_2io(pads, io, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, d, Pcharset_ASCII, tag, indent, "Pdate_ME", "Pa_date_ME_write_xml_2io")
+
+#define Pe_date_ME_write_xml_2io(pads, io, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_ME", "Pe_date_ME_write_xml_2io")
+
+#define Pdate_ME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, tag, indent, "Pdate_ME", "P_ME_date_write_xml_2buf")
+
+#define Pa_date_ME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, tag, indent, "Pdate_ME", "Pa_date_ME_write_xml_2buf")
+
+#define Pe_date_ME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, tag, indent, "Pdate_ME", "Pe_date_ME_write_xml_2buf")
+
+#define Pdate_CME_write_xml_2io(pads, io, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, d, tag, indent, "Pdate_CME", "Pdate_CME_write_xml_2io")
+
+#define Pa_date_CME_write_xml_2io(pads, io, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, d, Pcharset_ASCII, tag, indent, "Pdate_CME", "Pa_date_CME_write_xml_2io")
+
+#define Pe_date_CME_write_xml_2io(pads, io, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(matchRegexp)), pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_CME", "Pe_date_CME_write_xml_2io")
+
+#define Pdate_CME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, tag, indent, "Pdate_CME", "P_CME_date_write_xml_2buf")
+
+#define Pa_date_CME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, tag, indent, "Pdate_CME", "Pa_date_CME_write_xml_2buf")
+
+#define Pe_date_CME_write_xml_2buf(pads, buf, buf_len, buf_full, matchRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(matchRegexp)), pd, d, tag, indent, "Pdate_CME", "Pe_date_CME_write_xml_2buf")
+
+#define Pdate_SE_write_xml_2io(pads, io, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, d, tag, indent, "Pdate_SE", "Pdate_SE_write_xml_2io")
+
+#define Pa_date_SE_write_xml_2io(pads, io, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, d, Pcharset_ASCII, tag, indent, "Pdate_SE", "Pa_date_SE_write_xml_2io")
+
+#define Pe_date_SE_write_xml_2io(pads, io, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_SE", "Pe_date_SE_write_xml_2io")
+
+#define Pdate_SE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, tag, indent, "Pdate_SE", "P_SE_date_write_xml_2buf")
+
+#define Pa_date_SE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, tag, indent, "Pdate_SE", "Pa_date_SE_write_xml_2buf")
+
+#define Pe_date_SE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, tag, indent, "Pdate_SE", "Pe_date_SE_write_xml_2buf")
+
+#define Pdate_CSE_write_xml_2io(pads, io, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, d, tag, indent, "Pdate_CSE", "Pdate_CSE_write_xml_2io")
+
+#define Pa_date_CSE_write_xml_2io(pads, io, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, d, Pcharset_ASCII, tag, indent, "Pdate_CSE", "Pa_date_CSE_write_xml_2io")
+
+#define Pe_date_CSE_write_xml_2io(pads, io, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2io(pads, io, ((void*)(stopRegexp)), pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_CSE", "Pe_date_CSE_write_xml_2io")
+
+#define Pdate_CSE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, tag, indent, "Pdate_CSE", "P_CSE_date_write_xml_2buf")
+
+#define Pa_date_CSE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, tag, indent, "Pdate_CSE", "Pa_date_CSE_write_xml_2buf")
+
+#define Pe_date_CSE_write_xml_2buf(pads, buf, buf_len, buf_full, stopRegexp, pd, d, tag, indent) \
+  PDCI_date_write_xml_2buf(pads, buf, buf_len, buf_full, ((void*)(stopRegexp)), pd, d, tag, indent, "Pdate_CSE", "Pe_date_CSE_write_xml_2buf")
 
 #define Pipaddr_write_xml_2io(pads, io, stopChar, pd, d, tag, indent) \
   PDCI_ipaddr_write_xml_2io_chararg(pads, io, stopChar, pd, d, tag, indent, "Pipaddr", "Pipaddr_write_xml_2io")

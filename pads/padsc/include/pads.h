@@ -202,6 +202,8 @@
  *       4. A void ** arg which is a pointer to a list of pointers to type parameters,
  *          where the list is terminated by a null pointer.  For example,
  *          type Pa_int32_FW(:<width>:) has a single type parameter (width) of type Puint32.
+ *          The void* list passed for Pa_int32_FW would consist of a pointer to a Puint32
+ *          followed by a null pointer.
  *   Args 2-4 use void* types to enable the table to be used with arbitrary types,
  *   including user-defined types.  One must cast these void* args to the appropriate
  *   error pointer types before use -- see the example below.  The function should
@@ -242,6 +244,10 @@
  * N.B. An inv_valfn for a string type should use Pstring_copy, Pstring_cstr_copy,
  * Pstring_share, or Pstring_cstr_share to fill in the value of the Pstring* param.
  *
+ * Replacing the default behavior of fmt2io functions
+ * --------------------------------------------------
+ * XXX_TODOC
+ *
  * The default discipline
  * ----------------------
  * 
@@ -261,6 +267,8 @@
  *    acc_max2rep    10
  *    inv_valfn_map  NULL -- user must created and install a map
  *                           if inv_val functions need to be provided
+ *    fmt_fn_map     NULL -- user must created and install a map
+ *                           if fmt functions need to be provided
  *    io_disc:       NULL -- a default IO discipline (newline-terminated records)
  *                     is installed on P_open if one is not installed beforehand
  *
@@ -417,6 +425,7 @@ typedef enum PerrCode_t_e {
   P_INVALID_REGEXP                =  230,
   P_WIDTH_NOT_AVAILABLE           =  240,
   P_INVALID_DATE                  =  250,
+  P_INVALID_DATE_WIDTH            =  251,
   P_INVALID_IPADDR                =  260
 } PerrCode_t;
 
@@ -1085,6 +1094,14 @@ typedef Perror_t (*Pinv_valfn)(P_t *pads, void *pd_void, void *val_void, void **
 /* Pinv_valfn_map_t: type of an invalid val function map */
 typedef struct Pinv_valfn_map_s Pinv_valfn_map_t;
 
+/* Pfmt_fn: type of a pointer to a fmt function */
+typedef ssize_t (*Pfmt_fn)(P_t *pads, Pbyte *buf, size_t buf_len,
+			   int *buf_full, int *requestedOut, char const *delims,
+			   void *m, void  *pd, void *rep, void **type_args);
+
+/* Pfmt_fn_map_t: type of a fmt function map */
+typedef struct Pfmt_fn_map_s Pfmt_fn_map_t;
+
 /* type Pdisc_t: */
 struct Pdisc_s {
   Pflags_t           version;       /* interface version */
@@ -1104,6 +1121,7 @@ struct Pdisc_s {
   Puint64            acc_max2rep;   /* default maximum number of tracked values to describe in detail in report */
   Pfloat64           acc_pcnt2rep;  /* default maximum percent of values to describe in detail in report */
   Pinv_valfn_map_t  *inv_valfn_map; /* map types to inv_valfn for write functions */
+  Pfmt_fn_map_t     *fmt_fn_map;    /* map types to fmt functions */
   Pio_disc_t        *io_disc;       /* sub-discipline for controlling IO */
 #ifdef USE_GALAX
   PDCI_id_t          id_gen;        /* generator for field ids */
@@ -1233,6 +1251,27 @@ Pinv_valfn P_set_inv_valfn(P_t* pads, Pinv_valfn_map_t *map, const char *type_na
 
 Pinv_valfn_map_t* Pinv_valfn_map_create(P_t *pads);
 Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
+
+/* ================================================================================
+ * TOP-LEVEL fmt_fn FUNCTIONS
+ *
+ * Getting and setting a fmt function in a map:
+ *   P_get_fmt_fn returns the currently installed function for type_name, or NULL if none is installed
+ *
+ *   P_set_fmt_fn returns the previously installed function for type_name, or NULL if none was installed.
+ *   If the fn argument is NULL, any current mapping for type_name is removed.
+ *
+ * Creating and destroying fmt function maps: 
+ *
+ * Pfmt_fn_map_create: create a new, empty map
+ * Pfmt_fn_map_destroy: destroy a map
+ *
+ */
+Pfmt_fn P_get_fmt_fn(P_t* pads, Pfmt_fn_map_t *map, const char *type_name); 
+Pfmt_fn P_set_fmt_fn(P_t* pads, Pfmt_fn_map_t *map, const char *type_name, Pfmt_fn fn);
+
+Pfmt_fn_map_t* Pfmt_fn_map_create(P_t *pads);
+Perror_t       Pfmt_fn_map_destroy(P_t *pads, Pfmt_fn_map_t *map);
 
 /* ================================================================================
  * TOP-LEVEL IO FUNCTIONS
@@ -1962,15 +2001,18 @@ Perror_t Pstring_CSE_read  (P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
  *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
+ * Pdate_FW_read                  Pa_date_FW_read                Pe_date_FW_read
  * Pdate_read                     Pa_date_read                   Pe_date_read
+ * Pdate_ME_read                  Pa_date_ME_read                Pe_date_ME_read
+ * Pdate_CME_read                 Pa_date_CME_read               Pe_date_CME_read
+ * Pdate_SE_read                  Pa_date_SE_read                Pe_date_SE_read
+ * Pdate_CSE_read                 Pa_date_CSE_read               Pe_date_CSE_read
  *
- * Attempts to read a date string and convert it to seconds since the epoch.
- * For the different date formats supported, see the libast tmdate
- * documentation.  These read functions take a stop character, which is always
- * specified in ASCII.  It is converted to EBCDIC and the data is read as
- * EBCDIC chars if the EBCDIC form is used or if the DEFAULT form is used and
- * pads->disc->def_charset is Pcharset_EBCDIC.  Otherwise the data is read as
- * ASCII chars.
+ * Each of the date types corresponds to one of the above string types w.r.t. specifying
+ * the extent of the date field, which occurs as a 'string' in the input.  Once the
+ * string is read, it is converted to a Puint32 representing the date in
+ * seconds since the epoch.  For the different date formats that are supported,
+ * see the libast tmdate documentation.
  *
  * If the current IO cursor position points to a valid date string:
  *   + Sets (*res_out) to the resulting date in seconds since the epoch
@@ -1986,22 +2028,53 @@ Perror_t Pstring_CSE_read  (P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
 #if P_CONFIG_READ_FUNCTIONS > 0
 
 #if P_CONFIG_A_CHAR_STRING > 0
-Perror_t Pa_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
-		      Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pa_date_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pa_date_read    (P_t *pads, const Pbase_m *m, Pchar stopChar,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pa_date_ME_read (P_t *pads, const Pbase_m *m, const char *matchRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pa_date_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pa_date_SE_read (P_t *pads, const Pbase_m *m, const char *stopRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pa_date_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
-Perror_t Pe_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
-		      Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pe_date_FW_read (P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pe_date_read    (P_t *pads, const Pbase_m *m, Pchar stopChar,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pe_date_ME_read (P_t *pads, const Pbase_m *m, const char *matchRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pe_date_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pe_date_SE_read (P_t *pads, const Pbase_m *m, const char *stopRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pe_date_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
-Perror_t Pdate_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
-		      Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pdate_FW_read   (P_t *pads, const Pbase_m *m, size_t width,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pdate_read      (P_t *pads, const Pbase_m *m, Pchar stopChar,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pdate_ME_read   (P_t *pads, const Pbase_m *m, const char *matchRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pdate_CME_read  (P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pdate_SE_read   (P_t *pads, const Pbase_m *m, const char *stopRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pdate_CSE_read  (P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
+			  Pbase_pd *pd, Puint32 *res_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
 #endif /* FOR_CKIT */
+
 
 /* ================================================================================
  * IP ADDRESS READ FUNCTIONS
@@ -3002,36 +3075,138 @@ ssize_t Pstring_CSE_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int 
  * DATE WRITE FUNCTIONS
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pdate_write2io                 Pa_date_write2io               Pe_date_write2io 
+ * Pdate_FW_write2io              Pa_date_FW_write2io            Pe_date_FW_write2io
+ * Pdate_write2io                 Pa_date_write2io               Pe_date_write2io
+ * Pdate_ME_write2io              Pa_date_ME_write2io            Pe_date_ME_write2io
+ * Pdate_CME_write2io             Pa_date_CME_write2io           Pe_date_CME_write2io
+ * Pdate_SE_write2io              Pa_date_SE_write2io            Pe_date_SE_write2io
+ * Pdate_CSE_write2io             Pa_date_CSE_write2io           Pe_date_CSE_write2io
  *
+ * Pdate_FW_write2buf             Pa_date_FW_write2buf           Pe_date_FW_write2buf
  * Pdate_write2buf                Pa_date_write2buf              Pe_date_write2buf
+ * Pdate_ME_write2buf             Pa_date_ME_write2buf           Pe_date_ME_write2buf
+ * Pdate_CME_write2buf            Pa_date_CME_write2buf          Pe_date_CME_write2buf
+ * Pdate_SE_write2buf             Pa_date_SE_write2buf           Pe_date_SE_write2buf
+ * Pdate_CSE_write2buf            Pa_date_CSE_write2buf          Pe_date_CSE_write2buf
  */
 
 #ifdef FOR_CKIT
 #if P_CONFIG_WRITE_FUNCTIONS > 0
 
 #if P_CONFIG_A_CHAR_STRING > 0
-ssize_t Pa_date_write2io (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
-ssize_t Pa_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_FW_write2io  (P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_FW_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      size_t width, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_write2io     (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_write2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_ME_write2io  (P_t *pads, Sfio_t *io, const char *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_ME_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      const char *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_CME_write2io (P_t *pads, Sfio_t *io, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_CME_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_SE_write2io  (P_t *pads, Sfio_t *io, const char *stopRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_SE_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      const char *stopRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_CSE_write2io (P_t *pads, Sfio_t *io, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pa_date_CSE_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d);
 
-ssize_t Pa_date_write_xml_2io (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
-ssize_t Pa_date_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+
+ssize_t Pa_date_FW_write_xml_2io  (P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_FW_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   size_t width, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+
+ssize_t Pa_date_write_xml_2io     (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_write_xml_2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_ME_write_xml_2io  (P_t *pads, Sfio_t *io, const char *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_ME_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   const char *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_CME_write_xml_2io (P_t *pads, Sfio_t *io, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_CME_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_SE_write_xml_2io  (P_t *pads, Sfio_t *io, const char *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_SE_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   const char *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_CSE_write_xml_2io (P_t *pads, Sfio_t *io, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pa_date_CSE_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
-ssize_t Pe_date_write2io (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
-ssize_t Pe_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_FW_write2io  (P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_FW_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      size_t width, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_write2io     (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_write2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_ME_write2io  (P_t *pads, Sfio_t *io, const char *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_ME_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      const char *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_CME_write2io (P_t *pads, Sfio_t *io, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_CME_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_SE_write2io  (P_t *pads, Sfio_t *io, const char *stopRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_SE_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      const char *stopRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_CSE_write2io (P_t *pads, Sfio_t *io, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pe_date_CSE_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d);
 
-ssize_t Pe_date_write_xml_2io (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
-ssize_t Pe_date_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_FW_write_xml_2io  (P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_FW_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   size_t width, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_write_xml_2io     (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_write_xml_2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_ME_write_xml_2io  (P_t *pads, Sfio_t *io, const char *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_ME_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   const char *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_CME_write_xml_2io (P_t *pads, Sfio_t *io, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_CME_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_SE_write_xml_2io  (P_t *pads, Sfio_t *io, const char *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_SE_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   const char *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_CSE_write_xml_2io (P_t *pads, Sfio_t *io, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pe_date_CSE_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
-ssize_t Pdate_write2io   (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
-ssize_t Pdate_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_FW_write2io    (P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_FW_write2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      size_t width, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_write2io       (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_write2buf      (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_ME_write2io    (P_t *pads, Sfio_t *io, const char *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_ME_write2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      const char *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_CME_write2io   (P_t *pads, Sfio_t *io, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_CME_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_SE_write2io    (P_t *pads, Sfio_t *io, const char *stopRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_SE_write2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      const char *stopRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_CSE_write2io   (P_t *pads, Sfio_t *io, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d);
+ssize_t Pdate_CSE_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d);
 
-ssize_t Pdate_write_xml_2io   (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
-ssize_t Pdate_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_FW_write_xml_2io    (P_t *pads, Sfio_t *io, size_t width, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_FW_write_xml_2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   size_t width, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_write_xml_2io       (P_t *pads, Sfio_t *io, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_write_xml_2buf      (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar stopChar, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_ME_write_xml_2io    (P_t *pads, Sfio_t *io, const char *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_ME_write_xml_2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   const char *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_CME_write_xml_2io   (P_t *pads, Sfio_t *io, Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_CME_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   Pregexp_t *matchRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_SE_write_xml_2io    (P_t *pads, Sfio_t *io, const char *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_SE_write_xml_2buf   (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   const char *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_CSE_write_xml_2io   (P_t *pads, Sfio_t *io, Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
+ssize_t Pdate_CSE_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+				   Pregexp_t *stopRegexp, Pbase_pd *pd, Puint32 *d, const char *tag, int indent);
 #endif
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */

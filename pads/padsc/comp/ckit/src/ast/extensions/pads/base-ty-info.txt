@@ -285,9 +285,29 @@ Pe_string_CSE    1      Pstring       Pbase_m    Pbase_pd             -         
 
 # *date: Converts ASCII/EBCDIC char date description into seconds since Midnight Jan 1, 1970.  Based on libast's tmdate function.
 
-Pdate            1      Puint32       Pbase_m    Pbase_pd             -                    -                     -                  V            S           N
-Pa_date          1      Puint32       Pbase_m    Pbase_pd             -                    -                     -                  V            S           N
-Pe_date          1      Puint32       Pbase_m    Pbase_pd             -                    -                     -                  V            S           N
+Pdate            1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pa_date          1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pe_date          1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+
+Pdate_FW         1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               P(p1)        S           N
+Pa_date_FW       1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               P(p1)        S           N
+Pe_date_FW       1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               P(p1)        S           N
+
+Pdate_ME         1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pa_date_ME       1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pe_date_ME       1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+
+Pdate_CME        1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pa_date_CME      1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pe_date_CME      1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+
+Pdate_SE         1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pa_date_SE       1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pe_date_SE       1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+
+Pdate_CSE        1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pa_date_CSE      1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
+Pe_date_CSE      1      Puint32       Pbase_m    Pbase_pd             -                    -                     -               V            S           N
 
 # *ipaddr: Converts ASCII/EBCDIC numeric IP address (dotted form) into a Puint32.  Based on libast's strtoip4 function.
 

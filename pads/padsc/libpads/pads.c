@@ -56,6 +56,25 @@ do {
   } while (0)
 /* END_MACRO */
 
+#define PDCI_FINISH_DATE_READ
+do {
+  time_t       tm;
+  Pbyte       *tmp;
+  PDCI_STR_PRESERVE(s); /* this ensures s.str is null terminated */
+  tm = tmdate(s->str, (char**)&tmp, NiL);
+  if (!tmp || (char*)tmp - s->str != s->len) {
+    PDCI_READFN_SET_LOC_BE(-(s->len), 0);
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_DATE);
+  }
+  (*res_out) = tm;
+  P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %lu)",
+	   whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (unsigned long)tm);
+  return P_OK;
+} while (0);
+ fatal_alloc_err:
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR)
+/* END_MACRO */
+
 /*
  * Starting alloc size for strings, even if initial string is smaller;
  * saves on later alloc calls when Pstring field is re-used many
@@ -6129,7 +6148,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.163 2004-09-01 14:31:39 yitzhak Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.164 2004-09-09 03:33:34 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6544,6 +6563,7 @@ Pdisc_t Pdefault_disc = {
   10,   /* default max2rep   */
   100,  /* default pcnt2rep  */
   0,    /* by default, no inv_valfn map */
+  0,    /* by default, no fmt_fn map */
   0     /* a default IO discipline is installed on P_open */
 };
 
@@ -7850,6 +7870,7 @@ const char *P_errCode2str(PerrCode_t code)
   case P_INVALID_REGEXP: return "P_INVALID_REGEXP";
   case P_WIDTH_NOT_AVAILABLE: return "P_WIDTH_NOT_AVAILABLE";
   case P_INVALID_DATE: return "P_INVALID_DATE";
+  case P_INVALID_DATE_WIDTH: return "P_INVALID_DATE_WIDTH";
   case P_INVALID_IPADDR: return "P_INVALID_IPADDR";
   default: break;
   }
@@ -8052,6 +8073,9 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
       break;
     case P_INVALID_DATE:
       msg = "Invalid date";
+      break;
+    case P_INVALID_DATE_WIDTH:
+      msg = "Invalid date width";
       break;
     case P_INVALID_IPADDR:
       msg = "Invalid IP address";
@@ -9719,14 +9743,26 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t coun
 }
 
 Perror_t
+PDCI_date_FW_read(P_t *pads, const Pbase_m *m, size_t width,
+		  Pbase_pd *pd, Puint32 *res_out,
+		  Pcharset char_set, const char *whatfn)
+{
+  Pstring     *s = &pads->stmp1;
+  PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
+  P_TRACE2(pads->disc, "PDCI_date_FW_read called, args: char_set %s, whatfn = %s",
+	   Pcharset2str(char_set), whatfn);
+  /* Following call does a Pbase_pd_init_no_err(pd) */
+  if (P_ERR == PDCI_string_FW_read(pads, m, width, pd, s, char_set, whatfn)) {
+    return P_ERR;
+  }
+  PDCI_FINISH_DATE_READ;
+}
+
+Perror_t
 PDCI_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
 	       Pbase_pd *pd, Puint32 *res_out, Pcharset char_set, const char *whatfn)
 {
   Pstring     *s = &pads->stmp1;
-  time_t       tm;
-  Pbyte       *tmp;
-  size_t       width;
-
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
   P_TRACE3(pads->disc, "PDCI_date_read called, args: stopChar %s char_set %s, whatfn = %s",
 	   P_qfmt_char(stopChar), Pcharset2str(char_set), whatfn);
@@ -9734,20 +9770,71 @@ PDCI_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
   if (P_ERR == PDCI_string_read(pads, m, stopChar, pd, s, char_set, whatfn)) {
     return P_ERR;
   }
-  PDCI_STR_PRESERVE(s); /* this ensures s.str is null terminated */
-  width = s->len;
-  tm = tmdate(s->str, (char**)&tmp, NiL);
-  if (!tmp || (char*)tmp - s->str != width) {
-    PDCI_READFN_SET_LOC_BE(-width, 0);
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_DATE);
-  }
-  (*res_out) = tm;
-  P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %lu)",
-	   whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (unsigned long)tm);
-  return P_OK;
+  PDCI_FINISH_DATE_READ;
+}
 
- fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
+Perror_t
+PDCI_date_ME_read(P_t *pads, const Pbase_m *m, const char *matchRegexp,
+		  Pbase_pd *pd, Puint32 *res_out,
+		  Pcharset char_set, const char *whatfn)
+{
+  Pstring     *s = &pads->stmp1;
+  PDCI_IODISC_4P_CHECKS(whatfn, m, matchRegexp, pd, res_out);
+  P_TRACE2(pads->disc, "PDCI_date_ME_read called, args: char_set %s, whatfn = %s",
+	   Pcharset2str(char_set), whatfn);
+  /* Following call does a Pbase_pd_init_no_err(pd) */
+  if (P_ERR == PDCI_string_ME_read(pads, m, matchRegexp, pd, s, char_set, whatfn)) {
+    return P_ERR;
+  }
+  PDCI_FINISH_DATE_READ;
+}
+
+Perror_t
+PDCI_date_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
+		   Pbase_pd *pd, Puint32 *res_out,
+		   Pcharset char_set, const char *whatfn)
+{
+  Pstring     *s = &pads->stmp1;
+  PDCI_IODISC_4P_CHECKS(whatfn, m, matchRegexp, pd, res_out);
+  P_TRACE2(pads->disc, "PDCI_date_CME_read called, args: char_set %s, whatfn = %s",
+	   Pcharset2str(char_set), whatfn);
+  /* Following call does a Pbase_pd_init_no_err(pd) */
+  if (P_ERR == PDCI_string_CME_read(pads, m, matchRegexp, pd, s, char_set, whatfn)) {
+    return P_ERR;
+  }
+  PDCI_FINISH_DATE_READ;
+}
+
+Perror_t
+PDCI_date_SE_read(P_t *pads, const Pbase_m *m, const char *stopRegexp,
+		  Pbase_pd *pd, Puint32 *res_out,
+		  Pcharset char_set, const char *whatfn)
+{
+  Pstring     *s = &pads->stmp1;
+  PDCI_IODISC_4P_CHECKS(whatfn, m, stopRegexp, pd, res_out);
+  P_TRACE2(pads->disc, "PDCI_date_SE_read called, args: char_set %s, whatfn = %s",
+	   Pcharset2str(char_set), whatfn);
+  /* Following call does a Pbase_pd_init_no_err(pd) */
+  if (P_ERR == PDCI_string_SE_read(pads, m, stopRegexp, pd, s, char_set, whatfn)) {
+    return P_ERR;
+  }
+  PDCI_FINISH_DATE_READ;
+}
+
+Perror_t
+PDCI_date_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
+		   Pbase_pd *pd, Puint32 *res_out,
+		   Pcharset char_set, const char *whatfn)
+{
+  Pstring     *s = &pads->stmp1;
+  PDCI_IODISC_4P_CHECKS(whatfn, m, stopRegexp, pd, res_out);
+  P_TRACE2(pads->disc, "PDCI_date_CSE_read called, args: char_set %s, whatfn = %s",
+	   Pcharset2str(char_set), whatfn);
+  /* Following call does a Pbase_pd_init_no_err(pd) */
+  if (P_ERR == PDCI_string_CSE_read(pads, m, stopRegexp, pd, s, char_set, whatfn)) {
+    return P_ERR;
+  }
+  PDCI_FINISH_DATE_READ;
 }
 
 Perror_t
@@ -10871,6 +10958,149 @@ PDCI_string_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
     }
   }
   PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%s", P_fmt_str(s));
+}
+
+ssize_t
+PDCI_date_FW_write2io(P_t *pads, Sfio_t *io, void *type_arg1, size_t width, Pbase_pd *pd,
+		      Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn)
+{
+  ssize_t      n;
+  Pstring      s;
+  Pstring     *tmp_s = &s;
+  Pinv_valfn   fn;
+  void        *type_args[2];
+  Pbyte        space;
+
+  PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
+  P_TRACE2(pads->disc, "PDCI_date_write2io args: char_set = %s, whatfn = %s",
+	     Pcharset2str(char_set), whatfn);
+  if (pd->errCode != P_NO_ERR) {
+    fn = PDCI_GET_INV_VALFN(pads, inv_type);
+    type_args[0] = type_arg1;
+    type_args[1] = 0;
+    if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
+      if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {
+	(*d) = 0;
+      }
+    }
+  }
+  s.str = fmttime("%K", (time_t)(*d));
+  s.len = strlen(s.str);
+  if (tmp_s->len > 8 && tmp_s->len > width) {
+    tmp_s->len -= 8; /* remove +%H:%M:%S */
+  }
+  if (tmp_s->len > width) { /* %Y-%m-%d does not fit in width, give up */
+    PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_DATE_WIDTH, whatfn, 0);
+    return -1;
+  }
+  switch (char_set)
+    {
+    case Pcharset_ASCII:
+      space = P_ASCII_SPACE;
+      break;
+    case Pcharset_EBCDIC:
+      space = P_EBCDIC_SPACE;
+      tmp_s = &pads->stmp1;
+      PDCI_A2E_STR_CPY(tmp_s, s.str, s.len);
+      break;
+    default:
+      goto invalid_charset;
+    }
+  n = sfwrite(io, (Void_t*)tmp_s->str, tmp_s->len);
+  if (n != tmp_s->len) {
+    P_WARN1(pads->disc, "%s: low-level sfwrite failure", whatfn);
+    if (n > 0) {
+      /* XXX_TODO try to back up ??? */
+    }
+    return -1;
+  }
+  while (n < width) {
+    if (-1 == sfputc(io, space)) {
+      P_WARN1(pads->disc, "%s: low-level sfputc failure", whatfn);
+      if (n > 0) {
+	/* XXX_TODO try to back up ??? */
+      }
+      return -1;
+    }
+    n++;
+  }
+  return n;
+
+ invalid_charset:
+  PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_CHARSET, whatfn, 0);
+  return -1;
+
+ fatal_alloc_err:
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_ALLOC_ERR, whatfn, "Memory alloc error");
+  return -1;
+}
+
+ssize_t
+PDCI_date_FW_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, void *type_arg1,
+		       size_t width, Pbase_pd *pd,
+		       Puint32 *d, Pcharset char_set, const char *inv_type, const char *whatfn)
+{
+  Pstring      s;
+  Pstring     *tmp_s = &s;
+  Pinv_valfn   fn;
+  void        *type_args[2];
+  Pbyte       *buf2, *buf_end;
+  Pbyte        space;
+
+  PDCI_DISC_3P_CHECKS_RET_SSIZE(whatfn, buf, buf_full, d);
+  P_TRACE2(pads->disc, "PDCI_date_FW_write2buf args: char_set = %s, whatfn = %s",
+	     Pcharset2str(char_set), whatfn);
+  if (pd->errCode != P_NO_ERR) {
+    fn = PDCI_GET_INV_VALFN(pads, inv_type);
+    type_args[0] = type_arg1;
+    type_args[1] = 0;
+    if (!fn || (P_ERR == fn(pads, (void*)pd, (void*)d, type_args))) {
+      if (pd->errCode != P_USER_CONSTRAINT_VIOLATION) {
+	(*d) = 0;
+      }
+    }
+  }
+  s.str = fmttime("%K", (time_t)(*d));
+  s.len = strlen(s.str);
+  if (tmp_s->len > 8 && tmp_s->len > width) {
+    tmp_s->len -= 8; /* remove +%H:%M:%S */
+  }
+  if (tmp_s->len > width) { /* %Y-%m-%d does not fit in width, give up */
+    PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_DATE_WIDTH, whatfn, 0);
+    return -1;
+  }
+  if (width > buf_len) {
+    (*buf_full) = 1;
+    return -1;
+  }
+  switch (char_set)
+    {
+    case Pcharset_ASCII:
+      space = P_ASCII_SPACE;
+      break;
+    case Pcharset_EBCDIC:
+      space = P_EBCDIC_SPACE;
+      tmp_s = &pads->stmp1;
+      PDCI_A2E_STR_CPY(tmp_s, s.str, s.len);
+      break;
+    default:
+      goto invalid_charset;
+    }
+  memcpy(buf, tmp_s->str, tmp_s->len);
+  buf2 = buf + tmp_s->len;
+  buf_end = buf + width;
+  while (buf2 < buf_end) {
+    *buf2++ = space;
+  }
+  return width;
+
+ invalid_charset:
+  PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_CHARSET, whatfn, 0);
+  return -1;
+
+ fatal_alloc_err:
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_ALLOC_ERR, whatfn, "Memory alloc error");
+  return -1;
 }
 
 ssize_t
