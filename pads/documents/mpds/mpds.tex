@@ -9,7 +9,7 @@
 \setlength{\evensidemargin}{0in}
 \setlength{\parskip}{5pt}
 
-\title{\vskip -1in \pads{}: Processing Arbitrary Data Streams}
+\title{\vskip -.5in \pads{}: Processing Arbitrary Data Streams}
 \date{\today}
 \author{
   Kathleen Fisher\\
@@ -25,13 +25,15 @@
 
 \maketitle
 \thispagestyle{empty}
-
+\newcommand{\smallersp}{\vskip -2ex}
+\newcommand{\smallerend}{\vskip -5ex}
 \section{Introduction}
+\smallersp{}
 Transactional data streams, such as sequences of stock-market buy/sell orders,
 credit-card purchase records, web server entries, and electronic fund
 transfer orders, can be mined very profitably.  As an example,
-researchers at AT\&T have extracted information from streams of
-call-detail records to significant effect~\cite{kdd98,kdd99,kdd00}.   
+researchers at AT\&T have built customer profiles from streams of
+call-detail records to significant financial effect~\cite{kdd98,kdd99,kdd00}.   
 
 Often such streams are high-volume: AT\&T's call-detail stream contains
 roughly 300~million calls per day requiring approximately 7GBs of
@@ -61,7 +63,9 @@ describe the data feeds we see at AT\&T in practice, including ASCII,
 binary, and mixed data formats.  From \padsl{} we generate a tunable \C{}
 library with functions for parsing, manipulating, and summarizing the data.  
 
+\smallerend{}
 \section{\pads{} language}
+\smallersp
 Intuitively, a \padsl{} description specifies complete information
 about the physical layout and semantic constraints for the associated
 data stream.  Most type declarations in \padsl{} are analogous to type
@@ -77,13 +81,14 @@ record-like structures, alternatives, and sequences, respectively.
 Each of these
 types can have an associated predicate that indicates whether a
 value calculated from the physical specification is indeed a legal
-value for the type.  For example, the predicate might require that two
-fields of a 
-\kw{pstruct} are related via a particular function or that the elements
-of a sequence are in increasing order.  \padsl{} \kw{typedef}s can be used
+value for the type.  For example, a predicate might require that two
+fields of a \kw{pstruct} are related or that the elements
+of a sequence are in increasing order.  Programmers can specify such
+predicates using \padsl{} expressions or functions.
+\padsl{} \kw{typedef}s can be used
 to define new types that add further constraints to existing types.
 
-In addition, each of these types can be parameterized by values.
+In addition, \padsl{} types can be parameterized by values.
 This mechanism
 serves both to reduce the number of base types and to permit the
 format of later portions of the data to depend upon earlier portions.
@@ -95,11 +100,13 @@ describes an ASCII string terminated by a space.  Parameters can be
 used with compound types to specify the size of an array or which
 branch of a union should be taken.
 
-As an example, consider the common log format for web server logs.  A
+As an example, consider the common log format for Web server logs.  A
 typical record looks like the following:
 \begin{verbatim}
 207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
 \end{verbatim}
+
+\noindent
 recording the IP address of the requester; either a dash or the owner
 of the TCP session; either a dash or the login of the requester; the
 date; the actual request, which consists of the HTTP method, the
@@ -125,7 +132,9 @@ The \cd{version} field has a constraint predicate \cd{checkVersion}
 which ensures that obsolete HTTP methods \cd{LINK} and \cd{UNLINK} 
 are only used with HTTP version \cd{1.0}.
 
+\smallerend{}
 \section{Generated library}
+\smallersp
 From each type in a \padsl{} description, we generate C declarations for
 (1) an in-memory representation, 
 (2) a {\em checkset}\/-mask, which allows users to specify 
@@ -134,21 +143,26 @@ which portions of the data are relevant to their applications,
 semantic errors detected during parsing, 
 (4) a parse function, and 
 (5) utility functions.
-The parse function takes as arguments  pointers to a checkset-mask, an
-in-memory representation, and an
-error-description.  
-The generated library maintains the invariant that 
-if the checkset-mask requests that a data item be verified and set, 
-and if the error description indicates no
-error, then the in-memory representation satisfies the semantic
-constraints on the data. 
+The parse function takes as arguments pointers to a checkset-mask, an
+in-memory representation, and an error-description.  The generated
+library maintains the invariant that if the checkset-mask requests
+that a data item be verified and set, and if the error description
+indicates no error, then the in-memory representation satisfies the
+semantic constraints on the data.
 
-The checkset-mask allows the user to specify with
-fine granularity which constraints the parser should check and which
-portions of the in-memory representation it should fill in.  This
-control allows the description-writer to specify all known constraints
-about the data without worrying about the run-time cost of verifying
-potentially expensive constraints for time-critical applications.
+The checkset-mask allows the user to specify with fine granularity
+which constraints the parser should check and which portions of the
+in-memory representation it should fill in.  This control allows the
+description-writer to specify all known constraints about the data
+without worrying about the run-time cost of verifying potentially
+expensive constraints for time-critical applications.
+
+Appropriate error-handling can be as important as processing
+error-free data.  The error descriptor marks which portions of the
+data contain errors and characterizes the detected errors.
+Depending upon the nature of the errors and the desired application,
+programmers can take the appropriate action: halting the program,
+discarding parts of the data, or repairing the errors.
 
 By supporting multiple entry-points, we accommodate larger-scale data.
 For a small file, programmers can define a \padsl{} type that describes
@@ -157,7 +171,9 @@ file with one call.  For larger-scale data, programmers can sequence
 calls to parsing functions that read manageable portions of the file,
 \eg{}, reading a record at a time in a loop.
 
+\smallerend{}
 \section{Related work}
+\smallersp
 There are many tools for describing data formats. For example,
 \textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl} are both
 systems for declaratively describing data and then generating
@@ -174,7 +190,9 @@ data~\cite{sigcomm00,erlang-bit-syntax,gpce02}, motivated by parsing
 work, these systems only handle binary data and assume the data is
 error-free or halt parsing if an error is detected.  
 
+\smallerend{}
 \section{Conclusion}
+\smallersp
 Source code for \pads{} will be available for download shortly with
 a non-commercial use license from: 
 \begin{centercode}
