@@ -14,12 +14,12 @@ Punion clihost_t {
 Ptypedef Pchar unknown_t : unknown_t x => { x == '-'};
 
 Punion auth_id_t {
-  unknown_t unauthorized;                       /- non-authenticated http session
-  Pstring(:' ':) id;                           /- login supplied during authentication
+  unknown_t unauthorized;         /- non-authenticated http session
+  Pstring(:' ':) id;              /- login supplied during authentication
 };
 
 Punion contentOpt_t {
-  Puint32 len;                                 /- length available
+  Puint32 len;                    /- length available
   unknown_t unavailable;
 };
 
@@ -30,11 +30,7 @@ Pstruct http_v_t {
 };
 
 Penum http_method_t {
-    GET, 
-    PUT, 
-    POST, 
-    HEAD, 
-    DELETE, 
+    GET,     PUT,     POST,     HEAD,     DELETE, 
     LINK,        /- Unused after http 1.1
     UNLINK       /- Unused after http 1.1
 };

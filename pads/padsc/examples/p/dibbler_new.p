@@ -1,7 +1,10 @@
-Punion dib_pn {
-  Puint64           yesPN;
-  "no_TN";
-  Pcompute Puint32  emptyPN = 0;
+/* add these as a Pase base type */
+Ptypedef Puint32 zip_t;
+Ptypedef Puint64 pn_t;
+
+Precord Pstruct summary_header {
+  "0|";
+  Puint32       tstamp;
 };
 
 Pstruct no_ramp {
@@ -10,48 +13,19 @@ Pstruct no_ramp {
 };
 
 Punion dib_ramp {
-  Puint64  yesRamp;
-  Pint64   negRamp;
-  no_ramp  noRamp;
+  Puint64  ramp;
+  no_ramp  genRamp;
 };
 
-Pstruct event {
-  Pstring(:'|':) state;   '|';
-  Puint32        tstamp;  
-};
-
-Ptypedef Pchar zipSep_t : zipSep_t x => {x == '-' || x == '/' || x == ' '};
-
-Pstruct extended_zip{
-  Puint32 zip;
-  zipSep_t sep;
-  Puint32 suffix;
-};
-
-Punion zip_code_t{
-  extended_zip extendedZip;
-  Puint32      smallZip;
-  Puint64      largeZip;
-  Pcompute Pint32 defZip = 0;    
-};
-
-Precord Pstruct out_sum_header {
-  "0|";
-  Puint32       tstamp;
-};
-Parray eventSeq {
-  event [] : Psep('|');
-};
-
-Pstruct header {
+Pstruct order_header {
        Puint32             order_num;
  '|';  Puint32             att_order_num;
  '|';  Puint32             ord_version;
- '|';  dib_pn              servicen;
- '|';  dib_pn              billing_tn;
- '|';  dib_pn              nlp_service_tn;
- '|';  dib_pn              nlp_billing_tn;
- '|';  zip_code_t          zip_code;
+ '|';  Popt pn_t           service_tn;
+ '|';  Popt pn_t           billing_tn;
+ '|';  Popt pn_t           nlp_service_tn;
+ '|';  Popt pn_t           nlp_billing_tn;
+ '|';  Popt zip_t          zip_code;
  '|';  dib_ramp            ramp;
  '|';  Pstring(:'|':)      unknown1;
  '|';  Puint32             order_type;
@@ -60,13 +34,29 @@ Pstruct header {
  '|';
 };
 
+Pstruct event {
+  Pstring(:'|':) state;   '|';
+  Puint32        tstamp;  
+};
+
+Parray eventSeq {
+  event [] : Psep('|');
+};
+
+
 Precord Pstruct entry {
-  header           h;
+  order_header     h;
   eventSeq         events;
 };
 
-Psource Parray entries_t {
- entry[];
+Parray entries_t {
+  entry[];
 }
+
+Psource Pstruct out_sum{
+  summary_header h;
+  entries_t      es;
+}
+
 
 
