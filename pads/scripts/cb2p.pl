@@ -3,21 +3,22 @@
 use File::Basename;
 
 # hash tables
+my %controls_array = ();
 my %orig_ids = ();
 my %map_id = ();
-my %alt_ids = ();
+my %first_alt = ();
+my %last_alt = ();
 my %aux_arrays = ();
 my %field_ids = ();
-my %fieldgen = ();
-my %altnm = ();
+# my %fieldgen = ();
 my %arraynm = ();
 my %array_generated = ();
 my %elt_type = ();
 my %arr_count = ();
 my %is_str = ();
 my %redef = ();
-my %dlengths = ();
-my %dtylengths = ();
+my %dfieldlength = ();
+my %dtylength = ();
 
 # arrays
 my @lines;
@@ -30,13 +31,15 @@ my @arrays;
 my @dbytes;
 
 # scalars
+my $dbg = 1;
 my $nst = 0;
 my $altctr = 1;
 my $level = 1;
 my $get_top_id = 1;
 my ($id, $popid, $id1, $id2, $line, $lineno, $the_rest);
 my ($max, $array_param, $is_struct, $ty, $dlen);
-my ($tmp, $root, $field, $def);
+my ($tmp, $the_alt, $field, $def);
+my ($targetid, $parentid);
 $lev[$nst] = -99;
 
 goto usage if ($#ARGV != 1);
@@ -85,6 +88,7 @@ foreach $line (@lines) {
     $orig_ids{$id1}++;
   }
 }
+
 foreach $line (@lines) {
   $_ = $line;
   if (/^(\d+) [-]?\d+ ((\S+)_\d+) /) {
@@ -93,8 +97,9 @@ foreach $line (@lines) {
       $map_id{$id2} = $id1;
     } else { # more than one, use lineno
       $map_id{$id2} = $id1 . "_ln_$lineno";
-      print "XXX_REMOVE map_id{$id2} = $map_id{$id2}\n";
+      print "XXX_REMOVE map_id{$id2} = $map_id{$id2}\n" if ($dbg);
     }
+    $is_alt{$map_id{$id2}} = 0;
   }
 }
 
@@ -104,20 +109,26 @@ foreach $line (@lines) {
     ($lineno, $id1, $id2) = ($1, $2, $3);
     $id1 = $map_id{$id1};
     $id2 = $map_id{$id2};
-    if (defined($redef{$id2})) {
-      $root = $redef{$id1} = $redef{$id2};
-    } else {
-      $root = $redef{$id1} = $id2;
+    if (!defined($redef{$id2})) {
+      # found a new alt
+      $the_alt = sprintf("alt_%d", $altctr++);
+      $is_alt{$the_alt} = 1;
+      $redef{$id2} = $the_alt;
+      $first_alt{$the_alt} = $id2;
+    } else { # add to existing ALT chain
+      $the_alt = $redef{$id2};
     }
-    if (defined($alt_ids{$root})) {
-      $alt_ids{$root} .= "|$id1";
-    } else {
-      $alt_ids{$root} .= "$root|$id1";
-    }
-    print "XXX_REMOVE Redefine:  $id1 is an alternate for previously-defined $id2\n";
-    print "XXX_REMOVE  with root $root current alternatives: $alt_ids{$root}\n";
+    $last_alt{$the_alt} = $id1;
+    $redef{$id1} = $the_alt;
+    print "XXX_REMOVE Redefine:  $id1 is an alternate for previously-defined $id2, alt = $the_alt\n" if ($dbg);
+  }
+  if (/\d+[!]\d+[!](\S+) /) {
+    $id1 = $1;
+    $controls_array{$id1} = 1;
+    print "XXX_REMOVE controls_array{$id1} = 1\n" if ($dbg);
   }
 }
+
 foreach $line (@lines) {
   $_ = $line;
   if (/^(\d+) r (\S+) (\S+)/) {
@@ -127,53 +138,61 @@ foreach $line (@lines) {
     ($lineno, $level, $id1, $the_rest) = ($1, $2, $3, $4);
     $id1 = $map_id{$id1};
     if ($level <= $lev[$nst]) {
-      print "XXX_REMOVE Changing from level $lev[$nst] to final level $level -- popping levels\n";
+      print "XXX_REMOVE Changing from level $lev[$nst] to final level $level -- popping levels\n" if ($dbg);
       while ($nst && $level <= $lev[$nst]) {
 	$popid = $id[$nst];
-	print "XXX_REMOVE -- popping nst $nst (lev $lev[$nst], id $popid, rest $rest[$nst])\n";
+	print "XXX_REMOVE -- popping nst $nst (lev $lev[$nst], id $popid, rest $rest[$nst])\n" if ($dbg);
 	if ($nst > 1) {
 	  $parentid = $id[$nst-1];
+	  $targetid = $parentid;
+	  if (defined($redef{$popid})) {
+	    $targetid = $redef{$popid};
+	  }
 	  if ($rest[$nst-1] !~ /none/) {
 	    die("something is wrong, parent is not structured");
 	  }
-	  # parent is a struct or alternate, add a field and possibly an array declaration
+	  # parent is a struct, add a field and possibly an array declaration
 	  ($max, $array_param, $is_struct, $ty, $dlen) = &eval_ty($popid, $rest[$nst]);
-	  print "XXX_REMOVE popid $popid max is $max\n";
+	  print "XXX_REMOVE popid $popid max is $max\n" if ($dbg);
 	  if ($max > 1) {
 	    &add_array($ty);
 	    $ty = $arraynm{$ty};
-	    $aux_arrays{$parentid} .= "$ty#";
-	    print "XXX_REMOVE aux_arrays{$parentid} now = $aux_arrays{$parentid}\n";
+	    $aux_arrays{$targetid} .= "$ty#";
+	    print "XXX_REMOVE aux_arrays{$targetid} now = $aux_arrays{$targetid}\n" if ($dbg);
 	    # final ty for array case
 	    $ty = sprintf("%s(:%s:)", $ty, $array_param);
 	  }			# else ty is OK as-is
-	  $field = sprintf("    %-40s %25s // Field length:  %4s\n", $ty, $popid . ";", $dlengths{$popid});
-	  $fieldgen{$popid} = $field;
-	  $field_ids{$parentid} .= "$popid#";
+	  $fieldty{$popid} = $ty;
+	  # $field = sprintf("    %-40s %25s // Field length:  %4s\n", $ty, $popid . ";", $dfieldlength{$popid});
+	  # $fieldgen{$popid} = $field;
+	  $field_ids{$targetid} .= "$popid#";
+	  if ($first_alt{$targetid} eq $popid) {
+	    $ty = $targetid . "_t";
+	    $fieldty{$targetid} = $ty;
+	    # $field = sprintf("    %-40s %25s // Field length:  %4s\n", $ty, $targetid . ";", $dfieldlength{$targetid});
+	    # $fieldgen{$targetid} = $field;
+	    $field_ids{$parentid} .= "$targetid#";
+	  }
 	}
 	if ($rest[$nst] =~ /none/) {
-	  $arrays[$nst] =~ s/[\#]$//;
-	  foreach my $a (split(/[\#]/, $arrays[$nst])) {
-	    print POUT "$a\n";
-	  }
 	  if ($nst > 1) {
-	    $fmt_arrays{$popid} = "";
-	    $fmt_structs{$popid} = "";
 	    push(@defs, "$popid");
+	    if (defined($last_alt{$targetid}) && $last_alt{$targetid} eq $popid) {
+	      push(@defs, "$targetid");
+	      &calc_alt_lengths($targetid);
+	    }
 	  }
 	}
 	$nst--;
       }
     }
     if ($level != -99) {
-      print "XXX_REMOVE Changing from level $lev[$nst] to $level\n";
+      print "XXX_REMOVE Changing from level $lev[$nst] to $level\n" if ($dbg);
       $nst++;
-      print "XXX_REMOVE -- pushed nst $nst (lev $level, id $id1, rest $the_rest)\n";
+      print "XXX_REMOVE -- pushed nst $nst (lev $level, id $id1, rest $the_rest)\n" if ($dbg);
       $lev[$nst]    = $level;
       $id[$nst]     = $id1;
       $rest[$nst]   = $the_rest;
-      $arrays[$nst] = "";
-      $dbytes[$nst] = 0;
     }
   } else {
     die("unexpected input: $_");
@@ -239,37 +258,37 @@ sub padsbasety
     $ty = sprintf("Pe_string_FW(:%d:)", $p1);
   } elsif ($type eq "is") {
     # signed numbers   PIC S999 DISPLAY
-    $ty = sprintf("Pebc_int64(:%d:)", $p1);
+    $ty = sprintf("Pebc_int%d(:%d:)", ($p1<10 ? 32 : 64), $p1);
   } elsif ($type eq "i") {
     # uns. numbers     PIC 9999 DISPLAY
-    $ty = sprintf("Pebc_uint64(:%d:)", $p1);
+    $ty = sprintf("Pebc_uint%d(:%d:)", ($p1<10 ? 32 : 64), $p1);
   } elsif ($type eq "fs") {
     # signed fixed pt  PIC S9V9 DISPLAY
-    $ty = sprintf("Pebc_fpoint64(:%d,%d:)", $p1+$p2, $p2);
+    $ty = sprintf("Pebc_fpoint%d(:%d,%d:)", ($p1+$p2<10 ? 32 : 64), $p1+$p2, $p2);
   } elsif ($type eq "f") {
     # uns. fixed point PIC 9v99 DISPLAY
-    $ty = sprintf("Pebc_ufpoint64(:%d,%d:)", $p1+$p2, $p2);
+    $ty = sprintf("Pebc_ufpoint%d(:%d,%d:)", ($p1+$p2<10 ? 32 : 64), $p1+$p2, $p2);
   } elsif ($type eq "Is") {
     # bcd + sign       PIC S999 PACKED-
-    $ty = sprintf("Pbcd_int64(:%d:)", $p1);
+    $ty = sprintf("Pbcd_int%d(:%d:)", ($p1<10 ? 32 : 64), $p1);
   } elsif ($type eq "I") {
     # bcd + (non)sign  PIC 9999 PACKED-
-    $ty = sprintf("Pbcd_int64(:%d:)", $p1);
+    $ty = sprintf("Pbcd_int%d(:%d:)", ($p1<10 ? 32 : 64), $p1);
   } elsif ($type eq "F") {
     # signed bcd       PIC S9V9 PACKED-
-    $ty = sprintf("Pbcd_fpoint64(:%d,%d:)", $p1+$p2, $p2);
+    $ty = sprintf("Pbcd_fpoint%d(:%d,%d:)", ($p1+$p2<10 ? 32 : 64), $p1+$p2, $p2);
   } elsif ($type eq "bs") {
     # signed binary
-    $ty = sprintf("Psbh_int64(:%d:)", $tlen);
+    $ty = sprintf("Psbh_int%d(:%d:)", ($tlen<5 ? 32 : 64), $tlen);
   } elsif ($type eq "b") {
     # uns binary
-    $ty = sprintf("Psbh_uint64(:%d:)", $tlen);
+    $ty = sprintf("Psbh_uint%d(:%d:)", ($tlen<5 ? 32 : 64), $tlen);
   } elsif ($type eq "Bs") {
     # signed binary fixedpoint
-    $ty = sprintf("Psbh_fpoint64(:%d,%d:)", $tlen, $p2);
+    $ty = sprintf("Psbh_fpoint%d(:%d,%d:)", ($tlen<5 ? 32 : 64), $tlen, $p2);
   } elsif ($type eq "B") {
     # uns. binary fixedpoint
-    $ty = sprintf("Psbh_ufpoint64(:%d,%d:)", $tlen, $p2);
+    $ty = sprintf("Psbh_ufpoint%d(:%d,%d:)", ($tlen<5 ? 32 : 64), $tlen, $p2);
   } else {
     # error
     die("XXX should not get here, failure in padsbasety($type,$p1,$p2)\n");
@@ -278,24 +297,9 @@ sub padsbasety
 }
 
 # ==============================
-# Subroutine: str_or_alt($id)
-#   returns (type name to use for struct or alternate, "struct" or "alt")
-sub str_or_alt
-{
-  my ($id) = @_;
-  if (defined($redef{$id})) {
-    if (!defined($altnm{$redef{$id}})) {
-      $altnm{$redef{$id}} = sprintf("Alt_%d_T", $altctr++);
-    }
-    return ($altnm{$redef{$id}}, "alt");
-  }
-  return ($id . "_T", "struct");
-}
-
-# ==============================
-# Subroutine: add_dlen($dlen1, $dlen2)
+# Subroutine: dlen_add($dlen1, $dlen2)
 #
-sub add_dlen
+sub dlen_add
 {
   my ($dlen1, $dlen2) = @_;
   return "var" if ($dlen1 eq "var" || $dlen2 eq "var");
@@ -303,9 +307,9 @@ sub add_dlen
 }
 
 # ==============================
-# Subroutine: mul_dlen($dlen1, $dlen2)
+# Subroutine: dlen_mul($dlen1, $dlen2)
 #
-sub mul_dlen
+sub dlen_mul
 {
   my ($dlen1, $dlen2) = @_;
   return "var" if ($dlen1 eq "var" || $dlen2 eq "var");
@@ -313,9 +317,9 @@ sub mul_dlen
 }
 
 # ==============================
-# Subroutine: max_dlen($dlen1, $dlen2)
+# Subroutine: dlen_max($dlen1, $dlen2)
 #
-sub max_dlen
+sub dlen_max
 {
   my ($dlen1, $dlen2) = @_;
   return "var" if ($dlen1 eq "var" || $dlen2 eq "var");
@@ -361,28 +365,15 @@ sub eval_ty
     $array_param = $map_id{$array_param};
   }
   if ($type =~ /none/) {
-    $dtylen = 0;
     $is_struct = 1;
-    ($ty, $s_or_a) = &str_or_alt($id);
-    if ($s_or_a eq "struct") {
-      $fids = $field_ids{$id};
-      $fids =~ s/[\#]$//;
-      foreach $fid (split(/[\#]/, $fids)) {
-	$dtylen = &add_dlen($dtylen, $dlengths{$fid});
-      }
-    } else {
-      $aids = $alt_ids{$id};
-      $aids =~ s/[\#]$//;
-      foreach $aid (split(/[\#]/, $aids)) {
-	$dtylen = &max_dlen($dtylen, $dlengths{$aid});
-      }
-    }
+    $ty = $id . "_t";
+    $dtylen = &calc_struct_length($id);
     if ($min != $max) {
       $dlen = "var";
     } else {
-      $dlen = &mul_dlen($dtylen, $max);
+      $dlen = &dlen_mul($dtylen, $max);
+      print "XXX_REMOVE id $id dtylen $dtylen dlen $dlen\n" if ($dbg);
     }
-    $dtylengths{$id} = $dtylen;
   } else {
     $is_struct = 0;
     ($ty, $tlen) = &padsbasety($type, $p1, $p2);
@@ -392,71 +383,102 @@ sub eval_ty
       $dlen = $max * $tlen;
     }
   }
-  $dlengths{$id} = $dlen;
+  $dfieldlength{$id} = $dlen;
 
-  print "XXX_REMOVE eval_ty(id $id, rest $rest) returning (max $max, array_param $array_param, is_struct $is_struct, ty $ty, dlen $dlen)\n";
+  print "XXX_REMOVE eval_ty(id $id, rest $rest) returning (max $max, array_param $array_param, is_struct $is_struct, ty $ty, dlen $dlen)\n" if ($dbg);
   return ($max, $array_param, $is_struct, $ty, $dlen);
 }
 
 # ==============================
+# Subroutine: calc_struct_length($def)
+#    calculate $dtylength{$def}
+
+sub calc_struct_length
+{
+  my ($def) = @_;
+  my $dlen = 0;
+
+  $fids = $field_ids{$def};
+  $fids =~ s/[\#]$//;
+  foreach $fid (split(/[\#]/, $fids)) {
+    $dlen = &dlen_add($dlen, $dfieldlength{$fid});
+  }
+  $dtylength{$def} = $dlen;
+  return $dlen;
+}
+
+# ==============================
+# Subroutine: calc_alt_lengths($def)
+#    calculate $dtylength{$def}
+#   which is also $dfieldlength{$def}
+
+sub calc_alt_lengths
+{
+  my ($def) = @_;
+  my $dlen = 0;
+
+  $fids = $field_ids{$def};
+  $fids =~ s/[\#]$//;
+  foreach $fid (split(/[\#]/, $fids)) {
+    $dlen = &dlen_max($dlen, $dfieldlength{$fid});
+  }
+  $dtylength{$def} = $dlen;
+  $dfieldlength{$def} = $dlen;
+}
+
+# ==============================
 # Subroutine: padsgen($def)
-#   emit PADS code for $def
+#   emit Pstruct/Palternates decl for $def
+#   (preceded by any aux arrays)
 
 sub padsgen
 {
   my ($def) = @_;
-
-  if (defined($alt_ids{$def})) {
+  if ($is_alt{$def}) {
     &padsgen_alt($def);
-  } else { # a normal Pstruct
-    &padsgen_str($def);
+  } else {
+    &padsgen_struct($def);
   }
+}
+
+# ==============================
+# Subroutine: padsgen_struct($def)
+#   emit Pstruct decl for $def
+#   (preceded by any aux arrays)
+
+sub padsgen_struct
+{
+  my ($def) = @_;
+  my ($fids, $fid);
+  &padsgen_aux_arrays($def);
+  printf POUT "Pstruct %s_t \{\n", $def;
+  $fids = $field_ids{$def};
+  $fids =~ s/[\#]$//;
+  foreach $fid (split(/[\#]/, $fids)) {
+    $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fid . ";", $dfieldlength{$fid});
+    print POUT $field;
+  }
+  printf POUT "};                                                                     // Total length: %5s\n\n", $dtylength{$def};
 }
 
 # ==============================
 # Subroutine: padsgen_alt($def)
 #   emit Palternates decl for $def
-#   (preceded by any aux arrays and structs)
+#   (preceded by any aux arrays)
 
 sub padsgen_alt
 {
   my ($def) = @_;
-  my ($aids, $aid);
-  $aids = $alt_ids{$def};
-  $aids =~ s/[\#]$//;
-  my @split_alts = split(/[\#]/, $aids);
-  foreach $aid (@split_alts) {
-    if ($is_str{$aid}) {
-      &padsgen_str($aid);
-    } else {
-      &padsgen_aux_arrays($aid);
-    }
-  }
-  print POUT "Palternates $altnm{$def} {\n";
-  foreach $aid (@split_alts) {
-    print POUT $fieldgen{$aid};
-  }
-  print POUT "};\n\n";
-}
-
-# ==============================
-# Subroutine: padsgen_str($def)
-#   emit Pstruct decl for $def
-#   (preceded by any aux arrays)
-
-sub padsgen_str
-{
-  my ($def) = @_;
-  my ($stnm, $fids, $fid);
+  my ($fids, $fid);
+  &padsgen_aux_arrays($def);
+  printf POUT "Palternates %s_t \{\n", $def;
   $fids = $field_ids{$def};
   $fids =~ s/[\#]$//;
-  $stnm = $def . "_T";
-  &padsgen_aux_arrays($def);
-  print POUT "Pstruct $stnm \{\n";
   foreach $fid (split(/[\#]/, $fids)) {
-    print POUT $fieldgen{$fid};
+    $field = sprintf("    %-40s %25s // Field length:  %4s\n", $fieldty{$fid}, $fid . ";", $dfieldlength{$fid});
+    print POUT $field;
   }
-  printf POUT "};                                                                     // Struct length: %4s\n\n", $dtylengths{$def};
+  printf POUT "};                                                                     // Total length: %5s\n\n", $dtylength{$def};
 }
 
 # ==============================
