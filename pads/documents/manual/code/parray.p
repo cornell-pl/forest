@@ -1,4 +1,4 @@
-/*@FILE @LEFT  seq_t.tex sorted_t.tex*/
+/*@FILE @LEFT  seq_t.tex sorted_t.tex nosep.tex*/
 
 /*@BEGIN seq_t.tex */
 Parray seq_t{
@@ -21,4 +21,8 @@ Parray sorted_t(: Pint32 size :) {
 /*@END sorted_t.tex */
 
 
-
+/*@BEGIN nosep.tex */
+Parray nIP2 {
+  Puint8 [4] : Psep('.') && Pterm(Pnosep);
+};
+/*@END nosep.tex */

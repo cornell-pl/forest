@@ -80,6 +80,7 @@ range. The index variable, \cd{i} in the example, is bound to the
 range value in the body.
 
 \subsection{Special variables}
+\label{sec:special-variables}
 Within the various expression contexts of \Parray{} declarations, a
 number of variables are in scope.  The following table lists the
 variables and their bindings.
@@ -119,17 +120,57 @@ constraint can be a character, string, or regular expression, or the
 special keyword \Pnosep{}, which indicates that the lack of a
 separator should be interpreted as signalling the end of the
 sequence.   The terminator is not consumed by the read function for
-the array.
+the array.  The following description uses \Pnosep{} to indicate that
+an IP address should be terminated by the lack of a period.
+\input{code/nosep}
 
 \subsection{\Plast}
 The \Plast{} constraint is used to specify an arbitrary termination
-condition.  It takes as its argument a predicate expression (\cf{}
-\ref{sec:common-predicates}) 
-
+condition.  The body of the constraint is a predicate expression (\cf{}
+\ref{sec:common-predicates}).  It is evaluated after reading each
+element in the array.  If it evaluates to true, array parsing
+terminates. \secref{sec:special-variables} lists the variables that
+are in scope within the predicate.
 
 \subsection{\Pended}
+The \Pended{} clause is similar to \Plast{}, except that it allows 
+the specification writer to indicate whether to consume the terminating
+element.   As with \Plast{}, \Pended takes a predicate and has the
+variables in scope describd in \secref{sec:special-variables}.  When the
+predicate returns true, the array terminates.  By default, the
+terminating element is returned to the input, to be read by some other
+parsing function.  To indicate that the terminating element should
+instead be considered part of the array, the predicate can set the
+special variable \texttt{consume} to true as a side-effect.
+
 \subsection{\Pomit}
-\subsection{\Pwhere}
+Like \Plast{} and \Pended{}, the \Pomit{} clause takes a predicate and
+has the variables in scope described in
+\secref{sec:special-variables}. 
+The predicate is evaluated after reading each element in the array.
+When the predicate returns true, the just-read element is not stored
+into the array;  it is ``omitted''.  It is because of the \Pomit{}
+predicate that the special variables \texttt{numRead} and
+\texttt{length} need not be the same.  Variable \texttt{numRead}
+indicates the total number of possible elements that have been read,
+while \texttt{length} indicates the number that have been stored into
+the array.  Consequently, \texttt{numRead} will always be greater than
+or equal to \texttt{length}.
+
+\subsection{Optional \Pwhere{} clause}
+If given, a \Pwhere{} clause expresses constraints over the entirety
+of a \Parray{} value.  The special variables that are in scope are
+described in \secref{sec:special-variables}
+Within the context of a 
+\Pparsecheck{} clause, constants \cd{begin} and \cd{end}, each of type 
+\PDCpost{} are available.  Constant \cd{begin} is bound to the input
+position of the beginning of the \Parray{}; \cd{end} is bound to its end.
+If the predicate given in
+the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
+in the associated parse descriptor will indicate a user-constraint
+error has occurred.  
+
+
 \subsection{\Pparsecheck}
 \subsection{\Pforall}
 \begin{verbatim}
