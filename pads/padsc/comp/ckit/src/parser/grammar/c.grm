@@ -1125,8 +1125,8 @@ pEnumFieldList:
                                          (pAnnotatedEnumField :: pEnumFieldList)
 
 pEnum:
- PENUM pName pushScope  LCURLY pEnumFieldList popScope
+ pIsRecord PENUM pName pushScope  LCURLY pEnumFieldList popScope
  ( makeTypeName pName1;
-   ExternalDeclExt(PX.PEnum {name = pName1, params = [], 
+   ExternalDeclExt(PX.PEnum {name = pName1, params = [], isRecord = pIsRecord,
 			     members = pEnumFieldList})
  ) 

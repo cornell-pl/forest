@@ -652,6 +652,10 @@ structure CnvExt : CNVEXT = struct
 		       P.assignS(fieldX(ed, loc), locX)]),
 		   P.plusAssignS(fieldX(ed,nerr), P.intX 1)]
 
+	      fun reportBaseErrorSs (code, locX) = 
+		  [P.assignS(fieldX(ed, errCode), code),
+		   P.assignS(fieldX(ed, loc), locX)]
+
 	      fun reportUnionErrorSs (code, locX) = 
                  [PT.IfThen(
 		   P.eqX(PT.Id result, PL.PDC_OK), (* only report scanning error if correctly read field*)
@@ -2573,7 +2577,7 @@ structure CnvExt : CNVEXT = struct
 		           PT.IfThenElse(
 			     P.eqX(PL.PDC_OK,
 				  PL.scanFunX(Atom.toString termScan, PT.Id ts, 
-					      termX, P.trueX, P.zero, P.zero,
+					      termX, termX, P.trueX, P.zero,
 					      P.zero)),
                              PT.Compound[
 			      PT.IfThen(amCheckingE NONE, 
@@ -2853,7 +2857,7 @@ structure CnvExt : CNVEXT = struct
                  @ (List.concat(List.map cnvExternalDecl cleanupEDEDs))
 	     end
 
-	  fun cnvPEnum  {name:string, params : (pcty * pcdecr) list, 
+	  fun cnvPEnum  {name:string, params : (pcty * pcdecr) list, isRecord,
 			 members : (string * pcexp option * string option) list } =
 	      let val baseTy = PX.Name PL.strlit
                   fun mungeMembers (name, expOpt, commentOpt) = 
@@ -2871,7 +2875,7 @@ structure CnvExt : CNVEXT = struct
 				  else TyProps.Variable
 			      end
 			   else TyProps.Size (0,0)
-                  val enumProps = {diskSize = ds, memChar = TyProps.Static, endian=true, isRecord=false}
+                  val enumProps = {diskSize = ds, memChar = TyProps.Static, endian=true, isRecord=isRecord}
 		  val () = PTys.insert(Atom.atom name, enumProps)
 
                   (* generate canonical representation *)
@@ -2913,10 +2917,12 @@ structure CnvExt : CNVEXT = struct
 			    PT.Compound (PL.restoreS(PT.Id ts)),
 			    PT.Compound (  PL.commitS(PT.Id ts)
 				         @ [P.assignS(P.starX (PT.Id (gMod rep)), PT.Id bname),
-					    PT.Return PL.PDC_OK]))]
+					    P.assignS(PT.Id result, PL.PDC_OK),
+					    PT.Goto (findEORSuf name)]))]
 		      end
                   fun genReadBranches () = 
-                      [P.varDeclS'(PL.stringPCT, "strlit")]
+                      [P.varDeclS'(PL.stringPCT, "strlit"),
+		       P.varDeclS'(P.int, result)]
 		      @ List.concat(List.map readOneBranch members)
 		  val cleanupSs =  [P.mkCommentS("We didn't match any branch")]
 			         @ reportErrorSs(false,
@@ -2925,7 +2931,10 @@ structure CnvExt : CNVEXT = struct
 					("Did not match any branch of enum "^name^"."),
 					[])
 			         @ [P.assignS(fieldX(ed,panic), P.trueX),
-				    PT.Return PL.PDC_ERROR]
+				    P.assignS(PT.Id result, PL.PDC_ERROR)]
+		  val slurpToEORSs = if isRecord then genReadEOR reportBaseErrorSs () else []
+                  val gotoSs = [PT.Labeled(findEORSuf name,
+					PT.Compound (slurpToEORSs @ [PT.Return (PT.Id result)]))]
 
 
 		  (* -- Assemble read function *)
@@ -2935,7 +2944,7 @@ structure CnvExt : CNVEXT = struct
 		  val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		  val readFields = genReadBranches()                            (* does type checking *)
 		  val _ = popLocalEnv()                                         (* remove scope *)
-		  val bodySs = [PT.Compound(readFields @ cleanupSs)]
+		  val bodySs = [PT.Compound(readFields @ cleanupSs @ gotoSs)]
 		  val readFunEDs = genReadFun(readName, cParams, 
 					      emPCT,edPCT,canonicalPCT, NONE, false, bodySs)
 

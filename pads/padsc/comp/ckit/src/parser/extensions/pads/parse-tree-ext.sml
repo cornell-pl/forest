@@ -53,6 +53,7 @@ structure ParseTreeExt =
 		      variants : ('exp PSField) list}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
+		      isRecord : bool,
                       members  : (string * 'exp option * string option) list}
 
         datatype PStatement = PComment of string
