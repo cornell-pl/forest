@@ -29,8 +29,12 @@ my $ERROR_FILE  = "perl_vet.${SEQ_MASK}.error";
 # strategy: do a split, check each field in turn for validity
 
 # some constants
-my $MAX_UINT32 = 4294967295;
-my $MAX_UINT64 = 18446744073709551615;
+my $MAX_UINT32 =  4294967295;
+
+my $MIN_INT64  = -9223372036854775807;
+my $MAX_INT64  =  9223372036854775807;
+
+my $MAX_UINT64 =  18446744073709551615;
 
 if ($#ARGV >= 0) {
   $INPUT_FILE = $ARGV[0];
@@ -78,7 +82,7 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[0]  (order_num)
-  if ($a[0] !~ /\d+/) {
+  if ($a[0] !~ /^\d+$/) {
     printf STDERR "Line $line char $char: field order_num is not a uint32\n";
     print ERRF $_ . "\n";
     next LINE;
@@ -94,7 +98,7 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[1]  (att_order_num)
-  if ($a[1] !~ /\d+/) {
+  if ($a[1] !~ /^\d+$/) {
     printf STDERR "Line $line char $char: field att_order_num is not a uint32\n";
     print ERRF $_  . "\n";
     next LINE;
@@ -110,7 +114,7 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[2]   (ord_version)
-  if ($a[2] !~ /\d+/) {
+  if ($a[2] !~ /^\d+$/) {
     printf STDERR "Line $line char $char: field ord_version is not a uint32\n";
     print ERRF $_  . "\n";
     next LINE;
@@ -126,7 +130,7 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[3]   (service_tn)
-  if ($a[3] !~ /\d*/) {
+  if ($a[3] !~ /^\d*$/) {
     printf STDERR "Line $line char $char: field service_tn is not blank or a uint64\n";
     print ERRF $_  . "\n";
     next LINE;
@@ -142,7 +146,7 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[4]   (billing_tn)
-  if ($a[4] !~ /\d*/) {
+  if ($a[4] !~ /^\d*$/) {
     printf STDERR "Line $line char $char: field billing_tn is not blank or a uint64\n";
     print ERRF $_  . "\n";
     next LINE;
@@ -158,7 +162,7 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[5]   (nlp_service_tn)
-  if ($a[5] !~ /\d*/) {
+  if ($a[5] !~ /^\d*$/) {
     printf STDERR "Line $line char $char: field nlp_service_tn is not blank or a uint64\n";
     print ERRF $_  . "\n";
     next LINE;
@@ -174,7 +178,7 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[6]    (nlp_billing_tn)
-  if ($a[6] !~ /\d*/) {
+  if ($a[6] !~ /^\d*$/) {
     printf STDERR "Line $line char $char: field nlp_billing_tn is not blank or a uint64\n";
     print ERRF $_  . "\n";
     next LINE;
@@ -190,12 +194,30 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[7]   (zip_code)
-  if ($a[7] !~ /\d*/) {
-    printf STDERR "Line $line char $char: field zip_code is not blank or a uint32\n";
-    print ERRF $_ . "\n";
-    next LINE;
-  } elsif ($a[7] > $MAX_UINT64) {
-    printf STDERR "Line $line char $char: field zip_code is too large, does not fit in a uint64\n";
+  if ($a[7] =~ /^$/) {
+    # blank is OK
+  } elsif ($a[7] =~ /^(\d+)$/) {
+    # small or big zip code, must fit in uint64
+    if ($a[7] > $MAX_UINT64) {
+      printf STDERR "Line $line char $char: field zip_code is too large, does not fit in a uint64\n";
+      print ERRF $_ . "\n";
+      next LINE;
+    }
+  } elsif ($a[7] =~ /^(\d+)[\-\/ ](\d+)$/) {
+    my ($zip, $suffix) = ($1, $2);
+    # zip must fit in uint32, suffix must fit in uint32
+    if ($zip > $MAX_UINT32) {
+      printf STDERR "Line $line char $char: field zip_code zip+suffix form, zip does not fit in a uint32\n";
+      print ERRF $_ . "\n";
+      next LINE;
+    }
+    if ($suffix > $MAX_UINT32) {
+      printf STDERR "Line $line char $char: field zip_code zip+suffix form, suffix does not fit in a uint32\n";
+      print ERRF $_ . "\n";
+      next LINE;
+    }
+  } else {
+    printf STDERR "Line $line char $char: field zip_code is not empty, or an unsigned number, or a zip+suffix form\n";
     print ERRF $_ . "\n";
     next LINE;
   }
@@ -206,15 +228,23 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[8]    (ramp)
-  if ($a[8] =~ /(no_ii)?(\d+)/) {
-    my ($no_ii, $ramp) = ($1, $2);
+  if ($a[8] =~ /^[\-]?(\d+)$/) {
+    # normal ramp, must fit in an int64 
+    if ($a[8] < $MIN_INT64 || $a[8] > $MAX_INT64) {
+      printf STDERR "Line $line char $char: field ramp normal case does not fit in an int64\n";
+      print ERRF $_ . "\n";
+      next LINE;
+    }
+  } elsif ($a[8] =~ /^no_ii(\d+)$/) {
+    # special generated ramp, digits must fit in a uint64
+    my $ramp = $1;
     if ($ramp > $MAX_UINT64) {
-      printf STDERR "Line $line char $char: field ramp does not fit in a uint64\n";
+      printf STDERR "Line $line char $char: field ramp no_ii case does not fit in a uint64\n";
       print ERRF $_ . "\n";
       next LINE;
     }
   } else {
-    printf STDERR "Line $line char $char: field ramp invalid, not a uint64 (with/without optional leading 'no_ii')\n";
+    printf STDERR "Line $line char $char: field ramp invalid, not an int64 without the leading 'no_ii', nor a uint64 with the leading 'no_ii')\n";
     print ERRF $_ . "\n";
     next LINE;
   }
@@ -233,7 +263,7 @@ LINE: while (<INF>) {
     next LINE;
   }
   # validate $a[10]   (order_details)
-  if ($a[10] !~ /\d+/) {
+  if ($a[10] !~ /^\d+$/) {
     printf STDERR "Line $line char $char: field order_details is not a uint32\n";
     print ERRF $_ . "\n";
     next LINE;
@@ -278,7 +308,7 @@ LINE: while (<INF>) {
     }
     my $tstamp = $a[$idx];
     # validate $tstamp
-    if ($tstamp !~ /\d+/) {
+    if ($tstamp !~ /^\d+$/) {
       printf STDERR "Line $line char $char: field tstamp in state-tstamp pair is not a uint32\n";
       print ERRF $_ . "\n";
       next LINE;
@@ -320,3 +350,4 @@ close(INF);
 close(OUTF);
 close(ERRF);
 exit 0;
+
