@@ -744,15 +744,7 @@ structure CnvExt : CNVEXT = struct
 						    (* end nested case *))
                                     |  SOME(b:PBTys.baseInfoTy) => (#endian b))
 
-              fun lookupContainsRecord (ty:pty) = 
-(*		let val (PX.Name s)=ty
-		in (case PTys.find(Atom.atom s)
-                                                of NONE => false
-                                                | SOME (b:PTys.pTyInfo) => (#isRecord b orelse #containsRecord b)
-                                                    (* end nested case *))
-		end
-
-* I don't know why we have to look up in the baseInfoTy *)
+             fun lookupContainsRecord (ty:pty) = 
                   case ty 
                   of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
 				    of NONE => (case PTys.find(Atom.atom s)
@@ -1852,19 +1844,18 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      val isE2 = if isEndian andalso not (Option.isSome pred)
 				         then (PE.error ("Endian annotations require constraints ("^name^").\n"); false)
 				         else true
-			      val contR = lookupContainsRecord pty
+			      val contR = lookupContainsRecord pty 
 			      val lH = lookupHeuristic pty
 			  in [{diskSize = ds, memChar = mc, endian = isEndian andalso isE1 andalso isE2, 
                                isRecord = isRecord, containsRecord = contR, largeHeuristic = lH}] end
 		      fun genTyPropsBrief e = [{diskSize = TyProps.Size (1,0), memChar = TyProps.Static, 
-						endian = false, isRecord = false, containsRecord = false, largeHeuristic = false}]
+						endian = false, isRecord = false, 
+						containsRecord = false, largeHeuristic = false}]
 		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan fields
 		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
-                      val isR = isRecord 
-                      val {diskSize, memChar, endian, isRecord, containsRecord, largeHeuristic} = 
+                      val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic} = 
 			  List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
-                      val contR = containsRecord orelse isRecord
-		      val structProps = buildTyProps(name, PTys.Struct, diskSize, memChar, endian, isR, contR, largeHeuristic, isFile, edTid)
+		      val structProps = buildTyProps(name, PTys.Struct, diskSize, memChar, endian, isRecord, containsRecord, largeHeuristic, isFile, edTid)
                       val () = PTys.insert(Atom.atom name, structProps)
 
 
@@ -2579,13 +2570,12 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					 pred: pcexp option, comment: string option} = 
 			  let val mc = lookupMemChar pty
 			      val ds = lookupDiskSize pty
-			      val isR = isRecord (* lookupRecord pty *)
 			      val contR = lookupContainsRecord pty	 
 			      val lH = lookupHeuristic pty 
 			      val () = if isVirtual 
 				       then PE.error ("Omitted fields not supported in punions ("^name ^"). ")
 				       else ()
-			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isR, containsRecord=contR, largeHeuristic=lH}] end
+			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isRecord, containsRecord=contR, largeHeuristic=lH}] end
 		     fun genTyPropsBrief e = [] (* not used in unions *)
 		     val tyProps = mungeVariants genTyPropsFull genTyPropsBrief genTyPropsMan variants
                      (* check that all variants are records if any are *)
@@ -2596,10 +2586,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				    else ())
 					
 		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
-                     val isR = isRecord
-		     val {diskSize,memChar,endian,isRecord,containsRecord,largeHeuristic} = 
+		     val {diskSize,memChar,endian,isRecord=_,containsRecord,largeHeuristic} = 
 			 List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
-		     val unionProps = buildTyProps(name, PTys.Union, diskSize, memChar, endian, isR, containsRecord, largeHeuristic, isFile, edTid)
+		     val unionProps = buildTyProps(name, PTys.Union, diskSize, memChar, endian, isRecord, containsRecord, largeHeuristic, isFile, edTid)
                      val () = PTys.insert(Atom.atom name, unionProps)
 
                      (* union: generate canonical representation *)
