@@ -671,7 +671,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           )
       end
 
-  fun ppElemPairs pps (tyNameOpt, fieldName) = 
+  fun ppElemPair pps (tyNameOpt, fieldName) = (* new function; before, we used ppStrPairs *)
       let val tyName = case tyNameOpt of NONE => "NoTypeName" | SOME name => name
       in
 	  ( PPL.addStr pps "element"
@@ -684,6 +684,26 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           )
       end
 
+  fun ppElemOpt pps (eFields) =   (* new function, to pp an elem that is a union of elems *)
+      (PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
+		    , sep="|\n\t"
+		    , lDelim="("
+		    , rDelim=")"
+		    } pps eFields
+      ; newline pps) 
+
+  fun ppElemList pps (eName, eFields) =   (* new function, to pp an elem that is a list of elems *)
+      ( PPL.addStr pps "element"
+      ; space pps
+      ; PPL.addStr pps eName
+      ; space pps
+      ; PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
+		      , sep=",\n\t"
+		      , lDelim="{\n\t"
+		      , rDelim="\n}"
+		      } pps eFields
+      ; newline pps) 
+
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val edTid = #edTid ptyInfo
 	  val (edName, edFields) = structInfo tidtab edTid
@@ -693,11 +713,12 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; space pps
         ; PPL.addStr pps repName
 	; space pps
-        ; PPL.ppList { pp=ppElemPairs
+(*-->*) ; ppElemList pps ("errDesc",edFields) 
+        ; PPL.ppList { pp=ppElemPair (* must be a function that choose the actual pp function for this kind of element *)
 		        , sep="\n\t"
-		        , lDelim="{\n\t"
+		        , lDelim="\t" (*{\n*)
 		        , rDelim="\n}"
-		        } pps (edFields @ repFields) (* old: repFields @ edFields *)
+		        } pps (edFields)(* @ repFields)*) (* old: repFields @ edFields *)  (* must be ppElemList "errDesc" edFields *)
         ; newline pps)
 	 handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
