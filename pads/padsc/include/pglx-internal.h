@@ -1,4 +1,5 @@
 #include "libpadsc.h"
+#include "pdc_out_macros.h"
 #ifndef FOR_CKIT
 #  include "pglx-impl.h"
 #endif
@@ -8,21 +9,21 @@
 
 /* These macros are defind in pglx-impl.h.  Here we give prototypes for CKIT: */ 
 #ifdef FOR_CKIT
-void PDCI_NODE_CHECK(PDCI_node_rep_t *n, const char *whatfn);
-void PDCI_NODE_VT_CHECK(PDCI_node_rep_t *n, const char *whatfn);
-PDCI_node_rep_t *PDCI_NEW_NODE(PDC_t *pdc);
-PDCI_node_rep_t **PDCI_NEW_NODE_PTR_LIST(PDC_t *pdc, int num);
-void PDCI_FREE_NODE(PDC_t *pdc, PDCI_node_rep_t *n);
-void PDCI_FREE_NODE_PTR_LIST(PDC_t *pdc, PDCI_node_rep_t **list);
+void PDCI_NODE_CHECK(PDCI_node_t *n, const char *whatfn);
+void PDCI_NODE_VT_CHECK(PDCI_node_t *n, const char *whatfn);
+PDCI_node_t *PDCI_NEW_NODE(PDC_t *pdc);
+PDCI_node_t **PDCI_NEW_NODE_PTR_LIST(PDC_t *pdc, int num);
+void PDCI_FREE_NODE(PDC_t *pdc, PDCI_node_t *n);
+void PDCI_FREE_NODE_PTR_LIST(PDC_t *pdc, PDCI_node_t **list);
 
-void PDCI_MK_TNODE(PDCI_node_rep_t *result,
+void PDCI_MK_TNODE(PDCI_node_t *result,
 		   PDCI_vtable_t *vt,
-		   PDCI_node_rep_t *parent,
+		   PDCI_node_t *parent,
 		   const char *name, 
-		   PDCI_structured_pd_t* val);
-void  PDCI_MK_NODE(PDCI_node_rep_t *result,
+		   PDCI_structured_pd* val);
+void  PDCI_MK_NODE(PDCI_node_t *result,
 		   PDCI_vtable_t *vt,
-		   PDCI_node_rep_t *parent,
+		   PDCI_node_t *parent,
 		   const char *name, 
 		   void* m, void* pd,
 		   void* rep);
@@ -35,33 +36,34 @@ void  PDCI_MK_NODE(PDCI_node_rep_t *result,
 
 
 #define PDCI_DECL_BASE_MK(ty) \
-void ty ## _mk_node(PDCI_node_rep_t *result, PDCI_node_rep_t *parent, const char *name, \
+void ty ## _mk_node(PDCI_node_t *result, PDCI_node_t *parent, const char *name, \
                     PDC_base_m *m, PDC_base_pd *pd, ty *v)
 
 /* ================================================================================
  * TYPES */
 
-typedef struct PDCI_node_rep_s PDCI_node_rep_t;
+typedef struct PDCI_node_s PDCI_node_t;
+typedef struct PDCI_vtable_s   PDCI_vtable_t;
 
 /* prototypes for vtable functions */
-typedef PDCI_node_rep_t **  (* PDCI_childrenVTfn)    (PDCI_node_rep_t *node); 
-typedef value               (* PDCI_typeValueVTfn)   (PDCI_node_rep_t *node); 
-typedef const char *        (* PDCI_stringValueVTfn) (PDCI_node_rep_t *node);
+typedef PDCI_node_t **  (* PDCI_children_fn)    (PDCI_node_t *node); 
+typedef value               (* PDCI_typed_value_fn)   (PDCI_node_t *node); 
+typedef const char *        (* PDCI_string_value_fn) (PDCI_node_t *node);
 
-typedef struct PDCI_vtable_s {
-  PDCI_childrenVTfn      children;
-  PDCI_typedValueVTfn    typed_value;
-  PDCI_stringValueVTfn   string_value;
-} PDCI_vtable_t;
-
-struct PDCI_node_rep_s {
+struct PDCI_node_s {
   PDCI_vtable_t   *vt;
   PDC_t           *pdc;
-  PDCI_node_rep_t *parent;
+  PDCI_node_t *parent;
   void            *m;
   void            *pd;
   void            *rep;
   const char      *name;
+};
+
+struct PDCI_vtable_s {
+  PDCI_children_fn       children;
+  PDCI_typed_value_fn    typed_value;
+  PDCI_string_value_fn   string_value;
 };
 
 /* PARSE DESCRIPTOR SUPPORT */
@@ -71,7 +73,7 @@ typedef struct PDCI_structured_pd_s {
   PDC_errCode_t errCode;
   PDC_loc_t loc;
   int panic;
-} PDCI_structured_pd_t;
+} PDCI_structured_pd;
 
 /* NB all generated sequenced pd types must BEGIN with the declarations given here: */
 typedef struct PDCI_sequenced_pd_s {
@@ -81,18 +83,18 @@ typedef struct PDCI_sequenced_pd_s {
   int panic;
   int neerr;		        
   int firstError;		
-} PDCI_sequenced_pd_t;
+} PDCI_sequenced_pd;
 
 /* ================================================================================
  * Helper functions */
 
 /* Error function used for many cases */
-value PDCI_error_typed_value(PDCI_node_rep_t *node);
+value PDCI_error_typed_value(PDCI_node_t *node);
 
 /* Special children functions */
-PDCI_node_t ** PDCI_Cstring_children(PDCI_node_rep_t *self);
-PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_rep_t *self);
-PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_rep_t *self);
+PDCI_node_t ** PDCI_Cstring_children(PDCI_node_t *self);
+PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self);
+PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self);
 
 /* ================================================================================
  * VTABLES */
@@ -187,7 +189,7 @@ PDCI_DECL_BASE_VT(PDC_uint64_vtable);
 #define PDC_uint32_vtable PDCI_basetype_vtable
 #define PDC_uint64_vtable PDCI_basetype_vtable
 
-#end /* FOR_CKIT */
+#endif /* FOR_CKIT */
 
 /* We need one _val_vtable for each in-memory format.
    All of the PADS types that share an in-memory format 

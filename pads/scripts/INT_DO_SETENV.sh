@@ -67,6 +67,10 @@ if [ $_pads_status == "OK" ]; then
     fi
   fi
 
+  if [ "$OCAML_LIB"x == x ]; then
+    OCAML_LIB=/usr/common/lib/ocaml; export OCAML_LIB
+  fi
+
   if [ ! -e $INSTALLROOT ]; then
     (mkdir -p $INSTALLROOT > /dev/null 2>&1) || _pads_status=FAILED
   fi
@@ -106,6 +110,10 @@ if [ $_pads_status == "OK" ]; then
   MANPATH=`echo ${pads_man_dir}:${ast_man_dir}:${MANPATH} | $remove_dups`; export MANPATH
   PATH=`echo ${pads_bin_dir}:${pads_script_dir}:${PATH} | $remove_dups`; export PATH
 
+  if [ -e $OCAML_LIB ]; then
+    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${OCAML_LIB} | $remove_dups`; export LD_LIBRARY_PATH
+  fi
+
   if [ "$_pads_use_nmake" != 0 ]; then
     ast_bin_dir=$AST_HOME/bin
      PATH=`echo ${ast_bin_dir}:${PATH} | $remove_dups`; export PATH
@@ -120,6 +128,7 @@ if [ $_pads_status == "OK" ]; then
     echo "SHLIB_PATH=$SHLIB_PATH"
     echo "MANPATH=$MANPATH"
     echo "PATH=$PATH"
+    echo "OCAML_LIB=$OCAML_LIB"
     echo " "
   fi
 fi

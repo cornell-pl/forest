@@ -110,11 +110,18 @@ if ($_pads_status == "OK") then
   if (! $?MANPATH) then
     setenv MANPATH ""
   endif
+  if (! $?OCAML_LIB) then
+    setenv OCAML_LIB /usr/common/lib/ocaml
+  endif
 
   setenv LD_LIBRARY_PATH `echo ${pads_lib_dir}:${ast_lib_dir}:${LD_LIBRARY_PATH} | $remove_dups`
   setenv SHLIB_PATH      `echo ${pads_lib_dir}:${ast_lib_dir}:${SHLIB_PATH} | $remove_dups`
   setenv MANPATH         `echo ${pads_man_dir}:${ast_man_dir}:${MANPATH} | $remove_dups`
   setenv PATH            `echo ${pads_bin_dir}:${pads_script_dir}:${PATH} | $remove_dups`
+
+  if (-d $OCAML_LIB) then
+    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB} | $remove_dups`
+  endif
 
   if ($_pads_use_nmake == 1) then
     set ast_bin_dir  = $AST_HOME/bin
@@ -148,6 +155,7 @@ if ($_pads_status == "OK") then
     echo "SHLIB_PATH=$SHLIB_PATH"
     echo "MANPATH=$MANPATH"
     echo "PATH=$PATH"
+    echo "OCAML_LIB=$OCAML_LIB"
     echo " "
   endif
 

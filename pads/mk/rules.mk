@@ -65,6 +65,9 @@ STATIC_PADSLIB_NM_D = libpadsc-g.a
 STATIC_COBOL_PADSLIB_NM_O = libpadsc-cobol.a
 STATIC_COBOL_PADSLIB_NM_D = libpadsc-cobol-g.a
 
+STATIC_PGLXLIB_NM_O = libpglx.a
+STATIC_PGLXLIB_NM_D = libpglx-g.a
+
 SHARED_ASTLIB_NM_O = libast.so
 SHARED_ASTLIB_NM_D = libast.so
 
@@ -83,6 +86,14 @@ SHARED_COBOL_PADSLIB_NM_ALT2_O = libpadsc-cobol.so
 SHARED_COBOL_PADSLIB_NM_D = libpadsc-cobol-g.so.1.0
 SHARED_COBOL_PADSLIB_NM_ALT1_D = libpadsc-cobol-g.so.1
 SHARED_COBOL_PADSLIB_NM_ALT2_D = libpadsc-cobol-g.so
+
+SHARED_PGLXLIB_NM_O = libpglxc.so.1.0
+SHARED_PGLXLIB_NM_ALT1_O = libpglxc.so.1
+SHARED_PGLXLIB_NM_ALT2_O = libpglxc.so
+
+SHARED_PGLXLIB_NM_D = libpglxc-g.so.1.0
+SHARED_PGLXLIB_NM_ALT1_D = libpglxc-g.so.1
+SHARED_PGLXLIB_NM_ALT2_D = libpglxc-g.so
 
 STATIC_LIBTOOL = ar r
 STATIC_LIBTOOL_OPTS =
@@ -311,6 +322,11 @@ endef
 
 .SUFFIXES:
 .SUFFIXES: .c .o
+
+ifdef BuildPGLXLib
+# location of ocaml/C include files: 
+INCLUDES += -I/usr/common/lib/ocaml
+endif
 
 ifdef BuildPADSLib
 %-g.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)

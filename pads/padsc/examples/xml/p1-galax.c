@@ -17,10 +17,10 @@ PDCI_node_rep_t** fooStruct_children(PDCI_node_rep_t *self){
     failwith("ALLOC_ERROR: in fooStruct_children");
   };
   /* parse descriptor child */
-  PDCI_MK_TNODE(result[0], PDCI_structured_pd_vtable, self, "pd", pd);
+  PDCI_MK_TNODE(result[0], &PDCI_structured_pd_vtable, self, "pd", pd);
   
   /* now do normal fields: assume first field is bar b */
-  PDCI_MK_NODE(result[1],bar_vtable,self,"b",&(m->b),&(pd->b), &(rep->b));
+  PDCI_MK_NODE(result[1], &bar_vtable, self, "b", &(m->b), &(pd->b), &(rep->b));
 
   /* ... repeat for all other fields ... */
   return result;
@@ -54,10 +54,10 @@ PDCI_node_rep_t** fooTy_children(PDCI_node_rep_t *self){
     failwith("ALLOC_ERROR: in fooTy_children");
   };
   /* parse descriptor child */
-  PDCI_MK_TNODE(result[0], PDCI_structured_pd_vtable, self, "pd", pd);
+  PDCI_MK_TNODE(result[0], &PDCI_structured_pd_vtable, self, "pd", pd);
   
   /* base child*/
-  PDCI_MK_NODE(result[1],fooBase_vtable,self,"base",&(m->base),&(pd->base), rep);
+  PDCI_MK_NODE(result[1], &fooBase_vtable,self,"base",&(m->base),&(pd->base), rep);
 
   return result;
 }
@@ -78,12 +78,12 @@ PDCI_node_rep_t** fooUnion_children(PDCI_node_rep_t *self){
     failwith("ALLOC_ERROR: in fooUnion_children");
   };
   /* parse descriptor child */
-  PDCI_MK_TNODE(result[0], PDCI_structured_pd_vtable, self, "pd", pd);
+  PDCI_MK_TNODE(result[0], &PDCI_structured_pd_vtable, self, "pd", pd);
 
   switch (rep->tag){
   case tag1: 
   /* handle branches: assume first branch is tagty1 tag1 */
-    PDCI_MK_NODE(result[1],tagty1_vtable,self,branch,
+    PDCI_MK_NODE(result[1], &tagty1_vtable,self,branch,
 		 &(m->tag1),&(pd->val.tag1),&(rep->val.tag1));
     break;
 
@@ -111,11 +111,11 @@ PDCI_node_rep_t** fooArray_children(PDCI_node_rep_t *self){
     failwith("ALLOC_ERROR: in fooArray_children");
   };
   /* parse descriptor child */
-  PDCI_MK_TNODE(result[0], PDCI_sequenced_pd_vtable, self, "pd", pd);
-  PDCI_MK_TNODE(result[1], PDC_uint32_val_vtable, self, "length", &(rep->length));  
+  PDCI_MK_TNODE(result[0], &PDCI_sequenced_pd_vtable, self, "pd", pd);
+  PDCI_MK_TNODE(result[1], &PDC_uint32_val_vtable, self, "length", &(rep->length));  
   /* now do elements  */
   for (i = 0; i<rep->length; i++){
-    PDCI_MK_NODE(result[i+2],fooElement_vtable,self,
+    PDCI_MK_NODE(result[i+2],&fooElement_vtable,self,
 		 "elt",&(m->element),&(pd->elts[i]), &(rep->elts[i]));
   }
 

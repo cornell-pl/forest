@@ -155,6 +155,7 @@ clean :
 
 veryclean : clean
 	$(RM) dogen $(GEN_FILES)
+	(cd $(INSTALLROOT)/include; $(RM) $(INSTALL_INCLUDES); )
 
  # End of rules that are run from the arch directory
 endif
