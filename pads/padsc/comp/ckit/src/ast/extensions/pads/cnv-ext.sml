@@ -416,17 +416,12 @@ structure CnvExt : CNVEXT = struct
 			      [readX]
 			  end
 
-                      fun getPTyName ty = 
-			  if CTisUInt ty then "auint8" 
-			  else if CTisInt ty then "aint8"
-			  else "__bogus__"
-
 		      fun genReadBrief e = 
 			  let val e = PTSub.substExps((!subList), e)
 			      val (expTy, expAst) = cnvExpression e
 			      val () = if CTisInt expTy then ()
 				       else PE.error "Currently only characters supported as delimiters."
-			      val pTyName = getPTyName expTy
+			      val pTyName = "char_lit"
 			      val ted = "ted"
 			      val tem = "tem"
                               (* base_ed ted; *)
@@ -469,7 +464,7 @@ structure CnvExt : CNVEXT = struct
 						   [PT.Id ts, 
 						    P.addrX (PT.Id tem),
 						    P.addrX (PT.Id ted),
-						    P.zero])),
+						    e])),
                                      PT.Compound[
 				      PT.IfThen((* user_error_fun(ts) *)
 					PL.userErrorF(PT.Id ts),

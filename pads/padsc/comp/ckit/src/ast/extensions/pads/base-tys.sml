@@ -14,14 +14,14 @@ struct
 	   emname   = Atom.atom "base_em", 
 	   edname   = Atom.atom "base_ed", 
 	   readname = Atom.atom "auint8_read",
-           scanname = SOME (Atom.atom "auint8_scan")},
+           scanname = NONE},
 
 	  {padsname = Atom.atom "aint8", 
 	   repname  = Atom.atom "int8", 
 	   emname   = Atom.atom "base_em", 
 	   edname   = Atom.atom "base_ed", 
 	   readname = Atom.atom "aint8_read",
-           scanname = SOME (Atom.atom "aint8_scan")},
+           scanname = NONE},
 
 	  {padsname = Atom.atom "auint32", 
 	   repname  = Atom.atom "uint32", 
@@ -35,7 +35,14 @@ struct
 	   emname   = Atom.atom "base_em", 
 	   edname   = Atom.atom "base_ed", 
 	   readname = Atom.atom "aint32_read",
-           scanname = NONE}
+           scanname = NONE},
+
+	  {padsname = Atom.atom "char_lit", 
+	   repname  = Atom.atom "uint8", 
+	   emname   = Atom.atom "base_em", 
+	   edname   = Atom.atom "base_ed", 
+	   readname = Atom.atom "char_lit_read",
+           scanname = SOME(Atom.atom "char_lit_scan")}
        ]
 
 
