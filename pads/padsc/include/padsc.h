@@ -549,17 +549,72 @@ typedef struct PDC_uint_acc_s {
   PDC_uint64  fold;
   PDC_uint64  psum;
   double      avg;
+  PDC_uint64  min;
+  PDC_uint64  max;
 } PDC_uint_acc;
 typedef PDC_uint_acc PDC_uint8_acc;
 typedef PDC_uint_acc PDC_uint16_acc;
 typedef PDC_uint_acc PDC_uint32_acc;
 typedef PDC_uint_acc PDC_uint64_acc;
 
-PDC_error_t PDC_int32_acc_init(PDC_t* pdc, PDC_int32_acc* a, PDC_disc_t* disc);
-PDC_error_t PDC_int32_acc_reset(PDC_t* pdc, PDC_int32_acc* a, PDC_disc_t* disc);
-PDC_error_t PDC_int32_acc_cleanup(PDC_t* pdc, PDC_int32_acc* a, PDC_disc_t* disc);
-PDC_error_t PDC_int32_acc_add(PDC_t* pdc, PDC_int32_acc* a, PDC_base_ed* ed, PDC_int32* val, PDC_disc_t* disc);
-PDC_error_t PDC_int32_acc_report(PDC_t* pdc, const char* prefix, PDC_int32_acc* a, PDC_disc_t* disc);
+typedef struct PDC_string_acc_s {
+  Dt_t*          dict;
+  PDC_uint32_acc len_accum; /* used for length distribution and good/bad accounting */
+} PDC_string_acc;
+
+PDC_error_t PDC_int8_acc_init    (PDC_t* pdc, PDC_int8_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int8_acc_reset   (PDC_t* pdc, PDC_int8_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int8_acc_cleanup (PDC_t* pdc, PDC_int8_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int8_acc_add     (PDC_t* pdc, PDC_int8_acc* a, PDC_base_ed* ed, PDC_int8* val, PDC_disc_t* disc);
+PDC_error_t PDC_int8_acc_report  (PDC_t* pdc, const char* prefix, PDC_int8_acc* a, PDC_disc_t* disc);
+
+PDC_error_t PDC_int16_acc_init    (PDC_t* pdc, PDC_int16_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int16_acc_reset   (PDC_t* pdc, PDC_int16_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int16_acc_cleanup (PDC_t* pdc, PDC_int16_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int16_acc_add     (PDC_t* pdc, PDC_int16_acc* a, PDC_base_ed* ed, PDC_int16* val, PDC_disc_t* disc);
+PDC_error_t PDC_int16_acc_report  (PDC_t* pdc, const char* prefix, PDC_int16_acc* a, PDC_disc_t* disc);
+
+PDC_error_t PDC_int32_acc_init    (PDC_t* pdc, PDC_int32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int32_acc_reset   (PDC_t* pdc, PDC_int32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int32_acc_cleanup (PDC_t* pdc, PDC_int32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int32_acc_add     (PDC_t* pdc, PDC_int32_acc* a, PDC_base_ed* ed, PDC_int32* val, PDC_disc_t* disc);
+PDC_error_t PDC_int32_acc_report  (PDC_t* pdc, const char* prefix, PDC_int32_acc* a, PDC_disc_t* disc);
+
+PDC_error_t PDC_int64_acc_init    (PDC_t* pdc, PDC_int64_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int64_acc_reset   (PDC_t* pdc, PDC_int64_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int64_acc_cleanup (PDC_t* pdc, PDC_int64_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int64_acc_add     (PDC_t* pdc, PDC_int64_acc* a, PDC_base_ed* ed, PDC_int64* val, PDC_disc_t* disc);
+PDC_error_t PDC_int64_acc_report  (PDC_t* pdc, const char* prefix, PDC_int64_acc* a, PDC_disc_t* disc);
+
+PDC_error_t PDC_uint8_acc_init    (PDC_t* pdc, PDC_uint8_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint8_acc_reset   (PDC_t* pdc, PDC_uint8_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint8_acc_cleanup (PDC_t* pdc, PDC_uint8_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint8_acc_add     (PDC_t* pdc, PDC_uint8_acc* a, PDC_base_ed* ed, PDC_uint8* val, PDC_disc_t* disc);
+PDC_error_t PDC_uint8_acc_report  (PDC_t* pdc, const char* prefix, PDC_uint8_acc* a, PDC_disc_t* disc);
+
+PDC_error_t PDC_uint16_acc_init    (PDC_t* pdc, PDC_uint16_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint16_acc_reset   (PDC_t* pdc, PDC_uint16_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint16_acc_cleanup (PDC_t* pdc, PDC_uint16_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint16_acc_add     (PDC_t* pdc, PDC_uint16_acc* a, PDC_base_ed* ed, PDC_uint16* val, PDC_disc_t* disc);
+PDC_error_t PDC_uint16_acc_report  (PDC_t* pdc, const char* prefix, PDC_uint16_acc* a, PDC_disc_t* disc);
+
+PDC_error_t PDC_uint32_acc_init    (PDC_t* pdc, PDC_uint32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint32_acc_reset   (PDC_t* pdc, PDC_uint32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint32_acc_cleanup (PDC_t* pdc, PDC_uint32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint32_acc_add     (PDC_t* pdc, PDC_uint32_acc* a, PDC_base_ed* ed, PDC_uint32* val, PDC_disc_t* disc);
+PDC_error_t PDC_uint32_acc_report  (PDC_t* pdc, const char* prefix, PDC_uint32_acc* a, PDC_disc_t* disc);
+
+PDC_error_t PDC_uint64_acc_init    (PDC_t* pdc, PDC_uint64_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint64_acc_reset   (PDC_t* pdc, PDC_uint64_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint64_acc_cleanup (PDC_t* pdc, PDC_uint64_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint64_acc_add     (PDC_t* pdc, PDC_uint64_acc* a, PDC_base_ed* ed, PDC_uint64* val, PDC_disc_t* disc);
+PDC_error_t PDC_uint64_acc_report  (PDC_t* pdc, const char* prefix, PDC_uint64_acc* a, PDC_disc_t* disc);
+
+PDC_error_t PDC_string_acc_init    (PDC_t* pdc, PDC_string_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_string_acc_reset   (PDC_t* pdc, PDC_string_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_string_acc_cleanup (PDC_t* pdc, PDC_string_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_string_acc_add     (PDC_t* pdc, PDC_string_acc* a, PDC_base_ed* ed, PDC_string* val, PDC_disc_t* disc);
+PDC_error_t PDC_string_acc_report  (PDC_t* pdc, const char* prefix, PDC_string_acc* a, PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* MISC ROUTINES */

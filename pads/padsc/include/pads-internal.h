@@ -103,8 +103,15 @@ int          PDC_IO_is_EOF      (PDC_t* pdc, PDC_disc_t* disc);
 int          PDC_IO_peek_EOF    (PDC_t* pdc, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_getchar     (PDC_t* pdc, int obeyPanicStop, unsigned char* ct_out, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_getchars    (PDC_t* pdc, size_t num_chars, char** b_out, char** e_out, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_forward     (PDC_t* pdc, size_t num_chars, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_back        (PDC_t* pdc, size_t num_chars, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_refill      (PDC_t* pdc, PDC_disc_t* disc);
+
+/* These 2 should not be called directly ??? */
+PDC_error_t  PDC_Internal_IO_needchar(PDC_t* pdc, int obeyPanicStop,
+				      PDC_stkElt_t** tp_out, PDC_IO_line_t** tpline_out, PDC_disc_t* disc);
+PDC_error_t  PDC_Internal_IO_needchars(PDC_t* pdc, int obeyPanicStop,
+				       char** b_out, char** e_out, PDC_disc_t* disc);
 
 /*
  * Other IO routines:
