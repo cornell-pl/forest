@@ -4601,12 +4601,12 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		  val (itemType, offset, size, argList) = getPos(tyName, path, TyProps.mkSize(0,0),[](* top level must be closed *))
 	      in
 		((case offset
-		  of TyProps.Variable => PE.error ("Location of "^selName^" request depends on data.\n") 
-                  |  TyProps.Param(_) => PE.error ("Location of "^selName^" request depends on parameters.\n") 
+		  of TyProps.Variable => PE.error (selName^ ": location of request depends on data.\n") 
+                  |  TyProps.Param(_) => PE.error (selName^ ": location of request depends on parameters.\n") 
                   |  TyProps.Size(location,nr) => 
 		      (case size 
-		       of TyProps.Variable => PE.error ("Size of "^selName^" request depends on data.\n") 
-		       |  TyProps.Param(_) => PE.error ("Size of "^selName^" request depends on parameters.\n") 
+		       of TyProps.Variable => PE.error (selName^ ": size of request depends on data.\n") 
+		       |  TyProps.Param(_) => PE.error (selName^ ": size of "^selName^" request depends on parameters.\n") 
                        |  TyProps.Size(n,nr) => 
 			   Select.insert(Select.Select{selName = selName, tyName = itemType, 
 						       args = evalArgList argList, offset = location, size = n})

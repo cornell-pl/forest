@@ -25,7 +25,7 @@ struct
              | argsToString [i] = IntInf.toString i
              | argsToString (i::is) = (IntInf.toString i)^","^(argsToString is)
        in
-	   selName^":"^tyName^"(:"^(argsToString args)^":)"^"("^(IntInf.toString offset)^","^(IntInf.toString size)^")"
+	   selName^"="^tyName^"(:"^(argsToString args)^":)"^"["^(IntInf.toString offset)^","^(IntInf.toString size)^"]"
        end
 
    fun selectListToString sl = 
@@ -33,7 +33,7 @@ struct
 	   case sl 
            of [] => ""
            |  [s] => (selectToString s)
-           |  (s::sl) => ((selectToString s)^","^(h sl))
+           |  (s::sl) => ((selectToString s)^"|"^(h sl))
        in
 	   "{"^(h sl)^"}"
        end
