@@ -49,11 +49,25 @@
 /* END_MACRO */
 
 /* Assumes ed->loc has already been set */
-#define PDCI_READFN_RET_ERRCODE_WARN(msg, errcode)
+#define PDCI_READFN_RET_ERRCODE_WARN(whatfn, msg, errcode)
   do {
     if (pdc->speclev == 0 && (*em < PDC_Ignore)) {
       ed->errCode = (errcode);
-      PDCI_report_err(pdc, PDC_WARN_FLAGS, &(ed->loc), (errcode), (msg));
+      if (!pdc->inestlev) {
+	PDCI_report_err(pdc, PDC_WARN_FLAGS, &(ed->loc), (errcode), (whatfn), (msg));
+      }
+    }
+    return PDC_ERR;
+  } while (0)
+/* END_MACRO */
+
+/* Assumes ed->loc and ed->errCode have already been set */
+#define PDCI_READFN_RET_EXIST_ERRCODE_WARN(whatfn, msg)
+  do {
+    if (pdc->speclev == 0 && (*em < PDC_Ignore)) {
+      if (!pdc->inestlev) {
+	PDCI_report_err(pdc, PDC_WARN_FLAGS, &(ed->loc), ed->errCode, (whatfn), (msg));
+      }
     }
     return PDC_ERR;
   } while (0)
@@ -70,11 +84,11 @@
 /* END_MACRO */
 
 /* Does not use ed->loc */
-#define PDCI_READFN_RET_ERRCODE_FATAL(msg, errcode)
+#define PDCI_READFN_RET_ERRCODE_FATAL(whatfn, msg, errcode)
   do {
     if (pdc->speclev == 0 && (*em < PDC_Ignore)) {
       ed->errCode = (errcode);
-      PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, (errcode), (msg));
+      PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, (errcode), (whatfn), (msg));
     }
     return PDC_ERR;
   } while (0)
@@ -409,15 +423,15 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
 
  at_eor_or_eof_err:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
-  PDCI_READFN_RET_ERRCODE_WARN(0, eor ? PDC_AT_EOR : PDC_AT_EOF);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, eor ? PDC_AT_EOR : PDC_AT_EOF);
 
  invalid_wspace:
   PDCI_READFN_SET_LOC_BE(0, 1);
-  PDCI_READFN_RET_ERRCODE_WARN("spaces not allowed in a_int field unless flag PDC_WSPACE_OK is set", invalid_err);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", "spaces not allowed in a_int field unless flag PDC_WSPACE_OK is set", invalid_err);
 
  invalid:
   PDCI_READFN_SET_LOC_BE(0, p1-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, invalid_err);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, invalid_err);
 
  range_err:
   /* range error still consumes the number */
@@ -425,16 +439,16 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
   if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
     goto fatal_forward_err;
   }
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_RANGE);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, PDC_RANGE);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in " PDCI_MacroArg2String(fn_name) "_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -516,7 +530,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
 
  bad_param_err:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_BAD_PARAM);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, PDC_BAD_PARAM);
 
  width_not_avail:
   /* FW field: eat the space whether or not there is an error */
@@ -524,7 +538,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
   if (PDC_ERR == PDCI_IO_forward(pdc, end-begin)) {
     goto fatal_forward_err;
   }
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_WIDTH_NOT_AVAILABLE);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, PDC_WIDTH_NOT_AVAILABLE);
 
  invalid:
   /* FW field: eat the space whether or not there is an error */
@@ -532,7 +546,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
   if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
-  PDCI_READFN_RET_ERRCODE_WARN(0, invalid_err);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, invalid_err);
 
  invalid_wspace:
   /* FW field: eat the space whether or not there is an error */
@@ -540,7 +554,7 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
   if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
-  PDCI_READFN_RET_ERRCODE_WARN("spaces not allowed in a_int field unless flag PDC_WSPACE_OK is set", invalid_err);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", "spaces not allowed in a_int field unless flag PDC_WSPACE_OK is set", invalid_err);
 
  range_err:
   /* FW field: eat the space whether or not there is an error */
@@ -548,19 +562,19 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
   if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_RANGE);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, PDC_RANGE);
 
   /* fatal_alloc_err:
-     PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in " PDCI_MacroArg2String(fn_name) "_internal", PDC_ALLOC_ERR); */
+     PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "Memory alloc err", PDC_ALLOC_ERR); */
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in " PDCI_MacroArg2String(fn_name) "_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -618,16 +632,16 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em,
 
  width_not_avail:
   PDCI_READFN_SET_LOC_BE(0, end-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_WIDTH_NOT_AVAILABLE);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, PDC_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in " PDCI_MacroArg2String(fn_name) "_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -693,25 +707,25 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits_or_byte
   }
   switch (errno) {
   case EINVAL:
-    PDCI_READFN_RET_ERRCODE_WARN(0, invalid_err);
+    PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, invalid_err);
   case ERANGE:
-    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_RANGE);
+    PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, PDC_RANGE);
   case EDOM:
-    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_BAD_PARAM);
+    PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, PDC_BAD_PARAM);
   }
 
  width_not_avail:
   PDCI_READFN_SET_LOC_BE(0, end-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_WIDTH_NOT_AVAILABLE);
+  PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, PDC_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in " PDCI_MacroArg2String(fn_name) "_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in " PDCI_MacroArg2String(fn_name) "_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in " PDCI_MacroArg2String(fn_name) "_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -740,14 +754,17 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, PDC_uint32 num_digits_or_byte
   targ_type       tmp;   /* tmp num */
 
   PDC_TRACE(pdc->disc, PDCI_MacroArg2String(fn_name) "_internal called" );
+  (pdc->inestlev)++;
   if (PDC_ERR == internal_numerator_read_fn(pdc, em, num_digits_or_bytes, ed, &(tmp.num))) {
     /* ed filled in already, IO cursor advanced if appropriate */
-    return PDC_ERR;
+    (pdc->inestlev)--;
+    PDCI_READFN_RET_EXIST_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0);
   }
+  (pdc->inestlev)--;
   /* so far so good, IO cursor has been advanced, ed->errCode set to PDC_NO_ERR */
   if (d_exp > dexp_max) {
     PDCI_READFN_SET_LOC_BE(-width, 0);
-    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_BAD_PARAM);
+    PDCI_READFN_RET_ERRCODE_WARN("[in " PDCI_MacroArg2String(fn_name) "]", 0, PDC_BAD_PARAM);
   }
   if (res_out && *em == PDC_CheckAndSet) {
     tmp.denom = PDCI_10toThe[d_exp];
@@ -1457,16 +1474,20 @@ int
 rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_digits)
 {
   PDC_int32 n = num_digits;
-  PDC_byte ebc[30];
-  int neg = (i < 0);
+  PDC_byte  ebc[30];
+  int       neg = (i < 0);
+  targ_type lim;
 
   if (n == 0 || n > nd_max) {
     errno = EDOM;
     return -1;
   }
-  if ((n < act_nd_max) && ((i >= PDCI_10toThe[n]) || ((-i) >= PDCI_10toThe[n]))) {
-    errno = ERANGE;
-    return -1;
+  if (n < act_nd_max) {
+    lim = PDCI_10toThe[n];
+    if (i >= lim || (-i) >= lim) {
+      errno = ERANGE;
+      return -1;
+    }
   }
   if (neg) {
     while (--n >= 0) {
@@ -1529,15 +1550,19 @@ int
 rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type u, PDC_uint32 num_digits)
 {
   PDC_int32 n = num_digits;
-  PDC_byte ebc[30];
+  PDC_byte  ebc[30];
+  targ_type lim;
 
   if (n == 0 || n > nd_max) {
     errno = EDOM;
     return -1;
   }
-  if ((n < nd_max) && (u >= PDCI_10toThe[n])) {
-    errno = ERANGE;
-    return -1;
+  if (n < nd_max) {
+    lim = PDCI_10toThe[n];
+    if (u >= lim) {
+      errno = ERANGE;
+      return -1;
+    }
   }
   while (--n >= 0) {
     ebc[n] = 0xF0 | (u % 10);
@@ -1610,19 +1635,23 @@ fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr
 int
 rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_digits)
 {
-  PDC_byte bcd[30];
+  PDC_byte  bcd[30];
   PDC_int32 num_bytes;
-  int x, n;
-  int neg = (i < 0);
-  int oddbytes = (num_digits % 2 == 1);
+  int       x, n;
+  int       neg = (i < 0);
+  int       oddbytes = (num_digits % 2 == 1);
+  targ_type lim;
 
   if (num_digits == 0 || num_digits > nd_max) {
     errno = EDOM;
     return -1;
   }
-  if ((num_digits < act_nd_max) && ((i >= PDCI_10toThe[num_digits]) || ((-i) >= PDCI_10toThe[num_digits]))) {
-    errno = ERANGE;
-    return -1;
+  if (num_digits < act_nd_max) {
+    lim = PDCI_10toThe[num_digits];
+    if (i >= lim || (-i) >= lim) {
+      errno = ERANGE;
+      return -1;
+    }
   }
   num_bytes = ((num_digits+1) / 2);
   n = num_bytes - 1;
@@ -1715,17 +1744,21 @@ fn_name(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr
 int
 rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type u, PDC_uint32 num_digits)
 {
-  PDC_byte bcd[30];
+  PDC_byte  bcd[30];
   PDC_int32 num_bytes;
-  int x, n;
+  int       x, n;
+  targ_type lim;
 
   if (num_digits == 0 || num_digits > nd_max) {
     errno = EDOM;
     return -1;
   }
-  if ((num_digits < nd_max) && (u >= PDCI_10toThe[num_digits])) {
-    errno = ERANGE;
-    return -1;
+  if (num_digits < nd_max) {
+    lim = PDCI_10toThe[num_digits];
+    if (u >= lim) {
+      errno = ERANGE;
+      return -1;
+    }
   }
   num_bytes = ((num_digits+1) / 2);
   n = num_bytes - 1;
@@ -2606,7 +2639,7 @@ PDCI_E2UINT(PDCI_e2uint64, PDCI_uint64_2e, PDC_uint64, PDC_MAX_UINT64)
 /* PDCI_EBC2INT(fn_name, rev_fn_name, targ_type, int_min, int_max, nd_max, act_nd_max) */
 PDCI_EBC2INT(PDCI_ebc2int8,  PDCI_int8_2ebc,  PDC_int8,  PDC_MIN_INT8,  PDC_MAX_INT8,   3, 3)
 PDCI_EBC2INT(PDCI_ebc2int16, PDCI_int16_2ebc, PDC_int16, PDC_MIN_INT16, PDC_MAX_INT16,  5, 5)
-PDCI_EBC2INT(PDCI_ebc2int32, PDCI_int32_2ebc, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32, 11, 10)
+PDCI_EBC2INT(PDCI_ebc2int32, PDCI_int32_2ebc, PDC_int32, PDC_MIN_INT32, PDC_MAX_INT32, 10, 10)
 PDCI_EBC2INT(PDCI_ebc2int64, PDCI_int64_2ebc, PDC_int64, PDC_MIN_INT64, PDC_MAX_INT64, 19, 19)
 
 /* PDCI_EBC2UINT(fn_name, rev_fn_name, targ_type, int_max, nd_max) */
@@ -2664,7 +2697,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.63 2003-04-08 16:53:45 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.64 2003-04-09 02:13:11 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -3036,6 +3069,7 @@ PDC_open(PDC_t **pdc_out, PDC_disc_t *disc, PDC_IO_disc_t *io_disc)
     goto fatal_alloc_err;
   } 
 #endif
+  pdc->inestlev = 0;
   if (!(pdc->tmp = sfstropen())) {
     goto fatal_alloc_err;
   }
@@ -4050,7 +4084,7 @@ PDC_e_str_lit_read(PDC_t *pdc, PDC_base_em *em,
   return res;
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_e_str_lit_read", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_str_lit_read]", "Memory alloc error", PDC_ALLOC_ERR);
 }
 
 PDC_error_t
@@ -4096,7 +4130,7 @@ PDC_e_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stop
 
 PDC_error_t
 PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
-		PDC_errCode_t errCode, const char *format, ...)
+		PDC_errCode_t errCode, const char *whatfn, const char *format, ...)
 {
   PDC_error_f pdc_errorf;
   char    *severity = "Error";
@@ -4106,6 +4140,7 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
   int     nullspan = 0;
 
   PDC_TRACE(pdc->disc, "PDCI_report_err called");
+  if (!whatfn) whatfn = "";
   pdc_errorf = pdc->disc->errorf;
   if (PDC_GET_LEV(level) == PDC_LEV_FATAL) {
     severity = "FATAL error";
@@ -4124,19 +4159,19 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
   sfstrset(pdc->tmp, 0);
   if (pdc->disc->e_rep == PDC_errorRep_Min) {
     if (loc) {
-      pdc_errorf(NiL, level, "%s : %s %d char %d : errCode %d",
-		 severity, loc->b.unit, loc->b.num, loc->b.byte, errCode);
+      pdc_errorf(NiL, level, "%s %s: %s %d char %d: errCode %d",
+		 severity, whatfn, loc->b.unit, loc->b.num, loc->b.byte, errCode);
     } else {
-      pdc_errorf(NiL, level, "%s : errCode %d", severity, errCode);
+      pdc_errorf(NiL, level, "%s %s: errCode %d", severity, whatfn, errCode);
     }
     return PDC_OK;
   }
   if (format && strlen(format)) {
     va_list ap;
     if (loc) {
-      sfprintf(pdc->tmp, "%s : %s %d char %d : ", severity, loc->b.unit, loc->b.num, loc->b.byte);
+      sfprintf(pdc->tmp, "%s %s: %s %d char %d : ", severity, whatfn, loc->b.unit, loc->b.num, loc->b.byte);
     } else {
-      sfprintf(pdc->tmp, "%s : ", severity);
+      sfprintf(pdc->tmp, "%s %s: ", severity, whatfn);
     }
     va_start(ap, format);
     sfvprintf(pdc->tmp, format, ap);
@@ -4273,29 +4308,29 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
     }
     if (loc) {
       if (loc->b.num != loc->e.num) {
-	sfprintf(pdc->tmp, "%s from %s %d char %d to %s %d char %d: %s ",
-		 severity,
+	sfprintf(pdc->tmp, "%s %s: from %s %d char %d to %s %d char %d: %s ",
+		 severity, whatfn,
 		 loc->b.unit, loc->b.num, loc->b.byte, 
 		 loc->e.unit, loc->e.num, loc->e.byte,
 		 msg);
       } else if (nullspan) {
-	sfprintf(pdc->tmp, "%s at %s %d just before char %d: %s",
-		 severity,
+	sfprintf(pdc->tmp, "%s %s: at %s %d just before char %d: %s",
+		 severity, whatfn,
 		 loc->b.unit, loc->b.num, loc->b.byte,
 		 msg);
       } else if (loc->b.byte == loc->e.byte) {
-	sfprintf(pdc->tmp, "%s at %s %d at char %d : %s ",
-		 severity,
+	sfprintf(pdc->tmp, "%s %s: at %s %d at char %d : %s ",
+		 severity, whatfn,
 		 loc->b.unit, loc->b.num, loc->b.byte,
 		 msg);
       } else {
-	sfprintf(pdc->tmp, "%s at %s %d from char %d to char %d: %s ",
-		 severity,
+	sfprintf(pdc->tmp, "%s %s: at %s %d from char %d to char %d: %s ",
+		 severity, whatfn,
 		 loc->b.unit, loc->b.num, loc->b.byte, loc->e.byte,
 		 msg);
       }
     } else {
-      sfprintf(pdc->tmp, "%s : %s ", severity, msg);
+      sfprintf(pdc->tmp, "%s %s: %s ", severity, whatfn, msg);
     }
   }
   if (loc && (pdc->disc->e_rep == PDC_errorRep_Max)) {
@@ -4773,20 +4808,20 @@ PDC_char_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 
  at_eor_or_eof_err:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
-  PDCI_READFN_RET_ERRCODE_WARN(0, eor ? PDC_AT_EOR : PDC_AT_EOF);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_char_lit_read]", 0, eor ? PDC_AT_EOR : PDC_AT_EOF);
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, 1);
   if (*em == PDC_CheckAndSet) {
-    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_CHAR_LIT_NOT_FOUND);
+    PDCI_READFN_RET_ERRCODE_WARN("[in PDC_char_lit_read]", 0, PDC_CHAR_LIT_NOT_FOUND);
   }
   PDCI_READFN_RET_ERRCODE_NOWARN(PDC_CHAR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_char_lit_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_char_lit_read_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_char_lit_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_char_lit_read_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -4825,30 +4860,30 @@ PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_em *em,
 
  bad_param_err:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_BAD_PARAM);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_str_lit_read]", 0, PDC_BAD_PARAM);
 
  width_not_avail:
   PDCI_READFN_SET_LOC_BE(0, end-begin);
   if (*em == PDC_CheckAndSet) {
-    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_STR_LIT_NOT_FOUND);
+    PDCI_READFN_RET_ERRCODE_WARN("[in PDC_str_lit_read]", 0, PDC_STR_LIT_NOT_FOUND);
   }
   PDCI_READFN_RET_ERRCODE_NOWARN(PDC_STR_LIT_NOT_FOUND);
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, s->len);
   if (*em == PDC_CheckAndSet) {
-    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_STR_LIT_NOT_FOUND);
+    PDCI_READFN_RET_ERRCODE_WARN("[in PDC_str_lit_read]", 0, PDC_STR_LIT_NOT_FOUND);
   }
   PDCI_READFN_RET_ERRCODE_NOWARN(PDC_STR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_str_lit_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_str_lit_read_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_str_lit_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_str_lit_read_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_str_lit_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_str_lit_read_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -4912,7 +4947,7 @@ PDC_countX_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eor_required,
   }
   if (eor_required && !eor && eof) { /* EOF encountered first, error */
     PDCI_READFN_SET_LOC_BE(0, p1-begin);
-    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_EOF_BEFORE_EOR);
+    PDCI_READFN_RET_ERRCODE_WARN("[in PDC_countXtoY]", 0, PDC_EOF_BEFORE_EOR);
   }
   /* hit EOR/EOF/stop restriction */
   (*res_out) = count;
@@ -4920,10 +4955,10 @@ PDC_countX_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eor_required,
   return PDC_OK;
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_countXtoY_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_countX_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_countXtoY_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_countX_internal]", "IO error (mb)", PDC_IO_ERR);
 }
 
 PDC_error_t
@@ -4994,13 +5029,13 @@ PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, p1-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_CHAR_LIT_NOT_FOUND);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_countXtoY]", 0, PDC_CHAR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_countXtoY_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_countXtoY_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_countXtoY_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_countXtoY_internal]", "IO error (mb)", PDC_IO_ERR);
 }
 
 /* ================================================================================ */
@@ -5024,14 +5059,14 @@ PDC_a_date_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
   tm = tmdate(s->str, (char**)&tmp, NiL);
   if (!tmp || (char*)tmp - s->str != width) {
     PDCI_READFN_SET_LOC_BE(-width, 0);
-    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_INVALID_DATE);
+    PDCI_READFN_RET_ERRCODE_WARN("[in PDC_a_date_read]", 0, PDC_INVALID_DATE);
   }
   (*res_out) = tm;
   PDC_DBG3(pdc->disc, "PDC_a_date_read_internal converted string %s => %s (secs = %lu)", PDC_qfmt_str(s), fmttime("%K", (time_t)(*res_out)), (unsigned long)(*res_out));
   return PDC_OK;
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_a_date_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_date_read_internal]", "Memory alloc error", PDC_ALLOC_ERR);
 }
 
 PDC_error_t
@@ -5052,14 +5087,14 @@ PDC_e_date_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
   tm = tmdate(s->str, (char**)&tmp, NiL);
   if (!tmp || (char*)tmp - s->str != width) {
     PDCI_READFN_SET_LOC_BE(-width, 0);
-    PDCI_READFN_RET_ERRCODE_WARN(0, PDC_INVALID_DATE);
+    PDCI_READFN_RET_ERRCODE_WARN("[in PDC_e_date_read]", 0, PDC_INVALID_DATE);
   }
   (*res_out) = tm;
   PDC_DBG3(pdc->disc, "PDC_e_date_read_internal converted string %s => %s (secs = %lu)", PDC_qfmt_str(s), fmttime("%K", (time_t)(*res_out)), (unsigned long)(*res_out));
   return PDC_OK;
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_e_date_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_date_read_internal]", "Memory alloc error", PDC_ALLOC_ERR);
 }
 
 /* ================================================================================ */
@@ -5101,23 +5136,23 @@ PDC_a_string_FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 
  bad_param_err:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_BAD_PARAM);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_a_string_FW_read]", 0, PDC_BAD_PARAM);
 
  width_not_avail:
   PDCI_READFN_SET_LOC_BE(0, end-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_WIDTH_NOT_AVAILABLE);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_a_string_FW_read]", 0, PDC_WIDTH_NOT_AVAILABLE);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_a_string_FW_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_FW_read_internal]", "Memory alloc error", PDC_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_a_string_FW_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_FW_read_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_a_string_FW_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_FW_read_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_a_string_FW_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_FW_read_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -5181,19 +5216,19 @@ PDC_a_string_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, p1-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_CHAR_LIT_NOT_FOUND);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_a_string_read]", 0, PDC_CHAR_LIT_NOT_FOUND);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_a_string_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_read_internal]", "Memory alloc error", PDC_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_a_string_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_read_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_a_string_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_read_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_a_string_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_read_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -5208,7 +5243,9 @@ PDC_a_string_SE_read_internal(PDC_t *pdc, PDC_base_em *em, const char *stopRegex
 
  bad_exp:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
-  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_INVALID_REGEXP);  /* regexp_compile already issued a warning */
+  /* regexp_compile already issued a warning */
+  /* PDCI_READFN_RET_ERRCODE_WARN("[in PDC_a_string_SE_read]", 0, PDC_INVALID_REGEXP); */
+  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_INVALID_REGEXP);
 }
 
 PDC_error_t
@@ -5282,19 +5319,19 @@ PDC_a_string_CSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRe
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, p1-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_REGEXP_NOT_FOUND);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_a_string_CSE_read]", 0, PDC_REGEXP_NOT_FOUND);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_a_string_CSE_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_CSE_read_internal]", "Memory alloc error", PDC_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_a_string_CSE_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_CSE_read_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_a_string_CSE_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_CSE_read_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_a_string_CSE_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_a_string_CSE_read_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -5337,23 +5374,23 @@ PDC_e_string_FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 
  bad_param_err:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_BAD_PARAM);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_e_string_FW_read]", 0, PDC_BAD_PARAM);
 
  width_not_avail:
   PDCI_READFN_SET_LOC_BE(0, end-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_WIDTH_NOT_AVAILABLE);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_e_string_FW_read]", 0, PDC_WIDTH_NOT_AVAILABLE);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_e_string_FW_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_FW_read_internal]", "Memory alloc error", PDC_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_e_string_FW_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_FW_read_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_e_string_FW_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_FW_read_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_e_string_FW_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_FW_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -5422,19 +5459,19 @@ PDC_e_string_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, p1-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_CHAR_LIT_NOT_FOUND);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_e_string_read]", 0, PDC_CHAR_LIT_NOT_FOUND);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_e_string_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_read_internal]", "Memory alloc error", PDC_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_e_string_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_read_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_e_string_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_read_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_e_string_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_read_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
@@ -5449,7 +5486,9 @@ PDC_e_string_SE_read_internal(PDC_t *pdc, PDC_base_em *em, const char *stopRegex
 
  bad_exp:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
-  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_INVALID_REGEXP);  /* regexp_compile already issued a warning */
+  /* regexp_compile already issued a warning */
+  /* PDCI_READFN_RET_ERRCODE_WARN("[in PDC_e_string_SE_read]", 0, PDC_INVALID_REGEXP); */
+  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_INVALID_REGEXP);
 }
 
 PDC_error_t
@@ -5531,19 +5570,19 @@ PDC_e_string_CSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRe
 
  not_found:
   PDCI_READFN_SET_LOC_BE(0, p1-begin);
-  PDCI_READFN_RET_ERRCODE_WARN(0, PDC_REGEXP_NOT_FOUND);
+  PDCI_READFN_RET_ERRCODE_WARN("[in PDC_e_string_CSE_read]", 0, PDC_REGEXP_NOT_FOUND);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_e_string_CSE_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_CSE_read_internal]", "Memory alloc error", PDC_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_e_string_CSE_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_CSE_read_internal]", "IO error (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_e_string_CSE_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_CSE_read_internal]", "IO error (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_e_string_CSE_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("[in PDC_e_string_CSE_read_internal]", "IO_forward error", PDC_FORWARD_ERR);
 }
 
 

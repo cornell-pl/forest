@@ -1,4 +1,5 @@
 #include "libpadsc-internal.h" /* for testing - normally do not include internal */
+#include <stdio.h>
 
 int main(int argc, char** argv) {
   char fname[1000];
@@ -37,4 +38,5 @@ int main(int argc, char** argv) {
   sfwrite(io, (void*)&data4, sizeof(data4));
   sfputc(io, '\n');
   sfclose(io);
+  return 0;
 }

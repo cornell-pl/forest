@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
       error(0, "Read date term by vbar: %s (secs = %lu)", fmttime("%K", (time_t)tm), (unsigned long)tm);
     }
     if (PDC_ERR == PDC_a_char_lit_read(pdc, &em, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
+      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
       goto find_EOR;
     }
     if (PDC_ERR == PDC_a_date_read(pdc, &em, 0, &ed, &tm)) {

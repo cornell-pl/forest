@@ -216,6 +216,10 @@ PDC_error_t PDC_char_acc_report_internal   (PDCI_FIRST_ARGS, PDC_char_acc *a);
  *  
  *   XXX errCode's type should be an enum that describes the kind of error XXX ???
  *
+ * The whatfn param is optional (can be NULL). If non-null, the text
+ * is included in the error message (unlike format, which replaces the default message).
+ * Typically used to pass a string of this form:   "[in <function>]"
+ *
  * The <format, ...> args are for a printf-style description that augments
  * the default description based on errCode. 
  *
@@ -224,7 +228,7 @@ PDC_error_t PDC_char_acc_report_internal   (PDCI_FIRST_ARGS, PDC_char_acc *a);
  */
 
 PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
-			    PDC_errCode_t errCode, const char *format, ... );
+			    PDC_errCode_t errCode, const char *whatfn, const char *format, ... );
 
 /* ================================================================================ */
 /* PURELY INTERNAL IO FUNCTIONS */

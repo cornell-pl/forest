@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
     }
     if (PDC_ERR == PDC_a_char_lit_read(pdc, &em, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
+      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
       goto find_EOR;
     }
     if (PDC_ERR == PDC_a_string_read(pdc, &em, '|', &ed, &s)) {
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
     }
     if (PDC_ERR == PDC_a_char_lit_read(pdc, &em, &ed, '|')) {
-      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
+      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0, 0);
       goto find_EOR;
     }
     if (PDC_ERR == PDC_a_string_CSE_read(pdc, &em, my_regexp, &ed, &s)) {

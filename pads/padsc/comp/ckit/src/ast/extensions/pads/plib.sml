@@ -111,15 +111,15 @@ struct
 
   fun userErrorS(ts:PT.expression, loc:PT.expression,
                  errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_INFO, loc,errCode,format]@args))
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_INFO, loc, errCode, P.zero, format]@args))
 
   fun userWarnS(ts:PT.expression, loc:PT.expression,
                  format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_ERROR, loc,PDC_NO_ERROR,format]@args))
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_ERROR, loc, PDC_NO_ERROR, P.zero, format]@args))
 
   fun userFatalErrorS(ts:PT.expression, loc:PT.expression,
                  errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_FATAL, loc,errCode,format]@args))
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_FATAL, loc, errCode, P.zero, format]@args))
 
   fun chkError(ts:PT.expression, argX :PT.expression, errCode:PT.expression) =
     [ PT.IfThen(P.eqX(PDC_ERROR, argX),

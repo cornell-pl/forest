@@ -17,6 +17,7 @@ libtests : ebcdic_test \
            ebc_test \
            bcd_test \
            sb_test \
+           ebc_fpoint_test \
            adate_test \
            mk_ex_data_libtest2 \
            mk_ex_data_ebcdic_test \
@@ -31,8 +32,6 @@ libtests : ebcdic_test \
            mk_ex_data_biglibtest1 \
            biglibtest1 \
            string_share_test
-
-not_yet : fpoint_test 
 
 accumtests : accumtest accumtest2 accumtest_s
 
@@ -49,7 +48,7 @@ ebcdic_test      :: ebcdic_test.c       -lpadsc
 ebc_test         :: ebc_test.c          -lpadsc
 bcd_test         :: bcd_test.c          -lpadsc
 sb_test          :: sb_test.c           -lpadsc
-fpoint_test      :: fpoint_test.c       -lpadsc
+ebc_fpoint_test  :: ebc_fpoint_test.c   -lpadsc
 
 dttest         :: dttest.c        -lpadsc
 accumtest      :: accumtest.c     -lpadsc
@@ -64,18 +63,19 @@ mk_ex_data_ebcdic_test :: mk_ex_data_ebcdic_test.c        -lpadsc
 mk_ex_data_ebc_test    :: mk_ex_data_ebc_test.c           -lpadsc
 mk_ex_data_bcd_test    :: mk_ex_data_bcd_test.c           -lpadsc
 mk_ex_data_sb_test     :: mk_ex_data_sb_test.c            -lpadsc
-mk_ex_data_fpoint_test :: mk_ex_data_fpoint_test.c        -lpadsc
 
 regress : regress_libtest1 \
           regress_libtest2 \
           regress_libtest4 \
           regress_ebcdic_test \
+          regress_ebcdic_libtest4 \
           regress_ebc_test \
           regress_bcd_test \
           regress_sb_test \
-          regress_ebcdic_libtest4
 
-regress_not_yet : regress_fpoint_test
+
+regress_not_yet: regress_ebc_fpoint_test \
+
 
 regress_libtest1 : libtest1
 	if [ -f tmp/tmp.libtest1 ]; then $(RM) tmp/tmp.libtest1; fi
@@ -117,10 +117,10 @@ regress_sb_test : sb_test
 	(./sb_test fwrec_noseek 2>&1) | ../../../scripts/remove_junk.pl | cat > tmp/tmp.sb_test
 	diff tmp/tmp.sb_test ../../regress/sb_test.regress || echo SB_TEST DIFFERS
 
-regress_fpoint_test : fpoint_test
-	if [ -f tmp/tmp.fpoint_test ]; then $(RM) tmp/tmp.fpoint_test; fi
-	(./fpoint_test fwrec_noseek 2>&1) | ../../../scripts/remove_junk.pl | cat > tmp/tmp.fpoint_test
-	diff tmp/tmp.fpoint_test ../../regress/fpoint_test.regress || echo FPOINT_TEST DIFFERS
+regress_ebc_fpoint_test : ebc_fpoint_test
+	if [ -f tmp/tmp.ebc_fpoint_test ]; then $(RM) tmp/tmp.ebc_fpoint_test; fi
+	(./ebc_fpoint_test fwrec_noseek 2>&1) | ../../../scripts/remove_junk.pl | cat > tmp/tmp.ebc_fpoint_test
+	diff tmp/tmp.ebc_fpoint_test ../../regress/ebc_fpoint_test.regress || echo EBC_FPOINT_TEST DIFFERS
 
 clean :
 	$(RM) -f *.o *test* *~

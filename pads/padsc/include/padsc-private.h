@@ -34,6 +34,7 @@
   size_t            salloc;    /* total elts allocated for stack */ \
   size_t            top;       /* index of top stack elt */ \
   unsigned int      speclev;   /* speculative nesting level */ \
+  unsigned int      inestlev;  /* internal call nesting level */ \
   /* dummy used for error case */ \
   char              dummy[1]
 

@@ -1122,15 +1122,16 @@ PDC_error_t PDC_b_uint64_read(PDC_t *pdc, PDC_base_em *em,
  * PDC_uint8   1-3           1-1       0             / PDC_MAX_UINT8
  * PDC_int16   1-5           1-2       PDC_MIN_INT16 / PDC_MAX_INT16
  * PDC_uint16  1-5           1-2       0             / PDC_MAX_UINT16
- * PDC_int32   1-11          1-4       PDC_MIN_INT32 / PDC_MAX_INT32
+ * PDC_int32   1-10/11**     1-4       PDC_MIN_INT32 / PDC_MAX_INT32
  * PDC_uint32  1-10          1-4       0             / PDC_MAX_UINT32
  * PDC_int64   1-19          1-8       PDC_MIN_INT64 / PDC_MAX_INT64
  * PDC_uint64  1-20          1-8       0             / PDC_MAX_UINT64
  * 
  * NB: num_digits must be odd if the value on disk can be negative.
- * For PDC_int32, even though the min and max int32 have 10 digits, we allow use of
- * num_digits == 11 due to the fact that 11 is required for a 10 digit negative value;
- * as an actual 11 digit number would cause a range error, the leading digit must be 0.
+ *
+ * ** For PDC_bcd_int32_read only, even though the min and max int32 have 10 digits, we allow
+ * num_digits == 11 due to the fact that 11 is required for a 10 digit negative value
+ * (an actual 11 digit number would cause a range error, so the leading digit must be 0).
  * 
  * For all cases, if the specified number of bytes is NOT available,
  * the IO cursor is not advanced, and:
