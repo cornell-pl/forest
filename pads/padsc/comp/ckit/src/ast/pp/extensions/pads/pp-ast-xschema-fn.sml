@@ -719,6 +719,22 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", [], []))
       end
 
+  fun enumInfo tidtab tid =
+      let val binding = bind tidtab tid
+	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
+	  val (Ast.EnumRef stid) = cty
+	  val Bindings.Enum(tid'',fields) = valOf(#ntype (bind tidtab stid))
+	  fun cnvField (mem: Ast.member,_,_) = 
+	      let val fsym : Symbol.symbol = #name mem
+	      in
+		  (SOME (Symbol.name fsym))
+	      end
+      in
+	 (#name binding,List.map cnvField fields)
+	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", []))
+  	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", []))
+      end
+
   (** PADS to XML Schema translation **)
 
   fun ppXMLName pps (tyNameOpt,NameOpt) =     (* [name=NameOpt] [type=tyNameOpt] *)
@@ -825,22 +841,33 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  val edTid = #edTid ptyInfo
 	  val (edTyName, ed1Fields) = structInfo tidtab edTid
           val (repName, repFields) = structInfo tidtab tid
-          val lengthField = List.hd repFields			(* take the first two fields: length & elems *)
-          val elemsField = List.hd (List.tl repFields)
-          val elemField = changeName "elt" elemsField           
-          val ed2Fields = List.take (ed1Fields,8)		(* eliminates RBuf_t field *) 
-          val arrField = List.last ed2Fields
-          val edFields = List.take (ed2Fields,7) @ ((addType " minOccurs=\"0\" maxOccurs=\"unbounded\"" (changeName "elt" arrField)) :: []) 
+          val lengthField = List.hd repFields				(* takes only two fields = length & elts *) 
+          val eltField = addType " minOccurs=\"0\" maxOccurs=\"unbounded\"" (changeName "elt" (List.hd (List.tl repFields)))
+          val Fields = (edTyName,SOME "errDesc") :: lengthField :: eltField :: []
+          val ed2Fields = List.take (ed1Fields,8)			(* eliminates RBuf_t field *) 
+          val eltEdField = addType " minOccurs=\"0\" maxOccurs=\"unbounded\"" (changeName "elt" (List.last ed2Fields))
+          val edFields = List.take (ed2Fields,7) @ (eltEdField :: []) 
       in
 	((newline pps
-        ; ppXMLComplex pps (edTyName,edFields)  (* minOccurs="0" maxOccurs="unbounded" *)
+        ; ppXMLComplex pps (edTyName,edFields)  
         ; newline pps
-	; ppXMLComplex pps (repName,((edTyName,SOME "errDesc") :: lengthField :: (addType " minOccurs=\"0\" maxOccurs=\"unbounded\"" elemField) :: []))
+	; ppXMLComplex pps (repName,Fields)
     	; newline pps                                         (* adds errDesc field *) 
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
     | ppPArray ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+
+  fun ppPEnum (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
+      let val (repName, repFields) = enumInfo tidtab tid
+      in
+	((newline pps
+        ; ppXMLHeader "<simpleType " "> \n <restriction base=\"xsd:int\"/> \n</simpleType>" pps (NONE,repName)
+    	; newline pps
+        )
+	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
+      end  
+    | ppPEnum ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) tidtab pps decl = 
       case #kind ptyInfo
@@ -848,7 +875,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       |  PTys.Struct => ppPStruct ptyInfo tidtab pps decl
       |  PTys.Union => ppPUnion ptyInfo tidtab pps decl 
       |  PTys.Array => ppPArray ptyInfo tidtab pps decl 
-      |  PTys.Enum => PPL.addStr pps "Enum" 
+      |  PTys.Enum => ppPEnum ptyInfo tidtab pps decl
 
   fun ppCoreExternalDecl' ptyInfo aidinfo tidtab pps edecl =
     case edecl
