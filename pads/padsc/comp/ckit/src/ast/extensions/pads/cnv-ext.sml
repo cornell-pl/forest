@@ -311,6 +311,24 @@ structure CnvExt : CNVEXT = struct
     val CTisSInt = CTisNum (Ast.INT,Signed)
     val CTisUInt = CTisNum (Ast.INT,Unsigned)
 
+    val CTisPointer = TU.isPointer ttab
+
+    fun CTisString ty = 
+        let val coreTy = getCoreType ty
+            val isPointer = CTisPointer coreTy
+            fun getBase coreTy =
+                let val derefTyOpt = TU.deref ttab coreTy
+                in
+		    case derefTyOpt
+		    of SOME(baseTy) => baseTy
+                    | _ => PE.bug "Impossible: must be able to dereference a pointer.\n"
+                end
+        in
+            isPointer andalso (CTisChar (getBase coreTy))
+        end
+
+
+
     (* Type-utils implements but does not export an essentially identical
      function!!! *)
     fun CTreduce ct = 
@@ -764,11 +782,30 @@ structure CnvExt : CNVEXT = struct
 		      fun genReadBrief e = 
 			  let val e = PTSub.substExps (!subList) e
 			      val (expTy, expAst) = cnvExpression e
-			      val () = if CTisInt expTy then ()
-				       else PE.error "Currently only characters supported as delimiters."
+			      fun getCharComment eX = 
+				  let val cval = #1(evalExpr eX)
+				  in
+				      case cval of NONE => CExptoString expAst
+				      | SOME e => (Char.toCString(Char.chr (IntInf.toInt e))
+					  	   handle _ => CExptoString expAst)
+				  end
+			      fun getStrLen eX = 
+				  case eX of PT.String s => P.intX (String.size s)
+                                  | PT.MARKexpression(l,e) => getStrLen e
+				  | _ => PL.strLen eX
+			      val (pTyName, litdecls,expr,commentV) = 
+				  if CTisInt expTy then (PL.charlit, [], e, getCharComment e)
+				  else if CTisString expTy 
+				       then (PL.strlit,
+					     [P.varDeclS(PL.stringPCT, "strlit", 
+							 PT.InitList[P.zero, e]),
+					      P.assignS(P.dotX(PT.Id "strlit", PT.Id "len"), getStrLen e)],
+					     P.addrX(PT.Id "strlit"), CExptoString expAst)
+				  else (PE.error ("Currently only characters and strings "^
+					          "supported as delimiters.");
+					(PL.charlit, [], e, CExptoString expAst))
 			      val commentS = P.mkCommentS ("Reading delimiter field: "^
-						           (CExptoString expAst))
-			      val pTyName = PL.charlit
+						           commentV)
                               (* base_ed ted; *)
 			      val tedDecl = P.varDeclS'(PL.base_edPCT, ted)
 			      fun genPanicRecovery (pTyName:string) : pcstmt list -> pcstmt list = 
@@ -787,8 +824,8 @@ structure CnvExt : CNVEXT = struct
 						PT.IfThen(
 						 P.neqX(PL.PDC_ERROR,
 						       PL.scanFunX(Atom.toString a, PT.Id ts, 
-								   e, P.zero, 
-								   PT.Cast(P.ptrPCT P.uchar,P.zero),
+								   expr, expr, 
+								   P.zero,
                                                                    P.addrX (PT.Id "n"), 
 								   PT.Id disc)),
 						 (* moded->panic = false *)
@@ -809,14 +846,15 @@ structure CnvExt : CNVEXT = struct
 							    P.addrX (PT.Id tem),
 							    [],
 							    P.addrX (PT.Id ted),
-							    e, PT.Id disc),
+							    expr, PT.Id disc),
                                      PT.Compound[
 				       (* PDC_report_err(ts,disc, &ted.loc, 
 					                   MISSING_LITERAL,"missing separator", e) *)
 				       PL.userErrorS(PT.Id ts, PT.Id disc, 
 						     P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
 						     PL.PDC_MISSING_LITERAL,
-						     PT.String "Missing separator: %c.", [e]),
+						     PT.String "Missing separator: %s.", 
+						     [PT.String commentV]),
 				      PT.IfThen((* if (0 == moded->nerr) *)
                                        P.eqX(P.zero, fieldX(ed,nerr)),
 					     PT.Compound[
@@ -838,7 +876,8 @@ structure CnvExt : CNVEXT = struct
                                    [commentS, 
 				    PT.Compound(
 				     tedDecl 
-				     :: (genPanicRecovery pTyName notPanicSs))])]
+				     :: litdecls
+				     @ (genPanicRecovery pTyName notPanicSs))])]
 			  end
 
                       (* -- Assemble read function *)

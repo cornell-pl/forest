@@ -62,6 +62,15 @@ struct
   val base_edPCT   = P.makeTypedefPCT "PDC_base_ed"
 
   val charlit      = "PDC_char_lit"
+  val strlit       = "PDC_str_lit"
+  val stringPCT    = P.makeTypedefPCT "PDC_string"
+
+  fun fmtChar(chr:PT.expression) =
+   (*  char*       PDC_fmtChar(char c); *)
+   PT.Call(PT.Id "PDC_fmtChar", [chr])
+
+  fun strLen(s:PT.expression)=
+   PT.Call(PT.Id "strlen", [s])
 
   fun userErrorS(ts:PT.expression, disc:PT.expression, loc:PT.expression,
                  errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
