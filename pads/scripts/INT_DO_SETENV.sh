@@ -85,6 +85,28 @@ if [ $_pads_status = "OK" ]; then
     fi
   fi
 
+  if [ "$PADSGLX_LIB_DIR"x = x ]; then
+    export PADSGLX_LIB_DIR=$PADS_HOME/padsc/pads-glx/$AST_ARCH
+    if [ "$_pads_verbose" != 0 ]; then
+      echo "##############################################################################"
+      echo "# Setting env var PADSGLX_LIB_DIR to $PADSGLX_LIB_DIR"
+      echo "# If you do not like this setting, set PADSGLX_LIB_DIR_FORCE to the"
+      echo "# desired value for PADSGLX_LIB_DIR, then use $_pads_do_prog again."
+      echo "##############################################################################"
+      echo " "
+    fi
+  else
+    export PADSGLX_LIB_DIR=$PADGLX_LIB_DIR_FORCE
+    if [ "$_pads_verbose" != 0 ]; then
+      echo "##############################################################################"
+      echo "# Setting env var PADSGLX_LIB_DIR to value of PADSGLX_LIB_DIR_FORCE = $PADSGLX_LIB_DIR"
+      echo "# If you prefer to use the PADS default, unsetenv PADSGLX_LIB_DIR_FORCE"
+      echo "##############################################################################"
+      echo " "
+    fi
+  fi
+
+
   if [ "$OCAML_LIB_DIR"x = x ]; then
     export OCAML_LIB_DIR=/usr/local/lib/ocaml
   fi
@@ -99,9 +121,6 @@ if [ $_pads_status = "OK" ]; then
   fi
   if [ "$PCRE_LIB_DIR"x = x ]; then
     export PCRE_LIB_DIR=/home/mff/pcre-4.5-rh9/lib
-  fi
-  if [ "$PADSGLX_LIB_DIR"x = x ]; then
-    export PADSGLX_LIB_DIR=$PADS_HOME/padsc/pads-glx/$AST_ARCH
   fi
 
   if [ ! -e $INSTALLROOT ]; then

@@ -112,12 +112,12 @@ else
   endif
 endif
 
-set _is_padsglx_lib_dir
-if (! $?PADSGLX_LIB_DIR) then
-  unset _is_padsglx_lib_dir
+set _is_padsglx_lib_dir_force
+if (! $?PADSGLX_LIB_DIR_FORCE) then
+  unset _is_padsglx_lib_dir_force
 else
-  if ("$PADSGLX_LIB_DIR"x == x) then
-    unset _is_padsglx_lib_dir
+  if ("$PADSGLX_LIB_DIR_FORCE"x == x) then
+    unset _is_padsglx_lib_dir_force
   endif
 endif
 
@@ -204,6 +204,27 @@ if ($_pads_status == "OK") then
     endif
   endif
 
+  if (! $?_is_padsglx_lib_dir_force) then
+    setenv PADSGLX_LIB_DIR $PADS_HOME/padsc/pads-glx/$AST_ARCH
+    if ($_pads_verbose != 0) then
+      echo "##############################################################################"
+      echo "# Setting env var PADSGLX_LIB_DIR to $PADSGLX_LIB_DIR"
+      echo "# If you do not like this setting, set PADSGLX_LIB_DIR_FORCE to the"
+      echo "# desired value for PADSGLX_LIB_DIR, then use $_pads_do_prog again."
+      echo "##############################################################################"
+      echo " "
+    endif
+  else
+    setenv PADSGLX_LIB_DIR $PADSGLX_LIB_DIR_FORCE
+    if ($_pads_verbose != 0) then
+      echo "##############################################################################"
+      echo "# Setting env var PADSGLX_LIB_DIR to value of PADSGLX_LIB_DIR_FORCE = $PADSGLX_LIB_DIR"
+      echo "# If you prefer to use the PADS default, unsetenv PADSGLX_LIB_DIR_FORCE"
+      echo "##############################################################################"
+      echo " "
+    endif
+  endif
+
   if (! -e $INSTALLROOT) then
     (mkdir -p $INSTALLROOT >& /dev/null) || set _pads_status = FAILED
   endif
@@ -265,9 +286,6 @@ if ($_pads_status == "OK") then
   endif
   if (! $?_is_pcre_lib_dir) then
     setenv PCRE_LIB_DIR /home/mff/pcre-4.5-rh9/lib
-  endif
-  if (! $?_is_padsglx_lib_dir) then
-    setenv PADSGLX_LIB_DIR $PADS_HOME/padsc/pads-glx/$AST_ARCH
   endif
 
   # remove old PADS path components
