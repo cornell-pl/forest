@@ -3096,8 +3096,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                          case wherePredXOpt of NONE => []
                          | SOME predX =>
 			     let val errorMsg = "Pwhere clause violation"
-				 val getEndLocSs = [PL.getLocEndS(PT.Id pads, P.addrX locX, ~1)]
-				 val reportErrSs = reportErrorSs([locS], locX, true, 
+				 val getEndLocSs = [PL.getLocEndS(PT.Id pads, locX, ~1)]
+				 val reportErrSs = reportErrorSs(getEndLocSs, locX, true, 
 								 PL.P_USER_CONSTRAINT_VIOLATION, true, readName, errorMsg, [])
 				                   @[P.assignS(PT.Id result, PL.P_ERROR)]
 			     in
