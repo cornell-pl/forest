@@ -51,22 +51,15 @@ set _arch_n_opsys = `$PADS_HOME/scripts/arch-n-opsys`
 set IMAGE = $PADS_HOME/lib/padsc
 set SMLBIN = $PADS_HOME/binlinks/smlruntime.$_arch_n_opsys
 
-if ($_ast_arch == linux.i386) then 
+set lua =
+set lda = 
+set archmk = $PADS_HOME/mk/rules.arch.$AST_ARCH.mk
+if (-e $archmk) then
+  set gnutst = `/bin/grep GNU $archmk`
+  if ("$gnutst"x != x) then
     set lua = -U__GNUC__
     set lda = -D__LINUX_PREPROCESSOR_FIXES
-else 
-    if ($_ast_arch == freebsd.i386) then 
-        set lua = -U__GNUC__
-        set lda = -D__LINUX_PREPROCESSOR_FIXES
-    else
-       if ($_ast_arch == sol8.sun4) then 
-        set lua = -U__GNUC__
-        set lda = -D__LINUX_PREPROCESSOR_FIXES
-        else
-            set lua =
-            set lda = 
-        endif
-    endif
+  endif
 endif
 
 set opts = ""
