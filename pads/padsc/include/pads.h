@@ -39,8 +39,8 @@
  *
  *   version  : interface version
  *   flags    : control flags: some combination of the following
- *                 P_WSPACE_OK: for variable-width ascii integers, indicates
- *                                leading white space is OK; for fixed-width ascii
+ *                 P_WSPACE_OK: for variable-width ASCII integers, indicates
+ *                                leading white space is OK; for fixed-width ASCII
  *                                integers, indicates leading and/or trailing
  *                                white space is OK
  *
@@ -1136,7 +1136,7 @@ Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
  *                 implicitly called first.
  *
  * P_io_fopen    : Open a file for reading (a higher-level alternative to io_set).
- *                 Uses disc->fopen_fn, if non-null, otherwise uses P_fopen;
+ *                 Uses pads->disc->fopen_fn, if non-null, otherwise uses P_fopen;
  *                 always uses mode "r".  Returns P_OK on success, P_ERR on error
  *
  * P_io_close    : Clean up the io discipline state; attempts to return bytes that were
@@ -1319,8 +1319,8 @@ ssize_t   P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *
  *  char, otherwise it points to the char.  If panic is set,
  *  pads->disc->panic_max controls the scope of the scan, otherwise
  *  pads->disc->scan_max controls the scope of the scan.  Hitting eor or eof
- *  considered to be an error.  N.B. If there is mixed binary and ascii data,
- *  scanning can 'find' an ascii char in a binary field.  Be careful!
+ *  considered to be an error.  N.B. If there is mixed binary and ASCII data,
+ *  scanning can 'find' an ASCII char in a binary field.  Be careful!
  *
  * RETURNS: Perror_t
  *         P_OK    => f found, IO cursor now points to just beyond char
@@ -1341,8 +1341,8 @@ ssize_t   P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *
  *  char, otherwise it points to the char.  If panic is set,
  *  pads->disc->panic_max controls the scope of the scan, otherwise
  *  pads->disc->scan_max controls the scope of the scan.  Hitting eor or eof
- *  considered to be an error.  N.B. If there is mixed binary and ascii data,
- *  scanning can 'find' an ascii char in a binary field.  Be careful!
+ *  considered to be an error.  N.B. If there is mixed binary and ASCII data,
+ *  scanning can 'find' an ASCII char in a binary field.  Be careful!
  *
  * RETURNS: Perror_t
  *         P_OK    => f/s found, IO cursor now points to just beyond char
@@ -1562,11 +1562,11 @@ Perror_t Pcstr_re_match    (P_t *pads, const char *f,    int eat_f);
  * Mask flags control the behavior, as follows:
  *
  *
- * P_Test_SynCheck(*m)              P_Test_NoSynCheck(*m)
+ * P_Test_SynCheck(*m)                 P_Test_NoSynCheck(*m)
  * ---------------------------------   ------------------------------
  * If IO cursor points to specified    Always advance cursor by length
  * literal, advance cursor by length   of literal, regardless of what
- * of the literal and return P_OK,   cursor points to, and return
+ * of the literal and return P_OK,     cursor points to, and return
  * otherwise report error, do not      P_OK.
  * advance cursor, return P_ERR.
  * 
@@ -1624,44 +1624,44 @@ Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m, const char *s, Pbase_pd *
  *
  * countX outcomes:
  *   1. IO cursor is already at EOF and eor_required is non-zero:
- *     + pd->loc begin/end set to EOF 'location'
- *     + If P_Test_NotIgnore(*m), pd->errCode set to P_AT_EOF,
+ *     + pd->loc.b/e set to EOF 'location'
+ *     + if P_Test_NotIgnore(*m), pd->errCode set to P_AT_EOF,
  *         pd->nerr set to 1, and an error is reported
  *     + P_ERR returned   
  *   2. EOF is encountered before EOR and eor_required is non-zero:
- *     + pd->loc begin/end set to current IO cursor location
+ *     + pd->loc.b/e set to current IO cursor location
  *     + if P_Test_NotIgnore(*m), pd->errCode set to P_EOF_BEFORE_EOR,
  *         pd->nerr set to 1, and an error is reported
  *     + P_ERR returned
  *   3. count_max is > 0 and count_max limit is reached before x or EOR or EOF:
- *     + pd->loc begin/end set to current IO cursor location
+ *     + pd->loc.b/e set to current IO cursor location
  *     + if P_Test_NotIgnore(*m), pd->errCode set to P_COUNT_MAX_LIMIT,
  *         pd->nerr set to 1, and an error is reported
  *     + P_ERR returned
  *   4. EOR is encountered, or EOF is encounterd and eor_required is zero:
- *     (*res_out) is set to the number of occurrences of x from the IO cursor to EOR/EOF.
- *     P_OK returned
+ *     + (*res_out) is set to the number of occurrences of x from the IO cursor to EOR/EOF
+ *     + P_OK returned
  *
  * countXtoY outcomes:
  *   1. IO cursor is already at EOF
- *     => If !m || *m < P_Ignore:
- *           + pd->errCode set to P_AT_EOF
- *           + pd->loc begin/end set to EOF 'location'
- *     P_ERR returned   
+ *     + pd->loc.b/e set to EOF 'location'
+ *     + if P_Test_NotIgnore(*m), pd->errCode set to P_AT_EOF,
+ *         pd->nerr set to 1, and an error is reported
+ *     + P_ERR returned   
  *   2. y is not found before EOR or EOF is hit
- *     => If !m || *m < P_Ignore:
- *           + pd->errCode set to P_CHAR_LIT_NOT_FOUND
- *           + pd->loc begin/end set to current IO cursor location
- *     P_ERR returned
+ *     + pd->loc.b/e set to current IO cursor location
+ *     + if P_Test_NotIgnore(*m), pd->errCode set to P_CHAR_LIT_NOT_FOUND,
+ *         pd->nerr set to 1, and an error is reported
+ *     + P_ERR returned
  *   3. y is not found and count_max > 0 and count_max limit is hit 
- *     => If !m || *m < P_Ignore:
- *           + pd->errCode set to P_COUNT_MAX_LIMIT
- *           + pd->loc begin/end set to current IO cursor location
+ *     + pd->loc.b/e set to current IO cursor location
+ *     + if P_Test_NotIgnore(*), pd->errCode set to P_COUNT_MAX_LIMIT,
+ *         pd->nerr set to 1, and an error is reported
  *     P_ERR returned
  *   4. Char y is found
- *     (*res_out) is set to the number of occurrences of x
- *     from the IO cursor to first y.
- *     P_OK returned
+ *     + (*res_out) is set to the number of occurrences of x
+ *       from the IO cursor to first y
+ *     + P_OK returned
  */
 
 #ifdef FOR_CKIT
@@ -1754,7 +1754,7 @@ Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
  *   + all string_read functions specify a single stop character.
  *       if 0 (NULL) is used, then this will match a NULL in the data,
  *       and eor/eof will ALSO successfully terminate the string 
- *   + all string_ME_read and string_CME_read functions specify a Match Extpression
+ *   + all string_ME_read and string_CME_read functions specify a Match Expression
  *       (string includes all chars that match)
  *   + all string_SE_read and string_CSE_read specify a Stop Expression
  *       (string terminated by encountering 'stop chars' that match)
@@ -1780,8 +1780,8 @@ Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
  *     at some point prior using Pstring_init or one of the initializing P_STRING macros.
  *     (It can be initialized once and re-used in string read calls many times.)
  * 
- * Cleanup note: If copy_strings is non-zero, the memory allocated in *s_out should
- *               ultimately be freed using Pstring_cleanup.
+ * Cleanup note: If pads->disc->copy_strings is non-zero, the memory allocated in
+ *               (*s_out) should ultimately be freed using Pstring_cleanup.
  *
  * If an expected stop condition is not encountered, the
  * IO cursor position is unchanged.  Error codes used:
@@ -1871,7 +1871,8 @@ Perror_t Pstring_CSE_read  (P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
  *   + returns P_OK
  * Otherwise:
  *   + does not advance the IO cursor pos
- *   + returns P_ERR */
+ *   + returns P_ERR
+ */
 
 #ifdef FOR_CKIT
 #if P_CONFIG_READ_FUNCTIONS > 0
@@ -1915,7 +1916,8 @@ Perror_t Pdate_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
  *   + returns P_OK
  * Otherwise:
  *   + does not advance the IO cursor pos
- *   + returns P_ERR */
+ *   + returns P_ERR
+ */
 
 #ifdef FOR_CKIT
 #if P_CONFIG_READ_FUNCTIONS > 0
@@ -1941,10 +1943,10 @@ Perror_t Pipaddr_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
 /* ================================================================================
  * ASCII STRING TO INTEGER READ FUNCTIONS
  *
- * An ascii representation of an integer value (a string of digits in [0-9])
+ * An ASCII representation of an integer value (a string of digits in [0-9])
  * is assumed to be at the current cursor position, where
  * if the target type is a signed type a leading - or + is allowed and
- * if unsigned a leading + is allowed.  If (disc flags & P_WSPACE_OK), leading
+ * if unsigned a leading + is allowed.  If (pads->disc->flags & P_WSPACE_OK), leading
  * white space is skipped, otherwise leading white space causes an error.
  * Thus, the string to be converted consists of: optional white space,
  * optional +/-, and all consecutive digits (first nondigit marks end).
@@ -1953,31 +1955,31 @@ Perror_t Pipaddr_read  (P_t *pads, const Pbase_m *m, Pchar stopChar,
  *
  * Upon success, P_OK returned: 
  *   + the IO cursor is advanced to just beyond the last digit
- *   + if !m || *m == P_CheckAndSet, the out param is assigned a value
+ *   + if P_Test_NotIngore(*m), the out param is assigned a value
  *
  * P_ERR is returned on error.
  * Cursor advancement/err settings for different error cases:
  *
  * (1) If IO cursor is at EOF
- *     => IO cursor remains at EOF
- *     => If !m || *m < P_Ignore:
- *           + pd->errCode set to P_AT_EOF
- *           + pd->loc begin/end set to EOF 'location'
- * (2a) There is leading white space and not (disc flags & P_WSPACE_OK)
+ *     + pd->loc.b/e set to EOF 'location'
+ *     + IO cursor remains at EOF
+ *     + if P_Test_NotIgnore(*), pd->errCode set to P_AT_EOF,
+ *         pd->nerr set to 1, and an error is reported
+ * (2a) There is leading white space and not (pads->disc->flags & P_WSPACE_OK)
  * (2b) The target is unsigned and the first char is a -
  * (2c) The first character is not a +, -, or in [0-9]
  * (2d) First character is allowable + or -, following by a char that is not a digit
  * For the above 4 cases:
- *     => IO cursor is not advanced
- *     => If !m || *m < P_Ignore:
- *          + pd->errCode set to P_INVALID_A_NUM
- *          + pd->loc begin/end set to the IO cursor position.
- * (3) A valid ascii integer string is found, but it describes
+ *     + pd->loc.b/e set to the IO cursor position.
+ *     + IO cursor is not advanced
+ *     + if P_Test_NotIgnore(*m), pd->errCode set to P_INVALID_A_NUM,
+ *         pd->nerr set to 1, and an error is reported
+ * (3) A valid ASCII integer string is found, but it describes
  *     an integer that does not fit in the specified target type
- *     => IO cursor is advanced just beyond the last digit
- *     => If !m || *m < P_Ignore:
- *          + pd->errCode set to P_RANGE
- *          + pd->loc begin/end set to elt/char position of start and end of the ascii integer
+ *     + pd->loc.b/e set to elt/char position of start and end of the ASCII integer
+ *     + IO cursor is advanced just beyond the last digit
+ *     + if P_Test_NotIgnore(*m), pd->errCode set to P_RANGE,
+ *         pd->nerr set to 1, and an error is reported
  */
 
 #if P_CONFIG_READ_FUNCTIONS > 0
@@ -2012,10 +2014,10 @@ Perror_t Pa_uint64_read(P_t *pads, const Pbase_m *m,
 #endif /* P_CONFIG_READ_FUNCTIONS */
 
 /*
- * Fixed-width ascii integer read functions:
+ * Fixed-width ASCII integer read functions:
  *    Like the above, only a fixed width in input characters is specified, and
  *    only those characters are examined.  E.g., input '11112222' could be used
- *    to read two fixed-width ascii integers of width 4.
+ *    to read two fixed-width ASCII integers of width 4.
  *
  * N.B. The APIs require width > 0.  If width <= 0 is given, an immediate error 
  * return occurs, without setting pd's location or error code.
@@ -2025,18 +2027,21 @@ Perror_t Pa_uint64_read(P_t *pads, const Pbase_m *m,
  * 1. It is an error if the entire specified width is not an integer, e.g.,
  *    for fixed width 4, input '111|' is an error
  *
- * 2. (disc flags & P_WSPACE_OK) indicates whether leading OR trailing spaces are OK, e.g.,
+ * 2. (pads->disc->flags & P_WSPACE_OK) indicates whether leading OR trailing spaces are OK, e.g.,
  *    for fixed width 4, input ' 1  ' is not an error is wpace_ok is 1
  *    (trailing white space is not an issue for variable-width routines)
  *
  * 3. If the specified width is available, it is always consumed, even if there is an error.
- *    In this case if !m || *m < P_Ignore:
- *       + pd->loc begin/end is set to the first/last char of the fixed-width field. 
+ *    In this case
+ *      + pd->loc.b/e is set to the first/last char of the fixed-width field
+ *      + if P_Test_NotIgnore(*m), an error code is set,
+ *         pd->nerr set to 1, and an error is reported
  *
- *    If the specified width is *not* available (EOR/EOF hit), IO cursor is not advanced and
- *      if !m || *m < P_Ignore:
- *        + pd->errCode set to P_WIDTH_NOT_AVAILABLE
- *        + pd->loc begin/end set to elt/char position of start/end of the 'too small' field
+ *    If the specified width is *not* available (EOR/EOF hit):
+ *      + pd->loc.b/e set to elt/char position of start/end of the 'too small' field
+ *      + IO cursor is not advanced
+ *      + if P_Test_NotIgnore(*m), pd->errCode set to P_WIDTH_NOT_AVAILABLE,
+ *         pd->nerr set to 1, and an error is reported
  */
 
 #if P_CONFIG_READ_FUNCTIONS > 0
@@ -2203,26 +2208,25 @@ Perror_t Puint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
  * These functions parse signed or unsigned binary integers
  * of common bit widths (8, 16, 32, and 64 bit widths).
  * Whether bytes are reversed is controlled by the endian-ness of
- * the machine (determined automatically) and disc->d_endian. If they differ,
+ * the machine (determined automatically) and pads->disc->d_endian. If they differ,
  * byte order is reversed in the in-memory representation, otherwise it is not.
  *
  * A good way to set the d_endian value in a machine-independent way is to
  * use PRAGMA CHECK_ENDIAN with the first multi-byte binary integer field that appears
  * in the data.  For example, this header definition:
  *
- *
- * pstruct header {
- *    b_uint16 version : version < 10; //- PRAGMA CHECK_ENDIAN
+ * Pstruct header {
+ *    Pb_uint16 version : version < 10; //- PRAGMA CHECK_ENDIAN
  *    ..etc..
  * };
  *
  * indicates the first value is a 2-byte unsigned binary integer, version,
  * whose value should be less than 10.   The pragma indicates that there
  * should be two attempts at reading the version field: once with the
- * current disc->d_endian setting, and (if the read fails) once with the
- * opposite disc->d_endian setting.  If the second read succeeds, then
- * the new disc->d_endian setting is retained, otherwise the original
- * disc->d_endian setting is retained.
+ * current pads->disc->d_endian setting, and (if the read fails) once with the
+ * opposite pads->disc->d_endian setting.  If the second read succeeds, then
+ * the new pads->disc->d_endian setting is retained, otherwise the original
+ * pads->disc->d_endian setting is retained.
  * 
  * N.B. The CHECK_ENDIAN pragma is only able to determine the correct endian
  * choice for a field that has an attached constraint, where the
@@ -2231,10 +2235,11 @@ Perror_t Puint64_FW_read(P_t *pads, const Pbase_m *m, size_t width,
  * setting, the result is a value that is much greater than 10.) 
  *
  * For all cases, if the specified number of bytes is available, it is always read.
- * If the width is not available, the IO cursor is not advanced, and
- *    if !m || *m < P_Ignore:
- *        + pd->errCode set to P_WIDTH_NOT_AVAILABLE
- *        + pd->loc begin/end set to elt/char position of start/end of the 'too small' field
+ * If the width is not available:
+ *    + pd->loc.b/e set to elt/char position of start/end of the 'too small' field
+ *    + IO cursor is not advanced
+ *    + if P_Test_NotIgnore(*m), pd->errCode set to P_WIDTH_NOT_AVAILABLE,
+ *         pd->nerr set to 1, and an error is reported
  */
 
 #if P_CONFIG_READ_FUNCTIONS > 0
@@ -2309,7 +2314,7 @@ Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
  * in 3 ways: (1) SBL and SBH support any number of bytes between 1 and 8,
  * while B only supports 1, 2, 4, and 8; (2) with SBL and SBH you specify the target
  * type independently of the num_bytes; (3) SBL and SBH explicitly state the
- * byte ordering, while B uses the disc->d_endian setting to determine the
+ * byte ordering, while B uses the pads->disc->d_endian setting to determine the
  * byte ordering of the data.
  *
  * FOR ALL TYPES
@@ -2319,15 +2324,15 @@ Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
  * depends on target type:
  *    
  * Type        num_digits    num_bytes Min/Max values
- * ----------- ----------    --------- ----------------------------------------------------
- * Pint8    1-3           1-1       P_MIN_INT8  / P_MAX_INT8
- * Puint8   1-3           1-1       0             / P_MAX_UINT8
- * Pint16   1-5           1-2       P_MIN_INT16 / P_MAX_INT16
- * Puint16  1-5           1-2       0             / P_MAX_UINT16
- * Pint32   1-10/11**     1-4       P_MIN_INT32 / P_MAX_INT32
- * Puint32  1-10          1-4       0             / P_MAX_UINT32
- * Pint64   1-19          1-8       P_MIN_INT64 / P_MAX_INT64
- * Puint64  1-20          1-8       0             / P_MAX_UINT64
+ * ----------- ----------    --------- ----------------------------
+ * Pint8       1-3           1-1       P_MIN_INT8  / P_MAX_INT8
+ * Puint8      1-3           1-1       0           / P_MAX_UINT8
+ * Pint16      1-5           1-2       P_MIN_INT16 / P_MAX_INT16
+ * Puint16     1-5           1-2       0           / P_MAX_UINT16
+ * Pint32      1-10/11**     1-4       P_MIN_INT32 / P_MAX_INT32
+ * Puint32     1-10          1-4       0           / P_MAX_UINT32
+ * Pint64      1-19          1-8       P_MIN_INT64 / P_MAX_INT64
+ * Puint64     1-20          1-8       0           / P_MAX_UINT64
  * 
  * N.B.: num_digits must be odd if the value on disk can be negative.
  *
@@ -2335,30 +2340,31 @@ Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
  * num_digits == 11 due to the fact that 11 is required for a 10 digit negative value
  * (an actual 11 digit number would cause a range error, so the leading digit must be 0).
  * 
- * For all cases, if the specified number of bytes is NOT available,
- * the IO cursor is not advanced, and:
- *    if !m || *m < P_Ignore:
- *        + pd->errCode set to P_WIDTH_NOT_AVAILABLE
- *        + pd->loc begin/end set to elt/char position of start/end of the 'too small' field
+ * For all cases, if the specified number of bytes is NOT available:
+ *    + pd->loc.b/e set to elt/char position of start/end of the 'too small' field
+ *    + IO cursor is not advanced
+ *    + if P_Test_NotIgnore(*m), pd->errCode set to P_WIDTH_NOT_AVAILABLE,
+ *         pd->nerr set to 1, and an error is reported
  *
  * Otherwise, the IO cursor is always advanced.  There are 3 error cases that
  * can occur even though the IO cursor advances:
  *
  * If num_digits or num_bytes is not a legal choice for the target type and
  * sign of the value:
- *    if !m || *m < P_Ignore:
- *          + pd->errCode set to P_BAD_PARAM
+ *    + pd->loc.b/e set to elt/char position at the start/end of the field
+ *    + if P_Test_NotIgnore(*m), pd->errCode set to P_BAD_PARAM,
+ *         pd->nerr set to 1, and an error is reported
  *
  * If the specified bytes make up an integer that does not fit in the target type,
  * or if the actual value is not in the min/max range, then:
- *    if !m || *m < P_Ignore:
- *          + pd->errCode set to P_RANGE
+ *    + pd->loc.b/e set to elt/char position at the start/end of the field
+ *    + if P_Test_NotIgnore(*m), pd->errCode set to P_RANGE,
+ *         pd->nerr set to 1, and an error is reported
  *
  * If the specified bytes are not legal EBC/BCD integer bytes, then 
- *    if !m || *m < P_Ignore:
- *          + pd->errCode set to one of:
- *                P_INVALID_EBC_NUM
- *                P_INVALID_BCD_NUM
+ *    + pd->loc.b/e set to elt/char position at the start/end of the field
+ *    + if P_Test_NotIgnore(*m), pd->errCode set to P_INVALID_EBC_NUM or P_INVALID_BCD_NUM,
+ *         pd->nerr set to 1, and an error is reported
  */
 
 #if P_CONFIG_READ_FUNCTIONS > 0
@@ -2479,29 +2485,30 @@ Perror_t Psbh_uint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes,
  * depends on target type, and is the same as specified above for the
  * EBC/BCD/SBL/SBH integer read functions.
  *    
- * For all cases, if the specified number of bytes are NOT available,
- * the IO cursor is not advanced, and:
- *    if !m || *m < P_Ignore:
- *        + pd->errCode set to P_WIDTH_NOT_AVAILABLE
- *        + pd->loc begin/end set to elt/char position of start/end of the 'too small' field
+ * For all cases, if the specified number of bytes are NOT available:
+ *    + pd->loc.b/e set to elt/char position of start/end of the 'too small' field
+ *    + IO cursor not advanced
+ *    + if PD_Test_NotIgnore(*m), pd->errCode set to P_WIDTH_NOT_AVAILABLE,
+ *         pd->nerr set to 1, and an error is reported
  *
  * Otherwise, the IO cursor is always advanced.  There are 3 error cases that
  * can occur even though the IO cursor advances:
  *
  * If num_digits, num_bytes, or d_exp is not in a legal choice for the target type
  * and sign of the value:
- *    if !m || *m < P_Ignore:
- *          + pd->errCode set to P_BAD_PARAM
+ *    + pd->loc.b/e set to elt/char position at the start/end of the field
+ *    + if PD_Test_NotIgnore(*m), pd->errCode set to P_BAD_PARAM,
+ *         pd->nerr set to 1, and an error is reported
  *
  * If the actual numerator is not in the min/max numerator range, then:
- *    if !m || *m < P_Ignore:
- *          + pd->errCode set to P_RANGE
+ *    + pd->loc.b/e set to elt/char position at the start/end of the field
+ *    + if PD_Test_NotIgnore(*m), pd->errCode set to P_RANGE,
+ *         pd->nerr set to 1, and an error is reported
  *
  * If the specified bytes are not legal EBC/BCD integer bytes, then 
- *    if !m || *m < P_Ignore:
- *          + pd->errCode set to one of:
- *                P_INVALID_EBC_NUM
- *                P_INVALID_BCD_NUM
+ *    + pd->loc.b/e set to elt/char position at the start/end of the field
+ *    + if PD_Test_NotIgnore(*m), pd->errCode set to P_INVALID_EBC_NUM or P_INVALID_BCD_NUM,
+ *         pd->nerr set to 1, and an error is reported
  *
  */
 
