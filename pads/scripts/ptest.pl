@@ -8,11 +8,23 @@ if ($pads_home eq "") {
 }
 my $maxrecs = 0;
 my $readmask = "P_CheckAndSet";
+my $iodiscmk = "P_nlrec_make(0)";
 my $parsing_opt_args = 1;
 ARG: while ($parsing_opt_args) {
   if ($#ARGV > 0 && ($ARGV[0] eq "-m" || $ARGV[0] eq "--maxrecs")) {
     shift(@ARGV);
     $maxrecs = shift(@ARGV);
+    next ARG;
+  }
+  if ($#ARGV > 0 && ($ARGV[0] eq "-i" || $ARGV[0] eq "--iodisc")) {
+    shift(@ARGV);
+    my $idisc = shift(@ARGV);
+    if ($idisc eq "norec") {
+      $iodiscmk = "P_norec_make(0)";
+    } else {
+      print "\n    Did not recognize IO discipline $idisc\n";
+      goto usage;
+    }
     next ARG;
   }
   if ($#ARGV >= 0 && ($ARGV[0] eq "-d" || $ARGV[0] eq "--debug")) {
@@ -88,7 +100,7 @@ open (COUT, ">$cfile") || die "\n    Could not open $cfile for output\n\n";
 print COUT "#define PADS_TY(suf) $pty ## suf
 #define MAX_RECS $maxrecs
 #define READ_MASK $readmask
-#define IO_DISC_MK P_nlrec_make(0)
+#define IO_DISC_MK $iodiscmk
 #include \"$pspec_h\"
 #include \"template/read_orig_write_xml.h\"
 
@@ -116,5 +128,9 @@ print "\nResult:\n$res2\n";
 exit(0);
 
 usage:
-print "\n    usage:  ptest.pl [ -m/--maxrecs # ] [ -d/--debug ] <pspec> <ptype>\n\n";
+print "\n    usage:  ptest.pl [ -m/--maxrecs # ] [ -i/--iodisc <iodisc> ] [ -d/--debug ] <pspec> <ptype>
+
+       the default IO discipline is nlrec.  Other choices: norec
+
+";
 exit(-1);
