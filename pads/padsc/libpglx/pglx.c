@@ -16,6 +16,9 @@
 /* ocaml header files can be found in /usr/common/lib/ocaml/caml */
 
 
+/* conversion function from PDCI_pglx_id_t to padsNID. */
+padsNID PDCI_pglx_id_2_padsNID(PDCI_pglx_id_t id);
+
 /* ================================================================================
  * PUBLIC GALAX->PADS CALLS (see pglx.h) */ 
 

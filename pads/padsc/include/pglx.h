@@ -34,7 +34,4 @@ void        PGLX_node_free           (nodeRep ocaml_n);     /* free node ocaml_n
 void        PGLX_nodelist_free       (nodeRepArray child_list); /* free a void ** list returned from generic_children */
 /* Note: PGLX_nodelist_free does not free the child nodes, just the list that refers to them */
 
-/* conversion function from PDCI_pglx_id_t to padsNID. */
-padsNID PDCI_pglx_id_2_padsNID(PDCI_pglx_id_t id);
-
 #endif  /*   __PGLX_H__   */
