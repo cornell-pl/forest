@@ -57,11 +57,6 @@ mv temp_examples examples
 
 
 cd .. # now in pads directory
-echo cleaning scripts directory
-mkdir temp_scripts
-for x in `cat scripts/RELEASE_SCRIPTS`; do mv scripts/$x temp_scripts; done
-rm -rf scripts
-mv temp_scripts scripts
 
 echo cleaning padsc directory
 mkdir temp_padsc
@@ -69,9 +64,19 @@ for x in `cat padsc/take_list`; do mv padsc/$x temp_padsc; done
 rm -rf padsc
 mv temp_padsc padsc
 
-# add licenses!
+echo Adding licenses
+# should be in pads directory
+# must do this before cleaning scripts directory
+scripts/release/:make.notices
 
-#okay, tar up the desired files
+echo cleaning scripts directory
+mkdir temp_scripts
+for x in `cat scripts/RELEASE_SCRIPTS`; do mv scripts/$x temp_scripts; done
+rm -rf scripts
+mv temp_scripts scripts
+
+
+echo taring up the desired files
 cd ..  # now above pads directory
 echo building bundle
 tar cfz pads.tar.gz `cat pads/take_list`
