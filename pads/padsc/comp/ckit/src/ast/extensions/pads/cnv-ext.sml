@@ -306,6 +306,11 @@ structure CnvExt : CNVEXT = struct
 	in
 	    localInitVar(id, acty)
 	end
+
+    fun getBindings ns = List.map (fn (x,y,z) => (x,z)) ns
+    fun getTypeContent ns = List.map (fn (x,y,z) => (x,y)) ns
+    fun augTyEnv ns = ignore(List.map insTempVar (getTypeContent ns))
+
     (* Typedefs name to be ct.  Returns the related tid. Guarantees
      that this name is not previously typedef'd *)
     fun ASTtypedefGen bSym (name:string,ct:Ast.ctype): Tid.uid =
@@ -657,7 +662,8 @@ structure CnvExt : CNVEXT = struct
 	      val errorFX =  P.arrowX(P.arrowX(PT.Id pads, PT.Id PL.disc), PT.Id PL.errorf)
 	      val d_endianX =  P.arrowX(P.arrowX(PT.Id pads, PT.Id PL.disc), PT.Id PL.d_endian)
 	      val m_endianX =  P.arrowX(PT.Id pads, PT.Id PL.m_endian)
-	      val locX      =  P.addrX(fieldX(pd,loc))
+	      val locX'     =  fieldX(pd,loc)
+	      val locX      =  P.addrX(locX')
               val locS      =  PL.getLocS(PT.Id pads,P.addrX(fieldX(pd,loc)))
 	      val locBS     =  PL.getLocBeginS(PT.Id pads, P.addrX(fieldX(pd,loc)))
 	      val locES     =  PL.getLocEndS(PT.Id pads, P.addrX(fieldX(pd,loc)), ~2) 
@@ -2416,38 +2422,55 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			     commentS :: initSs
 			 end
 
+		     fun getIsExp postCon = 
+			 let fun cvtOne one = case one
+                       		              of PX.ParseCheck _ => []
+                                              |  PX.General e => [PTSub.substExps (!subList) e]
+			     val exps = (List.concat(List.map cvtOne postCon))
+			 in
+			     P.andBools exps
+			 end
 
+		     fun checkPostConstraint loc postCon = 
+			 let val (exp, bindingInfoList) = 
+			       case postCon 
+		               of PX.ParseCheck exp => (exp,[(PNames.structBegin, PL.posPCT, P.dotX(PT.Id loc, PT.Id "b")),
+							     (PNames.structEnd,   PL.posPCT, P.dotX(PT.Id loc, PT.Id "e"))])
+		       	       |  PX.General    exp => (exp, [])
+							   
+			     val exp = PTSub.substExps (!subList) exp
+			     val () = augTyEnv bindingInfoList
+			     val () = expEqualTy(exp, CTintTys, 
+						 fn s=> ("Pwhere clause for Pstruct "^
+							 name ^ " does not have integer type."))
+			     val exp = PTSub.substExps (getBindings bindingInfoList)  exp
+			 in
+			     exp
+			 end
+				
 		     fun genCheckPostConstraint postCon = 
-			 case postCon of NONE => ([],[])  (* get begin loc for struct, check constraint*)
-                         | SOME expr => (
-                            let val strLocD = P.varDeclS'(PL.locPCT, tloc)
-				val locX = PT.Id tloc
-				val getBeginLocS = PL.getLocBeginS(PT.Id pads, P.addrX locX)
-				val getEndLocSs = [PL.getLocEndS(PT.Id pads, P.addrX locX, ~1)]
-				val expr = PTSub.substExps (!subList) expr
-				val () = expEqualTy(expr, CTintTys, 
-						    fn s=> ("Pwhere clause for Pstruct "^
-							    name ^ " " ^
-							    "does not have integer type."))
-				val reportErrSs = 
-				       getEndLocSs
-				     @ reportStructErrorSs(PL.P_USER_CONSTRAINT_VIOLATION, false, locX)
-				     @ [PL.userErrorS(PT.Id pads,
-						      P.addrX(locX),
-						      fieldX(pd,errCode),
-						      readName,
-						      PT.String("Pwhere clause for Pstruct "^
-								name ^ " " ^
-								"violated."), [])]
-				val condSs = 
-				       [P.mkCommentS ("Checking Pwhere for Pstruct "^ name ^"."),
-					PT.IfThen(
-                                           P.andX( PL.mTestSemCheckX(fieldX(m,PNames.structLevel)), P.notX expr),
-					   PT.Compound reportErrSs)]
-			    in
-			       ([strLocD,getBeginLocS], condSs)
-			    end (* end some case *))
-				 
+			 let val strLocD = P.varDeclS'(PL.locPCT, tloc)
+			     val locX = PT.Id tloc
+			     val condXs = List.map (checkPostConstraint tloc) postCon
+			     val condX = P.andBools condXs
+			     val getBeginLocS = PL.getLocBeginS(PT.Id pads, P.addrX (locX))
+			     val getEndLocSs = [PL.getLocEndS(PT.Id pads, P.addrX locX, ~1)]
+			     val initSs = if (List.length condXs) > 0 then [strLocD, getBeginLocS] else []
+			     val reportErrSs = getEndLocSs
+				             @ reportStructErrorSs(PL.P_USER_CONSTRAINT_VIOLATION, false, locX)
+					     @ [PL.userErrorS(PT.Id pads, P.addrX(locX), fieldX(pd,errCode),
+							    readName, PT.String("Pwhere clause for Pstruct "^
+										name ^ " violated."), [])]
+			     val condSs = 
+                                 if List.length condXs = 0 then []
+				 else
+				 [P.mkCommentS ("Checking Pwhere for Pstruct "^ name ^"."),
+				  PT.IfThen(
+					    P.andX( PL.mTestSemCheckX(fieldX(m,PNames.structLevel)), P.notX condX),
+					    PT.Compound reportErrSs)]
+			 in
+			     (initSs, condSs)
+			 end
 			     
 
                       (* -- Assemble read function *)
@@ -2463,7 +2486,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val localDeclSs = List.map (P.varDeclS' o (fn(x,y) => (y,x))) localVars
 		      val bodyS = localDeclSs @ postLocSs @ readFields @ postCondSs @ readRecord
-		      val bodySs = if 0 = List.length localDeclSs andalso not (Option.isSome postCond)
+		      val bodySs = if 0 = List.length localDeclSs andalso 0 = List.length postCond
 				       then bodyS else [PT.Compound bodyS]
 		      val returnS = genReturnChk (P.arrowX(PT.Id pd, PT.Id nerr))
 		      val bodySs = bodySs @ [returnS]
@@ -2500,7 +2523,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 					 fieldXs @ predXs 
 				     end
 			      val fieldConS = mungeFields getConFull (fn x=>[]) (fn x=>[]) fields
-			      val whereConS = case postCond of NONE => [] | SOME e => [e]
+			      val whereConS = [getIsExp postCond]
 			      val constraintSs = List.map (PTSub.substExps (!subList)) (fieldConS @ whereConS)
 			  in
 			      P.andBools constraintSs
@@ -2744,7 +2767,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 	     fun cnvPUnion {name: string, params: (pcty * pcdecr) list, 
 			     isRecord: bool, containsRecord, largeHeuristic, isSource: bool, 
-			     variants: (pdty, pcdecr, pcexp) PX.PBranches, postCond : pcexp option} = 
+			     variants: (pdty, pcdecr, pcexp) PX.PBranches, postCond : (pcexp PX.PPostCond) list} = 
 		 let (* Some useful names *)
 		     val unionName = name
 		     val cParams : (string * pcty) list = List.map mungeParam params
@@ -2952,19 +2975,31 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                      val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
                      (* Process where clause *)
-		     val wherePredXOpt = case postCond of NONE => NONE
-                         | SOME wherePred => 
-			    let val env = [(tag, tagPCT), (value, unionPCT)]
-				val subList = [(tag, fieldX(rep,tag)), (value, fieldX(rep, value))]
-				fun errMsg s = "Pwhere clause for Punion "^name^" has type "^s^". Expected type int."
-				val () = (pushLocalEnv();
-				          ignore(List.map insTempVar env);
-					  expEqualTy(wherePred, CTintTys, errMsg);
-					  popLocalEnv())
-				val predX = PTSub.substExps subList wherePred
-			    in
-				SOME predX
-			    end
+		     val (whereReadXs, whereIsXs) =
+			 let val env = [(tag, tagPCT, fieldX(rep,tag)), (value, unionPCT, fieldX(rep,value))]
+			     val subList = [(tag, fieldX(rep,tag)), (value, fieldX(rep, value))]
+			     fun errMsg s = "Pwhere clause for Punion "^name^" has type "^s^". Expected type int."
+			     fun cvtOne postCond = 
+				 let val (isParseCheck, exp, bindingInfoList) = 
+				     case postCond
+				     of PX.General exp => (false, exp,env)
+				     |  PX.ParseCheck exp => (true, exp, env
+							           @[(PNames.unionBegin, PL.posPCT, P.dotX(locX', PT.Id "b")),
+							             (PNames.unionEnd,   PL.posPCT, P.dotX(locX', PT.Id "e"))])
+				     val modexp = PTSub.substExps ((getBindings bindingInfoList) @ subList) exp
+				 in
+				     pushLocalEnv();
+				     augTyEnv bindingInfoList;
+				     ignore(List.map insTempVar cParams);
+				     expEqualTy(exp, CTintTys, errMsg);
+				     popLocalEnv();	
+				     ([modexp], if isParseCheck then [] else [modexp] )
+				 end
+			     val (whereReadXss, whereIsXss) = ListPair.unzip(List.map cvtOne postCond)
+			 in
+			     (List.concat whereReadXss, List.concat whereIsXss)
+			 end
+
 
                      (* Generate tag to string function *)
 		     val tagFields' = List.map (fn(name,exp,comment) => (name,name,exp,comment)) tagFields
@@ -3080,7 +3115,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 					    P.neqX(fieldX(rep,tag), PT.Id (!firstTag)),
 					    PT.Compound (cleanupSpaceSs @ initSpaceSs))]
 
-		     val returnSs = if isRecord then
+		     val hasPostlude = isRecord orelse List.length postCond >0
+		     val returnSs = if hasPostlude then
 			 [P.assignS(PT.Id result, PL.P_OK),
 			  PT.Goto (findEORSuf unionName)]
 				    else [PT.Return PL.P_OK]
@@ -3105,16 +3141,16 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				 end
 
                      val checkWhereSs = 
-                         case wherePredXOpt of NONE => []
-                         | SOME predX =>
+			 if List.length whereReadXs = 0 then []
+			 else
 			     let val errorMsg = "Pwhere clause violation"
-				 val getEndLocSs = [PL.getLocEndS(PT.Id pads, locX, ~1)]
-				 val reportErrSs = reportErrorSs(getEndLocSs, locX, true, 
+				 val reportErrSs = reportErrorSs([], locX, true, 
 								 PL.P_USER_CONSTRAINT_VIOLATION, true, readName, errorMsg, [])
 				                   @[P.assignS(PT.Id result, PL.P_ERROR)]
 			     in
 			     [P.mkCommentS "Checking Pwhere clause",
-			      PT.IfThen(P.andX(PL.mTestSemCheckX(fieldX(m,PNames.unionLevel)), P.notX predX),
+			      PL.getLocEndS(PT.Id pads, locX, ~1),
+			      PT.IfThen(P.andX(PL.mTestSemCheckX(fieldX(m,PNames.unionLevel)), P.notX (P.andBools whereReadXs)),
 					PT.Compound reportErrSs)]
 
 			     end
@@ -3196,12 +3232,15 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			             @ [P.assignS(fieldX(rep,tag),PT.Id (errSuf name)),
 					P.assignS(fieldX(pd, tag),PT.Id (errSuf name))]
 
+		     fun genPostlude() = if isRecord then
+			                   [PT.Labeled(findEORSuf name, 
+						       PT.Compound (genReadEOR (readName, reportUnionErrorSs) ()))]
+					 else if hasPostlude then [PT.Labeled(findEORSuf name, PT.Compound[])]
+					      else []
+
 		     fun genCleanupSs (s,locS) =  (genErrorSs (s,locS))
-			             @ [PL.setPanicS(PT.Id pd)]
-				     @ (if isRecord then
-			                 [PT.Labeled(findEORSuf name, 
-						   PT.Compound (genReadEOR (readName, reportUnionErrorSs) ()))]
-				        else [])
+			                        @ [PL.setPanicS(PT.Id pd)]
+				                @ genPostlude()
                      
 		     fun chkCaseLabel eOpt = 
 			 case eOpt of NONE => ()
@@ -3250,10 +3289,11 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				 val augReadFields = if hasDefault then readFields 
 				                     else readFields @ (genSwDefaultIfAbsent())
 				 val bodyS = PT.Switch(descriminator, PT.Compound augReadFields)
+				 val cleanupSs = genPostlude  ()
 			     in
 				   [P.varDeclS(PL.toolErrPCT, result, PL.P_ERROR)] 
 				 @ deallocOldSpaceSs 
-				 @ [locBS, bodyS]
+				 @ [locBS, bodyS] @ cleanupSs
 			     end
 
                      fun buildReadFun () = 
@@ -3319,7 +3359,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 						  PT.DefaultLabel(setAggSs P.falseX)]
 			     val fieldConS = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound fieldConCases)]
 			     val aggDecl = P.varDeclS'(P.int, agg)
-			     val whereConS = case wherePredXOpt of NONE => [] | SOME e => [P.assignS(PT.Id agg, e)]
+			     val whereConS = case whereIsXs of [] => [] | xl => [P.assignS(PT.Id agg, P.andBools whereIsXs)]
 			     val constraintSs = fieldConS @ whereConS
 			 in
                               [aggDecl]
@@ -3530,7 +3570,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, 
                             largeHeuristic, isSource : bool, args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list,
-			    postCond : pcexp PX.PPostCond list} =
+			    postCond : pcexp PX.PArrayPostCond list} =
 	     let 
 		 val cParams : (string * pcty) list = List.map mungeParam params
 		 val paramNames = #1(ListPair.unzip cParams)
@@ -3796,7 +3836,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 							 name ^" has type "^s^". Expected "^
 							 "type int."));
 			 popLocalEnv();
-                         (false, PX.General modExpX)
+                         (false, PX.AGeneral modExpX)
 		     end
 
 		 fun chkParseChkConstraintSs (exp) = 
@@ -3820,14 +3860,14 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 							 name ^" has type "^s^". Expected "^
 							 "type int."));
 			 popLocalEnv();
-                         (needEndLoc, PX.ParseCheck modExp)
+                         (needEndLoc, PX.AParseCheck modExp)
 		     end
 
                  fun chkPostCondClause c = 
 		     case c of 
-		       PX.Forall r     => chkForallConstraintSs    r
-		     | PX.General exp  => chkGeneralConstraintSs  exp
-                     | PX.ParseCheck p => chkParseChkConstraintSs p
+		       PX.Forall r      => chkForallConstraintSs    r
+		     | PX.AGeneral exp  => chkGeneralConstraintSs  exp
+                     | PX.AParseCheck p => chkParseChkConstraintSs p
 			   
 		 fun chkWhereClauses cs = 
 		     let val r = List.map chkPostCondClause cs
@@ -4633,9 +4673,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 						     ("Pparsecheck constraint for array "^name^" violated."), [], false))])]
                  fun genWhereClause c = 
 		     case c of
-		       PX.Forall r     => genForallConstraintSs     r
-		     | PX.General exp  => genGeneralConstraintSs    exp
-                     | PX.ParseCheck p => genParseCheckConstraintSs p
+		       PX.Forall r      => genForallConstraintSs     r
+		     | PX.AGeneral exp  => genGeneralConstraintSs    exp
+                     | PX.AParseCheck p => genParseCheckConstraintSs p
        
 
                  val semanticConstraintSs = List.concat (List.map genWhereClause postCond)
@@ -4754,9 +4794,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                  val isName = PNames.isPref name
 		 fun genPredClause c = 
 		     case c of 
-                       PX.Forall     r   => genLoop r
-		     | PX.General    exp => [PT.IfThen(exp, PT.Compound[P.assignS(PT.Id violated, P.trueX)])]
-                     | PX.ParseCheck exp => []
+                       PX.Forall      r   => genLoop r
+		     | PX.AGeneral    exp => [PT.IfThen(exp, PT.Compound[P.assignS(PT.Id violated, P.trueX)])]
+                     | PX.AParseCheck exp => []
 		 val clausesSs = List.concat(List.map genPredClause postCond)
 		 val bodySs = [P.varDeclS(P.int, violated, P.falseX)]
 		             @  clausesSs

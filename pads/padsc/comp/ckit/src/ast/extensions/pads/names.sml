@@ -11,6 +11,10 @@ struct
   val arrayEnd    = "arrayEnd"    (* tloc.e     : Ppos_t *)
   val elemBegin   = "eltBegin"    (* pd->loc.b  : Ppos_t *)
   val elemEnd     = "eltEnd"      (* pd->loc.e  : Ppos_t *)
+  val structBegin = "structBegin"  (* tloc.b     : Ppos_t *)
+  val structEnd   = "structEnd"    (* tloc.e     : Ppos_t *)
+  val unionBegin  = "unionBegin"  (* tloc.b     : Ppos_t *)
+  val unionEnd    = "unionEnd"    (* tloc.e     : Ppos_t *)
   val position    = "position"
 
   val structLevel = "structLevel"
@@ -43,7 +47,7 @@ struct
   fun mapSuf s = s^"_map"
   fun toStringSuf s = s^"2str"
   fun errSuf s = s^"_err"
-  fun findEORSuf s = s^"_findEOR"
+  fun findEORSuf s = s^"_findpostlude"
   fun findEndSuf s = s^"_end"
   fun gTemp base = "tmp"^base
   fun childrenSuf name = name^"_children" 

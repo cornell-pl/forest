@@ -1,12 +1,21 @@
-Pstruct str{
+Pstruct entry(:int len:){
   Puint32 foo;
 } Pwhere {
-  foo % 2 == 0 && Pparsecheck(foo % 3 == 0) && Pparsecheck(foo % 6 == 0);
+  foo % 2 == 0 && Pparsecheck(structEnd.offset - structBegin.offset == len);
 };
 
 
-Punion uni{
+Precord Punion uni(:int len:){
   Puint32 goo;
 } Pwhere {
-  goo % 2 == 0 && Pparsecheck(goo % 3 == 0) && Pparsecheck(foo % 6 == 0);
+  2 % 2 == 0 && Pparsecheck(unionEnd.offset - unionBegin.offset == len);
 };
+
+
+Punion suni(:int len:){
+  Pswitch(len){
+  Pcase 1 : Pint32  number : number %2 == 0;
+  } 
+} Pwhere{
+  2 % 2 == 0 && Pparsecheck(unionEnd.offset - unionBegin.offset == len);
+}

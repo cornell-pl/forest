@@ -36,9 +36,13 @@ structure ParseTreeExt =
          | Last of 'exp 
          | Ended of 'exp 
 
-        datatype 'exp PPostCond = 
+        datatype 'exp PArrayPostCond = 
            Forall of {index : string, range : 'exp PRange, body : 'exp}
-         | General of 'exp
+         | AGeneral of 'exp
+         | AParseCheck of 'exp
+
+        datatype 'exp PPostCond = 
+           General of 'exp
          | ParseCheck of 'exp
 
         datatype ('dt, 'decr, 'exp) PBranches = 
@@ -66,7 +70,7 @@ structure ParseTreeExt =
                        largeHeuristic : bool,
 		       isSource : bool,
 		       fields : (('dt, 'decr, 'exp) PSField) list,
-		       postCond : 'exp option}
+		       postCond : ('exp PPostCond) list}
          | PArray  of {name : string, 
 		       baseTy : Pty, 
 		       params : ('ct * 'decr) list, 
@@ -77,7 +81,7 @@ structure ParseTreeExt =
 		       args   : 'exp list, 
 		       sizeSpec : ('exp PSize) option, 
 		       constraints : ('exp PConstraint) list,
-		       postCond : ('exp PPostCond) list} 
+		       postCond : ('exp PArrayPostCond) list} 
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
 		      isRecord : bool, 
@@ -85,7 +89,7 @@ structure ParseTreeExt =
                       containsRecord : bool, 
                       largeHeuristic : bool,
 		      variants : ('dt, 'decr, 'exp) PBranches,
-		      postCond : 'exp option}
+		      postCond : ('exp PPostCond) list}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
 		      isRecord : bool, 

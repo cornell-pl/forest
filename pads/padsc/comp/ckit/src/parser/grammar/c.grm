@@ -345,7 +345,10 @@ end
         | pStruct of (declarator, ctype, decltype, expression) PX.PExternal
         | pStructFieldList of ((decltype, declarator, expression) PX.PSField) list
         | pStructField of (decltype, declarator, expression) PX.PSField
-	| pPostCondOpt of expression option
+        | pPC of (expression PX.PPostCond)
+        | pPCList of (expression PX.PPostCond) list
+        | pConstraints of (expression PX.PPostCond) list
+	| pPostCondOpt of (expression PX.PPostCond) list
         | pManifestField of (decltype, declarator, expression) PX.PSField
         | pConstraintOpt of expression option
         | pCommentOpt of string option
@@ -357,10 +360,10 @@ end
         | pArrayConstraint of (expression PX.PConstraint) 
         | pArrayConstraints of (expression PX.PConstraint) list
         | pArrayConstraintOpt of (expression PX.PConstraint) list
-        | pArrayPCorFor of expression PX.PPostCond
-        | pArrayPCorForList of (expression PX.PPostCond) list
-        | pArrayPostConstraints of (expression PX.PPostCond) list
-        | pArrayPostConds of (expression PX.PPostCond) list
+        | pArrayPCorFor of expression PX.PArrayPostCond
+        | pArrayPCorForList of (expression PX.PArrayPostCond) list
+        | pArrayPostConstraints of (expression PX.PArrayPostCond) list
+        | pArrayPostConds of (expression PX.PArrayPostCond) list
         | pBranch of expression option * (decltype, declarator, expression) PX.PSField
         | pBranchList of (expression option * (decltype, declarator, expression) PX.PSField) list
         | pVariants of (decltype, declarator, expression) PX.PBranches
@@ -416,25 +419,38 @@ tu:
 	| tu externalDeclaration	(addOptToEnd(externalDeclaration, tu))
 
 (* PADS *)
-pPostCondOpt: (NONE)
- | PWHERE LCURLY expr SEMICOLON RCURLY  (SOME expr)
+pPC:
+   PPARSECHECK LPAREN expr RPAREN     (PX.ParseCheck expr)
+
+pPCList:
+   pPC             ([pPC])
+ | pPCList AND pPC (pPCList @ [pPC])
+
+pConstraints :
+   expr             ([PX.General expr])
+ | pPCList AND expr (pPCList @ [PX.General expr])
+ | expr AND pPCList ([PX.General expr] @ pPCList)
+ | pPCList          (pPCList)
+
+pPostCondOpt: ([])
+ | PWHERE LCURLY pConstraints SEMICOLON RCURLY  (pConstraints)
 
 pArrayPCorFor : 
    PFORALL LPAREN pName PIN pForAllRange COLON expr RPAREN
                 (PX.Forall {index = pName, range = pForAllRange, body = expr})
- | PPARSECHECK LPAREN expr RPAREN     (PX.ParseCheck expr)
+ | PPARSECHECK LPAREN expr RPAREN     (PX.AParseCheck expr)
 
 pArrayPCorForList : 
     pArrayPCorFor                           ([pArrayPCorFor])
   | pArrayPCorForList AND pArrayPCorFor     ( pArrayPCorForList @[pArrayPCorFor])
 
 pArrayPostConstraints : 
-    expr                           ([PX.General expr])
-  | pArrayPCorForList AND expr     (pArrayPCorForList @ [PX.General expr])
-  | expr AND pArrayPCorForList     ([PX.General expr] @ pArrayPCorForList)
+    expr                           ([PX.AGeneral expr])
+  | pArrayPCorForList AND expr     (pArrayPCorForList @ [PX.AGeneral expr])
+  | expr AND pArrayPCorForList     ([PX.AGeneral expr] @ pArrayPCorForList)
   | pArrayPCorForList              (pArrayPCorForList)
   | pArrayPCorForList AND expr AND pArrayPCorForList
-    (pArrayPCorForList1 @ [PX.General expr] @ pArrayPCorForList2)
+    (pArrayPCorForList1 @ [PX.AGeneral expr] @ pArrayPCorForList2)
 
 pArrayPostConds : ([])
  | PWHERE LCURLY pArrayPostConstraints SEMICOLON RCURLY (pArrayPostConstraints)
@@ -1195,7 +1211,7 @@ pStruct:
  ( makeTypeName pName;
    PX.PStruct {isRecord = pIsRecord, isSource = pIsSource, 
 	       containsRecord = false, largeHeuristic = false,
-               name = pName, params = pTyParams, fields = pStructFieldList, postCond = NONE}	
+               name = pName, params = pTyParams, fields = pStructFieldList, postCond = []}	
  )
 
 pForAllRange : 
@@ -1260,7 +1276,7 @@ pUnion:
  ( makeTypeName pName;
    PX.PUnion {name = pName, params = pTyParams, 
 	      containsRecord = false, largeHeuristic = false,
-              isRecord = pIsRecord, isSource = pIsSource, variants=pVariants, postCond = NONE}
+              isRecord = pIsRecord, isSource = pIsSource, variants=pVariants, postCond = []}
  ) 
 
 
