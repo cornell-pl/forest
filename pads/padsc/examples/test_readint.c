@@ -1,20 +1,15 @@
 #include "libpadsc.h"
-#include "format6.h"
+#include "readinttest.h"
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
-  defPN_em        pem = {PDC_CheckAndSet, {PDC_CheckAndSet, PDC_CheckAndSet}};
-  defPN_ed        ped;
-  defPN           pdata;
+  record          r;
 
-  /* Open pdc handle */
   if (PDC_ERROR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-
-  /* Open output file */
-  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.format6", 0)) {
+  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.readinttest", 0)) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -23,16 +18,11 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_peek_EOF(pdc, 0)) {
-    PDC_error_t res;
-    int i;
-    res= defPN_read(pdc, &pem, 1999999999LL, 9999999999LL, &ped, &pdata, 0);
-
-    if (res == PDC_OK) {
-      printf("Record okay:\t");
+    if (PDC_OK == record_read(pdc, 0, 0, &r, 0)) {
+      /* do something with the data */
     } else {
-      printf("Record not okay:\t");
+      error(2, "record_read returned: error");
     }
-    printf("x = %llu\n", pdata.id);
   }
 
   if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {
