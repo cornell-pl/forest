@@ -10,10 +10,8 @@ int main(int argc, char** argv) {
   int             ctr;
   size_t          n;
   int             f_found;
-  P_t*          pads;
-  Pdisc_t      my_disc = Pdefault_disc;
-  Pbase_pd     pd = {0};
-  Pbase_m      m  = P_CheckAndSet;
+  P_t*            pads;
+  Pdisc_t         my_disc = Pdefault_disc;
 
   if (!(io_disc = P_norec_make(0))) {
     error(2, "*** P_norec_make failed ***");
@@ -38,7 +36,7 @@ int main(int argc, char** argv) {
       if (f_found) { 
 	ctr++;
 	P_io_checkpoint(pads, 1);
-	if (P_OK == Pa_char_lit_read(pads, &m, &pd, 'a')) {
+	if (P_OK == Pa_char_lit_match(pads, 'a', 1)) {
 	  error(2, "found an 'a' after a vbar");
 	}
 	P_io_commit(pads);

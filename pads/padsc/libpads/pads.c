@@ -189,7 +189,7 @@ do {
 /* Assumes pd->loc has already been set */
 #define PDCI_READFN_RET_ERRCODE_WARN(whatfn, msg, errcode)
   do {
-    if (pads->speclev == 0 && P_Test_NotIgnore(*m)) {
+    if (pads->speclev == 0 && P_Test_NotIgnore(*(m))) {
       pd->errCode = (errcode);
       if (!pads->inestlev) {
 	PDCI_report_err(pads, P_WARN_FLAGS, &(pd->loc), (errcode), (whatfn), (msg));
@@ -202,7 +202,7 @@ do {
 /* Assumes pd->loc and pd->errCode have already been set */
 #define PDCI_READFN_RET_EXIST_ERRCODE_WARN(whatfn, msg)
   do {
-    if (pads->speclev == 0 && P_Test_NotIgnore(*m)) {
+    if (pads->speclev == 0 && P_Test_NotIgnore(*(m))) {
       if (!pads->inestlev) {
 	PDCI_report_err(pads, P_WARN_FLAGS, &(pd->loc), pd->errCode, (whatfn), (msg));
       }
@@ -214,7 +214,7 @@ do {
 /* Assumes pd->loc has already been set, warning already issued */
 #define PDCI_READFN_RET_ERRCODE_NOWARN(errcode)
   do {
-    if (pads->speclev == 0 && P_Test_NotIgnore(*m)) {
+    if (pads->speclev == 0 && P_Test_NotIgnore(*(m))) {
       pd->errCode = (errcode);
     }
     return P_ERR;
@@ -224,7 +224,7 @@ do {
 /* Does not use pd->loc */
 #define PDCI_READFN_RET_ERRCODE_FATAL(whatfn, msg, errcode)
   do {
-    if (pads->speclev == 0 && P_Test_NotIgnore(*m)) {
+    if (pads->speclev == 0 && P_Test_NotIgnore(*(m))) {
       pd->errCode = (errcode);
       PDCI_report_err(pads, P_FATAL_FLAGS, 0, (errcode), (whatfn), (msg));
     }
@@ -241,141 +241,149 @@ do {
 /* END_MACRO */
 
 /* Pstring_cstr_copy -- inline version.  Caller must provide fatal_alloc_err target */
-#define PDCI_STR_CPY(s, b, wdth)
+#define PDCI_STR_CPY(sIN, bIN, wIN)
   do {
-    if (!(s)->rbuf) {
-      if (!((s)->rbuf = RMM_new_rbuf(pads->rmm_nz))) {
+    size_t wdth_PDCI_STR_CPY = (wIN);
+    if (!(sIN)->rbuf) {
+      if (!((sIN)->rbuf = RMM_new_rbuf(pads->rmm_nz))) {
 	goto fatal_alloc_err;
       }
     }
-    if (RBuf_reserve((s)->rbuf, (void**)&((s)->str), sizeof(char), (wdth)+1, PDCI_STRING_HINT)) {
+    if (RBuf_reserve((sIN)->rbuf, (void**)&((sIN)->str), sizeof(char), wdth_PDCI_STR_CPY+1, PDCI_STRING_HINT)) {
       goto fatal_alloc_err;
     }
-    strncpy((s)->str, (b), (wdth));
-    (s)->str[wdth] = 0;
-    (s)->len = (wdth);
-    /* if ((s)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(s)); } */
-    (s)->sharing = 0;
+    strncpy((sIN)->str, (char*)(bIN), wdth_PDCI_STR_CPY);
+    (sIN)->str[wdth_PDCI_STR_CPY] = 0;
+    (sIN)->len = wdth_PDCI_STR_CPY;
+    /* if ((sIN)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(sIN)); } */
+    (sIN)->sharing = 0;
+  } while (0)
+/* END_MACRO */
+
+/* copy and convert from ASCII to EBCDIC at same time.  Caller must provide fatal_alloc_err target */
+#define PDCI_A2E_STR_CPY(sIN, bIN, wIN)
+  do {
+    int i;
+    size_t wdth_PDCI_A2E_STR_CPY = (wIN);
+    if (!(sIN)->rbuf) {
+      if (!((sIN)->rbuf = RMM_new_rbuf(pads->rmm_nz))) {
+	goto fatal_alloc_err;
+      }
+    }
+    if (RBuf_reserve((sIN)->rbuf, (void**)&((sIN)->str), sizeof(char), wdth_PDCI_A2E_STR_CPY+1, PDCI_STRING_HINT)) {
+      goto fatal_alloc_err;
+    }
+    for (i = 0; i < wdth_PDCI_A2E_STR_CPY; i++) {
+      (sIN)->str[i] = P_mod_ae_tab[(int)((bIN)[i])];
+    }
+    (sIN)->str[wdth_PDCI_A2E_STR_CPY] = 0;
+    (sIN)->len = wdth_PDCI_A2E_STR_CPY;
+    /* if ((sIN)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(sIN)); } */
+    (sIN)->sharing = 0;
+  } while (0)
+/* END_MACRO */
+
+/* copy and convert from EBCDIC to ASCII at same time.  Caller must provide fatal_alloc_err target */
+#define PDCI_E2A_STR_CPY(sIN, bIN, wIN)
+  do {
+    int i;
+    size_t wdth_PDCI_E2A_STR_CPY = (wIN);
+    if (!(sIN)->rbuf) {
+      if (!((sIN)->rbuf = RMM_new_rbuf(pads->rmm_nz))) {
+	goto fatal_alloc_err;
+      }
+    }
+    if (RBuf_reserve((sIN)->rbuf, (void**)&((sIN)->str), sizeof(char), wdth_PDCI_E2A_STR_CPY+1, PDCI_STRING_HINT)) {
+      goto fatal_alloc_err;
+    }
+    for (i = 0; i < wdth_PDCI_E2A_STR_CPY; i++) {
+      (sIN)->str[i] = P_mod_ea_tab[(int)((bIN)[i])];
+    }
+    (sIN)->str[wdth_PDCI_E2A_STR_CPY] = 0;
+    (sIN)->len = wdth_PDCI_E2A_STR_CPY;
+    /* if ((sIN)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(sIN)); } */
+    (sIN)->sharing = 0;
   } while (0)
 /* END_MACRO */
 
 /* Fill string s with n copies of c.  Caller must provide fatal_alloc_err target */
-#define PDCI_STRFILL(s, c, n)
+#define PDCI_STRFILL(sIN, cIN, nIN)
   do {
-    if (!(s)->rbuf) {
-      if (!((s)->rbuf = RMM_new_rbuf(pads->rmm_nz))) {
+    if (!(sIN)->rbuf) {
+      if (!((sIN)->rbuf = RMM_new_rbuf(pads->rmm_nz))) {
 	goto fatal_alloc_err;
       }
     }
-    if (RBuf_reserve((s)->rbuf, (void**)&((s)->str), sizeof(char), (n)+1, PDCI_STRING_HINT)) {
+    if (RBuf_reserve((sIN)->rbuf, (void**)&((sIN)->str), sizeof(char), (nIN)+1, PDCI_STRING_HINT)) {
       goto fatal_alloc_err;
     }
-    memset((s)->str, (c), (n));
-    (s)->str[n] = 0;
-    (s)->len = (n);
-    /* if ((s)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE fill: string %p is no longer sharing", (void*)(s)); } */
-    (s)->sharing = 0;
+    memset((sIN)->str, (cIN), (nIN));
+    (sIN)->str[nIN] = 0;
+    (sIN)->len = (nIN);
+    /* if ((sIN)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE fill: string %p is no longer sharing", (void*)(sIN)); } */
+    (sIN)->sharing = 0;
   } while (0)
 /* END_MACRO */
 
 /* Pstring_preserve -- inline version.  Caller must provide fatal_alloc_err target */
-#define PDCI_STR_PRESERVE(s)
+#define PDCI_STR_PRESERVE(sIN)
   do {
     char *shared_str;
-    /* P_WARN3(pads->disc, "XXX_REMOVE [%s:%d] preserve called on shared string %p", __FILE__, __LINE__, (void*)(s)); */
-    /* if (!(s)->sharing) { P_WARN3(pads->disc, "XXX_REMOVE [%s:%d] ... but string %p was not shared",__FILE__, __LINE__, (void*)(s)); } */
-    if ((s)->sharing) {
-      shared_str = (s)->str;
-      PDCI_STR_CPY((s), shared_str, (s)->len);
+    /* P_WARN3(pads->disc, "XXX_REMOVE [%s:%d] preserve called on shared string %p", __FILE__, __LINE__, (void*)(sIN)); */
+    /* if (!(sIN)->sharing) { P_WARN3(pads->disc, "XXX_REMOVE [%s:%d] ... but string %p was not shared",__FILE__, __LINE__, (void*)(sIN)); } */
+    if ((sIN)->sharing) {
+      shared_str = (sIN)->str;
+      PDCI_STR_CPY((sIN), shared_str, (sIN)->len);
     }
   } while (0)
 /* END_MACRO */
 
 /* Set up str sharing */
-#define PDCI_STR_SHARE(s, b, wdth)
+#define PDCI_STR_SHARE(sIN, bIN, wIN)
   do {
-    (s)->str = (char*)(b);
-    (s)->len = wdth;
-    (s)->sharing = 1;
-    /* P_WARN1(pads->disc, "XXX_REMOVE string %p is now sharing", (void*)(s)); */
+    (sIN)->str = (char*)(bIN);
+    (sIN)->len = (wIN);
+    (sIN)->sharing = 1;
+    /* P_WARN1(pads->disc, "XXX_REMOVE string %p is now sharing", (void*)(sIN)); */
   } while (0)
 /* END_MACRO */
 
-/* If P_Test_Set(*m), point to or copy (depending on pads->disc->copy_strings)
- * the string that goes from b to e-1.
+/* If P_Test_Set(*(mIN)), point to or copy (depending on pads->disc->copy_strings)
+ * the string bIN of width wIN
  * Caller must provide fatal_alloc_err target
  */
-#define PDCI_A_STR_SET(s, b, e)
+#define PDCI_A_STR_SET(mIN, sIN, bIN, wIN)
   do {
-    if ((s) && P_Test_Set(*m)) {
-      size_t wdth = (e)-(b); 
+    if (P_Test_Set(*(mIN))) {
       if (pads->disc->copy_strings) {
-	PDCI_STR_CPY((s), (b), wdth);
+	PDCI_STR_CPY(sIN, bIN, wIN);
       } else {
-	PDCI_STR_SHARE((s), (b), wdth);
+	PDCI_STR_SHARE(sIN, bIN, wIN);
       }
     }
   } while (0)
 /* END_MACRO */
 
-/* If P_Test_Set(*m), copy (always copy for EBCDIC) the
- * string that goes from b to e-1 and convert copy to ASCII.
+/* If P_Test_Set(*(mIN)), copy string of width wIN.
+ * Caller must provide fatal_alloc_err target
+ */
+#define PDCI_STR_CPY_ON_SET(mIN, sIN, bIN, wIN)
+  do {
+    if (P_Test_Set(*(mIN))) {
+      PDCI_STR_CPY(sIN, bIN, wIN);
+    }
+  } while (0)
+/* END_MACRO */
+
+/* If P_Test_Set(*(mIN)), copy (always copy for EBCDIC) the
+ * string bIN of width wIN and convert copy to ASCII.
  * Caller must provide fatal_alloc_err target.
  */
-#define PDCI_E_STR_SET(m, s, b, e)
+#define PDCI_E_STR_SET(mIN, sIN, bIN, wIN)
   do {
-    Pbyte *_ptmp, *_ptmp_end;
-    if ((s) && P_Test_Set(*m)) {
-      size_t wdth = (e)-(b); 
-      PDCI_STR_CPY((s), (b), wdth);
-      for (_ptmp = (Pbyte*)s_out->str, _ptmp_end = _ptmp + s_out->len; _ptmp < _ptmp_end; _ptmp++) {
-	(*_ptmp) = P_ea_tab[(int)(*_ptmp)];
-      }
+    if (P_Test_Set(*(mIN))) {
+      PDCI_E2A_STR_CPY(sIN, bIN, wIN);
     }
-  } while (0)
-/* END_MACRO */
-
-/* copy and convert from ASCII to EBCDIC at same time.  Caller must provide fatal_alloc_err target */
-#define PDCI_A2E_STR_CPY(s, b, wdth)
-  do {
-    int i;
-    if (!(s)->rbuf) {
-      if (!((s)->rbuf = RMM_new_rbuf(pads->rmm_nz))) {
-	goto fatal_alloc_err;
-      }
-    }
-    if (RBuf_reserve((s)->rbuf, (void**)&((s)->str), sizeof(char), (wdth)+1, PDCI_STRING_HINT)) {
-      goto fatal_alloc_err;
-    }
-    for (i = 0; i < wdth; i++) {
-      (s)->str[i] = P_mod_ae_tab[(int)((b)[i])];
-    }
-    (s)->str[wdth] = 0;
-    (s)->len = (wdth);
-    /* if ((s)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(s)); } */
-    (s)->sharing = 0;
-  } while (0)
-/* END_MACRO */
-
-/* copy and convert from EBCDIC to ASCII at same time.  Caller must provide fatal_alloc_err target */
-#define PDCI_E2A_STR_CPY(s, b, wdth)
-  do {
-    int i;
-    if (!(s)->rbuf) {
-      if (!((s)->rbuf = RMM_new_rbuf(pads->rmm_nz))) {
-	goto fatal_alloc_err;
-      }
-    }
-    if (RBuf_reserve((s)->rbuf, (void**)&((s)->str), sizeof(char), (wdth)+1, PDCI_STRING_HINT)) {
-      goto fatal_alloc_err;
-    }
-    for (i = 0; i < wdth; i++) {
-      (s)->str[i] = P_mod_ea_tab[(int)((b)[i])];
-    }
-    (s)->str[wdth] = 0;
-    (s)->len = (wdth);
-    /* if ((s)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(s)); } */
-    (s)->sharing = 0;
   } while (0)
 /* END_MACRO */
 
@@ -518,10 +526,10 @@ Perror_t
 fn_pref ## _read(P_t *pads, const Pbase_m *m,
 		 Pbase_pd *pd, targ_type *res_out)
 {
-  targ_type       tmp;   /* tmp num */
+  targ_type    tmp;   /* tmp num */
   Pbyte        ct;    /* char tmp */
-  Pbyte        *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
+  Pbyte       *begin, *p1, *end, *goal;
+  int          bor, eor, eof;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_pref) "_read", m, pd, res_out);
   P_PS_init(pd);
@@ -625,10 +633,10 @@ Perror_t
 fn_name(P_t *pads, const Pbase_m *m, size_t width,
 	Pbase_pd *pd, targ_type *res_out)
 {
-  targ_type       tmp;   /* tmp num */
+  targ_type    tmp;   /* tmp num */
   Pbyte        ct;    /* char tmp */
-  Pbyte        *begin, *p1, *end;
-  int             bor, eor, eof;
+  Pbyte       *begin, *p1, *end;
+  int          bor, eor, eof;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
   P_PS_init(pd);
@@ -726,7 +734,7 @@ fn_name(P_t *pads, const Pbase_m *m,
 	Pbase_pd *pd, targ_type *res_out)
 {
   Pbyte        *begin, *end;
-  int             bor, eor, eof;
+  int           bor, eor, eof;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
   P_PS_init(pd);
@@ -764,7 +772,7 @@ fn_name(P_t *pads, const Pbase_m *m,
 	Pbase_pd *pd, targ_type *res_out)
 {
   Pbyte        *begin, *end;
-  int             bor, eor, eof;
+  int           bor, eor, eof;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
   P_PS_init(pd);
@@ -803,9 +811,9 @@ Perror_t
 fn_name(P_t *pads, const Pbase_m *m, Puint32 num_digits_or_bytes,
 	Pbase_pd *pd, targ_type *res_out)
 {
-  targ_type       tmp;   /* tmp num */
+  targ_type     tmp;   /* tmp num */
   Pbyte        *begin, *p1, *end;
-  int             bor, eor, eof;
+  int           bor, eor, eof;
 
   PDCI_IODISC_3P_CHECKS( PDCI_MacroArg2String(fn_name), m, pd, res_out);
   P_PS_init(pd);
@@ -4587,7 +4595,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.113 2003-10-07 00:11:44 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.114 2003-10-07 20:52:10 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5100,15 +5108,16 @@ P_open(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc)
 }
 
 Perror_t
-P_close(P_t *pads)
+P_close_keep_io_disc(P_t *pads, int keep_io_disc)
 {
 
   PDCI_DISC_0P_CHECKS("P_close");
   Pstring_cleanup(pads, &pads->stmp1);
   Pstring_cleanup(pads, &pads->stmp2);
-  if (pads->disc->io_disc) {
-    pads->disc->io_disc->unmake_fn(pads, pads->disc->io_disc);
+  if (pads->disc->io_disc && !keep_io_disc) {
+    pads->disc->io_disc->unmake_fn(pads->disc->io_disc);
   }
+  pads->disc->io_disc = 0;
   if (pads->rmm_z) {
     RMM_close(pads->rmm_z);
   }
@@ -5127,6 +5136,11 @@ P_close(P_t *pads)
   return P_OK;
 }
 
+Perror_t
+P_close(P_t *pads)
+{
+  return P_close_keep_io_disc(pads, 0);
+}
 
 /* ================================================================================ */
 /* EXTERNAL DISCIPLINE GET/SET FUNCTIONS */
@@ -5154,7 +5168,7 @@ P_set_disc(P_t *pads, Pdisc_t *new_disc, int xfer_io)
 }
 
 Perror_t
-P_set_io_disc(P_t* pads, Pio_disc_t* new_io_disc)
+P_set_io_disc_keep_old(P_t* pads, Pio_disc_t* new_io_disc, int keep_old_io_disc)
 {
   PDCI_stkElt_t    *bot       = &(pads->stack[0]);
   Pio_elt_t     *io_elt    = bot->elt;
@@ -5172,9 +5186,9 @@ P_set_io_disc(P_t* pads, Pio_disc_t* new_io_disc)
       /* XXX perhaps it was not open?? */
     }
   }
-  if (pads->disc->io_disc) {
+  if (pads->disc->io_disc && !keep_old_io_disc) {
     /* unmake the previous discipline */
-    if (P_ERR == pads->disc->io_disc->unmake_fn(pads, pads->disc->io_disc)) {
+    if (P_ERR == pads->disc->io_disc->unmake_fn(pads->disc->io_disc)) {
       /* XXX report an error ??? */
     }
   }
@@ -5185,6 +5199,12 @@ P_set_io_disc(P_t* pads, Pio_disc_t* new_io_disc)
     }
   }
   return P_OK;
+}
+
+Perror_t
+P_set_io_disc(P_t* pads, Pio_disc_t* new_io_disc)
+{
+  return P_set_io_disc_keep_old(pads, new_io_disc, 0);
 }
 
 /* ================================================================================ */
@@ -7015,11 +7035,11 @@ PDCI_char_lit_scan1(P_t *pads, Pchar f, int eat_f, int panic,
 		    size_t *offset_out, Pcharset char_set, const char *whatfn)
 {
   Pbyte       *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
-  PDCI_goal_t     the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+  int          bor, eor, eof;
+  PDCI_goal_t  the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
 
   PDCI_IODISC_1P_CHECKS(whatfn, offset_out);
-  P_TRACE5(pads->disc, "PDCI_char_lit_scan1 args: c %s eat_c %d panic %d, char_set = %s, whatfn = %s",
+  P_TRACE5(pads->disc, "PDCI_char_lit_scan1 args: f %s eat_f %d panic %d, char_set = %s, whatfn = %s",
 	     P_qfmt_char(f), eat_f, panic, Pcharset2str(char_set), whatfn);
   switch (char_set)
     {
@@ -7066,8 +7086,8 @@ PDCI_char_lit_scan2(P_t *pads, Pchar f, Pchar s, int eat_f, int eat_s, int panic
 		    int *f_found_out, size_t *offset_out, Pcharset char_set, const char *whatfn)
 {
   Pbyte       *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
-  PDCI_goal_t     the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+  int          bor, eor, eof;
+  PDCI_goal_t  the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
 
   PDCI_IODISC_2P_CHECKS(whatfn, f_found_out, offset_out);
   P_TRACE7(pads->disc, "PDCI_char_lit_scan2 args: f %s s %s eat_f %d eat_s %d, panic %d, char_set = %s, whatfn = %s",
@@ -7132,17 +7152,19 @@ PDCI_str_lit_scan1(P_t *pads, const Pstring *f,
 		   const char *whatfn) 
 {
   Pbyte        *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
-  PDCI_goal_t     the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
-  Pstring     *tmp_f = (Pstring*)f;
+  int           bor, eor, eof;
+  PDCI_goal_t   the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+  Pstring      *tmp_f = (Pstring*)f;
+  size_t        width;
 
   PDCI_IODISC_2P_CHECKS(whatfn, f, offset_out);
 
   P_TRACE5(pads->disc, "PDCI_str_lit_scan args: f = %s eat_f = %d panic %d, char_set = %s, whatfn = %s",
 	     P_qfmt_str(f), eat_f, panic, Pcharset2str(char_set), whatfn);
   (*offset_out) = 0;
+  width = f->len;
 #ifndef NDEBUG
-  if (tmp_f->len == 0) {
+  if (width == 0) {
     if (pads->speclev == 0) {
       P_WARN1(pads->disc, "%s: empty find string specified", whatfn);
     }
@@ -7155,7 +7177,7 @@ PDCI_str_lit_scan1(P_t *pads, const Pstring *f,
       break;
     case Pcharset_EBCDIC:
       tmp_f = &pads->stmp1;
-      PDCI_A2E_STR_CPY(tmp_f, f->str, f->len);
+      PDCI_A2E_STR_CPY(tmp_f, f->str, width);
       break;
     default:
       goto invalid_charset;
@@ -7165,12 +7187,12 @@ PDCI_str_lit_scan1(P_t *pads, const Pstring *f,
   }
   p1 = begin;
   while (1) {
-    if (p1 + tmp_f->len > end) return P_ERR;
-    /* p1 + tmp_f->len <= end */
-    if (strncmp((char*)p1, tmp_f->str, tmp_f->len) == 0) {
+    if (p1 + width > end) return P_ERR;
+    /* p1 + width <= end */
+    if (strncmp((char*)p1, tmp_f->str, width) == 0) {
       (*offset_out) = (p1-begin);
       if (eat_f) {
-	p1 += tmp_f->len; /* advance beyond f */
+	p1 += width; /* advance beyond f */
       }
       if ((p1-begin) && P_ERR == PDCI_io_forward(pads, p1-begin)) {
 	goto fatal_forward_err;
@@ -7200,20 +7222,29 @@ PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
 		   const char *whatfn) 
 {
   Pbyte        *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
-  PDCI_goal_t     the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
-  Pstring     *tmp_f = (Pstring*)f;
-  Pstring     *tmp_s = (Pstring*)s;
+  int           bor, eor, eof;
+  PDCI_goal_t   the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+  Pstring      *tmp_f = (Pstring*)f;
+  Pstring      *tmp_s = (Pstring*)s;
+  size_t        fwidth, swidth;
 
   PDCI_IODISC_4P_CHECKS(whatfn, f, s, f_found_out, offset_out);
 
   P_TRACE7(pads->disc, "PDCI_str_lit_scan args: f = %s s = %s eat_f = %d eat_s = %d, panic %d, char_set = %s, whatfn = %s",
 	     P_qfmt_str(f), P_qfmt_str(s), eat_f, eat_s, panic, Pcharset2str(char_set), whatfn);
   (*offset_out) = 0;
+  fwidth = f->len;
+  swidth = s->len;
 #ifndef NDEBUG
-  if (tmp_f->len == 0) {
+  if (fwidth == 0) {
     if (pads->speclev == 0) {
-      P_WARN1(pads->disc, "%s: empty find string specified", whatfn);
+      P_WARN1(pads->disc, "%s: empty f string specified", whatfn);
+    }
+    return P_ERR;
+  }
+  if (swidth == 0) {
+    if (pads->speclev == 0) {
+      P_WARN1(pads->disc, "%s: empty s string specified", whatfn);
     }
     return P_ERR;
   }
@@ -7224,11 +7255,9 @@ PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
       break;
     case Pcharset_EBCDIC:
       tmp_f = &pads->stmp1;
-      PDCI_A2E_STR_CPY(tmp_f, f->str, f->len);
-      if (tmp_s) {
-	tmp_s = &pads->stmp2;
-	PDCI_A2E_STR_CPY(tmp_s, s->str, s->len);
-      }
+      PDCI_A2E_STR_CPY(tmp_f, f->str, fwidth);
+      tmp_s = &pads->stmp2;
+      PDCI_A2E_STR_CPY(tmp_s, s->str, swidth);
       break;
     default:
       goto invalid_charset;
@@ -7238,25 +7267,25 @@ PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
   }
   p1 = begin;
   while (1) {
-    if (p1 + tmp_f->len > end) return P_ERR;
-    /* p1 + tmp_f->len <= end */
-    if (strncmp((char*)p1, tmp_f->str, tmp_f->len) == 0) {
+    if (p1 + fwidth > end) return P_ERR;
+    /* p1 + fwidth <= end */
+    if (strncmp((char*)p1, tmp_f->str, fwidth) == 0) {
       (*f_found_out) = 1;
       (*offset_out) = (p1-begin);
       if (eat_f) {
-	p1 += tmp_f->len; /* advance beyond f */
+	p1 += fwidth; /* advance beyond f */
       }
       if ((p1-begin) && P_ERR == PDCI_io_forward(pads, p1-begin)) {
 	goto fatal_forward_err;
       }
       return P_OK;
     }
-    if (tmp_s && (p1 + tmp_s->len <= end) &&
-	strncmp((char*)p1, tmp_s->str, tmp_s->len) == 0) {
+    if ((p1 + swidth <= end) &&
+	strncmp((char*)p1, tmp_s->str, swidth) == 0) {
       (*f_found_out) = 0;
       (*offset_out) = (p1-begin);
       if (eat_s) {
-	p1 += tmp_s->len; /* advance beyond s */
+	p1 += swidth; /* advance beyond s */
       }
       if (P_ERR == PDCI_io_forward(pads, p1-begin)) {
 	goto fatal_forward_err;
@@ -7286,9 +7315,9 @@ PDCI_re_scan1(P_t *pads, Pregexp_t *f,
 	      const char *whatfn) 
 {
   Pbyte        *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
-  PDCI_goal_t     the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
-  regflags_t      e_flags;
+  int           bor, eor, eof;
+  PDCI_goal_t   the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+  regflags_t    e_flags;
 
   PDCI_IODISC_2P_CHECKS(whatfn, f, offset_out);
 
@@ -7337,9 +7366,9 @@ PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
 	      const char *whatfn) 
 {
   Pbyte        *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
-  PDCI_goal_t     the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
-  regflags_t      e_flags;
+  int           bor, eor, eof;
+  PDCI_goal_t   the_goal = panic ? PDCI_goal_panic : PDCI_goal_scan;
+  regflags_t    e_flags;
 
   PDCI_IODISC_4P_CHECKS(whatfn, f, s, f_found_out, offset_out);
 
@@ -7447,19 +7476,182 @@ PDCI_cstr_lit_scan2(P_t *pads, const char *f, const char *s,
 #endif /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================ */
+/* CHARSET INTERNAL MATCH FUNCTIONS */
+
+#if P_CONFIG_READ_FUNCTIONS > 0
+
+Perror_t
+PDCI_char_lit_match(P_t *pads, Pchar f, int eat_f,
+		    Pcharset char_set, const char *whatfn)
+{
+  Pbyte       *begin, *end;
+  int          bor, eor, eof;
+
+  PDCI_IODISC_0P_CHECKS(whatfn);
+  P_TRACE4(pads->disc, "PDCI_char_lit_match args: f %s eat_f %d char_set = %s, whatfn = %s",
+	     P_qfmt_char(f), eat_f, Pcharset2str(char_set), whatfn);
+  switch (char_set)
+    {
+    case Pcharset_ASCII:
+      break;
+    case Pcharset_EBCDIC:
+      f = P_mod_ae_tab[(int)f]; /* convert to EBCDIC char */
+      break;
+    default:
+      goto invalid_charset;
+    }
+  if (P_ERR == PDCI_io_need_K_bytes(pads, 1, &begin, &end, &bor, &eor, &eof)) {
+    return P_ERR;
+  }
+  if (end-begin != 1) return P_ERR;
+  if (f == (*begin)) {
+    if (eat_f && (P_ERR == PDCI_io_forward(pads, 1))) {
+      goto fatal_forward_err;
+    }
+    return P_OK;
+  }
+  /* not found */
+  return P_ERR;
+
+ invalid_charset:
+  PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_CHARSET, whatfn, 0);
+  return P_ERR;
+
+ fatal_forward_err:
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, whatfn, "IO_forward error");
+  return P_ERR;
+}
+
+Perror_t
+PDCI_str_lit_match(P_t *pads, const Pstring *f, int eat_f,
+		   Pcharset char_set, const char *whatfn) 
+{
+  Pbyte        *begin, *end;
+  int           bor, eor, eof;
+  Pstring      *tmp_f = (Pstring*)f;
+  size_t        width;
+
+  PDCI_IODISC_1P_CHECKS(whatfn, f);
+
+  P_TRACE4(pads->disc, "PDCI_str_lit_match args: f = %s eat_f = %d char_set = %s, whatfn = %s",
+	     P_qfmt_str(f), eat_f, Pcharset2str(char_set), whatfn);
+  width = f->len;
+#ifndef NDEBUG
+  if (width == 0) {
+    if (pads->speclev == 0) {
+      P_WARN1(pads->disc, "%s: empty find string specified", whatfn);
+    }
+    return P_ERR;
+  }
+#endif
+  switch (char_set)
+    {
+    case Pcharset_ASCII:
+      break;
+    case Pcharset_EBCDIC:
+      tmp_f = &pads->stmp1;
+      PDCI_A2E_STR_CPY(tmp_f, f->str, width);
+      break;
+    default:
+      goto invalid_charset;
+    }
+  if (P_ERR == PDCI_io_need_K_bytes(pads, width, &begin, &end, &bor, &eor, &eof)) {
+    return P_ERR;
+  }
+  if (end-begin != width) return P_ERR;
+  if (strncmp((char*)begin, tmp_f->str, width) == 0) {
+    if (eat_f && (P_ERR == PDCI_io_forward(pads, width))) {
+      goto fatal_forward_err;
+    }
+    return P_OK;
+  }
+  /* not found */ 
+  return P_ERR;
+
+ invalid_charset:
+  PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_CHARSET, whatfn, 0);
+  return P_ERR;
+
+ fatal_forward_err:
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, whatfn, "IO_forward error");
+  return P_ERR;
+
+ fatal_alloc_err:
+  PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_ALLOC_ERR, whatfn, "Memory alloc error");
+  return P_ERR;
+}
+
+Perror_t
+PDCI_re_match(P_t *pads, Pregexp_t *f, int eat_f,
+	      Pcharset char_set, const char *whatfn)
+{
+  Pbyte        *begin, *end, *goal;
+  int           bor, eor, eof;
+  regflags_t    e_flags;
+
+  PDCI_IODISC_1P_CHECKS(whatfn, f);
+
+  P_TRACE3(pads->disc, "PDCI_re_match args: eat_f = %d char_set = %s, whatfn = %s",
+	   eat_f, Pcharset2str(char_set), whatfn);
+  if (!f->valid) {
+    if (pads->speclev == 0) {
+      P_WARN1(pads->disc, "%s: invalid regular expression, f->valid is zero", whatfn);
+    }
+    return P_ERR;
+  }
+  if (P_ERR == PDCI_io_need_some_bytes(pads, PDCI_goal_match, 0, &begin, &end, &goal, &bor, &eor, &eof)) {
+    return P_ERR;
+  }
+  if (end-begin == 0 && !eor) {
+    /* must be at eof, do not want to match anything (not even /$/) */
+    return P_ERR;
+  }
+  e_flags = REG_LEFT; /* pin left when we do an inclusive match */
+  if (!bor) {
+    e_flags |= REG_NOTBOL;
+  }
+  if (!eor) {
+    e_flags |= REG_NOTEOL;
+  }
+  if (PDCI_regexp_match(pads, f, begin, end, e_flags, char_set)) return P_ERR;
+  /* found */
+  if (eat_f) {
+    size_t width = f->match[0].rm_eo; /* if rm_eo is 1 then last char in match is at begin */
+    if (width && P_ERR == PDCI_io_forward(pads, width)) {
+      PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_FORWARD_ERR, whatfn, "IO_forward error");
+      return P_ERR;
+    }
+  }
+  return P_OK;
+}
+
+Perror_t
+PDCI_cstr_lit_match(P_t *pads, const char *f, int eat_f,
+		    Pcharset char_set, const char *whatfn)
+{
+  Pstring fS;
+
+  PDCI_IODISC_1P_CHECKS(whatfn, f);
+  P_STRING_INIT_CSTR(fS, f);
+  return PDCI_str_lit_match(pads, &fS, eat_f, char_set, whatfn);
+}
+
+#endif /* P_CONFIG_READ_FUNCTIONS */
+
+/* ================================================================================ */
 /* CHARSET INTERNAL READ ROUTINES */
 
 #if P_CONFIG_READ_FUNCTIONS > 0
 
 Perror_t
-PDCI_char_lit_read(P_t *pads, const Pbase_m *m,
-		   Pbase_pd *pd, Pchar c, Pcharset char_set,
+PDCI_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c,
+		   Pbase_pd *pd, Pchar *c_out, Pcharset char_set,
 		   const char *whatfn)
 {
   Pbyte        *begin, *end;
-  int              bor, eor, eof;
+  int           bor, eor, eof;
 
-  PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
+  PDCI_IODISC_3P_CHECKS(whatfn, m, pd, c_out);
   P_PS_init(pd);
   P_TRACE3(pads->disc, "PDCI_char_lit_read called, arg: %s, char_set %s, whatfn = %s",
 	     P_qfmt_char(c), Pcharset2str(char_set), whatfn);
@@ -7482,6 +7674,7 @@ PDCI_char_lit_read(P_t *pads, const Pbase_m *m,
       goto fatal_forward_err;
     }
     pd->errCode = P_NO_ERR;
+    (*c_out) = c;
     return P_OK;  /* IO cursor is one beyond c */
   }
   goto not_found;
@@ -7506,36 +7699,48 @@ PDCI_char_lit_read(P_t *pads, const Pbase_m *m,
 }
 
 Perror_t
-PDCI_str_lit_read(P_t *pads, const Pbase_m *m,
-		  Pbase_pd *pd, const Pstring *s, Pcharset char_set, const char *whatfn)
+PDCI_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s,
+		  Pbase_pd *pd, Pstring *s_out, Pcharset char_set, const char *whatfn)
 {
   Pbyte        *begin, *end;
-  Pstring      *es;
-  int              bor, eor, eof;
+  Pstring      *es = (Pstring*)s;
+  int           bor, eor, eof;
+  size_t        width;
 
-  PDCI_IODISC_3P_CHECKS(whatfn, m, pd, s);
+  PDCI_IODISC_4P_CHECKS(whatfn, m, pd, s, s_out);
   P_PS_init(pd);
   P_TRACE3(pads->disc, "PDCI_str_lit_read called, arg: %s, char_set %s, whatfn = %s",
 	     P_qfmt_str(s), Pcharset2str(char_set), whatfn);
-  PDCI_READFN_WIDTH_CHECK(whatfn, "string literal", s->len);
+  width = s->len;
+  PDCI_READFN_WIDTH_CHECK(whatfn, "string literal", width);
   switch (char_set)
     {
     case Pcharset_ASCII:
       break;
     case Pcharset_EBCDIC:
       es = &pads->stmp1;
-      PDCI_A2E_STR_CPY(es, s->str, s->len);
-      s = es;
+      PDCI_A2E_STR_CPY(es, s->str, width);
       break;
     default:
       goto invalid_charset;
     }
-  if (P_ERR == PDCI_io_need_K_bytes(pads, s->len, &begin, &end, &bor, &eor, &eof)) {
+  if (P_ERR == PDCI_io_need_K_bytes(pads, width, &begin, &end, &bor, &eor, &eof)) {
     goto fatal_nb_io_err;
   }
-  if (end-begin != s->len) goto width_not_avail;
-  if (P_Test_NotSynCheck(*m) || (strncmp((char*)begin, s->str, s->len) == 0)) {
-    if (P_ERR == PDCI_io_forward(pads, s->len)) {
+  if (end-begin != width) goto width_not_avail;
+  if (P_Test_NotSynCheck(*m) || (strncmp((char*)begin, es->str, width) == 0)) {
+    switch (char_set)
+      {
+      case Pcharset_ASCII:
+	PDCI_A_STR_SET(m, s_out, begin, width);
+	break;
+      case Pcharset_EBCDIC:
+	PDCI_STR_CPY_ON_SET(m, s_out, s->str, width);
+	break;
+      default:
+	goto invalid_charset;
+      }
+    if (P_ERR == PDCI_io_forward(pads, width)) {
       goto fatal_forward_err;
     }
     pd->errCode = P_NO_ERR;
@@ -7552,7 +7757,7 @@ PDCI_str_lit_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_WIDTH_NOT_AVAILABLE);
 
  not_found:
-  PDCI_READFN_SET_LOC_BE(0, s->len);
+  PDCI_READFN_SET_LOC_BE(0, width);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_STR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
@@ -7566,15 +7771,15 @@ PDCI_str_lit_read(P_t *pads, const Pbase_m *m,
 }
 
 Perror_t
-PDCI_cstr_lit_read(P_t *pads, const Pbase_m *m,
-		   Pbase_pd *pd, const char *s, Pcharset char_set, const char *whatfn)
+PDCI_cstr_lit_read(P_t *pads, const Pbase_m *m, const char *s, 
+		   Pbase_pd *pd, Pstring *s_out, Pcharset char_set, const char *whatfn)
 {
   Pstring  p_s;
 
-  PDCI_IODISC_3P_CHECKS(whatfn, m, pd, s);
+  PDCI_IODISC_4P_CHECKS(whatfn, m, pd, s, s_out);
   P_STRING_INIT_CSTR(p_s, s);
   /* Following call does a P_PS_init(pd) */
-  return PDCI_str_lit_read(pads, m, pd, &p_s, char_set, whatfn);
+  return PDCI_str_lit_read(pads, m, &p_s, pd, s_out, char_set, whatfn);
 }
 
 Perror_t
@@ -7583,7 +7788,7 @@ PDCI_countX_read(P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t
 {
   Pint32       count = 0;
   Pbyte       *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
+  int          bor, eor, eof;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
   P_PS_init(pd);
@@ -7647,7 +7852,7 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_t coun
 {
   Pint32       count = 0;
   Pbyte       *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
+  int          bor, eor, eof;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
   P_PS_init(pd);
@@ -7714,9 +7919,9 @@ PDCI_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
 	       Pbase_pd *pd, Puint32 *res_out, Pcharset char_set, const char *whatfn)
 {
   Pstring     *s = &pads->stmp1;
-  time_t          tm;
+  time_t       tm;
   Pbyte       *tmp;
-  size_t          width;
+  size_t       width;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, pd, res_out);
   /* Following call does a P_PS_init(pd) */
@@ -7747,7 +7952,7 @@ PDCI_char_read(P_t *pads, const Pbase_m *m,
 	       const char *whatfn)
 {
   Pbyte       *begin, *end;
-  int             bor, eor, eof;
+  int          bor, eor, eof;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   P_PS_init(pd);
@@ -7797,7 +8002,7 @@ PDCI_string_FW_read(P_t *pads, const Pbase_m *m, size_t width,
 		    const char *whatfn)
 {
   Pbyte        *begin, *end;
-  int             bor, eor, eof;
+  int           bor, eor, eof;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   P_PS_init(pd);
@@ -7812,10 +8017,10 @@ PDCI_string_FW_read(P_t *pads, const Pbase_m *m, size_t width,
   switch (char_set)
     {
     case Pcharset_ASCII:
-      PDCI_A_STR_SET(s_out, (char*)begin, (char*)end);
+      PDCI_A_STR_SET(m, s_out, begin, width);
       break;
     case Pcharset_EBCDIC:
-      PDCI_E_STR_SET(m, s_out, (char*)begin, (char*)end);
+      PDCI_E_STR_SET(m, s_out, begin, width);
       break;
     default:
       goto invalid_charset;
@@ -7850,7 +8055,7 @@ PDCI_string_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
 		 const char *whatfn)
 {
   Pbyte        *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
+  int           bor, eor, eof;
 
   PDCI_IODISC_2P_CHECKS(whatfn, m, pd);
   P_PS_init(pd);
@@ -7883,10 +8088,10 @@ PDCI_string_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
   switch (char_set)
     {
     case Pcharset_ASCII:
-      PDCI_A_STR_SET(s_out, (char*)begin, (char*)p1);
+      PDCI_A_STR_SET(m, s_out, begin, p1-begin);
       break;
     case Pcharset_EBCDIC:
-      PDCI_E_STR_SET(m, s_out, (char*)begin, (char*)p1);
+      PDCI_E_STR_SET(m, s_out, begin, p1-begin);
       break;
     default:
       goto invalid_charset;
@@ -7944,8 +8149,8 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
 		     const char *whatfn)
 {
   Pbyte       *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
-  regflags_t      e_flags;
+  int          bor, eor, eof;
+  regflags_t   e_flags;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, matchRegexp, pd);
   P_PS_init(pd);
@@ -7972,10 +8177,10 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
   switch (char_set) 
     {
     case Pcharset_ASCII:
-      PDCI_A_STR_SET(s_out, (char*)begin, (char*)p1);
+      PDCI_A_STR_SET(m, s_out, begin, p1-begin);
       break;
     case Pcharset_EBCDIC:
-      PDCI_E_STR_SET(m, s_out, (char*)begin, (char*)p1);
+      PDCI_E_STR_SET(m, s_out, begin, p1-begin);
       break;
     default:
       goto invalid_charset;
@@ -8033,8 +8238,8 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
 		     const char *whatfn)
 {
   Pbyte       *begin, *p1, *end, *goal;
-  int             bor, eor, eof;
-  regflags_t      e_flags;
+  int          bor, eor, eof;
+  regflags_t   e_flags;
 
   PDCI_IODISC_3P_CHECKS(whatfn, m, stopRegexp, pd);
   P_PS_init(pd);
@@ -8060,10 +8265,10 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
   switch (char_set) 
     {
     case Pcharset_ASCII:
-      PDCI_A_STR_SET(s_out, (char*)begin, (char*)p1);
+      PDCI_A_STR_SET(m, s_out, begin, p1-begin);
       break;
     case Pcharset_EBCDIC:
-      PDCI_E_STR_SET(m, s_out, (char*)begin, (char*)p1);
+      PDCI_E_STR_SET(m, s_out, begin, p1-begin);
       break;
     default:
       goto invalid_charset;
@@ -8918,8 +9123,8 @@ int
 PDCI_regexp_match(P_t *pads, Pregexp_t *regexp, Pbyte *begin, Pbyte *end,
 		  regflags_t e_flags, Pcharset char_set)
 {
-  const char   *tmp_match_str = (const char*)begin;
-  Pstring   *tmp;
+  const char  *tmp_match_str = (const char*)begin;
+  Pstring     *tmp;
 
   switch (char_set)
     {

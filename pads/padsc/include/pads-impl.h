@@ -83,42 +83,57 @@ do { \
 #if P_CONFIG_READ_FUNCTIONS > 0
 
 Perror_t PDCI_char_lit_scan1(P_t *pads, Pchar f, int eat_f, int panic,
-				size_t *offset_out, Pcharset char_set,
-				const char *whatfn);
+			     size_t *offset_out, Pcharset char_set,
+			     const char *whatfn);
 
 Perror_t PDCI_char_lit_scan2(P_t *pads, Pchar f, Pchar s, int eat_f, int eat_s, int panic,
-				int *f_found_out, size_t *offset_out, Pcharset char_set,
-				const char *whatfn);
+			     int *f_found_out, size_t *offset_out, Pcharset char_set,
+			     const char *whatfn);
 
 Perror_t PDCI_str_lit_scan1(P_t *pads, const Pstring *f,
-			       int eat_f, int panic,
-			       size_t *offset_out, Pcharset char_set,
-			       const char *whatfn);
+			    int eat_f, int panic,
+			    size_t *offset_out, Pcharset char_set,
+			    const char *whatfn);
 
 Perror_t PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
-			       int eat_f, int eat_s, int panic,
-			       int *f_found_out, size_t *offset_out, Pcharset char_set,
-			       const char *whatfn);
+			    int eat_f, int eat_s, int panic,
+			    int *f_found_out, size_t *offset_out, Pcharset char_set,
+			    const char *whatfn);
 
 Perror_t PDCI_cstr_lit_scan1(P_t *pads, const char *f,
-				int eat_f, int panic,
-				size_t *offset_out, Pcharset char_set,
-				const char *whatfn);
+			     int eat_f, int panic,
+			     size_t *offset_out, Pcharset char_set,
+			     const char *whatfn);
 
 Perror_t PDCI_cstr_lit_scan2(P_t *pads, const char *f, const char *s,
-				int eat_f, int eat_s, int panic,
-				int *f_found_out, size_t *offset_out, Pcharset char_set,
-				const char *whatfn);
+			     int eat_f, int eat_s, int panic,
+			     int *f_found_out, size_t *offset_out, Pcharset char_set,
+			     const char *whatfn);
 
 Perror_t PDCI_re_scan1(P_t *pads, Pregexp_t *f,
-			  int eat_f, int panic,
-			  size_t *offset_out, Pcharset char_set,
-			  const char *whatfn);
+		       int eat_f, int panic,
+		       size_t *offset_out, Pcharset char_set,
+		       const char *whatfn);
 
 Perror_t PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
-			  int eat_f, int eat_s, int panic,
-			  int *f_found_out, size_t *offset_out, Pcharset char_set,
-			  const char *whatfn);
+		       int eat_f, int eat_s, int panic,
+		       int *f_found_out, size_t *offset_out, Pcharset char_set,
+		       const char *whatfn);
+
+#endif /* P_CONFIG_READ_FUNCTIONS */
+
+/* ================================================================================ */
+/* INTERNAL MATCH ROUTINES (helpers) */
+
+#if P_CONFIG_READ_FUNCTIONS > 0
+
+Perror_t PDCI_char_lit_match(P_t *pads, Pchar f, int eat_f, Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_str_lit_match(P_t *pads, const Pstring *f, int eat_f, Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_cstr_lit_match(P_t *pads, const char *f, int eat_f, Pcharset char_set, const char *whatfn);
+
+Perror_t PDCI_re_match(P_t *pads, Pregexp_t *f, int eat_f, Pcharset char_set, const char *whatfn);
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
 
@@ -127,15 +142,14 @@ Perror_t PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
 
 #if P_CONFIG_READ_FUNCTIONS > 0
 
-Perror_t PDCI_char_lit_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
-			       Pchar c, Pcharset char_set,
-			       const char* whatfn);
+Perror_t PDCI_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd, Pchar *c_out,
+			    Pcharset char_set, const char* whatfn);
 
-Perror_t PDCI_str_lit_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, const Pstring *s,
-			      Pcharset char_set, const char *whatfn);
+Perror_t PDCI_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd, Pstring *s_out,
+			   Pcharset char_set, const char *whatfn);
 
-Perror_t PDCI_cstr_lit_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, const char *s,
-			      Pcharset char_set, const char *whatfn);
+Perror_t PDCI_cstr_lit_read(P_t *pads, const Pbase_m *m, const char *s, Pbase_pd *pd, Pstring *s_out,
+			    Pcharset char_set, const char *whatfn);
 
 Perror_t PDCI_countX_read(P_t *pads, const Pbase_m *m, Puint8 x, int eor_required, size_t count_max,
 			  Pbase_pd *pd, Pint32 *res_out,
@@ -147,36 +161,36 @@ Perror_t PDCI_countXtoY_read(P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, si
 			     Pcharset char_set, const char *whatfn);
 
 Perror_t PDCI_date_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
-			   Pbase_pd *pd, Puint32 *res_out,
-			   Pcharset char_set, const char *whatfn);
+			Pbase_pd *pd, Puint32 *res_out,
+			Pcharset char_set, const char *whatfn);
 
 Perror_t PDCI_char_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out,
-			   Pcharset char_set, const char *whatfn);
+			Pcharset char_set, const char *whatfn);
 
 
 Perror_t PDCI_string_FW_read(P_t *pads, const Pbase_m *m, size_t width,
-				Pbase_pd *pd, Pstring *s_out,
-				Pcharset char_set, const char *whatfn);
-
-Perror_t PDCI_string_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
 			     Pbase_pd *pd, Pstring *s_out,
 			     Pcharset char_set, const char *whatfn);
 
+Perror_t PDCI_string_read(P_t *pads, const Pbase_m *m, Pchar stopChar,
+			  Pbase_pd *pd, Pstring *s_out,
+			  Pcharset char_set, const char *whatfn);
+
 Perror_t PDCI_string_ME_read(P_t *pads, const Pbase_m *m, const char *matchRegexp,
-				Pbase_pd *pd, Pstring *s_out,
-				Pcharset char_set, const char *whatfn);
+			     Pbase_pd *pd, Pstring *s_out,
+			     Pcharset char_set, const char *whatfn);
 
 Perror_t PDCI_string_CME_read(P_t *pads, const Pbase_m *m, Pregexp_t *matchRegexp,
-				 Pbase_pd *pd, Pstring *s_out,
-				 Pcharset char_set, const char *whatfn);
+			      Pbase_pd *pd, Pstring *s_out,
+			      Pcharset char_set, const char *whatfn);
 
 Perror_t PDCI_string_SE_read(P_t *pads, const Pbase_m *m, const char *stopRegexp,
-				Pbase_pd *pd, Pstring *s_out,
-				Pcharset char_set, const char *whatfn);
+			     Pbase_pd *pd, Pstring *s_out,
+			     Pcharset char_set, const char *whatfn);
 
 Perror_t PDCI_string_CSE_read(P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
-				 Pbase_pd *pd, Pstring *s_out,
-				 Pcharset char_set, const char *whatfn);
+			      Pbase_pd *pd, Pstring *s_out,
+			      Pcharset char_set, const char *whatfn);
 
 #endif  /* P_CONFIG_READ_FUNCTIONS */
 
@@ -326,7 +340,7 @@ ssize_t PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
   PDCI_REGEXP_FROM_CSTR(pads, my_regexp, str_expr, "", "P_REGEXP_FROM_CSTR")
 
 /* ================================================================================
- * CHAR/STRING SCAN FUNCTIONS
+ * CHAR/STRING/RE SCAN FUNCTIONS
  */
 
 #if P_CONFIG_READ_FUNCTIONS > 0
@@ -407,37 +421,81 @@ ssize_t PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 #endif /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================
+ * CHAR/STRING/RE SCAN FUNCTIONS
+ */
+
+#if P_CONFIG_READ_FUNCTIONS > 0
+
+#define Pchar_lit_match(pads, c, eat_c) \
+  PDCI_char_lit_match(pads, c, eat_c, PDCI_DEF_CHARSET(pads), "Pchar_lit_match")
+
+#define Pa_char_lit_match(pads, c, eat_c) \
+  PDCI_char_lit_match(pads, c, eat_c, Pcharset_ASCII, "Pa_char_lit_match")
+
+#define Pe_char_lit_match(pads, c, eat_c) \
+  PDCI_char_lit_match(pads, c, eat_c, Pcharset_EBCDIC, "Pe_char_lit_match")
+
+#define Pstr_lit_match(pads, f, eat_f) \
+  PDCI_str_lit_match(pads, f, eat_f, PDCI_DEF_CHARSET(pads), "Pstr_lit_match")
+
+#define Pa_str_lit_match(pads, f, eat_f) \
+  PDCI_str_lit_match(pads, f, eat_f, Pcharset_ASCII, "Pa_str_lit_match")
+
+#define Pe_str_lit_match(pads, f, eat_f) \
+  PDCI_str_lit_match(pads, f, eat_f, Pcharset_EBCDIC, "Pe_str_lit_match")
+
+#define Pcstr_lit_match(pads, f, eat_f) \
+  PDCI_cstr_lit_match(pads, f, eat_f, PDCI_DEF_CHARSET(pads), "Pcstr_lit_match")
+
+#define Pa_cstr_lit_match(pads, f, eat_f) \
+  PDCI_cstr_lit_match(pads, f, eat_f, Pcharset_ASCII, "Pa_cstr_lit_match")
+
+#define Pe_cstr_lit_match(pads, f, eat_f) \
+  PDCI_cstr_lit_match(pads, f, eat_f, Pcharset_EBCDIC, "Pe_cstr_lit_match")
+
+#define Pre_match(pads, f, eat_f) \
+  PDCI_re_match(pads, f, eat_f, PDCI_DEF_CHARSET(pads), "Pre_match")
+
+#define Pa_re_match(pads, f, eat_f) \
+  PDCI_re_match(pads, f, eat_f, Pcharset_ASCII, "Pa_re_match")
+
+#define Pe_re_match(pads, f, eat_f) \
+  PDCI_re_match(pads, f, eat_f, Pcharset_EBCDIC, "Pe_re_match")
+
+#endif /* P_CONFIG_READ_FUNCTIONS */
+
+/* ================================================================================
  * CHAR/STRING READ FUNCTIONS
  */
 
 #if P_CONFIG_READ_FUNCTIONS > 0
 
-#define Pchar_lit_read(pads, m, pd, c) \
-  PDCI_char_lit_read(pads, m, pd, c, PDCI_DEF_CHARSET(pads), "Pchar_lit_read")
+#define Pchar_lit_read(pads, m, c, pd, c_out) \
+  PDCI_char_lit_read(pads, m, c, pd, c_out, PDCI_DEF_CHARSET(pads), "Pchar_lit_read")
 
-#define Pa_char_lit_read(pads, m, pd, c) \
+#define Pa_char_lit_read(pads, m, c, pd, c_out) \
   PDCI_char_lit_read(pads, m, pd, c, Pcharset_ASCII, "Pa_char_lit_read")
 
-#define Pe_char_lit_read(pads, m, pd, c) \
-  PDCI_char_lit_read(pads, m, pd, c, Pcharset_EBCDIC, "Pe_char_lit_read")
+#define Pe_char_lit_read(pads, m, c, pd, c_out) \
+  PDCI_char_lit_read(pads, m, c, pd, c_out, Pcharset_EBCDIC, "Pe_char_lit_read")
 
-#define Pstr_lit_read(pads, m, pd, s) \
-  PDCI_str_lit_read(pads, m, pd, s, PDCI_DEF_CHARSET(pads), "Pstr_lit_read")
+#define Pstr_lit_read(pads, m, s, pd, s_out) \
+  PDCI_str_lit_read(pads, m, s, pd, s_out, PDCI_DEF_CHARSET(pads), "Pstr_lit_read")
 
-#define Pa_str_lit_read(pads, m, pd, s) \
-  PDCI_str_lit_read(pads, m, pd, s, Pcharset_ASCII, "Pa_str_lit_read")
+#define Pa_str_lit_read(pads, m, s, pd, s_out) \
+  PDCI_str_lit_read(pads, m, s, pd, s_out, Pcharset_ASCII, "Pa_str_lit_read")
 
-#define Pe_str_lit_read(pads, m, pd, s) \
-  PDCI_str_lit_read(pads, m, pd, s, Pcharset_EBCDIC, "Pe_str_lit_read")
+#define Pe_str_lit_read(pads, m, s, pd, s_out) \
+  PDCI_str_lit_read(pads, m, s, pd, s_out, Pcharset_EBCDIC, "Pe_str_lit_read")
 
-#define Pcstr_lit_read(pads, m, pd, s) \
-  PDCI_cstr_lit_read(pads, m, pd, s, PDCI_DEF_CHARSET(pads), "Pcstr_lit_read")
+#define Pcstr_lit_read(pads, m, s, pd, s_out) \
+  PDCI_cstr_lit_read(pads, m, s, pd, s_out, PDCI_DEF_CHARSET(pads), "Pcstr_lit_read")
 
-#define Pa_cstr_lit_read(pads, m, pd, s) \
-  PDCI_cstr_lit_read(pads, m, pd, s, Pcharset_ASCII, "Pa_cstr_lit_read")
+#define Pa_cstr_lit_read(pads, m, s, pd, s_out) \
+  PDCI_cstr_lit_read(pads, m, s, pd, s_out, Pcharset_ASCII, "Pa_cstr_lit_read")
 
-#define Pe_cstr_lit_read(pads, m, pd, s) \
-  PDCI_cstr_lit_read(pads, m, pd, s, Pcharset_EBCDIC, "Pe_cstr_lit_read")
+#define Pe_cstr_lit_read(pads, m, s, pd, s_out) \
+  PDCI_cstr_lit_read(pads, m, s, pd, s_out, Pcharset_EBCDIC, "Pe_cstr_lit_read")
 
 #define PcountX_read(pads, m, x, eor_required, count_max, pd, res_out) \
   PDCI_countX_read(pads, m, x, eor_required, count_max, pd, res_out, PDCI_DEF_CHARSET(pads), "PcountX_read")

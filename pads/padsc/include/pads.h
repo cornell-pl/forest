@@ -933,10 +933,26 @@ struct P_s {
 
 /* ================================================================================
  * LIBRARY HANDLE OPEN/CLOSE FUNCTIONS
+ *
+ * P_open:
+ *         XXX_TODOC
+ *
+ * P_close:
+ *         XXX_TODOC
+ *
+ *         If there is an installed IO discipline,
+ *         it is unmade; after this point it should NOT be used any more.
+ *         (See P_close_keep_io_disc below.)
+
+ * P_close_keep_io_disc:
+ *         Like P_close, except takes an extra argument, keep_io_disc, which
+ *         if non-zero indicates the installed IO discipline (if any) should not be unmade;
+ *         in this case it CAN be used again, e.g., in a future P_open call.
  */
 
 Perror_t  P_open  (P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc);
 Perror_t  P_close (P_t *pads); 
+Perror_t  P_close_keep_io_disc(P_t *pads, int keep_io_disc);
 
 /* ================================================================================
  * TOP-LEVEL GET/SET FUNCTIONS
@@ -960,12 +976,21 @@ Perror_t  P_close (P_t *pads);
  *                   new IO discipline after closing the old IO
  *                   discipline in a way that returns
  *                   all bytes beyond the current IO cursor to 
- *                   the stream.  The old IO discipline is unmade.
+ *                   the stream.  The old IO discipline (if any) is
+ *                   unmade.   After this point the old IO discipine should NOT
+ *                   be re-used.  (See P_set_io_disc_keep_old below.)
+ *
+ * P_set_io_disc_keep_old:
+ *                 Like P_set_io_disc, except takes an extra argument, keep_old_io_disc,
+ *                 which is non-zero indicates that the old IO discipline
+ *                 should not be unmade; in this case it CAN be used again, e.g., in a future
+ *                 P_set_io_disc call. 
  */
 
 Pdisc_t * P_get_disc   (P_t *pads);
 Perror_t  P_set_disc   (P_t *pads, Pdisc_t *new_disc, int xfer_io);
 Perror_t  P_set_io_disc(P_t* pads, Pio_disc_t* new_io_disc);
+Perror_t  P_set_io_disc_keep_old(P_t* pads, Pio_disc_t* new_io_disc, int keep_old_io_disc);
 
 /* P_rmm_zero    : get rbuf memory manager that zeroes allocated memory
  * P_rmm_nozero  : get rbuf memory manager that does not zero allocated memory
@@ -1001,17 +1026,21 @@ Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
  * TOP-LEVEL IO FUNCTIONS
  * 
  * P_io_set      : Initialize or change the current sfio stream used for input.
+ *                 If there is already an installed sfio stream, P_io_close is
+ *                 implicitly called first.
  *
  * P_io_fopen    : Open a file for reading (a higher-level alternative to io_set).
  *                   Uses disc->fopen_fn, if present, otherwise default P_fopen.
  *                   Returns P_OK on success, P_ERR on error
  *
- * P_io_close    : Clean up the io discipline state.
- *                   If a file was opened via P_io_fopen, close it.
- *                   If an io was installed via P_io_set, it is not closed.
- *                   When an IO is installed via P_io_set, it is up to the
- *                   the program that opened to installed io to close it
- *                   (*after* calling P_io_close).
+ * P_io_close    : Clean up the io discipline state; attempts to return bytes that were
+ *                 read from the underlying sfio stream but not consumed by the parse back
+ *                 to the stream.
+ * 
+ *                 If the underlying sfio stream is due to a file open via P_io_fopen,
+ *                 the file is closed.  If the underlying Sfio_stream is installed via
+ *                 P_io_set, it is not closed; it is up to the program that opened the
+ *                 installed sfio stream to close it  (*after* calling P_io_close).
  * 
  * P_io_next_rec : Advances current IO position to start of the next record, if any.
  *                   Returns P_OK on success, P_ERR on failure 
@@ -1040,7 +1069,7 @@ Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
  *                  (e.g., "line", "1K block", etc.). Returns NULL on error
  *                  (if there is no installed IO discipline).
  *
- * P_io_write_start:   Alloc a buffer buf associated with an output Sfio stream io
+ * P_io_write_start:   Alloc a buffer buf associated with an output sfio stream io
  *                       that can be filled in using the write2buf functions.
  *                       Must be paired with either commit_write or abort_write. 
  *                       Param buf_len specifies how many bytes will be required, and
@@ -1062,7 +1091,7 @@ Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
  *         to use the record write functions, and it must support blocks of records to
  *         use the block-of-record write functions.
  *
- * P_io_rec_write2io: write a record to io, an Sfio stream.  buf must contain the data bytes
+ * P_io_rec_write2io: write a record to io, an sfio stream.  buf must contain the data bytes
  *                      (of length rec_data_len) for the record.  Record start/end markers are
  *                      written around the data bytes according to the current I/O discipline.
  *                      On success, the total number of bytes added to io is returned.  On failure,
@@ -1086,7 +1115,7 @@ Perror_t          Pinv_valfn_map_destroy(P_t *pads, Pinv_valfn_map_t *map);
  *                      num_bytes will equal (buf - rec_start) if the full record is in a contiguous
  *                      region of memory.
  *
- * P_io_rblk_write2io: write a block of records to io, an Sfio stream.  buf must contain the data bytes
+ * P_io_rblk_write2io: write a block of records to io, an sfio stream.  buf must contain the data bytes
  *                      for all of the records (of length blk_data_len).  Block start/end markers are
  *                      written around the data bytes according to the current I/O discipline, where
  *                      num_recs or the appropriate length will be written as appropriate.  (Some disciplines
@@ -1160,8 +1189,8 @@ ssize_t   P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *
  *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pchar_lit_scan1             Pa_char_lit_scan1           Pe_char_lit_scan1
- * Pchar_lit_scan2             Pa_char_lit_scan2           Pe_char_lit_scan2
+ * Pchar_lit_scan1                Pa_char_lit_scan1              Pe_char_lit_scan1
+ * Pchar_lit_scan2                Pa_char_lit_scan2              Pe_char_lit_scan2
  *
  * EFFECT: 
  *
@@ -1214,11 +1243,11 @@ ssize_t   P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *
  *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pstr_lit_scan1              Pa_str_lit_scan1            Pe_str_lit_scan1
- * Pcstr_lit_scan1             Pa_cstr_lit_scan1           Pe_cstr_lit_scan1
+ * Pstr_lit_scan1                 Pa_str_lit_scan1               Pe_str_lit_scan1
+ * Pcstr_lit_scan1                Pa_cstr_lit_scan1              Pe_cstr_lit_scan1
  *
- * Pstr_lit_scan2              Pa_str_lit_scan2            Pe_str_lit_scan2
- * Pcstr_lit_scan2             Pa_cstr_lit_scan2           Pe_cstr_lit_scan2
+ * Pstr_lit_scan2                 Pa_str_lit_scan2               Pe_str_lit_scan2
+ * Pcstr_lit_scan2                Pa_cstr_lit_scan2              Pe_cstr_lit_scan2
  *
  * These functions are similar to the character scan functions, except ASCII find
  * and stop strings f and s are given.  String literals are passed as arguments in one of
@@ -1245,8 +1274,8 @@ ssize_t   P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *
  *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pre_scan1                   Pa_re_scan1                 Pe_re_scan1
- * Pre_scan2                   Pa_re_scan2                 Pe_re_scan2
+ * Pre_scan1                      Pa_re_scan1                    Pe_re_scan1
+ * Pre_scan2                      Pa_re_scan2                    Pe_re_scan2
  *
  * These functions are similar to the string literal scan functions except they
  * take a find regular expresssion f and (for scan2) a stop regular expression s.
@@ -1270,7 +1299,7 @@ ssize_t   P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *
 #if P_CONFIG_A_CHAR_STRING > 0
 Perror_t Pa_char_lit_scan1 (P_t *pads, Pchar f,          int eat_f, int panic, size_t *offset_out);
 Perror_t Pa_str_lit_scan1  (P_t *pads, const Pstring *f, int eat_f, int panic, size_t *offset_out);
-Perror_t Pa_cstr_lit_scan1 (P_t *pads, const char *f,       int eat_f, int panic, size_t *offset_out);
+Perror_t Pa_cstr_lit_scan1 (P_t *pads, const char *f,    int eat_f, int panic, size_t *offset_out);
 Perror_t Pa_re_scan1       (P_t *pads, Pregexp_t *f,     int eat_f, int panic, size_t *offset_out);
 
 Perror_t Pa_char_lit_scan2 (P_t *pads, Pchar f, Pchar s,
@@ -1290,7 +1319,7 @@ Perror_t Pa_re_scan2       (P_t *pads, Pregexp_t *f, Pregexp_t *s,
 #if P_CONFIG_E_CHAR_STRING > 0
 Perror_t Pe_char_lit_scan1 (P_t *pads, Pchar f,          int eat_f, int panic, size_t *offset_out);
 Perror_t Pe_str_lit_scan1  (P_t *pads, const Pstring *f, int eat_f, int panic, size_t *offset_out);
-Perror_t Pe_cstr_lit_scan1 (P_t *pads, const char *f,       int eat_f, int panic, size_t *offset_out);
+Perror_t Pe_cstr_lit_scan1 (P_t *pads, const char *f,    int eat_f, int panic, size_t *offset_out);
 Perror_t Pe_re_scan1       (P_t *pads, Pregexp_t *f,     int eat_f, int panic, size_t *offset_out);
 
 Perror_t Pe_char_lit_scan2 (P_t *pads, Pchar f, Pchar s,
@@ -1310,7 +1339,7 @@ Perror_t Pe_re_scan2       (P_t *pads, Pregexp_t *f, Pregexp_t *s,
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
 Perror_t Pchar_lit_scan1   (P_t *pads, Pchar f,          int eat_f, int panic, size_t *offset_out);
 Perror_t Pstr_lit_scan1    (P_t *pads, const Pstring *f, int eat_f, int panic, size_t *offset_out);
-Perror_t Pcstr_lit_scan1   (P_t *pads, const char *f,       int eat_f, int panic, size_t *offset_out);
+Perror_t Pcstr_lit_scan1   (P_t *pads, const char *f,    int eat_f, int panic, size_t *offset_out);
 Perror_t Pre_scan1         (P_t *pads, Pregexp_t *f,     int eat_f, int panic, size_t *offset_out);
 
 Perror_t Pchar_lit_scan2   (P_t *pads, Pchar f, Pchar s,
@@ -1330,17 +1359,81 @@ Perror_t Pre_scan2         (P_t *pads, Pregexp_t *f, Pregexp_t *s,
 #endif /* P_CONFIG_READ_FUNCTIONS */
 #endif /* FOR_CKIT */
 
+/* ================================================================================
+ * MATCH FUNCTIONS
+ *
+ * Match functions are used to check whether a character literal, string literal,
+ * or regular expression matches the data at the current IO position.
+ * They are normally used by library routines or by generated
+ * code, but are exposed here because they are generally useful.
+ *
+ * =================================
+ * CHARACTER LITERAL MATCH FUNCTIONS
+ * =================================
+ *
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * Pchar_lit_match                Pa_char_lit_match              Pe_char_lit_match
+ *
+ * XXX_TODOC
+ *
+ * ==============================
+ * STRING LITERAL MATCH FUNCTIONS
+ * ==============================
+ *
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * Pstr_lit_match                 Pa_str_lit_match               Pe_str_lit_match
+ * Pcstr_lit_match                Pa_cstr_lit_match              Pe_cstr_lit_match
+ *
+ * XXX_TODOC
+ *
+ * =================================
+ * REGULAR EXPRESSION SCAN FUNCTIONS
+ * =================================
+ *
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * Pre_match                      Pa_re_match                    Pe_re_match
+ *
+ * XXX_TODOC
+ */
 
+#ifdef FOR_CKIT
+#if P_CONFIG_READ_FUNCTIONS > 0
 
+#if P_CONFIG_A_CHAR_STRING > 0
+Perror_t Pa_char_lit_match (P_t *pads, Pchar f,          int eat_f);
+Perror_t Pa_str_lit_match  (P_t *pads, const Pstring *f, int eat_f);
+Perror_t Pa_cstr_lit_match (P_t *pads, const char *f,    int eat_f);
+Perror_t Pa_re_match       (P_t *pads, Pregexp_t *f,     int eat_f);
+#endif
+
+#if P_CONFIG_E_CHAR_STRING > 0
+Perror_t Pe_char_lit_match (P_t *pads, Pchar f,          int eat_f);
+Perror_t Pe_str_lit_match  (P_t *pads, const Pstring *f, int eat_f);
+Perror_t Pe_cstr_lit_match (P_t *pads, const char *f,    int eat_f);
+Perror_t Pe_re_match       (P_t *pads, Pregexp_t *f,     int eat_f);
+#endif
+
+#if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
+Perror_t Pchar_lit_match   (P_t *pads, Pchar f,          int eat_f);
+Perror_t Pstr_lit_match    (P_t *pads, const Pstring *f, int eat_f);
+Perror_t Pcstr_lit_match   (P_t *pads, const char *f,    int eat_f);
+Perror_t Pre_match         (P_t *pads, Pregexp_t *f,     int eat_f);
+#endif
+
+#endif /* P_CONFIG_READ_FUNCTIONS */
+#endif /* FOR_CKIT */
 
 /* ================================================================================
  * LITERAL READ FUNCTIONS
  *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pchar_lit_read              Pa_char_lit_read            Pe_char_lit_read
- * Pstr_lit_read               Pa_str_lit_read             Pe_str_lit_read
- * Pcstr_lit_read              Pa_cstr_lit_read            Pe_cstr_lit_read
+ * Pchar_lit_read                 Pa_char_lit_read               Pe_char_lit_read
+ * Pstr_lit_read                  Pa_str_lit_read                Pe_str_lit_read
+ * Pcstr_lit_read                 Pa_cstr_lit_read               Pe_cstr_lit_read
  * 
  * These char and string literal read functions all take an char or string to be
  * read specified in ASCII.  The char or string is converted to EBCDIC if one of
@@ -1365,30 +1458,21 @@ Perror_t Pre_scan2         (P_t *pads, Pregexp_t *f, Pregexp_t *s,
 #if P_CONFIG_READ_FUNCTIONS > 0
 
 #if P_CONFIG_A_CHAR_STRING > 0
-Perror_t Pa_char_lit_read(P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, Pchar c);
-Perror_t Pa_str_lit_read (P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, const Pstring *s);
-Perror_t Pa_cstr_lit_read(P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, const char *s);
+Perror_t Pa_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd, Pchar *c_out);
+Perror_t Pa_str_lit_read (P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd, Pstring *s_out);
+Perror_t Pa_cstr_lit_read(P_t *pads, const Pbase_m *m, const char *s, Pbase_pd *pd, Pstring *s_out);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
-Perror_t Pe_char_lit_read(P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, Pchar c);
-Perror_t Pe_str_lit_read (P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, const Pstring *s);
-Perror_t Pe_cstr_lit_read(P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, const char *s);
+Perror_t Pe_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd, Pchar *c_out);
+Perror_t Pe_str_lit_read (P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd, Pstring *s_out);
+Perror_t Pe_cstr_lit_read(P_t *pads, const Pbase_m *m, const char *s, Pbase_pd *pd, Pstring *s_out);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
-Perror_t Pchar_lit_read  (P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, Pchar c);
-Perror_t Pstr_lit_read   (P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, const Pstring *s);
-Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, const char *s);
+Perror_t Pchar_lit_read  (P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd, Pchar *c_out);
+Perror_t Pstr_lit_read   (P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd, Pstring *s_out);
+Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m, const char *s, Pbase_pd *pd, Pstring *s_out);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -1399,8 +1483,8 @@ Perror_t Pcstr_lit_read  (P_t *pads, const Pbase_m *m,
  *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * PcountX_read                Pa_countX_read                   Pe_countX_read
- * PcountXtoY                  Pa_countXtoY_read                Pe_countXtoY_read
+ * PcountX_read                   Pa_countX_read                 Pe_countX_read
+ * PcountXtoY                     Pa_countXtoY_read              Pe_countXtoY_read
  *
  * countX counts occurrences of char x between the current IO cursor and the
  * first EOR or EOF, while countXtoY counts occurrences of x between the current
@@ -1493,7 +1577,7 @@ Perror_t PcountXtoY_read (P_t *pads, const Pbase_m *m, Puint8 x, Puint8 y, size_
  * 
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pchar_read                  Pa_char_read                Pe_char_read
+ * Pchar_read                     Pa_char_read                   Pe_char_read
  *
  * Read a single character.  The in-memory result is always an ASCII character.
  * A conversion fom EBCDIC to ASCII occurs if the EBCDIC form is used or if the DEFAULT
@@ -1532,12 +1616,12 @@ Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
  *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pstring_FW_read             Pa_string_FW_read           Pe_string_FW_read
- * Pstring_read                Pa_string_read              Pe_string_read
- * Pstring_ME_read             Pa_string_ME_read           Pe_string_ME_read
- * Pstring_CME_read            Pa_string_CME_read          Pe_string_CME_read
- * Pstring_SE_read             Pa_string_SE_read           Pe_string_SE_read
- * Pstring_CSE_read            Pa_string_CSE_read          Pe_string_CSE_read
+ * Pstring_FW_read                Pa_string_FW_read              Pe_string_FW_read
+ * Pstring_read                   Pa_string_read                 Pe_string_read
+ * Pstring_ME_read                Pa_string_ME_read              Pe_string_ME_read
+ * Pstring_CME_read               Pa_string_CME_read             Pe_string_CME_read
+ * Pstring_SE_read                Pa_string_SE_read              Pe_string_SE_read
+ * Pstring_CSE_read               Pa_string_CSE_read             Pe_string_CSE_read
  *
  * The string read functions each has a different way of specifying
  * the extent of the string:
@@ -1645,7 +1729,7 @@ Perror_t Pstring_CSE_read  (P_t *pads, const Pbase_m *m, Pregexp_t *stopRegexp,
  *
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pdate_read                  Pa_date_read                Pe_date_read
+ * Pdate_read                     Pa_date_read                   Pe_date_read
  *
  * Attempts to read a date string and convert it to seconds since the epoch.
  * For the different date formats supported, see the libast tmdate
@@ -2344,7 +2428,7 @@ Perror_t Psbh_ufpoint64_read  (P_t *pads, const Pbase_m *m, Puint32 num_bytes, P
 
 /* ================================================================================
  * LITERAL WRITE FUNCTIONS
- *   Literal write functions: write a char or string to an Sfio stream or buffer.
+ *   Literal write functions: write a char or string to an sfio stream or buffer.
  *   Typically used with a literal argument, as in 
  *      Pa_cstr_lit_write(pads, io, "hello");
  *   Note that these are similar to Pa_char and Pa_string write functions
@@ -2393,9 +2477,9 @@ ssize_t Pcstr_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
  * CHAR WRITE FUNCTIONS
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pchar_write2io              Pa_char_write2io            Pe_char_write2io
+ * Pchar_write2io                 Pa_char_write2io               Pe_char_write2io
  *
- * Pchar_write2buf             Pa_char_write2buf           Pe_char_write2buf
+ * Pchar_write2buf                Pa_char_write2buf              Pe_char_write2buf
  */
 
 #ifdef FOR_CKIT
@@ -2423,19 +2507,19 @@ ssize_t Pchar_write2buf    (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
  * STRING WRITE FUNCTIONS
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pstring_FW_write2io         Pa_string_FW_write2io       Pe_string_FW_write2io
- * Pstring_write2io            Pa_string_write2io          Pe_string_write2io
- * Pstring_ME_write2io         Pa_string_ME_write2io       Pe_string_ME_write2io
- * Pstring_CME_write2io        Pa_string_CME_write2io      Pe_string_CME_write2io
- * Pstring_SE_write2io         Pa_string_SE_write2io       Pe_string_SE_write2io
- * Pstring_CSE_write2io        Pa_string_CSE_write2io      Pe_string_CSE_write2io
+ * Pstring_FW_write2io            Pa_string_FW_write2io          Pe_string_FW_write2io
+ * Pstring_write2io               Pa_string_write2io             Pe_string_write2io
+ * Pstring_ME_write2io            Pa_string_ME_write2io          Pe_string_ME_write2io
+ * Pstring_CME_write2io           Pa_string_CME_write2io         Pe_string_CME_write2io
+ * Pstring_SE_write2io            Pa_string_SE_write2io          Pe_string_SE_write2io
+ * Pstring_CSE_write2io           Pa_string_CSE_write2io         Pe_string_CSE_write2io
  *
- * Pstring_FW_write2buf        Pa_string_FW_write2buf      Pe_string_FW_write2buf
- * Pstring_write2buf           Pa_string_write2buf         Pe_string_write2buf
- * Pstring_ME_write2buf        Pa_string_ME_write2buf      Pe_string_ME_write2buf
- * Pstring_CME_write2buf       Pa_string_CME_write2buf     Pe_string_CME_write2buf
- * Pstring_SE_write2buf        Pa_string_SE_write2buf      Pe_string_SE_write2buf
- * Pstring_CSE_write2buf       Pa_string_CSE_write2buf     Pe_string_CSE_write2buf
+ * Pstring_FW_write2buf           Pa_string_FW_write2buf         Pe_string_FW_write2buf
+ * Pstring_write2buf              Pa_string_write2buf            Pe_string_write2buf
+ * Pstring_ME_write2buf           Pa_string_ME_write2buf         Pe_string_ME_write2buf
+ * Pstring_CME_write2buf          Pa_string_CME_write2buf        Pe_string_CME_write2buf
+ * Pstring_SE_write2buf           Pa_string_SE_write2buf         Pe_string_SE_write2buf
+ * Pstring_CSE_write2buf          Pa_string_CSE_write2buf        Pe_string_CSE_write2buf
  */
 
 #ifdef FOR_CKIT
@@ -2508,9 +2592,9 @@ ssize_t Pstring_CSE_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
  * DATE WRITE FUNCTIONS
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
- * Pdate_write2io              Pa_date_write2io            Pe_date_write2io 
+ * Pdate_write2io                 Pa_date_write2io               Pe_date_write2io 
  *
- * Pdate_write2buf             Pa_date_write2buf           Pe_date_write2buf
+ * Pdate_write2buf                Pa_date_write2buf              Pe_date_write2buf
  */
 
 #ifdef FOR_CKIT

@@ -118,6 +118,15 @@
   } while (0)
 
 /* ================================================================================ */
+/* P_io_disc_unmake: */
+
+Perror_t P_io_disc_unmake(Pio_disc_t *io_disc)
+{
+  if (!io_disc || !io_disc->unmake_fn) return P_ERR;
+  return io_disc->unmake_fn(io_disc);
+}
+
+/* ================================================================================ */
 /* PDCI_iodisc_report_partial mimics PDCI_report_err for just one error case,
  * a missing EOR before encountering an EOF.
  */
@@ -243,25 +252,29 @@ P_fwrec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
   Pio_elt_t                 *elt;
   int                        c, ctr;
   Pbyte                     *b, *bmin;
+  Pdisc_t                   *disc;
 
   if (!pads || !pads->disc) {
-    return P_ERR;
+    disc = &Pdefault_disc;
+  } else {
+    disc = pads->disc;
   }
+
   if (!io_disc || !io_disc->data) {
-    P_WARN(pads->disc, "P_fwrec_noseek_sfclose: bad param(s)");
+    P_WARN(disc, "P_fwrec_noseek_sfclose: bad param(s)");
     return P_ERR;
   }
   data = (P_fwrec_noseek_data_t*)io_disc->data;
   if (!data->io) {
-    P_WARN(pads->disc, "P_fwrec_noseek_sfclose: not in a valid open state");
+    P_WARN(disc, "P_fwrec_noseek_sfclose: not in a valid open state");
     return P_ERR;
   }
   if (io_cur_elt == data->head) {
-    P_WARN(pads->disc, "P_fwrec_noseek_sfclose: io_cur_elt == head not a valid elt!");
+    P_WARN(disc, "P_fwrec_noseek_sfclose: io_cur_elt == head not a valid elt!");
     return P_ERR;
   }
   if (io_cur_elt && remain > io_cur_elt->len) {
-    P_WARN(pads->disc, "P_fwrec_noseek_sfclose: remain > io_cur_elt->len!");
+    P_WARN(disc, "P_fwrec_noseek_sfclose: remain > io_cur_elt->len!");
     return P_ERR;
   }
   if (io_cur_elt) {
@@ -288,13 +301,13 @@ P_fwrec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
       for (; b >= bmin; b--, ctr++) {
 	c = *b;
 	if (c != sfungetc(data->io, c)) {
-	  P_WARN1(pads->disc, "P_fwrec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	  P_WARN1(disc, "P_fwrec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
 	  goto after_restore;
 	}
       }
     }
     if (ctr) {
-      P_WARN1(pads->disc, "XXX_CHANGE_TO_DBG P_fwrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      P_WARN1(disc, "XXX_CHANGE_TO_DBG P_fwrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -412,22 +425,19 @@ P_fwrec_noseek_blk_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *blk_
 }
 
 Perror_t
-P_fwrec_noseek_unmake(P_t *pads, Pio_disc_t* io_disc)
+P_fwrec_noseek_unmake(Pio_disc_t* io_disc)
 {
   P_fwrec_noseek_data_t   *data;
 
-  if (!pads || !pads->disc) {
-    return P_ERR;
-  }
   if (!io_disc) {
-    P_WARN(pads->disc, "P_fwrec_noseek_unmake: bad param(s)");
+    P_WARN(&Pdefault_disc, "P_fwrec_noseek_unmake: bad param(s)");
     return P_ERR;
   }
   data = (P_fwrec_noseek_data_t*)io_disc->data;
   if (data) {
     if (data->io) {
-      P_WARN(pads->disc, "P_fwrec_noseek_unmake: sfclose should have been called first, calling it now");
-      P_fwrec_noseek_sfclose(pads, io_disc, 0, 0);
+      P_WARN(&Pdefault_disc, "P_fwrec_noseek_unmake: sfclose should have been called first, calling it now.");
+      P_fwrec_noseek_sfclose(0, io_disc, 0, 0);
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);
@@ -588,25 +598,29 @@ P_norec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
   Pio_elt_t              *elt;
   int                     c, ctr;
   Pbyte                  *b, *bmin;
+  Pdisc_t                *disc;
 
   if (!pads || !pads->disc) {
-    return P_ERR;
+    disc = &Pdefault_disc;
+  } else {
+    disc = pads->disc;
   }
+
   if (!io_disc || !io_disc->data) {
-    P_WARN(pads->disc, "P_norec_noseek_sfclose: bad param(s)");
+    P_WARN(disc, "P_norec_noseek_sfclose: bad param(s)");
     return P_ERR;
   }
   data = (P_norec_noseek_data_t*)io_disc->data;
   if (!data->io) {
-    P_WARN(pads->disc, "P_norec_noseek_sfclose: not in a valid open state");
+    P_WARN(disc, "P_norec_noseek_sfclose: not in a valid open state");
     return P_ERR;
   }
   if (io_cur_elt == data->head) {
-    P_WARN(pads->disc, "P_norec_noseek_sfclose: io_cur_elt == head not a valid elt!");
+    P_WARN(disc, "P_norec_noseek_sfclose: io_cur_elt == head not a valid elt!");
     return P_ERR;
   }
   if (io_cur_elt && remain > io_cur_elt->len) {
-    P_WARN(pads->disc, "P_norec_noseek_sfclose: remain > io_cur_elt->len!");
+    P_WARN(disc, "P_norec_noseek_sfclose: remain > io_cur_elt->len!");
     return P_ERR;
   }
   if (io_cur_elt) {
@@ -617,12 +631,12 @@ P_norec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
     for (; b >= bmin; b--, ctr++) {
       c = *b;
       if (c != sfungetc(data->io, c)) {
-	P_WARN1(pads->disc, "P_norec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	P_WARN1(disc, "P_norec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
 	goto after_restore;
       }
     }
     if (ctr) {
-      P_WARN1(pads->disc, "XXX_CHANGE_TO_DBG P_norec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      P_WARN1(disc, "XXX_CHANGE_TO_DBG P_norec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -770,22 +784,19 @@ P_norec_noseek_blk_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *blk_
 }
 
 Perror_t
-P_norec_noseek_unmake(P_t *pads, Pio_disc_t* io_disc)
+P_norec_noseek_unmake(Pio_disc_t* io_disc)
 {
   P_norec_noseek_data_t   *data;
 
-  if (!pads || !pads->disc) {
-    return P_ERR;
-  }
   if (!io_disc) {
-    P_WARN(pads->disc, "P_norec_noseek_unmake: bad param(s)");
+    P_WARN(&Pdefault_disc, "P_norec_noseek_unmake: bad param(s)");
     return P_ERR;
   }
   data = (P_norec_noseek_data_t*)io_disc->data;
   if (data) {
     if (data->io) {
-      P_WARN(pads->disc, "P_norec_noseek_unmake: sfclose should have been called first, calling it now");
-      P_norec_noseek_sfclose(pads, io_disc, 0, 0);
+      P_WARN(&Pdefault_disc, "P_norec_noseek_unmake: sfclose should have been called first, calling it now");
+      P_norec_noseek_sfclose(0, io_disc, 0, 0);
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);
@@ -960,25 +971,29 @@ P_ctrec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
   Pio_elt_t              *elt;
   int                     c, ctr;
   Pbyte                  *b, *bmin;
+  Pdisc_t                *disc;
 
   if (!pads || !pads->disc) {
-    return P_ERR;
+    disc = &Pdefault_disc;
+  } else {
+    disc = pads->disc;
   }
+
   if (!io_disc || !io_disc->data) {
-    P_WARN(pads->disc, "P_ctrec_noseek_sfclose: bad param(s)");
+    P_WARN(disc, "P_ctrec_noseek_sfclose: bad param(s)");
     return P_ERR;
   }
   data = (P_ctrec_noseek_data_t*)io_disc->data;
   if (!data->io) {
-    P_WARN(pads->disc, "P_ctrec_noseek_sfclose: not in a valid open state");
+    P_WARN(disc, "P_ctrec_noseek_sfclose: not in a valid open state");
     return P_ERR;
   }
   if (io_cur_elt == data->head) {
-    P_WARN(pads->disc, "P_ctrec_noseek_sfclose: io_cur_elt == head not a valid elt!");
+    P_WARN(disc, "P_ctrec_noseek_sfclose: io_cur_elt == head not a valid elt!");
     return P_ERR;
   }
   if (io_cur_elt && remain > io_cur_elt->len) {
-    P_WARN(pads->disc, "P_ctrec_noseek_sfclose: remain > io_cur_elt->len!");
+    P_WARN(disc, "P_ctrec_noseek_sfclose: remain > io_cur_elt->len!");
     return P_ERR;
   }
   if (io_cur_elt) {
@@ -989,12 +1004,12 @@ P_ctrec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
     for (; b >= bmin; b--, ctr++) {
       c = *b;
       if (c != sfungetc(data->io, c)) {
-	P_WARN1(pads->disc, "P_ctrec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	P_WARN1(disc, "P_ctrec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
 	goto after_restore;
       }
     }
     if (ctr) {
-      P_WARN1(pads->disc, "XXX_CHANGE_TO_DBG P_ctrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      P_WARN1(disc, "XXX_CHANGE_TO_DBG P_ctrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -1226,18 +1241,15 @@ P_ctrec_noseek_blk_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *blk_
 }
 
 Perror_t
-P_ctrec_noseek_unmake(P_t *pads, Pio_disc_t* io_disc)
+P_ctrec_noseek_unmake(Pio_disc_t* io_disc)
 {
   P_ctrec_noseek_data_t  *data;
 
-  if (!pads || !pads->disc) {
-    return P_ERR;
-  }
   data = (P_ctrec_noseek_data_t*)io_disc->data;
   if (data) {
     if (data->io) {
-      P_WARN(pads->disc, "P_ctrec_noseek_unmake: sfclose should have been called first, calling it now");
-      P_ctrec_noseek_sfclose(pads, io_disc, 0, 0);
+      P_WARN(&Pdefault_disc, "P_ctrec_noseek_unmake: sfclose should have been called first, calling it now");
+      P_ctrec_noseek_sfclose(0, io_disc, 0, 0);
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);
@@ -1411,28 +1423,32 @@ Perror_t
 P_vlrec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t remain)
 {
   P_vlrec_noseek_data_t  *data;
-  Pio_elt_t             *elt;
-  int                       c, ctr;
-  Pbyte                 *b, *bmin;
+  Pio_elt_t              *elt;
+  int                     c, ctr;
+  Pbyte                  *b, *bmin;
+  Pdisc_t                *disc;
 
   if (!pads || !pads->disc) {
-    return P_ERR;
+    disc = &Pdefault_disc;
+  } else {
+    disc = pads->disc;
   }
+
   if (!io_disc || !io_disc->data) {
-    P_WARN(pads->disc, "P_vlrec_noseek_sfclose: bad param(s)");
+    P_WARN(disc, "P_vlrec_noseek_sfclose: bad param(s)");
     return P_ERR;
   }
   data = (P_vlrec_noseek_data_t*)io_disc->data;
   if (!data->io) {
-    P_WARN(pads->disc, "P_vlrec_noseek_sfclose: not in a valid open state");
+    P_WARN(disc, "P_vlrec_noseek_sfclose: not in a valid open state");
     return P_ERR;
   }
   if (io_cur_elt == data->head) {
-    P_WARN(pads->disc, "P_vlrec_noseek_sfclose: io_cur_elt == head not a valid elt!");
+    P_WARN(disc, "P_vlrec_noseek_sfclose: io_cur_elt == head not a valid elt!");
     return P_ERR;
   }
   if (io_cur_elt && remain > io_cur_elt->len) {
-    P_WARN(pads->disc, "P_vlrec_noseek_sfclose: remain > io_cur_elt->len!");
+    P_WARN(disc, "P_vlrec_noseek_sfclose: remain > io_cur_elt->len!");
     return P_ERR;
   }
   if (io_cur_elt) {
@@ -1443,12 +1459,12 @@ P_vlrec_noseek_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, si
     for (; b >= bmin; b--, ctr++) {
       c = *b;
       if (c != sfungetc(data->io, c)) {
-	P_WARN1(pads->disc, "P_vlrec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	P_WARN1(disc, "P_vlrec_noseek_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
 	goto after_restore;
       }
     }
     if (ctr) {
-      P_WARN1(pads->disc, "XXX_CHANGE_TO_DBG P_vlrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
+      P_WARN1(disc, "XXX_CHANGE_TO_DBG P_vlrec_noseek_sfclose: restored %d bytes using sfungetc", ctr);
     }
   }
  after_restore:
@@ -1777,18 +1793,15 @@ P_vlrec_noseek_blk_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *blk_
 }
 
 Perror_t
-P_vlrec_noseek_unmake(P_t *pads, Pio_disc_t* io_disc)
+P_vlrec_noseek_unmake(Pio_disc_t* io_disc)
 {
   P_vlrec_noseek_data_t  *data;
 
-  if (!pads || !pads->disc) {
-    return P_ERR;
-  }
   data = (P_vlrec_noseek_data_t*)io_disc->data;
   if (data) {
     if (data->io) {
-      P_WARN(pads->disc, "P_vlrec_noseek_unmake: sfclose should have been called first, calling it now");
-      P_vlrec_noseek_sfclose(pads, io_disc, 0, 0);
+      P_WARN(&Pdefault_disc, "P_vlrec_noseek_unmake: sfclose should have been called first, calling it now");
+      P_vlrec_noseek_sfclose(0, io_disc, 0, 0);
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);
@@ -1978,26 +1991,30 @@ Perror_t
 P_norec_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t remain)
 {
   P_norec_data_t   *data;
-  Pio_elt_t       *elt;
+  Pio_elt_t        *elt;
+  Pdisc_t          *disc;
 
   if (!pads || !pads->disc) {
-    return P_ERR;
+    disc = &Pdefault_disc;
+  } else {
+    disc = pads->disc;
   }
+
   if (!io_disc || !io_disc->data) {
-    P_WARN(pads->disc, "P_norec_sfclose: bad param(s)");
+    P_WARN(disc, "P_norec_sfclose: bad param(s)");
     return P_ERR;
   }
   data = (P_norec_data_t*)io_disc->data;
   if (!data->io) {
-    P_WARN(pads->disc, "P_norec_sfclose: not in a valid open state");
+    P_WARN(disc, "P_norec_sfclose: not in a valid open state");
     return P_ERR;
   }
   if (io_cur_elt == data->head) {
-    P_WARN(pads->disc, "P_norec_sfclose: io_cur_elt == head not a valid elt!");
+    P_WARN(disc, "P_norec_sfclose: io_cur_elt == head not a valid elt!");
     return P_ERR;
   }
   if (io_cur_elt && remain > io_cur_elt->len) {
-    P_WARN(pads->disc, "P_norec_sfclose: remain > io_cur_elt->len!");
+    P_WARN(disc, "P_norec_sfclose: remain > io_cur_elt->len!");
     return P_ERR;
   }
   if (io_cur_elt) {
@@ -2010,9 +2027,9 @@ P_norec_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t re
     if (offset < data->tail_off) {
       unsigned long long to_return = data->tail_off - offset;
       if (-1 == sfseek(data->io, offset, 0)) {
-	P_WARN1(pads->disc, "P_norec_sfclose: failed to return %llu bytes to IO stream", to_return);
+	P_WARN1(disc, "P_norec_sfclose: failed to return %llu bytes to IO stream", to_return);
       } else {
-	P_WARN1(pads->disc, "XXX_CHANGE_TO_DBG P_norec_sfclose: restored %llu bytes to IO stream using sfseek", to_return);
+	P_WARN1(disc, "XXX_CHANGE_TO_DBG P_norec_sfclose: restored %llu bytes to IO stream using sfseek", to_return);
       }
     }
   }
@@ -2186,18 +2203,15 @@ P_norec_blk_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *blk_start, 
 }
 
 Perror_t
-P_norec_unmake(P_t *pads, Pio_disc_t* io_disc)
+P_norec_unmake(Pio_disc_t* io_disc)
 {
   P_norec_data_t  *data;
 
-  if (!pads || !pads->disc) {
-    return P_ERR;
-  }
   data = (P_norec_data_t*)io_disc->data;
   if (data) {
     if (data->io) {
-      P_WARN(pads->disc, "P_norec_unmake: sfclose should have been called first, calling it now");
-      P_norec_sfclose(pads, io_disc, 0, 0);
+      P_WARN(&Pdefault_disc, "P_norec_unmake: sfclose should have been called first, calling it now");
+      P_norec_sfclose(0, io_disc, 0, 0);
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);

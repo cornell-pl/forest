@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pa_char_lit_match(pads, '|', 1)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (P_ERR == Pa_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pa_char_lit_match(pads, '|', 1)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR;
     }

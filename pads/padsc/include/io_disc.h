@@ -38,6 +38,23 @@
  *    norec and norec_noseek
  * The noseek versions do not require that the sfio stream
  * be seekable, while the other versions do.  
+ *
+ * In addition, the user should 'unmake' an IO discipline once it
+ * is no longer needed.  This can be achieved by using 
+ * PDC_close, or by installing a new IO discipline using P_set_io_disc.
+ * However, if an IO discipline is 'kept' around using, e.g., 
+ * P_close_keep_io_disc, or P_set_io_disc_keep_old, then 
+ * it can be re-used in a future P_open or P_set_io_disc call,
+ * and the user may have to unmake it explicitly when it is no longer
+ * needed, using:
+ *
+ *    P_io_disc_unmake(my_io_disc)
+ *
+ */
+
+Perror_t P_io_disc_unmake(Pio_disc_t *io_disc);
+/*
+ * Unmake io_disc.  See discussion above about when this is necessary.
  */
 
 Pio_disc_t * P_fwrec_make(size_t leader_len, size_t data_len, size_t trailer_len);
@@ -134,7 +151,7 @@ struct Pio_elt_s {
 
 /* Function types needed for the IO discipline: */
 
-typedef Perror_t     (*P_io_unmake_fn)    (P_t *pads, Pio_disc_t* io_disc);
+typedef Perror_t     (*P_io_unmake_fn)    (Pio_disc_t* io_disc);
 typedef Perror_t     (*P_io_sfopen_fn)    (P_t *pads, Pio_disc_t* io_disc, Sfio_t *sfio, Pio_elt_t *head);
 typedef Perror_t     (*P_io_sfclose_fn)   (P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t remain);
 typedef Perror_t     (*P_io_read_fn)      (P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt,

@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
     if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
       error(ERROR_FATAL, "*** P_open failed ***");
     }
+
     if (P_ERR == P_io_fopen(pads, "../../data/re_scan_test.dat")) {
       error(ERROR_FATAL, "*** P_io_fopen failed ***");
     }
@@ -136,12 +137,12 @@ int main(int argc, char** argv) {
     if (P_ERR == P_io_close(pads)) {
       error(ERROR_FATAL, "*** P_io_close failed ***");
     }
-
-    if (P_ERR == P_close(pads)) {
+    if (P_ERR == P_close_keep_io_disc(pads, 1)) {
       error(ERROR_FATAL, "*** P_close failed ***");
     }
-
   }
+
+  P_io_disc_unmake(io_disc);
 
   return 0;
 }

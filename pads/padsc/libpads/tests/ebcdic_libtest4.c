@@ -4,7 +4,7 @@
  *    tests:
  *        io discipline ctrec_noseek(P_EBCDIC_NEWLINE)
  *        Pe_string_read
- *        Pe_char_lit_read
+ *        Pe_char_lit_match
  *        Pe_string_CSE_read
  *        Pe_string_FW_read 
  *        Pe_string_SE_read
@@ -14,18 +14,15 @@
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
 int main(int argc, char** argv) {
-  /* int             ctr; */
-  /* size_t          n; */
-  /* unsigned char   c; */
-  /* int             i; */
-  Pstring      s;
-  P_t*          pads;
-  Pio_disc_t*  io_disc;
-  Pdisc_t      my_disc = Pdefault_disc;
-  Pbase_m      m       = P_CheckAndSet;
-  Pbase_pd     pd;
-  size_t          bytes_skipped;
-  unsigned long   ultmp;
+  Pchar          cfound;
+  Pstring        s;
+  P_t*           pads;
+  Pio_disc_t*    io_disc;
+  Pdisc_t        my_disc = Pdefault_disc;
+  Pbase_m        m       = P_CheckAndSet;
+  Pbase_pd       pd;
+  size_t         bytes_skipped;
+  unsigned long  ultmp;
   P_REGEXP_DECL_NULL(my_regexp);
 
   error(0, "\nUsing PADSC IO discipline ctrec with cterm P_EBCDIC_NEWLINE\n\n");
@@ -61,7 +58,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (P_ERR == Pe_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pe_char_lit_match(pads, '|', 1)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR1;
     }
@@ -70,7 +67,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (P_ERR == Pe_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pe_char_lit_match(pads, '|', 1)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR1;
     }
@@ -97,7 +94,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (P_ERR == Pe_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pe_char_lit_match(pads, '|', 1)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR2;
     }
@@ -106,7 +103,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", P_fmt_str(&s), s.len);
     }
-    if (P_ERR == Pe_char_lit_read(pads, &m, &pd, '|')) {
+    if (P_ERR == Pe_char_lit_read(pads, &m, '|', &pd, &cfound)) {
       PDCI_report_err (pads, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR2;
     }
