@@ -22,7 +22,7 @@
 
 #define NEXT_REC do {\
   if (strncmp(argv[1], "norec", 5) == 0) { \
-    if (PDC_ERR == PDC_e_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) { \
+    if (PDC_ERR == PDC_e_char_lit_scan(pdc, '\n', '\n', 1, 1, 0, &bytes_skipped)) { \
       error(2, "Could not find EOR (newline), ending program"); \
       goto done; \
     } \

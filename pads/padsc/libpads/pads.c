@@ -4713,7 +4713,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
 #gen_include "padsc-internal.h"
 #gen_include "padsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.103 2003-09-15 18:25:06 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.104 2003-09-15 19:13:44 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6995,7 +6995,7 @@ PDCI_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf
 
 #if PDC_CONFIG_READ_FUNCTIONS > 0
 PDC_error_t
-PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
 		   PDC_char *c_out, size_t *offset_out, PDC_charset char_set, const char *whatfn)
 {
   PDC_byte       *begin, *p1, *p2, *end;
@@ -7004,8 +7004,8 @@ PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
   int             matchlen = -1;
 
   PDCI_IODISC_0P_CHECKS(whatfn);
-  PDC_TRACE5(pdc->disc, "PDCI_char_lit_scan args: c %s stop %s eat %d, char_set = %s, whatfn = %s",
-	     PDC_qfmt_char(c), PDC_qfmt_char(s), eat_lit, PDC_charset2str(char_set), whatfn);
+  PDC_TRACE6(pdc->disc, "PDCI_char_lit_scan args: c %s stop %s eat_c %d eat_s %d, char_set = %s, whatfn = %s",
+	     PDC_qfmt_char(c), PDC_qfmt_char(s), eat_c, eat_s, PDC_charset2str(char_set), whatfn);
   switch (char_set)
     {
     case PDC_charset_ASCII:
@@ -7046,14 +7046,29 @@ PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
       continue;
     }
     /* p1 < end */
-    if (c == (*p1) || s == (*p1)) {
+    if (c == (*p1)) {
       if (c_out) {
-	(*c_out) = (*p1);
+	(*c_out) = c;
       }
       if (offset_out) {
 	(*offset_out) = (p1-begin);
       }
-      if (eat_lit) {
+      if (eat_c) {
+	p1++; /* advance beyond char found */
+      }
+      if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
+	goto fatal_forward_err;
+      }
+      return PDC_OK;
+    }
+    if (s == (*p1)) {
+      if (c_out) {
+	(*c_out) = s;
+      }
+      if (offset_out) {
+	(*offset_out) = (p1-begin);
+      }
+      if (eat_s) {
 	p1++; /* advance beyond char found */
       }
       if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
@@ -7087,7 +7102,8 @@ PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
 }
 
 PDC_error_t
-PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
+		  int eat_findStr, int eat_stopStr,
 		  PDC_string **str_out, size_t *offset_out, PDC_charset char_set,
 		  const char *whatfn) 
 {
@@ -7100,8 +7116,8 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
 
   PDCI_IODISC_1P_CHECKS(whatfn, findStr);
 
-  PDC_TRACE5(pdc->disc, "PDCI_str_lit_scan args: findStr = %s stopStre = %s eat = %d, char_set = %s, whatfn = %s",
-	     PDC_qfmt_str(findStr), PDC_qfmt_str(stopStr), eat_lit, PDC_charset2str(char_set), whatfn);
+  PDC_TRACE6(pdc->disc, "PDCI_str_lit_scan args: findStr = %s stopStre = %s eat_findStr = %d eat_stopStr = %d, char_set = %s, whatfn = %s",
+	     PDC_qfmt_str(findStr), PDC_qfmt_str(stopStr), eat_findStr, eat_stopStr, PDC_charset2str(char_set), whatfn);
   if (offset_out) {
     (*offset_out) = 0;
   }
@@ -7160,7 +7176,7 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
       if (offset_out) {
 	(*offset_out) = (p1-begin);
       }
-      if (eat_lit) {
+      if (eat_findStr) {
 	p1 += tmp_findStr->len; /* advance beyond findStr */
       }
       if ((p1-begin) && PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
@@ -7176,7 +7192,9 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
       if (offset_out) {
 	(*offset_out) = (p1-begin);
       }
-      p1 += tmp_stopStr->len; /* advance beyond stopStr */
+      if (eat_stopStr) {
+	p1 += tmp_stopStr->len; /* advance beyond stopStr */
+      }
       if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	goto fatal_forward_err;
       }
@@ -7212,7 +7230,8 @@ PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopS
 }
 
 PDC_error_t
-PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr, int eat_lit,
+PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr,
+		   int eat_findStr, int eat_stopStr,
 		   const char **str_out, size_t *offset_out, PDC_charset char_set,
 		   const char *whatfn)
 {
@@ -7231,13 +7250,13 @@ PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr, int eat
     stopS_ptr = &stopS;
   }
   if (str_out) {
-    if (PDC_ERR == PDCI_str_lit_scan(pdc, findS_ptr, stopS_ptr, eat_lit, &outS_ptr, offset_out, char_set, whatfn)) {
+    if (PDC_ERR == PDCI_str_lit_scan(pdc, findS_ptr, stopS_ptr, eat_findStr, eat_stopStr, &outS_ptr, offset_out, char_set, whatfn)) {
       return PDC_ERR;
     }
     (*str_out) = (outS_ptr == findS_ptr) ? findStr : stopStr;
     return PDC_OK;
   }
-  return PDCI_str_lit_scan(pdc, findS_ptr, stopS_ptr, eat_lit, 0, offset_out, char_set, whatfn);
+  return PDCI_str_lit_scan(pdc, findS_ptr, stopS_ptr, eat_findStr, eat_stopStr, 0, offset_out, char_set, whatfn);
 }
 
 #endif /* PDC_CONFIG_READ_FUNCTIONS */

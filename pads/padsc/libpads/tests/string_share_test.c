@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
     }
   find_EOR:
     if (norec) {
-      if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
+      if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 1, 0, &bytes_skipped)) {
 	error(2, "Could not find EOR (newline), ending program");
 	goto done;
       }

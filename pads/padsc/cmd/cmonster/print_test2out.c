@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
-    PDC_IO_checkpoint(pdc, 0);
+    /* PDC_IO_checkpoint(pdc, 0); */
     if (PDC_ERR == data_rec_read(pdc, &data_m, &data_pd, &data)) {
       error(ERROR_FATAL, "*** data_rec_read failed ***");
     }
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
 	    PDC_fmt_str(&(data.arms.val.a3.qy4)));
       break;
     }
-    PDC_IO_commit(pdc);
+    /* PDC_IO_commit(pdc); */
   }
 
   if (PDC_ERR == PDC_IO_close(pdc)) {

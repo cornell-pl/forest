@@ -1055,17 +1055,20 @@ ssize_t      PDC_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_l
  *  form is used or if the DEFAULT form is used and pdc->disc->def_charset is
  *  PDC_charset_EBCDIC.
  *
- *  If a gloal char is found, then if eat_lit is non-zero the IO
+
+ *  If a goal char is found, then if the corresponding 'eat' param
+ *  (eat_c if c is found, eat_s if s is found) is non-zero the IO
  *  points to just beyond the char, otherwise it points to the char.
  *  pdc->disc controls maximum scan distance.  Hitting eor or eof
  *  considered to be an error.  N.B. If there is mixed binary and
  *  ascii data, scanning can 'find' an ascii char in a binary field.
  *  Be careful!  Do not use 0 to mean EOR/EOF.  If there is no stop
  *  char, use the same char for both the c and s params.
+
  *
  * RETURNS: PDC_error_t
  *         PDC_OK    => goal/stop char found, IO cursor now points to just beyond char
- *                      (eat_lit non-zero) or to the char (eat_lit zero).
+ *                      (corresponding eat param non-zero) or to the char (eat param zero).
  *                      if c_out, *c_out set to the ASCII version of the char that was found
  *                      if offset_out, *offset_out set to the distance scanned to find that char
  *                      (0 means the IO cursor was already pointing at the found char)
@@ -1080,43 +1083,51 @@ ssize_t      PDC_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_l
  * and stop strings are given.  These strings are converted to EBCDIC if an EBCDIC form
  * is used or if a DEFAULT form is used and pdc->disc->def_charset is PDC_charset_EBCDIC.
  *
- * If there is no stop string, a NULL stop string should be used.  On PDC_OK, if
- * str_out is set then (*str_out) points to the original ASCII version of either
- * findStr or stopStr, depending on which was found, and if offset is set then
- * (*offset_out) is set to the distance scanned to find the string (0 means the
- * IO cursor was already pointing at the string). If eat_lit is non-zero, the IO
- * cursor points just beyond the string literal that was found, otherwise it
- * points to the start of the string that was found.  On PDC_ERR, the IO cursor
- * is unchanged.
+ * If there is no stop string, a NULL stop string should be used.  On
+ * PDC_OK, if str_out is set then (*str_out) points to the original
+ * ASCII version of either findStr or stopStr, depending on which was
+ * found, and if offset is set then (*offset_out) is set to the
+ * distance scanned to find the string (0 means the IO cursor was
+ * already pointing at the string). If the corresponding eat param is
+ * non-zero (eat_findStr for findStr, eat_stopStr for stopStr), the IO
+ * cursor points just beyond the string literal that was found,
+ * otherwise it points to the start of the string that was found.  On
+ * PDC_ERR, the IO cursor is unchanged.
  */
 
 #ifdef FOR_CKIT
 #if PDC_CONFIG_READ_FUNCTIONS > 0
 
 #if PDC_CONFIG_A_CHAR_STRING > 0
-PDC_error_t PDC_a_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+PDC_error_t PDC_a_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
 				PDC_char *c_out, size_t *offset_out);
-PDC_error_t PDC_a_str_lit_scan (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+PDC_error_t PDC_a_str_lit_scan (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
+				int eat_findStr, int eat_stopStr,
 			        PDC_string **str_out, size_t *offset_out);
-PDC_error_t PDC_a_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr, int eat_lit,
+PDC_error_t PDC_a_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr,
+				int eat_findStr, int eat_stopStr,
 				const char **str_out, size_t *offset_out);
 #endif
 
 #if PDC_CONFIG_E_CHAR_STRING > 0
-PDC_error_t PDC_e_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+PDC_error_t PDC_e_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
 				PDC_char *c_out, size_t *offset_out);
-PDC_error_t PDC_e_str_lit_scan (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+PDC_error_t PDC_e_str_lit_scan (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
+				int eat_findStr, int eat_stopStr,
 			        PDC_string **str_out, size_t *offset_out);
-PDC_error_t PDC_e_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr, int eat_lit,
+PDC_error_t PDC_e_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr,
+				int eat_findStr, int eat_stopStr,
 				const char **str_out, size_t *offset_out);
 #endif
 
 #if PDC_CONFIG_A_CHAR_STRING > 0 && PDC_CONFIG_E_CHAR_STRING > 0
-PDC_error_t PDC_char_lit_scan  (PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+PDC_error_t PDC_char_lit_scan  (PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
 			        PDC_char *c_out, size_t *offset_out);
-PDC_error_t PDC_str_lit_scan   (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+PDC_error_t PDC_str_lit_scan   (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
+				int eat_findStr, int eat_stopStr,
 			        PDC_string **str_out, size_t *offset_out);
-PDC_error_t PDC_Cstr_lit_scan  (PDC_t *pdc, const char *findStr, const char *stopStr, int eat_lit,
+PDC_error_t PDC_Cstr_lit_scan  (PDC_t *pdc, const char *findStr, const char *stopStr,
+				int eat_findStr, int eat_stopStr,
 				const char **str_out, size_t *offset_out);
 #endif
 

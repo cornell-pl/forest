@@ -82,15 +82,17 @@ do { \
 
 #if PDC_CONFIG_READ_FUNCTIONS > 0
 
-PDC_error_t PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+PDC_error_t PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
 			       PDC_char *c_out, size_t *offset_out, PDC_charset char_set,
 			       const char *whatfn);
 
-PDC_error_t PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+PDC_error_t PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
+			      int eat_findStr, int eat_stopStr,
 			      PDC_string **str_out, size_t *offset_out, PDC_charset char_set,
 			      const char *whatfn);
 
-PDC_error_t PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr, int eat_lit,
+PDC_error_t PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr,
+			       int eat_findStr, int eat_stopStr,
 			       const char **str_out, size_t *offset_out, PDC_charset char_set,
 			       const char *whatfn);
 
@@ -223,32 +225,32 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
 
 #if PDC_CONFIG_READ_FUNCTIONS > 0
 
-#define PDC_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out) \
-  PDCI_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_char_lit_scan")
+#define PDC_char_lit_scan(pdc, c, s, eat_c, eat_s, c_out, offset_out) \
+  PDCI_char_lit_scan(pdc, c, s, eat_c, eat_s, c_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_char_lit_scan")
 
-#define PDC_a_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out) \
-  PDCI_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out, PDC_charset_ASCII, "PDC_a_char_lit_scan")
+#define PDC_a_char_lit_scan(pdc, c, s, eat_c, eat_s, c_out, offset_out) \
+  PDCI_char_lit_scan(pdc, c, s, eat_c, eat_s, c_out, offset_out, PDC_charset_ASCII, "PDC_a_char_lit_scan")
 
-#define PDC_e_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out) \
-  PDCI_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out, PDC_charset_EBCDIC, "PDC_e_char_lit_scan")
+#define PDC_e_char_lit_scan(pdc, c, s, eat_c, eat_s, c_out, offset_out) \
+  PDCI_char_lit_scan(pdc, c, s, eat_c, eat_s, c_out, offset_out, PDC_charset_EBCDIC, "PDC_e_char_lit_scan")
 
-#define PDC_str_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
-  PDCI_str_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_str_lit_scan")
+#define PDC_str_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out) \
+  PDCI_str_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_str_lit_scan")
 
-#define PDC_a_str_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
-  PDCI_str_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDC_charset_ASCII, "PDC_a_str_lit_scan")
+#define PDC_a_str_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out) \
+  PDCI_str_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out, PDC_charset_ASCII, "PDC_a_str_lit_scan")
 
-#define PDC_e_str_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
-  PDCI_str_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDC_charset_EBCDIC, "PDC_e_str_lit_scan")
+#define PDC_e_str_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out) \
+  PDCI_str_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out, PDC_charset_EBCDIC, "PDC_e_str_lit_scan")
 
-#define PDC_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
-  PDCI_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_Cstr_lit_scan")
+#define PDC_Cstr_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out) \
+  PDCI_Cstr_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out, PDCI_DEF_CHARSET(pdc), "PDC_Cstr_lit_scan")
 
-#define PDC_a_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
-  PDCI_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDC_charset_ASCII, "PDC_a_Cstr_lit_scan")
+#define PDC_a_Cstr_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out) \
+  PDCI_Cstr_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out, PDC_charset_ASCII, "PDC_a_Cstr_lit_scan")
 
-#define PDC_e_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
-  PDCI_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_scan")
+#define PDC_e_Cstr_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out) \
+  PDCI_Cstr_lit_scan(pdc, findStr, stopStr, eat_findStr, eat_stopStr, str_out, offset_out, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_scan")
 
 #endif /* PDC_CONFIG_READ_FUNCTIONS */
 

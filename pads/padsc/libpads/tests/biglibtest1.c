@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
       PDC_a_int32_FW_read(pdc, &m, 6, &pd, &i1);
     }
     if (strncmp(argv[1], "norec", 5) == 0) {
-      if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
+      if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 1, 0, &bytes_skipped)) {
 	break;
       }
     } else {
