@@ -746,71 +746,70 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", SOME "bogus type"))
       end
 
-  (** PADS to XML Schema translation **)
+  (** PADS to XML XSchema translation **)
 
-  fun ppXMLName pps (tyNameOpt,NameOpt) =     (* [name=NameOpt] [type=tyNameOpt] *)
+  fun ppXMLName pps (tyNameOpt,NameOpt) =	(* [name=NameOpt] [type=tyNameOpt] *)
       let val tyName = case tyNameOpt of NONE => "" | SOME name => (" type=\"" ^ name ^ "\"")
           val Name = case NameOpt of NONE => "" | SOME name => ("name=\"" ^ name ^ "\"")
       in
           PPL.addStr pps (Name ^ tyName)
       end
 
-  fun ppXMLHeader str1 str2 pps pair =
+  fun ppXMLHeader str1 str2 pps pair =		(* changes parameters' order, useful with PPL.ppList *) 
       ( PPL.addStr pps str1
       ; ppXMLName pps pair
       ; PPL.addStr pps str2)
 
-  fun ppXMLList pps eFields = (* list of eFields w/o <seq> *)
-      ( PPL.ppList { pp=ppXMLHeader "<element " "/>"  (* Elem could be a function that choose the actual ppXML... 
-							 function for each kind of element *)
+  fun ppXMLList pps eFields =			(* list of eFields w/o <seq> *)
+      ( PPL.ppList { pp=ppXMLHeader "<xs:element " "/>"  
                       , sep="\n"
                       , lDelim=""
                       , rDelim=""
                       } pps eFields)
 
-  fun ppXMLSequence pps eFields =   (* <seq> eFields </seq> *)
-      ( PPL.addStr pps "<sequence>"
+  fun ppXMLSequence pps eFields =		(* <seq> eFields </seq> *)
+      ( PPL.addStr pps "<xs:sequence>"
       ; newline pps
       ; ppXMLList pps eFields
       ; newline pps
-      ; PPL.addStr pps "</sequence>"
+      ; PPL.addStr pps "</xs:sequence>"
       ; newline pps)
 
-  fun ppXMLComplex pps (eNameOpt,eFields) =   (* <complex [name=eName]> <seq> eFields </seq> </complex> *) 
-        ( ppXMLHeader "<complexType " ">" pps (NONE,eNameOpt)
+  fun ppXMLComplex pps (eNameOpt,eFields) =	(* <complex name=eName> <seq> eFields </seq> </complex> *) 
+        ( ppXMLHeader "<xs:complexType " ">" pps (NONE,eNameOpt)
         ; newline pps 
         ; ppXMLSequence pps eFields
-        ; PPL.addStr pps "</complexType>"
+        ; PPL.addStr pps "</xs:complexType>"
         ; newline pps)
 
-  fun ppXMLElemList pps (eNameOpt, eFields) =   (* <elem name=eName><complex><seq> eFields </seq></complex></elem> *)
-      ( ppXMLHeader "<element " ">" pps (NONE,eNameOpt) 
+  fun ppXMLElemList pps (eNameOpt, eFields) =	(* <elem name=eName><complex><seq> eFields </seq></complex></elem> *)
+      ( ppXMLHeader "<xs:element " ">" pps (NONE,eNameOpt) 
       ; newline pps 
       ; ppXMLComplex pps (NONE,eFields)
-      ; PPL.addStr pps "</element>"
+      ; PPL.addStr pps "</xs:element>"
       ; newline pps)
 
-  fun ppXMLChoiceFields pps Fields =
-      ( PPL.addStr pps "<choice>"
+  fun ppXMLChoiceFields pps Fields =		(* <choice> Fields </choice> *)
+      ( PPL.addStr pps "<xs:choice>"
       ; newline pps
       ; ppXMLList pps Fields
       ; newline pps
-      ; PPL.addStr pps "</choice>"
+      ; PPL.addStr pps "</xs:choice>"
       ; newline pps)
 
-  fun ppXMLChoice pps (NameOpt, Fields) =
-      ( ppXMLHeader "<complexType " ">" pps (NONE,NameOpt)
+  fun ppXMLChoice pps (NameOpt, Fields) =	(* <complex name=NameOpt><choice> Fields </choice></complex> *) 
+      ( ppXMLHeader "<xs:complexType " ">" pps (NONE,NameOpt)
       ; newline pps 
       ; ppXMLChoiceFields pps Fields
-      ; PPL.addStr pps "</complexType>"
+      ; PPL.addStr pps "</xs:complexType>"
       ; newline pps)
 
   fun ppTopElemIfPfile pps (ptyInfo:PTys.pTyInfo,repNameOpt) =
 	if (#isFile ptyInfo) 
-	then ( ppXMLHeader "<element " "/>" pps (repNameOpt,SOME "PFile")
+	then ( ppXMLHeader "<xs:element " "/>" pps (repNameOpt,SOME "PFile")
 	     ; newline pps)
 	else ()
-	
+
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val pdTid = #pdTid ptyInfo
 	  val (pdTyName, pdFields) = structInfo tidtab pdTid
@@ -834,22 +833,22 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  val tagName = SOME (valOf repName ^ "_tag")  
        in 
       ((newline pps
-      ; ppXMLHeader "<simpleType " "> \n<restriction base=\"xsd:string\"/> \n</simpleType> \n" pps (NONE,tagName) 
+      ; ppXMLHeader "<xs:simpleType " "> \n<restriction base=\"xsd:string\"/> \n</xs:simpleType> \n" pps (NONE,tagName) 
       ; newline pps
       ; ppXMLChoice pps (SOME ((valOf pdTyName) ^ "_u"),uPdFields)
       ; newline pps
       ; ppXMLComplex pps (pdTyName, Fields) 
       ; newline pps
-      ; ppXMLHeader "<complexType " ">" pps (NONE,repName) 
+      ; ppXMLHeader "<xs:complexType " ">" pps (NONE,repName) 
       ; newline pps
-      ; PPL.addStr pps "<sequence>"
+      ; PPL.addStr pps "<xs:sequence>"
       ; newline pps
-      ; ppXMLHeader "<element " "/>" pps (pdTyName,SOME "pd")
+      ; ppXMLHeader "<xs:element " "/>" pps (pdTyName,SOME "pd")
       ; newline pps
       ; ppXMLChoiceFields pps uFields    		(* original union fields *)
-      ; PPL.addStr pps "</sequence>"
+      ; PPL.addStr pps "</xs:sequence>"
       ; newline pps
-      ; PPL.addStr pps "</complexType>"
+      ; PPL.addStr pps "</xs:complexType>"
       ; newline pps
       ; ppTopElemIfPfile pps (ptyInfo,repName)
       )
@@ -885,7 +884,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val (repName, repFields) = enumInfo tidtab tid
       in
 	((newline pps
-        ; ppXMLHeader "<simpleType " "> \n <restriction base=\"xsd:int\"/> \n</simpleType>" pps (NONE,repName)
+        ; ppXMLHeader "<xs:simpleType " "> \n <restriction base=\"xsd:int\"/> \n</xs:simpleType>" pps (NONE,repName)
     	; newline pps
         ; ppTopElemIfPfile pps (ptyInfo,repName)	
         )
@@ -897,8 +896,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val (Name, Ty) = typedefInfo tidtab tid
       in
         ((newline pps
-        ; ppXMLHeader "<simpleType " ">\n" pps (NONE, Name)
-        ; PPL.addStr pps ("<restriction base=\"" ^ (valOf Ty) ^ "\"> \n</simpleType>")
+        ; ppXMLHeader "<xs:simpleType " ">\n" pps (NONE, Name)
+        ; PPL.addStr pps ("<restriction base=\"" ^ (valOf Ty) ^ "\"> \n</xs:simpleType>")
         ; newline pps
         ; ppTopElemIfPfile pps (ptyInfo,Name)
         )
@@ -917,11 +916,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
   fun ppCoreExternalDecl' ptyInfo aidinfo tidtab pps edecl =
     case edecl
-      of ExternalDecl decl => 
-	  ( ppPKind ptyInfo tidtab pps decl
-	  (* ; PPL.newline pps                            Is this the invocation to produce the XML output?
-	   ; ppDeclaration aidinfo tidtab pps decl
-	  *) ; PPL.newline pps)		    
+      of ExternalDecl decl => ppPKind ptyInfo tidtab pps decl
        | FunctionDef (id,ids,stmt) =>  (* This branch will not be called as functions aren't being tagged *)
 	   let val {location,...} = id
 	       val (stClass,ctype) = getCtype id
@@ -969,19 +964,27 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  PPAA.ppExternalDeclAdornment srcFile paidinfo ppCoreED aidinfo tidtab pps edecl
       end
 
-  fun ppAst srcFile paidinfo aidinfo tidtab pps edecls = 
-      List.app (ppExternalDeclRefined srcFile paidinfo aidinfo tidtab pps) edecls
+  fun ppAst srcFile paidinfo aidinfo tidtab pps edecls =
+      let val fileName = case srcFile of NONE => "" | SOME name => name
+	  val headerLeft = "<xs:schema targetNamespace=\"file:"
+	  val headerRight = "\n           xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">" 
+      in
+        ( PPL.newline pps
+        ; PPL.addStr pps (headerLeft ^ fileName ^ headerRight)
+        ; PPL.newline pps 
+        ; List.app (ppExternalDeclRefined srcFile paidinfo aidinfo tidtab pps) edecls
+        ; PPL.newline pps
+        ; PPL.addStr pps "</xs:schema>" 
+        ; PPL.newline pps
+        )  
+      end  
 
   (* The pretty-printer expects a block at top level, so all of the
    * external interfaces are wrapped to give it one.
    *)
   fun wrap pp aidinfo tidtab pps v = 
     ( PPL.bBlock pps PP.INCONSISTENT 0
-    ; PPL.addStr pps "<xs:schema targetNamespace=\"http://www.w3.org/1999/xhtml\" \n xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">"
-    ; PPL.newline pps 
     ; pp aidinfo tidtab pps v
-    ; PPL.newline pps
-    ; PPL.addStr pps "</xs:schema>"
     ; PPL.newline pps 
     ; PPL.eBlock pps
     )
