@@ -4204,9 +4204,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				    if (isVirtual andalso var = rep) orelse (TyProps.Static = lookupMemChar pty) then []
 				    else let val baseFunName = lookupMemFun (PX.Name tyName)
 					 in
-					     mkBreakCase(PT.Id name,
-							 SOME [PT.Expr(PT.Call(PT.Id(suf baseFunName),
-									       [PT.Id pads, getUnionBranchX(var, name)]))])
+					     [PT.CaseLabel(PT.Id name,
+							   PT.Return(PT.Call(PT.Id(suf baseFunName),
+									     [PT.Id pads, getUnionBranchX(var, name)])))]
 					 end
 				   fun genCleanupBrief e = []
 				   fun genCleanupMan _ = []

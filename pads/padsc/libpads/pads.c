@@ -5132,7 +5132,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.144 2004-02-19 16:23:56 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.145 2004-02-19 17:55:00 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -10511,8 +10511,8 @@ PDCI_Plongest_chkErr(Puint32 nerr, int *consume) {
   if (nerr) {
     *consume = 0;
     return 1;
-  };
+  }
   return 0;
-};
+}
 
 /* ================================================================================ */
