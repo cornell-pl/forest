@@ -681,7 +681,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
         ; PPL.addStr pps repName
 	; newline pps
         ; PPL.ppList { pp=ppStrPairs
-		        , sep="\n"
+		        , sep="\n\t"
 		        , lDelim="{"
 		        , rDelim="}"
 		        } pps (repFields @ edFields)
