@@ -168,10 +168,6 @@ Ptypedef Pstring_ME(:"/" RE_base64_user_pass "/":) base64_user_pass_t;
 Ptypedef Pstring_ME(:"/" RE_basic_credentials "/":) basic_credentials_t;
 #define RE_bytes_unit "bytes"
 Ptypedef Pstring_ME(:"/" RE_bytes_unit "/":) bytes_unit_t;
-#define RE_comment "XX"
-Ptypedef Pstring_ME(:"/" RE_comment "/":) comment_t;
-#define RE_comment_mailbox "XX"
-Ptypedef Pstring_ME(:"/" RE_comment_mailbox "/":) comment_mailbox_t;
 int is_ctext(Pchar x) { return
   ((32 <= x) && (x <= 39))
   || ((42 <= x) && (x <= 126))
@@ -306,12 +302,6 @@ Ptypedef Pstring_ME(:"/" RE_date3 "/":) date3_t;
 Ptypedef Pstring_ME(:"/" RE_obs_FWS "/":) obs_FWS_t;
 #define RE_FWS "(((" RE_WSP "*" RE_CRLF ")?" RE_WSP "+)|" RE_obs_FWS ")"
 Ptypedef Pstring_ME(:"/" RE_FWS "/":) FWS_t;
-#define RE_CFWS "((" RE_FWS "?" RE_comment_mailbox ")*((" RE_FWS "?" RE_comment_mailbox ")|" RE_FWS "))"
-Ptypedef Pstring_ME(:"/" RE_CFWS "/":) CFWS_t;
-#define RE_atom "(" RE_CFWS "?" RE_atext "+" RE_CFWS "?)"
-Ptypedef Pstring_ME(:"/" RE_atom "/":) atom_t;
-#define RE_dot_atom "(" RE_CFWS "?" RE_dot_atom_text "" RE_CFWS "?)"
-Ptypedef Pstring_ME(:"/" RE_dot_atom "/":) dot_atom_t;
 int is_obs_char(Pchar x) { return
   ((0 <= x) && (x <= 9))
   || (x == 11)
@@ -322,8 +312,6 @@ int is_obs_char(Pchar x) { return
 Ptypedef Pchar obs_char_t :: obs_char_t x => { is_obs_char(x) };
 Pcharclass obs_char {is_obs_char};
 #define RE_obs_char "[[:obs_char:]]"
-#define RE_obs_domain "(" RE_atom "(\\." RE_atom ")*)"
-Ptypedef Pstring_ME(:"/" RE_obs_domain "/":) obs_domain_t;
 #define RE_obs_qp "(\\\\[\\x0-\\x7f])"
 Ptypedef Pstring_ME(:"/" RE_obs_qp "/":) obs_qp_t;
 #define RE_obs_text "(" RE_LF "*" RE_CR "*(" RE_obs_char "" RE_LF "*" RE_CR "*)*)"
@@ -344,6 +332,20 @@ Pcharclass qtext {is_qtext};
 #define RE_qtext "[[:qtext:]]"
 #define RE_quoted_pair "(\\\\" RE_CHAR ")"
 Ptypedef Pstring_ME(:"/" RE_quoted_pair "/":) quoted_pair_t;
+#define RE_ccontent "(" RE_ctext "|" RE_quoted_pair ")"
+Ptypedef Pstring_ME(:"/" RE_ccontent "/":) ccontent_t;
+#define RE_comment "(\\((" RE_ctext "|" RE_quoted_pair ")*\\))"
+Ptypedef Pstring_ME(:"/" RE_comment "/":) comment_t;
+#define RE_comment_mailbox "(\\((" RE_FWS "?" RE_ccontent ")*" RE_FWS "?\\))"
+Ptypedef Pstring_ME(:"/" RE_comment_mailbox "/":) comment_mailbox_t;
+#define RE_CFWS "((" RE_FWS "?" RE_comment_mailbox ")*((" RE_FWS "?" RE_comment_mailbox ")|" RE_FWS "))"
+Ptypedef Pstring_ME(:"/" RE_CFWS "/":) CFWS_t;
+#define RE_atom "(" RE_CFWS "?" RE_atext "+" RE_CFWS "?)"
+Ptypedef Pstring_ME(:"/" RE_atom "/":) atom_t;
+#define RE_dot_atom "(" RE_CFWS "?" RE_dot_atom_text "" RE_CFWS "?)"
+Ptypedef Pstring_ME(:"/" RE_dot_atom "/":) dot_atom_t;
+#define RE_obs_domain "(" RE_atom "(\\." RE_atom ")*)"
+Ptypedef Pstring_ME(:"/" RE_obs_domain "/":) obs_domain_t;
 int is_reserved(Pchar x) { return
   (x == 59)
   || (x == 47)
