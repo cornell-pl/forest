@@ -144,7 +144,7 @@ struct
        ])]
 
   fun errAccReport(pdc, outStrmX, prefixX, whatX, nstX, fieldX) = 
-      PT.Call(PT.Id "PDC_nerr_acc_report_internal",[pdc, outStrmX, prefixX, whatX, nstX, fieldX])
+      PT.Call(PT.Id "PDC_nerr_acc_report2io",[pdc, outStrmX, prefixX, whatX, nstX, fieldX])
 
 (* Growable buffers *)
   fun zeroMM(pdc:PT.expression) = 
@@ -213,6 +213,36 @@ struct
 
   fun IODiscChecks(prefix) = 
     PT.Expr(PT.Call(PT.Id "PDCI_IODISC_INIT_CHECKS", [prefix]))
+
+  fun IODiscChecks0P(prefix) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_0P_CHECKS", [prefix]))
+
+  fun IODiscChecks1P(prefix, p1) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_1P_CHECKS", [prefix, p1]))
+
+  fun IODiscChecks2P(prefix, p1, p2) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_2P_CHECKS", [prefix, p1, p2]))
+
+  fun IODiscChecks3P(prefix, p1, p2, p3) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_3P_CHECKS", [prefix, p1, p2, p3]))
+
+  fun IODiscChecks4P(prefix, p1, p2, p3, p4) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_4P_CHECKS", [prefix, p1, p2, p3, p4]))
+
+  fun IODiscChecksSizeRet0P(prefix) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_0P_CHECKS_RET_SSIZE", [prefix]))
+
+  fun IODiscChecksSizeRet1P(prefix, p1) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_1P_CHECKS_RET_SSIZE", [prefix, p1]))
+
+  fun IODiscChecksSizeRet2P(prefix, p1, p2) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_2P_CHECKS_RET_SSIZE", [prefix, p1, p2]))
+
+  fun IODiscChecksSizeRet3P(prefix, p1, p2, p3) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_3P_CHECKS_RET_SSIZE", [prefix, p1, p2, p3]))
+
+  fun IODiscChecksSizeRet4P(prefix, p1, p2, p3, p4) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_3P_CHECKS_RET_SSIZE", [prefix, p1, p2, p3, p4]))
 
   fun nullCheck(prefix, ptrX) =
     PT.Expr(PT.Call(PT.Id "PDCI_NULLPARAM_CHECK", [prefix, PT.Cast(P.voidPtr, ptrX)]))

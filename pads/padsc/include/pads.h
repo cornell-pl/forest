@@ -824,13 +824,11 @@ RMM_t * PDC_rmm_nozero(PDC_t *pdc);
  * PDC_inv_valfn_map_destroy: destroy a map
  *
  */
-#ifdef FOR_CKIT
 PDC_inv_valfn PDC_get_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name); 
 PDC_inv_valfn PDC_set_inv_valfn(PDC_t* pdc, PDC_inv_valfn_map_t *map, const char *type_name, PDC_inv_valfn fn);
 
 PDC_inv_valfn_map_t* PDC_inv_valfn_map_create(PDC_t *pdc);
 PDC_error_t          PDC_inv_valfn_map_destroy(PDC_t *pdc, PDC_inv_valfn_map_t *map);
-#endif
 
 /* ================================================================================
  * TOP-LEVEL IO FUNCTIONS
@@ -2432,6 +2430,23 @@ ssize_t PDC_uint64_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf
 #endif /* FOR_CKIT */
 
 /* ================================================================================
+ * MISC WRITE FUNCTIONS
+ *
+ * The countX and countXtoY write functions do nothing and return length 0.
+ * They exist for completeness.
+ */
+
+ssize_t PDC_countX_write2io    (PDC_t *pdc, Sfio_t *io, PDC_uint8 x, int eor_required,
+				PDC_base_pd *pd, PDC_int32  *val);
+ssize_t PDC_countX_write2buf   (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_uint8 x, int eor_required,
+				PDC_base_pd *pd, PDC_int32  *val);
+
+ssize_t PDC_countXtoY_write2io (PDC_t *pdc, Sfio_t *io, PDC_uint8 x, PDC_uint8 y,
+				PDC_base_pd *pd, PDC_int32  *val);
+ssize_t PDC_countXtoY_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_uint8 x, PDC_uint8 y,
+				PDC_base_pd *pd, PDC_int32  *val);
+
+/* ================================================================================
  * BASE TYPE ACCUMULATORS
  *
  * For integer type T, accumulator functions PDC_T_acc_avg returns the running average
@@ -2597,7 +2612,7 @@ typedef const char * (*PDC_uint64_map_fn)(PDC_uint64 u);
  * these functions are used when integers have associated
  * string values.  
  */
-PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char *what, int nst,
+PDC_error_t PDC_int32_acc_map_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
 				     PDC_int32_map_fn  fn, PDC_int32_acc *a);
 
 /*

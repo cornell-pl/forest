@@ -12,6 +12,7 @@ int main(int argc, char** argv) {
   unsigned char   c;
   PDC_t*          pdc;
   PDC_base_pd     pd = {0};
+  PDC_base_m      m  = PDC_CheckAndSet;
 
   if (!(io_disc = PDC_norec_make(0))) {
     error(2, "*** PDC_norec_make failed ***");
@@ -36,7 +37,7 @@ int main(int argc, char** argv) {
       if (c == '|') { 
 	ctr++;
 	PDC_IO_checkpoint(pdc, 1);
-	if (PDC_OK == PDC_a_char_lit_read(pdc, 0, &pd, 'a')) {
+	if (PDC_OK == PDC_a_char_lit_read(pdc, &m, &pd, 'a')) {
 	  error(2, "found an 'a' after a vbar");
 	}
 	PDC_IO_commit(pdc);

@@ -135,5 +135,8 @@ test_copy_ai: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS)
 count_dibbler: $(GEN_DIR)/dibbler-notrailer.c count_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS)
 	@$(CCExec_DYNAMIC)
 
+test_dibbler1: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS)
+	@$(CCExec_DYNAMIC)
+
  # End of rules that are run from the arch directory
 endif
