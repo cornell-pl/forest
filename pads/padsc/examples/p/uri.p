@@ -12,7 +12,7 @@ int is_digit(char x) { return
   || (x == 57)
   ;
 };
-Ptypedef Pchar digit_t :: digit_t x => { is_digit(x) };
+Ptypedef Pchar digit_t : digit_t x => { is_digit(x) };
 Pcharclass digit {is_digit};
 Ptypedef Pstring_ME(:"/[[:digit:]]+/":) _bnf_0_t;
 Ptypedef Pstring_ME(:"/[[:digit:]]+/":) _bnf_1_t;
@@ -43,7 +43,7 @@ int is_hex(char x) { return
   || (x == 102)
   ;
 };
-Ptypedef Pchar hex_t :: hex_t x => { is_hex(x) };
+Ptypedef Pchar hex_t : hex_t x => { is_hex(x) };
 Pcharclass hex {is_hex};
 Pstruct escaped_t {
   "%";
@@ -79,7 +79,7 @@ int is_lowalpha(char x) { return
   || (x == 122)
   ;
 };
-Ptypedef Pchar lowalpha_t :: lowalpha_t x => { is_lowalpha(x) };
+Ptypedef Pchar lowalpha_t : lowalpha_t x => { is_lowalpha(x) };
 Pcharclass lowalpha {is_lowalpha};
 int is_mark(char x) { return
   (x == 45)
@@ -93,7 +93,7 @@ int is_mark(char x) { return
   || (x == 41)
   ;
 };
-Ptypedef Pchar mark_t :: mark_t x => { is_mark(x) };
+Ptypedef Pchar mark_t : mark_t x => { is_mark(x) };
 Pcharclass mark {is_mark};
 Ptypedef Pstring_ME(:"/[[:digit:]]*/":) port_t;
 int is_reserved(char x) { return
@@ -109,7 +109,7 @@ int is_reserved(char x) { return
   || (x == 44)
   ;
 };
-Ptypedef Pchar reserved_t :: reserved_t x => { is_reserved(x) };
+Ptypedef Pchar reserved_t : reserved_t x => { is_reserved(x) };
 Pcharclass reserved {is_reserved};
 int is_upalpha(char x) { return
   (x == 65)
@@ -140,21 +140,21 @@ int is_upalpha(char x) { return
   || (x == 90)
   ;
 };
-Ptypedef Pchar upalpha_t :: upalpha_t x => { is_upalpha(x) };
+Ptypedef Pchar upalpha_t : upalpha_t x => { is_upalpha(x) };
 Pcharclass upalpha {is_upalpha};
 int is_alpha(char x) { return
   is_lowalpha(x)
   || is_upalpha(x)
   ;
 };
-Ptypedef Pchar alpha_t :: alpha_t x => { is_alpha(x) };
+Ptypedef Pchar alpha_t : alpha_t x => { is_alpha(x) };
 Pcharclass alpha {is_alpha};
 int is_alphanum(char x) { return
   is_alpha(x)
   || is_digit(x)
   ;
 };
-Ptypedef Pchar alphanum_t :: alphanum_t x => { is_alphanum(x) };
+Ptypedef Pchar alphanum_t : alphanum_t x => { is_alphanum(x) };
 Pcharclass alphanum {is_alphanum};
 Punion _bnf_5_t {
   __cident__ Pfrom("-");
@@ -235,7 +235,7 @@ int is_unreserved(char x) { return
   || is_mark(x)
   ;
 };
-Ptypedef Pchar unreserved_t :: unreserved_t x => { is_unreserved(x) };
+Ptypedef Pchar unreserved_t : unreserved_t x => { is_unreserved(x) };
 Pcharclass unreserved {is_unreserved};
 Punion pchar_t {
   unreserved_t unreserved;

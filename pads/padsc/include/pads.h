@@ -378,6 +378,7 @@ typedef enum PerrCode_t_e {
   P_STRUCT_FIELD_ERR              =  125,
   P_STRUCT_EXTRA_BEFORE_SEP       =  126,
   P_UNION_MATCH_ERR               =  130,
+  P_OPTION_MATCH_ERR              =  130,
   P_ENUM_MATCH_ERR                =  140,
   P_TYPEDEF_CONSTRAINT_ERR        =  150,
 

@@ -25,7 +25,7 @@ Pstruct event {
   Puint32        tstamp;  
 };
 
-Ptypedef Pchar zipSep_t :: zipSep_t x => {x == '-' || x == '/' || x == ' '};
+Ptypedef Pchar zipSep_t : zipSep_t x => {x == '-' || x == '/' || x == ' '};
 
 Pstruct extended_zip{
   Puint32 zip;

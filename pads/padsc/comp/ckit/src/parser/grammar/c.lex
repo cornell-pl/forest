@@ -166,6 +166,7 @@ directive = #(.)*\n;
 <CC>.           => (continue());
 
 <INITIAL>\"		=> (charlist := [""]; stringstart := yypos; YYBEGIN S; continue());
+<S>\"{ws}\"   =>   (continue());
 <S>\"	        => (YYBEGIN INITIAL;Tokens.STRING(makeString charlist,!stringstart,yypos+1));
 <S>\n		=> ((#err errWarn) (!stringstart,yypos,"unclosed string");
 		    SourceMap.newline sourceMap yypos;

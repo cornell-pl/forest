@@ -1179,7 +1179,7 @@ pOptActParams: ([])
 
 pTypedefPredOpt :
 		(NONE)
- | COLONCOLON pName pName EQGT LCURLY expr popScope RCURLY (SOME{predTy=PX.Name pName1, thisVar=pName2, pred=expr})
+ | COLON pName pName EQGT LCURLY expr popScope RCURLY (SOME{predTy=PX.Name pName1, thisVar=pName2, pred=expr})
 
 pTypedef:
   pIsSource pIsRecord PTYPEDEF pName pOptActParams pName pushScope pTyParams pTypedefPredOpt

@@ -1,5 +1,5 @@
-Ptypedef Pint32 even :: even x => {x % 2 == 0};
-Ptypedef Pint32 odd  :: odd  x => {x % 2 == 1};
+Ptypedef Pint32 even : even x => {x % 2 == 0};
+Ptypedef Pint32 odd  : odd  x => {x % 2 == 1};
 
 Parray eseq_t {
   even [] : Psep(Pre "/a/") && Pended(Pparsecheck(pds[current].errCode != P_NO_ERR));

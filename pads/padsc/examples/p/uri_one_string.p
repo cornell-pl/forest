@@ -57,7 +57,7 @@ int is_digit(Pchar x) { return
   || (x == 57)
   ;
 };
-Ptypedef Pchar digit_t :: digit_t x => { is_digit(x) };
+Ptypedef Pchar digit_t : digit_t x => { is_digit(x) };
 Pcharclass digit {is_digit};
 #define RE_digit "[[:digit:]]"
 #define RE_IPv4address "(" "(" "(" "(" "(" "(" "(" RE_digit "){1,}" "\\." ")" "(" RE_digit "){1,}" ")" "\\." ")" "(" RE_digit "){1,}" ")" "\\." ")" "(" RE_digit "){1,}" ")"
@@ -78,7 +78,7 @@ int is_hex(Pchar x) { return
   || (x == 102)
   ;
 };
-Ptypedef Pchar hex_t :: hex_t x => { is_hex(x) };
+Ptypedef Pchar hex_t : hex_t x => { is_hex(x) };
 Pcharclass hex {is_hex};
 #define RE_hex "[[:hex:]]"
 #define RE_escaped "(" "(" "\\%" RE_hex ")" RE_hex ")"
@@ -112,7 +112,7 @@ int is_lowalpha(Pchar x) { return
   || (x == 122)
   ;
 };
-Ptypedef Pchar lowalpha_t :: lowalpha_t x => { is_lowalpha(x) };
+Ptypedef Pchar lowalpha_t : lowalpha_t x => { is_lowalpha(x) };
 Pcharclass lowalpha {is_lowalpha};
 #define RE_lowalpha "[[:lowalpha:]]"
 int is_mark(Pchar x) { return
@@ -127,7 +127,7 @@ int is_mark(Pchar x) { return
   || (x == 41)
   ;
 };
-Ptypedef Pchar mark_t :: mark_t x => { is_mark(x) };
+Ptypedef Pchar mark_t : mark_t x => { is_mark(x) };
 Pcharclass mark {is_mark};
 #define RE_mark "[[:mark:]]"
 #define RE_port "(" RE_digit "){0,}"
@@ -145,7 +145,7 @@ int is_reserved(Pchar x) { return
   || (x == 44)
   ;
 };
-Ptypedef Pchar reserved_t :: reserved_t x => { is_reserved(x) };
+Ptypedef Pchar reserved_t : reserved_t x => { is_reserved(x) };
 Pcharclass reserved {is_reserved};
 #define RE_reserved "[[:reserved:]]"
 int is_upalpha(Pchar x) { return
@@ -177,7 +177,7 @@ int is_upalpha(Pchar x) { return
   || (x == 90)
   ;
 };
-Ptypedef Pchar upalpha_t :: upalpha_t x => { is_upalpha(x) };
+Ptypedef Pchar upalpha_t : upalpha_t x => { is_upalpha(x) };
 Pcharclass upalpha {is_upalpha};
 #define RE_upalpha "[[:upalpha:]]"
 int is_alpha(Pchar x) { return
@@ -185,7 +185,7 @@ int is_alpha(Pchar x) { return
   || is_upalpha(x)
   ;
 };
-Ptypedef Pchar alpha_t :: alpha_t x => { is_alpha(x) };
+Ptypedef Pchar alpha_t : alpha_t x => { is_alpha(x) };
 Pcharclass alpha {is_alpha};
 #define RE_alpha "[[:alpha:]]"
 int is_alphanum(Pchar x) { return
@@ -193,7 +193,7 @@ int is_alphanum(Pchar x) { return
   || is_digit(x)
   ;
 };
-Ptypedef Pchar alphanum_t :: alphanum_t x => { is_alphanum(x) };
+Ptypedef Pchar alphanum_t : alphanum_t x => { is_alphanum(x) };
 Pcharclass alphanum {is_alphanum};
 #define RE_alphanum "[[:alphanum:]]"
 #define RE_domainlabel "(" RE_alphanum "(" "(" "(" "\\-" ")?" RE_alphanum ")" "){0,}" ")"
@@ -213,7 +213,7 @@ int is_unreserved(Pchar x) { return
   || is_mark(x)
   ;
 };
-Ptypedef Pchar unreserved_t :: unreserved_t x => { is_unreserved(x) };
+Ptypedef Pchar unreserved_t : unreserved_t x => { is_unreserved(x) };
 Pcharclass unreserved {is_unreserved};
 #define RE_unreserved "[[:unreserved:]]"
 #define RE_param_char "(" "(" "(" "(" "(" "(" "(" "(" RE_unreserved "|" RE_escaped ")"  "|" "\\:" ")"  "|" "\\@" ")"  "|" "\\&" ")"  "|" "\\=" ")"  "|" "\\+" ")"  "|" "\\$" ")"  "|" "\\," ")" 

@@ -1,4 +1,4 @@
-Ptypedef Puint64 pn_t(:Puint64 lo, Puint64 hi:) :: pn_t x => {x > lo && x <= hi};
+Ptypedef Puint64 pn_t(:Puint64 lo, Puint64 hi:) : pn_t x => {x > lo && x <= hi};
 
 Precord Pstruct defPN (:Puint64 lo, Puint64 hi:){
   pn_t(:lo, hi:) id; 

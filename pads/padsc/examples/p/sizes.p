@@ -13,7 +13,7 @@ Pstruct base(:Pint32 w:){
   Pint64_FW(:w+4:) f;           /* size = w + 4 */
 }
 
-Ptypedef base(:s + 2:) newBase(:Pint32 s:) :: newBase b => {b.f > 100};
+Ptypedef base(:s + 2:) newBase(:Pint32 s:) : newBase b => {b.f > 100};
 
 Parray seq(:Pint32 z:){
   base(:z:) [z+2] : Psep('a') && Pterm('b');  /* size = (z + 5) * (z + 2) + 1  = z*z + 7z + 11*/

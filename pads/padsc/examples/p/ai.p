@@ -11,7 +11,7 @@ Punion host_t  {
   sIP symbolic;    /- www.research.att.com
 };
 
-Ptypedef Pchar unknown_t :: unknown_t x => { x == '-'};
+Ptypedef Pchar unknown_t : unknown_t x => { x == '-'};
 
 Punion auth_id_t {
   unknown_t unauthorized;                       /- non-authenticated http session

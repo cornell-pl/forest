@@ -182,8 +182,8 @@ structure Main : sig
                           ^ (!includes)  (* augment include path *)
                           ^ " "
                           ^ compositeFile (* on composite file *)
-                          ^ " | "
-                          ^ combineStrLitsCmd (* combine C string literals *)
+(*                          ^ " | "
+                          ^ combineStrLitsCmd (* combine C string literals *) *)
                           ^ " >"
                           ^ destFile)
 	    val status = exec command

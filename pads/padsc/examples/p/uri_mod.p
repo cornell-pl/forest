@@ -33,39 +33,39 @@ Pstruct IPv4address_t {
 #define IS_UNRESERVED(x) (IS_ALPHANUM(x) || IS_MARK(x))
 
 int is_digit(char x) { return IS_DIGIT(x); };
-Ptypedef Pchar digit_t :: digit_t x => { is_digit(x) };
+Ptypedef Pchar digit_t : digit_t x => { is_digit(x) };
 Pcharclass digit {is_digit};
 
 int is_hex(char x) { return IS_HEX(x); }
-Ptypedef Pchar hex_t :: hex_t x => { is_hex(x) };
+Ptypedef Pchar hex_t : hex_t x => { is_hex(x) };
 Pcharclass hex {is_hex};
 
 int is_lowalpha(char x) { return IS_atoz(x); };
-Ptypedef Pchar lowalpha_t :: lowalpha_t x => { is_lowalpha(x) };
+Ptypedef Pchar lowalpha_t : lowalpha_t x => { is_lowalpha(x) };
 Pcharclass lowalpha {is_lowalpha};
 
 int is_upalpha(char x) { return IS_AtoZ(x); };
-Ptypedef Pchar upalpha_t :: upalpha_t x => { is_upalpha(x) };
+Ptypedef Pchar upalpha_t : upalpha_t x => { is_upalpha(x) };
 Pcharclass upalpha {is_upalpha};
 
 int is_alpha(char x) { return IS_ALPHA(x); };
-Ptypedef Pchar alpha_t :: alpha_t x => { is_alpha(x) };
+Ptypedef Pchar alpha_t : alpha_t x => { is_alpha(x) };
 Pcharclass alpha {is_alpha};
 
 int is_alphanum(char x) { return IS_ALPHANUM(x); };
-Ptypedef Pchar alphanum_t :: alphanum_t x => { is_alphanum(x) };
+Ptypedef Pchar alphanum_t : alphanum_t x => { is_alphanum(x) };
 Pcharclass alphanum {is_alphanum};
 
 int is_mark(char x) { return IS_MARK(x); };
-Ptypedef Pchar mark_t :: mark_t x => { is_mark(x) };
+Ptypedef Pchar mark_t : mark_t x => { is_mark(x) };
 Pcharclass mark {is_mark};
 
 int is_reserved(char x) { return IS_RESERVED(x); };
-Ptypedef Pchar reserved_t :: reserved_t x => { is_reserved(x) };
+Ptypedef Pchar reserved_t : reserved_t x => { is_reserved(x) };
 Pcharclass reserved {is_reserved};
 
 int is_unreserved(char x) { return IS_UNRESERVED(x); };
-Ptypedef Pchar unreserved_t :: unreserved_t x => { is_unreserved(x) };
+Ptypedef Pchar unreserved_t : unreserved_t x => { is_unreserved(x) };
 Pcharclass unreserved {is_unreserved};
 
 Pstruct escaped_t {

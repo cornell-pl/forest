@@ -17,7 +17,7 @@ int check(Pint32 t, auth_id_t user){
     return 1;  // Don't want to trigger another error 
   }
 };
-Ptypedef Pstring(:c:) foo(:Pchar c:) :: foo x => { x.len  > 10};
+Ptypedef Pstring(:c:) foo(:Pchar c:) : foo x => { x.len  > 10};
 
 Precord Pstruct line {
          intList    f;

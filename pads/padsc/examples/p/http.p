@@ -1,11 +1,11 @@
 #define Pvoid(label) Pcompute Pomit Puint32 label = 0
 
 int is_CHAR(Pchar x) { return (0 <= x) && (x <= 127); };
-Ptypedef Pchar CHAR_t :: CHAR_t x => { is_CHAR(x) };
+Ptypedef Pchar CHAR_t : CHAR_t x => { is_CHAR(x) };
 Pcharclass CHAR {is_CHAR};
 #define RE_CHAR "[[:CHAR:]]"
 int is_CR(Pchar x) { return (x == 13); };
-Ptypedef Pchar CR_t :: CR_t x => { is_CR(x) };
+Ptypedef Pchar CR_t : CR_t x => { is_CR(x) };
 Pcharclass CR {is_CR};
 #define RE_CR "[[:CR:]]"
 int is_CTL(Pchar x) { return
@@ -13,18 +13,18 @@ int is_CTL(Pchar x) { return
   || (x == 127)
   ;
 };
-Ptypedef Pchar CTL_t :: CTL_t x => { is_CTL(x) };
+Ptypedef Pchar CTL_t : CTL_t x => { is_CTL(x) };
 Pcharclass CTL {is_CTL};
 #define RE_CTL "[[:CTL:]]"
 int is_DIGIT(Pchar x) { return (48 <= x) && (x <= 57); };
-Ptypedef Pchar DIGIT_t :: DIGIT_t x => { is_DIGIT(x) };
+Ptypedef Pchar DIGIT_t : DIGIT_t x => { is_DIGIT(x) };
 Pcharclass DIGIT {is_DIGIT};
 #define RE_DIGIT "[[:DIGIT:]]"
 int is_DQUOTE(Pchar x) { return
   (x == 34)
   ;
 };
-Ptypedef Pchar DQUOTE_t :: DQUOTE_t x => { is_DQUOTE(x) };
+Ptypedef Pchar DQUOTE_t : DQUOTE_t x => { is_DQUOTE(x) };
 Pcharclass DQUOTE {is_DQUOTE};
 #define RE_DQUOTE "[[:DQUOTE:]]"
 int is_HEX(Pchar x) { return
@@ -43,17 +43,17 @@ int is_HEX(Pchar x) { return
   || is_DIGIT(x)
   ;
 };
-Ptypedef Pchar HEX_t :: HEX_t x => { is_HEX(x) };
+Ptypedef Pchar HEX_t : HEX_t x => { is_HEX(x) };
 Pcharclass HEX {is_HEX};
 #define RE_HEX "[[:HEX:]]"
 int is_HT(Pchar x) { return (x == 9); };
-Ptypedef Pchar HT_t :: HT_t x => { is_HT(x) };
+Ptypedef Pchar HT_t : HT_t x => { is_HT(x) };
 Pcharclass HT {is_HT};
 #define RE_HT "[[:HT:]]"
 #define RE_HTTP_Version "(HTTP\\/" RE_DIGIT "+\\." RE_DIGIT "+)"
 Ptypedef Pstring_ME(:"/" RE_HTTP_Version "/":) HTTP_Version_t;
 int is_LF(Pchar x) { return (x == 10); };
-Ptypedef Pchar LF_t :: LF_t x => { is_LF(x) };
+Ptypedef Pchar LF_t : LF_t x => { is_LF(x) };
 Pcharclass LF {is_LF};
 #define RE_LF "[[:LF:]]"
 #define RE_CRLF "(" RE_CR "" RE_LF ")"
@@ -77,11 +77,11 @@ int is_LHEX(Pchar x) { return
   || (x == 102)
   ;
 };
-Ptypedef Pchar LHEX_t :: LHEX_t x => { is_LHEX(x) };
+Ptypedef Pchar LHEX_t : LHEX_t x => { is_LHEX(x) };
 Pcharclass LHEX {is_LHEX};
 #define RE_LHEX "[[:LHEX:]]"
 int is_LOALPHA(Pchar x) { return (97 <= x) && (x <= 122); };
-Ptypedef Pchar LOALPHA_t :: LOALPHA_t x => { is_LOALPHA(x) };
+Ptypedef Pchar LOALPHA_t : LOALPHA_t x => { is_LOALPHA(x) };
 Pcharclass LOALPHA {is_LOALPHA};
 #define RE_LOALPHA "[[:LOALPHA:]]"
 int is_NO_WS_CTL(Pchar x) { return
@@ -92,17 +92,17 @@ int is_NO_WS_CTL(Pchar x) { return
   || (x == 127)
   ;
 };
-Ptypedef Pchar NO_WS_CTL_t :: NO_WS_CTL_t x => { is_NO_WS_CTL(x) };
+Ptypedef Pchar NO_WS_CTL_t : NO_WS_CTL_t x => { is_NO_WS_CTL(x) };
 Pcharclass NO_WS_CTL {is_NO_WS_CTL};
 #define RE_NO_WS_CTL "[[:NO_WS_CTL:]]"
 int is_OCTET(Pchar x) { return (0 <= x) && (x <= 255); };
-Ptypedef Pchar OCTET_t :: OCTET_t x => { is_OCTET(x) };
+Ptypedef Pchar OCTET_t : OCTET_t x => { is_OCTET(x) };
 Pcharclass OCTET {is_OCTET};
 #define RE_OCTET "[[:OCTET:]]"
 #define RE_Reason_Phrase "([\\x20-\\x7e]|[\\x80-\\xff])*"
 Ptypedef Pstring_ME(:"/" RE_Reason_Phrase "/":) Reason_Phrase_t;
 int is_SP(Pchar x) { return (x == 32); };
-Ptypedef Pchar SP_t :: SP_t x => { is_SP(x) };
+Ptypedef Pchar SP_t : SP_t x => { is_SP(x) };
 Pcharclass SP {is_SP};
 #define RE_SP "[[:SP:]]"
 #define RE_LWS "(" RE_CRLF "?(" RE_SP "|" RE_HT ")+)"
@@ -112,11 +112,11 @@ int is_TEXT(Pchar x) { return
   || ((128 <= x) && (x <= 255))
   ;
 };
-Ptypedef Pchar TEXT_t :: TEXT_t x => { is_TEXT(x) };
+Ptypedef Pchar TEXT_t : TEXT_t x => { is_TEXT(x) };
 Pcharclass TEXT {is_TEXT};
 #define RE_TEXT "[[:TEXT:]]"
 int is_UPALPHA(Pchar x) { return (65 <= x) && (x <= 90); };
-Ptypedef Pchar UPALPHA_t :: UPALPHA_t x => { is_UPALPHA(x) };
+Ptypedef Pchar UPALPHA_t : UPALPHA_t x => { is_UPALPHA(x) };
 Pcharclass UPALPHA {is_UPALPHA};
 #define RE_UPALPHA "[[:UPALPHA:]]"
 int is_ALPHA(Pchar x) { return
@@ -124,7 +124,7 @@ int is_ALPHA(Pchar x) { return
   || is_LOALPHA(x)
   ;
 };
-Ptypedef Pchar ALPHA_t :: ALPHA_t x => { is_ALPHA(x) };
+Ptypedef Pchar ALPHA_t : ALPHA_t x => { is_ALPHA(x) };
 Pcharclass ALPHA {is_ALPHA};
 #define RE_ALPHA "[[:ALPHA:]]"
 int is_WSP(Pchar x) { return
@@ -132,7 +132,7 @@ int is_WSP(Pchar x) { return
   || (x == 32)
   ;
 };
-Ptypedef Pchar WSP_t :: WSP_t x => { is_WSP(x) };
+Ptypedef Pchar WSP_t : WSP_t x => { is_WSP(x) };
 Pcharclass WSP {is_WSP};
 #define RE_WSP "[[:WSP:]]"
 int is_atext(Pchar x) { return
@@ -159,7 +159,7 @@ int is_atext(Pchar x) { return
   || (x == 126)
   ;
 };
-Ptypedef Pchar atext_t :: atext_t x => { is_atext(x) };
+Ptypedef Pchar atext_t : atext_t x => { is_atext(x) };
 Pcharclass atext {is_atext};
 #define RE_atext "[[:atext:]]"
 #define RE_base64_user_pass "XX"
@@ -174,7 +174,7 @@ int is_ctext(Pchar x) { return
   || ((128 <= x) && (x <= 255))
   ;
 };
-Ptypedef Pchar ctext_t :: ctext_t x => { is_ctext(x) };
+Ptypedef Pchar ctext_t : ctext_t x => { is_ctext(x) };
 Pcharclass ctext {is_ctext};
 #define RE_ctext "[[:ctext:]]"
 int is_ctext_mailbox(Pchar x) { return
@@ -184,7 +184,7 @@ int is_ctext_mailbox(Pchar x) { return
   || ((93 <= x) && (x <= 126))
   ;
 };
-Ptypedef Pchar ctext_mailbox_t :: ctext_mailbox_t x => { is_ctext_mailbox(x) };
+Ptypedef Pchar ctext_mailbox_t : ctext_mailbox_t x => { is_ctext_mailbox(x) };
 Pcharclass ctext_mailbox {is_ctext_mailbox};
 #define RE_ctext_mailbox "[[:ctext_mailbox:]]"
 #define RE_delta_seconds "" RE_DIGIT "+"
@@ -204,7 +204,7 @@ int is_digit(Pchar x) { return
   || (x == 57)
   ;
 };
-Ptypedef Pchar digit_t :: digit_t x => { is_digit(x) };
+Ptypedef Pchar digit_t : digit_t x => { is_digit(x) };
 Pcharclass digit {is_digit};
 #define RE_digit "[[:digit:]]"
 #define RE_IPv4address "(" RE_digit "+\\." RE_digit "+\\." RE_digit "+\\." RE_digit "+)"
@@ -217,7 +217,7 @@ int is_dtext(Pchar x) { return
   || ((94 <= x) && (x <= 126))
   ;
 };
-Ptypedef Pchar dtext_t :: dtext_t x => { is_dtext(x) };
+Ptypedef Pchar dtext_t : dtext_t x => { is_dtext(x) };
 Pcharclass dtext {is_dtext};
 #define RE_dtext "[[:dtext:]]"
 #define RE_entity_body "" RE_OCTET "*"
@@ -238,7 +238,7 @@ int is_hex(Pchar x) { return
   || (x == 102)
   ;
 };
-Ptypedef Pchar hex_t :: hex_t x => { is_hex(x) };
+Ptypedef Pchar hex_t : hex_t x => { is_hex(x) };
 Pcharclass hex {is_hex};
 #define RE_hex "[[:hex:]]"
 #define RE_escaped "(\\%" RE_hex "" RE_hex ")"
@@ -272,7 +272,7 @@ int is_lowalpha(Pchar x) { return
   || (x == 122)
   ;
 };
-Ptypedef Pchar lowalpha_t :: lowalpha_t x => { is_lowalpha(x) };
+Ptypedef Pchar lowalpha_t : lowalpha_t x => { is_lowalpha(x) };
 Pcharclass lowalpha {is_lowalpha};
 #define RE_lowalpha "[[:lowalpha:]]"
 int is_mark(Pchar x) { return
@@ -287,7 +287,7 @@ int is_mark(Pchar x) { return
   || (x == 41)
   ;
 };
-Ptypedef Pchar mark_t :: mark_t x => { is_mark(x) };
+Ptypedef Pchar mark_t : mark_t x => { is_mark(x) };
 Pcharclass mark {is_mark};
 #define RE_mark "[[:mark:]]"
 #define RE_md5_digest "XX"
@@ -313,7 +313,7 @@ int is_obs_char(Pchar x) { return
   || ((14 <= x) && (x <= 127))
   ;
 };
-Ptypedef Pchar obs_char_t :: obs_char_t x => { is_obs_char(x) };
+Ptypedef Pchar obs_char_t : obs_char_t x => { is_obs_char(x) };
 Pcharclass obs_char {is_obs_char};
 #define RE_obs_char "[[:obs_char:]]"
 #define RE_obs_qp "(\\\\[\\x0-\\x7f])"
@@ -331,7 +331,7 @@ int is_qtext(Pchar x) { return
   || ((93 <= x) && (x <= 126))
   ;
 };
-Ptypedef Pchar qtext_t :: qtext_t x => { is_qtext(x) };
+Ptypedef Pchar qtext_t : qtext_t x => { is_qtext(x) };
 Pcharclass qtext {is_qtext};
 #define RE_qtext "[[:qtext:]]"
 #define RE_quoted_pair "(\\\\" RE_CHAR ")"
@@ -365,7 +365,7 @@ int is_reserved(Pchar x) { return
   || (x == 44)
   ;
 };
-Ptypedef Pchar reserved_t :: reserved_t x => { is_reserved(x) };
+Ptypedef Pchar reserved_t : reserved_t x => { is_reserved(x) };
 Pcharclass reserved {is_reserved};
 #define RE_reserved "[[:reserved:]]"
 int is_separators(Pchar x) { return
@@ -390,7 +390,7 @@ int is_separators(Pchar x) { return
   || is_HT(x)
   ;
 };
-Ptypedef Pchar separators_t :: separators_t x => { is_separators(x) };
+Ptypedef Pchar separators_t : separators_t x => { is_separators(x) };
 Pcharclass separators {is_separators};
 #define RE_separators "[[:separators:]]"
 #define RE_subtag "" RE_ALPHA "{1,8}"
@@ -436,7 +436,7 @@ int is_token_char(Pchar x) { return
   || ((126 <= x) && (x <= 127))
   ;
 };
-Ptypedef Pchar token_char_t :: token_char_t x => { is_token_char(x) };
+Ptypedef Pchar token_char_t : token_char_t x => { is_token_char(x) };
 Pcharclass token_char {is_token_char};
 #define RE_token_char "[[:token_char:]]"
 #define RE_token "" RE_token_char "+"
@@ -514,7 +514,7 @@ int is_upalpha(Pchar x) { return
   || (x == 90)
   ;
 };
-Ptypedef Pchar upalpha_t :: upalpha_t x => { is_upalpha(x) };
+Ptypedef Pchar upalpha_t : upalpha_t x => { is_upalpha(x) };
 Pcharclass upalpha {is_upalpha};
 #define RE_upalpha "[[:upalpha:]]"
 int is_alpha(Pchar x) { return
@@ -522,7 +522,7 @@ int is_alpha(Pchar x) { return
   || is_upalpha(x)
   ;
 };
-Ptypedef Pchar alpha_t :: alpha_t x => { is_alpha(x) };
+Ptypedef Pchar alpha_t : alpha_t x => { is_alpha(x) };
 Pcharclass alpha {is_alpha};
 #define RE_alpha "[[:alpha:]]"
 int is_alphanum(Pchar x) { return
@@ -530,7 +530,7 @@ int is_alphanum(Pchar x) { return
   || is_digit(x)
   ;
 };
-Ptypedef Pchar alphanum_t :: alphanum_t x => { is_alphanum(x) };
+Ptypedef Pchar alphanum_t : alphanum_t x => { is_alphanum(x) };
 Pcharclass alphanum {is_alphanum};
 #define RE_alphanum "[[:alphanum:]]"
 #define RE_domainlabel "(" RE_alphanum "(\\-?" RE_alphanum ")*)"
@@ -548,7 +548,7 @@ int is_unreserved(Pchar x) { return
   || is_mark(x)
   ;
 };
-Ptypedef Pchar unreserved_t :: unreserved_t x => { is_unreserved(x) };
+Ptypedef Pchar unreserved_t : unreserved_t x => { is_unreserved(x) };
 Pcharclass unreserved {is_unreserved};
 #define RE_unreserved "[[:unreserved:]]"
 #define RE_param_char "(" RE_unreserved "|" RE_escaped "|\\:|\\@|\\&|\\=|\\+|\\$|\\,)"
