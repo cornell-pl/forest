@@ -218,6 +218,5 @@ if ($optx) then
   endif
 endif
 
-exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-ast/arch/$_ast_arch/include/ast $add_incs \
-$lua $lda < /dev/null
+exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd $lua $lda -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-ast/arch/$_ast_arch/include/ast $add_incs
 
