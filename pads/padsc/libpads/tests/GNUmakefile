@@ -50,8 +50,9 @@ LIBTESTS_D = $(LIBTESTS_O:%=%-g)
 LIBTESTS = $(LIBTESTS_O) $(LIBTESTS_D) 
 
 ACCUMTESTS = accumtest accumtest2 accumtest_s
+MISC_TESTS = test_re2-g
 
-ALL_PROGS = $(HELPERS) $(LIBTESTS) $(ACCUMTESTS)
+ALL_PROGS = $(HELPERS) $(LIBTESTS) $(ACCUMTESTS) $(MISC_TESTS)
 
 regress : regress_o regress_d
 

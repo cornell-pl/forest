@@ -14,17 +14,17 @@ int main(int argc, char** argv) {
   char            *exp, *str, *end, *rdelim;
   int              c_flags   = REG_AUGMENTED|REG_EXTENDED|REG_DELIMITED|REG_MULTIREF;
   int              e_flags   = 0;
-  int              cret, eret;
+  int              cret, eret, pin;
   regmatch_t       match[100];
 
 
-  c_flags |= REG_LEFT;  /* all PADS regular expressions are pinned left */
-
-  if (argc != 3) {
-    error(ERROR_FATAL, "\nCall me with 2 args, re and string\n");
+  if (argc != 4) {
+    error(ERROR_FATAL, "\nCall me with 3 args, re, string, and pin\n");
   }
   exp = argv[1];
   str = argv[2];
+  pin = atoi(argv[3]);
+  if (pin) { e_flags |= REG_LEFT; }
   delim = exp[0];
   rdelim = strrchr(exp, delim);
   if (rdelim == exp) {

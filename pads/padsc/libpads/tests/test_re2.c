@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
   str      = argv[2];
   exp_len  = strlen(exp);
   str_len  = strlen(str);
-  begin = (Pbyte*)str;
-  end   = (Pbyte*)(str + str_len);
+  begin    = (Pbyte*)str;
+  end      = (Pbyte*)(str + str_len);
 
   if (P_ERR == Pregexp_compile_cstr(pads, exp, &regexp)) {
     error(ERROR_FATAL, "Failed to compile re %s", P_qfmt_cstr_n(exp, exp_len));
