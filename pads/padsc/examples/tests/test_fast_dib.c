@@ -21,8 +21,8 @@ int main(int argc, char** argv) {
   char                     *fname          = "../../data/ex_data.dibbler1";
   behave                   b               = count_first21;
   unsigned long            good_21         = 0, good = 0, bad = 0;
-  /* out_sum_fixed1_csm       f1_csm           = { 0 }; */
-  out_sum_fixed1_csm       f1_csm           = {PDC_Ignore,{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}}};
+  /* out_sum_fixed1_m         f1_m           = { 0 }; */
+  out_sum_fixed1_m         f1_m            = {PDC_Ignore,{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}}};
 
   if (argc > 3) {
     goto usage;
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
   switch (b) {
     case count_first21: {
       while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_fixed1_read(pdc, &f1_csm, &f1_ed, &f1)) {
+	if (PDC_OK == out_sum_fixed1_read(pdc, &f1_m, &f1_ed, &f1)) {
 	  if (PDC_OK == event_read(pdc, 0, &ev_ed, &ev)) {
 	    good++;
 	    if (PDC_string_eq_Cstr(&(ev.state), "21")) {

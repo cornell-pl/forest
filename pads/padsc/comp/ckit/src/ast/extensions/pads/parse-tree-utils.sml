@@ -99,6 +99,7 @@ struct
     fun gtX (e1,e2)       = PT.Binop(PT.Gt,e1,e2)
     fun gteX (e1,e2)      = PT.Binop(PT.Gte,e1,e2)
     fun notX e            = PT.Unop(PT.Not,e)
+    fun bitNotX e         = PT.Unop(PT.BitNot,e)
     fun orX (e1,e2)       = PT.Binop(PT.Or,e1,e2)
     fun plusX (e1,e2)     = PT.Binop(PT.Plus,e1,e2)
     fun minusX (e1,e2)    = PT.Binop(PT.Minus,e1,e2)
@@ -106,6 +107,8 @@ struct
     fun timesX (e1,e2)    = PT.Binop(PT.Times,e1,e2)
     fun rshiftX (e1,e2)   = PT.Binop(PT.Rshift,e1,e2)
     fun modX (e1,e2)      = PT.Binop(PT.Mod,e1,e2)
+    fun bitAndX (e1,e2)   = PT.Binop(PT.BitAnd,e1,e2)
+    fun bitOrX (e1,e2)    = PT.Binop(PT.BitOr,e1,e2)
     fun plusAssignS(e1,e2)= PT.Expr(PT.Binop(PT.PlusAssign,e1,e2))
     fun postIncX e        = PT.Unop(PT.PostInc, e)
     fun postIncS e        = PT.Expr(PT.Unop(PT.PostInc, e))
@@ -188,6 +191,8 @@ struct
     and printUnopExp (rator, exp) =
 	case rator
         of PT.Uplus => "+ "^(expToString exp)
+        | PT.Not => "! "^(expToString exp)
+        | PT.BitNot => "~ "^(expToString exp)
         |  _ => "unop(" ^ (expToString exp) ^")"
 
     and printBinopExp (rator, exp1, exp2) =
@@ -197,6 +202,8 @@ struct
         |  PT.Times => (expToString exp1)^ " * " ^(expToString exp2)
         |  PT.Divide => (expToString exp1)^ " / " ^(expToString exp2)
         |  PT.Mod => (expToString exp1)^ " % " ^(expToString exp2)
+        |  PT.BitAnd => (expToString exp1)^ " & " ^(expToString exp2)
+        |  PT.BitOr => (expToString exp1)^ " | " ^(expToString exp2)
         |  PT.Gt => (expToString exp1)^ " > " ^(expToString exp2)
         |  PT.Lt => (expToString exp1)^ " < " ^(expToString exp2)
         |  PT.Gte => (expToString exp1)^ " >= " ^(expToString exp2)

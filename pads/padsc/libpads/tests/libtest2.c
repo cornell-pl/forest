@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   PDC_uint16      ui2;
   PDC_uint32      ui4;
   PDC_uint64      ui8;
-  PDC_base_csm    csm = PDC_CheckAndSet;
+  PDC_base_m      m    = PDC_CheckAndSet;
   PDC_base_ed     ed;
   PDC_disc_t      my_disc = PDC_default_disc;
   size_t          bytes_skipped;
@@ -76,43 +76,43 @@ int main(int argc, char** argv) {
       break;
     }
 
-    if (PDC_ERR == PDC_b_int8_read(pdc, &csm, &ed, &i1)) {
+    if (PDC_ERR == PDC_b_int8_read(pdc, &m, &ed, &i1)) {
       goto check_newline;
     } else {
       error(0, "Read bint8  : %ld", i1);
     }
-    if (PDC_ERR == PDC_b_uint8_read(pdc, &csm, &ed, &ui1)) {
+    if (PDC_ERR == PDC_b_uint8_read(pdc, &m, &ed, &ui1)) {
       goto check_newline;
     } else {
       error(0, "Read buint8 : %lu", ui1);
     }
 
-    if (PDC_ERR == PDC_b_int16_read(pdc, &csm, &ed, &i2)) {
+    if (PDC_ERR == PDC_b_int16_read(pdc, &m, &ed, &i2)) {
       goto check_newline;
     } else {
       error(0, "Read bint16  : %ld", i2);
     }
-    if (PDC_ERR == PDC_b_uint16_read(pdc, &csm, &ed, &ui2)) {
+    if (PDC_ERR == PDC_b_uint16_read(pdc, &m, &ed, &ui2)) {
       goto check_newline;
     } else {
       error(0, "Read buint16 : %lu", ui2);
     }
-    if (PDC_ERR == PDC_b_int32_read(pdc, &csm, &ed, &i4)) {
+    if (PDC_ERR == PDC_b_int32_read(pdc, &m, &ed, &i4)) {
       goto check_newline;
     } else {
       error(0, "Read bint32  : %ld", i4);
     }
-    if (PDC_ERR == PDC_b_uint32_read(pdc, &csm, &ed, &ui4)) {
+    if (PDC_ERR == PDC_b_uint32_read(pdc, &m, &ed, &ui4)) {
       goto check_newline;
     } else {
       error(0, "Read buint32 : %lu", ui4);
     }
-    if (PDC_ERR == PDC_b_int64_read(pdc, &csm, &ed, &i8)) {
+    if (PDC_ERR == PDC_b_int64_read(pdc, &m, &ed, &i8)) {
       goto check_newline;
     } else {
       error(0, "Read bint64  : %lld", i8);
     }
-    if (PDC_ERR == PDC_b_uint64_read(pdc, &csm, &ed, &ui8)) {
+    if (PDC_ERR == PDC_b_uint64_read(pdc, &m, &ed, &ui8)) {
       goto check_newline;
     } else {
       error(0, "Read buint64 : %llu", ui8);

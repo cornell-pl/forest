@@ -45,9 +45,9 @@ struct
 
   val PDC_CHAR_LIT_NOT_FOUND             = PT.Id "PDC_CHAR_LIT_NOT_FOUND"
 
-  val CSM_CHECK_AND_SET = PT.Id "PDC_CheckAndSet"
-  val CSM_CHECK         = PT.Id "PDC_Check"
-  val CSM_IGNORE        = PT.Id "PDC_Ignore"
+  val M_CHECK_AND_SET = PT.Id "PDC_CheckAndSet"
+  val M_CHECK         = PT.Id "PDC_Check"
+  val M_IGNORE        = PT.Id "PDC_Ignore"
 
   val PDC_littleEndian = PT.Id "PDC_littleEndian"
   val PDC_bigEndian    = PT.Id "PDC_bigEndian"
@@ -69,7 +69,7 @@ struct
   val rbufferPCT   = P.makeTypedefPCT "RBuf_t"
   val rMMPCT       = P.makeTypedefPCT "RMM_t"
 
-  val base_csmPCT  = P.makeTypedefPCT "PDC_base_csm"
+  val base_mPCT    = P.makeTypedefPCT "PDC_base_m"
   val base_edPCT   = P.makeTypedefPCT "PDC_base_ed"
   val bytePCT      = P.makeTypedefPCT "PDC_byte"
   val bytePtr      = P.ptrPCT(bytePCT)
@@ -226,6 +226,56 @@ struct
 
   fun nullCheckSizeRet(prefix, ptrX) =
     PT.Expr(PT.Call(PT.Id "PDCI_NULLPARAM_CHECK_RET_SSIZE", [prefix, PT.Cast(P.voidPtr, ptrX)]))
+
+  fun incNestLevS(pdc) =
+    PT.Expr(P.postIncX (P.arrowX(pdc, PT.Id "inestlev")))
+
+  fun decNestLevS(pdc) =
+    PT.Expr(P.postDecX (P.arrowX(pdc, PT.Id "inestlev")))
+
+(* -- Mask check/manipulation routines *)
+
+  fun mTestSetX(m) =
+    PT.Call(PT.Id "PDC_Test_Set", [m])
+
+  fun mTestNoSetX(m) =
+    PT.Call(PT.Id "PDC_Test_NoSet", [m])
+
+  fun mTestBaseCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_BaseCheck", [m])
+
+  fun mTestNoBaseCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_NoBaseCheck", [m])
+
+  fun mTestUserCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_UserCheck", [m])
+
+  fun mTestNoUserCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_NoUserCheck", [m])
+
+  fun mTestWhereCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_WhereCheck", [m])
+
+  fun mTestNoWhereCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_NoWhereCheck", [m])
+
+  fun mTestForallCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_ForallCheck", [m])
+
+  fun mTestNoForallCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_NoForallCheck", [m])
+
+  fun mTestWriteCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_WriteCheck", [m])
+
+  fun mTestNoWriteCheckX(m) =
+    PT.Call(PT.Id "PDC_Test_NoWriteCheck", [m])
+
+  fun mTestBaseIgnoreX(m) =
+    PT.Call(PT.Id "PDC_Test_BaseIgnore", [m])
+
+  fun mTestNoBaseIgnoreX(m) =
+    PT.Call(PT.Id "PDC_Test_NoBaseIgnore", [m])
 
 (* -- File manipulation routines *)
   fun getLocS(pdc:PT.expression, locAddr:PT.expression) = 

@@ -22,10 +22,10 @@ int main(int argc, char** argv) {
   char                     *fname = "../../data/ex_data.dibbler1";
   behave                   b = count_first21;
   unsigned long            good_21 = 0, good = 0, bad = 0;
-  out_sum_data_line_csm dline_csm={PDC_Ignore,{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},PDC_Ignore,{{PDC_Ignore,PDC_Ignore,PDC_Ignore},PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},PDC_Ignore};
+  out_sum_data_line_m   dline_m = {PDC_Ignore,{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},PDC_Ignore,{{PDC_Ignore,PDC_Ignore,PDC_Ignore},PDC_Ignore},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{{PDC_Ignore,PDC_Ignore},{PDC_Ignore,PDC_Ignore}},{PDC_Ignore,PDC_Ignore},PDC_Ignore};
 
   /* all we are interested in is the state field: */
-  dline_csm.events.element.state = PDC_CheckAndSet;
+  dline_m.events.element.state = PDC_CheckAndSet;
 
   if (argc > 3) {
     goto usage;
@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
 
     case count_first21: {
       while (!PDC_IO_at_EOF(pdc)) {
-	if (PDC_OK == out_sum_data_line_read_internal (pdc, &dline_csm, &dline_ed, &dline)) {
+	if (PDC_OK == out_sum_data_line_read_internal (pdc, &dline_m, &dline_ed, &dline)) {
 	  /* do something with the data */
 	  /* 	  error(0, "data line read returned OK, number of events = %d", dline.events.length); */
 	  good++;

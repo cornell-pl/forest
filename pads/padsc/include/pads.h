@@ -243,18 +243,6 @@
 
 #define PDC_VERSION                  20020815L
 
-/* flags are unsigned long values */
-typedef unsigned long          PDC_flags_t;
-
-#ifdef FOR_CKIT
-extern unsigned long PDC_NULL_CTL_FLAG;
-extern unsigned long PDC_WSPACE_OK;
-#else
-#define PDC_NULL_CTL_FLAG      0UL
-#define PDC_WSPACE_OK          1UL
-#endif /* FOR_CKIT */
-
-
 typedef enum PDC_error_t_e {
   PDC_OK                            =    0,
   PDC_ERR                           =   -1
@@ -395,7 +383,7 @@ typedef enum PDC_errCode_t_e {
  *     PDC_pos_t     : IO position
  *     PDC_loc_t     : IO location / range
  *     PDC_base_ed   : base error descriptor
- *     PDC_base_csm  : base CheckSet mask
+ *     PDC_base_m    : base mask
  *     PDC_errorRep  : enum for specifying error reporting level
  *     PDC_endian    : enum for specifying endian-ness
  *     PDC_charset   : enum for specifying character set
@@ -412,7 +400,6 @@ typedef struct PDC_regexp_s        PDC_regexp_t;
 typedef struct PDC_pos_s           PDC_pos_t;
 typedef struct PDC_loc_s           PDC_loc_t;
 typedef struct PDC_base_ed_s       PDC_base_ed;
-typedef enum   PDC_base_csm_e      PDC_base_csm;
 typedef enum   PDC_errorRep_e      PDC_errorRep;
 typedef enum   PDC_endian_e        PDC_endian;
 typedef enum   PDC_charset_e       PDC_charset;
@@ -454,6 +441,18 @@ typedef PDC_uint8 PDC_char;
  */
 #define PDC_FPOINT2FLT(fp) ((fp).num/(float)(fp).denom)
 #define PDC_FPOINT2DBL(fp) ((fp).num/(double)(fp).denom)
+
+/* flags are PDC_uint32 values */
+typedef PDC_uint32          PDC_flags_t;
+
+#ifdef FOR_CKIT
+extern PDC_uint32 PDC_NULL_CTL_FLAG;
+extern PDC_uint32 PDC_WSPACE_OK;
+#else
+#define PDC_NULL_CTL_FLAG      0UL
+#define PDC_WSPACE_OK          1UL
+#endif /* FOR_CKIT */
+
 
 /* ================================================================================
  * PDC_string: PADS strings have a ptr and length;
@@ -583,8 +582,121 @@ int PDC_errorf(const char *libnm, int level, ...);
  * LIBRARY TYPES
  */
 
-/* type PDC_base_csm: */
-enum PDC_base_csm_e { PDC_CheckAndSet, PDC_Check, PDC_Ignore };
+/* type PDC_base_m: */
+typedef PDC_uint32 PDC_base_m;
+
+#ifdef FOR_CKIT
+/* Declarations for CKIT */
+extern PDC_uint32 PDC_NoSet;
+extern PDC_uint32 PDC_NoBaseCheck;
+extern PDC_uint32 PDC_NoUserCheck;
+extern PDC_uint32 PDC_NoWhereCheck;
+extern PDC_uint32 PDC_NoForallCheck;
+extern PDC_uint32 PDC_NoWrite;
+extern PDC_uint32 PDC_NoChecks;
+extern PDC_uint32 PDC_AllNoFlags;
+extern PDC_uint32 PDC_CheckAndSet;
+extern PDC_uint32 PDC_Check;
+extern PDC_uint32 PDC_Set;
+extern PDC_uint32 PDC_Ignore;
+
+PDC_uint32 PDC_Test_NoSet(PDC_uint32 m);
+PDC_uint32 PDC_Test_NoBaseCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_NoUserCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_NoWhereCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_NoForallCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_NoWrite(PDC_uint32 m);
+
+PDC_uint32 PDC_Test_Set(PDC_uint32 m);
+PDC_uint32 PDC_Test_BaseCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_UserCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_WhereCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_ForallCheck(PDC_uint32 m);
+PDC_uint32 PDC_Test_Write(PDC_uint32 m);
+
+PDC_uint32 PDC_Test_BaseIgnore(PDC_uint32 m);
+PDC_uint32 PDC_Test_NoBaseIgnore(PDC_uint32 m);
+
+void       PDC_Do_Set(PDC_uint32 m);
+void       PDC_Do_BaseCheck(PDC_uint32 m);
+void       PDC_Do_UserCheck(PDC_uint32 m);
+void       PDC_Do_WhereCheck(PDC_uint32 m);
+void       PDC_Do_ForallCheck(PDC_uint32 m);
+void       PDC_Do_Checks(PDC_uint32 m);
+void       PDC_Do_Write(PDC_uint32 m);
+
+void       PDC_Dont_Set(PDC_uint32 m);
+void       PDC_Dont_BaseCheck(PDC_uint32 m);
+void       PDC_Dont_UserCheck(PDC_uint32 m);
+void       PDC_Dont_WhereCheck(PDC_uint32 m);
+void       PDC_Dont_ForallCheck(PDC_uint32 m);
+void       PDC_Dont_Checks(PDC_uint32 m);
+void       PDC_Dont_Write(PDC_uint32 m);
+
+#else
+/* The actual declarations */
+
+/* Mask flags used with read functions */
+#define PDC_NoSet                 (1 << 1)
+#define PDC_NoBaseCheck           (1 << 2)
+#define PDC_NoUserCheck           (1 << 3)
+#define PDC_NoWhereCheck          (1 << 4)
+#define PDC_NoForallCheck         (1 << 5)
+
+/* Mask flags used with write functions */
+#define PDC_NoWrite               PDC_NoSet  /* alias */
+
+/* Useful Combinations of Mask Flags */
+
+/* 'No' combinations */
+#define PDC_NoChecks              (PDC_NoBaseCheck|PDC_NoUserCheck|PDC_NoForallCheck|PDC_NoWhereCheck)
+#define PDC_AllNoFlags            (PDC_NoSet|PDC_NoChecks)
+
+/* 'Yes' combinations */
+#define PDC_CheckAndSet           0
+#define PDC_Check                 PDC_NoSet
+#define PDC_Set                   PDC_NoChecks
+#define PDC_BaseIgnore            (PDC_NoSet|PDC_NoBaseCheck)
+#define PDC_Ignore                PDC_AllNoFlags
+
+/* Useful macros for testing or modifying mask bits */
+
+#define PDC_Test_NoSet(m)         (m & PDC_NoSet)
+#define PDC_Test_NoBaseCheck(m)   (m & PDC_NoBaseCheck)
+#define PDC_Test_NoUserCheck(m)   (m & PDC_NoUserCheck)
+#define PDC_Test_NoWhereCheck(m)  (m & PDC_NoWhereCheck)
+#define PDC_Test_NoForallCheck(m) (m & PDC_NoForallCheck)
+#define PDC_Test_NoWrite(m)       (m & PDC_NoWrite)
+
+#define PDC_Test_Set(m)           (!PDC_Test_NoSet(m))
+#define PDC_Test_BaseCheck(m)     (!PDC_Test_NoBaseCheck(m))
+#define PDC_Test_UserCheck(m)     (!PDC_Test_NoUserCheck(m))
+#define PDC_Test_WhereCheck(m)    (!PDC_Test_NoWhereCheck(m))
+#define PDC_Test_ForallCheck(m)   (!PDC_Test_NoForallCheck(m))
+#define PDC_Test_Write(m)         (!PDC_Test_NoWrite(m))
+
+#define PDC_Test_BaseIgnore(m)    ((m & PDC_BaseIgnore) == PDC_BaseIgnore)
+#define PDC_Test_NoBaseIgnore(m)  ((m & PDC_BaseIgnore) != PDC_BaseIgnore)
+
+#define PDC_Do_Set(m)             (m &= (~PDC_NoSet))
+#define PDC_Do_BaseCheck(m)       (m &= (~PDC_NoBaseCheck))
+#define PDC_Do_UserCheck(m)       (m &= (~PDC_NoUserCheck))
+#define PDC_Do_WhereCheck(m)      (m &= (~PDC_NoWhereCheck))
+#define PDC_Do_ForallCheck(m)     (m &= (~PDC_NoForallCheck))
+#define PDC_Do_Checks(m)          (m &= (~PDC_NoChecks))
+#define PDC_Do_Write(m)           (m &= (~PDC_NoWrite))
+
+#define PDC_Dont_Set(m)           (m |= PDC_NoSet)
+#define PDC_Dont_BaseCheck(m)     (m |= PDC_NoBaseCheck)
+#define PDC_Dont_UserCheck(m)     (m |= PDC_NoUserCheck)
+#define PDC_Dont_WhereCheck(m)    (m |= PDC_NoWhereCheck)
+#define PDC_Dont_ForallCheck(m)   (m |= PDC_NoForallCheck)
+#define PDC_Dont_Checks(m)        (m |= PDC_NoChecks)
+#define PDC_Dont_Write(m)         (m |= PDC_NoWrite)
+
+/* If PDC_Test_NoBaseIgnore(m), then at least one of PDC_NoSet or PDC_NoBaseCheck is zero */
+
+#endif  /*  FOR_CKIT  */
 
 /* type PDC_errorRep: */
 enum PDC_errorRep_e { PDC_errorRep_Max, PDC_errorRep_Med, PDC_errorRep_Min, PDC_errorRep_None };
@@ -596,10 +708,11 @@ enum PDC_endian_e { PDC_bigEndian, PDC_littleEndian };
 enum PDC_charset_e { PDC_charset_INVALID = 0, PDC_charset_ASCII = 1, PDC_charset_EBCDIC = 2 };
 
 /* helper functions for the above enumerated types: */
-const char *PDC_base_csm2str (PDC_base_csm  e);
+const char *PDC_base_m2str   (PDC_t *pdc, PDC_base_m  m);
 const char *PDC_errorRep2str (PDC_errorRep  e);
 const char *PDC_endian2str   (PDC_endian    e);
-const char *PDC_charset2str(PDC_charset e); 
+const char *PDC_charset2str  (PDC_charset e); 
+/* Note: For PDC_base_m2str, result should be used/copied prior to further library calls */
 
 /* A PDC_pos_t (IO position) has a byte position within the num'th read element
  * where unit describes the element kind (e.g., "line", "1K Block", etc.)
@@ -976,42 +1089,41 @@ PDC_error_t PDC_e_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *sto
  * the EBCDIC forms is used or if one of the DEFAULT forms is used and
  * pdc->disc->def_charset is PDC_charset_EBCDIC.
  *
- * EFFECT: verify IO cursor points to specified char/string, move IO cursor just beyond.
- *   N.B. The CheckSet mask has the following meaning for these functions.  If *em is:
+ * Mask flags control the behavior, as follows:
  *
- *        PDC_CheckAndSet : IO cursor only advanced if literal matches,
- *                          warning message is issued on error.
- *        PDC_Check       : like PDC_CheckAndSet, but no warning on error.
- *        PDC_Ignore      : IO cursor is advanced by the length
- *                          (1 char / length of string) of the literal
- *                          without checking for a match.
  *
- * RETURNS: PDC_error_t
- *            OK    => IO cursor now points just beyond char / string
- *            ERROR => IO cursor did not point to char/string; unchanged
- *               (errCode PDC_CHAR_LIT_NOT_FOUND / PDC_STR_LIT_NOT_FOUND) */
+ * PDC_Test_BaseCheck(*m)              PDC_Test_NoBaseCheck(*m)
+ * ---------------------------------   ------------------------------
+ * If IO cursor points to specified    Always advance cursor by length
+ * literal, advance cursor by length   of literal, regardless of what
+ * of the literal and return PDC_OK,   cursor points to, and return
+ * otherwise report error, do not      PDC_OK.
+ * advance cursor, return PDC_ERR.
+ * 
+ * The error code used is either PDC_CHAR_LIT_NOT_FOUND or PDC_STR_LIT_NOT_FOUND.
+ */
 
 #ifdef FOR_CKIT
-PDC_error_t PDC_char_lit_read  (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_char_lit_read  (PDC_t *pdc, const PDC_base_m *m,
 			        PDC_base_ed *ed, PDC_char c);
-PDC_error_t PDC_a_char_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_char_lit_read(PDC_t *pdc, const PDC_base_m *m,
 				PDC_base_ed *ed, PDC_char c);
-PDC_error_t PDC_e_char_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_char_lit_read(PDC_t *pdc, const PDC_base_m *m,
 				PDC_base_ed *ed, PDC_char c);
 
-PDC_error_t PDC_str_lit_read   (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_str_lit_read   (PDC_t *pdc, const PDC_base_m *m,
 			        PDC_base_ed *ed, const PDC_string *s);
-PDC_error_t PDC_a_str_lit_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_str_lit_read (PDC_t *pdc, const PDC_base_m *m,
 			        PDC_base_ed *ed, const PDC_string *s);
-PDC_error_t PDC_e_str_lit_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_str_lit_read (PDC_t *pdc, const PDC_base_m *m,
 			        PDC_base_ed *ed, const PDC_string *s);
 
 
-PDC_error_t PDC_Cstr_lit_read  (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_Cstr_lit_read  (PDC_t *pdc, const PDC_base_m *m,
 			        PDC_base_ed *ed, const char *s);
-PDC_error_t PDC_a_Cstr_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_Cstr_lit_read(PDC_t *pdc, const PDC_base_m *m,
 				PDC_base_ed *ed, const char *s);
-PDC_error_t PDC_e_Cstr_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_Cstr_lit_read(PDC_t *pdc, const PDC_base_m *m,
 				PDC_base_ed *ed, const char *s);
 #endif /* FOR_CKIT */
 
@@ -1037,12 +1149,12 @@ PDC_error_t PDC_e_Cstr_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
  *
  * countX outcomes:
  *   1. IO cursor is already at EOF and eor_required is non-zero:
- *     => If !em || *em < PDC_Ignore:
+ *     => If !m || *m < PDC_Ignore:
  *           + ed->errCode set to PDC_AT_EOF
  *           + ed->loc begin/end set to EOF 'location'
  *     PDC_ERR returned   
  *   2. EOF is encountered before EOR and eor_required is non-zero
- *     => If !em || *em < PDC_Ignore:
+ *     => If !m || *m < PDC_Ignore:
  *           + ed->errCode set to PDC_EOF_BEFORE_EOR
  *           + ed->loc begin/end set to current IO cursor location
  *     PDC_ERR returned   
@@ -1053,12 +1165,12 @@ PDC_error_t PDC_e_Cstr_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
  *
  * countXtoY outcomes:
  *   1. IO cursor is already at EOF
- *     => If !em || *em < PDC_Ignore:
+ *     => If !m || *m < PDC_Ignore:
  *           + ed->errCode set to PDC_AT_EOF
  *           + ed->loc begin/end set to EOF 'location'
  *     PDC_ERR returned   
  *   2. y is not found
- *     => If !em || *em < PDC_Ignore:
+ *     => If !m || *m < PDC_Ignore:
  *           + ed->errCode set to PDC_CHAR_LIT_NOT_FOUND
  *           + ed->loc begin/end set to current IO cursor location
  *     PDC_ERR returned   
@@ -1070,18 +1182,18 @@ PDC_error_t PDC_e_Cstr_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
  */
 
 #ifdef FOR_CKIT
-PDC_error_t PDC_countX     (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, int eor_required,
+PDC_error_t PDC_countX     (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
 		            PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_a_countX   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, int eor_required,
+PDC_error_t PDC_a_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
 			    PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_e_countX   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, int eor_required,
+PDC_error_t PDC_e_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
 			    PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_countXtoY  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDC_countXtoY  (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
 		            PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_a_countXtoY(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDC_a_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
 			    PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_e_countXtoY(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDC_e_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
 			    PDC_base_ed *ed, PDC_int32 *res_out);
 #endif /* FOR_CKIT */
 
@@ -1096,20 +1208,20 @@ PDC_error_t PDC_e_countXtoY(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PD
  * A conversion fom EBCDIC to ASCII occurs if the EBCDIC form is used or if the DEFAULT
  * form is used and pdc->disc->def_charset is PDC_charset_EBCDIC.
  *
- *   If *em is PDC_Ignore or PDC_Check, simply skips one byte and returns PDC_OK.
- *   If *em is PDC_CheckAndSet, sets (*c_out) to the byte at the current IO position
+ *   If *m is PDC_Ignore or PDC_Check, simply skips one byte and returns PDC_OK.
+ *   If *m is PDC_CheckAndSet, sets (*c_out) to the byte at the current IO position
  *   and advances one byte.
  *
  *   If a char is not available, the IO cursor is not advanced, and
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
  *        + ed->loc begin/end set to the current IO position
  */
 
 #ifdef FOR_CKIT
-PDC_error_t PDC_char_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
-PDC_error_t PDC_a_char_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
-PDC_error_t PDC_e_char_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
+PDC_error_t PDC_char_read   (PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed, PDC_char *c_out);
+PDC_error_t PDC_a_char_read (PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed, PDC_char *c_out);
+PDC_error_t PDC_e_char_read (PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed, PDC_char *c_out);
 #endif /* FOR_CKIT */
 
 /* ================================================================================
@@ -1146,7 +1258,7 @@ PDC_error_t PDC_e_char_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *e
  * condition, then a string of length zero results.
  *
  * If an expected stop char/pattern/width is found, PDC_OK is returned.
- * If !em || *em == PDC_CheckAndSet, then:
+ * If !m || *m == PDC_CheckAndSet, then:
  *   + if s_out is non-null it is set to contain an in-memory string.
  *     If the original data is ASCII, then s_out will either share the string or contain a
  *     copy of the string, depending on pdc->disc->copy_strings.  If the original data is
@@ -1173,46 +1285,46 @@ PDC_error_t PDC_e_char_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *e
  */
 
 #ifdef FOR_CKIT
-PDC_error_t PDC_string_FW_read   (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_string_FW_read   (PDC_t *pdc, const PDC_base_m *m, size_t width,
 				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_string_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
 				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_string_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
 				  PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_string_read      (PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_string_read      (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 			          PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_a_string_read    (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 			          PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_e_string_read    (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 			          PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_string_ME_read   (PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
+PDC_error_t PDC_string_ME_read   (PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
 				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_ME_read (PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
+PDC_error_t PDC_a_string_ME_read (PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
 				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_ME_read (PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
-				  PDC_base_ed *ed, PDC_string *s_out);
-
-PDC_error_t PDC_string_CME_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
-				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_CME_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
-				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_CME_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
+PDC_error_t PDC_e_string_ME_read (PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
 				  PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_string_SE_read   (PDC_t *pdc, const PDC_base_csm *csm, const char *stopRegexp,
+PDC_error_t PDC_string_CME_read  (PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
 				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_SE_read (PDC_t *pdc, const PDC_base_csm *csm, const char *stopRegexp,
+PDC_error_t PDC_a_string_CME_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
 				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_SE_read (PDC_t *pdc, const PDC_base_csm *csm, const char *stopRegexp,
+PDC_error_t PDC_e_string_CME_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
 				  PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_string_CSE_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
+PDC_error_t PDC_string_SE_read   (PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
 				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_CSE_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
+PDC_error_t PDC_a_string_SE_read (PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
 				  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_CSE_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
+PDC_error_t PDC_e_string_SE_read (PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
+				  PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_string_CSE_read  (PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
+				  PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_a_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
+				  PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_e_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
 				  PDC_base_ed *ed, PDC_string *s_out);
 #endif /* FOR_CKIT */
 
@@ -1242,11 +1354,11 @@ PDC_error_t PDC_e_string_CSE_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regex
  *   + returns PDC_ERR */
 
 #ifdef FOR_CKIT
-PDC_error_t PDC_date_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_date_read  (PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 			    PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_a_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_a_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 			    PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_e_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_e_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 			    PDC_base_ed *ed, PDC_uint32 *res_out);
 #endif /* FOR_CKIT */
 
@@ -1265,14 +1377,14 @@ PDC_error_t PDC_e_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopCh
  *
  * Upon success, PDC_OK returned: 
  *   + the IO cursor is advanced to just beyond the last digit
- *   + if !em || *em == PDC_CheckAndSet, the out param is assigned a value
+ *   + if !m || *m == PDC_CheckAndSet, the out param is assigned a value
  *
  * PDC_ERR is returned on error.
  * Cursor advancement/err settings for different error cases:
  *
  * (1) If IO cursor is at EOF
  *     => IO cursor remains at EOF
- *     => If !em || *em < PDC_Ignore:
+ *     => If !m || *m < PDC_Ignore:
  *           + ed->errCode set to PDC_AT_EOF
  *           + ed->loc begin/end set to EOF 'location'
  * (2a) There is leading white space and not (disc flags & PDC_WSPACE_OK)
@@ -1281,40 +1393,40 @@ PDC_error_t PDC_e_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopCh
  * (2d) First character is allowable + or -, following by a char that is not a digit
  * For the above 4 cases:
  *     => IO cursor is not advanced
- *     => If !em || *em < PDC_Ignore:
+ *     => If !m || *m < PDC_Ignore:
  *          + ed->errCode set to PDC_INVALID_A_NUM
  *          + ed->loc begin/end set to the IO cursor position.
  * (3) A valid ascii integer string is found, but it describes
  *     an integer that does not fit in the specified target type
  *     => IO cursor is advanced just beyond the last digit
- *     => If !em || *em < PDC_Ignore:
+ *     => If !m || *m < PDC_Ignore:
  *          + ed->errCode set to PDC_RANGE
  *          + ed->loc begin/end set to elt/char position of start and end of the ascii integer
  */
 
-PDC_error_t PDC_a_int8_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_int8_read (PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_a_int16_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_int16_read(PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_a_int32_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_int32_read(PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_a_int64_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_int64_read(PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int64 *res_out);
 
 
-PDC_error_t PDC_a_uint8_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_uint8_read (PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_a_uint16_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_uint16_read(PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_a_uint32_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_uint32_read(PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_a_uint64_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_uint64_read(PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /*
@@ -1336,38 +1448,38 @@ PDC_error_t PDC_a_uint64_read(PDC_t *pdc, const PDC_base_csm *csm,
  *    (trailing white space is not an issue for variable-width routines)
  *
  * 3. If the specified width is available, it is always consumed, even if there is an error.
- *    In this case if !em || *em < PDC_Ignore:
+ *    In this case if !m || *m < PDC_Ignore:
  *       + ed->loc begin/end is set to the first/last char of the fixed-width field. 
  *
  *    If the specified width is *not* available (EOR/EOF hit), IO cursor is not advanced and
- *      if !em || *em < PDC_Ignore:
+ *      if !m || *m < PDC_Ignore:
  *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
  *        + ed->loc begin/end set to elt/char position of start/end of the 'too small' field
  */
 
-PDC_error_t PDC_a_int8_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_int8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
 				PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_a_int16_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_int16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_a_int32_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_int32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_a_int64_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_int64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				PDC_base_ed *ed, PDC_int64 *res_out);
 
 
-PDC_error_t PDC_a_uint8_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_uint8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
 				 PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_a_uint16_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_uint16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				 PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_a_uint32_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_uint32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				 PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_a_uint64_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				 PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================
@@ -1380,52 +1492,52 @@ PDC_error_t PDC_a_uint64_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t wid
  * than PDC_INVALID_A_NUM
  */
 
-PDC_error_t PDC_e_int8_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_int8_read (PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_e_int16_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_int16_read(PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_e_int32_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_int32_read(PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_e_int64_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_int64_read(PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_e_uint8_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_uint8_read (PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_e_uint16_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_uint16_read(PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_e_uint32_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_uint32_read(PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_e_uint64_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_uint64_read(PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint64 *res_out);
 
-PDC_error_t PDC_e_int8_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_int8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
 				PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_e_int16_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_int16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_e_int32_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_int32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_e_int64_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_int64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_e_uint8_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_uint8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
 				 PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_e_uint16_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_uint16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				 PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_e_uint32_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_uint32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				 PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_e_uint64_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				 PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================
@@ -1436,47 +1548,47 @@ PDC_error_t PDC_e_uint64_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t wid
  *
  * Example: the call 
  *
- *     PDC_int8_read(pdc, &csm, &ed, *res)
+ *     PDC_int8_read(pdc, &m, &ed, *res)
  *
  * is converted to one of these forms:
  *
- *     PDC_a_int8_read(pdc, &csm, &ed, *res)
- *     PDC_e_int8_read(pdc, &csm, &ed, *res)
+ *     PDC_a_int8_read(pdc, &m, &ed, *res)
+ *     PDC_e_int8_read(pdc, &m, &ed, *res)
  *     etc.
  */
 
 #ifdef FOR_CKIT
-PDC_error_t PDC_int8_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_int8_read (PDC_t *pdc, const PDC_base_m *m,
 			    PDC_base_ed *ed, PDC_int8 *res_out);
-PDC_error_t PDC_int16_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_int16_read(PDC_t *pdc, const PDC_base_m *m,
 			   PDC_base_ed *ed, PDC_int16 *res_out);
-PDC_error_t PDC_int32_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_int32_read(PDC_t *pdc, const PDC_base_m *m,
 			   PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_int64_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_int64_read(PDC_t *pdc, const PDC_base_m *m,
 			   PDC_base_ed *ed, PDC_int64 *res_out);
-PDC_error_t PDC_uint8_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_uint8_read (PDC_t *pdc, const PDC_base_m *m,
 			    PDC_base_ed *ed, PDC_uint8 *res_out);
-PDC_error_t PDC_uint16_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_uint16_read(PDC_t *pdc, const PDC_base_m *m,
 			    PDC_base_ed *ed, PDC_uint16 *res_out);
-PDC_error_t PDC_uint32_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_uint32_read(PDC_t *pdc, const PDC_base_m *m,
 			    PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_uint64_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_uint64_read(PDC_t *pdc, const PDC_base_m *m,
 			    PDC_base_ed *ed, PDC_uint64 *res_out);
-PDC_error_t PDC_int8_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_int8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
 			      PDC_base_ed *ed, PDC_int8 *res_out);
-PDC_error_t PDC_int16_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_int16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 			      PDC_base_ed *ed, PDC_int16 *res_out);
-PDC_error_t PDC_int32_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_int32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 			      PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_int64_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_int64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 			      PDC_base_ed *ed, PDC_int64 *res_out);
-PDC_error_t PDC_uint8_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_uint8_FW_read (PDC_t *pdc, const PDC_base_m *m, size_t width,
 			       PDC_base_ed *ed, PDC_uint8 *res_out);
-PDC_error_t PDC_uint16_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_uint16_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 			       PDC_base_ed *ed, PDC_uint16 *res_out);
-PDC_error_t PDC_uint32_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_uint32_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 			       PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_uint64_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_uint64_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 			       PDC_base_ed *ed, PDC_uint64 *res_out);
 #endif /* FOR_CKIT */
 
@@ -1515,33 +1627,33 @@ PDC_error_t PDC_uint64_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width
  *
  * For all cases, if the specified number of bytes is available, it is always read.
  * If the width is not available, the IO cursor is not advanced, and
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
  *        + ed->loc begin/end set to elt/char position of start/end of the 'too small' field
  */
 
-PDC_error_t PDC_b_int8_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_b_int8_read (PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_b_int16_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_b_int16_read(PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_b_int32_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_b_int32_read(PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_b_int64_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_b_int64_read(PDC_t *pdc, const PDC_base_m *m,
 			     PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_b_uint8_read (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_b_uint8_read (PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_b_uint16_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_b_uint16_read(PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_b_uint32_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_b_uint32_read(PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_b_uint64_read(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_b_uint64_read(PDC_t *pdc, const PDC_base_m *m,
 			      PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================
@@ -1614,7 +1726,7 @@ PDC_error_t PDC_b_uint64_read(PDC_t *pdc, const PDC_base_csm *csm,
  * 
  * For all cases, if the specified number of bytes is NOT available,
  * the IO cursor is not advanced, and:
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
  *        + ed->loc begin/end set to elt/char position of start/end of the 'too small' field
  *
@@ -1623,91 +1735,91 @@ PDC_error_t PDC_b_uint64_read(PDC_t *pdc, const PDC_base_csm *csm,
  *
  * If num_digits or num_bytes is not a legal choice for the target type and
  * sign of the value:
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *          + ed->errCode set to PDC_BAD_PARAM
  *
  * If the specified bytes make up an integer that does not fit in the target type,
  * or if the actual value is not in the min/max range, then:
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *          + ed->errCode set to PDC_RANGE
  *
  * If the specified bytes are not legal EBC/BCD integer bytes, then 
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *          + ed->errCode set to one of:
  *                PDC_INVALID_EBC_NUM
  *                PDC_INVALID_BCD_NUM
  */
 
-PDC_error_t PDC_ebc_int8_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_ebc_int8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_int8 *res_out);
-PDC_error_t PDC_ebc_int16_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_ebc_int16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_int16 *res_out);
-PDC_error_t PDC_ebc_int32_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_ebc_int32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_ebc_int64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_ebc_int64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_ebc_uint8_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_ebc_uint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_uint8 *res_out);
-PDC_error_t PDC_ebc_uint16_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_ebc_uint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_uint16 *res_out);
-PDC_error_t PDC_ebc_uint32_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_ebc_uint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_ebc_uint64_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_ebc_uint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_uint64 *res_out);
 
-PDC_error_t PDC_bcd_int8_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_bcd_int8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_int8 *res_out);
-PDC_error_t PDC_bcd_int16_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_bcd_int16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_int16 *res_out);
-PDC_error_t PDC_bcd_int32_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_bcd_int32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_bcd_int64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_bcd_int64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_bcd_uint8_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_bcd_uint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_uint8 *res_out);
-PDC_error_t PDC_bcd_uint16_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_bcd_uint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_uint16 *res_out);
-PDC_error_t PDC_bcd_uint32_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_bcd_uint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_bcd_uint64_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits,
+PDC_error_t PDC_bcd_uint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits,
 				 PDC_base_ed *ed, PDC_uint64 *res_out);
 
-PDC_error_t PDC_sbl_int8_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_int8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int8 *res_out);
-PDC_error_t PDC_sbl_int16_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_int16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int16 *res_out);
-PDC_error_t PDC_sbl_int32_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_int32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_sbl_int64_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_int64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_sbl_uint8_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_uint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint8 *res_out);
-PDC_error_t PDC_sbl_uint16_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_uint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint16 *res_out);
-PDC_error_t PDC_sbl_uint32_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_uint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_sbl_uint64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbl_uint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint64 *res_out);
 
-PDC_error_t PDC_sbh_int8_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbh_int8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int8 *res_out);
-PDC_error_t PDC_sbh_int16_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbh_int16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int16 *res_out);
-PDC_error_t PDC_sbh_int32_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbh_int32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_sbh_int64_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbh_int64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			         PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_sbh_uint8_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbh_uint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint8 *res_out);
-PDC_error_t PDC_sbh_uint16_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbh_uint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint16 *res_out);
-PDC_error_t PDC_sbh_uint32_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbh_uint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_sbh_uint64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes,
+PDC_error_t PDC_sbh_uint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes,
 			 	 PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /* ================================================================================
@@ -1746,7 +1858,7 @@ PDC_error_t PDC_sbh_uint64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint3
  *    
  * For all cases, if the specified number of bytes are NOT available,
  * the IO cursor is not advanced, and:
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
  *        + ed->loc begin/end set to elt/char position of start/end of the 'too small' field
  *
@@ -1755,91 +1867,91 @@ PDC_error_t PDC_sbh_uint64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint3
  *
  * If num_digits, num_bytes, or d_exp is not in a legal choice for the target type
  * and sign of the value:
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *          + ed->errCode set to PDC_BAD_PARAM
  *
  * If the actual numerator is not in the min/max numerator range, then:
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *          + ed->errCode set to PDC_RANGE
  *
  * If the specified bytes are not legal EBC/BCD integer bytes, then 
- *    if !em || *em < PDC_Ignore:
+ *    if !m || *m < PDC_Ignore:
  *          + ed->errCode set to one of:
  *                PDC_INVALID_EBC_NUM
  *                PDC_INVALID_BCD_NUM
  *
  */
 
-PDC_error_t PDC_ebc_fpoint8_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_ebc_fpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint8 *res_out);
-PDC_error_t PDC_ebc_fpoint16_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_ebc_fpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint16 *res_out);
-PDC_error_t PDC_ebc_fpoint32_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_ebc_fpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint32 *res_out);
-PDC_error_t PDC_ebc_fpoint64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_ebc_fpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint64 *res_out);
 
-PDC_error_t PDC_ebc_ufpoint8_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_ebc_ufpoint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint8 *res_out);
-PDC_error_t PDC_ebc_ufpoint16_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_ebc_ufpoint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint16 *res_out);
-PDC_error_t PDC_ebc_ufpoint32_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_ebc_ufpoint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint32 *res_out);
-PDC_error_t PDC_ebc_ufpoint64_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_ebc_ufpoint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint64 *res_out);
 
-PDC_error_t PDC_bcd_fpoint8_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_bcd_fpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint8 *res_out);
-PDC_error_t PDC_bcd_fpoint16_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_bcd_fpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint16 *res_out);
-PDC_error_t PDC_bcd_fpoint32_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_bcd_fpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint32 *res_out);
-PDC_error_t PDC_bcd_fpoint64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_bcd_fpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint64 *res_out);
 
-PDC_error_t PDC_bcd_ufpoint8_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_bcd_ufpoint8_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint8 *res_out);
-PDC_error_t PDC_bcd_ufpoint16_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_bcd_ufpoint16_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint16 *res_out);
-PDC_error_t PDC_bcd_ufpoint32_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_bcd_ufpoint32_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint32 *res_out);
-PDC_error_t PDC_bcd_ufpoint64_read (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp,
+PDC_error_t PDC_bcd_ufpoint64_read (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint64 *res_out);
 
-PDC_error_t PDC_sbl_fpoint8_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_fpoint8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint8 *res_out);
-PDC_error_t PDC_sbl_fpoint16_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_fpoint16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint16 *res_out);
-PDC_error_t PDC_sbl_fpoint32_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_fpoint32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint32 *res_out);
-PDC_error_t PDC_sbl_fpoint64_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_fpoint64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint64 *res_out);
 
-PDC_error_t PDC_sbl_ufpoint8_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_ufpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint8 *res_out);
-PDC_error_t PDC_sbl_ufpoint16_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_ufpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint16 *res_out);
-PDC_error_t PDC_sbl_ufpoint32_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_ufpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint32 *res_out);
-PDC_error_t PDC_sbl_ufpoint64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbl_ufpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint64 *res_out);
 
-PDC_error_t PDC_sbh_fpoint8_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbh_fpoint8_read    (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint8 *res_out);
-PDC_error_t PDC_sbh_fpoint16_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbh_fpoint16_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint16 *res_out);
-PDC_error_t PDC_sbh_fpoint32_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbh_fpoint32_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint32 *res_out);
-PDC_error_t PDC_sbh_fpoint64_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbh_fpoint64_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_fpoint64 *res_out);
 
-PDC_error_t PDC_sbh_ufpoint8_read   (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbh_ufpoint8_read   (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint8 *res_out);
-PDC_error_t PDC_sbh_ufpoint16_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbh_ufpoint16_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint16 *res_out);
-PDC_error_t PDC_sbh_ufpoint32_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbh_ufpoint32_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint32 *res_out);
-PDC_error_t PDC_sbh_ufpoint64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
+PDC_error_t PDC_sbh_ufpoint64_read  (PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint64 *res_out);
 
 /* ********************************************************************************
@@ -2691,7 +2803,7 @@ PDC_error_t PDC_swap_bytes(PDC_byte *bytes, size_t num_bytes);
 /*
  * Going away eventually
  */
-PDC_error_t PDC_dummy_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_int32 dummy_val, PDC_base_ed *ed, PDC_int32 *res_out);
+PDC_error_t PDC_dummy_read(PDC_t *pdc, const PDC_base_m *m, PDC_int32 dummy_val, PDC_base_ed *ed, PDC_int32 *res_out);
 
 /* ================================================================================
  * INCLUDE MACRO IMPLS OF SOME OF THE FUNCTIONS DECLARED ABOVE

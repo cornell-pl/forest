@@ -6,8 +6,8 @@
 
 #PADS_name     inMemory      checkSetMask  errorDescription     readFunction                  scanFunctionOpt               accumulatorOpt    DiskSize  Memory(S/V) Endian
 
-PDC_a_char_lit PDC_char      PDC_base_csm  PDC_base_ed          PDC_a_char_lit_read_internal  PDC_a_char_lit_scan_internal  PDC_uint8_acc     1         S           N
-PDC_a_str_lit  PDC_string    PDC_base_csm  PDC_base_ed          PDC_a_str_lit_read_internal   PDC_a_str_lit_scan_internal   PDC_string_acc    P         S           N
-PDC_e_char_lit PDC_char      PDC_base_csm  PDC_base_ed          PDC_e_char_lit_read_internal  PDC_e_char_lit_scan_internal  PDC_uint8_acc     1         S           N
-PDC_e_str_lit  PDC_string    PDC_base_csm  PDC_base_ed          PDC_e_str_lit_read_internal   PDC_e_str_lit_scan_internal   PDC_string_acc    P         S           N
+PDC_a_char_lit PDC_char      PDC_base_m    PDC_base_ed          PDC_a_char_lit_read_internal  PDC_a_char_lit_scan_internal  PDC_uint8_acc     1         S           N
+PDC_a_str_lit  PDC_string    PDC_base_m    PDC_base_ed          PDC_a_str_lit_read_internal   PDC_a_str_lit_scan_internal   PDC_string_acc    P         S           N
+PDC_e_char_lit PDC_char      PDC_base_m    PDC_base_ed          PDC_e_char_lit_read_internal  PDC_e_char_lit_scan_internal  PDC_uint8_acc     1         S           N
+PDC_e_str_lit  PDC_string    PDC_base_m    PDC_base_ed          PDC_e_str_lit_read_internal   PDC_e_str_lit_scan_internal   PDC_string_acc    P         S           N
 

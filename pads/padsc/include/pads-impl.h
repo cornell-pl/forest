@@ -64,54 +64,54 @@ PDC_error_t PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stop
 /* ================================================================================ */
 /* INTERNAL READ ROUTINES (helpers) */
 
-PDC_error_t PDCI_char_lit_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed,
+PDC_error_t PDCI_char_lit_read(PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed,
 			       PDC_char c, PDC_charset char_set,
 			       const char* whatfn, int safe);
 
-PDC_error_t PDCI_str_lit_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, const PDC_string *s,
+PDC_error_t PDCI_str_lit_read(PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed, const PDC_string *s,
 			      PDC_charset char_set, const char *whatfn, int safe);
 
-PDC_error_t PDCI_Cstr_lit_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, const char *s,
+PDC_error_t PDCI_Cstr_lit_read(PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed, const char *s,
 			      PDC_charset char_set, const char *whatfn, int safe);
 
-PDC_error_t PDCI_countX(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, int eor_required,
+PDC_error_t PDCI_countX(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
 			PDC_base_ed *ed, PDC_int32 *res_out,
 			PDC_charset char_set, const char *whatfn, int safe);
 
 
-PDC_error_t PDCI_countXtoY(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDCI_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
 			   PDC_base_ed *ed, PDC_int32 *res_out,
 			   PDC_charset char_set, const char *whatfn, int safe);
 
-PDC_error_t PDCI_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDCI_date_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 			   PDC_base_ed *ed, PDC_uint32 *res_out,
 			   PDC_charset char_set, const char *whatfn, int safe);
 
-PDC_error_t PDCI_char_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out,
+PDC_error_t PDCI_char_read(PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed, PDC_char *c_out,
 			   PDC_charset char_set, const char *whatfn, int safe);
 
 
-PDC_error_t PDCI_string_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDCI_string_FW_read(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				PDC_base_ed *ed, PDC_string *s_out,
 				PDC_charset char_set, const char *whatfn, int safe);
 
-PDC_error_t PDCI_string_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDCI_string_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 			     PDC_base_ed *ed, PDC_string *s_out,
 			     PDC_charset char_set, const char *whatfn, int safe);
 
-PDC_error_t PDCI_string_ME_read(PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
+PDC_error_t PDCI_string_ME_read(PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
 				PDC_base_ed *ed, PDC_string *s_out,
 				PDC_charset char_set, const char *whatfn, int safe);
 
-PDC_error_t PDCI_string_CME_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
+PDC_error_t PDCI_string_CME_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
 				 PDC_base_ed *ed, PDC_string *s_out,
 				 PDC_charset char_set, const char *whatfn, int safe);
 
-PDC_error_t PDCI_string_SE_read(PDC_t *pdc, const PDC_base_csm *csm, const char *stopRegexp,
+PDC_error_t PDCI_string_SE_read(PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
 				PDC_base_ed *ed, PDC_string *s_out,
 				PDC_charset char_set, const char *whatfn, int safe);
 
-PDC_error_t PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
+PDC_error_t PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
 				 PDC_base_ed *ed, PDC_string *s_out,
 				 PDC_charset char_set, const char *whatfn, int safe);
 
@@ -214,180 +214,180 @@ ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_
  * CHAR/STRING READ FUNCTIONS
  */
 
-#define PDC_char_lit_read(pdc, csm, ed, c) \
-  PDCI_char_lit_read(pdc, csm, ed, c, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_char_lit_read", 1)
+#define PDC_char_lit_read(pdc, m, ed, c) \
+  PDCI_char_lit_read(pdc, m, ed, c, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_char_lit_read", 1)
 
-#define PDC_a_char_lit_read(pdc, csm, ed, c) \
-  PDCI_char_lit_read(pdc, csm, ed, c, PDC_charset_ASCII, "PDC_a_char_lit_read", 1)
+#define PDC_a_char_lit_read(pdc, m, ed, c) \
+  PDCI_char_lit_read(pdc, m, ed, c, PDC_charset_ASCII, "PDC_a_char_lit_read", 1)
 
-#define PDC_e_char_lit_read(pdc, csm, ed, c) \
-  PDCI_char_lit_read(pdc, csm, ed, c, PDC_charset_EBCDIC, "PDC_e_char_lit_read", 1)
+#define PDC_e_char_lit_read(pdc, m, ed, c) \
+  PDCI_char_lit_read(pdc, m, ed, c, PDC_charset_EBCDIC, "PDC_e_char_lit_read", 1)
 
-#define PDC_str_lit_read(pdc, csm, ed, s) \
-  PDCI_str_lit_read(pdc, csm, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_str_lit_read", 1)
+#define PDC_str_lit_read(pdc, m, ed, s) \
+  PDCI_str_lit_read(pdc, m, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_str_lit_read", 1)
 
-#define PDC_a_str_lit_read(pdc, csm, ed, s) \
-  PDCI_str_lit_read(pdc, csm, ed, s, PDC_charset_ASCII, "PDC_a_str_lit_read", 1)
+#define PDC_a_str_lit_read(pdc, m, ed, s) \
+  PDCI_str_lit_read(pdc, m, ed, s, PDC_charset_ASCII, "PDC_a_str_lit_read", 1)
 
-#define PDC_e_str_lit_read(pdc, csm, ed, s) \
-  PDCI_str_lit_read(pdc, csm, ed, s, PDC_charset_EBCDIC, "PDC_e_str_lit_read", 1)
+#define PDC_e_str_lit_read(pdc, m, ed, s) \
+  PDCI_str_lit_read(pdc, m, ed, s, PDC_charset_EBCDIC, "PDC_e_str_lit_read", 1)
 
-#define PDC_Cstr_lit_read(pdc, csm, ed, s) \
-  PDCI_Cstr_lit_read(pdc, csm, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_Cstr_lit_read", 1)
+#define PDC_Cstr_lit_read(pdc, m, ed, s) \
+  PDCI_Cstr_lit_read(pdc, m, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_Cstr_lit_read", 1)
 
-#define PDC_a_Cstr_lit_read(pdc, csm, ed, s) \
-  PDCI_Cstr_lit_read(pdc, csm, ed, s, PDC_charset_ASCII, "PDC_a_Cstr_lit_read", 1)
+#define PDC_a_Cstr_lit_read(pdc, m, ed, s) \
+  PDCI_Cstr_lit_read(pdc, m, ed, s, PDC_charset_ASCII, "PDC_a_Cstr_lit_read", 1)
 
-#define PDC_e_Cstr_lit_read(pdc, csm, ed, s) \
-  PDCI_Cstr_lit_read(pdc, csm, ed, s, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_read", 1)
+#define PDC_e_Cstr_lit_read(pdc, m, ed, s) \
+  PDCI_Cstr_lit_read(pdc, m, ed, s, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_read", 1)
 
-#define PDC_countX(pdc, csm, x, eor_required, ed, res_out) \
-  PDCI_countX(pdc, csm, x, eor_required, ed, res_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_countX", 1)
+#define PDC_countX(pdc, m, x, eor_required, ed, res_out) \
+  PDCI_countX(pdc, m, x, eor_required, ed, res_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_countX", 1)
 
-#define PDC_a_countX(pdc, csm, x, eor_required, ed, res_out) \
-  PDCI_countX(pdc, csm, x, eor_required, ed, res_out, PDC_charset_ASCII, "PDC_a_countX", 1)
+#define PDC_a_countX(pdc, m, x, eor_required, ed, res_out) \
+  PDCI_countX(pdc, m, x, eor_required, ed, res_out, PDC_charset_ASCII, "PDC_a_countX", 1)
 
-#define PDC_e_countX(pdc, csm, x, eor_required, ed, res_out) \
-  PDCI_countX(pdc, csm, x, eor_required, ed, res_out, PDC_charset_EBCDIC, "PDC_e_countX", 1)
+#define PDC_e_countX(pdc, m, x, eor_required, ed, res_out) \
+  PDCI_countX(pdc, m, x, eor_required, ed, res_out, PDC_charset_EBCDIC, "PDC_e_countX", 1)
 
-#define PDC_countXtoY(pdc, csm, x, y, ed, res_out) \
-  PDCI_countXtoY(pdc, csm, x, y, ed, res_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_countXtoY", 1)
+#define PDC_countXtoY(pdc, m, x, y, ed, res_out) \
+  PDCI_countXtoY(pdc, m, x, y, ed, res_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_countXtoY", 1)
 
-#define PDC_a_countXtoY(pdc, csm, x, y, ed, res_out) \
-  PDCI_countXtoY(pdc, csm, x, y, ed, res_out, PDC_charset_ASCII, "PDC_a_countXtoY", 1)
+#define PDC_a_countXtoY(pdc, m, x, y, ed, res_out) \
+  PDCI_countXtoY(pdc, m, x, y, ed, res_out, PDC_charset_ASCII, "PDC_a_countXtoY", 1)
 
-#define PDC_e_countXtoY(pdc, csm, x, y, ed, res_out) \
-  PDCI_countXtoY(pdc, csm, x, y, ed, res_out, PDC_charset_EBCDIC, "PDC_e_countXtoY", 1)
+#define PDC_e_countXtoY(pdc, m, x, y, ed, res_out) \
+  PDCI_countXtoY(pdc, m, x, y, ed, res_out, PDC_charset_EBCDIC, "PDC_e_countXtoY", 1)
 
-#define PDC_date_read(pdc, csm, stopChar, ed, res_out) \
-  PDCI_date_read(pdc, csm, stopChar, ed, res_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_date_read", 1)
+#define PDC_date_read(pdc, m, stopChar, ed, res_out) \
+  PDCI_date_read(pdc, m, stopChar, ed, res_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_date_read", 1)
 
-#define PDC_a_date_read(pdc, csm, stopChar, ed, res_out) \
-  PDCI_date_read(pdc, csm, stopChar, ed, res_out, PDC_charset_ASCII, "PDC_a_date_read", 1)
+#define PDC_a_date_read(pdc, m, stopChar, ed, res_out) \
+  PDCI_date_read(pdc, m, stopChar, ed, res_out, PDC_charset_ASCII, "PDC_a_date_read", 1)
 
-#define PDC_e_date_read(pdc, csm, stopChar, ed, res_out) \
-  PDCI_date_read(pdc, csm, stopChar, ed, res_out, PDC_charset_EBCDIC, "PDC_e_date_read", 1)
+#define PDC_e_date_read(pdc, m, stopChar, ed, res_out) \
+  PDCI_date_read(pdc, m, stopChar, ed, res_out, PDC_charset_EBCDIC, "PDC_e_date_read", 1)
 
-#define PDC_char_read(pdc, csm, ed, c_out) \
-  PDCI_char_read(pdc, csm, ed, c_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_char_read", 1)
+#define PDC_char_read(pdc, m, ed, c_out) \
+  PDCI_char_read(pdc, m, ed, c_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_char_read", 1)
 
-#define PDC_a_char_read(pdc, csm, ed, c_out) \
-  PDCI_char_read(pdc, csm, ed, c_out, PDC_charset_ASCII, "PDC_a_char_read", 1)
+#define PDC_a_char_read(pdc, m, ed, c_out) \
+  PDCI_char_read(pdc, m, ed, c_out, PDC_charset_ASCII, "PDC_a_char_read", 1)
 
-#define PDC_e_char_read(pdc, csm, ed, c_out) \
-  PDCI_char_read(pdc, csm, ed, c_out, PDC_charset_EBCDIC, "PDC_e_char_read", 1)
+#define PDC_e_char_read(pdc, m, ed, c_out) \
+  PDCI_char_read(pdc, m, ed, c_out, PDC_charset_EBCDIC, "PDC_e_char_read", 1)
 
-#define PDC_string_FW_read(pdc, csm, width, ed, s_out) \
-  PDCI_string_FW_read(pdc, csm, width, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_FW_read", 1)
+#define PDC_string_FW_read(pdc, m, width, ed, s_out) \
+  PDCI_string_FW_read(pdc, m, width, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_FW_read", 1)
 
-#define PDC_a_string_FW_read(pdc, csm, width, ed, s_out) \
-  PDCI_string_FW_read(pdc, csm, width, ed, s_out, PDC_charset_ASCII, "PDC_a_string_FW_read", 1)
+#define PDC_a_string_FW_read(pdc, m, width, ed, s_out) \
+  PDCI_string_FW_read(pdc, m, width, ed, s_out, PDC_charset_ASCII, "PDC_a_string_FW_read", 1)
 
-#define PDC_e_string_FW_read(pdc, csm, width, ed, s_out) \
-  PDCI_string_FW_read(pdc, csm, width, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_FW_read", 1)
-
-
-#define PDC_string_read(pdc, csm, stopChar, ed, s_out) \
-  PDCI_string_read(pdc, csm, stopChar, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_read", 1)
-
-#define PDC_a_string_read(pdc, csm, stopChar, ed, s_out) \
-  PDCI_string_read(pdc, csm, stopChar, ed, s_out, PDC_charset_ASCII, "PDC_a_string_read", 1)
-
-#define PDC_e_string_read(pdc, csm, stopChar, ed, s_out) \
-  PDCI_string_read(pdc, csm, stopChar, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_read", 1)
+#define PDC_e_string_FW_read(pdc, m, width, ed, s_out) \
+  PDCI_string_FW_read(pdc, m, width, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_FW_read", 1)
 
 
-#define PDC_string_ME_read(pdc, csm, matchRegexp, ed, s_out) \
-  PDCI_string_ME_read(pdc, csm, matchRegexp, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_ME_read", 1)
+#define PDC_string_read(pdc, m, stopChar, ed, s_out) \
+  PDCI_string_read(pdc, m, stopChar, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_read", 1)
 
-#define PDC_a_string_ME_read(pdc, csm, matchRegexp, ed, s_out) \
-  PDCI_string_ME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_ME_read", 1)
+#define PDC_a_string_read(pdc, m, stopChar, ed, s_out) \
+  PDCI_string_read(pdc, m, stopChar, ed, s_out, PDC_charset_ASCII, "PDC_a_string_read", 1)
 
-#define PDC_e_string_ME_read(pdc, csm, matchRegexp, ed, s_out) \
-  PDCI_string_ME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_ME_read", 1)
-
-
-#define PDC_string_CME_read(pdc, csm, matchRegexp, ed, s_out) \
-  PDCI_string_CME_read(pdc, csm, matchRegexp, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_CME_read", 1)
-
-#define PDC_a_string_CME_read(pdc, csm, matchRegexp, ed, s_out) \
-  PDCI_string_CME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_CME_read", 1)
-
-#define PDC_e_string_CME_read(pdc, csm, matchRegexp, ed, s_out) \
-  PDCI_string_CME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_CME_read", 1)
+#define PDC_e_string_read(pdc, m, stopChar, ed, s_out) \
+  PDCI_string_read(pdc, m, stopChar, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_read", 1)
 
 
-#define PDC_string_SE_read(pdc, csm, stopRegexp, ed, s_out) \
-  PDCI_string_SE_read(pdc, csm, stopRegexp, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_SE_read", 1)
+#define PDC_string_ME_read(pdc, m, matchRegexp, ed, s_out) \
+  PDCI_string_ME_read(pdc, m, matchRegexp, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_ME_read", 1)
 
-#define PDC_a_string_SE_read(pdc, csm, stopRegexp, ed, s_out) \
-  PDCI_string_SE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_SE_read", 1)
+#define PDC_a_string_ME_read(pdc, m, matchRegexp, ed, s_out) \
+  PDCI_string_ME_read(pdc, m, matchRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_ME_read", 1)
 
-#define PDC_e_string_SE_read(pdc, csm, stopRegexp, ed, s_out) \
-  PDCI_string_SE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_SE_read", 1)
+#define PDC_e_string_ME_read(pdc, m, matchRegexp, ed, s_out) \
+  PDCI_string_ME_read(pdc, m, matchRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_ME_read", 1)
 
 
-#define PDC_string_CSE_read(pdc, csm, stopRegexp, ed, s_out) \
-  PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_CSE_read", 1)
+#define PDC_string_CME_read(pdc, m, matchRegexp, ed, s_out) \
+  PDCI_string_CME_read(pdc, m, matchRegexp, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_CME_read", 1)
 
-#define PDC_a_string_CSE_read(pdc, csm, stopRegexp, ed, s_out) \
-  PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_CSE_read", 1)
+#define PDC_a_string_CME_read(pdc, m, matchRegexp, ed, s_out) \
+  PDCI_string_CME_read(pdc, m, matchRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_CME_read", 1)
 
-#define PDC_e_string_CSE_read(pdc, csm, stopRegexp, ed, s_out) \
-  PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_CSE_read", 1)
+#define PDC_e_string_CME_read(pdc, m, matchRegexp, ed, s_out) \
+  PDCI_string_CME_read(pdc, m, matchRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_CME_read", 1)
+
+
+#define PDC_string_SE_read(pdc, m, stopRegexp, ed, s_out) \
+  PDCI_string_SE_read(pdc, m, stopRegexp, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_SE_read", 1)
+
+#define PDC_a_string_SE_read(pdc, m, stopRegexp, ed, s_out) \
+  PDCI_string_SE_read(pdc, m, stopRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_SE_read", 1)
+
+#define PDC_e_string_SE_read(pdc, m, stopRegexp, ed, s_out) \
+  PDCI_string_SE_read(pdc, m, stopRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_SE_read", 1)
+
+
+#define PDC_string_CSE_read(pdc, m, stopRegexp, ed, s_out) \
+  PDCI_string_CSE_read(pdc, m, stopRegexp, ed, s_out, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_CSE_read", 1)
+
+#define PDC_a_string_CSE_read(pdc, m, stopRegexp, ed, s_out) \
+  PDCI_string_CSE_read(pdc, m, stopRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_CSE_read", 1)
+
+#define PDC_e_string_CSE_read(pdc, m, stopRegexp, ed, s_out) \
+  PDCI_string_CSE_read(pdc, m, stopRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_CSE_read", 1)
 
 
 /* ================================================================================
  * DEFAULT STRING TO INTEGER READ FUNCTIONS
  */
 
-#define PDC_int8_read(pdc, csm, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int8_read, (pdc, csm, ed, res_out))
+#define PDC_int8_read(pdc, m, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, int8_read, (pdc, m, ed, res_out))
 
-#define PDC_int16_read(pdc, csm, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int16_read, (pdc, csm, ed, res_out))
+#define PDC_int16_read(pdc, m, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, int16_read, (pdc, m, ed, res_out))
 
-#define PDC_int32_read(pdc, csm, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int32_read, (pdc, csm, ed, res_out))
+#define PDC_int32_read(pdc, m, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, int32_read, (pdc, m, ed, res_out))
 
-#define PDC_int64_read(pdc, csm, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int64_read, (pdc, csm, ed, res_out))
+#define PDC_int64_read(pdc, m, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, int64_read, (pdc, m, ed, res_out))
 
-#define PDC_uint8_read(pdc, csm, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_read, (pdc, csm, ed, res_out))
+#define PDC_uint8_read(pdc, m, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_read, (pdc, m, ed, res_out))
 
-#define PDC_uint16_read(pdc, csm, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_read, (pdc, csm, ed, res_out))
+#define PDC_uint16_read(pdc, m, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_read, (pdc, m, ed, res_out))
 
-#define PDC_uint32_read(pdc, csm, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_read, (pdc, csm, ed, res_out))
+#define PDC_uint32_read(pdc, m, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_read, (pdc, m, ed, res_out))
 
-#define PDC_uint64_read(pdc, csm, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_read, (pdc, csm, ed, res_out))
+#define PDC_uint64_read(pdc, m, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_read, (pdc, m, ed, res_out))
 
-#define PDC_int8_FW_read(pdc, csm, width, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int8_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_int8_FW_read(pdc, m, width, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, int8_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_int16_FW_read(pdc, csm, width, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int16_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_int16_FW_read(pdc, m, width, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, int16_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_int32_FW_read(pdc, csm, width, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int32_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_int32_FW_read(pdc, m, width, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, int32_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_int64_FW_read(pdc, csm, width, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, int64_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_int64_FW_read(pdc, m, width, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, int64_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_uint8_FW_read(pdc, csm, width, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_uint8_FW_read(pdc, m, width, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, uint8_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_uint16_FW_read(pdc, csm, width, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_uint16_FW_read(pdc, m, width, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, uint16_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_uint32_FW_read(pdc, csm, width, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_uint32_FW_read(pdc, m, width, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, uint32_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_uint64_FW_read(pdc, csm, width, ed, res_out) \
-  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_uint64_FW_read(pdc, m, width, ed, res_out) \
+  PDCI_CHARSET_SWITCH(pdc, PDC, uint64_FW_read, (pdc, m, width, ed, res_out))
 
 /* ================================================================================
  * WRITE FUNCTIONS

@@ -282,291 +282,291 @@ PDC_error_t PDC_e_Cstr_lit_scan_internal(PDC_t *pdc, const char *findStr, const 
 #ifdef FOR_CKIT
 /* Prototypes for CKIT */
 
-PDC_error_t PDC_char_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_char_lit_read_internal(PDC_t *pdc, const PDC_base_m *m,
 				       PDC_base_ed *ed, PDC_char c);
-PDC_error_t PDC_a_char_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_char_lit_read_internal(PDC_t *pdc, const PDC_base_m *m,
 					 PDC_base_ed *ed, PDC_char c);
-PDC_error_t PDC_e_char_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_char_lit_read_internal(PDC_t *pdc, const PDC_base_m *m,
 					 PDC_base_ed *ed, PDC_char c);
-PDC_error_t PDC_str_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_str_lit_read_internal(PDC_t *pdc, const PDC_base_m *m,
 				      PDC_base_ed *ed, const PDC_string *s);
-PDC_error_t PDC_a_str_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_str_lit_read_internal(PDC_t *pdc, const PDC_base_m *m,
 					PDC_base_ed *ed, const PDC_string *s);
-PDC_error_t PDC_e_str_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_str_lit_read_internal(PDC_t *pdc, const PDC_base_m *m,
 					PDC_base_ed *ed, const PDC_string *s);
-PDC_error_t PDC_Cstr_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_Cstr_lit_read_internal(PDC_t *pdc, const PDC_base_m *m,
 				      PDC_base_ed *ed, const char *s);
-PDC_error_t PDC_a_Cstr_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_a_Cstr_lit_read_internal(PDC_t *pdc, const PDC_base_m *m,
 					PDC_base_ed *ed, const char *s);
-PDC_error_t PDC_e_Cstr_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_e_Cstr_lit_read_internal(PDC_t *pdc, const PDC_base_m *m,
 					PDC_base_ed *ed, const char *s);
-PDC_error_t PDC_countX_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, int eor_required,
+PDC_error_t PDC_countX_internal(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
 				PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_a_countX_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, int eor_required,
+PDC_error_t PDC_a_countX_internal(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
 				  PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_e_countX_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, int eor_required,
+PDC_error_t PDC_e_countX_internal(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
 				  PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_countXtoY_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDC_countXtoY_internal(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
 				   PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_a_countXtoY_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDC_a_countXtoY_internal(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
 				     PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_e_countXtoY_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDC_e_countXtoY_internal(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
 				     PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_date_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_date_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 				   PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_a_date_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_a_date_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 				     PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_e_date_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_e_date_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 				     PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_char_read_internal (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
-PDC_error_t PDC_a_char_read_internal (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
-PDC_error_t PDC_e_char_read_internal (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
-PDC_error_t PDC_string_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_char_read_internal (PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed, PDC_char *c_out);
+PDC_error_t PDC_a_char_read_internal (PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed, PDC_char *c_out);
+PDC_error_t PDC_e_char_read_internal (PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed, PDC_char *c_out);
+PDC_error_t PDC_string_FW_read_internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
 					PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_a_string_FW_read_internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
 					  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_e_string_FW_read_internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
 					  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_string_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_string_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 				     PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_a_string_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 				       PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
+PDC_error_t PDC_e_string_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 				       PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_string_ME_read_internal(PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
+PDC_error_t PDC_string_ME_read_internal(PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
 					PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_ME_read_internal(PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
+PDC_error_t PDC_a_string_ME_read_internal(PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
 					  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_ME_read_internal(PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
+PDC_error_t PDC_e_string_ME_read_internal(PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
 					  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_string_CME_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
+PDC_error_t PDC_string_CME_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
 					 PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_CME_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
+PDC_error_t PDC_a_string_CME_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
 					   PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_CME_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
+PDC_error_t PDC_e_string_CME_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
 					   PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_string_SE_read_internal(PDC_t *pdc, const PDC_base_csm *csm, const char *stopRegexp,
+PDC_error_t PDC_string_SE_read_internal(PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
 					PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_SE_read_internal(PDC_t *pdc, const PDC_base_csm *csm, const char *stopRegexp,
+PDC_error_t PDC_a_string_SE_read_internal(PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
 					  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_SE_read_internal(PDC_t *pdc, const PDC_base_csm *csm, const char *stopRegexp,
+PDC_error_t PDC_e_string_SE_read_internal(PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
 					  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_string_CSE_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
+PDC_error_t PDC_string_CSE_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
 					 PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_CSE_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
+PDC_error_t PDC_a_string_CSE_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
 					   PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_CSE_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
+PDC_error_t PDC_e_string_CSE_read_internal(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
 					   PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_int8_read_internal (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_int8_read_internal (PDC_t *pdc, const PDC_base_m *m,
 				    PDC_base_ed *ed, PDC_int8 *res_out);
-PDC_error_t PDC_int16_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_int16_read_internal(PDC_t *pdc, const PDC_base_m *m,
 				    PDC_base_ed *ed, PDC_int16 *res_out);
-PDC_error_t PDC_int32_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_int32_read_internal(PDC_t *pdc, const PDC_base_m *m,
 				    PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_int64_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_int64_read_internal(PDC_t *pdc, const PDC_base_m *m,
 				    PDC_base_ed *ed, PDC_int64 *res_out);
-PDC_error_t PDC_uint8_read_internal (PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_uint8_read_internal (PDC_t *pdc, const PDC_base_m *m,
 				     PDC_base_ed *ed, PDC_uint8 *res_out);
-PDC_error_t PDC_uint16_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_uint16_read_internal(PDC_t *pdc, const PDC_base_m *m,
 				     PDC_base_ed *ed, PDC_uint16 *res_out);
-PDC_error_t PDC_uint32_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_uint32_read_internal(PDC_t *pdc, const PDC_base_m *m,
 				     PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_uint64_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
+PDC_error_t PDC_uint64_read_internal(PDC_t *pdc, const PDC_base_m *m,
 				     PDC_base_ed *ed, PDC_uint64 *res_out);
-PDC_error_t PDC_int8_FW_read_internal (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_int8_FW_read_internal (PDC_t *pdc, const PDC_base_m *m, size_t width,
 				       PDC_base_ed *ed, PDC_int8 *res_out);
-PDC_error_t PDC_int16_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_int16_FW_read_internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				       PDC_base_ed *ed, PDC_int16 *res_out);
-PDC_error_t PDC_int32_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_int32_FW_read_internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				       PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_int64_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_int64_FW_read_internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
 				       PDC_base_ed *ed, PDC_int64 *res_out);
-PDC_error_t PDC_uint8_FW_read_internal (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_uint8_FW_read_internal (PDC_t *pdc, const PDC_base_m *m, size_t width,
 					PDC_base_ed *ed, PDC_uint8 *res_out);
-PDC_error_t PDC_uint16_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_uint16_FW_read_internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
 					PDC_base_ed *ed, PDC_uint16 *res_out);
-PDC_error_t PDC_uint32_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_uint32_FW_read_internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
 					PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_uint64_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
+PDC_error_t PDC_uint64_FW_read_internal(PDC_t *pdc, const PDC_base_m *m, size_t width,
 					PDC_base_ed *ed, PDC_uint64 *res_out);
 #else
 /* The actual impls */
 
-#define PDC_char_lit_read_internal(pdc, csm, ed, c) \
-          PDCI_char_lit_read(pdc, csm, ed, c, pdc->disc->def_charset, "PDC_char_lit_read", 0)
+#define PDC_char_lit_read_internal(pdc, m, ed, c) \
+          PDCI_char_lit_read(pdc, m, ed, c, pdc->disc->def_charset, "PDC_char_lit_read", 0)
 
-#define PDC_a_char_lit_read_internal(pdc, csm, ed, c) \
-          PDCI_char_lit_read(pdc, csm, ed, c, PDC_charset_ASCII, "PDC_a_char_lit_read", 0)
+#define PDC_a_char_lit_read_internal(pdc, m, ed, c) \
+          PDCI_char_lit_read(pdc, m, ed, c, PDC_charset_ASCII, "PDC_a_char_lit_read", 0)
 
-#define PDC_e_char_lit_read_internal(pdc, csm, ed, c) \
-          PDCI_char_lit_read(pdc, csm, ed, c, PDC_charset_EBCDIC, "PDC_e_char_lit_read", 0)
+#define PDC_e_char_lit_read_internal(pdc, m, ed, c) \
+          PDCI_char_lit_read(pdc, m, ed, c, PDC_charset_EBCDIC, "PDC_e_char_lit_read", 0)
 
-#define PDC_str_lit_read_internal(pdc, csm, ed, s) \
-          PDCI_str_lit_read(pdc, csm, ed, s, pdc->disc->def_charset, "PDC_str_lit_read", 0)
+#define PDC_str_lit_read_internal(pdc, m, ed, s) \
+          PDCI_str_lit_read(pdc, m, ed, s, pdc->disc->def_charset, "PDC_str_lit_read", 0)
 
-#define PDC_a_str_lit_read_internal(pdc, csm, ed, s) \
-          PDCI_str_lit_read(pdc, csm, ed, s, PDC_charset_ASCII, "PDC_a_str_lit_read", 0)
+#define PDC_a_str_lit_read_internal(pdc, m, ed, s) \
+          PDCI_str_lit_read(pdc, m, ed, s, PDC_charset_ASCII, "PDC_a_str_lit_read", 0)
 
-#define PDC_e_str_lit_read_internal(pdc, csm, ed, s) \
-          PDCI_str_lit_read(pdc, csm, ed, s, PDC_charset_EBCDIC, "PDC_e_str_lit_read", 0)
+#define PDC_e_str_lit_read_internal(pdc, m, ed, s) \
+          PDCI_str_lit_read(pdc, m, ed, s, PDC_charset_EBCDIC, "PDC_e_str_lit_read", 0)
 
-#define PDC_Cstr_lit_read_internal(pdc, csm, ed, s) \
-          PDCI_Cstr_lit_read(pdc, csm, ed, s, pdc->disc->def_charset, "PDC_Cstr_lit_read", 0)
+#define PDC_Cstr_lit_read_internal(pdc, m, ed, s) \
+          PDCI_Cstr_lit_read(pdc, m, ed, s, pdc->disc->def_charset, "PDC_Cstr_lit_read", 0)
 
-#define PDC_a_Cstr_lit_read_internal(pdc, csm, ed, s) \
-          PDCI_Cstr_lit_read(pdc, csm, ed, s, PDC_charset_ASCII, "PDC_a_Cstr_lit_read", 0)
+#define PDC_a_Cstr_lit_read_internal(pdc, m, ed, s) \
+          PDCI_Cstr_lit_read(pdc, m, ed, s, PDC_charset_ASCII, "PDC_a_Cstr_lit_read", 0)
 
-#define PDC_e_Cstr_lit_read_internal(pdc, csm, ed, s) \
-          PDCI_Cstr_lit_read(pdc, csm, ed, s, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_read", 0)
+#define PDC_e_Cstr_lit_read_internal(pdc, m, ed, s) \
+          PDCI_Cstr_lit_read(pdc, m, ed, s, PDC_charset_EBCDIC, "PDC_e_Cstr_lit_read", 0)
 
-#define PDC_countX_internal(pdc, csm, x, eor_required, ed, res_out) \
-          PDCI_countX(pdc, csm, x, eor_required, ed, res_out, pdc->disc->def_charset, "PDC_countX", 0)
+#define PDC_countX_internal(pdc, m, x, eor_required, ed, res_out) \
+          PDCI_countX(pdc, m, x, eor_required, ed, res_out, pdc->disc->def_charset, "PDC_countX", 0)
 
-#define PDC_a_countX_internal(pdc, csm, x, eor_required, ed, res_out) \
-          PDCI_countX(pdc, csm, x, eor_required, ed, res_out, PDC_charset_ASCII, "PDC_a_countX", 0)
+#define PDC_a_countX_internal(pdc, m, x, eor_required, ed, res_out) \
+          PDCI_countX(pdc, m, x, eor_required, ed, res_out, PDC_charset_ASCII, "PDC_a_countX", 0)
 
-#define PDC_e_countX_internal(pdc, csm, x, eor_required, ed, res_out) \
-          PDCI_countX(pdc, csm, x, eor_required, ed, res_out, PDC_charset_EBCDIC, "PDC_e_countX", 0)
-
-
-#define PDC_countXtoY_internal(pdc, csm, x, y, ed, res_out) \
-          PDCI_countXtoY(pdc, csm, x, y, ed, res_out, pdc->disc->def_charset, "PDC_countXtoY", 0)
-
-#define PDC_a_countXtoY_internal(pdc, csm, x, y, ed, res_out) \
-          PDCI_countXtoY(pdc, csm, x, y, ed, res_out, PDC_charset_ASCII, "PDC_a_countXtoY", 0)
-
-#define PDC_e_countXtoY_internal(pdc, csm, x, y, ed, res_out) \
-          PDCI_countXtoY(pdc, csm, x, y, ed, res_out, PDC_charset_EBCDIC, "PDC_e_countXtoY", 0)
+#define PDC_e_countX_internal(pdc, m, x, eor_required, ed, res_out) \
+          PDCI_countX(pdc, m, x, eor_required, ed, res_out, PDC_charset_EBCDIC, "PDC_e_countX", 0)
 
 
-#define PDC_date_read_internal(pdc, csm, stopChar, ed, res_out) \
-          PDCI_date_read(pdc, csm, stopChar, ed, res_out, pdc->disc->def_charset, "PDC_date_read", 0)
+#define PDC_countXtoY_internal(pdc, m, x, y, ed, res_out) \
+          PDCI_countXtoY(pdc, m, x, y, ed, res_out, pdc->disc->def_charset, "PDC_countXtoY", 0)
 
-#define PDC_a_date_read_internal(pdc, csm, stopChar, ed, res_out) \
-          PDCI_date_read(pdc, csm, stopChar, ed, res_out, PDC_charset_ASCII, "PDC_a_date_read", 0)
+#define PDC_a_countXtoY_internal(pdc, m, x, y, ed, res_out) \
+          PDCI_countXtoY(pdc, m, x, y, ed, res_out, PDC_charset_ASCII, "PDC_a_countXtoY", 0)
 
-#define PDC_e_date_read_internal(pdc, csm, stopChar, ed, res_out) \
-          PDCI_date_read(pdc, csm, stopChar, ed, res_out, PDC_charset_EBCDIC, "PDC_e_date_read", 0)
-
-
-#define PDC_char_read_internal(pdc, csm, ed, c_out) \
-          PDCI_char_read(pdc, csm, ed, c_out, pdc->disc->def_charset, "PDC_char_read", 0)
-
-#define PDC_a_char_read_internal(pdc, csm, ed, c_out) \
-          PDCI_char_read(pdc, csm, ed, c_out, PDC_charset_ASCII, "PDC_a_char_read", 0)
-
-#define PDC_e_char_read_internal(pdc, csm, ed, c_out) \
-          PDCI_char_read(pdc, csm, ed, c_out, PDC_charset_EBCDIC, "PDC_e_char_read", 0)
+#define PDC_e_countXtoY_internal(pdc, m, x, y, ed, res_out) \
+          PDCI_countXtoY(pdc, m, x, y, ed, res_out, PDC_charset_EBCDIC, "PDC_e_countXtoY", 0)
 
 
-#define PDC_string_FW_read_internal(pdc, csm, width, ed, s_out) \
-          PDCI_string_FW_read(pdc, csm, width, ed, s_out, pdc->disc->def_charset, "PDC_string_FW_read", 0)
+#define PDC_date_read_internal(pdc, m, stopChar, ed, res_out) \
+          PDCI_date_read(pdc, m, stopChar, ed, res_out, pdc->disc->def_charset, "PDC_date_read", 0)
 
-#define PDC_a_string_FW_read_internal(pdc, csm, width, ed, s_out) \
-          PDCI_string_FW_read(pdc, csm, width, ed, s_out, PDC_charset_ASCII, "PDC_a_string_FW_read", 0)
+#define PDC_a_date_read_internal(pdc, m, stopChar, ed, res_out) \
+          PDCI_date_read(pdc, m, stopChar, ed, res_out, PDC_charset_ASCII, "PDC_a_date_read", 0)
 
-#define PDC_e_string_FW_read_internal(pdc, csm, width, ed, s_out) \
-          PDCI_string_FW_read(pdc, csm, width, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_FW_read", 0)
-
-
-#define PDC_string_read_internal(pdc, csm, stopChar, ed, s_out) \
-          PDCI_string_read(pdc, csm, stopChar, ed, s_out, pdc->disc->def_charset, "PDC_string_read", 0)
-
-#define PDC_a_string_read_internal(pdc, csm, stopChar, ed, s_out) \
-          PDCI_string_read(pdc, csm, stopChar, ed, s_out, PDC_charset_ASCII, "PDC_a_string_read", 0)
-
-#define PDC_e_string_read_internal(pdc, csm, stopChar, ed, s_out) \
-          PDCI_string_read(pdc, csm, stopChar, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_read", 0)
+#define PDC_e_date_read_internal(pdc, m, stopChar, ed, res_out) \
+          PDCI_date_read(pdc, m, stopChar, ed, res_out, PDC_charset_EBCDIC, "PDC_e_date_read", 0)
 
 
-#define PDC_string_ME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
-          PDCI_string_ME_read(pdc, csm, matchRegexp, ed, s_out, pdc->disc->def_charset, "PDC_string_ME_read", 0)
+#define PDC_char_read_internal(pdc, m, ed, c_out) \
+          PDCI_char_read(pdc, m, ed, c_out, pdc->disc->def_charset, "PDC_char_read", 0)
 
-#define PDC_a_string_ME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
-          PDCI_string_ME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_ME_read", 0)
+#define PDC_a_char_read_internal(pdc, m, ed, c_out) \
+          PDCI_char_read(pdc, m, ed, c_out, PDC_charset_ASCII, "PDC_a_char_read", 0)
 
-#define PDC_e_string_ME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
-          PDCI_string_ME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_ME_read", 0)
-
-
-#define PDC_string_CME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
-          PDCI_string_CME_read(pdc, csm, matchRegexp, ed, s_out, pdc->disc->def_charset, "PDC_string_CME_read", 0)
-
-#define PDC_a_string_CME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
-          PDCI_string_CME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_CME_read", 0)
-
-#define PDC_e_string_CME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
-          PDCI_string_CME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_CME_read", 0)
+#define PDC_e_char_read_internal(pdc, m, ed, c_out) \
+          PDCI_char_read(pdc, m, ed, c_out, PDC_charset_EBCDIC, "PDC_e_char_read", 0)
 
 
-#define PDC_string_SE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
-          PDCI_string_SE_read(pdc, csm, stopRegexp, ed, s_out, pdc->disc->def_charset, "PDC_string_SE_read", 0)
+#define PDC_string_FW_read_internal(pdc, m, width, ed, s_out) \
+          PDCI_string_FW_read(pdc, m, width, ed, s_out, pdc->disc->def_charset, "PDC_string_FW_read", 0)
 
-#define PDC_a_string_SE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
-          PDCI_string_SE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_SE_read", 0)
+#define PDC_a_string_FW_read_internal(pdc, m, width, ed, s_out) \
+          PDCI_string_FW_read(pdc, m, width, ed, s_out, PDC_charset_ASCII, "PDC_a_string_FW_read", 0)
 
-#define PDC_e_string_SE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
-          PDCI_string_SE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_SE_read", 0)
+#define PDC_e_string_FW_read_internal(pdc, m, width, ed, s_out) \
+          PDCI_string_FW_read(pdc, m, width, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_FW_read", 0)
 
 
-#define PDC_string_CSE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
-          PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, pdc->disc->def_charset, "PDC_string_CSE_read", 0)
+#define PDC_string_read_internal(pdc, m, stopChar, ed, s_out) \
+          PDCI_string_read(pdc, m, stopChar, ed, s_out, pdc->disc->def_charset, "PDC_string_read", 0)
 
-#define PDC_a_string_CSE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
-          PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_CSE_read", 0)
+#define PDC_a_string_read_internal(pdc, m, stopChar, ed, s_out) \
+          PDCI_string_read(pdc, m, stopChar, ed, s_out, PDC_charset_ASCII, "PDC_a_string_read", 0)
 
-#define PDC_e_string_CSE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
-          PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_CSE_read", 0)
+#define PDC_e_string_read_internal(pdc, m, stopChar, ed, s_out) \
+          PDCI_string_read(pdc, m, stopChar, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_read", 0)
+
+
+#define PDC_string_ME_read_internal(pdc, m, matchRegexp, ed, s_out) \
+          PDCI_string_ME_read(pdc, m, matchRegexp, ed, s_out, pdc->disc->def_charset, "PDC_string_ME_read", 0)
+
+#define PDC_a_string_ME_read_internal(pdc, m, matchRegexp, ed, s_out) \
+          PDCI_string_ME_read(pdc, m, matchRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_ME_read", 0)
+
+#define PDC_e_string_ME_read_internal(pdc, m, matchRegexp, ed, s_out) \
+          PDCI_string_ME_read(pdc, m, matchRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_ME_read", 0)
+
+
+#define PDC_string_CME_read_internal(pdc, m, matchRegexp, ed, s_out) \
+          PDCI_string_CME_read(pdc, m, matchRegexp, ed, s_out, pdc->disc->def_charset, "PDC_string_CME_read", 0)
+
+#define PDC_a_string_CME_read_internal(pdc, m, matchRegexp, ed, s_out) \
+          PDCI_string_CME_read(pdc, m, matchRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_CME_read", 0)
+
+#define PDC_e_string_CME_read_internal(pdc, m, matchRegexp, ed, s_out) \
+          PDCI_string_CME_read(pdc, m, matchRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_CME_read", 0)
+
+
+#define PDC_string_SE_read_internal(pdc, m, stopRegexp, ed, s_out) \
+          PDCI_string_SE_read(pdc, m, stopRegexp, ed, s_out, pdc->disc->def_charset, "PDC_string_SE_read", 0)
+
+#define PDC_a_string_SE_read_internal(pdc, m, stopRegexp, ed, s_out) \
+          PDCI_string_SE_read(pdc, m, stopRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_SE_read", 0)
+
+#define PDC_e_string_SE_read_internal(pdc, m, stopRegexp, ed, s_out) \
+          PDCI_string_SE_read(pdc, m, stopRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_SE_read", 0)
+
+
+#define PDC_string_CSE_read_internal(pdc, m, stopRegexp, ed, s_out) \
+          PDCI_string_CSE_read(pdc, m, stopRegexp, ed, s_out, pdc->disc->def_charset, "PDC_string_CSE_read", 0)
+
+#define PDC_a_string_CSE_read_internal(pdc, m, stopRegexp, ed, s_out) \
+          PDCI_string_CSE_read(pdc, m, stopRegexp, ed, s_out, PDC_charset_ASCII, "PDC_a_string_CSE_read", 0)
+
+#define PDC_e_string_CSE_read_internal(pdc, m, stopRegexp, ed, s_out) \
+          PDCI_string_CSE_read(pdc, m, stopRegexp, ed, s_out, PDC_charset_EBCDIC, "PDC_e_string_CSE_read", 0)
 
 /* def_charset read functions */
 
-#define PDC_int8_read_internal(pdc, csm, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int8_read, (pdc, csm, ed, res_out))
+#define PDC_int8_read_internal(pdc, m, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int8_read, (pdc, m, ed, res_out))
 
-#define PDC_int16_read_internal(pdc, csm, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int16_read, (pdc, csm, ed, res_out))
+#define PDC_int16_read_internal(pdc, m, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int16_read, (pdc, m, ed, res_out))
 
-#define PDC_int32_read_internal(pdc, csm, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int32_read, (pdc, csm, ed, res_out))
+#define PDC_int32_read_internal(pdc, m, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int32_read, (pdc, m, ed, res_out))
 
-#define PDC_int64_read_internal(pdc, csm, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int64_read, (pdc, csm, ed, res_out))
+#define PDC_int64_read_internal(pdc, m, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int64_read, (pdc, m, ed, res_out))
 
-#define PDC_uint8_read_internal(pdc, csm, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint8_read, (pdc, csm, ed, res_out))
+#define PDC_uint8_read_internal(pdc, m, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint8_read, (pdc, m, ed, res_out))
 
-#define PDC_uint16_read_internal(pdc, csm, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint16_read, (pdc, csm, ed, res_out))
+#define PDC_uint16_read_internal(pdc, m, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint16_read, (pdc, m, ed, res_out))
 
-#define PDC_uint32_read_internal(pdc, csm, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint32_read, (pdc, csm, ed, res_out))
+#define PDC_uint32_read_internal(pdc, m, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint32_read, (pdc, m, ed, res_out))
 
-#define PDC_uint64_read_internal(pdc, csm, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint64_read, (pdc, csm, ed, res_out))
+#define PDC_uint64_read_internal(pdc, m, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint64_read, (pdc, m, ed, res_out))
 
-#define PDC_int8_FW_read_internal(pdc, csm, width, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int8_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_int8_FW_read_internal(pdc, m, width, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int8_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_int16_FW_read_internal(pdc, csm, width, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int16_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_int16_FW_read_internal(pdc, m, width, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int16_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_int32_FW_read_internal(pdc, csm, width, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int32_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_int32_FW_read_internal(pdc, m, width, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int32_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_int64_FW_read_internal(pdc, csm, width, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int64_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_int64_FW_read_internal(pdc, m, width, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int64_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_uint8_FW_read_internal(pdc, csm, width, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint8_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_uint8_FW_read_internal(pdc, m, width, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint8_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_uint16_FW_read_internal(pdc, csm, width, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint16_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_uint16_FW_read_internal(pdc, m, width, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint16_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_uint32_FW_read_internal(pdc, csm, width, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint32_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_uint32_FW_read_internal(pdc, m, width, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint32_FW_read, (pdc, m, width, ed, res_out))
 
-#define PDC_uint64_FW_read_internal(pdc, csm, width, ed, res_out) \
-  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint64_FW_read, (pdc, csm, width, ed, res_out))
+#define PDC_uint64_FW_read_internal(pdc, m, width, ed, res_out) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint64_FW_read, (pdc, m, width, ed, res_out))
 
 #endif /* FOR_CKIT */
 
@@ -602,33 +602,33 @@ ret_type fn_prefix ## u ## typ ## 64 ## fn_suffix(PDCI_FIRST_ARGS, const PDC_u #
 #define PDCI_LAST_ARGS 
 
 #undef PDCI_FIRST_ARGS
-#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed
+#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_m *m, PDC_base_ed *ed
 PDCI_DECL_FAMILY(PDC_error_t, PDC_a_, int, _read_internal, res_out);
 PDCI_DECL_FAMILY(PDC_error_t, PDC_e_, int, _read_internal, res_out);
 PDCI_DECL_FAMILY(PDC_error_t, PDC_b_, int, _read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
-#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_csm *csm, size_t width, PDC_base_ed *ed
+#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_m *m, size_t width, PDC_base_ed *ed
 PDCI_DECL_FAMILY(PDC_error_t, PDC_a_, int, _FW_read_internal, res_out);
 PDCI_DECL_FAMILY(PDC_error_t, PDC_e_, int, _FW_read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
-#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_base_ed *ed
+#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_base_ed *ed
 PDCI_DECL_FAMILY(PDC_error_t, PDC_ebc_, int, _read_internal, res_out);
 PDCI_DECL_FAMILY(PDC_error_t, PDC_bcd_, int, _read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
-#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_base_ed *ed
+#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_base_ed *ed
 PDCI_DECL_FAMILY(PDC_error_t, PDC_sbl_, int, _read_internal, res_out);
 PDCI_DECL_FAMILY(PDC_error_t, PDC_sbh_, int, _read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
-#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits, PDC_uint32 d_exp, PDC_base_ed *ed
+#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_digits, PDC_uint32 d_exp, PDC_base_ed *ed
 PDCI_DECL_FAMILY(PDC_error_t, PDC_ecb_, fpoint, _read_internal, res_out);
 PDCI_DECL_FAMILY(PDC_error_t, PDC_bcd_, fpoint, _read_internal, res_out);
 
 #undef PDCI_FIRST_ARGS
-#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp, PDC_base_ed *ed
+#define PDCI_FIRST_ARGS PDC_t *pdc, const PDC_base_m *m, PDC_uint32 num_bytes, PDC_uint32 d_exp, PDC_base_ed *ed
 PDCI_DECL_FAMILY(PDC_error_t, PDC_sbl_, fpoint, _read_internal, res_out);
 PDCI_DECL_FAMILY(PDC_error_t, PDC_sbh_, fpoint, _read_internal, res_out);
 
@@ -1350,6 +1350,11 @@ PDC_int16  PDCI_a2int16 (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_int32  PDCI_a2int32 (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_int64  PDCI_a2int64 (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 
+PDC_int8   PDCI_a2int8_norange  (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int16  PDCI_a2int16_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int32  PDCI_a2int32_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int64  PDCI_a2int64_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+
 ssize_t PDCI_int8_2a_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int8  i);
 ssize_t PDCI_int16_2a_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int16 i);
 ssize_t PDCI_int32_2a_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int32 i);
@@ -1374,6 +1379,11 @@ PDC_uint8  PDCI_a2uint8 (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_uint16 PDCI_a2uint16(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_uint32 PDCI_a2uint32(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_uint64 PDCI_a2uint64(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+
+PDC_uint8  PDCI_a2uint8_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint16 PDCI_a2uint16_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint32 PDCI_a2uint32_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint64 PDCI_a2uint64_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 
 ssize_t PDCI_uint8_2a_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint8  u);
 ssize_t PDCI_uint16_2a_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint16 u);
@@ -1400,6 +1410,11 @@ PDC_int16  PDCI_e2int16 (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_int32  PDCI_e2int32 (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_int64  PDCI_e2int64 (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 
+PDC_int8   PDCI_e2int8_norange  (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int16  PDCI_e2int16_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int32  PDCI_e2int32_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_int64  PDCI_e2int64_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+
 ssize_t PDCI_int8_2e_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int8  i);
 ssize_t PDCI_int16_2e_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int16 i);
 ssize_t PDCI_int32_2e_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int32 i);
@@ -1424,6 +1439,11 @@ PDC_uint8  PDCI_e2uint8 (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_uint16 PDCI_e2uint16(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_uint32 PDCI_e2uint32(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 PDC_uint64 PDCI_e2uint64(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+
+PDC_uint8  PDCI_e2uint8_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint16 PDCI_e2uint16_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint32 PDCI_e2uint32_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
+PDC_uint64 PDCI_e2uint64_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_byte **ptr_out);
 
 ssize_t PDCI_uint8_2e_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint8  u);
 ssize_t PDCI_uint16_2e_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint16 u);
@@ -1450,6 +1470,11 @@ PDC_int16  PDCI_ebc2int16(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digi
 PDC_int32  PDCI_ebc2int32(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 PDC_int64  PDCI_ebc2int64(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 
+PDC_int8   PDCI_ebc2int8_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_int16  PDCI_ebc2int16_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_int32  PDCI_ebc2int32_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_int64  PDCI_ebc2int64_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+
 ssize_t PDCI_int8_2ebc_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int8  i, PDC_uint32 num_digits);
 ssize_t PDCI_int16_2ebc_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int16 i, PDC_uint32 num_digits);
 ssize_t PDCI_int32_2ebc_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int32 i, PDC_uint32 num_digits);
@@ -1464,6 +1489,11 @@ PDC_uint8   PDCI_ebc2uint8 (PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_di
 PDC_uint16  PDCI_ebc2uint16(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 PDC_uint32  PDCI_ebc2uint32(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 PDC_uint64  PDCI_ebc2uint64(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+
+PDC_uint8   PDCI_ebc2uint8_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_uint16  PDCI_ebc2uint16_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_uint32  PDCI_ebc2uint32_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_uint64  PDCI_ebc2uint64_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 
 ssize_t PDCI_uint8_2ebc_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint8  u, PDC_uint32 num_digits);
 ssize_t PDCI_uint16_2ebc_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint16 u, PDC_uint32 num_digits);
@@ -1480,6 +1510,11 @@ PDC_int16  PDCI_bcd2int16(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digi
 PDC_int32  PDCI_bcd2int32(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 PDC_int64  PDCI_bcd2int64(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 
+PDC_int8   PDCI_bcd2int8_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_int16  PDCI_bcd2int16_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_int32  PDCI_bcd2int32_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_int64  PDCI_bcd2int64_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+
 ssize_t PDCI_int8_2bcd_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int8  i, PDC_uint32 num_digits);
 ssize_t PDCI_int16_2bcd_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int16 i, PDC_uint32 num_digits);
 ssize_t PDCI_int32_2bcd_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int32 i, PDC_uint32 num_digits);
@@ -1494,6 +1529,11 @@ PDC_uint8   PDCI_bcd2uint8 (PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_di
 PDC_uint16  PDCI_bcd2uint16(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 PDC_uint32  PDCI_bcd2uint32(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 PDC_uint64  PDCI_bcd2uint64(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+
+PDC_uint8   PDCI_bcd2uint8_norange (PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_uint16  PDCI_bcd2uint16_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_uint32  PDCI_bcd2uint32_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
+PDC_uint64  PDCI_bcd2uint64_norange(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_digits, PDC_byte **ptr_out);
 
 ssize_t PDCI_uint8_2bcd_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint8  u, PDC_uint32 num_digits);
 ssize_t PDCI_uint16_2bcd_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint16 u, PDC_uint32 num_digits);
@@ -1510,6 +1550,12 @@ PDC_int16  PDCI_sbl2int16(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_byte
 PDC_int32  PDCI_sbl2int32(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
 PDC_int64  PDCI_sbl2int64(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
 
+/* Above functions do not have range errors, so we do not need separate _norange versions */
+#define PDCI_sbl2int8_norange  PDCI_sbl2int8
+#define PDCI_sbl2int16_norange PDCI_sbl2int16
+#define PDCI_sbl2int32_norange PDCI_sbl2int32
+#define PDCI_sbl2int64_norange PDCI_sbl2int64
+
 ssize_t PDCI_int8_2sbl_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int8  i, PDC_uint32 num_bytes);
 ssize_t PDCI_int16_2sbl_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int16 i, PDC_uint32 num_bytes);
 ssize_t PDCI_int32_2sbl_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int32 i, PDC_uint32 num_bytes);
@@ -1524,6 +1570,12 @@ PDC_uint8   PDCI_sbl2uint8 (PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_by
 PDC_uint16  PDCI_sbl2uint16(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
 PDC_uint32  PDCI_sbl2uint32(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
 PDC_uint64  PDCI_sbl2uint64(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
+
+/* Above functions do not have range errors, so we do not need separate _norange versions */
+#define PDCI_sbl2uint8_norange  PDCI_sbl2uint8
+#define PDCI_sbl2uint16_norange PDCI_sbl2uint16
+#define PDCI_sbl2uint32_norange PDCI_sbl2uint32
+#define PDCI_sbl2uint64_norange PDCI_sbl2uint64
 
 ssize_t PDCI_uint8_2sbl_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint8  u, PDC_uint32 num_bytes);
 ssize_t PDCI_uint16_2sbl_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint16 u, PDC_uint32 num_bytes);
@@ -1540,6 +1592,12 @@ PDC_int16  PDCI_sbh2int16(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_byte
 PDC_int32  PDCI_sbh2int32(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
 PDC_int64  PDCI_sbh2int64(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
 
+/* Above functions do not have range errors, so we do not need separate _norange versions */
+#define PDCI_sbh2int8_norange  PDCI_sbh2int8
+#define PDCI_sbh2int16_norange PDCI_sbh2int16
+#define PDCI_sbh2int32_norange PDCI_sbh2int32
+#define PDCI_sbh2int64_norange PDCI_sbh2int64
+
 ssize_t PDCI_int8_2sbh_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int8  i, PDC_uint32 num_bytes);
 ssize_t PDCI_int16_2sbh_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int16 i, PDC_uint32 num_bytes);
 ssize_t PDCI_int32_2sbh_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_int32 i, PDC_uint32 num_bytes);
@@ -1554,6 +1612,12 @@ PDC_uint8   PDCI_sbh2uint8 (PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_by
 PDC_uint16  PDCI_sbh2uint16(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
 PDC_uint32  PDCI_sbh2uint32(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
 PDC_uint64  PDCI_sbh2uint64(PDC_t *pdc, const PDC_byte *bytes, PDC_uint32 num_bytes, PDC_byte **ptr_out);
+
+/* Above functions do not have range errors, so we do not need separate _norange versions */
+#define PDCI_sbh2uint8_norange  PDCI_sbh2uint8
+#define PDCI_sbh2uint16_norange PDCI_sbh2uint16
+#define PDCI_sbh2uint32_norange PDCI_sbh2uint32
+#define PDCI_sbh2uint64_norange PDCI_sbh2uint64
 
 ssize_t PDCI_uint8_2sbh_buf (PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint8  u, PDC_uint32 num_bytes);
 ssize_t PDCI_uint16_2sbh_buf(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbuf_full, PDC_uint16 u, PDC_uint32 num_bytes);

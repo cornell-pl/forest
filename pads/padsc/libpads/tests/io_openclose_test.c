@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
   PDC_t*          pdc;
   PDC_IO_disc_t*  io_disc;
   PDC_int8        i1;
-  PDC_base_csm    csm = PDC_CheckAndSet;
+  PDC_base_m      m    = PDC_CheckAndSet;
   PDC_base_ed     ed;
   PDC_disc_t      my_disc = PDC_default_disc;
   size_t          bytes_skipped;
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
     }
     /* try to read 4 fixed width integers (width 6) */
     for (i = 0; i < 4; i++) {
-      if (PDC_OK == PDC_a_int8_FW_read(pdc, &csm, 6, &ed, &i1)) {
+      if (PDC_OK == PDC_a_int8_FW_read(pdc, &m, 6, &ed, &i1)) {
 	error(0, "Read ascii integer of width 6: %ld", i1);
       }
     }
