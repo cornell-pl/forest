@@ -30,6 +30,7 @@ structure ParseTreeExt =
         datatype ('decr, 'ct, 'exp) PExternal = 
            PTypedef of {name : string,
 			params: ('ct * 'decr) list, 
+			isRecord : bool,
                         baseTy: Pty,
 			args   : 'exp list, 
                         predTy: Pty,

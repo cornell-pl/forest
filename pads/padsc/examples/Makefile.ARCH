@@ -29,6 +29,7 @@ test_format6  :: test_format6.c   format6.c     -lpadsc
 
 test_union2   :: test_punion2.c   punion2.c     -lpadsc
 test_array    :: test_array.c     array.c       -lpadsc
+test_typedef  :: test_typedef.c   typedef.c       -lpadsc
 test_enum     :: test_enum.c      enum.c        -lpadsc
 test_from     :: test_from.c      from.c        -lpadsc
 test_ai       :: test_ai.c        ai.c          -lpadsc

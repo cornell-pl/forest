@@ -1005,12 +1005,13 @@ pOptActParams: ([])
  | LCOLON pActParamList RCOLON ( List.rev pActParamList )
 
 pTypedef:
- PTYPEDEF pName pOptActParams pName pushScope pTyParams COLONCOLON pName pName EQGT LCURLY expr popScope
+ pIsRecord PTYPEDEF pName pOptActParams pName pushScope pTyParams COLONCOLON pName pName EQGT LCURLY expr popScope
  ( makeTypeName pName2;
    ExternalDeclExt(PX.PTypedef {baseTy = PX.Name pName1, 
                                 args   = pOptActParams,
                                 name   = pName2, 
 				params = pTyParams,
+				isRecord = pIsRecord,
 				predTy = PX.Name pName3,
 			        thisVar= pName4,
 			        pred = expr})

@@ -1007,7 +1007,7 @@ structure CnvExt : CNVEXT = struct
 			      then SOME ty else NONE
 		      end
 
-	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, 
+	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord,
 			        baseTy: PX.Pty, args: pcexp list, 
 			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
 		  let val base = "base"
@@ -1018,7 +1018,7 @@ structure CnvExt : CNVEXT = struct
                       val ds = lookupDiskSize baseTy
                       val mc = lookupMemChar baseTy
                       val endian = lookupEndian baseTy
-		      val isRecord = lookupRecord baseTy
+		      val isRecord = lookupRecord baseTy orelse isRecord
 		      val typedefProps = {diskSize=ds,memChar=mc, endian=endian, isRecord=isRecord}
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
@@ -1063,36 +1063,38 @@ structure CnvExt : CNVEXT = struct
                       val baseReadFun = lookupTy(baseTy, iSuf o readSuf, #readname)
 		      val () = checkParamTys(name, baseReadFun, args, 2, 2)
 		      val modPredX = PTSub.substExp (thisVar, P.starX(PT.Id (gMod rep)), pred)
-
-                      fun genReadSs () = 
-			  let 
-			      val () = expEqualTy(modPredX, CTintTys, 				
+		      fun chk () = expEqualTy(modPredX, CTintTys, 				
 					  fn s=> (" constraint for typedef "^
 						  name ^ " has type: " ^ s ^
 						  ". Expected an int."))
+
+                      fun genReadSs () = 
+			  let val resDeclSs = [P.varDeclS'(P.int, result)]
 			      val readBaseSs = 
-				  [PT.IfThen( 
-					     PL.readFunChkX(PL.PDC_ERROR, 
-							    baseReadFun, 
-							    PT.Id ts, 
-							    P.addrX (fieldX(em,base)),
-							    args,
-							    P.addrX (fieldX(ed,base)),
-							    PT.Id (gMod rep)),
-					     PT.Return PL.PDC_ERROR)]
+				  [P.assignS(PT.Id result, 
+					     PL.readFunX(baseReadFun, 
+							 PT.Id ts, 
+							 P.addrX (fieldX(em,base)),
+							 args,
+							 P.addrX (fieldX(ed,base)),
+							 PT.Id (gMod rep))),
+				   PT.IfThen(P.eqX(PT.Id result, PL.PDC_ERROR),
+					     PT.Goto (findEORSuf name))]
 
 			      val checkConstraintSs = 
-				  [PT.IfThen(
-					     P.andX(P.lteX(fieldX(em,user), PL.EM_CHECK),
+				  [PT.IfThen(P.andX(P.lteX(fieldX(em,user), PL.EM_CHECK),
 						    P.notX modPredX),
 					     PT.Compound (reportErrorSs(true,
 									PL.PDC_TYPEDEF_CONSTRAINT_ERR,
 									true,"", [])
-							  @ [PT.Return PL.PDC_ERROR])
+							  @ [P.assignS(PT.Id result, PL.PDC_ERROR),
+							     PT.Goto (findEORSuf name)])
 					     )]
-			      val okSs = [PT.Return PL.PDC_OK]
+			      val slurpSs = if isRecord then genReadEOR reportStructErrorSs () else []
+			      val endSs = [PT.Labeled(findEORSuf name, 
+						     PT.Compound(slurpSs @ [PT.Return (PT.Id result)]))]
 		      in
-			  readBaseSs @ checkConstraintSs @ okSs
+			  [PT.Compound (resDeclSs @ readBaseSs @ checkConstraintSs @ endSs)]
 		      end
 
                       (* -- Assemble read function *)
@@ -1100,6 +1102,7 @@ structure CnvExt : CNVEXT = struct
 		      val () = ignore (insTempVar(gMod rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
 		      val cParams : (string * pcty) list = List.map mungeParam params
                       val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
+		      val () = chk()
 		      val readFields = genReadSs ()                                   (* does type checking *)
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val bodySs = readFields 
@@ -1689,7 +1692,7 @@ structure CnvExt : CNVEXT = struct
 					 isVirtual:bool, isEndian:bool, pred:pcexp option, comment:string option} = 
 			  let val mc = lookupMemChar pty
 			      val ds = lookupDiskSize pty
-			      val isRecord = lookupRecord pty
+			      val isRecord = lookupRecord pty 
 			  in [{diskSize = ds, memChar = mc, endian = false, isRecord = isRecord}] end
 		     fun genTyPropsBrief e = [] (* not used in unions *)
 		     fun genTyPropsEOR e = [] (* not used in unions *)
@@ -1703,6 +1706,7 @@ structure CnvExt : CNVEXT = struct
 					
 		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
                      val unionProps = List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
+		     val unionProps = PTys.setRecord unionProps isRecord
                      val () = PTys.insert(Atom.atom name, unionProps)
 
                      (* generate enumerated type describing tags *)
@@ -2663,7 +2667,8 @@ structure CnvExt : CNVEXT = struct
 					 if min = max then TyProps.Size(n * (IntInf.toInt max), r * (IntInf.toInt max))
 					 else TyProps.Variable
 				     | _ => TyProps.Variable
-                 val arrayProps = {diskSize=arrayDiskSize, memChar = arrayMemChar, endian=false, isRecord=false}
+                 val arrayProps = {diskSize=arrayDiskSize, memChar = arrayMemChar, 
+				   endian=false, isRecord=isRecord}
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
 
