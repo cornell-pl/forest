@@ -1,3 +1,7 @@
+#ifndef PDCI_MacroArg2String
+#define PDCI_MacroArg2String(s) #s
+#endif
+
 #ifndef EXTRA_READ_ARGS
 #  define EXTRA_READ_ARGS
 #endif
@@ -9,6 +13,7 @@
 int main(int argc, char** argv) {
   P_t              *pads;
   Pdisc_t           my_disc = Pdefault_disc;
+  Pio_disc_t       *io_disc = 0;
   PADS_TY()         rep;
   PADS_TY(_pd)      pd;
   PADS_TY(_m)       m;
@@ -18,7 +23,21 @@ int main(int argc, char** argv) {
 #ifdef WSPACE_OK
   my_disc.flags |= (Pflags_t)P_WSPACE_OK;
 #endif
-  
+#ifdef COPY_STRINGS
+  my_disc.copy_strings = 1;
+#endif
+
+#ifdef IO_DISC_MK
+  if (!(io_disc = IO_DISC_MK)) {
+    error(ERROR_FATAL, "IO discipline make call [ " PDCI_MacroArg2String(IO_DISC_MK) " ] failed");
+  }
+#ifdef IO_DISC_DESCR
+  else { 
+    error(0, "Installed " IO_DISC_DESCR);
+  }
+#endif
+#endif
+
   if (argc == 2) {
     fileName = argv[1];
     error(0, "Data file = %s\n", fileName);
@@ -27,7 +46,7 @@ int main(int argc, char** argv) {
     error(0, "Data file = %s\n", DEF_INPUT_FILE);
   }
 
-  if (P_ERR == P_open(&pads, &my_disc, 0)) {
+  if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(ERROR_FATAL, "*** P_open failed ***");
   }
 
