@@ -38,7 +38,10 @@ regress:  sanity_check \
 	  regress_test_pswitch \
 	  regress_test_pswitch2 \
 	  regress_test_depends \
-	  regress_test_struct3
+	  regress_test_struct3 \
+	  regress_test_write_struct \
+	  regress_test_write_struct_strings
+
 	@echo " "; echo "DONE"; echo " "
 
 dib_tests: sanity_check $(DIB_TESTS)
@@ -72,6 +75,12 @@ regress_test_readint: test_readint
 	@(args=""; suf=""; filter="error:"; $(RegressFilter))
 
 regress_test_ai: test_ai
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_write_struct: test_write_struct
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_write_struct_strings: test_write_struct_strings
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_munion: manifest_union

@@ -35,11 +35,12 @@ int main(int argc, char** argv) {
     fname = argv[1];
   }
 
-  test_init(pdc, &rep);
   if (PDC_ERR == PDC_open(&pdc,0,0)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
+
+  test_init(pdc, &rep);
 
   pdc->disc->inv_valfn_map = PDC_inv_valfn_map_create(pdc); /* only needed if no map installed yet */ 
 #if 1
