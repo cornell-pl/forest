@@ -1,5 +1,5 @@
 #include "pads.h"
-#include "struct.h"
+#include "struct1.h"
 /* #define FILENAME  "stdin" */
 #define FILENAME  "../../data/write_struct" 
 
