@@ -88,10 +88,12 @@ typedef enum   PDC_errorRep_e      PDC_errorRep;
 typedef _ast_int1_t            PDC_int8;
 typedef _ast_int2_t            PDC_int16;
 typedef _ast_int4_t            PDC_int32; 
+typedef _ast_int8_t            PDC_int64; 
 
 typedef unsigned _ast_int1_t   PDC_uint8;
 typedef unsigned _ast_int2_t   PDC_uint16;
 typedef unsigned _ast_int4_t   PDC_uint32;
+typedef unsigned _ast_int8_t   PDC_uint64;
 
 typedef PDC_int8               PDC_aint8_rep;
 typedef PDC_aint8_rep          PDC_aint8;
@@ -116,14 +118,21 @@ typedef PDC_base_ed            PDC_auint32_ed;
 
 typedef unsigned long          PDC_flags_t;
 
+#define PDC_MIN_INT8       127
+#define PDC_MAX_INT8      -128
+#define PDC_MAX_UINT8      256
+
+#define PDC_MIN_INT16   -32768
+#define PDC_MAX_INT16    32767
+#define PDC_MAX_UINT16   65535
+
+/* ================================================================================ */ 
+/* ERROR REPORTING FUNCTIONS */
+
 /* 
  * An error function outputs a formatted error message, where level indicates:
  *     positive #    : warning/error (the larger the number, the greater the severity)
  *     negative # -K : debug msg at debug level K
- *
- * Two forms are required, one that takes ..., one that takes va_list
- * in each case, these args contain a printf-style format+args
- * 
  */
 typedef int (*PDC_error_f)(PDC_t* pdc, PDC_disc_t* disc, int level, ...);
 
@@ -226,15 +235,27 @@ PDC_error_t  PDC_IO_fclose     (PDC_t* pdc, PDC_disc_t* disc);
 PDC_error_t PDC_aint8_read(PDC_t* pdc, PDC_base_em* em,
 			   PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc);
 
+PDC_error_t PDC_aint16_read(PDC_t* pdc, PDC_base_em* em,
+			    PDC_base_ed* ed, PDC_int16* res_out, PDC_disc_t* disc);
+
 PDC_error_t PDC_aint32_read(PDC_t* pdc, PDC_base_em* em,
 			    PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
+
+PDC_error_t PDC_aint64_read(PDC_t* pdc, PDC_base_em* em,
+			    PDC_base_ed* ed, PDC_int64* res_out, PDC_disc_t* disc);
 
 
 PDC_error_t PDC_auint8_read(PDC_t* pdc, PDC_base_em* em,
 			    PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc);
 
+PDC_error_t PDC_auint16_read(PDC_t* pdc, PDC_base_em* em,
+			     PDC_base_ed* ed, PDC_uint16* res_out, PDC_disc_t* disc);
+
 PDC_error_t PDC_auint32_read(PDC_t* pdc, PDC_base_em* em,
 			     PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
+
+PDC_error_t PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
+			     PDC_base_ed* ed, PDC_uint64* res_out, PDC_disc_t* disc);
 
 /* ================================================================================ */
 
