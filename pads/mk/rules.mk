@@ -480,16 +480,16 @@ SHARED_ASTLIB_D = $(STATIC_ASTLIB_D)
 endif
 
 DYNAMIC_LIBS_O = -L$(INSTALL_LIBDIR)
-DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
-# mff may need to change next line
-# Note: PCRE_LIB_DIR needs to be defined in 
-# any makefile using galax.
+# Note: PCRE_LIB_DIR needs to be defined in any makefile using Galax.
 DYNAMIC_LIBS_O += \
+  -lpads-galax $(SHARED_ASTLIB_O) $(OS_SPEC_XTRA_LIBS) \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
+else 
+DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O) $(OS_SPEC_XTRA_LIBS)
 endif
 SHARED_PADSLIB_DEP_O = $(INSTALL_LIBDIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(INSTALL_LIBDIR)/$(SHARED_PGLXLIB_NM_O)
@@ -511,14 +511,15 @@ DYNAMIC_LIB_DEPS_O += $(SHARED_DLL_LIB_DEP_O) $(SHARED_BZLIB_DEP_O) $(SHARED_ZLI
 endif
 
 DYNAMIC_LIBS_D = -L$(INSTALL_LIBDIR)
-DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
-# mff may need to change next line 
 DYNAMIC_LIBS_D += \
+  -lpads-galax-g $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS) \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx-g -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
+else
+DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS)
 endif
 SHARED_PADSLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PADSLIB_NM_D)
 SHARED_PGLXLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PGLXLIB_NM_D)
