@@ -8,7 +8,7 @@ Precord Punion test2 {
   test bigger;
   Pint32 two;
 } Pwhere{
-  (tag == bigger) && bigger.id > 0;
+  (tag == bigger) && val.bigger.id > 0;
 };
 
 

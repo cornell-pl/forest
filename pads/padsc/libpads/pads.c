@@ -4595,7 +4595,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.117 2003-10-16 13:15:59 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.118 2003-10-17 19:44:57 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8939,6 +8939,42 @@ PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
  fatal_alloc_err:
   PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_ALLOC_ERR, whatfn, "Memory alloc error");
   return -1;
+}
+
+ssize_t
+PDCI_string_write2io_chararg(P_t *pads, Sfio_t *io, Pchar type_arg1, Pbase_pd *pd, Pstring *s,
+			     Pcharset char_set, const char *inv_type, const char *whatfn)
+{
+  return PDCI_string_write2io(pads, io, (void*)(&type_arg1), pd, s,
+			      char_set, inv_type, whatfn);
+}
+
+ssize_t
+PDCI_string_write2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			      Pchar type_arg1, Pbase_pd *pd, Pstring *s,
+			      Pcharset char_set, const char *inv_type, const char *whatfn)
+{
+  return PDCI_string_write2buf(pads, buf, buf_len, buf_full,
+			       (void*)(&type_arg1), pd, s,
+			       char_set, inv_type, whatfn);
+}
+
+ssize_t
+PDCI_date_write2io_chararg(P_t *pads, Sfio_t *io, Pchar type_arg1, Pbase_pd *pd, Puint32 *d,
+			   Pcharset char_set, const char *inv_type, const char *whatfn)
+{
+  return PDCI_date_write2io(pads, io, (void*)(&type_arg1), pd, d,
+			    char_set, inv_type, whatfn);
+}
+
+ssize_t
+PDCI_date_write2buf_chararg(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+			    Pchar type_arg1, Pbase_pd *pd, Puint32 *d,
+			    Pcharset char_set, const char *inv_type, const char *whatfn)
+{
+  return PDCI_date_write2buf(pads, buf, buf_len, buf_full,
+			     (void*)(&type_arg1), pd, d,
+			     char_set, inv_type, whatfn);
 }
 
 /* MISC WRITE FUNCTIONS */

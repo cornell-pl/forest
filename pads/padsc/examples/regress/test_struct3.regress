@@ -9,10 +9,10 @@ warning: Error [in Pa_int32_read]: record 4 byte 15 : spaces not allowed in a_in
 [record 4]12|23|9|24|12.>>> <<<ksf 1 1
 warning: Error [in line_read]: record 4 byte 20 : User constraint on field t violated.
 [record 4]12|23|9|24|12. ksf >>>1<<< 1
-warning: Error [in line_read]: record 4 byte 1 : Post condition for pstruct line violated.
+warning: Error [in line_read]: record 4 byte 1 : Pwhere clause for Pstruct line violated.
 [record 4]>>>12|23|9|24|12. ksf 1 1<<<
 read returned error
-warning: Error [in line_read]: record 5 byte 1 : Post condition for pstruct line violated.
+warning: Error [in line_read]: record 5 byte 1 : Pwhere clause for Pstruct line violated.
 [record 5]>>>3|4.2 bobg 2 17<<<
 read returned error
 *****************************************************************************************************
