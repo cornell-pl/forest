@@ -56,6 +56,9 @@ int main(int argc, char** argv) {
 #ifdef COPY_STRINGS
   my_disc.copy_strings = 1;
 #endif
+#ifdef DATE_FMT
+  my_disc.formats.date = DATE_FMT;
+#endif
 
 #ifdef IO_DISC_MK
   if (!(io_disc = IO_DISC_MK)) {
