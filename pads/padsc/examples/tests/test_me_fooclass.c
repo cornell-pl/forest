@@ -1,7 +1,7 @@
 #include "pads.h"
 #include "me_fooclass.h"
 
-#define DAT_FILE "../../data/test_me_fooclass"
+#define DAT_FILE "../../data/me_fooclass"
 
 #define P_PROC_DATA(t) do { \
   error(2, "line contains: %s|%s|%s", P_fmt_str(&(t.id1)), P_fmt_str(&(t.id2)), P_fmt_str(&(t.id3))); \
