@@ -339,6 +339,56 @@ Pa_timestamp_explicit_CSE 3 Puint32   Pbase_m    Pbase_pd             -         
 Pe_timestamp_explicit_CSE 3 Puint32   Pbase_m    Pbase_pd             -                    -                     Ptimestamp_explicit_acc  V     S         N
 
 
+Pdate_explicit       3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pa_date_explicit     3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pe_date_explicit     3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+
+Pdate_explicit_FW    3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  P(p1)    S           N
+Pa_date_explicit_FW  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  P(p1)    S           N
+Pe_date_explicit_FW  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  P(p1)    S           N
+
+Pdate_explicit_ME    3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pa_date_explicit_ME  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pe_date_explicit_ME  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+
+Pdate_explicit_CME   3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pa_date_explicit_CME 3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pe_date_explicit_CME 3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+
+Pdate_explicit_SE    3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pa_date_explicit_SE  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pe_date_explicit_SE  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+
+Pdate_explicit_CSE   3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pa_date_explicit_CSE 3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+Pe_date_explicit_CSE 3  Puint32       Pbase_m    Pbase_pd             -                    -                     Pdate_explicit_acc  V        S           N
+
+
+Ptime_explicit       3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pa_time_explicit     3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pe_time_explicit     3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+
+Ptime_explicit_FW    3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  P(p1)    S           N
+Pa_time_explicit_FW  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  P(p1)    S           N
+Pe_time_explicit_FW  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  P(p1)    S           N
+
+Ptime_explicit_ME    3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pa_time_explicit_ME  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pe_time_explicit_ME  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+
+Ptime_explicit_CME   3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pa_time_explicit_CME 3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pe_time_explicit_CME 3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+
+Ptime_explicit_SE    3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pa_time_explicit_SE  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pe_time_explicit_SE  3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+
+Ptime_explicit_CSE   3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pa_time_explicit_CSE 3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+Pe_time_explicit_CSE 3  Puint32       Pbase_m    Pbase_pd             -                    -                     Ptime_explicit_acc  V        S           N
+
+
 Ptimestamp       1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
 Pa_timestamp     1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N
 Pe_timestamp     1      Puint32       Pbase_m    Pbase_pd             -                    -                     Ptimestamp_acc  V            S           N

@@ -1521,7 +1521,7 @@ fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims
 }
 /* END_MACRO */
 
-#define PDCI_FMT_FN_XTRA3_IGNORE_LAST2_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty)
+#define PDCI_FMT_FN_XTRA3_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty)
 ssize_t
 fn_pref ## _fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
 			  Pbase_m *m, Pbase_pd *pd, rep_ty *rep, xtra_ty1 x1, xtra_ty2 x2, xtra_ty3 x3)
@@ -1532,7 +1532,7 @@ fn_pref ## _fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, 
   PDCI_STANDARD_FMT2BUF_INIT(*m, requested_out);
 
   (*requested_out) = 1;
-  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1);
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1, x2, x3);
 }
 
 ssize_t
@@ -1550,7 +1550,7 @@ fn_pref ## _fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *r
     return P_invoke_fmt_fn(fn, pads, buf, buf_len, buf_full, requested_out, delims, m, pd, rep, x1, x2, x3);
   }
   (*requested_out) = 1;
-  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1);
+  return afn_pref ## _write2buf(pads, buf, buf_len, buf_full, pd, rep, x1, x2, x3);
 }
 
 ssize_t
@@ -1572,7 +1572,7 @@ fn_pref ## _fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims
     PDCI_FMT2IO_USE_FMT2BUF_FN(PDCI_MacroArg2String(fn_pref) "_fmt2io", length=P_invoke_fmt_fn(fn, pads, buf, buf_len, &buf_full, requested_out, delims, m, pd, rep, x1, x2, x3));
   }
   (*requested_out) = 1;
-  return afn_pref ## _write2io(pads, io, pd, rep, x1);
+  return afn_pref ## _write2io(pads, io, pd, rep, x1, x2, x3);
 }
 /* END_MACRO */
 
@@ -2194,13 +2194,13 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io,
             PDCI_FMT_FN_XTRA1_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty)
 #  define PDCI_FMT_FN_XTRA1_IGNORE(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty) \
             PDCI_FMT_FN_XTRA1_IGNORE_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty)
-#  define PDCI_FMT_FN_XTRA3_IGNORE_LAST2(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty) \
-            PDCI_FMT_FN_XTRA3_IGNORE_LAST2_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty)
+#  define PDCI_FMT_FN_XTRA3(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty) \
+            PDCI_FMT_FN_XTRA3_GEN(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty)
 #else
 #  define PDCI_FMT_FN(fn_pref, afn_pref, rep_ty, lookup_ty)
 #  define PDCI_FMT_FN_XTRA1(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty)
 #  define PDCI_FMT_FN_XTRA1_IGNORE(fn_pref, afn_pref, rep_ty, xtra_ty1, lookup_ty)
-#  define PDCI_FMT_FN_XTRA3_IGNORE_LAST2(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty)
+#  define PDCI_FMT_FN_XTRA3(fn_pref, afn_pref, rep_ty, xtra_ty1, xtra_ty2, xtra_ty3, lookup_ty)
 #endif
 
 /* ********************************** END_MACROS ********************************** */
@@ -5519,12 +5519,26 @@ PDCI_FMT_FN_XTRA1(Pstring_CSE,  Pa_string_CSE,  Pstring,  Pregexp_t *,      "Pst
 
 #if P_CONFIG_A_CHAR_STRING > 0
 
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit,      Pa_timestamp,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pa_timestamp_explicit")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_FW,   Pa_timestamp_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pa_timestamp_FW")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_ME,   Pa_timestamp_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_timestamp_ME")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_CME,  Pa_timestamp_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_timestamp_CME")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_SE,   Pa_timestamp_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_timestamp_SE")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pa_timestamp_explicit_CSE,  Pa_timestamp_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_timestamp_CSE")
+PDCI_FMT_FN_XTRA3(Pa_timestamp_explicit,      Pa_timestamp_explicit,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pa_timestamp_explicit")
+PDCI_FMT_FN_XTRA3(Pa_timestamp_explicit_FW,   Pa_timestamp_explicit_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pa_timestamp_explicit_FW")
+PDCI_FMT_FN_XTRA3(Pa_timestamp_explicit_ME,   Pa_timestamp_explicit_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_timestamp_explicit_ME")
+PDCI_FMT_FN_XTRA3(Pa_timestamp_explicit_CME,  Pa_timestamp_explicit_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_timestamp_explicit_CME")
+PDCI_FMT_FN_XTRA3(Pa_timestamp_explicit_SE,   Pa_timestamp_explicit_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_timestamp_explicit_SE")
+PDCI_FMT_FN_XTRA3(Pa_timestamp_explicit_CSE,  Pa_timestamp_explicit_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_timestamp_explicit_CSE")
+
+PDCI_FMT_FN_XTRA3(Pa_date_explicit,      Pa_date_explicit,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pa_date_explicit")
+PDCI_FMT_FN_XTRA3(Pa_date_explicit_FW,   Pa_date_explicit_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pa_date_explicit_FW")
+PDCI_FMT_FN_XTRA3(Pa_date_explicit_ME,   Pa_date_explicit_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_date_explicit_ME")
+PDCI_FMT_FN_XTRA3(Pa_date_explicit_CME,  Pa_date_explicit_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_date_explicit_CME")
+PDCI_FMT_FN_XTRA3(Pa_date_explicit_SE,   Pa_date_explicit_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_date_explicit_SE")
+PDCI_FMT_FN_XTRA3(Pa_date_explicit_CSE,  Pa_date_explicit_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_date_explicit_CSE")
+
+PDCI_FMT_FN_XTRA3(Pa_time_explicit,      Pa_time_explicit,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pa_time_explicit")
+PDCI_FMT_FN_XTRA3(Pa_time_explicit_FW,   Pa_time_explicit_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pa_time_explicit_FW")
+PDCI_FMT_FN_XTRA3(Pa_time_explicit_ME,   Pa_time_explicit_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_time_explicit_ME")
+PDCI_FMT_FN_XTRA3(Pa_time_explicit_CME,  Pa_time_explicit_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_time_explicit_CME")
+PDCI_FMT_FN_XTRA3(Pa_time_explicit_SE,   Pa_time_explicit_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pa_time_explicit_SE")
+PDCI_FMT_FN_XTRA3(Pa_time_explicit_CSE,  Pa_time_explicit_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pa_time_explicit_CSE")
 
 PDCI_FMT_FN_XTRA1(Pa_timestamp,      Pa_timestamp,      Puint32,  Pchar,              "Pa_timestamp")
 PDCI_FMT_FN_XTRA1(Pa_timestamp_FW,   Pa_timestamp_FW,   Puint32,  size_t,             "Pa_timestamp_FW")
@@ -5549,12 +5563,27 @@ PDCI_FMT_FN_XTRA1(Pa_time_CSE,  Pa_time_CSE,  Puint32,  Pregexp_t *,        "Pa_
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit,      Pa_timestamp,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pe_timestamp_explicit")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_FW,   Pa_timestamp_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pe_timestamp_FW")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_ME,   Pa_timestamp_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_timestamp_ME")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_CME,  Pa_timestamp_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_timestamp_CME")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_SE,   Pa_timestamp_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_timestamp_SE")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Pe_timestamp_explicit_CSE,  Pa_timestamp_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_timestamp_CSE")
+
+PDCI_FMT_FN_XTRA3(Pe_timestamp_explicit,      Pa_timestamp_explicit,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pe_timestamp_explicit")
+PDCI_FMT_FN_XTRA3(Pe_timestamp_explicit_FW,   Pa_timestamp_explicit_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pe_timestamp_explicit_FW")
+PDCI_FMT_FN_XTRA3(Pe_timestamp_explicit_ME,   Pa_timestamp_explicit_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_timestamp_explicit_ME")
+PDCI_FMT_FN_XTRA3(Pe_timestamp_explicit_CME,  Pa_timestamp_explicit_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_timestamp_explicit_CME")
+PDCI_FMT_FN_XTRA3(Pe_timestamp_explicit_SE,   Pa_timestamp_explicit_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_timestamp_explicit_SE")
+PDCI_FMT_FN_XTRA3(Pe_timestamp_explicit_CSE,  Pa_timestamp_explicit_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_timestamp_explicit_CSE")
+
+PDCI_FMT_FN_XTRA3(Pe_date_explicit,      Pa_date_explicit,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pe_date_explicit")
+PDCI_FMT_FN_XTRA3(Pe_date_explicit_FW,   Pa_date_explicit_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pe_date_explicit_FW")
+PDCI_FMT_FN_XTRA3(Pe_date_explicit_ME,   Pa_date_explicit_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_date_explicit_ME")
+PDCI_FMT_FN_XTRA3(Pe_date_explicit_CME,  Pa_date_explicit_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_date_explicit_CME")
+PDCI_FMT_FN_XTRA3(Pe_date_explicit_SE,   Pa_date_explicit_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_date_explicit_SE")
+PDCI_FMT_FN_XTRA3(Pe_date_explicit_CSE,  Pa_date_explicit_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_date_explicit_CSE")
+
+PDCI_FMT_FN_XTRA3(Pe_time_explicit,      Pa_time_explicit,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pe_time_explicit")
+PDCI_FMT_FN_XTRA3(Pe_time_explicit_FW,   Pa_time_explicit_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pe_time_explicit_FW")
+PDCI_FMT_FN_XTRA3(Pe_time_explicit_ME,   Pa_time_explicit_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_time_explicit_ME")
+PDCI_FMT_FN_XTRA3(Pe_time_explicit_CME,  Pa_time_explicit_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_time_explicit_CME")
+PDCI_FMT_FN_XTRA3(Pe_time_explicit_SE,   Pa_time_explicit_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pe_time_explicit_SE")
+PDCI_FMT_FN_XTRA3(Pe_time_explicit_CSE,  Pa_time_explicit_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pe_time_explicit_CSE")
 
 PDCI_FMT_FN_XTRA1(Pe_timestamp,      Pa_timestamp,      Puint32,  Pchar,              "Pe_timestamp")
 PDCI_FMT_FN_XTRA1(Pe_timestamp_FW,   Pa_timestamp_FW,   Puint32,  size_t,             "Pe_timestamp_FW")
@@ -5579,12 +5608,27 @@ PDCI_FMT_FN_XTRA1(Pe_time_CSE,  Pa_time_CSE,  Puint32,  Pregexp_t *,        "Pe_
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 || P_CONFIG_E_CHAR_STRING > 0
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit,      Pa_timestamp,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Ptimestamp_explicit")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_FW,   Pa_timestamp_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Ptimestamp_FW")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_ME,   Pa_timestamp_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Ptimestamp_ME")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_CME,  Pa_timestamp_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Ptimestamp_CME")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_SE,   Pa_timestamp_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Ptimestamp_SE")
-PDCI_FMT_FN_XTRA3_IGNORE_LAST2(Ptimestamp_explicit_CSE,  Pa_timestamp_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Ptimestamp_CSE")
+
+PDCI_FMT_FN_XTRA3(Ptimestamp_explicit,      Pa_timestamp_explicit,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Ptimestamp_explicit")
+PDCI_FMT_FN_XTRA3(Ptimestamp_explicit_FW,   Pa_timestamp_explicit_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Ptimestamp_explicit_FW")
+PDCI_FMT_FN_XTRA3(Ptimestamp_explicit_ME,   Pa_timestamp_explicit_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Ptimestamp_explicit_ME")
+PDCI_FMT_FN_XTRA3(Ptimestamp_explicit_CME,  Pa_timestamp_explicit_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Ptimestamp_explicit_CME")
+PDCI_FMT_FN_XTRA3(Ptimestamp_explicit_SE,   Pa_timestamp_explicit_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Ptimestamp_explicit_SE")
+PDCI_FMT_FN_XTRA3(Ptimestamp_explicit_CSE,  Pa_timestamp_explicit_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Ptimestamp_explicit_CSE")
+
+PDCI_FMT_FN_XTRA3(Pdate_explicit,      Pa_date_explicit,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Pdate_explicit")
+PDCI_FMT_FN_XTRA3(Pdate_explicit_FW,   Pa_date_explicit_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Pdate_explicit_FW")
+PDCI_FMT_FN_XTRA3(Pdate_explicit_ME,   Pa_date_explicit_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pdate_explicit_ME")
+PDCI_FMT_FN_XTRA3(Pdate_explicit_CME,  Pa_date_explicit_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pdate_explicit_CME")
+PDCI_FMT_FN_XTRA3(Pdate_explicit_SE,   Pa_date_explicit_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Pdate_explicit_SE")
+PDCI_FMT_FN_XTRA3(Pdate_explicit_CSE,  Pa_date_explicit_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Pdate_explicit_CSE")
+
+PDCI_FMT_FN_XTRA3(Ptime_explicit,      Pa_time_explicit,      Puint32,  Pchar,         const char *,  Tm_zone_t *, "Ptime_explicit")
+PDCI_FMT_FN_XTRA3(Ptime_explicit_FW,   Pa_time_explicit_FW,   Puint32,  size_t,        const char *,  Tm_zone_t *, "Ptime_explicit_FW")
+PDCI_FMT_FN_XTRA3(Ptime_explicit_ME,   Pa_time_explicit_ME,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Ptime_explicit_ME")
+PDCI_FMT_FN_XTRA3(Ptime_explicit_CME,  Pa_time_explicit_CME,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Ptime_explicit_CME")
+PDCI_FMT_FN_XTRA3(Ptime_explicit_SE,   Pa_time_explicit_SE,   Puint32,  const char *,  const char *,  Tm_zone_t *, "Ptime_explicit_SE")
+PDCI_FMT_FN_XTRA3(Ptime_explicit_CSE,  Pa_time_explicit_CSE,  Puint32,  Pregexp_t *,   const char *,  Tm_zone_t *, "Ptime_explicit_CSE")
 
 PDCI_FMT_FN_XTRA1(Ptimestamp,      Pa_timestamp,      Puint32,  Pchar,                "Ptimestamp")
 PDCI_FMT_FN_XTRA1(Ptimestamp_FW,   Pa_timestamp_FW,   Puint32,  size_t,               "Ptimestamp_FW")
@@ -6877,7 +6921,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.186 2005-02-14 21:37:33 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.187 2005-02-15 18:49:31 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
