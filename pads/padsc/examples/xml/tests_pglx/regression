@@ -23,6 +23,8 @@ if (! -d $pcode) {
 }
 
 &regress_run("date", "Date");
+&regress_run("ip", "IP");
+&regress_run("string", "String");
 &regress_run("int32", "Int32");
 &regress_run("syslog", "Syslog");
 &regress_run("simple", "Simple");
