@@ -32,19 +32,24 @@ Expressions (\nont{expression}) represent any \C{} expression.
 
 
 \subsection{Example: Switched \Punion{}s}
-The following switched \Punion{}  describes data which starts with an
-integer tag which determines the form of the rest of the data.  A tag
-of \cd{1} indicates an unsigned integer will follow, while a tag of
-\cd{2} indicates a string terminated by the end
+The following description uses a switched \Punion{} to describe data
+which starts with an 
+integer tag that determines the form of the rest of the data.  A tag
+value of \cd{1} indicates an unsigned integer will follow, while a tag
+value of \cd{2} indicates a string terminated by an end-of-record
+mark.  Any other value for the tag indicates that no further data
+exists for the union.   Examples of this data format include:
+\begin{verbatim}
+ 1 4
+ 2 hello
+ 3
+\end{verbatim}
+
 \input{code/union.switch}
+The \Pstruct{} \cd{choice} handles reading the tags
 
 \subsection{Example: In-place \Punion{}s}
-\begin{verbatim}
-Punion name ( param list ){
- qualifier type name constraint comment
-...
-}
-\end{verbatim}
+\input{code/host_t}
 tries each branch in turn til one found that succeeds in finding an
 element of the indicated type and satisifies the constraint.
 

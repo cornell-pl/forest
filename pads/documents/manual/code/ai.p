@@ -1,4 +1,4 @@
-/*@FILE @LEFT httpRequest.tex checkVersion.tex */
+/*@FILE @LEFT httpRequest.tex checkVersion.tex host_t.tex*/
 
 Parray nIP {
   Puint8 [4] : Psep == '.' && Pterm == ' ';          
@@ -8,10 +8,12 @@ Parray sIP{
   Pstring_SE(:"[. ]":) [] : Psep == '.' && Pterm == ' '; 
 }
 
+/*@BEGIN host_t.tex */
 Punion host_t  {
   nIP resolved;    /- 135.207.23.32
   sIP symbolic;    /- www.research.att.com
 };
+/*@END host_t.tex */
 
 Ptypedef Pchar unknown_t :: unknown_t x => { x == '-'};
 

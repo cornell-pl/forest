@@ -8,9 +8,9 @@ Punion branches(Puint32 a) {
   Pdefault : Pcompute Puint32     def = 3; 
   }
 }
-/*@END union.switch.tex */
 
 Precord Pstruct choice{
   Puint32       a; 
-  branches(:a:)   b; 
+  branches(:a:) b; 
 }
+/*@END union.switch.tex */
