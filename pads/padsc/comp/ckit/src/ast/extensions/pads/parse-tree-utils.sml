@@ -68,6 +68,7 @@ struct
     val float      = makePCT [PT.Float]
     val double     = makePCT [PT.Double]
     val charPtr    = ptrPCT  char
+    val ccharPtr   = ptrPCT {qualifiers = [PT.CONST], specifiers = [PT.Char]}
     val ucharPtr   = ptrPCT  uchar
     val charPtrPtr = ptrPCT  charPtr
     val void       = makePCT [PT.Void]

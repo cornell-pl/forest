@@ -6,4 +6,3 @@ polux.entelchile.net - - [15/Oct/1997:21:02:07 -0700] "GET /latinam/spoeadp.html
 207.228.67.219 - - [15/Oct/1997:18:53:47 -0700] "GET / HTTP/1.0" 200 3082
 207.228.67.219 - - [15/Oct/1997:18:55:54 -0700] "GET /images/pnbut.gif HTTP/1.0" 304 -
 ppp31.igc.org - amnesty [16/Oct/1997:08:40:11 -0700] "GET /members/afreport.html HTTP/1.0" 200 450
-

@@ -101,7 +101,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
     | Ptr 
 
 
-  val printConst = ref false
+  val printConst = ref true (* PADS *)
 
   fun ppIdentifier tidtab pps =
       fn (ID id) => ppId pps id

@@ -595,20 +595,22 @@ structure CnvExt : CNVEXT = struct
 		      val incNerrSs = if hasNErr then
 			              [P.assignS(P.arrowX(PT.Id(gMod(ed)), PT.Id nerr), P.zero)]
 				      else []
+		      val innerInitDecls = incNerrSs  
+				     @ [P.assignS(P.arrowX(PT.Id(gMod(ed)), PT.Id panic), P.falseX)]
 		      val returnTy =  PL.toolErrPCT
+		      val innerBody = innerInitDecls @ bodySs
 
                       (* -- internal entry point function *)
 		      val readFunInternalED = 
-			  P.mkFunctionEDecl(iReadName, iFormalParams, PT.Compound bodySs, returnTy)
+			  P.mkFunctionEDecl(iReadName, iFormalParams, PT.Compound innerBody, returnTy)
                       (* -- external entry point function *)
 		      val decls =   genLocTemp(canonicalPCT, rep, NONE) 
 			          @ genLocTemp(emPCT, em, emFirstPCT) 
 			          @ genLocTemp(edPCT, ed, NONE)
-		      val initDecls =  [genLocInit rep, genLocInit em, genLocInit ed]
-				     @ incNerrSs  
-				     @ [P.assignS(P.arrowX(PT.Id(gMod(ed)), PT.Id panic), P.falseX)]
+		      val wrapperinitDecls =  [genLocInit rep, genLocInit em, genLocInit ed]
+			
                       val callIntSs = [PT.Return (PT.Call(PT.Id iReadName, paramArgs))]
-		      val bodySs' = decls @ initDecls @ callIntSs
+		      val bodySs' = decls @ wrapperinitDecls @ callIntSs
 		      val bodyS = PT.Compound bodySs'
 		      val readFunED = P.mkFunctionEDecl(readName, formalParams, bodyS, returnTy)
 		  in
@@ -932,6 +934,10 @@ structure CnvExt : CNVEXT = struct
 			  else []
 		      fun genAccBrief e = []
 		      val accFields = mungeFields genAccFull genAccBrief fields
+		      val accFields = if 0 = List.length accFields
+			  then [("placeholder", P.int, SOME ("This field is"^
+			 "a temporary dummy to prevent an empty struct."))]
+				      else accFields
 		      val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
 		      val accDecls = cnvExternalDecl accStructED 
                       val accPCT = P.makeTypedefPCT (accSuf name)			 
@@ -2200,7 +2206,7 @@ structure CnvExt : CNVEXT = struct
 		  val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		  val readFields = genReadBranches()                            (* does type checking *)
 		  val _ = popLocalEnv()                                         (* remove scope *)
-		  val bodySs = readFields @ cleanupSs
+		  val bodySs = [PT.Compound(readFields @ cleanupSs)]
 		  val readFunEDs = genReadFun(readName, cParams, 
 					      emPCT,edPCT,canonicalPCT, NONE, false, bodySs)
 
@@ -2227,6 +2233,23 @@ structure CnvExt : CNVEXT = struct
 		      val addReturnS = PT.Return addX
                       val addBodySs =  [addReturnS]
                       val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
+
+		  (* Generate enum to string function *)
+		  val cnvName = name^"2str"
+		  val which = "which"
+		  val paramTys = [canonicalPCT]
+		  val paramNames = [which]
+                  val formalParams = List.map P.mkParam(ListPair.zip(paramTys, paramNames))
+		  fun cnvOneBranch (bname, _, _) = 
+		      [PT.CaseLabel(PT.Id bname, PT.Return (PT.String bname))]
+		  val defBranch = 
+		      [PT.DefaultLabel(PT.Return (PT.String "* unknown meth *"))]
+		  val branches = (List.concat(List.map cnvOneBranch members)) @ defBranch
+		  val bodySs = [PT.Switch ((PT.Id which), PT.Compound branches)]
+		  val returnTy = P.ccharPtr
+		  val cnvFunED = 
+		      P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+		    
 	      in
 		  canonicalDecls
                 @ emDecls
@@ -2237,6 +2260,7 @@ structure CnvExt : CNVEXT = struct
                 @ cnvExternalDecl resetFunED
                 @ cnvExternalDecl cleanupFunED
                 @ cnvExternalDecl addFunED
+                @ cnvExternalDecl cnvFunED
 	      end
 
 

@@ -1,13 +1,13 @@
 #PADS_name   repName     errorMaskName errorDescriptionName readFunction               scanFunctionOpt  accumulatorOpt
-auint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_auint8_read            -                PDC_uint8_acc
-auint8FW     PDC_uint8   PDC_base_em   PDC_base_ed          PDC_auint8_fw_read         -                PDC_uint8_acc
-aint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_aint8_read             -                PDC_int8_acc
-aint8FW      PDC_int8    PDC_base_em   PDC_base_ed          PDC_aint8_fw_read          -                PDC_int8_acc
+auint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_auint8_read            -                -
+auint8FW     PDC_uint8   PDC_base_em   PDC_base_ed          PDC_auint8_fw_read         -                -
+aint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_aint8_read             -                -
+aint8FW      PDC_int8    PDC_base_em   PDC_base_ed          PDC_aint8_fw_read          -                -
 
-auint16      PDC_uint16  PDC_base_em   PDC_base_ed          PDC_auint16_read           -                PDC_uint16_acc
-auint16FW    PDC_uint16  PDC_base_em   PDC_base_ed          PDC_auint16_fw_read        -                PDC_uint16_acc
-aint16       PDC_int16   PDC_base_em   PDC_base_ed          PDC_aint16_read            -                PDC_int16_acc
-aint16FW     PDC_int16   PDC_base_em   PDC_base_ed          PDC_aint16_fw_read         -                PDC_int16_acc
+auint16      PDC_uint16  PDC_base_em   PDC_base_ed          PDC_auint16_read           -                -
+auint16FW    PDC_uint16  PDC_base_em   PDC_base_ed          PDC_auint16_fw_read        -                -
+aint16       PDC_int16   PDC_base_em   PDC_base_ed          PDC_aint16_read            -                -
+aint16FW     PDC_int16   PDC_base_em   PDC_base_ed          PDC_aint16_fw_read         -                -
 
 auint32      PDC_uint32  PDC_base_em   PDC_base_ed          PDC_auint32_read           -                PDC_uint32_acc
 auint32FW    PDC_uint32  PDC_base_em   PDC_base_ed          PDC_auint32_fw_read        -                PDC_uint32_acc
@@ -15,23 +15,23 @@ aint32       PDC_int32   PDC_base_em   PDC_base_ed          PDC_aint32_read     
 aint32FW     PDC_int32   PDC_base_em   PDC_base_ed          PDC_aint32_fw_read         -                PDC_int32_acc
 
 auint64      PDC_uint64  PDC_base_em   PDC_base_ed          PDC_auint64_read           -                -
-auint64FW    PDC_uint64  PDC_base_em   PDC_base_ed          PDC_auint64_fw_read        -                PDC_uint64_acc
-aint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64_read            -                PDC_int64_acc
-aint64FW     PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64_fw_read         -                PDC_int64_acc
+auint64FW    PDC_uint64  PDC_base_em   PDC_base_ed          PDC_auint64_fw_read        -                -
+aint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64_read            -                -
+aint64FW     PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64_fw_read         -                -
 
-buint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_buint8_read            -                PDC_uint8_acc
-bint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_bint8_read             -                PDC_int8_acc
-buint16      PDC_uint16  PDC_base_em   PDC_base_ed          PDC_buint16_read           -                PDC_uint16_acc
-bint16       PDC_int16   PDC_base_em   PDC_base_ed          PDC_bint16_read            -                PDC_int16_acc
-buint32      PDC_uint32  PDC_base_em   PDC_base_ed          PDC_buint32_read           -                PDC_uint32_acc
-bint32       PDC_int32   PDC_base_em   PDC_base_ed          PDC_bint32_read            -                PDC_int32_acc
-buint64      PDC_uint64  PDC_base_em   PDC_base_ed          PDC_buint64_read           -                PDC_uint64_acc
-bint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_bint64_read            -                PDC_int64_acc
-astring      PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopChar_read   -                PDC_string_acc
-PDC_char_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_char_lit_read          PDC_char_lit_scan PDC_uint8_acc
-PDC_str_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_str_lit_read           PDC_str_lit_scan  PDC_string_acc
-astringFW    PDC_string  PDC_base_em   PDC_base_ed          PDC_string_fw_read         -                 PDC_string_acc
-astringSRE   PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopRegexp_read -                 PDC_string_acc
+buint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_buint8_read            -                -
+bint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_bint8_read             -                -
+buint16      PDC_uint16  PDC_base_em   PDC_base_ed          PDC_buint16_read           -                -
+bint16       PDC_int16   PDC_base_em   PDC_base_ed          PDC_bint16_read            -                -
+buint32      PDC_uint32  PDC_base_em   PDC_base_ed          PDC_buint32_read           -                -
+bint32       PDC_int32   PDC_base_em   PDC_base_ed          PDC_bint32_read            -                -
+buint64      PDC_uint64  PDC_base_em   PDC_base_ed          PDC_buint64_read           -                -
+bint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_bint64_read            -                -
+astring      PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopChar_read   -                -
+PDC_char_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_char_lit_read          PDC_char_lit_scan -
+PDC_str_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_str_lit_read           PDC_str_lit_scan  -
+astringFW    PDC_string  PDC_base_em   PDC_base_ed          PDC_string_fw_read         -                 -
+astringSRE   PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopRegexp_read -                 -
 # adate rep and read function should be based on libast's clock = tmdate(s, &e, (time_t *)0);
 adate        PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopChar_read   -                 -
 countXtoY    PDC_int32   PDC_base_em   PDC_base_ed          PDC_countXtoY              -                 - 
