@@ -663,6 +663,7 @@ do {
 #define PCGEN_ALT_READ_BEGIN(fn_nm)
   Ppos_t start_pos_PCGEN_, cur_pos_PCGEN_, max_pos_PCGEN_;
   int no_panic_PCGEN_ = 0, moved_pos_PCGEN_ = 0;
+  Perror_t res;
   do {
     PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
     max_pos_PCGEN_ = start_pos_PCGEN_;
@@ -754,7 +755,6 @@ do {
 /* END_MACRO */
 
 #define PDCI_ALT_READ_FIELD(fn_nm, the_field, read_call,doEnd)
-  Perror_t res;
   PDCI_IO_BEGINLOC(pads, pd->the_field.loc);
   res = read_call;
   PDCI_IO_ENDLOC ## doEnd(pd->the_field.loc);
