@@ -32,6 +32,24 @@ regress:  sanity_check \
           regress_test_format5 \
           regress_test_format6 \
           regress_test_readint \
+          regress_test_ai \
+	  regress_test_pswitch2 \
+	  regress_test_depends \
+	  regress_test_struct3
+	@echo " "; echo "DONE"; echo " "
+
+problem_regress:  sanity_check \
+          regress_test_munion  \
+	  regress_test_pswitch
+	@echo " "; echo "DONE"; echo " "
+
+full_regress:  sanity_check \
+          regress_test_format1 \
+          regress_test_format2 \
+          regress_test_format3 \
+          regress_test_format5 \
+          regress_test_format6 \
+          regress_test_readint \
           regress_test_munion  \
           regress_test_ai \
 	  regress_test_pswitch \

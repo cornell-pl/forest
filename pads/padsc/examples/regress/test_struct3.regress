@@ -29,7 +29,7 @@ Errors: total vals:          5
         SUMMING         count:          5 pcnt-of-total-vals:  100.000
 [Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<top>.f : array intList of a_int32
+<top>.f : array intList of Pa_int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Array lengths: good vals:          5    bad vals:          0    pcnt-bad:    0.000
   Characterizing lengths:  min 2 max 5 avg 4.000

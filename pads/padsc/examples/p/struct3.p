@@ -18,7 +18,7 @@ int check(PDC_int32 t, auth_id_t user){
   }
 };
 
-Precord Pstruct line{
+Precord Pstruct line {
        intList    f;
        Pa_int32   a : a == f.length;
   ' '; auth_id_t  user;
