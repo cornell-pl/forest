@@ -150,8 +150,6 @@ typedef PDC_auint32_rep        PDC_auint32;
 typedef PDC_base_em            PDC_auint32_em;
 typedef PDC_base_ed            PDC_auint32_ed;
 
-typedef char *                 PDC_string;
-
 #define PDC_MIN_INT8      -128
 #define PDC_MAX_INT8       127
 #define PDC_MAX_UINT8      256

@@ -10,7 +10,7 @@
 #include "libpadsc-read-macros.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.16 2002-09-16 17:15:38 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.17 2002-09-16 17:36:29 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -290,13 +290,17 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
 
 /* related helper function */
 PDC_error_t
-PDC_free_string(PDC_t* pdc, char* str, PDC_disc_t* disc)
+PDC_free_string(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc)
 {
   if (!disc) {
     disc = pdc->disc;
   }
   TRACE(pdc, "PDC_free_string called");
-  if (0 == RMM_free_buf(pdc->rmm_nz, (void*)str)) {
+  if (!s && !s->str) {
+    /* XXX REPORT ERROR */
+    return PDC_ERROR;
+  }
+  if (0 == RMM_free_buf(pdc->rmm_nz, (void*)s->str)) {
     return PDC_OK;
   }
   return PDC_ERROR;
