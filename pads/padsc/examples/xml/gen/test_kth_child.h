@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
   /* Initialize NodeMM. */
   pads->ext1 = NodeMM_newMM();
-  NodeMM_init((NodeMM_t *)pads->ext1);  
+  NodeMM_initMM((NodeMM_t *)pads->ext1);  
   
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");

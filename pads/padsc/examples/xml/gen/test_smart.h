@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
   /* Initialize nodeid generator */
   PDCI_ID_RESET(pads,0);
 
-  NodeMM_init(pads, MAX_NODES);  
+  NodeMM_initMM(pads, MAX_NODES);  
   
   /* End initialize pads-galax */
 

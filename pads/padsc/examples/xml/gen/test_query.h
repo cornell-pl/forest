@@ -76,7 +76,6 @@ int main(int argc, char** argv) {
     error(0, "read raised panic error");
   } 
 
-  printf("id_gen: %ld.\n", pads->disc->id_gen);
 
   //P_CLEANUP_ALL(pads, log_t, rep, pd);
   if (P_ERR == PADS_TY(_cleanup)(pads, &rep)) {
