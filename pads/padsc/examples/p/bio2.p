@@ -19,7 +19,7 @@ Precord Pstruct header_t{
 };
 
 Parray aliasSeq_t {
-  Pstring(:';':) [] : Psep(';') && Pterm(";\t");
+  Pstring(:';':) [] : Psep(";") && Pterm(";\t");
 };
 
 Pstruct aliases_t {
@@ -33,27 +33,34 @@ Punion aliasInfo_t {
   aliases_t as;
 };
 
+
+Parray pubmedSeq_t {
+  Puint32 [] : Psep(";") && Pterm(";\r");
+};
+
+Pstruct pubmeds_t {
+  ';';
+  pubmedSeq_t ps;
+  ';';
+};
+
 Punion pubMedsInfo_t{
   "UNKNOWN";
-  Puint32 id;
+  pubmeds_t id;
 };
 
-Parray pubmeds_t {
-  pubMedsInfo_t [] : Psep(';') && Pterm(";\r");
-};
-
-Precord Pstruct entry_t{
+Precord Pstruct entry_t {
   Pstring(:'\t':) interactor_a;  '\t';
   Pstring(:'\t':) interactor_b;  '\t'; 
   aliasInfo_t     alias_a;       '\t';
   aliasInfo_t     alias_b;       '\t';
   Pstring(:'\t':) experiment;    '\t'; 
   Pstring(:'\t':) source;        '\t'; 
-  Pstring(:'\t':) direction;     "\t;"; 
-  pubmeds_t       pub_meds;      ";\r";
+  Pstring(:'\t':) direction;     '\t'; 
+  pubMedsInfo_t   pub_meds;      '\r';
 };
 
-Psource Pstruct bio_t{
+Psource Pstruct bio_t {
   header_t  h;
   entry_t[] entries;
 };

@@ -69,7 +69,8 @@
   /* The following are related to nested internal calls */ \
   unsigned int      inestlev;    /* internal call nesting level */ \
   /* dummy used for error case */ \
-  char              dummy[1]
+  char              dummy[1]    
+
 
 /* ================================================================================ */
 /* HELPER MACROS FOR SHARED STRING LIST */

@@ -11,6 +11,7 @@
 #ifndef __PADS_H__
 #define __PADS_H__
 
+#define VMFL 1
 #include <ast.h>
 #include <ast_float.h>
 //#include <ast_common.h>

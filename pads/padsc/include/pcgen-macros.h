@@ -1716,7 +1716,7 @@ do {
     PDCI_report_err(pads, P_LEV_FATAL, 0 ,P_ALLOC_ERR, fn_nm, 0);
   }
   if (src->length > dst->length) {
-    if (0 != RBuf_reserve(dst->_internal, (void**)(&(dst->elts)), sizeof(dst->elts[0]), src->length, 0)) {
+    if (0 != RBuf_RESERVE(dst->_internal, dst->elts, dst->elts[0], src->length)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_ALLOC_ERR, fn_nm, 0);
     }
     /* memset((void*)(&(dst->elts[dst->length])), 0, (src->length - dst->length)*sizeof(dst->elts[0])); */
@@ -1741,7 +1741,7 @@ do { } while (0)
 #define PCGEN_ARRAY_CLEANUP_AR_DYN_ELT_STAT(fn_nm, a)
 do {
   if (a->_internal) {
-    if (0 != RMM_free_rbuf (a->_internal)) {
+    if (0 != RMM_free_rbuf(a->_internal)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_ALLOC_ERR, fn_nm, "Couldn\'t free growable buffer");
     }
     a->_internal = 0;
@@ -1765,7 +1765,7 @@ do {
     if (P_ERR == elt_cleanup_fn(pads, &(a->elts[i_PCGEN_]))) nerr_PCGEN_++;
   }
   if (a->_internal) {
-    if (0 != RMM_free_rbuf (a->_internal)) {
+    if (0 != RMM_free_rbuf(a->_internal)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_ALLOC_ERR, fn_nm, "Couldn\'t free growable buffer");
     }
     a->_internal = 0;
@@ -1796,7 +1796,7 @@ do {
 #define PCGEN_ARRAY_ACC_REP_NOVALS()
 do {
   int dtsz_PCGEN_ = dtsize(acc->length.dict);
-  if (dtsz_PCGEN_ == 0) {
+  if (dtsz_PCGEN_ == 0 && 0 == acc->length.bad) {
     sfprintf(outstr, "(No %s values.)", what);
     sfstrclose(tmpstr);
     return P_OK;
@@ -2197,7 +2197,7 @@ do{
 do{
     if (0==((vIN)->_internal)) 
       {
-        (vIN)->_internal = RMM_new_rbuf (P_rmm_zero (pads));
+        (vIN)->_internal = RMM_new_rbuf(P_rmm_zero (pads));
         if (0==((vIN)->_internal)) 
           {
             PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_read","");
@@ -2210,7 +2210,7 @@ do{
 do{
     if (0==((vIN)->_internal)) 
       {
-        (vIN)->_internal = RMM_new_rbuf (P_rmm_nozero (pads));
+        (vIN)->_internal = RMM_new_rbuf(P_rmm_nozero (pads));
         if (0==((vIN)->_internal)) 
           {
             PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_read","");
@@ -2259,11 +2259,11 @@ do{
 
 #define PCGEN_ARRAY_RESERVE_SPACE(ty,elRepTy,elPdTy,hintIN)
 do{
-  if (0!=RBuf_reserve (rep->_internal,(void **) (&(rep->elts)),sizeof(elRepTy),rep->length + 1,hintIN)) 
+  if (0 != RBuf_RESERVE_HINT(rep->_internal, rep->elts, elRepTy, rep->length + 1, hintIN)) 
     {
       PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_read",0);
     }
-  if (0!=RBuf_reserve (pd->_internal,(void **) (&(pd->elts)),sizeof(elPdTy),rep->length + 1,hintIN)) 
+  if (0 != RBuf_RESERVE_HINT(pd->_internal, pd->elts, elPdTy, rep->length + 1, hintIN)) 
     {
       PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_read",0);
     }

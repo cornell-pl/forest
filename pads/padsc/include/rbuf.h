@@ -15,6 +15,9 @@
 
 #include <ast_common.h>
 
+// Uncomment the following to debug rbuf memory allocations
+// #define RBUF_DEBUG 1
+
 /* ================================================================================
 
 General description of this wrapper library
@@ -258,15 +261,33 @@ extern RMM_disc_t* RMM_nozero_disc_ptr;
 RMM_t*    RMM_open(RMM_disc_t* disc);
 int       RMM_close(RMM_t* mgr);
 
+#ifndef RBUF_DEBUG
+// The standard functions
 RBuf_t*   RMM_new_rbuf (RMM_t* mgr);
 
 int       RMM_free_rbuf(RBuf_t* rbuf);
 int       RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t** mgr_out);
 
-int       RMM_free_buf(RMM_t* mgr, void* buf);
-
 int       RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
 		       size_t numElts, size_t maxEltHint);
+
+#else
+// Debug versions of the standard functions.
+// The standards are implemented below a macros.
+
+RBuf_t*   RMM_new_rbuf_dbg(RMM_t* mgr, const char *file, int line);
+int       RMM_free_rbuf_dbg(RBuf_t* rbuf, const char *file, int line);
+int       RMM_free_rbuf_keep_buf_dbg(RBuf_t* rbuf, void** buf_out, RMM_t** mgr_out,
+				     const char *file, int line);
+
+int       RBuf_reserve_dbg(RBuf_t* rbuf, void** buf_out, size_t eltSize,
+			   size_t numElts, size_t maxEltHint,
+			   const char *file, int line);
+
+void      RBuf_dbg_report(const char *context);
+#endif
+
+int       RMM_free_buf(RMM_t* mgr, void* buf);
 
 size_t    RBuf_bufSize   (RBuf_t* rbuf);
 size_t    RBuf_numElts   (RBuf_t* rbuf);
@@ -282,6 +303,42 @@ void*     RBuf_get_elt  (RBuf_t* rbuf, size_t index);
 #define RBuf_RESERVE(rbuf, buf_ptr, type, numElts) \
   RBuf_reserve((rbuf), (void**)&(buf_ptr), sizeof(type), (numElts), (numElts))
 
+#define RBuf_RESERVE_HINT(rbuf, buf_ptr, type, numElts, hint) \
+  RBuf_reserve((rbuf), (void**)&(buf_ptr), sizeof(type), (numElts), (hint))
+
+#ifndef RBUF_DEBUG
+#define RBUF_DBG_REPORT(context) \
+  do { } while (0)
+#else
+#define RBUF_DBG_REPORT(context) \
+  RBuf_dbg_report(context)
+#endif
+
+#ifdef RBUF_DEBUG
+#ifdef FOR_CKIT
+// Prototypes for CKIT
+RBuf_t*   RMM_new_rbuf(RMM_t* mgr);
+int       RMM_free_rbuf(RBuf_t* rbuf);
+int       RMM_free_rbuf_keep(RBuf_t* rbuf, void** buf_out, RMM_t** mgr_out);
+int       RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
+		       size_t numElts, size_t maxEltHint);
+
+#else
+// Macro impls
+#define RMM_new_rbuf(mgr) \
+  RMM_new_rbuf_dbg(mgr, __FILE__, __LINE__)
+
+#define RMM_free_rbuf(rbuf) \
+  RMM_free_rbuf_dbg(rbuf, __FILE__, __LINE__)
+
+#define RMM_free_rbuf_keep_buf(rbuf, buf_out, mgr_out) \
+  RMM_free_rbuf_keep_buf_dbg(rbuf, buf_out, mgr_out, __FILE__, __LINE__)
+
+#define RBuf_reserve(rbuf, buf_ptr_out, size_expr, numElts, hint) \
+  RBuf_reserve_dbg(rbuf, buf_ptr_out, size_expr, numElts, hint, __FILE__, __LINE__)
+#endif
+#endif
+
 #define RBuf_GET_BUF(rbuf, type) \
   (type)* RBuf_get_buf(rbuf)
 
@@ -289,17 +346,17 @@ void*     RBuf_get_elt  (RBuf_t* rbuf, size_t index);
   (type)* RBuf_get_elt(rbuf, index)
 
 #ifdef FOR_CKIT
-/* Prototype for CKIT */
+// Prototype for CKIT
 void RBuf_CPY_SRC2DEST(RBuf_t*, RBuf_t*, void *, size_t, RMM_t*);
 
 #else
-/* The actual impl */
+// Macro impl
 #define RBuf_CPY_SRC2DEST(src, dest, dest_buf, bytes, mgr) do { \
   void *src_buf; \
   if (!(dest)) { \
     (dest) = RMM_new_rbuf(mgr); \
   } \
-  RBuf_reserve((dest), (void **)&(dest_buf), 1, (bytes), (bytes)); \
+  RBuf_RESERVE(dest, dest_buf, char, bytes); \
   src_buf = RBuf_get_buf(src); \
   memcpy((dest_buf), src_buf, (bytes)); \
 } while (0)

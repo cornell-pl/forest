@@ -2926,10 +2926,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      let val strName = which^"_str"
 				  val strArgX = PT.Id strName
 			      in
-				  ([P.varDeclS'(P.arrayPCT(P.intX 1, P.char), strName)], 
+				  ([P.varDeclS'(P.arrayPCT(P.intX 2, P.char), strName)], 
 				   [(P.charPtr, strName)], 
 				   [((P.charPtr,strName,NONE,NONE),
-				     P.assignS(P.subX(PT.Id strName, P.zero), e))], 
+					PT.Compound [P.assignS(P.subX(PT.Id strName, P.zero), e),
+						     P.assignS(P.subX(PT.Id strName, P.intX 1), P.zero)]) ], 
 				   strArgX, [])
 			      end	  
 			      			

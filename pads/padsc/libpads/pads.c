@@ -67,7 +67,9 @@ do {
  * saves on later alloc calls when Pstring field is re-used many
  * times with strings of different lengths.
  */ 
-#define PDCI_STRING_HINT 4
+
+#define PDCI_STRING_HINT 8
+
 /* END_MACRO */
 
 /* Pstring_cstr_copy -- inline version.  Caller must provide fatal_alloc_err target */
@@ -79,7 +81,7 @@ do {
 	goto fatal_alloc_err;
       }
     }
-    if (RBuf_reserve((sIN)->rbuf, (void**)&((sIN)->str), sizeof(char), wdth_PDCI_STR_CPY+1, PDCI_STRING_HINT)) {
+    if (RBuf_RESERVE_HINT((sIN)->rbuf, (sIN)->str, char, wdth_PDCI_STR_CPY+1, PDCI_STRING_HINT)) {
       goto fatal_alloc_err;
     }
     memcpy((sIN)->str, (char*)(bIN), wdth_PDCI_STR_CPY);
@@ -100,7 +102,7 @@ do {
 	goto fatal_alloc_err;
       }
     }
-    if (RBuf_reserve((sIN)->rbuf, (void**)&((sIN)->str), sizeof(char), wdth_PDCI_A2E_STR_CPY+1, PDCI_STRING_HINT)) {
+    if (RBuf_RESERVE_HINT((sIN)->rbuf, (sIN)->str, char, wdth_PDCI_A2E_STR_CPY+1, PDCI_STRING_HINT)) {
       goto fatal_alloc_err;
     }
     for (i = 0; i < wdth_PDCI_A2E_STR_CPY; i++) {
@@ -123,7 +125,7 @@ do {
 	goto fatal_alloc_err;
       }
     }
-    if (RBuf_reserve((sIN)->rbuf, (void**)&((sIN)->str), sizeof(char), wdth_PDCI_E2A_STR_CPY+1, PDCI_STRING_HINT)) {
+    if (RBuf_RESERVE_HINT((sIN)->rbuf, (sIN)->str, char, wdth_PDCI_E2A_STR_CPY+1, PDCI_STRING_HINT)) {
       goto fatal_alloc_err;
     }
     for (i = 0; i < wdth_PDCI_E2A_STR_CPY; i++) {
@@ -144,7 +146,7 @@ do {
 	goto fatal_alloc_err;
       }
     }
-    if (RBuf_reserve((sIN)->rbuf, (void**)&((sIN)->str), sizeof(char), (nIN)+1, PDCI_STRING_HINT)) {
+    if (RBuf_RESERVE_HINT((sIN)->rbuf, (sIN)->str, char, (nIN)+1, PDCI_STRING_HINT)) {
       goto fatal_alloc_err;
     }
     memset((sIN)->str, (cIN), (nIN));
@@ -6601,7 +6603,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.180 2004-12-17 22:26:32 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.181 2005-01-05 21:25:02 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7286,6 +7288,8 @@ P_close_keep_io_disc(P_t *pads, int keep_io_disc)
   if (pads->vm) {
     vmclose(pads->vm); /* frees everything alloc'd using vm */
   }
+  RBUF_DBG_REPORT("At end of P_close");
+  IODISC_DBG_REPORT("At end of P_close");
   return P_OK;
 }
 
@@ -8008,7 +8012,7 @@ P_io_checkpoint(P_t *pads, int speculative)
   if (++(pads->top) >= pads->salloc) {
     PDCI_stkElt_t *stack_next;
     size_t salloc_next = 2 * pads->salloc;
-    /* P_DBG2(pads->disc, "XXX_REMOVE Growing from %d to %d checkpoint stack slots", pads->salloc, salloc_next); */
+    error(0, "XXX_REMOVE Growing from %d to %d checkpoint stack slots", pads->salloc, salloc_next);
     if (!(stack_next = vmnewof(pads->vm, pads->stack, PDCI_stkElt_t, salloc_next, 0))) {
       P_FATAL(pads->disc, "out of space [input cursor stack]");
       return P_ERR;
@@ -10163,6 +10167,7 @@ PDCI_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s,
   PDCI_IO_NEED_K_BYTES(width, goto fatal_nb_io_err);
   if (end-begin != width)     goto width_not_avail;
   if (P_Test_NotSynCheck(*m) || (strncmp((char*)begin, es->str, width) == 0)) {
+    error(0, "Copying literal character.");
     switch (char_set)
       {
       case Pcharset_ASCII:

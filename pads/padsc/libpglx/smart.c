@@ -106,12 +106,12 @@ PDCI_smart_array_info_t *PDCI_makeSmartArrayInfo(P_t *pads,int max_elts, int siz
   PDCI_smart_array_info_t   *arrayInfo;
 
   arrayInfo = (PDCI_smart_array_info_t *)calloc(1,size);
-  arrayInfo->_internal = RMM_new_rbuf (P_rmm_nozero (pads));
+  arrayInfo->_internal = RMM_new_rbuf(P_rmm_nozero (pads));
   if (0==(arrayInfo->_internal)) 
     {
       PGLX_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,"");
     }
-  arrayInfo->_internal_live = RMM_new_rbuf (P_rmm_nozero (pads));
+  arrayInfo->_internal_live = RMM_new_rbuf(P_rmm_nozero (pads));
   if (0==(arrayInfo->_internal_live)) 
     {
       PGLX_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,"");

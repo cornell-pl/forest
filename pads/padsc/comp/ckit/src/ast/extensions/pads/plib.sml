@@ -373,7 +373,7 @@ struct
       end
 
   fun freeRBufferE(pads, prbuf:PT.expression, ppbuf:PT.expression) = 
-     PT.Call(PT.Id "RMM_free_rbuf_keep_buf", [prbuf, PT.Cast(P.voidPtrPtr, ppbuf), P.zero])
+     PT.Call(PT.Id "RMM_FREE_RBUF_KEEP_BUF", [prbuf, PT.Cast(P.voidPtrPtr, ppbuf), P.zero])
 
   fun chkFreeRBufferS(pads, whatFun, prbuf:PT.expression, ppbuf:PT.expression) = 
     PT.IfThen(
@@ -385,7 +385,7 @@ struct
 
   fun cfreeRBufferE(prbuf:PT.expression) = 
    (* int       RMM_free_rbuf(RBuf_t* rbuf); *)
-     PT.Call(PT.Id "RMM_free_rbuf", [prbuf])
+     PT.Call(PT.Id "RMM_FREE_RBUF", [prbuf])
 
   fun chkCFreeRBufferS(pads, whatFun, prbuf:PT.expression) = 
     PT.IfThen(

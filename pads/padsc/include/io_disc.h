@@ -15,6 +15,9 @@
 #ifndef __P_IO_DISC_H__
 #define __P_IO_DISC_H__
 
+// Uncomment the following to debug IO discipline memory allocations
+// #define IODISC_ALLOC_DEBUG 1
+
 /* ================================================================================ */
 /* THE IO DISCIPLINE
  *
@@ -183,6 +186,15 @@ struct Pio_disc_s {
   P_io_blk_close_fn   blk_close_fn;  /* fill in block markers for an output block */
   P_io_read_unit_fn   read_unit_fn;  /* return description of read unit */
 };
+
+/* ================================================================================ */
+
+#ifdef IODISC_ALLOC_DEBUG
+void IODISC_dbg_report(const char *context);
+#define IODISC_DBG_REPORT(context) IODISC_dbg_report(context)
+#else
+#define IODISC_DBG_REPORT(context) do { } while (0)
+#endif
 
 /* ================================================================================ */
 

@@ -41,6 +41,49 @@
 #include "out_macros.h"
 #include <stdio.h>
 
+#ifdef IODISC_ALLOC_DEBUG
+static unsigned long long IODISC_allocd_mem_ = 0ULL;
+void IODISC_dbg_report(const char *context) {
+  error(0, "%s: IODISC_allocd_mem_ = %llu", context, IODISC_allocd_mem_);
+}
+
+#define IODISC_NEW_ALLOC(sz) \
+do { \
+  IODISC_allocd_mem_ += (sz); \
+  error(0, "XXX[%s:%d] new alloc of %d, IODISC_allocd_mem_ now = %llu", \
+	__FILE__, __LINE__, (sz), IODISC_allocd_mem_); \
+} while (0)
+
+#define IODISC_REALLOC(old_sz, new_sz) \
+do { \
+  IODISC_allocd_mem_ += ((new_sz) - (old_sz)); \
+  error(0, "XXX[%s:%d] realloc from %d to %d, IODISC_allocd_mem_ now = %llu", \
+	__FILE__, __LINE__, (old_sz), (new_sz), IODISC_allocd_mem_); \
+} while (0)
+
+#define IODISC_FREE(sz) \
+do { \
+  IODISC_allocd_mem_ -= (sz); \
+  error(0, "XXX[%s:%d] free of %d, IODISC_allocd_mem_ now = %llu", \
+	__FILE__, __LINE__, (sz), IODISC_allocd_mem_); \
+} while (0)
+
+#define IODISC_VMCLOSE_CALLED \
+do { \
+  error(0, "XXX[%s:%d] vmclose called, assuming just freed %llu, resetting to 0", \
+	__FILE__, __LINE__, IODISC_allocd_mem_); \
+  IODISC_allocd_mem_ = 0; \
+} while (0)
+#else
+
+#define IODISC_NEW_ALLOC(sz)             P_NULL_STMT
+#define IODISC_REALLOC(old_sz, new_sz)   P_NULL_STMT
+#define IODISC_FREE(sz)                  P_NULL_STMT
+#define IODISC_VMCLOSE_CALLED            P_NULL_STMT
+
+#endif
+
+
 #define IODISC_NEED_AN_ELT(fn_name, elt, f_head, vm) \
   do { \
     if (P_SOME_ELTS(f_head)) { \
@@ -50,6 +93,7 @@
       if (!((elt) = vmnewof((vm), 0, Pio_elt_t, 1, 0))) { \
 	P_WARN(pads->disc, fn_name ": could not alloc space for input record"); \
       } \
+      IODISC_NEW_ALLOC(sizeof(Pio_elt_t)); \
     } \
   } while (0)
 
@@ -63,6 +107,7 @@
 	  !((elt)->disc_ptr = vmoldof((vm), 0, iodata_t, 1, xtra_bytes))) { \
 	P_WARN(pads->disc, fn_name ": could not alloc space for input record"); \
       } \
+      IODISC_NEW_ALLOC(sizeof(Pio_elt_t) + sizeof(iodata_t) + xtra_bytes); \
     } \
   } while (0)
 
@@ -441,6 +486,7 @@ P_fwrec_noseek_unmake(Pio_disc_t* io_disc)
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);
+      IODISC_VMCLOSE_CALLED;
     }
   }
   return P_ERR;
@@ -475,12 +521,15 @@ P_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len)
   if (!(io_disc = vmnewof(disc_vm, 0, Pio_disc_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_disc_t));
   if (!(data = vmnewof(disc_vm, 0, P_fwrec_noseek_data_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(P_fwrec_noseek_data_t));
   if (!(f_head = vmnewof(disc_vm, 0, Pio_elt_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_elt_t));
 
   f_head->prev = f_head;
   f_head->next = f_head;
@@ -522,6 +571,7 @@ P_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len)
   P_WARN(&Pdefault_disc, "P_fwrec_noseek_make: out of space");
   if (disc_vm) {
     vmclose(disc_vm);
+    IODISC_VMCLOSE_CALLED;
   }
   return 0;
 }
@@ -707,6 +757,7 @@ P_norec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
 	  (data->btail)--;
 	  return P_ERR;
 	}
+	IODISC_REALLOC(data->balloc * data->block_size, balloc_next * data->block_size);
 	diff           = dbuf_next - data->dbuf;
 	data->balloc   = balloc_next;
 	data->dbuf     = dbuf_next;
@@ -800,6 +851,7 @@ P_norec_noseek_unmake(Pio_disc_t* io_disc)
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);
+      IODISC_VMCLOSE_CALLED;
     }
   }
   return P_ERR;
@@ -833,15 +885,19 @@ P_norec_noseek_make(size_t block_size_hint)
   if (!(io_disc = vmnewof(disc_vm, 0, Pio_disc_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_disc_t));
   if (!(data = vmnewof(disc_vm, 0, P_norec_noseek_data_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(P_norec_noseek_data_t));
   if (!(f_head = vmnewof(disc_vm, 0, Pio_elt_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_elt_t));
   if (!(dbuf = vmoldof(disc_vm, 0, Pbyte, P_NOREC_NOSEEK_INIT_BLOCKS * block_size, 1))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(P_NOREC_NOSEEK_INIT_BLOCKS * block_size);
 
   f_head->prev = f_head;
   f_head->next = f_head;
@@ -883,6 +939,7 @@ P_norec_noseek_make(size_t block_size_hint)
   P_WARN(&Pdefault_disc, "P_norec_noseek_make: out of space");
   if (disc_vm) {
     vmclose(disc_vm);
+    IODISC_VMCLOSE_CALLED;
   }
   return 0;
 }
@@ -1111,6 +1168,7 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
 	readlen = 0;
 	break; /* continue after while to take care of earlier bytes_read, if any */
       }
+      IODISC_REALLOC(data->balloc * data->block_size, balloc_next * data->block_size);
       diff           = dbuf_next - data->dbuf;
       data->balloc   = balloc_next;
       data->dbuf     = dbuf_next;
@@ -1253,6 +1311,7 @@ P_ctrec_noseek_unmake(Pio_disc_t* io_disc)
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);
+      IODISC_VMCLOSE_CALLED;
     }
   }
   return P_ERR;
@@ -1282,15 +1341,19 @@ P_ctrec_noseek_make(Pbyte termChar, size_t block_size_hint)
   if (!(io_disc = vmnewof(disc_vm, 0, Pio_disc_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_disc_t));
   if (!(data = vmnewof(disc_vm, 0, P_ctrec_noseek_data_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(P_ctrec_noseek_data_t));
   if (!(f_head = vmnewof(disc_vm, 0, Pio_elt_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_elt_t));
   if (!(dbuf = vmoldof(disc_vm, 0, Pbyte, P_CTREC_NOSEEK_INIT_BLOCKS * block_size, 1))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(P_CTREC_NOSEEK_INIT_BLOCKS * block_size);
 
   f_head->prev = f_head;
   f_head->next = f_head;
@@ -1329,6 +1392,7 @@ P_ctrec_noseek_make(Pbyte termChar, size_t block_size_hint)
   P_WARN(&Pdefault_disc, "P_ctrec_noseek_make: out of space");
   if (disc_vm) {
     vmclose(disc_vm);
+    IODISC_VMCLOSE_CALLED;
   }
   return 0;
 }
@@ -1562,6 +1626,7 @@ P_vlrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
       readlen = 0;
       goto eof_case;
     }
+    IODISC_REALLOC(data->dbuf_alloc, dbuf_alloc_next);
 #if 0
     P_WARN2(pads->disc, "XXX_REMOVE grew dbuf from %lu to %lu",
 	      (unsigned long)data->dbuf_alloc, (unsigned long)dbuf_alloc_next);
@@ -1646,6 +1711,7 @@ P_vlrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
       readlen = 0;
       goto eof_case;
     }
+    IODISC_REALLOC(data->dbuf_alloc, dbuf_alloc_next);
 #if 0
     P_WARN2(pads->disc, "XXX_REMOVE grew dbuf from %lu to %lu", data->dbuf_alloc, dbuf_alloc_next);
 #endif
@@ -1805,6 +1871,7 @@ P_vlrec_noseek_unmake(Pio_disc_t* io_disc)
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);
+      IODISC_VMCLOSE_CALLED;
     }
   }
   return P_ERR;
@@ -1839,16 +1906,20 @@ P_vlrec_noseek_make(int blocked, size_t avg_rlen_hint)
   if (!(io_disc = vmnewof(disc_vm, 0, Pio_disc_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_disc_t));
   if (!(data = vmnewof(disc_vm, 0, P_vlrec_noseek_data_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(P_vlrec_noseek_data_t));
   if (!(f_head = vmnewof(disc_vm, 0, Pio_elt_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_elt_t));
   dbuf_alloc = P_VLREC_NOSEEK_INIT_RECS * rlen;
   if (!(dbuf = vmoldof(disc_vm, 0, Pbyte, dbuf_alloc, 1))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(dbuf_alloc);
 
   f_head->prev = f_head;
   f_head->next = f_head;
@@ -1888,6 +1959,7 @@ P_vlrec_noseek_make(int blocked, size_t avg_rlen_hint)
   P_WARN(&Pdefault_disc, "P_vlrec_noseek_make: out of space");
   if (disc_vm) {
     vmclose(disc_vm);
+    IODISC_VMCLOSE_CALLED;
   }
   return 0;
 }
@@ -2215,6 +2287,7 @@ P_norec_unmake(Pio_disc_t* io_disc)
     }
     if (data->disc_vm) {
       vmclose(data->disc_vm);
+      IODISC_VMCLOSE_CALLED;
     }
   }
   return P_ERR;
@@ -2247,12 +2320,15 @@ P_norec_make(size_t block_size_hint)
   if (!(io_disc = vmnewof(disc_vm, 0, Pio_disc_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_disc_t));
   if (!(data = vmnewof(disc_vm, 0, P_norec_data_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(P_norec_data_t));
   if (!(f_head = vmnewof(disc_vm, 0, Pio_elt_t, 1, 0))) {
     goto alloc_err;
   }
+  IODISC_NEW_ALLOC(sizeof(Pio_elt_t));
 
   f_head->prev = f_head;
   f_head->next = f_head;
@@ -2291,6 +2367,7 @@ P_norec_make(size_t block_size_hint)
   P_WARN(&Pdefault_disc, "P_norec_make: out of space");
   if (disc_vm) {
     vmclose(disc_vm);
+    IODISC_VMCLOSE_CALLED;
   }
   return 0;
 }

@@ -749,15 +749,16 @@ res
   ty          *rep  = (ty *)(smartNodeIN)->rep;
   ty ## _pd   *pd  = (ty ## _pd *)(smartNodeIN)->pd;
 
-  if (0!=RBuf_reserve (rep->_internal,(void **) (&(rep->elts)),sizeof(eltTy),arrayInfo->live_count+1,0)) 
+  if (0 != RBuf_RESERVE_HINT(rep->_internal, rep->elts, eltTy, arrayInfo->live_count+1, 0)) 
     {
       PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_allocElement",0);
     }
-  if (0!=RBuf_reserve (pd->_internal,(void **) (&(pd->elts)),sizeof(eltPdTy),arrayInfo->live_count+1,0)) 
+  if (0 != RBuf_RESERVE_HINT(pd->_internal, pd->elts, eltPdTy, arrayInfo->live_count+1, 0)) 
     {
       PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
-  if (0!=RBuf_reserve (arrayInfo->_internal_live,(void **) (&(arrayInfo->liveList)),sizeof(PDCI_childIndex_t),arrayInfo->live_count+1,0)) 
+  if (0 != RBuf_RESERVE_HINT(arrayInfo->_internal_live,arrayInfo->liveList,
+			     PDCI_childIndex_t, arrayInfo->live_count+1, 0)) 
     {
       PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
@@ -797,9 +798,9 @@ P_OK;
     PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_SYS_ERR,#ty "_smartNode_allocElement",0);
   }
 
-  if (0!=RBuf_reserve (arrayInfo->_internal_live,(void **) (&(arrayInfo->liveList)),
-		       sizeof(PDCI_childIndex_t),arrayInfo->live_count+1,
-		       arrayInfo->max_elts)) 
+  if (0 != RBuf_RESERVE_HINT(arrayInfo->_internal_live, arrayInfo->liveList,
+			     PDCI_childIndex_t, arrayInfo->live_count+1,
+			     arrayInfo->max_elts)) 
     {
       PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
@@ -1116,8 +1117,8 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
     PDCI_childIndex_t i = arrayInfo->next_idx_create;
     
     /* Grow the buffer to the needed size. */
-    if (0!=RBuf_reserve (arrayInfo->_internal,(void **) (&(arrayInfo->tmap)),
-			 sizeof(PDCI_smart_elt_info_t),(idxIN)+1,0)) 
+    if (0 != RBuf_RESERVE_HINT(arrayInfo->_internal, arrayInfo->tmap,
+			       PDCI_smart_elt_info_t, (idxIN)+1, 0)) 
       {
 	PGLX_report_err ((selfIN)->pads,P_LEV_FATAL,0,P_ALLOC_ERR,
                           #ty "_smartNode_kthChild",0);

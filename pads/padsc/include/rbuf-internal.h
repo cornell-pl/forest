@@ -21,6 +21,14 @@ struct RBuf_s {
   size_t       numElts;
   size_t       extraBytes;
   size_t       maxEltHint;
+#ifdef RBUF_DEBUG
+  // file and line of new call
+  const char  *new_file;
+  int          new_line;
+  // file and line of last reserve
+  const char  *reserve_file;
+  int          reserve_line;
+#endif
 };
 
 struct RMM_s {

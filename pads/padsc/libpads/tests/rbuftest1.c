@@ -35,12 +35,12 @@ int main(int argc, char** argv) {
     error(2, "*** RMM_new_rbuf on rmm_nz failed ***");
     exit(-1);
   }
-  if ((err = RBuf_reserve(rbuf1, &buf1, sizeof(Pint32), 5, 10))) {
+  if ((err = RBuf_RESERVE_HINT(rbuf1, buf1, Pint32, 5, 10))) {
     error(2, "*** rbuf1 reserve failed with err= %d ***", err);
     exit(-1);
   }
   ar1 = (Pint32*)buf1;
-  if ((err = RBuf_reserve(rbuf2, &buf2, sizeof(Pint8), 5, 0))) {
+  if ((err = RBuf_RESERVE_HINT(rbuf2, buf2, Pint8, 5, 0))) {
     error(2, "*** rbuf2 reserve failed with err= %d ***", err);
     exit(-1);
   }
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
   }
   error(0, "Growing zerod array from 5 to 20 elts, one increment at a time");
   for (i = 5; i < 20; i++) {
-    if ((err = RBuf_reserve(rbuf1, &buf1, sizeof(Pint32), i+1, 10))) {
+    if ((err = RBuf_RESERVE_HINT(rbuf1, buf1, Pint32, i+1, 10))) {
       error(2, "*** rbuf1 reserve failed with err= %d ***", err);
       exit(-1);
     }
@@ -66,22 +66,22 @@ int main(int argc, char** argv) {
   }
   error(0, "Growing non-zerod array from 5 to 20 elts, one increment at a time");
   for (i = 5; i < 20; i++) {
-    if ((err = RBuf_reserve(rbuf2, &buf2, sizeof(Pint8), i+1, 0))) {
+    if ((err = RBuf_RESERVE_HINT(rbuf2, buf2, Pint8, i+1, 0))) {
       error(2, "*** rbuf2 reserve failed with err= %d ***", err);
       exit(-1);
     }
     ar2 = (Pint8*)buf2;
     error(0, "ar2[%d] = %d", i, ar2[i]);
   }
-  error(0, "Calling RMM_free on rbuf1 (should cause 2 mem frees)");
+  error(0, "Calling RMM_free_rbuf on rbuf1 (should cause 2 mem frees)");
   err = RMM_free_rbuf(rbuf1);
   error(0, "=> RMM_rbuf_free on rbuf1 result: err= %d ***", err);
 
-  error(0, "Calling RMM_free on rbuf1 (should do nothing)");
+  error(0, "Calling RMM_free_rbuf on rbuf1 (should do nothing)");
   err = RMM_free_rbuf(rbuf1);
   error(0, "=> RMM_rbuf_free on rbuf1 result: err= %d ***", err);
 
-  error(0, "Calling RMM_free_keep_buf on rbuf2 (should cause 1 mem free)");
+  error(0, "Calling RMM_free_rbuf_keep_buf on rbuf2 (should cause 1 mem free)");
   err = RMM_free_rbuf_keep_buf(rbuf2, &buf2b, &mgr);
   error(0, "=> RMM_rbuf_free_keep_buf on rbuf2 result: err= %d ***", err);
   if (buf2b != buf2) {

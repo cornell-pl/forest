@@ -23,8 +23,9 @@
 #endif
 
 #include <stdlib.h>
-
+#include <rbuf-internal.h>
 Puint64 num_recs = 0;
+
 
 int main(int argc, char** argv) {
   P_t              *pads;
@@ -135,6 +136,7 @@ int main(int argc, char** argv) {
   /*
    * Try to read each line of data
    */
+
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
     if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
@@ -157,10 +159,11 @@ int main(int argc, char** argv) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
     /* accum both good and bad vals */
-    if (P_ERR == PADS_TY(_acc_add)(pads, &acc, &pd, &rep)) {
+       if (P_ERR == PADS_TY(_acc_add)(pads, &acc, &pd, &rep)) {
       error(ERROR_FATAL, "*** accumulator add failed ***");
-    }
+      }
   }
+
   if (P_ERR == PADS_TY(_acc_report)(pads, "", 0, 0, &acc)) {
     error(ERROR_FATAL, "** accum_report failed **");
   }
