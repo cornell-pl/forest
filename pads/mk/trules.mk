@@ -26,4 +26,3 @@ ifdef DEBUG_TRULES_MK
 	@echo "Using trules.mk rule TMP_RWXML_DD"
 endif
 	@$(CCExec_DYNAMIC_D)
-endif # REGRESS_TESTS / _d rule
