@@ -46,7 +46,7 @@ PDCI_node_t *barArray_smartNode_kthChild (PDCI_node_t *self, PDCI_childIndex_t i
     }
 
     result = bar_node_new(self,"elt",&(m->element),arrayInfo->tmap[idx].pd,arrayInfo->tmap[idx].rep,"element",WHATFN);
-    bar_sndNode_init(result,&arrayInfo->tmap[idx],arrayInfo->tmap[idx].gen, idx+2);
+    bar_sndNode_init(result,sn,idx,arrayInfo->tmap[idx].gen, idx+2);
 
     break;
   }
@@ -179,7 +179,7 @@ Perror_t barArray_seqSmartNode_eltRead(PDCI_node_t *smartNode, P_t *pads, PDCI_s
 	if (P_io_seek(pads,info->offset) == P_ERR){
 	  error(ERROR_FATAL, "*** failure in " WHATFN ": seek failed ***");  
 	}
-
+	
       }
       // read the rep,pd
       bar_read (pads,&(m->element),&pd->elts[physIdx],&(rep->elts)[physIdx]);
@@ -221,7 +221,7 @@ Perror_t barArray_seqSmartNode_eltRead(PDCI_node_t *smartNode, P_t *pads, PDCI_s
 	}
       }
 
-      return result;
+      return P_OK;
     }
 
     // are we about to read for the first time?
@@ -398,16 +398,21 @@ PDCI_node_t *barArray_dummySmartNode_init(PDCI_node_t *self)
 
 
 /*** TEMP: need to be moved elsewhere */
+PDCI_smart_elt_info_t *PDCI_get_ancestor(PDCI_node_t *node){
+  PDCI_smart_array_info_t *arrayInfo = (PDCI_smart_array_info_t *)node->manager->elt_state;
+  PDCI_childIndex_t idx = node->ancestor_idx;
+  return &arrayInfo->tmap[idx];
+}
 
-// node->ancestor must be valid.
+// PDCI_get_ancestor(node) must be valid.
 int PDCI_sndNode_is_valid(PDCI_node_t *node){
-  return (node->rep != NULL && node->ancestor->gen == node->ancestor_gen);
+  return (node->rep != NULL && PDCI_get_ancestor(node)->gen == node->ptr_gen);
 }
 
 // use only if !PDCI_node_is_valid(node)
 Perror_t PDCI_sndNode_make_valid(PDCI_node_t *node){
   Perror_t res;
-  PDCI_smart_elt_info_t  *ancestor = node->ancestor;
+  PDCI_smart_elt_info_t  *ancestor = PDCI_get_ancestor(node);
   PDCI_smart_node_t      *sn       = ancestor->parent->snExt; // Alias the smart node.
   PDCI_path_t             path;
 
@@ -432,7 +437,7 @@ Perror_t PDCI_sndNode_make_valid(PDCI_node_t *node){
     sn->handle_failure(node->pads,sn,ancestor,"failed to find element in path walk");
     return res;
   } 
-  node->ancestor_gen = ancestor->gen; 
+  node->ptr_gen = ancestor->gen; 
 
   return P_OK;
 }
@@ -598,286 +603,3 @@ Perror_t barArray_read_finish(P_t *pads,barArray_pd *pd,barArray *rep)
   pd->length = (rep->length);
   return ((pd->nerr)==0) ? P_OK : P_ERR;
 }
-
-
-/*
-PDCI_node_t *bar_node_kthChild (PDCI_node_t *self, PDCI_childIndex_t idx)
-{
-  bar *rep=(bar *) (self->rep);
-  bar_pd *pd=(bar_pd *) (self->pd);
-  bar_m *m=(bar_m *) (self->m);
-  PDCI_node_t *result = 0;
-
-  switch(idx){
-  case 0: 
-    // parse descriptor child
-    // PDCI_MK_TNODE (result, &PDCI_structured_pd_vtable,self,"pd",pd,"bar_kth_child");
-    result = PDCI_structured_pd_node_new(self,"pd",pd,"bar_node_kthChild");
-    break;
-  case 1:
-    // PDCI_MK_NODE (result,&Pint16_vtable,self,"f1",&(m->f1),&(pd->f1),&(rep->f1),"element","bar_node_kthChild");
-    result = Pint16_node_new(self,"f1",&(m->f1),&(pd->f1),&(rep->f1),"element","bar_node_kthChild");
-    break;
-  case 2:
-    // PDCI_MK_NODE (result,&Pint32_vtable,self,"f2",&(m->f2),&(pd->f2),&(rep->f2),"element","bar_node_kthChild"); 
-    result = Pint32_node_new(self,"f2",&(m->f2),&(pd->f2),&(rep->f2),"element","bar_node_kthChild");
-    break;
-  case 3:
-    // PDCI_MK_NODE (result,&Pchar_vtable,self,"f3",&(m->f3),&(pd->f3),&(rep->f3),"element","bar_node_kthChild");
-    result = Pchar_node_new(self,"f3",&(m->f3),&(pd->f3),&(rep->f3),"element","bar_node_kthChild");
-   break;
-  }
-  return result;
-}
-
-
-PDCI_node_t *bar_node_kthChildNamed (PDCI_node_t *self, PDCI_childIndex_t idx, const char *name)
-{
-  PDCI_node_t *result = 0;
-  
-  // The index must be 0 as all field names are unique.
-  if (idx != 0)
-    return result;
-
-  if (GLX_STR_MATCH(name,"pd"))       idx = 0;
-  else if (GLX_STR_MATCH(name,"f1"))  idx = 1;
-  else if (GLX_STR_MATCH(name,"f2"))  idx = 2;
-  else if (GLX_STR_MATCH(name,"f3"))  idx = 3;
-  else return result;
-
-  return (self->vt->kth_child)(self,idx);
-}
-
-PDCI_node_t *bar_cachedNode_kthChild (PDCI_node_t *self, PDCI_childIndex_t idx)
-{
-  PDCI_node_t *result = 0;
-
-  // Array bounds check for cache.
-  if (idx >= 4) // non-existent child
-    return result;
-
-  result = self->child_cache[idx];
-  if (result == NULL){
-    // create a new node for the kth child
-    result = bar_node_kthChild(self,idx);
-
-    // initialize the node to be a cachedNode.
-    (result->vt->cachedNode_init)(result);
-
-    // cache the result
-    self->child_cache[idx] = result;
-  }
-
-  return PDCI_ALIAS_NODE(result);
-}
-
-#undef WHATFN
-#define WHATFN "bar_sndNode_kthChild"
-// INV: self->ancestor, self->ancestor_gen and self->path are valid
-PDCI_node_t *bar_sndNode_kthChild (PDCI_node_t *self, PDCI_childIndex_t idx)
-{
-  bar *rep=(bar *) (self->rep);
-  bar_pd *pd=(bar_pd *) (self->pd);
-  bar_m *m=(bar_m *) (self->m);
-  PDCI_path_t path = PDCI_PATH_ADD(bar,self->path,idx);
-  PDCI_node_t *result = 0;
-
-  // check the validaty of the data
-  if (rep == NULL || !PDCI_sndNode_is_valid(self)){
-    // in case the right-side of the || got us here:
-    self->rep = NULL;  
-    self->pd  = NULL;
-
-    switch(idx){
-    case 0: 
-      // parse descriptor child
-      result = PDCI_structured_pd_node_new(self,"pd",NULL,WHATFN);
-      PDCI_structured_pd_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
-      break;
-    case 1:
-      result = Pint16_node_new(self,"f1",&(m->f1),NULL,NULL,"element",WHATFN);
-      Pint16_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
-      break;
-    case 2:
-      result = Pint32_node_new(self,"f2",&(m->f2),NULL,NULL,"element",WHATFN);
-      Pint32_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
-      break;
-    case 3:
-      result = Pchar_node_new(self,"f3",&(m->f3),NULL,NULL,"element",WHATFN);
-      Pchar_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
-      break;
-    }    
-  }else {
-    switch(idx){
-    case 0: 
-      // parse descriptor child
-      result = PDCI_structured_pd_node_new(self,"pd",pd,WHATFN);
-      PDCI_structured_pd_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
-      break;
-    case 1:
-      result = Pint16_node_new(self,"f1",&(m->f1),&(pd->f1),&(rep->f1),"element",WHATFN);
-      Pint16_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
-      break;
-    case 2:
-      result = Pint32_node_new(self,"f2",&(m->f2),&(pd->f2),&(rep->f2),"element",WHATFN);
-      Pint32_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
-      break;
-    case 3:
-      result = Pchar_node_new(self,"f3",&(m->f3),&(pd->f3),&(rep->f3),"element",WHATFN);
-      Pchar_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
-      break;
-    }
-  }  
-  return result;
-}
-
-Perror_t bar_node_pathWalk(P_t *pads, bar_m *m, bar_pd *pd, bar *rep, PDCI_path_t path,
-		      void **m_out, void **pd_out, void **rep_out)
-{
-  PDCI_childIndex_t idx;
-  Perror_t res = P_ERR;
-  
-  if (path.length > 0){
-    // modifies path
-    idx = PDCI_PATH_GET(path);
-
-    switch(idx){
-    case 0: 
-      *pd_out = NULL;
-      *m_out = NULL;
-      res = PDCI_structured_pd_node_pathWalk(pads,(PDCI_structured_pd *)pd,path,rep_out);
-      break;
-    case 1:
-      res = Pint16_node_pathWalk(pads,&(m->f1),&(pd->f1),&(rep->f1),path,m_out,pd_out,rep_out);      
-      break;
-    case 2:
-      res = Pint32_node_pathWalk(pads,&(m->f2),&(pd->f2),&(rep->f2),path,m_out,pd_out,rep_out);      
-      break;
-    case 3:
-      res = Pchar_node_pathWalk(pads,&(m->f3),&(pd->f3),&(rep->f3),path,m_out,pd_out,rep_out);      
-     break;
-    }
-  }else{
-    *rep_out = rep;
-    *pd_out = pd;
-    *m_out = m;
-
-    res = P_OK;
-  }
-
- return res;
-}
-
-PDCI_vtable_t const bar_node_vtable={bar_cachedNode_init,
-				     bar_node_kthChild,
-				     bar_node_kthChildNamed,
-				     PDCI_node_free,
-				     PDCI_error_typed_value,
-				     0};
-
-PDCI_vtable_t const bar_cachedNode_vtable={PDCI_error_cachedNode_init,
-					   bar_cachedNode_kthChild,
-					   bar_node_kthChildNamed,
-					   PDCI_cachedNode_free,
-					   PDCI_error_typed_value,
-					   0};
-
-PDCI_vtable_t const bar_sndNode_vtable={PDCI_error_cachedNode_init,
-					bar_sndNode_kthChild,
-					bar_node_kthChildNamed,
-					PDCI_node_free,
-					PDCI_error_typed_value,
-					0};
-
-PDCI_node_t *barArray_node_new(PDCI_node_t *parent,
-			       const char *name, 
-			       void* m, void* pd, void* rep,
-			       const char *kind,
-			       const char *whatfn){
-  PDCI_node_t *result;
-  PDCI_MK_NODE (result,&barArray_node_vtable,
-		parent,name,m,pd,rep,kind,"barArray_node_new");
-  return result;
-}
- 
-PDCI_node_t *barArray_cachedNode_init(PDCI_node_t *self){
-  barArray *rep=(barArray *) (self->rep);
-
-  // Setup the virtual table
-  self->vt  = & barArray_cachedNode_vtable;
-
-  // Setup node-type specific fields
-  self->child_cache = (PDCI_node_t **)PDCI_NEW_LIST(2 + rep->length);
-  if(self->child_cache == NULL)
-    failwith ("PADS/Galax ALLOC_ERROR: in barArray_cachedNode_init");  
-
-  return self;
-}
-
-PDCI_node_t *barArray_node_kthChild (PDCI_node_t *self, PDCI_childIndex_t idx)
-{
-  barArray *rep=(barArray *) (self->rep);
-  barArray_pd *pd=(barArray_pd *) (self->pd);
-  barArray_m *m=(barArray_m *) (self->m);
-  PDCI_node_t *result = 0;
-
-  switch(idx){
-  case 0: // parse descriptor child 
-    result = PDCI_sequenced_pd_node_new(self,"pd",pd,"barArray_node_kthChild");
-    break;
-  case 1: // length field
-    result = Puint32_val_node_new(self,"length",&(rep->length),"barArray_node_kthChild");
-    break;
-  default: // now do elements
-    idx -= 2;
-    if (idx < rep->length){
-      result = bar_node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element","barArray_node_kthChild");
-    }
-    break;
-  }
-  return result;
-}
-
-PDCI_node_t *barArray_node_kthChildNamed (PDCI_node_t *self, PDCI_childIndex_t idx, const char *name)
-{
-  barArray *rep=(barArray *) (self->rep);
-  PDCI_node_t *result = 0;
-  PDCI_childIndex_t k = 0;
-
-  if (GLX_STR_MATCH(name,"pd")){
-    if(idx == 0) k = idx;
-    else         return result;
-  }else if(GLX_STR_MATCH(name,"length")){
-    if(idx == 0) k = 1;
-    else         return result;
-  }else if(GLX_STR_MATCH(name,"elt") && idx < rep->length)  
-    k = idx + 2;
-  else return result;
-
-  return (self->vt->kth_child)(self,k);
-}
-
-PDCI_node_t *barArray_cachedNode_kthChild (PDCI_node_t *self, PDCI_childIndex_t idx)
-{
-  barArray *rep=(barArray *) (self->rep);
-  PDCI_node_t *result = 0;
-  
-  if (idx >= 2 + rep->length) // non-existent child
-    return result;
-
-  result = self->child_cache[idx];
-  if (result == NULL){
-    // create a new node for the kth child
-    result = barArray_node_kthChild(self,idx);
-
-    // initialize the node to be a cachedNode.
-    (result->vt->cachedNode_init)(result);
-
-    // cache the result
-    self->child_cache[idx] = result;
-  }
-
-  return PDCI_ALIAS_NODE(result);
-}
-
- */

@@ -32,7 +32,7 @@ REGRESS_TESTS = 1
 INCLUDES += -I ../gen
 CURDIR := $(shell pwd)
 SCRIPTS = $(PADS_HOME)/scripts
-INCLUDE_DEPS += $(PADS_HOME)/padsc/include/pglx-codegen-macros-gen.h
+# INCLUDE_DEPS += $(PADS_HOME)/padsc/include/pglx-codegen-macros-gen.h
 
 include $(PADS_HOME)/mk/rules.mk
 
@@ -87,7 +87,8 @@ pglx_lib:
 	@(cd $(PADS_HOME)/padsc; $(MAKE) pglx_lib)
 
 # MYENUM_DEPS = $(CODE_DIR)/enum_kth.c $(CODE_DIR)/enum_kth.h
-MYENUM_DEPS = $(CODE_DIR)/enum_kth.h
+MYENUM_DEPS = $(CODE_DIR)/enum_kth.h $(GEN_DIR)/enum.h $(GEN_DIR)/enum.c $(INCLUDE_DEPS)
+
 $(GEN_DIR)/myenum.c: $(MYENUM_DEPS)
 	touch $(GEN_DIR)/myenum.c
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 
-#define NUM_ELTS  10
+#define NUM_ELTS  50
 
 /* 1 Mb */
 #define INNER_ARR_SIZE  5
