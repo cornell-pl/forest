@@ -5132,7 +5132,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.143 2004-02-17 19:02:40 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.144 2004-02-19 16:23:56 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6446,8 +6446,10 @@ Pstring_cleanup(P_t *pads, Pstring *s)
 {
   PDCI_DISC_1P_CHECKS("Pstring_cleanup", s);
   /* if (s->sharing) { P_WARN1(pads->disc, "XXX_REMOVE cleanup: string %p is no longer sharing", (void*)s); } */
-  s->sharing = 0;
-  RMM_free_rbuf(s->rbuf);
+  if (s->rbuf && (0 != RMM_free_rbuf(s->rbuf))) {
+    PDCI_report_err(pads, P_LEV_FATAL, 0, P_ALLOC_ERR, "Pstring_cleanup", "Couldn\'t free growable buffer");
+  }
+  memset((void*)s, 0, sizeof(*s));
   return P_OK;
 }
 
@@ -6507,6 +6509,7 @@ Perror_t
 Pstring_pd_init(P_t *pads, Pbase_pd *pd)
 {
   PDCI_DISC_1P_CHECKS("Pstring_pd_init", pd);
+  memset((void*)pd, 0, sizeof(*pd));
   return P_OK;
 }
 
