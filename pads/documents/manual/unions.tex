@@ -193,6 +193,8 @@ there is a corresponding field in the mask, the type of which is the
 type of the mask type for that field.   For example, the mask type
 \csmSuf{branches} has the following structure:
 \input{code/union-impl-branches-mask.tex}
+Union masks have one additional field \cd{unionLevel} that allows the
+programmer to toggle behavior at the level of the union as a whole.
 
 \subsection{Parse descriptor}
 \label{sec:unions-parse-descriptors}

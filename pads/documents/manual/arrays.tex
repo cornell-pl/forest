@@ -95,6 +95,7 @@ variables, their types, and their bindings.
 Variable & Type & Contexts & Binding \\\hline \hline
 \texttt{numRead}  & \texttt{int}     & all & Number of elements read from source. \\ \hline
 \texttt{length}   & \texttt{int}     & all & Length of in-memory representation of sequence.\\ \hline
+\textit{arrayName}& \texttt{rep\_t *}& all & In-memory representation of element sequence. \\ \hline
 \texttt{elts}     & \texttt{rep\_t *}& all & In-memory representation of element sequence. \\ \hline
 \texttt{pds}      & \texttt{pd\_t *} & all & In-memory representation of parse descriptor sequence. \\ \hline
 \texttt{current}  & \texttt{int}     & all & Index of most recently read element.  \\ \hline
@@ -113,10 +114,8 @@ In the table, we use \texttt{rep\_t} to denote the type of the
 in-memory representation of the base type of the sequence \ie{},
 \texttt{rep\_t} is the base type for the sequence.  Similarly,
 \texttt{pd\_t} denotes the type of the parse descriptor for the base
-type of the sequence.
-
-In addition to these variables, the name of the array type is in scope
-in every context; it is a synonym for the special variable \texttt{elts}.
+type of the sequence. In the table, \textit{arrayName} denotes the
+name of the array; it is a synonym for the special variable \texttt{elts}.
 
 
 \subsection{Size specifications}
@@ -164,11 +163,13 @@ condition.  The body of the constraint is a predicate expression (\cf{}
 element in the array.  If it evaluates to true, array parsing
 terminates. \secref{sec:special-variables} lists the variables that
 are in scope within the predicate.
-
 The following description uses a \Plast{} predicate to 
 terminate array parsing if the number of input bytes consumed by
 reading the sequence is greater than a specified amount.
 \input{code/last}
+
+If an array has a \Plast{} constraint, it cannot have a
+\Plongest{} or a \Pended{} constraint.
 
 
 \subsection{\Plongest{}}
@@ -182,6 +183,10 @@ non-empty sequence of even integers separated by the character
 sequence of odd integers, separated by the character \cd('a') and
 terminated by the character \cd('b'):
 \input{code/longest}
+
+If an array has a \Plongest{} constraint, it cannot have a
+\Plast{} or a \Pended{} constraint.
+
 
 \subsection{\Pended}
 The \Pended{} clause is similar to \Plast{}, except that it allows 
@@ -203,6 +208,8 @@ descriptor as an argument, it must be within the scope of a
 
 \input{code/ended}
 
+If an array has a \Pended{} constraint, it cannot have a
+\Plast{} or a \Plongest{} constraint.
 
 \subsection{\Pomit}
 Like \Plast{} and \Pended{}, the \Pomit{} clause takes a predicate and
@@ -232,46 +239,145 @@ If the predicate given in
 the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
 in the associated parse descriptor will indicate a user-constraint
 error has occurred.   Syntactically,  \Pwhere{} clauses for arrays are
-a \cd{\&\&}-separated sequence of clauses.   There are three types of
-clauses: general expressions, \Pparsecheck{} constraints, and
-\Pforall{} 
+a \cd{\&\&}-separated sequence of array predicates.   There are two types of
+array predicates: general predicates, which include \Pparsecheck{}
+constraints, and  
+\Pforall{} predicates.  The value of the \Pwhere{} clause is the
+conjunction of the values of each of the array predicates.  The
+predicates are evaluated in the order they are listed.
 
+\subsection{General predicates}
+General predicates, which include \Pparsecheck{} predicates, are
+described in \secref{sec:common-predicates}
 
-\subsection{\Pparsecheck}
 \subsection{\Pforall}
-\begin{verbatim}
+\Pforall{} predicates provide a way to write constraints over the entirety
+of the in-memory representation of an array after it has been fully
+parsed. The following example checks that the resulting integer
+sequence is in sorted order
+\input{code/array-forall}
+Syntactically, the \Pforall{} clause gives an index variable
+(\texttt{i} in the example) and a range for that variable (\texttt{0}
+to \texttt{length-2}, inclusive).  Following the colon, it gives a
+boolean-valued expression. This expression is executed once for each
+value of the index in the range;  the value of the clause is the
+conjunction of the resulting values.
 
-semantic constraints
+\section{Termination conditions}
+There are a number of conditions under which parsing for an array will
+terminate:
 
-name.length in scope after array
+\begin{itemize}
+\item{\textit{Size limit.}} If an array specification includes an upper bound,
+  then parsing will terminate after the indicated number of elements
+  have been placed in the in-memory representation.  Note that omitted
+  elements are not included in this total.
+\item\textit{Terminator.} For an array with a \Pterm{} clause, parsing
+  terminates whenever the terminating sequence is found.
+\item\textit{End-of-source.} Parsing terminates if it reaches the end of the
+  data source.
+\item{\Plast{}.} If an array has a \Plast{} clause, parsing terminates
+  whenever the specified predicate evalutes to true.
+\item{\Plongest{}.} For an array with a \Plongest{} clause, parsing terminates
+  as soon as there is an error detected in reading an element.  The
+  erroneous element value is not included in the array.
+\item{\Pended{}.} If an array has a \Pended{} clause, parsing
+  terminates whenever the specified predicate evaluates to true.
+\end{itemize}
+A single array specification can include many of these termination
+conditions.  If any of the conditions trigger, then array parsing
+terminates.  
 
-Parray recList(a_uint32 h, int x, int size) {
-  test(:h,x:) [size] : forall i in [0 .. length - 2]
-       { recList[i].id < recList[i+1].id };
-};
-\end{verbatim}
-
-\section{termination conditions}
-reach upper limit on size, reach terminator, reach end-of-file, 
-not: violate constraint on individual element. (perhaps this should be
-choosable by programmer?)
-
-
-\section{common idiom}
-struct with length followed by parameterized array.
+After a termination condition has been detected, the parse function
+does error checking.  In particular,
+if an array specification has a minimum size and the
+length of the in-memory representation does not satisfy this
+requirement, the parse descriptor will record the error 
+\cd{P_ARRAY_SIZE_ERR}.  
 
 
 \section{Generated library}
+To explain the data structures and operations generated for array
+declarations, we will use the description of resolved IP addresses as
+an example.
+\input{code/nIP}
+
 \subsection{In-memory representation}
 \label{sec:arrays-rep}
+The in-memory representation of a \Parray{} is a struct with three
+fields.  
+\input{code/ai.arrayRep}
+The first of these is an integer recording the length of the
+array in memory.  The second is an array of elements of the base type
+of the array.  The third field is a pointer to a growable buffer that
+manages the dynamically-allocated space for the array.
+\note{Bob: add more detail here.}
+
 \subsection{Mask}
 \label{sec:arrays-masks}
+The mask for a \Parray{} is a struct containing a pair of masks.  The
+\cd{element} field stores a mask of the base element mask type.  This
+mask specifies how to handle each element in the array.  The
+\cd{arrayLevel} mask allows the user to toggle behavior at the level
+of the \Parray{} as a whole. 
+\input{code/ai.arrayMask}
+
+
 \subsection{Parse descriptor}
 \label{sec:arrays-parse-descriptors}
+The parse descriptor for a \Parray{} is a \c{} struct, with all the
+fields described in \secref{sec:common-parse-descriptor}.  
+\input{code/ai.arrayPD}
+In addition, the field \cd{neerr} records the number of errors that
+occurred while processing elements of the array. The field
+\cd{firstError} records the index of the first element that triggered
+an error.  This field is only valid if the \cd{errCode} has the value
+\cd{ARRAY_ELEM_ERR}.  The \cd{numRead} field records the number of
+elements in the array storing the parse descriptors for each of the
+array elements.  The field \cd{elts} stores the array of base parse
+descriptors.  Finally, field \cd{_internal} contains a pointer to the
+growable buffer that manages the dynamically-allocated space for the
+array of base parse descriptors.
+
 \subsection{Operations}
-init/cleanup rep
-pinit/cleanup ed
-\subsubsection{read}
-  error codes
+The operations generated by the \pads{} compiler for a \Parray{} are
+those described in \chapref{chap:common-features}.
+\input{code/ai.arrayOps}
+
+The error codes for \Pstruct{}s are:
+
+\tskip{}
+\begin{tabular}{lp{4in}}
+ \cd{P_NO\_ERR}                 & No error occurred\\[1ex]
+ \cd{P_ARRAY_ELEM_ERR}          & An error occurred during
+                                    parsing one of the elements of
+                                    the \Parray{}. The parse
+                                    descriptor for the element whose
+				    index is \texttt{firstError}
+                                    will contain more
+                                    information describing the precise
+                                    nature of the error.\\[1ex]
+ \cd{P_ARRAY_SEP_ERR}           & Error reading a separator.\\[1ex]
+ \cd{P_ARRAY_TERM_ERR}          & Error reading the terminator.\\[1ex]
+ \cd{P_STRUCT_EXTRA_BEFORE_SEP} & Unexpected data before a separator.\\[1ex]
+ \cd{P_STRUCT_EXTRA_BEFORE_TERM}& Unexpected data before the terminator.\\[1ex]
+ \cd{P_ARRAY_SEP_TERM_SAME_ERR} & The separator and terminator sequences were the same.\\[1ex]
+ \cd{P_ARRAY_SIZE_ERR}          & The size of 
+                                    the parsed \Parray{} did not match
+				    the specified size constraints.\\[1ex]
+ \cd{P_ARRAY_USER_CONSTRAINT_ERR}
+                                & A constraint in the \Pwhere{} clause failed.\\[1ex]
+
+
+\end{tabular}
+
+\noindent
+If multiple errors occur during the parsing of a \Parray{}, the
+\cd{errCode} field will reflect the first detected error.  The array
+of parse descriptors will describe any errors detected while
+reading the \Parray{} elements.
+
 \subsubsection{Accumulator functions}
+Accumulator functions for \Parrays{}s are described in
+\chapref{chap:accumulators}. 
 

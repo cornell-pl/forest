@@ -1,17 +1,24 @@
-/*@FILE @LEFT ai.httpRequestRep.tex  ai.httpRequestCSM.tex ai.httpRequestED.tex ai.httpRequestPD.tex ai.httpRequestOps.tex */
+/*@FILE @LEFT ai.httpRequestRep.tex  ai.httpRequestCSM.tex ai.httpRequestPD.tex ai.httpRequestOps.tex ai.arrayRep.tex ai.arrayPD.tex ai.arrayMask.tex ai.arrayOps.tex */
 #ifndef __AI__H__
 #define __AI__H__
 #include "pads.h"
 typedef struct nIP_s nIP;
+
+/*@BEGIN ai.arrayMask.tex*/
 typedef struct nIP_m_s nIP_m;
-typedef struct nIP_pd_s nIP_pd;
+
 struct nIP_m_s {
   Pbase_m element;		/* per-element */
   Pbase_m arrayLevel;		/* entire array */
 };
+/*@END ai.arrayMask.tex*/
+
+/*@BEGIN ai.arrayPD.tex*/
+typedef struct nIP_pd_s nIP_pd;
+
 struct nIP_pd_s {
   Pflags_t pstate;
-  Puint32 nerr;		/* Number of array errors */
+  Puint32 nerr;		        /* Number of array errors */
   PerrCode_t errCode;
   Ploc_t loc;
   Puint32 neerr;		/* Number of element errors */
@@ -21,12 +28,19 @@ struct nIP_pd_s {
   Pbase_pd *elts;
   RBuf_t *_internal;
 };
+/*@END ai.arrayPD.tex*/
+
+/*@BEGIN ai.arrayRep.tex*/
+typedef struct nIP_s nIP;
+
 struct nIP_s {
   Puint32 length;
   Puint8 *elts;
   RBuf_t *_internal;
 };
+/*@END ai.arrayRep.tex*/
 
+/*@BEGIN ai.arrayOps.tex */
 Perror_t nIP_init (P_t *pads,nIP *rep);
 
 Perror_t nIP_pd_init (P_t *pads,nIP_pd *pd);
@@ -44,6 +58,8 @@ void nIP_m_init (P_t *pads,nIP_m *mask,Pbase_m baseMask);
 Perror_t nIP_read (P_t *pads,nIP_m *m,nIP_pd *pd,nIP *rep);
 
 int is_nIP (nIP *rep);
+/*@END ai.arrayOps.tex */
+
 typedef struct nIP_acc_s nIP_acc;
 struct nIP_acc_s {
   Puint32_acc length;		/* Accumulator for array length */

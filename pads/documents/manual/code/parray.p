@@ -1,4 +1,4 @@
-/*@FILE @LEFT  seq_t.tex sorted_t.tex nosep.tex last.tex size.tex longest.tex ended.tex array-omit.tex*/
+/*@FILE @LEFT  seq_t.tex sorted_t.tex nosep.tex last.tex size.tex longest.tex ended.tex array-omit.tex array-forall.tex*/
 
 /*@BEGIN seq_t.tex */
 Parray seq_t{
@@ -90,3 +90,15 @@ Parray seq_t{
   Pint32 [:4] : Psep(' ') && Pomit(elt < 0) && Pterm(Peor);
 };
 /*@END array-omit.tex */
+
+
+/*@BEGIN array-forall.tex */
+Precord Parray intList {
+  Puint32 [INTLIST_SIZE] : Psep('|');
+} Pwhere {
+  Pforall( i Pin [0..length-2] : (intList[i] < intList[i+1]) )  && 
+  Pparsecheck(end.offset - begin.offset > 10)       
+};
+/*@END array-forall.tex */
+
+
