@@ -4,6 +4,9 @@
 int main(int argc, char** argv) {
   PDC_t*          pdc;
   test            f1data;
+  test_acc        accum;
+  test_em         em = {0};
+  test_ed         ed = {0};
 
   if (PDC_ERROR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");
@@ -14,16 +17,33 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
+  error(0, "\ninit the accum");
+  if (PDC_ERROR == test_acc_init(pdc, &accum, 0)) {
+    error(2, "** init failed **");
+    exit(-1);
+  }
+
   /*
    * Try to read each line of data
    */
   while (!PDC_IO_peek_EOF(pdc, 0)) {
-    if (PDC_OK == test_read(pdc, 0, 0, &f1data, 0)) {
+    if (PDC_OK == test_read(pdc, &em, &ed, &f1data, 0)) {
       /* do something with the data */
       error(2, "test_read returned: id %d  ts %d", f1data.id, f1data.ts);
+      if (PDC_ERROR == test_acc_add(pdc, &accum, &ed, &f1data, 0)) {
+	error(0, "** accum_add failed **");
+      }
     } else {
       error(2, "test_read returned: error");
     }
+  }
+
+  error(0, "\ndescribe the accum");
+  if (PDC_ERROR == PDC_int32_acc_report(pdc, "id", &(accum.id), 0)) {
+    error(0, "** accum_report failed **");
+  }
+  if (PDC_ERROR == PDC_int32_acc_report(pdc, "ts", &(accum.ts), 0)) {
+    error(0, "** accum_report failed **");
   }
 
   if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {
