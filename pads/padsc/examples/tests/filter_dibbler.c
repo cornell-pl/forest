@@ -37,9 +37,9 @@ void cnvPhoneNumbers(entry_t *entry){
 int main(int argc, char** argv) {
   P_t                *pads;
   Pio_disc_t         *io_disc;
-  summary_header     header;
-  summary_header_pd  header_pd;
-  summary_header_m   header_m;
+  summary_header_t   header;
+  summary_header_t_pd  header_pd;
+  summary_header_t_m   header_m;
   entry_t            entry;
   entry_t_pd         entry_pd;
   entry_t_m          entry_m;
@@ -77,9 +77,9 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  summary_header_init(pads, &header);
-  summary_header_pd_init(pads, &header_pd);
-  summary_header_m_init(pads, &header_m, P_CheckAndSet);
+  summary_header_t_init(pads, &header);
+  summary_header_t_pd_init(pads, &header_pd);
+  summary_header_t_m_init(pads, &header_m, P_CheckAndSet);
 
   /* INIT entry -- must do this for all variable data types */
   entry_t_init(pads, &entry);
@@ -96,9 +96,9 @@ int main(int argc, char** argv) {
    * Try to read header
    */
 
-  if (P_OK == summary_header_read(pads, &header_m, &header_pd, &header)) {
+  if (P_OK == summary_header_t_read(pads, &header_m, &header_pd, &header)) {
     error(0, "reading header returned: OK");
-    summary_header_write2io(pads, CLEAN_FILE, &header_pd, &header);
+    summary_header_t_write2io(pads, CLEAN_FILE, &header_pd, &header);
   } else {
     error(2, "reading header returned: error");
   }
