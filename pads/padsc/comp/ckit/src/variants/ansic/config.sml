@@ -13,7 +13,7 @@ struct
     val typedefsScoped		= true
     val prototypesAllowed 	= true
     val templatesAllowed 	= false
-    val trailingCommaInEnum 	= {error=false,warning=true}
+    val trailingCommaInEnum 	= {error=false,warning=false} (* PADS: ansic has this a warning *)
     val newFundefsAllowed 	= true
     val voidAllowed		= true
     val voidStarAllowed		= true

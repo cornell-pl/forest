@@ -92,6 +92,7 @@ struct
     | Switch of expression * statement
     | StatExt of (expression, statement, binop, unop) AstExt.statementExt
     | ErrorStmt
+(*    | CommentStmt of string (* PADS *) *)
 
   (* EXPRESSIONS *)
 

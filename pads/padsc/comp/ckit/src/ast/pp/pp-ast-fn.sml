@@ -638,7 +638,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	     ;ppStmt aidinfo tidtab pps stmt
              ;PPL.newline pps
 	   end 
-       | ExternalDeclExt ed => PPAE.ppExternalDeclExt (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+       | ExternalDeclExt ed => PPAE.ppExternalDeclExt (* PADS *) NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
   (* PADS: print .h version *)
   fun ppCoreExternalDeclH aidinfo tidtab pps edecl =
@@ -675,7 +675,8 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
              ;PPL.addStr pps ";"
 	     ;PPL.newline pps
 	   end 
-       | ExternalDeclExt ed => PPAE.ppExternalDeclExt (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+       | ExternalDeclExt ed => PPAE.ppExternalDeclExt NONE 
+	                       (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
   (* PADS: print .c version *)
   fun ppCoreExternalDeclC aidinfo tidtab pps edecl =
@@ -712,24 +713,25 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	     ;ppStmt aidinfo tidtab pps stmt
              ;PPL.newline pps
 	   end 
-       | ExternalDeclExt ed => PPAE.ppExternalDeclExt (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+       | ExternalDeclExt ed => PPAE.ppExternalDeclExt NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
   fun ppExternalDecl aidinfo tidtab pps edecl = 
-       PPAA.ppExternalDeclAdornment ppCoreExternalDecl aidinfo tidtab pps edecl
+       PPAA.ppExternalDeclAdornment NONE ppCoreExternalDecl aidinfo tidtab pps edecl
 
-  fun ppExternalDeclRefined outputTyp aidinfo tidtab pps edecl = 
+  (* PADS: takes source name and description of output kind *)
+  fun ppExternalDeclRefined outputTyp srcFile aidinfo tidtab pps edecl = 
       let val ppCoreED = 
           case outputTyp
           of HEADER => ppCoreExternalDeclH  (* PADS: print .h information *)
           |  IMPL =>   ppCoreExternalDeclC  (* PADS: print .c information *)
           |  ALL  =>   ppCoreExternalDecl   (* PADS: print everything *)
       in
-	  PPAA.ppExternalDeclAdornment ppCoreED aidinfo tidtab pps edecl
+	  PPAA.ppExternalDeclAdornment srcFile ppCoreED aidinfo tidtab pps edecl
       end
 
-  fun ppAst outputTyp aidinfo tidtab pps edecls = 
+  fun ppAst outputTyp srcFile aidinfo tidtab pps edecls = 
 (*PADS: this change removes extraneous white space from output file *)
-      List.app (ppExternalDeclRefined outputTyp aidinfo tidtab pps) edecls
+      List.app (ppExternalDeclRefined outputTyp srcFile aidinfo tidtab pps) edecls
 
 (* old version:  PPL.separate (ppExternalDecl aidinfo tidtab,PPL.newline) pps edecls *)
 
@@ -760,5 +762,5 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
   val ppCoreExpression = wrap (ppCoreExpr {nested=false})
   val ppExternalDecl = wrap ppExternalDecl
   val ppCoreExternalDecl = wrap ppCoreExternalDecl
-  val ppAst  = fn outputTyp => wrap (ppAst outputTyp) 
+  val ppAst  = fn outputTyp => fn srcFile => wrap (ppAst outputTyp srcFile)  (* PADS *)
 end

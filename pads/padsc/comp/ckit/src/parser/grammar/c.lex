@@ -112,6 +112,7 @@ fun special_char(c,fst,last,errWarn:errWarn) =
    INITIAL -- predefined start state and the default token state
    S -- inside a string (entered from INTITAL with ")
    C -- inside a comment (entered from INITIAL with /* )
+   CC -- inside a C++ style comment
  *)
 
 
@@ -122,9 +123,10 @@ fun special_char(c,fst,last,errWarn:errWarn) =
 			 sharing TokTable.Tokens = Tokens));
 
 %arg ({comLevel,errWarn,sourceMap,charlist,stringstart});
-%s C S; 
+%s CC C S; 
 
-
+eol=.*"\n";
+newline = ("\010" | "\010\013" | "\013" | "\013\010");
 id	= [_A-Za-z][_A-Za-z0-9]*; 
 octdigit	= [0-7];
 hexdigit	= [0-9a-fA-F];
@@ -146,11 +148,14 @@ directive = #(.)*\n;
 <INITIAL,C>\n		=> (SourceMap.newline sourceMap yypos; continue());
 <INITIAL,C>{ws}		=> (continue()); 
 
-
 <INITIAL>"/*"		=> (YYBEGIN C; continue());
 <C>"*/"	 	=> (YYBEGIN INITIAL; continue());
 <C>.		=> (continue());
 
+<INITIAL>"//"   => (YYBEGIN CC; continue());
+<CC>{newline}   => (YYBEGIN INITIAL; 
+                    SourceMap.newline sourceMap yypos; continue());  
+<CC>.           => (continue());
 
 <INITIAL>\"		=> (charlist := [""]; stringstart := yypos; YYBEGIN S; continue());
 <S>\"	        => (YYBEGIN INITIAL;Tokens.STRING(makeString charlist,!stringstart,yypos+1));

@@ -20,6 +20,8 @@ signature PPASTEXT = sig
       ((Ast.expression, Ast.statement, Ast.binop, Ast.unop) AstExt.statementExt,
        aidinfo) ppExt
   val ppExternalDeclExt :
+      string option ->  (* PADS: added optional source file info.
+			   If given, ast from all other sources will be filtered out *)
       ((Ast.expression, Ast.statement, Ast.binop, Ast.unop) AstExt.externalDeclExt,
        aidinfo) ppExt
 end

@@ -96,7 +96,7 @@ struct
 
     fun varDeclS (ct,v,init) = declS(pctToPDT ct,PT.VarDecr v,init)
     fun varDeclS' (ct,v) = varDeclS(ct,v,PT.EmptyExpr)
-
+    fun mkCommentS s = PT.StatExt(PX.PComment s)
 
 
     fun makeStructEDecl (fields : (string*PT.ctype) list, tag : string option) =

@@ -37,7 +37,7 @@ struct
 
   fun fileToC x = 
       let val {ast, tidtab, ...} = fileToAst x
-       in PPLib.ppToStrm (PPAst.ppAst PPAst.ALL () tidtab) TextIO.stdOut ast
+       in PPLib.ppToStrm (PPAst.ppAst PPAst.ALL NONE () tidtab) TextIO.stdOut ast
       end
 
 end (* structure ParseToAst *)

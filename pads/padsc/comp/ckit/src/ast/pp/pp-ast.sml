@@ -13,14 +13,19 @@ local
     fun ppStatementAdornment ppCoreStmt aidinfo tidtab pps  (Ast.STMT (coreStmt,_,_)) = 
 	ppCoreStmt aidinfo tidtab pps coreStmt
 
-    fun ppExternalDeclAdornment ppCoreExternalDecl aidinfo tidtab pps
+   (* PADS: added argument to denote source file.  Output from all other sources files
+            will be filtered out. *)
+    fun ppExternalDeclAdornment srcFileOpt ppCoreExternalDecl aidinfo tidtab pps
 	  (Ast.DECL (coreExtDecl,_,loc:SourceMap.location)) = 
 	  (case loc of SourceMap.UNKNOWN => ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
-           | SourceMap.LOC r => let val fname = OS.Path.file (#srcFile r)
+           | SourceMap.LOC r => let val fname = OS.Path.file (#srcFile r) (* PADS *)
 				 in
-				     if fname = "padslib.h" orelse fname = "padslib-internal.h" then ()
-
-				     else ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
+				     case srcFileOpt
+				     of NONE => ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
+                                     |  SOME srcname => 
+					 if srcname = fname 
+					 then ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
+					 else ()
 				 end)
   end
 

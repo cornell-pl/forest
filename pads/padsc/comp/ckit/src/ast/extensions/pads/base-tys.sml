@@ -17,32 +17,32 @@ struct
            scanname = NONE},
 
 	  {padsname = Atom.atom "aint8", 
-	   repname  = Atom.atom "int8", 
-	   emname   = Atom.atom "base_em", 
-	   edname   = Atom.atom "base_ed", 
-	   readname = Atom.atom "aint8_read",
+	   repname  = Atom.atom "PDC_int8", 
+	   emname   = Atom.atom "PDC_base_em", 
+	   edname   = Atom.atom "PDC_base_ed", 
+	   readname = Atom.atom "PDC_aint8_read",
            scanname = NONE},
 
 	  {padsname = Atom.atom "auint32", 
-	   repname  = Atom.atom "uint32", 
-	   emname   = Atom.atom "base_em", 
-	   edname   = Atom.atom "base_ed", 
-	   readname = Atom.atom "auint32_read",
+	   repname  = Atom.atom "PDC_uint32", 
+	   emname   = Atom.atom "PDC_base_em", 
+	   edname   = Atom.atom "PDC_base_ed", 
+	   readname = Atom.atom "PDC_auint32_read",
            scanname = NONE},
 
 	  {padsname = Atom.atom "aint32", 
-	   repname  = Atom.atom "int32", 
-	   emname   = Atom.atom "base_em", 
-	   edname   = Atom.atom "base_ed", 
-	   readname = Atom.atom "aint32_read",
+	   repname  = Atom.atom "PDC_int32", 
+	   emname   = Atom.atom "PDC_base_em", 
+	   edname   = Atom.atom "PDC_base_ed", 
+	   readname = Atom.atom "PDC_aint32_read",
            scanname = NONE},
 
 	  {padsname = Atom.atom "char_lit", 
-	   repname  = Atom.atom "uint8", 
-	   emname   = Atom.atom "base_em", 
-	   edname   = Atom.atom "base_ed", 
-	   readname = Atom.atom "char_lit_read",
-           scanname = SOME(Atom.atom "char_lit_scan")}
+	   repname  = Atom.atom "PDC_uint8", 
+	   emname   = Atom.atom "PDC_base_em", 
+	   edname   = Atom.atom "PDC_base_ed", 
+	   readname = Atom.atom "PDC_char_lit_read",
+           scanname = SOME(Atom.atom "PDC_char_lit_scan")}
        ]
 
 

@@ -208,7 +208,10 @@ end
 	| ELIPSIS
 	| TYPE_NAME of string
  	| PARALLEL | SEQUENTIAL | COUNT | IN | REDUCE | WHERE | DEPENDENCY  (* D *)
- 	| ASSOCIATIVE | TO | KWAND                                         (* D *)     | PSTRUCT
+ 	| ASSOCIATIVE | TO | KWAND                                         (* D *)     
+        | COMMENT of string
+        | PSTRUCT (* PADS *)
+         
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -938,4 +941,4 @@ pStruct:
    ExternalDeclExt(PX.PStruct {name = pName, fields = pStructFieldList})
  )
 
-
+ 

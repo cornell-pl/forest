@@ -7,6 +7,7 @@ structure CnvExt : CNVEXT = struct
   structure PTys = PBaseTys      (* Information about the pads base types *)
   structure PL   = PLib          (* Information about values/functions available from pads library *)
   structure PTSub= ParseTreeSubst(* Function for subtituting an expression for a string in an expression *)
+  structure PPL  = PPLib
 
   structure TU   = TypeUtil      (* Ckit module: type utility functions *)
   structure SYM  = Symbol
@@ -122,8 +123,41 @@ structure CnvExt : CNVEXT = struct
 	 {pushSwitchLabels, popSwitchLabels, addSwitchLabel, addDefaultLabel},
 	 ...}
 	= stateFuns
-
     val ttab = (#ttab (#uidTables (#globalState stateFuns)))
+
+(* Utility functions ********************************************************)
+    fun formatComment s = 
+	let val s = " "^s^" "
+	    val len = String.size s
+	    val line = 50
+	    val space = (line-len-4)
+	    val prefix = Int.div(space,2)
+	    val filler = #"*" 	
+	    fun padLeft s = StringCvt.padLeft filler (prefix+len) s
+	    fun padRight s = StringCvt.padRight filler (space+len) s
+	in
+	    if space<0 then ("\n"^s^"\n")
+	    else padRight (padLeft s)
+	end
+
+    fun CTtoString (ct:Ast.ctype) =  
+	let val underscore = !PPL.suppressTidUnderscores
+	    val          _ =  PPL.suppressTidUnderscores := true
+	    val        str =  PPL.ppToString (PPAst.ppCtype () ttab) ct
+	    val          _ =  PPL.suppressTidUnderscores := underscore
+	in 
+	    str 
+	end
+
+    fun CExptoString (acexp: Ast.expression) =
+	let val underscore = !PPL.suppressTidUnderscores
+	    val          _ =  PPL.suppressTidUnderscores := true
+	    val        str =  PPL.ppToString (PPAst.ppExpression () ttab) acexp
+	    val          _ =  PPL.suppressTidUnderscores := underscore
+            val        len = String.size str
+	in 
+	     String.extract (str, 0, SOME (len -1))
+	end
 
 (* Error Reporting  **********************************************************)
 
@@ -212,6 +246,9 @@ structure CnvExt : CNVEXT = struct
 
     val ASTtypedef =ASTtypedefGen bindSym
 
+    fun ASTmkEDeclComment s = 
+	wrapDECL(Ast.ExternalDeclExt(AstExt.EComment s))
+
 (* Ctype *********************************************************************)
 
     val CTint = Ast.Numeric (Ast.NONSATURATE,Ast.WHOLENUM,Ast.SIGNED,Ast.INT,
@@ -263,9 +300,6 @@ structure CnvExt : CNVEXT = struct
               val errCode   = "errCode"
               val loc       = "loc"
               val panic     = "panic"
-	      val locPCT       = P.makeTypedefPCT "loc_t"
-	      val toolErrPCT   = P.makeTypedefPCT "toolError_t"
-	      val toolStatePCT = P.makeTypedefPCT "toolState_t"
 
 	      fun cnvPStruct ({name:string, fields : (pcty, pcexp) PX.PSField list}) = 
 	          let (* Functions for walking over lists of struct elements *)
@@ -296,7 +330,7 @@ structure CnvExt : CNVEXT = struct
 			  [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)))]
 		      fun genEDBrief e = []
 		      val auxEDFields = [(nerr, P.int), (errCode, P.int),
-					 (loc, locPCT), (panic, P.int)]
+					 (loc, PL.locPCT), (panic, P.int)]
 		      val edFields = auxEDFields @ (mungeFields genEDFull genEDBrief fields)
 		      val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
                       val edPCT = P.makeTypedefPCT (edSuf name)			  
@@ -307,6 +341,7 @@ structure CnvExt : CNVEXT = struct
 		      val ts = "ts"
                       val em = "em" 
                       val ed = "ed"
+                      val disc = "disc"
 		      val rep = "rep"
                       fun gTemp base = "tmp"^base
                       fun gMod  base = "mod"^base
@@ -323,27 +358,31 @@ structure CnvExt : CNVEXT = struct
 			  let val readFieldName = lookupTy(pty, readSuf, #readname)
                               val modEdNameX = fieldX(ed,name)
                               val () = addSub(name, fieldX(rep,name))  (* record additional binding *)
-			      val readX = 
+			      val commentS = P.mkCommentS ("Beginning field: "^
+                                                           name )
+			      val readS = 
 			      PT.IfThenElse
                                  (fieldX(ed,panic), (* if moded->panic *)
 				  PT.Compound 
                                    [(* moded->name.panic = true *)
 				    P.assignS(P.dotX(modEdNameX, PT.Id panic),P.trueX),  
 				    (* moded->name.errCode = PANIC_SKIPPED *)
-				    P.assignS(P.dotX(modEdNameX, PT.Id errCode),PL.PANIC_SKIPPED),  
-                                    PL.getLocS(PT.Id ts,  (* get_location_info(ts, &moded->name.loc) *)
-					       P.addrX(P.dotX(modEdNameX,PT.Id loc))),
+				    P.assignS(P.dotX(modEdNameX, PT.Id errCode),PL.PDC_PANIC_SKIPPED),  
+                                    PL.getLocS(PT.Id ts,  (* PDC_get_loc(ts, &moded->name.loc, disc) *)
+					       P.addrX(P.dotX(modEdNameX,PT.Id loc)),
+					       PT.Id disc),
 				    (* moded->nerr += 1 *)
 				    P.plusAssignS(fieldX (ed,nerr),P.intX 1)],
-                                  (* if TOOL_ERROR = readFieldName(ts, &em->name, &ed->name, &res->name) *)
+                                  (* if PDC_ERROR = readFieldName(ts, &em->name, &ed->name, 
+				                                  &res->name, disc) *)
                                   PT.Compound [
                                    PT.IfThenElse
-                                    (P.eqX(PL.TOOL_ERROR,
-					   PT.Call(PT.Id readFieldName, 
-						   [PT.Id ts, (* aopt, *)
-						    P.addrX(fieldX(em,name)),
-						    P.addrX(fieldX(ed,name)),
-						    P.addrX(fieldX(rep,name))])),
+                                    (P.eqX(PL.PDC_ERROR,
+					   PL.readFunX(readFieldName, 
+						       PT.Id ts, (* aopt, *)
+						       P.addrX(fieldX(em,name)),
+						       P.addrX(fieldX(ed,name)),
+						       P.addrX(fieldX(rep,name)), PT.Id disc)),
 				     PT.Compound[ (* error reading field *)
 				      (* if (moded->name.panic) *)
                                       PT.IfThen(P.dotX(fieldX(ed, name), PT.Id panic),
@@ -352,8 +391,8 @@ structure CnvExt : CNVEXT = struct
                                       (* if (moded->nerr == 0) *)
                                       PT.IfThen(P.eqX(P.zero, fieldX(ed,nerr)), 
                                        PT.Compound [
-					(* moded->errCode = STRUCT_FIELD_ERROR *)
-                                        P.assignS(fieldX(ed, errCode), PL.STRUCT_FIELD_ERROR ),
+					(* moded->errCode = PDC_STRUCT_FIELD_ERROR *)
+                                        P.assignS(fieldX(ed, errCode), PL.PDC_STRUCT_FIELD_ERROR ),
                                         (* moded->loc = moded->name.loc; *)
 					P.assignS(fieldX(ed, loc), P.dotX(fieldX(ed, name), PT.Id loc))
                                        ]),
@@ -377,29 +416,28 @@ structure CnvExt : CNVEXT = struct
                                                  P.andX(P.lteX(fieldX(em,name), PL.EM_CHECK),
 							P.notX exp),
 						 PT.Compound[
-						   (* moded->name.errCode = STRUCT_FIELD_ERROR; *)
+						   (* moded->name.errCode = PDC_STRUCT_FIELD_ERROR; *)
                                                    P.assignS(P.dotX(fieldX(ed,name), PT.Id errCode), 
-								    PL.STRUCT_FIELD_ERROR),
-						   (* get_location_info(st, &(moded->name.loc));  *)
+								    PL.PDC_STRUCT_FIELD_ERROR),
+						   (* PDC_get_loc(ts, &(moded->name.loc), disc);  *)
 					           PL.getLocS(PT.Id ts,
-							      P.addrX(P.dotX(modEdNameX,PT.Id loc))),
-                                                   (* if (USER_ERROR_FUN(ts)) *)
-						   PT.IfThen(PL.userErrorF(PT.Id ts),
-							     (* USER_ERROR_FUN(ts)(moded->name.loc,
-							                           "constraint violated",
-										   moded->name.errCode) *)
-						    P.callS(PL.userErrorF(PT.Id ts),
-							    [P.dotX(fieldX(ed,name), PT.Id loc),
-							     PT.String ("User constraint on field "^
+							      P.addrX(P.dotX(modEdNameX,PT.Id loc)),
+							      PT.Id disc),
+                                                   (* PDC_report_err(ts,disc,&(moded->name.loc),
+						                     moded->name.errCode, 
+								     "constraint violated") *)
+                                                   PL.userErrorS(PT.Id ts, PT.Id disc, 
+								 P.addrX(P.dotX(fieldX(ed,name), PT.Id loc)),
+								 P.dotX(fieldX(ed,name), PT.Id errCode),
+								 PT.String("User constraint on field "^
 									name ^ " " ^
-									"violated."),
-							     P.dotX(fieldX(ed,name), PT.Id errCode)])),
+									"violated."), []),
 						   (* if (0 == moded->nerr) *)
                                                    PT.IfThen(P.eqX(P.zero, fieldX(ed,nerr)),
 						    PT.Compound[
 						      (* moded->errCode = USER_CONSTRAINT_VIOLATION *)
                                                       P.assignS(fieldX(ed,errCode), 
-								    PL.USER_CONSTRAINT_VIOLATION),
+								    PL.PDC_USER_CONSTRAINT_VIOLATION),
                                                       (* moded->loc = moded->name.loc *)
                                                       P.assignS(fieldX(ed,loc), 
 								P.dotX(fieldX(ed,name),PT.Id loc))
@@ -413,7 +451,7 @@ structure CnvExt : CNVEXT = struct
                                       )
                                      )])
 			  in
-			      [readX]
+			      [commentS, readS]
 			  end
 
 		      fun genReadBrief e = 
@@ -421,11 +459,13 @@ structure CnvExt : CNVEXT = struct
 			      val (expTy, expAst) = cnvExpression e
 			      val () = if CTisInt expTy then ()
 				       else PE.error "Currently only characters supported as delimiters."
-			      val pTyName = "char_lit"
+			      val commentS = P.mkCommentS ("Beginning delimiter field: "^
+						           (CExptoString expAst))
+			      val pTyName = PL.charlit
 			      val ted = "ted"
 			      val tem = "tem"
                               (* base_ed ted; *)
-			      val tedDecl = P.varDeclS'(P.makeTypedefPCT "base_ed", ted)
+			      val tedDecl = P.varDeclS'(PL.base_edPCT, ted)
 			      fun genPanicRecovery (pTyName:string) : pcstmt list -> pcstmt list = 
                                   case PTys.find(PTys.baseInfo, Atom.atom pTyName)
                                   of NONE => (fn id => id)     (* don't know how to recover *)
@@ -438,10 +478,10 @@ structure CnvExt : CNVEXT = struct
                                               fieldX(ed,panic),
 					      PT.Compound [
                                                 (* base_em tmask = Ignore; *)
-						P.varDeclS(P.makeTypedefPCT ("base_em"), tem, PL.EM_IGNORE),
+						P.varDeclS(PL.base_emPCT, tem, PL.EM_IGNORE),
 						PT.IfThen(
-                                                 (* if TOOL_ERROR == ty_scan(ts, &tem, &ted, e) *)
-						 P.neqX(PL.TOOL_ERROR,
+                                                 (* if PDC_ERROR == ty_scan(ts, &tem, &ted, e) *)
+						 P.neqX(PL.PDC_ERROR,
 						       PT.Call(PT.Id (Atom.toString a),
 							       [PT.Id ts, 
 								P.addrX(PT.Id tem),
@@ -457,28 +497,27 @@ structure CnvExt : CNVEXT = struct
 			      val readFieldName = lookupTy(PX.Name pTyName, readSuf, #readname)
                               val notPanicSs = 
                                   [(* base_em tem = Check *)
-				   P.varDeclS(P.makeTypedefPCT ("base_em"), tem, PL.EM_CHECK),
-                                   PT.IfThen( (* TOOL_ERROR == readFieldName(ts, &tem, &ted, 0) *)
-                                     P.eqX(PL.TOOL_ERROR,
-					   PT.Call(PT.Id readFieldName, 
-						   [PT.Id ts, 
-						    P.addrX (PT.Id tem),
-						    P.addrX (PT.Id ted),
-						    e])),
+				   P.varDeclS(PL.base_emPCT, tem, PL.EM_CHECK),
+                                   PT.IfThen( (* PDC_ERROR == readFieldName(ts, &tem, &ted, e) *)
+                                     P.eqX(PL.PDC_ERROR,
+					   PL.readFunX(readFieldName, 
+						       PT.Id ts, 
+						       P.addrX (PT.Id tem),
+						       P.addrX (PT.Id ted),
+						       e, PT.Id disc)),
                                      PT.Compound[
-				      PT.IfThen((* user_error_fun(ts) *)
-					PL.userErrorF(PT.Id ts),
-					(* user_error_fun(ts)(ted.loc, "missing separator", MISSING_LITERAL) *)
-					P.callS(PL.userErrorF(PT.Id ts),
-						[P.dotX(PT.Id ted, PT.Id loc),
-						 PT.String ("Missing separator."),
-						 PL.MISSING_LITERAL])),
+				       (* PDC_report_err(ts,disc, &ted.loc, 
+					                   MISSING_LITERAL,"missing separator", e) *)
+				       PL.userErrorS(PT.Id ts, PT.Id disc, 
+						     P.addrX(P.dotX(PT.Id ted, PT.Id loc)),
+						     PL.PDC_MISSING_LITERAL,
+						     PT.String "Missing separator: %c.", [e]),
 				      PT.IfThen((* if (0 == moded->nerr) *)
                                        P.eqX(P.zero, fieldX(ed,nerr)),
 					     PT.Compound[
 				              (* moded->errCode = MISSING_LITERAL *)
 					      P.assignS(fieldX(ed,errCode), 
-							PL.MISSING_LITERAL),
+							PL.PDC_MISSING_LITERAL),
                                               (* moded->loc = ted.loc *)
                                               P.assignS(fieldX(ed,loc), 
 							P.dotX(PT.Id ted,PT.Id loc))
@@ -490,15 +529,21 @@ structure CnvExt : CNVEXT = struct
                                      ]
 				   )]
 			  in
-			      [PT.Compound(tedDecl :: (genPanicRecovery pTyName notPanicSs))]
+			      [PT.Compound(
+                                   [commentS, 
+				    PT.Compound(
+				     tedDecl 
+				     :: (genPanicRecovery pTyName notPanicSs))])]
 			  end
 
                       (* -- Assemble read function *)
-		      val paramList = List.map P.mkParam [(P.ptrPCT toolStatePCT, ts),
+
+		      val paramList = List.map P.mkParam [(P.ptrPCT PL.toolStatePCT, ts),
 							  (P.ptrPCT emPCT, em),
 							  (P.ptrPCT edPCT, ed),
-							  (P.ptrPCT canonicalPCT, rep)]
-		      val returnTy =  toolErrPCT
+							  (P.ptrPCT canonicalPCT, rep),
+							  (P.ptrPCT PL.toolDiscPCT, disc)]
+		      val returnTy =  PL.toolErrPCT
                       fun genLocTemp (pcty, paramName) = 
                           [P.varDeclS(pcty, gTemp paramName, PT.InitList [P.zero]),
                            P.varDeclS(P.ptrPCT pcty, gMod paramName, PT.Id paramName)]
@@ -528,9 +573,12 @@ structure CnvExt : CNVEXT = struct
 	  in
 	      case decl of PX.PStruct s => cnvPStruct s
 	  end
+
+      fun pcnvStat (PX.PComment s) =  wrapSTMT(Ast.StatExt(AstExt.SComment(formatComment s)))
+
       in
 	  {CNVExp = CNVExp,
-	   CNVStat = CNVStat,
+	   CNVStat = pcnvStat,
 	   CNVBinop = CNVBinop,
 	   CNVUnop = CNVUnop,
 	   CNVExternalDecl = pcnvExternalDecl,
@@ -539,3 +587,4 @@ structure CnvExt : CNVEXT = struct
 	   CNVDeclaration = CNVDeclaration}
       end
 end
+
