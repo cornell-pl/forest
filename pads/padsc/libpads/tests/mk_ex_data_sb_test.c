@@ -1,6 +1,6 @@
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
-P_NOGEN;
+P_NOGEN
 
 #include <stdio.h>
 

@@ -12,7 +12,7 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
-P_NOGEN;
+P_NOGEN
 
 #define NEXT_REC do {\
   if (strncmp(argv[1], "norec", 5) == 0) { \

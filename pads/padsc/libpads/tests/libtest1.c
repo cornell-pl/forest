@@ -5,19 +5,19 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
-P_NOGEN;
+P_NOGEN
 
 int main(int argc, char** argv) {
   /* int             ctr; */
   /* size_t          n; */
   /* unsigned char   c; */
   int             i;
-  P_t*          pads;
-  Pio_disc_t*  io_disc;
-  Pint8        i1;
-  Pbase_m      m    = P_CheckAndSet;
-  Pbase_pd     pd;
-  Pdisc_t      my_disc = Pdefault_disc;
+  P_t*            pads;
+  Pio_disc_t*     io_disc;
+  Pint8           i1;
+  Pbase_m         m    = P_CheckAndSet;
+  Pbase_pd        pd;
+  Pdisc_t         my_disc = Pdefault_disc;
   size_t          bytes_skipped;
   unsigned long   ultmp;
 
@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
     error(2, "*** P_libopen failed ***");
     exit(-1);
   }
+  if (pads->path) error(ERROR_FATAL, "pads->path should be NULL");
   if (P_ERR == P_io_fopen(pads, "../../data/ex_data.libtest1")) {
     error(2, "*** P_io_fopen failed ***");
     exit(-1);

@@ -7,14 +7,14 @@
 
 #include "pads-internal.h"
 
-P_NOGEN;
+P_NOGEN
 
 const char* false_true [] = { "TRUE", "FALSE" };
 
 int is_foo(int c) { return c == 'f' || c == 'o' || isdigit(c); }
 
 /* used to register the new class: */
-void reg_foo() { regaddclass("foo", is_foo); }
+void reg_foo(void) { regaddclass("foo", is_foo); }
 
 int main(int argc, char** argv) {
   P_t          *pads;

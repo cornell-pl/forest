@@ -21,7 +21,7 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
-P_NOGEN;
+P_NOGEN
 
 #define NEXT_REC do {\
   if (P_ERR == P_io_next_rec(pads, &bytes_skipped)) { \

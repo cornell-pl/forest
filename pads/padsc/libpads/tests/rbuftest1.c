@@ -4,7 +4,7 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
-P_NOGEN;
+P_NOGEN
 
 int main(int argc, char** argv) {
   int             err, i;

@@ -5,7 +5,7 @@
 
 #include "pads-internal.h" /* for testing - normally do not include internal */
 
-P_NOGEN;
+P_NOGEN
 
 #ifndef PDCI_MacroArg2String
 #define PDCI_MacroArg2String(s) #s

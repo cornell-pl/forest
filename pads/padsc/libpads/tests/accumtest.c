@@ -1,6 +1,6 @@
 #include "pads-internal.h"
 
-P_NOGEN;
+P_NOGEN
 
 const char* names[] = {
   "foo",

@@ -1,6 +1,6 @@
 #include "pads-internal.h"
 
-P_NOGEN;
+P_NOGEN
 
 int main(int argc, char** argv) {
   P_t*             pads;
