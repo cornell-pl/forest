@@ -1,4 +1,11 @@
+
+ # This is a GNU makefile.
+
 SHELL= /bin/sh
+
+ifndef PADS_HOME
+  export PADS_HOME=$(shell cd ../..; pwd)
+endif
 
 # PADS documentation  programs
 #
@@ -11,7 +18,6 @@ SHELL= /bin/sh
 
 ## flags to always pass to the pads compiler
 PADS_FLAGS= 
-
 
 ## location of padsc executable.
 PADS=$(PADS_HOME)/scripts/padsc
