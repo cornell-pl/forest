@@ -850,6 +850,9 @@ ssize_t      PDCI_io_rec_open_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len,
 ssize_t      PDCI_io_rec_close_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 					  Pbyte *rec_start, size_t num_bytes, const char *whatfn);
 
+ssize_t      PDCI_io_rec_fmt2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+					  Pcharset char_set, const char *whatfn);
+
 ssize_t      PDCI_io_rblk_write2io       (P_t *pads, Sfio_t *io, Pbyte *buf, size_t blk_data_len, Puint32 num_recs,
 					  const char *whatfn);
 ssize_t      PDCI_io_rblk_open_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const char *whatfn);

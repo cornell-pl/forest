@@ -1309,6 +1309,9 @@ ssize_t   P_io_rblk_write2io(P_t *pads, Sfio_t *io, Pbyte *buf, size_t blk_data_
 ssize_t   P_io_rblk_open_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full);
 ssize_t   P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
 				    Pbyte *blk_start, size_t num_bytes, Puint32 num_recs);
+
+ssize_t   P_io_rec_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full);
+
 #endif
 
 /* ================================================================================

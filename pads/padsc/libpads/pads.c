@@ -5870,7 +5870,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.156 2004-06-07 01:52:15 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.157 2004-07-27 16:32:17 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7052,7 +7052,7 @@ P_io_rec_open_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full)
 
 ssize_t
 P_io_rec_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			   Pbyte *rec_start, size_t num_bytes) 
+			 Pbyte *rec_start, size_t num_bytes) 
 {
   PDCI_IODISC_INIT_CHECKS_RET_SSIZE("P_io_rec_close_write2buf");
   PDCI_NULLPARAM_CHECK_RET_SSIZE("P_io_rec_close_write2buf", buf);
@@ -7089,6 +7089,16 @@ P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
   PDCI_NULLPARAM_CHECK_RET_SSIZE("P_io_rblk_close_write2buf", blk_start);
   return PDCI_io_rblk_close_write2buf(pads, buf, buf_len, buf_full, blk_start, num_bytes, num_recs, "P_io_rblk_close_write2buf");
 }
+
+ssize_t
+P_io_rec_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full)
+{
+  PDCI_IODISC_INIT_CHECKS_RET_SSIZE("P_io_rec_fmt2buf");
+  PDCI_NULLPARAM_CHECK_RET_SSIZE("P_io_rec_fmt2buf", buf);
+  PDCI_NULLPARAM_CHECK_RET_SSIZE("P_io_rec_fmt2buf", buf_full);
+  return PDCI_io_rec_fmt2buf(pads, buf, buf_len, buf_full, Pcharset_ASCII, "P_io_rec_fmt2buf");
+}
+
 #endif
 
 /* ================================================================================ */
@@ -8508,6 +8518,40 @@ PDCI_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_ful
   }
   return iodisc->blk_close_fn(pads, iodisc, buf, blk_start, num_bytes, num_recs);
 }
+
+ssize_t
+PDCI_io_rec_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+		    Pcharset char_set, const char *whatfn)
+{
+  Pio_disc_t *iodisc = pads->disc->io_disc;
+
+  P_TRACE(pads->disc, "PDCI_io_rec_fmt2buf called");
+  if (!iodisc->rec_based) {
+    P_WARN1(pads->disc, "%s: pads->disc->io_disc must support records to use this function", whatfn);
+    return -1;
+  }
+  if (buf_len < 1) {
+    (*buf_full) = 1;
+    return -1;
+  }
+  switch (char_set)
+    {
+    case Pcharset_ASCII:
+      *buf = P_ASCII_NEWLINE;
+      break;
+    case Pcharset_EBCDIC:
+      *buf = P_EBCDIC_NEWLINE;
+      break;
+    default:
+      goto invalid_charset;
+    }
+  return 1;
+
+ invalid_charset:
+  PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_CHARSET, whatfn, 0);
+  return -1;
+}
+
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 
 /* ================================================================================ */
