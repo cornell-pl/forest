@@ -58,7 +58,7 @@ top: while (<IFILE>) {
     die "END_MACGEN not found while building $mgenfile";
   end_macgen:
     close(MGFILE);
-    $cmd = "cat tmp1.$mgenfile | stripnlnl.pl | cat > $mgenfile";
+    $cmd = "cat tmp1.$mgenfile | ./stripnlnl.pl | cat > $mgenfile";
     $res = `$cmd`;
     if ($res =~ /ERROR/) {
       die "Error running command $cmd\n";
@@ -116,7 +116,7 @@ top: while (<IFILE>) {
   end_mac:
     print MFILE "\n#endif  /*  $defname  */\n\n";
     close(MFILE);
-    $cmd = "cat tmp1.$macfile | stripnlnl.pl | cat > $macfile";
+    $cmd = "cat tmp1.$macfile | ./stripnlnl.pl | cat > $macfile";
     $res = `$cmd`;
     if ($res =~ /ERROR/) {
       die "Error running command $cmd\n";
@@ -139,7 +139,7 @@ top: while (<IFILE>) {
 }
 if ($defgen == 1) {
   close(DFILE);
-  $cmd = "cat tmp1.$defgenfile | stripnlnl.pl | cat > $defgenfile";
+  $cmd = "cat tmp1.$defgenfile | ./stripnlnl.pl | cat > $defgenfile";
   $res = `$cmd`;
   if ($res =~ /ERROR/) {
     die "Error running command $cmd\n";
