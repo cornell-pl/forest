@@ -45,13 +45,16 @@ FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 
                test_charclass test_me test_me_fooclass
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct test_write_struct_strings
-OTHER_TESTS  = test_cpygen_crs test_enum test_from test_ai test_readint test_depends test_pswitch test_pswitch2 test_struct3 manifest_union
+OTHER_TESTS  = test_array test_array_string test_record_enum test_struct test_struct2 \
+               test_punion2 test_typedef \
+               test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
+               test_pswitch test_pswitch2 test_struct3 manifest_union
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
 
 # do not build MISC tests when building 'all'
-MISC_TESTS_O = test_ios
+MISC_TESTS_O = test_ios 
 MISC_TESTS_D = $(MISC_TESTS_O:%=%_d)
 MISC_TESTS = $(MISC_TESTS_O) $(MISC_TESTS_D)
 CLEANUP_TESTS = $(ALL_TESTS) $(MISC_TESTS)
@@ -143,9 +146,9 @@ regress_test_me_fooclass_d: test_me_fooclass_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_format1_o: test_format1
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/ex_data.format1"; suf=""; $(RegressInput))
 regress_test_format1_d: test_format1_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/ex_data.format1"; suf=""; $(RegressInput))
 
 regress_test_format2_o: test_format2
 	@(args=""; suf=""; $(RegressDef))
@@ -178,9 +181,9 @@ regress_test_readint_d: test_readint_d
 	@(args=""; suf=""; filter="error:"; $(RegressFilter))
 
 regress_test_ai_o: test_ai
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/ex_data.ai"; suf=""; $(RegressInput))
 regress_test_ai_d: test_ai_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/ex_data.ai"; suf=""; $(RegressInput))
 
 regress_test_write_struct_o: test_write_struct
 	@(args=""; suf=""; $(RegressDef))
@@ -223,44 +226,44 @@ regress_test_struct_regexp_d: test_struct_regexp_d
 	@(args=""; input="../../data/ex_data.struct_regexp"; suf=""; $(RegressInput))
 
 regress_test_array_regexp_o: test_array_regexp
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_regexp"; suf=""; $(RegressInput))
 regress_test_array_regexp_d: test_array_regexp_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_regexp"; suf=""; $(RegressInput))
 
 regress_test_array_nosep_o: test_array_nosep
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_nosep"; suf=""; $(RegressInput))
 regress_test_array_nosep_d: test_array_nosep_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_nosep"; suf=""; $(RegressInput))
 
 regress_test_array_pred_o: test_array_pred
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_pred"; suf=""; $(RegressInput))
 regress_test_array_pred_d: test_array_pred_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_pred"; suf=""; $(RegressInput))
 
 regress_test_array_pred2_o: test_array_pred2
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_pred2"; suf=""; $(RegressInput))
 regress_test_array_pred2_d: test_array_pred2_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_pred2"; suf=""; $(RegressInput))
 
 regress_test_array_ended_o: test_array_ended
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_ended"; suf=""; $(RegressInput))
 regress_test_array_ended_d: test_array_ended_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_ended"; suf=""; $(RegressInput))
 
 regress_test_array_ended2_o: test_array_ended2
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_ended2"; suf=""; $(RegressInput))
 regress_test_array_ended2_d: test_array_ended2_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_ended2"; suf=""; $(RegressInput))
 
 regress_test_array_post_o: test_array_post
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_post"; suf=""; $(RegressInput))
 regress_test_array_post_d: test_array_post_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/array_post"; suf=""; $(RegressInput))
 
 regress_test_charclass_o: test_charclass
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/charclass"; suf=""; $(RegressInput))
 regress_test_charclass_d: test_charclass_d
-	@(args=""; suf=""; $(RegressDef))
+	@(args=""; input="../../data/charclass"; suf=""; $(RegressInput))
 
 clean:
 	$(RM) -f *~ *.o $(CLEANUP_TESTS)

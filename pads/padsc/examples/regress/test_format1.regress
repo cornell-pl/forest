@@ -1,50 +1,38 @@
+Data file = standard in
 warning: P_open: Installing default IO discipline : newline-terminated records
-init the accum
-calling test_read
 test_read returned: id 1  ts 11
-calling test_read
 test_read returned: id 2  ts 22
-calling test_read
 test_read returned: id 3  ts 33
-calling test_read
 warning: Error [in test_read]: record 4 byte 2 : Extra data before separator: |.
 [record 4]4>>>a<<<|44
 test_read returned: error
-calling test_read
 warning: Error [in test_read]: record 5 byte 5 : Unexpected data before EOR.
 [record 5]5|55>>>ab<<<
 test_read returned: error
-calling test_read
 warning: Error [in test_read]: record 6 byte 7 : Missing literal: |.
 [record 6]000006>>><<<a66b
 Note [in test_read]: record 6 byte 7 : Resynching at EOR
 [record 6]000006>>>a66b<<<
 test_read returned: error
-calling test_read
 test_read returned: id 7  ts 77
-calling test_read
 warning: Error [in Pa_int32_read]: at record 8 from byte 1 to byte 5: Invalid ASCII character encoding of a number 
 [record 8]>>>     <<<
 Note [in test_read]: record 8 byte 1 : Resynching at EOR
 [record 8]>>>     <<<
 test_read returned: error
-calling test_read
 test_read returned: id 8  ts 88
-calling test_read
 warning: Error [in Pa_int32_read]: at record 10 at byte 1 : Invalid ASCII character encoding of a number 
 [record 10]>>>a<<<4|44
 warning: Error [in test_read]: record 10 byte 4 : User constraint on field ts violated.
 [record 10]a4|>>>44<<<
 test_read returned: error
-calling test_read
 warning: Error [in Pa_int32_read]: at record 11 from byte 1 to byte 2: Invalid ASCII character encoding of a number 
 [record 11]>>> a<<<4|44
 warning: Error [in test_read]: record 11 byte 5 : User constraint on field ts violated.
 [record 11] a4|>>>44<<<
 test_read returned: error
-Found eof
 *****************************************************************************************************
-entire struct : struct test
+<top> : struct test
 *****************************************************************************************************
 Errors: total vals:         11
   Characterizing errors:  min 0 max 3 avg 1.182
@@ -55,9 +43,9 @@ Errors: total vals:         11
         val:          2 count:          1 pcnt-of-total-vals:    9.091
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:         11 pcnt-of-total-vals:  100.000
-[Describing each field of entire struct]
+[Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-entire struct.id : int32
+<top>.id : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          8    bad vals:          3    pcnt-bad:   27.273
   Characterizing int32:  min 1 max 8 avg 4.500
@@ -73,7 +61,7 @@ good vals:          8    bad vals:          3    pcnt-bad:   27.273
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          8  pcnt-of-good-vals:  100.000
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-entire struct.ts : int32
+<top>.ts : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          7    bad vals:          4    pcnt-bad:   36.364
   Characterizing int32:  min 11 max 88 avg 47.143

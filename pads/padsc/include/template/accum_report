@@ -1,3 +1,6 @@
+#ifndef EXTRA_READ_ARGS
+#  define EXTRA_READ_ARGS
+#endif
 
 int main(int argc, char** argv) {
   P_t              *pads;
@@ -47,13 +50,22 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!P_io_at_eof(pads)) {
-    if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep)) {
+    if (P_OK != PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep)) {
+#ifdef EXTRA_BAD_READ_CODE
+      EXTRA_BAD_READ_CODE;
+#else
       error(2, "read returned error");
+#endif
     }
+#ifdef EXTRA_GOOD_READ_CODE
+    else {
+      EXTRA_GOOD_READ_CODE;
+    }
+#endif
     /* accum both good and bad vals */
     if (P_ERR == PADS_TY(_acc_add)(pads, &acc, &pd, &rep)) {
       error(ERROR_FATAL, "*** accumulator add failed ***");
-    }	
+    }
   }
   if (P_ERR == PADS_TY(_acc_report)(pads, "", 0, 0, &acc)) {
     error(ERROR_FATAL, "** accum_report failed **");

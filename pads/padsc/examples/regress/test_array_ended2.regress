@@ -1,31 +1,22 @@
+Data file = standard in
 warning: P_open: Installing default IO discipline : newline-terminated records
-init everything
-calling entry_read
 entry_read returned array first of length: 1
 entry_read returned array second  of length: 0
-calling entry_read
 entry_read returned array first of length: 1
 entry_read returned array second  of length: 2
-calling entry_read
 entry_read returned array first of length: 3
 entry_read returned array second  of length: 2
-calling entry_read
 entry_read returned array first of length: 0
 entry_read returned array second  of length: 2
-calling entry_read
 entry_read returned array first of length: 0
 entry_read returned array second  of length: 1
-calling entry_read
 entry_read returned array first of length: 2
 entry_read returned array second  of length: 1
-calling entry_read
 warning: Error [in Pa_int32_read]: at record 7 just before byte 7: Unexpected end of record (field too short?)
 [record 7]12,-1,>>><<<
 entry_read returned: error
-Found eof
-Describe the accum
 *****************************************************************************************************
-top : struct entry
+<top> : struct entry
 *****************************************************************************************************
 Errors: total vals:          7
   Characterizing errors:  min 0 max 1 avg 0.143
@@ -34,9 +25,9 @@ Errors: total vals:          7
         val:          1 count:          1 pcnt-of-total-vals:   14.286
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          7 pcnt-of-total-vals:  100.000
-[Describing each field of top]
+[Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-top.first : array fseq_t of Pint32
+<top>.first : array fseq_t of Pint32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Array lengths: good vals:          7    bad vals:          0    pcnt-bad:    0.000
   Characterizing lengths:  min 0 max 3 avg 1.143
@@ -48,7 +39,7 @@ Array lengths: good vals:          7    bad vals:          0    pcnt-bad:    0.0
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          7  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.first.allArrayElts : all array elements
+<top>.first.allArrayElts : all array elements
 =====================================================================================================
 good vals:          8    bad vals:          0    pcnt-bad:    0.000
   Characterizing all array elements:  min 1 max 13 avg 8.000
@@ -59,7 +50,7 @@ good vals:          8    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          8  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.first.arrayDetail[0] : array element
+<top>.first.arrayDetail[0] : array element
 =====================================================================================================
 good vals:          5    bad vals:          0    pcnt-bad:    0.000
   Characterizing array element:  min 1 max 12 avg 9.800
@@ -69,7 +60,7 @@ good vals:          5    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          5  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.first.arrayDetail[1] : array element
+<top>.first.arrayDetail[1] : array element
 =====================================================================================================
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
   Characterizing array element:  min 1 max 13 avg 7.000
@@ -79,7 +70,7 @@ good vals:          2    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          2  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.first.arrayDetail[2] : array element
+<top>.first.arrayDetail[2] : array element
 =====================================================================================================
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
   Characterizing array element:  min 1 max 1 avg 1.000
@@ -88,7 +79,7 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          1  pcnt-of-good-vals:  100.000
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-top.second : array sseq_t of Pint32
+<top>.second : array sseq_t of Pint32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Array lengths: good vals:          6    bad vals:          1    pcnt-bad:   14.286
   Characterizing lengths:  min 0 max 2 avg 1.333
@@ -99,7 +90,7 @@ Array lengths: good vals:          6    bad vals:          1    pcnt-bad:   14.2
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          6  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.second.allArrayElts : all array elements
+<top>.second.allArrayElts : all array elements
 =====================================================================================================
 good vals:          9    bad vals:          1    pcnt-bad:   10.000
   Characterizing all array elements:  min -1 max 15 avg 6.000
@@ -112,7 +103,7 @@ good vals:          9    bad vals:          1    pcnt-bad:   10.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          9  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.second.arrayDetail[0] : array element
+<top>.second.arrayDetail[0] : array element
 =====================================================================================================
 good vals:          6    bad vals:          0    pcnt-bad:    0.000
   Characterizing array element:  min -1 max 14 avg 2.000
@@ -123,7 +114,7 @@ good vals:          6    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          6  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.second.arrayDetail[1] : array element
+<top>.second.arrayDetail[1] : array element
 =====================================================================================================
 good vals:          3    bad vals:          1    pcnt-bad:   25.000
   Characterizing array element:  min 13 max 15 avg 14.000

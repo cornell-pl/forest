@@ -1,16 +1,12 @@
+Data file = standard in
 warning: P_open: Installing default IO discipline : newline-terminated records
-init everything
-calling entry_read
 entry_read returned array evens of length: 2
 entry_read returned array odds  of length: 3
-calling entry_read
 warning: Error [in eseq_t_read]: at record 2 at byte 3 : Unexpected extra data before array element separator 
 [record 2]12>>>b<<<a24a13a15a17b
 entry_read returned: error
-Found eof
-Describe the accum
 *****************************************************************************************************
-top : struct entry
+<top> : struct entry
 *****************************************************************************************************
 Errors: total vals:          2
   Characterizing errors:  min 0 max 1 avg 0.500
@@ -19,9 +15,9 @@ Errors: total vals:          2
         val:          1 count:          1 pcnt-of-total-vals:   50.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          2 pcnt-of-total-vals:  100.000
-[Describing each field of top]
+[Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-top.evens : array eseq_t of even
+<top>.evens : array eseq_t of even
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Array lengths: good vals:          1    bad vals:          1    pcnt-bad:   50.000
   Characterizing lengths:  min 2 max 2 avg 2.000
@@ -30,10 +26,10 @@ Array lengths: good vals:          1    bad vals:          1    pcnt-bad:   50.0
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          1  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.evens.allArrayElts : all array elements
+<top>.evens.allArrayElts : all array elements
 =====================================================================================================
 -----------------------------------------------------------------------------------------------------
-top.evens.allArrayElts.even : int32
+<top>.evens.allArrayElts.even : int32
 -----------------------------------------------------------------------------------------------------
 good vals:          4    bad vals:          0    pcnt-bad:    0.000
   Characterizing int32:  min 12 max 24 avg 18.000
@@ -43,10 +39,10 @@ good vals:          4    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          4  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.evens.arrayDetail[0] : array element
+<top>.evens.arrayDetail[0] : array element
 =====================================================================================================
 -----------------------------------------------------------------------------------------------------
-top.evens.arrayDetail[0].even : int32
+<top>.evens.arrayDetail[0].even : int32
 -----------------------------------------------------------------------------------------------------
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
   Characterizing int32:  min 12 max 12 avg 12.000
@@ -55,10 +51,10 @@ good vals:          2    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          2  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.evens.arrayDetail[1] : array element
+<top>.evens.arrayDetail[1] : array element
 =====================================================================================================
 -----------------------------------------------------------------------------------------------------
-top.evens.arrayDetail[1].even : int32
+<top>.evens.arrayDetail[1].even : int32
 -----------------------------------------------------------------------------------------------------
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
   Characterizing int32:  min 24 max 24 avg 24.000
@@ -67,7 +63,7 @@ good vals:          2    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          2  pcnt-of-good-vals:  100.000
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-top.odds : array oseq_t of odd
+<top>.odds : array oseq_t of odd
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Array lengths: good vals:          2    bad vals:          0    pcnt-bad:    0.000
   Characterizing lengths:  min 3 max 3 avg 3.000
@@ -76,10 +72,10 @@ Array lengths: good vals:          2    bad vals:          0    pcnt-bad:    0.0
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          2  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.odds.allArrayElts : all array elements
+<top>.odds.allArrayElts : all array elements
 =====================================================================================================
 -----------------------------------------------------------------------------------------------------
-top.odds.allArrayElts.odd : int32
+<top>.odds.allArrayElts.odd : int32
 -----------------------------------------------------------------------------------------------------
 good vals:          6    bad vals:          0    pcnt-bad:    0.000
   Characterizing int32:  min 13 max 17 avg 15.000
@@ -90,10 +86,10 @@ good vals:          6    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          6  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.odds.arrayDetail[0] : array element
+<top>.odds.arrayDetail[0] : array element
 =====================================================================================================
 -----------------------------------------------------------------------------------------------------
-top.odds.arrayDetail[0].odd : int32
+<top>.odds.arrayDetail[0].odd : int32
 -----------------------------------------------------------------------------------------------------
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
   Characterizing int32:  min 13 max 13 avg 13.000
@@ -102,10 +98,10 @@ good vals:          2    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          2  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.odds.arrayDetail[1] : array element
+<top>.odds.arrayDetail[1] : array element
 =====================================================================================================
 -----------------------------------------------------------------------------------------------------
-top.odds.arrayDetail[1].odd : int32
+<top>.odds.arrayDetail[1].odd : int32
 -----------------------------------------------------------------------------------------------------
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
   Characterizing int32:  min 15 max 15 avg 15.000
@@ -114,10 +110,10 @@ good vals:          2    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          2  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.odds.arrayDetail[2] : array element
+<top>.odds.arrayDetail[2] : array element
 =====================================================================================================
 -----------------------------------------------------------------------------------------------------
-top.odds.arrayDetail[2].odd : int32
+<top>.odds.arrayDetail[2].odd : int32
 -----------------------------------------------------------------------------------------------------
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
   Characterizing int32:  min 17 max 17 avg 17.000

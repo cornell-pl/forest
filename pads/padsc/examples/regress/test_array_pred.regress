@@ -1,19 +1,14 @@
+Data file = standard in
 warning: P_open: Installing default IO discipline : newline-terminated records
-init everything
-calling entry_read
 entry_read returned array of length: 5
-calling entry_read
 warning: Error [in seq_t_read]: record 2 byte 9 : Missing terminator.
 [record 2]1|2|5|14>>><<<
 entry_read returned: error
-calling entry_read
 warning: Error [in seq_t_read]: at record 3 from byte 7 to byte 10: Unexpected extra data before array element terminator 
 [record 3]4|2|34>>>|45|<<<b
 entry_read returned: error
-Found eof
-Describe the accum
 *****************************************************************************************************
-top : struct entry
+<top> : struct entry
 *****************************************************************************************************
 Errors: total vals:          3
   Characterizing errors:  min 0 max 1 avg 0.667
@@ -22,9 +17,9 @@ Errors: total vals:          3
         val:          0 count:          1 pcnt-of-total-vals:   33.333
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          3 pcnt-of-total-vals:  100.000
-[Describing each field of top]
+[Describing each field of <top>]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-top.seq : array seq_t of Pint32
+<top>.seq : array seq_t of Pint32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Array lengths: good vals:          1    bad vals:          2    pcnt-bad:   66.667
   Characterizing lengths:  min 5 max 5 avg 5.000
@@ -33,7 +28,7 @@ Array lengths: good vals:          1    bad vals:          2    pcnt-bad:   66.6
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          1  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.seq.allArrayElts : all array elements
+<top>.seq.allArrayElts : all array elements
 =====================================================================================================
 good vals:         12    bad vals:          0    pcnt-bad:    0.000
   Characterizing all array elements:  min 1 max 99 avg 14.583
@@ -49,7 +44,7 @@ good vals:         12    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:         12  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.seq.arrayDetail[0] : array element
+<top>.seq.arrayDetail[0] : array element
 =====================================================================================================
 good vals:          3    bad vals:          0    pcnt-bad:    0.000
   Characterizing array element:  min 1 max 4 avg 2.000
@@ -59,7 +54,7 @@ good vals:          3    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          3  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.seq.arrayDetail[1] : array element
+<top>.seq.arrayDetail[1] : array element
 =====================================================================================================
 good vals:          3    bad vals:          0    pcnt-bad:    0.000
   Characterizing array element:  min 2 max 2 avg 2.000
@@ -68,7 +63,7 @@ good vals:          3    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          3  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.seq.arrayDetail[2] : array element
+<top>.seq.arrayDetail[2] : array element
 =====================================================================================================
 good vals:          3    bad vals:          0    pcnt-bad:    0.000
   Characterizing array element:  min 4 max 34 avg 14.333
@@ -79,7 +74,7 @@ good vals:          3    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          3  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.seq.arrayDetail[3] : array element
+<top>.seq.arrayDetail[3] : array element
 =====================================================================================================
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
   Characterizing array element:  min 7 max 14 avg 10.500
@@ -89,7 +84,7 @@ good vals:          2    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          2  pcnt-of-good-vals:  100.000
 =====================================================================================================
-top.seq.arrayDetail[4] : array element
+<top>.seq.arrayDetail[4] : array element
 =====================================================================================================
 good vals:          1    bad vals:          0    pcnt-bad:    0.000
   Characterizing array element:  min 99 max 99 avg 99.000

@@ -1,4 +1,4 @@
-Data file = ../../data/ex_data.ai
+Data file = standard in
 warning: P_open: Installing default IO discipline : newline-terminated records
 *****************************************************************************************************
 <top> : struct http_clf_t

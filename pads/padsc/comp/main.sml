@@ -233,11 +233,10 @@ structure Main : sig
 			       accName,accInit,accAdd,accReport,accClean,...}:PTys.pTyInfo) =
 	let val aname = name^".c"
 	    val aoutstream = getAccStream(aname)
-	    val templateName = padsDir^compilerFileLoc^"accum_template_dynamic"
 	in
 	    TextIO.output(aoutstream, "#define PADS_TY(suf) " ^repName^ " ## suf\n\n");
-	    TextIO.output(aoutstream, "#include \""^headerFile^"\"\n\n");
-	    echoFile(templateName,aoutstream);
+	    TextIO.output(aoutstream, "#include \""^headerFile^"\"\n");
+	    TextIO.output(aoutstream, "#include \"template/accum_report\"\n\n");
 
 	    TextIO.flushOut aoutstream;
 	    TextIO.closeOut aoutstream
