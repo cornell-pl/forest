@@ -20,6 +20,7 @@ typedef void* __builtin_va_list;
 #include <vmalloc.h>
 #include <sfstr.h>
 #include <error.h>
+#include <ctype.h>
 #include "libpadsc.h"
 #include "rbuf.h"
 

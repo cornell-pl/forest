@@ -174,21 +174,31 @@ typedef PDC_auint64_rep        PDC_auint64;
 typedef PDC_base_em            PDC_auint64_em;
 typedef PDC_base_ed            PDC_auint64_ed;
 
-
-#define PDC_MIN_INT8      -128
-#define PDC_MAX_INT8       127
-#define PDC_MAX_UINT8      256
-
-#define PDC_MIN_INT16   -32768
-#define PDC_MAX_INT16    32767
-#define PDC_MAX_UINT16   65535
-
-typedef char*                 PDC_string_NT;
+typedef char*                  PDC_string_NT;
 
 typedef struct PDC_string_s {
   size_t    len;
   char*     str;
 } PDC_string;
+
+/* ================================================================================ */
+/* USEFUL CONSTANTS */
+
+#define PDC_MIN_INT8                        -128
+#define PDC_MAX_INT8                         127
+#define PDC_MAX_UINT8                        255
+
+#define PDC_MIN_INT16                     -32768
+#define PDC_MAX_INT16                      32767
+#define PDC_MAX_UINT16                     65535
+
+#define PDC_MIN_INT32                -2147483648L
+#define PDC_MAX_INT32                 2147483647L
+#define PDC_MAX_UINT32                4294967295L
+
+#define PDC_MIN_INT64       -9223372036854775808LL
+#define PDC_MAX_INT64        9223372036854775807LL
+#define PDC_MAX_UINT64      18446744073709551615LL
 
 /* ================================================================================ */ 
 /* ERROR REPORTING FUNCTIONS */

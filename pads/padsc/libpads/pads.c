@@ -8,9 +8,8 @@
 
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
-#gen_include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.26 2002-10-01 21:12:22 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.27 2002-10-02 00:30:30 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -168,6 +167,42 @@ PDC_strtoull(const char* str, char** ptr, int base)
   } while (0)
 /* END_MACRO */
 
+/* Useful constants */
+
+#define PDC_HALFMIN_INT64   -4611686018427387904LL
+#define PDC_HALFMAX_INT64    4611686018427387903LL
+#define PDC_HALFMAX_UINT64   9223372036854775807LL
+/* END_MACRO */
+
+/* Fold Points : when should the running int64 / uint64 sum be folded into the average? */
+
+#define PDC_FOLD_MIN_INT8    -9223372036854775680LL  /* PDC_MIN_INT64 - PDC_MIN_INT8  */
+#define PDC_FOLD_MAX_INT8     9223372036854775680LL  /* PDC_MAX_INT64 - PDC_MAX_INT8  */
+#define PDC_FOLD_MIN_INT16   -9223372036854743040LL  /* PDC_MIN_INT64 - PDC_MIN_INT16 */
+#define PDC_FOLD_MAX_INT16    9223372036854743040LL  /* PDC_MAX_INT64 - PDC_MAX_INT16 */
+#define PDC_FOLD_MIN_INT32   -9223372034707292160LL  /* PDC_MIN_INT64 - PDC_MIN_INT32 */
+#define PDC_FOLD_MAX_INT32    9223372034707292160LL  /* PDC_MAX_INT64 - PDC_MAX_INT32 */
+
+#define PDC_FOLD_MAX_UINT8   18446744073709551488LL  /* PDC_MAX_UINT64 - PDC_MAX_UINT8  */
+#define PDC_FOLD_MAX_UINT16  18446744073709518848LL  /* PDC_MAX_UINT64 - PDC_MAX_UINT16 */
+#define PDC_FOLD_MAX_UINT32  18446744069414584320LL  /* PDC_MAX_UINT64 - PDC_MAX_UINT32 */
+/* END_MACRO */
+
+/* Macros that test whether folding should occur, given new val v and running sum s */
+
+#define PDC_FOLDTEST_INT8(v, s)  (((s) < PDC_FOLD_MIN_INT8)  || ((s) > PDC_FOLD_MAX_INT8))
+#define PDC_FOLDTEST_INT16(v, s) (((s) < PDC_FOLD_MIN_INT16) || ((s) > PDC_FOLD_MAX_INT16))
+#define PDC_FOLDTEST_INT32(v, s) (((s) < PDC_FOLD_MIN_INT32) || ((s) > PDC_FOLD_MAX_INT32))
+#define PDC_FOLDTEST_INT32(v, s) (((s) < PDC_FOLD_MIN_INT32) || ((s) > PDC_FOLD_MAX_INT32))
+#define PDC_FOLDTEST_INT64(v, s) ( (((s) < 0) && ((v) < PDC_HALFMIN_INT64)) ||
+				   (((v) < 0) && ((s) < PDC_HALFMIN_INT64)) ||
+				   (((s) > 0) && ((v) > PDC_HALFMAX_INT64)) ||
+				   (((v) > 0) && ((s) > PDC_HALFMAX_INT64)) )
+#define PDC_FOLDTEST_UINT8(v, s)  ((s) > PDC_FOLD_MAX_UINT8)
+#define PDC_FOLDTEST_UINT16(v, s) ((s) > PDC_FOLD_MAX_UINT16)
+#define PDC_FOLDTEST_UINT32(v, s) ((s) > PDC_FOLD_MAX_UINT32)
+#define PDC_FOLDTEST_UINT64(v, s) ( ((s) > PDC_HALFMAX_UINT64) || ((v) > PDC_HALFMAX_UINT64) )
+
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACROS ********************************** */
 
@@ -179,7 +214,6 @@ PDC_strtoull(const char* str, char** ptr, int base)
  * AT&T Labs Research
  */
 
-#gen_include "libpadsc-macros-gen.h"
 /* ********************************** END_HEADER ********************************** */
 #define PDC_AINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
 fn_name(PDC_t* pdc, PDC_base_em* em,
@@ -343,15 +377,15 @@ fn_name(PDC_t* pdc, PDC_base_em* em,
 /* ********************************** END_MACROS ********************************** */
 
 /* ****************** BEGIN_MACROS(libpadsc-acc-macros-gen.h) ********************* */
-#gen_include "libpadsc-macros-gen.h"
 /*
  * Macros that help implement accum functions
  * 
  * Kathleen Fisher, Robert Gruber
  * AT&T Labs Research
  */
+
 /* ********************************** END_HEADER ********************************** */
-#define PDC_INT_ACCUM(int_type, fmt)
+#define PDC_INT_ACCUM(int_type, fmt, fold_test)
 
 typedef struct int_type ## _dt_elt_s {
   int_type     val;
@@ -481,6 +515,9 @@ int_type ## _acc_add(PDC_t* pdc, int_type ## _acc* a, PDC_base_ed* ed, int_type*
     (a->bad)++;
     return PDC_OK;
   }
+  if (fold_test(v, a->psum)) {
+    int_type ## _acc_fold_psum(a);
+  }
   a->psum += v;
   (a->good)++;
   if (a->good == 1) {
@@ -489,9 +526,6 @@ int_type ## _acc_add(PDC_t* pdc, int_type ## _acc* a, PDC_base_ed* ed, int_type*
     a->min = v;
   } else if (v > a->max) {
     a->max = v;
-  }
-  if (a->good % 1000 == 0) {
-    int_type ## _acc_fold_psum(a);
   }
   if (dtsize(a->dict) < 10) {
     insert_val.val = v;
@@ -561,7 +595,7 @@ int_type ## _acc_report(PDC_t* pdc, const char* prefix, int_type ## _acc* a, PDC
  */
 
 #gen_include "libpadsc-internal.h"
-#gen_include <ctype.h>
+#gen_include "libpadsc-macros-gen.h"
 /* ********************************** END_HEADER ********************************** */
 #gen_include "libpadsc-read-macros-gen.h"
 
@@ -661,24 +695,25 @@ PDC_BINT_READ_FN(PDC_buint64_read, PDC_uint64, 8, 7);
  */
 
 #gen_include "libpadsc-internal.h"
+#gen_include "libpadsc-macros-gen.h"
 /* ********************************** END_HEADER ********************************** */
 #gen_include "libpadsc-acc-macros-gen.h"
 
-PDC_INT_ACCUM(PDC_int8, "d");
+PDC_INT_ACCUM(PDC_int8, "d", PDC_FOLDTEST_INT8);
 
-PDC_INT_ACCUM(PDC_uint8, "u");
+PDC_INT_ACCUM(PDC_uint8, "u", PDC_FOLDTEST_UINT8);
 
-PDC_INT_ACCUM(PDC_int16, "d");
+PDC_INT_ACCUM(PDC_int16, "d", PDC_FOLDTEST_INT16);
 
-PDC_INT_ACCUM(PDC_uint16, "u");
+PDC_INT_ACCUM(PDC_uint16, "u", PDC_FOLDTEST_UINT16);
 
-PDC_INT_ACCUM(PDC_int32, "ld");
+PDC_INT_ACCUM(PDC_int32, "ld", PDC_FOLDTEST_INT32);
 
-PDC_INT_ACCUM(PDC_uint32, "lu");
+PDC_INT_ACCUM(PDC_uint32, "lu", PDC_FOLDTEST_UINT32);
 
-PDC_INT_ACCUM(PDC_int64, "lld");
+PDC_INT_ACCUM(PDC_int64, "lld", PDC_FOLDTEST_INT64);
 
-PDC_INT_ACCUM(PDC_uint64, "llu");
+PDC_INT_ACCUM(PDC_uint64, "llu", PDC_FOLDTEST_UINT64);
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */

@@ -3,7 +3,7 @@
 int main(int argc, char** argv) {
   int                i;
   PDC_t*             pdc;
-  PDC_int32_acc    accum;
+  PDC_int32_acc      accum;
   PDC_int32          key1;
   PDC_base_ed        ed = {0};
 
