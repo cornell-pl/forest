@@ -18,6 +18,9 @@ PADS_HOME = ../../../..
 GEN_DIR = ../../gen
 GEN_WRITE = 1
 
+# Uncomment the following to use the -x option
+PADSC_EXTRA = -x
+
 # the following indicates that generated .c files should not be removed
 .PRECIOUS: $(GEN_DIR)/%.c 
 
