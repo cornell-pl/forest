@@ -29,6 +29,7 @@
 #define PDC_ARRAY_TERM_ERR                112
 #define PDC_ARRAY_SIZE_ERR                113
 #define PDC_ARRAY_USER_CONSTRAINT_ERR     114
+#define PDC_ARRAY_MIN_BIGGER_THAN_MAX_ERR 115
 #define PDC_STRUCT_FIELD_ERR              120
 #define PDC_UNION_MATCH_FAILURE           130
 #define PDC_ENUM_MATCH_FAILURE            140
@@ -37,6 +38,7 @@
 #define PDC_RANGE                         160
 #define PDC_INVALID_AINT                  170
 #define PDC_INVALID_AUINT                 171
+#define PDC_CHAR_LIT_NOT_FOUND            180
 
 /* ================================================================================ */
 /* INTERFACE LIBRARY TYPES: FORWARD DECLS */
@@ -121,11 +123,18 @@ enum PDC_base_em_e { PDC_CheckAndSet, PDC_Check, PDC_Ignore };
 
 enum PDC_panicStop_em_e { PDC_Line_Stop /* , PDC_EOF_Stop */ };    /* At the moment, only PDC_Line_Stop is supported */
 
+/* A position has a beginning and an ending: it marks the first and last
+ * character where something interesting happened, e.g., a field with
+ * invalid format.  In cases where clearcut boundaries for an error
+ * are not known, the parse position where the error was 'found'
+ * is used for both the begin and end positions.
+ */
+
 struct PDC_loc_s {
-  int          lineNum;
-  int          posNum;
-  char*        begin;
-  char*        end;
+  size_t       beginLine;
+  size_t       beginChar;
+  size_t       endLine;
+  size_t       endChar;
 };
 
 struct PDC_base_ed_s {

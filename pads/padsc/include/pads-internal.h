@@ -27,26 +27,48 @@ typedef void* __builtin_va_list;
 /* ================================================================================ */
 /* TYPE DEFINITIONS */
 
-/* 
- * PDC_IO_t: io state : this will change, something simple for now 
- *   (line based input is assumed to work)
+/*
+ * used for list of input lines, one per line retained in memory
+ * the input lines are pdc->iline[0] .. pdc->iline[pdc->itail].
+ * For the tail line, boff,eoff are offsets into sfio-managed space
+ * (base = pdc->sfbuf); otherwise they are offsets into the
+ * pdc->buf shadow space 
  */
-typedef struct PDC_IO_s {
-  Sfio_t*           io;   /* io stream */
-  char*             path; /* original path -- eventually want to support a set of input files */
-  size_t            line; /* line count */
-  int               eof;  /* hit EOF ? */ 
-  char*             buf;  /* input buffer : initialized on file open */
-  char*             b;    /* b, c, e point into buf, where b,e mark begin/end */
-  char*             e;    /* of cur input line, e one beyond last char in line */
-  char*             c;    /* thus c == e means current line has been read */
-} PDC_IO_t;
+typedef struct PDC_IO_line_s {
+  size_t  lnum;    /* line # */
+  size_t  boffset; /* offset of first char in line */
+  size_t  eoffset; /* offset 1 beyond last char in line */
+} PDC_IO_line_t;
+
+/*
+ * a stack elt has a cursor position cur, which is an
+ * offset within IO line ilines[idx] -- cur should be
+ * between ilines[idx].boff and ilines[idx].eoff
+ */
+typedef struct PDC_stkElt_s {
+  size_t      idx;   /* index of IO line */
+  size_t      cur;   /* cursor position */
+} PDC_stkElt_t;
 
 struct PDC_s {
   const char*       id;     /* interface id */
   PDC_disc_t*       disc;   /* user-supplied discipline (can be null) */
   Vmalloc_t*        vm;     /* vm handle */
-  PDC_IO_t          iost;   /* io state */
+  /* The following are all IO state */
+  Sfio_t*           io;      /* io stream */
+  int               eof;     /* hit eof? */ 
+  size_t            lnum;    /* last line # read */ 
+  char*             path;    /* original path -- eventually want to support a set of input files */
+  char*             sfbuf;   /* sfio buffer ptr returned from sfgetr */
+  PDC_IO_line_t*    ilines;  /* list of input lines in memory - resized dynamically */
+  size_t            ialloc;  /* total lines allocated for ilines */
+  size_t            itail;   /* indx of tail of iline list */
+  PDC_stkElt_t*     stack;   /* stack - resized dynamically */
+  size_t            salloc;  /* total elts allocated for stack */
+  size_t            top;     /* index of top stack elt */
+  char*             buf;     /* shadow buffer space - resized dynamically */
+  size_t            balloc;  /* total chars allocated for buf */
+  size_t            bchars;  /* total chars copied into buf so far */
 };
 
 /*
@@ -62,17 +84,26 @@ typedef struct PDC_rbuf_s {
 /* ================================================================================ */
 /* INTERNAL IO FUNCTIONS */
 
-PDC_error_t  PDC_get_loc       (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc);
-int          PDC_IO_is_EOF     (PDC_t* pdc, PDC_disc_t* disc);
+/*
+ * The checkpoint API: if any of these return PDC_ERROR, there is an
+ * internal error -- the calling code should probably exit the program
+ * as continuing could lead to unspecified behavior / crash.
+ */
+PDC_error_t  PDC_IO_checkpoint  (PDC_t* pdc, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_commit      (PDC_t* pdc, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_restore     (PDC_t* pdc, PDC_disc_t* disc);
 
-PDC_error_t  PDC_IO_getchar    (PDC_t* pdc, unsigned char* ct, int panicking, PDC_disc_t* disc);
-PDC_error_t  PDC_IO_back       (PDC_t* pdc, size_t num_chars, PDC_disc_t* disc);
+/* 
+ * Note: all of the following act on the IO cursor of the top checkpoint
+ */
+PDC_error_t  PDC_get_loc        (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc);
+int          PDC_IO_is_EOF      (PDC_t* pdc, PDC_disc_t* disc);
+int          PDC_IO_peek_EOF    (PDC_t* pdc, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_getchar     (PDC_t* pdc, unsigned char* ct, int panicking, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_back        (PDC_t* pdc, size_t num_chars, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_refill      (PDC_t* pdc, PDC_disc_t* disc);
 
-PDC_error_t  PDC_IO_checkpoint (PDC_t* pdc, PDC_disc_t* disc);
-PDC_error_t  PDC_IO_commit     (PDC_t* pdc, PDC_disc_t* disc);
-PDC_error_t  PDC_IO_restore    (PDC_t* pdc, PDC_disc_t* disc);
 
-PDC_error_t  PDC_IO_refill     (PDC_t* pdc, PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* RBUF: RESIZABLE ALLLOC'D SPACE */
@@ -123,7 +154,7 @@ int           PDC_errorvf(PDC_t* pdc, PDC_disc_t* disc, int level, va_list ap);
  */
 
 PDC_error_t PDC_char_lit_scan(PDC_t* pdc, PDC_base_em* em,
-			      PDC_base_ed* er, unsigned char c, PDC_disc_t* disc);
+			      PDC_base_ed* ed, unsigned char c, PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* READ FUNCTIONS */
@@ -139,7 +170,7 @@ PDC_error_t PDC_char_lit_scan(PDC_t* pdc, PDC_base_em* em,
  */
 
 PDC_error_t PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
-			      PDC_base_ed* er, unsigned char c, PDC_disc_t* disc);
+			      PDC_base_ed* ed, unsigned char c, PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* OUTPUT MACROS  */
