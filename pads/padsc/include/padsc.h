@@ -17,32 +17,34 @@
 
 #define PDC_VERSION                  20020815L
 
-#define PDC_OK                              0
-#define PDC_ERROR                          -1
+typedef enum PDC_error_t_e { PDC_OK = 0, PDC_ERROR = -1 } PDC_error_t;
 
-#define PDC_CHKPOINT_FAILURE                1
-#define PDC_COMMIT_FAILURE                  2
-#define PDC_RESTORE_FAILURE                 3
-#define PDC_ALLOC_FAILURE                   4
-#define PDC_PANIC_SKIPPED                  10
+typedef enum PDC_errCode_t_e {
+  PDC_NO_ERROR                      =    0,
+  PDC_CHKPOINT_FAILURE              =    1,
+  PDC_COMMIT_FAILURE                =    2,
+  PDC_RESTORE_FAILURE               =    3,
+  PDC_ALLOC_FAILURE                 =    4,
+  PDC_PANIC_SKIPPED                 =   10,
 
-#define PDC_USER_CONSTRAINT_VIOLATION     100
-#define PDC_MISSING_LITERAL               101
-#define PDC_ARRAY_ELEM_ERR                110
-#define PDC_ARRAY_SEP_ERR                 111
-#define PDC_ARRAY_TERM_ERR                112
-#define PDC_ARRAY_SIZE_ERR                113
-#define PDC_ARRAY_USER_CONSTRAINT_ERR     114
-#define PDC_ARRAY_MIN_BIGGER_THAN_MAX_ERR 115
-#define PDC_STRUCT_FIELD_ERR              120
-#define PDC_UNION_MATCH_FAILURE           130
-#define PDC_ENUM_MATCH_FAILURE            140
+  PDC_USER_CONSTRAINT_VIOLATION     =  100,
+  PDC_MISSING_LITERAL               =  101,
+  PDC_ARRAY_ELEM_ERR                =  110,
+  PDC_ARRAY_SEP_ERR                 =  111,
+  PDC_ARRAY_TERM_ERR                =  112,
+  PDC_ARRAY_SIZE_ERR                =  113,
+  PDC_ARRAY_USER_CONSTRAINT_ERR     =  114,
+  PDC_ARRAY_MIN_BIGGER_THAN_MAX_ERR =  115,
+  PDC_STRUCT_FIELD_ERR              =  120,
+  PDC_UNION_MATCH_FAILURE           =  130,
+  PDC_ENUM_MATCH_FAILURE            =  140,
 
-#define PDC_AT_EOF                        150
-#define PDC_RANGE                         160
-#define PDC_INVALID_AINT                  170
-#define PDC_INVALID_AUINT                 171
-#define PDC_CHAR_LIT_NOT_FOUND            180
+  PDC_AT_EOF                        =  150,
+  PDC_RANGE                         =  160,
+  PDC_INVALID_AINT                  =  170,
+  PDC_INVALID_AUINT                 =  171,
+  PDC_CHAR_LIT_NOT_FOUND            =  180
+} PDC_errCode_t;
 
 /* ================================================================================ */
 /* INTERFACE LIBRARY TYPES: FORWARD DECLS */
@@ -72,7 +74,6 @@
  *
  */
 
-typedef int                        PDC_error_t;
 typedef struct PDC_s               PDC_t;
 typedef struct PDC_disc_s          PDC_disc_t;
 typedef struct PDC_loc_s           PDC_loc_t;
@@ -150,9 +151,9 @@ struct PDC_loc_s {
 };
 
 struct PDC_base_ed_s {
-  int          errCode;
-  PDC_loc_t    loc;
-  int          panic;
+  int            panic;
+  PDC_errCode_t  errCode;
+  PDC_loc_t      loc;
 };
 
 struct PDC_disc_s {
@@ -188,12 +189,12 @@ PDC_error_t  PDC_IO_fclose     (PDC_t* pdc, PDC_disc_t* disc);
  * Note that the string to be converted consists of the optional +/- plus
  * all of the consecutive digits up to the first non-digit character.
  *
+ * RETURN VALUE: The # of errors (0 => success, 1 => failure)
+ *
  * Upon success: 
  *   + the IO cursor is advanced to just beyond the last digit
  *   + if !em || *em == PDC_CheckAndSet, the out param is assigned a value
- *   + PDC_OK is returned.
  *
- * For error cases, PDC_ERROR is returned.  
  * Cursor advancement/err settings for different error cases:
  *
  * (1) If IO cursor is at EOF
@@ -234,7 +235,6 @@ PDC_error_t PDC_auint8_read(PDC_t* pdc, PDC_base_em* em,
 
 PDC_error_t PDC_auint32_read(PDC_t* pdc, PDC_base_em* em,
 			     PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
-
 
 /* ================================================================================ */
 

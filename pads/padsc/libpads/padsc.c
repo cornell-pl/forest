@@ -9,7 +9,7 @@
 #include "libpadsc-internal.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.4 2002-08-22 16:44:31 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.5 2002-08-22 20:21:34 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -131,21 +131,40 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errC
 /* SCAN FUNCTIONS */
 
 PDC_error_t
-PDC_char_lit_scan(PDC_t* pdc, PDC_base_em* em,
-		  PDC_base_ed* ed, unsigned char c, PDC_disc_t* disc)
+PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
+		  unsigned char* c_out, size_t* offset_out,
+		  PDC_disc_t* disc)
 {
   unsigned char ct;
 
   if (!disc) {
     disc = pdc->disc;
   }
-  TRACE1(pdc, "PDC_char_lit_scan called for char = %c", c);
+  TRACE1(pdc, "PDC_char_lit_scan called for char = %s", PDC_fmtChar(c));
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+    return PDC_ERROR; /* XXX out of space -- unrecoverable error */
+  }
+  if (offset_out) {
+    *offset_out = 0;
+  }
   while (PDC_OK == PDC_IO_getchar(pdc, &ct, 1, disc)) { /* 1 means panicking */
-    if (c == ct) {
-      return PDC_OK;  /* IO cursor is one beyond c */
+    if ((c == ct) || (s == ct)) {
+      if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
+	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
+      }
+      if (c_out) {
+	*c_out = ct;
+      }
+      return PDC_OK;  /* IO cursor is one beyond c/s */
+    }
+    if (offset_out) {
+      *offset_out++;
     }
   }
-  /* IO cursor moved an arbitrary amount, limited by disc->p_stop setting */
+  /* restore IO cursor to original position and return error */
+  if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
+    return PDC_ERROR; /* XXX internal error -- unrecoverable error */
+  }
   return PDC_ERROR;
 }
 
@@ -163,7 +182,7 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
   if (!disc) {
     disc = pdc->disc;
   }
-  TRACE1(pdc, "PDC_char_lit_read called for char = %c", c);
+  TRACE1(pdc, "PDC_char_lit_read called for char = %s", PDC_fmtChar(c));
   if (!em) {
     em = &emt;
   }
@@ -184,7 +203,7 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
   return PDC_ERROR;
 }
 
-PDC_error_t
+int
 PDC_auint32_read(PDC_t* pdc, PDC_base_em* em,
 		 PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc)
 {
@@ -554,7 +573,7 @@ PDC_IO_restore(PDC_t* pdc, PDC_disc_t* disc)
     return PDC_ERROR;
   }
   /* this discards all changes since the latest checkpoint */ 
-  pdc->stack[pdc->top] = pdc->stack[pdc->top - 1];
+  pdc->top--;
   return PDC_OK;
 }
 

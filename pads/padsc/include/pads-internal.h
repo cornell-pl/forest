@@ -148,7 +148,7 @@ PDC_error_t   PDC_freeBuf      (PDC_t* pdc, void* buf, PDC_disc_t* disc);
  *      or if the discipline e_rep is PDC_errorRep_None
  */
 
-PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, int errCode,
+PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc, PDC_errCode_t errCode,
 			   const char* format, ... );
 
 /*
@@ -161,19 +161,21 @@ int           PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...);
 
 /* PDC_char_lit_scan:
  *
- * EFFECT:  scan forward, move IO cursor just beyond a specified char
+ * EFFECT:  scan for either goal character c or stop character s,
+ *          move IO cursor just beyond.  Discipline controls maximum
+ *          scan distance.  Hitting eof considered to be an error.
  *
- * RETURNS: PDC_OK if char found (IO cursor now points just beyond char)
- *
- *          PDC_ERROR if char not found (IO cursor has moved arbitrarily forward;
- *                                       exactly how far is determined by p_stop
- *                                       as found in the user-specified discipline)
- * 
- * ** NB: ** em and er currently ignored
+ * RETURNS: PDC_error_t
+ *             OK    => goal/stop char found, IO cursor now points just beyond char
+ *                      *c_out set to the char that was found
+ *                      *offset_out set to the distance scanned to find that char
+ *                      (0 means the IO cursor was pointing at the found char)
+ *             ERROR => char not found, IO cursor unchanged
  */
 
-PDC_error_t PDC_char_lit_scan(PDC_t* pdc, PDC_base_em* em,
-			      PDC_base_ed* ed, unsigned char c, PDC_disc_t* disc);
+PDC_error_t PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s, 
+			      unsigned char* c_out, size_t* offset_out,
+			      PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* READ FUNCTIONS */
@@ -182,10 +184,9 @@ PDC_error_t PDC_char_lit_scan(PDC_t* pdc, PDC_base_em* em,
  *
  * EFFECT: verify IO cursor points to specified char, move IO cursor just beyond
  *
- * RETURNS: PDC_ERROR if cursor does not point to char (IO cursor unchanged)
- *          PDC_OK if cursor does point to char (IO cursor now points just beyond char)
- *
- * ** NB: ** em and er currently ignored
+ * RETURNS: PDC_error_t
+ *            OK    => IO cursor did point to char, now points just beyond char
+ *            ERROR => IO cursor does not point to char (cursor unchanged)
  */
 
 PDC_error_t PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
