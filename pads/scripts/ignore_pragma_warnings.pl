@@ -1,11 +1,18 @@
 #!/usr/bin/env perl
 
-LINE: while (<>) {
+LINE: while (<STDIN>) {
+  if ($#ARGV == 0) {
+    if (/ast_common[.]h:\s+No/) {
+      open(TmpFile, ">$ARGV[0]") or die "Could not open: $ARGV[0]\n";
+      close(TmpFile);
+      exit 0;
+    }
+  }
   next LINE if (/ignoring pragma/);
   if (/In file included from/) {
     my @ermsgs = ();
     push (@ermsgs, $_);
-    ERLINE: while (<>) {
+    ERLINE: while (<STDIN>) {
       if (/^\s+from\s/) {
 	push (@ermsgs, $_);
 	next ERLINE;
