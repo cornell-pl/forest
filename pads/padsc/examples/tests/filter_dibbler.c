@@ -1,7 +1,9 @@
+/*@FILE @LEFT dibbler_filter.tex */
 #include "dibbler_new.h"
 #define SEQ_MASK P_CheckAndSet
 #define ERR_FILE sfstderr
 #define CLEAN_FILE sfstdout
+#define entry_t_verify is_entry_t
 
 void cnvServiceTN(service_tn_t *stn){
   if ((some_service_tn_t == stn->tag) && (stn->val.some_service_tn_t == 0)) {
@@ -35,20 +37,24 @@ void cnvPhoneNumbers(entry_t *entry){
 }
 
 int main(int argc, char** argv) {
-  P_t                *pads;
-  Pio_disc_t         *io_disc;
-  summary_header_t   header;
+/*@BEGIN dibbler_filter.tex */
+  P_t                  *pads;
+/*@END dibbler_filter.tex */
+  Pio_disc_t           *io_disc;
+  summary_header_t     header;
   summary_header_t_pd  header_pd;
   summary_header_t_m   header_m;
-  entry_t            entry;
-  entry_t_pd         entry_pd;
-  entry_t_m          entry_m;
-  char               *fname = "../../data/dibbler_short";
-  char               *errname = "/home/kfisher/esig/dibbler_errors";
-  char               *cleanname  = "/home/kfisher/esig/dibbler_clean";
-  Sfio_t*            errfile;
-  Sfio_t*            cleanfile;
-  Pbase_m            mask = SEQ_MASK;
+/*@BEGIN dibbler_filter.tex */
+  entry_t              entry;
+  entry_t_pd           entry_pd;
+  entry_t_m            entry_m;
+/*@END dibbler_filter.tex */
+  char                 *fname = "../../data/dibbler_short";
+  char                 *errname = "/home/kfisher/esig/dibbler_errors";
+  char                 *cleanname  = "/home/kfisher/esig/dibbler_clean";
+  Sfio_t*              errfile;
+  Sfio_t*              cleanfile;
+  Pbase_m              mask = SEQ_MASK;
   
   errfile = sfopen(0, errname, "rw");
   cleanfile = sfopen(0, cleanname, "rw");
@@ -77,15 +83,30 @@ int main(int argc, char** argv) {
     return -1;
   }
 
+  /*@BEGIN dibbler_filter.tex*/
+  /*@INSERT
+    ...
+  P_open(&pads, 0, 0); 
+  P_io_fopen(pads, "dibbler/data/2004.11.11");
+      ...
+   */
+  /*@END dibbler_filter.tex*/
   summary_header_t_init(pads, &header);
   summary_header_t_pd_init(pads, &header_pd);
   summary_header_t_m_init(pads, &header_m, P_CheckAndSet);
 
+
   /* INIT entry -- must do this for all variable data types */
   entry_t_init(pads, &entry);
   entry_t_pd_init(pads, &entry_pd);
+
+  /*@BEGIN dibbler_filter.tex */
   entry_t_m_init(pads, &entry_m, P_CheckAndSet);
-  entry_m.events.compoundLevel = SEQ_MASK;
+  entry_m.events.compoundLevel = P_Set;
+  /*@INSERT
+    ...
+   */
+  /*@END dibbler_filter.tex */
 
   if (P_ERR == P_io_fopen(pads, fname)) {
     error(2, "*** P_io_fopen failed ***");
@@ -106,16 +127,24 @@ int main(int argc, char** argv) {
   /*
    * Try to read each line of data
    */
+  /*@BEGIN dibbler_filter.tex */
   while (!P_io_at_eof(pads)) {
     entry_t_read(pads, &entry_m, &entry_pd, &entry);
     if (entry_pd.nerr > 0) {
       entry_t_write2io(pads, ERR_FILE, &entry_pd, &entry);
     } else {
       cnvPhoneNumbers(&entry);      
-      entry_t_write2io(pads, CLEAN_FILE, &entry_pd, &entry);
+      if (entry_t_verify(&entry)) {
+        entry_t_write2io(pads, CLEAN_FILE, &entry_pd, &entry);
+      } else {
+	error(2, "Data transform failed.");
+      }
     }
   }
-      
+  /*@INSERT
+    ...
+   */
+  /*@END dibbler_filter.tex */      
 
   if (P_ERR == P_io_close(pads)) {
     error(2, "*** P_io_close failed ***");
