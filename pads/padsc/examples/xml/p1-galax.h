@@ -1,11 +1,13 @@
+#include "pglx-internal.h"
+
 /*****************************************************************/
 /* in generated p1-galax.h file from pads file p1.p */
-/*typed_value: always uses error version in library for structured types*/
-/*string_value: not yet implemented. */
+/* typed_value: always uses error version in library for structured types*/
+/* string_value: not yet implemented. */
 
 /* assume fooStruct is a struct in p1.p*/
 PDCI_node_rep_t ** fooStruct_children(PDCI_node_rep_t *node);
-extern constPDCI_vtable_t fooStruct_vtable;
+extern const PDCI_vtable_t fooStruct_vtable;
 
 /* assume fooEnum is an enum in p1.p*/
 PDCI_node_rep_t ** fooEnum_children(PDCI_node_rep_t *node);

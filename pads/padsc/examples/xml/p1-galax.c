@@ -1,6 +1,6 @@
 /*****************************************************************/
 /* in generated p1-galax.c file from pads file p1.p */
-#include <p1-galax.h>
+#include "p1-galax.h"
 /* struct case */
 /* assume fooStruct is a struct in p1.p*/
 const PDCI_vtable_t fooStruct_vtable = {fooStruct_children, 

@@ -1,3 +1,4 @@
+#include "libpadsc.h"
 #ifndef FOR_CKIT
 #include "pglx-impl.h"
 #endif
