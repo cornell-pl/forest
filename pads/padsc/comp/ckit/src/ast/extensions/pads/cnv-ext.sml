@@ -1755,7 +1755,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genLocFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				      pred: pcexp option, comment: string option, size,optDecl, arrayDecl,...}:pfieldty) = 
-			  ( if   name = PNames.pd orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
+			  ( if   name = PNames.pd orelse name = PNames.identifier orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
 			    then PE.error (structOrUnion^" "^structOrUnionName^" contains field with reserved name '"^name^"'\n")
 			    else ();
 			    let val tyName = lookupTy (pty, repSuf, #repname)
@@ -1789,7 +1789,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   
 			       end
 		      fun genLocMan {tyname, name, args, isVirtual, expr, pred, comment} = 
-			 let val () = if name = PNames.pd orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
+			 let val () = if name = PNames.pd orelse name = PNames.identifier orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
 				       then PE.error (structOrUnion^" "^structOrUnionName^" contains field with reserved name '"^name^"'\n")
 				       else () 
 			      val () = (case expr 
@@ -2047,7 +2047,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
               fun emitXML   eds = emit (!(#outputXML(PInput.inputs)), eds)
 	      fun emitPred  eds = emitRead eds
 
-              fun isGalax () = (!(#outputExper(PInput.inputs)))
+              fun isGalax () = (!(#outputXML(PInput.inputs)))
 
               fun cnvCTy ctyED = 
 		  let val astdecls = cnvExternalDecl ctyED
