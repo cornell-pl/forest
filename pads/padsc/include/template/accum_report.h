@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
   /*
    * Try to read header
    */
-  if (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
+  if (!P_io_at_eof(pads)) {
     if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
       error(ERROR_FATAL, "Note: header read returned error");
     } else {
