@@ -198,8 +198,8 @@ space:=$(empty) $(empty)
 
 ifeq ($(OPSYS),irix)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
-CDBGFLAGS += -woff 47,1174,3201,3434
-COPTFLAGS += -woff 47,1174,3201,3434
+CDBGFLAGS += -woff 47,1174,3201,3434,3421
+COPTFLAGS += -woff 47,1174,3201,3434,3421
 endif
 
 ifeq ($(OPSYS),linux)
