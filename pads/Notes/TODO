@@ -1,3 +1,43 @@
+TO DISCUSS (NO DECISION YET)
+-----------------------------
+* nerr/neerr for all structured types
+  => in this case, nerr would always be 0 or 1, so it could become a flag in psate if we want
+
+* Penum right now supports only one 'in stream' type, ASCII string.
+  We might want to support others: any type where you can express constants could
+  be used.  Penum could be a type template, as in
+
+// the current Penum would become something like this:
+
+Penum<Pa_string> my_enum1 {
+  foo,
+  bar = 7,
+  Sfor Pfrom("for")
+};
+
+Penum<Psbh(:4:)> my_enum2 {
+  foo Pfrom(0),
+  bar Pfrom(7) = 7,
+  Sfor Pfrom(8)
+};
+
+For all types except string types, you always need to specify the Pfrom, so maybe
+we need another syntax, perhaps
+
+  on-disk-val [: enum_tag] [= in-memory-enum-val]
+
+Penum<Pa_string> my_enum1 {
+  foo,
+  bar = 7,
+  "for" : Sfor
+};
+
+Penum<Psbh(:4:)> my_enum2 {
+  4   : foo,      /* in memory enum val == 0 */
+  10  : bar = 7   /* in memory enum val == 7 */
+};
+
+
 soon
 ----
  * add instructions in README for how to obtain SML
