@@ -216,11 +216,11 @@ regress_test_charclass_o: test_charclass
 regress_test_charclass_d: test_charclass_d
 	@(args=""; suf=""; $(RegressDef))
 
-regress_rw_struct_o: rw_struct
-	@(args=""; input="../../data/rw_struct"; suf=""; $(RegressRW))
+regress_rw_struct_good_o: rw_struct_good
+	@(args=""; input="../../data/struct_good"; suf=""; $(RegressRW))
 
-regress_rw_struct_d: rw_struct_d
-	@(args=""; input="../../data/rw_struct"; suf=""; $(RegressRW))
+regress_rw_struct_good_d: rw_struct_good_d
+	@(args=""; input="../../data/struct_good"; suf=""; $(RegressRW))
 
 regress_rw_pendian_o: rw_pendian
 	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(RegressRW))
