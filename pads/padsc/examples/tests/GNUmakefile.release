@@ -29,44 +29,13 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH =  .. ../../p
 
-ALL_TESTS_O = \
-rw_pendian \
-rw_struct \
-rwxml_alt1 \
-rwxml_punion_literal2 \
-rwxml_struct \
-test_ai \
-test_array_ended \
-test_array_ended2 \
-test_array_nosep \
-test_array_post \
-test_array_pred \
-test_array_pred2 \
-test_array_regexp \
-test_array_skip \
-test_array_skip2 \
-test_charclass \
-test_depends \
-test_format1 \
-test_format2 \
-test_format3 \
-test_format5 \
-test_format6 \
-test_in_place \
-test_me \
-test_me_fooclass \
-test_opt \
-test_pswitch \
-test_pswitch2 \
-test_punion_manifest \
-test_readint \
-test_struct3 \
-test_struct_regexp \
-test_write_struct \
-test_write_struct_strings
-
+RELEASE_TESTS = $(shell cat ../RELEASE_TESTS)
+ALL_TESTS_O = $(RELEASE_TESTS:%.c=%)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
+
+REGRESS_O = $(ALL_TESTS_O:%=regress_%_o)
+REGRESS_D = $(ALL_TESTS_O:%=regress_%_d)
 
 CLEANUP_TESTS = $(ALL_TESTS)
 
@@ -75,81 +44,10 @@ rcount:
 
 regress: regress_o regress_d
 
-regress_o:  sanity_check \
-	  regress_o_announce \
-          regress_test_format1_o \
-          regress_test_format2_o \
-          regress_test_format3_o \
-          regress_test_format5_o \
-          regress_test_format6_o \
-          regress_test_readint_o \
-          regress_test_punion_manifest_o \
-	  regress_rwxml_punion_literal2_o \
-          regress_test_ai_o \
-	  regress_test_pswitch_o \
-	  regress_test_pswitch2_o \
-	  regress_test_depends_o \
-	  regress_test_struct3_o \
-          regress_test_me_o \
-          regress_test_me_fooclass_o \
-	  regress_test_write_struct_o \
-	  regress_test_write_struct_strings_o \
-          regress_test_struct_regexp_o \
-          regress_test_array_regexp_o \
-          regress_test_array_nosep_o \
-          regress_test_array_pred_o  \
-          regress_test_array_pred2_o  \
-          regress_test_array_ended_o \
-          regress_test_array_ended2_o \
-          regress_test_array_post_o \
-          regress_test_array_skip_o \
-          regress_test_array_skip2_o \
-          regress_test_in_place_o \
-          regress_test_opt_o \
-          regress_test_charclass_o \
-          regress_rw_struct_o \
-          regress_rw_pendian_o \
-          regress_rwxml_struct_o \
-          regress_rwxml_alt1_o
-
+regress_o:  sanity_check regress_o_announce $(REGRESS_O)
 	@echo " "; echo "DONE"; echo " "
 
-regress_d:  sanity_check \
-	  regress_d_announce \
-          regress_test_format1_d \
-          regress_test_format2_d \
-          regress_test_format3_d \
-          regress_test_format5_d \
-          regress_test_format6_d \
-          regress_test_readint_d \
-          regress_test_punion_manifest_d \
-	  regress_rwxml_punion_literal2_d \
-          regress_test_ai_d \
-	  regress_test_pswitch_d \
-	  regress_test_pswitch2_d \
-	  regress_test_depends_d \
-	  regress_test_struct3_d \
-          regress_test_me_d \
-          regress_test_me_fooclass_d \
-	  regress_test_write_struct_d \
-	  regress_test_write_struct_strings_d \
-          regress_test_struct_regexp_d \
-          regress_test_array_regexp_d \
-          regress_test_array_nosep_d \
-          regress_test_array_pred_d \
-          regress_test_array_pred2_d \
-          regress_test_array_ended_d  \
-          regress_test_array_ended2_d \
-          regress_test_array_post_d \
-          regress_test_array_skip_d \
-          regress_test_array_skip2_d \
-          regress_test_in_place_d \
-          regress_test_opt_d \
-          regress_test_charclass_d \
-          regress_rw_struct_d \
-          regress_rw_pendian_d \
-          regress_rwxml_struct_d \
-          regress_rwxml_alt1_d
+regress_d:  sanity_check regress_d_announce $(REGRESS_D)
 	@echo " "; echo "DONE"; echo " "
 
 all_tests: sanity_check $(ALL_TESTS)
@@ -162,7 +60,6 @@ regress_o_announce:
 
 regress_d_announce:
 	@echo " "; echo "REGRESS USING DEBUG CODE"; echo " " \
-
 
 regress_test_me_o: test_me
 	@(args=""; suf=""; $(RegressDef))
