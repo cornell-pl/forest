@@ -9,11 +9,17 @@
    PDC_flags_t, PDCI_flag.  We also need a vtable for each
    base type. */
 
+void PDCI_bty_mk_node(PDCI_node_rep_t *result,
+		      PDCI_node_rep_t *parent,
+		      const char *name, 
+		      bty_m m, bty_pd pd, bty val);
+
+
 /* put where CKIT can see: */
 
 #ifdef FOR_CKIT
 void PDCI_NODE_CHECK(PDCI_node_rep_t *n, const char *whatfn);
-void PDCI_NODE_NV_CHECK(PDCI_node_rep_t *n, const char *whatfn);
+void PDCI_NODE_VT_CHECK(PDCI_node_rep_t *n, const char *whatfn);
 PDCI_node_rep_t *PDCI_NEW_NODE(PDC_t *pdc);
 PDCI_node_rep_t **PDCI_NEW_NODE_PTR_LIST(PDC_t *pdc, int num);
 void PDCI_FREE_NODE(PDC_t *pdc, PDCI_node_rep_t *n);
@@ -26,7 +32,7 @@ void PDCI_FREE_NODE_PTR_LIST(PDC_t *pdc, PDCI_node_rep_t **list);
   vmnewof(pdc->vm, 0, PDCI_node_rep_t, 1, 0)
 
 #define PDCI_NEW_NODE_PTR_LIST(pdc, num) \
-  vmnewof(pdc->vm, 0, PDCI_node_rep_t*, num, 0)
+  vmnewof(pdc->vm, 0, PDCI_node_rep_t*, num +1, 0)
 
 #define PDCI_FREE_NODE(pdc, n) \
   vmfree(pdc->vm, n)
@@ -62,9 +68,9 @@ do { \
  * greater than one.
  */
 
-/* libpadsc-galax.h/c */
+/* libpadsc-galax.h */
 /* define unknown_vtable for unknown types */
-/* define foo_vtable for all base types foo*/
+/* define bt_vtable for all base types bt*/
 
 /* header files can be found in /usr/common/lib/ocaml/caml */
 #include <caml/mlvalues.h>  /* value type */
@@ -97,13 +103,6 @@ struct PDCI_node_rep_s {
   void            *rep;
   const char      *name;
 };
-/* Generic vtables */
-/* need one vtable for each pd of each kind of structured type:
-   struct, union, array, enum, typedef */
-const PDCI_vtable_t
-PDCI_struct_pd_vtable = {PDCI_struct_pd_childrenVT, 
-			 PDCI_error_typed_valueVT,
-			 0};
 
 /* 'Generic' forms of generated pd types  */
 
@@ -115,20 +114,41 @@ typedef struct PDCI_struct_pd_s {
   int panic;
 } PDCI_struct_pd_t;
 
+void PDCI_mk_tnode(PDCI_node_rep_t *result,
+		   PDCI_vtable_t *vt,
+		   PDCI_node_rep_t *parent,
+		   const char *name, 
+		   PDCI_struct_pd_t* val);
+void  PDCI_mk_node(PDCI_node_rep_t *result,
+		   PDCI_vtable_t *vt,
+		   PDCI_node_rep_t *parent,
+		   const char *name, 
+		   void* m, void* pd,
+		   void* rep);
 /* TODO: decls for PDCI_union_pd_t, PDCI_array_pd_t, and so on */
+
+
+/***************************************************************/
+/* libpadsc-galax.c */
+/* Generic vtables */
+/* need one vtable for each pd of each kind of structured type:
+   struct, union, array, enum, typedef */
+const PDCI_vtable_t
+PDCI_struct_pd_vtable = {PDCI_struct_pd_childrenVT, 
+			 PDCI_error_typed_valueVT,
+			 0};
+
 
 /* Generic functions */
 /* PDCI_node_rep_t ** PDCI_generic_children (PDCI_node_rep_t *node); */
-void**
-PDCI_generic_children (void *ocaml_n)
+void** PDCI_generic_children (void *ocaml_n)
 {
   PDCI_node_rep_t *n = (PDCI_node_rep_t *) ocaml_n; 
   PDCI_NODE_VT_CHECK(n, "PDCI_generic_children");
   return (void **) n->vt.children(n);
 }
 
-void*
-PDCI_generic_parent (void *ocaml_n)
+void* PDCI_generic_parent (void *ocaml_n)
 {
   PDCI_node_rep_t *n = (PDCI_node_rep_t *) ocaml_n; 
   PDCI_NODE_CHECK(n, "PDCI_generic_parent");
@@ -141,24 +161,21 @@ PDCI_generic_parent (void *ocaml_n)
       to a Caml object on the Caml side.
  */
 
-value
-PDCI_generic_typed_value (void * ocaml_n)
+value PDCI_generic_typed_value (void * ocaml_n)
 {
   PDCI_node_rep_t *n = (PDCI_node_rep_t *) ocaml_n; 
   PDCI_NODE_VT_CHECK(n, "PDCI_generic_typed_value");
   return n->vt.typed_value(n);
 }
 
-const char*
-PDCI_generic_string_value(void *ocaml_nn){
+const char* PDCI_generic_string_value(void *ocaml_nn){
   PDCI_node_rep_t *n = (PDCI_node_rep_t *) ocaml_n; 
   PDCI_NODE_CHECK(n, "PDCI_generic_string_value");
   return "Not yet implemented";
 }
 
 /* Error function used for many cases */
-value
-PDCI_error_typed_value(PDCI_node_rep_t *node){
+value PDCI_error_typed_value(PDCI_node_rep_t *node){
   failwith("NOT_A_VALUE: typed_value called on structured type.");
   return 0;  /* will never get here*/
 } 
@@ -166,19 +183,44 @@ PDCI_error_typed_value(PDCI_node_rep_t *node){
 /* Children functions for struct_pd, union_pd, etc. */
 
 /* A struct_pd has four children (nerr, errCode, loc, panic) */
-PDCI_node_t **
-PDCI_struct_pd_children(PDCI_node_rep_t *self){
+PDCI_node_t ** PDCI_struct_pd_children(PDCI_node_rep_t *self){
   PDCI_struct_pd *pd = (PDCI_struct_pd *) self->rep;
   PDCI_node_rep_t **result;
   if (!(result = PDCI_NEW_NODE_PTR_LIST(pdc, 4))) {
     failwith("ALLOC_ERROR: in PDCI_struct_pd_children");
   }
   /* the following mk calls raise an exception on alloc error */
-  result[0] = PDCI_uint32_mk_node(self, "nerr", pd->nerr);
-  result[1] = PDCI_errCode_mk_node(self, "errCode", pd->errCode);
-  result[2] = PDCI_loc_mk_node(self, "loc", pd->loc);
-  result[3] = PDCI_int32_mk_node(self, "panic", pd->panic);
+  PDCI_mk_tnode(result[0], PDC_uint32_vtable, self, "nerr", &(pd->nerr));
+  PDCI_mk_tnode(result[1], PDC_errCode_t_vtable,self,"errCode",&(pd->errCode));
+  PDCI_mk_tnode(result[2], PDC_loc_t_vtable, self, "loc", &(pd->loc));
+  PDCI_mk_tnode(result[3], PDC_int32_vtable, self, "panic", &(pd->panic));
   return result;
+}
+
+void PDCI_mk_node(PDCI_node_rep_t *result,
+		  const PDCI_vtable_t *vt,
+		  PDCI_node_rep_t *parent,
+		  const char *name, 
+		  void* m, void* pd,
+		  void* rep){
+  if (!(result = PDCI_NEW_NODE(pdc))) {
+    failwith("ALLOC_ERROR: in PDCI_mk_node");
+  }
+  result->vt     = vt;
+  result->pdc    = parent->pdc;
+  result->parent = parent;
+  result->m      = (void *)m;
+  result->pd     = (void *)pd;
+  result->rep    = rep;
+  result->name   = name;
+}
+
+void PDCI_mk_tnode(PDCI_node_rep_t * result,
+		   const PDCI_vtable_t *vt,
+		   PDCI_node_rep_t *parent,
+		   const char *name, 
+		   void* rep){
+  PDCI_mk_node(result, vt, parent, name, 0,0,rep);
 }
 
 /*****************************************************************/
@@ -199,7 +241,8 @@ extern const PDCI_vtable_t foo_vtable;
 const PDCI_vtable_t foo_vtable = {foo_children, PDCI_error_typed_value, 0};
 
 /* NOTE: <numChildren> = padsc compiler-computed constant 
-   (number of full fields + number of computed fields + 1) */
+   (number of full fields + number of computed fields + 1) 
+   for the parse descriptor.*/
 
 PDCI_node_rep_t** foo_children(PDCI_node_rep_t *self){
   foo *rep = (foo *) self->rep;
@@ -211,46 +254,18 @@ PDCI_node_rep_t** foo_children(PDCI_node_rep_t *self){
     failwith("ALLOC_ERROR: in foo_children");
   };
   /* parse descriptor child */
-  if (!(current = result[0] = PDCI_NEW_NODE(pdc))) {
-    failwith("ALLOC_ERROR: in foo_children");
-  }
-  current->vt     = PDCI_struct_pd_vtable;
-  current->pdc    = self->pdc;
-  current->parent = self;
-  current->m      = (void *)0;
-  current->pd     = (void *)0;
-  current->rep    = (void *)pd;
-  current->name   = "pd";
+  PDCI_mk_tnode(result[0], PDCI_struct_pd_vtable, self, "pd", pd);
   
   /* now do normal fields: assume first field is bar b */
-  current = &(self->children[1]);
-  current->vt = bar_vtable;
-  current->pdc = self->pdc;
-  current->parent = self;
-  current->m = (void *)&(m->b);
-  current->pd = (void *)&(pd->b);
-  current->rep = (void *)&(rep->b);
-  current->name = "b";
+  PDCI_mk_node(result[1],bar_vtable,self,"b",&(m->b),&(pd->b), &(rep->b));
+
   /* ... repeat for all other fields ... */
-  return PDC_OK;
-}
-
-/* struct, union, array, enum case */
-size_t foo_write2io(Sfio_t *fp, PDCI_node_rep_t *node){
-  foo *rep = (foo *) node->rep;
-  foo_pd *pd = (foo_pd *) node->pd;
-  return foo_write2io(node->pdc, fp, pd, rep);
-}
-
-size_t foo_write2buf(PDC_byte *buf, size_t buf_len, PDCI_node_rep_t * node, int *buf_full){
-  foo *rep = (foo *) node->rep;
-  foo_pd *pd = (foo_pd *) node->pd;
-  return foo_write2buf(node->pdc, buf, buf_len, buf_full, pd, rep);
+  return result;
 }
 
 
 /* typedef case, base type baz*/
-const PDCI_vtable_t fooTD_vtable = {baz_children, baz_typedValue, baz_write2IO, baz_write2Buffer};
+const PDCI_vtable_t fooTD_vtable = {baz_children, baz_typedValue};
 
 /* union case fooUn */
 const PDCI_vtable_t fooUn_vtable = {fooUn_children, fooUn_typedValue, fooUn_write2IO, fooUn_write2Buffer};

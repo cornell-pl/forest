@@ -133,9 +133,9 @@
  * helper function to do so:
  *
  *   PDC_error_t my_int32_inv_val(PDC_t *pdc, void *pd_void, void *val_void, void **type_args) {
- *     PDC_base_pd *pd  = (PDC_base_pd*)ed_void;
+ *     PDC_base_pd *pd  = (PDC_base_pd*)pd_void;
  *     PDC_int32   *val = (PDC_int32*)val_void;
- *     if (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
+ *     if (pd->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
  *       (*val) = -30;
  *     } else {
  *       (*val) = PDC_INT32_MAX;

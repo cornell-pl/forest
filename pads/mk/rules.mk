@@ -173,7 +173,7 @@ SHARED_COBOL_PADSLIB_DEP_D = $(INSTALLROOT)/lib/$(SHARED_COBOL_PADSLIB_NM_D)
 SHARED_ASTLIB_DEP_D = $(ASTLIB_DIR)/$(SHARED_ASTLIB_NM_D)
 # DYNAMIC_LIB_DEPS_D = $(SHARED_PADSLIB_DEP_D) $(SHARED_ASTLIB_DEP_D)
 
-INCLUDES = -I/home/gsf/arch/$(AST_ARCH)/include/ast -I$(PADS_HOME)/include -I. -I..
+INCLUDES = -I/home/gsf/arch/$(AST_ARCH)/include/ast -I$(PADS_HOME)/include -I/usr/common/lib/ocaml -I. -I..
 ifdef GEN_DIR
 INCLUDES += -I$(GEN_DIR)
 endif

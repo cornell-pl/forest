@@ -121,6 +121,24 @@ if ($_pads_status == "OK") then
     setenv PATH `echo ${ast_bin_dir}:${PATH} | $remove_dups`
   endif
 
+  # on linux, figure out where ligcc_s.so is using /usr/common/bin/gcc (if it exists)
+  # and add that dir to LD_LIBRARY_PATH.  This is required because
+  # gsf builds libast using /usr/common/bin/gcc.
+  switch ("`uname -a`")
+    case *Linux*:
+    case *linux*:
+      if (-e /usr/common/bin/gcc) then
+        set _foo = `/usr/common/bin/gcc -print-file-name=libgcc_s.so`
+        set _bar = $_foo:h
+        set _zot = `(cd $_bar; pwd)`
+        setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${_zot} | $remove_dups`
+        unset _foo
+        unset _bar
+        unset _zot
+        endif
+      breaksw
+  endsw
+
   if ($_pads_verbose != 0) then
     echo "PADS_HOME=$PADS_HOME"
     echo "INSTALLROOT=$INSTALLROOT"
