@@ -1510,7 +1510,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		  end
 
               (* Given manifest field, use f to generate struct field declaration from pads pty*)
-	      fun genMan f {decl, comment:string option} = 
+	      fun genMan f defaultTyOpt {decl, comment:string option} = 
 		  let val ctNoptEs = cnvDeclaration decl
 		      fun doOne (cty, nameOpt, exp) = 
 			  let val name = case nameOpt of NONE => "bogus"
@@ -1521,7 +1521,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			      case reverseLookup cty 
 				  of SOME pty => 
 				      [(name, P.makeTypedefPCT (f pty), fullCommentOpt)]
-				| NONE => []
+				| NONE => (case defaultTyOpt of NONE => []
+					   | SOME ty => [(name, ty, fullCommentOpt)])
 			  end
 		  in
 		      List.concat(List.map doOne ctNoptEs)
@@ -1534,14 +1535,14 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      fun f pty = 
 		        valOf (lookupAcc pty) handle x => (PE.error ("Failed to find accumulator:" ^(getName pty)); "foo")
 		  in
-		     genMan f m
+		     genMan f NONE m
 		  end
 
 	      (* Given representation of manifest field, generate parse descriptor representation. *)
 	      fun genEDMan m = 
 		  let fun f pty = lookupTy(pty, pdSuf, #pdname)
 		  in
-		      genMan f m
+		      genMan f (SOME PL.base_pdPCT) m
 		  end
 
 	      fun cnvPtyMan (theName, acc, name)  = 
@@ -2389,10 +2390,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			       | SOME n => n  
 				     val repX = fieldX(rep, name)
 				     val pos = "ppos"
+				     val needsPosition = PTSub.isFreeInExp([PNames.position], exp) 
 				     val () = addSub(name, repX) (* should this be here, or after the subst? *)
 				     val comment = ("Computing field: "^ name ^ ".")
 				     val commentS = P.mkCommentS (comment)
-				     val needsPosition = PTSub.isFreeInExp([PNames.position], exp) 
 				     val exp = PTSub.substExps ((!subList)@ [(PNames.position, PT.Id pos)] ) exp
 				     val () = pushLocalEnv()
 				     val () = ignore(insTempVar(pos, PL.posPCT))
@@ -3159,15 +3160,27 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			       | SOME n => n  
 				     fun glhsX base = P.dotX(fieldX(base, value), PT.Id name)
 				     val repX = glhsX rep
+				     val pos = "ppos"
+				     val needsPosition = PTSub.isFreeInExp([PNames.position], exp) 
+				     val exp = PTSub.substExps ([(PNames.position, PT.Id pos)] ) exp
 				     val pdX = glhsX pd
 				     val commentS = P.mkCommentS ("Computing variant: "^ name ^ ".")
-				     val initS = genAssignMan(cty,name,repX, exp)
+				     val () = pushLocalEnv()
+				     val () = ignore(insTempVar(pos, PL.posPCT))
+				     val assignS = genAssignMan(cty,name,repX, exp)
+				     val () = popLocalEnv()
+				     val initSs = if needsPosition
+					            then [PT.Compound[
+							   P.varDeclS'(PL.posPCT, pos),
+							   PL.getPosS(PT.Id pads, P.addrX(PT.Id pos)),
+							   assignS]]
+						    else [assignS]
 				 in
 				      cleanupSpaceSs
 				      @[commentS,
-				        P.assignS(fieldX(rep, tag), PT.Id name),
-				        initS,
-				        P.assignS(fieldX(pd, tag), PT.Id name),
+				        P.assignS(fieldX(rep, tag), PT.Id name)]
+				      @ initSs
+				      @[P.assignS(fieldX(pd, tag), PT.Id name),
 					P.assignS(P.dotX(pdX, PT.Id errCode), PL.P_NO_ERROR),
 					PL.initParseStateS(P.addrX(pdX)),
 					PL.getLocS(PT.Id pads,P.addrX(P.dotX(pdX,PT.Id loc)))]
