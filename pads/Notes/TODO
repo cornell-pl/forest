@@ -1,9 +1,5 @@
 testing
 -------
-  * is test_format3 producing the right output? 
-   should the line:
-         12a|23|34
-   produce a zero-element array?
 
 to decide
 ---------
@@ -48,6 +44,7 @@ ACCUM STUFF:
   * sort error codes into parser versus semantic errors
      include in accumulator bad values with error codes 
      that indicate semantic rather than parser level errors
+  * Need function for reporting numbers of errors
 
 DISCIPLINE:
  * slurp white space.
@@ -58,9 +55,7 @@ DISCIPLINE:
 
 padsc compiler todo
 -------------------
-  * check that nesting cascaded values work.
   * make enum.p work (strings that match c keywordsk, etc)
-  * explore accumulators for unions and error values.
   * don't complain about extra spaces if in slurp mode
   * generated accum types should have some top-level state
      as well as per-field accums.  one idea is to accum the nerr

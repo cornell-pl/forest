@@ -630,6 +630,7 @@ structure CnvExt : CNVEXT = struct
                       (name, pct)
 		  end
 	      fun fieldX (bsName, fName) = P.arrowX(PT.Id(gMod bsName), PT.Id fName)
+	      fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
 	      fun genLocTemp (pcty, paramName, firstTyopt) = 
                   let val initX = case firstTyopt of NONE => P.zero
                                      | SOME ty => PT.Cast(ty,P.zero) 
@@ -1201,7 +1202,8 @@ structure CnvExt : CNVEXT = struct
 		      @ (List.concat(List.map cnvExternalDecl cleanupEDEDs))
 		  end
 
-	      fun cnvPStruct ({name:string, isRecord, params: (pcty * pcdecr) list, fields : pcexp PX.PSField list}) = 
+	      fun cnvPStruct ({name:string, isRecord, params: (pcty * pcdecr) list, 
+			       fields : pcexp PX.PSField list}) = 
 	          let (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b r (PX.Full fd) = f fd
                         | mungeField f b r (PX.Brief e) = b e
@@ -1309,11 +1311,8 @@ structure CnvExt : CNVEXT = struct
 		      fun genAccBrief e = []
 		      fun genAccEOR () = []
 		      val accFields = mungeFields genAccFull genAccBrief genAccEOR fields
-		      val accFields = if 0 = List.length accFields
-			  then [("placeholder", P.int, SOME ("This field is"^
-			 "a temporary dummy to prevent an empty struct."))]
-				      else accFields
-		      val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
+		      val auxAccFields = [(nerr, PL.intAccPCT, NONE)]
+		      val accStructED = P.makeTyDefStructEDecl (auxAccFields @ accFields, accSuf name)
 		      val accDecls = cnvExternalDecl accStructED 
                       val accPCT = P.makeTypedefPCT (accSuf name)			 
 
@@ -1544,20 +1543,16 @@ structure CnvExt : CNVEXT = struct
                       (* -- generate accumulator init, reset, cleanup, and report functions *)
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
+			      val auxFields = chk3Pfun(theSuf PL.intAct, getFieldX(acc,nerr))
 			      fun genAccTheFull {pty :PX.Pty, args:pcexp list, name:string, 
 						 isVirtual:bool, isEndian:bool,
 						 pred:pcexp option, comment} = 
 				  if not isVirtual then
 				      case lookupAcc(pty) of NONE => []
-				    | SOME a => (
-						 let val theName = theSuf a
+				    | SOME a => (let val theName = theSuf a
 						     val fieldX = P.addrX(P.arrowX(PT.Id acc, PT.Id name))
 						 in
-						     [PT.IfThen(
-							    P.eqX(PL.PDC_ERROR, 
-								  PT.Call(PT.Id theName, 
-									  [PT.Id ts, fieldX])),
-							    PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
+						     chk3Pfun (theName, fieldX)
 						 end
 			                         (* end accOpt SOME case *))
 				  else []
@@ -1566,7 +1561,7 @@ structure CnvExt : CNVEXT = struct
 			      val theDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
 			      val theFields = mungeFields genAccTheFull genAccTheBrief genAccTheEOR fields
 			      val theReturnS = genReturnChk (PT.Id nerr)
-			      val theBodySs = theDeclSs @ theFields @ [theReturnS]
+			      val theBodySs = theDeclSs @ auxFields @ theFields @ [theReturnS]
 			      val theFunED = gen3PFun(theFun, accPCT, theBodySs)
 			  in
 			      theFunED
@@ -1578,6 +1573,10 @@ structure CnvExt : CNVEXT = struct
                       (* -- generate accumulator function *)
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* ,) *)
 		      val addFun = (addSuf o accSuf) name
+		      val addDeclSs = [P.varDeclS(P.int, nerr, P.zero),  P.varDeclS'(PL.base_edPCT, ted)]
+		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), 
+						 P.arrowX(PT.Id ed, PT.Id errCode))]
+
 		      fun genAccAddFull {pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool, 
 					 pred:pcexp option, comment} = 
@@ -1585,7 +1584,7 @@ structure CnvExt : CNVEXT = struct
 			  case lookupAcc(pty) of NONE => []
 			      | SOME a => (
 				 let val addName = addSuf a
-				     fun gfieldX base = P.addrX(P.arrowX(PT.Id base, PT.Id name))
+				     fun gfieldX base = getFieldX(base,name)
 				 in
 				    [PT.IfThen(
 				      P.eqX(PL.PDC_ERROR, 
@@ -1597,15 +1596,23 @@ structure CnvExt : CNVEXT = struct
 			  else []
                       fun genAccAddBrief e = []
                       fun genAccAddEOR () = []
-		      val addDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
+
+		      val addNErrSs = chkAddFun(addSuf PL.intAct, getFieldX(acc,nerr), 
+						P.addrX(PT.Id ted), 
+						PT.Cast(P.ptrPCT PL.intPCT, getFieldX(ed,nerr)))
+
 		      val addFields = mungeFields genAccAddFull genAccAddBrief genAccAddEOR fields
 		      val addReturnS = genReturnChk (PT.Id nerr)
-                      val addBodySs = addDeclSs @ addFields @ [addReturnS]
+                      val addBodySs = addDeclSs @ initTedSs @ addNErrSs @ addFields @ [addReturnS]
                       val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
 
                       (* -- generate report function pstruct *)
                       (*  PDC_error_t T_acc_report (PDC_t* , T_acc* , const char* prefix , ) *)
 		      val reportFun = (reportSuf o accSuf) name
+
+		      val reportNerrSs = [chkPrint(
+ 				         callIntPrint((iSuf o reportSuf) PL.intAct, PT.String "Errors", 
+							 PT.String "errors", P.intX ~1, getFieldX(acc,nerr))) ]
 		      val headerSs = [PL.sfprintf(PT.Id outstr, 
 						  PT.String "\n[Describing each field of %s]\n", 
 						  [PT.Id prefix])]
@@ -1615,7 +1622,7 @@ structure CnvExt : CNVEXT = struct
 			  case lookupAcc(pty) of NONE => []
 			      | SOME a => (
 				 let val reportName = reportSuf a
-				     fun gfieldX base = P.addrX(P.arrowX(PT.Id base, PT.Id name))
+				     fun gfieldX base = getFieldX(base,name)
 				 in
 				     genPrintPiece(iSuf reportName, name, P.zero, gfieldX acc,[])
 				 end
@@ -1624,7 +1631,8 @@ structure CnvExt : CNVEXT = struct
                       fun genAccReportBrief e = []
                       fun genAccReportEOR () = []
 		      val reportFields = mungeFields genAccReportFull genAccReportBrief genAccReportEOR fields
-                      val reportFunEDs = genReportFuns(reportFun, "struct "^name, accPCT, headerSs @ reportFields)
+                      val reportFunEDs = genReportFuns(reportFun, "struct "^name, accPCT, 
+						       (* reportNerrSs @ *)headerSs @ reportFields)
 
                       (* Generate Init Function struct case *)
 		      val initFunName = lookupMemFun (PX.Name name)
@@ -1920,7 +1928,6 @@ structure CnvExt : CNVEXT = struct
 						 P.condX(P.eqX(P.arrowX(PT.Id ed, PT.Id errCode),
 							       PL.PDC_UNION_MATCH_FAILURE),
 							 PL.PDC_UNION_MATCH_FAILURE, PL.PDC_OK))]
-		      fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
 		      val addTagSs = chkAddFun(addSuf PL.intAct, getFieldX(acc,tag), P.addrX(PT.Id ted), 
 						  PT.Cast(P.ptrPCT PL.intPCT, getFieldX(rep,tag)))
 		      fun fieldAddrX (base,name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
@@ -1948,10 +1955,9 @@ structure CnvExt : CNVEXT = struct
                       (*  PDC_error_t T_acc_report (PDC_t* , [Sfio_t * outstr], const char* prefix, 
 		                                    const char * what, int nst, T_acc*  ) *)
 		      val reportFun = (reportSuf o accSuf) name
-		      fun gfieldX (base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
                       val reportTags = [chkPrint(callEnumPrint((iSuf o mapSuf o reportSuf) PL.intAct,
 						    PT.String "Union tag", PT.String "tag", P.intX ~1,
-						    PT.Id ((toStringSuf o tgSuf) name), gfieldX(acc,tag))),
+						    PT.Id ((toStringSuf o tgSuf) name), getFieldX(acc,tag))),
 					PL.sfprintf(PT.Id outstr, 
 						    PT.String "\n[Describing each tag arm of %s]\n", 
 						    [PT.Id prefix])]
@@ -1961,7 +1967,7 @@ structure CnvExt : CNVEXT = struct
 			      | SOME a => (
 				 let val reportName = reportSuf a
 				 in
-				    genPrintPiece(iSuf reportName, name, P.zero, gfieldX(acc,name),[])
+				    genPrintPiece(iSuf reportName, name, P.zero, getFieldX(acc,name),[])
 				 end
                               (* end accOpt SOME case *))
                       fun genAccReportBrief e = []
