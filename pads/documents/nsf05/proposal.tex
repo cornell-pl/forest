@@ -206,7 +206,7 @@ compiler.  Our formal analysis may find bugs or flaws in the
 \end{enumerate}
 
 \noindent
-In addition, part of our mission will be to used \pads{} to provide
+In addition, part of our mission will be to use \pads{} to provide
 data processing tools for researchers in the natural sciences including
 biology, chemistry and physics.  We have already developed a partnership with
 Olga Troyanskaya in Princeton's Lewis-Sigler Institute for Integrative Genomics
@@ -410,7 +410,7 @@ the description.
 \kw{Pstruct}s describe fixed sequences of data with unrelated types.
 In the \dibbler{} description, the type declaration for
 \cd{no_ramp_t} illustrates a simple \kw{Pstruct}. It starts with a 
-a string literal that matches the characters \cd{no_li}.  Immediately after
+a string literal that matches the characters \cd{no_ii}.  Immediately after
 comes a single field named \cd{id}, which describes a 64-bit unsigned integer.
 The type \cd{order_header_t} is a more complicated \kw{Pstruct} which involves
 a series of fields including some integers, some optional fields (marked \kw{Popt}), some 
@@ -419,7 +419,7 @@ Each field is separated by a \cd{|} character in the data source.
 
 
 \kw{Punion}s describe variation in the data source.  For example, the
-\cd{dib_ramp_t} type in the CLF description indicates the possibility that
+\cd{dib_ramp_t} type in the sirius description indicates the possibility that
 the data may either be a 64-bit integer (\cd{ramp}) or a
 \cd{no_ramp_t}, which was discussed above.  During parsing, 
 the branches of a \kw{Punion} are tried in order; the first branch that 
@@ -510,8 +510,8 @@ and results in low-performance software.  We propose to redesign
 the automatic tool generation process using a principled methodology
 based upon a novel \pads{}-attribute system that can communicate
 semantic information across tools.  Third, there is no formal
-basis for the pads description language and compiler.  We propose to
-formalize the language and prove the critical \pads{} correctness
+basis for the \pads{} description language and compiler.  We propose to
+formalize the language and prove critical \pads{} correctness
 properties.  Overall, our research combines novel language
 design, high-performance systems engineering and theoretical analysis,
 all aimed at solving crucial data processing problems.
@@ -548,8 +548,8 @@ Finally, some data formats~\cite{korn+:delta,korn+:data-format} are not
 uniformly encrypted or compressed.
 The data may contain subsections that are encrypted and more troublesome,
 the encryption or compression algorithms may be data-dependent so
-disentangling the compression and encryption stages is cumbersome
-at best and impossible at worst.
+disentangling the compression and encryption stages 
+involves just the sort of parsing that \pads{} was built for.
 
 We plan to facilitate multi-stage data processing directly in PADS.  As a
 first step, we will add staging directives with the form 
@@ -587,7 +587,7 @@ have the appropriate {\em contractiveness} property so that we can
 generate well-formed internal data structures to represent the result of
 a parse.  Second,
 we need to transform the current ``descent'' parser into
-a ``recursive discent'' parser.  Third, the PADS parser is 
+a ``recursive descent'' parser.  Third, the PADS parser is 
 parameterized by user-supplied {\em masks} that tell the parser
 to turn off or on certain semantic checks.  We believe that
 masks for recursive data must themselves be recursive or cyclic
@@ -715,7 +715,7 @@ performance penalties because there is no automatic way to communicate
 semantic information from the data source to the tool.  The query
 engine tool, in particular, could benefit tremendously from semantic
 information such as the property that a given field acts as a {\em
-key} for a certain record (\ie each record of this type in the data
+key} for a certain record (\ie\  each record of this type in the data
 source has a unique key field) or the property that an array of
 records is {\em sorted}.
 
