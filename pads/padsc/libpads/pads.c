@@ -26,138 +26,6 @@
 /* ================================================================================ */
 /* MACROS USED BY READ FUNCTIONS */
 
-#define PDCI_IO_GETPOS(pads, pos)
-do {
-  PDCI_stkElt_t    *tp        = &((pads)->stack[(pads)->top]);
-  Pio_elt_t        *elt       = tp->elt;
-
-  (pos).num = elt->num;
-  if (elt->len) {
-    size_t pos_offset = elt->len - tp->remain;
-    (pos).byte        = pos_offset + 1;
-    (pos).offset      = elt->offset + pos_offset;
-  } else {
-    (pos).byte        = 0;
-    (pos).offset      = elt->offset;
-  }
-} while (0)
-/* END_MACRO */ 
-
-/* k must be > 0 */
-#define PDCI_IO_GETPOS_PLUS(pads, pos, k)
-do {
-  PDCI_stkElt_t   *tp        = &(pads->stack[pads->top]);
-  Pio_elt_t       *elt       = tp->elt;
-  size_t           remain    = tp->remain;
-  size_t           offset    = k;
-  /* invariant: remain should be in range [1, elt->len] */
-  if (remain > offset) {
-    remain -= offset;
-  } else {
-    while (1) {
-      offset -= remain;
-      elt = elt->next;
-      if (elt == pads->head) break;
-      remain = elt->len;
-      /* now at first byte of next elt */
-      if (remain > offset) {
-	remain -= offset;
-	break;
-      }
-    }
-  }
-  /* either we hit pads->head or we got to the proper spot */
-  if (elt == pads->head) {
-    (pos).num         =  0;
-    (pos).byte        =  0;
-    (pos).offset      = -1;
-    P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_PLUS called with bad offset");
-  } else {
-    size_t pos_offset = elt->len - remain;
-    (pos).num         = elt->num;
-    (pos).byte        = pos_offset + 1;
-    (pos).offset      = elt->offset + pos_offset;
-  }
-} while (0)
-/* END_MACRO */ 
-
-/* k must be > 0 */
-#define PDCI_IO_GETPOS_MINUS(pads, pos, k)
-do {
-  PDCI_stkElt_t    *tp        = &(pads->stack[pads->top]);
-  Pio_elt_t        *elt       = tp->elt;
-  size_t            remain    = tp->remain;
-  size_t            offset    = k;
-  size_t            avail;
-  /* invariant: remain should be in range [1, elt->len] */
-  avail = elt->len - remain;
-  if (avail >= offset) {
-    remain += offset;
-  } else {
-    while (1) {
-      offset -= avail; /* note offset still > 0 */
-      elt = elt->prev;
-      if (elt == pads->head) break;
-      if (!elt->len) { avail = 0; continue; }
-      remain = 1;
-      offset--;
-      avail = elt->len - 1;
-      /* now at last byte of prev elt */
-      if (avail >= offset) {
-	remain += offset;
-	break;
-      }
-    }
-  }
-  /* either we hit pads->head or we got to the proper spot */
-  if (elt == pads->head) {
-    (pos).num         =  0;
-    (pos).byte        =  0;
-    (pos).offset      = -1;
-    P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_MINUS called with bad offset");
-  } else {
-    size_t pos_offset = elt->len - remain;
-    (pos).num         = elt->num;
-    (pos).byte        = pos_offset + 1;
-    (pos).offset      = elt->offset + pos_offset;
-  }
-} while (0)
-/* END_MACRO */ 
-
-#define PDCI_IO_BEGINLOC(pads, loc) PDCI_IO_GETPOS(pads, (loc).b)
-
-#define PDCI_IO_ENDLOC_SPAN0(pads, loc)
-do {
-  (loc).e = (loc).b;
-  if ((loc).e.byte) {
-    ((loc).e.byte)--;
-    if ((loc).e.offset > 0) {
-      ((loc).e.offset)--;
-    }
-  }
-} while (0)
-/* END_MACRO */ 
-
-#define PDCI_IO_ENDLOC_SPAN1(pads, loc)
-do {
-  (loc).e = (loc).b;
-} while (0)
-/* END_MACRO */ 
-
-#define PDCI_IO_GETLOC_SPAN0(pads, loc)
-do {
-  PDCI_IO_BEGINLOC(pads, loc);
-  PDCI_IO_ENDLOC_SPAN0(pads, loc);
-} while (0)
-/* END_MACRO */ 
-
-#define PDCI_IO_GETLOC_SPAN1(pads, loc)
-do {
-  PDCI_IO_BEGINLOC(pads, loc);
-  PDCI_IO_ENDLOC_SPAN1(pads, loc);
-} while (0)
-/* END_MACRO */ 
-
 #define PDCI_READFN_PD_INIT(pads, pd)
 do {
   Pbase_pd_init(pd);
@@ -4886,7 +4754,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.124 2003-11-12 22:07:45 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.125 2003-11-12 23:13:47 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
