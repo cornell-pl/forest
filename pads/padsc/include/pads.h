@@ -1488,6 +1488,7 @@ Perror_t Pre_scan2         (P_t *pads, Pregexp_t *f, Pregexp_t *s,
  * DEFAULT                        ASCII                          EBCDIC
  * -----------------------------  -----------------------------  -----------------------------
  * Pre_match                      Pa_re_match                    Pe_re_match
+ * Pcstr_re_match                 Pa_cstr_re_match               Pe_cstr_re_match
  *
  * XXX_TODOC
  */
@@ -1500,6 +1501,7 @@ Perror_t Pa_char_lit_match (P_t *pads, Pchar f,          int eat_f);
 Perror_t Pa_str_lit_match  (P_t *pads, const Pstring *f, int eat_f);
 Perror_t Pa_cstr_lit_match (P_t *pads, const char *f,    int eat_f);
 Perror_t Pa_re_match       (P_t *pads, Pregexp_t *f,     int eat_f);
+Perror_t Pa_cstr_re_match  (P_t *pads, const char *f,    int eat_f);
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
@@ -1507,6 +1509,7 @@ Perror_t Pe_char_lit_match (P_t *pads, Pchar f,          int eat_f);
 Perror_t Pe_str_lit_match  (P_t *pads, const Pstring *f, int eat_f);
 Perror_t Pe_cstr_lit_match (P_t *pads, const char *f,    int eat_f);
 Perror_t Pe_re_match       (P_t *pads, Pregexp_t *f,     int eat_f);
+Perror_t Pe_cstr_re_match  (P_t *pads, const char *f,    int eat_f);
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
@@ -1514,6 +1517,7 @@ Perror_t Pchar_lit_match   (P_t *pads, Pchar f,          int eat_f);
 Perror_t Pstr_lit_match    (P_t *pads, const Pstring *f, int eat_f);
 Perror_t Pcstr_lit_match   (P_t *pads, const char *f,    int eat_f);
 Perror_t Pre_match         (P_t *pads, Pregexp_t *f,     int eat_f);
+Perror_t Pcstr_re_match    (P_t *pads, const char *f,    int eat_f);
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */

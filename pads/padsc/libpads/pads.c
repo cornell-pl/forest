@@ -5132,7 +5132,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.146 2004-02-20 19:33:05 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.147 2004-02-24 22:04:09 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8349,6 +8349,26 @@ PDCI_re_match(P_t *pads, Pregexp_t *f, int eat_f,
     }
   }
   return P_OK;
+}
+
+Perror_t
+PDCI_cstr_re_match(P_t *pads, const char *f, int eat_f,
+		   Pcharset char_set, const char *whatfn)
+{
+  Perror_t    res;
+  P_REGEXP_DECL_NULL(compiled_exp);
+
+  PDCI_IODISC_1P_CHECKS(whatfn, f);
+  if (P_ERR == PDCI_regexp_compile_cstr(pads, f, &compiled_exp, "Pcstr_re_match arg", whatfn)) {
+    goto bad_exp;
+  }
+  res = PDCI_re_match(pads, &compiled_exp, eat_f, char_set, whatfn);
+  PDCI_regexp_cleanup(pads, &compiled_exp, whatfn);
+  return res;
+
+ bad_exp:
+  /* regexp_compile already issued a warning */
+  return P_ERR;
 }
 
 Perror_t

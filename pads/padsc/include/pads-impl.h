@@ -150,6 +150,8 @@ Perror_t PDCI_cstr_lit_match(P_t *pads, const char *f, int eat_f, Pcharset char_
 
 Perror_t PDCI_re_match(P_t *pads, Pregexp_t *f, int eat_f, Pcharset char_set, const char *whatfn);
 
+Perror_t PDCI_cstr_re_match(P_t *pads, const char *f, int eat_f, Pcharset char_set, const char *whatfn);
+
 #endif /* P_CONFIG_READ_FUNCTIONS */
 
 /* ================================================================================ */
@@ -606,6 +608,15 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
 
 #define Pe_re_match(pads, f, eat_f) \
   PDCI_re_match(pads, f, eat_f, Pcharset_EBCDIC, "Pe_re_match")
+
+#define Pcstr_re_match(pads, f, eat_f) \
+  PDCI_cstr_re_match(pads, f, eat_f, PDCI_DEF_CHARSET(pads), "Pre_match")
+
+#define Pa_cstr_re_match(pads, f, eat_f) \
+  PDCI_cstr_re_match(pads, f, eat_f, Pcharset_ASCII, "Pa_re_match")
+
+#define Pe_cstr_re_match(pads, f, eat_f) \
+  PDCI_cstr_re_match(pads, f, eat_f, Pcharset_EBCDIC, "Pe_re_match")
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
 
