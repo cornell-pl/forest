@@ -69,6 +69,7 @@ set pfiles = ""
 set retarg = ""
 set retarg_OK = 1
 set help = 0
+set optx = 0
 
 foreach x ($*)
     switch ($x)
@@ -78,6 +79,10 @@ foreach x ($*)
     case -help:
     case --help:
       set help = 1
+    case -x:
+      set opts = "$opts $x"
+      set optx = 1
+      breaksw
     case -*:
       set opts = "$opts $x"
       breaksw
@@ -171,40 +176,47 @@ else
   set add_incs = ""
 endif
 
-if (! $?GALAX_LIB_DIR) then
-  set _galaxlib_status = FAILED
-else
-  if ("$GALAX_LIB_DIR"x == x) then
+if ($optx) then
+  if (! $?GALAX_HOME) then
     set _galaxlib_status = FAILED
+  else
+    if ("$GALAX_HOME"x == x) then
+      set _galaxlib_status = FAILED
+    endif
   endif
-endif
 
-if ($_galaxlib_status == "FAILED") then
-  set galax_lib_dir = /home/mff/Galax/lib/c
-else
-  set galax_lib_dir = $GALAX_LIB_DIR
-endif
+  if ($_galaxlib_status == "FAILED") then
+    echo "Env variable GALAX_HOME must be set to use -x option"
+    exit(-1)
+  endif
+  set galax_lib_dir = $GALAX_HOME/lib/c
+  if (-d $galax_lib_dir) then
+    set add_incs = "$add_incs -I $galax_lib_dir"
+  else
+    echo "Warning: expected directory $galax_lib_dir not found, check your GALAX_HOME env variable settting"
+    exit(-1)
+  endif
 
-if (-d $galax_lib_dir) then
-  set add_incs = "$add_incs -I $galax_lib_dir"
-endif
-
-if (! $?PADSGLX_LIB_DIR) then
-  set _padsglxlib_status = FAILED
-else
-  if ("$PADSGLX_LIB_DIR"x == x) then
+  if (! $?PADSGLX_HOME) then
     set _padsglxlib_status = FAILED
+  else
+    if ("$PADSGLX_HOME"x == x) then
+      set _padsglxlib_status = FAILED
+    endif
   endif
-endif
 
-if ($_padsglxlib_status == "FAILED") then
-  set padsglx_lib_dir = /home/mff/pads-glx/api
-else
-  set padsglx_lib_dir = $PADSGLX_LIB_DIR
-endif
+  if ($_padsglxlib_status == "FAILED") then
+    echo "Env variable PADSGLX_HOME must be set to use -x option"
+    exit(-1)
+  endif
+  set padsglx_lib_dir = $PADSGLX_HOME
 
-if (-d $padsglx_lib_dir) then
-  set add_incs = "$add_incs -I $padsglx_lib_dir"
+  if (-d $padsglx_lib_dir) then
+    set add_incs = "$add_incs -I $padsglx_lib_dir"
+  else
+    echo "Warning: expected directory $padsglx_lib_dir not found, check your PADSGLX_HOME env variable settting"
+    exit(-1)
+  endif
 endif
 
 exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-ast/arch/$_ast_arch/include/ast $add_incs \
