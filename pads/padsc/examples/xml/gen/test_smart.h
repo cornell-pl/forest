@@ -8,7 +8,9 @@
 
 #define exit_on_error(_Expr) {err = _Expr; if (err != 0) {error(0, "%s\n", galax_error_string); exit(err);}}	
 
-#define MAX_IDX 20
+
+#define MAX_ELTS 10
+
 
 #ifndef MAX_RECS
 #  define MAX_RECS 0
@@ -22,9 +24,10 @@ int main(int argc, char** argv) {
   PDCI_node_t    *smart_node;
 
   galax_err err;
-  item doc;
+  item doc,doc2;
   itemlist docitems;
 
+  Sfio_t       *io;
   Pdisc_t       mydisc; 
 
   mydisc = Pdefault_disc; 
@@ -46,10 +49,22 @@ int main(int argc, char** argv) {
     error(2, "*** P_open failed ***");
     exit(-1);
   }
+  io = P_fopen(argv[1],"r");
+  if (!io) {
+    error(2, "*** P_fopen failed ***");
+    exit(-1);
+  }
+  if (P_ERR == P_io_set(pads, io)) {
+    error(2, "*** P_io_set failed ***");
+    exit(-1);
+  }
+
+  /*
   if (P_ERR == P_io_fopen(pads, argv[1])) {
     error(2, "*** P_io_fopen failed ***");
     exit(-1);
   }
+  */
 
   /* init -- must do this! */
 
@@ -68,10 +83,18 @@ int main(int argc, char** argv) {
 
   // Create a new smart node.
   PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "doc", &m, &pd, &rep, "main");
-  PADS_TY(_seqSmartNode_init)(smart_node,MAX_IDX);
+  PADS_TY(_seqSmartNode_init)(smart_node, MAX_ELTS);
   //  PADS_TY(_dummySmartNode_init)(smart_node);
 
   err = padsDocument(argv[1], (nodeRep)smart_node, &doc);
+  exit_on_error(err); 
+
+  docitems = itemlist_cons(doc, itemlist_empty()); 
+  err = galax_serialize_to_stdout(docitems);
+  exit_on_error(err);
+
+  // create a second cursor over the data:
+  err = padsDocument(argv[1], (nodeRep)smart_node, &doc2);
   exit_on_error(err); 
 
   docitems = itemlist_cons(doc, itemlist_empty()); 

@@ -37,7 +37,7 @@ PDCI_node_t *barArray_cachedNode_kthChild (PDCI_node_t *self, PDCI_childIndex_t 
 
 PDCI_node_t *barArray_dummySmartNode_init(PDCI_node_t *self);
 
-PDCI_node_t *barArray_seqSmartNode_init(PDCI_node_t *self,PDCI_childIndex_t max_idx);
+PDCI_node_t *barArray_seqSmartNode_init(PDCI_node_t *self, unsigned int max_elts);
 
 Perror_t barArray_read_init (P_t *pads,barArray_m *m,barArray_pd *pd,barArray *rep);
 Perror_t barArray_read_all(P_t *pads,barArray_m *m,barArray_pd *pd,barArray *rep);

@@ -327,47 +327,50 @@ PDCI_node_t *barArray_cachedNode_kthChild (PDCI_node_t *self, PDCI_childIndex_t 
 PDCI_node_t *barArray_smartNode_kthChild (PDCI_node_t *self, PDCI_childIndex_t idx)
 {
   barArray_pd *pd=(barArray_pd *) (self->pd);
-  barArray_m *m=(barArray_m *) (self->m);
-  
-  //void *child_pd  = NULL;
-  //void *child_rep = NULL;
-
+  barArray_m *m=(barArray_m *) (self->m);  
   PDCI_node_t *result = 0;
   PDCI_smart_node_t *sn = self->snExt;  
-  PDCI_smart_array_info_t *info = (PDCI_smart_array_info_t *)sn->elt_state;
+  PDCI_smart_array_info_t *arrayInfo = (PDCI_smart_array_info_t *)sn->elt_state;
   
   switch(idx){
   case 0: // parse descriptor child 
     result = PDCI_sequenced_pd_node_new(self,"pd",pd,WHATFN);
     break;
   case 1: // length field. Set to number of elements seen so far.
-    result = Puint32_val_node_new(self,"length",&info->next_idx_read,WHATFN);
+    result = Puint32_val_node_new(self,"length",&arrayInfo->next_idx_read,WHATFN);
     break;
   default: // now do elements
     idx -= 2;
 
-    if (idx >= info->max_idx)
+    if (!P_PS_isPartial(pd) && idx >= arrayInfo->next_idx_read)
       break;
 
     // check whether element[idx] has been created
-    // if not, create it lazily.
-    if (idx >= info->next_idx_create){
+    // if not, create it and read in the data.
+    if (idx >= arrayInfo->next_idx_create){
       /* Grow the buffer to the needed size. */
-      if (0!=RBuf_reserve (info->_internal,(void **) (&(info->tmap)),sizeof(PDCI_smart_elt_info_t),idx+1,0)) 
+      if (0!=RBuf_reserve (arrayInfo->_internal,(void **) (&(arrayInfo->tmap)),sizeof(PDCI_smart_elt_info_t),idx+1,0)) 
 	{
 	  PDCI_report_err (self->pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,0);
 	}
 
-      info->next_idx_create = idx + 1;
+      arrayInfo->next_idx_create = idx + 1;
 
-      /* Initialize the element. */
-      PDCI_INIT_SMART_ELT(info->tmap[idx],self,idx,pd->loc.b.offset,0,
+      /* Initialize the element info. */
+      PDCI_INIT_SMART_ELT(arrayInfo->tmap[idx],self,idx,0,0,
 			  NULL,NULL,&m->element);
       
+      /* Attempt to read the element */
+      if (P_ERR == sn->elt_read(self, self->pads, &arrayInfo->tmap[idx])) { 
+	// Check whether anything was read.
+	if (!P_PS_isPartial(pd)) 
+	  return result; // array finished so nothing read; return the default node.
+	// else, go on as normal.
+      }
     }
 
-    result = bar_node_new(self,"elt",&(m->element),info->tmap[idx].pd,info->tmap[idx].rep,"element",WHATFN);
-    bar_sndNode_init(result,&info->tmap[idx],info->tmap[idx].gen, PDCI_EMPTY_PATH);
+    result = bar_node_new(self,"elt",&(m->element),arrayInfo->tmap[idx].pd,arrayInfo->tmap[idx].rep,"element",WHATFN);
+    bar_sndNode_init(result,&arrayInfo->tmap[idx],arrayInfo->tmap[idx].gen, PDCI_EMPTY_PATH);
 
     break;
   }
@@ -413,36 +416,167 @@ PDCI_vtable_t const barArray_seqSmartNode_vtable = {PDCI_error_cachedNode_init,
 #define BA_DONE 3
 
 #undef WHATFN
+#define WHATFN "barArray_seqSmartNode_chooseIdxToEvict"
+unsigned int barArray_seqSmartNode_chooseIdxToEvict(PDCI_smart_array_info_t *arrayInfo){
+  arrayInfo->next_idx_evict %= arrayInfo->max_elts;
+  return arrayInfo->next_idx_evict++;
+}
+
+#undef WHATFN
+#define WHATFN "barArray_seqSmartNode_evictIdx"
+void barArray_seqSmartNode_evictIdx(PDCI_smart_array_info_t *arrayInfo, unsigned int i){
+  PDCI_childIndex_t j = arrayInfo->invMap[i];
+  arrayInfo->tmap[j].rep = NULL;
+  arrayInfo->tmap[j].pd = NULL;
+  arrayInfo->tmap[j].gen++;
+}
+
+#undef WHATFN
+#define WHATFN "barArray_seqSmartNode_setInvIdx"
+void barArray_seqSmartNode_setInvIdx(PDCI_smart_array_info_t *arrayInfo, unsigned int i, PDCI_childIndex_t j){
+  arrayInfo->invMap[i]=j;  
+}
+
+#undef WHATFN
+#define WHATFN "barArray_seqSmartNode_getFreeIdx"
+PDCI_childIndex_t barArray_seqSmartNode_getFreeIdx(PDCI_node_t *smartNode, P_t *pads){
+  PDCI_smart_node_t *sn  = smartNode->snExt;
+  PDCI_smart_array_info_t 
+    *arrayInfo  = (PDCI_smart_array_info_t *)sn->elt_state;
+  barArray          *rep  = (barArray *)smartNode->rep;
+  barArray_pd       *pd  = (barArray_pd *)smartNode->pd;
+  PDCI_childIndex_t  physIdx = 0;
+
+  // should we allocate more memory or kick something out?
+  if (rep->length < arrayInfo->max_elts){
+    if (0!=RBuf_reserve (rep->_internal,(void **) (&(rep->elts)),sizeof(bar),rep->length+1,0)) 
+      {
+	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,0);
+      }
+    if (0!=RBuf_reserve (pd->_internal,(void **) (&(pd->elts)),sizeof(bar_pd),rep->length+1,0)) 
+      {
+	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,0);
+      }
+    if (0!=RBuf_reserve (arrayInfo->_internal_inv,(void **) (&(arrayInfo->invMap)),sizeof(PDCI_childIndex_t),rep->length+1,0)) 
+      {
+	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,0);
+      }
+    physIdx = rep->length++;
+  }else{
+    physIdx = barArray_seqSmartNode_chooseIdxToEvict(arrayInfo);
+    barArray_seqSmartNode_evictIdx(arrayInfo,physIdx);
+  }
+
+  return physIdx;
+}
+
+
+/* XXX TEMP XXX */
+Sfio_t *P_io_get(P_t *pads)
+{
+  return pads->io;
+}
+
+Perror_t P_io_seek(P_t *pads, Sfoff_t offset){
+  Sfio_t *io = P_io_get(pads);
+  P_io_close(pads);
+  if (-1 == sfseek(io, offset, 0)) {
+    return P_ERR;
+  }
+  return P_io_set(pads, io);
+}
+
+#undef WHATFN
 #define WHATFN "barArray_seqSmartNode_eltRead"
 /* Currently, only reads sequentially */
 Perror_t barArray_seqSmartNode_eltRead(PDCI_node_t *smartNode, P_t *pads, PDCI_smart_elt_info_t *info){
-  PDCI_IODISC_2P_CHECKS ("barArray_smartNode_eltRead",smartNode,info);
+  PDCI_IODISC_2P_CHECKS (WHATFN,smartNode,info);
   {
     PDCI_smart_node_t *sn  = smartNode->snExt;
     PDCI_smart_array_info_t 
-      *sa  = (PDCI_smart_array_info_t *)sn->elt_state;
+      *arrayInfo  = (PDCI_smart_array_info_t *)sn->elt_state;
     barArray          *rep  = (barArray *)smartNode->rep;
     barArray_pd       *pd  = (barArray_pd *)smartNode->pd;
     barArray_m        *m   = (barArray_m *)smartNode->m;
-    PDCI_childIndex_t  idx = info->idx;
+    PDCI_childIndex_t  virtIdx = info->idx;
+    PDCI_childIndex_t  physIdx = 0;
     Puint32 nerr = pd->nerr;		/* Number of array errors before read */
     int result;
     
-    // Only allow reading of next element.
-    if (idx != sa->next_idx_read){
+    // are we trying to read ahead?
+    if (virtIdx > arrayInfo->next_idx_read){
       return P_ERR;
     }
+
+    physIdx = barArray_seqSmartNode_getFreeIdx(smartNode,pads);
+    barArray_seqSmartNode_setInvIdx(arrayInfo,physIdx,info->idx);
     
-    if (0!=RBuf_reserve (rep->_internal,(void **) (&(rep->elts)),sizeof(bar),idx+1,0)) 
-      {
-	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,0);
+    // are we trying to read an earlier element?
+    if (virtIdx < arrayInfo->next_idx_read){
+      Sfoff_t cur_offset;
+      PDCI_IO_GETOFFSET(pads,cur_offset);
+
+      // should we seek?
+      if (cur_offset != info->offset){
+	
+	// seek to info->offset.
+	if (P_io_seek(pads,info->offset) == P_ERR){
+	  error(ERROR_FATAL, "*** failure in " WHATFN ": seek failed ***");  
+	}
+
       }
-    if (0!=RBuf_reserve (pd->_internal,(void **) (&(pd->elts)),sizeof(bar_pd),idx+1,0)) 
-      {
-	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,WHATFN,0);
-      }
+      // read the rep,pd
+      bar_read (pads,&(m->element),&pd->elts[physIdx],&(rep->elts)[physIdx]);
+
+      // we don't process a result because this element has been
+      // read/processed already.
+
+      // reset the element info
+      info->rep = &rep->elts[physIdx];
+      info->pd = &pd->elts[physIdx];
     
-    result = barArray_read_one(pads,m,pd,rep,idx);	  
+      // did we seek?
+      if (cur_offset != info->offset){
+	// are we still reading the array?
+	if (P_PS_isPartial(pd)){
+
+	  // INV: if the current offset >= nextOffset then the current
+	  // offset is the farthest point in the stream that we've
+	  // read (the head of the stream).  Otherwise nextOffset is
+	  // the head of the stream.  
+
+	  // Therefore, if we're at the head of the stream and we're
+	  // seeking backwards, then we must save the offset of the
+	  // head in nextOffset.
+
+	  // are we at the head of the stream?
+	  if (cur_offset > arrayInfo -> next_offset){
+	    arrayInfo->next_offset = cur_offset;
+	  }
+	}else{
+	  // We are no longer reading the array. Therefore, we must
+	  // return the io stream to its former position so that other
+	  // pads read calls can proceed as normal.
+
+	  // seek to previous offset.
+	  if (P_io_seek(pads,cur_offset) == P_ERR){
+	    error(ERROR_FATAL, "*** failure in " WHATFN ": seek failed ***");  
+	  }
+	}
+      }
+
+      return result;
+    }
+
+    // are we about to read for the first time?
+    if (arrayInfo->next_idx_read == 0){
+      if (barArray_read_start(pads,pd) != P_OK){
+	return P_ERR;
+      } 
+      arrayInfo->first_offset = pd->loc.b.offset;
+    }
+    
+    result = barArray_read_one(pads,m,pd,rep,physIdx);	  
     (pd->numRead)++;
 
     /*
@@ -451,44 +585,24 @@ Perror_t barArray_seqSmartNode_eltRead(PDCI_node_t *smartNode, P_t *pads, PDCI_s
     */
 
     if (result == BA_FAIL){
-      // Mark this idx as the first invalid idx,
-      // to prevent reading past the previous element.
-      sa->max_idx = idx; 
+      // we're done reading the array:
+      P_PS_unsetPartial(pd);
+
+      return P_ERR;
     }
 
-    sa->next_idx_read++;
-    rep->length++;
-
-    info->offset = pd->elts[idx].loc.b.offset;
-    info->rep = &rep->elts[idx];
-    info->pd = &pd->elts[idx];
+    arrayInfo->next_idx_read++;
+    
+    info->offset = pd->elts[physIdx].loc.b.offset;
+    info->rep = &rep->elts[physIdx];
+    info->pd = &pd->elts[physIdx];
 
     if (result == BA_DONE){
-      // Mark the next idx as the first invalid idx,
-      // to prevent reading past this element.
-      sa->max_idx = idx+1; 
+      // we're done reading the array:
+      P_PS_unsetPartial(pd);
     }
     
     return (pd->nerr == nerr) ? P_OK : P_ERR;
-
-    /* 
-    sa->tmap[idx].rep = &rep->elts[idx];
-    sa->tmap[idx].pd  = &pd->elts[idx];
-    sa->tmap[idx].m  =  &m->element;
-    
-    return P_OK;
-
-    // Check whether this is the first read.
-    if (sa->next_idx_read == 0){
-      barArray_pd       *pd  = (barArray_pd *)smartNode->pd;
-      barArray_m        *m   = (barArray_m *) smartNode->m;
-      int result = barArray_smartRead_init(pads,pd);
-      int result = barArray_read_start(pads,pd);
-      if (result == P_ERR)
-	max_idx = 0;
-      }
-    */
-      
   }  
 }
 
@@ -530,9 +644,9 @@ void barArray_dummySmartNode_handleFailure(P_t *pads, PDCI_smart_node_t *node,
 }
 
 /* Sequential version of smartNode_init */
-PDCI_node_t *barArray_seqSmartNode_init(PDCI_node_t *self, PDCI_childIndex_t max_idx)
+PDCI_node_t *barArray_seqSmartNode_init(PDCI_node_t *self,  unsigned int max_elts)
 {
-  PDCI_smart_array_info_t   *info;
+  PDCI_smart_array_info_t   *arrayInfo;
   //PDCI_smart_elt_info_t     *tmap;
   // PDCI_childIndex_t  idx;
 
@@ -546,28 +660,36 @@ PDCI_node_t *barArray_seqSmartNode_init(PDCI_node_t *self, PDCI_childIndex_t max
 
   // Initialize the rep and pd rbufs
   barArray_read_init(pads, m, pd, rep);
-  if (barArray_read_start(pads,pd) != P_OK){
-    error(0, "barArray_read_start failed");    
-    return (PDCI_node_t *) NULL;
-  } 
 
-  info = (PDCI_smart_array_info_t *)calloc(1,sizeof(PDCI_smart_array_info_t));
-  info->_internal = RMM_new_rbuf (P_rmm_nozero (pads));
-  if (0==(info->_internal)) 
+  // Initialize the array info.
+  arrayInfo = (PDCI_smart_array_info_t *)calloc(1,sizeof(PDCI_smart_array_info_t));
+  arrayInfo->_internal = RMM_new_rbuf (P_rmm_nozero (pads));
+  if (0==(arrayInfo->_internal)) 
     {
       PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,"barArray_seqSmartNode_init","");
     }
-  // Ignore offset related fields for now.
-  info->next_idx_read = 0;
-  info->next_idx_create = 0;
-  info->max_idx = max_idx;
+  arrayInfo->_internal_inv = RMM_new_rbuf (P_rmm_nozero (pads));
+  if (0==(arrayInfo->_internal_inv)) 
+    {
+      PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,"barArray_seqSmartNode_init","");
+    }
+  arrayInfo->max_elts = max_elts;
+
+  arrayInfo->first_offset = 0;
+  arrayInfo->next_offset = 0;
+
+  arrayInfo->next_idx_read = 0;
+  arrayInfo->next_idx_create = 0;
+  arrayInfo->next_idx_evict = 0;
+  P_PS_setPartial(pd);
+  //arrayInfo->max_idx = max_idx;
 
   PDCI_MK_SMART_NODE(self->snExt,pads,
 		     barArray_seqSmartNode_eltRead,
 		     barArray_dummySmartNode_eltFree,
 		     barArray_dummySmartNode_eltPathWalk,
 		     barArray_dummySmartNode_handleFailure,
-		     info,"barArray_seqSmartNode_init");    
+		     arrayInfo,"barArray_seqSmartNode_init");    
   return self;
 }
 
@@ -602,7 +724,7 @@ PDCI_node_t *barArray_dummySmartNode_init(PDCI_node_t *self)
   // Ignore all fields but next_idx*.
   info->next_idx_read = rep->length;
   info->next_idx_create = rep->length;
-  info->max_idx = rep->length - 1;
+  //  info->max_idx = rep->length - 1;
 
   for(idx = 0; idx < rep->length; idx++){
     PDCI_INIT_SMART_ELT(info->tmap[idx],self,idx,pd->elts[idx].loc.b.offset,0,
@@ -665,12 +787,12 @@ Perror_t barArray_read_init (P_t *pads,barArray_m *m,barArray_pd *pd,barArray *r
   PDCI_IODISC_3P_CHECKS ("barArray_read",m,pd,rep);
   PD_COMMON_INIT_NO_ERR (pd);
   {
-    Ploc_t tloc;
+    // Ploc_t tloc; NEVER USED?
     rep->length = 0;
     pd->neerr = 0;
     pd->firstError = 0;
     pd->numRead = 0;
-    P_io_getLocB (pads,&tloc,0);
+    // P_io_getLocB (pads,&tloc,0);
     if (0==(rep->_internal)) 
       {
         rep->_internal = RMM_new_rbuf (P_rmm_nozero (pads));
@@ -698,7 +820,6 @@ Perror_t barArray_read_start(P_t *pads,barArray_pd *pd)
 
   if ((!P_PS_isPanic (pd))&&(!P_io_at_eof (pads))) 
     {
-      // WHY?
       P_io_getLocB (pads,&(pd->loc),0);
       return P_OK;
     }
@@ -743,6 +864,9 @@ int barArray_read_one(P_t *pads,barArray_m *m,barArray_pd *pd,barArray *rep, PDC
 	    }
 	}
     }
+
+  // Record current position.
+  P_io_getLocB (pads,&afterLoc,0);
 
   if (P_POS_EQ (beforeLoc.b,afterLoc.b)) 
     {
