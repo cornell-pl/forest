@@ -3532,6 +3532,8 @@ const char* P_RE_STRING_FROM_STR(P_t *pads, Pstring *str_expr);
 void P_REGEXP_FROM_CHAR(P_t *pads, Pregexp_t my_regexp, Pchar char_expr);
 void P_REGEXP_FROM_CSTR(P_t *pads, Pregexp_t my_regexp, const char *str_expr);
 void P_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr);
+
+void P_REGEXP_DECL_NULL(Pregexp_t);
 #endif
 
 /* ================================================================================

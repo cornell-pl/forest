@@ -288,6 +288,9 @@ ssize_t PDCI_date_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
  * P_REGEXP macros
  */
 
+#define P_REGEXP_DECL_NULL(my_regexp) \
+  Pregexp_t my_regexp = { 0 }
+
 #define P_RE_STRING_FROM_CHAR(pads, char_expr) \
   ( sfstrset((pads)->tmp2, 0), \
     sfprintf((pads)->tmp2, "/[%c]/", (char_expr)), \

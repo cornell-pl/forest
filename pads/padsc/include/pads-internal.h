@@ -39,14 +39,6 @@
 #endif
 
 /* ----------------------
- * P_REGEXP_DECL macros
- * ----------------------
- */
-
-#define P_REGEXP_DECL_NULL(my_regexp) \
-  Pregexp_t my_regexp = { 0 }
-
-/* ----------------------
  * P_STRING_DECL macros
  * ----------------------
  * (note final args 0, 1 ==> initial null rbuf ptr, sharing set)
