@@ -314,7 +314,8 @@ typedef enum PDC_errCode_t_e {
   PDC_INVALID_EBC_NUM               =  182,
   PDC_INVALID_BCD_NUM               =  183,
 
-  PDC_INVALID_CHARSET             =  190,
+  PDC_INVALID_CHARSET               =  190,
+  PDC_INVALID_WIDTH                 =  191,
 
   PDC_CHAR_LIT_NOT_FOUND            =  200,
   PDC_STR_LIT_NOT_FOUND             =  210,
@@ -323,6 +324,71 @@ typedef enum PDC_errCode_t_e {
   PDC_WIDTH_NOT_AVAILABLE           =  240,
   PDC_INVALID_DATE                  =  250
 } PDC_errCode_t;
+
+/*
+ * Other useful constants
+ */
+
+#define PDC_MIN_INT8                         -128
+#define PDC_MAX_INT8                          127
+#define PDC_MAX_UINT8                         255U
+
+#define PDC_MIN_INT16                      -32768
+#define PDC_MAX_INT16                       32767
+#define PDC_MAX_UINT16                      65535U
+
+#define PDC_MIN_INT24                    -8388608
+#define PDC_MAX_INT24                     8388607
+#define PDC_MAX_UINT24                   16777215U
+
+#define PDC_MIN_INT32                 -2147483647L   /* should end in 8 but gcc does not like that */
+#define PDC_MAX_INT32                  2147483647L
+#define PDC_MAX_UINT32                 4294967295UL
+
+#define PDC_MIN_INT40               -549755813888LL
+#define PDC_MAX_INT40                549755813887LL
+#define PDC_MAX_UINT40              1099511627775ULL
+
+#define PDC_MIN_INT48            -140737488355328LL
+#define PDC_MAX_INT48             140737488355327LL
+#define PDC_MAX_UINT48            281474976710655ULL
+
+#define PDC_MIN_INT56          -36028797018963968LL
+#define PDC_MAX_INT56           36028797018963967LL
+#define PDC_MAX_UINT56          72057594037927935ULL
+
+#define PDC_MIN_INT64        -9223372036854775807LL  /* should end in 8 but gcc does not like that */
+#define PDC_MAX_INT64         9223372036854775807LL
+#define PDC_MAX_UINT64       18446744073709551615ULL
+
+/* USEFUL ASCII AND EBCDIC CHAR CONSTANTS */
+
+#define PDC_ASCII_NEWLINE '\n'
+#define PDC_EBCDIC_NEWLINE 0x25
+/* N.B. EBCDIC 0x15 is used on some systems for LF, 0x25 on others */
+
+#define PDC_ASCII_SPACE ' '
+#define PDC_EBCDIC_SPACE 0x40
+
+#define PDC_ASCII_PLUS '+'
+#define PDC_EBCDIC_PLUS 0x4e
+
+#define PDC_ASCII_MINUS '-'
+#define PDC_EBCDIC_MINUS 0x60
+
+/* DEFAULT 'invalid value' VALUES */
+
+#define PDC_CHAR_DEF_INV_VAL     PDC_MAX_UINT8
+
+#define PDC_INT8_DEF_INV_VAL     PDC_MIN_INT8
+#define PDC_UINT8_DEF_INV_VAL    PDC_MAX_UINT8
+#define PDC_INT16_DEF_INV_VAL    PDC_MIN_INT16
+#define PDC_UINT16_DEF_INV_VAL   PDC_MAX_UINT16
+#define PDC_INT32_DEF_INV_VAL    PDC_MIN_INT32
+#define PDC_UINT32_DEF_INV_VAL   PDC_MAX_UINT32
+#define PDC_INT64_DEF_INV_VAL    PDC_MIN_INT64
+#define PDC_UINT64_DEF_INV_VAL   PDC_MAX_UINT64
+
 
 /* ================================================================================
  * INTERFACE LIBRARY TYPES: FORWARD DECLS
@@ -357,7 +423,7 @@ typedef struct PDC_base_ed_s       PDC_base_ed;
 typedef enum   PDC_base_csm_e      PDC_base_csm;
 typedef enum   PDC_errorRep_e      PDC_errorRep;
 typedef enum   PDC_endian_e        PDC_endian;
-typedef enum   PDC_charset_e     PDC_charset;
+typedef enum   PDC_charset_e       PDC_charset;
 
 typedef struct PDC_IO_elt_s        PDC_IO_elt_t;
 typedef struct PDC_IO_disc_s       PDC_IO_disc_t;
@@ -477,57 +543,6 @@ int PDC_string_eq_Cstr(const PDC_string *str, const char *Cstr);
 PDC_error_t PDC_string_ed_init(PDC_t *pdc, PDC_base_ed *ed);
 PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_base_ed *ed);
 PDC_error_t PDC_string_ed_copy(PDC_t *pdc, PDC_base_ed *targ, const PDC_base_ed *src);
-
-/* ================================================================================
- * USEFUL CONSTANTS
- */
-
-#define PDC_MIN_INT8                         -128
-#define PDC_MAX_INT8                          127
-#define PDC_MAX_UINT8                         255U
-
-#define PDC_MIN_INT16                      -32768
-#define PDC_MAX_INT16                       32767
-#define PDC_MAX_UINT16                      65535U
-
-#define PDC_MIN_INT24                    -8388608
-#define PDC_MAX_INT24                     8388607
-#define PDC_MAX_UINT24                   16777215U
-
-#define PDC_MIN_INT32                 -2147483647L   /* should end in 8 but gcc does not like that */
-#define PDC_MAX_INT32                  2147483647L
-#define PDC_MAX_UINT32                 4294967295UL
-
-#define PDC_MIN_INT40               -549755813888LL
-#define PDC_MAX_INT40                549755813887LL
-#define PDC_MAX_UINT40              1099511627775ULL
-
-#define PDC_MIN_INT48            -140737488355328LL
-#define PDC_MAX_INT48             140737488355327LL
-#define PDC_MAX_UINT48            281474976710655ULL
-
-#define PDC_MIN_INT56          -36028797018963968LL
-#define PDC_MAX_INT56           36028797018963967LL
-#define PDC_MAX_UINT56          72057594037927935ULL
-
-#define PDC_MIN_INT64        -9223372036854775807LL  /* should end in 8 but gcc does not like that */
-#define PDC_MAX_INT64         9223372036854775807LL
-#define PDC_MAX_UINT64       18446744073709551615ULL
-
-/* USEFUL ASCII AND EBCDIC CHAR CONSTANTS */
-
-#define PDC_ASCII_NEWLINE '\n'
-#define PDC_EBCDIC_NEWLINE 0x25
-/* N.B. EBCDIC 0x15 is used on some systems for LF, 0x25 on others */
-
-#define PDC_ASCII_SPACE ' '
-#define PDC_EBCDIC_SPACE 0x40
-
-#define PDC_ASCII_PLUS '+'
-#define PDC_EBCDIC_PLUS 0x4e
-
-#define PDC_ASCII_MINUS '-'
-#define PDC_EBCDIC_MINUS 0x60
 
 /* ================================================================================
  * DISC FUNCTION FOR ERROR REPORTING
@@ -933,12 +948,12 @@ ssize_t      PDC_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_l
  */
 
 #ifdef FOR_CKIT
-PDC_error_t PDC_char_lit_scan  (PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-			        PDC_byte *c_out, size_t *offset_out);
-PDC_error_t PDC_a_char_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-				PDC_byte *c_out, size_t *offset_out);
-PDC_error_t PDC_e_char_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-				PDC_byte *c_out, size_t *offset_out);
+PDC_error_t PDC_char_lit_scan  (PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+			        PDC_char *c_out, size_t *offset_out);
+PDC_error_t PDC_a_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+				PDC_char *c_out, size_t *offset_out);
+PDC_error_t PDC_e_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+				PDC_char *c_out, size_t *offset_out);
 
 PDC_error_t PDC_str_lit_scan   (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
 			        PDC_string **str_out, size_t *offset_out);
@@ -986,11 +1001,11 @@ PDC_error_t PDC_e_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *sto
 
 #ifdef FOR_CKIT
 PDC_error_t PDC_char_lit_read  (PDC_t *pdc, const PDC_base_csm *csm,
-			        PDC_base_ed *ed, PDC_byte c);
+			        PDC_base_ed *ed, PDC_char c);
 PDC_error_t PDC_a_char_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
-				PDC_base_ed *ed, PDC_byte c);
+				PDC_base_ed *ed, PDC_char c);
 PDC_error_t PDC_e_char_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
-				PDC_base_ed *ed, PDC_byte c);
+				PDC_base_ed *ed, PDC_char c);
 
 PDC_error_t PDC_str_lit_read   (PDC_t *pdc, const PDC_base_csm *csm,
 			        PDC_base_ed *ed, const PDC_string *s);
@@ -1173,11 +1188,11 @@ PDC_error_t PDC_a_string_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t wi
 PDC_error_t PDC_e_string_FW_read (PDC_t *pdc, const PDC_base_csm *csm, size_t width,
 				  PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_string_read      (PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_string_read      (PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 			          PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_a_string_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 			          PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_e_string_read    (PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 			          PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_string_ME_read   (PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
@@ -1235,11 +1250,11 @@ PDC_error_t PDC_e_string_CSE_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regex
  *   + returns PDC_ERR */
 
 #ifdef FOR_CKIT
-PDC_error_t PDC_date_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_date_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 			    PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_a_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_a_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 			    PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_e_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_e_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 			    PDC_base_ed *ed, PDC_uint32 *res_out);
 #endif /* FOR_CKIT */
 
@@ -1853,35 +1868,134 @@ PDC_error_t PDC_sbh_ufpoint64_read  (PDC_t *pdc, const PDC_base_csm *csm, PDC_ui
  */
 
 #ifdef FOR_CKIT
-ssize_t PDC_a_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_byte c);
+ssize_t PDC_a_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_char c);
 ssize_t PDC_a_str_lit_write2io (PDC_t *pdc, Sfio_t *io, const PDC_string *s);
 ssize_t PDC_a_Cstr_lit_write2io(PDC_t *pdc, Sfio_t *io, const char *s);
 
-ssize_t PDC_a_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, ssize_t *buf_full, PDC_byte c);
+ssize_t PDC_a_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, ssize_t *buf_full, PDC_char c);
 ssize_t PDC_a_str_lit_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_string *s);
 ssize_t PDC_a_Cstr_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const char *s);
 
-ssize_t PDC_e_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_byte c);
+ssize_t PDC_e_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_char c);
 ssize_t PDC_e_str_lit_write2io (PDC_t *pdc, Sfio_t *io, const PDC_string *s);
 ssize_t PDC_e_Cstr_lit_write2io(PDC_t *pdc, Sfio_t *io, const char *s);
 
-ssize_t PDC_e_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_byte c);
+ssize_t PDC_e_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char c);
 ssize_t PDC_e_str_lit_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_string *s);
 ssize_t PDC_e_Cstr_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const char *s);
 
-ssize_t PDC_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_byte c);
+ssize_t PDC_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_char c);
 ssize_t PDC_str_lit_write2io (PDC_t *pdc, Sfio_t *io, const PDC_string *s);
 ssize_t PDC_Cstr_lit_write2io(PDC_t *pdc, Sfio_t *io, const char *s);
 
-ssize_t PDC_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_byte c);
+ssize_t PDC_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char c);
 ssize_t PDC_str_lit_write2buf (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_string *s);
 ssize_t PDC_Cstr_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const char *s);
 #endif /* FOR_CKIT */
 
 /* ================================================================================
- * CHAR AND STRING WRITE FUNCTIONS
- *   XXX_TODO
+ * CHAR WRITE FUNCTIONS
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * PDC_char_write2io              PDC_a_char_write2io            PDC_e_char_write2io
+ *
+ * PDC_char_write2buf             PDC_a_char_write2buf           PDC_e_char_write2buf
  */
+
+#ifdef FOR_CKIT
+ssize_t PDC_char_write2io     (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, PDC_char *c);
+ssize_t PDC_a_char_write2io   (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, PDC_char *c);
+ssize_t PDC_e_char_write2io   (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, PDC_char *c);
+
+ssize_t PDC_char_write2buf    (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, PDC_char *c);
+ssize_t PDC_a_char_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, ssize_t *buf_full, const PDC_base_ed *ed, PDC_char *c);
+ssize_t PDC_e_char_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, PDC_char *c);
+#endif /* FOR_CKIT */
+
+/* ================================================================================
+ * STRING WRITE FUNCTIONS
+ * DEFAULT                        ASCII                          EBCDIC
+ * -----------------------------  -----------------------------  -----------------------------
+ * PDC_string_FW_write2io         PDC_a_string_FW_write2io       PDC_e_string_FW_write2io
+ * PDC_string_write2io            PDC_a_string_write2io          PDC_e_string_write2io
+ * PDC_string_ME_write2io         PDC_a_string_ME_write2io       PDC_e_string_ME_write2io
+ * PDC_string_CME_write2io        PDC_a_string_CME_write2io      PDC_e_string_CME_write2io
+ * PDC_string_SE_write2io         PDC_a_string_SE_write2io       PDC_e_string_SE_write2io
+ * PDC_string_CSE_write2io        PDC_a_string_CSE_write2io      PDC_e_string_CSE_write2io
+ *
+ * PDC_string_FW_write2buf        PDC_a_string_FW_write2buf      PDC_e_string_FW_write2buf
+ * PDC_string_write2buf           PDC_a_string_write2buf         PDC_e_string_write2buf
+ * PDC_string_ME_write2buf        PDC_a_string_ME_write2buf      PDC_e_string_ME_write2buf
+ * PDC_string_CME_write2buf       PDC_a_string_CME_write2buf     PDC_e_string_CME_write2buf
+ * PDC_string_SE_write2buf        PDC_a_string_SE_write2buf      PDC_e_string_SE_write2buf
+ * PDC_string_CSE_write2buf       PDC_a_string_CSE_write2buf     PDC_e_string_CSE_write2buf
+ */
+
+#ifdef FOR_CKIT
+ssize_t PDC_string_FW_write2io   (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_FW_write2io (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_FW_write2io (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_FW_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				  size_t width, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_FW_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				  size_t width, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_FW_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				  size_t width, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_write2io   (PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_write2io (PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_write2io (PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_ME_write2io   (PDC_t *pdc, Sfio_t *io, const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_ME_write2io (PDC_t *pdc, Sfio_t *io, const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_ME_write2io (PDC_t *pdc, Sfio_t *io, const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_ME_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				  const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_ME_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				  const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_ME_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				  const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_CME_write2io   (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_CME_write2io (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_CME_write2io (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_CME_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				   PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_CME_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				   PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_CME_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				   PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_SE_write2io   (PDC_t *pdc, Sfio_t *io, const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_SE_write2io (PDC_t *pdc, Sfio_t *io, const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_SE_write2io (PDC_t *pdc, Sfio_t *io, const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_SE_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				  const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_SE_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				  const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_SE_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				  const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_CSE_write2io   (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_CSE_write2io (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_CSE_write2io (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_CSE_write2buf  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				   PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_CSE_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				   PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_CSE_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+				   PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+#endif /* FOR_CKIT */
 
 /* ================================================================================
  * INTEGER/FPOINT WRITE FUNCTIONS

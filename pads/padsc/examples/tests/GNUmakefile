@@ -133,6 +133,9 @@ test_copy_format5: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LI
 test_write_struct: $(GEN_DIR)/struct.c test_write_struct.c $(INCLUDE_DEPS) $(LIB_DEPS)
 	@$(CCExec_DYNAMIC)
 
+test_write_struct_strings: $(GEN_DIR)/struct_strings.c test_write_struct_strings.c $(INCLUDE_DEPS) $(LIB_DEPS)
+	@$(CCExec_DYNAMIC)
+
 test_copy_ai: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS)
 	@$(CCExec_DYNAMIC)
 

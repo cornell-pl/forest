@@ -225,12 +225,12 @@ ssize_t      PDCI_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_
 #ifdef FOR_CKIT
 /* Prototypes for CKIT */
 
-PDC_error_t PDC_char_lit_scan_internal(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-				       PDC_byte *c_out, size_t *offset_out);
-PDC_error_t PDC_a_char_lit_scan_internal(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-					 PDC_byte *c_out, size_t *offset_out);
-PDC_error_t PDC_e_char_lit_scan_internal(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-					 PDC_byte *c_out, size_t *offset_out);
+PDC_error_t PDC_char_lit_scan_internal(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+				       PDC_char *c_out, size_t *offset_out);
+PDC_error_t PDC_a_char_lit_scan_internal(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+					 PDC_char *c_out, size_t *offset_out);
+PDC_error_t PDC_e_char_lit_scan_internal(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+					 PDC_char *c_out, size_t *offset_out);
 PDC_error_t PDC_str_lit_scan_internal(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
 				      PDC_string **str_out, size_t *offset_out);
 PDC_error_t PDC_a_str_lit_scan_internal(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
@@ -283,11 +283,11 @@ PDC_error_t PDC_e_Cstr_lit_scan_internal(PDC_t *pdc, const char *findStr, const 
 /* Prototypes for CKIT */
 
 PDC_error_t PDC_char_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
-				       PDC_base_ed *ed, PDC_byte c);
+				       PDC_base_ed *ed, PDC_char c);
 PDC_error_t PDC_a_char_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
-					 PDC_base_ed *ed, PDC_byte c);
+					 PDC_base_ed *ed, PDC_char c);
 PDC_error_t PDC_e_char_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
-					 PDC_base_ed *ed, PDC_byte c);
+					 PDC_base_ed *ed, PDC_char c);
 PDC_error_t PDC_str_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
 				      PDC_base_ed *ed, const PDC_string *s);
 PDC_error_t PDC_a_str_lit_read_internal(PDC_t *pdc, const PDC_base_csm *csm,
@@ -312,11 +312,11 @@ PDC_error_t PDC_a_countXtoY_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_ui
 				     PDC_base_ed *ed, PDC_int32 *res_out);
 PDC_error_t PDC_e_countXtoY_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
 				     PDC_base_ed *ed, PDC_int32 *res_out);
-PDC_error_t PDC_date_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_date_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 				   PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_a_date_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_a_date_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 				     PDC_base_ed *ed, PDC_uint32 *res_out);
-PDC_error_t PDC_e_date_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_e_date_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 				     PDC_base_ed *ed, PDC_uint32 *res_out);
 PDC_error_t PDC_char_read_internal (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
 PDC_error_t PDC_a_char_read_internal (PDC_t *pdc, const PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
@@ -327,11 +327,11 @@ PDC_error_t PDC_a_string_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, s
 					  PDC_base_ed *ed, PDC_string *s_out);
 PDC_error_t PDC_e_string_FW_read_internal(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
 					  PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_string_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_string_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 				     PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_a_string_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_a_string_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 				       PDC_base_ed *ed, PDC_string *s_out);
-PDC_error_t PDC_e_string_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDC_error_t PDC_e_string_read_internal(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 				       PDC_base_ed *ed, PDC_string *s_out);
 PDC_error_t PDC_string_ME_read_internal(PDC_t *pdc, const PDC_base_csm *csm, const char *matchRegexp,
 					PDC_base_ed *ed, PDC_string *s_out);
@@ -636,29 +636,100 @@ PDCI_DECL_FAMILY(PDC_error_t, PDC_sbh_, fpoint, _read_internal, res_out);
 
 #ifdef FOR_CKIT
 /* Prototypes for CKIT */
-ssize_t PDC_a_char_lit_write2io_internal(PDC_t *pdc, Sfio_t *io, PDC_byte c);
+ssize_t PDC_a_char_lit_write2io_internal(PDC_t *pdc, Sfio_t *io, PDC_char c);
 ssize_t PDC_a_str_lit_write2io_internal (PDC_t *pdc, Sfio_t *io, const PDC_string *s);
 ssize_t PDC_a_Cstr_lit_write2io_internal(PDC_t *pdc, Sfio_t *io, const char *s);
 
-ssize_t PDC_a_char_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, PDC_byte c);
+ssize_t PDC_a_char_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, PDC_char c);
 ssize_t PDC_a_str_lit_write2buf_internal (PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, const PDC_string *s);
 ssize_t PDC_a_Cstr_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, const char *s);
 
-ssize_t PDC_e_char_lit_write2io_internal(PDC_t *pdc, Sfio_t *io, PDC_byte c);
+ssize_t PDC_e_char_lit_write2io_internal(PDC_t *pdc, Sfio_t *io, PDC_char c);
 ssize_t PDC_e_str_lit_write2io_internal (PDC_t *pdc, Sfio_t *io, const PDC_string *s);
 ssize_t PDC_e_Cstr_lit_write2io_internal(PDC_t *pdc, Sfio_t *io, const char *s);
 
-ssize_t PDC_e_char_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, PDC_byte c);
+ssize_t PDC_e_char_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, PDC_char c);
 ssize_t PDC_e_str_lit_write2buf_internal (PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, const PDC_string *s);
 ssize_t PDC_e_Cstr_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, const char *s);
 
-ssize_t PDC_char_lit_write2io_internal(PDC_t *pdc, Sfio_t *io, PDC_byte c);
+ssize_t PDC_char_lit_write2io_internal(PDC_t *pdc, Sfio_t *io, PDC_char c);
 ssize_t PDC_str_lit_write2io_internal (PDC_t *pdc, Sfio_t *io, const PDC_string *s);
 ssize_t PDC_Cstr_lit_write2io_internal(PDC_t *pdc, Sfio_t *io, const char *s);
 
-ssize_t PDC_char_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, PDC_byte c);
+ssize_t PDC_char_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, PDC_char c);
 ssize_t PDC_str_lit_write2buf_internal (PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, const PDC_string *s);
 ssize_t PDC_Cstr_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, const char *s);
+
+ssize_t PDC_char_write2io_internal     (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, PDC_char *c);
+ssize_t PDC_a_char_write2io_internal   (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, PDC_char *c);
+ssize_t PDC_e_char_write2io_internal   (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, PDC_char *c);
+
+ssize_t PDC_char_write2buf_internal    (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, PDC_char *c);
+ssize_t PDC_a_char_write2buf_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, ssize_t *buf_full, const PDC_base_ed *ed, PDC_char *c);
+ssize_t PDC_e_char_write2buf_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, PDC_char *c);
+
+ssize_t PDC_string_FW_write2io_internal   (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_FW_write2io_internal (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_FW_write2io_internal (PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_FW_write2buf_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					   size_t width, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_FW_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					   size_t width, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_FW_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					   size_t width, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_write2io_internal   (PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_write2io_internal (PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_write2io_internal (PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_write2buf_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_ME_write2io_internal   (PDC_t *pdc, Sfio_t *io, const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_ME_write2io_internal (PDC_t *pdc, Sfio_t *io, const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_ME_write2io_internal (PDC_t *pdc, Sfio_t *io, const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_ME_write2buf_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					   const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_ME_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					   const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_ME_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					   const char *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_CME_write2io_internal   (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_CME_write2io_internal (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_CME_write2io_internal (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_CME_write2buf_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					    PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_CME_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					    PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_CME_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					    PDC_regexp_t *matchRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_SE_write2io_internal   (PDC_t *pdc, Sfio_t *io, const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_SE_write2io_internal (PDC_t *pdc, Sfio_t *io, const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_SE_write2io_internal (PDC_t *pdc, Sfio_t *io, const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_SE_write2buf_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					   const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_SE_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					   const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_SE_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					   const char *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_CSE_write2io_internal   (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_CSE_write2io_internal (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_CSE_write2io_internal (PDC_t *pdc, Sfio_t *io, PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+
+ssize_t PDC_string_CSE_write2buf_internal  (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					    PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_a_string_CSE_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					    PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
+ssize_t PDC_e_string_CSE_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+					    PDC_regexp_t *stopRegexp, const PDC_base_ed *ed, PDC_string *s);
 
 #else
 /* Actual impls */
@@ -715,6 +786,180 @@ ssize_t PDC_Cstr_lit_write2buf_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_le
 
 #define PDC_Cstr_lit_write2buf_internal(pdc, buf, buf_len, buf_full, s) \
   PDCI_Cstr_lit_write2buf(pdc, buf, buf_len, buf_full, s, pdc->disc->dif_charset, "PDC_Cstr_lit_write2buf", 0)
+
+#define PDC_char_write2io_internal(pdc, io, ed, c) \
+  PDCI_char_write2io(pdc, io, ed, c, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_char_write2io", 0)
+
+#define PDC_a_char_write2io_internal(pdc, io, ed, c) \
+  PDCI_char_write2io(pdc, io, ed, c, pdc_charset_ASCII, "PDC_a_char_write2io", 0)
+
+#define PDC_e_char_write2io_internal(pdc, io, ed, c) \
+  PDCI_char_write2io(pdc, io, ed, c, pdc_charset_EBCDIC, "PDC_e_char_write2io", 0)
+
+#define PDC_char_write2buf_internal(pdc, buf, buf_len, buf_full, ed, c) \
+  PDCI_char_write2buf(pdc, buf, buf_len, buf_full, ed, c, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_char_write2buf", 0)
+
+#define PDC_a_char_write2buf_internal(pdc, buf, buf_len, buf_full, ed, c) \
+  PDCI_char_write2buf(pdc, buf, buf_len, buf_full, ed, c, PDC_charset_ASCII, "PDC_a_char_write2buf", 0)
+
+#define PDC_e_char_write2buf_internal(pdc, buf, buf_len, buf_full, ed, c) \
+  PDCI_char_write2buf(pdc, buf, buf_len, buf_full, ed, c, PDC_charset_EBCDIC, "PDC_e_char_write2buf", 0)
+
+#define PDC_string_FW_write2io_internal(pdc, io, width, ed, s) \
+  PDCI_string_FW_write2io(pdc, io, width, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_FW_write2io", 0)
+
+#define PDC_a_string_FW_write2io_internal(pdc, io, width, ed, s) \
+  PDCI_string_FW_write2io(pdc, io, width, ed, s, PDC_charset_ASCII, "PDC_a_string_FW_write2io", 0)
+
+#define PDC_e_string_FW_write2io_internal(pdc, io, width, ed, s) \
+  PDCI_string_FW_write2io(pdc, io, width, ed, s, PDC_charset_EBCDIC, "PDC_e_string_FW_write2io", 0)
+
+#define PDC_string_FW_write2buf_internal(pdc, buf, buf_len, buf_full, width, ed, s) \
+  PDCI_string_FW_write2buf(pdc, buf, buf_len, buf_full, width, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_FW_write2buf", 0)
+
+#define PDC_a_string_FW_write2buf_internal(pdc, buf, buf_len, buf_full, width, ed, s) \
+  PDCI_string_FW_write2buf(pdc, buf, buf_len, buf_full, width, ed, s, PDC_charset_ASCII, "PDC_a_string_FW_write2buf", 0)
+
+#define PDC_e_string_FW_write2buf_internal(pdc, buf, buf_len, buf_full, width, ed, s) \
+  PDCI_string_FW_write2buf(pdc, buf, buf_len, buf_full, width, ed, s, PDC_charset_EBCDIC, "PDC_e_string_FW_write2buf", 0)
+
+#define PDC_string_write2io_internal(pdc, io, stopChar, ed, s) \
+  PDCI_string_write2io(pdc, io, stopChar, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_write2io", 0)
+
+#define PDC_a_string_write2io_internal(pdc, io, stopChar, ed, s) \
+  PDCI_string_write2io(pdc, io, stopChar, ed, s, PDC_charset_ASCII, "PDC_a_string_write2io", 0)
+
+#define PDC_e_string_write2io_internal(pdc, io, stopChar, ed, s) \
+  PDCI_string_write2io(pdc, io, stopChar, ed, s, PDC_charset_EBCDIC, "PDC_e_string_write2io", 0)
+
+#define PDC_string_write2buf_internal(pdc, buf, buf_len, buf_full, stopChar, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, stopChar, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_write2buf", 0)
+
+#define PDC_a_string_write2buf_internal(pdc, buf, buf_len, buf_full, stopChar, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, stopChar, ed, s, PDC_charset_ASCII, "PDC_a_string_write2buf", 0)
+
+#define PDC_e_string_write2buf_internal(pdc, buf, buf_len, buf_full, stopChar, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, stopChar, ed, s, PDC_charset_EBCDIC, "PDC_e_string_write2buf", 0)
+
+#define PDC_string_ME_write2io_internal(pdc, io, matchRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_ME_write2io", 0)
+
+#define PDC_a_string_ME_write2io_internal(pdc, io, matchRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_charset_ASCII, "PDC_a_string_ME_write2io", 0)
+
+#define PDC_e_string_ME_write2io_internal(pdc, io, matchRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_charset_EBCDIC, "PDC_e_string_ME_write2io", 0)
+
+#define PDC_string_ME_write2buf_internal(pdc, buf, buf_len, buf_full, matchRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_ME_string_write2buf", 0)
+
+#define PDC_a_string_ME_write2buf_internal(pdc, buf, buf_len, buf_full, matchRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDC_charset_ASCII, "PDC_a_string_ME_write2buf", 0)
+
+#define PDC_e_string_ME_write2buf_internal(pdc, buf, buf_len, buf_full, matchRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDC_charset_EBCDIC, "PDC_e_string_ME_write2buf", 0)
+
+#define PDC_string_CME_write2io_internal(pdc, io, matchRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_CME_write2io", 0)
+
+#define PDC_a_string_CME_write2io_internal(pdc, io, matchRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_charset_ASCII, "PDC_a_string_CME_write2io", 0)
+
+#define PDC_e_string_CME_write2io_internal(pdc, io, matchRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_charset_EBCDIC, "PDC_e_string_CME_write2io", 0)
+
+#define PDC_string_CME_write2buf_internal(pdc, buf, buf_len, buf_full, matchRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_CME_string_write2buf", 0)
+
+#define PDC_a_string_CME_write2buf_internal(pdc, buf, buf_len, buf_full, matchRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDC_charset_ASCII, "PDC_a_string_CME_write2buf", 0)
+
+#define PDC_e_string_CME_write2buf_internal(pdc, buf, buf_len, buf_full, matchRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDC_charset_EBCDIC, "PDC_e_string_CME_write2buf", 0)
+
+#define PDC_string_SE_write2io_internal(pdc, io, stopRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_SE_write2io", 0)
+
+#define PDC_a_string_SE_write2io_internal(pdc, io, stopRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_charset_ASCII, "PDC_a_string_SE_write2io", 0)
+
+#define PDC_e_string_SE_write2io_internal(pdc, io, stopRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_charset_EBCDIC, "PDC_e_string_SE_write2io", 0)
+
+#define PDC_string_SE_write2buf_internal(pdc, buf, buf_len, buf_full, stopRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_SE_string_write2buf", 0)
+
+#define PDC_a_string_SE_write2buf_internal(pdc, buf, buf_len, buf_full, stopRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDC_charset_ASCII, "PDC_a_string_SE_write2buf", 0)
+
+#define PDC_e_string_SE_write2buf_internal(pdc, buf, buf_len, buf_full, stopRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDC_charset_EBCDIC, "PDC_e_string_SE_write2buf", 0)
+
+#define PDC_string_CSE_write2io_internal(pdc, io, stopRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_string_CSE_write2io", 0)
+
+#define PDC_a_string_CSE_write2io_internal(pdc, io, stopRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_charset_ASCII, "PDC_a_string_CSE_write2io", 0)
+
+#define PDC_e_string_CSE_write2io_internal(pdc, io, stopRegexp, ed, s) \
+  PDCI_string_write2io(pdc, io, ed, s, PDCI_charset_EBCDIC, "PDC_e_string_CSE_write2io", 0)
+
+#define PDC_string_CSE_write2buf_internal(pdc, buf, buf_len, buf_full, stopRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDCI_SAFE_DEF_CHARSET(pdc), "PDC_CSE_string_write2buf", 0)
+
+#define PDC_a_string_CSE_write2buf_internal(pdc, buf, buf_len, buf_full, stopRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDC_charset_ASCII, "PDC_a_string_CSE_write2buf", 0)
+
+#define PDC_e_string_CSE_write2buf_internal(pdc, buf, buf_len, buf_full, stopRegexp, ed, s) \
+  PDCI_string_write2buf(pdc, buf, buf_len, buf_full, ed, s, PDC_charset_EBCDIC, "PDC_e_string_CSE_write2buf", 0)
+
+#define PDC_int8_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int8_write2io, (pdc, io, ed, val))
+
+#define PDC_int16_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int16_write2io, (pdc, io, ed, val))
+
+#define PDC_int32_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int32_write2io, (pdc, io, ed, val))
+
+#define PDC_int64_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int64_write2io, (pdc, io, ed, val))
+
+#define PDC_uint8_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint8_write2io, (pdc, io, ed, val))
+
+#define PDC_uint16_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint16_write2io, (pdc, io, ed, val))
+
+#define PDC_uint32_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint32_write2io, (pdc, io, ed, val))
+
+#define PDC_uint64_write2io_internal(pdc, io, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint64_write2io, (pdc, io, ed, val))
+
+#define PDC_int8_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int8_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_int16_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int16_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_int32_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int32_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_int64_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, int64_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_uint8_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint8_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_uint16_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint16_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_uint32_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint32_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
+
+#define PDC_uint64_write2buf_internal(pdc, buf, buf_len, buf_full, ed, val) \
+  PDCI_INTERNAL_CHARSET_SWITCH(pdc, PDC, uint64_write2buf, (pdc, buf, buf_len, buf_full, ed, val))
 
 #endif /* FOR_CKIT */
 

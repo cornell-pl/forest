@@ -123,6 +123,25 @@
   } while (0)
 /* END_MACRO */
 
+/* Fill string s with n copies of c.  Caller must provide fatal_alloc_err target */
+#define PDCI_STRFILL(s, c, n)
+  do {
+    if (!(s)->rbuf) {
+      if (!((s)->rbuf = RMM_new_rbuf(pdc->rmm_nz))) {
+	goto fatal_alloc_err;
+      }
+    }
+    if (RBuf_reserve((s)->rbuf, (void**)&((s)->str), sizeof(char), (n)+1, PDCI_STRING_HINT)) {
+      goto fatal_alloc_err;
+    }
+    memset((s)->str, (c), (n));
+    (s)->str[n] = 0;
+    (s)->len = (n);
+    /* if ((s)->sharing) { PDC_WARN1(pdc->disc, "XXX_REMOVE fill: string %p is no longer sharing", (void*)(s)); } */
+    (s)->sharing = 0;
+  } while (0)
+/* END_MACRO */
+
 /* PDC_string_preserve -- inline version.  Caller must provide fatal_alloc_err target */
 #define PDCI_STR_PRESERVE(s)
   do {
@@ -837,7 +856,7 @@ fn_name(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint32 num_digits_or_bytes, PDC
 
 /* ********************************** END_HEADER ********************************** */
 
-#define PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, invalid_val)
+#define PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, inv_val)
 
 ssize_t
 fn_pref ## _write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, const targ_type *in)
@@ -852,7 +871,7 @@ fn_pref ## _write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *b
   } else {
     fn = PDCI_GET_INV_VALFN(pdc, inv_type);
     if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&t, type_args))) {
-      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : invalid_val;
+      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : inv_val;
     }
   }
   sfstrset(pdc->tmp1, 0);
@@ -878,7 +897,7 @@ fn_pref ## _write2io_internal(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, con
   } else {
     fn = PDCI_GET_INV_VALFN(pdc, inv_type);
     if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&t, type_args))) {
-      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : invalid_val;
+      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : inv_val;
     }
   }
   return sfprintf(io, fmt, t);
@@ -906,7 +925,7 @@ fn_pref ## _write2io(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, const targ_t
 }
 /* END_MACRO */
 
-#define PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, invalid_val)
+#define PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, inv_val)
 
 ssize_t
 fn_pref ## _write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed, const targ_type *in)
@@ -920,7 +939,7 @@ fn_pref ## _write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *b
   } else {
     fn = PDCI_GET_INV_VALFN(pdc, inv_type);
     if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&t, type_args))) {
-      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : invalid_val;
+      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : inv_val;
     }
   }
   return num2pre ## _buf (pdc, buf, buf_len, buf_full, t);
@@ -938,7 +957,7 @@ fn_pref ## _write2io_internal(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, con
   } else {
     fn = PDCI_GET_INV_VALFN(pdc, inv_type);
     if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&t, type_args))) {
-      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : invalid_val;
+      t = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : inv_val;
     }
   }
   return num2pre ## _io (pdc, io, t);
@@ -2943,17 +2962,17 @@ PDCI_EBCBCDSB_FPOINT_READ_FN(PDC_sbh_ufpoint64_read, PDC_ufpoint64, PDC_sbh_uint
 /* VARIABLE-WIDTH ASCII INTEGER WRITE FUNCTIONS */
 
 /*
- * PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, invalid_val)
+ * PDCI_A_INT_WRITE_FN(fn_pref, targ_type, fmt, inv_type, inv_val)
  */
 
-PDCI_A_INT_WRITE_FN(PDC_a_int8,   PDC_int8,   "%I1d",   "PDC_int8",   PDC_MIN_INT8);
-PDCI_A_INT_WRITE_FN(PDC_a_int16,  PDC_int16,  "%I2d",   "PDC_int16",  PDC_MIN_INT16);
-PDCI_A_INT_WRITE_FN(PDC_a_int32,  PDC_int32,  "%I4d",   "PDC_int32",  PDC_MIN_INT32);
-PDCI_A_INT_WRITE_FN(PDC_a_int64,  PDC_int64,  "%I8d",   "PDC_int64",  PDC_MIN_INT64);
-PDCI_A_INT_WRITE_FN(PDC_a_uint8,  PDC_uint8,  "%I1u",   "PDC_uint8",  PDC_MAX_UINT8);
-PDCI_A_INT_WRITE_FN(PDC_a_uint16, PDC_uint16, "%I2u",   "PDC_uint16", PDC_MAX_UINT16);
-PDCI_A_INT_WRITE_FN(PDC_a_uint32, PDC_uint32, "%I4u",   "PDC_uint32", PDC_MAX_UINT32);
-PDCI_A_INT_WRITE_FN(PDC_a_uint64, PDC_uint64, "%I8u",   "PDC_uint64", PDC_MAX_UINT64);
+PDCI_A_INT_WRITE_FN(PDC_a_int8,   PDC_int8,   "%I1d",   "PDC_int8",   PDC_INT8_DEF_INV_VAL);
+PDCI_A_INT_WRITE_FN(PDC_a_int16,  PDC_int16,  "%I2d",   "PDC_int16",  PDC_INT16_DEF_INV_VAL);
+PDCI_A_INT_WRITE_FN(PDC_a_int32,  PDC_int32,  "%I4d",   "PDC_int32",  PDC_INT32_DEF_INV_VAL);
+PDCI_A_INT_WRITE_FN(PDC_a_int64,  PDC_int64,  "%I8d",   "PDC_int64",  PDC_INT64_DEF_INV_VAL);
+PDCI_A_INT_WRITE_FN(PDC_a_uint8,  PDC_uint8,  "%I1u",   "PDC_uint8",  PDC_UINT8_DEF_INV_VAL);
+PDCI_A_INT_WRITE_FN(PDC_a_uint16, PDC_uint16, "%I2u",   "PDC_uint16", PDC_UINT16_DEF_INV_VAL);
+PDCI_A_INT_WRITE_FN(PDC_a_uint32, PDC_uint32, "%I4u",   "PDC_uint32", PDC_UINT32_DEF_INV_VAL);
+PDCI_A_INT_WRITE_FN(PDC_a_uint64, PDC_uint64, "%I8u",   "PDC_uint64", PDC_UINT64_DEF_INV_VAL);
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
@@ -2975,17 +2994,17 @@ PDCI_A_INT_WRITE_FN(PDC_a_uint64, PDC_uint64, "%I8u",   "PDC_uint64", PDC_MAX_UI
 /* VARIABLE-WIDTH EBCDIC CHAR ENCODING INTEGER WRITE FUNCTIONS */
 
 /*
- * PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, invalid_val)
+ * PDCI_E_INT_WRITE_FN(fn_pref, targ_type, num2pre, inv_type, inv_val)
  */
 
-PDCI_E_INT_WRITE_FN(PDC_e_int8,   PDC_int8,   PDCI_int8_2e,   "PDC_int8",   PDC_MIN_INT8);
-PDCI_E_INT_WRITE_FN(PDC_e_int16,  PDC_int16,  PDCI_int16_2e,  "PDC_int16",  PDC_MIN_INT16);
-PDCI_E_INT_WRITE_FN(PDC_e_int32,  PDC_int32,  PDCI_int32_2e,  "PDC_int32",  PDC_MIN_INT32);
-PDCI_E_INT_WRITE_FN(PDC_e_int64,  PDC_int64,  PDCI_int64_2e,  "PDC_int64",  PDC_MIN_INT64);
-PDCI_E_INT_WRITE_FN(PDC_e_uint8,  PDC_uint8,  PDCI_uint8_2e,  "PDC_uint8",  PDC_MAX_UINT8);
-PDCI_E_INT_WRITE_FN(PDC_e_uint16, PDC_uint16, PDCI_uint16_2e, "PDC_uint16", PDC_MAX_UINT16);
-PDCI_E_INT_WRITE_FN(PDC_e_uint32, PDC_uint32, PDCI_uint32_2e, "PDC_uint32", PDC_MAX_UINT32);
-PDCI_E_INT_WRITE_FN(PDC_e_uint64, PDC_uint64, PDCI_uint64_2e, "PDC_uint64", PDC_MAX_UINT64);
+PDCI_E_INT_WRITE_FN(PDC_e_int8,   PDC_int8,   PDCI_int8_2e,   "PDC_int8",   PDC_INT8_DEF_INV_VAL);
+PDCI_E_INT_WRITE_FN(PDC_e_int16,  PDC_int16,  PDCI_int16_2e,  "PDC_int16",  PDC_INT16_DEF_INV_VAL);
+PDCI_E_INT_WRITE_FN(PDC_e_int32,  PDC_int32,  PDCI_int32_2e,  "PDC_int32",  PDC_INT32_DEF_INV_VAL);
+PDCI_E_INT_WRITE_FN(PDC_e_int64,  PDC_int64,  PDCI_int64_2e,  "PDC_int64",  PDC_INT64_DEF_INV_VAL);
+PDCI_E_INT_WRITE_FN(PDC_e_uint8,  PDC_uint8,  PDCI_uint8_2e,  "PDC_uint8",  PDC_UINT8_DEF_INV_VAL);
+PDCI_E_INT_WRITE_FN(PDC_e_uint16, PDC_uint16, PDCI_uint16_2e, "PDC_uint16", PDC_UINT16_DEF_INV_VAL);
+PDCI_E_INT_WRITE_FN(PDC_e_uint32, PDC_uint32, PDCI_uint32_2e, "PDC_uint32", PDC_UINT32_DEF_INV_VAL);
+PDCI_E_INT_WRITE_FN(PDC_e_uint64, PDC_uint64, PDCI_uint64_2e, "PDC_uint64", PDC_UINT64_DEF_INV_VAL);
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACGEN ********************************** */
@@ -3025,12 +3044,12 @@ PDCI_INT_ACCUM_REPORT_MAP(PDC_int32, "int32", "ld");
 
 /* PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, floatORdouble, fpoint2floatORdouble) */
 
-PDCI_FPOINT_ACCUM(PDC_fpoint8,   "fpoint8",   float, PDC_FPOINT2FLT);
-PDCI_FPOINT_ACCUM(PDC_ufpoint8,  "ufpoint8",  float, PDC_FPOINT2FLT);
-PDCI_FPOINT_ACCUM(PDC_fpoint16,  "fpoint16",  float, PDC_FPOINT2FLT);
-PDCI_FPOINT_ACCUM(PDC_ufpoint16, "ufpoint16", float, PDC_FPOINT2FLT);
-PDCI_FPOINT_ACCUM(PDC_fpoint32,  "fpoint32",  float, PDC_FPOINT2FLT);
-PDCI_FPOINT_ACCUM(PDC_ufpoint32, "ufpoint32", float, PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_fpoint8,   "fpoint8",   float,  PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_ufpoint8,  "ufpoint8",  float,  PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_fpoint16,  "fpoint16",  float,  PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_ufpoint16, "ufpoint16", float,  PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_fpoint32,  "fpoint32",  float,  PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_ufpoint32, "ufpoint32", float,  PDC_FPOINT2FLT);
 PDCI_FPOINT_ACCUM(PDC_fpoint64,  "fpoint64",  double, PDC_FPOINT2DBL);
 PDCI_FPOINT_ACCUM(PDC_ufpoint64, "ufpoint64", double, PDC_FPOINT2DBL);
 
@@ -3710,7 +3729,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.82 2003-05-28 19:10:10 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.83 2003-05-29 04:49:53 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5132,6 +5151,9 @@ PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
     case PDC_INVALID_CHARSET:
       msg = "Invalid PDC_charset value";
       break;
+    case PDC_INVALID_WIDTH:
+      msg = "Invalid fixed width arg: does not match width of PDC_string arg";
+      break;
     case PDC_CHAR_LIT_NOT_FOUND:
       msg = "Expected character literal not found";
       break;
@@ -5893,8 +5915,8 @@ PDCI_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf
 /* CHARSET INTERNAL SCAN FUNCTIONS */
 
 PDC_error_t
-PDCI_char_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-		   PDC_byte *c_out, size_t *offset_out, PDC_charset char_set, const char *whatfn, int safe)
+PDCI_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_lit,
+		   PDC_char *c_out, size_t *offset_out, PDC_charset char_set, const char *whatfn, int safe)
 {
   PDC_byte       *begin, *p1, *p2, *end;
   int             eor, eof;
@@ -6148,7 +6170,7 @@ PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr, int eat
 
 PDC_error_t
 PDCI_char_lit_read(PDC_t *pdc, const PDC_base_csm *csm,
-		   PDC_base_ed *ed, PDC_byte c, PDC_charset char_set,
+		   PDC_base_ed *ed, PDC_char c, PDC_charset char_set,
 		   const char *whatfn, int safe)
 {
   PDC_byte        *begin, *p1, *p2, *end;
@@ -6545,7 +6567,7 @@ PDCI_countXtoY(PDC_t *pdc, const PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
 }
 
 PDC_error_t
-PDCI_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDCI_date_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 	       PDC_base_ed *ed, PDC_uint32 *res_out, PDC_charset char_set, const char *whatfn, int safe)
 {
   PDC_string     *s = &pdc->stmp1;
@@ -6736,7 +6758,7 @@ PDCI_string_FW_read(PDC_t *pdc, const PDC_base_csm *csm, size_t width,
 }
 
 PDC_error_t
-PDCI_string_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_byte stopChar,
+PDCI_string_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_char stopChar,
 		 PDC_base_ed *ed, PDC_string *s_out, PDC_charset char_set,
 		 const char *whatfn, int safe)
 {
@@ -7014,7 +7036,7 @@ PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp_t *stopRege
 /* CHARSET INTERNAL WRITE ROUTINES */
 
 ssize_t
-PDCI_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_byte c,
+PDCI_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_char c,
 		       PDC_charset char_set, const char *whatfn, int safe)
 {
   if (safe) {
@@ -7045,7 +7067,7 @@ PDCI_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_byte c,
 }
 
 ssize_t
-PDCI_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_byte c,
+PDCI_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_char c,
 			PDC_charset char_set, const char *whatfn, int safe)
 {
   if (safe) {
@@ -7243,6 +7265,322 @@ PDCI_Cstr_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full
   }
   memcpy(buf, tmp_s->str, tmp_s->len);
   return tmp_s->len;
+
+ invalid_charset:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_CHARSET, whatfn, 0);
+  return -1;
+
+ fatal_alloc_err:
+  PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_ALLOC_ERR, whatfn, "Memory alloc error");
+  return -1;
+}
+
+ssize_t
+PDCI_char_write2io(PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed, PDC_byte *in,
+		   PDC_charset char_set, const char *whatfn, int safe)
+{
+  PDC_char      c;
+  PDC_inv_valfn fn;
+  void         *type_args[1] = { 0 };
+
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, io);
+  }
+  PDC_TRACE4(pdc->disc, "PDCI_char_write2io args: c %s, char_set = %s, whatfn = %s, safe = %d",
+	     PDC_qfmt_char(*in), PDC_charset2str(char_set), whatfn, safe);
+  if (ed->errCode == PDC_NO_ERR) {
+    c = *in;
+  } else {
+    fn = PDCI_GET_INV_VALFN(pdc, "PDC_char");
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&c, type_args))) {
+      c = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : PDC_CHAR_DEF_INV_VAL;
+    }
+  }
+  switch (char_set)
+    {
+    case PDC_charset_ASCII:
+      break;
+    case PDC_charset_EBCDIC:
+      c = PDC_mod_ae_tab[(int)c]; /* convert to EBCDIC char */
+      break;
+    default:
+      goto invalid_charset;
+    }
+  if (c != sfputc(io, c)) {
+    PDC_WARN1(pdc->disc, "%s: low-level sfputc failure", whatfn);
+    return -1;
+  }
+  return 1;
+
+ invalid_charset:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_CHARSET, whatfn, 0);
+  return -1;
+}
+
+ssize_t
+PDCI_char_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+		    const PDC_base_ed *ed, PDC_byte *in,
+		    PDC_charset char_set, const char *whatfn, int safe)
+{
+  PDC_char      c;
+  PDC_inv_valfn fn;
+  void         *type_args[1] = { 0 };
+
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, buf);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, buf_full);
+  }
+  PDC_TRACE4(pdc->disc, "PDCI_char_write2buf args: c %s, char_set = %s, whatfn = %s, safe = %d",
+	     PDC_qfmt_char(*in), PDC_charset2str(char_set), whatfn, safe);
+  if (ed->errCode == PDC_NO_ERR) {
+    c = *in;
+  } else {
+    fn = PDCI_GET_INV_VALFN(pdc, "PDC_char");
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)&c, type_args))) {
+      c = (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) ? *in : PDC_CHAR_DEF_INV_VAL;
+    }
+  }
+  switch (char_set)
+    {
+    case PDC_charset_ASCII:
+      break;
+    case PDC_charset_EBCDIC:
+      c = PDC_mod_ae_tab[(int)c]; /* convert to EBCDIC char */
+      break;
+    default:
+      goto invalid_charset;
+    }
+  if (1 > buf_len) {
+    (*buf_full) = 1;
+    return -1;
+  }
+  *buf = c;
+  return 1;
+
+ invalid_charset:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_CHARSET, whatfn, 0);
+  return -1;
+}
+
+ssize_t
+PDCI_string_write2io(PDC_t *pdc, Sfio_t *io, PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s,
+		     PDC_charset char_set, const char *whatfn, int safe)
+{
+  ssize_t         n;
+  PDC_string     *tmp_s = (PDC_string*)s;
+  PDC_inv_valfn   fn;
+  void           *type_args[1] = { 0 };
+
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, io);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, s);
+  }
+  PDC_TRACE4(pdc->disc, "PDCI_string_write2io args: s %s, char_set = %s, whatfn = %s, safe = %d",
+	     PDC_qfmt_str(s), PDC_charset2str(char_set), whatfn, safe);
+  if (ed->errCode != PDC_NO_ERR) {
+    fn = PDCI_GET_INV_VALFN(pdc, "PDC_string");
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)s, type_args))) {
+      if (ed->errCode != PDC_USER_CONSTRAINT_VIOLATION) {
+	s->len = 0;
+      }
+    }
+  }
+  switch (char_set)
+    {
+    case PDC_charset_ASCII:
+      break;
+    case PDC_charset_EBCDIC:
+      tmp_s = &pdc->stmp1;
+      PDCI_A2E_STR_CPY(tmp_s, s->str, s->len);
+      break;
+    default:
+      goto invalid_charset;
+    }
+  n = sfwrite(io, (Void_t*)tmp_s->str, tmp_s->len);
+  if (n != tmp_s->len) {
+    PDC_WARN1(pdc->disc, "%s: low-level sfwrite failure", whatfn);
+    if (n > 0) {
+      /* XXX_TODO try to back up ??? */
+    }
+    return -1;
+  }
+  return n;
+
+ invalid_charset:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_CHARSET, whatfn, 0);
+  return -1;
+
+ fatal_alloc_err:
+  PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_ALLOC_ERR, whatfn, "Memory alloc error");
+  return -1;
+}
+
+ssize_t
+PDCI_string_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+		      PDC_char stopChar, const PDC_base_ed *ed, PDC_string *s,
+		      PDC_charset char_set, const char *whatfn, int safe)
+{
+  PDC_string     *tmp_s = (PDC_string*)s;
+  PDC_inv_valfn   fn;
+  void           *type_args[1] = { 0 };
+
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, buf);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, buf_full);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, s);
+  }
+  PDC_TRACE4(pdc->disc, "PDCI_string_write2buf args: s %s, char_set = %s, whatfn = %s, safe = %d",
+	     PDC_qfmt_str(s), PDC_charset2str(char_set), whatfn, safe);
+  if (ed->errCode != PDC_NO_ERR) {
+    fn = PDCI_GET_INV_VALFN(pdc, "PDC_string");
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)s, type_args))) {
+      if (ed->errCode != PDC_USER_CONSTRAINT_VIOLATION) {
+	s->len = 0;
+      }
+    }
+  }
+  switch (char_set)
+    {
+    case PDC_charset_ASCII:
+      break;
+    case PDC_charset_EBCDIC:
+      tmp_s = &pdc->stmp1;
+      PDCI_A2E_STR_CPY(tmp_s, s->str, s->len);
+      break;
+    default:
+      goto invalid_charset;
+    }
+  if (tmp_s->len > buf_len) {
+    (*buf_full) = 1;
+    return -1;
+  }
+  memcpy(buf, tmp_s->str, tmp_s->len);
+  return tmp_s->len;
+
+ invalid_charset:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_CHARSET, whatfn, 0);
+  return -1;
+
+ fatal_alloc_err:
+  PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_ALLOC_ERR, whatfn, "Memory alloc error");
+  return -1;
+}
+
+ssize_t
+PDCI_string_FW_write2io(PDC_t *pdc, Sfio_t *io,
+			size_t width, const PDC_base_ed *ed, PDC_string *s,
+			PDC_charset char_set, const char *whatfn, int safe)
+{
+  ssize_t         n;
+  PDC_string     *tmp_s = (PDC_string*)s;
+  PDC_inv_valfn   fn;
+  void           *type_args[2] = { (void*)(&width), 0 };
+
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, io);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, s);
+  }
+  PDC_TRACE4(pdc->disc, "PDCI_string_write2io args: s %s, char_set = %s, whatfn = %s, safe = %d",
+	     PDC_qfmt_str(s), PDC_charset2str(char_set), whatfn, safe);
+  if (ed->errCode != PDC_NO_ERR) {
+    fn = PDCI_GET_INV_VALFN(pdc, "PDC_string_FW");
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)s, type_args))) {
+      if (ed->errCode != PDC_USER_CONSTRAINT_VIOLATION) {
+	PDCI_STRFILL(s, PDC_CHAR_DEF_INV_VAL, width);
+      }
+    }
+  }
+  if (s->len != width) {
+    goto invalid_width;
+  }
+  switch (char_set)
+    {
+    case PDC_charset_ASCII:
+      break;
+    case PDC_charset_EBCDIC:
+      tmp_s = &pdc->stmp1;
+      PDCI_A2E_STR_CPY(tmp_s, s->str, s->len);
+      break;
+    default:
+      goto invalid_charset;
+    }
+  n = sfwrite(io, (Void_t*)tmp_s->str, tmp_s->len);
+  if (n != tmp_s->len) {
+    PDC_WARN1(pdc->disc, "%s: low-level sfwrite failure", whatfn);
+    if (n > 0) {
+      /* XXX_TODO try to back up ??? */
+    }
+    return -1;
+  }
+  return n;
+
+ invalid_width:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_WIDTH, whatfn, 0);
+  return -1;
+
+ invalid_charset:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_CHARSET, whatfn, 0);
+  return -1;
+
+ fatal_alloc_err:
+  PDCI_report_err(pdc, PDC_FATAL_FLAGS, 0, PDC_ALLOC_ERR, whatfn, "Memory alloc error");
+  return -1;
+}
+
+ssize_t
+PDCI_string_FW_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
+			 size_t width, const PDC_base_ed *ed, PDC_string *s,
+			 PDC_charset char_set, const char *whatfn, int safe)
+{
+  PDC_string     *tmp_s = (PDC_string*)s;
+  PDC_inv_valfn   fn;
+  void           *type_args[2] = { (void*)(&width), 0 };
+
+  if (safe) {
+    PDCI_DISC_INIT_CHECKS_RET_SSIZE(whatfn);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, buf);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, buf_full);
+    PDCI_NULLPARAM_CHECK_RET_SSIZE(whatfn, s);
+  }
+  PDC_TRACE4(pdc->disc, "PDCI_string_write2buf args: s %s, char_set = %s, whatfn = %s, safe = %d",
+	     PDC_qfmt_str(s), PDC_charset2str(char_set), whatfn, safe);
+  if (ed->errCode != PDC_NO_ERR) {
+    fn = PDCI_GET_INV_VALFN(pdc, "PDC_string_FW");
+    if (!fn || (PDC_ERR == fn(pdc, (void*)ed, (void*)s, type_args))) {
+      if (ed->errCode != PDC_USER_CONSTRAINT_VIOLATION) {
+	PDCI_STRFILL(s, PDC_CHAR_DEF_INV_VAL, width);
+      }
+    }
+  }
+  if (s->len != width) {
+    goto invalid_width;
+  }
+  switch (char_set)
+    {
+    case PDC_charset_ASCII:
+      break;
+    case PDC_charset_EBCDIC:
+      tmp_s = &pdc->stmp1;
+      PDCI_A2E_STR_CPY(tmp_s, s->str, s->len);
+      break;
+    default:
+      goto invalid_charset;
+    }
+  if (tmp_s->len > buf_len) {
+    (*buf_full) = 1;
+    return -1;
+  }
+  memcpy(buf, tmp_s->str, tmp_s->len);
+  return tmp_s->len;
+
+ invalid_width:
+  PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_WIDTH, whatfn, 0);
+  return -1;
 
  invalid_charset:
   PDCI_report_err(pdc, PDC_WARN_FLAGS, 0, PDC_INVALID_CHARSET, whatfn, 0);
