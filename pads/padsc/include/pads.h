@@ -20,7 +20,6 @@
 #include <tm.h>
 #include <vmalloc.h>
 #include <sfio.h>
-#include <sfstr.h>
 #include <ctype.h>
 #include <dt.h>
 #include <error.h>
