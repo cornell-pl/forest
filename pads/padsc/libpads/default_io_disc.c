@@ -27,7 +27,7 @@
  *                 the sfio stream be seekable
  *
  * NB In the current implementations of record-based disciplines, each elt
- * is anentire record (both bor and eor set) except possibly for the last
+ * is an entire record (both bor and eor set) except possibly for the last
  * elt which sometimes has bor but NOT eor set (e.g., for a partial fwrec
  * or for a missing term char for ctrec).  Should we make this behavior a
  * requirement?  That would get rid of the need for the 'bor' flag.
