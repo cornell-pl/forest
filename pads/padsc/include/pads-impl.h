@@ -76,6 +76,8 @@
   (pd)->errCode = P_NO_ERR; \
 } while (0)
 
+#define PD_COMMON_INIT(pd) Pbase_pd_init(pd)
+
 /* ================================================================================ */
 /* INTERNAL SCAN ROUTINES (helpers) */
 

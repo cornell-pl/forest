@@ -870,13 +870,33 @@ struct Ploc_s {
   Ppos_t e;
 };
 
+/* The following four fields are always the first four fields in every PADS
+ * parse descriptor type.  (They are the only fields in type Pbase_pd.)
+ */
+
+#define PD_COMMON_FIELDS \
+  Pflags_t    pstate; /* parse state */ \
+  Puint32     nerr; \
+  PerrCode_t  errCode; \
+  Ploc_t      loc
+
+/* Function (macro actually) that initializes the first four fields of
+ * any parse descriptor type: initializes pstate to 'not panic',
+ * errCode to P_NO_ERR, nerr to 0, loc to all zeros.
+ */
+#ifdef FOR_CKIT
+void PD_COMMON_INIT(void *pd);
+#endif
+
 /* type Pbase_pd: */
 struct Pbase_pd_s {
-  Pflags_t    pstate; /* parse state */
-  Puint32     nerr;
-  PerrCode_t  errCode;
-  Ploc_t      loc;
+  PD_COMMON_FIELDS;
 };
+
+/* This function (macro actually) invokes PD_COMMON_INIT on pd */
+#ifdef FOR_CKIT
+void Pbase_pd_init(Pbase_pd *pd);
+#endif
 
 /* string description of parse state */
 const char * P_pstate2str(Pflags_t pstate);
@@ -887,11 +907,6 @@ void P_PS_init(void *pd);         /* init pd->pstate */
 void P_PS_setPanic(void *pd);     /* set P_Panic in pd->pstate */
 void P_PS_unsetPanic(void *pd);   /* unset P_Panic in pd->pstate */
 int  P_PS_isPanic(void *pd);      /* test whether P_Panic is set in pd->pstate */
-#endif
-
-/* Function (macro actually) for initalizing a Pbase_pd: */
-#ifdef FOR_CKIT
-void Pbase_pd_init(Pbase_pd *pd); /* init pstate to 'not panic' state; errCode to P_NO_ERR, nerr to zero */
 #endif
 
 /* Pinv_valfn: type of a pointer to an invalid val function */

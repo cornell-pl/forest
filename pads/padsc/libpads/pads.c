@@ -35,10 +35,10 @@ do {
   if (elt->len) {
     size_t pos_offset = elt->len - tp->remain;
     (pos).byte        = pos_offset + 1;
-    (pos).offset = elt->offset + pos_offset;
+    (pos).offset      = elt->offset + pos_offset;
   } else {
     (pos).byte        = 0;
-    (pos).offset = elt->offset;
+    (pos).offset      = elt->offset;
   }
 } while (0)
 /* END_MACRO */ 
@@ -54,31 +54,29 @@ do {
   if (remain > offset) {
     remain -= offset;
   } else {
-    offset -= remain;
     while (1) {
+      offset -= remain;
       elt = elt->next;
       if (elt == pads->head) break;
-      if (!elt->len) continue;
-      /* now at first byte of next elt */
       remain = elt->len;
+      /* now at first byte of next elt */
       if (remain > offset) {
 	remain -= offset;
 	break;
       }
-      offset -= remain;
     }
   }
   /* either we hit pads->head or we got to the proper spot */
   if (elt == pads->head) {
     (pos).num         =  0;
     (pos).byte        =  0;
-    (pos).offset = -1;
+    (pos).offset      = -1;
     P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_PLUS called with bad offset");
   } else {
     size_t pos_offset = elt->len - remain;
     (pos).num         = elt->num;
     (pos).byte        = pos_offset + 1;
-    (pos).offset = elt->offset + pos_offset;
+    (pos).offset      = elt->offset + pos_offset;
   }
 } while (0)
 /* END_MACRO */ 
@@ -96,32 +94,32 @@ do {
   if (avail >= offset) {
     remain += offset;
   } else {
-    offset -= avail; /* note offset still > 0 */
     while (1) {
+      offset -= avail; /* note offset still > 0 */
       elt = elt->prev;
       if (elt == pads->head) break;
-      if (!elt->len) continue;
+      if (!elt->len) { avail = 0; continue; }
       remain = 1;
       offset--;
+      avail = elt->len - 1;
       /* now at last byte of prev elt */
       if (avail >= offset) {
 	remain += offset;
 	break;
       }
-      offset -= avail; /* note offset still > 0 */
     }
   }
   /* either we hit pads->head or we got to the proper spot */
   if (elt == pads->head) {
     (pos).num         =  0;
     (pos).byte        =  0;
-    (pos).offset = -1;
+    (pos).offset      = -1;
     P_WARN(pads->disc, "XXX_REMOVE PDCI_IO_GETPOS_MINUS called with bad offset");
   } else {
     size_t pos_offset = elt->len - remain;
     (pos).num         = elt->num;
     (pos).byte        = pos_offset + 1;
-    (pos).offset = elt->offset + pos_offset;
+    (pos).offset      = elt->offset + pos_offset;
   }
 } while (0)
 /* END_MACRO */ 
@@ -4892,7 +4890,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.122 2003-11-03 21:54:17 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.123 2003-11-10 20:08:05 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
