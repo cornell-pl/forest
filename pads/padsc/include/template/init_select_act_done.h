@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
   P_t              *pads;
   Pdisc_t           my_disc = Pdefault_disc;
   Pio_disc_t       *io_disc = 0;
+  Ppos_t            bpos, epos;
   PADS_TY()         rep;
   PADS_TY(_pd)      pd;
   PADS_TY(_m)       m;
@@ -41,6 +42,9 @@ int main(int argc, char** argv) {
 #endif /* PADS_HDR_TY */
   char             *inName  = 0;
 
+#ifdef PRE_LIT_LWS
+  my_disc.pre_lit_lws = PRE_LIT_LWS;
+#endif
 #ifdef WSPACE_OK
   my_disc.flags |= (Pflags_t)P_WSPACE_OK;
 #endif
@@ -108,7 +112,12 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
+    P_io_getPos(pads, &bpos, 0);
     PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep);
+    P_io_getPos(pads, &epos, 0);
+    if (P_POS_EQ(bpos, epos)) {
+      error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
+    }
     if (DO_SELECT(pads, pd_ptr, rep_ptr)) {
       DO_ACT(pads, pd_ptr, rep_ptr);
     }

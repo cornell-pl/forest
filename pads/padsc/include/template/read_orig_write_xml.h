@@ -30,18 +30,22 @@ int main(int argc, char** argv) {
   P_t              *pads;
   Pdisc_t           my_disc = Pdefault_disc;
   Pio_disc_t       *io_disc = 0;
+  Ppos_t            bpos, epos;
   PADS_TY()         rep;
   PADS_TY(_pd)      pd;
   PADS_TY(_m)       m;
 #ifdef PADS_HDR_TY
-  PADS_HDR_TY()         hdr_rep;
-  PADS_HDR_TY(_pd)      hdr_pd;
-  PADS_HDR_TY(_m)       hdr_m;
+  PADS_HDR_TY()     hdr_rep;
+  PADS_HDR_TY(_pd)  hdr_pd;
+  PADS_HDR_TY(_m)   hdr_m;
 #endif /* PADS_HDR_TY */
   Sfio_t           *io;
   char             *inName  = 0;
   char             *outName = 0;
 
+#ifdef PRE_LIT_LWS
+  my_disc.pre_lit_lws = PRE_LIT_LWS;
+#endif
 #ifdef WSPACE_OK
   my_disc.flags |= (Pflags_t)P_WSPACE_OK;
 #endif
@@ -121,13 +125,19 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
+    P_io_getPos(pads, &bpos, 0);
     if (P_OK != PADS_TY(_read)(pads, &m, EXTRA_READ_ARGS &pd, &rep)) {
       error(2, "<note>read returned error</note>");
     } else {
       error(2, "<note>read returned OK</note>");
     }
+    P_io_getPos(pads, &epos, 0);
+    if (P_POS_EQ(bpos, epos)) {
+      error(2, "<note>read call did not advance IO cursor, stopping read loop</note>");
+      break;
+    }
     if (P_ERR == PADS_TY(_write_xml_2io)(pads, io, EXTRA_READ_ARGS &pd, &rep, (const char*)0, 0)) {
-      error(ERROR_FATAL, "*** IO error during write");
+      error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
   }
   if (P_ERR == P_io_close(pads)) {
