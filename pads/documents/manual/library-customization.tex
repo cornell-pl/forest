@@ -5,7 +5,6 @@ The \pads{} core library is parameterized by a main discpline and by
 an IO discipline that allow users to customize the behavior of the
 system.
 
-
 \section{The IO Discpline and Defining Records}
 IO discipline values, which have type \cd{Pio\_disc\_t}, control the
 'raw' reading of data from a file or from some other data source.  
@@ -21,33 +20,23 @@ a creation function supplied by the \pads{} system.  The resulting IO
 discipline is then installed by passing it as an argument to either
 \cd{P\_open} or to \cd{P\_set\_io\_disc}.
 
-\subsection{Closing an IO discipline}
-When an IO discipline is no longer needed, the user should unmake it.
-The function \cd{P\_io\_disc\_unmake} explicitly deallocates an IO
-discipline. In addition, the function \cd{P\_close}
-deallocates the installed IO discipline.  
-The function \cd{P\_set\_io\_disc} deallocates the previously
-installed discipline.
-If desired, an IO discipline can be preserved using
-\cd{P\_close\_keep\_io\_disc} or \cd{P\_set\_io\_disc\_keep\_old}, in
-which case it can be re-used in a future \cd{P\_open} or
-\cd{P\_set\_io\_disc} call. 
+\begin{description}
+\item
+[\cd{Pio\_disc\_t * P\_fwrec\_make(size\_t leader\_len, size\_t data\_len, size\_t trailer\_len)}]
+ Instantiates an instance of \texttt{fwrec}, a discipline for fixed-width
+ records.  The parameter \cd{data\_len} specifies the number of data bytes per record,
+ while \cd{leader\_len} and \cd{trailer\_len} specify the number of bytes that
+ occur before and after the data bytes within each record (either or
+ both can be zero).  Thus the total record size in bytes is the sum
+ of the three arguments.  
 
+\item[\cd{Pio\_disc\_t * P\_fwrec\_noseek\_make(size\_t leader\_len, 
+          size\_t data\_len, size\_t trailer\_len)}]
+Instantiates an instance of \texttt{fwrec\_noseek}, a version of \texttt{norec}
+that does not require that the SFIO stream is seekable.
+
+\end{description}
 \begin{verbatim}
-Pio_disc_t * P_fwrec_make(size_t leader_len, size_t data_len, size_t trailer_len);
-/* Instantiates an instance of fwrec, a discipline for fixed-width
- * records.  data_len specifies the number of data bytes per record,
- * while leader_len and trailer_len specifies the number of bytes that
- * occur before and after the data bytes within each record (either or
- * both can be zero).  Thus the total record size in bytes is the sum
- * of the 3 arguments.  
- */
-
-Pio_disc_t * P_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len);
-/* Instantiates an instance of fwrec_noseek, a version of norec
- * that does not require that the sfio stream is seekable.
- */
-
 Pio_disc_t * P_ctrec_make(Pbyte termChar, size_t block_size_hint);
 /* Instantiates an instance of ctrec, a discipline for
  * character-terminated variable-width records. termChar is the
@@ -111,6 +100,20 @@ Pio_disc_t * P_norec_noseek_make(size_t block_size_hint);
  */
 \end{verbatim}
 
+
+\subsection{Closing an IO discipline}
+When an IO discipline is no longer needed, the user should unmake it.
+The function \cd{P\_io\_disc\_unmake} explicitly deallocates an IO
+discipline. In addition, the function \cd{P\_close}
+deallocates the installed IO discipline.  
+The function \cd{P\_set\_io\_disc} deallocates the previously
+installed discipline.
+If desired, an IO discipline can be preserved using
+\cd{P\_close\_keep\_io\_disc} or \cd{P\_set\_io\_disc\_keep\_old}, in
+which case it can be re-used in a future \cd{P\_open} or
+\cd{P\_set\_io\_disc} call. 
+
+\subsection{Implementations}
 Implementations of the standard IO disciplines can be found in
 \texttt{libpads/default\_io\_disc.c}.  Anyone planning to implement a new IO
 discipline should consult \texttt{default\_io\_disc.c}.
