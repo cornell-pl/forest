@@ -7,7 +7,7 @@ set PADSCDIR = /home/gruber/knb/padsc/
 set SMLBIN = $knbarchdir/bin/smlruntime
 
 # 
-IMAGE=${PADSCDIR}/lib/padsc
+set IMAGE = ${PADSCDIR}/lib/padsc
 
 
 exec ${SMLBIN} @SMLload=${IMAGE} ${PADSCDIR} $* -I ${PADSCDIR}include \
