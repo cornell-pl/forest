@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
    */
   ctr = 0;
   while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == PDC_a_char_lit_scan(pdc, '|', '\n', 1, &c, &n)) {
+    if (PDC_OK == PDC_a_char_lit_scan(pdc, '|', '\n', 1, 1, &c, &n)) {
       if (c == '|') { 
 	ctr++;
 	PDC_IO_checkpoint(pdc, 1);

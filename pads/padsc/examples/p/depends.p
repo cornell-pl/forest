@@ -20,7 +20,7 @@ int check(PDC_int32 t, auth_id_t user){
 
 Precord Pstruct line{
        intList    f;
-       Pint32     a : a == f.length;
+  '.'; Pint32     a : a == f.length;
   ' '; auth_id_t  user;
   ' '; Pint32     t : check(t, user);
 }

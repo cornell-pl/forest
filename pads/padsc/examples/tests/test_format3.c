@@ -4,9 +4,9 @@
 int main(int argc, char** argv) {
   PDC_t           *pdc;
   PDC_IO_disc_t   *io_disc;
-  intList         f3data;
-  intList_pd      f3pd;
-  intList_m       f3m;
+  entry         f3data;
+  entry_pd      f3pd;
+  entry_m       f3m;
 
   io_disc = PDC_norec_make(0);
   if (!io_disc) {
@@ -21,11 +21,11 @@ int main(int argc, char** argv) {
   }
 
   /* INIT f3data, f3pd -- must do this for all variable data types */
-  intList_init   (pdc, &f3data);
-  intList_pd_init(pdc, &f3pd);
+  entry_init   (pdc, &f3data);
+  entry_pd_init(pdc, &f3pd);
 
   /* INIT mask -- must do this! */
-  intList_m_init(pdc, &f3m, PDC_CheckAndSet);
+  entry_m_init(pdc, &f3m, PDC_CheckAndSet);
 
   if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.format3")) {
     error(2, "*** PDC_IO_fopen failed ***");
@@ -38,20 +38,20 @@ int main(int argc, char** argv) {
   while (!PDC_IO_at_EOF(pdc)) {
     PDC_error_t res;
     int i;
-    error(0, "\nCalling intList_read");
-    res= intList_read(pdc, &f3m, &f3pd, &f3data);
+    error(0, "\nCalling entry_read");
+    res= entry_read(pdc, &f3m, &f3pd, &f3data);
 
     if (res == PDC_OK) {
       error(0|ERROR_PROMPT, "Record okay:\t");
-      for (i = 0; i < f3data.length; i++){
-	error(0|ERROR_PROMPT, "%d", f3data.elts[i]);
-	if (i != f3data.length-1) {
+      for (i = 0; i < f3data.i.length; i++){
+	error(0|ERROR_PROMPT, "%d", f3data.i.elts[i]);
+	if (i != f3data.i.length-1) {
 	  error(0|ERROR_PROMPT, "|");
 	}  else {
 	  error(0, "");
 	}
       }
-    } else if (f3data.length) {
+    } else if (f3data.i.length) {
       error(0, "Record not okay");
     }
   }

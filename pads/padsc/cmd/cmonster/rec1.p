@@ -1,4 +1,6 @@
 /* record input format */
+extern int i;
+
 Precord Pstruct in_rec {
   Pa_string_FW(:8:) s;
 };

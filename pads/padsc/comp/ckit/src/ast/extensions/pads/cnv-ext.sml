@@ -323,6 +323,8 @@ structure CnvExt : CNVEXT = struct
 			     Ast.SIGNASSUMED)
     val CTintTys = [CTint, CTuint, CTchar, CTuchar]
 
+    val CTstring = Ast.Pointer CTuchar
+
     fun CTcnvType (ct : PT.ctype) : (acty * Ast.storageClass) 
 	= cnvType(false,P.pctToPDT ct)
 
@@ -413,6 +415,15 @@ structure CnvExt : CNVEXT = struct
             if List.exists (fn cty => equalType(cty, expTy)) CTtys
 	    then ()
 	    else PE.error (genErrMsg (CTtoString expTy)) 
+	end
+
+    fun getExpEqualTy(expPT, CTtys, genErrMsg) = 
+	let val (expTy, expAst) = cnvExpression expPT
+	in
+           if List.exists (fn cty => equalType(cty, expTy)) CTtys
+	   then (true, expTy)
+	   else (PE.error (genErrMsg (CTtoString expTy));
+                 (false, expTy))
 	end
 
     fun expAssignTy(expPT, CTtys, genErrMsg) = 
@@ -2277,7 +2288,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						PT.IfThen(
 						 P.neqX(PL.PDC_ERROR,
 						       PL.scanFunX(scanFieldName, PT.Id pdc, 
-								   expr, expr, P.trueX,
+								   expr, expr, P.trueX, P.trueX,
 								   P.zero,
                                                                    P.addrX (PT.Id "n"))),
 						 (* PDC_PS_unsetPanic(pd) *)
@@ -2312,7 +2323,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				   PT.IfThenElse(
 				      P.eqX(PL.PDC_OK,
 					    PL.scanFunX(scanFieldName, 
-							PT.Id pdc, expr, expr, P.trueX,
+							PT.Id pdc, expr, expr, P.trueX, P.trueX,
 							P.zero, P.addrX (PT.Id "n"))),
 				      PT.Compound(
 					 [PT.IfThen(
@@ -3607,30 +3618,37 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       let fun doOne (constr:pcexp PX.PConstraint) = 
                               case constr 
                               of PX.Sep exp => (
-				 expEqualTy(exp, CTintTys,fn s=>("Separator expression for array "^
-								 name ^" has type "^s^". Expected "^
-								 "type char."));
-				 let val pTyName = PL.charlit
-				     val readFun = readSuf pTyName
-				     val scanFun = SOME(Atom.atom(scanSuf pTyName))
-				     val writeFun = lookupLitWrite pTyName
+
+				 let val (okay,expTy) = getExpEqualTy(exp, CTstring :: CTintTys,
+								      fn s=>("Separator expression for array "^
+									     name ^" has type "^s^". Expected "^
+									     "type char or char*."));
+				     val isString = okay andalso equalType(expTy, CTstring)
+				     val (readFun,scanFun,writeFun) = 
+					     if isString then
+						 (PL.strlitRead, PL.strlitScan, PL.strlitWriteBuf)
+					     else
+						 (readSuf PL.charlit, scanSuf PL.charlit, lookupLitWrite PL.charlit)
 				     val (valOpt,_,_,_) = evalExpr exp
 				 in
-				    (SOME (exp, valOpt, readFun, scanFun, writeFun), NONE,NONE,NONE)
+				    (SOME (exp, valOpt, isString, readFun, scanFun, writeFun), NONE,NONE,NONE)
                                  end
 
                               (* end Sep case *))
                               |  PX.Term exp => (
-				 expEqualTy(exp, CTintTys,fn s=>("Terminator expression for array "^
-								 name ^" has type "^s^". Expected "^
-								 "type char."));
-                                 let val pTyName = PL.charlit 
-				     val readFun = readSuf pTyName
-				     val scanFun = SOME(Atom.atom(scanSuf pTyName))
-				     val writeFun = lookupLitWrite pTyName
+                                 let val (okay,expTy) = getExpEqualTy(exp, CTstring :: CTintTys,
+								      fn s=>("Terminator expression for array "^
+									     name ^" has type "^s^". Expected "^
+									     "type char or char*."));
+				     val isString = okay andalso equalType(expTy, CTstring)
+				     val (readFun,scanFun,writeFun) = 
+					     if isString then
+						 (PL.strlitRead, PL.strlitScan, PL.strlitWriteBuf)
+					     else
+						 (readSuf PL.charlit, scanSuf PL.charlit, lookupLitWrite PL.charlit)
 				     val (valOpt,_,_,_) = evalExpr exp
 				 in
-				   (NONE, SOME (exp,valOpt,readFun,scanFun,writeFun), NONE, NONE)
+				   (NONE, SOME (exp,valOpt, isString, readFun,scanFun,writeFun), NONE, NONE)
                                  end
                               (* end Term case *))
                               |  PX.Forall (r as {index,range,body}) => 
@@ -3659,14 +3677,25 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 							 " have the same value."
 			  val sepTermDynamicCheck = 
 			      case (sepXOpt, termXOpt) 
-			      of (SOME(_, SOME i, _, _, _), SOME(_, SOME j, _, _, _)) => 
+			      of (SOME(_, SOME i, _, _, _, _), SOME(_, SOME j, _, _, _, _)) => 
 				  if i = j then (PE.error (sepTermErrorMsg^"."); [])
 				  else []
-			      | (SOME(sepX, _, _, _, _), SOME(termX, _, _, _, _)) => 
-				      [PT.IfThen(P.eqX(sepX,termX),
+			      | (SOME(sepX, _, sepIsString, _, _, _), SOME(termX, _, termIsString, _, _, _)) => 
+				      let fun strCharCmp(sX,cX) = P.condX(P.eqX(PL.strLen(sX), P.intX 1),
+									P.eqX(P.subX(sX,P.zero), cX), P.falseX)
+					  val testX = if sepIsString andalso termIsString
+					              then P.eqX(P.zero, PL.strCmp(sepX, termX))
+						      else if (not sepIsString) andalso (not termIsString)
+						      then P.eqX(sepX,termX)
+						      else if sepIsString
+						      then strCharCmp(sepX, termX)
+						      else strCharCmp(termX, sepX)
+				      in
+				      [PT.IfThen(testX,
 						 PL.userErrorS(PT.Id pdc, locX, 
 							       PL.PDC_ARRAY_SEP_TERM_SAME_ERR, readName, 
 							       PT.String (sepTermErrorMsg^": %c"), [sepX]))]
+				      end
 			      |  (_,_) => []
 		      in
 			  (sepXOpt, termXOpt, arrayXOpt, genXOpt, sepTermDynamicCheck)
@@ -3789,6 +3818,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  val foundTerm    = "foundTerm"
 		 val reachedLimit = "reachedLimit"
 
+                 fun eqTest (isString, e1, e2) = if isString 
+						     then P.eqX(P.zero, PL.strCmp(e1,e2))
+						 else P.eqX(e1,e2)
 
 		 val resBufferX   = fieldX(rep, elts)
 		 val indexX       = P.minusX(fieldX(rep,length), P.intX 1)
@@ -3821,16 +3853,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  (* -- fragments for while loop for reading input *)
 
                  (* -- code for checking if terminator is next in input *)
-                 fun genTermCheck NONE = []
-                   | genTermCheck (SOME (exp, cExp, readFun, scanFun, writeFun)) = 
-                      [P.mkCommentS("Looking for terminator"),
-	               PL.incNestLevS(PT.Id pdc),
-		       PT.IfThen(
-                          PL.readFunChkX(PL.PDC_OK, readFun, PT.Id pdc, P.addrX(PT.Id tm),  [], 
-						             P.addrX(PT.Id tpd), exp),
-			  PT.Compound
-                           [P.assignS(PT.Id foundTerm, P.trueX)]),
-		       PL.decNestLevS(PT.Id pdc)]
 
                  (* -- Code for checking termination conditions *)
                  fun genBreakCheckX (termOpt, sizeOpt) = 
@@ -3859,15 +3881,12 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
                  (* -- Check that we found separator on last loop. *)
                  fun genSepCheck NONE = []
-                   | genSepCheck (SOME (sepX, cSepX, readSep, scanSepOpt, writeSep)) = 
-                      let val scanSep = Option.valOf scanSepOpt (* must exist *)
-			                handle Option => (PE.error "Expected scan function."; 
-							  Atom.atom "bogus")
-			  val (scanStopX, chkTermSs) = 
+                   | genSepCheck (SOME (sepX, cSepX, isString, readSep, scanSep, writeSep)) = 
+                      let val (scanStopX, chkTermSs) = 
 			      case termXOpt of NONE => (P.intX 0, [])
-			    | SOME(termX,cTermX,_,_,_) => 
+			    | SOME(termX,cTermX,_,_,_,_) => 
 				  let val chkTermSs = 
-				      [PT.IfThen(P.eqX(PT.Id "c", termX),
+				      [PT.IfThen(eqTest(isString, PT.Id "c", termX),
 					 PT.Compound[
 				          recordArrayErrorS([locES], locX,
 							    PL.PDC_ARRAY_EXTRA_BEFORE_TERM,true,
@@ -3877,22 +3896,24 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  in
 				    (termX, chkTermSs)
 				  end
+			  val gapDecl = if isString then P.varDeclS'(P.ccharPtr, "c")
+					else P.varDeclS'(P.uchar, "c")
 
 		      in
                        [P.mkCommentS("Array not finished; read separator."),
                          PT.Compound[
-	 		 P.varDeclS'(P.uchar, "c"),
+                         gapDecl,
 		 	 P.varDeclS'(PL.sizePCT, "n"),
 			 locBS,
 		         PT.IfThenElse(
 			    P.eqX(PL.PDC_OK,
-				  PL.scanFunX(Atom.toString scanSep, PT.Id pdc, 
-					      sepX, scanStopX, P.trueX, P.addrX (PT.Id "c"),
+				  PL.scanFunX(scanSep, PT.Id pdc, 
+					      sepX, scanStopX, P.trueX, P.falseX,P.addrX (PT.Id "c"),
 					      P.addrX (PT.Id "n"))),
 			    PT.Compound[
                               PT.IfThen(amCheckingBasicE NONE, 
 	  		       PT.Compound[ (* if am checking *)
-			         PT.IfThenElse(P.andX(P.eqX(PT.Id "c", sepX),P.gtX(PT.Id "n", P.zero)),
+			         PT.IfThenElse(P.andX(eqTest(isString, PT.Id "c", sepX),P.gtX(PT.Id "n", P.zero)),
 				    recordArrayErrorS([locES],locX,PL.PDC_ARRAY_EXTRA_BEFORE_SEP, true,
 						      readName,"", [],false),
                                     PT.Compound (chkTermSs))])],
@@ -3947,8 +3968,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			 fun recoverToCharSs (which, scan, forX, stopX) = [
 				  P.mkCommentS("Try to recover to " ^ which ^"."),
 				  PT.IfThenElse(P.eqX(PL.PDC_OK,
-						   PL.scanFunX(Atom.toString scan, PT.Id pdc, 
-							       forX, stopX, P.falseX, P.zero, P.zero)),
+						   PL.scanFunX(scan, PT.Id pdc, 
+							       forX, stopX, P.trueX, P.falseX, P.zero, P.zero)),
                                     PT.Compound[
 				     P.mkCommentS("We recovered; restored invariant.")],
 				    PT.Compound(recoveryFailedSs)
@@ -3956,30 +3977,19 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			 val recoverSs = 
 			 case (sepXOpt, termXOpt, maxOpt) 
                          of (NONE,NONE,_) => noRecoverySs
-                         |  (SOME (sepX, _, _, NONE, _), NONE, _) => noRecoverySs
-                         |  (SOME (sepX, _, _, SOME sepScan, _), NONE, NONE) => 
+                         |  (SOME (sepX, _, _,_, sepScan, _), NONE, NONE) => 
                                recoverToCharSs("separator", sepScan, sepX, P.intX 0)
-                         |  (SOME (sepX, _,_ , SOME sepScan, _), NONE, SOME _) => 
+                         |  (SOME (sepX, _,_,_, sepScan, _), NONE, SOME _) => 
 			       [PT.IfThenElse(PT.Id reachedLimit,
 				 PT.Compound(noRecoverySs), 
 				 PT.Compound(recoverToCharSs ("separator", sepScan, sepX, P.intX 0)))]
-                         |  (NONE, SOME(termX, _, _, NONE, _), _ ) => noRecoverySs
-                         |  (NONE, SOME(termX, _, _, SOME termScan, _), _ ) => 
+                         |  (NONE, SOME(termX, _,_, _, termScan, _), _ ) => 
 			       recoverToCharSs("terminator", termScan, termX, P.intX 0)
-                         |  (SOME (sepX, _, _, SOME sepScan, _), SOME(termX, _, _, SOME termScan,_), _ ) =>
-			      (if Atom.sameAtom (sepScan, termScan)
+                         |  (SOME (sepX, _, _, _, sepScan, _), SOME(termX, _, _,_, termScan,_), _ ) =>
+			      (if sepScan = termScan
 			       then recoverToCharSs("separator and/or terminator", termScan, sepX,termX)
-                               else (PE.error ("Different scanning functions for separators and terminators "^
-					      "not yet implemented."); noRecoverySs))
-			 |  (SOME (sepX, _, _, SOME sepScan,_), SOME(termX, _, _, NONE,_), SOME _ ) =>
-			       [PT.IfThenElse(PT.Id reachedLimit,
-				 PT.Compound(noRecoverySs), 
-				 PT.Compound(recoverToCharSs ("separator", sepScan, sepX, P.intX 0)))]
-			 |  (SOME (sepX, _, _, SOME sepScan,_), SOME(termX, _, _, NONE,_), NONE ) =>
-                               recoverToCharSs("separator", sepScan, sepX, P.intX 0)
-			 |  (SOME (sepX, _, _, NONE,_), SOME(termX, _, _, SOME termScan,_),  _ ) =>
-			       recoverToCharSs("terminator", termScan, termX, P.intX 0)
-			 |  (SOME (sepX, _, _, NONE,_), SOME(termX, _, _, NONE,_),  _ ) => noRecoverySs
+                               else (PE.error ("Currently, separators and terminators must both be characters or both be strings.");
+					      noRecoverySs))
 		     in
 			 PT.Compound recoverSs
 		     end
@@ -3987,6 +3997,32 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					   PT.Compound[genPanicRecoveryS(sepXOpt, termXOpt, maxOpt)])]
 
                  (* -- while loop for reading input *)
+
+		 fun readTerm (termRead, termX, bdyOpt) = 
+		     let val bodyS = case bdyOpt of NONE => 
+			                  PT.IfThen(P.eqX(PL.PDC_OK, PT.Id "result"),
+				           PT.Compound[P.assignS(PT.Id foundTerm, P.trueX)])
+		                     | SOME bdyS => 
+			                  PT.IfThenElse(P.eqX(PL.PDC_OK, PT.Id result),
+							PT.Compound[P.assignS(PT.Id foundTerm, P.trueX)],
+							PT.Compound[bdyS])
+		     in
+			 PT.Compound
+			 ([P.varDeclS'(PL.toolErrPCT, "result"),
+			   PL.incNestLevS(PT.Id pdc)]
+			  @ PL.chkPtS(PT.Id pdc, readName)
+			  @ [P.assignS(PT.Id result, PL.readFunX(termRead, PT.Id pdc, 
+						    P.addrX(PT.Id tm), [], P.addrX(PT.Id tpd), termX))] 
+			  @ PL.restoreS(PT.Id pdc, readName)
+			  @ [PL.decNestLevS(PT.Id pdc), bodyS])
+		     end
+
+                 fun genTermCheck NONE = []
+                   | genTermCheck (SOME (exp, cExp, isString, readFun, scanFun, writeFun)) = 
+                      [P.mkCommentS("Looking for terminator"), 
+		       readTerm (readFun, exp,NONE)]
+
+
                  val whileSs = 
 		     let fun insLengthChk bdyS = 
 			    case (maxOpt,maxConstOpt) 
@@ -3998,20 +4034,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      (* end case *))
 			    | (_,_) => bdyS
 
+
 			 fun insTermChk bdyS = 
 			     case termXOpt of NONE => PT.Compound[bdyS]
-			     | SOME (termX, _, termRead, _,_) => (
-				PT.Compound[PL.incNestLevS(PT.Id pdc),
-                                PT.IfThenElse(
-                                 PL.readFunChkX(PL.PDC_OK, termRead, PT.Id pdc, 
-						P.addrX (PT.Id tm), [], P.addrX (PT.Id tpd),
-						termX),
-				 PT.Compound[
-				  PL.decNestLevS(PT.Id pdc),
-				  P.assignS(PT.Id foundTerm, P.trueX)
-                                 ],
-                                 PT.Compound[PL.decNestLevS(PT.Id pdc), bdyS])
-                             (* end case SOME *)])
+			     | SOME (termX, _,_, termRead, termScan,_) => (readTerm (termRead, termX, SOME bdyS))
 			 val bdyS = 
 			     PT.While(P.trueX,  
                                  PT.Compound(
@@ -4037,16 +4063,15 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  (* -- Check if there was junk before trailing terminator *)
 	         val trailingJunkChkSs = 
 		     case termXOpt of NONE => []
-                     | SOME (termX, _, _, NONE, _) => (PE.error "Expected a scan function"; [])
-		     | SOME (termX, _, _, SOME termScan,_) => 
+		     | SOME (termX, _,_, _, termScan,_) => 
 			 [P.mkCommentS("End of loop. Read trailing terminator if there was trailing junk."),
 			  PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd),P.notX(PT.Id foundTerm)),
 			   PT.Compound[
 			   locBS,
 		           PT.IfThenElse(
 			     P.eqX(PL.PDC_OK,
-				  PL.scanFunX(Atom.toString termScan, PT.Id pdc, 
-					      termX, termX, P.trueX, P.zero,
+				  PL.scanFunX(termScan, PT.Id pdc, 
+					      termX, termX, P.trueX, P.falseX, P.zero,
 					      P.zero)),
                              PT.Compound[
 			      PT.IfThen(amCheckingBasicE NONE, 
@@ -4195,7 +4220,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		 val writeLastBaseSs =  [PT.IfThen(P.neqX(lengthX, P.zero),PT.Compound(writeBaseSs))]
 
 		 val writeSepSs = case sepXOpt of NONE => [] 
-		                  | SOME(e,_, _,_,writeSep) => writeFieldSs(writeSep, [e], true)
+		                  | SOME(e,_, _,_,_,writeSep) => writeFieldSs(writeSep, [e], true)
 		 val writeArraySs = [PT.Compound (
 				     [P.varDeclS'(P.int, "i"),
 				      PT.For(P.assignX(PT.Id "i",P.zero),
@@ -4203,7 +4228,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					     P.postIncX (PT.Id "i"),
 					     PT.Compound (writeBaseSs @ writeSepSs) )] @ writeLastBaseSs)]
 		 val writeTermSs = case termXOpt of NONE => []
-		                   | SOME(e, _, _,_,writeTerm) => writeFieldSs(writeTerm, [e], true)
+		                   | SOME(e, _,_, _,_,writeTerm) => writeFieldSs(writeTerm, [e], true)
 		 val bodySs = writeArraySs @ writeTermSs
 		 val writeFunEDs = genWriteFuns(writeName, isRecord, cParams, pdPCT, canonicalPCT, bodySs)
 

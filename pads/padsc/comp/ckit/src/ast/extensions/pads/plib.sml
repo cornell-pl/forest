@@ -73,6 +73,7 @@ struct
   val PDCI_error_typed_value = PT.Id "PDCI_error_typed_value"
   val PDCI_vtable_t = PT.TypedefName "PDCI_vtable_t"
 
+
   val toolErrPCT   = P.makeTypedefPCT "PDC_error_t"
   val toolStatePCT = P.makeTypedefPCT "PDC_t"
   val toolDiscPCT  = P.makeTypedefPCT "PDC_disc_t"
@@ -92,7 +93,10 @@ struct
 
   val charlit      = "PDC_a_char_lit"
   val strlit       = "PDC_a_str_lit"
+  val strlitRead   = "PDC_Cstr_lit_read"
+  val strlitScan   = "PDC_Cstr_lit_scan"
   val strlitWrite  = "PDC_a_Cstr_lit"
+  val strlitWriteBuf  = "PDC_a_Cstr_lit_write2buf"
   val stringPCT    = P.makeTypedefPCT "PDC_string"
   val str          = "str"
   val len          = "len"
@@ -399,8 +403,12 @@ struct
       P.eqX(expectedValX, readFunX(n,pdc,loc,optArgs,pd,res))
 
   fun scanFunX(n:string, pdc:PT.expression, c : PT.expression, s : PT.expression,eatLit:PT.expression,
-	                res:PT.expression, offset:PT.expression) = 
-      PT.Call(PT.Id n, [pdc,c,s,eatLit,res,offset])
+	       eatStop: PT.expression, res:PT.expression, offset:PT.expression) = 
+      PT.Call(PT.Id n, [pdc,c,s,eatLit,eatStop,res,offset])
+
+  fun scanFunChkX(expectedValX, n:string, pdc:PT.expression, c : PT.expression, s : PT.expression,eatLit:PT.expression,
+	       eatStop: PT.expression, res:PT.expression, offset:PT.expression) = 
+      P.eqX(expectedValX, scanFunX(n,pdc,c,s,eatLit,eatStop,res, offset))
 
   fun nstPrefixWhat(outstr, pnst, prefix, what) = 
       PT.Expr(PT.Call(PT.Id "PDCI_nst_prefix_what", [outstr, pnst, prefix, what]))
@@ -458,6 +466,7 @@ struct
 					    PT.Cast(P.voidPtr, srcX), sizeX])
   fun memcpyS (dstX, srcX, sizeX) = PT.Expr(memcpyX(dstX, srcX,sizeX))
   fun strLen(s:PT.expression)= PT.Call(PT.Id "strlen", [s])
+  fun strCmp(s1:PT.expression, s2: PT.expression )= PT.Call(PT.Id "strcmp", [s1,s2])
 
 (* -- Other helper functions *)
   fun swapBytesS(exp) = PT.Expr(PT.Call(PT.Id "PDC_swap_bytes",

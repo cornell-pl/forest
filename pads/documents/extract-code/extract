@@ -1,8 +1,7 @@
 #!/bin/sh
 #will be filled in by install script
 
-ARCH=`${PADS_HOME}/ast-base/bin/package`
-SMLBIN=${PADS_HOME}/binlinks/smlruntime.${ARCH}
+SMLBIN=${PADS_HOME}/binlinks/smlruntime.${AST_ARCH}
 IMAGE=${PADS_HOME}/documents/extract-code/extract-code
  
 exec ${SMLBIN} @SMLload=${IMAGE}  $* < /dev/null

@@ -163,17 +163,18 @@ ACCUM STUFF:
 padsc compiler todo
 -------------------
 NEW
+
+
+DEFER
+  * set parse descriptor errCode to PDC_NoError if read successfully
+  * if checkset mask is ignore or no-check, then set error descriptor
+    to indicate that status: PDC_Skipped
   * set parse descriptor errCode to PDC_NotParsed in initialization
     function 
       -- can't do this as no requirement that init function will be called.
       -- also, might reuse parse descriptor multiple times.
       -- this issue really comes into play when we support partial reads.
-  * set parse descriptor errCode to PDC_NoError if read successfully
-  * if checkset mask is ignore or no-check, then set error descriptor
-    to indicate that status: PDC_Skipped
 
-
-DEFER
   * if a user-defined constraint involves a field that has errCode != PDC_NO_ERR,
     the error message should be something like
       "User constraint skipped due to error reading one of its parts"
