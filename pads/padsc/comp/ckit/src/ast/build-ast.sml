@@ -517,21 +517,21 @@ let
   fun checkNonIdRebinding (sym, ty, kind: string) : unit =
       case lookLocalScope sym
 	of SOME(B.TYPEDEF{location=loc, ...}) =>
-	    (error ("illegal redeclaration of " ^ kind ^ (Sym.name sym) ^
+	    (error ("illegal redeclaration of " ^  (Sym.name sym) ^
 		    ";\n   previously declared as typedef at " ^
 		    SM.locToString loc))
 	 | SOME(B.MEMBER{location=loc, ...}) =>
-	    (error ("illegal redeclaration of " ^ kind ^ (Sym.name sym) ^
+	    (error ("illegal redeclaration of " ^  (Sym.name sym) ^
 		    ";\n   previously declared as member at " ^
 		    SM.locToString loc))
 	 | SOME(B.TAG{location=loc, ...}) =>
-	    (error ("illegal redeclaration of " ^ kind ^ (Sym.name sym) ^
+	    (error ("illegal redeclaration of " ^ (Sym.name sym) ^
 		    ";\n   previously declared as tag at " ^
 		    SM.locToString loc))
 	 | NONE => () (* not previously bound in local scope *)
          | SOME(B.ID {location=loc,...}) => 
-	    (error ("illegal redeclaration of " ^ kind ^ (Sym.name sym) ^
-		    ";\nPreviously declared as id at " ^
+	    (error ("illegal redeclaration of " ^ (Sym.name sym) ^
+		    ";\nPreviously declared as identifier at " ^
 		    SM.locToString loc))
 (*	 | _ => bug "checkNonIdRebinding: unexpected binding" *)
 

@@ -1493,8 +1493,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
                       (* Generate CheckSet mask *)
 		      val baseMPCT = P.makeTypedefPCT(lookupTy(baseTy,mSuf, #mname))
-                      val mFields  = [(base, baseMPCT, SOME "Base CheckSet mask"),
-				       (user, PL.base_mPCT, SOME "User constraint")]
+                      val mFields  = [(base, baseMPCT, SOME "Base mask"),
+				       (user, PL.base_mPCT, SOME "Typedef mask")]
 		      val mED      = P.makeTyDefStructEDecl (mFields, mSuf name)
 		      val mDecls   = cnvExternalDecl mED
                       val mPCT     = P.makeTypedefPCT (mSuf name)		
@@ -2475,12 +2475,13 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     fun genEDBrief e = []
 		     val edVariants = mungeVariants genEDFull genEDBrief genEDMan variants
 		     val unionED = P.makeTyDefUnionEDecl(edVariants, (unSuf o edSuf) name)
-		     val (unionEDDecls, edTid) = cnvCTy unionED
+		     val (unionEDDecls, uedTid) = cnvCTy unionED
 		     val unionEDPCT = P.makeTypedefPCT((unSuf o edSuf) name)
 		     val structEDFields = [(nerr, P.int,NONE), (errCode, PL.errCodePCT, NONE),
 				  	   (loc, PL.locPCT,NONE), (panic, P.int,NONE),
 					   (tag, tagPCT,NONE), (value, unionEDPCT,NONE)]
 		     val edStructED = P.makeTyDefStructEDecl (structEDFields, edSuf name)
+		     val (edStructEDDecls, edTid) = cnvCTy edStructED
 		     val edPCT = P.makeTypedefPCT (edSuf name)			  
 
 		     (* Generate accumulator type *)
@@ -2958,7 +2959,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     @ canonicalDecls
 	             @ cnvExternalDecl mStructED
                      @ unionEDDecls
-	             @ cnvExternalDecl edStructED
+	             @ edStructEDDecls
 	             @ cnvExternalDecl accStructED
 	             @ cnvExternalDecl toStringED
                      @ (List.concat(List.map cnvExternalDecl initRepEDs))     (* init used in read function *)
@@ -3151,8 +3152,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 	         (* Generate CheckSet mask *)
 		 val mFields = [(element, P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname)),
-				  SOME "per-element checks"),
-				 (array,   PL.base_mPCT, SOME "entire array checks")]
+				  SOME "per-element"),
+				 (array,   PL.base_mPCT, SOME "entire array")]
 		 val mStructED = P.makeTyDefStructEDecl (mFields, mSuf name)
 		 val mStructDecls = cnvExternalDecl mStructED 
 		 val mPCT = P.makeTypedefPCT (mSuf name)			  
