@@ -9,8 +9,15 @@
 #include "pglx.h"
 #include "pglx-internal.h"
 
+
 /* ocaml header files can be found in /usr/common/lib/ocaml/caml */
-#include "caml/fail.h"      /* exception */
+
+/* XXX_RESTORE: */
+/* #include "caml/fail.h" */     /* exception */
+
+/* XXX_REMOVE: */ 
+#define failwith(s) error(2, s)
+
 /* include mary's stuff for c to ocaml rep functions */
 
 /* ================================================================================
