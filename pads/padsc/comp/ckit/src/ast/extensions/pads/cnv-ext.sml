@@ -1486,6 +1486,22 @@ structure CnvExt : CNVEXT = struct
                       val cleanupRepEDs = genCleanupEDs (cleanupSuf, rep, canonicalPCT)
                       val cleanupEDEDs  = genCleanupEDs ((cleanupSuf o edSuf), ed, edPCT)
 
+                      (* Generate Copy Function typedef case *)
+                      fun genCopyEDs(suf, base, aPCT) = 
+			  let val copyFunName = suf initFunName
+			      val dst = dstSuf base
+			      val src = srcSuf base
+			      val nestedCopyFunName = suf baseFunName
+			      val bodySs = 
+				  case #memChar typedefProps
+				   of TyProps.Static => [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT)]
+				   | _ => [PT.Expr(PT.Call(PT.Id nestedCopyFunName, 
+							    [PT.Id pdc, PT.Id dst, PT.Id src]))]
+			  in
+			      [genCopyFun(copyFunName, dst, src, aPCT, bodySs,false)]
+			  end
+		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT)
+		      val copyEDEDs  = genCopyEDs(copySuf o edSuf,  ed,  edPCT)
 		  in
 		        canonicalDecls
                       @ csmDecls
@@ -1495,6 +1511,8 @@ structure CnvExt : CNVEXT = struct
 		      @ (List.concat(List.map cnvExternalDecl initEDEDs))
 		      @ (List.concat(List.map cnvExternalDecl cleanupRepEDs))
 		      @ (List.concat(List.map cnvExternalDecl cleanupEDEDs))
+		      @ (List.concat(List.map cnvExternalDecl copyRepEDs))
+		      @ (List.concat(List.map cnvExternalDecl copyEDEDs))
                       @ (List.concat(List.map cnvExternalDecl readFunEDs))
 		      @ cnvExternalDecl initFunED
                       @ cnvExternalDecl resetFunED
@@ -3688,6 +3706,18 @@ structure CnvExt : CNVEXT = struct
 		   val cleanupRepEDs = genInitEDs (cleanupSuf, rep, canonicalPCT)
 		   val cleanupEDEDs  = genInitEDs ((cleanupSuf o edSuf), ed, edPCT)
 
+                      (* Generate Copy Function typedef case *)
+		   fun genCopyEDs(suf, base, aPCT) = 
+		       let val copyFunName = suf initFunName
+			   val dst = dstSuf base
+			   val src = srcSuf base
+			   val bodySs = [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT)]
+		       in
+			   [genCopyFun(copyFunName, dst, src, aPCT, bodySs,false)]
+		       end
+		   val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT)
+		   val copyEDEDs  = genCopyEDs(copySuf o edSuf,  ed,  edPCT)
+
 		  (* Generate enum to string function *)
 		  val cnvFunED = genEnumToStringFun(name, canonicalPCT, members)
 	      in
@@ -3700,6 +3730,8 @@ structure CnvExt : CNVEXT = struct
 		@ (List.concat(List.map cnvExternalDecl initEDEDs))
 		@ (List.concat(List.map cnvExternalDecl cleanupRepEDs))
 		@ (List.concat(List.map cnvExternalDecl cleanupEDEDs))
+		@ (List.concat(List.map cnvExternalDecl copyRepEDs))
+		@ (List.concat(List.map cnvExternalDecl copyEDEDs))
                 @ (List.concat(List.map cnvExternalDecl readFunEDs))
                 @ cnvExternalDecl initFunED
                 @ cnvExternalDecl resetFunED

@@ -177,8 +177,11 @@ Union tag: good vals:         11    bad vals:          0    pcnt-bad:    0.000
         SUMMING                     count:         11  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.remoteID]
 =====================================================================================================
-<top>.remoteID.unauthorized : char
+<top>.remoteID.unauthorized : typedef unknown_t
 =====================================================================================================
+-----------------------------------------------------------------------------------------------------
+<top>.remoteID.unauthorized.unknown_t : char
+-----------------------------------------------------------------------------------------------------
 good vals:         11    bad vals:          0    pcnt-bad:    0.000
   Characterizing char:  min '-' max '-' (based on ASCII encoding)
     => distribution of top 1 values out of 1 distinct values:
@@ -200,8 +203,11 @@ Union tag: good vals:         11    bad vals:          0    pcnt-bad:    0.000
         SUMMING                     count:         11  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.auth]
 =====================================================================================================
-<top>.auth.unauthorized : char
+<top>.auth.unauthorized : typedef unknown_t
 =====================================================================================================
+-----------------------------------------------------------------------------------------------------
+<top>.auth.unauthorized.unknown_t : char
+-----------------------------------------------------------------------------------------------------
 good vals:         11    bad vals:          0    pcnt-bad:    0.000
   Characterizing char:  min '-' max '-' (based on ASCII encoding)
     => distribution of top 1 values out of 1 distinct values:
@@ -291,8 +297,18 @@ good vals:         11    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:         11  pcnt-of-good-vals:  100.000
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<top>.contentLength : uint32
+<top>.contentLength : union contentOpt_t
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Union tag: good vals:         11    bad vals:          0    pcnt-bad:    0.000
+  Characterizing tag:  min len (    1)  max len (    1)
+    => distribution of top 1 values out of 1 distinct values:
+        val: len (    1)   count:         11  pcnt-of-good-vals:  100.000
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING            count:         11  pcnt-of-good-vals:  100.000
+[Describing each tag arm of <top>.contentLength]
+=====================================================================================================
+<top>.contentLength.len : uint32
+=====================================================================================================
 good vals:         11    bad vals:          0    pcnt-bad:    0.000
   Characterizing uint32:  min 76 max 3013 avg 942.545
     => distribution of top 3 values out of 3 distinct values:
@@ -301,3 +317,10 @@ good vals:         11    bad vals:          0    pcnt-bad:    0.000
         val:         76 count:          1  pcnt-of-good-vals:    9.091
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:         11  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.contentLength.unavailable : typedef unknown_t
+=====================================================================================================
+-----------------------------------------------------------------------------------------------------
+<top>.contentLength.unavailable.unknown_t : char
+-----------------------------------------------------------------------------------------------------
+good vals:          0    bad vals:          0    pcnt-bad:    0.000

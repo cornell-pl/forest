@@ -11,20 +11,22 @@ punion host_t  {
   sIP symbolic;    /- www.research.att.com
 };
 
+ptypedef a_char unknown_t :: unknown_t x => { x == '-'};
+
 punion auth_id_t {
-  achar unauthorized : unauthorized == '-';    /- non-authenticated http session
-  astring(:' ':) id;                           /- login supplied during authentication
+  unknown_t unauthorized;                      /- non-authenticated http session
+  a_string(:' ':) id;                           /- login supplied during authentication
 };
 
 punion contentOpt_t {
-  auint32 len;                                 /- length available
-  achar unavailable : unavailable == '-';      /- content length not available
+  a_uint32 len;                                 /- length available
+  unknown_t unavailable;
 };
 
 pstruct http_v_t {
   "HTTP/";
-  auint8 major; '.';
-  auint8 minor;           /- http minor mode
+  a_uint8 major; '.';
+  a_uint8 minor;           /- http minor mode
 };
 
 penum http_method_t {
@@ -45,7 +47,7 @@ int  checkVersion(http_v_t version, http_method_t meth) {
 
 pstruct http_request_t {
   '\"';  http_method_t  meth;            /- Method used during request
-  ' ';   astring(:' ':) req_uri;         /- Requested uri.
+  ' ';   a_string(:' ':) req_uri;         /- Requested uri.
   ' ';   http_v_t       version : checkVersion(version, meth);
                                          /- HTTP version number of request 
   '\"';
@@ -55,9 +57,9 @@ precord pstruct http_clf_t {
    host_t host;                   /- IP address of client requesting service
    auth_id_t remoteID;            /- Remote identity; '-' indicates not obtained.
    ' ';   auth_id_t auth;                /- Name of authenticated user.
-   " [";  adate(:']':) date;             /- Timestamp of request.
+   " [";  a_date(:']':) date;             /- Timestamp of request.
    "] ";  http_request_t request;        /- Request.
-   ' ';   auint16FW(:3:) response;       /- 3-digit response code
+   ' ';   a_uint16FW(:3:) response;       /- 3-digit response code
    ' ';   contentOpt_t contentLength;    /- Number of bytes in request response.
 };
 
