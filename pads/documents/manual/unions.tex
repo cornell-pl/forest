@@ -1,16 +1,34 @@
 \chapter{Punions}
 \label{chap:unions}
+\Punion{}s are used to express variations in data.  \pads{}
+supports two forms of union: switched and in-place.  The first form
+supports data sources where there is an indication (\ie, a switch) in
+the data prior to the union indicating which alternative should be
+chosen.  The second form supports data sources where no such switch is
+present.  In this case, the read code tries the branches in order
+until it finds one in which no errors occurred during parsing.
 \section{Syntax}
-To express variations.  Two forms: in-place and switched.
-\subsection{in-place}
-\begin{verbatim}
-Punion name ( param list ){
- qualifier type name constraint comment
-...
-}
-\end{verbatim}
-tries each branch in turn til one found that succeeds in finding an
-element of the indicated type and satisifies the constraint.
+\begin{tabular}{rcl}
+\nont{qualifier}  & \is{} & \Pomit{} \alt{} \Pendian{}\\[1ex]
+\nont{qualifiers}  & \is{} & \nont{qualifier} \alt{} \nont{qualifier} \nont{qualifiers}\\[1ex]
+\nont{constraint} & \is{} & : \nont{predicate}\\[1ex]
+\nont{full\_field} & \is{} & \opt{\nont{qualifiers}}
+     \nont{p\_ty} \opt{\nont{p\_actual\_list}} identifier 
+       \opt{\nont{constraint}}; \opt{\nont{p\_comment}} \\[1ex]
+\nont{literal\_field} & \is{} & \term{char\_lit}; \alt{} \term{str\_lit};\\[1ex]
+\nont{comp\_field} & \is{} & \Pcompute{} \nont{c\_ty} identifier \cd{=} \nont{expression};\\[1ex]
+\nont{field} & \is{} & \nont{full\_field} \alt{} \nont{literal\_field}  \alt{} \nont{comp\_field}\\[1ex]
+\nont{fields} & \is{} & \nont{field} \alt{} \nont{field} \ \nont{fields}\\[1ex]
+
+\nont{union\_field} & \is{} & \nont{full\_field} \altP{} \nont{comp\_field}\\[1ex]
+\nont{branch}     & \is{} & \Pcase \nont{expression} : \nont{union\_field}\\[1ex]
+                  & \alt{} & \Pdefault : \nont{full\_field}\\[1ex]
+\nont{branches}   & \is{} & \nont{branch} \alt{} \nont{branch} \nont{branches} \\[1ex]
+\nont{switched}   & \is{} & \Pswtich (\nont{expression})\{ branches \}\\[1ex]
+\nont{union\_bdy} & \is{} & \nont{in\_place} \alt{} \nont{switched}\\[1ex]
+\nont{union\_ty}  & \is{} & \Punion{} identifier \opt{\nont{formals}} \{ union\_bdy \} \\[4ex]
+
+\end{tabular}
 
 \subsection{switched}
 jumps to appropriate branch indicated by switch expression.
@@ -24,6 +42,17 @@ Punion branches(a_uint32 a){
   }
 }
 \end{verbatim}
+
+\subsection{in-place}
+\begin{verbatim}
+Punion name ( param list ){
+ qualifier type name constraint comment
+...
+}
+\end{verbatim}
+tries each branch in turn til one found that succeeds in finding an
+element of the indicated type and satisifies the constraint.
+
 
 \section{Generated library}
 \subsection{In-memory representation}
