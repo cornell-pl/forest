@@ -387,6 +387,5 @@ let _ =
   begin
     (* Some default Galax options *)
     Conf.loop_fusion := true; 
-    Conf.unsafe_join_hack := true; 
     Callback.register "pads_document" pads_document
   end
