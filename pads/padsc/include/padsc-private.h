@@ -20,23 +20,27 @@
 
 /* PDC private state */
 #define PDC_PRIVATE_STATE \
-  Vmalloc_t         *vm;       /* vm handle */ \
-  Sfio_t            *tmp;      /* tmp sfprintf area */ \
-  PDC_string        stmp1;     /* tmp string 1 */ \
-  PDC_string        stmp2;     /* tmp string 2 */ \
-  RMM_t             *rmm_z;    /* rbuf memory mgr -- zeroes allocated memory */  \
-  RMM_t             *rmm_nz;   /* rbuf memory mgr -- does not zero allocated memory */  \
-  PDC_endian         m_endian; /* endian-ness of the machine */ \
+  Vmalloc_t         *vm;         /* vm handle */ \
+  Sfio_t            *tmp;        /* tmp sfprintf area */ \
+  PDC_string        stmp1;       /* tmp string 1 */ \
+  PDC_string        stmp2;       /* tmp string 2 */ \
+  RMM_t             *rmm_z;      /* rbuf memory mgr -- zeroes allocated memory */  \
+  RMM_t             *rmm_nz;     /* rbuf memory mgr -- does not zero allocated memory */  \
+  PDC_endian         m_endian;   /* endian-ness of the machine */ \
+  /* The following are used for write functions */ \
+  Void_t            *outbuf;     /* tmp buf to use with sfio out stream (alloc outbuf_len + 1) */ \
+  size_t             outbuf_len; /* len of outbuf */ \
+  size_t             outbuf_res; /* space to reserve per top-level write call */ \
   /* The following are all related to IO state / checkpointing */ \
-  char              *path;     /* original path -- eventually want to support a set of input files */ \
-  Sfio_t            *io;       /* sfio stream */ \
-  PDC_byte          *sfbuf;    /* buffer that is installed in any sfio that is opened */ \
-  PDC_IO_elt_t      *head;     /* head of list of input elts */ \
-  PDCI_stkElt_t     *stack;    /* stack - resized dynamically */ \
-  size_t            salloc;    /* total elts allocated for stack */ \
-  size_t            top;       /* index of top stack elt */ \
-  unsigned int      speclev;   /* speculative nesting level */ \
-  unsigned int      inestlev;  /* internal call nesting level */ \
+  char              *path;       /* original path -- eventually want to support a set of input files */ \
+  Sfio_t            *io;         /* sfio stream */ \
+  PDC_byte          *sfbuf;      /* buffer that is installed in any sfio that is opened */ \
+  PDC_IO_elt_t      *head;       /* head of list of input elts */ \
+  PDCI_stkElt_t     *stack;      /* stack - resized dynamically */ \
+  size_t            salloc;      /* total elts allocated for stack */ \
+  size_t            top;         /* index of top stack elt */ \
+  unsigned int      speclev;     /* speculative nesting level */ \
+  unsigned int      inestlev;    /* internal call nesting level */ \
   /* dummy used for error case */ \
   char              dummy[1]
 

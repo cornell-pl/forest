@@ -868,8 +868,6 @@ PDC_error_t PDC_e_date_read(PDC_t *pdc, PDC_base_csm *csm, PDC_byte stopChar,
 /* ================================================================================
  * ASCII STRING TO INTEGER READ FUNCTIONS
  *
- * Documentation for variable-width ascii string to integer read functions:
- *
  * An ascii representation of an integer value (a string of digits in [0-9])
  * is assumed to be at the current cursor position, where
  * if the target type is a signed type a leading - or + is allowed and
@@ -1406,6 +1404,50 @@ PDC_error_t PDC_sbh_ufpoint32_read  (PDC_t *pdc, PDC_base_csm *csm, PDC_uint32 n
 				    PDC_base_ed *ed, PDC_ufpoint32 *res_out);
 PDC_error_t PDC_sbh_ufpoint64_read  (PDC_t *pdc, PDC_base_csm *csm, PDC_uint32 num_bytes, PDC_uint32 d_exp,
 				    PDC_base_ed *ed, PDC_ufpoint64 *res_out);
+
+/* ================================================================================
+ * INTEGER WRITE FUNCTIONS
+ * 
+ * For each integer read function there is a corresponding integer write
+ * function which outputs the specified integer value in a format that will
+ * allow the corresponding read function to successfully read the value.
+ *
+ * For example, if a PDC_int8 is written using PDC_e_int8_write, the bytes
+ * that were output can be read back into a PDC_int8 using PDC_e_int8_read.
+ *
+ * All write functions take an Sfio_t* stream pointer (the stream to write to),
+ * an error descriptor ed, and a pointer to the value to be written.  Some also take
+ * additional arguments, such as num_digits.  All return an integer.
+ *
+ * If ed->errCode is either PDC_NO_ERR or PDC_USER_CONSTRAINT_VIOLATIONS then
+ * the value is assumed to have been filled in, and it is the value written.
+ * For other error codes, the value is assumed to *not* have been filled in,
+ * and an error value is written.  See the Default Error Value discussion above
+ * for the set of default error values and details on how to override them.
+ *
+ * If the write succeeds, the return value is the number of bytes written.
+ * If it fails, -1 is returned, and no bytes are written to the stream.
+ */
+
+int PDC_a_int8_write  (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int8   *val);
+int PDC_a_int16_write (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int16  *val);
+int PDC_a_int32_write (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int32  *val);
+int PDC_a_int64_write (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int64  *val);
+
+int PDC_a_uint8_write (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint8  *val);
+int PDC_a_uint16_write(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint16 *val);
+int PDC_a_uint32_write(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint32 *val);
+int PDC_a_uint64_write(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint64 *val);
+
+int PDC_e_int8_write  (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int8   *val);
+int PDC_e_int16_write (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int16  *val);
+int PDC_e_int32_write (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int32  *val);
+int PDC_e_int64_write (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_int64  *val);
+
+int PDC_e_uint8_write (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint8  *val);
+int PDC_e_uint16_write(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint16 *val);
+int PDC_e_uint32_write(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint32 *val);
+int PDC_e_uint64_write(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, PDC_uint64 *val);
 
 /* ================================================================================
  * BASE TYPE ACCUMULATORS
