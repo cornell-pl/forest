@@ -164,12 +164,10 @@ Pstruct _bnf_34_t {
   _bnf_5_t _bnf_5;
   alphanum_t alphanum;
 };
-Parray _bnf_4_t {
-  _bnf_34_t[0:] : Plongest;
-};
+
 Pstruct domainlabel_t {
   alphanum_t alphanum;
-  _bnf_4_t _bnf_4;
+  _bnf_34_t[0:] _bnf_4 : Plongest;
 };
 Pstruct _bnf_35_t {
   ".";

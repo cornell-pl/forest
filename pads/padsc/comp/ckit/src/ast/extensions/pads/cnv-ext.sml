@@ -266,6 +266,13 @@ structure CnvExt : CNVEXT = struct
            | c::cs => (validFirst c) andalso List.all valid cs
        end
 
+    fun enumConstDefined enumConst = 
+	let val sym = SYM.enumConst enumConst
+	in
+	    case lookLocalScope sym of 
+		SOME _ => (print ( enumConst ^ "already defined.\n"); true)
+	    | NONE => false
+	end
 
 (* Error Reporting  **********************************************************)
 
@@ -4657,10 +4664,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val firstTag = ref "bogus"
 		     val lastTag = ref "bogus"
 		     fun chkTag(name) = 			 
+			 let val name = if enumConstDefined name then unionName^"_"^name else name
+			 in
 			 (if !tagVal = 0 then firstTag := name else ();
 			  lastTag := name;
 			  tagVal := !tagVal + 1;
 			  [(name, P.intX(!tagVal), NONE)])
+			 end
 
 		     fun genTagFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, 
