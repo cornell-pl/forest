@@ -1,0 +1,32 @@
+# PADSL BASE TYPE INFO
+#
+#   This file may be found in (~kfisher/p/padsc/ckit/src/extensions/pads/base-ty-info.txt) 
+#
+#   Note that the term 'on disk' below is meant to indicate the input data
+#   in some data stream -- data streams need not be disk-based.
+#
+#   Types starting with "a"   are represented on disk in ASCII.
+#   Types starting with "e"   are represented on disk in EBCDIC.
+#   Types starting with "b"   are represented on disk in binary.
+#   Types starting with "bcd" are represented on disk in BCD.
+#   "u" represents unsigned, while its absence indicates signed.
+#   Trailing number indicates number of bits required to store in memory; this property is checked by read functions.
+#   FW suffix indicates a fixed width representation on disk; this number is supplied as a parameter,
+#     e.g., auint8FW(:3:)
+#   Note: the bcd types take a number of digits argument, where each digit is represented as 4 bits on disk
+#   There are no variable-width bcd types.   
+
+#
+#   The PDC types and function prototypes below are defined in libpadsc.h (~kfisher/p/padsc/include/libpadsc.h)
+#
+#PADS_name    inMemory    errorMaskName errorDescriptionName readFunction               scanFunctionOpt    accumulatorOpt  DiskSize  Memory(S/V) Endian
+
+# internal only
+PDC_achar_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_achar_lit_read         PDC_achar_lit_scan PDC_uint8_acc   1         S           N
+PDC_astr_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_astr_lit_read          PDC_astr_lit_scan  PDC_string_acc  P         S           N
+PDC_echar_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_echar_lit_read         PDC_echar_lit_scan PDC_uint8_acc   1         S           N
+PDC_estr_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_estr_lit_read          PDC_estr_lit_scan  PDC_string_acc  P         S           N
+
+# XXX dummy type will be removed at some point.  Used where a named field is required but not input needs to be read.
+# XXX dummy(:val:) indicates the val to be stored; val must be compatible with PDC_int32.
+dummy         PDC_int32   PDC_base_em   PDC_base_ed          PDC_dummy_read_internal             -                  PDC_int32_acc   0         S           N

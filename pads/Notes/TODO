@@ -65,9 +65,14 @@ padsc compiler todo
             1 elt errors         10% of time
             3 elt errors          2% of time
      More basic thing would just be number of good/bad values
+     # Need a library function for reporting error distribution.
   * implement compiler optimizations mentioned in talk
       - glomming ignores (see examples/gen/dibbler2-mod.c)
-  * change basety structure to allow additional tables
+        # I'm not sure this is a good idea.
+        # I would want to see performance numbers to show it is an
+	  optimization.
+        # Static specification of error mask and related customization
+	  will be a bigger win, I think.
 
 very minor:
  *  format char literal / str lit in err msgs

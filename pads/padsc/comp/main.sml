@@ -31,6 +31,7 @@ structure Main : sig
     (* Values/Flags supplied by user at command line *)
     datatype ArgType = Pads | Unknown
     val srcFiles = ref [] : (ArgType * string) list ref 
+    val baseTables  = ref [] : string list ref  (* paths to user defined base ty info tables *)
 
     val includes    = ref ""  (* paths user listed as include paths with -I flag *)
     val defines     = ref ""  (* symbols user defined with -U flag *)
@@ -47,11 +48,15 @@ structure Main : sig
     val outputDir = ref ""
     val outputDirFlag = ref false
 
+
+    fun addPadsFile s =    srcFiles := ((Pads,s) :: !srcFiles)
+    fun addUnknownFile s = srcFiles := ((Unknown,s) :: !srcFiles)
+
+    fun addBaseTable s = baseTables := (s :: !baseTables)
+
     fun addInclude i = (includes := (" -I "^i^(!includes)))
     fun addDefine  i = (defines := (" -D"^i^(!defines)))
     fun addUndefine  i = (undefines := (" -U"^i^(!undefines)))
-    fun addPadsFile s =    srcFiles := ((Pads,s) :: !srcFiles)
-    fun addUnknownFile s = srcFiles := ((Unknown,s) :: !srcFiles)
   
     fun setHeaderOutputFile s = (
         outputHeaderFileName := s; 
@@ -75,6 +80,7 @@ structure Main : sig
          ("c", "output code file",        PCL.String (setCOutputFile, false)),
          ("p", "output directory",        PCL.String (setOutputDir, false)),
          ("s", "send output to standard out", PCL.BoolSet(stdoutFlag)),
+         ("b", "add base type table",         PCL.String (addBaseTable, false)),
 	 ("I", "augment include path",        PCL.String (addInclude, true)),
 	 ("D", "add definition",              PCL.String (addDefine, true)),
 	 ("U", "remove definition",           PCL.String (addUndefine, true)),
@@ -269,8 +275,12 @@ structure Main : sig
            (* At this point, flag booleans have been set from command-line *)
            (* Generate base type typedefs from base description file *)
            val baseTyDefsFile = tmp ".h"
+	   val () = (List.app print (!baseTables); print "\n")
+	   val internalBaseTysPath = [homeDir^"/ckit/src/ast/extensions/pads/base-ty-info.txt",
+				      homeDir^"/ckit/src/ast/extensions/pads/internal-base-ty-info.txt"]
+	                             @(!baseTables)
        in
-         PBaseTys.genPadsInternal(homeDir, baseTyDefsFile);	   
+         PBaseTys.genPadsInternal(internalBaseTysPath, baseTyDefsFile);	   
          app (doFile baseTyDefsFile) (!srcFiles); 
          rmTmp();
          if !anyErrors 
