@@ -123,6 +123,15 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 		   | DEFAULT => ""
     in addStr pps s end
 
+  fun ppLocalStorageClassH pps sc = 
+    let val s = case sc
+	          of STATIC => "static "
+		   | EXTERN => ""
+		   | REGISTER => "register "
+		   | AUTO => ""
+		   | DEFAULT => ""
+    in addStr pps s end
+
       
   fun ppSignedness pps sign = 
     let val s = case sign
@@ -400,7 +409,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
     | ppDeclarationH aidinfo tidtab pps (VarDecl (id as {location,...}, initOpt)) = 
        (ppLoc pps location
        ;PPLib.addStr pps "extern "
-       ;ppIdDecl aidinfo tidtab pps id
+       ;ppIdDeclH aidinfo tidtab pps id
        ;PPL.addStr pps ";")
 
   and ppDeclarationC aidinfo tidtab pps (TypeDecl{shadow, tid}) =   ((* type declarations *))
@@ -412,11 +421,19 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	      (PPL.addStr pps "=";
 	       ppInitExpression aidinfo tidtab pps initExpr)
 	   | NONE => ()
-       ;PPL.addStr pps ";")
+       ;PPL.addStr pps ";"
+       ; PPL.newline pps)
 
   and ppIdDecl aidinfo tidtab pps (id: Ast.id) =
     let val (stClass,ctype) = getCtype id
     in (ppStorageClass pps stClass
+       ;ppDecl aidinfo tidtab pps (id,ctype)
+       )
+    end
+
+  and ppIdDeclH aidinfo tidtab pps (id: Ast.id) =
+    let val (stClass,ctype) = getCtype id
+    in (ppLocalStorageClassH pps stClass
        ;ppDecl aidinfo tidtab pps (id,ctype)
        )
     end
