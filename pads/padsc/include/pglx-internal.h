@@ -16,7 +16,8 @@
 #ifdef USE_GALAX
 
 /* #include "caml/mlvalues.h"    Need value      */
-/* #include "caml/fail.h"        Need failwith   */
+
+#include "caml/fail.h"        /* Need failwith                           */
 #include "glx.h"              /* Need to pack/unpack Galax atomic values */
 
 #else
