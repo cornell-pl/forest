@@ -1,10 +1,146 @@
 \chapter{Base types}
 \label{chap:base-types}
-Describe \pads{} base types.  Give examples and tables. 
 
-\section{In-memory representation}
+\PADSL{} base types describe inidivual (typically small) values: numbers, strings, dates, and so on.
+This chapter describes a large number of built-in \PADSL{} base types.
+It is also possible to extend \PADSL{} with any
+number of new base types; see \secref{sec:library-adding-new-base-types}.
+
+\section{In-Memory Representation}
 \label{sec:base-types-rep}
-\section{Masks}
-\label{sec:base-types-masks}
-\section{Parse descriptors}
-\label{sec:base-types-parse-descriptors}
+
+Each base type as an external and an in-memory representation, where
+related base types share the same in-memory representation.  For
+example, while there are 18 different string base types, all of them
+use \PDC{string} as their in-memory representation.
+
+This section reviews the different in-memory representation types.
+
+\subsection{{\tt PDC\_char}}
+
+\subsection{{\tt PDC\_string}}
+
+\subsection{Integer types}
+
+\PDC{int8} ... \PDC{int64}.
+
+\PDC{uint8} ... \PDC{uint64}.
+
+\subsection{Floating-point types}
+
+\PDC{float32}, \PDC{float64}
+
+\subsection{Fixed-point types}
+
+\PDC{fpoint8} ... \PDC{fpoint64}
+
+\PDC{ufpoint8} ... \PDC{ufpoint64}
+
+\section{Base Type Mask}
+\label{sec:base-type-mask}
+
+Describe \PDCbasem{} and the 'normal' meaning for each value.
+
+\section{Base Type Parse Descriptor}
+\label{sec:base-type-parse-descriptor}
+
+Describe \PDCbasepd{}.  This involves describing \PDCloct{}, \PDCpost{},
+and \PDCerrCodet{}.  
+
+Specific error codes are discussed below
+when the base type read functions are described.
+
+\section{Helper Types}
+
+\PDCregexpt{}.
+
+Other?
+
+\section{Character Base Types}
+\Pd{char}, \Pa{char}, \Pe{char}.
+
+\subsection{Special character base types}
+
+\Pd{countX}, \Pa{countX}, \Pe{countX}.
+
+\Pd{countXtoY}, \Pa{countXtoY}, \Pe{countXtoY}.
+
+\section{String Base Types}
+
+\PFW{string}, \PaFW{string}, \PeFW{string}.
+
+\Pd{string}, \Pa{string}, \Pe{string}.
+
+\PME{string}, \PaME{string}, \PeME{stringME}.
+
+\PCME{string}, \PaCME{string}, \PeCME{string}.
+
+\PSE{string}, \PaSE{string}, \PeSE{string}.
+
+\PCSE{stringCSE}, \PaCSE{string}, \PeCSE{string}.
+
+\subsection{Special string base types}
+
+\Pd{date}, \Pa{date}, \Pe{date}.
+
+\section{Integer Base Types}
+
+\PFW{int8} ... \PFW{int64}, \PaFW{int8} ... \PaFW{int64}, \PeFW{int8} ... \PeFW{int64}.
+
+\PFW{uint8} ... \PFW{uint64}, \PaFW{uint8} ... \PaFW{uint64}, \PeFW{uint8} ... \PeFW{uint64}.
+
+\Pd{int8} ... \Pd{int64}, \Pa{int8} ... \Pa{int64}, \Pe{int8} ... \Pe{int64}.
+
+\Pd{uint8} ... \Pd{uint64}, \Pa{uint8} ... \Pa{uint64}, \Pe{uint8} ... \Pe{uint64}.
+
+\Pb{int8} ... \Pb{int64}.
+
+\Pb{uint8} ... \Pb{uint64}.
+
+\Pebc{int8} ... \Pebc{int64}.
+
+\Pebc{uint8} ... \Pebc{uint64}.
+
+\Pbcd{int8} ... \Pbcd{int64}.
+
+\Pbcd{uint8} ... \Pbcd{uint64}.
+
+\Psbl{int8} ... \Psbl{int64}.
+
+\Psbl{uint8} ... \Psbl{uint64}.
+
+\Psbh{int8} ... \Psbh{int64}.
+
+\Psbh{uint8} ... \Psbh{uint64}.
+
+\section{Floating Point Base Types}
+
+\Pd{float32}, \Pa{float32}, \Pe{float32}.
+
+\Pd{float64}, \Pa{float64}, \Pe{float64}.
+
+\Pb{float32}, \Pb{float64}.
+
+\Psbl{float32}, \Psbl{float64}.
+
+\Psbh{float32}, \Psbh{float64}.
+
+\section{Fixed Point Base Types}
+
+\Pebc{fpoint8} .. \Pebc{fpoint64}.
+
+\Pebc{ufpoint8} .. \Pebc{ufpoint64}.
+
+\Pbcd{fpoint8} .. \Pbcd{fpoint64}.
+
+\Pbcd{ufpoint8} .. \Pbcd{ufpoint64}.
+
+\Psbl{fpoint8} .. \Psbl{fpoint64}.
+
+\Psbl{ufpoint8} .. \Psbl{ufpoint64}.
+
+\Psbh{fpoint8} .. \Psbh{fpoint64}.
+
+\Psbh{ufpoint8} .. \Psbh{ufpoint64}.
+
+ 

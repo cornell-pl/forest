@@ -21,9 +21,16 @@
 \newcommand{\forte}{{fort\'{e}\/}}
 
 \newcommand{\bftt}[1]{{\ttfamily\bfseries{}#1}}
-\newcommand{\kw}[1]{\bftt{#1}}
 \newcommand{\C}{\textsc{C}}
 \newcommand{\java}{\textsc{Java}}
+
+
+% keywords and PADSL types: added micro space on either side
+\newcommand{\padskw}[1]{\mbox{\/\bftt{#1}\/}}
+\newcommand{\padstype}[1]{\mbox{\/\cd{#1}\/}}
+
+% \newcommand{\kw}[1]{\bftt{#1}}
+\newcommand{\kw}[1]{\padskw{#1}}
 
 \newcommand{\is}{::=}
 \newcommand{\nont}[1]{\textit{#1}}
@@ -31,21 +38,53 @@
 \newcommand{\alt}{ \ $\mid$ \  }
 \newcommand{\opt}[1]{ [#1] }
 
+\newcommand{\PDCbasepd}{\padstype{PDC\_base\_pd}}
+\newcommand{\PDCbasem}{\padstype{PDC\_base\_m}}
+\newcommand{\PDCloct}{\padstype{PDC\_loc\_t}}
+\newcommand{\PDCpost}{\padstype{PDC\_pos\_t}}
+\newcommand{\PDCerrCodet}{\padstype{PDC\_errCode\_t}}
+\newcommand{\PDCregexpt}{\padstype{PDC\_regexp\_t}}
+
+\newcommand{\PDC}[1]{\padstype{PDC\_#1}}
+\newcommand{\Pd}[1]{\padstype{P#1}}
+\newcommand{\Pa}[1]{\padstype{Pa\_#1}}
+\newcommand{\Pe}[1]{\padstype{Pe\_#1}}
+\newcommand{\Pb}[1]{\padstype{Pb\_#1}}
+\newcommand{\Pebc}[1]{\padstype{Pebc\_#1}}
+\newcommand{\Pbcd}[1]{\padstype{Pbcd\_#1}}
+\newcommand{\Psbl}[1]{\padstype{Psbl\_#1}}
+\newcommand{\Psbh}[1]{\padstype{Psbh\_#1}}
+\newcommand{\PFW}[1]{\padstype{P#1\_FW}}
+\newcommand{\PaFW}[1]{\padstype{Pa\_#1\_FW}}
+\newcommand{\PeFW}[1]{\padstype{Pe\_#1\_FW}}
+\newcommand{\PSE}[1]{\padstype{P#1\_SE}}
+\newcommand{\PaSE}[1]{\padstype{Pa\_#1\_SE}}
+\newcommand{\PeSE}[1]{\padstype{Pe\_#1\_SE}}
+\newcommand{\PCSE}[1]{\padstype{P#1\_CSE}}
+\newcommand{\PaCSE}[1]{\padstype{Pa\_#1\_CSE}}
+\newcommand{\PeCSE}[1]{\padstype{Pe\_#1\_CSE}}
+\newcommand{\PME}[1]{\padstype{P#1\_ME}}
+\newcommand{\PaME}[1]{\padstype{Pa\_#1\_ME}}
+\newcommand{\PeME}[1]{\padstype{Pe\_#1\_ME}}
+\newcommand{\PCME}[1]{\padstype{P#1\_CME}}
+\newcommand{\PaCME}[1]{\padstype{Pa\_#1\_CME}}
+\newcommand{\PeCME}[1]{\padstype{Pe\_#1\_CME}}
+
 \newcommand{\PADS}{\textsc{pads}}
 \newcommand{\PADSL}{\textsc{padsl}}
 
-\newcommand{\Pomit}{\kw{Pomit}}
-\newcommand{\Pcompute}{\kw{Pcompute}}
-\newcommand{\Pendian}{\kw{Pendian}}
-\newcommand{\Pstruct}{\kw{Pstruct}}
-\newcommand{\Punion}{\kw{Punion}}
-\newcommand{\Parray}{\kw{Parray}}
-\newcommand{\Ptypedef}{\kw{Ptypedef}}
-\newcommand{\Pwhere}{\kw{Pwhere}}
-\newcommand{\Pterm}{\kw{Pterm}}
-\newcommand{\Psep}{\kw{Psep}}
-\newcommand{\Precord}{\kw{Precord}}
-\newcommand{\Pfile}{\kw{Pfile}}
+\newcommand{\Pomit}{\padskw{Pomit}}
+\newcommand{\Pcompute}{\padskw{Pcompute}}
+\newcommand{\Pendian}{\padskw{Pendian}}
+\newcommand{\Pstruct}{\padskw{Pstruct}}
+\newcommand{\Punion}{\padskw{Punion}}
+\newcommand{\Parray}{\padskw{Parray}}
+\newcommand{\Ptypedef}{\padskw{Ptypedef}}
+\newcommand{\Pwhere}{\padskw{Pwhere}}
+\newcommand{\Pterm}{\padskw{Pterm}}
+\newcommand{\Psep}{\padskw{Psep}}
+\newcommand{\Precord}{\padskw{Precord}}
+\newcommand{\Pfile}{\padskw{Pfile}}
 
 % Allow lowercase use of some of the above macros
 
@@ -64,7 +103,7 @@
 \newcommand{\precord}{\Precord}
 \newcommand{\pfile}{\Pfile}
 
-\newcommand{\csmSuf}[1]{\cd{#1\_m}}
-\newcommand{\pdSuf}[1]{\cd{#1\_pd}}
+\newcommand{\csmSuf}[1]{\padstype{#1\_m}}
+\newcommand{\pdSuf}[1]{\padstype{#1\_pd}}
 
 \newcommand{\external}{external}
