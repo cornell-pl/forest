@@ -76,6 +76,9 @@ if [ $_pads_status = "OK" ]; then
   if [ "$PADSGLX_HOME"x = x ]; then
     PADSGLX_HOME=/home/mff/pads_glx/api; export PADSGLX_HOME
   fi
+  if [ "$PCRE_LIB_DIR"x = x ]; then
+    PCRE_LIB_DIR=/home/mff/pcre-4.5-rh9/lib; export PCRE_LIB_DIR
+  fi
 
   if [ ! -e $INSTALLROOT ]; then
     (mkdir -p $INSTALLROOT > /dev/null 2>&1) || _pads_status=FAILED
@@ -120,18 +123,22 @@ if [ $_pads_status = "OK" ]; then
   if [ -e $OCAML_LIB_DIR ]; then
     DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`; export DYLD_LIBRARY_PATH
     LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`; export LD_LIBRARY_PATH
+    SHLIB_PATH=`echo ${SHLIB_PATH}:${OCAML_LIB_DIR} | $remove_dups`; export SHLIB_PATH
   fi
   if [ -e $GALAX_HOME/lib/c ]; then
     DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`; export DYLD_LIBRARY_PATH
     LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`; export LD_LIBRARY_PATH
+    SHLIB_PATH=`echo ${SHLIB_PATH}:${GALAX_HOME}/lib/c | $remove_dups`; export SHLIB_PATH
   fi
   if [ -e $PADSGLX_HOME ]; then
     DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`; export DYLD_LIBRARY_PATH
     LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`; export LD_LIBRARY_PATH
+    SHLIB_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`; export SHLIB_PATH
   fi
   if [ -e $PCRE_LIB_DIR ]; then
     DYLD_LIBRARY_PATH=`echo ${DYLD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`; export DYLD_LIBRARY_PATH
     LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`; export LD_LIBRARY_PATH
+    SHLIB_PATH=`echo ${LD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`; export SHLIB_PATH
   fi
 
   if [ "$_pads_use_nmake" != 0 ]; then

@@ -236,22 +236,27 @@ if ($_pads_status == "OK") then
   if (-d $OCAML_LIB_DIR) then
     setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
+    setenv SHLIB_PATH `echo ${SHLIB_PATH}:${OCAML_LIB_DIR} | $remove_dups`
   endif
   if (-d $OCAML_LIB_DIR) then
     setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
+    setenv SHLIB_PATH `echo ${SHLIB_PATH}:${OCAML_LIB_DIR} | $remove_dups`
   endif
   if (-d $GALAX_HOME/lib/c) then
     setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
+    setenv SHLIB_PATH `echo ${SHLIB_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
   endif
   if (-d $PADSGLX_HOME) then
     setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
+    setenv SHLIB_PATH `echo ${SHLIB_PATH}:${PADSGLX_HOME} | $remove_dups`
   endif
   if (-d $PCRE_LIB_DIR) then
     setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${PCRE_LIB_DIR} | $remove_dups`
+    setenv SHLIB_PATH `echo ${SHLIB_PATH}:${PCRE_LIB_DIR} | $remove_dups`
   endif
 
   if ($_pads_use_nmake == 1) then
