@@ -999,9 +999,12 @@ do { \
 
 /* type PDCI_stkElt_t: */
 struct PDCI_stkElt_s {
-  Pio_elt_t  *elt;
+  Pio_elt_t    *elt;
   size_t        remain;  /* bytes remaining in current IO elt; determines cursor position */
   int           spec;    /* the spec flag passed to checkpoint */
+#ifdef USE_GALAX
+  PDCI_id_t     id_gen;
+#endif
 };
 
 /* ================================================================================ */

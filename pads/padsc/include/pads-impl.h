@@ -94,17 +94,39 @@ Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
 /* In addition, arrays have a length field, which makes 15. */
 #  define PDCI_MAX_ID_INCR 15
 
-#  define PDCI_ID_RESET(padsIN,valIN)\
-     do{\
-       (padsIN)->disc->id_gen = (valIN);\
+#  define PDCI_ID_RESET(padsIN, valIN) \
+     do{ \
+       (padsIN)->stack[(padsIN)->top].id_gen = (valIN); \
      }while(0)
 
-#  define PDCI_ID_NEW(idOUT,padsIN)\
-do{\
-  (idOUT) = (padsIN)->disc->id_gen;\
-  (padsIN)->disc->id_gen += PDCI_MAX_ID_INCR;\
+#  define PDCI_ID_NEW(idOUT, padsIN) \
+do{ \
+  (idOUT) = (padsIN)->stack[(padsIN)->top].id_gen; \
+  (padsIN)->stack[(padsIN)->top].id_gen += PDCI_MAX_ID_INCR; \
 }while(0)
-     
+
+#  define PDCI_SAVE_PD_ID(idtmpIN, pdIN)          PDCI_id_t idtmpIN = (pdIN)->_id_
+#  define PDCI_REST_PD_ID(idtmpIN, pdIN)          (pdIN)->_id_ = idtmpIN
+#  define PDCI_IO_RESTORE_KEEP_ID_GEN(fn_nmIN, padsIN) \
+     do{ \
+       PCDI_id_t id_tmp = (padsIN)->stack[(padsIN)->top].id_gen; \
+       if (P_ERR == P_io_restore(padsIN)) { \
+         PDCI_report_err(padsIN, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nmIN, 0); \
+       } \
+       (padsIN)->stack[(padsIN)->top].id_gen = id_tmp; \
+     }while(0)
+
+#else
+
+#  define PDCI_SAVE_PD_ID(idtmpIN, pdIN)          P_NULL_STMT
+#  define PDCI_REST_PD_ID(idtmpIN, pdIN)          P_NULL_STMT
+#  define PDCI_IO_RESTORE_KEEP_ID_GEN(fn_nmIN, padsIN) \
+     do{ \
+       if (P_ERR == P_io_restore(padsIN)) { \
+         PDCI_report_err(padsIN, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nmIN, 0); \
+       } \
+     }while(0)
+
 #endif
 
 /* Parse descriptor macros */

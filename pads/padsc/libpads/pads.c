@@ -6335,7 +6335,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.171 2004-09-20 16:33:33 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.172 2004-09-22 01:06:09 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -7766,6 +7766,9 @@ P_io_checkpoint(P_t *pads, int speculative)
   }
   pads->stack[pads->top].elt     = pads->stack[pads->top - 1].elt;
   pads->stack[pads->top].remain  = pads->stack[pads->top - 1].remain;
+#ifdef USE_GALAX
+  pads->stack[pads->top].id_gen  = pads->stack[pads->top - 1].id_gen;
+#endif
   pads->stack[pads->top].spec    = speculative;
   if (speculative) {
     (pads->speclev)++;
@@ -7805,6 +7808,9 @@ P_io_commit(P_t *pads)
   /* propagate changes to elt/remain up to next level */
   pads->stack[pads->top - 1].elt    = pads->stack[pads->top].elt;
   pads->stack[pads->top - 1].remain = pads->stack[pads->top].remain;
+#ifdef USE_GALAX
+  pads->stack[pads->top - 1].id_gen  = pads->stack[pads->top].id_gen;
+#endif
   (pads->top)--;
   return P_OK;
 }
@@ -7824,6 +7830,9 @@ P_io_commit_pos(P_t *pads, Ppos_t pos)
     (pads->speclev)--;
   }
   /* see if we can find pos */
+#ifdef USE_GALAX
+  pads->stack[pads->top - 1].id_gen  = pads->stack[pads->top].id_gen;
+#endif
   (pads->top)--;
   if (P_ERR == PDCI_io_getElt(pads, pos.num, &elt)) {
     P_FATAL(pads->disc, "P_io_commit_pos called with invalid pos (elt not found)");

@@ -1196,9 +1196,6 @@ struct Pdisc_s {
   Pinv_val_fn_map_t  *inv_val_fn_map; /* map types to inv_val_fn for write functions */
   Pfmt_fn_map_t      *fmt_fn_map;     /* map types to fmt functions */
   Pio_disc_t         *io_disc;        /* sub-discipline for controlling IO */
-#ifdef USE_GALAX
-  PDCI_id_t           id_gen;         /* generator for field ids */
-#endif
 };
 
 extern Pdisc_t Pdefault_disc;

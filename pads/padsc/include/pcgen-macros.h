@@ -670,7 +670,7 @@ do {
   Perror_t res;
   do {
     PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
-    max_pos_PCGEN_ = start_pos_PCGEN_;
+    max_pos_PCGEN_    = start_pos_PCGEN_;
     if (P_ERR == P_io_checkpoint(pads, 0)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_CHKPOINT_ERR, fn_nm, 0);
     }
@@ -716,9 +716,7 @@ do {
       error(0, "XXX_REMOVE modified max_pos_PCGEN_");
     }
   }
-  if (P_ERR == P_io_restore(pads)) {
-    PDCI_report_err(pads, P_LEV_FATAL, 0, P_RESTORE_ERR, fn_nm, 0);
-  }
+  PDCI_IO_RESTORE_KEEP_ID_GEN(fn_nm, pads);
 /* END_MACRO */
 
 #define PCGEN_ALT_READ_PRE(fn_nm, the_field)
@@ -963,10 +961,12 @@ Ppos_t start_pos_PCGEN_;
 do {
   PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
   if (rep->tag != the_tag) {
-    rep_cleanup (pads, rep);
-    pd_cleanup  (pads, pd);
-    rep_init    (pads, rep);
-    pd_init     (pads, pd);
+    PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
+    rep_cleanup(pads, rep);
+    pd_cleanup(pads, pd);
+    rep_init(pads, rep);
+    pd_init(pads, pd);
+    PDCI_REST_PD_ID(pd_id_tmp_PCGEN_, pd);
   }
   pd->errCode = P_NO_ERR;
 } while (0)
@@ -991,8 +991,10 @@ do{
 
 #define PCGEN_UNION_READ_LONGEST_FIELD_SETUP(rep, pd, errCode, fn_nm, the_tag, read_call, doEnd, rep_init, pd_init)
   Perror_t read_res_PCGEN_;
+  PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
   rep_init(pads, rep);
   pd_init(pads, pd);
+  PDCI_REST_PD_ID(pd_id_tmp_PCGEN_, pd);
   errCode = P_NO_ERR;
   PCGEN_UNION_READ_SETUP_COMMON(rep->tag, pd->tag, fn_nm, the_tag, read_call, doEnd);   
 /* END_MACRO */
@@ -1173,8 +1175,10 @@ do {
 
 #define PCGEN_UNION_READ_MAN_NEXT_PRE(fn_nm, the_tag, rep_init, pd_init) 
 do {
+  PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
   rep_init(pads, rep);
-  pd_init (pads, pd);
+  pd_init(pads, pd);
+  PDCI_REST_PD_ID(pd_id_tmp_PCGEN_, pd);
   pd->errCode = P_NO_ERR;
   PCGEN_UNION_READ_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init);
 } while (0)
@@ -1183,8 +1187,10 @@ do {
 /* not sure that the init calls are needed */
 #define PCGEN_UNION_READ_MAN_NEXT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init) 
 do {
+  PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
   rep_init(pads, rep);
-  pd_init (pads, pd);
+  pd_init(pads, pd);
+  PDCI_REST_PD_ID(pd_id_tmp_PCGEN_, pd);
   pd->errCode = P_NO_ERR;
   PCGEN_UNION_READ_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init);
 } while (0)
@@ -1260,8 +1266,8 @@ do {
 /* END_MACRO */
 
 #define PCGEN_UNION_READ_LONGEST_SETUP_STAT(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
-Ppos_t start_pos_PCGEN_, end_pos_PCGEN_;
-ssize_t longest_PCGEN_ = -1;
+Ppos_t      start_pos_PCGEN_, end_pos_PCGEN_;
+ssize_t     longest_PCGEN_ = -1;
 do {
   PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
   memset((void*)&trep_PCGEN_, 0, sizeof(trep_PCGEN_));
@@ -1271,12 +1277,12 @@ do {
 /* END_MACRO */
 
 #define PCGEN_UNION_READ_LONGEST_SETUP(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
-Ppos_t start_pos_PCGEN_, end_pos_PCGEN_;
-ssize_t longest_PCGEN_ = -1;
+Ppos_t      start_pos_PCGEN_, end_pos_PCGEN_;
+ssize_t     longest_PCGEN_ = -1;
 do {
   PDCI_IO_GETPOS(pads, start_pos_PCGEN_);
-  rep_init  (pads, &trep_PCGEN_);
-  pd_init   (pads, &tpd_PCGEN_);
+  rep_init(pads, &trep_PCGEN_);
+  pd_init(pads, &tpd_PCGEN_);
   tpd_PCGEN_.errCode = P_NO_ERR;
 } while (0)
 /* END_MACRO */
@@ -1285,9 +1291,11 @@ do {
 do {
     PDCI_IO_GETPOS(pads, end_pos_PCGEN_);
     if (end_pos_PCGEN_.offset - start_pos_PCGEN_.offset > longest_PCGEN_) {
+      PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
       longest_PCGEN_ = end_pos_PCGEN_.offset - start_pos_PCGEN_.offset;
       memcpy(rep, &trep_PCGEN_, sizeof(trep_PCGEN_));
       memcpy(pd,  &tpd_PCGEN_,  sizeof(tpd_PCGEN_));
+      PDCI_REST_PD_ID(pd_id_tmp_PCGEN_, pd);
       pd->loc.b = start_pos_PCGEN_;
       pd->loc.e = end_pos_PCGEN_;
     }
@@ -1298,9 +1306,11 @@ do {
 do {
     PDCI_IO_GETPOS(pads, end_pos_PCGEN_);
     if (end_pos_PCGEN_.offset - start_pos_PCGEN_.offset > longest_PCGEN_) {
+      PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
       longest_PCGEN_ = end_pos_PCGEN_.offset - start_pos_PCGEN_.offset;
       rep_copy(pads, rep, &trep_PCGEN_);
-      pd_copy (pads, pd,  &tpd_PCGEN_);
+      pd_copy(pads, pd,  &tpd_PCGEN_);
+      PDCI_REST_PD_ID(pd_id_tmp_PCGEN_, pd);
       pd->loc.b = start_pos_PCGEN_;
       pd->loc.e = end_pos_PCGEN_;
     }
@@ -1454,8 +1464,8 @@ do {
 
 #define PCGEN_UNION_READ_LONGEST_MAN_NEXT_PRE(fn_nm, the_tag, rep_init, pd_init) 
 do {
-  rep_init  (pads, &trep_PCGEN_);
-  pd_init   (pads, &tpd_PCGEN_);
+  rep_init(pads, &trep_PCGEN_);
+  pd_init(pads, &tpd_PCGEN_);
   tpd_PCGEN_.errCode = P_NO_ERR;
   PCGEN_UNION_READ_LONGEST_MAN_STAT_PRE(fn_nm, the_tag, rep_init, pd_init);
 } while (0)
@@ -1464,8 +1474,8 @@ do {
 /* not sure that the init calls are needed */
 #define PCGEN_UNION_READ_LONGEST_MAN_NEXT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init) 
 do {
-  rep_init  (pads, &trep_PCGEN_);
-  pd_init   (pads, &tpd_PCGEN_);
+  rep_init(pads, &trep_PCGEN_);
+  pd_init(pads, &tpd_PCGEN_);
   tpd_PCGEN_.errCode = P_NO_ERR;
   PCGEN_UNION_READ_LONGEST_MAN_STAT_VIRT_PRE(fn_nm, the_tag, rep_init, pd_init);
 } while (0)
@@ -1542,10 +1552,12 @@ do {
 #define PDCI_SWUNION_READ_PRE(fn_nm, the_tag, rep_cleanup, rep_init, rep_copy, pd_cleanup, pd_init, pd_copy)
 do {
   if ((rep->tag) != the_tag) {
-    rep_cleanup (pads, rep);
-    pd_cleanup  (pads, pd);
-    rep_init    (pads, rep);
-    pd_init     (pads, pd);
+    PDCI_SAVE_PD_ID(pd_id_tmp_PCGEN_, pd);
+    rep_cleanup(pads, rep);
+    pd_cleanup(pads, pd);
+    rep_init(pads, rep);
+    pd_init(pads, pd);
+    PDCI_REST_PD_ID(pd_id_tmp_PCGEN_, pd);
   }
 } while (0)
 /* END_MACRO */
