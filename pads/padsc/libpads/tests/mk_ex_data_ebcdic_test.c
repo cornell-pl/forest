@@ -200,67 +200,67 @@ int main(int argc, char** argv) {
   num = 0;
   PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   num = PDC_MIN_INT8;
   PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   num = PDC_MAX_INT8;
   PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   unum = PDC_MAX_UINT8;
   PDC_uint64_to_ebcdic((PDC_byte*)tmp, unum, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   num = PDC_MIN_INT16;
   PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   num = PDC_MAX_INT16;
   PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   unum = PDC_MAX_UINT16;
   PDC_uint64_to_ebcdic((PDC_byte*)tmp, unum, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   num = PDC_MIN_INT32;
   PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   num = PDC_MAX_INT32;
   PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   unum = PDC_MAX_UINT32;
   PDC_uint64_to_ebcdic((PDC_byte*)tmp, unum, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   num = PDC_MIN_INT64;
   PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   num = PDC_MAX_INT64;
   PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   unum = PDC_MAX_UINT64;
   PDC_uint64_to_ebcdic((PDC_byte*)tmp, unum, 20);
   sfwrite(io, (void*)tmp, 20);
-  sfputc(io, '\n');
+  sfputc(io, PDC_EBCDIC_NEWLINE);
 
   sfclose(io);
 }

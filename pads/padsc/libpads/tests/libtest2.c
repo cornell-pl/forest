@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
       goto done;
     }
 #else
-    if (PDC_ERR == PDC_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
+    if (PDC_ERR == PDC_achar_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
       error(2, "Could not find newline, ending program");
       break;
     }

@@ -7,7 +7,7 @@
 
 #define NEXT_REC do {\
   if (strncmp(argv[1], "norec", 5) == 0) { \
-    if (PDC_ERR == PDC_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) { \
+    if (PDC_ERR == PDC_echar_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) { \
       error(2, "Could not find EOR (newline), ending program"); \
       goto done; \
     } \
@@ -46,14 +46,14 @@ int main(int argc, char** argv) {
 
   if (strcmp(argv[1], "fwrec") == 0) {
     io_disc = PDC_fwrec_make(0, 20, 1); /* 1 20-echar int, newline */ 
-  } else if (strcmp(argv[1], "nlrec") == 0) {
-    io_disc = PDC_nlrec_make(0);
+  } else if (strcmp(argv[1], "ctrec") == 0) {
+    io_disc = PDC_ctrec_make(PDC_EBCDIC_NEWLINE, 0);
   } else if (strcmp(argv[1], "norec") == 0) {
     io_disc = PDC_norec_make(0);
   } else if (strcmp(argv[1], "fwrec_noseek") == 0) {
     io_disc = PDC_fwrec_noseek_make(0, 20, 1); /* 1 20-echar int, newline */ 
-  } else if (strcmp(argv[1], "nlrec_noseek") == 0) {
-    io_disc = PDC_nlrec_noseek_make(0);
+  } else if (strcmp(argv[1], "ctrec_noseek") == 0) {
+    io_disc = PDC_ctrec_noseek_make(PDC_EBCDIC_NEWLINE, 0);
   } else if (strcmp(argv[1], "norec_noseek") == 0) {
     io_disc = PDC_norec_noseek_make(0);
   } else {
@@ -309,6 +309,6 @@ int main(int argc, char** argv) {
   return 0;
 
  usage:
-  error(2, "\nUsage: %s <io-disc-name>\n\n\twhere <io-disc-name> is one of: fwrec, nlrec, norec, fwrec_noseek, nlrec_noseek, norec_noseek\n", argv[0]);
+  error(2, "\nUsage: %s <io-disc-name>\n\n\twhere <io-disc-name> is one of: fwrec, ctrec, norec, fwrec_noseek, ctrec_noseek, norec_noseek\n", argv[0]);
   return -1;
 }

@@ -41,6 +41,7 @@ mk_ex_data_ebcdic_test :: mk_ex_data_ebcdic_test.c
 regress : regress_libtest1 \
           regress_libtest2 \
           regress_libtest4 \
+          regress_ebcdic_test \
           regress_ebcdic_libtest4
 
 regress_libtest1 : libtest1
@@ -62,6 +63,11 @@ regress_ebcdic_libtest4 : ebcdic_libtest4
 	if [ -f tmp/tmp.ebcdic_libtest4 ]; then $(RM) tmp/tmp.ebcdic_libtest4; fi
 	(./ebcdic_libtest4 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.ebcdic_libtest4
 	diff tmp/tmp.ebcdic_libtest4 ../../regress/ebcdic_libtest4.regress || echo EBCDIC_LIBTEST4 DIFFERS
+
+regress_ebcdic_test : ebcdic_test
+	if [ -f tmp/tmp.ebcdic_test ]; then $(RM) tmp/tmp.ebcdic_test; fi
+	(./ebcdic_test ctrec_noseek 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.ebcdic_test
+	diff tmp/tmp.ebcdic_test ../../regress/ebcdic_test.regress || echo EBCDIC_TEST DIFFERS
 
 clean :
 	$(RM) -f *.o *test* *~
