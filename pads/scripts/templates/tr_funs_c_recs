@@ -1,0 +1,20 @@
+// Transform file, generated from PSPEC_FILE by gigascope_make.pl
+// Generates schema file FUNS_C_FILE
+
+Output("FUNS_C_FILE");
+
+#include "tr_funs_h_inc"
+#include "tr_funs_c_inc"
+
+Transform Schema : TyDecl -> IO;
+
+Schema(Pstruct REC_TYPE)
+Begin
+ Pre:        -> "\n\
+\n\
+#include \"FUNS_H_FILE_NOPATH\" \n\
+#include \"pads_gigascope_macros.h\" \n\
+\n\
+"
+ Each:  ty f -> "REC_^PickMacro(^ty)(^Ty(^ty), ^f)\n"
+End;

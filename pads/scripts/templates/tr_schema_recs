@@ -3,13 +3,7 @@
 
 Output("SCHEMA_FILE");
 
-Transform Ty : TyName -> String;
-
-Ty(Pstring)     = "String";
-Ty(Pb_uint8)    = "ushort";
-Ty(Pb_uint16)   = "ushort";
-Ty(Pb_uint32)   = "uint  ";
-Ty(ipaddrtype)  = "IP    ";
+#include "tr_schema_inc"
 
 Transform Schema : TyDecl -> IO;
 

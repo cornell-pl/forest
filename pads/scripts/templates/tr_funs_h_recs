@@ -3,20 +3,17 @@
 
 Output("FUNS_H_FILE");
 
-Transform Ty : TyName -> String;
-
-Ty(Pstring)     = "String";
-Ty(Pb_uint8)    = "ushort";
-Ty(Pb_uint16)   = "ushort";
-Ty(Pb_uint32)   = "uint  ";
-Ty(ipaddrtype)  = "IP    ";
+#include "tr_funs_h_inc"
 
 Transform Schema : TyDecl -> IO;
 
 Schema(Pstruct REC_TYPE)
 Begin
  Pre:        -> "\n\
-struct packet;\n\
+\n\
+#include \"packet.h\" \n\
+#include \"lfta/rts_string.h\" \n\
+\n\
 "
- Each:  ty f -> "int get_pads_^f (struct packet *p, ^Ty(^ty) r);"
+ Each:  ty f -> "int get_pads_^f (struct packet *p, ^Ty(^ty) *r);"
 End;
