@@ -75,13 +75,36 @@ Parray domain_name {
   Pparsecheck(domain_name_dbg(elts, length, arrayBegin.offset));
 };
 
+Pstruct A_t(:Puint16 rdlength:) {
+  Psbh_uint32(:4:) address : rdlength == 4;
+};
+
+Pstruct WKS_t(:Puint16 rdlength:) {
+  Pcompute size_t start = position.offset;
+  Psbh_uint32(:4:) address;
+  Psbh_uint8(:1:) protocol;
+  Pcompute size_t middle = position.offset;
+  // Need to make sure rdlength > middle - start
+  Pa_string_FW(:rdlength-(middle-start):) bitmap;
+};
+
+Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
+  // Would be nice to check that rdlength was consumed
+  Pswitch (t) {
+  Pcase 1 : A_t(:rdlength:) A;
+  Pcase 11 : WKS_t(:rdlength:) WKS;
+  Pdefault : Pa_string_FW(:rdlength:) unknown;
+  }
+};
+
 Pstruct resource_record {
   domain_name              name;
-  Psbh_uint16(:2:)         type;
+  Psbh_uint16(:2:)         type : printf("Type is %d\n",type);
   Psbh_uint16(:2:)         class;
   Psbh_uint32(:4:)         ttl;    /- should be limited to positive signed 32bit
   Psbh_uint16(:2:)         rdlength;
-  Pa_string_FW(:rdlength:) rddata; /- structure determined by type, will fill in later
+  rr_spec(:type,rdlength:) rdata;
+  //  Pa_string_FW(:rdlength:) rdata; /- structure determined by type, will fill in later
 };
 
 Parray resource_records(:unsigned int size:) {
