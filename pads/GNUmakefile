@@ -52,7 +52,7 @@ veryveryclean: veryclean
 	@(cd ast-ast/arch; $(RM) -rf `../bin/package`)
 	@($(RM) ./mk/rules.arch.`ast-ast/bin/package`.mk)
 
-WHERE_NMAKE := $(shell (type nmake 2>/dev/null))
+WHERE_NMAKE := $(shell (type nmake 2>/dev/null) | grep -v 'not found')
 ifeq ($(WHERE_NMAKE),)
 $(AST_LIB) : ast-ast/lib/package/tgz/*.tgz
 	@(if [ ! -f ast-ast/bin/package ]; then cp ast-ast/bin/package.cvs ast-ast/bin/package; fi)
