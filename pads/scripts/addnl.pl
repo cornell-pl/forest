@@ -22,18 +22,17 @@ while (<>) {
   if ((/\# /) || (/\#line/)) { # do not emit source file info
     next;
   }
-  s/{/{\n/g;
-  s/}/}\n/g;
   foreach $part (split(/\"([^\"]|[\\][\"])*\"/)) {
     my $origpart = quotemeta($part);
     my $modpart = $part;
     $modpart =~ s/;([^\"])/;\n\1/g;
+    $modpart =~ s/([\{\}])/\1\n/g;
     s/$origpart/$modpart/g;
   }
   while (/\n\n/) {
     s/\n\n/\n/g;
   }
-  s/}\s*;/};/g;
+  s/\}\s*;/\};/g;
   print;
   $prev_empty = 0;
 }
