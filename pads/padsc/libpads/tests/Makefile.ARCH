@@ -50,9 +50,9 @@ regress_libtest1 : libtest1
 	diff tmp/tmp.libtest1 ../../regress/libtest1.regress || echo LIBTEST1 DIFFERS
 
 regress_libtest2 : libtest2
-	if [ -f tmp/tmp.libtest2 ]; then $(RM) tmp/tmp.libtest2; fi
-	(./libtest2 2>&1) | ../../../scripts/remove_junk.pl | cat > tmp/tmp.libtest2
-	diff tmp/tmp.libtest2 ../../regress/libtest2.regress || echo LIBTEST2 DIFFERS
+	if [ -f tmp/tmp.libtest2.`/home/gsf/bin/package` ]; then $(RM) tmp/tmp.libtest2.`/home/gsf/bin/package`; fi
+	(./libtest2 2>&1) | ../../../scripts/remove_junk.pl | cat > tmp/tmp.libtest2.`/home/gsf/bin/package`
+	diff tmp/tmp.libtest2.`/home/gsf/bin/package` ../../regress/libtest2.regress.`/home/gsf/bin/package` || echo LIBTEST2 DIFFERS
 
 regress_libtest4 : libtest4
 	if [ -f tmp/tmp.libtest4 ]; then $(RM) tmp/tmp.libtest4; fi
