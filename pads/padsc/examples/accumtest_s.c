@@ -40,6 +40,16 @@ int main(int argc, char** argv) {
     if (PDC_ERROR == PDC_string_acc_add(pdc, &accum, &ed, &key1, 0)) {
       error(0, "** accum_add failed **");
     }
+    if (i % 10 < 3) {
+      if (PDC_ERROR == PDC_string_acc_add(pdc, &accum, &ed, &key1, 0)) {
+	error(0, "** accum_add failed **");
+      }
+    }
+    if (i % 10 < 7) {
+      if (PDC_ERROR == PDC_string_acc_add(pdc, &accum, &ed, &key1, 0)) {
+	error(0, "** accum_add failed **");
+      }
+    }
   }
   ed.errCode = PDC_CHAR_LIT_NOT_FOUND; /* typical error for string term by char lit */
   for (i = 0; i < 100000; i++) {

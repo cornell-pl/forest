@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.29 2002-10-02 17:42:47 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.30 2002-10-02 21:10:20 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -383,38 +383,54 @@ fn_name(PDC_t* pdc, PDC_base_em* em,
  * Kathleen Fisher, Robert Gruber
  * AT&T Labs Research
  */
-
 /* ********************************** END_HEADER ********************************** */
 
+#define PDC_INT_ACCUM(int_type, num_bytes, fmt, fold_test)
 
-#define PDC_INT_ACCUM(int_type, fmt, fold_test)
-
-typedef struct int_type ## _dt_elt_s {
+typedef struct int_type ## _dt_key_s {
   int_type     val;
   PDC_uint64   cnt;
-  Dtlink_t     link;
+} int_type ## _dt_key_t;
+
+typedef struct int_type ## _dt_elt_s {
+  int_type ## _dt_key_t   key;
+  Dtlink_t         link;
 } int_type ## _dt_elt_t;
 
-int int_type ## _dt_elt_describe(Dt_t* dt, Void_t* a, Void_t* data)
-{
-  int_type ## _dt_elt_t* elt = (int_type ## _dt_elt_t*)a;
-  NoP(data);
-  error(0, "  dt_elt: val %3" fmt " cnt %3llu", elt->val, elt->cnt);
-  return 0;
-}
-
+/*
+ * Order set comparison function: only used at the end to rehash
+ * the (formerly unordered) set.  Since same val only occurs
+ * once, ptr equivalence produces key equivalence.
+ *   different keys: sort keys by cnt field, break tie with vals
+ */
 int
-int_type ## _dt_elt_cmp(Dt_t* dt, int_type* a, int_type* b, Dtdisc_t* disc)
+int_type ## _dt_elt_oset_cmp(Dt_t* dt, int_type ## _dt_key_t* a, int_type ## _dt_key_t* b, Dtdisc_t* disc)
 {
   NoP(dt);
   NoP(disc);
-  if (*a < *b) {
-    return -1;
+  if (a == b) { /* same key */
+    return 0;
   }
-  if (*a > *b) {
-    return 1;
+  if (a->cnt == b->cnt) { /* same count, do val comparison */
+    return (a->val < b->val) ? -1 : 1;
   }
-  return 0;
+  /* different counts */
+  return (a->cnt > b->cnt) ? -1 : 1;
+}
+
+/*
+ * Unordered set comparison function: all that matters is val equality
+ * (0 => equal, 1 => not equal)
+ */
+int
+int_type ## _dt_elt_set_cmp(Dt_t* dt, int_type ## _dt_key_t* a, int_type ## _dt_key_t* b, Dtdisc_t* disc)
+{
+  NoP(dt);
+  NoP(disc);
+  if (a->val == b->val) {
+    return 0;
+  }
+  return 1;
 }
 
 void*
@@ -422,8 +438,8 @@ int_type ## _dt_elt_make(Dt_t* dt, int_type ## _dt_elt_t* a, Dtdisc_t* disc)
 {
   int_type ## _dt_elt_t* b;
   if ((b = oldof(0, int_type ## _dt_elt_t, 1, 0))) {
-    b->val  = a->val;
-    b->cnt  = a->cnt;
+    b->key.val  = a->key.val;
+    b->key.cnt  = a->key.cnt;
   }
   return b;
 }
@@ -434,16 +450,28 @@ int_type ## _dt_elt_free(Dt_t* dt, int_type ## _dt_elt_t* a, Dtdisc_t* disc)
   free(a);
 }
 
-static Dtdisc_t int_type ## _acc_dt_disc = {
-  offsetof(int_type ## _dt_elt_t, val),   /* key     */
-  0,                                      /* size    */
-  offsetof(int_type ## _dt_elt_t, link),  /* link    */
-  (Dtmake_f)int_type ## _dt_elt_make,     /* makef   */
-  (Dtfree_f)int_type ## _dt_elt_free,     /* freef   */
-  (Dtcompar_f)int_type ## _dt_elt_cmp,    /* comparf */
-  NiL,                                    /* hashf   */
-  NiL,                                    /* memoryf */
-  NiL                                     /* eventf  */
+static Dtdisc_t int_type ## _acc_dt_set_disc = {
+  offsetof(int_type ## _dt_elt_t, key),     /* key     */
+  num_bytes,                                /* size    */
+  offsetof(int_type ## _dt_elt_t, link),    /* link    */
+  (Dtmake_f)int_type ## _dt_elt_make,       /* makef   */
+  (Dtfree_f)int_type ## _dt_elt_free,       /* freef   */
+  (Dtcompar_f)int_type ## _dt_elt_set_cmp,  /* comparf */
+  NiL,                                      /* hashf   */
+  NiL,                                      /* memoryf */
+  NiL                                       /* eventf  */
+};
+
+static Dtdisc_t int_type ## _acc_dt_oset_disc = {
+  offsetof(int_type ## _dt_elt_t, key),     /* key     */
+  num_bytes,                                /* size    */
+  offsetof(int_type ## _dt_elt_t, link),    /* link    */
+  (Dtmake_f)int_type ## _dt_elt_make,       /* makef   */
+  (Dtfree_f)int_type ## _dt_elt_free,       /* freef   */
+  (Dtcompar_f)int_type ## _dt_elt_oset_cmp, /* comparf */
+  NiL,                                      /* hashf   */
+  NiL,                                      /* memoryf */
+  NiL                                       /* eventf  */
 };
 
 PDC_error_t
@@ -454,7 +482,7 @@ int_type ## _acc_init(PDC_t* pdc, int_type ## _acc* a, PDC_disc_t* disc)
   if (!a) {
     return PDC_ERROR;
   }
-  if (!(a->dict = dtopen(&int_type ## _acc_dt_disc, Dtoset))) {
+  if (!(a->dict = dtopen(&int_type ## _acc_dt_set_disc, Dtset))) {
     return PDC_ERROR;
   }
   a->good = a->bad = a->fold = a->psum = a->avg = a->min = a->max = 0;
@@ -508,7 +536,8 @@ PDC_error_t
 int_type ## _acc_add(PDC_t* pdc, int_type ## _acc* a, PDC_base_ed* ed, int_type* val, PDC_disc_t* disc)
 {
   int_type               v          = (*val);
-  int_type ## _dt_elt_t  insert_val;
+  int_type ## _dt_elt_t  insert_elt;
+  int_type ## _dt_key_t  lookup_key;
   int_type ## _dt_elt_t* tmp1;
   PDC_DISC_INIT_CHECKS;
   TRACE(pdc, MacroArg2String(int_type) "_acc_add called");
@@ -531,16 +560,20 @@ int_type ## _acc_add(PDC_t* pdc, int_type ## _acc* a, PDC_base_ed* ed, int_type*
   } else if (v > a->max) {
     a->max = v;
   }
-  if (dtsize(a->dict) < 10) {
-    insert_val.val = v;
-    insert_val.cnt = 0;
-    if (!(tmp1 = dtinsert(a->dict, &insert_val))) {
+  if (dtsize(a->dict) < PDC_ACC_MAX2TRACK) {
+    insert_elt.key.val = v;
+    insert_elt.key.cnt = 0;
+    if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
       WARN(pdc, "** PADC internal error: dtinsert failed (out of memory?) **");
       return PDC_ERROR;
     }
-    (tmp1->cnt)++;
-  } else if ((tmp1 = dtmatch(a->dict, (Void_t*)&v))) {
-    (tmp1->cnt)++;
+    (tmp1->key.cnt)++;
+  } else {
+    lookup_key.val = v;
+    lookup_key.cnt = 0;
+    if ((tmp1 = dtmatch(a->dict, (Void_t*)&lookup_key))) {
+      (tmp1->key.cnt)++;
+    }
   }
   return PDC_OK;
 }
@@ -548,6 +581,8 @@ int_type ## _acc_add(PDC_t* pdc, int_type ## _acc* a, PDC_base_ed* ed, int_type*
 PDC_error_t
 int_type ## _acc_report_internal(PDC_t* pdc, const char* prefix1, const char* prefix2, int_type ## _acc* a, PDC_disc_t* disc)
 {
+  const char*           cmt = ""; 
+  int                   i = 0, sz, rp;
   PDC_uint64            cnt_sum = 0;
   double                cnt_sum_pcnt;
   double                elt_pcnt;
@@ -555,27 +590,39 @@ int_type ## _acc_report_internal(PDC_t* pdc, const char* prefix1, const char* pr
   int_type ## _dt_elt_t* elt;
 
   if (a->good == 0) {
-    disc->errorf(pdc, disc, 0, "%s: 0 good vals %llu bad vals", prefix1, a->bad);
+    disc->errorf(pdc, disc, 0, "%s: good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf", prefix1, 0, a->bad, 100.0);
     return PDC_OK;
   }
   int_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < PDC_ACC_REPORT_K) ? sz : PDC_ACC_REPORT_K;
+  if (sz == PDC_ACC_MAX2TRACK) {
+    cmt = " (* hit tracking limit *) ";
+  }
+  dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfstrset(pdc->tmp, 0);
-  sfprintf(pdc->tmp, "%s: %llu good vals %llu bad vals\n",
-	   prefix1, a->good, a->bad);
+  sfprintf(pdc->tmp, "%s: good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+	   prefix1, a->good, a->bad, (a->bad / (double)(a->good + a->bad)));
   sfprintf(pdc->tmp, "  Characterizing %s: (" MacroArg2String(int_type) ") min %" fmt " max %" fmt " avg %lf\n",
 	   prefix2, a->min, a->max, a->avg);
-  sfprintf(pdc->tmp, "    => distribution of first 10 values encountered:\n");
-  for (velt = dtfirst(a->dict); velt; velt = dtnext(a->dict, velt)) {
+  sfprintf(pdc->tmp, "    => distribution of top %d values out of %d distinct values%s:\n",
+	   rp, sz, cmt);
+  for (velt = dtfirst(a->dict); velt && i < PDC_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
     elt = (int_type ## _dt_elt_t*)velt;
-    cnt_sum += elt->cnt;
-    elt_pcnt = (100.0 * elt->cnt)/a->good;
+    cnt_sum += elt->key.cnt;
+    elt_pcnt = (100.0 * elt->key.cnt)/a->good;
     sfprintf(pdc->tmp, "        val: %10" fmt " count: %10llu  pcnt-of-good-vals: %8.3lf\n",
-	     elt->val, elt->cnt, elt_pcnt);
+	     elt->key.val, elt->key.cnt, elt_pcnt);
   }
   cnt_sum_pcnt = (100.0 * cnt_sum)/a->good;
+  sfprintf(pdc->tmp,   "----------------------------------------------------------------------\n");
   sfprintf(pdc->tmp,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf",
 	   cnt_sum, cnt_sum_pcnt);
   disc->errorf(pdc, disc, 0, "%s", sfstruse(pdc->tmp));
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &int_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
   return PDC_OK;
 }
 
@@ -708,66 +755,95 @@ PDC_BINT_READ_FN(PDC_buint64_read, PDC_uint64, 8, 7);
 
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
+
+/* track up to 1000 values, report the top 10 */
+#define PDC_ACC_MAX2TRACK      1000
+#define PDC_ACC_REPORT_K         10
+
 /* ********************************** END_HEADER ********************************** */
 #gen_include "libpadsc-acc-macros-gen.h"
 
-PDC_INT_ACCUM(PDC_int8, "d", PDC_FOLDTEST_INT8);
+/* PDC_INT_ACCUM(int_type, num_bytes, fmt, fold_test) */
 
-PDC_INT_ACCUM(PDC_uint8, "u", PDC_FOLDTEST_UINT8);
+PDC_INT_ACCUM(PDC_int8,   1, "d",   PDC_FOLDTEST_INT8);
 
-PDC_INT_ACCUM(PDC_int16, "d", PDC_FOLDTEST_INT16);
+PDC_INT_ACCUM(PDC_uint8,  1, "u",   PDC_FOLDTEST_UINT8);
 
-PDC_INT_ACCUM(PDC_uint16, "u", PDC_FOLDTEST_UINT16);
+PDC_INT_ACCUM(PDC_int16,  2, "d",   PDC_FOLDTEST_INT16);
 
-PDC_INT_ACCUM(PDC_int32, "ld", PDC_FOLDTEST_INT32);
+PDC_INT_ACCUM(PDC_uint16, 2, "u",   PDC_FOLDTEST_UINT16);
 
-PDC_INT_ACCUM(PDC_uint32, "lu", PDC_FOLDTEST_UINT32);
+PDC_INT_ACCUM(PDC_int32,  4, "ld",  PDC_FOLDTEST_INT32);
 
-PDC_INT_ACCUM(PDC_int64, "lld", PDC_FOLDTEST_INT64);
+PDC_INT_ACCUM(PDC_uint32, 4, "lu",  PDC_FOLDTEST_UINT32);
 
-PDC_INT_ACCUM(PDC_uint64, "llu", PDC_FOLDTEST_UINT64);
+PDC_INT_ACCUM(PDC_int64,  8, "lld", PDC_FOLDTEST_INT64);
+
+PDC_INT_ACCUM(PDC_uint64, 8, "llu", PDC_FOLDTEST_UINT64);
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 
-typedef struct PDC_string_dt_elt_s {
-  PDC_string  s;
+typedef struct PDC_string_dt_key_s {
   PDC_uint64  cnt;
-  Dtlink_t    link;
-  char        buf[1];
-} PDC_string_dt_elt_t;
+  size_t      len;
+  char*       str;
+} PDC_string_dt_key_t;
 
-int
-PDC_string_dt_elt_describe(Dt_t* dt, Void_t* a, Void_t* data)
-{
-  PDC_string_dt_elt_t* elt = (PDC_string_dt_elt_t*)a;
-  NoP(dt);
-  NoP(data);
-  error(0, "  dt_elt: str %-.*s cnt %3llu", elt->s.len, elt->s.str, elt->cnt);
-  return 0;
-}
+typedef struct PDC_string_dt_elt_s {
+  PDC_string_dt_key_t  key;
+  Dtlink_t             link;
+  char                 buf[1];
+} PDC_string_dt_elt_t;
 
 unsigned int
 PDC_string_dt_elt_hash(Dt_t* dt, Void_t* key, Dtdisc_t* disc)
 {
-  PDC_string* s = (PDC_string*)key;
+  PDC_string_dt_key_t* k = (PDC_string_dt_key_t*)key;
   NoP(dt);
   NoP(disc);
-  return dtstrhash(0, s->str, s->len);
+  return dtstrhash(0, k->str, k->len);
 }
 
+/*
+ * Order set comparison function: only used at the end to rehash
+ * the (formerly unordered) set.  Since same string only occurs
+ * once, ptr equivalence produces key equivalence.
+ *   different keys: sort keys by cnt field, break tie with string vals
+ */
 int
-PDC_string_dt_elt_cmp(Dt_t* dt, PDC_string* a, PDC_string* b, Dtdisc_t* disc)
+PDC_string_dt_elt_oset_cmp(Dt_t* dt, PDC_string_dt_key_t* a, PDC_string_dt_key_t* b, Dtdisc_t* disc)
 {
-  int res;
-  size_t minlen;
-
+  size_t min_len;
+  int    res;
   NoP(dt);
   NoP(disc);
-  minlen = (a->len < b->len) ? a->len : b->len;
-  if ((res = strncmp(a->str, b->str, minlen)) || (a->len == b->len)) {
-    return res;
+  if (a == b) { /* same key */
+    return 0;
   }
-  return (a->len < b->len) ? -1 : 1;
+  if (a->cnt == b->cnt) { /* same count, so do lexicographic comparison */
+    min_len = (a->len < b->len) ? a->len : b->len;
+    if ((res = strncmp(a->str, b->str, min_len))) {
+      return res;
+    }
+    return (a->len < b->len) ? -1 : 1;
+  }
+  /* different counts */
+  return (a->cnt > b->cnt) ? -1 : 1;
+}
+
+/*
+ * Unordered set comparison function: all that matters is string equality
+ * (0 => equal, 1 => not equal)
+ */
+int
+PDC_string_dt_elt_set_cmp(Dt_t* dt, PDC_string_dt_key_t* a, PDC_string_dt_key_t* b, Dtdisc_t* disc)
+{
+  NoP(dt);
+  NoP(disc);
+  if (a->len == b->len && strncmp(a->str, b->str, a->len) == 0) {
+    return 0;
+  }
+  return 1;
 }
 
 void*
@@ -776,11 +852,11 @@ PDC_string_dt_elt_make(Dt_t* dt, PDC_string_dt_elt_t* a, Dtdisc_t* disc)
   PDC_string_dt_elt_t* b;
   NoP(dt);
   NoP(disc);
-  if ((b = oldof(0, PDC_string_dt_elt_t, 1, a->s.len))) {
-    memcpy(b->buf, a->s.str, a->s.len);
-    b->cnt   = a->cnt;
-    b->s.str = b->buf;
-    b->s.len = a->s.len;
+  if ((b = oldof(0, PDC_string_dt_elt_t, 1, a->key.len))) {
+    memcpy(b->buf, a->key.str, a->key.len);
+    b->key.cnt = a->key.cnt;
+    b->key.len = a->key.len;
+    b->key.str = b->buf;
   }
   return b;
 }
@@ -791,16 +867,28 @@ PDC_string_dt_elt_free(Dt_t* dt, PDC_string_dt_elt_t* a, Dtdisc_t* disc)
   free(a);
 }
 
-static Dtdisc_t PDC_string_acc_dt_disc = {
-  offsetof(PDC_string_dt_elt_t, s),    /* key     */
-  0,				       /* size    */
-  offsetof(PDC_string_dt_elt_t, link), /* link    */
-  (Dtmake_f)PDC_string_dt_elt_make,    /* makef   */
-  (Dtfree_f)PDC_string_dt_elt_free,    /* freef */
-  (Dtcompar_f)PDC_string_dt_elt_cmp,   /* comparf */
-  (Dthash_f)PDC_string_dt_elt_hash,    /* hashf   */
-  NiL,				       /* memoryf */
-  NiL				       /* eventf  */
+static Dtdisc_t PDC_string_acc_dt_set_disc = {
+  offsetof(PDC_string_dt_elt_t, key),     /* key     */
+  0,				          /* size    */
+  offsetof(PDC_string_dt_elt_t, link),    /* link    */
+  (Dtmake_f)PDC_string_dt_elt_make,       /* makef   */
+  (Dtfree_f)PDC_string_dt_elt_free,       /* freef */
+  (Dtcompar_f)PDC_string_dt_elt_set_cmp,  /* comparf */
+  (Dthash_f)PDC_string_dt_elt_hash,       /* hashf   */
+  NiL,				          /* memoryf */
+  NiL				          /* eventf  */
+};
+
+static Dtdisc_t PDC_string_acc_dt_oset_disc = {
+  offsetof(PDC_string_dt_elt_t, key),     /* key     */
+  0,				          /* size    */
+  offsetof(PDC_string_dt_elt_t, link),    /* link    */
+  (Dtmake_f)PDC_string_dt_elt_make,       /* makef   */
+  (Dtfree_f)PDC_string_dt_elt_free,       /* freef */
+  (Dtcompar_f)PDC_string_dt_elt_oset_cmp, /* comparf */
+  (Dthash_f)PDC_string_dt_elt_hash,       /* hashf   */
+  NiL,				          /* memoryf */
+  NiL				          /* eventf  */
 };
 
 PDC_error_t
@@ -811,7 +899,7 @@ PDC_string_acc_init(PDC_t* pdc, PDC_string_acc* a, PDC_disc_t* disc)
   if (!a) {
     return PDC_ERROR;
   }
-  if (!(a->dict = dtopen(&PDC_string_acc_dt_disc, Dttree))) {
+  if (!(a->dict = dtopen(&PDC_string_acc_dt_set_disc, Dtset))) {
     return PDC_ERROR;
   }
   return PDC_uint32_acc_init(pdc, &(a->len_accum), disc);
@@ -847,7 +935,8 @@ PDC_string_acc_cleanup(PDC_t* pdc, PDC_string_acc* a, PDC_disc_t* disc)
 PDC_error_t
 PDC_string_acc_add(PDC_t* pdc, PDC_string_acc* a, PDC_base_ed* ed, PDC_string* val, PDC_disc_t* disc)
 {
-  PDC_string_dt_elt_t insert_val;
+  PDC_string_dt_elt_t insert_elt;
+  PDC_string_dt_key_t lookup_key;
   PDC_string_dt_elt_t* tmp1;
   PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_string_acc_add called");
@@ -860,17 +949,23 @@ PDC_string_acc_add(PDC_t* pdc, PDC_string_acc* a, PDC_base_ed* ed, PDC_string* v
   if (ed->errCode != 0) {
     return PDC_OK;
   }
-  if (dtsize(a->dict) < 10) {
-    insert_val.s.str = val->str;
-    insert_val.s.len = val->len;
-    if (!(tmp1 = dtinsert(a->dict, &insert_val))) {
+  if (dtsize(a->dict) < PDC_ACC_MAX2TRACK) {
+    insert_elt.key.str = val->str;
+    insert_elt.key.len = val->len;
+    insert_elt.key.cnt = 0;
+    if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
       WARN(pdc, "** PADC internal error: dtinsert failed (out of memory?) **");
       return PDC_ERROR;
     }
-    (tmp1->cnt)++;
+    (tmp1->key.cnt)++;
   }
-  else if ((tmp1 = dtmatch(a->dict, (Void_t*)val))) {
-    (tmp1->cnt)++;
+  else {
+    lookup_key.str = val->str;
+    lookup_key.len = val->len;
+    lookup_key.cnt = 0;
+    if ((tmp1 = dtmatch(a->dict, (Void_t*)&lookup_key))) {
+      (tmp1->key.cnt)++;
+    }
   }
   return PDC_OK;
 }
@@ -878,6 +973,8 @@ PDC_string_acc_add(PDC_t* pdc, PDC_string_acc* a, PDC_base_ed* ed, PDC_string* v
 PDC_error_t
 PDC_string_acc_report(PDC_t* pdc, const char* prefix, PDC_string_acc* a, PDC_disc_t* disc)
 {
+  const char*           cmt = ""; 
+  int                   i = 0, sz, rp;
   PDC_uint64            cnt_sum = 0;
   double                cnt_sum_pcnt;
   double                elt_pcnt;
@@ -891,31 +988,46 @@ PDC_string_acc_report(PDC_t* pdc, const char* prefix, PDC_string_acc* a, PDC_dis
   if (!disc->errorf) {
     return PDC_OK;
   }
-  if (PDC_ERROR == PDC_uint32_acc_report_internal(pdc, prefix, "string length", &(a->len_accum), disc)) {
+  if (PDC_ERROR == PDC_uint32_acc_report_internal(pdc, prefix, "string lengths", &(a->len_accum), disc)) {
     return PDC_ERROR;
   }
-  sfstrset(pdc->tmp, 0);
   if (a->len_accum.good == 0) {
     return PDC_OK;
   }
-  sfprintf(pdc->tmp, "  Characterizing strings:\n");
-  sfprintf(pdc->tmp, "    => distribution of first 10 strings encountered:\n");
-  for (velt = dtfirst(a->dict); velt; velt = dtnext(a->dict, velt)) {
+  /* rehash tree to get keys ordered by count */
+  sz = dtsize(a->dict);
+  rp = (sz < PDC_ACC_REPORT_K) ? sz : PDC_ACC_REPORT_K;
+  if (sz == PDC_ACC_MAX2TRACK) {
+    cmt = " (* hit tracking limit *) ";
+  }
+  dtdisc(a->dict, &PDC_string_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+  sfstrset(pdc->tmp, 0);
+  sfprintf(pdc->tmp, "\n  Characterizing strings:\n");
+  sfprintf(pdc->tmp, "    => distribution of top %d strings out of %d distinct strings%s:\n",
+	   rp, sz, cmt);
+  for (velt = dtfirst(a->dict); velt && i < PDC_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
     elt = (PDC_string_dt_elt_t*)velt;
-    cnt_sum += elt->cnt;
-    elt_pcnt = (100.0 * elt->cnt)/a->len_accum.good;
+    cnt_sum += elt->key.cnt;
+    elt_pcnt = (100.0 * elt->key.cnt)/a->len_accum.good;
     sfprintf(pdc->tmp, "        val: [%-.*s]%-.*s count: %10llu  pcnt-of-good-vals: %8.3lf\n",
-	     elt->s.len, elt->s.str,
-	     a->len_accum.max - elt->s.len,
+	     elt->key.len, elt->key.str,
+	     a->len_accum.max - elt->key.len,
 	     "                                                                                ",
-	     elt->cnt, elt_pcnt);
+	     elt->key.cnt, elt_pcnt);
   }
   cnt_sum_pcnt = (100.0 * cnt_sum)/a->len_accum.good;
+  sfprintf(pdc->tmp, "---------------%-.*s-----------------------------------------------\n",
+	   a->len_accum.max,
+	   "--------------------------------------------------------------------------------");
   sfprintf(pdc->tmp, "        SUMMING%-.*s count: %10llu  pcnt-of-good-vals: %8.3lf",
 	   a->len_accum.max,
 	   "                                                                                ",
 	   cnt_sum, cnt_sum_pcnt);
   disc->errorf(pdc, disc, 0, "%s", sfstruse(pdc->tmp));
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict, &PDC_string_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
   return PDC_OK;
 };
 
