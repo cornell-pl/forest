@@ -104,7 +104,7 @@ Group is
         extensions/pads/parse-tree-utils.sml
         extensions/pads/perror-sig.sml
         extensions/pads/perror.sml
-
+        extensions/pads/names.sml
         extensions/pads/plib.sml
 
 	(* pretty printer extensions *)

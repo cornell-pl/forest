@@ -1712,7 +1712,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 	      fun cnvPStruct ({name:string, isRecord, isFile, params: (pcty * pcdecr) list, 
 			       fields : (pdty, pcdecr, pcexp) PX.PSField list, postCond}) = 
-	          let (* Functions for walking over lists of struct elements *)
+	          let val dummy = "_dummy"
+
+		      (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b m (PX.Full fd) = f fd
                         | mungeField f b m (PX.Brief e) = b e
                         | mungeField f b m (PX.Manifest md) = m md
@@ -1818,6 +1820,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			  else []
 		      fun genRepBrief e = []
 		      val canonicalFields = mungeFields genRepFull genRepBrief genRepMan fields
+		      val canonicalFields = if List.length canonicalFields = 0 
+			                    then [(dummy, P.int, SOME "Dummy field inserted to avoid empty struct")]
+					    else canonicalFields
 		      val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
 		      val (canonicalDecls, canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
 
@@ -2371,8 +2376,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			     variants : (pdty, pcdecr, pcexp) PX.PBranches}) = 
 		 let (* Some useful names *)
 		     val unionName = name
-                     val value = "val"
-		     val tag = "tag"
+                     val value = PNames.unionVal
+		     val tag = PNames.unionTag
 		     fun tgSuf s = s^"_tag"
 		     fun unSuf s = s^"_u"
                      fun unionBranchX (base, name) = P.addrX(P.dotX(P.arrowX(PT.Id base, PT.Id value), PT.Id name))
@@ -2974,8 +2979,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, isFile,
 			    args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
-	     let val length = "length"
-                 val elts = "elts"
+	     let val length = PNames.arrayLen
+                 val elts = PNames.arrayElts
                  val internal = "_internal"
 		 val element = "element"
                  val array = "array"
