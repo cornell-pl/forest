@@ -10,8 +10,7 @@ int main(int argc, char** argv) {
   /* size_t          n; */
   /* unsigned char   c; */
   /* int             i; */
-  char*           str;
-  size_t          len;
+  PDC_string      s;
   PDC_t*          pdc;
   PDC_base_em     em = PDC_CheckAndSet;
   PDC_base_ed     ed;
@@ -35,31 +34,31 @@ int main(int argc, char** argv) {
       break;
     }
     /* try to read line with 2 strings term by vbar 1 string term by newline */
-    if (PDC_ERROR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &str, &len, &my_disc)) {
+    if (PDC_ERROR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s, &my_disc)) {
       PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, "Cannot find vbar stop char");
       goto find_newline;
     } else {
-      error(0, "Read string term by vbar: %s (length %d)", str, len);
+      error(0, "Read string term by vbar: %s (length %d)", s.str, s.len);
     }
     if (PDC_ERROR == PDC_char_lit_read(pdc, &em, &ed, '|', 0)) {
       PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
       goto find_newline;
     }
-    if (PDC_ERROR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &str, &len, &my_disc)) {
+    if (PDC_ERROR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s, &my_disc)) {
       PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, "Cannot find vbar stop char");
       goto find_newline;
     } else {
-      error(0, "Read string term by vbar: %s (length %d)", str, len);
+      error(0, "Read string term by vbar: %s (length %d)", s.str, s.len);
     }
     if (PDC_ERROR == PDC_char_lit_read(pdc, &em, &ed, '|', 0)) {
       PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
       goto find_newline;
     }
-    if (PDC_ERROR == PDC_string_stopRegexp_read(pdc, &em, "[\nX]", &ed, &str, &len, &my_disc)) {
+    if (PDC_ERROR == PDC_string_stopRegexp_read(pdc, &em, "[\nX]", &ed, &s, &my_disc)) {
       PDC_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, "Cannot find newline or X stop chars, ending program");
       break;
     } else {
-      error(0, "Read string term by newline or X : %s (length %d)", str, len);
+      error(0, "Read string term by newline or X : %s (length %d)", s.str, s.len);
     }
   find_newline:
     if (PDC_ERROR == PDC_char_lit_scan(pdc, '\n', '\n', 0, 0, &my_disc)) {
