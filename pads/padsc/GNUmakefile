@@ -21,12 +21,9 @@ pglx_lib:
 	echo Making pglx library
 	@(cd libpglx; $(MAKE) install)
 
-# pads_glx GNUmakefile depends on O'Caml .depend file.
-# To bootstrap compilation, we create it:
 pads_glx:
 	echo Making pads-glx library
-	@(cd pads-glx; echo "">.depend; echo "">$(AST_ARCH)/.depend)
-	@(cd pads-glx; echo $(MAKE) install)
+	@(cd pads-glx; $(MAKE) install)
 
 padsc_comp:
 	echo Making padsc compiler

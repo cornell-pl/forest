@@ -53,7 +53,11 @@ INSTALL_INCLUDES=$(CHEADERS)
 # Moving the generated files is a hack!
 pads_c.h : pads_c.idl
 	$(OCAML_BIN_DIR)/camlidl -header $<
-	cp $(VPATH)/pads_c.h  $(VPATH)/pads_c.ml  $(VPATH)/pads_c.mli .
+	cp $(VPATH)/pads_c.h  $(VPATH)/pads_c.ml  $(VPATH)/pads_c.mli $(VPATH)/pads_c_stubs.c .
+
+pads_c.mli     : pads_c.h
+pads_c.ml      : pads_c.h
+pads_c_stubs.c : pads_c.h
 
 # PADS Data model in Caml and C
 OPTLDFLAGS=-linkall nums.cmxa unix.cmxa str.cmxa -cclib -lunix -cclib -lstr $(GALAX_HOME)/lib/caml/galax.cmxa
@@ -64,13 +68,13 @@ pads_dm_opt.o: $(CAML_OPTOBJS) $(GALAX_HOME)/lib/caml/galax.cmxa
 pads_pglx.o: $(CHEADERS) pads_pglx.c
 	$(CC) $(CFLAGS_O) -I$(OCAML_LIB_DIR) -I . -I$(GALAXHOME)/lib/c -I$(OCAMLHOME)/caml  -I $(PADS_HOME)/padsc/include -c $(VPATH)/pads_pglx.c
 
-all : depend $(STATIC_GALAXLIB_O) $(SHARED_GALAXLIB_O) $(STATIC_GALAXLIB_D)
+all : $(STATIC_GALAXLIB_O) $(SHARED_GALAXLIB_O) $(STATIC_GALAXLIB_D)
 	echo "Making all in pads-glx"
 
-opt : depend $(STATIC_GALAXLIB_O) $(SHARED_GALAXLIB_O)
+opt : $(STATIC_GALAXLIB_O) $(SHARED_GALAXLIB_O)
 	echo "Making opt in pads-glx"
 
-debug : depend $(STATIC_GALAXLIB_D)
+debug : $(STATIC_GALAXLIB_D)
 	echo "Making debug in pads-glx"
 
 $(STATIC_GALAXLIB_O) : $(OBJS_O)
@@ -95,40 +99,33 @@ depend: pads_c.h
 	$(OCAML_BIN_DIR)/ocamldep $(OCAML_FLAGS) -I $(VPATH) $(VPATH)/*.mli $(VPATH)/*.ml >.depend
 
 clean : 
-	$(RM) $(STATIC_GALAXLIB_O) $(STATIC_GALAXLIB_D) $(SHARED_GALAXLIB_O)  *~ *.o *.cmx *.cmo *.cmi ../*~ \
-	pads_c.ml* pads_c_stubs.c pads_c.h 
+	$(RM) $(STATIC_GALAXLIB_O) $(STATIC_GALAXLIB_D) $(SHARED_GALAXLIB_O)  *~ *.o *.cm* ../*~ \
+	$(VPATH)/*.cm* pads_c.ml* pads_c_stubs.c pads_c.h $(VPATH)/pads_c.ml* $(VPATH)/pads_c_stubs.c $(VPATH)/pads_c.h 
 
 veryclean : clean
-
-# Dependencies
-include .depend
 
  # End of rules that are run from the arch directory
 endif
 
 .SUFFIXES: .ml .mli .mll .cmo .cmi .cmx
 
-# I don't know why I need a special rule for the generated pads_c files ...
-pads_c.cmx: pads_c.ml 
-	$(OCAML_BIN_DIR)/ocamlopt $(OCAML_FLAGS) -c $< 
+pads_dm.cmi: ../pads_dm.mli pads_c.cmi
+	$(OCAML_BIN_DIR)/ocamlc  -o $*.cmi $(OCAML_FLAGS) -c ../pads_dm.mli
 
-pads_c.cmo: pads_c.ml 
-	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c $< 
+pads_dm.cmo: pads_dm.cmi ../pads_dm.ml
+	$(OCAML_BIN_DIR)/ocamlc  -o $*.cmo $(OCAML_FLAGS) -c ../pads_dm.ml
 
-pads_c.cmi: pads_c.mli
-	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c $< 
+pads_dm.cmx: pads_dm.cmi ../pads_dm.ml
+	$(OCAML_BIN_DIR)/ocamlopt  -o $*.cmx $(OCAML_FLAGS) -c ../pads_dm.ml
 
-.ml.cmo:
-	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c $< 
-	cp $*.cmo .
+pads_c.cmi: pads_c.mli 
+	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c pads_c.mli
 
-.mli.cmi:
-	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c $<
-	cp $*.cmi .
+pads_c.cmx: pads_c.cmi pads_c.ml 
+	$(OCAML_BIN_DIR)/ocamlopt $(OCAML_FLAGS) -c pads_c.ml
 
-.ml.cmx:
-	$(OCAML_BIN_DIR)/ocamlopt $(OCAML_FLAGS) -c $<
-	cp $*.cmx $*.o .
+pads_c.cmo: pads_c.cmi pads_c.ml 
+	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c pads_c.ml
 
 .c.o: $(CHEADERS)
 	$(CC) $(CFLAGS) -I . -I$(GALAX_HOME)/lib/c -c $(VPATH)/$<
