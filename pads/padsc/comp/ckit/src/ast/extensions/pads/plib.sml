@@ -402,13 +402,15 @@ struct
 	          res:PT.expression) = 
       P.eqX(expectedValX, readFunX(n,pdc,loc,optArgs,pd,res))
 
-  fun scanFunX(n:string, pdc:PT.expression, c : PT.expression, s : PT.expression,eatLit:PT.expression,
-	       eatStop: PT.expression, res:PT.expression, offset:PT.expression) = 
-      PT.Call(PT.Id n, [pdc,c,s,eatLit,eatStop,res,offset])
+  fun scanFunX(n: string, pdc: PT.expression, c: PT.expression, s: PT.expression,
+	       eatLit: PT.expression, eatStop: PT.expression, panic: PT.expression,
+	       res: PT.expression, offset: PT.expression) = 
+      PT.Call(PT.Id n, [pdc,c,s,eatLit,eatStop,panic,res,offset])
 
-  fun scanFunChkX(expectedValX, n:string, pdc:PT.expression, c : PT.expression, s : PT.expression,eatLit:PT.expression,
-	       eatStop: PT.expression, res:PT.expression, offset:PT.expression) = 
-      P.eqX(expectedValX, scanFunX(n,pdc,c,s,eatLit,eatStop,res, offset))
+  fun scanFunChkX(expectedValX, n: string, pdc: PT.expression, c: PT.expression, s: PT.expression,
+		  eatLit: PT.expression, eatStop: PT.expression, panic: PT.expression,
+		  res: PT.expression, offset: PT.expression) = 
+      P.eqX(expectedValX, scanFunX(n,pdc,c,s,eatLit,eatStop,panic,res,offset))
 
   fun nstPrefixWhat(outstr, pnst, prefix, what) = 
       PT.Expr(PT.Call(PT.Id "PDCI_nst_prefix_what", [outstr, pnst, prefix, what]))

@@ -38,8 +38,6 @@ int main(int argc, char** argv) {
 #else
   error(0, "\nUsing PADSC IO discipline norec\n\n");
   io_disc = PDC_norec_make(0);
-  my_disc.scan_max = 1024;
-  my_disc.match_max = 1024;
 #endif
 
   if (argc >= 2) {
@@ -127,7 +125,7 @@ int main(int argc, char** argv) {
       goto done;
     }
 #else
-    if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 1, 0, &bytes_skipped)) {
+    if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 1, 0, 0, &bytes_skipped)) {
       error(2, "Could not find newline, ending program");
       break;
     }

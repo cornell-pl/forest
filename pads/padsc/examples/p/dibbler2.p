@@ -55,12 +55,12 @@ Pstruct out_sum_fixed2 {
   Puint32                   parent_order;
 };
 Pstruct do_ev_count {
-  Pomit PcountX(:'|',1:) bars;
-  Pcompute PDC_int32 ev_count = getLen(bars);
+  Pomit PcountX(:'|',1,0:)  bars;
+  Pcompute PDC_int32        ev_count = getLen(bars);
 };
 Precord Pstruct out_sum_data_line {
-  out_sum_fixed1           f1;
-  do_ev_count              c;
-  eventSeq(:c.ev_count:)   events;
-  out_sum_fixed2           f2;
+  out_sum_fixed1            f1;
+  do_ev_count               c;
+  eventSeq(:c.ev_count:)    events;
+  out_sum_fixed2            f2;
 };

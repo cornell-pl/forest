@@ -7,6 +7,8 @@
 
 #include "padsc-internal.h"
 
+const char* false_true [] = { "FALSE", "TRUE" };
+
 int main(int argc, char** argv) {
   PDC_t          *pdc;
   PDC_disc_t      my_disc = PDC_default_disc;
@@ -17,33 +19,6 @@ int main(int argc, char** argv) {
   PDC_byte       *begin, *end;
   const char     *exp, *str;
   size_t          exp_len, str_len;
-
-#if 0
-  int             mapped_vals;
-  mapped_vals = 0;
-  for (i = 0; i < 255; i++) {
-    if (PDC_mod_ae_tab[i] != 255) {
-      mapped_vals++;
-      if (PDC_mod_ea_tab[PDC_mod_ae_tab[i]] != i) {
-	error(0, "  i = %02x, ae[i] = %02x, ea[%02x] = %02x",
-	      i, PDC_mod_ae_tab[i], PDC_mod_ae_tab[i], PDC_mod_ea_tab[PDC_mod_ae_tab[i]]);
-      }
-    }
-  }
-  error(0, "mapped ae vals = %d", mapped_vals);
-  mapped_vals = 0;
-  for (i = 0; i < 255; i++) {
-    if (PDC_mod_ea_tab[i] != 255) {
-      mapped_vals++;
-      if (PDC_mod_ae_tab[PDC_mod_ea_tab[i]] != i) {
-	error(0, "  i = %02x, ea[i] = %02x, ae[%02x] = %02x",
-	      i, PDC_mod_ea_tab[i], PDC_mod_ea_tab[i], PDC_mod_ae_tab[PDC_mod_ea_tab[i]]);
-      }
-    }
-  }
-  error(0, "mapped ea vals = %d", mapped_vals);
-  return 0;
-#endif
 
   io_disc = PDC_nlrec_make(0);
   if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
@@ -68,11 +43,11 @@ int main(int argc, char** argv) {
   if (PDC_ERR == PDC_regexp_compile(pdc, exp, &regexp)) {
     error(ERROR_FATAL, "Failed to compile re %s", PDC_qfmt_Cstr(exp, exp_len));
   }
-  error(0, "compiled regexp, nsub = %d", regexp->preg.re_nsub);
+  error(0, "\ncompiled regexp, nsub = %d\n", regexp->preg.re_nsub);
 
   eret = PDCI_regexp_match(pdc, regexp, begin, end, bor, eor, PDC_charset_ASCII, &matchlen);
-  error(0, "match of RE %s against string %s produced %d  [matchlen %d]",
-	PDC_qfmt_Cstr(exp, exp_len), PDC_qfmt_Cstr(str, str_len), eret, (int)matchlen);
+  error(0, "match of RE %s against string %s produced matchlen %d, res %s",
+	PDC_qfmt_Cstr(exp, exp_len), PDC_qfmt_Cstr(str, str_len), (int)matchlen, false_true[eret]);
   if (eret) {
 #ifdef DEBUG_REGEX
     n = regexp->preg.re_nsub;
@@ -88,5 +63,6 @@ int main(int argc, char** argv) {
 	    str + regexp->match[i].rm_so);
     }
   }
+  error(0, "");
   return 0;
 }

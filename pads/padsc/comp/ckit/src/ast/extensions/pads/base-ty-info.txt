@@ -250,23 +250,29 @@ Pdate            1      PDC_uint32    PDC_base_m    PDC_base_pd          PDC_dat
 Pa_date          1      PDC_uint32    PDC_base_m    PDC_base_pd          PDC_a_date_read         -                     -                  V            S           N
 Pe_date          1      PDC_uint32    PDC_base_m    PDC_base_pd          PDC_e_date_read         -                     -                  V            S           N
 
-
 # *countX   is a counter data type that is parameterized by an ASCII count char (X)
 #           and represents the number of ASCII/EBCDIC X chars between the current IO position and the first EOR/EOF
-#           a second param, if non-zero, indicates whether encountering EOF before EOR is an error. E.g.,
-#           e_countX(:'|', 1:) counts the number of EBCDIC vertical bars between the current IO position and
+#           a second param indicates whether encountering EOF before EOR is an error (0 means no, 1 means yes) and
+#           a third param, if > 0, sets a total character scan limit: if the limit is reached before EOR/EOF,
+#           an error occurs.  Examples:
+#
+#           e_countX(:'|', 1, 0:) counts the number of EBCDIC vertical bars between the current IO position and
 #           the remainder of the current record, where an error occurs if EOF prior to detecting EOR.
 #
+#           e_countX(:'|', 1, 1024:) is the same, except there is also an error if EOR is not encountered
+#           with 1024 characters of the current IO position.
+#
 # *countXtoY is a counter data type that is parameterized by ASCII count char (X) and terminating char (Y),
-#           and represents the number of ASCII/EBCDIC X chars between the current IO position and the first Y char
-#           E.g., e_countXtoY(:'|', '+':) counts the number of EBCDIC vertical bars between the current IO position and
-#           the first occurence of an EBCDIC plus.
+#           and represents the number of ASCII/EBCDIC X chars between the current IO position and the first Y char.
+#           Like countX, it also has a final param to set a scan limit.
+#           E.g., e_countXtoY(:'|', '+', 0:) counts the number of EBCDIC vertical bars between the current
+#           IO position and the first occurence of an EBCDIC plus.
 
-PcountX          2      PDC_int32     PDC_base_m    PDC_base_pd          PDC_countX              -                     PDC_int32_acc      0            S           N
-Pa_countX        2      PDC_int32     PDC_base_m    PDC_base_pd          PDC_a_countX            -                     PDC_int32_acc      0            S           N
-Pe_countX        2      PDC_int32     PDC_base_m    PDC_base_pd          PDC_e_countX            -                     PDC_int32_acc      0            S           N
+PcountX          3      PDC_int32     PDC_base_m    PDC_base_pd          PDC_countX              -                     PDC_int32_acc      0            S           N
+Pa_countX        3      PDC_int32     PDC_base_m    PDC_base_pd          PDC_a_countX            -                     PDC_int32_acc      0            S           N
+Pe_countX        3      PDC_int32     PDC_base_m    PDC_base_pd          PDC_e_countX            -                     PDC_int32_acc      0            S           N
 
-PcountXtoY       2      PDC_int32     PDC_base_m    PDC_base_pd          PDC_countXtoY           -                     PDC_int32_acc      0            S           N
-Pa_countXtoY     2      PDC_int32     PDC_base_m    PDC_base_pd          PDC_a_countXtoY         -                     PDC_int32_acc      0            S           N
-Pe_countXtoY     2      PDC_int32     PDC_base_m    PDC_base_pd          PDC_e_countXtoY         -                     PDC_int32_acc      0            S           N
+PcountXtoY       3      PDC_int32     PDC_base_m    PDC_base_pd          PDC_countXtoY           -                     PDC_int32_acc      0            S           N
+Pa_countXtoY     3      PDC_int32     PDC_base_m    PDC_base_pd          PDC_a_countXtoY         -                     PDC_int32_acc      0            S           N
+Pe_countXtoY     3      PDC_int32     PDC_base_m    PDC_base_pd          PDC_e_countXtoY         -                     PDC_int32_acc      0            S           N
 

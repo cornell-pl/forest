@@ -20,8 +20,6 @@ int main(int argc, char** argv) {
     return -1;
   } 
 
-  my_disc.scan_max = my_disc.match_max = 1024;
-
   if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
     error(2, "*** PDC_open failed ***");
     return -1;
@@ -36,7 +34,7 @@ int main(int argc, char** argv) {
    */
   ctr = 0;
   while (!PDC_IO_at_EOF(pdc)) {
-    if (PDC_OK == PDC_a_char_lit_scan(pdc, '|', '\n', 1, 1, &c, &n)) {
+    if (PDC_OK == PDC_a_char_lit_scan(pdc, '|', '\n', 1, 1, 0, &c, &n)) {
       if (c == '|') { 
 	ctr++;
 	PDC_IO_checkpoint(pdc, 1);

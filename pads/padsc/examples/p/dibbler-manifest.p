@@ -41,11 +41,11 @@ int getLen(int numBars){ return (numBars - 4)/2; }
 Pstruct out_sum_fixed1 {
   a_uint32_vbar             order_num;
   a_uint32_vbar             order_item;
-  dib_pn_vbar              servicen;
-  dib_pn_vbar              billing_tn;
+  dib_pn_vbar               servicen;
+  dib_pn_vbar               billing_tn;
   a_uint32_vbar             zip_code;
-  dib_pn_vbar              nlp_service_tn;
-  dib_pn_vbar              nlp_billing_tn;
+  dib_pn_vbar               nlp_service_tn;
+  dib_pn_vbar               nlp_billing_tn;
 };
 Pstruct out_sum_fixed2 {
   opt_a_uint32_vbar         siid;
@@ -55,13 +55,13 @@ Pstruct out_sum_fixed2 {
   Pa_uint32                 parent_order;
 };
 Pstruct do_ev_count {
-  Pomit PcountX(:'|',1:) bars;
-  Pcompute PDC_int32 ev_count = getLen(bars);
+  Pomit PcountX(:'|',1,0:)  bars;
+  Pcompute PDC_int32        ev_count = getLen(bars);
 };
 
 Precord Pstruct out_sum_data_line {
-  out_sum_fixed1           f1;
-  do_ev_count              c;
-  eventSeq(:c.ev_count:)   events;
-  out_sum_fixed2           f2;
+  out_sum_fixed1            f1;
+  do_ev_count               c;
+  eventSeq(:c.ev_count:)    events;
+  out_sum_fixed2            f2;
 };

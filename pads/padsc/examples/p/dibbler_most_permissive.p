@@ -15,12 +15,12 @@ Pstruct a_string_vbar {
 };
 
 Pstruct just_vbar {
-  PcountX(:'|', 1:) vbars;
+  PcountX(:'|',1,0:) vbars;
   '|';
 };
 
 Pstruct nada {
-  PcountX(:'|', 1:) vbars;
+  PcountX(:'|',1,0:) vbars;
 };
 
 Punion a_uint16_field {
@@ -54,7 +54,7 @@ Pstruct gen_pn_vbar {
 };
 
 Pstruct no_pn_vbar {
-  PcountX(:'|', 1:) vbars;
+  PcountX(:'|',1,0:) vbars;
   "no_TN"; /* just no_TN by itself */
   '|'; 
 };
@@ -90,7 +90,7 @@ Precord Pstruct out_sum_data_line {
   a_uint32_field                zip_code;
   dib_pn_field                  nlp_service_tn;
   dib_pn_field                  nlp_billing_tn;
-  Pomit PcountX(:'|', 1:)       vbars;
+  Pomit PcountX(:'|',1,0:)      vbars;
   eventSeq(:getLength(vbars):)  events;
   a_uint32_field                siid;
   a_uint32_field                create_id;

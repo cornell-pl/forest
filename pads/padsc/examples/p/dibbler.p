@@ -46,7 +46,7 @@ Precord Pstruct out_sum_data_line {
   a_uint32_vbar                 zip_code;
   dib_pn_vbar                   nlp_service_tn;
   dib_pn_vbar                   nlp_billing_tn;
-  Pomit PcountX(:'|', 1:)       vbars;
+  Pomit PcountX(:'|',1,0:)      vbars;
   eventSeq(:getLength(vbars):)  events;
   opt_a_uint32_vbar             siid;
   opt_a_uint32_vbar             create_id;

@@ -92,6 +92,8 @@ void PDCI_IODISC_2P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2);
 void PDCI_IODISC_3P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, void *p3);
 void PDCI_IODISC_4P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, void *p3, void *p4);
 
+void PDCI_READFN_WIDTH_CHECK(const char *whatfn, const char *elt_descr, size_t width);
+
 PDC_inv_valfn PDCI_GET_INV_VALFN(PDC_t *, const char *);
 
 void PDCI_fill_mask(PDC_base_m* mask, PDC_base_m m, size_t mask_size);
@@ -375,6 +377,17 @@ do { \
   PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p4); \
 } while (0)
 
+#define PDCI_READFN_WIDTH_CHECK(whatfn, elt_descr, width) \
+do { \
+  if (width <= 0) { \
+    if (pdc->speclev == 0) { \
+      PDC_WARN2(pdc->disc, "UNEXPECTED PARAM VALUE: %s called with %s width <= 0", whatfn, elt_descr); \
+    } \
+    PDCI_READFN_SET_NULLSPAN_LOC(0); \
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, PDC_BAD_PARAM); \
+  } \
+} while (0)
+
 #else
 /* NO-DEBUG VERSIONS */
 
@@ -428,6 +441,8 @@ do { \
 #define PDCI_IODISC_2P_CHECKS_RET_SSIZE(whatfn, p1, p2)                  PDC_NULL_STMT
 #define PDCI_IODISC_3P_CHECKS_RET_SSIZE(whatfn, p1, p2, p3)              PDC_NULL_STMT
 #define PDCI_IODISC_4P_CHECKS_RET_SSIZE(whatfn, p1, p2, p3, p4)          PDC_NULL_STMT
+
+#define PDCI_READFN_WIDTH_CHECK(whatfn, elt_descr, width)                PDC_NULL_STMT
 
 #endif /* !NDEBUG */
 
@@ -587,8 +602,74 @@ PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
  * Note: all of the following act on the IO cursor of the top checkpoint
  *
  * PDCI_IO_install_io:    XXX_TODOC
- * PDCI_IO_needbytes:     XXX_TODOC
- * PDCI_IO_morebytes:     XXX_TODOC
+ * 
+ * PDCI_IO_need_K_bytes:
+ *
+ *   Used when the calling function knows exactly K byte are required.
+ *   need_K_bytes will either set (*b_out)/(*e_out) to cover exactly a K
+ *   byte span or will set them to cover the largest span < K bytes that is
+ *   possible (due to hitting eor or eof).  Also sets (*bor_out) to status of
+ *   begin byte, and (*eor_out)/(*eof_out) to status of the end byte.
+ *
+ * PDCI_IO_need_some_bytes:
+ *
+ *   Used when the calling function needs to determine the required byte scope
+ *   based on the bytes themselves.  Has same out params as need_K_bytes, plus a
+ *   (*g_out) [goal out] that is set as discussed below.  If (*e_out) < (*g_out),
+ *   then eor was not hit but eof WAS hit before the desired goal.  NB
+ *   (*g_out) should only be used for comparison to (*e_out).  A goal
+ *   is set by choosing one of the following enum values for the goal param:
+ *   PDCI_goal_match, PDCI_goal_scan, PDCI_goal_panic, PDCI_goal_numeric,
+ *   PDCI_goal_specific.
+ *
+ *     PDCI_goal_match:
+ *       Need sufficient bytes for a literal or regular expression match.
+ *
+ *       (a) For record-based disciplines:
+ *            The goal is to find eor or to find pdc->disc->match_max
+ *            characters, if pdc->disc->match_max != 0.  If eor or the goal # of
+ *            characters is found, then (*g_out) is set to the same character as
+ *            (*e_out).  If eof is found prior to reaching the goal, (*g_out) is
+ *            set to either (*e_out)+PDCI_GOAL_HUGE [when pdc->disc->match_max == 0] or
+ *            (*b_out)+pdc->disc->match_max [when pdc->disc->match_max != 0]...
+ *            (*g_out) > (*e_out) either way.
+ *
+ *       (b) For non-record-based disciplines:
+ *            The goal is to find pdc->disc->match_max characters, or if
+ *            pdc->disc->match_max == 0, then to try find the default built-in
+ *            value for match_max, but to allow the actual bytes found to
+ *            stretch to a larger value (use a soft rather than hard limit).  If
+ *            the goal # of characters is found, (*g_out) is set to the same
+ *            character as (*e_out).  Otherwise, (*g_out) is set to (*b_out)
+ *            + hard/soft goal... (*g_out) > (*e_out).
+ *
+ *        For both (a) and (b), note that if !eor and !eof, it must be the case
+ *        that hard/soft match_max forced a limit on the scope, otherwise it did not.
+ *        (*g_out) - (*e_out) gives the missing # of characters, where if 
+ *        the difference is PDCI_GOAL_HUGE then this is due to a record-based discipline
+ *        combined with a 0 pdc->disc->match_max.
+ *
+ *     PDCI_goal_scan:
+ *       Need sufficient bytes for a normal scan to find a terminating
+ *         literal or regular expression.  Same description as PDCI_goal_match,
+ *         except using pdc->disc->scan_max / the built-in scan_max default.
+ *
+ *     PDCI_goal_panic:
+ *       Need sufficient bytes for a panic scan to find a 'synchronizing'
+ *         literal or regular expression.  Same description as PDCI_goal_match,
+ *         except using pdc->disc->panic_max / the built-in panic_max default.
+ *
+ *     PDCI_goal_numeric:
+ *       Need sufficient bytes for a character-based number, e.g., need to parse
+ *       an integer, float32 or float64, etc.  In this case end-of-record is used as
+ *       the goal for record-based IO disciplines, otherwise a built-in soft goal
+ *       for numerics.
+ *
+ *     PDCI_goal_specific:
+ *       Need to set a specific goal using the specific param.  When this goal
+ *       is used, the specific param must have a value > 0, and it is used as
+ *       a hard limit.  PDC_ERR is returned immediately without setting any out
+ *       params if this goal is used with specific == 0.
  *
  * PDCI_IO_forward:
  *
@@ -597,21 +678,29 @@ PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
  *   or morebytes.  This call can obliviate that [begin,end] data
  *   region so IO_forward should only be used after all relevant data
  *   bytes have been observed.  Causes fatal error if K would move
- *   beyond an EOR/EOF marker or beyond the last in-memory data byte.
- *
- *   want_len is either 0 (unknown) or a goal number of bytes.
- *   If want_len is > 0 and (*bytes_out) is set to a number K < want_len,
- *   this means that only K bytes are available (before eor or eof).
- *   In other words, morebytes will not produce any more bytes.
+ *   beyond an EOR/EOF marker or beyond the last in-memory data byte. 
  */
+
+#define PDCI_GOAL_HUGE            999999
+
+typedef enum PDC_goal_e {
+  PDCI_goal_match,
+  PDCI_goal_scan,
+  PDCI_goal_panic,
+  PDCI_goal_numeric,
+  PDCI_goal_specific
+} PDCI_goal_t;
 
 PDC_error_t  PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io);
 
-PDC_error_t  PDCI_IO_needbytes (PDC_t *pdc, size_t want_len,
-				PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,
-			        int *bor_out, int *eor_out, int *eof_out, size_t *bytes_out);
-PDC_error_t  PDCI_IO_morebytes (PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2_out, PDC_byte **e_out,
-				int *eor_out, int *eof_out, size_t *bytes_out);
+PDC_error_t  PDCI_IO_need_K_bytes (PDC_t *pdc, size_t K,
+				   PDC_byte **b_out, PDC_byte **e_out,
+				   int *bor_out, int *eor_out, int *eof_out);
+
+PDC_error_t  PDCI_IO_need_some_bytes (PDC_t *pdc, PDCI_goal_t goal, size_t specific,
+				      PDC_byte **b_out, PDC_byte **e_out, PDC_byte **g_out,
+				      int *bor_out, int *eor_out, int *eof_out);
+
 PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
 
 
@@ -952,9 +1041,6 @@ ssize_t PDCI_uint64_2sbh_io(PDC_t *pdc, Sfio_t *io, PDC_uint64 u, PDC_uint32 num
 /* ================================================================================ */
 /* INTERNAL MISC TYPES + ROUTINES */
 
-/* If IO disc is not record-based, make sure scan_max and match_max are both > 0 */
-void PDCI_norec_check(PDC_t *pdc, const char *whatfn);
-
 /* XXX_REMOVE */
 /* #define DEBUG_REGEX 1 */
 
@@ -976,15 +1062,21 @@ struct PDC_regexp_s {
 PDC_error_t
 PDCI_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, const char *whatfn);
 
-/*  PDCI_regexp_match returns 1 on matched, 0 on not matched.
- *  On matched, it sets (*match_len_out) to the number of characters in str that match regexp.
+/*  PDCI_regexp_match returns 0 on success (match), non-zero on failure.
+ *  On success, the offset of the matched characters is given by:
+ *       regexp->match[0].rm_so, regexp->match[0].rm_eo where the difference
+ *  gives the match length.
+ *
  *  The region to match against is bound by begin/end, where end-begin gives the number of
- *  bytes in the region.  is_bor indicates whether begin is the first byte in a record;
- *  is_eor indicates whether end is one beyond the last byte in a record.
+ *  bytes in the region (*end is not included in the match).
+ *
+ *  e_flags should be set as follows:
+ *        set REG_LEFT    if the match must include the first character (*begin)
+ *        set REG_NOTBOL  if begin is not at bor (beginning of record)
+ *        set REG_NOTEOL  if end is not at eor (end of record)
  */
 int PDCI_regexp_match(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end,
-		      int is_bor, int is_eor,
-		      PDC_charset char_set, size_t *match_len_out);
+		      regflags_t e_flags, PDC_charset char_set);
 
 /* Accum impl helpers:
  *

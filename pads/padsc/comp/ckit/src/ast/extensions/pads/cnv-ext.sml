@@ -2289,6 +2289,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						 P.neqX(PL.PDC_ERROR,
 						       PL.scanFunX(scanFieldName, PT.Id pdc, 
 								   expr, expr, P.trueX, P.trueX,
+								   P.trueX, (* panic=1 *)
 								   P.zero,
                                                                    P.addrX (PT.Id "n"))),
 						 (* PDC_PS_unsetPanic(pd) *)
@@ -2324,6 +2325,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				      P.eqX(PL.PDC_OK,
 					    PL.scanFunX(scanFieldName, 
 							PT.Id pdc, expr, expr, P.trueX, P.trueX,
+							P.falseX, (* panic=0 *)
 							P.zero, P.addrX (PT.Id "n"))),
 				      PT.Compound(
 					 [PT.IfThen(
@@ -3908,7 +3910,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		         PT.IfThenElse(
 			    P.eqX(PL.PDC_OK,
 				  PL.scanFunX(scanSep, PT.Id pdc, 
-					      sepX, scanStopX, P.trueX, P.falseX,P.addrX (PT.Id "c"),
+					      sepX, scanStopX, P.trueX, P.falseX,
+					      P.falseX, (* panic=0 *)
+					      P.addrX (PT.Id "c"),
 					      P.addrX (PT.Id "n"))),
 			    PT.Compound[
                               PT.IfThen(amCheckingBasicE NONE, 
@@ -3969,7 +3973,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  P.mkCommentS("Try to recover to " ^ which ^"."),
 				  PT.IfThenElse(P.eqX(PL.PDC_OK,
 						   PL.scanFunX(scan, PT.Id pdc, 
-							       forX, stopX, P.trueX, P.falseX, P.zero, P.zero)),
+							       forX, stopX, P.trueX, P.falseX,
+							       P.trueX, (* panic=1 *)
+							       P.zero, P.zero)),
                                     PT.Compound[
 				     P.mkCommentS("We recovered; restored invariant.")],
 				    PT.Compound(recoveryFailedSs)
@@ -4071,8 +4077,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		           PT.IfThenElse(
 			     P.eqX(PL.PDC_OK,
 				  PL.scanFunX(termScan, PT.Id pdc, 
-					      termX, termX, P.trueX, P.falseX, P.zero,
-					      P.zero)),
+					      termX, termX, P.trueX, P.falseX,
+					      P.falseX, (* panic=0 *)
+					      P.zero, P.zero)),
                              PT.Compound[
 			      PT.IfThen(amCheckingBasicE NONE, 
 			        PT.Compound[

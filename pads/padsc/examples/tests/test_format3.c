@@ -16,8 +16,6 @@ int main(int argc, char** argv) {
     error(0, "\nInstalled IO discipline norec");
   }
 
-  my_disc.scan_max = my_disc.match_max = 1024;
-
   if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);

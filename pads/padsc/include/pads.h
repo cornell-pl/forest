@@ -106,28 +106,71 @@
  *              of data files.  See pdc_io_disc.h for details.
  *              Also see 'Changing The IO Discipline' below.
  *
- *  Limiting the scope of scanning and pattern matching:
+ *  Limiting the scope of scanning and pattern matching
+ *  ---------------------------------------------------
  *
- *  When scanning for a character, string literal, or stop pattern, how far
- *  should the scan go before giving up?  When matching over a regular
- *  expression, how many characters should the matcher consider before deciding
- *  it has looked at enough characters?  If a record-based IO discipline is
+ *  When scanning for a literal or regular expression match, how far
+ *  should the scan/match go before giving up?    If a record-based IO discipline is
  *  used, scanning and matching is limited to the scope of a single record.  In
- *  addition, the following PDC_disc_t fields can be used to provide further
- *  constraints on the scan and/or match scope.  Specifying such constraints is
- *  very important for read disciplines that are not record based!
+ *  addition, the following 3 PDC_disc_t fields can be used to provide further
+ *  constraints on scan/match scope.  
  *
- *   scan_max  : Maximum # of bytes that will be traversed by a scan.
- *               If set to 0, no scan_max constraint is imposed.
+ *  match_max:   Maximum # of bytes that will be included in an
+ *               inclusive pattern match attempt (see, e.g., data type
+ *               PDC_string_ME).  If set to 0, no match_max constraint is imposed
+ *               for a record-based IO discipline (other than finding
+ *               end-of-record), whereas a built-in soft limit of
+ *               PDC_BUILTIN_MATCH_MAX characters is imposed for non-record-based
+ *               IO disciplnes.  (The built-in limit is soft because if the match
+ *               happens to get more than PDC_BUILTIN_MATCH_MAX characters in a
+ *               single IO discipline read call it will go ahead and consider all
+ *               of them.  In contrast, if the discipline match_max is set
+ *               explicitly to value K, then this is a hard limit: the match will
+ *               only consider K characters even if more are available.)
  *
- *   match_max : Maximum # of bytes that will be included in an
- *               attempted pattern match.
- *               If set to 0, no match_max constraint is imposed.
+ *  numeric_max: Maximum # of bytes that will be included in an
+ *               attempt to read a character-based representation of a number.  If
+ *               non-zero, should be set large enough to cover any leading white
+ *               space (if allowed by PDC_WSPACE_OK), an optional +/- sign, and the
+ *               digits (dot etc. for floats) that make up the numeric value.  A
+ *               numeric_max of 0 results in an end-of-record constraint for
+ *               record-based IO disciplines and in a soft limit of
+ *               PDC_BUILTIN_NUMERIC_MAX bytes for non-record-based IO disciplines.
  *
- * Note: when a pattern is used as a terminating condition, the
- * scope bound for the pattern search is the sum of scan_max and match_max.
+ *  scan_max :   Maximum # of bytes that will be considered by a normal
+ *               scan that is looking for a terminating literal or a terminating
+ *               regular expressin (see, e.g., data type PDC_string_SE.).  Note
+ *               that this includes both the bytes skipped plus the bytes used for
+ *               the match.  A scan_max of 0 results in an end-of-record
+ *               constraint for record-based IO disciplines and in a soft limit of
+ *               PDC_BUILTIN_SCAN_MAX bytes for non-record-based IO disciplines.
+ * 
+ *  panic_max :  Maximum # of bytes that will be considered by when
+ *               parsing hits a 'panic' state and is looking for a synchronizing
+ *               literal or pattern.  See, for example, termination conditions for
+ *               user-defined array types.  A panic_max of 0 results in an
+ *               end-of-record constraint for record-based IO disciplines and in a
+ *               soft limit of PDC_BUILTIN_PANIC_MAX bytes for non-record-based IO
+ *               disciplines.
  *
- * Specifying what value to write during write calls when an invalid value is present:
+ *   ** N.B.: For non-record-based IO disciplines, the default soft limits may
+ *            be either too small or too large for a given input type.  It is
+ *            important important to determine appropriate hard limit settings.
+ *
+ *  The built-in soft limits for use with non-record-based IO disciplines are
+ *  as follows.  Although you can change them and recompile the padsc library,
+ *  it is easier to simply set up the correct hard limits in the discipline.
+ */
+
+#define PDC_BUILTIN_MATCH_MAX       512
+#define PDC_BUILTIN_SCAN_MAX        512
+#define PDC_BUILTIN_NUMERIC_MAX     512
+#define PDC_BUILTIN_PANIC_MAX      1024
+
+/*
+ *
+ * Specifying what value to write during write calls when an invalid value is present
+ * ----------------------------------------------------------------------------------
  *
  * Write functions take a parse descriptor and a value.  The value is valid if the
  * parse descriptor's errCode is set PDC_NO_ERR.  The value has been filled in if the
@@ -192,14 +235,18 @@
  *
  * N.B. An inv_valfn for a string type should use PDC_string_copy, PDC_string_Cstr_copy,
  * PDC_string_share, or PDC_string_Cstr_share to fill in the value of the PDC_string* param.
+ *
+ * The default discipline
+ * ----------------------
  * 
  * The default disc is PDC_default_disc.  It provides the following defaults:
  *    version:       PDC_VERSION (above) 
  *    flags:         0
  *    def_charset:   PDC_charset_ASCII
  *    copy_strings:  0
- *    scan_max:      0
  *    match_max:     0
+ *    scan_max:      0
+ *    panic_max:     0
  *    errorf:        PDC_errorf
  *    e_rep:         PDC_errorRep_Max
  *    d_endian:      PDC_littleEndian
@@ -332,6 +379,7 @@ typedef enum PDC_errCode_t_e {
   PDC_AT_EOR                        =  161,
   PDC_EXTRA_BEFORE_EOR              =  162,
   PDC_EOF_BEFORE_EOR                =  163,
+  PDC_COUNT_MAX_LIMIT               =  164,
   PDC_RANGE                         =  170,
 
   PDC_INVALID_A_NUM                 =  180,
@@ -800,8 +848,11 @@ struct PDC_disc_s {
   PDC_flags_t           flags;         /* control flags */
   PDC_charset           def_charset;   /* default char set */ 
   int                   copy_strings;  /* if non-zero,  ASCII string read functions copy the strings found, otherwise not */
-  size_t                scan_max;      /* max scan distance, use 0 to disable */
-  size_t                match_max;     /* max matching distance, use 0 to disable */
+  /* For the next four values, 0 means end-of-record / soft limit for non-record-based IO disciplines */
+  size_t                match_max;     /* max match distance */ 
+  size_t                numeric_max;   /* max numeric value distance */
+  size_t                scan_max;      /* max normal scan distance */
+  size_t                panic_max;     /* max panic scan distance */
   PDC_error_f           errorf;        /* error function using  ... */
   PDC_errorRep          e_rep;         /* controls error reporting */
   PDC_endian            d_endian;      /* endian-ness of the data */ 
@@ -1044,8 +1095,8 @@ ssize_t      PDC_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_l
  * LITERAL SCAN FUNCTIONS
  *
  * Scan functions are used to 'find' a location that is forward of the
- * current IO position.  They are normally used for error recovery purposes,
- * but are exposed here because they are generally useful.
+ * current IO position.  They are normally used by other library routines
+ * or by generated code, but are exposed here because they are generally useful.
  * N.B. Use the char_lit_read functions for cases where
  * a literal is known to be at the current IO position.
  *
@@ -1060,16 +1111,15 @@ ssize_t      PDC_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_l
  *  form is used or if the DEFAULT form is used and pdc->disc->def_charset is
  *  PDC_charset_EBCDIC.
  *
-
- *  If a goal char is found, then if the corresponding 'eat' param
- *  (eat_c if c is found, eat_s if s is found) is non-zero the IO
- *  points to just beyond the char, otherwise it points to the char.
- *  pdc->disc controls maximum scan distance.  Hitting eor or eof
- *  considered to be an error.  N.B. If there is mixed binary and
- *  ascii data, scanning can 'find' an ascii char in a binary field.
- *  Be careful!  Do not use 0 to mean EOR/EOF.  If there is no stop
- *  char, use the same char for both the c and s params.
-
+ *  If a goal char is found, then if the corresponding 'eat' param (eat_c if c
+ *  is found, eat_s if s is found) is non-zero the IO points to just beyond the
+ *  char, otherwise it points to the char.  If panic is set,
+ *  pdc->disc->panic_max controls the scope of the scan, otherwise
+ *  pdc->disc->scan_max controls the scope of the scan.  Hitting eor or eof
+ *  considered to be an error.  N.B. If there is mixed binary and ascii data,
+ *  scanning can 'find' an ascii char in a binary field.  Be careful!  Do not
+ *  use 0 to mean EOR/EOF.  If there is no distinct stop char, use the same char
+ *  for both the c and s params.
  *
  * RETURNS: PDC_error_t
  *         PDC_OK    => goal/stop char found, IO cursor now points to just beyond char
@@ -1088,51 +1138,49 @@ ssize_t      PDC_IO_rblk_close_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_l
  * and stop strings are given.  These strings are converted to EBCDIC if an EBCDIC form
  * is used or if a DEFAULT form is used and pdc->disc->def_charset is PDC_charset_EBCDIC.
  *
- * If there is no stop string, a NULL stop string should be used.  On
- * PDC_OK, if str_out is set then (*str_out) points to the original
- * ASCII version of either findStr or stopStr, depending on which was
- * found, and if offset is set then (*offset_out) is set to the
- * distance scanned to find the string (0 means the IO cursor was
- * already pointing at the string). If the corresponding eat param is
- * non-zero (eat_findStr for findStr, eat_stopStr for stopStr), the IO
- * cursor points just beyond the string literal that was found,
- * otherwise it points to the start of the string that was found.  On
- * PDC_ERR, the IO cursor is unchanged.
+ * If there is no stop string, a NULL stop string should be used.  On PDC_OK, if
+ * str_out is set then (*str_out) points to the original ASCII version of either
+ * findStr or stopStr, depending on which was found, and if offset is set then
+ * (*offset_out) is set to the distance scanned to find the string (0 means the
+ * IO cursor was already pointing at the string). If the corresponding eat param
+ * is non-zero (eat_findStr for findStr, eat_stopStr for stopStr), the IO cursor
+ * points just beyond the string literal that was found, otherwise it points to
+ * the start of the string that was found.  On PDC_ERR, the IO cursor is unchanged.
  */
 
 #ifdef FOR_CKIT
 #if PDC_CONFIG_READ_FUNCTIONS > 0
 
 #if PDC_CONFIG_A_CHAR_STRING > 0
-PDC_error_t PDC_a_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
+PDC_error_t PDC_a_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s, int panic,
 				PDC_char *c_out, size_t *offset_out);
 PDC_error_t PDC_a_str_lit_scan (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
-				int eat_findStr, int eat_stopStr,
+				int eat_findStr, int eat_stopStr, int panic,
 			        PDC_string **str_out, size_t *offset_out);
 PDC_error_t PDC_a_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr,
-				int eat_findStr, int eat_stopStr,
+				int eat_findStr, int eat_stopStr, int panic,
 				const char **str_out, size_t *offset_out);
 #endif
 
 #if PDC_CONFIG_E_CHAR_STRING > 0
-PDC_error_t PDC_e_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
+PDC_error_t PDC_e_char_lit_scan(PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s, int panic,
 				PDC_char *c_out, size_t *offset_out);
 PDC_error_t PDC_e_str_lit_scan (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
-				int eat_findStr, int eat_stopStr,
+				int eat_findStr, int eat_stopStr, int panic,
 			        PDC_string **str_out, size_t *offset_out);
 PDC_error_t PDC_e_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr,
-				int eat_findStr, int eat_stopStr,
+				int eat_findStr, int eat_stopStr, int panic,
 				const char **str_out, size_t *offset_out);
 #endif
 
 #if PDC_CONFIG_A_CHAR_STRING > 0 && PDC_CONFIG_E_CHAR_STRING > 0
-PDC_error_t PDC_char_lit_scan  (PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s,
+PDC_error_t PDC_char_lit_scan  (PDC_t *pdc, PDC_char c, PDC_char s, int eat_c, int eat_s, int panic,
 			        PDC_char *c_out, size_t *offset_out);
 PDC_error_t PDC_str_lit_scan   (PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
-				int eat_findStr, int eat_stopStr,
+				int eat_findStr, int eat_stopStr, int panic,
 			        PDC_string **str_out, size_t *offset_out);
 PDC_error_t PDC_Cstr_lit_scan  (PDC_t *pdc, const char *findStr, const char *stopStr,
-				int eat_findStr, int eat_stopStr,
+				int eat_findStr, int eat_stopStr, int panic,
 				const char **str_out, size_t *offset_out);
 #endif
 
@@ -1212,8 +1260,13 @@ PDC_error_t PDC_Cstr_lit_read  (PDC_t *pdc, const PDC_base_m *m,
  * first EOR or EOF, while countXtoY counts occurrences of x between the current
  * IO cursor and the first occurrence of char y.  x and y are always specified
  * as ASCII chars.  They are converted to EBCDIC if the EBCDIC form is used or
- * if the default form is used and pdc->disc->def->charset is
- * PDC_charset_EBCDIC.
+ * if the default form is used and pdc->disc->def->charset is PDC_charset_EBCDIC.
+ *
+ * If parameter scan_max is non-zero, then the count functions also stop counting
+ * after scanning scan_max characters, in which case an error is returned.
+ * If the IO discipline is not record-based and scan_max is zero, an error is
+ * returned immediately:  you *must* specify a scan_max > 0 when using an IO discipline
+ * that has no records.
  *
  * For countX, if param eor_required is non-zero, then encountering EOF
  * before EOR produces an error.
@@ -1231,7 +1284,12 @@ PDC_error_t PDC_Cstr_lit_read  (PDC_t *pdc, const PDC_base_m *m,
  *           + pd->errCode set to PDC_EOF_BEFORE_EOR
  *           + pd->loc begin/end set to current IO cursor location
  *     PDC_ERR returned   
- *   3. EOR is encountered, or EOF is encounterd and eor_required is zero
+ *   3. count_max is > 0 and count_max limit is reached before x or EOR or EOF.
+ *     => If !m || *m < PDC_Ignore:
+ *           + pd->errCode set to PDC_COUNT_MAX_LIMIT
+ *           + pd->loc begin/end set to current IO cursor location
+ *     PDC_ERR returned
+ *   4. EOR is encountered, or EOF is encounterd and eor_required is zero
  *     if res_out, *res_out is set to the number of occurrences of x
  *     from the IO cursor to EOR/EOF.
  *     PDC_OK returned
@@ -1242,39 +1300,43 @@ PDC_error_t PDC_Cstr_lit_read  (PDC_t *pdc, const PDC_base_m *m,
  *           + pd->errCode set to PDC_AT_EOF
  *           + pd->loc begin/end set to EOF 'location'
  *     PDC_ERR returned   
- *   2. y is not found
+ *   2. y is not found before EOR or EOF is hit
  *     => If !m || *m < PDC_Ignore:
  *           + pd->errCode set to PDC_CHAR_LIT_NOT_FOUND
  *           + pd->loc begin/end set to current IO cursor location
- *     PDC_ERR returned   
- *   3. Char y is found
+ *     PDC_ERR returned
+ *   3. y is not found and count_max > 0 and count_max limit is hit 
+ *     => If !m || *m < PDC_Ignore:
+ *           + pd->errCode set to PDC_COUNT_MAX_LIMIT
+ *           + pd->loc begin/end set to current IO cursor location
+ *     PDC_ERR returned
+ *   4. Char y is found
  *     if res_out, *res_out is set to the number of occurrences of x
  *     from the IO cursor to first y.
  *     PDC_OK returned
- *
  */
 
 #ifdef FOR_CKIT
 #if PDC_CONFIG_READ_FUNCTIONS > 0
 
 #if PDC_CONFIG_A_CHAR_STRING > 0
-PDC_error_t PDC_a_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
+PDC_error_t PDC_a_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required, size_t scan_max,
 			    PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_a_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDC_a_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y, size_t scan_max,
 			    PDC_base_pd *pd, PDC_int32 *res_out);
 #endif
 
 #if PDC_CONFIG_E_CHAR_STRING > 0
-PDC_error_t PDC_e_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
+PDC_error_t PDC_e_countX   (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required, size_t scan_max,
 			    PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_e_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDC_e_countXtoY(PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y, size_t scan_max,
 			    PDC_base_pd *pd, PDC_int32 *res_out);
 #endif
 
 #if PDC_CONFIG_A_CHAR_STRING > 0 && PDC_CONFIG_E_CHAR_STRING > 0
-PDC_error_t PDC_countX     (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required,
+PDC_error_t PDC_countX     (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, int eor_required, size_t scan_max,
 		            PDC_base_pd *pd, PDC_int32 *res_out);
-PDC_error_t PDC_countXtoY  (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y,
+PDC_error_t PDC_countXtoY  (PDC_t *pdc, const PDC_base_m *m, PDC_uint8 x, PDC_uint8 y, size_t scan_max,
 		            PDC_base_pd *pd, PDC_int32 *res_out);
 #endif
 
@@ -1335,8 +1397,9 @@ PDC_error_t PDC_char_read   (PDC_t *pdc, const PDC_base_m *m, PDC_base_pd *pd, P
  * The string read functions each has a different way of specifying
  * the extent of the string:
  *   + all string_FW_read functions specify a fixed width
- *   + all string_read functions specify a single stop character
- *       (can be 0 to specify eof as the stop character)
+ *   + all string_read functions specify a single stop character.
+ *       if 0 (NULL) is used, then this will match a NULL in the data,
+ *       and eor/eof will ALSO successfully terminate the string 
  *   + all string_ME_read and string_CME_read functions specify a Match Extpression
  *       (string includes all chars that match)
  *   + all string_SE_read and string_CSE_read specify a Stop Expression
@@ -1867,7 +1930,7 @@ PDC_error_t PDC_b_uint64_read(PDC_t *pdc, const PDC_base_m *m,
  * PDC_int64   1-19          1-8       PDC_MIN_INT64 / PDC_MAX_INT64
  * PDC_uint64  1-20          1-8       0             / PDC_MAX_UINT64
  * 
- * NB: num_digits must be odd if the value on disk can be negative.
+ * N.B.: num_digits must be odd if the value on disk can be negative.
  *
  * ** For PDC_bcd_int32_read only, even though the min and max int32 have 10 digits, we allow
  * num_digits == 11 due to the fact that 11 is required for a 10 digit negative value
@@ -3076,15 +3139,160 @@ unsigned int PDC_spec_level    (PDC_t *pdc);
  * not valid, it returns PDC_ERR.
  *
  * PDC_regexp_free takes a handle to a compiled regexp obj and frees the obj.
- *
- * ** At the moment, the following regular expression forms are supported:
- *               EOR                  -- matches EOR
- *               [<chars>]            -- matches one of the chars in <chars>
- *               [<chars>]|EOR        -- matches either EOR or one of the chars in <chars>
  */
 
 PDC_error_t PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out);
 PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
+
+/*
+ * PADS regular expressions support the full posix regex specification,
+ * and also support many of the Perl extensions.  For the complete details,
+ * see the PADS manual (not yet!).   If you have Perl installed, you can use
+ *
+ *    > man perlre
+ *
+ * to see Perl's regular expression man page.
+ *
+ * Here we just give some important features.
+ *
+ * [A] An uncompiled regular expression is specified as a string
+ *     (a const char*).  The first character in the string is the
+ *     expression delimeter: the next (non-espaced) occurence of
+ *     this delimeter marks the end of the regular expression.
+ *     We typically write our examples using slash (/) as the
+ *     delimeter, but any delimeter can be used.  After the closing
+ *     delimeter, one can add one or more single-character
+ *     modifiers which change the normal matching behavior.  The
+ *     modifies are based on those supported by Perl, and
+ *     currently include:
+ *
+ *     l  : Treat the pattern as a literal.  All characters in the pattern are
+ *          literal characters to be found in the input... there are no operators
+ *          or special characters.
+ *
+ *     i  : Do case-insensitve pattern matching
+ *
+ *     x  : Extend your pattern's legibility by permitting whitespace
+ *          and comments.
+ *
+ *          Tells the regular expression parser to ignore whitespace that
+ *          is neither backslashed nor within a character class You can
+ *          use this to break up your regular expression into (slightly)
+ *          more readable parts.  The "#" character is also treated as a
+ *          metacharacter introducing a comment.  This also means that if
+ *          you want real whitespace or "#" characters in the pattern
+ *          (outside a character class, where they are unaffected by
+ *          "/x"), you'll either have to escape them or encode them using
+ *          octal or hex escapes.  Be careful not to include the pattern
+ *          delimiter in the comment -- there is no way of knowing you
+ *          did not intend to close the pattern early. 
+ *
+ *     ?  : Minimal match.  Change from the normal maximal left-most match
+ *          semantics to a minimal left-most match semantics.
+ *
+ *     f  : First match.  Change from the normal maximal left-most match
+ *          semantics to accepting the first match found.  This may be
+ *          useful for terminating regular expressions where any match
+ *          is sufficient to trigger termination.  For termination, the matched
+ *          characters are not included in the resulting value, so getting
+ *          the best set of matching characters may not be necessary.
+ *
+ * It is important to note that in normal posix regexps, the '$' and '^'
+ * special characters match 'beginning of line' and 'end of line' respectively,
+ * where newline is the line separator character.  In contrast, in PADS regexps
+ * the '$' and '^' special characters match 'beginning of record' and 'end of record'
+ * respectively (and thus they only have meaning with the record-based IO 
+ * disciplines).  For this reason, newlines that occur within records or within
+ * input data for non-record-based input are treated as normal characters
+ * with no special semantics. This means, for example, that the '.' special character
+ * will match newlines.  (In Perl one would use the "/s" modifier to get similar
+ * behavior.)
+ *
+ * ** If newlines in your input data mark record boundaries, you
+ *    should be using one of the nlrec IO disciplines, in which case the newlines
+ *    do not appear in your normal input, so there is no issue of '.'
+ *    matching newlines, and $ and ^ will have their normal posix
+ *    behavior.
+ *
+ * [B] Regular expressions are used for two purposes in PADS,
+ * and the matching semantics with respect the current IO position
+ * are different for these two cases, as follows.
+ *
+ *   1. A regexp can be used as the inclusive scope of a data field,
+ *      i.e., it defines the set of characters that will be included
+ *      in a resulting value (see PDC_string_ME / PDC_string_CME).
+ *
+ *      In this case, the regexp is implicitly left-bounded at the
+ *      current IO position: if a match cannot be found that includes
+ *      the character at the current IO position, then matching fails.
+ *
+ *      The default is that the longest such match will be used
+ *      that is within the scope determined by pdc->disc->match_max.
+ * 
+ *   2. A regexp can be used to terminate a data field
+ *      (see PDC_string_SE / PDC_string_CSE).
+ *
+ *      In this case, the regexp is not 'left bounded': the
+ *      matcher finds the longest match whose first->last characters
+ *      occur anywhere in the scope determined by pdc->disc->scan_max.
+ *
+ *      The resulting value consists of all characters from the current
+ *      IO position up to (but not including) the left-most character
+ *      in the match.  I.e., none of the characters in the match are
+ *      included in the value; the match simply 'terminates' the value.
+ *
+ *      Example: suppose a string is either terminated by a comma
+ *      or by end-of-record.  This would by specified in a PADSL description as:
+ *
+ *      Pstring_SE(:"/[,]|$/":)    my_string;
+ * 
+ * [C] Within regular expressions, one can write in brackets [] a set of
+ *     characters to be matched against, or the inverse of such a set:
+ *
+ *         [abc]          matches an 'a', 'b', or 'c'
+ *
+ *         [^abc]         matches any character EXCEPT an 'a', 'b', or 'c'
+ *
+ *     INSIDE of one of these bracket expressions one can include a character
+ *     class using the syntax [:<classname>:].  For example, the following
+ *     matches either a letter ('A' through 'Z' or 'a' through 'z') or a '0' or '1':
+ *
+ *         [0[:alpha:]1]
+ *
+ *     Using character classes is preferable to writing something like this:
+ *
+ *         [0A-Za-z1]
+ *
+ *     because the letters A-Z may not occur contiguosly in all character set
+ *     encodings.  Note that when you just specify a character class within 
+ *     brackets, you end up with a double set of brackets, as in this pattern:
+ *
+ *        /[[:alpha:]]+/   : one or more alpha characters
+ *    
+ *     The following are all built-in character classes:
+ *
+ *        [:alnum:]           - alpha or digit
+ *        [:alpha:]           - upper or lower alphabet character
+ *        [:blank:]           - space (' ') or tab ('\t')
+ *        [:cntrl:]           - control character
+ *        [:digit:]           - digit (0 through 9)
+ *        [:graph:]           - any printable character except space
+ *        [:lower:]           - lower-case letter
+ *        [:print:]           - any printable character including space
+ *        [:punct:]           - any printable character which is not
+ *                                a space or an alphanumeric character
+ *        [:space:]           - a white-space character. Normally this
+ *                                includes: space, form-feed ('\f'),
+ *                                newline ('\n'), carriage return ('\r'),
+ *                                horizontal tab ('\t'), and vertical tab ('\v')
+ *        [:upper:]           - an upper-case letter
+ *        [:word:]            - an alphanumeric character or an underscore ('_') 
+ *        [:xdigit:]          - a hexadecimal digit (normal digits and A through F)
+ *
+ * It is possible to define your own character class in a PADSL file and then
+ * use that class in regular expressions that occur later in the file.  See
+ * the PADS manual for details.
+ */
 
 /* ================================================================================
  * MISC ROUTINES
