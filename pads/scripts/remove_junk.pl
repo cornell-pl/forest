@@ -10,5 +10,8 @@ while (<>) {
   if (/fname\s*=/) {
     next;
   }
+  if (/<note>(.*)<\/note>/) {
+    next;
+  }
   print;
 }

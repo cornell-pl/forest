@@ -388,6 +388,17 @@ define RegressInput
   echo " "; )
 endef
 
+define RegressInput
+(echo " "; echo "Performing $@"; \
+  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
+  $(RM) tmp/tmp.$<$$suf; \
+  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
+  echo "(./$< $$args < $$input 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
+  (./$< $$args < $$input 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
+  echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
+  echo " "; )
+endef
+
 define RegressInputPP
 (echo " "; echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
@@ -407,6 +418,16 @@ define RegressFilter
   echo "(./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | grep $$filter | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | grep $$filter | cat > tmp/tmp.$<$$suf; \
   echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
+  echo " "; )
+endef
+
+define RegressRW
+(echo " "; echo "Performing $@"; \
+  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
+  $(RM) tmp/tmp.$<$$suf; \
+  echo "./$< $$args < $$input > tmp/tmp.$<$$suf 2>/dev/null"; \
+  ./$< $$args < $$input > tmp/tmp.$<$$suf 2>/dev/null; \
+  echo cmp tmp/tmp.$<$$suf $$input; cmp tmp/tmp.$<$$suf $$input || echo "**********" $<$$suf DIFFERS; \
   echo " "; )
 endef
 
@@ -445,6 +466,12 @@ endif
 rw_%_d: $(GEN_DIR)/%.c rw_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule RW_D"
+endif
+	@$(CCExec_DYNAMIC_D)
+
+rwxml_%_d: $(GEN_DIR)/%.c rwxml_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule RWXML_D"
 endif
 	@$(CCExec_DYNAMIC_D)
 endif # REGRESS_TESTS / _d rule
@@ -495,6 +522,12 @@ endif
 rw_%: $(GEN_DIR)/%.c rw_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule RW_O"
+endif
+	@$(CCExec_DYNAMIC_O)
+
+rwxml_%: $(GEN_DIR)/%.c rwxml_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule RWXML_O"
 endif
 	@$(CCExec_DYNAMIC_O)
 endif # REGRESS_TESTS / non _d rule
