@@ -1,7 +1,13 @@
 
  # This is a GNU makefile.
 
-PADS_HOME = ../../..
+ifndef PADS_HOME
+%: forceabort2
+	@echo "ERROR: env variable PADS_HOME must be defined"
+	@exit 1
+forceabort2: ;
+endif
+
 ifndef AST_ARCH
   AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
   export AST_ARCH
@@ -14,7 +20,6 @@ else
 
  # The following rules are run from the arch directory
 
-PADS_HOME = ../../../..
 GEN_DIR = .
 GEN_WRITE = 1
 INCLUDE_DEPS_ADD = ../*.h

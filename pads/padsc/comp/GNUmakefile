@@ -1,6 +1,13 @@
 
  # This is a GNU makefile
 
+ifndef PADS_HOME
+%: forceabort2
+	@echo "ERROR: env variable PADS_HOME must be defined"
+	@exit 1
+forceabort2: ;
+endif
+
 ARCH_N_HEAPOPSYS := $(shell $(PADS_HOME)/scripts/arch-n-heapopsys)
 
 SML = $(PADS_HOME)/binlinks/sml.$(ARCH_N_HEAPOPSYS)

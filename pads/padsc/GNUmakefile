@@ -1,7 +1,12 @@
 
  # This is a GNU makefile.
 
-PADS_HOME = ..
+ifndef PADS_HOME
+%: forceabort2
+	@echo "ERROR: env variable PADS_HOME must be defined"
+	@exit 1
+forceabort2: ;
+endif
 
 TARGS = padsc_lib
 ifdef USE_GALAX
