@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     } else {
       printf("Record not okay:\t");
     }
-    printf("x = %lu\n", pdata.id);
+    printf("x = %llu\n", pdata.id);
   }
 
   if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {

@@ -1,12 +1,24 @@
 #PADS_name   repName     errorMaskName errorDescriptionName readFunction               scanFunctionOpt
 auint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_auint8_read            -
+auint8FW     PDC_uint8   PDC_base_em   PDC_base_ed          PDC_fw_auint8_read         -
 aint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_aint8_read             -
+aint8FW      PDC_int8    PDC_base_em   PDC_base_ed          PDC_fw_aint8_read          -
+
 auint16      PDC_uint16  PDC_base_em   PDC_base_ed          PDC_auint16_read           -
+auint16FW    PDC_uint16  PDC_base_em   PDC_base_ed          PDC_fw_auint16_read        -
 aint16       PDC_int16   PDC_base_em   PDC_base_ed          PDC_aint16_read            -
+aint16FW     PDC_int16   PDC_base_em   PDC_base_ed          PDC_fw_aint16_read         -
+
 auint32      PDC_uint32  PDC_base_em   PDC_base_ed          PDC_auint32_read           -
+auint32FW    PDC_uint32  PDC_base_em   PDC_base_ed          PDC_fw_auint32_read        -
 aint32       PDC_int32   PDC_base_em   PDC_base_ed          PDC_aint32_read            -
+aint32FW     PDC_int32   PDC_base_em   PDC_base_ed          PDC_fw_aint32_read         -
+
 auint64      PDC_uint64  PDC_base_em   PDC_base_ed          PDC_auint64_read           -
+auint64FW    PDC_uint64  PDC_base_em   PDC_base_ed          PDC_fw_auint64_read        -
 aint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_aint64_read            -
+aint64FW     PDC_int64   PDC_base_em   PDC_base_ed          PDC_fw_aint64_read         -
+
 buint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_buint8_read            -
 bint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_bint8_read             -
 buint16      PDC_uint16  PDC_base_em   PDC_base_ed          PDC_buint16_read           -
@@ -20,3 +32,5 @@ PDC_char_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_char_lit_read   
 PDC_str_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_str_lit_read           PDC_str_lit_scan
 astringFW    PDC_string  PDC_base_em   PDC_base_ed          PDC_string_fw_read         -
 astringSRE   PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopRegexp_read -
+# adate rep and read function should be based on libast's clock = tmdate(s, &e, (time_t *)0);
+adate        PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopChar_read   -

@@ -167,6 +167,9 @@ fun insertFuncParams (FuncDecr (_,params)) : unit =
      PT.FunctionDef *)
 
 (* PADS*)
+
+val makeTypeName = TypeDefs.addTdef
+
 fun insertParams params =
     let
 	fun getName (ct, dclr) = dclr2str dclr
@@ -987,7 +990,7 @@ pOptActParams: ([])
 
 pTypedef:
  PTYPEDEF pName pOptActParams pName pushScope pTyParams COLONCOLON pName pName EQGT LCURLY expr popScope
- (
+ ( makeTypeName pName2;
    ExternalDeclExt(PX.PTypedef {baseTy = PX.Name pName1, 
                                 args   = pOptActParams,
                                 name   = pName2, 
@@ -1010,7 +1013,7 @@ pStructFieldList:
 
 pStruct:
  PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
- (
+ ( makeTypeName pName;
    ExternalDeclExt(PX.PStruct {name = pName, params = pTyParams, fields = pStructFieldList})
  )
 
@@ -1043,7 +1046,7 @@ pSizeSpec:
 
 pArray:
  PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
- (
+ ( makeTypeName pName1;
    ExternalDeclExt(PX.PArray {name = pName1, params = pTyParams, 
 			      args = pOptActParams, baseTy = PX.Name pName2, 
 			      sizeSpec = pSizeSpec, constraints = pArrayConstraintOpt})
@@ -1051,6 +1054,6 @@ pArray:
 
 pUnion:
  PUNION pName pushScope pTyParams LCURLY pStructFieldList popScope
- (
+ ( makeTypeName pName;
    ExternalDeclExt(PX.PUnion {name = pName, params = pTyParams, variants=pStructFieldList})
  ) 

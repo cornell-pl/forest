@@ -1,0 +1,9 @@
+polux.entelchile.net - - [15/Oct/1997:21:02:07 -0700] "GET /latinam/spoeadp.html HTTP/1.0" 200 8540
+1cust230.tnt3.krk1.da.uu.net - - [15/Oct/1997:21:02:49 -0700] "GET /amnesty/urgact/urgact.html HTTP/1.0" 404 179
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /turkey/amnty1.gif HTTP/1.0" 200 3013
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /turkey/clear.gif HTTP/1.0" 200 76
+208.196.124.26 - - [15/Oct/1997:18:47:08 -0700] "GET /images/candalog.gif HTTP/1.0" 200 8638
+207.228.67.219 - - [15/Oct/1997:18:53:47 -0700] "GET / HTTP/1.0" 200 3082
+207.228.67.219 - - [15/Oct/1997:18:55:54 -0700] "GET /images/pnbut.gif HTTP/1.0" 304 -
+ppp31.igc.org - amnesty [16/Oct/1997:08:40:11 -0700] "GET /members/afreport.html HTTP/1.0" 200 450
+
