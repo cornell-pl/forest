@@ -1,4 +1,4 @@
-#!/bin/tcsh
+#!/bin/tcsh -f
 # Q_DO_SETENV.tcsh is for use with csh/tcsh
 # It is the 'quite' version of DO_SETENV.tcsh
 # From the same directory as Q_DO_SETENV.tcsh, do:
@@ -9,11 +9,18 @@ set _pads_status = OK
 set _pads_do_prog = Q_DO_SETENV.tcsh
 
 if (! $?PADS_HOME) then
+  set _pads_status = FAILED
+else
+  if ("$PADS_HOME"x == x) then
+    set _pads_status = FAILED
+  endif
+endif
+
+if ($_pads_status == "FAILED") then
   echo "##############################################################################"
   echo "# Set env var PADS_HOME and then use $_pads_do_prog again."
   echo "##############################################################################"
   echo " "
-  set _status = FAILED
 endif
 
 if ($_pads_status == "OK") then

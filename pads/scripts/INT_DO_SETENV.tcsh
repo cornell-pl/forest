@@ -16,7 +16,7 @@ if ($_pads_status == OK) then
   if ($_pads_verbose != 0) then
     echo " "
   endif
-  if (! $?PADS_HOME) then
+  if ("$PADS_HOME"x == x) then
     echo "##############################################################################"
     echo "# Set env var PADS_HOME and then use $_pads_do_prog again."
     echo "##############################################################################"
@@ -43,7 +43,7 @@ if ($_pads_status == "OK") then
 
   setenv AST_ARCH `$PADS_HOME/ast-base/bin/package`
 
-  if (! $?AST_HOME) then
+  if ("$AST_HOME"x == x) then
     setenv AST_HOME $PADS_HOME/ast-base/arch/$AST_ARCH
     if ($_pads_verbose != 0) then
       echo "##############################################################################"
@@ -55,7 +55,7 @@ if ($_pads_status == "OK") then
     endif
   endif
 
-  if (! $?INSTALLROOT) then
+  if ("$INSTALLROOT"x == x) then
     setenv INSTALLROOT $PADS_HOME/ast-base/arch/$AST_ARCH
     if ($_pads_verbose != 0) then
       echo "##############################################################################"
@@ -101,16 +101,16 @@ if ($_pads_status == "OK") then
   set pads_script_dir = $PADS_HOME/scripts
   set remove_dups     = $pads_script_dir/removedups.pl
 
-  if (! $?LD_LIBRARY_PATH) then
+  if ("$LD_LIBRARY_PATH"x == x) then
     setenv LD_LIBRARY_PATH ""
   endif
-  if (! $?SHLIB_PATH) then
+  if ("$SHLIB_PATH"x == x) then
     setenv SHLIB_PATH ""
   endif
-  if (! $?MANPATH) then
+  if ("$MANPATH"x == x) then
     setenv MANPATH ""
   endif
-  if (! $?OCAML_LIB) then
+  if ("$OCAML_LIB"x == x) then
     setenv OCAML_LIB /usr/common/lib/ocaml
   endif
 

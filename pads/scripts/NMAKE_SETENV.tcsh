@@ -8,11 +8,18 @@ set _pads_status = OK
 set _pads_do_prog = NMAKE_SETENV.tcsh
 
 if (! $?PADS_HOME) then
+  set _pads_status = FAILED
+else
+  if ("$PADS_HOME"x == x) then
+    set _pads_status = FAILED
+  endif
+endif
+
+if ($_pads_status == "FAILED") then
   echo "##############################################################################"
   echo "# Set env var PADS_HOME and then use $_pads_do_prog again."
   echo "##############################################################################"
   echo " "
-  set _status = FAILED
 endif
 
 if ($_pads_status == "OK") then
