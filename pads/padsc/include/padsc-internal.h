@@ -81,14 +81,17 @@ PDC_error_t PDC_countXtoY_internal(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC
 PDC_error_t PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed, 
 				    PDC_uint32 *res_out);
 
-PDC_error_t PDC_string_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+PDC_error_t PDC_astringFW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 					PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_string_stopChar_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
-					      PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_astring_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+				      PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_string_stopRegexp_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-						PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_astringSE_read_internal(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
+					PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_astringCSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
+					 PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_aint8_read_internal (PDC_t *pdc, PDC_base_em *em,
 				     PDC_base_ed *ed, PDC_int8 *res_out);

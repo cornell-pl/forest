@@ -631,12 +631,15 @@ PDC_error_t PDC_string_ed_init(PDC_t *pdc, PDC_string_ed *ed);
 PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed);
 
 /* The string read functions each has a different way of specifying
- * how much to read: string_fw_read specifies a fixed width,
- * string_stopChar_read specifies a single stop character (can be 0 to
- * specify eof as the stop character), and string_stopRegexp_read
- * specifies a compiled regular expression (see PDC_regexp_compile)
- * where a match of this 'stop expression' stops the string.  The stop
- * char(s) are not included in the resulting string.
+ * the extent of the string: astringFW_read specifies a fixed width,
+ * astring_read specifies a single stop character (can be 0 to specify
+ * eof as the stop character), and astringSE_read and astringCSE
+ * specify a Stop Expression, a regular expression indicating the
+ * termination of the string.  SE takes a string form and CSE takes a
+ * compiled form of the regular expression (see PDC_regexp_compile).
+ * For all stop cases, the stop char/chars are not included in the
+ * resulting string.  Note that if the IO cursor is already at a stop
+ * condition, then a string of length zero results.
  *
  * If an expected stop char/pattern/width is found, PDC_OK is returned.
  * If !em || *em == PDC_CheckAndSet, then:
@@ -647,9 +650,6 @@ PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed);
  *     should ultimately be freed using PDC_string_cleanup.
  *   + if l_out is non-null, *l_out is set to the length of the string
  *     (not including the null terminator).
- *
- * Note that if the IO cursor is already at a stop character, then
- * a string of length zero results.
  * 
  * If an expected stop condition is not encountered, the
  * IO cursor position is unchanged.  Error codes used:
@@ -659,14 +659,17 @@ PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed);
  *     PDC_INVALID_REGEXP
  */
 
-PDC_error_t PDC_string_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+PDC_error_t PDC_astring_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+			     PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_astringFW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
 			       PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_string_stopChar_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
-				     PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_astringSE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
+			       PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_string_stopRegexp_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-				       PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_astringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
+				PDC_base_ed *ed, PDC_string *s_out);
 
 /* ================================================================================ */
 /* REGULAR EXPRESSION SUPPORT */

@@ -82,6 +82,16 @@
   } while (0)
 /* END_MACRO */
 
+/* Assumes ed->loc has already been set, warning already issued */
+#define PDCI_READFN_RET_ERRCODE_NOWARN(errcode)
+  do {
+    if (pdc->speclev == 0 && (*em < PDC_Ignore)) {
+      ed->errCode = (errcode);
+    }
+    return PDC_ERR;
+  } while (0)
+/* END_MACRO */
+
 /* Does not use ed->loc */
 #define PDCI_READFN_RET_ERRCODE_FATAL(msg, errcode)
   do {
@@ -1489,7 +1499,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.44 2002-11-14 00:49:07 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.45 2002-11-14 04:20:17 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -1936,7 +1946,7 @@ PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed)
  */
 
 PDC_error_t
-PDC_string_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+PDC_astringFW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
 		   PDC_base_ed *ed, PDC_string *s_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
@@ -1948,12 +1958,12 @@ PDC_string_fw_read(PDC_t *pdc, PDC_base_em *em, size_t width,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_string_fw_read");
-  return PDC_string_fw_read_internal(pdc, em, width, ed, s_out);
+  PDCI_READFN_INIT_CHECKS("PDC_astringFW_read");
+  return PDC_astringFW_read_internal(pdc, em, width, ed, s_out);
 }
 
-PDC_string_stopChar_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
-			 PDC_base_ed *ed, PDC_string *s_out)
+PDC_astring_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+		 PDC_base_ed *ed, PDC_string *s_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -1964,13 +1974,13 @@ PDC_string_stopChar_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_string_stopChar_read");
-  return PDC_string_stopChar_read_internal(pdc, em, stopChar, ed, s_out);
+  PDCI_READFN_INIT_CHECKS("PDC_astring_read");
+  return PDC_astring_read_internal(pdc, em, stopChar, ed, s_out);
 }
 
 PDC_error_t
-PDC_string_stopRegexp_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-			   PDC_base_ed *ed, PDC_string *s_out)
+PDC_astringSE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
+		   PDC_base_ed *ed, PDC_string *s_out)
 {
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -1981,9 +1991,27 @@ PDC_string_stopRegexp_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp
   if (!ed) {
     ed = &edt;
   }
-  PDCI_READFN_INIT_CHECKS("PDC_string_stopRegexp_read");
-  PDCI_NULLPARAM_CHECK("PDC_string_stopRegexp_read", stopRegexp);
-  return PDC_string_stopRegexp_read_internal(pdc, em, stopRegexp, ed, s_out);
+  PDCI_READFN_INIT_CHECKS("PDC_astringSE_read");
+  PDCI_NULLPARAM_CHECK("PDC_astringSE_read", stopRegexp);
+  return PDC_astringSE_read_internal(pdc, em, stopRegexp, ed, s_out);
+}
+
+PDC_error_t
+PDC_astringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
+		    PDC_base_ed *ed, PDC_string *s_out)
+{
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  PDCI_READFN_INIT_CHECKS("PDC_astringCSE_read");
+  PDCI_NULLPARAM_CHECK("PDC_astringCSE_read", stopRegexp);
+  return PDC_astringCSE_read_internal(pdc, em, stopRegexp, ed, s_out);
 }
 
 /* ================================================================================ */
@@ -3128,16 +3156,16 @@ PDC_adate_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_base_ed *ed,
 /* INTERNAL VERSIONS OF EXTERNAL STRING READ FUNCTIONS */
 
 PDC_error_t
-PDC_string_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+PDC_astringFW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
 			    PDC_base_ed *ed, PDC_string *s_out)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
 
-  PDC_TRACE(pdc->disc, "PDC_string_fw_read_internal called");
+  PDC_TRACE(pdc->disc, "PDC_astringFW_read_internal called");
   if (width <= 0) {
-    PDC_WARN(pdc->disc, "UNEXPECTED PARAM VALUE: PDC_string_fw_read called with width <= 0");
+    PDC_WARN(pdc->disc, "UNEXPECTED PARAM VALUE: PDC_astringFW_read called with width <= 0");
     goto bad_param_err;
   }
   /* ensure there are width chars available */
@@ -3170,28 +3198,28 @@ PDC_string_fw_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
   PDCI_READFN_RET_ERRCODE_WARN(0, PDC_WIDTH_NOT_AVAILABLE);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_string_fw_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_astringFW_read_internal", PDC_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_string_fw_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_astringFW_read_internal (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_string_fw_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_astringFW_read_internal (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_string_fw_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_astringFW_read_internal", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
-PDC_string_stopChar_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
-				  PDC_base_ed *ed, PDC_string *s_out)
+PDC_astring_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+			  PDC_base_ed *ed, PDC_string *s_out)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
   int             matchlen = -1;
 
-  PDC_TRACE(pdc->disc, "PDC_string_stopChar_read_internal called");
+  PDC_TRACE(pdc->disc, "PDC_astring_read_internal called");
   if (pdc->disc->stop_regexp) {
     matchlen = pdc->disc->stop_regexp->max;
   }
@@ -3242,28 +3270,43 @@ PDC_string_stopChar_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char sto
   PDCI_READFN_RET_ERRCODE_WARN(0, PDC_CHAR_LIT_NOT_FOUND);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_string_stopChar_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_astring_read_internal", PDC_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_string_stopChar_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_astring_read_internal (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_string_stopChar_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_astring_read_internal (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_string_stopChar_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_astring_read_internal", PDC_FORWARD_ERR);
 }
 
 PDC_error_t
-PDC_string_stopRegexp_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-				    PDC_base_ed *ed, PDC_string *s_out)
+PDC_astringSE_read_internal(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
+			    PDC_base_ed *ed, PDC_string *s_out)
+{
+  PDC_regexp_t *compiled_exp;
+  if (PDC_ERR == PDC_regexp_compile(pdc, stopRegexp, &compiled_exp)) {
+    goto bad_exp;
+  }
+  return PDC_astringCSE_read_internal(pdc, em, compiled_exp, ed, s_out);
+
+ bad_exp:
+  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_INVALID_REGEXP);  /* regexp_compile already issued a warning */
+}
+
+PDC_error_t
+PDC_astringCSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
+			     PDC_base_ed *ed, PDC_string *s_out)
 {
   char            *begin, *p1, *p2, *end;
   int             eor, eof;
   size_t          bytes;
   int             matchlen;
 
-  PDC_TRACE(pdc->disc, "PDC_string_stopRegexp_read_internal called");
+  PDC_TRACE(pdc->disc, "PDC_astringCSE_read_internal called");
   matchlen = stopRegexp->max;
   if (matchlen && pdc->disc->stop_regexp) {
     if (pdc->disc->stop_regexp->max == 0) {
@@ -3326,16 +3369,16 @@ PDC_string_stopRegexp_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *s
   PDCI_READFN_RET_ERRCODE_WARN(0, PDC_REGEXP_NOT_FOUND);
 
  fatal_alloc_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_string_stopRegexp_read_internal", PDC_ALLOC_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("Memory alloc error in PDC_astringCSE_read_internal", PDC_ALLOC_ERR);
 
  fatal_nb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_string_stopRegexp_read_internal (nb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_astringCSE_read_internal (nb)", PDC_IO_ERR);
 
  fatal_mb_io_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_string_stopRegexp_read_internal (mb)", PDC_IO_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("IO error in PDC_astringCSE_read_internal (mb)", PDC_IO_ERR);
 
  fatal_forward_err:
-  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_string_stopRegexp_read_internal", PDC_FORWARD_ERR);
+  PDCI_READFN_RET_ERRCODE_FATAL("Internal IO_forward error in PDC_astringCSE_read_internal", PDC_FORWARD_ERR);
 }
 
 /* ================================================================================ */
