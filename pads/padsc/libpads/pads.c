@@ -10,7 +10,7 @@
 #include "libpadsc-read-macros.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.18 2002-09-17 19:21:05 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.19 2002-09-23 18:25:21 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -20,6 +20,44 @@ static const char lib[] = "padsc";
 #define PDC_initStkElts      8
 #define PDC_initInpBufs      8
 #define PDC_initBufSize   1024
+
+/* ================================================================================ */ 
+/* INTERNAL FUNCTIONS */
+
+static PDC_error_t
+PDC_Internal_IO_needchar(PDC_t* pdc, int obeyPanicStop, PDC_stkElt_t** tp_out, PDC_IO_line_t** tpline_out, PDC_disc_t* disc)
+{
+  PDC_stkElt_t*   tp      = &(pdc->stack[pdc->top]);
+  PDC_IO_line_t*  tpline  = &(pdc->ilines[tp->idx]);
+
+  TRACE(pdc, "PDC_Internal_IO_needchar called");
+  while (1) {
+    if (PDC_IO_is_EOF(pdc, disc)) { /* already hit EOF */
+      return PDC_ERROR;
+    }
+    if (tp->cur < tpline->eoffset) { /* still more chars on current line */
+      break;
+    }
+    if (obeyPanicStop && (disc->p_stop == PDC_Line_Stop)) {
+      /* do not move beyond newline char / line end */
+      return PDC_ERROR;
+    }
+    if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
+      tp->idx++;
+      tp->cur = 0;
+      tpline = &(pdc->ilines[tp->idx]);
+    } else {
+      /* hit end of in-memory input lines, must get next line */
+      if (PDC_ERROR == PDC_IO_refill(pdc, disc)) {
+	return PDC_ERROR;
+      }
+    }
+    /* go to top of loop to do eof/eol checks again */
+  }
+  (*tp_out) = tp;
+  (*tpline_out) = tpline;
+  return PDC_OK;
+}
 
 /* ================================================================================ */ 
 /* ERROR REPORTING FUNCTIONS */
@@ -168,6 +206,9 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
     case PDC_CHAR_LIT_NOT_FOUND:
       msg = "Expected character literal not found";
       break;
+    case PDC_STR_LIT_NOT_FOUND:
+      msg = "Expected string literal not found";
+      break;
     case PDC_REGEXP_NOT_FOUND:
       msg = "Match for regular expression not found";
       break;
@@ -190,11 +231,14 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
     if (PDC_OK == PDC_IO_getLineBuf(pdc, loc->endLine, &buf, &len, disc)) {
       size_t minc = (loc->beginLine == loc->endLine) ? loc->beginChar : 1;
       size_t maxc = loc->endChar;
-      if (len <= 1) {
+      if (buf[len-1] == '\n') {
+	len--;
+      }
+      if (len <= 0) {
 	sfprintf(pdc->tmp, "\n[LINE %d](**EMPTY**)", loc->endLine);
       } else {
-	if (maxc > len-1) {
-	  maxc = len-1;
+	if (maxc > len) {
+	  maxc = len;
 	}
 	if (minc > maxc) {
 	  minc = maxc;
@@ -233,7 +277,7 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
   if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
     return PDC_ERROR; /* XXX out of space -- unrecoverable error */
   }
-  while (PDC_OK == PDC_IO_getchar(pdc, &ct, 1, disc)) { /* 1 means obey panicStop */
+  while (PDC_OK == PDC_IO_getchar(pdc, 1, &ct, disc)) { /* 1 means obey panicStop */
     if ((c == ct) || (s == ct)) {
       if (c_out) {
 	(*c_out) = ct;
@@ -248,6 +292,74 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
     }
   }
   /* restore IO cursor to original position and return error */
+  if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
+    /* XXX unrecoverable error -- should call discipline unrecov error handler */
+  }
+  return PDC_ERROR;
+}
+
+PDC_error_t
+PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopStr,
+		 PDC_string** str_out, size_t* offset_out, PDC_disc_t* disc) 
+{
+  PDC_stkElt_t*   tp;
+  PDC_IO_line_t*  tpline;
+  char            *begin, *end, *ptr;
+  size_t          remain;
+
+  if (!disc) {
+    disc = pdc->disc;
+  }
+  TRACE2(pdc, "PDC_str_lit_scan called for findStr = %s stopStre = %s",
+	 PDC_fmtStr(findStr), PDC_fmtStr(stopStr));
+  if (offset_out) {
+    (*offset_out) = 0;
+  }
+  if (!findStr || findStr->len == 0) {
+    WARN(pdc, "PDC_str_lit_scan : null/empty findStr specified");
+    return PDC_ERROR;
+  }
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+    return PDC_ERROR; /* XXX out of space -- unrecoverable error */
+  }
+  if (PDC_Internal_IO_needchar(pdc, 0, &tp, &tpline, disc)) { /* 0 means do not obey panicStop */
+    goto not_found; /* hit EOF */
+  }
+  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
+  end = begin + tpline->eoffset;
+  begin += tp->cur;
+
+  for (ptr = begin, remain=end-begin; ptr < end; ptr++, tp->cur++, remain--) {
+    if (remain < findStr->len) {
+      break;
+    }
+    if (strncmp(findStr->str,ptr,findStr->len) == 0) {
+      if (str_out) {
+	(*str_out) = (PDC_string*)findStr;
+      }
+      tp->cur += findStr->len; /* XXX len - 1 ??? XXX */
+      if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
+	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
+      }
+      return PDC_OK; /* IO cursor one beyond findStr */
+    }
+    if (stopStr && (remain >= stopStr->len) &&
+	(strncmp(stopStr->str,ptr,stopStr->len) == 0)) {
+      if (str_out) {
+	(*str_out) = (PDC_string*)stopStr;
+      }
+      tp->cur += stopStr->len; /* XXX len - 1 ??? XXX */
+      if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
+	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
+      }
+      return PDC_OK; /* IO cursor one beyond findStr */
+    }
+    if (offset_out) {
+      (*offset_out)++;
+    }
+  }
+
+ not_found:
   if (PDC_ERROR == PDC_IO_restore(pdc, disc)) {
     /* XXX unrecoverable error -- should call discipline unrecov error handler */
   }
@@ -275,8 +387,8 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
   if (!ed) {
     ed = &edt;
   }
-  if (PDC_OK == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
-    if (c == ct) {
+  if (PDC_OK == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
+    if ((c == ct) || (*em == PDC_Ignore)) {
       return PDC_OK;  /* IO cursor is one beyond c */
     }
     /* wrong char -- put it back */
@@ -284,6 +396,53 @@ PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
   }
   HANDLE_ERR_CURPOS(PDC_CHAR_LIT_NOT_FOUND);
 }
+
+PDC_error_t
+PDC_str_lit_read(PDC_t* pdc, PDC_base_em* em,
+		 PDC_base_ed* ed, const PDC_string* s, PDC_disc_t* disc)
+{
+  char            *begin, *end;
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  if (!disc) {
+    disc = pdc->disc;
+  }
+  TRACE1(pdc, "PDC_str_lit_read called for str = %s", PDC_fmtStr(s));
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  if (s->len <= 0) {
+    WARN(pdc, "UNEXPECTED PARAM VALUE: PDC_str_lit_read called with s->len <= 0");
+    goto not_found;
+  }
+  if (PDC_ERROR == PDC_IO_getchars(pdc, s->len, &begin, &end, disc)) {
+    goto not_found;
+  }
+  if ((*em == PDC_Ignore) || (strncmp(begin, s->str, s->len) == 0)) {
+    return PDC_OK;    /* found it */
+  }
+  /* string did not match */
+  PDC_IO_back(pdc, s->len, disc);
+
+ not_found:
+  HANDLE_ERR_CURPOS(PDC_STR_LIT_NOT_FOUND);
+}
+
+/* ================================================================================ */
+/* DATE/TIME READ FUNCTIONS */
+
+PDC_error_t
+PDC_adate_read (PDC_t* pdc, PDC_base_em* em, PDC_base_ed* ed, 
+		PDC_uint32* res_out, PDC_disc_t* disc)
+{
+  /* TODO */
+  return PDC_ERROR;
+}
+
 
 /* ================================================================================ */
 /* STRING READ FUNCTIONS */
@@ -367,7 +526,7 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
     goto no_space;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, NiL, disc)) { /* 0 means do not obey panicStop */
     goto not_found;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -436,7 +595,7 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
     goto no_space;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, NiL, disc)) { /* 0 means do not obey panicStop */
     goto not_found;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -498,7 +657,7 @@ PDC_aint8_read(PDC_t* pdc, PDC_base_em* em,
     ed = &edt;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     goto at_eof_err;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -555,7 +714,7 @@ PDC_aint16_read(PDC_t* pdc, PDC_base_em* em,
     ed = &edt;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     goto at_eof_err;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -612,7 +771,7 @@ PDC_aint32_read(PDC_t* pdc, PDC_base_em* em,
     ed = &edt;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     goto at_eof_err;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -669,7 +828,7 @@ PDC_aint64_read(PDC_t* pdc, PDC_base_em* em,
     ed = &edt;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     goto at_eof_err;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -726,7 +885,7 @@ PDC_auint8_read(PDC_t* pdc, PDC_base_em* em,
     ed = &edt;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     goto at_eof_err;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -783,7 +942,7 @@ PDC_auint16_read(PDC_t* pdc, PDC_base_em* em,
     ed = &edt;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     goto at_eof_err;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -840,7 +999,7 @@ PDC_auint32_read(PDC_t* pdc, PDC_base_em* em,
     ed = &edt;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     goto at_eof_err;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -897,7 +1056,7 @@ PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
     ed = &edt;
   }
   /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     goto at_eof_err;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -1122,7 +1281,7 @@ PDC_IO_peek_EOF(PDC_t* pdc, PDC_disc_t* disc) {
     disc = pdc->disc;
   }
   TRACE(pdc, "PDC_IO_peek_EOF called");
-  if (PDC_ERROR == PDC_IO_getchar(pdc, &ct, 0, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
     return 1;
   }
   PDC_IO_back(pdc, 1, disc);
@@ -1130,42 +1289,22 @@ PDC_IO_peek_EOF(PDC_t* pdc, PDC_disc_t* disc) {
 }
 
 PDC_error_t
-PDC_IO_getchar(PDC_t* pdc, unsigned char* ct, int obeyPanicStop, PDC_disc_t* disc)
+PDC_IO_getchar(PDC_t* pdc, int obeyPanicStop, unsigned char* ct_out, PDC_disc_t* disc)
 {
-  PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
-  PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
+  PDC_stkElt_t*   tp;
+  PDC_IO_line_t*  tpline;
   char* base;
 
   if (!disc) {
     disc = pdc->disc;
   }
   TRACE(pdc, "PDC_IO_getchar called");
-  while (1) {
-    if (PDC_IO_is_EOF(pdc, disc)) { /* already hit EOF */
-      return PDC_ERROR;
-    }
-    if (obeyPanicStop && (disc->p_stop == PDC_Line_Stop) && (tp->cur >= tpline->eoffset)) {
-      /* do not move beyond newline char / line end */
-      return PDC_ERROR;
-    }
-    if (tp->cur < tpline->eoffset) { /* still more chars on current line */
-      break;
-    }
-    if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
-      tp->idx++;
-      tp->cur = 0;
-      tpline = &(pdc->ilines[tp->idx]);
-    } else {
-      /* hit end of in-memory input lines, must get next line */
-      if (PDC_ERROR == PDC_IO_refill(pdc, disc)) {
-	return PDC_ERROR;
-      }
-    }
-    /* go to top of loop to do eof and panic checks again */
+  if (PDC_Internal_IO_needchar(pdc, obeyPanicStop, &tp, &tpline, disc)) {
+    return PDC_ERROR; /* at panic stop or at EOF */
   }
-  base = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  if (ct) {
-    *ct = *(base + tp->cur);
+  if (ct_out) {
+    base = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
+    (*ct_out) = *(base + tp->cur);
   }
   tp->cur++;
   return PDC_OK;
@@ -1177,17 +1316,16 @@ PDC_IO_getchar(PDC_t* pdc, unsigned char* ct, int obeyPanicStop, PDC_disc_t* dis
 PDC_error_t
 PDC_IO_getchars(PDC_t* pdc, size_t num_chars, char** b_out, char** e_out, PDC_disc_t* disc)
 {
-  PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
-  PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
+  PDC_stkElt_t*   tp;
+  PDC_IO_line_t*  tpline;
   char* base;
 
   if (!disc) {
     disc = pdc->disc;
   }
   TRACE(pdc, "PDC_IO_getchars called");
-  if (PDC_IO_is_EOF(pdc, disc)) { /* already hit EOF */
+  if (PDC_Internal_IO_needchar(pdc, 0, &tp, &tpline, disc)) { /* hit EOF */
     return PDC_ERROR;
-
   }
   if (tp->cur + num_chars > tpline->eoffset) {
     /* not enough chars left on line; leave IO cursor as-is  */

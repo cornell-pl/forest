@@ -101,7 +101,7 @@ PDC_error_t  PDC_get_beginLoc   (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); /*
 PDC_error_t  PDC_get_endLoc     (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); /* sets l end pos to current IO pos */
 int          PDC_IO_is_EOF      (PDC_t* pdc, PDC_disc_t* disc);
 int          PDC_IO_peek_EOF    (PDC_t* pdc, PDC_disc_t* disc);
-PDC_error_t  PDC_IO_getchar     (PDC_t* pdc, unsigned char* ct, int obeyPanicStop, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_getchar     (PDC_t* pdc, int obeyPanicStop, unsigned char* ct_out, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_getchars    (PDC_t* pdc, size_t num_chars, char** b_out, char** e_out, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_back        (PDC_t* pdc, size_t num_chars, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_refill      (PDC_t* pdc, PDC_disc_t* disc);
@@ -176,24 +176,6 @@ PDC_error_t PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
 
 PDC_error_t PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopStr,
 			     PDC_string** str_out, size_t* offset_out, PDC_disc_t* disc);
-
-/* ================================================================================ */
-/* READ FUNCTIONS */
-
-/* PDC_char_lit_read:
- *
- * EFFECT: verify IO cursor points to specified char, move IO cursor just beyond
- *
- * RETURNS: PDC_error_t
- *            OK    => IO cursor did point to char, now points just beyond char
- *            ERROR => IO cursor does not point to char (cursor unchanged)
- */
-
-PDC_error_t PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
-			      PDC_base_ed* ed, unsigned char c, PDC_disc_t* disc);
-
-PDC_error_t PDC_str_lit_read(PDC_t* pdc, PDC_base_em* em,
-			     PDC_base_ed* ed, const PDC_string* s, PDC_disc_t* disc);
 
 /* ================================================================================ */
 /* MISC ROUTINES */

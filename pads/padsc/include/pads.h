@@ -70,9 +70,10 @@ typedef enum PDC_errCode_t_e {
   PDC_INVALID_BINT                  =  182,
   PDC_INVALID_BUINT                 =  183,
   PDC_CHAR_LIT_NOT_FOUND            =  190,
-  PDC_REGEXP_NOT_FOUND              =  200,
-  PDC_INVALID_REGEXP                =  210,
-  PDC_WIDTH_NOT_AVAILABLE           =  220
+  PDC_STR_LIT_NOT_FOUND             =  200,
+  PDC_REGEXP_NOT_FOUND              =  210,
+  PDC_INVALID_REGEXP                =  220,
+  PDC_WIDTH_NOT_AVAILABLE           =  230
 } PDC_errCode_t;
 
 /* ================================================================================ */
@@ -250,6 +251,26 @@ PDC_error_t  PDC_IO_fopen      (PDC_t* pdc, char* path, PDC_disc_t* disc);
 PDC_error_t  PDC_IO_fclose     (PDC_t* pdc, PDC_disc_t* disc);
 
 /* ================================================================================ */
+/* LITERAL READ FUNCTIONS */
+
+/* PDC_char_lit_read / str_lit_read:
+ *
+ * EFFECT: verify IO cursor points to specified char/string, move IO cursor just beyond
+ *         N.B. If *em is PDC_Ignore, IO cursor is advanced by the specified length
+ *              (1 char / length of string) without checking
+ *
+ * RETURNS: PDC_error_t
+ *            OK    => IO cursor now points just beyond char / string
+ *            ERROR => IO cursor did not point to char/string; unchanged
+ */
+
+PDC_error_t PDC_char_lit_read(PDC_t* pdc, PDC_base_em* em,
+			      PDC_base_ed* ed, unsigned char c, PDC_disc_t* disc);
+
+PDC_error_t PDC_str_lit_read(PDC_t* pdc, PDC_base_em* em,
+			     PDC_base_ed* ed, const PDC_string* s, PDC_disc_t* disc);
+
+/* ================================================================================ */
 /* DATE/TIME READ FUNCTIONS */
 
 /* PDC_adate_read : attempts to read an ascii date string and convert it to
@@ -272,7 +293,7 @@ PDC_error_t PDC_adate_read (PDC_t* pdc, PDC_base_em* em, PDC_base_ed* ed,
 /* ================================================================================ */
 /* STRING READ FUNCTIONS */
 
-/* Related helper function: PDC_string_freefree frees memory s->str
+/* Related helper function: PDC_free_string frees memory s->str
  * from a PDC_string *s that has been filled in by one of the string read
  * calls (with string duplication enabled by the discipline). 
  */
