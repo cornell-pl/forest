@@ -109,6 +109,7 @@ struct
   val m_endian     = "m_endian"
   val littleEndian = PDC_littleEndian
   val bigEndian    = PDC_bigEndian
+  val uint32       = P.makeTypedefPCT "PDC_uint32"
   val intAct       = "PDC_int32_acc"
   val intCvtPCT    = P.makeTypedefPCT "PDC_int32_map_fn"
   val intAccPCT    = P.makeTypedefPCT "PDC_int32_acc"

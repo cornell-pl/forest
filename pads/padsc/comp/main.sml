@@ -29,8 +29,7 @@ structure Main : sig
     val stage = ref ""
 
     (* Values/Flags supplied by user at command line *)
-    val compilerFileLoc = "/ckit/src/ast/extensions/pads/"
-    val makefileLoc     = "/config/locs.mk"
+    val compilerFileLoc = "/padsc/comp/ckit/src/ast/extensions/pads/"
 
 
     datatype ArgType = Pads | Unknown
@@ -222,17 +221,15 @@ structure Main : sig
 	in
 	    "__"^upper^"__H__"
 	end
-    fun generateAccumProgram (homeDir, headerFile, name,
+    fun generateAccumProgram (padsDir, headerFile, name,
 			      {memChar, repName,repInit,repRead,repClean,pdName,pdInit,pdClean,
 			       accName,accInit,accAdd,accReport,accClean,...}:PTys.pTyInfo) =
 	let val aname = name^".c"
 	    val aoutstream = getAccStream(aname)
-	    val templateName = if memChar = TyProps.Static then
-		homeDir^compilerFileLoc^"accum_template_static"
-			       else
-				   homeDir^compilerFileLoc^"accum_template_dynamic"
+	    val templateName = if memChar = TyProps.Static 
+		               then padsDir^compilerFileLoc^"accum_template_static"
+			       else padsDir^compilerFileLoc^"accum_template_dynamic"
 	in
-print ("generating accumulator");
 	    TextIO.output(aoutstream, "#include \"libpadsc.h\"\n");
 	    TextIO.output(aoutstream, "#include \""^headerFile^"\"\n");
 	    TextIO.output(aoutstream, "#define PADS_TY "^repName^"\n");
@@ -261,20 +258,24 @@ print ("generating accumulator");
 	    TextIO.closeOut aoutstream
 	end
 
-    fun generateMakeFile(homeDir, headerFile, genLibFile, makeFileName, name) = 
+    fun generateMakeFile(padsDir, headerFile, genLibFile, makeFileName, name) = 
 	let val moutstream = getAccStream(makeFileName)
-	    val execName = name^".exe"
 	    val programName = name^".c"
-	    val locs = OS.FileSys.fullPath (homeDir^makefileLoc)
+            fun outputRule (exeName,suf) = 
+		(TextIO.output(moutstream, exeName^":\t"^programName^" "^headerFile^" "^genLibFile);
+		 TextIO.output(moutstream, " $(INCLUDE_DEPS) $(LIB_DEPS_"^suf^")\n");
+		 TextIO.output(moutstream, "\t$(COMPILE_"^suf^") "^programName^" "^genLibFile);
+		 TextIO.output(moutstream, " $(DYNAMIC_LIBS_"^suf^") -o $@\n"))
+
 	in
-	    TextIO.output(moutstream, "include "^locs^"\n\n\n");
-	    TextIO.output(moutstream, execName^":\t"^programName^" "^headerFile^" "^genLibFile^"\n");
-	    TextIO.output(moutstream, "\t$(CC) $(CCFLAGS) "^programName^" "^genLibFile);
-	    TextIO.output(moutstream, " $(OBJ) $(LDFLAGS) -o "^execName^"\n");
+	    TextIO.output(moutstream, "PADS_HOME="^padsDir^"\n");
+	    TextIO.output(moutstream, "include $(PADS_HOME)/mk/rules.mk\n\n\n");
+            outputRule(name, "O");
+            outputRule(name^"-g", "D");
 	    TextIO.flushOut moutstream;
 	    TextIO.closeOut moutstream
 	end
-    fun compileAccum(homeDir, makeFileName) = 
+    fun compileAccum(makeFileName) = 
 	let val () = print "Building accumulator program.\n"
 	    val command = "cd "^(OS.FileSys.fullPath (!outputDir))^"; make -f " ^makeFileName
 	    val () = print (command ^"\n")
@@ -286,7 +287,7 @@ print ("generating accumulator");
 		        print "Build of accumulator program failed.\n"
 			else ()
 	end
-    fun generateAccum (homeDir, fileName, headerFile, genLibFile) = 
+    fun generateAccum (padsDir, fileName, headerFile, genLibFile) = 
 	let val p = PTys.pTys
 	    fun doOne(name : string) = 
 	        case PTys.find(Atom.atom name)
@@ -294,9 +295,9 @@ print ("generating accumulator");
 				 "Could not generate accumlator program.\n")
 		   | SOME s => (let val makeFileName = name^".mk"
 				in
-				    generateAccumProgram (homeDir,headerFile,name, s);
-				    generateMakeFile (homeDir,headerFile,genLibFile,makeFileName, name);
-				    compileAccum(homeDir,makeFileName)
+				    generateAccumProgram (padsDir,headerFile,name, s);
+				    generateMakeFile (padsDir,headerFile,genLibFile,makeFileName, name);
+				    compileAccum(makeFileName)
 				end)
 	in
 	    List.app doOne (!accumulators)
@@ -312,7 +313,7 @@ print ("generating accumulator");
 		TextIO.closeOut xoutstream			
 	    end
 
-    fun generateOutput (homeDir, astInfo : BuildAst.astBundle, fileName) =
+    fun generateOutput (padsDir, astInfo : BuildAst.astBundle, fileName) =
       let val {ast,tidtab,errorCount,warningCount,auxiliaryInfo={paidtab,...},...} = astInfo
 	  val srcFile = OS.Path.file fileName
       in
@@ -338,12 +339,12 @@ print ("generating accumulator");
 	      PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   
 	      TextIO.flushOut coutstream;
 	      TextIO.closeOut coutstream;
-	      generateAccum(homeDir, fileName, houtname, coutname);
+	      generateAccum(padsDir, fileName, houtname, coutname);
 	      generateXschema(fileName, srcFile, ast,tidtab, paidtab)
 	  end
       end
 	    
-    fun doFile (homeDir, baseTyFile) (typ, fname) = 
+    fun doFile (padsDir, baseTyFile) (typ, fname) = 
       (curFile := fname;
        case typ of Pads =>
 	 let val () = stage := "Preprocessing"
@@ -359,7 +360,7 @@ print ("generating accumulator");
              val () = if (!astOnlyFlag) then (setPrintDepth(); raise DebugExn(Ast ast)) else ()
 	     val () = stage := "Generating output"
 	 in
-	     generateOutput(homeDir, astInfo, fname)
+	     generateOutput(padsDir, astInfo, fname)
 	 end
       | _ => error "Unrecognized file type")
 
@@ -372,7 +373,7 @@ print ("generating accumulator");
 
     fun main release (cmd, args) = 
       (stage := "Command-line processing";
-       let val homeDir = hd args
+       let val padsDir = hd args
            val arguments = tl args
            val flags = if release then flags_release @ extensions
                        else flags_release @ flags_debug @ extensions
@@ -383,13 +384,13 @@ print ("generating accumulator");
            (* At this point, flag booleans have been set from command-line *)
            (* Generate base type typedefs from base description file *)
            val baseTyDefsFile = tmp ".h"
-	   val internalBaseTysPath = [homeDir^compilerFileLoc^"base-ty-info.txt",
-				      homeDir^compilerFileLoc^"internal-base-ty-info.txt"]
+	   val internalBaseTysPath = [padsDir^compilerFileLoc^"base-ty-info.txt",
+				      padsDir^compilerFileLoc^"internal-base-ty-info.txt"]
 	                             @(!baseTables)
        in
          PBaseTys.genPadsInternal(internalBaseTysPath, baseTyDefsFile);	   
          initState();
-         app (doFile (homeDir, baseTyDefsFile)) (!srcFiles); 
+         app (doFile (padsDir, baseTyDefsFile)) (!srcFiles); 
          rmTmp();
          if !anyErrors 
 	     then  OS.Process.exit(OS.Process.failure)
