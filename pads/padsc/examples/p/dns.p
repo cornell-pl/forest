@@ -407,8 +407,8 @@ Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
   Pdefault : Pa_string_FW(:rdlength:) unknown;
   }
 } Pwhere { 
-  // Pparsecheck(fprintf(stderr,"unionEnd.offset=%llx,unionBegin.offset=%llx,rdlength=%x\n",
-  // (long long)unionEnd.offset,(long long)unionBegin.offset,rdlength)) &&
+  //   Pparsecheck(fprintf(stderr,"unionEnd.offset=%llx,unionBegin.offset=%llx,rdlength=%x\n",
+  //   (long long)unionEnd.offset,(long long)unionBegin.offset,rdlength)) &&
            Pparsecheck(unionEnd.offset - unionBegin.offset == rdlength); };
 
 Pstruct resource_record {
@@ -457,6 +457,7 @@ Pstruct dns_msg {
    resource_records(:header.arcount:) additional;
 };
 
-Psource Parray dns_msg_array {
+
+Psource Parray dns_msg_array{
   dns_msg[];
 }

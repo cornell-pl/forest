@@ -36,18 +36,17 @@ Pstruct version_t {
   Puint8 minor;           /- http minor mode
 };
 
-Pstruct request_line_t {
+Precord Pstruct request_line_t {
         method_t meth;                       /- Method used during request
   ' ';  Pstring(:' ':) request_uri;          /- Requested uri.
   ' ';  version_t      http_version;         /- HTTP version number of request 
-  "\r\n";
 };
 
 Pstruct status_line_t{
         version_t              version;
  ' ';   Puint16_FW(:3:)        status_code;
- ' ';   Pstring_SE(:"\r\n":)   reason_phrase;  /- *** only partially implemented
- "\r\n";
+ ' ';   Pstring_SE(:"\$\":)    reason_phrase;  /- *** only partially implemented
+ Pre "\$\";
 };
 
 Punion start_line_t{
@@ -55,23 +54,29 @@ Punion start_line_t{
   status_line_t  status_line;
 };
 
+
 /* in-memory rep is string not char */
-Ptypedef Pstring_ME(:"(1*[CLRF](\t|' '))|[^CONTROL-characters, delete-char]":) TEXT_t;
+Ptypedef Pstring_ME(:"(1*[CRLF](\t|' '))|[^CONTROL-characters, delete-char]":) TEXT_t;
 
 /* doesn't handle white space branch */
-Ptypedef Puchar TEXT_t :: TEXT_t x => { (x > 31) && (x != 127)}  // LWS issue: definition is ambiguous
+Ptypedef Puchar ctrl_t :: ctrl_t(x) => {(x < 32) || (x == 127)}  
 
-Ptypedef Puchar tspecial_t :: tspecial_t(x) => { x in ["()<>@,;:\\\"/[]?={} \t"]}  // expand? syntactic support
+Ptypedef Puchar TEXT_t :: TEXT_t x => {! is_ctrl_t(x) }  // LWS issue: definition is ambiguous
 
-Ptypedef Puchar token_char_t :: token_char_t(x) => {(x > 31) && (! tspecial_t(x)) }   // implement this
+// expand? syntactic support
+
+Ptypedef Puchar tspecial_t :: tspecial_t(x) => { x in ["()<>@,;:\\\"/[]?={} \t"]}  
+
+
+Ptypedef Puchar token_char_t :: token_char_t(x) => {(x > 31) && (! is_tspecial_t(x)) }   // implement this
 
 Parray token_t(Puchar ending){
   token_char_t[1:] ts : Pterm == ending;
 };
 
-Pstruct generic_message_header_t{
+Precord Pstruct generic_message_header_t{
        token_t(:':':)        field_name;
-  ':'; Pstring_ME(:"\r\n":)  field_value;
+  ':'; Pstring_ME(:"\$\":)   field_value;  /- field content can be derived from field_value
 };
 
 Pstruct content_length_t{
