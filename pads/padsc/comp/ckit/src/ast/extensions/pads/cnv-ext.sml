@@ -1564,6 +1564,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val user = "user"
 		      val baseTyName = lookupTy(baseTy, repSuf, #padsname)
 
+
                       (* Generate CheckSet mask typedef case*)
 		      val baseMPCT = P.makeTypedefPCT(lookupTy(baseTy,mSuf, #mname))
                       val mFields  = [(base, baseMPCT, SOME "Base mask"),
@@ -1808,7 +1809,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      @ (List.concat(List.map cnvExternalDecl copyPDEDs))
                       @ (List.concat(List.map cnvExternalDecl readFunEDs))
                       @ (List.concat(List.map cnvExternalDecl maskFunEDs))
-  		      @ (List.concat(List.map cnvExternalDecl galaxEDs))
+  		      @ (emitXML galaxEDs)
                       @ (emitWrites writeFunEDs)
 		      @ cnvExternalDecl initFunED
                       @ cnvExternalDecl resetFunED
@@ -1822,7 +1823,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 	      fun cnvPStruct ({name: string, isRecord, containsRecord, largeHeuristic, isFile, 
                                params: (pcty * pcdecr) list, fields: (pdty, pcdecr, pcexp) PX.PSField list, 
                                postCond}) = 
-	          let val dummy = "_dummy"
+	          let val structName = name
+		      val dummy = "_dummy"
 
 		      (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b m (PX.Full fd) = f fd
@@ -1830,6 +1832,21 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                         | mungeField f b m (PX.Manifest md) = m md
 		      fun mungeFields f b m [] = []
 			| mungeFields f b m (x::xs) = (mungeField f b m x) @ (mungeFields f b m xs)
+
+		      (* Struct: Error checking *)
+		      fun checkFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
+				     isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+				     pred: pcexp option, comment: string option} = 
+			  (if name = "pd" then PE.error ("Pstruct "^ structName ^" contains field with reserved name 'pd'.\n") 
+			   else (); 
+			   let val ty = P.makeTypedefPCT(lookupTy(pty, repSuf, #repname))
+			   in
+			       CTcnvType ty  (* ensure that the type has been defined *)
+			   end; [])
+		      fun checkBrief e = []
+		      fun checkMan m = []
+		      val _ = mungeFields checkFull checkBrief checkMan fields
+
 
 		      (* Generate local variables  *)
 		      fun genLocFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
@@ -1937,7 +1954,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun genRepBrief e = []
 		      val canonicalFields = mungeFields genRepFull genRepBrief genRepMan fields
 		      val canonicalFields = if List.length canonicalFields = 0 
-			                    then (PE.warn ("PStruct "^structName^" does not contain any non-ommitted fields.\n");
+			                    then (PE.warn ("PStruct "^structName^" does not contain any non-omitted fields.\n");
 						 [(dummy, P.int, SOME "Dummy field inserted to avoid empty struct")])
 					    else canonicalFields
 		      val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
@@ -2605,6 +2622,22 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						(SOME descriminator, hasDefault, cases, branches)
 					    end
 
+		      (* Union: Error checking *)
+		      fun checkFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
+				     isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+				     pred: pcexp option, comment: string option} = 
+			  (if name = "pd" then PE.error ("Punion "^ unionName ^" contains variant with reserved name 'pd'.\n") 
+			   else (); 
+			   let val ty = P.makeTypedefPCT(lookupTy(pty, repSuf, #repname))
+			   in
+			       CTcnvType ty  (* ensure that the type has been defined *)
+			   end; [])
+		      fun checkBrief e = []
+		      fun checkMan m = []
+		      val _ = mungeVariants checkFull checkBrief checkMan variants
+
+
+
                      (* generate enumerated type describing tags *)
 		     val tagVal = ref 0
 		     val firstTag = ref "bogus"
@@ -3264,6 +3297,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		 val readName = readSuf name
 		 val pdRBufferX   = fieldX(pd, internal)
 		 val resRBufferX  = fieldX(rep, internal)
+
+                 (* Array: error checking *)
+                 val _ = CTcnvType elemRepPCT 
 
                  (* add local variables, ie, parameters,  to scope *)
 		 val _ = pushLocalEnv()                                        (* create new scope *)
