@@ -146,7 +146,7 @@ structure CnvExt : CNVEXT = struct
 
 (* Utility functions ********************************************************)
 
-
+(* old version*)
     fun formatComment s = 
 	let val s = " "^s^" "
 	    val len = String.size s
@@ -161,6 +161,7 @@ structure CnvExt : CNVEXT = struct
 	    else  *)
 	    padRight (padLeft s)
 	end
+    fun formatComment s = s
 
     fun stringOptMerge (s1Opt: string option, s2Opt:string option) =
 	case s1Opt
@@ -747,7 +748,8 @@ structure CnvExt : CNVEXT = struct
 				      SOME ((initSuf o pdSuf) name),
 				      SOME ((cleanupSuf o pdSuf) name))
 
-              fun buildTyProps (name, kind, diskSize, compoundDiskSize, memChar, endian, isRecord, containsRecord, largeHeuristic, isSource, pdTid, numArgs) = 
+              fun buildTyProps (name, kind, diskSize, compoundDiskSize, memChar, endian, isRecord, 
+				containsRecord, largeHeuristic, isSource, pdTid, numArgs) = 
      		  let val (repInit, repClean, pdInit, pdClean) = getDynamicFunctions (name, memChar)
 		  in
 		      {kind     = kind,
@@ -890,12 +892,6 @@ structure CnvExt : CNVEXT = struct
                                                 |  SOME (b:PTys.pTyInfo) => (#compoundDiskSize b)
                                                     (* end nested case *))) 
 
-(*              fun isPadsTy tyname = 
-		  case PBTys.find(PBTys.baseInfo, Atom.atom tyname)
-                  of SOME b => PTys.BaseTy b
-                  | NONE => (case PTys.find(Atom.atom tyname)
-			     of NONE => PTys.CTy
-			     |  SOME b => PTys.CompoundTy b) *)
               fun getPadsName (pcty:pcty) : pty = 
   		  case PTgetTyName pcty 
 		  of SOME n => (case PBTys.find(PBTys.baseInfo, Atom.atom n)
@@ -2176,8 +2172,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                params: (pcty * pcdecr) list, fields: (pcty, pdty, pcdecr, pcexp) PX.PSField list, 
                                postCond}) = 
 	          let val structName = name
-
-
 					   (* -- collection of expressions to be substituted for in constraints *)
 					   (* -- efficiency could be improved with better representations *)
                       val subList : (string * pcexp) list ref = ref []
@@ -3910,6 +3904,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val paramNames = #1(ListPair.unzip cParams)
 		 val length = PNames.arrayLen
                  val elts = PNames.arrayElts
+		 val numRead = "numRead"
 		 val consumeFlag = PNames.consume
                  val internal = "_internal"
 		 val element = "element"
@@ -4099,7 +4094,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 (neerr, PL.uint32PCT,   SOME "Number of element errors"),
 				 (firstError, PL.uint32PCT, 
 				    SOME "if errCode == ARRAY_ELEM_ERR, index of first error"),
-				 (length, PL.uint32PCT, NONE),
+				 (numRead, PL.uint32PCT, SOME "Number of elements read"),
+				 (length, PL.uint32PCT, SOME "Number of elements in memory"),
 				 (elts, P.ptrPCT(elemEdPCT), NONE),
 				 (internal, P.ptrPCT PL.rbufferPCT, NONE)] 
 		 val pdStructED = P.makeTyDefStructEDecl (pdFields, pdSuf name)
@@ -4208,32 +4204,29 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     end
 
                  fun chkPredConstraint (which, exp) = 
-		     let val subList = [(PNames.arrayLen,   fieldX(rep, length)), 
-					(PNames.arrayCur,   P.minusX(fieldX(rep, length), P.intX 1)), 
-					(name,              fieldX(rep, elts)),
-					(PNames.arrayBegin, P.dotX(PT.Id tloc, PT.Id "b")), 
-					(PNames.elemBegin,  P.dotX(fieldX(pd,"loc"), PT.Id "b")), 
-					(PNames.elemEnd,    P.dotX(fieldX(pd,"loc"), PT.Id "e")), 
-					(PNames.arrayElts,  fieldX(rep, elts)),
-					(PNames.pdElts,     fieldX(pd, elts))]
-			 val subList = if which = "Pended"
-				       then (PNames.consume, PT.Id consumeFlag) :: subList
-				       else subList
+		     let val curX = P.minusX(fieldX(rep, length), P.intX 1)
+			 val varList = [(PNames.arrayLen,   PL.uint32PCT,        fieldX(rep, length)), 
+					(PNames.numRead,    PL.uint32PCT,        fieldX(pd, numRead)), 
+					(PNames.arrayCur,   PL.uint32PCT,        curX), 
+					(name,              P.ptrPCT elemRepPCT, fieldX(rep, elts)),
+					(PNames.arrayElts,  P.ptrPCT elemRepPCT, fieldX(rep, elts)),
+					(PNames.pdElts,     P.ptrPCT elemEdPCT,  fieldX(pd, elts)),
+					(PNames.curElt,     elemRepPCT,          P.subX(fieldX(rep, elts), curX)),
+					(PNames.curPd,      elemEdPCT,           P.subX(fieldX(pd, elts),  curX)),
+					(PNames.arrayBegin, PL.posPCT,           P.dotX(PT.Id tloc, PT.Id "b")), 
+					(PNames.elemBegin,  PL.posPCT,           P.dotX(fieldX(pd,"loc"), PT.Id "b")), 
+					(PNames.elemEnd,    PL.posPCT,           P.dotX(fieldX(pd,"loc"), PT.Id "e"))] 
+			 val varList = if which = "Pended"
+				       then (PNames.consume, P.int,              PT.Id consumeFlag) :: varList
+				       else varList
+			 val subList = getBindings varList
 			 val needEndLoc = PTSub.isFreeInExp([PNames.elemEnd], exp)
 			 val modExpX = PTSub.substExps subList exp
 			 val errMsg = fn s => (which ^" expression for array "^
 					       name ^" has type"^s^", expected type int")
 		     in
 			 pushLocalEnv();
-			 ignore(insTempVar(length, PL.uint32PCT));
-			 ignore(insTempVar(PNames.arrayCur, PL.uint32PCT));
-			 ignore(insTempVar(name, P.ptrPCT elemRepPCT)); 
-			 ignore(insTempVar(PNames.arrayBegin, PL.posPCT)); 
-			 ignore(insTempVar(PNames.elemBegin, PL.posPCT)); 
-			 ignore(insTempVar(PNames.elemEnd, PL.posPCT)); 
-			 ignore(insTempVar(elts, P.ptrPCT elemRepPCT)); 
-			 ignore(insTempVar(PNames.pdElts, P.ptrPCT elemEdPCT)); 
-			 if which = "Pended" then ignore(insTempVar(PNames.consume, P.int)) else ();
+			 augTyEnv varList;
 			 expEqualTy(exp, CTintTys, errMsg);
 			 popLocalEnv();
 			 (needEndLoc, modExpX)
@@ -4249,7 +4242,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		       |  (SOME p, NONE) => SOME p
 		       |  (SOME p, SOME q) => (PE.error("Multiple "^which^" clauses"); SOME p)
 
-                 val (sepXOpt, termXOpt, noSepIsTerm, lastXOpt, endedXOpt,
+                 val (sepXOpt, termXOpt, noSepIsTerm, lastXOpt, endedXOpt, skipXOpt,
 		      sepTermDynamicCheck, scan2Opt, stdeclSs, stinitSs, stcloseSs) = 
                       let fun getFuns (which, exp) =
 			   let val (okay, expTy) = getExpEqualTy(exp, CTstring :: CTintTys,
@@ -4271,18 +4264,19 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 			  fun doOne (constr:pcexp PX.PConstraint) = 
                               case constr 
-                              of PX.Sep   exp => (SOME (getFuns("Separator", exp)), NONE, NONE, NONE, NONE)
-                              |  PX.Term  (PX.Expr exp) =>(NONE, SOME( getFuns("Terminator", exp)), NONE, NONE, NONE)
-                              |  PX.Term  PX.noSep => (NONE, NONE, SOME (), NONE, NONE)
-                              |  PX.Last  exp => (NONE, NONE, NONE, SOME exp, NONE)
-                              |  PX.Ended exp => (NONE, NONE, NONE, NONE, SOME exp)
+                              of PX.Sep   exp => (SOME (getFuns("Separator", exp)), NONE, NONE, NONE, NONE, NONE)
+                              |  PX.Term  (PX.Expr exp) =>(NONE, SOME( getFuns("Terminator", exp)), NONE, NONE, NONE, NONE)
+                              |  PX.Term  PX.noSep => (NONE, NONE, SOME (), NONE, NONE, NONE)
+                              |  PX.Last  exp => (NONE, NONE, NONE, SOME exp, NONE, NONE)
+                              |  PX.Ended exp => (NONE, NONE, NONE, NONE, SOME exp, NONE)
+                              |  PX.Skip  exp => (NONE, NONE, NONE, NONE, NONE, SOME exp)
 			  val constrs = List.map doOne constraints
-                          fun mergeAll ((a, b, c, d, e), (ra, rb, rc, rd, re)) = 
+                          fun mergeAll ((a, b, c, d, e, f), (ra, rb, rc, rd, re, rf)) = 
 			      (mergeOpt "Psep"  (a, ra), mergeOpt "Pterm" (b, rb), 
 			       mergeOpt "Pterm == Pnosep" (c, rc), 
-			       mergeOpt "Plast" (d, rd), mergeOpt "Pended" (e, re))
-			  val (sepXOpt, termXOpt, termNoSepXOpt, lastXOpt, endedXOpt ) = 
-			           List.foldr mergeAll (NONE, NONE, NONE, NONE, NONE) constrs
+			       mergeOpt "Plast" (d, rd), mergeOpt "Pended" (e, re), mergeOpt "Pskip" (f, rf))
+			  val (sepXOpt, termXOpt, termNoSepXOpt, lastXOpt, endedXOpt, skipXOpt ) = 
+			           List.foldr mergeAll (NONE, NONE, NONE, NONE, NONE, NONE) constrs
 
 			  val () = case (termXOpt, termNoSepXOpt) of 
 			             (SOME _, SOME _) => PE.error ("Multiple Pterm clauses in array "^name)
@@ -4453,7 +4447,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      |  (_, _) => []
 			      end
 		      in
-			  (sepXOpt, termXOpt, isSome termNoSepXOpt, lastXOpt, endedXOpt,
+			  (sepXOpt, termXOpt, isSome termNoSepXOpt, lastXOpt, endedXOpt, skipXOpt,
 			   sepTermDynamicCheck, scan2Opt, declSs, initSs, closeSs)
                       end
 		 val _ = popLocalEnv()
@@ -4496,6 +4490,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val _ = pushLocalEnv()
 		 val () = ignore(List.map insTempVar cParams)
 		 val (needArrayEndExp, postCond) = chkWhereClauses postCond
+		 val skipXOpt  = case skipXOpt  of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Pskip",  r))
                  val lastXOpt  = case lastXOpt  of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Plast",  r))
                  val endedXOpt = case endedXOpt of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Pended",  r))
 		 val _ = popLocalEnv()
@@ -4579,6 +4574,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val foundTerm    = "foundTerm"
 		 val lastSet      = "lastSet"
 		 val endedSet     = "endedSet"
+		 val omitresult   = "Pomitresult"
 		 val reachedLimit = "reachedLimit"
 
 		 val resBufferX   = fieldX(rep, elts)
@@ -4605,12 +4601,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                    [P.varDeclS(P.int, endedSet, P.falseX),
 				    P.varDeclS(P.int, consumeFlag,  P.falseX)]   (* default is to return last element *)
                                  else [])
+                              @ (if Option.isSome skipXOpt then               
+				   [P.varDeclS(P.int, omitresult, P.falseX)]
+				 else [])
                               @ (if Option.isSome maxOpt then               (* int reachedLimit = false *)
 				   [P.varDeclS(P.int, reachedLimit, P.falseX)]
 			        else [])
                               @ [ P.assignS(fieldX(rep, length), P.zero),
 				  P.assignS(fieldX(pd, neerr), P.zero),
-				  P.assignS(fieldX(pd, firstError), P.zero)]
+				  P.assignS(fieldX(pd, firstError), P.zero),
+				  P.assignS(fieldX(pd, numRead), P.zero)]
 		              @ stinitSs
 			      @ [ PL.getLocBeginS(PT.Id pads, P.addrX(PT.Id tloc))]      
 
@@ -4749,13 +4749,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     @ (if Option.isSome endedXOpt  (* checkpoint if have ended predicate in play *)
 			then ( [PL.incNestLevS(PT.Id pads)]
 			     @ PL.chkPtS(PT.Id pads, readName)) else [])
-                     @ [P.assignS(PT.Id result, PL.readFunX(elemReadName, PT.Id pads, P.addrX(fieldX(m, element)),
-							    args, P.addrX(edNext), P.addrX(resNext)))]
+                      @ [P.assignS(PT.Id result, PL.readFunX(elemReadName, PT.Id pads, P.addrX(fieldX(m, element)),
+							    args, P.addrX(edNext), P.addrX(resNext))),
+			 PT.Expr(P.postIncX (fieldX(pd, numRead)))]
 		 val markErrorSs = 
 		     let val baseX = P.eqX(PT.Id result, PL.P_ERROR) 
-			 val testX = case endedXOpt of 
+			 val etestX = case endedXOpt of 
 			               NONE   => baseX
 				     | SOME _ => P.andX(baseX, P.notX(PT.Id endedSet))
+			 val testX = case skipXOpt of
+			               NONE => etestX
+				     | SOME _ => P.andX(etestX, P.notX(PT.Id omitresult))
 		     in
 			 [PT.IfThen(testX,
 			   PT.Compound[
@@ -4816,9 +4820,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     in
 			 PT.Compound recoverSs
 		     end
-                 fun genPanicRecoverySs endedXOpt = 
+                 fun genPanicRecoverySs (endedXOpt, skipXOpt) = 
 		     let val predX = case endedXOpt of NONE => PL.testPanicX(P.addrX(edNext))
 			             | _ => P.andX(P.notX (PT.Id endedSet), PL.testPanicX(P.addrX(edNext)))
+			 val predX = case skipXOpt of NONE => predX
+			             | _ => P.andX(predX, P.notX (PT.Id omitresult))
 		     in
 			 [PT.IfThen(predX, PT.Compound[genPanicRecoveryS(sepXOpt, termXOpt, maxOpt)])]
 		     end
@@ -4843,10 +4849,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       [P.mkCommentS("Looking for terminator"), 
 		       readTerm (readFun, exp, NONE)]
 
-                 fun genLastCheck NONE = []
-                   | genLastCheck (SOME (_, exp)) = 
-                      [P.mkCommentS("Checking Plast predicate"),
-		       PT.IfThen(exp, PT.Compound[P.assignS(PT.Id lastSet, P.trueX)])]
+                 fun genLastCheck (NONE,_) = []
+                   | genLastCheck (SOME (_, exp), skipXOpt) = 
+                      let val predX = case skipXOpt of NONE => exp   
+				      | _ => P.andX(P.notX (PT.Id omitresult), exp)
+		      in
+			[P.mkCommentS("Checking Plast predicate"),
+		         PT.IfThen(predX, PT.Compound[P.assignS(PT.Id lastSet, P.trueX)])]
+		      end
 
                  fun genEndedLocCalcSs (l, e) =
                      let fun f(NONE) = [] 
@@ -4858,8 +4868,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 ended
 		     end
 
-                 fun genEndedCheck NONE = []
-                   | genEndedCheck (SOME (_, exp)) = 
+                 fun genEndedCheck exp = 
                       [P.mkCommentS("Checking Pended predicate"),
                        PT.Compound[
 			  P.varDeclS(P.int, "Ppredresult", exp),
@@ -4869,8 +4878,26 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					  PT.IfThenElse(PT.Id consumeFlag,
 					     PT.Compound(PL.commitS(PT.Id pads, readName)),
 			                     PT.Compound(PL.restoreS(PT.Id pads, readName)
-							 @ [P.postDecS(fieldX(rep, length))]))])),
+							 @ [P.postDecS(fieldX(rep, length)),
+							    P.postDecS(fieldX(pd, numRead))]))])),
 		          PL.decNestLevS(PT.Id pads)]]
+
+                 fun genEndedSkipCheck (NONE, NONE) = []
+                   | genEndedSkipCheck (SOME (_,exp), NONE) = genEndedCheck exp
+                   | genEndedSkipCheck (NONE, SOME (_,omitX)) = 
+		        [P.mkCommentS "Checking Pomit predicate",
+                         P.assignS(PT.Id omitresult, omitX),
+			 PT.IfThen(PT.Id omitresult,
+				   PT.Compound([P.postDecS(fieldX(rep, length))]))]
+                   | genEndedSkipCheck (SOME (_,ended), SOME (_,omitX)) = 
+		        [P.mkCommentS("Checking Pomit predicate"),
+                         P.assignS(PT.Id omitresult, omitX),
+			 PT.IfThenElse(PT.Id omitresult,
+				       PT.Compound(
+					      PL.commitS(PT.Id pads, readName)
+					    @ [P.postDecS(fieldX(rep, length)),
+					       PL.decNestLevS(PT.Id pads)]),
+				       PT.Compound (genEndedCheck ended))]
 
                  val whileSs = 
 		     let fun insLengthChk bdyS = 
@@ -4890,10 +4917,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				     [P.mkCommentS("Ready to read next element")]
 				   @ readElementSs 
                                    @ (genEndedLocCalcSs (lastXOpt, endedXOpt))
-                                   @ (genEndedCheck endedXOpt)
+                                   @ (genEndedSkipCheck (endedXOpt, skipXOpt))
 				   @ markErrorSs
-				   @ (genPanicRecoverySs endedXOpt)
-                                   @ (genLastCheck  lastXOpt)
+				   @ (genPanicRecoverySs (endedXOpt,skipXOpt))
+                                   @ (genLastCheck  (lastXOpt, skipXOpt))
                                    @ (genTermCheck  termXOpt)
 				   @ genBreakCheckSs (termXOpt, maxOpt, lastXOpt, endedXOpt)
                                    @ (genSepCheck sepXOpt)

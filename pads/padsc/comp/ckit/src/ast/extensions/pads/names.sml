@@ -3,9 +3,12 @@ struct
   val unionVal    = "val"
   val unionTag    = "tag"
   val arrayLen    = "length"
+  val numRead     = "numRead"
   val arrayElts   = "elts"
   val pdElts      = "pds"
   val arrayCur    = "current"
+  val curElt      = "elt"
+  val curPd       = "pd"
   val consume     = "consume"
   val arrayBegin  = "arrayBegin"  (* tloc.b     : Ppos_t *)
   val arrayEnd    = "arrayEnd"    (* tloc.e     : Ppos_t *)

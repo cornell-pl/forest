@@ -33,10 +33,11 @@ structure ParseTreeExt =
         datatype 'exp PTermExp = Expr of 'exp | noSep
 
         datatype 'exp PConstraint = 
-           Sep of 'exp
-         | Term of 'exp PTermExp
-         | Last of 'exp 
+           Sep   of 'exp
+         | Term  of 'exp PTermExp
+         | Last  of 'exp 
          | Ended of 'exp 
+         | Skip  of 'exp
 
         datatype 'exp PArrayPostCond = 
            Forall of {index : string, range : 'exp PRange, body : 'exp}

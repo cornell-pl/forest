@@ -68,8 +68,64 @@ structure ParseTreeSubst : PARSE_TREE_SUBST = struct
 	      | _ => x
 	end
 
-    fun substExps ([]:(string * ParseTree.expression) list) (e : ParseTree.expression) = e
-      | substExps ((n,nexp)::ls) e = substExps ls (substExp(n,nexp,e))
+    fun substExps (bindings:(string * ParseTree.expression) list) exp =
+	let fun s' exp = substExps bindings exp
+	    fun lookup id bindings = 
+		let fun f [] = Id id
+		    |   f ((x,ex)::l) = if x = id then ex else f l
+		in
+		    f bindings
+		end
+	in
+	    case exp of
+		Id s => lookup s bindings
+	      | Binop(oper,e1,e2) => 
+		    if fieldArgOp oper then
+			Binop(oper,s' e1,e2)
+		    else 
+			Binop(substOpers bindings oper,s' e1,s' e2)
+              | Unop(oper, e) => Unop(oper, s' e)
+	      | QuestionColon(e1,e2,e3) => QuestionColon(s' e1, s' e2, s' e3)
+	      | Call (e,es) => Call(s' e,map s' es)
+	      | Cast(ct,e) => Cast(ct,s' e)
+	      | InitList es => InitList (map s' es)
+	      | MARKexpression (l,e) => MARKexpression(l,s' e)
+	      | _ => exp
+	end
+
+    and substOpers bindings x =
+	(case x of
+	     SizeofType(ct) => SizeofType(substCTs bindings ct)
+	   | _ => x)
+    and substCTs bindings {qualifiers=q,specifiers=s} =
+	{qualifiers=q, specifiers=List.map (fn x => substSpecs bindings x) s}
+    and substSpecs bindings x =
+	let fun se' x = substExps bindings x
+	    fun sct' x = substCTs bindings x
+	in
+	    case x of
+		Array(e',ct) => Array(substExps bindings e',
+				      substCTs bindings ct)
+	      | Pointer(ct) => Pointer(substCTs bindings ct)
+	      | Enum {tagOpt,enumerators,trailingComma} =>
+		    Enum {tagOpt=tagOpt,
+			  enumerators = List.map (fn (s,e,c) => (s,se' e,c)) enumerators,
+			  trailingComma=trailingComma}
+	      | Struct {isStruct,tagOpt,members} =>
+		    let fun g (d,e) = (d,se' e)
+			fun f (ct,des, commentOpt) = 
+			    (sct' ct, List.map g des, commentOpt)
+		    in 
+			Struct {isStruct = isStruct,
+				tagOpt = tagOpt,
+				members = List.map f members
+				}
+		    end
+	      | _ => x
+	end
+
+(*    fun substExps ([]:(string * ParseTree.expression) list) (e : ParseTree.expression) = e
+      | substExps ((n,nexp)::ls) e = substExps ls (substExp(n,nexp,e))*)
 
     fun isFreeInExp (vars : string list, EmptyExpr )  = false
       | isFreeInExp (vars : string list, IntConst _ )  = false

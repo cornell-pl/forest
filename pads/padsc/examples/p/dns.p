@@ -456,3 +456,7 @@ Pstruct dns_msg {
    resource_records(:header.nscount:) authority: cnt_dbg("other",     header.arcount);
    resource_records(:header.arcount:) additional;
 };
+
+Psource Parray dns_msg{
+  dns_msg[];
+}
