@@ -83,8 +83,8 @@ Pstruct character_string {
   Pa_string_FW(:length:) bytes;
 }
 
-Pstruct A_t(:Puint16 rdlength:) {
-  Psbh_uint32(:4:) address : rdlength == 4;
+Pstruct A_t {
+  Psbh_uint32(:4:) address;
 };
 
 Pstruct CNAME_t {
@@ -365,7 +365,7 @@ Pstruct TSIG_t {
 
 Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
   Pswitch (t) {
-  Pcase 1 : A_t(:rdlength:) A;
+  Pcase 1 : A_t A;
   Pcase 2 : NS_t NS;
   Pcase 3 : MD_t MD;
   Pcase 4 : MF_t MF;
