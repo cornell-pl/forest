@@ -38,10 +38,6 @@ my @lines = "";
 
 LINE: while (<IFILE>) {
   $line++;
-  while (/(\"([^\"]|[\\][\"])*)\"(\s*)\"(([^\"]|[\\][\"])*\")/) {
-    # 1  2                   3      4 5
-    s/(\"([^\"]|[\\][\"])*)\"(\s*)\"(([^\"]|[\\][\"])*\")/\1\4/;
-  }
   if ($emit_lineno) {
     $lines .= "# $line \"$ifilename\"\n";
     $just_emitted = 1;  $emit_lineno  = 0;
