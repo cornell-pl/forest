@@ -191,10 +191,10 @@ PDCI_iodisc_report_partial(P_t *pads, Pio_elt_t *elt, int missing_term, size_t r
   loc.e.num   = elt->num;
   loc.e.byte  = readlen;
 
-  sfstrset(pads->tmp2, 0);
+  sfstrseek(pads->tmp2, 0, SEEK_SET);
   sfprintf(pads->tmp2, "[in %s]", whatfn);
   infn = sfstruse(pads->tmp2);
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
 
   if (pads->disc->e_rep == PerrorRep_Min) {
     pads->disc->error_fn(NiL, P_LEV_WARN, "%s %s: %s %d byte %d: errCode %d",

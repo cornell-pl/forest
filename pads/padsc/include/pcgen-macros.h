@@ -1929,7 +1929,7 @@ do {
 do {
   indent = (indent > 128) ? 128 : indent;
   if (!tag) { tag = def_tag; }
-  sfstrset(pads->tmp4, 0);
+  sfstrseek(pads->tmp4, 0, SEEK_SET);
   tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s>\n", indent, PDCI_spaces, tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
@@ -1937,7 +1937,7 @@ do {
 
 #define PCGEN_TAG_CLOSE_XML_OUT()
 do {
-  sfstrset(pads->tmp4, 0);
+  sfstrseek(pads->tmp4, 0, SEEK_SET);
   tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
@@ -1946,7 +1946,7 @@ do {
 #define PDCI_UNION_TAG_XML_OUT(tag)
 do {
   int tag_indent_PCGEN_ = (indent > 126) ? 128 : indent+2;
-  sfstrset(pads->tmp4, 0);
+  sfstrseek(pads->tmp4, 0, SEEK_SET);
   tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<p:tag>%s</p:tag>\n", tag_indent_PCGEN_, PDCI_spaces, tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
@@ -1956,7 +1956,7 @@ do {
 do {
   if (!tag) { tag = def_tag; }
   indent = ((indent) > 128) ? 128 : indent;
-  sfstrset(pads->tmp4, 0);
+  sfstrseek(pads->tmp4, 0, SEEK_SET);
   if ((pd)->errCode == P_NO_ERR) { /* no error */
     tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><p:val>%s</p:val></%s>\n", indent, PDCI_spaces, tag, rep2str_fn(*rep), tag);
   } else if ((pd)->errCode < 100) { /* error, no location */
@@ -1977,7 +1977,7 @@ do {
 do {
   if ((pd)->errCode != P_NO_ERR) {
     int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
-    sfstrset(pads->tmp4, 0);
+    sfstrseek(pads->tmp4, 0, SEEK_SET);
     if ((pd)->errCode < 100) { /* no location */
       tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<p:pd><p:pstate>%s</p:pstate><p:nerr>%lu</p:nerr><p:errCode>%s</p:errCode></p:pd>\n",
 		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode));
@@ -1999,7 +1999,7 @@ do {
 do {
   if ((pd)->errCode != P_NO_ERR) {
     int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
-    sfstrset(pads->tmp4, 0);
+    sfstrseek(pads->tmp4, 0, SEEK_SET);
     if ((pd)->errCode < 100) { /* no location */
       tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<p:pd><p:pstate>%s</p:pstate><p:nerr>%lu</p:nerr><p:errCode>%s</p:errCode><p:neerr>%lu</p:neerr><p:firstError>%lu</p:firstError></p:pd>\n",
 		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), (pd)->neerr, (pd)->firstError);
@@ -2017,7 +2017,7 @@ do {
 
 #define PCGEN_SOURCE_XML_OUT_BEGIN(schema_name)
 do {
-    sfstrset(pads->tmp4, 0);
+  sfstrseek(pads->tmp4, 0, SEEK_SET);
     tlen_PCGEN_ = sfprintf(pads->tmp4, "<p:Psource xmlns=\"%s\",\n\t   xmlns:p=\"pads.xsd\"\n\t   targetNamespace=\"%s\">\n",
 			   schema_name, schema_name);
     indent += 2;
@@ -2027,7 +2027,7 @@ do {
 
 #define PCGEN_SOURCE_XML_OUT_END()
 do {
-    sfstrset(pads->tmp4, 0); 
+  sfstrseek(pads->tmp4, 0, SEEK_SET); 
     tlen_PCGEN_ = sfprintf(pads->tmp4, "</p:Psource>\n");
     PDCI_FINAL_TMP4_TLEN_UPDATES();
 } while (0)

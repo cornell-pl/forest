@@ -511,18 +511,18 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
   Pregexp_t my_regexp = { 0 }
 
 #define P_RE_STRING_FROM_CHAR(pads, char_expr) \
-  ( sfstrset((pads)->tmp2, 0), \
+  ( sfstrseek((pads)->tmp2, 0, SEEK_SET),	   \
     sfprintf((pads)->tmp2, "/[%c]/", (char_expr)), \
     sfstruse((pads)->tmp2) )
 
 #define P_RE_STRING_FROM_STR(pads, str_expr) \
-  ( (pads)->tmp2_pstr = (str_expr), \
-    sfstrset((pads)->tmp2, 0), \
+  ( (pads)->tmp2_pstr = (str_expr), 		\
+    sfstrseek((pads)->tmp2, 0, SEEK_SET),	\
     sfprintf((pads)->tmp2, "/%.*s/l", (pads)->tmp2_pstr->len, (pads)->tmp2_pstr->str), \
     sfstruse((pads)->tmp2) )
 
 #define P_RE_STRING_FROM_CSTR(pads, str_expr) \
-  ( sfstrset((pads)->tmp2, 0), \
+  ( sfstrseek((pads)->tmp2, 0, SEEK_SET),	 \
     sfprintf((pads)->tmp2, "/%s/l", (str_expr)), \
     sfstruse((pads)->tmp2) )
 

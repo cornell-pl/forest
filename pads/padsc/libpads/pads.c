@@ -680,7 +680,7 @@ do {
 /* assumes variables writelen, buf, buf_full, buf_len, pads, tag, indent are in scope */
 #define PDCI_BASELIT_XML_OUT2BUF(def_tag, outfmt, outval)
   do {
-    sfstrset(pads->tmp3, 0);
+    sfstrseek(pads->tmp3, 0, SEEK_SET);
     PDCI_BASELIT_XML_OUT(writelen = , pads->tmp3, tag, def_tag, indent, outfmt, outval);
     if (writelen <= 0) {
       return -1;
@@ -727,7 +727,7 @@ do {
 /* assumes variables writelen, buf, buf_full, buf_len, pads, tag, indent, pd are in scope */
 #define PDCI_BASEVAL_XML_OUT2BUF(def_tag, outfmt, outval)
   do {
-    sfstrset(pads->tmp3, 0);
+    sfstrseek(pads->tmp3, 0, SEEK_SET);
     PDCI_BASEVAL_XML_OUT(writelen = , pads->tmp3, tag, def_tag, indent, pd, outfmt, outval);
     if (writelen <= 0) {
       return -1;
@@ -1540,7 +1540,7 @@ fn_pref ## _write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
       (*val) = inv_val;
     }
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, *val);
   if (writelen != width) {
     return -1;
@@ -1563,7 +1563,7 @@ fn_pref ## _write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, targ_type *val, size_t
       (*val) = inv_val;
     }
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, *val);
   if (writelen != width) {
     return -1;
@@ -1586,7 +1586,7 @@ fn_pref ## _write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
       (*val) = inv_val;
     }
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, *val);
   if (writelen != width) {
     return -1;
@@ -1608,7 +1608,7 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, targ_type *val, c
       (*val) = inv_val;
     }
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, *val);
   if (writelen != width) {
     return -1;
@@ -1634,7 +1634,7 @@ fn_pref ## _write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
       (*val) = inv_val;
     }
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro(writelen, pads->tmp1, fmt, *val);
   if (writelen <= 0) {
     return -1;
@@ -1680,7 +1680,7 @@ fn_pref ## _write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
       (*val) = inv_val;
     }
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro(writelen, pads->tmp1, fmt, *val);
   if (writelen <= 0) {
     return -1;
@@ -1702,7 +1702,7 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, targ_type *val, c
       (*val) = inv_val;
     }
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro(writelen, pads->tmp1, fmt, *val);
   if (writelen <= 0) {
     return -1;
@@ -3540,7 +3540,7 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
   ssize_t writelen;
 
   errno = 0;
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro(writelen, pads->tmp1, fmt, i);
   if (writelen <= 0) {
     return -1;
@@ -3563,7 +3563,7 @@ rev_fn_name ## _FW_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf
     if (outbuf_full) { (*outbuf_full) = 1; }
     return -1;
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, i);
   if (writelen != width) {
     return -1;
@@ -3588,7 +3588,7 @@ rev_fn_name ## _FW_io(P_t *pads, Sfio_t *io, targ_type i, size_t width)
   ssize_t writelen;
 
   errno = 0;
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, i);
   if (writelen != width) {
     return -1;
@@ -3749,7 +3749,7 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
   char    *buf;
 
   errno = 0;
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro(writelen, pads->tmp1, fmt, i);
   if (writelen <= 0) {
     return -1;
@@ -3776,7 +3776,7 @@ rev_fn_name ## _FW_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf
     if (outbuf_full) { (*outbuf_full) = 1; }
     return -1;
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, i);
   if (writelen != width) {
     return -1;
@@ -3795,7 +3795,7 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i)
   char    *buf;
 
   errno = 0;
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro(writelen, pads->tmp1, fmt, i);
   if (-1 == writelen) return -1;
   buf = sfstruse(pads->tmp1);
@@ -3812,7 +3812,7 @@ rev_fn_name ## _FW_io (P_t *pads, Sfio_t *io, targ_type i, size_t width)
   char    *buf;
 
   errno = 0;
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, i);
   if (writelen != width) {
     return -1;
@@ -6603,7 +6603,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.182 2005-01-21 16:09:06 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.183 2005-01-26 16:22:30 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8525,7 +8525,7 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
   if (!whatfn) {
     infn = "";
   } else {
-    sfstrset(pads->tmp2, 0);
+    sfstrseek(pads->tmp2, 0, SEEK_SET);
     sfprintf(pads->tmp2, "[in %s]", whatfn);
     infn = sfstruse(pads->tmp2);
   }
@@ -8548,7 +8548,7 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
   if (!(unit = P_io_read_unit(pads))) {
     unit = "";
   }
-  sfstrset(pads->tmp1, 0);
+  sfstrseek(pads->tmp1, 0, SEEK_SET);
   if (pads->disc->e_rep == PerrorRep_Min) {
     if (loc) {
       pdc_errorf(NiL, level, "%s %s: %s %d byte %d: errCode %d",
@@ -12252,7 +12252,7 @@ PDCI_regexp_compile(P_t *pads, const Pstring *regexp_str, Pregexp_t *regexp,
 		    const char *err_prefix, const char *whatfn)
 {
   PDCI_DISC_2P_CHECKS(whatfn, regexp_str, regexp);
-  sfstrset((pads)->tmp2, 0);
+  sfstrseek((pads)->tmp2, 0, SEEK_SET);
   sfprintf((pads)->tmp2, "%.*s", regexp_str->len, regexp_str->str);
   return PDCI_regexp_compile_cstr(pads, sfstruse(pads->tmp2), regexp, err_prefix, whatfn);
 }
