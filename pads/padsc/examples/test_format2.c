@@ -10,8 +10,8 @@ int main(int argc, char** argv) {
   size_t          n;
   unsigned char   c;
   PDC_t*          pdc;
-  PDC_base_em     em = PDC_CheckAndSet;
-  PDC_base_ed     ed;
+  PDC_base_em     em = {0};
+  PDC_base_ed     ed = {0};
 
   if (PDC_ERROR == PDC_open(0, &pdc)) {
     error(2, "*** PDC_open failed ***");

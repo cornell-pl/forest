@@ -112,13 +112,13 @@ int main(int argc, char** argv) {
 
   check_newline:
     PDC_get_loc(pdc, &ed.loc, &my_disc);
-    error(0, "Searching for newline char.  Start loc line %d char %d", ed.loc.beginLine, ed.loc.beginChar);
+    error(0, "Searching for newline char.  Start loc line %d char %d", ed.loc.beginRec, ed.loc.beginChar);
     if (PDC_ERROR == PDC_char_lit_scan(pdc, '\n', '\n', 0, 0, &my_disc)) {
       error(2, "Could not find newline, ending program");
       break;
     }
     PDC_get_loc(pdc, &ed.loc, &my_disc);
-    error(0, "Found newline.  Now loc line %d char %d", ed.loc.beginLine, ed.loc.beginChar);
+    error(0, "Found newline.  Now loc line %d char %d", ed.loc.beginRec, ed.loc.beginChar);
   }
 
   if (PDC_ERROR == PDC_IO_fclose(pdc, &my_disc)) {

@@ -6,8 +6,8 @@
 int main(int argc, char** argv) {
   int             i;
   PDC_t*          pdc;
-  http_clf_t_ed   ed = {0};
-  http_clf_t      ai = {0};
+  http_clf_t_ed   ed;
+  http_clf_t      ai;
   http_clf_t_acc  acc;
   char *          fileName = "../ex_data.ai";
   

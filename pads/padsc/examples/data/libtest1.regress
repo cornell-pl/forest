@@ -1,14 +1,12 @@
-XXX_REMOVE line 1: -6    12    24     9999 
 Read ascii integer of width 6: -6
 Read ascii integer of width 6: 12
 Read ascii integer of width 6: 24
-error at line 1 char 19 : Number out of range error 
-[LINE 1]-6    12    24    >>> 9999 <<<
-XXX_REMOVE line 2: 1a    12    a4    36    
-error at line 2 char 1 : Invalid ascii integer 
-[LINE 2]>>>1a    <<<
+error at record 1 char 19 : Number out of range error 
+[RECORD 1]-6    12    24    >>> 9999 <<<
+error at record 2 char 1 : Invalid ascii integer 
+[RECORD 2]>>>1a    <<<
 Read ascii integer of width 6: 12
-error at line 2 char 13 : Invalid ascii integer 
-[LINE 2]1a    12    >>>a4    <<<
+error at record 2 char 13 : Invalid ascii integer 
+[RECORD 2]1a    12    >>>a4    <<<
 Read ascii integer of width 6: 36
 Main program found eof

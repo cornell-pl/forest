@@ -1,16 +1,15 @@
-XXX_REMOVE line 1: 20198543987
-error at line 1 char 12 : Typedef constraint error 
-[LINE 1]20198543987<<<
-XXX_REMOVE line 2: 123
-error at line 2 char 4 : Typedef constraint error 
-[LINE 2]123<<<
-XXX_REMOVE line 3: 9739843167
-XXX_REMOVE line 4: 119739843167
-error at line 4 char 13 : Typedef constraint error 
-[LINE 4]119739843167<<<
-XXX_REMOVE line 5: 9733608077
-Record not okay:	x = 20198543987
+error at record 1 char 12 : Typedef constraint error 
+[RECORD 1]20198543987<<<
+error at record 2 char 4 : Typedef constraint error 
+[RECORD 2]123<<<
+error at record 3 char 11 : Typedef constraint error 
+[RECORD 3]9739843167<<<
+error at record 4 char 13 : Typedef constraint error 
+[RECORD 4]119739843167<<<
+error at record 5 char 11 : Typedef constraint error 
+[RECORD 5]9733608077<<<
+Record not okay:	x = 18446744072433259123
 Record not okay:	x = 123
-Record okay:	x = 9739843167
-Record not okay:	x = 119739843167
-Record okay:	x = 9733608077
+Record not okay:	x = 1149908575
+Record not okay:	x = 18446744073190310495
+Record not okay:	x = 1143673485

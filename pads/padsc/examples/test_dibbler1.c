@@ -10,6 +10,11 @@ int main(int argc, char** argv) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
+
+
+  /* INIT dline -- must do this for all variable data types */
+  out_sum_data_line_t_init   (pdc, &dline, 0);
+
   if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.dibbler1", 0)) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);

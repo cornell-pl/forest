@@ -39,10 +39,10 @@ int main(int argc, char** argv) {
   }
 
   error(0, "\ndescribe the accum");
-  if (PDC_ERROR == PDC_int32_acc_report(pdc, "id", &(accum.id), 0)) {
+  if (PDC_ERROR == PDC_int32_acc_report(pdc, "id", 0, 0, &(accum.id), 0)) {
     error(0, "** accum_report failed **");
   }
-  if (PDC_ERROR == PDC_int32_acc_report(pdc, "ts", &(accum.ts), 0)) {
+  if (PDC_ERROR == PDC_int32_acc_report(pdc, "ts", 0, 0, &(accum.ts), 0)) {
     error(0, "** accum_report failed **");
   }
 

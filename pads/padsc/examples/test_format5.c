@@ -3,8 +3,8 @@
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
-  call_em         cem = {PDC_CheckAndSet, PDC_CheckAndSet};
-  call_ed         ced;
+  call_em         cem = {0};
+  call_ed         ced = {0};
   call            cdata;
 
   /* Open pdc handle */

@@ -1,4 +1,3 @@
-XXX_REMOVE line 1: \376\002\377\376\000\002\377\377\377\376\000\000\000\002\377\377\377\377\377\377\377\376\000\000\000\000\000\000\000\002
 Read bint8  : -2
 Read buint8 : 2
 Read bint16  : -2
@@ -9,7 +8,6 @@ Read bint64  : -2
 Read buint64 : 2
 Searching for newline char.  Start loc line 1 char 31
 Found newline.  Now loc line 1 char 32
-XXX_REMOVE line 2: \376\002\377\376\000\002\377\377\377\376\000\000\000\002\377\377\377\377\377\377\377\376\000\002
 Read bint8  : -2
 Read buint8 : 2
 Read bint16  : -2
@@ -17,8 +15,8 @@ Read buint16 : 2
 Read bint32  : -2
 Read buint32 : 2
 Read bint64  : -2
-error at line 2 char 23 : Specified width not available (EOR/EOF encountered) 
-[LINE 2]\376\002\377\376\000\002\377\377\377\376\000\000\000\002\377\377\377\377\377\377\377\376>>>\000\002<<<
+error at record 2 char 23 : Specified width not available (EOR/EOF encountered) 
+[RECORD 2]\376\002\377\376\000\002\377\377\377\376\000\000\000\002\377\377\377\377\377\377\377\376>>>\000\002<<<
 Searching for newline char.  Start loc line 2 char 23
 Found newline.  Now loc line 2 char 26
 Main program found eof

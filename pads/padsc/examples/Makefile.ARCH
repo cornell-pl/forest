@@ -13,7 +13,9 @@ other_tests : test_readint test_ai test_dibbler1
 all_tests : libtests format_tests other_tests
 
 test_format1  :: test_format1.c   format1.c   -lpadsc
+test_format2  :: test_format2.c   format2.c   -lpadsc
 test_format3  :: test_format3.c   format3.c   -lpadsc
+test_format4  :: test_format4.c   format4.c   -lpadsc
 test_format5  :: test_format5.c   format5.c   -lpadsc
 test_format6  :: test_format6.c   format6.c   -lpadsc
 test_enum     :: test_enum.c      enum.c      -lpadsc
@@ -38,58 +40,61 @@ test_readint   :: test_readint.c  readinttest.c -lpadsc
 sfprintf_test :: sfprintf_test.c
 
 regress : regress_test_format1 \
+          regress_test_format2 \
           regress_test_format3 \
           regress_test_format5 \
           regress_test_format6 \
-          regress_test_readint
+          regress_test_readint \
+          regress_libtest1 \
+          regress_libtest2 \
+          regress_libtest4
 
 regress_libtest1 : libtest1
 	if [ -f tmp/tmp.libtest1 ]; then $(RM) tmp/tmp.libtest1; fi
-	./libtest1 > tmp/tmp.libtest1 2>&1
-	diff ../data/libtest1.regress tmp/tmp.libtest1 || echo LIBTEST1 DIFFERS
+	(./libtest1 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.libtest1
+	diff tmp/tmp.libtest1 ../data/libtest1.regress || echo LIBTEST1 DIFFERS
 
 regress_libtest2 : libtest2
 	if [ -f tmp/tmp.libtest2 ]; then $(RM) tmp/tmp.libtest2; fi
-	./libtest2 > tmp/tmp.libtest2 2>&1
-	diff ../data/libtest2.regress tmp/tmp.libtest2 || echo LIBTEST2 DIFFERS
+	(./libtest2 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.libtest2
+	diff tmp/tmp.libtest2 ../data/libtest2.regress || echo LIBTEST2 DIFFERS
 
 regress_libtest4 : libtest4
 	if [ -f tmp/tmp.libtest4 ]; then $(RM) tmp/tmp.libtest4; fi
-	./libtest4 > tmp/tmp.libtest4 2>&1
-	diff ../data/libtest4.regress tmp/tmp.libtest4 || echo LIBTEST4 DIFFERS
+	(./libtest4 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.libtest4
+	diff tmp/tmp.libtest4 ../data/libtest4.regress || echo LIBTEST4 DIFFERS
 
 regress_test_format1 : test_format1
 	if [ -f tmp/tmp.test_format1 ]; then $(RM) tmp/tmp.test_format1; fi
-	./test_format1 > tmp/tmp.test_format1 2>&1
-	diff ../data/test_format1.regress tmp/tmp.test_format1 || echo TEST_FORMAT1 DIFFERS
+	(./test_format1 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format1
+	diff tmp/tmp.test_format1 ../data/test_format1.regress || echo TEST_FORMAT1 DIFFERS
 
 regress_test_format2 : test_format2
 	if [ -f tmp/tmp.test_format2 ]; then $(RM) tmp/tmp.test_format2; fi
-	./test_format2 > tmp/tmp.test_format2 2>&1
-	diff ../data/test_format2.regress tmp/tmp.test_format2 || echo TEST_FORMAT2 DIFFERS
+	(./test_format2 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format2
+	diff tmp/tmp.test_format2 ../data/test_format2.regress || echo TEST_FORMAT2 DIFFERS
 
 regress_test_format3 : test_format3
 	if [ -f tmp/tmp.test_format3 ]; then $(RM) tmp/tmp.test_format3; fi
-	./test_format3 > tmp/tmp.test_format3 2>&1
-	diff ../data/test_format3.regress tmp/tmp.test_format3 || echo TEST_FORMAT3 DIFFERS
+	(./test_format3 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format3
+	diff tmp/tmp.test_format3 ../data/test_format3.regress || echo TEST_FORMAT3 DIFFERS
 
 regress_test_format4 : test_format4
 	if [ -f tmp/tmp.test_format4 ]; then $(RM) tmp/tmp.test_format4; fi
-	./test_format4 > tmp/tmp.test_format4 2>&1
-	diff ../data/test_format4.regress tmp/tmp.test_format4 || echo TEST_FORMAT4 DIFFERS
+	(./test_format4 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format4
+	diff tmp/tmp.test_format4 ../data/test_format4.regress || echo TEST_FORMAT4 DIFFERS
 
 regress_test_format5 : test_format5
 	if [ -f tmp/tmp.test_format5 ]; then $(RM) tmp/tmp.test_format5; fi
-	./test_format5 > tmp/tmp.test_format5 2>&1
-	diff ../data/test_format5.regress tmp/tmp.test_format5 || echo TEST_FORMAT5 DIFFERS
+	(./test_format5 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format5
+	diff tmp/tmp.test_format5 ../data/test_format5.regress || echo TEST_FORMAT5 DIFFERS
 
 regress_test_format6 : test_format6
 	if [ -f tmp/tmp.test_format6 ]; then $(RM) tmp/tmp.test_format6; fi
-	./test_format6 > tmp/tmp.test_format6 2>&1
-	diff ../data/test_format6.regress tmp/tmp.test_format6 || echo TEST_FORMAT6 DIFFERS
+	(./test_format6 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.test_format6
+	diff tmp/tmp.test_format6 ../data/test_format6.regress || echo TEST_FORMAT6 DIFFERS
 
 regress_test_readint : test_readint
 	if [ -f tmp/tmp.test_readint ]; then $(RM) tmp/tmp.test_readint; fi
-	(./test_readint 2>&1) | grep error: | cat > tmp/tmp.test_readint
-	diff ../data/test_readint.regress tmp/tmp.test_readint || echo TEST_READINT DIFFERS
-
+	(./test_readint 2>&1) | grep -v XXX_REMOVE | grep error: | cat > tmp/tmp.test_readint
+	diff tmp/tmp.test_readint ../data/test_readint.regress || echo TEST_READINT DIFFERS

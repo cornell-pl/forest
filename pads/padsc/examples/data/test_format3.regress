@@ -1,22 +1,15 @@
-XXX_REMOVE line 1: 12|24|34
-XXX_REMOVE line 2: 34|24|12
-error at line 2 char 10 : User constraint for array intList violated.
-[LINE 2]34|24|12<<<
-XXX_REMOVE line 3: 23
-error at line 3 char 4 : Read 1 element(s) for array intList; required 2.
-[LINE 3]23<<<
-XXX_REMOVE line 4: 12|24|45|56|77|99
-error at line 4 char 19 : Unexpected extra data before array element terminator 
-[LINE 4]12|24|45|56|77|99<<<
-XXX_REMOVE line 5: 12a|23|34
-error at line 5 char 5 : Unexpected extra data before array element separator 
-[LINE 5]12a|2<<<
-XXX_REMOVE line 6: 
-error at line 6 char 2 : Read 0 element(s) for array intList; required 2.
-[LINE 6](**EMPTY**)
-XXX_REMOVE line 7: 
-error at line 7 char 2 : Read 0 element(s) for array intList; required 2.
-[LINE 7](**EMPTY**)
+error at record 2 char 10 : User constraint for array intList violated.
+[RECORD 2]34|24|12<<<
+error at record 3 char 4 : Read 1 element(s) for array intList; required 2.
+[RECORD 3]23<<<
+error at record 4 char 19 : Unexpected extra data before array element terminator 
+[RECORD 4]12|24|45|56|77|99<<<
+error at record 5 char 5 : Unexpected extra data before array element separator 
+[RECORD 5]12a|2<<<
+error at record 6 char 2 : Read 0 element(s) for array intList; required 2.
+[RECORD 6](**EMPTY**)
+error at record 7 char 2 : Read 0 element(s) for array intList; required 2.
+[RECORD 7](**EMPTY**)
 Record okay:	12|24|34
 Record not okay:	34|24|12
 Record not okay:	23

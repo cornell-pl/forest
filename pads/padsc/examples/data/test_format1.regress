@@ -1,26 +1,35 @@
-XXX_REMOVE line 1: 1|11
 
 init the accum
 test_read returned: id 1  ts 11
-XXX_REMOVE line 2: 2|22
 test_read returned: id 2  ts 22
-XXX_REMOVE line 3: 3|33
 test_read returned: id 3  ts 33
-XXX_REMOVE line 4: 000004a44b
-error at line 4 char 7 : Missing separator: |.
-[LINE 4]000004a<<<
+error at record 4 char 7 : Missing separator: |.
+[RECORD 4]000004a<<<
 test_read returned: error
 
 describe the accum
-id: PDC_int32 field with 3 good vals 0 bad vals - for good vals: min 1 max 3 avg 2.000000
-  Distribution of first 10 values encountered:
-        val:          1 count:          1  pcnt-of-good-vals:  33.333
-        val:          2 count:          1  pcnt-of-good-vals:  33.333
-        val:          3 count:          1  pcnt-of-good-vals:  33.333
-        SUMMING          count:          3  pcnt-of-good-vals: 100.000
-ts: PDC_int32 field with 3 good vals 0 bad vals - for good vals: min 11 max 33 avg 22.000000
-  Distribution of first 10 values encountered:
-        val:         11 count:          1  pcnt-of-good-vals:  33.333
-        val:         22 count:          1  pcnt-of-good-vals:  33.333
-        val:         33 count:          1  pcnt-of-good-vals:  33.333
-        SUMMING          count:          3  pcnt-of-good-vals: 100.000
+
+*****************************************************************************************************
+id : int32
+*****************************************************************************************************
+good vals:          3    bad vals:          0    pcnt-bad:    0.000
+  Characterizing int32:  min 1 max 3 avg 2.000000
+    => distribution of top 3 values out of 3 distinct values:
+        val:          1 count:          1  pcnt-of-good-vals:   33.333
+        val:          2 count:          1  pcnt-of-good-vals:   33.333
+        val:          3 count:          1  pcnt-of-good-vals:   33.333
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          3  pcnt-of-good-vals:  100.000
+
+
+*****************************************************************************************************
+ts : int32
+*****************************************************************************************************
+good vals:          3    bad vals:          0    pcnt-bad:    0.000
+  Characterizing int32:  min 11 max 33 avg 22.000000
+    => distribution of top 3 values out of 3 distinct values:
+        val:         11 count:          1  pcnt-of-good-vals:   33.333
+        val:         22 count:          1  pcnt-of-good-vals:   33.333
+        val:         33 count:          1  pcnt-of-good-vals:   33.333
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:          3  pcnt-of-good-vals:  100.000
