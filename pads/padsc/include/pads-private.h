@@ -37,6 +37,7 @@
 /* PADS handle private state */
 #define P_PRIVATE_STATE \
   Vmalloc_t        *vm;          /* vm handle */ \
+  void             *ext1;        /* used by PDCI_node extensions. */ \
   Sfio_t           *tmp1;        /* tmp sfprintf area 1: used for many things, including numeric formatting that is part of higher-level formatting */ \
   Sfio_t           *tmp2;        /* tmp sfprintf area 2 */ \
   Sfio_t           *tmp3;        /* tmp sfprintf area 3: used for base type xml output formatting */ \

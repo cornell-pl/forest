@@ -8,49 +8,39 @@
 #ifndef __PGLX_IMPL_H__
 #define __PGLX_IMPL_H__
 
+#define PDCI_INIT_NODE(resultIN, vtIN, padsIN, parentIN, nameIN, mIN, pdIN, repIN, kindIN) \
+  do {  \
+    resultIN->vt     = (vtIN); \
+    resultIN->pads    = (padsIN); \
+    resultIN->parent = PDCI_ALIAS_NODE(parentIN); \
+    resultIN->m      = (void *)(mIN); \
+    resultIN->pd     = (void *)(pdIN); \
+    resultIN->rep    = (repIN);   \
+    resultIN->name   = (nameIN);  \
+    resultIN->kind   = (kindIN);  \
+  } while (0)
 
 #define PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, mIN, pdIN, repIN, kindIN, whatfn) \
   do {  \
-    if (!(resultIN = PDCI_NEW_NODE())) { \
+    if (!(resultIN = PDCI_NEW_NODE((parentIN)->pads))) { \
       failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
     } \
-    resultIN->vt     = (vtIN); \
-    resultIN->pads    = (parentIN)->pads; \
-    resultIN->parent = (parentIN); \
-    resultIN->m      = (void *)(mIN); \
-    resultIN->pd     = (void *)(pdIN); \
-    resultIN->rep    = (repIN); \
-    resultIN->name   = (nameIN); \
-    resultIN->kind   = (kindIN); \
+    PDCI_INIT_NODE(resultIN,vtIN,(parentIN)->pads,parentIN,nameIN,mIN,pdIN,repIN,kindIN); \
   } while (0)
 
 #define PDCI_MK_TOP_NODE(resultIN, vtIN, padsIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
-    if (!(resultIN = PDCI_NEW_NODE())) { \
+    if (!(resultIN = PDCI_NEW_NODE(padsIN))) { \
       failwith("PADS/Galax ALLOC_ERROR: in " whatfn); \
     } \
-    resultIN->vt     = (vtIN); \
-    resultIN->pads    = padsIN; \
-    resultIN->parent = NULL; \
-    resultIN->m      = (void *)(mIN); \
-    resultIN->pd     = (void *)(pdIN); \
-    resultIN->rep    = (repIN); \
-    resultIN->name   = (nameIN); \
-    resultIN->kind   = "document"; \
+    PDCI_INIT_NODE(resultIN,vtIN,padsIN,NULL,nameIN,mIN,pdIN,repIN,"document"); \
   } while (0)
 
 #define PDCI_MK_TOP_NODE_NORET(resultIN, vtIN, padsIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
-    resultIN = PDCI_NEW_NODE(); \
+    resultIN = PDCI_NEW_NODE(padsIN); \
     if (resultIN) { \
-      resultIN->vt     = (vtIN); \
-      resultIN->pads    = padsIN; \
-      resultIN->parent = NULL; \
-      resultIN->m      = (void *)(mIN); \
-      resultIN->pd     = (void *)(pdIN); \
-      resultIN->rep    = (repIN); \
-      resultIN->name   = (nameIN); \
-      resultIN->kind   = "document"; \
+      PDCI_INIT_NODE(resultIN,vtIN,padsIN,NULL,nameIN,mIN,pdIN,repIN,"document"); \
     } \
   } while (0)
 
@@ -62,17 +52,45 @@
 
 /* TODO: BASE TYPE: make macro for each base type */
 
-#define PDCI_NEW_NODE() \
-  ((PDCI_node_t*)calloc(1, sizeof(PDCI_node_t)))
+#define PDCI_NEW_NODE(pads) (NodeMM_alloc((NodeMM_t *)(pads->ext1)))
 
+#define PDCI_NEW_LIST(num) \
+  ((PDCI_node_t**)calloc((num), sizeof(void*)))
+ 
 #define PDCI_NEW_NODE_PTR_LIST(num) \
-  ((PDCI_node_t**)calloc((num)+1, sizeof(void*)))
+  PDCI_NEW_LIST((num) + 1)
 
-#define PDCI_FREE_NODE(n) \
-  free(n)
+#define PDCI_ALIAS_NODE(n) ((n) == NULL ? NULL : NodeMM_get_alias(n))
+
+#define PDCI_FREE_NODE(n) (((n)->vt->free)(n)) 
 
 #define PDCI_FREE_NODE_PTR_LIST(list) \
   free(list)
+
+#define PDCI_SND_INIT(ty,self,elt,gen,path)   \
+do{                                           \
+   /* Setup the virtual table */              \
+  (self)->vt = & ty ## _sndNode_vtable;     \
+					      \
+  /* Setup node-type specific fields  */      \
+  (self)->ancestor = (elt);		      \
+  (self)->ancestor_gen = (gen);		      \
+  (self)->path = (path);	              \
+}while(0)
+
+extern const PDCI_path_t PDCI_emptyPath;
+#define PDCI_EMPTY_PATH (PDCI_emptyPath)
+
+/* child <= ty_PATH_MASK */
+#define PDCI_PATH_ADD(ty,p,child)\
+  {((p).path |((child) << (p).length)),(p).length+(ty ## _pathWidth)}
+
+#define PDCI_PATH_REMOVE(ty,pIN,childOUT,pOUT)     \
+do { 					      \
+  (childOUT) = (pIN).path & ty ## _pathMask;      \
+  (pOUT).path   = (pIN).path >> ty ## _pathWidth;	      \
+  (pOUT).length = (pIN).length-(ty ## _pathWidth);	      \
+}while (0)
 
 #ifndef NDEBUG
 #define PDCI_NODE_CHECK(n, whatfn) \
