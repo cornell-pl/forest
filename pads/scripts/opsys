@@ -144,4 +144,8 @@ else
   HEAP_SUFFIX="$ARCH-$HEAP_OPSYS"
 fi
 
-echo $OPSYS
+if [ "$HEAP_OPSYS" = "" ]; then
+  echo $OPSYS
+else
+  echo $HEAP_OPSYS
+fi
