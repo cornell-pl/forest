@@ -22,6 +22,7 @@
 #include <dt.h>
 #include <error.h>
 #include <math.h>
+#include <regex.h>
 #include "rbuf.h"
 #include "padsc-config.h"
 #include "padsc-private.h"
@@ -114,10 +115,6 @@
  *  stop conditions.  Specifying such stop conditions is more 
  *  important for read disciplines that are not record based.
  *
- *   stop_regexp : a regular expression specifying a stop pattern:
- *                 if set to NiL, no stop_regexp constraint is imposed.
- *                 See PDC_regexp_compile below.
- *
  *   stop_maxlen : a maximum # of bytes that will be traversed by a scan.
  *                      if set to 0, no stop_maxlen constraint is imposed.
  *
@@ -192,7 +189,6 @@
  *    flags:         0
  *    def_charset:   PDC_charset_ASCII
  *    copy_strings:  0
- *    stop_regexp:   0
  *    stop_maxlen:   0
  *    errorf:        PDC_errorf
  *    e_rep:         PDC_errorRep_Max
@@ -795,7 +791,6 @@ struct PDC_disc_s {
   PDC_flags_t           flags;         /* control flags */
   PDC_charset           def_charset;   /* default char set */ 
   int                   copy_strings;  /* if non-zero,  ASCII string read functions copy the strings found, otherwise not */
-  PDC_regexp_t          *stop_regexp;  /* scan stop pattern, use 0 to disable */
   size_t                stop_maxlen;   /* max scan distance, use 0 to disable */
   PDC_error_f           errorf;        /* error function using  ... */
   PDC_errorRep          e_rep;         /* controls error reporting */
