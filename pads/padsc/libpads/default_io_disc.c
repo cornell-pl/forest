@@ -1036,7 +1036,7 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
   ssize_t                 readlen, keep_len, discard_len, bytes_read;
   Pbyte                  *tmp;
   Pbyte                  *found_cterm;
-  Sfoff_t                 diff, prev_tail_off;
+  Sfoff_t                 diff, next_elt_off;
 
   if (!pads || !pads->disc) {
     return P_ERR;
@@ -1098,7 +1098,7 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
 
   bytes_read      = 0;
   found_cterm     = 0;
-  prev_tail_off   = data->tail_off;
+  next_elt_off   = data->tail_off - data->un_bytes;
   while (1) { /* read blocks until find cterm or EOF */
     /* choose or alloc block to use */
     if (data->btail >= data->balloc) {
@@ -1161,8 +1161,8 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     elt->eof       = 0;
     elt->num       = (data->num)++;
     elt->unit      = "record";
-    elt->offset = prev_tail_off;
-    prev_tail_off += (elt->len + 1); /* account for cterm */
+    elt->offset = next_elt_off;
+    next_elt_off += (elt->len + 1); /* account for cterm */
     data->un_bytes -= (elt->len + 1); /* acount for cterm */
     elt->begin[elt->len] = 0; /* null-terminate the record, replaces cterm with NULL */
     P_APPEND_ELT(data->head, elt);
@@ -1187,7 +1187,7 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     elt->begin     = tmp;
     elt->end       = data->dbuf_end;
     elt->len       = data->un_bytes;
-    elt->offset = prev_tail_off;
+    elt->offset = next_elt_off;
     data->un_bytes = 0;
     elt->num  = (data->num)++;
     if (elt->len == 0) { /* trivial EOF record */
