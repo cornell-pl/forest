@@ -237,14 +237,8 @@ for parsing and manipulating the associated data source.
 \figref{fig:architecture} shows the architecture of the \pads{}
 system.  The output of the \pads{} compiler is linked with the \pads{}
 standard library and user code to form an executable.
-
-We chose \C{} as the target language for pragmatic reasons: there were
-libraries that made building the compiler and run-time libraries
-easier, our target users are comfortable with \C{}, and it can serve
-as a lingua franca in that essentially all languages have provisions
-for calling \C{} libraries.  Nothing about the \pads{} language
-mandates compiling to \C{}, however, and we envision eventually
-building alternate bindings.
+In addition to the generated library,
+the \pads{} system provides template programs for accumulating, pretty-printing, and converting into \xml{} data formats that have a particular format, namely, an optional header followed by a sequence of records.
 
 From each type in a \pads{} description, the compiler generates 
 \begin{itemize}
@@ -254,7 +248,7 @@ From each type in a \pads{} description, the compiler generates
 \item a parse descriptor, which describes syntactic and
 semantic errors detected during parsing, 
 \item parsing and printing functions, and 
-\item a collection of utility functions.
+\item a broad collection of utility functions.
 \end{itemize}
 %
 
@@ -303,6 +297,11 @@ calls to parsing functions that read manageable portions of the file,
 for \kw{Parrays} allows users to choose between reading the entire array
 at once or reading it one element at a time, again to support parsing
 and processing very large data sources.
+
+The ratio of the size of the data description to the size of the generated code gives a rough measure of the leverage of the
+declarative description.  For the 
+68~line \dibbler{} data description, the compiler yields a 1432~\texttt{.h} file
+and a 6471~\texttt{.c} file.  This expansion comes from the extensive error checking in the generated parser and the number of generated utility functions.
 
 
 \section{Related work}
@@ -429,5 +428,5 @@ distribution.  More information about \texttt{Sfio} is available from
 Please report any bugs in the \PADS{} implementation or problems with
 this manual by electronic mail to 
 \[
-\texttt{pads@research.att.com}.
+\texttt{pads-dev@research.att.com}.
 \]

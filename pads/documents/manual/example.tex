@@ -1,11 +1,17 @@
 \chapter{Tutorial}
 \label{chap:example}
 In this chapter, we use examples to give an overview of \pads{}.
+The examples used in this chapter appear in the \pads{} distribution in the 
+\texttt{pads/demo} directory.
 
-\section{CLF: Common log format}
+
+\section{Example data formats}
+We start by briefly describing the data formats we will use as running examples. 
+
+\subsection{CLF: Common log format}
 \label{sec:example:common-log-format}
-Web servers use the Common Log Format (CLF) to log client
-requests~\cite{wpp}.  Researchers use such logs to measure
+One of the formats that web servers use to log client
+requests is the Common Log Format (CLF)~\cite{wpp}.  Researchers use such logs to measure 
 properties of web workloads and to evaluate protocol changes
 by "replaying" the user activity recorded in the log.
 This ASCII format consists of a sequence of
@@ -21,7 +27,7 @@ third fields are often recorded only as a '-' character to indicate
 the server did not record the actual data.  \figref{figure:clf-records}
 shows a couple of typical records.
 
-\section{Provisioning data}
+\subsection{Provisioning data}
 
 In the telecommunications industry, the term \textit{provisioning}
 refers to the steps necessary to convert an order for phone service
@@ -49,18 +55,19 @@ this format.
 
 
 \begin{figure*}[t!]
-\begin{tiny}
-\begin{code}
-\input{../../padsc/examples/data/ai.paper}
-\end{code}
+\begin{footnotesize}
+\begin{verbatim}
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
+tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /scpt/dd@grp.org/confirm HTTP/1.0" 200 941
+\end{verbatim}
 \vskip -2ex
 \caption{Tiny example of web server log data.}
 \label{figure:clf-records}
-\end{tiny}
+\end{footnotesize}
 \end{figure*}
 
 \begin{figure*}
-\begin{small}
+\begin{footnotesize}
 \begin{center}
 \begin{verbatim}
 0|1005022800
@@ -70,32 +77,28 @@ this format.
 \caption{Tiny example of \dibbler{} provisioning data.}
 \label{figure:dibbler-records}
 \end{center}
-\end{small}
+\end{footnotesize}
 \end{figure*}
 
 \begin{figure}
-\begin{tiny}
-\input{../pldi/wsl}
+\input{wsl}
 \caption{\pads{} description for web server log data.}
 \label{figure:wsl}
-\end{tiny}
 \end{figure}
 
 \begin{figure}
-\begin{footnotesize}
-\input{../pldi/dibbler_new}
-\caption{\pads{} description for \dibbler{} provisioning data.}
+\input{sirius}
+\caption{Partial \pads{} description for \dibbler{} provisioning data.}
 \label{figure:dibbler}
-\end{footnotesize}
 \end{figure}
 
 
 
-\section{\padsl{} description}
+\section{\padsl{} descriptions}
 \label{sec:example:padsl-description}
 \figref{figure:wsl} gives the \pads{} description for CLF web server
 logs,  while \figref{figure:dibbler} gives the description for the
-\dibbler{} provisioning data.  We will use these example to illustrate
+\dibbler{} provisioning data.  We use these examples to illustrate
 various features of the \pads{} language.  In \pads{} descriptions,
 types are declared before they are used, so the type that describes
 the totality of the data source appears at the bottom of the
@@ -167,25 +170,7 @@ type, which always matches but never consumes any input.
 \subsection{Generated library}
 \label{sec:example:generated-library}
 From a description, the \pads{} compiler generates a \C{} library
-for parsing and manipulating the associated data source.  We chose \C{}
-as the target language for pragmatic reasons: there were 
-libraries that made building the compiler and run-time libraries easier,
-our target users are comfortable with \C{}, and it can serve 
-as a lingua franca in that essentially all languages have provisions for 
-calling \C{} libraries.  Nothing about the \pads{} language mandates compiling
-to \C{}, however, and we envision eventually building alternate bindings.
-
-From each type in a \pads{} description, the compiler generates 
-\begin{itemize}
-\setlength{\itemsep}{0ex plus0.2ex}
-\item an in-memory representation, 
-\item a mask, which allows users to customize generated functions,
-\item a parse descriptor, which describes syntactic and
-semantic errors detected during parsing, 
-\item parsing and printing functions, and 
-\item a broad collection of utility functions.
-\end{itemize}
-%
+for parsing and manipulating the associated data source.  
 \setcounter{totalnumber}{1}
 \setcounter{dbltopnumber}{1}
 \renewcommand{\topfraction}{0.85}
@@ -203,60 +188,57 @@ To give a feeling for the library that \pads{} generates,
 \figref{figure:library} includes selected portions of the generated 
 library for the \dibbler{} \cd{entry_t} declaration.
 
-The \C{} declarations for the in-memory representation, the mask, 
-and the parse descriptor all share the structure of the \pads{}
-type declaration.  The mapping to \C{} for each is straightforward: 
-\kw{Pstruct}s map to \C{} structs with appropriately mapped fields, 
-\kw{Punion}s map to tagged unions coded as \C{} structs with a tag field 
-and an embedded 
-union, \kw{Parray}s map to a \C{} struct with a length field and an 
-embedded sequence, \kw{Penums} map to \C{} enumerations, \kw{Poptions} 
-to tagged unions, and \kw{Ptypedef}s to \C{} typedefs.  Masks include
-auxiliary fields to control behavior at the level of a structured
-type, and parse descriptors include extra fields to record the 
-state of the parse, the number of detected errors, 
-the error code of the first detected error, and the location of that error.
-
-The parser takes a mask as an argument and returns an
-in-memory representation and a parse descriptor.  
-The mask allows the user to specify 
-which constraints the parser should check and which portions of the
-in-memory representation it should fill in.  This control allows the
-description-writer to specify all known constraints about the data
-without worrying about the run-time cost of verifying potentially
-expensive constraints for time-critical applications.
-
-Appropriate error-handling can be as important as processing
-error-free data.  The parse descriptor marks which portions of the
-data contain errors and characterizes the detected errors.
-Depending upon the nature of the errors and the desired application,
-programmers can take the appropriate action: halting the program,
-discarding parts of the data, or repairing the errors.
-If the mask requests
-that a data item be verified and set, and if the parse descriptor
-indicates no error, then the in-memory representation satisfies the
-semantic constraints on the data.
-
-Because we generate a parsing function for each type in a \pads{} description,
-we support multiple-entry point parsing, which allows us to 
-accommodate larger-scale data.
-For a small file, programmers can define a \pads{} type that describes
-the entire file and use that type's parsing function to read the whole
-file with one call.  For larger-scale data, programmers can sequence
-calls to parsing functions that read manageable portions of the file,
-\eg{}, reading a record at a time in a loop.  The parsing code generated
-for \kw{Parrays} allows users to choose between reading the entire array
-at once or reading it one element at a time, again to support parsing
-and processing very large data sources.
-
-The ratio of the size of the data description to the size of the generated code gives a rough measure of the leverage of the
-declarative description.  For the 
-68~line \dibbler{} data description, the compiler yields a 1432~\texttt{.h} file
-and a 6471~\texttt{.c} file.  This expansion comes from the extensive error checking in the generated parser and the number of generated utility functions.
-
-We discuss details of the generated library in the following section
-as we describe its uses.
-
 
 \subsection{Example library use}
 \label{sec:example:library-use}
+\figref{figure:sirius-filter} shows a simple use of 
+the generated \dibbler{} library to filter out ill-formed records and normalize the representation of optional phone numbers. 
+The code first initializes the \pads{} library handle, \texttt{p}, by invoking the core library function \texttt{P\_open}.  The second argument to this function allows the user to customize behavior in the \pads{} library by passing a (pointer to a) \texttt{Pdisc\_t} \textit{discipline}. With this discipline, the user can specify properties such as the endianness of the data, the default character set (ASCII or EBCIDC), error handling, \etc{}  The third argument to the \texttt{P\_open} function specifies a (pointer to a) \texttt{Pio\_disc\_t} discipline, which allows the user to describe how to detect record boundaries, \ie{}, are records new-line terminated, fixed width, EBCDIC-style, \etc{} 
+Passing zero in these argument positions triggers default behavior, which 
+means ASCII encoded, little endian, new-line terminated records.
+\chapref{chap:library-customization} describes the use of disciplines in more detail. 
+
+After initializing the \pads{} handle, the code uses the core library function \texttt{P\_io\_fopen} to open the data source by specify the path to the data on disk.  
+ and opening the data source, the code sets
+the \texttt{entry\_t} \texttt{mask} to check all conditions in the \dibbler{} description except the
+sorting of the timestamps.  We have omitted from the figure the code to read and write the header. 
+The code then echoes error records to one file and cleaned ones to another.
+The raw data has two different representations of unavailable phone numbers:
+simply omitting the number altogether, which corresponds to the \cd{NONE}
+branch of the \kw{Popt}, or having the value \cd{0} in the data.  
+The function \cd{cnvPhoneNumbers} unifies these two representations 
+by converting the zeroes into \cd{NONE}s.  The function \cd{entry_t_verify}
+ensures that our computation hasn't broken any of the semantic properties
+of the in-memory representation of the data.
+
+
+\begin{figure*}
+\input{code/sirius-filter}
+\caption{Fragment of a program to filter and normalize \dibbler{} data.}
+\label{figure:sirius-filter}
+\end{figure*}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
