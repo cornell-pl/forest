@@ -257,7 +257,7 @@ end
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT | PCHARCLASS (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PNOSEP | PFORALL | PGENERAL | PIN | PLAST | PENDED (* PADS *)
+	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
         | POMIT | PENDIAN | PCOMPUTE (* PADS *)
  	| PRECORD | PSOURCE | PWHERE  (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT (* PADS*)
@@ -355,8 +355,8 @@ end
         | pArrayConstraint of (expression PX.PConstraint) 
         | pArrayConstraints of (expression PX.PConstraint) list
         | pArrayConstraintOpt of (expression PX.PConstraint) list
-        | pArrayForAll of expression PX.PPostCond
-        | pArrayForAllList of (expression PX.PPostCond) list
+        | pArrayPCorFor of expression PX.PPostCond
+        | pArrayPCorForList of (expression PX.PPostCond) list
         | pArrayPostConstraints of (expression PX.PPostCond) list
         | pArrayPostConds of (expression PX.PPostCond) list
         | pBranch of expression option * (decltype, declarator, expression) PX.PSField
@@ -415,19 +415,22 @@ tu:
 pPostCondOpt: (NONE)
  | PWHERE LCURLY expr SEMICOLON RCURLY  (SOME expr)
 
-pArrayForAll : 
+pArrayPCorFor : 
    PFORALL LPAREN pName PIN pForAllRange COLON expr RPAREN
                 (PX.Forall {index = pName, range = pForAllRange, body = expr})
+ | PPARSECHECK LPAREN expr RPAREN     (PX.ParseCheck expr)
 
-pArrayForAllList :
-    pArrayForAll                      ([pArrayForAll])
-  | pArrayForAllList AND pArrayForAll (pArrayForAllList @[pArrayForAll])
-  
+pArrayPCorForList : 
+    pArrayPCorFor                           ([pArrayPCorFor])
+  | pArrayPCorForList AND pArrayPCorFor     ( pArrayPCorForList @[pArrayPCorFor])
+
 pArrayPostConstraints : 
-   expr                                  ([PX.General expr])
- | pArrayForAllList AND expr             (pArrayForAllList @ [PX.General expr])
- | expr AND pArrayForAllList             (pArrayForAllList @ [PX.General expr])
- | pArrayForAllList                      (pArrayForAllList)
+    expr                           ([PX.General expr])
+  | pArrayPCorForList AND expr     (pArrayPCorForList @ [PX.General expr])
+  | expr AND pArrayPCorForList     ([PX.General expr] @ pArrayPCorForList)
+  | pArrayPCorForList              (pArrayPCorForList)
+  | pArrayPCorForList AND expr AND pArrayPCorForList
+    (pArrayPCorForList1 @ [PX.General expr] @ pArrayPCorForList2)
 
 pArrayPostConds : ([])
  | PWHERE LCURLY pArrayPostConstraints SEMICOLON RCURLY (pArrayPostConstraints)

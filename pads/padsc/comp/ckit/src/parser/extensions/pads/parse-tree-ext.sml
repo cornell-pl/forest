@@ -36,6 +36,7 @@ structure ParseTreeExt =
         datatype 'exp PPostCond = 
            Forall of {index : string, range : 'exp PRange, body : 'exp}
          | General of 'exp
+         | ParseCheck of 'exp
 
         datatype ('dt, 'decr, 'exp) PBranches = 
            Ordered of (('dt, 'decr, 'exp) PSField) list
