@@ -618,7 +618,9 @@ structure CnvExt : CNVEXT = struct
 	      fun findEORSuf s = s^"_findEOR"
 	      fun findEndSuf s = s^"_end"
 	      fun gTemp base = "tmp"^base
-
+              fun childrenSuf name = name^"_children" 
+              fun vTableSuf name = name^"_vtable"
+		
 	      fun fieldX (bsName, fName) = P.arrowX(PT.Id bsName, PT.Id fName)
 	      fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
 
@@ -1082,9 +1084,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val returnTy =  PL.toolErrPCT
 		      val reportFunED = 
 			  P.mkFunctionEDecl(reportName, formalParams, PT.Compound bodySs, returnTy)
-		  in
+	  in
 		      reportFunED
 		  end
+
               (* PDC_error_t foostruct_report(PDC_t* pdc, [sfio_t *str], const char * prefix,
 	                                      const char* what, int nst, foostruct_acc* acc) *)
 	      fun genReportFuns (reportName, whatStr, accPCT,intlBodySs) = 
@@ -1119,6 +1122,60 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		  in
 		      [toioReportFunED, externalReportFunED]
 		  end
+
+(** generation of PADS-Galax stuff **)
+
+		  fun apply [] x = []
+	            | apply (f::fs) x = (f x)::(apply fs x)
+
+		  fun pairing [] [] = []
+                    | pairing (x::xs) (y::ys) = (x,y)::(pairing xs ys)
+                    | pairing _ _ = []
+
+ 		  fun listOfNumbers 0 m = []
+		    | listOfNumbers n m = (m-n+1)::(listOfNumbers (n-1) m)
+
+                  (* header: common declaration part in foo_children function *) 
+		  fun headerGalaxChildrenFun(nameTy) =
+    		      let val nodeRepTy = P.makeTypedefPCT "PDCI_node_t"
+			  fun varDecl(field,ty) = 
+			      let fun typePref n = P.ptrPCT (P.makeTypedefPCT n)        	
+				  val typeField = typePref ty
+			      in P.varDeclS(typeField, field, PT.Cast(typeField, fieldX("self",field)))
+			      end
+		      in List.map varDecl (pairing [rep,pd,m] (apply [repSuf,pdSuf,mSuf] nameTy))
+			 @ [P.varDeclS'(P.ptrPCT (P.ptrPCT nodeRepTy), "result")]
+		      end
+
+		  (* if: common if-then in foo_children function *)
+		  fun ifGalaxChildren(returnName, number, errorString) =
+		      [PT.IfThen(P.notX(P.assignX(returnName,
+			       			  PT.Call(PT.Id "PDCI_NEW_NODE_PTR_LIST", 
+					                  [fieldX("self",pdc), 
+						           number]))),		
+                                 PT.Expr(PT.Call(PT.Id "failwith",[PT.String errorString])))]
+	
+		  (* PDCI_MK_TNODE: common in foo_children function *)
+		  fun macroTNode (returnName, structPd, cnvName) = 
+		      [P.mkCommentS "parse descriptor child",
+		       PT.Expr(PT.Call(PT.Id "PDCI_MK_TNODE",	
+                                       [P.subX(returnName,P.intX 0), 
+                                        P.addrX(PT.Id (vTableSuf structPd)),
+                                        PT.Id "self", 
+                                        PT.String "pd", 
+                                        PT.Id "pd",
+                                        PT.String cnvName]))]
+
+		  fun macroNodeCall (returnName,n,tyField,nameField,nameStruct) = 
+	  	      PT.Expr(PT.Call(PT.Id "PDCI_MK_NODE",
+                                      [P.subX(returnName,n), 
+                                       P.addrX(PT.Id (vTableSuf tyField)),
+                                       PT.Id "self", 
+                                       PT.String nameField, 
+                                       getFieldX(m,nameField),
+                                       getFieldX(pd,nameField),
+                                       getFieldX(rep,nameField),
+                                       PT.String nameStruct])) 
 
                   (* const char * name2str(enumPCT which) *)
                   fun genEnumToStringFun(name, enumPCT, members) = 
@@ -1692,8 +1749,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 
 
-	      fun cnvPStruct ({name: string, isRecord, containsRecord, largeHeuristic, isFile, params: (pcty * pcdecr) list, 
-			       fields: (pdty, pcdecr, pcexp) PX.PSField list, postCond}) = 
+	      fun cnvPStruct ({name: string, isRecord, containsRecord, largeHeuristic, isFile, 
+                               params: (pcty * pcdecr) list, fields: (pdty, pcdecr, pcexp) PX.PSField list, 
+                               postCond}) = 
 	          let val dummy = "_dummy"
 
 		      (* Functions for walking over lists of struct elements *)
@@ -1791,7 +1849,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
                       val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic} = 
 			  List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
-		      val structProps = buildTyProps(name, PTys.Struct, diskSize, memChar, endian, isRecord, containsRecord, largeHeuristic, isFile, pdTid)
+		      val structProps = buildTyProps(name, PTys.Struct, diskSize, memChar, endian, 
+                                                     isRecord, containsRecord, largeHeuristic, isFile, pdTid)
                       val () = PTys.insert(Atom.atom name, structProps)
 
 		      (* Struct: Generate canonical representation *)
@@ -2133,6 +2192,42 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val maskFillName = maskFillSuf name 
                       val maskFunEDs = genMaskFillFun(maskFillName, mPCT)
 
+(*struct PADS-Galax stuff *)
+
+		      fun genFieldFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
+				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+				      pred: pcexp option, comment: string option} = 
+			  [(name, lookupTy (pty,repSuf,#repname))]
+		      fun genFieldBrief e = []
+		      fun genFieldMan m = []
+		      val localFields = mungeFields genFieldFull genFieldBrief genFieldMan fields
+
+    	              (* PDCI_node_t** fooStruct_children(PDCI_node_t *self) *)
+		      fun genGalaxStructChildrenFun(name,fields) =		
+		          let val nodeRepTy = P.makeTypedefPCT "PDCI_node_t"
+                              val returnName = PT.Id "result"
+			      val returnTy = P.ptrPCT (P.ptrPCT (nodeRepTy))
+                              val cnvName = childrenSuf name  
+                              val paramNames = ["self"]
+                              val paramTys = [P.ptrPCT nodeRepTy]
+                              val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
+		              fun macroNode (n,(nameField,f)) = 
+					macroNodeCall(returnName,P.intX n,f, nameField, cnvName)
+ 		              val bodySs = headerGalaxChildrenFun(name) @
+					   ifGalaxChildren(returnName,P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
+					   macroTNode(returnName,"PDCI_structured_pd",cnvName) @
+				 	   (List.map macroNode 
+					             (pairing (listOfNumbers (List.length fields) 
+                                                                             (List.length fields)) 
+                                                               localFields)) @
+				           (* (1,tyField,nameField) which are the name,type of each field*)
+					   [P.returnS (returnName)]
+                          in   
+                            P.mkFunctionEDecl(cnvName, formalParams,PT.Compound bodySs, returnTy)
+                          end
+ 
+		      val genGalaxStructChildrenFunED = genGalaxStructChildrenFun(name,fields)
+
                       (* Generate Write function struct case *)
 		      val writeName = writeSuf name
 		      fun getLastField fs = 
@@ -2361,6 +2456,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  @ (List.concat(List.map cnvExternalDecl copyPDEDs))
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
                  @ (List.concat(List.map cnvExternalDecl maskFunEDs))
+(*foo*)		 @ cnvExternalDecl genGalaxStructChildrenFunED
 		 @ (emitWrites writeFunEDs)
                  @ cnvExternalDecl initFunED
                  @ cnvExternalDecl resetFunED
