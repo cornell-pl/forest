@@ -887,7 +887,7 @@ P_OK;
       return P_READ_FAILURE;
     }
 
-    PDCI_IO_GETOFFSET((padsIN),begin_offset);
+    PDCI_ALWAYS_GETOFFSET((padsIN),begin_offset);
 
     PDCI_ID_RESET((padsIN),0);
 
