@@ -129,6 +129,12 @@ void PDCI_REGEXP_FROM_CSTR(P_t *pads, Pregexp_t my_regexp, const char *str_expr,
 void PDCI_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr,
 			  const char *err_prefix, const char *whatfn);
 
+typedef ssize_t (PDCI_write2buf_fn)(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, void *pd, void *rep);
+typedef ssize_t (PDCI_write_xml_2buf_fn)(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, void *pd, void *rep,
+					 const char *tag, int indent);
+
+void PDCI_WRITE2IO_USE_WRITE2BUF(const char *fn_nm, ssize_t write2buf_call);
+
 void PDCI_TLEN_UPDATES();
 void PDCI_FINAL_TLEN_UPDATES();
 void PDCI_TMP4_TLEN_UPDATES();
@@ -517,6 +523,34 @@ do { \
   } \
 } while (0)
 
+/* function body for a write2io function that has params pads, io, pd, rep */
+/* always precede with decls for buf, buf_len, and buf_full and always follow with 'return -1' */
+#define PDCI_WRITE2IO_USE_WRITE2BUF(fn_nm, write2buf_call) \
+  int set_buf; \
+  ssize_t length; \
+  PDCI_IODISC_2P_CHECKS_RET_SSIZE (fn_nm, io, rep); \
+  buf_len = pads->outbuf_res; \
+  while (1) { \
+    set_buf  = 0; \
+    buf_full = 0; \
+    buf = PDCI_io_write_start (pads, io, &buf_len, &set_buf, fn_nm); \
+    if (!buf)  { \
+      /* Don't have to abort because start failed. */ \
+      return -1; \
+    } \
+    length = write2buf_call; \
+    if (buf_full)  { \
+      /* Try again with a bigger buffer */ \
+      PDCI_io_write_abort (pads, io, buf, set_buf, fn_nm); \
+      buf_len*=2; \
+      continue; \
+    } \
+    break; \
+  } \
+  if (length>=0) { \
+    return PDCI_io_write_commit (pads, io, buf, set_buf, length, fn_nm); \
+  } \
+  PDCI_io_write_abort (pads, io, buf, set_buf, fn_nm)
 
 #define PDCI_TLEN_UPDATES() do { \
   if (tlen<0) { \

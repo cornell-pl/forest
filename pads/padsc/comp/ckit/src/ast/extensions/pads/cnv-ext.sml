@@ -1102,66 +1102,26 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  P.mkFunctionEDecl(writeXMLBufName, BufXMLFormalParams, PT.Compound bufXMLBodySs, returnTy)
 
                       (* -- write2io  and  write_xml_2io *)
-		      val setBuf = "set_buf"
-		      val introSs = [P.varDeclS'(P.ptrPCT PL.bytePCT, buf),
-				     P.varDeclS'(P.int, setBuf),
-				     P.varDeclS'(P.int, bufFull),
-				     P.varDeclS'(PL.ssizePCT, length),
-				     P.varDeclS'(PL.sizePCT, bufLen) ]
-			  (* can optimize here if we know that type has static disk size:
-			   /* XXX CASE 2: test is static length 107; test not a record type */
-			   size_t       buf_len = 107;
-			   /* XXX CASE 3: test is static length 107, test is a record type */
-			   size_t       buf_len = 107 + pads->disc->io_disc->rec_obytes + pads->disc->io_disc->rec_cbytes;
-			   *)
-		      fun ioCheckParamsSs wIOName = [PL.IODiscChecksSizeRet2P(PT.String wIOName, PT.Id io, PT.Id rep)]
-		      val ioBuflenInitSs = [P.assignS(PT.Id bufLen, P.arrowX(PT.Id pads, PT.Id PL.outBufRes))]
-                      (* beginning of loop to write record; loop in case original buffer isn't big enough *)
-  		        val loopInitSs = [P.assignS(PT.Id setBuf, P.zero), 
-					  P.assignS(PT.Id bufFull, P.zero)]
-			fun writeStartS wIOName = P.assignS(PT.Id buf,
-					    PL.writeStartX(PT.Id pads, PT.Id io, P.addrX(PT.Id bufLen), 
-							   P.addrX (PT.Id setBuf), PT.String wIOName))
-			val chkBufS = PT.IfThen(P.notX (PT.Id buf),
-			                PT.Compound[
-				         P.mkCommentS "Don't have to abort because start failed.",
-					 PT.Return (P.intX ~1)])
-			fun doWriteS (wBufName, lastArgs) = P.assignS(PT.Id length,
-				         PT.Call(PT.Id wBufName, 
-					         [PT.Id pads, PT.Id buf, PT.Id bufLen,
-						  P.addrX (PT.Id bufFull)] @ (List.map PT.Id (cNames @ [pd, rep])) @ lastArgs ))
-			fun chkResS wIOName = PT.IfThen(PT.Id bufFull,
-				        PT.Compound[
-				         P.mkCommentS("Try again with a bigger buffer"),
-				         PL.writeAbortS(PT.Id pads, PT.Id io, PT.Id buf, PT.Id setBuf, PT.String wIOName),
-				         P.timesAssignS(PT.Id bufLen, P.intX 2),
-				         PT.Continue])
-		        val loopEndS = PT.Break
-		      fun whileLoopS (wBufName, wIOName, lastArgs) = PT.While(P.intX 1, 
-                                        PT.Compound(loopInitSs @
-						    [writeStartS(wIOName), chkBufS, doWriteS(wBufName, lastArgs), chkResS(wIOName), loopEndS]))
-		      fun chkResS wIOName = PT.IfThen(P.gteX(PT.Id length, P.zero),
-				      PT.Compound[
-					 PT.Return 
-					   (PL.writeCommitX(PT.Id pads, PT.Id io, PT.Id buf, 
-							    PT.Id setBuf, PT.Id length, PT.String wIOName))])
-		      fun abortS wIOName = PL.writeAbortS(PT.Id pads, PT.Id io, PT.Id buf, PT.Id setBuf, PT.String wIOName)
-					 
-		      val returnS = PT.Return (P.intX ~1)
-		      fun bodySs (wBufName, wIOName, lastArgs) = introSs @ ioCheckParamsSs(wIOName) @ ioBuflenInitSs
-							@ [ whileLoopS(wBufName, wIOName, lastArgs), chkResS(wIOName), abortS(wIOName), returnS]
-		      fun bodyS (wBufName, wIOName, lastArgs) = PT.Compound(bodySs(wBufName, wIOName, lastArgs))
-		      val writeIOFunED = P.mkFunctionEDecl(writeIOName, IOformalParams,
-							   bodyS(writeBufName, writeIOName, []),
-							   returnTy)
-		      val writeXMLIOFunED = P.mkFunctionEDecl(writeXMLIOName, IOXMLformalParams,
-							      bodyS(writeXMLBufName, writeXMLIOName, [PT.Id tag, PT.Id indent]),
-							      returnTy)
-
+ 		      val introSs = [P.varDeclS'(P.ptrPCT PL.bytePCT, buf),
+ 				     P.varDeclS'(P.int, bufFull),
+ 				     P.varDeclS'(PL.sizePCT, bufLen) ]
+		      fun doWriteS (wBufName, lastArgs) = PT.Call(PT.Id wBufName,
+							          [PT.Id pads, PT.Id buf, PT.Id bufLen,
+								   P.addrX (PT.Id bufFull)]
+								    @ (List.map PT.Id (cNames @ [pd, rep])) @ lastArgs)
+		      fun mkWriteFunED (wIOName, fParams, wBufName, lastArgs) =
+					P.mkFunctionEDecl(wIOName, fParams,
+							  PT.Compound ( introSs @
+									[PT.Expr(PT.Call(PT.Id "PDCI_WRITE2IO_USE_WRITE2BUF",
+											[PT.String(wIOName),
+											  doWriteS(wBufName, lastArgs)])),
+									 PT.Return(P.intX ~1)]),
+							  returnTy)
+		      val writeIOFunED    = mkWriteFunED(writeIOName,    IOformalParams,    writeBufName, [])
+		      val writeXMLIOFunED = mkWriteFunED(writeXMLIOName, IOXMLformalParams, writeXMLBufName, [PT.Id tag, PT.Id indent])
 		  in
 		      [writeBufFunED, writeIOFunED, writeXMLBufFunED, writeXMLIOFunED]
 		  end
-
 
 
               (* Perror_t foo_init/foo_clear(P_t* pads, foo *r) *)
