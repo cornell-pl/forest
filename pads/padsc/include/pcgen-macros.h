@@ -1648,8 +1648,8 @@ do {
   if (src->tag != dst->tag) {
     cleanup_fn(pads, dst);
     memset((void*)(&(dst->val)), 0, sizeof(dst->val));
-    memcpy((void*)(dst), (void*)(src), sizeof(*dst) - sizeof(dst->val));
   }
+  memcpy((void*)(dst), (void*)(src), sizeof(*dst) - sizeof(dst->val));
 } while (0)
 /* END_MACRO */
 
