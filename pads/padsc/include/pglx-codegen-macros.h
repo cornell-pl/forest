@@ -466,6 +466,14 @@ result
     break
 /* END_MACRO */
 
+/* case for kthChild function */
+#define UNION_NODE_KC_CASE_LITERAL(ty,branchTagIN)
+  case branchTagIN:
+    result = PDCI_cstr_val_node_new(self,branch,&((pd->val).branchTagIN),(void *)branch, PDCI_VAL_OFF,
+				    PDCI_MacroArg2String(ty) "_node_kthChild");
+    break
+/* END_MACRO */
+
 #define UNION_NODE_KTH_CHILD_NAMED_BODY(ty)
   ty *rep=(ty *) (self->rep);
   char const *branch = ty ## _tag2str (rep->tag);
@@ -530,9 +538,20 @@ result
     break
 /* END_MACRO */
 
+/* case for kthChild function */
+#define UNION_SND_NODE_KC_CASE_LITERAL(ty,branchTagIN)
+  case branchTagIN:
+    result = PDCI_cstr_val_node_new(self,branch,&((pd->val).branchTagIN),(void *)branch, PDCI_VAL_OFF,
+				    PDCI_MacroArg2String(ty) "_node_kthChild");
+    Pbase_pd_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    break
+/* END_MACRO */
+
+
 #define UNION_NODE_PATH_WALK_BODY_BEGIN(ty)
   Perror_t res = P_ERR;
   PDCI_childIndex_t idx;
+  
   
   if (path.length > 0){
     /* modifies path */
@@ -573,6 +592,15 @@ res
 					 &((pd->val).branchTagIN),
 					 &((rep->val).branchTagIN),
 					 path,m_out,pd_out,rep_out);      
+	break
+/* END_MACRO */
+
+#define UNION_NODE_PW_CASE_LITERAL(ty, branchTagIN)
+      case branchTagIN:
+	res = PDCI_cstr_val_node_pathWalk(pads,
+					  &((pd->val).branchTagIN),
+					  (void *)ty ## _tag2str(rep->tag),
+					  path,pd_out,rep_out);      
 	break
 /* END_MACRO */
 

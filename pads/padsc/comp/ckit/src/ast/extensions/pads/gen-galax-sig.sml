@@ -29,8 +29,8 @@ signature GENGALAX = sig
   val makeTypedefSNDKthChildFun : string * string -> ParseTree.externalDecl
   val makeTypedefPathWalkFun : string * string -> ParseTree.externalDecl
 
-  val makeUnionSNDKthChildFun : string * (string * string * bool) list -> ParseTree.externalDecl
-  val makeUnionPathWalkFun : string * (string * string * bool) list -> ParseTree.externalDecl
+  val makeUnionSNDKthChildFun : string * (string * string option) list -> ParseTree.externalDecl
+  val makeUnionPathWalkFun : string * (string * string option) list -> ParseTree.externalDecl
 
   val makeEnumSNDKthChildFun : string -> ParseTree.externalDecl
   val makeEnumPathWalkFun : string -> ParseTree.externalDecl
@@ -81,13 +81,13 @@ signature GENGALAX = sig
   val makeKCCase : string
                    -> int * (string * string * bool) -> ParseTree.statement
 
-  val makeUnionKCCase : string -> (string * string * bool) -> ParseTree.statement
+  val makeUnionKCCase : string -> (string * string option) -> ParseTree.statement
 
   val apply : ('a -> 'b) list -> 'a -> 'b list
   val inc : int -> int
   val listOf : int -> int list
   val enumerate : 'a list -> (int * 'a) list
-  val getUniqueTys : ('a * ''b * 'c) list -> ''b list
+  val getUniqueTys : ''b list -> ''b list
 
   val macroTNode : ParseTree.expression * string * string
                    * ParseTree.expression * string

@@ -432,7 +432,7 @@ Parray questions(:unsigned int size:) {
    question_t [size];
 };
 
-Pstruct header_t {
+Pstruct mheader_t {
    Psbh_uint16(:2:) id;
    Psbh_uint16(:2:) blob;
    Psbh_uint16(:2:) qdcount; /- number of questions
@@ -448,7 +448,7 @@ int cnt_dbg(const char *cnt_descr, unsigned int cnt) {
 
 Pstruct dns_msg {
    Psbh_uint16(:2:)                   length;
-   header_t                           header :   cnt_dbg("questions", header.qdcount);  /- not? OK to use "header" for both?
+   mheader_t                           header :   cnt_dbg("questions", header.qdcount);  /- not? OK to use "header" for both?
    questions(:header.qdcount:)        question:  cnt_dbg("answers",   header.ancount);
    resource_records(:header.ancount:) answer:    cnt_dbg("auths",     header.nscount);
    resource_records(:header.nscount:) authority: cnt_dbg("other",     header.arcount);

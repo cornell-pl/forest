@@ -50,7 +50,7 @@ structure GenGalax = struct
   fun enumerate xs = ListPair.zip(listOf (List.length xs), xs)
 
   fun getUniqueTys nil = nil
-    | getUniqueTys ((_,fieldTy,_)::fs) = 
+    | getUniqueTys (fieldTy::fs) = 
       let val utys = getUniqueTys fs
 	  fun notIn (fd,nil) = true
 	    | notIn (fd,f::fs) = fd <> f andalso notIn (fd,fs)	
@@ -58,6 +58,7 @@ structure GenGalax = struct
 	  if notIn(fieldTy,utys) then fieldTy::utys
 	  else utys
       end
+
 
   (* header: common declaration part in foo_children function *) 
   fun headerGalaxChildrenFun(nameTy) =
@@ -292,9 +293,15 @@ structure GenGalax = struct
       PT.Expr(PT.Call(PL.UNION_NODE_KC_CASE,
 		      [PT.Id ty, PT.Id branchTag, PT.Id branchTy]))
 
-  fun makeUnionKCCase name (branchTag, branchTy, _) = 
-      macroUnionKCCase(name, branchTag, branchTy)
-      
+  fun macroUnionKCCaseLiteral(ty,branchTag) =
+      PT.Expr(PT.Call(PL.UNION_NODE_KC_CASE_LITERAL,
+		      [PT.Id ty, PT.Id branchTag]))
+
+  fun makeUnionKCCase name (branchTag, branchTy) = 
+      case branchTy of 
+	  NONE =>  macroUnionKCCaseLiteral(name, branchTag) 
+	| SOME branchTy =>  macroUnionKCCase(name, branchTag, branchTy)
+
   fun macroUnionKCN(ty) =
 	  PT.Expr(PT.Call(PL.UNION_NODE_KTH_CHILD_NAMED_BODY,
 			  [PT.Id ty]))
@@ -311,10 +318,14 @@ structure GenGalax = struct
       PT.Call(PL.UNION_SND_NODE_KTH_CHILD_RET,nil)
 
   fun macroUnionSNDKCCase(ty,branchTag,branchTy) =
-      PT.Expr(PT.Call(PL.UNION_SND_NODE_KC_CASE,
-		      [PT.Id ty, PT.Id branchTag,PT.Id branchTy]))
+      case branchTy of 
+        NONE => PT.Expr(PT.Call(PL.UNION_SND_NODE_KC_CASE_LITERAL,
+			   [PT.Id ty, PT.Id branchTag]))
+      | SOME branchTy =>
+           PT.Expr(PT.Call(PL.UNION_SND_NODE_KC_CASE,
+			   [PT.Id ty, PT.Id branchTag,PT.Id branchTy]))
 
-  fun makeUnionSNDKCCase name (branchTag,branchTy,_) =
+  fun makeUnionSNDKCCase name (branchTag,branchTy) =
       macroUnionSNDKCCase(name,branchTag,branchTy)
 
   fun macroUnionPWBegin(name) =
@@ -327,12 +338,16 @@ structure GenGalax = struct
   fun macroUnionPWRet() =
 		    PT.Call(PL.UNION_NODE_PATH_WALK_RET,nil)
 
-  fun macroUnionPWCase(branchTag,branchTy) =
-      PT.Expr(PT.Call(PL.UNION_NODE_PW_CASE,
+  fun macroUnionPWCase(ty, branchTag,branchTy) =
+      case branchTy 
+      of NONE =>  PT.Expr(PT.Call(PL.UNION_NODE_PW_CASE_LITERAL,
+				  [PT.Id ty, PT.Id branchTag]))
+      | SOME branchTy => 
+	  PT.Expr(PT.Call(PL.UNION_NODE_PW_CASE,
 		      [PT.Id branchTag,PT.Id branchTy]))
 
-  fun makeUnionPWCase (branchTag,branchTy,_) =
-      macroUnionPWCase(branchTag,branchTy)
+  fun makeUnionPWCase ty (branchTag,branchTy) =
+      macroUnionPWCase(ty, branchTag,branchTy)
 
 
   (****  Enum macros ****)
@@ -492,7 +507,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  val paramNames = [self,idx]
 	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
-	  val uniqueFieldTys = getUniqueTys fields
+	  val uniqueFieldTys = getUniqueTys (List.map (fn(x,y,z) => y) fields)
 	  val fieldNames = map (fn (n,_,_) => n) fields						   
 	  val bodySs = makeInvisibleDecls(name :: uniqueFieldTys, fieldNames)
 		       @ [macroStructSNDKCBegin(name)] 
@@ -518,7 +533,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  val paramNames = [pads,PN.m,PN.pd,PN.rep,path,"m_out","pd_out","rep_out"]
 	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
-	  val uniqueFieldTys = getUniqueTys fields
+	  val uniqueFieldTys = getUniqueTys (List.map (fn(x,y,z)=> y) fields)
 	  val fieldNames = map (fn (n,_,_) => n) fields						   
 	  val bodySs = makeInvisibleDecls(name :: uniqueFieldTys, fieldNames)
 		       @ [macroStructPWBegin()] 
@@ -607,8 +622,8 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  val paramNames = [self,idx]
 	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
-	  val uniqueBranchTys = getUniqueTys branches
-	  val branchNames = map (fn (n,_,_) => n) branches						   
+	  val uniqueBranchTys = getUniqueTys (List.mapPartial (fn(x,y) => y ) branches)
+	  val branchNames = map (fn (n,_) => n) branches						   
 	  val mkCase = makeUnionSNDKCCase name
 	  val caseSs = List.map mkCase branches
 
@@ -634,9 +649,9 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  val paramNames = [pads,PN.m,PN.pd,PN.rep,path,"m_out","pd_out","rep_out"]
 	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
-	  val uniqueBranchTys = getUniqueTys branches
-	  val branchNames = map (fn (n,_,_) => n) branches						   
-	  val caseSs = List.map makeUnionPWCase branches
+	  val uniqueBranchTys = getUniqueTys (List.mapPartial (fn(x,y) => y ) branches)
+	  val branchNames = map (fn (n,_) => n) branches						   
+	  val caseSs = List.map (makeUnionPWCase name) branches
 
 	  val bodySs = makeInvisibleDecls(name :: uniqueBranchTys,nil)
 		       @ [macroUnionPWBegin(name)] 

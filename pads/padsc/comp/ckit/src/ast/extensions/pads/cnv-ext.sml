@@ -4904,7 +4904,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				    isRecord, containsRecord, largeHeuristic: bool,
 				    pred, comment,...}:pfieldty) = 
 			 [(name, P.makeTypedefPCT(lookupTy (pty, pdSuf, #pdname)), NONE)]
-		     fun genEDBrief e = []
+		     fun genEDBrief e = case getString e of NONE => [] | SOME s => [(s, PL.base_pdPCT, NONE )]
 		     val pdVariants = mungeFields genEDFull genEDBrief genEDMan variants
 		     val pdVariants = if List.length pdVariants = 0
 			                    then [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty union pd")]
@@ -5782,41 +5782,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      (***** union PADS-Galax *****)
 	              (* In the XML representation of unions, each alternative is always the second child 
                          (index 1), after the <pd> child. *)
-		      fun tagbranch (nameField, typeField, isPcomputed) =
- 			  let val maskField = if isPcomputed then (P.intX 0) else (P.getFieldX(m, nameField)) 	
-			          (* if it's a Pcompute field, then the 'mask field' argument is NULL, by now *)
-			      val nameID = PT.Id nameField
-			      fun addrArg node = P.addrX(P.dotX(P.arrowX(PT.Id node, PT.Id value), nameID))
-			      val pdArg = addrArg pd	
-			      val repArg = addrArg rep
-			      val resultArg = PT.Id result
-			      val i = P.intX 1
-			      val branchField = PT.Id "branch"
-			      val sentences = [G.macroNodeCall(resultArg, i, typeField, branchField, maskField,
-						             pdArg, repArg, childrenSuf name)]
-			  in
-			      mkBreakCase(nameID, SOME sentences)
-			  end
-		      fun tagbranches bs = List.concat(List.map tagbranch bs)
-		      fun genCaseBranch (name, pty, b) =
+
+		      fun genCaseBranch (name, pty) =  (* why is this testing if there is an accumulator???*)
 			  case lookupAcc(pty) of NONE   => []
-					       | SOME a => [(name, lookupBranch pty, b)] 
+					       | SOME a => [(name, SOME(lookupBranch pty))] 
 
 		      fun genBranchFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					 pred, comment,...}:pfieldty) = 
-			  genCaseBranch (name, pty, false)
-		      fun genBranchBrief e = []
+					 pred, comment,...}:pfieldty) =  genCaseBranch (name, pty)
+		      fun genBranchBrief e = case getString e of NONE => [] | SOME s => [(s,NONE)]
 		      fun genBranchMan {tyname, name, args, isVirtual, expr, pred, comment}= 
-			  case isPadsTy tyname of PTys.CTy => [] | _ => genCaseBranch(name, getPadsName tyname, true)
+			  case isPadsTy tyname of PTys.CTy => [] | _ => genCaseBranch(name, getPadsName tyname)
 
-		      val branches = mungeFields genBranchFull genBranchBrief genBranchMan variants
-
-		      val addBranchSs = (tagbranches branches)
-		      val errBranchSs = mkBreakCase(PT.Id(errSuf name), NONE)
-                      val switchTag = PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), 
-						 PT.Compound (addBranchSs @ errBranchSs))
-
+		      val branches : (string * string option) list = mungeFields genBranchFull genBranchBrief genBranchMan variants
+ 
 		      fun genGalaxUnionKthChildFun(name,branches) =		
 			  let val nodeRepTy = PL.nodeT
 			      val returnTy = P.ptrPCT nodeRepTy
@@ -5825,10 +5804,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                               val paramNames = [G.self,G.idx]
                               val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
-			      val uniqueBranchTys = G.getUniqueTys branches
-			      val branchNames = List.map (fn (n,_,_) => n) branches
-			      val mkCase = G.makeUnionKCCase name
-			      val caseSs = List.map mkCase branches
+				  (* What are thse types being used for? *)
+			      val uniqueBranchTys = G.getUniqueTys (List.mapPartial (fn(x,y) => y ) branches)
+			      val caseSs = List.map (G.makeUnionKCCase name)  branches
 
 		              val bodySs = G.makeInvisibleDecls(name :: uniqueBranchTys, nil)
 					   @ [G.macroUnionKCBegin(name)]
@@ -6809,7 +6787,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                               val paramNames = [G.self,G.idx]
                               val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
-			      val uniqueFieldTys = G.getUniqueTys fields
+			      val uniqueFieldTys = G.getUniqueTys (List.map (fn(x,y,z) => y) fields)
 			      val fieldNames = map (fn (n,_,_) => n) fields						   
 		              val bodySs = G.makeInvisibleDecls(name :: uniqueFieldTys, fieldNames)
 					   @ [G.macroStructKCBegin(name)]

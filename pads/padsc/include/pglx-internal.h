@@ -152,17 +152,20 @@ void UNION_NODE_KTH_CHILD_BODY_BEGIN(type_t ty);
 void UNION_NODE_KTH_CHILD_BODY_END();
 PDCI_node_t *UNION_NODE_KTH_CHILD_RET();
 void UNION_NODE_KC_CASE(type_t ty, int branchTagIN, type_t branchTy);
+void UNION_NODE_KC_CASE_LITERAL(type_t ty, int branchTagIN);
 void UNION_NODE_KTH_CHILD_NAMED_BODY(type_t ty, ...);
 PDCI_node_t*UNION_NODE_KTH_CHILD_NAMED_RET();
 void UNION_SND_NODE_KTH_CHILD_BODY_BEGIN(type_t ty);
 void UNION_SND_NODE_KTH_CHILD_BODY_END();
 PDCI_node_t *UNION_SND_NODE_KTH_CHILD_RET();
 void UNION_SND_NODE_KC_CASE(type_t ty, int branchTagIN, type_t branchTy);
+void UNION_SND_NODE_KC_CASE_LITERAL(type_t ty, int branchTagIN);
 void UNION_NODE_PATH_WALK_BODY_BEGIN(type_t ty);
 void UNION_NODE_PATH_WALK_BODY_END();
 Perror_t UNION_NODE_PATH_WALK_RET();
 
 int  UNION_NODE_PW_CASE(int branchTagIN, type_t branchTy);
+int  UNION_NODE_PW_CASE_LITERAL(type_t ty, int branchTagIN);
 
 void ENUM_NODE_KTH_CHILD_BODY(type_t ty);
 PDCI_node_t *ENUM_NODE_KTH_CHILD_RET();
