@@ -1569,7 +1569,7 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Puint32 num_digits_or_bytes, Pu
 
 /* ********************************** END_HEADER ********************************** */
 
-#define PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, fold_test)
+#define PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, mfmt, fold_test)
 
 /*
  * Order set comparison function: only used at the end to rehash
@@ -1824,8 +1824,8 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
   }
   dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
-  sfprintf(outstr, "  Characterizing %s values:  min %" fmt, what, a->min);
-  sfprintf(outstr, " max %" fmt, a->max);
+  sfprintf(outstr, "  Characterizing %s values:  min %" mfmt, what, a->min);
+  sfprintf(outstr, " max %" mfmt, a->max);
   sfprintf(outstr, " avg %.3lf\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
@@ -1880,7 +1880,7 @@ int_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int nst
 }
 /* END_MACRO */
 
-#define PDCI_INT_ACCUM_MAP_REPORT_GEN(int_type, int_descr, fmt)
+#define PDCI_INT_ACCUM_MAP_REPORT_GEN(int_type, int_descr, fmt, mfmt)
 Perror_t
 int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *what,  int nst,
 			       int_type ## _map_fn fn, int_type ## _acc *a)
@@ -1945,8 +1945,8 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   mapped_min = fn(a->min);
   mapped_max = fn(a->max);
-  sfprintf(outstr, "  Characterizing %s values:  min %s (%5" fmt, what, mapped_min, a->min);
-  sfprintf(outstr, ")  max %s (%5" fmt, mapped_max, a->max);
+  sfprintf(outstr, "  Characterizing %s values:  min %s (%5" mfmt, what, mapped_min, a->min);
+  sfprintf(outstr, ")  max %s (%5" mfmt, mapped_max, a->max);
   sfprintf(outstr, ")\n");
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
   if (sz == a->max2track && a->good > a->tracked) {
@@ -2327,15 +2327,15 @@ fpoint_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int 
 /* ********************************* BEGIN_TRAILER ******************************** */
 
 #if P_CONFIG_ACCUM_FUNCTIONS > 0
-#  define PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, fold_test) \
-            PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, fold_test)
-#  define PDCI_INT_ACCUM_MAP_REPORT(int_type, int_descr, fmt) \
-            PDCI_INT_ACCUM_MAP_REPORT_GEN(int_type, int_descr, fmt)
+#  define PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, mfmt, fold_test) \
+            PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, mfmt, fold_test)
+#  define PDCI_INT_ACCUM_MAP_REPORT(int_type, int_descr, fmt, mfmt) \
+            PDCI_INT_ACCUM_MAP_REPORT_GEN(int_type, int_descr, fmt, mfmt)
 #  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64) \
             PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64)
 #else
-#  define PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, fold_test)
-#  define PDCI_INT_ACCUM_MAP_REPORT(int_type, int_descr, fmt)
+#  define PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, mfmt, fold_test)
+#  define PDCI_INT_ACCUM_MAP_REPORT(int_type, int_descr, fmt, mfmt)
 #  define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64)
 #endif
 
@@ -4327,24 +4327,24 @@ PDCI_SBH_FPOINT_WRITE_FN(Psbh_ufpoint64, Pufpoint64, PDCI_uint64_2sbh, "Pufpoint
 /* ********************************** END_HEADER ********************************** */
 #gen_include "pads-acc-macros-gen.h"
 
-/* PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, fold_test) */
+/* PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, mfmt, fold_test) */
 /* Always generate uint8, int32 and uint32 accumulator types */
 
-PDCI_INT_ACCUM_GEN(Puint8,  "uint8",  1, "u",   PDCI_FOLDTEST_UINT8)
-PDCI_INT_ACCUM_GEN(Pint32,  "int32",  4, "ld",  PDCI_FOLDTEST_INT32)
-PDCI_INT_ACCUM_GEN(Puint32, "uint32", 4, "lu",  PDCI_FOLDTEST_UINT32)
+PDCI_INT_ACCUM_GEN(Puint8,  "uint8",  1, "u",   "llu", PDCI_FOLDTEST_UINT8)
+PDCI_INT_ACCUM_GEN(Pint32,  "int32",  4, "ld",  "lld", PDCI_FOLDTEST_INT32)
+PDCI_INT_ACCUM_GEN(Puint32, "uint32", 4, "lu",  "llu", PDCI_FOLDTEST_UINT32)
 
-/* PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, fold_test) */
+/* PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, mfmt, fold_test) */
 
-PDCI_INT_ACCUM(Pint8,   "int8",   1, "d",   PDCI_FOLDTEST_INT8)
-PDCI_INT_ACCUM(Pint16,  "int16",  2, "d",   PDCI_FOLDTEST_INT16)
-PDCI_INT_ACCUM(Puint16, "uint16", 2, "u",   PDCI_FOLDTEST_UINT16)
-PDCI_INT_ACCUM(Pint64,  "int64",  8, "lld", PDCI_FOLDTEST_INT64)
-PDCI_INT_ACCUM(Puint64, "uint64", 8, "llu", PDCI_FOLDTEST_UINT64)
+PDCI_INT_ACCUM(Pint8,   "int8",   1, "d",   "lld", PDCI_FOLDTEST_INT8)
+PDCI_INT_ACCUM(Pint16,  "int16",  2, "d",   "lld", PDCI_FOLDTEST_INT16)
+PDCI_INT_ACCUM(Puint16, "uint16", 2, "u",   "llu", PDCI_FOLDTEST_UINT16)
+PDCI_INT_ACCUM(Pint64,  "int64",  8, "lld", "lld", PDCI_FOLDTEST_INT64)
+PDCI_INT_ACCUM(Puint64, "uint64", 8, "llu", "llu", PDCI_FOLDTEST_UINT64)
 
-/* PDCI_INT_ACCUM_MAP_REPORT_GEN(int_type, int_descr, fmt) */
+/* PDCI_INT_ACCUM_MAP_REPORT_GEN(int_type, int_descr, fmt, mfmt) */
 /* Always generate this report function */  
-PDCI_INT_ACCUM_MAP_REPORT_GEN(Pint32, "int32", "ld")
+PDCI_INT_ACCUM_MAP_REPORT_GEN(Pint32, "int32", "ld", "lld")
 
 /* PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, float32or64, fpoint2float32or64) */
 
@@ -4362,8 +4362,8 @@ PDCI_FPOINT_ACCUM(Pufpoint64, "ufpoint64", Pfloat64, P_FPOINT2FLOAT64)
 #if P_CONFIG_ACCUM_FUNCTIONS > 0
 
 typedef struct PDCI_string_dt_key_s {
-  Puint64     cnt;
-  size_t      len;
+  Puint64      cnt;
+  size_t       len;
   char        *str;
 } PDCI_string_dt_key_t;
 
@@ -4377,9 +4377,11 @@ unsigned int
 PDCI_string_dt_elt_hash(Dt_t *dt, Void_t *key, Dtdisc_t *disc)
 {
   PDCI_string_dt_key_t *k = (PDCI_string_dt_key_t*)key;
+  int len = k->len;
   NoP(dt);
   NoP(disc);
-  return dtstrhash(0, k->str, k->len);
+  if (len == 0) return 0;
+  return dtstrhash(0, k->str, len);
 }
 
 /*
@@ -4399,6 +4401,8 @@ PDCI_string_dt_elt_oset_cmp(Dt_t *dt, PDCI_string_dt_key_t *a, PDCI_string_dt_ke
     return 0;
   }
   if (a->cnt == b->cnt) { /* same count, so do lexicographic comparison */
+    if (a->len == 0) return -1;
+    if (b->len == 0) return 1;
     min_len = (a->len < b->len) ? a->len : b->len;
     if ((res = strncmp(a->str, b->str, min_len))) {
       return res;
@@ -4418,10 +4422,9 @@ PDCI_string_dt_elt_set_cmp(Dt_t *dt, PDCI_string_dt_key_t *a, PDCI_string_dt_key
 {
   NoP(dt);
   NoP(disc);
-  if (a->len == b->len && strncmp(a->str, b->str, a->len) == 0) {
-    return 0;
-  }
-  return 1;
+  if (a->len != b->len) return 1;
+  if (a->len == 0) return 0;
+  return strncmp(a->str, b->str, a->len);
 }
 
 void*
@@ -4523,6 +4526,12 @@ Pstring_acc_add(P_t *pads, Pstring_acc *a, const Pbase_pd *pd, const Pstring *va
     return P_OK;
   }
   if (val->len == 0 || dtsize(a->dict) < a->max2track) {
+#if 0
+    if (val->len == 0) 
+      P_WARN(pads->disc, "XXX_REMOVE val->len 0");
+    else
+      P_WARN3(pads->disc, "XXX_REMOVE val->len %lu string[%.*s]", (unsigned long)val->len, val->len, val->str);
+#endif
     insert_elt.key.str = val->str;
     insert_elt.key.len = val->len;
     insert_elt.key.cnt = 0;
@@ -4533,6 +4542,12 @@ Pstring_acc_add(P_t *pads, Pstring_acc *a, const Pbase_pd *pd, const Pstring *va
     (tmp1->key.cnt)++;
     (a->tracked)++;
   } else {
+#if 0
+    if (val->len == 0) 
+      P_WARN(pads->disc, "XXX_REMOVE val->len 0 (max2track hit)");
+    else
+      P_WARN3(pads->disc, "XXX_REMOVE val->len %lu string[%.*s] (max2track hit)", (unsigned long)val->len, val->len, val->str);
+#endif
     lookup_key.str = val->str;
     lookup_key.len = val->len;
     lookup_key.cnt = 0;
@@ -4849,8 +4864,8 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
     dtdisc(a->dict,   &Puint32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
     dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
     sfprintf(outstr, "  Characterizing number of errors PER READ CALL (nerr-per-read) :");
-    sfprintf(outstr, " min %ld", a->min);
-    sfprintf(outstr, " max %ld", a->max);
+    sfprintf(outstr, " min %lld", a->min);
+    sfprintf(outstr, " max %lld", a->max);
     sfprintf(outstr, " avg %.3lf\n", a->avg);
     sfprintf(outstr, "    => distribution of top %d nerr-per-read values out of %d distinct nerr-per-read values:\n", rp, sz);
     if (sz == a->max2track && a->good > a->tracked) {
@@ -5132,7 +5147,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.150 2004-03-04 20:28:45 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.151 2004-04-04 03:42:38 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6074,7 +6089,7 @@ P_io_next_rec(P_t *pads, size_t *skipped_bytes_out) {
 
 Perror_t
 P_io_skip_bytes(P_t *pads, size_t width, size_t *skipped_bytes_out) {
-  Pbyte            *begin, *p1, *end;
+  Pbyte            *begin, *end;
   int               bor, eor, eof;
   size_t            skipped;
 
