@@ -1341,7 +1341,7 @@ structure CnvExt : CNVEXT = struct
 						  ". Expected an int."))
 
                       fun genReadSs () = 
-			  let val resDeclSs = [P.varDeclS'(P.int, result)]
+			  let val resDeclSs = [P.varDeclS'(PL.toolErrPCT, result)]
 			      val readBaseSs = 
 				  [P.assignS(PT.Id result, 
 					     PL.readFunX(baseReadFun, 
@@ -2384,7 +2384,7 @@ structure CnvExt : CNVEXT = struct
 				                     else readFields @ (genSwDefaultIfAbsent())
 				 val bodyS = PT.Switch(descriminator, PT.Compound augReadFields)
 			     in
-				 [PT.Compound (  [P.varDeclS(P.int, result, PL.PDC_ERROR)] 
+				 [PT.Compound (  [P.varDeclS(PL.toolErrPCT, result, PL.PDC_ERROR)] 
 					       @ deallocOldSpaceSs 
                                                @ [locBS,
 						  bodyS,
@@ -2398,7 +2398,7 @@ structure CnvExt : CNVEXT = struct
 				 val cleanupSs = genCleanupSs ("Failed to match any branch of union "^name^".",
 							       locES)
 			     in
-				 [PT.Compound ([P.varDeclS(P.int, result, PL.PDC_ERROR),
+				 [PT.Compound ([P.varDeclS(PL.toolErrPCT, result, PL.PDC_ERROR),
 						locBS] 
 					       @ deallocOldSpaceSs @ readFields @ cleanupSs)]
 			     end
@@ -2451,7 +2451,7 @@ structure CnvExt : CNVEXT = struct
 		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), 
 						 P.condX(P.eqX(P.arrowX(PT.Id ed, PT.Id errCode),
 							       PL.PDC_UNION_MATCH_FAILURE),
-							 PL.PDC_UNION_MATCH_FAILURE, PL.PDC_OK))]
+							 PL.PDC_UNION_MATCH_FAILURE, PL.PDC_NO_ERROR))]
 		      val addTagSs = chkAddFun(addSuf PL.intAct, getFieldX(acc,tag), P.addrX(PT.Id ted), 
 						  PT.Cast(P.ptrPCT PL.intPCT, getFieldX(rep,tag)))
 		      fun fieldAddrX (base,name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
@@ -3473,7 +3473,7 @@ structure CnvExt : CNVEXT = struct
 		      end
                   fun genReadBranches () = 
                       [P.varDeclS'(PL.stringPCT, "strlit"),
-		       P.varDeclS'(P.int, result)]
+		       P.varDeclS'(PL.toolErrPCT, result)]
 		      @ List.concat(List.map readOneBranch members)
 		  val cleanupSs =  [P.mkCommentS("We didn't match any branch")]
 			         @ reportErrorSs([locS],false,
