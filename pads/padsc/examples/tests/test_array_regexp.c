@@ -1,5 +1,5 @@
 #include "pads.h"
-#include "array-string.h"
+#include "array_regexp.h"
 
 int main(int argc, char** argv) {
   P_t*             pdc;
@@ -13,8 +13,8 @@ int main(int argc, char** argv) {
   if (P_ERR == P_open(&pdc,0,0)) {
     error(ERROR_FATAL, "*** P_open failed ***");
   }
-  if (P_ERR == P_io_fopen(pdc, "../../data/array-string")) {
-    error(ERROR_FATAL, "*** P_IO_fopen failed ***");
+  if (P_ERR == P_io_fopen(pdc, "../../data/array_regexp")) {
+    error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
 
   error(0, "\ninit everything");
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   }
 
   if (P_ERR == P_io_close(pdc)) {
-    error(ERROR_FATAL, "*** P_IO_close failed ***");
+    error(ERROR_FATAL, "*** P_io_close failed ***");
   }
 
   if (P_ERR == P_close(pdc)) {

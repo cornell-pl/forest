@@ -24,7 +24,7 @@ VPATH = ..
 
 OBJS_O = rbuf.o default_io_disc.o pads-gen.o pads-acc-gen.o pads-read-gen.o pads-write-gen.o pads-misc-gen.o
 
-OBJS_D = $(OBJS_O:%.o=%-g.o)
+OBJS_D = $(OBJS_O:%.o=%_d.o)
 
 GEN_FILES = pads-acc-gen.c \
             pads-misc-gen.c \

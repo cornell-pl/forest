@@ -21,13 +21,8 @@ GEN_WRITE = 1
 # the following indicates that generated .c files should not be removed
 .PRECIOUS: $(GEN_DIR)/%.c 
 
-# need to give these rules before including rules.mk
-
-test_%-g: $(GEN_DIR)/%.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
-	@$(CCExec_DYNAMIC_D)
-
-test_%: $(GEN_DIR)/%.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
-	@$(CCExec_DYNAMIC_O)
+# need to set this before including rules.mk
+REGRESS_TESTS = 1
 
 include $(PADS_HOME)/mk/rules.mk
 
@@ -45,15 +40,21 @@ else
 XML_TESTS = test_children
 endif
 
-FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 test_struct-regexp test_array-regexp \
-               test_array-nosep test_array-pred test_array-pred2 test_array-ended test_array-ended2 test_array-post \
-               test_charclass	    
+FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 test_struct_regexp test_array_regexp \
+               test_array_nosep test_array_pred test_array_pred2 test_array_ended test_array_ended2 test_array_post \
+               test_charclass test_me test_me_fooclass
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_cpygen_crs test_enum test_from test_ai test_readint test_depends test_pswitch test_pswitch2 test_struct3 manifest_union
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
-ALL_TESTS_D = $(ALL_TESTS_O:%=%-g)
+ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
+
+# do not build MISC tests when building 'all'
+MISC_TESTS_O = test_ios
+MISC_TESTS_D = $(MISC_TESTS_O:%=%_d)
+MISC_TESTS = $(MISC_TESTS_O) $(MISC_TESTS_D)
+CLEANUP_TESTS = $(ALL_TESTS) $(MISC_TESTS)
 
 regress: regress_o regress_d
 
@@ -75,15 +76,15 @@ regress_o:  sanity_check \
           regress_test_me_fooclass_o \
 	  regress_test_write_struct_o \
 	  regress_test_write_struct_strings_o \
-          regress_test_struct-regexp_o \
-          regress_test_array-regexp_o \
-          regress_test_array-nosep_o \
-          regress_test_array-pred_o  \
-          regress_test_array-pred2_o  \
-          regress_test_array-ended_o \
-          regress_test_array-ended2_o \
-          regress_test_array-post_o \
-          regress_test_charclass_o 
+          regress_test_struct_regexp_o \
+          regress_test_array_regexp_o \
+          regress_test_array_nosep_o \
+          regress_test_array_pred_o  \
+          regress_test_array_pred2_o  \
+          regress_test_array_ended_o \
+          regress_test_array_ended2_o \
+          regress_test_array_post_o \
+          regress_test_charclass_o
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -105,14 +106,14 @@ regress_d:  sanity_check \
           regress_test_me_fooclass_d \
 	  regress_test_write_struct_d \
 	  regress_test_write_struct_strings_d \
-          regress_test_struct-regexp_d \
-          regress_test_array-regexp_d \
-          regress_test_array-nosep_d \
-          regress_test_array-pred_d \
-          regress_test_array-pred2_d \
-          regress_test_array-ended_d  \
-          regress_test_array-ended2_d \
-          regress_test_array-post_d \
+          regress_test_struct_regexp_d \
+          regress_test_array_regexp_d \
+          regress_test_array_nosep_d \
+          regress_test_array_pred_d \
+          regress_test_array_pred2_d \
+          regress_test_array_ended_d  \
+          regress_test_array_ended2_d \
+          regress_test_array_post_d \
           regress_test_charclass_d 
 	@echo " "; echo "DONE"; echo " "
 
@@ -133,187 +134,187 @@ regress_d_announce:
 
 regress_test_me_o: test_me
 	@(args=""; suf=""; $(RegressDef))
-regress_test_me_d: test_me-g
+regress_test_me_d: test_me_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_me_fooclass_o: test_me_fooclass
 	@(args=""; suf=""; $(RegressDef))
-regress_test_me_fooclass_d: test_me_fooclass-g
+regress_test_me_fooclass_d: test_me_fooclass_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_format1_o: test_format1
 	@(args=""; suf=""; $(RegressDef))
-regress_test_format1_d: test_format1-g
+regress_test_format1_d: test_format1_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_format2_o: test_format2
 	@(args=""; suf=""; $(RegressDef))
-regress_test_format2_d: test_format2-g
+regress_test_format2_d: test_format2_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_format3_o: test_format3
 	@(args=""; suf=""; $(RegressDef))
-regress_test_format3_d: test_format3-g
+regress_test_format3_d: test_format3_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_format4_o: test_format4
 	@(args=""; suf=""; $(RegressDef))
-regress_test_format4_d: test_format4-g
+regress_test_format4_d: test_format4_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_format5_o: test_format5
 	@(args=""; suf=""; $(RegressDef))
-regress_test_format5_d: test_format5-g
+regress_test_format5_d: test_format5_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_format6_o: test_format6
 	@(args=""; suf=""; $(RegressDef))
-regress_test_format6_d: test_format6-g
+regress_test_format6_d: test_format6_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_readint_o: test_readint
 	@(args=""; suf=""; filter="error:"; $(RegressFilter))
-regress_test_readint_d: test_readint-g
+regress_test_readint_d: test_readint_d
 	@(args=""; suf=""; filter="error:"; $(RegressFilter))
 
 regress_test_ai_o: test_ai
 	@(args=""; suf=""; $(RegressDef))
-regress_test_ai_d: test_ai-g
+regress_test_ai_d: test_ai_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_write_struct_o: test_write_struct
 	@(args=""; suf=""; $(RegressDef))
-regress_test_write_struct_d: test_write_struct-g
+regress_test_write_struct_d: test_write_struct_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_write_struct_strings_o: test_write_struct_strings
 	@(args=""; suf=""; $(RegressDef))
-regress_test_write_struct_strings_d: test_write_struct_strings-g
+regress_test_write_struct_strings_d: test_write_struct_strings_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_munion_o: manifest_union
-	@(args=""; input="../../data/union-manifest"; suf=""; $(RegressInput))
-regress_test_munion_d: manifest_union-g
-	@(args=""; input="../../data/union-manifest"; suf=""; $(RegressInput))
+	@(args=""; input="../../data/union_manifest"; suf=""; $(RegressInput))
+regress_test_munion_d: manifest_union_d
+	@(args=""; input="../../data/union_manifest"; suf=""; $(RegressInput))
 
 regress_test_pswitch_o: test_pswitch
 	@(args=""; input="../../data/pswitch"; suf=""; $(RegressInput))
-regress_test_pswitch_d: test_pswitch-g
+regress_test_pswitch_d: test_pswitch_d
 	@(args=""; input="../../data/pswitch"; suf=""; $(RegressInput))
 
 regress_test_pswitch2_o: test_pswitch2
 	@(args=""; input="../../data/pswitch"; suf=""; $(RegressInput))
-regress_test_pswitch2_d: test_pswitch2-g
+regress_test_pswitch2_d: test_pswitch2_d
 	@(args=""; input="../../data/pswitch"; suf=""; $(RegressInput))
 
 regress_test_depends_o: test_depends
 	@(args=""; input="../../data/depends"; suf=""; $(RegressInput))
-regress_test_depends_d: test_depends-g
+regress_test_depends_d: test_depends_d
 	@(args=""; input="../../data/depends"; suf=""; $(RegressInput))
 
 regress_test_struct3_o: test_struct3
 	@(args=""; input="../../data/struct3"; suf=""; $(RegressInput))
-regress_test_struct3_d: test_struct3-g
+regress_test_struct3_d: test_struct3_d
 	@(args=""; input="../../data/struct3"; suf=""; $(RegressInput))
 
-regress_test_struct-regexp_o: test_struct-regexp
-	@(args=""; input="../../data/ex_data.struct-regexp"; suf=""; $(RegressInput))
-regress_test_struct-regexp_d: test_struct-regexp-g
-	@(args=""; input="../../data/ex_data.struct-regexp"; suf=""; $(RegressInput))
+regress_test_struct_regexp_o: test_struct_regexp
+	@(args=""; input="../../data/ex_data.struct_regexp"; suf=""; $(RegressInput))
+regress_test_struct_regexp_d: test_struct_regexp_d
+	@(args=""; input="../../data/ex_data.struct_regexp"; suf=""; $(RegressInput))
 
-regress_test_array-regexp_o: test_array-regexp
+regress_test_array_regexp_o: test_array_regexp
 	@(args=""; suf=""; $(RegressDef))
-regress_test_array-regexp_d: test_array-regexp-g
-	@(args=""; suf=""; $(RegressDef))
-
-regress_test_array-nosep_o: test_array-nosep
-	@(args=""; suf=""; $(RegressDef))
-regress_test_array-nosep_d: test_array-nosep-g
+regress_test_array_regexp_d: test_array_regexp_d
 	@(args=""; suf=""; $(RegressDef))
 
-regress_test_array-pred_o: test_array-pred
+regress_test_array_nosep_o: test_array_nosep
 	@(args=""; suf=""; $(RegressDef))
-regress_test_array-pred_d: test_array-pred-g
-	@(args=""; suf=""; $(RegressDef))
-
-regress_test_array-pred2_o: test_array-pred2
-	@(args=""; suf=""; $(RegressDef))
-regress_test_array-pred2_d: test_array-pred2-g
+regress_test_array_nosep_d: test_array_nosep_d
 	@(args=""; suf=""; $(RegressDef))
 
-regress_test_array-ended_o: test_array-ended
+regress_test_array_pred_o: test_array_pred
 	@(args=""; suf=""; $(RegressDef))
-regress_test_array-ended_d: test_array-ended-g
-	@(args=""; suf=""; $(RegressDef))
-
-regress_test_array-ended2_o: test_array-ended2
-	@(args=""; suf=""; $(RegressDef))
-regress_test_array-ended2_d: test_array-ended2-g
+regress_test_array_pred_d: test_array_pred_d
 	@(args=""; suf=""; $(RegressDef))
 
-regress_test_array-post_o: test_array-post
+regress_test_array_pred2_o: test_array_pred2
 	@(args=""; suf=""; $(RegressDef))
-regress_test_array-post_d: test_array-post-g
+regress_test_array_pred2_d: test_array_pred2_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_array_ended_o: test_array_ended
+	@(args=""; suf=""; $(RegressDef))
+regress_test_array_ended_d: test_array_ended_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_array_ended2_o: test_array_ended2
+	@(args=""; suf=""; $(RegressDef))
+regress_test_array_ended2_d: test_array_ended2_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_array_post_o: test_array_post
+	@(args=""; suf=""; $(RegressDef))
+regress_test_array_post_d: test_array_post_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_charclass_o: test_charclass
 	@(args=""; suf=""; $(RegressDef))
-regress_test_charclass_d: test_charclass-g
+regress_test_charclass_d: test_charclass_d
 	@(args=""; suf=""; $(RegressDef))
 
 clean:
-	$(RM) -f *~ *.o $(ALL_TESTS)
+	$(RM) -f *~ *.o $(CLEANUP_TESTS)
 
 veryclean: clean
-	$(RM) $(GEN_DIR)/*.[hc] $(GEN_DIR)/*.xsd
+	$(RM) $(GEN_DIR)/*.[hc] $(GEN_DIR)/*.xsd tmp/*
 
 # This works for some but not all test cases
 
 # These cases do not fit the usual pattern
 test_readint: $(GEN_DIR)/readinttest.c test_readint.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_readint-g: $(GEN_DIR)/readinttest.c test_readint.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_readint_d: $(GEN_DIR)/readinttest.c test_readint.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
-manifest_union: $(GEN_DIR)/punion-manifest.c munion.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+manifest_union: $(GEN_DIR)/punion_manifest.c munion.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-manifest_union-g: $(GEN_DIR)/punion-manifest.c munion.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+manifest_union_d: $(GEN_DIR)/punion_manifest.c munion.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 test_copy_format5: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_copy_format5-g: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_copy_format5_d: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 test_write_struct: $(GEN_DIR)/struct.c test_write_struct.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_write_struct-g: $(GEN_DIR)/struct.c test_write_struct.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_write_struct_d: $(GEN_DIR)/struct.c test_write_struct.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 test_write_struct_strings: $(GEN_DIR)/struct_strings.c test_write_struct_strings.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_write_struct_strings-g: $(GEN_DIR)/struct_strings.c test_write_struct_strings.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_write_struct_strings_d: $(GEN_DIR)/struct_strings.c test_write_struct_strings.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 test_copy_ai: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_copy_ai-g: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_copy_ai_d: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
-count_dibbler: $(GEN_DIR)/dibbler-notrailer.c count_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+count_dibbler: $(GEN_DIR)/dibbler_notrailer.c count_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-count_dibbler-g: $(GEN_DIR)/dibbler-notrailer.c count_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+count_dibbler_d: $(GEN_DIR)/dibbler_notrailer.c count_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 test_dibbler1: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_dibbler1-g: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
+test_dibbler1_d: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 ifdef GALAX_NONE
 test_children: var_error
 
-test_children-g: var_error
+test_children_d: var_error
 
 var_error:
 	@echo " "
@@ -331,7 +332,7 @@ else
 test_children: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-test_children-g: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_children_d: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 endif
 

@@ -370,7 +370,7 @@ define RegressDef
 (echo " "; echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
-  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|-g||'`; \
+  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
   echo "(./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
   echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
@@ -381,7 +381,7 @@ define RegressInput
 (echo " "; echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
-  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|-g||'`; \
+  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
   echo "(./$< $$args < $$input 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args < $$input 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
   echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
@@ -392,7 +392,7 @@ define RegressFilter
 (echo " "; echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
-  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|-g||'`; \
+  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
   echo "(./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | grep $$filter | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | grep $$filter | cat > tmp/tmp.$<$$suf; \
   echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
@@ -401,74 +401,6 @@ endef
 
 .SUFFIXES:
 .SUFFIXES: .c .o
-
-# First we put all the -g rules
-
-ifdef BuildPADSLib
- # Just one -g rule needed for BuildPADSLib
-
-%-g.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule A_D"
-endif
-	$(COMPILE_D) -c $< -o $@
-
-else
- # Three -g rules needed for !BuildPADSLib
-
-%-g: %-g.o $(LIB_DEPS_D)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule J_D"
-endif
-	$(LINK_D) $< $(DYNAMIC_LIBS_D) -o $@
-
-%-g.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule K_D"
-endif
-	$(COMPILE_D) -c $< -o $@
-
-%-g: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS) $(LIB_DEPS_D)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule L_D"
-endif
-	$(COMPILE_D) $< $(DYNAMIC_LIBS_D) -o $@
-
-endif # BuildPADSLib / -g rules
-
-# Now the non -g rules
-
-ifdef BuildPADSLib
- # Just one non -g rule needed for BuildPADSLib
-
-%.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule A_O"
-endif
-	$(COMPILE_O) -c $< -o $@
-
-else
- # Three non -g rules needed for !BuildPADSLib
-
-%: %.o $(LIB_DEPS_O)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule J_O"
-endif
-	$(LINK_O) $< $(DYNAMIC_LIBS_O) -o $@
-
-%.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule K_O"
-endif
-	$(COMPILE_O) -c $< -o $@
-
-%: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS) $(LIB_DEPS_O)
-ifdef DEBUG_RULES_MK
-	@echo "Using rules.mk rule L_O"
-endif
-	$(COMPILE_O) $< $(DYNAMIC_LIBS_O) -o $@
-
-endif # BuildPadsLib / non -g rules
 
 ifdef GEN_DIR
 ifdef GEN_WRITE
@@ -489,3 +421,90 @@ endif
 
 endif # GEN_WRITE
 endif # GEN_DIR
+
+# First we put all the _d rules
+
+ifdef REGRESS_TESTS
+test_%_d: $(GEN_DIR)/%.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule R_D"
+endif
+	@$(CCExec_DYNAMIC_D)
+endif # REGRESS_TESTS / _d rule
+
+ifdef BuildPADSLib
+ # Just one _d rule needed for BuildPADSLib
+
+%_d.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule A_D"
+endif
+	$(COMPILE_D) -c $< -o $@
+
+else
+ # Three _d rules needed for !BuildPADSLib
+
+%_d: %_d.o $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule J_D"
+endif
+	$(LINK_D) $< $(DYNAMIC_LIBS_D) -o $@
+
+%_d.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule K_D"
+endif
+	$(COMPILE_D) -c $< -o $@
+
+ifndef REGRESS_TESTS
+%_d: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule L_D"
+endif
+	$(COMPILE_D) $< $(DYNAMIC_LIBS_D) -o $@
+endif # !REGRESS_TESTS
+
+endif # BuildPADSLib / _d rules
+
+# Now the non _d rules
+
+ifdef REGRESS_TESTS
+test_%: $(GEN_DIR)/%.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule R_O"
+endif
+	@$(CCExec_DYNAMIC_O)
+endif # REGRESS_TESTS / non _d rule
+
+ifdef BuildPADSLib
+ # Just one non _d rule needed for BuildPADSLib
+
+%.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule A_O"
+endif
+	$(COMPILE_O) -c $< -o $@
+
+else
+ # Three non _d rules needed for !BuildPADSLib
+
+%: %.o $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule J_O"
+endif
+	$(LINK_O) $< $(DYNAMIC_LIBS_O) -o $@
+
+%.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule K_O"
+endif
+	$(COMPILE_O) -c $< -o $@
+
+%: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS) $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule L_O"
+endif
+	$(COMPILE_O) $< $(DYNAMIC_LIBS_O) -o $@
+
+endif # BuildPadsLib / non _d rules
+

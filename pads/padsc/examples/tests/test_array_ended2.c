@@ -1,5 +1,5 @@
 #include "pads.h"
-#include "array-nosep.h"
+#include "array_ended2.h"
 
 int main(int argc, char** argv) {
   P_t*             pdc;
@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   if (P_ERR == P_open(&pdc,0,0)) {
     error(ERROR_FATAL, "*** P_open failed ***");
   }
-  if (P_ERR == P_io_fopen(pdc, "../../data/array-nosep")) {
+  if (P_ERR == P_io_fopen(pdc, "../../data/array_ended2")) {
     error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
 
@@ -30,7 +30,8 @@ int main(int argc, char** argv) {
     error(0, "\ncalling entry_read");
     if (P_OK == entry_read(pdc, &m, &pd, &rep)) {
       /* do something with the data */
-      error(2, "entry_read returned array of length: %d", rep.length);
+      error(2, "entry_read returned array first of length: %d", rep.first.length);
+      error(2, "entry_read returned array second  of length: %d", rep.second.length);
       if (P_ERR == entry_acc_add(pdc, &accum, &pd, &rep)) {
 	error(0, "** accum_add failed **");
       }

@@ -1,5 +1,5 @@
 #include "pads.h"
-#include "array-pred.h"
+#include "array_pred2.h"
 
 int main(int argc, char** argv) {
   P_t*             pdc;
@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   if (P_ERR == P_open(&pdc,0,0)) {
     error(ERROR_FATAL, "*** P_open failed ***");
   }
-  if (P_ERR == P_io_fopen(pdc, "../../data/array-pred")) {
+  if (P_ERR == P_io_fopen(pdc, "../../data/array_pred2")) {
     error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
 

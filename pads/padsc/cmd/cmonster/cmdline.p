@@ -49,7 +49,7 @@ int CM_finish_c_cookie(CM_c_cookie_t *c);
 int CM_finish_s_cookie(CM_s_cookie_t *s);
 
 Parray CM_params {
-  Pa_uint32 [] : Psep == ',' && Pterm == ':';
+  Pa_uint32 [] : Psep(',') && Pterm(':');
 };
 
 Pstruct CM_query {
@@ -68,7 +68,7 @@ Pstruct CM_query {
 };
 
 Parray CM_queries {
-  CM_query [1:] : Psep == '|' && Pterm == '}' ;
+  CM_query [1:] : Psep('|') && Pterm('}') ;
 };
 
 Pstruct CM_c_cookie {
@@ -89,7 +89,7 @@ Pstruct CM_arm {
 
 /* note that this array 'eats' the terminating curly */
 Parray CM_arms {
-  CM_arm [1:] : Psep == '/' && Pterm == '}';
+  CM_arm [1:] : Psep('/') && Pterm('}');
 };
 
 Pstruct CM_s_cookie {

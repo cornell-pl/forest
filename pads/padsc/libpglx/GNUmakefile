@@ -25,7 +25,7 @@ VPATH = ..
 
 OBJS_O = pglx.o
 
-OBJS_D = $(OBJS_O:%.o=%-g.o)
+OBJS_D = $(OBJS_O:%.o=%_d.o)
 
 INSTALL_INCLUDES = pglx.h
 
