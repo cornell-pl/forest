@@ -1,0 +1,27 @@
+Using PADSC IO discipline nlrec
+Read IP address term by vbar: 1.0.0.0. (Puint32 = 16777216)
+Read date term by NULL: 12.0.0.0. (Puint32 = 201326592)
+bytes_skipped to find EOR/newline = 0
+Read IP address term by vbar: 123.0.0.234. (Puint32 = 2063597802)
+Read date term by NULL: 255.0.0.0. (Puint32 = 4278190080)
+bytes_skipped to find EOR/newline = 0
+Read IP address term by vbar: 10.0.0.10. (Puint32 = 167772170)
+Read date term by NULL: 10.10.0.10. (Puint32 = 168427530)
+bytes_skipped to find EOR/newline = 0
+Read IP address term by vbar: 6.7.8.9. (Puint32 = 101124105)
+Read date term by NULL: 6.7.8.9. (Puint32 = 101124105)
+bytes_skipped to find EOR/newline = 0
+warning: Error [in Pa_ip_read]: at record 5 from byte 1 to byte 3: Invalid IP address, numbers must be between 0 and 255 
+[record 5]>>>256<<<.5.5.256|1.1.1.1.
+bytes_skipped to find EOR/newline = 9
+warning: Error [in Pa_ip_read]: at record 6 from byte 7 to byte 9: Invalid IP address, numbers must be between 0 and 255 
+[record 6]5.5.5.>>>256<<<|1.1.1.1.
+bytes_skipped to find EOR/newline = 9
+warning: Error [in Pa_ip_read]: at record 7 from byte 7 to byte 9: Invalid IP address, numbers must be between 0 and 255 
+[record 7]5.5.5.>>>256<<<.|1.1.1.1.
+bytes_skipped to find EOR/newline = 9
+Read IP address term by vbar: 255.5.5.5. (Puint32 = 4278519045)
+warning: Error [in Pa_ip_read]: at record 8 at byte 11 : Invalid IP address 
+[record 8]255.5.5.5|>>>a<<<1.1.1.1.
+bytes_skipped to find EOR/newline = 9
+Main program found eof
