@@ -1,5 +1,10 @@
-//#define DATE_OUT_FMT "%K %z"
-//#define DEFAULT_TIME_ZONE "UTC"
+// Set the time zone to the one where the ai data (web log) was
+// recorded.  This means date output will be consistent with the dates
+// in the data file.  If the default ("UTC") is used, the 7 hour time
+// difference can appear to produce a different day of the week for a
+// given date-time value.
+
+#define DEFAULT_TIME_ZONE "-0700"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Change this to '#if 1' to enable some printing for each good line
