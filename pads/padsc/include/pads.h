@@ -1311,7 +1311,6 @@ ssize_t   P_io_rblk_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *
 				    Pbyte *blk_start, size_t num_bytes, Puint32 num_recs);
 
 ssize_t   P_io_rec_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full);
-
 #endif
 
 /* ================================================================================
@@ -3610,6 +3609,9 @@ ssize_t Pe_float32_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *b
 ssize_t Pe_float64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val, const char *tag, int indent);
 #endif
 
+/* fmt2buf functions */
+ssize_t Pint32_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const char *delims,
+			Pbase_m *m, Pbase_pd *pd, Pint32 *rep);
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
 
