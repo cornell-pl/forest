@@ -13,13 +13,14 @@ Suppose you checked out the padsc module in /home/fred/padsc.  You
 must arrange to have env variable PADS_HOME set to this location
 before doing other steps.  Once PADS_HOME is set, you can source a
 DO_SETENV script that will set the other env variables that you will
-need.  DO_SETENV will also make your installation directories
-(rooted at $INSTALLROOT) if they do not exist yet.
+need (INSTALLROOT, PATH, LD_LIBRARY_PATH, etc.).
+DO_SETENV will also make your installation directories
+(rooted at INSTALLROOT) if they do not exist yet.
 
 Below are instructions for different kinds of shells.
 You could do the following by hand, or add them to your shell init script.
 Note: Use DO_SETENV rather than Q_DO_SETENV when running from
-the command line, to see how the env variables that are set up.
+the command line to see how the env variables that are set up.
 
 For csh/tcsh users:
   setenv PADS_HOME /home/fred/padsc
@@ -32,7 +33,36 @@ For sh/ksh/bash users:
 Install link to SML runtime environment:
   Follow instructions in $(PADS_HOME)/binlinks/README
 
-STEP 2: BUILD AND INSTALL THE PADSC LIBRARY
+STEP 2: BUILD AND INSTALL libast
+
+Folks at AT&T Labs Research (who were also at Bell Labs before the
+AT&T - Lucent split) collect many useful C routines in a
+single library called libast.  PADS uses this library, so you need
+to build it: 
+
+> cd $PADS_HOME/base-ast
+> bin/package make
+
+(Before you issue this command, make sure INSTALLROOT has been set
+by one of the DO_SETENV scripts!)
+
+If everything goes as planned, the following files will end up being
+installed in directory $PADS_HOME/ast-base/arch/$AST_ARCH/lib:
+
+   libast.a
+   libast.so
+   libast.so.5.4
+
+where the latter 2 are really 2 names for the same file.
+
+*** NB Right now the entire ast-base package is built.  This contains
+*** a lot more stuff than libast, and we will eventually produce a
+*** smaller package just for building libast.  In the meantime:
+*** you may get some errors during the package build that have
+*** nothing to do with libast.  If the 3 libast files above are built
+*** successfully, then you are done with step 2.
+
+STEP 3: BUILD AND INSTALL THE PADSC LIBRARY
 
 > cd $PADS_HOME/libpadsc
 > gmake install
@@ -41,7 +71,6 @@ STEP 3: BUILD THE COMPILER
 
 > cd $PADS_HOME
 > gmake
-
 
 STEP 4: TEST THE PADSC LIBRARY
 
@@ -67,7 +96,4 @@ to be built and run. If you see a message of the form
     test_foo DIFFERS
 
 then there is a problem with the test_foo test.
-
-
-
 

@@ -44,7 +44,7 @@ if [ $_pads_status == "OK" ]; then
   AST_ARCH=`$PADS_HOME/scripts/package`; export AST_ARCH
 
   if [ "$AST_HOME"x == x ]; then
-    AST_HOME=/home/gsf/arch/$AST_ARCH; export AST_HOME
+    AST_HOME=$PADS_HOME/ast-base/arch/$AST_ARCH; export AST_HOME
     if [ "$_pads_verbose" != 0 ]; then
       echo "##############################################################################"
       echo "# Setting env var AST_HOME to $AST_HOME"
