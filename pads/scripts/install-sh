@@ -218,15 +218,32 @@ else
 		true
 	fi
 
+	changed="yes"
+	if [ x"$stripcmd" = x ]
+	then
+	    if [ -f $dstdir/$dstfile ]
+	    then
+		cmp $src $dstdir/$dstfile && changed=""
+	    fi
+	fi
+	if [ x"$changed" = x ]
+	then
+# No strip requested and src is same as dest, so just apply chown/chgrp/chmod
+	    echo "$src is same as $dstdir/$dstfile"
+	    if [ x"$chowncmd" != x ]; then $doit $chowncmd $dstdir/$dstfile; else true;fi &&
+	    if [ x"$chgrpcmd" != x ]; then $doit $chgrpcmd $dstdir/$dstfile; else true;fi &&
+	    if [ x"$chmodcmd" != x ]; then $doit $chmodcmd $dstdir/$dstfile; else true;fi
+	else
+
 # Make a temp file name in the proper directory.
 
-	dsttmp=$dstdir/#inst.$$#
+	    dsttmp=$dstdir/#inst.$$#
 
 # Move or copy the file name to the temp name
 
-	$doit $instcmd $src $dsttmp &&
+	    $doit $instcmd $src $dsttmp &&
 
-	trap "rm -f ${dsttmp}" 0 &&
+	    trap "rm -f ${dsttmp}" 0 &&
 
 # and set any options; do chmod last to preserve setuid bits
 
@@ -234,16 +251,17 @@ else
 # ignore errors from any of these, just make sure not to ignore
 # errors from the above "$doit $instcmd $src $dsttmp" command.
 
-	if [ x"$chowncmd" != x ]; then $doit $chowncmd $dsttmp; else true;fi &&
-	if [ x"$chgrpcmd" != x ]; then $doit $chgrpcmd $dsttmp; else true;fi &&
-	if [ x"$stripcmd" != x ]; then $doit $stripcmd $dsttmp; else true;fi &&
-	if [ x"$chmodcmd" != x ]; then $doit $chmodcmd $dsttmp; else true;fi &&
+	    if [ x"$chowncmd" != x ]; then $doit $chowncmd $dsttmp; else true;fi &&
+	    if [ x"$chgrpcmd" != x ]; then $doit $chgrpcmd $dsttmp; else true;fi &&
+	    if [ x"$stripcmd" != x ]; then $doit $stripcmd $dsttmp; else true;fi &&
+	    if [ x"$chmodcmd" != x ]; then $doit $chmodcmd $dsttmp; else true;fi &&
 
 # Now rename the file to the real destination.
 
-	$doit $rmcmd -f $dstdir/$dstfile &&
-	$doit $mvcmd $dsttmp $dstdir/$dstfile 
+	    $doit $rmcmd -f $dstdir/$dstfile &&
+	    $doit $mvcmd $dsttmp $dstdir/$dstfile 
 
+	fi
 fi &&
 
 
