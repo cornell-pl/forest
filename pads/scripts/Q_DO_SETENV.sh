@@ -7,7 +7,7 @@
 _pads_do_program=Q_DO_SETENV.sh
 _pads_status=OK 
 
-if [ "$PADS_HOME"x == x ]; then
+if [ "$PADS_HOME"x = x ]; then
   echo "##############################################################################"
   echo "# Set env var PADS_HOME and then use DO_SETENV.sh again."
   echo "##############################################################################"
@@ -15,7 +15,7 @@ if [ "$PADS_HOME"x == x ]; then
   _pads_status=FAILED
 fi
 
-if [ $_pads_status == "OK" ]; then
+if [ $_pads_status = "OK" ]; then
   _pads_verbose=0
   _pads_use_nmake=0
   . $PADS_HOME/scripts/INT_DO_SETENV.sh

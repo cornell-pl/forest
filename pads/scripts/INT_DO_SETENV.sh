@@ -3,7 +3,7 @@
 
 _pads_status=OK 
 
-if [ "$_pads_verbose"x == x ]; then
+if [ "$_pads_verbose"x = x ]; then
   echo "##############################################################################"
   echo "# Do not use INT_DO_SETENV directly, use DO_SETENV or Q_DO_SETENV"
   echo "##############################################################################"
@@ -12,12 +12,12 @@ if [ "$_pads_verbose"x == x ]; then
 fi
 
 
-if [ $_pads_status == "OK" ]; then
+if [ $_pads_status = "OK" ]; then
   if [ "$_pads_verbose" != 0 ]; then
     echo " "
   fi
 
-  if [ "$PADS_HOME"x == x ]; then
+  if [ "$PADS_HOME"x = x ]; then
     echo "##############################################################################"
     echo "# Set env var PADS_HOME and then use $_pads_do_prog again."
     echo "##############################################################################"
@@ -26,7 +26,7 @@ if [ $_pads_status == "OK" ]; then
   fi
 fi
 
-if [ $_pads_status == "OK" ]; then
+if [ $_pads_status = "OK" ]; then
   if [ ! -e $PADS_HOME/ast-ast/bin/package.cvs ]; then
     echo "##############################################################################"
     echo "# Invalid setting (?) : PADS_HOME = $PADS_HOME"
@@ -40,10 +40,10 @@ if [ $_pads_status == "OK" ]; then
   fi
 fi
 
-if [ $_pads_status == "OK" ]; then
+if [ $_pads_status = "OK" ]; then
   AST_ARCH=`$PADS_HOME/ast-ast/bin/package.cvs`; export AST_ARCH
 
-  if [ "$AST_HOME"x == x ]; then
+  if [ "$AST_HOME"x = x ]; then
     AST_HOME=$PADS_HOME/ast-ast/arch/$AST_ARCH; export AST_HOME
     if [ "$_pads_verbose" != 0 ]; then
       echo "##############################################################################"
@@ -55,7 +55,7 @@ if [ $_pads_status == "OK" ]; then
     fi
   fi
 
-  if [ "$INSTALLROOT"x == x ]; then
+  if [ "$INSTALLROOT"x = x ]; then
     INSTALLROOT=$PADS_HOME/ast-ast/arch/$AST_ARCH; export INSTALLROOT
     if [ "$_pads_verbose" != 0 ]; then
       echo "##############################################################################"
@@ -67,14 +67,14 @@ if [ $_pads_status == "OK" ]; then
     fi
   fi
 
-  if [ "$OCAML_LIB_DIR"x == x ]; then
+  if [ "$OCAML_LIB_DIR"x = x ]; then
     OCAML_LIB_DIR=/usr/lib/ocaml; export OCAML_LIB_DIR
   fi
-  if [ "$GALAX_HOME"x == x ]; then
+  if [ "$GALAX_HOME"x = x ]; then
     GALAX_HOME=/home/mff/Galax; export GALAX_HOME
   fi
   GALAX_LIB=$GALAX_HOME/lib/c; export GALAX_LIB
-  if [ "$PADSGLX_HOME"x == x ]; then
+  if [ "$PADSGLX_HOME"x = x ]; then
     PADSGLX_HOME=/home/mff/pads_glx/api; export PADSGLX_HOME
   fi
   PADSGLX_LIB_DIR=$PADSGLX_HOME; export PADSGLX_LIB_DIR
@@ -95,7 +95,7 @@ if [ $_pads_status == "OK" ]; then
     (mkdir -p $INSTALLROOT/man > /dev/null 2>&1) || _pads_status=FAILED
   fi
 
-  if [ $_pads_status == "FAILED" ]; then
+  if [ $_pads_status = "FAILED" ]; then
     echo "##############################################################################"
     echo "# WARNING: Could not create INSTALLROOT $INSTALLROOT"
     echo "# or one of its subdirs (bin, include, lib, man).  Correct problem (e.g.,"

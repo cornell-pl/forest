@@ -113,11 +113,6 @@ case `uname -s` in
   *) exit 1;;
 esac
 
-if [ "$HEAP_OPSYS" = "" ]; then
-  HEAP_SUFFIX="$ARCH-$OPSYS"
-else
-  HEAP_SUFFIX="$ARCH-$HEAP_OPSYS"
-fi
-
+HEAP_SUFFIX="$ARCH-$OPSYS"
 #echo "ARCH=$ARCH; OPSYS=$OPSYS; HEAP_SUFFIX=$HEAP_SUFFIX"
 echo "$HEAP_SUFFIX"
