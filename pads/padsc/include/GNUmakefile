@@ -42,11 +42,11 @@ install : all
 
 $(PCGEN) : $(SCRIPTS)/mksrc.pl $(PCGEN_IN)
 	@echo "Building pcgen-macros-gen.h"
-	$(SCRIPTS)/mksrc.pl $(PCGEN_IN) $(INCDIR) $(PADS_HOME)
+	$(SCRIPTS)/mksrc.pl $(CC) $(PCGEN_IN) $(INCDIR) $(PADS_HOME)
 
 $(PGLXGEN) : $(PGLXGEN_IN) $(SCRIPTS)/mksrc.pl 
 	@echo "Building pglx-codegen-macros-gen.h"
-	$(SCRIPTS)/mksrc.pl $(PGLXGEN_IN) $(INCDIR) $(PADS_HOME)
+	$(SCRIPTS)/mksrc.pl $(CC) $(PGLXGEN_IN) $(INCDIR) $(PADS_HOME)
 
 clean :
 	$(RM) *~ ../*~

@@ -116,7 +116,7 @@ endif
 
 dogen : $(PCGEN) $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(INCLUDE_DEPS)
 	@echo "Building generated source files"
-	$(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(CURDIR) $(PADS_HOME)
+	$(SCRIPTS)/mksrc.pl $(CC) $(PADS_HOME)/padsc/libpads/pads.c $(CURDIR) $(PADS_HOME)
 	touch dogen
 
 $(PCGEN) : $(SCRIPTS)/mksrc.pl $(PCGEN_IN)

@@ -88,7 +88,7 @@ test_rr_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_rr_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 
 #dogen : $(CODE_DIR)/enum_kth.c $(CODE_DIR)/enum_kth.h
 #	@echo "Building generated source files"
-#	$(SCRIPTS)/mksrc.pl $(CODE_DIR)/enum_kth.c $(CODE_DIR) $(PADS_HOME)
+#	$(SCRIPTS)/mksrc.pl $(CC) $(CODE_DIR)/enum_kth.c $(CODE_DIR) $(PADS_HOME)
 #	touch dogen
 
 pglx_lib:
