@@ -24,7 +24,12 @@ while (<>) {
   }
   s/{/{\n/g;
   s/}/}\n/g;
-  s/;/;\n/g;
+  foreach $part (split(/\"([^\"]|[\\][\"])*\"/)) {
+    my $origpart = quotemeta($part);
+    my $modpart = $part;
+    $modpart =~ s/;([^\"])/;\n\1/g;
+    s/$origpart/$modpart/g;
+  }
   while (/\n\n/) {
     s/\n\n/\n/g;
   }
