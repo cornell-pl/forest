@@ -11,5 +11,5 @@
 #define PADS_TY(suf) pn_t ## suf
 #define EXTRA_READ_ARGS 0, 9999999999LL,
 #include "typedef.h"
-#include "template/accum_report"
+#include "template/accum_report.h"
 

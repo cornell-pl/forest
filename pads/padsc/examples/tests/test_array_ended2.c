@@ -10,5 +10,5 @@
 #define PADS_TY(suf) entry ## suf
 
 #include "array_ended2.h"
-#include "template/accum_report"
+#include "template/accum_report.h"
 

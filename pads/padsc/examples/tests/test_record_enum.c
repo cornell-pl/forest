@@ -11,5 +11,5 @@
 #define PADS_TY(suf) orderStates ## suf
 
 #include "record_enum.h"
-#include "template/accum_report"
+#include "template/accum_report.h"
 

@@ -46,5 +46,5 @@ do { \
 
 #define PADS_TY(suf) http_clf_t ## suf
 #include "ai.h"
-#include "template/accum_report"
+#include "template/accum_report.h"
 

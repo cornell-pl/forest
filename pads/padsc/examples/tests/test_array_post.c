@@ -9,5 +9,5 @@
 #define PADS_TY(suf) intList ## suf
 
 #include "array_post.h"
-#include "template/accum_report"
+#include "template/accum_report.h"
 

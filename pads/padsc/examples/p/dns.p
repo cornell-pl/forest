@@ -27,9 +27,11 @@ Pstruct label_t {
    Pa_string_FW(:length:) l;  
 };
 
+// to get the offset in a pointer field, ignore the top two bits
+int p_offset(Puint16 p) { return p - (p & 49152); } // return p & ~0xC000
+
 Pstruct ptr_t {
-  Psbh_uint16(:2:)          praw : (praw>>14) == 3;
-  Pcompute Puint16          pfix = praw - (praw & 49152); // 49152 == 0xC000
+  Psbh_uint16(:2:)          p : (p>>14) == 3;
 };
 
 Punion label_or_ptr {
@@ -58,7 +60,7 @@ int domain_name_dbg(label_or_ptr* elts, Puint32 length, size_t offset) {
       if (elts[i].tag == label) {
 	fprintf(stderr, "%s", P_fmt_str(&(elts[i].val.label.l)));
       } else {
-	fprintf(stderr, "[ptr:%x->%x]", elts[i].val.ptr.praw, elts[i].val.ptr.pfix);
+	fprintf(stderr, "[ptr:%x->%x]", elts[i].val.ptr.p, p_offset(elts[i].val.ptr.p));
       }
     }
   }
@@ -71,8 +73,7 @@ Parray domain_name {
   label_or_ptr [] : Plast(check256(eltEnd.offset - arrayBegin.offset, arrayBegin.offset)
 			      || elts[current].tag != label
 			      || elts[current].val.label.length == 0) ;
-} Pwhere {
-  Pparsecheck(domain_name_dbg(elts, length, arrayBegin.offset));
+//} Pwhere { Pparsecheck(domain_name_dbg(elts, length, arrayBegin.offset))
 };
 
 Pstruct A_t(:Puint16 rdlength:) {
@@ -99,7 +100,7 @@ Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
 
 Pstruct resource_record {
   domain_name              name;
-  Psbh_uint16(:2:)         type : printf("Type is %d\n",type);
+  Psbh_uint16(:2:)         type /* : printf("Type is %d\n",type) */ ;
   Psbh_uint16(:2:)         class;
   Psbh_uint32(:4:)         ttl;    /- should be limited to positive signed 32bit
   Psbh_uint16(:2:)         rdlength;

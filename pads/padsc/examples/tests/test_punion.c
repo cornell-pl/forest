@@ -11,5 +11,5 @@
 #define PADS_TY(suf) test2 ## suf
 
 #include "punion.h"
-#include "template/accum_report"
+#include "template/accum_report.h"
 

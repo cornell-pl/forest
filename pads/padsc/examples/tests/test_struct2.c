@@ -10,5 +10,5 @@
 
 #define PADS_TY(suf) test ## suf
 #include "struct2.h"
-#include "template/accum_report"
+#include "template/accum_report.h"
 

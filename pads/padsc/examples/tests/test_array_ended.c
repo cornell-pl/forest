@@ -10,4 +10,4 @@
 #define PADS_TY(suf) entry ## suf
 
 #include "array_ended.h"
-#include "template/accum_report"
+#include "template/accum_report.h"

@@ -2,4 +2,4 @@
 #define IO_DISC_MK P_norec_noseek_make(0)
 #define COPY_STRINGS 1
 #include "dns.h"
-#include "template/accum_report.h"
+#include "template/read_write.h"

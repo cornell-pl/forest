@@ -10,5 +10,5 @@
 #define WSPACE_OK
 
 #include "format1.h"
-#include "template/accum_report"
+#include "template/accum_report.h"
 

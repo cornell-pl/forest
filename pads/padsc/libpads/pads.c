@@ -252,7 +252,7 @@ do {
     if (RBuf_reserve((sIN)->rbuf, (void**)&((sIN)->str), sizeof(char), wdth_PDCI_STR_CPY+1, PDCI_STRING_HINT)) {
       goto fatal_alloc_err;
     }
-    strncpy((sIN)->str, (char*)(bIN), wdth_PDCI_STR_CPY);
+    memcpy((sIN)->str, (char*)(bIN), wdth_PDCI_STR_CPY);
     (sIN)->str[wdth_PDCI_STR_CPY] = 0;
     (sIN)->len = wdth_PDCI_STR_CPY;
     /* if ((sIN)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(sIN)); } */
@@ -4595,7 +4595,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.119 2003-10-17 20:30:11 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.120 2003-10-21 20:53:26 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

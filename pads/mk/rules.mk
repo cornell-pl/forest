@@ -271,7 +271,7 @@ endif
 
 ifndef BuildAST4PADSLib
 INCLUDES += -I$(PADS_HOME)/padsc/include
-INCLUDE_DEPS = $(PADS_HOME)/padsc/include/*.h
+INCLUDE_DEPS = $(PADS_HOME)/padsc/include/*.h $(PADS_HOME)/padsc/include/template/*.h
 else
 INCLUDE_DEPS =
 endif
@@ -441,6 +441,12 @@ ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule R_D"
 endif
 	@$(CCExec_DYNAMIC_D)
+
+rw_%_d: $(GEN_DIR)/%.c rw_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule RW_D"
+endif
+	@$(CCExec_DYNAMIC_D)
 endif # REGRESS_TESTS / _d rule
 
 ifdef BuildPADSLib
@@ -483,6 +489,12 @@ ifdef REGRESS_TESTS
 test_%: $(GEN_DIR)/%.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule R_O"
+endif
+	@$(CCExec_DYNAMIC_O)
+
+rw_%: $(GEN_DIR)/%.c rw_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule RW_O"
 endif
 	@$(CCExec_DYNAMIC_O)
 endif # REGRESS_TESTS / non _d rule

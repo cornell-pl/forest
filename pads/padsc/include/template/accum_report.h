@@ -40,11 +40,10 @@ int main(int argc, char** argv) {
 
   if (argc == 2) {
     fileName = argv[1];
-    error(0, "Data file = %s\n", fileName);
   } else {
     fileName = DEF_INPUT_FILE;
-    error(0, "Data file = %s\n", DEF_INPUT_FILE);
   }
+  error(0, "Data file = %s\n", fileName);
 
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(ERROR_FATAL, "*** P_open failed ***");
