@@ -45,7 +45,7 @@ endif
 pglx_lib:
 	@(cd $(PADS_HOME)/padsc; $(MAKE) pglx_lib)
 
-current: test_smart_myenum-g
+current: test_smart_myenum-d
 
 test_load_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_load_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D) 
 	@$(CCExec_DYNAMIC_D)
@@ -77,8 +77,8 @@ test_query_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_
 test_query_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-$(CODE_DIR)/%_myenum.c: $(CODE_DIR)/enum_kth.c $(CODE_DIR)/enum_kth.h
-	touch $(CODE_DIR)/$*_myenum.c
+$(GEN_DIR)/myenum.c: $(CODE_DIR)/enum_kth.c $(CODE_DIR)/enum_kth.h
+	touch $(GEN_DIR)/myenum.c
 
 
 ifdef WITH_KTH
