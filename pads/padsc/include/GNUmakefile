@@ -25,9 +25,14 @@ INCDIR = $(PADS_HOME)/padsc/include
 PCGEN_IN = $(INCDIR)/pcgen-macros.h
 PCGEN = $(INCDIR)/pcgen-macros-gen.h
 
-INSTALL_INCLUDES = io_disc.h rbuf.h pads.h pads-private.h pads-internal.h pcgen-macros-gen.h
+PGLXGEN_IN = $(INCDIR)/pglx-codegen-macros.h
+PGLXGEN = $(INCDIR)/pglx-codegen-macros-gen.h
 
-all : $(PCGEN)
+INSTALL_INCLUDES = io_disc.h rbuf.h pads.h pads-private.h pads-internal.h pcgen-macros-gen.h \
+	pglx-codegen-macros-gen.h node_mm.h path_walk.h smart.h free-list-internal.h \
+	free-list-imp.h pglx-free-list.h
+
+all : $(PCGEN) $(PGLXGEN)
 
 install : all
 	+@(set -x ; \
@@ -37,13 +42,17 @@ install : all
 
 $(PCGEN) : $(SCRIPTS)/mksrc.pl $(PCGEN_IN)
 	@echo "Building pcgen-macros-gen.h"
-	$(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/include/pcgen-macros.h $(INCDIR) $(PADS_HOME)
+	$(SCRIPTS)/mksrc.pl $(PCGEN_IN) $(INCDIR) $(PADS_HOME)
+
+$(PGLXGEN) : $(PGLXGEN_IN) $(SCRIPTS)/mksrc.pl 
+	@echo "Building pglx-codegen-macros-gen.h"
+	$(SCRIPTS)/mksrc.pl $(PGLXGEN_IN) $(INCDIR) $(PADS_HOME)
 
 clean :
 	$(RM) *~ ../*~
 
 veryclean :
-	$(RM) *~ ../*~ $(PCGEN)
+	$(RM) *~ ../*~ $(PCGEN) $(PGLXGEN)
 	(cd $(INSTALLROOT)/include; $(RM) $(INSTALL_INCLUDES); )
 
  # End of rules that are run from the arch directory

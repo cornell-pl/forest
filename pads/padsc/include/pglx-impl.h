@@ -78,22 +78,45 @@ do{                                           \
   (self)->path = (path);	              \
 }while(0)
 
+/*
 extern const PDCI_path_t PDCI_emptyPath;
 #define PDCI_EMPTY_PATH (PDCI_emptyPath)
 
 #define PDCI_PATH_INC(pathIN) ((pathIN).length++)
 #define PDCI_PATH_DEC(pathIN) ((pathIN).length--)
+*/
 
-/* child <= ty_PATH_MASK */
+/* child <= ty_PATH_MASK 
 #define PDCI_PATH_ADD(ty,p,child)\
   {((p).path |((child) << (p).length)),(p).length+(ty ## _pathWidth)}
+*/
 
-#define PDCI_PATH_REMOVE(ty,pIN,childOUT,pOUT)     \
-do { 					      \
-  (childOUT) = (pIN).path & ty ## _pathMask;      \
-  (pOUT).path   = (pIN).path >> ty ## _pathWidth;	      \
-  (pOUT).length = (pIN).length-(ty ## _pathWidth);	      \
-}while (0)
+#define PDCI_PATH_NEW(pathIN,LENGTH)\
+do{\
+  if ((LENGTH) > 0){\
+    (pathIN).p = (PDCI_childIndex_t *)calloc((LENGTH),sizeof(PDCI_childIndex_t));\
+  }else{ \
+   (pathIN).p = 0;\
+  }\
+ (pathIN).length = (LENGTH);   \
+}while(0)
+
+#define PDCI_PATH_FREE(pathIN)\
+do{\
+  if ((pathIN).p != 0){\
+    free((pathIN).p);  \
+    (pathIN).p = 0;\
+  }\
+  (pathIN).length = 0;\
+}while(0)
+
+#define PDCI_PATH_SET(pathIN,idxIN,childIN)\
+do{\
+  (pathIN).p[idxIN] = (childIN);\
+}while(0)
+
+#define PDCI_PATH_GET(pathIN)     \
+  ((pathIN).p[--((pathIN).length)])
 
 #ifndef NDEBUG
 #define PDCI_NODE_CHECK(n, whatfn) \

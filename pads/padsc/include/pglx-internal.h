@@ -34,8 +34,10 @@ typedef struct PDCI_sequenced_pd_s  PDCI_sequenced_pd;
  * HELPER MACROS */
 
 /* These macros are defined in pglx-impl.h.  Here we give prototypes for CKIT: */ 
+
 #ifndef FOR_CKIT
 #  include "pglx-impl.h"
+#  include "pglx-codegen-macros-gen.h"
 #else
 
 void PDCI_NODE_CHECK(PDCI_node_t *n, const char *whatfn);
@@ -74,8 +76,66 @@ void  PDCI_MK_TOP_NODE(PDCI_node_t *result,
 		       void* m, void* pd,
 		       void* rep,
 		       const char *whatfn);
-#endif
+typedef int type_t;
+typedef int field_t;
 
+void NODE_NEW_BODY(type_t ty);
+PDCI_node_t *NODE_NEW_RET();
+
+void CACHED_NODE_INIT_BODY(type_t ty, int NUM_CHILDREN);
+PDCI_node_t *CACHED_NODE_INIT_RET();
+
+void SND_NODE_INIT_BODY(type_t ty);
+PDCI_node_t
+    *SND_NODE_INIT_RET();
+
+void STR_NODE_KTH_CHILD_BODY_BEGIN(type_t ty);
+void STR_NODE_KTH_CHILD_BODY_END();
+PDCI_node_t *STR_NODE_KTH_CHILD_RET();
+
+void NODE_KC_CASE(type_t ty, int fieldNumIN, type_t fieldTy, field_t fieldNameIN);
+void NODE_KC_CASE_COMP(type_t ty, int fieldNumIN, type_t fieldTy, field_t fieldNameIN);
+void STR_NODE_KTH_CHILD_NAMED_BODY(type_t ty, ...);
+PDCI_node_t
+    *STR_NODE_KTH_CHILD_NAMED_RET();
+
+void CACHED_NODE_KTH_CHILD_BODY(type_t ty, int NUM_CHILDREN);
+PDCI_node_t 
+    *CACHED_NODE_KTH_CHILD_RET();
+
+void STR_SND_NODE_KTH_CHILD_BODY_BEGIN(type_t ty);
+void STR_SND_NODE_KTH_CHILD_BODY_END();
+PDCI_node_t
+    *STR_SND_NODE_KTH_CHILD_RET();
+void SND_NODE_KC_CASE(type_t ty, int fieldNumIN,type_t fieldTy, field_t fieldNameIN);
+void SND_NODE_KC_CASE_COMP(type_t ty, int fieldNumIN,type_t fieldTy, field_t fieldNameIN);
+
+void STR_NODE_PATH_WALK_BODY_BEGIN();
+void STR_NODE_PATH_WALK_BODY_END();
+Perror_t STR_NODE_PATH_WALK_RET();
+
+int  NODE_PW_CASE(fieldNumIN,fieldTy,fieldNameIN);
+
+void VTABLE_DEFS(type_t ty);
+
+void ARR_NODE_KTH_CHILD_BODY(type_t ty, type_t childTy);
+PDCI_node_t 
+    *ARR_NODE_KTH_CHILD_RET();
+
+void ARR_NODE_KTH_CHILD_NAMED_BODY(type_t ty);
+PDCI_node_t
+    *ARR_NODE_KTH_CHILD_NAMED_RET();
+
+int  ARR_LENGTH(type_t ty);
+
+void ARR_SND_NODE_KTH_CHILD_BODY(type_t ty, type_t childTy);
+PDCI_node_t *
+     ARR_SND_NODE_KTH_CHILD_RET();
+
+void ARR_NODE_PATH_WALK_BODY(type_t childTy);
+Perror_t
+     ARR_NODE_PATH_WALK_RET();
+#endif
 /* Helper macros that we always want expanded */
 
 #define PDCI_DECL_NEW(ty) \
@@ -87,7 +147,7 @@ PDCI_node_t * ty ## _node_new(PDCI_node_t *parent, \
 PDCI_node_t * ty ## _sndNode_init(PDCI_node_t *self,          \
 				  PDCI_smart_elt_info_t *elt, \
 				  PDCI_gen_t gen, 	      \
-				  PDCI_path_t path)
+				  PDCI_childIndex_t idx)
 
 #define PDCI_DECL_VT(ty) \
 extern const PDCI_vtable_t ty ## _node_vtable; \
@@ -105,9 +165,9 @@ PDCI_node_t * ty ## _text_node_new(PDCI_node_t *parent, const char *whatfn);\
 PDCI_node_t  * ty ## _val_cachedNode_init(PDCI_node_t *node); \
 PDCI_node_t  * ty ## _text_cachedNode_init(PDCI_node_t *node); \
 PDCI_node_t  * ty ## _val_sndNode_init(PDCI_node_t *node, PDCI_smart_elt_info_t *elt, \
-				     PDCI_gen_t gen, PDCI_path_t path); \
+				     PDCI_gen_t gen, PDCI_childIndex_t idx); \
 PDCI_node_t  * ty ## _text_sndNode_init(PDCI_node_t *node, PDCI_smart_elt_info_t *elt, \
-				     PDCI_gen_t gen, PDCI_path_t path); \
+				     PDCI_gen_t gen, PDCI_childIndex_t idx); \
 PDCI_node_t  * ty ## _val_node_kthChild(PDCI_node_t *node, PDCI_childIndex_t idx); \
 PDCI_node_t  * ty ## _val_node_kthChildNamed(PDCI_node_t *node, PDCI_childIndex_t idx, const char *name); \
 item ty ## _typed_value(PDCI_node_t *node); \
@@ -156,15 +216,15 @@ struct PDCI_node_s {
   PDCI_gen_t               ancestor_gen;
 
   /*
-   * path to object from ancestor
+   * index of object in relation to parent
    */
-  PDCI_path_t              path;
+  PDCI_childIndex_t        idx;
   
   // Used by smart nodes:
-  PDCI_smart_node_t        *snExt;
+  PDCI_smart_node_t       *snExt;
 
   // Used by caching nodes
-  PDCI_node_t             **child_cache;  
+  PDCI_node_t           **child_cache;  
 };
 
 /* Type PDCI_vtable_t: */
@@ -231,15 +291,15 @@ PDCI_node_t  * PDCI_sequenced_pd_cachedNode_init(PDCI_node_t *self);
 /* sndNode init functions */
 
 PDCI_node_t  * Pbase_pd_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
-				     PDCI_gen_t gen, PDCI_path_t path);
+				     PDCI_gen_t gen, PDCI_childIndex_t idx);
 PDCI_node_t  * Ploc_t_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
-				     PDCI_gen_t gen, PDCI_path_t path);
+				     PDCI_gen_t gen, PDCI_childIndex_t idx);
 PDCI_node_t  * Ppos_t_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
-				     PDCI_gen_t gen, PDCI_path_t path);
+				     PDCI_gen_t gen, PDCI_childIndex_t idx);
 PDCI_node_t  * PDCI_structured_pd_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
-				     PDCI_gen_t gen, PDCI_path_t path);
+				     PDCI_gen_t gen, PDCI_childIndex_t idx);
 PDCI_node_t  * PDCI_sequenced_pd_sndNode_init(PDCI_node_t *self, PDCI_smart_elt_info_t *elt, 
-				     PDCI_gen_t gen, PDCI_path_t path);
+				     PDCI_gen_t gen, PDCI_childIndex_t idx);
 
 /* children functions that return an array - will go away */
 
