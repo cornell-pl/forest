@@ -76,7 +76,7 @@ Precord Pstruct out_sum_header {
   Pa_uint32     tstamp;
 };
 
-Parray eventSeq(int size) {
+Parray eventSeq(:int size:) {
   event [size];
 };
 
