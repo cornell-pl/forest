@@ -959,7 +959,7 @@ structure CnvExt : CNVEXT = struct
 
                       (* Generate error description *)
 		      val baseEDPCT = P.makeTypedefPCT(lookupTy(baseTy,edSuf, #edname))
-                      val edFields  = [(nerr, P.int, NONE), (errCode, P.int, NONE),
+                      val edFields  = [(nerr, P.int, NONE), (errCode, PL.errCodePCT, NONE),
 				       (loc, PL.locPCT,NONE), (panic, P.int, NONE),
 				       (base, baseEDPCT, SOME "Base error description")]
 		      val edED      = P.makeTyDefStructEDecl (edFields, edSuf name)
@@ -1196,7 +1196,7 @@ structure CnvExt : CNVEXT = struct
 			  [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		      fun genEDBrief e = []
 		      fun genEDEOR () = []
-		      val auxEDFields = [(nerr, P.int,NONE), (errCode, P.int,NONE),
+		      val auxEDFields = [(nerr, P.int,NONE), (errCode, PL.errCodePCT, NONE),
 					 (loc, PL.locPCT,NONE), (panic, P.int,NONE)]
 		      val edFields = auxEDFields @ (mungeFields genEDFull genEDBrief genEDEOR fields)
 		      val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
@@ -1720,7 +1720,7 @@ structure CnvExt : CNVEXT = struct
 			 [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		     fun genEDBrief e = []
 		     fun genEDEOR e = []
-		     val auxEDFields = [(nerr, P.int,NONE), (errCode, P.int,NONE),
+		     val auxEDFields = [(nerr, P.int,NONE), (errCode, PL.errCodePCT, NONE),
 					(loc, PL.locPCT,NONE), (panic, P.int,NONE)]
 		     val edFields = auxEDFields @ (mungeVariants genEDFull genEDBrief genEDEOR variants)
 		     val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
@@ -1862,7 +1862,7 @@ structure CnvExt : CNVEXT = struct
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* ) *)
 		      val addFun = (addSuf o accSuf) name
 		      val addDeclSs = [P.varDeclS(P.int, nerr, P.zero), P.varDeclS'(PL.base_edPCT, ted)]
-		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), P.zero)]
+		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), PL.PDC_NO_ERROR)]
 		      fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
 		      val addTagSs = chkAddFun(addSuf PL.intAct, getFieldX(acc,tag), P.addrX(PT.Id ted), 
 						  PT.Cast(P.ptrPCT PL.intPCT, getFieldX(rep,tag)))
@@ -2655,7 +2655,7 @@ structure CnvExt : CNVEXT = struct
 		     let val theSuf = addSuf
 			 val theFun = (theSuf o accSuf) name
 			 val theDeclSs = [P.varDeclS(P.int, nerr, P.zero), P.varDeclS'(PL.base_edPCT, ted)]
-			 val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), P.zero)]
+			 val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), PL.PDC_NO_ERROR)]
 			 fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
                          val doElems = 
 			     case lookupAcc baseTy of NONE => []
