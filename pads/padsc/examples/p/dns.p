@@ -161,6 +161,189 @@ Parray TXT_t(:Puint16 rdlength:) {
   character_string [] : Plast(eltEnd.offset - arrayBegin.offset >= rdlength);
 };
 
+Pstruct SRV_t {
+  Psbh_uint16(:2:) priority;
+  Psbh_uint16(:2:) weight;
+  Psbh_uint16(:2:) port;
+  domain_name target;
+};
+
+Pstruct NAPTR_t {
+  Psbh_uint16(:2:) order;
+  Psbh_uint16(:2:) preference;
+  character_string flags;
+  character_string services;
+  character_string regexp;
+  domain_name replacement;
+};
+
+Pstruct KX_t {
+  Psbh_uint16(:2:) preference;
+  domain_name exchanger;
+};
+
+Pstruct A6_t {
+  Psbh_uint8(:1:) prefix_len; // FIX: must be <129
+  Pa_string_FW(:(prefix_len==128)?0:((128-prefix_len)/8 + 1):) address_suffix; // Note: can be 0 octets
+  domain_name prefix; // FIX: if prefix_len is 0, should be omitted!!
+};
+
+Pstruct DNAME_t {
+  domain_name target;
+};
+
+Pstruct DS_t(:Puint16 rdlength:) {
+  Pcompute size_t start = position.offset;
+  Psbh_uint16(:2:) key_tag;
+  Psbh_uint8(:1:) algorithm;
+  Psbh_uint8(:1:) digest_type;
+  domain_name signers_name;
+  Pcompute size_t middle = position.offset;
+  // Need to make sure rdlength > middle - start
+  Pa_string_FW(:rdlength-(middle-start):) digest;
+};
+
+Pstruct RP_t {
+  domain_name mbox_dname;
+  domain_name txt_dname;
+};
+
+Pstruct AFSDB_t {
+  Psbh_uint16(:2:) subtype;
+  domain_name hostname;
+};
+
+Pstruct X25_t {
+  character_string PSDN_address;
+};
+
+Pstruct ISDN_t {
+  character_string ISDN_address;
+  character_string sa; // FIX: OPTIONAL! RFC 1183
+};
+
+Pstruct RT_t {
+  Psbh_uint16(:2:) preference;
+  domain_name intermediate_host;
+};
+
+Pstruct NSAP_t(:Puint16 rdlength:) {
+  Pa_string_FW(:rdlength:) nsap;
+};
+
+Pstruct SIG_t(:Puint16 rdlength:) {
+  // Identical to and obsoleted by RRSIG
+  Pcompute size_t start = position.offset;
+  Psbh_uint16(:2:) type_covered;
+  Psbh_uint8(:1:) algorithm;
+  Psbh_uint8(:1:) labels;
+  Psbh_uint32(:4:) original_ttl;
+  Psbh_uint32(:4:) signature_expiration;
+  Psbh_uint32(:4:) signature_inception;
+  Psbh_uint16(:2:) key_tag;
+  domain_name signers_name;
+  Pcompute size_t middle = position.offset;
+  // Need to make sure rdlength > middle - start
+  Pa_string_FW(:rdlength-(middle-start):) signature;
+};
+
+Pstruct KEY_t(:Puint16 rdlength:) {
+  // Identical to and obsoleted by DNSKEY
+  Pcompute size_t start = position.offset;
+  Psbh_uint16(:2:) flags;
+  Psbh_uint8(:1:) protocol;
+  Psbh_uint8(:1:) algorithm;
+  Pcompute size_t middle = position.offset;
+  // Need to make sure rdlength > middle - start
+  Pa_string_FW(:rdlength-(middle-start):) public_key;
+};
+
+Pstruct PX_t {
+  Psbh_uint16(:2:) preference;
+  domain_name map822;
+  domain_name mapx400;
+};
+
+Pstruct AAAA_t {
+  Pa_string_FW(:16:) address;
+};
+
+Pstruct LOC_t {
+  Psbh_uint8(:1:) version;
+  Psbh_uint8(:1:) size;
+  Psbh_uint8(:1:) horiz_pre;
+  Psbh_uint8(:1:) vert_pre;
+  Psbh_uint32(:4:) latitude;
+  Psbh_uint32(:4:) longitude;
+  Psbh_uint32(:4:) altitude;
+};
+
+Pstruct NXT_t(:Puint16 rdlength:) {
+  // Identical to and obsoleted by NSEC
+  Pcompute size_t start = position.offset;
+  domain_name next_domain_name;
+  Pcompute size_t middle = position.offset;
+  // Need to make sure rdlength > middle - start
+  Pa_string_FW(:rdlength-(middle-start):) type_bit_map;
+};
+
+Pstruct RRSIG_t(:Puint16 rdlength:) {
+  Pcompute size_t start = position.offset;
+  Psbh_uint16(:2:) type_covered;
+  Psbh_uint8(:1:) algorithm;
+  Psbh_uint8(:1:) labels;
+  Psbh_uint32(:4:) original_ttl;
+  Psbh_uint32(:4:) signature_expiration;
+  Psbh_uint32(:4:) signature_inception;
+  Psbh_uint16(:2:) key_tag;
+  domain_name signers_name;
+  Pcompute size_t middle = position.offset;
+  // Need to make sure rdlength > middle - start
+  Pa_string_FW(:rdlength-(middle-start):) signature;
+};
+
+Pstruct NSEC_t(:Puint16 rdlength:) {
+  Pcompute size_t start = position.offset;
+  domain_name next_domain_name;
+  Pcompute size_t middle = position.offset;
+  // Need to make sure rdlength > middle - start
+  Pa_string_FW(:rdlength-(middle-start):) type_bit_map;
+};
+
+Pstruct DNSKEY_t(:Puint16 rdlength:) {
+  Pcompute size_t start = position.offset;
+  Psbh_uint16(:2:) flags;
+  Psbh_uint8(:1:) protocol;
+  Psbh_uint8(:1:) algorithm;
+  Pcompute size_t middle = position.offset;
+  // Need to make sure rdlength > middle - start
+  Pa_string_FW(:rdlength-(middle-start):) public_key;
+};
+
+Pstruct TKEY_t {
+  domain_name algorithm;
+  Psbh_uint32(:4:) inception;
+  Psbh_uint32(:4:) expiration;
+  Psbh_uint16(:2:) mode;
+  Psbh_uint16(:2:) error;
+  Psbh_uint16(:2:) key_size;
+  Pa_string_FW(:key_size:) key_data;
+  Psbh_uint16(:2:) other_size;
+  Pa_string_FW(:other_size:) other_data;
+};
+
+Pstruct TSIG_t {
+  domain_name algorithm;
+  Psbh_uint64(:8:) time_signed; // FIX: SHOULD BE UINT48!!!!!
+  Psbh_uint16(:2:) fudge;
+  Psbh_uint16(:2:) mac_size;
+  Pa_string_FW(:mac_size:) mac;
+  Psbh_uint16(:2:) original_id;
+  Psbh_uint16(:2:) error;
+  Psbh_uint16(:2:) other_len;
+  Pa_string_FW(:other_len:) other_data;
+};
+
 Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
   Pswitch (t) {
   Pcase 1 : A_t(:rdlength:) A;
@@ -179,6 +362,29 @@ Punion rr_spec (:Puint16 t,Puint16 rdlength:) {
   Pcase 14 : MINFO_t MINFO;
   Pcase 15 : MX_t MX;
   Pcase 16 : TXT_t(:rdlength:) TXT;
+  Pcase 17 : RP_t RP;
+  Pcase 18 : AFSDB_t AFSDB;
+  Pcase 19 : X25_t X25;
+  Pcase 20 : ISDN_t ISDN;
+  Pcase 21 : RT_t RT;
+  Pcase 22 : NSAP_t(:rdlength:) NSAP;
+  Pcase 24 : SIG_t(:rdlength:) SIG;
+  Pcase 25 : KEY_t(:rdlength:) KEY;
+  Pcase 26 : PX_t PX;
+  Pcase 28 : AAAA_t AAAA;
+  Pcase 29 : LOC_t LOC;
+  Pcase 30 : NXT_t(:rdlength:) NXT;
+  Pcase 33 : SRV_t SRV;
+  Pcase 35 : NAPTR_t NAPTR;
+  Pcase 36 : KX_t KX;
+  Pcase 38 : A6_t A6;
+  Pcase 39 : DNAME_t DNAME;
+  Pcase 43 : DS_t(:rdlength:) DS;
+  Pcase 46 : RRSIG_t(:rdlength:) RRSIG;
+  Pcase 47 : NSEC_t(:rdlength:) NSEC;
+  Pcase 48 : DNSKEY_t(:rdlength:) DNSKEY;
+  Pcase 249 : TKEY_t TKEY;
+  Pcase 250 : TSIG_t TSIG;
   Pdefault : Pa_string_FW(:rdlength:) unknown;
   }
 } Pwhere { Pparsecheck(fprintf(stderr,"unionEnd.offset=%x,unionBegin.offset=%x,rdlength=%x\n",unionEnd.offset,unionBegin.offset,rdlength)) &&
