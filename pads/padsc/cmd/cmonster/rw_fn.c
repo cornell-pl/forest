@@ -14,8 +14,8 @@
  *               targ_decl,       declare in-memory rep type targ
  *               read_call,       read function call
  *               assign_stmt,     either null statement or a (*res_out) assignment
- *               dbg_val_write,   stmt that writes resulting value to cm.errf, uses targ or res_out
- *               write2buf_nm,    name of write2buf fn (string)
+ *               dbg_val_write,   stmt that writes resulting value to cm->errf, uses targ or res_out
+ *               write2buf_nm,    name of write2buf fn as string
  *               write_sz,        size in bytes to write, may be constant or qy->params.elts[0]
  *               write_call       write2buf function call, uses targ or res_out
  * );      
@@ -1116,34 +1116,34 @@ CM_RW_FN_IMPL(  CM_RW_FN_NM(e_char),
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(string_FW),
 		CM_RW_FN_PARAMS,
-		PDC_string targ,
-		PDC_string_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
+		PDC_string *targp = &(cm->tmp1),
+		PDC_string_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, targp),
 		PDC_NULL_STMT,
-		sfprintf(cm->errf, "  ==> val = [%.*s]\n", targ.len, targ.str),
+		sfprintf(cm->errf, "  ==> val = [%s]\n", PDC_qfmt_str(targp)),
 		"PDC_a_string_FW_write2buf",
 		qy->params.elts[0],
-		PDC_a_string_FW_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, &targ)
+		PDC_a_string_FW_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, targp)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(a_string_FW),
 		CM_RW_FN_PARAMS,
-		PDC_string targ,
-		PDC_a_string_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
+		PDC_string *targp = &(cm->tmp1),
+		PDC_a_string_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, targp),
 		PDC_NULL_STMT,
-		sfprintf(cm->errf, "  ==> val = [%.*s]\n", targ.len, targ.str),
+		sfprintf(cm->errf, "  ==> val = [%s]\n", PDC_qfmt_str(targp)),
 		"PDC_a_string_FW_write2buf",
 		qy->params.elts[0],
-		PDC_a_string_FW_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, &targ)
+		PDC_a_string_FW_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, targp)
 );
 
 CM_RW_FN_IMPL(  CM_RW_FN_NM(e_string_FW),
 		CM_RW_FN_PARAMS,
-		PDC_string targ,
-		PDC_e_string_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, &targ),
+		PDC_string *targp = &(cm->tmp1),
+		PDC_e_string_FW_read(cm->pdc, &m, qy->params.elts[0], &pd, targp),
 		PDC_NULL_STMT,
-		sfprintf(cm->errf, "  ==> val = [%.*s]\n", targ.len, targ.str),
+		sfprintf(cm->errf, "  ==> val = [%s]\n", PDC_qfmt_str(targp)),
 		"PDC_a_string_FW_write2buf",
 		qy->params.elts[0],
-		PDC_a_string_FW_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, &targ)
+		PDC_a_string_FW_write2buf(cm->pdc, cm->outbuf_cursor, remain_out, &buf_full, qy->params.elts[0], &pd, targp)
 );
 

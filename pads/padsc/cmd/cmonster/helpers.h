@@ -24,8 +24,6 @@ void describe_arm(Sfio_t *io, CM_arm *a);
 void describe_s_cookie(Sfio_t *io, CM_s_cookie *s);
 void describe_cookie(Sfio_t *io, CM_cspec *cspec);
 
-size_t out_sz_c_cookie(CM_c_cookie *c);
-size_t out_sz_s_cookie(CM_s_cookie *s);
 size_t out_sz_cookie(CM_cspec *cspec);
 
 PDC_error_t rw_c_cookie(CM_t *cm, CM_c_cookie *c, PDC_byte *begin, PDC_byte *end);

@@ -14,8 +14,8 @@
  *               targ_decl,       declare in-memory rep type targ
  *               read_call,       read function call
  *               assign_stmt,     either null statement or a (*res_out) assignment
- *               dbg_val_write,   stmt that writes resulting value to cm.errf, uses targ or res_out
- *               write2buf_nm,    name of write2buf fn (string)
+ *               dbg_val_write,   stmt that writes resulting value to cm->errf, uses targ or res_out
+ *               write2buf_nm,    name of write2buf fn as string
  *               write_sz,        size in bytes to write, may be constant or qy->params.elts[0]
  *               write_call       write2buf function call, uses targ or res_out
  * );      

@@ -7,7 +7,6 @@
  */
 
 #include "cmonster.h"
-extern CM_t *error_cm; /* cm handle for parser routines to use for error reporting */
 
 /* Declare all of the rw_fn: */
 
@@ -283,21 +282,3 @@ CM_tmentry_t tmap[] = {
   { 0, 0, 0, 0, 0 }
 };
 
-CM_tmentry_t* CM_get_tmentry(PDC_string *s, int switch_qy)
-{
-  CM_tmentry_t *e = &(tmap[0]);
-  for (; e->tname; e++) {
-    if (PDC_string_eq_Cstr(s, e->tname)) {
-      if (switch_qy && !e->sval_fn) {
-	sfprintf(error_cm->errf,
-	      "\n*** FATAL: type %.*s not a valid switch type (char type or int32 target type).\n"
-	      "    Use 'cmonster -h' for details.\n\n", s->len, s->str);
-	abort();
-      }
-      return e;
-    }
-  }
-  sfprintf(error_cm->errf, "\n*** FATAL: unknown type: %.*s\n\n", s->len, s->str);
-  abort();
-  return 0; /* control never gets here, but it may make compilers happy */
-}

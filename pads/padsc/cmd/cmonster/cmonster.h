@@ -17,6 +17,8 @@
 /* -------------------------------------------------------------------------------- */
 /* types */
 
+typedef struct CM_s           CM_t;
+
 /* A cmonster handle, type CM_t: */
 struct CM_s {
   PDC_t           *pdc;
@@ -29,6 +31,31 @@ struct CM_s {
   PDC_byte        *outbuf;
   PDC_byte        *outbuf_end;
   PDC_byte        *outbuf_cursor; /* cursor always in range [outbuf, outbuf_end] */
+  PDC_string       tmp1;          /* used by string rw/sval functions */
+};
+
+extern CM_t *error_cm; /* cm handle for parser routines to use for error reporting */
+
+/* signatures for:
+ *    read-write function
+ *    switch-val function
+ *    calculate-in-sz function
+ *    calculate-out-sz function
+ */
+
+typedef PDC_error_t (*CM_rw_fn)    (CM_t *cm, CM_query *qy, PDC_byte *begin, PDC_byte *end);
+typedef PDC_error_t (*CM_sval_fn)  (CM_t *cm, CM_query *qy, PDC_byte *begin, PDC_byte *end, PDC_int32 *res_out);
+
+typedef size_t      (*CM_in_sz_fn) (CM_query *qy);
+typedef size_t      (*CM_out_sz_fn)(CM_query *qy);
+
+/* A typemap entry, type CM_tmentry_t: */
+struct CM_tmentry_s {
+  const char      *tname;
+  CM_rw_fn         rw_fn;
+  CM_sval_fn       sval_fn;
+  CM_in_sz_fn      in_sz_fn;
+  CM_out_sz_fn     out_sz_fn;
 };
 
 /* -------------------------------------------------------------------------------- */

@@ -5,6 +5,7 @@
  * AT&T Labs Research
  */
 
+#include "cmonster.h"
 #include "helpers.h"
 
 void describe_query(Sfio_t *io, CM_query *q)
@@ -39,8 +40,7 @@ void describe_queries(Sfio_t *io, CM_queries *qs)
 
 void describe_c_cookie(Sfio_t *io, CM_c_cookie *c)
 {
-  size_t out_sz = out_sz_c_cookie(c);
-  sfprintf(io, "        C_COOKIE (out_sz: %ld):\n", (long)out_sz);
+  sfprintf(io, "        C_COOKIE (out_sz: %ld):\n", (long)c->out_sz);
   describe_queries(io, &(c->queries));
 }
 
@@ -48,8 +48,7 @@ void describe_s_cookie(Sfio_t *io, CM_s_cookie *s)
 {
   PDC_uint32 len = s->arms.length;
   PDC_uint32 i;
-  size_t out_sz = out_sz_s_cookie(s);
-  sfprintf(io, "  S_COOKIE (out_sz: %ld):\n", (long)out_sz);
+  sfprintf(io, "  S_COOKIE (out_sz: %ld):\n", (long)s->out_sz);
   sfprintf(io, "    SWITCH:\n");
   sfprintf(io, "            ");
   describe_query(io, &(s->s_qy));
@@ -72,47 +71,6 @@ void describe_cookie(Sfio_t *io, CM_cspec *cspec)
     describe_s_cookie(io, &(cspec->cookie.val.s_cookie));
     break;
   }
-}
-
-size_t out_sz_c_cookie(CM_c_cookie *c)
-{
-  PDC_uint32 len = c->queries.length;
-  size_t res = 0;
-  PDC_uint32 i;
-  for (i = 0; i < len; i++) {
-    res += (size_t)c->queries.elts[i].out_sz;
-  }
-  return res;
-}
-
-size_t out_sz_s_cookie(CM_s_cookie *s)
-{
-  PDC_uint32 len = s->arms.length;
-  PDC_uint32 i;
-  size_t res, res1;
-
-  res = out_sz_c_cookie(&(s->arms.elts[0].cookie));
-  for (i = 1; i < len; i++) {
-    res1 = out_sz_c_cookie(&(s->arms.elts[i].cookie));
-    if (res1 > res) {
-      res = res1;
-    }
-  }
-  res += s->s_qy.out_sz;
-  return res;
-}
-
-size_t out_sz_cookie(CM_cspec *cspec)
-{
-  switch (cspec->cookie.tag) {
-  case CM_c_or_s_err:
-    break;
-  case c_cookie:
-    return out_sz_c_cookie(&(cspec->cookie.val.c_cookie));
-  case s_cookie:
-    return out_sz_s_cookie(&(cspec->cookie.val.s_cookie));
-  }
-  return -1;
 }
 
 PDC_error_t rw_c_cookie(CM_t *cm, CM_c_cookie *c, PDC_byte *begin, PDC_byte *end)
@@ -142,16 +100,8 @@ PDC_error_t rw_s_cookie(CM_t *cm, CM_s_cookie *s, PDC_byte *begin, PDC_byte *end
       return rw_c_cookie(cm, &(s->arms.elts[i].cookie), begin, end);
     }
   }
-  /* did not find matching switch arm */
-  return PDC_ERR;
-}
-
-int CM_calc_in_out_sz(CM_query *q, PDC_int32 out_val)
-{
-  q->in_sz = q->entry->in_sz_fn(q);
-  if (!out_val) return 1; /* leave out_sz == 0 */
-  q->out_sz = q->entry->out_sz_fn(q);
-  return 1;
+  /* did not find matching switch arm.  not considered an error. */
+  return PDC_OK;
 }
 
 size_t CM_sz_1(CM_query *qy)
@@ -182,4 +132,78 @@ size_t CM_sz_p1(CM_query *qy)
 size_t CM_sz_p1plus1div2(CM_query *qy)
 {
   return (size_t)((qy->params.elts[0] + 1)/2);
+}
+
+CM_tmentry_t* CM_get_tmentry(PDC_string *s, int is_switch_qy)
+{
+  CM_tmentry_t *e = &(tmap[0]);
+  for (; e->tname; e++) {
+    if (PDC_string_eq_Cstr(s, e->tname)) {
+      if (is_switch_qy && !e->sval_fn) {
+	sfprintf(error_cm->errf,
+	      "\n*** FATAL: type %.*s not a valid switch type (char type or int32 target type).\n"
+	      "    Use 'cmonster -h' for details.\n\n", s->len, s->str);
+	abort();
+      }
+      return e;
+    }
+  }
+  sfprintf(error_cm->errf, "\n*** FATAL: unknown type: %.*s\n\n", s->len, s->str);
+  abort();
+  return 0; /* control never gets here, but it may make compilers happy */
+}
+
+/* Finishing functions fill in NULL Pcompute fields, abort on error. */
+int CM_finish_query(CM_query *q, int is_switch_qy, int is_out_val)
+{
+  q->entry = CM_get_tmentry(&(q->ty_id), is_switch_qy); /* aborts on error */
+  q->in_sz = q->entry->in_sz_fn(q);
+  if (!is_out_val) return 1; /* leave q->out_sz == 0 */
+  q->out_sz = q->entry->out_sz_fn(q);
+  return 1;
+}
+
+int CM_finish_c_cookie(CM_c_cookie *c)
+{
+  PDC_uint32    len = c->queries.length;
+  PDC_uint32    i;
+  CM_query     *q;
+
+  for (i = 0; i < len; i++) {
+    q = &(c->queries.elts[i]);
+    CM_finish_query(q, 0, 1);
+    c->out_sz += q->out_sz;
+  }
+  return 1;
+}
+
+int CM_finish_s_cookie(CM_s_cookie *s)
+{
+  PDC_uint32 len = s->arms.length;
+  PDC_uint32 i, tmp;
+
+  s->out_sz = s->arms.elts[0].cookie.out_sz;
+  for (i = 1; i < len; i++) {
+    tmp = s->arms.elts[i].cookie.out_sz;
+    if (tmp > s->out_sz) {
+      s->out_sz = tmp;
+    }
+  }
+
+  CM_finish_query(&(s->s_qy), 1, s->sval_out);
+  s->out_sz += s->s_qy.out_sz;
+  return 1;
+}
+
+size_t out_sz_cookie(CM_cspec *cspec)
+{
+  switch (cspec->cookie.tag) {
+  case CM_c_or_s_err:
+    break;
+  case c_cookie:
+    return (size_t)(cspec->cookie.val.c_cookie.out_sz);
+  case s_cookie:
+    return (size_t)(cspec->cookie.val.s_cookie.out_sz);
+  }
+  return (size_t)-1;
 }

@@ -34,44 +34,26 @@
  *             off :: UINT
  */
 
-/* predeclare a couple of types */
-typedef struct CM_query_s CM_qy_t; /* aka CM_query */
-typedef struct CM_s       CM_t;
+/* predeclare some types */
+typedef struct CM_tmentry_s  CM_tmentry_t;
 
-/* signature of a read-write function */
-typedef PDC_error_t (*CM_rw_fn)(CM_t *cm, CM_qy_t *qy, PDC_byte *begin, PDC_byte *end);
+typedef struct CM_c_cookie_s CM_c_cookie_t;    /* aka CM_c_cookie */
+typedef struct CM_s_cookie_s CM_s_cookie_t;    /* aka CM_s_cookie */
 
-/* signature of a switch-val function */
-typedef PDC_error_t (*CM_sval_fn)(CM_t *cm, CM_qy_t *qy, PDC_byte *begin, PDC_byte *end, PDC_int32 *res_out);
+/* Finishing functions that fill in
+ * NULL Pcompute fields (in cookies and their contained queries).
+ * Should return 1 or abort on error.
+ */
 
-/* signature of a calculate-in-sz function */
-typedef size_t (*CM_in_sz_fn)(CM_qy_t *qy);
-
-/* signature of a calculate-out-sz function */
-typedef size_t (*CM_out_sz_fn)(CM_qy_t *qy);
-
-/* helper function that computes in_sz and out_sz for a query */
-/* should return 1 on success, 0 if there is a problem */
-int CM_calc_in_out_sz(CM_qy_t *q, PDC_int32 out_val);
-
-/* A typemap entry */
-typedef struct CM_tmentry_s {
-  const char      *tname;
-  CM_rw_fn         rw_fn;
-  CM_sval_fn       sval_fn;
-  CM_in_sz_fn      in_sz_fn;
-  CM_out_sz_fn     out_sz_fn;
-} CM_tmentry_t;
-
-/* helper function that maps: ty_id x switch_qy --> CM_tmentry_t */
-CM_tmentry_t* CM_get_tmentry(PDC_string *ty_id, int switch_qy);
+int CM_finish_c_cookie(CM_c_cookie_t *c);
+int CM_finish_s_cookie(CM_s_cookie_t *s);
 
 /* note that this array 'eats' the terminating colon */
 Parray CM_params {
   Pa_uint32 [] : Psep == ',' && Pterm == ':';
 };
 
-Pstruct CM_query(int switch_qy) {
+Pstruct CM_query {
   Pa_string(:'=':)         qy_id;
   '=';
   Pa_string(:'(':)         ty_id;
@@ -80,20 +62,24 @@ Pstruct CM_query(int switch_qy) {
   ")[";
   Pa_uint32                off;
   ']';
-  Pcompute CM_tmentry_t   *entry  = CM_get_tmentry(&ty_id, switch_qy);
-  Pcompute Puint32         in_sz = 0;
+  /* additional (non-parsed) state */
+  Pcompute CM_tmentry_t   *entry  = (CM_tmentry_t*)0;
+  Pcompute Puint32         in_sz  = 0;
   Pcompute Puint32         out_sz = 0;
 };
 
 /* note that this array 'eats' the terminating curly */
 Parray CM_queries {
-  CM_query(:0:) [1:] : Psep == '|' && Pterm == '}'
-                          && Pforall i Pin elts { CM_calc_in_out_sz(&(elts[i]), 1) };
+  CM_query [1:] : Psep == '|' && Pterm == '}' ;
 };
 
 Pstruct CM_c_cookie {
   "c{";
   CM_queries               queries;
+  /* additional (non-parsed) state */
+  Pcompute Puint32         out_sz = 0;
+} Pwhere {
+  CM_finish_c_cookie(rep);
 };
 
 Pstruct CM_arm {
@@ -112,9 +98,13 @@ Pstruct CM_s_cookie {
   Pomit Pa_char            sval_out_char : sval_out_char == '+' || sval_out_char == '-';
   Pcompute Pint32          sval_out = ((sval_out_char == '+') ? 1 : 0);
   '{';
-  CM_query(:1:)            s_qy : CM_calc_in_out_sz(&(s_qy), sval_out);
+  CM_query                 s_qy;
   '/';
   CM_arms                  arms;
+  /* additional (non-parsed) state */
+  Pcompute Puint32         out_sz = 0;
+} Pwhere {
+  CM_finish_s_cookie(rep);
 };
 
 Punion CM_c_or_s {

@@ -236,6 +236,7 @@ int main(int argc, char **argv)
 
   /* initialize cm */
   cm.pdc = pdc;
+  PDC_string_init(pdc, &(cm.tmp1));
   if (!(cm.vm = vmopen(Vmdcheap, Vmbest, 0))) {
     sfprintf(cm.errf, "\n*** FATAL: vmopen failed\n\n");
     return -1;
@@ -337,6 +338,7 @@ int main(int argc, char **argv)
   /* done */
 
   /* cleanup cm */
+  PDC_string_cleanup(pdc, &(cm.tmp1));
   if (cm.vm) {
     vmclose(cm.vm); /* frees everything alloc'd using cm.vm */
   }
