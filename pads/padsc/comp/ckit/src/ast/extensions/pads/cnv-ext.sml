@@ -1326,6 +1326,7 @@ structure CnvExt : CNVEXT = struct
                       fun addSub (a : string * pcexp) = subList := (a:: (!subList))
 
                       (* -- Some helper functions *)
+		      val first = ref true
 		      fun genReadFull {pty :PX.Pty, args:pcexp list, name:string, 
 				       isVirtual:bool, isEndian:bool,
 				       pred:pcexp option, comment} = 
@@ -1340,10 +1341,7 @@ structure CnvExt : CNVEXT = struct
 			      val comment = ("Reading field: "^ name ^ 
 					     (if isEndian then ". Doing endian check." else "."))
 			      val commentS = P.mkCommentS (comment)
-			      val readS = 
-			      PT.IfThenElse
-                                 (fieldX(ed,panic), (* if moded->panic *)
-				  PT.Compound 
+			      val ifPanicSs = 				  PT.Compound 
                                    [(* moded->name.panic = true *)
 				    P.assignS(P.dotX(modEdNameX, PT.Id panic),P.trueX),  
 				    (* moded->name.errCode = PANIC_SKIPPED *)
@@ -1351,7 +1349,8 @@ structure CnvExt : CNVEXT = struct
                                     PL.getLocS(PT.Id ts,  (* PDC_get_loc(ts, &moded->name.loc) *)
 					       P.addrX(P.dotX(modEdNameX,PT.Id loc))),
 				    (* moded->nerr += 1 *)
-				    P.plusAssignS(fieldX (ed,nerr),P.intX 1)],
+				    P.plusAssignS(fieldX (ed,nerr),P.intX 1)]
+			      val ifNoPanicSs =
                                   PT.Compound ([
                                    PT.IfThenElse
                                     (P.eqX(PL.PDC_ERROR,
@@ -1427,7 +1426,11 @@ structure CnvExt : CNVEXT = struct
 						     swap reportErrSs
 						    else reportErrSs))]
 					   end
-                                      ))]))
+                                      ))])
+			      val readS = if !first then (first:= false; ifNoPanicSs)
+					  else PT.IfThenElse
+					      (fieldX(ed,panic), (* if moded->panic *)
+					       ifPanicSs, ifNoPanicSs)
 			  in
 			      [commentS, readS]
 			  end

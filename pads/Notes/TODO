@@ -67,7 +67,6 @@ padsc compiler todo
      More basic thing would just be number of good/bad values
   * implement compiler optimizations mentioned in talk
       - glomming ignores (see examples/gen/dibbler2-mod.c)
-      - first field in a struct should not check for panic mode.
   * change basety structure to allow additional tables
 
 very minor:
