@@ -21,10 +21,12 @@
 static const char *walk_children_spaces = "                                                                                                                        ";
 
 void walk_children(void *n, int indent) {
-  void ** children, **iter;
-  void *  child;
-  int i;
-  const char * n_name = PGLX_generic_name(n);
+  void      **children, **iter;
+  void       *child;
+  int         i;
+  char       *str;
+  value       val;
+  const char *n_name = PGLX_generic_name(n);
   if (!(children = PGLX_generic_children(n))) {
     error(ERROR_FATAL, "PGLX_generic_children(%s) returned NULL", n_name);
   }
@@ -38,8 +40,12 @@ void walk_children(void *n, int indent) {
     error(0, "%.*s</%s>",
 	  indent, walk_children_spaces, n_name);
   } else {
+    val = PGLX_generic_typed_value(n);
+    if (glx_string_of_atomicValue(val, &str)) {
+      error(ERROR_FATAL, "glx_string_of_atomicValue returned an error code (node %s)", n_name);
+    }
     error(0, "%.*s<%s>%s</%s>",
-	  indent, walk_children_spaces, n_name, PGLX_generic_typed_value(n), n_name);
+	  indent, walk_children_spaces, n_name, str, n_name);
   }
 }
 
