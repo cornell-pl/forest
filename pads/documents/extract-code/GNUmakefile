@@ -1,11 +1,11 @@
 
  # This is a GNU makefile
 
-ifndef PADS_SML
-  export PADS_SML=sml
+ifndef SML
+  export SML=sml
 endif
 
-SML_VER = $(shell $(PADS_SML) '@SMLversion' | sed -e 's|.* ||')
+SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
 SML_MINOR_VER = $(shell echo $(SML_VER) | sed -e 's|.*[.]||')
 ifeq ($(SML_VER),$(SML_MINOR_VER))
 SML_MINOR_VER = 0
@@ -24,11 +24,11 @@ all:	extractor
 
 extractor:
 	echo Making extractor
-	$(PADS_SML) < $(BUILD_EXTRACT)
+	$(SML) < $(BUILD_EXTRACT)
 
 
 foo:
-	@(echo SML = $(PADS_SML))
+	@(echo SML = $(SML))
 	@(echo SML_VER = $(SML_VER))
 	@(echo SML_MINOR_VER = $(SML_MINOR_VER))
 	@(echo SML_MINOR_VER_TEST = $(SML_MINOR_VER_TEST))

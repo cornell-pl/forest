@@ -85,14 +85,14 @@ STEP 2: INSTALL SML / SML RUNTIME
   once padsc has been built.)
 
   (b) Put the sml startup script in your path, or
-      set the environment variable PADS_SML to the
+      set the environment variable SML to the
       location of this script.
   
   Example for csh/tcsh users:
-    setenv PADS_SML /usr/common/sml/bin/sml
+    setenv SML /usr/common/sml/bin/sml
   
   Example for sh/ksh/bash users:
-    export PADS_SML=/usr/common/sml/bin/sml
+    export SML=/usr/common/sml/bin/sml
 
 STEP 3: BUILD AND INSTALL libast.a
 
