@@ -14,21 +14,23 @@ endif
 ARCH_N_HEAPOPSYS := $(shell $(PADS_HOME)/scripts/arch-n-heapopsys)
 
 SML = $(PADS_HOME)/binlinks/sml.$(ARCH_N_HEAPOPSYS)
+BUILDEXEC = build-exec-45.sml
+
 SMLVER=$(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
 
-all:	compiler 
-
 ifeq ($(SMLVER),110)
-foo:
-	echo $(SMLVER)
-	$(SML) < build-exec.sml
-else
-foo:
-	echo $(SMLVER)
-	echo sml version is later than 110.0.7
+BUILDEXEC = build-exec-45.sml
 endif
 
+ifeq ($(SMLVER),110.19)
+BUILDEXEC = build-exec.sml
+endif
 
+all:	compiler
+
+foo:
+	@(echo SMLVER = $(SMLVER))
+	@(echo BUILDEXEC = $(BUILDEXEC))
 
 compiler:
 	echo Making compiler
