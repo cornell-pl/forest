@@ -101,6 +101,7 @@ if ($expanded) {
   $efile_d = $efile . "_d";
 }
 my $cfile = "$efile.c";
+my $cfile_tmp = "$efile.c.tmp";
 my $gendir = ".";
 
 # print "XXX_REMOVE pspec = $pspec\n";
@@ -125,7 +126,7 @@ open (MOUT, ">$mfile") || die "\n    Could not open $mfile for output\n\n";
 print MOUT $mtmpl;
 close (MOUT);
 
-open (COUT, ">$arch/$cfile") || die "\n    Could not open $cfile for output\n\n";
+open (COUT, ">$arch/$cfile_tmp") || die "\n    Could not open $cfile_tmp for output\n\n";
 if ($skippre) { print COUT "#define PRE_SKIP_BYTES $skippre\n"; }
 if ($skippost) { print COUT "#define POST_SKIP_BYTES $skippost\n"; }
 print COUT "#define PADS_TY(suf) $pty ## suf
@@ -137,6 +138,14 @@ print COUT "#define PADS_TY(suf) $pty ## suf
 
 ";
 close(COUT);
+
+my $tres1 = `(cmp $arch/$cfile_tmp $arch/$cfile || echo " DIFFERS") 2>&1`;
+if ($tres1 =~ /DIFFERS/) {
+  my $tres2 = `mv $arch/$cfile_tmp $arch/$cfile 2>&1`;
+  print "PTEST_DBG: cfile did not exist or changed\ncmp result = $tres1\nmv result = $tres2\n\n" if ($ptest_dbg);
+} else {
+  print "PTEST_DBG: cfile same as last time\ncmp result = $tres1\n" if ($ptest_dbg);
+}
 
 print "\nBuilding test program\n";
 my $res = `gmake -f $mfile 2>&1` || die "\n    Build of test program failed\n\n";

@@ -33,5 +33,11 @@ VPATH =  .. $(PPATH)
 
 all: =EFILE=
 
+# do not consider Makefile a target
+Makefile:;
+
+# do not consider tmp_GNUmakefile.ptest a target
+tmp_GNUmakefile.ptest:;
+
  # End of rules that are run from the arch directory
 endif
