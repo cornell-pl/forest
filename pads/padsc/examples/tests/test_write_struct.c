@@ -5,7 +5,7 @@
 
 PDC_error_t my_uint32_inv_val(PDC_t *pdc, void *ed_void, void *val_void, void **type_args) {
   PDC_base_ed *ed  = (PDC_base_ed*)ed_void;
-  PDC_int32   *val = (PDC_uint32*)val_void;
+  PDC_uint32  *val = (PDC_uint32*)val_void;
   if (ed->errCode == PDC_USER_CONSTRAINT_VIOLATION) {
     (*val) = 77777;
   } else {
