@@ -1,7 +1,9 @@
 /*@FILE @LEFT union-impl-branches-tag.tex union-impl-branches-rep.tex union-impl-branches-pd.tex union-impl-branches-mask.tex union-impl-branches-ops.tex*/
 #ifndef __PUNION__H__
 #define __PUNION__H__
-#include "padsc.h"
+#include "pads.h"
+typedef union branches_pd_u_u branches_pd_u;
+typedef struct branches_pd_s branches_pd;
 
 /*@BEGIN union-impl-branches-tag.tex*/
 typedef enum branches_tag_e branches_tag;
@@ -18,18 +20,18 @@ enum branches_tag_e {
 typedef union branches_pd_u_u branches_pd_u;
 
 union branches_pd_u_u {
-  PDC_base_pd number;
-  PDC_base_pd name;
-  PDC_base_pd other;		/* which */
+  Pbase_pd number;
+  Pbase_pd name;
+  Pbase_pd other;		/* other = which */
 };
 
 typedef struct branches_pd_s branches_pd;
 
 struct branches_pd_s {
-  PDC_flags_t pstate;
-  PDC_errCode_t errCode;
-  PDC_loc_t loc;
-  PDC_uint32 nerr;
+  Pflags_t pstate;
+  Puint32 nerr;
+  PerrCode_t errCode;
+  Ploc_t loc;
   branches_tag tag;
   branches_pd_u val;
 };
@@ -39,9 +41,9 @@ struct branches_pd_s {
 typedef union branches_u_u branches_u;
 
 union branches_u_u {
-  PDC_int32 number;		/* number % 2 == 0 */
-  PDC_string name;
-  PDC_uint32 other;		/* which */
+  Pint32 number;		/* number % 2 == 0 */
+  Pstring name;
+  Puint32 other;		/* other = which */
 };
 
 typedef struct branches_s branches;
@@ -56,119 +58,134 @@ struct branches_s {
 typedef struct branches_m_s branches_m;
 
 struct branches_m_s {
-  PDC_base_m number;
-  PDC_base_m name;
+  Pbase_m unionLevel;
+  Pbase_m number;		/* nested constraints */
+  Pbase_m number_con;		/* union constraints */
+  Pbase_m name;		/* nested constraints */
 };
 /*@END union-impl-branches-mask.tex*/
 
 /*@BEGIN union-impl-branches-ops.tex*/
 char const *branches_tag2str (branches_tag which);
 
-PDC_error_t branches_init (PDC_t *pdc,branches *rep);
+Perror_t branches_init (P_t *pads,branches *rep);
 
-PDC_error_t branches_pd_init (PDC_t *pdc,branches_pd *pd);
+Perror_t branches_pd_init (P_t *pads,branches_pd *pd);
 
-PDC_error_t branches_cleanup (PDC_t *pdc,branches *rep);
+Perror_t branches_cleanup (P_t *pads,branches *rep);
 
-PDC_error_t branches_pd_cleanup (PDC_t *pdc,branches_pd *pd);
+Perror_t branches_pd_cleanup (P_t *pads,branches_pd *pd);
 
-PDC_error_t branches_copy (PDC_t *pdc,branches *rep_dst,branches *rep_src);
+Perror_t branches_copy (P_t *pads,branches *rep_dst,branches *rep_src);
 
-PDC_error_t branches_pd_copy (PDC_t *pdc,branches_pd *pd_dst,
-			      branches_pd *pd_src);
+Perror_t branches_pd_copy (P_t *pads,branches_pd *pd_dst,
+			   branches_pd *pd_src);
 
-void branches_m_init (PDC_t *pdc,branches_m *mask,PDC_base_m baseMask);
+void branches_m_init (P_t *pads,branches_m *mask,Pbase_m baseMask);
 
-PDC_error_t branches_read (PDC_t *pdc,branches_m *m,PDC_uint32 which,
+Perror_t branches_read (P_t *pads,branches_m *m,Puint32 which,
+			branches_pd *pd,branches *rep);
+
+ssize_t branches_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,
+			    Puint32 which,branches_pd *pd,branches *rep);
+
+ssize_t branches_write2io (P_t *pads,Sfio_t *io,Puint32 which,
 			   branches_pd *pd,branches *rep);
 
-ssize_t branches_write2buf (PDC_t *pdc,PDC_byte *buf,size_t buf_len,
-			    int *buf_full,PDC_uint32 which,branches_pd *pd,
-			    branches *rep);
-
-ssize_t branches_write2io (PDC_t *pdc,Sfio_t *io,PDC_uint32 which,
-			   branches_pd *pd,branches *rep);
-
+int is_branches (branches *rep,Puint32 which);
 /*@END union-impl-branches-ops.tex*/
 
 typedef struct branches_acc_s branches_acc;
 struct branches_acc_s {
-  PDC_int32_acc tag;
-  PDC_int32_acc number;
-  PDC_string_acc name;
-  PDC_uint32_acc other;		/* which */
+  Pint32_acc tag;
+  Pint32_acc number;
+  Pstring_acc name;
+  Puint32_acc other;		/* other = which */
 };
 
-PDC_error_t branches_acc_init (PDC_t *pdc,branches_acc *acc);
+Perror_t branches_acc_init (P_t *pads,branches_acc *acc);
 
-PDC_error_t branches_acc_reset (PDC_t *pdc,branches_acc *acc);
+Perror_t branches_acc_reset (P_t *pads,branches_acc *acc);
 
-PDC_error_t branches_acc_cleanup (PDC_t *pdc,branches_acc *acc);
+Perror_t branches_acc_cleanup (P_t *pads,branches_acc *acc);
 
-PDC_error_t branches_acc_add (PDC_t *pdc,branches_acc *acc,branches_pd *pd,branches *rep);
+Perror_t branches_acc_add (P_t *pads,branches_acc *acc,branches_pd *pd,branches *rep);
 
-PDC_error_t branches_acc_report2io (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,branches_acc *acc);
+Perror_t branches_acc_report2io (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,branches_acc *acc);
 
-PDC_error_t branches_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,branches_acc *acc);
+Perror_t branches_acc_report (P_t *pads,char const *prefix,char const *what,int nst,branches_acc *acc);
 
+ssize_t branches_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,Puint32 which,branches_pd *pd,branches *rep);
+
+ssize_t branches_write2io (P_t *pads,Sfio_t *io,Puint32 which,branches_pd *pd,branches *rep);
+
+ssize_t branches_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,Puint32 which,branches_pd *pd,branches *rep,char const *tag,int indent);
+
+ssize_t branches_write_xml_2io (P_t *pads,Sfio_t *io,Puint32 which,branches_pd *pd,branches *rep,char const *tag,int indent);
 typedef struct choice_s choice;
 typedef struct choice_m_s choice_m;
 typedef struct choice_pd_s choice_pd;
 struct choice_m_s {
-  PDC_base_m structLevel;
-  PDC_base_m which;
-  branches_m branch;
+  Pbase_m structLevel;
+  Pbase_m which;		/* nested constraints */
+  branches_m branch;		/* nested constraints */
 };
 struct choice_pd_s {
-  PDC_flags_t pstate;
-  PDC_errCode_t errCode;
-  PDC_loc_t loc;
-  PDC_uint32 nerr;
-  PDC_base_pd which;
+  Pflags_t pstate;
+  Puint32 nerr;
+  PerrCode_t errCode;
+  Ploc_t loc;
+  Pbase_pd which;
   branches_pd branch;
 };
 struct choice_s {
-  PDC_uint32 which;
+  Puint32 which;
   branches branch;
 };
 
-PDC_error_t choice_init (PDC_t *pdc,choice *rep);
+Perror_t choice_init (P_t *pads,choice *rep);
 
-PDC_error_t choice_pd_init (PDC_t *pdc,choice_pd *pd);
+Perror_t choice_pd_init (P_t *pads,choice_pd *pd);
 
-PDC_error_t choice_cleanup (PDC_t *pdc,choice *rep);
+Perror_t choice_cleanup (P_t *pads,choice *rep);
 
-PDC_error_t choice_pd_cleanup (PDC_t *pdc,choice_pd *pd);
+Perror_t choice_pd_cleanup (P_t *pads,choice_pd *pd);
 
-PDC_error_t choice_copy (PDC_t *pdc,choice *rep_dst,choice *rep_src);
+Perror_t choice_copy (P_t *pads,choice *rep_dst,choice *rep_src);
 
-PDC_error_t choice_pd_copy (PDC_t *pdc,choice_pd *pd_dst,choice_pd *pd_src);
+Perror_t choice_pd_copy (P_t *pads,choice_pd *pd_dst,choice_pd *pd_src);
 
-void choice_m_init (PDC_t *pdc,choice_m *mask,PDC_base_m baseMask);
+void choice_m_init (P_t *pads,choice_m *mask,Pbase_m baseMask);
 
-PDC_error_t choice_read (PDC_t *pdc,choice_m *m,choice_pd *pd,choice *rep);
+Perror_t choice_read (P_t *pads,choice_m *m,choice_pd *pd,choice *rep);
+
+int is_choice (choice *rep);
 typedef struct choice_acc_s choice_acc;
 struct choice_acc_s {
-  PDC_int32_acc nerr;
-  PDC_uint32_acc which;
+  Puint32_acc nerr;
+  Puint32_acc which;
   branches_acc branch;
 };
 
-PDC_error_t choice_acc_init (PDC_t *pdc,choice_acc *acc);
+Perror_t choice_acc_init (P_t *pads,choice_acc *acc);
 
-PDC_error_t choice_acc_reset (PDC_t *pdc,choice_acc *acc);
+Perror_t choice_acc_reset (P_t *pads,choice_acc *acc);
 
-PDC_error_t choice_acc_cleanup (PDC_t *pdc,choice_acc *acc);
+Perror_t choice_acc_cleanup (P_t *pads,choice_acc *acc);
 
-PDC_error_t choice_acc_add (PDC_t *pdc,choice_acc *acc,choice_pd *pd,choice *rep);
+Perror_t choice_acc_add (P_t *pads,choice_acc *acc,choice_pd *pd,choice *rep);
 
-PDC_error_t choice_acc_report2io (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,choice_acc *acc);
+Perror_t choice_acc_report2io (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,choice_acc *acc);
 
-PDC_error_t choice_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,choice_acc *acc);
+Perror_t choice_acc_report (P_t *pads,char const *prefix,char const *what,int nst,choice_acc *acc);
 
-ssize_t choice_write2buf (PDC_t *pdc,PDC_byte *buf,size_t buf_len,int *buf_full,choice_pd *pd,choice *rep);
+ssize_t choice_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,choice_pd *pd,choice *rep);
 
-ssize_t choice_write2io (PDC_t *pdc,Sfio_t *io,choice_pd *pd,choice *rep);
+ssize_t choice_write2io (P_t *pads,Sfio_t *io,choice_pd *pd,choice *rep);
+
+ssize_t choice_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,choice_pd *pd,choice *rep,char const *tag,int indent);
+
+ssize_t choice_write_xml_2io (P_t *pads,Sfio_t *io,choice_pd *pd,choice *rep,char const *tag,int indent);
 typedef enum intOpt_tag_e intOpt_tag;
 typedef union intOpt_u_u intOpt_u;
 typedef struct intOpt_s intOpt;
@@ -181,82 +198,89 @@ enum intOpt_tag_e {
   def=2
   };
 union intOpt_pd_u_u {
-  PDC_base_pd val;
-  PDC_base_pd def;		/* defVal */
+  Pbase_pd val;
+  Pbase_pd def;		/* def = defVal */
 };
 struct intOpt_pd_s {
-  PDC_flags_t pstate;
-  PDC_errCode_t errCode;
-  PDC_loc_t loc;
-  PDC_uint32 nerr;
+  Pflags_t pstate;
+  Puint32 nerr;
+  PerrCode_t errCode;
+  Ploc_t loc;
   intOpt_tag tag;
   intOpt_pd_u val;
 };
 union intOpt_u_u {
-  PDC_uint32 val;
-  PDC_uint32 def;		/* defVal */
+  Puint32 val;
+  Puint32 def;		/* def = defVal */
 };
 struct intOpt_s {
   intOpt_tag tag;
   intOpt_u val;
 };
 struct intOpt_m_s {
-  PDC_base_m val;
+  Pbase_m unionLevel;
+  Pbase_m val;		/* nested constraints */
 };
 
 char const *intOpt_tag2str (intOpt_tag which);
 
-PDC_error_t intOpt_init (PDC_t *pdc,intOpt *rep);
+Perror_t intOpt_init (P_t *pads,intOpt *rep);
 
-PDC_error_t intOpt_pd_init (PDC_t *pdc,intOpt_pd *pd);
+Perror_t intOpt_pd_init (P_t *pads,intOpt_pd *pd);
 
-PDC_error_t intOpt_cleanup (PDC_t *pdc,intOpt *rep);
+Perror_t intOpt_cleanup (P_t *pads,intOpt *rep);
 
-PDC_error_t intOpt_pd_cleanup (PDC_t *pdc,intOpt_pd *pd);
+Perror_t intOpt_pd_cleanup (P_t *pads,intOpt_pd *pd);
 
-PDC_error_t intOpt_copy (PDC_t *pdc,intOpt *rep_dst,intOpt *rep_src);
+Perror_t intOpt_copy (P_t *pads,intOpt *rep_dst,intOpt *rep_src);
 
-PDC_error_t intOpt_pd_copy (PDC_t *pdc,intOpt_pd *pd_dst,intOpt_pd *pd_src);
+Perror_t intOpt_pd_copy (P_t *pads,intOpt_pd *pd_dst,intOpt_pd *pd_src);
 
-void intOpt_m_init (PDC_t *pdc,intOpt_m *mask,PDC_base_m baseMask);
+void intOpt_m_init (P_t *pads,intOpt_m *mask,Pbase_m baseMask);
 
-PDC_error_t intOpt_read (PDC_t *pdc,intOpt_m *m,PDC_uint32 defVal,intOpt_pd *pd,intOpt *rep);
+Perror_t intOpt_read (P_t *pads,intOpt_m *m,Puint32 defVal,intOpt_pd *pd,intOpt *rep);
+
+int is_intOpt (intOpt *rep,Puint32 defVal);
 typedef struct intOpt_acc_s intOpt_acc;
 struct intOpt_acc_s {
-  PDC_int32_acc tag;
-  PDC_uint32_acc val;
-  PDC_uint32_acc def;		/* defVal */
+  Pint32_acc tag;
+  Puint32_acc val;
+  Puint32_acc def;		/* def = defVal */
 };
 
-PDC_error_t intOpt_acc_init (PDC_t *pdc,intOpt_acc *acc);
+Perror_t intOpt_acc_init (P_t *pads,intOpt_acc *acc);
 
-PDC_error_t intOpt_acc_reset (PDC_t *pdc,intOpt_acc *acc);
+Perror_t intOpt_acc_reset (P_t *pads,intOpt_acc *acc);
 
-PDC_error_t intOpt_acc_cleanup (PDC_t *pdc,intOpt_acc *acc);
+Perror_t intOpt_acc_cleanup (P_t *pads,intOpt_acc *acc);
 
-PDC_error_t intOpt_acc_add (PDC_t *pdc,intOpt_acc *acc,intOpt_pd *pd,intOpt *rep);
+Perror_t intOpt_acc_add (P_t *pads,intOpt_acc *acc,intOpt_pd *pd,intOpt *rep);
 
-PDC_error_t intOpt_acc_report2io (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,intOpt_acc *acc);
+Perror_t intOpt_acc_report2io (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,intOpt_acc *acc);
 
-PDC_error_t intOpt_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,intOpt_acc *acc);
+Perror_t intOpt_acc_report (P_t *pads,char const *prefix,char const *what,int nst,intOpt_acc *acc);
 
-ssize_t intOpt_write2buf (PDC_t *pdc,PDC_byte *buf,size_t buf_len,int *buf_full,PDC_uint32 defVal,intOpt_pd *pd,intOpt *rep);
+ssize_t intOpt_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,Puint32 defVal,intOpt_pd *pd,intOpt *rep);
 
-ssize_t intOpt_write2io (PDC_t *pdc,Sfio_t *io,PDC_uint32 defVal,intOpt_pd *pd,intOpt *rep);
+ssize_t intOpt_write2io (P_t *pads,Sfio_t *io,Puint32 defVal,intOpt_pd *pd,intOpt *rep);
+
+ssize_t intOpt_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,Puint32 defVal,intOpt_pd *pd,intOpt *rep,char const *tag,int indent);
+
+ssize_t intOpt_write_xml_2io (P_t *pads,Sfio_t *io,Puint32 defVal,intOpt_pd *pd,intOpt *rep,char const *tag,int indent);
 typedef struct data_s data;
 typedef struct data_m_s data_m;
 typedef struct data_pd_s data_pd;
 struct data_m_s {
-  PDC_base_m structLevel;
-  intOpt_m field1;
-  intOpt_m field2;
-  intOpt_m field3;
+  Pbase_m structLevel;
+  intOpt_m field1;		/* nested constraints */
+  intOpt_m field2;		/* nested constraints */
+  intOpt_m field3;		/* nested constraints */
 };
 struct data_pd_s {
-  PDC_flags_t pstate;
-  PDC_errCode_t errCode;
-  PDC_loc_t loc;
-  PDC_uint32 nerr;
+  Pflags_t pstate;
+  Puint32 nerr;
+  PerrCode_t errCode;
+  Ploc_t loc;
   intOpt_pd field1;
   intOpt_pd field2;
   intOpt_pd field3;
@@ -267,43 +291,51 @@ struct data_s {
   intOpt field3;
 };
 
-PDC_error_t data_init (PDC_t *pdc,data *rep);
+Perror_t data_init (P_t *pads,data *rep);
 
-PDC_error_t data_pd_init (PDC_t *pdc,data_pd *pd);
+Perror_t data_pd_init (P_t *pads,data_pd *pd);
 
-PDC_error_t data_cleanup (PDC_t *pdc,data *rep);
+Perror_t data_cleanup (P_t *pads,data *rep);
 
-PDC_error_t data_pd_cleanup (PDC_t *pdc,data_pd *pd);
+Perror_t data_pd_cleanup (P_t *pads,data_pd *pd);
 
-PDC_error_t data_copy (PDC_t *pdc,data *rep_dst,data *rep_src);
+Perror_t data_copy (P_t *pads,data *rep_dst,data *rep_src);
 
-PDC_error_t data_pd_copy (PDC_t *pdc,data_pd *pd_dst,data_pd *pd_src);
+Perror_t data_pd_copy (P_t *pads,data_pd *pd_dst,data_pd *pd_src);
 
-void data_m_init (PDC_t *pdc,data_m *mask,PDC_base_m baseMask);
+void data_m_init (P_t *pads,data_m *mask,Pbase_m baseMask);
 
-PDC_error_t data_read (PDC_t *pdc,data_m *m,data_pd *pd,data *rep);
+Perror_t data_read (P_t *pads,data_m *m,data_pd *pd,data *rep);
+
+int is_data (data *rep);
 typedef struct data_acc_s data_acc;
 struct data_acc_s {
-  PDC_int32_acc nerr;
+  Puint32_acc nerr;
   intOpt_acc field1;
   intOpt_acc field2;
   intOpt_acc field3;
 };
 
-PDC_error_t data_acc_init (PDC_t *pdc,data_acc *acc);
+Perror_t data_acc_init (P_t *pads,data_acc *acc);
 
-PDC_error_t data_acc_reset (PDC_t *pdc,data_acc *acc);
+Perror_t data_acc_reset (P_t *pads,data_acc *acc);
 
-PDC_error_t data_acc_cleanup (PDC_t *pdc,data_acc *acc);
+Perror_t data_acc_cleanup (P_t *pads,data_acc *acc);
 
-PDC_error_t data_acc_add (PDC_t *pdc,data_acc *acc,data_pd *pd,data *rep);
+Perror_t data_acc_add (P_t *pads,data_acc *acc,data_pd *pd,data *rep);
 
-PDC_error_t data_acc_report2io (PDC_t *pdc,Sfio_t *outstr,char const *prefix,char const *what,int nst,data_acc *acc);
+Perror_t data_acc_report2io (P_t *pads,Sfio_t *outstr,char const *prefix,char const *what,int nst,data_acc *acc);
 
-PDC_error_t data_acc_report (PDC_t *pdc,char const *prefix,char const *what,int nst,data_acc *acc);
+Perror_t data_acc_report (P_t *pads,char const *prefix,char const *what,int nst,data_acc *acc);
 
-ssize_t data_write2buf (PDC_t *pdc,PDC_byte *buf,size_t buf_len,int *buf_full,data_pd *pd,data *rep);
+ssize_t data_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,data_pd *pd,data *rep);
 
-ssize_t data_write2io (PDC_t *pdc,Sfio_t *io,data_pd *pd,data *rep);
+ssize_t data_write2io (P_t *pads,Sfio_t *io,data_pd *pd,data *rep);
+
+ssize_t data_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,data_pd *pd,data *rep,char const *tag,int indent);
+
+ssize_t data_write_xml_2io (P_t *pads,Sfio_t *io,data_pd *pd,data *rep,char const *tag,int indent);
+
+void P_lib_init ();
 
 #endif /*  __PUNION__H__  */

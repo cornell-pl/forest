@@ -1,7 +1,45 @@
 \chapter{Parrays}
 \label{chap:arrays}
+\Parray{}s are used to describe sequences of values of the same type.
 \section{Syntax}
-To express repetitions.  
+\label{sec:arrays-syntax}
+The syntax for \Parray{}s is given by the following BNF grammar fragment:
+\tskip{}
+\begin{tabular}{rcl}
+\nont{p\_size\_spec} & \is{} & \opt{\nont{expresssion}} \alt{}\opt{nont{expression}} : \opt{\nont{expression}}\\[1ex]
+\\
+\nont{p\_term\_expression} & \is{} & \Pnosep{} \alt{} \nont{p\_expression}\\[1ex]
+\nont{p\_array\_constraint} & \is{}  & \Psep{}(\nont{p\_expression})  \alt{} \Pterm{}(\nont{p\_term\_expression})\\
+                            & \alt{} & \Plast{}(\nont{predicate}) \alt{} \Pended{}(\nont{predicate})\\
+                            & \alt{} & \Pomit{}(\nont{predicate})\\[1ex]
+\nont{p\_array\_constraints} & \is{} & \nont{p\_array\_constraint} 
+\alt{} \nont{p\_array\_constraint} \&\& \nont{p\_array\_constraints}\\[1ex]
+\\
+\nont{p\_range}  & \is{} & \{ \nont{expression} .. \nont{expression}\}  \alt{} identifier\\
+\nont{p\_forall} & \is{} & ( identifier \Pin{} \nont{p\_range} : \nont{expression} )\\
+\nont{p\_array\_post}  & \is{} & \nont{predicate} \alt{} \nont{p\_forall}\\
+\nont{p\_array\_posts} & \is{} & \nont{p\_array\_post} \alt{} \nont{p\_array\_post} \&\& \nont{p\_array\_posts}\\[1ex]
+\\
+\nont{array\_ty} & \is{} &  \Parray{} identifier \opt{\nont{p\_formals}} \{\\
+&& \quad \nont{p\_ty} `['\nont{p\_size\_spec}`]' \opt{: \nont{p\_array\_constraints}}\\
+&& \}\ \opt{ \Pwhere{} \ \{\ \nont{p\_array\_posts}\ \}}; \\[4ex]
+\end{tabular}
+
+\noindent
+We explain the meaning of this syntax in the remainder of this chapter.
+All non-terminals not defined in this grammar fragment were
+defined previously.
+Predicates (\nont{predicate}) are described in \secref{sec:common-predicates}.
+\padsl{} types (\nont{p\_ty}) and formal parameters (\nont{p\_formals})
+are described in \secref{sec:common-parameterization}.
+\padsl{} expressions \nont{p\_expressions} are defined in \secref{sec:regular-expressions}.
+Literals (\nont{p\_literal})  are described in
+\secref{sec:common-literals}.
+Expressions (\nont{expression}) represent any \C{} expression.
+We put single quotation marks around the left and right brackets to
+indicate they appear in the grammer, rather than as a meta-notation
+for optionality.
+
 
 \begin{verbatim}
 Parray name ( param list ){

@@ -18,17 +18,21 @@ and a family of type constructors for building structured types:
 \penum{}s for fixed collections of strings, and
 \ptypedef{}s for refinements of existing types.
 
-Syntactically, a \padsl{} type (\nont{p\_ty}) must have the following form:
+Syntactically, a \padsl{} type declaration (\nont{p\_ty\_decl}) must
+have the following form: 
 
 \vskip 1ex
 \begin{tabular}{rcll}
-\nont{p\_ty} & \is{} & \nont{base\_ty} & (* \chapref{chap:base-types} *) \\[1ex]
+\nont{p\_ty\_decl} & \is{} & \nont{base\_ty} & (* \chapref{chap:base-types} *) \\[1ex]
 & \alt{} & \nont{struct\_ty}           & (* \chapref{chap:structs} *)\\[1ex]
 & \alt{} & \nont{union\_ty}            & (* \chapref{chap:unions} *)\\[1ex]
 & \alt{} & \nont{array\_ty}            & (* \chapref{chap:arrays} *)\\[1ex]
 & \alt{} & \nont{enum\_ty}             & (* \chapref{chap:enums} *)\\[1ex]
 & \alt{} & \nont{typedef\_ty}          & (* \chapref{chap:typedefs} *)\\[1ex]
 \end{tabular}
+
+We use the terminal \term{p\_ty\_name} for an identifier bound to one
+of the above types.  
 
 \noindent
 The grammar for each of the above non-terminals is given in the
@@ -62,7 +66,27 @@ for validating semantic properties of syntactically correct data.
 Syntactically, such predicates are arbitrary \C{} expressions of
 integer type.  Predicates that evaluate to \cd{false} (\ie{}, \cd{0})
 imply the data is invalid, while all other values imply the data is
-valid. Predicates are assumed to be side-effect free.
+valid.  Predicates are assumed to be side-effect free.
+
+To allow users to express constraints involving the size and position
+of physical data, \padsl{} supports \nont{p\_parsecheck} expressions within
+constraints.  Syntactically,
+\vskip 1ex
+\begin{tabular}{rcl}
+\nont{p\_parsecheck} & \is{} & \pparsecheck{}(\nont{aug\_expression})\\
+\end{tabular}
+\vskip 1ex
+\noindent
+In the production, \nont{aug\_expression} is an integer-valued \C{}
+expression that is allowed to refer 
+to special constants providing location information.  The precise constants
+depend upon the context of the \pparsecheck{} clause in the \pads{}
+description, but always include the constant \cd{position} of type 
+\PDCpost{}, bound to the current position in the physical
+source.  
+
+For integration with general constraints, \pparsecheck{} expressions
+are treated as \C{} expressions with type \texttt{int}.
 
 \section{Literals}
 \label{sec:common-literals}
@@ -70,7 +94,14 @@ valid. Predicates are assumed to be side-effect free.
 literals, referred to in the \pads{} grammar as \term{char\_lit} and
 \term{str\_lit}, respectively.  
 These literals may contain \C{} character escapes such as \cd{\\"} and
-\cd{\\'}. 
+\cd{\\'}.  \PADSL{} also supports regular expression literals,
+described in more detail in \secref{sec:regular-expressions}.  We use
+the non-terminal \term{regexp\_lit} to refer to regular expressions.
+Syntactically, 
+\vskip 1ex
+\begin{tabular}{rcl}
+\nont{p\_literal} & \is{} & \term{char\_lit} \alt{} \nont{str\_lit} \alt{} \Pre{} \nont{regexp\_lit} \\[1ex]
+\end{tabular}
 
 \cut{
 One use of character and string literals are used to read external
@@ -114,13 +145,18 @@ that describes the sequence to specify the termination condition for
 the sequence. Syntactically, 
 \vskip 1ex
 \begin{tabular}{rcl}
-\nont{p\_actuals} & \is{} & \nont{expression} \alt{} \nont{expression}, \nont{p\_actuals} \\[1ex]
-\nont{p\_actual\_list} & \is{} & (: \nont{p\_actuals} :)\\[2ex]
+\nont{p\_actual\_list} & \is{} & \nont{expression} \alt{} \nont{expression}, \nont{p\_actual\_list} \\[1ex]
+\nont{p\_actuals} & \is{} & (: \nont{p\_actual\_list} :)\\[1ex]
+\nont{p\_ty} & \is{} & p\_ty\_name \opt{\nont{p\_actuals}}\\[2ex]
 \end{tabular}
 
 \noindent
 where \nont{expression} is any \C{} expression. Formal parameter lists
-\nont{formals} are the same as in \C{}. 
+are similar to \C{}'s, except they are deliminated differently:
+\vskip 1ex
+\begin{tabular}{rcl}
+\nont{p\_formals} & \is{} & (: \nont{c\_formal\_list} :)\\[1ex]
+\end{tabular}
 
 \subsection{Example}
 The \cd{formalParamExample} type declaration in the following \padsl{}
@@ -154,9 +190,9 @@ ibm-style record    & Record header indicates size\\
 a data source. 
 
 
-\section{\Pfile{} modifier}
+\section{\Psource{} modifier}
 \label{sec:common-pfile}
-The \Pfile{} modifier may be used as an annotation on any \pads{}
+The \Psource{} modifier may be used as an annotation on any \pads{}
 type, indicating that the type in question describes the entirety of
 the external representation of the data.
 
@@ -272,6 +308,11 @@ types appear in
 
 \section{Regular Expressions}
 \label{sec:regular-expressions}
+\begin{tabular}{rcl}
+\nont{p\_regexp\_lit} & \is{} & ... \\[1ex]
+\nont{p\_regexp\_expression} & \is{} & \Pre{} \nont{expression} \\[1ex]
+\nont{p\_expression} & \is{} & \nont{exprsesion} \alt{}  \Pre{} \nont{expression} \\[1ex]
+\end{tabular}
 
 \textbf{To do:}
 
@@ -341,6 +382,15 @@ PDC_error_t foo_copy (PDC_t *pdc, foo *rep_dst, foo *rep_src);
 
 PDC_error_t foo_pd_copy (PDC_t *pdc, foo_pd *pd_dst, foo_pd *pd_src);
 \end{code}
+
+\noindent
+Each type \cd{foo} also has a predicate function that returns true if
+the supplied in-memory representation satisfies all of the
+non-\pparsecheck{} constraints.
+\begin{code}
+int is_foo(foo *rep_dst);
+\end{code}
+
 
 \subsection{Read function}
 The read function for a \pads{} type \cd{foo} takes as an input parameter a

@@ -16,7 +16,10 @@ until it finds one which parses without any errors.
 \nont{switched}   & \is{} & \Pswitch{} (\nont{expression})\{ \nont{branches} \}\\[1ex]
 \nont{in\_place}  & \is{} & \nont{union\_field} \alt{} \nont{union\_field} \nont{in\_place}\\[1ex]
 \nont{union\_bdy} & \is{} & \nont{switched} \alt{} \nont{in\_place}\\[1ex]
-\nont{union\_ty}  & \is{} & \Punion{} identifier \opt{\nont{formals}} \{ \nont{union\_bdy} \} \\[4ex]
+\nont{union\_ty}  & \is{} & \Punion{} identifier \opt{\nont{p\_formals}} \{ \\
+&& \quad \nont{union\_bdy} \\
+&& \}\ \opt{ \Pwhere{} \ \{\ \nont{predicate}\ \}}; \\[4ex]
+
 \end{tabular}
 
 \noindent
@@ -27,7 +30,7 @@ Full fields (\nont{full\_field})
 appear in \secref{sec:structs-full-fields}, 
 computed fields (\nont{comp\_field}) in
 \secref{sec:structs-computed-fields}, and
-parameter lists (\nont{formals}) in \secref{sec:common-parameterization}.
+\padsl{} parameter lists (\nont{p\_formals}) in \secref{sec:common-parameterization}.
 Expressions (\nont{expression}) represent any \C{} expression. 
 
 
@@ -74,15 +77,16 @@ The comments embedded in the description give an example of each of the two
 forms.   With in-place \Punion{}s, the parser tries each of the branches
 in turn until it finds one that matches the data without any errors.
 
-\subsection{\Pswitch{}}
+\subsection{Switched \Punion{}s}
+\subsubsection{\Pswitch{}}
 The expression on which a switched \Punion{} branches can be any \C{}
 expression of integer type (as in a \kw{switch} statement in \C{}).
 Typically, this expression is computed from a parameter to the
 switched \Punion{}.
 
-\subsection{Branches}
+\subsubsection{Branches}
 The body of a switched \Punion{} is a non-empty sequence of branches.
-Each branch in a switched \Punion can have one of two forms: a
+Each branch in a switched \Punion{} can have one of two forms: a
 \Pcase{} statement, or a \Pdefault{} statement.  The \Pcase{} form
 specifies an integer value.  During parsing, the first \Pcase{}
 expression whose value equals the \Pswitch{} expression is selected as
@@ -116,8 +120,25 @@ a default value for the omitted field.
 \label{fig:union-option}
 \end{figure}
 
+\subsection{Optional \texttt{Pwhere} clause}
+If given, a \Pwhere{} clause expresses constraints over the entirety
+of a \Punion{} value.  Special constants \cd{tag} and \cd{val} are
+in scope, of the tag and value types for the union, respectively
+(\cf{} \secref{sec:unions-tags}).  The
+first indicates which branch of the union matched, while the second
+contains the representation of the matched branch. 
+Within the context of a 
+\Pparsecheck{} clause, constants \cd{begin} and \cd{end}, each of type 
+\PDCpost{} are available.  Constant \cd{begin} is bound to the input
+position of the beginning of the \punion{}; \cd{end} is bound to its end.
+If the predicate given in
+the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
+in the associated parse descriptor will indicate a user-constraint
+error has occurred.  
+
 \section{Generated library}
 \subsection{Tags}
+\label{sec:unions-tags}
 In addition to the types generated for every \pads{} specification,
 the \pads{} compiler generates an extra type 
 declaration for every \Punion{}: a enumerated type with one component
