@@ -25,7 +25,7 @@ void walk_children(void *n, int indent) {
   void       *child;
   int         i;
   char       *str;
-  value       val;
+  item       val;
   const char *n_name = PGLX_generic_name(n);
   if (!(children = PGLX_generic_children(n))) {
     error(ERROR_FATAL, "PGLX_generic_children(%s) returned NULL", n_name);
@@ -73,7 +73,7 @@ void* PGLX_generic_parent (void *ocaml_n)
 
 /* Return value TBD */
 
-value PGLX_generic_typed_value (void * ocaml_n)
+item PGLX_generic_typed_value (void * ocaml_n)
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
   PDCI_NODE_VT_CHECK(n, "PGLX_generic_typed_value");
@@ -131,11 +131,11 @@ const PDCI_vtable_t ty ## _vtable = {ty ## _children, \
 
 #define PDCI_IMPL_BASE_VAL_VT(ty) \
 /* node->rep is a pointer to a ty */ \
-value ty ## _typed_value (PDCI_node_t *node) \
+item ty ## _typed_value (PDCI_node_t *node) \
 { \
   /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
   /* For now, raise exception containing the value as as string. */ \
-  value         res = 0; \
+  item         res = 0; \
   ty           *r   = (ty*)node->rep; \
   PDC_base_pd  *pd  = (PDC_base_pd*)node->pd; \
   PDC_base_pd   tpd; \
@@ -160,11 +160,11 @@ const PDCI_vtable_t ty ## _val_vtable = {PDCI_no_children, \
 /* For the case where a base type requires an arg, such as stop char for PDC_string */
 #define PDCI_IMPL_BASE_VAL_VT_ARG1(ty, ty_arg1) \
 /* node->rep is a pointer to a ty */ \
-value ty ## _typed_value (PDCI_node_t *node) \
+item ty ## _typed_value (PDCI_node_t *node) \
 { \
   /* XXX_TODO: invoke Galax-provided macro for producing a value containing a ty */ \
   /* For now, raise exception containing the value as a string. */ \
-  value         res = 0; \
+  item         res = 0; \
   ty           *r   = (ty*)node->rep; \
   PDC_base_pd  *pd  = (PDC_base_pd*)node->pd; \
   PDC_base_pd   tpd; \
@@ -313,16 +313,16 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *self)
  * --------------------------- */
 
 /* Error function used for many cases */
-value PDCI_error_typed_value(PDCI_node_t *node)
+item PDCI_error_typed_value(PDCI_node_t *node)
 {
   failwith("NOT_A_VALUE: typed_value called on structured type.");
   return 0;  /* will never get here*/
 } 
 
 /* node->rep is a C-style string (const char *) */
-value PDCI_Cstr_typed_value(PDCI_node_t *node)
+item PDCI_Cstr_typed_value(PDCI_node_t *node)
 {
-  value        res = 0;
+  item        res = 0;
   char        *s   = (char *)node->rep;
   if (glx_atomicString(s, &res)) {
     failwith("UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in PDC_Cstr_typed_value");
@@ -401,9 +401,9 @@ PDCI_IMPL_BASE_VAL_VT(PDC_uint64);
  */
 
 /* node->rep is a pointer to a PDC_uint32 */
-value PDC_uint32_typed_value (PDCI_node_t *node)
+item PDC_uint32_typed_value (PDCI_node_t *node)
 {
-  value         res = 0;
+  item         res = 0;
   PDC_uint32   *r   = (PDC_uint32*)node->rep;
   PDC_base_pd  *pd  = (PDC_base_pd*)node->pd;
   PDC_base_pd  tpd;
@@ -426,7 +426,7 @@ const PDCI_vtable_t PDC_uint32_val_vtable = {PDCI_no_children,
 					     0};
 
 
-
+#ifndef USE_GALAX
 /*
  * These will go away some day.
  * They all leak memory, but they are just used for simple testing so that is OK.
@@ -509,3 +509,4 @@ fake_glx_string_of_atomicValue(atomicValue v, char **outval)
   (*outval) = (char*)v;
   return 0;
 }
+#endif
