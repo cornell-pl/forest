@@ -217,6 +217,7 @@ CSHAREFLAGS = $(CC_DLL)
 else
 CSHAREFLAGS =
 endif
+
 # XXX Nothing for these in rules.arch.<ARCH>.mk ???
 CARCHFLAGS =
 STATIC_LIBTOOL = ar r
@@ -261,8 +262,13 @@ ifeq ($(OPSYS),linux)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 endif
 
+# iffy generated mam_cc_SHARED=-G is incorrect
 ifeq ($(ARCH_N_OPSYS),ppc-darwin)
+mam_cc_SHARED=
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
+SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE :=-dynamiclib -flat_namespace -undefined suppress -read_only_relocs suppress
+SHARED_LIBTOOL_WHOLE_ARCHIVE :=-dynamiclib -flat_namespace -undefined suppress -read_only_relocs suppress
+CARCHFLAGS :=-fno-common
 endif
 
 ifeq ($(ARCH_N_OPSYS),x86-freebsd)
@@ -319,11 +325,13 @@ STATIC_GALAXLIB_D = $(PADSGLX_LIB_DIR)/$(mam_cc_PREFIX_ARCHIVE)padsglxopt$(mam_c
 SHARED_GALAXLIB_O = $(PADSGLX_LIB_DIR)/$(mam_cc_PREFIX_SHARED)padsglxopt$(mam_cc_SUFFIX_SHARED)
 STATIC_OCAMLLIB_O = \
   $(OCAML_LIB_DIR)/libnums$(mam_cc_SUFFIX_ARCHIVE) \
-  $(USR_LIB_DIR)/libm$(mam_cc_SUFFIX_ARCHIVE) \
-  $(USR_LIB_DIR)/libdl$(mam_cc_SUFFIX_ARCHIVE) \
-  $(USR_LIB_DIR)/libcurses$(mam_cc_SUFFIX_ARCHIVE) \
   $(OCAML_LIB_DIR)/libunix$(mam_cc_SUFFIX_ARCHIVE) \
   $(OCAML_LIB_DIR)/libstr$(mam_cc_SUFFIX_ARCHIVE)
+
+# These libraries on MacOS are not static:
+#  $(USR_LIB_DIR)/libm$(mam_cc_SUFFIX_ARCHIVE) \
+#  $(USR_LIB_DIR)/libdl$(mam_cc_SUFFIX_ARCHIVE) \
+#  $(USR_LIB_DIR)/libcurses$(mam_cc_SUFFIX_ARCHIVE) \
 # XXX what about $(mam_cc_PREFIX_ARCHIVE)camlrun$(mam_cc_SUFFIX_ARCHIVE) ?
 ifdef USE_GALAX
 STATIC_LIBS_O = $(STATIC_PGLXLIB_O) $(STATIC_PADSLIB_O) $(STATIC_ASTLIB_O)
@@ -396,7 +404,8 @@ ifdef USE_GALAX
 DYNAMIC_LIBS_O += \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
-  -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c -lpcre_stubs
+  -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
+  -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
 endif
 SHARED_PADSLIB_DEP_O = $(INSTALL_LIBDIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(INSTALL_LIBDIR)/$(SHARED_PGLXLIB_NM_O)
@@ -424,7 +433,8 @@ ifdef USE_GALAX
 DYNAMIC_LIBS_D += \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx-g -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
-  -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c -lpcre_stubs
+  -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
+  -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
 endif
 SHARED_PADSLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PADSLIB_NM_D)
 SHARED_PGLXLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PGLXLIB_NM_D)

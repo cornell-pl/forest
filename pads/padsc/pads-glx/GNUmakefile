@@ -23,6 +23,8 @@ include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
 
+CC=gcc
+
 # Caml object files
 
 pads_c.ml : pads_c.cmi
@@ -60,13 +62,25 @@ pads_c.ml      : pads_c.h
 pads_c_stubs.c : pads_c.h
 
 # PADS Data model in Caml and C
-OPTLDFLAGS=-linkall nums.cmxa unix.cmxa str.cmxa -cclib -lunix -cclib -lstr $(GALAX_HOME)/lib/caml/galax.cmxa
+# These definitions come from galax/config/Makefile.gen
+CAMLLIBPCRE=$(OCAML_LIB_DIR)/site-lib/pcre
+CAMLLIBNETSTRING=$(OCAML_LIB_DIR)/site-lib/netstring
+CAMLLIBPXP=$(OCAML_LIB_DIR)/site-lib/pxp-engine
+CAML_LIBS=nums.cmxa unix.cmxa str.cmxa pcre.cmxa netstring.cmxa pxp_engine.cmxa
+DEFAULT_CLIBS=-lnums -lunix -lstr -lpcre -lpcre_stubs -L$(PCRE_LIB_DIR) -L$(CAMLLIBPCRE)
+CAML_DEFAULT_CLIBS=-cclib -lnums -cclib -lunix -cclib -lstr -cclib -lpcre_stubs -cclib -lpcre -ccopt -L$(PCRE_LIB_DIR) -ccopt -L$(CAMLLIBPCRE) -ccopt -L$(CAMLLIBPXP)
+
+ALL_CAML_LIBS=-I $(CAMLLIBPCRE) -I $(CAMLLIBNETSTRING) -I $(CAMLLIBPXP) $(CAML_LIBS) $(CAML_DEFAULT_CLIBS) 
+
+API_ALL_CAML_LIBS=-linkall $(ALL_CAML_LIBS) $(GALAX_HOME)/lib/caml/galax.cmxa
+
+# OPTLDFLAGS=-linkall nums.cma unix.cma str.cma pcre.cma netstring.cma pxp_engine.cma -cclib -lnums -cclib -lunix -cclib -lstr $(GALAX_HOME)/lib/caml/galax.cmxa
 
 pads_dm_opt.o: $(CAML_OPTOBJS) $(GALAX_HOME)/lib/caml/galax.cmxa
-	$(OCAML_BIN_DIR)/ocamlopt -output-obj -o pads_dm_opt.o $(OPTLDFLAGS) $(CAML_OPTOBJS) 
+	$(OCAML_BIN_DIR)/ocamlopt -output-obj -o pads_dm_opt.o $(API_ALL_CAML_LIBS) $(CAML_OPTOBJS) 
 
 pads_pglx.o: $(CHEADERS) pads_pglx.c
-	$(CC) $(CFLAGS_O) -I$(OCAML_LIB_DIR) -I . -I$(GALAXHOME)/lib/c -I$(OCAMLHOME)/caml  -I $(PADS_HOME)/padsc/include -c $(VPATH)/pads_pglx.c
+	$(CC) -fno-common $(CFLAGS_O) -I$(OCAML_LIB_DIR) -I . -I$(GALAXHOME)/lib/c -I$(OCAMLHOME)/caml  -I $(PADS_HOME)/padsc/include -c $(VPATH)/pads_pglx.c
 
 all : $(STATIC_GALAXLIB_O) $(SHARED_GALAXLIB_O) $(STATIC_GALAXLIB_D)
 	echo "Making all in pads-glx"
@@ -128,6 +142,6 @@ pads_c.cmo: pads_c.cmi pads_c.ml
 	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c pads_c.ml
 
 .c.o: $(CHEADERS)
-	$(CC) $(CFLAGS) -I . -I$(GALAX_HOME)/lib/c -c $(VPATH)/$<
+	$(CC) -fno-common $(CFLAGS) -I . -I$(GALAX_HOME)/lib/c -c $(VPATH)/$<
 	cp $*.o .
 

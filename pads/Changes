@@ -1,3 +1,8 @@
+January 24, 2005 - Mary
+
+  o Changed rules.mk to fix incorrect definitions of cc/ld variables
+    in rules.arch.darwin.ppc.mk. 
+
 January 5, 2005 - Mary
   o Added XML "regression" test_xml target to pads/GNUmakefile
 
