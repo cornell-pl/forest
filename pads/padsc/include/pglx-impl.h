@@ -11,7 +11,7 @@
 
 #define PDCI_MK_NODE(resultIN, vtIN, parentIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
-    if (!(resultIN = PDCI_NEW_NODE((parentIN)->pdc))) { \
+    if (!(resultIN = PDCI_NEW_NODE())) { \
       failwith("ALLOC_ERROR: in " whatfn); \
     } \
     resultIN->vt     = (vtIN); \
@@ -25,7 +25,7 @@
 
 #define PDCI_MK_TOP_NODE(resultIN, vtIN, pdcIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
-    if (!(resultIN = PDCI_NEW_NODE(pdcIN))) { \
+    if (!(resultIN = PDCI_NEW_NODE())) { \
       failwith("ALLOC_ERROR: in " whatfn); \
     } \
     resultIN->vt     = (vtIN); \
@@ -39,7 +39,7 @@
 
 #define PDCI_MK_TOP_NODE_NORET(resultIN, vtIN, pdcIN, nameIN, mIN, pdIN, repIN, whatfn) \
   do {  \
-    resultIN = PDCI_NEW_NODE(pdcIN); \
+    resultIN = PDCI_NEW_NODE(); \
     if (resultIN) { \
       resultIN->vt     = (vtIN); \
       resultIN->pdc    = pdcIN; \
@@ -56,17 +56,17 @@
 
 /* TODO: BASE TYPE: make macro for each base type */
 
-#define PDCI_NEW_NODE(pdc) \
-  vmnewof((pdc)->vm, 0, PDCI_node_t, 1, 0)
+#define PDCI_NEW_NODE() \
+  ((PDCI_node_t*)calloc(1, sizeof(PDCI_node_t)))
 
-#define PDCI_NEW_NODE_PTR_LIST(pdc, num) \
-  vmnewof((pdc)->vm, 0, PDCI_node_t*, (num)+1, 0)
+#define PDCI_NEW_NODE_PTR_LIST(num) \
+  ((PDCI_node_t**)calloc((num)+1, sizeof(void*)))
 
-#define PDCI_FREE_NODE(pdc, n) \
-  vmfree((pdc)->vm, n)
+#define PDCI_FREE_NODE(n) \
+  free(n)
 
-#define PDCI_FREE_NODE_PTR_LIST(pdc, list) \
-  vmfree((pdc)->vm, list)
+#define PDCI_FREE_NODE_PTR_LIST(list) \
+  free(list)
 
 #ifndef NDEBUG
 #define PDCI_NODE_CHECK(n, whatfn) \

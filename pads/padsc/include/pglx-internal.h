@@ -102,10 +102,10 @@ typedef struct PDCI_sequenced_pd_s PDCI_sequenced_pd;
 #ifdef FOR_CKIT
 void PDCI_NODE_CHECK(PDCI_node_t *n, const char *whatfn);
 void PDCI_NODE_VT_CHECK(PDCI_node_t *n, const char *whatfn);
-PDCI_node_t *PDCI_NEW_NODE(PDC_t *pdc);
-PDCI_node_t **PDCI_NEW_NODE_PTR_LIST(PDC_t *pdc, int num);
-void PDCI_FREE_NODE(PDC_t *pdc, PDCI_node_t *n);
-void PDCI_FREE_NODE_PTR_LIST(PDC_t *pdc, PDCI_node_t **list);
+PDCI_node_t *PDCI_NEW_NODE();
+PDCI_node_t **PDCI_NEW_NODE_PTR_LIST(unsigned int num);
+void PDCI_FREE_NODE(PDCI_node_t *n);
+void PDCI_FREE_NODE_PTR_LIST(PDCI_node_t **list);
 
 void PDCI_MK_TNODE(PDCI_node_t *result,
 		   const PDCI_vtable_t *vt,

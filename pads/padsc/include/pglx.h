@@ -40,6 +40,8 @@ value       PGLX_generic_typed_value (void *ocaml_n);
 const char* PGLX_generic_string_value(void *ocaml_n);
 const char* PGLX_generic_name        (void *ocaml_n);
 
-void        PGLX_node_free           (void *ocaml_n);
+void        PGLX_node_free           (void *ocaml_n);     /* free node ocaml_n */
+void        PGLX_nodelist_free       (void **child_list); /* free a void ** list returned from generic_children */
+/* Note: PGLX_nodelist_free does not free the child nodes, just the list that refers to them */
 
 #endif  /*   __PGLX_H__   */

@@ -1235,8 +1235,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		  fun ifGalaxChildren(returnName, number, errorString) =
 		      [PT.IfThen(P.notX(P.assignX(returnName,
 			       			  PT.Call(PL.PDCI_NEW_NODE_PTR_LIST, 
-					                  [fieldX(self,pdc), 
-						           number]))),		
+					                  [number]))),		
                                  PT.Expr(PT.Call(PT.Id "failwith",[PT.String errorString])))]
 	
 		  (* PDCI_MK_TNODE: common in foo_children function *)
