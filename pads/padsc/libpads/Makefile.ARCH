@@ -5,7 +5,7 @@
 if 0
 CCFLAGS = $(CC.DEBUG) $(CC.DLL)
 end
-CCFLAGS = $(CC.OPT) $(CC.DLL) -DNDEBUG
+CCFLAGS = $(CC.OPTIMIZE) $(CC.DLL) -DNDEBUG
 
 padsc 1.0 :LIBRARY: rbuf.c default_io_disc.c libpadsc-gen.c libpadsc-acc-gen.c libpadsc-read-gen.c
 
