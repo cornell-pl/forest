@@ -1,0 +1,44 @@
+This directory contains a very simple test of the Caml/C IDL
+interface.   The IDL mimics the functionst that must be provided to
+the Galax datamodel.  Here are the files:
+
+  test.idl:  
+
+    The shared types and signatures of C functions available to Caml.
+
+    test.h, test.mli, test.ml are all generated from this IDL file.
+
+  test.c: 
+
+    The implementations of the functions in test.idl.  Note that the
+    root() function creates a little "document" and returns a pointer
+    to the C nodeRepStruct that represents the root.
+
+    To test this interface with PADS, test.c should be replaced by the
+    PADS library that implements these functions for a particular PADS
+    data source.  Obviously, the names and possibly signatures of the
+    interface functions might have to change to match those produced
+    by PADS. 
+
+  test_idl.ml:
+
+    The "main" Caml program, which calls root() to get the root of the
+    document and then does a depth first walk over the document,
+    printing the name of each node and, if it is a leaf node, its
+    typed value. 
+
+
+To run on delenn, "make run"
+
+~~~~~~~~~~~
+Noto Bene!!
+~~~~~~~~~~~
+
+  The children() function returns a _null terminated array_ of
+  nodeReps (i.e., pointers to node representations).  This means that
+  if a node has _no_ children, it _does not_ return NULL.  Instead, it
+  returns an array whose first value is NULL.  You will get a SEG
+  fault if you return a NULL value to any Caml function expecting an
+  array of values.   See test.c, lines 49 & 50, on how to alloc &
+  initialize an empty array.  Be sure the PADS children function is
+  yielding a NULL terminated array. 
