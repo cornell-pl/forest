@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
   char* h;
   int rev = 0;
   PDC_t*          pdc;
+  PDC_IO_disc_t*  io_disc;
   PDC_int8        i1;
   PDC_int16       i2;
   PDC_int32       i4;
@@ -31,11 +32,11 @@ int main(int argc, char** argv) {
   unsigned long   ultmp;
 
 #ifdef USE_NLREC
-  printf("\nUsing PADSC IO discipline nlrec\n\n");
-  PDC_nlrec_install(&my_disc, 0);
+  printf("\nUsing PADSC IO discipline nlrec_noseek\n\n");
+  io_disc = PDC_nlrec_noseek_make(0);
 #else
-  printf("\nUsing PADSC IO discipline newrec\n\n");
-  PDC_newrec_install(&my_disc, 0);
+  printf("\nUsing PADSC IO discipline norec\n\n");
+  io_disc = PDC_norec_make(0);
 #endif
 
   if (argc >= 2) {
@@ -57,59 +58,59 @@ int main(int argc, char** argv) {
     break;
   }
 
-  if (PDC_ERR == PDC_open(&my_disc, &pdc)) {
+  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_IO_fopen(pdc, fname, &my_disc)) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, fname)) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
 
   while (1) {
-    if (PDC_IO_at_EOF(pdc, &my_disc)) {
+    if (PDC_IO_at_EOF(pdc)) {
       error(0, "Main program found eof");
       break;
     }
 
-    if (PDC_ERR == PDC_bint8_read(pdc, &em, &ed, &i1, &my_disc)) {
+    if (PDC_ERR == PDC_bint8_read(pdc, &em, &ed, &i1)) {
       goto check_newline;
     } else {
       error(0, "Read bint8  : %ld", i1);
     }
-    if (PDC_ERR == PDC_buint8_read(pdc, &em, &ed, &ui1, &my_disc)) {
+    if (PDC_ERR == PDC_buint8_read(pdc, &em, &ed, &ui1)) {
       goto check_newline;
     } else {
       error(0, "Read buint8 : %lu", ui1);
     }
 
-    if (PDC_ERR == PDC_bint16_read(pdc, &em, &ed, &i2, &my_disc)) {
+    if (PDC_ERR == PDC_bint16_read(pdc, &em, &ed, &i2)) {
       goto check_newline;
     } else {
       error(0, "Read bint16  : %ld", i2);
     }
-    if (PDC_ERR == PDC_buint16_read(pdc, &em, &ed, &ui2, &my_disc)) {
+    if (PDC_ERR == PDC_buint16_read(pdc, &em, &ed, &ui2)) {
       goto check_newline;
     } else {
       error(0, "Read buint16 : %lu", ui2);
     }
-    if (PDC_ERR == PDC_bint32_read(pdc, &em, &ed, &i4, &my_disc)) {
+    if (PDC_ERR == PDC_bint32_read(pdc, &em, &ed, &i4)) {
       goto check_newline;
     } else {
       error(0, "Read bint32  : %ld", i4);
     }
-    if (PDC_ERR == PDC_buint32_read(pdc, &em, &ed, &ui4, &my_disc)) {
+    if (PDC_ERR == PDC_buint32_read(pdc, &em, &ed, &ui4)) {
       goto check_newline;
     } else {
       error(0, "Read buint32 : %lu", ui4);
     }
-    if (PDC_ERR == PDC_bint64_read(pdc, &em, &ed, &i8, &my_disc)) {
+    if (PDC_ERR == PDC_bint64_read(pdc, &em, &ed, &i8)) {
       goto check_newline;
     } else {
       error(0, "Read bint64  : %lld", i8);
     }
-    if (PDC_ERR == PDC_buint64_read(pdc, &em, &ed, &ui8, &my_disc)) {
+    if (PDC_ERR == PDC_buint64_read(pdc, &em, &ed, &ui8)) {
       goto check_newline;
     } else {
       error(0, "Read buint64 : %llu", ui8);
@@ -117,12 +118,12 @@ int main(int argc, char** argv) {
 
   check_newline:
 #ifdef USE_NLREC
-    if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped, &my_disc)) {
+    if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped)) {
       error(2, "Could not find EOR (newline), ending program");
       goto done;
     }
 #else
-    if (PDC_ERR == PDCI_char_lit_scan(pdc, '\n', '\n', 0, &bytes_skipped, &my_disc)) {
+    if (PDC_ERR == PDCI_char_lit_scan(pdc, '\n', '\n', 0, &bytes_skipped)) {
       error(2, "Could not find newline, ending program");
       break;
     }
@@ -132,12 +133,12 @@ int main(int argc, char** argv) {
   }
 
  done:
-  if (PDC_ERR == PDC_IO_fclose(pdc, &my_disc)) {
+  if (PDC_ERR == PDC_IO_fclose(pdc)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc, &my_disc)) {
+  if (PDC_ERR == PDC_close(pdc)) {
     error(2, "*** PDC_close failed ***");
     exit(-1);
   }

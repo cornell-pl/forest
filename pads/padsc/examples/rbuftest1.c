@@ -17,14 +17,13 @@ int main(int argc, char** argv) {
   void*           buf2b;
   PDC_int32*      ar1;
   PDC_int8*       ar2;
-  PDC_disc_t      my_disc = PDC_default_disc;
 
-  if (PDC_ERR == PDC_open(0, &pdc)) {
+  if (PDC_ERR == PDC_open(&pdc, 0, 0)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  rmm_z = PDC_rmm_zero(pdc, 0);
-  rmm_nz = PDC_rmm_nozero(pdc, 0);
+  rmm_z = PDC_rmm_zero(pdc);
+  rmm_nz = PDC_rmm_nozero(pdc);
 
   if (!(rbuf1 = RMM_new_rbuf(rmm_z))) {
     error(2, "*** RMM_new_rbuf on rmm_z failed ***");
@@ -98,7 +97,7 @@ int main(int argc, char** argv) {
   err = RMM_free_buf(mgr, buf2b);
   error(0, "=> RMM_free_buf on rbuf2's buffer result: err= %d ***", err);
 
-  if (PDC_ERR == PDC_close(pdc, &my_disc)) {
+  if (PDC_ERR == PDC_close(pdc)) {
     error(2, "*** PDC_close failed ***");
     exit(-1);
   }

@@ -12,6 +12,7 @@ int main(int argc, char** argv) {
   /* int             i; */
   PDC_string      s;
   PDC_t*          pdc;
+  PDC_IO_disc_t*  io_disc;
   PDC_base_em     em = PDC_CheckAndSet;
   PDC_base_ed     ed;
   PDC_disc_t      my_disc = PDC_default_disc;
@@ -20,18 +21,18 @@ int main(int argc, char** argv) {
   PDC_regexp_t    *my_regexp;
 
   printf("\nUsing PADSC IO discipline nlrec\n\n");
-  PDC_nlrec_install(&my_disc, 0);
+  io_disc = PDC_nlrec_make(0);
 
-  if (PDC_ERR == PDC_open(&my_disc, &pdc)) {
+  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.libtest4", &my_disc)) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.libtest4")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_regexp_compile(pdc, "[X]|EOR", &my_regexp, &my_disc)) {
+  if (PDC_ERR == PDC_regexp_compile(pdc, "[X]|EOR", &my_regexp)) {
     error(2, "** unexpected regexp compile failure **");
     exit(-1);
   }
@@ -40,36 +41,36 @@ int main(int argc, char** argv) {
    * XXX Process the data here XXX
    */
   while (1) {
-    if (PDC_IO_at_EOF(pdc, &my_disc)) {
+    if (PDC_IO_at_EOF(pdc)) {
       error(0, "Main program found eof");
       break;
     }
     /* try to read line with 2 strings term by vbar 1 string term by EOR */
-    if (PDC_ERR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s, &my_disc)) {
+    if (PDC_ERR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s)) {
       goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", s.str, s.len);
     }
-    if (PDC_ERR == PDC_char_lit_read(pdc, &em, &ed, '|', 0)) {
-      PDCI_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+    if (PDC_ERR == PDC_char_lit_read(pdc, &em, &ed, '|')) {
+      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s, &my_disc)) {
+    if (PDC_ERR == PDC_string_stopChar_read(pdc, &em, '|', &ed, &s)) {
       goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", s.str, s.len);
     }
-    if (PDC_ERR == PDC_char_lit_read(pdc, &em, &ed, '|', 0)) {
-      PDCI_report_err (pdc, &my_disc, 0, &ed.loc, ed.errCode, 0);
+    if (PDC_ERR == PDC_char_lit_read(pdc, &em, &ed, '|')) {
+      PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_string_stopRegexp_read(pdc, &em, my_regexp, &ed, &s, &my_disc)) {
+    if (PDC_ERR == PDC_string_stopRegexp_read(pdc, &em, my_regexp, &ed, &s)) {
       break;
     } else {
       error(0, "Read string term by EOR or X : %s (length %d)", s.str, s.len);
     }
   find_EOR:
-    if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped, &my_disc)) {
+    if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped)) {
       error(2, "Could not find EOR (newline), ending program");
       goto done;
     }
@@ -78,12 +79,12 @@ int main(int argc, char** argv) {
   }
 
  done:
-  if (PDC_ERR == PDC_IO_fclose(pdc, &my_disc)) {
+  if (PDC_ERR == PDC_IO_fclose(pdc)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_close(pdc, &my_disc)) {
+  if (PDC_ERR == PDC_close(pdc)) {
     error(2, "*** PDC_close failed ***");
     exit(-1);
   }
