@@ -1,3 +1,17 @@
+by 8/6
+------
+accum disc. knobs
+panic -> status flags and macros
+ints -> PDC_uint32
+const?
+skipped error codes: PDC_SKIPPED (library and generated code)
+pd illegal name
+PDC_NOT_PARSED errCode
+error if separator equals terminator
+
+manual
+separate ast and pads trees
+
 testing
 -------
 
@@ -11,11 +25,7 @@ to decide
      - want to be able to define special bit patterns,
         either individual bits or collections of them.
   * padsl pragmas for specifying record-type, endian, slurp mode
-  * add struct predicates to calculuate properties of entire struct
-	- consider adding an overlay ability here, which would
-	  reinterpret something of buffer type
   * allow union arms with no variable names by specifying a tag name
-  * more convenient ways of specying error-mask settings.
   * support for optional fields?
   * how to handle name conflicts for enums and unions
      how relates to name spaces and separate compilation
@@ -35,29 +45,16 @@ to document
 library todo
 ------------
  * accum config params in disc
- * accum for char
- * print routine for nerr accum
- * add nerr to padsc base types
+ * accum report to buffer and to IO (now just to PDC error stream)
  * buffer data source
- * io_commit hack that outputs the raw bytes to an sfio stream
  * alias to PDC_IO_dump_start, PDC_IO_dump_end
  * non-preserving write functions for base types
 
 MORE BASE TYPES:
-
-  DONE, TEST WRITTEN:
-     * adate
-
-  DONE?, NO TEST?
-     * echar, estring, estringFW, estringSE, estringCSE [done?, no test?
-
-  NOT DONE?
      * afloat32, afloat64, bfloat32, bfloat64
-     * BCD (numeric), rational numbers (fixed point, unsigned fixed point)
      * astringME, estringME (low priority)
 
 IO STUFF:
- * io discipline for IBM-style records, vlvd whatever 
  * PDCI_IO_commit_sfwrite : writes all bytes from start of checkpoint
                             to the current IO cursor that is being committed
                             to the sfio stream provided
@@ -66,12 +63,9 @@ IO STUFF:
                 a new io_cur_elt/io_remain to allow cleanup after write
 
 ACCUM STUFF:
-  * accums should keep track of bad values, they are
-      sometimes even more interesting than the good values
-  * sort error codes into parser versus semantic errors
-     include in accumulator bad values with error codes 
-     that indicate semantic rather than parser level errors
-  * Need function for reporting numbers of errors
+  * accumulators need quad groupoing
+    - skipped values, syntactic errors, semantic errors, good values
+
 
 DISCIPLINE:
  * let user set hash table size, include a symbolic constant for 
@@ -82,35 +76,32 @@ DISCIPLINE:
 padsc compiler todo
 -------------------
 NEW
-  * collapse pd and m for typedefs, as is done with reps
-  * set parse descriptor errCode to PDC_NotParsed in initialization
-  function
+  * pd needs to be illegal for struct/union field names, enum labels
+  * set parse descriptor errCode to PDC_NotParsed in initialization function
   * set parse descriptor errCode to PDC_Skipped if skipped
   * set parse descriptor errCode to PDC_NoError if read successfully
+  * if checkset mask is ignore or no-check, then set error descriptor
+    to indicate that status: PDC_Skipped
   * error if sep and term are the same char
+  * generate better error message if field type is non-existent.
+  * empty structs (create dummy field of type PDC_char)
+
+DEFER
   * if a user-defined constraint involves a field that has errCode != PDC_NO_ERR,
     the error message should be something like
       "User constraint skipped due to error reading one of its parts"
        and the error code should be, e.g.,
        PDC_USER_CONSTRAINT_SKIPPED.
+ * illegal to omit fields used later as parameters 
 
-  * if checkset mask is ignore or no-check, then set error descriptor
-    to indicate that status.
-  * implement set but no check
-  * generate better error message if field type is non-existent.
-
-OLD (some of them are done)
   * make enum.p work (strings that match c keywordsk, etc)
-  * don't complain about extra spaces if in slurp mode
-  * generated accum types should have some top-level state
-     as well as per-field accums.  one idea is to accum the nerr
-     field so that one could report the distribution of error
-     cases, as in struct example:
-            0 elt errors         88% of time
-            1 elt errors         10% of time
-            3 elt errors          2% of time
-     More basic thing would just be number of good/bad values
-     # Need a library function for reporting error distribution.
+  * fix accumulator generation program to start from file type
+  * add analysis to determine if checkset mask is plausible 
+    given other constraints
+  * generate write functions
+        - xml (need canonical mapping)
+
+Optimizations
   * implement compiler optimizations mentioned in talk
       - glomming ignores (see examples/gen/dibbler2-mod.c)
         # I'm not sure this is a good idea.
@@ -118,13 +109,4 @@ OLD (some of them are done)
 	  optimization.
         # Static specification of error mask and related customization
 	  will be a bigger win, I think.
-  * fix accumulator generation program to start from file type
-  * add analysis to determine if checkset mask is plausible 
-    given other constraints
-  * empty structs
-  * change comment character to //-
-  * generate write functions
-        - original
-        - xml (need canonical mapping)
-done
-----
+

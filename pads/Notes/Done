@@ -1,0 +1,32 @@
+8/1/2003
+  * add struct predicates to calculuate properties of entire struct
+	- consider adding an overlay ability here, which would
+	  reinterpret something of buffer type
+
+  * more convenient ways of specying error-mask settings.
+
+ * accum for char
+ * print routine for nerr accum
+
+base types
+     * adate
+     * echar, estring, estringFW, estringSE, estringCSE [done?, no test?]
+     * BCD (numeric), rational numbers (fixed point, unsigned fixed point)
+
+IO STUFF
+ * io discipline for IBM-style records, vlvd whatever 
+
+ACCUM
+  * generated accum types should have some top-level state
+     as well as per-field accums.  one idea is to accum the nerr
+     field so that one could report the distribution of error
+     cases, as in struct example:
+            0 elt errors         88% of time
+            1 elt errors         10% of time
+            3 elt errors          2% of time
+     More basic thing would just be number of good/bad values
+     # Need a library function for reporting error distribution.
+
+compiler
+  * generate write functions
+        - original
