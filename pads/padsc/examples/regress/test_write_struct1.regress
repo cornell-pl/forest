@@ -1,5 +1,5 @@
 warning: P_open: Installing default IO discipline : newline-terminated records
-Data file = ../../data/write_struct
+Data file = ../../data/write_struct1
 calling testtwo_read
 testtwo_read returned: id 1  ts 11  f 11 
 1|11|11
