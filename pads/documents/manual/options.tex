@@ -4,14 +4,15 @@
 The in-memory representation of an option records if the data was
 available and if so, the value of that data.  
 \section{Syntax}
+\label{opts-syntax}
 \begin{tabular}{rcl}
 \nont{p\_opt\_some}    & \is{}  & \Psome{} identifier \cd{=>} \{ \nont{predicate} \}\\[1ex]
 \nont{p\_opt\_none}    & \is{}  & \Pnone{} \cd{=>} \{ \nont{predicate} \}\\[1ex]
-\nont{opt\_predicates} & \is{}  & : \nont{p\_opt\_some} `$\mid$' \nont{p\_opt\_none} \\
-                       & \alt{} & : \nont{p\_opt\_none} `$\mid$' \nont{p\_opt\_some} \\
-                       & \alt{} & : \nont{p\_opt\_none} \\
-                       & \alt{} & : \nont{p\_opt\_some} \\
-\nont{opt\_ty}    & \is{} & \Popt{} \nont{p\_ty} identifier \opt{\nont{p\_formals}} \opt{\nont{opt\_predicates}};\\
+\nont{opt\_predicates} & \is{}  & \nont{p\_opt\_some} `$\mid$' \nont{p\_opt\_none} \\
+                       & \alt{} & \nont{p\_opt\_none} `$\mid$' \nont{p\_opt\_some} \\
+                       & \alt{} & \nont{p\_opt\_none} \\
+                       & \alt{} & \nont{p\_opt\_some} \\
+\nont{opt\_ty}    & \is{} & \Popt{} \nont{p\_ty} identifier \opt{\nont{p\_formals}} \opt{: \nont{opt\_predicates}};\\
 
 \\[4ex]
 
@@ -21,11 +22,12 @@ available and if so, the value of that data.
 We explain the meaning of this syntax in the remainder of this chapter.
 All non-terminals not defined in this grammar fragment were
 defined previously, as follows.
-Predicates (\term{predicate}) are defined in \secref{sec:common-predicates}
+Predicates (\term{predicate}) are defined in \secref{sec:common-predicates},
 \padsl{} parameter lists (\nont{p\_formals}) in \secref{sec:common-parameterization}.
 
 
 \subsection{Examples}
+\label{sec:opt-examples}
 The following declaration indicates that the type \cd{oPuint32} describes
 an optional \cd{Puint32}.  
 
@@ -47,11 +49,6 @@ indicate that the data matched, storing the values \cd{12} and
 \cd{24}, respectively.  For the second line, the representation of
 \cd{f} will record no match, while \cd{g}'s will indicate a match with
 value \cd{23}. 
-
-Because \Popt{}s can be declared in-line in \Pstruct{} and \Punion{}
-declarations (\cf{} \secref{sec:options-inline} ), we can rewrite
-\cd{entry1} as follows and produce an equivalent description:
-\input{code/simple-inline-opt}
 
 A slightly more complex example of options uses predicates to
 determine if the option matches the input data:
@@ -78,11 +75,9 @@ match \cd{14}, while \cd{x2} and \cd{y2} will be marked as not
 matching. For the second record, \cd{x2} and \cd{y2} will match 
 instead, with \cd{x1} and \cd{y1} being marked as no match, \etc{}
 
-Again, using in-line declarations, we can rewrite \cd{entry3} to the
-equivalent description \cd{entry4}
-\input{code/constraint-inline-opt}
 
 \subsection{Constraints}
+\label{sec:opt-constraints}
 Option constraints can have a \Psome{} clause and/or a \Pnone{}
 clause.  The \Psome{} clause specifies a variable and a predicate to
 execute if the base type of the option is successfully read.  If a
@@ -91,8 +86,21 @@ representation of the base element and the associated predicate is
 executed in that context.  If the predicate returns true, the
 
 \subsection{In-line options}
+For conciseness, \Popt{}s can be declared in-line in \Pstruct{} and \Punion{}
+declarations (\cf{} \secref{sec:structs-inline} and
+\secref{sec:unions-inline}).  For example,  we can rewrite 
+\cd{entry1} as follows and produce an equivalent description:
+\input{code/simple-inline-opt}
+
+\noindent
+Similarly, can rewrite \cd{entry3} to the equivalent description
+\cd{entry4} 
+\input{code/constraint-inline-opt}
+
+
 
 \section{Generated library}
+label{sec:opts-library}
 
 \subsection{In-memory representation}
 \label{sec:opts-rep}

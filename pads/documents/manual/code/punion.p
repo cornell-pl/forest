@@ -1,4 +1,4 @@
-/*@FILE @LEFT union.switch.tex union.option.tex*/
+/*@FILE @LEFT union.switch.tex union.option.tex union.literal.tex*/
 
 /*@BEGIN union.switch.tex */
 Punion branches(:Puint32 which:) {
@@ -30,3 +30,13 @@ Pstruct data {
 */
 }
 /*@END union.option.tex */
+
+/*@BEGIN union.literal.tex */
+Precord Punion test {
+  "baz";
+  'c';
+  star Pfrom("*");
+  as Pfrom(Pre "/a+/");
+  Pint32 f;
+};
+/*@END union.literal.tex */

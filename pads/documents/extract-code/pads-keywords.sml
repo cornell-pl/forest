@@ -66,6 +66,7 @@ structure PadsKeywords : sig
               ("Pfrom", T.Keyword),
               ("Pin", T.Keyword),
               ("Plast", T.Keyword),
+              ("Plongest", T.Keyword),
               ("Pnone", T.Keyword),
               ("Pnosep", T.Keyword),
               ("Pomit", T.Keyword),

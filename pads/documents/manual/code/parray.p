@@ -1,4 +1,4 @@
-/*@FILE @LEFT  seq_t.tex sorted_t.tex nosep.tex last.tex size.tex longest.tex ended.tex array-omit.tex array-forall.tex*/
+/*@FILE @LEFT  seq_t.tex sorted_t.tex nosep.tex last.tex size.tex longest.tex ended.tex array-omit.tex array-forall.tex array-inplace.tex*/
 
 /*@BEGIN seq_t.tex */
 Parray seq_t{
@@ -101,4 +101,11 @@ Precord Parray intList {
 };
 /*@END array-forall.tex */
 
+/*@BEGIN array-inplace.tex */
+ Pstruct log_t {
+  Puint8 [4] ip  : Psep('.') && Pterm(Pnosep); /- resolved ip address
+  '|';
+  Puint32 numBytes;
+};
+/*@END array-inplace.tex */
 

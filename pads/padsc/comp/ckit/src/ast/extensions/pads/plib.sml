@@ -162,8 +162,6 @@ struct
   val longestX     = [PX.ParseCheck(
 		       PT.Call(PT.Id "PDCI_Plongest_chkErr",
 			       [P.dotX(P.subX(PT.Id PNames.pdElts, PT.Id PNames.arrayCur),PT.Id PNames.nerr),
-				P.minusX(P.dotX(PT.Id PNames.elemEnd, PT.Id PNames.offset),
-					 P.dotX(PT.Id PNames.elemBegin, PT.Id PNames.offset)),
 				P.addrX(PT.Id PNames.consume)]))]
 
   fun fmtChar(chr:PT.expression) =

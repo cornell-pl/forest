@@ -127,7 +127,7 @@ if ($res =~ /\`?$pty\'?\s+undeclared/is) {
   print "\nBuild of test program failed, ptype $pty not found\n\n";
   exit(-1);
 }
-if ($res =~ /error/is) {
+if ($res =~ /error/is || $res =~ /no rule/is) {
   print "\n$res\n\nBuild of test program failed, see error(s) above\n\n";
   exit(-1);
 }

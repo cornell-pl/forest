@@ -161,6 +161,8 @@ void PDCI_REGEXP_FROM_CSTR(P_t *pads, Pregexp_t my_regexp, const char *str_expr,
 			   const char *err_prefix, const char *whatfn);
 void PDCI_REGEXP_FROM_STR(P_t *pads, Pregexp_t my_regexp, Pstring *str_expr,
 			  const char *err_prefix, const char *whatfn);
+
+
 #else
 /* The actual impls */
 
@@ -1499,13 +1501,9 @@ Pbyte *PDCI_findlast(const Pbyte *begin, const Pbyte *end, Pbyte b);
 /*
  * PDCI_Plongest_chkErr: if nerr, set *consume to 0 and return 1; if nerr==0, return 0
  */
-int PDCI_Plongest_chkErr(Puint32 nerr, size_t elt_size, int *consume);
+int PDCI_Plongest_chkErr(Puint32 nerr, int *consume);
 
-/* 
- * Plongest: can only be used as an array constraint, forces array to terminate
- *           if there is an element error (does not consume the error elt)
- */
-#define Plongest Pended(Pparsecheck(PDCI_Plongest_chkErr(pds[current].nerr, eltEnd.offset - eltBegin.offset, &consume)))
+
 #define Peor Pre "/$/"
 
 /* ================================================================================ */

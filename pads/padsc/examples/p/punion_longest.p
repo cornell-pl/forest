@@ -4,7 +4,7 @@ Parray a1 {
 Parray a2 {
   Pchar [] : Pterm('y');
 };
-PlongestMatch Punion test {
+Plongest Punion test {
   a1         arm1;
   a2         arm2;
 };

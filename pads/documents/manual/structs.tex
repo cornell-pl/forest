@@ -16,7 +16,12 @@ The syntax for \Pstruct{}s is given by the following BNF grammar fragment:
      \nont{p\_ty}  identifier \opt{\nont{constraint}}; \opt{\nont{p\_comment}} \\[1ex]
 \nont{comp\_field} & \is{} & \Pcompute{} \opt{\Pomit{}} \nont{ty} identifier \cd{=} \nont{expression} \opt{\nont{constraint}};\\[1ex]
 \nont{literal\_field} & \is{} & \nont{p\_coreliteral};\\[1ex]
-\nont{field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field}  \\[1ex]
+\nont{array\_field} & \is{} & \opt{\nont{qualifiers}} \nont{p\_ty} `['\nont{p\_size\_spec}`]' identifier 
+                             \opt{: \nont{p\_array\_constraints}} ; \opt{\nont{p\_comment}} \\[1ex] 
+\nont{opt\_field} & \is{} & \opt{\nont{qualifiers}} \Popt{} \nont{p\_ty} identifier 
+                          \opt{: \nont{opt\_predicates}}; \opt{\nont{p\_comment}}\\[1ex]
+\nont{field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field} 
+                       \alt{} \nont{array\_field} \alt{} \nont{opt\_field} \\[1ex]
 \nont{fields} & \is{} & \nont{field} \alt{} \nont{field} \ \nont{fields}\\[1ex]
 \nont{struct\_ty} & \is{} &  \Pstruct{} identifier \opt{\nont{p\_formals}} \{\\
 && \quad \nont{fields}\\
@@ -25,14 +30,16 @@ The syntax for \Pstruct{}s is given by the following BNF grammar fragment:
 
 \noindent
 We explain the meaning of this syntax in the remainder of this chapter.
-All non-terminals not defined in this grammar fragment were
-defined previously.
+All non-terminals not defined in this grammar fragment are defined elsewhere.
 Predicates (\nont{predicate}) are described in \secref{sec:common-predicates}.
 \padsl{} types (\nont{p\_ty}) and formal parameters (\nont{p\_formals})
 are described in \secref{sec:common-parameterization}.
 \PADS{} comments (\nont{p\_comment}) are described in \secref{sec:common-comments}.
 Core literals (\nont{p\_coreliteral})  are described in
 \secref{sec:common-literals}.
+For in-line arrays, size specifications (\nont{p\_size\_spec}) and array constraints 
+appear in \chapref{chap:arrays}.
+Option constraints (\nont{opt\_predicates}) are defined in \secref{opts-syntax}.
 Expressions (\nont{expression}) represent any \C{} expression, 
 while \nont{c\_ty} denotes any \C{} type.
 
@@ -134,6 +141,43 @@ associated parse descriptor.  The library discipline has parameters
 that allow the library user to tune the extent of such scanning
 (\cf{} \secref{sec:library-customization-scanning-extent}).
 
+\subsection{In-line declarations}
+\label{sec:structs-inline}
+For conciseness, \pads{} allows anonymous option and array types to be
+declared within \Pstruct{} field declarations. 
+
+\subsubsection{Array declarations}
+\label{sec:structs-arrays-inline}
+In-line array declarations include a size specification after the type
+of the field. For example, the following \Pstruct{} matches a resolved
+IP address (of the form \cd{135.27.24.12}) and an integer recording a
+number of bytes, separted by a vertical bar:
+\input{code/array-inplace}
+After the field name, \pads{} permits an optional colon followed by
+array constraints.  Details about size specifications, array
+constraints, and the in-memory representation of arrays may be found
+in \chapref{chap:arrays}. 
+
+\subsubsection{Option declarations}
+\label{sec:structs-options-inline}
+In-line options are marked by the keyword \Popt{}.  For example, the
+following \Pstruct{} matches two optional integers separated by a
+vertical bar and terminated by a newline.
+\input{code/simple-inline-opt}
+This declaration is equivalent to the \cd{entry1} type defined in
+\secref{sec:opt-examples}.
+Fields with in-line option declarations admit the option form of
+constraints, which are described in \secref{sec:opt-constraints}.
+As an example, the \Pstruct{} \cd{entry4} 
+\input{code/constraint-inline-opt}
+uses option constraints to specify when the option should match.
+Type \cd{entry4} is equivalent to the type \cd{entry3} defined in
+\secref{sec:opt-examples} .
+
+Details about the in-memory representation of options appear in
+\secref{sec:opts-rep}.
+
+
 \subsection{Qualifiers}
 \label{sec:structs-qualifiers}
 Non-literal fields can take one or more qualifiers.
@@ -158,12 +202,6 @@ Non-literal fields can take one or more qualifiers.
   \secref{sec:library-customization-endian}).
 \end{description}
 
-\subsection{In-line declarations}
-\label{sec:structs-inline}
-\subsubsection{Array declarations}
-\label{sec:arrays-inline}
-\subsubsection{Option declarations}
-\label{sec:options-inline}
 
 \subsection{Optional \texttt{Pwhere} clause}
 If given, a \Pwhere{} clause expresses constraints over the entirety

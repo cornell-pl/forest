@@ -119,8 +119,8 @@ name of the array; it is a synonym for the special variable \texttt{elts}.
 
 
 \subsection{Size specifications}
+\label{sec:array-size-spec}
 There are five different kinds of size specifications possible:
-
 \begin{tabular}{ll}
   \texttt{[]}         & unbounded \\
   \texttt{[n]}        & exactly size \texttt{n}\\
@@ -283,6 +283,10 @@ terminate:
   erroneous element value is not included in the array.
 \item{\Pended{}.} If an array has a \Pended{} clause, parsing
   terminates whenever the specified predicate evaluates to true.
+\item{\textit{Failure to consume input.}} If array parsing code fails
+  to consume any input in reading the next element of the sequence,
+  then parsing for the array will terminate.  (The alternative is to
+  loop infinitely).
 \end{itemize}
 A single array specification can include many of these termination
 conditions.  If any of the conditions trigger, then array parsing

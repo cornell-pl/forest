@@ -5,18 +5,21 @@ supports two forms of union: switched and in-place.  The first form
 supports data sources where there is an indication (\ie, a switch) in
 the data prior to the union indicating which alternative should be
 chosen.  The second form supports data sources where no such switch is
-present.  In this case, the read code tries the branches in order
-until it finds one which parses without any errors.
+present.  The default for this case is to try the branches in order
+until one parses without any errors.  There is also a qualifier
+(\Plongest{}) that indicates the parser should take the branch that
+consumes the most input. 
 \section{Syntax}
 \begin{tabular}{rcl}
-\nont{union\_field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field}\\[1ex]
+\nont{union\_field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field}
+			     \alt{} \nont{array\_field} \alt{} \nont{opt\_field} \\[1ex]
 \nont{branch}     & \is{} & \Pcase{} \nont{expression} : \nont{union\_field}
                     \alt{}  \Pdefault : \nont{union\_field}\\[1ex]
 \nont{branches}   & \is{} & \nont{branch} \alt{} \nont{branch} \nont{branches} \\[1ex]
 \nont{switched}   & \is{} & \Pswitch{} (\nont{expression})\{ \nont{branches} \}\\[1ex]
 \nont{in\_place}  & \is{} & \nont{union\_field} \alt{} \nont{union\_field} \nont{in\_place}\\[1ex]
 \nont{union\_bdy} & \is{} & \nont{switched} \alt{} \nont{in\_place}\\[1ex]
-\nont{union\_ty}  & \is{} & \Punion{} identifier \opt{\nont{p\_formals}} \{ \\
+\nont{union\_ty}  & \is{} & \opt{\Plongest{}} \Punion{} identifier \opt{\nont{p\_formals}} \{ \\
 && \quad \nont{union\_bdy} \\
 && \}\ \opt{ \Pwhere{} \ \{\ \nont{predicate}\ \}}; \\[4ex]
 
@@ -26,7 +29,8 @@ until it finds one which parses without any errors.
 We explain the meaning of this syntax in the remainder of this chapter.
 All non-terminals not defined in this grammar fragment were
 defined previously, as follows.
-Full fields (\nont{full\_field}) 
+Full fields (\nont{full\_field}), in-line array declarations
+(\nont{array\_field}), and in-line option declarations (\nont{option\_field})
 appear in \secref{sec:structs-full-fields}, 
 computed fields (\nont{comp\_field}) in
 \secref{sec:structs-computed-fields}, 
@@ -99,24 +103,28 @@ matches, the \Pdefault{} expression (if present) matches instead.
 The body of each branch in a switched \Punion{} is a \nont{union\_field},
 while the body of each in-place \Punion{} is a non-empty sequence of
 such fields. 
-There are three varieties of union fields: 
-full fields (\secref{sec:structs-full-fields}) 
-and computed fields (\secref{sec:structs-computed-fields}), borrowed from \Pstruct{}s, and 
-literal fields.
-The only semantic change for full and computed is that in \Pstruct{}s,
-the values of earlier 
-fields are in scope for the constraints of later fields, while in
-\Punion{}s, fields do not cascade because only one branch of a union
-can be active at a time.  For literal fields, the parser tries to find
-the literal in the source.  
+There are five varieties of union fields: 
+full fields (\secref{sec:structs-full-fields}),
+computed fields (\secref{sec:structs-computed-fields}), 
+in-place array declarations (\secref{sec:structs-arrays-inline}),
+in-place option declarations (\secref{sec:structs-options-inline}),
+and literal fields, all borrowed from \Pstruct{}s.
+The only semantic change from \Pstruct{}s  is
+that in\Punion{}s, earlier fields are not in scope for later fields
+because only one branch of a union can be active at a time.
 
 The name of a branch in either kind of union is the name of the
 declared identifier for full and computed fields.  For literal fields,
 it is the literal itself, unless the programmer specifies a different
 name using the \Pfrom{} form.  The \Pfrom{} form must be used when the
-literal is not a valid \C{} identifier.
+literal is not a valid \C{} identifier.  For example, the following
+in-place union uses the \Pfrom{} form to provide names for the
+string literal \cd{"*"} and the regular expression literal \cd{\Pre{}
+  "/a+/"}.
+\input{code/union.literal}
 
 
+\cut{
 Optional fields in data sources can be described using an in-place
 \Punion{} with a computed field.  For example, suppose a data source
 contains a sequence of fields separated by vertical bars, where each
@@ -131,6 +139,19 @@ a default value for the omitted field.
 \caption{A \Punion{} with a computed field describes an optional field.}
 \label{fig:union-option}
 \end{figure}
+}
+
+\subsection{In-line declarations}
+\label{sec:unions-inline}
+In-line declarations in \Punion{}s have the same form as in
+\Pstruct{}s \cf{} \secref{sec:structs-inline}.
+
+\subsection{\Plongest{}}
+By default, in-place \Punion{}s commit to the first branch that parses
+without any errors. Adding the \Plongest{} qualifier to the
+\Punion{} declaration, however, indicates that the parser should
+instead select the \textit{longest} match, \ie{}, the match that
+consumes the most input. 
 
 \subsection{Optional \texttt{Pwhere} clause}
 If given, a \Pwhere{} clause expresses constraints over the entirety
@@ -240,7 +261,8 @@ appropriate branch.  If there is no \Pdefault{} branch and none of the
 \cd{P_UNION_MATCH_ERR} and set the \cd{tag} fields of the parse
 descriptor and in-memory representation to the error tag. 
 
-For an in-place \Punion{}, the read function speculatively reads each
+For an in-place \Punion{} without the \Plongest{} qualifier, the read
+function speculatively reads each 
 branch in turn until it finds one that parses without errors.  Before
 reading a branch, the read function marks the 
 current location in the input.  It then tries to read the data
@@ -256,6 +278,9 @@ function returns the error code
 descriptor and in-memory representation to the error tag. 
 Errors that occur duing parsing branches of an in-line \Punion{} are
 surpressed because of the speculative nature of the parsing.
+
+For in-place \Punion{}s with the \Plongest{} qualifier, the reading
+code reads the data... \note{finish this description.}
 
 The error codes for \Punion{}s are:
 
