@@ -808,15 +808,11 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val edTid = #edTid ptyInfo
 	  val (edTyName, edFields) = structInfo tidtab edTid
           val (repName, repFields) = structInfo tidtab tid
-          val isRec = #isRecord ptyInfo
-          val name = if isRec then SOME (valOf repName ^ "_IS_REC") else repName 
-          val contRec = #containsRecord ptyInfo
-          val name2 = if contRec then SOME (valOf name ^ "_CONT_REC") else name
       in
 	((newline pps
         ; ppXMLComplex pps (edTyName,edFields)
         ; newline pps
-	; ppXMLComplex pps (name2,((edTyName,SOME "errDesc") :: repFields)) (*repName*)
+	; ppXMLComplex pps (repName,((edTyName,SOME "errDesc") :: repFields)) 
     	; newline pps
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
@@ -828,10 +824,6 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           val (repName,sFields,uFields) = unionInfo tidtab tid
           val (edTyName,Fields,uEdFields) = unionEdInfo tidtab edTid
 	  val tagName = SOME (valOf repName ^ "_tag")  
-          val isRec = #isRecord ptyInfo
-          val name = if isRec then SOME (valOf repName ^ "_IS_REC") else repName 
-          val contRec = #containsRecord ptyInfo
-          val name2 = if contRec then SOME (valOf name ^ "_CONT_REC") else name
        in 
       ( newline pps
       ; ppXMLHeader "<simpleType " "> \n<restriction base=\"xsd:string\"/> \n</simpleType> \n" pps (NONE,tagName) 
@@ -840,7 +832,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; newline pps
       ; ppXMLComplex pps (edTyName, Fields) 
       ; newline pps
-      ; ppXMLHeader "<complexType " ">" pps (NONE,name2) (*repName*) 
+      ; ppXMLHeader "<complexType " ">" pps (NONE,repName) 
       ; newline pps
       ; PPL.addStr pps "<sequence>"
       ; newline pps
@@ -867,18 +859,12 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           val ed2Fields = List.take (ed1Fields,8)			(* eliminates RBuf_t field *) 
           val eltEdField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.last ed2Fields))
           val edFields = List.take (ed2Fields,7) @ (eltEdField :: []) 
-          val isRec = #isRecord ptyInfo
-          val name = if isRec then SOME (valOf repName ^ "_IS_REC") else repName 
-          val contRec = #containsRecord ptyInfo
-          val name2 = if contRec then SOME (valOf name ^ "_CONT_REC") else name
-	  val lH = #largeHeuristic ptyInfo
-          val name3 = if lH then SOME (valOf name2 ^ "_LHEU") else name2
       in
 	((newline pps
         ; ppXMLComplex pps (edTyName,edFields)  
         ; newline pps
-	; ppXMLComplex pps (name3,Fields) (*repName*)
-    	; newline pps                                         (* adds errDesc field *) 
+	; ppXMLComplex pps (repName,Fields)
+    	; newline pps                      
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
