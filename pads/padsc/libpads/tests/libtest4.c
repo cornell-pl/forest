@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_regexp_compile(pdc, "[X]|EOR", &my_regexp)) {
+  if (PDC_ERR == PDC_regexp_compile(pdc, "/[X]/|EOR", &my_regexp)) {
     error(2, "** unexpected regexp compile failure **");
     exit(-1);
   }

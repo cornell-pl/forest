@@ -55,12 +55,12 @@ int main(int argc, char** argv) {
   }
 
   if (norec) {
-    if (PDC_ERR == PDC_regexp_compile(pdc, "[X\n]", &my_regexp)) {
+    if (PDC_ERR == PDC_regexp_compile(pdc, "/[X\n]/", &my_regexp)) {
       error(2, "** unexpected regexp compile failure **");
       return -1;
     }
   } else {
-    if (PDC_ERR == PDC_regexp_compile(pdc, "[X]|EOR", &my_regexp)) {
+    if (PDC_ERR == PDC_regexp_compile(pdc, "/[X]/|EOR", &my_regexp)) {
       error(2, "** unexpected regexp compile failure **");
       return -1;
     }

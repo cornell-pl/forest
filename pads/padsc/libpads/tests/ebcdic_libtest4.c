@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
-  if (PDC_ERR == PDC_regexp_compile(pdc, "[X]|EOR", &my_regexp)) {
+  if (PDC_ERR == PDC_regexp_compile(pdc, "/[X]/|EOR", &my_regexp)) {
     error(2, "** unexpected regexp compile failure **");
     exit(-1);
   }
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
       PDCI_report_err (pdc, 0, &pd.loc, pd.errCode, 0, 0);
       goto find_EOR2;
     }
-    if (PDC_ERR == PDC_e_string_SE_read(pdc, &m, "[X]|EOR", &pd, &s)) {
+    if (PDC_ERR == PDC_e_string_SE_read(pdc, &m, "/[X]/|EOR", &pd, &s)) {
       break;
     } else {
       error(0, "Read string term by EOR or X : %s (length %d)", PDC_fmt_str(&s), s.len);
