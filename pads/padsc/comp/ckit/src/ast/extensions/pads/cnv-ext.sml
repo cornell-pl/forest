@@ -528,7 +528,7 @@ structure CnvExt : CNVEXT = struct
               fun accSuf  s = s^"_acc"
               fun initSuf s = s^"_init"
               fun resetSuf s = s^"_reset"
-              fun freeSuf s = s^"_free"
+              fun cleanupSuf s = s^"_cleanup"
               fun addSuf  s = s^"_add"
               fun readSuf s = s^"_read"
               fun iSuf s = s^"_internal"
@@ -808,8 +808,8 @@ structure CnvExt : CNVEXT = struct
 		      val readFunEDs = genReadFun(readName, cParams, emPCT,edPCT,canonicalPCT, 
 						  NONE, true, bodySs)
 
-                      (* -- generate accumulator init, reset, and free functions (typedef case) *)
-		      fun genResetInitFree theSuf = 
+                      (* -- generate accumulator init, reset, and cleanup functions (typedef case) *)
+		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
 			  in case lookupAcc baseTy 
 			      of NONE => (gen3PFun(theFun, accPCT, 
@@ -826,9 +826,9 @@ structure CnvExt : CNVEXT = struct
 				   end
 				       (* end SOME *))
 			  end
-		      val initFunED = genResetInitFree initSuf
-		      val resetFunED = genResetInitFree resetSuf
-                      val freeFunED = genResetInitFree freeSuf
+		      val initFunED = genResetInitCleanup initSuf
+		      val resetFunED = genResetInitCleanup resetSuf
+                      val cleanupFunED = genResetInitCleanup cleanupSuf
 
                       (* -- generate accumulator function *)
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
@@ -856,7 +856,7 @@ structure CnvExt : CNVEXT = struct
                       @ List.concat(List.map cnvExternalDecl readFunEDs)
 		      @ cnvExternalDecl initFunED
                       @ cnvExternalDecl resetFunED
-                      @ cnvExternalDecl freeFunED
+                      @ cnvExternalDecl cleanupFunED
                       @ cnvExternalDecl addFunED
 		  end
 
@@ -1168,8 +1168,8 @@ structure CnvExt : CNVEXT = struct
 						  emFirstPCT, true, bodySs)
 
                       (* Generate Accumulator functions *)
-                      (* -- generate accumulator init, reset, and free functions *)
-		      fun genResetInitFree theSuf = 
+                      (* -- generate accumulator init, reset, and cleanup functions *)
+		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
 			      fun genAccTheFull {pty :PX.Pty, args:pcexp list,
 						  name:string, isVirtual:bool, pred:pcexp option, comment} = 
@@ -1194,9 +1194,9 @@ structure CnvExt : CNVEXT = struct
 			  in
 			      theFunED
 			  end
-		      val initFunED = genResetInitFree initSuf
-		      val resetFunED = genResetInitFree resetSuf
-                      val freeFunED = genResetInitFree freeSuf
+		      val initFunED = genResetInitCleanup initSuf
+		      val resetFunED = genResetInitCleanup resetSuf
+                      val cleanupFunED = genResetInitCleanup cleanupSuf
 
                       (* -- generate accumulator function *)
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
@@ -1230,7 +1230,7 @@ structure CnvExt : CNVEXT = struct
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
                  @ cnvExternalDecl initFunED
                  @ cnvExternalDecl resetFunED
-                 @ cnvExternalDecl freeFunED
+                 @ cnvExternalDecl cleanupFunED
                  @ cnvExternalDecl addFunED
 	      end
 
@@ -1381,8 +1381,8 @@ structure CnvExt : CNVEXT = struct
 						 emFirstPCT, true, bodySs)
 
                       (* Generate Accumulator functions (union case) *)
-                      (* -- generate accumulator init, reset, and free functions *)
-		      fun genResetInitFree theSuf = 
+                      (* -- generate accumulator init, reset, and cleanup functions *)
+		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
 			      val theDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
 			      fun fieldX(base,name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
@@ -1404,9 +1404,9 @@ structure CnvExt : CNVEXT = struct
 			  in
 			      theFunED
 			  end
-		      val initFunED = genResetInitFree initSuf
-		      val resetFunED = genResetInitFree resetSuf
-                      val freeFunED = genResetInitFree freeSuf
+		      val initFunED = genResetInitCleanup initSuf
+		      val resetFunED = genResetInitCleanup resetSuf
+                      val cleanupFunED = genResetInitCleanup cleanupSuf
 
                       (* -- generate accumulator function *)
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
@@ -1446,7 +1446,7 @@ structure CnvExt : CNVEXT = struct
 	             @ (List.concat (List.map cnvExternalDecl readFunEDs))
 	             @ cnvExternalDecl initFunED
 	             @ cnvExternalDecl resetFunED
-	             @ cnvExternalDecl freeFunED
+	             @ cnvExternalDecl cleanupFunED
 	             @ cnvExternalDecl addFunED
 		 end
 	  
@@ -2044,8 +2044,8 @@ structure CnvExt : CNVEXT = struct
 		 val accPCT = P.makeTypedefPCT (accSuf name)			
 
                  (* Generate accumulator functions *) 
-  	         (* -- generate accumulator reset, init, and free function *)
-                 fun genResetInitFree theSuf = 
+  	         (* -- generate accumulator reset, init, and cleanup function *)
+                 fun genResetInitCleanup theSuf = 
 		     let val theFun = (theSuf o accSuf) name
                          val doElems = 
 			     case lookupAcc baseTy of NONE => []
@@ -2076,7 +2076,7 @@ structure CnvExt : CNVEXT = struct
 			 theFunED
 		     end
 
-  	         (* -- generate accumulator reset, init, and free function *)
+  	         (* -- generate accumulator reset, init, and cleanup function *)
                  fun genAdd () = 
 		     let val theSuf = addSuf
 			 val theFun = (theSuf o accSuf) name
@@ -2116,9 +2116,9 @@ structure CnvExt : CNVEXT = struct
 			 theFunED
 		     end
 
-		 val initFunED = genResetInitFree  initSuf
-		 val resetFunED = genResetInitFree resetSuf
-		 val freeFunED = genResetInitFree freeSuf
+		 val initFunED = genResetInitCleanup  initSuf
+		 val resetFunED = genResetInitCleanup resetSuf
+		 val cleanupFunED = genResetInitCleanup cleanupSuf
                  val addFunED = genAdd()
 	     in
 		   canonicalDecls
@@ -2128,7 +2128,7 @@ structure CnvExt : CNVEXT = struct
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
                  @ cnvExternalDecl initFunED
                  @ cnvExternalDecl resetFunED 
-                 @ cnvExternalDecl freeFunED 
+                 @ cnvExternalDecl cleanupFunED 
                  @ cnvExternalDecl addFunED
 	     end
 
@@ -2205,8 +2205,8 @@ structure CnvExt : CNVEXT = struct
 					      emPCT,edPCT,canonicalPCT, NONE, false, bodySs)
 
                   (* Generate Accumulator functions (enum case) *)
-                  (* -- generate accumulator init, reset, and free functions *)
-		  fun genResetInitFree theSuf = 
+                  (* -- generate accumulator init, reset, and cleanup functions *)
+		  fun genResetInitCleanup theSuf = 
 		      let val theFun : string = (theSuf o accSuf) name
 			  val theBodyE = PT.Call(PT.Id (theSuf PL.intAct),[PT.Id ts, PT.Id acc, PT.Id disc])
                           val theReturnS = PT.Return theBodyE
@@ -2214,9 +2214,9 @@ structure CnvExt : CNVEXT = struct
 			  in
 			      theFunED
 			  end
-		      val initFunED = genResetInitFree initSuf
-		      val resetFunED = genResetInitFree resetSuf
-                      val freeFunED = genResetInitFree freeSuf
+		      val initFunED = genResetInitCleanup initSuf
+		      val resetFunED = genResetInitCleanup resetSuf
+                      val cleanupFunED = genResetInitCleanup cleanupSuf
 
                       (* -- generate accumulator function *)
                       (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
@@ -2235,7 +2235,7 @@ structure CnvExt : CNVEXT = struct
                 @ (List.concat (List.map cnvExternalDecl readFunEDs))
                 @ cnvExternalDecl initFunED
                 @ cnvExternalDecl resetFunED
-                @ cnvExternalDecl freeFunED
+                @ cnvExternalDecl cleanupFunED
                 @ cnvExternalDecl addFunED
 	      end
 
