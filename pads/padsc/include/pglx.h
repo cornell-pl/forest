@@ -17,14 +17,14 @@
 
 #ifdef USE_GALAX
 
-#include "caml/mlvalues.h"  /* Need value */
+#include "glx.h"  /* Need Galax item definition */
 
 #else
 
 /* XXX_REMOVE next 4 lines: */
 #ifndef FAKE_CAML_VALUE
 #define FAKE_CAML_VALUE
-typedef void* value;
+typedef void* item;
 #endif /* FAKE_CAML_VALUE */
 
 #endif /* USE_GALAX */
@@ -36,7 +36,7 @@ void walk_children(void *n, int indent);
 
 void**      PGLX_generic_children    (void *ocaml_n);
 void*       PGLX_generic_parent      (void *ocaml_n);
-value       PGLX_generic_typed_value (void *ocaml_n);
+item        PGLX_generic_typed_value (void *ocaml_n);
 const char* PGLX_generic_string_value(void *ocaml_n);
 const char* PGLX_generic_name        (void *ocaml_n);
 

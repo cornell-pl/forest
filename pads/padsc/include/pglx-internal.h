@@ -15,29 +15,29 @@
 
 #ifdef USE_GALAX
 
-#include "caml/mlvalues.h"    /* Need value      */
-#include "caml/fail.h"        /* Need failwith   */
+/* #include "caml/mlvalues.h"    Need value      */
+/* #include "caml/fail.h"        Need failwith   */
 #include "glx.h"              /* Need to pack/unpack Galax atomic values */
 
 #else
 
 #ifndef FAKE_CAML_VALUE
 #define FAKE_CAML_VALUE
-typedef void* value;
-#endif /* FAKE_CAML_VALUE */
+typedef void* item;
 
 /* make all the value types be value */
-#define atomicString value
-#define atomicBoolean value
-#define atomicInt value
-#define atomicInteger value
-#define atomicDecimal value
-#define atomicFloat value
-#define atomicDouble value
-#define atomicAnyURI value
-#define atomicValue value
+#define atomicString item
+#define atomicBoolean item
+#define atomicInt item
+#define atomicInteger item
+#define atomicDecimal item
+#define atomicFloat item
+#define atomicDouble item
+#define atomicAnyURI item
+#define atomicValue item
 
 #define glx_err int
+#endif /* FAKE_CAML_VALUE */
 
 /* XXX_REMOVE next 14 lines: */
 #ifdef FOR_CKIT
@@ -137,7 +137,7 @@ void  PDCI_MK_TOP_NODE(PDCI_node_t *result,
 extern const PDCI_vtable_t ty ## _vtable
 
 #define PDCI_DECL_VAL_VT(ty) \
-value ty ## typed_value(PDCI_node_t *node); \
+item ty ## typed_value(PDCI_node_t *node); \
 extern const PDCI_vtable_t ty ## _val_vtable
 
 /* ================================================================================
@@ -145,7 +145,7 @@ extern const PDCI_vtable_t ty ## _val_vtable
 
 /* prototypes for vtable functions */
 typedef PDCI_node_t **      (* PDCI_children_fn)      (PDCI_node_t *node); 
-typedef value               (* PDCI_typed_value_fn)   (PDCI_node_t *node); 
+typedef item                (* PDCI_typed_value_fn)   (PDCI_node_t *node); 
 typedef const char *        (* PDCI_string_value_fn)  (PDCI_node_t *node);
 
 /* Type PDCI_node_t: */
@@ -208,8 +208,8 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *self);
 
 /* Typed Value functions */
 
-value PDCI_error_typed_value(PDCI_node_t *node); /* Error function used for many cases */
-value PDCI_Cstr_typed_value (PDCI_node_t *node); /* node->rep is a C-style string (const char *) */
+item PDCI_error_typed_value(PDCI_node_t *node); /* Error function used for many cases */
+item PDCI_Cstr_typed_value (PDCI_node_t *node); /* node->rep is a C-style string (const char *) */
 
 /* ================================================================================
  * VTABLES */
@@ -320,5 +320,5 @@ PDCI_DECL_VAL_VT(PDC_e_string_CSE);
 
 #endif /* FOR_CKIT */
 
-#endif  /*   __PGLX_INTERNAL_H__   */
+#endif  /*   __PGX_INTERNAL_H__   */
 
