@@ -104,17 +104,15 @@ void PGLX_nodelist_free(nodeRepArray list)
 /* ================================================================================
  * INTERNAL */
 
-const PDCI_path_t PDCI_emptyPath = {0,0};
-
 /* Helper macros  */
 
 #define PDCI_SND_INIT_DEF(ty) \
 PDCI_node_t * ty ## _sndNode_init(PDCI_node_t *self,          \
 				  PDCI_smart_elt_info_t *elt, \
 				  PDCI_gen_t gen, 	      \
-				  PDCI_path_t path) 	      \
+				  PDCI_childIndex_t idx)      \
 {                                                             \
-  PDCI_SND_INIT(ty,self,elt,gen,path);			      \
+  PDCI_SND_INIT(ty,self,elt,gen,idx);			      \
   return self;						      \
 }							      
 
@@ -217,12 +215,9 @@ PDCI_node_t * ty ## _cachedNode_kthChild(PDCI_node_t *self, childIndex idx) \
   return PDCI_ALIAS_NODE(result);\
 } \
 \
-const unsigned char ty ## _pathWidth = 1;  \
-const unsigned char ty ## _pathMask = 0x1; \
 \
 PDCI_node_t * ty ## _sndNode_kthChild(PDCI_node_t *self, childIndex idx) \
 { \
-  PDCI_path_t path = PDCI_PATH_ADD(ty,self->path,idx); \
   ty        *rep = (ty*)self->rep; \
   Pbase_pd  *pd  = (Pbase_pd*)self->pd; \
   PDCI_node_t *result = 0; \
@@ -230,7 +225,7 @@ PDCI_node_t * ty ## _sndNode_kthChild(PDCI_node_t *self, childIndex idx) \
   switch (idx) { \
     case 0: \
       result = Pbase_pd_node_new(self, "pd",  pd,  PDCI_MacroArg2String(ty) "_sndNode_kthChild"); \
-      Pbase_pd_sndNode_init(result,self->ancestor,self->ancestor_gen,path);\
+      Pbase_pd_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);\
       break; \
     case 1: \
 \
@@ -241,7 +236,7 @@ PDCI_node_t * ty ## _sndNode_kthChild(PDCI_node_t *self, childIndex idx) \
 \
       if (pd->errCode == P_NO_ERR || pd->errCode == P_USER_CONSTRAINT_VIOLATION) { \
         result = ty ## _val_node_new(self, "val", rep, PDCI_MacroArg2String(ty) "_sndNode_kthChild"); \
-        ty ## _val_sndNode_init(result,self->ancestor,self->ancestor_gen,path); \
+        ty ## _val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx); \
       } \
       break; \
   } \
@@ -538,19 +533,16 @@ PDCI_node_t * ty ## _val_cachedNode_kthChild(PDCI_node_t *self, childIndex idx) 
   return PDCI_ALIAS_NODE(result);\
 } \
  \
-const unsigned char ty ## _val_pathWidth = 0;  \
-const unsigned char ty ## _val_pathMask = 0x0; \
 \
 PDCI_node_t * ty ## _val_sndNode_kthChild(PDCI_node_t *self, childIndex idx) \
 { \
-  PDCI_path_t path = PDCI_PATH_ADD(ty ## _val,self->path,idx); \
   PDCI_node_t *result = 0; \
 \
   /* the only valid idx is 0  */ \
   if (idx) return 0; \
 \
   result = ty ## _text_node_new(self, PDCI_MacroArg2String(ty) "_val_sndNode_kthChild"); \
-  ty ## _text_sndNode_init(result,self->ancestor,self->ancestor_gen,path); \
+  ty ## _text_sndNode_init(result,self->ancestor,self->ancestor_gen,idx); \
   return result; \
 }
 
@@ -912,14 +904,11 @@ PDCI_node_t *  Ppos_t_cachedNode_kthChild(PDCI_node_t *self, childIndex idx)
   return PDCI_ALIAS_NODE(result);
 } 
 
-const unsigned char Ppos_t_pathWidth = 1;
-const unsigned char Ppos_t_pathMask = 0x1;
 #undef WHATFN
 #define WHATFN "Ppos_t_sndNode_kthChild"
 PDCI_node_t * Ppos_t_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
 {
   Ppos_t *pos = (Ppos_t *) self->rep;
-  PDCI_path_t path = PDCI_PATH_ADD(Ppos_t,self->path,idx);
   PDCI_node_t *result = 0;
 
   // check the validaty of the data
@@ -931,11 +920,11 @@ PDCI_node_t * Ppos_t_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Pint32_val_node_new(self, "byte", NULL, WHATFN);
-      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result = Pint32_val_node_new(self, "num", NULL, WHATFN);
-      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 2:
       /* PDCI_MK_TNODE(result[2], &Puint64_val_vtable,  self, "offset",  (Puint64)(pos->offset), WHATFN); */
@@ -945,11 +934,11 @@ PDCI_node_t * Ppos_t_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Pint32_val_node_new(self, "byte", &(pos->byte), WHATFN);
-      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result = Pint32_val_node_new(self, "num", &(pos->num), WHATFN);
-      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Pint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 2:
       /*  PDCI_MK_TNODE(result[2], &Puint64_val_vtable,  self, "offset",  (Puint64)(pos->offset), WHATFN); */
@@ -1058,14 +1047,11 @@ PDCI_node_t *  Ploc_t_cachedNode_kthChild(PDCI_node_t *self, childIndex idx)
   return PDCI_ALIAS_NODE(result);
 } 
 
-const unsigned char Ploc_t_pathWidth = 1;
-const unsigned char Ploc_t_pathMask = 0x1;
 #undef WHATFN
 #define WHATFN "Ploc_t_sndNode_kthChild"
 PDCI_node_t * Ploc_t_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
 {
   Ploc_t *loc = (Ploc_t *) self->rep;
-  PDCI_path_t path = PDCI_PATH_ADD(Ploc_t,self->path,idx);
   PDCI_node_t *result = 0;
 
   // check the validaty of the data
@@ -1077,22 +1063,22 @@ PDCI_node_t * Ploc_t_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Ppos_t_node_new(self, "b", NULL,     WHATFN);
-      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result =  Ppos_t_node_new(self, "e", NULL,     WHATFN);
-      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     }
   }else{
     switch (idx) {
     case 0:
       result = Ppos_t_node_new(self, "b",     &(loc->b),     WHATFN);
-      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result =  Ppos_t_node_new(self, "e",     &(loc->e),     WHATFN);
-      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Ppos_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     }
   }
@@ -1220,14 +1206,11 @@ PDCI_node_t *  Pbase_pd_cachedNode_kthChild(PDCI_node_t *self, childIndex idx)
   return PDCI_ALIAS_NODE(result);
 } 
 
-const unsigned char Pbase_pd_pathWidth = 2;
-const unsigned char Pbase_pd_pathMask = 0x3;
 #undef WHATFN
 #define WHATFN "Pbase_pd_sndNode_kthChild"
 PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
 {
   Pbase_pd     *pd = (Pbase_pd *) self->rep;
-  PDCI_path_t path = PDCI_PATH_ADD(Pbase_pd,self->path,idx);
   PDCI_node_t  *result = 0;
 
   // check the validaty of the data
@@ -1239,11 +1222,11 @@ PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",  NULL,  WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "errCode", NULL, WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 2:
       /* We need to know the value of errCode, so force validation. */
@@ -1254,7 +1237,7 @@ PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
 
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(self, "loc",  NULL,     WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       }
       break;
     }
@@ -1262,16 +1245,16 @@ PDCI_node_t * Pbase_pd_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",  &(pd->pstate),  WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "errCode", &(pd->errCode), WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 2:
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(self, "loc",     &(pd->loc),     WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       }
       break;
     }
@@ -1410,14 +1393,11 @@ PDCI_node_t *  PDCI_structured_pd_cachedNode_kthChild(PDCI_node_t *self, childIn
   return PDCI_ALIAS_NODE(result);
 } 
 
-const unsigned char PDCI_structured_pd_pathWidth = 2;
-const unsigned char PDCI_structured_pd_pathMask = 0x3;
 #undef WHATFN
 #define WHATFN "PDCI_structured_pd_sndNode_kthChild"
 PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
 {
   PDCI_structured_pd  *pd = (PDCI_structured_pd *) self->rep;
-  PDCI_path_t path = PDCI_PATH_ADD(PDCI_structured_pd,self->path,idx);
   PDCI_node_t         *result = 0;
 
   // check the validaty of the data
@@ -1429,15 +1409,15 @@ PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *self, childIndex 
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",  NULL,  WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "nerr", NULL,    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 2:
       result = Puint32_val_node_new(self, "errCode", NULL,    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 3:
       /* We need to know the value of errCode, so force validation. */
@@ -1448,7 +1428,7 @@ PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *self, childIndex 
 
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(self, "loc", &(pd->loc),     WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       }
       break;
     }
@@ -1456,20 +1436,20 @@ PDCI_node_t * PDCI_structured_pd_sndNode_kthChild(PDCI_node_t *self, childIndex 
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",  &(pd->pstate),  WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "nerr",    &(pd->nerr),    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 2:
       result = Puint32_val_node_new(self, "errCode",    &(pd->errCode),    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 3:
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(self, "loc",     &(pd->loc),     WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       }
       break;
     }
@@ -1609,14 +1589,11 @@ PDCI_node_t *  PDCI_sequenced_pd_cachedNode_kthChild(PDCI_node_t *self, childInd
   return PDCI_ALIAS_NODE(result);
 } 
 
-const unsigned char PDCI_sequenced_pd_pathWidth = 4;
-const unsigned char PDCI_sequenced_pd_pathMask = 0xF;
 #undef WHATFN
 #define WHATFN "PDCI_sequenced_pd_sndNode_kthChild"
 PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *self, childIndex idx)
 {
   PDCI_sequenced_pd  *pd = (PDCI_sequenced_pd *) self->rep;
-  PDCI_path_t path = PDCI_PATH_ADD(PDCI_sequenced_pd,self->path,idx);
   PDCI_node_t        *result = 0;
 
   // check the validaty of the data
@@ -1628,23 +1605,23 @@ PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *self, childIndex i
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",   NULL,     WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "nerr",     NULL,       WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 2:
       result = Puint32_val_node_new(self, "errCode",  NULL,    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 3:
       result = Puint32_val_node_new(self, "neerr",    NULL,      WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 4:
       result = Puint32_val_node_new(self, "firstError", NULL, WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 5:
       /* We need to know the value of errCode, so force validation. */
@@ -1655,7 +1632,7 @@ PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *self, childIndex i
 
       if (pd->errCode >= 100) {
 	result = Ploc_t_node_new(     self, "loc",&(pd->loc),        WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       }
       break;
     }
@@ -1663,28 +1640,28 @@ PDCI_node_t * PDCI_sequenced_pd_sndNode_kthChild(PDCI_node_t *self, childIndex i
     switch (idx) {
     case 0:
       result = Puint32_val_node_new(self, "pstate",   &(pd->pstate),     WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 1:
       result = Puint32_val_node_new(self, "nerr",     &(pd->nerr),       WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 2:
       result = Puint32_val_node_new(self, "errCode",  &(pd->errCode),    WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 3:
       result = Puint32_val_node_new(self, "neerr",    &(pd->neerr),      WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 4:
       result = Puint32_val_node_new(self, "firstError", &(pd->firstError), WHATFN);
-      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+      Puint32_val_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       break;
     case 5:
       if (pd->errCode >= 100) { /* return loc as child */
 	result = Ploc_t_node_new(     self, "loc",      &(pd->loc),        WHATFN);
-	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,path);
+	Ploc_t_sndNode_init(result,self->ancestor,self->ancestor_gen,idx);
       }
       break;
     }

@@ -1,5 +1,20 @@
 #include "pglx-internal.h"
 
+/* the first caller should pass 0 as curLength */
+PDCI_path_t PDCI_node_getPath(PDCI_node_t *node, int curLength)
+{
+  PDCI_path_t path;
+  if (node->parent == node->ancestor->parent){
+    PDCI_PATH_NEW(path,curLength);
+  }else{
+    path = PDCI_node_getPath(node->parent,curLength + 1);
+    /* path.p[curLength] = node->idx */
+    PDCI_PATH_SET(path,curLength,node->idx);
+  }
+    
+  return path;
+}
+
 #define PDCI_DEF_BASE_PATH_WALK(ty)\
 Perror_t ty ## _node_pathWalk(P_t *pads, Pbase_m *m, Pbase_pd *pd, ty *rep, PDCI_path_t path,\
 			      void **m_out, void **pd_out, void **rep_out)\
@@ -9,7 +24,7 @@ Perror_t ty ## _node_pathWalk(P_t *pads, Pbase_m *m, Pbase_pd *pd, ty *rep, PDCI
                         \
   if (path.length > 0){ \
     /* modifies path */ \
-    PDCI_PATH_REMOVE(ty,path,idx,path);\
+    idx = PDCI_PATH_GET(path);\
 \
     switch (idx) { \
       case 0: \
@@ -42,7 +57,7 @@ Perror_t ty ## _val_node_pathWalk(P_t *pads, ty *rep, PDCI_path_t path,void **re
                         \
   if (path.length > 0){ \
     /* modifies path */ \
-    PDCI_PATH_REMOVE(ty,path,idx,path);\
+    idx = PDCI_PATH_GET(path);\
 \
     /* the only valid idx is 0  */\
     if (idx == 0)\
@@ -85,7 +100,7 @@ Perror_t Ppos_t_node_pathWalk(P_t *pads, Ppos_t *pos, PDCI_path_t path, void **r
                         
   if (path.length > 0){ 
     /* modifies path */ 
-    PDCI_PATH_REMOVE(Ppos_t,path,idx,path);
+    idx = PDCI_PATH_GET(path);
 
     switch (idx) {
     case 0:
@@ -113,7 +128,7 @@ Perror_t Ploc_t_node_pathWalk(P_t *pads, Ploc_t *loc, PDCI_path_t path, void **r
                         
   if (path.length > 0){ 
     /* modifies path */ 
-    PDCI_PATH_REMOVE(Ploc_t,path,idx,path);
+    idx = PDCI_PATH_GET(path);
 
     switch (idx) {
     case 0:
@@ -138,7 +153,7 @@ Perror_t Pbase_pd_node_pathWalk(P_t *pads, Pbase_pd *pd, PDCI_path_t path, void 
                         
   if (path.length > 0){ 
     /* modifies path */ 
-    PDCI_PATH_REMOVE(Pbase_pd,path,idx,path);
+    idx = PDCI_PATH_GET(path);
 
     switch (idx) {
     case 0:
@@ -168,7 +183,7 @@ Perror_t PDCI_structured_pd_node_pathWalk(P_t *pads, PDCI_structured_pd *pd, PDC
                         
   if (path.length > 0){ 
     /* modifies path */ 
-    PDCI_PATH_REMOVE(PDCI_structured_pd,path,idx,path);
+    idx = PDCI_PATH_GET(path);
 
     switch (idx) {
     case 0:
@@ -201,7 +216,7 @@ Perror_t PDCI_sequenced_pd_node_pathWalk(P_t *pads, PDCI_sequenced_pd *pd, PDCI_
                         
   if (path.length > 0){ 
     /* modifies path */ 
-    PDCI_PATH_REMOVE(PDCI_sequenced_pd,path,idx,path);
+    idx = PDCI_PATH_GET(path);
 
     switch (idx) {
     case 0:
