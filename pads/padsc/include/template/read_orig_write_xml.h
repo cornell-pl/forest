@@ -8,6 +8,10 @@
 #  define EXTRA_READ_ARGS
 #endif
 
+#ifndef EXTRA_HDR_READ_ARGS
+#  define EXTRA_HDR_READ_ARGS
+#endif
+
 #ifndef DEF_INPUT_FILE
 #  define DEF_INPUT_FILE "/dev/stdin"
 #endif
@@ -27,6 +31,11 @@ int main(int argc, char** argv) {
   PADS_TY()         rep;
   PADS_TY(_pd)      pd;
   PADS_TY(_m)       m;
+#ifdef PADS_HDR_TY
+  PADS_HDR_TY()         hdr_rep;
+  PADS_HDR_TY(_pd)      hdr_pd;
+  PADS_HDR_TY(_m)       hdr_m;
+#endif /* PADS_HDR_TY */
   Sfio_t           *io;
   char             *inName  = 0;
   char             *outName = 0;
@@ -80,6 +89,32 @@ int main(int argc, char** argv) {
   }
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, P_CheckAndSet);
+#ifdef PADS_HDR_TY
+  if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
+    error(ERROR_FATAL, "*** header representation initialization failed ***");
+  }
+  if (P_ERR == PADS_HDR_TY(_pd_init)(pads, &hdr_pd)) {
+    error(ERROR_FATAL, "*** header parse description initialization failed ***");
+  }
+  /* init mask -- must do this! */
+  PADS_HDR_TY(_m_init)(pads, &hdr_m, P_CheckAndSet);
+#endif /* PADS_HDR_TY */
+
+#ifdef PADS_HDR_TY
+  /*
+   * Try to read header
+   */
+  if (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
+    if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep)) {
+      error(ERROR_FATAL, "<note>header read returned error</note>");
+    } else {
+      error(2, "<note>header read returned OK</note>");
+    }
+    if (P_ERR == PADS_HDR_TY(_write_xml_2io)(pads, io, EXTRA_HDR_READ_ARGS &hdr_pd, &hdr_rep, (const char*)0, 0)) {
+      error(ERROR_FATAL, "*** IO error during header write");
+    }
+  }
+#endif /* PADS_HDR_TY */
 
   /*
    * Try to read each line of data
