@@ -118,7 +118,7 @@ SHARED_PADSLIB_DEP = $(INSTALLROOT)/lib/$(SHARED_PADSLIB_NM)
 SHARED_ASTLIB_DEP = $(ASTLIB_DIR)/$(SHARED_ASTLIB_NM)
 # DYNAMIC_LIB_DEPS = $(SHARED_PADSLIB_DEP) $(SHARED_ASTLIB_DEP)
 
-INCLUDES = -I/home/gsf/arch/$(AST_ARCH)/include/ast -I$(PADS_HOME)/include -I.
+INCLUDES = -I/home/gsf/arch/$(AST_ARCH)/include/ast -I$(PADS_HOME)/include -I. -I..
 ifdef GEN_DIR
 INCLUDES += -I$(GEN_DIR)
 endif
@@ -249,7 +249,7 @@ endif
 ifdef GEN_DIR
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)
 	@echo "Using rule P"
-	$(PADSC) $< -r $(GEN_DIR)
+	$(PADSC) $< -r $(GEN_DIR) -I . -I ..
 endif
 
 # Notes: 

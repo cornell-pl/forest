@@ -747,15 +747,16 @@ PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_base_ed *ed);
  * If an expected stop char/pattern/width is found, PDC_OK is returned.
  * If !em || *em == PDC_CheckAndSet, then:
  *   + if s_out is non-null, PDC_string_set is used with (*s_out) to copy/set
- *     the string that is found, where pdc->disc->copy_strings controlls the copy arg.
+ *     the string that is found, where pdc->disc->copy_strings controlls whether copy is used.
  *     *s_out should have been initialized
  *     at some point prior using PDC_string_init (it can be initialized once
- *     and re-used in string read calls many times).  If pdc->disc->copy_strings is
- *     non-zero, the memory allocated by *s_out
- *     should ultimately be freed using PDC_string_cleanup.
+ *     and re-used in string read calls many times).
  *   + if l_out is non-null, *l_out is set to the length of the string
  *     (not including the null terminator).
  * 
+ * Cleanup note: If copy_strings is non-zero, the memory allocated by *s_out should
+ *               ultimately be freed using PDC_string_cleanup.
+ *
  * If an expected stop condition is not encountered, the
  * IO cursor position is unchanged.  Error codes used:
  *     PDC_WIDTH_NOT_AVAILABLE
@@ -800,11 +801,16 @@ PDC_error_t PDC_a_string_CSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *sto
  *          between the IO cursor and the EBCDIC vertical bar will
  *          be converted to ASCII chars. 
  *
- * ** N.B. If pdc->disc->copy_strings is zero, then sharing is used and the
- *         string is modified 'in place' (replacing EBCDIC chars with ASCII chars).
- *         If copy_strings is non-zero, the original EBCDIC chars are unmodified,
- *         while the string copy will contain ASCII chars.  This distinction only
- *         matters if the special output version of PDC_IO_commit is used.
+ * ** N.B. Unlike the a_string read functions, e_string read functions always
+ *         copy the string before converting from EBCDIC to ASCII, so that the
+ *         underlying data managed by the IO discipline is not modified.
+ *         Note that this means that the special output version of PDC_IO_commit
+ *         will output the original EBCDIC chars.
+ *
+ *         (PDC_e_date_read also does not modify the underlying data.)
+ * 
+ * Cleanup note: The memory allocated by *s_out should ultimately be freed
+ *               using PDC_string_cleanup.
  */
 
 PDC_error_t PDC_e_string_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,

@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     if (res == PDC_OK) {
       error(0|ERROR_PROMPT, "Record okay:\t");
       for (i = 0; i < f3data.length; i++){
-	error(0|ERROR_PROMPT, "%d", f3data.intList[i]);
+	error(0|ERROR_PROMPT, "%d", f3data.elts[i]);
 	if (i != f3data.length-1) {
 	  error(0|ERROR_PROMPT, "|");
 	}  else {

@@ -2605,6 +2605,7 @@ structure CnvExt : CNVEXT = struct
 			    args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
 	     let val length = "length"
+                 val elts = "elts"
                  val internal = "_internal"
 		 val element = "element"
                  val array = "array"
@@ -2634,7 +2635,7 @@ structure CnvExt : CNVEXT = struct
 
 		 (* Generate canonical representation *)
 		 val canonicalFields = [(length, PL.intPCT, NONE), 
-				        (name, P.ptrPCT elemRepPCT, NONE),
+				        (elts, P.ptrPCT elemRepPCT, NONE),
 					(internal, P.ptrPCT PL.rbufferPCT, NONE) ]
 		 val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
 		 val canonicalDecls = cnvExternalDecl canonicalStructED 
@@ -2657,7 +2658,7 @@ structure CnvExt : CNVEXT = struct
 				 (firstError, P.int, 
 				    SOME "if errCode == ARRAY_ELEM_ERR, index of first error"),
 				 (length, P.int, NONE),
-				 (name, P.ptrPCT(P.makeTypedefPCT(lookupTy(baseTy, edSuf, #edname))), NONE),
+				 (elts, P.ptrPCT(P.makeTypedefPCT(lookupTy(baseTy, edSuf, #edname))), NONE),
 				 (internal, P.ptrPCT PL.rbufferPCT, NONE)] 
 		 val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
 		 val edStructDecls = cnvExternalDecl edStructED 
@@ -2671,12 +2672,12 @@ structure CnvExt : CNVEXT = struct
 		 val reachedLimit = "reachedLimit"
 
 		 val resRBufferX  = fieldX(rep, internal)
-		 val resBufferX   = fieldX(rep, name)
+		 val resBufferX   = fieldX(rep, elts)
 		 val indexX       = P.minusX(fieldX(rep,length), P.intX 1)
 		 val resNext      = P.subX(resBufferX, indexX)
 
 		 val edRBufferX   = fieldX(ed, internal)
-		 val edBufferX    = fieldX(ed, name)
+		 val edBufferX    = fieldX(ed, elts)
  		 val edNext       = P.subX(edBufferX, indexX)
           
                  (* add local variables, ie, parameters,  to scope *)
@@ -2834,14 +2835,15 @@ structure CnvExt : CNVEXT = struct
                               (* end Term case *))
                               |  PX.Forall (r as {index,range,body}) => (
                                  let val subList = [(length, fieldX(rep,length)), 
-						    (name, fieldX(rep,name))]
+						    (name, fieldX(rep,elts)), 
+						    (elts, fieldX(rep,elts))]
 				     val (lower, upper) = 
 					(case range 
 					 of PX.ArrayName n => (
-					    (if n = name then ()
+					    (if n = name orelse n = elts then ()
 					     else PE.error ("Array name in bound expression ("^
 							    n^") does not match the name "^
-							    "of the array ("^ name ^ ").")
+							    "of the array (must use '"^ name ^ "' or 'elts').")
                                             ); (P.zero, PT.Id length))
 					 | PX.Bounds(lower, upper) => (lower,upper))
 				     val modBodyX = PTSub.substExps subList body
@@ -3293,11 +3295,11 @@ structure CnvExt : CNVEXT = struct
 						 P.postIncX (PT.Id "i"),
 						 PT.Compound ([PT.IfThen(P.ltX(PT.Id "i", P.intX numElemsToTrack),
 							       PT.Compound (doOne (getArrayFieldX(acc,arrayDetail), 
-										   getArrayFieldX(ed,name), 
-										   getArrayFieldX(rep,name))))]
+										   getArrayFieldX(ed,elts), 
+										   getArrayFieldX(rep,elts))))]
 							      @ (doOne (getFieldX(acc,array), 
-								        getArrayFieldX(ed,name), 
-									getArrayFieldX(rep,name))))
+								        getArrayFieldX(ed,elts), 
+									getArrayFieldX(rep,elts))))
 						 )]]
 			       in
 				   doArrayDetailSs
@@ -3363,7 +3365,7 @@ structure CnvExt : CNVEXT = struct
 		   |  TyProps.Dynamic => 
 			 let val bodySs = 
 			     [P.assignS(P.arrowX(PT.Id base, PT.Id length), P.zero),
-			      P.assignS(P.arrowX(PT.Id base, PT.Id name), P.zero),
+			      P.assignS(P.arrowX(PT.Id base, PT.Id elts), P.zero),
 			      P.assignS(P.arrowX(PT.Id base, PT.Id internal), P.zero)]
 			 in
 			     [genInitFun(suf name, base, aPCT, bodySs,false)]
@@ -3380,7 +3382,7 @@ structure CnvExt : CNVEXT = struct
 		   |  TyProps.Dynamic => 
 			 let val bodySs = 
 			     [P.assignS(P.arrowX(PT.Id base, PT.Id length), P.zero),
-			      P.assignS(P.arrowX(PT.Id base, PT.Id name), P.zero),
+			      P.assignS(P.arrowX(PT.Id base, PT.Id elts), P.zero),
 			      PT.IfThen(
 				P.arrowX(PT.Id base, PT.Id internal),
 			        PT.Compound[

@@ -1,7 +1,10 @@
 #include "libpadsc.h"
-#include "pads_crs.h"
+#include "cpygen_crs.h"
 
-extern void print_cpy_crsdet(PDC_t* pdc, cpy_crsdet *tt);
+/* declared in cpygen_crs.[ph], initialized here : */
+PDC_uint64 num_recs = 0;
+
+void print_cpy_crsdet(PDC_t* pdc, cpy_crsdet *tt);
 
 int main(int argc, char** argv) {
   PDC_t             *pdc;
@@ -11,17 +14,13 @@ int main(int argc, char** argv) {
   cpy_crshdr         hdr_rep;
   cpy_crshdr_ed      hdr_ed;
 
-  cpy_crstlr         tlr_rep;
-  cpy_crstlr_ed      tlr_ed;
-
-  cpy_crsdet         rep;
-  cpy_crsdet_ed      ed;
+  det_or_tlr         rep;
+  det_or_tlr_ed      ed;
   cpy_crsdet_acc     acc;
 
   char              *fileName;
   PDC_error_t        e;
   PDC_pos_t          before_pos, after_pos;
-  PDC_uint64         num_recs = 0;
   
   if (argc == 2) {
     fileName = argv[1];
@@ -59,18 +58,11 @@ int main(int argc, char** argv) {
   }
 
 
-  if (PDC_ERR == cpy_crstlr_init(pdc, &tlr_rep)) {
-    error(2|ERROR_FATAL, "*** cpy_crstlr representation initialization failed ***");
+  if (PDC_ERR == det_or_tlr_init(pdc, &rep)) {
+    error(2|ERROR_FATAL, "*** det_or_tlr representation initialization failed ***");
   }
-  if (PDC_ERR == cpy_crstlr_ed_init(pdc, &tlr_ed)) {
-    error(2|ERROR_FATAL, "*** cpy_crstlr error description initialization failed ***");
-  }
-
-  if (PDC_ERR == cpy_crsdet_init(pdc, &rep)) {
-    error(2|ERROR_FATAL, "*** cpy_crsdet representation initialization failed ***");
-  }
-  if (PDC_ERR == cpy_crsdet_ed_init(pdc, &ed)) {
-    error(2|ERROR_FATAL, "*** cpy_crsdet error description initialization failed ***");
+  if (PDC_ERR == det_or_tlr_ed_init(pdc, &ed)) {
+    error(2|ERROR_FATAL, "*** det_or_tlr error description initialization failed ***");
   }
 
   if (PDC_ERR == cpy_crsdet_acc_init(pdc, &acc)) {
@@ -99,37 +91,29 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
-    if (num_recs) { /* complete processing of record */
-      PDC_IO_commit(pdc);
-      if (PDC_OK != e) {
-	error(2, "crsdet_read returned error");
-      } else {
-	print_cpy_crsdet(pdc, &(rep));
-      }
-      /* accum both good and bad vals */
-      if (PDC_ERR == cpy_crsdet_acc_add(pdc, &acc, &ed, &rep)) {
-	error(2|ERROR_FATAL, "*** accumulator add failed ***");
-      }
-    }
-    /* start processing new record */ 
-    num_recs++;
-    PDC_IO_checkpoint(pdc, 0);
     PDC_IO_getPos(pdc, &before_pos, 0);
-    e = cpy_crsdet_read(pdc, 0, &ed, &rep);
+    e = det_or_tlr_read(pdc, 0, &ed, &rep);
     PDC_IO_getPos(pdc, &after_pos, 0);
     if (PDC_POS_EQ(before_pos, after_pos)) {
-      error(2|ERROR_FATAL, "** crsdet_read did not advance IO cursor, giving up **");
+      error(2|ERROR_FATAL, "** det_or_tlr_read did not advance IO cursor, giving up **");
+    }
+    if (rep.tag == is_tlr) break;
+    num_recs++;
+    if (e == PDC_ERR) {
+      error(2, "det_or_tlr_read returned error");
+    } else {
+      print_cpy_crsdet(pdc, &(rep.val.is_det));
+    }
+    /* accum both good and bad vals */
+    if (PDC_ERR == cpy_crsdet_acc_add(pdc, &acc, &(ed.val.is_det), &(rep.val.is_det))) {
+      error(2|ERROR_FATAL, "*** accumulator add failed ***");
     }
   }
-  /* back up one record and try to parse trailer */
-  PDC_IO_restore(pdc);
-  num_recs--;
-  if (PDC_OK != cpy_crstlr_read(pdc, 0, &tlr_ed, &tlr_rep)) {
-    error(2|ERROR_FATAL, "crstlr_read returned error");
+  if (rep.tag == is_tlr) {
+    error(0, "TRAILER INFO:");
+    error(0, "          XX_TOTAL_RECORDS_3: %llu", rep.val.is_tlr.XX_CRS_TRAILER_1.XX_TOTAL_RECORDS_3);
+    error(0, "         compare to num_recs: %llu\n", num_recs);
   }
-  error(0, "TRAILER INFO:");
-  error(0, "          XX_TOTAL_RECORDS_3: %llu", tlr_rep.XX_CRS_TRAILER_1.XX_TOTAL_RECORDS_3);
-  error(0, "         compare to num_recs: %llu\n", num_recs);
 
   if (PDC_ERR == cpy_crsdet_acc_report(pdc, "", 0, 0, &acc)) {
     error(0, "** accum_report failed **");
@@ -139,11 +123,11 @@ int main(int argc, char** argv) {
     error(2|ERROR_FATAL, "*** PDC_IO_close failed ***");
   }
 
-  if (PDC_ERR == cpy_crsdet_cleanup(pdc, &rep)) {
+  if (PDC_ERR == det_or_tlr_cleanup(pdc, &rep)) {
     error(0, "** representation cleanup failed **");
   }
 
-  if (PDC_ERR == cpy_crsdet_ed_cleanup(pdc, &ed)) {
+  if (PDC_ERR == det_or_tlr_ed_cleanup(pdc, &ed)) {
     error(0, "** error descriptor cleanup failed **");
   }
 
@@ -188,7 +172,7 @@ pr_XX_TOTALS_BY_JURISD_RD_20_crsdet(PDC_t* pdc, char *indent, int offset, XX_TOT
     int i;
     for(i = 0; i < 5; i++) {
       pr_XX_GROSS_AND_DISCS_21_crsdet(pdc, indent, offset+(i*12),
-				      &(tt->XX_GROSS_AND_DISCS_21.array_5_elts_eltType_XX_GROSS_AND_DISCS_21_crsdet[i]));
+				      &(tt->XX_GROSS_AND_DISCS_21.elts[i]));
     }
   }
 }
@@ -253,17 +237,20 @@ pr_XX_CRS_RECORD_1_crsdet(PDC_t* pdc, char *indent, int offset, XX_CRS_RECORD_1_
   error(0, "%sXX_CRS_RECORD_1_crsdet >>>>>>aggr", indent--);
   PR_T_CHARS(XX_LEAD_ACCT_NUM_2, &(tt->XX_LEAD_ACCT_NUM_2), offset);
   PR_T_CHARS(XX_SUB_ACCT_NUM_3, &(tt->XX_SUB_ACCT_NUM_3), offset+13);
-  /* XXX ignore tag and print redefine union value both ways, since that is what Hume's code does. */
+  if (tt->GEN_UNION_1.tag != XX_TOTALS_BY_JURISD_4_arm) {
+    error(2|ERROR_FATAL, "XXX Unexpected: tag is not first tag.\n"
+	  "XXX A redefine should match all punion arms, so tag should always be first tag");
+  }
+  /* XXX ignore tag and print redefine-based union value both ways, since that is what Hume's code does. */
   pr_XX_TOTALS_BY_JURISD_4_crsdet(pdc, indent, offset+26,
-				  &(tt->redefine_of_XX_TOTALS_BY_JURISD_4_to_XX_TOTALS_BY_JURISD_RD_20.val.union_arm_XX_TOTALS_BY_JURISD_4));
-
+				  &(tt->GEN_UNION_1.val.XX_TOTALS_BY_JURISD_4_arm));
 #if 0
   pr_XX_TOTALS_BY_JURISD_RD_20_crsdet(pdc, indent, offset+26,
-				      &(tt->redefine_of_XX_TOTALS_BY_JURISD_4_to_XX_TOTALS_BY_JURISD_RD_20.val.union_arm_XX_TOTALS_BY_JURISD_RD_20));
+				      &(tt->GEN_UNION_1.val.XX_TOTALS_BY_JURISD_RD_20_crsdet));
 #else
   /* XXX hack: the representation differs due to use of variable length array so need to fake it here */
   HACK_pr_XX_TOTALS_BY_JURISD_RD_20_crsdet(pdc, indent, offset+26,
-				  &(tt->redefine_of_XX_TOTALS_BY_JURISD_4_to_XX_TOTALS_BY_JURISD_RD_20.val.union_arm_XX_TOTALS_BY_JURISD_4));
+					   &(tt->GEN_UNION_1.val.XX_TOTALS_BY_JURISD_4_arm));
 #endif
 }
 static void

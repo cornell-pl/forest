@@ -148,7 +148,7 @@
  * the string that goes from b to e-1.
  * Caller must provide fatal_alloc_err target
  */
-#define PDCI_STR_SET(s, b, e)
+#define PDCI_A_STR_SET(s, b, e)
   do {
     if (*em == PDC_CheckAndSet && (s)) {
       size_t wdth = (e)-(b); 
@@ -157,6 +157,19 @@
       } else {
 	PDCI_STR_SHARE((s), (b), wdth);
       }
+    }
+  } while (0)
+/* END_MACRO */
+
+/* If *em is CheckAndSet, copy (always copy for EBCDIC)
+ * the string that goes from b to e-1.
+ * Caller must provide fatal_alloc_err target
+ */
+#define PDCI_E_STR_SET(s, b, e)
+  do {
+    if (*em == PDC_CheckAndSet && (s)) {
+      size_t wdth = (e)-(b); 
+      PDCI_STR_CPY((s), (b), wdth);
     }
   } while (0)
 /* END_MACRO */
@@ -1784,7 +1797,6 @@ rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_digits)
 {
   PDC_int32 n = num_digits;
   PDC_byte  ebc[30];
-  int       neg = (i < 0);
   targ_type lim;
 
   if (n == 0 || n > nd_max) {
@@ -1798,9 +1810,10 @@ rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_digits)
       return -1;
     }
   }
-  if (neg) {
+  if (i < 0) {
+    i = -i;
     while (--n >= 0) {
-      ebc[n] = 0xF0 | (-(i % 10));
+      ebc[n] = 0xF0 | (i % 10);
       i /= 10;
     }
     ebc[num_digits-1] &= 0xDF; /* force sign nibble to negative */
@@ -1947,7 +1960,6 @@ rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_digits)
   PDC_byte  bcd[30];
   PDC_int32 num_bytes;
   int       x, n;
-  int       neg = (i < 0);
   int       oddbytes = (num_digits % 2 == 1);
   targ_type lim;
 
@@ -1964,16 +1976,17 @@ rev_fn_name(PDC_t *pdc, Sfio_t *io, targ_type i, PDC_uint32 num_digits)
   }
   num_bytes = ((num_digits+1) / 2);
   n = num_bytes - 1;
-  if (neg) {
+  if (i < 0) {
     if (!oddbytes) {  /* must use odd number of digits for negative number */
       errno = EDOM;
       return -1;
     }
-    bcd[n] = ((-(i%10))<<4) | 0xD; /* force sign nibble to negative */
+    i = -i;
+    bcd[n] = ((i%10)<<4) | 0xD; /* force sign nibble to negative */
     n--;
     i /= 10;
     while (n >= 0) {
-      x = -(i % 100);
+      x = i % 100;
       i /= 100;
       bcd[n--] = (x%10) | ((x/10)<<4);
     }
@@ -3016,7 +3029,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.68 2003-05-01 20:24:30 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.69 2003-05-08 17:23:28 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5562,7 +5575,7 @@ PDC_a_string_FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
   }
   /* end-begin >= width */
   end = begin + width;
-  PDCI_STR_SET(s_out, (char*)begin, (char*)end);
+  PDCI_A_STR_SET(s_out, (char*)begin, (char*)end);
   if (PDC_ERR == PDCI_IO_forward(pdc, width)) {
     goto fatal_forward_err;
   }
@@ -5630,7 +5643,7 @@ PDC_a_string_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
     /* (p1 < end) OR (p1 == end, stopChar is 0, eor|eof set) */
     if (p1 == end || stopChar == (*p1)) {
       /* success */
-      PDCI_STR_SET(s_out, (char*)begin, (char*)p1);
+      PDCI_A_STR_SET(s_out, (char*)begin, (char*)p1);
       if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	goto fatal_forward_err;
       }
@@ -5707,7 +5720,7 @@ PDC_a_string_CSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRe
   while (1) {
     if (p1 == end) {
       if (eor && stopRegexp->or_eor) { /* EOR is valid stop */
-	PDCI_STR_SET(s_out, (char*)begin, (char*)p1);
+	PDCI_A_STR_SET(s_out, (char*)begin, (char*)p1);
 	if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	  goto fatal_forward_err;
 	}
@@ -5733,7 +5746,7 @@ PDC_a_string_CSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRe
     }
     /* p1 < end */
     if (PDCI_regexpMatch(pdc, stopRegexp, p1, end, 0)) {
-      PDCI_STR_SET(s_out, (char*)begin, (char*)p1);
+      PDCI_A_STR_SET(s_out, (char*)begin, (char*)p1);
       if (PDC_ERR == PDCI_IO_forward(pdc, p1-begin)) {
 	goto fatal_forward_err;
       }
@@ -5796,7 +5809,7 @@ PDC_e_string_FW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
   }
   /* end-begin >= width */
   end = begin + width;
-  PDCI_STR_SET(s_out, (char*)begin, (char*)end);
+  PDCI_E_STR_SET(s_out, (char*)begin, (char*)end);
   /* convert EBCDIC to ASCII */  
   for (p2 = (PDC_byte*)s_out->str, end = p2 + s_out->len; p2 < end; p2++) {
     (*p2) = PDC_ea_tab[(int)(*p2)];
@@ -5869,7 +5882,7 @@ PDC_e_string_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
     /* (p1 < end) OR (p1 == end, estopChar is 0, eor|eof set) */
     if (p1 == end || estopChar == (*p1)) {
       /* success */
-      PDCI_STR_SET(s_out, (char*)begin, (char*)p1);
+      PDCI_E_STR_SET(s_out, (char*)begin, (char*)p1);
       /* convert EBCDIC to ASCII */
       for (p2 = (PDC_byte*)s_out->str, end = p2 + s_out->len; p2 < end; p2++) {
 	(*p2) = PDC_ea_tab[(int)(*p2)];
@@ -5950,7 +5963,7 @@ PDC_e_string_CSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRe
   while (1) {
     if (p1 == end) {
       if (eor && stopRegexp->or_eor) { /* EOR is valid stop */
-	PDCI_STR_SET(s_out, (char*)begin, (char*)p1);
+	PDCI_E_STR_SET(s_out, (char*)begin, (char*)p1);
 	/* convert EBCDIC to ASCII */
 	for (p2 = (PDC_byte*)s_out->str, end = p2 + s_out->len; p2 < end; p2++) {
 	  (*p2) = PDC_ea_tab[(int)(*p2)];
@@ -5980,7 +5993,7 @@ PDC_e_string_CSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRe
     }
     /* p1 < end */
     if (PDCI_regexpMatch(pdc, stopRegexp, p1, end, 1)) {
-      PDCI_STR_SET(s_out, (char*)begin, (char*)p1);
+      PDCI_E_STR_SET(s_out, (char*)begin, (char*)p1);
       /* convert EBCDIC to ASCII */
       for (p2 = (PDC_byte*)s_out->str, end = p2 + s_out->len; p2 < end; p2++) {
 	(*p2) = PDC_ea_tab[(int)(*p2)];
