@@ -85,25 +85,26 @@ structure Main : sig
     val extensions = [("p", "PADS files", PCL.Extension(addPadsFile,true))]
 
     val flags_release = [
-         ("h", "output header file",      PCL.String (setHeaderOutputFile, false)),
-         ("c", "output code file",        PCL.String (setCOutputFile, false)),
 	 ("wnone", "suppress write function generation", PCL.BoolSet writeNoneFlag),
 	 ("anone", "suppress accumulator generation", PCL.BoolSet accumNoneFlag),
-         ("a", "generate accumulator program",    PCL.String (addAccumulator, true)),
          ("x", "output Galax Data API",   PCL.BoolSet xmlFlag),
          ("r", "output directory",        PCL.String (setOutputDir, false)),
          ("b", "add base type table",         PCL.String (addBaseTable, false)),
 	 ("I", "augment include path",        PCL.String (addInclude, true)),
 	 ("D", "add definition",              PCL.String (addDefine, true)),
 	 ("U", "remove definition",           PCL.String (addUndefine, true)),
-         ("T", "transform specification",      PCL.String (addTranslate, true)),
          ("t", "trace system commands",       PCL.BoolSet traceFlag)
         ]
 
     val flags_debug = [
-	 ("parse", "generate parsetree only", PCL.BoolSet parseTreeOnlyFlag),
+         ("h", "output header file",      PCL.String (setHeaderOutputFile, false)),
+         ("c", "output code file",        PCL.String (setCOutputFile, false)),
+
+         ("a", "generate accumulator program",    PCL.String (addAccumulator, true)),	 
+         ("parse", "generate parsetree only", PCL.BoolSet parseTreeOnlyFlag),
 	 ("ast",   "generate ast only", PCL.BoolSet astOnlyFlag),
-         ("experimental", "generate experimental features", PCL.BoolSet experimentFlag)
+         ("experimental", "generate experimental features", PCL.BoolSet experimentFlag),
+         ("T", "transform specification",      PCL.String (addTranslate, true))
         ]
 
     (* Error handling *)
@@ -397,7 +398,7 @@ structure Main : sig
            val flags = if release then flags_release @ extensions
                        else flags_release @ flags_debug @ extensions
            val banner = PCL.genBanner("padsc", 
-				      "PADS Compiler version 0.1", flags)
+				      "PADS Compiler version 0.9", flags)
            val () = PCL.parseArgs(arguments, flags, addUnknownFile, banner)
            val () = checkFlags()
            (* At this point, flag booleans have been set from command-line *)

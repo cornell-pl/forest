@@ -182,6 +182,7 @@ void PCGEN_TLEN_UPDATES();
 void PCGEN_FINAL_TLEN_UPDATES();
 void PCGEN_TAG_OPEN_XML_OUT(const char *def_tag);
 void PCGEN_TAG_CLOSE_XML_OUT();
+void PCGEN_XML_VALUE_OUT(const char *def_tag, int value);
 
 void PCGEN_STRUCT_PD_XML_OUT();
 void PCGEN_ARRAY_PD_XML_OUT();
@@ -1940,6 +1941,15 @@ do {
   sfstrseek(pads->tmp4, 0, SEEK_SET);
   tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, tag);
   PDCI_TMP4_TLEN_UPDATES();
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_XML_VALUE_OUT(ltag, val)
+do{
+    indent = (indent > 126) ? 128 : indent + 2;
+    sfstrseek(pads->tmp4, 0, SEEK_SET);
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s>%d</%s>\n", indent, PDCI_spaces, ltag, val, ltag);
+    PDCI_TMP4_TLEN_UPDATES();
 } while (0)
 /* END_MACRO */
 
