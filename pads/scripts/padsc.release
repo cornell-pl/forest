@@ -1,0 +1,202 @@
+#!/usr/bin/env perl
+#                                                                        -*- mode: perl; -*-
+use Getopt::Long;
+
+# file paths will be filled in by install script
+
+# padsc : front-end script to PADS compiler
+# 
+# features of this front-end script:
+#         1. If all the .p files are in the same dir P 
+#            and there is a 'gen' dir at the same level
+#            as P, the generated files are placed in gen.
+#            This auto retargeting does not occur if
+#            there is no gen, or an explicit -p option
+#            is already present, or if some .p files
+#            are in different locations.
+#
+#         2. The script needs to determine $pads_home, the location
+#            of the PADS installation, so that it can find
+#            $pads_home/padsc/include and $pads_home/padsc/lib.
+#            If environment variable PADS_HOME is not set,
+#            or if the path to the script does not help us find
+#            pads_home, the script fails and reports an error.
+#
+
+# =========================
+sub cleanupStr
+{
+    my( $txt ) = @_;
+    chomp($txt);
+    $txt =~ s/\s//g;
+    return $txt;
+}
+
+# =========================
+# main program
+
+my $dbg=0;
+
+my $pads_home = $ENV{"PADS_HOME"};
+if ($pads_home eq "") {
+  # try to find pads_home from script path
+  if ($0 =~ m|/padsc(?:.pl)?$|) {
+    my $path = $0;
+    $path =~ s|/padsc(?:.pl)?$||;
+    $path .= "/..";
+    $pads_home = `(cd $path; pwd)` || "";
+    $pads_home = &cleanupStr($pads_home);
+    print "\n*** Guessing pads_home = [$pads_home]\n\n" if ($dbg);
+  }
+}
+if ($pads_home eq "") {
+  print "\n    Error: either env variable PADS_HOME must be set
+           OR the invocation of this script must have a path component
+           so that the script can figure out where PADS is
+
+    Set PADS_HOME or use a relative or absolute path to the script and try again\n\n";
+  exit -1;
+}
+
+my $ast_arch = `$pads_home/ast-ast/bin/package.cvs` || "";
+$ast_arch = &cleanupStr($ast_arch);
+my $arch_n_opsys = `$pads_home/scripts/arch-n-opsys` || "";
+$arch_n_opsys = &cleanupStr($arch_n_opsys);
+
+my $image  = "$pads_home/lib/padsc";
+my $smlbin = "$pads_home/binlinks/smlruntime.$arch_n_opsys";
+
+my $lua = "";
+my $lda = "";
+my $archmk = "$pads_home/mk/rules.arch.$ast_arch.mk";
+
+if (-e $archmk) {
+  my $gnutst = `grep -l GNU $archmk`;
+  $gnutst = &cleanupStr($gnutst); 
+  if ($gnutst ne "") {
+    $lua = "-U__GNUC__";
+    $lda = "-D__LINUX_PREPROCESSOR_FIXES";
+  }
+}
+
+my $opts = "";      # all options other than pfiles
+my $pfiles = "";    # all pfiles
+my $retarg = "";    # detected gen dir, if found
+my $retarg_OK = 1;  # OK to use retarg
+my $help = 0;       # -h/--help option used
+my $optx = 0;       # -x option used
+
+my $full_args = join(" ", @ARGV);
+foreach $x (@ARGV) {
+  if ($x eq "-r") {
+    $retarg_OK = 0;
+    $opts = "$opts $x";
+  } elsif  ($x eq "-h" || $x eq "--help") {
+    $help = 1;
+  } elsif ($x eq "-x") {
+    $optx = 1;
+    $opts = "$opts $x";
+  } elsif ($x !~ /^-/ && $x =~ /[.]p$/) {
+    # not an option of some kind, ends in .p, ergo a .p file
+    $pfiles = "$pfiles $x";
+    if ($retarg_OK) {
+      my $trydir = "../gen";
+      if ($x =~ m|^(.*)/[^/]+$|) {
+	$trydir = $1 . "/../gen";
+      }
+      if (-d $trydir) {
+	my $possible_retarg = `(cd $trydir; pwd)` || "oops";
+	$possible_retarg = &cleanupStr($possible_retarg);
+	if ($retarg eq "") {
+	  $retarg = $possible_retarg;
+	} elsif ($retarg ne $possible_retarg) {
+	  # two different gen dirs found
+	  $retarg_OK = 0;
+	}
+      } else {
+	# possible_retarg not a dir
+	$retarg_OK = 0;
+      }
+    }
+  } else {
+    $opts = "$opts $x";
+  }
+}
+
+if ($dbg) {
+  print "full_args = $full_args\n";
+  print "pfiles    = $pfiles\n";
+  print "opts      = $opts\n";
+  print "retarg_OK = $retarg_OK\n";
+  print "retarg    = $retarg\n";
+}
+
+#my $cmd = "$smlbin \@SMLload=$image $pads_home";
+my $cmd = "sml \@SMLload=$image $pads_home";
+if ($help) {
+  $cmd .= " -help";
+} else {
+  if ($pfiles eq "") {
+    print "\nNo .p files specified.  Usage:  $0 <options> <.p files>\n\tUse --help for all available options.\n\n";
+    exit -1;
+  }
+  my $args = $full_args;
+  if ($retarg_OK) {
+    $args = "-r $retarg $opts $pfiles";
+    print "\nAuto-selecting target dir $retarg\n\n";
+  }
+  my @incs = ();
+  if ($optx) {
+    my $ocaml_lib_dir = $ENV{"OCAML_LIB_DIR"};
+    if ($ocaml_lib_dir eq "") {
+      $ocaml_lib_dir = "/usr/common/lib/ocaml";
+    }
+    $ocaml_lib_dir =~ s|/$||;
+    if (-d $ocaml_lib_dir) {
+      push(@incs, "-I $ocaml_lib_dir");
+    } else {
+      print "\nWarning: expected dir $ocaml_lib_dir not found, check your OCAML_LIB_DIR env var setting\n\n";
+      exit -1;
+    }
+    
+    my $galax_home = $ENV{"GALAX_HOME"};
+    if ($galax_home eq "") {
+      print "\nEnv variable GALAX_HOME must be set to use -x option\n\n";
+      exit -1;
+    }
+    if ($galax_home !~ m|/$|) {
+      $galax_home .= "/";
+    }
+    my $galax_lib_dir = $galax_home . "lib/c";
+    $galax_lib_dir =~ s|/$||;
+    if (-d $galax_lib_dir) {
+      push(@incs, "-I $galax_lib_dir");
+    } else {
+      print "\nWarning: expected dir $galax_lib_dir not found, check your GALAX_HOME env var setting\n\n";
+      exit -1;
+    }
+    
+    my $padsglx_home = $ENV{"PADSGLX_HOME"};
+    if ($padsglx_home eq "") {
+      print "\nEnv variable PADSGLX_HOME must be set to use -x option\n\n";
+      exit -1;
+    }
+    my $padsglx_lib_dir = $padsglx_home;
+    $padsglx_lib_dir =~ s|/$||;
+    if (-d $padsglx_lib_dir) {
+      push(@incs, "-I $padsglx_lib_dir");
+    } else {
+      print "\nWarning: expected dir $padsglx_lib_dir not found, check your PADSGLX_HOME env var setting\n\n";
+      exit -1;
+    }
+  }
+  my $add_incs = join(" ", @incs);
+  $cmd .= " $args $lua $lda -I $pads_home/padsc/include -I $pads_home/ast-ast/arch/$ast_arch/include/ast $add_incs";
+}
+
+while ($cmd =~ /\s\s/) {
+  $cmd =~ s/\s\s/ /g;
+}
+
+print "\nexec $cmd\n\n" if ($dbg);
+exec $cmd;
