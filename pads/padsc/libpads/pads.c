@@ -1833,7 +1833,7 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
 			   int_type ## _acc *a)
 {
   int                    i, sz, rp;
-  Puint64             cnt_sum;
+  Puint64                cnt_sum;
   double                 cnt_sum_pcnt;
   double                 bad_pcnt;
   double                 track_pcnt;
@@ -1849,6 +1849,20 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
     what = int_descr;
   }
   PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  int_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    sfprintf(outstr, "(No %s values.)\n", what);
+    return P_OK;
+  }
+  if (sz == 1 && a->bad == 0) {
+    elt = (int_type ## _dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %10" fmt "\n",
+	     a->good, what, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
@@ -1857,14 +1871,20 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
   if (a->good == 0) {
+    sfprintf(outstr, "(No good %s values.)\n", what);
     return P_OK;
   }
-  int_type ## _acc_fold_psum(a);
-  sz = dtsize(a->dict);
-  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  /* check for 100% identical values */
+  if (sz == 1) {
+    elt = (int_type ## _dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "For good %s values, 100 pcnt identical: %10" fmt "\n",
+	     what, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
   dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
-  sfprintf(outstr, "  Characterizing %s:  min %" fmt, what, a->min);
+  sfprintf(outstr, "  Characterizing %s values:  min %" fmt, what, a->min);
   sfprintf(outstr, " max %" fmt, a->max);
   sfprintf(outstr, " avg %.3lf\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
@@ -1887,6 +1907,7 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   }
+  dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf\n",
 	   cnt_sum, cnt_sum_pcnt);
@@ -1929,7 +1950,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   const char            *mapped_max;
   const char            *mapped_val;
   int                    i, sz, rp, tmp;
-  Puint64             cnt_sum;
+  Puint64                cnt_sum;
   double                 cnt_sum_pcnt;
   double                 bad_pcnt;
   double                 track_pcnt;
@@ -1945,6 +1966,21 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
     what = int_descr;
   }
   PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  int_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    sfprintf(outstr, "(No %s values.)\n", what);
+    return P_OK;
+  }
+  if (sz == 1 && a->bad == 0) {
+    elt = (int_type ## _dt_elt_t*)dtfirst(a->dict);
+    mapped_val = fn(elt->key.val);
+    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %s (%5" fmt ")\n",
+	     a->good, what, mapped_val, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
@@ -1953,16 +1989,23 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
   if (a->good == 0) {
+    sfprintf(outstr, "(No good %s values.)\n", what);
     return P_OK;
   }
-  int_type ## _acc_fold_psum(a);
-  sz = dtsize(a->dict);
-  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  /* check for 100% identical values */
+  if (sz == 1) {
+    elt = (int_type ## _dt_elt_t*)dtfirst(a->dict);
+    mapped_val = fn(elt->key.val);
+    sfprintf(outstr, "For good %s values, 100 pcnt identical: %s (%5" fmt ")\n",
+	     what, mapped_val, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
   dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   mapped_min = fn(a->min);
   mapped_max = fn(a->max);
-  sfprintf(outstr, "  Characterizing %s:  min %s (%5" fmt, what, mapped_min, a->min);
+  sfprintf(outstr, "  Characterizing %s values:  min %s (%5" fmt, what, mapped_min, a->min);
   sfprintf(outstr, ")  max %s (%5" fmt, mapped_max, a->max);
   sfprintf(outstr, ")\n");
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
@@ -1978,6 +2021,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
       tmp = sz; 
     }
   }
+  dtnext(a->dict, 0); /* discard any iterator state */
   for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
        velt && i < a->max2rep;
        velt = dtnext(a->dict, velt), i++) {
@@ -1986,14 +2030,14 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
 	       rp-i, rp, a->pcnt2rep);
       break;
     }
+    dtnext(a->dict, 0); /* discard any iterator state */
     elt = (int_type ## _dt_elt_t*)velt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
     mapped_val = fn(elt->key.val);
     sfprintf(outstr, "        val: %s (%5" fmt, mapped_val, elt->key.val);
     sfprintf(outstr, ") ");
     pad = tmp-strlen(mapped_val);
-    sfprintf(outstr, "%-.*s", pad,
-	     "                                                                                ");
+    sfprintf(outstr, "%-.*s", pad, PDCI_spaces);
     sfprintf(outstr, "  count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
@@ -2001,8 +2045,7 @@ int_type ## _acc_map_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, co
   sfprintf(outstr,   "%-.*s", tmp,
 	   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .");
   sfprintf(outstr,   " . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n        SUMMING");
-  sfprintf(outstr,   "%-.*s", tmp,
-	   "                                                                                ");
+  sfprintf(outstr,   "%-.*s", tmp, PDCI_spaces);
   sfprintf(outstr,   "         count: %10llu  pcnt-of-good-vals: %8.3lf\n", cnt_sum, cnt_sum_pcnt);
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
@@ -2251,6 +2294,20 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
     what = fpoint_descr;
   }
   PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  fpoint_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    sfprintf(outstr, "(No %s values.)\n", what);
+    return P_OK;
+  }
+  if (sz == 1 && a->bad == 0) {
+    elt = (fpoint_type ## _dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %10.5lf\n",
+	     a->good, what, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
@@ -2259,14 +2316,20 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
   if (a->good == 0) {
+    sfprintf(outstr, "(No good %s values.)\n", what);
     return P_OK;
   }
-  fpoint_type ## _acc_fold_psum(a);
-  sz = dtsize(a->dict);
-  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  /* check for 100% identical values */
+  if (sz == 1) {
+    elt = (fpoint_type ## _dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "For good %s values, 100 pcnt identical: %10.5lf\n",
+	     what, elt->key.val);
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
   dtdisc(a->dict,   &fpoint_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
-  sfprintf(outstr, "  Characterizing %s:  min %.5lf", what, a->min);
+  sfprintf(outstr, "  Characterizing %s values:  min %.5lf", what, a->min);
   sfprintf(outstr, " max %.5lf", a->max);
   sfprintf(outstr, " avg %.3lf\n", a->avg);
   sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
@@ -2289,6 +2352,7 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(floatORdouble)a->good);
   }
+  dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf\n",
 	   cnt_sum, cnt_sum_pcnt);
@@ -4223,7 +4287,7 @@ PDCI_FPOINT_ACCUM(Pufpoint64, "ufpoint64", double, P_FPOINT2DBL)
 #if P_CONFIG_ACCUM_FUNCTIONS > 0
 
 typedef struct PDCI_string_dt_key_s {
-  Puint64  cnt;
+  Puint64     cnt;
   size_t      len;
   char        *str;
 } PDCI_string_dt_key_t;
@@ -4410,7 +4474,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
 			 Pstring_acc *a)
 {
   size_t                 pad;
-  int                    i, sz, rp;
+  int                    i, sz, len_sz, rp;
   Puint64             cnt_sum;
   double                 cnt_sum_pcnt;
   double                 track_pcnt;
@@ -4426,18 +4490,40 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
     what = "string";
   }
   PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  sz = dtsize(a->dict);
+  len_sz = dtsize(a->len_accum.dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (len_sz == 0) { /* no values accumulated */
+    sfprintf(outstr, "(No string values.)\n");
+    return P_OK;
+  }
+  if (sz == 1 && a->len_accum.bad == 0) {
+    elt = (PDCI_string_dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "%llu string values, 100 pcnt good, 100 pcnt identical (length %8lu): %-.*s\n",
+	     a->len_accum.good,
+	     (unsigned long)elt->key.len, elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len));
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
   if (P_ERR == Puint32_acc_report2io(pads, outstr, "String lengths", "lengths", -1, &(a->len_accum))) {
     return P_ERR;
   }
   if (a->len_accum.good == 0) {
+    sfprintf(outstr, "(No good string values.)\n");
+    return P_OK;
+  }
+  /* check for 100% identical values */
+  if (sz == 1) {
+    elt = (PDCI_string_dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "For good string values, 100 pcnt identical (length %lu): %-.*s\n",
+	     (unsigned long)elt->key.len, elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len));
+    dtnext(a->dict, 0); /* discard any iterator state */
     return P_OK;
   }
   /* rehash tree to get keys ordered by count */
-  sz = dtsize(a->dict);
-  rp = (sz < a->max2rep) ? sz : a->max2rep;
   dtdisc(a->dict, &PDCI_string_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
-  sfprintf(outstr, "\n  Characterizing strings:\n");
+  sfprintf(outstr, "\n  Characterizing string values:\n");
   sfprintf(outstr, "    => distribution of top %d strings out of %d distinct strings:\n", rp, sz);
   if (sz == a->max2track && a->len_accum.good > a->tracked) {
     track_pcnt = 100.0 * (a->tracked/(double)a->len_accum.good);
@@ -4457,12 +4543,12 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
     sfprintf(outstr, "%-.*s", elt->key.len+2, P_qfmt_cstr_n(elt->key.str, elt->key.len));
     sfprintf(outstr, "");
     pad = a->len_accum.max - elt->key.len;
-    sfprintf(outstr, "%-.*s", pad,
-	     "                                                                                ");
+    sfprintf(outstr, "%-.*s", pad, PDCI_spaces);
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->len_accum.good);
   }
+  dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr, ". . . . . . . .");
   pad = a->len_accum.max;
   sfprintf(outstr, "%-.*s", pad,
@@ -4470,8 +4556,7 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
   sfprintf(outstr, " . . . . . . . . . . . . . . . . . . . . . . .\n");
 
   sfprintf(outstr, "        SUMMING");
-  sfprintf(outstr, "%-.*s", pad,
-	   "                                                                                ");
+  sfprintf(outstr, "%-.*s", pad, PDCI_spaces);
   sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", cnt_sum, cnt_sum_pcnt);
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
@@ -4544,6 +4629,20 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
     what = "char";
   }
   PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  Puint8_acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    sfprintf(outstr, "(No %s values.)\n", what);
+    return P_OK;
+  }
+  if (sz == 1 && a->bad == 0) {
+    elt = (Puint8_dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "%llu %s values, 100 pcnt good, 100 pcnt identical: %s (as ASCII)\n",
+	     a->good, what, P_qfmt_char(elt->key.val));
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
   if (a->good == 0) {
     bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
   } else {
@@ -4552,14 +4651,20 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
 	   a->good, a->bad, bad_pcnt);
   if (a->good == 0) {
+    sfprintf(outstr, "(No good %s values.)\n", what);
     return P_OK;
   }
-  Puint8_acc_fold_psum(a);
-  sz = dtsize(a->dict);
-  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  /* check for 100% identical values */
+  if (sz == 1) {
+    elt = (Puint8_dt_elt_t*)dtfirst(a->dict);
+    sfprintf(outstr, "For good %s values, 100 pcnt identical: %s (as ASCII)\n",
+	     what, P_qfmt_char(elt->key.val));
+    dtnext(a->dict, 0); /* discard any iterator state */
+    return P_OK;
+  }
   dtdisc(a->dict,   &Puint8_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
-  sfprintf(outstr, "  Characterizing %s:  min %s", what, P_qfmt_char(a->min));
+  sfprintf(outstr, "  Characterizing %s values:  min %s", what, P_qfmt_char(a->min));
   sfprintf(outstr, " max %s", P_qfmt_char(a->max));
   sfprintf(outstr, " (based on ASCII encoding)\n");
 
@@ -4583,6 +4688,7 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
     cnt_sum += elt->key.cnt;
     cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   }
+  dtnext(a->dict, 0); /* discard any iterator state */
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING     count: %10llu  pcnt-of-good-vals: %8.3lf\n",
 	   cnt_sum, cnt_sum_pcnt);
@@ -4691,6 +4797,7 @@ P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *
       cnt_sum += elt->key.cnt;
       cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
     }
+    dtnext(a->dict, 0); /* discard any iterator state */
     sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
     sfprintf(outstr,   "        SUMMING         count: %10llu pcnt-of-total-vals: %8.3lf\n",
 	     cnt_sum, cnt_sum_pcnt);
@@ -4950,7 +5057,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.130 2003-11-21 18:09:32 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.131 2003-11-25 17:13:41 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5324,7 +5431,7 @@ Puint64 PDCI_10toThe[] = {
  * ================================================================================ */
 
 /* used for indent, max length 128 */ 
-const char *PDCI_spaces = "                                                                                                                                 ";
+const char *PDCI_spaces = "                                                                                                                                                                                                                                                                 ";
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * EXTERNAL FUNCTIONS (see pads.h)
