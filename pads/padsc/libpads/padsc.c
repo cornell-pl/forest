@@ -9,7 +9,7 @@
 #include "libpadsc-internal.h"
 #include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.12 2002-09-09 20:07:27 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.13 2002-09-09 20:35:00 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -160,6 +160,9 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
       break;
     case PDC_CHAR_LIT_NOT_FOUND:
       msg = "Expected character literal not found";
+      break;
+    case PDC_INVALID_REGEXP:
+      msg = "Invalid regular expression";
       break;
     }
     if (loc) {
@@ -404,9 +407,12 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
 }
 
 PDC_error_t
-PDC_string_stopregExp_read(PDC_t* pdc, PDC_base_em* em, const char* stopCharSet,
+PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
 			   PDC_base_ed* ed, char** b_out, char** e_out,  PDC_disc_t* disc)
 {
+  int             len;
+  char*           stopReg = (char*)stopRegexp;
+  char*           stopCharSet;
   PDC_stkElt_t*   tp;
   PDC_IO_line_t*  tpline;
   char*           begin; /* cursor at beginning of call */
@@ -418,7 +424,7 @@ PDC_string_stopregExp_read(PDC_t* pdc, PDC_base_em* em, const char* stopCharSet,
   if (!disc) {
     disc = pdc->disc;
   }
-  TRACE(pdc, "PDC_string_stopChar_read called");
+  TRACE(pdc, "PDC_string_stopRegexp_read called");
   if (!em) {
     em = &emt;
   }
@@ -438,6 +444,26 @@ PDC_string_stopregExp_read(PDC_t* pdc, PDC_base_em* em, const char* stopCharSet,
   begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
   end = begin + tpline->eoffset;
   begin += tp->cur;
+
+  if (!stopReg) {
+    WARN(pdc, "astringSRE : null regexp specified");
+    if (*em < PDC_Ignore) {
+      ed->errCode = PDC_INVALID_REGEXP;
+      PDC_get_loc(pdc, &(ed->loc), disc);
+    }
+    return PDC_ERROR;
+  }
+  len = strlen(stopReg);
+  if ((len < 2) || stopReg[0] != '[' || stopReg[len-1] != ']') {
+    WARN1(pdc, "astringSRE : invalid regexp: %s, currently only support a stopRegexp of the form [<chars>], i.e., a simple stop char set", stopReg);
+    if (*em < PDC_Ignore) {
+      ed->errCode = PDC_INVALID_REGEXP;
+      PDC_get_loc(pdc, &(ed->loc), disc);
+    }
+    return PDC_ERROR;
+  }
+  stopReg[len-1] = 0;
+  stopCharSet = stopReg + 1;
   for (ptr = begin; ptr < end; ptr++, tp->cur++) {
     if (strchr(stopCharSet, *ptr)) {
       /* success */
@@ -447,9 +473,11 @@ PDC_string_stopregExp_read(PDC_t* pdc, PDC_base_em* em, const char* stopCharSet,
       if (e_out) {
 	*e_out = ptr;
       }
+      stopReg[len-1] = ']';
       return PDC_OK;
     }
   }
+  stopReg[len-1] = ']';
   /* hit EOF/EOL before hitting stopChar */
   /* XXX not supporting multi-line strings yet XXX */
   if (PDC_IO_peek_EOF(pdc, disc)) {
