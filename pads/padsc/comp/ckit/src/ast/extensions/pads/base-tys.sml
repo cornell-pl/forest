@@ -32,7 +32,7 @@ struct
     (print (String.concat["accname = ", case accname of NONE => "-" | SOME n =>  Atom.toString n, "\n"]));
     (print (String.concat["diskSize = ", 
 			  case diskSize of TyProps.Size (n,r) => Int.toString n 
-                                         | TyProps.Param =>  "P"
+                                         | TyProps.Param (s, _) =>  ("P"^s)
                                          | TyProps.Variable => "V", "\n"]));
     (print (String.concat["memory characteristic = ", 
 			  case memChar of TyProps.Static => "S"
@@ -58,7 +58,9 @@ struct
 				    else SOME (Atom.atom(List.nth(fields,6))),
 			 diskSize = let val str = List.nth(fields,7) 
 				    in
-			               if str = "P" then TyProps.Param 
+			               if str = "P" then TyProps.Variable
+				       else if String.isPrefix "P" str then TyProps.Param (String.extract(str, 1, NONE), ref NONE) 
+					   before print (String.extract(str,1,NONE))
 				       else if str = "V" then TyProps.Variable
 				       else case Int.fromString str
 					    of NONE => TyProps.Variable

@@ -47,4 +47,40 @@ struct
 	(TextIO.output(Error.errStream errState,"ParseError raised\n");
 	 [])
 
+  val tFile = ref ""
+
+  fun parseString errState s = 
+    let val _ = TypeDefs.reset()
+        val _ = tFile := (OS.FileSys.tmpName () ^".p")
+	val sourceMap = SourceMap.newmap{srcFile=(!tFile)}
+
+	fun lexErr (p1, p2, msg) =
+	  Error.error (errState, SourceMap.location sourceMap (p1, p2), msg)
+	fun lexWarn (p1, p2, msg) =
+	  Error.warning (errState, SourceMap.location sourceMap (p1, p2), msg)
+	fun parseErr (msg, p1, p2) =
+	  Error.error (errState, SourceMap.location sourceMap (p1, p2), msg)
+
+	fun inputc instrm i = TextIO.inputN(instrm,i)
+
+	val lexArg = {comLevel = ref 0,
+		      sourceMap = sourceMap,
+		      charlist = ref ([] : string list),
+		      stringstart = ref 0,
+		      errWarn = {err=lexErr, warn = lexWarn}
+		      }
+	val instrm = TextIO.openIn (!tFile)
+	val lookahead = 15
+
+	val lexer = LrParser.Stream.streamify (CLex.makeLexer (inputc instrm) lexArg)
+	val (res,_) = P.parse(lookahead, lexer, parseErr, sourceMap) 
+	val _ = TextIO.closeIn instrm
+	val _ =  OS.FileSys.remove (!tFile) handle e => ();
+     in res
+    end
+    handle P.ParseError =>
+	(TextIO.output(Error.errStream errState,"ParseError raised\n");
+         OS.FileSys.remove (!tFile) handle e => ();
+	 [])
+
 end (* structure Parser *)

@@ -64,8 +64,8 @@
 
 Puint8        PDC_uint8     PDC_base_m    PDC_base_pd          PDC_uint8_read           -                  PDC_uint8_acc     V         S           Y
 Pint8         PDC_int8      PDC_base_m    PDC_base_pd          PDC_int8_read            -                  PDC_int8_acc      V         S           Y
-Puint8_FW     PDC_uint8     PDC_base_m    PDC_base_pd          PDC_uint8_FW_read        -                  PDC_uint8_acc     P         S           Y
-Pint8_FW      PDC_int8      PDC_base_m    PDC_base_pd          PDC_int8_FW_read         -                  PDC_int8_acc      P         S           Y
+Puint8_FW     PDC_uint8     PDC_base_m    PDC_base_pd          PDC_uint8_FW_read        -                  PDC_uint8_acc     P(p1)     S           Y
+Pint8_FW      PDC_int8      PDC_base_m    PDC_base_pd          PDC_int8_FW_read         -                  PDC_int8_acc      P(p1)     S           Y
 
 Puint16       PDC_uint16    PDC_base_m    PDC_base_pd          PDC_uint16_read          -                  PDC_uint16_acc    V         S           Y
 Pint16        PDC_int16     PDC_base_m    PDC_base_pd          PDC_int16_read           -                  PDC_int16_acc     V         S           Y
