@@ -506,9 +506,10 @@ fn_pref ## _write(PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed, targ_type *val)
   PDC_base_ed     edt;
 
   if (!ed) {
+    memset ((void *) (&edt),0,sizeof(edt));
     ed = &edt;
   }
-  PDCI_IODISC_INIT_CHECKS( PDCI_MacroArg2String(fn_pref) "_write" );
+  PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(fn_pref) "_write" );
   PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(fn_pref) "_write" , io );
   PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(fn_pref) "_write" , val );
 
@@ -3478,7 +3479,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.74 2003-05-13 15:47:44 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.75 2003-05-13 21:02:42 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
