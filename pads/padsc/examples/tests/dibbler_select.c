@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
   select_state_len = strlen(select_state);
   output_io = sfopen(0, output_name, "w");
-  io_disc = P_nlrec_noseek_make(0);
+  io_disc = P_nlrec_make(0);
   if (!io_disc) {
     error(ERROR_FATAL, "\nFailed to install IO discipline nlrec_noseek");
   } else {
