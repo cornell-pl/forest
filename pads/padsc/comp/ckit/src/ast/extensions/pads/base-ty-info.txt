@@ -1,9 +1,7 @@
 # PADSL BASE TYPE INFO
 #
-#   This file may be found in (~kfisher/p/padsc/ckit/src/extensions/pads/base-ty-info.txt).
 #
 #   The PDC types and function prototypes below are defined in pads.h
-#     (~kfisher/padsc/include/pads.h)
 #
 #   Note that the term 'on disk' below is meant to indicate the input data
 #   in some data stream -- data streams need not be disk-based.

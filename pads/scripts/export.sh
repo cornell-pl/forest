@@ -21,7 +21,7 @@ rm -rf GIGASCOPE_README
 rm -rf Notes
 
 #remove .cvs files
-for x in `find . -name .cvsignore`; do rm $x ; done
+for x in `find . -name .cvsignore`; do echo rm $x ; done
 
 # clean example directory
 cd padsc/examples
