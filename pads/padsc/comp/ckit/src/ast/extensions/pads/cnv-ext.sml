@@ -90,6 +90,7 @@ structure CnvExt : CNVEXT = struct
        largeHeuristic : bool,
        pred : pcexp option, 
        comment : string option,
+       optDecl : bool, 
        arrayDecl : bool,
        size : (pcexp PX.PSize) option,
        arraypred : (pcexp PX.PConstraint) list}
@@ -1744,14 +1745,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  [var-pair(if omit)|empty], [empty(if omit)|mapping], [empty(if omit)|mapping] )] *)
 		      fun genLocFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred: pcexp option, comment: string option, size,arrayDecl,...}:pfieldty) = 
+				      pred: pcexp option, comment: string option, size,optDecl, arrayDecl,...}:pfieldty) = 
 			  ( if   name = PNames.pd orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
 			    then PE.error (structOrUnion^" "^structOrUnionName^" contains field with reserved name '"^name^"'\n")
 			    else ();
 			    let val tyName = lookupTy (pty, repSuf, #repname)
 				val ty = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
 				val () = ( CTcnvType ty  (* ensure that the type has been defined *) ; () )
-				val (ty,tyName) = if arrayDecl then 
+				val (ty,tyName) = if arrayDecl orelse optDecl then 
 				                    let val tyName = padsID name 
 						    in (P.makeTypedefPCT tyName, tyName) 
 						    end 
@@ -3850,8 +3851,1063 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  @ (emitXML galaxEDs)
 	     end
 
+          fun cnvPOpt ({name : string, params: (pcty * pcdecr) list, args: pcexp list,
+			isRecord, isSource : bool, pred : (pcexp PX.OptPredicate) option, 
+			baseTy: PX.Pty })=
+	      let val someTag = "some_"^name
+		  fun cvtDecon {var,some,none} = 
+		      P.condX(P.eqX(PT.Id "tag", PT.Id someTag), 
+			      (PTSub.substExps  [(var, P.dotX(PT.Id "val", PT.Id (someTag)))] some),
+			      case none of SOME x => x | NONE => P.trueX)
+		  val pred = 
+		      case pred of NONE => []
+		      | SOME(PX.Simple x) => [PX.General x]
+ 	              | SOME(PX.Decon d) => [PX.General (cvtDecon d)]
+		  val some = PX.Full {pty = baseTy, 
+				      args = args,
+				      name = someTag, 
+				      isVirtual = false,
+				      isEndian = false,
+				      isRecord = false,
+				      containsRecord = false,
+				      largeHeuristic = false,
+				      pred = NONE, 
+				      comment = SOME "value is present",
+				      optDecl =false,
+				      arrayDecl = false, 
+				      size = NONE,
+				      arraypred = []}
+		   val none =  PX.Manifest 
+				    { tyname = PL.uint32PCT,
+				      name   = "none_"^name,
+				      args   = [],
+				      isVirtual = true,
+				      expr = P.intX 0,
+				      pred = NONE,
+				      comment = SOME "value was not present"}
+		   val branches = PX.Ordered [some,none]
+		   val unionVal = {name = name,
+				   params = params,
+				   isLongestMatch = false,
+				   isRecord = isRecord,
+				   isSource = isSource,
+				   containsRecord = false, (* dummies to be filled in later *)
+				   largeHeuristic = false, (* dummies to be filled in later *)
+				   variants = branches,
+				   postCond = pred,
+				   fromOpt = true}
+	      in
+		  cnvPUnion unionVal
+	      end
 
-	      fun cnvPStruct {isAlt, name: string, isRecord, containsRecord, largeHeuristic, isSource, 
+
+
+	     and cnvPUnion {name: string, params: (pcty * pcdecr) list, isLongestMatch: bool,
+			    isRecord: bool, containsRecord, largeHeuristic, isSource: bool, 
+			    variants: (pcty, pdty, pcdecr, pcexp) PX.PBranches, postCond : (pcexp PX.PPostCond) list,
+			    fromOpt} =
+		 let val unionName = name
+		     val which = if fromOpt then "opt" else "union"
+		     val checkIf = if isLongestMatch then "Check If " else ""
+		     val macStart = if isLongestMatch then "PCGEN_UNION_READ_LONGEST" else "PCGEN_UNION_READ"
+		     fun whereNeedsEndChk1 cond =
+			 case cond
+			  of PX.General expr => false
+			   | PX.ParseCheck expr => PTSub.isFreeInExp([PNames.unionEnd], expr)
+		     val whereNeedsEnd = (List.exists whereNeedsEndChk1 postCond)
+		     (* Functions for walking over list of branch, variant *)
+		     fun mungeBV f b m eopt (PX.Full fd) = f (eopt, fd)
+		       | mungeBV f b m eopt (PX.Brief e) = b (eopt, e)
+		       | mungeBV f b m eopt (PX.Manifest md)  = m (eopt, md)
+		     fun mungeBVs f b m [] [] = []
+		       | mungeBVs f b m (x::xs) (y::ys) = (mungeBV f b m x y) @ (mungeBVs f b m xs ys)
+		       | mungeBVs f b m _ _ = raise Fail "This case should never happen"
+
+                     (* Function for moving default clause to end of switched union branch list *)
+                     fun mungeBranches (cases, branches) = 
+                       let fun mB([], [], acs, abs, acds, abds) = 
+			       let val numDefaults = List.length acds
+			       in
+			          if (numDefaults >= 2) 
+				      then (PE.error ("Switched union "^ unionName ^" can have at most "^
+						      "one default clause\n");
+					    (true (* has default clause*), 
+					     (List.rev acs) @ [hd acds], (List.rev abs) @ [hd abds]))
+				  else (numDefaults = 1, (List.rev acs) @ acds, (List.rev abs) @ abds)
+			       end
+                             | mB(NONE::cases, b::bs, acs, abs, acds, abds) = 
+					    mB(cases, bs, acs, abs, NONE::acds, b::abds)
+                             | mB(c::cases, b::bs, acs, abs, acds, abds) = 
+					    mB(cases, bs, c::acs, b::abs, acds, abds)
+                             | mB _ = raise Fail "This case can't happen"
+		       in
+			   mB(cases, branches, [], [], [], [])
+		       end
+
+
+                     val branches = variants
+                     val (descOpt, hasDefault, cases, variants) = 
+				    case branches 
+			            of PX.Ordered v => (NONE, false (* no default clause *), [], v)
+			            |  PX.Switched {descriminator, cases, branches} => 
+					    let val (hasDefault, cases, branches) = mungeBranches(cases, branches)
+					    in
+						(SOME descriminator, hasDefault, cases, branches)
+					    end
+
+                     (* -- collection of expressions to be substituted for in constraints *)
+                     (* -- efficiency could be improved with better representations *)
+                     val readSubList : (string * pcexp) list ref = ref []
+                     val postReadSubList : (string * pcexp) list ref = ref []
+                     fun addReadSub (a : string * pcexp) = readSubList := (a:: (!readSubList))
+                     fun addPostReadSub (a : string * pcexp) = postReadSubList := (a:: (!postReadSubList))
+		     val (allVars, omitNames, omitVars, readSubs, postReadSubs, tys, tyNames) =
+			 checkStructUnionFields("Punion", unionName, isLongestMatch, variants)
+		     val _ = List.map addReadSub readSubs
+		     val _ = List.map addPostReadSub postReadSubs
+
+		     val dummy = "_dummy"
+		     val cParams : (string * pcty) list = List.map mungeParam params
+		     val paramNames = #1(ListPair.unzip cParams)
+                     val value = PNames.unionVal
+		     val tag = PNames.unionTag
+		     fun tgSuf s = s^"_tag"
+		     fun unSuf s = s^"_u"
+
+                     (* generate enumerated type describing tags *)
+		     val tagVal = ref 0
+		     val firstTag = ref "bogus"
+		     val lastTag = ref "bogus"
+		     fun chkTag(name) = 			 
+			 let val name = if enumConstDefined name then 
+			                  let val t0 = unionName^"_"^name 
+					  in 
+					      if enumConstDefined t0 then
+						  let fun getname base next = 
+						       let val t = base^"_"^(Int.toString next)
+						       in
+						          if enumConstDefined t
+							      then getname base (next + 1)
+							      else t
+						       end
+						  in
+						      getname t0 0
+						  end
+					      else t0
+					  end
+					else name
+			 in
+			 (if !tagVal = 0 then firstTag := name else ();
+			  lastTag := name;
+			  tagVal := !tagVal + 1;
+			  [(name, P.intX(!tagVal), NONE)])
+			 end
+
+		     fun genTagFull ({pty: PX.Pty, args: pcexp list, name: string, 
+				     isVirtual: bool, isEndian: bool, 
+				     isRecord, containsRecord, largeHeuristic: bool,
+				     pred: pcexp option, comment: string option,...}:pfieldty) = 
+			 chkTag(name)
+		     fun genTagBrief e = case getString e of NONE => [] | SOME s => chkTag s
+                     fun genTagMan {tyname, name, args, isVirtual, expr, pred, comment} = chkTag name
+
+		     val tagFields = mungeFields genTagFull genTagBrief genTagMan variants
+		     val tagFieldsWithError = (errSuf name, P.zero, NONE) :: tagFields 
+		     val tagED = P.makeTyDefEnumEDecl(tagFieldsWithError, tgSuf name)
+		     val tagDecls = cnvExternalDecl tagED
+		     val tagPCT = P.makeTypedefPCT(tgSuf name)
+
+		      (* Generate CheckSet mask *)
+		     fun genMFull ({pty: PX.Pty, args: pcexp list, name: string, 
+				    isVirtual: bool, isEndian: bool, 
+                                    isRecord, containsRecord, largeHeuristic: bool,
+				    pred: pcexp option, comment,...}:pfieldty) = 
+			 [(name, P.makeTypedefPCT(lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
+			 @ (case pred of NONE => [] | SOME _ => [(mConSuf name, PL.base_mPCT, SOME "union constraints")])
+		     fun genMBrief e = []
+		     fun genMMan m = []
+		     val mFieldsNested = mungeFields genMFull genMBrief genMMan variants
+		     val auxMFields    = [(PNames.unionLevel, PL.base_mPCT, NONE)]
+                     val mFields = auxMFields @ mFieldsNested
+		     val mFirstPCT = getFirstEMPCT mFields
+		     val mStructED = P.makeTyDefStructEDecl (mFields, mSuf name)
+		     val mPCT = P.makeTypedefPCT (mSuf name)			  
+
+		     (* Generate parse description *)
+		     fun genEDFull ({pty: PX.Pty, args: pcexp list, name: string, 
+				    isVirtual: bool, isEndian: bool,
+				    isRecord, containsRecord, largeHeuristic: bool,
+				    pred: pcexp option, comment,...}:pfieldty) = 
+			 [(name, P.makeTypedefPCT(lookupTy (pty, pdSuf, #pdname)), NONE)]
+		     fun genEDBrief e = []
+		     val pdVariants = mungeFields genEDFull genEDBrief genEDMan variants
+		     val pdVariants = if List.length pdVariants = 0
+			                    then [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty union pd")]
+					    else pdVariants			        
+		     val unionPD = P.makeTyDefUnionEDecl(pdVariants, (unSuf o pdSuf) name)
+		     val (unionPDDecls, updTid) = cnvCTy unionPD
+		     val unionPDPCT = P.makeTypedefPCT((unSuf o pdSuf) name)
+		     val structEDFields = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
+				  	   (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT, NONE),
+					   (tag, tagPCT, NONE), (value, unionPDPCT, NONE)]
+		     val pdStructED = P.makeTyDefStructEDecl (structEDFields, pdSuf name)
+		     val (pdStructPDDecls, pdTid) = cnvCTy pdStructED
+		     val pdPCT = P.makeTypedefPCT (pdSuf name)			  
+
+		     (* Generate accumulator type *)
+		     fun genAccFull ({pty: PX.Pty, args: pcexp list, name: string, 
+				     isVirtual: bool, isEndian: bool, 
+				     isRecord, containsRecord, largeHeuristic: bool, 
+				     pred: pcexp option, comment,...}:pfieldty) = 
+			 if not isVirtual then
+			     case lookupAcc pty of NONE => []
+			   | SOME a => [(name, P.makeTypedefPCT a, NONE)]
+			 else []
+		     fun genAccBrief e = [] (* literals are not stored in in-memory rep, so can't be accumulated *)
+		     val auxAccFields = [(tag, PL.intAccPCT, NONE)]
+		     val accFields = auxAccFields @ (mungeFields genAccFull genAccBrief genAccMan variants)
+		     val accED = P.makeTyDefStructEDecl (accFields, accSuf name)
+		     val accPCT = P.makeTypedefPCT (accSuf name)			  
+
+		     (* Calculate and insert type properties into type table *)
+		     fun genTyPropsFull ({pty: PX.Pty, args: pcexp list, name: string, 
+					 isVirtual: bool, isEndian: bool, 
+					 isRecord, containsRecord, largeHeuristic: bool,
+					 pred: pcexp option, comment: string option,...}:pfieldty) = 
+			  let val PX.Name ftyName = pty
+			      val mc = lookupMemChar pty
+			      val ds = computeDiskSize(name, paramNames, pty, args)
+			      val contR = lookupContainsRecord pty	 
+			      val lH = lookupHeuristic pty 
+			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isRecord, 
+			       containsRecord=contR, largeHeuristic=lH, 
+			       labels = [SOME (name, ftyName, (paramNames, args))]}] 
+			  end
+		     (* Not storing strings read via RE yet, so Static for now *) 
+		     fun genTyPropsBrief (e, labelOpt) = case extractString e 
+                           of NONE =>  (* either regular expression or error case; error reported elsewhere *)
+			        [{diskSize=TyProps.Variable, memChar=TyProps.Static, endian=false, isRecord=false, 
+				  containsRecord=false, largeHeuristic=false, 
+				  labels = [NONE]}] 
+		           | SOME s => 
+			     let val  ds = TyProps.Size(IntInf.fromInt (String.size s), IntInf.fromInt 0)
+			     in [{diskSize=ds, memChar=TyProps.Static, endian=false, isRecord=false, 
+				  containsRecord=false, largeHeuristic=false, 
+				  labels = [NONE]}] 
+			     end
+
+		     val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan variants
+                     (* check that all variants are records if any are *)
+		     (* val () = case tyProps of [] => ()
+			      | 
+			  ({isRecord=first,...}::xs) => 
+			           (if List.exists (fn {isRecord, diskSize, memChar, endian,
+							containsRecord, largeHeuristic, labels} => not (isRecord = first)) xs 
+				    then PE.error "All branches of Punion must terminate record if any branch does"
+				    else ()) *)
+					
+		     val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic, labels} = 
+			 List.foldl (PTys.mergeTyInfo (fn (x, y) => x) ) PTys.minTyInfo tyProps
+		     fun computeUnionDiskSize tyProps = 
+			 case tyProps of [] => TyProps.mkSize(0,0)
+			 | [r:PTys.sTyInfo] => #diskSize r
+			 | (r::rs) => TyProps.overlay(#diskSize r,  computeUnionDiskSize rs   )
+		     val diskSize = computeUnionDiskSize tyProps
+		     val compoundDiskSize = TyProps.Union ((ListPair.zip(List.rev labels, 
+									  (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
+		     val numArgs = List.length params
+		     val unionProps = buildTyProps(name, PTys.Union, diskSize, compoundDiskSize, memChar, 
+						   endian, isRecord, containsRecord, 
+						   largeHeuristic, isSource, pdTid, numArgs)
+                     val () = PTys.insert(Atom.atom name, unionProps)
+
+                     (* union: generate canonical representation *)
+		     fun genRepFull ({pty: PX.Pty, args: pcexp list, name: string, 
+				     isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+				     pred: pcexp option, comment: string option,...}:pfieldty) = 
+			 if not isVirtual then
+			     let val predStringOpt = Option.map P.expToString pred
+				 val fullCommentOpt = stringOptMerge(comment, predStringOpt)
+			     in
+				 [(name, P.makeTypedefPCT(lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
+			     end
+			 else []
+		     fun genRepBrief (e,labelOpt) = 
+			 let fun chk e = 
+			         case e 
+				 of PT.MARKexpression(loc, e) => chk e
+				 | PT.IntConst i => if IntInf.<(i,IntInf.fromInt 0) orelse IntInf.>(i,IntInf.fromInt 255) then
+				                       PE.error("In Punion "^name^": integer literals not supported.")
+						    else ()
+                                 | PT.ExprExt(PX.Pregexp e') => if not (Option.isSome labelOpt) then
+							PE.error("In Punion "^name^": regular expression literals must have a label.")
+							else ()
+				 | PT.String s => ()
+				 | _ => PE.error("In Punion "^name^": general expression literals not supported.")
+			     in
+				 []
+			 end
+		     val canonicalVariants = mungeFields genRepFull genRepBrief genRepMan variants
+		     val canonicalVariants = if List.length canonicalVariants = 0
+			                    then ((* PE.warn ("PUnion "^unionName^" does not contain any non-omitted fields\n"); *)
+						 [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty union")])
+					    else canonicalVariants
+		     val unionPD = P.makeTyDefUnionEDecl(canonicalVariants, unSuf name)
+		     val unionDecls = cnvExternalDecl unionPD
+                     val unionPCT = P.makeTypedefPCT(unSuf name)
+                     val structFields = [(tag, tagPCT, NONE),
+					 (value, unionPCT, NONE)]
+		     val canonicalStructED = P.makeTyDefStructEDecl (structFields, repSuf name)
+		     val (canonicalDecls, canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
+                     val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
+
+                     (* Process where clause *)
+		     val (whereReadXs, whereIsXs) =
+			 let val env = [(tag, tagPCT, fieldX(rep, tag)), (value, unionPCT, fieldX(rep, value))]
+			     val wsubs = [(tag, fieldX(rep, tag)), (value, fieldX(rep, value))]
+			     fun errMsg s = "Pwhere clause for "^ which ^" " ^name^" has type "^s^", expected type int"
+			     fun cvtOne postCond = 
+				 let val (isParseCheck, exp, bindingInfoList) = 
+				     case postCond
+				     of PX.General exp => (false, exp, env)
+				     |  PX.ParseCheck exp => (true, exp, env
+							           @ [(PNames.unionBegin, PL.posPCT, P.dotX(locX', PT.Id "b")),
+							              (PNames.unionEnd,   PL.posPCT, P.dotX(locX', PT.Id "e"))])
+				     val modexp = PTSub.substExps ((getBindings bindingInfoList) @ wsubs) exp
+				 in
+				     pushLocalEnv();
+				     augTyEnv bindingInfoList;
+				     ignore(List.map insTempVar cParams);
+				     expEqualTy(exp, CTintTys, errMsg);
+				     popLocalEnv();	
+				     ([modexp], if isParseCheck then [] else [modexp] )
+				 end
+			     val (whereReadXss, whereIsXss) = ListPair.unzip(List.map cvtOne postCond)
+			 in
+			     (List.concat whereReadXss, List.concat whereIsXss)
+			 end
+
+
+                     (* Generate tag to string function *)
+		     val tagFields' = List.map (fn(name, exp, comment) => (name, name, exp, comment)) tagFields
+		     val toStringEDs = [genEnumToStringFun(tgSuf name, tagPCT, tagFields')]
+
+                      (* Generate m_init function union case *)
+                      val maskInitName = maskInitSuf name 
+                      val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
+
+                      (* Generate init function, union case *)
+                      val baseFunName = lookupMemFun (PX.Name name)
+                      fun genInitEDs (suf, var, varPCT) = 
+			  case #memChar unionProps
+			  of TyProps.Static => 
+			      [genInitFun(suf baseFunName, var, varPCT, [], true)]
+			   | TyProps.Dynamic => 
+			       let val zeroSs = [PL.bzeroS(PT.Id var, P.sizeofX(varPCT))]
+			       in
+				   [genInitFun(suf baseFunName, var, varPCT, zeroSs, false)]
+		               end
+                      val initRepEDs = genInitEDs (initSuf, rep, canonicalPCT)
+		      val initPDEDs = genInitEDs((initSuf o pdSuf), pd, pdPCT)
+
+                      (* Generate cleanup function, union case *)
+		      fun genCleanupEDs (suf, var, varPCT) = case #memChar unionProps
+			  of TyProps.Static => [genInitFun(suf baseFunName, var, varPCT, [], true)]
+			   | TyProps.Dynamic => 
+			       let fun genCleanupFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
+						    name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
+						    pred:pcexp option, comment:string option,...}:pfieldty) = 
+				    if (isVirtual andalso var = rep) orelse (TyProps.Static = lookupMemChar pty) then []
+				    else let val baseFunName = lookupMemFun (PX.Name tyName)
+					 in
+					     mkBreakCase(PT.Id name,
+							 SOME [PT.Expr(PT.Call(PT.Id(suf baseFunName),
+									       [PT.Id pads, getUnionBranchX(var, name)]))])
+					 end
+				   fun genCleanupBrief e = []
+				   fun genCleanupMan _ = []
+				   val branchSs = mungeFields genCleanupFull 
+				                   genCleanupBrief genCleanupMan variants
+				   val allBranchSs = branchSs @ mkDefBreakCase(NONE)
+				   val bodySs = [PT.Switch(P.arrowX(PT.Id var, PT.Id tag), PT.Compound allBranchSs)]
+			       in
+				   [genInitFun(suf baseFunName, var, varPCT, bodySs, false)]
+		               end
+			   
+		      val cleanupRepEDs = genCleanupEDs(cleanupSuf, rep, canonicalPCT)
+		      val cleanupPDEDs = genCleanupEDs(cleanupSuf o pdSuf, pd, pdPCT)
+
+                      (* Generate Copy Function union case *)
+                      fun genCopyEDs(suf, base, aPCT) = 
+			  let val copyFunName = suf baseFunName
+			      val dst = dstSuf base
+			      val src = srcSuf base
+			      val copySs = [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT)]
+			  in
+			      case #memChar unionProps
+			       of TyProps.Static => [genCopyFun(copyFunName, dst, src, aPCT, copySs, true)]
+				|  TyProps.Dynamic => 
+			           let fun genCopyFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
+							name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
+							pred:pcexp option, comment:string option,...}:pfieldty) = 
+					   let val nestedCopyFunName = suf (lookupMemFun pty)
+					   in
+					       if (isVirtual andalso base = rep) orelse (TyProps.Static = lookupMemChar pty)
+					       then
+						   []
+					       else
+						   mkBreakCase(PT.Id name,
+							       SOME [PT.Expr(PT.Call(PT.Id(nestedCopyFunName),
+										     [PT.Id pads, 
+										      getUnionBranchX(dst, name),
+										      getUnionBranchX(src, name)]))])
+					   end
+				       fun genCopyBrief e  = []
+				       fun noop _ = []
+				       val branchSs = mungeFields genCopyFull genCopyBrief noop variants
+				       val branchSs = branchSs @ mkDefBreakCase(NONE)
+				       val bodySs = [PT.Switch (P.arrowX(PT.Id src, PT.Id tag), PT.Compound branchSs)]
+				   in
+				       [genCopyFun(copyFunName, dst, src, aPCT, copySs @ bodySs, false)]
+				   end
+			  end
+		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT)
+		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  pdPCT)
+
+                     (* Generate read function *)
+
+                     (* -- Some useful names/ids *)
+		     val readName   = readSuf unionName
+		     val errTag     = PT.Id(errSuf unionName)
+		     val repInit    = PT.Id(initSuf unionName)
+		     val pdInit     = PT.Id((initSuf o pdSuf) unionName)
+		     val repCopy    = PT.Id(copySuf unionName)
+		     val pdCopy     = PT.Id((copySuf o pdSuf) unionName)
+		     val repCleanup = PT.Id(cleanupSuf unionName)
+		     val pdCleanup  = PT.Id((cleanupSuf o pdSuf) unionName)
+		     val addStat    = (if #memChar unionProps = TyProps.Static then "_STAT" else "")
+
+
+                     (* -- Some helper functions *)
+
+		     fun addVirt(isVirt) = (if isVirt then "_VIRT" else "")
+		     fun addSFN(theTag)  = (if #memChar unionProps = TyProps.Static then "_STAT"
+					    else (if theTag = !firstTag then "_FIRST" else "_NEXT"))
+		     fun addSFNL(theTag) = (if #memChar unionProps = TyProps.Static then "_STAT"
+					    else (if theTag = !firstTag then "_FIRST"
+						  else (if theTag = !lastTag then "_LAST" else "_NEXT")))
+
+		     fun uReadSetup (theTag)=
+			 [PT.Expr(PT.Call(PT.Id(macStart^"_SETUP"^addStat),
+					  [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy, pdCleanup, pdInit, pdCopy]))]
+		     fun uRead (theTag, predOpt, readCall) =
+			 case predOpt of
+			     NONE       => [PT.Expr(PT.Call(PT.Id(macStart^addSFNL(theTag)),
+							    [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy,
+							     pdCleanup,  pdInit, pdCopy, readCall]))]
+			   | SOME check => [PT.Expr(PT.Call(PT.Id(macStart^addSFNL(theTag)^"_CHECK"),
+							    [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy,
+							     pdCleanup,  pdInit, pdCopy, readCall, check]))]
+		     fun uReadManPre (theTag, isVirt) =
+			 [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addSFN(theTag)^addVirt(isVirt)^"_PRE"),
+					  [PT.String readName, PT.Id theTag, repInit, pdInit]))]
+		     fun uReadManPost (theTag, predOpt) =
+			 case predOpt of
+			     NONE       => [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addStat^"_POST"),
+							    [PT.String readName, repCopy, pdCopy]))]
+			   | SOME check => [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addStat^"_POST_CHECK"),
+							    [PT.String readName, repCopy, repCleanup, pdCopy, pdCleanup, check]))]
+		     fun uReadFailed () =
+			 [P.mkCommentS (checkIf^"Failed to match any branch of union "^unionName),
+			  PT.Expr(PT.Call(PT.Id (macStart^"_CHECK_FAILED"),
+					  [PT.String readName, PT.String unionName, errTag]))]
+		     fun swReadPostCheck (theTag, predOpt) =
+			 case predOpt of
+			     NONE       => []
+			   | SOME check => [PT.Expr(PT.Call(PT.Id "PCGEN_SWUNION_READ_POST_CHECK",
+							    [PT.String readName, PT.Id theTag, errTag, check]))]
+		     fun swRead (theTag, predOpt, readCall) =
+			 [PT.Expr(PT.Call(PT.Id("PCGEN_SWUNION_READ"^addStat),
+					  [PT.String readName, PT.Id theTag, errTag, repCleanup, repInit, repCopy,
+					   pdCleanup, pdInit, pdCopy, readCall]))]
+			 @ swReadPostCheck(theTag, predOpt) @ [PT.Break]
+		     fun swReadManPre (theTag, isVirt) =
+			 [PT.Expr(PT.Call(PT.Id("PCGEN_SWUNION_READ_MAN"^addStat^addVirt(isVirt)^"_PRE"),
+					  [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy, pdCleanup, pdInit, pdCopy]))]
+		     fun swReadManPost (theTag, predOpt) = swReadPostCheck(theTag, predOpt) @ [PT.Break]
+		     fun swReadFailed () =
+		         [P.mkCommentS ("Switch value does not match any branch of switched union "^unionName),
+			  PT.Expr(PT.Call(PT.Id "PCGEN_SWUNION_READ_FAILED",
+					  [PT.String readName, PT.String unionName, errTag]))]
+
+		     fun readWhereCheck () =
+		         if List.length whereReadXs = 0 then []
+			 else let val needsEnd = if whereNeedsEnd then "_END" else ""
+			          val isOptX = if fromOpt then P.trueX else P.falseX
+				  val whereCheck
+				    = case descOpt of NONE => macStart^"_WHERE"^needsEnd^"_CHECK"
+						    | SOME descriminator => "PCGEN_SWUNION_READ_WHERE"^needsEnd^"_CHECK"
+			      in
+				  [P.mkCommentS "Checking Pwhere constraint",
+				   PT.Expr(PT.Call(PT.Id whereCheck, [PT.String readName, (P.andBools whereReadXs), isOptX]))]
+			      end
+		     fun mkLabel(s) = [PT.Labeled(s, PT.Compound([]))]
+		     fun branchesDoneLabel() = if isLongestMatch then [] else mkLabel("branches_done")
+		     fun finalCheckLabel()   = mkLabel("final_check")
+		     fun eorCheck() =
+			 (if isRecord then [PT.Expr(PT.Call(PT.Id "PCGEN_FIND_EOR", [PT.String readName]))] else [])
+
+                     fun genReadFull({pty :PX.Pty, args:pcexp list, name:string,
+				     isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
+				     pred:pcexp option, comment,...}:pfieldty) = 
+			 let val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
+			     val readFieldName = lookupTy(pty, readSuf, #readname)
+	                     val tyname = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
+			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
+			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
+			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
+                             val () = checkParamTys(name, readFieldName, modArgs, 2, 2)
+			     val () = pushLocalEnv()
+			     val readCall
+			       = PL.readFunX(readFieldName, PT.Id pads, P.addrX(fieldX(m, name)),
+					     modArgs, P.addrX(pdX), P.addrX(repX))
+			     val () = popLocalEnv()
+			     val commentSs = [P.mkCommentS ("Read branch '"^name^"'")]
+			 in
+			     commentSs @ uRead(name, modPred, readCall)
+			 end
+
+		     fun readBriefUtil (r as (e:pcexp, labelOpt)) = 
+			 case labelOpt of NONE => 
+			    (case (getString r) of NONE => NONE
+			     | SOME s => 
+			       let val cmt = "Pliteral branch '"^s^"'.\n"
+				   val repX = unionRepX(rep, s, true, isLongestMatch)
+				   val readCall = PL.matchFunX(PL.cstrlitMatch, PT.Id pads, PT.String s, P.trueX)
+			       in
+				   SOME (cmt, s, readCall)
+			       end)
+                         | SOME label => 
+			     let val reOpt = getRE e
+			     in
+				 case reOpt of NONE => 
+				    (case extractString e of NONE => NONE (* error reported eariler *)
+                                     | SOME s => 
+				         let val cmt = "Pliteral branch '"^s^"'.\n"
+					     val repX = unionRepX(rep, label, true, isLongestMatch)
+					     val readCall = PL.matchFunX(PL.cstrlitMatch, PT.Id pads, PT.String s, P.trueX)
+					 in
+					     SOME(cmt,label,readCall)
+					 end)
+                                 | SOME e => ((PE.error "regular expression literals not yet supported in Punions.\n");NONE)
+
+			     end
+
+                     fun genReadBrief e = 
+			  case readBriefUtil e of 
+			      NONE => []
+			  | SOME (cmt, tag, readCall) => 
+			     [P.mkCommentS cmt] @ uRead(tag, NONE,readCall)
+
+                     fun genReadUnionEOR _ = []
+
+		     fun genReadMan {tyname, name, args, isVirtual, expr, pred, comment} = 
+			 let val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
+			     val () = chkManArgs("Punion", unionName, tyname, name, args, (!readSubList))
+			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
+			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
+			     val pos = "ppos"
+			     val needsPosition = PTSub.isFreeInExp([PNames.position], expr) 
+			     val () = pushLocalEnv()
+			     val () = if needsPosition then ignore(insTempVar(pos, PL.posPCT)) else ()
+			     val exp = PTSub.substExps ((!readSubList) @ [(PNames.position, PT.Id pos)] ) expr
+			     val assignS = genAssignMan(tyname, name, repX, exp)
+			     val () = popLocalEnv()
+			     val initSs = if needsPosition
+					  then [PT.Compound[
+					      	  P.varDeclS'(PL.posPCT, pos),
+						  PL.getPosS(PT.Id pads, P.addrX(PT.Id pos)),
+					          assignS]]
+				          else [assignS]
+			     val commentSs = [P.mkCommentS ("Pcompute branch '"^name^"'")]
+			 in
+			     commentSs @ uReadManPre(name, isVirtual) @ initSs @ uReadManPost(name, modPred)
+			 end
+
+		     fun chkCaseLabel eOpt = 
+			 case eOpt of NONE => ()
+		       | SOME e => expAssignTy(e, CTintTys, 
+					      fn s=> (" case label for variant "^
+						      name ^ " has type " ^ s ^
+						      ", expected type int"))
+		     fun genReadSwFull (eOpt,
+			               ({pty :PX.Pty, args:pcexp list, name:string, 
+				        isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
+				        pred:pcexp option, comment,...}:pfieldty)) = 
+			 let val () = chkCaseLabel eOpt
+			     val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
+			     val readFieldName = lookupTy(pty, readSuf, #readname)
+	                     val tyname = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
+			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
+			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
+			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
+			     val () = checkParamTys(name, readFieldName, modArgs, 2, 2)
+			     val () = pushLocalEnv()
+			     val readCall = PL.readFunX(readFieldName, PT.Id pads, P.addrX(fieldX(m, name)),
+							modArgs, P.addrX(pdX), P.addrX(repX))
+			     val () = popLocalEnv()
+			     val readSs = swRead(name, modPred, readCall)
+			     val cmt = "Read branch '"^name^"'"
+			     val swPart = case eOpt of NONE =>    mkDefCommentCase(cmt, SOME readSs)
+						     | SOME e =>  mkCommentCase(e, cmt, SOME readSs)
+			 in
+			     swPart
+			 end
+
+                     fun genReadSwBrief (eOpt, e) = 
+			 case readBriefUtil e of NONE => []
+                         | SOME(cmt, tag, readCall) =>
+                           (let val readSs = swRead(tag, NONE, readCall)
+				val swPart = case eOpt of NONE =>    mkDefCommentCase(cmt, SOME readSs)
+			                                | SOME e =>  mkCommentCase(e, cmt, SOME readSs)
+			     in
+				 swPart
+			     end)
+
+		     fun genReadSwMan (eOpt, {tyname, name, args, isVirtual, expr, pred, comment}) =
+			 let val () = chkCaseLabel eOpt
+			     val () = chkManArgs("Punion", unionName, tyname, name, args, (!readSubList))
+			     val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
+			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
+			     val pdX = unionRepX(pd, name, isVirtual, isLongestMatch)
+			     val pos = "ppos"
+			     val needsPosition = PTSub.isFreeInExp([PNames.position], expr)
+			     val () = pushLocalEnv()
+			     val () = if needsPosition then ignore(insTempVar(pos, PL.posPCT)) else ()
+			     val exp = PTSub.substExps ((!readSubList) @ [(PNames.position, PT.Id pos)] ) expr
+			     val assignS = genAssignMan(tyname, name, repX, exp)
+			     val () = popLocalEnv()
+			     val initSs = if needsPosition
+					  then [PT.Compound[
+					      	  P.varDeclS'(PL.posPCT, pos),
+						  PL.getPosS(PT.Id pads, P.addrX(PT.Id pos)),
+					          assignS]]
+				          else [assignS]
+			     val readS = swReadManPre(name, isVirtual) @ initSs @ swReadManPost(name, modPred)
+			     val cmt = "Pcompute branch '"^name^"'"
+			     val swPart = case eOpt of NONE   => mkDefCommentCase(cmt, SOME readS)
+						     | SOME e => mkCommentCase(e, cmt, SOME readS)
+			 in
+			     swPart
+			 end
+
+                     fun genSwDefaultIfAbsent () = mkDefCase(SOME(swReadFailed()))
+
+                     fun buildSwitchRead (descriminator) = 
+			     let val () = expAssignTy(descriminator, CTintTys, 
+						     fn s=> (" Descriminator for union "^
+							     name ^ " has type " ^ s ^
+							     ", expected type int"))
+				 val readFields = mungeBVs genReadSwFull genReadSwBrief genReadSwMan cases variants
+				 val augReadFields = if hasDefault then readFields 
+				                     else readFields @ (genSwDefaultIfAbsent())
+				 val bodyS = PT.Switch(descriminator, PT.Compound augReadFields)
+			     in
+				 [bodyS] @ readWhereCheck() @ branchesDoneLabel() @ eorCheck()
+			     end
+
+                     fun buildReadFun () = 
+			 let val localDeclSs = if isLongestMatch
+					       then [P.varDeclS'(canonicalPCT, pcgenName("trep")),
+						     P.varDeclS'(pdPCT, pcgenName("tpd"))] 
+						    @ omitVarDecls(omitVars)
+					       else omitVarDecls(omitVars)
+			     val localInitSs = if isLongestMatch
+					       then [PT.Expr(PT.Call(PT.Id "PD_COMMON_INIT_NO_ERR", [P.addrX(pcgenId("tpd"))]))]
+						    @ omitVarInits(omitVars)
+					       else omitVarInits(omitVars)
+			     val coreSs = 
+                               case descOpt of NONE => 
+			         let val readFields = mungeFields genReadFull genReadBrief genReadMan variants  (* does type checking *)
+				     val readBodySs = [PT.Compound(uReadSetup(!firstTag)
+								   @ readFields
+								   @ (uReadFailed())
+								   @ branchesDoneLabel()
+								   @ readWhereCheck()
+								   @ finalCheckLabel()
+								   @ eorCheck())]
+				 in
+				     readBodySs
+				 end
+			       | SOME descriminator => buildSwitchRead(descriminator)
+			     val bodySs = localDeclSs @ localInitSs @ coreSs @ [stdReturnS]
+			 in
+			     [PT.Compound bodySs]
+			 end
+
+                     (* -- Assemble read function union case *)
+		     val _ = pushLocalEnv()                                        (* create new scope *)
+		     (* add rep, possibly temp-rep to scope *)
+		     val () = ignore(insTempVar(rep, P.ptrPCT canonicalPCT))
+		     val () = if isLongestMatch then ignore(insTempVar(pcgenName("trep"), canonicalPCT)) else ()
+		     val cParams : (string * pcty) list = List.map mungeParam params
+		     val () = ignore(List.map insTempVar omitVars)                 (* insert virtuals into scope *)
+                     val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
+		     val bodySs = buildReadFun() 
+		     val readFunEDs = genReadFun(readName, cParams, mPCT, pdPCT, canonicalPCT, 
+						 mFirstPCT, true, bodySs)
+		     val _ = popLocalEnv()                                         (* remove scope *)
+
+                     val readEDs = toStringEDs @ initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
+			         @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
+
+                     (* Generate is function union case *)
+                     val isName = PNames.isPref name
+                     val bodySs = 	
+			 let val agg = "isValid"
+			     fun setAgg to   = P.assignS(PT.Id agg, to)
+			     fun setAggSs to = PT.Compound[setAgg(to), PT.Break]
+			     fun mkPadsIsCase(pty, args, name, isVirt, pred) =
+				 let val hasTest =
+					 (case pred
+					   of NONE => (case lookupPred pty of NONE => false | SOME fieldPred => true)
+					    | SOME e => true)
+				 in
+				     if hasTest
+				     then 
+					 let val predXs  = case pred of NONE   => [] 
+								      | SOME e => [PTSub.substExps (!postReadSubList) e]
+					     val fieldXs = case lookupPred pty of NONE           => []
+										| SOME fieldPred => 
+										  [PT.Call(PT.Id fieldPred,
+											   [getUnionBranchX(rep, name)] @ args)]
+					     val condX = P.andBools(predXs @ fieldXs)
+					 in
+					     mkBreakCase(PT.Id name, SOME [setAgg(condX)])
+					 end
+				     else
+					 let val cmt = "PADS type has no is_ function and there is no user constraint"
+					 in
+					     mkCommentBreakCase(PT.Id name, cmt, NONE)
+					 end
+				 end
+			     fun mkCtyIsCase(tyname, args, name, pred) =
+				 case pred
+				  of NONE =>
+				     let val cmt = "Pcompute branch (with C type) : no user constraint"
+				     in
+					 mkCommentBreakCase(PT.Id name, cmt, NONE)
+				     end
+				   | SOME e =>
+				     let val predXs  = [PTSub.substExps (!postReadSubList) e]
+					 val condX = P.andBools(predXs)
+					 val cmt = "Pcompute branch (with C type)"
+				     in
+					 mkCommentBreakCase(PT.Id name, cmt, SOME [setAgg(condX)])
+				     end
+			     fun mkVirtIsCase(name, pred) =
+				 let val addCmt = (case pred of NONE => "no user constraint" | SOME e => "cannot check user constraint")
+				     val cmt = "Pomit branch: "^addCmt 
+				 in
+				     mkCommentBreakCase(PT.Id name, cmt, NONE)
+				 end
+			     fun getConFull({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
+					    isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+					    pred: pcexp option, comment: string option,...}:pfieldty) = 
+				 if isVirtual
+				 then mkVirtIsCase(name, pred)
+				 else mkPadsIsCase(pty, args, name, isVirtual, pred)
+			     fun getConBrief e = 
+				 case getString e of NONE => [] 
+				     | SOME s => mkVirtIsCase(s, NONE)
+			     fun getConMan {tyname, name, args, isVirtual, expr, pred, comment} =
+				 if isVirtual
+				 then mkVirtIsCase(name, pred)
+				 else case isPadsTy tyname
+				       of PTys.CTy => mkCtyIsCase(tyname, args, name, pred)
+					| _        => mkPadsIsCase(getPadsName tyname, args, name, false, pred)
+			     val fieldConCases = mungeFields getConFull getConBrief getConMan variants
+			     val fieldConCases = fieldConCases
+						 @ mkCommentBreakCase(PT.Id(errSuf name), "error case", SOME [setAgg(P.falseX)])
+			     val fieldConS = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound fieldConCases)]
+			     val aggDecl = P.varDeclS(P.int, agg, P.trueX)
+			     val whereConS = case whereIsXs of [] => [] | xl => [P.assignS(PT.Id agg, P.andBools whereIsXs)]
+			     val constraintSs = fieldConS @ whereConS
+			 in
+                              [aggDecl]
+			    @ constraintSs
+			    @ [PT.Return (PT.Id agg)]
+			 end
+
+		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
+
+
+                      (* Generate Accumulator functions (union case) *)
+                      (* -- generate accumulator init, reset, and cleanup functions *)
+		      fun genResetInitCleanup theSuf = 
+			  let val theFun = (theSuf o accSuf) name
+			      val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
+			      fun genAccTheFull ({pty :PX.Pty, args:pcexp list, name:string, 
+						 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
+						 pred:pcexp option, comment,...}:pfieldty) = 
+				  if isVirtual then []
+				  else case lookupAcc(pty) of NONE => []
+							    | SOME a => chk3Pfun(theSuf a, getFieldX(acc, name))
+			      fun genAccTheBrief e = []
+			      val tagFields = mungeFields genAccTheFull genAccTheBrief 
+				              (genAccTheMan theSuf) variants
+			      val auxFields = chk3Pfun(theSuf PL.intAct, getFieldX(acc, tag))
+			      val theFields = auxFields @ tagFields
+			      val theReturnS = genReturnChk (PT.Id nerr)
+			      val theBodySs = theDeclSs @ theFields @ [theReturnS]
+			      val theFunED = gen3PFun(theFun, accPCT, theBodySs)
+			  in
+			      theFunED
+			  end
+		      val initFunED = genResetInitCleanup initSuf
+		      val resetFunED = genResetInitCleanup resetSuf
+                      val cleanupFunED = genResetInitCleanup cleanupSuf
+
+                      (* -- generate accumulator function *)
+                      (*  Perror_t T_acc_add (P_t* , T_acc* , T_pd*, T* ) *)
+		      val addFun = (addSuf o accSuf) name
+		      val addDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero), P.varDeclS'(PL.base_pdPCT, tpd)]
+		      val initTpdSs = [P.assignS(P.dotX(PT.Id tpd, PT.Id errCode), 
+						 P.condX(P.eqX(P.arrowX(PT.Id pd, PT.Id errCode),
+							       PL.P_UNION_MATCH_FAILURE),
+							 PL.P_UNION_MATCH_FAILURE, PL.P_NO_ERROR))]
+		      val addTagSs = chkAddFun(addSuf PL.intAct, getFieldX(acc, tag), P.addrX(PT.Id tpd), 
+						  PT.Cast(P.ptrPCT PL.intPCT, getFieldX(rep, tag)))
+		      fun fieldAddrX (base, name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
+
+		      fun genCase (name, pty, initSs, pdX) = 
+			  case lookupAcc(pty)
+			   of NONE =>
+			      mkCommentBreakCase(PT.Id name, "Type for branch does not have acc_add function: cannot accumulate", NONE)
+			    | SOME a =>
+			      (let val funName = addSuf a
+				   val repX = getUnionBranchX(rep, name)
+				   val caseSs = initSs @ chkAddFun(funName, fieldAddrX(acc, name), pdX, repX)
+			       in
+				   mkBreakCase(PT.Id name, SOME caseSs)
+			       end
+		      (* end accOpt SOME case *))
+		      fun genVirt (name) =
+			  mkCommentBreakCase(PT.Id name, "Pomit branch: cannot accumulate", NONE)
+		      fun genAccAddFull ({pty :PX.Pty, args:pcexp list, name:string, 
+					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
+					 pred:pcexp option, comment,...}:pfieldty) = 
+			  if isVirtual then genVirt(name)
+			  else genCase(name, pty, [], getUnionBranchX(pd, name))
+		      fun genAccAddBrief e = 
+			  case getString e of NONE => [] | SOME s => genVirt(s)
+		      fun genAccAddMan  {tyname, name, args, isVirtual, expr, pred, comment} = 
+			  if isVirtual
+			  then genVirt(name)
+			  else case isPadsTy tyname 
+				of PTys.CTy =>
+				   mkCommentBreakCase(PT.Id name, "branch has C type: C type accum not implemented (yet)", NONE)
+				 | _ =>
+				   genCase(name, getPadsName tyname, [], getUnionBranchX(pd, name))
+		      val nameBranchSs = mungeFields genAccAddFull genAccAddBrief genAccAddMan variants
+		      val errBranchSs = mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
+		      val addBranchSs = nameBranchSs @ errBranchSs
+                      val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound addBranchSs)]
+		      val addReturnS = genReturnChk (PT.Id nerr)
+                      val addBodySs = addDeclSs @ initTpdSs @ ifNotPanicSkippedSs(addTagSs @ addVariantsSs) @ [addReturnS]
+                      val addFunED = genAddFun(addFun, accPCT, pdPCT, canonicalPCT, addBodySs)
+
+                      (* -- generate report function (internal and external)  punion *)
+                      (*  Perror_t T_acc_report (P_t* , [Sfio_t * outstr], const char* prefix, 
+		                                    const char * what, int nst, T_acc*  ) *)
+		      val reportFun = (reportSuf o accSuf) name
+		      val header = if fromOpt then "Opt tag" else "Union tag"
+                      val reportTags = [chkPrint(callEnumPrint((ioSuf o reportSuf o mapSuf) PL.intAct,
+						    PT.String header, PT.String "tag", P.intX ~1,
+						    PT.Id((toStringSuf o tgSuf) name), getFieldX(acc, tag))),
+					PL.sfprintf(PT.Id outstr, 
+						    PT.String "\n[Describing each tag arm of %s]\n", 
+						    [PT.Id prefix])]
+		      fun genAccReportFull ({pty :PX.Pty, args:pcexp list, name:string, 
+					    isVirtual:bool, isEndian: bool, isRecord, containsRecord, largeHeuristic:bool, 
+					    pred:pcexp option, comment,...}:pfieldty) = 
+			  if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
+			  else cnvPtyForReport(reportSuf, ioSuf, pty, name, "branch")
+                      fun genAccReportBrief e = []
+		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_ACC_REP_NOVALS", []))]
+		      val reportVariants = mungeFields genAccReportFull genAccReportBrief 
+			                      (genAccReportMan (reportSuf, ioSuf, "branch")) variants
+                      val reportFunEDs = genReportFuns(reportFun, which ^ " "^name, 
+						       accPCT, checkNoValsSs @ reportTags @ reportVariants)
+		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
+
+                      (* Generate Write function union case *)
+		      val writeName = writeSuf name
+		      val writeXMLName = writeXMLSuf name
+		      fun genWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
+					isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
+					pred:pcexp option, comment,...}:pfieldty) = 
+			  if isVirtual
+			  then
+			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
+                          else
+			    let val writeFieldName = (bufSuf o writeSuf) (lookupWrite pty) 
+				val caseSs = writeFieldSs(writeFieldName,
+							  args @ [getUnionBranchX(pd, name), getUnionBranchX(rep, name)],
+							  true)
+			    in
+				mkBreakCase(PT.Id name, SOME caseSs)
+			    end
+		      fun genWriteBrief e = 
+			  case getString e of NONE => [] | 
+			      SOME s => let val writeFieldName = PL.cstrlitWriteBuf
+					    val caseSs = writeFieldSs(writeFieldName, [PT.String s], true)
+					in
+					    mkBreakCase(PT.Id s, SOME caseSs)
+					end
+		      fun genWriteMan {tyname, name, args, isVirtual, expr, pred, comment} = 
+			  (* Manifest fields do not need to be written *)
+			  let val cmt = (if isVirtual
+					 then "Pomit branch: cannot output"
+					 else "Pcompute branch: format-preserving write functions do not output")
+			  in
+			      mkCommentBreakCase(PT.Id name, cmt, NONE)
+			  end
+
+		      fun genXMLWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
+					   isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
+					   pred:pcexp option, comment,...}:pfieldty) = 
+			  if isVirtual
+			  then
+			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
+                          else
+			    let val writeXMLFieldName = (bufSuf o writeXMLSuf) (lookupWrite pty) 
+				val caseSs = writeXMLFieldSs(writeXMLFieldName,
+							     args @ [getUnionBranchX(pd, name), getUnionBranchX(rep, name)],
+							     PT.String(name), true, true)
+			    in
+				mkBreakCase(PT.Id name, SOME caseSs)
+			    end
+		      fun genXMLWriteBrief e = 
+			  case getString e of NONE => [] | 
+			      SOME s => let val writeXMLFieldName = PL.cstrlitWriteXMLBuf
+					    val caseSs = writeXMLFieldSs(writeXMLFieldName, [PT.String s], PT.String s, true, true)
+					in
+					    mkBreakCase(PT.Id s, SOME caseSs)
+					end
+		      fun genXMLWriteMan {tyname, name, args, isVirtual, expr, pred, comment} = 
+			  if isVirtual then
+			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
+                          else
+			    let val pty = isPadsTy tyname
+			    in case isPadsTy tyname
+				of PTys.CTy => 
+				   let val cmt = "Pcompute branch with C type: XML write for C types not implemented (yet)"
+				   in
+				       mkCommentBreakCase(PT.Id name, cmt, NONE)
+				   end
+				 | _ =>
+				   let val writeXMLFieldName = (bufSuf o writeXMLSuf) (lookupWrite (getPadsName tyname))
+				       val cmt = "Pcompute branch"
+				       val caseSs = writeXMLFieldSs(writeXMLFieldName,
+								    args @ [getUnionBranchX(pd, name), getUnionBranchX(rep, name)],
+								    PT.String(name), true, true)
+				   in
+				       mkCommentBreakCase(PT.Id name, cmt, SOME caseSs)
+				   end
+			    end
+
+		      val nameBranchSs = mungeFields genWriteFull genWriteBrief genWriteMan variants
+		      val nameXMLBranchSs = mungeFields genXMLWriteFull genXMLWriteBrief genXMLWriteMan variants
+		      val errBranchSs = mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
+		      val writeBranchSs = nameBranchSs @ errBranchSs
+		      val writeXMLBranchSs = nameXMLBranchSs @ errBranchSs
+                      val writeVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound writeBranchSs)]
+                      val writeXMLVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound writeXMLBranchSs)]
+		      val bodySs = writeVariantsSs
+		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)])),
+				       PT.Expr(PT.Call(PT.Id "PCGEN_UNION_PD_XML_OUT", []))]
+					@ writeXMLVariantsSs
+					@ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
+                      val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
+
+		      (***** union PADS-Galax *****)
+	              (* In the XML representation of unions, each alternative is always the second child 
+                         (index 1), after the <pd> child. *)
+		      fun tagbranch (index, (nameField, typeField, isPcomputed)) =
+ 			  let val maskField = if isPcomputed then (P.intX 0) else (getFieldX(m, nameField)) 	
+			          (* if it's a Pcompute field, then the 'mask field' argument is NULL, by now *)
+			      val nameID = PT.Id nameField
+			      fun addrArg node = P.addrX(P.dotX(P.arrowX(PT.Id node, PT.Id value), nameID))
+			      val pdArg = addrArg pd	
+			      val repArg = addrArg rep
+			      val resultArg = PT.Id result
+			      val i = P.intX 1
+			      val branchField = PT.Id "branch"
+			      val sentences = [macroNodeCall(resultArg, i, typeField, branchField, maskField,
+						             pdArg, repArg, childrenSuf name)]
+			  in
+			      mkBreakCase(nameID, SOME sentences)
+			  end
+		      fun tagbranches bs = List.concat(List.map tagbranch bs)
+		      fun genCaseBranch (name, pty, i) =
+			  case lookupAcc(pty) of NONE   => []
+					       | SOME a => [(name, lookupBranch pty, i)] 
+
+		      fun genBranchFull ({pty :PX.Pty, args:pcexp list, name:string, 
+					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
+					 pred:pcexp option, comment,...}:pfieldty) = 
+			  genCaseBranch (name, pty, false)
+		      fun genBranchBrief e = []
+		      fun genBranchMan {tyname, name, args, isVirtual, expr, pred, comment}= 
+			  case isPadsTy tyname of PTys.CTy => [] | _ => genCaseBranch(name, getPadsName tyname, true)
+
+		      val nameBranchSs = mungeFields genBranchFull genBranchBrief genBranchMan variants
+		      val addBranchSs = (tagbranches (enumerate nameBranchSs))
+		      val errBranchSs = mkBreakCase(PT.Id(errSuf name), NONE)
+                      val switchTag = PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), 
+						 PT.Compound (addBranchSs @ errBranchSs))
+
+    	              (* PDCI_node_t** fooUnion_children(PDCI_node_t *self) *)
+		      fun genGalaxUnionChildrenFun(name, variants) =		
+		          let val nodeRepTy = PL.nodeT
+                              val returnName = PT.Id result
+			      val returnTy = P.ptrPCT (P.ptrPCT (nodeRepTy))
+                              val cnvName = childrenSuf name 
+                              val paramNames = [self]
+                              val paramTys = [P.ptrPCT nodeRepTy]
+                              val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
+			      val numFields = List.length variants
+ 		              val bodySs = headerGalaxChildrenFun(name) @
+					   [P.varDeclS(P.ccharPtr,"branch",
+                                                       PT.Call(PT.Id(toStringSuf (tgSuf name)), [fieldX(rep, tag)]))] @
+					   ifGalaxChildren(returnName, P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
+					   macroTNode(returnName, PL.PDCI_structured_pd, pd, PT.Id pd, cnvName) @
+				 	   [switchTag] @
+					   [P.returnS (returnName)]
+                          in   
+                            P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+                          end
+
+		      val galaxEDs = [genGalaxUnionChildrenFun(name, variants),
+		                      genGalaxVtable(name)]
+
+		 in
+		       tagDecls
+		     @ unionDecls
+		     @ canonicalDecls
+	             @ cnvExternalDecl mStructED
+                     @ unionPDDecls
+	             @ pdStructPDDecls
+                     @ (emitRead readEDs)
+		     @ (emitPred isFunEDs)
+		     @ (emitAccum accumEDs)
+                     @ (emitWrite writeFunEDs)
+                     @ (emitXML galaxEDs)
+		 end
+	  
+
+	      and cnvPStruct {isAlt, name: string, isRecord, containsRecord, largeHeuristic, isSource, 
                               params: (pcty * pcdecr) list, fields: (pcty, pdty, pcdecr, pcexp) PX.PSField list, 
                               postCond} = 
 	          let val structName = name
@@ -3874,30 +4930,45 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun findOffset p [] n = NONE
                         | findOffset p (x::xs) n = if p x then SOME (n, x) else findOffset p xs (n+1)
 
-                       fun cvtInPlaceFULL (f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,arrayDecl,...}:pfieldty) = 
-			   if not arrayDecl then [([], PX.Full f)]
+                       fun cvtInPlaceFULL (f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,
+						 optDecl, arrayDecl,...}:pfieldty) = 
+			   if not (arrayDecl orelse optDecl) then [([], PX.Full f)]
 			   else
-			      let val (offset, arrayName) = 
+			      let val (offset, declName) = 
 				       case findOffset (fn(nm,_) => nm = name) (ListPair.zip (allVars, tyNames)) 0
 			               of SOME (n,(fname,tynm)) => (n,tynm)
 				       | NONE => (PE.bug "Compiler bug"; (0, padsID name))
 				  val otherFields = List.take (ListPair.zip (tys, List.map (PT.PointerDecr o PT.VarDecr) allVars), offset)
+				  val params = params @ otherFields
 				  val relSubs = List.take (readSubs, offset)
 				  val otherArgs = List.map (fn x=>P.addrX x) (#2 (ListPair.unzip relSubs))
                                   val modRelSubs = List.map (fn (name,rep) => (name, P.starX (PT.Id name))) relSubs
 				  val otherArgs =   List.map (fn x => P.addrX x) (List.take (#2(ListPair.unzip readSubs), offset))
-				  val (modargs, modsize, modarraypred) = reduceArrayParts(modRelSubs, args, size, arraypred)
-				  val params = params @ otherFields
-				  val arrayPX =      {name=arrayName, baseTy = pty, params = params, 
-						      isRecord = false, containsRecord = false, largeHeuristic = false, isSource = false,
-						      args = modargs, sizeSpec=modsize, constraints=modarraypred, postCond = []}
-				  val arrayASTs = cnvPArray arrayPX
-				  val sfield = ({pty=PX.Name arrayName, args=(List.map (fn x=> PT.Id x) paramNames)@otherArgs, 
-						 name=name, isVirtual=isVirtual, isEndian=isEndian,
-						  isRecord=false, containsRecord=false, largeHeuristic=false, pred=NONE,comment=comment,
-						  arrayDecl = false, size=NONE, arraypred=[]} : pfieldty)
+
+				  fun doArray () = 
+				      let val (modargs, modsize, modarraypred) = reduceArrayParts(modRelSubs, args, size, arraypred)
+					  val arrayPX = {name=declName, baseTy = pty, params = params, 
+							 isRecord = false, containsRecord = false, largeHeuristic = false, isSource = false,
+							 args = modargs, sizeSpec=modsize, constraints=modarraypred, postCond = []}
+				      in
+					  (cnvPArray arrayPX, NONE)
+				      end
+				  fun doOpt () = 
+				      let val doSub = PTSub.substExps modRelSubs
+					  val modpred = Option.map doSub pred
+					  val modArgs = List.map doSub args
+					  val optPX = {name     = declName, params   = params, args     = modArgs,
+						       isRecord = false, isSource = false, pred = NONE (* fix this *), baseTy   = pty}
+				      in
+					   (cnvPOpt optPX, modpred)
+				      end
+				  val (newAsts,modpred) = if arrayDecl then doArray() else doOpt ()
+				  val sfield = {pty=PX.Name declName, args=(List.map (fn x=> PT.Id x) paramNames)@otherArgs, 
+						name=name, isVirtual=isVirtual, isEndian=isEndian,
+						isRecord=false, containsRecord=false, largeHeuristic=false, pred=modpred,comment=comment,
+						optDecl = false, arrayDecl = false, size=NONE, arraypred=[]} : pfieldty
 			      in
-				  [(arrayASTs, PX.Full sfield)]
+				  [(newAsts, PX.Full sfield)]
 	 		      end
                       fun cvtInPlaceBrief x = [([],PX.Brief x)]
                       fun cvtInPlaceMan   x = [([],PX.Manifest x)]
@@ -4681,1005 +5752,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
   		      @ (emitXML galaxEDs)
 		  end
 
-	     fun cnvPUnion {name: string, params: (pcty * pcdecr) list, isLongestMatch: bool,
-			    isRecord: bool, containsRecord, largeHeuristic, isSource: bool, 
-			    variants: (pcty, pdty, pcdecr, pcexp) PX.PBranches, postCond : (pcexp PX.PPostCond) list} =
-		 let val unionName = name
-		     val checkIf = if isLongestMatch then "Check If " else ""
-		     val macStart = if isLongestMatch then "PCGEN_UNION_READ_LONGEST" else "PCGEN_UNION_READ"
-		     fun whereNeedsEndChk1 cond =
-			 case cond
-			  of PX.General expr => false
-			   | PX.ParseCheck expr => PTSub.isFreeInExp([PNames.unionEnd], expr)
-		     val whereNeedsEnd = (List.exists whereNeedsEndChk1 postCond)
-		     (* Functions for walking over list of branch, variant *)
-		     fun mungeBV f b m eopt (PX.Full fd) = f (eopt, fd)
-		       | mungeBV f b m eopt (PX.Brief e) = b (eopt, e)
-		       | mungeBV f b m eopt (PX.Manifest md)  = m (eopt, md)
-		     fun mungeBVs f b m [] [] = []
-		       | mungeBVs f b m (x::xs) (y::ys) = (mungeBV f b m x y) @ (mungeBVs f b m xs ys)
-		       | mungeBVs f b m _ _ = raise Fail "This case should never happen"
-
-                     (* Function for moving default clause to end of switched union branch list *)
-                     fun mungeBranches (cases, branches) = 
-                       let fun mB([], [], acs, abs, acds, abds) = 
-			       let val numDefaults = List.length acds
-			       in
-			          if (numDefaults >= 2) 
-				      then (PE.error ("Switched union "^ unionName ^" can have at most "^
-						      "one default clause\n");
-					    (true (* has default clause*), 
-					     (List.rev acs) @ [hd acds], (List.rev abs) @ [hd abds]))
-				  else (numDefaults = 1, (List.rev acs) @ acds, (List.rev abs) @ abds)
-			       end
-                             | mB(NONE::cases, b::bs, acs, abs, acds, abds) = 
-					    mB(cases, bs, acs, abs, NONE::acds, b::abds)
-                             | mB(c::cases, b::bs, acs, abs, acds, abds) = 
-					    mB(cases, bs, c::acs, b::abs, acds, abds)
-                             | mB _ = raise Fail "This case can't happen"
-		       in
-			   mB(cases, branches, [], [], [], [])
-		       end
-
-
-                     val branches = variants
-                     val (descOpt, hasDefault, cases, variants) = 
-				    case branches 
-			            of PX.Ordered v => (NONE, false (* no default clause *), [], v)
-			            |  PX.Switched {descriminator, cases, branches} => 
-					    let val (hasDefault, cases, branches) = mungeBranches(cases, branches)
-					    in
-						(SOME descriminator, hasDefault, cases, branches)
-					    end
-
-                     (* -- collection of expressions to be substituted for in constraints *)
-                     (* -- efficiency could be improved with better representations *)
-                     val readSubList : (string * pcexp) list ref = ref []
-                     val postReadSubList : (string * pcexp) list ref = ref []
-                     fun addReadSub (a : string * pcexp) = readSubList := (a:: (!readSubList))
-                     fun addPostReadSub (a : string * pcexp) = postReadSubList := (a:: (!postReadSubList))
-		     val (allVars, omitNames, omitVars, readSubs, postReadSubs, tys, tyNames) =
-			 checkStructUnionFields("Punion", unionName, isLongestMatch, variants)
-		     val _ = List.map addReadSub readSubs
-		     val _ = List.map addPostReadSub postReadSubs
-
-		     val dummy = "_dummy"
-		     val cParams : (string * pcty) list = List.map mungeParam params
-		     val paramNames = #1(ListPair.unzip cParams)
-                     val value = PNames.unionVal
-		     val tag = PNames.unionTag
-		     fun tgSuf s = s^"_tag"
-		     fun unSuf s = s^"_u"
-
-                     (* generate enumerated type describing tags *)
-		     val tagVal = ref 0
-		     val firstTag = ref "bogus"
-		     val lastTag = ref "bogus"
-		     fun chkTag(name) = 			 
-			 let val name = if enumConstDefined name then 
-			                  let val t0 = unionName^"_"^name 
-					  in 
-					      if enumConstDefined t0 then
-						  let fun getname base next = 
-						       let val t = base^"_"^(Int.toString next)
-						       in
-						          if enumConstDefined t
-							      then getname base (next + 1)
-							      else t
-						       end
-						  in
-						      getname t0 0
-						  end
-					      else t0
-					  end
-					else name
-			 in
-			 (if !tagVal = 0 then firstTag := name else ();
-			  lastTag := name;
-			  tagVal := !tagVal + 1;
-			  [(name, P.intX(!tagVal), NONE)])
-			 end
-
-		     fun genTagFull ({pty: PX.Pty, args: pcexp list, name: string, 
-				     isVirtual: bool, isEndian: bool, 
-				     isRecord, containsRecord, largeHeuristic: bool,
-				     pred: pcexp option, comment: string option,...}:pfieldty) = 
-			 chkTag(name)
-		     fun genTagBrief e = case getString e of NONE => [] | SOME s => chkTag s
-                     fun genTagMan {tyname, name, args, isVirtual, expr, pred, comment} = chkTag name
-
-		     val tagFields = mungeFields genTagFull genTagBrief genTagMan variants
-		     val tagFieldsWithError = (errSuf name, P.zero, NONE) :: tagFields 
-		     val tagED = P.makeTyDefEnumEDecl(tagFieldsWithError, tgSuf name)
-		     val tagDecls = cnvExternalDecl tagED
-		     val tagPCT = P.makeTypedefPCT(tgSuf name)
-
-		      (* Generate CheckSet mask *)
-		     fun genMFull ({pty: PX.Pty, args: pcexp list, name: string, 
-				    isVirtual: bool, isEndian: bool, 
-                                    isRecord, containsRecord, largeHeuristic: bool,
-				    pred: pcexp option, comment,...}:pfieldty) = 
-			 [(name, P.makeTypedefPCT(lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
-			 @ (case pred of NONE => [] | SOME _ => [(mConSuf name, PL.base_mPCT, SOME "union constraints")])
-		     fun genMBrief e = []
-		     fun genMMan m = []
-		     val mFieldsNested = mungeFields genMFull genMBrief genMMan variants
-		     val auxMFields    = [(PNames.unionLevel, PL.base_mPCT, NONE)]
-                     val mFields = auxMFields @ mFieldsNested
-		     val mFirstPCT = getFirstEMPCT mFields
-		     val mStructED = P.makeTyDefStructEDecl (mFields, mSuf name)
-		     val mPCT = P.makeTypedefPCT (mSuf name)			  
-
-		     (* Generate parse description *)
-		     fun genEDFull ({pty: PX.Pty, args: pcexp list, name: string, 
-				    isVirtual: bool, isEndian: bool,
-				    isRecord, containsRecord, largeHeuristic: bool,
-				    pred: pcexp option, comment,...}:pfieldty) = 
-			 [(name, P.makeTypedefPCT(lookupTy (pty, pdSuf, #pdname)), NONE)]
-		     fun genEDBrief e = []
-		     val pdVariants = mungeFields genEDFull genEDBrief genEDMan variants
-		     val pdVariants = if List.length pdVariants = 0
-			                    then [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty union pd")]
-					    else pdVariants			        
-		     val unionPD = P.makeTyDefUnionEDecl(pdVariants, (unSuf o pdSuf) name)
-		     val (unionPDDecls, updTid) = cnvCTy unionPD
-		     val unionPDPCT = P.makeTypedefPCT((unSuf o pdSuf) name)
-		     val structEDFields = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
-				  	   (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT, NONE),
-					   (tag, tagPCT, NONE), (value, unionPDPCT, NONE)]
-		     val pdStructED = P.makeTyDefStructEDecl (structEDFields, pdSuf name)
-		     val (pdStructPDDecls, pdTid) = cnvCTy pdStructED
-		     val pdPCT = P.makeTypedefPCT (pdSuf name)			  
-
-		     (* Generate accumulator type *)
-		     fun genAccFull ({pty: PX.Pty, args: pcexp list, name: string, 
-				     isVirtual: bool, isEndian: bool, 
-				     isRecord, containsRecord, largeHeuristic: bool, 
-				     pred: pcexp option, comment,...}:pfieldty) = 
-			 if not isVirtual then
-			     case lookupAcc pty of NONE => []
-			   | SOME a => [(name, P.makeTypedefPCT a, NONE)]
-			 else []
-		     fun genAccBrief e = [] (* literals are not stored in in-memory rep, so can't be accumulated *)
-		     val auxAccFields = [(tag, PL.intAccPCT, NONE)]
-		     val accFields = auxAccFields @ (mungeFields genAccFull genAccBrief genAccMan variants)
-		     val accED = P.makeTyDefStructEDecl (accFields, accSuf name)
-		     val accPCT = P.makeTypedefPCT (accSuf name)			  
-
-		     (* Calculate and insert type properties into type table *)
-		     fun genTyPropsFull ({pty: PX.Pty, args: pcexp list, name: string, 
-					 isVirtual: bool, isEndian: bool, 
-					 isRecord, containsRecord, largeHeuristic: bool,
-					 pred: pcexp option, comment: string option,...}:pfieldty) = 
-			  let val PX.Name ftyName = pty
-			      val mc = lookupMemChar pty
-			      val ds = computeDiskSize(name, paramNames, pty, args)
-			      val contR = lookupContainsRecord pty	 
-			      val lH = lookupHeuristic pty 
-			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isRecord, 
-			       containsRecord=contR, largeHeuristic=lH, 
-			       labels = [SOME (name, ftyName, (paramNames, args))]}] 
-			  end
-		     (* Not storing strings read via RE yet, so Static for now *) 
-		     fun genTyPropsBrief (e, labelOpt) = case extractString e 
-                           of NONE =>  (* either regular expression or error case; error reported elsewhere *)
-			        [{diskSize=TyProps.Variable, memChar=TyProps.Static, endian=false, isRecord=false, 
-				  containsRecord=false, largeHeuristic=false, 
-				  labels = [NONE]}] 
-		           | SOME s => 
-			     let val  ds = TyProps.Size(IntInf.fromInt (String.size s), IntInf.fromInt 0)
-			     in [{diskSize=ds, memChar=TyProps.Static, endian=false, isRecord=false, 
-				  containsRecord=false, largeHeuristic=false, 
-				  labels = [NONE]}] 
-			     end
-
-		     val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan variants
-                     (* check that all variants are records if any are *)
-		     val () = case tyProps of [] => ()
-			      | ({isRecord=first,...}::xs) => 
-			           (if List.exists (fn {isRecord, diskSize, memChar, endian,
-							containsRecord, largeHeuristic, labels} => not (isRecord = first)) xs 
-				    then PE.error "All branches of Punion must terminate record if any branch does"
-				    else ())
-					
-		     val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic, labels} = 
-			 List.foldl (PTys.mergeTyInfo (fn (x, y) => x) ) PTys.minTyInfo tyProps
-		     fun computeUnionDiskSize tyProps = 
-			 case tyProps of [] => TyProps.mkSize(0,0)
-			 | [r:PTys.sTyInfo] => #diskSize r
-			 | (r::rs) => TyProps.overlay(#diskSize r,  computeUnionDiskSize rs   )
-		     val diskSize = computeUnionDiskSize tyProps
-		     val compoundDiskSize = TyProps.Union ((ListPair.zip(List.rev labels, 
-									  (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
-		     val numArgs = List.length params
-		     val unionProps = buildTyProps(name, PTys.Union, diskSize, compoundDiskSize, memChar, 
-						   endian, isRecord, containsRecord, 
-						   largeHeuristic, isSource, pdTid, numArgs)
-                     val () = PTys.insert(Atom.atom name, unionProps)
-
-                     (* union: generate canonical representation *)
-		     fun genRepFull ({pty: PX.Pty, args: pcexp list, name: string, 
-				     isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				     pred: pcexp option, comment: string option,...}:pfieldty) = 
-			 if not isVirtual then
-			     let val predStringOpt = Option.map P.expToString pred
-				 val fullCommentOpt = stringOptMerge(comment, predStringOpt)
-			     in
-				 [(name, P.makeTypedefPCT(lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
-			     end
-			 else []
-		     fun genRepBrief (e,labelOpt) = 
-			 let fun chk e = 
-			         case e 
-				 of PT.MARKexpression(loc, e) => chk e
-				 | PT.IntConst i => if IntInf.<(i,IntInf.fromInt 0) orelse IntInf.>(i,IntInf.fromInt 255) then
-				                       PE.error("In Punion "^name^": integer literals not supported.")
-						    else ()
-                                 | PT.ExprExt(PX.Pregexp e') => if not (Option.isSome labelOpt) then
-							PE.error("In Punion "^name^": regular expression literals must have a label.")
-							else ()
-				 | PT.String s => ()
-				 | _ => PE.error("In Punion "^name^": general expression literals not supported.")
-			     in
-				 []
-			 end
-		     val canonicalVariants = mungeFields genRepFull genRepBrief genRepMan variants
-		     val canonicalVariants = if List.length canonicalVariants = 0
-			                    then ((* PE.warn ("PUnion "^unionName^" does not contain any non-omitted fields\n"); *)
-						 [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty union")])
-					    else canonicalVariants
-		     val unionPD = P.makeTyDefUnionEDecl(canonicalVariants, unSuf name)
-		     val unionDecls = cnvExternalDecl unionPD
-                     val unionPCT = P.makeTypedefPCT(unSuf name)
-                     val structFields = [(tag, tagPCT, NONE),
-					 (value, unionPCT, NONE)]
-		     val canonicalStructED = P.makeTyDefStructEDecl (structFields, repSuf name)
-		     val (canonicalDecls, canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
-                     val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
-
-                     (* Process where clause *)
-		     val (whereReadXs, whereIsXs) =
-			 let val env = [(tag, tagPCT, fieldX(rep, tag)), (value, unionPCT, fieldX(rep, value))]
-			     val wsubs = [(tag, fieldX(rep, tag)), (value, fieldX(rep, value))]
-			     fun errMsg s = "Pwhere clause for Punion "^name^" has type "^s^", expected type int"
-			     fun cvtOne postCond = 
-				 let val (isParseCheck, exp, bindingInfoList) = 
-				     case postCond
-				     of PX.General exp => (false, exp, env)
-				     |  PX.ParseCheck exp => (true, exp, env
-							           @ [(PNames.unionBegin, PL.posPCT, P.dotX(locX', PT.Id "b")),
-							              (PNames.unionEnd,   PL.posPCT, P.dotX(locX', PT.Id "e"))])
-				     val modexp = PTSub.substExps ((getBindings bindingInfoList) @ wsubs) exp
-				 in
-				     pushLocalEnv();
-				     augTyEnv bindingInfoList;
-				     ignore(List.map insTempVar cParams);
-				     expEqualTy(exp, CTintTys, errMsg);
-				     popLocalEnv();	
-				     ([modexp], if isParseCheck then [] else [modexp] )
-				 end
-			     val (whereReadXss, whereIsXss) = ListPair.unzip(List.map cvtOne postCond)
-			 in
-			     (List.concat whereReadXss, List.concat whereIsXss)
-			 end
-
-
-                     (* Generate tag to string function *)
-		     val tagFields' = List.map (fn(name, exp, comment) => (name, name, exp, comment)) tagFields
-		     val toStringEDs = [genEnumToStringFun(tgSuf name, tagPCT, tagFields')]
-
-                      (* Generate m_init function union case *)
-                      val maskInitName = maskInitSuf name 
-                      val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
-
-                      (* Generate init function, union case *)
-                      val baseFunName = lookupMemFun (PX.Name name)
-                      fun genInitEDs (suf, var, varPCT) = 
-			  case #memChar unionProps
-			  of TyProps.Static => 
-			      [genInitFun(suf baseFunName, var, varPCT, [], true)]
-			   | TyProps.Dynamic => 
-			       let val zeroSs = [PL.bzeroS(PT.Id var, P.sizeofX(varPCT))]
-			       in
-				   [genInitFun(suf baseFunName, var, varPCT, zeroSs, false)]
-		               end
-                      val initRepEDs = genInitEDs (initSuf, rep, canonicalPCT)
-		      val initPDEDs = genInitEDs((initSuf o pdSuf), pd, pdPCT)
-
-                      (* Generate cleanup function, union case *)
-		      fun genCleanupEDs (suf, var, varPCT) = case #memChar unionProps
-			  of TyProps.Static => [genInitFun(suf baseFunName, var, varPCT, [], true)]
-			   | TyProps.Dynamic => 
-			       let fun genCleanupFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
-						    name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
-						    pred:pcexp option, comment:string option,...}:pfieldty) = 
-				    if (isVirtual andalso var = rep) orelse (TyProps.Static = lookupMemChar pty) then []
-				    else let val baseFunName = lookupMemFun (PX.Name tyName)
-					 in
-					     mkBreakCase(PT.Id name,
-							 SOME [PT.Expr(PT.Call(PT.Id(suf baseFunName),
-									       [PT.Id pads, getUnionBranchX(var, name)]))])
-					 end
-				   fun genCleanupBrief e = []
-				   fun genCleanupMan _ = []
-				   val branchSs = mungeFields genCleanupFull 
-				                   genCleanupBrief genCleanupMan variants
-				   val allBranchSs = branchSs @ mkDefBreakCase(NONE)
-				   val bodySs = [PT.Switch(P.arrowX(PT.Id var, PT.Id tag), PT.Compound allBranchSs)]
-			       in
-				   [genInitFun(suf baseFunName, var, varPCT, bodySs, false)]
-		               end
-			   
-		      val cleanupRepEDs = genCleanupEDs(cleanupSuf, rep, canonicalPCT)
-		      val cleanupPDEDs = genCleanupEDs(cleanupSuf o pdSuf, pd, pdPCT)
-
-                      (* Generate Copy Function union case *)
-                      fun genCopyEDs(suf, base, aPCT) = 
-			  let val copyFunName = suf baseFunName
-			      val dst = dstSuf base
-			      val src = srcSuf base
-			      val copySs = [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT)]
-			  in
-			      case #memChar unionProps
-			       of TyProps.Static => [genCopyFun(copyFunName, dst, src, aPCT, copySs, true)]
-				|  TyProps.Dynamic => 
-			           let fun genCopyFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
-							name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
-							pred:pcexp option, comment:string option,...}:pfieldty) = 
-					   let val nestedCopyFunName = suf (lookupMemFun pty)
-					   in
-					       if (isVirtual andalso base = rep) orelse (TyProps.Static = lookupMemChar pty)
-					       then
-						   []
-					       else
-						   mkBreakCase(PT.Id name,
-							       SOME [PT.Expr(PT.Call(PT.Id(nestedCopyFunName),
-										     [PT.Id pads, 
-										      getUnionBranchX(dst, name),
-										      getUnionBranchX(src, name)]))])
-					   end
-				       fun genCopyBrief e  = []
-				       fun noop _ = []
-				       val branchSs = mungeFields genCopyFull genCopyBrief noop variants
-				       val branchSs = branchSs @ mkDefBreakCase(NONE)
-				       val bodySs = [PT.Switch (P.arrowX(PT.Id src, PT.Id tag), PT.Compound branchSs)]
-				   in
-				       [genCopyFun(copyFunName, dst, src, aPCT, copySs @ bodySs, false)]
-				   end
-			  end
-		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT)
-		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  pdPCT)
-
-                     (* Generate read function *)
-
-                     (* -- Some useful names/ids *)
-		     val readName   = readSuf unionName
-		     val errTag     = PT.Id(errSuf unionName)
-		     val repInit    = PT.Id(initSuf unionName)
-		     val pdInit     = PT.Id((initSuf o pdSuf) unionName)
-		     val repCopy    = PT.Id(copySuf unionName)
-		     val pdCopy     = PT.Id((copySuf o pdSuf) unionName)
-		     val repCleanup = PT.Id(cleanupSuf unionName)
-		     val pdCleanup  = PT.Id((cleanupSuf o pdSuf) unionName)
-		     val addStat    = (if #memChar unionProps = TyProps.Static then "_STAT" else "")
-
-
-                     (* -- Some helper functions *)
-
-		     fun addVirt(isVirt) = (if isVirt then "_VIRT" else "")
-		     fun addSFN(theTag)  = (if #memChar unionProps = TyProps.Static then "_STAT"
-					    else (if theTag = !firstTag then "_FIRST" else "_NEXT"))
-		     fun addSFNL(theTag) = (if #memChar unionProps = TyProps.Static then "_STAT"
-					    else (if theTag = !firstTag then "_FIRST"
-						  else (if theTag = !lastTag then "_LAST" else "_NEXT")))
-
-		     fun uReadSetup (theTag)=
-			 [PT.Expr(PT.Call(PT.Id(macStart^"_SETUP"^addStat),
-					  [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy, pdCleanup, pdInit, pdCopy]))]
-		     fun uRead (theTag, predOpt, readCall) =
-			 case predOpt of
-			     NONE       => [PT.Expr(PT.Call(PT.Id(macStart^addSFNL(theTag)),
-							    [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy,
-							     pdCleanup,  pdInit, pdCopy, readCall]))]
-			   | SOME check => [PT.Expr(PT.Call(PT.Id(macStart^addSFNL(theTag)^"_CHECK"),
-							    [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy,
-							     pdCleanup,  pdInit, pdCopy, readCall, check]))]
-		     fun uReadManPre (theTag, isVirt) =
-			 [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addSFN(theTag)^addVirt(isVirt)^"_PRE"),
-					  [PT.String readName, PT.Id theTag, repInit, pdInit]))]
-		     fun uReadManPost (theTag, predOpt) =
-			 case predOpt of
-			     NONE       => [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addStat^"_POST"),
-							    [PT.String readName, repCopy, pdCopy]))]
-			   | SOME check => [PT.Expr(PT.Call(PT.Id(macStart^"_MAN"^addStat^"_POST_CHECK"),
-							    [PT.String readName, repCopy, repCleanup, pdCopy, pdCleanup, check]))]
-		     fun uReadFailed () =
-			 [P.mkCommentS (checkIf^"Failed to match any branch of union "^unionName),
-			  PT.Expr(PT.Call(PT.Id (macStart^"_CHECK_FAILED"),
-					  [PT.String readName, PT.String unionName, errTag]))]
-		     fun swReadPostCheck (theTag, predOpt) =
-			 case predOpt of
-			     NONE       => []
-			   | SOME check => [PT.Expr(PT.Call(PT.Id "PCGEN_SWUNION_READ_POST_CHECK",
-							    [PT.String readName, PT.Id theTag, errTag, check]))]
-		     fun swRead (theTag, predOpt, readCall) =
-			 [PT.Expr(PT.Call(PT.Id("PCGEN_SWUNION_READ"^addStat),
-					  [PT.String readName, PT.Id theTag, errTag, repCleanup, repInit, repCopy,
-					   pdCleanup, pdInit, pdCopy, readCall]))]
-			 @ swReadPostCheck(theTag, predOpt) @ [PT.Break]
-		     fun swReadManPre (theTag, isVirt) =
-			 [PT.Expr(PT.Call(PT.Id("PCGEN_SWUNION_READ_MAN"^addStat^addVirt(isVirt)^"_PRE"),
-					  [PT.String readName, PT.Id theTag, repCleanup, repInit, repCopy, pdCleanup, pdInit, pdCopy]))]
-		     fun swReadManPost (theTag, predOpt) = swReadPostCheck(theTag, predOpt) @ [PT.Break]
-		     fun swReadFailed () =
-		         [P.mkCommentS ("Switch value does not match any branch of switched union "^unionName),
-			  PT.Expr(PT.Call(PT.Id "PCGEN_SWUNION_READ_FAILED",
-					  [PT.String readName, PT.String unionName, errTag]))]
-
-		     fun readWhereCheck () =
-		         if List.length whereReadXs = 0 then []
-			 else let val needsEnd = if whereNeedsEnd then "_END" else ""
-				  val whereCheck
-				    = case descOpt of NONE => macStart^"_WHERE"^needsEnd^"_CHECK"
-						    | SOME descriminator => "PCGEN_SWUNION_READ_WHERE"^needsEnd^"_CHECK"
-			      in
-				  [P.mkCommentS "Checking Pwhere constraint",
-				   PT.Expr(PT.Call(PT.Id whereCheck, [PT.String readName, (P.andBools whereReadXs)]))]
-			      end
-		     fun mkLabel(s) = [PT.Labeled(s, PT.Compound([]))]
-		     fun branchesDoneLabel() = if isLongestMatch then [] else mkLabel("branches_done")
-		     fun finalCheckLabel()   = mkLabel("final_check")
-		     fun eorCheck() =
-			 (if isRecord then [PT.Expr(PT.Call(PT.Id "PCGEN_FIND_EOR", [PT.String readName]))] else [])
-
-                     fun genReadFull({pty :PX.Pty, args:pcexp list, name:string,
-				     isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-				     pred:pcexp option, comment,...}:pfieldty) = 
-			 let val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
-			     val readFieldName = lookupTy(pty, readSuf, #readname)
-	                     val tyname = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
-			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
-			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
-			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
-                             val () = checkParamTys(name, readFieldName, modArgs, 2, 2)
-			     val () = pushLocalEnv()
-			     val readCall
-			       = PL.readFunX(readFieldName, PT.Id pads, P.addrX(fieldX(m, name)),
-					     modArgs, P.addrX(pdX), P.addrX(repX))
-			     val () = popLocalEnv()
-			     val commentSs = [P.mkCommentS ("Read branch '"^name^"'")]
-			 in
-			     commentSs @ uRead(name, modPred, readCall)
-			 end
-
-		     fun readBriefUtil (r as (e:pcexp, labelOpt)) = 
-			 case labelOpt of NONE => 
-			    (case (getString r) of NONE => NONE
-			     | SOME s => 
-			       let val cmt = "Pliteral branch '"^s^"'.\n"
-				   val repX = unionRepX(rep, s, true, isLongestMatch)
-				   val readCall = PL.matchFunX(PL.cstrlitMatch, PT.Id pads, PT.String s, P.trueX)
-			       in
-				   SOME (cmt, s, readCall)
-			       end)
-                         | SOME label => 
-			     let val reOpt = getRE e
-			     in
-				 case reOpt of NONE => 
-				    (case extractString e of NONE => (print "extract returned none.\n"; NONE) (* error reported eariler *)
-                                     | SOME s => 
-				         let val cmt = "Pliteral branch '"^s^"'.\n"
-					     val repX = unionRepX(rep, label, true, isLongestMatch)
-					     val readCall = PL.matchFunX(PL.cstrlitMatch, PT.Id pads, PT.String s, P.trueX)
-					 in
-					     SOME(cmt,label,readCall)
-					 end)
-                                 | SOME e => ((PE.error "regular expression literals not yet supported.\n");NONE)
-
-			     end
-
-                     fun genReadBrief e = 
-			  case readBriefUtil e of 
-			      NONE => []
-			  | SOME (cmt, tag, readCall) => 
-			     [P.mkCommentS cmt] @ uRead(tag, NONE,readCall)
-
-                     fun genReadUnionEOR _ = []
-
-		     fun genReadMan {tyname, name, args, isVirtual, expr, pred, comment} = 
-			 let val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
-			     val () = chkManArgs("Punion", unionName, tyname, name, args, (!readSubList))
-			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
-			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
-			     val pos = "ppos"
-			     val needsPosition = PTSub.isFreeInExp([PNames.position], expr) 
-			     val () = pushLocalEnv()
-			     val () = if needsPosition then ignore(insTempVar(pos, PL.posPCT)) else ()
-			     val exp = PTSub.substExps ((!readSubList) @ [(PNames.position, PT.Id pos)] ) expr
-			     val assignS = genAssignMan(tyname, name, repX, exp)
-			     val () = popLocalEnv()
-			     val initSs = if needsPosition
-					  then [PT.Compound[
-					      	  P.varDeclS'(PL.posPCT, pos),
-						  PL.getPosS(PT.Id pads, P.addrX(PT.Id pos)),
-					          assignS]]
-				          else [assignS]
-			     val commentSs = [P.mkCommentS ("Pcompute branch '"^name^"'")]
-			 in
-			     commentSs @ uReadManPre(name, isVirtual) @ initSs @ uReadManPost(name, modPred)
-			 end
-
-		     fun chkCaseLabel eOpt = 
-			 case eOpt of NONE => ()
-		       | SOME e => expAssignTy(e, CTintTys, 
-					      fn s=> (" case label for variant "^
-						      name ^ " has type " ^ s ^
-						      ", expected type int"))
-		     fun genReadSwFull (eOpt,
-			               ({pty :PX.Pty, args:pcexp list, name:string, 
-				        isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-				        pred:pcexp option, comment,...}:pfieldty)) = 
-			 let val () = chkCaseLabel eOpt
-			     val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
-			     val readFieldName = lookupTy(pty, readSuf, #readname)
-	                     val tyname = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
-			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
-			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
-			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
-			     val () = checkParamTys(name, readFieldName, modArgs, 2, 2)
-			     val () = pushLocalEnv()
-			     val readCall = PL.readFunX(readFieldName, PT.Id pads, P.addrX(fieldX(m, name)),
-							modArgs, P.addrX(pdX), P.addrX(repX))
-			     val () = popLocalEnv()
-			     val readSs = swRead(name, modPred, readCall)
-			     val cmt = "Read branch '"^name^"'"
-			     val swPart = case eOpt of NONE =>    mkDefCommentCase(cmt, SOME readSs)
-						     | SOME e =>  mkCommentCase(e, cmt, SOME readSs)
-			 in
-			     swPart
-			 end
-
-                     fun genReadSwBrief (eOpt, e) = 
-			 case readBriefUtil e of NONE => []
-                         | SOME(cmt, tag, readCall) =>
-                           (let val readSs = swRead(tag, NONE, readCall)
-				val swPart = case eOpt of NONE =>    mkDefCommentCase(cmt, SOME readSs)
-			                                | SOME e =>  mkCommentCase(e, cmt, SOME readSs)
-			     in
-				 swPart
-			     end)
-
-		     fun genReadSwMan (eOpt, {tyname, name, args, isVirtual, expr, pred, comment}) =
-			 let val () = chkCaseLabel eOpt
-			     val () = chkManArgs("Punion", unionName, tyname, name, args, (!readSubList))
-			     val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
-			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
-			     val pdX = unionRepX(pd, name, isVirtual, isLongestMatch)
-			     val pos = "ppos"
-			     val needsPosition = PTSub.isFreeInExp([PNames.position], expr)
-			     val () = pushLocalEnv()
-			     val () = if needsPosition then ignore(insTempVar(pos, PL.posPCT)) else ()
-			     val exp = PTSub.substExps ((!readSubList) @ [(PNames.position, PT.Id pos)] ) expr
-			     val assignS = genAssignMan(tyname, name, repX, exp)
-			     val () = popLocalEnv()
-			     val initSs = if needsPosition
-					  then [PT.Compound[
-					      	  P.varDeclS'(PL.posPCT, pos),
-						  PL.getPosS(PT.Id pads, P.addrX(PT.Id pos)),
-					          assignS]]
-				          else [assignS]
-			     val readS = swReadManPre(name, isVirtual) @ initSs @ swReadManPost(name, modPred)
-			     val cmt = "Pcompute branch '"^name^"'"
-			     val swPart = case eOpt of NONE   => mkDefCommentCase(cmt, SOME readS)
-						     | SOME e => mkCommentCase(e, cmt, SOME readS)
-			 in
-			     swPart
-			 end
-
-                     fun genSwDefaultIfAbsent () = mkDefCase(SOME(swReadFailed()))
-
-                     fun buildSwitchRead (descriminator) = 
-			     let val () = expAssignTy(descriminator, CTintTys, 
-						     fn s=> (" Descriminator for union "^
-							     name ^ " has type " ^ s ^
-							     ", expected type int"))
-				 val readFields = mungeBVs genReadSwFull genReadSwBrief genReadSwMan cases variants
-				 val augReadFields = if hasDefault then readFields 
-				                     else readFields @ (genSwDefaultIfAbsent())
-				 val bodyS = PT.Switch(descriminator, PT.Compound augReadFields)
-			     in
-				 [bodyS] @ readWhereCheck() @ branchesDoneLabel() @ eorCheck()
-			     end
-
-                     fun buildReadFun () = 
-			 let val localDeclSs = if isLongestMatch
-					       then [P.varDeclS'(canonicalPCT, pcgenName("trep")),
-						     P.varDeclS'(pdPCT, pcgenName("tpd"))] 
-						    @ omitVarDecls(omitVars)
-					       else omitVarDecls(omitVars)
-			     val localInitSs = if isLongestMatch
-					       then [PT.Expr(PT.Call(PT.Id "PD_COMMON_INIT_NO_ERR", [P.addrX(pcgenId("tpd"))]))]
-						    @ omitVarInits(omitVars)
-					       else omitVarInits(omitVars)
-			     val coreSs = 
-                               case descOpt of NONE => 
-			         let val readFields = mungeFields genReadFull genReadBrief genReadMan variants  (* does type checking *)
-				     val readBodySs = [PT.Compound(uReadSetup(!firstTag)
-								   @ readFields
-								   @ (uReadFailed())
-								   @ branchesDoneLabel()
-								   @ readWhereCheck()
-								   @ finalCheckLabel()
-								   @ eorCheck())]
-				 in
-				     readBodySs
-				 end
-			       | SOME descriminator => buildSwitchRead(descriminator)
-			     val bodySs = localDeclSs @ localInitSs @ coreSs @ [stdReturnS]
-			 in
-			     [PT.Compound bodySs]
-			 end
-
-                     (* -- Assemble read function union case *)
-		     val _ = pushLocalEnv()                                        (* create new scope *)
-		     (* add rep, possibly temp-rep to scope *)
-		     val () = ignore(insTempVar(rep, P.ptrPCT canonicalPCT))
-		     val () = if isLongestMatch then ignore(insTempVar(pcgenName("trep"), canonicalPCT)) else ()
-		     val cParams : (string * pcty) list = List.map mungeParam params
-		     val () = ignore(List.map insTempVar omitVars)                 (* insert virtuals into scope *)
-                     val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
-		     val bodySs = buildReadFun() 
-		     val readFunEDs = genReadFun(readName, cParams, mPCT, pdPCT, canonicalPCT, 
-						 mFirstPCT, true, bodySs)
-		     val _ = popLocalEnv()                                         (* remove scope *)
-
-                     val readEDs = toStringEDs @ initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
-			         @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
-
-                     (* Generate is function union case *)
-                     val isName = PNames.isPref name
-                     val bodySs = 	
-			 let val agg = "isValid"
-			     fun setAgg to   = P.assignS(PT.Id agg, to)
-			     fun setAggSs to = PT.Compound[setAgg(to), PT.Break]
-			     fun mkPadsIsCase(pty, args, name, isVirt, pred) =
-				 let val hasTest =
-					 (case pred
-					   of NONE => (case lookupPred pty of NONE => false | SOME fieldPred => true)
-					    | SOME e => true)
-				 in
-				     if hasTest
-				     then 
-					 let val predXs  = case pred of NONE   => [] 
-								      | SOME e => [PTSub.substExps (!postReadSubList) e]
-					     val fieldXs = case lookupPred pty of NONE           => []
-										| SOME fieldPred => 
-										  [PT.Call(PT.Id fieldPred,
-											   [getUnionBranchX(rep, name)] @ args)]
-					     val condX = P.andBools(predXs @ fieldXs)
-					 in
-					     mkBreakCase(PT.Id name, SOME [setAgg(condX)])
-					 end
-				     else
-					 let val cmt = "PADS type has no is_ function and there is no user constraint"
-					 in
-					     mkCommentBreakCase(PT.Id name, cmt, NONE)
-					 end
-				 end
-			     fun mkCtyIsCase(tyname, args, name, pred) =
-				 case pred
-				  of NONE =>
-				     let val cmt = "Pcompute branch (with C type) : no user constraint"
-				     in
-					 mkCommentBreakCase(PT.Id name, cmt, NONE)
-				     end
-				   | SOME e =>
-				     let val predXs  = [PTSub.substExps (!postReadSubList) e]
-					 val condX = P.andBools(predXs)
-					 val cmt = "Pcompute branch (with C type)"
-				     in
-					 mkCommentBreakCase(PT.Id name, cmt, SOME [setAgg(condX)])
-				     end
-			     fun mkVirtIsCase(name, pred) =
-				 let val addCmt = (case pred of NONE => "no user constraint" | SOME e => "cannot check user constraint")
-				     val cmt = "Pomit branch: "^addCmt 
-				 in
-				     mkCommentBreakCase(PT.Id name, cmt, NONE)
-				 end
-			     fun getConFull({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
-					    isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					    pred: pcexp option, comment: string option,...}:pfieldty) = 
-				 if isVirtual
-				 then mkVirtIsCase(name, pred)
-				 else mkPadsIsCase(pty, args, name, isVirtual, pred)
-			     fun getConBrief e = 
-				 case getString e of NONE => [] 
-				     | SOME s => mkVirtIsCase(s, NONE)
-			     fun getConMan {tyname, name, args, isVirtual, expr, pred, comment} =
-				 if isVirtual
-				 then mkVirtIsCase(name, pred)
-				 else case isPadsTy tyname
-				       of PTys.CTy => mkCtyIsCase(tyname, args, name, pred)
-					| _        => mkPadsIsCase(getPadsName tyname, args, name, false, pred)
-			     val fieldConCases = mungeFields getConFull getConBrief getConMan variants
-			     val fieldConCases = fieldConCases
-						 @ mkCommentBreakCase(PT.Id(errSuf name), "error case", SOME [setAgg(P.falseX)])
-			     val fieldConS = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound fieldConCases)]
-			     val aggDecl = P.varDeclS(P.int, agg, P.trueX)
-			     val whereConS = case whereIsXs of [] => [] | xl => [P.assignS(PT.Id agg, P.andBools whereIsXs)]
-			     val constraintSs = fieldConS @ whereConS
-			 in
-                              [aggDecl]
-			    @ constraintSs
-			    @ [PT.Return (PT.Id agg)]
-			 end
-
-		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
-
-
-                      (* Generate Accumulator functions (union case) *)
-                      (* -- generate accumulator init, reset, and cleanup functions *)
-		      fun genResetInitCleanup theSuf = 
-			  let val theFun = (theSuf o accSuf) name
-			      val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
-			      fun genAccTheFull ({pty :PX.Pty, args:pcexp list, name:string, 
-						 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
-						 pred:pcexp option, comment,...}:pfieldty) = 
-				  if isVirtual then []
-				  else case lookupAcc(pty) of NONE => []
-							    | SOME a => chk3Pfun(theSuf a, getFieldX(acc, name))
-			      fun genAccTheBrief e = []
-			      val tagFields = mungeFields genAccTheFull genAccTheBrief 
-				              (genAccTheMan theSuf) variants
-			      val auxFields = chk3Pfun(theSuf PL.intAct, getFieldX(acc, tag))
-			      val theFields = auxFields @ tagFields
-			      val theReturnS = genReturnChk (PT.Id nerr)
-			      val theBodySs = theDeclSs @ theFields @ [theReturnS]
-			      val theFunED = gen3PFun(theFun, accPCT, theBodySs)
-			  in
-			      theFunED
-			  end
-		      val initFunED = genResetInitCleanup initSuf
-		      val resetFunED = genResetInitCleanup resetSuf
-                      val cleanupFunED = genResetInitCleanup cleanupSuf
-
-                      (* -- generate accumulator function *)
-                      (*  Perror_t T_acc_add (P_t* , T_acc* , T_pd*, T* ) *)
-		      val addFun = (addSuf o accSuf) name
-		      val addDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero), P.varDeclS'(PL.base_pdPCT, tpd)]
-		      val initTpdSs = [P.assignS(P.dotX(PT.Id tpd, PT.Id errCode), 
-						 P.condX(P.eqX(P.arrowX(PT.Id pd, PT.Id errCode),
-							       PL.P_UNION_MATCH_FAILURE),
-							 PL.P_UNION_MATCH_FAILURE, PL.P_NO_ERROR))]
-		      val addTagSs = chkAddFun(addSuf PL.intAct, getFieldX(acc, tag), P.addrX(PT.Id tpd), 
-						  PT.Cast(P.ptrPCT PL.intPCT, getFieldX(rep, tag)))
-		      fun fieldAddrX (base, name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
-
-		      fun genCase (name, pty, initSs, pdX) = 
-			  case lookupAcc(pty)
-			   of NONE =>
-			      mkCommentBreakCase(PT.Id name, "Type for branch does not have acc_add function: cannot accumulate", NONE)
-			    | SOME a =>
-			      (let val funName = addSuf a
-				   val repX = getUnionBranchX(rep, name)
-				   val caseSs = initSs @ chkAddFun(funName, fieldAddrX(acc, name), pdX, repX)
-			       in
-				   mkBreakCase(PT.Id name, SOME caseSs)
-			       end
-		      (* end accOpt SOME case *))
-		      fun genVirt (name) =
-			  mkCommentBreakCase(PT.Id name, "Pomit branch: cannot accumulate", NONE)
-		      fun genAccAddFull ({pty :PX.Pty, args:pcexp list, name:string, 
-					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					 pred:pcexp option, comment,...}:pfieldty) = 
-			  if isVirtual then genVirt(name)
-			  else genCase(name, pty, [], getUnionBranchX(pd, name))
-		      fun genAccAddBrief e = 
-			  case getString e of NONE => [] | SOME s => genVirt(s)
-		      fun genAccAddMan  {tyname, name, args, isVirtual, expr, pred, comment} = 
-			  if isVirtual
-			  then genVirt(name)
-			  else case isPadsTy tyname 
-				of PTys.CTy =>
-				   mkCommentBreakCase(PT.Id name, "branch has C type: C type accum not implemented (yet)", NONE)
-				 | _ =>
-				   genCase(name, getPadsName tyname, [], getUnionBranchX(pd, name))
-		      val nameBranchSs = mungeFields genAccAddFull genAccAddBrief genAccAddMan variants
-		      val errBranchSs = mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
-		      val addBranchSs = nameBranchSs @ errBranchSs
-                      val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound addBranchSs)]
-		      val addReturnS = genReturnChk (PT.Id nerr)
-                      val addBodySs = addDeclSs @ initTpdSs @ ifNotPanicSkippedSs(addTagSs @ addVariantsSs) @ [addReturnS]
-                      val addFunED = genAddFun(addFun, accPCT, pdPCT, canonicalPCT, addBodySs)
-
-                      (* -- generate report function (internal and external)  punion *)
-                      (*  Perror_t T_acc_report (P_t* , [Sfio_t * outstr], const char* prefix, 
-		                                    const char * what, int nst, T_acc*  ) *)
-		      val reportFun = (reportSuf o accSuf) name
-                      val reportTags = [chkPrint(callEnumPrint((ioSuf o reportSuf o mapSuf) PL.intAct,
-						    PT.String "Union tag", PT.String "tag", P.intX ~1,
-						    PT.Id((toStringSuf o tgSuf) name), getFieldX(acc, tag))),
-					PL.sfprintf(PT.Id outstr, 
-						    PT.String "\n[Describing each tag arm of %s]\n", 
-						    [PT.Id prefix])]
-		      fun genAccReportFull ({pty :PX.Pty, args:pcexp list, name:string, 
-					    isVirtual:bool, isEndian: bool, isRecord, containsRecord, largeHeuristic:bool, 
-					    pred:pcexp option, comment,...}:pfieldty) = 
-			  if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
-			  else cnvPtyForReport(reportSuf, ioSuf, pty, name, "branch")
-                      fun genAccReportBrief e = []
-		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_ACC_REP_NOVALS", []))]
-		      val reportVariants = mungeFields genAccReportFull genAccReportBrief 
-			                      (genAccReportMan (reportSuf, ioSuf, "branch")) variants
-                      val reportFunEDs = genReportFuns(reportFun, "union "^name, 
-						       accPCT, checkNoValsSs @ reportTags @ reportVariants)
-		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
-
-                      (* Generate Write function union case *)
-		      val writeName = writeSuf name
-		      val writeXMLName = writeXMLSuf name
-		      fun genWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
-					isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					pred:pcexp option, comment,...}:pfieldty) = 
-			  if isVirtual
-			  then
-			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
-                          else
-			    let val writeFieldName = (bufSuf o writeSuf) (lookupWrite pty) 
-				val caseSs = writeFieldSs(writeFieldName,
-							  args @ [getUnionBranchX(pd, name), getUnionBranchX(rep, name)],
-							  true)
-			    in
-				mkBreakCase(PT.Id name, SOME caseSs)
-			    end
-		      fun genWriteBrief e = 
-			  case getString e of NONE => [] | 
-			      SOME s => let val writeFieldName = PL.cstrlitWriteBuf
-					    val caseSs = writeFieldSs(writeFieldName, [PT.String s], true)
-					in
-					    mkBreakCase(PT.Id s, SOME caseSs)
-					end
-		      fun genWriteMan {tyname, name, args, isVirtual, expr, pred, comment} = 
-			  (* Manifest fields do not need to be written *)
-			  let val cmt = (if isVirtual
-					 then "Pomit branch: cannot output"
-					 else "Pcompute branch: format-preserving write functions do not output")
-			  in
-			      mkCommentBreakCase(PT.Id name, cmt, NONE)
-			  end
-
-		      fun genXMLWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
-					   isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					   pred:pcexp option, comment,...}:pfieldty) = 
-			  if isVirtual
-			  then
-			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
-                          else
-			    let val writeXMLFieldName = (bufSuf o writeXMLSuf) (lookupWrite pty) 
-				val caseSs = writeXMLFieldSs(writeXMLFieldName,
-							     args @ [getUnionBranchX(pd, name), getUnionBranchX(rep, name)],
-							     PT.String(name), true, true)
-			    in
-				mkBreakCase(PT.Id name, SOME caseSs)
-			    end
-		      fun genXMLWriteBrief e = 
-			  case getString e of NONE => [] | 
-			      SOME s => let val writeXMLFieldName = PL.cstrlitWriteXMLBuf
-					    val caseSs = writeXMLFieldSs(writeXMLFieldName, [PT.String s], PT.String s, true, true)
-					in
-					    mkBreakCase(PT.Id s, SOME caseSs)
-					end
-		      fun genXMLWriteMan {tyname, name, args, isVirtual, expr, pred, comment} = 
-			  if isVirtual then
-			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
-                          else
-			    let val pty = isPadsTy tyname
-			    in case isPadsTy tyname
-				of PTys.CTy => 
-				   let val cmt = "Pcompute branch with C type: XML write for C types not implemented (yet)"
-				   in
-				       mkCommentBreakCase(PT.Id name, cmt, NONE)
-				   end
-				 | _ =>
-				   let val writeXMLFieldName = (bufSuf o writeXMLSuf) (lookupWrite (getPadsName tyname))
-				       val cmt = "Pcompute branch"
-				       val caseSs = writeXMLFieldSs(writeXMLFieldName,
-								    args @ [getUnionBranchX(pd, name), getUnionBranchX(rep, name)],
-								    PT.String(name), true, true)
-				   in
-				       mkCommentBreakCase(PT.Id name, cmt, SOME caseSs)
-				   end
-			    end
-
-		      val nameBranchSs = mungeFields genWriteFull genWriteBrief genWriteMan variants
-		      val nameXMLBranchSs = mungeFields genXMLWriteFull genXMLWriteBrief genXMLWriteMan variants
-		      val errBranchSs = mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
-		      val writeBranchSs = nameBranchSs @ errBranchSs
-		      val writeXMLBranchSs = nameXMLBranchSs @ errBranchSs
-                      val writeVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound writeBranchSs)]
-                      val writeXMLVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound writeXMLBranchSs)]
-		      val bodySs = writeVariantsSs
-		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)])),
-				       PT.Expr(PT.Call(PT.Id "PCGEN_UNION_PD_XML_OUT", []))]
-					@ writeXMLVariantsSs
-					@ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
-                      val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
-
-		      (***** union PADS-Galax *****)
-	              (* In the XML representation of unions, each alternative is always the second child 
-                         (index 1), after the <pd> child. *)
-		      fun tagbranch (index, (nameField, typeField, isPcomputed)) =
- 			  let val maskField = if isPcomputed then (P.intX 0) else (getFieldX(m, nameField)) 	
-			          (* if it's a Pcompute field, then the 'mask field' argument is NULL, by now *)
-			      val nameID = PT.Id nameField
-			      fun addrArg node = P.addrX(P.dotX(P.arrowX(PT.Id node, PT.Id value), nameID))
-			      val pdArg = addrArg pd	
-			      val repArg = addrArg rep
-			      val resultArg = PT.Id result
-			      val i = P.intX 1
-			      val branchField = PT.Id "branch"
-			      val sentences = [macroNodeCall(resultArg, i, typeField, branchField, maskField,
-						             pdArg, repArg, childrenSuf name)]
-			  in
-			      mkBreakCase(nameID, SOME sentences)
-			  end
-		      fun tagbranches bs = List.concat(List.map tagbranch bs)
-		      fun genCaseBranch (name, pty, i) =
-			  case lookupAcc(pty) of NONE   => []
-					       | SOME a => [(name, lookupBranch pty, i)] 
-
-		      fun genBranchFull ({pty :PX.Pty, args:pcexp list, name:string, 
-					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					 pred:pcexp option, comment,...}:pfieldty) = 
-			  genCaseBranch (name, pty, false)
-		      fun genBranchBrief e = []
-		      fun genBranchMan {tyname, name, args, isVirtual, expr, pred, comment}= 
-			  case isPadsTy tyname of PTys.CTy => [] | _ => genCaseBranch(name, getPadsName tyname, true)
-
-		      val nameBranchSs = mungeFields genBranchFull genBranchBrief genBranchMan variants
-		      val addBranchSs = (tagbranches (enumerate nameBranchSs))
-		      val errBranchSs = mkBreakCase(PT.Id(errSuf name), NONE)
-                      val switchTag = PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), 
-						 PT.Compound (addBranchSs @ errBranchSs))
-
-    	              (* PDCI_node_t** fooUnion_children(PDCI_node_t *self) *)
-		      fun genGalaxUnionChildrenFun(name, variants) =		
-		          let val nodeRepTy = PL.nodeT
-                              val returnName = PT.Id result
-			      val returnTy = P.ptrPCT (P.ptrPCT (nodeRepTy))
-                              val cnvName = childrenSuf name 
-                              val paramNames = [self]
-                              val paramTys = [P.ptrPCT nodeRepTy]
-                              val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
-			      val numFields = List.length variants
- 		              val bodySs = headerGalaxChildrenFun(name) @
-					   [P.varDeclS(P.ccharPtr,"branch",
-                                                       PT.Call(PT.Id(toStringSuf (tgSuf name)), [fieldX(rep, tag)]))] @
-					   ifGalaxChildren(returnName, P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
-					   macroTNode(returnName, PL.PDCI_structured_pd, pd, PT.Id pd, cnvName) @
-				 	   [switchTag] @
-					   [P.returnS (returnName)]
-                          in   
-                            P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
-                          end
-
-		      val galaxEDs = [genGalaxUnionChildrenFun(name, variants),
-		                      genGalaxVtable(name)]
-
-		 in
-		       tagDecls
-		     @ unionDecls
-		     @ canonicalDecls
-	             @ cnvExternalDecl mStructED
-                     @ unionPDDecls
-	             @ pdStructPDDecls
-                     @ (emitRead readEDs)
-		     @ (emitPred isFunEDs)
-		     @ (emitAccum accumEDs)
-                     @ (emitWrite writeFunEDs)
-                     @ (emitXML galaxEDs)
-		 end
-	  
 
 	  fun cnvPEnum  {name:string, params: (pcty * pcdecr) list, 
 			 isRecord, containsRecord, largeHeuristic, isSource, prefix = eprefix : string option,
@@ -5919,43 +5991,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      end
 
 
-          fun cnvPOpt ({name : string, params: (pcty * pcdecr) list, isRecord,
-			isSource : bool, baseTy: PX.Pty, args: pcexp list})=
-	      let val some = PX.Full { pty = baseTy, 
-				      args = args,
-				      name = "some_"^name, 
-				      isVirtual = false,
-				      isEndian = false,
-				      isRecord = false,
-				      containsRecord = false,
-				      largeHeuristic = false,
-				      pred = NONE, 
-				      comment = SOME "value is present",
-				      arrayDecl = false, 
-				      size = NONE,
-				      arraypred = []}
-		   val none =  PX.Manifest 
-				    { tyname = PL.uint32PCT,
-				      name   = "none_"^name,
-				      args   = [],
-				      isVirtual = true,
-				      expr = P.intX 0,
-				      pred = NONE,
-				      comment = SOME "value was not present"}
-		   val branches = PX.Ordered [some,none]
-		   val unionVal = {name = name,
-				   params = params,
-				   isLongestMatch = false,
-				   isRecord = isRecord,
-				   isSource = isSource,
-				   containsRecord = false, (* dummies to be filled in later *)
-				   largeHeuristic = false, (* dummies to be filled in later *)
-				   variants = branches,
-				   postCond = []}
-	      in
-		  cnvPUnion unionVal
-	      end
-
 	  fun cnvPCharClass {name, pred} = 
 	      let val _ = pushLocalEnv()
 		  val (apredCT, _ ) = cnvExpression pred
@@ -6127,10 +6162,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	  in
 	      case decl 
 	      of PX.PTypedef     t => cnvPTypedef   t
-              |  PX.Popt         p => cnvPOpt       p
-              |  PX.PStruct      s => cnvPStruct    s
-              |  PX.PUnion       u => cnvPUnion     u
               |  PX.PArray       a => cnvPArray     a
+              |  PX.Popt         p => cnvPOpt       p
+              |  PX.PUnion       u => cnvPUnion     u
+              |  PX.PStruct      s => cnvPStruct    s
               |  PX.PEnum        e => cnvPEnum      e
 	      |  PX.PCharClass   c => cnvPCharClass c
 	      |  PX.PSelect      s => cnvPSelect    s

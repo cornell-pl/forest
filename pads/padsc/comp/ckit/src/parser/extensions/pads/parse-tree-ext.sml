@@ -30,6 +30,7 @@ structure ParseTreeExt =
              largeHeuristic : bool,
 		       pred : 'exp option, 
 		    comment : string option,
+		    optDecl : bool,
 		  arrayDecl : bool, 
 		       size : ('exp PSize) option,
 		  arraypred : ('exp PConstraint) list}
@@ -61,6 +62,8 @@ structure ParseTreeExt =
 			branches      : (('ct, 'dt, 'decr, 'exp) PSField) list}
 
         type 'exp  PPredicate =  {predTy: Pty, thisVar : string, pred : 'exp}
+        datatype 'exp  OptPredicate = Simple of 'exp 
+	                        | Decon of {var : string, some : 'exp, none : 'exp option}
        
         datatype ('decr, 'ct, 'dt, 'exp) PExternal = 
            PTypedef of {name : string,
@@ -77,6 +80,7 @@ structure ParseTreeExt =
 			args   : 'exp list,
 			isRecord : bool, 
 			isSource : bool,
+                        pred : ('exp OptPredicate) option,
                         baseTy: Pty}
          | PStruct of {isAlt : bool,
 		       name : string, 
@@ -106,7 +110,8 @@ structure ParseTreeExt =
                       containsRecord : bool, 
                       largeHeuristic : bool,
 		      variants : ('ct,'dt, 'decr, 'exp) PBranches,
-		      postCond : ('exp PPostCond) list}
+		      postCond : ('exp PPostCond) list,
+		      fromOpt : bool}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
 		      isRecord : bool, 

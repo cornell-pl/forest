@@ -93,8 +93,8 @@ void PCGEN_UNION_READ_MAN_POST_CHECK      (const char *fn_nm, void *rep_copy, vo
 					   void *pd_copy, void *pd_cleanup, int usercheck);
 
 void PCGEN_UNION_READ_CHECK_FAILED    (const char *fn_nm, const char *nm, int err_tag);
-void PCGEN_UNION_READ_WHERE_CHECK     (const char *fn_nm, int usercheck);
-void PCGEN_UNION_READ_WHERE_END_CHECK (const char *fn_nm, int usercheck);
+void PCGEN_UNION_READ_WHERE_CHECK     (const char *fn_nm, int usercheck, int isOpt);
+void PCGEN_UNION_READ_WHERE_END_CHECK (const char *fn_nm, int usercheck, int isOpt);
 
 void PCGEN_UNION_READ_LONGEST_SETUP_STAT(PDCI_UNION_READ_SETUP_ARGS);
 void PCGEN_UNION_READ_LONGEST_SETUP(PDCI_UNION_READ_SETUP_ARGS);
@@ -125,8 +125,8 @@ void PCGEN_UNION_READ_LONGEST_MAN_POST_CHECK      (const char *fn_nm, void *rep_
 						   void *pd_copy, void *pd_cleanup, int usercheck);
 
 void PCGEN_UNION_READ_LONGEST_CHECK_FAILED    (const char *fn_nm, const char *nm, int err_tag);
-void PCGEN_UNION_READ_LONGEST_WHERE_CHECK     (const char *fn_nm, int usercheck);
-void PCGEN_UNION_READ_LONGEST_WHERE_END_CHECK (const char *fn_nm, int usercheck);
+void PCGEN_UNION_READ_LONGEST_WHERE_CHECK     (const char *fn_nm, int usercheck, int isOpt);
+void PCGEN_UNION_READ_LONGEST_WHERE_END_CHECK (const char *fn_nm, int usercheck, int isOpt);
 
 #define PDCI_SWUNION_READ_ARGS          const char *fn_nm, int the_tag, int err_tag, \
                                         void *rep_cleanup, void *rep_init, void *rep_copy, \
@@ -146,8 +146,8 @@ void PCGEN_SWUNION_READ_MAN_VIRT_PRE      (PDCI_SWUNION_READ_MAN_PRE_ARGS);
 
 void PCGEN_SWUNION_READ_POST_CHECK  (const char *fn_nm, int the_tag, int err_tag, int usercheck);
 void PCGEN_SWUNION_READ_FAILED      (const char *fn_nm, const char *nm, int err_tag);
-void PCGEN_SWUNION_READ_WHERE_CHECK (const char *fn_nm, int usercheck);
-void PCGEN_SWUNION_READ_WHERE_END_CHECK (const char *fn_nm, int usercheck);
+void PCGEN_SWUNION_READ_WHERE_CHECK (const char *fn_nm, int usercheck, int isOpt);
+void PCGEN_SWUNION_READ_WHERE_END_CHECK (const char *fn_nm, int usercheck, int isOpt);
 
 void PCGEN_FIND_EOR(const char *fn_nm);
 
@@ -1114,19 +1114,23 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_READ_WHERE_CHECK(fn_nm, usercheck)
+#define PCGEN_UNION_READ_WHERE_CHECK(fn_nm, usercheck, isOpt)
 do {
     if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
       pd->loc.b = start_pos_PCGEN_;
-      PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation");
+      if (isOpt) {
+        PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Popt specification violation");
+      } else {
+        PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation");
+      }
     }
 } while (0)
 /* END_MACRO */
 
-#define PDCI_UNION_READ_WHERE_END_CHECK(fn_nm, usercheck)
+#define PDCI_UNION_READ_WHERE_END_CHECK(fn_nm, usercheck, isOpt)
 do {
     PDCI_IO_ENDLOC(pads, pd->loc);
-    PCGEN_UNION_READ_WHERE_CHECK(fn_nm, usercheck);
+    PCGEN_UNION_READ_WHERE_CHECK(fn_nm, usercheck, isOpt);
 } while (0)
 /* END_MACRO */
 
@@ -1424,16 +1428,20 @@ do {
 /* END_MACRO */
 
 /* pd->loc already set by CHECK_LONGEST macros */
-#define PCGEN_UNION_READ_LONGEST_WHERE_CHECK(fn_nm, usercheck)
+#define PCGEN_UNION_READ_LONGEST_WHERE_CHECK(fn_nm, usercheck, isOpt)
 do {
     if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
-      PDCI_CONSTRAINT_ERR_LOC_ALREADY_SET(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation");
+      if (isOpt) {
+        PDCI_CONSTRAINT_ERR_LOC_ALREADY_SET(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Popt specification violation");
+      } else {
+        PDCI_CONSTRAINT_ERR_LOC_ALREADY_SET(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation");
+      }
     }
 } while (0)
 /* END_MACRO */
 
-#define PDCI_UNION_LONGEST_READ_WHERE_END_CHECK(fn_nm, usercheck)
-    PCGEN_UNION_READ_LONGEST_WHERE_CHECK(fn_nm, usercheck)
+#define PDCI_UNION_LONGEST_READ_WHERE_END_CHECK(fn_nm, usercheck, isOpt)
+    PCGEN_UNION_READ_LONGEST_WHERE_CHECK(fn_nm, usercheck, isOpt)
 /* END_MACRO */
 
 #define PCGEN_UNION_READ_LONGEST_CHECK_FAILED(fn_nm, nm, err_tag)
@@ -1543,7 +1551,7 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_SWUNION_READ_WHERE_CHECK(fn_nm, usercheck)
+#define PCGEN_SWUNION_READ_WHERE_CHECK(fn_nm, usercheck, isOpt)
 do {
     if (pd->nerr == 0 && P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
       PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation");
@@ -1551,10 +1559,10 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_SWUNION_READ_WHERE_END_CHECK(fn_nm, usercheck)
+#define PCGEN_SWUNION_READ_WHERE_END_CHECK(fn_nm, usercheck, isOpt)
 do {
     PDCI_IO_ENDLOC(pads, pd->loc);
-    PCGEN_SWUNION_READ_WHERE_CHECK(fn_nm, usercheck);
+    PCGEN_SWUNION_READ_WHERE_CHECK(fn_nm, usercheck, isOpt);
 } while (0)
 /* END_MACRO */
 

@@ -189,10 +189,10 @@ fun addStructPostCond (decl,postCondOpt) =
 
 fun addUnionPostCond (decl,postCondOpt) = 
    (case decl of
-    (PX.PUnion{isLongestMatch,isRecord,isSource,containsRecord,largeHeuristic,name,params,variants,postCond}) => 
+    (PX.PUnion{isLongestMatch,isRecord,isSource,containsRecord,largeHeuristic,name,params,variants,postCond,fromOpt}) => 
       PX.PUnion{isLongestMatch = isLongestMatch, isRecord = isRecord, isSource = isSource, 
 		 containsRecord = containsRecord, largeHeuristic = largeHeuristic,
-                 name = name, params = params, variants = variants, postCond = postCondOpt} 
+                 name = name, params = params, variants = variants, postCond = postCondOpt, fromOpt = fromOpt} 
     | s => s)
 
 fun addArrayPostCond (decl,postConds) = 
@@ -221,8 +221,10 @@ datatype FieldDesc =
          PTArray of string * (expression PX.PSize) option * (expression PX.PConstraint) list
        | PTStruct of string * (expression option)
 
-fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, isEndian, comment) = 
-    let val (fName, pred, arraypred, sizeOpt,isArray) = 
+fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersOpt, (* isVirtual, isEndian,*) comment) = 
+    let val (isVirtual, isEndian, isOpt) = case qualifiersOpt of NONE => (false,false,false)
+	                                   | SOME s => s
+	val (fName, pred, arraypred, sizeOpt,isArray) = 
 	case compoundField 
         of   PTStruct(fName, pred)              => (fName, pred, [], NONE,false)
 	|    PTArray(fName, sizeOpt, arrayPred) => (fName, NONE, arrayPred, sizeOpt,true)
@@ -236,6 +238,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, 
 	      largeHeuristic = false,
 	      pred = pred,
 	      comment = comment,
+	      optDecl = isOpt,
 	      arrayDecl = isArray,
 	      arraypred = arraypred,
 	      size = sizeOpt
@@ -283,7 +286,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, 
         | PTYPEDEF | PSTRUCT | PALTERNATES | PUNION  | PARRAY | PENUM (* PADS *)
 	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
         | POPT | POMIT | PENDIAN | PCOMPUTE (* PADS *)
-        | PFROM  (*PADS*)
+        | PFROM  | PSOME | PNONE (*PADS*)
  	| PLONGESTMATCH | PRECORD | PSOURCE | PWHERE  (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT | PPREFIX (* PADS*)
         | PRE | PDONE (* PADS *)
@@ -366,6 +369,9 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, 
         | pIsSource of bool
         | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
+	| pOptNone of expression option
+        | pOptPred of expression PX.OptPredicate
+        | pOptPredOpt of (expression PX.OptPredicate) option
 	| pOpt of externalDecl
         | pREexpr of expression
         | pOmitOpt of bool
@@ -374,6 +380,8 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, isVirtual, 
         | pStructFieldList of ((ctype, decltype, declarator, expression) PX.PSField) list
         | pStructField of (ctype, decltype, declarator, expression) PX.PSField
 	| pCompoundField of FieldDesc
+        | pStructQualifier of bool * bool * bool 
+        | pStructQualifiers of bool * bool * bool
         | pPC of (expression PX.PPostCond)
         | pPCList of (expression PX.PPostCond) list
         | pConstraints of (expression PX.PPostCond) list
@@ -1131,12 +1139,6 @@ pIsLongestMatch : (false)
 pIsSource : (false)
   | PSOURCE (true)
 
-(*pContainsRecord : (false)
-  | PCONTAINSRECORD (true) *)
-
-(*pLargeHeuristic : (false)
-  | PLARGEHEURISTIC (true) *)
-
 pTyParamDeclaration:
   parameterDeclaration
 	(let val (dt,decr) = parameterDeclaration
@@ -1181,15 +1183,28 @@ pTypedef:
 				largeHeuristic = false,
 				pred = pTypedefPredOpt}) )
 
+pOptNone : (NONE)
+| BAR PNONE EQGT LCURLY expr RCURLY (SOME expr)
+
+pOptPred : 
+  LCURLY expr RCURLY (PX.Simple expr)
+| PSOME ID EQGT LCURLY expr RCURLY pOptNone
+               (PX.Decon{var = ID, some = expr1, none = pOptNone})
+
+pOptPredOpt : (NONE)
+ | COLON pOptPred (SOME pOptPred)
+
+
 pOpt:
- pIsSource pIsRecord POPT pName pOptActParams pName pushScope pTyParams 
+ pIsSource pIsRecord POPT pName pOptActParams pName pushScope pTyParams pOptPredOpt
   (makeTypeName pName2;
    ExternalDeclExt(PX.Popt {baseTy   = PX.Name pName1,
 			    args     = pOptActParams,
 			    params   = pTyParams,
 			    name     = pName2,
 			    isRecord = pIsRecord,
-			    isSource = pIsSource}))
+			    isSource = pIsSource,
+			    pred = pOptPredOpt}))
 
 pREexpr :
    PRE expr                     (ExprExt(PX.Pregexp expr))
@@ -1199,28 +1214,9 @@ pREexpr :
  | CCONST			(markExpression srcMap (IntConst CCONST, CCONSTleft,CCONSTright))
  | ID				(markExpression srcMap (Id(ID), IDleft, IDright))
 
-(* | expr     (expr)  *)
-
 pOmitOpt : (false)
  | POMIT (true)
 
-(*
-pQualifier : 
-   POMIT     ({omit = true,  compute = false, isEndian = false})
- | PCOMPUTE  ({omit = false, compute = true,  isEndian = false})
- | PENDIAN   ({omit = false, compute = false, isEndian = true})
-
-pQualifiers : []
- pQualifier pQualifiers (let fun merge {omit=omit1, compute = compute1, isEndian = isEndian1}
-                                       {omit=omit2, compute = compute2, isEndian = isEndian2}	    
-				    =  {omit=omit1 andalso omit2, 
-				        compute = compute1 andalso compute2, 
-					isEndian = isEndian1 andalso isEndian2}
-			 in	 
-			    merge pQualifier (List.foldl merge {omit=false, compute=false, isEndian=false})
-                         end)
-
-*)
 
 pManifestField: 
   pOmitOpt typeName pOptActParams ID EQUALS expr pConstraintOpt SEMICOLON pCommentOpt  
@@ -1231,23 +1227,28 @@ pManifestField:
 		      expr    = expr,
 		      pred    = pConstraintOpt, 
 		      comment = pCommentOpt})
-			              (* fill in when add constraints  *)                           
+
+
+pStructQualifier:
+  POMIT   (true, false, false)
+| PENDIAN (false,true,  false)
+| POPT    (false,false, true )
+
+pStructQualifiers: 
+   pStructQualifier (pStructQualifier)
+ | pStructQualifier pStructQualifiers  (let fun merge ((x,y,z), (x', y', z')) = (x orelse x', y orelse y', z orelse z')
+					    in 
+						merge (pStructQualifier,pStructQualifiers)
+					end)
 
 pCompoundField: 
   ID pConstraintOpt (PTStruct (ID, pConstraintOpt))
 | LBRACE  pSizeOpt   RBRACE ID pArrayConstraintOpt  (PTArray(ID, pSizeOpt, pArrayConstraintOpt))
 
-
-pStructField:                         pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, false, false, pCommentOpt))
-  | POMIT                             pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true,  false, pCommentOpt))
-  | PENDIAN                           pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, false, true,  pCommentOpt))
-  | PENDIAN  POMIT                    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true,  true,  pCommentOpt))
-  | POMIT  PENDIAN                    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true,  true,  pCommentOpt))  
+pStructField: pStructQualifiers  pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, SOME pStructQualifiers, pCommentOpt))
+  | pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, NONE, pCommentOpt))
   | PCOMPUTE pManifestField           (pManifestField)
   | pREexpr SEMICOLON                 (PX.Brief (pREexpr, NONE)) 
   | pName PFROM LPAREN pREexpr RPAREN SEMICOLON (PX.Brief (pREexpr, SOME pName))
@@ -1337,7 +1338,8 @@ pUnion:
  ( makeTypeName pName;
    PX.PUnion {name = pName, params = pTyParams, 
 	      containsRecord = false, largeHeuristic = false,
-              isLongestMatch = pIsLongestMatch, isRecord = pIsRecord, isSource = pIsSource, variants=pVariants, postCond = []}
+              isLongestMatch = pIsLongestMatch, isRecord = pIsRecord, isSource = pIsSource, 
+	      variants=pVariants, postCond = [], fromOpt = false}
  ) 
 
 pFromOpt:

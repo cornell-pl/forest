@@ -1404,6 +1404,7 @@ int PDCI_Plongest_chkErr(Puint32 nerr, int *consume);
  *           if there is an element error (does not consume the error elt)
  */
 #define Plongest Pended(Pparsecheck(PDCI_Plongest_chkErr(pds[current].nerr, &consume)))
+#define Peor Pre "/$/"
 
 /* ================================================================================ */
 
