@@ -51,7 +51,7 @@ pstruct http_request_t {
   '\"';
 };
 
-record pstruct http_clf_t {
+precord pstruct http_clf_t {
    host_t host;                   /- IP address of client requesting service
    auth_id_t remoteID;            /- Remote identity; '-' indicates not obtained.
    ' ';
@@ -66,3 +66,6 @@ record pstruct http_clf_t {
    auint32 contentLength;         /- Number of bytes in request response.
 };
 
+pfile parray log_t {
+  http_clf_t [];
+}

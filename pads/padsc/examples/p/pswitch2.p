@@ -5,7 +5,7 @@ punion branches(auint32 a){
   }
 }
 
-record pstruct choice{
+precord pstruct choice{
   auint32       a; 
   branches(:a:) b; 
 }

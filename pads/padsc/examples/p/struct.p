@@ -4,7 +4,7 @@ pstruct test {
   auint32 ts : ts == 11 * id;   //- time stamp
 };
 
-record pstruct testtwo{
+precord pstruct testtwo{
   test header;
   '|';
   auint32 f : f == header.ts;   

@@ -1,9 +1,9 @@
-record punion dibblerPN(int x){
+precord punion dibblerPN(int x){
   auint32 code : code %x == 0;  
   auint32 pn;  //- phone number
 };
 
-record pstruct int32record{
+precord pstruct int32record{
   auint32 x;
 }
 

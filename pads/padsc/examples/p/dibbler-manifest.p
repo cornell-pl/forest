@@ -60,7 +60,7 @@ pstruct do_ev_count {
   compute PDC_int32 ev_count = getLen(bars);
 };
 
-record pstruct out_sum_data_line {
+precord pstruct out_sum_data_line {
   out_sum_fixed1           f1;
   do_ev_count              c;
   eventSeq(:c.ev_count:)   events;

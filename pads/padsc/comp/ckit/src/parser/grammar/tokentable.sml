@@ -79,7 +79,8 @@ struct
                ("omit", Tokens.POMIT),
                ("endian",   Tokens.PENDIAN),       
                ("compute",  Tokens.PCOMPUTE),       
-               ("record", Tokens.PRECORD),     
+               ("precord", Tokens.PRECORD),     
+               ("pfile", Tokens.PFILE),     
                ("EOR", Tokens.EOR)	       
               ])
 

@@ -35,6 +35,7 @@ test_format6  :: test_format6.c   format6.c     -lpadsc
 accum_struct  :: testtwo.c        struct.c      -lpadsc
 accum_ai      :: http_clf_t.c     ai.c          -lpadsc
 
+test_pswitch3 :: test_pswitch3.c  pswitch3.c     -lpadsc
 test_pswitch2 :: test_pswitch2.c  pswitch2.c     -lpadsc
 test_pswitch  :: test_pswitch.c   pswitch.c     -lpadsc
 manifest_union :: munion.c        punion-manifest.c -lpadsc

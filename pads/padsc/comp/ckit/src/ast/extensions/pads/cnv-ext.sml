@@ -1256,7 +1256,7 @@ structure CnvExt : CNVEXT = struct
 
 
 	      fun cnvPTypedef ({name : string, params: (pcty * pcdecr) list, isRecord,
-			        baseTy: PX.Pty, args: pcexp list, 
+				isFile : bool, baseTy: PX.Pty, args: pcexp list, 
 			        predTy: PX.Pty, thisVar: string, pred: pcexp}) = 
 		  let val base = "base"
 		      val user = "user"
@@ -1447,7 +1447,7 @@ structure CnvExt : CNVEXT = struct
 		      @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 		  end
 
-	      fun cnvPStruct ({name:string, isRecord, params: (pcty * pcdecr) list, 
+	      fun cnvPStruct ({name:string, isRecord, isFile, params: (pcty * pcdecr) list, 
 			       fields : (pdty, pcdecr, pcexp) PX.PSField list}) = 
 	          let (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b r m (PX.Full fd) = f fd
@@ -1999,7 +1999,8 @@ structure CnvExt : CNVEXT = struct
 	      end
 
 	     fun cnvPUnion ({name:string, params: (pcty * pcdecr) list, 
-			     isRecord : bool, variants : (pdty, pcdecr, pcexp) PX.PBranches}) = 
+			     isRecord : bool, isFile, 
+			     variants : (pdty, pcdecr, pcexp) PX.PBranches}) = 
 		 let (* Some useful names *)
 		     val unionName = name
                      val value = "val"
@@ -2559,7 +2560,8 @@ structure CnvExt : CNVEXT = struct
                      @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 		 end
 	  
-             fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, args : pcexp list, baseTy:PX.Pty, 
+             fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, isFile,
+			    args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
 	     let val length = "length"
                  val internal = "_internal"
@@ -3358,7 +3360,7 @@ structure CnvExt : CNVEXT = struct
                  @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 	     end
 
-	  fun cnvPEnum  {name:string, params : (pcty * pcdecr) list, isRecord,
+	  fun cnvPEnum  {name:string, params : (pcty * pcdecr) list, isRecord, isFile,
 			 members : (string * pcexp option * string option) list } =
 	      let val baseTy = PX.Name PL.strlit
                   fun mungeMembers (name, expOpt, commentOpt) = 

@@ -38,6 +38,7 @@ structure ParseTreeExt =
            PTypedef of {name : string,
 			params: ('ct * 'decr) list, 
 			isRecord : bool,
+			isFile : bool,
                         baseTy: Pty,
 			args   : 'exp list, 
                         predTy: Pty,
@@ -46,21 +47,25 @@ structure ParseTreeExt =
          | PStruct of {name : string, 
 		       params: ('ct * 'decr) list, 
 		       isRecord : bool,
+		       isFile : bool,
 		       fields : (('dt, 'decr, 'exp) PSField) list}
          | PArray  of {name : string, 
 		       baseTy : Pty, 
 		       params : ('ct * 'decr) list, 
 		       isRecord : bool,
+		       isFile : bool,
 		       args   : 'exp list, 
 		       sizeSpec : ('exp PSize) option, 
 		       constraints : ('exp PConstraint) list} 
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
 		      isRecord : bool,
+		      isFile   : bool,
 		      variants : ('dt, 'decr, 'exp) PBranches}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
 		      isRecord : bool,
+		      isFile   : bool,
                       members  : (string * 'exp option * string option) list}
 
         datatype PStatement = PComment of string

@@ -4,7 +4,7 @@ pstruct test {
   aint32 ts : ts == 11 * id;   //- time stamp
 };
 
-record punion test2 {
+precord punion test2 {
   test bigger;
   aint32 two;
 };

@@ -80,8 +80,6 @@ padsc compiler todo
         # Static specification of error mask and related customization
 	  will be a bigger win, I think.
   * rationalize union error structure, nerr semantics
-  * add file qualifier
-  * allow records for arrays, typedefs and enums
   * fix accumulator generation program to start from file type
   * add analysis to determine if checkset mask is plausible 
     given other constraints

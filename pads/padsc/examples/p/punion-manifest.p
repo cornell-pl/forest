@@ -10,7 +10,7 @@ punion choice {
   aint32 two;
 };
 
-record pstruct str2{
+precord pstruct str2{
   choice c;
   ' ';
   aint32 t;
