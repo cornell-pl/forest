@@ -142,6 +142,7 @@ void PDCI_READFN_RET_ERRCODE_FATAL(const char *whatfn, Pbase_m the_m, const char
 void PDCI_READFN_WIDTH_CHECK(const char *whatfn, const char *elt_descr, size_t width);
 void PDCI_READFN_WIDTH_CHECK_ZERO_OK(const char *whatfn, const char *elt_descr, size_t width);
 
+void PDCI_IO_GETOFFSET(P_t *pads, Sfoff_t offset);
 void PDCI_IO_GETPOS(P_t *pads, Ppos_t pos);
 void PDCI_IO_GETPOS_PLUS(P_t *pads, Ppos_t pos, size_t k);
 void PDCI_IO_GETPOS_MINUS(P_t *pads, Ppos_t pos, size_t k);
@@ -659,6 +660,19 @@ do { \
 #define PDCI_READFN_WIDTH_CHECK_ZERO_OK(whatfn, elt_descr, width)        P_NULL_STMT
 
 #endif /* !NDEBUG */
+
+#define PDCI_IO_GETOFFSET(pads, offsetIN) \
+do { \
+  PDCI_stkElt_t    *tp        = &((pads)->stack[(pads)->top]); \
+  Pio_elt_t        *elt       = tp->elt; \
+ \
+  if (elt->len) { \
+    size_t pos_offset = elt->len - tp->remain; \
+    (offsetIN)          = elt->offset + pos_offset; \
+  } else { \
+    (offsetIN)      = elt->offset; \
+  } \
+} while (0)
 
 #define PDCI_IO_GETPOS(pads, pos) \
 do { \

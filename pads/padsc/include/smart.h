@@ -116,20 +116,25 @@ struct PDCI_smart_node_s {
 //
 
 struct PDCI_smart_array_info_s {
-  // INV: tmap[0] ... tmap[next_idx-1] are all valid elements.
+  // INV: tmap[0] ... tmap[next_idx_create-1] are all allocated elements.
+  // INV: tmap[0] ... tmap[next_idx_read-1] are all valid elements.
   // INV: Forall valid idx, tmap[idx].rep != NULL iff tmap[idx] is in memory.
   // INV: Forall valid idx, tmap[idx].pd != NULL iff tmap[idx] is in memory.
   PDCI_smart_elt_info_t     *tmap;         // alias of _internal's buf; reset on growth
   RBuf_t                    *_internal;    // growable rbuf for tmap
+  PDCI_childIndex_t         *invMap;       // map from rep element indexes to corresponding smart element indexes.
+  RBuf_t                    *_internal_inv;    // growable rbuf for invMap.
+
+  unsigned int               max_elts;         // maximum number of elements allowed in-memory at once.
 
   // parse state
   Sfoff_t                    first_offset; // offset for idx 0
+  Sfoff_t                    next_offset;  // offset for next_idx
 
   PDCI_childIndex_t          next_idx_read;    // first unread index
   PDCI_childIndex_t          next_idx_create;  // first uncreated index
-  PDCI_childIndex_t          max_idx;        // first invalid index for this array
+  unsigned int               next_idx_evict;   // next eviction candidate 
 
-  Sfoff_t                    next_offset;  // offset for next_idx
   // ...
   
 };
