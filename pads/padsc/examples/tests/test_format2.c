@@ -11,6 +11,7 @@ int main(int argc, char** argv) {
   size_t          n;
   unsigned char   c;
   PDC_t*          pdc;
+  PDC_disc_t      my_disc = PDC_default_disc;
   PDC_base_pd     pd = {0};
   PDC_base_m      m  = PDC_CheckAndSet;
 
@@ -19,7 +20,9 @@ int main(int argc, char** argv) {
     return -1;
   } 
 
-  if (PDC_ERR == PDC_open(&pdc, 0, io_disc)) {
+  my_disc.scan_max = my_disc.match_max = 1024;
+
+  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
     error(2, "*** PDC_open failed ***");
     return -1;
   }

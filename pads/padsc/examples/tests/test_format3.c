@@ -4,9 +4,10 @@
 int main(int argc, char** argv) {
   PDC_t           *pdc;
   PDC_IO_disc_t   *io_disc;
-  entry         f3data;
-  entry_pd      f3pd;
-  entry_m       f3m;
+  PDC_disc_t       my_disc = PDC_default_disc;
+  entry            f3data;
+  entry_pd         f3pd;
+  entry_m          f3m;
 
   io_disc = PDC_norec_make(0);
   if (!io_disc) {
@@ -15,7 +16,9 @@ int main(int argc, char** argv) {
     error(0, "\nInstalled IO discipline norec");
   }
 
-  if (PDC_ERR == PDC_open(&pdc, 0, io_disc)) {
+  my_disc.scan_max = my_disc.match_max = 1024;
+
+  if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }

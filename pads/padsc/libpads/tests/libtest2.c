@@ -38,6 +38,8 @@ int main(int argc, char** argv) {
 #else
   error(0, "\nUsing PADSC IO discipline norec\n\n");
   io_disc = PDC_norec_make(0);
+  my_disc.scan_max = 1024;
+  my_disc.match_max = 1024;
 #endif
 
   if (argc >= 2) {

@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
       return -1;
     }
   } else {
-    if (PDC_ERR == PDC_regexp_compile(pdc, "/[X]/|EOR", &my_regexp)) {
+    if (PDC_ERR == PDC_regexp_compile(pdc, "/[X]|$/", &my_regexp)) {
       error(2, "** unexpected regexp compile failure **");
       return -1;
     }
