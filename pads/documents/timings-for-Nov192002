@@ -1,0 +1,21 @@
+time ./test_dibbler1 ~/knb/perl/data/head50K count_first21
+
+good_21: 39, total good: 49999, tot bad 0
+22.305u 0.243s 0:22.80 98.8% 0+0k 350+0io 1pf+0w
+
+smaug:~/knb/padsc/examples/sgi.mips3 [54]-> time ./test_fast_dib ~/knb/perl/data/head50K
+
+good_21: 39, total good: 49999, tot bad 0
+2.353u 0.183s 0:02.54 99.6% 0+0k 0+0io 0pf+0w
+
+smaug:~/knb/perl [56]-> time ./countFirstEq21.pl 
+
+  ctr = 39 
+
+2.145u 0.305s 0:02.81 86.8% 0+0k 31+0io 14pf+0w
+
+smaug:~/knb/perl [57]-> time ./countFirstEq21_split.pl 
+
+  ctr = 39 
+
+21.935u 0.264s 0:22.27 99.6% 0+0k 1+0io 0pf+0w
