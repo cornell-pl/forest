@@ -16,13 +16,15 @@
    - if we skip a cell, then we have to skip it in the parse descriptor array as well,
      to keep them parallel.
 */
+
+
 Parray seq_t{
-  Pint32 [] : Psep('|') && Pomit(elt % 2 == 0 ) && Pended(elts[current] > 10) && Pterm('b');
+  Pint32 [] : Psep('|') && Pomit(elt % 2 == 0 ) 
+              && Pended(consume = (elts[current] == -1));
 };
 
 Precord Pstruct entry{
   seq_t seq;
-  'b';
 };
 
 

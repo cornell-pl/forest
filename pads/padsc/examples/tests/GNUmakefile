@@ -47,7 +47,7 @@ endif
 
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 test_struct_regexp test_array_regexp \
                test_array_nosep test_array_pred test_array_pred2 test_array_ended test_array_ended2 test_array_post \
-               test_charclass test_me test_me_fooclass
+               test_array_skip test_array_skip2 test_charclass test_me test_me_fooclass
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_array test_array_string test_record_enum test_struct test_struct2 \
@@ -97,6 +97,8 @@ regress_o:  sanity_check \
           regress_test_array_ended_o \
           regress_test_array_ended2_o \
           regress_test_array_post_o \
+          regress_test_array_skip_o \
+          regress_test_array_skip2_o \
           regress_test_charclass_o \
           regress_rw_struct_o \
           regress_rw_pendian_o \
@@ -132,6 +134,8 @@ regress_d:  sanity_check \
           regress_test_array_ended_d  \
           regress_test_array_ended2_d \
           regress_test_array_post_d \
+          regress_test_array_skip_d \
+          regress_test_array_skip2_d \
           regress_test_charclass_d \
           regress_rw_struct_d \
           regress_rw_pendian_d \
@@ -277,6 +281,16 @@ regress_test_array_ended_d: test_array_ended_d
 regress_test_array_ended2_o: test_array_ended2
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_ended2_d: test_array_ended2_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_array_skip_o: test_array_skip
+	@(args=""; suf=""; $(RegressDef))
+regress_test_array_skip_d: test_array_skip_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_test_array_skip2_o: test_array_skip2
+	@(args=""; suf=""; $(RegressDef))
+regress_test_array_skip2_d: test_array_skip2_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_array_post_o: test_array_post

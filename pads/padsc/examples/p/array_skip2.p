@@ -1,4 +1,12 @@
-/* Is skip a good idea?
+/* Semantics:
+    read element
+    check if should omit & reduce length if so.
+    report error if not omitting
+    if Panic and not omitting, recover from panic
+    if not omitting, check last predicate
+    check terminator
+
+   Is skip a good idea?
    Skip is like omit in unions and structs, raising some of the same issues.
    Basic semantic question: does skip test come before or after termination checks?
    Interaction with Pended
@@ -17,7 +25,7 @@
      to keep them parallel.
 */
 Parray seq_t{
-  Pint32 [] : Psep('|') && Pomit(elt % 2 == 0 && numRead < 5) && Plast(elts[current] > 10) && Pterm('b');
+  Pint32 [] : Psep('|') && Pomit(elt % 2 == 0 || numRead > 5) && Plast(elts[current] > 10) && Pterm('b');
 };
 
 Precord Pstruct entry{
