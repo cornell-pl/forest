@@ -45,6 +45,7 @@ typedef struct PDC_IO_line_s {
  * between ilines[idx].boff and ilines[idx].eoff
  */
 typedef struct PDC_stkElt_s {
+  int         spec;  /* the spec flag passed to checkpoint */
   size_t      idx;   /* index of IO line */
   size_t      cur;   /* cursor position */
 } PDC_stkElt_t;
@@ -71,6 +72,7 @@ struct PDC_s {
   char*             buf;     /* shadow buffer space - resized dynamically */
   size_t            balloc;  /* total chars allocated for buf */
   size_t            bchars;  /* total chars copied into buf so far */
+  unsigned int      speclev; /* speculative nesting level */
 };
 
 /* ================================================================================ */
@@ -86,10 +88,16 @@ RMM_t* PDC_rmm_nozero(PDC_t* pdc, PDC_disc_t* disc);  /* get rbuf memory mgr tha
  * The checkpoint API: if any of these return PDC_ERROR, there is an
  * internal error -- the calling code should probably exit the program
  * as continuing could lead to unspecified behavior / crash.
+ *
+ * If a non-zero speculative flag is passed to checkpoint, then the
+ * speculative nesting level  is incremented by one.  Once the checkpoint
+ * is removed by either commit or restore, the nesting level is
+ * decremented by one.  PDC_spec_level gives the current nesting level.
  */
-PDC_error_t  PDC_IO_checkpoint  (PDC_t* pdc, PDC_disc_t* disc);
-PDC_error_t  PDC_IO_commit      (PDC_t* pdc, PDC_disc_t* disc);
-PDC_error_t  PDC_IO_restore     (PDC_t* pdc, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_checkpoint (PDC_t* pdc, int speculative, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_commit     (PDC_t* pdc, PDC_disc_t* disc);
+PDC_error_t  PDC_IO_restore    (PDC_t* pdc, PDC_disc_t* disc);
+unsigned int PDC_spec_level    (PDC_t* pdc, PDC_disc_t* disc);
 
 /* 
  * Note: all of the following act on the IO cursor of the top checkpoint

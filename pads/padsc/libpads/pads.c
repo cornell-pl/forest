@@ -10,7 +10,7 @@
 #gen_include "libpadsc-macros-gen.h"
 #gen_include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.25 2002-10-01 16:33:27 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.26 2002-10-01 21:12:22 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -482,7 +482,7 @@ int_type ## _acc_add(PDC_t* pdc, int_type ## _acc* a, PDC_base_ed* ed, int_type*
     return PDC_OK;
   }
   a->psum += v;
-  a->good++;
+  (a->good)++;
   if (a->good == 1) {
     a->min = a->max = v;
   } else if (v < a->min) {
@@ -500,9 +500,9 @@ int_type ## _acc_add(PDC_t* pdc, int_type ## _acc* a, PDC_base_ed* ed, int_type*
       WARN(pdc, "** PADC internal error: dtinsert failed (out of memory?) **");
       return PDC_ERROR;
     }
-    tmp1->cnt++;
+    (tmp1->cnt)++;
   } else if ((tmp1 = dtmatch(a->dict, (Void_t*)&v))) {
-    tmp1->cnt++;
+    (tmp1->cnt)++;
   }
   return PDC_OK;
 }
@@ -710,21 +710,25 @@ PDC_error_t
 PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
 	       PDC_errCode_t errCode, const char* format, ...)
 {
+  PDC_error_f errorf;
   char*   severity = "error";
 
   PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_report_err called");
-  if (disc->e_rep == PDC_errorRep_None || !disc->errorf) {
-    return PDC_OK;
-  }
+  errorf = disc->errorf;
   if (level & ERROR_FATAL) {
     severity = "FATAL error";
+    if (!errorf) { /* need an error function anyway for fatal case */
+      errorf = PDC_errorf;
+    }
+  } else if (pdc->speclev > 0 || disc->e_rep == PDC_errorRep_None || !errorf) {
+    return PDC_OK;
   }
   if (disc->e_rep == PDC_errorRep_Min) {
     if (loc) {
-      disc->errorf(pdc, disc, level, "%s at line %d char %d : errCode %d", severity, loc->beginLine, loc->beginChar, errCode);
+      errorf(pdc, disc, level, "%s at line %d char %d : errCode %d", severity, loc->beginLine, loc->beginChar, errCode);
     } else {
-      disc->errorf(pdc, disc, level, "%s : errCode %d", severity, errCode);
+      errorf(pdc, disc, level, "%s : errCode %d", severity, errCode);
     }
     return PDC_OK;
   }
@@ -893,7 +897,7 @@ PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* loc,
       }
     }
   }
-  disc->errorf(pdc, disc, level, "%s", sfstruse(pdc->tmp));
+  errorf(pdc, disc, level, "%s", sfstruse(pdc->tmp));
   return PDC_OK;
 }
 
@@ -912,7 +916,7 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
   if (offset_out) {
     (*offset_out) = 0;
   }
-  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, 0, disc)) {
     return PDC_ERROR; /* XXX out of space -- unrecoverable error */
   }
   while (PDC_OK == PDC_IO_getchar(pdc, 1, &ct, disc)) { /* 1 means obey panicStop */
@@ -954,7 +958,7 @@ PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopSt
     WARN(pdc, "PDC_str_lit_scan : null/empty findStr specified");
     return PDC_ERROR;
   }
-  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, 0, disc)) {
     return PDC_ERROR; /* XXX out of space -- unrecoverable error */
   }
   if (PDC_ERROR == PDC_Internal_IO_needchars(pdc, 0, &begin, &end, disc)) { /* 0 means do not obey panicStop */
@@ -1144,7 +1148,7 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
   if (!ed) {
     ed = &edt;
   }
-  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, 0, disc)) {
     goto no_space;
   }
   if (PDC_ERROR == PDC_Internal_IO_needchars(pdc, 0, &begin, &end, disc)) { /* 0 means do not obey panicStop */
@@ -1204,7 +1208,7 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
   }
   stopCharSetBegin = stopRegexp + 1;          /* first stop char */
   stopCharSetEnd   = stopRegexp + (len - 1);  /* one past last stop char */
-  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, 0, disc)) {
     goto no_space;
   }
   if (PDC_ERROR == PDC_Internal_IO_needchars(pdc, 0, &begin, &end, disc)) { /* 0 means do not obey panicStop */
@@ -1260,7 +1264,7 @@ PDC_countXtoY(PDC_t* pdc, PDC_base_em* em, PDC_uint8 x, PDC_uint8 y,
   if (res_out) {
     (*res_out) = 0;
   }
-  if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
+  if (PDC_ERROR == PDC_IO_checkpoint(pdc, 0, disc)) {
     HANDLE_ERR_CURPOS(PDC_OUT_OF_MEMORY);
   }
   while (PDC_OK == PDC_IO_getchar(pdc, 1, &ct, disc)) { /* 1 means obey panicStop */
@@ -1376,7 +1380,7 @@ PDC_IO_refill(PDC_t* pdc, PDC_disc_t* disc)
  at_eof:
   pdc->eof = 1;
   if (pdc->itail > 0) { /* better to point to end of a real line than start of zero-length line */
-    pdc->itail--; /* drop zero length line */
+    (pdc->itail)--; /* drop zero length line */
     tp->idx    = pdc->itail;
     readline   = &(pdc->ilines[pdc->itail]);
     tp->cur    = readline->eoffset; /* point to end of line */
@@ -1484,7 +1488,7 @@ PDC_IO_getchar(PDC_t* pdc, int obeyPanicStop, unsigned char* ct_out, PDC_disc_t*
     base = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
     (*ct_out) = *(base + tp->cur);
   }
-  tp->cur++;
+  (tp->cur)++;
   return PDC_OK;
 }
 
@@ -1538,7 +1542,7 @@ PDC_IO_back(PDC_t* pdc, size_t num_chars, PDC_disc_t* disc)
       return PDC_OK;
     }
     if (tp->idx > 0) { /* backup to end of prev line and continue loop */
-      tp->idx--;
+      (tp->idx)--;
       tpline = &(pdc->ilines[tp->idx]);
       tp->cur = tpline->eoffset;
       todo -= avail_this_line;
@@ -1572,7 +1576,7 @@ PDC_IO_forward(PDC_t* pdc, size_t num_chars, PDC_disc_t* disc)
       return PDC_OK;
     }
     if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
-      tp->idx++;
+      (tp->idx)++;
       tp->cur = 0;
       tpline = &(pdc->ilines[tp->idx]);
       todo -= avail_this_line;
@@ -1641,7 +1645,7 @@ PDC_IO_fclose(PDC_t* pdc, PDC_disc_t* disc)
 }
 
 PDC_error_t
-PDC_IO_checkpoint(PDC_t* pdc, PDC_disc_t* disc)
+PDC_IO_checkpoint(PDC_t* pdc, int speculative, PDC_disc_t* disc)
 {
   PDC_DISC_INIT_CHECKS;
   TRACE(pdc, "PDC_IO_checkpoint called");
@@ -1653,7 +1657,12 @@ PDC_IO_checkpoint(PDC_t* pdc, PDC_disc_t* disc)
       return PDC_ERROR;
     }
   }
-  pdc->stack[pdc->top] = pdc->stack[pdc->top - 1];
+  pdc->stack[pdc->top].idx  = pdc->stack[pdc->top - 1].idx;
+  pdc->stack[pdc->top].cur  = pdc->stack[pdc->top - 1].cur;
+  pdc->stack[pdc->top].spec = speculative;
+  if (speculative) {
+    (pdc->speclev)++;
+  }
   return PDC_OK;
 }
 
@@ -1666,9 +1675,20 @@ PDC_IO_restore(PDC_t* pdc, PDC_disc_t* disc)
     WARN(pdc, "Internal error: PDC_IO_restore called when stack top <= 0");
     return PDC_ERROR;
   }
+  if (pdc->stack[pdc->top].spec) {
+    (pdc->speclev)--;
+  }
   /* this discards all changes since the latest checkpoint */ 
-  pdc->top--;
+  (pdc->top)--;
   return PDC_OK;
+}
+
+unsigned int
+PDC_spec_level(PDC_t* pdc, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_spec_level called");
+  return pdc->speclev;
 }
 
 PDC_error_t
@@ -1680,9 +1700,13 @@ PDC_IO_commit(PDC_t* pdc, PDC_disc_t* disc)
     WARN(pdc, "Internal error: PDC_IO_commit called when stack top <= 0");
     return PDC_ERROR;
   }
+  if (pdc->stack[pdc->top].spec) {
+    (pdc->speclev)--;
+  }
   /* propagate changes up to next level */
-  pdc->stack[pdc->top - 1] = pdc->stack[pdc->top];
-  pdc->top--;
+  pdc->stack[pdc->top - 1].idx = pdc->stack[pdc->top].idx;
+  pdc->stack[pdc->top - 1].cur = pdc->stack[pdc->top].cur;
+  (pdc->top)--;
   return PDC_OK;
 }
 
@@ -1755,7 +1779,7 @@ PDC_Internal_IO_needchar(PDC_t* pdc, int obeyPanicStop, PDC_stkElt_t** tp_out, P
       return PDC_ERROR;
     }
     if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
-      tp->idx++;
+      (tp->idx)++;
       tp->cur = 0;
       tpline = &(pdc->ilines[tp->idx]);
     } else {
@@ -1790,7 +1814,7 @@ PDC_Internal_IO_needchars(PDC_t* pdc, int obeyPanicStop, char** b_out, char** e_
       return PDC_ERROR;
     }
     if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
-      tp->idx++;
+      (tp->idx)++;
       tp->cur = 0;
       tpline = &(pdc->ilines[tp->idx]);
     } else {
@@ -1882,7 +1906,8 @@ PDC_open(PDC_disc_t* disc, PDC_t** pdc_out)
     vmclose(vm);
     return PDC_ERROR;
   }
-  pdc->bchars = 0;
+  pdc->bchars  = 0;
+  pdc->speclev = 0;
   (*pdc_out) = pdc;
   return PDC_OK;
 }
