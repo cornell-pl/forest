@@ -72,7 +72,7 @@ Parray domain_name {
 			      || elts[current].tag != label
 			      || elts[current].val.label.length == 0) ;
 } Pwhere {
-  domain_name_dbg(elts, length, arrayBegin.offset);
+  Pparsecheck(domain_name_dbg(elts, length, arrayBegin.offset));
 };
 
 Pstruct resource_record {
@@ -110,9 +110,8 @@ Pstruct header_t {
 int cnt_dbg(const char *cnt_descr, unsigned int cnt) {
   fprintf(stderr, "# of %s = %u\n", cnt_descr, cnt);
   return 1;
-}
+};
 
-#if 0
 Pstruct dns_msg {
    Psbh_uint16(:2:)                   length;
    header_t                           header :   cnt_dbg("questions", header.qdcount);  /- not? OK to use "header" for both?
@@ -121,18 +120,3 @@ Pstruct dns_msg {
    resource_records(:header.nscount:) authority: cnt_dbg("other",     header.arcount);
    resource_records(:header.arcount:) additional;
 };
-#else
-Pstruct dns_msg {
-   Psbh_uint16(:2:)                   length;
-   header_t                           header
-     :   cnt_dbg("questions", header.qdcount)
-     &&  cnt_dbg("answers",   header.ancount)
-     &&  cnt_dbg("auths",     header.nscount)
-     &&  cnt_dbg("other",     header.arcount);
-   questions(:header.qdcount:)        question;
-   resource_records(:header.ancount:) answer;
-   resource_records(:header.nscount:) authority;
-   resource_records(:header.arcount:) additional;
-};
-#endif
-
