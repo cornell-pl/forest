@@ -4713,7 +4713,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
 #gen_include "padsc-internal.h"
 #gen_include "padsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.99 2003-09-09 13:54:57 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.100 2003-09-09 19:45:26 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5557,15 +5557,16 @@ PDC_IO_next_rec(PDC_t *pdc, size_t *skipped_bytes_out) {
     } else {
       /* use IO disc read_fn */
       if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
-	/* perhaps put an eof rec in */
-	tp->elt = PDC_LAST_ELT(pdc->head);
+	tp->elt = PDC_LAST_ELT(pdc->head); /* IO disc may have added eof elt */
 	tp->remain = 0;
 	return PDC_ERR;
       }
+#ifndef NDEBUG
       if (next_elt == pdc->head) { /* should not happen */
 	PDC_FATAL(pdc->disc, "Internal error, PDC_IO_next_rec observed incorrect read_fn behavior");
 	return PDC_ERR;
       }
+#endif
       tp->elt = next_elt;
     }
     tp->remain = tp->elt->len;
@@ -6511,6 +6512,8 @@ PDCI_IO_install_io(PDC_t *pdc, Sfio_t *io)
   }
   /* perform first read */
   if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, 0, 0, &next_elt)) {
+    tp->elt = PDC_LAST_ELT(pdc->head); /* IO disc may have added eof elt */
+    tp->remain = 0;
     return PDC_ERR;
   }
   tp->elt = PDC_FIRST_ELT(pdc->head);
@@ -6553,30 +6556,35 @@ PDCI_IO_morebytes(PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2
   PDC_IO_elt_t     *lastelt   = PDC_LAST_ELT(pdc->head);
   PDCI_stkElt_t    *bot       = &(pdc->stack[0]);
   PDC_IO_elt_t     *io_elt    = bot->elt;
+  size_t            io_remain = bot->remain;
   PDC_IO_elt_t     *next_elt;
-  size_t           io_remain  = bot->remain;
-  size_t           offset;
+  size_t            offset;
   PDC_byte         *prev_lastelt_end;
 
+  prev_lastelt_end = lastelt->end;
+#ifndef NDEBUG
   if (lastelt->eor|lastelt->eof) {
     PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_morebytes called when lastelt eor or eof is set");
     return PDC_ERR;
   }
-  if ((prev_lastelt_end = lastelt->end) != (*e_out)) {
+  if (prev_lastelt_end != (*e_out)) {
     PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_morebytes called when lastelt->end != (*e_out)");
     return PDC_ERR;
   }
+#endif
   if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
     (*bytes_out) = 0;
     (*eof_out)   = 1;
     return PDC_ERR;
   }
+#ifndef NDEBUG
   if (lastelt->next != next_elt || next_elt == pdc->head) { /* should not happen */
     PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_morebytes observed incorrect read_fn behavior");
     (*bytes_out) = 0;
     (*eof_out)   = 1;
     return PDC_ERR;
   }
+#endif
   if (lastelt->end > prev_lastelt_end) { /* things shifted to higher mem loc */
     offset = lastelt->end - prev_lastelt_end;
     (*b_out)  += offset;
@@ -6601,6 +6609,116 @@ PDCI_IO_morebytes(PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out, PDC_byte **p2
   }
   (*eor_out)   = lastelt->eor;
   (*eof_out)   = lastelt->eof;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDCI_IO_need_rec_bytes(PDC_t *pdc, int skip_rec,
+		       PDC_byte **b_out, PDC_byte **e_out,
+		       int *eor_out, int *eof_out, size_t *skipped_bytes_out)
+{
+  PDCI_stkElt_t    *tp          = &(pdc->stack[pdc->top]);
+  PDCI_stkElt_t    *bot         = 0; /* once set, do not need to set again */
+  PDC_IO_elt_t     *elt;
+  PDC_IO_elt_t     *next_elt;
+  PDC_IO_elt_t     *io_elt      = 0;
+  size_t            io_remain   = 0;
+
+#ifndef NDEBUG
+  if (!pdc->disc->io_disc->rec_based) {
+    PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_need_rec_bytes called on non-rec-based IO discipline");
+  }
+#endif
+  (*skipped_bytes_out) = 0;
+  if (skip_rec) {
+    /* assumes PDCI_IO_need_rec_bytes already called once and there is an elt with eor == 1 and eof == 0*/
+    while (!tp->elt->eor) {
+#ifndef NDEBUG
+      if (tp->elt->eof || tp->elt->next == pdc->head) {
+	PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_need_rec_bytes called in bad start state");
+      }
+#endif
+      (*skipped_bytes_out) += tp->remain;
+      tp->elt = tp->elt->next;
+      tp->remain = tp->elt->len;
+    }
+    /* found eor elt */
+#ifndef NDEBUG
+    if (tp->elt->eof) {
+      PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_need_rec_bytes called in bad start state");
+    }
+#endif
+    (*skipped_bytes_out) += tp->remain;
+    tp->remain = 0; /* advance past rec */
+    /* move top to following elt */
+    /* (also moves bot when top==bot [pdc->top == 0]) */
+    if (tp->elt->next != pdc->head) {
+      tp->elt = tp->elt->next;
+    } else {
+      /* need to read another elt using IO discipline */
+      if (pdc->top == 0) {
+	/* no need to preserve bytes on this read_fn call */
+	io_elt     = 0;
+	io_remain  = 0;
+      } else {
+	bot        = &(pdc->stack[0]);
+	io_elt     = bot->elt;
+	io_remain  = bot->remain;
+      }
+      if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
+	/* read problem, return zero length, !eor, eof */
+	tp->elt      = PDC_LAST_ELT(pdc->head); /* IO disc may have added eof elt */
+	tp->remain   = 0;
+	(*b_out)     = tp->elt->end;
+	(*e_out)     = (*b_out);
+	(*eor_out)   = 0;
+	(*eof_out)   = 1;
+	return PDC_ERR;
+      }
+#ifndef NDEBUG
+      if (next_elt == pdc->head) { /* should not happen */
+	PDC_FATAL(pdc->disc, "Internal error, PDC_IO_need_rec_bytes observed incorrect read_fn behavior");
+      }
+#endif
+      tp->elt = next_elt;
+    }
+    tp->remain = tp->elt->len;
+    /* record has been skipped, tp->elt is start loc for requested bytes */
+  } /* else do not skip record, tp->elt is still start lock for requested bytes */
+
+  /* find elt with eor or eof marker, starting with tp->elt */
+  elt = tp->elt;
+  while (!(elt->eor|elt->eof)) {
+    if (elt->next == pdc->head) {
+      /* need to read another elt using IO discipline */
+      if (!bot) {
+	/* We have not established io_elt/io_remain yet. */
+	/* There should be a valid bot + we need to keep it around. */
+	bot        = &(pdc->stack[0]);
+	io_elt     = bot->elt;
+	io_remain  = bot->remain;
+      }
+      if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
+	/* read problem, return zero length, !eor, eof */
+	(*b_out)     = elt->end;
+	(*e_out)     = (*b_out);
+	(*eor_out)   = 0;
+	(*eof_out)   = 1;
+	return PDC_ERR;
+      }
+#ifndef NDEBUG
+      if (elt->next != next_elt || next_elt == pdc->head) { /* should not happen */
+	PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_need_rec_bytes observed incorrect read_fn behavior");
+      }
+#endif
+    }
+    elt = elt->next; /* keep looking for eor|eof */
+  }
+  /* found eor|eof elt */
+  (*b_out)     = (tp->elt->end - tp->remain);
+  (*e_out)     = elt->end;
+  (*eor_out)   = elt->eor;
+  (*eof_out)   = elt->eof;
   return PDC_OK;
 }
 
@@ -6654,15 +6772,16 @@ PDCI_IO_forward(PDC_t *pdc, size_t num_bytes)
     io_remain = 0;
   }
   if (PDC_ERR == pdc->disc->io_disc->read_fn(pdc, pdc->disc->io_disc, io_elt, io_remain, &next_elt)) {
-    /* perhaps put an eof rec in */
-    tp->elt = PDC_LAST_ELT(pdc->head);
+    tp->elt = PDC_LAST_ELT(pdc->head); /* IO disc may have added eof elt */
     tp->remain = 0;
     return PDC_ERR;
   }
+#ifndef NDEBUG
   if (next_elt == pdc->head) { /* should not happen */
     PDC_FATAL(pdc->disc, "Internal error, PDCI_IO_forward observed incorrect read_fn behavior");
     return PDC_ERR;
   }
+#endif
   tp->elt = next_elt;
   tp->remain = tp->elt->len;
   return PDC_OK;

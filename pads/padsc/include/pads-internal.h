@@ -609,6 +609,23 @@ PDC_error_t  PDCI_IO_morebytes (PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out,
 				int *eor_out, int *eof_out, size_t *bytes_out);
 PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
 
+
+/*
+ * The following is used to obtain one record's worth of bytes at a time.
+ * The usage look something like this:
+ *   int eor = 0, eof = 0, skip_rec = 0;
+ *   PDC_byte *begin = 0, *end = 0;
+ *   size_t skipped_bytes = 0;
+ *   while (!eof && PDC_OK == PDCI_IO_need_rec_bytes(pdc, skip_rec, &begin, &end, &eor, &eof, &skipped_bytes)) {
+ *      skip_rec = 1;
+ *          -- after first call, subsequent calls advance the IO cursor past the current record
+ *          -- skipped_bytes is set to # of bytes skipped
+ *       ...use bytes which go from begin to end (rec_len = end-begin)
+ *   }
+ */
+PDC_error_t  PDCI_IO_need_rec_bytes(PDC_t *pdc, int skip_rec,
+				    PDC_byte **b_out, PDC_byte **e_out,
+				    int *eor_out, int *eof_out, size_t *skipped_bytes_out);
 /*
  * Other IO routines:
  *    PDCI_IO_getElt: if the specified elt is currently in an in-memory buffer,
