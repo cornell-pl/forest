@@ -1103,6 +1103,7 @@ int_type ## _acc_report(PDC_t *pdc, const char *prefix, const char *what, int ns
   PDC_error_t res;
   PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(int_type) "_acc_report" );
   PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_report" , a );
+
   if (!pdc->disc->errorf) {
     return PDC_OK;
   }
@@ -2838,6 +2839,86 @@ PDC_char_acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
   return res;
 }
 
+PDC_error_t
+PDC_nerr_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
+			     PDC_int32_acc *a)
+{
+  int                   i = 0, sz, rp;
+  PDC_uint64            cnt_sum = 0;
+  double                track_pcnt;
+  double                cnt_sum_pcnt;
+  double                elt_pcnt;
+  Void_t                *velt;
+  PDC_int32_dt_elt_t *elt;
+
+  PDC_TRACE(pdc->disc, "PDC_nerr_acc_report_internal called");
+  if (!prefix || *prefix == 0) {
+    prefix = "<top>";
+  }
+  if (!what) {
+    what = "nerr";
+  }
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  sfprintf(outstr, "total vals: %10llu\n", a->good);
+  if (a->bad) {
+    PDC_WARN(pdc->disc, "** UNEXPECTED: PDC_nerr_acc_report called with bad values (all nerr are valid).  Ignoring bad.");
+  }
+  if (a->good == 0) {
+    return PDC_OK;
+  }
+  PDC_int32_acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < PDCI_ACC_REPORT_K) ? sz : PDCI_ACC_REPORT_K;
+  dtdisc(a->dict,   &PDC_int32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+  sfprintf(outstr, "  Characterizing %s:  min %ld", what, a->min);
+  sfprintf(outstr, " max %ld", a->max);
+  sfprintf(outstr, " avg %.3lf\n", a->avg);
+  sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
+  if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
+    track_pcnt = 100.0 * (a->tracked/(double)a->good);
+    sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
+  }
+  for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+    elt = (PDC_int32_dt_elt_t*)velt;
+    cnt_sum += elt->key.cnt;
+    elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
+    sfprintf(outstr, "        val: %10ld", elt->key.val);
+    sfprintf(outstr, " count: %10llu pcnt-of-total-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+  }
+  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
+  sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
+  sfprintf(outstr,   "        SUMMING         count: %10llu pcnt-of-total-vals: %8.3lf\n",
+	   cnt_sum, cnt_sum_pcnt);
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &PDC_int32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_nerr_acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
+		    PDC_int32_acc *a)
+{
+  Sfio_t *tmpstr;
+  PDC_error_t res;
+  PDCI_DISC_INIT_CHECKS("PDC_nerr_acc_report");
+  PDCI_NULLPARAM_CHECK("PDC_nerr_acc_report", a);
+
+  if (!pdc->disc->errorf) {
+    return PDC_OK;
+  }
+  if (!(tmpstr = sfstropen ())) { 
+    return PDC_ERR;
+  }
+  res = PDC_nerr_acc_report_internal(pdc, tmpstr, prefix, what, nst, a);
+  if (res == PDC_OK) {
+    pdc->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+  }
+  sfstrclose (tmpstr);
+  return res;
+}
+
 /* ================================================================================ */ 
 /* ACCUM IMPL HELPERS */
 
@@ -3033,7 +3114,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.71 2003-05-09 14:04:06 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.72 2003-05-09 14:40:12 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

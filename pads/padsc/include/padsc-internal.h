@@ -203,6 +203,9 @@ PDC_error_t PDC_uint64_acc_report_internal (PDCI_FIRST_ARGS, PDC_uint64_acc *a);
 
 PDC_error_t PDC_int32_acc_report_map_internal(PDCI_FIRST_ARGS, PDC_int32_map_fn  fn, PDC_int32_acc *a);
 
+PDC_error_t PDC_nerr_acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
+					 PDC_int32_acc *a);
+
 PDC_error_t PDC_string_acc_report_internal (PDCI_FIRST_ARGS, PDC_string_acc *a);
 PDC_error_t PDC_char_acc_report_internal   (PDCI_FIRST_ARGS, PDC_char_acc *a);
 

@@ -1577,6 +1577,15 @@ PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char 
 				     PDC_int32_map_fn  fn, PDC_int32_acc *a);
 
 /*
+ * PDC_nerr_acc_report is used to report on the accumulation of the nerr field
+ * of a struct, union, array, etc.  The accumulator used must be a PDC_int32_acc.
+ * This is very similar to calling PDC_int32_acc_report, it just has slightly
+ * different formatting since no bad values are expected.
+ */
+PDC_error_t PDC_nerr_acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
+				PDC_int32_acc *a);
+
+/*
  * fpoint/ufpoint accumulator types
  *
  *    Note that double-based arithmetic is used for the fpoint64/ufpoint64 accumulators,
