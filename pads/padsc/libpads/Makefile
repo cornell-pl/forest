@@ -7,7 +7,7 @@ CCFLAGS = $(CC.DEBUG) $(CC.DLL)
 all : libpadsc-macros-gen.h
 
 clean :
-	$(RM) -f *gen* *~ #*
+	$(RM) -f *gen* *~ \#*
 
 veryclean : clean
 	$(RM) -f Makefile.ms Makefile.mo padsc.req

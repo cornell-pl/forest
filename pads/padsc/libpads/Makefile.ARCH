@@ -10,3 +10,10 @@ $(INCLUDEDIR) :INSTALLPROTO: libpadsc.h libpadsc-internal.h rbuf.h
 
 ../libpadsc-gen.c : ../libpadsc.c ../mksrc.pl ../../include/libpadsc.h ../../include/libpadsc-internal.h ../../include/rbuf.h ../../include/rbuf-internal.h ../../include/pdc_out_macros.h ../../include/pdc_io_disc.h
 	(cd ..; nmake)
+
+clean :
+	$(RM) -f libpadsc.* libpadsc-g.* *~
+
+veryclean : clean
+	$(RM) -f Makefile.ms Makefile.mo padsc.req
+
