@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <dt.h>
 #include <error.h>
+#include <math.h>
 #include "rbuf.h"
 #include "libpadsc-private.h"
 
@@ -298,6 +299,13 @@ typedef	struct { PDC_uint16 num; PDC_uint16 denom;} PDC_ufpoint16;
 typedef	struct { PDC_uint32 num; PDC_uint32 denom;} PDC_ufpoint32;
 typedef	struct { PDC_uint64 num; PDC_uint64 denom;} PDC_ufpoint64;
 
+/* HELPERS: 
+ *    PDC_FPOINT2FLT calculates num/denom as a float
+ *    PDC_FPOINT2DBL calculates num/denom as a double
+ */
+#define PDC_FPOINT2FLT(fp) ((fp).num/(float)(fp).denom)
+#define PDC_FPOINT2DBL(fp) ((fp).num/(double)(fp).denom)
+
 /* ================================================================================
  * PDC_string: PADS strings have a ptr and length;
  *             required since they need not be null-terminated.
@@ -445,6 +453,9 @@ struct PDC_pos_s {
   size_t       num;
   const char  *unit;
 };
+
+/* HELPER: PDC_POS_EQ tests whether pos1 is the same IO position as pos2 */
+#define PDC_POS_EQ(pos1, pos2) ((pos1).num == (pos2).num && (pos1).byte == (pos2).byte)
 
 /* type PDC_loc_t: */
 struct PDC_loc_s {
@@ -1527,6 +1538,111 @@ typedef const char * (*PDC_uint64_map_fn)(PDC_uint64 u);
  */
 PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char *what, int nst,
 				     PDC_int32_map_fn  fn, PDC_int32_acc *a);
+
+/*
+ * fpoint/ufpoint accumulator types
+ *
+ *    Note that double-based arithmetic is used for the fpoint64/ufpoint64 accumulators,
+ *    while float-based arithmetic is used for all other fpoint/ufpoint accumulators.
+ */
+
+typedef struct PDC_fpoint_acc_flt_s {
+  Dt_t        *dict;
+  PDC_uint64  good;
+  PDC_uint64  bad;
+  PDC_uint64  fold;
+  PDC_uint64  tracked;
+  double      psum;
+  double      avg;
+  double      min;
+  double      max;
+} PDC_fpoint_acc_flt;
+
+typedef struct PDC_fpoint_acc_dbl_s {
+  Dt_t        *dict;
+  PDC_uint64  good;
+  PDC_uint64  bad;
+  PDC_uint64  fold;
+  PDC_uint64  tracked;
+  double      psum;
+  double      avg;
+  double      min;
+  double      max;
+} PDC_fpoint_acc_dbl;
+
+typedef PDC_fpoint_acc_flt PDC_fpoint8_acc;
+typedef PDC_fpoint_acc_flt PDC_fpoint16_acc;
+typedef PDC_fpoint_acc_flt PDC_fpoint32_acc;
+typedef PDC_fpoint_acc_dbl PDC_fpoint64_acc;
+
+typedef PDC_fpoint_acc_flt PDC_ufpoint8_acc;
+typedef PDC_fpoint_acc_flt PDC_ufpoint16_acc;
+typedef PDC_fpoint_acc_flt PDC_ufpoint32_acc;
+typedef PDC_fpoint_acc_dbl PDC_ufpoint64_acc;
+
+PDC_error_t PDC_fpoint8_acc_init    (PDC_t *pdc, PDC_fpoint8_acc *a);
+PDC_error_t PDC_fpoint8_acc_reset   (PDC_t *pdc, PDC_fpoint8_acc *a);
+PDC_error_t PDC_fpoint8_acc_cleanup (PDC_t *pdc, PDC_fpoint8_acc *a);
+PDC_error_t PDC_fpoint8_acc_add     (PDC_t *pdc, PDC_fpoint8_acc *a, PDC_base_ed *ed, PDC_fpoint8 *val);
+PDC_error_t PDC_fpoint8_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
+				     PDC_fpoint8_acc *a);
+float       PDC_fpoint8_acc_avg     (PDC_t *pdc, PDC_fpoint8_acc *a);
+
+PDC_error_t PDC_fpoint16_acc_init   (PDC_t *pdc, PDC_fpoint16_acc *a);
+PDC_error_t PDC_fpoint16_acc_reset  (PDC_t *pdc, PDC_fpoint16_acc *a);
+PDC_error_t PDC_fpoint16_acc_cleanup(PDC_t *pdc, PDC_fpoint16_acc *a);
+PDC_error_t PDC_fpoint16_acc_add    (PDC_t *pdc, PDC_fpoint16_acc *a, PDC_base_ed *ed, PDC_fpoint16 *val);
+PDC_error_t PDC_fpoint16_acc_report (PDC_t *pdc, const char *prefix, const char *what, int nst,
+				     PDC_fpoint16_acc *a);
+float       PDC_fpoint16_acc_avg    (PDC_t *pdc, PDC_fpoint16_acc *a);
+
+PDC_error_t PDC_fpoint32_acc_init   (PDC_t *pdc, PDC_fpoint32_acc *a);
+PDC_error_t PDC_fpoint32_acc_reset  (PDC_t *pdc, PDC_fpoint32_acc *a);
+PDC_error_t PDC_fpoint32_acc_cleanup(PDC_t *pdc, PDC_fpoint32_acc *a);
+PDC_error_t PDC_fpoint32_acc_add    (PDC_t *pdc, PDC_fpoint32_acc *a, PDC_base_ed *ed, PDC_fpoint32 *val);
+PDC_error_t PDC_fpoint32_acc_report (PDC_t *pdc, const char *prefix, const char *what, int nst,
+				     PDC_fpoint32_acc *a);
+float       PDC_fpoint32_acc_avg    (PDC_t *pdc, PDC_fpoint32_acc *a);
+
+PDC_error_t PDC_fpoint64_acc_init   (PDC_t *pdc, PDC_fpoint64_acc *a);
+PDC_error_t PDC_fpoint64_acc_reset  (PDC_t *pdc, PDC_fpoint64_acc *a);
+PDC_error_t PDC_fpoint64_acc_cleanup(PDC_t *pdc, PDC_fpoint64_acc *a);
+PDC_error_t PDC_fpoint64_acc_add    (PDC_t *pdc, PDC_fpoint64_acc *a, PDC_base_ed *ed, PDC_fpoint64 *val);
+PDC_error_t PDC_fpoint64_acc_report (PDC_t *pdc, const char *prefix, const char *what, int nst,
+				     PDC_fpoint64_acc *a);
+double      PDC_fpoint64_acc_avg    (PDC_t *pdc, PDC_fpoint64_acc *a);
+
+PDC_error_t PDC_ufpoint8_acc_init    (PDC_t *pdc, PDC_ufpoint8_acc *a);
+PDC_error_t PDC_ufpoint8_acc_reset   (PDC_t *pdc, PDC_ufpoint8_acc *a);
+PDC_error_t PDC_ufpoint8_acc_cleanup (PDC_t *pdc, PDC_ufpoint8_acc *a);
+PDC_error_t PDC_ufpoint8_acc_add     (PDC_t *pdc, PDC_ufpoint8_acc *a, PDC_base_ed *ed, PDC_ufpoint8 *val);
+PDC_error_t PDC_ufpoint8_acc_report  (PDC_t *pdc, const char *prefix, const char *what, int nst,
+				     PDC_ufpoint8_acc *a);
+float       PDC_ufpoint8_acc_avg     (PDC_t *pdc, PDC_ufpoint8_acc *a);
+
+PDC_error_t PDC_ufpoint16_acc_init   (PDC_t *pdc, PDC_ufpoint16_acc *a);
+PDC_error_t PDC_ufpoint16_acc_reset  (PDC_t *pdc, PDC_ufpoint16_acc *a);
+PDC_error_t PDC_ufpoint16_acc_cleanup(PDC_t *pdc, PDC_ufpoint16_acc *a);
+PDC_error_t PDC_ufpoint16_acc_add    (PDC_t *pdc, PDC_ufpoint16_acc *a, PDC_base_ed *ed, PDC_ufpoint16 *val);
+PDC_error_t PDC_ufpoint16_acc_report (PDC_t *pdc, const char *prefix, const char *what, int nst,
+				     PDC_ufpoint16_acc *a);
+float       PDC_ufpoint16_acc_avg    (PDC_t *pdc, PDC_ufpoint16_acc *a);
+
+PDC_error_t PDC_ufpoint32_acc_init   (PDC_t *pdc, PDC_ufpoint32_acc *a);
+PDC_error_t PDC_ufpoint32_acc_reset  (PDC_t *pdc, PDC_ufpoint32_acc *a);
+PDC_error_t PDC_ufpoint32_acc_cleanup(PDC_t *pdc, PDC_ufpoint32_acc *a);
+PDC_error_t PDC_ufpoint32_acc_add    (PDC_t *pdc, PDC_ufpoint32_acc *a, PDC_base_ed *ed, PDC_ufpoint32 *val);
+PDC_error_t PDC_ufpoint32_acc_report (PDC_t *pdc, const char *prefix, const char *what, int nst,
+				     PDC_ufpoint32_acc *a);
+float       PDC_ufpoint32_acc_avg    (PDC_t *pdc, PDC_ufpoint32_acc *a);
+
+PDC_error_t PDC_ufpoint64_acc_init   (PDC_t *pdc, PDC_ufpoint64_acc *a);
+PDC_error_t PDC_ufpoint64_acc_reset  (PDC_t *pdc, PDC_ufpoint64_acc *a);
+PDC_error_t PDC_ufpoint64_acc_cleanup(PDC_t *pdc, PDC_ufpoint64_acc *a);
+PDC_error_t PDC_ufpoint64_acc_add    (PDC_t *pdc, PDC_ufpoint64_acc *a, PDC_base_ed *ed, PDC_ufpoint64 *val);
+PDC_error_t PDC_ufpoint64_acc_report (PDC_t *pdc, const char *prefix, const char *what, int nst,
+				     PDC_ufpoint64_acc *a);
+double      PDC_ufpoint64_acc_avg    (PDC_t *pdc, PDC_ufpoint64_acc *a);
 
 /* ================================================================================
  * SCAN FUNCTIONS

@@ -202,6 +202,15 @@ PDC_error_t PDC_int32_acc_report_map_internal(PDCI_FIRST_ARGS, PDC_int32_map_fn 
 PDC_error_t PDC_string_acc_report_internal (PDCI_FIRST_ARGS, PDC_string_acc *a);
 PDC_error_t PDC_char_acc_report_internal   (PDCI_FIRST_ARGS, PDC_char_acc *a);
 
+PDC_error_t PDC_fpoint8_acc_report_internal   (PDCI_FIRST_ARGS, PDC_fpoint8_acc *a);
+PDC_error_t PDC_fpoint16_acc_report_internal  (PDCI_FIRST_ARGS, PDC_fpoint16_acc *a);
+PDC_error_t PDC_fpoint32_acc_report_internal  (PDCI_FIRST_ARGS, PDC_fpoint32_acc *a);
+PDC_error_t PDC_fpoint64_acc_report_internal  (PDCI_FIRST_ARGS, PDC_fpoint64_acc *a);
+PDC_error_t PDC_ufpoint8_acc_report_internal  (PDCI_FIRST_ARGS, PDC_ufpoint8_acc *a);
+PDC_error_t PDC_ufpoint16_acc_report_internal (PDCI_FIRST_ARGS, PDC_ufpoint16_acc *a);
+PDC_error_t PDC_ufpoint32_acc_report_internal (PDCI_FIRST_ARGS, PDC_ufpoint32_acc *a);
+PDC_error_t PDC_ufpoint64_acc_report_internal (PDCI_FIRST_ARGS, PDC_ufpoint64_acc *a);
+
 /* ********************************************************************************
  * Remainder of this file contains function decls for functions
  * purely internal to the library impl.  Note the use of the PDCI prefix

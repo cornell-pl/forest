@@ -267,7 +267,7 @@ struct
 
 
 (* -- C helper functions *)
-  fun bzeroX (spX, sizeX) = PT.Call(PT.Id "bzero",[PT.Cast(P.voidPtr, spX), sizeX])
+  fun bzeroX (spX, sizeX) = PT.Call(PT.Id "memset",[PT.Cast(P.voidPtr, spX), P.zero, sizeX])
   fun bzeroS (spX, sizeX) = PT.Expr(bzeroX(spX,sizeX))
   fun strLen(s:PT.expression)= PT.Call(PT.Id "strlen", [s])
 

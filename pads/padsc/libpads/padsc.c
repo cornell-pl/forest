@@ -238,6 +238,8 @@
 #define PDCI_HALFMIN_INT64   -4611686018427387904LL
 #define PDCI_HALFMAX_INT64    4611686018427387903LL
 #define PDCI_HALFMAX_UINT64   9223372036854775807ULL
+#define PDCI_LARGE_NEG_DBL   -4611686018427387904.0
+#define PDCI_LARGE_POS_DBL    4611686018427387903.0
 /* END_MACRO */
 
 /* Fold Points : when should the running int64 / uint64 sum be folded into the average? */
@@ -897,23 +899,26 @@ int_type ## _acc_init(PDC_t *pdc, int_type ## _acc *a)
 {
   PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(int_type) "_acc_init" );
   PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_init" , a );
+  memset((void*)a, 0, sizeof(*a));
   if (!(a->dict = dtopen(&int_type ## _acc_dt_set_disc, Dtset))) {
     return PDC_ERR;
   }
-  a->good = a->bad = a->fold = a->tracked = a->psum = a->avg = a->min = a->max = 0;
   return PDC_OK;
 }
 
 PDC_error_t
 int_type ## _acc_reset(PDC_t *pdc, int_type ## _acc *a)
 {
+  Dt_t        *dict;
+
   PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(int_type) "_acc_reset" );
   PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(int_type) "_acc_reset" , a );
-  if (!a->dict) {
+  if (!(dict = a->dict)) {
     return PDC_ERR;
   }
-  dtclear(a->dict);
-  a->good = a->bad = a->fold = a->tracked = a->psum = a->avg = a->min = a->max = 0;
+  memset((void*)a, 0, sizeof(*a));
+  dtclear(dict);
+  a->dict = dict;
   return PDC_OK;
 }
 
@@ -1196,6 +1201,292 @@ int_type ## _acc_report_map(PDC_t *pdc, const char *prefix, const char *what, in
     return PDC_ERR;
   }
   res = int_type ## _acc_report_map_internal(pdc, tmpstr, prefix, what, nst, fn, a);
+  if (res == PDC_OK) {
+    pdc->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
+  }
+  sfstrclose (tmpstr);
+  return res;
+}
+/* END_MACRO */
+
+#define PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, floatORdouble, fpoint2floatORdouble)
+
+typedef struct fpoint_type ## _dt_key_s {
+  floatORdouble  val;
+  PDC_uint64     cnt;
+} fpoint_type ## _dt_key_t;
+
+typedef struct fpoint_type ## _dt_elt_s {
+  fpoint_type ## _dt_key_t key;
+  Dtlink_t link;
+} fpoint_type ## _dt_elt_t;
+
+/*
+ * Order set comparison function: only used at the end to rehash
+ * the (formerly unordered) set.  Since same val only occurs
+ * once, ptr equivalence produces key equivalence.
+ *   different keys: sort keys by cnt field, break tie with vals
+ */
+int
+fpoint_type ## _dt_elt_oset_cmp(Dt_t *dt, fpoint_type ## _dt_key_t *a, fpoint_type ## _dt_key_t *b, Dtdisc_t *disc)
+{
+  NoP(dt);
+  NoP(disc);
+  if (a == b) { /* same key */
+    return 0;
+  }
+  if (a->cnt == b->cnt) { /* same count, do val comparison */
+    return (a->val < b->val) ? -1 : 1;
+  }
+  /* different counts */
+  return (a->cnt > b->cnt) ? -1 : 1;
+}
+
+/*
+ * Unordered set comparison function: all that matters is val equality
+ * (0 => equal, 1 => not equal)
+ */
+int
+fpoint_type ## _dt_elt_set_cmp(Dt_t *dt, fpoint_type ## _dt_key_t *a, fpoint_type ## _dt_key_t *b, Dtdisc_t *disc)
+{
+  NoP(dt);
+  NoP(disc);
+  if (a->val == b->val) {
+    return 0;
+  }
+  return 1;
+}
+
+void*
+fpoint_type ## _dt_elt_make(Dt_t *dt, fpoint_type ## _dt_elt_t *a, Dtdisc_t *disc)
+{
+  fpoint_type ## _dt_elt_t *b;
+  if ((b = oldof(0, fpoint_type ## _dt_elt_t, 1, 0))) {
+    b->key.val  = a->key.val;
+    b->key.cnt  = a->key.cnt;
+  }
+  return b;
+}
+
+void
+fpoint_type ## _dt_elt_free(Dt_t *dt, fpoint_type ## _dt_elt_t *a, Dtdisc_t *disc)
+{
+  free(a);
+}
+
+static Dtdisc_t fpoint_type ## _acc_dt_set_disc = {
+  offsetof(fpoint_type ## _dt_elt_t, key),     /* key     */
+  sizeof(floatORdouble),                       /* size    */
+  offsetof(fpoint_type ## _dt_elt_t, link),    /* link    */
+  (Dtmake_f)fpoint_type ## _dt_elt_make,       /* makef   */
+  (Dtfree_f)fpoint_type ## _dt_elt_free,       /* freef   */
+  (Dtcompar_f)fpoint_type ## _dt_elt_set_cmp,  /* comparf */
+  NiL,                                         /* hashf   */
+  NiL,                                         /* memoryf */
+  NiL                                          /* eventf  */
+};
+
+static Dtdisc_t fpoint_type ## _acc_dt_oset_disc = {
+  offsetof(fpoint_type ## _dt_elt_t, key),     /* key     */
+  sizeof(floatORdouble),                       /* size    */
+  offsetof(fpoint_type ## _dt_elt_t, link),    /* link    */
+  (Dtmake_f)fpoint_type ## _dt_elt_make,       /* makef   */
+  (Dtfree_f)fpoint_type ## _dt_elt_free,       /* freef   */
+  (Dtcompar_f)fpoint_type ## _dt_elt_oset_cmp, /* comparf */
+  NiL,                                         /* hashf   */
+  NiL,                                         /* memoryf */
+  NiL                                          /* eventf  */
+};
+
+PDC_error_t
+fpoint_type ## _acc_init(PDC_t *pdc, fpoint_type ## _acc *a)
+{
+  PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(fpoint_type) "_acc_init" );
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(fpoint_type) "_acc_init" , a );
+  memset((void*)a, 0, sizeof(*a));
+  if (!(a->dict = dtopen(&fpoint_type ## _acc_dt_set_disc, Dtset))) {
+    return PDC_ERR;
+  }
+  return PDC_OK;
+}
+
+PDC_error_t
+fpoint_type ## _acc_reset(PDC_t *pdc, fpoint_type ## _acc *a)
+{
+  Dt_t        *dict;
+
+  PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(fpoint_type) "_acc_reset" );
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(fpoint_type) "_acc_reset" , a );
+  if (!(dict = a->dict)) {
+    return PDC_ERR;
+  }
+  memset((void*)a, 0, sizeof(*a));
+  dtclear(dict);
+  a->dict = dict;
+  return PDC_OK;
+}
+
+PDC_error_t
+fpoint_type ## _acc_cleanup(PDC_t *pdc, fpoint_type ## _acc *a)
+{
+  PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(fpoint_type) "_acc_cleanup" );
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(fpoint_type) "_acc_cleanup" , a );
+  if (a->dict) {
+    dtclose(a->dict);
+    a->dict = 0;
+  }
+  return PDC_OK;
+}
+
+void
+fpoint_type ## _acc_fold_psum(fpoint_type ## _acc *a) {
+  floatORdouble pavg, navg;
+  PDC_uint64 recent = a->good - a->fold;
+  if (recent == 0) {
+    return;
+  }
+  pavg = a->psum / (floatORdouble)recent;
+  navg = ((a->avg * a->fold) + (pavg * recent))/(floatORdouble)a->good;
+  /* could test for change between a->avg and navg */
+  a->avg = navg;
+  a->psum = 0;
+  a->fold += recent;
+}
+
+floatORdouble
+fpoint_type ## _acc_avg(PDC_t *pdc, fpoint_type ## _acc *a) {
+  fpoint_type ## _acc_fold_psum(a);
+  return a->avg;
+}
+
+PDC_error_t
+fpoint_type ## _acc_add(PDC_t *pdc, fpoint_type ## _acc *a, PDC_base_ed *ed, fpoint_type *val)
+{
+  floatORdouble             v          = fpoint2floatORdouble(*val);
+  fpoint_type ## _dt_elt_t  insert_elt;
+  fpoint_type ## _dt_key_t  lookup_key;
+  fpoint_type ## _dt_elt_t  *tmp1;
+  PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(fpoint_type) "_acc_add" );
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(fpoint_type) "_acc_add" , a );
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(fpoint_type) "_acc_add" , ed );
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(fpoint_type) "_acc_add" , val );
+  if (!a->dict) {
+    return PDC_ERR;
+  }
+  if (ed->errCode != 0) {
+    (a->bad)++;
+    return PDC_OK;
+  }
+  if ( (v > 0 && a->psum > PDCI_LARGE_POS_DBL) ||
+       (v < 0 && a->psum < PDCI_LARGE_NEG_DBL) ) {
+    fpoint_type ## _acc_fold_psum(a);
+  }
+  a->psum += v;
+  (a->good)++;
+  if (a->good == 1) {
+    a->min = a->max = v;
+  } else if (v < a->min) {
+    a->min = v;
+  } else if (v > a->max) {
+    a->max = v;
+  }
+  if (dtsize(a->dict) < PDCI_ACC_MAX2TRACK) {
+    insert_elt.key.val = v;
+    insert_elt.key.cnt = 0;
+    if (!(tmp1 = dtinsert(a->dict, &insert_elt))) {
+      PDC_WARN(pdc->disc, "** PADC internal error: dtinsert failed (out of memory?) **");
+      return PDC_ERR;
+    }
+    (tmp1->key.cnt)++;
+    (a->tracked)++;
+  } else {
+    lookup_key.val = v;
+    lookup_key.cnt = 0;
+    if ((tmp1 = dtmatch(a->dict, (Void_t*)&lookup_key))) {
+      (tmp1->key.cnt)++;
+      (a->tracked)++;
+    }
+  }
+  return PDC_OK;
+}
+
+PDC_error_t
+fpoint_type ## _acc_report_internal(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
+				    fpoint_type ## _acc *a)
+{
+  int                   i = 0, sz, rp;
+  PDC_uint64            cnt_sum = 0;
+  floatORdouble         bad_pcnt;
+  floatORdouble         track_pcnt;
+  floatORdouble         cnt_sum_pcnt;
+  floatORdouble         elt_pcnt;
+  Void_t                *velt;
+  fpoint_type ## _dt_elt_t *elt;
+
+  PDC_TRACE(pdc->disc, PDCI_MacroArg2String(fpoint_type) "_acc_report_internal called" );
+  if (!prefix || *prefix == 0) {
+    prefix = "<top>";
+  }
+  if (!what) {
+    what = fpoint_descr;
+  }
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what);
+  if (a->good == 0) {
+    bad_pcnt = (a->bad == 0) ? 0.0 : 100.0;
+  } else {
+    bad_pcnt = 100.0 * (a->bad / (floatORdouble)(a->good + a->bad));
+  }
+  sfprintf(outstr, "good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+	   a->good, a->bad, bad_pcnt);
+  if (a->good == 0) {
+    return PDC_OK;
+  }
+  fpoint_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < PDCI_ACC_REPORT_K) ? sz : PDCI_ACC_REPORT_K;
+  dtdisc(a->dict,   &fpoint_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+  sfprintf(outstr, "  Characterizing %s:  min %.5lf", what, a->min);
+  sfprintf(outstr, " max %.5lf", a->max);
+  sfprintf(outstr, " avg %.3lf\n", a->avg);
+  sfprintf(outstr, "    => distribution of top %d values out of %d distinct values:\n", rp, sz);
+  if (sz == PDCI_ACC_MAX2TRACK && a->good > a->tracked) {
+    track_pcnt = 100.0 * (a->tracked/(floatORdouble)a->good);
+    sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
+  }
+  for (velt = dtfirst(a->dict); velt && i < PDCI_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+    elt = (fpoint_type ## _dt_elt_t*)velt;
+    cnt_sum += elt->key.cnt;
+    elt_pcnt = 100.0 * (elt->key.cnt/(floatORdouble)a->good);
+    sfprintf(outstr, "        val: %10.5lf", elt->key.val);
+    sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+
+  }
+  cnt_sum_pcnt = 100.0 * (cnt_sum/(floatORdouble)a->good);
+  sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
+  sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf\n",
+	   cnt_sum, cnt_sum_pcnt);
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &fpoint_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return PDC_OK;
+}
+
+PDC_error_t
+fpoint_type ## _acc_report(PDC_t *pdc, const char *prefix, const char *what, int nst,
+			   fpoint_type ## _acc *a)
+{
+  Sfio_t *tmpstr;
+  PDC_error_t res;
+  PDCI_DISC_INIT_CHECKS( PDCI_MacroArg2String(fpoint_type) "_acc_report" );
+  PDCI_NULLPARAM_CHECK( PDCI_MacroArg2String(fpoint_type) "_acc_report" , a );
+  if (!pdc->disc->errorf) {
+    return PDC_OK;
+  }
+  if (!(tmpstr = sfstropen ())) { 
+    return PDC_ERR;
+  }
+  res = fpoint_type ## _acc_report_internal(pdc, tmpstr, prefix, what, nst, a);
   if (res == PDC_OK) {
     pdc->disc->errorf(NiL, 0, "%s", sfstruse(tmpstr));
   }
@@ -2135,6 +2426,16 @@ PDCI_INT_ACCUM(PDC_uint64, "uint64", 8, "llu", PDCI_FOLDTEST_UINT64);
 
 PDCI_INT_ACCUM_REPORT_MAP(PDC_int32, "int32", "ld");
 
+/* PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr, floatORdouble, fpoint2floatORdouble) */
+
+PDCI_FPOINT_ACCUM(PDC_fpoint8,   "fpoint8",   float, PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_ufpoint8,  "ufpoint8",  float, PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_fpoint16,  "fpoint16",  float, PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_ufpoint16, "ufpoint16", float, PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_fpoint32,  "fpoint32",  float, PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_ufpoint32, "ufpoint32", float, PDC_FPOINT2FLT);
+PDCI_FPOINT_ACCUM(PDC_fpoint64,  "fpoint64",  double, PDC_FPOINT2DBL);
+PDCI_FPOINT_ACCUM(PDC_ufpoint64, "ufpoint64", double, PDC_FPOINT2DBL);
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 
@@ -2715,7 +3016,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.67 2003-04-28 21:51:12 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.68 2003-05-01 20:24:30 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -2946,6 +3247,28 @@ int PDCI_bcd_hilo_digits[256] = {
   /* 0xF? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
+#if 0 
+/* HUME version */
+int PDCI_bcd_hilo_digits[256] = {
+  /* 0x0? */  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  0,  0,  0,  0,  0,  0,
+  /* 0x1? */ 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 10, 10, 10, 10, 10, 10,
+  /* 0x2? */ 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 20, 20, 20, 20, 20, 20,
+  /* 0x3? */ 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 30, 30, 30, 30, 30, 30,
+  /* 0x4? */ 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 40, 40, 40, 40, 40, 40,
+  /* 0x5? */ 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 50, 50, 50, 50, 50, 50,
+  /* 0x6? */ 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 60, 60, 60, 60, 60, 60,
+  /* 0x7? */ 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 70, 70, 70, 70, 70, 70,
+  /* 0x8? */ 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 80, 80, 80, 80, 80, 80,
+  /* 0x9? */ 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 90, 90, 90, 90, 90, 90,
+  /* 0xA? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xB? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xC? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xD? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xE? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xF? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+};
+#endif
+
 int PDCI_bcd_hi_digit[256] = {
   /* 0x0? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   /* 0x1? */  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -2964,6 +3287,28 @@ int PDCI_bcd_hi_digit[256] = {
   /* 0xE? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   /* 0xF? */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
+
+#if 0
+/* HUME version */
+int PDCI_bcd_hi_digit[256] = {
+  /* 0x0? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0x1? */  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+  /* 0x2? */  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,
+  /* 0x3? */  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
+  /* 0x4? */  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
+  /* 0x5? */  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
+  /* 0x6? */  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,
+  /* 0x7? */  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,
+  /* 0x8? */  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,
+  /* 0x9? */  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,
+  /* 0xA? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xB? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xC? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xD? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xE? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  /* 0xF? */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+};
+#endif
 
 #if 0
 /* XXX the only valid 2nd nible is  C, D, or F, so an alternate
@@ -3523,7 +3868,7 @@ PDC_string_init(PDC_t *pdc, PDC_string *s)
   if (!s) {
     return PDC_ERR;
   }
-  bzero(s, sizeof(PDC_string));
+  memset((void*)s, 0, sizeof(*s));
   return PDC_OK;
 }
 
