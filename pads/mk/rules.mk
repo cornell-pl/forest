@@ -237,13 +237,17 @@ STATIC_LIBS_D += $(STATIC_PGLXLIB_D)
 
 DYNAMIC_OCAML_LIBS_D = -L/home/mff/Galax-0.3.linux/lib/c -lglx -lnums -lm -ldl -lcurses -lunix -lstr
 DYNAMIC_OCAML_LIBS_O = $(DYNAMIC_OCAML_LIBS_D)
-# DYNAMIC_LIBS_D += $(DYNAMIC_OCAML_LIBS_D)
-# DYNAMIC_LIBS_O += $(DYNAMIC_OCAML_LIBS_O)
+ifdef USE_GALAX
+DYNAMIC_LIBS_D += $(DYNAMIC_OCAML_LIBS_D)
+DYNAMIC_LIBS_O += $(DYNAMIC_OCAML_LIBS_O)
+endif
 
 STATIC_OCAML_LIBS_D = /usr/common/lib/ocaml/libcamlrun.a /usr/common/lib/ocaml/libunix.a /usr/common/lib/ocaml/libstr.a /usr/common/lib/ocaml/libnums.a
 STATIC_OCAML_LIBS_O = $(STATIC_OCAML_LIBS_D)
-# STATIC_LIBS_D += $(STATIC_OCAML_LIBS_D)
-# STATIC_LIBS_O += $(STATIC_OCAML_LIBS_O)
+ifdef USE_GALAX
+STATIC_LIBS_D += $(STATIC_OCAML_LIBS_D)
+STATIC_LIBS_O += $(STATIC_OCAML_LIBS_O)
+endif
 endif
 
 define CCExec_DYNAMIC_D
