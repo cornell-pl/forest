@@ -1,4 +1,3 @@
-/* Pzip will eventually be a base type */
 Ptypedef Puint64 pn_t;
 
 Ptypedef Pchar zipSep_t : 
@@ -16,7 +15,6 @@ Punion Pzip{
   Puint64        largeZip;
 };
 
-/*@BEGIN dibbler_new.tex */
 Precord Pstruct summary_header_t {
   "0|";
   Puint32       tstamp;
@@ -55,7 +53,7 @@ Pstruct event_t {
 };
 
 Parray eventSeq {
-  event_t[] : Psep('|') /* && Pterm(Peor) */;
+  event_t[] : Psep('|') && Pterm(Peor) ;
 } Pwhere {
   Pforall (i Pin [0..length-2] : 
            (elts[i].tstamp <= elts[i+1].tstamp));
@@ -74,6 +72,5 @@ Psource Pstruct out_sum{
   summary_header_t  h;
   entries_t         es;
 };
-/*@END dibbler_new.tex */
 
 

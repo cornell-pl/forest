@@ -4,7 +4,9 @@
 #define IO_DISC_MK P_nlrec_make(0)
 
 
-// fmt function used to override the default Phostname fmt function
+/*  fmt function used to override the default Phostname fmt function.
+    Shortly, Phostname will become a built in PADS type, at which
+    point, this function will no longer be necessary */
 ssize_t
 my_Phostname_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len,
 	       int *buf_full, int *requested_out, char const *delims,

@@ -16,15 +16,15 @@ Punion auth_id_t {
   Pstring(:' ':) id;                        
 };
 
+Penum method_t {
+    GET,    PUT,  POST,  HEAD,     
+    DELETE, LINK, UNLINK 
+};
+
 Pstruct version_t {
   "HTTP/";
   Puint8 major; '.';
   Puint8 minor;          
-};
-
-Penum method_t {
-    GET,    PUT,  POST,  HEAD,     
-    DELETE, LINK, UNLINK 
 };
 
 bool chkVersion(version_t v, method_t m) {
@@ -44,12 +44,10 @@ Pstruct request_t {
 Ptypedef Puint16_FW(:3:) response_t : 
          response_t x => { 100 <= x && x < 600};
 
-/*
 Punion length_t {
   Pchar unavailable : unavailable == '-';
   Puint32 len;    
 };
-*/
 
 Precord Pstruct entry_t {
          client_t       client;          
@@ -58,7 +56,7 @@ Precord Pstruct entry_t {
    " ["; Pdate(:']':)   date;            
    "] "; request_t      request;         
    ' ';  response_t     response;        
-   ' ';  Puint32        length;          
+   ' ';  length_t        length;          
 };
 
 Psource Parray clt_t {

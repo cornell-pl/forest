@@ -63,9 +63,62 @@ wsl-sum-shared: wsl-sum.c wsl.c $(LIB_DEPS_O)
 wsl-sum-shared-g: wsl-sum.c wsl.c $(LIB_DEPS_D)
 	      @$(CCExec_DYNAMIC_D) 
 
+sirius-xml: sirius-xml.c sirius.c $(STATIC_LIBS_O)
+	$(COMPILE_O) $^ -o $@
+
+sirius-xml-g: sirius-xml.c sirius.c $(STATIC_LIBS_D)
+	$(COMPILE_D) $^ -o $@
+
+sirius-xml-shared: sirius-xml.c sirius.c $(LIB_DEPS_O)
+	      @$(CCExec_DYNAMIC_O) 
+
+sirius-xml-shared-g: sirius-xml.c sirius.c $(LIB_DEPS_D)
+	      @$(CCExec_DYNAMIC_D) 
+
+sirius-accum: sirius-accum.c sirius.c $(STATIC_LIBS_O)
+	$(COMPILE_O) $^ -o $@
+
+sirius-accum-g: sirius-accum.c sirius.c $(STATIC_LIBS_D)
+	$(COMPILE_D) $^ -o $@
+
+sirius-accum-shared: sirius-accum.c sirius.c $(LIB_DEPS_O)
+	      @$(CCExec_DYNAMIC_O) 
+
+sirius-accum-shared-g: sirius-accum.c sirius.c $(LIB_DEPS_D)
+	      @$(CCExec_DYNAMIC_D) 
+
+sirius-fmt: sirius-fmt.c sirius.c $(STATIC_LIBS_O)
+	$(COMPILE_O) $^ -o $@
+
+sirius-fmt-g: sirius-fmt.c sirius.c $(STATIC_LIBS_D)
+	$(COMPILE_D) $^ -o $@
+
+sirius-fmt-shared: sirius-fmt.c sirius.c $(LIB_DEPS_O)
+	      @$(CCExec_DYNAMIC_O) 
+
+sirius-fmt-shared-g: sirius-fmt.c sirius.c $(LIB_DEPS_D)
+	      @$(CCExec_DYNAMIC_D) 
+
+sirius-filter: sirius-filter.c sirius.c $(STATIC_LIBS_O)
+	$(COMPILE_O) $^ -o $@
+
+sirius-filter-g: sirius-filter.c sirius.c $(STATIC_LIBS_D)
+	$(COMPILE_D) $^ -o $@
+
+sirius-filter-shared: sirius-filter.c sirius.c $(LIB_DEPS_O)
+	      @$(CCExec_DYNAMIC_O) 
+
+sirius-filter-shared-g: sirius-filter.c sirius.c $(LIB_DEPS_D)
+	      @$(CCExec_DYNAMIC_D) 
+
 clean:
 	$(RM) wsl.[ch] wsl.xsd
 	$(RM) wsl-xml wsl-xml-g wsl-xml-shared wsl-xml-shared-g
 	$(RM) wsl-accum wsl-accum-g wsl-accum-shared wsl-accum-shared-g
 	$(RM) wsl-fmt wsl-fmt-g wsl-fmt-shared wsl-fmt-shared-g
 	$(RM) wsl-sum wsl-sum-g wsl-sum-shared wsl-sum-shared-g
+	$(RM) sirius.[ch] sirius.xsd sirius_clean sirius_errors
+	$(RM) sirius-xml sirius-xml-g sirius-xml-shared sirius-xml-shared-g
+	$(RM) sirius-accum sirius-accum-g sirius-accum-shared sirius-accum-shared-g
+	$(RM) sirius-fmt sirius-fmt-g sirius-fmt-shared sirius-fmt-shared-g
+	$(RM) sirius-filter sirius-filter-g sirius-filter-shared sirius-filter-shared-g

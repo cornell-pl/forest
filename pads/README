@@ -72,7 +72,7 @@ STEP 1: ENVIRONMENT SETUP
 STEP 2: INSTALL SML / SML RUNTIME
 
   To build the padsc compile, you need the Standard ML of NJ
-  compiler (sml), version 110.0.6 or version 110.0.7.
+  compiler (sml), version 110.0.7 or later.
 
   One the padsc compiler is built, you only require the SML runtime 
   to execute padsc.

@@ -355,11 +355,16 @@ SHARED_LIBTOOL_WHOLE_ARCHIVE :=-dynamiclib -flat_namespace -undefined suppress -
 CARCHFLAGS :=-fno-common
 endif
 
+# gsf suggested
+#(ranlib $$lib)>/dev/null 2>&1 || true
+# but darwin always has ranlib
+# so we just call ranlib $$lib below
+
 # use this rule as follows
 # (lib=<library>; $(FixStaticLib))
 ifeq ($(OPSYS),darwin)
 define FixStaticLib
-(ranlib $$lib)>/dev/null 2>&1 || true
+(echo calling ranlib $$lib; ranlib $$lib)
 endef
 else
 define FixStaticLib

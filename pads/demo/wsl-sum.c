@@ -37,12 +37,12 @@ int main(int argc, char** argv) {
   /* Read each line of data  */
   while (!P_io_at_eof(pads)) {
     if (P_OK == entry_t_read(pads, &m, &pd, &rep)) {
-      count += rep.length;
+      /*      count += rep.length; */
+      count += (rep.length.tag == unavailable)? 0 : rep.length.val.len;
     }
   };
   error(0, "Sum of lengths of all legal records = %d.\n", count);
   P_io_close(pads);
-
 
   entry_t_cleanup(pads, &rep);
   entry_t_pd_cleanup(pads, &pd);
