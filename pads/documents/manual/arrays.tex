@@ -15,8 +15,8 @@ The syntax for \Parray{}s is given by the following BNF grammar fragment:
 \nont{p\_array\_constraints} & \is{} & \nont{p\_array\_constraint} 
 \alt{} \nont{p\_array\_constraint} \&\& \nont{p\_array\_constraints}\\[1ex]
 \\
-\nont{p\_range}  & \is{} & \{ \nont{expression} .. \nont{expression}\}  \alt{} identifier\\
-\nont{p\_forall} & \is{} & ( identifier \Pin{} \nont{p\_range} : \nont{expression} )\\
+\nont{p\_range}  & \is{} & `[' \nont{expression} .. \nont{expression}`]'  \alt{} identifier\\
+\nont{p\_forall} & \is{} & \Pforall{} ( identifier \Pin{} \nont{p\_range} : \nont{expression} )\\
 \nont{p\_array\_post}  & \is{} & \nont{predicate} \alt{} \nont{p\_forall}\\
 \nont{p\_array\_posts} & \is{} & \nont{p\_array\_post} \alt{} \nont{p\_array\_post} \&\& \nont{p\_array\_posts}\\[1ex]
 \\
@@ -40,7 +40,90 @@ We put single quotation marks around the left and right brackets to
 indicate they appear in the grammer, rather than as a meta-notation
 for optionality.
 
+\subsection{Examples}
+To describe a resolved IP address in ASCII, an example of which is:
+\begin{center}
+\begin{verbatim}
+135.207.26.22
+\end{verbatim}
+\end{center}
+we use the specification:
+\input{code/nIP}
+\noindent
+which indicates that \Parray{} \cd{nIP} is a sequence of
+four \cd{Puint8}'s.  The elements of the sequence are separated by
+dots and the sequence is terminated by a space.  As a part of parsing
+the sequence, the generated read function for this type will read the
+separators.  It will check that the terminator is present, but will
+not consume it.  This specification has two termination conditions: a
+maximum size (4) and a terminator (a space).  Parsing will terminate
+when either condition is satisified.  An error will be reported if the
+other condition is not also satisifed.
 
+As another example, the \Parray{} \cd{seq_t}
+\input{code/seq_t}
+\noindent
+uses the \Plast{} predicate to terminate a
+sequence of 32-bit binary integers as soon as one of those integers is
+greater than ten.  The special variable \cd{elts} refers to the
+sequence matched so far, while \cd{current} is the index of the most
+recently read element.  If the expression within the \Plast{} clause
+evaluates to true, parsing for the array terminates.  The current
+element is then the last element in the array.
+
+In the next example, the \Parray{} \cd{sorted_t} uses a \Pwhere{}
+clause to check that the elements of the sequence were sorted by the
+\cd{id} field of the element type..
+\input{code/sorted_t}
+A \Pforall{} expression executes its body once for each value in the
+range. The index variable, \cd{i} in the example, is bound to the
+range value in the body.
+
+\subsection{Special variables}
+Within the various expression contexts of \Parray{} declarations, a
+number of variables are in scope.  The following table lists the
+variables and their bindings.
+\vskip 1ex
+\begin{tabular}{|l|l|l|}
+\hline
+Variable & Contexts & Binding \\\hline \hline
+numRead & all & Number of elements read from source. \\ \hline
+length  & all & Length of in-memory representation of sequence.\\ \hline
+elts    & all & In-memory representation of element sequence. \\ \hline
+pds     & all & In-memory representation of parse descriptor sequence. \\ \hline
+current & all & Index into in-memory representation of most recently read element.  \\ \hline
+elt     & all & Most recently read element of sequence. \\ \hline
+pd      & all & Most recently set  parse descriptor. \\ \hline
+consume & \Pended{} & See \Pended{} section for explanation. \\ \hline
+begin   & \Pparsecheck{} & Position in input source before reading sequence. \\ \hline
+end     & \Pparsecheck{} & Position in input source after reading sequence. \\ \hline
+elemBegin   & \Pparsecheck{} & Position in input source before reading element. \\ \hline
+elemEnd     & \Pparsecheck{} & Position in input source after reading element. \\ \hline
+\end{tabular}
+\noindent
+In addition, the name of the array type is in scope in every context;
+it is bound to the in-memory representation of the sequence.
+
+\subsection{\Psep}
+The \Psep{} constraint is used to specify separators, \ie{} data in
+the source that occurs between sequence elements.  The body of the
+\Psep{} constraint can be a character, string, or regular expression. 
+
+\subsection{\Pterm}
+The \Pterm{} constraint is used to specify a terminator, \ie{} data in
+the source that occurs after the last element of the sequence and
+indicates that the sequence has ended.  The body of the \Pterm{}
+constraint can be a character, string, or regular expression, or the
+special keyword \Pnosep{}, which indicates that the lack of a
+separator should be interpreted as signalling the end of the
+sequence. 
+
+\subsection{\Plast}
+\subsection{\Pended}
+\subsection{\Pomit}
+\subsection{\Pwhere}
+\subsection{\Pparsecheck}
+\subsection{\Pforall}
 \begin{verbatim}
 Parray name ( param list ){
  basetype sizespec : [sep == char] && [term == char] && semantic constraint

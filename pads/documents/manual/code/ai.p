@@ -1,11 +1,13 @@
-/*@FILE @LEFT httpRequest.tex checkVersion.tex host_t.tex*/
+/*@FILE @LEFT httpRequest.tex checkVersion.tex host_t.tex nIP.tex */
 
+/*@BEGIN nIP.tex */
 Parray nIP {
   Puint8 [4] : Psep('.') && Pterm(' ');
 };
+/*@END nIP.tex */
 
 Parray sIP{
-  Pstring_SE(:"[. ]":) [] : Psep('.') && Pterm(' '); 
+  Pstring_SE(:"[. ]":) [] : Psep('.') && Pterm(Pnosep); 
 }
 
 /*@BEGIN host_t.tex */
