@@ -1,8 +1,8 @@
 pstruct test {
-  auint32 id1;
+  a_uint32 id1;
   '|';
-  auint32 id2;
+  a_uint32 id2;
   "|";
-  auint32 id3;
+  a_uint32 id3;
   EOR;
 };

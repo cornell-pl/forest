@@ -70,9 +70,10 @@ struct
 
   val base_emPCT   = P.makeTypedefPCT "PDC_base_em"
   val base_edPCT   = P.makeTypedefPCT "PDC_base_ed"
+  val bytePCT      = P.makeTypedefPCT "PDC_byte"
 
-  val charlit      = "PDC_achar_lit"
-  val strlit       = "PDC_astr_lit"
+  val charlit      = "PDC_a_char_lit"
+  val strlit       = "PDC_a_str_lit"
   val stringPCT    = P.makeTypedefPCT "PDC_string"
   val str          = "str"
   val len          = "len"
@@ -266,6 +267,6 @@ struct
 
 (* -- Other helper functions *)
   fun swapBytesS(exp) = PT.Expr(PT.Call(PT.Id "PDC_swap_bytes",
-					[PT.Cast(P.charPtr, exp), PT.Cast(P.uint,P.sizeofEX exp)]))
+					[PT.Cast(P.ptrPCT bytePCT, P.addrX exp), PT.Cast(P.uint,P.sizeofEX exp)]))
   fun end2StringX(endian) = PT.Call(PT.Id "PDC_Endian2String", [endian])
 end

@@ -65,10 +65,10 @@ int main(int argc, char** argv) {
     }
     /* try to read 4 fixed width integers (width 6) */
     for (i = 0; i < 4; i++) {
-      PDC_aint32FW_read(pdc, &em, 6, &ed, &i1);
+      PDC_a_int32_FW_read(pdc, &em, 6, &ed, &i1);
     }
     if (strncmp(argv[1], "norec", 5) == 0) {
-      if (PDC_ERR == PDC_achar_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
+      if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
 	break;
       }
     } else {

@@ -1,6 +1,6 @@
 #include "libpadsc-internal.h" /* for testing - normally do not include internal */
 
-typedef unsigned char PDC_byte;
+/* typedef unsigned char PDC_byte; */
 
 PDC_byte ea_tab[256] =
 {

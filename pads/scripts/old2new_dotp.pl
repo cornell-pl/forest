@@ -3,10 +3,16 @@
 while (<>) {
   s/achar/a_char/g;
   s/astr/a_str/g;
+
+  s/echar/e_char/g;
+  s/estr/e_str/g;
+
   s/aint/a_int/g;
   s/auint/a_uint/g;
+
   s/eint/e_int/g;
   s/euint/e_uint/g;
+
   s/bint/b_int/g;
   s/buint/b_uint/g;
 

@@ -1,5 +1,28 @@
 #include "libpadsc-internal.h" /* for testing - normally do not include internal */
 
+static PDC_uint64 PDCI_10toThe[] = {
+  /* 10^0  = */                          1ULL,
+  /* 10^1  = */                         10ULL,
+  /* 10^2  = */                        100ULL,
+  /* 10^3  = */                       1000ULL,
+  /* 10^4  = */                      10000ULL,
+  /* 10^5  = */                     100000ULL,
+  /* 10^6  = */                    1000000ULL,
+  /* 10^7  = */                   10000000ULL,
+  /* 10^8  = */                  100000000ULL,
+  /* 10^9  = */                 1000000000ULL,
+  /* 10^10 = */                10000000000ULL,
+  /* 10^11 = */               100000000000ULL,
+  /* 10^12 = */              1000000000000ULL,
+  /* 10^13 = */             10000000000000ULL,
+  /* 10^14 = */            100000000000000ULL,
+  /* 10^15 = */           1000000000000000ULL,
+  /* 10^16 = */          10000000000000000ULL,
+  /* 10^17 = */         100000000000000000ULL,
+  /* 10^18 = */        1000000000000000000ULL,
+  /* 10^19 = */       10000000000000000000ULL
+};
+
 PDC_byte ea_tab[256] =
 {
   0x00, 0x01, 0x02, 0x03, '?',  0x09, '?',  0x7f,
@@ -185,78 +208,33 @@ PDC_uint64_to_ebcdic(PDC_byte *ebc, PDC_uint64 in, int len)
   printf("\n\n");
 }
 
+#define FUN_NUM  111111111111111111ULL
+
 int main(int argc, char** argv) {
-  PDC_int64   num;
   PDC_uint64 unum;
-  const char* fname = "../../data/ex_data.ebcdic_test";
+  const char* fname = "../../data/ex_data.fpoint_test";
   char tmp[1000];
   Sfio_t* io;
+  int w, n, d;
 
   printf("fname = %s\n", fname);
   io = sfopen(0, fname, "w");
 
-  num = 0;
-  PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
+  /* write copy of unum once for each legal n/d combo making up each legal width */
+  for (w = 1; w < 19; w++) {
+    unum = FUN_NUM / (PDCI_10toThe[18-w]);
+    printf("For width %d chose fun number %llu\n", w, unum);
+    PDC_uint64_to_ebcdic((PDC_byte*)tmp, unum, w);
+    for (n = w; n >= 0; n--) {
+      d = w-n;
+      sfwrite(io, (void*)tmp, w);
+      sfputc(io, PDC_EBCDIC_NEWLINE);
+    }
+  }
 
-  num = PDC_MIN_INT8;
-  PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
-  sfwrite(io, (void*)tmp, 20);
+  /* write 19 and 20 byte copies for illegal combo testing */
+  sfwrite(io, (void*)tmp, 19);
   sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  num = PDC_MAX_INT8;
-  PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  unum = PDC_MAX_UINT8;
-  PDC_uint64_to_ebcdic((PDC_byte*)tmp, unum, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  num = PDC_MIN_INT16;
-  PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  num = PDC_MAX_INT16;
-  PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  unum = PDC_MAX_UINT16;
-  PDC_uint64_to_ebcdic((PDC_byte*)tmp, unum, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  num = PDC_MIN_INT32;
-  PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  num = PDC_MAX_INT32;
-  PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  unum = PDC_MAX_UINT32;
-  PDC_uint64_to_ebcdic((PDC_byte*)tmp, unum, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  num = PDC_MIN_INT64;
-  PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  num = PDC_MAX_INT64;
-  PDC_int64_to_ebcdic((PDC_byte*)tmp, num, 20);
-  sfwrite(io, (void*)tmp, 20);
-  sfputc(io, PDC_EBCDIC_NEWLINE);
-
-  unum = PDC_MAX_UINT64;
-  PDC_uint64_to_ebcdic((PDC_byte*)tmp, unum, 20);
   sfwrite(io, (void*)tmp, 20);
   sfputc(io, PDC_EBCDIC_NEWLINE);
 

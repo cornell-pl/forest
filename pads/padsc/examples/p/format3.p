@@ -1,7 +1,7 @@
 pstruct test {
-  auint32 id : id < 100000;     //- identity 
+  a_uint32 id : id < 100000;     //- identity 
   '|';
-  auint32 ts : ts == 11 * id;   //- time stamp
+  a_uint32 ts : ts == 11 * id;   //- time stamp
   '\n';
 };
 
@@ -12,9 +12,9 @@ parray recList {
 
 
 pstruct testtwo{
-  auint32 id : id < 100000;     //- identity
+  a_uint32 id : id < 100000;     //- identity
   '|';
-  auint32 ts : ts == 11 * id;  //- time stamp
+  a_uint32 ts : ts == 11 * id;  //- time stamp
 };
 
 
@@ -26,7 +26,7 @@ parray recListtwo{
 #define MIN 2
 #define MAX 5
 parray intList {
-  auint32 [MIN : MAX] : sep == '|' && term == '\n' &&
+  a_uint32 [MIN : MAX] : sep == '|' && term == '\n' &&
 		   forall i in [0 .. length -2] {intList[i] < intList[i+1]};
 };
 

@@ -1,12 +1,12 @@
-punion branches(auint32 a){
+punion branches(a_uint32 a){
   switch (a) {
-  case 1 : aint32  number : number % 2 == 0;
-  case 2 : astringSE(:"EOR":) name;
-  default: auint32 def; 
+  case 1 : a_int32  number : number % 2 == 0;
+  case 2 : a_string_SE(:"EOR":) name;
+  default: a_uint32 def; 
   }
 }
 
 precord pstruct choice{
-  auint32       a; 
+  a_uint32       a; 
   branches(:a:) b; 
 }

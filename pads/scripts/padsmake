@@ -1,0 +1,14 @@
+#!/bin/tcsh
+
+if (! -e Makefile) then 
+  echo "padsmake only works in a dir with a Makefile that defines PADS_HOME"
+  exit -1
+endif
+set pads_home = `grep PADS_HOME Makefile | sed -e "s/PADS_HOME//" -e "s/=//g" -e "s/ //g"`
+if ("$pads_home" == "") then
+  echo "padsmake only works in a dir with a Makefile that defines PADS_HOME"
+  exit -1
+endif
+source $pads_home/DO_SETENV
+/bin/rm -f Makefile.??
+nmake $* |& fgrep -v 'ignoring pragma'

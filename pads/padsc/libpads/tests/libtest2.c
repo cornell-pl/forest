@@ -74,43 +74,43 @@ int main(int argc, char** argv) {
       break;
     }
 
-    if (PDC_ERR == PDC_bint8_read(pdc, &em, &ed, &i1)) {
+    if (PDC_ERR == PDC_b_int8_read(pdc, &em, &ed, &i1)) {
       goto check_newline;
     } else {
       error(0, "Read bint8  : %ld", i1);
     }
-    if (PDC_ERR == PDC_buint8_read(pdc, &em, &ed, &ui1)) {
+    if (PDC_ERR == PDC_b_uint8_read(pdc, &em, &ed, &ui1)) {
       goto check_newline;
     } else {
       error(0, "Read buint8 : %lu", ui1);
     }
 
-    if (PDC_ERR == PDC_bint16_read(pdc, &em, &ed, &i2)) {
+    if (PDC_ERR == PDC_b_int16_read(pdc, &em, &ed, &i2)) {
       goto check_newline;
     } else {
       error(0, "Read bint16  : %ld", i2);
     }
-    if (PDC_ERR == PDC_buint16_read(pdc, &em, &ed, &ui2)) {
+    if (PDC_ERR == PDC_b_uint16_read(pdc, &em, &ed, &ui2)) {
       goto check_newline;
     } else {
       error(0, "Read buint16 : %lu", ui2);
     }
-    if (PDC_ERR == PDC_bint32_read(pdc, &em, &ed, &i4)) {
+    if (PDC_ERR == PDC_b_int32_read(pdc, &em, &ed, &i4)) {
       goto check_newline;
     } else {
       error(0, "Read bint32  : %ld", i4);
     }
-    if (PDC_ERR == PDC_buint32_read(pdc, &em, &ed, &ui4)) {
+    if (PDC_ERR == PDC_b_uint32_read(pdc, &em, &ed, &ui4)) {
       goto check_newline;
     } else {
       error(0, "Read buint32 : %lu", ui4);
     }
-    if (PDC_ERR == PDC_bint64_read(pdc, &em, &ed, &i8)) {
+    if (PDC_ERR == PDC_b_int64_read(pdc, &em, &ed, &i8)) {
       goto check_newline;
     } else {
       error(0, "Read bint64  : %lld", i8);
     }
-    if (PDC_ERR == PDC_buint64_read(pdc, &em, &ed, &ui8)) {
+    if (PDC_ERR == PDC_b_uint64_read(pdc, &em, &ed, &ui8)) {
       goto check_newline;
     } else {
       error(0, "Read buint64 : %llu", ui8);
@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
       goto done;
     }
 #else
-    if (PDC_ERR == PDC_achar_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
+    if (PDC_ERR == PDC_a_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
       error(2, "Could not find newline, ending program");
       break;
     }

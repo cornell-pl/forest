@@ -2,6 +2,8 @@
 
 .SOURCE : ../../include ../tests ../gen ../p
 
+PADS_HOME = ../..
+
 if 0
 CCFLAGS = $(CC.OPTIMIZE) -DNDEBUG
 end

@@ -11,6 +11,8 @@
 
 #include <ast.h>
 #include <ast_common.h>
+#include <swap.h>
+#include <tm.h>
 #include <vmalloc.h>
 #include <sfio.h>
 #include <sfstr.h>
@@ -172,8 +174,9 @@ extern void bzero(void *s, size_t n);
  *  XXX_TODOC.
  */
 
-/* ================================================================================ */
-/* CONSTANTS */
+/* ================================================================================
+ * CONSTANTS
+ */
 
 #define PDC_VERSION                  20020815L
 
@@ -225,19 +228,12 @@ typedef enum PDC_errCode_t_e {
   PDC_EXTRA_BEFORE_EOR              =  162,
   PDC_EOF_BEFORE_EOR                =  163,
   PDC_RANGE                         =  170,
-  PDC_INVALID_AINT                  =  180,
-  PDC_INVALID_AUINT                 =  181,
-  PDC_INVALID_EINT                  =  182,
-  PDC_INVALID_EUINT                 =  183,
-  PDC_INVALID_BINT                  =  184,
-  PDC_INVALID_BUINT                 =  185,
 
-  PDC_INVALID_FPOINT                =  190,
-  PDC_INVALID_UFPOINT               =  191,
-  PDC_INVALID_FPOINT_BCD            =  192,
-  PDC_INVALID_UFPOINT_BCD           =  193,
-  PDC_INVALID_FPOINT_B              =  194,
-  PDC_INVALID_UFPOINT_B             =  195,
+  PDC_INVALID_A_NUM                 =  180,
+  PDC_INVALID_E_NUM                 =  181,
+  PDC_INVALID_SB_NUM                =  183,
+  PDC_INVALID_EBC_NUM               =  184,
+  PDC_INVALID_BCD_NUM               =  185,
 
   PDC_CHAR_LIT_NOT_FOUND            =  200,
   PDC_STR_LIT_NOT_FOUND             =  210,
@@ -247,10 +243,11 @@ typedef enum PDC_errCode_t_e {
   PDC_INVALID_DATE                  =  250
 } PDC_errCode_t;
 
-/* ================================================================================ */
-/* INTERFACE LIBRARY TYPES: FORWARD DECLS */
-
-/* The struct and enum decls for these types are in this file:
+/* ================================================================================
+ * INTERFACE LIBRARY TYPES: FORWARD DECLS
+ *
+ *
+ * The struct and enum decls for these types are in this file:
  *     PDC_t*        : runtime library handle (opaque)
  *                      initialized with PDC_open, passed as first arg to most library routines
  *     PDC_disc_t*   : handle to discipline
@@ -282,8 +279,9 @@ typedef enum   PDC_endian_e        PDC_endian;
 typedef struct PDC_IO_elt_s        PDC_IO_elt_t;
 typedef struct PDC_IO_disc_s       PDC_IO_disc_t;
 
-/* ================================================================================ */
-/* BASIC LIBRARY TYPES */
+/* ================================================================================
+ * BASIC LIBRARY TYPES
+ */
 
 typedef unsigned char          PDC_byte;
 
@@ -297,11 +295,11 @@ typedef unsigned _ast_int2_t   PDC_uint16;
 typedef unsigned _ast_int4_t   PDC_uint32;
 typedef unsigned _ast_int8_t   PDC_uint64;
 
-typedef	struct { PDC_int64  num; PDC_uint64 denom;} PDC_fpoint;
-typedef	struct { PDC_uint64 num; PDC_uint64 denom;} PDC_ufpoint;
+typedef	struct { PDC_int64  num; PDC_uint64 denom;} PDC_fpoint64;
+typedef	struct { PDC_uint64 num; PDC_uint64 denom;} PDC_ufpoint64;
 
-/* ================================================================================ */
-/* PDC_string: PADS strings have a ptr and length;
+/* ================================================================================
+ * PDC_string: PADS strings have a ptr and length;
  *             required since they need not be null-terminated.
  *             They also have some private state, which should
  *             be ignored by users of the library.
@@ -316,8 +314,9 @@ struct PDC_string_s {
   PDC_STRING_PRIVATE_STATE;
 };
 
-/* ================================================================================ */
-/* USEFUL CONSTANTS */
+/* ================================================================================
+ * USEFUL CONSTANTS
+ */
 
 #define PDC_MAX_INT8                             127
 #define PDC_MIN_INT8                            -128
@@ -339,10 +338,10 @@ struct PDC_string_s {
 
 #define PDC_MAX_UINT64       18446744073709551615ULL
 
-/* ================================================================================ */ 
-/* DISC FUNCTION FOR ERROR REPORTING */
-
-/* Prototypes:
+/* ================================================================================
+ * DISC FUNCTION FOR ERROR REPORTING
+ *
+ * Prototypes:
  *
  * A PDC_error_f function is an output function that output a
  * formatted error message, where level should be one of:
@@ -382,8 +381,9 @@ typedef int (*PDC_error_f)(const char *libnm, int level, ...);
 
 int PDC_errorf(const char *libnm, int level, ...);
 
-/* ================================================================================ */
-/* LIBRARY TYPES */
+/* ================================================================================
+ * LIBRARY TYPES
+ */
 
 /* type PDC_base_em: */
 enum PDC_base_em_e { PDC_CheckAndSet, PDC_Check, PDC_Ignore };
@@ -436,7 +436,7 @@ struct PDC_base_ed_s {
 struct PDC_disc_s {
   PDC_flags_t           version;      /* interface version */
   PDC_flags_t           flags;        /* control flags */
-  int                   copy_strings; /* if non-zero, astring read functions copy the strings found, otherwise not */
+  int                   copy_strings; /* if non-zero, a_string read functions copy the strings found, otherwise not */
   PDC_regexp_t          *stop_regexp; /* scan stop pattern, use 0 to disable */
   size_t                stop_maxlen;  /* max scan distance, use 0 to disable */
   PDC_error_f           errorf;       /* error function using  ... */
@@ -463,16 +463,17 @@ struct PDC_s {
   PDC_PRIVATE_STATE;
 };
 
-/* ================================================================================ */
-/* LIBRARY HANDLE OPEN/CLOSE FUNCTIONS */
+/* ================================================================================
+ * LIBRARY HANDLE OPEN/CLOSE FUNCTIONS
+ */
 
 PDC_error_t  PDC_open          (PDC_t **pdc_out, PDC_disc_t *disc, PDC_IO_disc_t *io_disc);
 PDC_error_t  PDC_close         (PDC_t *pdc); 
 
-/* ================================================================================ */
-/* TOP-LEVEL GET/SET FUNCTIONS */
-
-/* PDC_get_disc    : returns NULL on error, otherwise returns pointer to
+/* ================================================================================
+ * TOP-LEVEL GET/SET FUNCTIONS
+ *
+ * PDC_get_disc    : returns NULL on error, otherwise returns pointer to
  *                   the installed discipline
  *
  * PDC_set_disc    : install a different discipline handle.  If param xfer_io
@@ -507,10 +508,9 @@ PDC_error_t  PDC_set_IO_disc(PDC_t* pdc, PDC_IO_disc_t* new_io_disc);
 RMM_t * PDC_rmm_zero  (PDC_t *pdc);
 RMM_t * PDC_rmm_nozero(PDC_t *pdc);
 
-/* ================================================================================ */
-/* TOP-LEVEL IO FUNCTIONS */
-
-/* 
+/* ================================================================================
+ * TOP-LEVEL IO FUNCTIONS
+ * 
  * PDC_IO_set      : Initialize or change the current sfio stream used for input.
  *
  * PDC_IO_fopen    : Open a file for reading (a higher-level alternative to io_set).
@@ -558,10 +558,10 @@ PDC_error_t  PDC_IO_getLocB  (PDC_t *pdc, PDC_loc_t *loc, int offset);
 PDC_error_t  PDC_IO_getLocE  (PDC_t *pdc, PDC_loc_t *loc, int offset); 
 PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset); 
 
-/* ================================================================================ */
-/* LITERAL READ FUNCTIONS */
-
-/* PDC_achar_lit_read / astr_lit_read:
+/* ================================================================================
+ * LITERAL READ FUNCTIONS
+ *
+ * PDC_a_char_lit_read / a_str_lit_read:
  *
  * EFFECT: verify IO cursor points to specified char/string, move IO cursor just beyond
  *   N.B. The error mask has the following meaning for these two functions.  If *em is:
@@ -579,11 +579,11 @@ PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset);
  *               (errCode PDC_CHAR_LIT_NOT_FOUND / PDC_STR_LIT_NOT_FOUND)
  */
 
-PDC_error_t PDC_achar_lit_read(PDC_t *pdc, PDC_base_em *em,
-			       PDC_base_ed *ed, PDC_byte c);
+PDC_error_t PDC_a_char_lit_read(PDC_t *pdc, PDC_base_em *em,
+				PDC_base_ed *ed, PDC_byte c);
 
-PDC_error_t PDC_astr_lit_read(PDC_t *pdc, PDC_base_em *em,
-			      PDC_base_ed *ed, const PDC_string *s);
+PDC_error_t PDC_a_str_lit_read(PDC_t *pdc, PDC_base_em *em,
+			       PDC_base_ed *ed, const PDC_string *s);
 
 /* PDC_countX : count occurrences of char x between the
  * current IO cursor and the first EOR or EOF.  If param
@@ -631,13 +631,13 @@ PDC_error_t PDC_countX(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, int eor_require
 PDC_error_t PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
 		          PDC_base_ed *ed, PDC_int32 *res_out);
 
-/* ================================================================================ */
-/* DATE/TIME READ FUNCTIONS */
-
-/* PDC_adate_read : attempts to read an ascii date string and convert it to
- *                  seconds since the epoch.  For the different formats supported,
- *                  see the libast tmdate documentation.
- *                  adate_read takes the same stop character arg as astring_read
+/* ================================================================================
+ * DATE/TIME READ FUNCTIONS
+ *
+ * PDC_a_date_read : attempts to read an ascii date string and convert it to
+ *                   seconds since the epoch.  For the different formats supported,
+ *                   see the libast tmdate documentation.
+ *                   a_date_read takes the same stop character arg as a_string_read
  *
  * If the current IO cursor position points to a valid ascii date string:
  *   + if res_out, sets *res_out to the resulting date in seconds since the epoch
@@ -649,13 +649,13 @@ PDC_error_t PDC_countXtoY(PDC_t *pdc, PDC_base_em *em, PDC_uint8 x, PDC_uint8 y,
  *   + returns PDC_ERR
  */
 
-PDC_error_t PDC_adate_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
-			   PDC_base_ed *ed, PDC_uint32 *res_out);
+PDC_error_t PDC_a_date_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
+			    PDC_base_ed *ed, PDC_uint32 *res_out);
 
-/* ================================================================================ */
-/* STRING HELPER FUNCTIONS */
-
-/*    PDC_string_init    : initialize to valid empty string (no dynamic memory allocated yet)
+/* ================================================================================
+ * STRING HELPER FUNCTIONS
+ *
+ *    PDC_string_init    : initialize to valid empty string (no dynamic memory allocated yet)
  *    PDC_string_cleanup : free up the rbuf and any allocated space for the string
  *    PDC_string_share   : makes the PDC_string targ refer to the string specified by src/len,
  *                          sharing the space with the original owner.
@@ -685,16 +685,22 @@ PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
 PDC_error_t PDC_string_ed_init(PDC_t *pdc, PDC_base_ed *ed);
 PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_base_ed *ed);
 
-/* ================================================================================ */
-/* ASCII STRING READ FUNCTIONS */
-
-/* The string read functions each has a different way of specifying
- * the extent of the string: astringFW_read specifies a fixed width,
- * astring_read specifies a single stop character (can be 0 to specify
- * eof as the stop character), and astringSE_read and astringCSE
- * specify a Stop Expression, a regular expression indicating the
- * termination of the string.  SE takes a string form and CSE takes a
- * compiled form of the regular expression (see PDC_regexp_compile).
+/* ================================================================================
+ * ASCII STRING READ FUNCTIONS
+ *
+ * The string read functions each has a different way of specifying
+ * the extent of the string:
+ *   + a_string_FW_read specifies a fixed width
+ *   + a_string_read specifies a single stop character
+ *       (can be 0 to specify eof as the stop character)
+ *   + a_string_ME and a_string_CME specify a Match Extpression
+ *       (string includes all chars that match)
+ *   + a_string_SE_read and a_string_CSE specify a Stop Expression
+ *       (string terminated by encountering 'stop chars' that match)
+ *
+ * ME/SE take a string containing a regular expression, while CME/CSE take a
+ * compiled form of regular expression (see PDC_regexp_compile).
+ *
  * For all stop cases, the stop char/chars are not included in the
  * resulting string.  Note that if the IO cursor is already at a stop
  * condition, then a string of length zero results.
@@ -719,26 +725,32 @@ PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_base_ed *ed);
  *     PDC_INVALID_REGEXP
  */
 
-PDC_error_t PDC_astring_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
-			     PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_a_string_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
+			      PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_astringFW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_a_string_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_astringSE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
-			       PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_a_string_ME_read(PDC_t *pdc, PDC_base_em *em, const char *matchRegexp,
+				 PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_astringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-				PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_a_string_CME_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *matchRegexp,
+				  PDC_base_ed *ed, PDC_string *s_out);
 
-/* ================================================================================ */
-/* EBCDIC STRING READ FUNCTIONS */
+PDC_error_t PDC_a_string_SE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
+				 PDC_base_ed *ed, PDC_string *s_out);
 
-/* These functions behave exactly like the corresponding ASCII string read
- * functions, except the data being read is EBCDIC encoded.
+PDC_error_t PDC_a_string_CSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
+				  PDC_base_ed *ed, PDC_string *s_out);
+
+/* ================================================================================
+ * EBCDIC STRING READ FUNCTIONS
+ *
+ * These functions behave exactly like the corresponding ASCII string read
+ * functions, except the data being read is EBCDIC STRING encoded.
  *
  * N.B. ** Two important things to remember:
- *       1. The EBCDIC data is converted to ASCII, thus the resulting
+ *       1. The EBCDIC string data is converted to ASCII, thus the resulting
  *          string is an ASCII string.
  *       2. The stop char (stop regular expression) are specified
  *          using an ASCII character (ASCII string).
@@ -756,23 +768,31 @@ PDC_error_t PDC_astringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopR
  *         matters if the special output version of PDC_IO_commit is used.
  */
 
-PDC_error_t PDC_estring_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
-			     PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_e_string_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
+			      PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_estringFW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_e_string_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_estringSE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
-			       PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_e_string_ME_read(PDC_t *pdc, PDC_base_em *em, const char *matchRegexp,
+				 PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_estringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
-				PDC_base_ed *ed, PDC_string *s_out);
+PDC_error_t PDC_e_string_CME_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *matchRegexp,
+				  PDC_base_ed *ed, PDC_string *s_out);
 
-/* ================================================================================ */
-/* ASCII INTEGER READ FUNCTIONS */
+PDC_error_t PDC_e_string_SE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
+				 PDC_base_ed *ed, PDC_string *s_out);
 
-/*
- * Documentation for variable-width ascii integer read functions:
+PDC_error_t PDC_e_string_CSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
+				  PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_e_date_read(PDC_t *pdc, PDC_base_em *em, PDC_byte stopChar,
+			    PDC_base_ed *ed, PDC_uint32 *res_out);
+
+/* ================================================================================
+ * ASCII STRING TO INTEGER READ FUNCTIONS
+ *
+ * Documentation for variable-width ascii string to integer read functions:
  *
  * An ascii representation of an integer value (a string of digits in [0-9])
  * is assumed to be at the current cursor position, where
@@ -803,7 +823,7 @@ PDC_error_t PDC_estringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopR
  * For the above 4 cases:
  *     => IO cursor is not advanced
  *     => If !em || *em < PDC_Ignore:
- *          + ed->errCode set to PDC_INVALID_AINT / PDC_INVALID_AUINT (depending on target type)
+ *          + ed->errCode set to PDC_INVALID_A_NUM
  *          + ed->loc begin/end set to the IO cursor position.
  * (3) A valid ascii integer string is found, but it describes
  *     an integer that does not fit in the specified target type
@@ -813,30 +833,30 @@ PDC_error_t PDC_estringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopR
  *          + ed->loc begin/end set to elt/char position of start and end of the ascii integer
  */
 
-PDC_error_t PDC_aint8_read (PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int8 *res_out);
+PDC_error_t PDC_a_int8_read (PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_aint16_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int16 *res_out);
+PDC_error_t PDC_a_int16_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_aint32_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int32 *res_out);
+PDC_error_t PDC_a_int32_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_aint64_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int64 *res_out);
+PDC_error_t PDC_a_int64_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int64 *res_out);
 
 
-PDC_error_t PDC_auint8_read (PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint8 *res_out);
+PDC_error_t PDC_a_uint8_read (PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_auint16_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint16 *res_out);
+PDC_error_t PDC_a_uint16_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_auint32_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint32 *res_out);
+PDC_error_t PDC_a_uint32_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_auint64_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint64 *res_out);
+PDC_error_t PDC_a_uint64_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint64 *res_out);
 
 /*
  * Fixed-width ascii integer read functions:
@@ -866,92 +886,94 @@ PDC_error_t PDC_auint64_read(PDC_t *pdc, PDC_base_em *em,
  *        + ed->loc begin/end set to elt/char position of start/end of the 'too small' field
  */
 
-PDC_error_t PDC_aint8FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
-			      PDC_base_ed *ed, PDC_int8 *res_out);
+PDC_error_t PDC_a_int8_FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
+				PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_aint16FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			      PDC_base_ed *ed, PDC_int16 *res_out);
+PDC_error_t PDC_a_int16_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_aint32FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			      PDC_base_ed *ed, PDC_int32 *res_out);
+PDC_error_t PDC_a_int32_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_aint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			      PDC_base_ed *ed, PDC_int64 *res_out);
+PDC_error_t PDC_a_int64_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				PDC_base_ed *ed, PDC_int64 *res_out);
 
 
-PDC_error_t PDC_auint8FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_uint8 *res_out);
+PDC_error_t PDC_a_uint8_FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_auint16FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_uint16 *res_out);
+PDC_error_t PDC_a_uint16_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_auint32FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_uint32 *res_out);
+PDC_error_t PDC_a_uint32_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_auint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_uint64 *res_out);
+PDC_error_t PDC_a_uint64_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_uint64 *res_out);
 
-/* ================================================================================ */
-/* EBCDIC INTEGER READ FUNCTIONS */
-
-/* These functions are just like their ASCII counterparts; the only
- * difference is the encoding.  The error codes used are also the same,
- * except that codes PDC_INVALID_EINT/PDC_INVALID_EUINT are used rather 
- * than PDC_INVALID_AINT/PDC_INVALID_AUINT.
+/* ================================================================================
+ * EBCDIC STRING TO INTEGER READ FUNCTIONS
+ *
+ * These functions are just like their ASCII counterparts; the only
+ * difference is the integers are encoding using EBCDIC string data.
+ * The error codes used are also the same,
+ * except that error code PDC_INVALID_E_NUM is used rather 
+ * than PDC_INVALID_A_NUM
  */
 
-PDC_error_t PDC_eint8_read (PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int8 *res_out);
+PDC_error_t PDC_e_int8_read (PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_eint16_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int16 *res_out);
+PDC_error_t PDC_e_int16_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_eint32_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int32 *res_out);
+PDC_error_t PDC_e_int32_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_eint64_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int64 *res_out);
+PDC_error_t PDC_e_int64_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_euint8_read (PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint8 *res_out);
+PDC_error_t PDC_e_uint8_read (PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_euint16_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint16 *res_out);
+PDC_error_t PDC_e_uint16_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_euint32_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint32 *res_out);
+PDC_error_t PDC_e_uint32_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_euint64_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint64 *res_out);
+PDC_error_t PDC_e_uint64_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint64 *res_out);
 
-PDC_error_t PDC_eint8FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
-			      PDC_base_ed *ed, PDC_int8 *res_out);
+PDC_error_t PDC_e_int8_FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
+				PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_eint16FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			      PDC_base_ed *ed, PDC_int16 *res_out);
+PDC_error_t PDC_e_int16_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_eint32FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			      PDC_base_ed *ed, PDC_int32 *res_out);
+PDC_error_t PDC_e_int32_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_eint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			      PDC_base_ed *ed, PDC_int64 *res_out);
+PDC_error_t PDC_e_int64_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_euint8FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_uint8 *res_out);
+PDC_error_t PDC_e_uint8_FW_read (PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_euint16FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_uint16 *res_out);
+PDC_error_t PDC_e_uint16_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_euint32FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_uint32 *res_out);
+PDC_error_t PDC_e_uint32_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_euint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
-			       PDC_base_ed *ed, PDC_uint64 *res_out);
+PDC_error_t PDC_e_uint64_FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+				 PDC_base_ed *ed, PDC_uint64 *res_out);
 
-/* ================================================================================ */
-/* BINARY INTEGER READ FUNCTIONS */
-
-/* These functions parse signed or unsigned binary integers.
+/* ================================================================================
+ * COMMON WIDTH BINARY INTEGER READ FUNCTIONS
+ *
+ * These functions parse signed or unsigned binary integers
+ * of common bit widths (8, 16, 32, and 64 bit widths).
  * Whether bytes are reversed is controlled by two fields,
  * disc->m_endian and disc->d_endian. If they differ, then the byte
  * order is reversed in the in-memory representation, otherwise it is not.
@@ -962,7 +984,7 @@ PDC_error_t PDC_euint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
  *
  *
  * pstruct header {
- *    buint16 version : version < 10; //- PRAGMA CHECK_ENDIAN
+ *    b_uint16 version : version < 10; //- PRAGMA CHECK_ENDIAN
  *    ..etc..
  * };
  *
@@ -987,72 +1009,160 @@ PDC_error_t PDC_euint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
  *        + ed->loc begin/end set to elt/char position of start/end of the 'too small' field
  */
 
-PDC_error_t PDC_bint8_read (PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int8 *res_out);
+PDC_error_t PDC_b_int8_read (PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int8 *res_out);
 
-PDC_error_t PDC_bint16_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int16 *res_out);
+PDC_error_t PDC_b_int16_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int16 *res_out);
 
-PDC_error_t PDC_bint32_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int32 *res_out);
+PDC_error_t PDC_b_int32_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int32 *res_out);
 
-PDC_error_t PDC_bint64_read(PDC_t *pdc, PDC_base_em *em,
-			    PDC_base_ed *ed, PDC_int64 *res_out);
+PDC_error_t PDC_b_int64_read(PDC_t *pdc, PDC_base_em *em,
+			     PDC_base_ed *ed, PDC_int64 *res_out);
 
-PDC_error_t PDC_buint8_read (PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint8 *res_out);
+PDC_error_t PDC_b_uint8_read (PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint8 *res_out);
 
-PDC_error_t PDC_buint16_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint16 *res_out);
+PDC_error_t PDC_b_uint16_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint16 *res_out);
 
-PDC_error_t PDC_buint32_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint32 *res_out);
+PDC_error_t PDC_b_uint32_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_buint64_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, PDC_uint64 *res_out);
+PDC_error_t PDC_b_uint64_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, PDC_uint64 *res_out);
 
-/* ================================================================================ */
-/* FIXED POINT READ FUNCTIONS */
- 
-/* For these read functions, arg n is the number of digits before
- * the decimal place, and arg d is digits after the decimal place.
- * There are thus n+d digits total, forming the numerator,
- * while the denominator is 10^d.
+/* ================================================================================
+ * EBCDIC, BCD, and SERIALIZED BINARY ENCODINGS OF INTEGERS
+ *   (VARIABLE NUMBER OF DIGITS/BYTES)
  *
- *   PDC_fpoint_read:  read a signed fixed point value encoded in EBCDIC format
- *   PDC_ufpoint_read: read an unsigned fixed point value encoded in EBCDIC format.
- * 
- *   PDC_fpointBCD_read:  read a signed fixed point value encoded in BCD format
- *   PDC_ufpointBCD_read: read an unsigned fixed point value encoded in BCD format.
+ * These functions parse signed or unsigned EBCDIC (ebc_), BCD (bcd_), or
+ * SERIALIZED BINARY (sb_) encoded integers with a specified number of digits
+ * (for ebc_ and bcd_) or number of bytes (for sb_), producing either a PDC_int64
+ * or PDC_uint64.
  *
- *   PDC_fpointB_read:  read a signed fixed point value encoded in binary format
- *   PDC_ufpointB_read:  read a signed fixed point value encoded in binary format
+ * EBCDIC INTEGER ENCODING (PDC_ebc_int64_read / PDC_ebc_uint64_read):
  *
- * For the binary read functions, the number of bytes on disk must be (n+d)/2
+ * Each byte on disk encodes one digit (in low 4 bits).  For signed
+ * values, the final byte encodes the sign (high 4 bits == 0xD for negative).
+ * A signed or unsigned 5 digit value is encoded in 5 bytes.
+ *
+ * BCD INTEGER ENCODING (PDC_bcd_int_read / PDC_bcd_uint_read):
+ *
+ * Each byte on disk encodes two digits, 4 bits per digit.  For signed
+ * values, a negative number is encoded by having number of digits be odd
+ * such that there is a high 4 bits in the last byte is available for the sign.
+ * (high 4 bits == 0xD for negative).
+ * A signed or unsigned 5 digit value is encoded in 3 bytes, where the unsigned
+ * value ignores the final high 4 bits and the signed value uses them to get the sign.
+ *
+ * SERIALIZED BINARY INTEGER ENCODING (PDC_sb_int_read / PDC_sb_uint_read):
+ *
+ * For a K-bytess sbin encoding, the first byte on disk is treated 
+ * as the low order byte of a K byte value.  I.e., the value can be computed
+ * using this algorithm:
+ *   res = 0;
+ *   for (i = 0; i < K; i++) {
+ *      res = (res << 8) | bytes[i]; 
+ *   }
+ * Whether the result is treated as signed or unsigned depends on the read function used.
+ *
+ * For all cases, if the specified number of bytes is available, it is always read.
+ * If the specified bytes make up an integer that does not fit in the target PDC_int64 / PDC_uint64,
+ * the cursor is still advanced, and
+ *    if !em || *em < PDC_Ignore:
+ *          + ed->errCode set to PDC_RANGE
+ * If the specified bytes are not legal EBC/BCD integer bytes, then 
+ *    if !em || *em < PDC_Ignore:
+ *          + ed->errCode set to one of:
+ *                PDC_INVALID_EBC_NUM
+ *                PDC_INVALID_BCD_NUM
+ *
+ * If the bytes are not available, the IO cursor is not advanced, and
+ *    if !em || *em < PDC_Ignore:
+ *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
+ *        + ed->loc begin/end set to elt/char position of start/end of the 'too small' field
+ * */
+
+PDC_error_t PDC_ebc_int64_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
+				PDC_base_ed *ed, PDC_int64 *res_out);
+
+PDC_error_t PDC_ebc_uint64_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
+				 PDC_base_ed *ed, PDC_uint64 *res_out);
+
+PDC_error_t PDC_bcd_int64_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
+				PDC_base_ed *ed, PDC_int64 *res_out);
+
+PDC_error_t PDC_bcd_uint64_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 digits,
+				 PDC_base_ed *ed, PDC_uint64 *res_out);
+
+PDC_error_t PDC_sb_int64_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes,
+			       PDC_base_ed *ed, PDC_int64 *res_out);
+
+PDC_error_t PDC_sb_uint64_read (PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes,
+				PDC_base_ed *ed, PDC_uint64 *res_out);
+
+
+/* ================================================================================
+ * FIXED POINT READ FUNCTIONS
+ * FOR EBCDIC (ebc_), BCD (bcd_), and SERIALIZED BINARY (sb_) ENCODINGS
+ *
+ * For the EBCDIC and BCD read functions, n_digits is the number of digits before
+ * the decimal place, and d_digits is digits after the decimal place.  Let
+ * total_digits = n_digits + d_digits.  The numerator is encoding with
+ * total_digits digits on disk, while the denominator is implicitly 10^d_digits
+ * (and is thus not encoded on disk).  The number of bytes implied by tot_digits
+ * is the same as specified above for the EBCDIC/BCD integer read functions.
+ *
+ * For the SBIN fpoint read functions, bytes is the number of bytes on disk
+ * used to encode the numerator, the encoding being the same as for the SBIN
+ * integer read functions, while d_digits has the same meaning as for the other
+ * fpoint read functions.
+ *
+ * The signed fpoint read functions fill in a PDC_fpoint64 value, which has a 
+ * PDC_int64 num field and a PDC_uint64 denom field. The unsigned ufpoint read functions
+ * fill in a PDC_ufpoint64 value, which has PDC_uint64 num and denom fields.
+ *
+ * For all cases, if the specified number of bytes is available, it is always read.
+ * If the specified bytes make up an numerator that does not fit in the target 
+ * PDC_int64 / PDC_uint64, the cursor is still advanced, and
+ *    if !em || *em < PDC_Ignore:
+ *          + ed->errCode set to PDC_RANGE
+ * If the specified bytes are not legal EBC/BCD integer bytes, then 
+ *    if !em || *em < PDC_Ignore:
+ *          + ed->errCode set to one of:
+ *                PDC_INVALID_EBC_NUM
+ *                PDC_INVALID_BCD_NUM
+ *
+ * If the bytes are not available, the IO cursor is not advanced, and
+ *    if !em || *em < PDC_Ignore:
+ *        + ed->errCode set to PDC_WIDTH_NOT_AVAILABLE
+ *        + ed->loc begin/end set to elt/char position of start/end of the 'too small' field
+ *
  */
 
-PDC_error_t PDC_fpoint_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
-			    PDC_base_ed *ed, PDC_fpoint *res_out);
+PDC_error_t PDC_ebc_fpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
+				  PDC_base_ed *ed, PDC_fpoint64 *res_out);
 
-PDC_error_t PDC_ufpoint_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
-			     PDC_base_ed *ed, PDC_ufpoint *res_out);
+PDC_error_t PDC_ebc_ufpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
+				   PDC_base_ed *ed, PDC_ufpoint64 *res_out);
 
-PDC_error_t PDC_fpointBCD_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
-			       PDC_base_ed *ed, PDC_fpoint *res_out);
+PDC_error_t PDC_bcd_fpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
+				  PDC_base_ed *ed, PDC_fpoint64 *res_out);
 
-PDC_error_t PDC_ufpointBCD_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
-				PDC_base_ed *ed, PDC_ufpoint *res_out);
+PDC_error_t PDC_bcd_ufpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n_digits, PDC_uint32 d_digits,
+				   PDC_base_ed *ed, PDC_ufpoint64 *res_out);
 
-PDC_error_t PDC_fpointB_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
-			     PDC_base_ed *ed, PDC_fpoint *res_out);
+PDC_error_t PDC_sb_fpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes, PDC_uint32 d_digits,
+				 PDC_base_ed *ed, PDC_fpoint64 *res_out);
 
-PDC_error_t PDC_ufpointB_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 n, PDC_uint32 d,
-			      PDC_base_ed *ed, PDC_ufpoint *res_out);
+PDC_error_t PDC_sb_ufpoint64_read(PDC_t *pdc, PDC_base_em *em, PDC_uint32 bytes, PDC_uint32 d_digits,
+				  PDC_base_ed *ed, PDC_ufpoint64 *res_out);
 
-/* ================================================================================ */
-/* BASE TYPE ACCUMULATORS */
-
-/*
+/* ================================================================================
+ * BASE TYPE ACCUMULATORS
+ *
  * Each report function takes the following params (in addition to pdc/disc first/last args):
  *   prefix: a descriptive string, usually the field name
  *           if NULL or empty, the string "<top>" is used
@@ -1199,17 +1309,17 @@ typedef const char * (*PDC_uint64_map_fn)(PDC_uint64 u);
 PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char *what, int nst,
 				     PDC_int32_map_fn  fn, PDC_int32_acc *a);
 
-/* ================================================================================ */
-/* SCAN FUNCTIONS */
-
-/* Scan functions are used to 'find' a location that is forward of the
+/* ================================================================================
+ * SCAN FUNCTIONS
+ *
+ * Scan functions are used to 'find' a location that is forward of the
  * current IO position.  They are normally used for error recovery purposes,
  * but are exposed here because they are generally useful.
- * N.B. Use PDC_achar_lit_read / PDC_astring_lit_read for cases where
+ * N.B. Use PDC_a_char_lit_read / PDC_a_string_lit_read for cases where
  * a literal is known to be at the current IO position.
  */
 
-/* PDC_achar_lit_scan:
+/* PDC_a_char_lit_scan:
  *
  * EFFECT: 
  *  Scans for either goal character c or stop character s.  If a gloal
@@ -1229,7 +1339,7 @@ PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char 
  *                      (0 means the IO cursor was already pointing at the found char)
  *         PDC_ERR   => char not found, IO cursor unchanged
  * 
- * PDC_astr_lit_scan: same as achar_lit_scan execpt a goal string
+ * PDC_a_str_lit_scan: same as a_char_lit_scan execpt a goal string
  * and stop string are given.  In this case, if there is no stop
  * string, a NULL stop string should be used.  On PDC_OK, *str_out
  * points to either findStr or stopStr (depending on which was found),
@@ -1240,38 +1350,38 @@ PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char 
  * was found.  On PDC_ERR, the IO cursor is unchanged. 
  */
 
-PDC_error_t PDC_achar_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-			       PDC_byte *c_out, size_t *offset_out);
+PDC_error_t PDC_a_char_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
+				PDC_byte *c_out, size_t *offset_out);
 
-PDC_error_t PDC_astr_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
-			      PDC_string **str_out, size_t *offset_out);
+PDC_error_t PDC_a_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+			       PDC_string **str_out, size_t *offset_out);
 
-/* ================================================================================ */
-/* EBCDIC LITERAL READ and SCAN FUNCTIONS */
-
-/*
+/* ================================================================================
+ * EBCDIC LITERAL READ and SCAN FUNCTIONS 
+ *
  * Just like the ASCII versions, except the data read is EBCDIC data.
  *
  * ** N.B. The char or string to be read or scanned is specified in ASCII
  *    and converted to EBCDIC by the read or scan routine.  
  */
 
-PDC_error_t PDC_echar_lit_read(PDC_t *pdc, PDC_base_em *em,
-			       PDC_base_ed *ed, PDC_byte c);
+PDC_error_t PDC_e_char_lit_read(PDC_t *pdc, PDC_base_em *em,
+				PDC_base_ed *ed, PDC_byte c);
 
-PDC_error_t PDC_estr_lit_read(PDC_t *pdc, PDC_base_em *em,
-			      PDC_base_ed *ed, const PDC_string *s);
+PDC_error_t PDC_e_str_lit_read(PDC_t *pdc, PDC_base_em *em,
+			       PDC_base_ed *ed, const PDC_string *s);
 
-PDC_error_t PDC_echar_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
-			       PDC_byte *c_out, size_t *offset_out);
+PDC_error_t PDC_e_char_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
+				PDC_byte *c_out, size_t *offset_out);
 
-PDC_error_t PDC_estr_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
-			      PDC_string **str_out, size_t *offset_out);
+PDC_error_t PDC_e_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+			       PDC_string **str_out, size_t *offset_out);
 
 
 
-/* ================================================================================ */
-/* STRING COMPARISON */
+/* ================================================================================
+ * STRING COMPARISON
+ */
 
 #define PDC_string_eq(str1, str2) \
   ((str1)->len == (str2)->len && strncmp((str1)->str, (str2)->str, (str1)->len) == 0)
@@ -1279,10 +1389,9 @@ PDC_error_t PDC_estr_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_s
 #define PDC_string_eq_Cstr(PDCstr, Cstr) \
   ((PDCstr)->len == strlen(Cstr) && strncmp((PDCstr)->str, (Cstr), (PDCstr)->len) == 0)
 
-/* ================================================================================ */
-/* IO CHECKPOINT API */
-
-/*
+/* ================================================================================
+ * IO CHECKPOINT API
+ *
  * The checkpoint API: if any of these return PDC_ERR, it is due to a space
  * allocation problem or a non-balanced use of checkpoint/commit/restore.
  * These are normally fatal errors -- the calling code should probably exit the program.
@@ -1297,10 +1406,10 @@ PDC_error_t  PDC_IO_commit     (PDC_t *pdc);
 PDC_error_t  PDC_IO_restore    (PDC_t *pdc);
 unsigned int PDC_spec_level    (PDC_t *pdc);
 
-/* ================================================================================ */
-/* REGULAR EXPRESSION SUPPORT */
-
-/* PDC_regexp_compile: if regexp is a valid regular expression, this function
+/* ================================================================================
+ * REGULAR EXPRESSION SUPPORT
+ *
+ * PDC_regexp_compile: if regexp is a valid regular expression, this function
  * allocates a new compiled regular expression obj, assigns a handle to the obj
  * to (*regexp_out), and returns PDC_OK.  If regexp_out is NULL or regexp is
  * not valid, it returns PDC_ERR.
@@ -1316,10 +1425,9 @@ unsigned int PDC_spec_level    (PDC_t *pdc);
 PDC_error_t PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out);
 PDC_error_t PDC_regexp_free(PDC_t *pdc, PDC_regexp_t *regexp);
 
-/* ================================================================================ */
-/* MISC ROUTINES */
-
-/*
+/* ================================================================================
+ * MISC ROUTINES
+ *
  *    PDC_fmt_char: produce a ptr to a string that is a pretty-print (escaped) formated for char c
  *        N.B. Resulting string should be printed immediately then not used again, e.g.,
  *        PDC_errorf(0, 0, "Missing separator: %s", PDC_fmt_Char(c)); 
@@ -1347,8 +1455,9 @@ PDC_error_t PDC_swap_bytes(PDC_byte *bytes, size_t num_bytes);
  */
 PDC_error_t PDC_dummy_read(PDC_t *pdc, PDC_base_em *em, PDC_int32 dummy_val, PDC_base_ed *ed, PDC_int32 *res_out);
 
-/* ================================================================================ */
-/* INCLUDE THE IO DISCIPLINE DECLS */
+/* ================================================================================
+ * INCLUDE THE IO DISCIPLINE DECLS
+ */
 #include "pdc_io_disc.h"
 
 /* ================================================================================ */

@@ -1,6 +1,6 @@
-ptypedef auint64 pn_t(auint64 lo, auint64 hi) :: pn_t x => {x > lo && x <= hi};
+ptypedef a_uint64 pn_t(a_uint64 lo, a_uint64 hi) :: pn_t x => {x > lo && x <= hi};
 
-pstruct defPN (auint64 lo, auint64 hi){
+pstruct defPN (a_uint64 lo, a_uint64 hi){
   pn_t(:lo, hi:) id; 
   EOR;
 };
@@ -8,7 +8,7 @@ pstruct defPN (auint64 lo, auint64 hi){
 #if 0
 pstruct defPN{
   "no_PN";
-  auint32 id;
+  a_uint32 id;
 };
 
 

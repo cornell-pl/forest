@@ -3,10 +3,16 @@
 while (<>) {
   s/PDC_achar/PDC_a_char/g;
   s/PDC_astr/PDC_a_str/g;
+
+  s/PDC_echar/PDC_e_char/g;
+  s/PDC_estr/PDC_e_str/g;
+
   s/PDC_aint/PDC_a_int/g;
   s/PDC_auint/PDC_a_uint/g;
+
   s/PDC_eint/PDC_e_int/g;
   s/PDC_euint/PDC_e_uint/g;
+
   s/PDC_bint/PDC_b_int/g;
   s/PDC_buint/PDC_b_uint/g;
 

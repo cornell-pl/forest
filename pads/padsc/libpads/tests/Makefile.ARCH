@@ -1,6 +1,7 @@
 :PACKAGE: ast
-
 .SOURCE : .. ../../../include
+
+PADS_HOME = ../../..
 
 if 0
 CCFLAGS = $(CC.OPTIMIZE)
@@ -12,7 +13,20 @@ cvt_ebcdic_to_ascii :: cvt_ebcdic_to_ascii.c
 cvt_ascii_to_ebcdic :: cvt_ascii_to_ebcdic.c
 
 
-libtests : ebcdic_test adate_test mk_ex_data_libtest2 mk_ex_data_ebcdic_test libtest1 libtest2 ebcdic_libtest4 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1 string_share_test
+libtests : ebcdic_test \
+           adate_test \
+           mk_ex_data_libtest2 \
+           mk_ex_data_ebcdic_test \
+           libtest1 \
+           libtest2 \
+           ebcdic_libtest4 \
+           libtest4 \
+           rbuftest1 \
+           mk_ex_data_biglibtest1 \
+           biglibtest1 \
+           string_share_test
+
+not_yet : fpoint_test 
 
 accumtests : accumtest accumtest2 accumtest_s
 
@@ -26,6 +40,7 @@ libtest4         :: libtest4.c          -lpadsc
 ebcdic_libtest4  :: ebcdic_libtest4.c   -lpadsc
 rbuftest1        :: rbuftest1.c         -lpadsc
 ebcdic_test      :: ebcdic_test.c       -lpadsc
+fpoint_test      :: fpoint_test.c       -lpadsc
 
 dttest         :: dttest.c        -lpadsc
 accumtest      :: accumtest.c     -lpadsc
@@ -37,12 +52,15 @@ string_share_test   :: string_share_test.c          -lpadsc
 mk_ex_data_biglibtest1 :: mk_ex_data_biglibtest1.c
 mk_ex_data_libtest2    :: mk_ex_data_libtest2.c
 mk_ex_data_ebcdic_test :: mk_ex_data_ebcdic_test.c
+mk_ex_data_fpoint_test :: mk_ex_data_fpoint_test.c
 
 regress : regress_libtest1 \
           regress_libtest2 \
           regress_libtest4 \
           regress_ebcdic_test \
           regress_ebcdic_libtest4
+
+regress_not_yet : regress_fpoint_test
 
 regress_libtest1 : libtest1
 	if [ -f tmp/tmp.libtest1 ]; then $(RM) tmp/tmp.libtest1; fi
@@ -68,6 +86,11 @@ regress_ebcdic_test : ebcdic_test
 	if [ -f tmp/tmp.ebcdic_test ]; then $(RM) tmp/tmp.ebcdic_test; fi
 	(./ebcdic_test ctrec_noseek 2>&1) | ../../../scripts/remove_junk.pl | cat > tmp/tmp.ebcdic_test
 	diff tmp/tmp.ebcdic_test ../../regress/ebcdic_test.regress || echo EBCDIC_TEST DIFFERS
+
+regress_fpoint_test : fpoint_test
+	if [ -f tmp/tmp.fpoint_test ]; then $(RM) tmp/tmp.fpoint_test; fi
+	(./fpoint_test ctrec_noseek 2>&1) | ../../../scripts/remove_junk.pl | cat > tmp/tmp.fpoint_test
+	diff tmp/tmp.fpoint_test ../../regress/fpoint_test.regress || echo FPOINT_TEST DIFFERS
 
 clean :
 	$(RM) -f *.o *test* *~

@@ -5,10 +5,10 @@ Read ascii integer of width 6: 24
 warning: Error at line 1 from char 19 to char 24: Number out of range error 
 [line 1]-6    12    24    >>> 9999 <<<
 next_rec returned bytes_skipped = 0
-warning: Error at line 2 from char 1 to char 6: Invalid ASCII integer 
+warning: Error at line 2 from char 1 to char 6: Invalid ASCII character encoding of a number 
 [line 2]>>>1a    <<<12    a4    36    
 Read ascii integer of width 6: 12
-warning: Error at line 2 from char 13 to char 18: Invalid ASCII integer 
+warning: Error at line 2 from char 13 to char 18: Invalid ASCII character encoding of a number 
 [line 2]1a    12    >>>a4    <<<36    
 Read ascii integer of width 6: 36
 next_rec returned bytes_skipped = 0

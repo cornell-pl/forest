@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
       }
     }
   }
-  ed.errCode = PDC_INVALID_AINT;
+  ed.errCode = PDC_INVALID_A_NUM;
   for (i = 0; i < 100000; i++) {
     for (key1 = -100; key1 < -40; key1 += 10) {
       if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
       }
     }
   }
-  ed.errCode = PDC_INVALID_AINT;
+  ed.errCode = PDC_INVALID_A_NUM;
   for (i = 0; i < 100000; i++) {
     for (key1 = -100; key1 < -40; key1 += 10) {
       if (PDC_ERR == PDC_int32_acc_add(pdc, &accum, &ed, &key1)) {

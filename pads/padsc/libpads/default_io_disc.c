@@ -86,6 +86,7 @@
 #include "libpadsc-internal.h" /* XXX for debugging, should be libpadsc.h XXX */
 #include "libpadsc-macros-gen.h"
 #include "pdc_out_macros.h"
+#include <stdio.h>
 
 #define IODISC_NEED_AN_ELT(fn_name, elt, f_head, vm) \
   do { \

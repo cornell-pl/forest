@@ -1,36 +1,36 @@
-pstruct auint32_vbar {
-  auint32 val; '|';
+pstruct a_uint32_vbar {
+  a_uint32 val; '|';
 };
-pstruct auint64_vbar {
-  auint64 val; '|';
+pstruct a_uint64_vbar {
+  a_uint64 val; '|';
 };
 pstruct just_vbar {
   '|';
-  dummy(:0:) d;
+  compute PDC_int8 d = 0; /-- padsc should provide dummy field for 'empty' structs
 };
-punion opt_auint32_vbar {
-  auint32_vbar yes32;
+punion opt_a_uint32_vbar {
+  a_uint32_vbar yes32;
   just_vbar    no32;
 };
-punion opt_auint64_vbar {
-  auint64_vbar yes64;
+punion opt_a_uint64_vbar {
+  a_uint64_vbar yes64;
   just_vbar    no64;
 };
 pstruct no_pn_vbar {
   "no_TN|";
-  dummy(:0:) d;
+  compute PDC_int8 d = 0; /-- padsc should provide dummy field for 'empty' structs
 };
 punion dib_pn_vbar {
-  auint64_vbar yesPN;
+  a_uint64_vbar yesPN;
   no_pn_vbar   noPN;
 };
 pstruct event {
-  astring(:'|':) state;   '|';
-  auint32        tstamp;  '|';
+  a_string(:'|':) state;   '|';
+  a_uint32        tstamp;  '|';
 };
 pstruct out_sum_header {
   "0|";
-  auint32        tstamp;
+  a_uint32        tstamp;
   EOR;
 };
 parray eventSeq(int size) {
@@ -40,24 +40,24 @@ parray eventSeq(int size) {
 int getLen(int numBars){ return (numBars - 4)/2; }
 
 pstruct out_sum_fixed1 {
-  auint32_vbar             order_num;
-  auint32_vbar             order_item;
+  a_uint32_vbar             order_num;
+  a_uint32_vbar             order_item;
   dib_pn_vbar              servicen;
   dib_pn_vbar              billing_tn;
-  auint32_vbar             zip_code;
+  a_uint32_vbar             zip_code;
   dib_pn_vbar              nlp_service_tn;
   dib_pn_vbar              nlp_billing_tn;
 };
 pstruct out_sum_fixed2 {
-  opt_auint32_vbar         siid;
-  opt_auint32_vbar         create_id;
-  opt_auint64_vbar         rampII;
-  auint32_vbar             order_type;
-  auint32                  parent_order;
+  opt_a_uint32_vbar         siid;
+  opt_a_uint32_vbar         create_id;
+  opt_a_uint64_vbar         rampII;
+  a_uint32_vbar             order_type;
+  a_uint32                  parent_order;
 };
 pstruct do_ev_count {
   omit countX(:'|',1:) bars;
-  dummy(:getLen(bars):) ev_count;
+  compute PDC_int32 ev_count = getLen(bars);
 };
 pstruct out_sum_data_line {
   out_sum_fixed1           f1;

@@ -35,18 +35,18 @@ int main(int argc, char** argv) {
       break;
     }
     /* try to read line with 1 date term by vbar, 1 date term by EOR */
-    if (PDC_ERR == PDC_adate_read(pdc, &em, '|', &ed, &tm)) {
+    if (PDC_ERR == PDC_a_date_read(pdc, &em, '|', &ed, &tm)) {
       if (ed.errCode != PDC_INVALID_DATE) {
 	goto find_EOR;
       }
     } else {
       error(0, "Read date term by vbar: %s (secs = %lu)", fmttime("%K", (time_t)tm), (unsigned long)tm);
     }
-    if (PDC_ERR == PDC_achar_lit_read(pdc, &em, &ed, '|')) {
+    if (PDC_ERR == PDC_a_char_lit_read(pdc, &em, &ed, '|')) {
       PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_adate_read(pdc, &em, 0, &ed, &tm)) {
+    if (PDC_ERR == PDC_a_date_read(pdc, &em, 0, &ed, &tm)) {
       if (ed.errCode != PDC_INVALID_DATE) {
 	goto find_EOR;
       }

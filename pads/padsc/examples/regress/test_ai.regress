@@ -22,7 +22,7 @@ Union tag: good vals:         11    bad vals:          0    pcnt-bad:    0.000
         SUMMING                 count:         11  pcnt-of-good-vals:  100.000
 [Describing each tag arm of <top>.host]
 =====================================================================================================
-<top>.host.resolved : array nIP of auint8
+<top>.host.resolved : array nIP of a_uint8
 =====================================================================================================
 Array lengths: good vals:          4    bad vals:          0    pcnt-bad:    0.000
   Characterizing lengths:  min 4 max 4 avg 4.000
@@ -81,7 +81,7 @@ good vals:          4    bad vals:          0    pcnt-bad:    0.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          4  pcnt-of-good-vals:  100.000
 =====================================================================================================
-<top>.host.symbolic : array sIP of astringSE
+<top>.host.symbolic : array sIP of a_string_SE
 =====================================================================================================
 Array lengths: good vals:          7    bad vals:          0    pcnt-bad:    0.000
   Characterizing lengths:  min 4 max 4 avg 4.000

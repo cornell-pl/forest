@@ -1,9 +1,9 @@
 parray nIP {
-  auint8 [4] : sep == '.' && term == ' ';          
+  a_uint8 [4] : sep == '.' && term == ' ';          
 };
 
 parray sIP{
-  astringSE(:"[. ]":) [] : sep == '.' && term == ' '; 
+  a_string_SE(:"[. ]":) [] : sep == '.' && term == ' '; 
 }
 
 punion host_t  {
@@ -12,14 +12,14 @@ punion host_t  {
 };
 
 punion auth_id_t {
-  achar unauthorized : unauthorized == '-';    /- non-authenticated http session
-  astring(:' ':) id;                           /- login supplied during authentication
+  a_char unauthorized : unauthorized == '-';    /- non-authenticated http session
+  a_string(:' ':) id;                           /- login supplied during authentication
 };
 
 pstruct http_v_t {
   "HTTP/";
-  auint8 major; '.';
-  auint8 minor;           /- http minor mode
+  a_uint8 major; '.';
+  a_uint8 minor;           /- http minor mode
 };
 
 penum http_method_t {
@@ -44,7 +44,7 @@ pstruct http_request_t {
   '\"';
   http_method_t meth;             /- Method used during request
   ' ';
-  astring(:' ':) req_uri;         /- Requested uri.
+  a_string(:' ':) req_uri;         /- Requested uri.
   ' ';
   http_v_t       version : checkVersion(version, meth);
                                   /- HTTP version number of request 
@@ -57,13 +57,13 @@ precord pstruct http_clf_t {
    ' ';
    auth_id_t auth;                /- Name of authenticated user.
    " [";
-     adate(:']':) date;           /- Timestamp of request.
+     a_date(:']':) date;           /- Timestamp of request.
    "] ";
    http_request_t request;        /- Request.
    ' ';
-   auint16FW(:3:) response;       /- 3-digit response code
+   a_uint16_FW(:3:) response;       /- 3-digit response code
    ' ';
-   auint32 contentLength;         /- Number of bytes in request response.
+   a_uint32 contentLength;         /- Number of bytes in request response.
 };
 
 pfile parray log_t {

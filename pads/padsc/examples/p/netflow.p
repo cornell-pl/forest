@@ -1,103 +1,103 @@
 pstruct Hdr_v1
 {
-  endian buint16    version : version == 1; 
-  buint16    count;
-  buint32    uptime;
-  buint32    sec;
-  buint32    usec;
+  endian b_uint16    version : version == 1; 
+  b_uint16    count;
+  b_uint32    uptime;
+  b_uint32    sec;
+  b_uint32    usec;
 };
 
 pstruct Hdr_v5
 {
-  endian buint16    version : version == 5; 
-  buint16    count;
-  buint32    uptime;
-  buint32    sec;
-  buint32    usec;
-  buint32    flow_sequence;
-  buint8     engine_type;
-  buint8     engine_id;
-  buint16    sampling_interval;
+  endian b_uint16    version : version == 5; 
+  b_uint16    count;
+  b_uint32    uptime;
+  b_uint32    sec;
+  b_uint32    usec;
+  b_uint32    flow_sequence;
+  b_uint8     engine_type;
+  b_uint8     engine_id;
+  b_uint16    sampling_interval;
 };
 
 pstruct Hdr_v7
 {
-  endian buint16    version : version == 7;
-  buint16    count;
-  buint32    uptime;
-  buint32    sec;
-  buint32    usec;
-  buint32    flow_sequence;
+  endian b_uint16    version : version == 7;
+  b_uint16    count;
+  b_uint32    uptime;
+  b_uint32    sec;
+  b_uint32    usec;
+  b_uint32    flow_sequence;
 };
 
 pstruct Data_v1
 {
-  buint32    src_addr;
-  buint32    dst_addr;
-  buint32    hop;
-  buint16    input;
-  buint16    output;
-  buint32    packets;
-  buint32    bytes;
-  buint32    first;
-  buint32    last;
-  buint16    src_port;
-  buint16    dst_port;
-  buint16    pad1;
-  buint8     prot;
-  buint8     tos;
-  buint8     flags;
-  buint8     tcp_retx_cnt;
-  buint8     tcp_retx_secs;
-  buint8     tcp_misseq_cnt;
+  b_uint32    src_addr;
+  b_uint32    dst_addr;
+  b_uint32    hop;
+  b_uint16    input;
+  b_uint16    output;
+  b_uint32    packets;
+  b_uint32    bytes;
+  b_uint32    first;
+  b_uint32    last;
+  b_uint16    src_port;
+  b_uint16    dst_port;
+  b_uint16    pad1;
+  b_uint8     prot;
+  b_uint8     tos;
+  b_uint8     flags;
+  b_uint8     tcp_retx_cnt;
+  b_uint8     tcp_retx_secs;
+  b_uint8     tcp_misseq_cnt;
 };
 
 pstruct Data_v5
 {
-  buint32    src_addr;
-  buint32    dst_addr;
-  buint32    hop;
-  buint16    input;
-  buint16    output;
-  buint32    packets;
-  buint32    bytes;
-  buint32    first;
-  buint32    last;
-  buint16    src_port;
-  buint16    dst_port;
-  buint8     pad1;
-  buint8     tcp_flags;
-  buint8     prot;
-  buint8     tos;
-  buint16    src_as;
-  buint16    dst_as;
-  buint8     src_mask;
-  buint8     dst_mask;
+  b_uint32    src_addr;
+  b_uint32    dst_addr;
+  b_uint32    hop;
+  b_uint16    input;
+  b_uint16    output;
+  b_uint32    packets;
+  b_uint32    bytes;
+  b_uint32    first;
+  b_uint32    last;
+  b_uint16    src_port;
+  b_uint16    dst_port;
+  b_uint8     pad1;
+  b_uint8     tcp_flags;
+  b_uint8     prot;
+  b_uint8     tos;
+  b_uint16    src_as;
+  b_uint16    dst_as;
+  b_uint8     src_mask;
+  b_uint8     dst_mask;
 };
 
 pstruct Data_v7
 {
-  buint32    src_addr;
-  buint32    dst_addr;
-  buint32    hop;
-  buint16    input;
-  buint16    output;
-  buint32    packets;
-  buint32    bytes;
-  buint32    first;
-  buint32    last;
-  buint16    src_port;
-  buint16    dst_port;
-  buint8     flags;
-  buint8     tcp_flags;
-  buint8     prot;
-  buint8     tos;
-  buint16    src_as;
-  buint16    dst_as;
-  buint8     src_mask;
-  buint8     dst_mask;
-  buint16    pad2;
-  buint32    router_sc;
+  b_uint32    src_addr;
+  b_uint32    dst_addr;
+  b_uint32    hop;
+  b_uint16    input;
+  b_uint16    output;
+  b_uint32    packets;
+  b_uint32    bytes;
+  b_uint32    first;
+  b_uint32    last;
+  b_uint16    src_port;
+  b_uint16    dst_port;
+  b_uint8     flags;
+  b_uint8     tcp_flags;
+  b_uint8     prot;
+  b_uint8     tos;
+  b_uint16    src_as;
+  b_uint16    dst_as;
+  b_uint8     src_mask;
+  b_uint8     dst_mask;
+  b_uint16    pad2;
+  b_uint32    router_sc;
 };
 
 pstruct Packet_v1 {
