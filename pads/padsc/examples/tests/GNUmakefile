@@ -92,6 +92,7 @@ regress_o:  sanity_check \
           regress_test_array_post_o \
           regress_test_charclass_o \
           regress_rw_struct_o \
+          regress_rw_pendian_o \
           regress_rwxml_struct_o
 
 	@echo " "; echo "DONE"; echo " "
@@ -124,6 +125,7 @@ regress_d:  sanity_check \
           regress_test_array_post_d \
           regress_test_charclass_d \
           regress_rw_struct_d \
+          regress_rw_pendian_d \
           regress_rwxml_struct_d
 	@echo " "; echo "DONE"; echo " "
 
@@ -290,12 +292,12 @@ regress_rw_struct_d: rw_struct_d
 	@(args=""; input="../../data/rw_struct"; suf=""; $(RegressRW))
 
 regress_rw_pendian_o: rw_pendian
-	@(args=""; input="../../data/endian.delenn"; suf=""; $(RegressRW))
-	@(args=""; input="../../data/endian.raptor"; suf=""; $(RegressRW))
+	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(RegressRW))
+	@(args=""; input="../../data/endian.raptor"; suf="_raptor"; $(RegressRW))
 
 regress_rw_pendian_d: rw_pendian_d
-	@(args=""; input="../../data/endian.delenn"; suf=""; $(RegressRW))
-	@(args=""; input="../../data/endian.raptor"; suf=""; $(RegressRW))
+	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(RegressRW))
+	@(args=""; input="../../data/endian.raptor"; suf="_raptor"; $(RegressRW))
 
 regress_rwxml_struct_o: rwxml_struct
 	@(args=""; input="../../data/ex_data.struct"; suf=""; $(RegressInput))
