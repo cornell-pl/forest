@@ -2029,11 +2029,6 @@ do {
  } while (0)
 /* END_MACRO */
 
-
-
-
-
-
 #define PCGEN_FMT_TYPEDEF(fmtCall)
  do { 
       trequestedOut_PCGEN_ = 0;
@@ -2043,8 +2038,7 @@ do {
 	*requestedOut = 1; 
       };
  } while (0)
-
-
+/* END_MACRO */
 
 #define PCGEN_FMT_INIT(fnName) 
  do { 
@@ -2134,7 +2128,6 @@ do{
 	*requestedOut = 1; 
       };
  } while (0)
-
 /* END_MACRO */
 
 #define PCGEN_FMT_INIT_ENUM(fnName)
@@ -2154,7 +2147,6 @@ do{
 	 trequestedOut_PCGEN_ = 0;
       };
  } while (0)
-
 /* END_MACRO */
 
 #define PCGEN_FMT_RECORD(fname)

@@ -816,12 +816,16 @@ Puint32 P_Test_SynCheck(Puint32 m);
 Puint32 P_Test_SemCheck(Puint32 m);
 Puint32 P_Test_DbgRead(Puint32 m);
 Puint32 P_Test_Write(Puint32 m);
+Puint32 P_Test_WriteVoid(Puint32 m);
+Puint32 P_Test_WriteMeta(Puint32 m);
 
 Puint32 P_Test_NotSet(Puint32 m);
 Puint32 P_Test_NotSynCheck(Puint32 m);
 Puint32 P_Test_NotSemCheck(Puint32 m);
 Puint32 P_Test_NotDbgRead(Puint32 m);
 Puint32 P_Test_NotWrite(Puint32 m);
+Puint32 P_Test_NotWriteVoid(Puint32 m);
+Puint32 P_Test_NotWriteMeta(Puint32 m);
 
 Puint32 P_Test_CheckAndSet(Puint32 m);
 Puint32 P_Test_BothCheck(Puint32 m);
@@ -831,17 +835,24 @@ Puint32 P_Test_NotCheckAndSet(Puint32 m);
 Puint32 P_Test_NotBothCheck(Puint32 m);
 Puint32 P_Test_NotIgnore(Puint32 m);
 
+Puint32 P_Test_WriteOrWriteVoid(Puint32 m);
+Puint32 P_Test_NotWriteOrWriteVoid(Puint32 m);
+
 void    P_Do_Set(Puint32 m);
 void    P_Do_SynCheck(Puint32 m);
 void    P_Do_SemCheck(Puint32 m);
 void    P_Do_DbgRead(Puint32 m);
 void    P_Do_Write(Puint32 m);
+void    P_Do_WriteVoid(Puint32 m);
+void    P_Do_WriteMeta(Puint32 m);
 
 void    P_Dont_Set(Puint32 m);
 void    P_Dont_SynCheck(Puint32 m);
 void    P_Dont_SemCheck(Puint32 m);
 void    P_Dont_DbgRead(Puint32 m);
 void    P_Dont_Write(Puint32 m);
+void    P_Dont_WriteVoid(Puint32 m);
+void    P_Dont_WriteMeta(Puint32 m);
 
 #else
 /* The actual declarations */
@@ -869,12 +880,16 @@ void    P_Dont_Write(Puint32 m);
 #define P_Test_SemCheck(m)         ((m) & P_SemCheck)
 #define P_Test_DbgRead(m)          ((m) & P_DbgRead)
 #define P_Test_Write(m)            ((m) & P_Write)
+#define P_Test_WriteVoid(m)        ((m) & P_WriteVoid)
+#define P_Test_WriteMeta(m)        ((m) & P_WriteMeta)
 
 #define P_Test_NotSet(m)           (!P_Test_Set(m))
 #define P_Test_NotSynCheck(m)      (!P_Test_SynCheck(m))
 #define P_Test_NotSemCheck(m)      (!P_Test_SemCheck(m))
 #define P_Test_NotDbgRead(m)       (!P_Test_DbgRead(m))
 #define P_Test_NotWrite(m)         (!P_Test_Write(m))
+#define P_Test_NotWriteVoid(m)     (!P_Test_WriteVoid(m))
+#define P_Test_NotWriteMeta(m)     (!P_Test_WriteMeta(m))
 
 #define P_Test_CheckAndSet(m)      (((m) & P_CheckAndSet) == P_CheckAndSet)
 #define P_Test_BothCheck(m)        (((m) & P_CheckAndSet) == P_BothCheck)
@@ -884,17 +899,24 @@ void    P_Dont_Write(Puint32 m);
 #define P_Test_NotBothCheck(m)     (((m) & P_CheckAndSet) != P_BothCheck)
 #define P_Test_NotIgnore(m)        (((m) & P_CheckAndSet) != P_Ignore)
 
+#define P_Test_WriteOrWriteVoid(m)    ((m) & (P_Write|P_WriteVoid))
+#define P_Test_NotWriteOrWriteVoid(m) (!P_Test_WriteOrWriteVoid(m))
+
 #define P_Do_Set(m)                ((m) |= P_Set)
 #define P_Do_SynCheck(m)           ((m) |= P_SynCheck)
 #define P_Do_SemCheck(m)           ((m) |= P_SemCheck)
 #define P_Do_DbgRead(m)            ((m) |= P_DbgRead)
 #define P_Do_Write(m)              ((m) |= P_Write)
+#define P_Do_WriteVoid(m)          ((m) |= P_WriteVoid)
+#define P_Do_WriteMeta(m)          ((m) |= P_WriteMeta)
 
 #define P_Dont_Set(m)              ((m) &= (~P_Set))
 #define P_Dont_SynCheck(m)         ((m) &= (~P_SynCheck))
 #define P_Dont_SemCheck(m)         ((m) &= (~P_SemCheck))
 #define P_Dont_DbgRead(m)          ((m) &= (~P_DbgRead))
 #define P_Dont_Write(m)            ((m) &= (~P_Write))
+#define P_Dont_WriteVoid(m)        ((m) &= (~P_WriteVoid))
+#define P_Dont_WriteMeta(m)        ((m) &= (~P_WriteMeta))
 
 #endif  /*  FOR_CKIT  */
 
