@@ -9,6 +9,7 @@
 % \end{tabular}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\paragraph*{Intellectual Merits:} 
 An {\em ad hoc data format} is any nonstandard data format
 for which parsing, querying, analysis or transformation
 tools are not readily available.
@@ -16,77 +17,81 @@ There are vast amounts of useful data
 stored in traditional databases and \xml\ formats, but there is just
 as much in ad hoc formats.
 In the networking and telecommunications
-domain, we find ad hoc formats for web server logs~\cite{wpp}, 
-netflows capturing internet traffic~\cite{netflow}, 
+domain, we find ad hoc formats for web server logs, 
+netflows capturing internet traffic, 
 log files characterizing IP backbone resource utilization,
 wire formats for legacy telecommunication billing systems, 
-and telephone call detail data~\cite{hancock-toplas}, to name just a few.
+and telephone call detail data, to name just a few.
 The ability to parse, query, monitor and transform this ad hoc data
 is a crucial part of maintaining and providing security for
 our communications infrastructure.
 
-Processing ad hoc data is challenging for a variety of
-reasons. First, ad hoc data arrives ``as is:'' an analyst might want the
-data delivered in \xml, but unfortunately, he or she has just got to deal
-with it as it is.
-Second, documentation for the format may not exist at all, or it may be
-out of date.  
-Third, ad hoc data frequently contain errors, for a variety of
-reasons: malfunctioning equipment, race conditions on log
-entry~\cite{wpp}, malicious agents attempting to exploit
-software vulnerabilities, human error in entering data, and others. 
-The appropriate response to such errors depends on the application. 
-% Some applications require the data to be error free: 
-% if an error is detected, processing needs to stop immediately and a human
-% must be alerted.  Other applications can repair the data, while still
-% others can simply discard erroneous or unexpected values.  
-For some applications, errors or anomalous data can be the most 
-interesting part because they can signal potential network
-vulnerabilities, opportunities or ongoing fraud in telephony systems, 
-or failure to communicate between systems.  A fourth challenge is that 
-ad hoc data sources can be high volume.  For instance,
-AT\&T's call-detail stream contains roughly 300~million calls per day
-requiring approximately 7GBs of storage space.
+% Explanation as to why ad hoc data is relevant to cyber trust goes here.
+
+% Processing ad hoc data is challenging for a variety of
+% reasons. First, ad hoc data arrives ``as is:'' an analyst might want the
+% data delivered in \xml, but unfortunately, he or she has just got to deal
+% with it as it is.
+% Second, documentation for the format may not exist at all, or it may be
+% out of date.  
+% Third, ad hoc data frequently contain errors, for a variety of
+% reasons: malfunctioning equipment, race conditions on log
+% entry~\cite{wpp}, malicious agents attempting to exploit
+% software vulnerabilities, human error in entering data, and others. 
+% The appropriate response to such errors depends on the application. 
+% % Some applications require the data to be error free: 
+% % if an error is detected, processing needs to stop immediately and a human
+% % must be alerted.  Other applications can repair the data, while still
+% % others can simply discard erroneous or unexpected values.  
+% For some applications, errors or anomalous data can be the most 
+% interesting part because they can signal potential network
+% vulnerabilities, opportunities or ongoing fraud in telephony systems, 
+% or failure to communicate between systems.  A fourth challenge is that 
+% ad hoc data sources can be high volume.  For instance,
+% AT\&T's call-detail stream contains roughly 300~million calls per day
+% requiring approximately 7GBs of storage space.
 
 Work has begun on developing a high-level specification 
-language called PADS for describing ad hoc data formats.  From a
-PADS specification it is currently possible to generate a number of
+language called \pads{} for describing ad hoc data formats.  From a
+\pads{} specification it is currently possible to generate a number of
 tools for processing that data automatically including (1)
 efficient parsers for reading ad hoc data, (2) an interface to a 
 general-purpose data query engine, (3) an analyzer that generates 
 statistical summaries of data read by the parser, and (4)
 a translator from the ad hoc format into \xml.  
 
-While the work to date demonstrates the feasibility of the PADS
-approach, the PADS design and implementation are still in their infancy:
+While the work to date demonstrates the feasibility of the \pads{}
+approach, the \pads{} design and implementation are still in their infancy:
 We have discovered many common, real-world data formats that the current PADS 
 infrastructure is incapable of describing, parsing or analyzing. 
 To address these deficiencies, we propose to explore a number of different ways
-of extending the basic PADS specification language and related
-infrastructure.  In addition, we propose to augment PADS with
-facilities for programming common data transformations at a
-high level of abstraction.  These new transformational capabilities
-will allow us to fix data errors when they are detected, filter
-important information out of the data source and integrate basic data 
-processing steps with encryption or compression algorithms.
+of extending the basic \pads{} specification language and related
+infrastructure.  The second thrust of our research involves
+improving the automatic tool generation infrastructure in the \pads{} system.
+The current tool generation system is brittle, inflexible and suffers from
+subpar performance.  We will develop a novel extension to \pads{} 
+that allows users to augment \pads{} descriptions with application-specific
+attributes.  These attributes can then convey semantic information to
+the tool generators.  Our new architecture has the promise of being
+substantially more robust, flexible and efficient.
 Finally, in order to improve the reliability of the infrastructure,
-we will formalize PADS and prove important correctness properties
+we will formalize \pads{} and prove important correctness properties
 of our formal model.  Overall, this proposal involves challenging research in
-language design, efficient systems implementation and theoretical
+language design, efficient systems implementation and
 semantic analysis, all aimed at solving real-world data processing 
 problems.
 
 \paragraph*{Broader Impacts:}  We are collaborating with researchers at
 AT\&T who will be able to use our tools to address real problems such as
-telephone fraud detection at AT\&T.  In addition, our tools will be 
+telephone fraud detection.  In addition, our tools will be 
 freely available and open source so that other industrial partners
 may use them.  Moreover, ad hoc data is everywhere, not just the
 telecommunications industry.  Part of our mission will be to work with 
 biologists, chemists and physicists at Princeton and the broader community
 to help them with their data 
 processing needs.  We have already been meeting with Olga Troyanskaya,
-who works in Princeton's Institute for Integrative Genomics 
+who works in Princeton's Lewis-Sigler Institute for Integrative Genomics 
 on pathway modeling and analysis of protein-protein interactions.  Many of our proposed
-extensions to PADS were inspired directly by her data processing needs.
-The collaboration between CS and Genomics will also be an excellent platform
+extensions to \pads{} were inspired directly by her data processing needs.
+The collaboration between Computer Science and Genomics will also be an excellent platform
 for developing interdisciplinary undergraduate research projects.

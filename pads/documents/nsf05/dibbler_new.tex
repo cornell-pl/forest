@@ -1,17 +1,14 @@
 \begin{code}
 \kw{Precord} \kw{Pstruct} summary\_header\_t \{
-  "0|";
-  Puint32       tstamp;
+  "0|";  Puint32 tstamp;
 \};
 \mbox{}
 \kw{Pstruct} no\_ramp\_t \{
-  "no\_ii";
-  Puint64 id;
+  "no\_ii";  Puint64 id;
 \};
 \mbox{}
 \kw{Punion} dib\_ramp\_t \{
-  Pint64     ramp;
-  no\_ramp\_t  genRamp;
+  Pint64 ramp;  no\_ramp\_t genRamp;
 \};
 \mbox{}
 \kw{Pstruct} order\_header\_t \{
@@ -32,8 +29,7 @@
 \};
 \mbox{}
 \kw{Pstruct} event\_t \{
-  Pstring(:'|':) state;   '|';
-  Puint32        tstamp;
+  Pstring(:'|':) state;  '|';  Puint32 tstamp;
 \};
 \mbox{}
 \kw{Parray} eventSeq \{
@@ -44,8 +40,7 @@
 \};
 \mbox{}
 \kw{Precord} \kw{Pstruct} entry\_t \{
-  order\_header\_t  header;
-  eventSeq        events;
+  order\_header\_t  header;  eventSeq events;
 \};
 \mbox{}
 \kw{Parray} entries\_t \{
@@ -53,7 +48,6 @@
 \};
 \mbox{}
 \kw{Psource} \kw{Pstruct} out\_sum\{
-  summary\_header\_t  h;
-  entries\_t         es;
+  summary\_header\_t  h;  entries\_t es;
 \};
 \end{code}
