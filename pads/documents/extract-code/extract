@@ -1,7 +1,9 @@
 #!/bin/sh
 #will be filled in by install script
 
-SMLBIN=${PADS_HOME}/binlinks/smlruntime.${AST_ARCH}
-IMAGE=${PADS_HOME}/documents/extract-code/extract-code
+_arch_n_opsys=`$PADS_HOME/scripts/arch-n-opsys`
+
+SMLBIN=$PADS_HOME/binlinks/smlruntime.$_arch_n_opsys
+IMAGE=$PADS_HOME/documents/extract-code/extract-code
  
-exec ${SMLBIN} @SMLload=${IMAGE}  $* < /dev/null
+exec $SMLBIN @SMLload=$IMAGE $* < /dev/null
