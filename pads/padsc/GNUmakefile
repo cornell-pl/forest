@@ -1,6 +1,8 @@
 
  # This is a GNU makefile.
 
+PADS_HOME = ..
+
 TARGS = padsc_lib
 ifdef USE_GALAX
 TARGS += pglx_lib 
@@ -21,13 +23,14 @@ padsc_comp:
 	echo Making padsc compiler
 	@(cd comp; $(MAKE) all)
 
-regress: test_libpads test_comp
+regress:
+	@(cd libpads/tests; $(MAKE); cd ../../examples/tests; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
 
 test_libpads:
-	@(cd libpads/tests; $(MAKE))
+	@(cd libpads/tests; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
 
 test_comp:
-	@(cd examples/tests; $(MAKE))
+	@(cd examples/tests; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
 
 clean:
 	@(cd libpads; $(MAKE) clean)
