@@ -150,8 +150,9 @@ structure CnvExt : CNVEXT = struct
 	    fun padLeft s = StringCvt.padLeft filler (prefix+len) s
 	    fun padRight s = StringCvt.padRight filler (space+len) s
 	in
-	    if space<0 then ("\n"^s^"\n")
-	    else padRight (padLeft s)
+(*	    if space<0 then ("\n"^s^"\n")
+	    else  *)
+	    padRight (padLeft s)
 	end
 
     fun stringOptMerge (s1Opt: string option, s2Opt:string option) =
@@ -2146,6 +2147,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
                       (* -- Some helper functions *)
 		      val first = ref true
+		      val next  = ref 0
 		      fun genReadFull {pty: PX.Pty, args: pcexp list, name: string, 
 				       isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				       pred:pcexp option, comment} = 
@@ -2249,98 +2251,102 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 
 		      fun genReadBrief e = 
 			  let val e = PTSub.substExps (!subList) e
+			      val eptopt = case e of PT.ExprExt (PX.Pregexp e') => SOME e' | _ => NONE
 			      val (expTy, expAst) = cnvExpression e
+			      val cstr = CExptoString expAst
+
 			      fun getCharComment eX = 
 				  let val cval = #1(evalExpr eX)
+				      val defaultStr = CExptoString expAst
 				  in
-				      case cval of NONE => CExptoString expAst
-				      | SOME e => (Char.toCString(Char.chr (IntInf.toInt e))
-					  	   handle _ => CExptoString expAst)
+				      case cval of NONE => (defaultStr, defaultStr)
+				      | SOME e => ( ("'" ^ (Char.toString(Char.chr (IntInf.toInt e))) ^"'",
+						     Char.toString ( Char.chr (IntInf.toInt e)))
+					  	   handle _ => (defaultStr, defaultStr))
 				  end
 			      fun getStrLen eX = 
 				  case eX of PT.String s => P.intX (String.size s)
                                   | PT.MARKexpression(l,e) => getStrLen e
 				  | _ => PL.strLen eX
-			      val (pTyName, litdecls, expr, commentV) = 
-				  if CTisIntorChar expTy then (PL.charlit, [], e, getCharComment e)
+			      val (scanName, initStmts, expr, cleanStmts, gotoLabelOpt, commentV, cstr) = 
+				  if Option.isSome eptopt then 
+				      let val regArgX = P.addrX(PT.Id "regexplit")
+					  val () = next := !next +1
+					  val nextLabel = name ^ "_" ^ (Int.toString (!next))
+				      in (PL.relitScan1,
+					  [PL.regexpDeclNullS("regexplit"),
+					   PT.IfThen(P.eqX(PL.P_ERROR, PL.regexpCompileCStrX(PT.Id pads, e, regArgX, 
+									 PT.String "Literal Field", PT.String readName)),
+						     PT.Compound([ P.assignS(fieldX(pd, errCode), PL.P_INVALID_REGEXP),
+								   P.plusAssignS(fieldX(pd,nerr), P.intX 1),
+								   PL.setPanicS(PT.Id pd),
+								   PT.Goto nextLabel] ))],
+					  regArgX,
+					   [PL.regexpCleanupS(PT.Id pads, regArgX)],
+					  SOME nextLabel, cstr, cstr)
+				      end
+				  else if CTisIntorChar expTy then 
+				      let val (commentV, cstr) = getCharComment e
+					  in (PL.charlitScan1, [], e, [], NONE, commentV, cstr)end
 				  else if CTisString expTy 
-				       then (PL.strlit,
+				       then (PL.strlitScan1,
 					     [P.varDeclS(PL.stringPCT, "strlit", 
 							 PT.InitList[e, P.zero]),
-					      P.assignS(P.dotX(PT.Id "strlit", PT.Id "len"), getStrLen e)],
-					     P.addrX(PT.Id "strlit"), CExptoString expAst)
-				  else (PE.error ("Currently only characters and strings "^
+					       P.assignS(P.dotX(PT.Id "strlit", PT.Id "len"), getStrLen e)],
+					     P.addrX(PT.Id "strlit"), [], NONE, cstr, cstr)
+				  else (PE.error ("Currently only characters, strings, and regular expressions "^
 					          "supported as delimiters. Delimiter type: "^ (CTtoString expTy) ^".");
-					(PL.charlit, [], e, CExptoString expAst))
-			      val commentS = P.mkCommentS ("Reading delimiter field: "^ commentV)
+					(PL.charlit, [], e, [], NONE, cstr, cstr))
 
-			      val scanFieldName = scan1Suf pTyName
+			      val commentS = P.mkCommentS ("Reading delimiter field: "^ commentV)
 
 			      val tpdDecl = P.varDeclS'(PL.base_pdPCT, tpd)
 			      val offsetDecl = P.varDeclS'(PL.sizePCT, "offset")
-
-			      fun genPanicRecovery (pTyName:string) : pcstmt list -> pcstmt list = 
-                                        fn elseSs =>
-                                           [PT.IfThenElse(PL.testPanicX(PT.Id pd),
-					      PT.Compound [
-						PT.IfThen(
-						 P.neqX(PL.P_ERROR,
-						       PL.scan1FunX(scanFieldName, PT.Id pads, 
-								    expr, P.trueX, 
-								    P.trueX, (* panic=1 *)
-                                                                    P.addrX (PT.Id "offset"))),
-						 PT.Compound[PL.unsetPanicS(PT.Id pd)])
-                                              ], 
-                                              PT.Compound elseSs
-                                           )]
-
-			      val readFieldName = lookupTy(PX.Name pTyName, readSuf, #readname)
 			      fun reportBriefErrorSs (code, msg, offset) = 
 				  let val locX = P.dotX(PT.Id tpd, PT.Id loc)
 				  in
-				   [PT.IfThen(
-				      PL.getSpecLevelX(PT.Id pads),
-				      PT.Compound[PT.Return PL.P_ERROR]),
-				    PT.IfThen(
-				      P.eqX(P.zero, fieldX(pd,nerr)), 
-				      PT.Compound 
-				       [P.assignS(fieldX(pd, errCode), code),
-					PL.getLocEndS(PT.Id pads, P.addrX(locX), offset),
-					P.assignS(fieldX(pd, loc), locX),
-					PL.userErrorS(PT.Id pads, 
-						      P.addrX(P.dotX(PT.Id tpd, PT.Id loc)),
-						      code,
-						      readName,
-						      PT.String (msg^": %s."), 
-						      [PL.fmtStr(commentV)])]),
+				   [PT.IfThen(PL.getSpecLevelX(PT.Id pads), PT.Compound(cleanStmts@ [PT.Return PL.P_ERROR])),
+				    PT.IfThen(P.eqX(P.zero, fieldX(pd,nerr)), 
+				      PT.Compound [P.assignS(fieldX(pd, errCode), code),
+						   PL.getLocEndS(PT.Id pads, P.addrX(locX), offset),
+						   P.assignS(fieldX(pd, loc), locX),
+						   PL.userErrorS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc)),
+								 code, readName, PT.String (msg^": %s."), [PL.fmtStr(cstr)])]),
 				    P.plusAssignS(fieldX(pd,nerr), P.intX 1)]
 				  end
+
 			      val notPanicSs = 
 				  [PL.getLocBeginS(PT.Id pads, P.addrX(P.dotX(PT.Id tpd, PT.Id loc))),
-				   PT.IfThenElse(
-				      P.eqX(PL.P_OK,
-					    PL.scan1FunX(scanFieldName, 
+				   PT.IfThenElse(P.eqX(PL.P_OK,
+					    PL.scan1FunX(scanName, 
 							 PT.Id pads, expr, P.trueX,
 							 P.falseX, (* panic=0 *)
 							 P.addrX (PT.Id "offset"))),
 				      PT.Compound(
-					 [PT.IfThen(
-                                           PT.Id "offset",
-					   PT.Compound(
-						  reportBriefErrorSs (PL.P_STRUCT_EXTRA_BEFORE_SEP, 
+					 [PT.IfThen(PT.Id "offset",
+					   PT.Compound(reportBriefErrorSs (PL.P_STRUCT_EXTRA_BEFORE_SEP, 
 						                     "Extra data before separator", ~2)))]),
 				      PT.Compound(reportBriefErrorSs (PL.P_MISSING_LITERAL,
 						                       "Missing literal", ~1)
                                                   @[PL.setPanicS(PT.Id pd)]))]
 
+			      val panicRecoverSs = 
+                                           [PT.IfThenElse(PL.testPanicX(PT.Id pd),
+					      PT.Compound [
+						PT.IfThen(P.neqX(PL.P_ERROR,
+						       PL.scan1FunX(scanName, PT.Id pads, 
+								    expr, P.trueX, 
+								    P.trueX, (* panic=1 *)
+                                                                    P.addrX (PT.Id "offset"))),
+						 PT.Compound[PL.unsetPanicS(PT.Id pd)])], 
+                                              PT.Compound notPanicSs)]
+			      val endSs = case gotoLabelOpt of NONE => cleanStmts
+				          | SOME s => [PT.Labeled(s, PT.Compound cleanStmts)]
 			  in
 			      [PT.Compound(
                                    [commentS, 
-				    PT.Compound(
-				     tpdDecl 
-				     :: offsetDecl
-				     :: litdecls
-				     @ (genPanicRecovery pTyName notPanicSs))])]
+				    PT.Compound(tpdDecl :: offsetDecl :: initStmts
+				     @ panicRecoverSs @ endSs)])]
 			  end
 
 		     (* Given manifest representation, generate operations to set representation *)
@@ -2385,7 +2391,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 								name ^ " " ^
 								"violated."), [])]
 				val condSs = 
-				       [P.mkCommentS ("Checking post constraint for pstruct "^ name ^".\n"),
+				       [P.mkCommentS ("Checking post constraint for pstruct "^ name ^"."),
 					PT.IfThen(
                                            P.andX( PL.mTestSemCheckX(fieldX(m,all)), P.notX expr),
 					   PT.Compound reportErrSs)]

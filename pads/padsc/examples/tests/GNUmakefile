@@ -45,7 +45,7 @@ else
 XML_TESTS = test_children
 endif
 
-FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6
+FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 test_struct-regexp
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct test_write_struct_strings
 OTHER_TESTS  = test_cpygen_crs test_enum test_from test_ai test_readint test_depends test_pswitch test_pswitch2 test_struct3 manifest_union
@@ -72,7 +72,8 @@ regress_o:  sanity_check \
           regress_test_me_o \
           regress_test_me_fooclass_o \
 	  regress_test_write_struct_o \
-	  regress_test_write_struct_strings_o
+	  regress_test_write_struct_strings_o \
+          regress_test_struct-regexp_o
 	@echo " "; echo "DONE"; echo " "
 
 regress_d:  sanity_check \
@@ -92,7 +93,8 @@ regress_d:  sanity_check \
           regress_test_me_d \
           regress_test_me_fooclass_d \
 	  regress_test_write_struct_d \
-	  regress_test_write_struct_strings_d
+	  regress_test_write_struct_strings_d \
+          regress_test_struct-regexp_d
 	@echo " "; echo "DONE"; echo " "
 
 dib_tests: sanity_check $(DIB_TESTS)
@@ -194,6 +196,12 @@ regress_test_struct3_o: test_struct3
 	@(args=""; input="../../data/struct3"; suf=""; $(RegressInput))
 regress_test_struct3_d: test_struct3-g
 	@(args=""; input="../../data/struct3"; suf=""; $(RegressInput))
+
+regress_test_struct-regexp_o: test_struct-regexp
+	@(args=""; suf=""; $(RegressDef))
+regress_test_struct-regexp_d: test_struct-regexp-g
+	@(args=""; suf=""; $(RegressDef))
+
 
 clean:
 	$(RM) -f *~ *.o $(ALL_TESTS)

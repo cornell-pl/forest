@@ -50,6 +50,8 @@ struct
 
   val P_CHAR_LIT_NOT_FOUND             = PT.Id "P_CHAR_LIT_NOT_FOUND"
 
+  val P_INVALID_REGEXP                 = PT.Id "P_INVALID_REGEXP"
+
   val M_CHECK_AND_SET = PT.Id "P_CheckAndSet"
   val M_CHECK         = PT.Id "P_BothCheck"
   val M_IGNORE        = PT.Id "P_Ignore"
@@ -81,6 +83,7 @@ struct
   val errCodePCT   = P.makeTypedefPCT "PerrCode_t"
   val sizePCT      = P.makeTypedefPCT "size_t"
   val ssizePCT     = P.makeTypedefPCT "ssize_t"
+  val regexpPCT    = P.makeTypedefPCT "Pregexp_t"
 
   val rbufferPCT   = P.makeTypedefPCT "RBuf_t"
   val rMMPCT       = P.makeTypedefPCT "RMM_t"
@@ -92,13 +95,17 @@ struct
   val VoidPtr      = P.ptrPCT(P.makeTypedefPCT "Void_t")
 
   val charlit      = "Pa_char_lit"
+  val charlitScan1 = "Pchar_lit_scan1"
+  val charlitScan2 = "Pchar_lit_scan2"
   val strlit       = "Pa_str_lit"
   val strlitRead   = "Pcstr_lit_read"
-  val strlitScan1  = "Pcstr_lit_scan1"
-  val strlitScan2  = "Pcstr_lit_scan2"
+  val strlitScan1  = "Pstr_lit_scan1"
+  val strlitScan2  = "Pstr_lit_scan2"
   val strlitWrite  = "Pa_cstr_lit"
   val strlitWriteBuf  = "Pa_cstr_lit_write2buf"
   val stringPCT    = P.makeTypedefPCT "Pstring"
+  val relitScan1   = "Pre_scan1"
+  val relitScan2   = "Pre_scan2"
   val str          = "str"
   val len          = "len"
   val errorf       = "errorf"
@@ -411,17 +418,20 @@ struct
 	        res: PT.expression, offset: PT.expression) = 
       PT.Call(PT.Id n, [pads,c,s,eatLit,eatStop,panic,res,offset])
 
-(* --- OBSOLETE ? ----
-  fun scanFunChkX(expectedValX, n: string, pads: PT.expression, c: PT.expression, s: PT.expression,
-		  eatLit: PT.expression, eatStop: PT.expression, panic: PT.expression,
-		  res: PT.expression, offset: PT.expression) = 
-      P.eqX(expectedValX, scan2FunX(n,pads,c,s,eatLit,eatStop,panic,res,offset))
-
-*)
-
   fun nstPrefixWhat(outstr, pnst, prefix, what) = 
       PT.Expr(PT.Call(PT.Id "PDCI_nst_prefix_what", [outstr, pnst, prefix, what]))
 
+
+(* -- regexp routines *)
+  fun regexpDeclNullS(regexp) = P.varDeclS(regexpPCT, regexp, PT.InitList[P.zero])
+  fun regexpLitFromCharS(padsX, regexpX, charX, sourceDesc, sourceFun) = 
+        PT.Expr(PT.Call(PT.Id "PDCI_REGEXP_LIT_FROM_CHAR", [padsX, regexpX, charX, sourceDesc, sourceFun]))
+  fun regexpLitFromCStrS(padsX, regexpX, strX, sourceDesc, sourceFun) = 
+        PT.Expr(PT.Call(PT.Id "PDCI_REGEXP_LIT_FROM_CStr", [padsX, regexpX, strX, sourceDesc, sourceFun]))
+  fun regexpCompileCStrX(padsX, regCstrX, regExpX, prefixX, whatFunX) = 
+        PT.Call(PT.Id "PDCI_regexp_compile_cstr", [padsX, regCstrX, regExpX, prefixX, whatFunX ])
+  fun regexpCleanupS(padsX, regexpX) = 
+        PT.Expr(PT.Call(PT.Id "Pregexp_cleanup", [padsX, regexpX]))
 
 (* -- reading/writing record functions *)
   fun IOReadNextRecX(pads, namp) = PT.Call(PT.Id "P_io_next_rec", [pads, namp])
