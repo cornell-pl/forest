@@ -1264,7 +1264,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                       [P.subX(returnName,n), 
                                        P.addrX(PT.Id (vTableSuf tyField)),
                                        PT.Id self, 
-                                       PT.String nameField, 
+                                       nameField, 
 				       getField1, getField2, getField3,	
                                        PT.String nameStruct])) 
 	
@@ -1860,7 +1860,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					   ifGalaxChildren(returnName,P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
 					   macroTNode(returnName,PL.PDCI_structured_pd,pd,PT.Id pd,cnvName) @
 					   [P.mkCommentS "base child",
-					    macroNodeCall(returnName,P.intX 1,baseTypeName,base,
+					    macroNodeCall(returnName,P.intX 1,baseTypeName,PT.String base,
 				     			  getFieldX(m,base),getFieldX(pd,base),PT.Id rep,cnvName),
 					    P.returnS (returnName)]
                               in   
@@ -2582,7 +2582,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                               val paramTys = [P.ptrPCT nodeRepTy]
                               val formalParams =  List.map P.mkParam(ListPair.zip(paramTys, paramNames))
 		              fun macroNode (n,(nameField,tyField)) 
-					= macroNodeCall(returnName,P.intX n,tyField,nameField,
+					= macroNodeCall(returnName,P.intX n,tyField,PT.String nameField,
 							getFieldX(m,nameField),getFieldX(pd,nameField),
       							getFieldX(rep,nameField),cnvName)
 			      val numChildren = countFields + 1
@@ -3245,26 +3245,20 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val writeFunEDs = genWriteFuns(writeName, isRecord, cParams, pdPCT, canonicalPCT, bodySs)
 
 
-
-
-
 		      (***** union PADS-Galax *****)
-
+	
 		      fun tagbranches [] = []
-		  	| tagbranches ((i,(n,f,false))::ps) =
+		  	| tagbranches ((i,(n,f,b))::ps) =
+			    (* b=true <=> Pcompute field, in such case the 'mask field' argument is NULL, by now *)
+			    let val maskField = if b then (P.intX 0) else (getFieldX(m,n))
+			    in     
                             (PT.CaseLabel(PT.Id n,
-				          PT.Compound ([macroNodeCall(PT.Id result,P.intX i,f,n,getFieldX(m,n),
+				          PT.Compound ([macroNodeCall(PT.Id result,P.intX i,f,PT.Id "branch",maskField,
 						        P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
 					   		P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
 							       childrenSuf name),
 						        PT.Break])))::(tagbranches ps)
-		  	| tagbranches ((i,(n,f,true))::ps) =	(* Pcompute field in mask is NULL by now *) 
-                            (PT.CaseLabel(PT.Id n,
-				          PT.Compound ([macroNodeCall(PT.Id result,P.intX i,f,n,P.intX 0,
-						        P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
-					   		P.addrX(P.dotX(P.arrowX(PT.Id pd,PT.Id value),PT.Id n)),
-							       childrenSuf name),
-						        PT.Break])))::(tagbranches ps)
+			    end
 
 		      fun genCaseBranch (name,pty,i) =
 			  case lookupAcc(pty) of NONE   => []
@@ -3292,7 +3286,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val addBranchSs = (tagbranches (enumerate nameBranchSs))
 		      val errBranchSs = [PT.CaseLabel(PT.Id (errSuf name), PT.Break)]
                       val switchTag = PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), 
-						    PT.Compound (addBranchSs @ errBranchSs))
+						 PT.Compound (addBranchSs @ errBranchSs))
 
     	              (* PDCI_node_t** fooUnion_children(PDCI_node_t *self) *)
 		      fun genGalaxUnionChildrenFun(name,variants) =		
@@ -3309,7 +3303,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                                        PT.Call(PT.Id (toStringSuf (tgSuf name)),[fieldX(rep,tag)]))] @
 					   ifGalaxChildren(returnName,P.intX 2, "ALLOC_ERROR: in " ^ cnvName) @
 					   macroTNode(returnName,PL.PDCI_structured_pd,pd,PT.Id pd,cnvName) @
-				 	   [switchTag] (* localBranches *)  @
+				 	   [switchTag] @
 					   [P.returnS (returnName)]
                           in   
                             P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
@@ -4158,7 +4152,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                        PT.For(P.assignX(indexId,P.zero),
                                               P.ltX(indexId,fieldX(rep,length)),
                                               P.postIncX(indexId),
-					      macroNodeCall(returnName,P.plusX(indexId,P.intX 2),elemName,elt,
+					      macroNodeCall(returnName,P.plusX(indexId,P.intX 2),elemName,PT.String elt,
 							     getFieldX(m,element),P.addrX(P.subX(edBufferX,indexId)),
                                      			     P.addrX(P.subX(edBufferX,indexId)),cnvName)),
 				       P.returnS (returnName)]
