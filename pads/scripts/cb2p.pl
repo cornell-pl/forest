@@ -135,9 +135,9 @@ foreach $line (@lines) {
     $id1 = $map_id{$id1};
     $rest{$id1} = $the_rest;
     print "XXX_REMOVE rest{$id1} = $rest{$id1}\n" if ($dbg);
-    if ($level <= $lev[$nst]) {
+    if ($level <= $lev[$nst] || ($rest{$id[$nst]} !~ /none/)) {
       print "XXX_REMOVE Changing from level $lev[$nst] to final level $level -- popping levels\n" if ($dbg);
-      while ($nst && $level <= $lev[$nst]) {
+      while ($nst && (($level <= $lev[$nst]) || ($rest{$id[$nst]} !~ /none/))) {
 	$popid = $id[$nst];
 	print "XXX_REMOVE -- popping nst $nst (lev $lev[$nst], id $popid, rest $rest{$popid})\n" if ($dbg);
 	if ($nst > 1) {
@@ -147,7 +147,7 @@ foreach $line (@lines) {
 	    $targetid = $redef{$popid};
 	  }
 	  if ($rest{$parentid} !~ /none/) {
-	    die("something is wrong, parent is not structured");
+	    die("something is wrong, parent $parentid is not structured (rest for parent is $rest{$parentid})\n");
 	  }
 	  # parent is a struct, add a field and possibly an array declaration
 	  ($max, $array_param, $ty) = &eval_ty($popid, $rest{$popid});
