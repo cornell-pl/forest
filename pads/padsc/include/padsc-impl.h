@@ -148,25 +148,25 @@ PDC_error_t          PDCI_inv_valfn_map_destroy(PDC_t *pdc, PDC_inv_valfn_map_t 
 /* ================================================================================ */
 /* INTERNAL char/string write FUNCTIONS (helpers) */
 
-ssize_t PDCI_char_write2io (PDC_t *pdc, Sfio_t *io, const PDC_base_ed *ed,
+ssize_t PDCI_char_write2io (PDC_t *pdc, Sfio_t *io, PDC_base_ed *ed,
 			    PDC_char *c, PDC_charset char_set, const char *whatfn, int safe);
-ssize_t PDCI_char_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_base_ed *ed,
+ssize_t PDCI_char_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed,
 			    PDC_char *c, PDC_charset char_set, const char *whatfn, int safe);
-ssize_t PDCI_string_FW_write2io(PDC_t *pdc, Sfio_t *io, size_t width, const PDC_base_ed *ed,
+ssize_t PDCI_string_FW_write2io(PDC_t *pdc, Sfio_t *io, size_t width, PDC_base_ed *ed,
 				PDC_string *s, PDC_charset char_set, const char *whatfn, int size);
 ssize_t PDCI_string_FW_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
-				 size_t width, const PDC_base_ed *ed,
+				 size_t width, PDC_base_ed *ed,
 				 PDC_string *s, PDC_charset char_set, const char *whatfn, int size);
-ssize_t PDCI_string_write2io(PDC_t *pdc, Sfio_t *io, void *type_arg1, const PDC_base_ed *ed,
+ssize_t PDCI_string_write2io(PDC_t *pdc, Sfio_t *io, void *type_arg1, PDC_base_ed *ed,
 			     PDC_string *s, PDC_charset char_set, const char *inv_type, const char *whatfn, int safe);
 ssize_t PDCI_string_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
-			      void *type_arg1, const PDC_base_ed *ed, PDC_string *s,
+			      void *type_arg1, PDC_base_ed *ed, PDC_string *s,
 			      PDC_charset char_set, const char *inv_type, const char *whatfn, int safe);
 
-ssize_t PDCI_date_write2io(PDC_t *pdc, Sfio_t *io, void *type_arg1, const PDC_base_ed *ed,
+ssize_t PDCI_date_write2io(PDC_t *pdc, Sfio_t *io, void *type_arg1, PDC_base_ed *ed,
 			   PDC_uint32 *d, PDC_charset char_set, const char *inv_type, const char *whatfn, int safe);
 ssize_t PDCI_date_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full,
-			    void *type_arg1, const PDC_base_ed *ed, PDC_uint32 *d,
+			    void *type_arg1, PDC_base_ed *ed, PDC_uint32 *d,
 			    PDC_charset char_set, const char *inv_type, const char *whatfn, int safe);
 
 /* ================================================================================
