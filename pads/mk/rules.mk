@@ -225,21 +225,15 @@ define LibSanityCheck
 )
 endef
 
-DYNAMIC_OCAML_LIBS_D = /usr/common/lib/ocaml/libcamlrun.a -L/usr/common/lib/ocaml -lm -ldl -lcurses -lunix -lstr -lnums
+DYNAMIC_OCAML_LIBS_D = -L/home/mff/Galax-0.3.linux/lib/c -lglx -lnums -lm -ldl -lcurses -lunix -lstr
 DYNAMIC_OCAML_LIBS_O = $(DYNAMIC_OCAML_LIBS_D)
-DYNAMIC_LIBS_D += $(DYNAMIC_OCAML_LIBS_D)
-DYNAMIC_LIBS_O += $(DYNAMIC_OCAML_LIBS_O)
+# DYNAMIC_LIBS_D += $(DYNAMIC_OCAML_LIBS_D)
+# DYNAMIC_LIBS_O += $(DYNAMIC_OCAML_LIBS_O)
 
-STATIC_OCAML_LIBS_D = \
-/usr/common/lib/ocaml/libcamlrun.a \
-/usr/common/lib/ocaml/libunix.a \
-/usr/common/lib/ocaml/libstr.a \
-/usr/common/lib/ocaml/libnums.a \
- -lm -ldl 
-
+STATIC_OCAML_LIBS_D = /usr/common/lib/ocaml/libcamlrun.a /usr/common/lib/ocaml/libunix.a /usr/common/lib/ocaml/libstr.a /usr/common/lib/ocaml/libnums.a
 STATIC_OCAML_LIBS_O = $(STATIC_OCAML_LIBS_D)
-STATIC_LIBS_D += $(STATIC_OCAML_LIBS_D)
-STATIC_LIBS_O += $(STATIC_OCAML_LIBS_O)
+# STATIC_LIBS_D += $(STATIC_OCAML_LIBS_D)
+# STATIC_LIBS_O += $(STATIC_OCAML_LIBS_O)
 
 define CCExec_DYNAMIC_D
 (set -x; \
