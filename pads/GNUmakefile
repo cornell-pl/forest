@@ -40,6 +40,10 @@ clean:
 veryclean:
 	@(cd padsc; $(MAKE) veryclean)
 
+veryveryclean: veryclean
+	@(cd ast-ast/arch; $(RM) -rf `../bin/package`)
+	@($(RM) ./mk/rules.arch.`ast-ast/bin/package`.mk)
+
 ast_lib:
 	@(cp ast-ast/bin/package.cvs ast-ast/bin/package)
 	@(cd ast-ast; ./bin/package read)
