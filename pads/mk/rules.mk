@@ -206,6 +206,10 @@ ifeq ($(OPSYS),linux)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 endif
 
+ifeq ($(ARCH_N_OPSYS),ppc-darwin)
+COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
+endif
+
 ifeq ($(ARCH_N_OPSYS),x86-freebsd)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 # XXX why doesn't mamake figure this out ???
@@ -298,14 +302,14 @@ SHARED_ASTLIB_O = $(STATIC_ASTLIB_O)
 SHARED_ASTLIB_D = $(STATIC_ASTLIB_D)
 endif
 
-DYNAMIC_LIBS_O = -L $(LIBDIR)
+DYNAMIC_LIBS_O = -L$(LIBDIR)
 ifdef USE_GALAX
 DYNAMIC_LIBS_O += -lpglx
 endif
 DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
 # mff may need to change next line
-DYNAMIC_LIBS_O += -L $(PADSGLX_LIB_DIR) -lpadsglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
+DYNAMIC_LIBS_O += -L$(PADSGLX_LIB_DIR) -lpadsglxopt -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
 endif
 SHARED_PADSLIB_DEP_O = $(LIBDIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(LIBDIR)/$(SHARED_PGLXLIB_NM_O)
@@ -327,14 +331,14 @@ ifdef USE_PZIP
 DYNAMIC_LIB_DEPS_O += $(SHARED_DLL_LIB_DEP_O) $(SHARED_BZLIB_DEP_O) $(SHARED_ZLIB_DEP_O) $(SHARED_PZLIB_DEP_O) 
 endif
 
-DYNAMIC_LIBS_D = -L $(LIBDIR)
+DYNAMIC_LIBS_D = -L$(LIBDIR)
 ifdef USE_GALAX
 DYNAMIC_LIBS_D += -lpglx-g
 endif
 DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
 # mff may need to change next line 
-DYNAMIC_LIBS_D += -L $(PADSGLX_LIB_DIR) -lpadsglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
+DYNAMIC_LIBS_D += -L$(PADSGLX_LIB_DIR) -lpadsglxopt -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
 # XXX what about -lcamlrun ?
 endif
 SHARED_PADSLIB_DEP_D = $(LIBDIR)/$(SHARED_PADSLIB_NM_D)
@@ -356,7 +360,7 @@ ifdef USE_PZIP
 DYNAMIC_LIB_DEPS_D += $(SHARED_DLL_LIB_DEP_D) $(SHARED_BZLIB_DEP_D) $(SHARED_ZLIB_DEP_D) $(SHARED_PZLIB_DEP_D)
 endif
 
-TRIV_LIBS = -L $(LIBDIR) $(SHARED_ASTLIB_D)
+TRIV_LIBS = -L$(LIBDIR) $(SHARED_ASTLIB_D)
 
 INCLUDES =  -I. -I.. -I$(AST_HOME)/include/ast
 ifdef GEN_DIR

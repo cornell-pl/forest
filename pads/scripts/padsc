@@ -55,7 +55,7 @@ set lua =
 set lda = 
 set archmk = $PADS_HOME/mk/rules.arch.$AST_ARCH.mk
 if (-e $archmk) then
-  set gnutst = `/bin/grep GNU $archmk`
+  set gnutst = `grep GNU $archmk`
   if ("$gnutst"x != x) then
     set lua = -U__GNUC__
     set lda = -D__LINUX_PREPROCESSOR_FIXES

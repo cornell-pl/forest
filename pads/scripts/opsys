@@ -1,7 +1,10 @@
 #!/bin/sh
 #
-# opsys  -- get system info
+# .arch-n-opsys  -- get architecture and system info
 #
+
+export PATH
+PATH="/bin:/usr/bin"
 
 case `uname -s` in
   HP-UX)
@@ -17,7 +20,7 @@ case `uname -s` in
     case `uname -r` in
       4.*) OPSYS=irix4; HEAP_OPSYS=irix;;
       5.*) OPSYS=irix5; HEAP_OPSYS=irix;;
-      6.*) OPSYS=irix6; HEAP_OPSYS=irix;;
+      6.*) OPSYS=irix6; ALT_OPSYS=irix5; HEAP_OPSYS=irix;;
       *) exit 1;;
     esac
     ;;
@@ -46,7 +49,19 @@ case `uname -s` in
     ;;
   AIX)
     OPSYS=aix
-    ARCH=rs6000
+    ARCH=ppc
+    ;;
+  Darwin)
+    case `uname -r` in
+      5*) OPSYS=darwin5; HEAP_OPSYS=darwin ;; # MacOS X 10.1
+      6*) OPSYS=darwin;  HEAP_OPSYS=darwin ;; # MacOS X 10.2
+      7*) OPSYS=darwin;  HEAP_OPSYS=darwin ;; # MacOS X 10.3
+      *) exit 1;;
+    esac
+    case `uname -p` in
+      powerpc) ARCH=ppc;;
+      *) exit 1;;
+    esac
     ;;
   OSF1)
     case `uname -m` in
@@ -72,7 +87,7 @@ case `uname -s` in
 	ARCH=ppc
 	case `uname -r` in
 	  *osfmach*) OPSYS=mklinux ;;
-	  *) exit 1 ;;
+	  *) ;;
 	esac
 	;;
       *) exit 1;;
@@ -110,15 +125,23 @@ case `uname -s` in
       *) exit 1;;
     esac
     ;;
+  CYGWIN_NT*)
+    OPSYS=win32
+    case `uname -m` in
+       i386) ARCH=x86;;
+       i486) ARCH=x86;;
+       i586) ARCH=x86;;
+       i686) ARCH=x86;;
+       *) exit 1;;
+    esac
+    ;;
   *) exit 1;;
 esac
 
 if [ "$HEAP_OPSYS" = "" ]; then
   HEAP_SUFFIX="$ARCH-$OPSYS"
-  echo "$OPSYS"
 else
   HEAP_SUFFIX="$ARCH-$HEAP_OPSYS"
-  echo "$HEAP_OPSYS"
 fi
 
-#echo "ARCH=$ARCH; OPSYS=$OPSYS; HEAP_SUFFIX=$HEAP_SUFFIX"
+echo $OPSYS

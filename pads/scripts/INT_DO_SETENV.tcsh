@@ -31,6 +31,15 @@ else
   endif
 endif
 
+set _is_dyld_library_path
+if (! $?DYLD_LIBRARY_PATH) then
+  unset _is_dyld_library_path
+else
+  if ("$DYLD_LIBRARY_PATH"x == x) then
+    unset _is_dyld_library_path
+  endif
+endif
+
 set _is_ld_library_path
 if (! $?LD_LIBRARY_PATH) then
   unset _is_ld_library_path
@@ -184,6 +193,9 @@ if ($_pads_status == "OK") then
   set pads_script_dir = $PADS_HOME/scripts
   set remove_dups     = $pads_script_dir/removedups.pl
 
+  if (! $?_is_dyld_library_path) then
+    setenv DYLD_LIBRARY_PATH ""
+  endif
   if (! $?_is_ld_library_path) then
     setenv LD_LIBRARY_PATH ""
   endif
@@ -203,21 +215,26 @@ if ($_pads_status == "OK") then
     setenv PADSGLX_HOME /home/mff/pads-glx/api
   endif
 
+  setenv DYLD_LIBRARY_PATH `echo ${pads_lib_dir}:${ast_lib_dir}:${DYLD_LIBRARY_PATH} | $remove_dups`
   setenv LD_LIBRARY_PATH `echo ${pads_lib_dir}:${ast_lib_dir}:${LD_LIBRARY_PATH} | $remove_dups`
   setenv SHLIB_PATH      `echo ${pads_lib_dir}:${ast_lib_dir}:${SHLIB_PATH} | $remove_dups`
   setenv MANPATH         `echo ${pads_man_dir}:${ast_man_dir}:${MANPATH} | $remove_dups`
   setenv PATH            `echo ${pads_bin_dir}:${pads_script_dir}:${PATH} | $remove_dups`
 
   if (-d $OCAML_LIB_DIR) then
+    setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
   endif
   if (-d $OCAML_LIB_DIR) then
+    setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${OCAML_LIB_DIR} | $remove_dups`
   endif
   if (-d $GALAX_HOME/lib/c) then
+    setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${GALAX_HOME}/lib/c | $remove_dups`
   endif
   if (-d $PADSGLX_HOME) then
+    setenv DYLD_LIBRARY_PATH `echo ${DYLD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${PADSGLX_HOME} | $remove_dups`
   endif
 
@@ -249,6 +266,7 @@ if ($_pads_status == "OK") then
     echo "INSTALLROOT=$INSTALLROOT"
     echo "AST_ARCH=$AST_ARCH"
     echo "AST_HOME=$AST_HOME"
+    echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
     echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
     echo "SHLIB_PATH=$SHLIB_PATH"
     echo "MANPATH=$MANPATH"
@@ -271,6 +289,7 @@ endif
 unset _is_pads_home
 unset _is_ast_home
 unset _is_installroot
+unset _is_dyld_library_path
 unset _is_ld_library_path
 unset _is_shlib_path
 unset _is_manpath
