@@ -1,28 +1,103 @@
-Suppose <GTOP> is the top-level Gigascope directory,
-and <GTOP>/src/pads is where pads gets checked out.
 
-(1) building PADS
+Hi Oliver, let me know if you have any questions.  -- Bob
 
-First, you need to define GIGASCOPE_HOME, as in
-   > setenv GIGASCOPE_HOME <GTOP>           (csh/tcsh)
-or 
-   > export GIGASCOPE_HOME=<GTOP>           (sh/bash) 
+------------
+PADS library
+------------
 
-(or I think you can pass GIGASCOPE_HOME=<GTOP> as a make arg)
+   env var GIGASCOPE_HOME should be set to top, e.g.,
+     /home/gruber/gscpv1
 
-From directory $GIGASCOPE_HOME/src/pads, if you do
-   gmake install
+   We provide 2 tarballs, pads.tar.gz, pads_gscp.tar.gz,
+   with top-level relative dir pads/
+   These can be untarred to $GIGASCOPE_HOME/src/pads
+   (tarballs currently on gs1 in /home/kfisher)
 
-it should install everything necessary,
-in $GIGASCOPE_HOME/bin, $GIGASCOPE_HOME/lib, and $GIGASCOPE_HOME/include
+   env var PADS_HOME should be set to $GIGASCOPE_HOME/src/pads
 
-(2) building in a demo dir
+   To make the libary, first source $PADS_HOME/scripts/DO_SETENV.tcsh/sh
+   as in
+      source $PADS_HOME/scripts/DO_SETENV.tcsh  (for tcsh)
+   or
+      . $PADS_HOME/scripts/DO_SETENV.sh   (for bash/ksh/etc)
+
+   this will set up some helper env variables that are needed.
+
+   NOTE: sml needs to be in the path.
+
+   Then do:
+       cd $PADS_HOME
+       gmake
+
+   3 libraries should get installed under $GIGASCOPE_HOME/lib:
+       libast.a
+       libpads.a
+       libpads-g.a
+
+   some include files are installed under $GIGASCOPE_HOME/include as well:
+       pads.h
+       pads-private.h
+       pads-internal.h
+       rbuf.h
+       iodisc.h
+       pcgen-macros-gen.h
+       pads_gigascope.h
+       pads_gigascope_macros.h
+       template/*.h 
+  all of these should really start with pads (sorry!)
+  Since they don't, make sure they are not overwriting a standard gigascope .h file
+
+--------
+demo dir
+--------
+
+1. pads.mk
+
+   This makefile builds libgscppads.a from flowdata_v5.p
+
+   It has a 5 line preamble that needs to be set up
+   according to the particulars of the data format.
+   The rest of the GNUmakefile is boilerplate.
+
+   The 5 lines are:
+
+	PSPEC     =flowdata_v5.p
+	TEMPLATE  =hdr_recs_repeat
+	RECTYPE   =IPFlow5Stat
+	HDRTYPE   =Flow5StatHdr
+	NREC      =global_hdr.count
+
+   The possible choices for TEMPLATE are: 
+      recs              -- just a sequence of records
+      hdr_recs          -- a single header, then a sequence of records
+      hdr_recs_repeat   -- a header, J records, another header, K records, ...
+
+   You always give a RECTYPE and it must be one of the types from the PSEPC .p file
+
+   For hdr_recs or hdr_recs_repeat, you must give a HDRTYPE from the .p file
+
+   For hdr_recs_repeat, you must give an NREC expression which typically will
+   pull a count from global variable global_hdr (of type HDRTYPE) 
 
 
+2. pads_buildit
 
+   pads_buildit is a modified buildit that takes the Makefile
+   that Ted's tool generates and makes some mods before running make.
 
+   (It also runs   'gmake -f  pads.mk' before running the normal make.)
 
+   You can do
+      diff Makefile.orig Makefile
+   to see the changes that are applied.
 
+   This is really a big hack, you will want to fold things into Ted's tool.
 
+   You put a dummy libgscppads in your top-level lib dir, so that you can
+   always use -lgscppads, and the demo dir library will get picked up if it exists.
+   However at the moment I am not folding libpads.a and libast.a into
+   libgscppads.a, so all three are needed.  I'm not sure that you really want to
+   fold 3 static libs into one anyway, so maye you just want to have a
+   pads flag to Ted's tool?
 
 
