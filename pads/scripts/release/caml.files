@@ -1,0 +1,2 @@
+$(PADS_HOME)/padsc/pads-glx/*.ml
+$(PADS_HOME)/padsc/pads-glx/*.mli

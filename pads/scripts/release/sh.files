@@ -1,0 +1,5 @@
+$(PADS_HOME)/padsc/comp/ckit/src/ast/extensions/pads/base-ty-info.txt
+$(PADS_HOME)/scripts/*.sh
+$(PADS_HOME)/scripts/*.tcsh
+$(PADS_HOME)/scripts/*.pl
+

@@ -1,0 +1,4 @@
+$(PADS_HOME)/padsc/include/*.h
+$(PADS_HOME)/padsc/include/template/*.h
+$(PADS_HOME)/padsc/libpads/*.c
+$(PADS_HOME)/padsc/libpads/tests/*.c
