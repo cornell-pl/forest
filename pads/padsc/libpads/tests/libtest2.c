@@ -1,5 +1,5 @@
 /*
- *  libtest1: Test fixed width ascii read functions
+ *  libtest2: Test binary read functions
  */
 
 
@@ -19,19 +19,19 @@ int main(int argc, char** argv) {
   char fname[1000];
   char* h;
   int rev = 0;
-  P_t*          pads;
-  Pio_disc_t*  io_disc;
-  Pint8        i1;
-  Pint16       i2;
-  Pint32       i4;
-  Pint64       i8;
-  Puint8       ui1;
-  Puint16      ui2;
-  Puint32      ui4;
-  Puint64      ui8;
-  Pbase_m      m    = P_CheckAndSet;
-  Pbase_pd     pd;
-  Pdisc_t      my_disc = Pdefault_disc;
+  P_t*            pads;
+  Pio_disc_t*     io_disc;
+  Pint8           i1;
+  Pint16          i2;
+  Pint32          i4;
+  Pint64          i8;
+  Puint8          ui1;
+  Puint16         ui2;
+  Puint32         ui4;
+  Puint64         ui8;
+  Pbase_m         m    = P_CheckAndSet;
+  Pbase_pd        pd;
+  Pdisc_t         my_disc = Pdefault_disc;
   size_t          bytes_skipped;
   unsigned long   ultmp;
 
