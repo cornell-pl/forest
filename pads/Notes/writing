@@ -1,3 +1,42 @@
+
+int test_write (PDC_t *pdc,Sfio_t *io,test_ed *ed,test *rep)
+{
+  int length=-1;
+  PDC_byte *buf=0;
+  int setBuf=0;
+  int bufferFull=0;
+  test_ed ted;
+  PDCI_DISC_INIT_CHECKS("test_write");
+  PDCI_NULLPARAM_CHECK( "test_write" , io );
+  PDCI_NULLPARAM_CHECK( "test_write" , rep );
+
+  if (!ed) 
+    {
+      memset ((void *) (&ted),0,sizeof(test_ed));
+      ed = (&ted);
+    }
+  buf = PDCI_write_start (pdc,io,pdc->outbuf_res /* if know printed size, fill in here */, &setBuf, 1/0 /*record/not record*/);
+  if (!buf) 
+    {
+      /* don't have to abort because start failed */
+      return -1;
+    }
+  length = test_write_internal (pdc,buf,pdc->outbuf_res,&bufferFull,ed,rep);
+  /* 
+ We could check bufferFull and redo with a bigger buffer 
+ */
+  if (length>=0) 
+    {
+      length = PDCI_write_commit (pdc, io, buf, length, setBuf, 1/0 /* record/not record */);
+    }
+  else
+    {
+      PDCI_write_abort (pdc, io, buf, setBuf, 1/0 /* record/not record */);
+    }
+  
+  return length;
+}
+******************************************************************
 int write_external(PDC_t *pdc, Sfio_t *io, <params>, ed, can){
   int length = -1;
   PDC_byte * buf = 0;
