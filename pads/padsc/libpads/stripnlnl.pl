@@ -19,16 +19,6 @@ while (<>) {
     print;
     next;
   }
-  if ((/\# /) || (/\#line/)) { # do not emit source file info
-    next;
-  }
-  s/{/{\n/g;
-  s/}/}\n/g;
-  s/;/;\n/g;
-  while (/\n\n/) {
-    s/\n\n/\n/g;
-  }
-  s/}\s*;/};/g;
   print;
   $prev_empty = 0;
 }

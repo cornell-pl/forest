@@ -1,4 +1,4 @@
-#pragma prototyped
+/* DEFGEN(libpadsc-gen.c) */
 /*
  * library routines for library that goes with padsc
  *
@@ -6,14 +6,604 @@
  * AT&T Labs Research
  */
 
-#include "libpadsc-internal.h"
-#include "libpadsc-macros.h"
-#include "libpadsc-read-macros.h"
-#include <ctype.h>
+#gen_include "libpadsc-internal.h"
+#gen_include "libpadsc-macros-gen.h"
+#gen_include <ctype.h>
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.22 2002-09-27 21:25:03 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.23 2002-10-01 02:01:52 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
+
+/* ********************* BEGIN_MACROS(libpadsc-macros-gen.h) ********************** */
+/*
+ * Some generally useful macros
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+
+#ifndef MacroArg2String
+#define MacroArg2String(s) #s
+#endif
+/* ********************************** END_HEADER ********************************** */
+#define PDC_DISC_INIT_CHECKS
+  do {
+    if (!pdc)  { return PDC_ERROR; }
+    if (!disc) { disc = pdc->disc; }
+  } while (0)
+/* END_MACRO */
+
+/* set loc begin/end to current IO pos */
+#define HANDLE_ERR_CURPOS(errcode)
+  do {
+    if (*em < PDC_Ignore) {
+      ed->errCode = errcode;
+      PDC_get_loc(pdc, &(ed->loc), disc);
+    }
+    return PDC_ERROR;
+  } while (0)
+/* END_MACRO */
+
+/* set loc begin to current IO pos, end pos to end of current line */
+#define HANDLE_ERR_CUR2ENDPOS(errcode)
+  do {
+    if (*em < PDC_Ignore) {
+      ed->errCode = errcode;
+      PDC_get_loc2end(pdc, &(ed->loc), disc);
+    }
+    return PDC_ERROR;
+  } while (0)
+/* END_MACRO */
+
+/* set loc end to current IO pos */
+#define HANDLE_ERR_ENDPOS(errcode)
+  do {
+    if (*em < PDC_Ignore) {
+      ed->errCode = errcode;
+      PDC_get_endLoc(pdc, &(ed->loc), disc);
+    }
+    return PDC_ERROR;
+  } while (0)
+/* END_MACRO */
+
+/* move begin/end positions backwards by specified amounts */
+#define HANDLE_ERR_MODPOS(errcode, adj1, adj2)
+  do {
+    if (*em < PDC_Ignore) {
+      ed->errCode = errcode;
+      PDC_get_loc(pdc, &(ed->loc), disc);
+      ed->loc.beginChar -= (adj1);
+      ed->loc.endChar   -= (adj2);
+    }
+    return PDC_ERROR;
+  } while (0)
+/* END_MACRO */
+
+/*
+ * If *em is CheckAndSet, create a string copy of the string
+ * that goes from begin to end-1.  Must have a no_space label.
+ */
+#define PDC_STR_COPY(s_out, begin, end)
+  do {
+    if (*em == PDC_CheckAndSet && s_out) {
+      size_t wdth = end-begin; 
+      char* buf;
+      RBuf_t* rbuf;
+      if (!(rbuf = RMM_new_rbuf(pdc->rmm_nz))) {
+        goto no_space;
+      }
+      if (RBuf_RESERVE(rbuf, buf, char, wdth+1)) {
+       RMM_free_rbuf(rbuf);
+       goto no_space;
+      }
+      memcpy(buf, begin, wdth);
+      buf[wdth] = 0;
+      RMM_free_rbuf_keep_buf(rbuf, 0, 0);
+      s_out->str = buf;
+      s_out->len = wdth;
+    }
+  } while (0)
+/* END_MACRO */
+
+/* ********************************* BEGIN_TRAILER ******************************** */
+/* ********************************** END_MACROS ********************************** */
+
+/* ****************** BEGIN_MACROS(libpadsc-read-macros-gen.h) ******************** */
+/*
+ * Macros that help implement read functions
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+
+#gen_include "libpadsc-macros-gen.h"
+/* ********************************** END_HEADER ********************************** */
+#define PDC_AINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
+fn_name(PDC_t* pdc, PDC_base_em* em,
+	PDC_base_ed* ed, targ_type* res_out, PDC_disc_t* disc)
+{
+  int_type        tmp;   /* tmp num */
+  char*           tcp;   /* tmp char* */
+  char*           begin; /* cursor at beginning of call */
+  char*           end;   /* cursor just beyond EOR */
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, MacroArg2String(fn_name) " called");
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  if (PDC_ERROR == PDC_Internal_IO_needchars(pdc, 0, &begin, &end, disc)) { /* 0 means do not obey panicStop */
+    goto at_eof_err; /* hit EOF */
+  }
+  if (!(disc->flags & PDC_WSPACE_OK) && isspace(*begin)) {
+    goto bad_prefix_err;
+  }
+  tmp = strtonum_fn(begin, &tcp, 10);
+  if (tcp==0 || tcp==begin) {
+    goto bad_prefix_err;
+  }
+  PDC_IO_forward(pdc, tcp-begin, disc);
+  if (errno==ERANGE opt_tmp_test) {
+    goto range_err;
+  }
+  /* success */
+  if (res_out && *em == PDC_CheckAndSet) {
+    (*res_out) = (targ_type)tmp;
+  }
+  return PDC_OK;
+
+ at_eof_err:
+  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
+
+ bad_prefix_err:
+  HANDLE_ERR_CURPOS(invalid_err);
+
+ range_err:
+  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
+}
+/* END_MACRO */
+
+#define PDC_AINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
+PDC_error_t
+fn_name(PDC_t* pdc, PDC_base_em* em, size_t width,
+	PDC_base_ed* ed, targ_type* res_out, PDC_disc_t* disc)
+{
+  unsigned char   ct;    /* char tmp */
+  int_type        tmp;   /* tmp num */
+  char*           tcp;   /* tmp char* */
+  char*           begin; /* cursor at beginning of call */
+  char*           end;   /* cursor just beyond width chars */
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, MacroArg2String(fn_name) " called");
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  if (width <= 0) {
+    WARN(pdc, "UNEXPECTED PARAM VALUE: " MacroArg2String(fn_name) " called with width <= 0");
+    return PDC_ERROR; /* XXX mis-use of API -- unrecoverable/panic/advance cursor ??? */
+  }
+  /* ensure there are width chars available */
+  if (PDC_ERROR == PDC_IO_getchars(pdc, width, &begin, &end, disc)) {
+    goto width_not_avail;
+  }
+  if (!(disc->flags & PDC_WSPACE_OK) && isspace(*begin)) {
+    goto wspace_err;
+  }
+  ct = *end;    /* save */
+  *end = 0;     /* null */
+  tmp = strtonum_fn(begin, &tcp, 10);
+  *end = ct;    /* restore */
+  if (tcp==0 || tcp==begin) {
+    goto bad_prefix_err;
+  }
+  while (tcp < end && (disc->flags & PDC_WSPACE_OK) && isspace(*tcp)) {
+    tcp++;
+  }
+  if (tcp != end) {
+    goto bad_suffix_err;
+  }
+  if (errno==ERANGE opt_tmp_test) {
+    goto range_err;
+  }
+  /* success */
+  if (res_out && *em == PDC_CheckAndSet) {
+    (*res_out) = (targ_type)tmp;
+  }
+  return PDC_OK;
+
+ width_not_avail:
+  HANDLE_ERR_CUR2ENDPOS(PDC_WIDTH_NOT_AVAILABLE);
+
+ wspace_err:
+ bad_prefix_err:
+ bad_suffix_err:
+  HANDLE_ERR_MODPOS(invalid_err, width, 1); /* mod pos to start/end of number */
+
+ range_err:
+  HANDLE_ERR_MODPOS(PDC_RANGE, width, 1); /* mod pos to start/end of number */
+}
+/* END_MACRO */
+
+#define PDC_BINT_READ_FN(fn_name, targ_type, width, swapmem_op)
+PDC_error_t
+fn_name(PDC_t* pdc, PDC_base_em* em,
+	PDC_base_ed* ed, targ_type* res_out, PDC_disc_t* disc)
+{
+  char*           begin; /* cursor at beginning of call */
+  PDC_base_em     emt = PDC_CheckAndSet;
+  PDC_base_ed     edt;
+
+  if (!disc) {
+    disc = pdc->disc;
+  }
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, MacroArg2String(fn_name) " called");
+  if (!em) {
+    em = &emt;
+  }
+  if (!ed) {
+    ed = &edt;
+  }
+  /* ensure there are width chars available */
+  if (PDC_ERROR == PDC_IO_getchars(pdc, width, &begin, 0, disc)) {
+    goto width_not_avail;
+  }
+  /* success */
+  if (res_out && *em == PDC_CheckAndSet) {
+    if (disc->m_endian != disc->d_endian) {
+      swapmem(swapmem_op, begin, res_out, width);
+    } else {
+      swapmem(0, begin, res_out, width);
+    }
+  }
+  return PDC_OK;
+
+ width_not_avail:
+  HANDLE_ERR_CUR2ENDPOS(PDC_WIDTH_NOT_AVAILABLE);
+}
+/* END_MACRO */
+
+/* ********************************* BEGIN_TRAILER ******************************** */
+/* ********************************** END_MACROS ********************************** */
+
+/* ****************** BEGIN_MACROS(libpadsc-acc-macros-gen.h) ********************* */
+#gen_include "libpadsc-macros-gen.h"
+/*
+ * Macros that help implement accum functions
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+/* ********************************** END_HEADER ********************************** */
+#define PDC_INT_ACCUM(int_type, fmt)
+
+typedef struct int_type ## _dt_elt_s {
+  int_type     val;
+  PDC_uint64   cnt;
+  Dtlink_t     link;
+} int_type ## _dt_elt_t;
+
+int int_type ## _dt_elt_describe(Dt_t* dt, Void_t* a, Void_t* data)
+{
+  int_type ## _dt_elt_t* elt = (int_type ## _dt_elt_t*)a;
+  NoP(data);
+  error(0, "  dt_elt: val %3" fmt " cnt %3llu", elt->val, elt->cnt);
+  return 0;
+}
+
+int
+int_type ## _dt_elt_cmp(Dt_t* dt, int_type ## _dt_elt_t* a, int_type ## _dt_elt_t* b, Dtdisc_t* disc)
+{
+  NoP(dt);
+  NoP(disc);
+  if (a->val < b->val)
+    return -1;
+  if (a->val > b->val)
+    return 1;
+  return 0;
+}
+
+void*
+int_type ## _dt_elt_make(Dt_t* dt, int_type ## _dt_elt_t* a, Dtdisc_t* disc)
+{
+   int_type ## _dt_elt_t* b;
+  if ((b = oldof(0, int_type ## _dt_elt_t, 1, 0))) {
+    b->val = a->val;
+    b->cnt = a->cnt;
+  }
+  return b;
+}
+
+void
+int_type ## _dt_elt_free(Dt_t* dt, int_type ## _dt_elt_t* a, Dtdisc_t* disc)
+{
+  free(a);
+}
+
+static Dtdisc_t int_type ## _acc_dt_disc = {
+  0,                                      /* key     */
+  0,                                      /* size    */
+  offsetof(int_type ## _dt_elt_t, link),  /* link    */
+  (Dtmake_f)int_type ## _dt_elt_make,     /* makef   */
+  (Dtfree_f)int_type ## _dt_elt_free,     /* freef   */
+  (Dtcompar_f)int_type ## _dt_elt_cmp,    /* comparf */
+  NiL,                                    /* hashf   */
+  NiL,                                    /* memoryf */
+  NiL                                     /* eventf  */
+};
+
+PDC_error_t
+int_type ## _acc_init(PDC_t* pdc, int_type ## _acc* a, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, MacroArg2String(int_type) "_acc_init called");
+  if (!a) {
+    return PDC_ERROR;
+  }
+  if (!(a->dict = dtopen(&int_type ## _acc_dt_disc, Dtoset))) {
+    return PDC_ERROR;
+  }
+  a->good = a->bad = a->fold = a->psum = a->avg = a->min = a->max = 0;
+  return PDC_OK;
+}
+
+PDC_error_t
+int_type ## _acc_reset(PDC_t* pdc, int_type ## _acc* a, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, MacroArg2String(int_type) "_acc_reset called");
+  if (!a || !a->dict) {
+    return PDC_ERROR;
+  }
+  dtclear(a->dict);
+  a->good = a->bad = a->fold = a->psum = a->avg = a->min = a->max = 0;
+  return PDC_OK;
+}
+
+PDC_error_t
+int_type ## _acc_cleanup(PDC_t* pdc, int_type ## _acc* a, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, MacroArg2String(int_type) "_acc_cleanup called");
+  if (!a) {
+    return PDC_ERROR;
+  }
+  if (a->dict) {
+    dtclose(a->dict);
+    a->dict = 0;
+  }
+  return PDC_OK;
+}
+
+void
+int_type ## _acc_fold_psum(int_type ## _acc* a) {
+  double pavg, navg;
+  PDC_uint64 recent = a->good - a->fold;
+  if (recent == 0) {
+    return;
+  }
+  pavg = a->psum / (double)recent;
+  navg = ((a->avg * a->fold) + (pavg * recent))/(double)a->good;
+  /* could test for change between a->avg and navg */
+  a->avg = navg;
+  a->psum = 0;
+  a->fold += recent;
+}
+
+PDC_error_t
+int_type ## _acc_add(PDC_t* pdc, int_type ## _acc* a, PDC_base_ed* ed, int_type* val, PDC_disc_t* disc)
+{
+  int_type               v          = (*val);
+  int_type ## _dt_elt_t  insert_val;
+  int_type ## _dt_elt_t* tmp1;
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, MacroArg2String(int_type) "_acc_add called");
+  if (!a || !a->dict || !ed || !val) {
+    return PDC_ERROR;
+  }
+  if (ed->errCode != 0) {
+    (a->bad)++;
+    return PDC_OK;
+  }
+  a->psum += v;
+  a->good++;
+  if (a->good == 1) {
+    a->min = a->max = v;
+  } else if (v < a->min) {
+    a->min = v;
+  } else if (v > a->max) {
+    a->max = v;
+  }
+  if (a->good % 1000 == 0) {
+    int_type ## _acc_fold_psum(a);
+  }
+  if (dtsize(a->dict) < 10) {
+    insert_val.val = v;
+    insert_val.cnt = 0;
+    if (!(tmp1 = dtinsert(a->dict, &insert_val))) {
+      WARN(pdc, "** PADC internal error: dtinsert failed (out of memory?) **");
+      return PDC_ERROR;
+    }
+    tmp1->cnt++;
+  } else if ((tmp1 = dtmatch(a->dict, (Void_t*)&v))) {
+    tmp1->cnt++;
+  }
+  return PDC_OK;
+}
+
+PDC_error_t
+int_type ## _acc_report(PDC_t* pdc, const char* prefix, int_type ## _acc* a, PDC_disc_t* disc)
+{
+  PDC_uint64 cnt_sum = 0;
+  double     cnt_sum_pcnt;
+  Void_t* velt;
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, MacroArg2String(int_type) "_acc_report called");
+  if (!a) {
+    return PDC_ERROR;
+  }
+  if (!disc->errorf) {
+    return PDC_OK;
+  }
+  if (!a->good) {
+    disc->errorf(pdc, disc, 0,
+		 "%s: " MacroArg2String(int_type) " field with 0 good vals %llu bad vals ==> ** NO GOOD VALS **",
+		 prefix, a->bad);
+    return PDC_OK;
+  }
+  int_type ## _acc_fold_psum(a);
+  sfstrset(pdc->tmp, 0);
+  sfprintf(pdc->tmp, "%s: " MacroArg2String(int_type) " field with %llu good vals %llu bad vals - for good vals: min %" fmt " max %" fmt " avg %lf\n",
+	   prefix, a->good, a->bad, a->min, a->max, a->avg);
+  sfprintf(pdc->tmp, "  Distribution of first 10 values encountered:\n");
+  for (velt = dtfirst(a->dict); velt; velt = dtnext(a->dict, velt)) {
+    double elt_pcnt;
+    int_type ## _dt_elt_t* elt = (int_type ## _dt_elt_t*)velt;
+    cnt_sum += elt->cnt;
+    elt_pcnt = (100.0 * elt->cnt)/a->good;
+    sfprintf(pdc->tmp, "        val: %10" fmt " count: %10llu  pcnt-of-good-vals: %7.3lf\n",
+	     elt->val, elt->cnt, elt_pcnt);
+  }
+  cnt_sum_pcnt = (100.0 * cnt_sum)/a->good;
+  sfprintf(pdc->tmp,   "        SUMMING          count: %10llu  pcnt-of-good-vals: %7.3lf",
+	   cnt_sum, cnt_sum_pcnt);
+  disc->errorf(pdc, disc, 0, "%s", sfstruse(pdc->tmp));
+  return PDC_OK;
+}
+/* END_MACRO */
+
+/* ********************************* BEGIN_TRAILER ******************************** */
+/* ********************************** END_MACROS ********************************** */
+
+
+/* ********************** BEGIN_MACGEN(libpadsc-read-gen.c) *********************** */
+/*
+ * Generated read functions
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+
+#gen_include "libpadsc-internal.h"
+#gen_include <ctype.h>
+/* ********************************** END_HEADER ********************************** */
+#gen_include "libpadsc-read-macros-gen.h"
+
+/* ================================================================================ */
+/* VARIABLE-WIDTH ASCII INTEGER READ FUNCTIONS */
+
+/*
+ * PDC_AINT_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
+ */
+
+PDC_AINT_READ_FN(PDC_aint8_read,  PDC_int8,  long,      strtol,  PDC_INVALID_AINT,
+ || tmp < PDC_MIN_INT8  || tmp > PDC_MAX_INT8);
+
+PDC_AINT_READ_FN(PDC_aint16_read, PDC_int16, long,      strtol,  PDC_INVALID_AINT,
+ || tmp < PDC_MIN_INT16 || tmp > PDC_MAX_INT16);
+
+PDC_AINT_READ_FN(PDC_aint32_read, PDC_int32, long,      strtol,  PDC_INVALID_AINT, );
+
+PDC_AINT_READ_FN(PDC_aint64_read, PDC_int64, long long, strtoll, PDC_INVALID_AINT, );
+
+PDC_AINT_READ_FN(PDC_auint8_read,  PDC_uint8,  unsigned long,      strtoul,  PDC_INVALID_AUINT,
+ || tmp > PDC_MAX_UINT8);
+
+PDC_AINT_READ_FN(PDC_auint16_read, PDC_uint16, unsigned long,      strtoul,  PDC_INVALID_AUINT,
+ || tmp > PDC_MAX_UINT16);
+
+PDC_AINT_READ_FN(PDC_auint32_read, PDC_uint32, unsigned long,      strtoul,  PDC_INVALID_AUINT, );
+
+PDC_AINT_READ_FN(PDC_auint64_read, PDC_uint64, unsigned long long, strtoull, PDC_INVALID_AUINT, );
+
+/* ================================================================================ */
+/* FIXED-WIDTH ASCII INTEGER READ FUNCTIONS */
+
+/*
+ * PDC_AINT_FW_READ_FN(fn_name, targ_type, int_type, strtonum_fn, invalid_err, opt_tmp_test)
+ */
+
+PDC_AINT_FW_READ_FN(PDC_aint8_fw_read,  PDC_int8,  long,      strtol,  PDC_INVALID_AINT,
+ || tmp < PDC_MIN_INT8  || tmp > PDC_MAX_INT8);
+
+PDC_AINT_FW_READ_FN(PDC_aint16_fw_read, PDC_int16, long,      strtol,  PDC_INVALID_AINT,
+ || tmp < PDC_MIN_INT16 || tmp > PDC_MAX_INT16);
+
+PDC_AINT_FW_READ_FN(PDC_aint32_fw_read, PDC_int32, long,      strtol,  PDC_INVALID_AINT, );
+
+PDC_AINT_FW_READ_FN(PDC_aint64_fw_read, PDC_int64, long long, strtoll, PDC_INVALID_AINT, );
+
+PDC_AINT_FW_READ_FN(PDC_auint8_fw_read,  PDC_uint8,  unsigned long,      strtoul,  PDC_INVALID_AUINT,
+ || tmp > PDC_MAX_UINT8);
+
+PDC_AINT_FW_READ_FN(PDC_auint16_fw_read, PDC_uint16, unsigned long,      strtoul,  PDC_INVALID_AUINT,
+ || tmp > PDC_MAX_UINT16);
+
+PDC_AINT_FW_READ_FN(PDC_auint32_fw_read, PDC_uint32, unsigned long,      strtoul,  PDC_INVALID_AUINT, );
+
+PDC_AINT_FW_READ_FN(PDC_auint64_fw_read, PDC_uint64, unsigned long long, strtoull, PDC_INVALID_AUINT, );
+
+/* ================================================================================ */
+/* BINARY INTEGER READ FUNCTIONS */
+
+/*
+ * PDC_BINT_READ_FN(fn_name, targ_type, width, swapmem_op)
+ *
+ * swapmem ops:
+ *    0 -> straight copy
+ *    1 -> reverse each byte in each string of 2 bytes
+ *    3 -> reverse each byte in each string of 4 bytes
+ *    4 -> swap upper/lower 4 bytes in each 8 byte value
+ *    7 -> reverse each byte in each string of 8 bytes
+ */
+
+PDC_BINT_READ_FN(PDC_bint8_read,   PDC_int8,   1, 0);
+
+PDC_BINT_READ_FN(PDC_buint8_read,  PDC_uint8,  1, 0);
+
+PDC_BINT_READ_FN(PDC_bint16_read,  PDC_int16,  2, 1);
+
+PDC_BINT_READ_FN(PDC_buint16_read, PDC_uint16, 2, 1);
+
+PDC_BINT_READ_FN(PDC_bint32_read,  PDC_int32,  4, 3);
+
+PDC_BINT_READ_FN(PDC_buint32_read, PDC_uint32, 4, 3);
+
+PDC_BINT_READ_FN(PDC_bint64_read,  PDC_int64,  8, 7);
+
+PDC_BINT_READ_FN(PDC_buint64_read, PDC_uint64, 8, 7);
+
+/* ********************************* BEGIN_TRAILER ******************************** */
+/* ********************************** END_MACGEN ********************************** */
+
+/* ********************** BEGIN_MACGEN(libpadsc-acc-gen.c) ************************ */
+/*
+ * Generated accumulator functions
+ * 
+ * Kathleen Fisher, Robert Gruber
+ * AT&T Labs Research
+ */
+
+#gen_include "libpadsc-internal.h"
+/* ********************************** END_HEADER ********************************** */
+#gen_include "libpadsc-acc-macros-gen.h"
+
+PDC_INT_ACCUM(PDC_int32, "ld");
+
+PDC_INT_ACCUM(PDC_uint32, "lu");
+
+/* ********************************* BEGIN_TRAILER ******************************** */
+/* ********************************** END_MACGEN ********************************** */
 
 /* ================================================================================ */ 
 /* IMPL CONSTANTS */
@@ -25,7 +615,7 @@ static const char lib[] = "padsc";
 /* ================================================================================ */ 
 /* INTERNAL FUNCTIONS */
 
-static PDC_error_t
+PDC_error_t
 PDC_Internal_IO_needchar(PDC_t* pdc, int obeyPanicStop, PDC_stkElt_t** tp_out, PDC_IO_line_t** tpline_out, PDC_disc_t* disc)
 {
   PDC_stkElt_t*   tp      = &(pdc->stack[pdc->top]);
@@ -57,6 +647,42 @@ PDC_Internal_IO_needchar(PDC_t* pdc, int obeyPanicStop, PDC_stkElt_t** tp_out, P
   }
   (*tp_out) = tp;
   (*tpline_out) = tpline;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_Internal_IO_needchars(PDC_t* pdc, int obeyPanicStop, char** b_out, char** e_out, PDC_disc_t* disc)
+{
+  PDC_stkElt_t*   tp      = &(pdc->stack[pdc->top]);
+  PDC_IO_line_t*  tpline  = &(pdc->ilines[tp->idx]);
+
+  TRACE(pdc, "PDC_Internal_IO_needchars called");
+  while (1) {
+    if (PDC_IO_is_EOF(pdc, disc)) { /* already hit EOF */
+      return PDC_ERROR;
+    }
+    if (tp->cur < tpline->eoffset) { /* still more chars on current line */
+      break;
+    }
+    if (obeyPanicStop && (disc->p_stop == PDC_Line_Stop)) {
+      /* do not move beyond newline char / line end */
+      return PDC_ERROR;
+    }
+    if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
+      tp->idx++;
+      tp->cur = 0;
+      tpline = &(pdc->ilines[tp->idx]);
+    } else {
+      /* hit end of in-memory input lines, must get next line */
+      if (PDC_ERROR == PDC_IO_refill(pdc, disc)) {
+	return PDC_ERROR;
+      }
+    }
+    /* go to top of loop to do eof/eol checks again */
+  }
+  (*b_out) = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
+  (*e_out) = (*b_out) + tpline->eoffset;
+  (*b_out) += tp->cur;
   return PDC_OK;
 }
 
@@ -306,12 +932,11 @@ PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s,
   return PDC_ERROR;
 }
 
+/* XXX_TODO currently only examines one line */
 PDC_error_t
 PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopStr,
 		 PDC_string** str_out, size_t* offset_out, PDC_disc_t* disc) 
 {
-  PDC_stkElt_t*   tp;
-  PDC_IO_line_t*  tpline;
   char            *begin, *end, *ptr;
   size_t          remain;
 
@@ -328,14 +953,10 @@ PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopSt
   if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
     return PDC_ERROR; /* XXX out of space -- unrecoverable error */
   }
-  if (PDC_Internal_IO_needchar(pdc, 0, &tp, &tpline, disc)) { /* 0 means do not obey panicStop */
+  if (PDC_ERROR == PDC_Internal_IO_needchars(pdc, 0, &begin, &end, disc)) { /* 0 means do not obey panicStop */
     goto not_found; /* hit EOF */
   }
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  end = begin + tpline->eoffset;
-  begin += tp->cur;
-
-  for (ptr = begin, remain=end-begin; ptr < end; ptr++, tp->cur++, remain--) {
+  for (ptr = begin, remain=end-begin; ptr < end; ptr++, remain--) {
     if (remain < findStr->len) {
       break;
     }
@@ -343,7 +964,7 @@ PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopSt
       if (str_out) {
 	(*str_out) = (PDC_string*)findStr;
       }
-      tp->cur += findStr->len; /* XXX len - 1 ??? XXX */
+      PDC_IO_forward(pdc, findStr->len, disc); /* XXX len - 1 ??? XXX */
       if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
 	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
       }
@@ -354,7 +975,7 @@ PDC_str_lit_scan(PDC_t* pdc, const PDC_string* findStr, const PDC_string* stopSt
       if (str_out) {
 	(*str_out) = (PDC_string*)stopStr;
       }
-      tp->cur += stopStr->len; /* XXX len - 1 ??? XXX */
+      PDC_IO_forward(pdc, stopStr->len, disc); /* XXX len - 1 ??? XXX */
       if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
 	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
       }
@@ -504,8 +1125,6 @@ PDC_error_t
 PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
 			 PDC_base_ed* ed, PDC_string* s_out, PDC_disc_t* disc)
 {
-  PDC_stkElt_t*   tp;
-  PDC_IO_line_t*  tpline;
   char            *begin, *end, *ptr;
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
@@ -521,20 +1140,14 @@ PDC_string_stopChar_read(PDC_t* pdc, PDC_base_em* em, unsigned char stopChar,
   if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
     goto no_space;
   }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, NiL, disc)) { /* 0 means do not obey panicStop */
-    goto not_found;
+  if (PDC_ERROR == PDC_Internal_IO_needchars(pdc, 0, &begin, &end, disc)) { /* 0 means do not obey panicStop */
+    goto not_found; /* hit EOF */
   }
-  PDC_IO_back(pdc, 1, disc);
-  tp      = &(pdc->stack[pdc->top]);
-  tpline  = &(pdc->ilines[tp->idx]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  end = begin + tpline->eoffset;
-  begin += tp->cur;
-  for (ptr = begin; ptr < end; ptr++, tp->cur++) {
+  for (ptr = begin; ptr < end; ptr++) {
     if (*ptr == stopChar) {
       /* success */
       PDC_STR_COPY(s_out, begin, ptr);
+      PDC_IO_forward(pdc, ptr-begin, disc);
       if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
 	return PDC_ERROR; /* XXX internal error -- unrecoverable error */
       }
@@ -561,8 +1174,6 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
   int             len;
   char            *begin, *end, *ptr;
   const char      *stopCharSetBegin, *stopCharSetEnd, *ptr2;
-  PDC_stkElt_t*   tp;
-  PDC_IO_line_t*  tpline;
   PDC_base_em     emt = PDC_CheckAndSet;
   PDC_base_ed     edt;
 
@@ -588,21 +1199,14 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
   if (PDC_ERROR == PDC_IO_checkpoint(pdc, disc)) {
     goto no_space;
   }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, NiL, disc)) { /* 0 means do not obey panicStop */
-    goto not_found;
+  if (PDC_ERROR == PDC_Internal_IO_needchars(pdc, 0, &begin, &end, disc)) { /* 0 means do not obey panicStop */
+    goto not_found; /* hit EOF */
   }
-  PDC_IO_back(pdc, 1, disc);
-  tp      = &(pdc->stack[pdc->top]);
-  tpline  = &(pdc->ilines[tp->idx]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  end = begin + tpline->eoffset;
-  begin += tp->cur;
-
-  for (ptr = begin; ptr < end; ptr++, tp->cur++) {
+  for (ptr = begin; ptr < end; ptr++) {
     for (ptr2 = stopCharSetBegin; ptr2 < stopCharSetEnd;  ptr2++) {
       if (*ptr == *ptr2) { /* success */
 	PDC_STR_COPY(s_out, begin, ptr);
+	PDC_IO_forward(pdc, ptr-begin, disc);
 	if (PDC_ERROR == PDC_IO_commit(pdc, disc)) {
 	  return PDC_ERROR; /* XXX internal error -- unrecoverable error */
 	}
@@ -623,449 +1227,6 @@ PDC_string_stopRegexp_read(PDC_t* pdc, PDC_base_em* em, const char* stopRegexp,
 
  invalid_regexp:
   HANDLE_ERR_CURPOS(PDC_INVALID_REGEXP);
-}
-
-/* ================================================================================ */
-/* VARIABLE-WIDTH ASCII INTEGER READ FUNCTIONS */
-
-PDC_error_t
-PDC_aint8_read(PDC_t* pdc, PDC_base_em* em,
-	       PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp;    /* stack top */
-  unsigned char   ct;    /* char tmp */
-  long            tl;    /* tmp long */
-  char*           tcp;   /* tmp char* */
-  char*           begin; /* IO cursor at beginning of call */
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_aint8_read called");
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
-  }
-  PDC_IO_back(pdc, 1, disc);
-  if (!(disc->flags & PDC_WSPACE_OK) && isspace(ct)) {
-    goto bad_prefix_err;
-  }
-  tp = &(pdc->stack[pdc->top]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  begin += tp->cur;
-  tl = strtol(begin, &tcp, 10);
-  if (tcp==0 || tcp==begin) {
-    goto bad_prefix_err;
-  }
-  tp->cur += (tcp - begin); /* advance IO cursor */
-  if (errno==ERANGE || tl < PDC_MIN_INT8 || tl > PDC_MAX_INT8) {
-    goto range_err;
-  }
-  /* success */
-  if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) = (PDC_int8)tl;
-  }
-  return PDC_OK;
-
- at_eof_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
-
- bad_prefix_err:
-  HANDLE_ERR_CURPOS(PDC_INVALID_AINT);
-
- range_err:
-  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
-}
-
-PDC_error_t
-PDC_aint16_read(PDC_t* pdc, PDC_base_em* em,
-		PDC_base_ed* ed, PDC_int16* res_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp;    /* stack top */
-  unsigned char   ct;    /* char tmp */
-  long            tl;    /* tmp long */
-  char*           tcp;   /* tmp char* */
-  char*           begin; /* IO cursor at beginning of call */
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_aint16_read called");
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
-  }
-  PDC_IO_back(pdc, 1, disc);
-  if (!(disc->flags & PDC_WSPACE_OK) && isspace(ct)) {
-    goto bad_prefix_err;
-  }
-  tp = &(pdc->stack[pdc->top]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  begin += tp->cur;
-  tl = strtol(begin, &tcp, 10);
-  if (tcp==0 || tcp==begin) {
-    goto bad_prefix_err;
-  }
-  tp->cur += (tcp - begin); /* advance IO cursor */
-  if (errno==ERANGE || tl < PDC_MIN_INT16 || tl > PDC_MAX_INT16) {
-    goto range_err;
-  }
-  /* success */
-  if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) = (PDC_int16)tl;
-  }
-  return PDC_OK;
-
- at_eof_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
-
- bad_prefix_err:
-  HANDLE_ERR_CURPOS(PDC_INVALID_AINT);
-
- range_err:
-  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
-}
-
-PDC_error_t
-PDC_aint32_read(PDC_t* pdc, PDC_base_em* em,
-		PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp;    /* stack top */
-  unsigned char   ct;    /* char tmp */
-  long            tl;    /* tmp long */
-  char*           tcp;   /* tmp char* */
-  char*           begin; /* IO cursor at beginning of call */
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_aint32_read called");
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
-  }
-  PDC_IO_back(pdc, 1, disc);
-  if (!(disc->flags & PDC_WSPACE_OK) && isspace(ct)) {
-    goto bad_prefix_err;
-  }
-  tp = &(pdc->stack[pdc->top]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  begin += tp->cur;
-  tl = strtol(begin, &tcp, 10);
-  if (tcp==0 || tcp==begin) {
-    goto bad_prefix_err;
-  }
-  tp->cur += (tcp - begin); /* advance IO cursor */
-  if (errno==ERANGE) {
-    goto range_err;
-  }
-  /* success */
-  if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) = (PDC_int32)tl;
-  }
-  return PDC_OK;
-
- at_eof_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOF);
-
- bad_prefix_err:
-  HANDLE_ERR_CURPOS(PDC_INVALID_AINT);
-
- range_err:
-  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
-}
-
-PDC_error_t
-PDC_aint64_read(PDC_t* pdc, PDC_base_em* em,
-		PDC_base_ed* ed, PDC_int64* res_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp;    /* stack top */
-  unsigned char   ct;    /* char tmp */
-  long long       tll;   /* tmp long long */
-  char*           tcp;   /* tmp char* */
-  char*           begin; /* IO cursor at beginning of call */
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_aint64_read called");
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
-  }
-  PDC_IO_back(pdc, 1, disc);
-  if (!(disc->flags & PDC_WSPACE_OK) && isspace(ct)) {
-    goto bad_prefix_err;
-  }
-  tp = &(pdc->stack[pdc->top]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  begin += tp->cur;
-  tll = strtoll(begin, &tcp, 10);
-  if (tcp==0 || tcp==begin) {
-    goto bad_prefix_err;
-  }
-  tp->cur += (tcp - begin); /* advance IO cursor */
-  if (errno==ERANGE) {
-    goto range_err;
-  }
-  /* success */
-  if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) = (PDC_int64)tll;
-  }
-  return PDC_OK;
-
- at_eof_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
-
- bad_prefix_err:
-  HANDLE_ERR_CURPOS(PDC_INVALID_AINT);
-
- range_err:
-  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
-}
-
-PDC_error_t
-PDC_auint8_read(PDC_t* pdc, PDC_base_em* em,
-		PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp;    /* stack top */
-  unsigned char   ct;    /* char tmp */
-  unsigned long   tul;   /* tmp unsigned long */
-  char*           tcp;   /* tmp char* */
-  char*           begin; /* IO cursor at beginning of call */
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_auint8_read called");
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
-  }
-  PDC_IO_back(pdc, 1, disc);
-  if (!(disc->flags & PDC_WSPACE_OK) && isspace(ct)) {
-    goto bad_prefix_err;
-  }
-  tp = &(pdc->stack[pdc->top]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  begin += tp->cur;
-  tul = strtoul(begin, &tcp, 10);
-  if (tcp==0 || tcp==begin) {
-    goto bad_prefix_err;
-  }
-  tp->cur += (tcp - begin); /* advance IO cursor */
-  if (errno==ERANGE || tul > PDC_MAX_UINT8) {
-    goto range_err;
-  }
-  /* success */
-  if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) =(PDC_uint8)tul;
-  }
-  return PDC_OK;
-
- at_eof_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOF);
-
- bad_prefix_err:
-  HANDLE_ERR_CURPOS(PDC_INVALID_AUINT);
-
- range_err:
-  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
-}
-
-PDC_error_t
-PDC_auint16_read(PDC_t* pdc, PDC_base_em* em,
-		 PDC_base_ed* ed, PDC_uint16* res_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp;    /* stack top */
-  unsigned char   ct;    /* char tmp */
-  unsigned long   tul;   /* tmp unsigned long */
-  char*           tcp;   /* tmp char* */
-  char*           begin; /* IO cursor at beginning of call */
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_auint16_read called");
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
-  }
-  PDC_IO_back(pdc, 1, disc);
-  if (!(disc->flags & PDC_WSPACE_OK) && isspace(ct)) {
-    goto bad_prefix_err;
-  }
-  tp = &(pdc->stack[pdc->top]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  begin += tp->cur;
-  tul = strtoul(begin, &tcp, 10);
-  if (tcp==0 || tcp==begin) {
-    goto bad_prefix_err;
-  }
-  tp->cur += (tcp - begin); /* advance IO cursor */
-  if (errno==ERANGE || tul > PDC_MAX_UINT16) {
-    goto range_err;
-  }
-  /* success */
-  if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) =(PDC_uint16)tul;
-  }
-  return PDC_OK;
-
- at_eof_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOF);
-
- bad_prefix_err:
-  HANDLE_ERR_CURPOS(PDC_INVALID_AUINT);
-
- range_err:
-  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
-}
-
-PDC_error_t
-PDC_auint32_read(PDC_t* pdc, PDC_base_em* em,
-		 PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp;    /* stack top */
-  unsigned char   ct;    /* char tmp */
-  unsigned long   tul;   /* tmp unsigned long */
-  char*           tcp;   /* tmp char* */
-  char*           begin; /* IO cursor at beginning of call */
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_auint32_read called");
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
-  }
-  PDC_IO_back(pdc, 1, disc);
-  if (!(disc->flags & PDC_WSPACE_OK) && isspace(ct)) {
-    goto bad_prefix_err;
-  }
-  tp = &(pdc->stack[pdc->top]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  begin += tp->cur;
-  tul = strtoul(begin, &tcp, 10);
-  if (tcp==0 || tcp==begin) {
-    goto bad_prefix_err;
-  }
-  tp->cur += (tcp - begin); /* advance IO cursor */
-  if (errno==ERANGE) {
-    goto range_err;
-  }
-  /* success */
-  if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) =(PDC_uint32)tul;
-  }
-  return PDC_OK;
-
- at_eof_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
-
- bad_prefix_err:
-  HANDLE_ERR_CURPOS(PDC_INVALID_AUINT);
-
- range_err:
-  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
-}
-
-PDC_error_t
-PDC_auint64_read(PDC_t* pdc, PDC_base_em* em,
-		 PDC_base_ed* ed, PDC_uint64* res_out, PDC_disc_t* disc)
-{
-  PDC_stkElt_t*   tp;    /* stack top */
-  unsigned char   ct;    /* char tmp */
-  unsigned long   tull;  /* tmp unsigned long long */
-  char*           tcp;   /* tmp char* */
-  char*           begin; /* IO cursor at beginning of call */
-  PDC_base_em     emt = PDC_CheckAndSet;
-  PDC_base_ed     edt;
-
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_auint64_read called");
-  if (!em) {
-    em = &emt;
-  }
-  if (!ed) {
-    ed = &edt;
-  }
-  /* peek at first char -- ensures we are on line with at least one char to parse */
-  if (PDC_ERROR == PDC_IO_getchar(pdc, 0, &ct, disc)) { /* 0 means do not obey panicStop */
-    goto at_eof_err;
-  }
-  PDC_IO_back(pdc, 1, disc);
-  if (!(disc->flags & PDC_WSPACE_OK) && isspace(ct)) {
-    goto bad_prefix_err;
-  }
-  tp = &(pdc->stack[pdc->top]);
-  begin = (tp->idx == pdc->itail) ? pdc->sfbuf : pdc->buf;
-  begin += tp->cur;
-  tull = strtoull(begin, &tcp, 10);
-  if (tcp==0 || tcp==begin) {
-    goto bad_prefix_err;
-  }
-  tp->cur += (tcp - begin); /* advance IO cursor */
-  if (errno==ERANGE) {
-    goto range_err;
-  }
-  /* success */
-  if (res_out && *em == PDC_CheckAndSet) {
-    (*res_out) =(PDC_uint64)tull;
-  }
-  return PDC_OK;
-
- at_eof_err:
-  HANDLE_ERR_CURPOS(PDC_AT_EOF); 
-
- bad_prefix_err:
-  HANDLE_ERR_CURPOS(PDC_INVALID_AUINT);
-
- range_err:
-  HANDLE_ERR_MODPOS(PDC_RANGE, tcp-begin, 1); /* mod pos to start/end of number */
 }
 
 /* ================================================================================ */
@@ -1337,6 +1498,42 @@ PDC_IO_back(PDC_t* pdc, size_t num_chars, PDC_disc_t* disc)
     break;
   }
   WARN2(pdc, "XXX_CHANGE_TO_DBG PDC_IO_BACK: requested move back %d, but could only move back %d chars", num_chars, num_chars - todo);
+  return PDC_ERROR;
+}
+
+PDC_error_t
+PDC_IO_forward(PDC_t* pdc, size_t num_chars, PDC_disc_t* disc)
+{
+  PDC_stkElt_t*   tp          = &(pdc->stack[pdc->top]);
+  PDC_IO_line_t*  tpline      = &(pdc->ilines[tp->idx]);
+  size_t avail_this_line, todo;
+
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_IO_forward called");
+  todo = num_chars;
+  while (1) {
+    avail_this_line = tpline->eoffset - tp->cur;
+    if (todo <= avail_this_line) { /* all set */
+      tp->cur += todo;
+      DBG1(pdc, "PDC_IO_FORWARD: moved forward %d chars", num_chars);
+      return PDC_OK;
+    }
+    if (tp->idx < pdc->itail) { /* advance to next in-memory input line */
+      tp->idx++;
+      tp->cur = 0;
+      tpline = &(pdc->ilines[tp->idx]);
+      todo -= avail_this_line;
+      continue;
+    }
+    /* At last line in memory; attempting to move forward over 
+     * data that has not been read yet -- error!
+     * Advance to end of line and return error.
+     */
+    tp->cur = tpline->eoffset;
+    todo -= avail_this_line;
+    break;
+  }
+  WARN2(pdc, "XXX_CHANGE_TO_DBG PDC_IO_FORWARD: requested move forward %d, but could only move forward %d chars", num_chars, num_chars - todo);
   return PDC_ERROR;
 }
 
