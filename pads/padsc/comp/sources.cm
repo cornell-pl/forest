@@ -1,0 +1,25 @@
+(* sources.cm
+ *
+ * COPYRIGHT (c) 2002 AT&T Labs Research
+ *
+ * Sources file for the pads compiler
+ *)
+
+Library
+  structure Main
+is
+
+#if defined(NEW_CM)
+  $/basis.cm
+#endif
+
+  smlnj-lib.cm
+  pp-lib.cm
+#if defined(NEW_CM)
+  /home/kfisher/knb/padsc/ckit/src/ckit-lib.cm(bind:(anchor:smlnj-lib.cm value:$smlnj-lib.cm))
+#else
+  /home/kfisher/knb/padsc/ckit/src/ckit-lib.cm
+#endif
+  ckit/src/sources.cm
+  util/sources.cm
+  main.sml
