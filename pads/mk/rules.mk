@@ -173,7 +173,7 @@ CC = $(mam_cc_CC)
 CDBGFLAGS = $(mam_cc_WARN) $(mam_cc_DEBUG)
 COPTFLAGS = $(mam_cc_WARN) $(mam_cc_OPTIMIZE) -DNDEBUG
 ifdef BuildPADSLib
-CSHAREFLAGS = $(mam_cc_DLL)
+CSHAREFLAGS = $(CC_DLL)
 else
 CSHAREFLAGS =
 endif
@@ -195,6 +195,8 @@ OS_SPEC_XTRA_LIBS =
 
 empty:=
 space:=$(empty) $(empty)
+
+CC_DLL = $(mam_cc_DLL)
 
 # OS specific rules
 # (may override some of the above)
@@ -224,6 +226,7 @@ COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 endif
 
 ifeq ($(OPSYS),solaris)
+CC_DLL = $(mam_cc_DLLBIG)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 # XXX /bin/sh on solaris does not test the same way as on other os
 SHELL = bash
