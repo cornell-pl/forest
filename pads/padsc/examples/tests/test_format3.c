@@ -34,20 +34,21 @@ int main(int argc, char** argv) {
   while (!PDC_IO_at_EOF(pdc)) {
     PDC_error_t res;
     int i;
+    error(0, "\nCalling intList_read");
     res= intList_read(pdc, 0, &f3ed, &f3data);
 
     if (res == PDC_OK) {
-      printf("Record okay:\t");
-    } else if (f3data.length) {
-      printf("Record not okay:\t");
-    }
-    for (i = 0; i < f3data.length; i++){
-      printf("%d", f3data.intList[i]);
-      if (i != f3data.length-1) {
-	printf("|");
-      }  else {
-	printf("\n");
+      error(0|ERROR_PROMPT, "Record okay:\t");
+      for (i = 0; i < f3data.length; i++){
+	error(0|ERROR_PROMPT, "%d", f3data.intList[i]);
+	if (i != f3data.length-1) {
+	  error(0|ERROR_PROMPT, "|");
+	}  else {
+	  error(0, "");
+	}
       }
+    } else if (f3data.length) {
+      error(0, "Record not okay");
     }
   }
 

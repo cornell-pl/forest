@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
+    error(0, "\ncalling test_read");
     if (PDC_OK == test_read(pdc, 0, &ed, &f1data)) {
       /* do something with the data */
       error(2, "test_read returned: id %d  ts %d", f1data.id, f1data.ts);
@@ -34,18 +35,19 @@ int main(int argc, char** argv) {
       }
     } else {
       error(2, "test_read returned: error");
+      if (PDC_ERR == test_acc_add(pdc, &accum, &ed, &f1data)) {
+	error(0, "** accum_add failed **");
+      }
     }
   }
-
-#if 0
-  error(0, "\ndescribe the accum");
+  error(0, "\nFound eof");
+  error(0, "\nDescribe the accum");
   if (PDC_ERR == PDC_int32_acc_report(pdc, "id", 0, 0, &(accum.id))) {
     error(0, "** accum_report failed **");
   }
   if (PDC_ERR == PDC_int32_acc_report(pdc, "ts", 0, 0, &(accum.ts))) {
     error(0, "** accum_report failed **");
   }
-#endif
 
   if (PDC_ERR == PDC_IO_fclose(pdc)) {
     error(2, "*** PDC_IO_fclose failed ***");
