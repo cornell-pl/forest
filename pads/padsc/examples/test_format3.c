@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERROR == PDC_IO_fopen(pdc, "ex_data.format3", 0)) {
+  if (PDC_ERROR == PDC_IO_fopen(pdc, "../ex_data.format3", 0)) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 
     if (res == PDC_OK) {
       printf("Record okay:\t");
-    } else {
+    } else if (f3data.length) {
       printf("Record not okay:\t");
     }
     for (i = 0; i < f3data.length; i++){
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
       }  else {
 	printf("\n");
       }
-       }
+    }
   }
 
   if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {
