@@ -501,7 +501,7 @@ const char *P_errCode2str(PerrCode_t code);
  *     Pio_elt_t  : element of a linked list managed by the IO discipline 
  */
 
-typedef struct P_s               P_t;
+typedef struct P_s              P_t;
 typedef struct Pdisc_s          Pdisc_t;
 typedef struct Pregexp_s        Pregexp_t;
 
