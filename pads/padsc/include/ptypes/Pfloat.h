@@ -1,3 +1,4 @@
+/*@FILE Pfloat_app_1.tex Pfloat_app_2.tex Pfloat_app_3.tex Pfloat_app_4.tex Pfloat_app_5.tex Pfloat_app_6.tex Pfloat_app_7.tex Pfloat_app_8.tex Pfloat_app_9.tex Pfloat_app_10.tex*/
 #ifdef _USE_PROTO
 #pragma prototyped
 #endif
@@ -14,6 +15,7 @@
 #error Pfloat.h is intended to be included from pads.h, do not include it directly
 #endif
 
+/*@BEGIN Pfloat_app_1.tex*/
 /* ================================================================================
  * READ
  */
@@ -45,7 +47,10 @@
  * from the input and converted to an in-memory Pfloat32.
  *
  * RETURN VALUE: Perror_t
- *
+ */
+/*@END Pfloat_app_1.tex*/
+/*@BEGIN Pfloat_app_2.tex*/
+/*
  * Upon success, P_OK returned: 
  *   + the IO cursor is advanced to just beyond the last digit
  *   + if P_Test_NotIngore(*m), the out param is assigned a value
@@ -78,25 +83,40 @@
 #if P_CONFIG_READ_FUNCTIONS > 0
 
 #if P_CONFIG_A_FLOAT > 0
-Perror_t Pa_float32_read(P_t *pads, const Pbase_m *m,
-			 Pbase_pd *pd, Pfloat32 *res_out);
-Perror_t Pa_float64_read(P_t *pads, const Pbase_m *m,
-			 Pbase_pd *pd, Pfloat64 *res_out);
+
+/*@BEGIN Pfloat_app_2.tex*/
+
+Perror_t Pa_float32_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pfloat32 *res_out);
+
+Perror_t Pa_float64_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pfloat64 *res_out);
+
+/*@END Pfloat_app_2.tex*/
+
 #endif
 
 #if P_CONFIG_E_FLOAT > 0
-Perror_t Pe_float32_read(P_t *pads, const Pbase_m *m,
-			 Pbase_pd *pd, Pfloat32 *res_out);
-Perror_t Pe_float64_read(P_t *pads, const Pbase_m *m,
-			 Pbase_pd *pd, Pfloat64 *res_out);
+
+/*@BEGIN Pfloat_app_3.tex*/
+
+Perror_t Pe_float32_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pfloat32 *res_out);
+
+Perror_t Pe_float64_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pfloat64 *res_out);
+
+/*@END Pfloat_app_3.tex*/
+
 #endif
 
 #ifdef FOR_CKIT
 #if P_CONFIG_A_FLOAT > 0 && P_CONFIG_E_FLOAT > 0
-Perror_t Pfloat32_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pfloat32 *res_out);
-Perror_t Pfloat64_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pfloat64 *res_out);
+
+/*@BEGIN Pfloat_app_4.tex*/
+
+Perror_t Pfloat32_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pfloat32 *res_out);
+
+Perror_t Pfloat64_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pfloat64 *res_out);
+
+/*@END Pfloat_app_4.tex*/
+
 #endif
 #endif
 
@@ -109,76 +129,187 @@ Perror_t Pfloat64_read(P_t *pads, const Pbase_m *m,
 #if P_CONFIG_WRITE_FUNCTIONS > 0
 
 #if P_CONFIG_A_FLOAT > 0
-ssize_t Pa_float32_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val);
-ssize_t Pa_float64_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val);
 
-ssize_t Pa_float32_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val, const char *tag, int indent);
-ssize_t Pa_float64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val, const char *tag, int indent);
+/*@BEGIN Pfloat_app_5.tex*/
 
-ssize_t Pa_float32_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-			    Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep);
-ssize_t Pa_float32_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-				  Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep);
-ssize_t Pa_float64_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-			    Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep);
-ssize_t Pa_float64_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-				  Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep);
+ssize_t Pa_float32_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfloat32 *val
+                    );
 
-ssize_t Pa_float32_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
-			    Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep);
-ssize_t Pa_float64_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
-			    Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep);
+ssize_t Pa_float64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfloat64 *val
+                    );
+
+ssize_t Pa_float32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pbase_pd *pd, Pfloat32 *val, const char *tag,
+                    int indent
+                    );
+
+ssize_t Pa_float64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pbase_pd *pd, Pfloat64 *val, const char *tag,
+                    int indent
+                    );
+
+ssize_t Pa_float32_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat32 *rep
+                    );
+
+ssize_t Pa_float32_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat32 *rep
+                    );
+
+/*@END Pfloat_app_5.tex*/
+/*@BEGIN Pfloat_app_6.tex*/
+
+ssize_t Pa_float64_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat64 *rep
+                    );
+
+ssize_t Pa_float64_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat64 *rep
+                    );
+
+ssize_t Pa_float32_fmt2io(P_t *pads, Sfio_t *io, int *requested_out,
+                    const char *delims, Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep
+                    );
+
+ssize_t Pa_float64_fmt2io(P_t *pads, Sfio_t *io, int *requested_out,
+                    const char *delims, Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep
+                    );
+
+/*@END Pfloat_app_6.tex*/
+
 #endif
 
 #if P_CONFIG_E_FLOAT > 0
-ssize_t Pe_float32_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val);
-ssize_t Pe_float64_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val);
 
-ssize_t Pe_float32_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val, const char *tag, int indent);
-ssize_t Pe_float64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val, const char *tag, int indent);
+/*@BEGIN Pfloat_app_7.tex*/
 
-ssize_t Pe_float32_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-			    Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep);
-ssize_t Pe_float32_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-				  Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep);
-ssize_t Pe_float64_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-			    Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep);
-ssize_t Pe_float64_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-				  Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep);
+ssize_t Pe_float32_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfloat32 *val
+                    );
 
-ssize_t Pe_float32_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
-			    Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep);
-ssize_t Pe_float64_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
-			    Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep);
+ssize_t Pe_float64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfloat64 *val
+                    );
+
+ssize_t Pe_float32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pbase_pd *pd, Pfloat32 *val, const char *tag,
+                    int indent
+                    );
+
+ssize_t Pe_float64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pbase_pd *pd, Pfloat64 *val, const char *tag,
+                    int indent
+                    );
+
+ssize_t Pe_float32_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat32 *rep
+                    );
+
+ssize_t Pe_float32_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat32 *rep
+                    );
+
+/*@END Pfloat_app_7.tex*/
+/*@BEGIN Pfloat_app_8.tex*/
+
+ssize_t Pe_float64_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat64 *rep
+                    );
+
+ssize_t Pe_float64_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat64 *rep
+                    );
+
+ssize_t Pe_float32_fmt2io(P_t *pads, Sfio_t *io, int *requested_out,
+                    const char *delims, Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep
+                    );
+
+ssize_t Pe_float64_fmt2io(P_t *pads, Sfio_t *io, int *requested_out,
+                    const char *delims, Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep
+                    );
+
+/*@END Pfloat_app_8.tex*/
+
 #endif
 
 #ifdef FOR_CKIT
 #if P_CONFIG_A_FLOAT > 0 || P_CONFIG_E_FLOAT > 0
-ssize_t Pfloat32_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat32  *val);
-ssize_t Pfloat64_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat64  *val);
 
-ssize_t Pfloat32_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val);
-ssize_t Pfloat64_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val);
+/*@BEGIN Pfloat_app_9.tex*/
 
-ssize_t Pfloat32_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat32  *val, const char *tag, int indent);
-ssize_t Pfloat64_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat64  *val, const char *tag, int indent);
+ssize_t Pfloat32_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pfloat32 *val);
 
-ssize_t Pfloat32_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat32  *val, const char *tag, int indent);
-ssize_t Pfloat64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pbase_pd *pd, Pfloat64  *val, const char *tag, int indent);
 
-ssize_t Pfloat32_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-			  Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep);
-ssize_t Pfloat32_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep);
-ssize_t Pfloat64_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-			  Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep);
-ssize_t Pfloat64_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep);
+ssize_t Pfloat64_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pfloat64 *val);
 
-ssize_t Pfloat32_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
-			  Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep);
-ssize_t Pfloat64_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
-			  Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep);
+
+ssize_t Pfloat32_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfloat32 *val
+                    );
+
+ssize_t Pfloat64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfloat64 *val
+                    );
+
+ssize_t Pfloat32_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat32 *val,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pfloat64_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat64 *val,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pfloat32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfloat32 *val, const char *tag, int indent
+                    );
+
+ssize_t Pfloat64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfloat64 *val, const char *tag, int indent
+                    );
+
+/*@END Pfloat_app_9.tex*/
+/*@BEGIN Pfloat_app_10.tex*/
+
+ssize_t Pfloat32_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat32 *rep
+                    );
+
+ssize_t Pfloat32_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat32 *rep
+                    );
+
+ssize_t Pfloat64_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat64 *rep
+                    );
+
+ssize_t Pfloat64_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pfloat64 *rep
+                    );
+
+ssize_t Pfloat32_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Pfloat32 *rep
+                    );
+
+ssize_t Pfloat64_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Pfloat64 *rep
+                    );
+
+/*@END Pfloat_app_10.tex*/
+
 #endif
 #endif
 

@@ -42,15 +42,27 @@
 #if P_CONFIG_READ_FUNCTIONS > 0
 
 #if P_CONFIG_A_CHAR_STRING > 0
-Perror_t Pa_str_lit_read (P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd, Pstring *s_out);
+
+Perror_t Pa_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd,
+                    Pstring *s_out
+                    );
+
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
-Perror_t Pe_str_lit_read (P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd, Pstring *s_out);
+
+Perror_t Pe_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd,
+                    Pstring *s_out
+                    );
+
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
-Perror_t Pstr_lit_read (P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd, Pstring *s_out);
+
+Perror_t Pstr_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd *pd,
+                    Pstring *s_out
+                    );
+
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -64,33 +76,57 @@ Perror_t Pstr_lit_read (P_t *pads, const Pbase_m *m, const Pstring *s, Pbase_pd 
 #if P_CONFIG_WRITE_FUNCTIONS > 0
 
 #if P_CONFIG_A_CHAR_STRING > 0
-ssize_t Pa_str_lit_write2io (P_t *pads, Sfio_t *io, const Pstring *s);
 
-ssize_t Pa_str_lit_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const Pstring *s);
+ssize_t Pa_str_lit_write2io(P_t *pads,Sfio_t *io,const Pstring *s);
 
-ssize_t Pa_str_lit_write_xml_2io (P_t *pads, Sfio_t *io, const Pstring *s, const char *tag, int indent);
+ssize_t Pa_str_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    const Pstring *s
+                    );
 
-ssize_t Pa_str_lit_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const Pstring *s, const char *tag, int indent);
+ssize_t Pa_str_lit_write_xml_2io(P_t *pads, Sfio_t *io, const Pstring *s,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pa_str_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, const Pstring *s, const char *tag, int indent
+                    );
+
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
-ssize_t Pe_str_lit_write2io (P_t *pads, Sfio_t *io, const Pstring *s);
 
-ssize_t Pe_str_lit_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const Pstring *s);
+ssize_t Pe_str_lit_write2io(P_t *pads,Sfio_t *io,const Pstring *s);
 
-ssize_t Pe_str_lit_write_xml_2io (P_t *pads, Sfio_t *io, const Pstring *s, const char *tag, int indent);
+ssize_t Pe_str_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    const Pstring *s
+                    );
 
-ssize_t Pe_str_lit_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const Pstring *s, const char *tag, int indent);
+ssize_t Pe_str_lit_write_xml_2io(P_t *pads, Sfio_t *io, const Pstring *s,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pe_str_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, const Pstring *s, const char *tag, int indent
+                    );
+
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
-ssize_t Pstr_lit_write2io (P_t *pads, Sfio_t *io, const Pstring *s);
 
-ssize_t Pstr_lit_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const Pstring *s);
+ssize_t Pstr_lit_write2io(P_t *pads,Sfio_t *io,const Pstring *s);
 
-ssize_t Pstr_lit_write_xml_2io (P_t *pads, Sfio_t *io, const Pstring *s, const char *tag, int indent);
+ssize_t Pstr_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    const Pstring *s
+                    );
 
-ssize_t Pstr_lit_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const Pstring *s, const char *tag, int indent);
+ssize_t Pstr_lit_write_xml_2io(P_t *pads, Sfio_t *io, const Pstring *s,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pstr_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    const Pstring *s, const char *tag, int indent
+                    );
+
 #endif
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */

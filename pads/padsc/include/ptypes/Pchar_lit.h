@@ -44,15 +44,27 @@
 #if P_CONFIG_READ_FUNCTIONS > 0
 
 #if P_CONFIG_A_CHAR_STRING > 0
-Perror_t Pa_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd, Pchar *c_out);
+
+Perror_t Pa_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd,
+                    Pchar *c_out
+                    );
+
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
-Perror_t Pe_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd, Pchar *c_out);
+
+Perror_t Pe_char_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd,
+                    Pchar *c_out
+                    );
+
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
-Perror_t Pchar_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd, Pchar *c_out);
+
+Perror_t Pchar_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd,
+                    Pchar *c_out
+                    );
+
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
@@ -73,38 +85,61 @@ Perror_t Pchar_lit_read(P_t *pads, const Pbase_m *m, Pchar c, Pbase_pd *pd, Pcha
  * XXX_TODOC
  */
 
-
 #ifdef FOR_CKIT
 #if P_CONFIG_WRITE_FUNCTIONS > 0
 
 #if P_CONFIG_A_CHAR_STRING > 0
-ssize_t Pa_char_lit_write2io(P_t *pads, Sfio_t *io, Pchar c);
 
-ssize_t Pa_char_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar c);
+ssize_t Pa_char_lit_write2io(P_t *pads,Sfio_t *io,Pchar c);
 
-ssize_t Pa_char_lit_write_xml_2io(P_t *pads, Sfio_t *io, Pchar c, const char *tag, int indent);
+ssize_t Pa_char_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pchar c
+                    );
 
-ssize_t Pa_char_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar c, const char *tag, int indent);
+ssize_t Pa_char_lit_write_xml_2io(P_t *pads, Sfio_t *io, Pchar c, const char *tag,
+                    int indent
+                    );
+
+ssize_t Pa_char_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pchar c, const char *tag, int indent
+                    );
+
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
-ssize_t Pe_char_lit_write2io(P_t *pads, Sfio_t *io, Pchar c);
 
-ssize_t Pe_char_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar c);
+ssize_t Pe_char_lit_write2io(P_t *pads,Sfio_t *io,Pchar c);
 
-ssize_t Pe_char_lit_write_xml_2io(P_t *pads, Sfio_t *io, Pchar c, const char *tag, int indent);
+ssize_t Pe_char_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pchar c
+                    );
 
-ssize_t Pe_char_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar c, const char *tag, int indent);
+ssize_t Pe_char_lit_write_xml_2io(P_t *pads, Sfio_t *io, Pchar c, const char *tag,
+                    int indent
+                    );
+
+ssize_t Pe_char_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pchar c, const char *tag, int indent
+                    );
+
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
-ssize_t Pchar_lit_write2io(P_t *pads, Sfio_t *io, Pchar c);
 
-ssize_t Pchar_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar c);
+ssize_t Pchar_lit_write2io(P_t *pads,Sfio_t *io,Pchar c);
 
-ssize_t Pchar_lit_write_xml_2io(P_t *pads, Sfio_t *io, Pchar c, const char *tag, int indent);
+ssize_t Pchar_lit_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pchar c
+                    );
 
-ssize_t Pchar_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, Pchar c, const char *tag, int indent);
+ssize_t Pchar_lit_write_xml_2io(P_t *pads, Sfio_t *io, Pchar c, const char *tag,
+                    int indent
+                    );
+
+ssize_t Pchar_lit_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pchar c, const char *tag, int indent
+                    );
+
 #endif
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */

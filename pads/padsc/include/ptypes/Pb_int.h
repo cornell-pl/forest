@@ -75,33 +75,25 @@
 
 #if P_CONFIG_READ_FUNCTIONS > 0
 /*@BEGIN Pb_int_app_3.tex*/
-Perror_t Pb_int8_read (P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint8 *res_out);
 
-Perror_t Pb_int16_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint16 *res_out);
+Perror_t Pb_int8_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pint8 *res_out);
 
-Perror_t Pb_int32_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint32 *res_out);
+Perror_t Pb_int16_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pint16 *res_out);
 
-Perror_t Pb_int64_read(P_t *pads, const Pbase_m *m,
-		       Pbase_pd *pd, Pint64 *res_out);
+Perror_t Pb_int32_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pint32 *res_out);
 
-Perror_t Pb_uint8_read (P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint8 *res_out);
+Perror_t Pb_int64_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pint64 *res_out);
 
-Perror_t Pb_uint16_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint16 *res_out);
+Perror_t Pb_uint8_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Puint8 *res_out);
 
-Perror_t Pb_uint32_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint32 *res_out);
+Perror_t Pb_uint16_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Puint16 *res_out);
 
-Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
-			Pbase_pd *pd, Puint64 *res_out);
+Perror_t Pb_uint32_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Puint32 *res_out);
+
+Perror_t Pb_uint64_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Puint64 *res_out);
+
 /*@END Pb_int_app_3.tex*/
 #endif /* P_CONFIG_READ_FUNCTIONS */
-
-
 
 #if P_CONFIG_WRITE_FUNCTIONS > 0
 /*@BEGIN Pb_int_app_4.tex*/
@@ -109,153 +101,246 @@ Perror_t Pb_uint64_read(P_t *pads, const Pbase_m *m,
  * WRITE
  */
 
-ssize_t Pb_int8_write2io  (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint8   *val);
-ssize_t Pb_int16_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint16  *val);
-ssize_t Pb_int32_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint32  *val);
-ssize_t Pb_int64_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint64  *val);
+ssize_t Pb_int8_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pint8 *val);
 
-ssize_t Pb_uint8_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint8  *val);
-ssize_t Pb_uint16_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint16 *val);
-ssize_t Pb_uint32_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *val);
-ssize_t Pb_uint64_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint64 *val);
+ssize_t Pb_int16_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pint16 *val);
 
-ssize_t Pb_int8_write_xml_2io  (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint8   *val,
-				const char *tag, int indent);
-ssize_t Pb_int16_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint16  *val,
-				const char *tag, int indent);
-ssize_t Pb_int32_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint32  *val,
-				const char *tag, int indent);
-ssize_t Pb_int64_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint64  *val,
-				const char *tag, int indent);
+ssize_t Pb_int32_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pint32 *val);
 
-ssize_t Pb_uint8_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint8  *val,
-				const char *tag, int indent);
+ssize_t Pb_int64_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pint64 *val);
+
+ssize_t Pb_uint8_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Puint8 *val);
+
+ssize_t Pb_uint16_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Puint16 *val);
+
+ssize_t Pb_uint32_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Puint32 *val);
+
+ssize_t Pb_uint64_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Puint64 *val);
+
+ssize_t Pb_int8_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint8 *val,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pb_int16_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint16 *val,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pb_int32_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint32 *val,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pb_int64_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pint64 *val,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pb_uint8_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint8 *val,
+                    const char *tag, int indent
+                    );
+
 ssize_t Pb_uint16_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint16 *val,
-				const char *tag, int indent);
+                    const char *tag, int indent
+                    );
+
 ssize_t Pb_uint32_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *val,
-				const char *tag, int indent);
+                    const char *tag, int indent
+                    );
+
 ssize_t Pb_uint64_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint64 *val,
-				const char *tag, int indent);
+                    const char *tag, int indent
+                    );
+
 /*@END Pb_int_app_4.tex*/
 
 /*@BEGIN Pb_int_app_5.tex*/
-ssize_t Pb_int8_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			    Pbase_pd *pd, Pint8   *val);
-ssize_t Pb_int16_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			    Pbase_pd *pd, Pint16  *val);
-ssize_t Pb_int32_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			    Pbase_pd *pd, Pint32  *val);
-ssize_t Pb_int64_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			    Pbase_pd *pd, Pint64  *val);
 
-ssize_t Pb_uint8_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			    Pbase_pd *pd, Puint8  *val);
+ssize_t Pb_int8_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pint8 *val
+                    );
+
+ssize_t Pb_int16_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pint16 *val
+                    );
+
+ssize_t Pb_int32_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pint32 *val
+                    );
+
+ssize_t Pb_int64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pint64 *val
+                    );
+
+ssize_t Pb_uint8_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Puint8 *val
+                    );
+
 ssize_t Pb_uint16_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			    Pbase_pd *pd, Puint16 *val);
+                    Pbase_pd *pd, Puint16 *val
+                    );
+
 ssize_t Pb_uint32_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			    Pbase_pd *pd, Puint32 *val);
+                    Pbase_pd *pd, Puint32 *val
+                    );
+
 ssize_t Pb_uint64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			    Pbase_pd *pd, Puint64 *val);
+                    Pbase_pd *pd, Puint64 *val
+                    );
 
-ssize_t Pb_int8_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Pint8   *val,
-				 const char *tag, int indent);
-ssize_t Pb_int16_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Pint16  *val,
-				 const char *tag, int indent);
-ssize_t Pb_int32_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Pint32  *val,
-				 const char *tag, int indent);
-ssize_t Pb_int64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Pint64  *val,
-				 const char *tag, int indent);
+ssize_t Pb_int8_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pint8 *val, const char *tag, int indent
+                    );
 
-ssize_t Pb_uint8_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Puint8  *val,
-				 const char *tag, int indent);
-ssize_t Pb_uint16_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Puint16 *val,
-				 const char *tag, int indent);
-ssize_t Pb_uint32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Puint32 *val,
-				 const char *tag, int indent);
-ssize_t Pb_uint64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Puint64 *val,
-				 const char *tag, int indent);
+ssize_t Pb_int16_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pint16 *val, const char *tag, int indent
+                    );
+
+ssize_t Pb_int32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pint32 *val, const char *tag, int indent
+                    );
+
+ssize_t Pb_int64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pint64 *val, const char *tag, int indent
+                    );
+
+ssize_t Pb_uint8_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Puint8 *val, const char *tag, int indent
+                    );
+
+ssize_t Pb_uint16_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Puint16 *val, const char *tag, int indent
+                    );
+
+ssize_t Pb_uint32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Puint32 *val, const char *tag, int indent
+                    );
+
+ssize_t Pb_uint64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Puint64 *val, const char *tag, int indent
+                    );
+
 /*@END Pb_int_app_5.tex*/
 
 /*@BEGIN Pb_int_app_6.tex*/
-ssize_t Pb_int8_fmt2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			  int *requested_out, const char *delims,
-			     Pbase_m *m, Pbase_pd *pd, Pint8  *rep);
-ssize_t Pb_int8_fmt2buf_final  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Pint8  *rep);
-ssize_t Pb_int16_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			  int *requested_out, const char *delims,
-			     Pbase_m *m, Pbase_pd *pd, Pint16 *rep);
-ssize_t Pb_int16_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Pint16 *rep);
-ssize_t Pb_int32_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			  int *requested_out, const char *delims,
-			     Pbase_m *m, Pbase_pd *pd, Pint32 *rep);
-ssize_t Pb_int32_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Pint32 *rep);
-ssize_t Pb_int64_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			  int *requested_out, const char *delims,
-			     Pbase_m *m, Pbase_pd *pd, Pint64 *rep);
-ssize_t Pb_int64_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Pint64 *rep);
+
+ssize_t Pb_int8_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pint8 *rep
+                    );
+
+ssize_t Pb_int8_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pint8 *rep
+                    );
+
+ssize_t Pb_int16_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pint16 *rep
+                    );
+
+ssize_t Pb_int16_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pint16 *rep
+                    );
+
+ssize_t Pb_int32_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pint32 *rep
+                    );
+
+ssize_t Pb_int32_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pint32 *rep
+                    );
+
+ssize_t Pb_int64_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pint64 *rep
+                    );
+
+ssize_t Pb_int64_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pint64 *rep
+                    );
+
 /*@END Pb_int_app_6.tex*/
 
 /*@BEGIN Pb_int_app_7.tex*/
-ssize_t Pb_uint8_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			  int *requested_out, const char *delims,
-			  Pbase_m *m, Pbase_pd *pd, Puint8  *rep);
-ssize_t Pb_uint8_fmt2buf_final (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Puint8  *rep);
+
+ssize_t Pb_uint8_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Puint8 *rep
+                    );
+
+ssize_t Pb_uint8_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Puint8 *rep
+                    );
+
 ssize_t Pb_uint16_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			  int *requested_out, const char *delims,
-			  Pbase_m *m, Pbase_pd *pd, Puint16 *rep);
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Puint16 *rep
+                    );
+
 ssize_t Pb_uint16_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Puint16 *rep);
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Puint16 *rep
+                    );
+
 ssize_t Pb_uint32_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			  int *requested_out, const char *delims,
-			  Pbase_m *m, Pbase_pd *pd, Puint32 *rep);
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Puint32 *rep
+                    );
+
 ssize_t Pb_uint32_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Puint32 *rep);
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Puint32 *rep
+                    );
+
 ssize_t Pb_uint64_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-			  int *requested_out, const char *delims,
-			  Pbase_m *m, Pbase_pd *pd, Puint64 *rep);
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Puint64 *rep
+                    );
+
 ssize_t Pb_uint64_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				int *requested_out, const char *delims,
-				Pbase_m *m, Pbase_pd *pd, Puint64 *rep);
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Puint64 *rep
+                    );
+
 /*@END Pb_int_app_7.tex*/
 
 /*@BEGIN Pb_int_app_8.tex*/
-ssize_t Pb_int8_fmt2io   (P_t *pads, Sfio_t *io, int *requested_out,
-			  const char *delims, Pbase_m *m, Pbase_pd *pd, Pint8  *rep);
-ssize_t Pb_int16_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out,
-			  const char *delims, Pbase_m *m, Pbase_pd *pd, Pint16 *rep);
-ssize_t Pb_int32_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out,
-			  const char *delims, Pbase_m *m, Pbase_pd *pd, Pint32 *rep);
-ssize_t Pb_int64_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out,
-			  const char *delims, Pbase_m *m, Pbase_pd *pd, Pint64 *rep);
 
-ssize_t Pb_uint8_fmt2io  (P_t *pads, Sfio_t *io, int *requested_out,
-			  const char *delims, Pbase_m *m, Pbase_pd *pd, Puint8  *rep);
-ssize_t Pb_uint16_fmt2io (P_t *pads, Sfio_t *io, int *requested_out,
-			  const char *delims, Pbase_m *m, Pbase_pd *pd, Puint16 *rep);
-ssize_t Pb_uint32_fmt2io (P_t *pads, Sfio_t *io, int *requested_out,
-			  const char *delims, Pbase_m *m, Pbase_pd *pd, Puint32 *rep);
-ssize_t Pb_uint64_fmt2io (P_t *pads, Sfio_t *io, int *requested_out,
-			  const char *delims, Pbase_m *m, Pbase_pd *pd, Puint64 *rep);
+ssize_t Pb_int8_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Pint8 *rep
+                    );
+
+ssize_t Pb_int16_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Pint16 *rep
+                    );
+
+ssize_t Pb_int32_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Pint32 *rep
+                    );
+
+ssize_t Pb_int64_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Pint64 *rep
+                    );
+
+ssize_t Pb_uint8_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Puint8 *rep
+                    );
+
+ssize_t Pb_uint16_fmt2io(P_t *pads, Sfio_t *io, int *requested_out,
+                    const char *delims, Pbase_m *m, Pbase_pd *pd, Puint16 *rep
+                    );
+
+ssize_t Pb_uint32_fmt2io(P_t *pads, Sfio_t *io, int *requested_out,
+                    const char *delims, Pbase_m *m, Pbase_pd *pd, Puint32 *rep
+                    );
+
+ssize_t Pb_uint64_fmt2io(P_t *pads, Sfio_t *io, int *requested_out,
+                    const char *delims, Pbase_m *m, Pbase_pd *pd, Puint64 *rep
+                    );
+
 /*@END Pb_int_app_8.tex*/
 #endif /* P_CONFIG_WRITE_FUNCTIONS > 0 */
 

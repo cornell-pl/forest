@@ -91,23 +91,39 @@
 #if P_CONFIG_READ_FUNCTIONS > 0
 #if P_CONFIG_BCD_FPOINT > 0
 /*@BEGIN Pbcd_fpoint_app_3.tex*/
-Perror_t Pbcd_fpoint8_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd,
-			      Pfpoint8 *res_out, Puint32 num_digits, Puint32 d_exp);
-Perror_t Pbcd_fpoint16_read  (P_t *pads, const Pbase_m *m, Pbase_pd *pd,
-			      Pfpoint16 *res_out, Puint32 num_digits, Puint32 d_exp);
-Perror_t Pbcd_fpoint32_read  (P_t *pads, const Pbase_m *m, Pbase_pd *pd,
-			      Pfpoint32 *res_out, Puint32 num_digits, Puint32 d_exp);
-Perror_t Pbcd_fpoint64_read  (P_t *pads, const Pbase_m *m, Pbase_pd *pd,
-			      Pfpoint64 *res_out, Puint32 num_digits, Puint32 d_exp);
 
-Perror_t Pbcd_ufpoint8_read  (P_t *pads, const Pbase_m *m, Pbase_pd *pd,
-			      Pufpoint8 *res_out, Puint32 num_digits, Puint32 d_exp);
-Perror_t Pbcd_ufpoint16_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd,
-			      Pufpoint16 *res_out, Puint32 num_digits, Puint32 d_exp);
-Perror_t Pbcd_ufpoint32_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd,
-			      Pufpoint32 *res_out, Puint32 num_digits, Puint32 d_exp);
-Perror_t Pbcd_ufpoint64_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd,
-			      Pufpoint64 *res_out, Puint32 num_digits, Puint32 d_exp);
+Perror_t Pbcd_fpoint8_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
+                    Pfpoint8 *res_out, Puint32 num_digits, Puint32 d_exp
+                    );
+
+Perror_t Pbcd_fpoint16_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
+                    Pfpoint16 *res_out, Puint32 num_digits, Puint32 d_exp
+                    );
+
+Perror_t Pbcd_fpoint32_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
+                    Pfpoint32 *res_out, Puint32 num_digits, Puint32 d_exp
+                    );
+
+Perror_t Pbcd_fpoint64_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
+                    Pfpoint64 *res_out, Puint32 num_digits, Puint32 d_exp
+                    );
+
+Perror_t Pbcd_ufpoint8_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
+                    Pufpoint8 *res_out, Puint32 num_digits, Puint32 d_exp
+                    );
+
+Perror_t Pbcd_ufpoint16_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
+                    Pufpoint16 *res_out, Puint32 num_digits, Puint32 d_exp
+                    );
+
+Perror_t Pbcd_ufpoint32_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
+                    Pufpoint32 *res_out, Puint32 num_digits, Puint32 d_exp
+                    );
+
+Perror_t Pbcd_ufpoint64_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd,
+                    Pufpoint64 *res_out, Puint32 num_digits, Puint32 d_exp
+                    );
+
 /*@END Pbcd_fpoint_app_3.tex*/
 #endif
 #endif
@@ -119,115 +135,162 @@ Perror_t Pbcd_ufpoint64_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd,
 #if P_CONFIG_WRITE_FUNCTIONS > 0
 #if P_CONFIG_BCD_FPOINT > 0
 /*@BEGIN Pbcd_fpoint_app_4.tex*/
-ssize_t Pbcd_fpoint8_write2io  (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				Pfpoint8   *val, Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint16_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				Pfpoint16  *val, Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint32_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				Pfpoint32  *val, Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint64_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				Pfpoint64  *val, Puint32 num_digits, Puint32 d_exp);
 
-ssize_t Pbcd_ufpoint8_write2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				Pufpoint8  *val, Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_ufpoint16_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				Pufpoint16 *val, Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_ufpoint32_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				Pufpoint32 *val, Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_ufpoint64_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				Pufpoint64 *val, Puint32 num_digits, Puint32 d_exp);
+ssize_t Pbcd_fpoint8_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfpoint8 *val,
+                    Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint16_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfpoint16 *val,
+                    Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint32_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfpoint32 *val,
+                    Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint64_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfpoint64 *val,
+                    Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_ufpoint8_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pufpoint8 *val,
+                    Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_ufpoint16_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pufpoint16 *val,
+                    Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_ufpoint32_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pufpoint32 *val,
+                    Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_ufpoint64_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pufpoint64 *val,
+                    Puint32 num_digits, Puint32 d_exp
+                    );
+
 /*@END Pbcd_fpoint_app_4.tex*/
 
 /*@BEGIN Pbcd_fpoint_app_5.tex*/
-ssize_t Pbcd_fpoint8_write_xml_2io  (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				     Pfpoint8   *val, const char *tag, int indent,
-				     Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint16_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				     Pfpoint16  *val, const char *tag, int indent,
-				     Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint32_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				     Pfpoint32  *val, const char *tag, int indent,
-				     Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint64_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				     Pfpoint64  *val, const char *tag, int indent,
-				     Puint32 num_digits, Puint32 d_exp);
-							  							                                         
-ssize_t Pbcd_ufpoint8_write_xml_2io (P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				     Pufpoint8  *val, const char *tag, int indent,
-				     Puint32 num_digits, Puint32 d_exp);
+
+ssize_t Pbcd_fpoint8_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfpoint8 *val,
+                    const char *tag, int indent, Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint16_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
+                    Pfpoint16 *val, const char *tag, int indent, Puint32 num_digits,
+                    Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint32_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
+                    Pfpoint32 *val, const char *tag, int indent, Puint32 num_digits,
+                    Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint64_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
+                    Pfpoint64 *val, const char *tag, int indent, Puint32 num_digits,
+                    Puint32 d_exp
+                    );
+
+ssize_t Pbcd_ufpoint8_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
+                    Pufpoint8 *val, const char *tag, int indent, Puint32 num_digits,
+                    Puint32 d_exp
+                    );
+
 ssize_t Pbcd_ufpoint16_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				     Pufpoint16 *val, const char *tag, int indent,
-				     Puint32 num_digits, Puint32 d_exp);
+                    Pufpoint16 *val, const char *tag, int indent, Puint32 num_digits,
+                    Puint32 d_exp
+                    );
+
 ssize_t Pbcd_ufpoint32_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				     Pufpoint32 *val, const char *tag, int indent,
-				     Puint32 num_digits, Puint32 d_exp);
+                    Pufpoint32 *val, const char *tag, int indent, Puint32 num_digits,
+                    Puint32 d_exp
+                    );
+
 ssize_t Pbcd_ufpoint64_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd,
-				     Pufpoint64 *val, const char *tag, int indent,
-				     Puint32 num_digits, Puint32 d_exp);
+                    Pufpoint64 *val, const char *tag, int indent, Puint32 num_digits,
+                    Puint32 d_exp
+                    );
+
 /*@END Pbcd_fpoint_app_5.tex*/
 
 /*@BEGIN Pbcd_fpoint_app_6.tex*/
-ssize_t Pbcd_fpoint8_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				 Pbase_pd *pd, Pfpoint8   *val,
-				 Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint16_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				 Pbase_pd *pd, Pfpoint16  *val,
-				 Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint32_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				 Pbase_pd *pd, Pfpoint32  *val,
-				 Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint64_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				 Pbase_pd *pd, Pfpoint64  *val,
-				 Puint32 num_digits, Puint32 d_exp);
-										     				                                       
-ssize_t Pbcd_ufpoint8_write2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				 Pbase_pd *pd, Pufpoint8  *val,
-				 Puint32 num_digits, Puint32 d_exp);
+
+ssize_t Pbcd_fpoint8_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfpoint8 *val, Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint16_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfpoint16 *val, Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint32_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfpoint32 *val, Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pfpoint64 *val, Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_ufpoint8_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pufpoint8 *val, Puint32 num_digits, Puint32 d_exp
+                    );
+
 ssize_t Pbcd_ufpoint16_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				 Pbase_pd *pd, Pufpoint16 *val,
-				 Puint32 num_digits, Puint32 d_exp);
+                    Pbase_pd *pd, Pufpoint16 *val, Puint32 num_digits, Puint32 d_exp
+                    );
+
 ssize_t Pbcd_ufpoint32_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				 Pbase_pd *pd, Pufpoint32 *val,
-				 Puint32 num_digits, Puint32 d_exp);
+                    Pbase_pd *pd, Pufpoint32 *val, Puint32 num_digits, Puint32 d_exp
+                    );
+
 ssize_t Pbcd_ufpoint64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
-				 Pbase_pd *pd, Pufpoint64 *val,
-				 Puint32 num_digits, Puint32 d_exp);
+                    Pbase_pd *pd, Pufpoint64 *val, Puint32 num_digits, Puint32 d_exp
+                    );
+
 /*@END Pbcd_fpoint_app_6.tex*/
 
 /*@BEGIN Pbcd_fpoint_app_7.tex*/
-ssize_t Pbcd_fpoint8_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len,
-				      int *buf_full, Pbase_pd *pd, Pfpoint8   *val,
-				      const char *tag, int indent,
-				      Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint16_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len,
-				      int *buf_full, Pbase_pd *pd, Pfpoint16  *val,
-				      const char *tag, int indent,
-				      Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint32_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len,
-				      int *buf_full, Pbase_pd *pd, Pfpoint32  *val,
-				      const char *tag, int indent,
-				      Puint32 num_digits, Puint32 d_exp);
-ssize_t Pbcd_fpoint64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len,
-				      int *buf_full, Pbase_pd *pd, Pfpoint64  *val,
-				      const char *tag, int indent,
-				      Puint32 num_digits, Puint32 d_exp);
-											  							                                         
-ssize_t Pbcd_ufpoint8_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len,
-				      int *buf_full, Pbase_pd *pd, Pufpoint8  *val,
-				      const char *tag, int indent,
-				      Puint32 num_digits, Puint32 d_exp);
+
+ssize_t Pbcd_fpoint8_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pbase_pd *pd, Pfpoint8 *val, const char *tag,
+                    int indent, Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint16_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pbase_pd *pd, Pfpoint16 *val, const char *tag,
+                    int indent, Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pbase_pd *pd, Pfpoint32 *val, const char *tag,
+                    int indent, Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_fpoint64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pbase_pd *pd, Pfpoint64 *val, const char *tag,
+                    int indent, Puint32 num_digits, Puint32 d_exp
+                    );
+
+ssize_t Pbcd_ufpoint8_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Pbase_pd *pd, Pufpoint8 *val, const char *tag,
+                    int indent, Puint32 num_digits, Puint32 d_exp
+                    );
+
 ssize_t Pbcd_ufpoint16_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
-				      int *buf_full, Pbase_pd *pd, Pufpoint16 *val,
-				      const char *tag, int indent,
-				      Puint32 num_digits, Puint32 d_exp);
+                    int *buf_full, Pbase_pd *pd, Pufpoint16 *val, const char *tag,
+                    int indent, Puint32 num_digits, Puint32 d_exp
+                    );
+
 ssize_t Pbcd_ufpoint32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
-				      int *buf_full, Pbase_pd *pd, Pufpoint32 *val,
-				      const char *tag, int indent,
-				      Puint32 num_digits, Puint32 d_exp);
+                    int *buf_full, Pbase_pd *pd, Pufpoint32 *val, const char *tag,
+                    int indent, Puint32 num_digits, Puint32 d_exp
+                    );
+
 ssize_t Pbcd_ufpoint64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
-				      int *buf_full, Pbase_pd *pd, Pufpoint64 *val,
-				      const char *tag, int indent,
-				      Puint32 num_digits, Puint32 d_exp);
+                    int *buf_full, Pbase_pd *pd, Pufpoint64 *val, const char *tag,
+                    int indent, Puint32 num_digits, Puint32 d_exp
+                    );
+
 /*@END Pbcd_fpoint_app_7.tex*/
 #endif
 #endif

@@ -53,25 +53,30 @@
 
 #if P_CONFIG_A_CHAR_STRING > 0
 /*@BEGIN Pchar_app_2.tex*/
-Perror_t Pa_char_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
+
+Perror_t Pa_char_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pchar *c_out);
+
 /*@END Pchar_app_2.tex*/
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
 /*@BEGIN Pchar_app_3.tex*/
-Perror_t Pe_char_read (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
+
+Perror_t Pe_char_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pchar *c_out);
+
 /*@END Pchar_app_3.tex*/
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
 /*@BEGIN Pchar_app_4.tex*/
-Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
+
+Perror_t Pchar_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pchar *c_out);
+
 /*@END Pchar_app_4.tex*/
 #endif
 
 #endif /* P_CONFIG_READ_FUNCTIONS */
 #endif /* FOR_CKIT */
-
 
 /*@BEGIN Pchar_app_5.tex*/
 /* ================================================================================
@@ -93,92 +98,123 @@ Perror_t Pchar_read   (P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pchar *c_out);
 #ifdef FOR_CKIT
 #if P_CONFIG_A_CHAR_STRING > 0
 /*@BEGIN Pchar_app_6.tex*/
-ssize_t Pa_char_write2io   (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c);
-ssize_t Pa_char_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len,
-			    ssize_t *buf_full, Pbase_pd *pd, Pchar *c);
 
-ssize_t Pa_char_write_xml_2io   (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c,
-				 const char *tag, int indent);
-ssize_t Pa_char_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len,
-				 ssize_t *buf_full, Pbase_pd *pd, Pchar *c,
-				 const char *tag, int indent);
+ssize_t Pa_char_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pchar *c);
+
+ssize_t Pa_char_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, ssize_t *buf_full,
+                    Pbase_pd *pd, Pchar *c
+                    );
+
+ssize_t Pa_char_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pa_char_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    ssize_t *buf_full, Pbase_pd *pd, Pchar *c, const char *tag,
+                    int indent
+                    );
+
 /*@END Pchar_app_6.tex*/
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
 /*@BEGIN Pchar_app_7.tex*/
-ssize_t Pe_char_write2io   (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c);
-ssize_t Pe_char_write2buf  (P_t *pads, Pbyte *buf, size_t buf_len,
-			    int *buf_full, Pbase_pd *pd, Pchar *c);
 
-ssize_t Pe_char_write_xml_2io   (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c,
-				 const char *tag, int indent);
-ssize_t Pe_char_write_xml_2buf  (P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Pchar *c,
-				 const char *tag, int indent);
+ssize_t Pe_char_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pchar *c);
+
+ssize_t Pe_char_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pchar *c
+                    );
+
+ssize_t Pe_char_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pe_char_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pchar *c, const char *tag, int indent
+                    );
+
 /*@END Pchar_app_7.tex*/
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
 /*@BEGIN Pchar_app_8.tex*/
-ssize_t Pchar_write2io     (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c);
-ssize_t Pchar_write2buf    (P_t *pads, Pbyte *buf, size_t buf_len,
-			    int *buf_full, Pbase_pd *pd, Pchar *c);
 
-ssize_t Pchar_write_xml_2io     (P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c,
-				 const char *tag, int indent);
-ssize_t Pchar_write_xml_2buf    (P_t *pads, Pbyte *buf, size_t buf_len,
-				 int *buf_full, Pbase_pd *pd, Pchar *c,
-				 const char *tag, int indent);
+ssize_t Pchar_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pchar *c);
+
+ssize_t Pchar_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pchar *c
+                    );
+
+ssize_t Pchar_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c,
+                    const char *tag, int indent
+                    );
+
+ssize_t Pchar_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Pbase_pd *pd, Pchar *c, const char *tag, int indent
+                    );
+
 /*@END Pchar_app_8.tex*/
 #endif
 #endif /* FOR_CKIT */
 
 #if P_CONFIG_A_CHAR_STRING > 0
 /*@BEGIN Pchar_app_9.tex*/
-ssize_t Pa_char_fmt2buf      (P_t *pads, Pbyte *buf, size_t buf_len,
-			      int *buf_full, int *requested_out,
-			      const char *delims,
-			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
-ssize_t Pa_char_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len,
-			      int *buf_full, int *requested_out,
-			      const char *delims,
-			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
-ssize_t Pa_char_fmt2io       (P_t *pads, Sfio_t *io, int *requested_out,
-			      const char *delims,
-			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+
+ssize_t Pa_char_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pchar *rep
+                    );
+
+ssize_t Pa_char_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pchar *rep
+                    );
+
+ssize_t Pa_char_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Pchar *rep
+                    );
+
 /*@END Pchar_app_9.tex*/
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
 /*@BEGIN Pchar_app_10.tex*/
-ssize_t Pe_char_fmt2buf      (P_t *pads, Pbyte *buf, size_t buf_len,
-			      int *buf_full, int *requested_out,
-			      const char *delims,
-			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
-ssize_t Pe_char_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len,
-			      int *buf_full, int *requested_out,
-			      const char *delims,
-			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
-ssize_t Pe_char_fmt2io       (P_t *pads, Sfio_t *io, int *requested_out,
-			      const char *delims,
-			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+
+ssize_t Pe_char_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pchar *rep
+                    );
+
+ssize_t Pe_char_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pchar *rep
+                    );
+
+ssize_t Pe_char_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Pchar *rep
+                    );
+
 /*@END Pchar_app_10.tex*/
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 || P_CONFIG_E_CHAR_STRING > 0
 /*@BEGIN Pchar_app_11.tex*/
-ssize_t Pchar_fmt2buf      (P_t *pads, Pbyte *buf, size_t buf_len,
-			    int *buf_full, int *requested_out,
-			    const char *delims,
-			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
-ssize_t Pchar_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len,
-			    int *buf_full, int *requested_out,
-			    const char *delims,
-			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
-ssize_t Pchar_fmt2io       (P_t *pads, Sfio_t *io, int *requested_out,
-			    const char *delims,
-			      Pbase_m *m, Pbase_pd *pd, Pchar *rep);
+
+ssize_t Pchar_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pchar *rep
+                    );
+
+ssize_t Pchar_fmt2buf_final(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    int *requested_out, const char *delims, Pbase_m *m, Pbase_pd *pd,
+                    Pchar *rep
+                    );
+
+ssize_t Pchar_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *delims,
+                    Pbase_m *m, Pbase_pd *pd, Pchar *rep
+                    );
+
 /*@END Pchar_app_11.tex*/
 #endif
 

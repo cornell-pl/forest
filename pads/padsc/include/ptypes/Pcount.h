@@ -100,34 +100,43 @@
 
 #if P_CONFIG_A_CHAR_STRING > 0
 /*@BEGIN Pcount_app_4.tex*/
-Perror_t Pa_countX_read   (P_t *pads, const Pbase_m *m,
-			   Pbase_pd *pd, Pint32 *res_out, Puint8 x,
-			   int eor_required, size_t count_max);
-Perror_t Pa_countXtoY_read(P_t *pads, const Pbase_m *m,
-			   Pbase_pd *pd, Pint32 *res_out,
-			   Puint8 x, Puint8 y, size_t count_max);
+
+Perror_t Pa_countX_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pint32 *res_out,
+                    Puint8 x, int eor_required, size_t count_max
+                    );
+
+Perror_t Pa_countXtoY_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pint32 *res_out,
+                    Puint8 x, Puint8 y, size_t count_max
+                    );
+
 /*@END Pcount_app_4.tex*/
 #endif
 
 #if P_CONFIG_E_CHAR_STRING > 0
 /*@BEGIN Pcount_app_5.tex*/
-Perror_t Pe_countX_read   (P_t *pads, const Pbase_m *m,
-			   Pbase_pd *pd, Pint32 *res_out, Puint8 x,
-			   int eor_required, size_t count_max);
-Perror_t Pe_countXtoY_read(P_t *pads, const Pbase_m *m,
-			   Pbase_pd *pd, Pint32 *res_out,
-			   Puint8 x, Puint8 y, size_t count_max);
+
+Perror_t Pe_countX_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pint32 *res_out,
+                    Puint8 x, int eor_required, size_t count_max
+                    );
+
+Perror_t Pe_countXtoY_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pint32 *res_out,
+                    Puint8 x, Puint8 y, size_t count_max
+                    );
+
 /*@END Pcount_app_5.tex*/
 #endif
 
 #if P_CONFIG_A_CHAR_STRING > 0 && P_CONFIG_E_CHAR_STRING > 0
 /*@BEGIN Pcount_app_6.tex*/
-Perror_t PcountX_read     (P_t *pads, const Pbase_m *m,
-			   Pbase_pd *pd, Pint32 *res_out, Puint8 x,
-			   int eor_required, size_t count_max);
-Perror_t PcountXtoY_read (P_t *pads, const Pbase_m *m,
-			  Pbase_pd *pd, Pint32 *res_out,
-			  Puint8 x, Puint8 y, size_t count_max);
+
+Perror_t PcountX_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pint32 *res_out,
+                    Puint8 x, int eor_required, size_t count_max
+                    );
+
+Perror_t PcountXtoY_read(P_t *pads, const Pbase_m *m, Pbase_pd *pd, Pint32 *res_out,
+                    Puint8 x, Puint8 y, size_t count_max
+                    );
+
 /*@END Pcount_app_6.tex*/
 #endif
 
@@ -140,46 +149,50 @@ Perror_t PcountXtoY_read (P_t *pads, const Pbase_m *m,
 
 #if P_CONFIG_WRITE_FUNCTIONS > 0
 /*@BEGIN Pcount_app_7.tex*/
-ssize_t PcountX_write2io    (P_t *pads, Sfio_t *io,
-			     Puint8 x, int eor_required, size_t count_max,
-			     Pbase_pd *pd, Pint32  *val);
-ssize_t PcountX_write2buf   (P_t *pads, Pbyte *buf,
-			     size_t buf_len, int *buf_full,
-			     Puint8 x, int eor_required, size_t count_max,
-			     Pbase_pd *pd, Pint32  *val);
 
-ssize_t PcountXtoY_write2io (P_t *pads, Sfio_t *io,
-			     Puint8 x, Puint8 y, size_t count_max,
-			     Pbase_pd *pd, Pint32  *val);
-ssize_t PcountXtoY_write2buf(P_t *pads, Pbyte *buf,
-			     size_t buf_len, int *buf_full,
-			     Puint8 x, Puint8 y, size_t count_max,
-			     Pbase_pd *pd, Pint32  *val);
+ssize_t PcountX_write2io(P_t *pads, Sfio_t *io, Puint8 x, int eor_required,
+                    size_t count_max, Pbase_pd *pd, Pint32 *val
+                    );
+
+ssize_t PcountX_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Puint8 x, int eor_required, size_t count_max, Pbase_pd *pd,
+                    Pint32 *val
+                    );
+
+ssize_t PcountXtoY_write2io(P_t *pads, Sfio_t *io, Puint8 x, Puint8 y,
+                    size_t count_max, Pbase_pd *pd, Pint32 *val
+                    );
+
+ssize_t PcountXtoY_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Puint8 x, Puint8 y, size_t count_max, Pbase_pd *pd, Pint32 *val
+                    );
+
 /*@END Pcount_app_7.tex*/
 
 /*@BEGIN Pcount_app_8.tex*/
-ssize_t PcountX_write_xml_2io    (P_t *pads, Sfio_t *io,
-				  Puint8 x, int eor_required, size_t count_max,
-				  Pbase_pd *pd, Pint32  *val,
-				  const char *tag, int indent);
-ssize_t PcountX_write_xml_2buf   (P_t *pads, Pbyte *buf,
-				  size_t buf_len, int *buf_full,
-				  Puint8 x, int eor_required, size_t count_max,
-				  Pbase_pd *pd, Pint32  *val,
-				  const char *tag, int indent);
 
-ssize_t PcountXtoY_write_xml_2io (P_t *pads, Sfio_t *io,
-				  Puint8 x, Puint8 y, size_t count_max,
-				  Pbase_pd *pd, Pint32  *val,
-				  const char *tag, int indent);
-ssize_t PcountXtoY_write_xml_2buf(P_t *pads, Pbyte *buf,
-				  size_t buf_len, int *buf_full,
-				  Puint8 x, Puint8 y, size_t count_max,
-				  Pbase_pd *pd, Pint32  *val,
-				  const char *tag, int indent);
+ssize_t PcountX_write_xml_2io(P_t *pads, Sfio_t *io, Puint8 x, int eor_required,
+                    size_t count_max, Pbase_pd *pd, Pint32 *val, const char *tag,
+                    int indent
+                    );
+
+ssize_t PcountX_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
+                    Puint8 x, int eor_required, size_t count_max, Pbase_pd *pd,
+                    Pint32 *val, const char *tag, int indent
+                    );
+
+ssize_t PcountXtoY_write_xml_2io(P_t *pads, Sfio_t *io, Puint8 x, Puint8 y,
+                    size_t count_max, Pbase_pd *pd, Pint32 *val, const char *tag,
+                    int indent
+                    );
+
+ssize_t PcountXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
+                    int *buf_full, Puint8 x, Puint8 y, size_t count_max, Pbase_pd *pd,
+                    Pint32 *val, const char *tag, int indent
+                    );
+
 /*@END Pcount_app_8.tex*/
 #endif /* P_CONFIG_WRITE_FUNCTIONS */
-
 
 #endif /*  __PCOUNT_H__  */
 
