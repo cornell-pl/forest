@@ -2027,12 +2027,15 @@ structure CnvExt : CNVEXT = struct
                      (* Function for moving default clause to end of switched union branch list *)
                      fun mungeBranches (cases, branches) = 
                        let fun mB([],[], acs, abs, acds, abds) = 
-			          if (List.length acds >= 2) 
+			       let val numDefaults = List.length acds
+			       in
+			          if (numDefaults >= 2) 
 				      then (PE.error ("Switched union "^ unionName ^" can have at most "^
 						      "one default clause.\n");
-					    ((List.rev acs)@[hd acds], (List.rev abs)@[hd abds]))
-					    
-				  else ((List.rev acs)@acds, (List.rev abs)@abds)
+					    (true (* has default clause*), 
+					     (List.rev acs)@[hd acds], (List.rev abs)@[hd abds]))
+				  else (numDefaults = 1, (List.rev acs)@acds, (List.rev abs)@abds)
+			       end
                              | mB(NONE::cases, b::bs, acs,abs,acds,abds) = 
 					    mB(cases,bs, acs, abs, NONE::acds, b::abds)
                              | mB(c::cases, b::bs, acs,abs,acds,abds) = 
@@ -2043,13 +2046,13 @@ structure CnvExt : CNVEXT = struct
 
 
                      val branches = variants
-                     val (descOpt, cases, variants) = 
+                     val (descOpt, hasDefault, cases, variants) = 
 				    case branches 
-			            of PX.Ordered v => (NONE, [], v)
+			            of PX.Ordered v => (NONE, false (* no default clause *), [], v)
 			            |  PX.Switched {descriminator, cases, branches} => 
-					    let val (cases,branches) = mungeBranches(cases,branches)
+					    let val (hasDefault, cases,branches) = mungeBranches(cases,branches)
 					    in
-						(SOME descriminator, cases, branches)
+						(SOME descriminator, hasDefault, cases, branches)
 					    end
 
 		     (* Calculate and insert type properties into type table *)
@@ -2307,13 +2310,22 @@ structure CnvExt : CNVEXT = struct
 			     | SOME e =>  [PT.CaseLabel(e,readS)]
 			 end
 
+                     fun genSwDefaultIfAbsent () = 
+			 let val errorSs = 
+			         genErrorSs ("Failed to match any branch of "^ name^".", locES1)
+			 in
+			     [PT.DefaultLabel(PT.Compound errorSs)]
+			 end
+
                      fun buildSwitchRead (descriminator) = 
 			     let val () = expEqualTy(descriminator, CTintTys, 
 						     fn s=> (" Descriminator for union "^
 							     name ^ " has type: " ^ s ^
 							     ". Expected an int."))
 				 val readFields = mungeBVs genReadSwFull genReadBrief genReadSwMan cases variants
-				 val bodyS = PT.Switch(descriminator, PT.Compound readFields)
+				 val augReadFields = if hasDefault then readFields 
+				                     else readFields @ (genSwDefaultIfAbsent())
+				 val bodyS = PT.Switch(descriminator, PT.Compound augReadFields)
 			     in
 				 [PT.Compound (  [P.varDeclS(P.int, result, PL.PDC_ERROR)] 
 					       @ deallocOldSpaceSs 
