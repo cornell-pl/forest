@@ -1,6 +1,11 @@
 #define GLX_STR_MATCH(p,s) (strcmp((p),(s)) == 0)
 
-// ??? Does kth start with 0 or 1?
+void bar_init_perm(PDCI_node_t *node){
+}
+
+void bar_init_temp(PDCI_node_t *node){
+}
+
 PDCI_node_t *bar_kth_child (PDCI_node_t *self, PDCI_childIndex_t idx)
 {
   bar *rep=(bar *) (self->rep);
@@ -26,7 +31,6 @@ PDCI_node_t *bar_kth_child (PDCI_node_t *self, PDCI_childIndex_t idx)
   return result;
 }
 
-// ??? Does kth start with 0 or 1?
 PDCI_node_t *bar_kth_child_named (PDCI_node_t *self, PDCI_childIndex_t idx, const char *name)
 {
   bar *rep=(bar *) (self->rep);
