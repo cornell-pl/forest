@@ -6,13 +6,17 @@ struct
   type sTyInfo = {diskSize : TyProps.diskSize,
 		  memChar  : TyProps.memChar,
 		  endian   : bool,
-                  isRecord : bool} 
+                  isRecord : bool,
+		  containsRecord : bool,
+		  largeHeuristic : bool} 
 
   type pTyInfo = {kind     : PKind,
 		  diskSize : TyProps.diskSize,
 		  memChar  : TyProps.memChar,
 		  endian   : bool,
                   isRecord : bool,
+		  containsRecord: bool,
+	          largeHeuristic: bool,
 		  isFile   : bool,
 		  repName  : string,
 		  repInit  : string option,
@@ -32,10 +36,16 @@ struct
       {diskSize = TyProps.mergeDiskSize f (#diskSize r1, #diskSize r2),
        memChar  = TyProps.mergeMemChar(#memChar r1,   #memChar  r2),
        endian   = #endian r1 andalso #endian r2,
-       isRecord = #isRecord r1}
+       isRecord = #isRecord r1 orelse #isRecord r2,
+       containsRecord = #containsRecord r1 orelse #containsRecord r2,
+       largeHeuristic = #largeHeuristic r1 orelse #largeHeuristic r2}
 
-  val minTyInfo = {diskSize = TyProps.Size (0,0), memChar = TyProps.Static, endian = true, isRecord = false}
-
+  val minTyInfo = {diskSize = TyProps.Size (0,0), 
+                    memChar = TyProps.Static, 
+                     endian = true, 
+                   isRecord = false, 
+             containsRecord = false,
+             largeHeuristic = false}
   type pTyMap = pTyInfo PBaseTys.PBST.map
 
   val pTys : pTyMap ref = ref PBaseTys.PBST.empty

@@ -9,9 +9,13 @@ structure ParseTreeExt =
 		       name : string, 
 		  isVirtual : bool,
 		   isEndian : bool,
+                   isRecord : bool,
+             containsRecord : bool,
+             largeHeuristic : bool,
 		       pred : 'exp option, 
 		    comment : string option}
-	 | Manifest of { decl : 'dt * ('decr * 'exp) list, comment : string option}
+	 | Manifest of { decl : 'dt * ('decr * 'exp) list, 
+                      comment : string option}
          | Brief of 'exp
 
         datatype 'exp PSize = 
@@ -36,7 +40,9 @@ structure ParseTreeExt =
         datatype ('decr, 'ct, 'dt, 'exp) PExternal = 
            PTypedef of {name : string,
 			params: ('ct * 'decr) list, 
-			isRecord : bool,
+			isRecord : bool, 
+                        containsRecord : bool, 
+                        largeHeuristic : bool,
 			isFile : bool,
                         baseTy: Pty,
 			args   : 'exp list, 
@@ -45,26 +51,34 @@ structure ParseTreeExt =
 			pred: 'exp}
          | PStruct of {name : string, 
 		       params: ('ct * 'decr) list, 
-		       isRecord : bool,
+		       isRecord : bool, 
+                       containsRecord : bool, 
+                       largeHeuristic : bool,
 		       isFile : bool,
 		       fields : (('dt, 'decr, 'exp) PSField) list,
 		       postCond : 'exp option}
          | PArray  of {name : string, 
 		       baseTy : Pty, 
 		       params : ('ct * 'decr) list, 
-		       isRecord : bool,
+		       isRecord : bool, 
+                       containsRecord : bool, 
+                       largeHeuristic : bool,
 		       isFile : bool,
 		       args   : 'exp list, 
 		       sizeSpec : ('exp PSize) option, 
 		       constraints : ('exp PConstraint) list} 
          | PUnion of {name     : string,
 		      params   : ('ct * 'decr) list,
-		      isRecord : bool,
+		      isRecord : bool, 
+                      containsRecord : bool, 
+                      largeHeuristic : bool,
 		      isFile   : bool,
 		      variants : ('dt, 'decr, 'exp) PBranches}
          | PEnum of  {name     : string,
                       params   : ('ct * 'decr) list,
-		      isRecord : bool,
+		      isRecord : bool, 
+                      containsRecord : bool, 
+                      largeHeuristic : bool,
 		      isFile   : bool,
                       members  : (string * 'exp option * string option) list}
 
