@@ -8,13 +8,13 @@ pstruct test {
 
 #define RECLIST_SIZE 10
 parray recList {
-  test [RECLIST_SIZE] : forall i in recList { i < RECLIST_SIZE - 1 && recList[i].id < recList[i+1].id };
+  test [RECLIST_SIZE] : forall i in recList { i == length-1 || recList[i].id < recList[i+1].id };
 };
 
 
 pstruct testtwo{
   auint32 id : id < 100000;     //- identity
-  567;
+  '|';
   auint32 ts : ts == 11 * id;  //- time stamp
 };
 
@@ -28,7 +28,7 @@ parray recListtwo{
 #define MAX 5
 parray intList {
   auint32 [MIN : MAX] : sep == '|' && term == '\n' &&
-		   forall i in intList { i < length && intList[i] < intList[i+1]};
+		   forall i in intList { i == length-1 || intList[i] < intList[i+1]};
 };
 
 
