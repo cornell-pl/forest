@@ -11,7 +11,8 @@ struct
    type argList = string list * PT.expression list
    type labelInfo = string * string * argList (* label name, label type, supplied arguments *)
 
-   datatype compoundSize =  Base of diskSize | Typedef of diskSize 
+   datatype compoundSize =  Base of diskSize 
+                          | Typedef of diskSize * string * argList
                           | Struct of (labelInfo option * diskSize) list 
                           | Union of (labelInfo option * diskSize) list 
                           | Array of {baseTy : string, args : argList,

@@ -1624,6 +1624,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val user = "user"
 		      val baseTyName = lookupTy(baseTy,repSuf,#padsname)		
 		      val baseTypeName = lookupTy(baseTy,repSuf,#repname)		
+		      val cParams : (string * pcty) list = List.map mungeParam params
+		      val paramNames = #1(ListPair.unzip cParams)
 
                       (* Generate CheckSet mask typedef case*)
 		      val baseMPCT = P.makeTypedefPCT(lookupTy(baseTy,mSuf, #mname))
@@ -1654,13 +1656,14 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val accPCT    = P.makeTypedefPCT (accSuf name)		
 
 		      (* Insert type properties into type table *)
-                      val ds = lookupDiskSize baseTy
+                      val ds = computeDiskSize(name, paramNames, baseTy, args)
                       val mc = lookupMemChar baseTy
                       val endian = lookupEndian baseTy
                       val contR = lookupContainsRecord baseTy
  		      val lH = lookupHeuristic baseTy
 		      val numArgs = List.length params
-		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, TyProps.Typedef ds, mc, endian, isRecord, contR, lH, isFile, pdTid, numArgs)
+		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, TyProps.Typedef (ds, baseName, (paramNames, args)), mc, endian, 
+						      isRecord, contR, lH, isFile, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
 
@@ -1764,7 +1767,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       (* -- Assemble read function typedef case *)
 		      val _ = pushLocalEnv()                                        (* create new scope *)
 		      val () = ignore (insTempVar(rep, P.ptrPCT canonicalPCT))      (* add rep to scope *)
-		      val cParams : (string * pcty) list = List.map mungeParam params
                       val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
 		      val () = chk()
 		      val readFields = genReadSs ()                                 (* does type checking *)
@@ -4301,6 +4303,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 	      let val baseTy = PL.strlit
 		  val baseEM = mSuf baseTy
 		  val basePD = pdSuf baseTy
+		  val cParams : (string * pcty) list = List.map mungeParam params
+		  val paramNames = #1(ListPair.unzip cParams)
+
                   fun mungeMembers (name, expOpt, commentOpt) = 
 		      case expOpt of NONE => (name, PT.EmptyExpr, commentOpt)
  		                   | SOME e => (name, e, commentOpt)
@@ -4414,7 +4419,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		  (* -- Assemble read function *)
 		  val _ = pushLocalEnv()                                        (* create new scope *)
 		  val () = ignore (insTempVar(rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
-		  val cParams : (string * pcty) list = List.map mungeParam params
 		  val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		  val readFields = genReadBranches()                            (* does type checking *)
 		  val _ = popLocalEnv()                                         (* remove scope *)
@@ -4523,7 +4527,19 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			            handle Fail s => raise Fail (s^" Required for " ^selName^" request.")
 		      in
 			  case cds
-			  of TyProps.Base ds => (tyName, accumSize, reduceCDSize(args, ds), args)
+			  of TyProps.Base ds    => (tyName, accumSize, reduceCDSize(args, ds), args)
+			  |  TyProps.Enum ds => 
+			      let val size = reduceCDSize(args, ds)
+				  (* params should be fixed size of branches *)
+				  val params = case size of TyProps.Size(n,nrec) => [PT.IntConst n] | _ => []
+			      in
+				  ("PDC_string", accumSize, reduceCDSize(args, ds), params)
+			      end
+			  |  TyProps.Typedef (ds,baseName,targs) => 
+			      let val closedDS = reduceCDSize(args,ds)
+			      in
+				  getPos(baseName,path,accumSize,reduceArgList(args,targs))
+			      end
                           |  TyProps.Struct dsl => 
 			      let val (f,path) = case path of ((Select.Dot f)::path) => (f,path) | _ => raise Fail errS
 				  fun findField ([], accum) = raise Fail errS
@@ -4539,11 +4555,32 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 							     " has no external representation.")
 					     else
 						  getPos(tyName,path,accum,reduceArgList(args,sargs))
-
 				      end
 			      in
 				  findField(dsl,accumSize)
 			      end (* struct case *)
+			  | TyProps.Union dsl => 
+			      (* ksf: This case is not type safe.  
+			         After we add alternates, we should make it illegal to select out of a union statically.
+				 Alternatively, we could enrich cookie language to allow dependencies on data.
+			       *)
+			      let val (f,path) = case path of ((Select.Dot f)::path) => (f,path) | _ => raise Fail (errS^" didn't find dot.")
+				  fun findAlt ([]) = raise Fail (errS^"ran through all choices.\n")
+				    | findAlt((sOpt, diskSize)::ss) = 
+				      let val closedDS = reduceCDSize(args,diskSize)
+				      in
+				         case sOpt of NONE => findAlt(ss) (* literal: won't happen for union. *)
+                                         | SOME (l,tyName,sargs:TyProps.argList) => 
+					     if not (l = f) then findAlt ss
+					     else if (tyName = "Pcompute") then
+						 raise Fail (selName ^ ": ill-formed request: Computed field "^l^
+							     " has no external representation.")
+					     else
+						  getPos(tyName,path,accumSize,reduceArgList(args,sargs))
+				      end
+			      in
+				  findAlt dsl
+			      end (* union case *)
                           | TyProps.Array {baseTy, args=arrayArgs, elem, sep, term, length} =>
 		             let val (i,path) = case path of ((Select.Sub i)::path) => (i,path)  | _ => raise Fail errS
 				 val closedLen = reduceCDSize(args,length)
@@ -4560,7 +4597,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			     in
 				  getPos(baseTy, path, accum, reduceArgList(args,arrayArgs))
 			     end
-                          |  _ => raise Fail "Not yet implemented"
 		      end
 		  val (itemType, offset, size, argList) = getPos(tyName, path, TyProps.mkSize(0,0),[](* top level must be closed *))
 	      in
