@@ -22,7 +22,7 @@
 #  define MAX_RECS 0
 #endif
 
-
+#include <stdlib.h>
 
 Puint64 num_recs = 0;
 
@@ -41,6 +41,15 @@ int main(int argc, char** argv) {
   PADS_HDR_TY(_m)   hdr_m;
 #endif /* PADS_HDR_TY */
   char             *fileName = 0;
+#ifdef DEFAULT_TIME_ZONE
+  char              tzbuf[1024];
+#endif
+
+#ifdef DEFAULT_TIME_ZONE
+  sprintf(tzbuf, "TZ=%s", DEFAULT_TIME_ZONE);
+  error(0, "\nNote: doing setenv %s\n\n", tzbuf);
+  putenv((char*)tzbuf);
+#endif
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;

@@ -211,23 +211,19 @@ res
   ty ## _pd *pd=(ty ## _pd *) (self->pd);
   ty ## _m *m=(ty ## _m *) (self->m);
 
-  switch(idx){
-  case 0: /* parse descriptor child */
-    result = PDCI_sequenced_pd_node_new(self,"pd",pd, PDCI_MacroArg2String(ty) "_node_kthChild");
-    break;
-  case 1: /* length field */
+  if (idx < rep-> length) { /* indexes between 0 and rep->length belong to elements */
+      result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
+ 				    PDCI_MacroArg2String(ty)"_node_kthChild");
+  } else if (idx == rep->length) {  /* index of rep->length indicates parse descriptor */
     result = Puint32_val_node_new(self,"length",pd,&(rep->length),
 				  PDCI_LENGTH_OFF,
 				  PDCI_MacroArg2String(ty) "_node_kthChild");
-    break;
-  default: /* now do elements */
-    idx -= 2;
-    if (idx < rep->length){
-      result = childTy ## _node_new(self,"elt",&(m->element),&(pd->elts)[idx],&(rep->elts)[idx],"element",
-				    PDCI_MacroArg2String(ty)"_node_kthChild");
-    }
-    break;
-  }
+  } else if (idx == rep->length + 1) { /* index of rep->length indicates length */
+      result = Puint32_val_node_new(self,"length",pd,&(rep->length),
+	 			    PDCI_LENGTH_OFF,
+				    PDCI_MacroArg2String(ty) "_node_kthChild");
+  } /* otherwise, an illegal child was requested */
+
 /* END_MACRO */
 
 #define ARR_NODE_KTH_CHILD_RET()
@@ -237,16 +233,15 @@ result
 #define ARR_NODE_KTH_CHILD_NAMED_BODY()
   PDCI_childIndex_t k = 0;
 
-  if (GLX_STR_MATCH(name,"pd")){
-    if(idx == 0) k = idx;
-    else         return 0;
-  }else if(GLX_STR_MATCH(name,"length")){
-    if(idx == 0) k = 1;
-    else         return 0;
-  }else if(GLX_STR_MATCH(name,"elt"))  
-    k = idx + 2;
-  else return 0;
-
+  if (GLX_STR_MATCH(name,"elt")) {
+    k = idx;
+  } else if (GLX_STR_MATCH(name,"pd")){
+    if (idx == 0) k = idx;
+    else return 0;
+  } else if (GLX_STR_MATCH(name,"length")){
+    if (idx == 0) k = idx + 1;
+    else return 0;
+  } else return 0;
 /* END_MACRO */
 
 #define ARR_NODE_KTH_CHILD_NAMED_RET()

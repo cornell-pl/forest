@@ -768,7 +768,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           val (repName, repFields) = structInfo tidtab tid
           val lengthField = List.hd repFields				(* takes only two fields = length & elts *) 
           val eltField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.hd (List.tl repFields)))
-          val Fields = (pdTyName,SOME "pd") :: lengthField :: eltField :: []
+          val Fields = eltField :: (pdTyName,SOME "pd") :: lengthField :: []
           val pd2Fields = List.take (pd1Fields,8)			(* eliminates RBuf_t field *) 
           val eltPdField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.last pd2Fields))
           val pdFields = List.take (pd2Fields,7) @ (eltPdField :: []) 

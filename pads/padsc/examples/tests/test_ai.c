@@ -1,3 +1,6 @@
+//#define DATE_OUT_FMT "%K %z"
+//#define DEFAULT_TIME_ZONE "UTC"
+
 ////////////////////////////////////////////////////////////////////////////////
 // Change this to '#if 1' to enable some printing for each good line
 #if 0
