@@ -49,6 +49,8 @@ DISCIPLINE:
 padsc compiler todo
 -------------------
   * check that nesting cascaded values work.
+  * make enum.p work (strings that match c keywordsk, etc)
+  * explore accumulators for unions and error values.
   * don't complain about extra spaces if in slurp mode
   * generated accum types should have some top-level state
      as well as per-field accums.  one idea is to accum the nerr
