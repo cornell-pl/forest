@@ -1,9 +1,9 @@
-ifndef SML_BIN_DIR
- export SML_BIN_DIR=sml
-endif
-
 ifndef SML
+ifndef SML_BIN_DIR
+  export SML=sml
+else
   export SML=$(SML_BIN_DIR)/sml
+endif
 endif
 
 SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
