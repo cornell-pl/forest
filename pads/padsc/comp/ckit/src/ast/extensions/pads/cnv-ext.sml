@@ -2007,7 +2007,7 @@ structure CnvExt : CNVEXT = struct
 		     val tag = "tag"
 		     fun tgSuf s = s^"_tag"
 		     fun unSuf s = s^"_u"
-                     fun unionBranchX (name) = P.addrX(P.dotX(P.arrowX(PT.Id rep, PT.Id value), PT.Id name))
+                     fun unionBranchX (base, name) = P.addrX(P.dotX(P.arrowX(PT.Id base, PT.Id value), PT.Id name))
 
 		     (* Functions for walking over list of variants *)
 		     fun mungeVariant f b m (PX.Full fd) = f fd
@@ -2144,11 +2144,14 @@ structure CnvExt : CNVEXT = struct
 			 [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		     fun genEDBrief e = []
 		     fun genEDMan m = []
-		     val auxEDFields = [(nerr, P.int,NONE), (errCode, PL.errCodePCT, NONE),
-					(loc, PL.locPCT,NONE), (panic, P.int,NONE),
-					(tag, PL.base_edPCT,NONE)]
-		     val edFields = auxEDFields @ (mungeVariants genEDFull genEDBrief genEDMan variants)
-		     val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
+		     val edVariants = mungeVariants genEDFull genEDBrief genEDMan variants
+		     val unionED = P.makeTyDefUnionEDecl(edVariants, (unSuf o edSuf) name)
+		     val unionEDDecls = cnvExternalDecl unionED
+		     val unionEDPCT = P.makeTypedefPCT((unSuf o edSuf) name)
+		     val structEDFields = [(nerr, P.int,NONE), (errCode, PL.errCodePCT, NONE),
+				  	   (loc, PL.locPCT,NONE), (panic, P.int,NONE),
+					   (tag, tagPCT,NONE), (value, unionEDPCT,NONE)]
+		     val edStructED = P.makeTyDefStructEDecl (structEDFields, edSuf name)
 		     val edPCT = P.makeTypedefPCT (edSuf name)			  
 
 		     (* Generate accumulator type *)
@@ -2218,11 +2221,12 @@ structure CnvExt : CNVEXT = struct
 			 let val constraintChkS = doConstraint(pred,name,foundSs,notFoundSs)
 			 in
 			     [P.assignS(fieldX(rep,tag),PT.Id name),
+			      P.assignS(fieldX(ed,tag),PT.Id name),
 			      PT.IfThenElse(
 				 PL.readFunChkX(
 				     PL.PDC_ERROR, readFieldName, PT.Id ts, 
 				     P.addrX(fieldX(em,name)), args, 
-				     P.addrX(fieldX(ed,name)),
+				     P.addrX(P.dotX(fieldX(ed,value), PT.Id name)),
 				     P.addrX(P.dotX(fieldX(rep,value), PT.Id name))),
 				 notFoundSs,
 				 constraintChkS)]
@@ -2272,7 +2276,8 @@ structure CnvExt : CNVEXT = struct
 			             @ reportErrorSs([locS],true,
 					PL.PDC_UNION_MATCH_FAILURE,
 					true, s, [])
-			             @ [P.assignS(fieldX(rep,tag),PT.Id (errSuf name))]
+			             @ [P.assignS(fieldX(rep,tag),PT.Id (errSuf name)),
+					P.assignS(fieldX(ed, tag),PT.Id (errSuf name))]
 
 		     fun genCleanupSs (s,locS) =  (genErrorSs (s,locS))
 			             @ [P.assignS(fieldX(ed,panic), P.trueX),
@@ -2339,7 +2344,7 @@ structure CnvExt : CNVEXT = struct
 			 case descOpt of NONE => 
 			     let val readFields = mungeVariants genReadFull genReadBrief genReadMan
  					           variants  (* does type checking *)
-				 val cleanupSs = genCleanupSs ("Failed to match any branch of union"^name^".",
+				 val cleanupSs = genCleanupSs ("Failed to match any branch of union "^name^".",
 							       locES)
 			     in
 				 [PT.Compound ([P.varDeclS(P.int, result, PL.PDC_ERROR),
@@ -2403,7 +2408,7 @@ structure CnvExt : CNVEXT = struct
 		      fun genCase (name,pty, initSs, edX) = 
 			  case lookupAcc(pty) of NONE => []
 			| SOME a => (let val funName = addSuf a
-					 val repX = unionBranchX(name)
+					 val repX = unionBranchX(rep,name)
 				     in 
 					 [PT.CaseLabel(PT.Id name, 
 						       PT.Compound (initSs 
@@ -2415,7 +2420,7 @@ structure CnvExt : CNVEXT = struct
 		      fun genAccAddFull {pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool, 
 					 pred:pcexp option, comment} = 
-			  genCase (name,pty, [], fieldAddrX(ed,name))
+			  genCase (name,pty, [], unionBranchX(ed,name))
 
 		      fun genAccAddBrief e = []
 		      fun genAccAddMan {decl, comment:string option} = 
@@ -2478,7 +2483,7 @@ structure CnvExt : CNVEXT = struct
 					    in [PT.Expr(
 					           PT.Call(PT.Id (initSuf baseFunName),
 							   [PT.Id ts, 
-							    unionBranchX(name)]))]
+							    unionBranchX(rep, name)]))]
 					    end)]
 				   fun genInitBrief _ = [[]]
 				   fun genInitMan _ = []
@@ -2501,7 +2506,7 @@ structure CnvExt : CNVEXT = struct
 					 in [PT.Expr(
 					      PT.Call(PT.Id (suf baseFunName),
 							   [PT.Id ts, 
-							    P.addrX(P.arrowX(PT.Id ed, PT.Id name))]))]
+							    unionBranchX(ed,name)]))]
 					 end
 				   fun genInitBrief _ = []
 				   fun genInitMan _ = []
@@ -2527,7 +2532,7 @@ structure CnvExt : CNVEXT = struct
 					       PT.Expr(
 					           PT.Call(PT.Id (cleanupSuf baseFunName),
 							   [PT.Id ts, 
-							    unionBranchX(name)])), 
+							    unionBranchX(rep,name)])), 
 					       PT.Break])]
 					 end
 				   fun genCleanupBrief _ = []
@@ -2545,6 +2550,7 @@ structure CnvExt : CNVEXT = struct
 		     @ unionDecls
 		     @ canonicalDecls
 	             @ cnvExternalDecl emStructED
+                     @ unionEDDecls
 	             @ cnvExternalDecl edStructED
 	             @ cnvExternalDecl accStructED
 	             @ cnvExternalDecl toStringED
