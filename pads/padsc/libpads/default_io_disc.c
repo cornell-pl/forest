@@ -1031,7 +1031,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     data->un_bytes -= (elt->len + 1); /* acount for cterm */
     elt->begin[elt->len] = 0; /* null-terminate the record, replaces cterm with NULL */
     PDC_APPEND_ELT(data->head, elt);
-#if 1
+#if 0
     if (pdc->disc->errorf) {
       pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, PDC_fmt_Cstr(elt->begin, elt->len));
     }
@@ -1064,7 +1064,7 @@ PDC_ctrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
     }
     elt->begin[elt->len] = 0; /* null-terminate the record */
     PDC_APPEND_ELT(data->head, elt);
-#if 1
+#if 0
     if (pdc->disc->errorf) {
       pdc->disc->errorf(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, PDC_fmt_Cstr(elt->begin, elt->len));
     }
