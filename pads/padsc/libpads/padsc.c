@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.30 2002-10-02 21:10:20 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.31 2002-10-10 19:51:34 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -641,6 +641,85 @@ int_type ## _acc_report(PDC_t* pdc, const char* prefix1, int_type ## _acc* a, PD
 }
 /* END_MACRO */
 
+#define PDC_INT_ACCUM_REPORT_MAP(int_type, fmt)
+
+PDC_error_t
+int_type ## _acc_report_map_internal(PDC_t* pdc, const char* prefix1, const char* prefix2,
+				     int_type ## _map_fn fn, int_type ## _acc* a, PDC_disc_t* disc)
+{
+  const char*           cmt = ""; 
+  int                   i, sz, rp;
+  PDC_uint64            cnt_sum = 0;
+  double                cnt_sum_pcnt;
+  double                elt_pcnt;
+  Void_t*               velt;
+  int_type ## _dt_elt_t* elt;
+
+  if (a->good == 0) {
+    disc->errorf(pdc, disc, 0, "%s: good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf", prefix1, 0, a->bad, 100.0);
+    return PDC_OK;
+  }
+  int_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < PDC_ACC_REPORT_K) ? sz : PDC_ACC_REPORT_K;
+  if (sz == PDC_ACC_MAX2TRACK) {
+    cmt = " (* hit tracking limit *) ";
+  }
+  dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+  sfstrset(pdc->tmp, 0);
+  sfprintf(pdc->tmp, "%s: good vals: %10llu    bad vals: %10llu    pcnt-bad: %8.3lf\n",
+	   prefix1, a->good, a->bad, (a->bad / (double)(a->good + a->bad)));
+  sfprintf(pdc->tmp, "  Characterizing %s: (" MacroArg2String(int_type) ") min %" fmt " (%s) max %" fmt " (%s)\n",
+	   prefix2, a->min, fn(a->min), a->max, fn(a->max));
+  sfprintf(pdc->tmp, "    => distribution of top %d values out of %d distinct values%s:\n",
+	   rp, sz, cmt);
+  sz = rp = 0;
+  for (i = 0, velt = dtfirst(a->dict); velt && i < PDC_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+    elt = (int_type ## _dt_elt_t*)velt;
+    sz = strlen(fn(elt->key.val));
+    if (sz > rp) {
+      rp = sz; 
+    }
+  }
+  for (i = 0, velt = dtfirst(a->dict); velt && i < PDC_ACC_REPORT_K; velt = dtnext(a->dict, velt), i++) {
+    elt = (int_type ## _dt_elt_t*)velt;
+    cnt_sum += elt->key.cnt;
+    elt_pcnt = (100.0 * elt->key.cnt)/a->good;
+    sfprintf(pdc->tmp, "        val: %5" fmt " => %s%-.*s  count: %10llu  pcnt-of-good-vals: %8.3lf\n",
+	     elt->key.val, fn(elt->key.val), rp-strlen(fn(elt->key.val)),
+	     "                                                                                ",
+	     elt->key.cnt, elt_pcnt);
+  }
+  cnt_sum_pcnt = (100.0 * cnt_sum)/a->good;
+  sfprintf(pdc->tmp,   "%-.*s----------------------------------------------------------------------\n",
+	   rp, "--------------------------------------------------------------------------------");
+  sfprintf(pdc->tmp,   "        SUMMING%-.*s         count: %10llu  pcnt-of-good-vals: %8.3lf",
+	   rp, "                                                                                ",
+	   cnt_sum, cnt_sum_pcnt);
+  disc->errorf(pdc, disc, 0, "%s", sfstruse(pdc->tmp));
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &int_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return PDC_OK;
+}
+
+PDC_error_t
+int_type ## _acc_report_map(PDC_t* pdc, const char* prefix1,
+			    int_type ## _map_fn fn, int_type ## _acc* a, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, MacroArg2String(int_type) "_acc_mapped_report called");
+  if (!a) {
+    return PDC_ERROR;
+  }
+  if (!disc->errorf) {
+    return PDC_OK;
+  }
+  return int_type ## _acc_report_map_internal(pdc, prefix1, prefix1, fn, a, disc);
+}
+/* END_MACRO */
+
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACROS ********************************** */
 
@@ -780,6 +859,12 @@ PDC_INT_ACCUM(PDC_uint32, 4, "lu",  PDC_FOLDTEST_UINT32);
 PDC_INT_ACCUM(PDC_int64,  8, "lld", PDC_FOLDTEST_INT64);
 
 PDC_INT_ACCUM(PDC_uint64, 8, "llu", PDC_FOLDTEST_UINT64);
+
+
+/* PDC_INT_ACCUM_REPORT_MAP(int_type, fmt) */
+
+PDC_INT_ACCUM_REPORT_MAP(PDC_int32, "ld");
+
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 
