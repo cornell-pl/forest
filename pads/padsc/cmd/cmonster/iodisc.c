@@ -7,8 +7,8 @@
 
 #include "cmonster.h"
 
-int
-CMR_open_iodisc(CM_iodisc *ispec, PDC_IO_disc_t ** iodisc_out) {
+int CM_open_iodisc(CM_ispec *ispec, PDC_IO_disc_t **iodisc_out)
+{
 
   PDC_IO_disc_t *io_disc = 0;
 

@@ -14,14 +14,13 @@ else
 
  # The following rules are run from the arch directory
 
-# the following indicates that generated .c files should not be removed
-.PRECIOUS: $(GEN_DIR)/%.c 
-
 PADS_HOME = ../../../..
 GEN_DIR = .
 GEN_WRITE = 1
 INCLUDE_DEPS_ADD = ../*.h
 include $(PADS_HOME)/mk/rules.mk
+# the following indicates that generated .c files should not be removed
+.PRECIOUS: $(GEN_DIR)/%.c 
 
 VPATH = ..
 
@@ -30,7 +29,7 @@ GEN_SRC = $(GEN_DIR)/cmdline.c
 GEN_OBJ_O = $(GEN_SRC:$(GEN_DIR)/%.c=%.o)
 GEN_OBJ_D = $(GEN_SRC:$(GEN_DIR)/%.c=%-g.o)
 
-LOC_SRC = rwfn.c tmap.c iodisc.c cmhelpers.c cmonster.c
+LOC_SRC = rw_fn.c sval_fn.c tmap.c iodisc.c helpers.c cmonster.c
 LOC_OBJ_O = $(LOC_SRC:%.c=%.o)
 LOC_OBJ_D = $(LOC_SRC:%.c=%-g.o)
 
@@ -38,10 +37,10 @@ SRC = $(GEN_SRC) $(LOC_SRC)
 OBJ_O = $(GEN_OBJ_O) $(LOC_OBJ_O)
 OBJ_D = $(GEN_OBJ_D) $(LOC_OBJ_D)
 
-CMR_O = cmonster
-CMR_D = cmonster-g
+CM_O = cmonster
+CM_D = cmonster-g
 
-ALL_PROGS = $(CMR_O) $(CMR_D)
+ALL_PROGS = $(CM_O) $(CM_D)
 
 all: sanity_check $(ALL_PROGS)
 
@@ -49,10 +48,10 @@ sanity_check:
 	@$(LibSanityCheck)
 
 clean:
-	$(RM) $(ALL_PROGS) *.o *~ tmp/*
+	$(RM) $(ALL_PROGS) mk_rec1vlr-g *.o *~ tmp/*
 
 veryclean: clean
-	$(RM) cmdline.h cmdline.c
+	$(RM) cmdline.h cmdline.c rec1.h rec1.c
 
 cmonster: $(OBJ_O) $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
@@ -66,18 +65,25 @@ mk_rec1vlr-g: mk_rec1vlr.c rec1.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 do_mk: mk_rec1vlr-g
 	./mk_rec1vlr-g < ../rec1nl.dat > ../rec1vlr.dat
 
+test_many: cmonster-g
+	./cmonster-g 'fwrec(:0,8,1:)'         'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g 'fwrec_noseek(:0,8,1:)'  'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g 'nlrec(:0:)'             'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g 'nlrec_noseek(:0:)'      'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g 'ctrec(:10,0:)'          'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g 'ctrec_noseek(:10,0:)'   'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
+	./cmonster-g 'vlrec(:0,0:)'           'c{qy1=Pe_string_FW(:8:)[0]}' < ../rec1vlr.dat 
+	./cmonster-g 'vlrec_noseek(:0,0:)'    'c{qy1=Pe_string_FW(:8:)[0]}' < ../rec1vlr.dat 
+
 test1: cmonster-g
-	./cmonster-g 'fwrec(:0,8,1:)'         'c{qy1=Pa_string_FW(:8:)[0,8]}' < ../strfw8nl.dat
-	./cmonster-g 'fwrec_noseek(:0,8,1:)'  'c{qy1=Pa_string_FW(:8:)[0,8]}' < ../strfw8nl.dat
-	./cmonster-g 'nlrec(:0:)'             'c{qy1=Pa_string_FW(:8:)[0,8]}' < ../strfw8nl.dat
-	./cmonster-g 'nlrec_noseek(:0:)'      'c{qy1=Pa_string_FW(:8:)[0,8]}' < ../strfw8nl.dat
-	./cmonster-g 'ctrec(:10,0:)'          'c{qy1=Pa_string_FW(:8:)[0,8]}' < ../strfw8nl.dat
-	./cmonster-g 'ctrec_noseek(:10,0:)'   'c{qy1=Pa_string_FW(:8:)[0,8]}' < ../strfw8nl.dat
-	./cmonster-g 'vlrec(:0,0:)'           'c{qy1=Pe_string_FW(:8:)[0,8]}' < ../rec1vlr.dat 
-	./cmonster-g 'vlrec_noseek(:0,0:)'    'c{qy1=Pe_string_FW(:8:)[0,8]}' < ../rec1vlr.dat 
+	./cmonster-g 'fwrec(:0,8,1:)'         'c{qy1=Pa_string_FW(:8:)[0]}' < ../strfw8nl.dat
 
 test2: cmonster-g
-	./cmonster-g 'fwrec(:0,11,1:)'         's{qyswitch=Pa_int32_FW(:3:)[0,3]/-1:c{qy1=Pa_string_FW(:8:)[0,8]}/0:c{qy2=Pa_string_FW(:7:)[1,7]}/1:c{qy3=Pa_string_FW(:6:)[2,6]}}' < ../sw_aintfw3_astrfw8_nl.dat
+	./cmonster-g 'fwrec(:0,11,1:)'         's+{qyswitch=Pa_int32_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[0]}/0:c{qy2=Pa_string_FW(:7:)[1]}/1:c{qy3=Pa_string_FW(:2:)[2]|qy4=Pa_string_FW(:4:)[4]}}' < ../sw_aintfw3_astrfw8_nl.dat
+
+ #  An error case: not a legal switch tye
+test3: cmonster-g
+	./cmonster-g 'fwrec(:0,11,1:)'         's-{qyswitch=Pa_string_FW(:3:)[0]/-1:c{qy1=Pa_string_FW(:8:)[0]}/0:c{qy2=Pa_string_FW(:7:)[1]}/1:c{qy3=Pa_string_FW(:6:)[2]}}' < ../sw_aintfw3_astrfw8_nl.dat
 
  # End of rules that are run from the arch directory
 endif
