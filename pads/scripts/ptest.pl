@@ -142,12 +142,12 @@ print "\nResult:\n$res2\n";
 exit(0);
 
 usage:
-print "\n    usage:  ptest.pl [ -m/--maxrecs # ] [ -i/--iodisc <iodisc> ] [ -s/--skip_pre # ] [ -S/--skip_post # ] [ -d/--debug ] <pspec> <ptype>
+print "\n    usage:  ptest.pl [ -m/--maxrecs # ] [ -i/--iodisc <iodisc> ] [ -s/--skip-pre # ] [ -S/--skip-post # ] [ -d/--debug ] <pspec> <ptype>
 
    Notes:
        . the default IO discipline is nlrec.  Other choices: norec
-       . --skip_pre skips the specified # of bytes before each read call, while
-          --skip_post skips the specified # of bytes after each read call;
+       . --skip-pre skips the specified # of bytes before each read call, while
+          --skip-post skips the specified # of bytes after each read call;
           for a record-based discipline, bytes can only be skipped within a given record
 
 ";
