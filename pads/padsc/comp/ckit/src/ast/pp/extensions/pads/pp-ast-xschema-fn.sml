@@ -679,12 +679,12 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	((PPL.addStr pps "type" (* new: XQuery type notation, old: "Struct" *)
         ; space pps
         ; PPL.addStr pps repName
-	; newline pps
+	(*; newline pps *)
         ; PPL.ppList { pp=ppStrPairs
 		        , sep="\n\t"
-		        , lDelim="{"
-		        , rDelim="}"
-		        } pps (repFields @ edFields)
+		        , lDelim="\n{  "
+		        , rDelim="\n}"
+		        } pps (edFields @ repFields) (* old: repFields @ edFields *)
         ; newline pps)
 	 handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
