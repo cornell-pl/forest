@@ -20,7 +20,6 @@ int main(int argc, char** argv) {
 
   char              *fileName;
   PDC_error_t        e;
-  PDC_pos_t          before_pos, after_pos;
   
   if (argc == 2) {
     fileName = argv[1];
@@ -91,12 +90,7 @@ int main(int argc, char** argv) {
    * Try to read each line of data
    */
   while (!PDC_IO_at_EOF(pdc)) {
-    PDC_IO_getPos(pdc, &before_pos, 0);
     e = det_or_tlr_read(pdc, 0, &ed, &rep);
-    PDC_IO_getPos(pdc, &after_pos, 0);
-    if (PDC_POS_EQ(before_pos, after_pos)) {
-      error(2|ERROR_FATAL, "** det_or_tlr_read did not advance IO cursor, giving up **");
-    }
     if (rep.tag == is_tlr) break;
     num_recs++;
     if (e == PDC_ERR) {

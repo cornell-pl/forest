@@ -22,43 +22,65 @@ Note [in test_read]: record 6 char 7 : Resynching at EOR
 test_read returned: error
 calling test_read
 test_read returned: id 7  ts 77
+calling test_read
+warning: Error [in PDC_a_int32_read]: at record 8 from char 1 to char 5: Invalid ASCII character encoding of a number 
+[record 8]>>>     <<<
+Note [in test_read]: record 8 char 1 : Resynching at EOR
+[record 8]>>>     <<<
+test_read returned: error
+calling test_read
+test_read returned: id 8  ts 88
+calling test_read
+warning: Error [in PDC_a_int32_read]: at record 10 at char 1 : Invalid ASCII character encoding of a number 
+[record 10]>>>a<<<4|44
+Error [in test_read]: record 10 char 4 : User constraint on field ts violated.
+[record 10]a4|>>>44<<<
+test_read returned: error
+calling test_read
+warning: Error [in PDC_a_int32_read]: at record 11 from char 1 to char 2: Invalid ASCII character encoding of a number 
+[record 11]>>> a<<<4|44
+Error [in test_read]: record 11 char 5 : User constraint on field ts violated.
+[record 11] a4|>>>44<<<
+test_read returned: error
 Found eof
 *****************************************************************************************************
 entire struct : struct test
 *****************************************************************************************************
-Errors: good vals:          4    bad vals:          3    pcnt-bad:   42.857
+Errors: good vals:          5    bad vals:          6    pcnt-bad:   54.545
   Characterizing errors:  min 0 max 0 avg 0.000
     => distribution of top 1 values out of 1 distinct values:
-        val:          0 count:          4  pcnt-of-good-vals:  100.000
+        val:          0 count:          5  pcnt-of-good-vals:  100.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          4  pcnt-of-good-vals:  100.000
+        SUMMING         count:          5  pcnt-of-good-vals:  100.000
 [Describing each field of entire struct]
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 entire struct.id : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-good vals:          7    bad vals:          0    pcnt-bad:    0.000
-  Characterizing int32:  min 1 max 7 avg 4.000
-    => distribution of top 7 values out of 7 distinct values:
-        val:          1 count:          1  pcnt-of-good-vals:   14.286
-        val:          2 count:          1  pcnt-of-good-vals:   14.286
-        val:          3 count:          1  pcnt-of-good-vals:   14.286
-        val:          4 count:          1  pcnt-of-good-vals:   14.286
-        val:          5 count:          1  pcnt-of-good-vals:   14.286
-        val:          6 count:          1  pcnt-of-good-vals:   14.286
-        val:          7 count:          1  pcnt-of-good-vals:   14.286
+good vals:          8    bad vals:          3    pcnt-bad:   27.273
+  Characterizing int32:  min 1 max 8 avg 4.500
+    => distribution of top 8 values out of 8 distinct values:
+        val:          1 count:          1  pcnt-of-good-vals:   12.500
+        val:          2 count:          1  pcnt-of-good-vals:   12.500
+        val:          3 count:          1  pcnt-of-good-vals:   12.500
+        val:          4 count:          1  pcnt-of-good-vals:   12.500
+        val:          5 count:          1  pcnt-of-good-vals:   12.500
+        val:          6 count:          1  pcnt-of-good-vals:   12.500
+        val:          7 count:          1  pcnt-of-good-vals:   12.500
+        val:          8 count:          1  pcnt-of-good-vals:   12.500
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          7  pcnt-of-good-vals:  100.000
+        SUMMING         count:          8  pcnt-of-good-vals:  100.000
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 entire struct.ts : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-good vals:          6    bad vals:          1    pcnt-bad:   14.286
-  Characterizing int32:  min 11 max 77 avg 40.333
-    => distribution of top 6 values out of 6 distinct values:
-        val:         11 count:          1  pcnt-of-good-vals:   16.667
-        val:         22 count:          1  pcnt-of-good-vals:   16.667
-        val:         33 count:          1  pcnt-of-good-vals:   16.667
-        val:         44 count:          1  pcnt-of-good-vals:   16.667
-        val:         55 count:          1  pcnt-of-good-vals:   16.667
-        val:         77 count:          1  pcnt-of-good-vals:   16.667
+good vals:          7    bad vals:          4    pcnt-bad:   36.364
+  Characterizing int32:  min 11 max 88 avg 47.143
+    => distribution of top 7 values out of 7 distinct values:
+        val:         11 count:          1  pcnt-of-good-vals:   14.286
+        val:         22 count:          1  pcnt-of-good-vals:   14.286
+        val:         33 count:          1  pcnt-of-good-vals:   14.286
+        val:         44 count:          1  pcnt-of-good-vals:   14.286
+        val:         55 count:          1  pcnt-of-good-vals:   14.286
+        val:         77 count:          1  pcnt-of-good-vals:   14.286
+        val:         88 count:          1  pcnt-of-good-vals:   14.286
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          6  pcnt-of-good-vals:  100.000
+        SUMMING         count:          7  pcnt-of-good-vals:  100.000

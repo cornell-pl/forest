@@ -3,11 +3,14 @@
 
 int main(int argc, char** argv) {
   PDC_t*          pdc;
+  PDC_disc_t      mydisc = PDC_default_disc;
   test            f1data;
   test_acc        accum;
   test_ed         ed = {0};
 
-  if (PDC_ERR == PDC_open(&pdc,0,0)) {
+  mydisc.flags |= PDC_WSPACE_OK;
+
+  if (PDC_ERR == PDC_open(&pdc,&mydisc,0)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
