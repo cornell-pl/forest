@@ -85,6 +85,11 @@ OCAML_LIB_DIR = /usr/lib/ocaml
 export OCAML_LIB_DIR
 endif
 
+ifndef PCRE_LIB_DIR
+PCRE_LIB_DIR = /usr/lib
+export PCRE_LIB_DIR
+endif
+
 ifndef USR_LIB_DIR
 USR_LIB_DIR = /usr/lib
 endif
@@ -226,6 +231,11 @@ endif
 
 # Done with architecture-specific stuff
 
+ifdef FOR_CKIT
+CDBGFLAGS += -DFOR_CKIT
+COPTFLAGS += -DFOR_CKIT
+endif
+
 ifdef USE_GALAX
 PADSC_EXTRA = -x
 CDBGFLAGS += -DUSE_GALAX
@@ -327,7 +337,12 @@ endif
 DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
 # mff may need to change next line
-DYNAMIC_LIBS_O += -L$(PADSGLX_LIB_DIR) -lpadsglxopt -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
+# Note: PCRE_LIB_DIR needs to be defined in 
+# any makefile using galax.
+DYNAMIC_LIBS_O += \
+  -L$(PADSGLX_LIB_DIR) -lpadsglxopt \
+  -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
+  -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c -lpcre_stubs
 endif
 SHARED_PADSLIB_DEP_O = $(LIBDIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(LIBDIR)/$(SHARED_PGLXLIB_NM_O)
@@ -356,7 +371,10 @@ endif
 DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
 # mff may need to change next line 
-DYNAMIC_LIBS_D += -L$(PADSGLX_LIB_DIR) -lpadsglxopt -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
+DYNAMIC_LIBS_D += \
+  -L$(PADSGLX_LIB_DIR) -lpadsglxopt \
+  -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
+  -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c -lpcre_stubs
 # XXX what about -lcamlrun ?
 endif
 SHARED_PADSLIB_DEP_D = $(LIBDIR)/$(SHARED_PADSLIB_NM_D)

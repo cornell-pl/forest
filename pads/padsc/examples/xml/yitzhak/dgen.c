@@ -1,19 +1,27 @@
 #include <stdio.h>
 
 
-#define NUM_ELTS  50
+#define NUM_ELTS  1024
+#define INNER_ARR_SIZE  1024
 
-/* 1 Mb */
-#define INNER_ARR_SIZE  5
+int main(int argc,char** argv){
+  int numElts = NUM_ELTS,
+    innerArrSize = INNER_ARR_SIZE;
 
-int main(){
-  //  int numElts,innerArrSize;
+  if (argc > 1){
+    sscanf(argv[1],"%d",&numElts);
+    if (argc > 2)
+      sscanf(argv[2],"%d",&innerArrSize);
+  }
+
+  fprintf(stderr,"Using %d elements with inner array size %d.\n",numElts,innerArrSize);
+
   int i,j;
-  for (i=0; i<NUM_ELTS;i++){
-    for(j=0; j<INNER_ARR_SIZE-1;j++){
-      printf ("1048576:");
+  for (i=0; i<numElts;i++){
+    for(j=0; j<innerArrSize-1;j++){
+      printf ("10485768:");
     }
-    printf("1234567|%d|2|A\n",j,i);
+    printf("%d|2|A\n",i);
   }
 
 

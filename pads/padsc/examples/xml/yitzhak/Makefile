@@ -7,6 +7,7 @@ AST_OPT = -ast
 INCL_DIRS = -I. -I..
 DEFS = -DGALAXCOMPILE # -DOLD_PGLX
 
+
 .PHONY: all parse ast install
 
 all: install
@@ -28,3 +29,5 @@ $(GEN_DIR)/enum.h: enum.h
 
 install: $(GEN_DIR)/enum.c $(GEN_DIR)/enum.h
 
+
+include $(PADS_HOME)/mk/rules.mk
