@@ -103,12 +103,13 @@ PDC_error_t  PDC_IO_refill      (PDC_t* pdc, PDC_disc_t* disc);
 
 /*
  * Other IO routines:
- *    PDC_IO_getLineBuf: if the specified line is currently in an in-memory buffer,
- *                       sets *buf_out to point to first char of line in that buffer
+ *    PDC_IO_getLineBuf: if the specified line is currently in an in-memory buffer, sets
+ *                          + *buf_out to point to first char of line in that buffer
+ *                          + *len_out to the length of the line (including newline)
  *                       and returns PDC_OK, otherwise returns PDC_ERROR.
  */
 
-PDC_error_t PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, PDC_disc_t* disc);
+PDC_error_t PDC_IO_getLineBuf(PDC_t* pdc, size_t line, char** buf_out, size_t* len_out, PDC_disc_t* disc);
 
 /* ================================================================================ */ 
 /* INTERNAL ERROR REPORTING FUNCTIONS */

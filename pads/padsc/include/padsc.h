@@ -328,6 +328,50 @@ PDC_error_t PDC_FW_auint32_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 PDC_error_t PDC_FW_auint64_read(PDC_t* pdc, PDC_base_em* em, size_t width,
 				PDC_base_ed* ed, PDC_uint64* res_out, PDC_disc_t* disc);
 
+/* ================================================================================ */
+/* BINARY INTEGER READ FUNCTIONS */
+
+/* These functions are named by 4 things:
+ *   the on-disk format (signed or unsigned, plus number of bytes)
+ *   the endian-ness of the on-disk data (little- or big-endian) (l or b)
+ *   the endian-ness of the machine that is reading the data     (l or b)
+ *   whether the machine is a 32 bit or 64 bit machine           (32 or 64)
+ *
+ * Thus PDC_bint64_lb32_read reads 8 bytes of data (64 bits -> 8 bytes)
+ * that is stored in little-endian format into a machine that has a
+ * 32-bit big-endian architecture.  
+ *
+ * The specified number of bytes is always read, unless eof is hit.
+ * If the bytes read do not correspond to an integer of the
+ * specified type, an error occurs, where:
+ *    if !em || *em < PDC_Ignore:
+ *      err->errCode set to PDC_INVALID_BINT / PDC_INVALID_BUINT
+ */
+   
+PDC_error_t PDC_bint8_ll32_read(PDC_t* pdc, PDC_base_em* em,
+				PDC_base_ed* ed, PDC_int8* res_out, PDC_disc_t* disc);
+
+PDC_error_t PDC_bint16_ll32_read(PDC_t* pdc, PDC_base_em* em,
+				 PDC_base_ed* ed, PDC_int16* res_out, PDC_disc_t* disc);
+
+PDC_error_t PDC_bint32_ll32_read(PDC_t* pdc, PDC_base_em* em,
+				 PDC_base_ed* ed, PDC_int32* res_out, PDC_disc_t* disc);
+
+PDC_error_t PDC_bint64_ll32_read(PDC_t* pdc, PDC_base_em* em,
+				 PDC_base_ed* ed, PDC_int64* res_out, PDC_disc_t* disc);
+
+
+PDC_error_t PDC_buint8_ll32_read(PDC_t* pdc, PDC_base_em* em,
+				 PDC_base_ed* ed, PDC_uint8* res_out, PDC_disc_t* disc);
+
+PDC_error_t PDC_buint16_ll32_read(PDC_t* pdc, PDC_base_em* em,
+				  PDC_base_ed* ed, PDC_uint16* res_out, PDC_disc_t* disc);
+
+PDC_error_t PDC_buint32_ll32_read(PDC_t* pdc, PDC_base_em* em,
+				  PDC_base_ed* ed, PDC_uint32* res_out, PDC_disc_t* disc);
+
+PDC_error_t PDC_buint64_ll32_read(PDC_t* pdc, PDC_base_em* em,
+				  PDC_base_ed* ed, PDC_uint64* res_out, PDC_disc_t* disc);
 
 /* ================================================================================ */
 
