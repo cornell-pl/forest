@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     }
   }
   error(0, "\ndescribe the accum");
-  if (PDC_ERROR == PDC_string_acc_report(pdc, "foo_prefix", &accum, 0)) {
+  if (PDC_ERROR == PDC_string_acc_report(pdc, "foo_prefix", 0, 0, &accum, 0)) {
     error(0, "** accum_report failed **");
   }
 

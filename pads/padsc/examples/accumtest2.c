@@ -156,45 +156,45 @@ int main(int argc, char** argv) {
   }
   error(0, "\ndescribe the accums");
 
-  if (PDC_ERROR == PDC_int8_acc_report(pdc, "int8max", &accum8, 0)) {
+  if (PDC_ERROR == PDC_int8_acc_report(pdc, "int8max", 0, 0, &accum8, 0)) {
     error(0, "** accum8 report failed **");
   }
-  if (PDC_ERROR == PDC_int16_acc_report(pdc, "int16max", &accum16, 0)) {
+  if (PDC_ERROR == PDC_int16_acc_report(pdc, "int16max", 0, 0, &accum16, 0)) {
     error(0, "** accum16 report failed **");
   }
-  if (PDC_ERROR == PDC_int32_acc_report(pdc, "int32max", &accum32, 0)) {
+  if (PDC_ERROR == PDC_int32_acc_report(pdc, "int32max", 0, 0, &accum32, 0)) {
     error(0, "** accum32 report failed **");
   }
-  if (PDC_ERROR == PDC_int64_acc_report(pdc, "int64max", &accum64, 0)) {
+  if (PDC_ERROR == PDC_int64_acc_report(pdc, "int64max", 0, 0, &accum64, 0)) {
     error(0, "** accum64 report failed **");
   }
 
-  if (PDC_ERROR == PDC_int8_acc_report(pdc, "int8min", &accum8min, 0)) {
+  if (PDC_ERROR == PDC_int8_acc_report(pdc, "int8min", 0, 0, &accum8min, 0)) {
     error(0, "** accum8min report failed **");
   }
-  if (PDC_ERROR == PDC_int16_acc_report(pdc, "int16min", &accum16min, 0)) {
+  if (PDC_ERROR == PDC_int16_acc_report(pdc, "int16min", 0, 0, &accum16min, 0)) {
     error(0, "** accum16min report failed **");
   }
-  if (PDC_ERROR == PDC_int32_acc_report(pdc, "int32min", &accum32min, 0)) {
+  if (PDC_ERROR == PDC_int32_acc_report(pdc, "int32min", 0, 0, &accum32min, 0)) {
     error(0, "** accum32min report failed **");
   }
-  if (PDC_ERROR == PDC_int64_acc_report(pdc, "int64min", &accum64min, 0)) {
+  if (PDC_ERROR == PDC_int64_acc_report(pdc, "int64min", 0, 0, &accum64min, 0)) {
     error(0, "** accum64min report failed **");
   }
 
-  if (PDC_ERROR == PDC_uint8_acc_report(pdc, "uint8", &accum8u, 0)) {
+  if (PDC_ERROR == PDC_uint8_acc_report(pdc, "uint8", 0, 0, &accum8u, 0)) {
     error(0, "** accum8u report failed **");
   }
-  if (PDC_ERROR == PDC_uint16_acc_report(pdc, "uint16", &accum16u, 0)) {
+  if (PDC_ERROR == PDC_uint16_acc_report(pdc, "uint16", 0, 0, &accum16u, 0)) {
     error(0, "** accum16u report failed **");
   }
-  if (PDC_ERROR == PDC_uint32_acc_report(pdc, "uint32", &accum32u, 0)) {
+  if (PDC_ERROR == PDC_uint32_acc_report(pdc, "uint32", 0, 0, &accum32u, 0)) {
     error(0, "** accum32u report failed **");
   }
-  if (PDC_ERROR == PDC_uint64_acc_report(pdc, "uint64", &accum64u, 0)) {
+  if (PDC_ERROR == PDC_uint64_acc_report(pdc, "uint64", 0, 0, &accum64u, 0)) {
     error(0, "** accum64u report failed **");
   }
-  if (PDC_ERROR == PDC_uint64_acc_report(pdc, "uint64u20th", &accum64u20th, 0)) {
+  if (PDC_ERROR == PDC_uint64_acc_report(pdc, "uint64u20th", 0, 0, &accum64u20th, 0)) {
     error(0, "** accum64u20th report failed **");
   }
   error(0, "NB ==> u64 20th = %llu", key64u20th);

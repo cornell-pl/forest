@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     }
   }
   error(0, "\n\ndescribe the accum\n");
-  if (PDC_ERROR == PDC_int32_acc_report(pdc, "foo_prefix", &accum, disc)) {
+  if (PDC_ERROR == PDC_int32_acc_report (pdc, "foo_prefix", 0, 0, &accum, disc)) {
     error(0, "** accum_report failed **");
   }
 
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     }
   }
   error(0, "\n\ndescribe the accum\n");
-  if (PDC_ERROR == PDC_int32_acc_report_map_internal(pdc, "foo", "union tag", mymap, &accum, disc)) {
+  if (PDC_ERROR == PDC_int32_acc_report_map (pdc, "foo", "union tag", 0, mymap, &accum, disc)) {
     error(0, "** accum_report failed **");
   }
 

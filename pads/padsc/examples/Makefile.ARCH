@@ -19,6 +19,7 @@ test_format6  :: test_format6.c   format6.c   -lpadsc
 test_enum     :: test_enum.c      enum.c      -lpadsc
 test_from     :: test_from.c      from.c      -lpadsc
 test_ai       :: test_ai.c        ai.c        -lpadsc
+test_ai_bob   :: test_ai.c        ai_bob.c    -lpadsc
 test_dibbler1 :: test_dibbler1.c  dibbler.c   -lpadsc
 
 libtest1  :: libtest1.c   -lpadsc
@@ -33,6 +34,8 @@ accumtest      :: accumtest.c     -lpadsc
 accumtest2     :: accumtest2.c    -lpadsc
 accumtest_s    :: accumtest_s.c   -lpadsc
 test_readint   :: test_readint.c  readinttest.c -lpadsc
+
+sfprintf_test :: sfprintf_test.c
 
 regress : regress_test_format1 \
           regress_test_format3 \

@@ -164,6 +164,61 @@ PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, int level, PDC_loc_t* l
  */
 int           PDC_errorf(PDC_t* pdc, PDC_disc_t* disc, int level, ...);
 
+/* ================================================================================ */ 
+/* INTERNAL ACCUM REPORTING FUNCTIONS */
+
+/* A map_<int_type> function maps a given integer type to a string */
+typedef const char* (*PDC_int8_map_fn)  (PDC_int8   i);
+typedef const char* (*PDC_int16_map_fn) (PDC_int16  i);
+typedef const char* (*PDC_int32_map_fn) (PDC_int32  i);
+typedef const char* (*PDC_int64_map_fn) (PDC_int64  i);
+typedef const char* (*PDC_uint8_map_fn) (PDC_uint8  u);
+typedef const char* (*PDC_uint16_map_fn)(PDC_uint16 u);
+typedef const char* (*PDC_uint32_map_fn)(PDC_uint32 u);
+typedef const char* (*PDC_uint64_map_fn)(PDC_uint64 u);
+
+/* mapped versions of the integer acc_report functions */
+PDC_error_t PDC_int32_acc_report_map  (PDC_t* pdc, const char* prefix, const char* what, int nst,
+				       PDC_int32_map_fn  fn, PDC_int32_acc*  a, PDC_disc_t* disc);
+
+/* Internal versions of the reporting functions.
+ * These functions take an argument, outstr, for 
+ * the output target, and do not check
+ * the pdc, prefix, or accumulator arguments for NULL values.
+ */
+
+PDC_error_t PDC_int8_acc_report_internal   (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_int8_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int16_acc_report_internal  (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_int16_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int32_acc_report_internal  (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_int32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_int64_acc_report_internal  (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_int64_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint8_acc_report_internal  (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_uint8_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint16_acc_report_internal (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_uint16_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint32_acc_report_internal (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_uint32_acc* a, PDC_disc_t* disc);
+PDC_error_t PDC_uint64_acc_report_internal (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_uint64_acc* a, PDC_disc_t* disc);
+
+PDC_error_t PDC_int32_acc_report_map_internal(PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					      int nst, PDC_int32_map_fn  fn, PDC_int32_acc*  a, PDC_disc_t* disc);
+
+PDC_error_t PDC_string_acc_report_internal (PDC_t* pdc, Sfio_t* outstr, const char* prefix, const char* what,
+					    int nst, PDC_string_acc* a, PDC_disc_t* disc);
+
+/* Accum impl helpers:
+ *
+ * PDC_nst_prefix_what prints a heading to outstr 
+ * based on *nst nesting level and
+ * (unless *nst is -1) it increments the nesting level.
+ */
+
+void PDC_nst_prefix_what(Sfio_t* outstr, int* nst, const char* prefix, const char* what);
+
 /* ================================================================================ */
 /* SCAN FUNCTIONS */
 

@@ -1,5 +1,5 @@
 #include "libpadsc.h"
-#include "ai.h"
+#include "ai_bob.h"
 #include <ast.h>
 #include <error.h>
 
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
       error(2, "read returned: error");
     }
   }
-  http_clf_t_acc_report(pdc, "",&acc, 0);
+  http_clf_t_acc_report(pdc, "", 0, 0, &acc, 0);
   if (PDC_ERROR == PDC_IO_fclose(pdc, 0)) {
     error(2, "*** PDC_IO_fclose failed ***");
     exit(-1);
