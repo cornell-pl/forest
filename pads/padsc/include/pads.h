@@ -12,6 +12,14 @@
 #define __PADS_H__
 
 #define VMFL 1
+
+// XXX remove _DISABLED below to enable
+// the use of ckit-replace.h
+#ifdef FOR_CKIT_DISABLED
+// include minimum set of defs for ckit
+#include "ckit-replace.h"
+#else
+// normal includes
 #include <ast.h>
 #include <ast_float.h>
 //#include <ast_common.h>
@@ -25,6 +33,8 @@
 #include <error.h>
 #include <math.h>
 #include <regex.h>
+#endif
+
 #include "rbuf.h"
 #include "pads-config.h"
 #include "pads-private.h"
