@@ -512,6 +512,7 @@ structure CnvExt : CNVEXT = struct
 	      val ts = "ts"
 	      val em = "em" 
 	      val ed = "ed"
+	      val acc = "acc"
 	      val disc = "disc"
 	      val rep = "rep"
 	      val ted = "ted"
@@ -524,6 +525,11 @@ structure CnvExt : CNVEXT = struct
 	      fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
               fun emSuf   s = s^"_em"
               fun edSuf   s = s^"_ed"
+              fun accSuf  s = s^"_acc"
+              fun initSuf s = s^"_init"
+              fun resetSuf s = s^"_reset"
+              fun freeSuf s = s^"_free"
+              fun addSuf  s = s^"_add"
               fun readSuf s = s^"_read"
               fun iSuf s = s^"_internal"
 	      fun gTemp base = "tmp"^base
@@ -538,6 +544,11 @@ structure CnvExt : CNVEXT = struct
                   of PX.Name s => ( case PTys.find(PTys.baseInfo, Atom.atom s)
 				    of NONE => NONE
                                     |  SOME(b:PTys.baseInfoTy) => #scanname b)
+              fun lookupAcc(ty:pty) = 
+		  case ty
+                  of PX.Name s => ( case PTys.find(PTys.baseInfo, Atom.atom s)
+				    of NONE => SOME(accSuf s)  (* non-base type; acc constructed from type name*)
+                                    |  SOME(b:PTys.baseInfoTy) => Option.map Atom.toString (#accname b))
               fun mungeParam(pcty:pcty, decr:pcdecr) : string * pcty = 
 		  let val (act, nOpt) = CTcnvDecr(pcty, decr)
                       (* convert padsc name to c name, if a pads typedef *)
@@ -565,6 +576,9 @@ structure CnvExt : CNVEXT = struct
 		  PT.IfThen(P.notX(PT.Id(gMod paramName)),
 			    PT.Compound[
  			      P.assignS(PT.Id (gMod paramName), P.addrX(PT.Id(gTemp paramName)))])
+
+              fun genReturnChk e =  P.returnS (P.condX(P.eqX(e,P.zero), PL.PDC_OK, PL.PDC_ERROR))
+
 
 	      fun genReadFun (readName, cParams:(string * pcty)list, 
 			      emPCT,edPCT,canonicalPCT, emFirstPCT, hasNErr, bodySs) = 
@@ -600,6 +614,48 @@ structure CnvExt : CNVEXT = struct
 		  in
 		      [readFunInternalED, readFunED]
 		  end
+
+             (*  PDC_error_t T_acc_name(PDC_t* , T_acc* , PDC_disc_t* ) *)
+	      fun gen3PFun (name, accPCT, bodySs) = 
+		  let val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT accPCT, P.ptrPCT PL.toolDiscPCT]
+                      val paramNames = [ts, acc, disc]
+                      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
+		      val returnTy =  PL.toolErrPCT
+
+		      val zeroFunED = 
+			  P.mkFunctionEDecl(name, formalParams, PT.Compound bodySs, returnTy)
+		  in
+		      zeroFunED
+		  end
+
+              fun chk3Pfun (funName, e) = 
+		  [PT.IfThen(P.eqX(PL.PDC_ERROR, 
+				   PT.Call(PT.Id funName, 
+					   [PT.Id ts, e, PT.Id disc])),
+			     PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
+
+
+              (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
+	      fun genAddFun (addName, accPCT, edPCT, repPCT, bodySs) = 
+		  let val paramTys = [P.ptrPCT PL.toolStatePCT, 
+				      P.ptrPCT accPCT, 
+				      P.ptrPCT edPCT,
+				      P.ptrPCT repPCT,
+				      P.ptrPCT PL.toolDiscPCT]
+                      val paramNames = [ts, acc, ed, rep, disc]
+                      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
+		      val returnTy =  PL.toolErrPCT
+		      val addFunED = 
+			  P.mkFunctionEDecl(addName, formalParams, PT.Compound bodySs, returnTy)
+		  in
+		      addFunED
+		  end
+
+              fun chkAddFun (funName, accX,edX,repX) = 
+		  [PT.IfThen(P.eqX(PL.PDC_ERROR, 
+				   PT.Call(PT.Id funName, 
+					   [PT.Id ts, accX, edX, repX, PT.Id disc])),
+			     PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
 
 	      fun checkParamTys (fieldName, functionName, extraargs, numBefore, numAfter) = 
 		  let val (eaty, _) = cnvExpression (PT.Id functionName)
@@ -691,6 +747,18 @@ structure CnvExt : CNVEXT = struct
 		      val edDecls   = cnvExternalDecl edED
                       val edPCT     = P.makeTypedefPCT (edSuf name)		
 
+  		      (* Generate accumulator type *)
+		      val PX.Name baseName = baseTy
+		      val baseAccPCT = case PTys.find(PTys.baseInfo, Atom.atom baseName) 
+			               of NONE => P.makeTypedefPCT (accSuf baseName)  (* must have been generated *)
+                                       | SOME(b:PTys.baseInfoTy) => 
+					   (case (#accname b) 
+					    of NONE => P.voidPtr   (* accumulation not defined for this base type *)
+ 			                    | SOME acc => (P.makeTypedefPCT (Atom.toString acc)))
+		      val accED     = P.makeTyDefEDecl (baseAccPCT, accSuf name)
+		      val accDecls  = cnvExternalDecl accED
+		      val accPCT    = P.makeTypedefPCT (accSuf name)		
+
                       (* Generate read function *)
                       (* -- Some helper functions *)
 		      val readName = readSuf name
@@ -739,11 +807,57 @@ structure CnvExt : CNVEXT = struct
 		      val bodySs = readFields 
 		      val readFunEDs = genReadFun(readName, cParams, emPCT,edPCT,canonicalPCT, 
 						  NONE, true, bodySs)
+
+                      (* -- generate accumulator init, reset, and free functions (typedef case) *)
+		      fun genResetInitFree theSuf = 
+			  let val theFun = (theSuf o accSuf) name
+			  in case lookupAcc baseTy 
+			      of NONE => (gen3PFun(theFun, accPCT, 
+						   [P.mkCommentS ("Accumulation not defined for base type of ptyepdef."),
+						    PT.Return PL.PDC_OK])
+			                                     (* end NONE *))
+				| SOME a => (
+				   let val theBodyE = PT.Call(PT.Id (theSuf a), 
+							      [PT.Id ts, PT.Id acc, PT.Id disc])
+				       val theReturnS = PT.Return theBodyE
+				       val theFunED = gen3PFun(theFun, accPCT, [theReturnS])
+				   in
+				      theFunED
+				   end
+				       (* end SOME *))
+			  end
+		      val initFunED = genResetInitFree initSuf
+		      val resetFunED = genResetInitFree resetSuf
+                      val freeFunED = genResetInitFree freeSuf
+
+                      (* -- generate accumulator function *)
+                      (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
+		      val addFun = (addSuf o accSuf) name
+		      fun genAdd NONE = genAddFun(addFun, accPCT, edPCT, canonicalPCT, 
+						  [P.mkCommentS ("Accumulation not defined for base type of ptypedef."),
+						   PT.Return PL.PDC_OK])
+                        | genAdd (SOME a) =
+                           let val addX = PT.Call(PT.Id (addSuf  a), 
+						  [PT.Id ts, PT.Id acc, 
+						   P.addrX(P.arrowX(PT.Id ed,PT.Id base)), PT.Id rep, PT.Id disc])
+			       val addReturnS = PT.Return addX
+			       val addBodySs =  [addReturnS]
+			   in
+			       genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
+			   end
+
+                          (* end SOME case *)
+                      val addFunED = genAdd (lookupAcc baseTy)
 		  in
 		        canonicalDecls
                       @ emDecls
                       @ edDecls
+                      @ accDecls
                       @ List.concat(List.map cnvExternalDecl readFunEDs)
+		      @ cnvExternalDecl initFunED
+                      @ cnvExternalDecl resetFunED
+                      @ cnvExternalDecl freeFunED
+                      @ cnvExternalDecl addFunED
 		  end
 
 	      fun cnvPStruct ({name:string, params: (pcty * pcdecr) list, fields : pcexp PX.PSField list}) = 
@@ -800,7 +914,27 @@ structure CnvExt : CNVEXT = struct
 					 (loc, PL.locPCT,NONE), (panic, P.int,NONE)]
 		      val edFields = auxEDFields @ (mungeFields genEDFull genEDBrief fields)
 		      val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
+		      val edDecls = cnvExternalDecl edStructED 
                       val edPCT = P.makeTypedefPCT (edSuf name)			  
+
+		      (* Generate accumulator type *)
+		      fun genAccFull {pty :PX.Pty, args : pcexp list, name:string, isVirtual:bool, 
+				      pred:pcexp option, comment:string option} = 
+			  if not isVirtual then 
+			    let val predStringOpt = Option.map P.expToString pred
+			        val fullCommentOpt = stringOptMerge(comment, predStringOpt)
+				val accOpt = lookupAcc pty
+			    in
+				case accOpt of NONE => []
+                                | SOME acc => 
+  			          [(name,P.makeTypedefPCT acc, fullCommentOpt )]
+			    end
+			  else []
+		      fun genAccBrief e = []
+		      val accFields = mungeFields genAccFull genAccBrief fields
+		      val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
+		      val accDecls = cnvExternalDecl accStructED 
+                      val accPCT = P.makeTypedefPCT (accSuf name)			 
 
                       (* Generate read function *)
                       (* -- Some useful names *)
@@ -1027,18 +1161,77 @@ structure CnvExt : CNVEXT = struct
 		      val readFields = mungeFields genReadFull genReadBrief fields  (* does type checking *)
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val localDeclSs = List.map (P.varDeclS' o (fn(x,y) => (y,x))) localVars
-		      val returnS = P.returnS (
-				      P.condX(P.eqX(P.arrowX(PT.Id (gMod(ed)), PT.Id nerr),P.zero),
-				      PL.PDC_OK, PL.PDC_ERROR))
+		      val returnS = genReturnChk (P.arrowX(PT.Id (gMod(ed)), PT.Id nerr))
 		      val bodySs = localDeclSs @ readFields @ [returnS]
 
 		      val readFunEDs = genReadFun(readName, cParams, emPCT,edPCT,canonicalPCT, 
 						  emFirstPCT, true, bodySs)
+
+                      (* Generate Accumulator functions *)
+                      (* -- generate accumulator init, reset, and free functions *)
+		      fun genResetInitFree theSuf = 
+			  let val theFun = (theSuf o accSuf) name
+			      fun genAccTheFull {pty :PX.Pty, args:pcexp list,
+						  name:string, isVirtual:bool, pred:pcexp option, comment} = 
+				  case lookupAcc(pty) of NONE => []
+				| SOME a => (
+					     let val theName = theSuf a
+						 val fieldX = P.addrX(P.arrowX(PT.Id acc, PT.Id name))
+					     in
+						 [PT.IfThen(
+							    P.eqX(PL.PDC_ERROR, 
+								  PT.Call(PT.Id theName, 
+									  [PT.Id ts, fieldX, PT.Id disc])),
+							    PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
+					     end
+                                             (* end accOpt SOME case *))
+			      fun genAccTheBrief e = []
+			      val theDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
+			      val theFields = mungeFields genAccTheFull genAccTheBrief fields
+			      val theReturnS = genReturnChk (PT.Id nerr)
+			      val theBodySs = theDeclSs @ theFields @ [theReturnS]
+			      val theFunED = gen3PFun(theFun, accPCT, theBodySs)
+			  in
+			      theFunED
+			  end
+		      val initFunED = genResetInitFree initSuf
+		      val resetFunED = genResetInitFree resetSuf
+                      val freeFunED = genResetInitFree freeSuf
+
+                      (* -- generate accumulator function *)
+                      (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
+		      val addFun = (addSuf o accSuf) name
+		      fun genAccAddFull {pty :PX.Pty, args:pcexp list,
+				          name:string, isVirtual:bool, pred:pcexp option, comment} = 
+			  case lookupAcc(pty) of NONE => []
+			      | SOME a => (
+				 let val addName = addSuf a
+				     fun gfieldX base = P.addrX(P.arrowX(PT.Id base, PT.Id name))
+				 in
+				    [PT.IfThen(
+				      P.eqX(PL.PDC_ERROR, 
+					    PT.Call(PT.Id addName, 
+						    [PT.Id ts, gfieldX acc, gfieldX ed, gfieldX rep, PT.Id disc])),
+                                      PT.Compound[PT.Expr(P.postIncX (PT.Id nerr))])]
+				 end
+                              (* end accOpt SOME case *))
+                      fun genAccAddBrief e = []
+		      val addDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
+		      val addFields = mungeFields genAccAddFull genAccAddBrief fields
+		      val addReturnS = genReturnChk (PT.Id nerr)
+                      val addBodySs = addDeclSs @ addFields @ [addReturnS]
+                      val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
+
 	      in 
  		   canonicalDecls (* converted earlier because used in typechecking constraints *)
                  @ emDecls
-                 @ cnvExternalDecl edStructED
+                 @ edDecls
+                 @ accDecls
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
+                 @ cnvExternalDecl initFunED
+                 @ cnvExternalDecl resetFunED
+                 @ cnvExternalDecl freeFunED
+                 @ cnvExternalDecl addFunED
 	      end
 
 	     fun cnvPUnion ({name:string, params: (pcty * pcdecr) list, variants : pcexp PX.PSField list}) = 
@@ -1104,6 +1297,17 @@ structure CnvExt : CNVEXT = struct
 		     val edFields = auxEDFields @ (mungeVariants genEDFull genEDBrief variants)
 		     val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
 		     val edPCT = P.makeTypedefPCT (edSuf name)			  
+
+		     (* Generate accumulator type *)
+		     fun genAccFull {pty :PX.Pty, args : pcexp list,
+				     name:string, isVirtual:bool, pred:pcexp option, comment} = 
+			 case lookupAcc pty of NONE => []
+			 | SOME a => [(name,P.makeTypedefPCT a,NONE)]
+		     fun genAccBrief e = []
+		     val auxAccFields = [(tag, PL.intAccPCT, NONE)]
+		     val accFields = auxAccFields @ (mungeVariants genAccFull genAccBrief variants)
+		     val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
+		     val accPCT = P.makeTypedefPCT (accSuf name)			  
 
                      (* Generate read function *)
                      (* -- Some useful names *)
@@ -1176,13 +1380,74 @@ structure CnvExt : CNVEXT = struct
 		     val readFunEDs = genReadFun(readName, cParams,emPCT,edPCT,canonicalPCT, 
 						 emFirstPCT, true, bodySs)
 
+                      (* Generate Accumulator functions (union case) *)
+                      (* -- generate accumulator init, reset, and free functions *)
+		      fun genResetInitFree theSuf = 
+			  let val theFun = (theSuf o accSuf) name
+			      val theDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
+			      fun fieldX(base,name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
+			      fun genAccTheFull {pty :PX.Pty, args:pcexp list,
+						  name:string, isVirtual:bool, pred:pcexp option, comment} = 
+				  case lookupAcc(pty) of NONE => []
+				| SOME a => (let val theName = theSuf a
+						 val fieldX = fieldX(acc,name)
+					     in chk3Pfun(theName, fieldX)
+					     end
+                                             (* end accOpt SOME case *))
+			      fun genAccTheBrief e = []
+			      val tagFields = mungeVariants genAccTheFull genAccTheBrief variants
+			      val auxFields = chk3Pfun(theSuf PL.intAct, fieldX(acc,tag))
+			      val theFields = auxFields @ tagFields
+			      val theReturnS = genReturnChk (PT.Id nerr)
+			      val theBodySs = theDeclSs @ theFields @ [theReturnS]
+			      val theFunED = gen3PFun(theFun, accPCT, theBodySs)
+			  in
+			      theFunED
+			  end
+		      val initFunED = genResetInitFree initSuf
+		      val resetFunED = genResetInitFree resetSuf
+                      val freeFunED = genResetInitFree freeSuf
+
+                      (* -- generate accumulator function *)
+                      (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
+		      val addFun = (addSuf o accSuf) name
+		      val addDeclSs = [P.varDeclS(P.int, nerr, P.zero), P.varDeclS'(PL.base_edPCT, ted)]
+		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), P.zero)]
+		      fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
+		      val addTagSs = chkAddFun(addSuf PL.intAct, getFieldX(acc,tag), P.addrX(PT.Id ted), 
+						  PT.Cast(P.ptrPCT PL.intPCT, getFieldX(rep,tag)))
+		      fun fieldAddrX (base,name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
+		      fun genAccAddFull {pty :PX.Pty, args:pcexp list,
+					 name:string, isVirtual:bool, pred:pcexp option, comment} = 
+			  case lookupAcc(pty) of NONE => []
+			| SOME a => (let val funName = addSuf a
+					 val repX = P.addrX(P.dotX(P.arrowX(PT.Id rep, PT.Id value), PT.Id name))
+				     in 
+					 [PT.CaseLabel(PT.Id name, 
+						       PT.Compound (chkAddFun(funName, fieldAddrX(acc, name), 
+									       fieldAddrX(ed, name), repX)
+						                    @ [PT.Break]))]
+				     end
+		      (* end accOpt SOME case *))
+		      fun genAccAddBrief e = []
+		      val addBranches = mungeVariants genAccAddFull genAccAddBrief variants
+                      val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound addBranches)]
+		      val addReturnS = genReturnChk (PT.Id nerr)
+                      val addBodySs = addDeclSs @ initTedSs @ addTagSs @ addVariantsSs @ [addReturnS]
+                      val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
+
 		 in
 		       tagDecls
 		     @ unionDecls
 		     @ canonicalDecls
 	             @ cnvExternalDecl emStructED
 	             @ cnvExternalDecl edStructED
+	             @ cnvExternalDecl accStructED
 	             @ (List.concat (List.map cnvExternalDecl readFunEDs))
+	             @ cnvExternalDecl initFunED
+	             @ cnvExternalDecl resetFunED
+	             @ cnvExternalDecl freeFunED
+	             @ cnvExternalDecl addFunED
 		 end
 	  
              fun cnvPArray {name:string, params : (pcty * pcdecr) list, args : pcexp list, baseTy:PX.Pty, 
@@ -1190,6 +1455,7 @@ structure CnvExt : CNVEXT = struct
 	     let val length = "length"
 		 val element = "element"
                  val array = "array"
+                 val arrayDetail = "arrayDetail"
                  val neerr = "neerr"
                  val firstError = "firstError"
                  val elemRepPCT = P.makeTypedefPCT(lookupTy(baseTy, repSuf, #repname))
@@ -1211,7 +1477,7 @@ structure CnvExt : CNVEXT = struct
                    | amCheckingE(NONE) = P.lteX(fieldX(em,array), PL.EM_CHECK)
 
 		 (* Generate canonical representatin *)
-		 val canonicalFields = [(length, P.int, NONE), 
+		 val canonicalFields = [(length, P.uint, NONE), 
 				        (name, P.ptrPCT elemRepPCT, NONE)]
 		 val canonicalStructED = P.makeTyDefStructEDecl (canonicalFields, repSuf name)
 		 val canonicalDecls = cnvExternalDecl canonicalStructED 
@@ -1222,6 +1488,7 @@ structure CnvExt : CNVEXT = struct
 				  SOME "per-element checks"),
 				 (array,   PL.base_emPCT, SOME "entire array checks")]
 		 val emStructED = P.makeTyDefStructEDecl (emFields, emSuf name)
+		 val emStructDecls = cnvExternalDecl emStructED 
 		 val emPCT = P.makeTypedefPCT (emSuf name)			  
 
 	         (* Generate error description *)
@@ -1235,7 +1502,9 @@ structure CnvExt : CNVEXT = struct
 				 (length, P.int, NONE),
 				 (name, P.ptrPCT(P.makeTypedefPCT(lookupTy(baseTy, edSuf, #edname))), NONE)]
 		 val edStructED = P.makeTyDefStructEDecl (edFields, edSuf name)
+		 val edStructDecls = cnvExternalDecl edStructED 
 		 val edPCT = P.makeTypedefPCT (edSuf name)			  
+
 
 		 (* Generate read function *)
                  (* -- Some useful names *)
@@ -1257,7 +1526,7 @@ structure CnvExt : CNVEXT = struct
 		 (* scope is removed at end of cnvPArray *)
 
                  (* -- Check size specification for array *)
-                 val (minOpt, maxOpt, chkBoundsSs) = 
+                 val (minOpt, maxOpt, maxConstOpt, chkBoundsSs) = 
                      let fun allocBuffs  countX = 
                              PL.chkNewRBufS(PT.Id resRBuffer, false, PT.Id ts, PT.Id disc)
 			   @ PL.chkNewRBufS(PT.Id edRBuffer, true, PT.Id ts, PT.Id disc)
@@ -1301,10 +1570,10 @@ structure CnvExt : CNVEXT = struct
 
 		     in
                      (case sizeSpec 
-                      of NONE => (NONE, NONE, allocBuffs P.zero)
+                      of NONE => (NONE, NONE, NONE, allocBuffs P.zero)
                       |  SOME (PX.SizeInfo {min, max, maxTight}) => (
                            case (min,max) 
-                           of (NONE,NONE) => (NONE, NONE, allocBuffs P.zero)
+                           of (NONE,NONE) => (NONE, NONE, NONE, allocBuffs P.zero)
                            |  (SOME minX, SOME maxX) => (
 				let val minConstOpt = chkSize(minX, "Minimum")
 				    val maxConstOpt = chkSize(maxX, "Maximum")
@@ -1339,9 +1608,8 @@ structure CnvExt : CNVEXT = struct
 					else allocBuffs (P.zero)
 					             
 				in
-				   (SOME minX, SOME maxX,  
-				      dynBoundsCheckSs 
-                                    @ sizeAllocSs)
+				   (SOME minX, SOME maxX,  maxConstOpt,
+				      dynBoundsCheckSs @ sizeAllocSs)
 				end
                               (* end Some minX, Some maxX*))
                            | (SOME minX, NONE) => (
@@ -1350,7 +1618,7 @@ structure CnvExt : CNVEXT = struct
 				    val allocSizeX = P.intX (IntInf.toInt(valOf (#1(evalExpr minX))))
 						     handle Option => P.zero
 				in
-				   (SOME minX, NONE, posMinCheckSs @ allocBuffs(allocSizeX))
+				   (SOME minX, NONE, NONE, posMinCheckSs @ allocBuffs(allocSizeX))
 				end
                               (* end SOME minX, NONE *))
                            | (NONE, SOME maxX) => (
@@ -1359,7 +1627,7 @@ structure CnvExt : CNVEXT = struct
 				    val allocSizeX = P.intX (IntInf.toInt(valOf (#1(evalExpr maxX))))
 						     handle Option => P.zero
 				in
-				   (NONE, SOME maxX, posMaxCheckSs @ allocBuffs(allocSizeX))
+				   (NONE, SOME maxX, maxConstOpt, posMaxCheckSs @ allocBuffs(allocSizeX))
 				end
                               (* end NONE, SOME maxX *))
                            (* end case (min,max) *))
@@ -1557,7 +1825,7 @@ structure CnvExt : CNVEXT = struct
 				     P.addrX(PT.Id resBuffer), P.sizeofX elemRepPCT,
 				     fieldX(rep,length),P.zero))
 		     @ (PL.chkReserveSs(PT.Id ts, PT.Id disc, PT.Id edRBuffer, 
-				     P.addrX(PT.Id edBuffer), P.sizeofX edPCT,
+				     P.addrX(PT.Id edBuffer), P.sizeofX elemEdPCT,
 				     fieldX(rep,length),P.zero))
                      @ [PT.IfThen(
                           PL.readFunChkX(PL.PDC_ERROR, elemReadName, 
@@ -1628,7 +1896,17 @@ structure CnvExt : CNVEXT = struct
 
                  (* -- while loop for reading input *)
                  val whileSs = 
-		     let fun insTermChk bdyS = 
+		     let fun insLengthChk bdyS = 
+			    case (maxOpt,maxConstOpt) 
+                            of (SOME maxX, NONE) => (
+				PT.IfThenElse(
+                                 P.gteX(fieldX(rep,length), maxX),
+				 PT.Compound[P.assignS(PT.Id reachedLimit, P.trueX)],
+                                 PT.Compound[bdyS])
+			      (* end case *))
+			    | (_,_) => bdyS
+
+			 fun insTermChk bdyS = 
 			     case termXOpt of NONE => bdyS
 			     | SOME (termX, termRead, _) => (
                                 PT.IfThenElse(
@@ -1653,8 +1931,8 @@ structure CnvExt : CNVEXT = struct
 		     in 
 			 [P.mkCommentS("Reading input until we reach a termination condition"),
                                 PT.IfThen(P.andX(P.notX(fieldX(ed,panic)), 
-						 P.notX(PL.isEofX(PT.Id ts, PT.Id disc))) ,
-					  PT.Compound[insTermChk bdyS])]
+						 P.notX(PL.isEofX(PT.Id ts, PT.Id disc))),
+					  PT.Compound[insTermChk (insLengthChk bdyS)])]
 		     end
 
                  (* -- Check if there was junk before trailing terminator *)
@@ -1752,11 +2030,106 @@ structure CnvExt : CNVEXT = struct
                  val readFunEDs = genReadFun(readName, cParams, emPCT,edPCT,canonicalPCT, 
 					     NONE, true, bodySs)
                  val _ = popLocalEnv()
+
+		 (* Generate accumulator type (array case) *)
+                 val numElemsToTrack = case maxConstOpt of NONE => 10
+		                       | SOME x => Int.min(10,IntInf.toInt x)
+		 val baseFields = case lookupAcc baseTy of NONE => [] 
+	                        | SOME acc => [(array, P.makeTypedefPCT acc, SOME "Accumulator for all array elements"),
+					       (arrayDetail, P.arrayPCT (P.intX numElemsToTrack, P.makeTypedefPCT acc), 
+						SOME ("Accumulator for first "^(Int.toString numElemsToTrack)^" array elements"))]
+		 val accFields = (length, PL.intAccPCT, SOME "Accumulator for array length")::baseFields
+		 val accStructED = P.makeTyDefStructEDecl (accFields, accSuf name)
+		 val accDecls = cnvExternalDecl accStructED 
+		 val accPCT = P.makeTypedefPCT (accSuf name)			
+
+                 (* Generate accumulator functions *) 
+  	         (* -- generate accumulator reset, init, and free function *)
+                 fun genResetInitFree theSuf = 
+		     let val theFun = (theSuf o accSuf) name
+                         val doElems = 
+			     case lookupAcc baseTy of NONE => []
+			   | SOME a => (
+			       let val elemFunName = theSuf a
+				   fun doOne eX = chk3Pfun (elemFunName, eX)
+				   val fieldX = P.addrX(P.subX(P.arrowX(PT.Id acc, PT.Id arrayDetail), PT.Id "i"))
+				   val doArrayDetailSs = [
+					PT.Compound
+					 [P.varDeclS'(P.int, "i"),
+					  PT.For(P.assignX(PT.Id "i",P.zero),
+						 P.ltX(PT.Id "i", P.intX numElemsToTrack),
+						 P.postIncX (PT.Id "i"),
+						 PT.Compound (doOne fieldX)
+						 )]]
+				   val arrayX = P.addrX(P.arrowX(PT.Id acc, PT.Id array))
+				   val doArraySs = doOne arrayX
+			       in
+				   doArraySs @ doArrayDetailSs
+			       end(* end SOME acc case *))
+			 val lengthX = P.addrX(P.arrowX(PT.Id acc, PT.Id length))
+			 val doLength = chk3Pfun(theSuf PL.intAct, lengthX)
+			 val theDeclSs = [P.varDeclS(P.int, nerr, P.zero)]
+			 val theReturnS = genReturnChk (PT.Id nerr)
+			 val theBodySs = theDeclSs @ doLength @ doElems @ [theReturnS]
+			 val theFunED = gen3PFun(theFun, accPCT, theBodySs)
+		     in
+			 theFunED
+		     end
+
+  	         (* -- generate accumulator reset, init, and free function *)
+                 fun genAdd () = 
+		     let val theSuf = addSuf
+			 val theFun = (theSuf o accSuf) name
+			 val theDeclSs = [P.varDeclS(P.int, nerr, P.zero), P.varDeclS'(PL.base_edPCT, ted)]
+			 val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), P.zero)]
+			 fun getFieldX(base,field) = P.addrX(P.arrowX(PT.Id base, PT.Id field))
+                         val doElems = 
+			     case lookupAcc baseTy of NONE => []
+			   | SOME a => (
+			       let val elemFunName = theSuf a
+				   fun getArrayFieldX (base,field) = 
+					P.addrX(P.subX(P.arrowX(PT.Id base, PT.Id field), PT.Id "i"))
+				   fun doOne (accX,edX,repX) = chkAddFun (elemFunName, accX,edX,repX)
+				   val doArrayDetailSs = [
+					PT.Compound
+					 [P.varDeclS'(P.int, "i"),
+					  PT.For(P.assignX(PT.Id "i",P.zero),
+						 P.ltX(PT.Id "i", P.arrowX(PT.Id rep, PT.Id length)),
+						 P.postIncX (PT.Id "i"),
+						 PT.Compound ([PT.IfThen(P.ltX(PT.Id "i", P.intX numElemsToTrack),
+							       PT.Compound (doOne (getArrayFieldX(acc,arrayDetail), 
+										   getArrayFieldX(ed,name), 
+										   getArrayFieldX(rep,name))))]
+							      @ (doOne (getFieldX(acc,array), 
+								        getArrayFieldX(ed,name), 
+									getArrayFieldX(rep,name))))
+						 )]]
+			       in
+				   doArrayDetailSs
+			       end(* end SOME acc case *))
+			 val doLength = chkAddFun(theSuf PL.intAct, getFieldX(acc,length), P.addrX(PT.Id ted), 
+						  getFieldX(rep,length))
+			 val theReturnS = genReturnChk (PT.Id nerr)
+			 val theBodySs = theDeclSs @ initTedSs @ doLength @ doElems @ [theReturnS]
+			 val theFunED = genAddFun(theFun, accPCT, edPCT, canonicalPCT, theBodySs)
+		     in
+			 theFunED
+		     end
+
+		 val initFunED = genResetInitFree  initSuf
+		 val resetFunED = genResetInitFree resetSuf
+		 val freeFunED = genResetInitFree freeSuf
+                 val addFunED = genAdd()
 	     in
 		   canonicalDecls
-		 @ cnvExternalDecl emStructED
-                 @ cnvExternalDecl edStructED
+		 @ emStructDecls
+                 @ edStructDecls
+                 @ accDecls
                  @ (List.concat(List.map cnvExternalDecl readFunEDs))
+                 @ cnvExternalDecl initFunED
+                 @ cnvExternalDecl resetFunED 
+                 @ cnvExternalDecl freeFunED 
+                 @ cnvExternalDecl addFunED
 	     end
 
 	  fun cnvPEnum  {name:string, params : (pcty * pcdecr) list, 
@@ -1782,6 +2155,11 @@ structure CnvExt : CNVEXT = struct
 		  val edED      = P.makeTyDefEDecl (baseEDPCT, edSuf name)
 		  val edDecls   = cnvExternalDecl edED
 		  val edPCT     = P.makeTypedefPCT (edSuf name)		
+
+		  (* Generate accumulator type *)
+		  val accED     = P.makeTyDefEDecl (PL.intAccPCT, accSuf name)
+		  val accDecls  = cnvExternalDecl accED
+		  val accPCT    = P.makeTypedefPCT (accSuf name)		
 
                   (* Generate read function *)
                   (* -- Some useful names *)
@@ -1826,12 +2204,39 @@ structure CnvExt : CNVEXT = struct
 		  val readFunEDs = genReadFun(readName, cParams, 
 					      emPCT,edPCT,canonicalPCT, NONE, false, bodySs)
 
+                  (* Generate Accumulator functions (enum case) *)
+                  (* -- generate accumulator init, reset, and free functions *)
+		  fun genResetInitFree theSuf = 
+		      let val theFun : string = (theSuf o accSuf) name
+			  val theBodyE = PT.Call(PT.Id (theSuf PL.intAct),[PT.Id ts, PT.Id acc, PT.Id disc])
+                          val theReturnS = PT.Return theBodyE
+			  val theFunED = gen3PFun(theFun, accPCT, [theReturnS])
+			  in
+			      theFunED
+			  end
+		      val initFunED = genResetInitFree initSuf
+		      val resetFunED = genResetInitFree resetSuf
+                      val freeFunED = genResetInitFree freeSuf
 
+                      (* -- generate accumulator function *)
+                      (*  PDC_error_t T_acc_add (PDC_t* , T_acc* , T_ed*, T* , PDC_disc_t* ) *)
+		      val addFun = (addSuf o accSuf) name
+		      val addX = PT.Call(PT.Id (addSuf PL.intAct), 
+					  [PT.Id ts, PT.Id acc, PT.Id ed, 
+					   PT.Cast(P.ptrPCT PL.intPCT, PT.Id rep), PT.Id disc])
+		      val addReturnS = PT.Return addX
+                      val addBodySs =  [addReturnS]
+                      val addFunED = genAddFun(addFun, accPCT, edPCT, canonicalPCT, addBodySs)
 	      in
 		  canonicalDecls
                 @ emDecls
                 @ edDecls
+                @ accDecls
                 @ (List.concat (List.map cnvExternalDecl readFunEDs))
+                @ cnvExternalDecl initFunED
+                @ cnvExternalDecl resetFunED
+                @ cnvExternalDecl freeFunED
+                @ cnvExternalDecl addFunED
 	      end
 
 

@@ -143,7 +143,6 @@ typedef unsigned _ast_int8_t   PDC_uint64;
 
 typedef PDC_int8               PDC_aint8_rep;
 typedef PDC_aint8_rep          PDC_aint8;
-
 typedef PDC_base_em            PDC_aint8_em;
 typedef PDC_base_ed            PDC_int8_ed;
 
@@ -523,7 +522,16 @@ PDC_error_t PDC_buint32_read(PDC_t* pdc, PDC_base_em* em,
 PDC_error_t PDC_buint64_read(PDC_t* pdc, PDC_base_em* em,
 			     PDC_base_ed* ed, PDC_uint64* res_out, PDC_disc_t* disc);
 
+
 /* ================================================================================ */
+typedef int PDC_uint32_acc;   /* temporary placeholder */
+PDC_error_t PDC_uint32_acc_init(PDC_t* ts, PDC_uint32_acc *acc, PDC_disc_t *disc);
+PDC_error_t PDC_uint32_acc_reset(PDC_t* ts, PDC_uint32_acc *acc, PDC_disc_t *disc);
+PDC_error_t PDC_uint32_acc_free(PDC_t* ts, PDC_uint32_acc *acc, PDC_disc_t *disc);
+PDC_error_t PDC_uint32_acc_add (PDC_t* ts, PDC_uint32_acc *acc, PDC_base_ed *ed, PDC_uint32 *rep, PDC_disc_t *disc);
+
+/* ================================================================================ */
+
 /* MISC ROUTINES */
 
 /* PDC_countXtoY: count occurrences of char x until char y

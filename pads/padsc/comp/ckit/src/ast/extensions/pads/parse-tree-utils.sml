@@ -53,6 +53,7 @@ struct
 
     fun makeTypedefPCT s  = makePCT [PT.TypedefName s]
     fun ptrPCT ty         = makePCT [PT.Pointer ty]
+    fun arrayPCT (sizeX,ty) = makePCT [PT.Array(sizeX,ty)]
 
     val char       = makePCT [PT.Char]
     val uchar      = makePCT [PT.Unsigned, PT.Char]

@@ -528,7 +528,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	   ; PPL.addStr pps ")"
 	   )
        | Sub (e0,e1) =>
-	   ( ppExpr {nested=nested} aidinfo tidtab pps e0
+	   ( ppExpr {nested=true} aidinfo tidtab pps e0
 	   ; PPL.addStr pps "["
 	   ; ppExpr {nested=false} aidinfo tidtab pps e1
 	   ; PPL.addStr pps "]"

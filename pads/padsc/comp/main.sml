@@ -268,8 +268,8 @@ structure Main : sig
            (* At this point, flag booleans have been set from command-line *)
            (* Generate base type typedefs from base description file *)
            val baseTyDefsFile = tmp ".h"
-           val () = PBaseTys.genPadsInternal baseTyDefsFile
        in
+         PBaseTys.genPadsInternal baseTyDefsFile;	   
          app (doFile baseTyDefsFile) (!srcFiles); 
          rmTmp();
          if !anyErrors 
