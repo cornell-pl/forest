@@ -569,7 +569,7 @@ structure CnvExt : CNVEXT = struct
               val loc       = "loc"
               val panic     = "panic"
 	      val ts = "pdc"
-	      val em = "em" 
+	      val em = "csm" 
 	      val ed = "ed"
 	      val acc = "acc"
 	      val rep = "rep"
@@ -587,9 +587,9 @@ structure CnvExt : CNVEXT = struct
 
 	      (* Some useful functions *)
 	      fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
-              fun emSuf   s = s^"_em"
-              fun edSuf   s = s^"_ed"
-              fun accSuf  s = s^"_acc"
+              fun emSuf   s = s^"_"^em
+              fun edSuf   s = s^"_"^ed
+              fun accSuf  s = s^"_"^acc
               fun initSuf s = s^"_init"
               fun resetSuf s = s^"_reset"
               fun cleanupSuf s = s^"_cleanup"

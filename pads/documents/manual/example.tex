@@ -1,10 +1,19 @@
 \chapter{Example}
 \label{chap:example}
-In this section, we illustrate the use of \pads{} to describe the
-Common Log Format \cite{bala} (page 350). 
+In this chapter, we use examples to give an overview of \pads{}.
 
 \section{CLF: Common log format}
 \label{sec:example:common-log-format}
+The Common Log Format (CLF) \cite{clf} for web proxy/servers is used
+to describe client request/server response pairs.  Such logs consist
+of a sequence of entries, each of which contains information about a
+single request/response.  In particular, each entry specifies the IP
+address/hostname of the client, the owner of the TCP connection if
+known, the authenticated user makeing the request if known, the time
+of the request, the HTTP method used, the requested URL, the HTTP
+version, a three-digit response code, and the number of bytes
+returned. 
+
 \begin{verbatim}
 207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
 include other record formats here.
