@@ -279,6 +279,9 @@ structure Main : sig
             handle PCL.Invalid => (rmTmp(); OS.Process.exit(OS.Process.failure))
                   | DebugExn r => raise DebugExn r
                   | Exit r => OS.Process.exit(OS.Process.failure)
+                  | OS.SysErr(s, sopt) => (TextIO.output(TextIO.stdErr, 
+					   concat[s,"\n"]); 
+					   OS.Process.exit(OS.Process.failure))
                   | ex => (TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName ex,
 		          " [", exnMessage ex, "]\n"

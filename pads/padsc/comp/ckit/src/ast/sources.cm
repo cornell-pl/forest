@@ -97,6 +97,8 @@ Group is
         extensions/pads/perror-sig.sml
         extensions/pads/perror.sml
 
+        extensions/pads/ty-properties.sml
         extensions/pads/base-tys.sml
+        extensions/pads/cmp-tys.sml
         extensions/pads/plib.sml
        

@@ -67,9 +67,9 @@ struct
   val stringPCT    = P.makeTypedefPCT "PDC_string"
   val str          = "str"
   val len          = "len"
-  val intAct       = "PDC_uint32_acc"
-  val intAccPCT    = P.makeTypedefPCT "PDC_uint32_acc"
-  val intPCT       = P.makeTypedefPCT "PDC_uint32"
+  val intAct       = "PDC_int32_acc"
+  val intAccPCT    = P.makeTypedefPCT "PDC_int32_acc"
+  val intPCT       = P.makeTypedefPCT "PDC_int32"
   val sfioPCT      = P.ptrPCT (P.makeTypedefPCT "Sfio_t")
 
   fun fmtChar(chr:PT.expression) =
@@ -117,11 +117,14 @@ struct
 		    ts:PT.expression, disc:PT.expression) = 
     let val rBufX = newRBufE(if zero then zeroMM(ts,disc) else nonZeroMM(ts,disc))
     in
-      [ P.assignS(rBufV, rBufX),
-        PT.IfThen(P.eqX(P.zero, rBufV),
-	 PT.Compound[
-           userFatalErrorS(ts, disc, P.zero, PDC_ALLOC_FAILURE, PT.String "", [])
-         ])]
+	[PT.IfThen(
+	  P.eqX(P.zero, rBufV),
+	  PT.Compound
+	   [ P.assignS(rBufV, rBufX),
+	     PT.IfThen(P.eqX(P.zero, rBufV),
+		       PT.Compound[
+			  userFatalErrorS(ts, disc, P.zero, PDC_ALLOC_FAILURE, PT.String "", [])
+				   ])])]
     end
 
   fun reserveE(ts:PT.expression, disc: PT.expression, 
@@ -143,6 +146,18 @@ struct
   fun chkFreeRBufferS(ts, disc, prbuf:PT.expression, ppbuf:PT.expression) = 
     PT.IfThen(
       P.neqX(P.zero,freeRBufferE(ts, disc, prbuf,ppbuf)),
+      PT.Compound[
+         userFatalErrorS(ts, disc, P.zero, PDC_ALLOC_FAILURE, 
+			 PT.String "Couldn't free growable buffer", [])]
+    )
+
+  fun cfreeRBufferE(prbuf:PT.expression) = 
+   (* int       RMM_free_rbuf(RBuf_t* rbuf); *)
+     PT.Call(PT.Id "RMM_free_rbuf", [prbuf])
+
+  fun chkCFreeRBufferS(ts, disc, prbuf:PT.expression) = 
+    PT.IfThen(
+      P.neqX(P.zero,cfreeRBufferE(prbuf)),
       PT.Compound[
          userFatalErrorS(ts, disc, P.zero, PDC_ALLOC_FAILURE, 
 			 PT.String "Couldn't free growable buffer", [])]
