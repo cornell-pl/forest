@@ -44,8 +44,8 @@ val eof = fn ({comLevel,errWarn,sourceMap,stringstart,charlist}:lexarg) =>
 fun addString (charlist,s:string) = charlist := s :: (!charlist)
 fun makeString charlist = (implode(rev(!charlist)) before charlist := nil)
 
-fun mkHexInt (s,a,b,errWarn:errWarn)=((case (StringCvt.scanString (IntInf.scan StringCvt.HEX) s) of
-		  SOME i => i
+fun mkHexInt (s,a,b,errWarn:errWarn)=((case (StringCvt.scanString (IntInf.scan StringCvt.HEX) (String.extract(s,2,NONE))) of
+		  SOME i =>  i
 		| _ => ((#err errWarn)(a,b,"trouble in parsing int");IntInf.fromInt(0)))
 			handle OverFlow => ((#err errWarn)(a,b,"large int const");IntInf.fromInt(0)))
 
