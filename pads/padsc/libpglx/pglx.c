@@ -9,36 +9,12 @@
 #include "pads-internal.h"
 #include "pglx-internal.h"
 #include "pglx.h"
+#include "caml/fail.h"
 #include <stdio.h>
+
 
 /* ocaml header files can be found in /usr/common/lib/ocaml/caml */
 
-/*
- * XXX TEMPORARY:
- */
-
-static const char *walk_children_spaces = "                                                                                                                        ";
-
-void walk_children(void *n, int indent) {
-  void      **children, **iter;
-  void       *child;
-
-  if (strcmp(PGLX_generic_kind(n), "element") == 0 || strcmp(PGLX_generic_kind(n), "document") == 0) {
-    const char *n_name = PGLX_generic_name(n);
-    error(0, "%.*s<%s>",
-	  indent, walk_children_spaces, n_name);
-    children = PGLX_generic_children(n); 
-    for (iter = children, child = *iter; child; child = *++iter) {
-      walk_children(child, indent+4);
-      /*      PGLX_node_free(child); */
-    }
-    error(0, "%.*s</%s>",
-	  indent, walk_children_spaces, n_name);
-  } else {
-    error(0, "%.*s%s",
-	  indent, walk_children_spaces, PGLX_generic_string_value(n));
-  }
-}
 
 /* ================================================================================
  * PUBLIC GALAX->PADS CALLS (see pglx.h) */ 
@@ -408,6 +384,34 @@ const PDCI_vtable_t ty ## _text_vtable = {PDCI_no_children, \
 				          PDCI_no_kth_child_named, \
 				          ty ## _text_typed_value, \
 				          ty ## _string_value}
+
+
+/*
+ * XXX TEMPORARY:
+ */
+
+static const char *walk_children_spaces = "                                                                                                                        ";
+
+void walk_children(void *n, int indent) {
+  void      **children, **iter;
+  void       *child;
+
+  if (strcmp(PGLX_generic_kind(n), "element") == 0 || strcmp(PGLX_generic_kind(n), "document") == 0) {
+    const char *n_name = PGLX_generic_name(n);
+    error(0, "%.*s<%s>",
+	  indent, walk_children_spaces, n_name);
+    children = PGLX_generic_children(n); 
+    for (iter = children, child = *iter; child; child = *++iter) {
+      walk_children(child, indent+4);
+      /*      PGLX_node_free(child); */
+    }
+    error(0, "%.*s</%s>",
+	  indent, walk_children_spaces, n_name);
+  } else {
+    error(0, "%.*s%s",
+	  indent, walk_children_spaces, PGLX_generic_string_value(n));
+  }
+}
 
 /* HELPERS */
 
