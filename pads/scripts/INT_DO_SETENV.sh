@@ -74,6 +74,10 @@ if [ $_pads_status == "OK" ]; then
     GALAX_HOME=/home/mff/Galax; export GALAX_HOME
   fi
   GALAX_LIB=$GALAX_HOME/lib/c; export GALAX_LIB
+  if [ "$PADSGLX_HOME"x == x ]; then
+    PADSGLX_HOME=/home/mff/pads_glx/api; export PADSGLX_HOME
+  fi
+  PADSGLX_LIB_DIR=$PADSGLX_HOME; export PADSGLX_LIB_DIR
 
   if [ ! -e $INSTALLROOT ]; then
     (mkdir -p $INSTALLROOT > /dev/null 2>&1) || _pads_status=FAILED
@@ -120,6 +124,9 @@ if [ $_pads_status == "OK" ]; then
   if [ -e $GALAX_LIB ]; then
     LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${GALAX_LIB} | $remove_dups`; export LD_LIBRARY_PATH
   fi
+  if [ -e $PADSGLX_LIB_DIR ]; then
+    LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH}:${PADSGLX_LIB_DIR} | $remove_dups`; export LD_LIBRARY_PATH
+  fi
 
   if [ "$_pads_use_nmake" != 0 ]; then
     ast_bin_dir=$AST_HOME/bin
@@ -138,6 +145,8 @@ if [ $_pads_status == "OK" ]; then
     echo "OCAML_LIB_DIR=$OCAML_LIB_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
     echo "GALAX_LIB=$GALAX_LIB"
+    echo "PADSGLX_HOME=$PADSGLX_HOME"
+    echo "PADSGLX_LIB_DIR=$PADSGLX_LIB_DIR"
     echo " "
   fi
 fi

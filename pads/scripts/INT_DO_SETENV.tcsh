@@ -76,6 +76,15 @@ else
   endif
 endif
 
+set _is_padsglx_home
+if (! $?PADSGLX_HOME) then
+  unset _is_padsglx_home
+else
+  if ("$PADSGLX_HOME"x == x) then
+    unset _is_padsglx_home
+  endif
+endif
+
 set _pads_status = OK
 
 if (! $?_pads_verbose) then
@@ -191,6 +200,10 @@ if ($_pads_status == "OK") then
     setenv GALAX_HOME /home/mff/Galax
   endif
   setenv GALAX_LIB $GALAX_HOME/lib/c
+  if (! $?_is_padsglx_home) then
+    setenv PADSGLX_HOME /home/mff/pads-glx/api
+  endif
+  setenv PADSGLX_LIB_DIR $PADSGLX_HOME
 
   setenv LD_LIBRARY_PATH `echo ${pads_lib_dir}:${ast_lib_dir}:${LD_LIBRARY_PATH} | $remove_dups`
   setenv SHLIB_PATH      `echo ${pads_lib_dir}:${ast_lib_dir}:${SHLIB_PATH} | $remove_dups`
@@ -205,6 +218,9 @@ if ($_pads_status == "OK") then
   endif
   if (-d $GALAX_LIB) then
     setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${GALAX_LIB} | $remove_dups`
+  endif
+  if (-d $PADSGLX_LIB_DIR) then
+    setenv LD_LIBRARY_PATH `echo ${LD_LIBRARY_PATH}:${PADSGLX_LIB_DIR} | $remove_dups`
   endif
 
   if ($_pads_use_nmake == 1) then
@@ -242,6 +258,8 @@ if ($_pads_status == "OK") then
     echo "OCAML_LIB_DIR=$OCAML_LIB_DIR"
     echo "GALAX_HOME=$GALAX_HOME"
     echo "GALAX_LIB=$GALAX_LIB"
+    echo "PADSGLX_HOME=$PADSGLX_HOME"
+    echo "PADSGLX_LIB_DIR=$PADSGLX_LIB_DIR"
     echo " "
   endif
 

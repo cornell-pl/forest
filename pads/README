@@ -52,8 +52,13 @@ STEP 1: ENVIRONMENT SETUP
 [OPTIONAL]: For the PADS-Galax project only, you may wish to set
    the following env variables to override their default values.
 
-   OCAML_LIB_DIR (default:  /usr/common/lib/ocaml)
-   GALAX_HOME    (default:  /home/mff/Galax-rh7)
+   OCAML_LIB_DIR (default:  /usr/lib/ocaml)
+   GALAX_HOME    (default:  /home/mff/Galax) contains generic Galax
+                            library 
+   PADSGLX_HOME  (default:  /home/mff/pads_glx_api)  contains custom
+                 implementation of Galax for PADS
+
+   (Mary: GALAX_HOME and PADSGLX_HOME should be coalesced)
   
 STEP 2: INSTALL SML RUNTIME
 
