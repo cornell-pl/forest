@@ -84,8 +84,11 @@ STEP 2: INSTALL SML / SML RUNTIME
   Once the runtime is installed, you need to place two symbolic links in
   $PADS_HOME/binlinks:
 
-     $PADS_HOME/binlinks/sml.$(AST_ARCH)         : link to sml compiler command
-     $PADS_HOME/binlinks/smlruntime.$(AST_ARCH)  : link to sml runtime
+     $PADS_HOME/binlinks/smlruntime.$ARCH_N_OPSYS   : link to sml runtime
+     $PADS_HOME/binlinks/sml.$ARCH_N_HEAPOPSYS      : link to sml command
+  where
+     ARCH_N_OPSYS is given by $PADS_HOME/scripts/arch-n-opsys
+     ARCH_N_HEAPOPSYS is given by $PADS_HOME/scripts/arch-n-heapopsys
 
   The easiest way to set up these links is to do the following.
   Set the environment variable SML_BIN_DIR to the bin directory of

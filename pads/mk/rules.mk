@@ -86,6 +86,7 @@ USR_LIB_DIR = /usr/lib
 endif
 
 ARCH_N_OPSYS = $(shell $(PADS_HOME)/scripts/arch-n-opsys)
+ARCH_N_HEAPOPSYS = $(shell $(PADS_HOME)/scripts/arch-n-heapopsys)
 OPSYS = $(shell $(PADS_HOME)/scripts/opsys)
 
 LIB_DEP_PATTERN = %$(mam_cc_SUFFIX_ARCHIVE)
@@ -304,7 +305,7 @@ LINK_D = $(LINKER) $(LINKOPTS_D)
 LINK_O = $(LINKER) $(LINKOPTS_O)
 
 PADSC = $(PADS_HOME)/scripts/padsc 
-PADSC_REAL = $(PADS_HOME)/lib/padsc.$(ARCH_N_OPSYS)
+PADSC_REAL = $(PADS_HOME)/lib/padsc.$(ARCH_N_HEAPOPSYS)
 
 define SanityCheck
 ( if [ ! -e $(PADSC) ]; then \

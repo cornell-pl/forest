@@ -51,7 +51,7 @@ fi
 
 if [ $_pads_status = "OK" ]; then
   _arch_n_opsys=`$PADS_HOME/scripts/arch-n-opsys`
-  _ast_arch=`$PADS_HOME/ast-ast/bin/package.cvs`
+  _arch_n_heapopsys=`$PADS_HOME/scripts/arch-n-heapopsys`
   if [ ! -e $SML_BIN_DIR/sml ]; then
     echo "##############################################################################"
     echo "# Bad SML_BIN_DIR ($SML_BIN_DIR) setting"
@@ -60,9 +60,9 @@ if [ $_pads_status = "OK" ]; then
     echo "#   and then use MAKE_SML_LINK.sh again."
     echo "##############################################################################"
   else
-    /bin/rm -f $PADS_HOME/binlinks/sml.$_ast_arch
-    echo "Creating symbolic link $SML_BIN_DIR/sml -> $PADS_HOME/binlinks/sml.$_ast_arch"
-    ln -s $SML_BIN_DIR/sml $PADS_HOME/binlinks/sml.$_ast_arch
+    /bin/rm -f $PADS_HOME/binlinks/sml.$_arch_n_heapopsys
+    echo "Creating symbolic link $SML_BIN_DIR/sml -> $PADS_HOME/binlinks/sml.$_arch_n_heapopsys"
+    ln -s $SML_BIN_DIR/sml $PADS_HOME/binlinks/sml.$_arch_n_heapopsys
   fi
   if [ ! -e $SML_BIN_DIR/.run/run.$_arch_n_opsys ]; then
     echo "##############################################################################"
@@ -72,12 +72,11 @@ if [ $_pads_status = "OK" ]; then
     echo "#   and then use MAKE_SML_LINK.sh again."
     echo "##############################################################################"
   else
-    /bin/rm -f $PADS_HOME/binlinks/smlruntime.$_ast_arch
-    echo "Creating symbolic link $SML_BIN_DIR/.run/run.$_arch_n_opsys -> $PADS_HOME/binlinks/smlruntime.$_ast_arch"
-    ln -s $SML_BIN_DIR/.run/run.$_arch_n_opsys $PADS_HOME/binlinks/smlruntime.$_ast_arch
+    /bin/rm -f $PADS_HOME/binlinks/smlruntime.$_arch_n_opsys
+    echo "Creating symbolic link $SML_BIN_DIR/.run/run.$_arch_n_opsys -> $PADS_HOME/binlinks/smlruntime.$_arch_n_opsys"
+    ln -s $SML_BIN_DIR/.run/run.$_arch_n_opsys $PADS_HOME/binlinks/smlruntime.$_arch_n_opsys
   fi
   _arch_n_opsys=
-  _ast_arch=
 fi
 
 echo " "

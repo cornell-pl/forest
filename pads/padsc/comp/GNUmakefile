@@ -1,15 +1,15 @@
 
  # This is a GNU makefile
 
-ARCH_N_OPSYS = $(shell $(PADS_HOME)/scripts/arch-n-opsys)
+ARCH_N_HEAPOPSYS := $(shell $(PADS_HOME)/scripts/arch-n-heapopsys)
 
-SML=sml
+SML = $(PADS_HOME)/binlinks/sml.$(ARCH_N_HEAPOPSYS)
 
 all:	compiler 
 
 compiler:
 	echo Making compiler
-	sml < build-exec.sml
+	$(SML) < build-exec.sml
 
 clean:
 	$(RM) $(PADS_HOME)/lib/padsc.$(ARCH_N_OPSYS)

@@ -111,4 +111,4 @@ case `uname -s` in
   *) exit 1;;
 esac
 
-echo "$ARCH-$OPSYS"
+echo "$ARCH-$HEAP_OPSYS"

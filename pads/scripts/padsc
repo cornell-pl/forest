@@ -45,17 +45,23 @@ if (!(-d $PADS_HOME && -d $PADS_HOME/padsc && -d $PADS_HOME/lib && -d $PADS_HOME
   exit 0
 endif
 
-set arch = `$PADS_HOME/ast-ast/bin/package.cvs`
+set _ast_arch = `$PADS_HOME/ast-ast/bin/package.cvs`
+set _arch_n_opsys = `$PADS_HOME/scripts/arch-n-opsys`
 
 set IMAGE = $PADS_HOME/lib/padsc
-set SMLBIN = $PADS_HOME/binlinks/smlruntime.$arch
+set SMLBIN = $PADS_HOME/binlinks/smlruntime.$_arch_n_opsys
 
-if ($arch == linux.i386) then 
+if ($_ast_arch == linux.i386) then 
     set lua = -U__GNUC__
     set lda = -D__LINUX_PREPROCESSOR_FIXES
 else 
-    set lua =
-    set lda = 
+    if ($_ast_arch == freebsd.i386) then 
+        set lua = -U__GNUC__
+        set lda = -D__LINUX_PREPROCESSOR_FIXES
+    else
+        set lua =
+        set lda = 
+    endif
 endif
 
 set opts = ""
@@ -201,6 +207,6 @@ if (-d $padsglx_lib_dir) then
   set add_incs = "$add_incs -I $padsglx_lib_dir"
 endif
 
-exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-ast/arch/$arch/include/ast $add_incs \
+exec $SMLBIN @SMLload=$IMAGE $PADS_HOME $cmd -I $PADS_HOME/padsc/include -I $PADS_HOME/ast-ast/arch/$_ast_arch/include/ast $add_incs \
 $lua $lda < /dev/null
 
