@@ -39,7 +39,9 @@ const char* PGLX_generic_string_value(void *ocaml_nn){
   return "Not yet implemented";
 }
 
-
+void        PGLX_node_free(void *node){
+  PDCI_NODE_FREE(node);
+}
 
 
 /* HELPERS */

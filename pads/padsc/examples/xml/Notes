@@ -1,0 +1,5 @@
+The stub that calls the generic children needs to be modified
+to free the node list using PDCI_NODE_LIST_FREE.
+
+for each node returned from parent or children, we need to 
+hook in PGLX_node_free as a cleanup function.
