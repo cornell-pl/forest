@@ -417,5 +417,8 @@ test_children_d: $(GEN_DIR)/format1.c test_children.c $(INCLUDE_DEPS) $(LIB_DEPS
 	@$(CCExec_DYNAMIC_D)
 endif
 
+$(GEN_DIR)/http.c:
+	/home/gruber/knb/pads/scripts/padsc -anone ../../p/http.p  -r ../../gen -I. -I..
+
  # End of rules that are run from the arch directory
 endif
