@@ -22,42 +22,10 @@ Union tag: good vals:          2    bad vals:          0    pcnt-bad:    0.000
 [Describing each tag arm of <top>.client]
 
 =====================================================================================================
-<top>.client.ip : array Pip of Puint8
+<top>.client.ip : Pip
+    ** N.B. IPs are reported using the Puint32 internal rep, and are also pretty-printed using the default Pip output format
 =====================================================================================================
-Array lengths: 1 array length values, 100 pcnt good, 100 pcnt identical:          4
-
------------------------------------------------------------------------------------------------------
-<top>.client.ip.allArrayElts : all array element
------------------------------------------------------------------------------------------------------
-good vals:          4    bad vals:          0    pcnt-bad:    0.000
-  Characterizing all array element values:  min 49 max 207 avg 122.250
-    => distribution of top 4 values out of 4 distinct values:
-        val:         49 count:          1  pcnt-of-good-vals:   25.000
-        val:         97 count:          1  pcnt-of-good-vals:   25.000
-        val:        136 count:          1  pcnt-of-good-vals:   25.000
-        val:        207 count:          1  pcnt-of-good-vals:   25.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          4  pcnt-of-good-vals:  100.000
-
------------------------------------------------------------------------------------------------------
-<top>.client.ip.arrayDetail[0] : array element
------------------------------------------------------------------------------------------------------
-1 array element values, 100 pcnt good, 100 pcnt identical:        207
-
------------------------------------------------------------------------------------------------------
-<top>.client.ip.arrayDetail[1] : array element
------------------------------------------------------------------------------------------------------
-1 array element values, 100 pcnt good, 100 pcnt identical:        136
-
------------------------------------------------------------------------------------------------------
-<top>.client.ip.arrayDetail[2] : array element
------------------------------------------------------------------------------------------------------
-1 array element values, 100 pcnt good, 100 pcnt identical:         97
-
------------------------------------------------------------------------------------------------------
-<top>.client.ip.arrayDetail[3] : array element
------------------------------------------------------------------------------------------------------
-1 array element values, 100 pcnt good, 100 pcnt identical:         49
+1 Pip values, 100 pcnt good, 100 pcnt identical: 3481821489 (207.136.97.49)
 
 =====================================================================================================
 <top>.client.host : array Phostname of Pstring_SE
@@ -134,12 +102,10 @@ Union tag: 2 tag values, 100 pcnt good, 100 pcnt identical: unauthorized (    1)
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.date : date
-    ** N.B. Dates are recorded internally as seconds since the epoch
-       (midnight 1-jan-1970). The following summary is in terms
-       of this internal Puint32 representation
+    ** N.B. dates are reported in # of seconds since midnight 1-jan-1970, and also as formatted strings (using the default date output format)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
-  Characterizing date values:  min 876966411 (1997-10-16) max 877037542 (1997-10-16) avg 877001976.500
+  Characterizing date values:  min 876966411 (1997-10-16) max 877037542 (1997-10-16) avg rounded down to nearest Puint32: 877001976 (1997-10-16)
     => distribution of top 2 values out of 2 distinct values:
         val:  876966411 (1997-10-16) count:          1  pcnt-of-good-vals:   50.000
         val:  877037542 (1997-10-16) count:          1  pcnt-of-good-vals:   50.000
@@ -205,8 +171,20 @@ good vals:          2    bad vals:          0    pcnt-bad:    0.000
 2 typedef response_t [--> Puint16_FW] values, 100 pcnt good, 100 pcnt identical:        200
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<top>.length : uint32
+<top>.length : union length_t
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Union tag: 2 tag values, 100 pcnt good, 100 pcnt identical: len (    2)
+
+[Describing each tag arm of <top>.length]
+
+=====================================================================================================
+<top>.length.unavailable : char
+=====================================================================================================
+(No char values.)
+
+=====================================================================================================
+<top>.length.len : uint32
+=====================================================================================================
 good vals:          2    bad vals:          0    pcnt-bad:    0.000
   Characterizing uint32 values:  min 30 max 941 avg 485.500
     => distribution of top 2 values out of 2 distinct values:
