@@ -13,7 +13,6 @@ cb2p.pl
 count_differs.pl
 defmacros.pl 
 getprobeinfo.pl
-gigascope_make.pl
 grasp.py
 ignore_pragma_warnings.pl
 install-sh

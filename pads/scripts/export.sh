@@ -47,6 +47,9 @@ for x in `cat data/take_list`; do cp data/$x temp_data; done
 rm -rf data 
 mv temp_data data
 
+#delete xml directory for now
+rm -rf xml
+
 cd ..  # now in pads/padsc
 echo cleaning example directory
 pwd
@@ -62,7 +65,11 @@ for x in `cat scripts/RELEASE_SCRIPTS`; do mv scripts/$x temp_scripts; done
 rm -rf scripts
 mv temp_scripts scripts
 
-
+echo cleaning padsc directory
+mkdir temp_padsc
+for x in `cat padsc/take_list`; do mv padsc/$x temp_padsc; done
+rm -rf padsc
+mv temp_padsc padsc
 
 # add licenses!
 
