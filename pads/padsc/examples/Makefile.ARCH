@@ -12,7 +12,7 @@ all_tests : format_tests other_tests
 
 test_format1  :: test_format1.c   format1-mod.c     -lpadsc
 test_format2  :: test_format2.c   format2.c     -lpadsc
-test_format3  :: test_format3.c   format3.c     -lpadsc
+test_format3  :: test_format3.c   format3-mod.c     -lpadsc
 test_format4  :: test_format4.c   format4.c     -lpadsc
 test_format5  :: test_format5.c   format5.c     -lpadsc
 test_format6  :: test_format6.c   format6.c     -lpadsc
