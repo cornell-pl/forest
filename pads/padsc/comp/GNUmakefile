@@ -2,14 +2,8 @@
  # This is a GNU makefile
 
 ifndef PADS_HOME
-%: forceabort2
-	@echo "ERROR: env variable PADS_HOME must be defined"
-	@exit 1
-forceabort2: ;
+  export PADS_HOME=$(shell cd ../..; pwd)
 endif
-
-
-
 
 ARCH_N_HEAPOPSYS := $(shell $(PADS_HOME)/scripts/arch-n-heapopsys)
 
