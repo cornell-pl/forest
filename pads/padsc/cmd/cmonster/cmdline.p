@@ -1,32 +1,50 @@
 /*
- * This file describes two kinds of command-line arguments, iodisc_spec and cookie_spec.
+ * This file describes two kinds of command-line arguments, iodisc and cookie
  * 
- * Example cookie_spec:
- *
- *     c{qy1=Pa_string_FW(:8:)[172,8]|qy2=Pb_uint64(::)[202,8]}
- *
- *     s{Pe_int32_FW(:3:)[90,3]/1:c{qy1=Pa_string_FW(:8:)[172,8]}/2:c{qy2=Pb_uint64(::)[202,8]}}
- *
  * Example iodisc_spec format:
  *
  *     fwrec(:80:)
  * OR
  *     nlrec(::)
+ *
+ * Example cookie_spec:
+ *
+ *     c{qy1=Pa_string_FW(:8:)[172,8]|qy2=Pb_uint64(::)[202,8]}
+ *
+ *     s{qy1=Pe_int32_FW(:3:)[90,3]/1:c{qy2=Pa_string_FW(:8:)[172,8]}/2:c{qy3=Pb_uint64(::)[202,8]}}
+ *
+ * Informal BNF for cookie_spec:
+ *
+ *          cookie :: s_cookie | c_cookie
+ *        s_cookie :: "s{" s_qy "/" arms "}"
+ *            s_qy :: query
+ *            arms :: arm | arm "/" arms
+ *             arm :: s_val ":" c_cookie
+ *        c_cookie :: "c{" queries "}"
+ *         queries :: query | query "|" queries
+ *           query :: qy_id "=" ty_id "(" params ")[" off "," sz "]"
+ *          params :: param | param "," params
+ *           qy_id :: ID
+ *           ty_id :: ID
+ *           s_val :: INT
+ *           param :: UINT
+ *             off :: UINT
+ *              sz :: UINT
  */
 
 /* Comma-sep list of integers terminated by left paren: */
 
 /* note that this array 'eats' the terminating colon */
-Parray CMDLINE_intList {
+Parray CM_params {
   Pa_uint64 [] : Psep == ',' && Pterm == ':';
 };
 
-Pstruct CMDLINE_c_cookie_elt {
-  Pa_string(:'=':)       qy;
+Pstruct CM_query {
+  Pa_string(:'=':)       qy_id;
   '=';
-  Pa_string(:'(':)       ty;
+  Pa_string(:'(':)       ty_id;
   "(:";
-  CMDLINE_intList        params;
+  CM_params              params;
   ")[";
   Pa_uint64              off;
   ',';
@@ -35,49 +53,39 @@ Pstruct CMDLINE_c_cookie_elt {
 };
 
 /* note that this array 'eats' the terminating curly */
-Parray CMDLINE_c_cookie_ar {
-  CMDLINE_c_cookie_elt [1:] : Psep == '|' && Pterm == '}';
+Parray CM_queries {
+  CM_query [1:] : Psep == '|' && Pterm == '}';
 }
 
-Pstruct CMDLINE_c_cookie_spec {
+Pstruct CM_c_cookie {
   "c{";
-  CMDLINE_c_cookie_ar    cookies;
+  CM_queries             queries;
 };
 
-Pstruct CMDLINE_sw_val {
-  Pa_string(:'(':)       ty;
-  "(:";
-  CMDLINE_intList        params;
-  ")[";
-  Pa_uint64              off;
-  ',';
-  Pa_uint64              sz;
-  ']';
-};
-
-Pstruct CMDLINE_alt_elt {
-  Pa_int32               tag;
-  CMDLINE_c_cookie_spec  cookie;
+Pstruct CM_arm {
+  Pa_int32               s_val;
+  ':';
+  CM_c_cookie            cookie;
 };
 
 /* note that this array 'eats' the terminating curly */
-Parray CMDLINE_alt_ar {
-  CMDLINE_alt_elt [1:] : Psep == '/' && Pterm == '}';
+Parray CM_arms {
+  CM_arm [1:] : Psep == '/' && Pterm == '}';
 }
 
-Pstruct CMDLINE_s_cookie_spec {
+Pstruct CM_s_cookie {
   "s{";
-  CMDLINE_sw_val         val;
+  CM_query               s_qy;
   '/';
-  CMDLINE_alt_ar         alts;
+  CM_arms                arms;
 };
 
-Punion CMDLINE_cookie_spec {
-  CMDLINE_c_cookie_spec  c_cookie;
-  CMDLINE_s_cookie_spec  s_cookie;
+Punion CM_cookie {
+  CM_c_cookie            c_cookie;
+  CM_s_cookie            s_cookie;
 }
 
-Penum CMDLINE_discipline {
+Penum CM_disc {
   fwrec_noseek,
   ctrec_noseek,
   nlrec_noseek,
@@ -88,9 +96,9 @@ Penum CMDLINE_discipline {
   vlrec
 };
 
-Pstruct CMDLINE_iodisc_spec {
-  CMDLINE_discipline     iodisc;
+Pstruct CM_iodisc {
+  CM_disc               disc;
   "(:";
-  CMDLINE_intList        params;
+  CM_params             params;
   ")";
 };

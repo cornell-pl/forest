@@ -11,7 +11,7 @@
 #ifndef __CMONSTER_H__
 #define __CMONSTER_H__
 
-#include "libpadsc.h"
+#include "padsc-internal.h"
 #include "cmdline.h"
 
 /* Predeclare some types */
@@ -49,7 +49,7 @@ extern CMR_tmentry_t tmap[];
 
 /* returns -1 on usage error, 0 otherwise */
 /* (*iodisc_out) set to result of iodisc open call (may be NULL) */
-int CMR_open_iodisc(CMDLINE_iodisc_spec *ispec, PDC_IO_disc_t ** iodisc_out);
+int CMR_open_iodisc(CM_iodisc *ispec, PDC_IO_disc_t ** iodisc_out);
 
 #endif  /* __CMONSTER_H__  */
 

@@ -8,11 +8,11 @@
 #include "cmonster.h"
 
 int
-CMR_open_iodisc(CMDLINE_iodisc_spec *ispec, PDC_IO_disc_t ** iodisc_out) {
+CMR_open_iodisc(CM_iodisc *ispec, PDC_IO_disc_t ** iodisc_out) {
 
   PDC_IO_disc_t *io_disc = 0;
 
-  switch (ispec->iodisc) {
+  switch (ispec->disc) {
 
   case fwrec: {
     size_t    leader_len, data_len, trailer_len;

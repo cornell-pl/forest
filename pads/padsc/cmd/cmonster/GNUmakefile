@@ -14,22 +14,23 @@ else
 
  # The following rules are run from the arch directory
 
-PADS_HOME = ../../../..
-GEN_DIR = .
-GEN_WRITE = 1
-
 # the following indicates that generated .c files should not be removed
 .PRECIOUS: $(GEN_DIR)/%.c 
 
+PADS_HOME = ../../../..
+GEN_DIR = .
+GEN_WRITE = 1
+INCLUDE_DEPS_ADD = ../*.h
 include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
+
 
 GEN_SRC = $(GEN_DIR)/cmdline.c
 GEN_OBJ_O = $(GEN_SRC:$(GEN_DIR)/%.c=%.o)
 GEN_OBJ_D = $(GEN_SRC:$(GEN_DIR)/%.c=%-g.o)
 
-LOC_SRC = rwfn.c tmap.c iodisc.c cmonster.c
+LOC_SRC = rwfn.c tmap.c iodisc.c cmhelpers.c cmonster.c
 LOC_OBJ_O = $(LOC_SRC:%.c=%.o)
 LOC_OBJ_D = $(LOC_SRC:%.c=%-g.o)
 
@@ -74,6 +75,9 @@ test1: cmonster-g
 	./cmonster-g 'ctrec_noseek(:10,0:)'   'c{qy1=Pa_string_FW(:8:)[0,8]}' < ../strfw8nl.dat
 	./cmonster-g 'vlrec(:0,0:)'           'c{qy1=Pe_string_FW(:8:)[0,8]}' < ../rec1vlr.dat 
 	./cmonster-g 'vlrec_noseek(:0,0:)'    'c{qy1=Pe_string_FW(:8:)[0,8]}' < ../rec1vlr.dat 
+
+test2: cmonster-g
+	./cmonster-g 'fwrec(:0,11,1:)'         's{qyswitch=Pa_int32_FW(:3:)[0,3]/-1:c{qy1=Pa_string_FW(:8:)[0,8]}/0:c{qy2=Pa_string_FW(:7:)[1,7]}/1:c{qy3=Pa_string_FW(:6:)[2,6]}}' < ../sw_aintfw3_astrfw8_nl.dat
 
  # End of rules that are run from the arch directory
 endif

@@ -14,21 +14,24 @@
  */
 
 #include "cmonster.h"
+#include "cmhelpers.h"
 
 int main(int argc, char** argv) {
   PDC_t*                  pdc;
   PDC_disc_t              my_disc;
   PDC_IO_disc_t*          io_disc;
-  CMDLINE_iodisc_spec     ispec;
-  CMDLINE_iodisc_spec_m   ispec_m;
-  CMDLINE_iodisc_spec_pd  ispec_pd;
+  CM_iodisc               ispec;
+  CM_iodisc_m             ispec_m;
+  CM_iodisc_pd            ispec_pd;
 
-  CMDLINE_cookie_spec     cspec;
-  CMDLINE_cookie_spec_m   cspec_m;
-  CMDLINE_cookie_spec_pd  cspec_pd;
+  CM_cookie               cspec;
+  CM_cookie_m             cspec_m;
+  CM_cookie_pd            cspec_pd;
 
   Sfio_t                 *io;
-  size_t                  bytes_skipped;
+  size_t                  skipped_bytes = 0, rec_len;
+  int                     eor = 0, eof = 0, skip_rec = 0;
+  PDC_byte               *begin = 0, *end = 0;
 
   if (argc != 3) goto usage;
   /* Parse command line */
@@ -45,13 +48,13 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "\n*** PDC_open failed ***");
   }
 
-  CMDLINE_iodisc_spec_init(pdc, &ispec);
-  CMDLINE_iodisc_spec_pd_init(pdc, &ispec_pd);
-  CMDLINE_iodisc_spec_m_init(pdc, &ispec_m, PDC_CheckAndSet);
+  CM_iodisc_init(pdc, &ispec);
+  CM_iodisc_pd_init(pdc, &ispec_pd);
+  CM_iodisc_m_init(pdc, &ispec_m, PDC_CheckAndSet);
 
-  CMDLINE_cookie_spec_init(pdc, &cspec);
-  CMDLINE_cookie_spec_pd_init(pdc, &cspec_pd);
-  CMDLINE_cookie_spec_m_init(pdc, &cspec_m, PDC_CheckAndSet);
+  CM_cookie_init(pdc, &cspec);
+  CM_cookie_pd_init(pdc, &cspec_pd);
+  CM_cookie_m_init(pdc, &cspec_m, PDC_CheckAndSet);
 
   if (!(io = sfopen(NULL, argv[1], "s"))) {
     error(ERROR_FATAL, "\nXXX unexpected: sfopen(NULL, argv[1], \"s\") failed.");
@@ -59,7 +62,7 @@ int main(int argc, char** argv) {
   if (PDC_ERR == PDC_IO_set(pdc, io)) {
     error(ERROR_FATAL, "\n*** PDC_IO_set failed ***");
   }
-  if (PDC_ERR == CMDLINE_iodisc_spec_read(pdc, &ispec_m, &ispec_pd, &ispec)) {
+  if (PDC_ERR == CM_iodisc_read(pdc, &ispec_m, &ispec_pd, &ispec)) {
     error(0, "\nCould not parse arg1 io_spec");
     goto usage;
   }
@@ -74,8 +77,8 @@ int main(int argc, char** argv) {
   if (PDC_ERR == PDC_IO_set(pdc, io)) {
     error(ERROR_FATAL, "\n*** PDC_IO_set failed ***");
   }
-  if (PDC_ERR == CMDLINE_cookie_spec_read(pdc, &cspec_m, &cspec_pd, &cspec)) {
-    error(0, "\nCould not parse arg2 cookie_spec");
+  if (PDC_ERR == CM_cookie_read(pdc, &cspec_m, &cspec_pd, &cspec)) {
+    error(0, "\nCould not parse arg2 cookie");
     goto usage;
   }
   if (PDC_ERR == PDC_IO_close(pdc)) {
@@ -85,6 +88,8 @@ int main(int argc, char** argv) {
   if (PDC_ERR == PDC_close(pdc)) {
     error(ERROR_FATAL, "\n*** PDC_close failed ***");
   }
+  error(0, "XXX_REMOVE description of cookie");
+  describe_cookie(&cspec);
 
   if (-1 == CMR_open_iodisc(&ispec, &io_disc)) goto usage;
 
@@ -103,15 +108,21 @@ int main(int argc, char** argv) {
 
   /* read all the records */
   while (1) {
-    if (PDC_IO_at_EOF(pdc)) {
-      error(0, "\nXXX_REMOVE Main program found eof");
+    if (PDC_ERR == PDCI_IO_need_rec_bytes(pdc, skip_rec, &begin, &end, &eor, &eof, &skipped_bytes)) {
+      error(0, "\nXXX_REMOVE need_rec_bytes returned PDC_ERR, break from while loop");
       break;
     }
-    if (PDC_ERR == PDC_IO_next_rec(pdc, &bytes_skipped)) {
-      error(0, "\nXXX_REMOVE Could not find EOR (newline), ending program");
+    skip_rec = 1;
+    rec_len = end-begin;
+    error(0, "\nXXX_REMOVE rec_len = %ld  skipped_bytes = %ld   eor = %d   eof = %d",
+	  (long)rec_len, (long)skipped_bytes, eor, eof);
+    if (rec_len) {
+      error(0, "XXX_REMOVE: do something with bytes = [%.*s]", rec_len, begin);
+    }
+    if (eof) {
+      error(0, "\nXXX_REMOVE need_rec_bytes returned PDC_ERR, break from while loop");
       break;
     }
-    error(0, "\nXXX_REMOVE bytes_skipped = %ld", (long)bytes_skipped);
   }
   /* done */
 
@@ -126,6 +137,7 @@ int main(int argc, char** argv) {
   return 0;
 
  usage:
-  error(0, "\nUsage: cmonster io_spec cookie_spec\n");
+  error(0, "\nUsage: cmonster iodisc cookie\n");
+  error(0, "    See cmdline.p for details\n");
   return -1;
 }
