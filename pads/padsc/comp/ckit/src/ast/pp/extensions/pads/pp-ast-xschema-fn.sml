@@ -735,6 +735,17 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", []))
       end
 
+  fun typedefInfo tidtab tid =
+      let val binding = bind tidtab tid
+	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
+	  val (Ast.TypeRef stid) = cty
+          val bindTy = bind tidtab stid
+      in
+	 (#name binding,#name bindTy)
+	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", SOME "bogus type"))
+  	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", SOME "bogus type"))
+      end
+
   (** PADS to XML Schema translation **)
 
   fun ppXMLName pps (tyNameOpt,NameOpt) =     (* [name=NameOpt] [type=tyNameOpt] *)
@@ -797,11 +808,15 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val edTid = #edTid ptyInfo
 	  val (edTyName, edFields) = structInfo tidtab edTid
           val (repName, repFields) = structInfo tidtab tid
+          val isRec = #isRecord ptyInfo
+          val name = if isRec then SOME (valOf repName ^ "_IS_REC") else repName 
+          val contRec = #containsRecord ptyInfo
+          val name2 = if contRec then SOME (valOf name ^ "_CONT_REC") else name
       in
 	((newline pps
         ; ppXMLComplex pps (edTyName,edFields)
         ; newline pps
-	; ppXMLComplex pps (repName,((edTyName,SOME "errDesc") :: repFields))
+	; ppXMLComplex pps (name2,((edTyName,SOME "errDesc") :: repFields)) (*repName*)
     	; newline pps
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
@@ -811,16 +826,21 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   fun ppPUnion (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...}) =
       let val edTid = #edTid ptyInfo
           val (repName,sFields,uFields) = unionInfo tidtab tid
-          val (edTyName,Fields,uEdFields) = unionEdInfo tidtab edTid 
+          val (edTyName,Fields,uEdFields) = unionEdInfo tidtab edTid
+	  val tagName = SOME (valOf repName ^ "_tag")  
+          val isRec = #isRecord ptyInfo
+          val name = if isRec then SOME (valOf repName ^ "_IS_REC") else repName 
+          val contRec = #containsRecord ptyInfo
+          val name2 = if contRec then SOME (valOf name ^ "_CONT_REC") else name
        in 
       ( newline pps
-      ; ppXMLHeader "<simpleType " "_tag\"> \n<restriction base=\"xsd:string\"/> \n</simpleType> \n" pps (NONE,repName) 
+      ; ppXMLHeader "<simpleType " "> \n<restriction base=\"xsd:string\"/> \n</simpleType> \n" pps (NONE,tagName) 
       ; newline pps
       ; ppXMLChoice pps (SOME ((valOf edTyName) ^ "_u"),uEdFields)
       ; newline pps
       ; ppXMLComplex pps (edTyName, Fields) 
       ; newline pps
-      ; ppXMLHeader "<complexType " ">" pps (NONE,repName) 
+      ; ppXMLHeader "<complexType " ">" pps (NONE,name2) (*repName*) 
       ; newline pps
       ; PPL.addStr pps "<sequence>"
       ; newline pps
@@ -847,11 +867,17 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           val ed2Fields = List.take (ed1Fields,8)			(* eliminates RBuf_t field *) 
           val eltEdField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.last ed2Fields))
           val edFields = List.take (ed2Fields,7) @ (eltEdField :: []) 
+          val isRec = #isRecord ptyInfo
+          val name = if isRec then SOME (valOf repName ^ "_IS_REC") else repName 
+          val contRec = #containsRecord ptyInfo
+          val name2 = if contRec then SOME (valOf name ^ "_CONT_REC") else name
+	  val lH = #largeHeuristic ptyInfo
+          val name3 = if lH then SOME (valOf name2 ^ "_LHEU") else name2
       in
 	((newline pps
         ; ppXMLComplex pps (edTyName,edFields)  
         ; newline pps
-	; ppXMLComplex pps (repName,Fields)
+	; ppXMLComplex pps (name3,Fields) (*repName*)
     	; newline pps                                         (* adds errDesc field *) 
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
@@ -869,9 +895,22 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       end  
     | ppPEnum ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
+  fun ppPTypedef (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  =
+      let val (Name, Ty) = typedefInfo tidtab tid
+      in
+        ((newline pps
+        ; ppXMLHeader "<simpleType " ">\n" pps (NONE, Name)
+        ; PPL.addStr pps ("<restriction base=\"" ^ (valOf Ty) ^ "\"> \n</simpleType>")
+        ; newline pps
+        )
+        handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
+      end
+    | ppPTypedef ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+
+
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) tidtab pps decl = 
       case #kind ptyInfo
-      of PTys.Typedef => PPL.addStr pps "foo Typedef"
+      of PTys.Typedef => ppPTypedef ptyInfo tidtab pps decl
       |  PTys.Struct => ppPStruct ptyInfo tidtab pps decl
       |  PTys.Union => ppPUnion ptyInfo tidtab pps decl 
       |  PTys.Array => ppPArray ptyInfo tidtab pps decl 

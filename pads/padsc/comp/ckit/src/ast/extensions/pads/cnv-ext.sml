@@ -745,14 +745,14 @@ structure CnvExt : CNVEXT = struct
                                     |  SOME(b:PBTys.baseInfoTy) => (#endian b))
 
               fun lookupContainsRecord (ty:pty) = 
-		let val (PX.Name s)=ty
+(*		let val (PX.Name s)=ty
 		in (case PTys.find(Atom.atom s)
                                                 of NONE => false
                                                 | SOME (b:PTys.pTyInfo) => (#isRecord b orelse #containsRecord b)
                                                     (* end nested case *))
 		end
 
-(* I don't know why we have to look up in the baseInfoTy *
+* I don't know why we have to look up in the baseInfoTy *)
                   case ty 
                   of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
 				    of NONE => (case PTys.find(Atom.atom s)
@@ -760,7 +760,7 @@ structure CnvExt : CNVEXT = struct
 						| SOME (b:PTys.pTyInfo) => (#isRecord b orelse #containsRecord b)
 						    (* end nested case *))
                                     |  SOME(b:PBTys.baseInfoTy) => false)
-*)
+
 
 	      fun lookupHeuristic (ty:pty) =
 		  case ty
@@ -770,7 +770,6 @@ structure CnvExt : CNVEXT = struct
                                                 | SOME (b:PTys.pTyInfo) => (#largeHeuristic b)
                                                     (* end nested case *)) 
                                     |  SOME(b:PBTys.baseInfoTy) => false)(* ???? *)
-		(*ty.largeHeuristic=true *)
  
               fun tyName (ty:pty) = case ty of PX.Name s => s
 
@@ -1368,7 +1367,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			memChar = if isStatic 
 				      then TyProps.Static 
 				  else TyProps.Dynamic,
-			endian = false, isRecord = false,containsRecord=false, largeHeuristic=false}]
+			endian = false, isRecord = false, 
+                        containsRecord = false, largeHeuristic = false}]
 		  end
 
 	      (* Given a manifest field description, generate canonical representation *)
@@ -1570,11 +1570,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val ds = lookupDiskSize baseTy
                       val mc = lookupMemChar baseTy
                       val endian = lookupEndian baseTy
-		      val isRecord = isRecord 
-                      val containsRecord = lookupContainsRecord baseTy
- 		      val largeHeuristic = lookupHeuristic baseTy
-		      val isFile = isFile
-		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, mc, endian, isRecord, containsRecord, largeHeuristic, isFile, edTid)
+                      val contR = lookupContainsRecord baseTy
+ 		      val lH = lookupHeuristic baseTy
+		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, mc, endian, isRecord, contR, lH, isFile, edTid)
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
 
@@ -1766,8 +1764,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 
 
-	      fun cnvPStruct ({name:string, isRecord, containsRecord, largeHeuristic, isFile, params:(pcty * pcdecr) list, 
-			       fields:(pdty, pcdecr, pcexp) PX.PSField list, postCond}) = 
+	      fun cnvPStruct ({name: string, isRecord, containsRecord, largeHeuristic, isFile, params: (pcty * pcdecr) list, 
+			       fields: (pdty, pcdecr, pcexp) PX.PSField list, postCond}) = 
 	          let val dummy = "_dummy"
 
 		      (* Functions for walking over lists of struct elements *)
@@ -1778,9 +1776,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			| mungeFields f b m (x::xs) = (mungeField f b m x) @ (mungeFields f b m xs)
 
 		      (* Generate local variables  *)
-		      fun genLocFull {pty :PX.Pty, args : pcexp list, name:string, isVirtual:bool, 
-				      isEndian:bool,isRecord,containsRecord,largeHeuristic:bool,
-				      pred:pcexp option, comment:string option} = 
+		      fun genLocFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
+				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+				      pred: pcexp option, comment: string option} = 
 			  if not isVirtual then []
 			  else [(name, P.makeTypedefPCT(lookupTy (pty,repSuf,#repname)))]
 		      fun genLocBrief e = []
@@ -1789,8 +1787,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 		       
 		      (* Generate CheckSet mask *)
-		      fun genMFull {pty :PX.Pty, args : pcexp list, name:string, 
-				     isVirtual:bool, isEndian : bool, isRecord,containsRecord,largeHeuristic:bool,
+		      fun genMFull {pty: PX.Pty, args: pcexp list, name: string, 
+				     isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				     pred:pcexp option, comment} = 
 			  [(name,P.makeTypedefPCT(lookupTy (pty,mSuf,#mname)), NONE)]
 		      fun genMBrief e = []
@@ -1805,8 +1803,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val mPCT = P.makeTypedefPCT (mSuf name)			  
 
 		      (* Generate error description *)
-		      fun genEDFull {pty :PX.Pty, args : pcexp list, name:string,  
-				     isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool, 
+		      fun genEDFull {pty: PX.Pty, args: pcexp list, name: string,  
+				     isVirtual: bool, isEndian: bool, 
+                                     isRecord, containsRecord, largeHeuristic: bool, 
 				     pred:pcexp option, comment} = 
 			  [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		      fun genEDBrief e = []
@@ -1818,9 +1817,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val edPCT = P.makeTypedefPCT (edSuf name)			  
 
 		      (* Generate accumulator type *)
-		      fun genAccFull {pty :PX.Pty, args : pcexp list, name:string, 
-				      isVirtual:bool,  isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
-				      pred:pcexp option, comment:string option} = 
+		      fun genAccFull {pty: PX.Pty, args: pcexp list, name: string, 
+				      isVirtual: bool, isEndian: bool, 
+				      isRecord, containsRecord, largeHeuristic: bool,
+				      pred: pcexp option, comment: string option} = 
 			  if not isVirtual then 
 			    let val predStringOpt = Option.map P.expToString pred
 			        val fullCommentOpt = stringOptMerge(comment, predStringOpt)
@@ -1839,9 +1839,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val accPCT = P.makeTypedefPCT (accSuf name)			 
 
 		      (* Struct: Calculate and insert type properties into type table *)
-		      fun genTyPropsFull {pty :PX.Pty, args : pcexp list, name:string, 
-					  isVirtual:bool,  isEndian : bool, isRecord,containsRecord,largeHeuristic:bool,
-				          pred:pcexp option, comment:string option} = 
+		      fun genTyPropsFull {pty: PX.Pty, args: pcexp list, name: string, 
+					  isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+				          pred: pcexp option, comment:string option} = 
 			  let val mc = lookupMemChar pty
 			      val ds = lookupDiskSize pty
                               val supportsEndian = lookupEndian pty
@@ -1852,28 +1852,25 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      val isE2 = if isEndian andalso not (Option.isSome pred)
 				         then (PE.error ("Endian annotations require constraints ("^name^").\n"); false)
 				         else true
-			  in [{diskSize=ds, memChar=mc, endian=isEndian andalso isE1 andalso isE2, 
-                               isRecord=isRecord, containsRecord=containsRecord, largeHeuristic=false}] end
+			      val contR = lookupContainsRecord pty
+			      val lH = lookupHeuristic pty
+			  in [{diskSize = ds, memChar = mc, endian = isEndian andalso isE1 andalso isE2, 
+                               isRecord = isRecord, containsRecord = contR, largeHeuristic = lH}] end
 		      fun genTyPropsBrief e = [{diskSize = TyProps.Size (1,0), memChar = TyProps.Static, 
-						endian = false, isRecord = false,containsRecord=false, largeHeuristic = false}]
+						endian = false, isRecord = false, containsRecord = false, largeHeuristic = false}]
 		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan fields
 		      fun mStruct((x1,x2),(y1,y2)) = TyProps.Size ((x1+y1),(x2+y2))
                       val isR = isRecord 
                       val {diskSize, memChar, endian, isRecord, containsRecord, largeHeuristic} = 
 			  List.foldl (PTys.mergeTyInfo mStruct) PTys.minTyInfo tyProps
-(**)                  val containsRecord = containsRecord orelse isRecord
-                      val largeHeuristic = false 
-                      val isFile = isFile
-(* for debugging      val name = if containsRecord then name ^ "_CONTAINS" else name ^ "_NOT_CONTAINS"
-		      val name = if isRecord then name ^ "_S_RCRD" else name ^ "_S_NT_RCRD"
-		      val name = if isR then name ^ "_IS_RECORD" else name ^ "_IS_NOT_RECORD"
-*)		      val structProps = buildTyProps(name, PTys.Struct, diskSize, memChar, endian, isR, containsRecord, largeHeuristic, isFile, edTid)
+                      val contR = containsRecord orelse isRecord
+		      val structProps = buildTyProps(name, PTys.Struct, diskSize, memChar, endian, isR, contR, largeHeuristic, isFile, edTid)
                       val () = PTys.insert(Atom.atom name, structProps)
 
 
 		      (* Struct: Generate canonical representation *)
-		      fun genRepFull {pty :PX.Pty, args : pcexp list, name:string, 
-				      isVirtual:bool, isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
+		      fun genRepFull {pty: PX.Pty, args: pcexp list, name: string, 
+				      isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				      pred:pcexp option, comment:string option} = 
 			  if not isVirtual then 
 			    let val predStringOpt = Option.map P.expToString pred
@@ -1903,8 +1900,8 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
                       (* -- Some helper functions *)
 		      val first = ref true
-		      fun genReadFull {pty :PX.Pty, args:pcexp list, name:string, 
-				       isVirtual:bool, isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
+		      fun genReadFull {pty: PX.Pty, args: pcexp list, name: string, 
+				       isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				       pred:pcexp option, comment} = 
 			  let val readFieldName = lookupTy(pty, iSuf o readSuf, #readname)
                               val modEdNameX = modFieldX(ed,name)
@@ -2029,7 +2026,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  else (PE.error ("Currently only characters and strings "^
 					          "supported as delimiters. Delimiter type: "^ (CTtoString expTy) ^".");
 					(PL.charlit, [], e, CExptoString expAst))
-			      val commentS = P.mkCommentS ("Reading delimiter field: "^
+		      val commentS = P.mkCommentS ("Reading delimiter field: "^
 						           commentV)
                               (* base_ed ted; *)
 			      val tedDecl = P.varDeclS'(PL.base_edPCT, ted)
@@ -2228,9 +2225,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 		      val lastField = getLastField fields
                       val () = subList := [] (* reset substitution list *)
-		      fun genWriteFull (f as {pty :PX.Pty, args:pcexp list, name:string, 
-					      isVirtual:bool, isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
-					      pred:pcexp option, comment}) = 
+		      fun genWriteFull (f as {pty: PX.Pty, args: pcexp list, name: string, 
+					      isVirtual: bool, isEndian: bool, 
+  					      isRecord, containsRecord, largeHeuristic: bool,
+					      pred: pcexp option, comment}) = 
 			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
                           else
 			    let val writeFieldName = (iSuf o bufSuf o writeSuf) (lookupWrite pty) 
@@ -2266,9 +2264,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
 			      val auxFields = chk3Pfun(theSuf PL.intAct, getFieldX(acc,nerr))
-			      fun genAccTheFull {pty :PX.Pty, args:pcexp list, name:string, 
-						 isVirtual:bool, isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
-						 pred:pcexp option, comment} = 
+			      fun genAccTheFull {pty: PX.Pty, args: pcexp list, name: string, 
+						 isVirtual: bool, isEndian: bool, 
+						 isRecord, containsRecord, largeHeuristic: bool,
+						 pred: pcexp option, comment} = 
 				  if not isVirtual then
 				      case lookupAcc(pty) of NONE => []
 				    | SOME a => cnvPtyMan(theSuf a,acc,name)
@@ -2293,9 +2292,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val addDeclSs = [P.varDeclS(P.int, nerr, P.zero),  P.varDeclS'(PL.base_edPCT, ted)]
 		      val initTedSs = [P.assignS(P.dotX(PT.Id ted, PT.Id errCode), PL.PDC_NO_ERROR)]
 
-		      fun genAccAddFull {pty :PX.Pty, args:pcexp list, name:string, 
-					 isVirtual:bool, isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
-					 pred:pcexp option, comment} = 
+		      fun genAccAddFull {pty: PX.Pty, args: pcexp list, name: string, 
+					 isVirtual: bool, isEndian: bool, 
+					 isRecord, containsRecord, largeHeuristic: bool,
+					 pred: pcexp option, comment} = 
 			  if not isVirtual then cnvPtyForAdd(pty,name, getFieldX(ed,name)) else []
                       fun genAccAddBrief e = []
 		      fun genAccAddMan {decl, comment:string option} = 
@@ -2337,9 +2337,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 						  PT.String "\n[Describing each field of %s]\n", 
 						  [PT.Id prefix])]
 
-		      fun genAccReportFull {pty :PX.Pty, args:pcexp list, name:string, 
-					    isVirtual:bool, isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
-					    pred:pcexp option, comment} = 
+		      fun genAccReportFull {pty: PX.Pty, args: pcexp list, name: string, 
+					    isVirtual: bool, isEndian: bool, 
+					    isRecord, containsRecord, largeHeuristic: bool,
+					    pred: pcexp option, comment} = 
 			  if not isVirtual then cnvPtyForReport(reportSuf, iSuf, pty,name)
 			  else []
                       fun genAccReportBrief e = []
@@ -2362,9 +2363,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       fun genCleanupEDs(suf,base,aPCT) = case #memChar structProps
 			  of TyProps.Static => [genInitFun(suf baseFunName, base, aPCT, [],true)]
 			   | TyProps.Dynamic => 
-			       let fun genInitFull {pty as PX.Name tyName :PX.Pty, args : pcexp list, 
-						    name:string, isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool,
-						    pred:pcexp option, comment:string option} = 
+			       let fun genInitFull {pty as PX.Name tyName: PX.Pty, args: pcexp list, 
+						    name: string, isVirtual: bool, isEndian: bool,
+						    isRecord, containsRecord, largeHeuristic: bool,
+						    pred: pcexp option, comment: string option} = 
 				   if not isVirtual then
 				       if TyProps.Static = lookupMemChar pty then []
 				       else let val baseFunName = lookupMemFun (PX.Name tyName)
@@ -2395,9 +2397,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      case #memChar structProps
 			      of TyProps.Static => [genCopyFun(copyFunName, dst, src, aPCT, copySs,true)]
 			      |  TyProps.Dynamic => 
-			         let fun genCopyFull {pty as PX.Name tyName :PX.Pty, args : pcexp list, 
-						      name:string, isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool,
-						      pred:pcexp option, comment:string option} = 
+			         let fun genCopyFull {pty as PX.Name tyName: PX.Pty, args: pcexp list, 
+						      name: string, isVirtual: bool, isEndian: bool, 
+						      isRecord, containsRecord, largeHeuristic: bool,
+						      pred: pcexp option, comment: string option} = 
 				     let val nestedCopyFunName = suf (lookupMemFun pty)
 				     in
 				       if not isVirtual then
@@ -2440,9 +2443,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 	      end
 
-	     fun cnvPUnion ({name:string, params: (pcty * pcdecr) list, 
-			     isRecord : bool, containsRecord, largeHeuristic, isFile:bool, 
-			     variants : (pdty, pcdecr, pcexp) PX.PBranches}) = 
+	     fun cnvPUnion ({name: string, params: (pcty * pcdecr) list, 
+			     isRecord: bool, containsRecord, largeHeuristic, isFile: bool, 
+			     variants: (pdty, pcdecr, pcexp) PX.PBranches}) = 
 		 let (* Some useful names *)
 		     val unionName = name
                      val value = PNames.unionVal
@@ -2506,9 +2509,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			  tagVal := !tagVal + 1;
 			  [(name,P.intX(!tagVal),NONE)])
 
-		     fun genTagFull {pty :PX.Pty, args : pcexp list, name:string, 
-				     isVirtual:bool, isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
-				     pred:pcexp option, comment:string option} = 
+		     fun genTagFull {pty: PX.Pty, args: pcexp list, name: string, 
+				     isVirtual: bool, isEndian: bool, 
+				     isRecord, containsRecord, largeHeuristic: bool,
+				     pred: pcexp option, comment: string option} = 
 			 chkTag(name)
 		     fun genTagBrief e = []
                      fun genTagMan {decl,comment} = 
@@ -2525,9 +2529,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val tagPCT = P.makeTypedefPCT(tgSuf name)
 
 		      (* Generate CheckSet mask *)
-		     fun genMFull {pty :PX.Pty, args : pcexp list, name:string, 
-				    isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool,
-				    pred:pcexp option, comment} = 
+		     fun genMFull {pty: PX.Pty, args: pcexp list, name: string, 
+				    isVirtual: bool, isEndian: bool, 
+                                    isRecord, containsRecord, largeHeuristic: bool,
+				    pred: pcexp option, comment} = 
 			 [(name,P.makeTypedefPCT(lookupTy (pty,mSuf,#mname)), NONE)]
 		     fun genMBrief e = []
 		     fun genMMan m = []
@@ -2537,9 +2542,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val mPCT = P.makeTypedefPCT (mSuf name)			  
 
 		     (* Generate error description *)
-		     fun genEDFull {pty :PX.Pty, args : pcexp list, name:string, 
-				    isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool,
-				    pred:pcexp option, comment} = 
+		     fun genEDFull {pty: PX.Pty, args: pcexp list, name: string, 
+				    isVirtual: bool, isEndian: bool,
+				    isRecord, containsRecord, largeHeuristic: bool,
+				    pred: pcexp option, comment} = 
 			 [(name,P.makeTypedefPCT(lookupTy (pty,edSuf,#edname)),NONE)]
 		     fun genEDBrief e = []
 		     val edVariants = mungeVariants genEDFull genEDBrief genEDMan variants
@@ -2550,13 +2556,14 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  	   (loc, PL.locPCT,NONE), (panic, P.int,NONE),
 					   (tag, tagPCT,NONE), (value, unionEDPCT,NONE)]
 		     val edStructED = P.makeTyDefStructEDecl (structEDFields, edSuf name)
-		     val (edStructEDDecls, edTid) = cnvCTy edStructED
+	     val (edStructEDDecls, edTid) = cnvCTy edStructED
 		     val edPCT = P.makeTypedefPCT (edSuf name)			  
 
 		     (* Generate accumulator type *)
-		     fun genAccFull {pty :PX.Pty, args : pcexp list, name:string, 
-				     isVirtual:bool, isEndian:bool,isRecord,containsRecord,largeHeuristic:bool, 
-				     pred:pcexp option, comment} = 
+		     fun genAccFull {pty: PX.Pty, args: pcexp list, name: string, 
+				     isVirtual: bool, isEndian: bool, 
+				     isRecord, containsRecord, largeHeuristic: bool, 
+				     pred: pcexp option, comment} = 
 			 case lookupAcc pty of NONE => []
 			 | SOME a => [(name,P.makeTypedefPCT a,NONE)]
 		     fun genAccBrief e = []
@@ -2566,17 +2573,19 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		     val accPCT = P.makeTypedefPCT (accSuf name)			  
 
 		     (* Calculate and insert type properties into type table *)
-		     fun genTyPropsFull {pty :PX.Pty, args : pcexp list, name:string, 
-					 isVirtual:bool, isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
-					 pred:pcexp option, comment:string option} = 
+		     fun genTyPropsFull {pty: PX.Pty, args: pcexp list, name: string, 
+					 isVirtual: bool, isEndian: bool, 
+					 isRecord, containsRecord, largeHeuristic: bool,
+					 pred: pcexp option, comment: string option} = 
 			  let val mc = lookupMemChar pty
 			      val ds = lookupDiskSize pty
-			      val isRecord = isRecord (* lookupRecord pty *) 
-			      val largeHeuristic = lookupHeuristic pty 
+			      val isR = isRecord (* lookupRecord pty *)
+			      val contR = lookupContainsRecord pty	 
+			      val lH = lookupHeuristic pty 
 			      val () = if isVirtual 
 				       then PE.error ("Omitted fields not supported in punions ("^name ^"). ")
 				       else ()
-			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isRecord, containsRecord=containsRecord, largeHeuristic=largeHeuristic}] end
+			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isR, containsRecord=contR, largeHeuristic=lH}] end
 		     fun genTyPropsBrief e = [] (* not used in unions *)
 		     val tyProps = mungeVariants genTyPropsFull genTyPropsBrief genTyPropsMan variants
                      (* check that all variants are records if any are *)
@@ -2587,15 +2596,16 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				    else ())
 					
 		     fun mUnion (x,y) = if (x = y) then TyProps.Size x else TyProps.Variable
-		     val {diskSize,memChar,endian,isRecord=_,containsRecord,largeHeuristic} = 
+                     val isR = isRecord
+		     val {diskSize,memChar,endian,isRecord,containsRecord,largeHeuristic} = 
 			 List.foldr (PTys.mergeTyInfo mUnion) PTys.minTyInfo tyProps
-		     val unionProps = buildTyProps(name,PTys.Union, diskSize,memChar,endian,isRecord, containsRecord, largeHeuristic, isFile, edTid)
+		     val unionProps = buildTyProps(name, PTys.Union, diskSize, memChar, endian, isR, containsRecord, largeHeuristic, isFile, edTid)
                      val () = PTys.insert(Atom.atom name, unionProps)
 
                      (* union: generate canonical representation *)
-		     fun genRepFull {pty :PX.Pty, args : pcexp list, name:string, 
-				     isVirtual:bool, isEndian:bool, isRecord,containsRecord,largeHeuristic:bool,
-				     pred:pcexp option, comment:string option} = 
+		     fun genRepFull {pty: PX.Pty, args: pcexp list, name: string, 
+				     isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+				     pred: pcexp option, comment: string option} = 
 			 let val predStringOpt = Option.map P.expToString pred
 			     val fullCommentOpt = stringOptMerge(comment, predStringOpt)
 			 in
@@ -3052,7 +3062,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                      @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 		 end
 	  
-             fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, largeHeuristic, isFile,
+             fun cnvPArray {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, largeHeuristic, isFile : bool,
 			    args : pcexp list, baseTy:PX.Pty, 
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list} =
 	     let val length = PNames.arrayLen
@@ -3072,7 +3082,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 
 
                  (* Some useful functions *)
-                 fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg,args, setPanic) = 
+                 fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic) = 
                      PT.Compound([
 		       PT.IfThen(PL.getSpecLevelX(PT.Id pdc),
 				 PT.Return PL.PDC_ERROR),
@@ -3272,7 +3282,10 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 					 if min = max then TyProps.Size(n * (IntInf.toInt max), r * (IntInf.toInt max))
 					 else TyProps.Variable
 				     | _ => TyProps.Variable
-                 val arrayProps = buildTyProps(name,PTys.Array,arrayDiskSize, arrayMemChar, false, isRecord,containsRecord, largeHeuristic,isFile,edTid)
+		 val contR = lookupContainsRecord baseTy 
+		 val lH = contR orelse (lookupHeuristic baseTy)
+
+                 val arrayProps = buildTyProps(name,PTys.Array,arrayDiskSize,arrayMemChar,false,isRecord,contR,lH,isFile,edTid)
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
 
@@ -3963,8 +3976,9 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                  @ (List.concat(List.map cnvExternalDecl reportFunEDs))
 	     end
 
-	  fun cnvPEnum  {name:string, params : (pcty * pcdecr) list, isRecord, containsRecord, largeHeuristic,isFile,
-			 members : (string * pcexp option * string option) list } =
+	  fun cnvPEnum  {name:string, params: (pcty * pcdecr) list, 
+			 isRecord, containsRecord, largeHeuristic, isFile,
+			 members: (string * pcexp option * string option) list } =
 	      let val baseTy = PX.Name PL.strlit
                   fun mungeMembers (name, expOpt, commentOpt) = 
 		      case expOpt of NONE => (name, PT.EmptyExpr, commentOpt)
@@ -3998,7 +4012,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  else TyProps.Variable
 			      end
 			   else TyProps.Size (0,0)
-                  val enumProps = buildTyProps(name,PTys.Enum,ds,TyProps.Static, true, isRecord,containsRecord,largeHeuristic,isFile,edTid)
+                  val enumProps = buildTyProps(name,PTys.Enum,ds,TyProps.Static,true,isRecord,containsRecord,largeHeuristic,isFile,edTid)
 		  val () = PTys.insert(Atom.atom name, enumProps)
 
                   (* enums: generate canonical representation *)
