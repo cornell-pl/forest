@@ -8,8 +8,11 @@ end
 CCFLAGS = $(CC.DEBUG)
 
 myrand :: myrand.c
+cvt_ebcdic_to_ascii :: cvt_ebcdic_to_ascii.c
+cvt_ascii_to_ebcdic :: cvt_ascii_to_ebcdic.c
 
-libtests : ebcdic_test adate_test mk_ex_data_libtest2 mk_ex_data_ebcdic_test libtest1 libtest2 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1 string_share_test
+
+libtests : ebcdic_test adate_test mk_ex_data_libtest2 mk_ex_data_ebcdic_test libtest1 libtest2 ebcdic_libtest4 libtest4 rbuftest1 mk_ex_data_biglibtest1 biglibtest1 string_share_test
 
 accumtests : accumtest accumtest2 accumtest_s
 
@@ -20,6 +23,7 @@ libtest1         :: libtest1.c          -lpadsc
 biglibtest1      :: biglibtest1.c       -lpadsc
 libtest2         :: libtest2.c          -lpadsc
 libtest4         :: libtest4.c          -lpadsc
+ebcdic_libtest4  :: ebcdic_libtest4.c   -lpadsc
 rbuftest1        :: rbuftest1.c         -lpadsc
 ebcdic_test      :: ebcdic_test.c       -lpadsc
 
@@ -36,7 +40,8 @@ mk_ex_data_ebcdic_test :: mk_ex_data_ebcdic_test.c
 
 regress : regress_libtest1 \
           regress_libtest2 \
-          regress_libtest4
+          regress_libtest4 \
+          regress_ebcdic_libtest4
 
 regress_libtest1 : libtest1
 	if [ -f tmp/tmp.libtest1 ]; then $(RM) tmp/tmp.libtest1; fi
@@ -52,6 +57,11 @@ regress_libtest4 : libtest4
 	if [ -f tmp/tmp.libtest4 ]; then $(RM) tmp/tmp.libtest4; fi
 	(./libtest4 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.libtest4
 	diff tmp/tmp.libtest4 ../../regress/libtest4.regress || echo LIBTEST4 DIFFERS
+
+regress_ebcdic_libtest4 : ebcdic_libtest4
+	if [ -f tmp/tmp.ebcdic_libtest4 ]; then $(RM) tmp/tmp.ebcdic_libtest4; fi
+	(./ebcdic_libtest4 2>&1) | grep -v XXX_REMOVE | cat > tmp/tmp.ebcdic_libtest4
+	diff tmp/tmp.ebcdic_libtest4 ../../regress/ebcdic_libtest4.regress || echo EBCDIC_LIBTEST4 DIFFERS
 
 clean :
 	$(RM) -f *.o *test* *~

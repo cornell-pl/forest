@@ -49,15 +49,11 @@ extern void bzero(void *s, size_t n);
  *
  *   copy_strings : if non-zero, the string read functions copy the strings found, otherwise they do not
  *                  (instead the target PDC_string points to memory managed by the current IO discipline).
- *                  copy_strings should only be set to zero when an IO checkpoint has been established to ensure
- *                  that the referenced strings remain in memory.  For example, it is safe to set copy_strings
- *                  to zero with this code pattern:
- *
- *                     PDC_IO_checkpoint(pdc);
- *                     .. 
- *                     PDC_astring_read(..);
- *                     ..
- *                     PDC_IO_commit(pdc);
+ *                  copy_strings should only be set to zero for record-based IO disciplines where
+ *                  strings from record K are not used after PDC_IO_next_rec has been called to move
+ *                  the IO cursor to record K+1.  Note: PDC_string_preserve can be used to
+ *                  force a string that is using sharing to make a copy so that the string is 'preserved'
+ *                  (remains valid) across calls to PDC_IO_next_rec.
  *
  *   m_endian  : machine endian-ness (PDC_bigEndian or PDC_littleEndian)
  *
@@ -97,7 +93,7 @@ extern void bzero(void *s, size_t n);
  *    e_rep:        PDC_errorRep_Max
  *    m_endian:     PDC_bigEndian
  *    d_endian:     PDC_bigEndian
- *    io_disc:      NULL -- a default IO discipline (nlrec: for newline-terminated records)
+ *    io_disc:      NULL -- a default IO discipline (newline-terminated records)
  *                  is installed on PDC_open if one is not installed beforehand
  *
  *
@@ -567,7 +563,7 @@ PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset);
 /* ================================================================================ */
 /* LITERAL READ FUNCTIONS */
 
-/* PDC_char_lit_read / str_lit_read:
+/* PDC_achar_lit_read / astr_lit_read:
  *
  * EFFECT: verify IO cursor points to specified char/string, move IO cursor just beyond
  *   N.B. The error mask has the following meaning for these two functions.  If *em is:
@@ -585,11 +581,11 @@ PDC_error_t  PDC_IO_getLoc   (PDC_t *pdc, PDC_loc_t *loc, int offset);
  *               (errCode PDC_CHAR_LIT_NOT_FOUND / PDC_STR_LIT_NOT_FOUND)
  */
 
-PDC_error_t PDC_char_lit_read(PDC_t *pdc, PDC_base_em *em,
-			      PDC_base_ed *ed, unsigned char c);
+PDC_error_t PDC_achar_lit_read(PDC_t *pdc, PDC_base_em *em,
+			       PDC_base_ed *ed, unsigned char c);
 
-PDC_error_t PDC_str_lit_read(PDC_t *pdc, PDC_base_em *em,
-			     PDC_base_ed *ed, const PDC_string *s);
+PDC_error_t PDC_astr_lit_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, const PDC_string *s);
 
 /* PDC_countX : count occurrences of char x between the
  * current IO cursor and the first EOR or EOF.  If param
@@ -659,13 +655,11 @@ PDC_error_t PDC_adate_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
 			   PDC_base_ed *ed, PDC_uint32 *res_out);
 
 /* ================================================================================ */
-/* STRING READ FUNCTIONS */
+/* STRING HELPER FUNCTIONS */
 
-/* Related helper functions:
- *
- *    PDC_string_init    : initialize to valid empty string (no dynamic memory allocated yet)
+/*    PDC_string_init    : initialize to valid empty string (no dynamic memory allocated yet)
  *    PDC_string_cleanup : free up the rbuf and any allocated space for the string
- *    PDC_string_share    : makes the PDC_string targ refer to the string specified by src/len,
+ *    PDC_string_share   : makes the PDC_string targ refer to the string specified by src/len,
  *                          sharing the space with the original owner.
  *    PDC_string_copy    : copy len chars from string src into the PDC_string targ;
  *                         allocates RBuf and/or space for the copy, as necessary.
@@ -692,6 +686,9 @@ PDC_error_t PDC_string_preserve(PDC_t *pdc, PDC_string *s);
 
 PDC_error_t PDC_string_ed_init(PDC_t *pdc, PDC_string_ed *ed);
 PDC_error_t PDC_string_ed_cleanup(PDC_t *pdc, PDC_string_ed *ed);
+
+/* ================================================================================ */
+/* ASCII STRING READ FUNCTIONS */
 
 /* The string read functions each has a different way of specifying
  * the extent of the string: astringFW_read specifies a fixed width,
@@ -734,6 +731,43 @@ PDC_error_t PDC_astringSE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRege
 			       PDC_base_ed *ed, PDC_string *s_out);
 
 PDC_error_t PDC_astringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
+				PDC_base_ed *ed, PDC_string *s_out);
+
+/* ================================================================================ */
+/* EBCDIC STRING READ FUNCTIONS */
+
+/* These functions behave exactly like the corresponding ASCII string read
+ * functions, except the data being read is EBCDIC encoded.
+ *
+ * N.B. ** Two important things to remember:
+ *       1. The EBCDIC data is converted to ASCII, thus the resulting
+ *          string is an ASCII string.
+ *       2. The stop char (stop regular expression) are specified
+ *          using an ASCII character (ASCII string).
+ *
+ * Example: passing '|' (vertical bar, which is code 124 in ASCII) as the stop
+ *          char will result in a search for the EBCDIC encoding
+ *          of vertical bar (code 79 in EBCDIC), and all EBCDIC chars
+ *          between the IO cursor and the EBCDIC vertical bar will
+ *          be converted to ASCII chars. 
+ *
+ * ** N.B. If pdc->disc->copy_strings is zero, then sharing is used and the
+ *         string is modified 'in place' (replacing EBCDIC chars with ASCII chars).
+ *         If copy_strings is non-zero, the original EBCDIC chars are unmodified,
+ *         while the string copy will contain ASCII chars.  This distinction only
+ *         matters if the special output version of PDC_IO_commit is used.
+ */
+
+PDC_error_t PDC_estring_read(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+			     PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_estringFW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
+			       PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_estringSE_read(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
+			       PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_estringCSE_read(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
 				PDC_base_ed *ed, PDC_string *s_out);
 
 /* ================================================================================ */
@@ -862,7 +896,7 @@ PDC_error_t PDC_auint64FW_read(PDC_t *pdc, PDC_base_em *em, size_t width,
 /* ================================================================================ */
 /* EBCDIC INTEGER READ FUNCTIONS */
 
-/* These functions are just like their ascii counterparts; the only
+/* These functions are just like their ASCII counterparts; the only
  * difference is the encoding.  The error codes used are also the same,
  * except that codes PDC_INVALID_EINT/PDC_INVALID_EUINT are used rather 
  * than PDC_INVALID_AINT/PDC_INVALID_AUINT.
@@ -1135,11 +1169,11 @@ PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char 
 /* Scan functions are used to 'find' a location that is forward of the
  * current IO position.  They are normally used for error recovery purposes,
  * but are exposed here because they are generally useful.
- * N.B. Use PDC_char_lit_read / PDC_string_lit_read for cases where
+ * N.B. Use PDC_achar_lit_read / PDC_astring_lit_read for cases where
  * a literal is known to be at the current IO position.
  */
 
-/* PDC_char_lit_scan:
+/* PDC_achar_lit_scan:
  *
  * EFFECT: 
  *  Scans for either goal character c or stop character s.  If a gloal
@@ -1159,7 +1193,7 @@ PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char 
  *                      (0 means the IO cursor was already pointing at the found char)
  *         PDC_ERR   => char not found, IO cursor unchanged
  * 
- * PDC_string_lit_scan: same as char_lit_scan execpt a goal string
+ * PDC_astr_lit_scan: same as achar_lit_scan execpt a goal string
  * and stop string are given.  In this case, if there is no stop
  * string, a NULL stop string should be used.  On PDC_OK, *str_out
  * points to either findStr or stopStr (depending on which was found),
@@ -1170,11 +1204,35 @@ PDC_error_t PDC_int32_acc_report_map(PDC_t *pdc, const char *prefix, const char 
  * was found.  On PDC_ERR, the IO cursor is unchanged. 
  */
 
-PDC_error_t PDC_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
-			      unsigned char *c_out, size_t *offset_out);
+PDC_error_t PDC_achar_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
+			       unsigned char *c_out, size_t *offset_out);
 
-PDC_error_t PDC_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
-			     PDC_string **str_out, size_t *offset_out);
+PDC_error_t PDC_astr_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+			      PDC_string **str_out, size_t *offset_out);
+
+/* ================================================================================ */
+/* EBCDIC LITERAL READ and SCAN FUNCTIONS */
+
+/*
+ * Just like the ASCII versions, except the data read is EBCDIC data.
+ *
+ * ** N.B. The char or string to be read or scanned is specified in ASCII
+ *    and converted to EBCDIC by the read or scan routine.  
+ */
+
+PDC_error_t PDC_achar_lit_read(PDC_t *pdc, PDC_base_em *em,
+			       PDC_base_ed *ed, unsigned char c);
+
+PDC_error_t PDC_astr_lit_read(PDC_t *pdc, PDC_base_em *em,
+			      PDC_base_ed *ed, const PDC_string *s);
+
+PDC_error_t PDC_achar_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
+			       unsigned char *c_out, size_t *offset_out);
+
+PDC_error_t PDC_astr_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+			      PDC_string **str_out, size_t *offset_out);
+
+
 
 /* ================================================================================ */
 /* STRING COMPARISON */
@@ -1213,9 +1271,10 @@ unsigned int PDC_spec_level    (PDC_t *pdc);
  *
  * PDC_regexp_free takes a handle to a compiled regexp obj and frees the obj.
  *
- * ** At the moment, only regular expressions of the form
- *               [<chars>]
- *     are supported, i.e., a set of chars can be specified.
+ * ** At the moment, the following regular expression forms are supported:
+ *               EOR                  -- matches EOR
+ *               [<chars>]            -- matches one of the chars in <chars>
+ *               [<chars>]|EOR        -- matches either EOR or one of the chars in <chars>
  */
 
 PDC_error_t PDC_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out);

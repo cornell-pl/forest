@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(str1), str1->len);
     }
-    if (PDC_ERR == PDC_char_lit_read(pdc, &em, &ed, '|')) {
+    if (PDC_ERR == PDC_achar_lit_read(pdc, &em, &ed, '|')) {
       PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
       goto find_EOR;
     }
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(str2), str2->len);
     }
-    if (PDC_ERR == PDC_char_lit_read(pdc, &em, &ed, '|')) {
+    if (PDC_ERR == PDC_achar_lit_read(pdc, &em, &ed, '|')) {
       PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
       goto find_EOR;
     }
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
     }
   find_EOR:
     if (norec) {
-      if (PDC_ERR == PDC_char_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
+      if (PDC_ERR == PDC_achar_lit_scan(pdc, '\n', '\n', 1, 0, &bytes_skipped)) {
 	error(2, "Could not find EOR (newline), ending program");
 	goto done;
       }

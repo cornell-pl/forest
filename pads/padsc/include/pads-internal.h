@@ -96,6 +96,18 @@ PDC_error_t PDC_astringSE_read_internal(PDC_t *pdc, PDC_base_em *em, const char 
 PDC_error_t PDC_astringCSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
 					 PDC_base_ed *ed, PDC_string *s_out);
 
+PDC_error_t PDC_estringFW_read_internal(PDC_t *pdc, PDC_base_em *em, size_t width,
+					PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_estring_read_internal(PDC_t *pdc, PDC_base_em *em, unsigned char stopChar,
+				      PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_estringSE_read_internal(PDC_t *pdc, PDC_base_em *em, const char *stopRegexp,
+					PDC_base_ed *ed, PDC_string *s_out);
+
+PDC_error_t PDC_estringCSE_read_internal(PDC_t *pdc, PDC_base_em *em, PDC_regexp_t *stopRegexp,
+					 PDC_base_ed *ed, PDC_string *s_out);
+
 PDC_error_t PDC_aint8_read_internal (PDC_t *pdc, PDC_base_em *em,
 				     PDC_base_ed *ed, PDC_int8 *res_out);
 
@@ -339,10 +351,11 @@ unsigned long long PDCI_stringtoull(const char *, char **, int);
 /* INTERNAL MISC ROUTINES */
 
 /*  PDCI_regexpMatch returns the number of characters in str that match regexp
- *  (or 0 if str does not match the regular expression).
+ *  (or 0 if str does not match the regular expression).  If ebcdic is non-zero, the
+ *  chars between begin and end are EBCDIC chars, otherwise they are ASCII chars.
  */
 
-size_t PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, char *begin, char *end);
+size_t PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, char *begin, char *end, int ebcdic);
 
 /* Accum impl helpers:
  *

@@ -6,7 +6,7 @@ PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint3
   moded->panic = 0;
   /* XXX_OPT ************ Check short-circuit Ignore case ************* */
   if (modem->val == PDC_Ignore) { /* all fields prior to delim are set to Ignore */
-    if (PDC_ERR!=PDC_char_lit_scan (pdc,124,124,1,0,0)) 
+    if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,0)) 
       {
 	moded->errCode = PDC_NO_ERR;
 	return PDC_OK;
@@ -64,7 +64,7 @@ PDC_error_t auint32_vbar_read_internal (PDC_t *pdc,auint32_vbar_em *modem,auint3
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_char_lit_scan (pdc,124,124,1,0,&n)) 
+          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }
@@ -222,7 +222,7 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
   moded->panic = 0;
   /* XXX_OPT ************ Check short-circuit Ignore case ************* */
   if (modem->val == PDC_Ignore) { /* all fields prior to delim are set to Ignore */
-    if (PDC_ERR!=PDC_char_lit_scan (pdc,124,124,1,0,0)) 
+    if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,0)) 
       {
 	moded->errCode = PDC_NO_ERR;
 	return PDC_OK;
@@ -280,7 +280,7 @@ PDC_error_t auint64_vbar_read_internal (PDC_t *pdc,auint64_vbar_em *modem,auint6
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_char_lit_scan (pdc,124,124,1,0,&n)) 
+          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }
@@ -445,7 +445,7 @@ PDC_error_t just_vbar_read_internal (PDC_t *pdc,just_vbar_em *modem,just_vbar_ed
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_char_lit_scan (pdc,124,124,1,0,&n)) 
+          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }
@@ -1632,7 +1632,7 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_char_lit_scan (pdc,124,124,1,0,&n)) 
+          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }
@@ -1696,7 +1696,7 @@ PDC_error_t event_read_internal (PDC_t *pdc,event_em *modem,event_ed *moded,even
       if (moded->panic) 
         {
           size_t n;
-          if (PDC_ERR!=PDC_char_lit_scan (pdc,124,124,1,0,&n)) 
+          if (PDC_ERR!=PDC_achar_lit_scan (pdc,124,124,1,0,&n)) 
             {
               moded->panic = 0;
             }

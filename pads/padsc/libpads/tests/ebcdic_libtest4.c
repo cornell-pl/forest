@@ -20,14 +20,14 @@ int main(int argc, char** argv) {
   unsigned long   ultmp;
   PDC_regexp_t    *my_regexp;
 
-  error(0, "\nUsing PADSC IO discipline nlrec\n\n");
-  io_disc = PDC_nlrec_make(0);
+  error(0, "\nUsing PADSC IO discipline ctrec with cterm PDC_EBCDIC_NEWLINE\n\n");
+  io_disc = PDC_ctrec_noseek_make(PDC_EBCDIC_NEWLINE, 0);
 
   if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.libtest4")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.libtest4.ebcdic")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -48,25 +48,25 @@ int main(int argc, char** argv) {
       break;
     }
     /* try to read line with 2 strings term by vbar 1 string term by EOR */
-    if (PDC_ERR == PDC_astring_read(pdc, &em, '|', &ed, &s)) {
+    if (PDC_ERR == PDC_estring_read(pdc, &em, '|', &ed, &s)) {
       goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
     }
-    if (PDC_ERR == PDC_achar_lit_read(pdc, &em, &ed, '|')) {
+    if (PDC_ERR == PDC_echar_lit_read(pdc, &em, &ed, '|')) {
       PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_astring_read(pdc, &em, '|', &ed, &s)) {
+    if (PDC_ERR == PDC_estring_read(pdc, &em, '|', &ed, &s)) {
       goto find_EOR;
     } else {
       error(0, "Read string term by vbar: %s (length %d)", PDC_fmt_str(&s), s.len);
     }
-    if (PDC_ERR == PDC_achar_lit_read(pdc, &em, &ed, '|')) {
+    if (PDC_ERR == PDC_echar_lit_read(pdc, &em, &ed, '|')) {
       PDCI_report_err (pdc, 0, &ed.loc, ed.errCode, 0);
       goto find_EOR;
     }
-    if (PDC_ERR == PDC_astringCSE_read(pdc, &em, my_regexp, &ed, &s)) {
+    if (PDC_ERR == PDC_estringCSE_read(pdc, &em, my_regexp, &ed, &s)) {
       break;
     } else {
       error(0, "Read string term by EOR or X : %s (length %d)", PDC_fmt_str(&s), s.len);

@@ -20,6 +20,8 @@
 #define PDC_PRIVATE_STATE \
   Vmalloc_t         *vm;       /* vm handle */ \
   Sfio_t            *tmp;      /* tmp sfprintf area */ \
+  PDC_string        stmp1;     /* tmp string 1 */ \
+  PDC_string        stmp2;     /* tmp string 2 */ \
   RMM_t             *rmm_z;    /* rbuf memory mgr -- zeroes allocated memory */  \
   RMM_t             *rmm_nz;   /* rbuf memory mgr -- does not zero allocated memory */  \
   /* The following are all related to IO state / checkpointing */ \

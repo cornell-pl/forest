@@ -70,8 +70,8 @@ struct
   val base_emPCT   = P.makeTypedefPCT "PDC_base_em"
   val base_edPCT   = P.makeTypedefPCT "PDC_base_ed"
 
-  val charlit      = "PDC_char_lit"
-  val strlit       = "PDC_str_lit"
+  val charlit      = "PDC_achar_lit"
+  val strlit       = "PDC_astr_lit"
   val stringPCT    = P.makeTypedefPCT "PDC_string"
   val str          = "str"
   val len          = "len"

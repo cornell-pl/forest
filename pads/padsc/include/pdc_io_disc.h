@@ -14,6 +14,13 @@
 #define __PDC_IO_DISC_H__
 
 /* ================================================================================ */
+/* IO DISCIPLINE CONSTANTS */
+
+#define PDC_ASCII_NEWLINE '\n'
+#define PDC_EBCDIC_NEWLINE 0x25
+/* N.B. EBCDIC 0x15 is used on some systems for LF, 0x25 on others */
+
+/* ================================================================================ */
 /* THE IO DISCIPLINE
  *
  * Type PDC_IO_disc_t is used to control the 'raw' reading of data
@@ -31,7 +38,7 @@
  *
  * Note that there are two versions of each kind of IO discipline:
  *    fwrec and fwrec_noseek
- *    nlrec and nlrec_noseek
+ *    ctrec and ctrec_noseek
  *    norec and norec_noseek
  * The noseek versions do not require that the sfio stream
  * be seekable, while the other versions do.  
@@ -46,12 +53,17 @@ PDC_IO_disc_t * PDC_fwrec_make(size_t leader_len, size_t data_len, size_t traile
  * of the 3 arguments.  
  */
 
-PDC_IO_disc_t * PDC_nlrec_make(size_t block_size_hint);
-/* Instantiates an instance of nlrec, a discipline for
- * newline-terminated variable-width records.  block_size_hint is a
+PDC_IO_disc_t * PDC_ctrec_make(unsigned char termChar, size_t block_size_hint);
+/* Instantiates an instance of ctrec, a discipline for
+ * character-terminated variable-width records. termChar is the
+ * character that marks the end of a record. block_size_hint is a
  * hint as to what block size to use, if the discipline chooses to do
  * fixed block-sized reads 'under the covers'.  It may be ignored by
  * the discipline.
+ * 
+ * For ASCII newline-terminated records use, '\n' or PDC_ASCII_NEWLINE
+ * as the term character.  For EBCDIC newline-terminated records, use
+ * PDC_EBCDIC_NEWLINE as the term character.
  */
 
 PDC_IO_disc_t * PDC_norec_make(size_t block_size_hint);
@@ -66,8 +78,8 @@ PDC_IO_disc_t * PDC_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t
  * that does not require that the sfio stream is seekable.
  */
 
-PDC_IO_disc_t * PDC_nlrec_noseek_make(size_t block_size_hint);
-/* Instantiates an instance of nlrec_noseek, a version of norec
+PDC_IO_disc_t * PDC_ctrec_noseek_make(unsigned char termChar, size_t block_size_hint);
+/* Instantiates an instance of ctrec_noseek, a version of norec
  * that does not require that the sfio stream is seekable.
  */
 
@@ -75,6 +87,10 @@ PDC_IO_disc_t * PDC_norec_noseek_make(size_t block_size_hint);
 /* Instantiates an instance of norec_noseek, a version of norec
  * that does not require that the sfio stream is seekable.
  */
+
+/* Shorthands for calling corresponding ctrec make functions with '\n' as termChar: */
+#define PDC_nlrec_make(block_size_hint)         PDC_ctrec_make('\n', block_size_hint)
+#define PDC_nlrec_noseek_make(block_size_hint)  PDC_ctrec_noseek_make('\n', block_size_hint)
 
 /* PDC_IO_elt_t: used for list of input records managed by the io
  * discipline.  The io discipline maintains a doubly-linked list of
