@@ -45,5 +45,11 @@ struct CMR_tmentry_s {
 
 extern CMR_tmentry_t tmap[];
 
+/* io discipline helpers */
+
+/* returns -1 on usage error, 0 otherwise */
+/* (*iodisc_out) set to result of iodisc open call (may be NULL) */
+int CMR_open_iodisc(CMDLINE_iodisc_spec *ispec, PDC_IO_disc_t ** iodisc_out);
+
 #endif  /* __CMONSTER_H__  */
 

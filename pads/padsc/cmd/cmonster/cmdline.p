@@ -78,14 +78,14 @@ Punion CMDLINE_cookie_spec {
 }
 
 Penum CMDLINE_discipline {
-  fwrec,
-  ctrec,
-  nlrec,
-  vlrec,
   fwrec_noseek,
   ctrec_noseek,
   nlrec_noseek,
-  vlrec_noseek
+  vlrec_noseek,
+  fwrec,
+  ctrec,
+  nlrec,
+  vlrec
 };
 
 Pstruct CMDLINE_iodisc_spec {
