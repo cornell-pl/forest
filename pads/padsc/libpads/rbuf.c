@@ -25,25 +25,27 @@
 /* ================================================================================ */
 /* RMM : default allin1 functions and disciplines */
 
-void* RMM_allin1_zero(void* vm, void* data, size_t size)
+void *
+RMM_allin1_zero(void *vm, void *data, size_t size)
 {
   if (!vm) {
-    return (void*)vmopen(Vmdcheap, Vmbest, 0);
+    return (void *)vmopen(Vmdcheap, Vmbest, 0);
   }
   if (data || size) {
-    return (void*)vmresize((Vmalloc_t*)vm, data, size, VM_RSMOVE|VM_RSCOPY|VM_RSZERO);
+    return (void *)vmresize((Vmalloc_t*)vm, data, size, VM_RSMOVE|VM_RSCOPY|VM_RSZERO);
   }
   vmclose((Vmalloc_t*)vm);
   return 0;
 }
 
-void* RMM_allin1_nozero(void* vm, void* data, size_t size)
+void *
+RMM_allin1_nozero(void *vm, void *data, size_t size)
 {
   if (!vm) {
-    return (void*)vmopen(Vmdcheap, Vmbest, 0);
+    return (void *)vmopen(Vmdcheap, Vmbest, 0);
   }
   if (data || size) {
-    return (void*)vmresize((Vmalloc_t*)vm, data, size, VM_RSMOVE|VM_RSCOPY);
+    return (void *)vmresize((Vmalloc_t*)vm, data, size, VM_RSMOVE|VM_RSCOPY);
   }
   vmclose((Vmalloc_t*)vm);
   return 0;
@@ -52,17 +54,17 @@ void* RMM_allin1_nozero(void* vm, void* data, size_t size)
 RMM_disc_t RMM_zero_disc   = { RMM_allin1_zero };
 RMM_disc_t RMM_nozero_disc = { RMM_allin1_nozero };
 
-RMM_disc_t* RMM_zero_disc_ptr   = &RMM_zero_disc;
-RMM_disc_t* RMM_nozero_disc_ptr = &RMM_nozero_disc;
+RMM_disc_t *RMM_zero_disc_ptr   = &RMM_zero_disc;
+RMM_disc_t *RMM_nozero_disc_ptr = &RMM_nozero_disc;
 
 /* ================================================================================ */
 /* RMM : open/close */
 
 RMM_t*
-RMM_open(RMM_disc_t* disc)
+RMM_open(RMM_disc_t *disc)
 {
-  void* vm;
-  RMM_t* res;
+  void  *vm;
+  RMM_t *res;
 
   if (!disc) {
     disc = RMM_zero_disc_ptr;
@@ -79,7 +81,7 @@ RMM_open(RMM_disc_t* disc)
 }
 
 int
-RMM_close(RMM_t* mgr)
+RMM_close(RMM_t *mgr)
 {
   if (!mgr || !mgr->vm || !mgr->fn) {
     return -1; /* failure */
@@ -92,9 +94,9 @@ RMM_close(RMM_t* mgr)
 /* RMM : new/free functions */
 
 RBuf_t*
-RMM_new_rbuf (RMM_t* mgr)
+RMM_new_rbuf (RMM_t *mgr)
 {
-  RBuf_t* res;
+  RBuf_t *res;
 
   if (!mgr || !mgr->vm || !mgr->fn) {
     return 0; /* failure */
@@ -109,9 +111,9 @@ RMM_new_rbuf (RMM_t* mgr)
 }
 
 int
-RMM_free_rbuf(RBuf_t* rbuf)
+RMM_free_rbuf(RBuf_t *rbuf)
 {
-  RMM_t* mgr;
+  RMM_t *mgr;
   if (!rbuf) {
     return -2; /* failure - other */
   }
@@ -129,9 +131,9 @@ RMM_free_rbuf(RBuf_t* rbuf)
 }
 
 int
-RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t** mgr_out)
+RMM_free_rbuf_keep_buf(RBuf_t *rbuf, void **buf_out, RMM_t **mgr_out)
 {
-  RMM_t* mgr;
+  RMM_t *mgr;
   if (!rbuf) {
     return -2; /* failure - other */
   }
@@ -152,7 +154,7 @@ RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t** mgr_out)
 }
 
 int
-RMM_free_buf(RMM_t* mgr, void* buf)
+RMM_free_buf(RMM_t *mgr, void *buf)
 {
   if (!mgr || !mgr->vm || !mgr->fn) {
     return -1; /* failure - no manager */
@@ -165,10 +167,10 @@ RMM_free_buf(RMM_t* mgr, void* buf)
 /* RBuf: reserve function */
 
 int
-RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
+RBuf_reserve(RBuf_t *rbuf, void **buf_out, size_t eltSize,
 	     size_t numElts, size_t maxEltHint)
 {
-  RMM_t* mgr;
+  RMM_t  *mgr;
   size_t new_size;
   size_t targ_size;
 
@@ -233,7 +235,7 @@ RBuf_reserve(RBuf_t* rbuf, void** buf_out, size_t eltSize,
 /* RBuf : accessor functions */
 
 size_t
-RBuf_bufSize(RBuf_t* rbuf)
+RBuf_bufSize(RBuf_t *rbuf)
 {
   if (!rbuf) {
     return 0;
@@ -242,7 +244,7 @@ RBuf_bufSize(RBuf_t* rbuf)
 }
 
 size_t
-RBuf_numElts(RBuf_t* rbuf)
+RBuf_numElts(RBuf_t *rbuf)
 {
   if (!rbuf) {
     return 0;
@@ -251,7 +253,7 @@ RBuf_numElts(RBuf_t* rbuf)
 }
 
 size_t
-RBuf_eltSize(RBuf_t* rbuf)
+RBuf_eltSize(RBuf_t *rbuf)
 {
   if (!rbuf) {
     return 0;
@@ -260,7 +262,7 @@ RBuf_eltSize(RBuf_t* rbuf)
 }
 
 size_t
-RBuf_maxEltHint(RBuf_t* rbuf)
+RBuf_maxEltHint(RBuf_t *rbuf)
 {
   if (!rbuf) {
     return 0;
@@ -268,8 +270,8 @@ RBuf_maxEltHint(RBuf_t* rbuf)
   return rbuf->maxEltHint;
 }
 
-void*
-RBuf_get_buf(RBuf_t* rbuf)
+void *
+RBuf_get_buf(RBuf_t *rbuf)
 {
   if (!rbuf) {
     return 0;
@@ -277,13 +279,13 @@ RBuf_get_buf(RBuf_t* rbuf)
   return rbuf->buf;
 }
 
-void*
-RBuf_get_elt(RBuf_t* rbuf, size_t index)
+void *
+RBuf_get_elt(RBuf_t *rbuf, size_t index)
 {
   if (!rbuf) {
     return 0;
   }
-  return (void*) ((char*)rbuf->buf + (index * rbuf->eltSize));
+  return (void *) ((char*)rbuf->buf + (index * rbuf->eltSize));
 }
 
 /* ================================================================================ */

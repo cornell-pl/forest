@@ -12,8 +12,8 @@
 #include "rbuf.h"
 
 struct RBuf_s {
-  RMM_t*       mgr;
-  void*        buf;
+  RMM_t        *mgr;
+  void         *buf;
   size_t       bufSize;
   size_t       eltSize;
   size_t       numElts;
@@ -22,7 +22,7 @@ struct RBuf_s {
 };
 
 struct RMM_s {
-  void*          vm;
+  void           *vm;
   RMM_allin1_fn  fn;
 };
 

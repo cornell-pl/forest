@@ -187,14 +187,15 @@ RBuf_RESERVE(rbuf, buf_ptr, type, numElts)
 RBuf_RESERVE is a macro that calls RBuf_reserve.  The rewrite that occurs
 is that the above call is turned into:
 
-RBuf_reserve(rbuf, (void**)&(buf_ptr), sizeof(type), numElts, 0, 0)
+RBuf_reserve(rbuf, (void**)&(buf_ptr), sizeof(type), numElts, numElts)
 
 For example, these 2 calls are equivalent:
 
   RBuf_RESERVE(rbuf, buf, char, 12);
-  RBuf_reserve(rbuf, (void**)&buf, sizeof(char), 12, 0);
+  RBuf_reserve(rbuf, (void**)&buf, sizeof(char), 12, 12);
 
-Note that if you want to specify maxEltHint you cannot use this macro.
+Note that if you want to specify maxEltHint that is different from numElts,
+you cannot use this macro.
 
 ================================================================================
 RBuf state access functions:
@@ -277,7 +278,7 @@ void*     RBuf_get_elt  (RBuf_t* rbuf, size_t index);
 /* MACROS */
 
 #define RBuf_RESERVE(rbuf, buf_ptr, type, numElts) \
-  RBuf_reserve((rbuf), (void**)&(buf_ptr), sizeof(type), (numElts), 0)
+  RBuf_reserve((rbuf), (void**)&(buf_ptr), sizeof(type), (numElts), (numElts))
 
 #define RBuf_GET_BUF(rbuf, type) \
   (type)* RBuf_get_buf(rbuf)
