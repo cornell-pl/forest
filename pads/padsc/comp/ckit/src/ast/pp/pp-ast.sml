@@ -20,11 +20,14 @@ local
 	  (Ast.DECL (coreExtDecl,_,loc:SourceMap.location)) = 
 	  (case loc of SourceMap.UNKNOWN => ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
            | SourceMap.LOC r => let val fname = OS.Path.file (#srcFile r) (* PADS *)
+	                            val isPads = case OS.Path.splitBaseExt fname
+					         of {base, ext = SOME extension} => extension = "p"
+					         | _  => false
 				 in
 				     case srcFileOpt
 				     of NONE => ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
                                      |  SOME srcname => 
-					 if srcname = fname 
+					 if isPads
 					 then ppCoreExternalDecl aidinfo tidtab pps coreExtDecl
 					 else ()
 				 end)
