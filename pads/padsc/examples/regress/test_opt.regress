@@ -30,11 +30,9 @@ String lengths: good vals:          7    bad vals:          0    pcnt-bad:    0.
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          7  pcnt-of-good-vals:  100.000
   Characterizing string values:
-    => distribution of top 5 strings out of 5 distinct strings:
+    => distribution of top 3 strings out of 3 distinct strings:
+        val: ""       count:          3  pcnt-of-good-vals:   42.857
         val: "friend" count:          3  pcnt-of-good-vals:   42.857
-        val: ""       count:          1  pcnt-of-good-vals:   14.286
-        val: ""       count:          1  pcnt-of-good-vals:   14.286
-        val: ""       count:          1  pcnt-of-good-vals:   14.286
         val: "values" count:          1  pcnt-of-good-vals:   14.286
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING       count:          7  pcnt-of-good-vals:  100.000
