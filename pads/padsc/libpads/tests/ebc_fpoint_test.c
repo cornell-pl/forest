@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (f8.denom != 1) {
-      error(0, "XXX failure: denom should be 1 XXX", (long)0);
+      error(0, "XXX failure: denom should be 1 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (f8.denom != 10) {
-      error(0, "XXX failure: denom should be 10 XXX", (long)0);
+      error(0, "XXX failure: denom should be 10 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (f8.denom != 100) {
-      error(0, "XXX failure: denom should be 100 XXX", (long)0);
+      error(0, "XXX failure: denom should be 100 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (uf8.denom != 100) {
-      error(0, "XXX failure: denom should be 100 XXX", (long)0);
+      error(0, "XXX failure: denom should be 100 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -176,7 +176,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (f16.denom != 10000) {
-      error(0, "XXX failure: denom should be 10,000 XXX", (long)0);
+      error(0, "XXX failure: denom should be 10,000 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -195,7 +195,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (f16.denom != 10000) {
-      error(0, "XXX failure: denom should be 10,000 XXX", (long)0);
+      error(0, "XXX failure: denom should be 10,000 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -214,7 +214,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (uf16.denom != 10000) {
-      error(0, "XXX failure: denom should be 10,000 XXX", (long)0);
+      error(0, "XXX failure: denom should be 10,000 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -233,7 +233,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (f32.denom != 1000000000UL) {
-      error(0, "XXX failure: denom should be 1,000,000,000 XXX", (long)0);
+      error(0, "XXX failure: denom should be 1,000,000,000 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -252,7 +252,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (f32.denom != 1000000000UL) {
-      error(0, "XXX failure: denom should be 1,000,000,000 XXX", (long)0);
+      error(0, "XXX failure: denom should be 1,000,000,000 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -271,7 +271,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (uf32.denom != 1000000000UL) {
-      error(0, "XXX failure: denom should be 1,000,000,000 XXX", (long)0);
+      error(0, "XXX failure: denom should be 1,000,000,000 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -290,7 +290,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (f64.denom != 10000000000000000000ULL) {
-      error(0, "XXX failure: denom should be 10,000,000,000,000,000,000 XXX", (long)0);
+      error(0, "XXX failure: denom should be 10,000,000,000,000,000,000 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -309,7 +309,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (f64.denom != 10000000000000000000ULL) {
-      error(0, "XXX failure: denom should be 10,000,000,000,000,000,000 XXX", (long)0);
+      error(0, "XXX failure: denom should be 10,000,000,000,000,000,000 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -328,7 +328,7 @@ int main(int argc, char** argv) {
       return -1;
     }
     if (uf64.denom != 10000000000000000000ULL) {
-      error(0, "XXX failure: denom should be 10,000,000,000,000,000,000 XXX", (long)0);
+      error(0, "XXX failure: denom should be 10,000,000,000,000,000,000 XXX");
       return -1;
     } 
   } else { return -1; } 
@@ -348,6 +348,6 @@ int main(int argc, char** argv) {
   return 0;
 
  usage:
-  error(2, "\nUsage: %s <io-disc-name>\n\n\twhere <io-disc-name> is one of: fwrec, ctrec, norec, fwrec_noseek, ctrec_noseek, norec_noseek\n", argv[0]);
+  error(2, "\nUsage: %s [ <io-disc-name> ]\n\n\twhere <io-disc-name> is one of: fwrec, ctrec, norec, fwrec_noseek, ctrec_noseek, norec_noseek\n", argv[0]);
   return -1;
 }
