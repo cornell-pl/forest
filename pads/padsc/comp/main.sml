@@ -161,7 +161,7 @@ structure Main : sig
 	 OS.Process.system s)
 
     (* Run preprocessor ********************************************)
-    fun preprocess(padsDir, baseTyFile, srcFile, destFile) = 
+    fun preprocess(padsDir, cc, baseTyFile, srcFile, destFile) = 
 	let val srcFile = OS.FileSys.fullPath srcFile
             val ppFile = tmp ".c"
             val ppcommand = padsDir^"/scripts/ppp.pl "^ srcFile ^" > "^ppFile
@@ -179,8 +179,8 @@ structure Main : sig
 	    val outStrm = TextIO.openOut compositeFile
             val () = (TextIO.output(outStrm, compositeProg);
 		      TextIO.closeOut outStrm)
-            val command = (" cc "  (* invoke c compiler *)
-                          ^ "-E "  (* preprocessor only *)
+            val command = (cc  (* invoke c compiler *)
+                          ^ " -E "  (* preprocessor only *)
 			  ^ "-DFOR_CKIT" (* tell include files to include prototypes for macros *)
                           ^ (!defines)  (* symbols defined by user *)
                           ^ (!undefines)  (* symbols undefined by user *)
@@ -356,13 +356,13 @@ structure Main : sig
           generateTransforms(ast,tidtab,paidtab)
       end
 	    
-    fun doFile (padsDir, baseTyFile) (typ, fname) = 
+    fun doFile (padsDir, cc, baseTyFile) (typ, fname) = 
       (curFile := fname;
        case typ of Pads =>
 	 let val () = PadsState.reset()
 	     val () = stage := "Preprocessing"
 	     val ppoutFile = tmp ".c"
-	     val status = preprocess(padsDir, baseTyFile, fname, ppoutFile)
+	     val status = preprocess(padsDir, cc, baseTyFile, fname, ppoutFile)
 	     val () = if status <> OS.Process.success 
 	              then err "Pre-processor failed."
 		      else ()
@@ -392,7 +392,8 @@ structure Main : sig
     fun main release (cmd, args) = 
       (stage := "Command-line processing";
        let val padsDir = hd args
-           val arguments = tl args
+           val cc = hd (tl args)
+           val arguments = tl (tl args)
            val flags = if release then flags_release @ extensions
                        else flags_release @ flags_debug @ extensions
            val banner = PCL.genBanner("padsc", 
@@ -407,7 +408,7 @@ structure Main : sig
        in
          PBaseTys.genPadsInternal(internalBaseTysPath, baseTyDefsFile);	   
          initState();
-         app (doFile (padsDir, baseTyDefsFile)) (!srcFiles); 
+         app (doFile (padsDir, cc, baseTyDefsFile)) (!srcFiles); 
          rmTmp();
          if !anyErrors 
 	     then  OS.Process.exit(OS.Process.failure)
