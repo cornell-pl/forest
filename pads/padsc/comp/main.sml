@@ -145,6 +145,7 @@ structure Main : sig
 	let val srcFile = OS.FileSys.fullPath srcFile
             val compositeFile = tmp ".c"
             val includePrefix = ("#include <libpadsc-internal.h>\n"^
+				 "#include <libpadsc-ckit.h>\n"^
 				 "#include \""^baseTyFile^"\"\n"^
                                  "\n")
             val compositeProg = (includePrefix ^

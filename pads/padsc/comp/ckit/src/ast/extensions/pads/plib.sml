@@ -3,14 +3,14 @@ struct
   structure PT = ParseTree
   structure P  = ParseTreeUtil
 
-  val PDC_ERROR = PT.Id "PDC_ERROR"
+  val PDC_ERROR = PT.Id "PDC_ERR"
   val PDC_OK    = PT.Id "PDC_OK"
 
-  val PDC_NO_ERROR                       = PT.Id "PDC_NO_ERROR"
-  val PDC_CHKPOINT_FAILURE               = PT.Id "PDC_CHKPOINT_FAILURE"
-  val PDC_COMMIT_FAILURE                 = PT.Id "PDC_COMMIT_FAILURE"
-  val PDC_RESTORE_FAILURE                = PT.Id "PDC_RESTORE_FAILURE"
-  val PDC_ALLOC_FAILURE                  = PT.Id "PDC_ALLOC_FAILURE"
+  val PDC_NO_ERROR                       = PT.Id "PDC_NO_ERR"
+  val PDC_CHKPOINT_FAILURE               = PT.Id "PDC_CHKPOINT_ERR"
+  val PDC_COMMIT_FAILURE                 = PT.Id "PDC_COMMIT_ERR"
+  val PDC_RESTORE_FAILURE                = PT.Id "PDC_RESTORE_ERR"
+  val PDC_ALLOC_FAILURE                  = PT.Id "PDC_ALLOC_ERR"
 
   val PDC_PANIC_SKIPPED                  = PT.Id "PDC_PANIC_SKIPPED"
 
@@ -31,8 +31,8 @@ struct
   val PDC_ARRAY_EXTRA_BEFORE_TERM        = PT.Id "PDC_ARRAY_EXTRA_BEFORE_TERM"   
 
   val PDC_STRUCT_FIELD_ERR               = PT.Id "PDC_STRUCT_FIELD_ERR"
-  val PDC_UNION_MATCH_FAILURE            = PT.Id "PDC_UNION_MATCH_FAILURE"
-  val PDC_ENUM_MATCH_FAILURE             = PT.Id "PDC_ENUM_MATCH_FAILURE"
+  val PDC_UNION_MATCH_FAILURE            = PT.Id "PDC_UNION_MATCH_ERR"
+  val PDC_ENUM_MATCH_FAILURE             = PT.Id "PDC_ENUM_MATCH_ERR"
   val PDC_TYPEDEF_CONSTRAINT_ERR         = PT.Id "PDC_TYPEDEF_CONSTRAINT_ERR"
 
   val PDC_AT_EOF                         = PT.Id "PDC_AT_EOF"
@@ -53,9 +53,9 @@ struct
 
 
 
-  val ERROR_INFO  = P.intX 0
-  val ERROR_ERROR = P.intX 2
-  val ERROR_FATAL = P.intX 3
+  val ERROR_INFO  = PT.Id "PDC_LEV_INFO" 
+  val ERROR_ERROR = PT.Id "PDC_LEV_ERR"
+  val ERROR_FATAL = PT.Id "PDC_LEV_FATAL"
 
   val toolErrPCT   = P.makeTypedefPCT "PDC_error_t"
   val toolStatePCT = P.makeTypedefPCT "PDC_t"
@@ -76,6 +76,10 @@ struct
   val str          = "str"
   val len          = "len"
   val errorf       = "errorf"
+  val disc         = "disc"
+  val io_disc      = "io_disc"
+
+ 
   val d_endian     = "d_endian"
   val m_endian     = "m_endian"
   val littleEndian = PDC_littleEndian
@@ -91,49 +95,52 @@ struct
    PT.Call(PT.Id "PDC_fmtChar", [chr])
 
 (* error functions *)
-  fun userErrorS(ts:PT.expression, disc:PT.expression, loc:PT.expression,
-                 errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
-    (* PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc, 
-                                  int errCode, /* format, args */ ...) *)
-    PT.Expr(PT.Call(PT.Id "PDC_report_err", [ts,disc, ERROR_INFO, loc,errCode,format]@args))
+  fun trace(disc: PT.expression, msg:string) =
+    PT.Expr(PT.Call(PT.Id "PDC_TRACE", [disc, PT.String msg]))
 
-  fun userWarnS(ts:PT.expression, disc:PT.expression, loc:PT.expression,
+  fun warn(disc: PT.expression, msg :string) =
+    PT.Expr(PT.Call(PT.Id "PDC_WARN", [disc, PT.String msg]))
+
+  fun warnDefault(msg :string) =
+    PT.Expr(PT.Call(PT.Id "PDC_WARN", [P.addrX (PT.Id "PDC_default_disc"), PT.String msg]))
+
+  fun userErrorS(ts:PT.expression, loc:PT.expression,
+                 errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_INFO, loc,errCode,format]@args))
+
+  fun userWarnS(ts:PT.expression, loc:PT.expression,
                  format:PT.expression, args:PT.expression list) = 
-    (* PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc, 
-                                  int errCode, /* format, args */ ...) *)
-    PT.Expr(PT.Call(PT.Id "PDC_report_err", [ts,disc, ERROR_ERROR, loc,PDC_NO_ERROR,format]@args))
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_ERROR, loc,PDC_NO_ERROR,format]@args))
 
-  fun userFatalErrorS(ts:PT.expression, disc:PT.expression, loc:PT.expression,
+  fun userFatalErrorS(ts:PT.expression, loc:PT.expression,
                  errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
-    (* PDC_error_t PDC_report_err(PDC_t* pdc, PDC_disc_t* disc, PDC_loc_t* loc, 
-                                  int errCode, /* format, args */ ...) *)
-    PT.Expr(PT.Call(PT.Id "PDC_report_err", [ts,disc,ERROR_FATAL,loc,errCode,format]@args))
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_FATAL, loc,errCode,format]@args))
 
-  fun chkError(ts:PT.expression, disc:PT.expression,argX :PT.expression, errCode:PT.expression) =
+  fun chkError(ts:PT.expression, argX :PT.expression, errCode:PT.expression) =
     [ PT.IfThen(P.eqX(PDC_ERROR, argX),
        PT.Compound[
-         userFatalErrorS(ts, disc, P.zero, errCode, P.zero, [])
+         userFatalErrorS(ts, P.zero, errCode, P.zero, [])
        ])]
 
-  fun chkIntErrorSs(ts:PT.expression, disc:PT.expression,argX :PT.expression, errCode:PT.expression) =
+  fun chkIntErrorSs(ts:PT.expression, argX :PT.expression, errCode:PT.expression) =
      [PT.IfThen(P.neqX(P.zero, argX),
        PT.Compound[
-         userFatalErrorS(ts, disc, P.zero, errCode, P.zero, [])
+         userFatalErrorS(ts, P.zero, errCode, P.zero, [])
        ])]
 
 
 (* Growable buffers *)
-  fun zeroMM(ts:PT.expression, disc :PT.expression) = 
-    PT.Call(PT.Id "PDC_rmm_zero", [ts, disc])
-  fun nonZeroMM(ts:PT.expression, disc :PT.expression) = 
-    PT.Call(PT.Id "PDC_rmm_nozero", [ts, disc])
+  fun zeroMM(ts:PT.expression) = 
+    PT.Call(PT.Id "PDC_rmm_zero", [ts])
+  fun nonZeroMM(ts:PT.expression) = 
+    PT.Call(PT.Id "PDC_rmm_nozero", [ts])
 
   fun newRBufE(mm:PT.expression) = 
     PT.Call(PT.Id "RMM_new_rbuf", [mm])
 
   fun chkNewRBufS(rBufV: PT.expression, zero: bool,
-		    ts:PT.expression, disc:PT.expression) = 
-    let val rBufX = newRBufE(if zero then zeroMM(ts,disc) else nonZeroMM(ts,disc))
+		    ts:PT.expression) = 
+    let val rBufX = newRBufE(if zero then zeroMM(ts) else nonZeroMM(ts))
     in
 	[PT.IfThen(
 	  P.eqX(P.zero, rBufV),
@@ -141,31 +148,30 @@ struct
 	   [ P.assignS(rBufV, rBufX),
 	     PT.IfThen(P.eqX(P.zero, rBufV),
 		       PT.Compound[
-			  userFatalErrorS(ts, disc, P.zero, PDC_ALLOC_FAILURE, PT.String "", [])
+			  userFatalErrorS(ts, P.zero, PDC_ALLOC_FAILURE, PT.String "", [])
 				   ])])]
     end
 
-  fun reserveE(ts:PT.expression, disc: PT.expression, 
+  fun reserveE(ts:PT.expression, 
 		rbuf:PT.expression, buf:PT.expression, sizeX:PT.expression, 
 		numElementsX:PT.expression,growHintX:PT.expression) = 
    PT.Call(PT.Id "RBuf_reserve", 
 	   [rbuf, PT.Cast(P.voidPtrPtr, buf), sizeX, numElementsX, growHintX ])
 
-  fun chkReserveSs(ts, disc, rbuf,buf,sizeX,numElementsX,growHintX) = 
-      let val reserveX = reserveE(ts,disc,rbuf,buf,sizeX,numElementsX,growHintX)
+  fun chkReserveSs(ts, rbuf,buf,sizeX,numElementsX,growHintX) = 
+      let val reserveX = reserveE(ts,rbuf,buf,sizeX,numElementsX,growHintX)
       in
-	  chkIntErrorSs(ts,disc,reserveX,PDC_ALLOC_FAILURE)
+	  chkIntErrorSs(ts,reserveX,PDC_ALLOC_FAILURE)
       end
 
-  fun freeRBufferE(ts, disc, prbuf:PT.expression, ppbuf:PT.expression) = 
-   (* int       RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t* mgr_out); *)
+  fun freeRBufferE(ts, prbuf:PT.expression, ppbuf:PT.expression) = 
      PT.Call(PT.Id "RMM_free_rbuf_keep_buf", [prbuf, PT.Cast(P.voidPtrPtr, ppbuf), P.zero])
 
-  fun chkFreeRBufferS(ts, disc, prbuf:PT.expression, ppbuf:PT.expression) = 
+  fun chkFreeRBufferS(ts, prbuf:PT.expression, ppbuf:PT.expression) = 
     PT.IfThen(
-      P.neqX(P.zero,freeRBufferE(ts, disc, prbuf,ppbuf)),
+      P.neqX(P.zero,freeRBufferE(ts, prbuf,ppbuf)),
       PT.Compound[
-         userFatalErrorS(ts, disc, P.zero, PDC_ALLOC_FAILURE, 
+         userFatalErrorS(ts, P.zero, PDC_ALLOC_FAILURE, 
 			 PT.String "Couldn't free growable buffer.", [])]
     )
 
@@ -173,79 +179,65 @@ struct
    (* int       RMM_free_rbuf(RBuf_t* rbuf); *)
      PT.Call(PT.Id "RMM_free_rbuf", [prbuf])
 
-  fun chkCFreeRBufferS(ts, disc, prbuf:PT.expression) = 
+  fun chkCFreeRBufferS(ts, prbuf:PT.expression) = 
     PT.IfThen(
       P.neqX(P.zero,cfreeRBufferE(prbuf)),
       PT.Compound[
-         userFatalErrorS(ts, disc, P.zero, PDC_ALLOC_FAILURE, 
+         userFatalErrorS(ts, P.zero, PDC_ALLOC_FAILURE, 
 			 PT.String "Couldn't free growable buffer", [])]
     )
 
 (* -- File manipulation routines *)
-  fun getLocS(ts:PT.expression, locAddr:PT.expression, disc:PT.expression) = 
-    (* PDC_error_t  PDC_get_loc       (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); *)
-    PT.Expr(PT.Call(PT.Id "PDC_get_loc", [ts, locAddr, disc]))
+  fun getLocS(ts:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDC_IO_getLoc", [ts, locAddr, P.zero]))
 
-  fun getLocBeginS(ts:PT.expression, locAddr:PT.expression, disc:PT.expression) = 
-    (* PDC_error_t  PDC_get_loc       (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); *)
-    PT.Expr(PT.Call(PT.Id "PDC_get_beginLoc", [ts, locAddr, disc]))
+  fun getLocBeginS(ts:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocB", [ts, locAddr, P.zero]))
 
-  fun getLocEndS(ts:PT.expression, locAddr:PT.expression, disc:PT.expression) = 
-    (* PDC_error_t  PDC_get_loc       (PDC_t* pdc, PDC_loc_t* l, PDC_disc_t* disc); *)
-    PT.Expr(PT.Call(PT.Id "PDC_get_endLoc", [ts, locAddr, disc]))
+  fun getLocEndS(ts:PT.expression, locAddr:PT.expression) = 
+    PT.Expr(PT.Call(PT.Id "PDC_IO_getLocE", [ts, locAddr,P.zero]))
 
-  fun isEofX(ts:PT.expression, disc:PT.expression) = 
-    (* int          PDC_IO_is_EOF      (PDC_t* pdc, PDC_disc_t* disc); *)
-    PT.Call(PT.Id "PDC_IO_is_EOF", [ts, disc])
-
-  fun backOne(ts: PT.expression, disc:PT.expression) = 
-    (* PDC_error_t  PDC_IO_back        (PDC_t* pdc, size_t num_chars, PDC_disc_t* disc); *)
-    PT.Expr(PT.Call (PT.Id "PDC_IO_back", [ts, P.intX 1, disc]))
+  fun isEofX(ts:PT.expression) = 
+    PT.Call(PT.Id "PDC_IO_at_EOF", [ts])
 
 (* check point routines *)
-  fun chkPtS(ts:PT.expression, disc:PT.expression) =
-    (* PDC_error_t  PDC_IO_checkpoint  (PDC_t* pdc, PDC_disc_t* disc); *)
-    chkError(ts, disc, (PT.Call(PT.Id "PDC_IO_checkpoint", [ts, P.trueX, disc])), (* always speculative *)
+  fun chkPtS(ts:PT.expression) =
+    chkError(ts, (PT.Call(PT.Id "PDCI_IO_checkpoint", [ts, P.trueX])), (* always speculative *)
 	     PDC_CHKPOINT_FAILURE)
 
-  fun getSpecLevelX(ts:PT.expression, disc:PT.expression) =
-     PT.Call(PT.Id "PDC_spec_level", [ts,disc])
+  fun getSpecLevelX(ts:PT.expression) =
+     PT.Call(PT.Id "PDCI_spec_level", [ts])
 
-  fun commitS(ts:PT.expression, disc:PT.expression) =
-    (* PDC_error_t  PDC_IO_commit  (PDC_t* pdc, PDC_disc_t* disc); *)
-    chkError(ts, disc, (PT.Call(PT.Id "PDC_IO_commit", [ts,disc])),
+  fun commitS(ts:PT.expression) =
+    chkError(ts, (PT.Call(PT.Id "PDCI_IO_commit", [ts])),
 	     PDC_COMMIT_FAILURE)
 
-  fun restoreS(ts:PT.expression, disc:PT.expression) =
-    (* PDC_error_t  PDC_IO_restore  (PDC_t* pdc, PDC_disc_t* disc); *)
-    chkError(ts, disc, (PT.Call(PT.Id "PDC_IO_restore", [ts,disc])),
+  fun restoreS(ts:PT.expression) =
+    chkError(ts, (PT.Call(PT.Id "PDCI_IO_restore", [ts])),
 	     PDC_RESTORE_FAILURE)
 
 
   fun readFunX(n:string, ts:PT.expression, loc:PT.expression, 
 	                 optArgs: PT.expression list,
 			 ed:PT.expression, 
-	                 res:PT.expression, disc:PT.expression) = 
-      PT.Call(PT.Id n, [ts, loc] @ optArgs @[ed,res,disc])
+	                 res:PT.expression) = 
+      PT.Call(PT.Id n, [ts, loc] @ optArgs @[ed,res])
 
   fun readFunChkX(expectedValX : PT.expression,
 		  n:string, ts:PT.expression, 
 		  loc:PT.expression, optArgs:PT.expression list,
 		  ed:PT.expression, 
-	          res:PT.expression, disc:PT.expression) = 
-      P.eqX(expectedValX, readFunX(n,ts,loc,optArgs,ed,res,disc))
+	          res:PT.expression) = 
+      P.eqX(expectedValX, readFunX(n,ts,loc,optArgs,ed,res))
 
-  fun scanFunX(n:string, ts:PT.expression, c : PT.expression, s : PT.expression,
-	                res:PT.expression, offset:PT.expression, disc:PT.expression) = 
-      (* PDC_error_t PDC_char_lit_scan(PDC_t* pdc, unsigned char c, unsigned char s, 
-			      unsigned char* c_out, size_t* offset_out,
-			      PDC_disc_t* disc); *)
-      PT.Call(PT.Id n, [ts,c,s,res,offset,disc])
+  fun scanFunX(n:string, ts:PT.expression, c : PT.expression, s : PT.expression,eatLit:PT.expression,
+	                res:PT.expression, offset:PT.expression) = 
+      PT.Call(PT.Id n, [ts,c,s,eatLit,res,offset])
 
-  fun IONextRecX(ts, namp, disc) = PT.Call(PT.Id "PDC_IO_next_rec", [ts, namp,disc])
+  fun IONextRecX(ts, namp) = PT.Call(PT.Id "PDC_IO_next_rec", [ts, namp])
 
   fun nstPrefixWhat(outstr, pnst, prefix, what) = 
-      PT.Expr(PT.Call(PT.Id "PDC_nst_prefix_what", [outstr, pnst, prefix, what]))
+      PT.Expr(PT.Call(PT.Id "PDCI_nst_prefix_what", [outstr, pnst, prefix, what]))
 
 (* -- Sfio functions *)
   fun sfstrclose(str:PT.expression) = 

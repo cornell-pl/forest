@@ -252,10 +252,10 @@ PDC_error_t PDCI_report_err(PDC_t *pdc, int level, PDC_loc_t *loc,
  * IO cursor is unchanged.
  */
 
-PDC_error_t PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, 
+PDC_error_t PDCI_char_lit_scan(PDC_t *pdc, unsigned char c, unsigned char s, int eat_lit,
 			       unsigned char *c_out, size_t *offset_out);
 
-PDC_error_t PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr,
+PDC_error_t PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
 			      PDC_string **str_out, size_t *offset_out);
 
 /* ================================================================================ */

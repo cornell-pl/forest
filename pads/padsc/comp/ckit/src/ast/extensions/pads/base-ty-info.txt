@@ -51,5 +51,5 @@ adate        PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopChar_
 countXtoY    PDC_int32   PDC_base_em   PDC_base_ed          PDC_countXtoY              -                 -              V         S           N
 
 # internal only
-PDC_char_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_char_lit_read          PDC_char_lit_scan PDC_uint8_acc  1         S           N
-PDC_str_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_str_lit_read           PDC_str_lit_scan  PDC_string_acc P         V           N
+PDC_char_lit PDC_uint8   PDC_base_em   PDC_base_ed          PDC_char_lit_read          PDCI_char_lit_scan PDC_uint8_acc  1         S           N
+PDC_str_lit  PDC_string  PDC_base_em   PDC_base_ed          PDC_str_lit_read           PDCI_str_lit_scan  PDC_string_acc P         V           N

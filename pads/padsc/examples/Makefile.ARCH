@@ -15,7 +15,7 @@ other_tests : test_readint test_ai test_dibbler1
 all_tests : libtests format_tests other_tests
 
 
-test_format1  :: test_format1.c   format1.c   -lpadsc
+test_format1  :: format1.c test_format1.c   -lpadsc
 test_format2  :: test_format2.c   format2.c   -lpadsc
 test_format3  :: test_format3.c   format3.c   -lpadsc
 test_format4  :: test_format4.c   format4.c   -lpadsc
