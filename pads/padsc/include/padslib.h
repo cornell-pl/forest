@@ -11,12 +11,21 @@
 #define UNION_MATCH_FAILURE        130
 #define ENUM_MATCH_FAILURE         140
 
+/*
 typedef struct loc_s {
   int lineNum;
   int posNum;
   char *begin;
   char *end;
-} loc_t;
+  } loc_t;
+*/
+struct loc_s {
+  int lineNum;
+  int posNum;
+  char *begin;
+  char *end;
+  };
+typedef struct loc_s loc_t;
 
 typedef struct base_ed_s {
   int errCode;
