@@ -4,10 +4,6 @@
 TARGS = padsc_lib
 ifdef USE_GALAX
 TARGS += pglx_lib 
-else
-ifdef GEN_GALAX
-TARGS += pglx_lib 
-endif
 endif
 TARGS += padsc_comp
 

@@ -3,15 +3,9 @@
 
 PADS_HOME = .
 
-include $(PADS_HOME)/mk/rules.mk
-
 TARGS = ast_lib padsc_lib
 ifdef USE_GALAX
 TARGS += pglx_lib
-else
-ifdef GEN_GALAX
-TARGS += pglx_lib
-endif
 endif
 TARGS += padsc_comp
 
@@ -41,13 +35,7 @@ clean:
 veryclean:
 	@(cd padsc; $(MAKE) veryclean)
 
-# This should only be done once
 ast_lib:
 	@(cp ast-ast/bin/package.cvs ast-ast/bin/package)
 	@(cd ast-ast; ./bin/package read)
 	@(cd ast-ast; ./bin/package make)
-
-foo: 
-	echo CC=$(CC)
-	echo CDBGFLAGS=$(CDBGFLAGS)
-	echo COPTFLAGS=$(COPTFLAGS)
