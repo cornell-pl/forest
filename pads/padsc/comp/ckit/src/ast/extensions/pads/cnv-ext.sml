@@ -1464,7 +1464,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                     @ printSs
 		  end
 
-
               (* handles problem if first element of an initializer is an enumerated type *)
               fun getFirstEMPCT emFields = 
 		  case emFields
@@ -1651,8 +1650,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                       (* Generate parse description *)
 		      val baseEDPCT = P.makeTypedefPCT(lookupTy(baseTy,pdSuf, #pdname))
-                      val pdFields  = [(pstate, PL.flags_t, NONE), (errCode, PL.errCodePCT, NONE),
-				       (loc, PL.locPCT,NONE), (nerr, PL.uint32PCT, NONE),
+                      val pdFields  = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
+				       (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT,NONE),
 				       (base, baseEDPCT, SOME "Base parse description")]
 		      val pdED      = P.makeTyDefStructEDecl (pdFields, pdSuf name)
 		      val (pdDecls,pdTid)  = cnvCTy pdED
@@ -1684,7 +1683,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val baseTyPCT = P.makeTypedefPCT(lookupTy(baseTy, repSuf, #repname))
 		      val canonicalED = P.makeTyDefEDecl (baseTyPCT, repSuf name)
 		      val (canonicalDecls,canonicalTid) = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
-                      val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
+                      val canonicalPCT = P.makeTypedefPCT (repSuf name)
 
                       (* Generate Init function (typedef case) *)
 		      val baseFunName = lookupMemFun (PX.Name baseTyName)
@@ -1986,8 +1985,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				     pred:pcexp option, comment} = 
 			  [(name,P.makeTypedefPCT(lookupTy (pty,pdSuf,#pdname)),NONE)]
 		      fun genEDBrief e = []
-		      val auxEDFields = [(pstate, PL.flags_t, NONE), (errCode, PL.errCodePCT, NONE),
-					 (loc, PL.locPCT, NONE), (nerr, PL.uint32PCT, NONE)]
+		      val auxEDFields = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
+					 (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT, NONE)]
 		      val pdFields = auxEDFields @ (mungeFields genEDFull genEDBrief genMMan fields)
 		      val pdStructED = P.makeTyDefStructEDecl (pdFields, pdSuf name)
 		      val (pdDecls,pdTid) = cnvCTy pdStructED 
@@ -2227,6 +2226,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					       val reportErrSs = 
 						     [P.assignS(P.dotX(fieldX(pd,name), PT.Id errCode), 
 								PL.P_USER_CONSTRAINT_VIOLATION),
+						      P.assignS(P.dotX(fieldX(pd,name), PT.Id nerr),
+								P.intX 1),
 						      PL.getLocEndS(PT.Id pads, P.addrX(locX), ~1)]
 						   @ reportStructErrorSs(PL.P_STRUCT_FIELD_ERR, false,locX)
 						   @ [PL.userErrorS(PT.Id pads,
@@ -2941,8 +2942,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val unionPD = P.makeTyDefUnionEDecl(pdVariants, (unSuf o pdSuf) name)
 		     val (unionPDDecls, updTid) = cnvCTy unionPD
 		     val unionPDPCT = P.makeTypedefPCT((unSuf o pdSuf) name)
-		     val structEDFields = [(pstate, PL.flags_t, NONE), (errCode, PL.errCodePCT, NONE),
-				  	   (loc, PL.locPCT, NONE), (nerr, PL.uint32PCT, NONE),
+		     val structEDFields = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
+				  	   (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT, NONE),
 					   (tag, tagPCT, NONE), (value, unionPDPCT, NONE)]
 		     val pdStructED = P.makeTyDefStructEDecl (structEDFields, pdSuf name)
 		     val (pdStructPDDecls, pdTid) = cnvCTy pdStructED
@@ -3830,9 +3831,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 	         (* Generate parse description *)
                  val pdFields = [(pstate, PL.flags_t, NONE), 
+				 (nerr, PL.uint32PCT,    SOME "Number of array errors"),
 				 (errCode, PL.errCodePCT, NONE),
 				 (loc, PL.locPCT, NONE), 
-				 (nerr, PL.uint32PCT,    SOME "Number of array errors"),
 				 (neerr, PL.uint32PCT,   SOME "Number of element errors"),
 				 (firstError, PL.uint32PCT, 
 				    SOME "if errCode == ARRAY_ELEM_ERR, index of first error"),

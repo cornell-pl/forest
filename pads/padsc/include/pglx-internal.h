@@ -116,9 +116,9 @@ struct PDCI_vtable_s {
 /* type PDCI_structured_pd: */
 struct PDCI_structured_pd_s {
   Pflags_t     pstate;
+  int          nerr;
   PerrCode_t   errCode;
   Ploc_t       loc;
-  int             nerr;
 };
 
 /* NB all generated sequenced pd types must BEGIN with the declarations given here: */
@@ -126,11 +126,11 @@ struct PDCI_structured_pd_s {
 /* Type PDCI_sequenced_pd_t: */
 struct PDCI_sequenced_pd_s {
   Pflags_t    pstate;
+  int         nerr;
   PerrCode_t  errCode;
   Ploc_t      loc;
-  int            nerr;
-  int            neerr;		        
-  int            firstError;		
+  int         neerr;		        
+  int         firstError;		
 };
 
 /* ================================================================================

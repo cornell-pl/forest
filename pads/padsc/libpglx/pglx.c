@@ -387,7 +387,7 @@ PDCI_node_t ** Pbase_pd_children(PDCI_node_t *self)
   return result;
 }
 
-/* A structured_pd has four children (pstate, errCode, loc, nerr) */
+/* A structured_pd has four children (pstate, nerr, errCode, loc) */
 #undef WHATFN
 #define WHATFN "PDCI_structured_pd_children"
 PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
@@ -401,18 +401,16 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
   }
   /* the following mk calls raise an exception on alloc error */
   PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN); i++;
   PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
   if (pd->errCode >= 100) {
     PDCI_MK_TNODE(result[i], &Ploc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
-  } else {
-    result[i] = 0; i++;
   }
-  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN); i++;
   return result;
 }
 
 /* A sequenced_pd has six children 
-  (pstate, errCode, loc, nerr, neerr, firstError) */
+  (pstate, nerr, errCode, loc, neerr, firstError) */
 #undef WHATFN
 #define WHATFN "PDCI_sequenced_pd_children"
 PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
@@ -426,13 +424,13 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
   }
   /* the following mk calls raise an exception on alloc error */
   PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",   &(pd->pstate),     WHATFN); i++;
+  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN); i++;
   PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode",  &(pd->errCode),    WHATFN); i++;
   if (pd->errCode >= 100) {
     PDCI_MK_TNODE(result[i], &Ploc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
   } else {
     result[i] = 0; i++;
   }
-  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN); i++;
   PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "neerr",    &(pd->neerr),      WHATFN); i++;
   PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN); i++;
   return result;

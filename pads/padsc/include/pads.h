@@ -873,6 +873,7 @@ struct Ploc_s {
 /* type Pbase_pd: */
 struct Pbase_pd_s {
   Pflags_t    pstate; /* parse state */
+  Puint32     nerr;
   PerrCode_t  errCode;
   Ploc_t      loc;
 };
@@ -890,7 +891,7 @@ int  P_PS_isPanic(void *pd);      /* test whether P_Panic is set in pd->pstate *
 
 /* Function (macro actually) for initalizing a Pbase_pd: */
 #ifdef FOR_CKIT
-void Pbase_pd_init(Pbase_pd *pd); /* init pstate to 'not panic' state; errCode to P_NO_ERR */
+void Pbase_pd_init(Pbase_pd *pd); /* init pstate to 'not panic' state; errCode to P_NO_ERR, nerr to zero */
 #endif
 
 /* Pinv_valfn: type of a pointer to an invalid val function */

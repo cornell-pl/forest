@@ -71,9 +71,8 @@
 #define P_PS_isPanic(pd)       ((pd)->pstate & P_Panic)
 
 /* Macro for initalizing a Pbase_pd */
-#define Pbase_pd_init(pd) \
-do { \
-  (pd)->pstate  = 0; \
+#define Pbase_pd_init(pd) do { \
+  memset((void*)(pd), 0, sizeof(Pbase_pd)); \
   (pd)->errCode = P_NO_ERR; \
 } while (0)
 

@@ -133,6 +133,11 @@ typedef ssize_t (PDCI_write2buf_fn)(P_t *pads, Pbyte *buf, size_t buf_len, int *
 typedef ssize_t (PDCI_write_xml_2buf_fn)(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, void *pd, void *rep,
 					 const char *tag, int indent);
 
+void PDCI_TYPEDEF_READ(const char *fn_nm, Perror_t base_read_call);
+void PDCI_TYPEDEF_READ_REC(const char *fn_nm, Perror_t base_read_call);
+void PDCI_TYPEDEF_READ_USERCHECK(const char *fn_nm, Perror_t base_read_call, int usercheck);
+void PDCI_TYPEDEF_READ_USERCHECK_REC(const char *fn_nm, Perror_t base_read_call, int usercheck);
+
 void PDCI_WRITE2IO_USE_WRITE2BUF(const char *fn_nm, ssize_t write2buf_call);
 
 void PDCI_TLEN_UPDATES();
@@ -523,6 +528,85 @@ do { \
   } \
 } while (0)
 
+#define PDCI_FIND_EOR() \
+do { \
+  Pbase_pd tpd; \
+  size_t bytes_skipped; \
+  P_io_getLocB (pads, &(tpd.loc), 0); \
+  if (P_OK == P_io_next_rec (pads, &bytes_skipped)) { \
+    if (bytes_skipped) { \
+      if (P_spec_level (pads)) return P_ERR; \
+      P_io_getLocE (pads, &(tpd.loc), -1); \
+      if (!P_PS_isPanic (pd)) { \
+	PDCI_report_err (pads, P_LEV_WARN, &(tpd.loc), P_EXTRA_BEFORE_EOR, fn_nm, "Unexpected data before EOR"); \
+	if (0==(pd->nerr)) { \
+	  pd->errCode = P_EXTRA_BEFORE_EOR; \
+	  pd->loc = (tpd.loc); \
+	} \
+	(pd->nerr)+=1; \
+      } else { \
+	PDCI_report_err (pads, P_LEV_INFO, &(tpd.loc), P_NO_ERR, fn_nm, "Resynching at EOR"); \
+      } \
+    } \
+    P_PS_unsetPanic (pd); \
+  } else { \
+    if (P_spec_level (pads)) return P_ERR; \
+    P_PS_unsetPanic (pd); \
+    P_io_getLocE (pads, &(tpd.loc), -1); \
+    PDCI_report_err (pads, P_LEV_WARN, &(tpd.loc), P_EOF_BEFORE_EOR, fn_nm, "Found EOF when searching for EOR"); \
+    if (0==(pd->nerr)) { \
+      pd->errCode = P_EOF_BEFORE_EOR; \
+      pd->loc = (tpd.loc); \
+    } \
+    (pd->nerr)+=1; \
+  } \
+} while (0)
+
+#define PDCI_CONSTRAINT_ERR(ecode) \
+do { \
+  (pd->nerr)++; \
+  pd->errCode = P_TYPEDEF_CONSTRAINT_ERR; \
+  P_io_getLoc (pads, &(pd->loc), 0); \
+  PDCI_report_err (pads, P_LEV_WARN, &(pd->loc), pd->errCode, fn_nm, 0); \
+} while (0)
+
+/* for the following 4 macros, pd and rep shared with base type */
+/* base_read_call reports error, fills in pd->nerr */
+
+/* invoke this macro, return (pd->nerr == 0) ? P_OK : P_ERR */
+#define PDCI_TYPEDEF_READ(fn_nm, base_read_call) \
+do { \
+  PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep); \
+  base_read_call; \
+} while (0)
+
+/* invoke this macro, return (pd->nerr == 0) ? P_OK : P_ERR */
+#define PDCI_TYPEDEF_READ_REC(fn_nm, base_read_call) \
+do { \
+  PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep); \
+  base_read_call; \
+  PDCI_FIND_EOR(); \
+} while (0)
+
+/* invoke this macro, return (pd->nerr == 0) ? P_OK : P_ERR */
+#define PDCI_TYPEDEF_READ_USERCHECK(fn_nm, base_read_call, usercheck) \
+do { \
+  PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep); \
+  if (P_OK == (base_read_call) && P_Test_SemCheck (m->user) && (!(usercheck))) { \
+    PDCI_CONSTRAINT_ERR(P_TYPEDEF_CONSTRAINT_ERR); \
+  } \
+} while (0)
+
+/* invoke this macro, return (pd->nerr == 0) ? P_OK : P_ERR */
+#define PDCI_TYPEDEF_READ_USERCHECK_REC(fn_nm, base_read_call, usercheck) \
+do { \
+  PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep); \
+  if (P_OK == (base_read_call) && P_Test_SemCheck (m->user) && (!(usercheck))) { \
+    PDCI_CONSTRAINT_ERR(P_TYPEDEF_CONSTRAINT_ERR); \
+  } \
+  PDCI_FIND_EOR(); \
+} while (0)
+
 /* function body for a write2io function that has params pads, io, pd, rep */
 /* always precede with decls for buf, buf_len, and buf_full and always follow with 'return -1' */
 #define PDCI_WRITE2IO_USE_WRITE2BUF(fn_nm, write2buf_call) \
@@ -638,11 +722,11 @@ do { \
   if ((pd)->errCode == P_NO_ERR) { /* no error */ \
     tlen = sfprintf(pads->tmp4, "%.*s<%s><val>%s</></>\n", indent, PDCI_spaces, tag, rep2str_fn(*rep)); \
   } else if ((pd)->errCode < 100) { /* error, no location */ \
-    tlen = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><errCode>%s</errCode></pd></%s>\n", \
-		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), P_errCode2str((pd)->errCode), tag); \
+    tlen = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd></%s>\n", \
+		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), tag); \
   } else { /* error, location */ \
-    tlen = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc></pd></%s>\n", \
-		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), P_errCode2str((pd)->errCode), \
+    tlen = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc></pd></%s>\n", \
+		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), \
 		    (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset, \
 		    (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset, \
 		    tag); \
@@ -655,14 +739,13 @@ do { \
     int pd_indent = ((indent) > 126) ? 128 : (indent)+2; \
     sfstrset(pads->tmp4, 0); \
     if ((pd)->errCode < 100) { /* no location */ \
-      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><errCode>%s</errCode><nerr>%lu</nerr></pd>\n", \
-		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), P_errCode2str((pd)->errCode), (pd)->nerr); \
+      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd>\n", \
+		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode)); \
     } else { /* location */ \
-      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc><nerr>%lu</nerr></pd>\n", \
-		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), P_errCode2str((pd)->errCode), \
+      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc></pd>\n", \
+		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), \
 		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset, \
-		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset, \
-		      (pd)->nerr); \
+		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset); \
     } \
     PDCI_TMP4_TLEN_UPDATES(); \
   } \
@@ -675,14 +758,14 @@ do { \
     int pd_indent = ((indent) > 126) ? 128 : (indent)+2; \
     sfstrset(pads->tmp4, 0); \
     if ((pd)->errCode < 100) { /* no location */ \
-      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><errCode>%s</errCode><nerr>%lu</nerr><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n", \
-		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), P_errCode2str((pd)->errCode), (pd)->nerr, (pd)->neerr, (pd)->firstError); \
+      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n", \
+		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), (pd)->neerr, (pd)->firstError); \
     } else { /* location */ \
-      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc><nerr>%lu</nerr><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n", \
-		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), P_errCode2str((pd)->errCode), \
+      tlen = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</><byte>%lld</><offset>%lld</></b><e><num>%lld</><byte>%lld</><offset>%lld</></e></loc><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n", \
+		      pd_indent, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, (pd)->neerr, P_errCode2str((pd)->errCode), \
 		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset, \
 		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset, \
-		      (pd)->nerr, (pd)->neerr, (pd)->firstError); \
+		      (pd)->neerr, (pd)->firstError); \
     } \
     PDCI_TMP4_TLEN_UPDATES(); \
   } \
