@@ -1,0 +1,54 @@
+(An item for "Information and Software Systems Research" section)
+
+<p>
+<strong><em>PADS:</em> Processing Arbitrary Data Streams</strong>
+</p>
+
+<p>
+AT&T in general and research in particular generates and receives many
+high-volume data streams with data that can be mined very profitably.
+Unfortunately, many streams are in legacy formats over which we have
+no control.  An intense effort is required to understand a new data
+feed and write a parser for the data, a process that is both tedious
+and error-prone.  Often, this hard-won understanding of the data ends
+up embedded in parsing code, making long-term maintenance difficult
+for the original writer and sharing the knowledge with others still
+more difficult.
+</p>
+
+<p>
+The goal of the PADS project is to provide languages and tools for
+simplifying data stream analysis.  We have a preliminary design of a
+declarative data-description language, PADSL, expressive enough to
+describe the data feeds we see in practice, including both ASCII,
+binary, and mixed data.  From PADSL we generate a C library with
+functions for parsing, manipulating, and summarizing the data.  The
+library is immediately useful for those who write C programs to
+manipulate data streams.  Our next steps include using the library as
+input to tools that query and aggregate data.  The ultimate goal is
+for data analysts to write just the declarative description of the
+data and declarative queries -- no coding required.  Further, by
+providing a means of describing all of Research's incoming data
+streams using a common language, we open the possibility of
+correlating and integrating the data from these streams; such
+data integration is currently considered a nearly impossible task.
+</p>
+
+<p>
+High-volume data stream processing is very tricky to "get right,"
+and there is a great deal of knowledge and experience within Research
+that we are attempting to leverage.  For example, such knowledge led
+us to make the behavior of the generated code highly tunable,
+including control of which elements from each record are actually
+parsed, the level of constraint checking performed, whether errors
+cause a single record to be skipped or the entire parsing process to
+stop, etc.  We are very interested in learning about challenging
+data formats, potential PADS users, data processing "knobs" that
+have proven useful -- any and all input is welcome!
+</p>
+
+<p>
+Contacts: <a href="mailto:kfisher@research.att.com>Kathleen Fisher</a> and
+<a href="mailto:gruber@research.att.com>Robert Gruber</a>
+</p>
+
