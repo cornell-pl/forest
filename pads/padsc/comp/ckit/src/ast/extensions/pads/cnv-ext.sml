@@ -1130,7 +1130,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			  fun cnvOneBranch (bname, _, _) = 
 			      [PT.CaseLabel(PT.Id bname, PT.Return (PT.String bname))]
 			  val defBranch = 
-			      [PT.DefaultLabel(PT.Return (PT.String "* unknown tag *"))]
+			      [PT.DefaultLabel(PT.Return (PT.String "*unknown_tag*"))]
 			  val branches = (List.concat(List.map cnvOneBranch members)) @ defBranch
 			  val bodySs = [PT.Switch ((PT.Id which), PT.Compound branches)]
 			  val returnTy = P.ccharPtr
@@ -1794,7 +1794,6 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val structProps = buildTyProps(name, PTys.Struct, diskSize, memChar, endian, isRecord, containsRecord, largeHeuristic, isFile, pdTid)
                       val () = PTys.insert(Atom.atom name, structProps)
 
-
 		      (* Struct: Generate canonical representation *)
 		      fun genRepFull {pty: PX.Pty, args: pcexp list, name: string, 
 				      isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
@@ -2154,14 +2153,14 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                       val () = subList := [] (* reset substitution list *)
 		      fun genWriteFull (f as {pty: PX.Pty, args: pcexp list, name: string, 
 					      isVirtual: bool, isEndian: bool, 
-  					      isRecord, containsRecord, largeHeuristic: bool,
+  					      isRecord=_, containsRecord, largeHeuristic: bool,
 					      pred: pcexp option, comment}) = 
 			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
                           else
 			    let val writeFieldName = (bufSuf o writeSuf) (lookupWrite pty) 
 				val () = addSub(name, fieldX(rep,name))
 				val modArgs = List.map(PTSub.substExps (!subList)) args
-				val adjustLengths = not (matchesLast(PX.Full f, lastField) andalso not isRecord)
+				val adjustLengths = isRecord orelse  not (matchesLast(PX.Full f, lastField))
 			    in
 				writeFieldSs(writeFieldName, modArgs @[getFieldX(pd,name), 
 								       getFieldX(rep,name)], adjustLengths)
@@ -2171,7 +2170,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 			      val (expTy, expAst) = cnvExpression e
 			      val pTyName = if CTisIntorChar expTy then PL.charlit else PL.strlitWrite
 			      val writeFieldName = lookupLitWrite pTyName
-			      val adjustLengths = not(matchesLast(PX.Brief e, lastField))
+			      val adjustLengths = isRecord orelse not(matchesLast(PX.Brief e, lastField))
 			      val writeFieldSs = writeFieldSs(writeFieldName,[e], adjustLengths)
 			  in
 			      writeFieldSs
@@ -2483,7 +2482,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 				  	   (loc, PL.locPCT,NONE), (panic, P.int,NONE),
 					   (tag, tagPCT,NONE), (value, unionPDPCT,NONE)]
 		     val pdStructED = P.makeTyDefStructEDecl (structEDFields, pdSuf name)
-	     val (pdStructPDDecls, pdTid) = cnvCTy pdStructED
+		     val (pdStructPDDecls, pdTid) = cnvCTy pdStructED
 		     val pdPCT = P.makeTypedefPCT (pdSuf name)			  
 
 		     (* Generate accumulator type *)
