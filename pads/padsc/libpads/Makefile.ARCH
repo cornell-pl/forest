@@ -8,5 +8,5 @@ padsc 1.0 :LIBRARY: rbuf.c default_io_disc.c libpadsc-gen.c libpadsc-acc-gen.c l
 
 $(INCLUDEDIR) :INSTALLPROTO: libpadsc.h libpadsc-internal.h rbuf.h
 
-../libpadsc-gen.c : ../libpadsc.c ../srcgen.pl ../../include/libpadsc.h ../../include/libpadsc-internal.h ../../include/rbuf.h ../../include/rbuf-internal.h ../../include/pdc_out_macros.h ../../include/pdc_io_disc.h
+../libpadsc-gen.c : ../libpadsc.c ../mksrc.pl ../../include/libpadsc.h ../../include/libpadsc-internal.h ../../include/rbuf.h ../../include/rbuf-internal.h ../../include/pdc_out_macros.h ../../include/pdc_io_disc.h
 	(cd ..; nmake)
