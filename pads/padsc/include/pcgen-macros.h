@@ -296,7 +296,7 @@ do {
 #define PCGEN_TYPEDEF_READ_CHECK(fn_nm, base_read_call, usercheck)
 do {
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep);
-  if (P_OK == (base_read_call) && P_Test_SemCheck (m->user) && (!(usercheck))) {
+  if (P_OK == (base_read_call) && P_Test_SemCheck (m->compoundLevel) && (!(usercheck))) {
     PDCI_CONSTRAINT_ERR(fn_nm, P_TYPEDEF_CONSTRAINT_ERR, 0);
   }
 } while (0)
@@ -306,7 +306,7 @@ do {
 #define PCGEN_TYPEDEF_READ_CHECK_REC(fn_nm, base_read_call, usercheck)
 do {
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep);
-  if (P_OK == (base_read_call) && P_Test_SemCheck (m->user) && (!(usercheck))) {
+  if (P_OK == (base_read_call) && P_Test_SemCheck (m->compoundLevel) && (!(usercheck))) {
     PDCI_CONSTRAINT_ERR(fn_nm, P_TYPEDEF_CONSTRAINT_ERR, 0);
   }
   PCGEN_FIND_EOR(fn_nm);
@@ -863,7 +863,7 @@ do {
 // union arm debugging macros
 #define PDCI_UNION_ARM_FAILED(fn_nm, the_tag_nm, xmlwrite_call, read_res)
 do {
-  if (P_Test_DbgRead(m->unionLevel)) {
+  if (P_Test_DbgRead(m->compoundLevel)) {
     if (read_res == P_ERR) {
       fprintf(sfstderr, "[in %s](DbgRead is set): read for union field %s failed.  Read result:\n",
 	      fn_nm, the_tag_nm);
@@ -937,7 +937,7 @@ do {
   rep->tag = the_tag;
   pd->tag  = the_tag;
   read_res_PCGEN_ = read_call;
-  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
@@ -985,7 +985,7 @@ do {
   rep->tag = the_tag;
   pd->tag  = the_tag;
   read_res_PCGEN_ = read_call;
-  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
@@ -1041,7 +1041,7 @@ do {
   rep->tag = the_tag;
   pd->tag  = the_tag;
   read_res_PCGEN_ = read_call;
-  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
@@ -1095,7 +1095,7 @@ do {
   rep->tag = the_tag;
   pd->tag  = the_tag;
   read_res_PCGEN_ = read_call;
-  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     if (P_ERR == P_io_commit(pads)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_COMMIT_ERR, fn_nm, 0);
     }
@@ -1165,7 +1165,7 @@ do {
 
 #define PCGEN_UNION_READ_MAN_STAT_POST_CHECK(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup, usercheck)
 do {
-  if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) {
+  if (!P_Test_SemCheck(m->compoundLevel) || (usercheck)) {
     pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
@@ -1174,7 +1174,7 @@ do {
 
 #define PCGEN_UNION_READ_MAN_POST_CHECK(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup, usercheck)
 do {
-  if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) {
+  if (!P_Test_SemCheck(m->compoundLevel) || (usercheck)) {
     pd->loc.b = start_pos_PCGEN_;
     goto branches_done;
   }
@@ -1185,7 +1185,7 @@ do {
 
 #define PCGEN_UNION_READ_WHERE_CHECK(fn_nm, usercheck, isOpt)
 do {
-    if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
+    if (P_Test_SemCheck(m->compoundLevel) && (!(usercheck))) {
       pd->loc.b = start_pos_PCGEN_;
       if (isOpt) {
         PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Popt specification violation");
@@ -1294,7 +1294,7 @@ do {
   trep_PCGEN_.tag = the_tag;
   tpd_PCGEN_.tag  = the_tag;
   read_res_PCGEN_ = read_call;
-  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT;
   }
   PDCI_UNION_ARM_FAILED(fn_nm, the_tag_nm, xmlwrite_call, read_res_PCGEN_);
@@ -1334,7 +1334,7 @@ do {
   trep_PCGEN_.tag = the_tag;
   tpd_PCGEN_.tag  = the_tag;
   read_res_PCGEN_ = read_call;
-  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
   PDCI_UNION_ARM_FAILED(fn_nm, the_tag_nm, xmlwrite_call, read_res_PCGEN_);
@@ -1382,7 +1382,7 @@ do {
   trep_PCGEN_.tag = the_tag;
   tpd_PCGEN_.tag  = the_tag;
   read_res_PCGEN_ = read_call;
-  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
   PDCI_UNION_ARM_FAILED(fn_nm, the_tag_nm, xmlwrite_call, read_res_PCGEN_);
@@ -1430,7 +1430,7 @@ do {
   trep_PCGEN_.tag = the_tag;
   tpd_PCGEN_.tag  = the_tag;
   read_res_PCGEN_ = read_call;
-  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->unionLevel) || (usercheck))) {
+  if ((P_OK == read_res_PCGEN_) && (!P_Test_SemCheck(m->compoundLevel) || (usercheck))) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
   PDCI_UNION_ARM_FAILED(fn_nm, the_tag_nm, xmlwrite_call, read_res_PCGEN_);
@@ -1498,7 +1498,7 @@ do {
 
 #define PCGEN_UNION_READ_LONGEST_MAN_STAT_POST_CHECK(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup, usercheck)
 do {
-  if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) {
+  if (!P_Test_SemCheck(m->compoundLevel) || (usercheck)) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST_STAT;
   }
 } while (0)
@@ -1506,7 +1506,7 @@ do {
 
 #define PCGEN_UNION_READ_LONGEST_MAN_POST_CHECK(fn_nm, rep_copy, rep_cleanup, pd_copy, pd_cleanup, usercheck)
 do {
-  if (!P_Test_SemCheck(m->unionLevel) || (usercheck)) {
+  if (!P_Test_SemCheck(m->compoundLevel) || (usercheck)) {
     PDCI_UNION_LONGEST_READ_CHECK_LONGEST(rep_copy, pd_copy);
   }
   rep_cleanup (pads, &trep_PCGEN_);
@@ -1517,7 +1517,7 @@ do {
 /* pd->loc already set by CHECK_LONGEST macros */
 #define PCGEN_UNION_READ_LONGEST_WHERE_CHECK(fn_nm, usercheck, isOpt)
 do {
-    if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
+    if (P_Test_SemCheck(m->compoundLevel) && (!(usercheck))) {
       if (isOpt) {
         PDCI_CONSTRAINT_ERR_LOC_ALREADY_SET(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Popt specification violation");
       } else {
@@ -1545,7 +1545,7 @@ do {
     goto final_check;
   }
   if (P_ERR == PDCI_io_forward(pads, longest_PCGEN_)) {
-    PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), m->unionLevel, "IO_forward error", P_FORWARD_ERR);
+    PDCI_READFN_RET_ERRCODE_FATAL(PDCI_MacroArg2String(fn_name), m->compoundLevel, "IO_forward error", P_FORWARD_ERR);
   }
 } while (0)
 /* END_MACRO */
@@ -1618,7 +1618,7 @@ do {
 /* falls through on success, goto branches_done on failure */
 #define PCGEN_SWUNION_READ_POST_CHECK(fn_nm, the_tag, err_tag, usercheck)
 do {
-  if (P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
+  if (P_Test_SemCheck(m->compoundLevel) && (!(usercheck))) {
     PDCI_ELT_CONSTRAINT_ERR(fn_nm, pd->val.the_tag, P_USER_CONSTRAINT_VIOLATION, P_UNION_MATCH_ERR, "User constraint on branch " PDCI_MacroArg2String(the_tag) " violated",);
     goto branches_done;
   }
@@ -1640,7 +1640,7 @@ do {
 
 #define PCGEN_SWUNION_READ_WHERE_CHECK(fn_nm, usercheck, isOpt)
 do {
-    if (pd->nerr == 0 && P_Test_SemCheck(m->unionLevel) && (!(usercheck))) {
+    if (pd->nerr == 0 && P_Test_SemCheck(m->compoundLevel) && (!(usercheck))) {
       PDCI_CONSTRAINT_ERR(fn_nm, P_USER_CONSTRAINT_VIOLATION, "Pwhere clause violation");
     }
 } while (0)

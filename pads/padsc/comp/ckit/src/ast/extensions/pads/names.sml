@@ -22,9 +22,11 @@ struct
   val unionEnd    = "end"    (* tloc.e     : Ppos_t *)
   val position    = "position"
 
-  val structLevel = "structLevel"
-  val unionLevel  = "unionLevel"
-  val arrayLevel  = "arrayLevel"
+  val structLevel = "compoundLevel"
+  val unionLevel  = "compoundLevel"
+  val arrayLevel  = "compoundLevel"
+  val user        = "compoundLevel"  (* typedef case *)
+
 
   val m         = "m" 
   val pd        = "pd"

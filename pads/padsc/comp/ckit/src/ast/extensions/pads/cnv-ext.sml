@@ -2067,7 +2067,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				pred : pcexp PX.PPredicate option})=
 (*			        predTy: PX.Pty option, thisVar: string option, pred: pcexp option}) =  *)
 		  let val base = "base"
-		      val user = "user"
 		      val baseTyName = lookupTy(baseTy, repSuf, #padsname)		
 		      val baseTypeName = lookupTy(baseTy, repSuf, #repname)		
 		      val cParams : (string * pcty) list = List.map mungeParam params
