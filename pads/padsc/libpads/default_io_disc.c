@@ -79,7 +79,7 @@
  *          it is only safe to use lastelt->next if a non-NULL cur_io_elt
  *          is used.  */
 
-#include "libpadsc.h"
+#include "libpadsc-internal.h" /* XXX for debugging, should be libpadsc.h XXX */
 #include "pdc_out_macros.h"
 
 #define PDC_NEED_AN_ELT(fn_name, elt, f_head, vm) \
@@ -577,7 +577,7 @@ PDC_norec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
 	char* dbuf_next;
 	size_t balloc_next = data->balloc + PDC_NOREC_NOSEEK_ADD_BLOCKS;
 	keep_len = data->dbuf_end - data->dbuf;
-	if (!(dbuf_next = vmoldof(data->disc_vm, data->dbuf, char, balloc_next * data->block_size, 1))) {
+	if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, char, balloc_next * data->block_size, 1))) {
 	  PDC_WARN(pdc->disc, "PDC_norec_noseek_read: could not alloc space for input record");
 	  (data->btail)--;
 	  return PDC_ERR;
@@ -918,7 +918,7 @@ PDC_nlrec_noseek_read(PDC_t *pdc, PDC_IO_disc_t* io_disc, PDC_IO_elt_t *io_cur_e
 	char* dbuf_next;
 	size_t balloc_next = data->balloc + PDC_NLREC_NOSEEK_ADD_BLOCKS;
 	keep_len = data->dbuf_end - data->dbuf;
-	if (!(dbuf_next = vmoldof(data->disc_vm, data->dbuf, char, balloc_next * data->block_size, 1))) {
+	if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, char, balloc_next * data->block_size, 1))) {
 	  PDC_WARN(pdc->disc, "PDC_nlrec_noseek_read: could not alloc space for input record");
 	  (data->btail)--;
 	  readlen = 0;
