@@ -1,0 +1,63 @@
+General organization of tests:
+=============================
+Example PADS Descriptions are in 
+
+	examples/p/X.p
+
+Corresponding data files are in 
+	
+	examples/data/X.extension
+
+Drivers for loading/parsing data files are in:
+
+ 	examples/tests/test_X.c
+
+Output of regression tests is in:
+
+ 	examples/regress/test_X.regress
+
+Tests for PADS/Galax Interface
+==============================
+
+Tests for PADS/GALAX interface are in:
+
+	pads/padsc/examples/xml
+
+Drivers for PADS/Galax: 
+
+    Loading
+    =======
+ 	gen/test_load_X.c :
+
+	  (Currently,) the loading driver tests the PADS/Galax data
+          model interface by reading in a pads source, creating the
+          pads XML node representing that source, calling the
+          padsDocument constructor to create an instance of an XML
+          document, then calling Galax to serialize/print the source
+          in XML.
+
+    Querying
+    ========
+ 	gen/test_query_X.c :
+ 
+	  (Currently,) the query driver takes as input the name of a
+          pads data source (that must conform to the definition X.p)
+          and the name of an XQuery file containing a query to apply
+          to the source.  The driver reads in the pads data source,
+          creating the pads XML node representing that source, calls
+          the padsDocument constructor to create an instance of an XML
+          document, then applies the query to the padsDocument node,
+          and serializes the result to standard output.
+
+	queries/test_X_*.xq:
+
+          Example queries that can be applied to data sources that
+          conform to X.p.
+
+    NB: There are NO checks in the drivers that a-priori determine
+    that the input data source matches the pads description for which
+    the driver is written.
+ 
+    
+  
+
