@@ -12,7 +12,6 @@ structure Main : sig
 
   end = struct
 
-    structure O = OutFile
     structure T = Tokens
     structure SS = Substring
 
@@ -26,192 +25,23 @@ structure Main : sig
       val exts = ["p", "c", "h"]
       structure Lexer = PadsLexer)
 
-    type file_set = O.outfile list
+  (* output target types *)
+    datatype target = TEX | HVA | SRC
 
-  (* return (fs1 ^ fs2, fs1 - fs2) *)
-    fun splitFileSet (fs1, fs2) = let
-	  fun split ([] : file_set, inter, diff) = (inter, diff)
-	    | split (f::r, inter, diff) = let
-		fun inSet ([] : file_set) = false
-		  | inSet (f'::r) = O.sameFile(f, f') orelse (inSet r)
-		in
-		  if (inSet fs2)
-		    then split(r, f::inter, diff)
-		    else split(r, inter, f::diff)
-		end
-	  in
-	    split (fs1, [], [])
-	  end
+  (* report an uncaught exception *)
+    fun uncaughtExn (srcFile, exn) = (
+	  TextIO.output(TextIO.stdErr, concat[
+	      "[", srcFile, "]: ", General.exnMessage exn, "\n"
+	    ]);
+	  app (fn s => TextIO.output(TextIO.stdErr, concat[
+	      "  raised at ", s, "\n"
+	    ]))
+	    (SMLofNJ.exnHistory exn);
+	  OS.Process.exit OS.Process.failure)
 
-  (* values in the stack of IF statements *)
-    datatype if_stk_item
-      = ELSE of (file_set * file_set)
-      | ENDIF of file_set
-
-    fun getDate () = Date.toString(Date.fromTimeLocal(Time.now()))
-
-    fun isBlank [] = true
-      | isBlank l = let
-	  fun isB {space, kind, text} =
-		SS.isEmpty(SS.dropl Char.isSpace (SS.all text))
-	  in
-	    List.all isB l
-	  end
-
-    fun doFile (lang, srcFName) = (let
-	  val {get=getLn, error=err} =
-		valOf (Languages.makeScanner {lang=lang, file=srcFName})
-	  val date = getDate()
-	  fun initFile file = let
-		val dstFName = Atom.toString(O.nameOf file)
-		in
-		  TextIO.output(TextIO.stdErr, String.concat[
-		      "extracting ", dstFName, " from ", srcFName, "\n"
-		    ]);
-		  O.text (String.concat["% ", dstFName, "\n"]) file;
-		  O.text (String.concat["% extracted from ", srcFName, "\n"]) file;
-		  O.text (String.concat["% ", date, "\n"]) file;
-		  O.text "%\n" file
-		end
-	  fun error s = (err s; raise Fail s)
-	  val fileTbl = AtomTable.mkTable (8, Fail "FileTbl")
-	  fun mkFile attrs fname = (case (AtomTable.find fileTbl fname)
-		 of NONE => let
-		      val f = O.openFile (fname, attrs)
-		      in
-			AtomTable.insert fileTbl (fname, f); f
-		      end
-		  | (SOME _) => error "duplicate file name"
-		(* end case *))
-	  fun mkFileSet files = let
-		fun mkFile s = (case (AtomTable.find fileTbl s)
-		       of (SOME f) => f
-			| NONE => error(concat[
-			      "unopened file \"", Atom.toString s, "\""
-			    ])
-		      (* end case *))
-		in
-		  map mkFile files
-		end
-	  fun appAllFiles f = AtomTable.app f fileTbl
-	  fun doCmd (cmd, ifStk, curFiles) = let
-		fun continue () = nextCmd(ifStk, curFiles)
-		fun doLine l = if (isBlank l)
-		      then app O.mbox curFiles
-		      else app (O.line l) curFiles
-		in
-(**
-print "doCmd: "; prFiles curFiles; print "\n";
-**)
-		  case cmd
-		   of T.Eof => (
-			appAllFiles O.close;
-			case (ifStk, curFiles)
-			 of ([], []) => ()
-			  | _ => error "unexpected EOF"
-			(* end case *))
-		    | T.Error => continue()
-		    | (T.Text l) => (doLine l; continue())
-		    | (T.FILE(attrs, files)) => (case ifStk
-			 of [] => let
-			    val newFiles = map (mkFile attrs) files
-			    in
-			      app initFile newFiles;
-			      nextCmd(ifStk, curFiles)
-			    end
-			  | _ => error "unexpected FILE"
-			(* end case *))
-		    | (T.BEGIN[]) => error "missing files in BEGIN"
-		    | (T.BEGIN files) => (case ifStk
-			 of [] => let
-			      val fs = mkFileSet files
-			      val (_, curFiles) = splitFileSet(curFiles, fs)
-			      in
-				app O.enable fs;
-				nextCmd (ifStk, curFiles@fs)
-			      end
-			  | _ => error "unexpected BEGIN"
-			(* end case *))
-		    | (T.END[]) => (
-			app O.disable curFiles;
-			nextCmd (ifStk, []))
-		    | (T.END files) => (case ifStk
-			 of [] => let
-			      val fs = mkFileSet files
-			      val (_, curFiles) = splitFileSet(curFiles, fs)
-			      in
-				app O.disable fs;
-				nextCmd (ifStk, curFiles)
-			      end
-			  | _ => error "unexpected END"
-			(* end case *))
-		    | T.BEGIN_ELLIPSE => (
-			app O.disable curFiles;
-			continue())
-		    | T.END_ELLIPSE => (
-			app O.enable curFiles;
-			continue())
-		    | T.BEGIN_HIGHLIGHT => (
-			app (O.highlight true) curFiles;
-			continue())
-		    | T.END_HIGHLIGHT => (
-			app (O.highlight false) curFiles;
-			continue())
-		    | (T.IF_FILE files) => let
-			val fs = mkFileSet files
-			val (thenFiles, elseFiles) = splitFileSet(curFiles, fs)
-			val ifStk' = ELSE(elseFiles, curFiles) :: ifStk
-			in
-(***
-print "IF-FILE\n";
-***)
-			  nextCmd (ifStk', thenFiles)
-			end
-		    | (T.ELIF_FILE files) => (case ifStk
-			 of (ELSE(elseFiles, allFiles)::r) => let
-			      val fs = mkFileSet files
-			      val (thenFiles, elseFiles) =
-				    splitFileSet(elseFiles, fs)
-			      val ifStk' = ELSE(elseFiles, allFiles) :: r
-			      in
-(***
-print "ELIF-FILE\n";
-***)
-				nextCmd (ifStk', thenFiles)
-			      end
-			  | _ => error "unexpected ELIF-FILE"
-			(* end case *))
-		    | T.ELSE => (case ifStk
-			 of (ELSE(elseFiles, allFiles)::r) =>
-(***
-(print "ELSE\n";
-***)
-			      nextCmd ((ENDIF allFiles)::r, elseFiles)
-(***
-)
-***)
-			  | _ => error "unexpected ELSE"
-			(* end case *))
-		    | T.END_IF => (case ifStk
-			 of (ELSE(_, allFiles)::r) => nextCmd (r, allFiles) 
-			  | ((ENDIF allFiles)::r) => nextCmd (r, allFiles)
-			  | [] => error "unexpected END-IF"
-			(* end case *))
-		    | (T.INSERT stuff) => (app doLine stuff; continue())
-		  (* end case *)
-		end
-	  and nextCmd (ifStk, curFiles) =
-		doCmd(getLn(), ifStk, curFiles)
-	  in
-	    nextCmd ([], [])
-	  end
-	    handle ex => TextIO.output(TextIO.stdErr, String.concat[
-		"extract-code: ", exnMessage ex, "\n"
-	      ]))
-
-    fun stripFile (lang, srcFName) = (let
-	  val {get=getLn, error=err} =
-		valOf (Languages.makeScanner {lang=lang, file=srcFName})
+    fun stripFile (lang, srcFName) = let
+	  val SOME{get=getLn, error=err} =
+		Languages.makeScanner {lang=lang, file=srcFName}
 	  val outStrm = TextIO.openOut(OS.Path.joinBaseExt{
 		  base=srcFName, ext=SOME "strip"
 		})
@@ -254,40 +84,26 @@ print "ELIF-FILE\n";
 	    strip ();
 	    TextIO.closeOut outStrm
 	  end
-	    handle ex => TextIO.output(TextIO.stdErr, String.concat[
-		"extract-code: ", exnMessage ex, "\n"
-	      ]))
 
-(*
-    fun main' ("-strip"::r) = stripFiles r
-      | main' [] = doFile ("<stdin>", TextIO.stdIn)
-      | main' files = let
-	  fun openF fname = (let
-		val instrm = TextIO.openIn fname
-		in
-		  doFile (fname, instrm);
-		  TextIO.closeIn instrm
-		end
-		  handle ex => TextIO.output(TextIO.stdErr, String.concat[
-		      "extract-code: ", exnMessage ex, "\n"
-		    ]))
-	  in
-	    app openF files
-	  end
-*)
+    fun doFile (target, lang, file) = (
+	  case target
+	   of TEX => TeXOutput.doFile {lang=lang, srcFName=file}
+	    | HVA => HeVeAOutput.doFile {lang=lang, srcFName=file}
+	    | SRC => stripFile (lang, file)
+	  (* end case *))
+	    handle ex => uncaughtExn (file, ex)
 
-    fun doArgs (lang, strip, []) = ()
-      | doArgs (_, strip, "-lang"::lang::r) = doArgs(SOME lang, strip, r)
-      | doArgs (lang, strip, "-strip"::r) = doArgs(lang, true, r)
+    fun doArgs (lang, target, []) = ()
+      | doArgs (_, target, "-lang"::lang::r) = doArgs(SOME lang, target, r)
+      | doArgs (lang, _, "-strip"::r) = doArgs(lang, SRC, r)
+      | doArgs (lang, _, "-hevea"::r) = doArgs(lang, HVA, r)
+      | doArgs (lang, _, "-tex"::r) = doArgs(lang, TEX, r)
       | doArgs (_, _, ["-lang"]) = TextIO.output(TextIO.stdErr,
 	  "extract-code: missing argument to \"-lang\" option\n")
-      | doArgs (lang, true, file::r) = (
-	  stripFile(lang, file);
-	  doArgs (lang, true, r))
-      | doArgs (lang, false, file::r) = (
-	  doFile(lang, file);
-	  doArgs (lang, false, r))
+      | doArgs (lang, target, file::r) = (
+	  doFile (target, lang, file);
+	  doArgs (lang, target, r))
 
-    fun main (_, args) = (doArgs (NONE, false, args); OS.Process.success)
+    fun main (_, args) = (doArgs (NONE, TEX, args); OS.Process.success)
 
   end; (* Main *)

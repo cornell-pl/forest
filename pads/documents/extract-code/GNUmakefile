@@ -1,8 +1,9 @@
-
- # This is a GNU makefile
+ifndef SML_BIN_DIR
+ export SML_BIN_DIR=sml
+endif
 
 ifndef SML
-  export SML=sml
+  export SML=$(SML_BIN_DIR)/sml
 endif
 
 SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
@@ -20,23 +21,14 @@ endif
 SHELL=/bin/sh
 
 
+LEX_SOURCES =		$(wildcard *-lexer)
+SML_SOURCES =		$(wildcard *.sml)
+SOURCES =		$(SML_SOURCES) $(LEX_SOURCES) sources.cm
+
+
 all:	extractor
 
 extractor:
 	echo Making extractor
 	$(SML) < $(BUILD_EXTRACT)
 
-
-foo:
-	@(echo SML = $(SML))
-	@(echo SML_VER = $(SML_VER))
-	@(echo SML_MINOR_VER = $(SML_MINOR_VER))
-	@(echo SML_MINOR_VER_TEST = $(SML_MINOR_VER_TEST))
-	@(echo BUILD_EXTRACT = $(BUILD_EXTRACT))
-
-
-clean:
-	rm extract-code.x86-linux
-	rm -rf CM
-	rm pads-lexer.sml
-	rm sml-lexer.sml

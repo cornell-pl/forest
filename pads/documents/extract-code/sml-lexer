@@ -121,8 +121,10 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>{real}		=> (mkCon yytext);
 
 <INITIAL>{num}		=> (mkCon yytext);
+<INITIAL>"0w"{num}	=> (mkCon yytext);
 <INITIAL>~{num}		=> (mkCon yytext);
 <INITIAL>"0x"{hexnum}	=> (mkCon yytext);
+<INITIAL>"0wx"{hexnum}	=> (mkCon yytext);
 <INITIAL>"~0x"{hexnum}	=> (mkCon yytext);
 
 <INITIAL>"(*@INSERT"{eol}	=> (inInsert := true; INSERT_BEGIN);
