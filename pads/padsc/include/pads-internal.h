@@ -134,6 +134,8 @@ void PDCI_IODISC_1P_CHECKS_RET_SSIZE(const char *whatfn, void *p1);
 void PDCI_IODISC_2P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2);
 void PDCI_IODISC_3P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, void *p3);
 void PDCI_IODISC_4P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, void *p3, void *p4);
+void PDCI_IODISC_5P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, void *p3, void *p4, void *p5);
+void PDCI_IODISC_6P_CHECKS_RET_SSIZE(const char *whatfn, void *p1, void *p2, void *p3, void *p4, void *p5, void *p6);
 
 void PDCI_READFN_RET_ERRCODE_WARN(const char *whatfn, const char *msg, PerrCode_t errcode);
 void PDCI_READFN_RET_EXIST_ERRCODE_WARN(const char *whatfn, const char *msg);
@@ -529,6 +531,16 @@ do { \
   PDCI_NULLPARAM_CHECK (whatfn, p4); \
 } while (0)
 
+
+#define PDCI_IODISC_5P_CHECKS(whatfn, p1, p2, p3, p4) \
+do { \
+  PDCI_IODISC_INIT_CHECKS (whatfn); \
+  PDCI_NULLPARAM_CHECK (whatfn, p1); \
+  PDCI_NULLPARAM_CHECK (whatfn, p2); \
+  PDCI_NULLPARAM_CHECK (whatfn, p3); \
+  PDCI_NULLPARAM_CHECK (whatfn, p4); \
+} while (0)
+
 #define PDCI_IODISC_0P_CHECKS_RET_SSIZE(whatfn) \
      PDCI_IODISC_INIT_CHECKS_RET_SSIZE(whatfn)
 
@@ -560,6 +572,27 @@ do { \
   PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p2); \
   PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p3); \
   PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p4); \
+} while (0)
+
+#define PDCI_IODISC_5P_CHECKS_RET_SSIZE(whatfn, p1, p2, p3, p4, p5) \
+do { \
+  PDCI_IODISC_INIT_CHECKS_RET_SSIZE (whatfn); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p1); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p2); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p3); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p4); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p5); \
+} while (0)
+
+#define PDCI_IODISC_6P_CHECKS_RET_SSIZE(whatfn, p1, p2, p3, p4, p5, p6) \
+do { \
+  PDCI_IODISC_INIT_CHECKS_RET_SSIZE (whatfn); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p1); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p2); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p3); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p4); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p5); \
+  PDCI_NULLPARAM_CHECK_RET_SSIZE (whatfn, p6); \
 } while (0)
 
 #define PDCI_READFN_WIDTH_CHECK(whatfn, elt_descr, width) \
@@ -655,6 +688,8 @@ do { \
 #define PDCI_IODISC_2P_CHECKS_RET_SSIZE(whatfn, p1, p2)                  P_NULL_STMT
 #define PDCI_IODISC_3P_CHECKS_RET_SSIZE(whatfn, p1, p2, p3)              P_NULL_STMT
 #define PDCI_IODISC_4P_CHECKS_RET_SSIZE(whatfn, p1, p2, p3, p4)          P_NULL_STMT
+#define PDCI_IODISC_5P_CHECKS_RET_SSIZE(whatfn, p1, p2, p3, p4, p5)      P_NULL_STMT
+#define PDCI_IODISC_6P_CHECKS_RET_SSIZE(whatfn, p1, p2, p3, p4, p5, p6)  P_NULL_STMT
 
 #define PDCI_READFN_WIDTH_CHECK(whatfn, elt_descr, width)                P_NULL_STMT
 #define PDCI_READFN_WIDTH_CHECK_ZERO_OK(whatfn, elt_descr, width)        P_NULL_STMT

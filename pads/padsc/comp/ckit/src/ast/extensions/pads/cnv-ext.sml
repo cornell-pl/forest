@@ -718,6 +718,8 @@ structure CnvExt : CNVEXT = struct
 	      val buf       = "buf"
 	      val bufLen    = "buf_len"
 	      val bufFull   = "buf_full"
+	      val delims    = "delims"
+	      val requestedOut = "requestedOut"
 	      val tmpBufCursor = pcgenName("buf_cursor")
 	      val length    = "length"
 	      val tmpLength = pcgenName("length")
@@ -727,6 +729,8 @@ structure CnvExt : CNVEXT = struct
 	      val tm        = "tm"
 	      val tloc      = "tloc"
 	      val tlen      = pcgenName("tlen")
+	      val tdelim    = pcgenName("tdelim")
+	      val trequestedOut = pcgenName("trequestedOut")
 	      val prefix    = "prefix"
 	      val what      = "what"
 	      val nst       = "nst"
@@ -1215,6 +1219,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      @ argXs)))]
 		  @ (writeAdjustLenSs adjustLengths)
 
+	      fun fmtFieldSs (fname, argXs) = 
+		  let val callX = PT.Call(PT.Id fname, 
+					  [PT.Id pads, PT.Id tmpBufCursor, PT.Id bufLen, PT.Id bufFull, P.addrX(PT.Id trequestedOut), PT.Id tdelim]
+					  @ argXs)
+		  in
+		      [PL.fmt(PT.String fname, callX)]
+		  end
+
+
 	      fun writeXMLFieldSs (fname, argXs, tagArg, adjustLengths, bumpIndent) = 
 		  [P.assignS(PT.Id tlen, 
 			     PT.Call(PT.Id fname,
@@ -1222,20 +1235,40 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      @ argXs @ [tagArg, if bumpIndent then P.plusX(PT.Id indent, P.intX 2) else PT.Id indent])))]
 		  @ (writeAdjustLenSs adjustLengths)
 
-	      fun genWriteFuns (writeName, writeXMLName, isRecord, cParams:(string * pcty)list, 
-		 	        pdPCT, canonicalPCT, iBodySs, iXMLBodySs) = 
+	      fun genWriteFuns (writeName, writeXMLName, fmtName, isRecord, cParams:(string * pcty)list, 
+		 	       mPCT, pdPCT, canonicalPCT, iBodySs, iXMLBodySs, iFmtBodySs) = 
 		  let val writeIOName = ioSuf writeName
 		      val writeBufName = bufSuf writeName
 		      val writeXMLIOName = ioSuf writeXMLName
 		      val writeXMLBufName = bufSuf writeXMLName
+                      val fmtIOName  = ioSuf fmtName			
+		      val fmtBufName = bufSuf fmtName
 		      val (cNames, cTys) = ListPair.unzip cParams
-		      val commonTys = cTys @ [P.ptrPCT pdPCT, P.ptrPCT canonicalPCT]
-                      val IOparamTys =   [P.ptrPCT PL.toolStatePCT, PL.sfioPCT] @ commonTys
-                      val IOparamNames = [pads, io] @ cNames @ [pd, rep]
-		      val BufParamTys =   [P.ptrPCT PL.toolStatePCT, P.ptrPCT PL.bytePCT, PL.sizePCT, P.intPtr] @ commonTys
-		      val BufParamNames = [pads, buf, bufLen, bufFull] @ cNames @ [pd, rep]
+		      val commonTys =   [P.ptrPCT pdPCT, P.ptrPCT canonicalPCT]
+		      val commonNames = [pd, rep]
+		      val IOcommonTys = [P.ptrPCT PL.toolStatePCT, PL.sfioPCT]
+		      val IOcommonNames = [pads, io]
+		      val BufcommonTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT PL.bytePCT, PL.sizePCT, P.intPtr]
+		      val BufcommonNames =[pads, buf, bufLen, bufFull] 
+		      val FmtcommonTys = [P.intPtr, P.ccharPtr,  P.ptrPCT mPCT]
+		      val FmtcommonNames = [requestedOut, delims, m]
+
+                      val IOparamTys =   IOcommonTys @ cTys @ commonTys
+                      val IOparamNames = IOcommonNames @ cNames @ commonNames
                       val IOformalParams = List.map P.mkParam (ListPair.zip (IOparamTys, IOparamNames))
+
+		      val BufParamTys =   BufcommonTys @ cTys @ commonTys
+		      val BufParamNames =  BufcommonNames @ cNames @ commonNames
 		      val BufFormalParams = List.map P.mkParam (ListPair.zip (BufParamTys, BufParamNames))
+			  
+		      val FmtIOParamTys =   IOcommonTys @ FmtcommonTys @ cTys @ commonTys
+		      val FmtIOParamNames = IOcommonNames @ FmtcommonNames @ cNames @ commonNames
+		      val FmtIOformalParams = List.map P.mkParam (ListPair.zip (FmtIOParamTys, FmtIOParamNames))
+
+		      val FmtBufParamTys = BufcommonTys @ FmtcommonTys @ cTys @ commonTys
+		      val FmtBufParamNames = BufcommonNames @ FmtcommonNames @ cNames @ commonNames
+		      val FmtBufFormalParams = List.map P.mkParam (ListPair.zip (FmtBufParamTys, FmtBufParamNames))
+
                       val IOXMLparamTys = IOparamTys @ [P.ccharPtr, P.int]
                       val IOXMLparamNames = IOparamNames @ [tag, indent]
 		      val BufXMLParamTys =   BufParamTys @ [P.ccharPtr, P.int]
@@ -1270,6 +1303,19 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val writeBufFunED = 
 			  P.mkFunctionEDecl(writeBufName, BufFormalParams, PT.Compound bufBodySs, returnTy)
 
+                      (* -- fmt2buf *)
+		      val fmtbufDeclSs = bufDeclSs @
+			                 [P.varDeclS'(P.ccharPtr, tdelim),
+					  P.varDeclS (P.int, trequestedOut, P.falseX)]
+		      val fmtInitSs = [PL.fmtInit(PT.String fmtBufName, PT.String structLevel)]
+
+		      val fmtBufCloseSs = 
+			  (if isRecord then [PL.fmtRecord (PT.String fmtBufName)] else [])
+			  @ [PT.Return (PT.Id tmpLength)]
+		      val fmtBufBodySs  = fmtbufDeclSs @ fmtInitSs @ iFmtBodySs @ fmtBufCloseSs
+		      val fmtBufFunED = 
+			  P.mkFunctionEDecl(fmtBufName, FmtBufFormalParams, PT.Compound fmtBufBodySs, returnTy)
+
                       (* -- write_xml_2buf *)
 		      val bufXMLCheckParamsSs = [PL.IODiscChecksSizeRet3P(PT.String writeXMLBufName, 
 								          PT.Id buf, PT.Id bufFull, PT.Id rep)]
@@ -1281,23 +1327,25 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
  		      val introSs = [P.varDeclS'(P.ptrPCT PL.bytePCT, buf),
  				     P.varDeclS'(P.int, bufFull),
  				     P.varDeclS'(PL.sizePCT, bufLen) ]
-		      fun doWriteS (wBufName, lastArgs) =
+		      fun doWriteS (wBufName, extraArgs, lastArgs) =
 			  PT.Call(PT.Id wBufName,
 				  [PT.Id pads, PT.Id buf, PT.Id bufLen,
 				   P.addrX (PT.Id bufFull)]
+				  @ extraArgs
 				  @ (List.map PT.Id(cNames @ [pd, rep])) @ lastArgs)
-		      fun mkWriteFunED (wIOName, fParams, wBufName, lastArgs) =
+		      fun mkWriteFunED (wIOName, fParams, wBufName, extraArgs, lastArgs) =
 			  P.mkFunctionEDecl(wIOName, fParams,
 					    PT.Compound ( introSs @
 							  [PT.Expr(PT.Call(PT.Id "PCGEN_WRITE2IO_USE_WRITE2BUF",
 									   [PT.String(wIOName),
-									    doWriteS(wBufName, lastArgs)])),
+									    doWriteS(wBufName, extraArgs, lastArgs)])),
 							   PT.Return(P.intX ~1)]),
 					    returnTy)
-		      val writeIOFunED    = mkWriteFunED(writeIOName,    IOformalParams,    writeBufName, [])
-		      val writeXMLIOFunED = mkWriteFunED(writeXMLIOName, IOXMLformalParams, writeXMLBufName, [PT.Id tag, PT.Id indent])
+		      val writeIOFunED    = mkWriteFunED(writeIOName,    IOformalParams,    writeBufName,    [], [])
+		      val fmtIOFunED      = mkWriteFunED(fmtIOName,      FmtIOformalParams, fmtBufName,      [PT.Id requestedOut, PT.Id delims, PT.Id m], [])
+		      val writeXMLIOFunED = mkWriteFunED(writeXMLIOName, IOXMLformalParams, writeXMLBufName, [], [PT.Id tag, PT.Id indent])
 		  in
-		      [writeBufFunED, writeIOFunED, writeXMLBufFunED, writeXMLIOFunED]
+		      ([writeBufFunED, writeIOFunED, writeXMLBufFunED, writeXMLIOFunED], [fmtBufFunED, fmtIOFunED])
 		  end
 
 
@@ -1992,6 +2040,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
               fun emitAccum eds = emit (!(#outputAccum(PInput.inputs)), eds)
               fun emitRead  eds = emit (!(#outputRead(PInput.inputs)), eds)
               fun emitWrite eds = emit (!(#outputWrite(PInput.inputs)), eds)
+              fun emitExperiment eds = emit (!(#outputExper(PInput.inputs)), eds)
               fun emitXML   eds = emit (!(#outputXML(PInput.inputs)), eds)
 	      fun emitPred  eds = emitRead eds
 
@@ -2230,12 +2279,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                       (* Generate Write function typedef case *)
 		      val writeName = writeSuf name
+		      val fmtName = fmtSuf name
 		      val writeXMLName = writeXMLSuf name
 		      val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy) 
+		      val fmtBaseName = (bufSuf o fmtSuf) (lookupWrite baseTy) 
 		      val writeXMLBaseName = (bufSuf o writeXMLSuf) (lookupWrite baseTy) 
 		      val bodySs = writeFieldSs(writeBaseName, args @ [PT.Id pd, PT.Id rep], isRecord)
 		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, args @ [PT.Id pd, PT.Id rep], PT.Id tag, false, false)
-                      val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
+		      val bodyFmtSs = fmtFieldSs(fmtBaseName, [PT.Id m] @ args @ [PT.Id pd, PT.Id rep])
+                      val (writeFunEDs, experFmtFunEDs)  = genWriteFuns(writeName, writeXMLName, fmtName, isRecord, cParams, 
+									mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtSs)
 
 	              (***** typedef PADS-Galax *****)
 
@@ -2276,7 +2329,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      @ (emitPred isFunEDs)
                       @ (emitAccum accumEDs)
                       @ (emitWrite writeFunEDs)
-  		      @ (emitXML galaxEDs)
+                      @ (emitExperiment experFmtFunEDs)
+  		      @ (emitXML galaxEDs )
 		  end
 
 
@@ -3654,6 +3708,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 (* Generate Write function array case *)
 		 val writeName = writeSuf name
 		 val writeXMLName = writeXMLSuf name
+		 val fmtName = fmtSuf name
 		 val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy) 
 		 val writeXMLBaseName = (bufSuf o writeXMLSuf) (lookupWrite baseTy) 
 		 val lengthX = P.arrowX(PT.Id rep, PT.Id length)
@@ -3687,7 +3742,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_PD_XML_OUT", []))]
 				 @ writeXMLArraySs
 				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
-		 val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
+		 val bodyFmtSs = [] (* to be implemented array case *)
+		 val (writeFunEDs, experFmtFunEDs) = genWriteFuns(writeName, writeXMLName, fmtName, isRecord, cParams, 
+								  mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtSs)
 
                  (* Generate is function array case *)
                  val isName = PNames.isPref name
@@ -3899,6 +3956,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 @ (emitPred isFunEDs)
                  @ (emitAccum accumEDs)
                  @ (emitWrite writeFunEDs)
+		 @ (emitExperiment experFmtFunEDs)
                  @ (emitXML galaxEDs)
 	     end
 
@@ -4391,6 +4449,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val readName      = readSuf unionName
 		     val writeName     = writeSuf name
 		     val writeXMLName  = writeXMLSuf name
+		     val fmtName       = fmtSuf name
 		     val errTag        = PT.Id(errSuf unionName)
 		     val repInit       = PT.Id(initSuf unionName)
 		     val pdInit        = PT.Id((initSuf o pdSuf) unionName)
@@ -4947,7 +5006,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				       PT.Expr(PT.Call(PT.Id "PCGEN_UNION_PD_XML_OUT", []))]
 					@ writeXMLVariantsSs
 					@ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
-                      val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
+		      val bodyFmtSs = [] (* to be implemented union case*)
+                      val (writeFunEDs,  experFmtFunEDs) = genWriteFuns(writeName, writeXMLName, fmtName, isRecord, cParams, 
+									mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtSs)
 
 		      (***** union PADS-Galax *****)
 	              (* In the XML representation of unions, each alternative is always the second child 
@@ -5022,6 +5083,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      @ (emitRead readEDs)
 		     @ (emitPred isFunEDs)
 		     @ (emitAccum accumEDs)
+ 		     @ (emitExperiment experFmtFunEDs)
                      @ (emitXML galaxEDs)
 		 end
 	  
@@ -5697,9 +5759,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
-													 (* Generate Write function struct case *)
+													 
+	              (* Generate Write function struct case *)
 		      val writeName = writeSuf name
 		      val writeXMLName = writeXMLSuf name
+		      val fmtName = fmtSuf name
 		      fun getLastField fs = 
 			  let fun f'([], s) = s
                                 | f'(f::fs, s) = 
@@ -5755,6 +5819,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 											  P.arrowX(PT.Id pd, PT.Id errCode))]
 									       @ ss)])
 						       end
+
+
 
 		      fun genWriteBrief (eOrig, labelOpt) = 
 			  if PTSub.isFreeInExp(omitNames, eOrig) then
@@ -5834,18 +5900,60 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      end
 
 
+		      fun genFmtForM (fSpec, pty, args, name, isRecord, pdX, wrapSsFn) = 
+			  let val fmtFieldName = (bufSuf o fmtSuf) (lookupWrite pty) 
+			      fun checkOmitted args = List.exists(fn a=>PTSub.isFreeInExp(omitNames, a)) args
+			      fun warnOmitted fmtFieldName = 
+				  (PE.warn ("Omitted field passed to nested field type for field "^name^". "^
+					    "Excluding call to "^fmtFieldName ^" from "^ fmtName); [])
+			  in
+			      if checkOmitted(args)
+			      then warnOmitted(fmtFieldName)
+			      else
+				  let val modArgs = List.map(PTSub.substExps (!postReadSubList)) args
+				  in
+				      wrapSsFn(
+				      fmtFieldSs(fmtFieldName, 
+						 [P.getFieldX(m, name)] @ modArgs @ [pdX, P.getFieldX(rep, name)]))
+				  end
+			  end
+
+		      fun genFmtFull (f as ({pty: PX.Pty, args: pcexp list, name: string, 
+					      isVirtual: bool, isEndian: bool, 
+  					      isRecord=_, containsRecord, largeHeuristic: bool,
+					      pred: pcexp option, comment,...}:pfieldty)) = 
+			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
+                          else genFmtForM(PX.Full f, pty, args, name, isRecord, P.getFieldX(pd, name), fn x=>x)
+
+		      fun genFmtMan (m as {tyname, name, args, isVirtual, expr, pred, comment}) = 
+			  if isVirtual then [] else
+			  case isPadsTy tyname of PTys.CTy => [] 
+						| _ => let val padsName = getPadsName tyname
+						       in
+							   genWriteForM(PX.Manifest m, padsName, args, name, false(*manifest fields can't be records*),
+									P.addrX(PT.Id tpd),
+								     fn ss => [PT.Compound(
+									       [P.varDeclS'(P.makeTypedefPCT(lookupTy(padsName, pdSuf, #pdname)), tpd),
+										P.assignS(P.dotX(PT.Id tpd, PT.Id errCode),
+											  P.arrowX(PT.Id pd, PT.Id errCode))]
+									       @ ss)])
+						       end
+
+
 		      val _ = pushLocalEnv()       (* We convert literals to determine which write function to use*)
 		      val cParams : (string * pcty) list = List.map mungeParam params (* so we have to add params to scope *)
                       val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		      val wrFieldsSs = mungeFields genWriteFull genWriteBrief genWriteMan fields
 		      val wrXMLFieldsSs = mungeFields genXMLWriteFull genXMLWriteBrief genXMLWriteMan fields
+		      val fmtFieldsSs = (mungeFields genFmtFull (fn x => []) genFmtMan fields) @ [PL.fmtFixLast()]
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val bodySs = wrFieldsSs
 		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)])),
 				       PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_PD_XML_OUT", []))]
 				      @ wrXMLFieldsSs
 				      @ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
-                      val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
+                      val (writeFunEDs, experFmtFunEDs) = genWriteFuns(writeName, writeXMLName, fmtName, isRecord, cParams, 
+								       mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, fmtFieldsSs)
 
 						    (***** struct PADS-Galax *****)
 
@@ -5956,6 +6064,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	              @ (emitPred isFunEDs)
                       @ (emitAccum accumEDs)
                       @ (emitWrite writeFunEDs)
+   		      @ (emitExperiment experFmtFunEDs)
   		      @ (emitXML galaxEDs)
 		  end
 
@@ -6146,12 +6255,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                   (* Generate Write functions (enum case) *)
 		  val writeName = writeSuf name
 		  val writeXMLName = writeXMLSuf name
+		  val fmtName = fmtSuf name
 		  val writeBaseName = PL.cstrlitWriteBuf
 		  val writeXMLBaseName = PL.cstrlitWriteXMLBuf
                   val expX = PT.Call(PT.Id(toStringSuf name), [P.starX(PT.Id rep)])
 		  val bodySs = writeFieldSs(writeBaseName, [expX], isRecord)
 		  val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ENUM_XML_OUT", [PT.String(name), PT.Id(toStringSuf name)]))]
-		  val writeFunEDs = genWriteFuns(writeName, writeXMLName, isRecord, cParams, pdPCT, canonicalPCT, bodySs, bodyXMLSs)
+		  val bodyFmtSs = [] (* to be implemented *)
+		  val (writeFunEDs, experFmtFunEDs) = genWriteFuns(writeName, writeXMLName, fmtName, isRecord, cParams,
+						 mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtSs)
 
 	          (***** enum PADS-Galax *****)
 
@@ -6195,6 +6307,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                 @ (emitPred isFunEDs)
                 @ (emitAccum accumEDs)
                 @ (emitWrite writeFunEDs)
+ 		@ (emitExperiment experFmtFunEDs)
                 @ (emitXML galaxEDs)
 	      end
 

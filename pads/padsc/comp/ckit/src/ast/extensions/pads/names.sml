@@ -49,6 +49,7 @@ struct
   fun maskInitSuf s = s^"_m_init"
   fun writeSuf s = s^"_write"
   fun writeXMLSuf s = s^"_write_xml_"
+  fun fmtSuf s = s^"_fmt"
   fun ioSuf s = s^"2io"
   fun bufSuf s = s^"2buf"
   fun reportSuf s = s^"_report"

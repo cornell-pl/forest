@@ -56,6 +56,7 @@ structure Main : sig
     val writeNoneFlag = ref false
     val readNoneFlag = ref false
     val accumNoneFlag = ref false
+    val experimentFlag = ref false
 
     fun addPadsFile s =    srcFiles := ((Pads,s) :: !srcFiles)
     fun addUnknownFile s = srcFiles := ((Unknown,s) :: !srcFiles)
@@ -101,7 +102,8 @@ structure Main : sig
 
     val flags_debug = [
 	 ("parse", "generate parsetree only", PCL.BoolSet parseTreeOnlyFlag),
-	 ("ast",   "generate ast only", PCL.BoolSet astOnlyFlag)
+	 ("ast",   "generate ast only", PCL.BoolSet astOnlyFlag),
+         ("experimental", "generate experimental features", PCL.BoolSet experimentFlag)
         ]
 
     (* Error handling *)
@@ -382,9 +384,10 @@ structure Main : sig
 	else ()
         
     fun initState() = (* more customization in the future *)
-	( if !accumNoneFlag then PInput.emitAccum false else ();
-	  if !writeNoneFlag then PInput.emitWrite false else ();
-          if !xmlFlag       then PInput.emitXML true else ())
+	( if !accumNoneFlag  then PInput.emitAccum false else ();
+	  if !writeNoneFlag  then PInput.emitWrite false else ();
+	  if !experimentFlag then PInput.emitExperiment true else();
+          if !xmlFlag        then PInput.emitXML true else ())
 
     fun main release (cmd, args) = 
       (stage := "Command-line processing";

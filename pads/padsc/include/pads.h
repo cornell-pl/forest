@@ -361,6 +361,8 @@ typedef enum PerrCode_t_e {
   P_FORWARD_ERR                   =   15,
   P_PANIC_SKIPPED                 =   20,
 
+  P_FMT_EMPTY_DELIM_ERR           =   30,
+
   /* The following errors (code >= 100) DO have a corresponding location  */
   P_USER_CONSTRAINT_VIOLATION     =  100,
   P_MISSING_LITERAL               =  101,
@@ -802,6 +804,7 @@ extern Puint32 P_SynCheck;
 extern Puint32 P_SemCheck;
 extern Puint32 P_DbgRead;
 extern Puint32 P_Write;
+extern Puint32 P_WriteVoid;
 
 extern Puint32 P_CheckAndSet;
 extern Puint32 P_BothCheck;
@@ -850,6 +853,7 @@ void    P_Dont_Write(Puint32 m);
 
 /* Mask flags used with write functions */
 #define P_Write               0x0010
+#define P_WriteVoid           0x0020
 
 /* Useful Combinations of Mask Flags */
 #define P_CheckAndSet         0x0007     /* P_Set|P_SynCheck|P_SemCheck */

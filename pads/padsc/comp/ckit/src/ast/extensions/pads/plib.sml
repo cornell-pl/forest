@@ -58,6 +58,8 @@ struct
   val M_CHECK_AND_SET = PT.Id "P_CheckAndSet"
   val M_CHECK         = PT.Id "P_BothCheck"
   val M_IGNORE        = PT.Id "P_Ignore"
+  val M_WRITE         = PT.Id "P_Write"
+  val M_WRITEVOID     = PT.Id "P_WriteVoid"
 
   val PlittleEndian = PT.Id "PlittleEndian"
   val PbigEndian    = PT.Id "PbigEndian"
@@ -372,6 +374,18 @@ struct
 
   fun nullCheck(prefix, ptrX) =
     PT.Expr(PT.Call(PT.Id "PDCI_NULLPARAM_CHECK", [prefix, PT.Cast(P.voidPtr, ptrX)]))
+
+  fun fmtInit(fnNameX, maskName) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_INIT", [fnNameX, maskName]))
+
+  fun fmt(fnNameX, callX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_STRUCT_FIELD", [fnNameX, callX]))
+
+  fun fmtFixLast() = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_FIX_LAST", []))
+
+  fun fmtRecord(fnNameX) = 
+    PT.Expr(PT.Call(PT.Id "PCGEN_FMT_RECORD", [fnNameX]))
 
   fun discChecksSizeRet(prefix) = 
     PT.Expr(PT.Call(PT.Id "PDCI_DISC_INIT_CHECKS_RET_SSIZE", [prefix]))

@@ -1,11 +1,11 @@
 Pstruct test {
-  Puint32 id : id < 100000;     /- identity 
+  Pint32 id : id < 100000;     /- identity 
   '|';
-  Puint32 ts : ts == 11 * id;   /- time stamp
+  Pint32 ts : ts == 11 * id;   /- time stamp
 };
 
 Precord Pstruct testtwo{
   test header;
   '|';
-  Puint32 f : f == header.ts;   
+  Pint32 f : f == header.ts;   
 };

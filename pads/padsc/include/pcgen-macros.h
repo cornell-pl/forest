@@ -188,6 +188,10 @@ void PCGEN_ARRAY_PD_XML_OUT();
 void PCGEN_UNION_PD_XML_OUT();
 
 void PCGEN_ENUM_XML_OUT(const char *def_tag, const char *(rep2str_fn)(int));
+void PCGEN_FMT_INIT(char * fnName, char * maskName);
+void PCGEN_FMT_STRUCT_FIELD(char *fieldName, ssize_t length);
+void PCGEN_FMT_FIX_LAST();
+void PCGEN_FMT_RECORD(char * fnName);
 
 #else
 /* The actual macros */
@@ -2004,6 +2008,62 @@ do {
   }
 } while (0)
 /* END_MACRO */
+
+#define PCGEN_FMT_NEXT(delim) ((*(delim + 1)) ? delim + 1 : delim)
+
+#define PCGEN_FMT_INIT(fnName, structMask) 
+ do { 
+  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
+  if (!(*delims)) { 
+       PDCI_report_err(pads, P_WARN_FLAGS, 0, P_FMT_EMPTY_DELIM_ERR, (fnName), "Empty delimiter sequence");
+       return -1;
+  };
+  /* Invariant: delims[0] is always ok. */
+  tdelim_PCGEN_ = PCGEN_FMT_NEXT(delims);
+  if (!(P_Write|P_WriteVoid)&(m->structMask)) {
+     *requestedOut = 0; 
+     return length_PCGEN_=0;}
+  *buf_full = 0;
+ } while (0)
+/* END_MACRO */
+
+#define PCGEN_FMT_STRUCT_FIELD(fdName, fmtCall)
+ do { 
+      trequestedOut_PCGEN_ = 0;
+      tlen_PCGEN_ = fmtCall;
+      PCGEN_TLEN_UPDATES (); 
+      if (trequestedOut_PCGEN_) { 
+	*requestedOut = 1; 
+        tlen_PCGEN_ = Pchar_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,delims[0]);
+        PCGEN_TLEN_UPDATES ();
+      };
+ } while (0)
+
+/* END_MACRO */
+
+/*  If last field didn't request output, we need to unwrite the previous separator as well as the last one. */
+#define PCGEN_FMT_FIX_LAST()
+do{
+    if (!trequestedOut_PCGEN_ && length_PCGEN_ > 0 ) {
+       length_PCGEN_--;
+       buf_cursor_PCGEN_--;
+       buf_len++;
+    };
+    if (length_PCGEN_ > 0) {
+      length_PCGEN_--;
+      buf_cursor_PCGEN_--;
+      buf_len++;
+    }
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_FMT_RECORD(fname)
+do {
+    tlen_PCGEN_ = PDCI_io_rec_fmt2buf(pads, buf_cursor_PCGEN_, buf_len, buf_full, Pcharset_ASCII, (fname));
+    PCGEN_FINAL_TLEN_UPDATES ();
+} while (0)
+/* END_MACRO */
+
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 #endif /* FOR_CKIT */
