@@ -31,9 +31,18 @@ struct
 
   val elt_rep   = "elt_rep"
   val elt_pd    = "elt_pd"
+  val info = "info"
   val m         = "m" 
   val pd        = "pd"
   val rep       = "rep"
+  val smartNode = "smartNode"
+  val m_out = "m_out"
+  val pd_out = "pd_out"
+  val rep_out = "rep_out"
+  val max_elts = "max_elts"
+  val base = "base"
+  val params = "params"
+
   val acc       = "acc"
   val sfstderr  = "sfstderr"
   fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
@@ -49,10 +58,14 @@ struct
   fun dstSuf s = s^"_dst"
   fun addSuf  s = s^"_add"
   fun readSuf s = s^"_read"
+  fun arrayInfoSuf s = s^"_array_info_t"
+  fun roParamsSuf s = s^"_ro_params_t"
+  fun roParamsInitSuf s = s^"_ro_params_init"
   fun roDriverSuf s = s^"_ro_driver"
   fun roArgsSuf s = s^"_roArgs"
   fun roInitSuf s = s^"_read_one_init"
   fun readOneSuf s = s^"_read_one"
+  fun rereadOneSuf s = s^"_reread_one"
   fun finalChecksSuf s = s^"_final_checks"
   fun scan1Suf s = s^"_scan1"
   fun scan2Suf s = s^"_scan2"
@@ -78,10 +91,13 @@ struct
   fun vTableSuf name = name^"_vtable"
   fun cnInitSuf name = name^"_cachedNode_init"
   fun sndInitSuf name = name^"_sndNode_init"
+  
 
   fun nodeSuf name = name^"_node"
   fun cnSuf name = name^"_cachedNode"  
   fun sndSuf name = name^"_sndNode"  
+  fun snSuf name = name^"_smartNode"
+  fun ssnSuf name = name^"_seqSmartNode"
 
   fun nodeNewSuf name = (nodeSuf name)^"_new" 
   fun nodeKCSuf name = kthChildSuf (nodeSuf name)
@@ -95,6 +111,20 @@ struct
   fun sndKCSuf name = kthChildSuf (sndSuf name)
   fun sndKCNSuf name = kthChildNamedSuf (sndSuf name)
   fun sndVTableSuf name = vTableSuf (sndSuf name)
+
+  fun snEltAllocSuf name = (snSuf name) ^ "_eltAlloc"
+  fun snEltReadSuf name = (snSuf name) ^ "_eltRead"
+  fun snEltFreeSuf name = (snSuf name) ^ "_eltFree"
+  fun snEltPathWalkSuf name = (snSuf name) ^ "_eltPathWalk"
+  fun snKCSuf name = kthChildSuf (snSuf name)
+  fun snKCNSuf name = kthChildNamedSuf (snSuf name)
+  fun snInitSuf name = (snSuf name) ^ "_init"
+  fun snVTableSuf name = vTableSuf (snSuf name)
+
+  fun ssnInitSuf name = (ssnSuf name) ^ "_init"
+  fun ssnVTableSuf name = vTableSuf (ssnSuf name)
+
+  fun aiInitSuf s = s^"_array_info_init"
 
   fun isPref name = "is_"^name
 

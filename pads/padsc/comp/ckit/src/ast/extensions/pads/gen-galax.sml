@@ -8,6 +8,21 @@ structure GenGalax = struct
   structure PL   = PLib          (* Information about values/functions available from pads library *)
   structure PN   = PNames
 
+  val m = PN.m
+  val pd = PN.pd
+  val rep = PN.rep
+  val smartNode = PN.smartNode
+  val m_out = PN.m_out
+  val pd_out = PN.pd_out
+  val rep_out = PN.rep_out
+  val max_elts = PN.max_elts
+  val elt_rep   = PN.elt_rep
+  val elt_pd    = PN.elt_pd
+  val info = PN.info
+  val base = PN.base
+  val params = PN.params
+  
+  
   val kind = "kind"
   val whatfn = "whatfn"
   val result    = "result"
@@ -145,56 +160,30 @@ structure GenGalax = struct
   (* calls CACHED_NODE_INIT_RET macro*)
   fun macroCNKthChildRet() = PT.Call(PL.CACHED_NODE_KTH_CHILD_RET,nil)
 
-  (* calls ARR_NODE_KTH_CHILD_BODY macro*)
-  fun macroArrKC(ty,childTy) = 
-      PT.Expr(PT.Call(PL.ARR_NODE_KTH_CHILD_BODY,
-		      [PT.Id ty,PT.Id childTy]))
+  fun macroSNDInit(ty) = 
+      PT.Expr(PT.Call(PL.SND_NODE_INIT_BODY,[PT.Id ty]))
+  fun macroSNDInitRet() = 
+      PT.Call(PL.SND_NODE_INIT_RET,nil)
 
-  (* calls ARR_NODE_KTH_CHILD_BODY macro*)
-  fun macroArrKCRet() = PT.Call(PL.ARR_NODE_KTH_CHILD_RET,nil)
-
-  fun macroArrLength(ty) = PT.Call(PL.ARR_LENGTH, [PT.Id ty])
-
-  (* calls ARR_NODE_KTH_CHILD_BODY macro*)
-  fun macroArrKCN(ty) =
-	  PT.Expr(PT.Call(PL.ARR_NODE_KTH_CHILD_NAMED_BODY,
-			  [PT.Id ty]))
-
-  (* calls ARR_NODE_KTH_CHILD_RET macro*)
-  fun macroArrKCNRet() =
-		    PT.Call(PL.ARR_NODE_KTH_CHILD_NAMED_RET,nil)
-
-  (* calls STR_NODE_KTH_CHILD_BODY_BEGIN macro*)
+  (****  Struct  macros ****)
   fun macroStructKCBegin(ty) =
       PT.Expr(PT.Call(PL.STR_NODE_KTH_CHILD_BODY_BEGIN,
 		      [PT.Id ty]))
 
-  (* calls STR_NODE_KTH_CHILD_BODY_END macro*)
   fun macroStructKCEnd() =
 		    PT.Expr(PT.Call(PL.STR_NODE_KTH_CHILD_BODY_END,
 				    nil))
 
-  (* calls STR_NODE_KTH_CHILD_RET macro*)
   fun macroStructKCRet() =
 		    PT.Call(PL.STR_NODE_KTH_CHILD_RET,nil)
 
-  (* calls NODE_KC_CASE macro*)
   fun macroKCCase(ty,n,fieldTy,fieldName) =
       PT.Expr(PT.Call(PL.NODE_KC_CASE,
 		      [PT.Id ty,P.intX n,PT.Id fieldTy,PT.Id fieldName]))
 
-  (* calls NODE_KC_CASE_COMP macro*)
-  fun macroKCCaseComp(ty,n,fieldTy,fieldName) =
-      PT.Expr(PT.Call(PL.NODE_KC_CASE_COMP,
-	      [PT.Id ty,P.intX n,PT.Id fieldTy,PT.Id fieldName]))
+  fun makeKCCase name (n, (fieldName, fieldTy, _)) =
+      macroKCCase(name,n,fieldTy,fieldName)				      
 
-  fun makeKCCase name (n, (fieldName, fieldTy, isPcomputed)) =
-      if isPcomputed then
-	  macroKCCaseComp(name,n,fieldTy,fieldName)				      
-      else
-	  macroKCCase(name,n,fieldTy,fieldName)				      
-
-  (* calls STR_NODE_KTH_CHILD_BODY macro*)
   fun macroStructKCN(ty,fieldNames) =
       let val fnList = map PT.String fieldNames
       in
@@ -202,22 +191,12 @@ structure GenGalax = struct
 			  (PT.Id ty) :: fnList))
       end
 
-  (* calls STR_NODE_KTH_CHILD_RET macro*)
   fun macroStructKCNRet() =
 		    PT.Call(PL.STR_NODE_KTH_CHILD_NAMED_RET,nil)
-
-  fun macroSNDInit(ty) = 
-      PT.Expr(PT.Call(PL.SND_NODE_INIT_BODY,[PT.Id ty]))
-  fun macroSNDInitRet() = 
-      PT.Call(PL.SND_NODE_INIT_RET,nil)
 
   fun macroSNDKCCase(ty,n,fieldTy,fieldName) =
       PT.Expr(PT.Call(PL.SND_NODE_KC_CASE,
 		      [PT.Id ty,P.intX n,PT.Id fieldTy,PT.Id fieldName]))
-  fun macroSNDKCCaseComp(ty,n,fieldTy,fieldName) =
-      PT.Expr(PT.Call(PL.SND_NODE_KC_CASE_COMP,
-		      [PT.Id ty,P.intX n,PT.Id fieldTy,PT.Id fieldName]))
-
   fun macroStructSNDKCBegin(ty) =
       PT.Expr(PT.Call(PL.STR_SND_NODE_KTH_CHILD_BODY_BEGIN,[PT.Id ty]))
   fun macroStructSNDKCEnd() =
@@ -225,40 +204,40 @@ structure GenGalax = struct
   fun macroStructSNDKCRet() = 
       PT.Call(PL.STR_SND_NODE_KTH_CHILD_RET,nil)
 
-  fun makeSNDKCCase name (n, (fieldName, fieldTy, isPcomputed)) =
-      if isPcomputed then
-	  macroSNDKCCaseComp(name,n,fieldTy,fieldName)
-      else
-	  macroSNDKCCase(name,n,fieldTy,fieldName)				      
+  fun makeSNDKCCase name (n, (fieldName, fieldTy, _)) =
+      macroSNDKCCase(name,n,fieldTy,fieldName)				      
 
-  (* calls STR_NODE_PATH_WALK_BODY_BEGIN macro*)
   fun macroStructPWBegin() =
       PT.Expr(PT.Call(PL.STR_NODE_PATH_WALK_BODY_BEGIN,nil))
 
-  (* calls STR_NODE_PATH_WALK_BODY_END macro*)
   fun macroStructPWEnd() =
 		    PT.Expr(PT.Call(PL.STR_NODE_PATH_WALK_BODY_END,
 				    nil))
 
-  (* calls STR_NODE_PATH_WALK_RET macro*)
   fun macroStructPWRet() =
 		    PT.Call(PL.STR_NODE_PATH_WALK_RET,nil)
 
-  (* calls NODE_PW_CASE macro*)
   fun macroPWCase(n,fieldTy,fieldName) =
       PT.Expr(PT.Call(PL.NODE_PW_CASE,
 		      [P.intX n,PT.Id fieldTy,PT.Id fieldName]))
 
-  (* calls NODE_PW_CASE_COMP macro*)
-  fun macroPWCaseComp(n,fieldTy,fieldName) =
-      PT.Expr(PT.Call(PL.NODE_PW_CASE_COMP,
-	      [P.intX n,PT.Id fieldTy,PT.Id fieldName]))
+  fun makePWCase (n, (fieldName, fieldTy, _)) =
+      macroPWCase(n,fieldTy,fieldName)				      
 
-  fun makePWCase (n, (fieldName, fieldTy, isPcomputed)) =
-      if isPcomputed then
-	  macroPWCaseComp(n,fieldTy,fieldName)				      
-      else
-	  macroPWCase(n,fieldTy,fieldName)				      
+  (****  Array macros ****)
+  fun macroArrKC(ty,childTy) = 
+      PT.Expr(PT.Call(PL.ARR_NODE_KTH_CHILD_BODY,
+		      [PT.Id ty,PT.Id childTy]))
+
+  fun macroArrKCRet() = PT.Call(PL.ARR_NODE_KTH_CHILD_RET,nil)
+
+  fun macroArrLength(ty) = PT.Call(PL.ARR_LENGTH, [PT.Id ty])
+
+  fun macroArrKCN() =
+	  PT.Expr(PT.Call(PL.ARR_NODE_KTH_CHILD_NAMED_BODY,
+			  nil))
+  fun macroArrKCNRet() =
+		    PT.Call(PL.ARR_NODE_KTH_CHILD_NAMED_RET,nil)
 
   fun macroArrSNDKCBody(ty,childTy) =
       PT.Expr(PT.Call(PL.ARR_SND_NODE_KTH_CHILD_BODY,[PT.Id ty, PT.Id childTy]))
@@ -272,13 +251,115 @@ structure GenGalax = struct
   fun macroArrPWRet() = 
       PT.Call(PL.ARR_NODE_PATH_WALK_RET,nil)
 
-  (* 
-   galax non-existent file name: Bogus file name for use
-   with MARK decls, to prevent the pretty printer from
-   printing the contained decl 
-   *)
-  val NEFName = ".remove_pads"
 
+  (****  Typedef macros ****)
+  fun macroTypKC(ty,childTy) = 
+      PT.Expr(PT.Call(PL.TYP_NODE_KTH_CHILD_BODY,
+		      [PT.Id ty,PT.Id childTy]))
+
+  fun macroTypKCRet() = PT.Call(PL.TYP_NODE_KTH_CHILD_RET,nil)
+
+  fun macroTypKCN() =
+	  PT.Expr(PT.Call(PL.TYP_NODE_KTH_CHILD_NAMED_BODY,
+			  nil))
+  fun macroTypKCNRet() =
+		    PT.Call(PL.TYP_NODE_KTH_CHILD_NAMED_RET,nil)
+  fun macroTypSNDKCBody(ty,childTy) =
+      PT.Expr(PT.Call(PL.TYP_SND_NODE_KTH_CHILD_BODY,[PT.Id ty, PT.Id childTy]))
+
+  fun macroTypSNDKCRet() = 
+      PT.Call(PL.TYP_SND_NODE_KTH_CHILD_RET,nil)
+
+  fun macroTypPWBody(childTy) =
+      PT.Expr(PT.Call(PL.TYP_NODE_PATH_WALK_BODY,[PT.Id childTy]))
+
+  fun macroTypPWRet() = 
+      PT.Call(PL.TYP_NODE_PATH_WALK_RET,nil)
+
+  (****  Union macros ****)
+  fun macroUnionKCBegin(ty) =
+      PT.Expr(PT.Call(PL.UNION_NODE_KTH_CHILD_BODY_BEGIN,
+		      [PT.Id ty]))
+
+  fun macroUnionKCEnd() =
+		    PT.Expr(PT.Call(PL.UNION_NODE_KTH_CHILD_BODY_END,
+				    nil))
+
+  fun macroUnionKCRet() =
+		    PT.Call(PL.UNION_NODE_KTH_CHILD_RET,nil)
+
+  fun macroUnionKCCase(ty,branchTag,branchTy) =
+      PT.Expr(PT.Call(PL.UNION_NODE_KC_CASE,
+		      [PT.Id ty, PT.Id branchTag, PT.Id branchTy]))
+
+  fun makeUnionKCCase name (branchTag, branchTy, _) = 
+      macroUnionKCCase(name, branchTag, branchTy)
+      
+  fun macroUnionKCN(ty) =
+	  PT.Expr(PT.Call(PL.UNION_NODE_KTH_CHILD_NAMED_BODY,
+			  [PT.Id ty]))
+
+  fun macroUnionKCNRet() =
+		    PT.Call(PL.UNION_NODE_KTH_CHILD_NAMED_RET,nil)
+
+  fun macroUnionSNDKCBegin(ty) =
+      PT.Expr(PT.Call(PL.UNION_SND_NODE_KTH_CHILD_BODY_BEGIN,
+		      [PT.Id ty]))
+  fun macroUnionSNDKCEnd() =
+      PT.Expr(PT.Call(PL.UNION_SND_NODE_KTH_CHILD_BODY_END,nil))
+  fun macroUnionSNDKCRet() = 
+      PT.Call(PL.UNION_SND_NODE_KTH_CHILD_RET,nil)
+
+  fun macroUnionSNDKCCase(ty,branchTag,branchTy) =
+      PT.Expr(PT.Call(PL.UNION_SND_NODE_KC_CASE,
+		      [PT.Id ty, PT.Id branchTag,PT.Id branchTy]))
+
+  fun makeUnionSNDKCCase name (branchTag,branchTy,_) =
+      macroUnionSNDKCCase(name,branchTag,branchTy)
+
+  fun macroUnionPWBegin(name) =
+      PT.Expr(PT.Call(PL.UNION_NODE_PATH_WALK_BODY_BEGIN,[PT.Id name]))
+
+  fun macroUnionPWEnd() =
+		    PT.Expr(PT.Call(PL.UNION_NODE_PATH_WALK_BODY_END,
+				    nil))
+
+  fun macroUnionPWRet() =
+		    PT.Call(PL.UNION_NODE_PATH_WALK_RET,nil)
+
+  fun macroUnionPWCase(branchTag,branchTy) =
+      PT.Expr(PT.Call(PL.UNION_NODE_PW_CASE,
+		      [PT.Id branchTag,PT.Id branchTy]))
+
+  fun makeUnionPWCase (branchTag,branchTy,_) =
+      macroUnionPWCase(branchTag,branchTy)
+
+
+  (****  Enum macros ****)
+  fun macroEnumKC(ty) = 
+      PT.Expr(PT.Call(PL.ENUM_NODE_KTH_CHILD_BODY,
+		      [PT.Id ty]))
+
+  fun macroEnumKCRet() = PT.Call(PL.ENUM_NODE_KTH_CHILD_RET,nil)
+
+  fun macroEnumKCN() =
+	  PT.Expr(PT.Call(PL.ENUM_NODE_KTH_CHILD_NAMED_BODY,
+			  nil))
+  fun macroEnumKCNRet() =
+		    PT.Call(PL.ENUM_NODE_KTH_CHILD_NAMED_RET,nil)
+  fun macroEnumSNDKCBody(ty) =
+      PT.Expr(PT.Call(PL.ENUM_SND_NODE_KTH_CHILD_BODY,[PT.Id ty]))
+
+  fun macroEnumSNDKCRet() = 
+      PT.Call(PL.ENUM_SND_NODE_KTH_CHILD_RET,nil)
+
+  fun macroEnumPWBody(name) =
+      PT.Expr(PT.Call(PL.ENUM_NODE_PATH_WALK_BODY,[PT.Id name]))
+
+  fun macroEnumPWRet() = 
+      PT.Call(PL.ENUM_NODE_PATH_WALK_RET,nil)
+
+  (**** General purpose functions ****)
   fun makeInvisibleDecls(tys,fields) =
       let fun makeDecl ty name = 
 	      PT.Decl (PT.DeclarationExt (PX.PPhantomDecl (ty, name)))
@@ -288,6 +369,7 @@ structure GenGalax = struct
       in 
 	  tyDecls @ fieldDecls
       end
+
 
   fun makeNodeNewFun(name) =		
       let val nodeRepTy = PL.nodeT
@@ -357,6 +439,51 @@ structure GenGalax = struct
 	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
       end
 			      
+  fun makeNodeVtable(name) =
+	  PT.ExternalDecl(PT.Declaration({specifiers=[PL.PDCI_vtable_t], qualifiers=[PT.CONST], storage=[]},
+					 [(PT.VarDecr (PN.nodeVTableSuf name),
+					   PT.InitList [PT.Id(PN.cnInitSuf name),
+							PT.Id(PN.nodeKCSuf name),
+							PT.Id(PN.nodeKCNSuf name),
+							PL.PDCI_node_free,
+							PL.PDCI_node_getId,
+							PL.PDCI_error_typed_value,
+							P.zero])])) 
+
+(*
+const PDCI_vtable_t \
+ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
+			     ty ## _cachedNode_kthChild, \
+			     ty ## _node_kthChildNamed, \
+                             PDCI_cachedNode_free, \
+			     PDCI_error_typed_value, \
+			     PDCI_not_impl_yet_string_value};\
+
+*)
+  fun makeCachedNodeVtable(name) =
+	  PT.ExternalDecl(PT.Declaration({specifiers=[PL.PDCI_vtable_t], qualifiers=[PT.CONST], storage=[]},
+					 [(PT.VarDecr (PN.cnVTableSuf name),
+					   PT.InitList [PL.PDCI_error_cachedNode_init,
+							PT.Id(PN.cnKCSuf name),
+							PT.Id(PN.nodeKCNSuf name),
+							PL.PDCI_cachedNode_free,
+							PL.PDCI_node_getId,
+							PL.PDCI_error_typed_value,
+							P.zero])])) 
+
+  fun makeSNDNodeVtable(name) =
+	  PT.ExternalDecl(PT.Declaration({specifiers=[PL.PDCI_vtable_t], qualifiers=[PT.CONST], storage=[]},
+					 [(PT.VarDecr (PN.sndVTableSuf name),
+					   PT.InitList [PL.PDCI_error_cachedNode_init,
+							PT.Id(PN.sndKCSuf name),
+							PT.Id(PN.nodeKCNSuf name),
+							PL.PDCI_node_free,
+							PL.PDCI_sndNode_getId,
+							PL.PDCI_error_typed_value,
+							P.zero])])) 
+
+  (* Pads-type specific functions *)
+
   fun makeStructSNDKthChildFun(name,fields) =		
       let val nodeRepTy = PL.nodeT
 	  val returnTy = P.ptrPCT nodeRepTy
@@ -437,44 +564,361 @@ structure GenGalax = struct
 	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
       end
 
-  fun makeNodeVtable(name) =
-	  PT.ExternalDecl(PT.Declaration({specifiers=[PL.PDCI_vtable_t], qualifiers=[PT.CONST], storage=[]},
-					 [(PT.VarDecr (PN.nodeVTableSuf name),
-					   PT.InitList [PT.Id(PN.cnInitSuf name),
-							PT.Id(PN.nodeKCSuf name),
-							PT.Id(PN.nodeKCNSuf name),
-							PL.PDCI_node_free,
-							PL.PDCI_error_typed_value,
-							P.zero])])) 
+  fun makeTypedefSNDKthChildFun(name,baseName) =		
+      let val nodeRepTy = PL.nodeT
+	  val returnTy = P.ptrPCT nodeRepTy
+	  val cnvName = PN.sndKCSuf name
+	  val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT]
+	  val paramNames = [self,idx]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
-(*
-const PDCI_vtable_t \
-ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
-			     ty ## _cachedNode_kthChild, \
-			     ty ## _node_kthChildNamed, \
-                             PDCI_cachedNode_free, \
-			     PDCI_error_typed_value, \
-			     PDCI_not_impl_yet_string_value};\
+	  val bodySs = makeInvisibleDecls([name,baseName], nil)
+		       @ [macroTypSNDKCBody(name,baseName)] 
+		       @ [P.returnS (macroTypSNDKCRet())] 
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
 
-*)
-  fun makeCachedNodeVtable(name) =
+  fun makeTypedefPathWalkFun(name,baseName) =		
+      let val padsTy = P.ptrPCT PL.toolStatePCT
+	  val returnTy = PL.toolErrPCT
+	  val cnvName = PN.nodePWSuf name
+	  val maskTy = P.ptrPCT (P.makeTypedefPCT (PN.mSuf name))
+	  val pdTy  = P.ptrPCT (P.makeTypedefPCT (PN.pdSuf name))
+	  val repTy  = P.ptrPCT (P.makeTypedefPCT (PN.repSuf name))
+	  val pathTy = PL.pathT
+	  val vppT = P.voidPtrPtr
+	  val paramTys = [padsTy,maskTy,pdTy,repTy,pathTy,vppT,vppT,vppT]
+	  val paramNames = [pads,PN.m,PN.pd,PN.rep,path,"m_out","pd_out","rep_out"]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	  val bodySs = makeInvisibleDecls([baseName], nil)
+		       @ [macroTypPWBody(baseName)] 
+		       @ [P.returnS (macroTypPWRet())] 
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
+
+  fun makeUnionSNDKthChildFun(name,branches) =		
+      let val nodeRepTy = PL.nodeT
+	  val returnTy = P.ptrPCT nodeRepTy
+	  val cnvName = PN.sndKCSuf name
+	  val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT]
+	  val paramNames = [self,idx]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	  val uniqueBranchTys = getUniqueTys branches
+	  val branchNames = map (fn (n,_,_) => n) branches						   
+	  val mkCase = makeUnionSNDKCCase name
+	  val caseSs = List.map mkCase branches
+
+	  val bodySs = makeInvisibleDecls(name :: uniqueBranchTys,nil)
+		       @ [macroUnionSNDKCBegin(name)] 
+		       @ caseSs
+		       @ [macroUnionSNDKCEnd(),   
+			  P.returnS (macroUnionSNDKCRet())] 
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
+
+  fun makeUnionPathWalkFun(name,branches) =		
+      let val padsTy = P.ptrPCT PL.toolStatePCT
+	  val returnTy = PL.toolErrPCT
+	  val cnvName = PN.nodePWSuf name
+	  val maskTy = P.ptrPCT (P.makeTypedefPCT (PN.mSuf name))
+	  val pdTy  = P.ptrPCT (P.makeTypedefPCT (PN.pdSuf name))
+	  val repTy  = P.ptrPCT (P.makeTypedefPCT (PN.repSuf name))
+	  val pathTy = PL.pathT
+	  val vppT = P.voidPtrPtr
+	  val paramTys = [padsTy,maskTy,pdTy,repTy,pathTy,vppT,vppT,vppT]
+	  val paramNames = [pads,PN.m,PN.pd,PN.rep,path,"m_out","pd_out","rep_out"]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	  val uniqueBranchTys = getUniqueTys branches
+	  val branchNames = map (fn (n,_,_) => n) branches						   
+	  val caseSs = List.map makeUnionPWCase branches
+
+	  val bodySs = makeInvisibleDecls(name :: uniqueBranchTys,nil)
+		       @ [macroUnionPWBegin(name)] 
+		       @ caseSs
+		       @ [macroUnionPWEnd(),   
+			  P.returnS (macroUnionPWRet())] 
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
+
+  fun makeEnumSNDKthChildFun(name) =		
+      let val nodeRepTy = PL.nodeT
+	  val returnTy = P.ptrPCT nodeRepTy
+	  val cnvName = PN.sndKCSuf name
+	  val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT]
+	  val paramNames = [self,idx]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	  val bodySs = makeInvisibleDecls([name], nil)
+		       @ [macroEnumSNDKCBody(name)] 
+		       @ [P.returnS (macroEnumSNDKCRet())] 
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
+
+  fun makeEnumPathWalkFun(name) =		
+      let val padsTy = P.ptrPCT PL.toolStatePCT
+	  val returnTy = PL.toolErrPCT
+	  val cnvName = PN.nodePWSuf name
+	  val maskTy = P.ptrPCT (P.makeTypedefPCT (PN.mSuf name))
+	  val pdTy  = P.ptrPCT (P.makeTypedefPCT (PN.pdSuf name))
+	  val repTy  = P.ptrPCT (P.makeTypedefPCT (PN.repSuf name))
+	  val pathTy = PL.pathT
+	  val vppT = P.voidPtrPtr
+	  val paramTys = [padsTy,maskTy,pdTy,repTy,pathTy,vppT,vppT,vppT]
+	  val paramNames = [pads,PN.m,PN.pd,PN.rep,path,"m_out","pd_out","rep_out"]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	  val bodySs = makeInvisibleDecls([name],nil)
+		       @ [macroEnumPWBody(name)] 
+		       @ [P.returnS (macroEnumPWRet())] 
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
+
+  type cparams = (string * ParseTree.ctype) list
+  type stparams = (ParseTree.ctype * string) list
+
+  structure SmartNode = struct
+    val errTy =  PL.toolErrPCT
+    val padsTy = P.ptrPCT PL.toolStatePCT
+    val nodeTy = P.ptrPCT PL.nodeT
+    val vppTy = P.voidPtrPtr
+    val seinfoPtrTy = P.ptrPCT PL.smartEltInfoT
+    val vpTy = P.voidPtr
+    val pathTy = PL.pathT
+    val intTy = P.int
+    val uintTy = P.uint
+    val idxTy = PL.childIndexT
+    val sainfoTy = PL.smartArrayInfoT
+    val ccpTy = P.ccharPtr
+
+    fun maskTy ty = P.ptrPCT (P.makeTypedefPCT (PN.mSuf ty))
+    fun pdTy ty = P.ptrPCT (P.makeTypedefPCT (PN.pdSuf ty))
+    fun repTy ty  = P.ptrPCT (P.makeTypedefPCT (PN.repSuf ty))
+
+    (* macro call gen functions *)
+    fun macroEltAllocBody(ty,eltTy,eltPdTy,smartNode,pads,elt_pd,elt_rep) = 	               
+	PT.Expr(PT.Call(PL.SN_ELT_ALLOC_BODY,
+			List.map PT.Id [ty,eltTy,eltPdTy,smartNode,pads,
+					elt_pd,elt_rep])) 
+    fun macroEltAllocRet() = 				
+	PT.Call(PL.SN_ELT_ALLOC_RET,[])     
+    fun macroRoParam p =
+	PT.Call(PL.SN_RO_PARAM,[PT.Id p])     
+    fun macroWrapParams(params) =
+	PT.Call(PL.SN_WRAP_PARAMS, P.zero :: List.map macroRoParam params) 	    
+    fun macroWrapParams'(params) =
+	PT.Call(PL.SN_WRAP_PARAMS, P.zero :: List.map PT.Id params) 	    
+    fun macroEltReadBody(ty,eltTy,eltPdTy,smartNode,pads,info,wrapstX,wrapcX) = 
+	PT.Expr(PT.Call(PL.SN_ELT_READ_BODY, map PT.Id [ty,eltTy,eltPdTy]
+						 @ map PT.Id [smartNode,pads,info]
+						 @ [wrapstX,wrapcX]))
+    fun macroEltReadRet() =            			       
+	PT.Call(PL.SN_ELT_READ_RET,[])  
+    fun macroEltFreeBody(ty,pads,info) =
+ 	PT.Expr(PT.Call(PL.SN_ELT_FREE_BODY,map PT.Id [ty,pads,info]))  
+    fun macroEltFreeRet() =				       
+	PT.Call(PL.SN_ELT_FREE_RET,[])  
+    fun macroEltPathWalkBody(ty,eltTy,eltPdTy,eltMaskTy) =     
+	PT.Expr(PT.Call(PL.SN_ELT_PATH_WALK_BODY,
+			map PT.Id [ty,eltTy,eltPdTy,eltMaskTy,
+				   pads,m,pd,rep,path,m_out,pd_out,rep_out]))
+    fun macroEltPathWalkRet(eltTy,pads,path,m_out,pd_out,rep_out) =  
+	PT.Call(PL.SN_ELT_PATH_WALK_RET,map PT.Id [eltTy,pads,path,m_out,pd_out,rep_out])
+    fun macroArrayInfoInitBody(ty,pads,max_elts,wrapX) =
+	PT.Expr(PT.Call(PL.SN_ARRAY_INFO_INIT_BODY,
+			[PT.Id ty] @ List.map PT.Id [pads,max_elts] @ [wrapX]))			
+    fun macroArrayInfoInitRet() =            			       
+	PT.Call(PL.SN_ARRAY_INFO_INIT_RET,[]) 	
+    fun macroInitBody(ty,self,max_elts,cinitX,stX,cX) =   
+	PT.Expr(PT.Call(PL.SN_INIT_BODY,[PT.Id ty]
+					    @ List.map PT.Id [self,max_elts] 
+					    @ [cinitX,stX, cX]))  
+    fun macroInitRet() =            			       
+	PT.Call(PL.SN_INIT_RET,[PT.Id self]) 	
+    fun macroKthChildBody(ty,eltTy,self,idx) = 		       
+	PT.Expr(PT.Call(PL.SN_KTH_CHILD_BODY,map PT.Id [ty,eltTy,self,idx]))
+    fun macroKthChildRet() =				       
+	PT.Call(PL.SN_KTH_CHILD_RET,[]) 
+
+    fun macroKthChildNamedBody(ty,self,idx,name) = 		       
+	PT.Expr(PT.Call(PL.SN_KTH_CHILD_NAMED_BODY,map PT.Id [ty,self,idx,name]))
+    fun macroKthChildNamedRet() =				       
+	PT.Call(PL.SN_KTH_CHILD_NAMED_RET,[]) 
+
+
+    (* function gen functions *)
+    fun makeEltAllocFun(ty, eltTy, eltPdTy) =
+	let val returnTy = errTy
+	    val cnvName = PN.snEltAllocSuf ty 
+	    val paramTys = [nodeTy,padsTy,vppTy,vppTy]
+	    val paramNames = [smartNode,pads,elt_pd,elt_rep]
+	    val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+				
+	    val bodySs = makeInvisibleDecls([ty,eltTy,eltPdTy],nil)
+			 @ [macroEltAllocBody(ty,eltTy,eltPdTy, 
+					      smartNode,pads,elt_pd,elt_rep)] 
+			 @ [P.returnS (macroEltAllocRet())]  
+	in   
+	    P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+	end
+	      	  
+      fun makeEltReadFun(ty, eltTy, eltPdTy, cparams, stparams) = 
+	let val returnTy = PL.readResPCT
+	    val cnvName = PN.snEltReadSuf ty
+	    val paramTys = [nodeTy,padsTy,seinfoPtrTy]
+	    val paramNames = [smartNode,pads,info]
+	    val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+				
+	    val stNames = map (fn (_,x) => x) stparams
+	    val wrapstX = macroWrapParams(stNames) 
+	    val cpNames = map (fn (x,_) => x) cparams
+	    val wrapcX = macroWrapParams(cpNames)
+
+	    val bodySs = makeInvisibleDecls([ty,eltTy,eltPdTy],stNames @ cpNames)
+			 @ [macroEltReadBody(ty,eltTy,eltPdTy,smartNode,pads,
+					     info,wrapstX,wrapcX)]  
+			 @ [P.returnS (macroEltReadRet())]              
+	in   
+	    P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+	end
+
+      fun makeEltFreeFun(ty) = 
+	  let val returnTy = errTy
+	      val cnvName = PN.snEltFreeSuf ty
+	      val paramTys = [padsTy,seinfoPtrTy]
+	      val paramNames = [pads,info]
+	      val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	      val bodySs = makeInvisibleDecls([ty],nil)
+			   @ [macroEltFreeBody(ty,pads,info)] 
+			   @ [P.returnS (macroEltFreeRet())] 
+	  in   
+	      P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+	  end	      
+
+      fun makeEltPathWalkFun(ty,eltTy,eltPdTy,eltMaskTy) = 
+	let val returnTy = errTy
+	    val cnvName = PN.snEltPathWalkSuf ty
+	    val paramTys = [padsTy,vpTy,vpTy,vpTy,pathTy,vppTy,vppTy,vppTy]
+	    val paramNames = [pads,m,pd,rep,path,m_out,pd_out,rep_out]
+	    val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+				
+	    val bodySs = makeInvisibleDecls([ty,eltTy,eltPdTy,eltMaskTy],nil)
+			 @ [macroEltPathWalkBody(ty,eltTy,eltPdTy,eltMaskTy)]  
+			 @ [P.returnS (macroEltPathWalkRet(eltTy,pads,path,m_out,pd_out,rep_out))]  
+	in   
+	    P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+	end
+
+      fun makeArrayInfoInitFun(ty,cparams,stparams) =
+	let val returnTy = P.ptrPCT PL.smartArrayInfoT
+	    val cnvName = PN.aiInitSuf ty
+	    val paramTys = [padsTy,uintTy]
+	    val paramNames = [pads,max_elts]
+	    val allParams = ListPair.zip(paramTys, paramNames)
+
+	    val formalParams =  List.map P.mkParam allParams
+				@ List.map (fn (s,ty) => P.mkParam (ty,s)) cparams
+				
+	    val cpNames = map (fn (x,_) => x) cparams
+	    val wrapX = macroWrapParams'(cpNames)
+
+	    val bodySs = makeInvisibleDecls([ty],cpNames)
+			 @ [macroArrayInfoInitBody(ty,pads,max_elts,wrapX)]  
+			 @ [P.returnS (macroArrayInfoInitRet())]              
+	in   
+	    P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+	end
+
+      fun makeInitFun(ty,cparams,stparams) = 
+	let val returnTy = nodeTy
+	    val cnvName = PN.snInitSuf ty
+	    val paramTys = [nodeTy,uintTy]
+	    val paramNames = [self,max_elts]
+	    val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+				@ List.map (fn (s,ty) => P.mkParam (ty,s)) cparams
+
+	    val stNames = map (fn (_,x) => x) stparams
+	    val wrapstX = macroWrapParams(stNames) 
+
+	    val cpNames = map (fn (x,_) => x) cparams
+	    val wrapcInitX = macroWrapParams'(cpNames)
+	    val wrapcX = macroWrapParams(cpNames)
+
+	    val bodySs = makeInvisibleDecls([ty],stNames @ cpNames)
+			 @ [macroInitBody(ty,self,max_elts,wrapcInitX,wrapstX,wrapcX)]  
+			 @ [P.returnS (macroInitRet())]              
+	in   
+	    P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+	end
+
+      fun makeKthChildFun(ty,eltTy) = 
+	let val returnTy = nodeTy
+	    val cnvName = PN.snKCSuf ty
+	    val paramTys = [nodeTy,idxTy]
+	    val paramNames = [self,idx]
+	    val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+				
+	    val bodySs = makeInvisibleDecls([ty,eltTy],nil)
+			 @ [macroKthChildBody(ty,eltTy,self,idx)]  
+			 @ [P.returnS (macroKthChildRet())]  
+	in   
+	    P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+	end
+
+      fun makeKthChildNamedFun(ty) = 
+	let val returnTy = nodeTy
+	    val cnvName = PN.snKCNSuf ty 
+	    val paramTys = [nodeTy,idxTy,ccpTy]
+	    val paramNames = [self,idx,childName]
+	    val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+				
+	    val bodySs = makeInvisibleDecls([ty],nil)
+			 @ [macroKthChildNamedBody(ty,self,idx,childName)]  
+			 @ [P.returnS (macroKthChildNamedRet())]   
+	in   
+	    P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+	end
+
+      fun makeVTable(ty) = 
 	  PT.ExternalDecl(PT.Declaration({specifiers=[PL.PDCI_vtable_t], qualifiers=[PT.CONST], storage=[]},
-					 [(PT.VarDecr (PN.cnVTableSuf name),
+					 [(PT.VarDecr (PN.snVTableSuf ty),  
 					   PT.InitList [PL.PDCI_error_cachedNode_init,
-							PT.Id(PN.cnKCSuf name),
-							PT.Id(PN.nodeKCNSuf name),
+							PT.Id(PN.snKCSuf ty),
+							PT.Id(PN.snKCNSuf ty),
 							PL.PDCI_cachedNode_free,
+							PL.PDCI_smartNode_getId, 
 							PL.PDCI_error_typed_value,
-							P.zero])])) 
-
-  fun makeSNDNodeVtable(name) =
-	  PT.ExternalDecl(PT.Declaration({specifiers=[PL.PDCI_vtable_t], qualifiers=[PT.CONST], storage=[]},
-					 [(PT.VarDecr (PN.sndVTableSuf name),
-					   PT.InitList [PL.PDCI_error_cachedNode_init,
-							PT.Id(PN.sndKCSuf name),
-							PT.Id(PN.nodeKCNSuf name),
-							PL.PDCI_node_free,
-							PL.PDCI_error_typed_value,
-							P.zero])])) 
+							P.zero])]))
+      (* Generate type-specific array info structure  *)
+      fun genArrayInfoStructED(ty) =
+	  let val aiFields = [(base, sainfoTy, NONE),
+			      (params, P.makeTypedefPCT (PN.roParamsSuf ty), 
+			       SOME("Type-specific parameters to read related funcitons."))]
+	      val aiStructED = P.makeTyDefStructEDecl (aiFields, PN.arrayInfoSuf ty)
+	  in
+	      aiStructED
+	  end
+      fun makeAllEDs(ty,eltTy,eltPdTy,eltMaskTy,cparams,stparams) = 
+	  makeEltAllocFun(ty, eltTy, eltPdTy)
+	  :: makeEltReadFun(ty, eltTy, eltPdTy, cparams, stparams)
+	  :: makeEltFreeFun(ty)
+	  :: makeEltPathWalkFun(ty,eltTy,eltPdTy,eltMaskTy)
+	  :: makeArrayInfoInitFun(ty,cparams,stparams)
+	  :: makeInitFun(ty,cparams,stparams)
+          :: makeKthChildFun(ty,eltTy)
+          :: makeKthChildNamedFun(ty)
+	  :: makeVTable(ty)
+	  :: [genArrayInfoStructED(ty)]
+	      
+  end (* SmartNode struct *)
 
 end
