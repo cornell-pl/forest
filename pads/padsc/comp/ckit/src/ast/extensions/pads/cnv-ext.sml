@@ -217,6 +217,8 @@ structure CnvExt : CNVEXT = struct
        | Ast.Error => false
 
     fun getRE e = case e of PT.ExprExt (PX.Pregexp e') => SOME e' | _ => NONE
+    fun isEmptyString e = case e of PT.String s => String.size s = 0
+	                  | _ => false
     fun unMark (PT.MARKexpression (l,e)) = e
       | unMark e = e
 
@@ -3662,6 +3664,9 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 								       "type char or char*."));
 			       val reOpt = getRE exp
 			       val pExp = unMark exp
+			       val () = if isEmptyString pExp 
+					then PE.warn (which ^ " expression for array "^ name ^" is the empty string.")
+					else ()
 			       val isString = okay andalso equalType(expTy, CTstring)
 			   in
 			       if Option.isSome reOpt then
@@ -3691,10 +3696,21 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 						         PL.setPanicS(PT.Id pd),
 						         PT.Goto endLabel] ))],
 				 regArgX,
-				 PL.regexpCleanupS(PT.Id pads, regArgX))
+				 [PL.regexpCleanupS(PT.Id pads, regArgX)])
 			      end
 			  fun strToRegExp(which, endLabel,e) =
-                              compRegExp(which, endLabel, e) (*wrap e with conversion macro from new runtime *)
+                              compRegExp(which, endLabel, PL.regexpLitFromCStrX(PT.Id pads, e)) 
+			  fun charToRegExp(which, endLabel,e) =
+                              compRegExp(which, endLabel, PL.regexpLitFromCharX(PT.Id pads, e)) 
+
+                          fun charToString(which, e) = 
+			      let val strName = which^"_str"
+				  val strArgX = PT.Id strName
+			      in
+				  ([P.varDeclS'(P.arrayPCT(P.intX 1, P.char), strName)], 
+				   [P.assignS(P.subX(PT.Id strName, P.zero), e)], 
+				   strArgX, [])
+			      end	  
 
 			  val (sepXOpt, termXOpt, declSs, initSs, closeSs, scan2Opt) = 
 			      let val endLabel = name^"_end"
@@ -3703,14 +3719,14 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                                 (NONE,NONE) => (NONE, NONE, [],[],[], NONE)
                               | (SOME (e,e2, v,PRegExp, match, scan, write), NONE) => 
 				    let val (declSs, initSs, expr, closeS) = compRegExp("separator", endLabel,e)
-					val wCloseSs = [PT.Labeled(endLabel, closeS)]
+					val wCloseSs = [PT.Labeled(endLabel, PT.Compound closeS)]
 				    in
 					(SOME(expr,expr,v,PRegExp,match,scan,write), termXOpt, declSs, initSs, wCloseSs, NONE)
 				    end
                               | (SOME s, NONE) => (sepXOpt, termXOpt, [],[],[], NONE)
                               | (NONE, SOME(e,e2,v,PRegExp, match,scan,write)) =>
 				    let val (declSs, initSs, expr, closeS) = compRegExp("terminator", endLabel,e)
-					val wCloseSs = [PT.Labeled(endLabel, closeS)]
+					val wCloseSs = [PT.Labeled(endLabel, PT.Compound closeS)]
 				    in
 					(SOME(expr,expr,v,PRegExp,match,scan,write), termXOpt, declSs, initSs, wCloseSs, NONE)
 				    end
@@ -3726,50 +3742,105 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                               | (SOME(es,es2,vs,PRegExp,matchs,scans,writes), SOME(et,et2,vt,PRegExp,matcht,scant,writet)) =>
 				    let val (declSss, initSss, exprs, closeSs) = compRegExp("separator", endLabel,es)
 					val (declSst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel,et)
-					val wCloseSs = [PT.Labeled(endLabel, PT.Compound[closeSs, closeSt])]
+					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs @closeSt))]
 				    in
 					(SOME(exprs,exprs,vs,PRegExp,matchs,scans,writes), 
 					 SOME(exprt,exprt,vt,PRegExp,matcht,scant,writet), 
 					 declSss@declSst, initSss@initSst, wCloseSs, SOME PL.reScan2)
 				    end
-                              | (SOME(es,es2,vs,PRegExp,matchs,scans,writes), SOME(et,et2,vt,PStringExp,matcht,scant,writet)) =>
+                              | (SOME(es,es2,vs,PRegExp,matchs,scans,writes), SOME(et,et2,vt,PString,matcht,scant,writet)) =>
 				    let val (declSss, initSss, exprs, closeSs) = compRegExp("separator", endLabel,es)
 					val (declSst, initSst, exprt, closeSt) = strToRegExp("terminator", endLabel,et)
-					val wCloseSs = [PT.Labeled(endLabel, PT.Compound[closeSs,closeSt])]
+					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs @closeSt))]
 				    in
 					(SOME(exprs,exprs,vs,PRegExp,matchs,scans,writes), 
 					 SOME(et,exprt,vt,PString,matcht,scant,writet), 
 					 declSss@declSst, initSss@initSst, wCloseSs, SOME PL.reScan2)
 				    end
-			      | (_,_) => (PE.bug "mixed types for sep/term not yet implemented";
-				        (sepXOpt, termXOpt, [],[],[], NONE))
+                              | (SOME(es,es2,vs,PString,matchs,scans,writes), SOME(et,et2,vt,PRegExp,matcht,scant,writet)) =>
+				    let val (declSss, initSss, exprs, closeSs) = strToRegExp("separator", endLabel,es)
+					val (declSst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel,et)
+					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs@closeSt))]
+				    in
+					(SOME(es,exprs,vs,PRegExp,matchs,scans,writes), 
+					 SOME(exprt,exprt,vt,PString,matcht,scant,writet), 
+					 declSss@declSst, initSss@initSst, wCloseSs, SOME PL.reScan2)
+				    end
+                              | (SOME(es,es2,vs,PRegExp,matchs,scans,writes), SOME(et,et2,vt,PChar,matcht,scant,writet)) =>
+				    let val (declSss, initSss, exprs, closeSs) = compRegExp("separator", endLabel,es)
+					val (declSst, initSst, exprt, closeSt) = charToRegExp("terminator", endLabel,et)
+					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs@closeSt))]
+				    in
+					(SOME(exprs,exprs,vs,PRegExp,matchs,scans,writes), 
+					 SOME(et,exprt,vt,PChar,matcht,scant,writet), 
+					 declSss@declSst, initSss@initSst, wCloseSs, SOME PL.reScan2)
+				    end
+                              | (SOME(es,es2,vs,PChar,matchs,scans,writes), SOME(et,et2,vt,PRegExp,matcht,scant,writet)) =>
+				    let val (declSss, initSss, exprs, closeSs) = charToRegExp("separator", endLabel,es)
+					val (declSst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel,et)
+					val wCloseSs = [PT.Labeled(endLabel, PT.Compound(closeSs@closeSt))]
+				    in
+					(SOME(es,exprs,vs,PChar,matchs,scans,writes), 
+					 SOME(exprt,exprt,vt,PRegExp,matcht,scant,writet), 
+					 declSss@declSst, initSss@initSst, wCloseSs, SOME PL.reScan2)
+				    end
+                              | (SOME(es,es2,vs,PString,matchs,scans,writes), SOME(et,et2,vt,PChar,matcht,scant,writet)) =>
+				    let val (declSst, initSst, exprt, closeSt) = charToString("terminator", et)
+				    in
+				      (SOME(es,es2,vs,PString,matchs,scans,writes), 
+				       SOME(et,exprt,vt,PChar,matcht,scant,writet), declSst,initSst,closeSt,
+				       SOME PL.cstrlitScan2)
+				    end
+                              | (SOME(es,es2,vs,PChar,matchs,scans,writes), SOME(et,et2,vt,PString,matcht,scant,writet)) =>
+				    let val (declSss, initSss, exprs, closeSs) = charToString("separator", es)
+				    in
+				      (SOME(es,exprs,vs,PChar,matchs,scans,writes), 
+				       SOME(et,et2,vt,PString,matcht,scant,writet), declSss,initSss,closeSs,
+				       SOME PL.cstrlitScan2)
+				    end
 			      end
 
-			  val sepTermErrorMsg = "Psep and Pterm expressions for Parray "^ name^
-							 " have the same value."
 			  val sepTermDynamicCheck = 
+			      let val sepTermEqErrorMsg  = "Pterm and Psep expressions for Parray "^ name^
+							   " have the same value"
+				  val sepTermPreErrorMsg = "Pterm expressions for Parray "^ name^
+							   " is a prefix of Psep expression"
+				  fun intInftoStringRep i = Char.toString(Char.chr(IntInf.toInt i))
+ 			      in
 			      case (sepXOpt, termXOpt) 
-			      of (SOME(_, _, SOME i, _, _, _, _), SOME(_, _, SOME j, _, _, _, _)) => 
-				  if i = j then (PE.error (sepTermErrorMsg^"."); [])
-				  else []
+			      of (SOME(sepX, _, SOME i, _, _, _, _), SOME(termX, _, SOME j, _, _, _, _)) => 
+				  if i = j then (PE.error (sepTermEqErrorMsg^"."); []) else []
 			      | (SOME(sepX, _, _, sepTyp, _, _, _), SOME(termX, _, _, termTyp, _, _, _)) => 
-				      let fun strCharCmp(sX,cX) = P.condX(P.eqX(PL.strLen(sX), P.intX 1),
-									P.eqX(P.subX(sX,P.zero), cX), P.falseX)
-					  fun mkTest testX = 				      
-					      [PT.IfThen(testX,
-						 PL.userErrorS(PT.Id pads, locX, 
-							       PL.P_ARRAY_SEP_TERM_SAME_ERR, readName, 
-							       PT.String (sepTermErrorMsg^": %c"), [sepX]))]
-					  val testSs = case (sepTyp, termTyp) of
+				      (case (sepX, termX) of
+				          (PT.String s, PT.String t) => (if String.isPrefix t s 
+									 then (PE.error (sepTermPreErrorMsg^".")) else (); [])
+                                        | (PT.IntConst s, PT.IntConst t) => (if s = t
+									     then (PE.error (sepTermEqErrorMsg^".")) else ();[])
+                                        | (PT.String s, PT.IntConst t) => (if String.isPrefix (intInftoStringRep t) s
+									   then (PE.error (sepTermPreErrorMsg^".")) else (); 
+									       print ("Terminator: "^(IntInf.toString t)^".");[])
+                                        | (PT.IntConst s, PT.String t) => (if (intInftoStringRep s) = t 
+									   then (PE.error (sepTermEqErrorMsg^".")) else ();[])
+					| _ => (
+					    let fun strCharCmp(sX,cX) = P.condX(P.eqX(PL.strLen(sX), P.intX 1),
+										P.eqX(P.subX(sX,P.zero), cX), P.falseX)
+						fun mkTest testX = 				      
+						    [PT.IfThen(testX,
+							       PL.userErrorS(PT.Id pads, locX, 
+									     PL.P_ARRAY_SEP_TERM_SAME_ERR, readName, 
+									     PT.String (sepTermEqErrorMsg^": %c"), [sepX]))]
+						val testSs = 
+                                                      case (sepTyp, termTyp) of
 					                (PChar, PChar) => mkTest (P.eqX(sepX, termX))
                                                       | (PString, PString) => mkTest(P.eqX(P.zero, PL.strCmp(sepX, termX)))
-                                                      | (PChar, PString) => mkTest(strCharCmp(sepX, termX))
-						      | (PString, PChar) => mkTest(strCharCmp(termX, sepX))
+                                                      | (PChar, PString) => mkTest(strCharCmp(termX, sepX))
+						      | (PString, PChar) => mkTest(strCharCmp(sepX,  termX))
                                                       | _ => []
-				      in
-					  testSs
-				      end
+					    in
+						testSs
+					    end)) 
 			      |  (_,_) => []
+			      end
 		      in
 			  (sepXOpt, termXOpt, sepTermDynamicCheck, scan2Opt, declSs, initSs, closeSs)
                       end
@@ -3946,7 +4017,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		     
                  (* -- Check that we found separator on last loop. *)
                  fun genSepCheck NONE = []
-                   | genSepCheck (SOME (sepX, compSepX, cSepX, typ, matchSep,scan1Sep, writeSep)) = 
+                   | genSepCheck (SOME (sepX, scan2SepX, cSepX, typ, matchSep,scan1Sep, writeSep)) = 
 		      case termXOpt of 
                         NONE => 
                         [P.mkCommentS("Array not finished; reading separator."),
@@ -3966,7 +4037,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			      P.mkCommentS("Error reading separator"),
 			      recordArrayErrorS([locES],locX,PL.P_ARRAY_SEP_ERR, true, readName, "Missing separator.",[],true),
 			      PT.Break])]]
-		      | SOME(termX,_,_,_,_,_,_) => 
+		      | SOME(termX,scan2TermX,_,_,_,_,_) => 
                        [P.mkCommentS("Array not finished; read separator with recovery to terminator."),
                          PT.Compound[
 			 P.varDeclS'(P.int, "f_found"),
@@ -3975,7 +4046,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		         PT.IfThenElse(
 			    P.eqX(PL.P_OK,
 				  PL.scan2FunX(valOf scan2Opt, PT.Id pads, 
-					       sepX, termX, P.trueX, P.falseX,
+					       scan2SepX, scan2TermX, P.trueX, P.falseX,
 					       P.falseX, (* panic=0 *)
 					       P.addrX (PT.Id "f_found"),
 					       P.addrX (PT.Id "offset"))),
@@ -4072,8 +4143,8 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 				 PT.Compound(scan1ToRecoverSs ("separator", sepScan1, sepX, P.trueX)))]
                          |  (NONE, SOME(termX, _, _, _, _, termScan1, _), _ ) => 
 				scan1ToRecoverSs ("terminator", termScan1, termX, P.trueX)
-                         |  (SOME (sepX, _, _, _, _, _,  _), SOME(termX, _, _, _, _,_,_), _ ) =>
- 			        scan2ToRecoverSs("separator and/or terminator", sepX, termX, P.trueX, P.falseX)
+                         |  (SOME (_, scan2SepX, _, _, _, _,  _), SOME(_, scan2TermX, _, _, _,_,_), _ ) =>
+ 			        scan2ToRecoverSs("separator and/or terminator", scan2SepX, scan2TermX, P.trueX, P.falseX)
 		     in
 			 PT.Compound recoverSs
 		     end
@@ -4095,7 +4166,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			 ([P.varDeclS'(PL.toolErrPCT, "result"),
 			   PL.incNestLevS(PT.Id pads)]
 			  @ PL.chkPtS(PT.Id pads, readName)
-			  @ [P.assignS(PT.Id result, PL.matchFunX(termRead, PT.Id pads, termX, P.trueX(*eat lit"*)))] 
+			  @ [P.assignS(PT.Id result, PL.matchFunX(termRead, PT.Id pads, termX, P.falseX(*do not eat lit"*)))] 
 			  @ PL.restoreS(PT.Id pads, readName)
 			  @ [PL.decNestLevS(PT.Id pads), bodyS])
 		     end

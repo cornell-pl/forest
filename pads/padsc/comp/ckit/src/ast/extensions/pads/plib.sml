@@ -443,10 +443,10 @@ struct
 
 (* -- regexp routines *)
   fun regexpDeclNullS(regexp) = P.varDeclS(regexpPCT, regexp, PT.InitList[P.zero])
-  fun regexpLitFromCharS(padsX, regexpX, charX, sourceDesc, sourceFun) = 
-        PT.Expr(PT.Call(PT.Id "PDCI_REGEXP_LIT_FROM_CHAR", [padsX, regexpX, charX, sourceDesc, sourceFun]))
-  fun regexpLitFromCStrS(padsX, regexpX, strX, sourceDesc, sourceFun) = 
-        PT.Expr(PT.Call(PT.Id "PDCI_REGEXP_LIT_FROM_CStr", [padsX, regexpX, strX, sourceDesc, sourceFun]))
+  fun regexpLitFromCharX(padsX, charX) = 
+        PT.Call(PT.Id "P_RE_STRING_FROM_CHAR", [padsX, charX])
+  fun regexpLitFromCStrX(padsX, strX) = 
+        PT.Call(PT.Id "P_RE_STRING_FROM_CSTR", [padsX, strX])
   fun regexpCompileCStrX(padsX, regCstrX, regExpX, prefixX, whatFunX) = 
         PT.Call(PT.Id "PDCI_regexp_compile_cstr", [padsX, regCstrX, regExpX, prefixX, whatFunX ])
   fun regexpCleanupS(padsX, regexpX) = 
