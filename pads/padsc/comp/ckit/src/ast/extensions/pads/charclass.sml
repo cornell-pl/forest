@@ -13,4 +13,6 @@ struct
 
    fun isCharClass () = not (List.null (!ccList))
 
+   fun reset() = ccList := nil
+
 end

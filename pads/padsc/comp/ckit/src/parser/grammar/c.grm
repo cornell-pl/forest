@@ -355,7 +355,8 @@ end
         | pArrayConstraint of (expression PX.PConstraint) 
         | pArrayConstraints of (expression PX.PConstraint) list
         | pArrayConstraintOpt of (expression PX.PConstraint) list
-        | pArrayPostConstraint of (expression PX.PPostCond) 
+        | pArrayForAll of expression PX.PPostCond
+        | pArrayForAllList of (expression PX.PPostCond) list
         | pArrayPostConstraints of (expression PX.PPostCond) list
         | pArrayPostConds of (expression PX.PPostCond) list
         | pBranch of expression option * (decltype, declarator, expression) PX.PSField
@@ -414,14 +415,19 @@ tu:
 pPostCondOpt: (NONE)
  | PWHERE LCURLY expr SEMICOLON RCURLY  (SOME expr)
 
-pArrayPostConstraint : 
-   PFORALL pName PIN pForAllRange LCURLY expr RCURLY 
+pArrayForAll : 
+   PFORALL LPAREN pName PIN pForAllRange COLON expr RPAREN
                 (PX.Forall {index = pName, range = pForAllRange, body = expr})
- | PGENERAL LPAREN expr RPAREN         (PX.General expr)
 
+pArrayForAllList :
+    pArrayForAll                      ([pArrayForAll])
+  | pArrayForAllList AND pArrayForAll (pArrayForAllList @[pArrayForAll])
+  
 pArrayPostConstraints : 
-   pArrayPostConstraint ([pArrayPostConstraint])
- | pArrayPostConstraint AND pArrayPostConstraints  (pArrayPostConstraint :: pArrayPostConstraints)
+   expr                                  ([PX.General expr])
+ | pArrayForAllList AND expr             (pArrayForAllList @ [PX.General expr])
+ | expr AND pArrayForAllList             (pArrayForAllList @ [PX.General expr])
+ | pArrayForAllList                      (pArrayForAllList)
 
 pArrayPostConds : ([])
  | PWHERE LCURLY pArrayPostConstraints SEMICOLON RCURLY (pArrayPostConstraints)

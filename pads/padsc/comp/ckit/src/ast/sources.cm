@@ -78,7 +78,8 @@ Group is
         extensions/pads/base-tys.sml
         extensions/pads/cmp-tys.sml
         extensions/pads/select.sml        (* used for select expressions *)
-        extensions/pads/charclass.sml     (* used for collecting character classes *)
+        extensions/pads/charclass.sml     (* used for collecting  character classes *)
+        extensions/pads/state.sml     (* used for reinitializing state *)
 
 	state-sig.sml
 	state.sml

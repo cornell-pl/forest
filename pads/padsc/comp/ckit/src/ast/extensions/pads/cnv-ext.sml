@@ -1828,7 +1828,7 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		      val isName = isPref name
 		      val modPredX = PTSub.substExps [(thisVar, P.starX(PT.Id rep))] pred
 		      val predX  = case lookupPred baseTy of NONE => modPredX
-			           | SOME basePred => P.andX(modPredX, PT.Call(PT.Id basePred, [PT.Id rep]))
+			           | SOME basePred => P.andX(modPredX, PT.Call(PT.Id basePred, [PT.Id rep]@args))
 		      val bodySs = [PT.Return predX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
@@ -4114,10 +4114,13 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 		 val (canonicalDecls,canonicalTid) = cnvRep(canonicalStructED, valOf (PTys.find (Atom.atom name)))
 		 val canonicalPCT = P.makeTypedefPCT (repSuf name)			 
 
+		 val _ = pushLocalEnv()
+		 val () = ignore(List.map insTempVar cParams)
                  val arrayXOpt = case arrayXOpt of NONE => NONE | SOME r => SOME (chkForallConstraint r)
 		 val genXOpt   = case genXOpt   of NONE => NONE | SOME r => SOME (chkGeneralConstraint r)
                  val lastXOpt  = case lastXOpt  of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Plast",  r))
                  val endedXOpt = case endedXOpt of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Pended",  r))
+		 val _ = popLocalEnv()
 
                  val needArrayEndExp = 
 		     case (arrayXOpt, genXOpt) of 

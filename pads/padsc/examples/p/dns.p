@@ -38,7 +38,7 @@ Parray domain_name {
 			      || elts[current].tag != label
 			      || elts[current].val.label.length == 0) ;
 } Pwhere {
-  Pgeneral(pdebug(arrayBegin.offset));
+  pdebug(arrayBegin.offset);
 };
 
 Pstruct resource_record {

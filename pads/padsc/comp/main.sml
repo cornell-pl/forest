@@ -356,7 +356,8 @@ structure Main : sig
     fun doFile (padsDir, baseTyFile) (typ, fname) = 
       (curFile := fname;
        case typ of Pads =>
-	 let val () = stage := "Preprocessing"
+	 let val () = PadsState.reset()
+	     val () = stage := "Preprocessing"
 	     val ppoutFile = tmp ".c"
 	     val status = preprocess(baseTyFile, fname, ppoutFile)
 	     val () = if status <> OS.Process.success 

@@ -53,5 +53,6 @@ struct
    fun listSelections () = List.rev(!selectList)
 
    fun isSelection () = not (List.null (!selectList))
+   fun reset () = selectList := nil
 
 end
