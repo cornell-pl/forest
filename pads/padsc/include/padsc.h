@@ -150,6 +150,17 @@ typedef PDC_auint32_rep        PDC_auint32;
 typedef PDC_base_em            PDC_auint32_em;
 typedef PDC_base_ed            PDC_auint32_ed;
 
+typedef PDC_int64              PDC_aint64_rep;
+typedef PDC_aint64_rep         PDC_aint64;
+typedef PDC_base_em            PDC_aint64_em;
+typedef PDC_base_ed            PDC_aint64_ed;
+
+typedef PDC_uint64             PDC_auint64_rep;
+typedef PDC_auint64_rep        PDC_auint64;
+typedef PDC_base_em            PDC_auint64_em;
+typedef PDC_base_ed            PDC_auint64_ed;
+
+
 #define PDC_MIN_INT8      -128
 #define PDC_MAX_INT8       127
 #define PDC_MAX_UINT8      256
