@@ -1376,7 +1376,8 @@ int_type ## _acc_init(PDC_t *pdc, int_type ## _acc *a)
     return PDC_ERR;
   }
   a->max2track  = pdc->disc->acc_max2track;
-  a->num2rep    = pdc->disc->acc_num2rep;
+  a->max2rep    = pdc->disc->acc_max2rep;
+  a->pcnt2rep   = pdc->disc->acc_pcnt2rep;
   return PDC_OK;
 }
 
@@ -1490,12 +1491,12 @@ PDC_error_t
 int_type ## _acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
 			   int_type ## _acc *a)
 {
-  int                   i = 0, sz, rp;
-  PDC_uint64            cnt_sum = 0;
-  double                bad_pcnt;
-  double                track_pcnt;
-  double                cnt_sum_pcnt;
-  double                elt_pcnt;
+  int                    i, sz, rp;
+  PDC_uint64             cnt_sum;
+  double                 cnt_sum_pcnt;
+  double                 bad_pcnt;
+  double                 track_pcnt;
+  double                 elt_pcnt;
   Void_t                *velt;
   int_type ## _dt_elt_t *elt;
 
@@ -1519,7 +1520,7 @@ int_type ## _acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const
   }
   int_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < a->num2rep) ? sz : a->num2rep;
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
   dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %" fmt, what, a->min);
@@ -1530,15 +1531,21 @@ int_type ## _acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const
     track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
+  for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
+       velt && i < a->max2rep;
+       velt = dtnext(a->dict, velt), i++) {
+    if (cnt_sum_pcnt >= a->pcnt2rep) {
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+	       rp-i, rp, a->pcnt2rep);
+      break;
+    }
     elt = (int_type ## _dt_elt_t*)velt;
-    cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
     sfprintf(outstr, "        val: %10" fmt, elt->key.val);
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
-
+    cnt_sum += elt->key.cnt;
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   }
-  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf\n",
 	   cnt_sum, cnt_sum_pcnt);
@@ -1576,16 +1583,16 @@ PDC_error_t
 int_type ## _acc_map_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what,  int nst,
 			       int_type ## _map_fn fn, int_type ## _acc *a)
 {
-  size_t                pad;
+  size_t                 pad;
   const char            *mapped_min;
   const char            *mapped_max;
   const char            *mapped_val;
-  int                   i, sz, rp;
-  PDC_uint64            cnt_sum = 0;
-  double                bad_pcnt;
-  double                track_pcnt;
-  double                cnt_sum_pcnt;
-  double                elt_pcnt;
+  int                    i, sz, rp, tmp;
+  PDC_uint64             cnt_sum;
+  double                 cnt_sum_pcnt;
+  double                 bad_pcnt;
+  double                 track_pcnt;
+  double                 elt_pcnt;
   Void_t                *velt;
   int_type ## _dt_elt_t *elt;
 
@@ -1609,7 +1616,7 @@ int_type ## _acc_map_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, c
   }
   int_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < a->num2rep) ? sz : a->num2rep;
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
   dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   mapped_min = fn(a->min);
@@ -1622,31 +1629,38 @@ int_type ## _acc_map_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, c
     track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  sz = rp = 0;
-  for (i = 0, velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
+  sz = tmp = 0;
+  for (i = 0, velt = dtfirst(a->dict); velt && i < a->max2rep; velt = dtnext(a->dict, velt), i++) {
     elt = (int_type ## _dt_elt_t*)velt;
     sz = strlen(fn(elt->key.val));
-    if (sz > rp) {
-      rp = sz; 
+    if (sz > tmp) {
+      tmp = sz; 
     }
   }
-  for (i = 0, velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
+  for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
+       velt && i < a->max2rep;
+       velt = dtnext(a->dict, velt), i++) {
+    if (cnt_sum_pcnt >= a->pcnt2rep) {
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+	       rp-i, rp, a->pcnt2rep);
+      break;
+    }
     elt = (int_type ## _dt_elt_t*)velt;
-    cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
     mapped_val = fn(elt->key.val);
     sfprintf(outstr, "        val: %s (%5" fmt, mapped_val, elt->key.val);
     sfprintf(outstr, ") ");
-    pad = rp-strlen(mapped_val);
+    pad = tmp-strlen(mapped_val);
     sfprintf(outstr, "%-.*s", pad,
 	     "                                                                                ");
     sfprintf(outstr, "  count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+    cnt_sum += elt->key.cnt;
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   }
-  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
-  sfprintf(outstr,   "%-.*s", rp,
+  sfprintf(outstr,   "%-.*s", tmp,
 	   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .");
   sfprintf(outstr,   " . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n        SUMMING");
-  sfprintf(outstr,   "%-.*s", rp,
+  sfprintf(outstr,   "%-.*s", tmp,
 	   "                                                                                ");
   sfprintf(outstr,   "         count: %10llu  pcnt-of-good-vals: %8.3lf\n", cnt_sum, cnt_sum_pcnt);
   /* revert to unordered set in case more inserts will occur after this report */
@@ -1775,7 +1789,8 @@ fpoint_type ## _acc_init(PDC_t *pdc, fpoint_type ## _acc *a)
     return PDC_ERR;
   }
   a->max2track  = pdc->disc->acc_max2track;
-  a->num2rep    = pdc->disc->acc_num2rep;
+  a->max2rep    = pdc->disc->acc_max2rep;
+  a->pcnt2rep   = pdc->disc->acc_pcnt2rep;
   return PDC_OK;
 }
 
@@ -1878,11 +1893,11 @@ PDC_error_t
 fpoint_type ## _acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
 			      fpoint_type ## _acc *a)
 {
-  int                   i = 0, sz, rp;
-  PDC_uint64            cnt_sum = 0;
+  int                   i, sz, rp;
+  PDC_uint64            cnt_sum;
+  floatORdouble         cnt_sum_pcnt;
   floatORdouble         bad_pcnt;
   floatORdouble         track_pcnt;
-  floatORdouble         cnt_sum_pcnt;
   floatORdouble         elt_pcnt;
   Void_t                *velt;
   fpoint_type ## _dt_elt_t *elt;
@@ -1907,7 +1922,7 @@ fpoint_type ## _acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, co
   }
   fpoint_type ## _acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < a->num2rep) ? sz : a->num2rep;
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
   dtdisc(a->dict,   &fpoint_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %.5lf", what, a->min);
@@ -1918,15 +1933,21 @@ fpoint_type ## _acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, co
     track_pcnt = 100.0 * (a->tracked/(floatORdouble)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
+  for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
+       velt && i < a->max2rep;
+       velt = dtnext(a->dict, velt), i++) {
+    if (cnt_sum_pcnt >= a->pcnt2rep) {
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+	       rp-i, rp, a->pcnt2rep);
+      break;
+    }
     elt = (fpoint_type ## _dt_elt_t*)velt;
-    cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(floatORdouble)a->good);
     sfprintf(outstr, "        val: %10.5lf", elt->key.val);
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
-
+    cnt_sum += elt->key.cnt;
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(floatORdouble)a->good);
   }
-  cnt_sum_pcnt = 100.0 * (cnt_sum/(floatORdouble)a->good);
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3lf\n",
 	   cnt_sum, cnt_sum_pcnt);
@@ -3825,8 +3846,9 @@ PDC_string_acc_init(PDC_t *pdc, PDC_string_acc *a)
     return PDC_ERR;
   }
   a->max2track  = pdc->disc->acc_max2track;
-  a->num2rep    = pdc->disc->acc_num2rep;
-  a->tracked = 0;
+  a->max2rep    = pdc->disc->acc_max2rep;
+  a->pcnt2rep   = pdc->disc->acc_pcnt2rep;
+  a->tracked    = 0;
   return PDC_uint32_acc_init(pdc, &(a->len_accum));
 }
 
@@ -3896,10 +3918,10 @@ PDC_string_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const c
 			 PDC_string_acc *a)
 {
   size_t                 pad;
-  int                    i = 0, sz, rp;
-  PDC_uint64             cnt_sum = 0;
-  double                 track_pcnt;
+  int                    i, sz, rp;
+  PDC_uint64             cnt_sum;
   double                 cnt_sum_pcnt;
+  double                 track_pcnt;
   double                 elt_pcnt;
   Void_t                 *velt;
   PDCI_string_dt_elt_t   *elt;
@@ -3920,7 +3942,7 @@ PDC_string_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const c
   }
   /* rehash tree to get keys ordered by count */
   sz = dtsize(a->dict);
-  rp = (sz < a->num2rep) ? sz : a->num2rep;
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
   dtdisc(a->dict, &PDCI_string_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "\n  Characterizing strings:\n");
@@ -3929,9 +3951,15 @@ PDC_string_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const c
     track_pcnt = 100.0 * (a->tracked/(double)a->len_accum.good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
+  for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
+       velt && i < a->max2rep;
+       velt = dtnext(a->dict, velt), i++) {
+    if (cnt_sum_pcnt >= a->pcnt2rep) {
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+	       rp-i, rp, a->pcnt2rep);
+      break;
+    }
     elt = (PDCI_string_dt_elt_t*)velt;
-    cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->len_accum.good);
     sfprintf(outstr, "        val: ");
     sfprintf(outstr, "%-.*s", elt->key.len+2, PDC_qfmt_Cstr(elt->key.str, elt->key.len));
@@ -3940,8 +3968,9 @@ PDC_string_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const c
     sfprintf(outstr, "%-.*s", pad,
 	     "                                                                                ");
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+    cnt_sum += elt->key.cnt;
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->len_accum.good);
   }
-  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->len_accum.good);
   sfprintf(outstr, ". . . . . . . .");
   pad = a->len_accum.max;
   sfprintf(outstr, "%-.*s", pad,
@@ -4006,11 +4035,11 @@ PDC_error_t
 PDC_char_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
 		       PDC_char_acc *a)
 {
-  int                   i = 0, sz, rp;
-  PDC_uint64            cnt_sum = 0;
+  int                   i, sz, rp;
+  PDC_uint64            cnt_sum;
+  double                cnt_sum_pcnt;
   double                bad_pcnt;
   double                track_pcnt;
-  double                cnt_sum_pcnt;
   double                elt_pcnt;
   Void_t                *velt;
   PDC_uint8_dt_elt_t    *elt;
@@ -4035,7 +4064,7 @@ PDC_char_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
   }
   PDC_uint8_acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < a->num2rep) ? sz : a->num2rep;
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
   dtdisc(a->dict,   &PDC_uint8_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %s", what, PDC_qfmt_char(a->min));
@@ -4047,15 +4076,21 @@ PDC_char_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
     track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
+  for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
+       velt && i < a->max2rep;
+       velt = dtnext(a->dict, velt), i++) {
+    if (cnt_sum_pcnt >= a->pcnt2rep) {
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+	       rp-i, rp, a->pcnt2rep);
+      break;
+    }
     elt = (PDC_uint8_dt_elt_t*)velt;
-    cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
     sfprintf(outstr, "        val: %6s", PDC_qfmt_char(elt->key.val));
     sfprintf(outstr, " count: %10llu  pcnt-of-good-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
-
+    cnt_sum += elt->key.cnt;
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   }
-  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING     count: %10llu  pcnt-of-good-vals: %8.3lf\n",
 	   cnt_sum, cnt_sum_pcnt);
@@ -4090,10 +4125,10 @@ PDC_error_t
 PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const char *what, int nst,
 		       PDC_int32_acc *a)
 {
-  int                   i = 0, sz, rp;
-  PDC_uint64            cnt_sum = 0;
-  double                track_pcnt;
+  int                   i, sz, rp;
+  PDC_uint64            cnt_sum;
   double                cnt_sum_pcnt;
+  double                track_pcnt;
   double                elt_pcnt;
   Void_t                *velt;
   PDC_int32_dt_elt_t *elt;
@@ -4115,7 +4150,7 @@ PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
   }
   PDC_int32_acc_fold_psum(a);
   sz = dtsize(a->dict);
-  rp = (sz < a->num2rep) ? sz : a->num2rep;
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
   dtdisc(a->dict,   &PDC_int32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
   dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
   sfprintf(outstr, "  Characterizing %s:  min %ld", what, a->min);
@@ -4126,14 +4161,21 @@ PDC_nerr_acc_report2io(PDC_t *pdc, Sfio_t *outstr, const char *prefix, const cha
     track_pcnt = 100.0 * (a->tracked/(double)a->good);
     sfprintf(outstr, "        (* hit tracking limit, tracked %.3lf pcnt of all values *) \n", track_pcnt);
   }
-  for (velt = dtfirst(a->dict); velt && i < a->num2rep; velt = dtnext(a->dict, velt), i++) {
+  for (i = 0, cnt_sum = 0, cnt_sum_pcnt = 0, velt = dtfirst(a->dict);
+       velt && i < a->max2rep;
+       velt = dtnext(a->dict, velt), i++) {
+    if (cnt_sum_pcnt >= a->pcnt2rep) {
+      sfprintf(outstr, " [... %d of top %d values not reported due to %.2lf pcnt limit on reported values ...]\n",
+	       rp-i, rp, a->pcnt2rep);
+      break;
+    }
     elt = (PDC_int32_dt_elt_t*)velt;
-    cnt_sum += elt->key.cnt;
     elt_pcnt = 100.0 * (elt->key.cnt/(double)a->good);
     sfprintf(outstr, "        val: %10ld", elt->key.val);
     sfprintf(outstr, " count: %10llu pcnt-of-total-vals: %8.3lf\n", elt->key.cnt, elt_pcnt);
+    cnt_sum += elt->key.cnt;
+    cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   }
-  cnt_sum_pcnt = 100.0 * (cnt_sum/(double)a->good);
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING         count: %10llu pcnt-of-total-vals: %8.3lf\n",
 	   cnt_sum, cnt_sum_pcnt);
@@ -4399,7 +4441,7 @@ PDCI_SB2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_M
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.96 2003-08-07 20:28:57 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.97 2003-08-07 22:03:17 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -4776,7 +4818,8 @@ PDC_disc_t PDC_default_disc = {
   PDC_errorRep_Max,
   PDC_littleEndian,
   1000, /* default max2track */
-  10,   /* default num2rep */
+  10,   /* default max2rep   */
+  100,  /* default pcnt2rep  */
   0,    /* by default, no inv_valfn map */
   0     /* a default IO discipline is installed on PDC_open */
 };
