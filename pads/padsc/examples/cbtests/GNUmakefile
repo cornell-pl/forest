@@ -18,6 +18,9 @@ PADS_HOME = ../../../..
 P_DIR = ../../p
 GEN_DIR = ../../gen
 CPY_DIR = ../../copybook
+GENPROG = $(PADS_HOME)/scripts/cb2pads.ksh
+# GENPROG = $(PADS_HOME)/scripts/comp_cpy.ksh
+
 include $(PADS_HOME)/mk/rules.mk
 
 VPATH =  $(CPY_DIR)
@@ -40,10 +43,16 @@ $(P_DIR)/cpygen_crs.p: $(P_DIR)/cpygen_crshdr.p $(P_DIR)/cpygen_crstlr.p $(P_DIR
 	 echo "	det_tlr_array                                      is_rest;"; \
 	 echo "};"; echo ""; ) >> $@
 
+$(P_DIR)/cpygen_crsdet.p: crsdet.cpy
+	@(LABEL=$(patsubst %.cpy,%,$(notdir $<)); \
+	echo $(GENPROG) $< $$LABEL $(P_DIR) 11,12,15,24; \
+	$(GENPROG) $< $$LABEL $(P_DIR) 11,12,15,24; \
+	echo $(RM) $(P_DIR)/c_$$LABEL.c $(P_DIR)/p_$$LABEL.c $(P_DIR)/cpy_$$LABEL.c $(P_DIR)/cpy_$$LABEL.h)
+
 $(P_DIR)/cpygen_%.p: %.cpy
 	@(LABEL=$(patsubst %.cpy,%,$(notdir $<)); \
-	echo $(PADS_HOME)/scripts/comp_cpy.ksh $< $$LABEL $(P_DIR); \
-	$(PADS_HOME)/scripts/comp_cpy.ksh $< $$LABEL $(P_DIR); \
+	echo $(GENPROG) $< $$LABEL $(P_DIR); \
+	$(GENPROG) $< $$LABEL $(P_DIR); \
 	$(RM) $(P_DIR)/c_$$LABEL.c $(P_DIR)/p_$$LABEL.c $(P_DIR)/cpy_$$LABEL.c $(P_DIR)/cpy_$$LABEL.h)
 
 sanity_check:
