@@ -128,6 +128,19 @@ Union tag: 11 tag values, 100 pcnt good, 100 pcnt identical: unauthorized (    1
 =====================================================================================================
 (No string values.)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.my_date : date
+    ** N.B. Dates are recorded internally as seconds since the epoch
+       (midnight 1-jan-1970). The following summary is in terms
+       of this internal Puint32 representation
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+good vals:         11    bad vals:          0    pcnt-bad:    0.000
+  Characterizing date values:  min 876966411 (1997-10-15) max 876974569 (1997-10-16) avg 876971602.455
+    => distribution of top 2 values out of 2 distinct values:
+        val:  876974569 (1997-10-16) count:          7  pcnt-of-good-vals:   63.636
+        val:  876966411 (1997-10-15) count:          4  pcnt-of-good-vals:   36.364
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:         11  pcnt-of-good-vals:  100.000
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.request : struct http_request_t
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 good vals:         11    bad vals:          0    pcnt-bad:    0.000
