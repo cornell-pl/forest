@@ -231,10 +231,10 @@ regress_rw_pendian_d: rw_pendian_d
 	@(args=""; input="../../data/endian.raptor"; suf="_raptor"; $(RegressRW))
 
 regress_rwxml_struct_o: rwxml_struct
-	@(args=""; input="../../data/ex_data.struct"; suf=""; $(RegressInput))
+	@(args=""; input="../../data/struct"; suf=""; $(RegressInput))
 
 regress_rwxml_struct_d: rwxml_struct_d
-	@(args=""; input="../../data/ex_data.struct"; suf=""; $(RegressInput))
+	@(args=""; input="../../data/struct"; suf=""; $(RegressInput))
 
 regress_rwxml_alt1_o: rwxml_alt1
 	@(args=""; input="../../data/alt1"; suf=""; $(RegressInput))
