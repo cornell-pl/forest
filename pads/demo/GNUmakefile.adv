@@ -1,0 +1,67 @@
+ # This makefile uses gmake extensions
+ # such as $(shell ...) to execute a command
+
+.PRECIOUS: %.c
+
+# These variables need to be set
+PADS_HOME=/home/kfisher/pads
+
+include $(PADS_HOME)/mk/rules.mk
+# Rule to run the pads compiler on foo.p
+%.c: %.p
+	$(PADSC) $<
+
+wsl-xml: wsl-xml.c wsl.c $(STATIC_LIBS_O)
+	$(COMPILE_O) $^ -o $@
+
+wsl-xml-g: wsl-xml.c wsl.c $(STATIC_LIBS_D)
+	$(COMPILE_D) $^ -o $@
+
+wsl-xml-shared: wsl-xml.c wsl.c $(LIB_DEPS_O)
+	      @$(CCExec_DYNAMIC_O) 
+
+wsl-xml-shared-g: wsl-xml.c wsl.c $(LIB_DEPS_D)
+	      @$(CCExec_DYNAMIC_D) 
+
+wsl-accum: wsl-accum.c wsl.c $(STATIC_LIBS_O)
+	$(COMPILE_O) $^ -o $@
+
+wsl-accum-g: wsl-accum.c wsl.c $(STATIC_LIBS_D)
+	$(COMPILE_D) $^ -o $@
+
+wsl-accum-shared: wsl-accum.c wsl.c $(LIB_DEPS_O)
+	      @$(CCExec_DYNAMIC_O) 
+
+wsl-accum-shared-g: wsl-accum.c wsl.c $(LIB_DEPS_D)
+	      @$(CCExec_DYNAMIC_D) 
+
+wsl-fmt: wsl-fmt.c wsl.c $(STATIC_LIBS_O)
+	$(COMPILE_O) $^ -o $@
+
+wsl-fmt-g: wsl-fmt.c wsl.c $(STATIC_LIBS_D)
+	$(COMPILE_D) $^ -o $@
+
+wsl-fmt-shared: wsl-fmt.c wsl.c $(LIB_DEPS_O)
+	      @$(CCExec_DYNAMIC_O) 
+
+wsl-fmt-shared-g: wsl-fmt.c wsl.c $(LIB_DEPS_D)
+	      @$(CCExec_DYNAMIC_D) 
+
+wsl-sum: wsl-sum.c wsl.c $(STATIC_LIBS_O)
+	$(COMPILE_O) $^ -o $@
+
+wsl-sum-g: wsl-sum.c wsl.c $(STATIC_LIBS_D)
+	$(COMPILE_D) $^ -o $@
+
+wsl-sum-shared: wsl-sum.c wsl.c $(LIB_DEPS_O)
+	      @$(CCExec_DYNAMIC_O) 
+
+wsl-sum-shared-g: wsl-sum.c wsl.c $(LIB_DEPS_D)
+	      @$(CCExec_DYNAMIC_D) 
+
+clean:
+	$(RM) wsl.[ch] wsl.xsd
+	$(RM) wsl-xml wsl-xml-g wsl-xml-shared wsl-xml-shared-g
+	$(RM) wsl-accum wsl-accum-g wsl-accum-shared wsl-accum-shared-g
+	$(RM) wsl-fmt wsl-fmt-g wsl-fmt-shared wsl-fmt-shared-g
+	$(RM) wsl-sum wsl-sum-g wsl-sum-shared wsl-sum-shared-g
