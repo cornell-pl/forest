@@ -1,6 +1,4 @@
 #!/bin/tcsh
-
-set tmpfile = /tmp/padsmake.$$
 if (! -e Makefile) then 
   echo "padsmake only works in a dir with a Makefile that defines PADS_HOME"
   exit -1
@@ -11,12 +9,18 @@ if ("$pads_home" == "") then
   exit -1
 endif
 source $pads_home/DO_SETENV
-/bin/rm -f $tmpfile
-nmake $* |& $pads_home/scripts/ignore_pragma_warnings.pl | tee $tmpfile
-if ("`grep 'ast.h: No' $tmpfile`" != "") then
-  echo " "
-  echo "==> Removing Makefile.?? and Trying Again <=="
-  echo " "
-  /bin/rm -f Makefile.??
+if ("`grep LIBRARY Makefile`" == "") then
   nmake $* |& $pads_home/scripts/ignore_pragma_warnings.pl
+else
+  # library build seems to run into Makefile.?? problems
+  set tmpfile = /tmp/padsmake.$$
+  /bin/rm -f $tmpfile
+  nmake $* |& $pads_home/scripts/ignore_pragma_warnings.pl | tee $tmpfile
+  if ("`grep 'ast.h: No' $tmpfile`" != "") then
+    echo " "
+    echo "==> Removing Makefile.?? and Trying Again <=="
+    echo " "
+    /bin/rm -f Makefile.??
+    nmake $* |& $pads_home/scripts/ignore_pragma_warnings.pl
+  endif
 endif
