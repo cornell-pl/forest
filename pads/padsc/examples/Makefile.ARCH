@@ -13,10 +13,10 @@ PADSC = ../../padsc
 RES_SPEC = -r ../gen
 
 PADS_TESTS = format1 format2 format3 format4 format5 format6 punion-manifest \
-             readinttest ai pswitch pswitch2
+             readinttest ai pswitch pswitch2 depends
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
-OTHER_TESTS  = test_enum test_from test_ai test_readint
+OTHER_TESTS  = test_enum test_from test_ai test_readint test_depends
 ALL_TESTS = $(FORMAT_TESTS) $(DIB_TESTS) $(OTHER_TESTS) 
 
 dib_tests : $(DIB_TESTS)
@@ -55,9 +55,11 @@ test_dibbler1 :: test_dibbler1.c  dibbler.c     -lpadsc
 test_dibbler1_mod :: test_dibbler1_mod.c  dibbler-mod.c     -lpadsc
 test_fast_dib :: test_fast_dib.c  dibbler2.c    -lpadsc
 test_fast_dib_mod :: test_fast_dib_mod.c  dibbler2-mod.c    -lpadsc
+test_depends  :: test_depends.c   depends.c     -lpadsc
 
+genp    : format1 format2 format3 format4 format5 format6 punion-manifest ai readinttest pswitch pswitch2 \
+          depends
 
-genp    : format1 format2 format3 format4 format5 format6 punion-manifest ai readinttest pswitch pswitch2
 format1 : format1.p
 	  $(PADSC) ../p/format1.p $(RES_SPEC)
 
@@ -91,6 +93,9 @@ pswitch : pswitch.p
 pswitch2 : pswitch2.p
 	  $(PADSC) ../p/pswitch2.p $(RES_SPEC)
 
+depends : depends.p
+	  $(PADSC) ../p/depends.p $(RES_SPEC)
+
 regress : genp\
 	  regress_test_format1 \
           regress_test_format2 \
@@ -101,7 +106,8 @@ regress : genp\
           regress_test_munion  \
           regress_test_ai \
 	  regress_test_pswitch \
-	  regress_test_pswitch2
+	  regress_test_pswitch2 \
+	  regress_test_depends
 
 regress_test_format1 : test_format1
 	if [ -f tmp/tmp.test_format1 ]; then $(RM) tmp/tmp.test_format1; fi
@@ -157,6 +163,11 @@ regress_test_pswitch2 : test_pswitch2
 	if [ -f tmp/tmp.pswitch2 ]; then $(RM) tmp/tmp.pswitch2; fi
 	(./test_pswitch2 <../data/pswitch 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.pswitch2
 	diff tmp/tmp.pswitch2 ../regress/pswitch2.regress || echo TEST_PSWITCH2 DIFFERS
+
+regress_test_depends : test_depends
+	if [ -f tmp/tmp.depends ]; then $(RM) tmp/tmp.depends; fi
+	(./test_depends <../data/depends 2>&1) | ../../scripts/remove_junk.pl | cat > tmp/tmp.depends
+	diff tmp/tmp.depends ../regress/depends.regress || echo TEST_DEPENDS DIFFERS
 
 clean :
 	$(RM) -f *~ *.o $(ALL_TESTS)

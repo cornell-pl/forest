@@ -747,19 +747,25 @@ structure CnvExt : CNVEXT = struct
 
               fun genReturnChk e =  P.returnS (P.condX(P.eqX(e,P.zero), PL.PDC_OK, PL.PDC_ERROR))
 
-	      fun reportStructErrorSs (code, locX) = 
+	      fun reportStructErrorSs (code, shouldGetLoc, locX) = 
+		  let val setLocSs = if shouldGetLoc 
+				     then [PL.getLocEndS(PT.Id ts, P.addrX(locX), ~1)]
+				     else []
+		  in
 		  [PT.IfThen(
 		     P.eqX(P.zero, fieldX(ed,nerr)), 
-		     PT.Compound 
-		      [P.assignS(fieldX(ed, errCode), code),
-		       P.assignS(fieldX(ed, loc), locX)]),
+		     PT.Compound(
+		      [P.assignS(fieldX(ed, errCode), code)]
+		      @ setLocSs
+		      @ [P.assignS(fieldX(ed, loc), locX)])),
 		   P.plusAssignS(fieldX(ed,nerr), P.intX 1)]
+		  end
 
-	      fun reportBaseErrorSs (code, locX) = 
+	      fun reportBaseErrorSs (code, shouldGetLoc, locX) = 
 		  [P.assignS(fieldX(ed, errCode), code),
 		   P.assignS(fieldX(ed, loc), locX)]
 
-	      fun reportUnionErrorSs (code, locX) = 
+	      fun reportUnionErrorSs (code, shouldGetLoc, locX) = 
                  [PT.IfThen(
 		   P.eqX(PT.Id result, PL.PDC_OK), (* only report scanning error if correctly read field*)
 		   PT.Compound
@@ -798,7 +804,7 @@ structure CnvExt : CNVEXT = struct
 						      PL.PDC_EXTRA_BEFORE_EOR,
 						      P.zero, 
 						      [])]
-				       @ reportErrorSs(PL.PDC_EXTRA_BEFORE_EOR, P.dotX(PT.Id ted,PT.Id loc))),
+				       @ reportErrorSs(PL.PDC_EXTRA_BEFORE_EOR, true, P.dotX(PT.Id ted,PT.Id loc))),
 				     PT.Compound
 					[PL.getLocEndS(PT.Id ts, P.addrX(P.dotX(PT.Id ted, PT.Id loc)), ~1),
 					 PL.userWarnS(PT.Id ts, 
@@ -1213,7 +1219,7 @@ structure CnvExt : CNVEXT = struct
 		      assignS exp
 		  end
 
-	      (* Given manifest representation, generate accumulator functions(init,reset, cleanup *)
+	      (* Given manifest representation, generate accumulator functions(init,reset, cleanup) *)
 	      fun genAccTheMan theSuf {decl, comment:string option} = 
 		  let val ctNoptEs = cnvDeclaration decl
 		      fun doOne(cty,nameOpt,exp) = 
@@ -1245,7 +1251,7 @@ structure CnvExt : CNVEXT = struct
 	      (* end accOpt SOME case *))
 
 
-	      (* Given manifest representatin, generate report function *)
+	      (* Given manifest representation, generate report function *)
 	      fun cnvPtyForReport(reportSuf, iSuf, pty, name) = 
 		  case lookupAcc(pty) of NONE => []
 		| SOME a => (
@@ -1598,6 +1604,7 @@ structure CnvExt : CNVEXT = struct
 			  let val readFieldName = lookupTy(pty, iSuf o readSuf, #readname)
                               val modEdNameX = fieldX(ed,name)
 			      val repX = if isVirtual then PT.Id name else fieldX(rep,name)
+			      val locX = if isVirtual then PT.Id loc else P.dotX(modEdNameX, PT.Id loc)
                               val () = if not isVirtual 
 					   then addSub(name, fieldX(rep,name))  (* record additional binding *)
 				       else ()
@@ -1606,17 +1613,15 @@ structure CnvExt : CNVEXT = struct
 			      val comment = ("Reading field: "^ name ^ 
 					     (if isEndian then ". Doing endian check." else "."))
 			      val commentS = P.mkCommentS (comment)
-			      val ifPanicSs = 				  PT.Compound 
-                                   [(* moded->name.panic = true *)
-				    P.assignS(P.dotX(modEdNameX, PT.Id panic),P.trueX),  
-				    (* moded->name.errCode = PANIC_SKIPPED *)
+			      val ifPanicSs = 
+				  PT.Compound 
+                                   [P.assignS(P.dotX(modEdNameX, PT.Id panic),P.trueX),  
 				    P.assignS(P.dotX(modEdNameX, PT.Id errCode),PL.PDC_PANIC_SKIPPED),  
-                                    PL.getLocS(PT.Id ts,  (* PDC_get_loc(ts, &moded->name.loc) *)
-					       P.addrX(P.dotX(modEdNameX,PT.Id loc))),
-				    (* moded->nerr += 1 *)
+                                    PL.getLocS(PT.Id ts, P.addrX locX),
 				    P.plusAssignS(fieldX (ed,nerr),P.intX 1)]
 			      val ifNoPanicSs =
                                   PT.Compound ([
+				   PL.getLocBeginS(PT.Id ts, P.addrX locX),
                                    PT.IfThenElse
                                     (P.eqX(PL.PDC_ERROR,
 					   PL.readFunX(readFieldName, 
@@ -1630,7 +1635,7 @@ structure CnvExt : CNVEXT = struct
 						 PT.Compound[PT.Return PL.PDC_ERROR]),
                                        PT.IfThen(P.dotX(fieldX(ed, name), PT.Id panic),
 				                 PT.Compound[P.assignS(fieldX(ed,panic), P.trueX)])]
-				      @reportStructErrorSs(PL.PDC_STRUCT_FIELD_ERR, P.dotX(fieldX(ed, name), PT.Id loc))),
+				      @reportStructErrorSs(PL.PDC_STRUCT_FIELD_ERR, true, locX)),
 				     PT.Compound(* else no error reading field *)
                                       (* If user supplied constraint, check that constraint *)
                                       (case pred 
@@ -1642,25 +1647,16 @@ structure CnvExt : CNVEXT = struct
 								  name ^ " " ^
 								  "does not have integer type."))
 					       val reportErrSs = 
-						   [P.assignS(P.dotX(fieldX(ed,name), PT.Id errCode), 
-							      PL.PDC_STRUCT_FIELD_ERR),
-						    PL.getLocS(PT.Id ts,
-							       P.addrX(P.dotX(modEdNameX,PT.Id loc))),
-						    PL.userErrorS(PT.Id ts,
-								  P.addrX(P.dotX(fieldX(ed,name), PT.Id loc)),
-								  P.dotX(fieldX(ed,name), PT.Id errCode),
-								  PT.String("User constraint on field "^
-									    name ^ " " ^
-									    "violated."), []),
-						    PT.IfThen(P.eqX(P.zero, fieldX(ed,nerr)),
-						     PT.Compound
-                                                      [P.assignS(fieldX(ed,errCode), 
-								 PL.PDC_USER_CONSTRAINT_VIOLATION),
-						       P.assignS(fieldX(ed,loc), 
-								 P.dotX(fieldX(ed,name),PT.Id loc))
-						       ]),
-						    P.plusAssignS(fieldX(ed,nerr), P.intX 1)]
-
+						     [P.assignS(P.dotX(fieldX(ed,name), PT.Id errCode), 
+								PL.PDC_STRUCT_FIELD_ERR),
+						      PL.getLocEndS(PT.Id ts, P.addrX(locX), ~1)]
+						   @ reportStructErrorSs(PL.PDC_USER_CONSTRAINT_VIOLATION, false,locX)
+						   @ [PL.userErrorS(PT.Id ts,
+								    P.addrX(locX),
+								    P.dotX(fieldX(ed,name), PT.Id errCode),
+								    PT.String("User constraint on field "^
+									      name ^ " " ^
+									      "violated."), [])]
 					       fun swap reportErrSs = 
                                                    [PL.swapBytesS(fieldX(rep, name)),
 						    PT.IfThenElse(
@@ -1671,7 +1667,7 @@ structure CnvExt : CNVEXT = struct
 									   PL.littleEndian,
 									   PL.bigEndian)),
 							 PL.userWarnS(PT.Id ts, 
-							    P.addrX(P.dotX(fieldX(ed,name),PT.Id loc)), 
+							    P.addrX(locX), 
 							    PT.String ("New endian values: "^
 								       "data = %s, machine = %s "^
 								       "(from "^name^" field test)."),
@@ -1691,7 +1687,7 @@ structure CnvExt : CNVEXT = struct
 						     swap reportErrSs
 						    else reportErrSs))]
 					   end
-                                      ))])
+                                      (* end case pred *) ) )])
 			      val readS = if !first then (first:= false; ifNoPanicSs)
 					  else PT.IfThenElse
 					      (fieldX(ed,panic), (* if moded->panic *)
@@ -1812,7 +1808,7 @@ structure CnvExt : CNVEXT = struct
 						      PL.PDC_MISSING_LITERAL,
 						      PT.String "Missing separator: %s.", 
 						      [PL.fmtStr(commentV)])]
-					@ reportStructErrorSs(PL.PDC_MISSING_LITERAL, P.dotX(PT.Id ted,PT.Id loc))
+					@ reportStructErrorSs(PL.PDC_MISSING_LITERAL, true,P.dotX(PT.Id ted,PT.Id loc))
 					@[P.assignS(fieldX(ed,panic),P.trueX)]))]
 			      val notPanicSs = case scanFieldNameOpt of NONE => notPanicSsNoScan
 				               | SOME s => notPanicSsScan s
