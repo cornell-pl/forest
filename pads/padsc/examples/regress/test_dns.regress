@@ -5203,4 +5203,3 @@ good vals:          1    bad vals:          0    pcnt-bad:    0.000
 <top>.additional : array resource_records of resource_record
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 (No element values accumulated; all arrays had zero length.)
-warning: XXX_CHANGE_TO_DBG P_norec_noseek_sfclose: restored 108 bytes using sfungetc
