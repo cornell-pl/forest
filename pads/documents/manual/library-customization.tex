@@ -8,21 +8,251 @@ controlling IO is choosing what constitues a \textit{Precord} in the
 data source.
 
 \section{The \pads{} discipline}
-\subsection{Skipping white space}
-\label{sec:library-customization-white-space}
-Describe how to set various white space skipping modes.
+A \pads{} handle, \ie{}, a value of type \cd{P\_t}, contains a field
+named \cd{my\_disc} of type \cd{Pdisc\_t}, which appears in
+\figref{fig:pdisc}. The various fields of \cd{my\_disc} allow users to
+customize aspects of the \pads{} system.  We describe these fields in
+the following sections.
 
-\subsection{Scanning extent}
-\label{sec:library-customization-scanning-extent}
-
-\subsection{Endian-ness}
-\label{sec:library-customization-endian}
+\begin{figure}
+\inputCode{code/pdisc}
+\caption{The \texttt{Pdisc\_t} type, which allows users to customize the
+  behavior of the \pads{} system.}
+\label{fig:pdisc}
+\end{figure}
 
 \subsection{Character encodings}
 \label{sec:library-customization-character-encodings}
 how set discipline to ascii, ibcdic.
 
+\subsection{Copying strings} 
+\label{sec:library-customization-copy-strings}
+ If \cd{copy\_string} field in \pads{} discipline is non-zero, the string read functions
+ copy the strings found into the supplied representation, otherwise they do not.
+ Instead, the target \cd{Pstring} points to memory managed by the current
+ IO discipline.  This sharing avoids copying and speeds programs that
+ will never reference an old record after a new one is read in.
+Field \cd{copy\_strings} should only be set to zero for record-based IO disciplines where
+strings from record K are not used after \cd{P\_io\_next\_rec} has been called to move
+the IO cursor to record K+1.  Note: \cd{Pstring\_preserve} can be used to
+force a string that is using sharing to make a copy so that the string is 'preserved'
+(remains valid) across calls to \cd{P\_io\_next\_rec}.
+
+\subsection{Input time zone}
+\label{sec:library-customization-input-time-zone}
+The field \cd{in\_time\_zone} specifies the default time zone for
+string-based time input, used for input date strings 
+that do not have time zone information in them.     For example, the date
+\texttt{15/Oct/1997:18:46:51} has no time zone information.  If
+\cd{in\_time\_zone} is set  to \literal{\cd{"UTC"}}, 
+then this date/time would be assumed to be a UTC time.
+In contrast, regardless of the \cd{in\_time\_zone} setting, the date
+\texttt{15/Oct/1997:18:46:51 -0700}
+will always be interpreted as being in a time zone seven hours
+earlier than UTC time.
+
+The \cd{in\_time\_zone} is passed to the \cd{tmzone} function, so it
+must be a time zone description that \cd{tmzone}
+understands. Intuitively, it accepts three-letter strings such as 
+\literal{\cd{"PST"}}  and \literal{\cd{"EDT"}}  as well as strings
+denoting numeric offsets from UTC time, such as \literal{\cd{"-0500"}}.
+Documentation for the \cd{tmzone} function appears on the web page:
+\ifthenelse{\boolean{hevea}}{
+\myurl{www.research.att.com/\~gsf/man/man3/tm.html}}{
+\myurl{www.research.att.com/~gsf/man/man3/tm.html}}
+
+Before calling \cd{P\_open}, the discipline field \cd{disc->in\_time}
+can be initialized directly.  After calling \cd{P\_open}, however, it
+must be changed by passing the pads handle and a time zone string to 
+\cd{P\_set\_in\_time\_zone}, \eg{},
+
+\begin{centercode}
+    P\_set\_in\_time\_zone(pads,\literal{"PST"});
+\end{centercode}
+
+This will set \cd{pads->disc->in\_time\_zone}, and will also update
+an internal representation of the time zone maintained as part of
+the pads state.
+
+\subsection{Output time zone}
+\label{sec:library-customization-output-time-zone}
+This field specifies the output time zone for formatted time output.
+Regardless of the time zone used to read in a time,
+\cd{disc->output\_time\_zone} controls which time zone is used when
+formatting the time for output.  For example, a time that is read as 6am UTC time
+would be formatted as 1am if the \cd{output\_time\_zone} is \cd{\literal{"-0500"}}.
+Note that in the normal case you should use the same time zone
+for both input and output, unless you are intentially translating
+times from one time zone to another one. The format of output time
+zone specification strings is the same as for input time zone.
+
+Before calling \cd{P\_open}, the discipline field \cd{disc->in\_time}
+can be initialized directly.  After calling \cd{P\_open}, however, it
+must be changed by passing the pads handle and a time zone string to 
+\cd{P\_set\_output\_time\_zone}, \eg{},
+
+\begin{centercode}
+    P\_set\_output\_time\_zone(pads,\literal{"CDT"});
+\end{centercode}
+
+This will set \cd{pads->disc->output\_time\_zone}, and will also update
+an internal representation of the output time zone maintained as part of
+the pads state.
+
+\subsection{Input formats}
+\label{sec:library-customization-input-formats}
+The \cd{in\_formats} field of the discipline allows one to specify
+default input formats for some special types where there is 
+in no 'obvious' default. \figref{fig:input-formats} contains the type
+of this field.
+\begin{figure}
+\inputCode{code/pinformats}
+\caption{The \texttt{Pin\_formats\_t} type, which allows users to specify the
+  input format of various \pads{} base types. Each of the fields must
+  be a non-null string with a format understood by the \texttt{tmdate} function.}
+\label{fig:input-formats}
+\end{figure}
+The current entries are:
+
+\begin{description}
+\item[\cd{in\_formats.timestamp}]
+This field contains a format string specifying the input timestamp
+format, for use with \cd{Ptimestamp} and its variants.  Alternatives
+can be given using \cd{\%|}, and the special \cd{\%\&} format can be
+used to indicate all formats that can be parsed by the
+\cd{tmdate} fuction.  The default,
+
+\inputCode{code/timestamp-format}
+%
+\noindent
+allows for timestamps of these forms:
+\begin{verbatim}
+ 091172+230202
+ 091172+23:02:02
+ 09111972+230202
+ 09111972+23:02:02
+\end{verbatim}
+ and also allows for all date/time formats parsed by \cd{tmdate}.
+Documentation for the \cd{tmdate} function appears on the web page:
+\ifthenelse{\boolean{hevea}}{
+\myurl{www.research.att.com/\~gsf/man/man3/tm.html}}{
+\myurl{www.research.att.com/~gsf/man/man3/tm.html}}
+ 
+\item[\cd{in\_formats.date}]
+ A format string specifying the input date format, for use with
+ \cd{Pdate} and its variants.  The default, 
+
+\inputCode{code/date-format}
+%
+\noindent
+ allows for dates of these two forms:
+\begin{verbatim}
+   091172
+   09111972
+\end{verbatim}
+and also allows for all date formats parsed by \cd{tmdate}.
+Documentation for the \cd{tmdate} function appears on the web page:
+\ifthenelse{\boolean{hevea}}{
+\myurl{www.research.att.com/\~gsf/man/man3/tm.html}}{
+\myurl{www.research.att.com/~gsf/man/man3/tm.html}}
+
+\item[\cd{in\_formats.tme}]
+ A format string specifying the input time format, for use with
+ \cd{Ptime} and its variants.  The default, 
+
+\inputCode{code/time-format}
+%
+\noindent
+ allows for times of these two forms:
+\begin{verbatim}
+  230202
+  23:02:02
+\end{verbatim}
+and also allows for all date formats parsed by \cd{tmdate}.
+Documentation for the \cd{tmdate} function appears on the web page:
+\ifthenelse{\boolean{hevea}}{
+\myurl{www.research.att.com/\~gsf/man/man3/tm.html}}{
+\myurl{www.research.att.com/~gsf/man/man3/tm.html}}
+
+\end{description}
+
+\subsection{Output formats}
+\label{sec:library-customization-output-formats}
+The \cd{out\_formats} field of the discipline allows one to specify
+default output formats for some special types where there is 
+in no 'obvious' default. \figref{fig:output-formats} contains the type
+of this field.
+\begin{figure}
+\inputCode{code/poutformats}
+\caption{The \texttt{Pout\_formats\_t} type, which allows users to specify the
+  output format of various \pads{} base types. Each of the fields must
+  be a non-null string with a format understood by the \texttt{fmttime} function.}
+\label{fig:output-formats}
+\end{figure}
+The current entries are:
+\begin{description}
+\item[\cd{out\_formats.timestamp}]
+\item[\cd{out\_formats.timestamp\_explicit}]
+These two values specifying the default output formats for the \cd{Ptimestamp}
+and \cd{Ptimestamp\_explicit} families of types, respectively.  The normal use is for these formats
+to describe both the date and time of day.  Some examples:
+
+\inputCode{code/timestamp-output-format}
+%
+\noindent
+Documentation for the \cd{tmdate} function appears on the web page:
+\ifthenelse{\boolean{hevea}}{
+\myurl{www.research.att.com/\~gsf/man/man3/tm.html}}{
+\myurl{www.research.att.com/~gsf/man/man3/tm.html}}
+
+
+\item[\cd{out\_formats.date}]
+\item[\cd{out\_formats.date\_explicit}]
+These two values specifying the default output formats for the \cd{Pdate}
+and \cd{Pdate\_explicit} families of types, respectively.  The normal use is for these formats
+to describe the date but not the time of day.  Some examples:
+
+\inputCode{code/date-output-format}
+%
+\noindent
+Documentation for the \cd{tmdate} function appears on the web page:
+\ifthenelse{\boolean{hevea}}{
+\myurl{www.research.att.com/\~gsf/man/man3/tm.html}}{
+\myurl{www.research.att.com/~gsf/man/man3/tm.html}}
+
+
+
+\item[\cd{out\_formats.time}]
+\item[\cd{out\_formats.time\_explicit}]
+These two values specifying the default output formats for the \cd{Ptime}
+and \cd{Ptime\_explicit} families of types, respectively.  The normal use is for these formats
+to describe a time of day but not the date.  Some examples:
+
+\inputCode{code/time-output-format}
+%
+\noindent
+Documentation for the \cd{tmdate} function appears on the web page:
+\ifthenelse{\boolean{hevea}}{
+\myurl{www.research.att.com/\~gsf/man/man3/tm.html}}{
+\myurl{www.research.att.com/~gsf/man/man3/tm.html}}
+\end{description}
+
+\subsection{Scanning extent}
+\label{sec:library-customization-scanning-extent}
+
+\subsection{Skipping white space}
+\label{sec:library-customization-white-space}
+Describe how to set various white space skipping modes.
+
+
+
+
+\subsection{Endian-ness}
+\label{sec:library-customization-endian}
+
+
 \section{The IO Discpline}
+\label{sec:io-discipline}
 IO discipline values, which have type \cd{Pio\_disc\_t}, control the
 'raw' reading of data from a file or from some other data source.  
 The \pads{} system provides a collection of functions for generating
