@@ -47,7 +47,7 @@ $(P_DIR)/cpygen_crsdet.p: crsdet.cpy
 	@(LABEL=$(patsubst %.cpy,%,$(notdir $<)); \
 	echo $(GENPROG) $< $$LABEL $(P_DIR) 11,12,15,24,41,42; \
 	$(GENPROG) $< $$LABEL $(P_DIR) 11,12,15,24,41,42; \
-	echo $(RM) $(P_DIR)/c_$$LABEL.c $(P_DIR)/p_$$LABEL.c $(P_DIR)/cpy_$$LABEL.c $(P_DIR)/cpy_$$LABEL.h)
+	$(RM) $(P_DIR)/c_$$LABEL.c $(P_DIR)/p_$$LABEL.c $(P_DIR)/cpy_$$LABEL.c $(P_DIR)/cpy_$$LABEL.h)
 
 $(P_DIR)/cpygen_%.p: %.cpy
 	@(LABEL=$(patsubst %.cpy,%,$(notdir $<)); \
