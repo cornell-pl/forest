@@ -319,6 +319,9 @@ struct
   fun decNestLevS(pads) =
     PT.Expr(P.postDecX (P.arrowX(pads, PT.Id "inestlev")))
 
+  fun PosEq(p1, p2) = 
+    PT.Call(PT.Id "P_POS_EQ", [p1,p2])
+
 (* -- Parse state check/manipulation routines *)
 
   fun initParseStateS(pd) =

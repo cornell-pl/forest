@@ -906,17 +906,19 @@ struct Ppos_s {
 
 /* HELPER: P_POS_EQ tests whether pos1 is the same IO position as pos2 */
 /* #define P_POS_EQ(pos1, pos2) ((pos1).num == (pos2).num && (pos1).byte == (pos2).byte) */
-#define P_POS_EQ(pos1, pos2) ((pos1).offset == (pos2).offset)
 
-/* HELPER: P_POS_GT tests whether pos1 is greater than pos2 */
-/* #define P_POS_GT(pos1, pos2) ((pos1).num > (pos2).num || ((pos1).num > (pos2).num && (pos1).byte > (pos2).byte)) */
-#define P_POS_GT(pos1, pos2) ((pos1).offset > (pos2).offset)
+#ifdef FOR_CKIT
+int P_POS_EQ(Ppos_t first, Ppos_t second);
+int P_POS_GT(Ppos_t first, Ppos_t second);
+#endif
 
 /* type Ploc_t: */
 struct Ploc_s {
   Ppos_t b;
   Ppos_t e;
 };
+
+
 
 /* The following four fields are always the first four fields in every PADS
  * parse descriptor type.  (They are the only fields in type Pbase_pd.)

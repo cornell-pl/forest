@@ -393,6 +393,16 @@ ssize_t PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int
   ((PDcstr)->len == strlen(cstr) && (strncmp((PDcstr)->str, (cstr), (PDcstr)->len) == 0))
 
 /* ================================================================================
+ * POS MACROS
+ */
+
+#define P_POS_EQ(pos1, pos2) ((pos1).offset == (pos2).offset)
+/* HELPER: P_POS_GT tests whether pos1 is greater than pos2 */
+/* #define P_POS_GT(pos1, pos2) ((pos1).num > (pos2).num || ((pos1).num > (pos2).num && (pos1).byte > (pos2).byte)) */
+#define P_POS_GT(pos1, pos2) ((pos1).offset > (pos2).offset)
+
+
+/* ================================================================================
  * P_STRING_FROM macros
  */
 

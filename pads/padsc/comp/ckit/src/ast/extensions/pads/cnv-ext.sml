@@ -3211,9 +3211,24 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		        ([P.assignS(PT.Id reachedLimit, P.gteX(fieldX(rep, length), Option.valOf maxOpt))],
 			 sizeX)
 
+		 val sourceAdvanceCheckSs = 
+		     let fun getBloc offset = P.dotX(P.subX(edBufferX, offset), PT.Id "loc")
+			 fun getBpos offset = P.dotX(getBloc offset, PT.Id "b") 
+			 val prevOffsetX = P.minusX(fieldX(rep,length), P.intX 1)
+			 val curOffsetX = fieldX(rep,length)
+		     in
+			 [PT.IfThen(P.gtX(fieldX(rep,length), P.intX 1),
+			   PT.Compound
+			    [PL.getLocBeginS(PT.Id pads, P.addrX(getBloc curOffsetX)),
+			     PT.IfThen(PL.PosEq(getBpos prevOffsetX, getBpos curOffsetX),
+				       PT.Compound
+				         [P.mkCommentS "array termination from lack of progress",
+					  P.minusAssignS(fieldX(rep,length), P.intX 2),
+					  PT.Break])])]
+		     end
+
                  val readElementSs = 
-                       [P.postIncS(fieldX(rep, length)),
-			locBS]
+                       [P.postIncS(fieldX(rep, length))]
                      @ chkLenSs
 		     @ (PL.chkReserveSs(PT.Id pads,  readName, resRBufferX, 
 				     P.addrX resBufferX, P.sizeofX elemRepPCT,
@@ -3221,6 +3236,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     @ (PL.chkReserveSs(PT.Id pads, readName, pdRBufferX, 
 				     P.addrX edBufferX, P.sizeofX elemEdPCT,
 				     fieldX(rep, length), bufSugX))
+		     @ sourceAdvanceCheckSs
 		     @ (if Option.isSome endedXOpt  (* checkpoint if have ended predicate in play *)
 			then ( [PL.incNestLevS(PT.Id pads)]
 			     @ PL.chkPtS(PT.Id pads, readName)) else [])
@@ -3397,7 +3413,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
 			 val bdyS = 
-			     PT.While(P.trueX,  
+			     PT.Compound[
+			      locBS,
+			      PT.While(P.trueX,  
                                  PT.Compound(
 				     [P.mkCommentS("Ready to read next element")]
 				   @ readElementSs 
@@ -3409,7 +3427,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                    @ (genTermCheck  termXOpt)
 				   @ genBreakCheckSs (termXOpt, maxOpt, lastXOpt, endedXOpt)
                                    @ (genSepCheck sepXOpt)
-                                 ))
+                                 ))]
 			 val termCondX = if isRecord then 
 			                   P.andX(P.notX(PL.isEofX(PT.Id pads)),
 						  P.notX(PL.isEorX(PT.Id pads)))
