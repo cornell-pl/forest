@@ -298,7 +298,7 @@ endif
 
 # XXX Nothing for these in rules.arch.<ARCH>.mk ???
 CARCHFLAGS =
-STATIC_LIBTOOL = ar rs
+STATIC_LIBTOOL = ar r
 STATIC_LIBTOOL_OPTS =
 
 SHARED_LIBTOOL = $(CC) $(mam_cc_SHARED) $(mam_cc_SHARED_REGISTRY)
@@ -351,9 +351,14 @@ endif
 
 # use this rule as follows
 # (lib=<library>; $(FixStaticLib))
+ifeq ($(OPSYS),linux)
 define FixStaticLib
 (ranlib $$lib)>/dev/null 2>&1 || true
 endef
+else
+define FixStaticLib
+endef
+endif
 
 ifeq ($(ARCH_N_OPSYS),x86-freebsd)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
