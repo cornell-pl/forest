@@ -4,11 +4,13 @@ P_NOGEN
 
 int main(int argc, char** argv) {
   P_t*             pads;
-  Pio_disc_t*     io_disc;
-  Pdisc_t         my_disc = Pdefault_disc;
-  size_t             bytes_skipped;
-  const char        *fname;
-  int                blocked;
+  Pio_disc_t*      io_disc;
+  Pdisc_t          my_disc = Pdefault_disc;
+  size_t           bytes_skipped;
+  const char      *fname;
+  int              blocked;
+  int              verbose = 0;
+  Puint64          num_recs = 0;
 
 
   /* fname = "../../data/ND01.HP57WD1.OAK.5247135.20010513134851"; */
@@ -16,16 +18,19 @@ int main(int argc, char** argv) {
   fname = "/tmp/foo/ONE1.HP568T1A.G0155V00.70312937.20020412111044";
   blocked = 1;
 
-  if (argc > 3) goto usage;
+  if (argc > 4) goto usage;
   if (argc >= 2) {
     fname = argv[1];
   }
-  if (argc == 3) {
+  if (argc >= 3) {
     if (strcmp(argv[2], "0")==0) {
       blocked = 0;
     } else if (strcmp(argv[2], "1")==0) {
       blocked = 1;
     } else goto usage;
+  }
+  if (argc >= 4) {
+    verbose = atoi(argv[3]);
   }
 
   io_disc = P_vlrec_noseek_make(blocked, 0); /* no avg rlen hint */
@@ -48,6 +53,12 @@ int main(int argc, char** argv) {
     if (P_ERR == P_io_next_rec(pads, &bytes_skipped)) {
       error(2, "no next record, ending program");
       goto done;
+    }
+    num_recs++;
+    if (verbose) {
+      error(0, "Record %llu : %lu bytes",
+	    (unsigned long long)num_recs,
+	    (unsigned long)bytes_skipped);
     }
   }
 

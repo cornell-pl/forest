@@ -5047,7 +5047,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.133 2003-12-02 15:30:20 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.134 2003-12-02 18:55:05 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6535,7 +6535,8 @@ P_qfmt_str(const Pstring *s) {
 
 char*
 P_fmt_cstr_n(const char *s, size_t len) {
-  return fmtquote(s, NiL, NiL, len, 0);
+  size_t mod_len = strnlen(s, len);
+  return fmtquote(s, NiL, NiL, mod_len, 0);
 }
 
 char*
@@ -6545,7 +6546,8 @@ P_fmt_cstr(const char *s) {
 
 char*
 P_qfmt_cstr_n(const char *s, size_t len) {
-  return fmtquote(s, "\"", "\"", len, 1);
+  size_t mod_len = strnlen(s, len);
+  return fmtquote(s, "\"", "\"", mod_len, 1);
 }
 
 char*
