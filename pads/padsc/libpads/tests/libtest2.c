@@ -32,10 +32,10 @@ int main(int argc, char** argv) {
   unsigned long   ultmp;
 
 #ifdef USE_NLREC
-  printf("\nUsing PADSC IO discipline nlrec_noseek\n\n");
+  error(0, "\nUsing PADSC IO discipline nlrec_noseek\n\n");
   io_disc = PDC_nlrec_noseek_make(0);
 #else
-  printf("\nUsing PADSC IO discipline norec\n\n");
+  error(0, "\nUsing PADSC IO discipline norec\n\n");
   io_disc = PDC_norec_make(0);
 #endif
 
@@ -47,8 +47,8 @@ int main(int argc, char** argv) {
   if (argc >= 3 && strcmp(argv[2], "rev") == 0) {
     rev = 1;
   }
-  sprintf(fname, "../ex_data.libtest2.%s", h);
-  printf("fname = %s    rev = %d\n", fname, rev);
+  sprintf(fname, "../../data/ex_data.libtest2.%s", h);
+  error(0, "fname = %s    rev = %d\n", fname, rev);
   switch (my_disc.m_endian) {
   case PDC_bigEndian:
     my_disc.d_endian = rev ? PDC_littleEndian : PDC_bigEndian;

@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.libtest1-big")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.biglibtest1")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  printf("\n%lu\n\n", count);
+  error(0, "\n%lu\n\n", count);
 
   if (PDC_ERR == PDC_IO_fclose(pdc)) {
     error(2, "*** PDC_IO_fclose failed ***");

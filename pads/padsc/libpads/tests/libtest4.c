@@ -20,14 +20,14 @@ int main(int argc, char** argv) {
   unsigned long   ultmp;
   PDC_regexp_t    *my_regexp;
 
-  printf("\nUsing PADSC IO discipline nlrec\n\n");
+  error(0, "\nUsing PADSC IO discipline nlrec\n\n");
   io_disc = PDC_nlrec_make(0);
 
   if (PDC_ERR == PDC_open(&pdc, &my_disc, io_disc)) {
     error(2, "*** PDC_open failed ***");
     exit(-1);
   }
-  if (PDC_ERR == PDC_IO_fopen(pdc, "../ex_data.libtest4")) {
+  if (PDC_ERR == PDC_IO_fopen(pdc, "../../data/ex_data.libtest4")) {
     error(2, "*** PDC_IO_fopen failed ***");
     exit(-1);
   }

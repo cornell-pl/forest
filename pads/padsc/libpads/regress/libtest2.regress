@@ -1,3 +1,9 @@
+
+Using PADSC IO discipline norec
+
+
+fname = ../../data/ex_data.libtest2.raptor    rev = 0
+
 Read bint8  : -2
 Read buint8 : 2
 Read bint16  : -2
@@ -6,8 +12,7 @@ Read bint32  : -2
 Read buint32 : 2
 Read bint64  : -2
 Read buint64 : 2
-Searching for newline char.  Start loc line 1 char 31
-Found newline.  Now loc line 1 char 32
+bytes_skipped to find EOR/newline = 0
 Read bint8  : -2
 Read buint8 : 2
 Read bint16  : -2
@@ -15,9 +20,7 @@ Read buint16 : 2
 Read bint32  : -2
 Read buint32 : 2
 Read bint64  : -2
-error at record 2 char 23 : Specified width not available (EOR/EOF encountered) 
-[RECORD 2]\376\002\377\376\000\002\377\377\377\376\000\000\000\002\377\377\377\377\377\377\377\376>>>\000\002<<<
-Searching for newline char.  Start loc line 2 char 23
-Found newline.  Now loc line 2 char 26
+warning: error at 512B Block (last: partial) 1 from char 54 to char 56: Specified width not available (EOR/EOF encountered) 
+[512B Block (last: partial) 1]\376\002\377\376\000\002\377\377\377\376\000\000\000\002\377\377\377\377\377\377\377\376\000\000\000\000\000\000\000\002\n\376\002\377\376\000\002\377\377\377\376\000\000\000\002\377\377\377\377\377\377\377\376>>>\000\002\n<<<
+bytes_skipped to find EOR/newline = 2
 Main program found eof
-fname = ../ex_data.libtest2.raptor    rev = 0
