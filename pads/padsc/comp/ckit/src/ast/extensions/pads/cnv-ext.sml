@@ -1701,11 +1701,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      end
                       val initRepEDs = genInitEDs (initSuf, rep, canonicalPCT)
                       val initPDEDs  = genInitEDs ((initSuf o pdSuf), pd, pdPCT)
-                      fun genCleanupEDs (isRep, suf, argName, aPCT) = case #memChar typedefProps
+                      fun genCleanupEDs (suf, argName, aPCT) = case #memChar typedefProps
                           of TyProps.Static => 
 				  [genInitFun(suf initFunName, argName, aPCT, [],true)]
                            | TyProps.Dynamic =>
-			      let val argX = if isRep then PT.Id argName else getFieldX(argName, base)
+			      let val argX = PT.Id argName
 				  val bodySs = 
 				  [PT.Expr(
 				    PT.Call(PT.Id (suf baseFunName),
@@ -1713,11 +1713,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      in
 				  [genInitFun(suf initFunName, argName, aPCT, bodySs,false)]
 			      end
-                      val cleanupRepEDs = genCleanupEDs (true, cleanupSuf, rep, canonicalPCT)
-                      val cleanupPDEDs  = genCleanupEDs (false, (cleanupSuf o pdSuf), pd, pdPCT)
+                      val cleanupRepEDs = genCleanupEDs (cleanupSuf, rep, canonicalPCT)
+                      val cleanupPDEDs  = genCleanupEDs ((cleanupSuf o pdSuf), pd, pdPCT)
 
                       (* Generate Copy Function typedef case *)
-                      fun genCopyEDs(isRep, suf, which, aPCT) = 
+                      fun genCopyEDs(suf, which, aPCT) = 
 			  let val copyFunName = suf initFunName
 			      val dst = dstSuf which
 			      val src = srcSuf which
@@ -1725,18 +1725,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val bodySs = 
 				  case #memChar typedefProps
 				   of TyProps.Static => [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT)]
-				   | _ => if isRep then
-				            [PT.Expr(PT.Call(PT.Id nestedCopyFunName, 
+				   | _ => [PT.Expr(PT.Call(PT.Id nestedCopyFunName, 
 							    [PT.Id pads, PT.Id dst, PT.Id src]))]
-					  else
-					      [PL.memcpyS(PT.Id dst, PT.Id src, P.sizeofX aPCT),
-					       PT.Expr(PT.Call(PT.Id nestedCopyFunName, 
-							    [PT.Id pads, getFieldX(dst,base), getFieldX(src,base)]))]
 			  in
 			      [genCopyFun(copyFunName, dst, src, aPCT, bodySs,false)]
 			  end
-		      val copyRepEDs = genCopyEDs(true, copySuf o repSuf, rep, canonicalPCT)
-		      val copyPDEDs  = genCopyEDs(false, copySuf o pdSuf,  pd,  pdPCT)
+		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT)
+		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  pdPCT)
 
                       (* Generate m_init function typedef case *)
                       val maskInitName = maskInitSuf name 
