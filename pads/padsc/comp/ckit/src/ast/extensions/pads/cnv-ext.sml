@@ -1301,7 +1301,7 @@ structure CnvExt : CNVEXT = struct
 
 		     in
                      (case sizeSpec 
-                      of NONE => (NONE, NONE, [])
+                      of NONE => (NONE, NONE, (print "in none case.\n"; allocBuffs P.zero))
                       |  SOME (PX.SizeInfo {min, max, maxTight}) => (
                            case (min,max) 
                            of (NONE,NONE) => (NONE, NONE, allocBuffs P.zero)
