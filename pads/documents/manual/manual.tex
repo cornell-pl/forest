@@ -1,0 +1,67 @@
+\documentclass{report}
+\usepackage{epsfig}
+\usepackage{code}
+\usepackage{times}
+\usepackage{moreverb}
+\input{spacing.tex}
+
+\begin{document}
+\date{}
+\setlength{\parskip}{0pt}
+\input{defs.tex}
+\title{{\LARGE \bf PADS \\ Manual} \\
+\vspace*{.1in}
+{\large \today{}} \\
+\vspace*{.1in}
+{\large
+ \begin{tabular}{r@{\hskip .5em}c@{\hskip .5em}l}
+%   (Hancock 2.0 &:& May    15, 2001)\\
+ \end{tabular}}
+}
+
+\author{Kathleen Fisher \\
+        Robert Gruber \\[1ex]
+        {\em AT\&T Labs }\\
+	{\em Shannon Laboratory} \\
+	{\em 180 Park Avenue} \\
+	{\em Florham Park, NJ 07932, USA} \\
+        {\small\tt pads@research.att.com}}
+
+\pagenumbering{roman}
+\maketitle
+\setcounter{page}{0}
+\vspace*{3in}
+\begin{center}
+Copyright \copyright{ 2003 AT\&T Corp.}
+\end{center}
+\thispagestyle{empty} \pagebreak[4]
+\tableofcontents
+\clearpage
+\mbox{}
+\thispagestyle{empty} \pagebreak[4]
+\input{preface}
+\clearpage
+\pagenumbering{arabic}
+\input{intro}
+\input{example}
+\input{common-features}
+\input{base-types}
+\input{structs}
+\input{unions}
+\input{arrays}
+\input{enums}
+\input{typedefs}
+\input{library-customization}
+\input{implementation}
+\input{accumulators}
+
+%\input{general.tex}
+
+\bibliographystyle{jhr-alpha}
+\bibliography{pads}
+
+\appendix
+\input{ai.tex}
+\end{document}
+
+

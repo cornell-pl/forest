@@ -1,0 +1,38 @@
+\chapter{PUnions}
+\label{chap:unions}
+\section{Syntax}
+To express variations.  Two forms: in-place and switched.
+\subsection{in-place}
+\begin{verbatim}
+union name ( param list ){
+ qualifier type name constraint comment
+...
+}
+\end{verbatim}
+tries each branch in turn til one found that succeeds in finding an
+element of the indicated type and satisifies the constraint.
+
+\subsection{switched}
+jumps to appropriate branch indicated by switch expression.
+switch must be of integral type. 
+\begin{verbatim}
+punion branches(a_uint32 a){
+  switch (a) {
+  case 1 : a_int32  number : number % 2 == 0;
+  case 2 : a_string_SE(:"EOR":) name;
+  default: compute PDC_int32 def = 3; 
+  }
+}
+\end{verbatim}
+
+\section{Generated library}
+\subsection{in-memory representation}
+\subsection{check and set mask}
+\subsection{error descriptor}
+\subsection{Operations}
+init/cleanup rep
+init/cleanup ed
+\subsubsection{read}
+  error codes
+\subsubsection{Accumulator functions}
+

@@ -1,0 +1,48 @@
+\chapter{PArrays}
+\label{chap:arrays}
+\section{Syntax}
+To express repetitions.  
+
+\begin{verbatim}
+parray name ( param list ){
+ basetype sizespec : [sep == char] && [term == char] && semantic constraint
+}
+sizespec 
+  []  : unbounded
+  [n] : exactly size n
+  [low:high] : at least low, at most high
+  [low:] : at least low, no upper bound
+  [:high] : at most high, no lower bound
+optional separation specifier
+optional termination specifier
+
+semantic constraints
+
+name.length in scope after array
+
+parray recList(a_uint32 h, int x, int size) {
+  test(:h,x:) [size] : forall i in [0 .. length - 2]
+       { recList[i].id < recList[i+1].id };
+};
+\end{verbatim}
+\section{termination conditions}
+reach upper limit on size, reach terminator, reach end-of-file, 
+not: violate constraint on individual element. (perhaps this should be
+choosable by programmer?)
+
+
+\section{common idiom}
+struct with length followed by parameterized array.
+
+
+\section{Generated library}
+\subsection{in-memory representation}
+\subsection{check and set mask}
+\subsection{error descriptor}
+\subsection{Operations}
+init/cleanup rep
+init/cleanup ed
+\subsubsection{read}
+  error codes
+\subsubsection{Accumulator functions}
+
