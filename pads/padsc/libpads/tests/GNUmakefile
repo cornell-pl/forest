@@ -65,7 +65,7 @@ accumtests: sanity_check $(ACCUMTESTS)
 all: sanity_check $(ALL_PROGS)
 
 sanity_check:
-	@$(SanityCheck)
+	@$(LibSanityCheck)
 
 regress_libtest1 : libtest1
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))

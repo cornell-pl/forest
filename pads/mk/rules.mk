@@ -24,13 +24,17 @@
 # foo : foo.o $(LIB_DEPS)
 # 	$(LINK) -o $< foo.o $(DYNAMIC_LIBS)
 
+ifndef AST_ARCH
+  AST_ARCH := $(shell $(PADS_HOME)/scripts/package)
+  export AST_ARCH
+endif
+
 ARCH_N_OPSYS = $(shell $(PADS_HOME)/scripts/arch-n-opsys)
 OPSYS = $(shell $(PADS_HOME)/scripts/opsys)
 
 # OS specific rules
 
 ifeq ($(OPSYS),linux)
-GSFARCH = linux.i386
 ifndef CC
 CC = gcc
 endif
@@ -60,10 +64,7 @@ LINKOPTS = $(CDBGFLAGS) -Wl,-z,origin '-Wl,-R,$$ORIGIN/../lib'
 endif
 
 ifeq ($(OPSYS),irix)
-GSFARCH = sgi.mips3
-ifndef CC
-CC = cc
-endif
+CC = /home/gsf/arch/$(AST_ARCH)/bin/cc
 CDBGFLAGS = -g -woff 47,1174
 ifdef BuildPADSLib
 CSHAREFLAGS = -KPIC
@@ -106,7 +107,7 @@ ifndef INSTALLROOT
 forceabort2: ;
 endif
 
-ASTLIB_DIR = /home/gsf/arch/$(GSFARCH)/lib
+ASTLIB_DIR = /home/gsf/arch/$(AST_ARCH)/lib
 STATIC_PADSLIB = $(INSTALLROOT)/lib/$(STATIC_PADSLIB_NM)
 STATIC_ASTLIB = $(ASTLIB_DIR)/$(STATIC_ASTLIB_NM)
 STATIC_LIBS = $(STATIC_PADSLIB) $(STATIC_ASTLIB) 
@@ -117,7 +118,7 @@ SHARED_PADSLIB_DEP = $(INSTALLROOT)/lib/$(SHARED_PADSLIB_NM)
 SHARED_ASTLIB_DEP = $(ASTLIB_DIR)/$(SHARED_ASTLIB_NM)
 # DYNAMIC_LIB_DEPS = $(SHARED_PADSLIB_DEP) $(SHARED_ASTLIB_DEP)
 
-INCLUDES = -I/home/gsf/arch/$(GSFARCH)/include/ast -I$(PADS_HOME)/include -I.
+INCLUDES = -I/home/gsf/arch/$(AST_ARCH)/include/ast -I$(PADS_HOME)/include -I.
 ifdef GEN_DIR
 INCLUDES += -I$(GEN_DIR)
 endif
@@ -138,13 +139,26 @@ PADSC = $(PADS_HOME)/padsc
 PADSC_REAL = $(PADS_HOME)/lib/padsc.$(ARCH_N_OPSYS)
 
 define SanityCheck
-( for file in $(PADSC) $(PADSC_REAL); do \
+( if [ ! -e $(PADSC) ]; then \
+      echo "\nUNEXPECTED: $(PADSC) not found\n"; \
+      exit 1; \
+  fi; \
+  if [ ! -e $(PADSC_REAL) ]; then \
+      echo "\nUNEXPECTED: padsc compiler obj $(PADSC_REAL) not found"; \
+      echo "     Have you built the PADS compiler?\n     Try: using 'gmake' in the top-level padsc directory.\n"; \
+      exit 1; \
+  fi; \
+  for file in $(LIB_DEPS); do \
     if [ ! -e $$file ]; then \
-      echo "UNEXPECTED: padsc compiler file $$file does not exist"; \
+      echo "UNEXPECTED: library $$file does not exist"; \
       exit 1; \
     fi; \
   done; \
-  for file in $(LIB_DEPS); do \
+)
+endef
+
+define LibSanityCheck
+( for file in $(LIB_DEPS); do \
     if [ ! -e $$file ]; then \
       echo "UNEXPECTED: library $$file does not exist"; \
       exit 1; \
