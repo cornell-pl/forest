@@ -1,5 +1,5 @@
 rw_pendian.c
-_rw_struct_good.c
+rw_struct_good.c
 rwxml_alt1.c
 rwxml_punion_literal2.c
 rwxml_struct.c
