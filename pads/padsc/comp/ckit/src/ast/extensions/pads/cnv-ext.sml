@@ -941,18 +941,21 @@ structure CnvExt : CNVEXT = struct
 				       name:string, pred:pcexp option, comment} = 
 			  let val readFieldName = lookupTy(pty, readSuf, #readname)
                               val () = checkParamTys(name, readFieldName, args, 2, 3)
-                              val () = case pred of NONE => ()
-				       | SOME constraint => 
-				             expEqualTy(constraint, CTintTys, 
-						        fn s=> (" constraint for variant "^
-								name ^ " has type: " ^ s ^
-								". Expected an int."))
+                              val predXOpt = case pred of NONE => NONE
+				       | SOME constraint => ( 
+ 			                   (SOME (PTSub.substExp (name, P.dotX(fieldX(rep,value),PT.Id name),
+								   constraint)))
+					   before
+				           expEqualTy(constraint, CTintTys, 
+						      fn s=> (" constraint for variant "^
+							      name ^ " has type: " ^ s ^
+							      ". Expected an int.")))
 			      val commentS = P.mkCommentS ("Reading field: "^ name )
 			      val foundItSs = PT.Compound(
 					       PL.commitS(PT.Id ts, PT.Id disc)
 					       @[P.assignS(fieldX(rep,tag),PT.Id name),
 					         PT.Return PL.PDC_OK])
-			      fun doConstraint pred = case pred of NONE => foundItSs
+			      fun doConstraint predX = case predX of NONE => foundItSs
 				  | SOME constraint => PT.Compound[
                                           PT.IfThenElse(
                                            P.andX(P.lteX(fieldX(em,name), PL.EM_CHECK),
@@ -971,7 +974,7 @@ structure CnvExt : CNVEXT = struct
 					 P.addrX(P.dotX(fieldX(rep,value), PT.Id name)),
 					 PT.Id disc),
 				       PT.Compound (PL.restoreS(PT.Id ts, PT.Id disc)),
-				       doConstraint pred)
+				       doConstraint predXOpt)
 				    ]
 			  in
 			      [commentS] @  readS
