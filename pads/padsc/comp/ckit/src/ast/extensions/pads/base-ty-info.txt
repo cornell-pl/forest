@@ -1,11 +1,19 @@
-# Types starting with "a" are represented on disk in ascii
-# Types starting with "b" are represented on disk in binary 
-# "u" represents unsigned, while its absence indicates signed
-# Trailing number indicates number of bits required to store in memory; this property is checked by read functions
-# FW suffix indicates that number has fixed width representation on disk; this number is supplied as a parameter in PADS declaration,
-# ie, as auint8FW(:3:) 
-# The PDC types and function prototypes are defined in libpadsc.h (~kfisher/padsc/include/libpadsc.h)
-# This file may be found in (~kfisher/padsc/ckit/src/extensions/pads/base-ty-info.txt) 
+# PADSL BASE TYPE INFO
+#
+#   This file may be found in (~kfisher/padsc/ckit/src/extensions/pads/base-ty-info.txt) 
+#
+#   Note that the term 'on disk' below is meant to indicate the input data
+#   in some data stream -- data streams need not be disk-based.
+#
+#   Types starting with "a" are represented on disk in ASCII.
+#   Types starting with "b" are represented on disk in binary.
+#   "u" represents unsigned, while its absence indicates signed.
+#   Trailing number indicates number of bits required to store in memory; this property is checked by read functions.
+#   FW suffix indicates a fixed width representation on disk; this number is supplied as a parameter,
+#     e.g., auint8FW(:3:) 
+#
+#   The PDC types and function prototypes below are defined in libpadsc.h (~kfisher/padsc/include/libpadsc.h)
+#
 #PADS_name   inMemory    errorMaskName errorDescriptionName readFunction               scanFunctionOpt  accumulatorOpt  DiskSize  Memory(S/D) Endian
 auint8       PDC_uint8   PDC_base_em   PDC_base_ed          PDC_auint8_read            -                PDC_uint8_acc   V         S           Y
 aint8        PDC_int8    PDC_base_em   PDC_base_ed          PDC_aint8_read             -                PDC_int8_acc    V         S           Y
@@ -36,18 +44,25 @@ bint32       PDC_int32   PDC_base_em   PDC_base_ed          PDC_bint32_read     
 buint64      PDC_uint64  PDC_base_em   PDC_base_ed          PDC_buint64_read           -                PDC_uint64_acc  8         S           Y
 bint64       PDC_int64   PDC_base_em   PDC_base_ed          PDC_bint64_read            -                PDC_int64_acc   8         S           Y
 
-# achar is a single ascii character on disk
+# achar is a single ASCII character on disk
 achar        PDC_uint8   PDC_base_em   PDC_base_ed          PDC_buint8_read            -                PDC_uint8_acc   1         S           N
-# sequence of ascii characters on disk; PDC string in memory.  Takes terminating character as a parameter.
-astring      PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopChar_read   -                PDC_string_acc  V         V           N
-# fixed-width sequence of ascii characters on disk; PDC string in memory.  Takes width as a parameter.
-astringFW    PDC_string  PDC_base_em   PDC_base_ed          PDC_string_fw_read         -                PDC_string_acc  P         V           N
-# sequence of ascii characters on disk; PDC string in memory.  Takes terminating regular expression as parameter.
-# libpadsc.h describes syntax of regular expressions (currently quite limited).
-astringSRE   PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopRegexp_read -                PDC_string_acc  V         V           N
+# The following string types are for a sequence of ASCII characters on disk; PDC_string in memory.
+# The difference is in how the extent of the string is specified. 
+#   astring    : takes terminating character as a parameter.
+#   astringFW  : takes width as a parameter.
+#   astringSE  : takes a Stop Expression as parameter (a string containing a terminating regular expression)
+#   astringCSE : takes a Compiled Stop Expression as parameter 
+#                  Note: libpadsc.h describes syntax of regular expressions -- currently quite limited --
+#                        (see PDC_regexp_compile for regular expression compilation).
+astring      PDC_string  PDC_base_em   PDC_base_ed          PDC_astring_read           -                PDC_string_acc  V         V           N
+astringFW    PDC_string  PDC_base_em   PDC_base_ed          PDC_astringFW_read         -                PDC_string_acc  P         V           N
+astringSE    PDC_string  PDC_base_em   PDC_base_ed          PDC_astringSE_read         -                PDC_string_acc  V         V           N
+astringCSE   PDC_string  PDC_base_em   PDC_base_ed          PDC_astringCSE_read        -                PDC_string_acc  V         V           N
 
 # adate rep and read function should be based on libast's clock = tmdate(s, &e, (time_t *)0);               
-adate        PDC_string  PDC_base_em   PDC_base_ed          PDC_string_stopChar_read   -                 -              V         V           N
+adate        PDC_string  PDC_base_em   PDC_base_ed          PDC_astring_read           -                 -              V         V           N
+# countXtoY is a counter data type that is parameterized by a count char (X) and a terminating char (Y),
+#           and represents the number of X chars found before the first Y char
 countXtoY    PDC_int32   PDC_base_em   PDC_base_ed          PDC_countXtoY              -                 -              V         S           N
 
 # internal only
