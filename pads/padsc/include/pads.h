@@ -3610,7 +3610,7 @@ ssize_t Pe_float64_write_xml_2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *b
 #endif
 
 /* fmt2buf functions */
-ssize_t Pint32_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const char *delims,
+ssize_t Pint32_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *ignored, const char *delims,
 			Pbase_m *m, Pbase_pd *pd, Pint32 *rep);
 
 #endif /* P_CONFIG_WRITE_FUNCTIONS */

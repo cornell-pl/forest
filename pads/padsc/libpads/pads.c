@@ -5020,9 +5020,10 @@ PDCI_E_FLOAT_WRITE_FN(Pe_float64,  Pfloat64,  PDCI_float64_2e,  "Pfloat64",  P_F
 /* and they will check the mask, etc. */
 
 ssize_t
-Pint32_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, const char *delims,
+Pint32_fmt2buf (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, int *ignored, const char *delims,
 		Pbase_m *m, Pbase_pd *pd, Pint32 *rep)
 {
+  *ignored = 0;
   return Pa_int32_write2buf(pads, buf, buf_len, buf_full, pd, rep);
 }
 
@@ -5885,7 +5886,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.158 2004-07-27 18:11:34 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.159 2004-07-28 18:31:25 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
