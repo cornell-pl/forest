@@ -27,5 +27,6 @@ ptest.pl
 release.pl
 remove_junk.pl
 removedups.pl
+removepadsparts.pl
 stripnlnl.pl
 truncate.pl

@@ -5,6 +5,8 @@ my $dbg=1;
 my $targdir="./";
 my $ver="0.1";
 my $cvsroot = ":ext:raptor.research.att.com:/home/padsproj/cvsroot";
+my $export_arg = "-D '" . `date`. "'"; # export as of 'now'
+# (will probably want to use tag based export)
 
 my $tmpdir = $targdir . "tmp_pads_$ver";
 my $topdir = $targdir . "pads_$ver";
@@ -31,7 +33,7 @@ if ($pads_home eq "") {
 }
 
 &docmd("mkdir -p $tmpdir");
-&docmd("cd $tmpdir; cvs -d $cvsroot export pads");
+&docmd("cd $tmpdir; cvs -d $cvsroot export $export_arg pads");
 
 &docmd("/bin/rm -rf $topdir");
 &docmd("mv $tmpdir/pads $topdir");
