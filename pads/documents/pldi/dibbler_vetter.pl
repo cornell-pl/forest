@@ -32,16 +32,16 @@ my $ERROR_FILE  = "perl_vet.${SEQ_MASK}.error";
 my $MAX_UINT32 = 4294967295;
 my $MAX_UINT64 = 18446744073709551615;
 
-if ($#ARGV >= 1) {
+if ($#ARGV >= 0) {
   $INPUT_FILE = $ARGV[0];
 }
-if ($#ARGV >= 2) {
+if ($#ARGV >= 1) {
   $SEQ_MASK = $ARGV[1];
 }
-if ($#ARGV >= 3) {
+if ($#ARGV >= 2) {
   $CLEAN_FILE = $ARGV[2];
 }
-if ($#ARGV >= 4) {
+if ($#ARGV >= 3) {
   $ERROR_FILE = $ARGV[3];
 }
 
@@ -80,148 +80,148 @@ LINE: while (<INF>) {
   # validate $a[0]  (order_num)
   if ($a[0] !~ /\d+/) {
     printf STDERR "Line $line char $char: field order_num is not a uint32\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   } elsif ($a[0] > $MAX_UINT32) {
     printf STDERR "Line $line char $char: field order_num too large, does not fit in a uint32\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   $char += (length($a[0]) + 1);
   if ($len < 2) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after order_num)\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   # validate $a[1]  (att_order_num)
   if ($a[1] !~ /\d+/) {
     printf STDERR "Line $line char $char: field att_order_num is not a uint32\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   } elsif ($a[1] > $MAX_UINT32) {
     printf STDERR "Line $line char $char: field att_order_num too large, does not fit in a uint32\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   $char += (length($a[1]) + 1);
   if ($len < 3) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after att_order_num)\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   # validate $a[2]   (ord_version)
   if ($a[2] !~ /\d+/) {
     printf STDERR "Line $line char $char: field ord_version is not a uint32\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   } elsif ($a[2] > $MAX_UINT32) {
     printf STDERR "Line $line char $char: field ord_version too large, does not fit in a uint32\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   $char += (length($a[2]) + 1);
   if ($len < 4) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after ord_version)\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   # validate $a[3]   (service_tn)
   if ($a[3] !~ /\d*/) {
     printf STDERR "Line $line char $char: field service_tn is not blank or a uint64\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   } elsif ($a[3] > $MAX_UINT64) {
     printf STDERR "Line $line char $char: field service_tn too large, does not fit in a uint64\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   $char += (length($a[3]) + 1);
   if ($len < 5) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after service_tn)\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   # validate $a[4]   (billing_tn)
   if ($a[4] !~ /\d*/) {
     printf STDERR "Line $line char $char: field billing_tn is not blank or a uint64\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   } elsif ($a[4] > $MAX_UINT64) {
     printf STDERR "Line $line char $char: field billing_tn too large, does not fit in a uint64\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   $char += (length($a[4]) + 1);
   if ($len < 6) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after billing_tn)\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   # validate $a[5]   (nlp_service_tn)
   if ($a[5] !~ /\d*/) {
     printf STDERR "Line $line char $char: field nlp_service_tn is not blank or a uint64\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   } elsif ($a[5] > $MAX_UINT64) {
     printf STDERR "Line $line char $char: field nlp_service_tn too large, does not fit in a uint64\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   $char += (length($a[5]) + 1);
   if ($len < 7) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after nlp_service_tn)\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   # validate $a[6]    (nlp_billing_tn)
   if ($a[6] !~ /\d*/) {
     printf STDERR "Line $line char $char: field nlp_billing_tn is not blank or a uint64\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   } elsif ($a[6] > $MAX_UINT64) {
     printf STDERR "Line $line char $char: field nlp_billing_tn too large, does not fit in a uint64\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   $char += (length($a[6]) + 1);
   if ($len < 8) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after nlp_billing_tn)\n";
-    print ERRF $_;
+    print ERRF $_  . "\n";
     next LINE;
   }
   # validate $a[7]   (zip_code)
   if ($a[7] !~ /\d*/) {
     printf STDERR "Line $line char $char: field zip_code is not blank or a uint32\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   } elsif ($a[7] > $MAX_UINT32) {
     printf STDERR "Line $line char $char: field zip_code is too large, does not fit in a uint32\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   $char += (length($a[7]) + 1);
   if ($len < 9) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after zip_code)\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   # validate $a[8]    (ramp)
   if ($a[8] =~ /(no_ii)?(\d+)/) {
     my ($no_ii, $ramp) = ($1, $2);
-    if ($ramp > $MAX_UINT32) {
-      printf STDERR "Line $line char $char: field ramp does not fit in a uint32\n";
-      print ERRF $_;
+    if ($ramp > $MAX_UINT64) {
+      printf STDERR "Line $line char $char: field ramp does not fit in a uint64\n";
+      print ERRF $_ . "\n";
       next LINE;
     }
   } else {
     printf STDERR "Line $line char $char: field ramp invalid, not a uint64 (with/without optional leading 'no_ii')\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   $char += (length($a[8]) + 1);
   if ($len < 10) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after ramp)\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   # validate $a[9]    (order_type)
@@ -229,23 +229,23 @@ LINE: while (<INF>) {
   $char += (length($a[9]) + 1);
   if ($len < 11) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after order_type)\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   # validate $a[10]   (order_details)
   if ($a[10] !~ /\d+/) {
     printf STDERR "Line $line char $char: field order_details is not a uint32\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   } elsif ($a[10] > $MAX_UINT32) {
     printf STDERR "Line $line char $char: field order_details too large, does not fit in a uint32\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   $char += (length($a[10]) + 1);
   if ($len < 12) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after order_details)\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   # validate $a[11]   (ununsed)
@@ -253,7 +253,7 @@ LINE: while (<INF>) {
   $char += (length($a[11]) + 1);
   if ($len < 13) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after unused)\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   # validate $a[12]   (stream)
@@ -261,7 +261,7 @@ LINE: while (<INF>) {
   $char += (length($a[12]) + 1);
   if ($len < 14) {
     printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no fields found after stream)\n";
-    print ERRF $_;
+    print ERRF $_ . "\n";
     next LINE;
   }
   my $idx = 13;
@@ -273,18 +273,18 @@ LINE: while (<INF>) {
     $idx++;
     if ($idx >= $len) {
       printf STDERR "Line $line char $char: found end of line, expecting vertical bar (no timestamp field after state in event)\n";
-      print ERRF $_;
+      print ERRF $_ . "\n";
       next LINE;
     }
     my $tstamp = $a[$idx];
     # validate $tstamp
     if ($tstamp !~ /\d+/) {
       printf STDERR "Line $line char $char: field tstamp in state-tstamp pair is not a uint32\n";
-      print ERRF $_;
+      print ERRF $_ . "\n";
       next LINE;
     } elsif ($tstamp > $MAX_UINT32) {
       printf STDERR "Line $line char $char: field tstamp in state-tstamp pair too large, does not fit in a uint32\n";
-      print ERRF $_;
+      print ERRF $_ . "\n";
       next LINE;
     }
     $char += (length($tstamp) + 1);
@@ -294,7 +294,7 @@ LINE: while (<INF>) {
     for ($i = 14; $i < $idx-2; $i += 2) {
       if ($a[$i] > $a[$i+2]) {
 	printf STDERR "Line $line char $char: Parray Pwhere clause violated (non-decreasing check failed)\n";
-	print ERRF $_;
+	print ERRF $_ . "\n";
 	next LINE;
       }
     }
