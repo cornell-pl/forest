@@ -123,7 +123,6 @@ SHARED_PGLXLIB_NM_D = $(mam_cc_PREFIX_SHARED)pglxc-g$(mam_cc_SUFFIX_SHARED).1.0
 SHARED_PGLXLIB_NM_ALT1_D = $(mam_cc_PREFIX_SHARED)pglxc-g$(mam_cc_SUFFIX_SHARED).1
 SHARED_PGLXLIB_NM_ALT2_D = $(mam_cc_PREFIX_SHARED)pglxc-g$(mam_cc_SUFFIX_SHARED)
 
-
 CC = $(mam_cc_CC)
 CDBGFLAGS = $(mam_cc_WARN) $(mam_cc_DEBUG)
 COPTFLAGS = $(mam_cc_WARN) $(mam_cc_OPTIMIZE) -DNDEBUG
@@ -146,6 +145,8 @@ LINKER = $(mam_cc_LD)
 LINKOPTS_D = $(CDBGFLAGS) $(mam_cc_LD_ORIGIN)
 LINKOPTS_O = $(COPTFLAGS) $(mam_cc_LD_ORIGIN)
 
+OS_SPEC_XTRA_LIBS =
+
 empty:=
 space:=$(empty) $(empty)
 
@@ -160,6 +161,12 @@ endif
 
 ifeq ($(OPSYS),linux)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
+endif
+
+ifeq ($(ARCH_N_OPSYS),x86-freebsd)
+COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
+# XXX why doesn't mamake figure this out ???
+OS_SPEC_XTRA_LIBS += -liconv
 endif
 
 # Done with architecture-specific stuff
@@ -220,7 +227,7 @@ DYNAMIC_LIBS_O = -L $(LIBDIR)
 ifdef USE_GALAX
 DYNAMIC_LIBS_O += -lpglx
 endif
-DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O)
+DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
 # mff may need to change next line
 DYNAMIC_LIBS_O += -L $(PADSGLX_LIB_DIR) -lpadsglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr
@@ -242,7 +249,7 @@ DYNAMIC_LIBS_D = -L $(LIBDIR)
 ifdef USE_GALAX
 DYNAMIC_LIBS_D += -lpglx-g
 endif
-DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D)
+DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
 # mff may need to change next line 
 DYNAMIC_LIBS_D += -L $(PADSGLX_LIB_DIR) -lpadsglxopt -L $(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr

@@ -60,39 +60,45 @@ STEP 1: ENVIRONMENT SETUP
 
    (Mary: GALAX_HOME and PADSGLX_HOME should be coalesced)
   
-STEP 2: INSTALL SML RUNTIME
+STEP 2: INSTALL SML / SML RUNTIME
 
-  The padsc compiler requires the SML runtime from the Standard ML of NJ
+  To build the padsc compile, you need the Standard ML of NJ
   compiler (sml), version 110.0.6 or version 110.0.7.
+
+  One the padsc compiler is built, you only require the SML runtime 
+  to execute padsc.
   
+  (a) Install SML
+
   The sml compiler and directions on how to install it are
   available from the SMLNJ installation notes page:
      http://smlnj.sourceforge.net/install/index.html.
   The SMLNJ home page may be found at:
      http://smlnj.sourceforge.net/index.html.
+
+  The simplest thing to do is to install the entire SML.  (Advanced users
+  may decide to only install the runtime once padsc has been built.)
+
+  (b) Install links in $PADS_HOME/binlinks
   
-  The simplest thing to do is to install the entire SML.  Advanced users
-  may decide to only install the runtime.
-  
-  Once the runtime is installed, it will be located in a .run directory.
-  For example, if SML is installed in /usr/common/sml, then the .run
-  directory will be: /usr/common/sml/bin/.run
-  
-  Set the environment variable SML_RUN_DIR to this directory and then
-  execute MAKE_SML_LINK.sh:
+  Once the runtime is installed, you need to place two symbolic links in
+  $PADS_HOME/binlinks:
+
+     $PADS_HOME/binlinks/sml.$(AST_ARCH)         : link to sml compiler command
+     $PADS_HOME/binlinks/smlruntime.$(AST_ARCH)  : link to sml runtime
+
+  The easiest way to set up these links is to do the following.
+  Set the environment variable SML_BIN_DIR to the bin directory of
+  your SML installation, and then execute MAKE_SML_LINK.sh:
   
   Example for csh/tcsh users:
-    setenv SML_RUN_DIR /usr/common/sml/bin/.run
+    setenv SML_BIN_DIR /usr/common/sml/bin
     $PADS_HOME/scripts/MAKE_SML_LINK.sh
   
   Example for sh/ksh/bash users:
-    export SML_RUN_DIR=/usr/common/sml/bin/.run
+    export SML_BIN_DIR=/usr/common/sml/bin
     $PADS_HOME/scripts/MAKE_SML_LINK.sh
   
-  The MAKE_SML_LINK.sh script creates a symbolic link in
-  $PADS_HOME/binlinks to the SML runtime.  This link must be present for
-  the padsc compiler to work.
-
 STEP 3: BUILD AND INSTALL libast.a
 
   Folks at AT&T Labs Research collect many useful C routines in a single

@@ -1,5 +1,15 @@
 #!/bin/tcsh
 
+# some gmake versions screw up assignment to PADS_HOME during redirection
+if (! (-e $PADS_HOME/scripts/DO_SETENV.tcsh)) then
+  if (! (-e $PADS_HOME/../scripts/DO_SETENV.tcsh)) then
+    echo "XXX getprobeinfo.tcsh: could not find DO_SETENV.tcsh"
+    exit 0
+  else
+    setenv PADS_HOME $PADS_HOME/..
+  endif
+endif
+
 source $PADS_HOME/scripts/DO_SETENV.tcsh
 set targ = $PADS_HOME/mk/rules.arch.$AST_ARCH.mk
 if (! -e $targ) then
