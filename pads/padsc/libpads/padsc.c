@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.34 2002-10-17 15:04:42 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.35 2002-10-17 17:10:43 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -1533,32 +1533,20 @@ PDC_string_ed_cleanup(PDC_t* pdc, PDC_string_ed* ed, PDC_disc_t* disc)
 PDC_error_t
 PDC_string_init(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc)
 {
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_string_init called");
   if (!s) {
-    /* XXX REPORT ERROR */
     return PDC_ERROR;
   }
-  s->len  = 0;
-  s->str  = NiL;
-  s->rbuf = NiL;
+  bzero(s, sizeof(PDC_string));
   return PDC_OK;
 }
 
 PDC_error_t
 PDC_string_cleanup(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc)
 {
-  RBuf_t* rbuf;
-  PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_string_cleanup called");
-  rbuf    = s->rbuf;
-  s->len  = 0;
-  s->rbuf = NiL;
-  s->str  = NiL;
-  if (rbuf && RMM_free_rbuf(rbuf)) {
-    /* XXX REPORT ERROR */
+  if (!s) {
     return PDC_ERROR;
   }
+  RMM_free_rbuf(s->rbuf);
   return PDC_OK;
 }
 
