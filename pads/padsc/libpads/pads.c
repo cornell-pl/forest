@@ -4735,7 +4735,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, PDC_uint64, PDC_bigEndian, PDC_
 #gen_include "padsc-internal.h"
 #gen_include "padsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.106 2003-09-17 15:49:54 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.107 2003-09-18 13:17:23 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -5684,8 +5684,9 @@ PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
 	  pos->unit = "*pos not found*";
 #ifndef NDEBUG
 	  goto err_check; /* XXX_REMOVE */
-#endif
+#else
 	  return PDC_ERR;
+#endif
 	}
 	if (elt->len) {
 	  break;
@@ -5711,8 +5712,9 @@ PDC_IO_getPos(PDC_t *pdc, PDC_pos_t *pos, int offset)
 	  pos->unit = "*pos not found*";
 #ifndef NDEBUG
 	  goto err_check; /* XXX_REMOVE */
-#endif
+#else
 	  return PDC_ERR;
+#endif
 	}
 	if (elt->len) {
 	  break;
@@ -7850,6 +7852,99 @@ PDCI_string_read(PDC_t *pdc, const PDC_base_m *m, PDC_char stopChar,
 }
 
 PDC_error_t
+PDCI_string_ME_read(PDC_t *pdc, const PDC_base_m *m, const char *matchRegexp,
+		    PDC_base_pd *pd, PDC_string *s_out, PDC_charset char_set,
+		    const char *whatfn)
+{
+  PDC_regexp_t   *compiled_exp;
+
+  PDCI_IODISC_3P_CHECKS(whatfn, m, matchRegexp, pd);
+  PDC_PS_init(pd);
+  if (PDC_ERR == PDCI_regexp_compile(pdc, matchRegexp, &compiled_exp, whatfn)) {
+    goto bad_exp;
+  }
+  return PDCI_string_CME_read(pdc, m, compiled_exp, pd, s_out, char_set, whatfn);
+
+ bad_exp:
+  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  /* regexp_compile already issued a warning */
+  PDCI_READFN_RET_ERRCODE_NOWARN(PDC_INVALID_REGEXP);
+}
+
+PDC_error_t
+PDCI_string_CME_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *matchRegexp,
+		     PDC_base_pd *pd, PDC_string *s_out, PDC_charset char_set,
+		     const char *whatfn)
+{
+  PDC_byte       *begin, *p1, *p2, *end;
+  int             bor, eor, eof;
+  size_t          bytes, matchlen, max_matchlen, want_len, match_max;
+
+  PDCI_IODISC_3P_CHECKS(whatfn, m, matchRegexp, pd);
+  PDC_TRACE2(pdc->disc, "PDCI_string_CME_read called, char_set = %s, whatfn = %s",
+	     PDC_charset2str(char_set), whatfn);
+  PDC_PS_init(pd);
+  match_max = pdc->disc->match_max;
+  max_matchlen = 0; /* regex_max_match_len(matchRegexp->preg); */ /* foofoofoo */
+  if (max_matchlen > match_max) {
+    want_len = max_matchlen;
+  } else {
+    want_len = match_max;
+  }
+  if (PDC_ERR == PDCI_IO_needbytes(pdc, want_len, &begin, &p1, &p2, &end, &bor, &eor, &eof, &bytes)) {
+    goto fatal_nb_io_err;
+  }
+  if (bytes == 0 && !eor) {
+    /* must be at eof, do not want to match anything */
+    goto not_found;
+  }
+  if (!PDCI_regexp_match(pdc, matchRegexp, begin, end, bor, eor, char_set, &matchlen)) {
+    /* no match.  did match_max have an impact? */
+    if (!eor && match_max && bytes >= match_max) {
+      if (pdc->speclev == 0) {
+	PDC_WARN1(pdc->disc, "%s: hit disc->match_max limit without finding a match", whatfn);
+      }
+    }
+    goto not_found;
+  }
+  /* found */
+  p1 = begin + matchlen;
+  switch (char_set) 
+    {
+    case PDC_charset_ASCII:
+      PDCI_A_STR_SET(s_out, (char*)begin, (char*)p1);
+      break;
+    case PDC_charset_EBCDIC:
+      PDCI_E_STR_SET(s_out, (char*)begin, (char*)p1);
+      break;
+    default:
+      goto invalid_charset;
+    }
+  if (PDC_ERR == PDCI_IO_forward(pdc, matchlen)) {
+    goto fatal_forward_err;
+  }
+  pd->errCode = PDC_NO_ERR;
+  return PDC_OK;
+
+ invalid_charset:
+  PDCI_READFN_SET_NULLSPAN_LOC(0);
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, PDC_INVALID_CHARSET);
+
+ not_found:
+  PDCI_READFN_SET_LOC_BE(0, bytes);
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, PDC_REGEXP_NOT_FOUND);
+
+ fatal_alloc_err:
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "Memory alloc error", PDC_ALLOC_ERR);
+
+ fatal_nb_io_err:
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO error (nb)", PDC_IO_ERR);
+
+ fatal_forward_err:
+  PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO_forward error", PDC_FORWARD_ERR);
+}
+
+PDC_error_t
 PDCI_string_SE_read(PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
 		    PDC_base_pd *pd, PDC_string *s_out, PDC_charset char_set,
 		    const char *whatfn)
@@ -7866,7 +7961,6 @@ PDCI_string_SE_read(PDC_t *pdc, const PDC_base_m *m, const char *stopRegexp,
  bad_exp:
   PDCI_READFN_SET_NULLSPAN_LOC(0);
   /* regexp_compile already issued a warning */
-  /* PDCI_READFN_RET_ERRCODE_WARN("PDC_e_string_SE_read", 0, PDC_INVALID_REGEXP); */
   PDCI_READFN_RET_ERRCODE_NOWARN(PDC_INVALID_REGEXP);
 }
 
@@ -7875,7 +7969,7 @@ PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
 		     PDC_base_pd *pd, PDC_string *s_out, PDC_charset char_set,
 		     const char *whatfn)
 {
-  PDC_byte        *begin, *p1, *p2, *end;
+  PDC_byte       *begin, *p1, *p2, *end;
   int             p1_at_bor, bor, eor, eof;
   size_t          bytes, matchlen, max_matchlen, want_len, scan_max_plus_match_max;
 
@@ -7970,6 +8064,7 @@ PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_m *m, PDC_regexp_t *stopRegexp,
  fatal_forward_err:
   PDCI_READFN_RET_ERRCODE_FATAL(whatfn, "IO_forward error", PDC_FORWARD_ERR);
 }
+
 
 #endif /* PDC_CONFIG_READ_FUNCTIONS */
 
@@ -8789,7 +8884,7 @@ PDCI_regexp_match(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *e
 		  PDC_charset char_set, size_t *match_len_out)
 {
   int           eret;
-  PDC_byte     *tmp_match_str = begin;
+  const char   *tmp_match_str = (const char*)begin;
   PDC_string   *tmp;
 
   (*match_len_out) = 0;
