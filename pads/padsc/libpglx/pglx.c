@@ -526,15 +526,19 @@ PDCI_node_t ** Pbase_pd_children(PDCI_node_t *self)
   Pbase_pd      *pd = (Pbase_pd *) self->rep;
   PDCI_node_t  **result;
 
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(3))) {
-    failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
-  }
-  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
-  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
   if (pd->errCode >= 100) {
+    if (!(result = PDCI_NEW_NODE_PTR_LIST(3))) {
+      failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
+    }
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
     PDCI_MK_TNODE(result[i], &Ploc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
-  } else {
-    result[i] = 0; i++;
+  } else{
+    if (!(result = PDCI_NEW_NODE_PTR_LIST(2))) {
+      failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
+    }
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
   }
   return result;
 }
@@ -590,15 +594,23 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
   PDCI_structured_pd  *pd = (PDCI_structured_pd *) self->rep;
   PDCI_node_t        **result;
 
-  if (!(result = PDCI_NEW_NODE_PTR_LIST(4))) {
-    failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
-  }
-  /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
-  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN); i++;
-  PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
   if (pd->errCode >= 100) {
+    if (!(result = PDCI_NEW_NODE_PTR_LIST(4))) {
+      failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
+    }
+    /* the following mk calls raise an exception on alloc error */
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN); i++;
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
     PDCI_MK_TNODE(result[i], &Ploc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
+  } else {
+    if (!(result = PDCI_NEW_NODE_PTR_LIST(3))) {
+      failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
+    }
+    /* the following mk calls raise an exception on alloc error */
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "pstate",  &(pd->pstate),  WHATFN); i++;
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN); i++;
+    PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN); i++;
   }
   return result;
 }
@@ -671,8 +683,6 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
   PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "errCode",  &(pd->errCode),    WHATFN); i++;
   if (pd->errCode >= 100) {
     PDCI_MK_TNODE(result[i], &Ploc_t_vtable,    self, "loc",     &(pd->loc),     WHATFN); i++;
-  } else {
-    result[i] = 0; i++;
   }
   PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "neerr",    &(pd->neerr),      WHATFN); i++;
   PDCI_MK_TNODE(result[i], &Puint32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN); i++;
