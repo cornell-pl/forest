@@ -684,7 +684,7 @@ expr:
         | REALNUM                       (markExpression srcMap (RealConst REALNUM, REALNUMleft,REALNUMright))
 	| CCONST			(markExpression srcMap (IntConst CCONST, CCONSTleft,CCONSTright))
 	| ID				(markExpression srcMap (Id(ID), IDleft, IDright))
-        | strings                       (markExpression srcMap (String(strings),stringsleft,stringsright))
+        | strings                       (markExpression srcMap (String(strings),stringsleft,stringsright))  
 
 
 strings:  STRING                        (STRING)
@@ -1175,8 +1175,14 @@ pTypedef:
 				pred = pTypedefPredOpt}) )
 
 pREexpr :
-   PRE expr (ExprExt(PX.Pregexp expr))
- | expr     (expr) 
+   PRE expr                     (ExprExt(PX.Pregexp expr))
+ | strings                      (markExpression srcMap (String(strings),stringsleft,stringsright))  
+ | DECNUM			(markExpression srcMap (IntConst DECNUM,DECNUMleft,DECNUMright))
+ | REALNUM                      (markExpression srcMap (RealConst REALNUM, REALNUMleft,REALNUMright))
+ | CCONST			(markExpression srcMap (IntConst CCONST, CCONSTleft,CCONSTright))
+ | ID				(markExpression srcMap (Id(ID), IDleft, IDright))
+
+(* | expr     (expr)  *)
 
 pOmitOpt : (false)
  | POMIT (true)
@@ -1208,28 +1214,28 @@ pManifestField:
 		      expr    = expr,
 		      pred    = pConstraintOpt, 
 		      comment = pCommentOpt})
-			              (* fill in when add constraints
-  *)                           
+			              (* fill in when add constraints  *)                           
 
 pCompoundField: 
   ID pConstraintOpt (PTStruct (ID, pConstraintOpt))
-| LBRACE pSizeOpt RBRACE ID pArrayConstraintOpt  (PTArray(ID, pSizeOpt, pArrayConstraintOpt))
+| LBRACE  pSizeOpt   RBRACE ID pArrayConstraintOpt  (PTArray(ID, pSizeOpt, pArrayConstraintOpt))
 
 
-pStructField:                   pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+pStructField:                         pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
                                       (buildStructFieldRep(pName, pOptActParams, pCompoundField, false, false, pCommentOpt))
-pStructField: POMIT             pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+  | POMIT                             pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
                                       (buildStructFieldRep(pName, pOptActParams, pCompoundField, true, false, pCommentOpt))
-pStructField: PENDIAN           pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+  | PENDIAN                           pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
                                       (buildStructFieldRep(pName, pOptActParams, pCompoundField, false, true, pCommentOpt))
-pStructField: PENDIAN  POMIT    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+  | PENDIAN  POMIT                    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
                                       (buildStructFieldRep(pName, pOptActParams, pCompoundField, true, true, pCommentOpt))
-pStructField: POMIT  PENDIAN    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
-                                      (buildStructFieldRep(pName, pOptActParams, pCompoundField, true, true, pCommentOpt))
+  | POMIT  PENDIAN                    pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
+                                      (buildStructFieldRep(pName,
+                                      pOptActParams, pCompoundField,
+                                      true, true, pCommentOpt))  
   | PCOMPUTE pManifestField           (pManifestField)
-  | pREexpr SEMICOLON                 (PX.Brief (pREexpr, NONE))
-  | pName PFROM LPAREN pREexpr RPAREN SEMICOLON (PX.Brief (pREexpr,
-                                      SOME pName))
+  | pREexpr SEMICOLON                 (PX.Brief (pREexpr, NONE)) 
+  | pName PFROM LPAREN pREexpr RPAREN SEMICOLON (PX.Brief (pREexpr, SOME pName))
   
 
 pStructFieldList: 
