@@ -5147,7 +5147,7 @@ PDCI_SBH2UINT(PDCI_sbh2uint64, PDCI_uint64_2sbh, Puint64, PbigEndian, P_MAX_UINT
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.151 2004-04-04 03:42:38 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.152 2004-04-26 21:40:18 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -6775,7 +6775,7 @@ P_fopen(const char* string, const char* mode)
     struct stat	st;
     static Pzdisc_t pzdisc;
     if (!io) return 0;
-    if (sfsize(io) || !fstat(sffileno(io), &st) && S_ISFIFO(st.st_mode)) {
+    if (sfsize(io) || (!fstat(sffileno(io), &st) && S_ISFIFO(st.st_mode))) {
       pzdisc.errorf = errorf; /* from <error.h> */
       if (sfdcpzip(io, string, 0, &pzdisc) < 0) {
 	P_SYSERR1(&Pdefault_disc, "P_fopen for file \"%s\": decompression error", string);

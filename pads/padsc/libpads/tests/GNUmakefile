@@ -112,6 +112,12 @@ test_regaddclass_o: test_regaddclass.c
 test_regaddclass_d: test_regaddclass.c
 	@$(TrivCCExec_D)
 
+long_regaddclass_o: long_regaddclass.c
+	@$(TrivCCExec_O)
+
+long_regaddclass_d: long_regaddclass.c
+	@$(TrivCCExec_D)
+
 regress_o_announce:
 	@echo " "; echo "REGRESS USING OPTIMIZED CODE"; echo " " \
 
