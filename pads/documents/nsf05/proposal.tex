@@ -693,7 +693,7 @@ which is a data repository used by Olga Troyanskaya
 and other biologists who study protein-protein
 interactions.  One component of the GO data repository classifies reactions by placing them
 in a tree-structured hierarchy.   We believe that part of the solution
-to describing BIND's ad hoc data format is to describe the hierarchy
+to describing GO's ad hoc data format is to describe the hierarchy
 using recursive types.
 
 There are several challenges involved with adding recursive types to the 
@@ -857,8 +857,9 @@ to describe the data format including all appropriate
 semantic constraints.  However, different applications
 may use the data in entirely different ways.  Consequently,
 it can be extremely advantageous to specialize the basic
-parser to an individual application.  Our research has discovered
-three important ways to specialize generated \pads{} parsers.
+parser to an individual application.  We have discovered
+four important ways to specialize generated \pads{} parsers
+and hence the generated tools as well.
 
 \begin{enumerate}
 \item Some data sources are quite irregular and have much redundancy.
@@ -883,14 +884,25 @@ application-specific ways to fix errors as they are recognized.
 Allowing the user to control when and how to perform
 error recovery can result in both
 higher performance and better parsing.
+\item Some applications only need a small fragment of the information
+available in the totality of a data source.  These applications can
+skip large portions of the data source and we conjecture specializing
+our tools for these applications will allow us to achieve substantial
+performance improvements.
 \end{enumerate}
 
-We propose to investigate how we might develop a mechanism
+We propose to investigate how we might develop an effective mechanism
 that will allow us to specialize the \pads-generated parsers 
-with this sort of application-specific behavior.  We believe that
-it may be possible to use some ideas from the literature on partial 
+with this sort of application-specific behavior.  In some cases,
+we believe that it may be possible to use some ideas from the 
+literature on partial 
 evaluation to accomplish our goal, but we must do much more
 research to determine the best way to solve these problems.
+We also believe that there is a further role for research
+in language design here as we would like to develop
+a clear, concise and general notation for specifying
+how and where to specialize a \pads-generated parser
+and tool suite. 
 
 %\label{subsec:general}
 
@@ -1093,7 +1105,16 @@ not available.
 \subsection{Results from Prior NSF Support}
 \label{ssec:results}
 
-\paragraph*{Kathleen Fisher, Senior Personnel} (NSF 0243337, ACM Special Projects: 
+\paragraph*{Kathleen Fisher, Senior Personnel} 
+Kathleen Fisher is a senior industry researcher at AT\&T.
+She has not applied for previous general-purpose grants from NSF.
+However, she is active proponent of increasing the
+role of women and minorities in computing and has
+obtained NSF funding to support increased involvement of women
+in computer science as indicated in her biographical sketch
+and detailed below.
+
+(NSF 0243337, ACM Special Projects: 
 Travel Grants for Faculty at Minority/Female Institutions to Attend
 FCRC'03, Co-PI) This grant was committed to improving the representation of women and
 minorities in computer science. To that end, we solicited applications
