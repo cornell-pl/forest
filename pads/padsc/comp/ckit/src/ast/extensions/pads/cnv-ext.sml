@@ -1760,6 +1760,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                                params: (pcty * pcdecr) list, fields: (pdty, pcdecr, pcexp) PX.PSField list, 
                                postCond}) = 
 	          let val dummy = "_dummy"
+		      val structName = name 
 
 		      (* Functions for walking over lists of struct elements *)
 		      fun mungeField f b m (PX.Full fd) = f fd
@@ -1767,6 +1768,16 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
                         | mungeField f b m (PX.Manifest md) = m md
 		      fun mungeFields f b m [] = []
 			| mungeFields f b m (x::xs) = (mungeField f b m x) @ (mungeFields f b m xs)
+
+
+		      (* Struct: general error checking  *)
+		      fun errorChkFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
+				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+				      pred: pcexp option, comment: string option} = 
+		           (if name = "pd" then PE.error ("PStruct "^ structName ^" contains field with reserved name 'pd'.\n") else (); [])
+		      fun errorChkBrief e = []
+		      val _ = mungeFields errorChkFull errorChkBrief errorChkBrief fields
+
 
 		      (* Generate local variables  *)
 		      fun genLocFull {pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
@@ -1831,7 +1842,7 @@ ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *
 		      val accDecls = cnvExternalDecl accStructED 
                       val accPCT = P.makeTypedefPCT (accSuf name)			 
 
-		      (* Struct: Calculate and insert type properties into type table *)
+		      (* Struct: Calculate and insert type properties into type table; do error checking*)
 		      fun genTyPropsFull {pty: PX.Pty, args: pcexp list, name: string, 
 					  isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
 				          pred: pcexp option, comment:string option} = 
@@ -2545,6 +2556,17 @@ in function...
 					    in
 						(SOME descriminator, hasDefault, cases, branches)
 					    end
+
+                     (* Union: general error checking *)
+		     fun errorChkFull {pty: PX.Pty, args: pcexp list, name: string, 
+				       isVirtual: bool, isEndian: bool, 
+				       isRecord, containsRecord, largeHeuristic: bool,
+				       pred: pcexp option, comment: string option} = 
+		          (if name = "pd" then PE.error ("PUnion "^ unionName ^" contains branch with reserved name 'pd'.\n") else ();[])
+		     fun errorChkDef _ = []
+
+		     val _ = mungeVariants errorChkFull errorChkDef errorChkDef variants
+
 
                      (* generate enumerated type describing tags *)
 		     val tagVal = ref 0
@@ -4093,9 +4115,11 @@ in function...
 			 isRecord, containsRecord, largeHeuristic, isFile,
 			 members: (string * pcexp option * string option) list } =
 	      let val baseTy = PX.Name PL.strlit
+                  val enumName = name
                   fun mungeMembers (name, expOpt, commentOpt) = 
+		      (if name = "pd" then PE.error ("PEnum "^ enumName^" contains case with reserved name 'pd'.\n") else ();
 		      case expOpt of NONE => (name, PT.EmptyExpr, commentOpt)
- 		                   | SOME e => (name, e, commentOpt)
+ 		                   | SOME e => (name, e, commentOpt))
 		  val enumFields = List.map mungeMembers members
 
                   (* generate CheckSet mask *)
