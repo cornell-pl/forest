@@ -13,7 +13,7 @@
 
 #include "pads-internal.h"
 
-#include "glx.h"              /* Need to pack/unpack Galax atomic values */
+#include "galax.h"              /* Need to pack/unpack Galax atomic values */
 
 /* ================================================================================
  * Predeclare some types */

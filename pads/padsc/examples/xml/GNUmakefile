@@ -28,8 +28,23 @@ USE_GALAX = 1
 # the following indicates that generated .c files should not be removed
 .PRECIOUS: $(GEN_DIR)/%.c 
 
-# need to set this before including rules.mk
+# need to give these rules before including rules.mk
 REGRESS_TESTS = 1
+
+test_load_%-g: $(GEN_DIR)/%.c gen/test_load_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+test_load_%: $(GEN_DIR)/%.c gen/test_load_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+test_walk_%: $(GEN_DIR)/%.c gen/test_walk_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+test_query_%-g: $(GEN_DIR)/%.c gen/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+test_query_%: $(GEN_DIR)/%.c gen/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
 
 include $(PADS_HOME)/mk/rules.mk
 

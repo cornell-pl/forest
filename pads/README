@@ -55,7 +55,7 @@ STEP 1: ENVIRONMENT SETUP
    OCAML_LIB_DIR (default:  /usr/lib/ocaml)
    GALAX_HOME    (default:  /home/mff/Galax) contains generic Galax
                             library 
-   PADSGLX_HOME  (default:  /home/mff/pads_glx_api)  contains custom
+   PADSGLX_HOME  (default:  /home/mff/pads-glx/api)  contains custom
                  implementation of Galax for PADS
 
    (Mary: GALAX_HOME and PADSGLX_HOME should be coalesced)

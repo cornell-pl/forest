@@ -21,30 +21,21 @@ static const char *walk_children_spaces = "                                     
 void walk_children(void *n, int indent) {
   void      **children, **iter;
   void       *child;
-  int         i;
-  char       *str;
-  item       val;
-  const char *n_name = PGLX_generic_name(n);
-  if (!(children = PGLX_generic_children(n))) {
-    error(ERROR_FATAL, "PGLX_generic_children(%s) returned NULL", n_name);
-  }
-  for (i = 0, iter = children, child = *iter; child; i++, child = *++iter);
-  if (i) {
+
+  if (strcmp(PGLX_generic_kind(n), "element") == 0 || strcmp(PGLX_generic_kind(n), "document") == 0) {
+    const char *n_name = PGLX_generic_name(n);
     error(0, "%.*s<%s>",
 	  indent, walk_children_spaces, n_name);
+    children = PGLX_generic_children(n); 
     for (iter = children, child = *iter; child; child = *++iter) {
       walk_children(child, indent+4);
-      PGLX_node_free(child);
+      /*      PGLX_node_free(child); */
     }
     error(0, "%.*s</%s>",
 	  indent, walk_children_spaces, n_name);
   } else {
-    val = PGLX_generic_typed_value(n);
-    if (glx_string_of_atomicValue(val, &str)) {
-      error(ERROR_FATAL, "glx_string_of_atomicValue returned an error code (node %s)", n_name);
-    }
-    error(0, "%.*s<%s>%s</%s>",
-	  indent, walk_children_spaces, n_name, str, n_name);
+    error(0, "%.*s%s",
+	  indent, walk_children_spaces, PGLX_generic_string_value(n));
   }
 }
 
@@ -150,7 +141,7 @@ item ty ## _typed_value (PDCI_node_t *node) \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
     failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
+  if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
@@ -167,7 +158,7 @@ item ty ## _typed_value (PDCI_node_t *node) \
     pd = &tpd; \
     pd->errCode = P_NO_ERR; \
   } \
-  if (glx_atomicInt(r, &res)) { \
+  if (galax_atomicInt(r, &res)) { \
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
@@ -185,7 +176,7 @@ item ty ## _typed_value (PDCI_node_t *node) \
     pd = &tpd; \
     pd->errCode = P_NO_ERR; \
   } \
-  if (glx_atomicInteger(r, &res)) { \
+  if (galax_atomicInteger(r, &res)) { \
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
@@ -234,7 +225,7 @@ item ty ## _text_typed_value (PDCI_node_t *node) \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, pd, r)) { \
     failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
+  if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
@@ -265,7 +256,7 @@ item ty ## _typed_value (PDCI_node_t *node) \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
     failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
+  if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
@@ -314,7 +305,7 @@ item ty ## _text_typed_value (PDCI_node_t *node) \
   if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, ty_arg1, pd, r)) { \
     failwith("PADS/Galax UNEXPECTED_IO_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
-  if (glx_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
+  if (galax_atomicUntyped(sfstruse(node->pads->tmp2), &res)) { \
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in " PDCI_MacroArg2String(ty) "_typed_value"); \
   } \
   return res; \
@@ -334,7 +325,7 @@ const PDCI_vtable_t ty ## _text_vtable = {PDCI_no_children, \
  * Some children functions
  * --------------------------- */
 
-/* A pos_t has 3 children (byte, num, and unit) */
+/* A pos_t has 3 children (byte, num, and sfio-offset) */
 #undef WHATFN
 #define WHATFN "Ppos_t_children"
 PDCI_node_t ** Ppos_t_children(PDCI_node_t *self)
@@ -346,7 +337,7 @@ PDCI_node_t ** Ppos_t_children(PDCI_node_t *self)
   }
   PDCI_MK_TNODE(result[0], &Pint32_val_vtable,   self, "byte",    &(pos->byte),     WHATFN);
   PDCI_MK_TNODE(result[1], &Pint32_val_vtable,   self, "num",     &(pos->num),      WHATFN);
-  PDCI_MK_TNODE(result[2], &PDCI_cstr_val_vtable,   self, "unit",    (char*)pos->unit, WHATFN);
+  /*  PDCI_MK_TNODE(result[2], &Puint64_val_vtable,  self, "offset",  (Puint64)(pos->offset), WHATFN); */
   return result;
 }
 
@@ -448,19 +439,8 @@ PDCI_node_t ** PDCI_no_children(PDCI_node_t *self)
 {
   PDCI_node_t **result;
 
-  printf("IN PDCI_no_children: %s\n", self->name); 
-
-  if (strcmp(self->kind, "text") == 0) { 
-    if (!(result = PDCI_NEW_NODE_PTR_LIST(0))) {
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(1))) {
       failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
-    }
-  }
-  else {
-    if (!(result = PDCI_NEW_NODE_PTR_LIST(1))) {
-      failwith("PADS/Galax ALLOC_ERROR: in " WHATFN);
-    }
-    /* This is wrong, because the content of the node depends on its type. */
-    PDCI_MK_TEXTNODE(result[0], &PDCI_cstr_val_vtable, self, WHATFN);
   }
   return result;
 }
@@ -481,7 +461,7 @@ item PDCI_cstr_typed_value(PDCI_node_t *node)
 {
   item        res = 0;
   char        *s   = (char *)node->rep;
-  if (glx_atomicUntyped(s, &res)) {
+  if (galax_atomicUntyped(s, &res)) {
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in Pcstr_typed_value");
   }
   return res;
@@ -581,7 +561,7 @@ item Pchar_typed_value (PDCI_node_t *node)
   }
   sfstrset(node->pads->tmp2, 0);
   sfprintf(node->pads->tmp2, "%c", c);
-  if (glx_atomicString(sfstruse(node->pads->tmp2), &res)) {
+  if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) {
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in Pchar_typed_value");
   }
   return res;
@@ -599,7 +579,7 @@ item Pstring_typed_value (PDCI_node_t *node)
   }
   sfstrset(node->pads->tmp2, 0);
   sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str);
-  if (glx_atomicString(sfstruse(node->pads->tmp2), &res)) {
+  if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) {
     failwith("PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE in Pstring_typed_value");
   }
   return res;
