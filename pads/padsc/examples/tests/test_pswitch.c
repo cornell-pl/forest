@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 
   if (PDC_ERR == PDC_IO_fopen(pdc, fileName)) {
     error(2, "*** PDC_IO_fopen failed ***");
-    exit(-1);
+    exit(-1); 
   }
 
   if (PDC_ERR == PADS_TY_INIT(pdc, &rep)) {

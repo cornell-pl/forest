@@ -239,7 +239,9 @@ end
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
-	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE | PRECORD | PFILE | PWHERE (* PADS *)
+	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE (* PADS *)
+ 	| PRECORD | PFILE | PWHERE (* PADS *)  
+        | PSWITCH | PCASE | PDEFAULT (* PADS*)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -1161,15 +1163,15 @@ pArray:
  )
 
 pBranch: 
-   CASE expr COLON pStructField    (SOME expr, pStructField)
- | DEFAULT COLON pStructField      (NONE, pStructField)
+   PCASE expr COLON pStructField    (SOME expr, pStructField)
+ | PDEFAULT COLON pStructField      (NONE, pStructField)
 
 pBranchList:
     pBranch                         ([pBranch])
   | pBranch pBranchList		    (pBranch :: pBranchList)
 
 pVariants: 
- SWITCH LPAREN expr RPAREN LCURLY pBranchList RCURLY 
+ PSWITCH LPAREN expr RPAREN LCURLY pBranchList RCURLY 
     (let val (cases,branches) = ListPair.unzip pBranchList
      in PX.Switched{descriminator = expr,
                  cases = cases,
