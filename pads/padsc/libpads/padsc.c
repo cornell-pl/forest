@@ -356,10 +356,12 @@ fn_name ## _internal (PDC_t *pdc, PDC_base_em *em, size_t width,
     goto invalid;
   }
   *end = ct;    /* restore */
-  while (isspace(*p1) && !(pdc->disc->flags & PDC_WSPACE_OK)) {
-    goto invalid_wspace;
+  if (p1 < end && isspace(*p1)) {
+    if (!(pdc->disc->flags & PDC_WSPACE_OK)) {
+      goto invalid_wspace;
+    }
+    do { p1++; } while (p1 < end && isspace(*p1));
   }
-  while (p1 < end && isspace(*p1)) { p1++; } 
   if (p1 != end) {
     goto invalid;
   }
@@ -1474,7 +1476,7 @@ PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *w
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.49 2002-11-18 14:46:41 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.50 2002-11-18 19:32:59 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
