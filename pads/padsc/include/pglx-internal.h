@@ -28,7 +28,6 @@ void  PDCI_MK_NODE(PDCI_node_t *result,
 		   void* m, void* pd,
 		   void* rep,
 		   const char *whatfn);
-
 #endif
 
 /* Helper macros that we always want expanded */
@@ -59,6 +58,10 @@ struct PDCI_node_s {
   void                  *pd;
   void                  *rep;
   const char            *name;
+  /* the following are only used by base type nodes */
+  const PDCI_vtable_t   *base_vt;
+  PDC_base_pd           *base_pd;
+  void                  *base_val;
 };
 
 struct PDCI_vtable_s {
@@ -92,10 +95,15 @@ typedef struct PDCI_sequenced_pd_s {
 /* Error function used for many cases */
 value PDCI_error_typed_value(PDCI_node_t *node);
 
-/* Special children functions */
-PDCI_node_t ** PDCI_Cstring_children(PDCI_node_t *self);
+/* Children functions */
+
+PDCI_node_t ** PDC_base_pd_children(PDCI_node_t *self);
+PDCI_node_t ** PDC_loc_t_children(PDCI_node_t *self);
+PDCI_node_t ** PDC_pos_t_children(PDCI_node_t *self);
+
 PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self);
 PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self);
+PDCI_node_t ** PDCI_no_children(PDCI_node_t *self);
 
 /* ================================================================================
  * VTABLES */
@@ -107,9 +115,10 @@ PDCI_DECL_VT(PDCI_sequenced_pd);
 PDCI_DECL_VT(PDCI_basetype);
 
 PDCI_DECL_VT(PDC_base_pd);
-PDCI_DECL_VT(PDC_errCode_t);
 PDCI_DECL_VT(PDC_loc_t);
 PDCI_DECL_VT(PDC_pos_t);
+
+PDCI_DECL_VT(PDCI_Cstr);
 
 /* Base type vtables: need two vtables for all base types,
    one at level of pd/val, one for the actual value */

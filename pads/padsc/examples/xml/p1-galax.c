@@ -32,11 +32,18 @@ const PDCI_vtable_t fooStruct_vtable = {fooStruct_children,
 
 /* ENUM CASE fooEnum */
 PDCI_node_rep_t** fooEnum_children(PDCI_node_rep_t *self){
+  const char  *Cstr;
+  fooEnum     *rep  = (fooEnum *)     self->rep;
+  PDC_base_pd *pd   = (PDC_base_pd *) self->pd;
   PDCI_node_rep_t** result;
-  fooEnum *temp = (fooEnum *)self->val;
-  self->val = fooEnum2str(*temp);
-  result = PDCI_Cstring_children(self);
-  self->val = temp; 
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 2))) {
+    failwith("ALLOC_ERROR: in fooEnum_children");
+  };
+  /* parse descriptor child */
+  PDCI_MK_TNODE(result[0], &PDCI_base_pd_vtable, self, "pd", pd, "fooEnum_children");
+  /* string val child */
+  Cstr = fooEnum2str(*rep);
+  PDCI_MK_TNODE(result[0], &PDCI_Cstr_val_vtable, self, "val", Cstr, "fooEnum_children");
   return result;
 }
 

@@ -93,11 +93,10 @@ PDCI_node_t ** PDCI_structured_pd_children(PDCI_node_t *self)
     result[0]->rep    = (&(pd->nerr));
     result[0]->name   = ("nerr");
   } while (0);
-  PDCI_MK_NODE(result[0], (&PDC_uint32_val_vtable), self, "nerr", 0, 0, &(pd->nerr), WHATFN);
-  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr", &(pd->nerr), WHATFN);
-  PDCI_MK_TNODE(result[1], &PDC_errCode_t_vtable, self,"errCode", &(pd->errCode), WHATFN);
-  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable, self, "loc", &(pd->loc), WHATFN);
-  PDCI_MK_TNODE(result[3], &PDC_int32_val_vtable, self, "panic", &(pd->panic), WHATFN);
+  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",    &(pd->nerr),    WHATFN);
+  PDCI_MK_TNODE(result[1], &PDC_uint32_val_vtable, self, "errCode", &(pd->errCode), WHATFN);
+  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable,      self, "loc",     &(pd->loc),     WHATFN);
+  PDCI_MK_TNODE(result[3], &PDC_uint32_val_vtable, self, "panic",   &(pd->panic),   WHATFN);
   return result;
 }
 
@@ -113,12 +112,29 @@ PDCI_node_t ** PDCI_sequenced_pd_children(PDCI_node_t *self)
     failwith("ALLOC_ERROR: in PDCI_sequenced_pd_children");
   }
   /* the following mk calls raise an exception on alloc error */
-  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr", &(pd->nerr), WHATFN);
-  PDCI_MK_TNODE(result[1], &PDC_errCode_t_vtable, self,"errCode", &(pd->errCode), WHATFN);
-  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable, self, "loc",   &(pd->loc), WHATFN);
-  PDCI_MK_TNODE(result[3], &PDC_int32_val_vtable, self, "panic", &(pd->panic), WHATFN);
-  PDCI_MK_TNODE(result[4], &PDC_int32_val_vtable, self, "neerr", &(pd->neerr), WHATFN);
-  PDCI_MK_TNODE(result[5], &PDC_int32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN);
+  PDCI_MK_TNODE(result[0], &PDC_uint32_val_vtable, self, "nerr",     &(pd->nerr),       WHATFN);
+  PDCI_MK_TNODE(result[1], &PDC_uint32_val_vtable, self, "errCode",  &(pd->errCode),    WHATFN);
+  PDCI_MK_TNODE(result[2], &PDC_loc_t_vtable,      self, "loc",      &(pd->loc),        WHATFN);
+  PDCI_MK_TNODE(result[3], &PDC_uint32_val_vtable, self, "panic",    &(pd->panic),      WHATFN);
+  PDCI_MK_TNODE(result[4], &PDC_uint32_val_vtable, self, "neerr",    &(pd->neerr),      WHATFN);
+  PDCI_MK_TNODE(result[5], &PDC_uint32_val_vtable, self, "firstErr", &(pd->firstError), WHATFN);
+  return result;
+}
+
+/* All base types have two children, pd and val. */
+/* The routine that constructed self has already placed all */
+/* the necarry stuff in self->base_pd, self->base_val, and self->base_vt */
+#undef WHATFN
+#define WHATFN "PDCI_basetype_children"
+PDCI_node_t ** PDCI_basetype_children(PDCI_node_t *self)
+{
+  PDCI_node_t **result;
+  if (!(result = PDCI_NEW_NODE_PTR_LIST(self->pdc, 2))) {
+    failwith("ALLOC_ERROR: in " WHATFN);
+  }
+  /* the following mk calls raise an exception on alloc error */
+  PDCI_MK_TNODE(result[0], &PDC_base_pd_vtable, self, "pd",  self->base_pd,  WHATFN);
+  PDCI_MK_TNODE(result[1], self->base_vt,        self, "val", self->base_val, WHATFN);
   return result;
 }
 
@@ -133,10 +149,25 @@ PDCI_sequenced_pd_vtable = {PDCI_sequenced_pd_children,
 			    PDCI_error_typed_value,
 			    0};
 
-/* Bob: we need vtable for each base type in parse descriptors:
-   PDC_errCode_t, PDC_loc_t, PDC_pos_t, ...? 
-   PDC_flags_t, PDCI_flag.  */
+const PDCI_vtable_t
+PDCI_basetype_vtable = {PDCI_basetype_children,
+			PDCI_error_typed_value,
+			0};
 
+const PDCI_vtable_t
+PDCI_base_pd_vtable = {PDC_base_pd_children,
+		       PDCI_error_typed_value,
+		       0};
+
+const PDCI_vtable_t
+PDCI_loc_t_vtable = {PDC_loc_t_children,
+		     PDCI_error_typed_value,
+		     0};
+
+const PDCI_vtable_t
+PDCI_pos_t_vtable = {PDC_pos_t_children,
+		     PDCI_error_typed_value,
+		     0};
 
 /* BASE TYPE SUPPORT */
 /* 1. Define a vtable and val_vtable for each base type */
