@@ -418,14 +418,11 @@ DYNAMIC_LIB_DEPS_O += $(SHARED_DLL_LIB_DEP_O) $(SHARED_BZLIB_DEP_O) $(SHARED_ZLI
 endif
 
 DYNAMIC_LIBS_D = -L$(INSTALL_LIBDIR)
-ifdef USE_GALAX
-DYNAMIC_LIBS_D += -lpglx-g
-endif
 DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS)
 ifdef USE_GALAX
 # mff may need to change next line 
 DYNAMIC_LIBS_D += \
-  -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lcamlidl \
+  -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx-g -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c -lpcre_stubs
 endif
