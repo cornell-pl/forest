@@ -1,0 +1,5 @@
+#!/bin/csh
+
+cc -g -Wall -I. -I.. -I/home/rmedel/pads/ast-base/arch/linux.i386/include/ast -I../../gen -I../../../../padsc/include ../../gen/$argv.c test_$argv.c -L /home/rmedel/pads/ast-base/arch/linux.i386/lib -lpadsc-g -lpglx-g -last -o test_$argv
+
+
