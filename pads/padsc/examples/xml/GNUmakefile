@@ -24,7 +24,7 @@ CODE_DIR = ../gen
 USE_GALAX = 1
 
 # the following indicates that generated .c files should not be removed
-.PRECIOUS: $(GEN_DIR)/%.c  $(GEN_DIR)/%_expanded.c 
+.PRECIOUS: $(GEN_DIR)/%.c $(GEN_DIR)/%_expanded.c 
 
 # need to give these rules before including rules.mk
 REGRESS_TESTS = 1
@@ -32,7 +32,6 @@ REGRESS_TESTS = 1
 INCLUDES += -I ../gen
 CURDIR := $(shell pwd)
 SCRIPTS = $(PADS_HOME)/scripts
-# INCLUDE_DEPS += $(PADS_HOME)/padsc/include/pglx-codegen-macros-gen.h
 
 include $(PADS_HOME)/mk/rules.mk
 
@@ -43,7 +42,7 @@ endif
 
 # DEP_myenum =
 
-.PHONY: current pglx_lib
+.PHONY: current pglx_lib clean
 
 
 current: test_smart_myenum-d
@@ -63,11 +62,11 @@ test_smart_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_smart_%.c $(CODE_DIR)/test_smart
 test_smart_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_smart_%.c $(CODE_DIR)/test_smart.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
 	@$(CCExec_DYNAMIC_O)
 
-test_kth_child_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_kth_child_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)  
-	@$(CCExec_DYNAMIC_O)
-
 test_kth_child_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_kth_child_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)  
 	@$(CCExec_DYNAMIC_D)
+
+test_kth_child_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_kth_child_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+	@$(CCExec_DYNAMIC_O)
 
 test_walk_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_walk_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
@@ -76,6 +75,12 @@ test_query_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_
 	@$(CCExec_DYNAMIC_D)
 
 test_query_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_query_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+test_rr_%-g: $(GEN_DIR)/%.c $(CODE_DIR)/test_rr_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)  
+	@$(CCExec_DYNAMIC_D)
+
+test_rr_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_rr_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)  
 	@$(CCExec_DYNAMIC_O)
 
 #dogen : $(CODE_DIR)/enum_kth.c $(CODE_DIR)/enum_kth.h
