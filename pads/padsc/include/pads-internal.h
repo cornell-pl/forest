@@ -1205,6 +1205,7 @@ Perror_t Puint64_acc_report2io (PDCI_FIRST_ARGS, Puint64_acc *a);
 
 Perror_t Pstring_acc_report2io (PDCI_FIRST_ARGS, Pstring_acc *a);
 Perror_t Pchar_acc_report2io   (PDCI_FIRST_ARGS, Pchar_acc *a);
+Perror_t Pip_acc_report2io     (PDCI_FIRST_ARGS, Puint32_acc *a);
 
 Perror_t Pfpoint8_acc_report2io   (PDCI_FIRST_ARGS, Pfpoint8_acc *a);
 Perror_t Pfpoint16_acc_report2io  (PDCI_FIRST_ARGS, Pfpoint16_acc *a);

@@ -171,6 +171,15 @@ do { \
 
 #if P_CONFIG_ACCUM_FUNCTIONS > 0
 
+/* Pip */
+
+#define Pip_acc_init(pads, a)         Puint32_acc_init(pads, a)
+#define Pip_acc_reset(pads, a)        Puint32_acc_reset(pads, a)
+#define Pip_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
+#define Pip_acc_add(pads, a, pd, val) Puint32_acc_add(pads, a, pd, val)
+
+/* Ptimestamp */
+
 #define Ptimestamp_explicit_acc_init(pads, a)         Puint32_acc_init(pads, a)
 #define Ptimestamp_explicit_acc_reset(pads, a)        Puint32_acc_reset(pads, a)
 #define Ptimestamp_explicit_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
@@ -181,15 +190,21 @@ do { \
 #define Ptimestamp_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
 #define Ptimestamp_acc_add(pads, a, pd, val) Puint32_acc_add(pads, a, pd, val)
 
+/* Pdate */
+
 #define Pdate_acc_init(pads, a)         Puint32_acc_init(pads, a)
 #define Pdate_acc_reset(pads, a)        Puint32_acc_reset(pads, a)
 #define Pdate_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
 #define Pdate_acc_add(pads, a, pd, val) Puint32_acc_add(pads, a, pd, val)
 
+/* Ptime */
+
 #define Ptime_acc_init(pads, a)         Puint32_acc_init(pads, a)
 #define Ptime_acc_reset(pads, a)        Puint32_acc_reset(pads, a)
 #define Ptime_acc_cleanup(pads, a)      Puint32_acc_cleanup(pads, a)
 #define Ptime_acc_add(pads, a, pd, val) Puint32_acc_add(pads, a, pd, val)
+
+/* report/report2io functions for date/time types */
 
 Perror_t PDCI_date_time_acc_report(P_t *pads, const char *prefix, const char *what,
 				   int nst, Puint32_acc *a,

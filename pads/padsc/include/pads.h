@@ -2070,6 +2070,26 @@ Perror_t Pchar_acc_add       (P_t *pads, Pchar_acc *a, const Pbase_pd *pd, const
 Perror_t Pchar_acc_report    (P_t *pads, const char *prefix, const char *what, int nst, Pchar_acc *a);
 
 /*
+ * Pip uses Puint32 in memory.
+ * Accumulation uses Puint32_acc, but Pip has 
+ * a distinct report function.
+ */
+
+#ifndef FOR_CKIT
+typedef Puint32 Pip;
+#endif
+
+typedef Puint32_acc Pip_acc;
+
+#ifdef FOR_CKIT
+Perror_t Pip_acc_init    (P_t *pads, Pip_acc *a);
+Perror_t Pip_acc_reset   (P_t *pads, Pip_acc *a);
+Perror_t Pip_acc_cleanup (P_t *pads, Pip_acc *a);
+Perror_t Pip_acc_add     (P_t *pads, Pip_acc *a, const Pbase_pd *pd, Puint32 *val);
+#endif
+Perror_t Pip_acc_report  (P_t *pads, const char *prefix, const char *what, int nst, Pip_acc *a);
+
+/*
  * Ptimestamp_explicit/Ptimestamp/Pdate/Ptime are Puint32s in memory.
  * Accumulation for these types uses Puint32_acc, but each type
  * has a distinct report function.
