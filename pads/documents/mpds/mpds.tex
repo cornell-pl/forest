@@ -9,17 +9,13 @@
 \setlength{\evensidemargin}{0in}
 \setlength{\parskip}{5pt}
 
-
 \title{\vskip -1in \pads{}: Processing Arbitrary Data Streams}
 \date{\today}
 \author{
   Kathleen Fisher\\
+  Robert Gruber\\
   AT\&T Labs --- Research \\
-  \small\texttt{kfisher@research.att.com}
-\and
-  Robert E. Gruber \\
-  AT\&T Labs --- Research \\
-  \small\texttt{gruber@research.att.com}
+  \small\texttt{\{kfisher,gruber\}@research.att.com}
 }
 
 \begin{document}
@@ -48,7 +44,7 @@ Understanding a new data stream and producing a suitable parser are
 crucial first steps in any use of stream data.  Unfortunately, writing
 parsers for such data is a difficult task, both tedious and
 error-prone. It is complicated by lack of documentation, convoluted
-encodings designed to save disk space, the need to handle errors
+encodings designed to save space, the need to handle errors
 robustly, and the need to produce efficient code to cope with the
 scale of the stream.  Often, the hard-won understanding of the data
 ends up embedded in parsing code, making long-term maintenance
@@ -57,29 +53,29 @@ others nearly impossible.
 
 The goal of the PADS project is to provide languages and tools for
 simplifying data stream analysis.  We have a preliminary design of a
-declarative data-description language, PADSL, expressive enough to
+declarative data-description language, \padsl{}, expressive enough to
 describe the data feeds we see at AT\&T in practice, including both ASCII,
-binary, and mixed data.  From PADSL we generate a tunable C library with
+binary, and mixed data.  From \padsl{} we generate a tunable C library with
 functions for parsing, manipulating, and summarizing the data.  
 
 \section{\pads{} language}
 Intuitively, a \pads{} description specifies complete information
 about the physical layout and semantic constraints for the associated
-data stream.  The structure of the language is analogous to \C{}'s
-type structure.  \pads{} has an extensible set of base types that
+data stream.  Most type declarations in \padsl{} are based on analogous type declarations in \C{}.
+\pads{} has an extensible set of base types that
 specify how to read and verify atomic pieces of data such as ASCII
 integers (\cd{aint32}) and binary bytes (\cd{bint8}).
 Verification conditions for such base types include checking that the
 number produced fits in the indicated space, \ie, 32-bits for
 \cd{aint32}.  \pads{}
 \kw{pstruct}s allow users to describe record-like structures, 
-\kw{punion}s alternatives, and \kw{array}s sequences.  Each of these
+\kw{punion}s alternatives, and \kw{parray}s sequences.  Each of these
 types can have a predicate associated with it that indicates whether a
 value calculated from the physical specification is indeed a legal
-value for the type.  Such conditions might be that two fields of a
+value for the type.  Such conditions might require that two fields of a
 \cd{pstruct} are related via a particular function or that the elements
-of a sequence are in increasing order.  \pads{} \cd{typedef}s allow
-users to add additional constraints to existing types. 
+of a sequence are in increasing order.  \pads{} \cd{typedef}s can be used
+to define new types that add further constraints to existing types.
 
 In addition, each of these types can be parameterized by values, which
 serves both to reduce the number of base types and permit later
@@ -99,7 +95,7 @@ recording the IP address of the requester; either a dash or the owner
 of the TCP session; either a dash or the login of the requester; the
 date; the actual request, which consists of the HTTP method, the
 requested URL, the HTTP version number; a response code, and the
-number of bytes returned.  The \pads{} description of the request is 
+number of bytes returned.  A \pads{} type describing a request is
 \begin{code}
 \kw{pstruct} http_request_t \{
   '\\"'; http_method_t  meth;            /- Method used during request
@@ -109,33 +105,35 @@ number of bytes returned.  The \pads{} description of the request is
   '\\"';
 \};
 \end{code}
-The \cd{version} field of this \cd{pstruct} has a constraint predicate
-which ensures that obsolte versions \cd{LINK} and \cd{UNLINK} do not
-appear after HTTP version \cd{1.0}.
+This \cd{pstruct} uses other already-defined types.
+Its \cd{version} field has a constraint predicate
+which ensures that obsolte HTTP methods \cd{LINK} and \cd{UNLINK} 
+are only used with HTTP version \cd{1.0}.
 
 \section{Generated Library}
-From each type in a \pads{} description, we generate 
-1) an in-memory representation, 
-2) an error-mask, which allows users to specify
-which portions of the data are relevant to their applications,
-3) an error-description, which we use to describe physical and
+From each type in a \pads{} description, we generate C declarations for
+(1) an in-memory representation, 
+(2) a {\em checkset}\/-mask, which allows users to specify at fine granularity
+whether to check constraints and whether to fill in the in-memory representation,
+allowing users to tune which constraints and which portions of the data are relevant to their applications,
+(3) an error-description, which we use to describe physical and
 semantic errors detected during parsing, 
-4) a parsing function, and 
-5) utility functions.
-Each parse function takes as an argument an error mask and returns
-both an error description and the in-memory representation of the
-physical data.  
-The invariant maintained by the library is that if the error mask
-requests a portion of the data and the error description indicates no
-error, then the in-memory representation satisfies all of the semantic
-constraints of the data. 
+(4) a parse function, and 
+(5) utility functions.
+The parse function takes as arguments pointers to a checkset-mask, in-memory representation, and
+error-description.  It uses the checkset mask to guide constraint checking and in-memory setting
+as it fills in the in-memory representation and error-description.
+The function maintains this invariant: if the checkset-mask
+requests a data item be both checked and set, and the error description indicates no
+error for that item, then the in-memory representation of the item has been filled in and
+satisfies all of the semantic constraints of the data. 
 
 By supporting multiple entry-points, we accomodate larger-scale data.
-For a small file, the user can call a single parse-function that will
-read the entire contents of a file.  For larger-scale data, programmers
-can sequence calls to parser functions for portions of the data,
-perhaps parsing each record in a file in a loop, for example. 
-
+For a small file, the user can define a \padsl{} type that describes
+the entire file, and use that type's parse function to parse the whole
+file with one call.  For larger-scale data, the user would sequence
+calls to parse functions that read manageable portions of the file,
+parsing each record in a file in a loop, for example.
 
 \section{Related work}
 \textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl} are both
@@ -144,7 +142,8 @@ libraries for manipulating that data.  In contrast to \pads{},
 however, both these systems specify the logical representation and
 automatically generate a physical representation.  Although useful for
 many purposes, this technology does not help process data that arrives
-in an already-determined format. 
+in an already-determined format that does not conform to
+any standard. 
 
 More closely related work allows declarative descriptions of binary
 data~\cite{sigcomm00,erlang-bit-syntax,gpce02}, motivated by parsing
