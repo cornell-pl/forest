@@ -12,6 +12,7 @@
 #include <ast.h>
 #include <ast_common.h>
 #include <dt.h>
+#include "rbuf.h"
 
 /* ================================================================================ */
 /* CONSTANTS */
@@ -179,6 +180,7 @@ typedef char*                  PDC_string_NT;
 typedef struct PDC_string_s {
   size_t    len;
   char*     str;
+  RBuf_t*   rbuf;
 } PDC_string;
 
 /* ================================================================================ */
@@ -306,11 +308,19 @@ PDC_error_t PDC_adate_read (PDC_t* pdc, PDC_base_em* em, PDC_base_ed* ed,
 /* ================================================================================ */
 /* STRING READ FUNCTIONS */
 
-/* Related helper function: PDC_free_string frees memory s->str
- * from a PDC_string *s that has been filled in by one of the string read
- * calls (with string duplication enabled by the discipline). 
+/* Related helper functions:
+ *
+ *    PDC_string_init : initialize to valid empty string (no dynamic memory allocated yet)
+ *    PDC_string_cleanup : free up the rbuf and any allocated space for the string
+ *    PDC_string_copy : Copy len chars from string src into the PDC_string targ;
+ *                      allocates RBuf and/or space for the copy, as necessary.
+ *                      Although not strictly necessary, null-terminates targ->str.
+ *              string_copy returns PDC_ERROR on bad arguments or on failure to alloc space,
+ *              otherwise it returns PDC_OK
  */
-PDC_error_t PDC_free_string(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc);
+PDC_error_t PDC_string_init(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc);
+PDC_error_t PDC_string_cleanup(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc);
+PDC_error_t PDC_string_copy(PDC_t* pdc, PDC_string* targ, const char* src, size_t len, PDC_disc_t* disc);
 
 /*
  * The string read functions each has a different way of specifying how much
@@ -326,10 +336,11 @@ PDC_error_t PDC_free_string(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc);
  * 
  * If an expected stop char/pattern/width is found, PDC_OK is returned.
  * If !em || *em == PDC_CheckAndSet, then:
- *   + if s_out is non-null, a null-terminated form the string is placed in a
- *     newly-allocated memory buffer and *s_out is set to point to this string copy.
- *     The buffer should eventually be freed using PDC_free_string, as in:
- *         PDC_free_string(pdc, string_ptr, 0);
+ *   + if s_out is non-null, a null-terminated form the string is placed in the
+ *     memory buffer managed by *s_out; *s_out should have been initialized
+ *     at some point prior using PDC_string_init (it can be initialized once
+ *     and re-used in string read calls many times).  The memory allocated by *s_out
+ *     should ultimately be freed using PDC_string_cleanup.
  *   + if l_out is non-null, *l_out is set to the length of the string
  *     (not including the null terminator).
  *

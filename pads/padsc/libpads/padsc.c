@@ -9,7 +9,7 @@
 #gen_include "libpadsc-internal.h"
 #gen_include "libpadsc-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: padsc.c,v 1.31 2002-10-10 19:51:34 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: padsc.c,v 1.32 2002-10-10 20:45:53 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -150,17 +150,16 @@ PDC_strtoull(const char* str, char** ptr, int base)
     if (*em == PDC_CheckAndSet && s_out) {
       size_t wdth = end-begin; 
       char* buf;
-      RBuf_t* rbuf;
-      if (!(rbuf = RMM_new_rbuf(pdc->rmm_nz))) {
-        goto no_space;
+      if (!s_out->rbuf) {
+	if (!(s_out->rbuf = RMM_new_rbuf(pdc->rmm_nz))) {
+	  goto no_space;
+	}
       }
-      if (RBuf_RESERVE(rbuf, buf, char, wdth+1)) {
-       RMM_free_rbuf(rbuf);
+      if (RBuf_reserve(s_out->rbuf, (void**)&buf, sizeof(char), wdth+1, 0)) {
        goto no_space;
       }
       memcpy(buf, begin, wdth);
       buf[wdth] = 0;
-      RMM_free_rbuf_keep_buf(rbuf, 0, 0);
       s_out->str = buf;
       s_out->len = wdth;
     }
@@ -1515,19 +1514,66 @@ PDC_adate_read (PDC_t* pdc, PDC_base_em* em, PDC_base_ed* ed,
 /* ================================================================================ */
 /* STRING READ FUNCTIONS */
 
-/* related helper function */
+/* related helper functions */
 PDC_error_t
-PDC_free_string(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc)
+PDC_string_init(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc)
 {
   PDC_DISC_INIT_CHECKS;
-  TRACE(pdc, "PDC_free_string called");
-  if (!s && !s->str) {
+  TRACE(pdc, "PDC_string_init called");
+  if (!s) {
     /* XXX REPORT ERROR */
     return PDC_ERROR;
   }
-  if (0 == RMM_free_buf(pdc->rmm_nz, (void*)s->str)) {
-    return PDC_OK;
+  s->len = 0;
+  s->str = NiL;
+  s->rbuf = NiL;
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_string_cleanup(PDC_t* pdc, PDC_string* s, PDC_disc_t* disc)
+{
+  RBuf_t* rbuf;
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_string_cleanup called");
+  if (!s || !s->str || !s->rbuf) {
+    /* XXX REPORT ERROR */
+    return PDC_ERROR;
   }
+  rbuf = s->rbuf;
+  s->len = 0;
+  s->str = NiL;
+  s->rbuf = NiL;
+  if (RMM_free_rbuf(rbuf)) {
+    /* XXX REPORT ERROR */
+    return PDC_ERROR;
+  }
+  return PDC_OK;
+}
+
+PDC_error_t
+PDC_string_copy(PDC_t* pdc, PDC_string* targ, const char* src, size_t len, PDC_disc_t* disc)
+{
+  PDC_DISC_INIT_CHECKS;
+  TRACE(pdc, "PDC_string_copy called");
+  if (!src || !targ) {
+    /* XXX REPORT ERROR */
+    return PDC_ERROR;
+  }
+  if (!targ->rbuf) {
+    if (!(targ->rbuf = RMM_new_rbuf(pdc->rmm_nz))) {
+      goto no_space;
+    }
+  }
+  if (RBuf_reserve(targ->rbuf, (void**)&(targ->str), sizeof(char), len+1, 0)) {
+    goto no_space;
+  }
+  memcpy(targ->str, src, len);
+  targ->str[len] = 0;
+  targ->len = len;
+  return PDC_OK;
+ no_space:
+  /* XXX REPORT ERROR */
   return PDC_ERROR;
 }
 

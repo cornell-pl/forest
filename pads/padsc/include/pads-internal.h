@@ -22,7 +22,6 @@ typedef void* __builtin_va_list;
 #include <error.h>
 #include <ctype.h>
 #include "libpadsc.h"
-#include "rbuf.h"
 
 /* ================================================================================ */
 /* TYPE DEFINITIONS */
