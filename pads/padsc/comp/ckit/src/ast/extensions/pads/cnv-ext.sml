@@ -3689,6 +3689,10 @@ ssize_t test_write2buf         (P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
 			  val () = case (termXOpt, termNoSepXOpt) of 
 			             (SOME _, SOME _) => PE.error ("Multiple terminator clauses in array "^name^".")
 				   | _ => ()
+			  val () = case (sepXOpt, termNoSepXOpt) of
+			              (NONE, SOME _) => PE.error ("Array "^name^" must have a separator for termination specification "^
+								  "of Pnosep to be valid.")
+				   | _ => ()
 
                           fun compRegExp (which, endLabel, e) = 
 			      let val regName = which^"_regexp"
