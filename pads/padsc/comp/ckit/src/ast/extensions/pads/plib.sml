@@ -100,6 +100,7 @@ struct
    PT.Call(PT.Id "PDC_fmt_Cstr", [PT.String s, P.intX (String.size s)] )
 
 (* error functions *)
+  fun mkFName s = PT.String ("[in "^s^"]")
   fun trace(disc: PT.expression, msg:string) =
     PT.Expr(PT.Call(PT.Id "PDC_TRACE", [disc, PT.String msg]))
 
@@ -109,28 +110,30 @@ struct
   fun warnDefault(msg :string) =
     PT.Expr(PT.Call(PT.Id "PDC_WARN", [P.addrX (PT.Id "PDC_default_disc"), PT.String msg]))
 
-  fun userErrorS(ts:PT.expression, loc:PT.expression,
-                 errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_INFO, loc, errCode, P.zero, format]@args))
+  fun userErrorS(ts:PT.expression, loc:PT.expression, errCode:PT.expression, 
+		 whatFunction: string, format:PT.expression, args:PT.expression list) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_INFO, loc, errCode, 
+					      mkFName whatFunction, format]@args))
 
   fun userWarnS(ts:PT.expression, loc:PT.expression,
-                 format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_ERROR, loc, PDC_NO_ERROR, P.zero, format]@args))
+                whatFunction: string,  format:PT.expression, args:PT.expression list) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_ERROR, loc, PDC_NO_ERROR, 
+					      mkFName whatFunction , format]@args))
 
-  fun userFatalErrorS(ts:PT.expression, loc:PT.expression,
+  fun userFatalErrorS(ts:PT.expression, loc:PT.expression, whatFunction: string,
                  errCode:PT.expression, format:PT.expression, args:PT.expression list) = 
-    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_FATAL, loc, errCode, P.zero, format]@args))
+    PT.Expr(PT.Call(PT.Id "PDCI_report_err", [ts, ERROR_FATAL, loc, errCode, mkFName whatFunction, format]@args))
 
-  fun chkError(ts:PT.expression, argX :PT.expression, errCode:PT.expression) =
+  fun chkError(ts:PT.expression, argX :PT.expression, whatFun: string, errCode:PT.expression) =
     [ PT.IfThen(P.eqX(PDC_ERROR, argX),
        PT.Compound[
-         userFatalErrorS(ts, P.zero, errCode, P.zero, [])
+         userFatalErrorS(ts, P.zero, whatFun, errCode, P.zero, [])
        ])]
 
-  fun chkIntErrorSs(ts:PT.expression, argX :PT.expression, errCode:PT.expression) =
+  fun chkIntErrorSs(ts:PT.expression, argX :PT.expression,  whatFun : string, errCode:PT.expression) =
      [PT.IfThen(P.neqX(P.zero, argX),
        PT.Compound[
-         userFatalErrorS(ts, P.zero, errCode, P.zero, [])
+         userFatalErrorS(ts, P.zero, whatFun, errCode, P.zero, [])
        ])]
 
 
@@ -143,7 +146,7 @@ struct
   fun newRBufE(mm:PT.expression) = 
     PT.Call(PT.Id "RMM_new_rbuf", [mm])
 
-  fun chkNewRBufS(rBufV: PT.expression, zero: bool,
+  fun chkNewRBufS(whatFun, rBufV: PT.expression, zero: bool,
 		    ts:PT.expression) = 
     let val rBufX = newRBufE(if zero then zeroMM(ts) else nonZeroMM(ts))
     in
@@ -153,7 +156,7 @@ struct
 	   [ P.assignS(rBufV, rBufX),
 	     PT.IfThen(P.eqX(P.zero, rBufV),
 		       PT.Compound[
-			  userFatalErrorS(ts, P.zero, PDC_ALLOC_FAILURE, PT.String "", [])
+			  userFatalErrorS(ts, P.zero, whatFun, PDC_ALLOC_FAILURE, PT.String "", [])
 				   ])])]
     end
 
@@ -163,20 +166,20 @@ struct
    PT.Call(PT.Id "RBuf_reserve", 
 	   [rbuf, PT.Cast(P.voidPtrPtr, buf), sizeX, numElementsX, growHintX ])
 
-  fun chkReserveSs(ts, rbuf,buf,sizeX,numElementsX,growHintX) = 
+  fun chkReserveSs(ts, whatFun, rbuf,buf,sizeX,numElementsX,growHintX) = 
       let val reserveX = reserveE(ts,rbuf,buf,sizeX,numElementsX,growHintX)
       in
-	  chkIntErrorSs(ts,reserveX,PDC_ALLOC_FAILURE)
+	  chkIntErrorSs(ts,reserveX,whatFun,PDC_ALLOC_FAILURE)
       end
 
   fun freeRBufferE(ts, prbuf:PT.expression, ppbuf:PT.expression) = 
      PT.Call(PT.Id "RMM_free_rbuf_keep_buf", [prbuf, PT.Cast(P.voidPtrPtr, ppbuf), P.zero])
 
-  fun chkFreeRBufferS(ts, prbuf:PT.expression, ppbuf:PT.expression) = 
+  fun chkFreeRBufferS(ts, whatFun, prbuf:PT.expression, ppbuf:PT.expression) = 
     PT.IfThen(
       P.neqX(P.zero,freeRBufferE(ts, prbuf,ppbuf)),
       PT.Compound[
-         userFatalErrorS(ts, P.zero, PDC_ALLOC_FAILURE, 
+         userFatalErrorS(ts, P.zero, whatFun, PDC_ALLOC_FAILURE, 
 			 PT.String "Couldn't free growable buffer.", [])]
     )
 
@@ -184,11 +187,11 @@ struct
    (* int       RMM_free_rbuf(RBuf_t* rbuf); *)
      PT.Call(PT.Id "RMM_free_rbuf", [prbuf])
 
-  fun chkCFreeRBufferS(ts, prbuf:PT.expression) = 
+  fun chkCFreeRBufferS(ts, whatFun, prbuf:PT.expression) = 
     PT.IfThen(
       P.neqX(P.zero,cfreeRBufferE(prbuf)),
       PT.Compound[
-         userFatalErrorS(ts, P.zero, PDC_ALLOC_FAILURE, 
+         userFatalErrorS(ts, P.zero, whatFun, PDC_ALLOC_FAILURE, 
 			 PT.String "Couldn't free growable buffer", [])]
     )
 
@@ -209,19 +212,22 @@ struct
     PT.Call(PT.Id "PDC_IO_at_EOR", [ts])
 
 (* check point routines *)
-  fun chkPtS(ts:PT.expression) =
+  fun chkPtS(ts:PT.expression, whatFun) =
     chkError(ts, (PT.Call(PT.Id "PDC_IO_checkpoint", [ts, P.trueX])), (* always speculative *)
+	     whatFun,
 	     PDC_CHKPOINT_FAILURE)
 
   fun getSpecLevelX(ts:PT.expression) =
      PT.Call(PT.Id "PDC_spec_level", [ts])
 
-  fun commitS(ts:PT.expression) =
+  fun commitS(ts:PT.expression, whatFun) =
     chkError(ts, (PT.Call(PT.Id "PDC_IO_commit", [ts])),
+	     whatFun,
 	     PDC_COMMIT_FAILURE)
 
-  fun restoreS(ts:PT.expression) =
+  fun restoreS(ts:PT.expression, whatFun) =
     chkError(ts, (PT.Call(PT.Id "PDC_IO_restore", [ts])),
+	     whatFun,
 	     PDC_RESTORE_FAILURE)
 
 

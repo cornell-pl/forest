@@ -1,6 +1,6 @@
 Data file = standard in
 warning: Installing default IO discipline : newline-terminated records
-Error : line 4 char 2 : Failed to match branch number.
+Error [in branches_read]: line 4 char 2 : Failed to match branch number.
 [line 4]1>>> 23<<<
 *****************************************************************************************************
 <top> : struct choice

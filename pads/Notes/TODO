@@ -90,5 +90,6 @@ padsc compiler todo
   * can we access the length of an array or the tag on a union
     after we have parsed the associated data?
   * empty structs
+  * change comment character to //-
 done
 ----

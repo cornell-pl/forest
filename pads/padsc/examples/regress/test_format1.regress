@@ -7,17 +7,17 @@ test_read returned: id 2  ts 22
 calling test_read
 test_read returned: id 3  ts 33
 calling test_read
-Error : line 4 char 2 : Extra data before separator: |.
+Error [in test_read]: line 4 char 2 : Extra data before separator: |.
 [line 4]4>>>a<<<|44
 test_read returned: error
 calling test_read
-Error at line 5 from char 5 to char 6: Unexpected extra data before EOR 
+Error [in test_read]: line 5 char 5 : Unexpected data before EOR.
 [line 5]5|55>>>ab<<<
 test_read returned: error
 calling test_read
-Error : line 6 char 7 : Missing literal: |.
+Error [in test_read]: line 6 char 7 : Missing literal: |.
 [line 6]000006>>><<<a66b
-Note : line 6 char 7 : Resynching at EOR
+Note [in test_read]: line 6 char 7 : Resynching at EOR
 [line 6]000006>>>a66b<<<
 test_read returned: error
 calling test_read
