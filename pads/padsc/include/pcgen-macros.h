@@ -330,10 +330,13 @@ do {
     PDCI_IO_ENDLOC_MINUS1(pads, pd->the_field.loc);
     swap_call;
     if (usercheck) {
+       PerrorRep erep_PCGEN_ = pads->disc->e_rep;
+       pads->disc->e_rep = PerrorRep_Med;
        pads->disc->d_endian = ((pads->disc->d_endian == PbigEndian) ? PlittleEndian : PbigEndian);
        PDCI_report_err(pads, P_LEV_INFO, &(pd->the_field.loc), P_NO_ERR, fn_nm,
                        "New data endian value: %s.  Machine endian value: %s (from " PDCI_MacroArg2String(the_field) " field test)",
                        Pendian2str(pads->disc->d_endian), Pendian2str(pads->m_endian));
+       pads->disc->e_rep = erep_PCGEN_;
     } else {
       swap_call;
       PDCI_STRUCT_ELT_CONSTRAINT_ERR(fn_nm, the_field);
@@ -671,10 +674,13 @@ do {
     PDCI_IO_ENDLOC_MINUS1(pads, pd->the_field.loc);
     swap_call;
     if (usercheck) {
+       PerrorRep erep_PCGEN_ = pads->disc->e_rep;
+       pads->disc->e_rep = PerrorRep_Med;
        pads->disc->d_endian = ((pads->disc->d_endian == PbigEndian) ? PlittleEndian : PbigEndian);
        PDCI_report_err(pads, P_LEV_INFO, &(pd->the_field.loc), P_NO_ERR, fn_nm,
                        "New data endian value: %s.  Machine endian value: %s (from " PDCI_MacroArg2String(the_field) " field test)",
                        Pendian2str(pads->disc->d_endian), Pendian2str(pads->m_endian));
+       pads->disc->e_rep = erep_PCGEN_;
     } else {
       swap_call;
       PDCI_ALT_ELT_CONSTRAINT_ERR(fn_nm, the_field);
