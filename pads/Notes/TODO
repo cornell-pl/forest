@@ -92,7 +92,7 @@ NEW
     to indicate that status.
 
   * implement set but no check
-
+  * generate better error message if field type is non-existent.
 
 OLD (some of them are done)
   * make enum.p work (strings that match c keywordsk, etc)

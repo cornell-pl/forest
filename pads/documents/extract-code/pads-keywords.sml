@@ -17,7 +17,7 @@ structure PadsKeywords : sig
 	  fun ins (s, item) = insert (Atom.atom s, item)
 	  in
 	    app ins [
-(*  Don't want c keywords in bold
+(*  comment out if don't want c keywords in bold *)
               ("break", T.Keyword),
 	      ("case", T.Keyword),
 	      ("continue", T.Keyword),
@@ -49,7 +49,6 @@ structure PadsKeywords : sig
 	      ("return", T.Keyword),
 	      ("switch", T.Keyword),
 	      ("while", T.Keyword),
-*)
  	       ("const", T.Keyword),
                ("ptypedef", T.Keyword),
                ("pstruct", T.Keyword),

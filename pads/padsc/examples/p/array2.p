@@ -1,4 +1,4 @@
 #define LIST_SIZE 10
-precord parray intList {
-  a_int32 [LIST_SIZE] : sep == '|' && forall i in elts { elts[i] == intList[i]};
+Precord Parray intList {
+  Pint32 [LIST_SIZE] : Psep == '|' && Pforall i Pin elts { elts[i] == intList[i]};
 };

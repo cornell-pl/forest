@@ -13,7 +13,6 @@ structure ParseTreeExt =
 		    comment : string option}
 	 | Manifest of { decl : 'dt * ('decr * 'exp) list, comment : string option}
          | Brief of 'exp
-         | EOR
 
         datatype 'exp PSize = 
            SizeInfo of {min : 'exp option, max : 'exp option, maxTight : bool}

@@ -1,12 +1,12 @@
-pstruct test {
-  aint32 id : id < 100000;     //- identity 
+Pstruct test {
+  Pint32 id : id < 100000;     /- identity 
   '|';
-  aint32 ts : ts == 11 * id;   //- time stamp
+  Pint32 ts : ts == 11 * id;   /- time stamp
 };
 
-precord punion test2 {
+Precord Punion test2 {
   test bigger;
-  aint32 two;
+  Pint32 two;
 };
 
 

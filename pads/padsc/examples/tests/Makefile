@@ -96,7 +96,7 @@ test_depends  :: test_depends.c   depends.c     -lpadsc
 test_copy     :: test_copy.c	  format1.c	-lpadsc
 test_copy_format3     :: test_copy_format3.c	  format3.c	-lpadsc
 test_copy_format5     :: test_copy_format5.c	  format5.c	-lpadsc
-
+test_write_struct     :: test_write_struct.c      struct.c      -lpadsc
 
 regress_test_format1 : test_format1
 	(set +x; test -d tmp || mkdir tmp)

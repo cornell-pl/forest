@@ -67,6 +67,7 @@ struct
     val ulonglong  = makePCT [PT.Long, PT.Long, PT.Unsigned]
     val float      = makePCT [PT.Float]
     val double     = makePCT [PT.Double]
+    val intPtr     = ptrPCT  int
     val charPtr    = ptrPCT  char
     val ccharPtr   = ptrPCT {qualifiers = [PT.CONST], specifiers = [PT.Char]}
     val ucharPtr   = ptrPCT  uchar
@@ -101,6 +102,7 @@ struct
     fun orX (e1,e2)       = PT.Binop(PT.Or,e1,e2)
     fun plusX (e1,e2)     = PT.Binop(PT.Plus,e1,e2)
     fun minusX (e1,e2)    = PT.Binop(PT.Minus,e1,e2)
+    fun minusAssignS(e1,e2)= PT.Expr(PT.Binop(PT.MinusAssign,e1,e2))
     fun timesX (e1,e2)    = PT.Binop(PT.Times,e1,e2)
     fun rshiftX (e1,e2)   = PT.Binop(PT.Rshift,e1,e2)
     fun modX (e1,e2)      = PT.Binop(PT.Mod,e1,e2)
@@ -114,6 +116,7 @@ struct
     fun strIsNonNull name = PT.Binop(PT.Neq,PT.Id name,zero)
     fun subX(e1,e2)       = PT.Binop(PT.Sub, e1, e2)
     fun timesX(e1,e2)     = PT.Binop(PT.Times, e1, e2)
+    fun timesAssignS(e1,e2) = PT.Expr(PT.Binop(PT.TimesAssign,e1,e2))
     val emptyS            = (PT.Expr PT.EmptyExpr)
     fun returnS e         = PT.Return(e) 
     fun condX (e1,e2,e3)  = PT.QuestionColon(e1,e2,e3)

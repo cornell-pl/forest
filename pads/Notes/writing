@@ -2,7 +2,10 @@
 
 /* predeclare internal routines */
 ssize_t test_write2io_internal (PDC_t *pdc, Sfio_t *io, <test_params>, test_ed *ed, test *rep);
+ssize_t test_write2io          (PDC_t *pdc, Sfio_t *io, <test_params>, test_ed *ed, test *rep)
+
 ssize_t test_write2buf_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, <test_params>, test_ed *ed, test *rep)
+ssize_t test_write2buf         (PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, <test_params>, test_ed *ed, test *rep)
 
 ssize_t
 test_write2io (PDC_t *pdc, Sfio_t *io, <test_params>, test_ed *ed, test *rep)

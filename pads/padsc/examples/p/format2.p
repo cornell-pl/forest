@@ -1,8 +1,7 @@
-pstruct test {
-  a_uint32 id1;
+Precord Pstruct test {
+  Pint32 id1;
   '|';
-  a_uint32 id2;
+  Puint32 id2;
   "|";
-  a_uint32 id3;
-  EOR;
+  Puint32 id3;
 };

@@ -64,6 +64,7 @@ struct
   val locPCT       = P.makeTypedefPCT "PDC_loc_t"
   val errCodePCT   = P.makeTypedefPCT "PDC_errCode_t"
   val sizePCT      = P.makeTypedefPCT "size_t"
+  val ssizePCT     = P.makeTypedefPCT "ssize_t"
 
   val rbufferPCT   = P.makeTypedefPCT "RBuf_t"
   val rMMPCT       = P.makeTypedefPCT "RMM_t"
@@ -71,16 +72,23 @@ struct
   val base_csmPCT  = P.makeTypedefPCT "PDC_base_csm"
   val base_edPCT   = P.makeTypedefPCT "PDC_base_ed"
   val bytePCT      = P.makeTypedefPCT "PDC_byte"
+  val bytePtr      = P.ptrPCT(bytePCT)
+  val VoidPtr      = P.ptrPCT(P.makeTypedefPCT "Void_t")
 
   val charlit      = "PDC_a_char_lit"
   val strlit       = "PDC_a_str_lit"
+  val strlitWrite  = "PDC_a_Cstr_lit"
   val stringPCT    = P.makeTypedefPCT "PDC_string"
   val str          = "str"
   val len          = "len"
   val errorf       = "errorf"
   val disc         = "disc"
   val io_disc      = "io_disc"
+  val outbuf       = "outbuf"
+  val outBufLen    = "outbuf_len"
+  val outBufRes    = "outbuf_res"
 
+  val prefix       = "PDC_"
  
   val d_endian     = "d_endian"
   val m_endian     = "m_endian"
@@ -201,6 +209,24 @@ struct
       (*void RBuf_CPY_SRC2DEST(RBuf_t*, RBuf_t*, void * dest, size_t, RMM_t* ); *)
     PT.Expr(PT.Call(PT.Id "RBuf_CPY_SRC2DEST", [psrcRbuf, pdstRbuf, destX, size, mm]))
 
+  fun discChecks(prefix) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_DISC_INIT_CHECKS", [prefix]))
+
+  fun IODiscChecks(prefix) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_INIT_CHECKS", [prefix]))
+
+  fun nullCheck(prefix, ptrX) =
+    PT.Expr(PT.Call(PT.Id "PDCI_NULLPARAM_CHECK", [prefix, PT.Cast(P.voidPtr, ptrX)]))
+
+  fun discChecksSizeRet(prefix) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_DISC_INIT_CHECKS_RET_SSIZE", [prefix]))
+
+  fun IODiscChecksSizeRet(prefix) = 
+    PT.Expr(PT.Call(PT.Id "PDCI_IODISC_INIT_CHECKS_RET_SSIZE", [prefix]))
+
+  fun nullCheckSizeRet(prefix, ptrX) =
+    PT.Expr(PT.Call(PT.Id "PDCI_NULLPARAM_CHECK_RET_SSIZE", [prefix, PT.Cast(P.voidPtr, ptrX)]))
+
 (* -- File manipulation routines *)
   fun getLocS(pdc:PT.expression, locAddr:PT.expression) = 
     PT.Expr(PT.Call(PT.Id "PDC_IO_getLoc", [pdc, locAddr, P.zero]))
@@ -254,12 +280,32 @@ struct
 	                res:PT.expression, offset:PT.expression) = 
       PT.Call(PT.Id n, [pdc,c,s,eatLit,res,offset])
 
-  fun IONextRecX(pdc, namp) = PT.Call(PT.Id "PDC_IO_next_rec", [pdc, namp])
-
   fun nstPrefixWhat(outstr, pnst, prefix, what) = 
       PT.Expr(PT.Call(PT.Id "PDCI_nst_prefix_what", [outstr, pnst, prefix, what]))
 
+
+(* -- reading/writing record functions *)
+  fun IOReadNextRecX(pdc, namp) = PT.Call(PT.Id "PDC_IO_next_rec", [pdc, namp])
+
+  fun writeStartX(pdc,io,bufLen,setBuf, whatFn) = 
+      PT.Call(PT.Id "PDCI_IO_write_start", [pdc,io,bufLen,setBuf, whatFn])
+
+  fun writeCommitX(pdc,io,buf,setBuf, length, whatFn) = 
+      PT.Call(PT.Id "PDCI_IO_write_commit", [pdc,io,buf,setBuf,length, whatFn])
+
+  fun writeAbortX(pdc,io,buf,setBuf, whatFn) = 
+      PT.Call(PT.Id "PDCI_IO_write_abort", [pdc,io,buf,setBuf, whatFn])
+  fun writeAbortS(pdc,io,buf,setBuf,whatFn) = PT.Expr(writeAbortX(pdc,io,buf,setBuf, whatFn))
+
+  fun recOpenBufWrite(pdc, bufCursor, bufLen, bufFull, whatFn) = 
+      PT.Call(PT.Id "PDCI_IO_rec_open_write2buf", [pdc, bufCursor,bufLen,bufFull, whatFn])
+
+  fun recCloseBufWrite(pdc, bufCursor, bufLen, bufFull, buf, length, whatFn) = 
+      PT.Call(PT.Id "PDCI_IO_rec_close_write2buf", [pdc, bufCursor,bufLen,bufFull,buf,length, whatFn])
+
 (* -- Sfio functions *)
+  val SF_LOCKR = PT.Id "SF_LOCKR"
+
   fun sfstrclose(str:PT.expression) = 
     PT.Expr(PT.Call(PT.Id "sfstrclose", [str]))
 
@@ -271,10 +317,20 @@ struct
   fun sfstruse (tmpstr : PT.expression) = 
       PT.Call(PT.Id "sfstruse", [tmpstr])
 
+  fun sfsetbufX (io, buf, flags) = 
+      PT.Call(PT.Id "sfsetbuf", [io,PT.Cast(VoidPtr, buf),flags])
+  fun sfsetbufS (io, buf, flags) = PT.Expr (sfsetbufX(io,buf,flags))
+
+  fun sfreserveX (io, buf, flags) = PT.Cast(bytePtr, PT.Call(PT.Id "sfreserve", [io,buf,flags]))
+  fun sfreserveS (io, buf, flags) = PT.Expr (sfreserveX(io,buf,flags))
+
+  fun sfwriteX(ioX, bufX, lengthX) = PT.Call(PT.Id "sfwrite", [ioX, PT.Cast(VoidPtr, bufX), lengthX])
+  fun sfwriteS(ioX, bufX, lengthX) = PT.Expr(sfwriteX(ioX, bufX, lengthX))
 
 (* -- C helper functions *)
   fun bzeroX (spX, sizeX) = PT.Call(PT.Id "memset",[PT.Cast(P.voidPtr, spX), P.zero, sizeX])
   fun bzeroS (spX, sizeX) = PT.Expr(bzeroX(spX,sizeX))
+
   fun memcpyX (dstX, srcX, sizeX) = PT.Call(PT.Id "memcpy", 
 					   [PT.Cast(P.voidPtr, dstX), 
 					    PT.Cast(P.voidPtr, srcX), sizeX])

@@ -23,7 +23,7 @@ structure Main : sig
       structure Lexer = SMLLexer)
     structure PADS_FE = ScannerFn (
       val name = "pads"
-      val exts = ["p"]
+      val exts = ["p", "c", "h"]
       structure Lexer = PadsLexer)
 
     type file_set = O.outfile list

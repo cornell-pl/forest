@@ -1,13 +1,13 @@
-precord punion dibblerPN(int x){
-  a_uint32 code : code %x == 0;  
-  a_uint32 pn;  //- phone number
+Precord Punion dibblerPN(int x){
+  Puint32 code : code %x == 0;  
+  Puint32 pn;  /- phone number
 };
 
-precord pstruct int32record{
-  a_uint32 x;
+Precord Pstruct int32record{
+  Puint32 x;
 }
 
-pstruct call{
+Pstruct call{
   int32record x;
   dibblerPN(:x.x:) pn; 
 }	    

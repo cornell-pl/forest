@@ -1,11 +1,11 @@
-pstruct test {
-  a_uint32 id : id < 100000;     //- identity 
+Pstruct test {
+  Puint32 id : id < 100000;     /- identity 
   '|';
-  a_uint32 ts : ts == 11 * id;   //- time stamp
+  Puint32 ts : ts == 11 * id;   /- time stamp
 };
 
-precord pstruct testtwo{
-  test header;
+Precord Pstruct testtwo{
+  test header : header.id == 12;
   '|';
-  a_uint32 f : f == header.ts;   
+  Puint32 f : f == header.ts;   
 };

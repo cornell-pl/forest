@@ -234,7 +234,7 @@ end
  	| ASSOCIATIVE | TO | KWAND                                         (* D *)     
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
-        | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT | EOR (* PADS *)
+        | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PTYPEDEF | PSTRUCT | PUNION | PARRAY | PENUM (* PADS *)
 	| PSEP | PTERM | PFORALL | PIN | POMIT | PENDIAN | PCOMPUTE | PRECORD | PFILE | PWHERE (* PADS *)
 
@@ -1080,7 +1080,6 @@ pStructField: POMIT  PENDIAN pName pOptActParams ID  pConstraintOpt SEMICOLON pC
 						pred = pConstraintOpt,
                                                 comment = pCommentOpt})	
   | PCOMPUTE pManifestField SEMICOLON pCommentOpt   (PX.Manifest{decl = pManifestField, comment=pCommentOpt})
-  | EOR  SEMICOLON                    (PX.EOR)
   | expr SEMICOLON                    (PX.Brief expr)
 
 pStructFieldList: 

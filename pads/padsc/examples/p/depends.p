@@ -1,10 +1,10 @@
-parray intList {
-  a_int32 [] : sep == '|' && term == '.' ;
+Parray intList {
+  Pint32 [] : Psep == '|' && Pterm == '.' ;
 };
 
-punion auth_id_t {
-  a_char unauthorized : unauthorized == '-';    /- non-authenticated http session
-  a_string(:' ':) id;                           /- login supplied during authentication
+Punion auth_id_t {
+  Pchar unauthorized : unauthorized == '-';    /- non-authenticated http session
+  Pstring(:' ':) id;                           /- login supplied during authentication
 };
 
 int check(PDC_int32 t, auth_id_t user){
@@ -18,9 +18,9 @@ int check(PDC_int32 t, auth_id_t user){
   }
 };
 
-precord pstruct line{
+Precord Pstruct line{
        intList    f;
-       a_int32    a : a == f.length;
+       Pint32    a : a == f.length;
   ' '; auth_id_t  user;
-  ' '; a_int32    t : check(t, user);
+  ' '; Pint32    t : check(t, user);
 }
