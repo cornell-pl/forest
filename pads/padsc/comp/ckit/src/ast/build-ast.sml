@@ -1376,7 +1376,7 @@ let
     | cnvExternalDecl (PT.MARKexternalDecl (loc,extDecl)) =
        (pushLoc loc;
 	cnvExternalDecl extDecl
-	before popLoc ())
+	(* defer popping until makeAst' so that top level types get the correct location before popLoc ()*))
     | cnvExternalDecl (PT.ExternalDeclExt extDecl) =
        CNVExternalDecl extDecl
 
@@ -3070,6 +3070,7 @@ end old code ******)
 		       in (List.map (fn x => wrapDECL(Ast.ExternalDecl(Ast.TypeDecl{shadow=NONE, tid=x})))
 			            newtids)
 			   @ astExtDecl
+			   before popLoc() (* PADS: pop location info left for these newtids *)
 		      end
 	       in List.map process extDecls
 	      end
