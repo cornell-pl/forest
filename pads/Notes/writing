@@ -3,9 +3,11 @@ int test_write (PDC_t *pdc,Sfio_t *io,test_ed *ed,test *rep)
 {
   int length=-1;
   PDC_byte *buf=0;
-  int setBuf=0;
-  int bufferFull=0;
+  int set_buf=0;
+  int buf_full=0;
   test_ed ted;
+  size_t buf_len;
+
   PDCI_DISC_INIT_CHECKS("test_write");
   PDCI_NULLPARAM_CHECK( "test_write" , io );
   PDCI_NULLPARAM_CHECK( "test_write" , rep );
@@ -15,23 +17,24 @@ int test_write (PDC_t *pdc,Sfio_t *io,test_ed *ed,test *rep)
       memset ((void *) (&ted),0,sizeof(test_ed));
       ed = (&ted);
     }
-  buf = PDCI_write_start (pdc,io,pdc->outbuf_res /* if know printed size, fill in here */, &setBuf, 1/0 /*record/not record*/);
+  buf_len = pdc->outbuf_res; /* if know printed size, fill in here */
+  buf = PDCI_write_start (pdc, io, &buf_len, &set_buf, 1/0 /*record/not record*/);
   if (!buf) 
     {
       /* don't have to abort because start failed */
       return -1;
     }
-  length = test_write_internal (pdc,buf,pdc->outbuf_res,&bufferFull,ed,rep);
+  length = test_write_internal (pdc, buf, buf_len, &buf_full, ed, rep);
   /* 
- We could check bufferFull and redo with a bigger buffer 
+ We could check buf_full and redo with a bigger buffer 
  */
   if (length>=0) 
     {
-      length = PDCI_write_commit (pdc, io, buf, length, setBuf, 1/0 /* record/not record */);
+      length = PDCI_write_commit (pdc, io, buf, length, set_buf, 1/0 /* record/not record */);
     }
   else
     {
-      PDCI_write_abort (pdc, io, buf, setBuf, 1/0 /* record/not record */);
+      PDCI_write_abort (pdc, io, buf, set_buf, 1/0 /* record/not record */);
     }
   
   return length;
@@ -40,21 +43,21 @@ int test_write (PDC_t *pdc,Sfio_t *io,test_ed *ed,test *rep)
 int write_external(PDC_t *pdc, Sfio_t *io, <params>, ed, can){
   int length = -1;
   PDC_byte * buf = 0;
-  int setBuf = 0;  
-  int bufferFull = 0;
+  int set_buf = 0;  
+  int buf_full = 0;
   ted 
   if !(pdc and io and can) {report error; goto write_External_done;};
   if !ed then {memset(&ted,0,sizeof(ted)); ed = &ted;};
 
   if !sfsetbuf(io, (Void_t *)1, 0)  {
     sfsetbuf(io, pdc->outbuf, pdc->outbuf_len);
-    setBuf = 1;
+    set_buf = 1;
   }
   buf = (PDC_byte *) sfreserve(io,pdc->outbuf_res, SF_LOCKR);
   if (!buf) { report error; length = -1; goto write_External_done;};
 
-  length = write_internal(pdc, buf, pdc->outbuf_res, &bufferFull, <params>, ed, can);
-  /* could check bufferFull and redo with bigger buffer, potentially in while loop */
+  length = write_internal(pdc, buf, pdc->outbuf_res, &buf_full, <params>, ed, can);
+  /* could check buf_full and redo with bigger buffer, potentially in while loop */
   if (length >= 0) {
     length = sfwrite(io, (Void_t *)buf, length);
   } else {
@@ -63,28 +66,30 @@ int write_external(PDC_t *pdc, Sfio_t *io, <params>, ed, can){
   }
 
 write_External_done:
-  if (setBuf) {
+  if (set_buf) {
     sfsetbuf(io, (Void_t *)0, 0);
   }
   return length;
 };
 
-int write_internal(PDC_t *pdc, PDC_byte *buf, size_t remain, int * bufferFull, <params>,ed, can){
+int write_internal(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int * buf_full, <params>,ed, can){
   int length = 0;
   int tlen;
   
-  tlen = write_foo_internal(pdc, buf, remain, bufferFull, <params>, &ed->field, &can->field);
+  tlen = write_foo_internal(pdc, buf, buf_len, buf_full, <params>, &ed->field, &can->field);
   if (tlen < 0) {
     return -1;
   };
+  buf += tlen;
   length += tlen;
-  remain -= tlen;
-  tlen = write_literal_internal(pdc, buf, remain, bufferFull, <params>, "-");
+  buf_len -= tlen;
+  tlen = write_literal_internal(pdc, buf, buf_len, buf_full, <params>, "-");
   if (tlen < 0) {
     return -1;
   };
+  buf += tlen;
   length += tlen;
-  remain -= tlen;
+  buf_len -= tlen;
   /* ... repeat for all pieces of the struct ... */
   return length;
 }  

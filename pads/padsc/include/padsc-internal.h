@@ -70,65 +70,171 @@ int          PDC_IO_at_EOF_internal   (PDC_t *pdc);
 PDC_error_t  PDC_IO_getPos_internal   (PDC_t *pdc, PDC_pos_t *pos, int offset); 
 
 /* ================================================================================ */ 
+/* INTERNAL VERSIONS OF SCAN FUNCTIONS */
+
+#define PDC_char_lit_scan_internal(pdc, c, s, eat_lit, c_out, offset_out) \
+          PDCI_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out, pdc->disc->def_charclass, "[in PDC_char_lit_scan]")
+
+#define PDC_a_char_lit_scan_internal(pdc, c, s, eat_lit, c_out, offset_out) \
+          PDCI_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out, PDC_charclass_ASCII, "[in PDC_a_char_lit_scan]")
+
+#define PDC_e_char_lit_scan_internal(pdc, c, s, eat_lit, c_out, offset_out) \
+          PDCI_char_lit_scan(pdc, c, s, eat_lit, c_out, offset_out, PDC_charclass_EBCDIC, "[in PDC_e_char_lit_scan]")
+
+#define PDC_str_lit_scan_internal(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
+          PDCI_str_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, pdc->disc->def_charclass, "[in PDC_str_lit_scan]")
+
+#define PDC_a_str_lit_scan_internal(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
+          PDCI_str_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDC_charclass_ASCII, "[in PDC_a_str_lit_scan]")
+
+#define PDC_e_str_lit_scan_internal(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
+          PDCI_str_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDC_charclass_EBCDIC, "[in PDC_e_str_lit_scan]")
+
+#define PDC_Cstr_lit_scan_internal(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
+          PDCI_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, pdc->disc->def_charclass, "[in PDC_Cstr_lit_scan]")
+
+
+#define PDC_a_Cstr_lit_scan_internal(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
+          (pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDC_charclass_ASCII, "[in PDC_a_Cstr_lit_scan]")
+
+#define PDC_e_Cstr_lit_scan_internal(pdc, findStr, stopStr, eat_lit, str_out, offset_out) \
+          PDCI_Cstr_lit_scan(pdc, findStr, stopStr, eat_lit, str_out, offset_out, PDC_charclass_EBCDIC, "[in PDC_e_Cstr_lit_scan]")
+
+/* ================================================================================ */ 
 /* INTERNAL VERSIONS OF ALL BASE TYPE READ FUNCTIONS */
 
-PDC_error_t PDC_char_lit_read_internal(PDC_t *pdc, PDC_base_csm *csm,
-				       PDC_base_ed *ed, PDC_byte c);
+/* read functions that involve character class */
 
-PDC_error_t PDC_str_lit_read_internal(PDC_t *pdc, PDC_base_csm *csm,
-				      PDC_base_ed *ed, const PDC_string *s);
+#define PDC_char_lit_read_internal(pdc, csm, ed, c) \
+          PDCI_char_lit_read(pdc, csm, ed, c, pdc->disc->def_charclass, "[in PDC_char_lit_read]")
 
-PDC_error_t PDC_countX_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_uint8 x, int eor_required,
-				PDC_base_ed *ed, PDC_int32 *res_out);
+#define PDC_a_char_lit_read_internal(pdc, csm, ed, c) \
+          PDCI_char_lit_read(pdc, csm, ed, c, PDC_charclass_ASCII, "[in PDC_a_char_lit_read]")
 
-PDC_error_t PDC_countXtoY_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
-				   PDC_base_ed *ed, PDC_int32 *res_out);
+#define PDC_e_char_lit_read_internal(pdc, csm, ed, c) \
+          PDCI_char_lit_read(pdc, csm, ed, c, PDC_charclass_EBCDIC, "[in PDC_e_char_lit_read]")
 
-PDC_error_t PDC_a_date_read_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_byte stopChar,
-				     PDC_base_ed *ed, PDC_uint32 *res_out);
 
-PDC_error_t PDC_e_date_read_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_byte stopChar,
-				     PDC_base_ed *ed, PDC_uint32 *res_out);
+#define PDC_str_lit_read_internal(pdc, csm, ed, s) \
+          PDCI_str_lit_read(pdc, csm, ed, s, pdc->disc->def_charclass, "[in PDC_str_lit_read]")
 
-PDC_error_t PDC_a_char_read_internal (PDC_t *pdc, PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
+#define PDC_a_str_lit_read_internal(pdc, csm, ed, s) \
+          PDCI_str_lit_read(pdc, csm, ed, s, PDC_charclass_ASCII, "[in PDC_a_str_lit_read]")
 
-PDC_error_t PDC_e_char_read_internal (PDC_t *pdc, PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out);
+#define PDC_e_str_lit_read_internal(pdc, csm, ed, s) \
+          PDCI_str_lit_read(pdc, csm, ed, s, PDC_charclass_EBCDIC, "[in PDC_e_str_lit_read]")
 
-PDC_error_t PDC_a_string_FW_read_internal(PDC_t *pdc, PDC_base_csm *csm, size_t width,
-					  PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_a_string_read_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_byte stopChar,
-				       PDC_base_ed *ed, PDC_string *s_out);
+#define PDC_Cstr_lit_read_internal(pdc, csm, ed, s) \
+          PDCI_Cstr_lit_read(pdc, csm, ed, s, pdc->disc->def_charclass, "[in PDC_Cstr_lit_read]")
 
-PDC_error_t PDC_a_string_ME_read_internal(PDC_t *pdc, PDC_base_csm *csm, const char *matchRegexp,
-					  PDC_base_ed *ed, PDC_string *s_out);
+#define PDC_a_Cstr_lit_read_internal(pdc, csm, ed, s) \
+          PDCI_Cstr_lit_read(pdc, csm, ed, s, PDC_charclass_ASCII, "[in PDC_a_Cstr_lit_read]")
 
-PDC_error_t PDC_a_string_CME_read_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
-					   PDC_base_ed *ed, PDC_string *s_out);
+#define PDC_e_Cstr_lit_read_internal(pdc, csm, ed, s) \
+          PDCI_Cstr_lit_read(pdc, csm, ed, s, PDC_charclass_EBCDIC, "[in PDC_e_Cstr_lit_read]")
 
-PDC_error_t PDC_a_string_SE_read_internal(PDC_t *pdc, PDC_base_csm *csm, const char *stopRegexp,
-					  PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_a_string_CSE_read_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
-					   PDC_base_ed *ed, PDC_string *s_out);
+#define PDC_countX_internal(pdc, csm, x, eor_required, ed, res_out) \
+          PDCI_countX(pdc, csm, x, eor_required, ed, res_out, pdc->disc->def_charclass, "[in PDC_countX]")
 
-PDC_error_t PDC_e_string_FW_read_internal(PDC_t *pdc, PDC_base_csm *csm, size_t width,
-					  PDC_base_ed *ed, PDC_string *s_out);
+#define PDC_a_countX_internal(pdc, csm, x, eor_required, ed, res_out) \
+          PDCI_countX(pdc, csm, x, eor_required, ed, res_out, PDC_charclass_ASCII, "[in PDC_a_countX]")
 
-PDC_error_t PDC_e_string_read_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_byte stopChar,
-				       PDC_base_ed *ed, PDC_string *s_out);
+#define PDC_e_countX_internal(pdc, csm, x, eor_required, ed, res_out) \
+          PDCI_countX(pdc, csm, x, eor_required, ed, res_out, PDC_charclass_EBCDIC, "[in PDC_e_countX]")
 
-PDC_error_t PDC_e_string_ME_read_internal(PDC_t *pdc, PDC_base_csm *csm, const char *matchRegexp,
-					  PDC_base_ed *ed, PDC_string *s_out);
 
-PDC_error_t PDC_e_string_CME_read_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
-					   PDC_base_ed *ed, PDC_string *s_out);
+#define PDC_countXtoY_internal(pdc, csm, x, y, ed, res_out) \
+          PDCI_countXtoY(pdc, csm, x, y, ed, res_out, pdc->disc->def_charclass, "[in PDC_countXtoY]")
 
-PDC_error_t PDC_e_string_SE_read_internal(PDC_t *pdc, PDC_base_csm *csm, const char *stopRegexp,
-					  PDC_base_ed *ed, PDC_string *s_out);
+#define PDC_a_countXtoY_internal(pdc, csm, x, y, ed, res_out) \
+          PDCI_countXtoY(pdc, csm, x, y, ed, res_out, PDC_charclass_ASCII, "[in PDC_a_countXtoY]")
 
-PDC_error_t PDC_e_string_CSE_read_internal(PDC_t *pdc, PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
-					   PDC_base_ed *ed, PDC_string *s_out);
+#define PDC_e_countXtoY_internal(pdc, csm, x, y, ed, res_out) \
+          PDCI_countXtoY(pdc, csm, x, y, ed, res_out, PDC_charclass_EBCDIC, "[in PDC_e_countXtoY]")
+
+
+#define PDC_date_read_internal(pdc, csm, stopChar, ed, res_out) \
+          PDCI_date_read(pdc, csm, stopChar, ed, res_out, pdc->disc->def_charclass, "[in PDC_date_read]")
+
+#define PDC_a_date_read_internal(pdc, csm, stopChar, ed, res_out) \
+          PDCI_date_read(pdc, csm, stopChar, ed, res_out, PDC_charclass_ASCII, "[in PDC_a_date_read]")
+
+#define PDC_e_date_read_internal(pdc, csm, stopChar, ed, res_out) \
+          PDCI_date_read(pdc, csm, stopChar, ed, res_out, PDC_charclass_EBCDIC, "[in PDC_e_date_read]")
+
+
+#define PDC_char_read_internal(pdc, csm, ed, c_out) \
+          PDCI_char_read(pdc, csm, ed, c_out, pdc->disc->def_charclass, "[in PDC_char_read]")
+
+#define PDC_a_char_read_internal(pdc, csm, ed, c_out) \
+          PDCI_char_read(pdc, csm, ed, c_out, PDC_charclass_ASCII, "[in PDC_a_char_read]")
+
+#define PDC_e_char_read_internal(pdc, csm, ed, c_out) \
+          PDCI_char_read(pdc, csm, ed, c_out, PDC_charclass_EBCDIC, "[in PDC_e_char_read]")
+
+
+#define PDC_string_FW_read_internal(pdc, csm, width, ed, s_out) \
+          PDCI_string_FW_read(pdc, csm, width, ed, s_out, pdc->disc->def_charclass, "[in PDC_string_FW_read]")
+
+#define PDC_a_string_FW_read_internal(pdc, csm, width, ed, s_out) \
+          PDCI_string_FW_read(pdc, csm, width, ed, s_out, PDC_charclass_ASCII, "[in PDC_a_string_FW_read]")
+
+#define PDC_e_string_FW_read_internal(pdc, csm, width, ed, s_out) \
+          PDCI_string_FW_read(pdc, csm, width, ed, s_out, PDC_charclass_EBCDIC, "[in PDC_e_string_FW_read]")
+
+
+#define PDC_string_read_internal(pdc, csm, stopChar, ed, s_out) \
+          PDCI_string_read(pdc, csm, stopChar, ed, s_out, pdc->disc->def_charclass, "[in PDC_string_read]")
+
+#define PDC_a_string_read_internal(pdc, csm, stopChar, ed, s_out) \
+          PDCI_string_read(pdc, csm, stopChar, ed, s_out, PDC_charclass_ASCII, "[in PDC_a_string_read]")
+
+#define PDC_e_string_read_internal(pdc, csm, stopChar, ed, s_out) \
+          PDCI_string_read(pdc, csm, stopChar, ed, s_out, PDC_charclass_EBCDIC, "[in PDC_e_string_read]")
+
+
+#define PDC_string_ME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
+          PDCI_string_ME_read(pdc, csm, matchRegexp, ed, s_out, pdc->disc->def_charclass, "[in PDC_string_ME_read]")
+
+#define PDC_a_string_ME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
+          PDCI_string_ME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charclass_ASCII, "[in PDC_a_string_ME_read]")
+
+#define PDC_e_string_ME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
+          PDCI_string_ME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charclass_EBCDIC, "[in PDC_e_string_ME_read]")
+
+
+#define PDC_string_CME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
+          PDCI_string_CME_read(pdc, csm, matchRegexp, ed, s_out, pdc->disc->def_charclass, "[in PDC_string_CME_read]")
+
+#define PDC_a_string_CME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
+          PDCI_string_CME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charclass_ASCII, "[in PDC_a_string_CME_read]")
+
+#define PDC_e_string_CME_read_internal(pdc, csm, matchRegexp, ed, s_out) \
+          PDCI_string_CME_read(pdc, csm, matchRegexp, ed, s_out, PDC_charclass_EBCDIC, "[in PDC_e_string_CME_read]")
+
+
+#define PDC_string_SE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
+          PDCI_string_SE_read(pdc, csm, stopRegexp, ed, s_out, pdc->disc->def_charclass, "[in PDC_string_SE_read]")
+
+#define PDC_a_string_SE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
+          PDCI_string_SE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charclass_ASCII, "[in PDC_a_string_SE_read]")
+
+#define PDC_e_string_SE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
+          PDCI_string_SE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charclass_EBCDIC, "[in PDC_e_string_SE_read]")
+
+
+#define PDC_string_CSE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
+          PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, pdc->disc->def_charclass, "[in PDC_string_CSE_read]")
+
+#define PDC_a_string_CSE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
+          PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charclass_ASCII, "[in PDC_a_string_CSE_read]")
+
+#define PDC_e_string_CSE_read_internal(pdc, csm, stopRegexp, ed, s_out) \
+          PDCI_string_CSE_read(pdc, csm, stopRegexp, ed, s_out, PDC_charclass_EBCDIC, "[in PDC_e_string_CSE_read]")
+
+
 
 /* ================================================================================ */ 
 /* HELPER MACRO TO DECLARE FAMILY OF FUNCTIONS */
@@ -182,6 +288,10 @@ PDCI_DECL_FAMILY(PDC_error_t, PDC_sbl_, fpoint, _read_internal, res_out);
 PDCI_DECL_FAMILY(PDC_error_t, PDC_sbh_, fpoint, _read_internal, res_out);
 
 /* INTERNAL VERSIONS OF WRITE FUNCTIONS */
+
+int PDC_a_char_lit_write_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, PDC_byte c);
+int PDC_a_str_lit_write_internal (PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, PDC_string *s);
+int PDC_a_Cstr_lit_write_internal(PDC_t *pdc, PDC_byte* buf, size_t buf_len, int *buf_full, const char *s);
 
 #undef PDCI_FIRST_ARGS
 #define PDCI_FIRST_ARGS PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_base_ed *ed
@@ -313,6 +423,30 @@ PDC_error_t  PDCI_IO_morebytes (PDC_t *pdc, PDC_byte **b_out, PDC_byte **p1_out,
 PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
 
 /*
+ * PDCI_IO_start_write:  Alloc a buffer buf associated with an output Sfio stream
+ *                       that can be filled in using the internal write functions.
+ *                       Must be paired with either commit_write or abort_write. 
+ *                       is_rec specifies whether this is the start of a record write,
+ *                       Param buf_len specifies how many bytes to allocate in buf, and
+ *                       can be modified to a greater value if an existing buffer of
+ *                       larger size is used.  Param set_buf is set to indicate whether the
+ *                       stream's buffer has been set.  The same buf, io, set_buf, is_rec
+ *                       must be passed to the paired commit_write or abort_write.
+ *                       Returns NULL on failure, buf on success.
+ *
+ * PDCI_IO_commit_write: Write num_bytes bytes from buf to the stream, de-alloc buf.
+ *                       Returns -1 on error, otherwise number of bytes written, which will
+ *                       be greater than num_bytes if is_rec is non-zero and writing
+ *                       a record happes to involve additional header/trailer bytes.
+ * 
+ * PDCI_IO_abort_write:  de-alloc buf without writing anything to io.
+ */
+
+PDC_byte*   PDCI_IO_start_write (PDC_t *pdc, Sfio_t *io, size_t *buf_len, int *set_buf, int is_rec);
+int         PDCI_IO_commit_write(PDC_t *pdc, Sfio_t *io, PDC_byte *buf, size_t num_bytes, int set_buf, int is_rec);
+PDC_error_t PDCI_IO_abort_write (PDC_t *pdc, Sfio_t *io, PDC_byte *buf, int set_buf, int is_rec);
+
+/*
  * Other IO routines:
  *    PDCI_IO_getElt: if the specified elt is currently in an in-memory buffer,
  *                    sets (*elt_out) to point to elt and returns PDC_OK,
@@ -320,6 +454,59 @@ PDC_error_t  PDCI_IO_forward   (PDC_t *pdc, size_t num_bytes);
  */
 
 PDC_error_t PDCI_IO_getElt(PDC_t *pdc, size_t num, PDC_IO_elt_t **elt_out);
+
+/* ================================================================================ */
+/* INTERNAL SCAN ROUTINES (helpers) */
+
+PDC_error_t PDCI_char_lit_scan(PDC_t *pdc, PDC_byte c, PDC_byte s, int eat_lit,
+			       PDC_byte *c_out, size_t *offset_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_str_lit_scan(PDC_t *pdc, const PDC_string *findStr, const PDC_string *stopStr, int eat_lit,
+			      PDC_string **str_out, size_t *offset_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_Cstr_lit_scan(PDC_t *pdc, const char *findStr, const char *stopStr, int eat_lit,
+			       const char **str_out, size_t *offset_out, PDC_charclass char_class, const char *whatfn);
+
+/* ================================================================================ */
+/* INTERNAL READ ROUTINES (helpers) */
+
+PDC_error_t PDCI_char_lit_read(PDC_t *pdc, PDC_base_csm *csm, PDC_base_ed *ed,
+			       PDC_byte c, PDC_charclass char_class, const char* whatfn);
+
+PDC_error_t PDCI_str_lit_read(PDC_t *pdc, PDC_base_csm *csm, PDC_base_ed *ed,
+			      const PDC_string *s, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_Cstr_lit_read(PDC_t *pdc, PDC_base_csm *csm, PDC_base_ed *ed,
+			       const char *s, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_countX(PDC_t *pdc, PDC_base_csm *csm, PDC_uint8 x, int eor_required,
+			PDC_base_ed *ed, PDC_int32 *res_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_countXtoY(PDC_t *pdc, PDC_base_csm *csm, PDC_uint8 x, PDC_uint8 y,
+			   PDC_base_ed *ed, PDC_int32 *res_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_date_read(PDC_t *pdc, PDC_base_csm *csm, PDC_byte stopChar,
+			   PDC_base_ed *ed, PDC_uint32 *res_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_char_read(PDC_t *pdc, PDC_base_csm *csm, PDC_base_ed *ed, PDC_char *c_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_string_FW_read(PDC_t *pdc, PDC_base_csm *csm, size_t width,
+				PDC_base_ed *ed, PDC_string *s_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_string_read(PDC_t *pdc, PDC_base_csm *csm, PDC_byte stopChar,
+			     PDC_base_ed *ed, PDC_string *s_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_string_ME_read(PDC_t *pdc, PDC_base_csm *csm, const char *matchRegexp,
+				PDC_base_ed *ed, PDC_string *s_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_string_CME_read(PDC_t *pdc, PDC_base_csm *csm, PDC_regexp_t *matchRegexp,
+				 PDC_base_ed *ed, PDC_string *s_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_string_SE_read(PDC_t *pdc, PDC_base_csm *csm, const char *stopRegexp,
+				PDC_base_ed *ed, PDC_string *s_out, PDC_charclass char_class, const char *whatfn);
+
+PDC_error_t PDCI_string_CSE_read(PDC_t *pdc, PDC_base_csm *csm, PDC_regexp_t *stopRegexp,
+				 PDC_base_ed *ed, PDC_string *s_out, PDC_charclass char_class, const char *whatfn);
 
 /* ================================================================================ */
 /* INTERNAL CONVERSION ROUTINES */
@@ -468,12 +655,15 @@ int PDCI_uint64_2sbh(PDC_t *pdc, PDC_byte *outbuf, size_t outbuf_len, int *outbu
 /* ================================================================================ */
 /* INTERNAL MISC ROUTINES */
 
-/*  PDCI_regexpMatch returns the number of characters in str that match regexp
- *  (or 0 if str does not match the regular expression).  If ebcdic is non-zero, the
- *  chars between begin and end are EBCDIC chars, otherwise they are ASCII chars.
- */
 
-size_t PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end, int ebcdic);
+/* Internal version of PDC_regexp_compile, takes whatfn */
+PDC_error_t
+PDCI_regexp_compile(PDC_t *pdc, const char *regexp, PDC_regexp_t **regexp_out, const char *whatfn);
+
+/*  PDCI_regexpMatch returns the number of characters in str that match regexp
+ *  (or 0 if str does not match the regular expression).
+ */
+size_t PDCI_regexpMatch(PDC_t *pdc, PDC_regexp_t *regexp, PDC_byte *begin, PDC_byte *end, PDC_charclass char_class);
 
 /* Accum impl helpers:
  *

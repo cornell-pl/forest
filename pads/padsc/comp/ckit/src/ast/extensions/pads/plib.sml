@@ -284,5 +284,5 @@ struct
 (* -- Other helper functions *)
   fun swapBytesS(exp) = PT.Expr(PT.Call(PT.Id "PDC_swap_bytes",
 					[PT.Cast(P.ptrPCT bytePCT, P.addrX exp), PT.Cast(P.uint,P.sizeofEX exp)]))
-  fun end2StringX(endian) = PT.Call(PT.Id "PDC_Endian2String", [endian])
+  fun end2StringX(endian) = PT.Call(PT.Id "PDC_endian2str", [endian])
 end

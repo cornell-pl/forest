@@ -3,6 +3,8 @@ testing
 
 to decide
 ---------
+  * for stop_regexp, how to specify the charset to use?
+     XXX perhaps stop_regexp is overkill and should be removed
   * design and implement support for bit fields
      - C bitfields have platform dependent semantics
        (fill from left or from right)
