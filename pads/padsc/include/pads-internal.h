@@ -1000,6 +1000,35 @@ PDC_error_t PDCI_string_CSE_read(PDC_t *pdc, const PDC_base_csm *csm, PDC_regexp
 				 PDC_charset char_set, const char *whatfn, int safe);
 
 /* ================================================================================ */
+/* INTERNAL READ ROUTINES (helpers) */
+
+
+ssize_t PDCI_char_lit_write2io(PDC_t *pdc, Sfio_t *io, PDC_byte c,
+			       PDC_charset char_set, const char *whatfn, int safe);
+
+ssize_t PDCI_char_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, PDC_byte c,
+				PDC_charset char_set, const char *whatfn, int safe);
+
+ssize_t PDCI_str_lit_write2io(PDC_t *pdc, Sfio_t *io, const PDC_string *s,
+			      PDC_charset char_set, const char *whatfn, int safe);
+
+ssize_t PDCI_str_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const PDC_string *s,
+			       PDC_charset char_set, const char *whatfn, int safe);
+
+ssize_t PDCI_Cstr_lit_write2io(PDC_t *pdc, Sfio_t *io, const char *s,
+			       PDC_charset char_set, const char *whatfn, int safe);
+
+ssize_t PDCI_Cstr_lit_write2buf(PDC_t *pdc, PDC_byte *buf, size_t buf_len, int *buf_full, const char *s,
+				PDC_charset char_set, const char *whatfn, int safe);
+
+
+
+
+
+
+
+
+/* ================================================================================ */
 /* INTERNAL CONVERSION ROUTINES */
 
 /* Various tables */
