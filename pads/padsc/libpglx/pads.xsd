@@ -1,5 +1,4 @@
-
-<xs:schema targetNamespace="http://www.w3.org/1999/xhtml"
+<xs:schema targetNamespace="file:pads.xsd"
 	   xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
 <xs:simpleType name="Pchar">
@@ -240,41 +239,48 @@
   </xs:choice>
 </xs:complexType>
 
+<xs:simpleType name="size_t">
+ <xs:restriction base="xs:integer"/>
+</xs:simpleType>
 
+<xs:complexType name="Pflags_t">
+ <xs:choice>
+  <xs:element name="Panic">
+    <xs:complexType>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Partial">
+    <xs:complexType>
+    </xs:complexType>
+  </xs:element>
+ </xs:choice>
+</xs:complexType>
 
-<xs:simpleType name="size_t" type="xs:integer"/>
+<xs:complexType name="Ppos_t"> 
+ <xs:sequence>
+  <xs:element name="byte" type="size_t"/>
+  <xs:element name="num" type="size_t"/>
+  <xs:element name="unit" type="xs:string"/> <!-- string??? -->
+ </xs:sequence>
+</xs:complexType>
 
-<complexType name="Pflags_t">
- <choice>
-  <element name="Panic"/>
- </choice>
-</complexType>
-
-<complexType name="Ppos_t"> 
- <sequence>
-  <element name="byte" type="size_t"/>
-  <element name="num" type="size_t"/>
-  <element name="unit" type="xs:string"/> <!-- string??? -->
- </sequence>
-</complexType>
-
-<complexType name="Ploc_t"> 
- <sequence>
-  <element name="b" type="Ppos_t"/>
-  <element name="e" type="Ppos_t"/>
- </sequence>
-</complexType>
+<xs:complexType name="Ploc_t"> 
+ <xs:sequence>
+  <xs:element name="b" type="Ppos_t"/>
+  <xs:element name="e" type="Ppos_t"/>
+ </xs:sequence>
+</xs:complexType>
 
 <xs:simpleType name="PerrCode_t">
   <xs:restriction base="xs:string"/>  
 </xs:simpleType>
 
-<complexType name="Pbase_ed">
- <sequence>
-  <element name="panic" type="xs:integer"/>
-  <element name="errCode" type="PerrCode_t"/>
-  <element name="loc" type="Ploc_t"/>
- </sequence>
-</complexType>
+<xs:complexType name="Pbase_ed">
+ <xs:sequence>
+  <xs:element name="panic" type="xs:integer"/>
+  <xs:element name="errCode" type="PerrCode_t"/>
+  <xs:element name="loc" type="Ploc_t"/>
+ </xs:sequence>
+</xs:complexType>
 
 </xs:schema>
