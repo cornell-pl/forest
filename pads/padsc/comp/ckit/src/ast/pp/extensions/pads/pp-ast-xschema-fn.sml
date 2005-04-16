@@ -648,9 +648,21 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   (** PADS to XML XSchema translation **)
 
   fun ppXMLName f pps (tyNameOpt,NameOpt) =	(* [name=NameOpt] [type=tyNameOpt] *)
-      let val tyName = case tyNameOpt of NONE => "" | SOME name => (" type=\"" ^ (f name) ^ "\"")
+      let 
           val (Name,isOpt) = case NameOpt of NONE => ("", false) | SOME name => (("name=\"" ^ name ^ "\""), name = "pd")
-	  val optStr = if isOpt then " minOccurs=\"0\" maxOccurs=\"unbounded\"" else ""
+	  val optStr = if isOpt then " minOccurs=\"0\" maxOccurs=\"1\"" else ""
+	  fun wrapTy s = (" type=\"" ^ s ^ "\"")
+	  fun strip suf s = String.extract(s, 0, SOME (String.size s - String.size suf))
+	  fun stripAll s = if String.isSuffix "_pd" s 
+	                   then strip "_pd" s
+			   else if String.isSuffix "_tag" s
+                           then strip "_tag" s
+			   else if String.isSuffix "_pd_u" s
+                           then strip "_pd_u" s
+			   else s 
+	  val tyName = case tyNameOpt of NONE => "" | 
+	               SOME name => if Option.isSome (PTys.find (Atom.atom (stripAll name))) 
+					then wrapTy name else wrapTy ("p:"^(f name))
       in
           PPL.addStr pps (Name ^ tyName ^ optStr)
       end
@@ -723,13 +735,15 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val pdTid = #pdTid ptyInfo
 	  val (pdTyName, pdFields) = structInfo tidtab pdTid
+	  val pdHeader = List.take(pdFields,4)
           val (repName, repFields) = structInfo tidtab tid
-	  fun cnvBTypes s =  if PBaseTys.isBaseTy(PBaseTys.baseInfo, ParseTreeExt.Name s) then ("p:val_"^s) else s
+	  val augRepFields = repFields @ [(pdTyName, SOME "pd")]
+	  fun cnvBTypes s =  if PBaseTys.isBaseTy(PBaseTys.baseInfo, ParseTreeExt.Name s) then ("val_"^s) else s
       in
 	((newline pps
-        ; ppXMLComplex id pps (pdTyName,pdFields)
+        ; ppXMLComplex id pps (pdTyName,pdHeader)
         ; newline pps
-	; ppXMLComplex cnvBTypes pps (repName,repFields) 
+	; ppXMLComplex cnvBTypes pps (repName,augRepFields) 
     	; newline pps
 	; ppTopElemIfPsource pps (ptyInfo,repName)
 	)						
@@ -778,7 +792,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           val Fields = eltField :: lengthField :: (pdTyName,SOME "pd") :: []
           val pd2Fields = List.take (pd1Fields,8)			(* eliminates RBuf_t field *) 
           val eltPdField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.last pd2Fields))
-          val pdFields = List.take (pd2Fields,7) @ (eltPdField :: []) 
+          val pdFields = List.take (pd2Fields,7) 
       in
 	((newline pps
         ; ppXMLComplex id pps (pdTyName,pdFields)  
@@ -878,13 +892,28 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  PPAA.ppExternalDeclAdornment srcFile paidinfo ppCoreED aidinfo tidtab pps edecl
       end
 
-  fun ppAst srcFile paidinfo aidinfo tidtab pps edecls =
+  fun ppAst padsDir srcFile paidinfo aidinfo tidtab pps edecls =
       let val fileName = case srcFile of NONE => "" | SOME name => name
-	  val headerLeft = "<xs:schema targetNamespace=\"file:"
-	  val headerRight = "\"\n           xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">" 
+	  val endS = "\"\n"
+	  val begS = "           "
+	  val padsloc = padsDir ^ "/padsc/libpglx/pads.xsd"
+	  fun wrapLine s = begS ^ s ^ endS
+	  val targetNamespace = "<xs:schema targetNamespace=\"file:" ^ fileName ^ endS
+	  val xmlns   = wrapLine ("xmlns=\"file:" ^ fileName) 
+	  val xmlnsxs = wrapLine "xmlns:xs=\"http://www.w3.org/2001/XMLSchema" 
+	  val xmlnsp  = wrapLine "xmlns:p=\"http://www.padsproj.org/pads.xsd"
+	  val elmFormDef  = begS ^ "elementFormDefault=\"qualified\">" 
+          val importStmt = "<xs:import namespace = \"http://www.padsproj.org/pads.xsd\"\n" ^
+			   "           schemaLocation=\"file:"^padsloc^"\"/>"
       in
-        ( PPL.newline pps
-        ; PPL.addStr pps (headerLeft ^ fileName ^ headerRight)
+        ( PPL.addStr pps targetNamespace
+        ; PPL.addStr pps xmlns
+        ; PPL.addStr pps xmlnsxs
+        ; PPL.addStr pps xmlnsp
+        ; PPL.addStr pps elmFormDef
+        ; PPL.newline pps 
+        ; PPL.newline pps 
+        ; PPL.addStr pps importStmt
         ; PPL.newline pps 
         ; List.app (ppExternalDeclRefined srcFile paidinfo aidinfo tidtab pps) edecls
         ; PPL.newline pps
@@ -912,5 +941,5 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   val ppCoreExpression = wrap (ppCoreExpr {nested=false})
   val ppExternalDecl = fn paidInfo => wrap (ppExternalDecl paidInfo) (* PADS*)
   val ppCoreExternalDecl = fn ptyInfoOpt => wrap (ppCoreExternalDecl ptyInfoOpt) (* PADS *)
-  val ppAst  = fn srcFile => fn paidInfo => wrap (ppAst srcFile paidInfo)  (* PADS *)
+  val ppAst  = fn padsDir => fn srcFile => fn paidInfo => wrap (ppAst padsDir srcFile paidInfo)  (* PADS *)
 end

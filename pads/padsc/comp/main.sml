@@ -300,12 +300,12 @@ structure Main : sig
 	    List.app doOne (!accumulators)
 	end
 
-    fun generateXschema(fileName, ast, tidtab,paidtab) =
+    fun generateXschema(padsDir, fileName, ast, tidtab,paidtab) =
 	if (!xmlFlag) orelse not (!writeNoneFlag) then  
 	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xsd")		(* This name computation is repeated in cnv-ext.sml*)
 		val srcPath = OS.FileSys.fullPath(fileName)
 	    in
-		PPLib.ppToStrm((PPXSchemaAst.ppAst (SOME srcPath) paidtab) () tidtab) xoutstream ast;
+		PPLib.ppToStrm((PPXSchemaAst.ppAst padsDir (SOME srcPath) paidtab) () tidtab) xoutstream ast;
 		TextIO.flushOut xoutstream;
 		TextIO.closeOut xoutstream			
 	    end
@@ -353,7 +353,7 @@ structure Main : sig
       in
 	  generateSelect(fileName);
 	  generateAccum(padsDir, fileName, houtname, coutname);
-	  generateXschema(fileName, ast,tidtab, paidtab);
+	  generateXschema(padsDir, fileName, ast,tidtab, paidtab);
           generateTransforms(ast,tidtab,paidtab)
       end
 	    

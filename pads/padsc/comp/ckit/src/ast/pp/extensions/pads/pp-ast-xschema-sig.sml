@@ -31,7 +31,7 @@ sig
   val ppInitExpression   : aidinfo -> Tables.tidtab -> Ast.initExpression pp
   val ppCoreExternalDecl : ptyinfo option -> aidinfo -> Tables.tidtab -> Ast.coreExternalDecl pp
   val ppExternalDecl     : paidinfo -> aidinfo -> Tables.tidtab -> Ast.externalDecl pp
-  val ppAst              : string option -> paidinfo -> aidinfo -> Tables.tidtab -> Ast.ast pp
+  val ppAst              : string -> string option -> paidinfo -> aidinfo -> Tables.tidtab -> Ast.ast pp
 
 end
 
