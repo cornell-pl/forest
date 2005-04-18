@@ -653,11 +653,19 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  val optStr = if isOpt then " minOccurs=\"0\" maxOccurs=\"1\"" else ""
 	  fun wrapTy s = (" type=\"" ^ s ^ "\"")
 	  fun strip suf s = String.extract(s, 0, SOME (String.size s - String.size suf))
-	  fun stripAll s = if String.isSuffix "_pd" s 
+	  fun isSuffix suf s = 
+	      if String.size suf >= String.size s then false
+	      else let val schars = String.explode s
+	                           val endStr = String.implode (
+					           List.drop (schars, String.size s - String.size suf))
+			       in
+				   endStr = suf
+			       end
+	  fun stripAll s = if isSuffix "_pd" s 
 	                   then strip "_pd" s
-			   else if String.isSuffix "_tag" s
+			   else if isSuffix "_tag" s
                            then strip "_tag" s
-			   else if String.isSuffix "_pd_u" s
+			   else if isSuffix "_pd_u" s
                            then strip "_pd_u" s
 			   else s 
 	  val tyName = case tyNameOpt of NONE => "" | 
