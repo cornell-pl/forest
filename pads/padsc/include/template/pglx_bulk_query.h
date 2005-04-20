@@ -282,7 +282,7 @@ int main(int argc, char** argv) {
 
       PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
 
-      exit_on_error(padsDocument(pc, inName, (nodeRep)doc_node, &doc), "padsDocument");
+      exit_on_error(padsDocument(pc, inName, pads_input_file, (nodeRep)doc_node, &doc), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 
 
       exit_on_error(galax_load_standard_library(pc, &cp), "galax_load_standard_library");

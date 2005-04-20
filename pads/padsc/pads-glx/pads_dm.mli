@@ -49,8 +49,9 @@ class virtual padsNode :
 (* PADS Document Nodes *)
 
 class padsDocumentNode :
-    Dm.atomicString option -> 
+    Dm.atomicString option ->  (* optional base URI *)
     Nodeid.docid ->  
+    string ->                  (* required .p file name *)
     nodeRep -> 
   object
     inherit document
@@ -75,6 +76,7 @@ class padsElementNode :
     Nodeid.docid ->  
     nodeRep ->
     nodeRep option ->
+    Namespace_context.nsenv ->
   object
     inherit element
     inherit padsNode
@@ -127,4 +129,4 @@ class padsTextNode :
   end
 
 (* This is the "callback" function that is called from the PADS mainline *)
-val pads_document : Processing_context.processing_context -> Dm.atomicString option -> nodeRep -> padsDocumentNode
+val pads_document : Processing_context.processing_context -> Dm.atomicString option -> string -> nodeRep -> padsDocumentNode

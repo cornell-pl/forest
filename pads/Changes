@@ -1,3 +1,10 @@
+April 19, 2005 - Mary
+
+  o Support for XML Schema 
+    - Updated pads.xsd to align w/ XML Schema 
+    - Changed pglx_*.h templates to pass ".p" file to Galax so that
+      generated data refers to correct ".p" file.
+
 April 4, 2005 - Mary and Yitzhak
   o More on representation of <pd>
     - Isolated source of March 30 problems:

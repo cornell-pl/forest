@@ -44,10 +44,12 @@ value _v1;
 }
 
 galax_err
-padsDocument(processing_context pc, char *uri, nodeRep nr, item *itp)
+padsDocument(processing_context pc, char *uri, char *psource_file, nodeRep nr, item *itp)
 {
   CAMLparam0();
   CAMLlocal2(nrv, caml_result);
+  int argct = 4;
+  value args[argct+1];
 
   static value * pads_document_closure = NULL;
 
@@ -59,7 +61,14 @@ padsDocument(processing_context pc, char *uri, nodeRep nr, item *itp)
      the data model constructor. */
 
   nrv = local_camlidl_c2ml_pads_c_nodeRep(&nr); 
-  caml_result = callback3_exn(*pads_document_closure, *pc, copy_string(uri), nrv);
+  args[0] = *pc;
+  args[1] = copy_string(uri);
+  args[2] = copy_string(psource_file);
+  args[3] = nrv;
+  args[4] = (value)0;
+
+  caml_result = callbackN_exn(*pads_document_closure, argct, args);
+  /*  caml_result = callback3_exn(*pads_document_closure, *pc, copy_string(uri), nrv); */
 
   if (Is_exception_result(caml_result)) {
     pads_error_string = galax_exception_string(Extract_exception(caml_result)); 

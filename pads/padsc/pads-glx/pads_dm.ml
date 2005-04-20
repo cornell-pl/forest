@@ -7,7 +7,8 @@ open Dm
 open Conf
 open Monitor
 open Monitoring_context
-
+open Namespace_context
+open Namespace_names
 (* open Pads_c *)
 
 (* For now, we use one, global nodeid_context for the whole module.
@@ -58,7 +59,7 @@ class virtual padsNode docid' nr' pnr' =
     method parent() = 
       match pnr with 
       |	None -> None
-      |	Some nr -> Some ((new padsElementNode docid nr None) :> Dm.node)
+      |	Some nr -> Some ((new padsElementNode docid nr None default_xml_nsenv) :> Dm.node)
 
     method nodeid() = 
       let printNidDebug nid = 
@@ -99,14 +100,16 @@ class virtual padsNode docid' nr' pnr' =
 (* PADS Document Nodes *)
 (* padsDocumentNode is passed the nodeRep of the dummy root element
    node of the virtual XML document. *)
-and padsDocumentNode (doc_uri_opt : atomicString option) docid (nr : Pads_c.nodeRep) =
+and padsDocumentNode (doc_uri_opt : atomicString option) docid psource_file (nr : Pads_c.nodeRep) =
   object (self)
     inherit document (doc_uri_opt)
     inherit padsNode docid nr (None)
 
     val mutable kidIdx = 0
 
-    method children () =  Cursor.cursor_of_list[((new padsElementNode docid nr None) :> Dm.node)]
+    method children () =  
+      let nsenv = add_all_ns default_xml_nsenv [(NSPrefix "padsns", NSUri ("file:"^psource_file))] in 
+      Cursor.cursor_of_list[((new padsElementNode docid nr None nsenv) :> Dm.node)]
 
     method document_uri () =  doc_uri_opt
 
@@ -172,13 +175,13 @@ and padsDocumentNode (doc_uri_opt : atomicString option) docid (nr : Pads_c.node
 
 (* PADS Element Nodes *)
 
-and padsElementNode docid (nr' : Pads_c.nodeRep) (pnr' : Pads_c.nodeRep option) = 
+and padsElementNode docid (nr' : Pads_c.nodeRep) (pnr' : Pads_c.nodeRep option) (nsenv : nsenv) = 
   object (self)
     inherit element
     inherit padsNode docid (nr') (pnr')
 
-    val rsym = Namespace_symbols.relem_symbol (Namespace_names.NSDefaultElementPrefix, Namespace_names.NSUri "", Pads_c.name(nr'))
-    val qn = Some (new atomicQName (Namespace_symbols.anon_symbol(Namespace_names.NSDefaultElementPrefix, Namespace_names.NSUri "", Pads_c.name(nr'))))
+    val rsym = Namespace_symbols.relem_symbol (NSDefaultElementPrefix, NSUri "", Pads_c.name(nr'))
+    val qn = Some (new atomicQName (Namespace_symbols.anon_symbol(NSDefaultElementPrefix, NSUri "", Pads_c.name(nr'))))
 
     val mutable typed_content : Dm.atomicValue option = None
 
@@ -190,7 +193,7 @@ and padsElementNode docid (nr' : Pads_c.nodeRep) (pnr' : Pads_c.nodeRep option) 
         match Pads_c.kth_child nr !k with
 	  Some(c) -> 
 	    if (Pads_c.kind(c) = "element") then
-	      Some ((new padsElementNode docid c (Some nr)) :> Dm.node)
+	      Some ((new padsElementNode docid c (Some nr) nsenv) :> Dm.node)
 	    else
 	      Some ((new padsTextNode docid c (Some nr)) :> Dm.node)
 	| None -> None
@@ -202,7 +205,7 @@ and padsElementNode docid (nr' : Pads_c.nodeRep) (pnr' : Pads_c.nodeRep option) 
     method node_type   () = Some Namespace_symbols.anytype (* Dm.type_annotation option *)
 
     method attributes  () = Cursor.cursor_empty ()
-    method namespace_environment () = Namespace_context.default_xquery_nsenv;
+    method namespace_environment () = nsenv;
     method typed_value () = 
       match typed_content with
       |	None ->
@@ -361,7 +364,7 @@ let docid_gen = Nodeid.build_docid_gen()
 let uri_docid_table = Hashtbl.create 101
 
 (* Pass name of PADS-generated schema *)
-let pads_document proc_ctxt uriopt (* pads-schema-name *) nr = 
+let pads_document proc_ctxt uriopt psource_file nr = 
   start_monitor_call proc_ctxt Prolog "pads_document" ; 
   let docid =
     match uriopt with
@@ -374,7 +377,7 @@ let pads_document proc_ctxt uriopt (* pads-schema-name *) nr =
 	  docid)
     | None -> Nodeid.new_docid (docid_gen)  (* If there is no uri, then generate a unique docid for this call. *)
   in
-  let pdnfn (docid, nr) = new padsDocumentNode uriopt docid nr in
+  let pdnfn (docid, nr) = new padsDocumentNode uriopt docid psource_file nr in
   let pdn = 
     wrap_monitor 
       proc_ctxt 
@@ -387,6 +390,5 @@ let pads_document proc_ctxt uriopt (* pads-schema-name *) nr =
 let _ =
   begin
     (* Some default Galax options *)
-    Conf.loop_fusion := true; 
     Callback.register "pads_document" pads_document
   end
