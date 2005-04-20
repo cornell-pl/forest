@@ -13,6 +13,9 @@
 #include "galax.h"              /* Need to pack/unpack Galax atomic values */
 #include "limits.h"
 
+/* Source variable */
+extern char * PDCI_source;
+
 /* ================================================================================
  * Predeclare some types */
 

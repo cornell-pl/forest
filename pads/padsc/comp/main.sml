@@ -327,7 +327,8 @@ structure Main : sig
 	    TextIO.output(houtstream, "#define "^ includeName ^"\n");
 	    TextIO.output(houtstream, "#include \"pads.h\"\n");
 	    if (!xmlFlag) then 
-		TextIO.output(houtstream, "#include \"pglx-internal.h\"\n")
+		(TextIO.output(houtstream, "#include \"pglx-internal.h\"\n");
+		 TextIO.output(houtstream, "char* PDCI_source = \""^(OS.FileSys.fullPath fileName) ^"\";\n"))
 	    else ();
 	    PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER (SOME srcFile)) () tidtab) houtstream ast;
 	    TextIO.output(houtstream, "#endif /*  "^ includeName ^"  */\n");
