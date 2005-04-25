@@ -661,12 +661,18 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 			       in
 				   endStr = suf
 			       end
+	  val seqStr = case tyNameOpt of NONE => "" 
+	               | SOME str => if not isOpt andalso isSuffix "\"unbounded" str 
+				     then " minOccurs=\"0\" maxOccurs=\"unbounded\"" else ""
+
 	  fun stripAll s = if isSuffix "_pd" s 
 	                   then strip "_pd" s
 			   else if isSuffix "_tag" s
                            then strip "_tag" s
 			   else if isSuffix "_pd_u" s
                            then strip "_pd_u" s
+			   else if isSuffix "\" minOccurs=\"0\" maxOccurs=\"unbounded" s
+	                   then strip "\" minOccurs=\"0\" maxOccurs=\"unbounded" s
 			   else s 
 	  val tyName = case tyNameOpt of NONE => "" | 
 	               SOME name => if Option.isSome (PTys.find (Atom.atom (stripAll name))) 
@@ -675,9 +681,9 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           PPL.addStr pps (Name ^ tyName ^ optStr)
       end
 
-  fun ppXMLHeader str1 str2 f pps  pair =		(* changes parameters' order, useful with PPL.ppList *) 
+  fun ppXMLHeader str1 str2 f pps  triple =		(* changes parameters' order, useful with PPL.ppList *) 
       ( PPL.addStr pps str1
-      ; ppXMLName f pps pair
+      ; ppXMLName f pps triple
       ; PPL.addStr pps str2)
 
   fun ppXMLList f pps eFields =			(* list of eFields w/o <seq> *)
@@ -798,9 +804,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           val lengthField = List.hd repFields				(* takes only two fields = length & elts *) 
           val eltField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.hd (List.tl repFields)))
           val Fields = eltField :: lengthField :: (pdTyName,SOME "pd") :: []
-          val pd2Fields = List.take (pd1Fields,8)			(* eliminates RBuf_t field *) 
-          val eltPdField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.last pd2Fields))
-          val pdFields = List.take (pd2Fields,7) 
+          val pdFields = List.take (pd1Fields,7) 
       in
 	((newline pps
         ; ppXMLComplex id pps (pdTyName,pdFields)  
