@@ -56,11 +56,11 @@ ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
 
 .PHONY: pglx_lib clean
-# Test bulk load
+
 test_load_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/test_load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_D) 
 	@$(CCExec_DYNAMIC_D)
 
-test_load_%: $(GEN_DIR)/%.c  $(CODE_DIR)/test_%.h $(CODE_DIR)/test_load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+test_load_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/test_load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
 	@$(CCExec_DYNAMIC_O)
 
 # Test bulk load & query
@@ -119,6 +119,14 @@ regress_dns: regress_load_dns regress_bulk_dns
 regress_dibbler_notrailer: regress_load_dibbler_notrailer regress_bulk_dibbler_notrailer regress_smart_dibbler_notrailer
 
 regress: $(REGRESS_TESTS)
+
+# XML Schema Tests
+
+test_schema_%: test_load_%
+	./$?
+	$(GALAX_HOME)/bin/galax-parse test_load_$*.xml -validate -xmlschema ../../gen/$*.xsd
+
+#	$(MAKE) -f ../GNUmakefile -k -s N=schema_$* S=schema_$*.xml T=../../regress/schema_$*.xml compare_files
 
 #regress: regress_ai
 

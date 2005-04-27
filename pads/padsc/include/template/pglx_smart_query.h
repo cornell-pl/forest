@@ -276,12 +276,12 @@ int main(int argc, char** argv) {
 
       // Create the new smart node.
       exit_on_error(galax_start_monitor_call(pc, "pads_mk_top_node"), "galax_start_monitor_call");
-      PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
+      PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "padsns:PSource", &m, &pd, &rep, "main");
       PADS_TY(_smartNode_init)(smart_node, MAX_ELTS  EXTRA_ARGS);
       exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
 
       exit_on_error(galax_load_standard_library(pc, &cp), "galax_load_standard_library");
-      exit_on_error(padsDocument(pc, inName, pads_input_file, (nodeRep)smart_node, &doc), "padsDocument");
+      exit_on_error(padsDocument(pc, inName, PDCI_source, (nodeRep)smart_node, &doc), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 
       exit_on_error(galax_import_main_module(cp, ExternalContextItem, Buffer_Input, input, &cm), "galax_import_main_module");
       exit_on_error(galax_build_external_context(pc, docitems, itemlist_empty(), vars, vals, 0, &exc), "galax_build_external_context");

@@ -327,8 +327,7 @@ structure Main : sig
 	    TextIO.output(houtstream, "#define "^ includeName ^"\n");
 	    TextIO.output(houtstream, "#include \"pads.h\"\n");
 	    if (!xmlFlag) then 
-		(TextIO.output(houtstream, "#include \"pglx-internal.h\"\n");
-		 TextIO.output(houtstream, "char* PDCI_source = \""^(OS.FileSys.fullPath fileName) ^"\";\n"))
+		(TextIO.output(houtstream, "#include \"pglx-internal.h\"\n"))
 	    else ();
 	    PPLib.ppToStrm ((PPAst.ppAst PPAst.HEADER (SOME srcFile)) () tidtab) houtstream ast;
 	    TextIO.output(houtstream, "#endif /*  "^ includeName ^"  */\n");
@@ -336,7 +335,8 @@ structure Main : sig
 	    TextIO.closeOut houtstream;
 	    TextIO.output(coutstream, "#include \"pads-internal.h\"\n");
 	    if (!xmlFlag) then 
-		TextIO.output(coutstream, "#include \"pglx-internal.h\"\n")
+		(TextIO.output(coutstream, "#include \"pglx-internal.h\"\n");
+		 TextIO.output(coutstream, "char* PDCI_source = \""^(OS.FileSys.fullPath fileName) ^"\";\n"))
 	    else ();
 	    TextIO.output(coutstream, ("#include \"" ^ houtname ^ "\"\n"));
 	    PPLib.ppToStrm ((PPAst.ppAst PPAst.IMPL (SOME srcFile)) () tidtab) coutstream ast;		   

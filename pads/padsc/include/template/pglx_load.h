@@ -250,7 +250,7 @@ int main(int argc, char** argv) {
 
       /*      walk_children(doc_node,0);  */
 
-      exit_on_error((padsDocument(pc, inName, PADS_INPUT_FILE, (nodeRep)doc_node, &doc)), "padsDocument");
+      exit_on_error((padsDocument(pc, inName, PDCI_source, (nodeRep)doc_node, &doc)), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 
 
       if (is_empty(docitems)) error(2, "*** Result is empty") ;

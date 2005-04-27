@@ -1,3 +1,18 @@
+April 26, 2005 - Mary
+
+  o More support for XML Schema 
+
+    - main.sml : 
+      Moved definition of PDCI_source from generated-file.h
+      to generated-file.c. 
+
+    - pp-ast-xschema-fn.sml
+      Removed elementFormDefault="qualified" -- all local element
+      names are in default namespace.  Makes data easier to read. 
+
+    - Changed padsc/include/templates/pglx_*.h to pass PDCI_source to
+      Galax. 
+
 April 19, 2005 - Mary
 
   o Support for XML Schema 

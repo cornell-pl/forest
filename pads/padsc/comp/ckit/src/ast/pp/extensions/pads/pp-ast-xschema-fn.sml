@@ -36,6 +36,31 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
   fun getCtype ({stClass,ctype,...}: Ast.id) = (stClass,ctype)
 
+(* Type-name munging functions *)
+
+  fun cnvBTypes s =  if PBaseTys.isBaseTy(PBaseTys.baseInfo, ParseTreeExt.Name s) then ("val_"^s) else s
+
+  fun strip suf s = String.extract(s, 0, SOME (String.size s - String.size suf))
+      
+  fun isSuffix suf s = 
+      if String.size suf >= String.size s then false
+      else let val schars = String.explode s
+	       val endStr = String.implode (
+					    List.drop (schars, String.size s - String.size suf))
+	   in
+	       endStr = suf
+	   end
+
+  fun stripAll s = if isSuffix "_pd" s 
+		       then strip "_pd" s
+		   else if isSuffix "_tag" s
+			    then strip "_tag" s
+			else if isSuffix "_pd_u" s
+				 then strip "_pd_u" s
+			     else if isSuffix "\" minOccurs=\"0\" maxOccurs=\"unbounded" s
+				      then strip "\" minOccurs=\"0\" maxOccurs=\"unbounded" s
+				  else s 
+
   fun isPostFix PostInc = true
     | isPostFix PostDec = true
     | isPostFix _ = false
@@ -647,41 +672,28 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
   (** PADS to XML XSchema translation **)
 
+(* Convert a type name to an XML Schema type name. *)
+  fun padsTypeNameToSchemaName wrapTy cnvFn name =
+      if Option.isSome (PTys.find (Atom.atom (stripAll name))) 
+	  then wrapTy name else wrapTy ("p:"^(cnvFn name)) 
+
   fun ppXMLName f pps (tyNameOpt,NameOpt) =	(* [name=NameOpt] [type=tyNameOpt] *)
       let 
           val (Name,isOpt) = case NameOpt of NONE => ("", false) | SOME name => (("name=\"" ^ name ^ "\""), name = "pd")
 	  val optStr = if isOpt then " minOccurs=\"0\" maxOccurs=\"1\"" else ""
 	  fun wrapTy s = (" type=\"" ^ s ^ "\"")
-	  fun strip suf s = String.extract(s, 0, SOME (String.size s - String.size suf))
-	  fun isSuffix suf s = 
-	      if String.size suf >= String.size s then false
-	      else let val schars = String.explode s
-	                           val endStr = String.implode (
-					           List.drop (schars, String.size s - String.size suf))
-			       in
-				   endStr = suf
-			       end
 	  val seqStr = case tyNameOpt of NONE => "" 
 	               | SOME str => if not isOpt andalso isSuffix "\"unbounded" str 
 				     then " minOccurs=\"0\" maxOccurs=\"unbounded\"" else ""
-
-	  fun stripAll s = if isSuffix "_pd" s 
-	                   then strip "_pd" s
-			   else if isSuffix "_tag" s
-                           then strip "_tag" s
-			   else if isSuffix "_pd_u" s
-                           then strip "_pd_u" s
-			   else if isSuffix "\" minOccurs=\"0\" maxOccurs=\"unbounded" s
-	                   then strip "\" minOccurs=\"0\" maxOccurs=\"unbounded" s
-			   else s 
 	  val tyName = case tyNameOpt of NONE => "" | 
-	               SOME name => if Option.isSome (PTys.find (Atom.atom (stripAll name))) 
-					then wrapTy name else wrapTy ("p:"^(f name))
+	               SOME name => padsTypeNameToSchemaName wrapTy f name
+(* if Option.isSome (PTys.find (Atom.atom (stripAll name))) then wrapTy name else wrapTy ("p:"^(f name)) *)
       in
           PPL.addStr pps (Name ^ tyName ^ optStr)
       end
 
-  fun ppXMLHeader str1 str2 f pps  triple =		(* changes parameters' order, useful with PPL.ppList *) 
+  (* triple = (string option, type name) *)
+  fun ppXMLHeader str1 str2 f pps triple =	(* changes parameters' order, useful with PPL.ppList *) 
       ( PPL.addStr pps str1
       ; ppXMLName f pps triple
       ; PPL.addStr pps str2)
@@ -702,8 +714,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; newline pps)
 
   fun ppXMLRestriction pps base =
-      PPL.addStr pps ("\n <restriction base=\"" ^ base ^ "\"/> \n")
-
+      PPL.addStr pps ("\n <xs:restriction base=\"" ^ base ^ "\"/> \n")
+      
   fun isIdentity  arg = case arg of
       (_,NONE) => false 
     | (tyOpt, SOME name) =>  name = PNames.identifier 
@@ -752,12 +764,11 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  val pdHeader = List.take(pdFields,4)
           val (repName, repFields) = structInfo tidtab tid
 	  val augRepFields = repFields @ [(pdTyName, SOME "pd")]
-	  fun cnvBTypes s =  if PBaseTys.isBaseTy(PBaseTys.baseInfo, ParseTreeExt.Name s) then ("val_"^s) else s
       in
 	((newline pps
         ; ppXMLComplex id pps (pdTyName,pdHeader)
         ; newline pps
-	; ppXMLComplex cnvBTypes pps (repName,augRepFields) 
+	; ppXMLComplex cnvBTypes pps (repName, augRepFields) 
     	; newline pps
 	; ppTopElemIfPsource pps (ptyInfo,repName)
 	)						
@@ -833,12 +844,20 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
   fun ppPTypedef (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  =
       let val (Name, Ty) = typedefInfo tidtab tid
-      in
+	  val base = (valOf Ty)
+	  val pd_base = base ^ "_pd"
+	  val Name_pd = (valOf Name)^"_pd"
+      in 
         ((newline pps
         ; ppXMLHeader "<xs:simpleType " ">\n" id pps (NONE, Name)
-        ; ppXMLRestriction pps (valOf Ty)
+	; ppXMLRestriction pps (padsTypeNameToSchemaName id cnvBTypes base)
+
         ; PPL.addStr pps "</xs:simpleType>"
         ; newline pps
+	  (* A typedef has two corresponding types for the rep and for the pd *)
+        ; ppXMLHeader "<xs:simpleType " ">\n" id pps (NONE, SOME Name_pd)
+	; ppXMLRestriction pps (padsTypeNameToSchemaName id cnvBTypes pd_base)
+        ; PPL.addStr pps "</xs:simpleType>"
         ; ppTopElemIfPsource pps (ptyInfo,Name)
         )
         handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
@@ -914,7 +933,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	  val xmlns   = wrapLine ("xmlns=\"file:" ^ fileName) 
 	  val xmlnsxs = wrapLine "xmlns:xs=\"http://www.w3.org/2001/XMLSchema" 
 	  val xmlnsp  = wrapLine "xmlns:p=\"http://www.padsproj.org/pads.xsd"
-	  val elmFormDef  = begS ^ "elementFormDefault=\"qualified\">" 
+	  val elmFormDef  = begS ^ ">" 
+(*	  val elmFormDef  = begS ^ "elementFormDefault=\"qualified\">"  *)
           val importStmt = "<xs:import namespace = \"http://www.padsproj.org/pads.xsd\"\n" ^
 			   "           schemaLocation=\"file:"^padsloc^"\"/>"
       in

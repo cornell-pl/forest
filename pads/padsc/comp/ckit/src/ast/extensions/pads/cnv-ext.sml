@@ -4412,7 +4412,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 fun elemX base = P.addrX(P.subX(P.arrowX(PT.Id base, PT.Id elts), PT.Id "i"))
                  val writeBaseSs = writeFieldSs(writeBaseName, [elemX pd, elemX rep] @ args, true)
 		 val fmtBaseX = fmtCall(fmtBaseName, [P.getFieldX(m, element),elemX pd, elemX rep] @ args)
-                 val writeXMLBaseSs = writeXMLFieldSs(writeXMLBaseName, [elemX pd, elemX rep], PT.String "p:elt", true, true, args)
+                 val writeXMLBaseSs = writeXMLFieldSs(writeXMLBaseName, [elemX pd, elemX rep], PT.String "elt", true, true, args)
 		 val writeLastBaseSs =  [PT.IfThen(P.neqX(lengthX, P.zero), PT.Compound(writeBaseSs))]
 		 fun writeLitSs litXOpt = 
 		     case litXOpt of NONE => [] 
@@ -4438,7 +4438,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val bodySs = writeArraySs @ writeTermSs
 		 val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)]))]
 				 @ writeXMLArraySs
-				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_XML_VALUE_OUT", [PT.String("p:len"), lengthX]))]
+				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_XML_VALUE_OUT", [PT.String("length"), lengthX]))]
 				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_PD_XML_OUT", []))]
 				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
 		 val fmtBufFinalName = bufFinalSuf fmtName
