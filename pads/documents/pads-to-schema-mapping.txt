@@ -1,0 +1,321 @@
+==========================
+PADS to XML Schema Mapping
+==========================
+
+The PADS compiler, either natively or via the Galax XQuery query
+engine, can transform PADS data into XML and, correspondingly, can map
+a PADS description to a corresponding XML Schema, such that the
+following constraint holds:
+
+  For any PADS description X.p and 
+      any X.data that conforms to X.p,
+  If [[ X.p ]]_schema == X.xsd and [[ X.data ]]_data == X.xml
+  Then X.xml conforms to X.xsd
+
+where [[ ]]_schema is the mapping from a PADS description to an XML
+schema and [[ ]]_data is the mapping from PADS data to XML. 
+
+The following rewrite rules define the mapping [[ ]]_schema.  
+
+Each PADS type in the source PDL is mapped to a list of global schema
+declarations (a complex type, a simple type, or an element):
+
+   [[ PADS type decl ]]_schema == XML Schema Declaration
+
+A complete PADS PDL is mapped by simply concatenating the global
+declarations:
+
+   [[ pads_decl pads_decl_list ]]_schema
+      == 
+   [[ pads_decl ]] @ [[ pads_decl_list ]]_schema
+
+The [[ ]]_local mapping rule maps a field in a PADS type to a local schema element.
+
+=====================
+Section 4. Base Types
+=====================
+   The default mappings for all base types are in pads.xsd.  Each base
+   type is mapped to two global declarations: a simple type that
+   corresponds to the value space of the PADS type, and a complex type
+   that contains either an instance of the value or the default
+   parse-descriptor for base types.  For example, 
+
+       [[ Pchar ]]_schema
+           == 
+       [
+        <xs:simpleType name="Pchar">
+          <xs:restriction base="xs:string">
+            <xs:maxLength value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+       ;
+        <xs:complexType name="val_Pchar">
+          <xs:choice>
+           <xs:element name="val" type="p:Pchar"/>
+           <xs:element name="pd" type="p:Pbase_pd"/>
+          </xs:choice>
+        </xs:complexType>
+       ]
+
+   References to base types are mapped to references to the
+   corresponding complex type in the pads.xsd namespace:
+
+       [[ base_ty ]]_typeref 
+            ==
+       "p:val_base_ty"
+
+   References to user-defined types are mapped to references to the
+   corresponding complex type in the local namespace (i.e., the target schema):
+
+       [[ ty ]]_typeref 
+     ty not a base type
+            ==
+           "ty"
+
+
+===================
+Section 5. Pstructs
+===================
+
+qualifier  ::= Pomit | Pendian
+qualifiers ::= qualifier | qualifier qualifiers
+
+    Any field that is qualified by Pomit maps to the empty
+    declaration, because there is no realization of the data in the
+    main memory rep of the type and therefore no realization in the
+    XML view of the type.
+
+    [[ [qualifiers] ... any field declaration ... ]]_local
+                where Pomit \in qualifiers
+                        == 
+                        [] 
+
+constraint ::=  : predicate
+       ty  ::=  c_ty | p_ty
+
+    NB!!!: There is no mapping for native C types!!! 
+
+full_field ::= [qualifiers] p_ty identifier [constraint] ; [p_comment]
+
+    A full field maps to a local element declaration in XML Schema:
+
+    [[ [qualifiers] p_ty identifier [constraint] ; [p_comment] ]]_local
+                where Pomit \not\in qualifiers
+                        == 
+         [ <element name=[[identifier]] type=[[p_ty]]_typeref/> ]
+
+comp_field ::=  Pcompute [Pomit] ty identifier = expression [constraint] ;
+
+    A computed field maps to a local element declaration (NB! Native C
+    types are not handled!):
+
+       [[ Pcompute ty identifier = expression [constraint]  ]]_local
+                        == 
+         [ <element name=[[identifier]] type=[[ty]]_typeref/> ]
+
+literal_field ::= p_coreliteral;
+
+    Literals have no realization in XML Schema: 
+
+    [[ p_coreliteral ]]_local == []
+
+array_field ::= [qualifiers] p_ty `['p_size_spec`]' identifier[: p_array_constraints] ; [p_comment]
+
+  ??? Should an array field be mapped in the same way as a Parray ???
+  !!! Note that if we could interpret p_size_spec, we could use this
+      to specify the lower & upper arround bounds in the schema type !!!
+
+    An array field maps to an element that contains a sequence of
+    array elements:
+
+  [[ [qualifiers] p_ty `['p_size_spec`]' identifier [: p_array_constraints] ; [p_comment] ]]_local
+                where Pomit \not\in qualifiers
+                        == 
+  [ <element name=[[identifier]]>
+      <complexType>
+        <sequence>
+          <element name="elt" type=[[p_ty]]_typeref minOccurs="0" maxOccurs="unbounded"/>
+          <element name="length" type="p:Puint32"/>
+        </sequence>
+      </complexType>
+    </element>
+   ]
+   
+opt_field ::= [qualifiers] Popt p_ty identifier [: opt_predicates] ; [p_comment]
+
+  [[ [qualifiers] Popt p_ty identifier [: opt_predicates] ; [p_comment] ]]_local
+                where Pomit \not\in qualifiers
+                        == 
+  [ <element name=[[identifier]] type=[[p_ty]]_typeref minOccurs="0"  maxOccurs="1"/> ]
+
+field  ::= full_field | comp_field | literal_field | array_field | opt_field
+
+fields ::= field | field fields
+
+    A field is mapped to a local schema element or attribute, which
+    are simply concatenated together:
+
+      [[ field fields  ]]_local
+           == 
+    [[ field ]]_local @ [[ fields ]]_local
+
+struct_ty ::= Pstruct identifier [p_formals] { fields } [ Pwhere { predicate }] ; 
+
+    A Pstruct yields two global complex types: one for the type itself
+    and one for its parse descriptor.
+
+    [[  Pstruct identifier [p_formals] { fields } [ Pwhere { predicate }] ]]
+                              == 
+    [ 
+      <complexType name=[[identifier]]> 
+        [[ fields ]]_local @ 
+        [ <element name="pd" type=[[identifier]]_pd minOccurs="0" maxOccurs="1"> ]
+      </complexType>
+    ; 
+      <complexType name=[[identifier]]_pd>
+        <sequence>
+          <element name="pstate" type="p:Pflags_t"/>
+          <element name="nerr" type="p:Puint32"/>
+          <element name="errCode" type="p:PerrCode_t"/>
+          <element name="loc" type="p:Ploc_t"/>
+        </sequence>
+      </complexType>
+    ]
+     
+==================
+Section 6. Punions
+==================
+
+union_field ::= full_field | comp_field | literal_field  | array_field | opt_field
+
+branch      ::= Pcase expression : union_field | Pdefault: union_field
+
+      [[ Pcase expression : union_field ]] 
+                        == 
+              [[ union_field ]]_local
+
+branches    ::= branch | branch branches
+          [[ branch branches ]]_local
+                   ==
+          [[ branch ]]_local @ [[ branches ]]_local
+
+switched    ::= Pswitch (expression){ branches }
+
+    [[ Pswitch (expression){ branches } ]]_local
+                    ==
+            [[ branches ]]_local
+
+in_place    ::= union_field | union_field in_place
+
+union_bdy   ::= switched | in_place
+
+union_ty    ::= [Plongest] Punion identifier [p_formals] { union_bdy } [ Pwhere { predicate }] ;
+
+  [[ [Plongest] Punion identifier [p_formals] { union_bdy } [ Pwhere { predicate }] ]]
+                                  == 
+    [ 
+      <complexType name=[[identifier]]> 
+        <sequence>
+          <choice>
+            [[ union_bdy ]]_local
+          </choice>
+          [ <element name="pd" type=[[identifier]]_pd minOccurs="0" maxOccurs="1"> ]
+        </sequence>
+      </complexType>
+    ; 
+      <complexType name=[[identifier]]_pd>
+        <sequence>
+          <element name="pstate" type="Pflags_t"/>
+          <element name="nerr" type="Puint32"/>
+          <element name="errCode" type="PerrCode_t"/>
+          <element name="loc" type="Ploc_t"/>
+          <element name="tag" type=[[identifier]]_tag/>
+        </sequence>
+      </complexType>
+    ; 
+      <xs:simpleType name=[[identifier]]_tag>
+        <restriction base="xsd:string"/> 
+      </xs:simpleType>
+    ]
+  
+==================
+Section 7. Parrays
+==================
+
+The syntax for Parrays is given by the following BNF grammar fragment:
+
+p_size_spec      ::=  [expresssion] | [expression] : [expression]
+array_ty    ::=  Parray identifier [p_formals] { 
+                   p_ty `['p_size_spec`]' [: p_array_constraints]
+                 } [ Pwhere { p_array_posts }] ;
+
+   [[ Parray identifier [p_formals] { 
+        p_ty `['p_size_spec`]' [: p_array_constraints]
+      } [ Pwhere { p_array_posts }] 
+   ]]  ==
+
+   [ <complexType name=[[identifier]]>
+       <sequence>
+         <element name="elt" type=[[p_ty]]_typeref minOccurs="0" maxOccurs="unbounded"/>
+         <element name="length" type="p:Puint32"/>
+         <element name="pd" type=[[identifier]]_pd minOccurs="0" maxOccurs="1"/>
+       </sequence>
+     </complexType>
+   ;     
+     <complexType name="[[identifier]]_pd">
+       <sequence>
+         <element name="pstate" type="p:Pflags_t"/>
+         <element name="nerr" type="p:Puint32"/>
+         <element name="errCode" type="p:PerrCode_t"/>
+         <element name="loc" type="p:Ploc_t"/>
+         <element name="neerr" type="p:Puint32"/>
+         <element name="firstError" type="p:Puint32"/>
+       </sequence>
+     </complexType>
+   ]     
+      
+=================
+Section 8. Penums
+=================
+
+p_enum_prefix    ::= Pprefix ( identifier )
+p_raw_enum_field ::= p_literal [= expression ]
+p_enum_field     ::= p_raw_enum_field, [p_comment]
+p_last_enum_field ::= p_raw_enum_field [p_comment]
+p_enum_fields     ::= p_last_enum_field
+                    | p_enum_field p_enum_fields
+enum_ty ::=  Penum identifier [p_formals] [p_enum_prefix] { p_enum_fields } ; 
+
+   [[ Penum identifier [p_formals] [p_enum_prefix] { p_enum_fields } ]]
+                             == 
+
+================
+Section 9. Popts
+================
+
+p_opt_some     ::= Psome identifier => { predicate }
+p_opt_none     ::= Pnone => { predicate }
+opt_predicates ::= p_opt_some `|' p_opt_none
+      |     p_opt_none `|' p_opt_some
+      |     p_opt_none
+      |     p_opt_some
+opt_ty  ::=  Popt p_ty identifier [p_formals] [: opt_predicates] ;
+ 
+   ??? Not sure what to do here ???
+
+   [[ Popt p_ty identifier [p_formals] [: opt_predicates] ]]
+                             == 
+   <complexType name=[[identifier]] restricts [[p_ty]]_typeref >
+   </complexType>
+
+=====================
+Section 10. Ptypedefs
+=====================
+
+typedef_predicates ::= identifier identifier => { predicate }
+typedef_ty         ::= Ptypedef p_ty identifier [p_formals] [:typedef_predicates] ; 
+
+   <complexType name=[[identifier]]>
+     <restriction base=[[p_ty]]_typeref/>
+   </complexType>
+
