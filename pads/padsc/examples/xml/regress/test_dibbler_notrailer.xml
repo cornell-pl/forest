@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PSource>
+<padsns:PSource xmlns:padsns="file:dibbler_notrailer.p">
   <elt>
     <h>
       <order_num><val>9152272</val></order_num>
@@ -69,4 +69,4 @@
     </events>
   </elt>
   <length>1</length>
-</PSource>
+</padsns:PSource>

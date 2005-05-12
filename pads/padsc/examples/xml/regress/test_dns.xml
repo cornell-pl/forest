@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PSource>
+<padsns:PSource xmlns:padsns="file:dns.p">
   <elt>
     <length><val>37266</val></length>
     <header>
@@ -27303,4 +27303,4 @@
     <additional><length>0</length></additional>
   </elt>
   <length>1</length>
-</PSource>
+</padsns:PSource>

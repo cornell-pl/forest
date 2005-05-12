@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PSource>
+<padsns:PSource xmlns:padsns="file:ai.p">
   <elt>
     <host>
       <symbolic>
@@ -287,4 +287,4 @@
     <contentLength><len><val>179</val></len></contentLength>
   </elt>
   <length>11</length>
-</PSource>
+</padsns:PSource>
