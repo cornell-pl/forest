@@ -1,3 +1,7 @@
+May 11, 2005 - Mary
+
+  o Changed .xsd/data namespace to be file-system independent
+
 April 26, 2005 - Mary
 
   o More support for XML Schema 

@@ -924,7 +924,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       end
 
   fun ppAst padsDir srcFile paidinfo aidinfo tidtab pps edecls =
-      let val fileName = case srcFile of NONE => "" | SOME name => name
+      let val fileName = case srcFile of NONE => "" | SOME name => OS.Path.file name
 	  val endS = "\"\n"
 	  val begS = "           "
 	  val padsloc = padsDir ^ "/padsc/libpglx/pads.xsd"
