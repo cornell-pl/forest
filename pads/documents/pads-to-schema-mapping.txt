@@ -2,10 +2,10 @@
 PADS to XML Schema Mapping
 ==========================
 
-The PADS compiler, either natively or via the Galax XQuery query
-engine, can transform PADS data into XML and, correspondingly, can map
-a PADS description to a corresponding XML Schema, such that the
-following constraint holds:
+A PADS description has a structurally isomorphic definition in XML
+Schema and, correspondingly, a PADS data file has a structurally
+isomorphic representation in XML, such that the following constraint
+holds:
 
   For any PADS description X.p and 
       any X.data that conforms to X.p,
@@ -32,13 +32,31 @@ declarations:
 The [[ ]]_local mapping rule maps a field in a PADS type to a local schema element.
 
 =====================
+3.8  Psource modifier
+=====================
+
+  The Psource modifier may be used as an annotation on any Pads type,
+  indicating that the type in question describes the entirety of the
+  external representation of the data.  In the XML representation of a
+  PADS data source, the corresponding top-level or root XML element,
+  which contains entirety of the PADS data, is named 'Psource'.
+
+  [[ Psource pads_decl ]] 
+  identifier is name of type in pads_decl
+          ==
+  [[ pads_decl ]]_schema @ 
+  [ <element name="PSource" type=[[identifier]]> ]
+  
+
+=====================
 Section 4. Base Types
 =====================
+
    The default mappings for all base types are in pads.xsd.  Each base
    type is mapped to two global declarations: a simple type that
-   corresponds to the value space of the PADS type, and a complex type
-   that contains either an instance of the value or the default
-   parse-descriptor for base types.  For example, 
+   contains the value space of the PADS type, and a complex type that
+   contains either an instance of the value or the default
+   parse-descriptor for base types.  For example,
 
        [[ Pchar ]]_schema
            == 
@@ -57,20 +75,28 @@ Section 4. Base Types
         </xs:complexType>
        ]
 
-   References to base types are mapped to references to the
+   A reference to a base type is mapped to a reference to the
    corresponding complex type in the pads.xsd namespace:
 
        [[ base_ty ]]_typeref 
             ==
-       "p:val_base_ty"
+       \"p:val_base_ty\"
 
-   References to user-defined types are mapped to references to the
-   corresponding complex type in the local namespace (i.e., the target schema):
+   A reference to a user-defined type is mapped to a reference to the
+   corresponding complex type in the empty namespace (i.e., the target
+   schema):
 
        [[ ty ]]_typeref 
      ty not a base type
             ==
-           "ty"
+           \"ty\"
+
+   A reference to a type's parse descriptor is just the name of the
+   type concatenated with "_pd":
+
+       [[ identifier ]]_pd
+            ==
+       \"[[ identifier ]]^"_pd"\"
 
 
 ===================
@@ -164,7 +190,7 @@ struct_ty ::= Pstruct identifier [p_formals] { fields } [ Pwhere { predicate }] 
     A Pstruct yields two global complex types: one for the type itself
     and one for its parse descriptor.
 
-    [[  Pstruct identifier [p_formals] { fields } [ Pwhere { predicate }] ]]
+    [[  Pstruct identifier [p_formals] { fields } [ Pwhere { predicate }] ]]_schema
                               == 
     [ 
       <complexType name=[[identifier]]> 
@@ -211,7 +237,10 @@ union_bdy   ::= switched | in_place
 
 union_ty    ::= [Plongest] Punion identifier [p_formals] { union_bdy } [ Pwhere { predicate }] ;
 
-  [[ [Plongest] Punion identifier [p_formals] { union_bdy } [ Pwhere { predicate }] ]]
+  A Punion is mapped into a complex type that contains a choice of all
+  of the union's fields and an optional parse descriptor.
+
+  [[ [Plongest] Punion identifier [p_formals] { union_bdy } [ Pwhere { predicate }] ]]_schema
                                   == 
     [ 
       <complexType name=[[identifier]]> 
@@ -244,15 +273,18 @@ Section 7. Parrays
 
 The syntax for Parrays is given by the following BNF grammar fragment:
 
-p_size_spec      ::=  [expresssion] | [expression] : [expression]
+p_size_spec ::=  [expresssion] | [expression] : [expression]
 array_ty    ::=  Parray identifier [p_formals] { 
                    p_ty `['p_size_spec`]' [: p_array_constraints]
                  } [ Pwhere { p_array_posts }] ;
 
-   [[ Parray identifier [p_formals] { 
-        p_ty `['p_size_spec`]' [: p_array_constraints]
-      } [ Pwhere { p_array_posts }] 
-   ]]  ==
+  A Parray is mapped to a complex type that contains a sequence of
+  array elements, a length field, and a parse descriptor:
+
+  [[ Parray identifier [p_formals] { 
+       p_ty `['p_size_spec`]' [: p_array_constraints]
+     } [ Pwhere { p_array_posts }] 
+  ]]  ==
 
    [ <complexType name=[[identifier]]>
        <sequence>
@@ -286,27 +318,27 @@ p_enum_fields     ::= p_last_enum_field
                     | p_enum_field p_enum_fields
 enum_ty ::=  Penum identifier [p_formals] [p_enum_prefix] { p_enum_fields } ; 
 
-   [[ Penum identifier [p_formals] [p_enum_prefix] { p_enum_fields } ]]
+  A Penum is mapped to a simple type that restricts integer. 
+
+   [[ Penum identifier [p_formals] [p_enum_prefix] { p_enum_fields } ]]_schema
                              == 
+   <simpleType name=[[identifier]]>
+     <restriction base="xs:int"/>
+   </simpleType>
+
+  !!! Note that if we should probably map to an enumeration type !!!
+
+    <simpleType name=[[identifier]]>
+      <restriction base="string">
+        [[ p_enum_fields ]]_enum
+      </restriction>
+    </simpleType>
 
 ================
 Section 9. Popts
 ================
 
-p_opt_some     ::= Psome identifier => { predicate }
-p_opt_none     ::= Pnone => { predicate }
-opt_predicates ::= p_opt_some `|' p_opt_none
-      |     p_opt_none `|' p_opt_some
-      |     p_opt_none
-      |     p_opt_some
-opt_ty  ::=  Popt p_ty identifier [p_formals] [: opt_predicates] ;
- 
-   ??? Not sure what to do here ???
-
-   [[ Popt p_ty identifier [p_formals] [: opt_predicates] ]]
-                             == 
-   <complexType name=[[identifier]] restricts [[p_ty]]_typeref >
-   </complexType>
+   Popts are compiled into Punions, so are handled in Section 6 above.
 
 =====================
 Section 10. Ptypedefs
@@ -315,7 +347,31 @@ Section 10. Ptypedefs
 typedef_predicates ::= identifier identifier => { predicate }
 typedef_ty         ::= Ptypedef p_ty identifier [p_formals] [:typedef_predicates] ; 
 
+   A Ptypedef is just a synonym for another type.  In XML Schema, we
+   use type derivation by restriction to specify a synonym:
+
+   [[ Ptypedef p_ty identifier [p_formals] [:typedef_predicates] ]]_schema
+              p_ty not a base type
+                    == 
+  [
    <complexType name=[[identifier]]>
      <restriction base=[[p_ty]]_typeref/>
    </complexType>
+  ; 
+   <complexType name=[[identifier]]_pd>
+     <restriction base=[[[[p_ty]]_typeref]]_pd/>
+   </complexType>
+  ]
 
+  [[ Ptypedef p_ty identifier [p_formals] [:typedef_predicates] ]]_schema
+              p_ty is a base type
+                    == 
+  [
+   <simpleType name=[[identifier]]>
+     <restriction base=[[p_ty]]_typeref/>
+   </simpleType>
+  ; 
+   <simpleType name=[[identifier]]_pd>
+     <restriction base=[[[[p_ty]]_typeref]]_pd/>
+   </simpleType>
+  ]
