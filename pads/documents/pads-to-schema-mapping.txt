@@ -375,3 +375,20 @@ typedef_ty         ::= Ptypedef p_ty identifier [p_formals] [:typedef_predicates
      <restriction base=[[[[p_ty]]_typeref]]_pd/>
    </simpleType>
   ]
+
+=====================
+Default XQuery Prolog
+=====================
+
+gen/format7_context.xq
+
+import schema padsns = "format7.p" at "file:/.../format7.xsd";
+declare variable AZ = "AZ";
+...
+declare variable WY = "WY";
+----------
+
+
+
+
+

@@ -4437,11 +4437,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  PT.Compound (writeXMLBaseSs))])]
 		 val writeTermSs = writeLitSs termXOpt
 		 val bodySs = writeArraySs @ writeTermSs
-		 val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)]))]
+		 val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_OPEN_XML_OUT", []))]
 				 @ writeXMLArraySs
 				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_XML_VALUE_OUT", [PT.String("length"), lengthX]))]
 				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_PD_XML_OUT", []))]
-				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
+				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_CLOSE_XML_OUT", []))]
 		 val fmtBufFinalName = bufFinalSuf fmtName
 		 val bodyFmtFinalSs = [P.varDeclS(P.int, "i", P.zero),
 				       PL.fmtFinalInitStruct (PT.String fmtBufFinalName) ] @ [PL.fmtArray(PT.String fmtBufFinalName, fmtBaseX)] @ [PL.fmtFixLast()]
