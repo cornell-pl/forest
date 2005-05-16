@@ -668,7 +668,7 @@ do {
   do {
     if (!tag) { tag = def_tag; }
     indent = (indent > 128) ? 128 : indent;
-    sfprintf_prefix sfprintf(io, "%.*s<%s><p:val>" outfmt "</p:val></%s>\n", indent, PDCI_spaces, tag, outval, tag);
+    sfprintf_prefix sfprintf(io, "%.*s<%s><val>" outfmt "</val></%s>\n", indent, PDCI_spaces, tag, outval, tag);
   } while (0)
 /* END_MACRO */
 
@@ -699,18 +699,18 @@ do {
     if (!tag) { tag = def_tag; }
     indent = (indent > 128) ? 128 : indent;
     if ((pd)->errCode == P_NO_ERR) {
-      sfprintf_prefix sfprintf(io, "%.*s<%s><p:val>" outfmt "</p:val></%s>\n", indent, PDCI_spaces, tag, outval, tag);
+      sfprintf_prefix sfprintf(io, "%.*s<%s><val>" outfmt "</val></%s>\n", indent, PDCI_spaces, tag, outval, tag);
     } else if ((pd)->errCode < 100) { /* no location, no value */
-      sfprintf_prefix sfprintf(io, "%.*s<%s><p:pd><p:pstate>%s</p:pstate><p:nerr>%lu</p:nerr><p:errCode>%s</p:errCode></p:pd></%s>\n",
+      sfprintf_prefix sfprintf(io, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd></%s>\n",
 			       indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), tag);
     } else if ((pd)->errCode == P_USER_CONSTRAINT_VIOLATION) { /* location and value */
-      sfprintf_prefix sfprintf(io, "%.*s<%s><p:pd><p:pstate>%s</p:pstate><p:nerr>%lu</p:nerr><p:errCode>%s</p:errCode><p:loc><p:b><p:num>%lld</p:num><p:byte>%lld</p:byte><p:offset>%lld</p:offset></p:b><p:e><p:num>%lld</p:num><p:byte>%lld</p:byte><p:offset>%lld</p:offset></p:e></p:loc></p:pd><p:val>" outfmt "</p:val></%s>\n",
+      sfprintf_prefix sfprintf(io, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</num><byte>%lld</byte><offset>%lld</offset></b><e><num>%lld</num><byte>%lld</byte><offset>%lld</offset></e></loc></pd><val>" outfmt "</val></%s>\n",
 			       indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
 			       (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
 			       (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset,
 			       outval, tag);
     } else { /* location, no value */
-      sfprintf_prefix sfprintf(io, "%.*s<%s><p:pd><p:pstate>%s</p:pstate><p:nerr>%lu</p:nerr><p:errCode>%s</p:errCode><p:loc><p:b><p:num>%lld</p:num><p:byte>%lld</p:byte><p:offset>%lld</p:offset></p:b><p:e><p:num>%lld</p:num><p:byte>%lld</p:byte><p:offset>%lld</p:offset></p:e></p:loc></p:pd></%s>\n",
+      sfprintf_prefix sfprintf(io, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</num><byte>%lld</byte><offset>%lld</offset></b><e><num>%lld</num><byte>%lld</byte><offset>%lld</offset></e></loc></pd></%s>\n",
 			       indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
 			       (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
 			       (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset,
@@ -6912,7 +6912,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.190 2005-04-04 03:46:18 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.191 2005-05-16 18:39:10 joel Exp $\0\n";
 
 static const char lib[] = "padsc";
 
