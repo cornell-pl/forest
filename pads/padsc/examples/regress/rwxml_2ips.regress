@@ -2,48 +2,48 @@ Input file = ../../data/2ips
 Output file = /dev/stdout
 warning: P_open: Installing default IO discipline : newline-terminated records
 <test>
-  <ip1><p:val>1.0.0.0</p:val></ip1>
-  <ip2><p:val>12.0.0.0</p:val></ip2>
+  <ip1><val>1.0.0.0</val></ip1>
+  <ip2><val>12.0.0.0</val></ip2>
 </test>
 <test>
-  <ip1><p:val>123.0.0.234</p:val></ip1>
-  <ip2><p:val>255.0.0.0</p:val></ip2>
+  <ip1><val>123.0.0.234</val></ip1>
+  <ip2><val>255.0.0.0</val></ip2>
 </test>
 <test>
-  <ip1><p:val>10.0.0.10</p:val></ip1>
-  <ip2><p:val>10.10.0.10</p:val></ip2>
+  <ip1><val>10.0.0.10</val></ip1>
+  <ip2><val>10.10.0.10</val></ip2>
 </test>
 <test>
-  <ip1><p:val>6.7.8.9</p:val></ip1>
-  <ip2><p:val>6.7.8.9</p:val></ip2>
+  <ip1><val>6.7.8.9</val></ip1>
+  <ip2><val>6.7.8.9</val></ip2>
 </test>
 warning: Error [in Pip_read]: at record 5 from byte 1 to byte 3: Invalid IP address, numbers must be between 0 and 255 
 [record 5]>>>256<<<.5.5.256|1.1.1.1.
 <test>
-  <p:pd><p:pstate>Normal</p:pstate><p:nerr>1</p:nerr><p:errCode>P_STRUCT_FIELD_ERR</p:errCode><p:loc><p:b><p:num>5</p:num><p:byte>1</p:byte><p:offset>55</p:offset></p:b><p:e><p:num>5</p:num><p:byte>3</p:byte><p:offset>57</p:offset></p:e></p:loc></p:pd>
-  <ip1><p:pd><p:pstate>Normal</p:pstate><p:nerr>1</p:nerr><p:errCode>P_INVALID_IP_RANGE</p:errCode><p:loc><p:b><p:num>5</p:num><p:byte>1</p:byte><p:offset>55</p:offset></p:b><p:e><p:num>5</p:num><p:byte>3</p:byte><p:offset>57</p:offset></p:e></p:loc></p:pd></ip1>
-  <ip2><p:val>1.1.1.1</p:val></ip2>
+  <pd><pstate>Normal</pstate><nerr>1</nerr><errCode>P_STRUCT_FIELD_ERR</errCode><loc><b><num>5</num><byte>1</byte><offset>55</offset></b><e><num>5</num><byte>3</byte><offset>57</offset></e></loc></pd>
+  <ip1><pd><pstate>Normal</pstate><nerr>1</nerr><errCode>P_INVALID_IP_RANGE</errCode><loc><b><num>5</num><byte>1</byte><offset>55</offset></b><e><num>5</num><byte>3</byte><offset>57</offset></e></loc></pd></ip1>
+  <ip2><val>1.1.1.1</val></ip2>
 </test>
 warning: Error [in Pip_read]: at record 6 from byte 7 to byte 9: Invalid IP address, numbers must be between 0 and 255 
 [record 6]5.5.5.>>>256<<<|1.1.1.1.
 <test>
-  <p:pd><p:pstate>Normal</p:pstate><p:nerr>1</p:nerr><p:errCode>P_STRUCT_FIELD_ERR</p:errCode><p:loc><p:b><p:num>6</p:num><p:byte>7</p:byte><p:offset>82</p:offset></p:b><p:e><p:num>6</p:num><p:byte>9</p:byte><p:offset>84</p:offset></p:e></p:loc></p:pd>
-  <ip1><p:pd><p:pstate>Normal</p:pstate><p:nerr>1</p:nerr><p:errCode>P_INVALID_IP_RANGE</p:errCode><p:loc><p:b><p:num>6</p:num><p:byte>7</p:byte><p:offset>82</p:offset></p:b><p:e><p:num>6</p:num><p:byte>9</p:byte><p:offset>84</p:offset></p:e></p:loc></p:pd></ip1>
-  <ip2><p:val>1.1.1.1</p:val></ip2>
+  <pd><pstate>Normal</pstate><nerr>1</nerr><errCode>P_STRUCT_FIELD_ERR</errCode><loc><b><num>6</num><byte>7</byte><offset>82</offset></b><e><num>6</num><byte>9</byte><offset>84</offset></e></loc></pd>
+  <ip1><pd><pstate>Normal</pstate><nerr>1</nerr><errCode>P_INVALID_IP_RANGE</errCode><loc><b><num>6</num><byte>7</byte><offset>82</offset></b><e><num>6</num><byte>9</byte><offset>84</offset></e></loc></pd></ip1>
+  <ip2><val>1.1.1.1</val></ip2>
 </test>
 warning: Error [in Pip_read]: at record 7 from byte 7 to byte 9: Invalid IP address, numbers must be between 0 and 255 
 [record 7]5.5.5.>>>256<<<.|1.1.1.1.
 <test>
-  <p:pd><p:pstate>Normal</p:pstate><p:nerr>1</p:nerr><p:errCode>P_STRUCT_FIELD_ERR</p:errCode><p:loc><p:b><p:num>7</p:num><p:byte>7</p:byte><p:offset>101</p:offset></p:b><p:e><p:num>7</p:num><p:byte>9</p:byte><p:offset>103</p:offset></p:e></p:loc></p:pd>
-  <ip1><p:pd><p:pstate>Normal</p:pstate><p:nerr>1</p:nerr><p:errCode>P_INVALID_IP_RANGE</p:errCode><p:loc><p:b><p:num>7</p:num><p:byte>7</p:byte><p:offset>101</p:offset></p:b><p:e><p:num>7</p:num><p:byte>9</p:byte><p:offset>103</p:offset></p:e></p:loc></p:pd></ip1>
-  <ip2><p:val>1.1.1.1</p:val></ip2>
+  <pd><pstate>Normal</pstate><nerr>1</nerr><errCode>P_STRUCT_FIELD_ERR</errCode><loc><b><num>7</num><byte>7</byte><offset>101</offset></b><e><num>7</num><byte>9</byte><offset>103</offset></e></loc></pd>
+  <ip1><pd><pstate>Normal</pstate><nerr>1</nerr><errCode>P_INVALID_IP_RANGE</errCode><loc><b><num>7</num><byte>7</byte><offset>101</offset></b><e><num>7</num><byte>9</byte><offset>103</offset></e></loc></pd></ip1>
+  <ip2><val>1.1.1.1</val></ip2>
 </test>
 warning: Error [in Pip_read]: at record 8 at byte 11 : Invalid IP address 
 [record 8]255.5.5.5|>>>a<<<1.1.1.1.
 warning: Error [in test_read]: record 8 byte 11 : Unexpected data before EOR
 [record 8]255.5.5.5|>>>a1.1.1.1.<<<
 <test>
-  <p:pd><p:pstate>Normal</p:pstate><p:nerr>2</p:nerr><p:errCode>P_STRUCT_FIELD_ERR</p:errCode><p:loc><p:b><p:num>8</p:num><p:byte>11</p:byte><p:offset>125</p:offset></p:b><p:e><p:num>8</p:num><p:byte>11</p:byte><p:offset>125</p:offset></p:e></p:loc></p:pd>
-  <ip1><p:val>255.5.5.5</p:val></ip1>
-  <ip2><p:pd><p:pstate>Normal</p:pstate><p:nerr>1</p:nerr><p:errCode>P_INVALID_IP</p:errCode><p:loc><p:b><p:num>8</p:num><p:byte>11</p:byte><p:offset>125</p:offset></p:b><p:e><p:num>8</p:num><p:byte>11</p:byte><p:offset>125</p:offset></p:e></p:loc></p:pd></ip2>
+  <pd><pstate>Normal</pstate><nerr>2</nerr><errCode>P_STRUCT_FIELD_ERR</errCode><loc><b><num>8</num><byte>11</byte><offset>125</offset></b><e><num>8</num><byte>11</byte><offset>125</offset></e></loc></pd>
+  <ip1><val>255.5.5.5</val></ip1>
+  <ip2><pd><pstate>Normal</pstate><nerr>1</nerr><errCode>P_INVALID_IP</errCode><loc><b><num>8</num><byte>11</byte><offset>125</offset></b><e><num>8</num><byte>11</byte><offset>125</offset></e></loc></pd></ip2>
 </test>
