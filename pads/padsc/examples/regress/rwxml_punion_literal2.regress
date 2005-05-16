@@ -2,47 +2,47 @@ Input file = ../../data/punion_literal2
 Output file = /dev/stdout
 warning: P_open: Installing default IO discipline : newline-terminated records
 <test>
-  <baz><p:val>baz</p:val></baz>
+  <baz><val>baz</val></baz>
 </test>
 <test>
-  <c><p:val>c</p:val></c>
+  <c><val>c</val></c>
 </test>
 <test>
-  <baz><p:val>baz</p:val></baz>
+  <baz><val>baz</val></baz>
 </test>
 <test>
-  <f><p:val>34</p:val></f>
+  <f><val>34</val></f>
 </test>
 <test>
-  <star><p:val>star</p:val></star>
+  <star><val>star</val></star>
 </test>
 <test>
-  <baz><p:val>baz</p:val></baz>
+  <baz><val>baz</val></baz>
 </test>
 <test>
-  <f><p:val>356</p:val></f>
+  <f><val>356</val></f>
 </test>
 <test>
-  <star><p:val>star</p:val></star>
+  <star><val>star</val></star>
 </test>
 <test>
-  <c><p:val>c</p:val></c>
+  <c><val>c</val></c>
 </test>
 <test>
-  <baz><p:val>baz</p:val></baz>
+  <baz><val>baz</val></baz>
 </test>
 <test>
-  <star><p:val>star</p:val></star>
+  <star><val>star</val></star>
 </test>
 <test>
-  <as><p:val>as</p:val></as>
+  <as><val>as</val></as>
 </test>
 <test>
-  <as><p:val>as</p:val></as>
+  <as><val>as</val></as>
 </test>
 <test>
-  <as><p:val>as</p:val></as>
+  <as><val>as</val></as>
 </test>
 <test>
-  <f><p:val>23</p:val></f>
+  <f><val>23</val></f>
 </test>
