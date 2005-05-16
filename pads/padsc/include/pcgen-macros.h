@@ -2043,7 +2043,7 @@ do {
 #define PCGEN_SOURCE_XML_OUT_BEGIN(schema_name)
 do {
   sfstrseek(pads->tmp4, 0, SEEK_SET);
-    tlen_PCGEN_ = sfprintf(pads->tmp4, "<?xml version=\"1.0\" encoding \"UTF-8\"?>\n<padsns:Psource xmlns:padsns=\"%s\">\n",
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<padsns:Psource xmlns:padsns=\"%s\">\n",
 			   schema_name);
     indent += 2;
     PDCI_TMP4_TLEN_UPDATES();
