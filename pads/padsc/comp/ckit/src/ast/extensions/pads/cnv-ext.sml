@@ -1371,10 +1371,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val (sourceTagBeginSs,sourceTagEndSs) = 
 			  if isSource then 
 			      let val full =  OS.Path.file (!(PadsState.padsName))
-				  val name = case PTyUtils.mungeFileName(full, "p", "xsd") of NONE => "" 
-			                     | SOME n => n
+(*				  val name = case PTyUtils.mungeFileName(full, "p", "xsd") of NONE => "" 
+			                     | SOME n => n *)
 				  in
-				      ([PT.Expr(PT.Call(PT.Id "PCGEN_SOURCE_XML_OUT_BEGIN", [PT.String name]))],
+				      ([PT.Expr(PT.Call(PT.Id "PCGEN_SOURCE_XML_OUT_BEGIN", [PT.String full]))],
 				       [PT.Expr(PT.Call(PT.Id "PCGEN_SOURCE_XML_OUT_END",[]))])
 			      end
 			      else ([],[])
