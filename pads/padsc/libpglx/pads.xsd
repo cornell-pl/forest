@@ -275,4 +275,8 @@
  </xs:sequence>
 </xs:complexType>
 
+<xs:simpleType name="Pip">
+  <xs:restriction base="xs:string"/>  
+</xs:simpleType>
+
 </xs:schema>
