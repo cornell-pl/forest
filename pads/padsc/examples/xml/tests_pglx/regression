@@ -4,6 +4,8 @@
 # assumes user has run the PADS SETENV script
 #
 
+$galaxhome = $ENV{'GALAX_HOME'};
+
 # Test for PADS_HOME
 $phome = $ENV{'PADS_HOME'};
 if ($phome eq "") {
@@ -22,8 +24,8 @@ if (! -d $pcode) {
    die "regression: PADS_WEB_CODE_ROOT directory does not exist";
 }
 
-&regress_run("date", "Date");
 &regress_run("ip", "IP");
+&regress_run("date", "Date");
 &regress_run("string", "String");
 &regress_run("int32", "Int32");
 &regress_run("syslog", "Syslog");
@@ -47,13 +49,15 @@ sub regress_run {
    $cmd = "/usr/bin/gmake rwxml_$a";
    $rslt = `$cmd 2>&1`;
 
-   # Generate XML output from PADS executable
+   # Generate XML output from PADS executable. Note that we cannot collect
+   # standard err - some normal messages go there, and we can't have them in
+   # output XML.
    $cmd = "cat $pcode/html/sources/$a/data/sample | linux.i386/rwxml_$a > linux.i386/pads.$a.xml";
-   $rslt = `$cmd 2>&1`;
+   $rslt = `$cmd`;
    $cmd = "cat $pcode/html/sources/$a/data/bad.sample | linux.i386/rwxml_$a > linux.i386/bad.pads.$a.xml";
    $rslt = `$cmd 2>&1`;
 
-   # copy needed C program and header file
+   # copy needed C program and header file, for building PADX XML generator
    print "regression: generating PADX XML from source $b\n";
    $cmd = "cp $pcode/html/sources/$a/out/test_bulk_$a.c .";
    $rslt = `$cmd 2>&1`;
@@ -62,10 +66,27 @@ sub regress_run {
    $cmd = "padsc -x $a.p; mv GNUmakefile Yu; cp GNUmakefile.galax GNUmakefile; /usr/bin/gmake test_bulk_$a; mv Yu GNUmakefile";
    $rslt = `$cmd 2>&1`;
 
+   # Generate XML with PADS executable. Use simplest XQuery query to get
+   # the output XML.
    $cmd = "linux.i386/test_bulk_$a $pcode/html/sources/$a/data/sample $pcode/html/sources/$a/queries/dot.xq";
    $rslt = `$cmd 2>&1`;
    $cmd = "linux.i386/test_bulk_$a $pcode/html/sources/$a/data/bad.sample $pcode/html/sources/$a/queries/dot.xq -output-xml linux.i386/bad.test_bulk_$a.xml";
    $rslt = `$cmd 2>&1`;
+
+   # Use galax-parse to check well-formedness of XML produced by PADS
+   print "regression: Testing PADS XML on source $b\n";
+   $cmd = "$galaxhome/bin/galax-parse -validate -xmlschema $a.xsd linux.i386/pads.$a.xml";
+   $rslt = `$cmd 2>&1`;
+   if ($rslt ne "") {
+      print "Test One from PADS: {$rslt}\n";
+   }
+
+   print "regression: Testing PADX XML on source $b\n";
+   $cmd = "$galaxhome/bin/galax-parse -validate -xmlschema $a.xsd linux.i386/test_bulk_$a.xml";
+   $rslt = `$cmd 2>&1`;
+   if ($rslt ne "") {
+      print "Test One from PADX: {$rslt}\n";
+   }
 
    # now clean up afterwards
    $cmd = "rm $a.*";
