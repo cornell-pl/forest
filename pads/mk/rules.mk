@@ -496,6 +496,10 @@ SHARED_ASTLIB_D = $(STATIC_ASTLIB_D)
 endif
 
 DYNAMIC_LIBS_O = -L$(INSTALL_LIBDIR)
+ifdef WAVELETS 
+DYNAMIC_LIBS_O += -lm
+endif
+
 ifdef USE_GALAX
 # Note: PCRE_LIB_DIR needs to be defined in any makefile using Galax.
 DYNAMIC_LIBS_O += \
@@ -527,6 +531,9 @@ DYNAMIC_LIB_DEPS_O += $(SHARED_DLL_LIB_DEP_O) $(SHARED_BZLIB_DEP_O) $(SHARED_ZLI
 endif
 
 DYNAMIC_LIBS_D = -L$(INSTALL_LIBDIR)
+ifdef WAVELETS 
+DYNAMIC_LIBS_D += -lm
+endif
 ifdef USE_GALAX
 DYNAMIC_LIBS_D += \
   -lpads-galax-g $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS) \
