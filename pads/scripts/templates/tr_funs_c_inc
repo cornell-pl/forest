@@ -29,6 +29,10 @@ PickMacro(Pchar)   = "GET_FN";
 PickMacro(Pa_char) = "GET_FN";
 PickMacro(Pe_char) = "GET_FN";
 
+PickMacro(Pip)         = "GET_FN";
+PickMacro(Pa_ip)       = "GET_FN";
+PickMacro(Pe_ip)       = "GET_FN";
+
 PickMacro(ipaddrtype)  = "GET_FN";
 PickMacro(Pipaddr)     = "GET_FN";
 PickMacro(Pa_ipaddr)   = "GET_FN";

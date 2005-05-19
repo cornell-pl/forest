@@ -25,6 +25,9 @@ Ty(Pchar)   = "short";
 Ty(Pa_char) = "short";
 Ty(Pe_char) = "short";
 
+Ty(Pip)         = "IP";
+Ty(Pa_ip)       = "IP";
+Ty(Pe_ip)       = "IP";
 Ty(ipaddrtype)  = "IP";
 Ty(Pipaddr)     = "IP";
 Ty(Pa_ipaddr)   = "IP";

@@ -25,6 +25,10 @@ Ty(Pchar)   = "short";
 Ty(Pa_char) = "short";
 Ty(Pe_char) = "short";
 
+Ty(Pip)       = "unsigned int";
+Ty(Pa_ip)     = "unsigned int";
+Ty(Pe_ip)     = "unsigned int";
+
 Ty(ipaddrtype)  = "unsigned int";
 Ty(Pipaddr)     = "unsigned int";
 Ty(Pa_ipaddr)   = "unsigned int";
