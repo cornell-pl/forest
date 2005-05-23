@@ -27,7 +27,7 @@ SRC_INCDIR = $(PADS_HOME)/padsc/include
 PCGEN_IN = $(SRC_INCDIR)/pcgen-macros.h
 PCGEN = $(SRC_INCDIR)/pcgen-macros-gen.h
 
-OBJS_O = default_io_disc.o pads-gen.o pads-acc-gen.o pads-read-gen.o pads-write-gen.o pads-misc-gen.o rbuf.o
+OBJS_O = default_io_disc.o pads-gen.o pads-acc-gen.o pads-read-gen.o pads-write-gen.o pads-misc-gen.o rbuf.o pads-hist.o
 
 OBJS_D = $(OBJS_O:%.o=%_d.o)
 
