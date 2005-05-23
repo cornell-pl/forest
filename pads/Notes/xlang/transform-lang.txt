@@ -1,0 +1,119 @@
+Principles
+==========
+
+1. User cannot touch reps w/ syntactic errors.
+
+2. User does not construct Pds.   Language should do all Pd
+   manipulation.  (Preserves theorem)
+
+3. User can specify output type (including constraints) and
+   system checks the constraints.  
+
+(5/20/05)
+
+4. Error paths should not clutter normal path.
+   Note that values always have a paired parse descriptor, so
+   we can handle the case of no specified transform for an error
+   by just marking an error in result.
+
+5. Don't want users to have to do low-level memory management.
+   Also, should be able to manipulate strings at a high-level of abstraction.
+
+6. Preserve metadata-data relationship. In particular, keep track of source of errors even under transform. E.g. if we combine two error fields, how do we record where the new error came from?
+
+7. Separate language into destructors and constructors.
+
+8. Base X-lang on IPADS.
+
+9. In pattern matching, support pattern matching on values and types. Value names can be used in value-expressions and type names can be used in type expressions.
+  
+Issues 
+======
+
+Implementation Issues
+----------------------
+o Constraint language and transform language have to be in sync - if constr. language is C but Xform language is ML, how do they work together?
+
+o How do we match transform language to constraint language?
+
+o What is the target language of the transformation language? 
+  If we don't compile into C, how do we interface with existing PADS? 
+
+o What are performance issues of interfacing C and ML?
+
+o Is the transformation language compiled or interpreted?
+
+Other
+-----
+o Array introduction and elimination notes:
+intlist = Puint32 [Plit '|'; e or len x+2, Peor];
+
+match arr with 
+ e : eTy [sTy; exp, tTy] =>
+ f(e) : ... (using names in type above).
+
+f represents a function to apply to all elements e, as in map. We have more work to do here. The key point is that the pattern-matching elimination form of the array allows you to bind both the value and type portions of the array to names. Then, the value names can be used as usual and the type-related names can be used in a type annotation on the right-hand side.
+
+o We've decided to based the design of the transformation language on the syntax/structure of IPADS, for simplicity. Once that is accomplished, we will have to decide whether to come up with a new syntax that's appropriate to PADS itself, whether to modify the PADS syntax to bring it closer the IPADS syntax, or whether to do some combination of the two.
+
+o Can we separate code in compiler that deals with constraint expressions into its own module that could be binding-dependent? Eg. if constr. lang. is subset of c, C-binding module would just return the expr. while ML-binding module would compile it into ML code (if possible), etc. 
+
+o For surface language (i.e. not the core X-lang. we're working on now), we'd like user to be able to ignore error cases and have default code handle. For pieces that depend on error data, should be able to mark them themselves as error. But, want some way to know that the error came from dependency on other error, so want some form of error-source tracking.
+
+o General expressiveness of language 
+  - should language be terminating? 
+  - or permit arbitrary definition of functions?
+
+o Why not embed PADS in ML/Haskell? (i.e. Answers question of why we're not using a GPL/FPL).
+
+o Usefulness of row polymorphism 
+
+o How to do I/O?
+  - Psource represents I/O
+
+  - What do other languages do about I/O? Xduce/Cduce/Haskell variants
+
+o Union splitting -- how to express it? builtin or via a library
+  function. 
+
+o Composing transforms 
+  - How implicit can tree-walking be?
+
+o Compiler optimizations
+  - Guarantee one pass over data!
+  - Merge into transform into parsing to avoid separate pass. Particularly for streaming, don't want to parse then transform but do it all together.
+
+o What do we do about (rep, parse descriptor) pair?
+
+  - Patterns (as written in our example) implicitly match values that
+    have no errors/i.e., no pd.
+
+  - How to express case(s) when value does contain an error?
+
+  - Several cases:
+
+    Input      Output 
+    No Pd      No Pd
+    No Pd      Pd (constraint invalid)
+    Pd(syntax) Must supply a value
+    Pd(semantic) Pd opt
+
+    Does output type reflect output pd?
+
+    *** Output type for transform functions could be rep-val or
+        raw-bits
+
+o Built-in operators 
+
+  - On base types, which know how to manipulate Pds?
+
+o What do we do about constraints?
+
+  - Include predicate expressions in the types 
+    exprs that can show up in the types are limited
+  - Should be able to drop constraint on a field
+  - Implicitly add constraints to output types
+    constraints on array lengths more common
+    constraints on strings/dates not so common
+    David knows about techniques for this
+  - Programmer could write down constraints by hand
