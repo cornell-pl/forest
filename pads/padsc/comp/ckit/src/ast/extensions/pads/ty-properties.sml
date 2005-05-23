@@ -10,7 +10,7 @@ struct
                       | Variable
 
    type argList = string list * PT.expression list
-   type labelInfo = string * string * argList * bool (* label name, label type, supplied arguments, is omitted*)
+   type labelInfo = string * string * argList * bool * string option(* label name, label type, supplied arguments, is omitted, comment*)
 
    datatype compoundSize =  Base of diskSize 
                           | Typedef of diskSize * string * argList

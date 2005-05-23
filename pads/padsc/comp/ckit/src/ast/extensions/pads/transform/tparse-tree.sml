@@ -8,7 +8,7 @@ struct
 
   datatype body 
          = Bsimple of string 
-         | Bstruct of {pre : string option, each: (string * string * string) option, post : string option}
+         | Bstruct of {pre : string option, each: (string * string * string option * string) option, post : string option}
        
   datatype externalDecl 
          = Output of string

@@ -86,9 +86,9 @@ end = struct
   fun substTrToString mapping (tr:trTree) = 
     case tr 
     of (Str s) => s
-    |  (Deref s) => (case (List.find (fn(k,b)=> k = s) mapping)
+    |  (Deref s) => (case (List.find (fn(k,b)=>  k = s) mapping)
                      of SOME (k,b) => b
-                     | NONE => (print ("Unexpected variable name: "^(s)^".\n"); "ERROR"))
+                     | NONE => (print ("Unexpected variable name: ("^s^").\n"); "ERROR"))
     |  (App(s,trArg)) => let val argStr = substTrToString mapping trArg
                        in
 		           case Map.find(!simpletfs, Atom.atom s)
@@ -101,7 +101,7 @@ end = struct
     |  (Seq(tr1, tr2)) => ((substTrToString mapping tr1) ^ (substTrToString mapping tr2))
                   
     
-  fun cvtTr (ty, field) l = 
+  fun cvtTr freeVars l = 
       let fun findMatching tr l = 
 	    let fun fm nil n acc = (print ("Failed to find matching right paren after transform "^tr^".\n"); (acc, nil))
 		  | fm (c::cs) n acc = if c = #")" andalso n = 0 then (acc, cs)
@@ -120,7 +120,7 @@ end = struct
               fun getDeref (seq : char list)= 
 		  let val seqS = String.implode seq
 		  in
-		  case (List.find (fn var => String.isPrefix var seqS) [ty, field])
+		  case (List.find (fn var => String.isPrefix var seqS) freeVars)
 		  of NONE => (print ("Unexpected variable name: "^ seqS ^".\n"); (Str "", []))
                   | SOME which =>(Deref which, List.drop(seq, String.size which))
 		  end
@@ -169,25 +169,32 @@ end = struct
 
   fun getFieldInfo (ptyInfo:PTys.pTyInfo) = 
       let val fieldInfo = #compoundDiskSize ptyInfo
+	  fun cnvComment NONE = "" 
+            | cnvComment (SOME s) = s
 	  fun mungeOne infoOpt = case infoOpt of NONE => []
-	                         | SOME (name,ty,args,isOmitted) => [(ty,name,isOmitted)]
+	                         | SOME (name,ty,args,isOmitted, commentOpt) => [(ty,name,cnvComment commentOpt, isOmitted)]
       in
 	  case fieldInfo
 	  of (TyProps.Struct sinfol) => List.concat(List.map mungeOne (#1(ListPair.unzip sinfol)))
           | _ => (print "Struct transform applied to non-struct.\n"; [])
       end
         
-  fun doFields (stream, tid, tidtab, ptyInfo) (ty, field, bdyS) = 
+  fun doFields (stream, tid, tidtab, ptyInfo) (ty, field, commentOpt, bdyS) = 
       let val repFields = getFieldInfo ptyInfo
           fun chkParam p = if (isCap p) then
 		       print ("Variable names must be not capitalized ("^p^").\n") else ()
 	  val () = chkParam ty
           val () = chkParam field
-	  val trTree = cvtTr(ty, field) (String.explode bdyS)
+          fun getOne label [] = ([], [])
+            | getOne label ((_, field, _, _)::xs) = ([label], [(label, field)])
+	  val (first, firstMap) = getOne "pFIRST" repFields
+          val (last, lastMap) = getOne "pLAST" (List.rev repFields)
+	  val trTree = cvtTr([ty, field] @ (case commentOpt of NONE => [] | SOME s => [s])@ first@last) (String.explode bdyS)
 	  val trStr = trToString trTree
-	  fun doField (tyname, fieldname, isOmitted) = 
+	  fun doField (tyname, fieldname, commentText, isOmitted) = 
               if isOmitted then ()
-              else let val mapping = [(ty,tyname), (field,fieldname)]
+              else let val commentMapping = case commentOpt of NONE => [] | SOME s => [(s, commentText)]
+		       val mapping = [(ty,tyname), (field,fieldname)] @ commentMapping @ firstMap @ lastMap
                        val outStr = substTrToString mapping trTree
 		   in
 		       TextIO.output(stream, "  "^outStr^"\n")
@@ -202,7 +209,7 @@ end = struct
       | SOME preS => TextIO.output(stream, preS^"\n"));
      (case each 
       of NONE => ()
-      | SOME (ty, field, bdyS) => doFields(stream,tid,tidtab, ptyInfo) (ty,field,bdyS));
+      | SOME (ty, field, comment, bdyS) => doFields(stream,tid,tidtab, ptyInfo) (ty,field,comment, bdyS));
      (case post 
       of NONE => ()
       | SOME postS => TextIO.output(stream, postS^"\n\n")))

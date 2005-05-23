@@ -390,7 +390,7 @@ print TRF $ttext;
 close (TRF);
 print "\nDone creating $make_file\n" if ($dbg);
 
-$res = `/bin/rm -f $temp_files > /dev/null 2>&1`;
+#$res = `/bin/rm -f $temp_files > /dev/null 2>&1`;
 
 exit 0;
 

@@ -50,7 +50,8 @@ end
 	| targ of targ
 	| body of body
         | preOpt of string option
-        | eachOpt of (string * string * string) option
+        | commentOpt of string option
+        | eachOpt of (string * string * string option * string) option
         | postOpt of string option
         | domain of sTy
         | range  of dTy
@@ -109,8 +110,11 @@ body: EQUALS STRING                       (Bsimple STRING)
 preOpt:                               (NONE)
    | PRE COLON ARROW STRING           (SOME STRING)
 
+commentOpt:			      (NONE)
+   | ID				      (SOME ID)
+
 eachOpt:                              (NONE)
-   | EACH COLON ID ID ARROW STRING    (SOME (ID1,ID2,STRING))
+   | EACH COLON ID ID commentOpt ARROW STRING    (SOME (ID1,ID2,commentOpt, STRING))
 
 postOpt:                              (NONE)
    | POST COLON ARROW STRING          (SOME STRING)

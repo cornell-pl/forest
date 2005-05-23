@@ -23,13 +23,13 @@ PROTOCOL udp_pads (base) {\n\
 }\n\
 \n\
 PROTOCOL pads_=HDR_TYPE= (udp_pads) { "
- Each:  ty f -> "^Ty(^ty) pads_^f\tget_pads_^f;"
+ Each:  ty f c -> "^Ty(^ty) pads_^f\tget_pads_^f^c;"
  Post:       -> "}"
 End;
 
 Schema(Pstruct =REC_TYPE=)
 Begin
  Pre:        -> "PROTOCOL pads_=REC_TYPE= (pads_=HDR_TYPE=) { "
- Each:  ty f -> "^Ty(^ty) pads_^f\tget_pads_^f;"
+ Each:  ty f c -> "^Ty(^ty) pads_^f\tget_pads_^f^c;"
  Post:       -> "}"
 End;

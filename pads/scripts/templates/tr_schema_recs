@@ -23,6 +23,6 @@ PROTOCOL udp_pads (base) {\n\
 }\n\
 \n\
 PROTOCOL pads_=REC_TYPE= (udp_pads) { "
- Each:  ty f -> "^Ty(^ty) pads_^f\tget_pads_^f;"
+ Each:  ty f c -> "^Ty(^ty) pads_^f\tget_pads_^f^c;"
  Post:       -> "}"
 End;

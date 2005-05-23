@@ -1729,12 +1729,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  PE.error ("Representation of manifest field "^name
 				    ^" contains a pointer")
 			       else ()
+		      val tyStr = CTtoString ct
 		  in
 		      [{diskSize = TyProps.mkSize (0,0), 
 			memChar = if isStatic then TyProps.Static else TyProps.Dynamic,
 			endian = false, isRecord = false, 
                         containsRecord = false, largeHeuristic = false, 
-			labels = [SOME (name, "Pcompute", ([], []), isVirtual )]}]
+			labels = [SOME (name, tyStr, ([], []), isVirtual, comment )]}]
 		  end
 
 	      (* Functions for walking over lists of struct or union elements *)
@@ -4960,7 +4961,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val lH = lookupHeuristic pty 
 			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isRecord, 
 			       containsRecord=contR, largeHeuristic=lH, 
-			       labels = [SOME (name, ftyName, (paramNames, args), isVirtual)]}] 
+			       labels = [SOME (name, ftyName, (paramNames, args), isVirtual, comment)]}] 
 			  end
 		     (* Not storing strings read via RE yet, so Static for now *) 
 		     fun genTyPropsBrief (e, labelOpt) = case extractString e 
@@ -6049,7 +6050,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val lH = lookupHeuristic pty
 			  in [{diskSize = ds, memChar = mc, endian = isEndian andalso isE1 andalso isE2, 
                                isRecord = isRecord, containsRecord = contR, 
-			       largeHeuristic = lH, labels = [SOME (name, ftyName, (paramNames, args), isVirtual )]}] 
+			       largeHeuristic = lH, labels = [SOME (name, ftyName, (paramNames, args), isVirtual, comment )]}] 
                           end
 		      fun genTyPropsBrief (e,labelOpt) = 
 			  (* assume field is correct; error checking done in genReadBrief below *)
@@ -7200,7 +7201,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      let val closedDS = reduceCDSize(args, diskSize)
 				      in
 				         case sOpt of NONE => findField(ss, TyProps.add(closedDS, accum)) (* literal*)
-                                         | SOME (l, tyName, sargs:TyProps.argList, isVirtual) => 
+                                         | SOME (l, tyName, sargs:TyProps.argList, isVirtual, comment) => 
 					     if not (l = f) then 
 						 findField(ss, TyProps.add(closedDS, accum))
 					     else if (tyName = "Pcompute") then
@@ -7223,7 +7224,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      let val closedDS = reduceCDSize(args, diskSize)
 				      in
 				         case sOpt of NONE => findAlt(ss) (* literal: won't happen for union. *)
-                                         | SOME (l, tyName, sargs:TyProps.argList, isVirtual) => 
+                                         | SOME (l, tyName, sargs:TyProps.argList, isVirtual,commentOpt) => 
 					     if not (l = f) then findAlt ss
 					     else if (tyName = "Pcompute") then
 						 raise Fail (selName ^ ": ill-formed request: Computed field "^l^
