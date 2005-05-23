@@ -347,5 +347,56 @@ fun cvtDowns(recs_t rs)   : recsDown_t   = mapMerge cvtDown rs
 
 /* Stream splitting : */
 
+5/11/05
 
+Reading:
+XDuce, Lenses,
 
+Source Example:
+Pstruct normal_t{
+    Pstring(:'|':) comment;
+'|' Ptime t;
+'|' Puint32 code
+}
+
+Pstruct down_t{
+  Puint32 error;
+}
+
+Punion payload_t{
+  normal_t n;
+  down_t d;
+}
+
+Pstruct rec_t{
+  Puint64 key;
+'|' Pdate(:'|':) d;
+'|' Pstring(:'|':) unused;
+'|' Pip dest;
+'|' Pip source;
+'|' payload_t p;
+}
+
+Psource Parray recs{
+  rec_t[];
+}
+
+Target example:
+Pstruct univrec_t{
+      Pint32 key;
+  ',' Pdate(:',':) d;
+  ',' Pip source;
+  ',' Pip dest;
+  ',' Popt Psstring(:',':) comment;
+  ',' Popt Ptime t;
+  ',' Popt Puint32 code;
+  ',' Popt Puint32 error;
+}
+
+Pstruct recNormal_t{
+  key;d;source;dest;comment;t;code
+}
+
+Pstruct recDown{
+  key;d;source;dest;error;
+}
