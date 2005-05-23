@@ -1,3 +1,12 @@
+May 22, 2005 - Mary
+
+  o Added mapping rules for PADS to XML Schema in :
+    - pads/documents/pads-to-schema-mapping.txt
+    - Implemented in: 
+      comp/ckit/src/ast/pp/extensions/pads/pp-ast-xschema-fn.sml
+
+      *** NB: Rules for Ptypedef are still not quite right ***
+
 May 16, 2005 - Mary and Joel
   o Changed default writing of XML data from PADS so 
     that all elements other than <padsns:PSource> are

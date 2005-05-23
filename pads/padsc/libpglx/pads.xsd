@@ -279,4 +279,11 @@
   <xs:restriction base="xs:string"/>  
 </xs:simpleType>
 
+<xs:complexType name="val_Pip">
+  <xs:choice>
+   <xs:element name="val" type="p:Pip"/>
+   <xs:element name="pd" type="p:Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
 </xs:schema>

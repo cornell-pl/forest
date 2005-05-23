@@ -22,12 +22,22 @@ declarations (a complex type, a simple type, or an element):
 
    [[ PADS type decl ]]_schema == XML Schema Declaration
 
-A complete PADS PDL is mapped by simply concatenating the global
-declarations:
+A complete PADS source file is mapped to a complete XML Schema.  The target
+namespace is the name of the PADS source file.  The default PADS
+schema is imported and associated with the 'p' namespace prefix.
+The content of the XML schema is the concatenation of all the global 
+declarations that result from mapping the top-level PADS types.
 
    [[ pads_decl pads_decl_list ]]_schema
       == 
-   [[ pads_decl ]] @ [[ pads_decl_list ]]_schema
+   <schema targetNamespace=[[name-of-pads-source]]
+     xmlns=[[name-of-pads-source]]
+     xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xmlns:p="http://www.padsproj.org/pads.xsd" >
+     <import namespace="http://www.padsproj.org/pads.xsd"
+             schemaLocation=[[location-of-pads.xsd]]/>
+     [[ pads_decl ]] @ [[ pads_decl_list ]]_schema
+   </schema>
 
 The [[ ]]_local mapping rule maps a field in a PADS type to a local schema element.
 
@@ -76,20 +86,21 @@ Section 4. Base Types
        ]
 
    A reference to a base type is mapped to a reference to the
-   corresponding complex type in the pads.xsd namespace:
+   corresponding complex type in the pads.xsd namespace, and is
+   enclosed in quotes:
 
-       [[ base_ty ]]_typeref 
+       [[ base_ty ]]_typename 
             ==
-       \"p:val_base_ty\"
+       "\"p:val_" ^ base_ty ^ "\""
 
    A reference to a user-defined type is mapped to a reference to the
    corresponding complex type in the empty namespace (i.e., the target
-   schema):
+   schema) and is enclosed in quotes:
 
-       [[ ty ]]_typeref 
+       [[ ty ]]_typename 
      ty not a base type
             ==
-           \"ty\"
+           "\"" ^ ty ^ "\""
 
    A reference to a type's parse descriptor is just the name of the
    type concatenated with "_pd":
@@ -128,7 +139,7 @@ full_field ::= [qualifiers] p_ty identifier [constraint] ; [p_comment]
     [[ [qualifiers] p_ty identifier [constraint] ; [p_comment] ]]_local
                 where Pomit \not\in qualifiers
                         == 
-         [ <element name=[[identifier]] type=[[p_ty]]_typeref/> ]
+         [ <element name=[[identifier]] type=[[p_ty]]_typename/> ]
 
 comp_field ::=  Pcompute [Pomit] ty identifier = expression [constraint] ;
 
@@ -137,7 +148,7 @@ comp_field ::=  Pcompute [Pomit] ty identifier = expression [constraint] ;
 
        [[ Pcompute ty identifier = expression [constraint]  ]]_local
                         == 
-         [ <element name=[[identifier]] type=[[ty]]_typeref/> ]
+         [ <element name=[[identifier]] type=[[ty]]_typename/> ]
 
 literal_field ::= p_coreliteral;
 
@@ -160,7 +171,7 @@ array_field ::= [qualifiers] p_ty `['p_size_spec`]' identifier[: p_array_constra
   [ <element name=[[identifier]]>
       <complexType>
         <sequence>
-          <element name="elt" type=[[p_ty]]_typeref minOccurs="0" maxOccurs="unbounded"/>
+          <element name="elt" type=[[p_ty]]_typename minOccurs="0" maxOccurs="unbounded"/>
           <element name="length" type="p:Puint32"/>
         </sequence>
       </complexType>
@@ -172,7 +183,7 @@ opt_field ::= [qualifiers] Popt p_ty identifier [: opt_predicates] ; [p_comment]
   [[ [qualifiers] Popt p_ty identifier [: opt_predicates] ; [p_comment] ]]_local
                 where Pomit \not\in qualifiers
                         == 
-  [ <element name=[[identifier]] type=[[p_ty]]_typeref minOccurs="0"  maxOccurs="1"/> ]
+  [ <element name=[[identifier]] type=[[p_ty]]_typename minOccurs="0"  maxOccurs="1"/> ]
 
 field  ::= full_field | comp_field | literal_field | array_field | opt_field
 
@@ -288,7 +299,7 @@ array_ty    ::=  Parray identifier [p_formals] {
 
    [ <complexType name=[[identifier]]>
        <sequence>
-         <element name="elt" type=[[p_ty]]_typeref minOccurs="0" maxOccurs="unbounded"/>
+         <element name="elt" type=[[p_ty]]_typename minOccurs="0" maxOccurs="unbounded"/>
          <element name="length" type="p:Puint32"/>
          <element name="pd" type=[[identifier]]_pd minOccurs="0" maxOccurs="1"/>
        </sequence>
@@ -355,11 +366,11 @@ typedef_ty         ::= Ptypedef p_ty identifier [p_formals] [:typedef_predicates
                     == 
   [
    <complexType name=[[identifier]]>
-     <restriction base=[[p_ty]]_typeref/>
+     <restriction base=[[p_ty]]_typename/>
    </complexType>
   ; 
    <complexType name=[[identifier]]_pd>
-     <restriction base=[[[[p_ty]]_typeref]]_pd/>
+     <restriction base=[[[[p_ty]]_typename]]_pd/>
    </complexType>
   ]
 
@@ -368,11 +379,11 @@ typedef_ty         ::= Ptypedef p_ty identifier [p_formals] [:typedef_predicates
                     == 
   [
    <simpleType name=[[identifier]]>
-     <restriction base=[[p_ty]]_typeref/>
+     <restriction base=[[p_ty]]_typename/>
    </simpleType>
   ; 
    <simpleType name=[[identifier]]_pd>
-     <restriction base=[[[[p_ty]]_typeref]]_pd/>
+     <restriction base=[[[[p_ty]]_typename]]_pd/>
    </simpleType>
   ]
 

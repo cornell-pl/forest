@@ -352,8 +352,8 @@ res
 
   switch(idx){
   case 0:
-    result = baseTy ## _node_new(self,"base",&(m->base),pd,rep,
-				 "element", PDCI_MacroArg2String(ty) "_node_kthChild");
+    result = baseTy ## _val_node_new(self, "val",  pd, rep, PDCI_VAL_OFF, 
+				 PDCI_MacroArg2String(ty) "_node_kthChild");
     break;
   case 1:
     /* parse descriptor child */
@@ -374,7 +374,8 @@ result
   if (idx != 0)
     return 0;
   
-  if (GLX_STR_MATCH(name,"base")) {k = 0;}
+  if (GLX_STR_MATCH(name,"val")) {k = 0;}
+/*  if (GLX_STR_MATCH(name,"base")) {k = 0;} */
   else if (GLX_STR_MATCH(name,"pd")) {k = 1;}
   else return 0;
 /* END_MACRO */
@@ -398,9 +399,14 @@ result
 
   switch(idx){
   case 0:
-    result = baseTy ## _node_new(self,"base",&(m->base),pd,rep,
+    result = baseTy ## _val_node_new(self, "val",  pd, rep, PDCI_VAL_OFF, 
+				  PDCI_MacroArg2String(ty) "_sndNode_kthChild");
+    baseTy ## _val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+
+    /*    result = baseTy ## _node_new(self,"base",&(m->base),pd,rep,
 				 "element", PDCI_MacroArg2String(ty) "_sndNode_kthChild");
     baseTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    */
     break;
   case 1:
     /* parse descriptor child */
