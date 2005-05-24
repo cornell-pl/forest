@@ -25,7 +25,7 @@ Perror_t Pint64_hist_init (P_t *pads, Pint64_hist *h) {
     /* Equally spaced */
     h->partS = 0;
     h->bukI = 0;
-    Pint64 i;
+    Puint32 i;
     for (i = 0; i < h->B; i++) h->result[i].bound = ((Pint64)(h->N / h->B) + 1) * (i + 1);
     h->result[h->B - 1].bound = h->N;
   }
@@ -38,14 +38,14 @@ Perror_t Pint64_hist_init (P_t *pads, Pint64_hist *h) {
     }
     else {
       /* Adjust dimension to be perfect power of 2. */
-      Pint64 adj = (Pint64)((Pfloat64)log(h->N) / (Pfloat64)log(2));  
-      if ((Pint64)pow(2, (Pfloat64)adj) != h->N) h->N = (Pint64)pow(2, (Pfloat64)adj + 1);
+      Puint64 adj = (Puint64)((Pfloat64)log(h->N) / (Pfloat64)log(2));  
+      if ((Puint64)pow(2, (Pfloat64)adj) != h->N) h->N = (Puint64)pow(2, (Pfloat64)adj + 1);
 
-      h->lNumber = (Pint64)((Pfloat64)log(h->N) / (Pfloat64)log(2)); 
+      h->lNumber = (Puint8)((Pfloat64)log(h->N) / (Pfloat64)log(2)); 
       h->leftS = malloc(h->lNumber * sizeof(Pfloat64));
       h->rightS = malloc(h->lNumber * sizeof(Pfloat64));
       if (h->leftS == (Pfloat64*)0 || h->rightS == (Pfloat64*)0) exit(-1); 
-      h->rSize = (Pint64)((Pfloat64)(h->B * ((Pfloat64)log(h->N) / (Pfloat64)log(2)) * ((Pfloat64)log(h->M) / (Pfloat64)log(2))) / h->e);
+      h->rSize = (Puint32)((Pfloat64)(h->B * ((Pfloat64)log(h->N) / (Pfloat64)log(2)) * ((Pfloat64)log(h->M) / (Pfloat64)log(2))) / h->e);
       h->top = malloc(2 * h->rSize * sizeof(struct wave));
       if (h->top == (struct wave*)0) exit(-1);
       h->topI = 0;
@@ -134,8 +134,8 @@ Perror_t Pint64_hist_report (P_t *pads, Pint64_hist *h) {
 	compOpt(h);
       }
       else {
-	Pint64 i;
-	Pint64 tempInd = h->ind;
+	Puint64 i;
+	Puint64 tempInd = h->ind;
 	for (i = h->ind; i < h->N; i++) res = NearOptHis(h, 0);
 	buildRob(h);
 	h->ind = tempInd;
@@ -146,7 +146,7 @@ Perror_t Pint64_hist_report (P_t *pads, Pint64_hist *h) {
   
   printf("*** Histogram Result *** \n");
   if (h->isE == 0) h->bukI = h->B;
-  Pint64 i;	
+  Puint64 i;	
   for (i = 0; i < h->bukI; i++) {
     if (i == 0) printf("From %d to ", 0);
     else printf("From %d to ", h->result[i-1].bound);
@@ -186,12 +186,12 @@ Perror_t OptHis(Pint64_hist *h, double d) {
 
 Perror_t NearOptHis(Pint64_hist *h, double d) {
   /* Compute coefficients */
-  Pint64 i;
+  Puint8 i;
   struct wave* tempCoef = malloc((h->lNumber + 1) * sizeof(struct wave));
   if (tempCoef == (struct wave*)0) exit(-1);
-  Pint64 tempCoefI = 0;
+  Puint8 tempCoefI = 0;
   for (i = 0; i < h->lNumber; i++) {
-    Pint64 rem = h->ind % (Pint64)pow(2, (Pfloat64)i+1);		
+    Puint64 rem = h->ind % (Pint64)pow(2, (Pfloat64)i+1);		
     
     if (rem == 0) {
       /* Hit the left half of a new wavelet on ith. level */
@@ -199,29 +199,29 @@ Perror_t NearOptHis(Pint64_hist *h, double d) {
 	/* Roll back current wavelet vector */
 	struct wave temp;
 	temp.level = i;
-	temp.index = h->ind / (Pint64)pow(2, (Pfloat64)i+1);
+	temp.index = h->ind / (Puint64)pow(2, (Pfloat64)i+1);
 	temp.coef = (h->rightS[i] - h->leftS[i]) / pow(2, ((Pfloat64)i+1)/2);
 	tempCoef[tempCoefI] = temp;
 	tempCoefI++; 
       }
       h->leftS[i] = d; 
     } 
-    if (rem == (Pint64)pow(2, (Pfloat64)i)) {
+    if (rem == (Puint64)pow(2, (Pfloat64)i)) {
       /* Hit the right half of current wavelet on ith. level */
       h->rightS[i] = d;
     }	
-    if (rem > 0 && rem < (Pint64)pow(2, (Pfloat64)i)) {
+    if (rem > 0 && rem < (Puint64)pow(2, (Pfloat64)i)) {
       /* Keep on the left half of current wavelet on ith. level */
       h->leftS[i] += d;
     }
-    if (rem > (Pint64)pow(2, (Pfloat64)i)) {
+    if (rem > (Puint64)pow(2, (Pfloat64)i)) {
       /* Keep on the right half of current wavelet of ith. level */
       h->rightS[i] += d;
       if (h->ind == h->N - 1) {
 	/* The last element, roll up */
 	struct wave temp;
 	temp.level = i;
-	temp.index = h->ind / (Pint64)pow(2, (Pfloat64)i+1);
+	temp.index = h->ind / (Puint64)pow(2, (Pfloat64)i+1);
 	temp.coef = (h->rightS[i] - h->leftS[i]) / pow(2, ((Pfloat64)i+1)/2);
 	tempCoef[tempCoefI] = temp;
 	tempCoefI++;
@@ -255,7 +255,7 @@ void buildRob(Pint64_hist *h) {
   select_w(&(h->top), h, 0, 2 * h->rSize - 1); 
    
   /* Build the robust histogram out of the top array, start point recorded */
-  Pint64 i;
+  Puint32 i;
   for (i = 0; i < h->rSize; i++) {
     struct wave temp = h->top[i];
     if (temp.level == h->lNumber) {
@@ -265,9 +265,9 @@ void buildRob(Pint64_hist *h) {
       h->boundI++; 
     }
     else {
-      Pint64 left = temp.index * (Pint64)pow(2, (Pfloat64)(temp.level + 1));
-      Pint64 right = (temp.index + 1) * (Pint64)pow(2, (Pfloat64)(temp.level + 1));
-      Pint64 mid = (Pint64)(left + right) / 2;
+      Puint64 left = temp.index * (Puint64)pow(2, (Pfloat64)(temp.level + 1));
+      Puint64 right = (temp.index + 1) * (Puint64)pow(2, (Pfloat64)(temp.level + 1));
+      Puint64 mid = (Puint64)(left + right) / 2;
       Pfloat64 hei = temp.coef * pow(2, -((Pfloat64)temp.level+1) / 2);
 
       h->bound[h->boundI].bound = left;
@@ -286,7 +286,7 @@ void buildRob(Pint64_hist *h) {
 	
   quickSort(&h->bound, 0, h->boundI-1);
 
-  Pint64 currB = h->bound[0].bound;
+  Puint64 currB = h->bound[0].bound;
   Pfloat64 currH = h->bound[0].hei;
   h->robI = 0;
   for (i = 1; i < h->boundI; i++) {
@@ -305,13 +305,13 @@ void buildRob(Pint64_hist *h) {
   h->rob[h->robI].bound = h->N;
 }
 
-struct dpCell OptHei(Pint64_hist *h, Pint64 s, Pint64 e) {
+struct dpCell OptHei(Pint64_hist *h, Puint64 s, Puint64 e) {
   if (h->n == 1) {
     /* L-1 norm */
-    Pint64 len = e - s + 1;
+    Puint64 len = e - s + 1;
     struct bucket* temp = malloc(len * sizeof(struct bucket));
     if (temp == (struct bucket*)0) exit(-1);
-    Pint64 i; 
+    Puint64 i; 
     for (i = 0; i < len; i++) temp[i] = h->rob[s + i]; 
     Pfloat64 hei = 0;
     if ((len % 2) == 0) hei = (select_b(&temp, h, 0, len-1, len/2) + select_b(&temp, h, 0, len-1, len/2-1 )) / 2;
@@ -328,8 +328,8 @@ struct dpCell OptHei(Pint64_hist *h, Pint64 s, Pint64 e) {
 
   /* L-2 norm. Compute the average */
   Pfloat64 sum = 0;
-  Pint64 len = 0;
-  Pint64 i;
+  Puint64 len = 0;
+  Puint64 i;
   for (i = s; i < e; i++) {
     len += h->rob[i+1].bound - h->rob[i].bound;
     sum += h->rob[i].hei * (h->rob[i+1].bound - h->rob[i].bound);
@@ -361,7 +361,7 @@ void compOpt(Pint64_hist *h) {
   if (h->isO != 0) h->colN = h->N;
   else {
     if (h->ind != h->N) {
-      Pint64 i = 0;
+      Puint64 i = 0;
       while (i < h->robI && h->rob[i].bound < h->ind) i++;
       h->robI = i;
     }
@@ -371,7 +371,7 @@ void compOpt(Pint64_hist *h) {
   h->rowN = h->B;
   h->dpTable = malloc(h->rowN * sizeof(struct dpCell*));
   if (h->dpTable == (struct dpCell**)0) exit(-1);
-  Pint64 i;
+  Puint32 i;
   for (i = 0; i < h->rowN; i++) {
     h->dpTable[i] = malloc(h->colN * sizeof(struct dpCell));
     if (h->dpTable[i] == (struct dpCell*)0) exit(-1);
@@ -384,16 +384,16 @@ void compOpt(Pint64_hist *h) {
   }
 	 
   /* Histogram with i buckets, computed based on those with i-1 buckets */
-  Pint64 j;
+  Puint64 j;
   for (j = 0; j < h->colN; j++) {
     /* j stands for the end boundary currently reached */
-    Pint64 i;
+    Puint32 i;
     for (i = 1; i < h->rowN; i++) {
       /* i stands for the number of buckets currently used */
       Pfloat64 keepE = INF;
       Pint64 keepB = INF;
       Pfloat64 keepH = INF;
-      Pint64 k;
+      Puint64 k;
       for (k = 0; k < j; k++) {
 	struct dpCell temp = OptHei(h, k + 1, j);
 	Pfloat64 err = temp.error + h->dpTable[i - 1][k].error;
@@ -409,8 +409,8 @@ void compOpt(Pint64_hist *h) {
     }
   }
   /* Fill the result table, for result histogram. End point recorded */
-  Pint64 resultI = h->rowN - 1;
-  Pint64 track = h->colN;
+  Puint32 resultI = h->rowN - 1;
+  Puint64 track = h->colN;
   while (track != 0) {
     if (track == h->colN) h->result[resultI].bound = h->ind; 
     else h->result[resultI].bound = h->rob[track].bound;
@@ -420,22 +420,22 @@ void compOpt(Pint64_hist *h) {
   }
   if (resultI > 0) {
     /* Use less than B buckets, with error guarantee */
-    Pint64 i;
+    Puint32 i;
     for (i = 0; i < resultI + 1; i++) h->result[i].bound = 0; 	
   } 
   if (h->dpTable != NULL) {
-    Pint64 i;
+    Puint32 i;
     for (i = 0; i < h->rowN; i++) free(h->dpTable[i]);
     free(h->dpTable);
   }
 }
 
-Pint64 partition_w(struct wave** A, Pint64 p, Pint64 r) {
+Puint64 partition_w(struct wave** A, Puint64 p, Puint64 r) {
   /* Set the last element in the scope to be pivot */
   struct wave x = (*A)[r];
-  Pint64 i = p - 1;
+  Puint64 i = p - 1;
 
-  Pint64 j;
+  Puint64 j;
   for (j = p; j < r; j++) {
     if (fabs((*A)[j].coef) > fabs(x.coef)) {
       i++;
@@ -452,21 +452,21 @@ Pint64 partition_w(struct wave** A, Pint64 p, Pint64 r) {
   return i+1;
 } 
 
-void select_w(struct wave** A, Pint64_hist* h, Pint64 p, Pint64 r) {
+void select_w(struct wave** A, Pint64_hist* h, Puint64 p, Puint64 r) {
   if (p == r) return;
 	
-  Pint64 q = partition_w(A, p, r);
+  Puint64 q = partition_w(A, p, r);
   if (q == h->rSize) return;
   if (q < h->rSize) select_w(A, h, q+1, r);
   else select_w(A, h, p, q-1); 
 }
 
-Pint64 partition_b(struct bucket** A, Pint64 p, Pint64 r) {
+Puint64 partition_b(struct bucket** A, Puint64 p, Puint64 r) {
   /* Set the last element in the scope to be pivot */
   struct bucket x = (*A)[r];
-  Pint64 i = p - 1;
+  Puint64 i = p - 1;
 
-  Pint64 j;
+  Puint64 j;
   for (j = p; j < r; j++) {
     if ((*A)[j].bound < x.bound) {
       i++;
@@ -483,18 +483,18 @@ Pint64 partition_b(struct bucket** A, Pint64 p, Pint64 r) {
   return i+1;	
 }
 
-Pfloat64 select_b(struct bucket** A, Pint64_hist *h, Pint64 p, Pint64 r, Pint64 sel) {
+Pfloat64 select_b(struct bucket** A, Pint64_hist *h, Puint64 p, Puint64 r, Puint64 sel) {
   if (p == r) return (*A)[p].hei;
 
-  Pint64 q = partition_b(A, p, r);
+  Puint64 q = partition_b(A, p, r);
   if (q == sel) return (*A)[q].hei;
   if (q < sel) return select_b(A, h, q+1, r, sel);
   else return select_b(A, h, p, q-1, sel);	
 }
 
-void quickSort(struct bucket** A, Pint64 p, Pint64 r) {
+void quickSort(struct bucket** A, Puint64 p, Puint64 r) {
   if (p < r) {
-      Pint64 q = partition_b(A, p, r);
+      Puint64 q = partition_b(A, p, r);
       quickSort(A, p, q-1);
       quickSort(A, q+1, r);
   }

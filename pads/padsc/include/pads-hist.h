@@ -44,8 +44,8 @@ typedef Pint64 (*Pint64_fromFloat_fn) (Pfloat64);
 
 typedef struct Pint64_hist_s {
   /* These fields can be customized by users */
-  Pint64 N; // Dimension of the original data item. 
-  Pint64 B; // Number of buckets in the final histogram.
+  Puint64 N; // Dimension of the original data item. 
+  Puint32 B; // Number of buckets in the final histogram.
   Pint64 M; // Bound on the range that values can take.
   Pint8 isE; // Buckets required to be of same lenght or not.  
   Pint8 isO; // Result required to be optimal one or near-optimal. Valid when isEqual = f;
@@ -56,22 +56,22 @@ typedef struct Pint64_hist_s {
   Pint64_fromFloat_fn fromFloat; // Map Pfloat64 back to given type.  
     
   /* These fields are defined for private use only */
-  Pint64 ind; // Index of current data item.
+  Puint64 ind; // Index of current data item.
   struct bucket *result; // Result histogram.  
   Pfloat64 partS; // Used in EqualHis.
-  Pint64 bukI;	// Used in EqualHis.      
-  Pint64 lNumber; // Level Number in wavelet representation.
+  Puint64 bukI;	// Used in EqualHis.      
+  Puint8 lNumber; // Level Number in wavelet representation.
   Pfloat64 *leftS,*rightS; // Store pipelined information in computing coefficients.
-  Pint64 rSize; // Size of robust representation.
+  Puint32 rSize; // Size of robust representation.
   struct wave *top; // Store wavelets with top coefficients.
-  Pint64 topI;	// Used in NearOptHis, for top array. 
+  Puint32 topI;	// Used in NearOptHis, for top array. 
   struct bucket *bound;	// Used in NearOptHis.
-  Pint64 boundI; // Used in NearOptHis, for bound array.      
+  Puint32 boundI; // Used in NearOptHis, for bound array.      
   struct bucket *rob; // Robust histogram.
-  Pint64 robI;	// Used in NearOptHis, for rob array. 
+  Puint64 robI;	// Used in NearOptHis, for rob array. 
   struct dpCell **dpTable; // Table to compute the dynamic programming.
-  Pint64 rowN;	// Used in NearOptHis, for dpTable.
-  Pint64 colN;	// Used in NearOptHis, for dpTable.
+  Puint32 rowN;	// Used in NearOptHis, for dpTable.
+  Puint64 colN;	// Used in NearOptHis, for dpTable.
 } Pint64_hist;
 
 /* Functions defined with public access */
@@ -86,12 +86,12 @@ Perror_t EqualHis    (Pint64_hist *h, Pfloat64 d);
 Perror_t OptHis      (Pint64_hist *h, Pfloat64 d);
 Perror_t NearOptHis  (Pint64_hist *h, Pfloat64 d);
 
-struct dpCell OptHei (Pint64_hist *h, Pint64 s, Pint64 e); // Optimal height between A[s...e].
-Pint64 partition_w   (struct wave** A, Pint64 p, Pint64 r); // Rearrange the array A[p...r].
-Pint64 partition_b   (struct bucket** A, Pint64 p, Pint64 r); // Override function.
-void select_w        (struct wave** A, Pint64_hist* h, Pint64 p, Pint64 r); // Drops the least half numbers.   
-Pfloat64 select_b    (struct bucket** A, Pint64_hist* h, Pint64 p, Pint64 r, Pint64 sel); // Return element at sel rank; 
-void quickSort       (struct bucket** A, Pint64 p, Pint64 q); // Sort array A based on end point.
+struct dpCell OptHei (Pint64_hist *h, Puint64 s, Puint64 e); // Optimal height between A[s...e].
+Puint64 partition_w   (struct wave** A, Puint64 p, Puint64 r); // Rearrange the array A[p...r].
+Puint64 partition_b   (struct bucket** A, Puint64 p, Puint64 r); // Override function.
+void select_w        (struct wave** A, Pint64_hist* h, Puint64 p, Puint64 r); // Drops the least half numbers.   
+Pfloat64 select_b    (struct bucket** A, Pint64_hist* h, Puint64 p, Puint64 r, Puint64 sel); // Return element at sel rank; 
+void quickSort       (struct bucket** A, Puint64 p, Puint64 q); // Sort array A based on end point.
 void buildRob        (Pint64_hist *h); // Build robust histograms from top coefficients. 
 void compOpt         (Pint64_hist *h); // Use dynamic programming to get the optimal one from rob array.
 
