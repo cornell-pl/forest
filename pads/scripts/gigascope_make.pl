@@ -81,6 +81,7 @@ GetOptions( "usage"      => \$usage,
             "demodir:s"  => \$demodir,
             "gigdir:s"   => \$gigdir,
             "pspec:s"    => \$pspec,
+            "base:s"     => \$base,
 	    "template:s" => \$template,
 	    "rectype:s"  => \$rectype,
 	    "hdrtype:s"  => \$hdrtype,
@@ -115,7 +116,12 @@ if (@extra) {
   goto usage;
 }
 
-goto usage if ($template !~ /(recs|hdr_rec|hdr_recs_repeat)/);
+goto usage if ($template !~ /^(recs|hdr_rec|hdr_recs_repeat)$/);
+
+$base = "udp" if (!defined($base));
+goto usage if ($base !~ /^(udp|file)$/);
+my $base_suffix = "";
+$base_suffix = "_filebase" if ($base eq "file");
 
 if (!defined($iodisc)) {
   $iodisc = "norec";
@@ -224,7 +230,7 @@ $funs_h_guard =~ s/[-]/_/g;
 $funs_h_guard =~ s/[.]/_/g;
 $funs_h_guard =~ tr/a-z/A-Z/;
 
-my $tfile = "$template_dir/tr_schema_$template";
+my $tfile = "$template_dir/tr_schema_$template$base_suffix";
 my $ttext = &expandFile($tfile);
 if ($ttext eq "") {
   print "  Could not find template file $tfile\n\n";

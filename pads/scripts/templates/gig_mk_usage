@@ -6,6 +6,7 @@
      -d/--demodir           : directory to write output files (default is current working dir)
      -g/--gigdir            : gigascope top level directory (default is <demodir>/../..) 
      -p/--pspec <file>      : specify PADS spec file (required)
+     -b/--base <base>       : specify a schema base, choices are: udp, file
      -t/--template <name>   : specify template name (required), see template descriptions below
      -r/--rectype <type>    : specify main record type (required)
      -h/--hdrtype <type>    : specify header type (may be required, depends on template)

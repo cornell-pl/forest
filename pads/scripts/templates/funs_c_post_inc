@@ -15,7 +15,9 @@
 // this initializes global data structures
 int PADS_INIT() {
 
-  global_disc = Pdefault_disc;
+  global_num_recs         = 0;
+  global_num_bytes_parsed = 0;
+  global_disc             = Pdefault_disc;
 #ifdef WSPACE_OK
   global_disc.flags |= (Pflags_t)P_WSPACE_OK;
 #endif
@@ -64,8 +66,11 @@ int PADS_INIT() {
 
 // returns 0 on OK, -1 on error
 // sets up IO from specified file (can be "/dev/stdin")
-int PADS_INPUT_FILE(const char *inName) {
-
+int PADS_INPUT_FILE(const char *inName, int expect_new_header) {
+  if (expect_new_header) {
+    global_num_bytes_parsed = 0;
+    PADS_RESET_HEADER();
+  }
   if (P_ERR == P_io_fopen(global_pads, inName)) {
     error(0, "*** P_io_fopen failed ***");
     return -1;
@@ -75,7 +80,11 @@ int PADS_INPUT_FILE(const char *inName) {
 
 // returns 0 on OK, -1 on error
 // sets up IO from specified buffer/buffer length
-int PADS_INPUT_BUF(char *buf, size_t buf_len) {
+int PADS_INPUT_BUF(char *buf, size_t buf_len, int expect_new_header) {
+  if (expect_new_header) {
+    global_num_bytes_parsed = 0;
+    PADS_RESET_HEADER();
+  }
   if (!(global_io_in = sfnew(global_io_in, (Void_t*)buf, buf_len, -1, SF_STRING|SF_READ))) {
     error(0, "*** sfnew failed ***");
     return -1;
@@ -128,45 +137,64 @@ int PADS_CLEANUP() {
 int PADS_NEXT(int *done) {
   Ppos_t            bpos, epos;
   int               res = 0;
+  int               bytes_parsed;
+  Perror_t          read_error;
 
   *done = 0;
   if (P_io_at_eof(global_pads)) {
-    //error(2, "<note>XXX_REMOVE PADS : stopping due to EOF, returning -1, *done = 1</note>");
+    //error(2, "<note>PADS : stopping due to EOF, returning -2, *done = 1</note>");
     *done = 1;
-    return -1;
+    return -2;  // too few bytes
   }
   if (MAX_RECS && ++global_num_recs > MAX_RECS) {
-    //error(2, "<note>XXX_REMOVE PADS : stopping due to MAX_RECS, returning -1, *done = 1</note>");
+    //error(2, "<note>PADS : stopping due to MAX_RECS, returning -1, *done = 1</note>");
     *done = 1;
-    return -1;
+    return -1;  // error other than too few bytes
   }
 
 #ifdef PADS_HDR_TY
   if (PADS_DO_READ_HEADER) {
-    if (P_OK != PADS_HDR_TY(_read)(global_pads, &global_hdr_m, EXTRA_HDR_READ_ARGS &global_hdr_pd, &global_hdr)) {
-      //error(2, "<note>XXX_REMOVE PADS header read returned error, returning -1, *done = 1</note>");
+    P_io_getPos(global_pads, &bpos, 0);
+    read_error = PADS_HDR_TY(_read)(global_pads, &global_hdr_m, EXTRA_HDR_READ_ARGS &global_hdr_pd, &global_hdr);
+    P_io_getPos(global_pads, &epos, 0);
+    bytes_parsed = epos.offset - bpos.offset;
+    if (hdr_too_few_bytes()) {
+      //error(2, "<note>PADS header read: too few bytes, returning -2, *done = 1</note>");
       *done = 1;
-      return -1;
-    } else {
-      //error(2, "<note>XXX_REMOVE PADS header read returned OK</note>");
+      return -2; // too few bytes
     }
+    if (read_error != P_OK) {
+      //error(2, "<note>PADS header read: error, returning -1, *done = 1</note>");
+      *done = 1;
+      return -1; // error other than too few bytes
+    } else {
+      //error(2, "<note>PADS header read: OK</note>");
+    }
+    global_num_bytes_parsed += bytes_parsed;
     PADS_HEADER_READ;
   }
 #endif /* PADS_HDR_TY */
 
   P_io_getPos(global_pads, &bpos, 0);
-  if (P_OK != PADS_TY(_read)(global_pads, &global_rec_m, EXTRA_READ_ARGS &global_rec_pd, &global_rec)) {
-    //error(2, "<note>XXX_REMOVE PADS read returned error, returning -1</note>");
-    res = -1;
+  read_error = PADS_TY(_read)(global_pads, &global_rec_m, EXTRA_READ_ARGS &global_rec_pd, &global_rec);
+  P_io_getPos(global_pads, &epos, 0);
+  bytes_parsed = epos.offset - bpos.offset;
+  if (rec_too_few_bytes()) {
+    //error(2, "<note>PADS rec read: too few bytes, returning -2, *done = 1</note>");
+    *done = 1;
+    return -2;  // too few bytes
+  }
+  if (read_error != P_OK) {
+    //error(2, "<note>PADS rec read: error, returning -1, *done = 0</note>");
+    res = -1;  // error other than too few bytes
   } else {
-    //error(2, "<note>XXX_REMOVE PADS read returned OK</note>");
+    //error(2, "<note>PADS rec read: OK</note>");
   }
   PADS_REC_READ;
-  P_io_getPos(global_pads, &epos, 0);
-  if (P_POS_EQ(bpos, epos)) {
-    error(2, "<note>PADS read call did not advance IO cursor, returning -1, *done = 1</note>");
-    *done = 1;
-    return -1;
-  }
+  global_num_bytes_parsed += bytes_parsed;
   return res;
+}
+
+int PADS_NUM_BYTES_PARSED() {
+  return global_num_bytes_parsed;
 }
