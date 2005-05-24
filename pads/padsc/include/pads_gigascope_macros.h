@@ -37,3 +37,13 @@ int get_pads_ ## field (struct packet *p, struct string *r) { \
   r->owner = 0; \
   return 0; \
 }
+
+#define HDR_TOO_FEW_BYTES(last_field) \
+int hdr_too_few_bytes() { \
+  return (global_hdr_pd.last_field.errCode == P_AT_EOF) ? 1 : 0; \
+}
+
+#define REC_TOO_FEW_BYTES(last_field) \
+int rec_too_few_bytes() { \
+  return (global_rec_pd.last_field.errCode == P_AT_EOF) ? 1 : 0; \
+}
