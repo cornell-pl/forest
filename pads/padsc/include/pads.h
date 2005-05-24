@@ -1189,7 +1189,6 @@ struct Ppos_s {
 };
 
 /* HELPER: P_POS_EQ tests whether pos1 is the same IO position as pos2 */
-/* #define P_POS_EQ(pos1, pos2) ((pos1).num == (pos2).num && (pos1).byte == (pos2).byte) */
 
 #ifdef FOR_CKIT
 int P_POS_EQ(Ppos_t first, Ppos_t second);
