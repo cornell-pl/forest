@@ -11,8 +11,8 @@
 #  define EXTRA_HDR_READ_ARGS
 #endif
 
-// returns 0 on OK, -1 on error
-// this initializes global data structures
+// PADS_INIT: initialize pads data structures.
+// Returns PADS_RET_OK or PADS_RET_ERR.
 int PADS_INIT() {
 
   global_num_recs         = 0;
@@ -29,43 +29,49 @@ int PADS_INIT() {
 
   if (!(global_io_disc = IO_DISC_MK)) {
     error(0, "IO discipline make call [ " PDCI_MacroArg2String(IO_DISC_MK) " ] failed");
-    return -1;
+    return PADS_RET_ERR;
   } else { 
     error(0, "Installed " PDCI_MacroArg2String(IO_DISC_MK) );
   }
 
   if (P_ERR == P_open(&global_pads, &global_disc, global_io_disc)) {
     error(0, "*** P_open failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
   if (P_ERR == PADS_TY(_init)(global_pads, &global_rec)) {
     error(0, "*** representation initialization failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
   if (P_ERR == PADS_TY(_pd_init)(global_pads, &global_rec_pd)) {
     error(0, "*** parse description initialization failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
   /* init mask -- must do this! */
   PADS_TY(_m_init)(global_pads, &global_rec_m, READ_MASK);
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(global_pads, &global_hdr)) {
     error(0, "*** header representation initialization failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
   if (P_ERR == PADS_HDR_TY(_pd_init)(global_pads, &global_hdr_pd)) {
     error(0, "*** header parse description initialization failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
   /* init mask -- must do this! */
   PADS_HDR_TY(_m_init)(global_pads, &global_hdr_m, P_CheckAndSet);
 #endif /* PADS_HDR_TY */
 
-  return 0;
+  return PADS_RET_OK;
 }
 
-// returns 0 on OK, -1 on error
-// sets up IO from specified file (can be "/dev/stdin")
+// PADS_INPUT_FILE: (re)initialize pads to read from file "inName",
+// which can be "/dev/stdin" or a file path.  If "continuation" is
+// non-zero then the new input is treated as a continuation of the
+// bytes already *successfully* parsed by PADS_NEXT calls (i.e.,
+// PADS_NEXT calls with a return value of PADS_RET_OK or
+// PADS_RET_ERR).  If "continuation" is 0, the new bytes begin a fresh
+// parse, which resets the pads state.
+//  Returns PADS_RET_OK or PADS_RET_ERR.
 int PADS_INPUT_FILE(const char *inName, int expect_new_header) {
   if (expect_new_header) {
     global_num_bytes_parsed = 0;
@@ -73,13 +79,18 @@ int PADS_INPUT_FILE(const char *inName, int expect_new_header) {
   }
   if (P_ERR == P_io_fopen(global_pads, inName)) {
     error(0, "*** P_io_fopen failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
-  return 0;
+  return PADS_RET_OK;
 }
 
-// returns 0 on OK, -1 on error
-// sets up IO from specified buffer/buffer length
+// PADS_INPUT_BUF: (re)initialize pads to read from a buffer "buf" of
+// length "buf_len".  If "continuation" is non-zero then the new input
+// is treated as a continuation of the bytes already *successfully*
+// parsed by PADS_NEXT calls (i.e., PADS_NEXT calls with a return
+// value of PADS_RET_OK or PADS_RET_ERR).  If "continuation" is 0, the
+// new bytes begin a fresh parse, which resets the pads state.
+// Returns PADS_RET_OK or PADS_RET_ERR.
 int PADS_INPUT_BUF(char *buf, size_t buf_len, int expect_new_header) {
   if (expect_new_header) {
     global_num_bytes_parsed = 0;
@@ -87,53 +98,63 @@ int PADS_INPUT_BUF(char *buf, size_t buf_len, int expect_new_header) {
   }
   if (!(global_io_in = sfnew(global_io_in, (Void_t*)buf, buf_len, -1, SF_STRING|SF_READ))) {
     error(0, "*** sfnew failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
   if (P_ERR == P_io_set(global_pads, global_io_in)) {
     error(0, "*** P_io_set failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
   if (P_io_at_eof(global_pads)) { /* XXX_REMOVE */
     error(0, "*** XXX_REMOVE P_io_set succeeded but P_io_at_eof !! ***");
-    return -1;
+    return PADS_RET_ERR;
   }
-  return 0;
+  return PADS_RET_OK;
 }
 
 int PADS_CLEANUP() {
   if (P_ERR == P_io_close(global_pads)) {
     error(0, "*** P_io_close failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
   if (P_ERR == PADS_TY(_cleanup)(global_pads, &global_rec)) {
     error(0, "** representation cleanup failed **");
-    return -1;
+    return PADS_RET_ERR;
   }
   if (P_ERR == PADS_TY(_pd_cleanup)(global_pads, &global_rec_pd)) {
     error(0, "** parse descriptor cleanup failed **");
-    return -1;
+    return PADS_RET_ERR;
   }
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_cleanup)(global_pads, &global_hdr)) {
     error(0, "** representation cleanup failed **");
-    return -1;
+    return PADS_RET_ERR;
   }
   if (P_ERR == PADS_HDR_TY(_pd_cleanup)(global_pads, &global_hdr_pd)) {
     error(0, "** parse descriptor cleanup failed **");
-    return -1;
+    return PADS_RET_ERR;
   }
 #endif
   if (P_ERR == P_close(global_pads)) {
     error(0, "*** P_close failed ***");
-    return -1;
+    return PADS_RET_ERR;
   }
 
-  return 0;
+  return PADS_RET_OK;
 }
 
-// returns 0 on OK, -1 on error
-// if OK, global_rec has been updated
-// if done is set to 1, there are no more records
+// PADS_NEXT: read the next record.
+//
+// Returns one of three result codes:
+//   PADS_RET_OK             => successful parse, no errors
+//   PADS_RET_ERR            => entire record was read,
+//                              but there were some field-level errors
+//   PADS_RET_TOO_FEW_BYTES  => not enough bytes available to read entire record
+//
+// In addition, sets *done to one of two values:
+//    0  => there are more records to be read
+//    1  => there are no more records to be read
+//          (another PADS_INPUT_FILE or PADS_INPUT_BUF call
+//           must be used before using PADS_NEXT again).
 int PADS_NEXT(int *done) {
   Ppos_t            bpos, epos;
   int               res = 0;
@@ -142,14 +163,14 @@ int PADS_NEXT(int *done) {
 
   *done = 0;
   if (P_io_at_eof(global_pads)) {
-    //error(2, "<note>PADS : stopping due to EOF, returning -2, *done = 1</note>");
+    //error(2, "<note>PADS : stopping due to EOF, returning PADS_RET_TOO_FEW_BYTES, *done = 1</note>");
     *done = 1;
-    return -2;  // too few bytes
+    return PADS_RET_TOO_FEW_BYTES;
   }
   if (MAX_RECS && ++global_num_recs > MAX_RECS) {
-    //error(2, "<note>PADS : stopping due to MAX_RECS, returning -1, *done = 1</note>");
+    //error(2, "<note>PADS : stopping due to MAX_RECS, returning PADS_RET_ERR, *done = 1</note>");
     *done = 1;
-    return -1;  // error other than too few bytes
+    return PADS_RET_ERR;
   }
 
 #ifdef PADS_HDR_TY
@@ -159,14 +180,14 @@ int PADS_NEXT(int *done) {
     P_io_getPos(global_pads, &epos, 0);
     bytes_parsed = epos.offset - bpos.offset;
     if (hdr_too_few_bytes()) {
-      //error(2, "<note>PADS header read: too few bytes, returning -2, *done = 1</note>");
+      //error(2, "<note>PADS header read: too few bytes, returning PADS_RET_TOO_FEW_BYTES, *done = 1</note>");
       *done = 1;
-      return -2; // too few bytes
+      return PADS_RET_TOO_FEW_BYTES;
     }
     if (read_error != P_OK) {
-      //error(2, "<note>PADS header read: error, returning -1, *done = 1</note>");
+      //error(2, "<note>PADS header read: error, returning PADS_RET_ERR, *done = 1</note>");
       *done = 1;
-      return -1; // error other than too few bytes
+      return PADS_RET_ERR;
     } else {
       //error(2, "<note>PADS header read: OK</note>");
     }
@@ -180,13 +201,13 @@ int PADS_NEXT(int *done) {
   P_io_getPos(global_pads, &epos, 0);
   bytes_parsed = epos.offset - bpos.offset;
   if (rec_too_few_bytes()) {
-    //error(2, "<note>PADS rec read: too few bytes, returning -2, *done = 1</note>");
+    //error(2, "<note>PADS rec read: too few bytes, returning PADS_RET_TOO_FEW_BYTES, *done = 1</note>");
     *done = 1;
-    return -2;  // too few bytes
+    return PADS_RET_TOO_FEW_BYTES;
   }
   if (read_error != P_OK) {
-    //error(2, "<note>PADS rec read: error, returning -1, *done = 0</note>");
-    res = -1;  // error other than too few bytes
+    //error(2, "<note>PADS rec read: error, returning PADS_RET_ERR, *done = 0</note>");
+    res = PADS_RET_ERR;
   } else {
     //error(2, "<note>PADS rec read: OK</note>");
   }

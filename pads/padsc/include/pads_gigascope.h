@@ -12,8 +12,13 @@
 // Returns PADS_RET_OK or PADS_RET_ERR.
 int PADS_INIT();
 
-// PADS_INPUT_FILE: (re)initialize pads to read from file
-// "inName", which can be "/dev/stdin" or a file path.
+// PADS_INPUT_FILE: (re)initialize pads to read from file "inName",
+// which can be "/dev/stdin" or a file path.  If "continuation" is
+// non-zero then the new input is treated as a continuation of the
+// bytes already *successfully* parsed by PADS_NEXT calls (i.e.,
+// PADS_NEXT calls with a return value of PADS_RET_OK or
+// PADS_RET_ERR).  If "continuation" is 0, the new bytes begin a fresh
+// parse, which resets the pads state.
 // Returns PADS_RET_OK or PADS_RET_ERR.
 int PADS_INPUT_FILE(const char *inName, int expect_new_header);
 
@@ -21,18 +26,8 @@ int PADS_INPUT_FILE(const char *inName, int expect_new_header);
 // length "buf_len".  If "continuation" is non-zero then the new input
 // is treated as a continuation of the bytes already *successfully*
 // parsed by PADS_NEXT calls (i.e., PADS_NEXT calls with a return
-// value of 0 or -1).  If "continuation" is 0, the new bytes begina
-// fresh parse, which resets the pads state.
-
-
-
-// (so, for example, a header WILL be expected for on
-
-// and a header-based template is being used, then pads expects
-// this new input to begin with a header.  If "expect_new_header"
-// is false, then the new input is treated as a continuation of
-// the bytes that have already been parsed by prior PADS_NEXT
-// calls, and thus a 
+// value of PADS_RET_OK or PADS_RET_ERR).  If "continuation" is 0, the
+// new bytes begin a fresh parse, which resets the pads state.
 // Returns PADS_RET_OK or PADS_RET_ERR.
 int PADS_INPUT_BUF(char *buf, size_t buf_len, int expect_new_header);
 
