@@ -427,7 +427,7 @@ dibbler_vetter: $(GEN_DIR)/dibbler_new.c dibbler_vetter.c $(INCLUDE_DEPS) $(LIB_
 dibbler_vetter_d: $(GEN_DIR)/dibbler_new.c dibbler_vetter.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
-dibbler_select: $(GEN_DIR)/dibbler_new.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+dibblr_select: $(GEN_DIR)/dibbler_new.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 dibbler_select_d: $(GEN_DIR)/dibbler_new.c dibbler_select.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
@@ -453,9 +453,9 @@ ifdef DEBUG_RULES_MK
 endif
 	@$(CCExec_DYNAMIC_D)
 
-test_dibbler1: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_O)
+test_hist: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-hist.c test_hist.c $(INCLUDE_DEDS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_dibbler1_d: $(GEN_DIR)/dibbler.c test_dibbler1.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
+test_hist_d: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-hist.c test_hist.c test_hist.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 ifdef GALAX_NONE
