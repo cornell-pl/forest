@@ -435,7 +435,7 @@ do {
 
 #define PDCI_STRUCT_READ_HANDLE_PANIC(fn_nm, the_field)
   P_PS_setPanic(&(pd->the_field));
-  pd->the_field.errCode = P_PANIC_SKIPPED;
+  pd->the_field.errCode = P_io_at_eof(pads) ? P_AT_EOF : P_PANIC_SKIPPED;
   pd->the_field.nerr = 1;
   PDCI_READFN_GETLOC_SPAN0(pads, pd->the_field.loc);
   (pd->nerr)++;
