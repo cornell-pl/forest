@@ -179,22 +179,17 @@ end = struct
           | _ => (print "Struct transform applied to non-struct.\n"; [])
       end
         
-  fun doFields (stream, tid, tidtab, ptyInfo) (ty, field, commentOpt, bdyS) = 
-      let val repFields = getFieldInfo ptyInfo
-          fun chkParam p = if (isCap p) then
+  fun doFields (stream, repFields,globals, globalMapping) (ty, field, commentOpt, bdyS) = 
+      let fun chkParam p = if (isCap p) then
 		       print ("Variable names must be not capitalized ("^p^").\n") else ()
 	  val () = chkParam ty
           val () = chkParam field
-          fun getOne label [] = ([], [])
-            | getOne label ((_, field, _, _)::xs) = ([label], [(label, field)])
-	  val (first, firstMap) = getOne "pFIRST" repFields
-          val (last, lastMap) = getOne "pLAST" (List.rev repFields)
-	  val trTree = cvtTr([ty, field] @ (case commentOpt of NONE => [] | SOME s => [s])@ first@last) (String.explode bdyS)
-	  val trStr = trToString trTree
+          val comment = case commentOpt of NONE => [] | SOME s => (chkParam s; [s])
+	  val trTree = cvtTr([ty, field] @ comment @ globals) (String.explode bdyS)
 	  fun doField (tyname, fieldname, commentText, isOmitted) = 
               if isOmitted then ()
               else let val commentMapping = case commentOpt of NONE => [] | SOME s => [(s, commentText)]
-		       val mapping = [(ty,tyname), (field,fieldname)] @ commentMapping @ firstMap @ lastMap
+		       val mapping = [(ty,tyname), (field,fieldname)] @ commentMapping @ globalMapping
                        val outStr = substTrToString mapping trTree
 		   in
 		       TextIO.output(stream, "  "^outStr^"\n")
@@ -203,17 +198,33 @@ end = struct
 	  List.app doField repFields
       end
 
-  fun doStruct (stream, tid, tidtab, ptyInfo) {pre, each, post} = 
-    ((case pre 
-      of NONE => ()
-      | SOME preS => TextIO.output(stream, preS^"\n"));
-     (case each 
-      of NONE => ()
-      | SOME (ty, field, comment, bdyS) => doFields(stream,tid,tidtab, ptyInfo) (ty,field,comment, bdyS));
-     (case post 
-      of NONE => ()
-      | SOME postS => TextIO.output(stream, postS^"\n\n")))
+  fun doExp (globals, globalMapping, exp) = 
+      let val trTree = cvtTr globals (String.explode exp)
+	  val outStr = substTrToString globalMapping trTree
+      in
+	  outStr
+      end
+	  
 
+  fun doStruct (stream, tid, tidtab, ptyInfo) {pre, each, post} = 
+      let val repFields = getFieldInfo ptyInfo
+          fun getOne label [] = ([], [])
+            | getOne label ((_, field, _, _)::xs) = ([label], [(label, field)])
+	  val (first, firstMap) = getOne "pFIRST" repFields
+          val (last, lastMap) = getOne "pLAST" (List.rev repFields)
+	  val globals = first @ last
+	  val globalMap = firstMap @ lastMap
+      in
+	  ((case pre 
+            of NONE => ()
+            | SOME preS => TextIO.output(stream, (doExp(globals, globalMap, preS))^"\n"));
+           (case each 
+            of NONE => ()
+            | SOME (ty, field, comment, bdyS) => doFields(stream, repFields, globals,globalMap) (ty,field,comment, bdyS));
+           (case post 
+            of NONE => ()
+            | SOME postS => TextIO.output(stream, (doExp(globals, globalMap, postS))^"\n\n")))
+      end
 
   fun doEDecl (stream, tidtab, paidtab) (Ast.DECL(cedecl, aid, paid, loc) : Ast.externalDecl) = 
       let val pinfo : PTys.pTyInfo option = Paidtab.find(paidtab, paid)  (* Is this the rep of a pads type?*)
