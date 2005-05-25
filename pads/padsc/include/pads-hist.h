@@ -39,10 +39,10 @@ struct dpCell {
 /* Data structure defined with public access. */
 
 /* Map function maps between a given type and the Pfloat64 type */
-typedef Pfloat64 (*Pint64_toFloat_fn) (Pint64);
-typedef Pint64 (*Pint64_fromFloat_fn) (Pfloat64);
+typedef Pfloat64 (*Pint_toFloat_fn) (Pint64);
+typedef Pint64 (*Pint_fromFloat_fn) (Pfloat64);
 
-typedef struct Pint64_hist_s {
+struct hist {
   /* These fields can be customized by users */
   Puint64 N; // Dimension of the original data item. 
   Puint32 B; // Number of buckets in the final histogram.
@@ -52,8 +52,6 @@ typedef struct Pint64_hist_s {
   Pint8 n; // Only 1 and 2 are allowed. Specify L1 or L2 norm. Valid when isEqual = f and isOpt = t.
   Pfloat64 e; // Error tolence. For isOpt = f only.
   Pint64 scale; // SCALE factor to make data having proper value.
-  Pint64_toFloat_fn toFloat; // Map given type to Pfloat64.
-  Pint64_fromFloat_fn fromFloat; // Map Pfloat64 back to given type.  
     
   /* These fields are defined for private use only */
   Puint64 ind; // Index of current data item.
@@ -72,27 +70,85 @@ typedef struct Pint64_hist_s {
   struct dpCell **dpTable; // Table to compute the dynamic programming.
   Puint32 rowN;	// Used in NearOptHis, for dpTable.
   Puint64 colN;	// Used in NearOptHis, for dpTable.
-} Pint64_hist;
+}; 
+
+typedef struct Pint_hist_s {
+  struct hist his_gen;
+
+  Pint_toFloat_fn toFloat; // Map given type to Pfloat64.
+  Pint_fromFloat_fn fromFloat; // Map Pfloat64 back to given type.  
+} Pint_hist;
+
+typedef Pint_hist Pint8_hist;
+typedef Pint_hist Pint16_hist;
+typedef Pint_hist Pint32_hist;
+typedef Pint_hist Pint64_hist;
+typedef Pint_hist Puint8_hist;
+typedef Pint_hist Puint16_hist;
+typedef Pint_hist Puint32_hist;
+typedef Pint_hist Puint64_hist;
 
 /* Functions defined with public access */
+Perror_t Pint8_hist_init     (P_t *pads, Pint8_hist *h);
+Perror_t Pint8_hist_reset    (P_t *pads, Pint8_hist *h);
+Perror_t Pint8_hist_cleanup  (P_t *pads, Pint8_hist *h);
+Perror_t Pint8_hist_add      (P_t *pads, Pint8_hist *h, Pbase_pd *pd, Pint8 *rep);
+Perror_t Pint8_hist_report   (P_t *pads, Pint8_hist *h);
+
+Perror_t Pint16_hist_init    (P_t *pads, Pint16_hist *h);
+Perror_t Pint16_hist_reset   (P_t *pads, Pint16_hist *h);
+Perror_t Pint16_hist_cleanup (P_t *pads, Pint16_hist *h);
+Perror_t Pint16_hist_add     (P_t *pads, Pint16_hist *h, Pbase_pd *pd, Pint16 *rep);
+Perror_t Pint16_hist_report  (P_t *pads, Pint16_hist *h);
+
+Perror_t Pint32_hist_init    (P_t *pads, Pint32_hist *h);
+Perror_t Pint32_hist_reset   (P_t *pads, Pint32_hist *h);
+Perror_t Pint32_hist_cleanup (P_t *pads, Pint32_hist *h);
+Perror_t Pint32_hist_add     (P_t *pads, Pint32_hist *h, Pbase_pd *pd, Pint32 *rep);
+Perror_t Pint32_hist_report  (P_t *pads, Pint32_hist *h);
+
 Perror_t Pint64_hist_init    (P_t *pads, Pint64_hist *h);
 Perror_t Pint64_hist_reset   (P_t *pads, Pint64_hist *h);
 Perror_t Pint64_hist_cleanup (P_t *pads, Pint64_hist *h);
-Perror_t Pint64_hist_add     (P_t *pads, Pint64_hist *h, Pint64 i, Pbase_pd *p);
+Perror_t Pint64_hist_add     (P_t *pads, Pint64_hist *h, Pbase_pd *pd, Pint64 *rep);
 Perror_t Pint64_hist_report  (P_t *pads, Pint64_hist *h);
 
-/* Functions defined for private use only */
-Perror_t EqualHis    (Pint64_hist *h, Pfloat64 d);
-Perror_t OptHis      (Pint64_hist *h, Pfloat64 d);
-Perror_t NearOptHis  (Pint64_hist *h, Pfloat64 d);
+Perror_t Puint8_hist_init     (P_t *pads, Puint8_hist *h);
+Perror_t Puint8_hist_reset    (P_t *pads, Puint8_hist *h);
+Perror_t Puint8_hist_cleanup  (P_t *pads, Puint8_hist *h);
+Perror_t Puint8_hist_add      (P_t *pads, Puint8_hist *h, Pbase_pd *pd, Puint8 *rep);
+Perror_t Puint8_hist_report   (P_t *pads, Puint8_hist *h);
 
-struct dpCell OptHei (Pint64_hist *h, Puint64 s, Puint64 e); // Optimal height between A[s...e].
-Puint64 partition_w   (struct wave** A, Puint64 p, Puint64 r); // Rearrange the array A[p...r].
-Puint64 partition_b   (struct bucket** A, Puint64 p, Puint64 r); // Override function.
-void select_w        (struct wave** A, Pint64_hist* h, Puint64 p, Puint64 r); // Drops the least half numbers.   
-Pfloat64 select_b    (struct bucket** A, Pint64_hist* h, Puint64 p, Puint64 r, Puint64 sel); // Return element at sel rank; 
+Perror_t Puint16_hist_init    (P_t *pads, Puint16_hist *h);
+Perror_t Puint16_hist_reset   (P_t *pads, Puint16_hist *h);
+Perror_t Puint16_hist_cleanup (P_t *pads, Puint16_hist *h);
+Perror_t Puint16_hist_add     (P_t *pads, Puint16_hist *h, Pbase_pd *pd, Puint16 *rep);
+Perror_t Puint16_hist_report  (P_t *pads, Puint16_hist *h);
+
+Perror_t Puint32_hist_init    (P_t *pads, Puint32_hist *h);
+Perror_t Puint32_hist_reset   (P_t *pads, Puint32_hist *h);
+Perror_t Puint32_hist_cleanup (P_t *pads, Puint32_hist *h);
+Perror_t Puint32_hist_add     (P_t *pads, Puint32_hist *h, Pbase_pd *pd, Puint32 *rep);
+Perror_t Puint32_hist_report  (P_t *pads, Puint32_hist *h);
+
+Perror_t Puint64_hist_init    (P_t *pads, Puint64_hist *h);
+Perror_t Puint64_hist_reset   (P_t *pads, Puint64_hist *h);
+Perror_t Puint64_hist_cleanup (P_t *pads, Puint64_hist *h);
+Perror_t Puint64_hist_add     (P_t *pads, Puint64_hist *h, Pbase_pd *pd, Puint64 *rep);
+Perror_t Puint64_hist_report  (P_t *pads, Puint64_hist *h);
+
+/* Functions defined for private use only */
+Perror_t EqualHis    (struct hist *h, Pfloat64 d);
+Perror_t OptHis      (struct hist *h, Pfloat64 d);
+Perror_t NearOptHis  (struct hist *h, Pfloat64 d);
+
+struct dpCell OptHei (struct hist *h, Puint64 s, Puint64 e); // Optimal height between A[s...e].
+Puint64 partition_w  (struct wave** A, Puint64 p, Puint64 r); // Rearrange the array A[p...r].
+Puint64 partition_b  (struct bucket** A, Puint64 p, Puint64 r); // Override function.
+void select_w        (struct wave** A, struct hist* h, Puint64 p, Puint64 r); // Drops the least half numbers.   
+Pfloat64 select_b    (struct bucket** A, struct hist* h, Puint64 p, Puint64 r, Puint64 sel); // Return element at sel rank; 
 void quickSort       (struct bucket** A, Puint64 p, Puint64 q); // Sort array A based on end point.
-void buildRob        (Pint64_hist *h); // Build robust histograms from top coefficients. 
-void compOpt         (Pint64_hist *h); // Use dynamic programming to get the optimal one from rob array.
+void buildRob        (struct hist *h); // Build robust histograms from top coefficients. 
+void compOpt         (struct hist *h); // Use dynamic programming to get the optimal one from rob array.
 
 #endif /*  __P_HIST_H__  */
