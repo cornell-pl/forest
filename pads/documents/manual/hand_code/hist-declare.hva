@@ -1,0 +1,7 @@
+\begin{code}
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}init~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}reset~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}cleanup~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}add~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h,entry\symbol{95}t~*rep,Pbase\symbol{95}pd~*p);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}report~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+\end{code}
