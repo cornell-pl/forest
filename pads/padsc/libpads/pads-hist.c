@@ -96,7 +96,7 @@ Perror_t Pint64_hist_cleanup (P_t *pads, Pint64_hist *h) {
   return P_OK;
 }
 
-Perror_t Pint64_hist_add (P_t *pads, Pint64_hist *h, Pint64 i) {
+Perror_t Pint64_hist_add (P_t *pads, Pint64_hist *h, Pint64 i, Pbase_pd *p) {
   Pfloat64 d;
   Perror_t res;
 

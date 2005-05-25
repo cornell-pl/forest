@@ -78,7 +78,7 @@ typedef struct Pint64_hist_s {
 Perror_t Pint64_hist_init    (P_t *pads, Pint64_hist *h);
 Perror_t Pint64_hist_reset   (P_t *pads, Pint64_hist *h);
 Perror_t Pint64_hist_cleanup (P_t *pads, Pint64_hist *h);
-Perror_t Pint64_hist_add     (P_t *pads, Pint64_hist *h, Pint64 i);
+Perror_t Pint64_hist_add     (P_t *pads, Pint64_hist *h, Pint64 i, Pbase_pd *p);
 Perror_t Pint64_hist_report  (P_t *pads, Pint64_hist *h);
 
 /* Functions defined for private use only */
