@@ -89,49 +89,57 @@ typedef Pint_hist Puint32_hist;
 typedef Pint_hist Puint64_hist;
 
 /* Functions defined with public access */
-Perror_t Pint8_hist_init     (P_t *pads, Pint8_hist *h);
-Perror_t Pint8_hist_reset    (P_t *pads, Pint8_hist *h);
-Perror_t Pint8_hist_cleanup  (P_t *pads, Pint8_hist *h);
-Perror_t Pint8_hist_add      (P_t *pads, Pint8_hist *h, Pbase_pd *pd, Pint8 *rep);
-Perror_t Pint8_hist_report   (P_t *pads, Pint8_hist *h);
+Perror_t Pint8_hist_init      (P_t *pads, Pint8_hist *h);
+Perror_t Pint8_hist_setConv   (P_t *pads, Pint8_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
+Perror_t Pint8_hist_reset     (P_t *pads, Pint8_hist *h);
+Perror_t Pint8_hist_cleanup   (P_t *pads, Pint8_hist *h);
+Perror_t Pint8_hist_add       (P_t *pads, Pint8_hist *h, Pbase_pd *pd, Pint8 *rep);
+Perror_t Pint8_hist_report    (P_t *pads, Pint8_hist *h);
 
-Perror_t Pint16_hist_init    (P_t *pads, Pint16_hist *h);
-Perror_t Pint16_hist_reset   (P_t *pads, Pint16_hist *h);
-Perror_t Pint16_hist_cleanup (P_t *pads, Pint16_hist *h);
-Perror_t Pint16_hist_add     (P_t *pads, Pint16_hist *h, Pbase_pd *pd, Pint16 *rep);
-Perror_t Pint16_hist_report  (P_t *pads, Pint16_hist *h);
+Perror_t Pint16_hist_init     (P_t *pads, Pint16_hist *h);
+Perror_t Pint16_hist_setConv  (P_t *pads, Pint16_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
+Perror_t Pint16_hist_reset    (P_t *pads, Pint16_hist *h);
+Perror_t Pint16_hist_cleanup  (P_t *pads, Pint16_hist *h);
+Perror_t Pint16_hist_add      (P_t *pads, Pint16_hist *h, Pbase_pd *pd, Pint16 *rep);
+Perror_t Pint16_hist_report   (P_t *pads, Pint16_hist *h);
 
-Perror_t Pint32_hist_init    (P_t *pads, Pint32_hist *h);
-Perror_t Pint32_hist_reset   (P_t *pads, Pint32_hist *h);
-Perror_t Pint32_hist_cleanup (P_t *pads, Pint32_hist *h);
-Perror_t Pint32_hist_add     (P_t *pads, Pint32_hist *h, Pbase_pd *pd, Pint32 *rep);
-Perror_t Pint32_hist_report  (P_t *pads, Pint32_hist *h);
+Perror_t Pint32_hist_init     (P_t *pads, Pint32_hist *h);
+Perror_t Pint32_hist_setConv  (P_t *pads, Pint32_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
+Perror_t Pint32_hist_reset    (P_t *pads, Pint32_hist *h);
+Perror_t Pint32_hist_cleanup  (P_t *pads, Pint32_hist *h);
+Perror_t Pint32_hist_add      (P_t *pads, Pint32_hist *h, Pbase_pd *pd, Pint32 *rep);
+Perror_t Pint32_hist_report   (P_t *pads, Pint32_hist *h);
 
-Perror_t Pint64_hist_init    (P_t *pads, Pint64_hist *h);
-Perror_t Pint64_hist_reset   (P_t *pads, Pint64_hist *h);
-Perror_t Pint64_hist_cleanup (P_t *pads, Pint64_hist *h);
-Perror_t Pint64_hist_add     (P_t *pads, Pint64_hist *h, Pbase_pd *pd, Pint64 *rep);
-Perror_t Pint64_hist_report  (P_t *pads, Pint64_hist *h);
+Perror_t Pint64_hist_init     (P_t *pads, Pint64_hist *h);
+Perror_t Pint64_hist_setConv  (P_t *pads, Pint64_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
+Perror_t Pint64_hist_reset    (P_t *pads, Pint64_hist *h);
+Perror_t Pint64_hist_cleanup  (P_t *pads, Pint64_hist *h);
+Perror_t Pint64_hist_add      (P_t *pads, Pint64_hist *h, Pbase_pd *pd, Pint64 *rep);
+Perror_t Pint64_hist_report   (P_t *pads, Pint64_hist *h);
 
 Perror_t Puint8_hist_init     (P_t *pads, Puint8_hist *h);
+Perror_t Puint8_hist_setConv  (P_t *pads, Puint8_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
 Perror_t Puint8_hist_reset    (P_t *pads, Puint8_hist *h);
 Perror_t Puint8_hist_cleanup  (P_t *pads, Puint8_hist *h);
 Perror_t Puint8_hist_add      (P_t *pads, Puint8_hist *h, Pbase_pd *pd, Puint8 *rep);
 Perror_t Puint8_hist_report   (P_t *pads, Puint8_hist *h);
 
 Perror_t Puint16_hist_init    (P_t *pads, Puint16_hist *h);
+Perror_t Puint16_hist_setConv (P_t *pads, Puint16_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
 Perror_t Puint16_hist_reset   (P_t *pads, Puint16_hist *h);
 Perror_t Puint16_hist_cleanup (P_t *pads, Puint16_hist *h);
 Perror_t Puint16_hist_add     (P_t *pads, Puint16_hist *h, Pbase_pd *pd, Puint16 *rep);
 Perror_t Puint16_hist_report  (P_t *pads, Puint16_hist *h);
 
 Perror_t Puint32_hist_init    (P_t *pads, Puint32_hist *h);
+Perror_t Puint32_hist_setConv (P_t *pads, Puint32_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
 Perror_t Puint32_hist_reset   (P_t *pads, Puint32_hist *h);
 Perror_t Puint32_hist_cleanup (P_t *pads, Puint32_hist *h);
 Perror_t Puint32_hist_add     (P_t *pads, Puint32_hist *h, Pbase_pd *pd, Puint32 *rep);
 Perror_t Puint32_hist_report  (P_t *pads, Puint32_hist *h);
 
 Perror_t Puint64_hist_init    (P_t *pads, Puint64_hist *h);
+Perror_t Puint64_hist_setConv (P_t *pads, Puint64_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
 Perror_t Puint64_hist_reset   (P_t *pads, Puint64_hist *h);
 Perror_t Puint64_hist_cleanup (P_t *pads, Puint64_hist *h);
 Perror_t Puint64_hist_add     (P_t *pads, Puint64_hist *h, Pbase_pd *pd, Puint64 *rep);
@@ -141,6 +149,8 @@ Perror_t Puint64_hist_report  (P_t *pads, Puint64_hist *h);
 Perror_t EqualHis    (struct hist *h, Pfloat64 d);
 Perror_t OptHis      (struct hist *h, Pfloat64 d);
 Perror_t NearOptHis  (struct hist *h, Pfloat64 d);
+
+Perror_t Pint_print  (Pint_hist *h);
 
 struct dpCell OptHei (struct hist *h, Puint64 s, Puint64 e); // Optimal height between A[s...e].
 Puint64 partition_w  (struct wave** A, Puint64 p, Puint64 r); // Rearrange the array A[p...r].

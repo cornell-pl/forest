@@ -10,7 +10,7 @@ Pfloat64 Pint_to (Pint64 i) { return (Pfloat64)i; }
 Pint64 Pint_from (Pfloat64 f) { return (Pint64)f; }
 
 /* Begin Macro */
-#define TYPE_HIST_GEN(type) \
+#define TYPE_HIST_GEN(type, class) \
 \
 Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   Puint32 i; \
@@ -21,8 +21,8 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   if (h->his_gen.n == 1) { if (h->his_gen.isO == 0 || h->his_gen.isE != 0) return P_ERR; } \
 \
   /* Initialize */ \
-  h->toFloat = Pint_to; \
-  h->fromFloat = Pint_from; \
+  h->toFloat = class ## _to; \
+  h->fromFloat = class ## _from; \
   h->his_gen.ind = 0; \
   h->his_gen.result = malloc(h->his_gen.B * sizeof(struct bucket)); \
   if (h->his_gen.result == (struct bucket*)0) exit(-1); \
@@ -63,6 +63,12 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
       h->his_gen.robI = 1; \
     } \
   } \
+  return P_OK; \
+} \
+\
+Perror_t type ## _hist_setConv (P_t *pads, type ## _hist *h, class ## _toFloat_fn to, class ## _fromFloat_fn from) { \
+  h->toFloat = to; \
+  h->fromFloat = from; \
   return P_OK; \
 } \
 \
@@ -152,28 +158,22 @@ Perror_t type ## _hist_report (P_t *pads, type ## _hist *h) { \
       } \
     } \
   } \
-  printf("*** Histogram Result *** \n"); \
-  if (h->his_gen.isE == 0) h->his_gen.bukI = h->his_gen.B; \
-  for (i = 0; i < h->his_gen.bukI; i++) { \
-    if (i == 0) printf("From %d to ", 0); \
-    else printf("From %d to ", h->his_gen.result[i-1].bound); \
-    printf("%d, with height ", h->his_gen.result[i].bound - 1); \
-    printf("%d. \n", (*h->fromFloat)(h->his_gen.result[i].hei * (Pfloat64)h->his_gen.scale)); \
-  } \
+  if (res == P_OK) class ## _print (h); \
+\
   return res; \
 } 
 
 /* END_MACRO */
 
 /* Functions defined with public access */
-TYPE_HIST_GEN(Pint8);
-TYPE_HIST_GEN(Pint16);
-TYPE_HIST_GEN(Pint32);
-TYPE_HIST_GEN(Pint64);
-TYPE_HIST_GEN(Puint8);
-TYPE_HIST_GEN(Puint16);
-TYPE_HIST_GEN(Puint32);
-TYPE_HIST_GEN(Puint64);
+TYPE_HIST_GEN(Pint8, Pint);
+TYPE_HIST_GEN(Pint16, Pint);
+TYPE_HIST_GEN(Pint32, Pint);
+TYPE_HIST_GEN(Pint64, Pint);
+TYPE_HIST_GEN(Puint8, Pint);
+TYPE_HIST_GEN(Puint16, Pint);
+TYPE_HIST_GEN(Puint32, Pint);
+TYPE_HIST_GEN(Puint64, Pint);
 
 /* Functions defined for private use only */ 
 Perror_t EqualHis(struct hist *h, Pfloat64 d) { 
@@ -462,6 +462,20 @@ void compOpt(struct hist *h) {
     for (i = 0; i < h->rowN; i++) free(h->dpTable[i]);
     free(h->dpTable);
   }
+}
+
+Perror_t Pint_print(Pint_hist *h) {
+  Puint32 i;
+
+  printf("*** Histogram Result *** \n");
+  if (h->his_gen.isE == 0) h->his_gen.bukI = h->his_gen.B;
+  for (i = 0; i < h->his_gen.bukI; i++) {
+    if (i == 0) printf("From %d to ", 0);
+    else printf("From %d to ", h->his_gen.result[i-1].bound);
+    printf("%d, with height ", h->his_gen.result[i].bound - 1);
+    printf("%d. \n", (*h->fromFloat)(h->his_gen.result[i].hei * (Pfloat64)h->his_gen.scale));
+  }
+  return P_OK;
 }
 
 Puint64 partition_w(struct wave** A, Puint64 p, Puint64 r) {
