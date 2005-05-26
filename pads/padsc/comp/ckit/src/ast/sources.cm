@@ -110,10 +110,13 @@ Group is
         extensions/pads/transform/transform.sml
 
         extensions/pads/parse-tree-utils.sml
+        extensions/pads/build-utils.sml
         extensions/pads/perror-sig.sml
         extensions/pads/perror.sml
         extensions/pads/names.sml
         extensions/pads/plib.sml
+
+        extensions/pads/hist.sml
 
 	(* pretty printer extensions *)
 	pp/extensions/pads/pp-ast-paid-adornment-sig.sml

@@ -302,11 +302,16 @@ struct
     fun getPredXs [] = []
 	| getPredXs (x::xs) = case x of PX.General e => e :: (getPredXs xs) | PX.ParseCheck e => e :: (getPredXs xs)
 
-    fun constraintToString arg = 
-       (case arg of [] => ""
-        | ((PX.General e)::rest) => (expToString e) ^ "&&" ^ constraintToString rest
-        | ((PX.ParseCheck e) :: rest) => "ParseCheck("^expToString e^") &&" ^ constraintToString rest
-       (* end case *))
+
+    (* Functions for walking over lists of struct or union elements *)
+    fun mungeField f b m (PX.Full fd) = f fd
+      | mungeField f b m (PX.Brief e) = b e
+      | mungeField f b m (PX.Manifest md) = m md
+    fun mungeFields f b m [] = []
+      | mungeFields f b m (x::xs) = (mungeField f b m x) @ (mungeFields f b m xs)
+
+    fun tyName (ty:PX.Pty) = case ty of PX.Name s => s
+
 
 end
 

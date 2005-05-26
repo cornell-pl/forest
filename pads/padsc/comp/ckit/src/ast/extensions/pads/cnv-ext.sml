@@ -7,6 +7,7 @@ structure CnvExt : CNVEXT = struct
   structure PL   = PLib          (* Information about values/functions available from pads library *)
   structure PTSub= ParseTreeSubst(* Function for subtituting an expression for a string in an expression *)
   structure PPL  = PPLib
+  structure BU   = BuildUtils
 
   structure TU   = TypeUtil      (* Ckit module: type utility functions *)
   structure SYM  = Symbol
@@ -80,33 +81,6 @@ structure CnvExt : CNVEXT = struct
   type pcexp = ParseTree.expression
   type pcstmt = ParseTree.statement
   type pcdecr = ParseTree.declarator
-
-  type pfieldty = 
-      {pty : PX.Pty, 
-       args : pcexp list, 
-       name : string, 
-       isVirtual : bool,
-       isEndian : bool,
-       isRecord : bool,
-       containsRecord : bool,
-       largeHeuristic : bool,
-       pred : pcexp PX.PPostCond list option, 
-       comment : string option,
-       optPred : (pcexp PX.OptPredicate) option,
-       optDecl : bool, 
-       arrayDecl : bool,
-       size : (pcexp PX.PSize) option,
-       arraypred : (pcexp PX.PConstraint) list}
-
-
-  type pmanty = 
-      {tyname : pcty, 
-       name : string, 
-       args : pcexp list, 
-       isVirtual : bool,
-       expr : pcexp,
-       pred : pcexp PX.PPostCond list option, 
-       comment : string option}
 
 
   type acty = Ast.ctype
@@ -201,11 +175,6 @@ structure CnvExt : CNVEXT = struct
 	end
     fun formatComment s = s
 
-    fun stringOptMerge (s1Opt: string option, s2Opt:string option) =
-	case s1Opt
-	of NONE => s2Opt
-        | SOME s1 => (case s2Opt of NONE => SOME s1
-			         | SOME s2 => SOME (s1 ^". " ^ s2))
 
     fun extractString e = 
 	case e
@@ -736,49 +705,18 @@ structure CnvExt : CNVEXT = struct
 	      fun pcgenName (nm) = nm^"_PCGEN_"
 	      fun pcgenId (nm) = PT.Id(pcgenName(nm))
 
-              val pstate    = "pstate"
-              val errCode   = "errCode"
-              val loc       = "loc"
-              val nerr      = PNames.nerr
+
               val nerrPCGEN = pcgenName("nerr")
-	      val pads      = "pads"
-              val rep       = "rep"
-              val io        = "io"
-	      val buf       = "buf"
-	      val bufLen    = "buf_len"
-	      val bufFull   = "buf_full"
-	      val delims    = "delims"
-	      val requestedOut = "requestedOut"
 	      val tmpBufCursor = pcgenName("buf_cursor")
 	      val tmpFn     = pcgenName("fn")
-	      val length    = "length"
 	      val tmpLength = pcgenName("length")
-	      val tag       = "tag"
-	      val indent    = "indent"
-	      val tpd       = "tpd"
-	      val tm        = "tm"
-	      val tloc      = "tloc"
-	      val beginLoc  = "beginLoc"
-	      val haveData   = "haveData"
-	      val locPtr    = "loc_ptr"
 	      val tlen      = pcgenName("tlen")
 	      val tdelim    = pcgenName("tdelim")
 	      val trequestedOut = pcgenName("trequestedOut")
-	      val prefix    = "prefix"
-	      val what      = "what"
-	      val nst       = "nst"
-	      val tmpstr    = "tmpstr"
-	      val outstr    = "outstr"
-	      val result    = "result"
-	      val errorf    = "error_fn"
-	      val self      = "self"
-	      val paramsVar = "params"
 
 	      (* Some useful functions *)
 		
-	      val discX = P.arrowX(PT.Id pads, PT.Id PL.disc)
 	      val ioDiscX =  P.arrowX(P.arrowX(PT.Id pads, PT.Id PL.disc), PT.Id PL.io_disc)
-	      val errorFX =  P.arrowX(P.arrowX(PT.Id pads, PT.Id PL.disc), PT.Id PL.errorf)
 	      val d_endianX =  P.arrowX(P.arrowX(PT.Id pads, PT.Id PL.disc), PT.Id PL.d_endian)
 	      val m_endianX =  P.arrowX(PT.Id pads, PT.Id PL.m_endian)
 	      val locX'     =  P.fieldX(pd, loc)
@@ -881,11 +819,6 @@ structure CnvExt : CNVEXT = struct
 		       accClean = (cleanupSuf o accSuf) name}
 		  end
 
-	      fun lookupTy (ty:pty, sufFun:string->string, fldSelect:PBTys.baseInfoTy ->Atom.atom) = 
-                  case ty 
-                  of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s) 
-                                    of NONE => (sufFun s)
-			            | SOME (b:PBTys.baseInfoTy) => Atom.toString(fldSelect b))
 
               fun lookupScan(ty:pty) = 
 		  case ty
@@ -898,6 +831,8 @@ structure CnvExt : CNVEXT = struct
                   of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
 				    of NONE => SOME(accSuf s)  (* non-base type; acc constructed from type name*)
                                     |  SOME(b:PBTys.baseInfoTy) => Option.map Atom.toString (#accname b))
+	      fun lookupAcc'(ty:pty) = 
+		  valOf (lookupAcc ty) handle x => (PE.error ("Failed to find accumulator:" ^(P.tyName ty)); "missing_accumulator")
 
               fun lookupPred(ty:pty) = 
 		  case ty
@@ -910,6 +845,7 @@ structure CnvExt : CNVEXT = struct
                   of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
 				    of NONE => s  (* non-base type; acc constructed from type name*)
                                     |  SOME(b:PBTys.baseInfoTy) => s)
+
 
 	      fun lookupLitWrite s = (bufSuf o writeSuf) s
 
@@ -1014,7 +950,6 @@ structure CnvExt : CNVEXT = struct
 					    | SOME b => PTys.CompoundTy b))
                    | NONE => PTys.CTy
  
-              fun tyName (ty:pty) = case ty of PX.Name s => s
 
 	      fun reduceArgList(args, (params, bodies):TyProps.argList)=
 		  let val subList = ListPair.zip(params, args)
@@ -1121,7 +1056,7 @@ structure CnvExt : CNVEXT = struct
                       val pct = case CTgetTyName act
 			        of NONE => CTtoPTct act
                                 | SOME tyName => 
-				    P.makeTypedefPCT(lookupTy(PX.Name tyName, repSuf, #repname))
+				    P.makeTypedefPCT(BU.lookupTy(PX.Name tyName, repSuf, #repname))
 
                       val name = case nOpt
 			         of NONE => (PE.error "Parameters to PADS data types must have names\n"; 
@@ -1131,8 +1066,6 @@ structure CnvExt : CNVEXT = struct
                       (name, pct)
 		  end
 
-              fun genReturnChk e =  P.returnS (P.condX(P.eqX(e, P.zero), PL.P_OK, PL.P_ERROR))
-	      val stdReturnS = genReturnChk (P.arrowX(PT.Id pd, PT.Id nerr))
 
 
 	      fun reportStructErrorSs (code, shouldGetLoc, locX) = 
@@ -1476,37 +1409,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      isFunED
 		  end
 
-              fun genInitTmpStrSs str = [P.varDeclS'(PL.sfioPCT, str),
-					 PT.IfThen(P.notX(P.assignX(PT.Id str, PL.sfstropen)),
-						   PT.Compound[PT.Return PL.P_ERROR])]
 
-              (* Perror_t foostruct_report(P_t* pads, const char * prefix,
-	                                      const char* what, int nst, foostruct_acc* acc) *)
-              fun genExternalReport(reportName, intlParamNames, formalParams) = 
-		  let val resDecl = P.varDeclS'(PL.toolErrPCT, result)
-		      val initTmpStrSs = genInitTmpStrSs outstr
-                      val chkTSandAccS = PT.IfThen(P.orX(
-						     P.orX(P.notX(PT.Id pads), P.notX(PT.Id acc)), 
-						     P.notX discX),
-						   PT.Compound[PT.Return PL.P_ERROR])
-		      val chkErrorFS = PT.IfThen(P.notX errorFX, PT.Compound[PT.Return PL.P_OK])
-		      val internalCallS = P.assignS(PT.Id result,
-						    PT.Call(PT.Id(ioSuf reportName),
-							    List.map PT.Id intlParamNames))
-                      val reportS = PT.IfThen(P.eqX(PL.P_OK, PT.Id result),
-					      PT.Compound[
-							  PT.Expr(PT.Call(errorFX,
-							      [P.zero, P.zero, 
-							       PT.String "%s", PL.sfstruse (PT.Id outstr)]))])
-		      val closeSs = [PL.sfstrclose(PT.Id outstr), PT.Return (PT.Id result)]
-		      val bodySs =  (resDecl :: initTmpStrSs) 
-			          @ (chkTSandAccS :: chkErrorFS :: internalCallS :: reportS :: closeSs)
-		      val returnTy =  PL.toolErrPCT
-		      val reportFunED = 
-			  P.mkFunctionEDecl(reportName, formalParams, PT.Compound bodySs, returnTy)
-		  in
-		      reportFunED
-		  end
 
               (* Perror_t foostruct_report(P_t* pads, [sfio_t *str], const char * prefix,
 	                                      const char* what, int nst, foostruct_acc* acc) *)
@@ -1523,7 +1426,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val extlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [], genParamNames []))
 		      val intlFormalParams = List.map P.mkParam 
 			                        (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
- 		      val initTmpStrSs = genInitTmpStrSs tmpstr
+ 		      val initTmpStrSs = BU.genInitTmpStrSs tmpstr
 		      val setPrefixS = PT.IfThen(P.orX(P.notX(PT.Id prefix), P.eqX(P.zero, P.starX(PT.Id prefix))),
 						 PT.Compound[P.assignS(PT.Id prefix, PT.String "<top>")])
 		      val setWhatS = PT.IfThen(P.notX(PT.Id what),
@@ -1537,7 +1440,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val bodyS = PT.Compound bodySs
 		      val returnTy = PL.toolErrPCT
 		      val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, bodyS, returnTy)
-		      val externalReportFunED = genExternalReport(reportName, intlParamNames, extlFormalParams)
+		      val externalReportFunED = BU.genExternalReportFun(reportName, intlParamNames, extlFormalParams, acc)
 		  in
 		      [toioReportFunED, externalReportFunED]
 		  end
@@ -1565,7 +1468,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val bodySs = PT.Compound([macroCallS])
 		      val returnTy = PL.toolErrPCT
 		      val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, bodySs, returnTy)
-		      val externalReportFunED = genExternalReport(reportName, intlParamNames, extlFormalParams)
+		      val externalReportFunED = BU.genExternalReportFun(reportName, intlParamNames, extlFormalParams, acc)
 		  in
 		      [toioReportFunED, externalReportFunED]
 		  end
@@ -1592,69 +1495,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
 
-             (*  Perror_t T_acc_name(P_t* , T_acc* ) *)
-	      fun gen3PFun (name, accPCT, bodySs) = 
-		  let val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT accPCT]
-                      val paramNames = [pads, acc]
-                      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
-		      val returnTy =  PL.toolErrPCT
-
-		      val zeroFunED = 
-			  P.mkFunctionEDecl(name, formalParams, PT.Compound bodySs, returnTy)
-		  in
-		      zeroFunED
-		  end
-
-	      val incNerrSs      = [PT.Expr(P.postIncX(PT.Id nerr))]
-	      val incPDNerrSs    = [PT.Expr(P.postIncX(P.fieldX(pd,nerr)))]
-	      val incNerrCompS   = PT.Compound(incNerrSs)
-	      val incPDNerrCompS = PT.Compound(incPDNerrSs)
-
-              fun chk3Pfun (funName, e) = 
-		  [PT.IfThen(P.eqX(PL.P_ERROR, 
-				   PT.Call(PT.Id funName, 
-					   [PT.Id pads, e])),
-			     incNerrCompS)]
-
-              (*  Perror_t T_acc_add (P_t* , T_acc* , T_pd*, T* ) *)
-	      fun genAddFun (addName, accPCT, pdPCT, repPCT, bodySs) = 
-		  let val paramTys = [P.ptrPCT PL.toolStatePCT, 
-				      P.ptrPCT accPCT, 
-				      P.ptrPCT pdPCT,
-				      P.ptrPCT repPCT]
-                      val paramNames = [pads, acc, pd, rep]
-                      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
-		      val returnTy =  PL.toolErrPCT
-		      val addFunED = 
-			  P.mkFunctionEDecl(addName, formalParams, PT.Compound bodySs, returnTy)
-		  in
-		      addFunED
-		  end
 
 
-
-              fun chkAddFun (funName, accX, pdX, repX) = 
-		  [PT.IfThen(P.eqX(PL.P_ERROR, 
-				   PT.Call(PT.Id funName, 
-					   [PT.Id pads, accX, pdX, repX])),
-			     incNerrCompS)]
-
-              fun chkPrint (bodyX) = 		   
-		  PT.IfThen(
-		      P.eqX(PL.P_ERROR, bodyX), 
-		      PT.Compound[PL.sfstrclose(PT.Id tmpstr),
-				  PT.Return PL.P_ERROR])
-
-              fun printScaffolding (fieldDescriptor, extraArgsXs, bodyX) = 
-		  [PL.sfprintf(PT.Id tmpstr, PT.String ("%s."^fieldDescriptor), [PT.Id prefix] @ extraArgsXs),
-		   chkPrint bodyX]
 
               fun genPrintPiece(reportName, fieldDescriptor, whatX, fieldX, extraArgsXs) = 
                   let val bodyX = PT.Call(PT.Id reportName, 
 				    [PT.Id pads, PT.Id outstr, PL.sfstruse (PT.Id tmpstr), whatX, PT.Id nst, 
 				     fieldX])
 		  in
-		      printScaffolding(fieldDescriptor, extraArgsXs, bodyX)
+		  [PL.sfprintf(PT.Id tmpstr, PT.String ("%s."^fieldDescriptor), [PT.Id prefix] @ extraArgsXs),  BU.chkPrint bodyX]
 		  end
 
 	      fun callIntPrint (reportName, prefixX, whatX, nstX, fieldX) = 
@@ -1693,22 +1542,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  (* end case *))
 		  end
                                       
-              fun reportErrorSs(locCodeSs, locX, shouldIncNerr, errCodeC, shouldPrint, funStr, msgStr, args) = 
-		  let val errCodeX = P.fieldX(pd, errCode)
-		      val msgX = if msgStr = "" then P.zero else PT.String msgStr
-		      val nErrSs = if shouldIncNerr 
-			           then incPDNerrSs
-				   else []
-                      val printSs = if shouldPrint 
-				    then [PL.userErrorS(PT.Id pads, locX, 
-							errCodeX, funStr, msgX, args)]
-				    else []
-		  in
-                     nErrSs
-                    @ [P.assignS(P.fieldX(pd, errCode), errCodeC)]
-		    @ locCodeSs
-                    @ printSs
-		  end
+
 
               (* handles problem if first element of an initializer is an enumerated type *)
               fun getFirstEMPCT emFields = 
@@ -1737,13 +1571,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                         containsRecord = false, largeHeuristic = false, 
 			labels = [SOME (name, tyStr, ([], []), isVirtual, comment )]}]
 		  end
-
-	      (* Functions for walking over lists of struct or union elements *)
-	      fun mungeField f b m (PX.Full fd) = f fd
-                | mungeField f b m (PX.Brief e) = b e
-                | mungeField f b m (PX.Manifest md) = m md
-	      fun mungeFields f b m [] = []
-		| mungeFields f b m (x::xs) = (mungeField f b m x) @ (mungeFields f b m xs)
 
               fun unionBranchX (base, name) = P.dotX(P.fieldX(base, PNames.unionVal), PT.Id name)
               fun getUnionBranchX (base, name) = P.addrX(unionBranchX(base, name))
@@ -1821,13 +1648,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  [var-pair(if omit)|empty], [empty(if omit)|mapping], [empty(if omit)|mapping] )] *)
 		      fun genLocFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred, comment: string option, size,optDecl, arrayDecl,...}:pfieldty) = 
+				      pred, comment: string option, size,optDecl, arrayDecl,...}:BU.pfieldty) = 
 			  ( if  name = PNames.pd orelse name = PNames.identifier orelse (structOrUnion = "Pstruct" andalso name = PNames.structLevel)
 				orelse isSuffix "_pd" name 
 			    then PE.error (structOrUnion^" "^structOrUnionName^" contains field with reserved name '"^name^"'\n")
 			    else ();
-			    let val tyName = lookupTy (pty, repSuf, #repname)
-				val ty = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
+			    let val tyName = BU.lookupTy (pty, repSuf, #repname)
+				val ty = P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname))
 				val () = ( CTcnvType ty  (* ensure that the type has been defined *) ; () )
 				val (ty,tyName) = if arrayDecl orelse optDecl then 
 				                    let val tyName = name^"_t"
@@ -1870,7 +1697,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 then [( [name], [name], [(tmpName(name),tyname)], tmpMapping(name),  [],             tmpMapping(name),      [tyname], ["bogus"] )]
 				 else [( [name], [],     [],                       readMapping(name), pdMapping name, postReadMapping(name), [tyname], ["bogus"] )]
 			       | _        => 
-				 let val tyName = lookupTy ((getPadsName tyname), repSuf, #repname)
+				 let val tyName = BU.lookupTy ((getPadsName tyname), repSuf, #repname)
 				     val ty = P.makeTypedefPCT(tyName)
 				     val () = ( CTcnvType ty  (* ensure that the type has been defined *) ;
 						if lookupContainsRecord(getPadsName tyname)
@@ -1882,7 +1709,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				     else [( [name], [],     [],                   readMapping(name), pdMapping name, postReadMapping(name), [ty], [tyName] )]
 				 end
 			 end
-		      val resall = mungeFields genLocFull genLocBrief genLocMan fields
+		      val resall = P.mungeFields genLocFull genLocBrief genLocMan fields
 		      fun analyzePred NONE = false
                         | analyzePred (SOME pred:pcexp PX.PPostCond list option) = 
 			  let fun f [] = false
@@ -1893,10 +1720,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  end
 		      fun predInfoFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 				      isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred, comment: string option, size,optDecl, arrayDecl,...}:pfieldty) = [analyzePred pred]
+				      pred, comment: string option, size,optDecl, arrayDecl,...}:BU.pfieldty) = [analyzePred pred]
 		      fun predInfoBrief _ = [false]
 		      fun predInfoMan {tyname, name, args, isVirtual, expr, pred, comment} = [analyzePred pred]
-		      val hasParseCheck = List.exists (fn x=>x) (mungeFields predInfoFull predInfoBrief predInfoMan fields)
+		      val hasParseCheck = List.exists (fn x=>x) (P.mungeFields predInfoFull predInfoBrief predInfoMan fields)
 		  in
 		     (hasParseCheck, unzip8' resall)
 		  end
@@ -2008,12 +1835,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   SOME (P.andBools(List.map (doOne subList) predList))
 			       end
 
-	      fun ifNotPanicSkippedSs (stmts) =
-		  [PT.IfThen(P.neqX(P.fieldX(pd, errCode), PL.P_PANIC_SKIPPED), PT.Compound(stmts))]
-
-	      fun ifNotPanicSkippedElseSs (stmts, elseStmts) =
-		  [PT.IfThenElse(P.neqX(P.fieldX(pd, errCode), PL.P_PANIC_SKIPPED), PT.Compound(stmts), PT.Compound(elseStmts))]
-
 	      fun chkManArgs (structOrUnion, structOrUnionName, tyname, name, args, subList) =
 		  case isPadsTy tyname
 		   of PTys.CTy => if not (List.length args = 0) then
@@ -2021,63 +1842,37 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  else ()
 		    | _ => (let val modArgs = List.map (PTSub.substExps subList) args
 			    in
-				checkParamTys(name, (lookupTy(getPadsName tyname, readSuf, #readname)), modArgs, 4, 0)
+				checkParamTys(name, (BU.lookupTy(getPadsName tyname, readSuf, #readname)), modArgs, 4, 0)
 			    end)
 
-	      fun manComment (name, comment, expr, pred) =
-		  let val defStringOpt =  SOME(name^" = "^P.expToString expr)
-		      val predStringOpt = Option.map P.constraintToString pred
-		      val partialCommentOpt = stringOptMerge(comment,  defStringOpt)
-		      val fullCommentOpt = stringOptMerge(partialCommentOpt, predStringOpt)
-		  in
-		      fullCommentOpt
-		  end
+
 
 	      (* Given a manifest field description, generate canonical representation *)
 	      fun genRepMan {tyname, name, args, isVirtual, expr, pred, comment} = 
 		  if isVirtual then [] else
-		  let val fullCommentOpt = manComment(name, comment, expr, pred)
+		  let val fullCommentOpt = BU.manComment(name, comment, expr, pred)
 		      val ty = case isPadsTy tyname
 			       of PTys.CTy => tyname
-                               | _ => P.makeTypedefPCT(lookupTy(getPadsName tyname, repSuf, #repname))
+                               | _ => P.makeTypedefPCT(BU.lookupTy(getPadsName tyname, repSuf, #repname))
 		  in
 		      [(name, ty, fullCommentOpt)]
 		  end
 
 
               (* Given manifest field, use f to generate field declaration from pads pty *)
-	      fun genMan f defaultTyOpt virtOK {tyname, name, args, isVirtual, expr, pred, comment}= 
-		  if virtOK orelse not isVirtual then
-		      let val fullCommentOpt = manComment(name, comment, expr, pred)
-			  fun mkEntry ty = [(name, ty, fullCommentOpt)]
-		      in
-			  case isPadsTy tyname
-		          of  PTys.CTy => (case defaultTyOpt of NONE => [] | SOME ty => mkEntry ty)
-                          |   _ => mkEntry (P.makeTypedefPCT(f (getPadsName tyname)))
-		      end
-		  else []
+              fun genMan x =  BuildUtils.genMan (isPadsTy, getPadsName) x
               
 	      
 	      (* Given representation of manifest field, generate accumulator representation. *)
-	      fun genAccMan m = 
-		  let fun f pty = 
-		        valOf (lookupAcc pty) handle x => (PE.error ("Failed to find accumulator:" ^(tyName pty)); "foo")
-		  in
-		     genMan f NONE false m
-		  end
+	      fun genAccMan m =  genMan (lookupAcc', NONE, false, m)
 
 	      (* Given representation of manifest field, generate parse descriptor representation. *)
 	      fun genEDMan m = 
-		  let fun f pty = lookupTy(pty, pdSuf, #pdname)
+		  let fun f pty = BU.lookupTy(pty, pdSuf, #pdname)
 		  in
-		      genMan f (SOME PL.base_pdPCT) true m
+		      genMan (f, (SOME PL.base_pdPCT), true, m)
 		  end
 
-	      fun cnvPtyMan (theName, acc, name)  = 
-		  let val fieldX = P.addrX(P.arrowX(PT.Id acc, PT.Id name))
-		  in
-		      chk3Pfun (theName, fieldX)
-		  end
 
               fun genAssignMan(tyname, name, repX, exp) = 
 		  let val pct = tyNameToPCT tyname
@@ -2101,29 +1896,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  end
 
 	      (* Given manifest representation, generate accumulator functions(init, reset, cleanup) *)
-	      fun genAccTheMan theSuf {tyname, name, args, isVirtual, expr, pred, comment} =
-		  if isVirtual then [] else
-		  case isPadsTy tyname
-                   of PTys.CTy => [] 
-		    |  _        => (case lookupAcc(getPadsName tyname) of NONE => []
- 									| SOME a => cnvPtyMan(theSuf a, acc, name))
+	      fun genAccTheMan theSuf m = 
+		      BU.genFunMan (isPadsTy, getPadsName) (lookupAcc', theSuf, acc, m)
 
-	      (* Given manifest representation, generate accumulator function *)
-
-	      fun cnvPtyForAdd (pty, name, errDescX) = 
-		  case lookupAcc(pty)
-		   of NONE =>
-		      [P.mkCommentS("field '"^name^"': no acc function, cannot accumulate")]
-		    | SOME a =>
-		      (let val addName = addSuf a
-			   fun gfieldX base = P.getFieldX(base, name)
-		       in
-			   [PT.IfThen(
-			    P.eqX(PL.P_ERROR, 
-				  PT.Call(PT.Id addName, 
-					  [PT.Id pads, gfieldX acc, errDescX, gfieldX rep])),
-			    incNerrCompS)]
-		       end)
 
 	      (* Given manifest representation, generate report function *)
 	      fun cnvPtyForReport(reportSuf, ioSuf, pty, name, fieldOrBranch) = 
@@ -2154,6 +1929,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
               fun emitWrite eds = emit (!(#outputWrite(PInput.inputs)), eds)
               fun emitExperiment eds = emit (!(#outputExper(PInput.inputs)), eds)
               fun emitXML   eds = emit (!(#outputXML(PInput.inputs)), eds)
+              fun emitHist  eds = emit (!(#outputHist(PInput.inputs)), eds)
 	      fun emitPred  eds = emitRead eds
 
               fun isGalax () = (!(#outputXML(PInput.inputs)))
@@ -2181,13 +1957,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				pred : pcexp PX.PPredicate option})=
 (*			        predTy: PX.Pty option, thisVar: string option, pred: pcexp option}) =  *)
 		  let val base = "base"
-		      val baseTyName = lookupTy(baseTy, repSuf, #padsname)		
-		      val baseTypeName = lookupTy(baseTy, repSuf, #repname)		
+		      val baseTyName = BU.lookupTy(baseTy, repSuf, #padsname)		
+		      val baseTypeName = BU.lookupTy(baseTy, repSuf, #repname)		
 		      val cParams : (string * pcty) list = List.map mungeParam params
 		      val paramNames = #1(ListPair.unzip cParams)
 
                       (* Generate CheckSet mask typedef case*)
-		      val baseMPCT = P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname))
+		      val baseMPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, mSuf, #mname))
                       val mFields  = [(base, baseMPCT,          SOME "Base mask"),
 				      (user, PL.base_mPCT,      SOME "Typedef mask")]
 		      val mED      = P.makeTyDefStructEDecl (mFields, mSuf name)
@@ -2195,7 +1971,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val mPCT     = P.makeTypedefPCT (mSuf name)		
 
                       (* Generate parse description: typedef to base pd *)
-		      val pdEDPCT = P.makeTypedefPCT(lookupTy(baseTy, pdSuf, #pdname))
+		      val pdEDPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, pdSuf, #pdname))
 		      val pdED = P.makeTyDefEDecl (pdEDPCT, pdSuf name)
 		      val (pdDecls, pdTid)  = cnvCTy pdED
                       val pdPCT = P.makeTypedefPCT (pdSuf name)
@@ -2223,7 +1999,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
 		      (* Generate canonical representation: typedef to base representation *)
-		      val baseTyPCT = P.makeTypedefPCT(lookupTy(baseTy, repSuf, #repname))
+		      val baseTyPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, repSuf, #repname))
 		      val canonicalED = P.makeTyDefEDecl (baseTyPCT, repSuf name)
 		      val (canonicalDecls, canonicalTid) = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
                       val canonicalPCT = P.makeTypedefPCT (repSuf name)
@@ -2280,7 +2056,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* Generate read function *)
                       (* -- Some helper functions *)
 		      val readName = readSuf name
-                      val baseReadFun = lookupTy(baseTy, readSuf, #readname)
+                      val baseReadFun = BU.lookupTy(baseTy, readSuf, #readname)
 		      val modPredXOpt = case pred of NONE => NONE
 			             | SOME {predTy, thisVar, pred} => SOME (PTSub.substExp (thisVar, P.starX(PT.Id rep), pred))
 		      fun chk () = 
@@ -2313,7 +2089,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					  PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_READ_CHECK", [PT.String(readName), readBaseX, modPredX]))
 
 		      in
-			  [callMacroS, stdReturnS]
+			  [callMacroS, BU.stdReturnS]
 		      end
 
                       (* -- Assemble read function typedef case *)
@@ -2343,7 +2119,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
 			  in case lookupAcc baseTy 
-			      of NONE => (gen3PFun(theFun, accPCT, 
+			      of NONE => (BU.gen3PFun(theFun, accPCT, acc,
 						   [P.mkCommentS ("Accumulation not defined for base type of ptypedef"),
 						    PT.Return PL.P_OK])
 			                                     (* end NONE *))
@@ -2351,7 +2127,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   let val theBodyE = PT.Call(PT.Id(theSuf a), 
 							      [PT.Id pads, PT.Id acc])
 				       val theReturnS = PT.Return theBodyE
-				       val theFunED = gen3PFun(theFun, accPCT, [theReturnS])
+				       val theFunED = BU.gen3PFun(theFun, accPCT, acc,[theReturnS])
 				   in
 				      theFunED
 				   end
@@ -2364,7 +2140,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* -- generate accumulator function *)
                       (*  Perror_t T_acc_add (P_t* , T_acc* , T_pd*, T* ) *)
 		      val addFun = (addSuf o accSuf) name
-		      fun genAdd NONE = genAddFun(addFun, accPCT, pdPCT, canonicalPCT, 
+		      fun genAdd NONE = BU.genAddFun(addFun, acc, accPCT, pdPCT, canonicalPCT, 
 						  [P.mkCommentS ("Accumulation not defined for base type of ptypedef"),
 						   PT.Return PL.P_OK])
                         | genAdd (SOME a) =
@@ -2373,7 +2149,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       val addReturnS = PT.Return addX
 			       val addBodySs =  [addReturnS]
 			   in
-			       genAddFun(addFun, accPCT, pdPCT, canonicalPCT, addBodySs)
+			       BU.genAddFun(addFun, acc,accPCT, pdPCT, canonicalPCT, addBodySs)
 			   end
 
                           (* end SOME case *)
@@ -2481,10 +2257,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val neerr = "neerr"
                  val firstError = "firstError"
 		 val violated = "violated"
-                 val elemRepPCT = P.makeTypedefPCT(lookupTy(baseTy, repSuf, #repname))
-                 val elemEdPCT  = P.makeTypedefPCT(lookupTy(baseTy, pdSuf, #pdname))
-                 val elemMPCT  = P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname))
-                 val elemReadName = lookupTy(baseTy, readSuf, #readname)
+                 val elemRepPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, repSuf, #repname))
+                 val elemEdPCT  = P.makeTypedefPCT(BU.lookupTy(baseTy, pdSuf, #pdname))
+                 val elemMPCT  = P.makeTypedefPCT(BU.lookupTy(baseTy, mSuf, #mname))
+                 val elemReadName = BU.lookupTy(baseTy, readSuf, #readname)
 		 val tLocX      =  PT.Id locPtr
  		 val tLocBX     =  P.arrowX(tLocX, PT.Id "b")
 		 val tLocEX     =  P.arrowX(tLocX, PT.Id "e")				  
@@ -2492,22 +2268,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val tlocES0    =  PL.getLocEndS(PT.Id pads, P.starX(tLocX)) 
 
                  (* Some useful functions *)
-(*                 fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic, endSpec) = 
-                     PT.Compound([PT.IfThenElse(P.notX(P.fieldX(pd, nerr)),
-						PT.Compound (reportErrorSs(getLocSs, locX, true, errCodeC,
-									   shouldPrint, whatFun, msg, args)),
-						incPDNerrCompS)]
-				 @ (if endSpec then [PL.endSpec pads PL.P_ERROR] else [])
-				 @ (if setPanic then [PL.setPanicS(PT.Id pd)] else []))
-*)
-  
-                 fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic, endSpec) = 
-                     PT.Compound([PT.IfThenElse(P.notX(P.fieldX(pd, nerr)),
-						PT.Compound (reportErrorSs(getLocSs, locX, true, errCodeC,
-									   shouldPrint, whatFun, msg, args)),
-						incPDNerrCompS)]
-				 @ (case endSpec of SOME(esRetX) => [PL.endSpec pads esRetX] | _ => [])
-				 @ (if setPanic then [PL.setPanicS(PT.Id pd)] else []))
+
   
                  fun amCheckingBasicE(SOME testE) = 
                      P.andX(PL.mTestSynCheckX(P.fieldX(m, array)), testE)
@@ -2577,7 +2338,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       if isUnsigned then []
 			       else [PT.IfThen( (* if (minX<0) *)
 					     amCheckingBasicE(SOME (P.ltX(minX, P.zero))),
-					     recordArrayErrorS([tlocES1], tLocX,
+					     BU.recordArrayErrorS([tlocES1], tLocX,
 							       PL.P_ARRAY_MIN_NEGATIVE, true,
 							       readName,
 							       "Minimum value for the size of array "^
@@ -2590,7 +2351,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 if isUnsigned then []
 				 else [PT.IfThen( (* if (maxX<0) *)
 					     amCheckingBasicE(SOME(P.ltX(maxX, P.zero))),
-					     recordArrayErrorS([tlocES1], tLocX,
+					     BU.recordArrayErrorS([tlocES1], tLocX,
 							       PL.P_ARRAY_MAX_NEGATIVE, true, readName,
 							       "Maximum value for the size of array "^
 							       name ^  "(%d) " ^
@@ -2616,7 +2377,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                                                   else [] (* no static error, no need for dynamic checks*)
 					     else ([PT.IfThen( (* if (minX > maxX) *)
 						     amCheckingBasicE(SOME(P.gtX(minX, maxX))), 
-						      recordArrayErrorS([tlocES1], tLocX,
+						      BU.recordArrayErrorS([tlocES1], tLocX,
 									PL.P_ARRAY_MIN_BIGGER_THAN_MAX_ERR,
                                                                         true, readName,
 									      "Mininum value for "^
@@ -2673,7 +2434,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					  size specifications *)
 
 	         (* Generate CheckSet mask *)
-		 val mFields = [(element, P.makeTypedefPCT(lookupTy(baseTy, mSuf, #mname)), SOME "per-element"),
+		 val mFields = [(element, P.makeTypedefPCT(BU.lookupTy(baseTy, mSuf, #mname)), SOME "per-element"),
 				 (array,   PL.base_mPCT, SOME "entire array")]
 		 val mStructED = P.makeTyDefStructEDecl (mFields, mSuf name)
 		 val mStructDecls = cnvExternalDecl mStructED 
@@ -3154,7 +2915,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val bodySs = [PT.Compound[P.varDeclS(PL.uint32PCT, nerrPCGEN, P.zero),
 						   PT.Expr(PT.Call(PT.Id("PCGEN_ARRAY_CLEANUP"^arrayStat^eltStat),
 								   [PT.String(cleanupFunName), PT.Id base] @ xArgs)),
-						   genReturnChk(PT.Id nerrPCGEN)]]
+						   BU.genReturnChk(PT.Id nerrPCGEN)]]
 		     in 
 			 [genInitFun(cleanupFunName, base, aPCT, bodySs, false)]
 		     end
@@ -3174,7 +2935,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val bodySs = [PT.Compound[P.varDeclS(PL.uint32PCT, nerrPCGEN, P.zero),
 						   PT.Expr(PT.Call(PT.Id("PCGEN_ARRAY_COPY"^arrayStat^eltStat),
 								   [PT.String(copyFunName), PT.Id(src), PT.Id(dst)] @ xArgs)),
-						   genReturnChk(PT.Id nerrPCGEN)]]
+						   BU.genReturnChk(PT.Id nerrPCGEN)]]
 		     in
 			 [genCopyFun(copyFunName, dst, src, aPCT, bodySs, false)]
 		     end
@@ -3327,14 +3088,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     PT.IfThen(amCheckingBasicE NONE, 
 			      PT.Compound[(* if am checking *)
 			        PT.IfThen(PT.Id "offset",
-				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, 
+				    BU.recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, 
 						      readName,"", [], false, 
 						      case endedXOpt of SOME(_) => NONE
 								      | NONE => SOME(esRetX)))])],
                             PT.Compound([ (* else error in reading separator *)
 			     P.mkCommentS("Error reading separator")]
 			     @(if (Option.isSome endedXOpt)  andalso useChkPts then (PL.commitS(PT.Id pads, readName)) else [])
-			     @(recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, 
+			     @(BU.recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, 
 						 "Missing separator", [], true, SOME(esRetX)) ::
 			        breakSs)))])]
 		      | (SOME(termX, scan2TermX, _, _, _, _, _), _) => 
@@ -3360,11 +3121,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                               PT.IfThen(amCheckingBasicE NONE, 
 	  		       PT.Compound[ (* if am checking *)
 			         PT.IfThenElse(P.andX(PT.Id "f_found", PT.Id "offset"),
-				    recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], 
+				    BU.recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], 
 						      false,case endedXOpt of SOME(_) => NONE
 									    | NONE => SOME(esRetX)),
                                     PT.Compound [PT.IfThen(P.notX(PT.Id "f_found"),
-					                   PT.Compound(recordArrayErrorS([locES1], locX,
+					                   PT.Compound(BU.recordArrayErrorS([locES1], locX,
 											 PL.P_ARRAY_EXTRA_BEFORE_TERM, true,
 											 readName,"", [], false,SOME(esRetX)) ::
 								       breakSs))] )])],
@@ -3372,7 +3133,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      [P.mkCommentS("Error reading separator")]
 			      @ (if Option.isSome endedXOpt andalso useChkPts 
 				     then (PL.chkPtS'(PT.Id pads, readName)) else [])
-			      @ (recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, 
+			      @ (BU.recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, 
 						    true, readName, "Missing separator", [], true,SOME(esRetX)) ::
 			         breakSs)
 			      ))])]
@@ -3437,7 +3198,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				    P.postIncS(P.fieldX(pd, neerr)),
                                     PT.IfThen(P.notX(P.fieldX(pd, nerr)),
                                        PT.Compound (
-	 			           (reportErrorSs([locES1], locX, true, PL.P_ARRAY_ELEM_ERR, false, readName, "", []))
+	 			           (BU.reportErrorSs([locES1], locX, true, PL.P_ARRAY_ELEM_ERR, false, readName, "", []))
                                          @ [P.mkCommentS("Index of first element with an error"),
 				            P.assignS(P.fieldX(pd, firstError), P.minusX(P.fieldX(rep, length), P.intX 1))])),
                                             PL.endSpec pads PL.P_ERROR])])]
@@ -3666,10 +3427,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                              PT.Compound[
 			      PT.IfThen(amCheckingBasicE NONE, 
 			        PT.Compound[
-				 recordArrayErrorS([locES1], locX, PL.P_ARRAY_EXTRA_BEFORE_TERM,
+				 BU.recordArrayErrorS([locES1], locX, PL.P_ARRAY_EXTRA_BEFORE_TERM,
 						   true, readName,"", [], false,SOME(esRetX)),
 				 P.assignS(PT.Id foundTerm, P.trueX)])],
-			     recordArrayErrorS([locES1], locX, PL.P_ARRAY_TERM_ERR, true, readName,
+			     BU.recordArrayErrorS([locES1], locX, PL.P_ARRAY_TERM_ERR, true, readName,
 					       "Missing terminator", [], true,SOME(esRetX)))
 			 ])]
 		     end
@@ -3718,7 +3479,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     in
 			      [P.mkCommentS("Checking that we read enough elements"),
 			       PT.IfThen(testX,
-				  recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_SIZE_ERR, true, readName,
+				  BU.recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_SIZE_ERR, true, readName,
 				    ("Read %d element(s) for array "^name^"; required %d"),
 				    [P.fieldX(rep, length), minX], false,SOME(esRetX)))]
 			     end
@@ -3729,7 +3490,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  [P.varDeclS(P.int, "violated", P.falseX)]
 				  @ genLoop forall
 				  @ [PT.IfThen(PT.Id "violated",
-					       recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, 
+					       BU.recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, 
 								 true, readName,("Pforall constraint for array "^name^" violated"), 
 								 [], false,SOME(esRetX)))])]
 
@@ -3739,7 +3500,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				[PT.Compound(
 				   [P.mkCommentS "Checking PWhere constraint"]
 				   @ [PT.IfThen(P.notX exp,
-					   recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
+					   BU.recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
 							     ("Pwhere constraint for array "^name^" violated"), [], false,SOME(esRetX)))])]
 
 			 (* -- -- Check that the user's parse check predicate is satisfied *)
@@ -3748,7 +3509,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   [P.mkCommentS "Checking Pparsecheck constraint"]
 				   @ (if needArrayEndExp then [tlocES0] else [])
 				   @ [PT.IfThen(P.notX exp,
-					   recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
+					   BU.recordArrayErrorS([tlocES1], tLocX, PL.P_ARRAY_USER_CONSTRAINT_ERR, true, readName,
 							     ("Pparsecheck constraint for array "^name^" violated"), 
 							     [], false,SOME(esRetX)))])]
 			 fun genWhereClause c = 
@@ -4093,8 +3854,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		 (* Assemble read_one driver function *)
 		 fun roDriverBodySs(name) =
-		     let val elemName = lookupTy(baseTy, repSuf, #repname)
-			 val elemPdName  = lookupTy(baseTy, pdSuf, #pdname)
+		     let val elemName = BU.lookupTy(baseTy, repSuf, #repname)
+			 val elemPdName  = BU.lookupTy(baseTy, pdSuf, #pdname)
 
 			 val initDecSs =   
 			     stdeclSs
@@ -4356,7 +4117,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT]
                          val paramNames = [G.self,G.idx]
                          val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
-			 val elemName = lookupTy(baseTy, repSuf, #repname)
+			 val elemName = BU.lookupTy(baseTy, repSuf, #repname)
 		         val bodySs = G.makeInvisibleDecls([name,elemName],nil)
 				      @ [G.macroArrKC(name,elemName),
 					 P.returnS (G.macroArrKCRet())]
@@ -4380,9 +4141,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     end
 			 
 		 fun makeGalaxEDs(name) = 
-		     let val elemName = lookupTy(baseTy, repSuf, #repname)
-			 val pdName = lookupTy(baseTy, pdSuf, #pdname)
-			 val mName = lookupTy(baseTy, mSuf, #mname)
+		     let val elemName = BU.lookupTy(baseTy, repSuf, #repname)
+			 val pdName = BU.lookupTy(baseTy, pdSuf, #pdname)
+			 val mName = BU.lookupTy(baseTy, mSuf, #mname)
 		     in 
 			 [G.makeNodeNewFun(name),
 			  G.makeCNInitFun(name,G.macroArrLength(name)),
@@ -4540,7 +4301,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     case lookupAcc baseTy of NONE => []
 			   | SOME a => (
 			       let val elemFunName = theSuf a
-				   fun doOne eX = chk3Pfun (elemFunName, eX)
+				   fun doOne eX = BU.chk3Pfun (elemFunName, [eX])
 				   val fieldX = P.addrX(P.subX(P.arrowX(PT.Id acc, PT.Id arrayDetail), PT.Id "i"))
 				   val doArrayDetailSs = [
 					PT.Compound
@@ -4556,11 +4317,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   doArraySs @ doArrayDetailSs
 			       end(* end SOME acc case *))
 			 val lengthX = P.addrX(P.arrowX(PT.Id acc, PT.Id length))
-			 val doLength = chk3Pfun(theSuf PL.uint32Act, lengthX)
+			 val doLength = BU.chk3Pfun(theSuf PL.uint32Act, [lengthX])
 			 val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
-			 val theReturnS = genReturnChk (PT.Id nerr)
+			 val theReturnS = BU.genReturnChk (PT.Id nerr)
 			 val theBodySs = theDeclSs @ doLength @ doElems @ [theReturnS]
-			 val theFunED = gen3PFun(theFun, accPCT, theBodySs)
+			 val theFunED = BU.gen3PFun(theFun, accPCT, acc, theBodySs)
 		     in
 			 theFunED
 		     end
@@ -4578,7 +4339,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       let val elemFunName = theSuf a
 				   fun getArrayFieldX (base, field) = 
 					P.addrX(P.subX(P.arrowX(PT.Id base, PT.Id field), PT.Id "i"))
-				   fun doOne (accX, pdX, repX) = chkAddFun (elemFunName, accX, pdX, repX)
+				   fun doOne (accX, pdX, repX) = BU.chkAddFun (elemFunName, accX, pdX, repX)
 				   val doArrayDetailSs = [
 					PT.Compound
 					 [P.varDeclS'(P.int, "i"),
@@ -4596,11 +4357,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       in
 				   doArrayDetailSs
 			       end(* end SOME acc case *))
-			 val doLength = chkAddFun(theSuf PL.uint32Act, P.getFieldX(acc, length), P.addrX(PT.Id tpd), 
+			 val doLength = BU.chkAddFun(theSuf PL.uint32Act, P.getFieldX(acc, length), P.addrX(PT.Id tpd), 
 						  P.getFieldX(rep, length))
-			 val theReturnS = genReturnChk (PT.Id nerr)
-			 val theBodySs = theDeclSs @ initTpdSs @ ifNotPanicSkippedSs(doLength @ doElems) @ [theReturnS]
-			 val theFunED = genAddFun(theFun, accPCT, pdPCT, canonicalPCT, theBodySs)
+			 val theReturnS = BU.genReturnChk (PT.Id nerr)
+			 val theBodySs = theDeclSs @ initTpdSs @ BU.ifNotPanicSkippedSs(doLength @ doElems) @ [theReturnS]
+			 val theFunED = BU.genAddFun(theFun, acc, accPCT, pdPCT, canonicalPCT, theBodySs)
 		     in
 			 theFunED
 		     end
@@ -4615,7 +4376,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  fun genReport () = 
 		     let val reportFun = (reportSuf o accSuf) name
 			 val lengthX = P.arrowX(PT.Id acc, PT.Id length)
-			 val doLengthSs = [chkPrint(
+			 val doLengthSs = [BU.chkPrint(
 					     callIntPrint((ioSuf o reportSuf) PL.uint32Act, PT.String "Array lengths", 
 						 	 PT.String "array length", P.intX ~1, P.addrX lengthX)) ]
 			 val maxX = P.dotX(lengthX, PT.Id "max")
@@ -4799,7 +4560,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                      (* Process in-line declarations *)
                      fun cvtInPlaceFULL ( f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,
-						optPred, optDecl, arrayDecl,...}:pfieldty) = 
+						optPred, optDecl, arrayDecl,...}:BU.pfieldty) = 
 			   if not (arrayDecl orelse optDecl) then 
 			       (if Option.isSome optPred then PE.error ("Field "^name^" in "^unionName^ " has option-style constraints "^
 									"but is not an in-line option declaration.\n")
@@ -4831,14 +4592,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						name=name, isVirtual=isVirtual, isEndian=isEndian,
 						isRecord=false, containsRecord=false, largeHeuristic=false, pred=pred,
 						comment=comment,optPred = NONE,
-						optDecl = false, arrayDecl = false, size=NONE, arraypred=[]} : pfieldty
+						optDecl = false, arrayDecl = false, size=NONE, arraypred=[]} : BU.pfieldty
 			      in
 				  [(newAsts, PX.Full sfield)]
 	 		      end
                       fun cvtInPlaceBrief x = [([],PX.Brief x)]
                       fun cvtInPlaceMan   x = [([],PX.Manifest x)]
                       fun cvtRep variants = 
-			  let val res = mungeFields cvtInPlaceFULL cvtInPlaceBrief cvtInPlaceMan variants
+			  let val res = P.mungeFields cvtInPlaceFULL cvtInPlaceBrief cvtInPlaceMan variants
 			      val (asts, newfields) = ListPair.unzip res
 			  in
 			      (List.concat asts, newfields)
@@ -4877,12 +4638,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genTagFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, 
 				     isRecord, containsRecord, largeHeuristic: bool,
-				     pred, comment: string option,...}:pfieldty) = 
+				     pred, comment: string option,...}:BU.pfieldty) = 
 			 chkTag(name)
 		     fun genTagBrief e = case getString e of NONE => [] | SOME s => chkTag s
                      fun genTagMan {tyname, name, args, isVirtual, expr, pred, comment} = chkTag name
 
-		     val tagFields = mungeFields genTagFull genTagBrief genTagMan variants
+		     val tagFields = P.mungeFields genTagFull genTagBrief genTagMan variants
 		     val tagFieldsWithError = (errSuf name, P.zero, NONE) :: tagFields 
 		     val tagED = P.makeTyDefEnumEDecl(tagFieldsWithError, tgSuf name)
 		     val tagDecls = cnvExternalDecl tagED
@@ -4892,8 +4653,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genMFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				    isVirtual: bool, isEndian: bool, 
                                     isRecord, containsRecord, largeHeuristic: bool,
-				    pred, comment,...}:pfieldty) = 
-			 [(name, P.makeTypedefPCT(lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
+				    pred, comment,...}:BU.pfieldty) = 
+			 [(name, P.makeTypedefPCT(BU.lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
 			 @ (case pred of NONE => [] | SOME _ => [(mConSuf name, PL.base_mPCT, SOME "union constraints")])
 		     fun genMBrief e = []
 		     (* fun genMMan m = [] foofoofoo *)
@@ -4902,10 +4663,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  of PTys.CTy => []
 			   | _ => (let val pty : pty = getPadsName tyname
 				   in 
-				       [(name, P.makeTypedefPCT(lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
+				       [(name, P.makeTypedefPCT(BU.lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
 				       @ (case pred of NONE => [] | SOME _ =>  [(mConSuf name, PL.base_mPCT, SOME "union constraints")])
 				   end)
-		     val mFieldsNested = mungeFields genMFull genMBrief genMMan variants
+		     val mFieldsNested = P.mungeFields genMFull genMBrief genMMan variants
 		     val auxMFields    = [(PNames.unionLevel, PL.base_mPCT, NONE)]
                      val mFields = auxMFields @ mFieldsNested
 		     val mFirstPCT = getFirstEMPCT mFields
@@ -4916,10 +4677,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genEDFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				    isVirtual: bool, isEndian: bool,
 				    isRecord, containsRecord, largeHeuristic: bool,
-				    pred, comment,...}:pfieldty) = 
-			 [(name, P.makeTypedefPCT(lookupTy (pty, pdSuf, #pdname)), NONE)]
+				    pred, comment,...}:BU.pfieldty) = 
+			 [(name, P.makeTypedefPCT(BU.lookupTy (pty, pdSuf, #pdname)), NONE)]
 		     fun genEDBrief e = case getString e of NONE => [] | SOME s => [(s, PL.base_pdPCT, NONE )]
-		     val pdVariants = mungeFields genEDFull genEDBrief genEDMan variants
+		     val pdVariants = P.mungeFields genEDFull genEDBrief genEDMan variants
 		     val pdVariants = if List.length pdVariants = 0
 			                    then [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty union pd")]
 					    else pdVariants			        
@@ -4938,14 +4699,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genAccFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, 
 				     isRecord, containsRecord, largeHeuristic: bool, 
-				     pred, comment,...}:pfieldty) = 
+				     pred, comment,...}:BU.pfieldty) = 
 			 if not isVirtual then
 			     case lookupAcc pty of NONE => []
 			   | SOME a => [(name, P.makeTypedefPCT a, NONE)]
 			 else []
 		     fun genAccBrief e = [] (* literals are not stored in in-memory rep, so can't be accumulated *)
 		     val auxAccFields = [(tag, PL.intAccPCT, NONE)]
-		     val accFields = auxAccFields @ (mungeFields genAccFull genAccBrief genAccMan variants)
+		     val accFields = auxAccFields @ (P.mungeFields genAccFull genAccBrief genAccMan variants)
 		     val accED = P.makeTyDefStructEDecl (accFields, accSuf name)
 		     val accPCT = P.makeTypedefPCT (accSuf name)			  
 
@@ -4953,7 +4714,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genTyPropsFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					 isVirtual: bool, isEndian: bool, 
 					 isRecord, containsRecord, largeHeuristic: bool,
-					 pred, comment: string option,...}:pfieldty) = 
+					 pred, comment: string option,...}:BU.pfieldty) = 
 			  let val PX.Name ftyName = pty
 			      val mc = lookupMemChar pty
 			      val ds = computeDiskSize(name, paramNames, pty, args)
@@ -4976,7 +4737,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  labels = [NONE]}] 
 			     end
 
-		     val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan variants
+		     val tyProps = P.mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan variants
                      (* check that all variants are records if any are *)
 		     (* val () = case tyProps of [] => ()
 			      | 
@@ -5004,12 +4765,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      (* union: generate canonical representation *)
 		     fun genRepFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				     pred, comment: string option,...}:pfieldty) = 
+				     pred, comment: string option,...}:BU.pfieldty) = 
 			 if not isVirtual then
-			     let val predStringOpt = Option.map P.constraintToString pred
-				 val fullCommentOpt = stringOptMerge(comment, predStringOpt)
+			     let val predStringOpt = Option.map BU.constraintToString pred
+				 val fullCommentOpt = BU.stringOptMerge(comment, predStringOpt)
 			     in
-				 [(name, P.makeTypedefPCT(lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
+				 [(name, P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
 			     end
 			 else []
 		     fun genRepBrief (e,labelOpt) = 
@@ -5027,7 +4788,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     in
 				 []
 			 end
-		     val canonicalVariants = mungeFields genRepFull genRepBrief genRepMan variants
+		     val canonicalVariants = P.mungeFields genRepFull genRepBrief genRepMan variants
 		     val canonicalVariants = if List.length canonicalVariants = 0
 			                    then ((* PE.warn ("PUnion "^unionName^" does not contain any non-omitted fields\n"); *)
 						 [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty union")])
@@ -5096,7 +4857,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			   | TyProps.Dynamic => 
 			       let fun genCleanupFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
 						    name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
-						    pred, comment:string option,...}:pfieldty) = 
+						    pred, comment:string option,...}:BU.pfieldty) = 
 				    if (isVirtual andalso var = rep) orelse (TyProps.Static = lookupMemChar pty) then []
 				    else let val baseFunName = lookupMemFun (PX.Name tyName)
 					 in
@@ -5106,7 +4867,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					 end
 				   fun genCleanupBrief e = []
 				   fun genCleanupMan _ = []
-				   val branchSs = mungeFields genCleanupFull 
+				   val branchSs = P.mungeFields genCleanupFull 
 				                   genCleanupBrief genCleanupMan variants
 				   val allBranchSs = branchSs @ mkDefBreakCase(NONE)
 				   val bodySs = [PT.Switch(P.arrowX(PT.Id var, PT.Id tag), PT.Compound allBranchSs),PT.Return PL.P_OK]
@@ -5132,7 +4893,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				|  TyProps.Dynamic => 
 			           let fun genCopyFull ({pty as PX.Name tyName :PX.Pty, args : pcexp list, 
 							name:string, isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
-							pred, comment:string option,...}:pfieldty) = 
+							pred, comment:string option,...}:BU.pfieldty) = 
 					   let val nestedCopyFunName = suf (lookupMemFun pty)
 					   in
 					       if (isVirtual andalso base = rep) 
@@ -5152,7 +4913,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					   end
 				       fun genCopyBrief e  = []
 				       fun noop _ = []
-				       val branchSs = mungeFields genCopyFull genCopyBrief noop variants
+				       val branchSs = P.mungeFields genCopyFull genCopyBrief noop variants
 				       val branchSs = branchSs @ mkDefBreakCase(NONE)
 				       val bodySs = [PT.Expr(PT.Call(PT.Id("PCGEN_UNION_"^pdOpt^"COPY_PRE"),
 								     [PT.String(copyFunName), PT.Id(cleanupFunName)])),
@@ -5256,10 +5017,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                      fun genReadFull({pty :PX.Pty, args:pcexp list, name:string,
 				     isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-				     pred, comment,...}:pfieldty) = 
+				     pred, comment,...}:BU.pfieldty) = 
 			 let val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
-			     val readFieldName = lookupTy(pty, readSuf, #readname)
-	                     val tyname = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
+			     val readFieldName = BU.lookupTy(pty, readSuf, #readname)
+	                     val tyname = P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname))
 			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
 			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
 			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
@@ -5344,11 +5105,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     fun genReadSwFull (eOpt,
 			               ({pty :PX.Pty, args:pcexp list, name:string, 
 				        isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-				        pred, comment,...}:pfieldty)) = 
+				        pred, comment,...}:BU.pfieldty)) = 
 			 let val () = chkCaseLabel eOpt
 			     val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
-			     val readFieldName = lookupTy(pty, readSuf, #readname)
-	                     val tyname = P.makeTypedefPCT(lookupTy (pty, repSuf, #repname))
+			     val readFieldName = BU.lookupTy(pty, readSuf, #readname)
+	                     val tyname = P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname))
 			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
 			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
 			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
@@ -5426,7 +5187,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val localInitSs = omitVarInits(omitVars)
 			     val coreSs = 
                                case descOpt of NONE => 
-			         let val readFields = mungeFields genReadFull genReadBrief genReadMan variants  (* does type checking *)
+			         let val readFields = P.mungeFields genReadFull genReadBrief genReadMan variants  (* does type checking *)
 				     val readBodySs = [PT.Compound(uReadSetup(!firstTag)
 								   @ readFields
 								   @ (uReadFailed())
@@ -5438,7 +5199,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				     readBodySs
 				 end
 			       | SOME descriminator => buildSwitchRead(descriminator)
-			     val bodySs = localDeclSs @ localInitSs @ coreSs @ [stdReturnS]
+			     val bodySs = localDeclSs @ localInitSs @ coreSs @ [BU.stdReturnS]
 			 in
 			     [PT.Compound bodySs]
 			 end
@@ -5523,20 +5284,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 end
 			     fun getConFull({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 					    isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					    pred, comment: string option,...}:pfieldty) = 
+					    pred, comment: string option,...}:BU.pfieldty) = 
 				 if isVirtual
 				 then mkVirtIsCase(name, pred)
 				 else mkPadsIsCase(pty, args, name, isVirtual, pred)
 			     fun getConBrief e = 
 				 case getString e of NONE => [] 
 				     | SOME s => mkVirtIsCase(s, NONE)
-			     fun getConMan ({tyname, name, args, isVirtual, expr, pred, comment} : pmanty) =
+			     fun getConMan ({tyname, name, args, isVirtual, expr, pred, comment} : BU.pmanty) =
 				 if isVirtual
 				 then mkVirtIsCase(name, pred)
 				 else case isPadsTy tyname
 				       of PTys.CTy => mkCtyIsCase(tyname, args, name, pred)
 					| _        => mkPadsIsCase(getPadsName tyname, args, name, false, pred)
-			     val fieldConCases = mungeFields getConFull getConBrief getConMan variants
+			     val fieldConCases = P.mungeFields getConFull getConBrief getConMan variants
 			     val fieldConCases = fieldConCases
 						 @ mkCommentBreakCase(PT.Id(errSuf name), "error case", SOME [setAgg(P.falseX)])
 			     val fieldConS = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound fieldConCases)]
@@ -5559,18 +5320,18 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 			      fun genAccTheFull ({pty :PX.Pty, args:pcexp list, name:string, 
 						 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,
-						 pred, comment,...}:pfieldty) = 
+						 pred, comment,...}:BU.pfieldty) = 
 				  if isVirtual then []
 				  else case lookupAcc(pty) of NONE => []
-							    | SOME a => chk3Pfun(theSuf a, P.getFieldX(acc, name))
+							    | SOME a => BU.chk3Pfun(theSuf a, [P.getFieldX(acc, name)])
 			      fun genAccTheBrief e = []
-			      val tagFields = mungeFields genAccTheFull genAccTheBrief 
+			      val tagFields = P.mungeFields genAccTheFull genAccTheBrief 
 				              (genAccTheMan theSuf) variants
-			      val auxFields = chk3Pfun(theSuf PL.intAct, P.getFieldX(acc, tag))
+			      val auxFields = BU.chk3Pfun(theSuf PL.intAct, [P.getFieldX(acc, tag)])
 			      val theFields = auxFields @ tagFields
-			      val theReturnS = genReturnChk (PT.Id nerr)
+			      val theReturnS = BU.genReturnChk (PT.Id nerr)
 			      val theBodySs = theDeclSs @ theFields @ [theReturnS]
-			      val theFunED = gen3PFun(theFun, accPCT, theBodySs)
+			      val theFunED = BU.gen3PFun(theFun, accPCT, acc, theBodySs)
 			  in
 			      theFunED
 			  end
@@ -5586,7 +5347,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						 P.condX(P.eqX(P.arrowX(PT.Id pd, PT.Id errCode),
 							       PL.P_UNION_MATCH_FAILURE),
 							 PL.P_UNION_MATCH_FAILURE, PL.P_NO_ERROR))]
-		      val addTagSs = chkAddFun(addSuf PL.intAct, P.getFieldX(acc, tag), P.addrX(PT.Id tpd), 
+		      val addTagSs = BU.chkAddFun(addSuf PL.intAct, P.getFieldX(acc, tag), P.addrX(PT.Id tpd), 
 						  PT.Cast(P.ptrPCT PL.intPCT, P.getFieldX(rep, tag)))
 		      fun fieldAddrX (base, name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
 
@@ -5597,7 +5358,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			    | SOME a =>
 			      (let val funName = addSuf a
 				   val repX = getUnionBranchX(rep, name)
-				   val caseSs = initSs @ chkAddFun(funName, fieldAddrX(acc, name), pdX, repX)
+				   val caseSs = initSs @ BU.chkAddFun(funName, fieldAddrX(acc, name), pdX, repX)
 			       in
 				   mkBreakCase(PT.Id name, SOME caseSs)
 			       end
@@ -5606,7 +5367,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  mkCommentBreakCase(PT.Id name, "Pomit branch: cannot accumulate", NONE)
 		      fun genAccAddFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					 pred, comment,...}:pfieldty) = 
+					 pred, comment,...}:BU.pfieldty) = 
 			  if isVirtual then genVirt(name)
 			  else genCase(name, pty, [], getUnionBranchX(pd, name))
 		      fun genAccAddBrief e = 
@@ -5619,20 +5380,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   mkCommentBreakCase(PT.Id name, "branch has C type: C type accum not implemented (yet)", NONE)
 				 | _ =>
 				   genCase(name, getPadsName tyname, [], getUnionBranchX(pd, name))
-		      val nameBranchSs = mungeFields genAccAddFull genAccAddBrief genAccAddMan variants
+		      val nameBranchSs = P.mungeFields genAccAddFull genAccAddBrief genAccAddMan variants
 		      val errBranchSs = mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
 		      val addBranchSs = nameBranchSs @ errBranchSs
                       val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound addBranchSs)]
-		      val addReturnS = genReturnChk (PT.Id nerr)
-                      val addBodySs = addDeclSs @ initTpdSs @ ifNotPanicSkippedSs(addTagSs @ addVariantsSs) @ [addReturnS]
-                      val addFunED = genAddFun(addFun, accPCT, pdPCT, canonicalPCT, addBodySs)
+		      val addReturnS = BU.genReturnChk (PT.Id nerr)
+                      val addBodySs = addDeclSs @ initTpdSs @ BU.ifNotPanicSkippedSs(addTagSs @ addVariantsSs) @ [addReturnS]
+                      val addFunED = BU.genAddFun(addFun, acc, accPCT, pdPCT, canonicalPCT, addBodySs)
 
                       (* -- generate report function (internal and external)  punion *)
                       (*  Perror_t T_acc_report (P_t* , [Sfio_t * outstr], const char* prefix, 
 		                                    const char * what, int nst, T_acc*  ) *)
 		      val reportFun = (reportSuf o accSuf) name
 		      val header = if fromOpt then "Opt tag" else "Union tag"
-                      val reportTags = [chkPrint(callEnumPrint((ioSuf o reportSuf o mapSuf) PL.intAct,
+                      val reportTags = [BU.chkPrint(callEnumPrint((ioSuf o reportSuf o mapSuf) PL.intAct,
 						    PT.String header, PT.String "tag", P.intX ~1,
 						    PT.Id((toStringSuf o tgSuf) name), P.getFieldX(acc, tag))),
 					PL.sfprintf(PT.Id outstr, 
@@ -5640,12 +5401,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						    [PT.Id prefix])]
 		      fun genAccReportFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					    isVirtual:bool, isEndian: bool, isRecord, containsRecord, largeHeuristic:bool, 
-					    pred, comment,...}:pfieldty) = 
+					    pred, comment,...}:BU.pfieldty) = 
 			  if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
 			  else cnvPtyForReport(reportSuf, ioSuf, pty, name, "branch")
                       fun genAccReportBrief e = []
 		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_ACC_REP_NOVALS", []))]
-		      val reportVariants = mungeFields genAccReportFull genAccReportBrief 
+		      val reportVariants = P.mungeFields genAccReportFull genAccReportBrief 
 			                      (genAccReportMan (reportSuf, ioSuf, "branch")) variants
                       val reportFunEDs = genReportFuns(reportFun, which ^ " "^name, 
 						       accPCT, checkNoValsSs @ reportTags @ reportVariants)
@@ -5654,7 +5415,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* Generate Write function union case *)
 		      fun genWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					pred, comment,...}:pfieldty) = 
+					pred, comment,...}:BU.pfieldty) = 
 			  if isVirtual
 			  then
 			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
@@ -5684,7 +5445,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genXMLWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					   isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					   pred, comment,...}:pfieldty) = 
+					   pred, comment,...}:BU.pfieldty) = 
 			  if isVirtual
 			  then
 			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
@@ -5729,7 +5490,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genFmtFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					   isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					   pred, comment,...}:pfieldty) = 
+					   pred, comment,...}:BU.pfieldty) = 
 			  if isVirtual
 			  then
 			      mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
@@ -5772,9 +5533,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   end
 			    end
 
-		      val nameBranchSs = mungeFields genWriteFull genWriteBrief genWriteMan variants
-		      val nameXMLBranchSs = mungeFields genXMLWriteFull genXMLWriteBrief genXMLWriteMan variants
-		      val nameFmtBranchSs = mungeFields genFmtFull genFmtBrief genFmtMan variants
+		      val nameBranchSs = P.mungeFields genWriteFull genWriteBrief genWriteMan variants
+		      val nameXMLBranchSs = P.mungeFields genXMLWriteFull genXMLWriteBrief genXMLWriteMan variants
+		      val nameFmtBranchSs = P.mungeFields genFmtFull genFmtBrief genFmtMan variants
 		      val errBranchSs = mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
 		      val writeBranchSs = nameBranchSs @ errBranchSs
 		      val writeXMLBranchSs = nameXMLBranchSs @ errBranchSs
@@ -5803,13 +5564,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genBranchFull ({pty :PX.Pty, args:pcexp list, name:string, 
 					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					 pred, comment,...}:pfieldty) =  genCaseBranch (name, pty)
+					 pred, comment,...}:BU.pfieldty) =  genCaseBranch (name, pty)
 		      fun genBranchBrief e = case getString e of NONE => [] | SOME s => [(s,NONE)]
 		      fun genBranchMan {tyname, name, args, isVirtual, expr, pred, comment}= 
 			  case isPadsTy tyname of PTys.CTy => [] | _ => 
 			      if isVirtual then [(name, NONE)] else genCaseBranch(name, getPadsName tyname)
 
-		      val branches : (string * string option) list = mungeFields genBranchFull genBranchBrief genBranchMan variants
+		      val branches : (string * string option) list = P.mungeFields genBranchFull genBranchBrief genBranchMan variants
  
 		      fun genGalaxUnionKthChildFun(name,branches) =		
 			  let val nodeRepTy = PL.nodeT
@@ -5913,7 +5674,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                         | findOffset p (x::xs) n = if p x then SOME (n, x) else findOffset p xs (n+1)
 
                        fun cvtInPlaceFULL (f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,
-						 optPred, optDecl, arrayDecl,...}:pfieldty) = 
+						 optPred, optDecl, arrayDecl,...}:BU.pfieldty) = 
 			   if not (arrayDecl orelse optDecl) then 
 			       (if Option.isSome optPred then PE.error ("Field "^name^" in "^structName^ " has option-style constraints "^
 									"but is not an in-line option declaration.\n")
@@ -5955,7 +5716,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						name=name, isVirtual=isVirtual, isEndian=isEndian,
 						isRecord=false, containsRecord=false, largeHeuristic=false, pred=modpred,
 						comment=comment,optPred = NONE,
-						optDecl = false, arrayDecl = false, size=NONE, arraypred=[]} : pfieldty
+						optDecl = false, arrayDecl = false, size=NONE, arraypred=[]} : BU.pfieldty
 			      in
 				  [(newAsts, PX.Full sfield)]
 	 		      end
@@ -5963,7 +5724,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       fun cvtInPlaceMan   x = [([],PX.Manifest x)]
 
                       fun cvtRep fields = 
-			  let val res = mungeFields cvtInPlaceFULL cvtInPlaceBrief cvtInPlaceMan fields
+			  let val res = P.mungeFields cvtInPlaceFULL cvtInPlaceBrief cvtInPlaceMan fields
 			      val (asts, newfields) = ListPair.unzip res
 			  in
 			      (List.concat asts, newfields)
@@ -5973,8 +5734,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					(* Generate CheckSet mask *)
 		      fun genMFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				     isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				     pred, comment,...} : pfieldty ) = 
-			  [(name, P.makeTypedefPCT(lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
+				     pred, comment,...} : BU.pfieldty ) = 
+			  [(name, P.makeTypedefPCT(BU.lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
 			  @ (case pred of NONE => [] | SOME _ =>  [(mConSuf name, PL.base_mPCT, SOME "struct constraints")])
 		      fun genMBrief e = []
 		      fun genMMan {tyname : pcty, name, args, isVirtual, expr, pred, comment} = 
@@ -5982,10 +5743,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			   of PTys.CTy => []
 			    | _ => (let val pty : pty = getPadsName tyname
 				    in 
-					[(name, P.makeTypedefPCT(lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
+					[(name, P.makeTypedefPCT(BU.lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
 					@ (case pred of NONE => [] | SOME _ =>  [(mConSuf name, PL.base_mPCT, SOME "struct constraints")])
 				    end)
-		      val mFieldsNested = mungeFields genMFull genMBrief genMMan fields
+		      val mFieldsNested = P.mungeFields genMFull genMBrief genMMan fields
 		      val auxMFields = [(PNames.structLevel, PL.base_mPCT, NONE)]
 		      val mFields = auxMFields @ mFieldsNested
 
@@ -5998,14 +5759,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genEDFull ({pty: PX.Pty, args: pcexp list, name: string,  
 				     isVirtual: bool, isEndian: bool, 
                                      isRecord, containsRecord, largeHeuristic: bool, 
-				     pred, comment,...}: pfieldty) = 
-			  [(name, P.makeTypedefPCT(lookupTy (pty, pdSuf, #pdname)), NONE)]
+				     pred, comment,...}: BU.pfieldty) = 
+			  [(name, P.makeTypedefPCT(BU.lookupTy (pty, pdSuf, #pdname)), NONE)]
 		      fun genEDBrief e = []
 					     (* fun genEDMan e = [] *) (* XXX use the one above *)
 		      val auxEDFields = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
 					 (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT, NONE)]
                                         @ (if isGalax() then [(identifier, PL.idPCT, SOME "Identifier tag for Galax")] else [])
-		      val pdFields = auxEDFields @ (mungeFields genEDFull genEDBrief genEDMan fields)
+		      val pdFields = auxEDFields @ (P.mungeFields genEDFull genEDBrief genEDMan fields)
 		      val pdStructED = P.makeTyDefStructEDecl (pdFields, pdSuf name)
 		      val (pdDecls, pdTid) = cnvCTy pdStructED
                       val pdPCT = P.makeTypedefPCT (pdSuf name)
@@ -6014,10 +5775,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genAccFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				      isVirtual: bool, isEndian: bool, 
 				      isRecord, containsRecord, largeHeuristic: bool,
-				      pred, comment: string option,...}: pfieldty) = 
+				      pred, comment: string option,...}: BU.pfieldty) = 
 			  if not isVirtual then 
-			      let val predStringOpt = Option.map P.constraintToString pred
-			          val fullCommentOpt = stringOptMerge(comment, predStringOpt)
+			      let val predStringOpt = Option.map BU.constraintToString pred
+			          val fullCommentOpt = BU.stringOptMerge(comment, predStringOpt)
 				  val accOpt = lookupAcc pty
 			      in
 				  case accOpt of NONE => []
@@ -6026,7 +5787,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      end
 			  else []
 		      fun genAccBrief e = []
-		      val accFields = mungeFields genAccFull genAccBrief genAccMan fields
+		      val accFields = P.mungeFields genAccFull genAccBrief genAccMan fields
 		      val auxAccFields = [(nerr, PL.uint32AccPCT, NONE)]
 		      val accED = P.makeTyDefStructEDecl (auxAccFields @ accFields, accSuf name)
                       val accPCT = P.makeTypedefPCT (accSuf name)			 
@@ -6034,14 +5795,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						    (* Struct: Calculate and insert type properties into type table *)
 		      fun genTyPropsFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					  isVirtual: bool, isEndian: bool, isRecord, containsRecord, 
-					  largeHeuristic: bool, pred, comment:string option,...}: pfieldty) = 
-			  let val ftyName = tyName pty
+					  largeHeuristic: bool, pred, comment:string option,...}: BU.pfieldty) = 
+			  let val ftyName = P.tyName pty
 			      val mc = lookupMemChar pty
 			      val ds = computeDiskSize (name, paramNames, pty, args)
                               val supportsEndian = lookupEndian pty
 			      val isE1 = if isEndian andalso not supportsEndian
 				         then (PE.error ("Endian annotation not supported on fields of type "
-							 ^(tyName pty)^"\n"); false)
+							 ^(P.tyName pty)^"\n"); false)
 				         else true
 			      val isE2 = if isEndian andalso not (Option.isSome pred)
 				         then (PE.error ("Endian annotations require constraints ("^name^")\n"); false)
@@ -6070,7 +5831,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				    containsRecord = false, largeHeuristic = false, labels = [NONE]}]
 		              end
 
-		      val tyProps = mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan fields
+		      val tyProps = P.mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan fields
                       val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic, labels} = 
  			  List.foldl (PTys.mergeTyInfo TyProps.add) PTys.minTyInfo tyProps
 
@@ -6084,16 +5845,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					  (* Struct: Generate canonical representation *)
 		      fun genRepFull ({pty: PX.Pty, args: pcexp list, name: string, 
 				      isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				      pred, comment:string option,...}: pfieldty) = 
+				      pred, comment:string option,...}: BU.pfieldty) = 
 			  if not isVirtual then 
-			      let val predStringOpt = Option.map P.constraintToString pred
-			          val fullCommentOpt = stringOptMerge(comment, predStringOpt)
+			      let val predStringOpt = Option.map BU.constraintToString pred
+			          val fullCommentOpt = BU.stringOptMerge(comment, predStringOpt)
 			      in
-				  [(name, P.makeTypedefPCT(lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
+				  [(name, P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
 			      end
 			  else []
 		      fun genRepBrief e = []
-		      val canonicalFields = mungeFields genRepFull genRepBrief genRepMan fields
+		      val canonicalFields = P.mungeFields genRepFull genRepBrief genRepMan fields
 		      val canonicalFields = if List.length canonicalFields = 0 
 			                    then ((* PE.warn ("PStruct "^structName^" does not contain any non-omitted fields\n"); *)
 						  [(dummy, PL.uint32PCT, SOME "Dummy field inserted to avoid empty struct")])
@@ -6135,7 +5896,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      fun genInitFull ({pty: PX.Pty, args: pcexp list, 
 						       name: string, isVirtual: bool, isEndian: bool,
 						       isRecord, containsRecord, largeHeuristic: bool,
-						       pred, comment: string option,...}:pfieldty) = 
+						       pred, comment: string option,...}:BU.pfieldty) = 
 					  doDynamic(isVirtual, pty, name)
 				      fun genInitBrief _ = []
 				      fun genInitMan {tyname, name, args, isVirtual, expr, pred, comment} = 
@@ -6143,7 +5904,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					  else (case isPadsTy tyname 
 						    of PTys.CTy => [] 
 						  | _ =>  doDynamic(isVirtual, getPadsName tyname, name))
-				      val eltSs = mungeFields genInitFull genInitBrief genInitMan fields
+				      val eltSs = P.mungeFields genInitFull genInitBrief genInitMan fields
 				      val bodySs = eltSs @ [PT.Return PL.P_OK]
 				  in
 				      [genInitFun(suf baseFunName, base, aPCT, bodySs, false)]
@@ -6207,7 +5968,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				       fun genCopyFull ({pty as PX.Name tyName: PX.Pty, args: pcexp list, 
 							name: string, isVirtual: bool, isEndian: bool, 
 							isRecord, containsRecord, largeHeuristic: bool,
-							pred, comment: string option,...}:pfieldty) = 
+							pred, comment: string option,...}:BU.pfieldty) = 
 					   doCopy(isVirtual, pty, name)
 				       fun noop _ = []
 				       fun genCopyMan {tyname, name, args, isVirtual, expr, pred, comment} = 
@@ -6215,7 +5976,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					   case isPadsTy tyname 
 					    of PTys.CTy => [] 
                                              | _ =>  doCopy(isVirtual, getPadsName tyname, name)
-				       val fieldCpySs = mungeFields genCopyFull noop genCopyMan fields
+				       val fieldCpySs = P.mungeFields genCopyFull noop genCopyMan fields
 				       val bodySs = fieldCpySs @ genMemcpy() @ [PT.Return PL.P_OK]
 				   in
 				       [genCopyFun(copyFunName, dst, src, aPCT, bodySs, false)]
@@ -6261,10 +6022,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genReadFull ({pty: PX.Pty, args: pcexp list, name: string,
 				       isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-				       pred, comment, ...}:pfieldty) =
+				       pred, comment, ...}:BU.pfieldty) =
 			  let val firstNext = if isAlt then "" else (if !first then (first := false; "_FIRST") else "_NEXT")
 			      val modPred = modStructPred(structName, name, allVars, pred, (!readSubList))
-			      val readFieldName = lookupTy(pty, readSuf, #readname)
+			      val readFieldName = BU.lookupTy(pty, readSuf, #readname)
 			      val repX = structRepX(rep, name, isVirtual)
 			      val modArgs = List.map (PTSub.substExps (!readSubList)) args
                               val () = checkParamTys(name, readFieldName, modArgs, 4, 0)
@@ -6413,7 +6174,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val () = ignore (insTempVar(setEndID, P.int))                   (* add phantom arg to conrol setting end location
 										       to scope to fake out type checker. *)
 		      val () = ignore (insTempVar(noopID, P.int))                   
-		      val readFields = mungeFields genReadFull genReadBrief genReadMan fields  
+		      val readFields = P.mungeFields genReadFull genReadBrief genReadMan fields  
 		                                   (* does type checking *)
 		      val augReadFields = if isAlt
 					  then [PT.Compound([PT.Expr(PT.Call(PT.Id "PCGEN_ALT_READ_BEGIN", [PT.String readName]))]
@@ -6429,7 +6190,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val bodyS = localDeclSs @ postLocSs @ localInitSs @ augReadFields @ postCondSs @ eorCheck
 		      val bodySs = if 0 = List.length localDeclSs andalso 0 = List.length postCond
 				   then bodyS else [PT.Compound bodyS]
-		      val bodySs = bodySs @ [stdReturnS]
+		      val bodySs = bodySs @ [BU.stdReturnS]
 
 		      val readFunEDs = genReadFun(readName, cParams, mPCT, pdPCT, canonicalPCT, 
 						  mFirstPCT, true, bodySs)
@@ -6459,7 +6220,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 			      fun getConFull({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 					     isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					     pred, comment: string option,...}:pfieldty) = 
+					     pred, comment: string option,...}:BU.pfieldty) = 
 			          if isVirtual then [] 
                                   else let val predXs  = getConM name pred
 					   val fieldXs = case lookupPred pty of NONE => []
@@ -6475,7 +6236,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					   fieldXs @ predXs 
 				       end
 			      fun getConMan  {tyname, name, args, isVirtual, pred, expr, comment} = getConM name pred
-			      val fieldConS = mungeFields getConFull (fn x=>[]) getConMan fields
+			      val fieldConS = P.mungeFields getConFull (fn x=>[]) getConMan fields
 			      val whereConS = [getIsExp postCond]
 			      val constraintSs = List.map (PTSub.substExps (!postReadSubList)) (fieldConS @ whereConS)
 			  in
@@ -6489,22 +6250,22 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					 (* -- generate accumulator init, reset, cleanup, and report functions *)
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
-			      val auxFields = chk3Pfun(theSuf PL.uint32Act, P.getFieldX(acc, nerr))
+			      val auxFields = BU.chk3Pfun(theSuf PL.uint32Act, [P.getFieldX(acc, nerr)])
 			      fun genAccTheFull ({pty: PX.Pty, args: pcexp list, name: string, 
 						 isVirtual: bool, isEndian: bool, 
 						 isRecord, containsRecord, largeHeuristic: bool,
-						 pred, comment,...}:pfieldty) = 
+						 pred, comment,...}:BU.pfieldty) = 
 				  if not isVirtual then
 				      case lookupAcc(pty) of NONE => []
-							   | SOME a => cnvPtyMan(theSuf a, acc, name)
+							   | SOME a => BU.callFun(theSuf a, acc, name)
 				  else []
 			      fun genAccTheBrief e = []
 
 			      val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
-			      val theFields = mungeFields genAccTheFull genAccTheBrief (genAccTheMan theSuf) fields
-			      val theReturnS = genReturnChk (PT.Id nerr)
+			      val theFields = P.mungeFields genAccTheFull genAccTheBrief (genAccTheMan theSuf) fields
+			      val theReturnS = BU.genReturnChk (PT.Id nerr)
 			      val theBodySs = theDeclSs @ auxFields @ theFields @ [theReturnS]
-			      val theFunED = gen3PFun(theFun, accPCT, theBodySs)
+			      val theFunED = BU.gen3PFun(theFun, accPCT, acc, theBodySs)
 			  in
 			      theFunED
 			  end
@@ -6522,8 +6283,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genAccAddFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					 isVirtual: bool, isEndian: bool, 
 					 isRecord, containsRecord, largeHeuristic: bool,
-					 pred, comment,...}:pfieldty) = 
-			  if not isVirtual then cnvPtyForAdd(pty, name, P.getFieldX(pd, name)) else []
+					 pred, comment,...}:BU.pfieldty) = 
+			  if isVirtual then []
+			  else case lookupAcc(pty) 
+			       of NONE => []
+	                       | SOME a => BU.chkAddFun(addSuf a, P.getFieldX(acc,name), P.getFieldX(pd,name), P.getFieldX(rep,name))
                       fun genAccAddBrief e = []
 
 		      fun genAccAddMan {tyname, name, args, isVirtual, expr, pred, comment} = 
@@ -6532,26 +6296,22 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                            of PTys.CTy => [] 
 			    | _  => (let val pty = getPadsName tyname
 				     in
-					 [PT.Compound(
-					  [P.varDeclS'(P.makeTypedefPCT(lookupTy(pty, pdSuf, #pdname)), tpd),
-					   P.assignS(P.dotX(PT.Id tpd, PT.Id errCode),
-						     P.arrowX(PT.Id pd, PT.Id errCode))]
-					  @ cnvPtyForAdd(pty, name, P.addrX(PT.Id tpd)))]
+					 BU.chkAddFun(addSuf(lookupAcc' pty), P.getFieldX(acc,name), P.addrX(PT.Id tpd), P.getFieldX(rep, name))
 				     end)
 
-		      val addNErrSs = chkAddFun(addSuf PL.uint32Act, P.getFieldX(acc, nerr),
+		      val addNErrSs = BU.chkAddFun(addSuf PL.uint32Act, P.getFieldX(acc, nerr),
 						P.addrX(PT.Id tpd),
 						P.getFieldX(pd, nerr))
-		      val addFieldsSs = mungeFields genAccAddFull genAccAddBrief genAccAddMan fields
-		      val addReturnS = genReturnChk (PT.Id nerr)
-                      val addBodySs = addDeclSs @ initTpdSs @ addNErrSs @ ifNotPanicSkippedSs(addFieldsSs) @ [addReturnS]
-                      val addFunED = genAddFun(addFun, accPCT, pdPCT, canonicalPCT, addBodySs)
+		      val addFieldsSs = P.mungeFields genAccAddFull genAccAddBrief genAccAddMan fields
+		      val addReturnS = BU.genReturnChk (PT.Id nerr)
+                      val addBodySs = addDeclSs @ initTpdSs @ addNErrSs @ BU.ifNotPanicSkippedSs(addFieldsSs) @ [addReturnS]
+                      val addFunED = BU.genAddFun(addFun, acc, accPCT, pdPCT, canonicalPCT, addBodySs)
 
 					      (* -- generate report function pstruct *)
 					      (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix , ) *)
 		      val reportFun = (reportSuf o accSuf) name
 		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_ACC_REP_NOVALS", []))]
-		      val reportNerrSs = [chkPrint(
+		      val reportNerrSs = [BU.chkPrint(
  				          PL.errAccReport(PT.Id pads, PT.Id outstr, PT.String "Errors", 
 							  PT.String "errors", P.intX ~1, P.getFieldX(acc, nerr))) ]
 		      val headerSs = [PL.sfprintf(PT.Id outstr, 
@@ -6561,16 +6321,19 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genAccReportFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					    isVirtual: bool, isEndian: bool, 
 					    isRecord, containsRecord, largeHeuristic: bool,
-					    pred, comment,...}:pfieldty) = 
+					    pred, comment,...}:BU.pfieldty) = 
 			  if not isVirtual then cnvPtyForReport(reportSuf, ioSuf, pty, name, "field")
 			  else []
                       fun genAccReportBrief e = []
-		      val reportFields = (mungeFields genAccReportFull genAccReportBrief 
+		      val reportFields = (P.mungeFields genAccReportFull genAccReportBrief 
 						      (genAccReportMan (reportSuf, ioSuf, "field")) fields)
                       val reportFunEDs = genReportFuns(reportFun, "struct "^name, accPCT, 
 						       checkNoValsSs @ reportNerrSs @ headerSs @ reportFields)
 
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
+
+		      (* Generate histogram declarations, struct case *)
+		      val histEDs = Hist.genHistStruct (isPadsTy, getPadsName) (name, fields, canonicalPCT, pdPCT)
 
 													 
 	              (* Generate Write function struct case *)
@@ -6614,7 +6377,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genWriteFull (f as ({pty: PX.Pty, args: pcexp list, name: string, 
 					      isVirtual: bool, isEndian: bool, 
   					      isRecord=_, containsRecord, largeHeuristic: bool,
-					      pred, comment,...}:pfieldty)) = 
+					      pred, comment,...}:BU.pfieldty)) = 
 			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
                           else genWriteForM(PX.Full f, pty, args, name, isRecord, P.getFieldX(pd, name), fn x=>x)
 
@@ -6626,7 +6389,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							   genWriteForM(PX.Manifest m, padsName, args, name, false(*manifest fields can't be records*),
 									P.addrX(PT.Id tpd),
 								     fn ss => [PT.Compound(
-									       [P.varDeclS'(P.makeTypedefPCT(lookupTy(padsName, pdSuf, #pdname)), tpd),
+									       [P.varDeclS'(P.makeTypedefPCT(BU.lookupTy(padsName, pdSuf, #pdname)), tpd),
 										P.assignS(P.dotX(PT.Id tpd, PT.Id errCode),
 											  P.arrowX(PT.Id pd, PT.Id errCode))]
 									       @ ss)])
@@ -6673,7 +6436,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genXMLWriteFull (f as ({pty: PX.Pty, args: pcexp list, name: string, 
 						 isVirtual: bool, isEndian: bool, 
   						 isRecord=_, containsRecord, largeHeuristic: bool,
-						 pred, comment,...}:pfieldty)) = 
+						 pred, comment,...}:BU.pfieldty)) = 
 			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
                           else genXMLWriteForM(PX.Full f, pty, args, name, isRecord, P.getFieldX(pd, name), fn x=>x)
 
@@ -6685,7 +6448,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							   genXMLWriteForM(PX.Manifest m, padsName, args, name, false(*manifest fields can't be records*),
 									   P.addrX(PT.Id tpd),
 									fn ss => [PT.Compound(
-										  [P.varDeclS'(P.makeTypedefPCT(lookupTy(padsName, pdSuf, #pdname)), tpd),
+										  [P.varDeclS'(P.makeTypedefPCT(BU.lookupTy(padsName, pdSuf, #pdname)), tpd),
 										   P.assignS(P.dotX(PT.Id tpd, PT.Id errCode),
 											     P.arrowX(PT.Id pd, PT.Id errCode))]
 										  @ ss)])
@@ -6733,7 +6496,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genFmtFull (f as ({pty: PX.Pty, args: pcexp list, name: string, 
 					      isVirtual: bool, isEndian: bool, 
   					      isRecord=_, containsRecord, largeHeuristic: bool,
-					      pred, comment,...}:pfieldty)) = 
+					      pred, comment,...}:BU.pfieldty)) = 
 			  if isVirtual then [] (* have no rep of virtual (omitted) fields, so can't print *)
                           else genFmtForM(PX.Full f, pty, args, name, isRecord, P.getFieldX(pd, name), fn x=>x)
 
@@ -6745,7 +6508,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							   genFmtForM(PX.Manifest m, padsName, args, name, false(*manifest fields can't be records*),
 									P.addrX(PT.Id tpd),
 								     fn ss => [PT.Compound(
-									       [P.varDeclS'(P.makeTypedefPCT(lookupTy(padsName, pdSuf, #pdname)), tpd),
+									       [P.varDeclS'(P.makeTypedefPCT(BU.lookupTy(padsName, pdSuf, #pdname)), tpd),
 										P.assignS(P.dotX(PT.Id tpd, PT.Id errCode),
 											  P.arrowX(PT.Id pd, PT.Id errCode))]
 									       @ ss)])
@@ -6755,10 +6518,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val _ = pushLocalEnv()       (* We convert literals to determine which write function to use*)
 (* unneeded?          val cParams : (string * pcty) list = List.map mungeParam params (* so we have to add params to scope *) *)
                       val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
-		      val wrFieldsSs = mungeFields genWriteFull genWriteBrief genWriteMan fields
-		      val wrXMLFieldsSs = mungeFields genXMLWriteFull genXMLWriteBrief genXMLWriteMan fields
+		      val wrFieldsSs = P.mungeFields genWriteFull genWriteBrief genWriteMan fields
+		      val wrXMLFieldsSs = P.mungeFields genXMLWriteFull genXMLWriteBrief genXMLWriteMan fields
 		      val fmtBufFinalName = bufFinalSuf fmtName
-		      val fmtFieldsFinalSs = [PL.fmtFinalInitStruct (PT.String fmtBufFinalName) ] @ (mungeFields genFmtFull (fn x => []) genFmtMan fields) @ [PL.fmtFixLast()]
+		      val fmtFieldsFinalSs = [PL.fmtFinalInitStruct (PT.String fmtBufFinalName) ] @ (P.mungeFields genFmtFull (fn x => []) genFmtMan fields) @ [PL.fmtFixLast()]
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val bodySs = wrFieldsSs
 		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)])),
@@ -6772,8 +6535,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genFieldFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 					isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					pred, comment: string option,...}:pfieldty) = 
-			  if isVirtual then [] else [(name, lookupTy (pty, repSuf, #repname), false)]
+					pred, comment: string option,...}:BU.pfieldty) = 
+			  if isVirtual then [] else [(name, BU.lookupTy (pty, repSuf, #repname), false)]
 		      fun genFieldBrief e = []
 		      fun genFieldMan {tyname, name, args, isVirtual, expr, pred, comment} =
 			  if isVirtual then [] else
@@ -6783,16 +6546,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				    in case lookupAcc(pty) of NONE   => [] | SOME a => [(name, lookupBranch pty, true)]
                                     end)
 
-		      val localFields = mungeFields genFieldFull genFieldBrief genFieldMan fields
+		      val localFields = P.mungeFields genFieldFull genFieldBrief genFieldMan fields
 
 						    (* counting Full and Computed fields *)
 		      fun countFieldFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool,
 					  isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					  pred, comment: string option,...}:pfieldty) =
+					  pred, comment: string option,...}:BU.pfieldty) =
 			  if isVirtual then [] else [1]
 		      fun countFieldMan m = []
 		      fun countFieldBrief e = [1]
-		      val countFields = List.length (mungeFields countFieldFull countFieldMan countFieldBrief fields) 
+		      val countFields = List.length (P.mungeFields countFieldFull countFieldMan countFieldBrief fields) 
 
 		      fun genGalaxStructKthChildFun(name,fields) =		
 			  let val nodeRepTy = PL.nodeT
@@ -6850,6 +6613,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	              @ readDecls
 	              @ (emitPred isFunEDs)
                       @ (emitAccum accumEDs)
+                      @ (emitHist histEDs)
                       @ (emitWrite writeFunEDs)
    		      @ (emitWrite fmtFunEDs)
   		      @ (emitXML galaxEDs)
@@ -6970,7 +6734,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		       P.varDeclS'(PL.toolErrPCT, result)]
 		      @ List.concat(List.map readOneBranch enumFields)
 		  val cleanupSs =  [P.mkCommentS("We didn't match any branch")]
-			           @ reportErrorSs([locS], locX, false,
+			           @ BU.reportErrorSs([locS], locX, false,
 						   PL.P_ENUM_MATCH_FAILURE,
 						   true, 
 						   readName,
@@ -7010,7 +6774,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      let val theFun : string = (theSuf o accSuf) name
 			  val theBodyE = PT.Call(PT.Id(theSuf PL.intAct), [PT.Id pads, PT.Id acc])
                           val theReturnS = PT.Return theBodyE
-			  val theFunED = gen3PFun(theFun, accPCT, [theReturnS])
+			  val theFunED = BU.gen3PFun(theFun, accPCT, acc, [theReturnS])
 			  in
 			      theFunED
 			  end
@@ -7026,7 +6790,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				       PT.Cast(P.ptrPCT PL.intPCT, PT.Id rep)])
 		   val addReturnS = PT.Return addX
 		   val addBodySs =  [addReturnS]
-		   val addFunED = genAddFun(addFun, accPCT, pdPCT, canonicalPCT, addBodySs)
+		   val addFunED = BU.genAddFun(addFun, acc, accPCT, pdPCT, canonicalPCT, addBodySs)
 
 		   (* -- generate report function enum *)
 		   (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix ) *)

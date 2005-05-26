@@ -3,6 +3,7 @@ struct
   structure PT = ParseTree
   structure P  = ParseTreeUtil
   structure PX = ParseTreeExt
+  open PNames
  
   val libInit = "P_lib_init"
 
@@ -297,6 +298,9 @@ struct
    PT.Call(PT.Id "P_fmt_cstr_n", [PT.String s, P.intX (String.size s)] )
 
 (* error functions *)
+  val errorFX =  P.arrowX(P.arrowX(PT.Id pads, PT.Id disc), PT.Id errorf)
+  val discX = P.arrowX(PT.Id pads, PT.Id disc)
+
   fun mkFName s = PT.String (s)
   fun trace(disc: PT.expression, msg:string) =
     PT.Expr(PT.Call(PT.Id "P_TRACE", [disc, PT.String msg]))

@@ -44,6 +44,7 @@ structure Main : sig
 
     val traceFlag = ref true
     val xmlFlag   = ref true
+    val histFlag   = ref false
     val parseTreeOnlyFlag = ref false
     val astOnlyFlag = ref false
     val outputHeaderFileName = ref ""
@@ -88,6 +89,7 @@ structure Main : sig
 	 ("wnone", "suppress write function generation", PCL.BoolSet writeNoneFlag),
 	 ("anone", "suppress accumulator generation", PCL.BoolSet accumNoneFlag),
          ("x", "output Galax Data API",   PCL.BoolSet xmlFlag),
+         ("hist", "output histogram functions",   PCL.BoolSet histFlag),
          ("r", "output directory",        PCL.String (setOutputDir, false)),
          ("b", "add base type table",         PCL.String (addBaseTable, false)),
 	 ("I", "augment include path",        PCL.String (addInclude, true)),
@@ -389,6 +391,7 @@ structure Main : sig
 	( if !accumNoneFlag  then PInput.emitAccum false else ();
 	  if !writeNoneFlag  then PInput.emitWrite false else ();
 	  if !experimentFlag then PInput.emitExperiment true else();
+	  if !histFlag       then PInput.emitHist true else();
           if !xmlFlag        then PInput.emitXML true else ())
 
     fun main release (cmd, args) = 

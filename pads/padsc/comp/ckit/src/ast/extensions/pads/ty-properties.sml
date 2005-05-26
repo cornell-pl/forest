@@ -45,7 +45,7 @@ struct
              Param(ps1, NONE, P.plusX(ebytes1, ebytes2), P.plusX(erecs1, erecs2))
 
 
-   val dynamicValue = PLib.strLen(PT.String "Non-static-length")
+   val dynamicValue = PT.Call(PT.Id "strlen", [PT.String "Non-static-length"])
    fun merge (e1,e2) =  P.condX(P.eqX(e1, e2), e2, dynamicValue)
 
    fun overlay (Variable, _ ) = Variable 

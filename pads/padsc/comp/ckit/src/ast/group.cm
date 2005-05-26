@@ -120,10 +120,13 @@ is
         extensions/pads/pp-ast-ext-fn.sml
 
         extensions/pads/parse-tree-utils.sml
+        extensions/pads/build-utils.sml
         extensions/pads/perror-sig.sml
         extensions/pads/perror.sml
         extensions/pads/names.sml
         extensions/pads/plib.sml
+
+	extensions/pads/hist.sml
        
         extensions/pads/utils.sml
 
