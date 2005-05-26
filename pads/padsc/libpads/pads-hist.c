@@ -129,7 +129,7 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
   return res; \
 } \
 \
-Perror_t type ## _hist_report (P_t *pads, type ## _hist *h) { \
+Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, type ## _hist *h) { \
   Perror_t res; \
   Puint64 i; \
   Puint64 tempInd; \
@@ -158,10 +158,17 @@ Perror_t type ## _hist_report (P_t *pads, type ## _hist *h) { \
       } \
     } \
   } \
-  if (res == P_OK) class ## _print (h); \
+  if (res == P_OK) class ## _print (h, outstr); \
 \
   return res; \
-} 
+} \
+\
+Perror_t type ## _hist_report (P_t *pads, type ## _hist *h) { \
+  Sfio_t *tmpstr = sfstdout; \
+  Perror_t res; \
+  res = type ## _hist_report2io (pads, tmpstr, h); \
+  return P_OK; \
+} \
 
 /* END_MACRO */
 
@@ -464,16 +471,16 @@ void compOpt(struct hist *h) {
   }
 }
 
-Perror_t Pint_print(Pint_hist *h) {
+Perror_t Pint_print(Pint_hist *h, Sfio_t *outstr) {
   Puint32 i;
-
-  printf("*** Histogram Result *** \n");
+  
+  sfprintf(outstr, "*** Histogram Result *** \n");
   if (h->his_gen.isE == 0) h->his_gen.bukI = h->his_gen.B;
   for (i = 0; i < h->his_gen.bukI; i++) {
-    if (i == 0) printf("From %d to ", 0);
-    else printf("From %d to ", h->his_gen.result[i-1].bound);
-    printf("%d, with height ", h->his_gen.result[i].bound - 1);
-    printf("%d. \n", (*h->fromFloat)(h->his_gen.result[i].hei * (Pfloat64)h->his_gen.scale));
+    if (i == 0) sfprintf(outstr, "From %d to ", 0);
+    else sfprintf(outstr, "From %d to ", h->his_gen.result[i-1].bound);
+    sfprintf(outstr, "%d, with height ", h->his_gen.result[i].bound - 1);
+    sfprintf(outstr, "%d. \n", (*h->fromFloat)(h->his_gen.result[i].hei * (Pfloat64)h->his_gen.scale));
   }
   return P_OK;
 }
