@@ -2109,9 +2109,9 @@ Perror_t Pchar_acc_report    (P_t *pads, const char *prefix, const char *what, i
  * a distinct report function.
  */
 
-#ifndef FOR_CKIT
+
 typedef Puint32 Pip;
-#endif
+
 
 typedef Puint32_acc Pip_acc;
 
@@ -2150,7 +2150,7 @@ typedef Puint32_acc Ptime_acc;
 Perror_t Ptimestamp_explicit_acc_init    (P_t *pads, Ptimestamp_explicit_acc *a);
 Perror_t Ptimestamp_explicit_acc_reset   (P_t *pads, Ptimestamp_explicit_acc *a);
 Perror_t Ptimestamp_explicit_acc_cleanup (P_t *pads, Ptimestamp_explicit_acc *a);
-Perror_t Ptimestamp_explicit_acc_add     (P_t *pads, Ptimestamp_explicit_acc *a, const Pbase_pd *pd, Puint32 *val);
+Perror_t Ptimestamp_explicit_acc_add     (P_t *pads, Ptimestamp_explicit_acc *a, const Pbase_pd *pd, Ptimestamp *val);
 
 Perror_t Pdate_explicit_acc_init    (P_t *pads, Pdate_explicit_acc *a);
 Perror_t Pdate_explicit_acc_reset   (P_t *pads, Pdate_explicit_acc *a);

@@ -183,7 +183,7 @@ structure PBaseTys = struct
           TextIO.output(outStrm, "void sfstrclose(Sfio_t *);\n");
           TextIO.output(outStrm, "#ifdef sfstruse\n#undef sfstruse\n#endif\n");
           TextIO.output(outStrm, "const char* sfstruse(Sfio_t *);\n");
-          List.app (genTypedef outStrm) (!baseInfoList);
+(*          List.app (genTypedef outStrm) (!baseInfoList); *)
 	  TextIO.output(outStrm, "#endif /*  __PADS_INTERNAL__H__  */\n");
 	  TextIO.flushOut outStrm;
 	  TextIO.closeOut outStrm
