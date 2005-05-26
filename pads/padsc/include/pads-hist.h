@@ -10,11 +10,7 @@
 #ifndef __P_HIST_H__
 #define __P_HIST_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 
-#include "pads.h"
 
 #ifndef INF
 #define INF 10000000
