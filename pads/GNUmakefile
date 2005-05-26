@@ -69,8 +69,8 @@ MODS = ast-ast/mods/mods.tar
 
 $(AST_LIB) : $(MODS) ast-ast/lib/package/tgz/*.tgz
 	@(if [ ! -f ast-ast/bin/package ]; then cp ast-ast/bin/package.cvs ast-ast/bin/package; fi)
-	@( $(PATH_FIX) ; cd ast-ast; ./bin/package read SHELL=$(SHELL) )
+	@( $(PATH_FIX) ; cd ast-ast; PWD=`pwd`; ./bin/package read SHELL=$(SHELL) )
 	tar xf $(MODS)
-	@( $(PATH_FIX) ; cd ast-ast; ./bin/package make SHELL=$(SHELL) )
+	@( $(PATH_FIX) ; cd ast-ast; PWD=`pwd`; ./bin/package make SHELL=$(SHELL) )
 	( $(RM) mk/rules.arch.$(AST_ARCH).mk )
 
