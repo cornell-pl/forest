@@ -75,7 +75,7 @@ int PADS_INIT() {
 int PADS_INPUT_FILE(const char *inName, int expect_new_header) {
   if (expect_new_header) {
     global_num_bytes_parsed = 0;
-    PADS_RESET_HEADER();
+    PADS_RESET_HEADER;
   }
   if (P_ERR == P_io_fopen(global_pads, inName)) {
     error(0, "*** P_io_fopen failed ***");
@@ -94,7 +94,7 @@ int PADS_INPUT_FILE(const char *inName, int expect_new_header) {
 int PADS_INPUT_BUF(char *buf, size_t buf_len, int expect_new_header) {
   if (expect_new_header) {
     global_num_bytes_parsed = 0;
-    PADS_RESET_HEADER();
+    PADS_RESET_HEADER;
   }
   if (!(global_io_in = sfnew(global_io_in, (Void_t*)buf, buf_len, -1, SF_STRING|SF_READ))) {
     error(0, "*** sfnew failed ***");

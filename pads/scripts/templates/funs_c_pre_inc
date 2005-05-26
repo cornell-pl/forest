@@ -2,6 +2,7 @@
 #add_include "pads-internal.h"
 #add_include "=FUNS_H_FILE_NOPATH="
 #add_include "=PSPEC_H_FILE="
+#add_include "pads_gigascope.h"
 #add_include "pads_gigascope_macros.h"
 
 =PADS_TY_DEFINE=
