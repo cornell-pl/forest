@@ -39,8 +39,14 @@ struct dpCell {
 /* Data structure defined with public access. */
 
 /* Map function maps between a given type and the Pfloat64 type */
-typedef Pfloat64 (*Pint_toFloat_fn) (Pint64);
-typedef Pint64 (*Pint_fromFloat_fn) (Pfloat64);
+typedef Pfloat64 (*Pint_toFloat_fn)     (Pint64);
+typedef Pint64   (*Pint_fromFloat_fn)   (Pfloat64);
+typedef Pfloat64 (*Pfloat_toFloat_fn)   (Pfloat64);
+typedef Pfloat64 (*Pfloat_fromFloat_fn) (Pfloat64);
+typedef Pfloat64 (*Pchar_toFloat_fn)    (Pchar);
+typedef Pchar    (*Pchar_fromFloat_fn)  (Pfloat64); 
+typedef Pfloat64 (*Pstr_toFloat_fn)     (Pstring);
+typedef Pstring  (*Pstr_fromFloat_fn)   (Pfloat64);
 
 struct hist {
   /* These fields can be customized by users */
@@ -74,9 +80,8 @@ struct hist {
 
 typedef struct Pint_hist_s {
   struct hist his_gen;
-
-  Pint_toFloat_fn toFloat; // Map given type to Pfloat64.
-  Pint_fromFloat_fn fromFloat; // Map Pfloat64 back to given type.  
+  Pint_toFloat_fn toFloat;
+  Pint_fromFloat_fn fromFloat; 
 } Pint_hist;
 
 typedef Pint_hist Pint8_hist;
@@ -87,6 +92,10 @@ typedef Pint_hist Puint8_hist;
 typedef Pint_hist Puint16_hist;
 typedef Pint_hist Puint32_hist;
 typedef Pint_hist Puint64_hist;
+typedef Pint_hist Ptimestamp_hist; 
+typedef Pint_hist Pdate_hist;
+typedef Pint_hist Ptime_hist;
+typedef Pint_hist Pip_hist;
 
 /* Functions defined with public access */
 Perror_t Pint8_hist_init        (P_t *pads, Pint8_hist *h);
@@ -153,20 +162,103 @@ Perror_t Puint64_hist_add       (P_t *pads, Puint64_hist *h, Pbase_pd *pd, Puint
 Perror_t Puint64_hist_report2io (P_t *pads, Sfio_t *outstr, Puint64_hist *h);
 Perror_t Puint64_hist_report    (P_t *pads, Puint64_hist *h);
 
+Perror_t Ptimestamp_hist_init      (P_t *pads, Ptimestamp_hist *h);
+Perror_t Ptimestamp_hist_setConv   (P_t *pads, Ptimestamp_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
+Perror_t Ptimestamp_hist_reset     (P_t *pads, Ptimestamp_hist *h);
+Perror_t Ptimestamp_hist_cleanup   (P_t *pads, Ptimestamp_hist *h);
+Perror_t Ptimestamp_hist_add       (P_t *pads, Ptimestamp_hist *h, Pbase_pd *pd, Puint32 *rep);
+Perror_t Ptimestamp_hist_report2io (P_t *pads, Sfio_t *outstr, Ptimestamp_hist *h);
+Perror_t Ptimestamp_hist_report    (P_t *pads, Ptimestamp_hist *h);
+
+Perror_t Pdate_hist_init      (P_t *pads, Pdate_hist *h);
+Perror_t Pdate_hist_setConv   (P_t *pads, Pdate_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
+Perror_t Pdate_hist_reset     (P_t *pads, Pdate_hist *h);
+Perror_t Pdate_hist_cleanup   (P_t *pads, Pdate_hist *h);
+Perror_t Pdate_hist_add       (P_t *pads, Pdate_hist *h, Pbase_pd *pd, Pdate *rep);
+Perror_t Pdate_hist_report2io (P_t *pads, Sfio_t *outstr, Pdate_hist *h);
+Perror_t Pdate_hist_report    (P_t *pads, Pdate_hist *h);
+
+Perror_t Ptime_hist_init      (P_t *pads, Ptime_hist *h);
+Perror_t Ptime_hist_setConv   (P_t *pads, Ptime_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
+Perror_t Ptime_hist_reset     (P_t *pads, Ptime_hist *h);
+Perror_t Ptime_hist_cleanup   (P_t *pads, Ptime_hist *h);
+Perror_t Ptime_hist_add       (P_t *pads, Ptime_hist *h, Pbase_pd *pd, Ptime *rep);
+Perror_t Ptime_hist_report2io (P_t *pads, Sfio_t *outstr, Ptime_hist *h);
+Perror_t Ptime_hist_report    (P_t *pads, Ptime_hist *h);
+
+Perror_t Pip_hist_init      (P_t *pads, Pip_hist *h);
+Perror_t Pip_hist_setConv   (P_t *pads, Pip_hist *h, Pint_toFloat_fn to, Pint_fromFloat_fn from);
+Perror_t Pip_hist_reset     (P_t *pads, Pip_hist *h);
+Perror_t Pip_hist_cleanup   (P_t *pads, Pip_hist *h);
+Perror_t Pip_hist_add       (P_t *pads, Pip_hist *h, Pbase_pd *pd, Pip *rep);
+Perror_t Pip_hist_report2io (P_t *pads, Sfio_t *outstr, Pip_hist *h);
+Perror_t Pip_hist_report    (P_t *pads, Pip_hist *h);
+
+typedef struct Pfloat_hist_s {
+  struct hist his_gen;
+  Pfloat_toFloat_fn toFloat;
+  Pfloat_fromFloat_fn fromFloat;
+} Pfloat_hist;
+
+typedef Pfloat_hist Pfloat32_hist;
+typedef Pfloat_hist Pfloat64_hist; 
+
+Perror_t Pfloat32_hist_init      (P_t *pads, Pfloat32_hist *h);
+Perror_t Pfloat32_hist_setConv   (P_t *pads, Pfloat32_hist *h, Pfloat_toFloat_fn to, Pfloat_fromFloat_fn from);
+Perror_t Pfloat32_hist_reset     (P_t *pads, Pfloat32_hist *h);
+Perror_t Pfloat32_hist_cleanup   (P_t *pads, Pfloat32_hist *h);
+Perror_t Pfloat32_hist_add       (P_t *pads, Pfloat32_hist *h, Pbase_pd *pd, Pfloat32 *rep);
+Perror_t Pfloat32_hist_report2io (P_t *pads, Sfio_t *outstr, Pfloat32_hist *h);
+Perror_t Pfloat32_hist_report    (P_t *pads, Pfloat32_hist *h);
+
+Perror_t Pfloat64_hist_init      (P_t *pads, Pfloat64_hist *h);
+Perror_t Pfloat64_hist_setConv   (P_t *pads, Pfloat64_hist *h, Pfloat_toFloat_fn to, Pfloat_fromFloat_fn from);
+Perror_t Pfloat64_hist_reset     (P_t *pads, Pfloat64_hist *h);
+Perror_t Pfloat64_hist_cleanup   (P_t *pads, Pfloat64_hist *h);
+Perror_t Pfloat64_hist_add       (P_t *pads, Pfloat64_hist *h, Pbase_pd *pd, Pfloat64 *rep);
+Perror_t Pfloat64_hist_report2io (P_t *pads, Sfio_t *outstr, Pfloat64_hist *h);
+Perror_t Pfloat64_hist_report    (P_t *pads, Pfloat64_hist *h);
+
+typedef struct Pchar_hist_s {
+  struct hist his_gen;
+  Pchar_toFloat_fn toFloat;
+  Pchar_fromFloat_fn fromFloat;
+} Pchar_hist;
+
+Perror_t Pchar_hist_init      (P_t *pads, Pchar_hist *h);
+Perror_t Pchar_hist_setConv   (P_t *pads, Pchar_hist *h, Pchar_toFloat_fn to, Pchar_fromFloat_fn from);
+Perror_t Pchar_hist_reset     (P_t *pads, Pchar_hist *h);
+Perror_t Pchar_hist_cleanup   (P_t *pads, Pchar_hist *h);
+Perror_t Pchar_hist_add       (P_t *pads, Pchar_hist *h, Pbase_pd *pd, Pchar *rep);
+Perror_t Pchar_hist_report2io (P_t *pads, Sfio_t *outstr, Pchar_hist *h);
+Perror_t Pchar_hist_report    (P_t *pads, Pchar_hist *h);
+
+typedef struct Pstring_hist_s {
+  struct hist his_gen;
+  Pstr_toFloat_fn toFloat;
+  Pstr_fromFloat_fn fromFloat;
+} Pstring_hist;
+
+Perror_t Pstring_hist_init      (P_t *pads, Pstring_hist *h);
+Perror_t Pstring_hist_setConv   (P_t *pads, Pstring_hist *h, Pstr_toFloat_fn to, Pstr_fromFloat_fn from);
+Perror_t Pstring_hist_reset     (P_t *pads, Pstring_hist *h);
+Perror_t Pstring_hist_cleanup   (P_t *pads, Pstring_hist *h);
+Perror_t Pstring_hist_add       (P_t *pads, Pstring_hist *h, Pbase_pd *pd, Pstring *rep);
+Perror_t Pstring_hist_report2io (P_t *pads, Sfio_t *outstr, Pstring_hist *h);
+Perror_t Pstring_hist_report    (P_t *pads, Pstring_hist *h);
+
 /* Functions defined for private use only */
-Perror_t EqualHis    (struct hist *h, Pfloat64 d);
-Perror_t OptHis      (struct hist *h, Pfloat64 d);
-Perror_t NearOptHis  (struct hist *h, Pfloat64 d);
+Perror_t EqualHis     (struct hist *h, Pfloat64 d);
+Perror_t OptHis       (struct hist *h, Pfloat64 d);
+Perror_t NearOptHis   (struct hist *h, Pfloat64 d);
 
-Perror_t Pint_print  (Pint_hist *h, Sfio_t *outstr);
-
-struct dpCell OptHei (struct hist *h, Puint64 s, Puint64 e); // Optimal height between A[s...e].
-Puint64 partition_w  (struct wave** A, Puint64 p, Puint64 r); // Rearrange the array A[p...r].
-Puint64 partition_b  (struct bucket** A, Puint64 p, Puint64 r); // Override function.
-void select_w        (struct wave** A, struct hist* h, Puint64 p, Puint64 r); // Drops the least half numbers.   
-Pfloat64 select_b    (struct bucket** A, struct hist* h, Puint64 p, Puint64 r, Puint64 sel); // Return element at sel rank; 
-void quickSort       (struct bucket** A, Puint64 p, Puint64 q); // Sort array A based on end point.
-void buildRob        (struct hist *h); // Build robust histograms from top coefficients. 
-void compOpt         (struct hist *h); // Use dynamic programming to get the optimal one from rob array.
+struct dpCell OptHei  (struct hist *h, Puint64 s, Puint64 e); // Optimal height between A[s...e].
+Puint64 partition_w   (struct wave** A, Puint64 p, Puint64 r); // Rearrange the array A[p...r].
+Puint64 partition_b   (struct bucket** A, Puint64 p, Puint64 r); // Override function.
+void select_w         (struct wave** A, struct hist* h, Puint64 p, Puint64 r); // Drops the least half numbers.   
+Pfloat64 select_b     (struct bucket** A, struct hist* h, Puint64 p, Puint64 r, Puint64 sel); // Return element at sel rank; 
+void quickSort        (struct bucket** A, Puint64 p, Puint64 q); // Sort array A based on end point.
+void buildRob         (struct hist *h); // Build robust histograms from top coefficients. 
+void compOpt          (struct hist *h); // Use dynamic programming to get the optimal one from rob array.
 
 #endif /*  __P_HIST_H__  */

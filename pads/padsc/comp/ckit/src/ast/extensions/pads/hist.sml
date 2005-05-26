@@ -18,11 +18,10 @@ structure Hist = struct
   fun histSuf  s = s^"_"^hist
 
   fun lookupHist(ty:pty) = 
-      case ty
-	  of PX.Name s => histSuf
-	      ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
-		    of NONE => s  (* non-base type; hist constructed from type name*)
-		  |  SOME(b:PBTys.baseInfoTy) => s)
+      case ty of PX.Name s => histSuf s
+
+
+  fun genHistTypedef() = []
 
   fun genHistRepStruct ptyfuns name fields = 
       let fun genHistFull ({pty: PX.Pty, args: pcexp list, name: string, 
@@ -44,6 +43,8 @@ structure Hist = struct
       in
 	  (histED, histPCT)
       end
+
+
 
   fun genWalkFunsStruct (ptyfuns, name, fields, thePCT, whichSuf) = 
       let val whichFun = (whichSuf o histSuf) name

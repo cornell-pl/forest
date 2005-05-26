@@ -2166,6 +2166,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val reportFunEDs = genTrivReportFuns(reportFun, "typedef "^name, SOME(PT.String baseTyName), accPCT, repioCallX)
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
+	              (* Generate Hist functions typedef case *)
+	              val histEDs = Hist.genHistTypedef ()
+
                       (* Generate Write function typedef case *)
 		      val writeName = writeSuf name
 		      val fmtName = fmtSuf name
@@ -2232,6 +2235,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      @ (emitRead readEDs)
 		      @ (emitPred isFunEDs)
                       @ (emitAccum accumEDs)
+                      @ (emitHist histEDs)
                       @ (emitWrite writeFunEDs)
                       @ (emitWrite fmtFunEDs)
   		      @ (emitXML galaxEDs )

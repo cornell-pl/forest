@@ -6,11 +6,22 @@
 #include "pads-internal.h"
 
 /* Default mapping functions, can be overwritten by users */
-Pfloat64 Pint_to (Pint64 i) { return (Pfloat64)i; }
-Pint64 Pint_from (Pfloat64 f) { return (Pint64)f; }
+Pfloat64 Pint_to     (Pint64 i)   { return (Pfloat64)i; }
+Pint64   Pint_from   (Pfloat64 f) { return (Pint64)f; }
+Pfloat64 Pfloat_to   (Pfloat64 f) { return f; }
+Pfloat64 Pfloat_from (Pfloat64 f) { return f; }
+Pfloat64 Pchar_to    (Pchar c)    { return Pint_to((Puint8)c); }
+Pchar    Pchar_from  (Pfloat64 f) { return (Pchar)(Pint_from(f)); }
+Pfloat64 Pstr_to     (Pstring s)  { return Pstring2float64(&s); }
+Pstring  Pstr_from   (Pfloat64 f) { 
+  Pstring s;
+  s.str = "non defined.";
+  s.len = 12;
+  return s;
+}
 
 /* Begin Macro */
-#define TYPE_HIST_GEN(type, class) \
+#define TYPE_HIST_GEN(type, class, fmt) \
 \
 Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   Puint32 i; \
@@ -158,7 +169,14 @@ Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, type ## _hist *h) {
       } \
     } \
   } \
-  if (res == P_OK) class ## _print (h, outstr); \
+  sfprintf(outstr, "*** Histogram Result *** \n"); \
+  if (h->his_gen.isE == 0) h->his_gen.bukI = h->his_gen.B; \
+  for (i = 0; i < h->his_gen.bukI; i++) { \
+    if (i == 0) sfprintf(outstr, "From %d to ", 0); \
+    else sfprintf(outstr, "From %d to ", h->his_gen.result[i-1].bound); \
+    sfprintf(outstr, "%d, with height ", h->his_gen.result[i].bound - 1); \
+    sfprintf(outstr, "%" fmt ". \n", (*h->fromFloat)(h->his_gen.result[i].hei * (Pfloat64)h->his_gen.scale)); \
+  } \
 \
   return res; \
 } \
@@ -173,14 +191,22 @@ Perror_t type ## _hist_report (P_t *pads, type ## _hist *h) { \
 /* END_MACRO */
 
 /* Functions defined with public access */
-TYPE_HIST_GEN(Pint8, Pint);
-TYPE_HIST_GEN(Pint16, Pint);
-TYPE_HIST_GEN(Pint32, Pint);
-TYPE_HIST_GEN(Pint64, Pint);
-TYPE_HIST_GEN(Puint8, Pint);
-TYPE_HIST_GEN(Puint16, Pint);
-TYPE_HIST_GEN(Puint32, Pint);
-TYPE_HIST_GEN(Puint64, Pint);
+TYPE_HIST_GEN(Pint8, Pint, "d");
+TYPE_HIST_GEN(Pint16, Pint, "d");
+TYPE_HIST_GEN(Pint32, Pint, "d");
+TYPE_HIST_GEN(Pint64, Pint, "d");
+TYPE_HIST_GEN(Puint8, Pint, "d");
+TYPE_HIST_GEN(Puint16, Pint, "d");
+TYPE_HIST_GEN(Puint32, Pint, "d");
+TYPE_HIST_GEN(Puint64, Pint, "d");
+TYPE_HIST_GEN(Ptimestamp, Pint, "d");
+TYPE_HIST_GEN(Pdate, Pint, "d");
+TYPE_HIST_GEN(Ptime, Pint, "d");
+TYPE_HIST_GEN(Pip, Pint, "d");
+TYPE_HIST_GEN(Pfloat32, Pfloat, "f");
+TYPE_HIST_GEN(Pfloat64, Pfloat, "f");
+TYPE_HIST_GEN(Pchar, Pchar, "c");
+TYPE_HIST_GEN(Pstring, Pstr, "s");
 
 /* Functions defined for private use only */ 
 Perror_t EqualHis(struct hist *h, Pfloat64 d) { 
@@ -469,20 +495,6 @@ void compOpt(struct hist *h) {
     for (i = 0; i < h->rowN; i++) free(h->dpTable[i]);
     free(h->dpTable);
   }
-}
-
-Perror_t Pint_print(Pint_hist *h, Sfio_t *outstr) {
-  Puint32 i;
-  
-  sfprintf(outstr, "*** Histogram Result *** \n");
-  if (h->his_gen.isE == 0) h->his_gen.bukI = h->his_gen.B;
-  for (i = 0; i < h->his_gen.bukI; i++) {
-    if (i == 0) sfprintf(outstr, "From %d to ", 0);
-    else sfprintf(outstr, "From %d to ", h->his_gen.result[i-1].bound);
-    sfprintf(outstr, "%d, with height ", h->his_gen.result[i].bound - 1);
-    sfprintf(outstr, "%d. \n", (*h->fromFloat)(h->his_gen.result[i].hei * (Pfloat64)h->his_gen.scale));
-  }
-  return P_OK;
 }
 
 Puint64 partition_w(struct wave** A, Puint64 p, Puint64 r) {

@@ -2130,14 +2130,14 @@ Perror_t Pip_acc_report  (P_t *pads, const char *prefix, const char *what, int n
  * has a distinct report function.
  */
 
-#ifndef FOR_CKIT
+
 typedef Puint32 Ptimestamp_explicit;
 typedef Puint32 Pdate_explicit;
 typedef Puint32 Ptime_explicit;
 typedef Puint32 Ptimestamp;
 typedef Puint32 Pdate;
 typedef Puint32 Ptime;
-#endif
+
 
 typedef Puint32_acc Ptimestamp_explicit_acc;
 typedef Puint32_acc Pdate_explicit_acc;
