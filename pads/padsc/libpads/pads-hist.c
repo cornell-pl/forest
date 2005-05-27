@@ -28,7 +28,7 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   Puint64 adj; \
 \
   /* Initialize */ \
-  h->his_gen.N = 13; \
+  h->his_gen.N = 10; \
   h->his_gen.B = 2; \
   h->his_gen.M = 1; \
   h->his_gen.isE = 1; \
@@ -81,9 +81,17 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   return P_OK; \
 } \
 \
-Perror_t type ## _hist_setConv (P_t *pads, type ## _hist *h, class ## _toFloat_fn to, class ## _fromFloat_fn from) { \
-  h->toFloat = to; \
-  h->fromFloat = from; \
+Perror_t type ## _hist_setConv (P_t *pads, type ## _hist *h, P_hist* d_hist, class ## _toFloat_fn to, class ## _fromFloat_fn from) { \
+  if (to != 0) h->toFloat = to; \
+  if (from != 0) h->fromFloat = from; \
+  h->his_gen.N = d_hist->N; \
+  h->his_gen.B = d_hist->B; \
+  h->his_gen.M = d_hist->M; \
+  h->his_gen.isE = d_hist->isE; \
+  h->his_gen.isO = d_hist->isO; \
+  h->his_gen.n = d_hist->n; \
+  h->his_gen.e = d_hist->e; \
+  h->his_gen.scale = d_hist->scale; \
   return P_OK; \
 } \
 \

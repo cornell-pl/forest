@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
   Pdisc_t           my_disc = Pdefault_disc;
   Pio_disc_t       *io_disc = 0;
   Ppos_t            bpos, epos;
+  P_hist            default_hist;
   PADS_TY( )        rep;
   PADS_TY(_pd)      pd;
   PADS_TY(_m)       m;
@@ -74,51 +75,20 @@ int main(int argc, char** argv) {
   EXTRA_DECLS;
 #endif
 
+  default_hist.N = INIT_N;
+  default_hist.B = INIT_B;
+  default_hist.M = INIT_M;
+  default_hist.isE = INIT_ISE;
+  default_hist.isO = INIT_ISO;
+  default_hist.n = INIT_n;
+  default_hist.e = INIT_e;
+  default_hist.scale = INIT_scale;
+
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
 #endif
 #ifdef WSPACE_OK
   my_disc.flags |= (Pflags_t)P_WSPACE_OK;
-#endif
-
-  my_disc.copy_strings = 1;  /* strings should almost always be copied for accumulator programs */
-
-#ifdef IN_TIME_ZONE
-  my_disc.in_time_zone = IN_TIME_ZONE;
-  error(0, "Note: set my_disc.in_time_zone to \"%s\"\n", IN_TIME_ZONE);
-#endif
-#ifdef OUT_TIME_ZONE
-  my_disc.out_time_zone = OUT_TIME_ZONE;
-  error(0, "Note: set my_disc.out_time_zone to \"%s\"\n", OUT_TIME_ZONE);
-#endif
-
-#ifdef TIMESTAMP_IN_FMT
-  my_disc.in_formats.timestamp = TIMESTAMP_IN_FMT;
-#endif
-#ifdef DATE_IN_FMT
-  my_disc.in_formats.date = DATE_IN_FMT;
-#endif
-#ifdef TIME_IN_FMT
-  my_disc.in_formats.time = TIME_IN_FMT;
-#endif
-
-#ifdef TIMESTAMP_EXPLICIT_OUT_FMT
-  my_disc.out_formats.timestamp_explicit = TIMESTAMP_EXPLICIT_OUT_FMT;
-#endif
-#ifdef TIMESTAMP_OUT_FMT
-  my_disc.out_formats.timestamp = TIMESTAMP_OUT_FMT;
-#endif
-#ifdef DATE_EXPLICIT_OUT_FMT
-  my_disc.out_formats.date_explicit = DATE_EXPLICIT_OUT_FMT;
-#endif
-#ifdef DATE_OUT_FMT
-  my_disc.out_formats.date = DATE_OUT_FMT;
-#endif
-#ifdef TIME_EXPLICIT_OUT_FMT
-  my_disc.out_formats.time_explicit = TIME_EXPLICIT_OUT_FMT;
-#endif
-#ifdef TIME_OUT_FMT
-  my_disc.out_formats.time = TIME_OUT_FMT;
 #endif
 
 #ifdef IO_DISC_MK
@@ -152,7 +122,9 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
 
+  
   PADS_TY(_hist_init)(pads, &h);	
+  //  PADS_TY(_hist_setConv)(pads, &h, &default_hist, 0, 0); 
   printf("init finished.");
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, READ_MASK);
