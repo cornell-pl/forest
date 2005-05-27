@@ -7,7 +7,6 @@
   Pio\_disc\_t           *io\_disc;
   entry\_t               rep;
   entry\_t\_pd           pd;
-  Pbase\_pd              p;
   entry\_t\_m            mask;
   entry\_t\_hist         h;
   \kw{char}              *fname = DEF\_INPUT\_FILE;
@@ -27,7 +26,7 @@
   entry\_t\_hist\_init(pads, &h);
   \kw{while} (!P\_io\_at\_eof(pads)) \{
     entry\_t\_read(pads, &mask, &pd, &rep);
-    entry\_t\_hist\_add(pads, &h, &rep, &p);
+    entry\_t\_hist\_add(pads, &h, &pd, &rep);
   \};
   entry\_t\_hist\_report(pads, &h);
 \mbox{}
