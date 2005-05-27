@@ -10,7 +10,7 @@ Transform Schema : TyDecl -> IO;
 Schema(Pstruct =REC_TYPE=)
 Begin
  Pre:        -> "\n\
-PROTOCOL file_pads () {\n\
+PROTOCOL file_pads {\n\
   string padsFilename file_pads_filename;\n\
 }\n\
 PROTOCOL pads_=REC_TYPE= (file_pads) { "
