@@ -27,11 +27,15 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   Puint32 i; \
   Puint64 adj; \
 \
-  /* Parameter Checking */ \
-  if (h->his_gen.n != 1 && h->his_gen.n != 2) return P_ERR; \
-  if (h->his_gen.n == 1) { if (h->his_gen.isO == 0 || h->his_gen.isE != 0) return P_ERR; } \
-\
   /* Initialize */ \
+  h->his_gen.N = 13; \
+  h->his_gen.B = 2; \
+  h->his_gen.M = 1; \
+  h->his_gen.isE = 1; \
+  h->his_gen.isO = 1; \
+  h->his_gen.n = 2; \
+  h->his_gen.e = 1; \
+  h->his_gen.scale = 1; \
   h->toFloat = class ## _to; \
   h->fromFloat = class ## _from; \
   h->his_gen.ind = 0; \
@@ -41,7 +45,7 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
     /* Equally spaced */ \
     h->his_gen.partS = 0; \
     h->his_gen.bukI = 0; \
-    for (i = 0; i < h->his_gen.B; i++) h->his_gen.result[i].bound = ((Pint64)(h->his_gen.N / h->his_gen.B) + 1) * (i + 1); \
+    for (i = 0; i < h->his_gen.B; i++) h->his_gen.result[i].bound = ((Pint64)(h->his_gen.N / h->his_gen.B) + 1) * (i + 1) - 1; \
     h->his_gen.result[h->his_gen.B - 1].bound = h->his_gen.N; \
   } \
   else { \
@@ -134,6 +138,7 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
       if (h->his_gen.isO == 0) buildRob(&(h->his_gen)); \
       compOpt(&(h->his_gen)); \
     } \
+    else EqualHis(&(h->his_gen), d); \
     if(res == P_OK) res =  type ## _hist_report(pads, h); \
     if(res == P_OK) res = type ## _hist_reset(pads, h); \
   } \
@@ -146,6 +151,7 @@ Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, type ## _hist *h) {
   Puint64 tempInd; \
 \
   res = P_OK; \
+  if (h->his_gen.ind == 0) return res; \
   if (h->his_gen.ind != h->his_gen.N) { \
     /* Real data is less than the estimated dimension */ \
     if (h->his_gen.isE != 0) { \
@@ -212,13 +218,13 @@ TYPE_HIST_GEN(Pstring, Pstr, "s");
 Perror_t EqualHis(struct hist *h, Pfloat64 d) { 
   Puint64 i;
 
-  if (h->ind == h->result[h->bukI].bound || h->ind == h->N - 1) {
+  if (h->ind == h->result[h->bukI].bound || h->ind == h->N) {
     /* Reach a boundary, height computed, end point recorded */
     h->result[h->bukI].hei = h->partS;
     h->bukI++;
     h->partS = 0;
   }
-  else {
+  //  else {
     if (h->partS == 0) h->partS = d;
     else {
       if (h->bukI == 0) h->partS = (h->partS * h->ind + d) / (h->ind + 1);
@@ -227,7 +233,7 @@ Perror_t EqualHis(struct hist *h, Pfloat64 d) {
 	h->partS = (h->partS * i + d) / (i + 1);
       }
     }
-  }
+    // }
   return P_OK;
 }
 
