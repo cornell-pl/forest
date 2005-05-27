@@ -24,14 +24,14 @@ Pstring  Pstr_from   (Pfloat64 f) {
 #define TYPE_HIST_GEN(type, class, fmt) \
 \
 Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
-  Puint32 i; \
-  Puint64 adj; \
+  Pint32 i; \
+  Pint64 adj; \
 \
   /* Initialize */ \
-  h->his_gen.N = 10; \
+  h->his_gen.N = 16; \
   h->his_gen.B = 2; \
-  h->his_gen.M = 1; \
-  h->his_gen.isE = 1; \
+  h->his_gen.M = 100; \
+  h->his_gen.isE = 0; \
   h->his_gen.isO = 1; \
   h->his_gen.n = 2; \
   h->his_gen.e = 1; \
@@ -57,14 +57,14 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
     } \
     else { \
       /* Adjust dimension to be perfect power of 2. */ \
-      adj = (Puint64)((Pfloat64)log(h->his_gen.N) / (Pfloat64)log(2)); \
-      if ((Puint64)pow(2, (Pfloat64)adj) != h->his_gen.N) h->his_gen.N = (Puint64)pow(2, (Pfloat64)adj + 1); \
+      adj = (Pint64)((Pfloat64)log(h->his_gen.N) / (Pfloat64)log(2)); \
+      if ((Pint64)pow(2, (Pfloat64)adj) != h->his_gen.N) h->his_gen.N = (Pint64)pow(2, (Pfloat64)adj + 1); \
 \
-      h->his_gen.lNumber = (Puint8)((Pfloat64)log(h->his_gen.N) / (Pfloat64)log(2));  \
+      h->his_gen.lNumber = (Pint8)((Pfloat64)log(h->his_gen.N) / (Pfloat64)log(2));  \
       h->his_gen.leftS = malloc(h->his_gen.lNumber * sizeof(Pfloat64)); \
       h->his_gen.rightS = malloc(h->his_gen.lNumber * sizeof(Pfloat64)); \
       if (h->his_gen.leftS == (Pfloat64*)0 || h->his_gen.rightS == (Pfloat64*)0) exit(-1); \
-      h->his_gen.rSize = (Puint32)((Pfloat64)(h->his_gen.B * ((Pfloat64)log(h->his_gen.N) / (Pfloat64)log(2)) * ((Pfloat64)log(h->his_gen.M) / (Pfloat64)log(2))) / h->his_gen.e); \
+      h->his_gen.rSize = (Pint32)((Pfloat64)(h->his_gen.B * ((Pfloat64)log(h->his_gen.N) / (Pfloat64)log(2)) * ((Pfloat64)log(h->his_gen.M) / (Pfloat64)log(2))) / h->his_gen.e); \
       h->his_gen.top = malloc(2 * h->his_gen.rSize * sizeof(struct wave)); \
       if (h->his_gen.top == (struct wave*)0) exit(-1); \
       h->his_gen.topI = 0; \
@@ -155,8 +155,8 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
 \
 Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, type ## _hist *h) { \
   Perror_t res; \
-  Puint64 i; \
-  Puint64 tempInd; \
+  Pint64 i; \
+  Pint64 tempInd; \
 \
   res = P_OK; \
   if (h->his_gen.ind == 0) return res; \
@@ -176,7 +176,10 @@ Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, type ## _hist *h) {
       } \
       else { \
 	tempInd = h->his_gen.ind; \
-	for (i = h->his_gen.ind; i < h->his_gen.N; i++) res = NearOptHis(&(h->his_gen), 0); \
+	for (i = tempInd; i < h->his_gen.N; i++) { \
+	  res = NearOptHis(&(h->his_gen), 0); \
+          h->his_gen.ind++; \
+        } \
 	buildRob(&(h->his_gen)); \
 	h->his_gen.ind = tempInd; \
 	compOpt(&(h->his_gen)); \
@@ -224,7 +227,7 @@ TYPE_HIST_GEN(Pstring, Pstr, "s");
 
 /* Functions defined for private use only */ 
 Perror_t EqualHis(struct hist *h, Pfloat64 d) { 
-  Puint64 i;
+  Pint64 i;
 
   if (h->ind == h->result[h->bukI].bound || h->ind == h->N) {
     /* Reach a boundary, height computed, end point recorded */
@@ -232,16 +235,14 @@ Perror_t EqualHis(struct hist *h, Pfloat64 d) {
     h->bukI++;
     h->partS = 0;
   }
-  //  else {
-    if (h->partS == 0) h->partS = d;
+  if (h->partS == 0) h->partS = d;
+  else {
+    if (h->bukI == 0) h->partS = (h->partS * h->ind + d) / (h->ind + 1);
     else {
-      if (h->bukI == 0) h->partS = (h->partS * h->ind + d) / (h->ind + 1);
-      else {
-	i = h->ind - h->result[h->bukI - 1].bound;
-	h->partS = (h->partS * i + d) / (i + 1);
-      }
+      i = h->ind - h->result[h->bukI - 1].bound;
+      h->partS = (h->partS * i + d) / (i + 1);
     }
-    // }
+  }
   return P_OK;
 }
 
@@ -253,9 +254,9 @@ Perror_t OptHis(struct hist *h, double d) {
 }
 
 Perror_t NearOptHis(struct hist *h, double d) {
-  Puint8 i;
-  Puint8 tempCoefI;
-  Puint64 rem;
+  Pint8 i;
+  Pint8 tempCoefI;
+  Pint64 rem;
   struct wave temp;
   struct wave* tempCoef;
 
@@ -270,39 +271,39 @@ Perror_t NearOptHis(struct hist *h, double d) {
       if (h->ind != 0) {
 	/* Roll back current wavelet vector */
 	temp.level = i;
-	temp.index = h->ind / (Puint64)pow(2, (Pfloat64)i+1);
+	temp.index = h->ind / (Pint64)pow(2, (Pfloat64)i+1) - 1;
 	temp.coef = (h->rightS[i] - h->leftS[i]) / pow(2, ((Pfloat64)i+1)/2);
 	tempCoef[tempCoefI] = temp;
 	tempCoefI++;
       }
       h->leftS[i] = d;
     }
-    if (rem == (Puint64)pow(2, (Pfloat64)i)) {
+    if (rem == (Pint64)pow(2, (Pfloat64)i)) {
       /* Hit the right half of current wavelet on ith. level */
       h->rightS[i] = d;
     }
-    if (rem > 0 && rem < (Puint64)pow(2, (Pfloat64)i)) {
+    if (rem > 0 && rem < (Pint64)pow(2, (Pfloat64)i)) {
       /* Keep on the left half of current wavelet on ith. level */
       h->leftS[i] += d;
     }
-    if (rem > (Puint64)pow(2, (Pfloat64)i)) {
+    if (rem > (Pint64)pow(2, (Pfloat64)i)) {
       /* Keep on the right half of current wavelet of ith. level */
       h->rightS[i] += d;
-      if (h->ind == h->N - 1) {
-	/* The last element, roll up */
-	temp.level = i;
-	temp.index = h->ind / (Puint64)pow(2, (Pfloat64)i+1);
-	temp.coef = (h->rightS[i] - h->leftS[i]) / pow(2, ((Pfloat64)i+1)/2);
+    }
+    if (h->ind == h->N - 1) {
+      /* The last element, roll up */
+      temp.level = i;
+      temp.index = h->ind / (Pint64)pow(2, (Pfloat64)i+1);
+      temp.coef = (h->rightS[i] - h->leftS[i]) / pow(2, ((Pfloat64)i+1)/2);
+      tempCoef[tempCoefI] = temp;
+      tempCoefI++;
+      if (i == h->lNumber - 1) {
+	/* Add the uniform wavelet vector */
+	temp.level = i + 1;
+	temp.index = 0;
+	temp.coef = (h->rightS[i] + h->leftS[i]) / sqrt((Pfloat64)(h->N));
 	tempCoef[tempCoefI] = temp;
 	tempCoefI++;
-	if (i == h->lNumber - 1) {
-	  /* Add the uniform wavelet vector */
-	  temp.level = i + 1;
-	  temp.index = 0;
-	  temp.coef = (h->rightS[i] + h->leftS[i]) / sqrt((Pfloat64)(h->N));
-	  tempCoef[tempCoefI] = temp;
-	  tempCoefI++;
-	}
       }
     }
   }
@@ -321,18 +322,21 @@ Perror_t NearOptHis(struct hist *h, double d) {
 }
 
 void buildRob(struct hist *h) {
-  Puint32 i;
-  Puint64 left;
-  Puint64 right;
-  Puint64 mid;
+  Pint32 i;
+  Pint64 left;
+  Pint64 right;
+  Pint64 mid;
   Pfloat64 hei;
-  Puint64 currB;
+  Pfloat64 help;
+  Pint64 currB;
   Pfloat64 currH;
   struct wave temp;
 
-  select_w(&(h->top), h, 0, 2 * h->rSize - 1);
+  select_w(&(h->top), h, 0, h->topI - 1);
+  if (h->rSize > h->topI) h->rSize = h->topI;
   /* Build the robust histogram out of the top array, start point recorded */
   for (i = 0; i < h->rSize; i++) {
+    temp = h->top[i];
     if (temp.level == h->lNumber) {
       /* The uniform one */
       h->bound[h->boundI].bound = 0;
@@ -340,10 +344,11 @@ void buildRob(struct hist *h) {
       h->boundI++;
     }
     else {
-      left = temp.index * (Puint64)pow(2, (Pfloat64)(temp.level + 1));
-      right = (temp.index + 1) * (Puint64)pow(2, (Pfloat64)(temp.level + 1));
-      mid = (Puint64)(left + right) / 2;
-      hei = temp.coef * pow(2, -((Pfloat64)temp.level+1) / 2);
+      left = temp.index * (Pint64)pow(2, (Pfloat64)(temp.level + 1));
+      right = (temp.index + 1) * (Pint64)pow(2, (Pfloat64)(temp.level + 1));
+      mid = (Pint64)(left + right) / 2;
+      help = -(Pfloat64)(temp.level+1) / (Pfloat64)2;
+      hei = temp.coef * pow(2, help);
 
       h->bound[h->boundI].bound = left;
       h->bound[h->boundI].hei = -hei;
@@ -358,7 +363,8 @@ void buildRob(struct hist *h) {
       }
     }
   }
-  quickSort(&h->bound, 0, h->boundI-1);
+
+  quickSort(&(h->bound), 0, h->boundI-1);
 
   currB = h->bound[0].bound;
   currH = h->bound[0].hei;
@@ -379,9 +385,9 @@ void buildRob(struct hist *h) {
   h->rob[h->robI].bound = h->N;
 }
 
-struct dpCell OptHei(struct hist *h, Puint64 s, Puint64 e) {
-  Puint64 len;
-  Puint64 i;
+struct dpCell OptHei(struct hist *h, Pint64 s, Pint64 e) {
+  Pint64 len;
+  Pint64 i;
   Pfloat64 hei;
   Pfloat64 err;
   Pfloat64 sum;
@@ -434,15 +440,15 @@ struct dpCell OptHei(struct hist *h, Puint64 s, Puint64 e) {
 }
 
 void compOpt(struct hist *h) {
-  Puint64 i;
-  Puint64 j;
-  Puint64 k;
+  Pint64 i;
+  Pint64 j;
+  Pint64 k;
   Pfloat64 keepE;
-  Puint64 keepB;
+  Pint64 keepB;
   Pfloat64 keepH;
   Pfloat64 err;
-  Puint32 resultI;
-  Puint64 track;
+  Pint32 resultI;
+  Pint64 track;
   struct dpCell temp;
 
   /* Size of the dynamic programming table */
@@ -511,12 +517,12 @@ void compOpt(struct hist *h) {
   }
 }
 
-Puint64 partition_w(struct wave** A, Puint64 p, Puint64 r) {
+Pint64 partition_w(struct wave** A, Pint64 p, Pint64 r) {
   /* Set the last element in the scope to be pivot */
   struct wave x;
   struct wave swap;
-  Puint64 i;
-  Puint64 j;
+  Pint64 i;
+  Pint64 j;
 
   x = (*A)[r];
   i = p - 1;
@@ -535,8 +541,8 @@ Puint64 partition_w(struct wave** A, Puint64 p, Puint64 r) {
   return i+1;
 }
 
-void select_w(struct wave** A, struct hist* h, Puint64 p, Puint64 r) {
-  Puint64 q;
+void select_w(struct wave** A, struct hist* h, Pint64 p, Pint64 r) {
+  Pint64 q;
 
   if (p == r) return;
   q = partition_w(A, p, r);
@@ -545,12 +551,12 @@ void select_w(struct wave** A, struct hist* h, Puint64 p, Puint64 r) {
   else select_w(A, h, p, q-1);
 }
 
-Puint64 partition_b(struct bucket** A, Puint64 p, Puint64 r) {
+Pint64 partition_b(struct bucket** A, Pint64 p, Pint64 r) {
   /* Set the last element in the scope to be pivot */
   struct bucket x;
   struct bucket swap;
-  Puint64 i;
-  Puint64 j;
+  Pint64 i;
+  Pint64 j;
 
   x = (*A)[r];
   i = p - 1;
@@ -570,8 +576,8 @@ Puint64 partition_b(struct bucket** A, Puint64 p, Puint64 r) {
   return i+1;
 }
 
-Pfloat64 select_b(struct bucket** A, struct hist *h, Puint64 p, Puint64 r, Puint64 sel) {
-  Puint64 q;
+Pfloat64 select_b(struct bucket** A, struct hist *h, Pint64 p, Pint64 r, Pint64 sel) {
+  Pint64 q;
 
   if (p == r) return (*A)[p].hei;
   q = partition_b(A, p, r);
@@ -580,9 +586,9 @@ Pfloat64 select_b(struct bucket** A, struct hist *h, Puint64 p, Puint64 r, Puint
   else return select_b(A, h, p, q-1, sel);
 }
 
-void quickSort(struct bucket** A, Puint64 p, Puint64 r) {
+void quickSort(struct bucket** A, Pint64 p, Pint64 r) {
   if (p < r) {
-      Puint64 q = partition_b(A, p, r);
+      Pint64 q = partition_b(A, p, r);
       quickSort(A, p, q-1);
       quickSort(A, q+1, r);
   }

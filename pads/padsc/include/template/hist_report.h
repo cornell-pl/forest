@@ -122,10 +122,9 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
 
-  
   PADS_TY(_hist_init)(pads, &h);	
   //  PADS_TY(_hist_setConv)(pads, &h, &default_hist, 0, 0); 
-  printf("init finished.");
+
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, READ_MASK);
 #ifdef EXTRA_BEGIN_CODE
