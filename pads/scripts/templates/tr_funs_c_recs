@@ -11,6 +11,5 @@ Transform Schema : TyDecl -> IO;
 Schema(Pstruct =REC_TYPE=)
 Begin
  Each:  ty f -> "REC_^PickMacro(^ty)(^Ty(^ty), ^f)\n"
- Post:  -> "REC_TOO_FEW_BYTES(^pLAST)\n"
 End;
 

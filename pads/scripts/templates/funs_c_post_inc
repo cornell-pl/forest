@@ -11,13 +11,14 @@
 #  define EXTRA_HDR_READ_ARGS
 #endif
 
-// PADS_INIT: initialize pads data structures.
-// Returns PADS_RET_OK or PADS_RET_ERR.
+// see documentation in pads_gigascope.h
 int PADS_INIT() {
+  char *erep_env;
 
-  global_num_recs         = 0;
-  global_num_bytes_parsed = 0;
-  global_disc             = Pdefault_disc;
+  global_num_recs                   = 0;
+  global_bytes_parsed_current_input = 0;
+  global_fuzzy_boundary             = 0;
+  global_disc                       = Pdefault_disc;
 #ifdef WSPACE_OK
   global_disc.flags |= (Pflags_t)P_WSPACE_OK;
 #endif
@@ -26,6 +27,20 @@ int PADS_INIT() {
 #endif
   // is this the default for network data?
   global_disc.d_endian = PbigEndian;
+  // do not report errors; PADS_E_REP overrides
+  global_disc.e_rep = PerrorRep_None;
+  erep_env = getenv("PADS_E_REP");
+  if (erep_env) {
+    if (strcmp(erep_env, "Min") == 0) {
+      global_disc.e_rep = PerrorRep_Min;
+    } else 
+    if (strcmp(erep_env, "Med") == 0) {
+      global_disc.e_rep = PerrorRep_Med;
+    } else 
+    if (strcmp(erep_env, "Max") == 0) {
+      global_disc.e_rep = PerrorRep_Max;
+    }
+  }
 
   if (!(global_io_disc = IO_DISC_MK)) {
     error(0, "IO discipline make call [ " PDCI_MacroArg2String(IO_DISC_MK) " ] failed");
@@ -64,17 +79,11 @@ int PADS_INIT() {
   return PADS_RET_OK;
 }
 
-// PADS_INPUT_FILE: (re)initialize pads to read from file "inName",
-// which can be "/dev/stdin" or a file path.  If "continuation" is
-// non-zero then the new input is treated as a continuation of the
-// bytes already *successfully* parsed by PADS_NEXT calls (i.e.,
-// PADS_NEXT calls with a return value of PADS_RET_OK or
-// PADS_RET_ERR).  If "continuation" is 0, the new bytes begin a fresh
-// parse, which resets the pads state.
-//  Returns PADS_RET_OK or PADS_RET_ERR.
-int PADS_INPUT_FILE(const char *inName, int expect_new_header) {
-  if (expect_new_header) {
-    global_num_bytes_parsed = 0;
+// see documentation in pads_gigascope.h
+int PADS_INPUT_FILE(const char *inName, int continuation, int fuzzy_boundary) {
+  global_fuzzy_boundary              = fuzzy_boundary;
+  global_bytes_parsed_current_input  = 0;
+  if (continuation == 0) {
     PADS_RESET_HEADER;
   }
   if (P_ERR == P_io_fopen(global_pads, inName)) {
@@ -84,16 +93,11 @@ int PADS_INPUT_FILE(const char *inName, int expect_new_header) {
   return PADS_RET_OK;
 }
 
-// PADS_INPUT_BUF: (re)initialize pads to read from a buffer "buf" of
-// length "buf_len".  If "continuation" is non-zero then the new input
-// is treated as a continuation of the bytes already *successfully*
-// parsed by PADS_NEXT calls (i.e., PADS_NEXT calls with a return
-// value of PADS_RET_OK or PADS_RET_ERR).  If "continuation" is 0, the
-// new bytes begin a fresh parse, which resets the pads state.
-// Returns PADS_RET_OK or PADS_RET_ERR.
-int PADS_INPUT_BUF(char *buf, size_t buf_len, int expect_new_header) {
-  if (expect_new_header) {
-    global_num_bytes_parsed = 0;
+// see documentation in pads_gigascope.h
+int PADS_INPUT_BUF(char *buf, size_t buf_len, int continuation, int fuzzy_boundary) {
+  global_fuzzy_boundary              = fuzzy_boundary;
+  global_bytes_parsed_current_input  = 0;
+  if (continuation == 0) {
     PADS_RESET_HEADER;
   }
   if (!(global_io_in = sfnew(global_io_in, (Void_t*)buf, buf_len, -1, SF_STRING|SF_READ))) {
@@ -111,6 +115,7 @@ int PADS_INPUT_BUF(char *buf, size_t buf_len, int expect_new_header) {
   return PADS_RET_OK;
 }
 
+// see documentation in pads_gigascope.h
 int PADS_CLEANUP() {
   if (P_ERR == P_io_close(global_pads)) {
     error(0, "*** P_io_close failed ***");
@@ -142,30 +147,21 @@ int PADS_CLEANUP() {
   return PADS_RET_OK;
 }
 
-// PADS_NEXT: read the next record.
-//
-// Returns one of three result codes:
-//   PADS_RET_OK             => successful parse, no errors
-//   PADS_RET_ERR            => entire record was read,
-//                              but there were some field-level errors
-//   PADS_RET_TOO_FEW_BYTES  => not enough bytes available to read entire record
-//
-// In addition, sets *done to one of two values:
-//    0  => there are more records to be read
-//    1  => there are no more records to be read
-//          (another PADS_INPUT_FILE or PADS_INPUT_BUF call
-//           must be used before using PADS_NEXT again).
+// see documentation in pads_gigascope.h
 int PADS_NEXT(int *done) {
   Ppos_t            bpos, epos;
   int               res = 0;
-  int               bytes_parsed;
   Perror_t          read_error;
 
   *done = 0;
   if (P_io_at_eof(global_pads)) {
-    //error(2, "<note>PADS : stopping due to EOF, returning PADS_RET_TOO_FEW_BYTES, *done = 1</note>");
+    if (global_fuzzy_boundary) {
+      //error(2, "<note>PADS : EOF on entry and fuzzy_boundary, returning PADS_RET_NEED_MORE_BYTES, *done = 0</note>");
+      return PADS_RET_NEED_MORE_BYTES;
+    }
+    //error(2, "<note>PADS : stopping due to EOF, NOT fuzzy_boundary, returning PADS_RET_ERR, *done = 1</note>");
     *done = 1;
-    return PADS_RET_TOO_FEW_BYTES;
+    return PADS_RET_ERR;
   }
   if (MAX_RECS && ++global_num_recs > MAX_RECS) {
     //error(2, "<note>PADS : stopping due to MAX_RECS, returning PADS_RET_ERR, *done = 1</note>");
@@ -177,13 +173,12 @@ int PADS_NEXT(int *done) {
   if (PADS_DO_READ_HEADER) {
     P_io_getPos(global_pads, &bpos, 0);
     read_error = PADS_HDR_TY(_read)(global_pads, &global_hdr_m, EXTRA_HDR_READ_ARGS &global_hdr_pd, &global_hdr);
-    P_io_getPos(global_pads, &epos, 0);
-    bytes_parsed = epos.offset - bpos.offset;
-    if (hdr_too_few_bytes()) {
-      //error(2, "<note>PADS header read: too few bytes, returning PADS_RET_TOO_FEW_BYTES, *done = 1</note>");
-      *done = 1;
-      return PADS_RET_TOO_FEW_BYTES;
+    if (P_io_at_eof(global_pads) && global_fuzzy_boundary) {
+      //error(2, "<note>PADS : EOF after header read and fuzzy_boundary, returning PADS_RET_NEED_MORE_BYTES, *done = 0</note>");
+      return PADS_RET_NEED_MORE_BYTES;
     }
+    P_io_getPos(global_pads, &epos, 0);
+    global_bytes_parsed_current_input += (epos.offset - bpos.offset);
     if (read_error != P_OK) {
       //error(2, "<note>PADS header read: error, returning PADS_RET_ERR, *done = 1</note>");
       *done = 1;
@@ -191,20 +186,18 @@ int PADS_NEXT(int *done) {
     } else {
       //error(2, "<note>PADS header read: OK</note>");
     }
-    global_num_bytes_parsed += bytes_parsed;
     PADS_HEADER_READ;
   }
 #endif /* PADS_HDR_TY */
 
   P_io_getPos(global_pads, &bpos, 0);
   read_error = PADS_TY(_read)(global_pads, &global_rec_m, EXTRA_READ_ARGS &global_rec_pd, &global_rec);
-  P_io_getPos(global_pads, &epos, 0);
-  bytes_parsed = epos.offset - bpos.offset;
-  if (rec_too_few_bytes()) {
-    //error(2, "<note>PADS rec read: too few bytes, returning PADS_RET_TOO_FEW_BYTES, *done = 1</note>");
-    *done = 1;
-    return PADS_RET_TOO_FEW_BYTES;
+  if (P_io_at_eof(global_pads) && global_fuzzy_boundary) {
+    //error(2, "<note>PADS : EOF after rec read and fuzzy_boundary, returning PADS_RET_NEED_MORE_BYTES, *done = 0</note>");
+    return PADS_RET_NEED_MORE_BYTES;
   }
+  P_io_getPos(global_pads, &epos, 0);
+  global_bytes_parsed_current_input += (epos.offset - bpos.offset);
   if (read_error != P_OK) {
     //error(2, "<note>PADS rec read: error, returning PADS_RET_ERR, *done = 0</note>");
     res = PADS_RET_ERR;
@@ -212,10 +205,10 @@ int PADS_NEXT(int *done) {
     //error(2, "<note>PADS rec read: OK</note>");
   }
   PADS_REC_READ;
-  global_num_bytes_parsed += bytes_parsed;
   return res;
 }
 
-int PADS_NUM_BYTES_PARSED() {
-  return global_num_bytes_parsed;
+// see documentation in pads_gigascope.h
+int PADS_BYTES_PARSED_CURRENT_INPUT() {
+  return global_bytes_parsed_current_input;
 }

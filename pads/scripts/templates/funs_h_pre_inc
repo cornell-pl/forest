@@ -6,4 +6,3 @@
 #include "packet.h"
 #include "lfta/rts_string.h"
 
-int rec_too_few_bytes();

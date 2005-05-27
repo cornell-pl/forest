@@ -11,11 +11,9 @@ Transform Schema : TyDecl -> IO;
 Schema(Pstruct =HDR_TYPE=)
 Begin
  Each:  ty f -> "HDR_^PickMacro(^ty)(^Ty(^ty), ^f)\n"
- Post:  -> "HDR_TOO_FEW_BYTES(^pLAST)\n"
 End;
 
 Schema(Pstruct =REC_TYPE=)
 Begin
  Each:  ty f -> "REC_^PickMacro(^ty)(^Ty(^ty), ^f)\n"
- Post:  -> "REC_TOO_FEW_BYTES(^pLAST)\n"
 End;

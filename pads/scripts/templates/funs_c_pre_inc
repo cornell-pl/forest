@@ -51,6 +51,6 @@ PADS_HDR_TY( )   global_hdr;
 PADS_HDR_TY(_pd) global_hdr_pd;
 PADS_HDR_TY(_m)  global_hdr_m;
 #endif
-Puint64          global_num_recs         = 0;
-Puint64          global_num_bytes_parsed = 0;
-
+Puint64          global_num_recs                   = 0;
+Puint64          global_bytes_parsed_current_input = 0;
+int              global_fuzzy_boundary             = 0;
