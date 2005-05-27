@@ -1,3 +1,66 @@
+5/27/05
+
+More Principles
+===============
+3. User is allowed to write any value including no-val, whose default
+   pd always contains an error.  (User always writes down values; and
+   we always construct parse-descriptors).
+
+Type Deconstructor Patterns
+===========================
+
+Pstruct
+
+  case y : Pstruct of
+    { foo : Pint = <foo,foo_pd> (* foo, foo-pd in scope *)
+      bar : T3   = <bar,bar_pd>
+    }
+    
+Punion
+
+  case x : Punion of
+      i : Pint = <i,i_pd> =>
+    | b : Pbool = <b, b_pd> =>
+
+Popt
+
+  case z : Popt of
+      None =>
+    | Some TypePat => 
+
+Parray 
+
+  Deconstruct arrays into lists of values, a separator and a
+  terminator.  Write recursive functions to transform elements in
+  list; then construct new array from new list, new separator, new
+  terminator.
+
+  rec fun listmap (f, l) = 
+    case l : T Plist of
+      Nil => Nil
+    | Cons(<x, x_pd>, rest) => Cons (f x, listmap f rest)
+
+  rec fun arraymap (f, a) = 
+    case a of 
+    (list, sep, term) => 
+      if a.pd.err != OK then ???raise error???
+      else let l' = listmap(f, l) in 
+        l' Parray (',', '\n')
+    
+   Some functions over lists should be built-in.
+
+Pds
+
+  { errcode = ErrPat
+    span = SpanPat
+    nerr = IntegerPat
+  } 
+
+  ErrPat ::= OK | Panic | Err
+
+
+TypePat 
+  
 5/20/05
 
 Principles
@@ -10,13 +73,22 @@ Principles
 5. Don't want users to have to do low-level memory management.
    Also, should be able to manipulate strings at a high-level of abstraction.
 
-6. Preserve metadata-data relationship. In particular, keep track of source of errors even under transform. E.g. if we combine two error fields, how do we record where the new error came from?
+6. Preserve metadata-data relationship. In particular, keep track of
+   source of errors even under transform. E.g. if we combine two error
+   fields, how do we record where the new error came from?
+
+   This principle is dictated by the Canonical-forms Lemma:
+   if { x : T | P(x) } 
+   then <v_rep, v_parse> s.t. if P(v_rep) and v_rep : T then v_parse = OK
+
 
 7. Separate language into destructors and constructors.
 
 8. Base X-lang design on IPADS.
 
-9. In pattern matching, support pattern matching on values and types. Value names can be used in value-expressions and type names can be used in type expressions.
+9. In pattern matching, support pattern matching on values and
+   types. Value names can be used in value-expressions and type names
+   can be used in type expressions.
 
   
 Issues 
@@ -24,7 +96,10 @@ Issues
 
 Implementation Issues
 ----------------------
-o Constraint language and transform language have to be in sync - if constr. language is C but Xform language is ML, how do they work together?
+
+o Constraint language and transform language have to be in sync - if
+  constr. language is C but Xform language is ML, how do they work
+  together?
 
 o How do we use the generated C parsing libraries?
 
@@ -41,17 +116,41 @@ match arr with
  e : eTy [sTy; exp, tTy] =>
  f(e) : ... (using names in type above).
 
-f represents a function to apply to all elements e, as in map. We have more work to do here. The key point is that the pattern-matching elimination form of the array allows you to bind both the value and type portions of the array to names. Then, the value names can be used as usual and the type-related names can be used in a type annotation on the right-hand side.
+f represents a function to apply to all elements e, as in map. We have
+more work to do here. The key point is that the pattern-matching
+elimination form of the array allows you to bind both the value and
+type portions of the array to names. Then, the value names can be used
+as usual and the type-related names can be used in a type annotation
+on the right-hand side.
 
-We've decided to based the design of the transformation language on the syntax/structure of IPADS, for simplicity. Once that is accomplished, we will have to decide whether to come up with a new syntax that's appropriate to PADS itself, whether to modify the PADS syntax to bring it closer the IPADS syntax, or whether to do some combination of the two.
+We've decided to based the design of the transformation language on
+the syntax/structure of IPADS, for simplicity. Once that is
+accomplished, we will have to decide whether to come up with a new
+syntax that's appropriate to PADS itself, whether to modify the PADS
+syntax to bring it closer the IPADS syntax, or whether to do some
+combination of the two.
 
-What is the target language of the transformation language? If we don't compile into C, how do we interface with existing PADS? we can't redo entire pads infrastructure. What are performance issues of interfacing C and ML?
+What is the target language of the transformation language? If we
+don't compile into C, how do we interface with existing PADS? we can't
+redo entire pads infrastructure. What are performance issues of
+interfacing C and ML?
 
-Can we separate code in compiler that deals with constraint expressions into its own module that could be binding-dependent? Eg. if constr. lang. is subset of c, C-binding module would just return the expr. while ML-binding module would compile it into ML code (if possible), etc.
+Can we separate code in compiler that deals with constraint
+expressions into its own module that could be binding-dependent?
+Eg. if constr. lang. is subset of c, C-binding module would just
+return the expr. while ML-binding module would compile it into ML code
+(if possible), etc.
 
-Think about optimization of transforms - merge into parsing to avoid separate pass. Particularly for streaming, don't want to parse then transform but do it all together.
+Think about optimization of transforms - merge into parsing to avoid
+separate pass. Particularly for streaming, don't want to parse then
+transform but do it all together.
 
-For surface language (i.e. not the core X-lang. we're working on now), we'd like user to be able to ignore error cases and have default code handle. For pieces that depend on error data, should be able to mark them themselves as error. But, want some way to know that the error came from dependency on other error, so want some form of error-source tracking.
+For surface language (i.e. not the core X-lang. we're working on now),
+we'd like user to be able to ignore error cases and have default code
+handle. For pieces that depend on error data, should be able to mark
+them themselves as error. But, want some way to know that the error
+came from dependency on other error, so want some form of error-source
+tracking.
 
 5/17/05
 
