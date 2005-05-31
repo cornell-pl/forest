@@ -1,0 +1,101 @@
+\subsection{Overview of Planned Research and Collaboration}
+\label{ssec:sow}
+
+The expected results from this project are: 
+(1) a general framework for accurately specifying, composing and 
+    verifying higher-level properties for low-level software; 
+(2) a prototype implementation of certifying compiler for the Microsoft Common
+Intermediate Language (CIL) and
+    (together with Intel\footnote{
+Intel Labs has an ``Open Runtime Platform'' project, one component
+of which is
+an open-source research JIT compiler for the Microsoft Common Intermediate
+Language
+interface.  We are now beginning a collaboration with
+researchers in this project to make this JIT ``type-preserving'' so
+that it can generate proof-carrying code.  Intel plans to publish
+all its results and make all the source code available
+under a BSD-style open-source license.  
+All of our own work will be unrestricted
+by proprietary licenses.}) 
+a realistic industrial-strength 
+    certifying JIT compiler for CIL; and
+(3) a set of general recipes for writing certified libraries.
+% and a type-safe dynamic linker.
+We divide our work into the following three areas:
+%
+{\renewcommand{\labelenumi}{\bf\theenumi.}
+\begin{enumerate} \itemsep 0pt
+\item {\bf High-level specifications for low-level software.} 
+Work in this area focuses on basic research. Our goal is to tackle the
+fundamental problem in constructing high-assurance software
+components, i.e., how to accurately specify, compose, and verify
+high-level specifications for low-level programs.
+We will work on {\bf{}Logic-based type systems (LTS)} at Yale and Princeton
+to specify and verify low-level 
+      constructs such as stack allocation, mutable recursive
+      data structures, exception handling, data layout 
+      with alignment and flexible tagging, 
+      and array-bounds checking elimination.
+We will extend the current {\bf{}FPCC infrastructure} at Princeton
+ to support new and more
+      powerful type systems, develop semantic models for LTS, and build a
+      highly efficient FPCC verifier.
+We will develop 
+{\bf{}LTS/FPCC interface}
+technologies for translating compiler intermediate languages
+annotated with LTS types into foundational proof-carrying code.
+
+\item{\bf High-assurance virtual machine.}
+Work in this area focuses on the technology transfer of results from
+Part 1 into realistic CLR implementations. We plan to extend our
+FLINT certifying compiler to support Microsoft Common Intermediate 
+Language. We'll also work with people at Intel Labs, 
+advising them on design of low-level intermediate representations 
+and type systems to use in their JIT compilers.  
+%
+At Yale we'll develop a prototype 
+certifying {\bf FLINT/CIL} compiler that compiles CIL bytecodes into the
+      logic-based typed assembly language (which uses LTS developed in
+      Part 1).  
+At Princeton we'll 
+      develop a prototype {\bf CIL PCC} generator that translates FLINT/CIL 
+      assembly code into typed machine code. 
+And we'll all work with Intel Labs
+      to transfer our technologies developed under our prototype
+      implementation into realistic industrial-strength 
+{\bf Certifying JIT compilers}. 
+%
+\item{\bf Certified libraries with application-specific 
+           properties.}
+Large software systems often have very specific rules and constraints. 
+To achieve seamless interoperability, we must specify
+and verify these advanced system properties. 
+At Princeton and Yale we'll
+      develop technologies for specifying, composing, and
+      verifying various kinds of {\bf{}memory management APIs}  
+      (e.g., 
+      reference counting, garbage collection, region-based memory  
+      management).
+\ignore{We'll also
+      develop technologies for {\bf type-safe dynamic linking},
+build a set of libraries for enforcing consistent
+      {\bf metadata protocols and type-safe reflection},
+and develop the basic methodologies for building libraries that
+      enforce {\bf 
+%advanced security protocols and 
+accurate resource usage}.
+}%
+\end{enumerate}}
+%
+\noindent{}We give a detailed description for each of these three
+areas in Sections~\ref{ssec:hlspec}--\ref{ssec:certapi}. 
+We then summarize the broader impact (see Section~\ref{ssec:impact}) 
+and compare our work with other related research 
+(see Section~\ref{ssec:related}). Finally we present the PIs' results 
+from prior NSF supported grants (see Section~\ref{ssec:results}).
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "proposal"
+%%% End: 
