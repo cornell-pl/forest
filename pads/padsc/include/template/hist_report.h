@@ -31,7 +31,7 @@
 #endif 
 
 #ifndef INIT_scale
-#define INIT_scale INF 
+#define INIT_scale 100 
 #endif
 
 #ifndef EXTRA_READ_ARGS
@@ -83,6 +83,8 @@ int main(int argc, char** argv) {
   default_hist.n = INIT_n;
   default_hist.e = INIT_e;
   default_hist.scale = INIT_scale;
+  default_hist.toFloat = 0;
+  default_hist.fromFloat = 0;
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;

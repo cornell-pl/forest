@@ -1,6 +1,10 @@
 Precord Pstruct entry_t {
-       Pint64 foo;
-       '|';
-       Pchar c;			
+			Pip ip;
+			'|';
+			Pstring(:'|':) str;
+			'|';
+			Pint16 foo;
+			'|';
+			Pchar c;			
 } 
  

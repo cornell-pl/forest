@@ -5,6 +5,7 @@
 \kw{int} main(\kw{int} argc, \kw{char}** argv) \{
   P\_t                   *pads;
   Pio\_disc\_t           *io\_disc;
+  P\_hist                default_hist;
   entry\_t               rep;
   entry\_t\_pd           pd;
   entry\_t\_m            mask;
@@ -24,6 +25,9 @@
   \}
 \mbox{}
   entry\_t\_hist\_init(pads, &h);
+  default\_hist.toFloat = 0;
+  default\_hist.fromFloat = 0;
+  entry\_t\_hist\_setPara(pads, &h, &default_hist);
   \kw{while} (!P\_io\_at\_eof(pads)) \{
     entry\_t\_read(pads, &mask, &pd, &rep);
     entry\_t\_hist\_add(pads, &h, &pd, &rep);

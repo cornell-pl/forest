@@ -1,9 +1,9 @@
 \begin{code}
-Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}init~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
-Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}setConv~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h,entry\symbol{95}t\symbol{95}toFloat\symbol{95}fn~to,entry\symbol{95}t\symbol{95}fromFloat\symbol{95}fn~from);\\
-Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}reset~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
-Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}cleanup~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
-Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}add~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h,Pbase\symbol{95}pd~*pd,entry\symbol{95}t~*rep);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}init~~~~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}setPara~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h,P\symbol{95}hist~*d\symbol{95}hist);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}reset~~~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}cleanup~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}add~~~~~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h,Pbase\symbol{95}pd~*pd,entry\symbol{95}t~*rep);\\
 Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}report2io~(P\symbol{95}t~*pads,Sfio\symbol{95}t~*outstr,entry\symbol{95}t\symbol{95}hist~*h);\\
-Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}report~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}report~~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
 \end{code}

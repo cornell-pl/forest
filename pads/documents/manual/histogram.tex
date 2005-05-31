@@ -52,7 +52,7 @@ every 500 values seen in the data source.
 for a \pads{} type.
 \begin{figure}
 \inputCode{hand_code/hist-declare}
-\caption{Histogram functions generated for the \texttt{entry\_t}  type.}
+\caption{Histogram functions generated for the \texttt{entry\_t} type.}
 \label{figure:histogram}
 \end{figure}
 %
@@ -61,8 +61,10 @@ These functions have the following behaviors:
 \item[\cd{entry\_t\_hist\_init}] Initializes histogram data
   structure. This function must be called before any data can be added
   to the histogram.
-\item[\cd{entry\_t\_hist\_setConv}] Sets functions in histogram data
-  structure, mapping between \cd{Pfloat64} type and \cd{entry_t} type. 
+\item[\cd{entry\_t\_hist\_setPara}] Customizes histogram data
+  structure. For the two conversion functions (specified below), user
+  needs to set the corresponding fields in the template program. This
+  function must be called to make any customization effected.  
 \item[\cd{entry\_t\_hist\_reset}] Reinitializes histogram data
   structure. This function can be used to set any point of the data
   source as the start point of a new run. But it can't be used to 
@@ -99,22 +101,24 @@ which contains:
   for histogram to summarize. If the number of values in the data
   source exceeds \cd{INIT\_N}, histograms will be built on each
   \cd{INIT\_N} data values respectively, until the end of data
-  source is reached. 
+  source is reached. The default value is 1024.
 
 \item[\cd{INIT\_B}] is a \cd{Puint32} denoting the number of buckets
   in final histogram. As \cd{INIT\_B} increases, accuracy of final
-  histogram approximation is increased, while more time and space is consumed.
+  histogram approximation is increased, while more time and space is
+  consumed. The default value is 10.
 
 \item[\cd{INIT\_M}] is a \cd{Pint64} denoting an upper bound of data
   values in data source. Time consumed increases in poly-logrithm of
   \cd{INIT\_M}, so \cd{INIT\_M} can be set very large if little about
-  data values in data source is known.
+  data values in data source is known. The default value is $2^{20}$.
 
 \item[\cd{INIT\_ISE}] is a \cd{Pint8} denoting whether buckets in the final
   histogram are required to be of the same width. If \cd{INIT\_ISE} is
   set to be non-zero, all buckets have equal width. In this case,
   the time needed is in linear-\cd{INIT\_N}, and only constant space will
-  be used. However, the result histogram will have less accuracy.
+  be used. However, the result histogram will have less accuracy. The
+  default value is 1.
 
 \item[\cd{INIT\_ISO}] is a \cd{Pint8} denoting whether final histogram
   is required to be optimal or not. This parameter is valid only
@@ -143,25 +147,28 @@ which contains:
   not affect the final result. For example, if the data source can
   take values up to \cd{64} bits, the overall \cd{SSE} could need
   as many as \cd{128} bits, which exceeds the representation limit of
-  \pads{}. In this case, \cd{INIT\_scale} is needed.        
+  \pads{}. In this case, \cd{INIT\_scale} is needed. The default value
+  is 100.       
 
 \item[\cd{entry\_t\_toFloat}] is a function pointer, taking
   \cd{entry\_t} as input parameter, and returning corresponding
   \cd{Pfloat64}. Histograms will handle \cd{Pfloat64} type data value 
   only. Any type with a well-defined conversion function to
   \cd{Pfloat64} is considered as a meaningful type, and could be summarized
-  correctly by histograms. By default, all base types in \pads{} have
-  conversion functions to \cd{Pfloat64}. And users are allowed write their
-  own conversion functions, and use \cd{entry_t_hist_setConv} function
-  to set them.
+  correctly by histograms. By default, only \cd{integer}, \cd{float} and \cd{char} in \pads{} have
+  meaningful conversion functions to \cd{Pfloat64}. Users are allowed write their
+  own conversion functions, and use \cd{entry_t_hist_setPara} function
+  to set them. If zero is assigned to this pointer, those default
+  conversion functions will be used.
    
 \item[\cd{entry\_t\_fromFloat}] is a function pointer, taking
   \cd{Pfloat64} as input parameter, and returning corresponding
   \cd{entry\_t} type. Any type without a well-defined conversion
   function from \cd{Pfloat64} may not be printed correctly. By
-  default, all base types other than \cd{Pstring} in \pads{} have
-  conversion functions from \cd{Pfloat64}. And users are allowed to write their
-  own conversion functions, and use \cd{entry_t_hist_setConv} function
-  to set them.
+  default, only \cd{integer}, \cd{float} and \cd{char} in \pads{} have
+  meaningful conversion functions from \cd{Pfloat64}. Users are allowed to write their
+  own conversion functions, and use \cd{entry_t_hist_setPara} function
+  to set them. If zero is assigned to this pointer, those default
+  conversion functions will be used.
 
 \end{description}

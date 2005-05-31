@@ -6,122 +6,142 @@
 #include "pads-internal.h"
 
 /* Default mapping functions, can be overwritten by users */
-Pfloat64 Pint_to     (Pint64 i)   { return (Pfloat64)i; }
-Pint64   Pint_from   (Pfloat64 f) { return (Pint64)f; }
-Pfloat64 Pfloat_to   (Pfloat64 f) { return f; }
-Pfloat64 Pfloat_from (Pfloat64 f) { return f; }
-Pfloat64 Pchar_to    (Pchar c)    { return Pint_to((Puint8)c); }
-Pchar    Pchar_from  (Pfloat64 f) { return (Pchar)(Pint_from(f)); }
-Pfloat64 Pstr_to     (Pstring s)  { return Pstring2float64(&s); }
-Pstring  Pstr_from   (Pfloat64 f) { 
-  Pstring s;
-  s.str = "non defined.";
-  s.len = 12;
-  return s;
-}
+Perror_t Pint8_to        (Pint8 *i, Pfloat64 *f)      { *f = (Pfloat64)(*i); return P_OK; }
+Perror_t Pint8_from      (Pfloat64 f, Pint8 *v)       { *v = (Pint8)f; return P_OK; }
+Perror_t Pint16_to       (Pint16 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+Perror_t Pint16_from     (Pfloat64 f, Pint16 *v)      { *v = (Pint16)f; return P_OK; }
+Perror_t Pint32_to       (Pint32 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+Perror_t Pint32_from     (Pfloat64 f, Pint32 *v)      { *v = (Pint32)f; return P_OK; }
+Perror_t Pint64_to       (Pint64 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+Perror_t Pint64_from     (Pfloat64 f, Pint64 *v)      { *v = (Pint64)f; return P_OK; }
+Perror_t Puint8_to       (Puint8 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+Perror_t Puint8_from     (Pfloat64 f, Puint8 *v)      { *v = (Puint8)f; return P_OK; }
+Perror_t Puint16_to      (Puint16 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
+Perror_t Puint16_from    (Pfloat64 f, Puint16 *v)     { *v = (Puint16)f; return P_OK; }
+Perror_t Puint32_to      (Puint32 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
+Perror_t Puint32_from    (Pfloat64 f, Puint32 *v)     { *v = (Puint32)f; return P_OK; }
+Perror_t Puint64_to      (Puint64 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
+Perror_t Puint64_from    (Pfloat64 f, Puint64 *v)     { *v = (Puint64)f; return P_OK; }
+Perror_t Pfloat32_to     (Pfloat32 *i, Pfloat64 *o)   { *o = (Pfloat64)(*i); return P_OK; }
+Perror_t Pfloat32_from   (Pfloat64 i, Pfloat32 *o)    { *o = (Pfloat32)i; return P_OK; }
+Perror_t Pfloat64_to     (Pfloat64 *i, Pfloat64 *o)   { *o = *i; return P_OK; }
+Perror_t Pfloat64_from   (Pfloat64 i, Pfloat64 *o)    { *o = i; return P_OK; }
+Perror_t Pchar_to        (Pchar *c, Pfloat64 *f)      { *f = (Pfloat64)((Puint8)(*c)); return P_OK; }
+Perror_t Pchar_from      (Pfloat64 f, Pchar *c)       { *c = (Pchar)((Puint8)f); return P_OK; }
+Perror_t Pstring_to      (Pstring *s, Pfloat64 *f)    { *f = 0; return P_OK; }
+Perror_t Pstring_from    (Pfloat64 f, Pstring *s)     { s->str = "non defined."; s->len = 12; return P_OK; }
+Perror_t Pip_to          (Pip *i, Pfloat64 *f)        { *f = 0; return P_OK; }
+Perror_t Pip_from        (Pfloat64 f, Pip *i)         { *i = 0; return P_OK; }
+Perror_t Ptimestamp_to   (Ptimestamp *t, Pfloat64 *f) { *f = 0; return P_OK; }
+Perror_t Ptimestamp_from (Pfloat64 f, Ptimestamp *t)  { *t = 0; return P_OK; }
+Perror_t Ptime_to        (Ptime *t, Pfloat64 *f)      { *f = 0; return P_OK; }
+Perror_t Ptime_from      (Pfloat64 f, Ptime *t)       { *t = 0; return P_OK; }
+Perror_t Pdate_to        (Pdate *d, Pfloat64 *f)      { *f = 0; return P_OK; }
+Perror_t Pdate_from      (Pfloat64 f, Pdate *d)       { *d = 0; return P_OK; }
 
 /* Begin Macro */
-#define TYPE_HIST_GEN(type, class, fmt) \
+#define TYPE_HIST_GEN(type, fmt) \
 \
 Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   Pint32 i; \
   Pint64 adj; \
 \
   /* Initialize */ \
-  h->his_gen.N = 16; \
-  h->his_gen.B = 2; \
-  h->his_gen.M = 100; \
-  h->his_gen.isE = 0; \
-  h->his_gen.isO = 1; \
-  h->his_gen.n = 2; \
-  h->his_gen.e = 1; \
-  h->his_gen.scale = 1; \
-  h->toFloat = class ## _to; \
-  h->fromFloat = class ## _from; \
-  h->his_gen.ind = 0; \
-  h->his_gen.result = malloc(h->his_gen.B * sizeof(struct bucket)); \
-  if (h->his_gen.result == (struct bucket*)0) exit(-1); \
-  if (h->his_gen.isE != 0) { \
+  h->N = 16; \
+  h->B = 2; \
+  h->M = 100; \
+  h->isE = 0; \
+  h->isO = 0; \
+  h->n = 2; \
+  h->e = 1; \
+  h->scale = 1; \
+  h->toFloat = (P_toFloat_fn) type ## _to; \
+  h->fromFloat = (P_fromFloat_fn) type ## _from; \
+  h->ind = 0; \
+  h->result = malloc(h->B * sizeof(struct bucket)); \
+  if (h->result == (struct bucket*)0) exit(-1); \
+  if (h->isE != 0) { \
     /* Equally spaced */ \
-    h->his_gen.partS = 0; \
-    h->his_gen.bukI = 0; \
-    for (i = 0; i < h->his_gen.B; i++) h->his_gen.result[i].bound = ((Pint64)(h->his_gen.N / h->his_gen.B) + 1) * (i + 1) - 1; \
-    h->his_gen.result[h->his_gen.B - 1].bound = h->his_gen.N; \
+    h->partS = 0; \
+    h->bukI = 0; \
+    for (i = 0; i < h->B; i++) h->result[i].bound = ((Pint64)(h->N / h->B) + 1) * (i + 1) - 1; \
+    h->result[h->B - 1].bound = h->N; \
   } \
   else { \
-    if (h->his_gen.isO != 0) { \
+    if (h->isO != 0) { \
       /* Optimal result required */ \
-      h->his_gen.rob = malloc(h->his_gen.N * sizeof(struct bucket)); \
-      if (h->his_gen.rob == (struct bucket*)0) exit(-1); \
-      h->his_gen.robI = 0; \
+      h->rob = malloc(h->N * sizeof(struct bucket)); \
+      if (h->rob == (struct bucket*)0) exit(-1); \
+      h->robI = 0; \
     } \
     else { \
       /* Adjust dimension to be perfect power of 2. */ \
-      adj = (Pint64)((Pfloat64)log(h->his_gen.N) / (Pfloat64)log(2)); \
-      if ((Pint64)pow(2, (Pfloat64)adj) != h->his_gen.N) h->his_gen.N = (Pint64)pow(2, (Pfloat64)adj + 1); \
+      adj = (Pint64)((Pfloat64)log(h->N) / (Pfloat64)log(2)); \
+      if ((Pint64)pow(2, (Pfloat64)adj) != h->N) h->N = (Pint64)pow(2, (Pfloat64)adj + 1); \
 \
-      h->his_gen.lNumber = (Pint8)((Pfloat64)log(h->his_gen.N) / (Pfloat64)log(2));  \
-      h->his_gen.leftS = malloc(h->his_gen.lNumber * sizeof(Pfloat64)); \
-      h->his_gen.rightS = malloc(h->his_gen.lNumber * sizeof(Pfloat64)); \
-      if (h->his_gen.leftS == (Pfloat64*)0 || h->his_gen.rightS == (Pfloat64*)0) exit(-1); \
-      h->his_gen.rSize = (Pint32)((Pfloat64)(h->his_gen.B * ((Pfloat64)log(h->his_gen.N) / (Pfloat64)log(2)) * ((Pfloat64)log(h->his_gen.M) / (Pfloat64)log(2))) / h->his_gen.e); \
-      h->his_gen.top = malloc(2 * h->his_gen.rSize * sizeof(struct wave)); \
-      if (h->his_gen.top == (struct wave*)0) exit(-1); \
-      h->his_gen.topI = 0; \
-      h->his_gen.bound = malloc(3 * h->his_gen.rSize * sizeof(struct bucket)); \
-      if (h->his_gen.bound == (struct bucket*)0) exit(-1); \
-      h->his_gen.boundI = 0; \
-      h->his_gen.rob = malloc((3 * h->his_gen.rSize + 1) * sizeof(struct bucket)); \
-      if (h->his_gen.rob == (struct bucket*)0) exit(-1); \
-      h->his_gen.rob[0].bound = 0; \
-      h->his_gen.rob[0].hei = 0; \
-      h->his_gen.robI = 1; \
+      h->lNumber = (Pint8)((Pfloat64)log(h->N) / (Pfloat64)log(2));  \
+      h->leftS = malloc(h->lNumber * sizeof(Pfloat64)); \
+      h->rightS = malloc(h->lNumber * sizeof(Pfloat64)); \
+      if (h->leftS == (Pfloat64*)0 || h->rightS == (Pfloat64*)0) exit(-1); \
+      h->rSize = (Pint32)((Pfloat64)(h->B * ((Pfloat64)log(h->N) / (Pfloat64)log(2)) * ((Pfloat64)log(h->M) / (Pfloat64)log(2))) / h->e); \
+      h->top = malloc(2 * h->rSize * sizeof(struct wave)); \
+      if (h->top == (struct wave*)0) exit(-1); \
+      h->topI = 0; \
+      h->bound = malloc(3 * h->rSize * sizeof(struct bucket)); \
+      if (h->bound == (struct bucket*)0) exit(-1); \
+      h->boundI = 0; \
+      h->rob = malloc((3 * h->rSize + 1) * sizeof(struct bucket)); \
+      if (h->rob == (struct bucket*)0) exit(-1); \
+      h->rob[0].bound = 0; \
+      h->rob[0].hei = 0; \
+      h->robI = 1; \
     } \
   } \
   return P_OK; \
 } \
 \
-Perror_t type ## _hist_setConv (P_t *pads, type ## _hist *h, P_hist* d_hist, class ## _toFloat_fn to, class ## _fromFloat_fn from) { \
-  if (to != 0) h->toFloat = to; \
-  if (from != 0) h->fromFloat = from; \
-  h->his_gen.N = d_hist->N; \
-  h->his_gen.B = d_hist->B; \
-  h->his_gen.M = d_hist->M; \
-  h->his_gen.isE = d_hist->isE; \
-  h->his_gen.isO = d_hist->isO; \
-  h->his_gen.n = d_hist->n; \
-  h->his_gen.e = d_hist->e; \
-  h->his_gen.scale = d_hist->scale; \
+Perror_t type ## _hist_setPara (P_t *pads, type ## _hist *h, P_hist* d_hist) { \
+  if (d_hist->toFloat != 0) h->toFloat = (P_toFloat_fn) d_hist->toFloat; \
+  if (d_hist->fromFloat != 0) h->fromFloat = (P_fromFloat_fn) d_hist->fromFloat; \
+  h->N = d_hist->N; \
+  h->B = d_hist->B; \
+  if (d_hist->M < 2) d_hist->M = 2; \
+  h->M = d_hist->M; \
+  h->isE = d_hist->isE; \
+  h->isO = d_hist->isO; \
+  h->n = d_hist->n; \
+  h->e = d_hist->e; \
+  h->scale = d_hist->scale; \
   return P_OK; \
 } \
 \
 Perror_t type ## _hist_reset (P_t *pads, type ## _hist *h) { \
-  h->his_gen.ind = 0; \
-  if (h->his_gen.isE != 0) { \
+  h->ind = 0; \
+  if (h->isE != 0) { \
     /* Equally spaced */ \
-    h->his_gen.partS = 0; \
-    h->his_gen.bukI = 0; \
+    h->partS = 0; \
+    h->bukI = 0; \
   } \
   else { \
-    if (h->his_gen.isO != 0) h->his_gen.robI = 0; \
+    if (h->isO != 0) h->robI = 0; \
     else { \
-      h->his_gen.topI = 0; \
-      h->his_gen.boundI = 0; \
-      h->his_gen.robI = 1; \
+      h->topI = 0; \
+      h->boundI = 0; \
+      h->robI = 1; \
     } \
   } \
   return P_OK; \
 } \
 \
 Perror_t type ## _hist_cleanup (P_t *pads, type ## _hist *h) { \
-  free(h->his_gen.result); \
-  if (h->his_gen.isE == 0) { \
-    free(h->his_gen.rob); \
-    if (h->his_gen.isO == 0) { \
-      free(h->his_gen.leftS); \
-      free(h->his_gen.rightS); \
-      free(h->his_gen.top); \
-      free(h->his_gen.bound); \
+  free(h->result); \
+  if (h->isE == 0) { \
+    free(h->rob); \
+    if (h->isO == 0) { \
+      free(h->leftS); \
+      free(h->rightS); \
+      free(h->top); \
+      free(h->bound); \
     } \
   } \
   return P_OK; \
@@ -131,22 +151,23 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
   Pfloat64 d; \
   Perror_t res; \
 \
-  d = (*h->toFloat)((*rep)) / (Pfloat64)h->his_gen.scale; \
+  res = (*(type ## _toFloat_fn) (h->toFloat)) (rep, &d); \
+  d = d / (Pfloat64)h->scale; \
   res = P_OK; \
-  if (h->his_gen.isE != 0) res = EqualHis(&(h->his_gen), d); \
+  if (h->isE != 0) res = EqualHis(h, d); \
   else { \
-    if (h->his_gen.isO != 0) res = OptHis(&(h->his_gen), d); \
-    else res = NearOptHis(&(h->his_gen), d); \
+    if (h->isO != 0) res = OptHis(h, d); \
+    else res = NearOptHis(h, d); \
   } \
-  h->his_gen.ind++; \
+  h->ind++; \
 \
-  if (h->his_gen.ind == h->his_gen.N) { \
+  if (h->ind == h->N) { \
     /* The last element in the scope */ \
-    if (h->his_gen.isE == 0) { \
-      if (h->his_gen.isO == 0) buildRob(&(h->his_gen)); \
-      compOpt(&(h->his_gen)); \
+    if (h->isE == 0) { \
+      if (h->isO == 0) buildRob(h); \
+      compOpt(h); \
     } \
-    else EqualHis(&(h->his_gen), d); \
+    else EqualHis(h, d); \
     if(res == P_OK) res =  type ## _hist_report(pads, h); \
     if(res == P_OK) res = type ## _hist_reset(pads, h); \
   } \
@@ -157,42 +178,44 @@ Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, type ## _hist *h) {
   Perror_t res; \
   Pint64 i; \
   Pint64 tempInd; \
+  type obj; \
 \
   res = P_OK; \
-  if (h->his_gen.ind == 0) return res; \
-  if (h->his_gen.ind != h->his_gen.N) { \
+  if (h->ind == 0) return res; \
+  if (h->ind != h->N) { \
     /* Real data is less than the estimated dimension */ \
-    if (h->his_gen.isE != 0) { \
-      h->his_gen.result[h->his_gen.bukI].hei = h->his_gen.partS; \
-      h->his_gen.result[h->his_gen.bukI].bound = h->his_gen.ind; \
-      h->his_gen.bukI++; \
+    if (h->isE != 0) { \
+      h->result[h->bukI].hei = h->partS; \
+      h->result[h->bukI].bound = h->ind; \
+      h->bukI++; \
     } \
     else { \
-      if (h->his_gen.isO == 1) { \
-	h->his_gen.robI = h->his_gen.ind; \
-	h->his_gen.N = h->his_gen.ind; \
-	if (h->his_gen.B > h->his_gen.robI) h->his_gen.B = h->his_gen.robI; \
-	compOpt(&(h->his_gen)); \
+      if (h->isO == 1) { \
+	h->robI = h->ind; \
+	h->N = h->ind; \
+	if (h->B > h->robI) h->B = h->robI; \
+	compOpt(h); \
       } \
       else { \
-	tempInd = h->his_gen.ind; \
-	for (i = tempInd; i < h->his_gen.N; i++) { \
-	  res = NearOptHis(&(h->his_gen), 0); \
-          h->his_gen.ind++; \
+	tempInd = h->ind; \
+	for (i = tempInd; i < h->N; i++) { \
+	  res = NearOptHis(h, 0); \
+          h->ind++; \
         } \
-	buildRob(&(h->his_gen)); \
-	h->his_gen.ind = tempInd; \
-	compOpt(&(h->his_gen)); \
+	buildRob(h); \
+	h->ind = tempInd; \
+	compOpt(h); \
       } \
     } \
   } \
   sfprintf(outstr, "*** Histogram Result *** \n"); \
-  if (h->his_gen.isE == 0) h->his_gen.bukI = h->his_gen.B; \
-  for (i = 0; i < h->his_gen.bukI; i++) { \
+  if (h->isE == 0) h->bukI = h->B; \
+  for (i = 0; i < h->bukI; i++) { \
     if (i == 0) sfprintf(outstr, "From %d to ", 0); \
-    else sfprintf(outstr, "From %d to ", h->his_gen.result[i-1].bound); \
-    sfprintf(outstr, "%d, with height ", h->his_gen.result[i].bound - 1); \
-    sfprintf(outstr, "%" fmt ". \n", (*h->fromFloat)(h->his_gen.result[i].hei * (Pfloat64)h->his_gen.scale)); \
+    else sfprintf(outstr, "From %d to ", h->result[i-1].bound); \
+    sfprintf(outstr, "%d, with height ", h->result[i].bound - 1); \
+    res = (*(type ## _fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj); \
+    sfprintf(outstr, "%" fmt ". \n", obj); \
   } \
 \
   return res; \
@@ -208,25 +231,25 @@ Perror_t type ## _hist_report (P_t *pads, type ## _hist *h) { \
 /* END_MACRO */
 
 /* Functions defined with public access */
-TYPE_HIST_GEN(Pint8, Pint, "d");
-TYPE_HIST_GEN(Pint16, Pint, "d");
-TYPE_HIST_GEN(Pint32, Pint, "d");
-TYPE_HIST_GEN(Pint64, Pint, "d");
-TYPE_HIST_GEN(Puint8, Pint, "d");
-TYPE_HIST_GEN(Puint16, Pint, "d");
-TYPE_HIST_GEN(Puint32, Pint, "d");
-TYPE_HIST_GEN(Puint64, Pint, "d");
-TYPE_HIST_GEN(Ptimestamp, Pint, "d");
-TYPE_HIST_GEN(Pdate, Pint, "d");
-TYPE_HIST_GEN(Ptime, Pint, "d");
-TYPE_HIST_GEN(Pip, Pint, "d");
-TYPE_HIST_GEN(Pfloat32, Pfloat, "f");
-TYPE_HIST_GEN(Pfloat64, Pfloat, "f");
-TYPE_HIST_GEN(Pchar, Pchar, "c");
-TYPE_HIST_GEN(Pstring, Pstr, "s");
+TYPE_HIST_GEN (Pint8, "d");
+TYPE_HIST_GEN (Pint16, "d");
+TYPE_HIST_GEN (Pint32, "d");
+TYPE_HIST_GEN (Pint64, "d");
+TYPE_HIST_GEN (Puint8, "d");
+TYPE_HIST_GEN (Puint16, "d");
+TYPE_HIST_GEN (Puint32, "d");
+TYPE_HIST_GEN (Puint64, "d");
+TYPE_HIST_GEN (Pfloat32, "f");
+TYPE_HIST_GEN (Pfloat64, "f");
+TYPE_HIST_GEN (Pchar, "c");
+TYPE_HIST_GEN (Pstring, "s");
+TYPE_HIST_GEN (Pip, "d");
+TYPE_HIST_GEN (Ptimestamp, "d");
+TYPE_HIST_GEN (Ptime, "d");
+TYPE_HIST_GEN (Pdate, "d");
 
 /* Functions defined for private use only */ 
-Perror_t EqualHis(struct hist *h, Pfloat64 d) { 
+Perror_t EqualHis(P_hist *h, Pfloat64 d) { 
   Pint64 i;
 
   if (h->ind == h->result[h->bukI].bound || h->ind == h->N) {
@@ -246,14 +269,14 @@ Perror_t EqualHis(struct hist *h, Pfloat64 d) {
   return P_OK;
 }
 
-Perror_t OptHis(struct hist *h, double d) {
+Perror_t OptHis(P_hist *h, double d) {
   h->rob[h->ind].bound = h->ind;
   h->rob[h->ind].hei = d;
   h->robI++;
   return P_OK;
 }
 
-Perror_t NearOptHis(struct hist *h, double d) {
+Perror_t NearOptHis(P_hist *h, double d) {
   Pint8 i;
   Pint8 tempCoefI;
   Pint64 rem;
@@ -321,7 +344,7 @@ Perror_t NearOptHis(struct hist *h, double d) {
   return P_OK;
 }
 
-void buildRob(struct hist *h) {
+void buildRob(P_hist *h) {
   Pint32 i;
   Pint64 left;
   Pint64 right;
@@ -385,7 +408,7 @@ void buildRob(struct hist *h) {
   h->rob[h->robI].bound = h->N;
 }
 
-struct dpCell OptHei(struct hist *h, Pint64 s, Pint64 e) {
+struct dpCell OptHei(P_hist *h, Pint64 s, Pint64 e) {
   Pint64 len;
   Pint64 i;
   Pfloat64 hei;
@@ -439,7 +462,7 @@ struct dpCell OptHei(struct hist *h, Pint64 s, Pint64 e) {
   return temp_dp;
 }
 
-void compOpt(struct hist *h) {
+void compOpt(P_hist *h) {
   Pint64 i;
   Pint64 j;
   Pint64 k;
@@ -541,7 +564,7 @@ Pint64 partition_w(struct wave** A, Pint64 p, Pint64 r) {
   return i+1;
 }
 
-void select_w(struct wave** A, struct hist* h, Pint64 p, Pint64 r) {
+void select_w(struct wave** A, P_hist* h, Pint64 p, Pint64 r) {
   Pint64 q;
 
   if (p == r) return;
@@ -576,7 +599,7 @@ Pint64 partition_b(struct bucket** A, Pint64 p, Pint64 r) {
   return i+1;
 }
 
-Pfloat64 select_b(struct bucket** A, struct hist *h, Pint64 p, Pint64 r, Pint64 sel) {
+Pfloat64 select_b(struct bucket** A, P_hist *h, Pint64 p, Pint64 r, Pint64 sel) {
   Pint64 q;
 
   if (p == r) return (*A)[p].hei;
