@@ -275,6 +275,9 @@ struct
   val uint32Act    = "Puint32_acc"
   val uint32AccPCT = P.makeTypedefPCT "Puint32_acc"
 
+  val uint32Hist    = "Puint32_hist"
+  val uint32HistPCT = P.makeTypedefPCT "Puint32_hist"
+
   val idPCT    = P.makeTypedefPCT "PDCI_id_t"
 
   val intPCT       = P.makeTypedefPCT "Pint32"

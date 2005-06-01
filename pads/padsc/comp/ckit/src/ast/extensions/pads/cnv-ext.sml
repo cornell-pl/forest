@@ -4418,6 +4418,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
       		 val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
+		 (* Generate histogram declarations, array case *)
+		 val histEDs = Hist.genHistArray (name, baseTy, canonicalPCT, pdPCT)
+
+
 		 val galaxStructDecls = 
 		     if !(#outputXML(PInput.inputs)) andalso (lookupContainsRecord baseTy)
 		     then #1(cnvCTy (G.SmartNode.makeArrayInfoStructED(name)))
@@ -4432,6 +4436,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 @ (emitRead readEDs)
 		 @ (emitPred isFunEDs)
                  @ (emitAccum accumEDs)
+	         @ (emitHist histEDs)
                  @ (emitWrite writeFunEDs)
 		 @ (emitWrite fmtFunEDs)
                  @ (emitXML galaxEDs)
