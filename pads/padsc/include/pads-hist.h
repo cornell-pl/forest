@@ -149,192 +149,192 @@ Perror_t Pint8_hist_setPara        (P_t *pads, Pint8_hist *h, P_hist *d_hist);
 Perror_t Pint8_hist_reset          (P_t *pads, Pint8_hist *h);
 Perror_t Pint8_hist_cleanup        (P_t *pads, Pint8_hist *h);
 Perror_t Pint8_hist_add            (P_t *pads, Pint8_hist *h, Pbase_pd *pd, Pint8 *rep);
-Perror_t Pint8_hist_report2io      (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pint8_hist *h);
-Perror_t Pint8_hist_report         (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pint8_hist *h);
+Perror_t Pint8_hist_report2io      (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pint8_hist *h);
+Perror_t Pint8_hist_report         (P_t *pads, const char *prefix, const char *what, int nst, Pint8_hist *h);
 
 Perror_t Pint16_hist_init          (P_t *pads, Pint16_hist *h);
 Perror_t Pint16_hist_setPara       (P_t *pads, Pint16_hist *h, P_hist* d_hist);
 Perror_t Pint16_hist_reset         (P_t *pads, Pint16_hist *h);
 Perror_t Pint16_hist_cleanup       (P_t *pads, Pint16_hist *h);
 Perror_t Pint16_hist_add           (P_t *pads, Pint16_hist *h, Pbase_pd *pd, Pint16 *rep);
-Perror_t Pint16_hist_report2io     (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pint16_hist *h);
-Perror_t Pint16_hist_report        (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pint16_hist *h);
+Perror_t Pint16_hist_report2io     (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pint16_hist *h);
+Perror_t Pint16_hist_report        (P_t *pads, const char *prefix, const char *what, int nst, Pint16_hist *h);
 
 Perror_t Pint32_hist_init          (P_t *pads, Pint32_hist *h);
 Perror_t Pint32_hist_setPara       (P_t *pads, Pint32_hist *h, P_hist* d_hist);
 Perror_t Pint32_hist_reset         (P_t *pads, Pint32_hist *h);
 Perror_t Pint32_hist_cleanup       (P_t *pads, Pint32_hist *h);
 Perror_t Pint32_hist_add           (P_t *pads, Pint32_hist *h, Pbase_pd *pd, Pint32 *rep);
-Perror_t Pint32_hist_report2io     (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pint32_hist *h);
-Perror_t Pint32_hist_report        (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pint32_hist *h);
+Perror_t Pint32_hist_report2io     (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pint32_hist *h);
+Perror_t Pint32_hist_report        (P_t *pads, const char *prefix, const char *what, int nst, Pint32_hist *h);
 
 Perror_t Pint64_hist_init          (P_t *pads, Pint64_hist *h);
 Perror_t Pint64_hist_setPara       (P_t *pads, Pint64_hist *h, P_hist* d_hist);
 Perror_t Pint64_hist_reset         (P_t *pads, Pint64_hist *h);
 Perror_t Pint64_hist_cleanup       (P_t *pads, Pint64_hist *h);
 Perror_t Pint64_hist_add           (P_t *pads, Pint64_hist *h, Pbase_pd *pd, Pint64 *rep);
-Perror_t Pint64_hist_report2io     (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pint64_hist *h);
-Perror_t Pint64_hist_report        (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pint64_hist *h);
+Perror_t Pint64_hist_report2io     (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pint64_hist *h);
+Perror_t Pint64_hist_report        (P_t *pads, const char *prefix, const char *what, int nst, Pint64_hist *h);
 
 Perror_t Puint8_hist_init          (P_t *pads, Puint8_hist *h);
 Perror_t Puint8_hist_setPara       (P_t *pads, Puint8_hist *h, P_hist* d_hist);
 Perror_t Puint8_hist_reset         (P_t *pads, Puint8_hist *h);
 Perror_t Puint8_hist_cleanup       (P_t *pads, Puint8_hist *h);
 Perror_t Puint8_hist_add           (P_t *pads, Puint8_hist *h, Pbase_pd *pd, Puint8 *rep);
-Perror_t Puint8_hist_report2io     (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Puint8_hist *h);
-Perror_t Puint8_hist_report        (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Puint8_hist *h);
+Perror_t Puint8_hist_report2io     (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Puint8_hist *h);
+Perror_t Puint8_hist_report        (P_t *pads, const char *prefix, const char *what, int nst, Puint8_hist *h);
 
 Perror_t Puint16_hist_init         (P_t *pads, Puint16_hist *h);
 Perror_t Puint16_hist_setPara      (P_t *pads, Puint16_hist *h, P_hist* d_hist);
 Perror_t Puint16_hist_reset        (P_t *pads, Puint16_hist *h);
 Perror_t Puint16_hist_cleanup      (P_t *pads, Puint16_hist *h);
 Perror_t Puint16_hist_add          (P_t *pads, Puint16_hist *h, Pbase_pd *pd, Puint16 *rep);
-Perror_t Puint16_hist_report2io    (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Puint16_hist *h);
-Perror_t Puint16_hist_report       (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Puint16_hist *h);
+Perror_t Puint16_hist_report2io    (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Puint16_hist *h);
+Perror_t Puint16_hist_report       (P_t *pads, const char *prefix, const char *what, int nst, Puint16_hist *h);
 
 Perror_t Puint32_hist_init         (P_t *pads, Puint32_hist *h);
 Perror_t Puint32_hist_setPara      (P_t *pads, Puint32_hist *h, P_hist* d_hist);
 Perror_t Puint32_hist_reset        (P_t *pads, Puint32_hist *h);
 Perror_t Puint32_hist_cleanup      (P_t *pads, Puint32_hist *h);
 Perror_t Puint32_hist_add          (P_t *pads, Puint32_hist *h, Pbase_pd *pd, Puint32 *rep);
-Perror_t Puint32_hist_report2io    (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Puint32_hist *h);
-Perror_t Puint32_hist_report       (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Puint32_hist *h);
+Perror_t Puint32_hist_report2io    (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Puint32_hist *h);
+Perror_t Puint32_hist_report       (P_t *pads, const char *prefix, const char *what, int nst, Puint32_hist *h);
 
 Perror_t Puint64_hist_init         (P_t *pads, Puint64_hist *h);
 Perror_t Puint64_hist_setPara      (P_t *pads, Puint64_hist *h, P_hist* d_hist);
 Perror_t Puint64_hist_reset        (P_t *pads, Puint64_hist *h);
 Perror_t Puint64_hist_cleanup      (P_t *pads, Puint64_hist *h);
 Perror_t Puint64_hist_add          (P_t *pads, Puint64_hist *h, Pbase_pd *pd, Puint64 *rep);
-Perror_t Puint64_hist_report2io    (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Puint64_hist *h);
-Perror_t Puint64_hist_report       (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Puint64_hist *h);
+Perror_t Puint64_hist_report2io    (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Puint64_hist *h);
+Perror_t Puint64_hist_report       (P_t *pads, const char *prefix, const char *what, int nst, Puint64_hist *h);
 
 Perror_t Pfloat32_hist_init        (P_t *pads, Pfloat32_hist *h);
 Perror_t Pfloat32_hist_setPara     (P_t *pads, Pfloat32_hist *h, P_hist* d_hist);
 Perror_t Pfloat32_hist_reset       (P_t *pads, Pfloat32_hist *h);
 Perror_t Pfloat32_hist_cleanup     (P_t *pads, Pfloat32_hist *h);
 Perror_t Pfloat32_hist_add         (P_t *pads, Pfloat32_hist *h, Pbase_pd *pd, Pfloat32 *rep);
-Perror_t Pfloat32_hist_report2io   (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pfloat32_hist *h);
-Perror_t Pfloat32_hist_report      (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pfloat32_hist *h);
+Perror_t Pfloat32_hist_report2io   (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pfloat32_hist *h);
+Perror_t Pfloat32_hist_report      (P_t *pads, const char *prefix, const char *what, int nst, Pfloat32_hist *h);
 
 Perror_t Pfloat64_hist_init        (P_t *pads, Pfloat64_hist *h);
 Perror_t Pfloat64_hist_setPara     (P_t *pads, Pfloat64_hist *h, P_hist* d_hist);
 Perror_t Pfloat64_hist_reset       (P_t *pads, Pfloat64_hist *h);
 Perror_t Pfloat64_hist_cleanup     (P_t *pads, Pfloat64_hist *h);
 Perror_t Pfloat64_hist_add         (P_t *pads, Pfloat64_hist *h, Pbase_pd *pd, Pfloat64 *rep);
-Perror_t Pfloat64_hist_report2io   (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pfloat64_hist *h);
-Perror_t Pfloat64_hist_report      (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pfloat64_hist *h);
+Perror_t Pfloat64_hist_report2io   (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pfloat64_hist *h);
+Perror_t Pfloat64_hist_report      (P_t *pads, const char *prefix, const char *what, int nst, Pfloat64_hist *h);
 
 Perror_t Pfpoint8_hist_init        (P_t *pads, Pfpoint8_hist *h);
 Perror_t Pfpoint8_hist_setPara     (P_t *pads, Pfpoint8_hist *h, P_hist *d_hist);
 Perror_t Pfpoint8_hist_reset       (P_t *pads, Pfpoint8_hist *h);
 Perror_t Pfpoint8_hist_cleanup     (P_t *pads, Pfpoint8_hist *h);
 Perror_t Pfpoint8_hist_add         (P_t *pads, Pfpoint8_hist *h, Pbase_pd *pd, Pfpoint8 *rep);
-Perror_t Pfpoint8_hist_report2io   (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pfpoint8_hist *h);
-Perror_t Pfpoint8_hist_report      (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pfpoint8_hist *h);
+Perror_t Pfpoint8_hist_report2io   (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pfpoint8_hist *h);
+Perror_t Pfpoint8_hist_report      (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint8_hist *h);
 
 Perror_t Pfpoint16_hist_init       (P_t *pads, Pfpoint16_hist *h);
 Perror_t Pfpoint16_hist_setPara    (P_t *pads, Pfpoint16_hist *h, P_hist* d_hist);
 Perror_t Pfpoint16_hist_reset      (P_t *pads, Pfpoint16_hist *h);
 Perror_t Pfpoint16_hist_cleanup    (P_t *pads, Pfpoint16_hist *h);
 Perror_t Pfpoint16_hist_add        (P_t *pads, Pfpoint16_hist *h, Pbase_pd *pd, Pfpoint16 *rep);
-Perror_t Pfpoint16_hist_report2io  (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pfpoint16_hist *h);
-Perror_t Pfpoint16_hist_report     (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pfpoint16_hist *h);
+Perror_t Pfpoint16_hist_report2io  (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pfpoint16_hist *h);
+Perror_t Pfpoint16_hist_report     (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint16_hist *h);
 
 Perror_t Pfpoint32_hist_init       (P_t *pads, Pfpoint32_hist *h);
 Perror_t Pfpoint32_hist_setPara    (P_t *pads, Pfpoint32_hist *h, P_hist* d_hist);
 Perror_t Pfpoint32_hist_reset      (P_t *pads, Pfpoint32_hist *h);
 Perror_t Pfpoint32_hist_cleanup    (P_t *pads, Pfpoint32_hist *h);
 Perror_t Pfpoint32_hist_add        (P_t *pads, Pfpoint32_hist *h, Pbase_pd *pd, Pfpoint32 *rep);
-Perror_t Pfpoint32_hist_report2io  (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pfpoint32_hist *h);
-Perror_t Pfpoint32_hist_report     (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pfpoint32_hist *h);
+Perror_t Pfpoint32_hist_report2io  (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pfpoint32_hist *h);
+Perror_t Pfpoint32_hist_report     (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint32_hist *h);
 
 Perror_t Pfpoint64_hist_init       (P_t *pads, Pfpoint64_hist *h);
 Perror_t Pfpoint64_hist_setPara    (P_t *pads, Pfpoint64_hist *h, P_hist* d_hist);
 Perror_t Pfpoint64_hist_reset      (P_t *pads, Pfpoint64_hist *h);
 Perror_t Pfpoint64_hist_cleanup    (P_t *pads, Pfpoint64_hist *h);
 Perror_t Pfpoint64_hist_add        (P_t *pads, Pfpoint64_hist *h, Pbase_pd *pd, Pfpoint64 *rep);
-Perror_t Pfpoint64_hist_report2io  (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pfpoint64_hist *h);
-Perror_t Pfpoint64_hist_report     (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pfpoint64_hist *h);
+Perror_t Pfpoint64_hist_report2io  (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pfpoint64_hist *h);
+Perror_t Pfpoint64_hist_report     (P_t *pads, const char *prefix, const char *what, int nst, Pfpoint64_hist *h);
 
 Perror_t Pufpoint8_hist_init       (P_t *pads, Pufpoint8_hist *h);
 Perror_t Pufpoint8_hist_setPara    (P_t *pads, Pufpoint8_hist *h, P_hist* d_hist);
 Perror_t Pufpoint8_hist_reset      (P_t *pads, Pufpoint8_hist *h);
 Perror_t Pufpoint8_hist_cleanup    (P_t *pads, Pufpoint8_hist *h);
 Perror_t Pufpoint8_hist_add        (P_t *pads, Pufpoint8_hist *h, Pbase_pd *pd, Pufpoint8 *rep);
-Perror_t Pufpoint8_hist_report2io  (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pufpoint8_hist *h);
-Perror_t Pufpoint8_hist_report     (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pufpoint8_hist *h);
+Perror_t Pufpoint8_hist_report2io  (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pufpoint8_hist *h);
+Perror_t Pufpoint8_hist_report     (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint8_hist *h);
 
 Perror_t Pufpoint16_hist_init      (P_t *pads, Pufpoint16_hist *h);
 Perror_t Pufpoint16_hist_setPara   (P_t *pads, Pufpoint16_hist *h, P_hist* d_hist);
 Perror_t Pufpoint16_hist_reset     (P_t *pads, Pufpoint16_hist *h);
 Perror_t Pufpoint16_hist_cleanup   (P_t *pads, Pufpoint16_hist *h);
 Perror_t Pufpoint16_hist_add       (P_t *pads, Pufpoint16_hist *h, Pbase_pd *pd, Pufpoint16 *rep);
-Perror_t Pufpoint16_hist_report2io (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pufpoint16_hist *h);
-Perror_t Pufpoint16_hist_report    (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pufpoint16_hist *h);
+Perror_t Pufpoint16_hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pufpoint16_hist *h);
+Perror_t Pufpoint16_hist_report    (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint16_hist *h);
 
 Perror_t Pufpoint32_hist_init      (P_t *pads, Pufpoint32_hist *h);
 Perror_t Pufpoint32_hist_setPara   (P_t *pads, Pufpoint32_hist *h, P_hist* d_hist);
 Perror_t Pufpoint32_hist_reset     (P_t *pads, Pufpoint32_hist *h);
 Perror_t Pufpoint32_hist_cleanup   (P_t *pads, Pufpoint32_hist *h);
 Perror_t Pufpoint32_hist_add       (P_t *pads, Pufpoint32_hist *h, Pbase_pd *pd, Pufpoint32 *rep);
-Perror_t Pufpoint32_hist_report2io (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pufpoint32_hist *h);
-Perror_t Pufpoint32_hist_report    (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pufpoint32_hist *h);
+Perror_t Pufpoint32_hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pufpoint32_hist *h);
+Perror_t Pufpoint32_hist_report    (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint32_hist *h);
 
 Perror_t Pufpoint64_hist_init      (P_t *pads, Pufpoint64_hist *h);
 Perror_t Pufpoint64_hist_setPara   (P_t *pads, Pufpoint64_hist *h, P_hist* d_hist);
 Perror_t Pufpoint64_hist_reset     (P_t *pads, Pufpoint64_hist *h);
 Perror_t Pufpoint64_hist_cleanup   (P_t *pads, Pufpoint64_hist *h);
 Perror_t Pufpoint64_hist_add       (P_t *pads, Pufpoint64_hist *h, Pbase_pd *pd, Pufpoint64 *rep);
-Perror_t Pufpoint64_hist_report2io (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pufpoint64_hist *h);
-Perror_t Pufpoint64_hist_report    (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pufpoint64_hist *h);
+Perror_t Pufpoint64_hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pufpoint64_hist *h);
+Perror_t Pufpoint64_hist_report    (P_t *pads, const char *prefix, const char *what, int nst, Pufpoint64_hist *h);
 
 Perror_t Pchar_hist_init           (P_t *pads, Pchar_hist *h);
 Perror_t Pchar_hist_setPara        (P_t *pads, Pchar_hist *h, P_hist* d_hist);
 Perror_t Pchar_hist_reset          (P_t *pads, Pchar_hist *h);
 Perror_t Pchar_hist_cleanup        (P_t *pads, Pchar_hist *h);
 Perror_t Pchar_hist_add            (P_t *pads, Pchar_hist *h, Pbase_pd *pd, Pchar *rep);
-Perror_t Pchar_hist_report2io      (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pchar_hist *h);
-Perror_t Pchar_hist_report         (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pchar_hist *h);
+Perror_t Pchar_hist_report2io      (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pchar_hist *h);
+Perror_t Pchar_hist_report         (P_t *pads, const char *prefix, const char *what, int nst, Pchar_hist *h);
 
 Perror_t Pstring_hist_init         (P_t *pads, Pstring_hist *h);
 Perror_t Pstring_hist_setPara      (P_t *pads, Pstring_hist *h, P_hist* d_hist);
 Perror_t Pstring_hist_reset        (P_t *pads, Pstring_hist *h);
 Perror_t Pstring_hist_cleanup      (P_t *pads, Pstring_hist *h);
 Perror_t Pstring_hist_add          (P_t *pads, Pstring_hist *h, Pbase_pd *pd, Pstring *rep);
-Perror_t Pstring_hist_report2io    (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pstring_hist *h);
-Perror_t Pstring_hist_report       (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pstring_hist *h);
+Perror_t Pstring_hist_report2io    (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pstring_hist *h);
+Perror_t Pstring_hist_report       (P_t *pads, const char *prefix, const char *what, int nst, Pstring_hist *h);
 
 Perror_t Pip_hist_init             (P_t *pads, Pip_hist *h);
 Perror_t Pip_hist_setPara          (P_t *pads, Pip_hist *h, P_hist* d_hist);
 Perror_t Pip_hist_reset            (P_t *pads, Pip_hist *h);
 Perror_t Pip_hist_cleanup          (P_t *pads, Pip_hist *h);
 Perror_t Pip_hist_add              (P_t *pads, Pip_hist *h, Pbase_pd *pd, Pip *rep);
-Perror_t Pip_hist_report2io        (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pip_hist *h);
-Perror_t Pip_hist_report           (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pip_hist *h);
+Perror_t Pip_hist_report2io        (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pip_hist *h);
+Perror_t Pip_hist_report           (P_t *pads, const char *prefix, const char *what, int nst, Pip_hist *h);
 
 Perror_t Ptimestamp_hist_init      (P_t *pads, Ptimestamp_hist *h);
 Perror_t Ptimestamp_hist_setPara   (P_t *pads, Ptimestamp_hist *h, P_hist* d_hist);
 Perror_t Ptimestamp_hist_reset     (P_t *pads, Ptimestamp_hist *h);
 Perror_t Ptimestamp_hist_cleanup   (P_t *pads, Ptimestamp_hist *h);
 Perror_t Ptimestamp_hist_add       (P_t *pads, Ptimestamp_hist *h, Pbase_pd *pd, Ptimestamp *rep);
-Perror_t Ptimestamp_hist_report2io (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Ptimestamp_hist *h);
-Perror_t Ptimestamp_hist_report    (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Ptimestamp_hist *h);
+Perror_t Ptimestamp_hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Ptimestamp_hist *h);
+Perror_t Ptimestamp_hist_report    (P_t *pads, const char *prefix, const char *what, int nst, Ptimestamp_hist *h);
 
 Perror_t Ptime_hist_init           (P_t *pads, Ptime_hist *h);
 Perror_t Ptime_hist_setPara        (P_t *pads, Ptime_hist *h, P_hist* d_hist);
 Perror_t Ptime_hist_reset          (P_t *pads, Ptime_hist *h);
 Perror_t Ptime_hist_cleanup        (P_t *pads, Ptime_hist *h);
 Perror_t Ptime_hist_add            (P_t *pads, Ptime_hist *h, Pbase_pd *pd, Ptime *rep);
-Perror_t Ptime_hist_report2io      (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Ptime_hist *h);
-Perror_t Ptime_hist_report         (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Ptime_hist *h);
+Perror_t Ptime_hist_report2io      (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Ptime_hist *h);
+Perror_t Ptime_hist_report         (P_t *pads, const char *prefix, const char *what, int nst, Ptime_hist *h);
 
 Perror_t Pdate_hist_init           (P_t *pads, Pdate_hist *h);
 Perror_t Pdate_hist_setPara        (P_t *pads, Pdate_hist *h, P_hist* d_hist);
 Perror_t Pdate_hist_reset          (P_t *pads, Pdate_hist *h);
 Perror_t Pdate_hist_cleanup        (P_t *pads, Pdate_hist *h);
 Perror_t Pdate_hist_add            (P_t *pads, Pdate_hist *h, Pbase_pd *pd, Pdate *rep);
-Perror_t Pdate_hist_report2io      (P_t *pads, Sfio_t *outstr, /*const char *prefix, const char *what, int nst,*/ Pdate_hist *h);
-Perror_t Pdate_hist_report         (P_t *pads, /*const char *prefix, const char *what, int nst,*/ Pdate_hist *h);
+Perror_t Pdate_hist_report2io      (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, Pdate_hist *h);
+Perror_t Pdate_hist_report         (P_t *pads, const char *prefix, const char *what, int nst, Pdate_hist *h);
 
 /* Functions defined for private use only */
 Perror_t Pint8_report      (Sfio_t *outstr, Pint8_hist *h);

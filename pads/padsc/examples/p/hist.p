@@ -1,3 +1,8 @@
+Punion last {
+	    Pchar c;
+	    Pint8 i;
+};
+
 Precord Pstruct entry_t {
 			Pdate(:'|':) date;
 			'|';
@@ -7,6 +12,6 @@ Precord Pstruct entry_t {
 			'|';
 			Pint16 foo;
 			'|';
-			Pchar c;			
+			last l;			
 } 
  

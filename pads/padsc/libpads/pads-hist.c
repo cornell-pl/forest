@@ -26,22 +26,6 @@ Perror_t Pfloat32_to     (Pfloat32 *i, Pfloat64 *o)   { *o = (Pfloat64)(*i); ret
 Perror_t Pfloat32_from   (Pfloat64 i, Pfloat32 *o)    { *o = (Pfloat32)i; return P_OK; }
 Perror_t Pfloat64_to     (Pfloat64 *i, Pfloat64 *o)   { *o = *i; return P_OK; }
 Perror_t Pfloat64_from   (Pfloat64 i, Pfloat64 *o)    { *o = i; return P_OK; }
-Perror_t Pfpoint8_to     (Pfpoint8 *i, Pfloat64 *f)   { *f = P_FPOINT2FLOAT64(*i); return P_OK; }
-Perror_t Pfpoint8_from   (Pfloat64 f, Pfpoint8 *v)    { v->denom = 100; v->num = (Pint8)(f * 100); return P_OK; }
-Perror_t Pfpoint16_to    (Pfpoint16 *i, Pfloat64 *f)  { *f = P_FPOINT2FLOAT64(*i); return P_OK; }
-Perror_t Pfpoint16_from  (Pfloat64 f, Pfpoint16 *v)   { v->denom = 100; v->num = (Pint16)(f * 100); return P_OK; }
-Perror_t Pfpoint32_to    (Pfpoint32 *i, Pfloat64 *f)  { *f = P_FPOINT2FLOAT64(*i); return P_OK; }
-Perror_t Pfpoint32_from  (Pfloat64 f, Pfpoint32 *v)   { v->denom = 100; v->num = (Pint32)(f * 100); return P_OK; }
-Perror_t Pfpoint64_to    (Pfpoint64 *i, Pfloat64 *f)  { *f = P_FPOINT2FLOAT64(*i); return P_OK; }
-Perror_t Pfpoint64_from  (Pfloat64 f, Pfpoint64 *v)   { v->denom = 100; v->num = (Pint64)(f * 100); return P_OK; }
-Perror_t Pufpoint8_to    (Pufpoint8 *i, Pfloat64 *f)  { *f = P_FPOINT2FLOAT64(*i); return P_OK; }
-Perror_t Pufpoint8_from  (Pfloat64 f, Pufpoint8 *v)   { v->denom = 100; v->num = (Puint8)(f * 100); return P_OK; }
-Perror_t Pufpoint16_to   (Pufpoint16 *i, Pfloat64 *f) { *f = P_FPOINT2FLOAT64(*i); return P_OK; }
-Perror_t Pufpoint16_from (Pfloat64 f, Pufpoint16 *v)  { v->denom = 100; v->num = (Puint16)(f * 100); return P_OK; }
-Perror_t Pufpoint32_to   (Pufpoint32 *i, Pfloat64 *f) { *f = P_FPOINT2FLOAT64(*i); return P_OK; }
-Perror_t Pufpoint32_from (Pfloat64 f, Pufpoint32 *v)  { v->denom = 100; v->num = (Puint32)(f * 100); return P_OK; }
-Perror_t Pufpoint64_to   (Pufpoint64 *i, Pfloat64 *f) { *f = P_FPOINT2FLOAT64(*i); return P_OK; }
-Perror_t Pufpoint64_from (Pfloat64 f, Pufpoint64 *v)  { v->denom = 100; v->num = (Puint64)(f * 100); return P_OK; }
 Perror_t Pchar_to        (Pchar *c, Pfloat64 *f)      { *f = (Pfloat64)((Puint8)(*c)); return P_OK; }
 Perror_t Pchar_from      (Pfloat64 f, Pchar *c)       { *c = (Pchar)((Puint8)f); return P_OK; }
 Perror_t Pstring_to      (Pstring *s, Pfloat64 *f)    { *f = 0; return P_OK; }
@@ -55,15 +39,27 @@ Perror_t Ptime_from      (Pfloat64 f, Ptime *t)       { *t = (Ptime)((Puint64)f)
 Perror_t Pdate_to        (Pdate *d, Pfloat64 *f)      { *f = (Pfloat64)((Puint64)(*d)); return P_OK; }
 Perror_t Pdate_from      (Pfloat64 f, Pdate *d)       { *d = (Pdate)((Puint64)f); return P_OK; }
 
+static const char *PDCI_hdr_strings[] = {
+  "*****************************************************************************************************\n",
+  "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n",
+  "=====================================================================================================\n",
+  "-----------------------------------------------------------------------------------------------------\n",
+  ".....................................................................................................\n",
+  "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n",
+  "+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +\n",
+  "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =\n",
+  "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n"
+};
+
 /* Begin Macro */
-#define TYPE_HIST_GEN(type) \
+#define TYPE_HIST_GEN(type, fmt) \
 \
 Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   Pint32 i; \
   Pint64 adj; \
 \
   /* Initialize */ \
-  h->N = 16; \
+  h->N = 14; \
   h->B = 2; \
   h->M = 100; \
   h->isE = 0; \
@@ -134,7 +130,7 @@ Perror_t type ## _hist_setPara (P_t *pads, type ## _hist *h, P_hist* d_hist) { \
 \
 Perror_t type ## _hist_reset (P_t *pads, type ## _hist *h) { \
   h->ind = 0; \
-  h->portion = 1; \
+  h->portion++; \
   if (h->isE != 0) { \
     /* Equally spaced */ \
     h->partS = 0; \
@@ -186,30 +182,29 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
       compOpt(h); \
     } \
     else EqualHis(h, d); \
-    if(res == P_OK) res =  type ## _hist_report(pads, h); \
-    if(res == P_OK) res = type ## _hist_reset(pads, h); \
-    h->portion++; \
+    return P_ERR; \
   } \
   return res; \
 } \
 \
-Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, type ## _hist *h) { \
+Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, type ## _hist *h) { \
   Perror_t res; \
   Pint64 i; \
   Pint64 tempInd; \
 \
+  if (!prefix || *prefix == 0) prefix = "<top>"; \
+  what = fmt; \
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
   if (h->portion == 1) { \
     /* Print header */ \
     sfprintf(outstr, "Basic Information:\n"); \
-    sfprintf(outstr, "Type: %s;    Name: %s \n", 0, 0); \
-    sfprintf(outstr, "Length: %d;    ", h->N); \
+    sfprintf(outstr, "Portion length: %d;    ", h->N); \
     sfprintf(outstr, "Number of buckets: %d \n", h->B); \
     if (h->isE != 0) sfprintf(outstr, "Equal width buckets required. \n"); \
     else{ \
       if (h->isO != 0) sfprintf(outstr, "Optimal histogram required, with norm %d \n", h->n); \
       else sfprintf(outstr, "Histogram within poly-(1+%f) times error \n", h->e); \
     } \
-    sfprintf(outstr, "+++++++++++++++++++++++++++++++++++++++++++++++ \n"); \
   } \
   res = P_OK; \
   if (h->ind == 0) return res; \
@@ -243,39 +238,31 @@ Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, type ## _hist *h) {
   return res; \
 } \
 \
-Perror_t type ## _hist_report (P_t *pads, type ## _hist *h) { \
+Perror_t type ## _hist_report (P_t *pads, const char *prefix, const char *what, int nst, type ## _hist *h) { \
   Sfio_t *tmpstr = sfstdout; \
   Perror_t res; \
-  res = type ## _hist_report2io (pads, tmpstr, h); \
+  res = type ## _hist_report2io (pads, tmpstr, prefix, what, nst, h); \
   return P_OK; \
 } 
 /* END_MACRO */
 
 /* Functions defined with public access */
-TYPE_HIST_GEN (Pint8);
-TYPE_HIST_GEN (Pint16);
-TYPE_HIST_GEN (Pint32);
-TYPE_HIST_GEN (Pint64);
-TYPE_HIST_GEN (Puint8);
-TYPE_HIST_GEN (Puint16);
-TYPE_HIST_GEN (Puint32);
-TYPE_HIST_GEN (Puint64);
-TYPE_HIST_GEN (Pfloat32);
-TYPE_HIST_GEN (Pfloat64);
-TYPE_HIST_GEN (Pfpoint8);
-TYPE_HIST_GEN (Pfpoint16);
-TYPE_HIST_GEN (Pfpoint32);
-TYPE_HIST_GEN (Pfpoint64);
-TYPE_HIST_GEN (Pufpoint8);
-TYPE_HIST_GEN (Pufpoint16);
-TYPE_HIST_GEN (Pufpoint32);
-TYPE_HIST_GEN (Pufpoint64);
-TYPE_HIST_GEN (Pchar);
-TYPE_HIST_GEN (Pstring);
-TYPE_HIST_GEN (Pip);
-TYPE_HIST_GEN (Ptimestamp);
-TYPE_HIST_GEN (Ptime);
-TYPE_HIST_GEN (Pdate);
+TYPE_HIST_GEN (Pint8, "int8");
+TYPE_HIST_GEN (Pint16, "int16");
+TYPE_HIST_GEN (Pint32, "int32");
+TYPE_HIST_GEN (Pint64, "int64");
+TYPE_HIST_GEN (Puint8, "uint8");
+TYPE_HIST_GEN (Puint16, "uint16");
+TYPE_HIST_GEN (Puint32, "uint32");
+TYPE_HIST_GEN (Puint64, "uint64");
+TYPE_HIST_GEN (Pfloat32, "float32");
+TYPE_HIST_GEN (Pfloat64, "float64");
+TYPE_HIST_GEN (Pchar, "char");
+TYPE_HIST_GEN (Pstring, "string");
+TYPE_HIST_GEN (Pip, "ip");
+TYPE_HIST_GEN (Ptimestamp, "timestamp");
+TYPE_HIST_GEN (Ptime, "time");
+TYPE_HIST_GEN (Pdate, "date");
 
 /* BEGIN_MACRO */
 #define BASIC_REPORT_GEN(type, fmt) \
@@ -284,7 +271,7 @@ Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
   Pint64 i; \
   type obj; \
 \
-  sfprintf(outstr, "Portion %d for field %s: \n", h->portion, 0); \
+  sfprintf(outstr, "Portion %d: \n", h->portion); \
   if (h->isE == 0) h->bukI = h->B; \
   for (i = 0; i < h->bukI; i++) { \
     if (i == 0) sfprintf(outstr, "From %d to ", 0); \
@@ -293,7 +280,7 @@ Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
     res = (*(type ## _fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj); \
     sfprintf(outstr, "%" fmt " \n", obj); \
   } \
-  sfprintf(outstr, "+++++++++++++++++++++++++++++++++++++++++++++++ \n"); \
+  sfprintf(outstr, "%s", PDCI_hdr_strings[2]); \
   return res; \
 } 
 /* END_MACRO */
@@ -311,43 +298,12 @@ BASIC_REPORT_GEN (Pfloat64, "f");
 BASIC_REPORT_GEN (Pchar, "c");
 BASIC_REPORT_GEN (Pstring, "s");
 
-/* BEGIN_MACRO */
-#define FPOINT_REPORT_GEN(type) \
-Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
-  Perror_t res = P_OK; \
-  Pint64 i; \
-  type obj; \
-\
-  sfprintf(outstr, "Portion %d for field %s: \n", h->portion, 0); \
-  if (h->isE == 0) h->bukI = h->B; \
-  for (i = 0; i < h->bukI; i++) { \
-    if (i == 0) sfprintf(outstr, "From %d to ", 0); \
-    else sfprintf(outstr, "From %d to ", h->result[i-1].bound); \
-    sfprintf(outstr, "%d, with height ", h->result[i].bound - 1); \
-    res = (*(type ## _fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj); \
-    sfprintf(outstr, "%d.", obj.num / obj.denom); \
-    sfprintf(outstr, "%d \n", obj.num % obj.denom * obj.denom); \
-  } \
-  sfprintf(outstr, "+++++++++++++++++++++++++++++++++++++++++++++++ \n"); \
-  return res; \
-} 
-/* END_MACRO */
-
-FPOINT_REPORT_GEN(Pfpoint8);
-FPOINT_REPORT_GEN(Pfpoint16);
-FPOINT_REPORT_GEN(Pfpoint32);
-FPOINT_REPORT_GEN(Pfpoint64);
-FPOINT_REPORT_GEN(Pufpoint8);
-FPOINT_REPORT_GEN(Pufpoint16);
-FPOINT_REPORT_GEN(Pufpoint32);
-FPOINT_REPORT_GEN(Pufpoint64);
-
 Perror_t Pip_report (Sfio_t *outstr, Pip_hist *h) {
   Perror_t res = P_OK;
   Pint64 i;
   Pip obj;
 
-  sfprintf(outstr, "Portion %d for field %s: \n", h->portion, 0);
+  sfprintf(outstr, "Portion %d: \n", h->portion);
   if (h->isE == 0) h->bukI = h->B;
   for (i = 0; i < h->bukI; i++) {
     if (i == 0) sfprintf(outstr, "From %d to ", 0);
@@ -356,7 +312,7 @@ Perror_t Pip_report (Sfio_t *outstr, Pip_hist *h) {
     res = (*(Pip_fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj);
     sfprintf(outstr, "%d.%d.%d.%d \n", P_IP_PART(obj, 1), P_IP_PART(obj, 2), P_IP_PART(obj, 3), P_IP_PART(obj, 4));
   }
-  sfprintf(outstr, "+++++++++++++++++++++++++++++++++++++++++++++++ \n");
+  sfprintf(outstr, "%s", PDCI_hdr_strings[2]);
   return res;
 }
 
@@ -367,7 +323,7 @@ Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
   Pint64 i; \
   type obj; \
 \
-  sfprintf(outstr, "Portion %d for field %s: \n", h->portion, 0); \
+  sfprintf(outstr, "Portion %d: \n", h->portion); \
   if (h->isE == 0) h->bukI = h->B; \
   for (i = 0; i < h->bukI; i++) { \
     if (i == 0) sfprintf(outstr, "From %d to ", 0); \
@@ -376,7 +332,7 @@ Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
     res = (*(type ## _fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj); \
     sfprintf(outstr, "%s \n", fmttime("%x %I:%M %p", (time_t)obj)); \
   } \
-  sfprintf(outstr, "+++++++++++++++++++++++++++++++++++++++++++++++ \n"); \
+  sfprintf(outstr, "%s", PDCI_hdr_strings[2]); \
   return res; \
 }
 /* END_MACRO */

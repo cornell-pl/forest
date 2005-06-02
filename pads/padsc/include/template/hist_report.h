@@ -168,7 +168,10 @@ int main(int argc, char** argv) {
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
     if (P_OK == PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
-      PADS_TY(_hist_add)(pads, &h, &pd, &rep);
+      if (P_ERR == PADS_TY(_hist_add)(pads, &h, &pd, &rep)) {
+	PADS_TY(_hist_report)(pads, "", 0, 0, &h);
+	PADS_TY(_hist_reset)(pads, &h);
+      }
     }
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {
@@ -176,7 +179,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  PADS_TY(_hist_report)(pads, &h);
+  PADS_TY(_hist_report)(pads, "", 0, 0, &h);
   PADS_TY(_hist_cleanup)(pads, &h);
 
 #ifdef EXTRA_DONE_CODE
