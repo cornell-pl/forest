@@ -1,4 +1,6 @@
 Precord Pstruct entry_t {
+			Pdate(:'|':) date;
+			'|';
 			Pip ip;
 			'|';
 			Pstring(:'|':) str;

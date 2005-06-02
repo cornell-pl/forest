@@ -125,7 +125,11 @@ int main(int argc, char** argv) {
   }
 
   PADS_TY(_hist_init)(pads, &h);	
-  //  PADS_TY(_hist_setConv)(pads, &h, &default_hist, 0, 0); 
+  //  PADS_TY(_hist_setPara)(pads, &h, &default_hist);
+
+#ifdef EXTRA_INIT_CODE
+  EXTRA_INIT_CODE;
+#endif
 
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, READ_MASK);

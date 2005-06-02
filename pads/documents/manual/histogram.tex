@@ -155,20 +155,18 @@ which contains:
   \cd{Pfloat64}. Histograms will handle \cd{Pfloat64} type data value 
   only. Any type with a well-defined conversion function to
   \cd{Pfloat64} is considered as a meaningful type, and could be summarized
-  correctly by histograms. By default, only \cd{integer}, \cd{float} and \cd{char} in \pads{} have
-  meaningful conversion functions to \cd{Pfloat64}. Users are allowed write their
-  own conversion functions, and use \cd{entry_t_hist_setPara} function
-  to set them. If zero is assigned to this pointer, those default
+  correctly by histograms. By default, all base types other than \cd{Pstring} in \pads{} have
+  conversion functions to \cd{Pfloat64}. Users are allowed to write their
+  own conversion function for each field by defining macro \cd{EXTRA_INIT_CODE}. If zero is assigned to this pointer, those default
   conversion functions will be used.
    
 \item[\cd{entry\_t\_fromFloat}] is a function pointer, taking
   \cd{Pfloat64} as input parameter, and returning corresponding
   \cd{entry\_t} type. Any type without a well-defined conversion
   function from \cd{Pfloat64} may not be printed correctly. By
-  default, only \cd{integer}, \cd{float} and \cd{char} in \pads{} have
-  meaningful conversion functions from \cd{Pfloat64}. Users are allowed to write their
-  own conversion functions, and use \cd{entry_t_hist_setPara} function
-  to set them. If zero is assigned to this pointer, those default
+  default, all base types other than \cd{Pstring} in \pads{} have
+  conversion functions from \cd{Pfloat64}. Users are allowed to write their
+  own conversion function for each field by defining macro \cd{EXTRA_INIT_CODE}. If zero is assigned to this pointer, those default
   conversion functions will be used.
 
 \end{description}
