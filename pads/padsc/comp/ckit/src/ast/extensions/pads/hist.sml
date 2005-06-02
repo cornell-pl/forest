@@ -21,24 +21,10 @@ structure Hist = struct
       case ty of PX.Name s => histSuf s
 
 
-  (* Perror_t Pint8_hist_report   (P_t *pads, Pint8_hist *h); *)
-  (* Perror_t Pint8_hist_report2io(P_t *pads, Sfio_t * io, Pint8_hist *h); *)
-  fun genReportFun (reportName, histPCT, intlBodySs) = 
-      let fun genParamTys extraPCTs = [P.ptrPCT PL.toolStatePCT] @ extraPCTs @ [P.ptrPCT histPCT]
-	  fun genParamNames extraNames = [pads] @ extraNames @ [ hist ]
-	  val intlParamNames = genParamNames [outstr]
-	  val extlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [], genParamNames []))
-	  val intlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
-	  val bodyS = PT.Compound intlBodySs
-	  val returnTy = PL.toolErrPCT
-	  val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, bodyS, returnTy)
-	  val externalReportFunED = BU.genExternalReportFun(reportName, intlParamNames, extlFormalParams, hist)
-      in
-	  [toioReportFunED, externalReportFunED]
-      end
 
 
   fun genHistTypedef() = []
+
 
 
   fun genRepArray name baseTy = 
@@ -97,15 +83,18 @@ structure Hist = struct
   fun genReportFunArray (name, baseTy, histPCT) = 
       let val reportFun = (reportSuf o histSuf) name
 	  val elemFunName = ioSuf(reportSuf (lookupHist baseTy))
+	  val baseTyStr = case baseTy of PX.Name n => n
 	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 	  val lengthX = P.arrowX(PT.Id hist, PT.Id length)
-	  val doLengthSs =  BU.chk3Pfun(ioSuf(reportSuf PL.uint32Hist), [PT.Id outstr, P.addrX(lengthX)])
+	  val doLengthSs =  BU.chk3Pfun(ioSuf(reportSuf PL.uint32Hist), [PT.Id outstr, PT.String "Array lengths", 
+									 PT.String "array length", P.intX ~1, P.addrX(lengthX)])
 	  val arrayX = P.arrowX(PT.Id hist, PT.Id arrayLevel)
-          val doArraySs = BU.chk3Pfun (elemFunName, [PT.Id outstr, P.addrX (arrayX)])
+          val doArraySs = BU.chk3Pfun (elemFunName, [PT.Id outstr, PT.String "allArrayElts", PT.String "all array elements", 
+						     PT.Id nst, P.addrX (arrayX)])
 
 	  val reportReturnSs = [BU.genReturnChk(PT.Id nerr)]
 	  val reportBodySs   = whichDeclSs @ doLengthSs @ doArraySs @ reportReturnSs
-	  val reportFunEDs   = genReportFun(reportFun, histPCT, reportBodySs)
+	  val reportFunEDs   = BU.genReportFuns(reportFun, "array "^ name ^" of "^baseTyStr, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end
@@ -121,8 +110,137 @@ structure Hist = struct
       in
 	  [histED, initFunED, resetFunED, addFunED] @ reportFunEDs @ [ cleanupFunED]
       end
-			   
 
+  (* PUNIONS *)
+  fun genRepUnion ptyfuns name variants = 
+      let fun genHistFull ({pty: PX.Pty, args: pcexp list, name: string, 
+			    isVirtual: bool, isEndian: bool, 
+			    isRecord, containsRecord, largeHeuristic: bool,
+			    pred, comment: string option,...}: BU.pfieldty) = 
+	  if not isVirtual then 
+	      let val predStringOpt = Option.map BU.constraintToString pred
+		  val fullCommentOpt = BU.stringOptMerge(comment, predStringOpt)
+	      in
+		  [(name, P.makeTypedefPCT (lookupHist pty), fullCommentOpt )]
+	      end
+	  else []
+	  fun genHistBrief e = []
+	  fun genHistMan ptyfuns m = BU.genMan ptyfuns (lookupHist, NONE, false, m)
+	  val histFields = P.mungeFields genHistFull genHistBrief (genHistMan ptyfuns) variants
+	  val auxHistFields = [(tag, PL.intHistPCT, NONE)]
+
+	  val histED = P.makeTyDefStructEDecl (auxHistFields @ histFields, histSuf name)
+	  val histPCT = P.makeTypedefPCT (histSuf name)			 
+      in
+	  (histED, histPCT)
+      end
+
+  fun genWalkFunsUnion (ptyfuns, name, variants, thePCT, whichSuf) = 
+      let val whichFun = (whichSuf o histSuf) name
+	  fun genWhichFull ({pty: PX.Pty, name: string,isVirtual: bool, ...}:BU.pfieldty) = 
+	      if isVirtual then []
+	      else BU.callFun(whichSuf (lookupHist pty), hist, name)
+          
+	  fun genWhichBrief e = []
+	  fun genWhichMan (ptyfuns, whichSuf) m = BU.genFunMan ptyfuns (lookupHist, whichSuf, hist, m)
+
+	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
+	  val whichFields = P.mungeFields genWhichFull genWhichBrief (genWhichMan (ptyfuns, whichSuf)) variants
+	  val auxFields = BU.chk3Pfun(whichSuf PL.intHist, [P.getFieldX(hist, tag)])
+	  val whichReturnS = BU.genReturnChk (PT.Id nerr)
+	  val whichBodySs = whichDeclSs @ auxFields @ whichFields @ [whichReturnS]
+	  val whichFunED = BU.gen3PFun(whichFun, thePCT, hist, whichBodySs)
+      in
+	  whichFunED
+      end
+
+  fun genAddFunUnion (ptyfuns, name, variants, histPCT, repPCT, pdPCT) = 
+      let val addFun = (addSuf o histSuf) name
+	  val addDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero),  P.varDeclS'(PL.base_pdPCT, tpd)]
+	  val initTpdSs = [P.assignS(P.dotX(PT.Id tpd, PT.Id errCode), 
+				     P.condX(P.eqX(P.arrowX(PT.Id pd, PT.Id errCode),
+						   PL.P_UNION_MATCH_FAILURE),
+					     PL.P_UNION_MATCH_FAILURE, PL.P_NO_ERROR))]
+
+	  val addTagSs = BU.chkAddFun(addSuf PL.intHist, P.getFieldX(hist, tag), P.addrX(PT.Id tpd), 
+				      PT.Cast(P.ptrPCT PL.intPCT, P.getFieldX(rep, tag)))
+	  fun fieldAddrX (base, name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
+	  fun genCase (name, pty, initSs, pdX) = 
+	      let val funName = addSuf (lookupHist pty)
+		  val repX = P.getUnionBranchX(rep, name)
+		  val caseSs = initSs @ BU.chkAddFun(funName, fieldAddrX(hist, name), pdX, repX)
+	      in
+		  P.mkBreakCase(PT.Id name, SOME caseSs)
+	      end
+
+	  fun genVirt name = P.mkCommentBreakCase(PT.Id name, "Pomit branch: cannot accumulate", NONE)
+
+	  fun genAddFull ({pty: PX.Pty, name: string,isVirtual: bool, ...}:BU.pfieldty) = 
+	      if isVirtual then genVirt name
+	      else genCase(name, pty, [], P.getUnionBranchX(pd, name))
+	  fun genAddBrief e = []
+	  fun genAddMan (ptyfuns as (isPadsTy, getPadsName)) ({tyname, name,isVirtual,...}:BU.pmanty) = 
+	      if isVirtual then genVirt name
+	      else case isPadsTy tyname 
+                   of PTys.CTy =>  P.mkCommentBreakCase(PT.Id name, "branch has C type: C type accum not implemented (yet)", NONE) 
+	     	    | _  => (let val pty = getPadsName tyname
+			     in
+				 genCase(name, getPadsName tyname, [],  P.getUnionBranchX(pd, name))
+			     end)
+
+	  val addFields = P.mungeFields genAddFull genAddBrief (genAddMan ptyfuns) variants
+	  val errBranchSs = P.mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
+	  val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound (addFields @ errBranchSs))]
+	  val addReturnS = BU.genReturnChk (PT.Id nerr)
+	  val addBodySs = addDeclSs @ initTpdSs @ BU.ifNotPanicSkippedSs(addTagSs @ addVariantsSs) @ [addReturnS]
+	  val addFunED = BU.genAddFun(addFun, hist, histPCT, pdPCT, repPCT, addBodySs)
+      in
+	  addFunED
+      end
+
+  fun genReportFunUnion (ptyfuns, name, variants, histPCT, fromOpt) = 
+      let val reportFun = (reportSuf o histSuf) name
+	  val header = if fromOpt then "Opt" else "Union"
+	  val reportTags = [(* we need to implement Pint32_hist_map_report2io 
+			     BU.chkPrint(BU.callEnumPrint((ioSuf o reportSuf o mapSuf) PL.intHist,
+							 PT.String header, PT.String "tag", P.intX ~1,
+							 PT.Id((toStringSuf o tgSuf) name), P.getFieldX(hist, tag))),*)
+			    PL.sfprintf(PT.Id outstr, 
+					PT.String "\n[Describing each tag arm of %s]\n", 
+					[PT.Id prefix])]
+	  fun reportUnionField (pty, fieldName) = 
+	      BU.genPrintPiece(ioSuf(reportSuf (lookupHist pty)), fieldName, P.zero, P.getFieldX(hist,fieldName), [])
+	  fun genReportFull ({pty: PX.Pty, name: string,isVirtual: bool, ...}:BU.pfieldty) = 
+	      if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
+	      else reportUnionField(pty, name)
+
+	  fun genReportBrief e = []
+	  fun genReportMan (ptyfuns as (isPadsTy, getPadsName)) ({tyname, name,isVirtual,...}:BU.pmanty) = 
+	      if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
+	      else case isPadsTy tyname 
+                   of PTys.CTy => [] 
+	     	    | _  =>  reportUnionField(getPadsName tyname, name)
+
+	  val reportFields   = P.mungeFields genReportFull genReportBrief (genReportMan ptyfuns) variants
+	  val reportBodySs   = reportTags @ reportFields 
+	  val reportFunEDs   = BU.genReportFuns(reportFun, header^"tag "^name, histPCT, hist, reportBodySs)
+      in
+	  reportFunEDs
+      end
+
+
+  fun genHistUnion ptyfuns (name, variants, repPCT, pdPCT, fromOpt) = 
+      let val (histED, histPCT) = genRepUnion ptyfuns name variants
+	  val initFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, initSuf)
+	  val resetFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, resetSuf)
+	  val addFunED = genAddFunUnion(ptyfuns, name, variants, histPCT, repPCT, pdPCT)
+	  val reportFunEDs = genReportFunUnion(ptyfuns, name, variants, histPCT, fromOpt)
+	  val cleanupFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, cleanupSuf)
+      in
+	  [histED, initFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
+      end
+
+  (* PSTRUCTS *)
   fun genRepStruct ptyfuns name fields = 
       let fun genHistFull ({pty: PX.Pty, args: pcexp list, name: string, 
 			    isVirtual: bool, isEndian: bool, 
@@ -143,8 +261,6 @@ structure Hist = struct
       in
 	  (histED, histPCT)
       end
-
-
 
   fun genWalkFunsStruct (ptyfuns, name, fields, thePCT, whichSuf) = 
       let val whichFun = (whichSuf o histSuf) name
@@ -195,25 +311,25 @@ structure Hist = struct
 
   fun genReportFunStruct (ptyfuns, name, fields, histPCT) = 
       let val reportFun = (reportSuf o histSuf) name
-	  val reportDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
+	  val headerSs = [PL.sfprintf(PT.Id outstr, 
+				      PT.String "\n[Describing each field of %s]\n", 
+				      [PT.Id prefix])]
+	  fun reportStructField (pty, fieldName) = 
+	      BU.genPrintPiece(ioSuf(reportSuf (lookupHist pty)), fieldName, P.zero, P.getFieldX(hist,fieldName), [])
 	  fun genReportFull ({pty: PX.Pty, name: string,isVirtual: bool, ...}:BU.pfieldty) = 
 	      if isVirtual then []
-	      else BU.chk3Pfun(ioSuf(reportSuf (lookupHist pty)), [PT.Id outstr, P.getFieldX(hist,name)])
+	      else reportStructField(pty, name)
 
 	  fun genReportBrief e = []
 	  fun genReportMan (ptyfuns as (isPadsTy, getPadsName)) ({tyname, name,isVirtual,...}:BU.pmanty) = 
 	      if isVirtual then []
 	      else case isPadsTy tyname 
                    of PTys.CTy => [] 
-	     	    | _  => (let val pty = getPadsName tyname
-			     in
-				 BU.chk3Pfun(ioSuf (reportSuf(lookupHist pty)), [PT.Id outstr, P.getFieldX(hist,name)])
-			     end)
+	     	    | _  =>  reportStructField(getPadsName tyname, name)
 
 	  val reportFields   = P.mungeFields genReportFull genReportBrief (genReportMan ptyfuns) fields
-	  val reportReturnSs = [BU.genReturnChk (PT.Id nerr)]
-	  val reportBodySs   = reportDeclSs @ reportFields @ reportReturnSs
-	  val reportFunEDs   = genReportFun(reportFun, histPCT, reportBodySs)
+	  val reportBodySs   = headerSs @ reportFields 
+	  val reportFunEDs   = BU.genReportFuns(reportFun, "struct "^name, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end

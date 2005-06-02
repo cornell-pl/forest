@@ -182,6 +182,66 @@ struct
 	    PT.Switch(e, PT.Compound (caseList @ (makeDefaultCase d)))
 	end
 
+    fun unionBranchX (base, name) = dotX(fieldX(base, PNames.unionVal), PT.Id name)
+    fun getUnionBranchX (base, name) = addrX(unionBranchX(base, name))
+
+    fun mkCase (swval, rest) =
+	case rest
+	    of SOME restSs =>
+		[PT.CaseLabel(swval, PT.Compound(restSs))]
+	  | NONE =>
+		[PT.CaseLabel(swval, mkCommentS(" (do nothing) "))]
+
+    fun mkDefCase (rest) =
+	case rest
+	    of SOME restSs =>
+		[PT.DefaultLabel(PT.Compound(restSs))]
+	  | NONE =>
+		[PT.DefaultLabel(mkCommentS(" (do nothing) "))]
+
+    fun mkCommentCase (swval, comment, rest) =
+	case rest
+	    of SOME restSs =>
+		[PT.CaseLabel(swval, PT.Compound([mkCommentS(comment), PT.Compound(restSs)]))]
+	  | NONE =>
+		[PT.CaseLabel(swval, mkCommentS(comment))]
+
+    fun mkDefCommentCase (comment, rest) =
+	case rest
+	    of SOME restSs =>
+		[PT.DefaultLabel(PT.Compound([mkCommentS(comment), PT.Compound(restSs)]))]
+	  | NONE =>
+		[PT.DefaultLabel(mkCommentS(comment))]
+
+    fun mkBreakCase (swval, rest) =
+	case rest
+	    of SOME restSs =>
+		[PT.CaseLabel(swval, PT.Compound(restSs @ [PT.Break]))]
+	  | NONE =>
+		[PT.CaseLabel(swval, PT.Compound([mkCommentS(" (do nothing) "), PT.Break]))]
+
+    fun mkDefBreakCase (rest) =
+	case rest
+	    of SOME restSs =>
+		[PT.DefaultLabel(PT.Compound(restSs @ [PT.Break]))]
+	  | NONE =>
+		[PT.DefaultLabel(PT.Compound([mkCommentS(" (do nothing) "), PT.Break]))]
+
+    fun mkCommentBreakCase (swval, comment, rest) =
+	case rest
+	    of SOME restSs =>
+		[PT.CaseLabel(swval, PT.Compound([mkCommentS(comment), PT.Compound(restSs @ [PT.Break])]))]
+	  | NONE =>
+		[PT.CaseLabel(swval, PT.Compound([mkCommentS(comment), PT.Break]))]
+
+    fun mkDefCommentBreakCase (comment, rest) =
+	case rest
+	    of SOME restSs =>
+		[PT.DefaultLabel(PT.Compound([mkCommentS(comment), PT.Compound(restSs @ [PT.Break])]))]
+	  | NONE =>
+		[PT.DefaultLabel(PT.Compound([mkCommentS(comment), PT.Break]))]
+
+
     fun andBools [] = trueX
       | andBools [bX] = bX
       | andBools (cX::cXs) = andX(cX, andBools cXs)

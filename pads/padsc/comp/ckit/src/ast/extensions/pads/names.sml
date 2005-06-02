@@ -117,6 +117,8 @@ struct
   fun findEORSuf s = s^"_findpostlude"
   fun findEndSuf s = s^"_end"
   fun gTemp base = "tmp"^base
+  fun tgSuf s = s^"_tag"
+  fun unSuf s = s^"_u"
 
 
   fun childrenSuf name = name^"_children" 

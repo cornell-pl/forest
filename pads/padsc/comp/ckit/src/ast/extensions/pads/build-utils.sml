@@ -188,6 +188,21 @@ structure BuildUtils = struct
 			       PT.IfThen(P.notX(P.assignX(PT.Id str, PL.sfstropen)),
 					 PT.Compound[PT.Return PL.P_ERROR])]
 
+    fun callEnumPrint (reportName, prefixX, whatX, nstX, mapFnX, fieldX) = 
+	PT.Call(PT.Id reportName, 
+		[PT.Id pads, PT.Id outstr,  prefixX, whatX, nstX,
+		 PT.Cast(PL.intCvtPCT, mapFnX),
+		 fieldX])
+
+    fun genPrintPiece(reportName, fieldDescriptor, whatX, fieldX, extraArgsXs) = 
+	let val bodyX = PT.Call(PT.Id reportName, 
+				[PT.Id pads, PT.Id outstr, PL.sfstruse (PT.Id tmpstr), whatX, PT.Id nst, 
+				 fieldX])
+	in
+	    [PL.sfprintf(PT.Id tmpstr, PT.String ("%s."^fieldDescriptor), [PT.Id prefix] @ extraArgsXs),  chkPrint bodyX]
+	end
+
+
     (* Perror_t foostruct_report(P_t* pads, const char * prefix,
      const char* what, int nst, foostruct_acc* acc) *)
 
@@ -216,6 +231,39 @@ structure BuildUtils = struct
 	  reportFunED
       end
 
+
+  (* Perror_t foo_report(P_t* pads, [sfio_t *str], const char * prefix,
+                         const char* what, int nst, foostruct_acc* acc) *)
+  fun genReportFuns (reportName, whatStr, whichPCT, var, intlBodySs) = 
+      let fun genParamTys extraPCTs =
+	    [P.ptrPCT PL.toolStatePCT] 
+	  @ extraPCTs
+	  @ [P.ccharPtr,
+	     P.ccharPtr,
+	     P.int,
+	     P.ptrPCT whichPCT]
+	  fun genParamNames extraNames = [pads] @ extraNames @ [ prefix, what, nst, var]
+	  val intlParamNames = genParamNames [outstr]
+	  val extlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [], genParamNames []))
+	  val intlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
+	  val initTmpStrSs = genInitTmpStrSs tmpstr
+	  val setPrefixS = PT.IfThen(P.orX(P.notX(PT.Id prefix), P.eqX(P.zero, P.starX(PT.Id prefix))),
+				     PT.Compound[P.assignS(PT.Id prefix, PT.String "<top>")])
+	  val setWhatS = PT.IfThen(P.notX(PT.Id what),
+				   PT.Compound[P.assignS(PT.Id what, PT.String whatStr)])
+	  val printNstS = PL.nstPrefixWhat(PT.Id outstr, P.addrX(PT.Id nst), PT.Id prefix, PT.Id what)
+	  val closeSs = [PL.sfstrclose(PT.Id tmpstr), PT.Return PL.P_OK]
+	  val bodySs =   initTmpStrSs
+	               @ [setPrefixS, setWhatS, printNstS]
+	               @ intlBodySs
+	               @ closeSs
+	  val bodyS = PT.Compound bodySs
+	  val returnTy = PL.toolErrPCT
+	  val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, bodyS, returnTy)
+	  val externalReportFunED = genExternalReportFun(reportName, intlParamNames, extlFormalParams, var)
+      in
+	  [toioReportFunED, externalReportFunED]
+      end
 
 
 end
