@@ -1,0 +1,184 @@
+PADS/ML
+-------
+
+Pads/ML types (values in these types are pairs of rep/pd
+               satisfying our canonical forms theorem wrt errors)
+
+T ::=  \alpha
+     | Pbase             (base type)
+     | d(M)             (parameterized data type; e is perimeter)
+     | M                (singleton type.  eg: " " for literal space)
+     | x:T1 ** T2        (dependent pair)
+     | PD               (parser descriptor type)
+     | T array(esep, eterm)     (array types)
+     | T list           (list type; underlying rep for arrays)
+     | {x:T | M}        (constrained type; ie: Pwhere)
+
+
+Pads/ML data type declarations
+
+D ::= datatype d(x:t) = DS
+   |    datatype d(x:t) = case M of TS
+   |    type \alpha = T
+
+DS ::= c of T
+     | (c of T | DS)  (datatype constructor; 
+                       parameter x of the datatype may appear
+                       free in T)
+
+TS ::= . | (pat => c of T | TS)
+
+ML pads transform types
+
+F ::= T           (type of pads value)
+   | base
+   | F -> F      (transform types)
+   | F * F
+
+ML pads terms
+
+M ::=  x                                 (pads transform variable)
+     | k          (constants)
+     | let x = M in M                    (computation in host language)
+     | Pbase(M)                           (base type constructor; M computes the rep)
+     | <M>                                (unit value given singleton type M)
+     | c[M](M)                           (data type constructor with parameter M)
+     | (M1 ** M2)                   (pair)
+     | (M1 * M2)                     (ordinary pair)
+     | nil                               (empty list)
+     | M1 :: M2                          (cons)
+     | Parray(M, esep, eterm, etermfun)  (array; first element is list)
+     | case M of MS                      (deconstructors)
+     | Fun x1(x2:F1):F2 = M              (recursive function m1; arg m2)
+     | M1 (M2)		(function application)
+     | cast (M : T)                           (type annot/dependent cast?)
+     | op M                                (additional uninteresting operations)
+     | pd
+
+
+Parse descriptors
+pd ::= G	good
+     |    B	bad
+     |    N	nested error
+     |    S	semantic error
+Pattern Matches
+
+MS ::= . | (pat => M | MS)
+
+pat ::= x
+       | <<pat, pdpat>> (pattern for reading out the pd)
+       | (pat, pat)     (pair pattern)
+       | c(pat)         (constructor pattern)
+       | nil            (list pattern)
+       | pat1 :: pat2   (list pattern)
+       | Parray(pat, xsep, xterm)  
+
+pdpat ::= x
+        | G | B | N | S
+
+Complete Programs
+
+prog ::= M              (probably should have first-order type T -> T)
+       | D; prog        (data type declaration)
+
+
+Addendum
+--------------
+
+constants k ::= true | false | () |  ...
+
+values V ::= <<P,pd>> | k 
+              | (V1 * V2) | Fun x1 (x2 : F1) : F2 = M
+
+prevalues P ::= k | c[M](V2) | (V1 ** V2) 
+                    |  nil | V1 :: V2 | Parray (V1,V2,V3)  | noval
+
+
+Semantics
+========
+G ::= . | G,m:F | G,d:T -> Type
+    | G,c:[T](T)-> d
+    | G,\alpha
+
+Main judgments for typing
+
+|F| = F_simp (erases dependency)
+------------
+...
+
+F1 ~ F2  iff |F1| =_\alpha |F2|
+
+
+!!! REPLACE m WITH x !!!
+
+G |- M :F
+---------
+Here is the typing rule for functions.  Assume that G is the typing context
+mapping variables m to their (dependent) PADS types:
+
+G, m:T1 -> T2, m1:T1 |- M : T2'    T2' ~ T2
+------------------------------------------- 
+G |- fun m (m1:T1):T2 = M : T1 -> T2
+
+Operationally, when we reach the end of the function, we dynamically check
+the function result to make sure it satisfies T2.  If it doesn't, we use the
+relation V |= T2 ==> V'
+
+Function application is similar [I screwed up... everywhere I wrote T I did
+not just mean a PADS types T,  I meant possibly a transform type F.  I
+should have been writing F... I am switching now]:
+
+G |- M1 : F1 -> F2    G |- M2 : F1'    F1' ~ F1
+-----------------------------------------------
+G |- M1 M2 : F2
+
+At run time, we evaluate M2, obtaining a value V2 and we dynamically check
+whether or not V2 |= F1
+
+The variable typing rule:
+
+--------------
+G,m:F |- m : F    
+
+G |- M : F'   F' ~ F
+---------------------
+G |- cast (M : F) : F
+
+
+------------------
+G |- pat : F => G'
+------------------
+
+-----------------
+G |- x : F => x:F
+
+G |- pat1:F1 => G1   G|- pat2 : F2 => G2
+---------------------------------------- 
+G |- pat1 ** pat2 : F1 ** F2 => G1,G2
+
+... (fill in myself)
+
+Now we can do the operational semantics.  The basic operational judgment is:
+
+--------
+M --> M'   (M executes in one step to M')
+--------
+
+Cast operation:
+
+V |= F ==> V'
+-------------------------------
+cast (V : F)  -->  V'
+
+
+M --> M'
+-------------------------------
+cast (M : F)  -->  cast (M' : F)
+
+
+Function application:
+
+-----------------------------------------------------------------------
+(fun m (m1:F1):F2 = M) M1  --> 
+  let m1 = cast (M1:F1) in (cast (M : F2))[(fun m (m1:F1):F2 = M)/m]
+
