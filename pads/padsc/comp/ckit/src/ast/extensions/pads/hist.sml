@@ -23,8 +23,109 @@ structure Hist = struct
 
 
 
-  fun genHistTypedef() = []
+  fun genRepTypedef (name,baseTy) = 
+      let val histED = P.makeTyDefEDecl (P.makeTypedefPCT (lookupHist baseTy), histSuf name)
+	  val histPCT = P.makeTypedefPCT (histSuf name)		
+      in
+	  (histED, histPCT)
+      end
 
+  fun genWalkFunsTypedef (name, baseTy, thePCT, whichSuf) = 
+      let val whichFun = (whichSuf o histSuf) name
+	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
+	  val whichBodySs = BU.chk3Pfun(whichSuf (lookupHist baseTy), [PT.Id hist])
+	  val whichReturnS = BU.genReturnChk (PT.Id nerr)
+	  val whichBodySs = whichDeclSs @ whichBodySs @ [whichReturnS]
+	  val whichFunED = BU.gen3PFun(whichFun, thePCT, hist, whichBodySs)
+      in
+	  whichFunED
+      end
+
+
+  fun genAddFunTypedef (name, baseTy, histPCT, repPCT, pdPCT) = 
+      let val addFun = (addSuf o histSuf) name
+	  val addDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
+          val bodySs = BU.chkAddFun(addSuf (lookupHist baseTy), PT.Id hist,  PT.Id pd, PT. Id rep)
+	  val addReturnS = BU.genReturnChk (PT.Id nerr)
+	  val addBodySs = addDeclSs @ bodySs @ [addReturnS]
+	  val addFunED = BU.genAddFun(addFun, hist, histPCT, pdPCT, repPCT, addBodySs)
+      in
+	  addFunED
+      end
+
+  fun genReportFunTypedef(name, baseTy, histPCT) =
+      let val reportFun = (reportSuf o histSuf) name
+	  val repioCallX = PT.Call(PT.Id((ioSuf o reportSuf) (lookupHist baseTy)),
+				   [PT.Id pads, PT.Id outstr, PT.Id prefix, PT.Id what, PT.Id nst, PT.Id hist])
+	  val reportBodySs = [PT.Expr repioCallX]
+	  val reportFunEDs = BU.genReportFuns(reportFun, "typedef "^name, histPCT, hist, reportBodySs)
+      in
+	  reportFunEDs
+      end
+
+
+  fun genHistTypedef (name, baseTy, repPCT, pdPCT) = 
+      let val (histED, histPCT) = genRepTypedef  (name, baseTy)
+	  val initFunED = genWalkFunsTypedef(name, baseTy, histPCT, initSuf)
+	  val resetFunED = genWalkFunsTypedef(name, baseTy, histPCT, resetSuf)
+	  val cleanupFunED = genWalkFunsTypedef(name, baseTy, histPCT, cleanupSuf)
+	  val addFunED = genAddFunTypedef(name, baseTy, histPCT, repPCT, pdPCT)
+	  val reportFunEDs = genReportFunTypedef(name, baseTy, histPCT) 
+      in
+	  [histED, initFunED, resetFunED,  addFunED] @  reportFunEDs @  [cleanupFunED] 
+      end
+
+
+  fun genRepEnum name = 
+      let val histED  = P.makeTyDefEDecl (PL.intHistPCT, histSuf name)
+	  val histPCT = P.makeTypedefPCT(histSuf name)
+      in
+	  (histED, histPCT)
+      end
+
+  fun genWalkFunsEnum (name, histPCT, whichSuf) = 
+      let val whichFun : string = (whichSuf o histSuf) name
+	  val whichBodyE = PT.Call(PT.Id(whichSuf PL.intHist), [PT.Id pads, PT.Id hist])
+	  val whichReturnS = PT.Return whichBodyE
+	  val whichFunED = BU.gen3PFun(whichFun, histPCT, hist, [whichReturnS])
+      in
+	  whichFunED
+      end
+
+  fun genAddFunEnum(name, histPCT, repPCT, pdPCT) =
+      let val addFun = (addSuf o histSuf) name
+	  val addX = PT.Call(PT.Id(addSuf PL.intHist), 
+				      [PT.Id pads, PT.Id hist, PT.Id pd, 
+				       PT.Cast(P.ptrPCT PL.intPCT, PT.Id rep)])
+	  val addReturnS = PT.Return addX
+	  val addBodySs =  [addReturnS]
+	  val addFunED = BU.genAddFun(addFun, hist, histPCT, pdPCT, repPCT, addBodySs)
+      in
+	  addFunED
+      end
+
+  fun genReportFunEnum(name, histPCT) =
+      let val reportFun = (reportSuf o histSuf) name
+	  val repioCallX = BU.callEnumPrint((ioSuf o reportSuf o mapSuf) PL.intHist,
+					    PT.Id prefix, PT.Id what, PT.Id nst,
+					    PT.Id(toStringSuf name), PT.Id hist)
+	  val reportBodySs = [PT.Expr repioCallX]
+	  val reportFunEDs = BU.genReportFuns(reportFun, "enum "^name, histPCT, hist, reportBodySs)
+      in
+	  reportFunEDs
+      end
+
+  fun genHistEnum (name, repPCT, pdPCT) = 
+      let val (histED, histPCT) = genRepEnum  name 
+	  val initFunED = genWalkFunsEnum(name, histPCT, initSuf)
+	  val resetFunED = genWalkFunsEnum(name, histPCT, resetSuf)
+	  val cleanupFunED = genWalkFunsEnum(name, histPCT, cleanupSuf)
+	  val addFunED = genAddFunEnum(name, histPCT, repPCT, pdPCT)
+	  val reportFunEDs = genReportFunEnum(name, histPCT)
+
+      in
+	  [histED, initFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
+      end
 
 
   fun genRepArray name baseTy = 
@@ -201,10 +302,10 @@ structure Hist = struct
   fun genReportFunUnion (ptyfuns, name, variants, histPCT, fromOpt) = 
       let val reportFun = (reportSuf o histSuf) name
 	  val header = if fromOpt then "Opt" else "Union"
-	  val reportTags = [(* we need to implement Pint32_hist_map_report2io 
+	  val reportTags = [
 			     BU.chkPrint(BU.callEnumPrint((ioSuf o reportSuf o mapSuf) PL.intHist,
 							 PT.String header, PT.String "tag", P.intX ~1,
-							 PT.Id((toStringSuf o tgSuf) name), P.getFieldX(hist, tag))),*)
+							 PT.Id((toStringSuf o tgSuf) name), P.getFieldX(hist, tag))),
 			    PL.sfprintf(PT.Id outstr, 
 					PT.String "\n[Describing each tag arm of %s]\n", 
 					[PT.Id prefix])]
@@ -223,7 +324,7 @@ structure Hist = struct
 
 	  val reportFields   = P.mungeFields genReportFull genReportBrief (genReportMan ptyfuns) variants
 	  val reportBodySs   = reportTags @ reportFields 
-	  val reportFunEDs   = BU.genReportFuns(reportFun, header^"tag "^name, histPCT, hist, reportBodySs)
+	  val reportFunEDs   = BU.genReportFuns(reportFun, header^" tag "^name, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end

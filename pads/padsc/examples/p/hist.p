@@ -1,6 +1,6 @@
 Punion last {
-	    Pchar c;
 	    Pint8 i;
+	    Pchar c;
 };
 
 Precord Pstruct entry_t {

@@ -2061,7 +2061,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
 	              (* Generate Hist functions typedef case *)
-	              val histEDs = Hist.genHistTypedef ()
+	              val histEDs = Hist.genHistTypedef (name, baseTy, canonicalPCT, pdPCT)
 
                       (* Generate Write function typedef case *)
 		      val writeName = writeSuf name
@@ -6706,6 +6706,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						   PT.Id(toStringSuf name), PT.Id acc)
 		   val reportFunEDs = genTrivReportFuns(reportFun, "enum "^name, NONE, accPCT, repioCallX)
 		   val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
+
+                   (* -- generate histogram functions *)
+                   val histEDs = Hist.genHistEnum(name, canonicalPCT, pdPCT)
  
                    (* Generate Write functions (enum case) *)
 		   val writeName = writeSuf name
@@ -6773,6 +6776,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                 @ (emitRead readEDs)
                 @ (emitPred isFunEDs)
                 @ (emitAccum accumEDs)
+                @ (emitHist histEDs)
                 @ (emitWrite writeFunEDs)
  		@ (emitWrite fmtFunEDs)
                 @ (emitXML galaxEDs)
