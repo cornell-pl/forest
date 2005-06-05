@@ -4,14 +4,14 @@ Download EANCS format. Steal proposal intro.
 1. Intro
 - What is ad hoc data?
 - What problems? Errors.
-- Filter our errors, normalize time zones (Darkstar) - data cleaning.
+- Filter out errors, normalize time zones (Darkstar) - data cleaning.
 - Transform to match another description (May be a standardized one)
 - Four examples: Darkstar, Gigascope, Richard at Princeton, Olga/Magic.
 - Solution: Data description Language + transform language
 - New contributions
   + ML Syntax (parameterized datatypes)
     - PADS binding for functional languages (maybe mention rec. types
-    in passing).
+      in passing).
     - Concise (datatypes,etc.)
     - Fits with transforms
       +  Symetric (constructors/destructors)
@@ -24,13 +24,13 @@ Download EANCS format. Steal proposal intro.
     - PADS/ML types as contracts to handle dependency
       + new way of implementing contracts - replace exceptions with meta data record.
     - values are pairs of data item and error descriptor
+      + compiler controls invariants of relationship between value and
+	its descriptor.
       + concise way of ignoring errors safely (due to pairing),
       + error preservation allows programatic repair of faulty
-      records (rather than just dumping bad records at beginning).
+	records (rather than just dumping bad records at beginning).
       + error querying
       + will show examples
-      + compiler controls invariants of relationship between value and
-      its descriptor.
 
 2. PADS/ML
   - PADS Weltenshaung (worldview)

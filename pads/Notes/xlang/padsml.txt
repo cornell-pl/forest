@@ -17,8 +17,8 @@ T ::=  \alpha
 
 Pads/ML data type declarations
 
-D ::= datatype d(x:t) = DS
-   |    datatype d(x:t) = case M of TS
+D ::= datatype d(x:???) = DS
+   |    datatype d(x:???) = case M of TS
    |    type \alpha = T
 
 DS ::= c of T
