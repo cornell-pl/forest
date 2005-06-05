@@ -5,14 +5,14 @@ Pads/ML types (values in these types are pairs of rep/pd
                satisfying our canonical forms theorem wrt errors)
 
 T ::=  \alpha
-     | Pbase             (base type)
-     | d(M)             (parameterized data type; e is perimeter)
-     | M                (singleton type.  eg: " " for literal space)
-     | x:T1 ** T2        (dependent pair)
-     | PD               (parser descriptor type)
-     | T array(esep, eterm)     (array types)
-     | T list           (list type; underlying rep for arrays)
-     | {x:T | M}        (constrained type; ie: Pwhere)
+     | Pbase                  (base type)
+     | d(M)		      (parameterized data type; e is perimeter)
+     | M		      (singleton type.  eg: " " for literal space)
+     | x:T1 ** T2	      (dependent pair)
+     | PD		      (parser descriptor type)
+     | T Parray(Msep, Mterm)  (array types)
+     | T list		      (list type; underlying rep for arrays)
+     | {x:T | M}	      (constrained type; ie: Pwhere)
 
 
 Pads/ML data type declarations
@@ -47,7 +47,7 @@ M ::=  x                                 (pads transform variable)
      | (M1 * M2)                     (ordinary pair)
      | nil                               (empty list)
      | M1 :: M2                          (cons)
-     | Parray(M, esep, eterm, etermfun)  (array; first element is list)
+     | Parray(M, Msep, Mterm)  (array; first element is list)
      | case M of MS                      (deconstructors)
      | Fun x1(x2:F1):F2 = M              (recursive function m1; arg m2)
      | M1 (M2)		(function application)
@@ -100,11 +100,34 @@ G ::= . | G,m:F | G,d:T -> Type
     | G,c:[T](T)-> d
     | G,\alpha
 
-Main judgments for typing
+F_simp ::= \alpha
+       |   Pbase
+       |   d
+       |   Punit
+       |   F_simp1 ** F_simp2
+       |   PD
+       |   F_simp Parray
+       |   F_simp list
+       |   base
+       |   F_simp1 -> F_simp2
+       |   F_simp1 * F_simp2
 
+Main judgments for typing
+-------------
 |F| = F_simp (erases dependency)
-------------
-...
+-------------
+|\alpha|	      = \alpha
+|Pbase|               = Pbase
+|d(M)|		      = d
+|M|		      = Punit
+|x:T1**T2|	      = |T1| ** |T2|
+|PD|		      = PD
+|T Parray(Msep,Mterm) = |T| Parray
+|T list|	      = |T| list
+|{x:T | M}|	      = |T|
+|base|		      = base
+|F1 -> F2|	      = |F1| -> |F2|
+|F1 * F2|	      = |F1| * |F2|
 
 F1 ~ F2  iff |F1| =_\alpha |F2|
 

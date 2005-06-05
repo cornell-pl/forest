@@ -1,3 +1,111 @@
+6/3/05
+Download EANCS format. Steal proposal intro.
+
+1. Intro
+- What is ad hoc data?
+- What problems? Errors.
+- Filter our errors, normalize time zones (Darkstar) - data cleaning.
+- Transform to match another description (May be a standardized one)
+- Four examples: Darkstar, Gigascope, Richard at Princeton, Olga/Magic.
+- Solution: Data description Language + transform language
+- New contributions
+  + ML Syntax (parameterized datatypes)
+    - PADS binding for functional languages (maybe mention rec. types
+    in passing).
+    - Concise (datatypes,etc.)
+    - Fits with transforms
+      +  Symetric (constructors/destructors)
+    - New: polymorphism
+    - New: datatypes
+  + Our (Functional) Language for Transforms
+    - fun. language => good fit for data-driven transforms
+      + pattern matching
+      + higher-order functions
+    - PADS/ML types as contracts to handle dependency
+      + new way of implementing contracts - replace exceptions with meta data record.
+    - values are pairs of data item and error descriptor
+      + concise way of ignoring errors safely (due to pairing),
+      + error preservation allows programatic repair of faulty
+      records (rather than just dumping bad records at beginning).
+      + error querying
+      + will show examples
+      + compiler controls invariants of relationship between value and
+      its descriptor.
+
+2. PADS/ML
+  - PADS Weltenshaung (worldview)
+     + Diagram: type -> parser->rep+pd : types as transducers b/w
+        ext. data and rep + pd.
+     + Describe parse descriptor (corr. shape, syn. vs. sem. errors,
+     etc.)
+     + recovery
+     + What do we need to express ?
+      - Motivating example data (snippets for each later example format)
+      - sequences (of different types), alternations, arrays(seq of same
+        types), constraints, recursion (tree-structured), dependency
+        + introduce syntax in above discussion - top down view.
+      - how? 
+        (+ constraints and dependency => CFG/REs not convenient)
+        + we use types
+       + "error-aware" computing (emphasize this).
+  - "Formal" Syntax Chart
+  - Further Examples
+    + Simple (Dibbler)
+    + Complex (Kathleen)
+    + Recursion (Newick)
+
+3. PADS/T
+  - Reminder of motivation
+    + Transforms, one format to another
+    + (unobtrusive) error-aware computing.
+  - Language design for error-aware computing.
+    + compiler ensures data items are coupled with descriptors
+      - programmers can't screw it up
+    + preserved by the transformations
+    + programmers can read descriptions and make decisions (but no
+      writing).
+    + concise notation allows programmers to leave error processing
+      for downstream process.
+    + yet, ability to compute with errors and fix if you want
+    + contracts dynamicly enforce rich constraints that can't be
+    checked at compile time.
+    
+   - Syntax figure - don't explain much, just reference.
+
+   - Example template
+     + Drawn from real-world examples but modified for proprietary
+     purposes and for illustration.
+     + Heres the transform we want
+     + here's the code
+     + explain the code
+   
+   - Example of Normalizing, reordering
+     + Alarms; VPN Monitoring
+   - Syntax of parse descriptors
+   - Example of using parse descriptor
+     + Dibbler transform.
+     + Show invariants in action.
+  
+  - Subsection with some judgment forms, perhaps some informal
+    explanation of what's going on.
+
+4. Implementation techniques
+   - talk to Kathleen
+
+5. Related work - Mary
+   + standard stuff ...
+   + XDUCE/CDUCE
+   + Lenses (we're a front end).
+
+6. Conclusions and future work - Dave
+   - error aware parsing
+   - func. lang. for  ...
+   - static checking
+   - polymorphic datatypes (alarm example)
+   - semantics
+   - meta theory
+   - implementation
+
 5/27/05
 
 More Principles
