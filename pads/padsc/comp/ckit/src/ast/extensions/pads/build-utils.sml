@@ -103,6 +103,8 @@ structure BuildUtils = struct
 		PT.Compound[PL.sfstrclose(PT.Id tmpstr),
 			    PT.Return PL.P_ERROR])
 
+  fun chkPrintCall(name, args) = [chkPrint(PT.Call(PT.Id name, (PT.Id pads) :: args))]
+
 
   fun genMan (isPadsTy, getPadsName) (f, defaultTyOpt, virtOK, {tyname, name, args, isVirtual, expr, pred, comment})= 
       if virtOK orelse not isVirtual then

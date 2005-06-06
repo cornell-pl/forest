@@ -188,16 +188,14 @@ structure Hist = struct
       let val reportFun = (reportSuf o histSuf) name
 	  val elemFunName = ioSuf(reportSuf (lookupHist baseTy))
 	  val baseTyStr = case baseTy of PX.Name n => n
-	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 	  val lengthX = P.arrowX(PT.Id hist, PT.Id length)
-	  val doLengthSs =  BU.chk3Pfun(ioSuf(reportSuf PL.uint32Hist), [PT.Id outstr, PT.String "Array lengths", 
-									 PT.String "array length", P.intX ~1, P.addrX(lengthX)])
+	  val doLengthSs =  BU.chkPrintCall(ioSuf(reportSuf PL.uint32Hist), [PT.Id outstr, PT.String "Array lengths", 
+									     PT.String "array length", P.intX ~1, P.addrX(lengthX)])
 	  val arrayX = P.arrowX(PT.Id hist, PT.Id arrayLevel)
-          val doArraySs = BU.chk3Pfun (elemFunName, [PT.Id outstr, PT.String "allArrayElts", PT.String "all array elements", 
-						     PT.Id nst, P.addrX (arrayX)])
+          val doArraySs = BU.chkPrintCall (elemFunName, [PT.Id outstr, PT.String "allArrayElts", PT.String "all array elements", 
+							 PT.Id nst, P.addrX (arrayX)])
 
-	  val reportReturnSs = [BU.genReturnChk(PT.Id nerr)]
-	  val reportBodySs   = whichDeclSs @ doLengthSs @ doArraySs @ reportReturnSs
+	  val reportBodySs   = doLengthSs @ doArraySs 
 	  val reportFunEDs   = BU.genReportFuns(reportFun, "array "^ name ^" of "^baseTyStr, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
