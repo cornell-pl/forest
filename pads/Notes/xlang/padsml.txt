@@ -4,7 +4,9 @@ PADS/ML
 Pads/ML types (values in these types are pairs of rep/pd
                satisfying our canonical forms theorem wrt errors)
 
-T ::=  \alpha
+constants k ::= true | false | () |  ...
+
+T ::=  \alpha(M)
      | Pbase                  (base type)
      | d(M)		      (parameterized data type; e is perimeter)
      | M		      (singleton type.  eg: " " for literal space)
@@ -17,16 +19,18 @@ T ::=  \alpha
 
 Pads/ML data type declarations
 
-D ::= datatype d(x:???) = DS
-   |    datatype d(x:???) = case M of TS
-   |    type \alpha = T
+D ::= datatype \vec \alpha d(x:F) = DTBody
+   |  type \vec \alpha \alpha(x:F) = T
+
+DTBody ::= DS | case M of TS
 
 DS ::= c of T
      | (c of T | DS)  (datatype constructor; 
                        parameter x of the datatype may appear
                        free in T)
 
-TS ::= . | (pat => c of T | TS)
+TS ::= pat => c of T
+   |   (pat => c of T | TS)
 
 ML pads transform types
 
@@ -63,9 +67,9 @@ pd ::= G	good
      |    S	semantic error
 Pattern Matches
 
-MS ::= . | (pat => M | MS)
+MS ::= pat => M | (pat => M | MS)
 
-pat ::= x
+pat ::= x | k
        | <<pat, pdpat>> (pattern for reading out the pd)
        | (pat, pat)     (pair pattern)
        | c(pat)         (constructor pattern)
@@ -84,8 +88,6 @@ prog ::= M              (probably should have first-order type T -> T)
 
 Addendum
 --------------
-
-constants k ::= true | false | () |  ...
 
 values V ::= <<P,pd>> | k 
               | (V1 * V2) | Fun x1 (x2 : F1) : F2 = M
