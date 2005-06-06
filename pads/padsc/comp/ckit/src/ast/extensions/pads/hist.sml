@@ -18,7 +18,10 @@ structure Hist = struct
   fun histSuf  s = s^"_"^hist
 
   fun lookupHist(ty:pty) = 
-      case ty of PX.Name s => histSuf s
+      case ty of PX.Name s => 
+	  ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
+		of NONE => histSuf s  (* non-base type; acc constructed from type name*)
+	        |  SOME(b:PBTys.baseInfoTy) => histSuf(Atom.toString (#repname b)))
 
 
 
