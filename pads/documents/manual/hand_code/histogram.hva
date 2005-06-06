@@ -31,11 +31,11 @@
 ~~\kw{while}~(!P\symbol{95}io\symbol{95}at\symbol{95}eof(pads))~\symbol{123}\\
 ~~~~entry\symbol{95}t\symbol{95}read(pads,~\symbol{38}mask,~\symbol{38}pd,~\symbol{38}rep);\\
 ~~~~\kw{if}~(P\symbol{95}ERR~==~entry\symbol{95}t\symbol{95}hist\symbol{95}add(pads,~\symbol{38}h,~\symbol{38}pd,~\symbol{38}rep))~\{\\
-~~~~~~entry\symbol{95}t\symbol{95}hist\symbol{95}report(pads,~"",~0,~0,~\symbol{38}h);\\
+~~~~~~entry\symbol{95}t\symbol{95}hist\symbol{95}report(pads,~\literal{""},~\literal{0},~\literal{0},~\symbol{38}h);\\
 ~~~~~~entry\symbol{95}t\symbol{95}hist\symbol{95}reset(pads,~\symbol{38}h);
 ~~~~\}\\
 ~~\symbol{125};\\
-~~entry\symbol{95}t\symbol{95}acc\symbol{95}report(pads,~"",~0,~0,~\symbol{38}h);\\
+~~entry\symbol{95}t\symbol{95}acc\symbol{95}report(pads,~\literal{""},~\literal{0},~\literal{0},~\symbol{38}h);\\
 \\
 ~~P\symbol{95}io\symbol{95}close(pads);\\
 ~~entry\symbol{95}t\symbol{95}cleanup(pads,~\symbol{38}rep);\\
