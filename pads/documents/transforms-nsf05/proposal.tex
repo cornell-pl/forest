@@ -76,7 +76,7 @@ research agenda.
 
 \begin{enumerate}
 \item We will design, study and implement
-a universal ad hoc data description language.
+a {\em universal ad hoc data description language.}
 Our descriptions will be capable of
 concisely and accurately describing both the basic syntactic structure
 as well as the deeper semantic properties of any ad hoc data source.
@@ -84,10 +84,10 @@ We will study of the semantic properties of our description language
 and implement a compiler that can
 generate a parser automatically from a data description.
 
-\item We will design, study, and implement a 
-high-level programming language, \datatype{}, that comes with 
+\item We will design, study, and implement  \datatype{}, a 
+high-level programming language {\em with 
 intrinsic support for 
-processing ad hoc data.  Our programming language will use the
+processing ad hoc data.}  Our programming language will use the
 rich data descriptions both as directives for
 parsing ad hoc data sources and as types for describing
 representations of ad hoc data within the programming environment.  
@@ -104,19 +104,45 @@ studying its type system and metatheory extensively.
 
 \item We will evaluate \datatype's design by implementing 
 applications in at least two completely different domains.  First, we will
-develop tools for cleaning and normalizing
-telecommunications data provided by AT\&T.  Second, we 
-will process data provided by computational biologists
+develop tools for cleaning, normalizing, analyzing and mining
+telecommunications data supplied by AT\&T.  This will allow
+us to evaluate our tools on the massive data sets found in
+industry.  Our research in this context also has the 
+long-term potential of making
+a broad impact on society by improving the reliability of network
+monitoring and fraud detection tools
+used in the telecommunications industry.  Second, we 
+will develop tools for processing data sources of 
+interest to computational biologists, genomics researchers 
+at Princeton and in the
+broader research community.  In particular, we will collaborate with
 Olga Troyanskaya from Princeton's Lewis-Sigler Institute for 
 Integrative Genomics and Steven Kleinstein, head of Princeton's
 Picasso project for interdisciplinary research.
-Troyanskaya is in the process of developing Magic~\cite{magic}, a database 
-that stores information on gene-gene interactions
-and needs to load that database with information extracted from
-a variety of other sources including, among others,
-the Gene Ontology database GO~\cite{go}.  Kleinstein is currently working on
-a simulator for understanding immune-system responses and is in need of tools for
-loading ad hoc data into his simulator. 
+This collaboration will allow to make a broad impact on
+research in the natural sciences:  Our general-purpose, reuseable
+and reliable tools will help boost the productivity of biologists, 
+chemists and physicists.
+% Troyanskaya is in the process of developing Magic~\cite{magic}, a database 
+% that stores information on gene-gene interactions
+% and needs to load that database with information extracted from
+% a variety of other sources including, among others,
+% the Gene Ontology database GO~\cite{go}.  Kleinstein is currently working on
+% a simulator for understanding immune-system responses and is in need of tools for
+% loading ad hoc data into his simulator. 
+
+\item We will engage Princeton's undergraduate students in 
+a series of independent projects based around the the development and use of
+\datatype.  Potential projects include (1) cross disciplinary
+research in computer science and biology by building the ad hoc
+data processing tools needed for biological research at 
+Princeton, (2) building a visual interface so non-programmers can
+describe, parse, print, and edit data at a high level of abstraction,
+(3) research in compiler and parser optimization for massive data sets 
+(4) research in techniques for automatically guessing effective data 
+descriptions for simple tabular data, and several more.  Three
+Princeton undergraduates Mark Daly, Jon Epstein and Michael Ten-Pow
+have already expressed interest in these projects for the coming year.
 \end{enumerate}
 
 
@@ -164,50 +190,74 @@ loading ad hoc data into his simulator.
 % with their data processing problems.  
 % \end{enumerate}
 
-Overall, our research will combine novel language design ideas
-and strong theoretical analysis with a serious implementation.  
-We will deliver a programming system with the potential to substantially
-increase the overall productivity of data analysts and
-programmers who deal with ad hoc data regularly.
-Finally, our research will have a broad impact on research in
-interdisciplinary computational science.  In particular, we will develop tools for
-computational biologists at Princeton who use ad hoc data on a day-to-day
-basis.
+Overall, our research will combine novel language design ideas and
+strong theoretical analysis with a serious implementation.  We will
+deliver a programming system with the potential to substantially
+increase the overall productivity of data analysts, network administrators
+and programmers who
+deal with ad hoc data regularly.  Finally, our research will have a
+broad impact on research in interdisciplinary computational science,
+particularly genomics and microbiology where we will focus
+our initial efforts.
 
-Our language design and implemenation will build upon the experience we have
-gained designing and implementing the \pads{} system~\cite{fisher+:pads,pads-website}.
-The \pads{} system allows users to write \C-like type declarations and
-interpret them as descriptions of ad hoc data.  The \pads{} compiler
-generates libraries for parsing and printing from these descriptions.  There are at least 
-two substantial differences between
-\pads{} and our new system.  First, \datatype's data description
-language will be based on polymorphic, recursive datatypes as opposed to 
-\C{} structs, arrays and unions.  This design will allow us to write descriptions
-for a number of important formats used by computational biologist that cannot currently be
-described in \pads.  In addition, our initial experiments
-indicate that \datatype{} descriptions are anywhere from 10\% to 40\% more concise than
-\pads{} descriptions.
-Most importantly, \datatype{} description are a much better fit for the light-weight 
-data transformation language we propose to develop.
-The second critical difference is that {\em \pads{} is not a programming language.}
-It merely generates libraries that can be used by \C{} programmers.  \C{}
-is a very low-level language that makes transforming ad hoc data awkward, cumbersome
-and potentially error-prone.  More importantly, it provides no intrinsic support for dealing with the errors
-that appear in ad hoc data.  In addition, \C's type system and operational model provide no support for checking
-the rich invariants found in ad hoc data either at run time or at compile time.  In contrast, 
-\datatype{} will be a high-level language with an elegant and convenient syntax for 
-data-driven programming, intrinsic support for handling errors, intrinsic mechanisms for checking data invariants at
-run time and a sophisticated type system for enforcing data invariants compile time.  
+\paragraph*{Experience and prior work with ad hoc data.}
+\datatype's language design and implementation will build upon the experience
+we have gained designing and implementing the \pads{}
+system~\cite{fisher+:pads,pads-website}.  The \pads{} system allows
+users to write \C-like type declarations and interpret them as
+descriptions of ad hoc data.  The \pads{} compiler generates libraries
+for parsing and printing from these descriptions.  
+While \pads{} is an excellent first step in the design of
+a language for processing ad hoc data, the experience we have
+gained developing and using it demonstrates clearly that 
+it has many deficiencies and drawbacks.  Our current research 
+will correct these problems with a vastly improved
+design and implementation.
+
+The two most substantial differences between \pads{} and 
+\datatype{} are present at the very core of the two designs.
+The first critical difference is that 
+\datatype's data description language will be based on
+polymorphic, recursive datatypes as found in functional programming languages
+as opposed to \C{} structs, arrays
+and unions.  By adding recursion, a feature not present in the original
+pads, our new design will allow us to write descriptions for a
+number of important tree-structured formats used by computational 
+biologists.  In addition, our initial
+experiments indicate that \datatype{} descriptions are anywhere from
+10\% to 40\% more concise than the current \pads{} descriptions.  Most
+importantly, \datatype{} description are a much better fit for the
+light-weight data transformation language we propose to develop.  
+
+The second critical difference is that {\em \pads{} is not a programming
+language.}  It merely generates libraries that can be used by \C{}
+programmers.  \C{} is a very low-level language that makes
+transforming ad hoc data awkward, cumbersome and potentially
+error-prone.  More importantly, it provides no intrinsic support for
+dealing with the errors that appear in ad hoc data.  In addition, \C's
+type system and operational model provide no support for checking the
+rich invariants found in ad hoc data either at run time or at compile
+time.  In contrast, \datatype{} will be a high-level language with an
+elegant and convenient syntax for data-driven programming, intrinsic
+support for handling errors, intrinsic mechanisms for checking data
+invariants at run time and a sophisticated type system for enforcing
+data invariants at compile time.  Overall,
+programs written in \datatype{} will be more concise, more reliable,
+easier to understand,
+easier to maintain, and easier to evolve as data formats evolve
+than programs written in \C.
 
 However, the \pads{} implementation will certainly not go unused.  It is a well-engineered
 and efficient parser generator with excellent support for massive data sources.
 We plan to implement \datatype{} directly on top of \pads{}, extending \pads{}
-with new functionality where necessary to support the novel features of \datatype.
+with new functionality where necessary to support the novel features of \datatype.  Using \pads{} directly as a back-end for our
+new system will greatly speed up our development process.
 %We will give and additional comparison of
 %our proposed system, \datatype{} and its relation to \pads{} in
 %the related work section at
 %the end of this proposal.  
 
+\paragraph*{Proposal Structure.}
 In the rest of this proposal, we will explain the immense
 challenges and risks posed by ad hoc data in more detail.  We will
 explain how our proposed system as a whole can deal with them.   
@@ -218,34 +268,37 @@ traditional computer science and on interdisciplinary education as well.
 
 \subsection{The Challenges of Ad Hoc Data}
 
-There are vast amounts of useful data stored in
-traditional databases and \xml{} formats, but there is just as much in
-ad hoc formats.  \figref{figure:data-sources} provides some information
-on ad hoc data formats from the networking and telecommunications domain at AT\&T
-and ad hoc data formats used by computational biologists at Princeton.  
-They include ASCII, binary, and Cobol data formats, with
-both fixed and variable-width records arraged in linear sequences or in
-tree- or DAG-shaped hierarchies.  The data sources range in size from
-relatively small files up to network applications, such as web server logs,
-which can be produced at a rate of 12GB per week, to Netflow applications, which 
-can be produced at over one GB per second.  Common errors include undocumented data,
-corrupted data, missing data, and multiple missing-value
-representations.   
+There are vast amounts of useful data stored in traditional databases
+and \xml{} formats, but there is just as much in ad hoc formats.
+\figref{figure:data-sources} provides some information on ad hoc data
+formats from the networking and telecommunications domain at AT\&T and
+ad hoc data formats used by computational biologists at Princeton.
+They include ASCII, binary, and Cobol data formats, with both fixed
+and variable-width records arraged in linear sequences or in tree- or
+DAG-shaped hierarchies.  The data sources range in size from
+relatively small files up to network applications, such as web server
+logs, which can be produced at a rate of 12GB per week, to Netflow
+applications, which can be produced at over one GB per second.  Common
+errors include undocumented data, corrupted data, missing data, and
+multiple missing-value representations.
 
-We hope that these examples give the reader a beginning sense of the nature and
-pervasiveness of ad hoc data sources.  However, we cannot emphasize enough just how
-pervasive ad hoc data is and to what degree it infiltrates computer systems, businesses, government,
-and scientific research.  Remember, just about any program that spits out useful information
-in a format other than \xml{}, \textsc{html}, \textsc{jpeg}, \textsc{mpeg} or a few others
-is generating ad hoc data.  Hence, most programmers deal with ad hoc data on a
-individual basis regularly.  When it comes to ad hoc data on a grand scale, perhaps the most
-daunting challenge will  come from the national health-care system.  Recently, Newt Gingrich and 
-Hilary Clinton have jointly proposed we 
-consolidate and integrate our national healthcare records in the next 10 years.  
-Such a massive project will undoubtedly require technical solutions at many levels.  At the
-lowest levels, we will need a reliable software to collect and transfer health care
-data from legacy systems into modern formats.  The \datatype{} system we propose
-will be an invaluable aid in the development of this software.
+We hope that these examples give the reader a beginning sense of the
+nature and pervasiveness of ad hoc data sources.  However, we cannot
+emphasize enough just how pervasive ad hoc data is and to what degree
+it infiltrates computer systems, businesses, government, and
+scientific research.  Remember, just about any program that spits out
+useful information in a format other than \xml{}, \textsc{html},
+\textsc{jpeg}, \textsc{mpeg} or a few others is generating ad hoc
+data.  Hence, most programmers deal with ad hoc data on a individual
+basis regularly.  When it comes to ad hoc data on a grand scale,
+perhaps the most daunting challenge will come from the national
+health-care system.  Recently, Newt Gingrich and Hilary Clinton have
+jointly proposed we consolidate and integrate our national healthcare
+records in the next 10 years.  Such a massive project will undoubtedly
+require technical solutions at many levels.  At the lowest levels, we
+will need a reliable software to collect and transfer health care data
+from legacy systems into modern formats.  The \datatype{} system we
+propose will be an invaluable aid in the development of this software.
 
 \begin{figure*}
 \begin{center}
@@ -421,46 +474,56 @@ language that permits analysts to describe the physical layout of
 their data, \textit{as it is}.  The language also permits analysts to
 describe expected semantic properties of their data so that deviations can
 be flagged as errors. The intent is to allow analysts to capture in a
-\datatype{} description all that they know about a given data source
-and to provide the analysts with a library of useful routines in exchange. 
+\datatype{} description all that they know about a given data source.
+When the data descriptions are coupled with the computational element
+of \datatype{}, programmers will have a quick and easy way to
+develop efficient and reliable scripts for processing ad hoc data.
+
+
+\figHeight{architecture-grant}{Processing ad hoc using the \datatype{} system.  Green-shaded components are written by
+the programmer. The sequences 010010100100.. and
+101101001011.. stand for the input and output ad hoc data
+respectively. The words ``Rep, MD'' stand for the pair of internal 
+data representation and its associated metadata including error 
+descriptions.}{fig:dsys}{2in}
 
 \datatype{} descriptions are intended to be concise enough to serve as
 documentation and flexible enough to describe any ASCII, binary,
-Cobol, and mixed data formats.  In addition, useful software tools
-can be generated from the descriptions and this feature provides
+Cobol, and mixed data formats.  Ideally, programmers write
+a single description for a data source and then develop
+many useful software tools based on
+the single description.  This one-description/many-tools feature provides
 strong incentive for keeping the descriptions current, allowing them
-to serve as living documentation.  
-
-\figHeight{architecture}{The \datatype{} System}{fig:dsys}{4in}
-
-Figure~\ref{fig:dsys} shows how one builds a typical transformation tool for
-processing ad hoc data using \datatype{}.  The first step is to
-write down \datatype{} descriptions for the input data and output
-data.  In some cases, such as when a tool is simply doing {\em data cleaning},
-the process of error detection
-and correction, the input and output data formats will be the same.
-In other cases, \datatype{} may simply serve as a front-end tool for getting ad hoc 
-into a programmable system and an output description will not be needed.
-Once the descriptions have been defined, the \datatype{} description compiler
-will be able to produce
-customizable libraries for parsing and printing the data.   
-The generated parsing code checks
-all possible error cases: system errors related to the input file,
-buffer, or socket; syntax errors related to deviations in the physical
-format; and semantic errors in which the data violates user
-constraints.  Because these checks appear only in generated code, they
-do not clutter the high-level declarative description of the data
-source.  Moreover, since tools are generated
-automatically by a compiler rather than written by hand, 
-they are far more likely to be robust
-and far less likely to have dangerous vulnerabilities such as
-buffer overflows.  The Ethereal system~\cite{ethereal}, which is used for
+to serve as living documentation for a data source.
+  
+Figure~\ref{fig:dsys} shows how one builds a typical transformation
+tool for processing ad hoc data using \datatype{}.  The first step is
+to write down \datatype{} descriptions for the input data and output
+data.  In some cases, such as when a tool is simply doing {\em data
+cleaning}, the process of error detection and correction, the input
+and output data formats will be the same.  In other cases, \datatype{}
+may simply serve as a front-end tool for getting ad hoc into a
+programmable system and an output description will not be needed.
+Once the descriptions have been defined, the \datatype{} description
+compiler will be able to produce customizable libraries for parsing
+and printing the data.  The generated parsing code checks all possible
+error cases: system errors related to the input file, buffer, or
+socket; syntax errors related to deviations in the physical format;
+and semantic errors in which the data violates user constraints.
+Because these checks appear only in generated code, they do not
+clutter the high-level declarative description of the data source.
+Moreover, since tools are generated automatically by a compiler rather
+than written by hand, they are far more likely to be robust and far
+less likely to have dangerous vulnerabilities such as buffer
+overflows.  The Ethereal system~\cite{ethereal}, which is used for
 monitoring network performance and security, is a cautionary example
-of what happens when people write parsers for ad hoc data by hand --- they are
-bound to get it wrong.  A recent security analysis of the Ethereal system~\cite{ethereal-attack}
-found 13 new vulnerabilities that allowed a malicious attacker to take control
-of the system, an unfortunate situation for software intended in part to
-improve the security of a system. Nine of 13 were buffer overruns found in the parsing code.
+of what happens when people write parsers for ad hoc data by hand ---
+they are bound to get it wrong.  A recent security analysis of the
+Ethereal system~\cite{ethereal-attack} found 13 new vulnerabilities
+that allowed a malicious attacker to take control of the system, an
+unfortunate situation for software intended in part to improve the
+security of a system. Nine of 13 were buffer overruns found in the
+parsing code.
 
 
 The result of a parse is a pair consisting of a canonical
@@ -471,34 +534,35 @@ the position of the data in the file and a characterization
 of the possible errors in the data.  There are several
 different sorts of errors that may arise.  Syntactic errors occur
 when a parser cannot read a valid item of the right type from the file 
-(eg: of parser attempts to read an integer to find the character '?'
-instead).  Semantec errors occur when a parser can read an item
+(eg: a parser attempting to read an integer finds the character '?'
+instead).  Semantic errors occur when a parser can read an item
 but it does not satisfy the appropriate semantic condition (eg: the
 parse finds an integer in the file, but the integer is $-1$ when it
 should be greater than zero).  
 
 The computational part of the \datatype{} language will form the glue between
 the input data format and the output format.  Transformations written
-\datatype{} will be able to handle error-free data using concise 
+\datatype{} will be able to handle error-free data using a concise 
 notation.  In addition, programmers will have the freedom to
 query the parse descriptor coupled with the data representation. 
-This structure allows analysts
-to choose how to respond to errors in application-specific ways.
+This structure allows programmers
+to respond to errors in application-specific ways.
 
-With such huge datasets, performance is critical. The \datatype{} system
-will address performance in a number of ways.  First, we will compile the
-data description to \pads{} rather than simply interpret it. \pads{}
-itself is compiled into efficient \C{} code.  Second, we will support 
-lazy processing of data streams
-for very large data sources.  The lazy stream-reading system will
-read manageable chunks of a large data source into the run-time environment 
-and flush them when they are no longer needed.  
-Finally, we will exploit another portion of the underlying \pads{} implementation:
-the \textit{parsing masks}.  \pads{} parsing masks allow data analysts to choose which semantic
-conditions to check at run-time, permitting them to specify all known
-properties in the source description without forcing all users of that
-description to pay the run-time cost of checking them.  \datatype{} programmers
-will be given access to this functionality as well.
+With such huge datasets, performance is critical. The \datatype{}
+system will address performance in a number of ways.  First, we will
+compile the data description to \pads{} rather than simply interpret
+it. \pads{} itself is compiled into efficient \C{} code.  Second, we
+will support lazy processing of data streams for very large data
+sources.  The lazy stream-reading system will read manageable chunks
+of a large data source into the run-time environment and flush them
+when they are no longer needed.  Finally, we will exploit another
+portion of the underlying \pads{} implementation: the \textit{parsing
+masks}.  \pads{} parsing masks allow data analysts to choose which
+semantic conditions to check at run-time, permitting them to specify
+all known properties in the source description without forcing all
+users of that description to pay the run-time cost of checking them.
+\datatype{} programmers will be given access to this functionality as
+well.
 
 % We propose to extend and improve the current \pads{}\ prototype by engaging
 % in three intertwined research efforts:
@@ -537,37 +601,10 @@ will be given access to this functionality as well.
 % We also give examples to show how useful they have been at AT\&T.
 
 
-\subsubsection{The \datatype{} Language Infrastructure}
+\subsection{Towards a Universal Ad Hoc Data Description Language}
 
-% \figref{figure:data-sources} summarizes some of the sources we have
-% worked with.  They include ASCII, binary, and Cobol data formats, with
-% both fixed and variable-width records, ranging in size from
-% relatively small files through network applications which process over
-% a gigabyte per second.  Common errors include undocumented data,
-% corrupted data, missing data, and multiple missing-value
-% representations.
-
-
-% \subsection{Common Log Format}
-% Web servers use the Common Log Format (CLF) to log client
-% requests~\cite{wpp}.  Researchers use such logs to measure
-% properties of web workloads and to evaluate protocol changes
-% by "replaying" the user activity recorded in the log.
-% This ASCII format consists of a sequence of
-% records, each of which has seven fields: the host name or IP address
-% of the client making the request, the account associated with the
-% request on the client side, the name the user provided for
-% authentication, the time of the request, the actual request, the
-% \textsc{http} response code, and the number of bytes returned as a
-% result of the request.  The actual request has three parts: the
-% request method (\eg, \texttt{GET}, \texttt{PUT}), the requested
-% \textsc{uri}, and the protocol version.  In addition, the second and
-% third fields are often recorded only as a '-' character to indicate
-% the server did not record the actual data.  \figref{figure:clf-records}
-% shows a couple of typical records.
-
-
-In order to understand further how \datatype{} can be used,
+In order to give the reader a sense of our proposed data
+description language and some of the challenges, we
 will take a look at an example of ad hoc data:
 a tiny fragment of provisioning data from AT\&T and show
 how our proposed \datatype{} language can be used to describe it.
@@ -623,8 +660,19 @@ basic types describe atomic data such as integers, strings, dates, \etc{}, while
 structured types describe compound data built from simpler pieces.
 \suppressfloats
 
-The \datatype{} provides a collection of broadly useful base
-types.  Examples include 8-bit unsigned integers (\cd{Puint8}), 32-bit
+
+\begin{figure}
+\begin {code}
+\input{dibblerml}
+\end{code}
+\caption{\datatype{} description for \dibbler{} provisioning data.}
+\label{figure:dibblerml}
+\end{figure}
+
+The \datatype{} will provide a large collection of broadly useful base
+types by exploiting the fact that we have already implemented many,
+many such types in the underlying \pads{} backend.  Examples of base
+types include 8-bit unsigned integers (\cd{Puint8}), 32-bit
 integers (\cd{Pint32}), dates (\cd{Pdate}), strings (\cd{Pstring}),
 and IP addresses (\cd{Pip}).  Semantic conditions for such base types
 include checking that the resulting number fits in the indicated
@@ -632,53 +680,64 @@ space, \ie, 16-bits for \cd{Pint16}.  By themselves, these base types
 do not provide sufficient information to allow parsing because they do
 not specify how the data is coded, \ie{}, in ASCII, EBCDIC, or binary.
 To resolve this ambiguity, \datatype{} will allow users to set an
-ambient coding discipline.  By default, \pads{} uses ASCII.  To
-specify a particular coding, the description writer can select base
-types which indicate the coding to use.  Examples of such types
-include ASCII 32-bit integers (\cd{Pa_int32}), binary bytes
-(\cd{Pb_int8}), and EBCDIC characters (\cd{Pe_char}).  In addition to
-these types, we propose to allow users to define their own new base types to specify more
-specialized forms of atomic data.
+ambient coding discipline.  By default, it will use ASCII.  In addition to
+these built-in types, we propose to allow users to define their own new base 
+types to specify more specialized forms of atomic data.  We
+will need to discover a convenience and effective way to do this.
+
+Types can be parameterized by values.  This mechanism serves
+both to reduce the number of base types and to permit the format and
+properties of later portions of the data to depend upon earlier
+portions.  For example, the base type \cd{Puint16_FW(3)} specifies
+an unsigned two byte integer physically represented by exactly three
+characters, while the type \cd{Pstring(' ')} describes a string
+terminated by a space.
 
 To describe more complex data, \datatype{} provides a collection of
 structured types loosely based on the type structure of functional
-programming languages such as Haskell and ML.  In
-particular, we will develop a novel form of 
-polymorphic, recursive and dependent datatypes
-to describe ad hoc data.  Different cases in the datatype describe
-different alternatives in the ad hoc data.  Recursion can be used to
-specify flat representations of tree-like data.  Dependency makes
-it possible for later parsing to depend upon earlier parsing.
-There will also be (dependent) records, tuples and arrays for describing sequences of data
-items.  Singleton types will be used to describing literal characters that must
-appear in the ad hoc data source. Each of
-these types can have an associated predicate that indicates whether a
-value calculated from the physical specification is indeed a legal
-value for the type.  For example, a predicate might require that two
-fields of a record are related or that the elements of a
-sequence are in increasing order.  Programmers can specify such
-predicates using \datatype{} expressions and functions, written in an
-ML-like syntax.  Finally, \kw{Ptypedef}s can be used to
-define convenient type abbreviations.
+programming languages such as Haskell and ML.  
+\figref{figure:dibblerml} gives a \datatype{} description for the
+\dibbler{} provisioning data written in a syntax we are currently
+designing.  We will use this example to illustrate some of the
+features of \datatype{} language.  
 
-\pads{} types can be parameterized by values.  This mechanism serves
-both to reduce the number of base types and to permit the format and
-properties of later portions of the data to depend upon earlier
-portions.  For example, the base type \cd{Puint16_FW(:3:)} specifies
-an unsigned two byte integer physically represented by exactly three
-characters, while the type \cd{Pstring(:' ':)} describes a string
-terminated by a space.  Parameters can be used with compound types to
-specify the size of an array or which branch of a union should be
-taken.
+Overall, the \datatype{} data
+description is a sequence of type definitions.
+It is probably easiest to understand the data source by
+reading these descriptions bottom up.
+The last type definition \cd{source} is intended to be
+a definition of an entire \dibbler{} data source.  The
+type description states that a \cd{source} is a
+\cd{summery\_ header} followed by a sequence (\cd{Parray}) of objects
+made up of an \cd{order\_header} followed by \cd{events}.
+The \cd{Parray} type depends upon two value parameters.
+The first parameter describes the syntactic separators 
+that may be found between elements of the array.  In this
+case \cd{NL} (the newline character) may be found between
+each element of the array.  In other words, once 
+the \cd{summery\_ header} has been parsed, each line
+of the data source will contain an 
+\cd{order\_header} and \cd{events}.  The second parameter
+is the terminator for the array.  In this case,
+the terminator is the end-of-file marker.  The array
+is considered completely and successfully parsed when 
+the end-of-file marker is reached.
 
-
-\figref{figure:dibbler} gives a \datatype{} description for the \dibbler{} 
-provisioning data written in a syntax we are currently designing.  
-We will use this example to illustrate some of the features of 
-\datatype{} language.  In \pads{} descriptions, types are declared before they are used, 
-so the type that describes the totality of the data source appears at the bottom of 
-the description.
-
+% Different cases in the datatype describe
+% different alternatives in the ad hoc data.  Recursion can be used to
+% specify flat representations of tree-like data.  Dependency makes
+% it possible for later parsing to depend upon earlier parsing.
+% There will also be (dependent) records, tuples and arrays for describing sequences of data
+% items.  Singleton types will be used to describing literal characters that must
+% appear in the ad hoc data source. Each of
+% these types can have an associated predicate that indicates whether a
+% value calculated from the physical specification is indeed a legal
+% value for the type.  For example, a predicate might require that two
+% fields of a record are related or that the elements of a
+% sequence are in increasing order.  Programmers can specify such
+% predicates using \datatype{} expressions and functions, written in an
+% ML-like syntax.  Finally, \datatype will allow programmers to
+% define their own new type abbreviations.
 
 % \begin{figure}
 % {\small
@@ -689,160 +748,204 @@ the description.
 % \end{figure}
 
 
+
+The definitions of \cd{events} indicate that
+this part of the \dibbler{} data will contain a sequence
+of \cd{event}s separated by verticle bars and terminated by a newline.
+Each \cd{event} is a string terminated by a veriticle bar,
+followed by a verticle bar and ending with an unsigned
+32-bit integer.  The interesting part of this sequence is the
+presence of the type \cd{'|'}.  In type-theoretic terms, this is
+a {\em singleton type}.  It states that one should
+ expect exactly the character \cd{'|'} in the input stream at this point.
+Other singletons appear in the summary header type as \cd{"0|"}
+and NL (the newline character).
+
+The type \cd{order\_header} is a record type that indicates
+the data format involves the sequence of items described by
+the fields of the record.  Notice that there are two different
+sorts of fields: anonymous fields containing directives to parse
+a particular character (\cd{'|'}), like the singleton types,
+and fields with names.  The second named field,
+\cd{att\_order\_num}, reveals two other proposed features of 
+\datatype: dependency and constraints.  Here,
+\cd{att\_order\_num} is constrained to be less than
+\cd{order\_num}, the value parsed in an earlier field.
+This is a relatively simple constraint on the correctness of the
+ad hoc data format.  In practice, constraints can become very rich
+involving properties such as sortedness of records in an array,
+restrictions on date and time ranges, constraints on IP addresses,
+restrictions on phone number formats, addresses and virtually 
+infinite variety of other possibilities. 
+
+The last interesting feature in the \dibbler{} example is the
+datatype definition of \cd{dib\_ramp}.  It describes
+two alternatives for portion of data, either an integer alone
+or the fixed string \cd{"no\_ii"} followed by an integer.
+In order to parse data in this format, the parser will
+first attempt to parse the first branch and only if it
+sales will it attempt to parse the second branch.
+
 \begin{figure}
-\begin {code}
-\input{dibblerml}
+\begin{code}
+type entry = Pstring(':') * ':' * Puint32
+\mbox{}
+datatype tree =
+    Tree of '(' * tree Parray(',', ')') * "):" * Puint32
+  | Tip of entry
+\mbox{}
+type trees = (tree * ';') Parray(NL,EOF)
+\mbox{}
+(* Tiny data fragment with type trees:
+\mbox{}
+(B:10,(A:34,C:15,E:23):4,D:2):12;
+((A:4,E:22):4,D:2):11;
+\mbox{}
+*)
 \end{code}
-\caption{\pads{}/ML description for \dibbler{} provisioning data.}
-\label{figure:dibblerml}
+\caption{Simplified Tree-shaped Newick Data}
+\label{figure:newick}
 \end{figure}
 
-\kw{Pstruct}s describe fixed sequences of data with unrelated types.
-In the \dibbler{} description, the type declaration for
-\cd{no_ramp_t} illustrates a simple \kw{Pstruct}. It starts with a 
-a string literal that matches the characters \cd{no_ii}.  Immediately after
-comes a single field named \cd{id}, which describes a 64-bit unsigned integer.
-The type \cd{order_header_t} is a more complicated \kw{Pstruct} which involves
-a series of fields including some integers, some optional fields (marked \kw{Popt}), some 
-structured fields (\cd{ramp} which is a \cd{dib_ramp_t}) and some strings.
-Each field is separated by a \cd{|} character in the data source.
+A second interesting example of ad hoc data comes courtesy of
+Steven Kleinstein, head of Princeton's Picasso project for
+interdisciplinary research in computational sciences.  
+Kleinstein is in the process of 
+building a simulator to study immune response.  Data
+needed for his simulations comes in a Newick format, which is
+a flat representation of trees and used by many biologists~\cite{newick}.  
+In Kleinstein's Newick format (simplified
+here for expository purposes), leaves of the
+tree are string labels followed by a colon and a number.
+A parent node in the tree introduces a collection of
+children by placing a sequence of trees within parens.
+Following the parens is a colon and a number, as is the case
+for the leaf node (incidentally, the numbers are called ``distances''
+and represent the number of genetic mutations that separate the
+child from the parent).  Each line of a file may contain
+a different tree, terminated by a semi-colon.
 
+\figref{figure:dibbler-records} gives a description of Newick
+and a bit of example data.
+Despite the relative complexity of the structure of the data, 
+the description is remarkably concise.
+Notice that the data type definition of \cd{tree} is recursive ---
+there appears to be no effective description of this data
+source without it.  
 
-\kw{Punion}s describe variation in the data source.  For example, the
-\cd{dib_ramp_t} type in the Sirius description indicates the possibility that
-the data may either be a 64-bit integer (\cd{ramp}) or a
-\cd{no_ramp_t}, which was discussed above.  During parsing, 
-the branches of a \kw{Punion} are tried in order; the first branch that 
-parses without error is taken.  
-The \kw{Popt} type in \cd{order_header_t} is actually syntactic sugar for a 
-stylized use of a \kw{Punion} with two branches: the first with the indicated type, 
-and the second with the ``void'' type, which  
-always matches but never consumes any input.
+\subsubsection{Planned Research on the Universal Data Description Language}
 
+The previous subsection should give the reader a flavor of the
+Universal Data Description Language we propose.
+Our ultimate goals for the language are (1) to make it
+as expressive as possible, enabling descriptions of
+any data format, (2) to keep the notation lightweight, 
+concise and easy to understand at a glance, and (3)
+to be a good fit with the data processing and
+transformation components of the \datatype{} language.
+In this subsection, we briefly outline the major steps
+we will take to realize our language design goals.
 
-\pads{} provides \kw{Parray}s to describe varying-length sequences of data all 
-with the same type.  The \cd{eventSeq_t} declaration in the \dibbler{} data description
-uses a \kw{Parray} to characterize the sequence of events an
-order goes through during processing.  This declaration indicates that the elements
-in the sequence have type \cd{event_t}.  It also specifies that the elements will
-be separated by vertical bars, and that the sequence will be terminated by 
-an end-of-record marker (\kw{Peor}).  In general, \pads{} provides a rich collection
-of array-termination conditions: reaching a maximum size, finding a terminating
-literal (including end-of-record and end-of-source),
-or satisfying a user-supplied predicate over the already-parsed portion of 
-the \kw{Parray}.  Finally, this type declaration includes a \kw{Pwhere} clause
-to specify a semantic constraint:  
-the sequence of timestamps must be in sorted order.
-It uses the \kw{Pforall} construct to express this constraint.
-In general, the body of a \kw{Pwhere} clause can be any boolean expression.
-In such a context for arrays, the pseudo-variable \cd{elts} is bound to the in-memory representation of the sequence and \cd{length} to its length.
+\paragraph*{Design of basic type structure including recursive datatype specifications.}
+We will first design the concrete syntax of the data description.
+As indicated in the previous section, we already have worked
+out the general ideas behind the basic design.  Now we need to make 
+it precise and fill in the details.  The central novelty
+here will be the definition of the recursive, polymorphic
+and dependent datatype specifications.
 
-% Returning to the CLF description in \figref{figure:wsl}, the \kw{Penum} type \cd{method_t} describes
-% a collection of data literals.  During parsing, \pads{} interprets these
-% constants using the ambient character encoding.  The \kw{Ptypedef} 
-% \cd{response_t} describes possible server response codes in CLF data by adding
-% the constraint that the three-digit integer must be between 100 and 600.
+We have not mentioned polymorphic definitions yet in any detail,
+but our experience with several dataformats indicates
+they will be very useful for specification reuse.  
+For example, in the common format for web server logs~\cite{wpp}, optional
+values are represented as either a single dash (if the item does not
+appear) or the item itself (if it does appear).  Currently, for every
+different sort of optional value (\ie ``dash or integer'' vs. ``dash
+or string''), one must write down a separate specification.  It should
+be possible to eliminate this sort of redundancy and reduce the size
+of format specifications using polymorphic types (types parameterized
+by other types).  In our previous examples, we used
+{\cd{Popt}} type constructors, which were intended to be
+``nothing or something'' pervasively.  With polymorphism,
+these sorts of constructors would not need to be built in to the
+system.  A user could defind new constructors of this ilk 
+whenever they chose to.
 
-% \setlength{\floatsep}{0pt}
-% \setlength{\dblfloatsep}{0pt}
-% \setcounter{totalnumber}{4}
-% \setcounter{dbltopnumber}{2}
-% \begin{figure*}[t!]
-% \begin{small}
-% \begin{center}
-% \begin{code}
-% \input{ai.paper}
-% \end{code}
-% \vskip -2ex
-% \caption{Tiny example of web server log data.}
-% \label{figure:clf-records}
-% \end{center}
-% \end{small}
-% \end{figure*}
+In addition, we will be developing a syntax for the more mundane
+elements of a language: tuples, records, arrays
+(parameterized) type definitions, base types etc.
 
+\paragraph*{Implementation of the basic type structure.}
+In order to implement our data description language,
+we will compile the basic types into our old system, \pads.
+In order to compile the recursive and polymorphic
+elements of our design, 
+two features our experience with real-world data sources
+has shown are invaluable,
+we will have to extend the underlying \pads{}
+implementation.  These extensions to \pads{}
+are nontrivial.  In particular,
+we need to transform \pads{} current ``descent'' parser into
+a ``recursive descent'' parser.  
+There are also a number of changes that must be made to
+the generated libraries to handle recursion.  
+We will have to make similar sorts of extensions
+to \pads{} to handle polymorphism as well.  However,
+once the extensions to \pads{} are complete,
+we believe we will be able to compile recursive data types
+into specifications based on \pads{} structs and unions.
+However, the optimal compilation strategy is certainly
+an important research question.
 
-% \begin{figure}
-% \input{wsl}
-% \caption{\pads{} description for web server log data.}
-% \label{figure:wsl}
-% \end{figure}
+\paragraph*{Advanced Features:  Data with Pointers.}
+Some data formats contain explicit embedded pointers 
+from one part of the data source to another.
+For example, the Gene Ontology (GO)
+Project~\cite{geneontology} is a data repository used by Olga
+Troyanskaya (Princeton Lewis-Sigler Institute for Integrative
+Genomics) and other biologists who study protein-protein interactions.
+One component of the GO data repository classifies reactions by
+placing them in a DAG-structured hierarchy.  In order
+to specify and represent this data internally in a 
+space-efficient manner, we cannot simply rely on
+recursive datatype descriptions as they will
+generate trees of data internally.  Instead,
+we believe we need a second mechanism which will allow us to specify
+a pointer from one part of the data representation to another.
+Another similar example occurs in
+part of the DNS packet format.  This format compresses
+host names by using pointers to point back to common
+hostname suffixes. 
 
+We plan to consider these and similar data sources in more detail
+in order to come up with an effective and general specification mechanism.
+At the current time, we need to do more research before we can
+propose a concrete design.
 
-Finally, the \kw{Precord} and \kw{Psource} annotations deserve comment.  The first
-indicates that the annotated type constitutes a record,
-while the second means that the type constitutes the totality of a data source.  
-The notion of a record varies depending upon the data encoding.  
-ASCII data typically uses new-line characters to delimit 
-records, binary sources tend to have fixed-width records, while 
-COBOL sources usually store the length of each record before the actual data.
-\pads{} supports each of these encodings of records and allows users to define
-their own encodings.  By default, \pads{} assumes records are new-line terminated.
-Before parsing, however, the user can direct \pads{} to use a different record
-definition.
-
-%More information about the \pads{} language may be found in the
-%\pads{} manual~\cite{padsmanual}.
-
-
-\subsection{Overview of Planned Research}
-\label{ssec:sow}
-
-Our central research agenda is divided into three broad subsections,
-which we will discuss here; our broader impacts will be discussed in the next 
-section.  First, our experience with real-world data has revealed that
-the current \pads{}\ system is unable to process many common
-data formats.  We propose a number of extensions to \pads{} 
-that will greatly improve its expressive power and enable
-us to handle many more important ad hoc formats.  Second,
-while \pads{}\ can automatically generate tools for providing
-statistical data summaries, querying ad hoc data and generating
-\xml, the tool generation process is extremely brittle, inflexible
-and results in low-performance software.  We propose to redesign
-the automatic tool generation process using a principled methodology
-based upon a novel \pads{}-attribute system that can communicate
-semantic information across tools.  Third, there is no formal
-basis for the \pads{} description language and compiler.  We propose to
-formalize the language and prove critical \pads{} correctness
-properties.  Overall, our research combines novel language
-design, high-performance systems engineering and theoretical analysis,
-all aimed at solving crucial data processing problems.
-
-\subsubsection{Towards a Universal Data Description System}
-
-An important part of our research involves investigating as many
-different ad hoc data formats that are used in practice as possible.
-These practical examples highlight deficiencies in our current tools
-and suggest many ways in which they need to be improved.  In this
-section, we discuss a number of the limitations of the current \pads{}\ 
-system and suggest extensions that we believe will be able to rectify
-these deficiencies.  In all cases, our ideas for extensions
-are driven directly by our experience dealing with real-world data.
-
-\paragraph*{Multi-stage Data Processing}
+\paragraph*{Advanced Features: Multi-stage Data Processing.}
 Many data sources require multi-stage processing.  For instance,
 security-sensitive data may be encrypted and high-volume data
 is often compressed.  On the way into the system, a first 
 pass must decrypt or decompress the data before a second pass
 does the parsing work on the underlying format.  On the way out of the system, 
 it may be necessary to apply reverse transforms.  
-It is currently impossible to code up multi-stage processing in PADS.
+
 One solution
 to this problem might be to let auxiliary passes through the data
-remain outside the PADS system.  Unfortunately, this solution
-leaves us in a situation in which PADS is not a self-contained
-definition of the data format in question.  Consequently some of the value
-of pads as documentation is lost.  In addition, programmers must do
-more work themselves to produce pads applications.  They cannot
-simply run our automatic generators and receive a well-packaged 
-a query engine, parser or statistical analyzer for the raw data.
-Finally, some data formats~\cite{korn+:delta,korn+:data-format} are not 
+remain outside the \datatype{} system.  Unfortunately, this solution
+leaves us in a situation in which \datatype{} descriptions 
+are not self-contained
+definitions of the data format in question.  Consequently some of the value
+of \datatype{} as documentation is lost.  
+In addition, some data formats~\cite{korn+:delta,korn+:data-format} are not 
 uniformly encrypted or compressed.
-The data may contain subsections that are encrypted and more troublesome,
+The data may contain subsections that are encrypted, and more troublesome,
 the encryption or compression algorithms may be data-dependent so
 disentangling the compression and encryption stages 
 involves just the sort of parsing that \pads{} was built for.
 
-We plan to facilitate multi-stage data processing directly in PADS.  As a
+We hope to be able to facilitate multi-stage data processing 
+directly in \datatype.  As a
 first step, we will add staging directives with the form 
 \cd{preprocess(args) \Pthen T} to the language of types.
 The command \cd{preprocess(args)} performs some preprocessing step, be it
@@ -857,82 +960,13 @@ decompress and then decrypt:
 \Pthen\ statements are designed to compose with other PADS features, making
 it easy to do data-dependent processing.
 
-\paragraph*{Recursive Data}
-At its core, PADS currently defines three main different sorts of type 
-constructors: 
-records, unions and arrays.  However, many data sources have a recursive
-structure that cannot be captured with these basic types.  We are
-particularly familiar with Gene Ontology (GO) Project~\cite{geneontology},
-which is a data repository used by Olga Troyanskaya
-(Princeton Lewis-Sigler Institute for Integrative Genomics) 
-and other biologists who study protein-protein
-interactions.  One component of the GO data repository classifies reactions by placing them
-in a tree-structured hierarchy.   We believe that part of the solution
-to describing GO's ad hoc data format is to describe the hierarchy
-using recursive types.
-
-There are several challenges involved with adding recursive types to the 
-PADS infrastructure.  First, we need to analyze recursive type definitions
-to ensure they
-have the appropriate {\em contractiveness} property so that we can
-generate well-formed internal data structures to represent the result of
-a parse.  Second,
-we need to transform the current ``descent'' parser into
-a ``recursive descent'' parser.  Third, the PADS parser is 
-parameterized by user-supplied {\em masks} that tell the parser
-to turn off or on certain semantic checks.  We believe that
-masks for recursive data must themselves be recursive or cyclic
-data structures, though we must do more research to determine the
-optimal solution.  Finally, PADS parsers output parse descriptors
-that track data errors and statistical summaries of the data values
-parsed.  We need to investigate the form these auxiliary
-data structures should take when the data parsed is recursive. 
-It is necessary balance system performance with accuracy
-and consequently, the choice of parse descriptor and summary 
-format is far from obvious.
-
-\paragraph*{Data with Pointers}
-Some data formats contain explicit embedded pointers 
-from one part of the data source to another.
-For example, part of the DNS packet format compresses
-host names by using pointers to point back to common
-hostname suffixes.  The GO data source
-mentioned above also contains pointers as the
-hierarchy that describes gene product interactions
-is not a tree, but rather a DAG.  
-
-PADS currently provides no support for processing these pointers.
-Ideally, PADS should generate internal
-data structures with pointers that point from one part
-of the internal structure to another.  This way the backend application
-will be able to manipulate the data in a much more convenient fashion.
-We plan to explore the language design space here and to determine
-the most effective way to specify and automatically process data
-with pointers.  
-
-\paragraph*{Specification Reuse}
-Many specifications contain numerous repeated subcomponents.  For
-example, in the common format for web server logs~\cite{wpp}, optional
-values are represented as either a single dash (if the item does not
-appear) or the item itself (if it does appear).  Currently, for every
-different sort of optional value (\ie ``dash or integer'' vs. ``dash
-or string''), one must write down a separate specification.  It should
-be possible to eliminate this sort of redundancy and reduce the size
-of format specifications using polymorphic types (types parameterized
-by other types).  We plan to investigate how to integrate
-polymorphism into PADS specifications and our implementation.
-As is the case with recursive types, there are bound to be
-a number of language design and implementation issues to deal with.
-
-
-\paragraph*{Integrating Multiple Data Repositories}
+\paragraph*{Integrating Multiple Data Repositories.}
 Sometimes, a single logical data source is represented
 as several distinct, concrete repositories.   This is the case
-in the GO data source, where data is split into four disjoint
+in the GO data source used by Troyanskaya mentioned above. 
+In GO,  data is split into four disjoint
 files: a molecular function file, a biological process file,
 a cellular component file and a term definitions file.
-The current \pads{} implementation is unable to process
-these distinct repositories as a single, coherent data source.
 
 % begin BS
 
@@ -949,170 +983,14 @@ pros and cons of such a set up.
 
 % end BS
 
-\subsubsection{Automatic Tool Generation}
-
-The current \pads{}\ system can automatically generate tools for
-creating statistical summaries of data sources, querying
-data sources and outputting data in ``hoc'' formats such as
-\xml.  Unfortunately, the tool generation process is quite brittle and the
-performance of the generated artifacts can be substantially improved.  
-In this section, we propose several innovative ways of improving our
-automatic tool generation infrastructure.
-
-\paragraph*{Attribute-based Tool Generation}
-The primary reason that automatic tool generation is brittle
-is that the tools assume that the data passed to them fits a generic
-shape: it must be an optional {\em header} followed by
-a {\em body} that consists of a sequence of records 
-terminated by the end of source.  
-When the data does not fit the assumed shape, automatic
-tool generation cannot be used.  Moreover, in order to specify 
-the header and body sections, a programmer must write a complicated series of
-C macros that specialize the tool.  This process is obviously highly 
-error-prone and extremely inflexible.  We need a more flexible 
-tool generation paradigm that allows data analysts to manipulate
-any data format they might come across, and also to
-analyze any subparts of a data set they deem important.
-
-We propose to develop a more principled and substantially more robust
-approach to automatic tool generation by extending \pads{}\ with a
-high-level attribute system.  {\em Attributes} are tokens that may be
-attached to \pads{}\ specifications and that communicate semantic
-information to tools such as the statistical analyzer and the query
-engine.  For example, if a data analyst wanted to use the statistical
-summary tool, he or she might attach the {\cd{summary}} attribute to
-the specific parts of a pads description that describe data that must
-be summarized.  Likewise, to generate \xml{}\ from a portion of the
-data, the analyst might attach the {\cd{xml}} attribute to the
-appropriate component of the \pads{} description.  In addition to
-enabling more robust tool generation, attributes will make our
-generated tools much more flexible.  Analysts will be able to use
-attributes to select portions of the data that they wish to analyze or
-manipulate.
-
-In order to make this new attribute-based tool generation system work,
-we must do considerable research in language design and we must
-re-architect some of the current tool base.  The language design is
-nontrivial because attribute specifications must be separated from the
-basic data format description.  The attributes need to the separated
-because they change frequently and depend upon the current needs of
-the data analyst, whereas the basic data format description is
-independent of any given tool or any given analyst, and consequently
-persists indefinitely.
-
-\paragraph*{Exploiting Semantic Constraints}
-In addition to being brittle, the current \pads{}\ tools suffer from
-performance penalties because there is no automatic way to communicate
-semantic information from the data source to the tool.  The query
-engine tool, in particular, could benefit tremendously from semantic
-information such as the property that a given field acts as a {\em
-key} for a certain record (\ie\  each record of this type in the data
-source has a unique key field) or the property that an array of
-records is {\em sorted}.
-
-We plan to extend the basic attribute system described above with
-user-defined attributes that are associated with semantic constraints
-such as the \cd{key} attribute or the \cd{sorted} attribute.  When we
-generate tools from a \pads{} description and associated attributes,
-the generated parser will check the semantic constraints as it reads
-new data.  On the other hand, a downstream tool such as the query
-engine will be able to assume that the semantic constraints hold
-(provided the parse descriptor indicates the data is error-free) and
-it will be able to exploit this knowledge to optimize its query plan.
-Overall, we believe attributes with semantic constraints will provide
-an efficient and robust means of communicating information between
-tools.  However, once again, we must do much more research to develop
-the right language design and effective tool interfaces.
-
-% mention FAX here?
-
-\paragraph*{Application-specific, Compile-time Specialization}
-For any ad hoc data format, there should be a single \pads{} description
-to describe the data format including all appropriate
-semantic constraints.  However, different applications
-may use the data in entirely different ways.  Consequently,
-it can be extremely advantageous to specialize the basic
-parser to an individual application.  We have discovered
-four important ways to specialize generated \pads{} parsers
-and hence the generated tools as well.
-
-\begin{enumerate}
-\item Some data sources are quite irregular and have much redundancy.
-It is common to want to ``clean up'' a data source by
-normalizing it in some way or another.  For instance,
-IP backbone data from the Regulus project at AT\&T has
-multiple different formats that represent  ``missing values.''
-For statistical summaries and querying,
-it is highly desirable to take the multiple missing value representations
-and convert them all to a single representation.
-\item For performance reasons, when processing high-volume data,
-it is sometimes necessary to turn off semantic checks.  
-Currently, this is possible with \pads{} masks, but the masks
-are checked over and over again at run time.  We believe it is
-possible to partially evaluate the masks at compile time
-and achieve performance improvements.
-\item Different applications deal with errors in different ways. 
-Sometimes a single error in a data fragment is sufficient
-reason to skip to the end of the fragment; other times,
-the parser can attempt to recover.  Sometimes, there are
-application-specific ways to fix errors as they are recognized.
-Allowing the user to control when and how to perform
-error recovery can result in both
-higher performance and better parsing.
-\item Some applications only need a small fragment of the information
-available in the totality of a data source.  These applications can
-skip large portions of the data source and we conjecture specializing
-our tools for these applications will allow us to achieve substantial
-performance improvements.
-\end{enumerate}
-
-We propose to investigate how we might develop an effective mechanism
-that will allow us to specialize the \pads-generated parsers 
-with this sort of application-specific behavior.  In some cases,
-we believe that it may be possible to use some ideas from the 
-literature on partial 
-evaluation to accomplish our goal, but we must do much more
-research to determine the best way to solve these problems.
-We also believe that there is a further role for research
-in language design here as we would like to develop
-a clear, concise and general notation for specifying
-how and where to specialize a \pads-generated parser
-and tool suite. 
-
-%\label{subsec:general}
-
-% We start by showing in \figref{figure:dibbler-filter} a simple use of 
-% the core library to clean and normalize \dibbler{} data. After initializing
-% the \pads{} library handle and opening the data source, the code sets
-% the mask to check all conditions in the \dibbler{} description except the
-% sorting of the timestamps.  We have omitted from the figure the code to read and write the header. 
-% The code then echoes error records to one file and cleaned ones to another.
-% The raw data has two different representations of unavailable phone numbers:
-% simply omitting the number altogether, which corresponds to the \cd{NONE}
-% branch of the \kw{Popt}, or having the value \cd{0} in the data.  
-% The function \cd{cnvPhoneNumbers} unifies these two representations 
-% by converting the zeroes into \cd{NONE}s.  The function \cd{entry_t_verify}
-% ensures that our computation hasn't broken any of the semantic properties
-% of the in-memory representation of the data.
-% \begin{figure}[t]
-% \begin{small}
-% \begin{center}
-% \input{dibbler_filter}
-% \caption{Code fragment to filter and normalize \dibbler{} data.}
-% \label{figure:dibbler-filter}
-% \end{center}
-% \end{small}
-% \end{figure}
-
-%\paragraph*{Transforming Data from One Ad Hoc Format to Another}
-
-\subsubsection{Formalization and Semantic Analysis}
-
-Currently, \pads{} has no formal description or semantics. 
-In other words, there is no implementation-independent specification
-of what a \pads{} description means and there is no way to
-formally guarantee that a parse descriptor accurately describes the
-error structure of the result.
+\paragraph*{Formalization and Semantic Analysis.}
+In order to understand the expressiveness and meta-theoretic
+properties of our data description language
+we plan to formally define its semantics.
+Currently, as far as we are aware, no data description language
+anything like \datatype{}
+(including \pads~\cite{pads}, \packettypes~\cite{packettypes}, and \datascript~\cite{datascript}, and \blt~\cite{blt})
+has been given a formal semantics.  
 We propose to ameliorate this situation by
 formalizing the core features of the current language
 and analyzing the semantics of our extensions as we develop them.
@@ -1120,17 +998,16 @@ and analyzing the semantics of our extensions as we develop them.
 %evaluate our tools, will help us find bugs in the implementation and 
 %may suggest ways to generalize or streamline the \pads{} system.
 
-We believe that the best way to model \pads{} is as a dependent
+We believe that the best way to model \datatype{} is as a dependent
 type theory with dependent record types ($\Sigma x{:}\tau.\tau'$) to model
-\pads{} structures, set types ($\{x{:}\tau \; | \; P(x) \}$) to model
-semantic constraints, sum types to model unions and type functions
-($\lambda x{:}\tau.\tau'$) to model parameterized \pads{}\ types.  Further
-type constructors will also be necessary to model arrays, switched unions,
-and literals.  As we add features such as recursive types and 
-polymorphic types, we will need to extend the type theory to include
-type variables as well.
-
-In order to give a semantics to the \pads{} compiler, we will explore using
+the dependent records we propose, set types 
+($\{x{:}\tau \; | \; P(x) \}$) to model
+semantic constraints, sum and recursive types to model
+datatypes and type functions
+($\lambda x{:}\tau.\tau'$ and $\lambda \alpha{::}\kappa.\tau'$) 
+to model parameterized \pads{}\ types.  
+In order to give a semantics to the \datatype{} description
+compiler, we will explore using
 a denotational semantics in which {\em types} are interpreted 
 {\em as data processors}:
 
@@ -1140,42 +1017,42 @@ a denotational semantics in which {\em types} are interpreted
 
 \noindent
 where the data processor $f$ is a function that maps bitstreams into 
-data structures in a host language.  The host language for the
-implementation is C, but to simplify the semantics, we will 
-develop an abstract host language based on the lambda calculus.
+data structures in the lambda calculus. 
 
-We have several goals for the semantics:  
+% We have several goals for the semantics:  
 
-\begin{enumerate}
-\item By formalizing the language and then comparing the implementation to our
-formal model we will be able to uncover bugs in the implementation.
-Indeed, we have already made preliminary progress on the semantics and we have
-found bugs in the array-processing code of the compiler.  
-\item There are several corner cases in the current system 
-that we are unsure how to implement.  We hope our semantics
-will allow us to reevaluate our overall design
-and will also suggest implementation strategies in these 
-corner cases.
-\item We hope to use our semantics to understand other data
-processing languages such as
-\packettypes{}~\cite{sigcomm00} and
-\datascript{}~\cite{gpce02} and their relationship to
-\pads{}.  This understanding may help us augment \pads{}\ with new
-and useful features from these other systems.  For instance,
-our preliminary analysis of \packettypes{}\ suggests that their
-overlays can be modeled by intersection types.  By taking advantage of this 
-insight, we believe it should be possible to add overlays to \pads{}\ 
-in a relatively straightforward manner.
-\item Perhaps most importantly, we wish to prove an important
-correctness property of the \pads{}\ compiler:  When the generated parser
-produces a data representation and parse descriptor, all semantic 
-constraints on the data representation hold except when the parse 
-descriptor signals an error.  This crucial property implies that
-if a tool checks the parse descriptor and the parse descriptor
-signals no error then the data representation is valid.  Consequently,
-downstream tools such as the query engine can assume semantic constraints
-are valid merely by checking the parse descriptor.
-\end{enumerate}
+% \begin{enumerate}
+% \item By formalizing the language and then comparing the implementation to our
+% formal model we will be able to uncover bugs in the implementation.
+% Indeed, we have already made preliminary progress on the semantics and we have
+% found bugs in the array-processing code of the compiler.  
+% \item There are several corner cases in the current system 
+% that we are unsure how to implement.  We hope our semantics
+% will allow us to reevaluate our overall design
+% and will also suggest implementation strategies in these 
+% corner cases.
+% \item We hope to use our semantics to understand other data
+% processing languages such as
+% \packettypes{}~\cite{sigcomm00} and
+% \datascript{}~\cite{gpce02} and their relationship to
+% \pads{}.  This understanding may help us augment \pads{}\ with new
+% and useful features from these other systems.  For instance,
+% our preliminary analysis of \packettypes{}\ suggests that their
+% overlays can be modeled by intersection types.  By taking advantage of this 
+% insight, we believe it should be possible to add overlays to \pads{}\ 
+% in a relatively straightforward manner.
+% \item Perhaps most importantly, we wish to prove an important
+% correctness property of the \pads{}\ compiler:  When the generated parser
+% produces a data representation and parse descriptor, all semantic 
+% constraints on the data representation hold except when the parse 
+% descriptor signals an error.  This crucial property implies that
+% if a tool checks the parse descriptor and the parse descriptor
+% signals no error then the data representation is valid.  Consequently,
+% downstream tools such as the query engine can assume semantic constraints
+% are valid merely by checking the parse descriptor.
+% \end{enumerate}
+
+\subsection{The \datatype{} Transformation Language}
 
 \subsection{Broader Impacts}
 \label{ssec:impact}
