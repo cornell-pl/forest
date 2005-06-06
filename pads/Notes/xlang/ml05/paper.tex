@@ -1,6 +1,7 @@
 \documentclass{entcs} 
 \usepackage{entcsmacro}
 \usepackage{graphicx}
+\usepackage{code}
 
 \include{defs}
 
@@ -292,16 +293,339 @@ in section~\ref{sec:conclusion}.
 \section{Describing Data in \datatype{}}
 \label{sec:data-description}
 
-\subsection{The \pads{} Weltenshauung}
+\subsection{The \pads{} Weltanshauung}
+
+\begin{figure}[tp]
+  \includegraphics[height=3in,width=5in]{architecture.eps}
+%  \includegraphics{architecture.eps}
+\label{fig:pads-arch}
+\caption{The \pads{} Architecture}
+\end{figure}
+
+The data description primitives of the \pads{} language are types.
+However, more than describing data alone, these types describe a
+transformation from data in an external format to data in an internal
+format.  Yet, in \pads{}, data does not live alone. A critical benefit
+of the parsing is the meta-data gained during the transformation
+process.  Therefore, the result of a parse is a pair consisting of a
+canonical in-memory representation of the data and meta-data for the
+parse.  We refer to the meta-data as the {\em parse descriptor}. The
+parse descriptor may hold a variety of bits of information including
+the position of the data in the file and a characterization of the
+possible errors in the data.  There are several different sorts of
+errors that may arise.  Syntactic errors occur when a parser cannot
+read a valid item of the right type from the file (eg: of parser
+attempts to read an integer to find the character '?'  instead).
+Semantic errors occur when a parser can read an item but it does not
+satisfy the appropriate semantic condition (eg: the parse finds an
+integer in the file, but the integer is $-1$ when it should be greater
+than zero).  Furthermore, the \pads{} system does not view errors as
+fatal. Through the parse descriptor, \pads{} is able to record the
+presence of errors and continue (performing recovery as necessary),
+instead of throwing an exception or halting the parse as may be done
+in more conventional, ``data-only'' systems. Here, the parse
+descriptors play a critical role in the functioning of the system,
+beyond their otherwise ``passive,'' descriptive role.
+
+Now that we understand the relationship between external and internal
+data, we will look at three example data samples that can be described
+in \pads{}.
+
+Our first example is a tiny fragment of provisioning data from AT\&T.
+In the telecommunications industry, the term \textit{provisioning}
+refers to the steps necessary to convert an order for phone service
+into the actual service.  To track AT\&T's provisioning process, the
+\dibbler{} project compiles weekly summaries of the state of certain
+types of phone service orders.  These ASCII summaries store the
+summary date and one record per order.  Each order record contains a
+header followed by a sequence of events.  The header has 13 pipe
+separated fields: the order number, AT\&T's internal order number, the
+order version, four different telephone numbers associated with the
+order, the zip code of the order, a billing identifier, the order
+type, a measure of the complexity of the order, an unused field, and
+the source of the order data.  Many of these fields are optional, in
+which case nothing appears between the pipe characters.  The billing
+identifier may not be available at the time of processing, in which
+case the system generates a unique identifier, and prefixes this value
+with the string ``no\_ii'' to indicate the number was generated. The
+event sequence represents the various states a service order goes
+through; it is represented as a new-line terminated, pipe separated
+list of state, timestamp pairs.  There are over 400 distinct states
+that an order may go through during provisioning.  The sequence is
+sorted in order of increasing timestamps.
+\figref{figure:dibbler-records} shows a small example of this format.
+It may be apparent from this paragraph that English is a poor
+language for describing data formats!
+
+\begin{figure*}
+\begin{small}
+%\begin{center}
+\begin{verbatim}
+0|1005022800
+9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
+\end{verbatim}
+\caption{Tiny example of \dibbler{} provisioning data.}
+\label{fig:dibbler-records}
+%\end{center}
+\end{small}
+\end{figure*}
+
+A \datatype{} description specifies the physical layout and semantic
+properties of an ad hoc data source.  The language provides a
+type-based model: basic types describe atomic data such as integers,
+strings, dates, \etc{}, while structured types describe compound data
+built from simpler pieces.  \suppressfloats
+
+
+\begin{figure}
+\begin {code}
+\input{dibblerml}
+\end{code}
+\caption{\datatype{} description for \dibbler{} provisioning data.}
+\label{figure:dibblerml}
+\end{figure}
+
+The \datatype{} will provide a large collection of broadly useful base
+types by exploiting the fact that we have already implemented many,
+many such types in the underlying \pads{} backend.  Examples of base
+types include 8-bit unsigned integers (\cd{Puint8}), 32-bit
+integers (\cd{Pint32}), dates (\cd{Pdate}), strings (\cd{Pstring}),
+and IP addresses (\cd{Pip}).  Semantic conditions for such base types
+include checking that the resulting number fits in the indicated
+space, \ie, 16-bits for \cd{Pint16}.  By themselves, these base types
+do not provide sufficient information to allow parsing because they do
+not specify how the data is coded, \ie{}, in ASCII, EBCDIC, or binary.
+To resolve this ambiguity, \datatype{} will allow users to set an
+ambient coding discipline.  By default, it will use ASCII.  In addition to
+these built-in types, we propose to allow users to define their own new base 
+types to specify more specialized forms of atomic data.  We
+will need to discover a convenience and effective way to do this.
+
+Types can be parameterized by values.  This mechanism serves
+both to reduce the number of base types and to permit the format and
+properties of later portions of the data to depend upon earlier
+portions.  For example, the base type \cd{Puint16_FW(3)} specifies
+an unsigned two byte integer physically represented by exactly three
+characters, while the type \cd{Pstring(' ')} describes a string
+terminated by a space.
+
+To describe more complex data, \datatype{} provides a collection of
+structured types loosely based on the type structure of functional
+programming languages such as Haskell and ML.  
+\figref{figure:dibblerml} gives a \datatype{} description for the
+\dibbler{} provisioning data written in a syntax we are currently
+designing.  We will use this example to illustrate some of the
+features of \datatype{} language.  
+
+Overall, the \datatype{} data
+description is a sequence of type definitions.
+It is probably easiest to understand the data source by
+reading these descriptions bottom up.
+The last type definition \cd{source} is intended to be
+a definition of an entire \dibbler{} data source.  The
+type description states that a \cd{source} is a
+\cd{summery\_ header} followed by a sequence (\cd{Parray}) of objects
+made up of an \cd{order\_header} followed by \cd{events}.
+The \cd{Parray} type depends upon two value parameters.
+The first parameter describes the syntactic separators 
+that may be found between elements of the array.  In this
+case \cd{'\\n'} (the newline character) may be found between
+each element of the array.  In other words, once 
+the \cd{summery\_ header} has been parsed, each line
+of the data source will contain an 
+\cd{order\_header} and \cd{events}.  The second parameter
+is the terminator for the array.  In this case,
+the terminator is the end-of-file marker.  The array
+is considered completely and successfully parsed when 
+the end-of-file marker is reached.
+
+% Different cases in the datatype describe
+% different alternatives in the ad hoc data.  Recursion can be used to
+% specify flat representations of tree-like data.  Dependency makes
+% it possible for later parsing to depend upon earlier parsing.
+% There will also be (dependent) records, tuples and arrays for describing sequences of data
+% items.  Singleton types will be used to describing literal characters that must
+% appear in the ad hoc data source. Each of
+% these types can have an associated predicate that indicates whether a
+% value calculated from the physical specification is indeed a legal
+% value for the type.  For example, a predicate might require that two
+% fields of a record are related or that the elements of a
+% sequence are in increasing order.  Programmers can specify such
+% predicates using \datatype{} expressions and functions, written in an
+% ML-like syntax.  Finally, \datatype will allow programmers to
+% define their own new type abbreviations.
+
+% \begin{figure}
+% {\small
+% \input{dibbler_new}
+% }
+% \caption{\pads{} description for \dibbler{} provisioning data.}
+% \label{figure:dibbler}
+% \end{figure}
+
+The definitions of \cd{events} indicate that
+this part of the \dibbler{} data will contain a sequence
+of \cd{event}s separated by verticle bars and terminated by a newline.
+Each \cd{event} is a string terminated by a veriticle bar,
+followed by a verticle bar and ending with an unsigned
+32-bit integer.  The interesting part of this sequence is the
+presence of the type \cd{'|'}.  In type-theoretic terms, this is
+a {\em singleton type}.  It states that one should
+ expect exactly the character \cd{'|'} in the input stream at this point.
+Other singletons appear in the summary header type as \cd{"0|"}
+and $\backslash$n (the newline character).
+
+The type \cd{order\_header} is a record type that indicates
+the data format involves the sequence of items described by
+the fields of the record.  Notice that there are two different
+sorts of fields: anonymous fields containing directives to parse
+a particular character (\cd{'|'}), like the singleton types,
+and fields with names.  The second named field,
+\cd{att\_order\_num}, reveals two other proposed features of 
+\datatype: dependency and constraints.  Here,
+\cd{att\_order\_num} is constrained to be less than
+\cd{order\_num}, the value parsed in an earlier field.
+This is a relatively simple constraint on the correctness of the
+ad hoc data format.  In practice, constraints can become very rich
+involving properties such as sortedness of records in an array,
+restrictions on date and time ranges, constraints on IP addresses,
+restrictions on phone number formats, addresses and virtually 
+infinite variety of other possibilities. 
+
+The last interesting feature in the \dibbler{} example is the
+datatype definition of \cd{dib\_ramp}.  It describes
+two alternatives for portion of data, either an integer alone
+or the fixed string \cd{"no\_ii"} followed by an integer.
+In order to parse data in this format, the parser will
+first attempt to parse the first branch and only if it
+sales will it attempt to parse the second branch.
+
+\begin{figure}
+\begin{code}
+type entry = Pstring(':') * ':' * Puint32
+\mbox{}
+datatype tree =
+    Tree of '(' * tree Parray(',', ')') * "):" * Puint32
+  | Tip of entry
+\mbox{}
+type trees = (tree * ';') Parray('\\n',EOF)
+\mbox{}
+(* Tiny data fragment with type trees:
+\mbox{}
+(B:10,(A:34,C:15,E:23):4,D:2):12;
+((A:4,E:22):4,D:2):11;
+\mbox{}
+*)
+\end{code}
+\caption{Simplified Tree-shaped Newick Data}
+\label{figure:newick}
+\end{figure}
+
+A second interesting example of ad hoc data comes courtesy of
+Steven Kleinstein, head of Princeton's Picasso project for
+interdisciplinary research in computational sciences.  
+Kleinstein is in the process of 
+building a simulator to study immune response.  Data
+needed for his simulations comes in a Newick format, which is
+a flat representation of trees and used by many biologists~\cite{newick}.  
+In Kleinstein's Newick format (simplified
+here for expository purposes), leaves of the
+tree are string labels followed by a colon and a number.
+A parent node in the tree introduces a collection of
+children by placing a sequence of trees within parens.
+Following the parens is a colon and a number, as is the case
+for the leaf node (incidentally, the numbers are called ``distances''
+and represent the number of genetic mutations that separate the
+child from the parent).  Each line of a file may contain
+a different tree, terminated by a semi-colon.
+
+\figref{figure:dibbler-records} gives a description of Newick
+and a bit of example data.
+Despite the relative complexity of the structure of the data, 
+the description is remarkably concise.
+Notice that the data type definition of \cd{tree} is recursive ---
+there appears to be no effective description of this data
+source without it.  
+
+% The \dibbler{} project compiles weekly summaries of the state of
+% certain types of phone service orders. The above sample data is a tiny
+% extract from one such summary. It begins with a summary header and is
+% followed by a list of records each describing a different order. The
+% basic structural elements this data source, then, are fixed-size
+% sequences of elements (usually of different type) and open-ended
+% sequences of elements of the same type. We also notice that individual
+% fields in the data are separated by special characters such as newline
+% and vertical bar ('|'). To support these we have a support the
+% specification of literals.
+
+% The \datatype{} data descriptions are loosely based on the type
+% structure of functional programming languages such as ML and Haskell.
+% Therefore, the sequences fo dissimilar elements are described with
+% tuples and those of similar elements with arrays. The literals are
+% described with singleton types. The top level description of the
+% \dibbler{} data is as follows:
+% \begin{code}
+% \kw{type} summary\_header = "0|" ** Puint32 ** \\n
+% \mbox{}
+% \kw{type} events = event Parray('|',\\n)
+% \mbox{}
+% \kw{type} source = summary\_header ** (order\_header ** events) Parray(\\n,EOF)
+% \end{code}
+
+% Darkstar
+\begin{verbatim}
+???
+\end{verbatim}
 
 \subsection{Syntax}
+
+\begin{figure}
+  \centering
+\begin{verbatim}
+T ::=  \alpha
+     | Pbase                  (base type)
+     | d(M)		      (parameterized data type; e is perimeter)
+     | M		      (singleton type.  eg: " " for literal space)
+     | x:T1 ** T2	      (dependent pair)
+     | PD		      (parser descriptor type)
+     | T Parray(Msep, Mterm)  (array types)
+     | T list		      (list type; underlying rep for arrays)
+     | {x:T | M}	      (constrained type; ie: Pwhere)
+
+
+Pads/ML data type declarations
+
+D ::= datatype d(x:???) = DS
+   |    datatype d(x:???) = case M of TS
+   |    type \alpha = T
+
+DS ::= c of T
+     | (c of T | DS)  (datatype constructor; 
+                       parameter x of the datatype may appear
+                       free in T)
+
+TS ::= . | (pat => c of T | TS)
+\end{verbatim}
+  \caption{Syntax of Data Descriptions}
+  \label{fig:syntax-dd}
+\end{figure}
+
+We present the formal syntax of data descriptions, including that used
+in the examples, in figure~\ref{fig:syntax-dd}.
 
 \subsection{Further Examples}
 
 \section{Transforming Data in \datatype{}}
 \label{sec:data-transformation}
 
-Reminder of motivation
+Reminder of motivation.
+
+% The \datatype{} language inherits the ``error-aware computing''
+% approach of its predecessor. At all times, data is paired with a
+% parse descriptor that accurately describes its error state, along
+% with other information.
+
 
 \subsection{Language Design for Error-aware Computing}
 
