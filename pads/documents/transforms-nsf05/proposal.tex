@@ -106,7 +106,8 @@ studying its type system and metatheory extensively.
 applications in at least two completely different domains.  First, we will
 develop tools for cleaning, normalizing, analyzing and mining
 telecommunications data supplied by AT\&T.  This will allow
-us to evaluate our tools on the massive data sets found in
+us to evaluate the performance of our tools on the truly
+massive data sets (gigabytes or even terabytes in size)  found in
 industry.  Our research in this context also has the 
 long-term potential of making
 a broad impact on society by improving the reliability of network
@@ -193,17 +194,21 @@ have already expressed interest in these projects for the coming year.
 Overall, our research will combine novel language design ideas and
 strong theoretical analysis with a serious implementation.  We will
 deliver a programming system with the potential to substantially
-increase the overall productivity of data analysts, network administrators
+increase the overall productivity of data analysts, 
+information systems administrators
 and programmers who
-deal with ad hoc data regularly.  Finally, our research will have a
-broad impact on research in interdisciplinary computational science,
+deal with ad hoc data regularly.  Finally, our research has the potential
+to have  a
+broad impact on the telecommunications industry and on
+research in interdisciplinary computational science,
 particularly genomics and microbiology where we will focus
 our initial efforts.
 
-\paragraph*{Experience and prior work with ad hoc data.}
+\subsubsection{Experience and prior work with ad hoc data.}
 \datatype's language design and implementation will build upon the experience
 we have gained designing and implementing the \pads{}
-system~\cite{fisher+:pads,pads-website}.  The \pads{} system allows
+system~\cite{fisher+:pads,pads-website}.  The \pads{} system 
+is freely available software we have developed that allows
 users to write \C-like type declarations and interpret them as
 descriptions of ad hoc data.  The \pads{} compiler generates libraries
 for parsing and printing from these descriptions.  
@@ -215,15 +220,15 @@ will correct these problems with a vastly improved
 design and implementation.
 
 The two most substantial differences between \pads{} and 
-\datatype{} are present at the very core of the two designs.
+\datatype{} go to the very core of the two designs.
 The first critical difference is that 
 \datatype's data description language will be based on
 polymorphic, recursive datatypes as found in functional programming languages
 as opposed to \C{} structs, arrays
 and unions.  By adding recursion, a feature not present in the original
-pads, our new design will allow us to write descriptions for a
+\pads, our new design will allow us to write descriptions for a
 number of important tree-structured formats used by computational 
-biologists.  In addition, our initial
+biologists~\cite{go,newick}.  In addition, our initial
 experiments indicate that \datatype{} descriptions are anywhere from
 10\% to 40\% more concise than the current \pads{} descriptions.  Most
 importantly, \datatype{} description are a much better fit for the
@@ -250,8 +255,14 @@ than programs written in \C.
 However, the \pads{} implementation will certainly not go unused.  It is a well-engineered
 and efficient parser generator with excellent support for massive data sources.
 We plan to implement \datatype{} directly on top of \pads{}, extending \pads{}
-with new functionality where necessary to support the novel features of \datatype.  Using \pads{} directly as a back-end for our
+with new functionality where necessary to support the novel features 
+of \datatype.  Using \pads{} directly as a back-end for our
 new system will greatly speed up our development process.
+Overall, due to our past experience with \pads{} and
+our ability to leverage the current implementation in our new design,
+we are able, and in fact uniquely qualified, to take on the crucial
+research challenge we are proposing here.
+  
 %We will give and additional comparison of
 %our proposed system, \datatype{} and its relation to \pads{} in
 %the related work section at
@@ -274,7 +285,7 @@ and \xml{} formats, but there is just as much in ad hoc formats.
 formats from the networking and telecommunications domain at AT\&T and
 ad hoc data formats used by computational biologists at Princeton.
 They include ASCII, binary, and Cobol data formats, with both fixed
-and variable-width records arraged in linear sequences or in tree- or
+and variable-width records arranged in linear sequences or in tree- or
 DAG-shaped hierarchies.  The data sources range in size from
 relatively small files up to network applications, such as web server
 logs, which can be produced at a rate of 12GB per week, to Netflow
@@ -833,6 +844,104 @@ Notice that the data type definition of \cd{tree} is recursive ---
 there appears to be no effective description of this data
 source without it.  
 
+\subsection{The \datatype{} Transformation Language}
+
+
+\begin{figure}
+\begin{code}
+(* open file to introduce dibbler type definitions for
+   event, events, source, etc.  See Figure \ref{figure:dibbler}. *) 
+\mbox{}
+open dibbler.dt
+\mbox{}
+fun splitEntry (e:entry * entry list * entry list) : entry list * entry list =
+  case e of
+    <<entry, OK>> * good * bad => (entry::good, bad)
+  | <<entry, _>> * good * bad => (good, entry::bad)
+\mbox{}    
+fun splitSource (s:source) : entry list * entry list =
+  case s of 
+    <<(hdr,Parray(entries,_,_)),OK>> => (entries, nil)
+  | <<(hdr,Parray(entries,_,_)),OK>> =>
+    List.foldl splitEntry (nil, nil) entries
+\mbox{}
+fun app ((fdin,fdgood,fdbad) : File.FD * File.FD * File.FD) : unit =  
+  let input = read::source fdin in
+  let (good,bad) = splitSource input in
+  write::(entry Parray(NL,EOF)) (Parray(good,NL,EOF), fdgood);
+  write::(entry Parray(NL,EOF)) (Parray(bad,NL,EOF), bad)
+\end{code}
+\caption{Error filter for \dibbler{} data}
+\label{figure:newick-clean}
+\end{figure}
+
+Often, the first thing one wants to do with ad hoc data 
+is to transform it into some standard form, such as \xml{}
+or one of the standard database formats.  This way,
+the ad hoc data can be read directly into the database
+and users can write standard XQuery or SQL queries to extract the information 
+they need.  Since maintaining the integrity of information
+within a database is crucial, conversion to a standard format
+is usually accompanied by a data cleaning phase that detects
+and attempts to correct any errors it finds in the data source.
+
+\figref{figure:newick-clean} presents a very simple \datatype{}
+program in a syntax we are in the process of designing (we
+will explain several of the details of the code in this figure below).  The
+intent here is to give the reader a basic idea of the initial direction
+for our design --- it is by no means well worked out.  Much additional
+research is required.  Overall, the language is functional
+and makes heavy use of pattern matching.  We believe this design will
+allow programmers to quickly and easily write concise and correct
+programs.  
+
+A second key feature is that the data descriptions 
+(\cd{source}, \cd{entry}, etc.),
+which we wrote in the previous section, now become the types
+of datastructures that represent the ad hoc data once it has been
+parsed and read into the run-time system.  Since \datatype{} descriptions
+are parameterized by values and depend upon complex semantic constraints
+this leads to a very rich type structure for our programming language.
+A central research problem will involve developing the type system
+and its type inference algorithm.
+
+A third key feature is the intrinsic support the programming language provides
+for processing ad hoc data containing errors.  As we mentioned in previous
+sections, the parser for ad hoc generates a pair of objects:
+the actual data representation {\em and} a parse descriptor (PD)
+that carries metadata concerning the data representation,
+including any errors that may present in the data.
+From now on, we use the word {\em ad hoc value} to refer to
+the pair of ad hoc data representation and corresponding PD.
+One of the crucial design principles of our language will be
+that programmers never write PDs themselves; the
+PDs are always constructed automatically by the
+compiler system.  This important principle allows the compiler
+to guarantee that a value's PD always accurately describes the representation.
+It will be impossible for a programmer to corrupt the relationship
+between representation and PD accidentally.  
+
+At a first cut, the parse descriptor for any ad hoc data
+value may indicate one of the following things:
+\begin{itemize}
+\item {\tt G}: this is good data; it contains no syntactic or 
+semantic errors, not even nested deeply within its structure.
+\item {\tt B}: this is bad data; it is not even syntactically correct
+\item {\tt S}: this is syntactically valid data, but a semantic constraint 
+does not hold.
+\item {\tt R}: the top-level structure of this data is good, but some
+substructure is either syntactically or semantically invalid.
+\item {\tt U}: this data may be good, but I cannot be sure.  The programmer will
+have to check the substructure herself.  This last descriptor
+is important for stream processing where the system reads the
+stream lazily and cannot know in advance whether or not the stream
+as a whole will be good.
+\end{itemize}
+
+Although programmers cannot construct a parse descriptor and pair it with a
+representation to create a value, the programmer may use pattern matching
+to extract and read a value's parse descriptor.  
+
 \subsubsection{Planned Research on the Universal Data Description Language}
 
 The previous subsection should give the reader a flavor of the
@@ -1052,7 +1161,7 @@ data structures in the lambda calculus.
 % are valid merely by checking the parse descriptor.
 % \end{enumerate}
 
-\subsection{The \datatype{} Transformation Language}
+
 
 \subsection{Broader Impacts}
 \label{ssec:impact}

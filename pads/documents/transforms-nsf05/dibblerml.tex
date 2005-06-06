@@ -1,12 +1,12 @@
-\kw{type} summary\_header = <"0|"> * Puint32 * <NL>
+\kw{type} summary\_header = "0|" * Puint32 * NL
 \mbox{}
 \kw{datatype} dib\_ramp = 
   Ramp of Puint64 
-| GenRamp of <"no\_ii"> * Puint64
+| GenRamp of "no\_ii" * Puint64
 \mbox{}
 \kw{type} order\_header = \{
        order\_num      : Puint32;
- '|';  att\_order\_num  : Puint32;             
+ '|';  att\_order\_num  : Puint32 Pwhere att\_order\_num < order\_num; 
  '|';  ord\_version    : Puint32;         
  '|';  service\_tn     : pn\_t \kw{Popt};
  '|';  billing\_tn     : pn\_t \kw{Popt};          
@@ -21,7 +21,7 @@
  '|';
 \}
 \mbox{}
-\kw{type} event  = Pstring('|') *  <'|'> * Puint32
+\kw{type} event  = Pstring('|') *  '|' * Puint32
 \mbox{}
 \kw{type} events = event Parray('|',NL)
 \mbox{}
