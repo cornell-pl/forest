@@ -75,7 +75,8 @@ These functions have the following behaviors:
   is called once a new record is coming. Any data type with an
   associated mapping function to \cd{Pfloat64} is considered as a 
   meaningful type. This function tracks fields with meaningful type
-  and legal values only.  
+  and legal values only. This function will return \cd{P_ERR} if the
+  current data is the last one of a portion.
 \item[\cd{entry\_t\_hist\_report2io}] Writes summary report for
   histogram \cd{h} to \cd{*outstr}. 
 \item[\cd{entry\_t\_hist\_report}] Writes summary report for
@@ -147,8 +148,9 @@ which contains:
   not affect the final result. For example, if the data source can
   take values up to \cd{64} bits, the overall \cd{SSE} could need
   as many as \cd{128} bits, which exceeds the representation limit of
-  \pads{}. In this case, \cd{INIT\_scale} is needed. The default value
-  is 100.       
+  \pads{}. In this case, \cd{INIT\_scale} is needed. If segment fault
+  appears when running this program over users' data stream, we
+  suggest to increase this parameter.  The default value is 100.       
 
 \item[\cd{entry\_t\_toFloat}] is a function pointer, taking
   \cd{entry\_t} as input parameter, and returning corresponding

@@ -6,6 +6,7 @@ Perror\_t entry\_t\_hist\_cleanup (P\_t *pads,entry\_t\_hist *h);
 Perror\_t entry\_t\_hist\_add (P\_t *pads,entry\_t\_hist *h,Pbase\_pd
 *pd,entry\_t *rep);
 Perror\_t entry\_t\_hist\_report2io (P\_t *pads, Sfio\_t *ourstr,
-entry\_t\_hist *h); 
-Perror\_t entry\_t\_hist\_report (P\_t *pads,entry\_t\_hist *h);
+const char *prefix, const char *what, int nst, entry\_t\_hist *h); 
+Perror\_t entry\_t\_hist\_report (P\_t *pads, const char *prefix,
+const char *what, int nst, entry\_t\_hist *h);
 \end{code}
