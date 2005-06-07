@@ -390,12 +390,24 @@ the\cd{Pa\_string\_ME} form is simpler and therefore clearer.)
 
 \noindent
 A timestamp is a combination of a calendar date and a time of day.
-The corresponding in-memory representation is a Puint32 which
+The corresponding in-memory representation is a \cd{Puint32} which
 represents the number of seconds since {\tt 00:00:00 1-Jan-1970 UTC},
 also knows as ``seconds since the epoch.''
 Thus, the time {\tt 00:00:20 1-Jan-1970 UTC} would be represented
 internally as the number 1200, since it occurs 1200 seconds
 (20 minutes) past the epoch.
+
+If the input is \texttt{``midnight Jan 1 1970''} and the time zone is \literal{UTC}, then
+this produces a value of 0 since this is actually the epoch.  If the
+time zone is \literal{EST}, then this produces 5 * 60 * 60 since midnight in the
+\literal{EST} timezone occurred 5 hours after the start of the epoch.
+
+If  the input explicitly has a time zone, as in \texttt{``midnight Jan 1 1970
+UTC''} then the time zone in the input is used, so this would produce 0,
+regardless of the time zone specified for the type.  Of course, not
+all timestamp input formats allow you to explicitly give the time
+zone!
+
 
 The input values are ASCII or EBCDIC strings.  Each
 \cd{Ptimestamp\_explicit} type takes as first argument the same form of
