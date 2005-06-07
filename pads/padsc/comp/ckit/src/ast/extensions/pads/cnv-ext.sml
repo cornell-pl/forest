@@ -1791,7 +1791,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 	      (* Given manifest representation, generate accumulator functions(init, reset, cleanup) *)
 	      fun genAccTheMan theSuf m = 
-		      BU.genFunMan (isPadsTy, getPadsName) (lookupAcc', theSuf, acc, m)
+		      BU.genFunMan (isPadsTy, getPadsName) (lookupAcc', theSuf, acc, [], m)
 
 
 	      (* Given manifest representation, generate report function *)
@@ -2013,7 +2013,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
 			  in case lookupAcc baseTy 
-			      of NONE => (BU.gen3PFun(theFun, accPCT, acc,
+			      of NONE => (BU.gen3PFun(theFun, [accPCT], [acc],
 						   [P.mkCommentS ("Accumulation not defined for base type of ptypedef"),
 						    PT.Return PL.P_OK])
 			                                     (* end NONE *))
@@ -2021,7 +2021,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   let val theBodyE = PT.Call(PT.Id(theSuf a), 
 							      [PT.Id pads, PT.Id acc])
 				       val theReturnS = PT.Return theBodyE
-				       val theFunED = BU.gen3PFun(theFun, accPCT, acc,[theReturnS])
+				       val theFunED = BU.gen3PFun(theFun, [accPCT], [acc],[theReturnS])
 				   in
 				      theFunED
 				   end
@@ -4219,7 +4219,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val theDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 			 val theReturnS = BU.genReturnChk (PT.Id nerr)
 			 val theBodySs = theDeclSs @ doLength @ doElems @ [theReturnS]
-			 val theFunED = BU.gen3PFun(theFun, accPCT, acc, theBodySs)
+			 val theFunED = BU.gen3PFun(theFun, [accPCT], [acc], theBodySs)
 		     in
 			 theFunED
 		     end
@@ -5232,7 +5232,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val theFields = auxFields @ tagFields
 			      val theReturnS = BU.genReturnChk (PT.Id nerr)
 			      val theBodySs = theDeclSs @ theFields @ [theReturnS]
-			      val theFunED = BU.gen3PFun(theFun, accPCT, acc, theBodySs)
+			      val theFunED = BU.gen3PFun(theFun, [accPCT], [acc], theBodySs)
 			  in
 			      theFunED
 			  end
@@ -6163,7 +6163,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						 pred, comment,...}:BU.pfieldty) = 
 				  if not isVirtual then
 				      case lookupAcc(pty) of NONE => []
-							   | SOME a => BU.callFun(theSuf a, acc, name)
+							   | SOME a => BU.callFun(theSuf a, acc, name,[])
 				  else []
 			      fun genAccTheBrief e = []
 
@@ -6171,7 +6171,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val theFields = P.mungeFields genAccTheFull genAccTheBrief (genAccTheMan theSuf) fields
 			      val theReturnS = BU.genReturnChk (PT.Id nerr)
 			      val theBodySs = theDeclSs @ auxFields @ theFields @ [theReturnS]
-			      val theFunED = BU.gen3PFun(theFun, accPCT, acc, theBodySs)
+			      val theFunED = BU.gen3PFun(theFun, [accPCT], [acc], theBodySs)
 			  in
 			      theFunED
 			  end
@@ -6680,7 +6680,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      let val theFun : string = (theSuf o accSuf) name
 			  val theBodyE = PT.Call(PT.Id(theSuf PL.intAct), [PT.Id pads, PT.Id acc])
                           val theReturnS = PT.Return theBodyE
-			  val theFunED = BU.gen3PFun(theFun, accPCT, acc, [theReturnS])
+			  val theFunED = BU.gen3PFun(theFun, [accPCT], [acc], [theReturnS])
 			  in
 			      theFunED
 			  end

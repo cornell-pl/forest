@@ -84,10 +84,10 @@ structure BuildUtils = struct
 			       (PT.Id pads):: e)),
 		 incNerrCompS)]
 
-  fun callFun (theName, var, name)  = 
+  fun callFun (theName, var, name, others)  = 
       let val fieldX = P.addrX(P.arrowX(PT.Id var, PT.Id name))
       in
-	  chk3Pfun (theName, [fieldX])
+	  chk3Pfun (theName, fieldX::others)
       end
 
 
@@ -117,11 +117,11 @@ structure BuildUtils = struct
 	  end
       else []
 
-  fun genFunMan (isPadsTy, getPadsName) (f, theSuf, var, {tyname, name, args, isVirtual, expr, pred, comment}) = 
+  fun genFunMan (isPadsTy, getPadsName) (f, theSuf, var, others, {tyname, name, args, isVirtual, expr, pred, comment}) = 
       if isVirtual then [] else
          case isPadsTy tyname 
          of PTys.CTy => []
-         | _ => callFun(theSuf (f (getPadsName tyname)), var, name)
+         | _ => callFun(theSuf (f (getPadsName tyname)), var, name,others)
 
   fun genAddMan (isPadsTy, getPadsName) (f, theSuf, var, tyname, name, isVirtual, errDescX) = 
       if isVirtual then [] else
@@ -159,9 +159,10 @@ structure BuildUtils = struct
   val stdReturnS = genReturnChk (P.arrowX(PT.Id pd, PT.Id nerr))
 
   (*  Perror_t T_acc_name(P_t* , T_acc* ) *)
-  fun gen3PFun (name, thePCT, var, bodySs) = 
-      let val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT thePCT]
-	  val paramNames = [pads, var]
+  fun gen3PFun (name, argPCTs, vars, bodySs) = 
+      let val preParamTys = [PL.toolStatePCT] @ argPCTs
+	  val paramTys = List.map P.ptrPCT preParamTys
+	  val paramNames = pads:: vars
 	  val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
 	  val returnTy =  PL.toolErrPCT
 	      

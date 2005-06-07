@@ -16,6 +16,10 @@ structure Hist = struct
 
   val hist = "hist"
   fun histSuf  s = s^"_"^hist
+  val def_hist = "default_hist"
+  val def_histX = PT.Id "default_hist"
+  fun setParamSuf s = s^"_setPara"
+  val defPackage = (PL.defaultHistPCT, def_histX, def_hist)
 
   fun lookupHist(ty:pty) = 
       case ty of PX.Name s => 
@@ -33,13 +37,21 @@ structure Hist = struct
 	  (histED, histPCT)
       end
 
-  fun genWalkFunsTypedef (name, baseTy, thePCT, whichSuf) = 
+  fun split3 [] = ([],[],[])
+    | split3 ((a,b,c)::xs) = 
+       let val (ays, bs, cs) = split3 xs
+       in
+	   (a::ays, b::bs, c::cs)
+       end
+
+  fun genWalkFunsTypedef (name, baseTy, thePCT, whichSuf, others) = 
       let val whichFun = (whichSuf o histSuf) name
+	  val (otherPCTs, otherXs, otherVars) = split3 others
 	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
-	  val whichBodySs = BU.chk3Pfun(whichSuf (lookupHist baseTy), [PT.Id hist])
+	  val whichBodySs = BU.chk3Pfun(whichSuf (lookupHist baseTy), (PT.Id hist)::otherXs)
 	  val whichReturnS = BU.genReturnChk (PT.Id nerr)
 	  val whichBodySs = whichDeclSs @ whichBodySs @ [whichReturnS]
-	  val whichFunED = BU.gen3PFun(whichFun, thePCT, hist, whichBodySs)
+	  val whichFunED = BU.gen3PFun(whichFun, thePCT::otherPCTs, hist::otherVars, whichBodySs)
       in
 	  whichFunED
       end
@@ -69,13 +81,14 @@ structure Hist = struct
 
   fun genHistTypedef (name, baseTy, repPCT, pdPCT) = 
       let val (histED, histPCT) = genRepTypedef  (name, baseTy)
-	  val initFunED = genWalkFunsTypedef(name, baseTy, histPCT, initSuf)
-	  val resetFunED = genWalkFunsTypedef(name, baseTy, histPCT, resetSuf)
-	  val cleanupFunED = genWalkFunsTypedef(name, baseTy, histPCT, cleanupSuf)
+	  val initFunED = genWalkFunsTypedef(name, baseTy, histPCT, initSuf,[])
+	  val setParamsFunED = genWalkFunsTypedef(name, baseTy, histPCT, setParamSuf,[defPackage])
+	  val resetFunED = genWalkFunsTypedef(name, baseTy, histPCT, resetSuf,[])
+	  val cleanupFunED = genWalkFunsTypedef(name, baseTy, histPCT, cleanupSuf,[])
 	  val addFunED = genAddFunTypedef(name, baseTy, histPCT, repPCT, pdPCT)
 	  val reportFunEDs = genReportFunTypedef(name, baseTy, histPCT) 
       in
-	  [histED, initFunED, resetFunED,  addFunED] @  reportFunEDs @  [cleanupFunED] 
+	  [histED, initFunED, setParamsFunED, resetFunED,  addFunED] @  reportFunEDs @  [cleanupFunED] 
       end
 
 
@@ -86,11 +99,12 @@ structure Hist = struct
 	  (histED, histPCT)
       end
 
-  fun genWalkFunsEnum (name, histPCT, whichSuf) = 
+  fun genWalkFunsEnum (name, histPCT, whichSuf, others) = 
       let val whichFun : string = (whichSuf o histSuf) name
-	  val whichBodyE = PT.Call(PT.Id(whichSuf PL.intHist), [PT.Id pads, PT.Id hist])
+	  val (otherPCTs, otherXs, otherVars) = split3 others
+	  val whichBodyE = PT.Call(PT.Id(whichSuf PL.intHist), [PT.Id pads, PT.Id hist]@otherXs)
 	  val whichReturnS = PT.Return whichBodyE
-	  val whichFunED = BU.gen3PFun(whichFun, histPCT, hist, [whichReturnS])
+	  val whichFunED = BU.gen3PFun(whichFun, histPCT::otherPCTs, hist::otherVars, [whichReturnS])
       in
 	  whichFunED
       end
@@ -120,14 +134,15 @@ structure Hist = struct
 
   fun genHistEnum (name, repPCT, pdPCT) = 
       let val (histED, histPCT) = genRepEnum  name 
-	  val initFunED = genWalkFunsEnum(name, histPCT, initSuf)
-	  val resetFunED = genWalkFunsEnum(name, histPCT, resetSuf)
-	  val cleanupFunED = genWalkFunsEnum(name, histPCT, cleanupSuf)
+	  val initFunED = genWalkFunsEnum(name, histPCT, initSuf,[])
+	  val setParamsFunED = genWalkFunsEnum(name, histPCT, setParamSuf,[defPackage])
+	  val resetFunED = genWalkFunsEnum(name, histPCT, resetSuf,[])
+	  val cleanupFunED = genWalkFunsEnum(name, histPCT, cleanupSuf,[])
 	  val addFunED = genAddFunEnum(name, histPCT, repPCT, pdPCT)
 	  val reportFunEDs = genReportFunEnum(name, histPCT)
 
       in
-	  [histED, initFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
+	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
       end
 
 
@@ -140,17 +155,18 @@ structure Hist = struct
 	  (histED, histPCT)
       end
 
-  fun genWalkFunsArray (name, baseTy, whichPCT, whichSuf) = 
+  fun genWalkFunsArray (name, baseTy, whichPCT, whichSuf,others) = 
       let val whichFun = (whichSuf o histSuf) name
+	  val (otherPCTs, otherXs, otherVars) = split3 others
 	  val elemFunName = whichSuf (lookupHist baseTy)
 	  val lengthX = P.addrX(P.arrowX(PT.Id hist, PT.Id length))
-	  val doLength = BU.chk3Pfun(whichSuf PL.uint32Hist, [lengthX])
+	  val doLength = BU.chk3Pfun(whichSuf PL.uint32Hist, lengthX::otherXs)
 	  val arrayX = P.addrX(P.arrowX(PT.Id hist, PT.Id arrayLevel))
-          val doArraySs = BU.chk3Pfun (elemFunName, [arrayX])
+          val doArraySs = BU.chk3Pfun (elemFunName, arrayX::otherXs)
 	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 	  val whichReturnSs = [BU.genReturnChk (PT.Id nerr)]
 	  val whichBodySs = whichDeclSs @ doLength @ doArraySs @ whichReturnSs
-	  val whichFunED = BU.gen3PFun(whichFun, whichPCT, hist, whichBodySs)
+	  val whichFunED = BU.gen3PFun(whichFun, whichPCT::otherPCTs, hist::otherVars, whichBodySs)
       in
 	  whichFunED
       end
@@ -204,13 +220,14 @@ structure Hist = struct
 
   fun genHistArray(name, baseTy, repPCT, pdPCT) = 
       let val (histED, histPCT) = genRepArray name baseTy
-	  val initFunED    = genWalkFunsArray (name, baseTy, histPCT, initSuf)
-	  val resetFunED   = genWalkFunsArray (name, baseTy, histPCT, resetSuf)
+	  val initFunED    = genWalkFunsArray (name, baseTy, histPCT, initSuf,[])
+	  val setParamsFunED = genWalkFunsArray (name, baseTy, histPCT, setParamSuf,[defPackage])
+	  val resetFunED   = genWalkFunsArray (name, baseTy, histPCT, resetSuf,[])
 	  val addFunED     = genAddFunArray   (name, baseTy, histPCT, repPCT, pdPCT)
 	  val reportFunEDs = genReportFunArray(name, baseTy, histPCT)
-	  val cleanupFunED = genWalkFunsArray (name, baseTy, histPCT, cleanupSuf)
+	  val cleanupFunED = genWalkFunsArray (name, baseTy, histPCT, cleanupSuf,[])
       in
-	  [histED, initFunED, resetFunED, addFunED] @ reportFunEDs @ [ cleanupFunED]
+	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFunEDs @ [ cleanupFunED]
       end
 
   (* PUNIONS *)
@@ -237,21 +254,22 @@ structure Hist = struct
 	  (histED, histPCT)
       end
 
-  fun genWalkFunsUnion (ptyfuns, name, variants, thePCT, whichSuf) = 
+  fun genWalkFunsUnion (ptyfuns, name, variants, thePCT, whichSuf,others) = 
       let val whichFun = (whichSuf o histSuf) name
+	  val (otherPCTs, otherXs, otherVars) = split3 others
 	  fun genWhichFull ({pty: PX.Pty, name: string,isVirtual: bool, ...}:BU.pfieldty) = 
 	      if isVirtual then []
-	      else BU.callFun(whichSuf (lookupHist pty), hist, name)
+	      else BU.callFun(whichSuf (lookupHist pty), hist, name,otherXs)
           
 	  fun genWhichBrief e = []
-	  fun genWhichMan (ptyfuns, whichSuf) m = BU.genFunMan ptyfuns (lookupHist, whichSuf, hist, m)
+	  fun genWhichMan (ptyfuns, whichSuf) m = BU.genFunMan ptyfuns (lookupHist, whichSuf, hist, otherXs, m)
 
 	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 	  val whichFields = P.mungeFields genWhichFull genWhichBrief (genWhichMan (ptyfuns, whichSuf)) variants
-	  val auxFields = BU.chk3Pfun(whichSuf PL.intHist, [P.getFieldX(hist, tag)])
+	  val auxFields = BU.chk3Pfun(whichSuf PL.intHist, (P.getFieldX(hist, tag))::otherXs)
 	  val whichReturnS = BU.genReturnChk (PT.Id nerr)
 	  val whichBodySs = whichDeclSs @ auxFields @ whichFields @ [whichReturnS]
-	  val whichFunED = BU.gen3PFun(whichFun, thePCT, hist, whichBodySs)
+	  val whichFunED = BU.gen3PFun(whichFun, thePCT::otherPCTs, hist::otherVars, whichBodySs)
       in
 	  whichFunED
       end
@@ -333,13 +351,14 @@ structure Hist = struct
 
   fun genHistUnion ptyfuns (name, variants, repPCT, pdPCT, fromOpt) = 
       let val (histED, histPCT) = genRepUnion ptyfuns name variants
-	  val initFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, initSuf)
-	  val resetFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, resetSuf)
+	  val initFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, initSuf,[])
+	  val setParamsFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, setParamSuf,[defPackage])
+	  val resetFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, resetSuf,[])
 	  val addFunED = genAddFunUnion(ptyfuns, name, variants, histPCT, repPCT, pdPCT)
 	  val reportFunEDs = genReportFunUnion(ptyfuns, name, variants, histPCT, fromOpt)
-	  val cleanupFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, cleanupSuf)
+	  val cleanupFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, cleanupSuf,[])
       in
-	  [histED, initFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
+	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
       end
 
   (* PSTRUCTS *)
@@ -364,20 +383,21 @@ structure Hist = struct
 	  (histED, histPCT)
       end
 
-  fun genWalkFunsStruct (ptyfuns, name, fields, thePCT, whichSuf) = 
+  fun genWalkFunsStruct (ptyfuns, name, fields, thePCT, whichSuf, others) = 
       let val whichFun = (whichSuf o histSuf) name
+	  val (otherPCTs, otherXs, otherVars) = split3 others
 	  fun genWhichFull ({pty: PX.Pty, name: string,isVirtual: bool, ...}:BU.pfieldty) = 
 	      if isVirtual then []
-	      else BU.callFun(whichSuf (lookupHist pty), hist, name)
+	      else BU.callFun(whichSuf (lookupHist pty), hist, name,otherXs)
           
 	  fun genWhichBrief e = []
-	  fun genWhichMan (ptyfuns, whichSuf) m = BU.genFunMan ptyfuns (lookupHist, whichSuf, hist, m)
+	  fun genWhichMan (ptyfuns, whichSuf) m = BU.genFunMan ptyfuns (lookupHist, whichSuf, hist, otherXs, m)
 
 	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 	  val whichFields = P.mungeFields genWhichFull genWhichBrief (genWhichMan (ptyfuns, whichSuf)) fields
 	  val whichReturnS = BU.genReturnChk (PT.Id nerr)
 	  val whichBodySs = whichDeclSs @ whichFields @ [whichReturnS]
-	  val whichFunED = BU.gen3PFun(whichFun, thePCT, hist, whichBodySs)
+	  val whichFunED = BU.gen3PFun(whichFun, thePCT :: otherPCTs, hist::otherVars, whichBodySs)
       in
 	  whichFunED
       end
@@ -438,13 +458,14 @@ structure Hist = struct
 
   fun genHistStruct ptyfuns (name, fields, repPCT, pdPCT) = 
       let val (histED, histPCT) = genRepStruct ptyfuns name fields
-	  val initFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, initSuf)
-	  val resetFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, resetSuf)
+	  val initFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, initSuf,[])
+	  val setParamsFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, setParamSuf,[defPackage])
+	  val resetFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, resetSuf,[])
 	  val addFunED = genAddFunStruct(ptyfuns, name, fields, histPCT, repPCT, pdPCT)
 	  val reportFunEDs = genReportFunStruct(ptyfuns, name, fields, histPCT)
-	  val cleanupFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, cleanupSuf)
+	  val cleanupFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, cleanupSuf,[])
       in
-	  [histED, initFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
+	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
       end
 
 end

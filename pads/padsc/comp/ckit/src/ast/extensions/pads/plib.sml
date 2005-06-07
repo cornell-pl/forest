@@ -287,6 +287,7 @@ struct
   val uint32HistPCT = P.makeTypedefPCT "Puint32_hist"
   val intHist       = "Pint32_hist"
   val intHistPCT    = P.makeTypedefPCT "Pint32_hist"
+  val defaultHistPCT = P.makeTypedefPCT "P_hist"
 
 
 
