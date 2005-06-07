@@ -13,23 +13,31 @@
 An {\em ad hoc data format} is any nonstandard data format for which
 parsing, querying, analysis or transformation tools are not readily
 available.  \xml{} is not an ad hoc data format --- there are hundreds
-of tools for reading, querying, and transforming \xml{}.  However,
-network administrators,
-data analysts, computer scientists,
-biologists, chemists, and physicists deal with ad hoc
+of tools for reading, querying, and transforming \xml{}.   However,
+network administrators, computer scientists, information systems managers,
+financial analysts, biologists, chemists, and physicists deal with ad hoc
 data in a myriad of complex formats on a daily basis.
 This data, which is often unpredictable, poorly documented,
 filled with errors (malicious and benign) and unwieldy,
 poses tremendous challenges to its users and the software
 that manipulates it.  
-Our goal is to alleviate the burden, risk and confusion associated
-with ad hoc data by developing a universal data processing system
-capable of 
+
+Our end goal is to help software developers 
+create efficient, reliable and easy-to-maintain software for
+for processing ad hoc data.  We will achieve our goal
+through the design and implementation of \datatype,
+a revolutionary new language with intrinsic support for 
+processing ad hoc data.  \datatype{} will have 
+two logical components.
 
 \begin{enumerate}
-\item concisely and accurately describing any ad hoc data source at an 
-easy-to-understand, high-level of abstraction, and
-\item automatically generating a suite of high-assurance,
+\item A Universal Data Description Language.  We will aim to develop a 
+high-level, easy-to-understand description language for \datatype, capable of
+concisely and accurately describing the physical format of
+any ad hoc data source. 
+\item An Expressive and Efficient Ad Hoc Data Transformation Language.
+The data transformation language will allow programmers
+automatically generating a suite of high-assurance,
 efficient data processing tools that make understanding, manipulating 
 and transforming ad hoc data an effortless task.
 \end{enumerate}
