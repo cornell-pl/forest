@@ -230,7 +230,7 @@ Combine data description language with a transform language.
 \pads{} is bound to C. However, functional programming languages are
 better suited to the task of data tranformation. We therefore propose
 a new language, \datatype{}, that combines a data description language
-based in the style of ML types (and datatypes) with a functional data
+based on the style of ML types (and datatypes) with a functional data
 transformation language. 
 
 Our contributions are twofold. First, we propose an ML-style syntax
@@ -262,8 +262,8 @@ intrinsic mechanisms for checking data invariants at run time {\em
 At its core, \datatype{} is a functional language with standard
 features such as pattern matching and higher-order functions, which we
 view as critical to supporting data-driven transforms. In addition,
-\datatype{} will allow programmers to enforce semantic constraints on
-data by using \datatype{} descriptions as a special form runtime
+\datatype{} allows programmers to enforce semantic constraints on
+data by using \datatype{} descriptions as a special form of runtime
 contracts. The basic values of the language will be pairs of data
 items and their corresponding meta-data. For each data item, the meta
 data will include, among other things, descriptions of the error
@@ -273,11 +273,11 @@ property (which we call ``error-aware computing'') enables three
 critical language features.
 \begin{enumerate}
 \item Safe, error-transparent transformations
+\item Error querying - analyst can extract detailed picture of data
+  error profile.
 \item Flexible, programmatic repair of faulty records - analyst can
   choose when in the processing stream to address errors, rather than
   being forced to drop all faulty records at the beginning of the process.
-\item Error querying - analyst can extract detailed picture of data
-  error profile.
 \end{enumerate}
 
 In the next section, we will describe, in detail, the \pads{} approach
@@ -383,10 +383,10 @@ built from simpler pieces.  \suppressfloats
 \input{dibblerml}
 \end{code}
 \caption{\datatype{} description for \dibbler{} provisioning data.}
-\label{figure:dibblerml}
+\label{fig:dibblerml}
 \end{figure}
 
-The \datatype{} will provide a large collection of broadly useful base
+The \datatype{} language will provide a large collection of broadly useful base
 types by exploiting the fact that we have already implemented many,
 many such types in the underlying \pads{} backend.  Examples of base
 types include 8-bit unsigned integers (\cd{Puint8}), 32-bit
@@ -407,13 +407,13 @@ both to reduce the number of base types and to permit the format and
 properties of later portions of the data to depend upon earlier
 portions.  For example, the base type \cd{Puint16_FW(3)} specifies
 an unsigned two byte integer physically represented by exactly three
-characters, while the type \cd{Pstring(' ')} describes a string
+characters, while the type \cd{Pstring(" ")} describes a string
 terminated by a space.
 
 To describe more complex data, \datatype{} provides a collection of
 structured types loosely based on the type structure of functional
 programming languages such as Haskell and ML.  
-\figref{figure:dibblerml} gives a \datatype{} description for the
+\figref{fig:dibblerml} gives a \datatype{} description for the
 \dibbler{} provisioning data written in a syntax we are currently
 designing.  We will use this example to illustrate some of the
 features of \datatype{} language.  
@@ -519,34 +519,25 @@ type trees = (tree * ';') Parray('\\n',EOF)
 *)
 \end{code}
 \caption{Simplified Tree-shaped Newick Data}
-\label{figure:newick}
+\label{fig:newick}
 \end{figure}
 
-A second interesting example of ad hoc data comes courtesy of
-Steven Kleinstein, head of Princeton's Picasso project for
-interdisciplinary research in computational sciences.  
-Kleinstein is in the process of 
-building a simulator to study immune response.  Data
-needed for his simulations comes in a Newick format, which is
-a flat representation of trees and used by many biologists~\cite{newick}.  
-In Kleinstein's Newick format (simplified
-here for expository purposes), leaves of the
-tree are string labels followed by a colon and a number.
-A parent node in the tree introduces a collection of
-children by placing a sequence of trees within parens.
-Following the parens is a colon and a number, as is the case
-for the leaf node (incidentally, the numbers are called ``distances''
-and represent the number of genetic mutations that separate the
-child from the parent).  Each line of a file may contain
-a different tree, terminated by a semi-colon.
+A second interesting example is the Newick format, which is a flat
+representation of trees and used by many biologists~\cite{newick}.  In
+the Newick format (simplified here for expository purposes), leaves of
+the tree are string labels followed by a colon and a number.  A parent
+node in the tree introduces a collection of children by placing a
+sequence of trees within parens.  Following the parens is a colon and
+a number, as is the case for the leaf node (incidentally, the numbers
+are called ``distances'' and represent the number of genetic mutations
+that separate the child from the parent).  Each line of a file may
+contain a different tree, terminated by a semi-colon.
 
-\figref{figure:dibbler-records} gives a description of Newick
-and a bit of example data.
-Despite the relative complexity of the structure of the data, 
-the description is remarkably concise.
-Notice that the data type definition of \cd{tree} is recursive ---
-there appears to be no effective description of this data
-source without it.  
+\figref{fig:newick} gives a description of Newick and a bit of example
+data.  Despite the relative complexity of the structure of the data,
+the description is remarkably concise.  Notice that the data type
+definition of \cd{tree} is recursive --- there appears to be no
+effective description of this data source without it.
 
 % The \dibbler{} project compiles weekly summaries of the state of
 % certain types of phone service orders. The above sample data is a tiny
@@ -573,65 +564,444 @@ source without it.
 % \kw{type} source = summary\_header ** (order\_header ** events) Parray(\\n,EOF)
 % \end{code}
 
-% Darkstar
+\begin{figure}
+  \centering
+  \small
 \begin{verbatim}
-???
-\end{verbatim}
+ 2:3004092508||5001|dns1=abc.com;dns2=xyz.com|c=slow link;w=lost packets
+ |INTERNATIONAL
+ 3:|3004097201|5074|dns1=bob.com;dns2=alice.com|src_addr=192.168.0.10;
+ dst_addr=192.168.23.10;start_time=1234567890;end_time=1234568000;
+ cycle_time=17412|SPECIAL
+\end{verbatim}  
+  \caption{Simplified Network Monitoring Data}
+  \label{fig:darkstar-records}
+\end{figure}
+
+Another example comes from the \darkstar{} project, shown in
+Figure~\ref{fig:darkstar-records}. Note that this example is derived
+from a real data format in use at AT\&T. In particular, it is based on
+alarm data recorded by a network link monitor. An alarm signals a
+problem with a network link. Also, it has been formatted to fit on the
+page - individual records do not contain newlines. In our example,
+there are two classes of alarms, indicated with the integers 2 and 3.
+The alarm class is specified first, followed by a colon. When a class
+2 alarm occurs, the ``start'' timestamp is recorded, while when a
+class 3 alarm occurs, the ``clear'' timestamp is recorded.  Next, we
+have an integer indicating the exact type of the alarm.  Following
+this, we expect two pairs of strings, with the strings of each pair
+separated by '='. The first string is a name and the second a string
+value associated with that name. The pairs are separated by a
+semicolon.  The first pairs has name ``dns1'' and the second ``dns2'',
+indicating the DNS names of the parties on either end of the network
+link. Next, the record contains information about the alarm. The
+format of this information differs depending on the type of alarm. For
+alarm 5074, we include a specific set of details about the failure.
+For other alarms, there appears a sequence of name-string pairs of
+unpspecfied length.  Finally, the alarm indicates the service class of
+the network. This value is one of three strings: ``DOMESTIC'',
+``INTERNATIONAL,'' and ``SPECIAL.'' Each field of the alarm is
+separated by a vertical bar, except where otherwise specified.
+
+The details included for alarm 5074 are as follows: a source and
+detination IP address, both encoded as name-IP pairs, with names
+``src\_addr'' and ``dest\_addr.'' These are followed by two
+name-timestamp pairs, with names ``start\_time'' and ``end\_time,''
+indicating the start and end times of the problem. The timestamps are
+10-digits indicating the number of seconds since the epoch, in
+GMT. The last field is a name-integer pair, with name ``cycle\_time,''
+indicating ???. Note that each field is separated by a semicolon.
+
+\begin{figure}
+  \centering
+  \small
+%  \begin{code}
+  \include{darkstarsml}
+%  \end{code}
+  \caption{Description of \darkstar{} Data.}
+  \label{fig:darkstar-ml}
+\end{figure}
+We now turn to the data description, shown in \figref{fig:darkstar-ml}.
+The source type is an array of \cd{alarm}s, where each alarm is a
+\cd{raw\_alarm}, constrained to ensure that the alarm number is
+properly correlated with the timestamps.  We check this correlation
+with the function \cd{checkCorr}.  The type \cd{raw\_alarm} closely
+follows the description above. We highlight a few important features.
+First, we note that the type of the field \cd{info} depends on the
+alarm code, reflecting the text above. More interestingly, the type
+\cd{info} is implemented with a switched datatype, deciding how to
+parse based on the parameter \cd{alarm\_code}.  Next, we note that the
+description includes five different types of name-value pairs. We take
+advantage of both the type and value parameterization of types to
+encode all of these pair types based on one common description,
+\cd{pnvp}. This type is polymorphic in the type of the value and takes
+an arbitrary constraint \cd{c} as an argument. The type \cd{nvp} is
+polymorphic in the type of the value, but takes the expected name of
+the string as an argument. Finally, we note that the type \cd{service}
+is a datatype with only tags for constructors.  Each tag implicitly
+looks in the data for the string that exactly matches the name of the
+tag. For example, the tag \cd{DOMESTIC} attempts to read the string
+``DOMESTIC'' from the data source. This datatype could alternatively
+have been specified as:
+\begin{code}
+datatype service =
+    DOMESTIC      of "DOMESTIC"
+  | INTERNATIONAL of "INTERNATIONAL"
+  | SPECIAL       of "SPECIAL"
+\end{code}
+
+Note that the base type \cd{Pstring} takes a string indicating a set
+of acceptable terminator characters for the string. So, a
+\cd{Pstring(";|")} can be terminated by either a semicolon or a
+vertical bar.
 
 \subsection{Syntax}
 
 \begin{figure}
   \centering
-\begin{verbatim}
-T ::=  \alpha
-     | Pbase                  (base type)
-     | d(M)		      (parameterized data type; e is perimeter)
-     | M		      (singleton type.  eg: " " for literal space)
-     | x:T1 ** T2	      (dependent pair)
-     | PD		      (parser descriptor type)
-     | T Parray(Msep, Mterm)  (array types)
-     | T list		      (list type; underlying rep for arrays)
-     | {x:T | M}	      (constrained type; ie: Pwhere)
-
-
-Pads/ML data type declarations
-
-D ::= datatype d(x:???) = DS
-   |    datatype d(x:???) = case M of TS
-   |    type \alpha = T
-
-DS ::= c of T
-     | (c of T | DS)  (datatype constructor; 
-                       parameter x of the datatype may appear
-                       free in T)
-
-TS ::= . | (pat => c of T | TS)
-\end{verbatim}
+Insert dd diagram here.
   \caption{Syntax of Data Descriptions}
   \label{fig:syntax-dd}
 \end{figure}
 
 We present the formal syntax of data descriptions, including that used
-in the examples, in figure~\ref{fig:syntax-dd}.
-
-\subsection{Further Examples}
+in the examples, in \figref{fig:syntax-dd}. We will specify the
+definition of terms \kw{M} in the next section.
 
 \section{Transforming Data in \datatype{}}
 \label{sec:data-transformation}
 
-Reminder of motivation.
-
-% The \datatype{} language inherits the ``error-aware computing''
-% approach of its predecessor. At all times, data is paired with a
-% parse descriptor that accurately describes its error state, along
-% with other information.
-
+While data description is extremely useful to the data analyst, it is
+only a start in solving her needs. A description allows the analyst to
+conveniently bring the data into memory. Once there, she is on her own
+for analysis and transformation.
 
 \subsection{Language Design for Error-aware Computing}
 
-\subsection{Examples}
+\datatype{} is more than a data description language. It is also a
+functional programming language with extensive support for data
+transformation. Most importantly, \datatype{} is not merely a combination
+of these two language elements - data description and transformation -
+but a synthesis.  The meta-data learned during the process of parsing
+the data based on its description is not lost once the parsing is
+finished, but instead plays a prominent role in the programmatic
+elements of the language. As we are particularly concerned with error
+related meta-data, we term this synthesis ``error-aware computing.''
+
+From now on, we use the word {\em ad hoc value} to refer to the pair
+of ad hoc data representation and corresponding PD.  One of the
+crucial design principles of our language will be that programmers
+never write PDs themselves; the PDs are always constructed
+automatically by the compiler system. This important principle allows
+the compiler to guarantee that a value's PD always accurately
+describes the representation.  It will be impossible for a programmer
+to corrupt the relationship between representation and PD
+accidentally. Additionally, there is no mechanism for accessing a
+representation directly. Instead, it can only be accessed by
+deconstructing it with one of the patterns. While this is not critical
+for the safety of the language, we feel it is an important element of
+the language design that parsed data always be paired with its
+meta-data.
+
+There are currently four possible descriptions in a parse descriptor:
+\pdgood{}, \pdbad{},\pdnest{} and \pdsem{}. The description \pdgood{}
+describes data that is error free; \pdbad{} describes data that is
+entirely invalid; \pdnest{} describes data with an error in one or
+more subcomponents; \pdsem{} describes data with a semantic error.
+Note that in the actual language, parse descriptors will carry more
+information including the location in the source file (or a default
+location if generated by any user), but for the purposes of this paper
+we have simplified the representation to the one described. 
+
+Although programmers cannot construct a parse descriptor and pair it
+with a representation to create a value, the programmer may use
+pattern matching to extract and read a value's parse descriptor, using
+pattern \patreadpd {pat} {pdpat}.  Notice that when the programmer
+determines that a value's parse descriptor is \cd{G}ood, this implies
+the entire substructure is error free and need not be checked further
+for errors.  This greatly facilitates programming with data that is
+expected to be error-free in the common case --- a programmer can
+simply check the top-level PD and if it is indeed \cd{G}ood, she need
+not clutter the rest of her code with error-checking preteens.  In
+addition, when the top-level PD is \cd{G}ood, the value representation
+might perhaps be optimized as the PDs for the substructures are
+unnecessary.  Of course, we need to do much more research before we
+will understand how to represent and compute with ad hoc data values
+most efficiently. Furthermore, note that while the right subpattern
+matches only the parse descriptor, the pattern on the left matches the
+entire pair, preventing direct access to the data representation, as
+discussed above.
+
+The direct access to parse descriptors enables two powerful features:
+error querying and error repair. For error querying, the programmer
+can write a program to walk over the data source and collect
+information about the errors in the data such as how many errors
+occured, where they occured, etc. Given the expressiveness of the
+language, the queryist is limited only by his imagination. It would be
+an interesting future project to implement a generic query engine for
+a well known query language such as XQuery. Lest this seem like an
+unreasonable goal, a popular implementation of XQuery - Galax - is
+already written in O'Caml.
+
+Alternatively, the programmer might be interested in cleaning the data
+in preparation for use in another application or even just further
+transformation. Again, based on the parse descriptor, the programmer
+can know the location and nature of errors in the data. This
+information, combined with any relevant domain-specific knowledge
+about the data can allow the programmer to effectively repair broken
+records or remove them entirely. The fine-grained nature of the
+meta-data can be important in minimizing how much work must be done in
+such a cleaning process.
+
+\begin{figure}
+\begin{code}
+type streams = entry stream * entry stream
+\mbox{}
+fun splitEntry (e:entry * streams) : streams =
+  case e of
+    (<<entry, G>>, good, bad) => (entry::good, bad)
+  | (<<entry, _>>, good, bad) => (good, entry::bad)
+\mbox{}    
+fun splitSource (s:source) : streams =
+    let (hdr,Parray(entries,_,_)) = s in 
+    stream\_fold splitEntry (nil, nil) entries
+\mbox{}
+fun app (fds : fd * fd * fd) : unit =  
+  let (fdin,fdgood,fdbad) = fds                in
+  let input               = Pread::source fdin in
+  let (good,bad)          = splitSource input  in
+  Pwrite::(entry Parray(NL,EOF)) (Parray(good,NL,EOF), fdgood);
+  Pwrite::(entry Parray(NL,EOF)) (Parray(bad,NL,EOF), fdbad)
+\end{code}
+\caption{Error filter for \dibbler{} data}
+\label{figure:ex-data-clean}
+\end{figure}
+
+As an example of data cleaning, we provide the program in
+\figref{fig:ex-data-clean}.  It takes the \dibbler{} data source and
+walks through all of the entries in the source checking for entries
+with errors.  The good entries are placed into one output stream and
+the bad entries are placed into another.  The idea is that the good
+entries may then be further processed or directly loaded into a
+database without corrupting the valuable data therein.  A human might
+examine the bad entries off-line to determine the cause of errors and
+to figure out how to fix the corrupted entries. Notice how this
+example combines error repair with error querying.
+
+The command in the program opens the \dibbler{} data description
+module.  This enters the type definitions into the programming
+environment (see~\figref{fig:dibblerml} for the details of these
+definitions).  Next the \cd{splitEntry} function describes how to
+check an entry to determine whether it is \cd{G}ood (syntactically and
+semantically valid) or not.  The \cd{G}ood entries are placed in the
+\cd{good} stream and the other entries are placed in the \cd{bad}
+stream.  Here, \cd{<<pat,pdpat>>} is a pattern in which \cd{pdpat} is
+a pattern for PDs and \cd{pat} is a pattern for the recursive
+structure of the value.  We do not actually look at the recursive
+structure of the value, because once we see the \cd{G} PD associated
+with an entry we know that the entire substructure is good.  In this
+example, we use the notation \cd{entry::good} to put an \cd{entry} on
+the front of the \cd{good} stream.
+
+The \cd{splitSource} function pattern matches against the input
+source, extracting the stream of entries, and iteratively applying the
+\cd{splitEntry} function.  In this example, \cd{Parray(entry,\_,\_)}
+is a pattern for array values.  An array value is a stream (in this
+case \cd{entry}) coupled with a separator and a terminator.  Also in
+this example, we assume \cd{fold\_stream} iteratively applies a
+function to a stream.  We intend to scour the existing research on
+stream processing to help us develop a stream programming model for
+\datatype.
+
+The function \cd{app} is responsible for reading in streams from the
+file descriptors it is given, splitting the streams into good and bad
+data and writing the streams back out to files.  The process of
+reading and writing is dependent on the type descriptions of the ad
+hoc data.  Here, we write \cd{read::T} to read a data source formatted
+according to \cd{T} and \cd{write::T} to write a format according to
+\cd{T}.  The read function generates an ad hoc data value with type
+\cd{T} and the write function writes an ad hoc data value with type
+\cd{T} to a file.
+
+\begin{figure}
+  \centering
+\begin{code}
+fun checkAlarm (a : alarm): alarm opt =
+    case a of 
+	\{\{alarm=<<a,S>>;...\} |_\} => SOME(a)
+      | _ => NONE
+\mbox{}
+fun collectAlarms(as : alarm stream): alarm stream =
+    Stream.compact (Stream.map checkAlarm as)  
+\end{code}
+  \caption{Querying for Erroneous Alarm Values}
+  \label{fig:ex-error-query}
+\end{figure}
+
+We present a furthre example of error querying in
+\figref{fig:ex-error-query}, based on the \darkstar{} data
+description. The function \cd{checkAlarm} takes an alarm record,
+returning it (wrapped in \cd{SOME}) if its \cd{alarm} field had a
+semantic error. Otherwise, it returns \cd{NONE}. The function
+\cd{collectAlarms}, then, collects all alarm records in the alarm
+stream \cd{as}, whose \cd{alarm} field has a semantic error.
+
+\begin{figure}
+  \centering
+\begin{code}
+fun fixAlarmVal (al : \{x:Puint32 | x==2 orelse x==3\}): 
+  \{x:Puint32 | x==2 orelse x==3\} =
+    case al of
+      \{20 | _\} => \{x = Puint32(2) | x == 2 orelse x == 3\}
+    | \{30 | _\} => \{x = Puint32(3) | x == 2 orelse x == 3\}
+    | _ => al
+\mbox{}
+fun fixAlarm (a : alarm): alarm opt =
+    case a of 
+	\{\{alarm=<<al,S>>; start=s; clear=c; 
+          code=cd; src_dns=sd; dest_dns=dd; 
+	  info=i; service=s\} |_\} 
+          => \{x=\{alarm=fixAlarmVal al; 
+                 start=s; clear=c; 
+                 code=cd; src_dns=sd; dest_dns=dd; 
+                 info=i; service=s\}
+              | checkCorr x\} 
+      | _ => a
+\mbox{}
+fun fixAlarms(as : alarm stream): alarm stream =
+    Stream.map checkAlarm as
+\end{code}
+  \caption{Repairing Erroneous Alarms}
+  \label{fig:ex-error-repair}
+\end{figure}
+
+For an example of error repair in which the erroneous records are
+fixed, please see \figref{fig:ex-error-repair}. Here, the data analyst
+has discovered that some process producing alarm records was
+erroneously using the values $20$ and $30$ for the alarm classes,
+instead of the required $2$ and $3$. The program finds all alarm
+records with semantics errors in the alarm field and corrects those
+with value $20$ or $30$, leaving other untouched.
+
+\begin{figure}
+  \centering
+  \begin{code}
+type d_alarm = \{
+       alarm    :  \{ alarm : Puint32 | alarm == 2 
+                                        orelse alarm == 3\};
+ ':';  start :  date_time Popt;
+ '|';  clear :  date_time Popt;
+ '|';  code: Puint32;
+ '|';  src_dns  :  nsp("dns1");
+ ';';  dest_dns :  nsp("dns2");
+ '|';  details  : details;
+ '|';  service  :  service;
+\}
+\mbox{}
+type g_alarm = \{
+       alarm    :  \{ alarm : Puint32 | alarm == 2 
+                                        orelse alarm == 3\};
+ ':';  start :  date_time Popt;
+ '|';  clear :  date_time Popt;
+ '|';  code: Puint32;
+ '|';  src_dns  :  nsp("dns1");
+ ';';  dest_dns :  nsp("dns2");
+ '|';  generic  : nsp_a Parray(';', '|');
+ '|';  service  :  service;
+\}
+\mbox{}
+fun splitAlarm (ra : raw_alarm): 
+    d_alarm opt * g_alarm list opt
+  = case ra of
+        \{alarm=a; start=s; clear=c; code=cd; 
+         src_dns=sd; dest_dns=dd; 
+         info=Details(d); service=s\} 
+        => 
+        (SOME \{alarm=a; start=s; clear=c; 
+               code=cd; src_dns=sd; dest_dns=dd; 
+               details=d; service=s\}, 
+         NONE)
+      | \{alarm=a; start=s; clear=c; code=cd; 
+         src_dns=sd; dest_dns=dd; 
+         info=Generic(g); service=s\} 
+        => 
+        (NONE,
+         SOME \{alarm=a; start=s; clear=c; 
+               code=cd; src_dns=sd; dest_dns=dd; 
+               generic=g; service=s\})    
+  \end{code}
+  \label{fig:ex-no-err-check}
+  \caption{Shredding \darkstar{} Data Based on the {\tt info} Field}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \begin{code}
+type time = 
+  \{time: Ptimestamp_explicit_FW(8, "%H:%M:%S", GMT);
+   ':'; timezone: Pstring_FW(3)\}
+\mbox{}
+fun normalizeTimeToGMT(t : time): Ptimestamp_FW(8) =
+    case t of
+      \{time=t;timezone="GMT"\} => t
+    | \{time=t;timezone="EST"\} => t + (5 * 60 * 60)
+    | \{time=t;timezone="PST"\} => t + (8 * 60 * 60)
+    | ...    
+  \end{code}
+  \caption{Normalizing Timestamps}
+  \label{fig:ex-normalize}
+\end{figure}
+
+In addition to their primary focus, the examples above illustrated
+another crucial aspect of our design of \datatype{} - error handling
+is ``pay as you go''.  Despite the essential pairing of data and
+meta-data, programmers can choose exactly when and where in the
+transformation to attend to errors, or even to safely ignore them. The
+programmer can deconstruct data without examining the parse
+descriptor. That is, use of the pattern \patreadpd{pat}{pdpat} is not
+required. This feature allows structural manipulation of the data (see
+\darkstar{} example) without regard to errors. For example, the
+program in \figref{fig:ex-no-err-check} shreds the \darkstar{} data
+source into two, based on the \cd{info} field, without any reference to
+parse descriptors at all.
+
+However, such structural manipulation is not enough to fully shield
+the programmer from dealing with errors. When manipulating base
+values, there might be no structure to manipulate. If the parse failed
+for that value, the representation will be \bottom{}, and no
+meaningful value can be extracted. Therefore, we have also designed
+our operators to be able to safely operate on \bottom{}, by
+propogating it from inputs to output. For example, addition of one or
+more \bottom{} values results in \bottom{}. We use this property in
+the example in \figref{fig:ex-normalize}, where we normalize
+timestamp-timezone pairs into simple timestamps in GMT time.
+
+The many advantages of accurate parse descriptors highlight the
+importance of maintaining accurate meta-data. Therefore, we need
+language support for pairing newly created data with an accurate parse
+descriptor, based on the type of the pair. Furthermore, we would like
+to be able to check whether an existing value matches a particular
+data description (i.e. type), for example, in a cast operation.
+However, data descriptions can contain rich constraints that can't
+necessarily be checked at compile time.
+
+To this end, we include a mechanism for translating the constraints
+found in the data descriptions into dynamic checks in the style of
+contracts~\cite{contracts}. For example, in
+\figref{fig:ex-error-repair}, the compiler will insert a dynamic check
+at the end of function \cd{fixAlarmVal} to ensure that the constraint
+on the set-type is satisfied. However, unlike previous work on
+contracts, our system does not raise an exception when a dynamic check
+fails, but, instead, records the failure in the parse descriptor of
+the datum being checked.  The exact nature and location of these
+checks will be detailed in the semantics of the language.
 
 \subsection{Semantics Preview}
+
+As \datatype{} is a work-in-progress, we have not fully worked out the
+details of the semantics.  Therefore, we present here an overview of
+the main concepts involved, together with some of the judgment forms.
+...
 
 \input{implementation}
 

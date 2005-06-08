@@ -1,0 +1,5 @@
+- Add U to pd values.
+- Change list to stream.
+- Add base patterns.
+- Add set type pattern {pat1 | pat2} with pat2 matching a bool.
+- Add set type constructors {x=M | M'}.
