@@ -14,51 +14,67 @@ An {\em ad hoc data format} is any nonstandard data format for which
 parsing, querying, analysis or transformation tools are not readily
 available.  \xml{} is not an ad hoc data format --- there are hundreds
 of tools for reading, querying, and transforming \xml{}.   However,
-network administrators, computer scientists, information systems managers,
-financial analysts, biologists, chemists, and physicists deal with ad hoc
+network administrators, programmers,
+healthcare and airline information systems managers,
+corporate IT professionals, 
+Wall Street traders, microbiologists, chemists, and astrophysicists 
+deal with ad hoc
 data in a myriad of complex formats on a daily basis.
-This data, which is often unpredictable, poorly documented,
-filled with errors (malicious and benign) and unwieldy,
+This data, which is often unpredictable, poorly documented, and
+filled with errors,
 poses tremendous challenges to its users and the software
-that manipulates it.  
-
-Our end goal is to help software developers 
+that manipulates it.  Often, before anything can be done with
+ad hoc data one must clense it of as many errors as possible,
+normalize its shape and transform it into a standardized format
+that can be loaded directly into a database.
+The goal of our research is to help software developers 
 create efficient, reliable and easy-to-maintain software for
 for processing ad hoc data.  We will achieve our goal
 through the design and implementation of \datatype,
 a revolutionary new language with intrinsic support for 
-processing ad hoc data.  \datatype{} will have 
-two logical components.
+ad hoc data.  Our comprehensive research agenda
+consists of the following components.
 
 \begin{enumerate}
-\item A Universal Data Description Language.  We will aim to develop a 
+\item Design, theory and implementation of a 
+{\em Universal Data Description Language.}  
+We will aim to develop a 
 high-level, easy-to-understand description language for \datatype, capable of
 concisely and accurately describing the physical format of
-any ad hoc data source. 
-\item An Expressive and Efficient Ad Hoc Data Transformation Language.
-The data transformation language will allow programmers
-automatically generating a suite of high-assurance,
-efficient data processing tools that make understanding, manipulating 
-and transforming ad hoc data an effortless task.
+any ad hoc data source whether it be a stream of binary data such as 
+packets from various networking protocols, a recursive hierarchy
+of (ASCII) geneological data, a table of stock ticker information, a
+web log from a web server, the output of a tcsh shell command, a (Cobol) 
+entry for telephone call billing data or any other bit of electronic data
+in any other format one can imagine.
+ 
+\item Design, theory and implementation of an expressive and efficient 
+{\em Ad Hoc Data Transformation Language.}
+\datatype{} will support analysis, manipulation and transformation
+of ad hoc data in domains ranging from genomics and microbiology to
+networking and telecommunications, on scales ranging from kilobytes to 
+gigabytes or more, and in the presence of both syntactic and semantic
+data errors.  
+\datatype{} will use the universal data descriptions as directives for
+printing and parsing ad hoc data and as types for describing
+representations of ad hoc data within the programming environment.  
+
+\item Applications and Evaluation.  We will evaluate the expressiveness and 
+performance of \datatype{}
+by implementing applications in at least two completely 
+different domains.  First, we will
+develop tools for cleaning, normalizing, analyzing and mining
+telecommunications data supplied by AT\&T.  This will allow
+us to evaluate the performance of our tools on the truly
+massive data sets (gigabytes or even terabytes in size).  
+Second, we will collaborate with
+Olga Troyanskaya from Princeton's Lewis-Sigler Institute for 
+Integrative Genomics and with Steven Kleinstein, program coordinator
+for Princeton's
+Picasso project for interdisciplinary computational science
+and provide them with tools for manipulating
+genomics and microbiology data.
 \end{enumerate}
-
-% An {\em ad hoc data format} is any nonstandard data format
-% for which parsing, querying, analysis or transformation
-% tools are not readily available.
-% There are vast amounts of useful data 
-% stored in traditional databases and \xml\ formats, but there is just
-% as much in ad hoc formats.
-% In the networking and telecommunications
-% domain, we find ad hoc formats for web server logs, 
-% netflows capturing internet traffic, 
-% log files characterizing IP backbone resource utilization,
-% wire formats for legacy telecommunication billing systems, 
-% and telephone call detail data, to name just a few.
-% The ability to parse, query, monitor and transform this ad hoc data
-% is a crucial part of maintaining and providing security for
-% our communications infrastructure.
-
-% Explanation as to why ad hoc data is relevant to cyber trust goes here.
 
 % Processing ad hoc data is challenging for a variety of
 % reasons. First, ad hoc data arrives ``as is:'' an analyst might want the
@@ -83,47 +99,34 @@ and transforming ad hoc data an effortless task.
 % AT\&T's call-detail stream contains roughly 300~million calls per day
 % requiring approximately 7GBs of storage space.
 
-Work has begun on developing a high-level specification 
-language called \pads{} for describing ad hoc data formats.  From a
-\pads{} specification it is currently possible to generate a number of
-tools for processing that data automatically including (1)
-efficient parsers for reading ad hoc data, (2) an interface to a 
-general-purpose data query engine, (3) an analyzer that generates 
-statistical summaries of data read by the parser, and (4)
-a translator from the ad hoc format into \xml.  
+\paragraph*{Broader Impacts:}  
+Ad hoc data is ubiquitous. Consequently our research has the 
+potential for far-ranging impact on corporate and
+governmental data processing as well as
+on the progress of research in the natural sciences including
+biology, genomics, chemistry and physics.  For instance, in the governmental
+arena, Newt Gingrich and Hillary Clinton have recently proposed integrating 
+our national health records and providing a single electronic service
+for accessing them.  Our technology will be of incalcuable value in helping
+move old health records from legacy formats into modern systems.
+In industry, our tools could be used to facilitate mergers or
+data exchange between corporate parteners.
+In academia, our tools will help improve the productivity of
+computational biologists who need to collect data from a vast
+array of online sources in their search to understand the functioning of our
+genes and their relations to disease.
 
-While the work to date demonstrates the feasibility of the \pads{}
-approach, the \pads{} design and implementation are still in their infancy:
-We have discovered many common, real-world data formats that the current PADS 
-infrastructure is incapable of describing, parsing or analyzing. 
-To address these deficiencies, we propose to explore innovative ways
-of extending the basic \pads{} specification language and related
-infrastructure.  The second thrust of our research involves
-improving the automatic tool generation infrastructure in the \pads{} system.
-The current tool generation system is brittle, inflexible and suffers from
-subpar performance.  We will develop a novel extension to \pads{} 
-that allows users to augment \pads{} descriptions with application-specific
-attributes and customizations.  The attributes convey semantic information to
-the tool generators and the customizations improve error-handling
-and performance.  Our new architecture has the promise of being
-substantially more robust, flexible and efficient.
-Finally, in order to improve the reliability of the infrastructure,
-we will formalize \pads{} and prove important correctness properties
-of our formal model.  Overall, this proposal involves challenging research in
-language design, efficient systems implementation and
-semantic analysis, all aimed at solving real-world data processing 
-problems.
+% We are collaborating with researchers at AT\&T who will be able to use
+% our tools to address real problems such as telephone fraud detection.
+% In addition, our tools will be freely available to researchers and
+% scientists over the web.  Moreover, part of our mission will be to
+% work with biologists, chemists and physicists at Princeton and the
+% broader community to help them with their data processing needs.  We
+% have already been meeting with Olga Troyanskaya, who works in
+% Princeton's Lewis-Sigler Institute for Integrative Genomics on pathway
+% modeling and analysis of protein-protein interactions.  Many of our
+% proposed extensions to \pads{} were inspired directly by her data
+% processing needs.  The collaboration between Computer Science and
+% Genomics will also be an excellent platform for developing
+% interdisciplinary undergraduate research projects.
 
-\paragraph*{Broader Impacts:}  We are collaborating with researchers at
-AT\&T who will be able to use our tools to address real problems such as
-telephone fraud detection.  In addition, our tools will be 
-freely available to researchers and scientists over the web.  
-Moreover, part of our mission will be to work with 
-biologists, chemists and physicists at Princeton and the broader community
-to help them with their data 
-processing needs.  We have already been meeting with Olga Troyanskaya,
-who works in Princeton's Lewis-Sigler Institute for Integrative Genomics 
-on pathway modeling and analysis of protein-protein interactions.  Many of our proposed
-extensions to \pads{} were inspired directly by her data processing needs.
-The collaboration between Computer Science and Genomics will also be an excellent platform
-for developing interdisciplinary undergraduate research projects.
