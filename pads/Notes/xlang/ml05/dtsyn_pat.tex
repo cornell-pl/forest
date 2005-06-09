@@ -1,0 +1,20 @@
+{\small
+\begin{verbatim}
+MS ::= pat => M | (pat => M | MS)
+
+pat ::= x | k | nil
+       | Pbase(pat)
+       | <<pat, pdpat>>           // project pd
+       | (pat * pat)              // normal pair
+       | (pat ** pat)             // dep. pair
+       | {fieldpats}              // record
+       | {pat | setpat}           // set-type
+       | c(pat)                   // constructor
+       | pat1 :: pat2             // stream
+       | Parray(pat, xsep, xterm) // array with stream, sep and term.
+
+fieldpats ::= x = pat | x = pat; fieldpats
+setpat    ::= x | true | false
+pdpat     ::= x | pd
+\end{verbatim}
+}

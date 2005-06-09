@@ -213,8 +213,6 @@ detecting and correcting or deleting erroneous data.  Third,
 transformed data must be printed in the new format that can be
 processed by standards tools.
 
-Examples:Darkstar, Gigascope, Richard at Princeton, Olga/Magic.
-
 Today, people tend to use \C{} or \perl{} for this task.
 Unfortunately, writing parsers, transformations and printers this way
 is tedious and error-prone, complicated by the lack of documentation,
@@ -283,9 +281,10 @@ critical language features.
 In the next section, we will describe, in detail, the \pads{} approach
 to data and meta data (inherited by \datatype{}), the \datatype{}
 syntax for data description, and illustrative examples. Next, in
-section~\ref{sec:data-transformation} we will elaborate on \datatype{}'s support for
-data transformation, including design, syntax, brief overview of the semantics
-and some examples. Section~\ref{sec:implementation-techniques} will discuss our proposed
+section~\ref{sec:data-transformation} we will elaborate on
+\datatype{}'s support for data transformation, including design,
+syntax, brief overview of the semantics and some examples.
+Section~\ref{sec:implementation-techniques} will discuss our proposed
 implementation techiniques, and section~\ref{sec:related-work}, the
 related work. A discussion of conclusions and future work is concluded
 in section~\ref{sec:conclusion}.
@@ -309,11 +308,11 @@ format.  Yet, in \pads{}, data does not live alone. A critical benefit
 of the parsing is the meta-data gained during the transformation
 process.  Therefore, the result of a parse is a pair consisting of a
 canonical in-memory representation of the data and meta-data for the
-parse.  We refer to the meta-data as the {\em parse descriptor}. The
-parse descriptor may hold a variety of bits of information including
-the position of the data in the file and a characterization of the
-possible errors in the data.  There are several different sorts of
-errors that may arise.  Syntactic errors occur when a parser cannot
+parse.  We refer to the meta-data as the {\em parse descriptor} (PD).
+The parse descriptor may hold a variety of bits of information
+including the position of the data in the file and a characterization
+of the possible errors in the data.  There are several different sorts
+of errors that may arise.  Syntactic errors occur when a parser cannot
 read a valid item of the right type from the file (eg: of parser
 attempts to read an integer to find the character '?'  instead).
 Semantic errors occur when a parser can read an item but it does not
@@ -659,64 +658,101 @@ vertical bar.
 
 \begin{figure}
   \centering
-Insert dd diagram here.
-  \caption{Syntax of Data Descriptions}
+  \include{dtsyn}
+  \caption{Syntax of Data Descriptions and Other Types}
   \label{fig:syntax-dd}
 \end{figure}
 
 We present the formal syntax of data descriptions, including that used
 in the examples, in \figref{fig:syntax-dd}. We will specify the
-definition of terms \kw{M} in the next section.
+definition of terms \cd{M} in the next section, \figref{fig:syntax-terms}.
 
 \section{Transforming Data in \datatype{}}
 \label{sec:data-transformation}
 
-While data description is extremely useful to the data analyst, it is
-only a start in solving her needs. A description allows the analyst to
-conveniently bring the data into memory. Once there, she is on her own
-for analysis and transformation.
+\datatype{} is more than a data description language. It is also a
+functional programming language with extensive support for data
+transformation. Most importantly, \datatype{} is not merely a
+combination of these two language elements - data description and
+transformation - but a synthesis.  The meta-data learned during the
+process of parsing the data based on its description is not lost once
+the parsing is finished, but instead plays a prominent role in the
+programmatic elements of the language. As we are particularly
+concerned with error-related meta-data, we term this synthesis
+``error-aware computing.''
 
 \subsection{Language Design for Error-aware Computing}
 
-\datatype{} is more than a data description language. It is also a
-functional programming language with extensive support for data
-transformation. Most importantly, \datatype{} is not merely a combination
-of these two language elements - data description and transformation -
-but a synthesis.  The meta-data learned during the process of parsing
-the data based on its description is not lost once the parsing is
-finished, but instead plays a prominent role in the programmatic
-elements of the language. As we are particularly concerned with error
-related meta-data, we term this synthesis ``error-aware computing.''
+A typical \datatype{} program begins with parsing a data source. The
+result of the parse is a pair of a representation of the parsed data
+and a parse descriptor. Many transformations and analyses of data are
+concerned with both the data and the meta-data. Therefore, the
+language directly supports manipulating them together. To begin,
+\datatype{} integrates the two together into one element, which we
+term a \pvalue{}. This integrated value pairs a parse descriptor with
+a data element at every level of a data structure. That is, the
+subcomponents of a data structure (if any) are themselves \pvalue{}.
+Next, associated with the set of \pvalue{} are data constructors and
+patterns (destructors) designed to enable the programmer to program
+with \pvalue{} in a natural way.  Finally, \datatype{} carefully
+controls the use of \pvalue{} to maintain the invariant that a
+\pvalue{}'s parse descriptor accurately describes the representation.
+Critical to this last feature is \datatype{}'s type system, which is
+designed with this invariant in mind. We will further discuss the type
+system towards the end of the section, after describing some features
+of the language itself.
 
-From now on, we use the word {\em ad hoc value} to refer to the pair
-of ad hoc data representation and corresponding PD.  One of the
-crucial design principles of our language will be that programmers
-never write PDs themselves; the PDs are always constructed
-automatically by the compiler system. This important principle allows
-the compiler to guarantee that a value's PD always accurately
-describes the representation.  It will be impossible for a programmer
-to corrupt the relationship between representation and PD
-accidentally. Additionally, there is no mechanism for accessing a
-representation directly. Instead, it can only be accessed by
-deconstructing it with one of the patterns. While this is not critical
-for the safety of the language, we feel it is an important element of
-the language design that parsed data always be paired with its
-meta-data.
+\begin{figure}
+  \centering
+  \include{dtsyn_terms}
+  \caption{Syntax of Constructors}
+  \label{fig:syntax-terms}
+\end{figure}
 
-There are currently four possible descriptions in a parse descriptor:
-\pdgood{}, \pdbad{},\pdnest{} and \pdsem{}. The description \pdgood{}
-describes data that is error free; \pdbad{} describes data that is
-entirely invalid; \pdnest{} describes data with an error in one or
-more subcomponents; \pdsem{} describes data with a semantic error.
-Note that in the actual language, parse descriptors will carry more
-information including the location in the source file (or a default
-location if generated by any user), but for the purposes of this paper
-we have simplified the representation to the one described. 
+\begin{figure}
+  \centering
+  \include{dtsyn_pat}
+  \caption{Syntax of Patterns}
+  \label{fig:syntax-pat}
+\end{figure}
 
-Although programmers cannot construct a parse descriptor and pair it
-with a representation to create a value, the programmer may use
-pattern matching to extract and read a value's parse descriptor, using
-pattern \patreadpd {pat} {pdpat}.  Notice that when the programmer
+\begin{figure}
+  \centering
+  \include{dtsyn_prog}
+  \caption{Syntax of Programs}
+  \label{fig:syntax-prog}
+\end{figure}
+
+In essence, data transformation in \datatype{} is performed by
+deconstructing values using patterns and reconstructing them after
+applying a transformation to their contents. For each type capable of
+describing data, their is a corresponding pattern and constructor for
+manipulating a \pvalue{} that corresponds to that type. We will see
+and explain these patterns and constructors in the upcoming examples.
+However, we do encourage interested readers to reference
+\figref{fig:syntax-dd}, \figref{fig:syntax-terms},
+\figref{fig:syntax-pat} and \figref{fig:syntax-prog} for a formal
+presentation of the syntax. Data constructors are included under terms
+\cd{M}, and patterns under \cd{pat}.
+
+In addition, although programmers cannot construct a parse descriptor
+and pair it with a representation to create a \pvalue{}, there is a
+generic pattern for all \pvalue{}s, \patreadpd {pat} {pdpat}, to
+extract and read a value's parse descriptor (note that while the right
+subpattern matches only the parse descriptor, the pattern on the left
+matches the entire pair). There are currently four possible
+descriptions in a parse descriptor: \pdgood{}, \pdbad{},\pdnest{} and
+\pdsem{}. The description \pdgood{} describes data that is error free;
+\pdbad{} describes data that is entirely invalid; \pdnest{} describes
+data with an error in one or more subcomponents; \pdsem{} describes
+data with a semantic error.  Note that in the actual language, parse
+descriptors will carry more information including the location in the
+source file (or a default location if generated by any user), but for
+the purposes of this paper we have simplified the representation to
+the one described.
+
+{\em is this par. important?}
+Notice that when the programmer
 determines that a value's parse descriptor is \cd{G}ood, this implies
 the entire substructure is error free and need not be checked further
 for errors.  This greatly facilitates programming with data that is
@@ -725,13 +761,8 @@ simply check the top-level PD and if it is indeed \cd{G}ood, she need
 not clutter the rest of her code with error-checking preteens.  In
 addition, when the top-level PD is \cd{G}ood, the value representation
 might perhaps be optimized as the PDs for the substructures are
-unnecessary.  Of course, we need to do much more research before we
-will understand how to represent and compute with ad hoc data values
-most efficiently. Furthermore, note that while the right subpattern
-matches only the parse descriptor, the pattern on the left matches the
-entire pair, preventing direct access to the data representation, as
-discussed above.
-
+unnecessary.
+  
 The direct access to parse descriptors enables two powerful features:
 error querying and error repair. For error querying, the programmer
 can write a program to walk over the data source and collect
@@ -759,49 +790,41 @@ type streams = entry stream * entry stream
 \mbox{}
 fun splitEntry (e:entry * streams) : streams =
   case e of
-    (<<entry, G>>, good, bad) => (entry::good, bad)
-  | (<<entry, _>>, good, bad) => (good, entry::bad)
+    (<<entry, G>> * (good * bad)) => (entry::good * bad)
+  | (<<entry, _>> * (good * bad)) => (good * entry::bad)
 \mbox{}    
 fun splitSource (s:source) : streams =
-    let (hdr,Parray(entries,_,_)) = s in 
-    stream\_fold splitEntry (nil, nil) entries
+    let (hdr * Parray(entries,_,_)) = s in 
+    stream\_fold splitEntry (nil * nil) entries
 \mbox{}
 fun app (fds : fd * fd * fd) : unit =  
-  let (fdin,fdgood,fdbad) = fds                in
+  let (fdin * fdgood * fdbad) = fds            in
   let input               = Pread::source fdin in
-  let (good,bad)          = splitSource input  in
-  Pwrite::(entry Parray(NL,EOF)) (Parray(good,NL,EOF), fdgood);
-  Pwrite::(entry Parray(NL,EOF)) (Parray(bad,NL,EOF), fdbad)
+  let (good*bad)          = splitSource input  in
+  Pwrite::(entry Parray(NL,EOF)) (Parray(good,NL,EOF)* fdgood);
+  Pwrite::(entry Parray(NL,EOF)) (Parray(bad,NL,EOF)* fdbad)
 \end{code}
 \caption{Error filter for \dibbler{} data}
-\label{figure:ex-data-clean}
+\label{fig:ex-data-clean}
 \end{figure}
 
 As an example of data cleaning, we provide the program in
-\figref{fig:ex-data-clean}.  It takes the \dibbler{} data source and
+\figref{fig:ex-data-clean}. It takes the \dibbler{} data source and
 walks through all of the entries in the source checking for entries
-with errors.  The good entries are placed into one output stream and
-the bad entries are placed into another.  The idea is that the good
-entries may then be further processed or directly loaded into a
-database without corrupting the valuable data therein.  A human might
-examine the bad entries off-line to determine the cause of errors and
-to figure out how to fix the corrupted entries. Notice how this
-example combines error repair with error querying.
+with errors.  The good entries are placed in one output stream and the
+bad entries are placed in another.  The idea is that the good entries
+may then be further processed or directly loaded into a database
+without corrupting the valuable data therein.  A human might examine
+the bad entries off-line to determine the cause of errors and to
+figure out how to fix the corrupted entries.
 
-The command in the program opens the \dibbler{} data description
-module.  This enters the type definitions into the programming
-environment (see~\figref{fig:dibblerml} for the details of these
-definitions).  Next the \cd{splitEntry} function describes how to
-check an entry to determine whether it is \cd{G}ood (syntactically and
-semantically valid) or not.  The \cd{G}ood entries are placed in the
-\cd{good} stream and the other entries are placed in the \cd{bad}
-stream.  Here, \cd{<<pat,pdpat>>} is a pattern in which \cd{pdpat} is
-a pattern for PDs and \cd{pat} is a pattern for the recursive
-structure of the value.  We do not actually look at the recursive
-structure of the value, because once we see the \cd{G} PD associated
-with an entry we know that the entire substructure is good.  In this
-example, we use the notation \cd{entry::good} to put an \cd{entry} on
-the front of the \cd{good} stream.
+The \cd{splitEntry} function describes how to check an entry to
+determine whether it is \cd{G}ood (syntactically and semantically
+valid) or not.  Here, \cd{<<pat,pdpat>>} is a pattern that the
+programmer uses to extract information about the parse descriptor from
+a value.  \cd{pdpat} is the pattern for PDs and \cd{pat} is a pattern
+for the value's substructures. Also, \cd{(good * bad)} deconstructs a pair,
+while \cd{(good * entry::bad)} constructs one.
 
 The \cd{splitSource} function pattern matches against the input
 source, extracting the stream of entries, and iteratively applying the
@@ -809,26 +832,24 @@ source, extracting the stream of entries, and iteratively applying the
 is a pattern for array values.  An array value is a stream (in this
 case \cd{entry}) coupled with a separator and a terminator.  Also in
 this example, we assume \cd{fold\_stream} iteratively applies a
-function to a stream.  We intend to scour the existing research on
-stream processing to help us develop a stream programming model for
-\datatype.
+function to a stream.  
 
-The function \cd{app} is responsible for reading in streams from the
-file descriptors it is given, splitting the streams into good and bad
-data and writing the streams back out to files.  The process of
-reading and writing is dependent on the type descriptions of the ad
-hoc data.  Here, we write \cd{read::T} to read a data source formatted
-according to \cd{T} and \cd{write::T} to write a format according to
-\cd{T}.  The read function generates an ad hoc data value with type
-\cd{T} and the write function writes an ad hoc data value with type
-\cd{T} to a file.
+The function \cd{app} is responsible for reading in data from the file
+descriptors it is given, splitting the data into good and bad and
+writing the data back out to files.  The process of reading and
+writing is dependent on the type descriptions of the ad hoc data.
+Here, we write \cd{read::T} to read a data source formatted according
+to \cd{T} and \cd{write::T} to write a format according to \cd{T}.
+The read function will parse a file and generates an ad hoc data value
+with type \cd{T}.  The write function will write an ad hoc data value
+with type \cd{T} to a file.
 
 \begin{figure}
   \centering
 \begin{code}
 fun checkAlarm (a : alarm): alarm opt =
     case a of 
-	\{\{alarm=<<a,S>>;...\} |_\} => SOME(a)
+	\{\{alarm=<<_,S>>;...\} |_\} => SOME(a)
       | _ => NONE
 \mbox{}
 fun collectAlarms(as : alarm stream): alarm stream =
@@ -840,11 +861,21 @@ fun collectAlarms(as : alarm stream): alarm stream =
 
 We present a furthre example of error querying in
 \figref{fig:ex-error-query}, based on the \darkstar{} data
-description. The function \cd{checkAlarm} takes an alarm record,
-returning it (wrapped in \cd{SOME}) if its \cd{alarm} field had a
-semantic error. Otherwise, it returns \cd{NONE}. The function
-\cd{collectAlarms}, then, collects all alarm records in the alarm
-stream \cd{as}, whose \cd{alarm} field has a semantic error.
+description. The function \cd{checkAlarm} takes an alarm set-type,
+extracts the underlying raw alarm and checks its \cd{alarm} field for
+a semantic error.  If the \cd{alarm} field contained a semantic error,
+we return the entire alarm (wrapped in \cd{SOME}). Otherwise, we
+return \cd{NONE}. The pattern \cd{\{pat | setpat\}} for set-types
+matches \cd{pat} against the underlying value, and \cd{setpat} against
+a boolean indicating whether the constraint was satisfied. As we don't
+care about the constraint on the alarm itself, we specify a wild-card
+pattern.  Also, the pattern for records is quite similar to that found
+in ML. We note, however, that literal fields in a record type do not
+appear as part of the pattern. 
+
+The function \cd{collectAlarms}, then,
+collects all alarm records in the alarm stream \cd{as}, whose
+\cd{alarm} field has a semantic error.
 
 \begin{figure}
   \centering
@@ -881,7 +912,13 @@ has discovered that some process producing alarm records was
 erroneously using the values $20$ and $30$ for the alarm classes,
 instead of the required $2$ and $3$. The program finds all alarm
 records with semantics errors in the alarm field and corrects those
-with value $20$ or $30$, leaving other untouched.
+with value $20$ or $30$, leaving other untouched. We highlight two new
+features: first, in function \cd{fixAlarmVal}, the bodies of the case
+branches use the constructor for set types; second, in the pattern
+\cd{<<_,S>>} the variable \cd{al} is bound to the entire \pvalue{} of
+the \cd{alarm} \pvalue{}, rather than just the data. {\em should we
+  explain this decision here? its simpler for the language and for the
+programmer - don't have to worry about prevalues.}
 
 \begin{figure}
   \centering
@@ -1002,6 +1039,22 @@ As \datatype{} is a work-in-progress, we have not fully worked out the
 details of the semantics.  Therefore, we present here an overview of
 the main concepts involved, together with some of the judgment forms.
 ...
+
+% assigns \pvalue{}s to their own class of types.
+% For this purpose, programmers can never construct PDs themselves; they
+% are always constructed automatically by the compiler system.  It will
+% be impossible for a programmer to corrupt the relationship between
+% representation and PD accidentally. Additionally, there is no
+% mechanism for accessing a representation directly.  Instead, it can
+% only be accessed by deconstructing it with one of the patterns. While
+% this is not critical for the safety of the language, we feel it is an
+% important element of the language design that parsed data always be
+% paired with its meta-data.
+% Furthermore, note that while the right subpattern
+% matches only the parse descriptor, the pattern on the left matches the
+% entire pair, preventing direct access to the data representation, as
+% discussed above.
+
 
 \input{implementation}
 

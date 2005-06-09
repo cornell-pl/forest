@@ -1,3 +1,4 @@
+{\small
 \begin{verbatim}
 constants k ::= true | false | () |  ...
 
@@ -7,14 +8,14 @@ Parsing Types
 
 T ::=  \alpha(M)
      | Pbase                  // base type
-     | d(M)		      // parameterized data type; e is perimeter
-     | M		      // singleton type.  eg: " " for literal space
-     | x:T1 ** T2	      // dependent pair
-     | {fieldtys}	      // dep. record
-     | PD		      // parser descriptor type
+     | d(M)                   // parameterized data type; e is perimeter
+     | M                      // singleton type.  eg: " " for literal space
+     | x:T1 ** T2             // dependent pair
+     | {fieldtys}             // dep. record
+     | PD                     // parser descriptor type
      | T Parray(Msep, Mterm)  // array types
-     | T stream		      // stream type; underlying rep for arrays
-     | {x:T | M}	      // constrained type; ie: Pwhere
+     | T stream               // stream type; underlying rep for arrays
+     | {x:T | M}              // constrained type; ie: Pwhere
 
 
 D ::= datatype typarams d(x:F) = DTBody
@@ -40,69 +41,6 @@ Transform Types
 F ::= T          // type of parsed value
    | base        // values of base types
    | F -> F      // transforms
-   | F * F	 // ordinary pairs
-
-
-Terms
-=====
-
-M ::=  x                        // variable
-     | Pbase[M1](M2)		// base type constructor; M1 is
-                                   an argument to the type; M2 computes the rep)
-     | c(M)			// data type constructor with parameter M
-     | (x:M1 ** M2)		// pair
-     | {fields}
-     | {x = M1 | M2}		// set-type; M2 is the predicate
-     | Parray(M, Msep, Mterm)   // array; first element is stream
-     | k			// constants
-     | let x = M in M		// computation in host language
-     | <M>                      // unit value given singleton type M
-     | (M1 * M2)		// ordinary pair
-     | nil                      // empty list
-     | M1 :: M2                 // cons
-     | case M of MS             // deconstructors
-     | fun x1(x2:F1):F2 = M     // recursive function x1 with arg x2
-     | M1 (M2)			// function application
-     | cast (M : T)		// type annot/dependent cast?
-     | op M			// additional uninteresting operations
-     
-fields ::= x = M | x = M; fields
-
-Parse Descriptors Values
------------------------
-pd ::=   G    // good
-     |   B    // bad
-     |   N    // nested error
-     |   S    // semantic error
-     |   U    // unknown
-
-Patterns
---------
-MS ::= pat => M | (pat => M | MS)
-
-pat ::= x | k | nil
-       | Pbase(pat)
-       | <<pat, pdpat>>           // project pd
-       | (pat * pat)		  // normal pair
-       | (pat ** pat)		  // dep. pair
-       | {fieldpats}		  // record
-       | {pat | setpat}		  // set-type
-       | c(pat)			  // constructor
-       | pat1 :: pat2		  // stream
-       | Parray(pat, xsep, xterm) // array with stream, sep and term.
-
-fieldpats ::= x = pat | x = pat; fieldpats
-
-setpat ::= x | true | false
-
-pdpat ::= x | pd
-
-
-Complete Programs
-=================
-
-prog ::= M              
-       | D prog          // type declaration
-       | val x = M prog  // value declaration
+   | F * F       // ordinary pairs
 \end{verbatim}
-
+}
