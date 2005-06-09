@@ -1,18 +1,23 @@
 {\small
 \begin{verbatim}
-M ::=  x                        // variable
-     | Pbase[M1](M2)            // base type constructor; M1 is
+N ::=  Pbase[M1](M2)            // base type constructor; M1 is
                                    an argument to the type; M2 computes the rep)
-     | c(M)                     // data type constructor with parameter M
+     | c[M](M)                  // data type constructor with parameter M
      | (x:M1 ** M2)             // pair
-     | {fields}                 // record
+     | {{fields}}               // record
      | {x = M1 | M2}            // set-type; M2 is the predicate
      | Parray(M, Msep, Mterm)   // array; first element is stream
+
+fields ::= x = M | x = M; fields
+
+M ::=  x                        // variable
+     | N                        // \core terms
      | k                        // constants
      | let x = M in M           // computation in host language
      | <M>                      // unit value given singleton type M
      | (M1 * M2)                // ordinary pair
-     | nil                      // empty list
+     | {fields}                 // ordinary record
+     | nil                      // empty stream
      | M1 :: M2                 // cons
      | case M of MS             // deconstructors
      | fun x1(x2:F1):F2 = M     // recursive function x1 with arg x2
@@ -20,8 +25,6 @@ M ::=  x                        // variable
      | cast (M : T)             // type annot/dependent cast?
      | op M                     // additional uninteresting operations
      
-fields ::= x = M | x = M; fields
-
 pd ::=   G    // good
      |   B    // bad
      |   N    // nested error
@@ -29,3 +32,8 @@ pd ::=   G    // good
      |   U    // unknown
 \end{verbatim}
 }
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 

@@ -2,31 +2,46 @@
 \begin{bnf}
 \name{Constants} \meta{k} \::= \mcd{true} \| \mcd{false} \| \mcd{()} \| ...
 \\
-\name{Parse Types} \meta{T} \::= 
-  \alpha(M) \| {Pbase} \| M \| \mcd{PD} \nlalt
-  \ppair x {T_1} {T_2} \| \{\nont{fts}\} \| d(M) \nlalt
+\name{Type Variables} \meta{\alpha}
+\\
+\name{Type Names} \meta{t}
+\\
+\name{\Core{} Types} \meta{T} \::= 
+  \alpha \| {Pbase} \| M \| \mcd{PD} \nlalt
+  \ppair x {T_1} {T_2} \| \precord {\nont{fts}} \| t(M) \nlalt
   \pset x T M \nlalt
   \parray T {M_{sep}} {M_{term}} \| \pstream T
 \\
 \name{Datatypes} \meta{D} \::= 
-  \mcd{datatype}\; \nont{tps}\; d(x{:}F) = \nont{DTBody} \nlalt
-  \mcd{type}\; \nont{tps}\; \alpha(x{:}F) = T
+  \mcd{datatype}\; \nont{tps}\; t(x{:}F) = \nont{b} \nlalt
+  \mcd{type}\; \nont{tps}\; t(x{:}F) = T
 \\
-\name{Type Parameters} \meta{tps} \::= \cdot \| \alpha \; \nont{tps}
+\name{Type Parameters} \meta{tps} \::= \cdot \| \alpha \| (tvl)
 \\
-\name{DTBody} \meta{} \::= \nont{DS} \| \mcd{case}\; M \mcd{of}\; \nont{TS}
+\name{Type Var. List} \meta{tvl} \::= \alpha \| \alpha,\, tvl
 \\
-\name{} \meta{DS} \::= c\;\mcd{of}\;T \| c\;\mcd{of}\;T\;\mcd{|}\;\nont{DS}
+\name{} \meta{b} \::= \nont{CS} \| \mcd{case}\; M \mcd{of}\; \nont{CCS}
 \\
-\name{} \meta{TS} \::= 
+\name{} \meta{CS} \::= c\;\mcd{of}\;T \| c\;\mcd{of}\;T\;\mcd{|}\;\nont{CS}
+\\
+\name{} \meta{CCS} \::= 
   \nont{pat} \Rightarrow c\;\mcd{of}\;T \nlalt
-  \nont{pat} \Rightarrow c\;\mcd{of}\;T\;\mcd{|}\;\nont{TS}
+  \nont{pat} \Rightarrow c\;\mcd{of}\;T\;\mcd{|}\;\nont{CCS}
 \\
 \name{Field Types} \meta{fts} \::= \nont{ft} \| \nont{ft};\;\nont{fts}
 \\
 \name{Field Type} \meta{ft} \::= T \| x = T
+\\
+\name{Types} \meta{F} \::= 
+  T           \descr{type of \pvalue{}} \nlalt
+  \nont{base} \descr{values of ordinary base types} \nlalt
+  F * F       \descr{ordinary pairs} \nlalt
+  \{ofs\}     \descr{ord. records} \nlalt
+  F \-> F     \descr{functions}
+\\
+\name{Ord. Field Types} \meta{ofs} \::= x = F \| x=F,\;\nont{ofs}
 \end{bnf}
-
+}
 
 % constants k ::= true | false | () |  ...
 
@@ -63,16 +78,14 @@
 
 % Fieldty ::= T | x = T
 
-\begin{verbatim}
-Transform Types
-========================
+% Transform Types
+% ===============
 
-F ::= T          // type of parsed value
-   | base        // values of base types
-   | F -> F      // transforms
-   | F * F       // ordinary pairs
-\end{verbatim}
-}
+% F ::= T          // type of parsed value
+%    | base        // values of base types
+%    | F -> F      // transforms
+%    | F * F       // ordinary pairs
+
 
 %%% Local Variables: 
 %%% mode: latex

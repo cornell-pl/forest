@@ -22,7 +22,8 @@
 \newcommand{\pads}{\textsc{pads}}
 \newcommand{\padsl}{\textsc{padsl}}
 \newcommand{\padst}{\textsc{pads/t}}
-\newcommand{\datatype}{\textsc{DataType}}
+\newcommand{\datatype}{\textsc{PADS/T}}
+%\newcommand{\datatype}{\textsc{DataType}}
 \newcommand{\C}{\textsc{C}}
 \newcommand{\perl}{\textsc{Perl}}
 \newcommand{\ml}{\textsc{ml}}
@@ -35,6 +36,7 @@
 \newcommand{\packettypes}{\textsc{PacketTypes}}
 \newcommand{\erlang}{\textsc{Erlang}}
 
+\newcommand{\Core}{Ad hoc}
 \newcommand{\core}{ad hoc}
 \newcommand{\pvalue}{\core{} value}
 \newcommand{\ppat}{\core{} pattern}
@@ -85,7 +87,7 @@
       \newcommand{\none}{\epsilon}
       \newcommand{\nwln}{\\ &&&}
       \newcommand{\nlalt}{\\ && \| &}
-      \[\begin{array}{lrcll}
+      \[\begin{array}{lrlll}
      }
      {\end{array}\]}
 
@@ -94,3 +96,4 @@
 \newcommand{\parray}[3]{#1\;\mcd{Parray}(#2,#3)}
 \newcommand{\pset}[3]{\{#1{:}#2\,|\,#3\}}
 \newcommand{\pstream}[1]{#1\;\mcd{stream}}
+\newcommand{\precord}[1]{\{\{#1\}\}}
