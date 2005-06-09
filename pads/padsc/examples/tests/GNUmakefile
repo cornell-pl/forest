@@ -453,9 +453,9 @@ ifdef DEBUG_RULES_MK
 endif
 	@$(CCExec_DYNAMIC_D)
 
-test_hist: $(GEN_DIR)/hist.c $(PADS_HOME)/padsc/libpads/pads-hist.c test_hist.c $(INCLUDE_DEDS) $(LIB_DEPS_O)
+test_hist: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-hist.c test_hist.c $(INCLUDE_DEDS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
-test_hist_d: $(GEN_DIR)/hist.c $(PADS_HOME)/padsc/libpads/pads-hist.c test_hist.c test_hist.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
+test_hist_d: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-hist.c test_hist.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 ifdef GALAX_NONE

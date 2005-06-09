@@ -34,6 +34,18 @@
 #define INIT_scale 100 
 #endif
 
+#ifndef INIT_PREFIX
+#define INIT_PREFIX ""
+#endif
+
+#ifndef INIT_WHAT
+#define INIT_WHAT 0
+#endif
+
+#ifndef INIT_NST
+#define INIT_NST 0
+#endif 
+
 #ifndef EXTRA_READ_ARGS
 #  define EXTRA_READ_ARGS
 #endif
@@ -85,6 +97,9 @@ int main(int argc, char** argv) {
   default_hist.scale = INIT_scale;
   default_hist.toFloat = 0;
   default_hist.fromFloat = 0;
+  default_hist.prefix = INIT_PREFIX;
+  default_hist.what = INIT_WHAT;
+  default_hist.nst = INIT_NST;
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -125,7 +140,7 @@ int main(int argc, char** argv) {
   }
 
   PADS_TY(_hist_init)(pads, &h);	
-  //  PADS_TY(_hist_setPara)(pads, &h, &default_hist);
+  PADS_TY(_hist_setPara)(pads, &h, &default_hist);
 
 #ifdef EXTRA_INIT_CODE
   EXTRA_INIT_CODE;
@@ -167,12 +182,8 @@ int main(int argc, char** argv) {
 
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
-    if (P_OK == PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
-      if (P_ERR == PADS_TY(_hist_add)(pads, &h, &pd, &rep)) {
-	PADS_TY(_hist_report)(pads, "", 0, 0, &h);
-	PADS_TY(_hist_reset)(pads, &h);
-      }
-    }
+    if (P_OK == PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS ))
+      PADS_TY(_hist_add)(pads, &h, &pd, &rep);
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");

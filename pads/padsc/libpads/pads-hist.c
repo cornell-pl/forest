@@ -27,7 +27,7 @@ Perror_t Pfloat32_from   (Pfloat64 i, Pfloat32 *o)    { *o = (Pfloat32)i; return
 Perror_t Pfloat64_to     (Pfloat64 *i, Pfloat64 *o)   { *o = *i; return P_OK; }
 Perror_t Pfloat64_from   (Pfloat64 i, Pfloat64 *o)    { *o = i; return P_OK; }
 Perror_t Pchar_to        (Pchar *c, Pfloat64 *f)      { *f = (Pfloat64)((Puint8)(*c)); return P_OK; }
-Perror_t Pchar_from      (Pfloat64 f, Pchar *c)       { *c = (Pchar)((Puint8)f); return P_OK; }
+Perror_t Pchar_from      (Pfloat64 f, Pchar *c)       { *c = (Pchar)('a'); return P_OK; }
 Perror_t Pstring_to      (Pstring *s, Pfloat64 *f)    { *f = 0; return P_OK; }
 Perror_t Pstring_from    (Pfloat64 f, Pstring *s)     { s->str = "non defined."; s->len = 12; return P_OK; }
 Perror_t Pip_to          (Pip *i, Pfloat64 *f)        { *f = (Pfloat64)((Puint32)(*i)); return P_OK; }
@@ -55,9 +55,6 @@ static const char *PDCI_hdr_strings[] = {
 #define TYPE_HIST_GEN(type, fmt) \
 \
 Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
-  Pint32 i; \
-  Pint64 adj; \
-\
   /* Initialize */ \
   h->N = 14; \
   h->B = 2; \
@@ -69,47 +66,10 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   h->scale = 10000000; \
   h->toFloat = (P_toFloat_fn) type ## _to; \
   h->fromFloat = (P_fromFloat_fn) type ## _from; \
-  h->ind = 0; \
-  h->portion = 1; \
-  h->result = malloc(h->B * sizeof(struct bucket)); \
-  if (h->result == (struct bucket*)0) exit(-1); \
-  if (h->isE != 0) { \
-    /* Equally spaced */ \
-    h->partS = 0; \
-    h->bukI = 0; \
-    for (i = 0; i < h->B; i++) h->result[i].bound = ((Pint64)(h->N / h->B) + 1) * (i + 1) - 1; \
-    h->result[h->B - 1].bound = h->N; \
-  } \
-  else { \
-    if (h->isO != 0) { \
-      /* Optimal result required */ \
-      h->rob = malloc(h->N * sizeof(struct bucket)); \
-      if (h->rob == (struct bucket*)0) exit(-1); \
-      h->robI = 0; \
-    } \
-    else { \
-      /* Adjust dimension to be perfect power of 2. */ \
-      adj = (Pint64)((Pfloat64)log(h->N) / (Pfloat64)log(2)); \
-      if ((Pint64)pow(2, (Pfloat64)adj) != h->N) h->N = (Pint64)pow(2, (Pfloat64)adj + 1); \
-\
-      h->lNumber = (Pint8)((Pfloat64)log(h->N) / (Pfloat64)log(2));  \
-      h->leftS = malloc(h->lNumber * sizeof(Pfloat64)); \
-      h->rightS = malloc(h->lNumber * sizeof(Pfloat64)); \
-      if (h->leftS == (Pfloat64*)0 || h->rightS == (Pfloat64*)0) exit(-1); \
-      h->rSize = (Pint32)((Pfloat64)(h->B * ((Pfloat64)log(h->N) / (Pfloat64)log(2)) * ((Pfloat64)log(h->M) / (Pfloat64)log(2))) / h->e); \
-      h->top = malloc(2 * h->rSize * sizeof(struct wave)); \
-      if (h->top == (struct wave*)0) exit(-1); \
-      h->topI = 0; \
-      h->bound = malloc(3 * h->rSize * sizeof(struct bucket)); \
-      if (h->bound == (struct bucket*)0) exit(-1); \
-      h->boundI = 0; \
-      h->rob = malloc((3 * h->rSize + 1) * sizeof(struct bucket)); \
-      if (h->rob == (struct bucket*)0) exit(-1); \
-      h->rob[0].bound = 0; \
-      h->rob[0].hei = 0; \
-      h->robI = 1; \
-    } \
-  } \
+  h->prefix = ""; \
+  h->what = ""; \
+  h->nst = 0; \
+  allocateS(h); \
   return P_OK; \
 } \
 \
@@ -125,12 +85,16 @@ Perror_t type ## _hist_setPara (P_t *pads, type ## _hist *h, P_hist* d_hist) { \
   h->n = d_hist->n; \
   h->e = d_hist->e; \
   h->scale = d_hist->scale; \
+  h->prefix = d_hist->prefix; \
+  h->what = d_hist->what; \
+  h->nst = d_hist->nst; \
+  type ## _hist_cleanup(pads, h); \
+  allocateS(h); \
   return P_OK; \
 } \
 \
 Perror_t type ## _hist_reset (P_t *pads, type ## _hist *h) { \
   h->ind = 0; \
-  h->portion++; \
   if (h->isE != 0) { \
     /* Equally spaced */ \
     h->partS = 0; \
@@ -182,7 +146,8 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
       compOpt(h); \
     } \
     else EqualHis(h, d); \
-    return P_ERR; \
+    type ## _hist_report(pads, h->prefix, h->what, h->nst, h); \
+    type ## _hist_reset(pads, h); \
   } \
   return res; \
 } \
@@ -191,23 +156,22 @@ Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix,
   Perror_t res; \
   Pint64 i; \
   Pint64 tempInd; \
+  Pint64 tempN = h->N; \
 \
+  if (h->ind == 0) return P_OK; \
   if (!prefix || *prefix == 0) prefix = "<top>"; \
   what = fmt; \
   PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
-  if (h->portion == 1) { \
-    /* Print header */ \
-    sfprintf(outstr, "Basic Information:\n"); \
-    sfprintf(outstr, "Portion length: %d;    ", h->N); \
-    sfprintf(outstr, "Number of buckets: %d \n", h->B); \
-    if (h->isE != 0) sfprintf(outstr, "Equal width buckets required. \n"); \
-    else{ \
-      if (h->isO != 0) sfprintf(outstr, "Optimal histogram required, with norm %d \n", h->n); \
-      else sfprintf(outstr, "Histogram within poly-(1+%f) times error \n", h->e); \
-    } \
+  /* Print header */ \
+  sfprintf(outstr, "Basic Information:\n"); \
+  sfprintf(outstr, "Portion length: %d;    ", h->N); \
+  sfprintf(outstr, "Number of buckets: %d \n", h->B); \
+  if (h->isE != 0) sfprintf(outstr, "Equal width buckets required. \n"); \
+  else{ \
+    if (h->isO != 0) sfprintf(outstr, "Optimal histogram required, with norm %d \n", h->n); \
+    else sfprintf(outstr, "Histogram within poly-(1+%f) times error \n", h->e); \
   } \
   res = P_OK; \
-  if (h->ind == 0) return res; \
   if (h->ind != h->N) { \
     /* Real data is less than the estimated dimension */ \
     if (h->isE != 0) { \
@@ -235,6 +199,7 @@ Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix,
     } \
   } \
   res = type ## _report (outstr, h); \
+  h->N = tempN; \
   return res; \
 } \
 \
@@ -265,13 +230,101 @@ TYPE_HIST_GEN (Ptime, "time");
 TYPE_HIST_GEN (Pdate, "date");
 
 /* BEGIN_MACRO */
+#define MAP_REPORT_GEN(int_type) \
+Perror_t int_type ## _hist_map_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _hist *h) { \
+  Perror_t res = P_OK; \
+  Pint64 i; \
+  Pint64 tempInd; \
+  Pint64 tempN = h->N; \
+\
+  if (h->ind == 0 || h->result[0].bound < 1) return P_OK; \
+  if (!prefix || *prefix == 0) prefix = "<top>"; \
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
+  /* Print header */ \
+  sfprintf(outstr, "Basic Information:\n"); \
+  sfprintf(outstr, "Portion length: %d;    ", h->N); \
+  sfprintf(outstr, "Number of buckets: %d \n", h->B); \
+  if (h->isE != 0) sfprintf(outstr, "Equal width buckets required. \n"); \
+  else{ \
+    if (h->isO != 0) sfprintf(outstr, "Optimal histogram required, with norm %d \n", h->n); \
+    else sfprintf(outstr, "Histogram within poly-(1+%f) times error \n", h->e); \
+  } \
+  if (h->ind != h->N) { \
+    /* Real data is less than the estimated dimension */ \
+    if (h->isE != 0) { \
+      h->result[h->bukI].hei = h->partS; \
+      h->result[h->bukI].bound = h->ind; \
+      h->bukI++; \
+    } \
+    else { \
+      if (h->isO == 1) { \
+	h->robI = h->ind; \
+	h->N = h->ind; \
+	if (h->B > h->robI) h->B = h->robI; \
+	compOpt(h); \
+      } \
+      else { \
+	tempInd = h->ind; \
+	for (i = tempInd; i < h->N; i++) { \
+	  res = NearOptHis(h, 0); \
+          h->ind++; \
+        } \
+	buildRob(h); \
+	h->ind = tempInd; \
+	compOpt(h); \
+      } \
+    } \
+  } \
+  res = int_type ## _map_report (outstr, fn, h); \
+  h->N = tempN; \
+  return res; \
+}
+/* END_MACRO */
+
+MAP_REPORT_GEN (Pint8);
+MAP_REPORT_GEN (Pint16);
+MAP_REPORT_GEN (Pint32);
+MAP_REPORT_GEN (Pint64);
+MAP_REPORT_GEN (Puint8);
+MAP_REPORT_GEN (Puint16);
+MAP_REPORT_GEN (Puint32);
+MAP_REPORT_GEN (Puint64);
+
+/* BEGIN_MACRO */
+#define INT_TYPE_MAP_GEN(int_type) \
+Perror_t int_type ## _map_report (Sfio_t *outstr, int_type ## _map_fn fn, int_type ## _hist *h) { \
+  Perror_t res = P_OK; \
+  Pint64 i; \
+  int_type obj; \
+\
+  for (i = 0; i < h->bukI; i++) { \
+    if (i == 0) sfprintf(outstr, "From %d to ", 0); \
+    else sfprintf(outstr, "From %d to ", h->result[i-1].bound); \
+    sfprintf(outstr, "%d, with height ", h->result[i].bound - 1); \
+    res = (*(int_type ## _fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj); \
+    sfprintf(outstr, "%s \n", (*fn)(obj)); \
+  } \
+  sfprintf(outstr, "%s", PDCI_hdr_strings[2]); \
+  return res; \
+}
+/* END_MACRO */
+
+INT_TYPE_MAP_GEN (Pint8);
+INT_TYPE_MAP_GEN (Pint16);
+INT_TYPE_MAP_GEN (Pint32);
+INT_TYPE_MAP_GEN (Pint64);
+INT_TYPE_MAP_GEN (Puint8);
+INT_TYPE_MAP_GEN (Puint16);
+INT_TYPE_MAP_GEN (Puint32);
+INT_TYPE_MAP_GEN (Puint64);
+
+/* BEGIN_MACRO */
 #define BASIC_REPORT_GEN(type, fmt) \
 Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
   Perror_t res = P_OK; \
   Pint64 i; \
   type obj; \
 \
-  sfprintf(outstr, "Portion %d: \n", h->portion); \
   if (h->isE == 0) h->bukI = h->B; \
   for (i = 0; i < h->bukI; i++) { \
     if (i == 0) sfprintf(outstr, "From %d to ", 0); \
@@ -303,7 +356,6 @@ Perror_t Pip_report (Sfio_t *outstr, Pip_hist *h) {
   Pint64 i;
   Pip obj;
 
-  sfprintf(outstr, "Portion %d: \n", h->portion);
   if (h->isE == 0) h->bukI = h->B;
   for (i = 0; i < h->bukI; i++) {
     if (i == 0) sfprintf(outstr, "From %d to ", 0);
@@ -323,7 +375,6 @@ Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
   Pint64 i; \
   type obj; \
 \
-  sfprintf(outstr, "Portion %d: \n", h->portion); \
   if (h->isE == 0) h->bukI = h->B; \
   for (i = 0; i < h->bukI; i++) { \
     if (i == 0) sfprintf(outstr, "From %d to ", 0); \
@@ -342,9 +393,55 @@ TIME_DATE_REPORT_GEN(Ptime);
 TIME_DATE_REPORT_GEN(Pdate);
 
 /* Functions defined for private use only */ 
+void allocateS(P_hist *h) {
+  Pint32 i;
+  Pint64 adj;
+
+  h->ind = 0;
+  h->result = malloc(h->B * sizeof(struct bucket));
+  if (h->result == (struct bucket*)0) exit(-1);
+  if (h->isE != 0) {
+    /* Equally spaced */
+    h->partS = 0;
+    h->bukI = 0;
+    for (i = 0; i < h->B; i++) h->result[i].bound = ((Pint64)(h->N / h->B) + 1) * (i + 1) - 1;
+    h->result[h->B - 1].bound = h->N;
+  }
+  else {
+    if (h->isO != 0) {
+      /* Optimal result required */
+      h->rob = malloc(h->N * sizeof(struct bucket));
+      if (h->rob == (struct bucket*)0) exit(-1);
+      h->robI = 0;
+    }
+    else {
+      /* Adjust dimension to be perfect power of 2. */
+      adj = (Pint64)((Pfloat64)log(h->N) / (Pfloat64)log(2));
+      if ((Pint64)pow(2, (Pfloat64)adj) != h->N) h->N = (Pint64)pow(2, (Pfloat64)adj + 1);
+
+      h->lNumber = (Pint8)((Pfloat64)log(h->N) / (Pfloat64)log(2));
+      h->leftS = malloc(h->lNumber * sizeof(Pfloat64));
+      h->rightS = malloc(h->lNumber * sizeof(Pfloat64));
+      if (h->leftS == (Pfloat64*)0 || h->rightS == (Pfloat64*)0) exit(-1);
+      h->rSize = (Pint32)((Pfloat64)(h->B * ((Pfloat64)log(h->N) / (Pfloat64)log(2)) * ((Pfloat64)log(h->M) / (Pfloat64)log(2))) / h->e);
+      h->top = malloc(2 * h->rSize * sizeof(struct wave));
+      if (h->top == (struct wave*)0) exit(-1);
+      h->topI = 0;
+      h->bound = malloc(3 * h->rSize * sizeof(struct bucket));
+      if (h->bound == (struct bucket*)0) exit(-1);
+      h->boundI = 0;
+      h->rob = malloc((3 * h->rSize + 1) * sizeof(struct bucket));
+      if (h->rob == (struct bucket*)0) exit(-1);
+      h->rob[0].bound = 0;
+      h->rob[0].hei = 0;
+      h->robI = 1;
+    }
+  }
+}
+
 Perror_t EqualHis(P_hist *h, Pfloat64 d) { 
   Pint64 i;
-
+  if (h->ind == 0) h->bukI = 0;
   if (h->ind == h->result[h->bukI].bound || h->ind == h->N) {
     /* Reach a boundary, height computed, end point recorded */
     h->result[h->bukI].hei = h->partS;
@@ -546,9 +643,27 @@ struct dpCell OptHei(P_hist *h, Pint64 s, Pint64 e) {
 
   /* Compute the error */
   err = 0;
-  for (i = s; i < e; i++) err += (h->rob[i+1].bound - h->rob[i].bound) * pow(h->rob[i].hei - hei, 2);
-  if (e == h->robI - 1)	err += (h->N - h->rob[e].bound) * pow(h->rob[e].hei - hei, 2);
-  else 	err += (h->rob[e+1].bound - h->rob[e].bound) * pow(h->rob[e].hei - hei, 2);
+  for (i = s; i < e; i++) {
+    if ((Pfloat64)log(h->rob[i+1].bound) + 2 * (Pfloat64)log(fabs(h->rob[i].hei)) > 60 * (Pfloat64)log(2)) {
+      printf("*** Overflow Error: Try increase parameter SCALE *** \n");
+      exit(-1);
+    }
+    err += (h->rob[i+1].bound - h->rob[i].bound) * pow(h->rob[i].hei - hei, 2);
+  }
+  if (e == h->robI - 1)	{
+    if ((Pfloat64)log(h->N) + 2 * (Pfloat64)log(fabs(h->rob[e].hei)) > 60 * (Pfloat64)log(2)) {
+      printf("*** Overflow Error: Try increase parameter SCALE *** \n");
+      exit(-1);
+    }
+    err += (h->N - h->rob[e].bound) * pow(h->rob[e].hei - hei, 2);
+  }
+  else {
+    if ((Pfloat64)log(h->rob[e+1].bound) + 2 * (Pfloat64)log(fabs(h->rob[e].hei)) > 60 * (Pfloat64)log(2)) {
+      printf("\n *** Overflow Error: Try increase parameter SCALE *** \n");
+      exit(-1);
+    }
+    err += (h->rob[e+1].bound - h->rob[e].bound) * pow(h->rob[e].hei - hei, 2);
+  }
 
   temp_dp.error = err;
   temp_dp.hei = hei;
