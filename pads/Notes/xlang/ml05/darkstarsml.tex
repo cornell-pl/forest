@@ -6,7 +6,7 @@ type 'a pnvp(c : Pstring -> bool) =
         '=';
         val : 'a \}
 type 'a nvp(name:string) = 'a pnvp(fun c(s:string):bool = (s = name))
-type nsp_s(name:string) = Pstring(";|") nvp(name)
+type nsp(name:string) = Pstring(";|") nvp(name)
 type nsp_a = Pstring(";|") pnvp(fun c(s:string):bool = true)
 \mbox{}
 type details = \{

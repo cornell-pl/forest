@@ -1,40 +1,69 @@
 {\small
+\begin{bnf}
+\name{Constants} \meta{k} \::= \mcd{true} \| \mcd{false} \| \mcd{()} \| ...
+\\
+\name{Parse Types} \meta{T} \::= 
+  \alpha(M) \| {Pbase} \| M \| \mcd{PD} \nlalt
+  \ppair x {T_1} {T_2} \| \{\nont{fts}\} \| d(M) \nlalt
+  \pset x T M \nlalt
+  \parray T {M_{sep}} {M_{term}} \| \pstream T
+\\
+\name{Datatypes} \meta{D} \::= 
+  \mcd{datatype}\; \nont{tps}\; d(x{:}F) = \nont{DTBody} \nlalt
+  \mcd{type}\; \nont{tps}\; \alpha(x{:}F) = T
+\\
+\name{Type Parameters} \meta{tps} \::= \cdot \| \alpha \; \nont{tps}
+\\
+\name{DTBody} \meta{} \::= \nont{DS} \| \mcd{case}\; M \mcd{of}\; \nont{TS}
+\\
+\name{} \meta{DS} \::= c\;\mcd{of}\;T \| c\;\mcd{of}\;T\;\mcd{|}\;\nont{DS}
+\\
+\name{} \meta{TS} \::= 
+  \nont{pat} \Rightarrow c\;\mcd{of}\;T \nlalt
+  \nont{pat} \Rightarrow c\;\mcd{of}\;T\;\mcd{|}\;\nont{TS}
+\\
+\name{Field Types} \meta{fts} \::= \nont{ft} \| \nont{ft};\;\nont{fts}
+\\
+\name{Field Type} \meta{ft} \::= T \| x = T
+\end{bnf}
+
+
+% constants k ::= true | false | () |  ...
+
+
+% Parsing Types
+% ======================
+
+% T ::=  \alpha(M)
+%      | Pbase                  // base type
+%      | d(M)                   // parameterized data type; M is parameter
+%      | M                      // singleton type.  eg: " " for literal space
+%      | x:T1 ** T2             // dependent pair
+%      | {FieldTys}             // dep. record
+%      | PD                     // parser descriptor type
+%      | T Parray(Msep, Mterm)  // array types
+%      | T stream               // stream type; underlying rep for arrays
+%      | {x:T | M}              // constrained type; ie: Pwhere
+
+
+% D ::= datatype TyParams d(x:F) = DTBody
+%    |  type TyParams \alpha(x:F) = T
+
+% TyParams ::= . | \alpha typarams
+
+% DTBody ::= DS | case M of TS
+
+% DS ::= c of T
+%      | (c of T | DS)
+
+% TS ::= pat => c of T
+%    |   (pat => c of T | TS)
+
+% Fieldtys ::= fieldty | fieldty ; fieldtys
+
+% Fieldty ::= T | x = T
+
 \begin{verbatim}
-constants k ::= true | false | () |  ...
-
-
-Parsing Types
-======================
-
-T ::=  \alpha(M)
-     | Pbase                  // base type
-     | d(M)                   // parameterized data type; e is perimeter
-     | M                      // singleton type.  eg: " " for literal space
-     | x:T1 ** T2             // dependent pair
-     | {fieldtys}             // dep. record
-     | PD                     // parser descriptor type
-     | T Parray(Msep, Mterm)  // array types
-     | T stream               // stream type; underlying rep for arrays
-     | {x:T | M}              // constrained type; ie: Pwhere
-
-
-D ::= datatype typarams d(x:F) = DTBody
-   |  type typarams \alpha(x:F) = T
-
-typarams ::= . | \alpha typarams
-
-DTBody ::= DS | case M of TS
-
-DS ::= c of T
-     | (c of T | DS)
-
-TS ::= pat => c of T
-   |   (pat => c of T | TS)
-
-fieldtys ::= fieldty | fieldty ; fieldtys
-
-fieldty ::= T | x = T
-
 Transform Types
 ========================
 
@@ -44,3 +73,8 @@ F ::= T          // type of parsed value
    | F * F       // ordinary pairs
 \end{verbatim}
 }
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 

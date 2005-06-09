@@ -49,7 +49,7 @@
 \newcommand{\pdsem}{{\tt S}}
 \newcommand{\ptypes}{T}
 \newcommand{\patreadpd}[2]{{\tt <<#1,#2>>}}
-\newcommand{\bottom}{\cd{BOT}}
+\newcommand{\btm}{\cd{BOT}}
 
 
 \newcommand{\lsem}{{[\![}}
@@ -63,3 +63,30 @@
 	\label{#3}
 	\end{figure}}
 
+%% Environment for typesetting BNF grammars. Uses display math mode.
+\newenvironment{bnf}
+     {%% local command definitions:
+        %% BNF definition symbol
+      \def\->{\rightarrow}
+%%      \def\::={{::=} &}
+      \def\::={\bnfdef &}
+      \def\|{\bnfalt}
+      \newcommand{\name}[1]{\text{##1}}
+        %% non-terminal
+      \newcommand{\nont}[1]{{##1}}
+      \newcommand{\meta}[1]{& ##1 &}
+      \newcommand{\descr}[1]{& \text{// ##1}}
+      \newcommand{\opt}[1]{ [##1] }
+      \newcommand{\opnon}[1]{\opt{\nont{##1}}}
+      \newcommand{\none}{\epsilon}
+      \newcommand{\nwln}{\\ &&&}
+      \newcommand{\nlalt}{\\ && \| &}
+      \[\begin{array}{lrcll}
+     }
+     {\end{array}\]}
+
+\newcommand{\mcd}[1]{\mathtt{#1}}
+\newcommand{\ppair}[3]{#1{:}#2 \mathrel{**} #3}
+\newcommand{\parray}[3]{#1\;\mcd{Parray}(#2,#3)}
+\newcommand{\pset}[3]{\{#1{:}#2\,|\,#3\}}
+\newcommand{\pstream}[1]{#1\;\mcd{stream}}
