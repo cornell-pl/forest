@@ -105,19 +105,39 @@ if (length($cc) == 0) {
   $cc = "" if ($cc =~ /not/);
 }
 if (length($cc) == 0) {
-  print "\n** No environment variable CC, and no gcc or cc in your path.\n** Please fix and re-run make.\n\n";
+  print "\n** No environment variable CC, and no gcc or cc in your path.\n";
   exit -1;
 }
 
 my $sml;
+my $sml_from = "environment variable SML";
 chomp($sml = $ENV{'SML'});
 if (length($sml) == 0) {
   chomp($sml = `type sml 2>/dev/null`);
-  $sml =~ s/sml is//;
+  $sml =~ s/sml is[ ]?//;
   $sml = "" if ($sml =~ /not/);
+  $sml_from = "your path";
 }
 if (length($sml) == 0) {
-  print "\n** No environment variable SML, and no sml in your path.\n** Please fix and re-run make.\n\n";
+  print "\n** No environment variable SML, and no sml in your path.\n";
+  exit -1;
+}
+my $sml_resolved;
+chomp($sml_resolved = `readlink -f $sml 2>/dev/null`);
+if ($sml_resolved eq "") {
+  $sml_resolved = $sml;
+}
+if (! (-x $sml_resolved)) {
+  print "\n** sml program '$sml' (from $sml_from)"
+    . "\n   does not appear to be an executable.\n";
+  exit -1;
+}
+my $smltest;
+chomp($smltest = `$sml \@SMLversion 2>&1`);
+if ($smltest !~ /^sml \d+[.]\d+$/) {
+  print "\n** sml program '$sml' (from $sml_from)"
+    . "\n   does not appear to be an sml interpreter --"
+    . "\n   it is failing the simple test '$sml \@SMLversion'\n";
   exit -1;
 }
 
@@ -199,7 +219,7 @@ if ($help) {
       print "\nWarning: expected dir $ocaml_lib_dir not found, check your OCAML_LIB_DIR env var setting\n";
       print "   (you are likely to get errors due to missing .h files below)\n\n";
     }
-    
+
     my $galax_home = $ENV{"GALAX_HOME"};
     if ($galax_home eq "") {
       print "\nWarning: env variable GALAX_HOME should be set when using the -x option\n";
