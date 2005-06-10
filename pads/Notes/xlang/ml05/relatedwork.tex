@@ -1,0 +1,62 @@
+\section{Related Work}
+\label{sec:related-work}
+
+Given the importance of ad hoc data, it is perhaps surprising that
+more tools do not exist to solve it.  Many, many tools simply assumes
+that the data they manipulate is in the right format from the
+beginning.  If it is not, it is up to the user to get the data in the
+correct format themselves --- he or she receives little or no help
+with the problem. For instance, \xml{} and relational databases expect
+their inputs are already in \xml{} or standard formats such as CSV
+(Comma-Separated Values).  The development of \datatype{} is
+completely complementary to research on relational and semi-structured
+databases as \datatype will be explicitly designed to help with the
+problem of loading one of these databases with data that is not
+currently in the expected format.
+
+One might wonder why we do not choose to use tools based on regular
+expressions or context-free grammars like Lex and Yacc.  First,
+regular expressions and context-free grammars, while excellent
+formalisms for describing programming language syntax, are not ideal
+for describing the sort of ad hoc data we have discussed in this
+proposal.  The main reason for this is that regular expressions and
+context free grammars do not support dependency and do not support
+deep semantic constraints that are important for ensuring data
+integrity.  For instance, many ad hoc data sources we have studied
+include ...
+
+ASN.1~\cite{asn} and related systems~\cite{asdl} allow the user to
+specify the {\em logical} in-memory representation and generate a {\em
+  physical} on-disk format, but this doesn't help when given a
+particular, fixed physical on-disk format.  \datatype{} helps solve
+the latter problem.
+
+More closely related work includes \erlang{}'s bit
+syntax~\cite{erlang} and the \packettypes{}~\cite{sigcomm00} and
+\datascript{} languages~\cite{gpce02}, all of which allow declarative
+descriptions of physical data.  These projects were motivated by
+parsing protocols, \textsc{TCP/IP} packets, and \java{} jar-files,
+respectively.  Like \pads{}, these languages have a type-directed
+approach to describing ad hoc data and permit the user to define
+semantic constraints.  In contrast to our work, these systems handle
+only binary data and assume the data is error-free or halt parsing if
+an error is detected.  Parsing non-binary data poses additional
+challenges because of the need to handle delimiter values and to
+express richer termination conditions on sequences of data. These
+systems also focus exclusively on the parsing/printing problem,
+whereas we have leveraged the declarative nature of our data
+descriptions to build additional useful tools.
+
+Recently, a standardization effort has been started whose stated goals
+are quite similar to those of the \pads{} project~\cite{dfdl}. The
+description language seems to be \xml{} based, but at the moment, more
+details are not available.
+
+xduce - very similar, but for xml. Focus on static validation, not on
+transformation. However, their language design of DSL pattern matching
+and data constructors is parallel. no notion of error support.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
