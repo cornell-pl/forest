@@ -6,16 +6,16 @@
 An {\em ad hoc data format} is any non-standard data format for which
 parsing, querying, analysis, or transformation tools are not readily
 available.  Despite the increasing use of standard data formats such
-as \xml{}, ad hoc data sources continue to arise in countless
+as \xml{}, ad hoc data sources continue to arise in numerous
 industries such as finance, health care, transportation, and
 telecommunications as well as in scientific domains, such as
 computational biology and chemistry.  The absence of tools for
 processing ad hoc data formats complicates the daily data-management
-tasks of IT professionals, who typically must cope with numerous ad
+tasks of IT professionals, who may have to cope with numerous ad
 hoc formats even within a single application.  
 
 Common characteristics of ad hoc data complicate even basic tasks,
-such as loading such data into a database system.  Documentation is
+such as loading ad hoc data into a database system.  Documentation is
 often incomplete or inaccurate, and the data itself may contain
 syntactic and semantic errors.  Before the data can be processed
 reliably by an application, errors must be identified, filtered out,
@@ -38,8 +38,8 @@ and \xml{} formats, but there is just as much in ad hoc formats.}
 
 The variety of application domains, format characteristics, and
 sources of errors make working with ad hoc data challenging.
-\figref{figure:data-sources} describes several ad hoc sources from the
-networking and telecommunications domain at AT\&T and from
+\figref{figure:data-sources} summarizes several ad hoc sources from the
+networking and telecommunication domains at AT\&T and from
 computational biology applications at Princeton.  Formats include
 ASCII, binary, and Cobol, with both fixed and variable-width records
 arranged in linear sequences and in tree-shaped or DAG-shaped
@@ -87,25 +87,24 @@ Immune system response simulation & in tree-shaped hierarchy
 %% WHY IS PROCESSING IT HARD?
 %% No control of source or target format
 
-In addition to poor documentation and error-prone data records, other
-common characteristics of ad hoc data make basic processing
-tasks challenging.  For example, a data analyst cannot control the format of the
-ad hoc data at its source nor at its final destination, for example,
-in a database.  The data arrives ``as is'', and the analyst who
-receives it can only thank the supplier, not request a more convenient
-format.  Once an analyst has the data, a common task is converting the
-source format to a standard database loading format.  This
-transformation proceeds in three stages.  First, the analyst writes a
-parser for the ad hoc format, using whatever (in)accurate
-documentation may be available.  Second, he writes a program that
-parses the data and then detects, corrects or deletes erroneous data
-records, selects interesting records, and possibly normalizes records
-into a standard format, for example, by reordering, removing, or
-transforming fields.  Unfortunately, the parsing and transformation
-code are often tightly interleaved.  This interleaving hides within a
-particular transformation program the knowledge of the ad hoc format
-obtained by an analyst and severely limits the parser's reuse in other
-applications.
+In addition to poor documentation and error-prone data sources, other
+common characteristics of ad hoc data make basic processing tasks
+challenging.  For example, a data analyst cannot control the format of
+the ad hoc data at its source nor at its final destination, for
+example, in a database.  The data arrives ``as is'', and the analyst
+who receives it can only thank the supplier, not request a more
+convenient format.  Once an analyst has the data, a common task is
+converting the source format to a standard database loading format.
+This transformation proceeds in three stages.  First, the analyst
+writes a parser for the ad hoc format, using whatever (in)accurate
+documentation may be available.  Second, he writes a program that that
+detects, corrects or deletes erroneous data records, selects records
+of interest, and possibly normalizes records into a standard format,
+for example, by reordering, removing, or transforming fields.
+Unfortunately, the parsing, error handling, and transformation code is
+often tightly interleaved.  This interleaving hides the knowledge of
+the ad hoc format obtained by an analyst and severely limits the
+parser's reuse in other applications.
 
 \cut{A common phenomenon is for a
 field in a data source to fall into disuse.  After a while, a new
@@ -115,33 +114,40 @@ instead they hijack the unused field, often failing to update the
 documentation in the process.}
 
 %% Sources, meaning, and handling of errors
-
-Third, such data frequently contain errors for a variety of reasons:
-malfunctioning equipment, race conditions on log entry~\cite{wpp},
-non-standard values to indicate ``no data available,'' human error in
-entering data, unexpected data values, \etc{} The appropriate response
-to such errors depends on the application.  Some applications require
-the data to be error free: if an error is detected, processing needs
-to stop immediately and a human must be alerted.  Other applications
-can repair the data, while still others either set data aside for a
-human user to investigate or simply discard the erroneous or
-unexpected values altogether.  For some applications, errors in the
-data can be the most interesting part because they can signal where
-two systems are failing to communicate.
+Another challenge in processing ad hoc data is handling the variety of
+error kinds and the variety of application-dependent strategies for
+handling errors.  Some of the sources of errors that we have
+encountered in ad hoc sources include malfunctioning equipment, race
+conditions on log entry~\cite{wpp}, presence of non-standard values to
+indicate ``no data available,'' human error when entering data, and
+unexpected data values.  A wide range of responses are possible when errors
+are detected, and they are highly application dependent.  Example
+responses include haulting processing and altering a human operator, to
+partitioning error from error-free records for examination off-line, to
+simply discarding erroneous or unexpected values.  One of the most
+challenging aspects of processing ad hoc data is that erroneous data
+is often more important than error-free data, because it may indicate,
+for example, that two systems are failing to communicate.  Writing
+code that is reliably \emph{error aware}, however, is difficult and
+tedious.
 
 %% High-volume
-A fourth challenge is that ad hoc data sources can be high volume:
-AT\&T's call-detail stream contains roughly 300~million calls per day
-requiring approximately 7GBs of storage space. Although this data is
-eventually archived in a database, analysts mine it profitably before
-such archiving~\cite{kdd98,kdd99}. More challenging, the \ningaui{}
-project at AT\&T accumulates billing data at a rate of 250-300GB/day,
-with occasional spurts of 750GBs/day. Netflow data arrives from Cisco
-routers at rates over a Gigabit per second~\cite{gigascope}! Such
-volumes mean it must be possible to process the data without loading
-it all into memory at once.
+Another challenge is efficient, error-aware processing of 
+data sources that are high volume.  AT\&T's call-detail stream contains roughly 300~million
+calls per day requiring approximately 7GBs of storage space.  Although
+this data is eventually archived in a database, analysts mine it
+profitably before such archiving~\cite{kdd98,kdd99}.  More
+challenging, the \ningaui{} project at AT\&T accumulates billing data
+at a rate of 250-300GB/day, with occasional spurts of 750GBs/day.
+Netflow data arrives from Cisco routers at rates over a Gigabit per
+second~\cite{gigascope}!  Such volumes require that the data be
+processed without loading it into memory all at once.  More
+importantly, flexible error-response strategies are necessary for
+high-volume sources, so that processing is not haulted or delayed when
+errors are detected.
 
 %% EXISTING SOLUTIONS
+
 Today, people tend to use \C{} or \perl{} for this task.
 Unfortunately, writing parsers, transformations and printers this way
 is tedious and error-prone, complicated by the lack of documentation,
@@ -217,6 +223,8 @@ intrinsic mechanisms for checking data invariants at run time {\em
   coming soon: and a sophisticated type system for enforcing data
   invariants at compile time}. 
 
+%% CONTRIBUTIONS
+
 At its core, \datatype{} is a functional language with standard
 features such as pattern matching and higher-order functions, which we
 view as critical to supporting data-driven transforms. In addition,
@@ -238,6 +246,26 @@ critical language features.
   being forced to drop all faulty records at the beginning of the process.
 \end{enumerate}
 
+\cut{Consequently, tools for
+ad hoc data should provide constructs that are \emph{error aware}.}
+
+Before we talked about two contributions:-- a universal data
+description language based on polymorphic, recursive anddependent data
+types-- the transformation languageThere might be a third:--
+collection and analysis a variety of different examples of ad hoc
+datafrom widely differing domains (networking to genomics).  The
+analysis of thedifferent sorts of ad hoc data is a substantial
+contribution.  It helps usunderstand what is required and what is not.
+
+\subsection{\datatype{} Architecture}
+
+\begin{figure}[tp]
+  \includegraphics[height=3in,width=5in]{architecture}
+%  \includegraphics{architecture.eps}
+\label{fig:pads-arch}
+\caption{The \pads{} Architecture}
+\end{figure}
+
 In the next section, we will describe, in detail, the \pads{} approach
 to data and meta data (inherited by \datatype{}), the \datatype{}
 syntax for data description, and illustrative examples. Next, in
@@ -249,22 +277,3 @@ implementation techiniques, and section~\ref{sec:related-work} the
 related work. A discussion of conclusions and future work is included
 in section~\ref{sec:conclusion}.
 
-%% CONTRIBUTIONS
-
-Before we talked about two contributions:-- a universal data
-description language based on polymorphic, recursive anddependent data
-types-- the transformation languageThere might be a third:--
-collection and analysis a variety of different examples of ad hoc
-datafrom widely differing domains (networking to genomics).  The
-analysis of thedifferent sorts of ad hoc data is a substantial
-contribution.  It helps usunderstand what is required and what is not.
-
-
-\subsection{Architecture}
-
-\begin{figure}[tp]
-  \includegraphics[height=3in,width=5in]{architecture}
-%  \includegraphics{architecture.eps}
-\label{fig:pads-arch}
-\caption{The \pads{} Architecture}
-\end{figure}
