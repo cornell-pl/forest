@@ -86,7 +86,7 @@ provisioning.  The sequence is sorted in order of increasing timestamps.
 \suppressfloats
 
 \begin{figure}
-\begin {code}
+\begin{code}
 \input{dibblerml}
 \end{code}
 \caption{\datatype{} description for \dibbler{} provisioning data.}
@@ -386,7 +386,7 @@ determine the branch of the datatype to chose
 based on the data about to be parsed, the decision is made based on
 the \cd{alarm\_code}, data which has likely been extracted from some previous
 point in the source.  More specifically, if the alarm code is
-\cd{5075}, the format specification given by the 
+\cd{5074}, the format specification given by the 
 \cd{Details} constructor will be used to parse
 the current data.  Otherwise, the format given by the \cd{Generic} constructor
 will be used to parse the current data.  
@@ -446,3 +446,8 @@ instead of throwing an exception or halting the parse as may be done
 in more conventional, ``data-only'' systems. Here, the parse
 descriptors play a critical role in the functioning of the system,
 beyond their otherwise ``passive,'' descriptive role.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 

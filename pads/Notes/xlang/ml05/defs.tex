@@ -36,8 +36,8 @@
 \newcommand{\packettypes}{\textsc{PacketTypes}}
 \newcommand{\erlang}{\textsc{Erlang}}
 
-\newcommand{\Core}{Ad hoc}
-\newcommand{\core}{ad hoc}
+\newcommand{\Core}{Fused}
+\newcommand{\core}{fused}
 \newcommand{\pvalue}{\core{} value}
 \newcommand{\ppat}{\core{} pattern}
 \newcommand{\ptype}{\core{} type}
@@ -80,8 +80,8 @@
       \def\|{\bnfalt}
       \newcommand{\name}[1]{\text{##1}}
         %% non-terminal
-      \newcommand{\nont}[1]{{##1}}
-      \newcommand{\meta}[1]{& ##1 &}
+      \newcommand{\nont}[1]{\mathit{##1}}
+      \newcommand{\meta}[1]{& {\mathit{##1}} &}
       \newcommand{\descr}[1]{& \text{// ##1}}
       \newcommand{\opt}[1]{ [##1] }
       \newcommand{\opnon}[1]{\opt{\nont{##1}}}
@@ -93,8 +93,11 @@
      {\end{array}\]}
 
 \newcommand{\mcd}[1]{\mathtt{#1}}
+%% code-font vertical bar
+\newcommand{\cvb}{\mathrel{\mbox{\tt|}}}
 \newcommand{\ppair}[3]{#1{:}#2 \mathrel{**} #3}
 \newcommand{\parray}[3]{#1\;\mcd{Parray}(#2,#3)}
-\newcommand{\pset}[3]{\{#1{:}#2\,|\,#3\}}
+\newcommand{\pset}[3]{\{#1{:}#2 \cvb #3\}}
 \newcommand{\pstream}[1]{#1\;\mcd{stream}}
 \newcommand{\precord}[1]{\{\{#1\}\}}
+\newcommand{\tfun}[5]{\mcd{fun}\;#1(#2{:}#3):#4 = #5}

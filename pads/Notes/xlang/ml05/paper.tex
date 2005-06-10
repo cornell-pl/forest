@@ -25,7 +25,17 @@
   \thanks[premail]{Email:\texttt{\normalshape
         yitzhakm,dpw {\it at} cs {\it dot} princeton {\it dot} edu}}
 \begin{abstract} 
-  Insert abstract here.
+  We present a language for describing and transforming ad hoc data,
+  that is, data in a non-standard format. The data descriptions are in
+  the form of types based closely on \ml{}-style types, including
+  parametric datatypes, type definitions, and records. They are used
+  by the compiler to generate parsing functions from the data source
+  to special internal language data structures, called \pvalue{}s.
+%   Furthermore, these data structures are combinations of
+%   parsed data and parse descriptors, which describe properties of the
+%   parsing process, including errors. 
+  The language provides new patterns and data constructors for 
+  transforming \pvalue{}s.
 \end{abstract}
 \begin{keyword}
   Please list keywords from your paper here, separated by commas.
@@ -40,8 +50,7 @@
 
 \input{implementation}
 
-\section{Related Work}
-\label{sec:related-work}
+\input{relatedwork}
 
 \section{Conclusions and Future Work}
 \label{sec:conclusion}

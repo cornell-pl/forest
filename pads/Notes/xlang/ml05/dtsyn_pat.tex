@@ -1,20 +1,35 @@
 {\small
-\begin{verbatim}
-MS ::= pat => M | (pat => M | MS)
-
-pat ::= x | k | nil
-       | Pbase(pat)
-       | <<pat, pdpat>>           // project pd
-       | (pat * pat)              // normal pair
-       | (pat ** pat)             // dep. pair
-       | {fieldpats}              // record
-       | {pat | setpat}           // set-type
-       | c(pat)                   // constructor
-       | pat1 :: pat2             // stream
-       | Parray(pat, xsep, xterm) // array with stream, sep and term.
-
-fieldpats ::= x = pat | x = pat; fieldpats
-setpat    ::= x | true | false
-pdpat     ::= x | pd
-\end{verbatim}
+\begin{bnf}
+\name{Parse Descriptors} \meta{pd} \::=   
+  G \| B \| N \| S \| U
+% \name{Parse Descriptors} \meta{pd} \::=   
+%          G    \descr{good}
+% \nlalt   B    \descr{bad}
+% \nlalt   N    \descr{nested error}
+% \nlalt   S    \descr{semantic error}
+% \nlalt   U    \descr{unknown}
+\\
+\name{Patterns}\meta{pat} \::= 
+   x \| k \| \mcd{nil}
+\nlalt \nont{Pbase}(\nont{pat})
+\nlalt \nont{pat}\langle\langle\nont{pdpat}\rangle\rangle \descr{project pd}
+\nlalt (\nont{pat} * \nont{pat})              \descr{normal pair}
+\nlalt (\nont{pat} \mathrel{**} \nont{pat})             \descr{dep. pair}
+\nlalt \{\nont{fpat}\}              \descr{record}
+\nlalt \{\nont{pat} \cvb \nont{spat}\}           \descr{set-type}
+\nlalt c(\nont{pat})                   \descr{constructor}
+\nlalt \nont{pat}_1 \mathrel{::} \nont{pat}_2             \descr{stream}
+\nlalt \mcd{Parray}(\nont{pat}, x_{sep}, x_{term}) \descr{array with stream, sep and term.}
+\\
+\name{Field Pattern} \meta{fpat} \::= x = \nont{pat} \| x = \nont{pat};\;\nont{fpat}
+\\
+\name{Set-type Pattern} \meta{spat} \::= x \| \mcd{true} \| \mcd{false}
+\\
+\name{PD Pattern} \meta{pdpat}\::= x \| \nont{pd}
+\end{bnf}
 }
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 

@@ -1,37 +1,45 @@
 {\small
-\begin{verbatim}
-N ::=  Pbase[M1](M2)            // base type constructor; M1 is
-                                   an argument to the type; M2 computes the rep)
-     | c[M](M)                  // data type constructor with parameter M
-     | (x:M1 ** M2)             // pair
-     | {{fields}}               // record
-     | {x = M1 | M2}            // set-type; M2 is the predicate
-     | Parray(M, Msep, Mterm)   // array; first element is stream
-
-fields ::= x = M | x = M; fields
-
-M ::=  x                        // variable
-     | N                        // \core terms
-     | k                        // constants
-     | let x = M in M           // computation in host language
-     | <M>                      // unit value given singleton type M
-     | (M1 * M2)                // ordinary pair
-     | {fields}                 // ordinary record
-     | nil                      // empty stream
-     | M1 :: M2                 // cons
-     | case M of MS             // deconstructors
-     | fun x1(x2:F1):F2 = M     // recursive function x1 with arg x2
-     | M1 (M2)                  // function application
-     | cast (M : T)             // type annot/dependent cast?
-     | op M                     // additional uninteresting operations
-     
-pd ::=   G    // good
-     |   B    // bad
-     |   N    // nested error
-     |   S    // semantic error
-     |   U    // unknown
-\end{verbatim}
+\begin{bnf}
+\name{Types} \meta{F} \::= 
+  T           \descr{type of \pvalue{}} 
+\nlalt \nont{base} \descr{values of ordinary base types} 
+\nlalt F * F       \descr{ordinary pairs} 
+\nlalt \{\nont{fts}\}     \descr{ordinary records} 
+\nlalt F \-> F     \descr{functions}
+\\
+\name{Field Types} \meta{fts} \::= x = F \| x=F,\;\nont{fts}
+\\
+\name{\Core{} Terms} \meta{N} \::=  
+       Pbase[M_1](M_2)            \descr{base type constructor}
+\nlalt c[M_1](M_2)                  \descr{data type constructor}
+\nlalt (x{=}{M_1} \mathrel{**} {M_2}) \descr{pair}
+\nlalt \{\{\nont{fs}\}\}        \descr{record}
+\nlalt \{x = {M_1} \cvb {M_2}\} \descr{set-type; $M_2$ is the predicate}
+\nlalt Parray(M, M_{sep}, M_{term})   \descr{array; first element is stream}
+\\
+\name{Terms} \meta{M} \::= 
+       x                        \descr{variable}
+\nlalt N                        \descr{\core{} terms}
+\nlalt k                        \descr{constants}
+\nlalt \mcd{let}\;x = M_1\;\mcd{in}\;M_2           \descr{computation in host language}
+\nlalt \langle M \rangle        \descr{unit value given singleton type M}
+\nlalt (M_1 * M_2)              \descr{ordinary pair}
+\nlalt \{\nont{fs}\}        \descr{ordinary record}
+\nlalt \mcd{nil}                \descr{empty stream}
+\nlalt M_1 \mathrel{::} M_2     \descr{cons}
+\nlalt \mcd{case}\;M\;\mcd{of}\;\nont{ms} \descr{deconstructors}
+\nlalt \tfun {x_1}{x_2}{F_1}{F_2}{M}     \descr{recursive function x1 with arg x2}
+\nlalt M_1\;(M_2)               \descr{function application}
+\nlalt \mcd{cast}\;(M : T)             \descr{type annot/dependent cast?}
+\nlalt \mcd{op}\;M                     \descr{additional uninteresting operations}
+\\
+\name{Fields} \meta{fs} \::= x = M \| x = M; \nont{fs}
+\\
+\name{Matches}\meta{ms} \::= 
+  \nont{pat} \Rightarrow M \| \nont{pat} \Rightarrow M \cvb \nont{ms}
+\end{bnf}
 }
+
 
 %%% Local Variables: 
 %%% mode: latex
