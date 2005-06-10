@@ -1,12 +1,12 @@
-- Add U to pd values.
-- Change list to stream.
-- Add base patterns.
-- Add set type pattern {pat1 | pat2} with pat2 matching a bool.
-- Add set type constructors {x=M | M'}.
+x Add U to pd values.
+x Change list to stream.
+x Add base patterns.
+x Add set type pattern {pat1 | pat2} with pat2 matching a bool.
+x Add set type constructors {x=M | M'}.
 
-- add type params to t(M)
-- add pd constructors
-- add singleton constructors?
--make sure syntax charts are all in same order
-- finish related work
+x add type params to t(M)
+x add pd constructors
+x add singleton constructors?
+x make sure syntax charts are all in same order
+x finish related work
 - change "set type" to "type constraint" or "constrained type"
