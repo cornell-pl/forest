@@ -117,53 +117,48 @@ In the remainder of this section, we present our data transformation language th
   \centering
   \begin{code}
 
-  
-type d_alarm = \{
-       alarm    :  \{ alarm : Puint32 | alarm = 2 
-                                        orelse alarm = 3\};
+type header = \{
+       alarm : \{ alarm : Puint32 | alarm = 2 
+                                    orelse alarm = 3\};
  ':';  start :  date_time Popt;
  '|';  clear :  date_time Popt;
  '|';  code: Puint32;
  '|';  src_dns  :  nsp("dns1");
  ';';  dest_dns :  nsp("dns2");
- '|';  details  : details;
- '|';  service  :  service;
+ '|';  service  : service
 \}
+  \mbox{}
+type d_alarm = \{
+       header   : header;
+ '|';  details  : details;
+ \}
 \mbox{}
 type g_alarm = \{
-       alarm    :  \{ alarm : Puint32 | alarm = 2 
-                                        orelse alarm = 3\};
- ':';  start :  date_time Popt;
- '|';  clear :  date_time Popt;
- '|';  code: Puint32;
- '|';  src_dns  :  nsp("dns1");
- ';';  dest_dns :  nsp("dns2");
+       header   : header;
  '|';  generic  : nsp_a Parray(';', '|');
- '|';  service  :  service;
 \}
 \mbox{}
-fun splitAlarm (ra : raw_alarm): 
-    d_alarm opt * g_alarm opt
+fun splitAlarm (ra : raw_alarm): d_alarm opt * g_alarm opt
   = case ra of
-        \{alarm=a; start=s; clear=c; code=cd; 
-         src_dns=sd; dest_dns=dd; 
-         info=Details(d); service=s\} 
+        \{alarm=a; start=s; clear=c; code=cd; src_dns=sd; 
+         dest_dns=dd; info=Details(d); service=s\} 
         => 
-        (SOME \{alarm=a; start=s; clear=c; 
-               code=cd; src_dns=sd; dest_dns=dd; 
-               details=d; service=s\}, 
+        (SOME \{ header = \{alarm=a; start=s; clear=c; 
+                          code=cd; src_dns=sd; 
+                          dest_dns=dd; service=s\};
+                details = d\}, 
          NONE)
-      | \{alarm=a; start=s; clear=c; code=cd; 
-         src_dns=sd; dest_dns=dd; 
-         info=Generic(g); service=s\} 
+      | \{alarm=a; start=s; clear=c; code=cd; src_dns=sd; 
+         dest_dns=dd; info=Generic(g); service=s\} 
         => 
         (NONE,
-         SOME \{alarm=a; start=s; clear=c; 
-               code=cd; src_dns=sd; dest_dns=dd; 
-               generic=g; service=s\})    
+         SOME \{ header = \{alarm=a; start=s; clear=c; 
+                          code=cd; src_dns=sd; 
+                          dest_dns=dd; service=s\};
+                generic = g\})    
   \end{code}
+  \caption{Shredding \darkstar{} data based on the {\tt info} field.}
   \label{fig:ex-no-err-check}
-  \caption{Shredding \darkstar{} Data Based on the {\tt info} Field}
 \end{figure}
 
 \begin{figure}
@@ -180,130 +175,75 @@ fun normalizeTimeToGMT(t : time): Ptimestamp_FW(8) =
     | \{time=t;timezone="PST"\} => t + (8 * 60 * 60)
     | ...    
   \end{code}
-  \caption{Normalizing Timestamps}
+  \caption{Normalizing timestamps}
   \label{fig:ex-normalize}
 \end{figure}
-In this section, we illustrate the ``pay as you go'' nature of error handling in \datatype{}.  Despite the essential pairing of data and
-meta-data, programmers can choose exactly when and where in the
-transformation to attend to errors, or even to safely ignore them. The
-programmer can deconstruct data without examining the parse
-descriptor. That is, use of the pattern \patreadpd{pat}{pdpat} is not
-required. This feature allows structural manipulation of the data (see
-\darkstar{} example) without regard to errors. For example, the
-program in \figref{fig:ex-no-err-check} shreds the \darkstar{} data
-source into two, based on the \cd{info} field, without any reference
-to parse descriptors at all.
+In this section, we illustrate the ``pay as you go'' nature of error handling in \datatype{} using a transformation designed to prepare \darkstar{} data for loading into a relational database.  In particular, we shred the data into two different pieces based on the \cd{info} field.  
+The code in \figref{fig:ex-no-err-check} shows such a transformation
+(It also reorders the fields, putting the shared \texttt{service} field into the common \texttt{header}.)  Our syntax for record pattern matching resembles that of \sml{}.  Note however, that unlike \sml{}, the order of fields in \datatype{} records is significant (because we have to be able to serialize the data to an output stream in a canonical form eventually).  Note also that we omit the literal fields from \datatype{} record patterns for conciseness.
 
-However, such structural manipulation is not enough to fully shield
-the programmer from dealing with errors. When manipulating base
-values, there might be no structure to manipulate. If the parse failed
-for that value, the representation will be \btm{}, and no meaningful
-value can be extracted. Therefore, we have also designed our operators
-to be able to safely operate on \btm{}, by propogating it from inputs
-to output. For example, addition of one or more \btm{} values results
+This code fragment provides an example of our obliviousness principle.  Despite the fact that the argument \cd{ra} may contain errors, the transformation code did not need to examine the descriptor associated with \cd{ra} to perform the transformation.  Errors in the argument descriptor will simply be mapped into errors in the result descriptors automatically.
+
+Two features of the language enable this obliviousness: first, the fact that programmers can deconstruct \pvalue{}s without using the pattern 
+\patreadpd{pat}{pdpat}, and second, the fact that the language propagates base type errors.  If a given transform does not need to examine the descriptor, programmers can use a pattern form that matches only against the underlying value, as illustrated in \figref{fig:ex-no-err-check}.  If the transform applies an operator to a base value marked as a syntactic error (in which case the representation is \btm{}) the operator simply returns \btm{} and the resulting descriptor is set appropriately. 
+For example, addition of one or more \btm{} values results
 in \btm{}. We use this property in the example in
 \figref{fig:ex-normalize}, where we normalize timestamp-timezone pairs
 into simple timestamps in GMT time.
 
-The many advantages of accurate parse descriptors highlight the
-importance of maintaining accurate meta-data. Therefore, we need
-language support for pairing newly created data with an accurate parse
-descriptor, based on the type of the pair. Furthermore, we would like
-to be able to check whether an existing value matches a particular
-data description (i.e. type), for example, in a cast operation.
-However, data descriptions can contain rich constraints that can't
-necessarily be checked at compile time.
 
-To this end, we include a mechanism for translating the constraints
-found in the data descriptions into dynamic checks in the style of
-contracts~\cite{contracts}. For example, in
-\figref{fig:ex-error-repair}, the compiler will insert a dynamic check
-at the end of function \cd{fixAlarmVal} to ensure that the constraint
-on the set-type is satisfied. However, unlike previous work on
-contracts, our system does not raise an exception when a dynamic check
-fails, but, instead, records the failure in the parse descriptor of
-the datum being checked.  
-% The exact nature and location of these
-% checks will be detailed in the semantics of the language.
 
 \subsection{Example: Data cleaning}
-The direct access to parse descriptors enables two powerful features:
-error querying and error repair. For error querying, the programmer
-can write a program to walk over the data source and collect
-information about the errors in the data such as how many errors
-occured, where they occured, \etc{}.
-
-Alternatively, the programmer might be interested in cleaning the data
-in preparation for use in another application or even just further
-transformation. Again, based on the parse descriptor, the programmer
-can know the location and nature of errors in the data. This
-information, combined with any relevant domain-specific knowledge
-about the data can allow the programmer to effectively repair broken
-records or remove them entirely. The fine-grained nature of the
-meta-data can be important in minimizing how much work must be done in
-such a cleaning process.
+Instead of simply ignoring errors as in the previous section,
+programmers might want to clean their data, \ie{}, filter out data containing errors. In this case, the direct access to descriptors suggested by the reification principle facilitates this process.
 
 \begin{figure}
 \begin{code}
 type streams = entry stream * entry stream
+type entry\_array = entry Parray(Peor,Peof)
 \mbox{}
 fun splitEntry (e:entry * streams) : streams =
   case e of
     (entry<<G>> * (good * bad)) => (entry::good * bad)
   | (entry<<_>> * (good * bad)) => (good * entry::bad)
 \mbox{}
-fun splitSource (s:source) : streams =
+fun splitSource (s:source) : (entry\_array * entry\_array) =
     let (hdr ** Parray(entries,_,_)) = s in
-    Stream.fold splitEntry (nil * nil) entries
-\mbox{}
-type entry\_array = entry Parray(NL,EOF)
-\mbox{}
-fun app (input : source) : (entry\_array * entry\_array) =
-  let (good*bad)          = splitSource input  in
-  (Parray(good,Peor,Peof) * Parray(bad,Peor,Peof))
+    let (good*bad) = Stream.fold splitEntry (nil * nil) entries in
+    (Parray(good,Peor,Peof) * Parray(bad,Peor,Peof))     
 \end{code}
 \caption{Error filter for \dibbler{} data}
 \label{fig:ex-data-clean}
 \end{figure}
 
-As an example of data cleaning, we provide the program in
-\figref{fig:ex-data-clean}. It takes the \dibbler{} data source and
-walks through all of the entries in the source checking for entries
-with errors.  The good entries are placed in one output stream and the
-bad entries are placed in another.  The idea is that the good entries
-may then be further processed or directly loaded into a database
+\figref{fig:ex-data-clean} gives such an example. 
+It examines all entries in a \dibbler{} data source, placing good entries into one output array and bad entries into another.
+The good entries
+may then be further processed or loaded into a database
 without corrupting the valuable data therein.  A human might examine
-the bad entries off-line to determine the cause of errors and to
+the bad entries off-line to determine the cause of errors or to
 figure out how to fix the corrupted entries.
 
-The \cd{splitEntry} function describes how to check an entry to
+The \cd{splitEntry} function checks is argument \cd{e} to
 determine whether it is \cd{G}ood (syntactically and semantically
-valid) or not.  Here, \cd{pat<<pdpat>>} is a pattern that the
-programmer uses to extract information about the parse descriptor from
-a value.  \cd{pdpat} is the pattern for PDs and \cd{pat} is a pattern
-for the value's substructures. Also, \cd{(good * bad)} deconstructs a pair,
-while \cd{(good * entry::bad)} constructs one.
+valid).  Because the function needs to access \cd{e}'s descriptor for filtering,
+it uses the  \cd{pat<<pdpat>>} pattern to extract the descriptor from the \pvalue{}.  In this pattern,  \cd{pdpat} is the pattern for descriptors and \cd{pat} is a pattern the entire \pvalue{}.
 
 The \cd{splitSource} function pattern matches against the input
-source, extracting the stream of entries, and iteratively applying the
-\cd{splitEntry} function.  In this example, \cd{Parray(entry,\_,\_)}
+source, extracting the stream of entries, and iteratively applies the
+\cd{splitEntry} function.  It then packages the resulting two streams as a pair of arrays. In this example, \cd{Parray(entry,\_,\_)}
 is a pattern for array values.  An array value is a stream (in this
-case \cd{entry}) coupled with a separator and a terminator.  Also in
-this example, we assume \cd{fold\_stream} iteratively applies a
-function to a stream.  
-
-The function \cd{app} is responsible for reading in data from the file
-descriptors it is given, splitting the data into good and bad and
-writing the data back out to files.  The process of reading and
-writing is dependent on the type descriptions of the ad hoc data.
-Here, we write \cd{read::T} to read a data source formatted according
-to \cd{T} and \cd{write::T} to write a format according to \cd{T}.
-The read function will parse a file and generates an ad hoc data value
-with type \cd{T}.  The write function will write an ad hoc data value
-with type \cd{T} to a file.
+case \cd{entry}) coupled with a separator and a terminator (and of course, a descriptor).  
 
 
-\section{Example: Error querying}
+\subsection{Example: Error querying}
+Understanding the errors in an ad hoc data source can be immensely important, 
+either to learn how to repair the data or simply to understand the errors themselves.  It is not uncommon for errors in ad hoc data to be the most interesting aspect of the data.  For example, errors in log files often indicate that the monitored system may be in need of repair.
+By reifying the error structure of the data, \datatype{} enables programmers to write rich query programs to help them in such tasks.
+For example, such programs might walk over the data and collect
+information about the number, type, frequency, or location of errors.
+
+
 \begin{figure}
   \centering
 \begin{code}
@@ -319,9 +259,9 @@ fun collectAlarms(as : alarm stream): alarm stream =
   \label{fig:ex-error-query}
 \end{figure}
 
-We present a further example of error querying in
-\figref{fig:ex-error-query}, based on the \darkstar{} data
-description. The function \cd{checkAlarm} takes an alarm set-type,
+The code in \figref{fig:ex-error-query} queries a \darkstar{} data
+description to collect the alarms in that source that contain semantic errors. 
+(Recall that semantic errors correspond to violations of user constraints). The function \cd{checkAlarm} takes an alarm set-type,
 extracts the underlying raw alarm and checks its \cd{alarm} field for
 a semantic error.  If the \cd{alarm} field contained a semantic error,
 we return the entire alarm (wrapped in \cd{SOME}). Otherwise, we
@@ -329,14 +269,13 @@ return \cd{NONE}. The pattern \cd{\{pat | setpat\}} for set-types
 matches \cd{pat} against the underlying value, and \cd{setpat} against
 a boolean indicating whether the constraint was satisfied. As we don't
 care about the constraint on the alarm itself, we specify a wild-card
-pattern.  Also, the pattern for records is quite similar to that found
-in ML. We note, however, that literal fields in a record type do not
-appear as part of the pattern. 
-
-The function \cd{collectAlarms}, then,
+pattern.   The function \cd{collectAlarms}
 collects all alarm records in the alarm stream \cd{as}, whose
 \cd{alarm} field has a semantic error.
 
+
+\subsection{Example: Error repair}
+A final advantage of reifying descriptors is that it supports error repair for situation in which programmers have enough domain knowledge to make such repairs.
 \begin{figure}
   \centering
 \begin{code}
@@ -362,26 +301,45 @@ fun fixAlarm (a : alarm): alarm opt =
 fun fixAlarms(as : alarm stream): alarm stream =
     Stream.map checkAlarm as
 \end{code}
-  \caption{Repairing Erroneous Alarms}
+  \caption{Repairing erroneous alarms}
   \label{fig:ex-error-repair}
 \end{figure}
 
-\subsection{Example: Error repair}
-\figref{fig:ex-error-repair} illustrates repairing erroneous records.
+
+\figref{fig:ex-error-repair} illustrates such a transformation.
 Here, the data analyst
 has discovered that some process producing alarm records was
 erroneously using the values $20$ and $30$ for the alarm classes,
 instead of the required $2$ and $3$. The program finds all alarm
-records with semantics errors in the alarm field and corrects those
-with value $20$ or $30$, leaving other untouched. We highlight three
-new features. In function \cd{fixAlarmVal}, the bodies of the case
-branches use the constructor for set types (\cd{\{x=M | M'\}}) and the
-constructor for base types (\cd{Pbase(M)}.  In the pattern
-\cd{_<<S>>} the variable \cd{al} is bound to the entire \pvalue{} of
-the \cd{alarm} \pvalue{}, rather than just the data. {\em should we
-  explain this decision here?  its simpler for the language and for
-  the programmer - don't have to worry about prevalues.}
+records with semantic errors in the alarm field and corrects those
+with value $20$ or $30$, leaving the other parts of the data untouched. 
 
+We highlight two new \datatype{} features illustrated in this example. In function \cd{fixAlarmVal}, the bodies of the case
+branches use the constructor for set types (\cd{\{x=M | M'\}}) and the
+constructor for base types (\cd{Pbase(M)}.  The base type constructor takes the underlying value and pairs it with a fresh descriptor, one that indicates no error has occurred.  The set type constructor evaluates the associated constraint and sets the descriptor for the value as appropriate based on the result.
+
+
+\subsection{A note on semantic checks}
+The many advantages of accurate descriptors highlight the
+importance of maintaining accurate meta-data. Therefore, we need
+language support for pairing newly created data with an accurate parse
+descriptor, based on the type of the pair. Furthermore, we would like
+to be able to check whether an existing value matches a particular
+data description (i.e. type), for example, in a cast operation.
+However, data descriptions can contain rich constraints that can't
+necessarily be checked at compile time.
+
+To this end, we include a mechanism for translating the constraints
+found in the data descriptions into dynamic checks in the style of
+contracts~\cite{contracts}. For example, in
+\figref{fig:ex-error-repair}, the compiler will insert a dynamic check
+at the end of function \cd{fixAlarmVal} to ensure that the constraint
+on the set-type is satisfied. However, unlike previous work on
+contracts, our system does not raise an exception when a dynamic check
+fails, but, instead, records the failure in the parse descriptor of
+the datum being checked.  
+% The exact nature and location of these
+% checks will be detailed in the semantics of the language.
 
 
 \cut{
