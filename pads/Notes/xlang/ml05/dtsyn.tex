@@ -41,51 +41,6 @@
 \name{\Core{} Field Type} \meta{fft} \::= T \| x = T
 \end{bnf}
 }
-
-% constants k ::= true | false | () |  ...
-
-
-% Parsing Types
-% ======================
-
-% T ::=  \alpha(M)
-%      | Pbase                  // base type
-%      | d(M)                   // parameterized data type; M is parameter
-%      | M                      // singleton type.  eg: " " for literal space
-%      | x:T1 ** T2             // dependent pair
-%      | {FieldTys}             // dep. record
-%      | PD                     // parser descriptor type
-%      | T Parray(Msep, Mterm)  // array types
-%      | T stream               // stream type; underlying rep for arrays
-%      | {x:T | M}              // constrained type; ie: Pwhere
-
-
-% D ::= datatype TyParams d(x:F) = DTBody
-%    |  type TyParams \alpha(x:F) = T
-
-% TyParams ::= . | \alpha typarams
-
-% DTBody ::= DS | case M of TS
-
-% DS ::= c of T
-%      | (c of T | DS)
-
-% TS ::= pat => c of T
-%    |   (pat => c of T | TS)
-
-% Fieldtys ::= fieldty | fieldty ; fieldtys
-
-% Fieldty ::= T | x = T
-
-% Transform Types
-% ===============
-
-% F ::= T          // type of parsed value
-%    | base        // values of base types
-%    | F -> F      // transforms
-%    | F * F       // ordinary pairs
-
-
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "paper"

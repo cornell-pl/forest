@@ -7,11 +7,11 @@
 \nlalt F * F       \descr{ordinary pairs} 
 \nlalt \{\nont{fts}\}     \descr{ordinary records} 
 \nlalt F \-> F     \descr{functions}
-\nlalt \pstream F
-
+\nlalt \pstream F  \descr{streams}
 \\
 \name{Field Types} \meta{fts} \::= x = F \| x=F,\;\nont{fts}
-\\
+\end{bnf}
+\begin{bnf}
 \name{Parse Descriptors} \meta{pd} \::=   
   G \| B \| N \| S \| U
 \\
@@ -21,7 +21,8 @@
 \nlalt (x{=}{M_1} \mathrel{**} {M_2}) \descr{pair}
 \nlalt \lcr \nont{fs} \rcr            \descr{record}
 \nlalt c[M_1](M_2)                    \descr{data type constructor}
-\nlalt \{x = {M_1} \cvb {M_2}\}       \descr{set-type; $M_2$ is the predicate}
+\nlalt \{x = {M_1} \cvb {M_2}\}       \descr{constrained type, with
+  $M_2$ the constraint}
 \nlalt \mcd{Parray}(M, M_{sep}, M_{term})   \descr{array; first element is stream}
 \\
 \name{Terms} \meta{M} \::= 
@@ -46,8 +47,6 @@
   \nont{pat} \Rightarrow M \| \nont{pat} \Rightarrow M \cvb \nont{ms}
 \end{bnf}
 }
-
-
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "paper"
