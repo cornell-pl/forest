@@ -10,8 +10,8 @@
 \def\lastname{Fernandez, Fisher, Mandelbaum and Walker}
 \begin{document}
 \begin{frontmatter}
-  \title{A Language for Describing and Transforming Ad Hoc Data} 
-  \author{Mary Fern\'andez,
+  \title{\datatype{}: A Language for Describing and Transforming Ad Hoc Data} 
+  \author{Mary Fernandez,
     Kathleen Fisher\thanksref{attemail}}
   \address{AT\&T\\ 
     Florham Park,NJ USA} 
@@ -25,30 +25,13 @@
   \thanks[premail]{Email:\texttt{\normalshape
         yitzhakm,dpw {\it at} cs {\it dot} princeton {\it dot} edu}}
 \begin{abstract}
-\datatype{} pairs a declarative data description language with an 
-error-aware transformation language to provide rich support for
+\datatype{} is a declarative data description language paired with an 
+error-aware transformation language.  This pairing provides rich support for
 programming with ad hoc data sources.  Such data is common in a wide range of domains including networking, financial analysis, biology, and physics.
-\datatype{}'s data description language is based on polymorphic, recursive, and dependent data types.  From such descriptions, the compiler generates robust parsing and pretty printing code. The transformation language supports \textit{error-aware computation} by automatically maintaining an association between parsed data and a description of the errors in that data.  This association supports an obliviousness property, which allows programmers to specify transforms for correct data, trusting the system to preserve error tags during such transformations.
-This reification of errors allows programmers to filter, query, and repair errors on the one hand, while allowing programs to safely ignore errors on the other.  
-
-We present the design of an \ml{}-like language with intrinsic support for parsing, transforming, and pretty printing \textit{ad hoc} data. We use the term  ad hoc data to refer to any non-standard data source.  Such data is common 
-
-  
-   language for describing and transforming ad hoc data,
-  that is, data in a non-standard format. The data descriptions are in
-  the form of types based closely on \ml{}-style types, including
-  parametric datatypes, type definitions, and records. They are used
-  by the compiler to generate parsing functions from the data source
-  to special internal language data structures, called \pvalue{}s.
-%   Furthermore, these data structures are combinations of
-%   parsed data and parse descriptors, which describe properties of the
-%   parsing process, including errors. 
-  The language provides new patterns and data constructors for 
-  transforming \pvalue{}s.
+\datatype{}'s data description language is based on polymorphic, recursive, and dependent data types.  From such descriptions, the compiler generates robust parsing and pretty printing code. The transformation language supports \textit{error-aware computation} by automatically maintaining an association between data and a description of the errors in that data.  
 \end{abstract}
 \begin{keyword}
-  Ad hoc data, data description, data transformation, pattern matching, 
-  dependent types.
+Ad hoc data, semi-structured data, data description, data transformation, pattern matching, dependent types.
 \end{keyword}
 \end{frontmatter}
 
