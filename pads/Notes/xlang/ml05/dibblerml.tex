@@ -22,7 +22,6 @@
 \}
 \mbox{}
 \kw{type} event  = Pstring('|') **  '|' ** Puint32
-\mbox{}
 \kw{type} events = event Parray('|',Peor)
-\mbox{}
-\kw{type} source = summary\_header ** (order\_header ** events) Parray(Peor,Peof)
+\kw{type} source = summary\_header **
+                  (order\_header ** events) Parray(Peor,Peof)

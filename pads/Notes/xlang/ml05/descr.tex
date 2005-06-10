@@ -37,7 +37,7 @@ The bread and butter of any \datatype{} description are the
 simple structured types: tuple, record and array types for expressing
 sequences of data; sum types, realized here as datatypes, for
 expressing alternatives; and singleton types for expressing
-the placement of particular character in data.  In this section, we
+the placement of particular characters in the data.  In this section, we
 explain each of these items by building a description 
 of the \dibbler{} data presented in \figref{figure:dibblerml}.
 
@@ -102,7 +102,7 @@ bottom up.
 
 The last type definition \cd{source} is intended to be a definition of
 an entire \dibbler{} data source.  It states that a
-\cd{source} is a \cd{summery\_ header} followed by a sequence of
+\cd{source} is a \cd{summary\_header} followed by a sequence of
 objects made up of an \cd{order\_header} followed by \cd{events}.  The
 tuple type constructor (\cd{T1 ** T2}) and the array type constructor
 (\cd{T Parray(sep,term)}) both specify sequences of objects in a data
@@ -123,9 +123,9 @@ for expository purposes.
 
 The definition of \cd{events} indicates that this part of the
 \dibbler{} data will contain a sequence of \cd{event}s separated by
-verticle bars and terminated by an end-of-record character.  
+vertical bars and terminated by an end-of-record character.  
 Each \cd{event} is a
-string terminated by a veriticle bar, followed by a verticle bar and
+string terminated by a vertical bar, followed by a vertical bar and
 ending with an unsigned 32-bit integer.  The interesting part of this
 sequence is the presence of the type \cd{'|'}.  In type-theoretic
 terms, this is a {\em singleton type}.  It states that one should
@@ -158,8 +158,8 @@ The last interesting feature in the \dibbler{} example is the
 datatype definition of \cd{dib\_ramp}.  It describes
 two alternatives for a portion of data, either an integer alone
 or the fixed string \cd{"no\_ii"} followed by an integer.
-In order to parse data in this format, the parser will
-first attempt to parse the first branch and only if it
+To parse data in this format, the parser will
+attempt to parse the first branch and only if it
 fails will it attempt to parse the second branch.
 Notice how this semantics differs from similar constructs in
 regular expressions and context-free grammars, which
@@ -222,7 +222,7 @@ in the process of building a simulator to study the
 proliferation of B lymphocytes during an immune response.  Data
 needed for his simulations is represented in a variant of the
 Newick format, which is a flat
-representation of trees and used by 
+representation of trees used by 
 many biologists~\cite{newick}.  In Newick, 
 leaves of the tree are string labels followed by a colon and a number.
 A parent node in the tree introduces a collection of children by
@@ -262,7 +262,7 @@ The last key feature of \datatype{} is the ability to define
 parameterized descriptions.  In \pads, description parameters
 were limited to values.  In \datatype, descriptions
 maybe parameterized by both values and types.  Type parameterization
-introduces allows descriptions to be
+allows descriptions to be
 reused at a variety of different types.  This feature 
 helps make data descriptions
 more concise and allows programmers to define convenient libraries
@@ -274,7 +274,7 @@ the usefulness of descriptions parameterized by
 both types and values and introduce a couple of other
 useful features as well.   This example displays
 alarm data recorded by a network link monitor
-and used \darkstar{} project at AT\&T.  Each alarm signals some
+used by the \darkstar{} project at AT\&T.  Each alarm signals some
 problem with a network link.  
 
 Now, at this point, we could write out an English description
@@ -349,7 +349,7 @@ a record with three fields.  The first field of the record
 has been given a constrained type.  In general, constrained types have the
 form \cd{\{x:T | M\}} where \cd{M} is an arbitrary pure boolean 
 expression.  Data \cd{d} satisfies this description if it satisfies
-\cd{T} and boolean \cd{M}evaluates to true when the \pvalue{} \cd{d}
+\cd{T} and boolean \cd{M} evaluates to true when the \pvalue{} \cd{d}
 is substituted for \cd{x}.  If the boolean evaluates to false, the
 data contains a semantic error.  
 
