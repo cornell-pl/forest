@@ -1,3 +1,10 @@
 \section{Conclusions and Future Work}
 \label{sec:conclusion}
- 
+
+In this paper, we have described the importance and pervasiveness of ad hoc data, as well as the many difficulties in dealing with it.  We have enumerated a a set of principles for any language targeted at the problem of transforming such data.  These principles include obliviousness, reification, and soundness. We term languages that support these properties ``error-aware.''  
+Based on these principles, we have sketched the design of \datatype{}, an \ml{}-like language with a declarative data description sublanguage and an error-aware transformation language.   We have illustrated the design of each through a number of practically motivated examples.
+
+The work described in this paper is very much ``work in progress.''  Consequently, much work remains, including formally specifying the type system and semantics for the language and building a prototype implementation.  We intend to leverage the existing \pads{} system to implement our parsers, and to define our transform language as an extension of \sml{} so that we may ``compile'' it by translation into \sml{} proper. 
+
+
+
