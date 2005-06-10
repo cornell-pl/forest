@@ -1,9 +1,9 @@
 \appendix
+
 \section{Language Syntax}
-{\allowdisplaybreaks
-\noindent
-{\bf Syntax of data descriptions and other types}
+\subsection{Syntax of data descriptions and other types}
 \label{app:syntax-dd}
+{\small
 \begin{bnf}
 \name{Constants} \meta{k} \::= \mcd{true} \| \mcd{false} \| \mcd{()} \| ...
 \\
@@ -45,11 +45,15 @@
 \\
 \name{\Core{} Field Type} \meta{fft} \::= T \| x = T
 \end{bnf}
-%\include{dtsyn}
+}
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
 
-\noindent
-{\bf Syntax of terms}
+\subsection{Syntax of Terms}
 \label{app:syntax-terms}
+{\small
 \begin{bnf}
 \name{Types} \meta{F} \::= 
   T           \descr{type of \pvalue{}} 
@@ -61,9 +65,8 @@
 \nlalt \pstream F  \descr{streams}
 \\
 \name{Field Types} \meta{fts} \::= x = F \| x=F,\;\nont{fts}
-\\
-%\end{bnf}
-%\begin{bnf}
+\end{bnf}
+\begin{bnf}
 \name{Parse Descriptors} \meta{pd} \::=   
   G \| B \| N \| S \| U
 \\
@@ -76,11 +79,7 @@
 \nlalt \{x = {M_1} \cvb {M_2}\}       \descr{constrained type, with
   $M_2$ the constraint}
 \nlalt \mcd{Parray}(M, M_{sep}, M_{term})   \descr{array; first element is stream}
-\end{bnf}
-
-\newpage
-
-\begin{bnf}
+\\
 \name{Terms} \meta{M} \::= 
        x                        \descr{variable}
 \nlalt N                        \descr{\core{} terms}
@@ -102,13 +101,15 @@
 \name{Matches}\meta{ms} \::= 
   \nont{pat} \Rightarrow M \| \nont{pat} \Rightarrow M \cvb \nont{ms}
 \end{bnf}
-%\include{dtsyn_terms}
+}
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
   
-\newpage
-
-\noindent
-{\bf Syntax of patterns}
+\subsection{Syntax of Patterns}
 \label{app:syntax-pat}
+{\small
 \begin{bnf}
 % \name{Parse Descriptors} \meta{pd} \::=   
 %          G    \descr{good}
@@ -141,19 +142,28 @@ x \| \nont{Pbase}(\nont{pat})
 \\
 \name{Field Pattern} \meta{fps} \::= x = \nont{pat} \| x = \nont{pat};\;\nont{fps}
 \end{bnf}
-%\include{dtsyn_pat}
+}
 
-\noindent
-{\bf Syntax of programs}
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
+
+\subsection{Syntax of Programs}
 \label{app:syntax-prog}
+{\small
 \begin{bnf}
 \name{Program} \meta{prog} \::= 
   M              
  \nlalt D\; \nont{prog}          \descr{type declaration}
  \nlalt \mcd{val}\;x = M\;\mcd{prog} \descr{value declaration}
 \end{bnf}
-%\include{dtsyn_prog}
 }
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "paper"
