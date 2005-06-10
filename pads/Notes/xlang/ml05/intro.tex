@@ -11,7 +11,7 @@ industries such as finance, health care, transportation, and
 telecommunications as well as in scientific domains, such as
 computational biology and chemistry.  The absence of tools for
 processing ad hoc data formats complicates the daily data-management
-tasks of IT professionals, who may have to cope with numerous ad
+tasks of data analysts, who may have to cope with numerous ad
 hoc formats even within a single application.  
 
 Common characteristics of ad hoc data complicate the building of tools
@@ -139,9 +139,9 @@ instead they hijack the unused field, often failing to update the
 documentation in the process.}
 
 %% Sources, meaning, and handling of errors
-Another challenge is handling the variety of errors and the
+Another challenge is the variety of errors and the
 variety of application-dependent strategies for handling errors in ad
-hoc data.  Some common errors, listed in ~\figref{figure:data-sources},
+hoc data.  Some common errors, listed in \figref{figure:data-sources},
 include undocumented data, corrupted data, missing data, and multiple
 representations for missing values.  Some sources of errors
 that we have encountered in ad hoc sources include malfunctioning
@@ -149,7 +149,7 @@ equipment, race conditions on log entry~\cite{wpp}, presence of
 non-standard values to indicate ``no data available,'' human error
 when entering data, and unexpected data values.  A wide range of
 responses are possible when errors are detected, and they are highly
-application dependent.  Possible responses range from haulting processing
+application dependent.  Possible responses range from halting processing
 and alerting a human operator, to partitioning erroneous from error-free
 records for examination off-line, to simply discarding erroneous or
 unexpected values.  One of the most challenging aspects of processing
@@ -177,7 +177,7 @@ second~\cite{gigascope}!  Such volumes require that the data be
 processed without loading it into memory all at once.  Not
 surprisingly, flexible error-response strategies are especially
 critical with high-volume sources, so that error detection does not
-hault or delay normal processing.
+halt or delay normal processing.
 
 %% EXISTING SOLUTIONS
 
@@ -198,6 +198,7 @@ making long-term maintenance difficult for the original writers and
 sharing the knowledge with others nearly impossible.
 
 %% OUR SOLUTION & CONTRIBUTIONS
+\subsection{\datatypebig{}}
 
 Our answer to processing ad hoc data is \datatype{}, a functional
 programming language with extensive support for describing and
@@ -206,6 +207,10 @@ functional features such as pattern matching and higher-order
 functions, which we view as critical to supporting data-driven
 transformation.  \datatype{}'s novel data-description language is
 based on a rich system of polymorphic, recursive, and dependent types.
+In addition, \datatype{} allows programmers to
+enforce semantic constraints on data by using \datatype{} descriptions
+as a special form of runtime contracts.
+
 Most importantly, \datatype{} is not merely a combination of two
 language elements---data description and transformation---but a
 synthesis.  The meta-data acquired during parsing of data is not lost
@@ -216,80 +221,79 @@ concerned with error-related meta-data, we call this synthesis
 
 \datatype{} has evolved from \pads{}~\cite{fisher+:pads}, a
 data-description language for ad hoc data with a \C{}-like syntax, and
-the \pads{} system is the foundation of \datatype{}'s implementation.
-Given a \pads{} description, the \pads{} compiler generates a parsing
-library that can be called from a \C{} program.  The parsing functions
-can detect and report errors in data records and can recover from
-non-fatal errors, but the programmer himself must write the code for
-partitioning erroneous from error-free records, for correcting errors,
-or for transforming records.  In contrast, \datatype{} is a high-level
-language with an elegant and convenient syntax for data-driven
-programming and intrinsic support for handling errors.
+\datatype{}'s implementation is based on the \pads{}
+system~\footnote{\pads{} can be downloaded from
+\texttt{http://www.padsproj.org}}.  Given a \pads{} description, the
+\pads{} compiler generates a parsing library that can be called from a
+\C{} program.  The parsing functions can detect and report errors in
+data records and can recover from non-fatal errors, but the programmer
+himself must write \C{} code for partitioning erroneous from error-free
+records, for correcting errors, and for transforming records.  In
+contrast, \datatype{} is a high-level language with an elegant and
+convenient syntax for data-driven programming and intrinsic support
+for handling errors.  
 
-\cut{\pads{} provides several data-analysis tools
-built upon the generated parsing libraries.}
-
-\cut{\C{} is a very
-low-level language that makes transforming ad hoc data awkward,
-cumbersome and potentially error-prone.  More importantly, it provides
-no intrinsic support for dealing with the errors that appear in ad hoc
-data.  In addition, \C's type system and operational model provide no
-support for checking the rich invariants found in ad hoc data either
-at run time or at compile time.
-
- and intrinsic mechanisms for checking data invariants
-at run time}
-
-Unlike \datatype{},
-\pads{} is not a programming language
-
-The iterative process of writing a \datatype{} description, parsing ad
-hoc data that conforms to that description, and refining the
-description results in ``living documentation'' of the data source
-that can be in other \datatype{} programs.  
-
-\cut{\datatype{} makes it possible to write accurate, complete, and
-reusable descriptions of ad hoc data that serve }
-
-In addition,
-\datatype{} allows programmers to enforce semantic constraints on
-data by using \datatype{} descriptions as a special form of runtime
-contracts. 
-
-Our second contribution is the data transformation language itself.
-{\em \pads{} is not a programming language.}  
- 
-There might be a third:--
-collection and analysis a variety of different examples of ad hoc
-datafrom widely differing domains (networking to genomics).  The
-analysis of thedifferent sorts of ad hoc data is a substantial
-contribution.  It helps usunderstand what is required and what is not.
-
-\subsection{\datatype{} Architecture}
+% \subsection{\datatypebig{} Architecture}
 
 \begin{figure}[tp]
-  \includegraphics[height=3in,width=5in]{architecture-grant}
+  \includegraphics[height=3in,width=5in]{architecture-grant-pads-t}
 %  \includegraphics{architecture-grant.eps}
 \label{fig:pads-arch}
-\caption{The \pads{} Architecture}
+\caption{Common use of \datatype{} architecture}
 \end{figure}
 
 % ---------------------------------------------------
 
-\datatype{}'s values, called \emph{\pvalue}s are pairs of data items
-and their corresponding meta-data.  For each data item, the meta data
-includes, among other things, descriptions of the error content of the
-data item.  \datatype{}'s type system ensures that data items and
-their associated meta data are always consistent.  This ``error-aware
-computation'' enables three critical language features:
+\figref{fig:pads-arch} depicts a common use of the \datatype{}
+architecture\footnote{The green boxes denote code written by users.}.
+On the upper left, the format of an ad hoc input source is specified
+by a user in the \datatype{} data description language.  From this
+description, the \datatype{} description compiler produces a custom
+parser for instances of the ad hoc input.  Symmetrically, on the
+upper-right, the  data description of the output data is compiled into
+a custom printer for instances of the ouput.  A \datatype{}
+transformation program refers to the types defined by the input and
+output descriptions, and the \datatype{} runtime environment for the
+transformation program calls the corresponding parsers and printers.
+
+The key abstraction in \datatype{} that supports error-aware computing
+is the \emph{\pvalue}, which pairs a data item with its
+corresponding meta data.  Meta data includes, among other things,
+descriptions of the error content of the data item.  In
+\figref{fig:pads-arch}, a \pvalue{} consists of the data item's
+\emph{representation} (Rep) and its \emph{parse descriptor} (PD),
+which contains the meta data.
+
+\datatype{}'s type system ensures
+that data items and their associated meta data are always consistent.
+This error-aware computation enables three important language
+features:
 \begin{enumerate}
-\item Safe, error-transparent transformations
-\item Error querying - analyst can extract detailed picture of data
-  error profile.
-\item Flexible, programmatic repair of faulty records - analyst can
-  choose when in the processing stream to address errors, rather than
-  being forced to drop all faulty records at the beginning of the process.
+\item Safe, error-transparent transformations that need only specify
+  how to handle error-free data.
+\item Selective querying of errors, which supports easy extraction of detailed error profiles.
+\item Flexible, programmatic repair of erroneous, which supports
+  disciplined and identifiable correction of errors.
 \end{enumerate}
+
+
+\cut{ - analyst can
+  choose when in the processing stream to address errors, rather than
+  being forced to drop all faulty records at the beginning of the
+  process}
+
+In Section~\ref{sec:data-description}, we introduce \datatype{}'s data
+description language using examples from the applications described in
+\figref{figure:data-sources} and in
+Section~\ref{sec:data-transformation}, we do the same for
+\datatype{}'s data-transformation constructs.
+Section~\ref{sec:related-work} briefly surveys related work, and in
+Section~\ref{sec:conclusion}, we enumerate only a few of the numerous
+open problems that await us in \datatype{}'s future.
+
+\cut{ 
+
+INTRO BACK MATTER 
 
 In the next section, we will describe, in detail, the \pads{} approach
 to data and meta data (inherited by \datatype{}), the \datatype{}
@@ -319,7 +323,7 @@ Solution: Data description Language + transform language
 Combine data description language with a transform language.
 
 \pads{} is bound to C. However, functional programming languages are
-better suited to the task of data tranformation. We therefore propose
+better suited to the task of data transformation. We therefore propose
 a new language, \datatype{}, that combines a data description language
 based on the style of ML types (and datatypes) with a functional data
 transformation language. 
@@ -335,8 +339,31 @@ the new syntax is much more appropriate for transformation language
 proposed below, which is based heavily on pattern-matching and data
 constructors.
 
+\pads{} provides several data-analysis tools
+built upon the generated parsing libraries.
 
-%%% Local Variables: 
-%%% mode: latex
-%%% TeX-master: "paper"
-%%% End: 
+\C{} is a very low-level language that makes transforming ad hoc
+data awkward, cumbersome and potentially error-prone.  More
+importantly, it provides no intrinsic support for dealing with the
+errors that appear in ad hoc data.  In addition, \C's type system and
+operational model provide no support for checking the rich invariants
+found in ad hoc data either at run time or at compile time.  and
+intrinsic mechanisms for checking data invariants at run time
+
+The iterative process of writing a \datatype{} description, parsing ad
+hoc data that conforms to that description, and refining the
+description results in ``living documentation'' of the data source
+that can be in other \datatype{} programs.  
+
+\datatype{} makes it possible to write accurate, complete, and
+reusable descriptions of ad hoc data that serve 
+
+Our second contribution is the data transformation language itself.
+{\em \pads{} is not a programming language.}  
+ 
+There might be a third:--
+collection and analysis a variety of different examples of ad hoc
+data from widely differing domains (networking to genomics).  The
+analysis of thedifferent sorts of ad hoc data is a substantial
+contribution.  It helps usunderstand what is required and what is not.
+}
