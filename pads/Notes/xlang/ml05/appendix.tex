@@ -1,7 +1,7 @@
 \appendix
 
 \section{Language Syntax}
-\subsection{Syntax of data descriptions and other types}
+\subsection{Syntax of data descriptions}
 \label{app:syntax-dd}
 {\small
 \begin{bnf}
@@ -51,7 +51,7 @@
 %%% TeX-master: "paper"
 %%% End: 
 
-\subsection{Syntax of Terms}
+\subsection{Syntax of Transform Terms and their Types}
 \label{app:syntax-terms}
 {\small
 \begin{bnf}
@@ -60,7 +60,7 @@
 \nlalt \nont{base} \descr{values of ordinary base types} 
 \nlalt \mcd{PD}    \descr{PD type}
 \nlalt F * F       \descr{ordinary pairs} 
-\nlalt \{\nont{fts}\}     \descr{ordinary records} 
+%\nlalt \{\nont{fts}\}     \descr{ordinary records} 
 \nlalt F \-> F     \descr{functions}
 \nlalt \pstream F  \descr{streams}
 \\
@@ -74,7 +74,7 @@
        Pbase[M_1](M_2)                \descr{base type constructor}
 \nlalt \langle M \rangle              \descr{unit value (with singleton type M)}
 \nlalt (x{=}{M_1} \mathrel{**} {M_2}) \descr{pair}
-\nlalt \lcr \nont{fs} \rcr            \descr{record}
+\nlalt \precord{\nont{fs}}            \descr{record}
 \nlalt c[M_1](M_2)                    \descr{data type constructor}
 \nlalt \{x = {M_1} \cvb {M_2}\}       \descr{constrained type, with
   $M_2$ the constraint}
@@ -86,7 +86,7 @@
 \nlalt k                        \descr{constants}
 \nlalt \nont{pd}                      \descr{pd value}
 \nlalt (M_1 * M_2)              \descr{ordinary pair}
-\nlalt \{\nont{fs}\}        \descr{ordinary record}
+%\nlalt \{\nont{fs}\}        \descr{ordinary record}
 \nlalt \tfun {x_1}{x_2}{F_1}{F_2}{M}     \descr{recursive function x1 with arg x2}
 \nlalt \mcd{nil}                \descr{empty stream}
 \nlalt M_1 \mathrel{::} M_2     \descr{cons}
@@ -121,7 +121,7 @@
 x \| \nont{Pbase}(\nont{pat})
 \nlalt \langle \nont{pat} \rangle             \descr{singleton}
 \nlalt (\nont{fpat} \mathrel{**} \nont{fpat})   \descr{\core{} pair}
-\nlalt \lcr \nont{ffps} \rcr                  \descr{\core{} record}
+\nlalt \precord{ \nont{ffps} }                  \descr{\core{} record}
 \nlalt c(\nont{fpat})                          \descr{constructor}
 \nlalt \{\nont{fpat} \cvb \nont{cpat}\}        \descr{type constaint}
 \nlalt \mcd{Parray}(\nont{pat}, x_{sep}, x_{term}) \descr{array with stream, sep and term.}
@@ -131,7 +131,7 @@ x \| \nont{Pbase}(\nont{pat})
        \nont{fpat} \descr{\core{} pattern}
 \nlalt k \| \nont{pdpat}                      \descr{constants and parse descriptors}
 \nlalt (\nont{pat} * \nont{pat})              \descr{normal pair}
-\nlalt \{\nont{fps}\}                        \descr{record}
+%\nlalt \{\nont{fps}\}                        \descr{record}
 \nlalt \mcd{nil} \| \nont{pat}_1 \mathrel{::} \nont{pat}_2 \descr{stream}
 \\
 \name{\Core{} Field Pattern} \meta{ffps} \::= x = \nont{fpat} \| x = \nont{fpat};\;\nont{ffps}
