@@ -1,23 +1,24 @@
 \section{Transforming Data in \datatype{}}
 \label{sec:data-transformation}
 
-As we have seen, \datatype{} descriptions make it easy to convert ad
-hoc data into \pvalue{}s.  Once parsed, a natural desire is to
-transform such data to make it more amenable to further analysis.  For
-example, analysts often need to convert ad hoc data into a form
-suitable for loading into an existing system, such as a relational
-database or statistical analysis pacakge.  Desired transformations
-include removing extraneous literals, inserting delimiters, dropping
-or reordering fields, and normalizing the values of fields (\eg{}
-converting all times into a specified time zone).  Because relational
-databases typically cannot store unions directly, another important
-transformation is to convert data with variation (\ie{}, unions) into
-a form that such systems can handle.  Typically, there are two choices
-for such a transformation.  The first is to chop the data into pieces:
-one piece for each variation.  This approach is called
-\textit{shredding}. The second is to create an ``uber'' table, with
-one ``column'' for each field in any variation.  If a given field is
-not in a particular variation, it is marked as missing.
+As we have seen, \datatype{} descriptions make it
+easy to convert ad hoc data into \pvalue{}s.  Once parsed, a natural
+desire is to transform such data to make it more amenable to further
+analysis.  For example, analysts often need to convert ad hoc data
+into a form suitable for loading into an existing system, such as a
+relational database or statistical analysis pacakge.  Desired
+transformations include removing extraneous literals, inserting
+delimiters, dropping or reordering fields, and normalizing the values
+of fields (\eg{} converting all times into a specified time zone).
+Because relational databases typically cannot store unions directly,
+another important transformation is to convert data with variation
+(\ie{}, unions) into a form that such systems can handle.  Typically,
+there are two choices for such a transformation.  The first is to chop
+the data into two separate relational tables: one table for each
+variation.  This approach is called \textit{shredding}. The second is
+to create an ``uber'' table, with one ``column'' for each field in any
+variation.  If a given field is not in a particular variation, it is
+marked as missing.
 
 Typically, these transformations are fairly straightforward, except
 they must all be done in the context of errors.  If analysts choose to
@@ -25,7 +26,8 @@ ignore possible errors in the data, then the transformations may be
 very simple to code, but the analysts run the risk of having those
 errors corrupt legal values.  If they insert code to detect errors,
 that error detection code can swamp the semantically interesting
-transformations.
+transformations. 
+
 
 Errors themselves provide the second major motivation to support data transformation, as error analysis, repair, and removal are important tasks in understanding and using an ad hoc data source.
 
@@ -34,10 +36,15 @@ In designing the transformation language \datatype{}, our goal is to allow data 
 \begin{description}
 \item[Obliviousness] For transformations not concerned with errors, we should be able to specify the transformation without reference to errors.  The language should ensure, however, that error values are appropriately propagated ``under the covers,'' so that later code may determine that a given piece of data is erroneous.
 \item[Reification] For transformations concerned with errors, it should be easy to examine the error characteristics of a piece of data and to make choices depending upon those characteristics.
+\item[Soundness] Programmers cannot accidentally (or
+maliciously) associate the wrong error characterization with a piece of
+data.  For instance, if data contains a syntactic error, the associated
+description must say so and likewise with a semantic error.
 \end{description}
 %
 Together, these principles define what we call \textit{error-aware} computing.
 
+\subsection{Error-aware computing}
 \datatype{} supports error-aware computing by leveraging the idea of a parse descriptor.   The result of a parse is a pair of an in-memory representation of the parsed data and a parse descriptor, which characterizes the error structure of the data.  Instead of throwing this descriptor away immediately after parsing, the language preserves it during transformation.  At any point in the computation then, the descriptor associated with a data item describes the errors in that data item.  We use the term \pvalue{} to denote such a pair.  Note that this integrated value pairs a descriptor with a data element at every level of the data structure. That is, the subcomponents of a data structure (if any) are themselves \pvalue{}s.
 \datatype{} carefully controls the use of \pvalue{}s to maintain the invariant that a \pvalue{}'s parse descriptor accurately describes the representation.
 Critical to this last feature is \datatype{}'s type system, which we 
@@ -337,7 +344,7 @@ necessarily be checked at compile time.
 
 To this end, we include a mechanism for translating the constraints
 found in the data descriptions into dynamic checks in the style of
-contracts~\cite{contracts}. For example, in
+contracts~\cite{findler+:contracts}. For example, in
 \figref{fig:ex-error-repair}, the compiler will insert a dynamic check
 at the end of function \cd{fixAlarmVal} to ensure that the constraint
 on the set-type is satisfied. However, unlike previous work on
