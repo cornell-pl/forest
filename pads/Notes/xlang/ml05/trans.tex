@@ -59,8 +59,8 @@ describing data, there is a corresponding pattern and constructor for
 manipulating a \pvalue{} that corresponds to that type. We will see
 and explain these patterns and constructors in the upcoming examples.
 However, we do encourage interested readers to reference
-\figref{fig:syntax-dd}, \figref{fig:syntax-terms},
-\figref{fig:syntax-pat} and \figref{fig:syntax-prog} for a formal
+Appendix~\ref{app:syntax-dd}, \ref{app:syntax-terms},
+and \ref{app:syntax-pat} and \ref{app:syntax-prog} for a formal
 presentation of the syntax. Data constructors are included under terms
 \cd{M}, and patterns under \cd{pat}. We also note that while
 \datatype{} focuses on supporting \pvalue{}s, the language also
@@ -100,30 +100,13 @@ unnecessary.
 }
   
 
-In the remainder of this section, we present our data transformation language through a series of examples.  For reference, we present the grammar for the terms, patterns, and programs of the language in Figures~\ref{fig:syntax-terms}, \ref{fig:syntax-pat}, and \ref{fig:syntax-prog}.  In the examples, we assume the existence of a \texttt{Stream} library with standard operations \texttt{fold}, \texttt{map}, and \texttt{mapPartial}.
-
-
-\begin{figure}
-  \centering
-  \include{dtsyn_terms}
-  \caption{Syntax of Terms}
-  \label{fig:syntax-terms}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \include{dtsyn_pat}
-  \caption{Syntax of Patterns}
-  \label{fig:syntax-pat}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \include{dtsyn_prog}
-  \caption{Syntax of Programs}
-  \label{fig:syntax-prog}
-\end{figure}
-
+In the remainder of this section, we present our data transformation
+language through a series of examples.  For reference, we present the
+grammar for the remaining types and the terms, patterns, and programs
+of the language in Appendices~\ref{app:syntax-terms},
+\ref{app:syntax-pat}, and \ref{app:syntax-prog}.  In the examples, we
+assume the existence of a \texttt{Stream} library with standard
+operations \texttt{fold}, \texttt{map}, and \texttt{mapPartial}.
 
 \subsection{Example: Data transformation}
 \begin{figure}

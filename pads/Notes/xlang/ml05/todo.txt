@@ -3,3 +3,10 @@
 - Add base patterns.
 - Add set type pattern {pat1 | pat2} with pat2 matching a bool.
 - Add set type constructors {x=M | M'}.
+
+- add type params to t(M)
+- add pd constructors
+- add singleton constructors?
+-make sure syntax charts are all in same order
+- finish related work
+- change "set type" to "type constraint" or "constrained type"

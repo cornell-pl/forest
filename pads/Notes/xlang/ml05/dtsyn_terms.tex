@@ -3,35 +3,42 @@
 \name{Types} \meta{F} \::= 
   T           \descr{type of \pvalue{}} 
 \nlalt \nont{base} \descr{values of ordinary base types} 
+\nlalt \mcd{PD}    \descr{PD type}
 \nlalt F * F       \descr{ordinary pairs} 
 \nlalt \{\nont{fts}\}     \descr{ordinary records} 
 \nlalt F \-> F     \descr{functions}
+\nlalt \pstream F
+
 \\
 \name{Field Types} \meta{fts} \::= x = F \| x=F,\;\nont{fts}
 \\
+\name{Parse Descriptors} \meta{pd} \::=   
+  G \| B \| N \| S \| U
+\\
 \name{\Core{} Terms} \meta{N} \::=  
-       Pbase[M_1](M_2)            \descr{base type constructor}
-\nlalt c[M_1](M_2)                  \descr{data type constructor}
+       Pbase[M_1](M_2)                \descr{base type constructor}
+\nlalt \langle M \rangle              \descr{unit value (with singleton type M)}
 \nlalt (x{=}{M_1} \mathrel{**} {M_2}) \descr{pair}
-\nlalt \{\{\nont{fs}\}\}        \descr{record}
-\nlalt \{x = {M_1} \cvb {M_2}\} \descr{set-type; $M_2$ is the predicate}
-\nlalt Parray(M, M_{sep}, M_{term})   \descr{array; first element is stream}
+\nlalt \lcr \nont{fs} \rcr            \descr{record}
+\nlalt c[M_1](M_2)                    \descr{data type constructor}
+\nlalt \{x = {M_1} \cvb {M_2}\}       \descr{set-type; $M_2$ is the predicate}
+\nlalt \mcd{Parray}(M, M_{sep}, M_{term})   \descr{array; first element is stream}
 \\
 \name{Terms} \meta{M} \::= 
        x                        \descr{variable}
 \nlalt N                        \descr{\core{} terms}
 \nlalt k                        \descr{constants}
-\nlalt \mcd{let}\;x = M_1\;\mcd{in}\;M_2           \descr{computation in host language}
-\nlalt \langle M \rangle        \descr{unit value given singleton type M}
+\nlalt \nont{pd}                      \descr{pd value}
 \nlalt (M_1 * M_2)              \descr{ordinary pair}
 \nlalt \{\nont{fs}\}        \descr{ordinary record}
+\nlalt \tfun {x_1}{x_2}{F_1}{F_2}{M}     \descr{recursive function x1 with arg x2}
 \nlalt \mcd{nil}                \descr{empty stream}
 \nlalt M_1 \mathrel{::} M_2     \descr{cons}
 \nlalt \mcd{case}\;M\;\mcd{of}\;\nont{ms} \descr{deconstructors}
-\nlalt \tfun {x_1}{x_2}{F_1}{F_2}{M}     \descr{recursive function x1 with arg x2}
 \nlalt M_1\;(M_2)               \descr{function application}
-\nlalt \mcd{cast}\;(M : T)             \descr{type annot/dependent cast?}
 \nlalt \mcd{op}\;M                     \descr{additional uninteresting operations}
+\nlalt \mcd{let}\;x = M_1\;\mcd{in}\;M_2           \descr{computation in host language}
+\nlalt \mcd{cast}\;(M : T)             \descr{type annot/dependent cast?}
 \\
 \name{Fields} \meta{fs} \::= x = M \| x = M; \nont{fs}
 \\

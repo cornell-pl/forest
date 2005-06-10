@@ -96,9 +96,12 @@
 \newcommand{\mcd}[1]{\mathtt{#1}}
 %% code-font vertical bar
 \newcommand{\cvb}{\mathrel{\mbox{\tt|}}}
+\newcommand{\lcr}{\{\!\{}
+\newcommand{\rcr}{\}\!\}}
+
 \newcommand{\ppair}[3]{#1{:}#2 \mathrel{**} #3}
 \newcommand{\parray}[3]{#1\;\mcd{Parray}(#2,#3)}
 \newcommand{\pset}[3]{\{#1{:}#2 \cvb #3\}}
 \newcommand{\pstream}[1]{#1\;\mcd{stream}}
-\newcommand{\precord}[1]{\{\{#1\}\}}
+\newcommand{\precord}[1]{\lcr #1 \rcr}
 \newcommand{\tfun}[5]{\mcd{fun}\;#1(#2{:}#3):#4 = #5}
