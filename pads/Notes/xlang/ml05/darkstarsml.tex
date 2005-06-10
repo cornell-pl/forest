@@ -1,13 +1,12 @@
 \begin{code}
 type timestamp = Ptimestamp_explicit_FW(10, "%S", GMT)
 \mbox{}
-type 'a pnvp(c : Pstring -> bool) =
-      \{ name : \{name : Pstring("=") | c name\};
-        '=';
-        val : 'a \}
-type 'a nvp(name:string) = 'a pnvp(fun c(s:string):bool = (s = name))
-type nsp(name:string) = Pstring(";|") nvp(name)
-type nsp_a = Pstring(";|") pnvp(fun c(s:string):bool = true)
+type 'a pnvp(f:Pstring -> bool) =
+      \{ name : \{name : Pstring("=") | f name\}; 
+         '='; 
+         val : 'a \}
+type 'a nvp(name:string) = 'a pnvp(fn s = (s = name))
+type nvp_a = Pstring(";|") ** string pnvp(fn s = true)
 \mbox{}
 type details = \{
       source      : Pip nvp("src_addr");
@@ -20,22 +19,19 @@ type details = \{
 datatype info(alarm_code : Puint32) =
   case alarm_code of 
     5074 => Details of details
-  | _    => Generic of nsp_a Parray(';', '|')
+  | _    => Generic of nvp_a Parray(';', '|')
 \mbox{}
-datatype service =
-    DOMESTIC
-  | INTERNATIONAL
-  | SPECIAL
+datatype service = DOMESTIC | INTERNATIONAL | SPECIAL
 \mbox{}
 type raw_alarm = \{
-       alarm    :  \{ alarm : Puint32 | alarm == 2 orelse alarm == 3\};
- ':';  start :  timestamp Popt;
- '|';  clear :  timestamp Popt;
- '|';  code: Puint32;
- '|';  src_dns  :  nsp("dns1");
- ';';  dest_dns :  nsp("dns2");
- '|';  info     :  info(code);
- '|';  service  :  service;
+       alarm    : \{ alarm : Puint32 | alarm == 2 orelse alarm == 3\};
+ ':';  start    : timestamp Popt;
+ '|';  clear    : timestamp Popt;
+ '|';  code     : Puint32;
+ '|';  src_dns  : Pstring(";|") ** nvp("dns1");
+ ';';  dest_dns : Pstring(";|") ** nvp("dns2");
+ '|';  info     : info(code);
+ '|';  service  : service;
 \}
 \mbox{}
 fun checkCorr(ra:raw_alarm):bool =
@@ -44,7 +40,7 @@ fun checkCorr(ra:raw_alarm):bool =
   | \{alarm=3; start=NONE;    clear=SOME(_);...\} => true
   |  _ => false
 \mbox{}
-type alarm = \{x: raw_alarm | checkCorr x\}
+type alarm = \{x:raw_alarm | checkCorr x\}
 \mbox{}
-type source = alarm Parray('\\n', Peof)
+type source = alarm Parray(Peor, Peof)
 \end{code}

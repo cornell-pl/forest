@@ -2,8 +2,9 @@
 \label{sec:data-description}
 
 A \datatype{} description specifies the physical layout and semantic
-properties of an ad hoc data source.  The language provides a
-type-based model: basic types describe atomic data, while structured
+properties of an ad hoc data source.  
+These descriptions are composed of types: 
+base types describe atomic data, while structured
 types describe compound data built from simpler pieces.  Examples of
 base types include 8-bit unsigned integers (\cd{Puint8}), 32-bit
 integers (\cd{Pint32}), binary 32-bit integers (\cd{Pbint32}), dates
@@ -17,30 +18,32 @@ mechanism serves both to reduce the number of base types and to permit
 the format and properties of later portions of the data to depend upon
 earlier portions.  For example, the base type \cd{Puint16_FW(3)}
 specifies an unsigned two byte integer physically represented by
-exactly three characters, while the type \cd{Pstring(' ')} describes a
-string terminated by a space.  The \datatype{} implementation will
-exploit the fact that we have already implemented many, many such base
-types in the underlying \pads{} backend.
+exactly three characters. The base type \cd{Pstring} takes 
+a string indicating the set of acceptable terminator characters. Hence, 
+\cd{Pstring(";|")} can be terminated by either a semicolon or a
+vertical bar.
+
 
 To describe more complex data, \datatype{} provides a collection of
-structured types loosely based on the type structure of functional
-programming languages such as Haskell and ML.
-\figref{figure:dibblerml} gives a \datatype{} description for the
-\dibbler{} phone order summaries in our proposed syntax.  Overall, the
-data description is a sequence of type definitions.  It is probably
-easiest to understand the data source by reading these descriptions
-bottom up.
+type constructors derived from the type structure of functional
+programming languages such as Haskell and ML.  The following
+subsections will explain these structured types through a series 
+of real-world examples.  Readers eager to see the complete syntax
+of types should flip forward to \figref{figure:syntax-dd}.
 
+\subsection{Simple Structured Descriptions}
 
-\subsection{\dibbler{}}
-In order
-to give the reader a sense of data descriptions
-and some of the challenges, we will take a look at an example of ad
-hoc data: summaries of phone order information produced by the
-\dibbler{} project.
-%To track AT\&T's provisioning process, the \dibbler{} project compiles
-%weekly summaries of the state of certain types of phone service orders.  
-These ASCII summaries store the summary date and one record per order.
+The bread and butter of any \datatype{} description are the
+simple structured types: tuple, record and array types for expressing
+sequences of data; sum types, realized here as datatypes, for
+expressing alternatives; and singleton types for expressing
+the placement of particular character in data.  In this section, we
+explain each of these items by building a description 
+of the \dibbler{} data presented in \figref{figure:dibblerml}.
+
+The \dibbler{} data source is used to record summaries of
+phone orders produced at AT\&T.  Each summary
+involves a date and one record per order.
 Each order record contains a header followed by a sequence of events.
 The header has 13 pipe separated fields: the order number, AT\&T's
 internal order number, the order version, four different telephone
@@ -56,8 +59,8 @@ various states a service order goes through; it is represented as a
 new-line terminated, pipe separated list of state, timestamp pairs.
 There are over 400 distinct states that an order may go through during
 provisioning.  The sequence is sorted in order of increasing timestamps. 
-\figref{figure:dibbler-records} shows a small example of
-this format.
+%\figref{figure:dibbler-records} shows a small example of
+%this format.
 %156 different states for one order
 %-rw-r--r--    1 angusm   dibbler   2187472314 Jun  9  2003 /fs/dibblerd/tlf/data/out_sum.stream
 %2171.364u 31.379s 40:41.54 90.2% 0+0k 2+0io 2pf+0w
@@ -74,7 +77,7 @@ this format.
 9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|
 9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|
 \end{verbatim}
-\caption{Tiny example of \dibbler{} provisioning data.}
+\caption{Miniscule example of \dibbler{} data.}
 \label{figure:dibbler-records}
 %\end{center}
 \end{small}
@@ -90,8 +93,15 @@ this format.
 \label{figure:dibblerml}
 \end{figure}
 
+
+\figref{figure:dibblerml} gives a \datatype{} description for the
+\dibbler{} phone order summaries in our syntax.  Overall, the description 
+is a sequence of type definitions.  It is probably
+easiest to understand the data source by reading these definitions
+bottom up.
+
 The last type definition \cd{source} is intended to be a definition of
-an entire \dibbler{} data source.  The type description states that a
+an entire \dibbler{} data source.  It states that a
 \cd{source} is a \cd{summery\_ header} followed by a sequence of
 objects made up of an \cd{order\_header} followed by \cd{events}.  The
 tuple type constructor (\cd{T1 ** T2}) and the array type constructor
@@ -99,42 +109,50 @@ tuple type constructor (\cd{T1 ** T2}) and the array type constructor
 source.  The \cd{Parray} type depends upon two value parameters,
 (\cd{sep} and \cd{term}).  The first parameter describes the syntactic
 separators that may be found between elements of the array.  In this
-case \cd{NL} (the newline character) may be found between each element
-of the array.  In other words, once the \cd{summary\_header} has been
-parsed, each line of the data source will contain an
-\cd{order\_header} and \cd{events}.  The second parameter is the
-terminator for the array.  In this case, the terminator is the
-end-of-file marker.  We will also support other termination conditions
-for arrays when our research proves they are necessary.
+case \cd{Peor}, the {\em end-of-record} character, may be found 
+between each element
+of the array.  In this case, the end-of-record character 
+should be set to a newline character as there is one record per
+line in the file.   
+The second parameter is the
+terminator for the array.  In this case, the terminator is \cd{Peof}, the
+end-of-file marker.  It is often necessary to have additional
+termination conditions for arrays, such as termination dependent on
+the number of elements read so far, but we omitted this additional option 
+for expository purposes.
 
 The definition of \cd{events} indicates that this part of the
 \dibbler{} data will contain a sequence of \cd{event}s separated by
-verticle bars and terminated by a newline.  Each \cd{event} is a
+verticle bars and terminated by an end-of-record character.  
+Each \cd{event} is a
 string terminated by a veriticle bar, followed by a verticle bar and
 ending with an unsigned 32-bit integer.  The interesting part of this
 sequence is the presence of the type \cd{'|'}.  In type-theoretic
 terms, this is a {\em singleton type}.  It states that one should
 expect exactly the character \cd{'|'} in the input stream at this
 point.  Other singletons appear in the summary header type as
-\cd{"0|"} and NL (the newline character).
+\cd{"0|"} and \cd{Peor}.  Any expression that appears embedded in a type
+as a singleton must be effect-free.
 
 The type \cd{order\_header} is a record type that indicates
 the data format involves the sequence of items described by
 the fields of the record.  Notice that there are two different
-sorts of fields: anonymous fields containing directives to parse
-a particular character (\cd{'|'}), like the singleton types,
-and fields with names.  The second named field,
-\cd{att\_order\_num}, reveals two other proposed features of 
-\datatype: dependency and constraints.  Here,
-\cd{att\_order\_num} is constrained to be less than
-\cd{order\_num}, the value parsed in an earlier field.
-This is a relatively simple constraint on the correctness of the
-ad hoc data format.  In practice, constraints can become very rich
-involving properties such as sortedness of records in an array,
-definitions of expected characters,
-restrictions on date and time ranges, constraints on IP address
-domains, restrictions on phone number area codes and virtually 
-infinite variety of other possibilities. 
+sorts of fields: anonymous fields (a second form of singleton type) 
+containing directives to parse a particular character (\cd{'|'}) or
+string (\cd{"0|"})
+and fields with names.  
+% The second named field,
+% \cd{att\_order\_num}, reveals two other proposed features of 
+% \datatype: dependency and constraints.  Here,
+% \cd{att\_order\_num} is constrained to be less than
+% \cd{order\_num}, the value parsed in an earlier field.
+% This is a relatively simple constraint on the correctness of the
+% ad hoc data format.  In practice, constraints can become very rich
+% involving properties such as sortedness of records in an array,
+% definitions of expected characters,
+% restrictions on date and time ranges, constraints on IP address
+% domains, restrictions on phone number area codes and virtually 
+% infinite variety of other possibilities. 
 
 The last interesting feature in the \dibbler{} example is the
 datatype definition of \cd{dib\_ramp}.  It describes
@@ -143,53 +161,83 @@ or the fixed string \cd{"no\_ii"} followed by an integer.
 In order to parse data in this format, the parser will
 first attempt to parse the first branch and only if it
 fails will it attempt to parse the second branch.
+Notice how this semantics differs from similar constructs in
+regular expressions and context-free grammars, which
+non-deterministically choose between alternatives.
+By making alternatives deterministic, we avoid
+the need to implement general backtracking search.  
+Fortunately, we have yet to come across an ad hoc data source
+where we wish we had nondeterminisc choice.\footnote{\pads{}
+can recognize string data based on regular expressions.
+Non-determinism here has been useful, but as it
+has been confined to parsing elements of the \cd{Pstring} 
+base type, it has had no impact on the overall parsing 
+algorithm.}
 
 \begin{figure}
 \begin{code}
-{\rm Tiny data fragment with type trees: }
-\mbox{}
-(B:10,(A:34,C:15,E:23):4,D:2):12;
-((A:4,E:22):4,D:2):11;
-\mbox{}
 val COMMA  = ','
-val COLON  = ":"
+val COLON  = ':'
 val SEMI   = ';'
 val LPAREN = '('
 val RPAREN = ')'
 \mbox{}
-type entry = Pstring(COLON) ** COLON ** Puint32
+type entry = Pstring(COLON) ** COLON ** Pfloat32
 \mbox{}
 datatype tree =
     Tree of LPAREN ** tree Parray(COMMA,RPAREN) ** "):" ** Puint32
   | Tip of entry
 \mbox{}
-type trees = (tree ** SEMI) Parray(NL,EOF)
+type source = (tree ** SEMI) Parray(NL,EOF)
+\mbox{}
+{\rm Tiny fragment of Newick data:} 
+\mbox{}
+(((erHomoC:0.28006,erCaelC:0.22089):0.40998,(erHomoA:0.32304,
+(erpCaelC:0.58815,((erHomoB:0.5807,erCaelB:0.23569):0.03586,
+erCaelA:0.38272):0.06516):0.03492):0.14265):0.63594,(TRXHomo:0.65866,
+TRXSacch:0.38791):0.32147,TRXEcoli:0.57336);
 \end{code}
 \caption{Simplified Tree-shaped Newick Data}
 \label{fig:newick}
 \end{figure}
 
-\subsection{Newick}
+\subsection{Recursive Descriptions}
 
-A second interesting example of ad hoc data comes courtesy of Steven
+The original \pads{} design contained analogues of all the 
+simple type constructors described in the previous section.
+Hence, although the syntax of types we just saw
+is more compact and more elegant than the C-style syntax 
+of \pads, we have yet to add any expressive power. 
+The first real step forward for \datatype{} is the introduction
+of recursion through the data type mechanism.  While
+recursion never appeared in the telecommunications and 
+networking data sources \pads{} was initially designed for, it
+appears essential for describing a number of biological
+data sources we have encountered.
+  
+A representative example of such data comes courtesy of Steven
 Kleinstein, program coordinator of Princeton's Picasso project for
 interdisciplinary research in computational sciences.  Kleinstein is
-in the process of building a simulator to study immune response.  Data
-needed for his simulations comes in a Newick format, which is a flat
-representation of trees and used by many biologists~\cite{newick}.  In
-Kleinstein's Newick format (simplified here for expository purposes),
+in the process of building a simulator to study the
+proliferation of B lymphocytes during an immune response.  Data
+needed for his simulations is represented in a variant of the
+Newick format, which is a flat
+representation of trees and used by 
+many biologists~\cite{newick}.  In Newick, 
 leaves of the tree are string labels followed by a colon and a number.
 A parent node in the tree introduces a collection of children by
 placing a sequence of trees within parens.  Following the parens is a
-colon and a number, as is the case for the leaf node (incidentally,
-the numbers are called ``distances'' and represent the number of
-genetic mutations that separate the child from the parent).  Each line
+colon and a number, as is the case for the leaf node.
+The numbers represent the ``distance'' 
+that separates the child from the parent.  In
+Kleinstein's case, the distance is the number of mutations that occur
+in the antibody receptor genes of B lymphocytes.   Each line
 of a file may contain a different tree, terminated by a semi-colon.
 
-\figref{fig:newick} gives a description of Newick and a bit of example
-data.  Despite the relative complexity of the structure of the data,
-the description is remarkably concise.  Notice that the data type
-definition of \cd{tree} is recursive --- there appears to be no
+\figref{fig:newick} gives a description of Newick and a short fragment 
+of example data.  Despite the relative complexity of the structure of the data,
+the description is remarkably concise and elegant.  Notice that the data type
+definition of \cd{tree} is recursive --- we have not been able to find any
 effective description of this data source without it.
 
 \begin{figure}
@@ -202,45 +250,73 @@ effective description of this data source without it.
  dst_addr=192.168.23.10;start_time=1234567890;end_time=1234568000;
  cycle_time=17412|SPECIAL
 \end{verbatim}  
-  \caption{Simplified Network Monitoring Data}
+  \caption{Simplified Network Monitoring Data.  This 
+data containts two alarm records.  Extra newlines 
+were inserted mid-record so the data would fit on a page.}
   \label{fig:darkstar-records}
 \end{figure}
 
-\subsection{\darkstar{}}
+\subsection{Parameterized Descriptions}
 
-Another example comes from the \darkstar{} project, shown in
-Figure~\ref{fig:darkstar-records}. Note that this example is derived
-from a real data format in use at AT\&T. In particular, it is based on
-alarm data recorded by a network link monitor. An alarm signals a
-problem with a network link. Also, it has been formatted to fit on the
-page - individual records do not contain newlines. In our example,
-there are two classes of alarms, indicated with the integers 2 and 3.
-The alarm class is specified first, followed by a colon. When a class
-2 alarm occurs, the ``start'' timestamp is recorded, while when a
-class 3 alarm occurs, the ``clear'' timestamp is recorded.  Next, we
-have an integer indicating the exact type of the alarm.  Following
-this, we expect two pairs of strings, with the strings of each pair
-separated by '='. The first string is a name and the second a string
-value associated with that name. The pairs are separated by a
-semicolon.  The first pairs has name ``dns1'' and the second ``dns2'',
-indicating the DNS names of the parties on either end of the network
-link. Next, the record contains information about the alarm. The
-format of this information differs depending on the type of alarm. For
-alarm 5074, we include a specific set of details about the failure.
-For other alarms, there appears a sequence of name-string pairs of
-unpspecfied length.  Finally, the alarm indicates the service class of
-the network. This value is one of three strings: ``DOMESTIC'',
-``INTERNATIONAL,'' and ``SPECIAL.'' Each field of the alarm is
-separated by a vertical bar, except where otherwise specified.
+The last key feature of \datatype{} is the ability to define
+parameterized descriptions.  In \pads, description parameters
+were limited to values.  In \datatype, descriptions
+maybe parameterized by both values and types.  Type parameterization
+introduces allows descriptions to be
+reused at a variety of different types.  This feature 
+helps make data descriptions
+more concise and allows programmers to define convenient libraries
+of reusable description components.
 
-The details included for alarm 5074 are as follows: a source and
-detination IP address, both encoded as name-IP pairs, with names
-``src\_addr'' and ``dest\_addr.'' These are followed by two
-name-timestamp pairs, with names ``start\_time'' and ``end\_time,''
-indicating the start and end times of the problem. The timestamps are
-10-digits indicating the number of seconds since the epoch, in
-GMT. The last field is a name-integer pair, with name ``cycle\_time,''
-indicating ???. Note that each field is separated by a semicolon.
+Our final example, shown in
+Figure~\ref{fig:darkstar-records}, will illustrate 
+the usefulness of descriptions parameterized by
+both types and values and introduce a couple of other
+useful features as well.   This example displays
+alarm data recorded by a network link monitor
+and used \darkstar{} project at AT\&T.  Each alarm signals some
+problem with a network link.  
+
+Now, at this point, we could write out an English description
+of the \darkstar{} data, and indeed, in an earlier version of this paper
+we did so.  However, English is a terrible specification language
+for ad hoc data, and every description we have attempted to give has not 
+only been imprecise, it has also made for some very 
+boring reading.  Hence, we dispense with the informal
+English and head straight for for the \datatype{} description,
+which is shown in \figref{fig:darkstar-ml}.
+
+% In our example,
+% there are two classes of alarms, indicated with the integers 2 and 3.
+% The alarm class is specified first, followed by a colon. When a class
+% 2 alarm occurs, the ``start'' timestamp is recorded, while when a
+% class 3 alarm occurs, the ``clear'' timestamp is recorded.  Next, we
+% have an integer indicating the exact type of the alarm.  Following
+% this, we expect two pairs of strings, with the strings of each pair
+% separated by '='. The first string is a name and the second a string
+% value associated with that name. The pairs are separated by a
+% semicolon.  The first pair has name ``dns1'' and the second ``dns2'',
+% indicating the DNS names of the parties on either end of the network
+% link. Next, the record contains information about the alarm. The
+% format of this information differs depending on the type of alarm. For
+% alarm 5074, we include a specific set of details about the failure.
+% For other alarms, there appears a sequence of name-string pairs of
+% unpspecfied length.  Finally, the alarm indicates the service class of
+% the network. This value is one of three strings: ``DOMESTIC'',
+% ``INTERNATIONAL,'' and ``SPECIAL.'' Each field of the alarm is
+% separated by a vertical bar, except where otherwise specified.
+
+% The details included for alarm 5074 are as follows: a source and
+% detination IP address, both encoded as name-IP pairs, with names
+% ``src\_addr'' and ``dest\_addr.'' These are followed by two
+% name-timestamp pairs, with names ``start\_time'' and ``end\_time,''
+% indicating the start and end times of the problem. The timestamps are
+% 10-digits indicating the number of seconds since the epoch, in
+% GMT. The last field is a name-integer pair. Note that each field 
+% is separated by a semicolon.
+
+% At this point, the reader might consider for themselves whether or not
+% English is an effective specification language for ad hoc data.
 
 \begin{figure}
   \centering
@@ -249,28 +325,80 @@ indicating ???. Note that each field is separated by a semicolon.
   \caption{Description of \darkstar{} Data.}
   \label{fig:darkstar-ml}
 \end{figure}
-We now turn to the data description, shown in \figref{fig:darkstar-ml}.
-The source type is an array of \cd{alarm}s, where each alarm is a
-\cd{raw\_alarm}, constrained to ensure that the alarm number is
-properly correlated with the timestamps.  We check this correlation
-with the function \cd{checkCorr}.  The type \cd{raw\_alarm} closely
-follows the description above. We highlight a few important features.
-First, we note that the type of the field \cd{info} depends on the
-alarm code, reflecting the text above. More interestingly, the type
-\cd{info} is implemented with a switched datatype, deciding how to
-parse based on the parameter \cd{alarm\_code}.  Next, we note that the
-description includes five different types of name-value pairs. We take
+
+One of the interesting facets of this data source is the fact that
+it contains multiple different types of name-value pairs.  In the
+second definition from the top, \cd{pnvp}, we take
 advantage of both the type and value parameterization of types to
-encode all of these pair types based on one common description,
-\cd{pnvp}. This type is polymorphic in the type of the value and takes
-an arbitrary constraint \cd{c} as an argument. The type \cd{nvp} is
-polymorphic in the type of the value, but takes the expected name of
-the string as an argument. Finally, we note that the type \cd{service}
-is a datatype with only tags for constructors.  Each tag implicitly
-looks in the data for the string that exactly matches the name of the
-tag. For example, the tag \cd{DOMESTIC} attempts to read the string
-``DOMESTIC'' from the data source. This datatype could alternatively
-have been specified as:
+encode all the different 
+variations.\footnote{This fragment of code contains both
+types \cd{Pstring} and \cd{string}.  These types are subtly different
+as the first is the type of an \pvalue{} containing both a string 
+representation and a parse descriptor whereas the second is an 
+ordinary string.  The reader can safely ignore the distinction for now.}    
+The type parameters
+are specified to the left of type name, as is customary in ML.
+To the right of the type name in parentheses, we give the
+value parameter and its type. 
+In the case of \cd{pnvp}, there is a type parameter name \cd{'a}
+and a value parameter named \cd{f}.  Informally,
+\cd{'a pnvp(f)} is a name-value pair where the value has type \cd{'a}
+and the name must satisfy the predicate \cd{f}.  More precisely,
+\cd{pnvp} is defined to be
+a record with three fields.  The first field of the record
+has been given a constrained type.  In general, constrained types have the
+form \cd{\{x:T | M\}} where \cd{M} is an arbitrary pure boolean 
+expression.  Data \cd{d} satisfies this description if it satisfies
+\cd{T} and boolean \cd{M} with the \pvalue{} \cd{d} substituted for \cd{x}
+evaluates to true.  If the boolean evaluates to false, the
+data contains a semantic error.  
+
+The \cd{pnvp} type is used in both of the following type definitions.
+In the case of the \cd{nvp} definition, the predicate is instantiated
+with a test for a specific string but the type parameter remains 
+abstract.  Later in the description, \cd{nvp}'s
+are used with ip addresses, timestamps and integers. In the \cd{nvp\_a} 
+definition, the name can be arbitrary, but the value must have 
+type string.
+
+% The source type is an array of \cd{alarm}s, where each alarm is a
+% \cd{raw\_alarm}, constrained to ensure that the alarm number is
+% properly correlated with the timestamps.  We check this correlation
+% with the function \cd{checkCorr}.  The type \cd{raw\_alarm} closely
+% follows the description above. We highlight a few important features.
+% First, we note that the type of the field \cd{info} depends on the
+% alarm code, reflecting the text above. More interestingly, the type
+% \cd{info} is implemented with a switched datatype, deciding how to
+% parse based on the parameter \cd{alarm\_code}.  Next, we note that the
+% description includes five different types of name-value pairs. We take
+% advantage of both the type and value parameterization of types to
+% encode all of these pair types based on one common description,
+% \cd{pnvp}. This type is polymorphic in the type of the value and takes
+% an arbitrary constraint \cd{c} as an argument. The type \cd{nvp} is
+% polymorphic in the type of the value, but takes the expected name of
+% the string as an argument. 
+
+The \darkstar{} description also introduces two new forms of
+datatypes.  The first new form appears in the \cd{info} type.
+This datatype is parameterized by an \cd{alarm\_code}.
+Rather than 
+determine the branch of the datatype to chose
+based on the data about to be parsed, the decision is made based on
+the \cd{alarm\_code}, data which has likely been extracted from some previous
+point in the source.  More specifically, if the alarm code is
+\cd{5075}, the format specification given by the 
+\cd{Details} constructor will be used to parse
+the current data.  Otherwise, the format given by the \cd{Generic} constructor
+will be used to parse the current data.  
+
+The second new form of datatype appears in the  \cd{service} type.
+Here, the constructors specify no types for their arguments.  
+Our convention in this case
+is to look for string data that matches the name of the
+constructor. For example, the constructor \cd{DOMESTIC} 
+is associated with the string
+``DOMESTIC.'' This type could have been specified (more verbosely)
+using the ordinary form for datatypes together with singletons:
 \begin{code}
 datatype service =
     DOMESTIC      of "DOMESTIC"
@@ -278,12 +406,8 @@ datatype service =
   | SPECIAL       of "SPECIAL"
 \end{code}
 
-Note that the base type \cd{Pstring} takes a string indicating a set
-of acceptable terminator characters for the string. So, a
-\cd{Pstring(";|")} can be terminated by either a semicolon or a
-vertical bar.
 
-\subsection{Syntax}
+\subsection{Complete Syntax}
 
 \begin{figure}
   \centering
@@ -292,9 +416,8 @@ vertical bar.
   \label{fig:syntax-dd}
 \end{figure}
 
-We present the formal syntax of data descriptions, including that used
-in the examples, in \figref{fig:syntax-dd}. We will specify the
-definition of terms \cd{M} in the next section, \figref{fig:syntax-terms}.
+\figref{fig:syntax-dd}. 
+presents the complete syntax of \datatype{} data descriptions.
 
 %\subsection{The \pads{} Weltanshauung}
 \subsection{Error Representation}
