@@ -3,10 +3,10 @@ type timestamp = Ptimestamp_explicit_FW(10, "%S", GMT)
 \mbox{}
 type 'a pnvp(f:Pstring -> bool) =
       \{ name : \{name : Pstring("=") | f name\}; 
-         '='; 
-         val : 'a \}
+        '='; 
+        val : 'a \}
 type 'a nvp(name:string) = 'a pnvp(fn s = (s = name))
-type nvp_a = Pstring(";|") ** string pnvp(fn s = true)
+type nvp_a = Pstring(";|") pnvp(fn s = true)
 \mbox{}
 type details = \{
       source      : Pip nvp("src_addr");
@@ -28,8 +28,8 @@ type raw_alarm = \{
  ':';  start    : timestamp Popt;
  '|';  clear    : timestamp Popt;
  '|';  code     : Puint32;
- '|';  src_dns  : Pstring(";|") ** nvp("dns1");
- ';';  dest_dns : Pstring(";|") ** nvp("dns2");
+ '|';  src_dns  : Pstring(";|") nvp("dns1");
+ ';';  dest_dns : Pstring(";|") nvp("dns2");
  '|';  info     : info(code);
  '|';  service  : service;
 \}
