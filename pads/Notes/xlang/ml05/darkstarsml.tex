@@ -24,14 +24,14 @@ datatype info(alarm_code : Puint32) =
 datatype service = DOMESTIC | INTERNATIONAL | SPECIAL
 \mbox{}
 type raw_alarm = \{
-       alarm    : \{ alarm : Puint32 | alarm == 2 orelse alarm == 3\};
+       alarm    : \{ alarm : Puint32 | alarm = 2 orelse alarm = 3\};
  ':';  start    : timestamp Popt;
  '|';  clear    : timestamp Popt;
  '|';  code     : Puint32;
  '|';  src_dns  : Pstring(";|") nvp("dns1");
  ';';  dest_dns : Pstring(";|") nvp("dns2");
  '|';  info     : info(code);
- '|';  service  : service;
+ '|';  service  : service
 \}
 \mbox{}
 fun checkCorr(ra:raw_alarm):bool =

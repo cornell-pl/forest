@@ -349,17 +349,17 @@ a record with three fields.  The first field of the record
 has been given a constrained type.  In general, constrained types have the
 form \cd{\{x:T | M\}} where \cd{M} is an arbitrary pure boolean 
 expression.  Data \cd{d} satisfies this description if it satisfies
-\cd{T} and boolean \cd{M} with the \pvalue{} \cd{d} substituted for \cd{x}
-evaluates to true.  If the boolean evaluates to false, the
+\cd{T} and boolean \cd{M}evaluates to true when the \pvalue{} \cd{d}
+is substituted for \cd{x}.  If the boolean evaluates to false, the
 data contains a semantic error.  
 
 The \cd{pnvp} type is used in both of the following type definitions.
 In the case of the \cd{nvp} definition, the predicate is instantiated
 with a test for a specific string but the type parameter remains 
-abstract.  Later in the description, \cd{nvp}'s
-are used with ip addresses, timestamps and integers. In the \cd{nvp\_a} 
+abstract.  In the \cd{nvp\_a} 
 definition, the name can be arbitrary, but the value must have 
-type string.
+type string. Later in the description, \cd{nvp}'s
+are used with ip addresses, timestamps and integers. 
 
 % The source type is an array of \cd{alarm}s, where each alarm is a
 % \cd{raw\_alarm}, constrained to ensure that the alarm number is
@@ -382,7 +382,7 @@ The \darkstar{} description also introduces two new forms of
 datatypes.  The first new form appears in the \cd{info} type.
 This datatype is parameterized by an \cd{alarm\_code}.
 Rather than 
-determine the branch of the datatype to chose
+determine the branch of the datatype to choose
 based on the data about to be parsed, the decision is made based on
 the \cd{alarm\_code}, data which has likely been extracted from some previous
 point in the source.  More specifically, if the alarm code is
