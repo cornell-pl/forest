@@ -130,12 +130,12 @@ type header = \{
   \mbox{}
 type d_alarm = \{
        header   : header;
- '|';  details  : details;
+ '|';  details  : details
  \}
 \mbox{}
 type g_alarm = \{
        header   : header;
- '|';  generic  : nsp_a Parray(';', '|');
+ '|';  generic  : nsp_a Parray(';', '|')
 \}
 \mbox{}
 fun splitAlarm (ra : raw_alarm): d_alarm opt * g_alarm opt
