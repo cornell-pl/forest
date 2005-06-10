@@ -1,4 +1,3 @@
-{\small
 \begin{bnf}
 \name{Types} \meta{F} \::= 
   T           \descr{type of \pvalue{}} 
@@ -24,7 +23,8 @@
 \nlalt \{x = {M_1} \cvb {M_2}\}       \descr{constrained type, with
   $M_2$ the constraint}
 \nlalt \mcd{Parray}(M, M_{sep}, M_{term})   \descr{array; first element is stream}
-\\
+\end{bnf}
+\begin{bnf}
 \name{Terms} \meta{M} \::= 
        x                        \descr{variable}
 \nlalt N                        \descr{\core{} terms}
@@ -46,7 +46,7 @@
 \name{Matches}\meta{ms} \::= 
   \nont{pat} \Rightarrow M \| \nont{pat} \Rightarrow M \cvb \nont{ms}
 \end{bnf}
-}
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "paper"
