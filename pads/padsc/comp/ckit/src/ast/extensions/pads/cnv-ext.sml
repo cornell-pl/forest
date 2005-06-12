@@ -1824,6 +1824,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
               fun emitExperiment eds = emit (!(#outputExper(PInput.inputs)), eds)
               fun emitXML   eds = emit (!(#outputXML(PInput.inputs)), eds)
               fun emitHist  eds = emit (!(#outputHist(PInput.inputs)), eds)
+              fun emitCluster eds = emit (!(#outputCluster(PInput.inputs)), eds)
 	      fun emitPred  eds = emitRead eds
 
               fun isGalax () = (!(#outputXML(PInput.inputs)))
@@ -2061,7 +2062,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
 	              (* Generate Hist functions typedef case *)
-	              val histEDs = Hist.genHistTypedef (name, baseTy, canonicalPCT, pdPCT)
+	              val histEDs = Hist.genTypedef (name, baseTy, canonicalPCT, pdPCT)
+
+	              (* Generate Cluster functions typedef case *)
+	              val clusterEDs = Cluster.genTypedef (name, baseTy, canonicalPCT, pdPCT)
 
                       (* Generate Write function typedef case *)
 		      val writeName = writeSuf name
@@ -2130,6 +2134,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      @ (emitPred isFunEDs)
                       @ (emitAccum accumEDs)
                       @ (emitHist histEDs)
+                      @ (emitCluster clusterEDs)
                       @ (emitWrite writeFunEDs)
                       @ (emitWrite fmtFunEDs)
   		      @ (emitXML galaxEDs )
@@ -4313,7 +4318,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
       		 val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
 		 (* Generate histogram declarations, array case *)
-		 val histEDs = Hist.genHistArray (name, baseTy, canonicalPCT, pdPCT)
+		 val histEDs = Hist.genArray (name, baseTy, canonicalPCT, pdPCT)
+
+		 (* Generate cluster declarations, array case *)
+		 val clusterEDs = Cluster.genArray (name, baseTy, canonicalPCT, pdPCT)
 
 
 		 val galaxStructDecls = 
@@ -4331,6 +4339,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 @ (emitPred isFunEDs)
                  @ (emitAccum accumEDs)
 	         @ (emitHist histEDs)
+	         @ (emitCluster clusterEDs)
                  @ (emitWrite writeFunEDs)
 		 @ (emitWrite fmtFunEDs)
                  @ (emitXML galaxEDs)
@@ -5315,7 +5324,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
 		      (* Generate histogram declarations, union case *)
-		      val histEDs = Hist.genHistUnion (isPadsTy, getPadsName) (name, variants, canonicalPCT, pdPCT, fromOpt)
+		      val histEDs = Hist.genUnion (isPadsTy, getPadsName) (name, variants, canonicalPCT, pdPCT, fromOpt)
+
+		      (* Generate cluster declarations, union case *)
+		      val clusterEDs = Cluster.genUnion (isPadsTy, getPadsName) (name, variants, canonicalPCT, pdPCT, fromOpt)
 
                       (* Generate Write function union case *)
 		      fun genWriteFull ({pty :PX.Pty, args:pcexp list, name:string, 
@@ -5550,6 +5562,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     @ (emitPred isFunEDs)
 		     @ (emitAccum accumEDs)
 		     @ (emitHist histEDs)
+		     @ (emitCluster clusterEDs)
  		     @ (emitWrite fmtFunEDs)
                      @ (emitXML galaxEDs)
 		 end
@@ -6239,7 +6252,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
 		      (* Generate histogram declarations, struct case *)
-		      val histEDs = Hist.genHistStruct (isPadsTy, getPadsName) (name, fields, canonicalPCT, pdPCT)
+		      val histEDs = Hist.genStruct (isPadsTy, getPadsName) (name, fields, canonicalPCT, pdPCT)
+
+
+		      (* Generate cluster declarations, struct case *)
+		      val clusterEDs = Cluster.genStruct (isPadsTy, getPadsName) (name, fields, canonicalPCT, pdPCT)
 
 													 
 	              (* Generate Write function struct case *)
@@ -6520,6 +6537,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	              @ (emitPred isFunEDs)
                       @ (emitAccum accumEDs)
                       @ (emitHist histEDs)
+                      @ (emitCluster clusterEDs)
                       @ (emitWrite writeFunEDs)
    		      @ (emitWrite fmtFunEDs)
   		      @ (emitXML galaxEDs)
@@ -6708,7 +6726,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		   val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
                    (* -- generate histogram functions *)
-                   val histEDs = Hist.genHistEnum(name, canonicalPCT, pdPCT)
+                   val histEDs = Hist.genEnum(name, canonicalPCT, pdPCT)
+
+                   (* -- generate cluster functions *)
+                   val clusterEDs = Cluster.genEnum(name, canonicalPCT, pdPCT)
  
                    (* Generate Write functions (enum case) *)
 		   val writeName = writeSuf name
@@ -6777,6 +6798,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                 @ (emitPred isFunEDs)
                 @ (emitAccum accumEDs)
                 @ (emitHist histEDs)
+                @ (emitCluster clusterEDs)
                 @ (emitWrite writeFunEDs)
  		@ (emitWrite fmtFunEDs)
                 @ (emitXML galaxEDs)

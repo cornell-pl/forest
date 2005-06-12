@@ -117,6 +117,7 @@ Group is
         extensions/pads/plib.sml
 
         extensions/pads/hist.sml
+        extensions/pads/cluster.sml
 
 	(* pretty printer extensions *)
 	pp/extensions/pads/pp-ast-paid-adornment-sig.sml

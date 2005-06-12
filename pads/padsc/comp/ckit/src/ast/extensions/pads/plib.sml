@@ -283,14 +283,6 @@ struct
   val intAccPCT    = P.makeTypedefPCT "Pint32_acc"
   val intCvtPCT    = P.makeTypedefPCT "Pint32_map_fn"
 
-  val uint32Hist    = "Puint32_hist"
-  val uint32HistPCT = P.makeTypedefPCT "Puint32_hist"
-  val intHist       = "Pint32_hist"
-  val intHistPCT    = P.makeTypedefPCT "Pint32_hist"
-  val defaultHistPCT = P.makeTypedefPCT "P_hist"
-
-
-
   val sfioPCT      = P.ptrPCT (P.makeTypedefPCT "Sfio_t")
 
 
