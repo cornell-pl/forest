@@ -437,7 +437,7 @@ structure Cluster = struct
 
 	  fun genAddFull ({pty: PX.Pty, name: string,isVirtual: bool, ...}:BU.pfieldty) = 
 	      if isVirtual then []
-	      else BU.chkAddFun(addSuf (lookupAnalysis pty), P.getFieldX(analysis,name),  P.getFieldX(pd, name), P.getFieldX(rep,name))
+	      else chkAddFun(addSuf (lookupAnalysis pty), P.getFieldX(analysis,name),  P.getFieldX(pd, name), P.getFieldX(rep,name))
 
 	  fun genAddBrief e = []
 	  fun genAddMan (ptyfuns as (isPadsTy, getPadsName)) ({tyname, name,isVirtual,...}:BU.pmanty) = 
