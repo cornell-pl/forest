@@ -2677,6 +2677,10 @@ do { \
 #include "pads-hist.h"
 
 /* ================================================================================ */
+/* INCLUDE FILE FOR HISTOGRAMS */
+#include "pads-cluster.h"
+
+/* ================================================================================ */
 /* INCLUDE FILES FOR BUILT-IN TYPES */
 
 #include "ptypes/Pb_int.h"

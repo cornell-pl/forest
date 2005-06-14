@@ -31,46 +31,9 @@ typedef struct S_link clink;
 /* Data structure defined with public access. */
 typedef double   (*Distri_fn) (double, double, double);
 
-/* Map function maps between a given type and the Pfloat64 type */
-typedef Perror_t (*P_toFloat_fn)   (void*, Pfloat64*);
-typedef Perror_t (*P_fromFloat_fn) (Pfloat64, void*);
-
-typedef Perror_t (*Pint8_toFloat_fn)        (Pint8*, Pfloat64*);
-typedef Perror_t (*Pint8_fromFloat_fn)      (Pfloat64, Pint8*);
-typedef Perror_t (*Pint16_toFloat_fn)       (Pint16*, Pfloat64*);
-typedef Perror_t (*Pint16_fromFloat_fn)     (Pfloat64, Pint16*);
-typedef Perror_t (*Pint32_toFloat_fn)       (Pint32*, Pfloat64*);
-typedef Perror_t (*Pint32_fromFloat_fn)     (Pfloat64, Pint32*);
-typedef Perror_t (*Pint64_toFloat_fn)       (Pint64*, Pfloat64*);
-typedef Perror_t (*Pint64_fromFloat_fn)     (Pfloat64, Pint64*);
-typedef Perror_t (*Puint8_toFloat_fn)       (Puint8*, Pfloat64*);
-typedef Perror_t (*Puint8_fromFloat_fn)     (Pfloat64, Puint8*);
-typedef Perror_t (*Puint16_toFloat_fn)      (Puint16*, Pfloat64*);
-typedef Perror_t (*Puint16_fromFloat_fn)    (Pfloat64, Puint16*);
-typedef Perror_t (*Puint32_toFloat_fn)      (Puint32*, Pfloat64*);
-typedef Perror_t (*Puint32_fromFloat_fn)    (Pfloat64, Puint32*);
-typedef Perror_t (*Puint64_toFloat_fn)      (Puint64*, Pfloat64*);
-typedef Perror_t (*Puint64_fromFloat_fn)    (Pfloat64, Puint64*);
-typedef Perror_t (*Pfloat32_toFloat_fn)     (Pfloat32*, Pfloat64*);
-typedef Perror_t (*Pfloat32_fromFloat_fn)   (Pfloat64, Pfloat32*);
-typedef Perror_t (*Pfloat64_toFloat_fn)     (Pfloat64*, Pfloat64*);
-typedef Perror_t (*Pfloat64_fromFloat_fn)   (Pfloat64, Pfloat64*);
-typedef Perror_t (*Pchar_toFloat_fn)        (Pchar*, Pfloat64*);
-typedef Perror_t (*Pchar_fromFloat_fn)      (Pfloat64, Pchar*);
-typedef Perror_t (*Pstring_toFloat_fn)      (Pstring*, Pfloat64*);
-typedef Perror_t (*Pstring_fromFloat_fn)    (Pfloat64, Pstring*);
-typedef Perror_t (*Pip_toFloat_fn)          (Pip*, Pfloat64*);
-typedef Perror_t (*Pip_fromFloat_fn)        (Pfloat64, Pip*);
-typedef Perror_t (*Ptimestamp_toFloat_fn)   (Ptimestamp*, Pfloat64*);
-typedef Perror_t (*Ptimestamp_fromFloat_fn) (Pfloat64, Ptimestamp*);
-typedef Perror_t (*Ptime_toFloat_fn)        (Ptime*, Pfloat64*);
-typedef Perror_t (*Ptime_fromFloat_fn)      (Pfloat64, Ptime*);
-typedef Perror_t (*Pdate_toFloat_fn)        (Pdate*, Pfloat64*);
-typedef Perror_t (*Pdate_fromFloat_fn)      (Pfloat64, Pdate*);
-
 typedef struct P_cluster_s {
   /* Fields with public access */
-  P_distri       type;           // Distribution type of each cluster.
+  P_distri       cType;          // Distribution type of each cluster.
   Pint32         k;              // Number of clusters.
   Pfloat64       open;           // Threshold for opening a new cluster.
   Pfloat64       initVar;        // Initial variance for each cluster.
@@ -254,32 +217,25 @@ Perror_t Pdate_cluster_report2io          (P_t *pads, Sfio_t *outstr, const char
 Perror_t Pdate_cluster_report             (P_t *pads, const char *prefix, const char *what, int nst, Pdate_cluster *c);
 
 /* Functions defined for private use only */
-Perror_t Pint8_report       (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Pint16_report      (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Pint32_report      (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Pint64_report      (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Puint8_report      (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Puint16_report     (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Puint32_report     (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Puint64_report     (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Pint8_map_report   (Sfio_t *outstr, Pint8_map_fn fn, Pint8_cluster *c);
-Perror_t Pint16_map_report  (Sfio_t *outstr, Pint16_map_fn fn, Pint16_cluster *c);
-Perror_t Pint32_map_report  (Sfio_t *outstr, Pint32_map_fn fn, Pint32_cluster *c);
-Perror_t Pint64_map_report  (Sfio_t *outstr, Pint64_map_fn fn, Pint64_cluster *c);
-Perror_t Puint8_map_report  (Sfio_t *outstr, Puint8_map_fn fn, Puint8_cluster *c);
-Perror_t Puint16_map_report (Sfio_t *outstr, Puint16_map_fn fn, Puint16_cluster *c);
-Perror_t Puint32_map_report (Sfio_t *outstr, Puint32_map_fn fn, Puint32_cluster *c);
-Perror_t Puint64_map_report (Sfio_t *outstr, Puint64_map_fn fn, Puint64_cluster *c);
-Perror_t Pfloat32_report    (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Pfloat64_report    (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Pchar_report       (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Pstring_report     (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Pip_report         (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Ptimestamp_report  (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Ptime_report       (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
-Perror_t Pdate_report       (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pint8_cluster_report_private       (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pint16_cluster_report_private      (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pint32_cluster_report_private      (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pint64_cluster_report_private      (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Puint8_cluster_report_private      (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Puint16_cluster_report_private     (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Puint32_cluster_report_private     (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Puint64_cluster_report_private     (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pfloat32_cluster_report_private    (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pfloat64_cluster_report_private    (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pchar_cluster_report_private       (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pstring_cluster_report_private     (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pip_cluster_report_private         (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Ptimestamp_cluster_report_private  (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Ptime_cluster_report_private       (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
+Perror_t Pdate_cluster_report_private       (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2);
 
 /* Functions defined for private use only */
+void     cluster_allocateS  (P_cluster *c);
 void     K_mean_add         (P_cluster *c, Pfloat64 d);
 void     Exponential_add    (P_cluster *c, Pfloat64 d);
 void     Laplace_add        (P_cluster *c, Pfloat64 d);

@@ -28,7 +28,7 @@ PCGEN = $(SRC_INCDIR)/pcgen-macros-gen.h
 PGLXGEN_IN = $(SRC_INCDIR)/pglx-codegen-macros.h
 PGLXGEN = $(SRC_INCDIR)/pglx-codegen-macros-gen.h
 
-INSTALL_INCLUDES = io_disc.h rbuf.h pads.h pads-private.h pads-internal.h pcgen-macros-gen.h pads-hist.h
+INSTALL_INCLUDES = io_disc.h rbuf.h pads.h pads-private.h pads-internal.h pcgen-macros-gen.h pads-hist.h pads-cluster.h
 
 TEMPLATE_INCLUDES = accum_report.h read_and_reread.h read_write.h init_select_act_done.h \
         read_format.h just_read.h read_orig_write_xml.h

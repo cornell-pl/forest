@@ -6,38 +6,38 @@
 #include "pads-internal.h"
 
 /* Default mapping functions, can be overwritten by users */
-Perror_t Pint8_to        (Pint8 *i, Pfloat64 *f)      { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Pint8_from      (Pfloat64 f, Pint8 *v)       { *v = (Pint8)f; return P_OK; }
-Perror_t Pint16_to       (Pint16 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Pint16_from     (Pfloat64 f, Pint16 *v)      { *v = (Pint16)f; return P_OK; }
-Perror_t Pint32_to       (Pint32 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Pint32_from     (Pfloat64 f, Pint32 *v)      { *v = (Pint32)f; return P_OK; }
-Perror_t Pint64_to       (Pint64 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Pint64_from     (Pfloat64 f, Pint64 *v)      { *v = (Pint64)f; return P_OK; }
-Perror_t Puint8_to       (Puint8 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Puint8_from     (Pfloat64 f, Puint8 *v)      { *v = (Puint8)f; return P_OK; }
-Perror_t Puint16_to      (Puint16 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Puint16_from    (Pfloat64 f, Puint16 *v)     { *v = (Puint16)f; return P_OK; }
-Perror_t Puint32_to      (Puint32 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Puint32_from    (Pfloat64 f, Puint32 *v)     { *v = (Puint32)f; return P_OK; }
-Perror_t Puint64_to      (Puint64 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Puint64_from    (Pfloat64 f, Puint64 *v)     { *v = (Puint64)f; return P_OK; }
-Perror_t Pfloat32_to     (Pfloat32 *i, Pfloat64 *o)   { *o = (Pfloat64)(*i); return P_OK; }
-Perror_t Pfloat32_from   (Pfloat64 i, Pfloat32 *o)    { *o = (Pfloat32)i; return P_OK; }
-Perror_t Pfloat64_to     (Pfloat64 *i, Pfloat64 *o)   { *o = *i; return P_OK; }
-Perror_t Pfloat64_from   (Pfloat64 i, Pfloat64 *o)    { *o = i; return P_OK; }
-Perror_t Pchar_to        (Pchar *c, Pfloat64 *f)      { *f = (Pfloat64)((Puint8)(*c)); return P_OK; }
-Perror_t Pchar_from      (Pfloat64 f, Pchar *c)       { *c = (Pchar)('a'); return P_OK; }
-Perror_t Pstring_to      (Pstring *s, Pfloat64 *f)    { *f = 0; return P_OK; }
-Perror_t Pstring_from    (Pfloat64 f, Pstring *s)     { s->str = "non defined."; s->len = 12; return P_OK; }
-Perror_t Pip_to          (Pip *i, Pfloat64 *f)        { *f = (Pfloat64)((Puint32)(*i)); return P_OK; }
-Perror_t Pip_from        (Pfloat64 f, Pip *i)         { *i = (Puint32)f; return P_OK; }
-Perror_t Ptimestamp_to   (Ptimestamp *t, Pfloat64 *f) { *f = (Pfloat64)((Puint64)(*t)); return P_OK; }
-Perror_t Ptimestamp_from (Pfloat64 f, Ptimestamp *t)  { *t = (Ptimestamp)((Puint64)f); return P_OK; }
-Perror_t Ptime_to        (Ptime *t, Pfloat64 *f)      { *f = (Pfloat64)((Puint64)(*t)); return P_OK; }
-Perror_t Ptime_from      (Pfloat64 f, Ptime *t)       { *t = (Ptime)((Puint64)f); return P_OK; }
-Perror_t Pdate_to        (Pdate *d, Pfloat64 *f)      { *f = (Pfloat64)((Puint64)(*d)); return P_OK; }
-Perror_t Pdate_from      (Pfloat64 f, Pdate *d)       { *d = (Pdate)((Puint64)f); return P_OK; }
+static Perror_t Pint8_to        (Pint8 *i, Pfloat64 *f)      { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pint8_from      (Pfloat64 f, Pint8 *v)       { *v = (Pint8)f; return P_OK; }
+static Perror_t Pint16_to       (Pint16 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pint16_from     (Pfloat64 f, Pint16 *v)      { *v = (Pint16)f; return P_OK; }
+static Perror_t Pint32_to       (Pint32 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pint32_from     (Pfloat64 f, Pint32 *v)      { *v = (Pint32)f; return P_OK; }
+static Perror_t Pint64_to       (Pint64 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pint64_from     (Pfloat64 f, Pint64 *v)      { *v = (Pint64)f; return P_OK; }
+static Perror_t Puint8_to       (Puint8 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Puint8_from     (Pfloat64 f, Puint8 *v)      { *v = (Puint8)f; return P_OK; }
+static Perror_t Puint16_to      (Puint16 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Puint16_from    (Pfloat64 f, Puint16 *v)     { *v = (Puint16)f; return P_OK; }
+static Perror_t Puint32_to      (Puint32 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Puint32_from    (Pfloat64 f, Puint32 *v)     { *v = (Puint32)f; return P_OK; }
+static Perror_t Puint64_to      (Puint64 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Puint64_from    (Pfloat64 f, Puint64 *v)     { *v = (Puint64)f; return P_OK; }
+static Perror_t Pfloat32_to     (Pfloat32 *i, Pfloat64 *o)   { *o = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pfloat32_from   (Pfloat64 i, Pfloat32 *o)    { *o = (Pfloat32)i; return P_OK; }
+static Perror_t Pfloat64_to     (Pfloat64 *i, Pfloat64 *o)   { *o = *i; return P_OK; }
+static Perror_t Pfloat64_from   (Pfloat64 i, Pfloat64 *o)    { *o = i; return P_OK; }
+static Perror_t Pchar_to        (Pchar *c, Pfloat64 *f)      { *f = (Pfloat64)((Puint8)(*c)); return P_OK; }
+static Perror_t Pchar_from      (Pfloat64 f, Pchar *c)       { *c = (Pchar)('a'); return P_OK; }
+static Perror_t Pstring_to      (Pstring *s, Pfloat64 *f)    { *f = 0; return P_OK; }
+static Perror_t Pstring_from    (Pfloat64 f, Pstring *s)     { s->str = "non defined."; s->len = 12; return P_OK; }
+static Perror_t Pip_to          (Pip *i, Pfloat64 *f)        { *f = (Pfloat64)((Puint32)(*i)); return P_OK; }
+static Perror_t Pip_from        (Pfloat64 f, Pip *i)         { *i = (Puint32)f; return P_OK; }
+static Perror_t Ptimestamp_to   (Ptimestamp *t, Pfloat64 *f) { *f = (Pfloat64)((Puint64)(*t)); return P_OK; }
+static Perror_t Ptimestamp_from (Pfloat64 f, Ptimestamp *t)  { *t = (Ptimestamp)((Puint64)f); return P_OK; }
+static Perror_t Ptime_to        (Ptime *t, Pfloat64 *f)      { *f = (Pfloat64)((Puint64)(*t)); return P_OK; }
+static Perror_t Ptime_from      (Pfloat64 f, Ptime *t)       { *t = (Ptime)((Puint64)f); return P_OK; }
+static Perror_t Pdate_to        (Pdate *d, Pfloat64 *f)      { *f = (Pfloat64)((Puint64)(*d)); return P_OK; }
+static Perror_t Pdate_from      (Pfloat64 f, Pdate *d)       { *d = (Pdate)((Puint64)f); return P_OK; }
 
 static const char *PDCI_hdr_strings[] = {
   "*****************************************************************************************************\n",
@@ -123,9 +123,9 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
   Pfloat64 d; \
   Perror_t res; \
 \
-  if (h->ind == h->N) { \
+  if (h->ind == h->N || h->ind > h->N) { \
     printf("*** Warning: Full histogram cleared without reported *** \n"); \
-    type ## _hist_cleanup(pads, h); \ 
+    type ## _hist_reset(pads, h); \
   } \
   res = (*(type ## _toFloat_fn) (h->toFloat)) (rep, &d); \
   d = d / (Pfloat64)h->scale; \

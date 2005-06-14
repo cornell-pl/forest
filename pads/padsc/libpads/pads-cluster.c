@@ -20,38 +20,38 @@ Pfloat64 Gaussian (Pfloat64 mean, Pfloat64 var, Pfloat64 x) {
 }
 
 /* Default mapping functions, can be overwritten by users */
-Perror_t Pint8_to        (Pint8 *i, Pfloat64 *f)      { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Pint8_from      (Pfloat64 f, Pint8 *v)       { *v = (Pint8)f; return P_OK; }
-Perror_t Pint16_to       (Pint16 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Pint16_from     (Pfloat64 f, Pint16 *v)      { *v = (Pint16)f; return P_OK; }
-Perror_t Pint32_to       (Pint32 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Pint32_from     (Pfloat64 f, Pint32 *v)      { *v = (Pint32)f; return P_OK; }
-Perror_t Pint64_to       (Pint64 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Pint64_from     (Pfloat64 f, Pint64 *v)      { *v = (Pint64)f; return P_OK; }
-Perror_t Puint8_to       (Puint8 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Puint8_from     (Pfloat64 f, Puint8 *v)      { *v = (Puint8)f; return P_OK; }
-Perror_t Puint16_to      (Puint16 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Puint16_from    (Pfloat64 f, Puint16 *v)     { *v = (Puint16)f; return P_OK; }
-Perror_t Puint32_to      (Puint32 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Puint32_from    (Pfloat64 f, Puint32 *v)     { *v = (Puint32)f; return P_OK; }
-Perror_t Puint64_to      (Puint64 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
-Perror_t Puint64_from    (Pfloat64 f, Puint64 *v)     { *v = (Puint64)f; return P_OK; }
-Perror_t Pfloat32_to     (Pfloat32 *i, Pfloat64 *o)   { *o = (Pfloat64)(*i); return P_OK; }
-Perror_t Pfloat32_from   (Pfloat64 i, Pfloat32 *o)    { *o = (Pfloat32)i; return P_OK; }
-Perror_t Pfloat64_to     (Pfloat64 *i, Pfloat64 *o)   { *o = *i; return P_OK; }
-Perror_t Pfloat64_from   (Pfloat64 i, Pfloat64 *o)    { *o = i; return P_OK; }
-Perror_t Pchar_to        (Pchar *c, Pfloat64 *f)      { *f = (Pfloat64)((Puint8)(*c)); return P_OK; }
-Perror_t Pchar_from      (Pfloat64 f, Pchar *c)       { *c = (Pchar)('a'); return P_OK; }
-Perror_t Pstring_to      (Pstring *s, Pfloat64 *f)    { *f = 0; return P_OK; }
-Perror_t Pstring_from    (Pfloat64 f, Pstring *s)     { s->str = "non defined."; s->len = 12; return P_OK; }
-Perror_t Pip_to          (Pip *i, Pfloat64 *f)        { *f = (Pfloat64)((Puint32)(*i)); return P_OK; }
-Perror_t Pip_from        (Pfloat64 f, Pip *i)         { *i = (Puint32)f; return P_OK; }
-Perror_t Ptimestamp_to   (Ptimestamp *t, Pfloat64 *f) { *f = (Pfloat64)((Puint64)(*t)); return P_OK; }
-Perror_t Ptimestamp_from (Pfloat64 f, Ptimestamp *t)  { *t = (Ptimestamp)((Puint64)f); return P_OK; }
-Perror_t Ptime_to        (Ptime *t, Pfloat64 *f)      { *f = (Pfloat64)((Puint64)(*t)); return P_OK; }
-Perror_t Ptime_from      (Pfloat64 f, Ptime *t)       { *t = (Ptime)((Puint64)f); return P_OK; }
-Perror_t Pdate_to        (Pdate *d, Pfloat64 *f)      { *f = (Pfloat64)((Puint64)(*d)); return P_OK; }
-Perror_t Pdate_from      (Pfloat64 f, Pdate *d)       { *d = (Pdate)((Puint64)f); return P_OK; }
+static Perror_t Pint8_to        (Pint8 *i, Pfloat64 *f)      { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pint8_from      (Pfloat64 f, Pint8 *v)       { *v = (Pint8)f; return P_OK; }
+static Perror_t Pint16_to       (Pint16 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pint16_from     (Pfloat64 f, Pint16 *v)      { *v = (Pint16)f; return P_OK; }
+static Perror_t Pint32_to       (Pint32 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pint32_from     (Pfloat64 f, Pint32 *v)      { *v = (Pint32)f; return P_OK; }
+static Perror_t Pint64_to       (Pint64 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pint64_from     (Pfloat64 f, Pint64 *v)      { *v = (Pint64)f; return P_OK; }
+static Perror_t Puint8_to       (Puint8 *i, Pfloat64 *f)     { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Puint8_from     (Pfloat64 f, Puint8 *v)      { *v = (Puint8)f; return P_OK; }
+static Perror_t Puint16_to      (Puint16 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Puint16_from    (Pfloat64 f, Puint16 *v)     { *v = (Puint16)f; return P_OK; }
+static Perror_t Puint32_to      (Puint32 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Puint32_from    (Pfloat64 f, Puint32 *v)     { *v = (Puint32)f; return P_OK; }
+static Perror_t Puint64_to      (Puint64 *i, Pfloat64 *f)    { *f = (Pfloat64)(*i); return P_OK; }
+static Perror_t Puint64_from    (Pfloat64 f, Puint64 *v)     { *v = (Puint64)f; return P_OK; }
+static Perror_t Pfloat32_to     (Pfloat32 *i, Pfloat64 *o)   { *o = (Pfloat64)(*i); return P_OK; }
+static Perror_t Pfloat32_from   (Pfloat64 i, Pfloat32 *o)    { *o = (Pfloat32)i; return P_OK; }
+static Perror_t Pfloat64_to     (Pfloat64 *i, Pfloat64 *o)   { *o = *i; return P_OK; }
+static Perror_t Pfloat64_from   (Pfloat64 i, Pfloat64 *o)    { *o = i; return P_OK; }
+static Perror_t Pchar_to        (Pchar *c, Pfloat64 *f)      { *f = (Pfloat64)((Puint8)(*c)); return P_OK; }
+static Perror_t Pchar_from      (Pfloat64 f, Pchar *c)       { *c = (Pchar)('a'); return P_OK; }
+static Perror_t Pstring_to      (Pstring *s, Pfloat64 *f)    { *f = 0; return P_OK; }
+static Perror_t Pstring_from    (Pfloat64 f, Pstring *s)     { s->str = "non defined."; s->len = 12; return P_OK; }
+static Perror_t Pip_to          (Pip *i, Pfloat64 *f)        { *f = (Pfloat64)((Puint32)(*i)); return P_OK; }
+static Perror_t Pip_from        (Pfloat64 f, Pip *i)         { *i = (Puint32)f; return P_OK; }
+static Perror_t Ptimestamp_to   (Ptimestamp *t, Pfloat64 *f) { *f = (Pfloat64)((Puint64)(*t)); return P_OK; }
+static Perror_t Ptimestamp_from (Pfloat64 f, Ptimestamp *t)  { *t = (Ptimestamp)((Puint64)f); return P_OK; }
+static Perror_t Ptime_to        (Ptime *t, Pfloat64 *f)      { *f = (Pfloat64)((Puint64)(*t)); return P_OK; }
+static Perror_t Ptime_from      (Pfloat64 f, Ptime *t)       { *t = (Ptime)((Puint64)f); return P_OK; }
+static Perror_t Pdate_to        (Pdate *d, Pfloat64 *f)      { *f = (Pfloat64)((Puint64)(*d)); return P_OK; }
+static Perror_t Pdate_from      (Pfloat64 f, Pdate *d)       { *d = (Pdate)((Puint64)f); return P_OK; }
 
 static const char *PDCI_hdr_strings[] = {
   "*****************************************************************************************************\n",
@@ -70,34 +70,35 @@ static const char *PDCI_hdr_strings[] = {
 \
 Perror_t type ## _cluster_init (P_t *pads, type ## _cluster *c) { \
   /* Initialize */ \
-  c->type = GAUSSIAN; \
+  c->cType = OTHERS; \
   c->k = 3; \
   c->initVar = 0; \
   c->open = .8; \
   c->anorm_pos = .1; \
   c->anorm_num = .5; \
-  h->toFloat = (P_toFloat_fn) type ## _to; \
-  h->fromFloat = (P_fromFloat_fn) type ## _from; \
-  allocateS(c); \
+  c->probFn = (Distri_fn) Gaussian; \
+  c->toFloat = (P_toFloat_fn) type ## _to; \
+  c->fromFloat = (P_fromFloat_fn) type ## _from; \
+  cluster_allocateS(c); \
   return P_OK; \
 } \
 \
 Perror_t type ## _cluster_setPara (P_t *pads, type ## _cluster *c, P_cluster* d_cluster) { \
-  if (d_cluster->toFloat != 0) h->toFloat = (P_toFloat_fn) d_cluster->toFloat; \
-  if (d_cluster->fromFloat != 0) h->fromFloat = (P_fromFloat_fn) d_cluster->fromFloat; \
-  c->type = GAUSSIAN; \
-  c->k = 3; \
-  c->initVar = 0; \
-  c->open = .8; \
-  c->anorm_pos = .1; \
-  c->anorm_num = .5; \
-  h->toFloat = (P_toFloat_fn) type ## _to; \
-  h->fromFloat = (P_fromFloat_fn) type ## _from; \
-  allocateS(c); \
+  if (d_cluster->toFloat != 0) c->toFloat = (P_toFloat_fn) d_cluster->toFloat; \
+  if (d_cluster->fromFloat != 0) c->fromFloat = (P_fromFloat_fn) d_cluster->fromFloat; \
+  if (d_cluster->probFn != 0) c->probFn = (Distri_fn) d_cluster->probFn; \
+  c->cType = d_cluster->cType; \
+  c->k = d_cluster->k; \
+  c->initVar = d_cluster->initVar; \
+  c->open = d_cluster->open; \
+  c->anorm_pos = d_cluster->anorm_pos; \
+  c->anorm_num = d_cluster->anorm_num; \
+  cluster_allocateS(c); \
   return P_OK; \
 } \
 \
 Perror_t type ## _cluster_reset (P_t *pads, type ## _cluster *c) { \
+  Puint32 i; \
   clink *temp; \
 \
   c->total = 0; \
@@ -115,8 +116,9 @@ Perror_t type ## _cluster_reset (P_t *pads, type ## _cluster *c) { \
 \
 Perror_t type ## _cluster_cleanup (P_t *pads, type ## _cluster *c) { \
   clink *temp; \
-  Pint32 i;
+  Pint32 i; \
 \
+  temp = c->head; \
   while (temp != c->tail) { \
     temp = temp -> next; \
     free(c->head); \
@@ -130,7 +132,10 @@ Perror_t type ## _cluster_cleanup (P_t *pads, type ## _cluster *c) { \
 } \
 \
 Perror_t type ## _cluster_add (P_t *pads, type ## _cluster *c, Pbase_pd *pd, type *rep, Puint32 *isFull) { \
-  switch (c->type) { \
+  Pfloat64 d; \
+\
+  (*(type ## _toFloat_fn) (c->toFloat)) (rep, &d); \
+  switch (c->cType) { \
   case K_MEAN: \
     K_mean_add(c, d); \
     break; \
@@ -157,15 +162,17 @@ Perror_t type ## _cluster_add (P_t *pads, type ## _cluster *c, Pbase_pd *pd, typ
 \
 Perror_t type ## _cluster_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, type ## _cluster *c) { \
   Pint64 i; \
-  clink *temp; \
+  clink *temp = c->head; \
+  Pfloat64 var = 0; \
+  Pfloat64 b = 0; \
 \
-  if (h->ind == 0) return P_OK; \
+  if (c->ind == 0) return P_OK; \
   if (!prefix || *prefix == 0) prefix = "<top>"; \
   what = fmt; \
   PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
   /* Print header */ \
-  sfprintf(outstr, "\n Clustering based distribution: "); \
-  switch (c->type) { \
+  sfprintf(outstr, "\nClustering based distribution: "); \
+  switch (c->cType) { \
   case K_MEAN: \
     sfprintf(outstr, "K_mean. \n"); \
     break; \
@@ -177,30 +184,29 @@ Perror_t type ## _cluster_report2io (P_t *pads, Sfio_t *outstr, const char *pref
     break; \
   case LAPLACE: \
     sfprintf(outstr, "Laplace distribution. \n"); \
-    break;
+    break; \
   case OTHERS: \
     sfprintf(outstr, "User defined distribution. \n"); \
-    break;
+    break; \
   } \
   for (i = 0; i < c->ind; i++) { \
-    printf("Cluster %d, with ", i+1); \
-    if (c->type == K_MEAN) { \
-      type ## _report (outstr, c->para[i][0], 0); \
+    if (c->cType == K_MEAN) { \
+      type ## _cluster_report_private (outstr, c, c->para[i][0], 0); \
       sfprintf(outstr, "%d elements. \n", c->num[i]); \
     } \
-    if (c->type == GAUSSIAN || c->type == OTHERS) { \
+    if (c->cType == GAUSSIAN || c->cType == OTHERS) { \
       var = c->para[i][1] - pow(c->para[i][0], (Pfloat64)2); \
-      type ## _report (outstr, c->para[i][0], var); \
+      type ## _cluster_report_private (outstr, c, c->para[i][0], var); \
       sfprintf(outstr, "%d elements. \n", c->num[i]); \
     } \
-    if (c->type == EXPONENTIAL) { \
-      type ## _report (outstr, c->para[i][0], var); \
+    if (c->cType == EXPONENTIAL) { \
+      type ## _cluster_report_private (outstr, c, c->para[i][0], var); \
       sfprintf(outstr, "%d elements. \n", c->num[i]); \
     } \
-    if (c->type == LAPLACE) { \
+    if (c->cType == LAPLACE) { \
       var = c->para[i][1] - pow(c->para[i][0], (Pfloat64)2); \
       b = pow(var / (Pfloat64)2, (Pfloat64).5); \
-      type ## _report (outstr, c->para[i][0], b); \
+      type ## _cluster_report_private (outstr, c, c->para[i][0], b); \
       sfprintf(outstr, "%d elements. \n", c->num[i]); \
     } \
   } \
@@ -208,14 +214,14 @@ Perror_t type ## _cluster_report2io (P_t *pads, Sfio_t *outstr, const char *pref
   sfprintf(outstr, "Possible anormality based on probability %f: \n", c->anorm_pos); \
   temp = c->head; \
   while (temp != c->tail) { \
-    type ## _report (outstr, temp->ele, 0 - INF); \
+    type ## _cluster_report_private (outstr, c, temp->ele, 0 - INF); \
     temp = temp->next; \
   } \
   sfprintf(outstr, "Possible anormality based on clustering elements number %f: \n", c->anorm_num); \
   for (i = 0; i < c->k; i++) { \
-    if (c->type == EXPONENTIAL) break; \
+    if (c->cType == EXPONENTIAL) break; \
     if (c->num[i] < (int)(c->total * c->anorm_num) && c->num[i] > 0) \
-      type ## _report (outstr, c->para[i][0], 0 - INF); \
+      type ## _cluster_report_private (outstr, c, c->para[i][0], 0 - INF); \
   } \
   return P_OK; \
 } \
@@ -247,19 +253,20 @@ TYPE_CLUSTER_GEN (Ptime, "time");
 TYPE_CLUSTER_GEN (Pdate, "date");
 
 /* BEGIN_MACRO */
-#define MAP_REPORT_GEN(int_type) \
-Perror_t int_type ## _cluster_map_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _cluster *h) { \
+#define CLUSTER_MAP_REPORT_GEN(int_type) \
+Perror_t int_type ## _cluster_map_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _cluster *c) { \
   Pint64 i; \
   clink *temp; \
   int_type obj; \
+  Pfloat64 var; \
+  Pfloat64 b; \
 \
-  if (h->ind == 0) return P_OK; \
+  if (c->ind == 0) return P_OK; \
   if (!prefix || *prefix == 0) prefix = "<top>"; \
-  what = fmt; \
   PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
   /* Print header */ \
   sfprintf(outstr, "\n Clustering based distribution: "); \
-  switch (c->type) { \
+  switch (c->cType) { \
   case K_MEAN: \
     sfprintf(outstr, "K_mean. \n"); \
     break; \
@@ -271,37 +278,37 @@ Perror_t int_type ## _cluster_map_report2io (P_t *pads, Sfio_t *outstr, const ch
     break; \
   case LAPLACE: \
     sfprintf(outstr, "Laplace distribution. \n"); \
-    break;
+    break; \
   case OTHERS: \
     sfprintf(outstr, "User defined distribution. \n"); \
-    break;
+    break; \
   } \
   for (i = 0; i < c->ind; i++) { \
     printf("Cluster %d, with ", i+1); \
-    if (c->type == K_MEAN) { \
-      (*(int_type ## _fromFloat_fn) (h->fromFloat)) (c->para[i][0], &obj); \
+    if (c->cType == K_MEAN) { \
+      (*(int_type ## _fromFloat_fn) (c->fromFloat)) (c->para[i][0], &obj); \
       sfprintf(outstr, "mean %s, containing ", (*fn)(obj)); \
       sfprintf(outstr, "%d elements. \n", c->num[i]); \
     } \
-    if (c->type == GAUSSIAN || c->type == OTHERS) { \
+    if (c->cType == GAUSSIAN || c->cType == OTHERS) { \
       var = c->para[i][1] - pow(c->para[i][0], (Pfloat64)2); \
-      (*(int_type ## _fromFloat_fn) (h->fromFloat)) (c->para[i][0], &obj); \
+      (*(int_type ## _fromFloat_fn) (c->fromFloat)) (c->para[i][0], &obj); \
       sfprintf(outstr, "mean %s, and variance ", (*fn)(obj)); \
-      (*(int_type ## _fromFloat_fn) (h->fromFloat)) (var, &obj); \
+      (*(int_type ## _fromFloat_fn) (c->fromFloat)) (var, &obj); \
       sfprintf(outstr, "%s, containing ", (*fn)(obj)); \
       sfprintf(outstr, "%d elements. \n", c->num[i]); \
     } \
-    if (c->type == EXPONENTIAL) { \
-      (*(int_type ## _fromFloat_fn) (h->fromFloat)) (c->para[i][0], &obj); \
+    if (c->cType == EXPONENTIAL) { \
+      (*(int_type ## _fromFloat_fn) (c->fromFloat)) (c->para[i][0], &obj); \
       sfprintf(outstr, "ratio %s, containing ", (*fn)(obj)); \
       sfprintf(outstr, "%d elements. \n", c->num[i]); \
     } \
-    if (c->type == LAPLACE) { \
+    if (c->cType == LAPLACE) { \
       var = c->para[i][1] - pow(c->para[i][0], (Pfloat64)2); \
       b = pow(var / (Pfloat64)2, (Pfloat64).5); \
-      (*(int_type ## _fromFloat_fn) (h->fromFloat)) (c->para[i][0], &obj); \
+      (*(int_type ## _fromFloat_fn) (c->fromFloat)) (c->para[i][0], &obj); \
       sfprintf(outstr, "mean %s, and b ", (*fn)(obj)); \
-      (*(int_type ## _fromFloat_fn) (h->fromFloat)) (b, &obj); \
+      (*(int_type ## _fromFloat_fn) (c->fromFloat)) (b, &obj); \
       sfprintf(outstr, "%s, containing ", (*fn)(obj)); \
       sfprintf(outstr, "%d elements. \n", c->num[i]); \
     } \
@@ -310,116 +317,114 @@ Perror_t int_type ## _cluster_map_report2io (P_t *pads, Sfio_t *outstr, const ch
   sfprintf(outstr, "Possible anormality based on probability %f: \n", c->anorm_pos); \
   temp = c->head; \
   while (temp != c->tail) { \
-    (*(int_type ## _fromFloat_fn) (h->fromFloat)) (temp->ele, &obj); \
+    (*(int_type ## _fromFloat_fn) (c->fromFloat)) (temp->ele, &obj); \
     sfprintf(outstr, "Data: %s \n", (*fn)(obj)); \
     temp = temp->next; \
   } \
   sfprintf(outstr, "Possible anormality based on clustering elements number %f: \n", c->anorm_num); \
   for (i = 0; i < c->k; i++) { \
-    if (c->type == EXPONENTIAL) break; \
+    if (c->cType == EXPONENTIAL) break; \
     if (c->num[i] < (int)(c->total * c->anorm_num) && c->num[i] > 0) \
-    (*(int_type ## _fromFloat_fn) (h->fromFloat)) (c->para[i][0], &obj); \
+    (*(int_type ## _fromFloat_fn) (c->fromFloat)) (c->para[i][0], &obj); \
     sfprintf(outstr, "Data around %s \n", (*fn)(obj)); \
   } \
   return P_OK; \
 }
 /* END_MACRO */
 
-MAP_REPORT_GEN (Pint8);
-MAP_REPORT_GEN (Pint16);
-MAP_REPORT_GEN (Pint32);
-MAP_REPORT_GEN (Pint64);
-MAP_REPORT_GEN (Puint8);
-MAP_REPORT_GEN (Puint16);
-MAP_REPORT_GEN (Puint32);
-MAP_REPORT_GEN (Puint64);
+CLUSTER_MAP_REPORT_GEN (Pint8);
+CLUSTER_MAP_REPORT_GEN (Pint16);
+CLUSTER_MAP_REPORT_GEN (Pint32);
+CLUSTER_MAP_REPORT_GEN (Pint64);
+CLUSTER_MAP_REPORT_GEN (Puint8);
+CLUSTER_MAP_REPORT_GEN (Puint16);
+CLUSTER_MAP_REPORT_GEN (Puint32);
+CLUSTER_MAP_REPORT_GEN (Puint64);
 
 /* BEGIN_MACRO */
-#define BASIC_REPORT_GEN(type, fmt) \
-Perror_t type ## _report (Sfio_t *outstr, Pfloat64 p1, Pfloat64 p2) { \
-  Pint64 i; \
+#define CLUSTER_BASIC_REPORT_GEN(type, fmt) \
+Perror_t type ## _cluster_report_private (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2) { \
   type obj; \
 \
   if (p2 == 0-INF) { \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "Data (around): %" fmt " \n", obj); \
     return P_OK; \
   } \
-  if (c->type == K_MEAN) { \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+  if (c->cType == K_MEAN) { \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "mean %" fmt ", containing ", obj); \
   } \
-  if (c->type == GAUSSIAN || c->type == OTHERS) { \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+  if (c->cType == GAUSSIAN || c->cType == OTHERS) { \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "mean %" fmt ", and variance ", obj); \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p2, &obj); \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p2, &obj); \
     sfprintf(outstr, "%" fmt ", containing ", obj); \
   } \
-  if (c->type == EXPONENTIAL) { \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+  if (c->cType == EXPONENTIAL) { \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "ratio %" fmt ", containing ", obj); \
   } \
-  if (c->type == LAPLACE) { \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+  if (c->cType == LAPLACE) { \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "mean %" fmt ", and b ", obj); \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p2, &obj); \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p2, &obj); \
     sfprintf(outstr, "%" fmt ", containing ", obj); \
   } \
   return P_OK; \
 } 
 /* END_MACRO */
 
-BASIC_REPORT_GEN (Pint8, "d");
-BASIC_REPORT_GEN (Pint16, "d");
-BASIC_REPORT_GEN (Pint32, "d");
-BASIC_REPORT_GEN (Pint64, "d");
-BASIC_REPORT_GEN (Puint8, "d");
-BASIC_REPORT_GEN (Puint16, "d");
-BASIC_REPORT_GEN (Puint32, "d");
-BASIC_REPORT_GEN (Puint64, "d");
-BASIC_REPORT_GEN (Pfloat32, "f");
-BASIC_REPORT_GEN (Pfloat64, "f");
-BASIC_REPORT_GEN (Pchar, "c");
-BASIC_REPORT_GEN (Pstring, "s");
+CLUSTER_BASIC_REPORT_GEN (Pint8, "d");
+CLUSTER_BASIC_REPORT_GEN (Pint16, "d");
+CLUSTER_BASIC_REPORT_GEN (Pint32, "d");
+CLUSTER_BASIC_REPORT_GEN (Pint64, "d");
+CLUSTER_BASIC_REPORT_GEN (Puint8, "d");
+CLUSTER_BASIC_REPORT_GEN (Puint16, "d");
+CLUSTER_BASIC_REPORT_GEN (Puint32, "d");
+CLUSTER_BASIC_REPORT_GEN (Puint64, "d");
+CLUSTER_BASIC_REPORT_GEN (Pfloat32, "f");
+CLUSTER_BASIC_REPORT_GEN (Pfloat64, "f");
+CLUSTER_BASIC_REPORT_GEN (Pchar, "c");
+CLUSTER_BASIC_REPORT_GEN (Pstring, "s");
 
-Perror_t Pip_report (Sfio_t *outstr, Pip_cluster *h) {
-  Pint64 i;
+Perror_t Pip_cluster_report_private (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2) {
   Pip obj;
 
   if (p2 == 0-INF) {
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj);
+    (*(Pip_fromFloat_fn) (c->fromFloat)) (p1, &obj);
     sfprintf(outstr, "Data (around): ");
     sfprintf(outstr, "%d.%d.%d.%d \n", P_IP_PART(obj, 1), P_IP_PART(obj, 2), P_IP_PART(obj, 3), P_IP_PART(obj, 4));
     sfprintf(outstr, " \n");
     return P_OK;
   }
-  if (c->type == K_MEAN) {
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj);
+  if (c->cType == K_MEAN) {
+    (*(Pip_fromFloat_fn) (c->fromFloat)) (p1, &obj);
     sfprintf(outstr, "mean ");
     sfprintf(outstr, "%d.%d.%d.%d \n", P_IP_PART(obj, 1), P_IP_PART(obj, 2), P_IP_PART(obj, 3), P_IP_PART(obj, 4));
     sfprintf(outstr, ", containing ");
   }
-  if (c->type == GAUSSIAN || c->type == OTHERS) {
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj);
+  if (c->cType == GAUSSIAN || c->cType == OTHERS) {
+    (*(Pip_fromFloat_fn) (c->fromFloat)) (p1, &obj);
     sfprintf(outstr, "mean ");
     sfprintf(outstr, "%d.%d.%d.%d \n", P_IP_PART(obj, 1), P_IP_PART(obj, 2), P_IP_PART(obj, 3), P_IP_PART(obj, 4));
-    sfprintf(", and variance ");
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p2, &obj);
+    sfprintf(outstr, ", and variance ");
+    (*(Pip_fromFloat_fn) (c->fromFloat)) (p2, &obj);
     sfprintf(outstr, "%d.%d.%d.%d \n", P_IP_PART(obj, 1), P_IP_PART(obj, 2), P_IP_PART(obj, 3), P_IP_PART(obj, 4));
     sfprintf(outstr, ", containing ", obj);
   }
-  if (c->type == EXPONENTIAL) {
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj);
+  if (c->cType == EXPONENTIAL) {
+    (*(Pip_fromFloat_fn) (c->fromFloat)) (p1, &obj);
     sfprintf(outstr, "ratio ");
     sfprintf(outstr, "%d.%d.%d.%d \n", P_IP_PART(obj, 1), P_IP_PART(obj, 2), P_IP_PART(obj, 3), P_IP_PART(obj, 4));
     sfprintf(outstr, ", containing ", obj);
   }
-  if (c->type == LAPLACE) {
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj);
+  if (c->cType == LAPLACE) {
+    (*(Pip_fromFloat_fn) (c->fromFloat)) (p1, &obj);
     sfprintf(outstr, "mean ");
     sfprintf(outstr, "%d.%d.%d.%d \n", P_IP_PART(obj, 1), P_IP_PART(obj, 2), P_IP_PART(obj, 3), P_IP_PART(obj, 4));
-    sfprintf(", and b ", obj);
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p2, &obj);
+    sfprintf(outstr, ", and b ", obj);
+    (*(Pip_fromFloat_fn) (c->fromFloat)) (p2, &obj);
     sfprintf(outstr, "%d.%d.%d.%d \n", P_IP_PART(obj, 1), P_IP_PART(obj, 2), P_IP_PART(obj, 3), P_IP_PART(obj, 4));
     sfprintf(outstr, ", containing ", obj);
   }
@@ -427,45 +432,44 @@ Perror_t Pip_report (Sfio_t *outstr, Pip_cluster *h) {
 }
 
 /* BEGIN_MACRO */
-#define TIME_DATE_REPORT_GEN(type) \
-Perror_t type ## _report (Sfio_t *outstr, type ## _cluster *h) { \
-  Pint64 i; \
+#define CLUSTER_TIME_DATE_REPORT_GEN(type) \
+Perror_t type ## _cluster_report_private (Sfio_t *outstr, P_cluster *c, Pfloat64 p1, Pfloat64 p2) { \
   type obj; \
 \
-  if (p2 == 0-INF) {
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+  if (p2 == 0-INF) { \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "Data (around): "); \
     sfprintf(outstr, "%s \n", fmttime("%x %I:%M %p", (time_t)obj)); \
     sfprintf(outstr, " \n"); \
     return P_OK; \
   } \
-  if (c->type == K_MEAN) { \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+  if (c->cType == K_MEAN) { \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "mean "); \
     sfprintf(outstr, "%s \n", fmttime("%x %I:%M %p", (time_t)obj)); \
     sfprintf(outstr, ", containing "); \
   } \
-  if (c->type == GAUSSIAN || c->type == OTHERS) { \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+  if (c->cType == GAUSSIAN || c->cType == OTHERS) { \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "mean "); \
     sfprintf(outstr, "%s \n", fmttime("%x %I:%M %p", (time_t)obj)); \
-    sfprintf(", and variance "); \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p2, &obj); \
+    sfprintf(outstr, ", and variance "); \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p2, &obj); \
     sfprintf(outstr, "%s \n", fmttime("%x %I:%M %p", (time_t)obj)); \
     sfprintf(outstr, ", containing ", obj); \
   } \
-  if (c->type == EXPONENTIAL) { \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+  if (c->cType == EXPONENTIAL) { \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "ratio "); \
     sfprintf(outstr, "%s \n", fmttime("%x %I:%M %p", (time_t)obj)); \
     sfprintf(outstr, ", containing ", obj); \
   } \
-  if (c->type == LAPLACE) { \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p1, &obj); \
+  if (c->cType == LAPLACE) { \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p1, &obj); \
     sfprintf(outstr, "mean "); \
     sfprintf(outstr, "%s \n", fmttime("%x %I:%M %p", (time_t)obj)); \
-    sfprintf(", and b ", obj); \
-    (*(type ## _fromFloat_fn) (h->fromFloat)) (p2, &obj); \
+    sfprintf(outstr, ", and b ", obj); \
+    (*(type ## _fromFloat_fn) (c->fromFloat)) (p2, &obj); \
     sfprintf(outstr, "%s \n", fmttime("%x %I:%M %p", (time_t)obj)); \
     sfprintf(outstr, ", containing ", obj); \
   } \
@@ -473,12 +477,12 @@ Perror_t type ## _report (Sfio_t *outstr, type ## _cluster *h) { \
 }
 /* END_MACRO */
 
-TIME_DATE_REPORT_GEN(Ptimestamp);
-TIME_DATE_REPORT_GEN(Ptime);
-TIME_DATE_REPORT_GEN(Pdate);
+CLUSTER_TIME_DATE_REPORT_GEN(Ptimestamp);
+CLUSTER_TIME_DATE_REPORT_GEN(Ptime);
+CLUSTER_TIME_DATE_REPORT_GEN(Pdate);
 
 /* Functions defined for private use only */ 
-void allocateS(P_cluster *h) {
+void cluster_allocateS(P_cluster *c) {
   Pint64 i;
 
   c->total = 0;
@@ -491,7 +495,7 @@ void allocateS(P_cluster *h) {
   c->tail = malloc(sizeof(clink));
   if (c->tail == (clink*)0) exit(-1);
   c->head = c->tail;
-  switch (c->type) {
+  switch (c->cType) {
   case K_MEAN: 
     for (i = 0; i < c->k; i++) {
       c->para[i] = malloc(sizeof(Pfloat64));
@@ -518,7 +522,6 @@ void allocateS(P_cluster *h) {
     }
     break;
   case OTHERS:
-    c->probFn = (Distri_fn) Gaussian;
     for (i = 0; i < c->k; i++) {
       c->para[i] = malloc(2 * sizeof(Pfloat64));
       if (c->para[i] == (Pfloat64*)0) exit(-1);

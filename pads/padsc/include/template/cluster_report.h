@@ -2,6 +2,38 @@
 #define PDCI_MacroArg2String(s) #s
 #endif
 
+#ifndef INIT_CTYPE
+#define INIT_CTYPE GAUSSIAN
+#endif
+
+#ifndef INIT_K
+#define INIT_K 3
+#endif 
+
+#ifndef INIT_INITVAR
+#define INIT_INITVAR 0
+#endif
+
+#ifndef INIT_OPEN
+#define INIT_OPEN .8
+#endif
+
+#ifndef INIT_ANORM_POS
+#define INIT_ANORM_POS .1
+#endif 
+
+#ifndef INIT_ANORM_NUM
+#define INIT_ANORM_NUM .5
+#endif
+
+#ifndef EXTRA_READ_ARGS
+#  define EXTRA_READ_ARGS
+#endif
+
+#ifndef EXTRA_HDR_READ_ARGS
+#  define EXTRA_HDR_READ_ARGS
+#endif
+
 #ifndef READ_MASK
 #define READ_MASK P_CheckAndSet
 #endif
@@ -24,6 +56,7 @@ int main(int argc, char** argv) {
   Pdisc_t           my_disc = Pdefault_disc;
   Pio_disc_t       *io_disc = 0;
   Ppos_t            bpos, epos;
+  P_cluster         default_cluster;
   PADS_TY( )        rep;
   PADS_TY(_pd)      pd;
   PADS_TY(_m)       m;
@@ -38,6 +71,16 @@ int main(int argc, char** argv) {
 #ifdef EXTRA_DECLS
   EXTRA_DECLS;
 #endif
+
+  default_cluster.cType = INIT_CTYPE;
+  default_cluster.k = INIT_K;
+  default_cluster.open = INIT_OPEN;
+  default_cluster.initVar = INIT_INITVAR;
+  default_cluster.anorm_pos = INIT_ANORM_POS;
+  default_cluster.anorm_num = INIT_ANORM_NUM;
+  default_cluster.probFn = 0;
+  default_cluster.toFloat = 0;
+  default_cluster.fromFloat = 0;
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -77,8 +120,8 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
 
-  PADS_TY(_cluster_init)(pads, &h);	
-  //  PADS_TY(_cluster_setPara)(pads, &h, &default_cluster);
+  PADS_TY(_cluster_init)(pads, &c);	
+  PADS_TY(_cluster_setPara)(pads, &c, &default_cluster);
 
 #ifdef EXTRA_INIT_CODE
   EXTRA_INIT_CODE;
@@ -121,15 +164,15 @@ int main(int argc, char** argv) {
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
     if (P_OK == PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS ))
-      PADS_TY(_cluster_add)(pads, &h, &pd, &rep, &isFull);
+      PADS_TY(_cluster_add)(pads, &c, &pd, &rep, &isFull);
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
   }
 
-  PADS_TY(_cluster_report)(pads, "", 0, 0, &h);
-  PADS_TY(_cluster_cleanup)(pads, &h);
+  PADS_TY(_cluster_report)(pads, "", 0, 0, &c);
+  PADS_TY(_cluster_cleanup)(pads, &c);
 
 #ifdef EXTRA_DONE_CODE
   EXTRA_DONE_CODE;
