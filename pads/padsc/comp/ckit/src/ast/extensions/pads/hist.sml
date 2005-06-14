@@ -438,7 +438,7 @@ structure Hist = struct
 
 	  fun genAddFull ({pty: PX.Pty, name: string,isVirtual: bool, ...}:BU.pfieldty) = 
 	      if isVirtual then []
-	      else BU.chkAddFun(addSuf (lookupHist pty), P.getFieldX(hist,name),  P.getFieldX(pd, name), P.getFieldX(rep,name))
+	      else chkAddFun(addSuf (lookupHist pty), P.getFieldX(hist,name),  P.getFieldX(pd, name), P.getFieldX(rep,name))
 
 	  fun genAddBrief e = []
 	  fun genAddMan (ptyfuns as (isPadsTy, getPadsName)) ({tyname, name,isVirtual,...}:BU.pmanty) = 
