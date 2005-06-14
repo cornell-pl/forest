@@ -218,7 +218,7 @@ Perror_t type ## _cluster_report2io (P_t *pads, Sfio_t *outstr, const char *pref
     temp = temp->next; \
   } \
   sfprintf(outstr, "Possible anormality based on clustering elements number %f: \n", c->anorm_num); \
-  for (i = 0; i < c->k; i++) { \
+  for (i = 0; i < c->ind; i++) { \
     if (c->cType == EXPONENTIAL) break; \
     if (c->num[i] < (int)(c->total * c->anorm_num) && c->num[i] > 0) \
       type ## _cluster_report_private (outstr, c, c->para[i][0], 0 - INF); \
@@ -322,7 +322,7 @@ Perror_t int_type ## _cluster_map_report2io (P_t *pads, Sfio_t *outstr, const ch
     temp = temp->next; \
   } \
   sfprintf(outstr, "Possible anormality based on clustering elements number %f: \n", c->anorm_num); \
-  for (i = 0; i < c->k; i++) { \
+  for (i = 0; i < c->ind; i++) { \
     if (c->cType == EXPONENTIAL) break; \
     if (c->num[i] < (int)(c->total * c->anorm_num) && c->num[i] > 0) \
     (*(int_type ## _fromFloat_fn) (c->fromFloat)) (c->para[i][0], &obj); \
