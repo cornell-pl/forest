@@ -66,9 +66,6 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   h->scale = 10000000; \
   h->toFloat = (P_toFloat_fn) type ## _to; \
   h->fromFloat = (P_fromFloat_fn) type ## _from; \
-  h->prefix = ""; \
-  h->what = ""; \
-  h->nst = 0; \
   allocateS(h); \
   return P_OK; \
 } \
@@ -85,9 +82,6 @@ Perror_t type ## _hist_setPara (P_t *pads, type ## _hist *h, P_hist* d_hist) { \
   h->n = d_hist->n; \
   h->e = d_hist->e; \
   h->scale = d_hist->scale; \
-  h->prefix = d_hist->prefix; \
-  h->what = d_hist->what; \
-  h->nst = d_hist->nst; \
   type ## _hist_cleanup(pads, h); \
   allocateS(h); \
   return P_OK; \
@@ -125,10 +119,14 @@ Perror_t type ## _hist_cleanup (P_t *pads, type ## _hist *h) { \
   return P_OK; \
 } \
 \
-Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep) { \
+Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep, Puint32 *isFull) { \
   Pfloat64 d; \
   Perror_t res; \
 \
+  if (h->ind == h->N) { \
+    printf("*** Warning: Full histogram cleared without reported *** \n"); \
+    type ## _hist_cleanup(pads, h); \ 
+  } \
   res = (*(type ## _toFloat_fn) (h->toFloat)) (rep, &d); \
   d = d / (Pfloat64)h->scale; \
   res = P_OK; \
@@ -139,6 +137,7 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
   } \
   h->ind++; \
 \
+  *isFull = 0; \
   if (h->ind == h->N) { \
     /* The last element in the scope */ \
     if (h->isE == 0) { \
@@ -146,8 +145,7 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
       compOpt(h); \
     } \
     else EqualHis(h, d); \
-    type ## _hist_report(pads, h->prefix, h->what, h->nst, h); \
-    type ## _hist_reset(pads, h); \
+    *isFull = 1; \
   } \
   return res; \
 } \

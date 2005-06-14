@@ -6,42 +6,6 @@
 #define READ_MASK P_CheckAndSet
 #endif
 
-#ifndef INIT_N
-#define INIT_N 1024
-#endif 
-#ifndef INIT_B
-#define INIT_B 10
-#endif 
-#ifndef INIT_M
-#define INIT_M 1024 * 1024
-#endif 
-#ifndef INIT_ISE
-#define INIT_ISE 1
-#endif 
-
-#ifndef INIT_ISO
-#define INIT_ISO 0
-#endif 
-#ifndef INIT_n
-#define INIT_n 2
-#endif 
-
-#ifndef INIT_e
-#define INIT_e .1
-#endif 
-
-#ifndef INIT_scale
-#define INIT_scale 100 
-#endif
-
-#ifndef EXTRA_READ_ARGS
-#  define EXTRA_READ_ARGS
-#endif
-
-#ifndef EXTRA_HDR_READ_ARGS
-#  define EXTRA_HDR_READ_ARGS
-#endif
-
 #ifndef DEF_INPUT_FILE
 #  define DEF_INPUT_FILE "/dev/stdin"
 #endif
@@ -60,11 +24,10 @@ int main(int argc, char** argv) {
   Pdisc_t           my_disc = Pdefault_disc;
   Pio_disc_t       *io_disc = 0;
   Ppos_t            bpos, epos;
-  P_hist            default_hist;
   PADS_TY( )        rep;
   PADS_TY(_pd)      pd;
   PADS_TY(_m)       m;
-  PADS_TY(_hist)    h;
+  PADS_TY(_cluster) c;
   Puint32           isFull;
 #ifdef PADS_HDR_TY
   PADS_HDR_TY( )    hdr_rep;
@@ -75,17 +38,6 @@ int main(int argc, char** argv) {
 #ifdef EXTRA_DECLS
   EXTRA_DECLS;
 #endif
-
-  default_hist.N = INIT_N;
-  default_hist.B = INIT_B;
-  default_hist.M = INIT_M;
-  default_hist.isE = INIT_ISE;
-  default_hist.isO = INIT_ISO;
-  default_hist.n = INIT_n;
-  default_hist.e = INIT_e;
-  default_hist.scale = INIT_scale;
-  default_hist.toFloat = 0;
-  default_hist.fromFloat = 0;
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -125,8 +77,8 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
 
-  PADS_TY(_hist_init)(pads, &h);	
-  PADS_TY(_hist_setPara)(pads, &h, &default_hist);
+  PADS_TY(_cluster_init)(pads, &h);	
+  //  PADS_TY(_cluster_setPara)(pads, &h, &default_cluster);
 
 #ifdef EXTRA_INIT_CODE
   EXTRA_INIT_CODE;
@@ -169,19 +121,15 @@ int main(int argc, char** argv) {
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
     if (P_OK == PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS ))
-      PADS_TY(_hist_add)(pads, &h, &pd, &rep, &isFull);
-    if (isFull != 0) {
-      PADS_TY(_hist_report)(pads, "", 0, 0, &h);
-      PADS_TY(_hist_cleanup)(pads, &h); 
-    }
+      PADS_TY(_cluster_add)(pads, &h, &pd, &rep, &isFull);
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
   }
 
-  PADS_TY(_hist_report)(pads, "", 0, 0, &h);
-  PADS_TY(_hist_cleanup)(pads, &h);
+  PADS_TY(_cluster_report)(pads, "", 0, 0, &h);
+  PADS_TY(_cluster_cleanup)(pads, &h);
 
 #ifdef EXTRA_DONE_CODE
   EXTRA_DONE_CODE;

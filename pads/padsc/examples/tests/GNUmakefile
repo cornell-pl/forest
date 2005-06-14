@@ -458,6 +458,11 @@ test_hist: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-hist.c test_hist.c $(
 test_hist_d: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-hist.c test_hist.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
+test_cluster: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_cluster.c $(INCLUDE_DEDS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+test_cluster_d: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_cluster.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
 ifdef GALAX_NONE
 test_children: var_error
 
