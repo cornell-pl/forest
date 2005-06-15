@@ -1,89 +1,110 @@
 PADS/ML
 -------
 
-Pads/ML types (values in these types are pairs of rep/pd
-               satisfying our canonical forms theorem wrt errors)
-
 constants k ::= true | false | () |  ...
 
+
+Parsing Types
+======================
+
 T ::=  \alpha(M)
-     | Pbase                  (base type)
-     | d(M)		      (parameterized data type; e is perimeter)
-     | M		      (singleton type.  eg: " " for literal space)
-     | x:T1 ** T2	      (dependent pair)
-     | PD		      (parser descriptor type)
-     | T Parray(Msep, Mterm)  (array types)
-     | T list		      (list type; underlying rep for arrays)
-     | {x:T | M}	      (constrained type; ie: Pwhere)
+     | Pbase                  // base type
+     | d(M)		      // parameterized data type; e is perimeter
+     | M		      // singleton type.  eg: " " for literal space
+     | x:T1 ** T2	      // dependent pair
+     | {fieldtys}	      // dep. record
+     | PD		      // parser descriptor type
+     | T Parray(Msep, Mterm)  // array types
+     | T stream		      // stream type; underlying rep for arrays
+     | {x:T | M}	      // constrained type; ie: Pwhere
 
 
-Pads/ML data type declarations
+D ::= datatype typarams d(x:F) = DTBody
+   |  type typarams \alpha(x:F) = T
 
-D ::= datatype \vec \alpha d(x:F) = DTBody
-   |  type \vec \alpha \alpha(x:F) = T
+typarams ::= . | \alpha typarams
 
 DTBody ::= DS | case M of TS
 
 DS ::= c of T
-     | (c of T | DS)  (datatype constructor; 
-                       parameter x of the datatype may appear
-                       free in T)
+     | (c of T | DS)
 
 TS ::= pat => c of T
    |   (pat => c of T | TS)
 
-ML pads transform types
+fieldtys ::= fieldty | fieldty ; fieldtys
 
-F ::= T           (type of pads value)
+fieldty ::= T | x = T
+
+Transform Types
+========================
+
+F ::= T          (type of parsed value)
    | base
    | F -> F      (transform types)
-   | F * F
-
-ML pads terms
-
-M ::=  x                                 (pads transform variable)
-     | k          (constants)
-     | let x = M in M                    (computation in host language)
-     | Pbase(M)                           (base type constructor; M computes the rep)
-     | <M>                                (unit value given singleton type M)
-     | c[M](M)                           (data type constructor with parameter M)
-     | (M1 ** M2)                   (pair)
-     | (M1 * M2)                     (ordinary pair)
-     | nil                               (empty list)
-     | M1 :: M2                          (cons)
-     | Parray(M, Msep, Mterm)  (array; first element is list)
-     | case M of MS                      (deconstructors)
-     | Fun x1(x2:F1):F2 = M              (recursive function m1; arg m2)
-     | M1 (M2)		(function application)
-     | cast (M : T)                           (type annot/dependent cast?)
-     | op M                                (additional uninteresting operations)
-     | pd
+   | F * F	 (ordinary pair)
 
 
-Parse descriptors
-pd ::= G	good
-     |    B	bad
-     |    N	nested error
-     |    S	semantic error
-Pattern Matches
+Terms
+=====
 
+M ::=  x                        // variable
+     | k			// constants
+     | let x = M in M		// computation in host language
+     | Pbase[M1](M2)		// base type constructor; M1 is
+                                   an argument to the type; M2 computes the rep)
+     | <M>                      // unit value given singleton type M
+     | c(M)			// data type constructor with parameter M
+     | (x:M1 ** M2)		// pair
+     | {fields}
+     | (M1 * M2)		// ordinary pair
+     | {x = M1 | M2}		// set-type; M2 is the predicate
+     | nil                      // empty list
+     | M1 :: M2                 // cons
+     | Parray(M, Msep, Mterm)   // array; first element is stream
+     | case M of MS             // deconstructors
+     | Fun x1(x2:F1):F2 = M     // recursive function x1 with arg x2
+     | M1 (M2)			// function application
+     | cast (M : T)		// type annot/dependent cast?
+     | op M			// additional uninteresting operations
+     
+fields ::= x = M | x = M; fields
+
+Parse Descriptors Values
+-----------------------
+pd ::=   G    // good
+     |   B    // bad
+     |   N    // nested error
+     |   S    // semantic error
+     |   U    // unknown
+
+Patterns
+--------
 MS ::= pat => M | (pat => M | MS)
 
-pat ::= x | k
-       | <<pat, pdpat>> (pattern for reading out the pd)
-       | (pat, pat)     (pair pattern)
-       | c(pat)         (constructor pattern)
-       | nil            (list pattern)
-       | pat1 :: pat2   (list pattern)
-       | Parray(pat, xsep, xterm)  
+pat ::= x | k | nil
+       | <<pat, pdpat>>           // project pd
+       | (pat * pat)		  // normal pair
+       | (pat ** pat)		  // dep. pair
+       | {fieldpats}		  // record
+       | {pat | setpat}		  // set-type
+       | c(pat)			  // constructor
+       | pat1 :: pat2		  // stream
+       | Parray(pat, xsep, xterm) // array with stream, sep and term.
 
-pdpat ::= x
-        | G | B | N | S
+fieldpats ::= x = pat | x = pat; fieldpats
+
+setpat ::= x | true | false
+
+pdpat ::= x | pd
+
 
 Complete Programs
+=================
 
-prog ::= M              (probably should have first-order type T -> T)
-       | D; prog        (data type declaration)
+prog ::= M              
+       | D prog          // type declaration
+       | val x = M prog  // value declaration
 
 
 Addendum
@@ -136,8 +157,9 @@ F1 ~ F2  iff |F1| =_\alpha |F2|
 
 !!! REPLACE m WITH x !!!
 
-G |- M :F
 ---------
+G |- M :F
+----------
 Here is the typing rule for functions.  Assume that G is the typing context
 mapping variables m to their (dependent) PADS types:
 

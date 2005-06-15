@@ -1,3 +1,28 @@
+6/7/05 (phone conversation Y + D)
+Add to principles:
+Key invariants with regard to values - ie. rep and pd pairs:
+
+1. Reps *can* be separated from pds, but only safely through special
+   deconstructors. Safety is enforced by the type system. In order to
+   support rep extraction or base types, I have invented the pattern
+   base(x) (comments welcome). For example,
+
+     Fun foo (x: Pint) : int =
+	case x of 
+	  int(y) => y
+	| noval => 0   
+
+   Notice, however, that in <<x,pd>>, x is bound to the whole value,
+   not just the rep. I don't see any way to extract the rep as we
+   don't have types for prevalues. However, there's no reason (that I
+   see) that we couldn't - we just don't.
+
+2. On the other hand, pds *cannot* be created by the programmer. Only
+   the language/compiler can do that.
+
+Sum: in deconstruction, we can separate reps from pds, but in
+construction we cannot explicitly pair them.
+
 6/3/05
 Download EANCS format. Steal proposal intro.
 
@@ -27,13 +52,13 @@ Download EANCS format. Steal proposal intro.
       + compiler controls invariants of relationship between value and
 	its descriptor.
       + concise way of ignoring errors safely (due to pairing),
+      + error querying
       + error preservation allows programatic repair of faulty
 	records (rather than just dumping bad records at beginning).
-      + error querying
       + will show examples
 
 2. PADS/ML
-  - PADS Weltenshaung (worldview)
+  - PADS Weltanshauung (worldview)
      + Diagram: type -> parser->rep+pd : types as transducers b/w
         ext. data and rep + pd.
      + Describe parse descriptor (corr. shape, syn. vs. sem. errors,
@@ -47,12 +72,13 @@ Download EANCS format. Steal proposal intro.
       - how? 
         (+ constraints and dependency => CFG/REs not convenient)
         + we use types
-       + "error-aware" computing (emphasize this).
-  - "Formal" Syntax Chart
+      - "error-aware" computing (emphasize this).
   - Further Examples
     + Simple (Dibbler)
     + Complex (Kathleen)
     + Recursion (Newick)
+
+  - "Formal" Syntax Chart
 
 3. PADS/T
   - Reminder of motivation
@@ -61,23 +87,27 @@ Download EANCS format. Steal proposal intro.
   - Language design for error-aware computing.
     + compiler ensures data items are coupled with descriptors
       - programmers can't screw it up
-    + preserved by the transformations
-    + programmers can read descriptions and make decisions (but no
-      writing).
-    + concise notation allows programmers to leave error processing
-      for downstream process.
-    + yet, ability to compute with errors and fix if you want
-    + contracts dynamicly enforce rich constraints that can't be
-    checked at compile time.
+      - preserved by the transformations
+    + Reading PD
+      + concise notation allows programmers to leave error processing
+	for downstream process.
+      + yet, ability to compute with errors and fix if you want
+      + programmers can read descriptions and make decisions (but no
+	writing).
+    + Writing PD:
+      - Safely and correctly create parse descriptors based on
+        contract-style dynamic checks.
+      - contracts dynamicly enforce rich constraints that can't be
+        checked at compile time.
     
    - Syntax figure - don't explain much, just reference.
 
-   - Example template
+   (- Example template
      + Drawn from real-world examples but modified for proprietary
      purposes and for illustration.
      + Heres the transform we want
      + here's the code
-     + explain the code
+     + explain the code)
    
    - Example of Normalizing, reordering
      + Alarms; VPN Monitoring
