@@ -1,0 +1,56 @@
+\documentclass{entcs} 
+\usepackage{entcsmacro}
+\usepackage{graphicx}
+\usepackage{code,amsmath,amssymb}
+\usepackage{math-cmds}
+
+\include{defs}
+
+% A couple of exemplary definitions:
+\def\lastname{Fernandez, Fisher, Mandelbaum and Walker}
+\begin{document}
+\begin{frontmatter}
+  \title{\datatype{}: A Language for Describing and Transforming Ad Hoc Data} 
+  \author{Mary Fernandez,
+    Kathleen Fisher\thanksref{attemail}}
+  \address{AT\&T\\ 
+    Florham Park,NJ USA} 
+  \author{Yitzhak Mandelbaum,
+    David Walker\thanksref{premail}}
+  \address{Department of Computer Science\\ 
+    Princeton University\\
+    Princeton,NJ USA} 
+  \thanks[attemail]{Email:\texttt{\normalshape
+        mff,kfisher@research.att.com}}
+  \thanks[premail]{Email:\texttt{\normalshape
+        yitzhakm,dpw {\it at} cs {\it dot} princeton {\it dot} edu}}
+\begin{abstract}
+\datatype{} is a declarative data description language paired with an 
+error-aware transformation language.  This pairing provides rich support for
+programming with ad hoc data sources.  Such data is common in a wide range of domains including networking, financial analysis, biology, and physics.
+\datatype{}'s data description language is based on polymorphic, recursive, and dependent data types.  From such descriptions, the compiler generates robust parsing and pretty printing code. The transformation language supports \textit{error-aware computation} by automatically maintaining an association between data and a description of the errors in that data.  
+\end{abstract}
+\begin{keyword}
+Ad hoc data, semi-structured data, data description, data transformation, pattern matching, dependent types.
+\end{keyword}
+\end{frontmatter}
+
+\input{intro}
+
+\input{descr}
+
+\input{trans}
+
+%\input{implementation}
+
+\input{relatedwork}
+
+\input{conclusions}
+
+{\tiny
+\bibliographystyle{abbrv}
+\bibliography{pads}
+}
+\newpage
+\input{appendix}
+\end{document}
