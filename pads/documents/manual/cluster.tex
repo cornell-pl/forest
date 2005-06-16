@@ -1,0 +1,253 @@
+\chapter{Cluster}
+\label{chap:cluster}
+\cutname{cluster.html}
+
+Clustering program divides data into several groups based on
+certain distribution. It summarizes the data by recording specified
+features of each group. Clustering is built for each meaningful 
+piece of a \pads{} description. \figref{figure:wsl-cluster-report-1}
+is an example report for a web server log data.     
+%
+\begin{figure*}
+\begin{small}
+\begin{verbatim}
+[Describing each tag arm of <top>.host]
+
+=====================================================================================================
+<top>.host.resolved : array nIP of Puint8
+=====================================================================================================
+Array lengths: 
+Clustering based distribution: User defined distribution. 
+mean 4, and variance 0, containing 4 elements. 
+=====================================================================================================
+Possible anormality based on probability 0.010000: 
+Possible anormality based on clustering elements number 0.100000: 
+
+-----------------------------------------------------------------------------------------------------
+allArrayElts : uint8
+-----------------------------------------------------------------------------------------------------
+
+Clustering based distribution: User defined distribution. 
+mean 128, and variance 77, containing 8 elements. 
+mean 136, and variance 0, containing 4 elements. 
+mean 97, and variance 0, containing 4 elements. 
+=====================================================================================================
+Possible anormality based on probability 0.010000: 
+Data (around): 49 
+Data (around): 207 
+Data (around): 49 
+Data (around): 207 
+Data (around): 50 
+Data (around): 207 
+Data (around): 50 
+Possible anormality based on clustering elements number 0.100000: 
+
+=====================================================================================================
+<top>.host.symbolic : array sIP of Pstring_SE
+=====================================================================================================
+Array lengths: 
+Clustering based distribution: User defined distribution. 
+mean 4, and variance 0, containing 7 elements. 
+=====================================================================================================
+Possible anormality based on probability 0.010000: 
+Possible anormality based on clustering elements number 0.100000: 
+
+-----------------------------------------------------------------------------------------------------
+allArrayElts : string
+-----------------------------------------------------------------------------------------------------
+
+Clustering based distribution: User defined distribution. 
+mean non defined., and variance non defined., containing 28 elements. 
+=====================================================================================================
+Possible anormality based on probability 0.010000: 
+Possible anormality based on clustering elements number 0.100000: 
+. . . . . . . . . . . . . . . . . . . . . . 
+\end{verbatim}
+\end{small}
+\caption{Portion of clustering report for web server log data.}
+\label{figure:wsl-cluster-report-1}
+\end{figure*}
+%
+In this particular run, maximal 3 clusterings are built for all the
+data values seen in the data source.
+
+\section{Operations}
+\figref{figure:cluster} shows the clustering functions declared 
+for a \pads{} type.
+\begin{figure}
+\inputCode{hand_code/cluster-declare}
+\caption{Clustering functions generated for the \texttt{entry\_t} type.}
+\label{figure:cluster}
+\end{figure}
+%
+These functions have the following behaviors:
+\begin{description}
+\item[\cd{entry\_t\_hist\_init}] Initializes clustering data
+  structure. This function must be called before any data can be added
+  to the programme.
+\item[\cd{entry\_t\_hist\_setPara}] Customizes clustering data
+  structure. For the distribution function and two conversion
+  functions (specified below), user needs to set the corresponding 
+  fields explicitly. This function must be called to make any 
+  customization effected.  
+\item[\cd{entry\_t\_hist\_reset}] Reinitializes clustering data
+  structure. This function can be used to set any point of the data
+  source as the start point of a new run. But it can't be used to 
+  reset any previous defined parameters.
+\item[\cd{entry\_t\_hist\_cleanup}] Deallocates all memory associated
+  with clustering.
+\item[\cd{entry\_t\_hist\_add}] Inserts a data value. This function 
+  is called once a new record is coming. Any data type with an
+  associated mapping function to \cd{Pfloat64} is considered as a 
+  meaningful type. This function tracks fields with meaningful type
+  and legal values only.
+\item[\cd{entry\_t\_hist\_report2io}] Writes summary report for
+  clustering \cd{c} to \cd{*outstr}. 
+\item[\cd{entry\_t\_hist\_report}] Writes summary report for
+  clustering \cd{c} to screen. 
+\end{description}
+\figref{figure:wsl-cluster-hand} illustrates a sample use of clustering
+functions for printing a summary of CLF \cd{entry_t}.  
+\begin{figure}
+\inputCode{hand_code/cluster}
+\caption{Simple use of clustering functions for the
+  \texttt{entry\_t} type from CLF data.}
+\label{figure:wsl-cluster-hand}
+\end{figure}
+
+\section{Customization}
+\label{sec:clusterings-customization}
+Users are allowed to customize various aspects of clustering by 
+setting the appropriate field in the clustering data structure, 
+which contains: 
+
+\begin{description}
+\item[\cd{INIT\_CTYPE}] is an enumeration denoting the type of the
+  underlying distribution for each clustering. Built-in distributions
+  include K\_mean, Gaussian distribution, Exponential distribution and
+  Laplace distribution. Users are allowed to add any distributions,
+  which could be fully characterized by mean and variance, by setting
+  the field \cd{Distri\_fn}, which will be specified later.
+
+\item[\cd{INIT\_K}] is a \cd{Puint32} denoting the maximal number of
+  clusterings users want to use to divide the date source. Together
+  with \cd{INIT\_CTYPE}, it decides the underlying model of the data
+  source. 
+
+\item[\cd{INIT\_OPEN}] is a \cd{Pfloat64} denoting the probability
+  threshold for opening a new clustering. A new clustering will be
+  opened for a coming data value, if and only if, the number of current
+  clusterings is less than \cd{INIT\_K} and the probabilities it falls
+  in all current clusterings are less than \cd{INIT\_OPEN}.
+
+\item[\cd{INIT\_INITVAR}] is a \cd{Pfloat64} denoting the initial
+  variance for each clustering. It takes effect only before the second
+  data item is inserted. After that, the variance of each clustering
+  will be fully decided by its elements.
+
+\item[\cd{INIT\_ANORM\_POS}] is a \cd{Pfloat64} denoting the
+  probability threshold for detecting anormality. A data value will
+  be reported as anormality if no new clustering is opened for it, and the
+  probabilities it falls in all existing clusterings are less than
+  \cd{INIT_ANORM_POS}. The data value detected later in the data source
+  is expected to be more accurate than the one detected at the
+  beginning of the data source.
+
+\item[\cd{INIT\_ANORM\_NUM}] is a \cd{Pfloat64} denoting the element
+  number threshold for detecting anormality. A whole clustering will be
+  reported as anormality if the number of its elements is less than
+  \cd{INIT\_ANORM\_NUM} of the total number of data items in the data source.
+
+\item[\cd{entry\_t\_probFn}] is a function pointer, taking mean,
+  variance and data value as input, and returning corresponding
+  probability of that data value, according to mean and variance. Users
+  could define their own distribution for each clustering, as long as the
+  distribution is fully specified by mean and variance. Doing this,
+  they need: first, set \cd{INIT\_CTYPE} to be \cd{OTHERS}; then, use
+  \cd{EXTRA_INIT_CODE} to define their own distribution function, and
+  assign them to this pointer. If \cd{OTHERS} is set to \cd{INIT\_CTYPE},
+  and zero is set to this pointer, Gaussian distribution will be used.
+
+\item[\cd{entry\_t\_toFloat}] is a function pointer, taking
+  \cd{entry\_t} as input parameter, and returning corresponding
+  \cd{Pfloat64}. Clusterings will handle \cd{Pfloat64} type data value 
+  only. Any type with a well-defined conversion function to
+  \cd{Pfloat64} is considered as a meaningful type, and could be summarized
+  correctly by clusterings. By default, all base types other than \cd{Pstring} in \pads{} have
+  conversion functions to \cd{Pfloat64}. Users are allowed to write their
+  own conversion function for each field by defining macro \cd{EXTRA_INIT_CODE}. If zero is assigned to this pointer, those default
+  conversion functions will be used.
+   
+\item[\cd{entry\_t\_fromFloat}] is a function pointer, taking
+  \cd{Pfloat64} as input parameter, and returning corresponding
+  \cd{entry\_t} type. Any type without a well-defined conversion
+  function from \cd{Pfloat64} may not be printed correctly. By
+  default, all base types other than \cd{Pstring} in \pads{} have
+  conversion functions from \cd{Pfloat64}. Users are allowed to write their
+  own conversion function for each field by defining macro \cd{EXTRA_INIT_CODE}. If zero is assigned to this pointer, those default
+  conversion functions will be used.
+
+\end{description}
+
+\section{Template Program}
+Because generating a clustering report from a \pads{} description is a
+very routine task, \pads{} provides a template program to automate the
+task for common data formats. In particular, the template applies to
+data that can be viewed as an optional header followed by a sequence
+of records. Note that any data source that can be read entirely into
+memory fits this pattern by considering the source to have no header
+and a single body record. 
+
+When instantiated, the template program takes an optional command-line
+argument specifying the path to the data source. If no argument is
+given, it uses a default location for the data specified by the
+template user. The template first reads the optional header, then
+reads each record and inserts the value of each meanful field into
+clustering until either the data source is exhuasted or the end of a
+portion is reached, at which point it prints the clustering report to
+standard io. The following list describes the macroes used by
+clustering template:
+
+\begin{description}
+
+\item[\cd{DEF\_INPUT\_FILE}] If defined, this macro specifies a string
+  representation of the path to the default data source. If no path to
+  the data is supplied at the command-line, this is the location used
+  for input data. 
+\item[\cd{EXTRA\_BEGIN\_CODE}] If defined, this macro points to a \C{}
+  statement that will be executed after all initialization code is
+  performed, but before the optional header is read.
+\item[\cd{EXTRA\_DECLS}] This optional macro defines additional \C{}
+  declarations that proceed all template code.
+\item[\cd{EXTRA\_DONE\_CODE}] If defined, this macro points to a \C{}
+  statement that will be executed after generating the accumulator report.
+\item[\cd{EXTRA\_INIT\_CODE}] This optional macro defines additional \C{}
+  codes that customize clustering data structure for different fields.
+\item[\cd{EXTRA\_READ\_ARGS}] If the type of the repeated record was
+  parameterized, this macro allows the user to supply corresponding
+  parameters. 
+\item[\cd{IO\_DISC\_MK}] If defined, this macro specifies the
+  interpretation of \Precord{} by indicating which IO discpline the
+  system should install. It specifies the discipline by naming the
+  function to create the discipline. \secref{sec:io-discipline}
+  describes the available IO discipline creation functions.  If the
+  user does not define this macro, the system installs the IO
+  discipline corresponding to  new-line terminated ASCII records.
+\item[\cd{PADS\_HDR\_TY}] Intuitively, this macro defines the type of
+  the header record in the data source. This macro need only be
+  defined if the data source has a header record. It defines a function used by the template program to
+  generate the various function and type names derived from the name
+  of the header record type, $i.e.$, the type of the associated in-memory
+  representation, mask, parse descriptor, read function, etc.
+\item[\cd{PADS\_TY}] Intuitively, this macro defines the type of the repeated
+  record in the data source, $i.e.$, the type of the value to be
+  summarized. This macro must be defined to use the clustering
+  template. It defines a function used by the template program to
+  generate the various function and type names derived from the name
+  of the record type, $i.e.$, the type of the associated in-memory
+  representation, mask, parse descriptor, read function, etc.
+\item[\cd{READ\_MASK}] This macro specifies the mask to use in reading
+  the repeated record. If not defined by the user, the template uses
+  the value \cd{P\_CheckAndSet}.
+
+\end{description}

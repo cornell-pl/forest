@@ -284,7 +284,6 @@ Perror_t int_type ## _cluster_map_report2io (P_t *pads, Sfio_t *outstr, const ch
     break; \
   } \
   for (i = 0; i < c->ind; i++) { \
-    printf("Cluster %d, with ", i+1); \
     if (c->cType == K_MEAN) { \
       (*(int_type ## _fromFloat_fn) (c->fromFloat)) (c->para[i][0], &obj); \
       sfprintf(outstr, "mean %s, containing ", (*fn)(obj)); \
