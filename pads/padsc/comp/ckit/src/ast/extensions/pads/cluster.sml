@@ -91,9 +91,9 @@ structure Cluster = struct
       end
 
 
-  fun genAddFunTypedef (name, baseTy, analysisPCT, repPCT, pdPCT) = 
+  fun genAddFunTypedef (name, baseTy, analysisPCT, repPCT, pdPCT, repX) = 
       let val addFun = (addSuf o analysisSuf) name
-          val bodySs = chkAddFun(addSuf (lookupAnalysis baseTy), PT.Id analysis,  PT.Id pd, PT. Id rep)
+          val bodySs = chkAddFun(addSuf (lookupAnalysis baseTy), PT.Id analysis,  PT.Id pd, repX)
 	  val addFunED = genAddFun(addFun, analysis, analysisPCT, pdPCT, repPCT, bodySs)
       in
 	  addFunED
@@ -116,7 +116,7 @@ structure Cluster = struct
 	  val setParamsFunED = genWalkFunsTypedef(name, baseTy, analysisPCT, setParamSuf,[defPackage])
 	  val resetFunED = genWalkFunsTypedef(name, baseTy, analysisPCT, resetSuf,[])
 	  val cleanupFunED = genWalkFunsTypedef(name, baseTy, analysisPCT, cleanupSuf,[])
-	  val addFunED = genAddFunTypedef(name, baseTy, analysisPCT, repPCT, pdPCT)
+	  val addFunED = genAddFunTypedef(name, baseTy, analysisPCT, repPCT, pdPCT, PT.Id rep)
 	  val reportFunEDs = genReportFunTypedef(name, baseTy, analysisPCT) 
       in
 	  [analysisED, initFunED, setParamsFunED, resetFunED,  addFunED] @  reportFunEDs @  [cleanupFunED] 
@@ -154,7 +154,7 @@ structure Cluster = struct
       end
 
   fun genAddFunEnum(name, analysisPCT,repPCT,pdPCT) = 
-      genAddFunTypedef(name, PX.Name "Pint32", analysisPCT, repPCT,pdPCT)
+      genAddFunTypedef(name, PX.Name "Pint32", analysisPCT, repPCT,pdPCT, PT.Cast(P.ptrPCT PL.intPCT, PT.Id rep))
 
   fun genReportFunEnum(name, analysisPCT) =
       let val reportFun = (reportSuf o analysisSuf) name

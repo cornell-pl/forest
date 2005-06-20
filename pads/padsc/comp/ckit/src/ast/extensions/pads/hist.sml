@@ -92,9 +92,9 @@ structure Hist = struct
       end
 
 
-  fun genAddFunTypedef (name, baseTy, histPCT, repPCT, pdPCT) = 
+  fun genAddFunTypedef (name, baseTy, histPCT, repPCT, pdPCT, repX) = 
       let val addFun = (addSuf o histSuf) name
-          val bodySs = chkAddFun(addSuf (lookupHist baseTy), PT.Id hist,  PT.Id pd, PT. Id rep)
+          val bodySs = chkAddFun(addSuf (lookupHist baseTy), PT.Id hist,  PT.Id pd, repX)
 	  val addFunED = genAddFun(addFun, hist, histPCT, pdPCT, repPCT, bodySs)
       in
 	  addFunED
@@ -117,7 +117,7 @@ structure Hist = struct
 	  val setParamsFunED = genWalkFunsTypedef(name, baseTy, histPCT, setParamSuf,[defPackage])
 	  val resetFunED = genWalkFunsTypedef(name, baseTy, histPCT, resetSuf,[])
 	  val cleanupFunED = genWalkFunsTypedef(name, baseTy, histPCT, cleanupSuf,[])
-	  val addFunED = genAddFunTypedef(name, baseTy, histPCT, repPCT, pdPCT)
+	  val addFunED = genAddFunTypedef(name, baseTy, histPCT, repPCT, pdPCT, PT.Id rep)
 	  val reportFunEDs = genReportFunTypedef(name, baseTy, histPCT) 
       in
 	  [histED, initFunED, setParamsFunED, resetFunED,  addFunED] @  reportFunEDs @  [cleanupFunED] 
@@ -155,7 +155,7 @@ structure Hist = struct
       end
 
   fun genAddFunEnum(name, histPCT,repPCT,pdPCT) = 
-      genAddFunTypedef(name, PX.Name "Pint32", histPCT, repPCT,pdPCT)
+      genAddFunTypedef(name, PX.Name "Pint32", histPCT, repPCT,pdPCT, PT.Cast(P.ptrPCT PL.intPCT, PT.Id rep))
 
   fun genReportFunEnum(name, histPCT) =
       let val reportFun = (reportSuf o histSuf) name
