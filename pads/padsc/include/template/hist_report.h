@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
     if (P_OK == PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
       PADS_TY(_hist_add)(pads, &h, &pd, &rep, &isFull);
       if (isFull != 0) {
-	PADS_TY(_hist_report)(pads, "", 0, 0, &h);
+	PADS_TY(_hist_reportFull)(pads, "", 0, 0, &h);
 	PADS_TY(_hist_reset)(pads, &h); 
       }
     }
@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  PADS_TY(_hist_report)(pads, "", 0, 0, &h);
+  PADS_TY(_hist_reportAll)(pads, "", 0, 0, &h);
   PADS_TY(_hist_cleanup)(pads, &h);
 
 #ifdef EXTRA_DONE_CODE

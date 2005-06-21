@@ -64,6 +64,7 @@ Perror_t type ## _hist_init (P_t *pads, type ## _hist *h) { \
   h->n = 2; \
   h->e = 1; \
   h->scale = 10000000; \
+  h->maxPortion = 3; \
   h->toFloat = (P_toFloat_fn) type ## _to; \
   h->fromFloat = (P_fromFloat_fn) type ## _from; \
   allocateS(h); \
@@ -82,6 +83,8 @@ Perror_t type ## _hist_setPara (P_t *pads, type ## _hist *h, P_hist* d_hist) { \
   h->n = d_hist->n; \
   h->e = d_hist->e; \
   h->scale = d_hist->scale; \
+  if (d_hist->maxPortion < 1) d_hist->maxPortion = 3; \
+  h->maxPortion = d_hist->maxPortion; \
   type ## _hist_cleanup(pads, h); \
   allocateS(h); \
   return P_OK; \
@@ -106,6 +109,9 @@ Perror_t type ## _hist_reset (P_t *pads, type ## _hist *h) { \
 } \
 \
 Perror_t type ## _hist_cleanup (P_t *pads, type ## _hist *h) { \
+  Pint8 i; \
+\
+  for (i = 0; i < h->maxPortion; i++) free(h->result[i]); \
   free(h->result); \
   if (h->isE == 0) { \
     free(h->rob); \
@@ -124,7 +130,12 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
   Perror_t res; \
 \
   if (h->ind == h->N || h->ind > h->N) { \
-    printf("*** Warning: Full histogram cleared without reported *** \n"); \
+    h->portionInd++; \
+    if (h->portionInd == h->maxPortion) { \
+      /* Space exceeds. Probably user programme error */ \
+      printf("*** Warning: Full histograms cleared without reported *** \n"); \
+      h->portionInd = 0; \
+    } \
     type ## _hist_reset(pads, h); \
   } \
   res = (*(type ## _toFloat_fn) (h->toFloat)) (rep, &d); \
@@ -150,13 +161,11 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
   return res; \
 } \
 \
-Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, type ## _hist *h) { \
-  Perror_t res; \
+Perror_t type ## _hist_report2ioFull (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, type ## _hist *h) { \
+  Perror_t res = P_OK; \
   Pint64 i; \
-  Pint64 tempInd; \
-  Pint64 tempN = h->N; \
 \
-  if (h->ind == 0) return P_OK; \
+  if (h->portionInd == 0 && h->ind != h->N) return P_OK; \
   if (!prefix || *prefix == 0) prefix = "<top>"; \
   what = fmt; \
   PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
@@ -169,12 +178,35 @@ Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix,
     if (h->isO != 0) sfprintf(outstr, "Optimal histogram required, with norm %d \n", h->n); \
     else sfprintf(outstr, "Histogram within poly-(1+%f) times error \n", h->e); \
   } \
+  for (i = 0; i < h->portionInd; i++) res = type ## _report (outstr, h, i); \
+  return res; \
+} \
+\
+Perror_t type ## _hist_report2ioAll (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, type ## _hist *h) { \
+  Perror_t res; \
+  Pint64 i; \
+  Pint64 tempInd; \
+  Pint64 tempN = h->N; \
+\
+  type ## _hist_report2ioFull(pads, outstr, prefix, what, nst, h); \
   res = P_OK; \
+  if (h->ind == 0) return res; \
+  if (!prefix || *prefix == 0) prefix = "<top>"; \
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
+  /* Print header */ \
+  sfprintf(outstr, "Basic Information:\n"); \
+  sfprintf(outstr, "Portion length: %d;    ", h->N); \
+  sfprintf(outstr, "Number of buckets: %d \n", h->B); \
+  if (h->isE != 0) sfprintf(outstr, "Equal width buckets required. \n"); \
+  else{ \
+    if (h->isO != 0) sfprintf(outstr, "Optimal histogram required, with norm %d \n", h->n); \
+    else sfprintf(outstr, "Histogram within poly-(1+%f) times error \n", h->e); \
+  } \
   if (h->ind != h->N) { \
     /* Real data is less than the estimated dimension */ \
     if (h->isE != 0) { \
-      h->result[h->bukI].hei = h->partS; \
-      h->result[h->bukI].bound = h->ind; \
+      h->result[h->portionInd][h->bukI].hei = h->partS; \
+      h->result[h->portionInd][h->bukI].bound = h->ind; \
       h->bukI++; \
     } \
     else { \
@@ -196,15 +228,22 @@ Perror_t type ## _hist_report2io (P_t *pads, Sfio_t *outstr, const char *prefix,
       } \
     } \
   } \
-  res = type ## _report (outstr, h); \
+  res = type ## _report (outstr, h, h->portionInd); \
   h->N = tempN; \
   return res; \
 } \
 \
-Perror_t type ## _hist_report (P_t *pads, const char *prefix, const char *what, int nst, type ## _hist *h) { \
+Perror_t type ## _hist_reportFull (P_t *pads, const char *prefix, const char *what, int nst, type ## _hist *h) { \
   Sfio_t *tmpstr = sfstdout; \
   Perror_t res; \
-  res = type ## _hist_report2io (pads, tmpstr, prefix, what, nst, h); \
+  res = type ## _hist_report2ioFull (pads, tmpstr, prefix, what, nst, h); \
+  return P_OK; \
+} \
+\
+Perror_t type ## _hist_reportAll (P_t *pads, const char *prefix, const char *what, int nst, type ## _hist *h) { \
+  Sfio_t *tmpstr = sfstdout; \
+  Perror_t res; \
+  res = type ## _hist_report2ioAll (pads, tmpstr, prefix, what, nst, h); \
   return P_OK; \
 } 
 /* END_MACRO */
@@ -229,13 +268,34 @@ TYPE_HIST_GEN (Pdate, "date");
 
 /* BEGIN_MACRO */
 #define MAP_REPORT_GEN(int_type) \
-Perror_t int_type ## _hist_map_report2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _hist *h) { \
+Perror_t int_type ## _hist_map_report2ioFull (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _hist *h) { \
+  Perror_t res = P_OK; \
+  Pint64 i; \
+\
+  if (h->portionInd == 0 && h->ind != h->N) return P_OK; \
+  if (!prefix || *prefix == 0) prefix = "<top>"; \
+  PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
+  /* Print header */ \
+  sfprintf(outstr, "Basic Information:\n"); \
+  sfprintf(outstr, "Portion length: %d;    ", h->N); \
+  sfprintf(outstr, "Number of buckets: %d \n", h->B); \
+  if (h->isE != 0) sfprintf(outstr, "Equal width buckets required. \n"); \
+  else{ \
+    if (h->isO != 0) sfprintf(outstr, "Optimal histogram required, with norm %d \n", h->n); \
+    else sfprintf(outstr, "Histogram within poly-(1+%f) times error \n", h->e); \
+  } \
+  for (i = 0; i < h->portionInd; i++) res = int_type ## _map_report (outstr, fn, h, i); \
+  return res; \
+} \
+\
+Perror_t int_type ## _hist_map_report2ioAll (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _hist *h) { \
   Perror_t res = P_OK; \
   Pint64 i; \
   Pint64 tempInd; \
   Pint64 tempN = h->N; \
 \
-  if (h->ind == 0 || h->result[0].bound < 1) return P_OK; \
+  int_type ## _hist_map_report2ioFull(pads, outstr, prefix, what, nst, fn, h); \
+  if (h->ind == 0 || h->result[h->portionInd][0].bound < 1) return P_OK; \
   if (!prefix || *prefix == 0) prefix = "<top>"; \
   PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
   /* Print header */ \
@@ -250,8 +310,8 @@ Perror_t int_type ## _hist_map_report2io (P_t *pads, Sfio_t *outstr, const char 
   if (h->ind != h->N) { \
     /* Real data is less than the estimated dimension */ \
     if (h->isE != 0) { \
-      h->result[h->bukI].hei = h->partS; \
-      h->result[h->bukI].bound = h->ind; \
+      h->result[h->portionInd][h->bukI].hei = h->partS; \
+      h->result[h->portionInd][h->bukI].bound = h->ind; \
       h->bukI++; \
     } \
     else { \
@@ -273,7 +333,7 @@ Perror_t int_type ## _hist_map_report2io (P_t *pads, Sfio_t *outstr, const char 
       } \
     } \
   } \
-  res = int_type ## _map_report (outstr, fn, h); \
+  res = int_type ## _map_report (outstr, fn, h, h->portionInd); \
   h->N = tempN; \
   return res; \
 }
@@ -290,16 +350,16 @@ MAP_REPORT_GEN (Puint64);
 
 /* BEGIN_MACRO */
 #define INT_TYPE_MAP_GEN(int_type) \
-Perror_t int_type ## _map_report (Sfio_t *outstr, int_type ## _map_fn fn, int_type ## _hist *h) { \
+Perror_t int_type ## _map_report (Sfio_t *outstr, int_type ## _map_fn fn, int_type ## _hist *h, Pint8 pInd) { \
   Perror_t res = P_OK; \
   Pint64 i; \
   int_type obj; \
 \
   for (i = 0; i < h->bukI; i++) { \
     if (i == 0) sfprintf(outstr, "From %d to ", 0); \
-    else sfprintf(outstr, "From %d to ", h->result[i-1].bound); \
-    sfprintf(outstr, "%d, with height ", h->result[i].bound - 1); \
-    res = (*(int_type ## _fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj); \
+    else sfprintf(outstr, "From %d to ", h->result[pInd][i-1].bound); \
+    sfprintf(outstr, "%d, with height ", h->result[pInd][i].bound - 1); \
+    res = (*(int_type ## _fromFloat_fn) (h->fromFloat)) (h->result[pInd][i].hei * (Pfloat64)h->scale, &obj); \
     sfprintf(outstr, "%s \n", (*fn)(obj)); \
   } \
   sfprintf(outstr, "%s", PDCI_hdr_strings[2]); \
@@ -318,7 +378,7 @@ INT_TYPE_MAP_GEN (Puint64);
 
 /* BEGIN_MACRO */
 #define BASIC_REPORT_GEN(type, fmt) \
-Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
+Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h, Pint8 pInd) { \
   Perror_t res = P_OK; \
   Pint64 i; \
   type obj; \
@@ -326,9 +386,9 @@ Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
   if (h->isE == 0) h->bukI = h->B; \
   for (i = 0; i < h->bukI; i++) { \
     if (i == 0) sfprintf(outstr, "From %d to ", 0); \
-    else sfprintf(outstr, "From %d to ", h->result[i-1].bound); \
-    sfprintf(outstr, "%d, with height ", h->result[i].bound - 1); \
-    res = (*(type ## _fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj); \
+    else sfprintf(outstr, "From %d to ", h->result[pInd][i-1].bound); \
+    sfprintf(outstr, "%d, with height ", h->result[pInd][i].bound - 1); \
+    res = (*(type ## _fromFloat_fn) (h->fromFloat)) (h->result[pInd][i].hei * (Pfloat64)h->scale, &obj); \
     sfprintf(outstr, "%" fmt " \n", obj); \
   } \
   sfprintf(outstr, "%s", PDCI_hdr_strings[2]); \
@@ -349,7 +409,7 @@ BASIC_REPORT_GEN (Pfloat64, "f");
 BASIC_REPORT_GEN (Pchar, "c");
 BASIC_REPORT_GEN (Pstring, "s");
 
-Perror_t Pip_report (Sfio_t *outstr, Pip_hist *h) {
+Perror_t Pip_report (Sfio_t *outstr, Pip_hist *h, Pint8 pInd) {
   Perror_t res = P_OK;
   Pint64 i;
   Pip obj;
@@ -357,9 +417,9 @@ Perror_t Pip_report (Sfio_t *outstr, Pip_hist *h) {
   if (h->isE == 0) h->bukI = h->B;
   for (i = 0; i < h->bukI; i++) {
     if (i == 0) sfprintf(outstr, "From %d to ", 0);
-    else sfprintf(outstr, "From %d to ", h->result[i-1].bound);
-    sfprintf(outstr, "%d, with average ip address ", h->result[i].bound - 1);
-    res = (*(Pip_fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj);
+    else sfprintf(outstr, "From %d to ", h->result[pInd][i-1].bound);
+    sfprintf(outstr, "%d, with average ip address ", h->result[pInd][i].bound - 1);
+    res = (*(Pip_fromFloat_fn) (h->fromFloat)) (h->result[pInd][i].hei * (Pfloat64)h->scale, &obj);
     sfprintf(outstr, "%d.%d.%d.%d \n", P_IP_PART(obj, 1), P_IP_PART(obj, 2), P_IP_PART(obj, 3), P_IP_PART(obj, 4));
   }
   sfprintf(outstr, "%s", PDCI_hdr_strings[2]);
@@ -368,7 +428,7 @@ Perror_t Pip_report (Sfio_t *outstr, Pip_hist *h) {
 
 /* BEGIN_MACRO */
 #define TIME_DATE_REPORT_GEN(type) \
-Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
+Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h, Pint8 pInd) { \
   Perror_t res = P_OK; \
   Pint64 i; \
   type obj; \
@@ -376,9 +436,9 @@ Perror_t type ## _report (Sfio_t *outstr, type ## _hist *h) { \
   if (h->isE == 0) h->bukI = h->B; \
   for (i = 0; i < h->bukI; i++) { \
     if (i == 0) sfprintf(outstr, "From %d to ", 0); \
-    else sfprintf(outstr, "From %d to ", h->result[i-1].bound); \
-    sfprintf(outstr, "%d, with average time ", h->result[i].bound - 1); \
-    res = (*(type ## _fromFloat_fn) (h->fromFloat)) (h->result[i].hei * (Pfloat64)h->scale, &obj); \
+    else sfprintf(outstr, "From %d to ", h->result[pInd][i-1].bound); \
+    sfprintf(outstr, "%d, with average time ", h->result[pInd][i].bound - 1); \
+    res = (*(type ## _fromFloat_fn) (h->fromFloat)) (h->result[pInd][i].hei * (Pfloat64)h->scale, &obj); \
     sfprintf(outstr, "%s \n", fmttime("%x %I:%M %p", (time_t)obj)); \
   } \
   sfprintf(outstr, "%s", PDCI_hdr_strings[2]); \
@@ -393,17 +453,26 @@ TIME_DATE_REPORT_GEN(Pdate);
 /* Functions defined for private use only */ 
 void allocateS(P_hist *h) {
   Pint32 i;
+  Pint8 j;
   Pint64 adj;
 
   h->ind = 0;
-  h->result = malloc(h->B * sizeof(struct bucket));
-  if (h->result == (struct bucket*)0) exit(-1);
+  h->portionInd = 0;
+  h->result = malloc(h->maxPortion * sizeof(struct bucket*));
+  if (h->result == (struct bucket**)0) exit(-1);
+  for (j = 0; j < h->maxPortion; j++) {
+    h->result[j] = malloc(h->B * sizeof(struct bucket));
+    if (h->result[j] == (struct bucket*)0) exit(-1);
+  }
   if (h->isE != 0) {
     /* Equally spaced */
     h->partS = 0;
     h->bukI = 0;
-    for (i = 0; i < h->B; i++) h->result[i].bound = ((Pint64)(h->N / h->B) + 1) * (i + 1) - 1;
-    h->result[h->B - 1].bound = h->N;
+    for (j = 0; j < h->maxPortion; j++) {
+      for (i = 0; i < h->B; i++) 
+	h->result[j][i].bound = ((Pint64)(h->N / h->B) + 1) * (i + 1) - 1;
+      h->result[j][h->B - 1].bound = h->N;
+    }
   }
   else {
     if (h->isO != 0) {
@@ -440,9 +509,9 @@ void allocateS(P_hist *h) {
 Perror_t EqualHis(P_hist *h, Pfloat64 d) { 
   Pint64 i;
   if (h->ind == 0) h->bukI = 0;
-  if (h->ind == h->result[h->bukI].bound || h->ind == h->N) {
+  if (h->ind == h->result[h->portionInd][h->bukI].bound || h->ind == h->N) {
     /* Reach a boundary, height computed, end point recorded */
-    h->result[h->bukI].hei = h->partS;
+    h->result[h->portionInd][h->bukI].hei = h->partS;
     h->bukI++;
     h->partS = 0;
   }
@@ -450,7 +519,7 @@ Perror_t EqualHis(P_hist *h, Pfloat64 d) {
   else {
     if (h->bukI == 0) h->partS = (h->partS * h->ind + d) / (h->ind + 1);
     else {
-      i = h->ind - h->result[h->bukI - 1].bound;
+      i = h->ind - h->result[h->portionInd][h->bukI - 1].bound;
       h->partS = (h->partS * i + d) / (i + 1);
     }
   }
@@ -730,15 +799,15 @@ void compOpt(P_hist *h) {
   resultI = h->rowN - 1;
   track = h->colN;
   while (track != 0) {
-    if (track == h->colN) h->result[resultI].bound = h->ind;
-    else h->result[resultI].bound = h->rob[track].bound;
-    h->result[resultI].hei = h->dpTable[resultI][track - 1].hei;
+    if (track == h->colN) h->result[h->portionInd][resultI].bound = h->ind;
+    else h->result[h->portionInd][resultI].bound = h->rob[track].bound;
+    h->result[h->portionInd][resultI].hei = h->dpTable[resultI][track - 1].hei;
     track = h->dpTable[resultI][track - 1].bound;
     resultI--;
   }
   if (resultI > 0) {
     /* Use less than B buckets, with error guarantee */
-     for (i = 0; i < resultI + 1; i++) h->result[i].bound = 0;
+     for (i = 0; i < resultI + 1; i++) h->result[h->portionInd][i].bound = 0;
   }
   if (h->dpTable != NULL) {
     for (i = 0; i < h->rowN; i++) free(h->dpTable[i]);
