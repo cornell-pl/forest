@@ -161,7 +161,7 @@ Perror_t type ## _hist_add (P_t *pads, type ## _hist *h, Pbase_pd *pd, type *rep
   return res; \
 } \
 \
-Perror_t type ## _hist_report2ioFull (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, type ## _hist *h) { \
+Perror_t type ## _hist_reportFull2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, type ## _hist *h) { \
   Perror_t res = P_OK; \
   Pint64 i; \
 \
@@ -182,13 +182,13 @@ Perror_t type ## _hist_report2ioFull (P_t *pads, Sfio_t *outstr, const char *pre
   return res; \
 } \
 \
-Perror_t type ## _hist_report2ioAll (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, type ## _hist *h) { \
+Perror_t type ## _hist_reportAll2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, type ## _hist *h) { \
   Perror_t res; \
   Pint64 i; \
   Pint64 tempInd; \
   Pint64 tempN = h->N; \
 \
-  type ## _hist_report2ioFull(pads, outstr, prefix, what, nst, h); \
+  type ## _hist_reportFull2io(pads, outstr, prefix, what, nst, h); \
   res = P_OK; \
   if (h->ind == 0) return res; \
   if (!prefix || *prefix == 0) prefix = "<top>"; \
@@ -236,14 +236,14 @@ Perror_t type ## _hist_report2ioAll (P_t *pads, Sfio_t *outstr, const char *pref
 Perror_t type ## _hist_reportFull (P_t *pads, const char *prefix, const char *what, int nst, type ## _hist *h) { \
   Sfio_t *tmpstr = sfstdout; \
   Perror_t res; \
-  res = type ## _hist_report2ioFull (pads, tmpstr, prefix, what, nst, h); \
+  res = type ## _hist_reportFull2io (pads, tmpstr, prefix, what, nst, h); \
   return P_OK; \
 } \
 \
 Perror_t type ## _hist_reportAll (P_t *pads, const char *prefix, const char *what, int nst, type ## _hist *h) { \
   Sfio_t *tmpstr = sfstdout; \
   Perror_t res; \
-  res = type ## _hist_report2ioAll (pads, tmpstr, prefix, what, nst, h); \
+  res = type ## _hist_reportAll2io (pads, tmpstr, prefix, what, nst, h); \
   return P_OK; \
 } 
 /* END_MACRO */
@@ -268,7 +268,7 @@ TYPE_HIST_GEN (Pdate, "date");
 
 /* BEGIN_MACRO */
 #define MAP_REPORT_GEN(int_type) \
-Perror_t int_type ## _hist_map_report2ioFull (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _hist *h) { \
+Perror_t int_type ## _hist_map_reportFull2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _hist *h) { \
   Perror_t res = P_OK; \
   Pint64 i; \
 \
@@ -288,13 +288,13 @@ Perror_t int_type ## _hist_map_report2ioFull (P_t *pads, Sfio_t *outstr, const c
   return res; \
 } \
 \
-Perror_t int_type ## _hist_map_report2ioAll (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _hist *h) { \
+Perror_t int_type ## _hist_map_reportAll2io (P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst, int_type ## _map_fn fn, int_type ## _hist *h) { \
   Perror_t res = P_OK; \
   Pint64 i; \
   Pint64 tempInd; \
   Pint64 tempN = h->N; \
 \
-  int_type ## _hist_map_report2ioFull(pads, outstr, prefix, what, nst, fn, h); \
+  int_type ## _hist_map_reportFull2io(pads, outstr, prefix, what, nst, fn, h); \
   if (h->ind == 0 || h->result[h->portionInd][0].bound < 1) return P_OK; \
   if (!prefix || *prefix == 0) prefix = "<top>"; \
   PDCI_nst_prefix_what(outstr, &nst, prefix, what, 0); \
