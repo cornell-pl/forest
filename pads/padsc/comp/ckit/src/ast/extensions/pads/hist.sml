@@ -19,6 +19,8 @@ structure Hist = struct
   val def_hist = "default_hist"
   val def_histX = PT.Id "default_hist"
   fun setParamSuf s = s^"_setPara"
+  fun reportFullSuf s = s^"_reportFull"
+  fun reportAllSuf s = s^"_reportAll"
 
   val uint32Hist    = "Puint32_hist"
   val uint32HistPCT = P.makeTypedefPCT "Puint32_hist"
@@ -100,7 +102,7 @@ structure Hist = struct
 	  addFunED
       end
 
-  fun genReportFunTypedef(name, baseTy, histPCT) =
+  fun genReportFunTypedef(name, baseTy, histPCT, reportSuf) =
       let val reportFun = (reportSuf o histSuf) name
 	  val repioCallX = PT.Call(PT.Id((ioSuf o reportSuf) (lookupHist baseTy)),
 				   [PT.Id pads, PT.Id outstr, PT.Id prefix, PT.Id what, PT.Id nst, PT.Id hist])
@@ -118,9 +120,11 @@ structure Hist = struct
 	  val resetFunED = genWalkFunsTypedef(name, baseTy, histPCT, resetSuf,[])
 	  val cleanupFunED = genWalkFunsTypedef(name, baseTy, histPCT, cleanupSuf,[])
 	  val addFunED = genAddFunTypedef(name, baseTy, histPCT, repPCT, pdPCT, PT.Id rep)
-	  val reportFunEDs = genReportFunTypedef(name, baseTy, histPCT) 
+	  val reportFullFunEDs = genReportFunTypedef(name, baseTy, histPCT, reportFullSuf) 
+	  val reportAllFunEDs = genReportFunTypedef(name, baseTy, histPCT, reportAllSuf) 
       in
-	  [histED, initFunED, setParamsFunED, resetFunED,  addFunED] @  reportFunEDs @  [cleanupFunED] 
+	  [histED, initFunED, setParamsFunED, resetFunED,  addFunED] @  
+	  reportFullFunEDs @  reportAllFunEDs @ [cleanupFunED] 
       end
 
 
@@ -157,7 +161,7 @@ structure Hist = struct
   fun genAddFunEnum(name, histPCT,repPCT,pdPCT) = 
       genAddFunTypedef(name, PX.Name "Pint32", histPCT, repPCT,pdPCT, PT.Cast(P.ptrPCT PL.intPCT, PT.Id rep))
 
-  fun genReportFunEnum(name, histPCT) =
+  fun genReportFunEnum(name, histPCT, reportSuf) =
       let val reportFun = (reportSuf o histSuf) name
 	  val repioCallX = BU.callEnumPrint((ioSuf o reportSuf o mapSuf) intHist,
 					    PT.Id prefix, PT.Id what, PT.Id nst,
@@ -175,10 +179,11 @@ structure Hist = struct
 	  val resetFunED = genWalkFunsEnum(name, histPCT, resetSuf,[])
 	  val cleanupFunED = genWalkFunsEnum(name, histPCT, cleanupSuf,[])
 	  val addFunED = genAddFunEnum(name, histPCT, repPCT, pdPCT)
-	  val reportFunEDs = genReportFunEnum(name, histPCT)
+	  val reportFullFunEDs = genReportFunEnum(name, histPCT,reportFullSuf)
+	  val reportAllFunEDs = genReportFunEnum(name, histPCT,reportAllSuf)
 
       in
-	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
+	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFullFunEDs @ reportAllFunEDs @[cleanupFunED]
       end
 
 
@@ -231,7 +236,7 @@ structure Hist = struct
       end
 
   (* -- generate histogram report function array *)
-  fun genReportFunArray (name, baseTy, histPCT) = 
+  fun genReportFunArray (name, baseTy, histPCT, reportSuf) = 
       let val reportFun = (reportSuf o histSuf) name
 	  val elemFunName = ioSuf(reportSuf (lookupHist baseTy))
 	  val baseTyStr = case baseTy of PX.Name n => n
@@ -255,10 +260,11 @@ structure Hist = struct
 	  val setParamsFunED = genWalkFunsArray (name, baseTy, histPCT, setParamSuf,[defPackage])
 	  val resetFunED   = genWalkFunsArray (name, baseTy, histPCT, resetSuf,[])
 	  val addFunED     = genAddFunArray   (name, baseTy, histPCT, repPCT, pdPCT)
-	  val reportFunEDs = genReportFunArray(name, baseTy, histPCT)
+	  val reportFullFunEDs = genReportFunArray(name, baseTy, histPCT, reportFullSuf)
+	  val reportAllFunEDs = genReportFunArray(name, baseTy, histPCT, reportAllSuf)
 	  val cleanupFunED = genWalkFunsArray (name, baseTy, histPCT, cleanupSuf,[])
       in
-	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFunEDs @ [ cleanupFunED]
+	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFullFunEDs @ reportAllFunEDs @ [ cleanupFunED]
       end
 
   (* PUNIONS *)
@@ -346,7 +352,7 @@ structure Hist = struct
 	  addFunED
       end
 
-  fun genReportFunUnion (ptyfuns, name, variants, histPCT, fromOpt) = 
+  fun genReportFunUnion (ptyfuns, name, variants, histPCT, fromOpt, reportSuf) = 
       let val reportFun = (reportSuf o histSuf) name
 	  val header = if fromOpt then "Opt" else "Union"
 	  val reportTags = [
@@ -383,10 +389,11 @@ structure Hist = struct
 	  val setParamsFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, setParamSuf,[defPackage])
 	  val resetFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, resetSuf,[])
 	  val addFunED = genAddFunUnion(ptyfuns, name, variants, histPCT, repPCT, pdPCT)
-	  val reportFunEDs = genReportFunUnion(ptyfuns, name, variants, histPCT, fromOpt)
+	  val reportFullFunEDs = genReportFunUnion(ptyfuns, name, variants, histPCT, fromOpt, reportFullSuf)
+	  val reportAllFunEDs = genReportFunUnion(ptyfuns, name, variants, histPCT, fromOpt, reportAllSuf)
 	  val cleanupFunED = genWalkFunsUnion (ptyfuns, name, variants, histPCT, cleanupSuf,[])
       in
-	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
+	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFullFunEDs @ reportAllFunEDs @[cleanupFunED]
       end
 
   (* PSTRUCTS *)
@@ -458,7 +465,7 @@ structure Hist = struct
       end
 
 
-  fun genReportFunStruct (ptyfuns, name, fields, histPCT) = 
+  fun genReportFunStruct (ptyfuns, name, fields, histPCT, reportSuf) = 
       let val reportFun = (reportSuf o histSuf) name
 	  val headerSs = [PL.sfprintf(PT.Id outstr, 
 				      PT.String "\n[Describing each field of %s]\n", 
@@ -489,10 +496,11 @@ structure Hist = struct
 	  val setParamsFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, setParamSuf,[defPackage])
 	  val resetFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, resetSuf,[])
 	  val addFunED = genAddFunStruct(ptyfuns, name, fields, histPCT, repPCT, pdPCT)
-	  val reportFunEDs = genReportFunStruct(ptyfuns, name, fields, histPCT)
+	  val reportFullFunEDs = genReportFunStruct(ptyfuns, name, fields, histPCT, reportFullSuf)
+	  val reportAllFunEDs = genReportFunStruct(ptyfuns, name, fields, histPCT, reportAllSuf)
 	  val cleanupFunED = genWalkFunsStruct (ptyfuns, name, fields, histPCT, cleanupSuf,[])
       in
-	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFunEDs @ [cleanupFunED]
+	  [histED, initFunED, setParamsFunED, resetFunED, addFunED] @ reportFullFunEDs @ reportAllFunEDs @ [cleanupFunED]
       end
 
 end
