@@ -2,14 +2,14 @@
 
 The primitives of \ddc{} are deceptively simple.  Each captures a
 simple concept, often familiar from type theory. However, in reality,
-each primitive is multi-faceted. It simultaneously describes a
+each primitive is multi-faceted. Each simultaneously describes a
 collection of bit strings, two datatypes in the host language -- one
 for the data representation (Rep) itself and one for its parse
-descriptor (PD) -- and a transformation from the data source, represented as a bitstring, into data and
+descriptor (PD) -- and a transformation from bit strings into data and
 corresponding meta-data. Moreover, the collection of bit strings
-described need not be ``perfect'' - many bit strings not exactly
+described need not be ``perfect'' --- many bit strings not exactly
 matching the intuitive meaning of a type must also be successfully
-parsed.
+parsed, with errors marked in the parse descriptor.
 
 % Diagram:
 
@@ -22,30 +22,29 @@ parsed.
 %                 corr
 
 What, then, are the semantics of a type? A number of factors went into
-our design of the \ddc{}, and they heavily influenced our choice for
+the design of \ddc{}, and they heavily influenced our choice for
 the semantics of the calculus. First, it was necessary that the
 calculus be simultaneously detailed enough to capture meaningful
-differences between the data description languages, yet rich enough to
-express many, if not all, of the constructs found in these languages.
-Second, we sought to explain to the user of a DDL the process by which
+differences between various data description languages (DDLs), 
+and broad enough to express the constructs found in these languages.
+Second, we sought to explain to DDL users the process by which
 a bit stream is converted into an in-memory representation. For the
-analyst, the data format already existed, with a specific meaning to
-someone. We sought to be precise in specifying the transform so the
+analyst, the data format already existed, with a specific meaning. We sought to precisely specify the transform so the
 analyst knows how that meaning is mapped into the host language.
-Finally, it was critical that the \ddc{} include error reporting and
-error handling mechanisms. Errors are an unavoidable and intrinsic
-characteristic of ad hoc data. All DDLs are set up to handle errors
-with varying degrees of flexibility.
+Finally, it was critical that \ddc{} include error reporting and
+error handling mechanisms because errors are an intrinsic
+characteristic of ad hoc data. 
+%All DDLs are set up to handle errors with varying degrees of flexibility.
 %   (warn the reader that the current calculus is not necessarily
 %   ultimately flexible in this regard, but open to extension).
 
 We therefore chose to specify the semantics of a type as the
-transformation it performs on bitstrings. From the formal
+transformation it performs on bit strings. From the formal
 specification of a type's transformation - that is, parsing function,
 we can infer all of the other properties mentioned above.  The
 datatypes associated with the internal representation of the data and
 its corresponding parse descriptor can be infered from the description
-of the transformation itself. The set of ``perfect'' bitstrings are
+of the transformation itself. The set of ``perfect'' bit strings are
 exactly those whose transformation results in a parse descriptor that
 reports no errors.
 
@@ -68,8 +67,8 @@ reports no errors.
   \end{center}
 \end{table}
 
-{\em Do we need this line and the table? it seems better suited to the
-TR.} In Table~\ref{tab:judg-list}, we provide a listing of all the
+In the remainder of this section, we formalize this semantics for \ddc{} types. 
+For reference, we provide in \tblref{tab:judg-list} a listing of all the
 judgments found in this section and a brief description of each. 
 
 \begin{figure}[tp]
@@ -79,13 +78,8 @@ judgments found in this section and a brief description of each.
   \label{fig:correspond-graphic}
 \end{figure}
 
-\subsection{From \ddc{} Type to Data Representation and Parse
-  Descriptor Type}
+\subsection{Representations and Parse Descriptors}
 \label{sec:intty-sem}
-
-{\em We present this section first, as the kinding rules in the next
-  section depend on the semantics presented in this section.}  
-
 We now describe the exact correspondence between \ddc{} primitives and
 data representations and parse descriptor \implang types. An
 illustration of this correspondence is provided in
