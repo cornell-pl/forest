@@ -1,0 +1,14 @@
+  We present a calculus of dependent types that can be used
+  compositionally to describe the physical layout and semantic
+  properties of a data source. We present a semantics for the calculus
+  in which we interpret the types simultaneously as the simple types
+  for the data described and as parsing functions for the data source.
+  The parsing functions are robust, automatically detecting and
+  recording errors in the data stream without halting parsing.  We
+  prove two important correctness properties of the parsers.  First,
+  we show they are type-correct, outputing data whose type matches the
+  simple-type interpretation of the specificatIon, and second, we show
+  they are ``error-correct,'' reporting exactly the number of physical
+  and semantic errors that occur in the returned data. Finally, we
+  present a case study of using this calculus to describe the PADS
+  language.

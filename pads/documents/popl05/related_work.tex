@@ -1,0 +1,19 @@
+\section{Related Work}
+
+To our knowledge, ours is the first attempt to specify a semantics for
+data description languages. Therefore, most closely related to our
+work are the data description languages themselves, discussed in the
+introduction.  However, there are certainly alternative formalisms for
+defining langauges, perhaps most notably, regular expressions and
+contex-free grammars. Unfortunately, the nondeterminism and lack of
+dependency in these formalisms limit their suitability to formalizing
+data description languages. While the parsing expression grammars
+(PEG) formalism~\cite{ford:parsing-expression-grammars} is
+significantly closer to the \ddc{}, it too lacks the necessary
+dependency.
+
+Less related, but still relevant, are Haskell's parsing
+combinators. While these are not a formalism, they do provide an
+elegant manner in which to express parsers. Hence, while we chose to
+define our parsing semantics in the polymorphic lambda calculus,they
+potentialy provide a more elegant alternative.

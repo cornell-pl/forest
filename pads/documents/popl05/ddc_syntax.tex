@@ -1,0 +1,160 @@
+\section{A Data Description Calculus}
+
+At the heart of our work is a calculus of data descriptions (\ddc{}),
+designed to capture the core features of data description languages. Consequently, the syntax of \ddc{} is at a significantly lower level than that of \ipads{}.  Like \ipads{}, however, \ddc{} presents a type-based model.  Each \ddc{} type describes the external representation of a piece of data and implicitly specifies how to transform that external representation into an internal one.  The internal representation includes both the transformed value and a \textit{parse descriptor} that characterizes the errors that occurred during parsing. Syntactically, the primitives of the calculus are
+similar to the types found in many dependent type systems, with a
+number of additions specific to the domain of data description.  
+%We define each data description primitive orthogonally from the others, using composition to describe richer structures.
+We base our calculus on a \textit{dependent} type theory
+because it is common in data description languages for expressions to appear within the types. 
+
+\cut{
+Our choice to base our calculus on a specifically
+\textit{dependent} type theory is due to the appearance in the data
+descriptions of expressions $e$ taken from an abstract expression
+language \footnote{In the next section we will specify one possible such
+expression language}.
+
+In order to understand the calculus, the types should be thought of
+not merely as classifying values, but as transforming them from an
+external representation to an internal one. Our description of the
+individual primitives will be based on just such a conception of their
+meaning.
+}
+
+{\em This paragraph belongs somewhere in this section or the next:
+A few things to note regarding variable names. First, all variable
+names introduced in translation are by definition not equal to the
+target of the substitution, nor present in the free variables of the
+term being substituted. Second, for those types with bound variables,
+we note that the potential alpha-conversion when performing a
+substitution on the type exactly parallels any alpha-conversion of the
+same variable where it appears in the translation of the type. Last,
+all constructors, support functions and base-type parsers are closed
+with respect to user-defined variable names.}
+
+\subsection{Data Description Calculus Syntax}
+The syntax of \ddc{} is parameterised by an expression language.  We specify one possible such language in the next section.  Otherwise,
+the syntax of \ddc{} is as follows:
+\begin{bnf}
+  \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
+                               \pext{\| \gk \-> \gk} \\
+  \name{Types} \meta{\ty} \::= 
+    \ptrue\| \pfalse \| \pbase{e} \| 
+    \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \nlalt
+%%        \|
+%%       \pext{\plam{\ptyvar}{\gk}{\ty} \| \papp{\ty}{\ty} \nlalt}
+%%       \pxpd{\ty}{e}
+%%       \pext{\nlalt
+%%         \ptransform{e}{e}{\ty} \| 
+%%       }
+    \psig x \ty \ty \| \psum \ty e \ty \| \pand \ty \ty \nlalt 
+    \pset x \ty e \|
+    \pseq \ty \ty {\pterm e \ty} \nlalt
+    \ptyvar \| \pmu{\ptyvar}{\ty} \nlalt
+    \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
+\end{bnf}%
+\noindent
+The most basic types are $\ptrue$ and $\pfalse$, both of which consume no input
+and return unit as the value portion of the internal representation. 
+The difference between $\ptrue$ and $\pfalse$ is that the former always succeeds, while the latter always fails, a distinction recorded in the associated parse descriptors.
+
+
+The syntax $\pbase e$ denotes a base type $C$ parameterized by a host language expression $e$.
+% An instance of the \ddc{} will provide a set of base types $C$. 
+Base types recognize and transform atomic values within the
+data source; typical examples include various kinds of integers and strings. 
+The parameter expression plays a type-dependent role, \eg{}, specifying digit lengths for integers or terminating conditions for strings.
+
+So that we may parameterize types by expressions, we provide type constructors
+$\plam x {} \ty$ and type applications $\papp \ty e$.
+Dependent product types $\psig x \ty \ty$ describe a sequence of
+values. The second type in the product can refer to the value of the
+first with the name $x$. Sum types $\psum \ty e \ty$ describe
+variation in the data format, choosing between the two possible types
+in a deterministic manner. Intersection types, $\pand \ty \ty$,
+describe data that can be understood as both of the component types,
+transforming the single set of bits into two distinct values.  Set
+types $\pset x \ty e$ transform the data according to the underlying
+type $\ty$, but additionally check that the constraint $e$ is met.
+The value returned by $\ty$ is bound as $x$ in $e$.
+
+The type $\pseq \ty {\ty_s} {\pterm e {\ty_t}}$ represents a sequence
+of values of type $\ty$. The first type, $\ty$, specifies
+the element type of the sequence. The second type, $\ty_s$, specifies
+the type of the separator found between elements of the sequence. For
+sequences without separators, we can use $\ptrue$ as the separator
+type.  The expression $e$ is a boolean-valued function that examines
+the parsed contents of the sequence after each element is read to
+determine whether the sequence has completed. For example, if the
+sequence is at most $n$ elements, then the expression would count the
+number of elements in the array -- returning $\itrue$ if the size were
+greater than or equal to $n$.  The final type $\ty_t$ denotes the type of the terminator found after the last element of the sequence.  For sequences without terminators, we can use $\pfalse$ as the terminator type.
+
+Recursive types $\pmu \ptyvar \ty$ and type variables describe
+recursive data formats, such as trees.
+
+In addition to the above types, we add a number of ``active'' types.
+These types describe actions to be taken during the parsing process
+rather than strictly describing the data format. The $\pcompute e
+\ity$ types allow us to include an element in the parsed output that
+does not appear in the data stream (although it is likely dependent on
+elements that do), based on evaluation of an expression $e$.  In
+contrast, the types $\pabsorb \ty$ transform data based on the type
+$\ty$, but discard the returned value. This behaviour can be useful
+for data which might be important for parsing, such as a separator,
+yet uninteresting to users of the parsed data. The last of the
+``active'' types are $\pscan \ty$ which scan the input stream for a
+portion of data that can be successfully transformed according to
+$\ty$. This behaviour can be useful, for example, when we expect that
+extraneous data might have been erroneously inserted in the data
+stream. Here, scan allows us to skip the extraneous data and still
+successfully parse $\ty$.
+
+\subsection{Example}
+
+As an example, we present an abbreviated description of the common log
+format as it might appear in the calculus. Note that, for simplicity,
+the description below does not fully capture the semantics of the
+\ipads{} description from \secref{sec:ipads}. Additionally, we
+use the abbreviation $\ty * \ty'$ for non-dependent products. Finally,
+for the sake of clarity, we introduce a number of type abbreviations
+in the form $\mathrm{name} \equiv \ty$, before showing the final type
+describing the format in its entirety.
+
+{\em explain and cleanup}
+
+\[
+\begin{array}{l}
+\mathrm{S} \equiv \plam {ch} {} {\pset c {Pchar} {c = {ch}}}\\
+\\
+\mathrm{response\_t} \equiv \plam x {} {
+      \pset y {Puint16\_FW(x)} 
+      {\codefont{100 \leq y \iandi y < 600}}
+    }\\
+\\
+\mathrm{authid\_t} \equiv 
+\psum {\mathrm{S}('-')} {} {Pstring(``\;")}\\
+\\
+\mathrm{entry\_t} \equiv \\ \;
+\begin{array}{lll}
+\psig {client} {Pip} {&\mathrm{S}('\;')} &* \\
+\psig {remoteid} {\mathrm{authid\_t}} {&\mathrm{S}('\;')} &* \\
+\psig {response} {
+  \papp
+    {\mathrm{response\_t}} 3
+}{&\mathrm{S}('\;')} &*\\
+\multicolumn{3}{c}{
+\pcompute {\codefont{getdomain\;client = ``edu"}} \iboolty}
+\end{array}\\
+\\
+\pseq {\mathrm{entry\_t}} {\mathrm{S}('\backslash n')}{
+  \pterm {\ilam x {} \ifalse} {\pfalse}
+}
+\end{array}
+\]
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 

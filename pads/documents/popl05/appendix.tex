@@ -1,0 +1,494 @@
+\appendix
+
+
+\section{Well-Formedness Rules}
+\label{app:well-form}
+
+\fbox{$\wfd \pctxt \ity$}
+
+\[
+\infer{\wfd \pctxt a}{}
+\quad
+\infer{
+  \wfd \pctxt {\ity \iarrowi \ity'}
+}{
+  \wfd \pctxt \ity &
+  \wfd \pctxt {\ity'}
+}
+\quad
+\infer{
+  \wfd \pctxt {\ity \iprodi \ity'}
+}{
+  \wfd \pctxt \ity &
+  \wfd \pctxt {\ity'}
+}
+\]
+
+\[%\quad
+\infer{
+  \wfd \pctxt {\isum \ity {\ity'}}
+}{
+  \wfd \pctxt \ity &
+  \wfd \pctxt {\ity'}
+}
+\quad
+\infer{
+  \wfd \pctxt {\iseqty \ity}
+}{
+  \wfd \pctxt \ity
+}
+\quad
+\infer{
+  \wfd \pctxt {\ierrty \ity}
+}{
+  \wfd \pctxt \ity
+}
+\]
+
+\[%\quad
+\infer{
+  \wfd \pctxt {\forall \ityvar.\ity}
+}{
+  \wfd {\pctxt,\ityvar} \ity
+}
+\quad
+\infer{
+  \wfd \pctxt  \ityvar
+}{
+  \ityvar \in \pctxt
+}
+\quad
+\infer{
+  \wfd \pctxt {\imu \ityvar \ity}
+}{
+  \wfd {\pctxt,\ityvar} \ity
+}
+\]
+
+\fbox{$\wfd \pctxt \ctxt$}
+
+\[
+\infer{
+  \wfd \pctxt \cdot
+}{}
+\quad
+\infer{
+  \wfd \pctxt {\ctxt,x:\ity}
+}{
+  \wfd \pctxt \ctxt & x \not\in \dom \ctxt & \wfd \pctxt \ity
+}
+\]
+
+\fbox{$\wfd \ctxt \rctxt$}
+
+\[
+\infer{\wfd \ctxt \cdot}{}
+\quad
+\infer{
+  \wfd \ctxt {\rctxt,\ptyvar=\pmu \ptyvar \ty}
+}{
+  \wfd \ctxt \rctxt \quad \ptyvar \not\in \dom \rctxt &
+  \ddck[\pmu \ptyvar \ty, \rctxt;\ctxt,\kty,\con]
+}
+\]
+
+\section{\Implang Expression Typing}
+
+Constants are assigned types with the interface $\Icty$ and operators
+with $\Iopty$. Some example constants and their types are show below.
+\[
+\begin{array}{ll}
+ \Icty(\itrue) = \iboolty &
+ \Icty(\ifalse) = \iboolty \\
+ \Icty(\ierr) = \invty &
+ \Icty(\data) = \ibitsty \\
+ \Icty(\off) = \ioffty
+\end{array}
+\]
+
+We use contexts $\ctxt$ to record the types of variables. The syntax
+of $\ctxt$ is as follows:
+\begin{bnf}
+\name{Context} \meta{\ctxt} \::= . \| \ctxt,x{:}\ity
+\end{bnf}
+
+Note that \textit{T-Generalize} can only be used in the premise of a
+\texttt{let} expression.
+
+\[
+  \infer[Const]{
+    \stsem[\const,\pctxt;\ctxt,\Icty(\const)]
+  }{
+    \wfd \pctxt \ctxt
+  }
+\quad
+  \infer[Var]{
+    \stsem[\var,\pctxt;\ctxt,\ity]
+  }{
+    \wfd \pctxt \ctxt & \ctxt(\var) = \ity
+  }
+\]
+\[%\quad
+  \infer[Op]{
+    \stsem[\iop e,\pctxt;\ctxt,\ity]
+  }{
+    \Iopty({op}) = \ioparrow {\ity'} \ity &
+    \stsem[e,\pctxt;\ctxt,\ity']
+  }
+\]
+
+\[%\qquad
+%   \infer[Abs]{
+%     \stsem[\ilam{\nrm \var}{\ity'}{e},
+%     \ctxt,\ity' \iarrowi \ity]
+%   }{
+%     \stsem[e,\pctxt;\ectxt{\var{:}\ity'},\ity] &
+%     {\rm FTV}(\ity') \in \pctxt
+%   }
+% \quad
+  \infer[Fun]{
+    \stsem[\ifun {\nrm f} {\nrm x} e,
+           \pctxt;\ctxt,\ity' \iarrowi \ity]
+  }{
+    \stsem[e,\pctxt;\ectxt{f{:}\ity' \iarrowi \ity,x{:}\ity'},\ity]
+  }  
+\quad
+  \infer[App]{
+    \stsem[\iapp{e}{e'},\pctxt;\ctxt,\ity]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity' \iarrowi \ity] &
+    \stsem[e',\pctxt;\ctxt,\ity']
+  }
+\]
+
+\[%\qquad
+  \infer[Let]{
+    \stsem[{\ilet {\nrm x} {e'} \; e},
+           \pctxt;\ctxt,\ity]
+  }{
+%    \begin{array}{c}
+      \stsem[e',\pctxt;\ctxt,\ity'] &
+      \stsem[e,\pctxt;\ectxt{x{:}\ity'},\ity]
+%    \end{array}
+  }  
+% \quad
+%   \infer[LetRec]{
+%     \stsem[{\iletfun {\nrm f} {\nrm x} e \; \iin \; e'},
+%            \ctxt,\ity]
+%   }{
+%     \stsem[e,\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2,x{:}\ity_1},\ity_2] &
+%     \stsem[e',\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2},\ity] 
+%   }
+\]
+
+\[%\qquad
+  \infer[Cond]{
+    \stsem[\iif e \; \ithen {e_1} \; \ielse {e_2},\pctxt;\ctxt,\ity]
+  }{       
+    \stsem[e,\pctxt;\ctxt,\iboolty] &
+    \stsem[e_1,\pctxt;\ctxt,\ity] &
+    \stsem[e_2,\pctxt;\ctxt,\ity]
+  }
+\]
+\[%\quad
+  \infer[Pair]{
+    \stsem[\ipair {e_1}{e_2},\pctxt;\ctxt,\iprodty {\ity_1} {\ity_2}]
+  }{       
+    \stsem[e_1,\pctxt;\ctxt,\ity_1] &
+    \stsem[e_2,\pctxt;\ctxt,\ity_2]
+  }
+\quad
+  \infer[Proj]{
+    \stsem[\ipi{\nrm i}{e},\pctxt;\ctxt,\ity_i]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity_1 \iprodi \ity_2] 
+  }
+\]
+
+\[%\quad
+  \infer[InL]{
+    \stsem[\iinl e,\pctxt;\ctxt,\isum \ity {\ity'}]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity] &
+    \wfd \pctxt {\ity'}
+  }
+\quad
+  \infer[InR]{
+    \stsem[\iinr e,\pctxt;\ctxt,\isum \ity {\ity'}]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity'] &
+    \wfd \pctxt {\ity}
+  }
+\]
+
+\[%\qquad
+  \infer[Case]{
+    \stsem[\icaseg{e}{\nrm x}{e_l}{\nrm y}{e_r}
+    ,\pctxt;\ctxt,\ity]
+  }{
+    \stsem[e,\pctxt;\ctxt,\isum {\ity_l} {\ity_r}] &
+    \stsem[e_l,\pctxt;\ectxt{x{:}\ity_l},\ity] &
+    \stsem[e_r,\pctxt;\ectxt{y{:}\ity_r},\ity]
+  }
+\]
+
+\[
+  \infer[Empty]{
+    \stsem[\ieseq,\pctxt;\ctxt,\iseqty \ity]
+  }{
+    \wfd \pctxt \ctxt & \wfd \pctxt \ity
+  }
+\]
+\[%\quad
+  \infer[Seq]{
+    \stsem[\iarr{e_1 \cdots e_n},\pctxt;\ctxt,\iseqty \ity]
+  }{
+    \wfd \pctxt \ctxt & \stsem[e_i,\pctxt;\ctxt,\ity] \quad 
+    \mbox{(for $i=1 \ldots n$)}
+  }
+\]
+
+\[
+  \infer[Append]{
+    \stsem[\iappend e {e'},\pctxt;\ctxt,\iseqty \ity]
+  }{
+    \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
+    \stsem[e',\pctxt;\ctxt,\iseqty \ity]
+  }
+\]
+\[%\quad
+  \infer[Sub]{
+    \stsem[\isub e {\nrm {e'}},\pctxt;\ctxt,\isum \ity \iunitty]
+  }{
+    \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
+    \stsem[e',\pctxt;\ctxt,\iintty]    
+  }
+\]
+
+\[
+  \infer[Roll]{
+    \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
+  }
+  \quad
+  \infer[Unroll]{
+    \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
+  }{
+    \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
+  }
+\]
+
+\[%\quad
+  \infer[Error]{
+    \stsem[\ierror e,\pctxt;\ctxt,\ierrty \ity]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity]
+  }
+\quad
+  \infer[Exm]{
+    \stsem[\iexamine e,\pctxt;\ctxt,\ity]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ierrty \ity]
+  }
+\]
+
+\[%\qquad
+  \infer[Generalize]{
+    \stsem[v,\pctxt;\ctxt,\forall \ityvar.\ity]
+  }{
+    \stsem[v,{\pctxt,\ityvar;\ctxt},\ity] & 
+    (\ityvar \not\in {\rm FTV}(\ctxt))
+  }
+\]
+\[%\quad
+  \infer[Instantiate]{
+    \stsem[\expr,{\pctxt;\ctxt},{\ity[\ity'/\ityvar]}]
+  }{
+    \stsem[\expr,\pctxt;\ctxt,\forall \ityvar.\ity]
+  }
+\]
+
+\section{\Implang Expression Evaluation}
+\begin{bnf}
+\name{Evaluation} \meta{E} \::= 
+  [] \| \iop{E} \| \iapp E e \| \iapp v E \\
+\name{Contexts} \meta{} \| &
+  \ilet {\nrm x} E \; e \nlalt
+  \iif E \; \ithen {e_1} \; \ielse {e_2} \nlalt
+  \ipair E e \| \ipair v E \| \ipi{\nrm i}{E} \nlalt
+  \iinld \ity E \| \iinrd \ity E \nlalt
+  \icaseg E {\nrm x} e {\nrm x} {e'} \nlalt
+  \iarr{\vec v \, E \, \vec{e}} \| 
+  \iappend E e \| \iappend v E \nlalt
+  \isub e E \| \isub v E \nlalt
+  \ierror E \| \iexamine E\\
+\end{bnf}
+
+We specify the implementation of an operator with
+$\mathcal{O}({op},v)$. Most of the rules are standard, although the
+sequence rules are new. Append appends the contents of the second
+array to that of the first array, while Sub extracts the element at
+index i, if i is within the bounds of the array. If not, the
+expression fails.
+
+\[
+\infer[Op]{
+  \iop v \stepsto v'
+}{
+  \mathcal{O}({op},v) = v'
+}
+% \quad
+% \infer[App]{
+%   \iapp v {v'} \stepsto e[v'/x]
+% }{
+%   (v = \ilam {\nrm x} {} e)
+% }
+\quad
+\infer[App]{
+  \iapp v {v'} \stepsto e[v/f][v'/x]
+}{
+  (v = \ifun {\nrm f}{\nrm x} e)
+}
+\]
+\[%\quad
+\infer[Let]{
+  \ilet {\nrm x} v \; e
+  \stepsto e[v/x]
+}{}
+% \quad
+% \infer[LetRec]{
+%   \iletfun {\nrm f} {\nrm x} e \; \iin \; e'
+%   \stepsto e'[{\ifun {\nrm f} {\nrm x} e}/f]
+% }{}
+\]
+
+\[
+\infer[{IfTrue}]{
+  \iif \itrue \; \ithen e \; \ielse {e'} \stepsto
+  e
+}{}
+\]
+\[%\quad
+\infer[{IfFalse}]{
+  \iif \ifalse \; \ithen e \; \ielse {e'} \stepsto
+  e'
+}{}
+\]
+
+\[
+\infer[Proj1]{
+  \ipi 1 {\ipair v {v'}} \stepsto v
+}{}
+\quad
+\infer[Proj2]{
+  \ipi 2 {\ipair v {v'}} \stepsto v'
+}{}
+\]
+
+\[
+\infer[CaseL]{
+  \icaseg{\iinl v}{\nrm x}{e_l}{\nrm y}{e_r}
+  \stepsto {e_l}[v/x]
+}{}
+\]
+
+\[%\quad
+\infer[CaseR]{
+  \icaseg{\iinr v}{\nrm x}{e_l}{\nrm y}{e_r}
+  \stepsto {e_r}[v/y]
+}{}
+\]
+
+\[
+\infer[Append]{
+  \iappend {\iarr{\vec v_1}} {\iarr{\vec v_2}} \stepsto
+  {\iarr{\vec v_1 \, \vec v_2}}
+}{}
+\quad
+\infer[EmptySub]{
+  \isub \ieseq {\nrm i} \stepsto \iinr{\iuval}
+}{}
+\]
+
+\[
+\infer[SubIn]{
+  \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
+  \stepsto \iinl {v_{i}}
+}{
+  0 \leq i < n
+}
+\quad
+\infer[SubOut]{
+  \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
+  \stepsto \iinr{\iuval}
+}{
+  i \geq n
+}
+\]
+
+\[
+\infer[Examine]{
+  \iexamine{\ierror v} \stepsto v
+}{}
+\quad
+\infer[Step]{
+  E[e] \stepsto E[e']
+}{
+  e \stepsto e'
+}
+\]
+
+\section{Assorted Functions}
+\label{sec:asst-functions}
+\label{sec:ty-constructors}
+
+%% Maps pads base types to implementation language base types
+\begin{description}
+\item[Misc.:]
+\item $\Ikind : {Const} \rightarrow {Kind}$.
+\item $\Irty : {Const} \rightarrow {Type}$.
+% \item $\Ipdty : {Const} \rightarrow {Type}$.
+\item $\Iimp : {Const} \rightarrow {Expression}$.
+
+\item $\codefont {Eof} : \ibitsty \iprodi \ioffty \iarrowi \iboolty$
+
+\item $\codefont{scanMax} : \iintty$
+
+\item $\ifun {max} {\ictup{m,n}} {\codefont{\iif {m>n}\; \ithen m\; \ielse n}}$
+\item $\ifun {pos} n {\codefont{\iif {n=0}\; \ithen 0\; \ielse 1}}$
+\item $\ifun {isOk} p {\codefont{pos(p.nerr) = 0}}$
+\item $\ifun {isErr} p {\codefont{pos(p.nerr) = 1}}$
+
+\item $\ifun {ecCeil} {\ictup{ec_1, ec_2}} {}$ \\
+  $\begin{array}{l}
+    \iif {\codefont{ec_1} = \iecpc \iori \codefont{ec_2} = \iecpc}\; \ithen \iecpc \\
+    \ielse{} \iif {\codefont{ec_1} = \iecerr \iori \codefont{ec_2} = \iecerr}\; \ithen \iecerr \\
+    \ielse \iok
+   \end{array}$
+
+%% \item[Transform:]
+%% \item \fnm{P_T} (h,b) = (h,(???,b))
+
+%% \item \fnm{SetNumRead} p n = p\{numRead=n\}
+%% \item \fnm{IncNR} p = \fnm{SetNumRead} (p.numRead + 1) p
+
+%% \item // \textit{In most cases, when SetErr is used, nerr should also be set.}
+%% \item \fnm{SetErr} p = p\{errCode=err\}
+
+%% \item // \textit{SetPanic sets error as well (and nerr?).}
+%% \item \fnm{SetPanic} p = p\{state=pc,errCode=err\}
+
+%% \item \fnm{MakeErrorPd} t = ...
+\end{description}
+
+\begin{lemma}[Function Types]
+  $\stsem[\codefont{isOk},
+  \codefont{pos}{:}\iintty \iarrowi \iintty,
+  \forall \ga.\ipty \ga \iarrowi \iboolty]$.
+\end{lemma}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 

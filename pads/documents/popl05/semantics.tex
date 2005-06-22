@@ -1,0 +1,62 @@
+%\documentclass[fleqn]{article}
+\documentclass[nocopyrightspace]{sigplanconf}
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\title{A Calculus for Describing Ad-Hoc Data Formats}
+\authorinfo{Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{kfisher@research.att.com}}
+
+\authorinfo{Yitzhak Mandelbaum}{
+	   Princeton University}
+       {\mono{yitzhakm@CS.Princeton.EDU}}
+\authorinfo{David Walker}{
+	   Princeton University}
+       {\mono{dpw@CS.Princeton.EDU}}
+
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+\input{abstract}
+\end{abstract}
+
+\input{intro}
+
+\input{ipads}
+
+\input{ddc_syntax}
+
+\input{ddc_sem}
+
+\input{meta_theory}
+
+\input{encoding}
+
+\input{related_work}
+
+\input{appendix}
+
+\bibliographystyle{abbrv}
+\bibliography{pads}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+

@@ -1,0 +1,197 @@
+\section{Encoding DDLs in the DDC}
+
+\subsection{IPADS Translation}
+\label{sec:trans-sl}
+
+Note that contexts always contain surface-language types, not pads
+types. Formally, the form of $\gG$ is:
+\begin{bnf}
+\name{} \meta{\gG} \::= . \| \gG,x {:} \ity
+\end{bnf}
+
+We now define some syntactic sugar for multi-argument versions of type
+constructors that only take one or two arguments. Some of these
+abbreviations take a list of bindings $b$, each of the form $x{:}t$.
+
+\begin{align*}
+  &\begin{array}{l}
+    \plamA{x{:}\ity}{\ty} = \plam{x}{\ity}{\ty} \\
+    \plamA{x{:}\ity,\vec{b}}{\ty} = \plam{x}{\ity}{\plamA{\vec{b}}{\ty}}
+  \end{array}
+  &
+  &\begin{array}{l}
+    \gS^* x:\ty,y:\ty' = \gS x:\ty.\ty' \\
+    \gS^* x:t,\vec b   = \gS x:\ty.\gS^* \vec b
+  \end{array}
+  \\ \\
+  &\begin{array}{l}
+    +^* \ty,\ty' = \ty + \ty'\\
+    +^* \ty,\vec{\ty} = \ty + (+^* \vec{\ty})
+  \end{array}
+  &
+  &\begin{array}{l}
+    \&^* \ty,\ty' =\pand \ty {\ty'}\\
+    \&^* \ty,\vec{\ty} = \pand \ty {(\&^* \vec{\ty})}
+  \end{array}
+\end{align*}
+
+The interface $\Ikind$ provides the kind of base
+types $C$. Note that $\Pwhere{}$ requires that the surrounded type
+have kind $\kty$.
+
+\begin{figure}
+\fbox{$
+  \begin{array}{l}
+    \ctxt \turn {prog} \Longrightarrow \ty \; {prog} \\
+    \ctxt \turn {pty}  \Longrightarrow \ty : \kind
+  \end{array}
+$}
+
+\[
+ \infer[ProgOne]{ 
+    \ctxt \turn {pty} \Longrightarrow \ty \; {prog}
+  }{
+    \ctxt \turn {pty} \Longrightarrow \ty : \kty
+  }
+\]
+
+\[
+  \infer[ProgSome]{ 
+    \ctxt \turn x = {pty} \quad {prog} \Longrightarrow \ty \; {prog}
+  }{
+    \ctxt \turn {prog}[{pty}/x] \Longrightarrow \ty \; {prog}
+  }
+\]
+
+\[
+  \infer[Base]{ 
+    \ctxt \turn \Pbase e \Longrightarrow \pbase e : \kty
+  }{
+    \ctxt \turn e : \ity & (\Ikind(C) = \ity \to \kty)
+  }
+\]
+
+\[
+  \infer[Pfun]{ 
+    \ctxt \turn \Pfun (x:\ity) = {pty} \Longrightarrow \plam x
+    \ity \ty : \ity \to \kind
+  }{
+    \ectxt{x{:}\ity} \turn {pty} \Longrightarrow \ty : \kind
+  }
+\]
+
+\[
+  \infer[PApp]{ 
+    \ctxt \turn {pty} \; e \Longrightarrow \ty \; e : \kind
+  }{
+    \ctxt \turn {pty} \Longrightarrow \ty : \ity \to \kind & \ctxt \turn e : \ity
+  }
+\]
+
+\[
+  \infer[Pstruct]{
+    \ctxt \turn \Pstruct \{\vec x:\vec {{pty}}\} \Longrightarrow
+    \gS^* \vec x{:}\vec \ty : \kty
+  }{ 
+    \begin{array}{c}
+      \ctxt_1 = \ctxt \quad \ity_{i-1} = \iprod{\itsem[\ty_{i-1}]} {\itpdsem[\ty_{i-1}]}\\
+      \ctxt_i = \ctxt_{i-1},x_{i-1}{:} \ity_{i-1} \quad 
+      (\text{for} \; i = 2 \ldots n) \\
+      \ctxt_i \turn {pty}_i \Longrightarrow \ty_i : \kty \quad
+      (\text{for} \; i = 1 \ldots n)
+    \end{array}
+  }
+\]
+
+\[
+  \infer[Punion]{
+    \ctxt \turn \Punion \{\vec x:\vec {{pty}}\} \Longrightarrow
+    +^* (\vec \ty,\pfalse) : \kty
+  }{ 
+    \begin{array}{c}
+      \ctxt \turn {pty}_i \Longrightarrow \ty_i : \kty \quad
+      (\text{for} \; i = 1 \ldots n)
+    \end{array}
+  }
+\]
+
+\[
+  \infer[Palt]{
+    \ctxt \turn \Palt \{\vec x:\vec {{pty}}\} \Longrightarrow
+    \&^* \vec \ty : \kty
+  }{ 
+    \begin{array}{c}
+      \ctxt \turn {pty}_i \Longrightarrow \ty_i : \kty \quad
+      (\text{for} \; i = 1 \ldots n) \\
+    \end{array}
+  }
+\]
+
+\[
+  \infer[Popt]{
+    \ctxt \turn \Popt \; {pty} \Longrightarrow
+     \psum \ty {} \ptrue
+  }{
+    \ctxt \turn {pty} \Longrightarrow \ty : \kty
+  }
+\]
+
+\[
+  \infer[Pwhere]{
+    \begin{array}{l}
+      \ctxt \turn {pty} \; \Pwhere \, x.e \Longrightarrow  \\
+      \qquad
+      \pset x \ty {\iif {\pdok {x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+    \end{array}
+  }{ 
+     \ctxt \turn {pty} \Longrightarrow \ty : \kty & 
+     \stsem[e,\ectxt{x{:}\iprod{\itsem[\ty]} {\itpdsem[\ty]}},\iboolty]
+  }
+\]
+
+\[
+  \infer[Parray]{
+    \ctxt \turn {pty} \; [{pty}_{sep}; e,{pty}_{term}] \Longrightarrow 
+    \pseq \ty {\pscan {\ty_s}} {\pterm e {\ty_t}} : \kty
+  }{ 
+       \begin{array}{lcr}
+         \ctxt \turn {pty} \Longrightarrow \ty : \kty & 
+         \ctxt \turn {pty}_{sep} \Longrightarrow \ty_s : \kty \\ 
+         \ctxt \turn {pty}_{term} \Longrightarrow \ty_t : \kty \\
+         \multicolumn{2}{c}{
+           \stsem[e,\ctxt,\iprod {\iseq {\itsem[\ty]}}{\iseq
+             {\itpdsem[\ty]}} \iarrowi \iboolty]
+         }
+       \end{array}
+  }
+\]
+
+\[
+  \infer[Pcompute]{ 
+    \ctxt \turn \Pcompute{} \; e \Longrightarrow \pcompute e \ity : \kty
+  }{
+    \stsem[e,\ctxt,\ity]
+  }
+\]
+
+\[
+  \infer[Plit]{ 
+    \ctxt \turn \Plit \const \Longrightarrow 
+    \pscan {\pabsorb {\pset \var \ty {\ivar = \iconst}}} : \kty
+  }{
+    \stsem[\const,\ctxt,\ity] & \defty \ity \ty
+  }
+\]  
+  \caption{Encoding \ipads{} in the \ddc{}}
+  \label{fig:encode-ipads}
+\end{figure}
+
+\subsection{Sketches of Other DDLs}
+{\em add sketches of Datascript, packet types and BLT here.}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 

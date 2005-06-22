@@ -1,0 +1,370 @@
+\section{The Challenge of Ad Hoc Data Formats}
+\label{sec:intro}
+
+\cut{
+\begin{itemize}
+\item difficulties of ad hoc data suggest need for DDLs.
+  ad hoc data is buggy. need good error handling.
+  e.g packettypes~\cite{sigcomm00}, datascript~\cite{gpce02}, 
+  PADS~\cite{fisher+:pads}, BLT.
+\item a number of ddls exist, but none have formal specification.
+\item formal specification provides:
+  \begin{itemize}
+  \item Clear specification of language (for understanding)
+  \item Validation of existing implementation - allows us to reason
+    formally about the language and finds bugs in existing
+    implementation.
+  \item Supports fast creation of new language bindings, new language
+    features
+  \end{itemize}
+\item Contributions:
+  \begin{itemize}
+  \item Calculus itself
+    \begin{itemize}
+    \item our language is compositional. Easy to
+      reason about, add new features.
+    \item formalizes error handling
+    \end{itemize}    
+  \item Mapping from IPADS to calc;sketches of others.
+  \item Framework for designing and studying DDLs: What types of
+    properties are needed by system (i.e. what to prove, how to
+    structure); what's the right style of semantics.
+  \item theorems and their proofs. (i.e. above we say that we figured
+    out what to prove. this point is that we went ahead and proved it).
+  \item new features inspired/guided by formalism: recursion,overlays.
+  \end{itemize}
+\end{itemize}
+}
+
+XML. HTML. CSV. JPEG. MPEG.  These data formats
+represent vast quantities of industrial, governmental,
+scientific, and private data.  Because they have been standardized
+and are widely used, many reliable, efficient, and
+convenient tools for processing data in these formats are
+readily available.  For instance, your favorite programming language
+undoubtedly has libraries for parsing XML and HTML as well as
+reading and transforming images in JPEG or movies in MPEG.  Query engines
+are available for asking questions about XML documents.
+Widely-used applications like Microsoft Word and Excel automatically
+translate documents back and forth between HTML and other
+standard formats.  In short, life is good when working with standard data formats. In an ideal world, all data would be in such formats. In reality, however, we are not nearly so fortunate.
+
+An {\em ad hoc data format} is any non-standard data format.  Typically, such formats do not have parsing,
+querying, analysis, or transformation tools readily available.
+Every day, network administrators, financial analysts, computer
+scientists, biologists, corporate IT professionals, chemists, astronomers, and
+physicists deal with ad hoc data in a myriad of complex formats.
+Figure~\ref{figure:data-sources} gives a partial sense of the range
+and pervasiveness of such data.  Since off-the-shelf
+tools for processing these ad hoc data formats do not exist
+or are not readily available, talented scientists, data analysts, and
+programmers must waste their time 
+on low-level chores like parsing and format translation
+to extract the valuable information they need from their data.
+
+In addition to the inconvenience of having to build custom
+processing tools from scratch, the nonstandard nature of ad hoc data
+frequently leads to a number of other difficulties for its users.
+First, documentation for the format may not exist, or it may be out of
+date.  For example, a common phenomenon is for a field in a data source to fall
+into disuse.  After a while, a new piece of information becomes
+interesting, but compatibility issues prevent data suppliers from
+modifying the shape of their data, so instead they hijack the unused
+field, often failing to update the documentation in the process.
+
+Second, such data frequently contain errors, for a variety of reasons:
+malfunctioning equipment, programming errors (\eg{} race conditions on
+log entry~\cite{wpp}), non-standard values to indicate ``no data
+available,'' human error in entering data, and unexpected data values
+caused by the lack of good documentation.  Detecting errors is important, because otherwise they can corrupt ``good'' data.
+The appropriate response to such errors depends on the application. Some applications require the data
+to be error free: if an error is detected, processing needs to stop
+immediately and a human must be alerted.  Other applications can
+repair the data, while still others can simply discard erroneous or
+unexpected values.  For some applications, errors in the data can be
+the most interesting part because they can signal where two systems
+are failing to communicate.
+
+Today, many programmers tackle the challenge of ad hoc data by writing
+scripts in a language like Perl.  Unfortunately, this process is slow,
+tedious, and unreliable.  Error checking and recovery in these scripts
+is often minimal or nonexistent because when present, such error code swamps the main-line computation.  The program itself is often
+unreadable by anyone other than the original authors (and
+usually not even them in a month or two) and consequently cannot stand as
+documentation for the format.  Processing code often ends up intertwined with parsing code, making it difficult to reuse the parsing code for different analyses. Hence, in general, software produced
+in this way is not the high-quality, reliable, and maintainable 
+code one should demand.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Name \& Use   &  Representation               \\ \hline\hline
+Web server logs (CLF):  &  Fixed-column ASCII records \\ 
+Measure web workloads &                             \\ \hline
+AT\&T provisioning data: & Variable-width ASCII records  \\ 
+Monitor service activation &                              \\ \hline
+Call detail: Fraud detection  &  Fixed-width binary records \\  \hline 
+AT\&T billing data: & Various Cobol data formats  \\ 
+Monitor billing process   &                             \\ \hline
+IP backbone data:  & ASCII   \\
+Monitor network performance  &        \\ \hline
+Netflow:                        & Data-dependent number of     \\ 
+Monitor network performance  & fixed-width binary records  \\ \hline
+Newick:   Immune                 & Fixed-width ASCII records \\ 
+system response simulation & in tree-shaped hierachy\\ \hline                                
+Gene Ontology:             & Variable-width ASCII records \\
+Gene-gene correlations     & in DAG-shaped hierarchy \\ \hline
+HL7:             & Variable-width ASCII records \\
+Medical lab results     &  \\ \hline
+CPT codes: Medical diagnoses & Floating point numbers \\ \hline
+SnowMed: Medical clinic notes & keyword tags  \\ \hline
+
+
+\end{tabular}
+
+
+\caption{Selected ad hoc data sources.}
+\label{figure:data-sources}
+\end{center}
+\end{figure}
+ 
+\subsection{Promising Solutions}
+
+To address these challenges, 
+researchers have begun to develop high-level languages 
+for describing and processing ad hoc data.  For instance,
+McCann and Chandra introduced
+\packettypes{}~\cite{sigcomm00}, a specification language designed to help systems
+researchers and developers parse and process binary data 
+associated with networking protocols.
+Godmar Back
+developed \datascript{}~\cite{gpce02}, a scripting language with explicit support for 
+specifying and parsing binary data formats. \datascript{} has been 
+used to manipulate Java jar files and ELF object files.
+The developers of Erlang,
+a widely used functional programming language in the 
+telecommunications industry, introduced 
+language extensions that they refer to as {\em binaries}~\cite{erlang-bits}
+to aid in packet processing and protocol programming.
+At CMU, Eger has developed a language of Bit-Level Types~\cite{eger:blt}
+for specifying file formats such as ELF, JPEG, and
+MIDI as well as packet layouts.  Finally, we are part of a group developing
+\pads{}~\cite{fisher+:pads}, another system for specifying ad hoc data.
+\pads{} focuses on robust error handling and tool generation.
+It is also unusual in that it supports a variety of data encodings:
+ASCII formats used by financial analysts and scientists,
+EBCDIC formats used in Cobol-based legacy business systems,
+binary data from network applications, \etc{}, 
+and even mixed encodings.
+
+% Consequently, \pads{} can be used in applications 
+% ranging from network packet processing to financial data analysis to
+% medical record processing to web server log parsing and others.
+
+% Here are several examples;
+% there are likely more we are not familiar with.
+
+% \begin{itemize}
+% \item At SIGCOM,
+% McCann and Chandra~\cite{sigcomm00} introduced
+% \packettypes{}, a specification language aimed at helping systems
+% researchers and developers parse and process binary data 
+% associated with all different kinds of networking protocols.  
+% \item The developers of Erlang,
+% a widely used functional programming language in the 
+% telecommunications industry, introduced 
+% language extensions they refer to as {\em binaries}~\cite{erlang-bits}
+% to aid in packet processing and protocol programming.
+% \item Godmar Back~\cite{gpce02}
+% developed \datascript{}, a scripting language with explicit support for 
+% specifying and parsing binary data formats. \datascript has been 
+% used to process Java jar files and ELF object files.  
+% \item At CMU, Eger~\cite{eger:blt} has developed a language of Bit-Level Types
+% once again for specifying file formats such as ELF, JPEG and
+% MIDI as well as packet layouts.
+% \item We ourselves are part of a group developing
+% \pads{}~\cite{fisher+:pldi05}, yet another system for specifying ad hoc data.  Unlike the other systems mentioned above,
+% \pads{} allows users to write specifications of both ASCII and
+% binary data.  Consequently, \pads{} can be used in applications 
+% ranging from network packet processing to financial data analysis to
+% medical record processing to web server log parsing and others.
+% \end{itemize}
+
+
+\figHeight{architecture}{Architecture of \pads{}  system.}{fig:architecture}{2in}
+
+While differing in many details, the broad design and underlying rationale 
+for all of these languages are similar. 
+\figref{fig:architecture} illustrates their common architecture.
+In each, the data consumer writes a data description in a high-level language designed for the purpose.  A compiler converts this description into parsing code, which maps raw data into a canonical in-memory representation of that data in some host language.  In the case of \pads{}, the parser also generates a parse descriptor, which describes the errors detected in the data.  The data consumer then writes processing code in the host language.  
+These systems address the challenges of ad hoc data in multiple ways.  
+
+First, format specifications in these languages serve as high-level
+documentation that is more easily read, understood, modified, and
+maintained than the equivalent low-level \perl{} script or C parser.  
+\pads{}, for example, is a declarative language that 
+allows programmers to describe both the physical layout of data
+as well as its deeper semantic properties such as equality and range 
+constraints on values, sortedness, and other forms of dependency.
+The intent is to allow analysts to capture all they know about
+a data source in a \pads{} description.  
+
+Second, this documentation is ``living'' in that the various systems convert the descriptions into parsing libraries (and in the case of \pads{}, a myriad of additional tools including an \xml{} translator, a statistical profiler, a pretty printer, and an auxiliary library that enables XQueries using the Galax query engine\cite{galax}).  If the format changes, analysts have strong incentive to update the documentation to generate a new parser and tool suite.
+
+Third, the declarative nature of these data description languages 
+facilitates the insertion of error handling code. The generated parsing code checks all possible
+error cases: system errors related to the input file, buffer, or
+socket; syntax errors related to deviations in the physical format;
+and semantic errors in which the data violates user
+constraints. Because these checks appear only in generated code, they
+do not clutter the high-level declarative description of the data
+source. Moreover, since tools are generated automatically by a
+compiler rather than written by hand, they are far more likely to be
+robust and far less likely to have dangerous vulnerabilities such as
+buffer overflows. Moreover, as formats evolve, one can
+make a small change in the high-level description and the compiler
+manages the rest. Consequently, it is unlikely that new
+vulnerabilities or buffer overflows will be added to the code base.
+
+In summary, data description languages such as \datascript{}, \packettypes{}, Erlang,  \blt{}, and \pads{} meet the challenge of processing
+ad hoc data by providing a concise and precise form of ``living'' data documentation, producing reliable tools that handle errors robustly.
+
+
+\subsection{The Next 700 Data Description Languages}
+
+\begin {quote}
+The languages people use to communicate with computers differ in their intended aptitudes, towards either a
+particular application area, or a particular phase of computer use (high level programming, program assembly,
+job scheduling, etc). They also differ in physical appearance, and more important, in logical structure. The question arises, do the idiosyncracies reflect basic logical
+properties of the situations that are being catered for?
+Or are they accidents of history and personal background
+that may be obscuring fruitful developments? This
+question is clearly important if we are trying to predict or
+influence language evolution.
+
+To answer it we must think in terms, not of languages,
+but of families of languages. That is to say we must
+systematize their design so that a new language is a point
+chosen from a well-mapped space, rather than a laboriously
+devised construction.
+
+$\qquad$ --- J. P. Landin, {\em The Next 700 Programming Languages}, 1965.
+\end{quote}
+
+Landin asserts that principled programming language design
+involves thinking in terms of ``families of languages'' and
+choosing from a ``well-mapped space.''  However, so far,
+when it comes to the domain of processing ad hoc data, 
+there is no well-mapped space and no systematic understanding
+of the family of languages one might be dealing with.
+
+The primary goal of this paper is to begin to understand the
+family of ad hoc data processing languages.  We do so,
+as Landin did, by developing a semantic
+framework for defining, comparing, and contrasting languages
+in our domain.  This semantic framework revolves around the
+definition of a data description calculus (\ddc{}).  
+This calculus uses types from a dependent type theory to describe
+various forms of ad hoc data:
+base types describe atomic pieces of data, while
+orthogonal type constructors can be applied to describe richer structures.
+We show how to give a denotational semantics
+to \ddc{} by interpreting
+types as parser functions that map external representations (bits)
+to data structures in a polymorphic lambda calculus.  More precisely,
+these parsers produce both 
+internal representations of the external data and
+parse descriptors that pinpoint errors in the original source.
+
+For many domains, researchers have a solid understanding of
+what makes a ``good'' or ``bad'' language.  For instance,
+a good typed language is one in which values of a given type
+have a well-defined canonical form and ``programs don't go wrong.''
+On the other hand, when we began this research, it
+was not at all clear
+how to decide whether our data description language and
+its interpretation were ``good'' or ``bad.''  A conventional sort
+of canonical forms property, for instance, 
+is not relevant as the input data source
+is not under system control, and, as
+mentioned above, is frequently buggy.  Consequently,
+we have had to define and formalize a new correctness criterion for the language. 
+In a nutshell, rather than requiring input data be error-free, we require
+that all errors in the parsed data be accurately recorded
+in the parse descriptor.  We adopted this criterion because it ensures
+that data consumers can rely on the integrity of data marked as error-free.
+
+%There are other possible correctness criteria
+%as well, but this is a solid starting point.
+% eg: the existence of inverse mappings?
+
+To study and compare \pads{}, \datascript{}, or
+some other data description language, we advocate translating
+the language into \ddc{}.  The translation breaks down
+the relatively complex, high-level descriptions of the language 
+in question into a series of lower-level
+\ddc{} descriptions, which have all been formally defined.  
+We have done this decomposition for \ipads{}, an idealized version of the
+\pads{} language that captures the essence of the actual 
+implementation.  We have also given a semantics to one of the features
+of \packettypes{}, its {\em overlays}, not found in \pads{}.
+Our semantic investigation of overlays uncovered the fact that
+they can be viewed as an syntactically 
+unorthodcx (but very useful) form of intersection type.
+Moreover, though we have not done so yet, it should be straightforward to
+add them to the \pads{} implementation by encoding them as
+``\Palternate{}s,'' \pads{} own form of intersection type.
+
+To our delight, the process of giving \pads{} 
+a semantics in this framework has had additional benefits.  
+In particular, since we defined the
+semantics by carefully reviewing the code base for the 
+implementation, we found a couple of subtle bugs that we have subsequently fixed.  We also discovered a corner case in some error handling code
+where we made a very questionable design decision.
+In addition to using the semantic specification to help us find bugs
+in the implementation, we also used it to explore practical extensions.
+In particular, driven by examples found in a biological data 
+source~\cite{geneontology}, we decided to add recursion to \pads{}.
+We used our semantic framework to study the ramifications of this addition.
+
+In summary, this paper makes the following contributions:
+%
+\begin{itemize}
+\item We define a semantic framework for understanding and comparing data description languages such as \pads{},
+\packettypes{}, \datascript{}, and \blt{}.
+No one had previously given a formal semantics to any of these 
+languages.
+
+\item At the center of the framework is \ddc{},
+a calculus of data descriptions.
+We show how to give a denotational semantics
+to \ddc{} by interpreting
+types as parsers. 
+
+\item We define an important correctness criterion for our language
+stating that all errors in the parsed data are reported in the parse 
+descriptor.  We prove our \ddc{} parsers maintain this and several
+other meta-theoretic properties.
+
+\item We define \ipads{}, an idealized
+version of the \pads{} programming language
+that captures its essential features,
+and show how to give it a semantics by translating it into \ddc{}.  
+The process of defining the semantics led to the
+discovery of several bugs in the actual implemention.
+
+\item We show how to use \ddc{} to give a semantics to
+\packettypes{'} overlays and devise an implementation strategy
+for overlays in \pads{}.
+
+\item We use \ipads{} and \ddc{} to experiment with 
+a definition and implementation strategy for recursive data types,
+a feature not found in any existing ad hoc data description language that
+we are aware of.  Recursive types are essential for representing tree-shaped hierarchical
+data.  We have integrated recursion into the \pads{} implementation,
+using our theory as a guide. We used the new feature to represent
+the Gene Ontology data 
+format~\cite{geneontology}, an online resource used by genomics researchers,
+and Newick~\cite{newick}, a format used by molecular biologists.
+\end{itemize}
