@@ -10,6 +10,7 @@
   entry\_t\_pd           pd;
   entry\_t\_m            mask;
   entry\_t\_hist         h;
+  Puint32                isFull;
   \kw{char}              *fname = DEF\_INPUT\_FILE;
 \mbox{}
   io\_disc = P\_nlrec\_noseek\_make(0);
@@ -30,12 +31,10 @@
   entry\_t\_hist\_setPara(pads, &h, &default\_hist);
   \kw{while} (!P\_io\_at\_eof(pads)) \{
     entry\_t\_read(pads, &mask, &pd, &rep);
-    if (entry\_t\_hist\_add(pads, &h, &pd, &rep) == P\_ERR) \{
-      entry\_t\_hist\_report(pads, "", 0, 0, &h);
-      entry\_t\_hist\_reset(pads, &h);
-    \}
-  \};
-  entry\_t\_hist\_report(pads, "", 0, 0, &h);
+    entry\_t\_hist\_add(pads, &h, &pd, &rep, &isFull);
+    \kw{if} (isFull != 0) entry\_t\_hist\_reportFull(pads, "", 0, 0, &h);
+  \}
+  entry\_t\_hist\_reportAll(pads, "", 0, 0, &h);
 \mbox{}
   P\_io\_close(pads);
   entry\_t\_cleanup(pads, &rep);

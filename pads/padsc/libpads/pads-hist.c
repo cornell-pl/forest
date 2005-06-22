@@ -179,6 +179,12 @@ Perror_t type ## _hist_reportFull2io (P_t *pads, Sfio_t *outstr, const char *pre
     else sfprintf(outstr, "Histogram within poly-(1+%f) times error \n", h->e); \
   } \
   for (i = 0; i < h->portionInd; i++) res = type ## _report (outstr, h, i); \
+  /* Reset the reported ones */ \
+  for (i = 0; i < h->B; i++) { \
+    h->result[0][i].bound = h->result[h->portionInd][i].bound; \
+    h->result[0][i].hei = h->result[h->portionInd][i].hei; \
+  } \
+  h->portionInd = 0; \
   return res; \
 } \
 \
@@ -285,6 +291,12 @@ Perror_t int_type ## _hist_map_reportFull2io (P_t *pads, Sfio_t *outstr, const c
     else sfprintf(outstr, "Histogram within poly-(1+%f) times error \n", h->e); \
   } \
   for (i = 0; i < h->portionInd; i++) res = int_type ## _map_report (outstr, fn, h, i); \
+  /* Reset the reported ones */ \
+  for (i = 0; i < h->B; i++) { \
+    h->result[0][i].bound = h->result[h->portionInd][i].bound; \
+    h->result[0][i].hei = h->result[h->portionInd][i].hei; \
+  } \
+  h->portionInd = 0; \
   return res; \
 } \
 \

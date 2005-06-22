@@ -1,37 +1,45 @@
 #ifndef PDCI_MacroArg2String
-#define PDCI_MacroArg2String(s) #s
+#  define PDCI_MacroArg2String(s) #s
 #endif
 
 #ifndef READ_MASK
-#define READ_MASK P_CheckAndSet
+#  define READ_MASK P_CheckAndSet
 #endif
 
 #ifndef INIT_N
-#define INIT_N 1024
+#  define INIT_N 1024
 #endif 
+
 #ifndef INIT_B
-#define INIT_B 10
+#  define INIT_B 10
 #endif 
+
 #ifndef INIT_M
-#define INIT_M 1024 * 1024
-#endif 
+#  define INIT_M 1024 * 1024
+#endif
+ 
 #ifndef INIT_ISE
-#define INIT_ISE 1
+#  define INIT_ISE 1
 #endif 
 
 #ifndef INIT_ISO
-#define INIT_ISO 0
+#  define INIT_ISO 0
 #endif 
+
 #ifndef INIT_n
-#define INIT_n 2
+#  define INIT_n 2
 #endif 
 
 #ifndef INIT_e
-#define INIT_e .1
+#  define INIT_e .1
 #endif 
 
 #ifndef INIT_scale
-#define INIT_scale 100 
+#  define INIT_scale 100 
+#endif
+
+#ifndef INIT_maxPortion
+#  define INIT_maxPortion 3
 #endif
 
 #ifndef EXTRA_READ_ARGS
@@ -84,6 +92,7 @@ int main(int argc, char** argv) {
   default_hist.n = INIT_n;
   default_hist.e = INIT_e;
   default_hist.scale = INIT_scale;
+  default_hist.maxPortion = INIT_maxPortion;
   default_hist.toFloat = 0;
   default_hist.fromFloat = 0;
 
@@ -172,7 +181,6 @@ int main(int argc, char** argv) {
       PADS_TY(_hist_add)(pads, &h, &pd, &rep, &isFull);
       if (isFull != 0) {
 	PADS_TY(_hist_reportFull)(pads, "", 0, 0, &h);
-	PADS_TY(_hist_reset)(pads, &h); 
       }
     }
     P_io_getPos(pads, &epos, 0);

@@ -75,12 +75,19 @@ These functions have the following behaviors:
   is called once a new record is coming. Any data type with an
   associated mapping function to \cd{Pfloat64} is considered as a 
   meaningful type. This function tracks fields with meaningful type
-  and legal values only. This function will return \cd{P_ERR} if the
-  current data is the last one of a portion.
-\item[\cd{entry\_t\_hist\_report2io}] Writes summary report for
-  histogram \cd{h} to \cd{*outstr}. 
-\item[\cd{entry\_t\_hist\_report}] Writes summary report for
-  histogram \cd{h} to screen. 
+  and legal values only. The output parameter isFull will be set 
+  nonzero, if the current data is the last one of a portion.
+\item[\cd{entry\_t\_hist\_reportFull2io}] Writes summary report for
+  finished histograms to \cd{*outstr}. In most cases, when this
+  function is called, all stored histograms will be reported and the
+  space will be released, while the current one won't.
+\item[\cd{entry\_t\_hist\_reportAll2io}] Writes summary report for
+  all histograms to \cd{*outstr}. When this function is called, all 
+  histograms will be reported and the space will be released. 
+\item[\cd{entry\_t\_hist\_reportFull}] Writes summary report for
+  finished histograms to screen.
+\item[\cd{entry\_t\_hist\_reportAll}] Writes summary report for
+  all histograms to screen. 
 \end{description}
 \figref{figure:wsl-hist-hand} illustrates a sample use of histogram
 functions for printing a summary of CLF \cd{entry_t}s.  
@@ -102,7 +109,7 @@ which contains:
   for histogram to summarize. If the number of values in the data
   source exceeds \cd{INIT\_N}, histograms will be built on each
   \cd{INIT\_N} data values respectively, until the end of data
-  source is reached. The default value is 1024.
+  source is reached. 
 
 \item[\cd{INIT\_B}] is a \cd{Puint32} denoting the number of buckets
   in final histogram. As \cd{INIT\_B} increases, accuracy of final
@@ -112,14 +119,13 @@ which contains:
 \item[\cd{INIT\_M}] is a \cd{Pint64} denoting an upper bound of data
   values in data source. Time consumed increases in poly-logrithm of
   \cd{INIT\_M}, so \cd{INIT\_M} can be set very large if little about
-  data values in data source is known. The default value is $2^{20}$.
+  data values in data source is known. 
 
 \item[\cd{INIT\_ISE}] is a \cd{Pint8} denoting whether buckets in the final
   histogram are required to be of the same width. If \cd{INIT\_ISE} is
   set to be non-zero, all buckets have equal width. In this case,
   the time needed is in linear-\cd{INIT\_N}, and only constant space will
-  be used. However, the result histogram will have less accuracy. The
-  default value is 1.
+  be used. However, the result histogram will have less accuracy. 
 
 \item[\cd{INIT\_ISO}] is a \cd{Pint8} denoting whether final histogram
   is required to be optimal or not. This parameter is valid only
@@ -148,9 +154,15 @@ which contains:
   not affect the final result. For example, if the data source can
   take values up to \cd{64} bits, the overall \cd{SSE} could need
   as many as \cd{128} bits, which exceeds the representation limit of
-  \pads{}. In this case, \cd{INIT\_scale} is needed. If segment fault
-  appears when running this program over users' data stream, we
-  suggest to increase this parameter.  The default value is 100.       
+  \pads{}. In this case, \cd{INIT\_scale} is needed. 
+
+\item[\cd{INIT\_maxPortion}] is a \cd{Pint8} denoting the maximal
+  number of stored histograms. If user forgets to report a finished
+  histogram, or the inner histogram is finished while the outer one is
+  not in nested cases, the finished histogram will go into a stored
+  histogram list. If a new histogram is required to build, while the
+  number of stored histograms is already \cd{INIT\_maxPortion}, the
+  list will be cleared and a warning will be reported.
 
 \item[\cd{entry\_t\_toFloat}] is a function pointer, taking
   \cd{entry\_t} as input parameter, and returning corresponding

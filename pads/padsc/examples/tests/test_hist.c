@@ -6,6 +6,7 @@
 #define INIT_n 1 
 #define INIT_e .1 
 #define INIT_scale 100000000 
+#define INIT_maxPortion 3 
 /*
 #define EXTRA_INIT_CODE \
 Perror_t myFromFn (Pfloat64 f, Pint16 *v)  { *v = (Pint16)f + 100; return P_OK; } \
