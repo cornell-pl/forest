@@ -233,6 +233,24 @@ $
   specified above.
 \end{proofsketch}
 
+{\em fix this: } 
+Also included here is
+the extension of parser type assignment to recursive contexts
+$\rctxt$, decscribed in the next section. 
+
+\begin{figure}
+\small
+\fbox{$\ptyc{\rctxt} = \ctxt$} 
+    
+\begin{align*}
+  &\ptyc{\cdot} = \cdot \\
+  &\ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
+  \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
+\end{align*}  
+  \caption{Recursive Parser \Implang{} Types}
+  \label{fig:rec-parser-types}
+\end{figure}
+
 Next we present the type correctness theorem, followed by a simpler
 statement for closed types. Note that we need to add $\ptyc \rctxt$ to
 $\ctxt$ in order to give types to any free function variables in

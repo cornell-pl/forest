@@ -3,50 +3,45 @@
 The primitives of \ddc{} are deceptively simple.  Each captures a
 simple concept, often familiar from type theory. However, in reality,
 each primitive is multi-faceted. Each simultaneously describes a
-collection of bit strings, two datatypes in the host language -- one
-for the data representation (Rep) itself and one for its parse
+collection of valid bit strings, two datatypes in the host language --
+one for the data representation (Rep) itself and one for its parse
 descriptor (PD) -- and a transformation from bit strings into data and
-corresponding meta-data. Moreover, the collection of bit strings
-described need not be ``perfect'' --- many bit strings not exactly
-matching the intuitive meaning of a type must also be successfully
-parsed, with errors marked in the parse descriptor.
+corresponding meta-data. {\em fix next sentence:} Furthermore, many
+invalid bit strings must also be successfully transformed, with errors
+marked in the parse descriptor.
 
-% Diagram:
-
-% 011011101010101010000011...
-%                 |
-%                 |  [[ tau ]] _parser
-%                 |
-%                 v
-%  [[tau]_pd  <-----------> [[ tau ]]_rep
-%                 corr
-
+{\em This paragraph is nice, but I don't think it belongs here.YHM} 
 What, then, are the semantics of a type? A number of factors went into
-the design of \ddc{}, and they heavily influenced our choice for
-the semantics of the calculus. First, it was necessary that the
-calculus be simultaneously detailed enough to capture meaningful
-differences between various data description languages (DDLs), 
-and broad enough to express the constructs found in these languages.
-Second, we sought to explain to DDL users the process by which
-a bit stream is converted into an in-memory representation. For the
-analyst, the data format already existed, with a specific meaning. We sought to precisely specify the transform so the
-analyst knows how that meaning is mapped into the host language.
-Finally, it was critical that \ddc{} include error reporting and
-error handling mechanisms because errors are an intrinsic
-characteristic of ad hoc data. 
+the design of \ddc{}, and they heavily influenced our choice for the
+semantics of the calculus. First, it was necessary that the calculus
+be simultaneously detailed enough to capture meaningful differences
+between various data description languages (DDLs), and broad enough to
+express the constructs found in these languages. Second, we sought to
+explain to DDL users the process by which a bit stream is converted
+into an in-memory representation. For the analyst, the data format
+already existed, with a specific meaning. We sought to precisely
+specify the transform so the analyst knows how that meaning is mapped
+into the host language.  Finally, it was critical that \ddc{} include
+error reporting and error handling mechanisms because errors are an
+intrinsic characteristic of ad hoc data.
 %All DDLs are set up to handle errors with varying degrees of flexibility.
 %   (warn the reader that the current calculus is not necessarily
 %   ultimately flexible in this regard, but open to extension).
 
-We therefore chose to specify the semantics of a type as the
-transformation it performs on bit strings. From the formal
-specification of a type's transformation - that is, parsing function,
-we can infer all of the other properties mentioned above.  The
-datatypes associated with the internal representation of the data and
-its corresponding parse descriptor can be infered from the description
-of the transformation itself. The set of ``perfect'' bit strings are
-exactly those whose transformation results in a parse descriptor that
-reports no errors.
+We therefore choose to specify the semantics of \ddc{} with three
+semantic functions, each precisely conveying a particular aspect of a
+type's meaning. The function $\trans[\cdot,,]$ describes the {\it
+  parsing semantics} of \ddc{}, defining a function in the lambda
+calculus that parses bit strings to produce structured data and
+meta-data. The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$
+describe the {\it representation semantics} of \ddc{}, detailing the
+in-memory representation of the data and meta-data -- the Rep and PD
+types, respectively -- output by the parsing functions. The function
+and relationship of the semantic functions is illustrated in
+\figref{fig:correspond-graphic}. We note the structural correspondence
+of Reps and PDs highlighted by the figure. We also note that the set
+of ``perfect'' bit strings are exactly those whose transformation
+results in a parse descriptor that reports no errors.
 
 \begin{table}
   \begin{center}
@@ -67,26 +62,21 @@ reports no errors.
   \end{center}
 \end{table}
 
-In the remainder of this section, we formalize this semantics for \ddc{} types. 
-For reference, we provide in \tblref{tab:judg-list} a listing of all the
-judgments found in this section and a brief description of each. 
+In the remainder of this section, we formalize this three-fold
+semantics of \ddc{} types.  For reference, we provide in
+\tblref{tab:judg-list} a listing of all the functions and judgments
+defined in this section and a brief description of each. {\em Should
+  we define here $\rctxt,\ctxt,\pctxt$?}
 
 \begin{figure}[tp]
   \centering
   \includegraphics[height=2in,width=2in]{correspond}  
-  \caption{Relationship between semantics judments}
+  \caption{Relationship between semantics functions}
   \label{fig:correspond-graphic}
 \end{figure}
 
-\subsection{Representations and Parse Descriptors}
+\subsection{Representation Semantics}
 \label{sec:intty-sem}
-We now describe the exact correspondence between \ddc{} primitives and
-data representations and parse descriptor \implang types. An
-illustration of this correspondence is provided in
-\figref{fig:correspond-graphic}.  The function $\trans[\ty,,]$ denotes
-the parsing function for \ddc{}-type $\ty$. The functions
-$\itsem[\ty]$ and $\itpdsem[\ty]$ denote the types of the Rep and PD,
-respectively, output by the parsing function.
 
 As \implang{} Rep and PD types belong to the host language, we now
 introduce those types.
@@ -106,12 +96,17 @@ introduce those types.
 
 {\em Define noval in this paragraph.}
 
-The types include base types $a$, function types, product types (for
-pairs), sum types (for injections), sequence types $\iseqty \ty$,
-classifying sequences with element type $\ty$ and error types,
-classifying tagged errors. In addition, we include parameterized types
-$\forall \ityvar.\ity$ and type variables $\ityvar$ for polymorphism.
-Finally, we have recursive types $\imu \ityvar \ity$.
+We highlight the non-standard types of the language. The type $\invty$
+is the singleton type of the constant $\ierr$, most often injected
+into a sum when a parse fails. Types $\iecty$ and $\ioffty$ are for
+error codes recorded in the parse descriptors and bit-stream offsets,
+respectively. The type $\ierrty \ity$ classifies values of type $\ity$
+that have been tagged as violating some semantic constraint.
+
+The remaining types have their standard meaning: function types,
+product types, sum types, sequence types $\iseqty \ty$; polymorphic
+types $\forall \ityvar.\ity$ and type variables $\ityvar$; and
+recursive types $\imu \ityvar \ity$.
 
 \begin{figure}
 \fbox{$\itsem[\ty] = \ity$}
@@ -140,73 +135,52 @@ Finally, we have recursive types $\imu \ityvar \ity$.
 %% }
 \end{array}
 \]
-\label{fig:rep-tys}
 \caption{Representation Types}
+\label{fig:rep-tys}
 \end{figure}
 
-In Figure~\ref{fig:rep-tys}, we present the corresponding data
-representation for each primitive of the \ddc{}. As our language
-abstracts over base types, the corresponding internal types of base
-types is based on the interface $\Irty$. As base type parses can fail,
-producing no output, all base types correspond to a sum between the
-actual type and the type $\invty$. The \ddc{} type $\ptrue$ always
-succeeds while neither consuming nor producing data; hence it
-corresponds to the $\iunitty$ type. Type $\pfalse$ always fails,
-producing no data, and so corresponds to $\invty$.
+In Figure~\ref{fig:rep-tys}, we present the in-memory representation
+of each primitive of \ddc{}. We note that, as \ddc{} contains
+dependent types while the \implang{} language is simply typed, an
+essential feature of the translation is to detail how the dependency
+is removed, which we now explain. For all basic types in which
+expressions appear -- base, set, sequence and compute types, those
+expressions are relevant only to parsing.  Hence, the translation
+simply drops the expressions to remove the dependency. With these
+expressions gone, variables become useless, and, hence, variable
+bindings are dropped as well, as in product and set types. We raise
+this approach to higher-order types by translating type abstraction
+and application according to their underlying types~\footnote{Type
+  abstractions do not really have a representation, as they cannot
+  directly describe data. The value of defining the representation of
+  type abstractions comes only from the fact that we determine the
+  representation for applications from the underlying type
+  (abstraction) being applied.}.
 
-As types can only be parameterized over expressions and expressions
-are irrelevant to the simple types of the \implang{} language, type
-abstraction and application can be ignored. Therefore, the internal
-representation corresponding to a type application is exactly the
-representation for the component type abstraction.  Similarly, the
-representation for a type abstraction is the representation for the
-underlying type. Note, however, that type abtractions can not directly
-transform data - they must first be applied. Hence, the value of
-assigning them any corresponding representation comes only from the
-fact that we determine the representation type for application by
-considering its component abstraction.
+The \ddc{} type $\ptrue$ transforms no input and hences produces only
+the $\iunitty$ value.  Correspondingly, $\pfalse$ transforms no input,
+but uniformly fails, and hence produces the $\invty$ value. The
+function $\Irty$ maps each base type to a representation for
+successfully parsed data. As base type parsers can fail, this type is
+summed with $\invty$ to produce the actual representation. Similarly,
+set types produce sums, where a left branch indicates that the data
+satisfied the contraint, and the right indicates that it did not. In
+the latter case, though, as the error is semantic rather than
+syntactic, the parser can return the offending data rather than $\ierr$.
 
-\ddc{} dependent products correspond to simple internal products.  \ddc{}
-sums correspond to internal sums.
-% ... additionally summing with the
-% $\invty$ type to cover the possibility that neither type will be
-% successfully parsed from the stream. Unlike products, we need to
-% introduce the failure alternative for sums, as errors in both branches
-% leaves us with no way to choose between the two erroneous values. With
-% products, we have no need to choose between them; hence, if both
-% branches have errors, we can return a pair of erroneous values. 
-For intersection types, we would like access to the data in both forms
-specified in the intersection.  Intersections therefore correspond to
-a pair of values, one for each type. For set types, we wrap the
-underlying element in an error in the event that the specified
-constraint is not met. As we don't know at compile time whether the
-constraint will be met by the data, the internal representation is a
-sum. For sequences, we keep track of the length of the sequence as an
-integer along with the sequence itself.
+Intersection types produce a pair of values -- one for each sub-type
+-- as the representations of the subtypes need not be identical nor
+even compatible. Sequences produce an sequence together with its
+length.  Recursive types generate recursive \implang{} data
+structures. Note that the \implang{} type uses the same variable names
+as the \ddc{} type, and so the type corresponding to the type variable
+$\ptyvar$ is exactly $\ityvar$.
 
-Recursive types generate recursive data structures, so the
-\implang{}-language type corresponding to a recursive \ddc{} type is
-just a recursive \implang{} type. Note that the \implang{} type uses the same
-variable names as the \ddc{} type, and so the type corresponding to
-the type variable $\ptyvar$ is exactly $\ityvar$.
-
-The type corresponding to a computed expression is exactly the type of
-the expression itself.  The type corresponding to absorb is either
-$\iunitty$ when parsing the underlying type succeeds, or $\invty$,
-when it fails. The type for scan is either that of the underlying
-primitive, or $\invty$ to indicate that data matching that primitive
-was not found.
-
-Every parse descriptor consists of a header, which provides parse
-information about the whole corresponding data structure and
-subcomponents that are themselves parse descriptors, which describe
-corresponding subcomponents of the data structure. Each header
-contains an integer field recording the number of errors encountered
-during parsing, an error code indicating the degree of success of the
-parse -- success, success with errors, or failure -- and the span of
-data described by the descriptor.  For brevity, we define an
-abbreviation for the type of parse descriptor headers:
-$\tyface{pd\_hdr} \triangleq \iintty \iprodi \iecty \iprodi \ispty$.
+The output of a $\pcomputen$ is exactly the computed value, and,
+therefore shares its type.  The output of $\pabsorbn$ is a sum
+indicating whether parsing the underlying type succeeded or failed.
+The type of $\pscann$ is similar, although instead returning an
+element of the underlying type in case of success.
 
 \begin{figure}
 \fbox{$\itpdsem[\ty] = \ity$}
@@ -237,76 +211,57 @@ $\tyface{pd\_hdr} \triangleq \iintty \iprodi \iecty \iprodi \ispty$.
     {\itpdsem[\ty]})} \iunitty)}
 \end{array}
 \]
-\label{fig:pd-tys}
 \caption{Parse Descriptor Types}
+\label{fig:pd-tys}
 \end{figure}
 
-In \figref{fig:pd-tys}, we present the corresponding parse
-descriptor type for each \ddc{} type. The first three \ddc{}
-primitives are all atomic, having no subcomponents. Therefore, they
-require no more than a header. As with representation types, the
-corresponding PD type of type constructors and type application is
-that of their underlying type.  Dependent product, sum, and
-intersection PD types are as expected.
+In \figref{fig:pd-tys}, we present the corresponding parse descriptor
+type for each \ddc{} type. Every parse descriptor consists of a
+header, and 0 or more subdescriptors corresponding to subcomponents of
+the Rep. Each header records the number of errors encountered during
+parsing, an error code indicating the degree of success of the parse
+-- success, success with errors, or failure -- and the span of data
+described by the descriptor.  Formally, the type of the header,
+$\tyface{pd\_hdr}$ is $\iintty \iprodi \iecty \iprodi \ispty$.
+
+A number of primitives have no subcomponents, therefore requiring no
+more than a header. However, we also include a unit value so that all
+parse descriptors share the same basic shape, which is critical for
+defining polymorphic functions on PDs. 
 
 Sequence parse descriptors contain a header and the parse descriptors
-of all elements, but also include two additional fields - one
-recording the total number of element errors, and one the sequence
-length. Note that the number of element errors is distinct from the
-number of sequence errors, as sequences can have errors that are not
-related to any elements (such as errors reading separators).  We
-introduce an abbreviation for array parse descriptor types,
+of all elements, but also record the number of element errors and the
+sequence length. Note that the number of element errors is distinct
+from the number of sequence errors, as sequences can have errors that
+are not related to any elements (such as errors reading separators).
+We introduce an abbreviation for array PD types,
 $\iaptyname \; \ity \triangleq \iintty \iprodi \iintty \iprodi (\iseq
 \ity)$.  We refer to the fields as \textit{neerr, length}, and
 \textit{elts}.
 
-The parse descriptor types for type variables and recursive types are
-defined in the same way as for the data representations. We note,
-additionally, that recursive types do not receive their own
-header. {\em Should we explain this difference from other types?}
-% which is critical for our iso-recursive treatment of recursive types
-% (note that it would be even more so for an equi-recursive system).
-
-Compute parse descriptors have no subelements, as the data they
-describe is not parsed from the data source.  The absorb parse
-descriptor type is unit in order to parallel the type of the
-representation. We assume that just as the user does not want the rep
-to be kept, so too the parse descriptor.  However, the absorb parse
-descriptor does record a summary of the error information of its
-underlying type.  Hence, if the underlying type had an error, then
-absorb will report that an error occured. The scan parse descriptor is
-either $\iunitty$, in case no match was found, or records the number
-of bits skipped before the type was matched along with the type's
-corresponding parse descriptor.
+The $\pcomputen$ parse descriptors have no subelements because the
+data they describe is not parsed from the data source.  The $\pabsorbn$ PD
+type is $\iunitty$ as with the representation. We assume that just as
+the user does not want the rep to be kept, so too the parse
+descriptor.  The scan parse descriptor is either $\iunitty$, in case
+no match was found, or records the number of bits skipped before the
+type was matched, along with the type's corresponding parse descriptor.
 
 We conclude by specifying the \implang types of the parsers generated
-from \ddc{} types in \figref{fig:parser-types}. Also included here is
-the extension of parser type assignment to recursive contexts
-$\rctxt$, decscribed in the next section. We note that the type for
+from \ddc{} types in \figref{fig:parser-types}. We note that the type for
 parsers at kind $\kty$ corresponds to the diagram shown in
 \figref{fig:correspond-graphic}. In essence, such a parser takes bits
-as input and outputs a Rep and PD whose type is determined by the
+as input and outputs a Rep and PD whose type is determined by
 \ddc{}-type from which the parser was generated.
 
 \begin{figure}
 \small
 \fbox{$\kTrans[\gk,\ty] = \ity$} 
-\fbox{$\ptyc{\rctxt} = \ctxt$} 
     
 \begin{align*}
-  %% Ty
   &\kTrans[\kty,\ty] = \extdom * \offdom \iarrowi \offdom * \itsem[\ty] * \itpdsem[\ty]
    \\
-%%   \begin{semcasedef}{K-Abs}
-%%     \kTrans[\gk_1 \-> \gk_2] = \kTrans[\gk_1] \-> \kTrans[\gk_2]
-%%   \end{semcasedef}
-%%    \\ \notag \\ 
-   %% VAbs
    &\kTrans[\ity \iarrowi \gk,\ty] = \ity \iarrowi \kTrans[\gk,\ty]
-\\
-  &\ptyc{\cdot} = \cdot \\
-  &\ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
-  \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
 \end{align*}  
   \caption{Parser \Implang{} Types}
   \label{fig:parser-types}
@@ -700,17 +655,19 @@ However, we define it as shown in \figref{fig:ddc-sem}, for the
 purpose of simplifying the meta-theory. For details, please see our
 companion technical report.
 
-The definition of $\kwd{compute}$ just calls the compute constructors. The
-Rep constructor returns the value computed by
-$e$, while the PD records no errors and reports a span of
-length 0, as no data is consumed by the computation. The $\kwd{absorb}$
-parser first parses the underlying type and then calls the absorb
-constructors, passing only the PD, which is needed by the
-Rep constructor to determine whether an error occured while
-parsing the underlying type. If so, the value returned is a
-$\ierr$. Otherwise, it is $\iunitty$.
+The definition of $\pcomputen$ just calls the compute constructors.
+The Rep constructor returns the value computed by $e$, while the PD
+records no errors and reports a span of length 0, as no data is
+consumed by the computation. The $\pabsorbn$ parser first parses
+the underlying type and then calls the absorb constructors, passing
+only the PD, which is needed by the Rep constructor to determine
+whether an error occured while parsing the underlying type. If so, the
+value returned is a $\ierr$. Otherwise, it is $\iunitty$.  The absorb
+parse descriptor records a summary of the error information of its
+underlying type.  Hence, if the underlying type had an error, then
+absorb will report that an error occured.
 
-The semantics of the $\kwd{scan}$ type is to attempt to parse the underlying
+The semantics of the $\pscann$ type is to attempt to parse the underlying
 type from the stream at an increasing scan-offset, $i$, from the original
 offset $\off$,  until success is achieved
 or a predefined maximum scan-offset (\cd{scan\_max}) is reached. Note

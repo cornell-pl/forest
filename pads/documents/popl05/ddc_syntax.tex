@@ -70,7 +70,7 @@ So that we may parameterize types by expressions, we provide type constructors
 $\plam x {} \ty$ and type applications $\papp \ty e$.
 Dependent product types $\psig x \ty \ty$ describe a sequence of
 values. The second type in the product can refer to the value of the
-first with the name $x$. Sum types $\psum \ty e \ty$ describe
+first with the name $x$. Sum types $\psum \ty e \ty$ describes
 variation in the data format, choosing between the two possible types
 in a deterministic manner. Intersection types, $\pand \ty \ty$,
 describe data that can be understood as both of the component types,
@@ -97,14 +97,14 @@ recursive data formats, such as trees.
 In addition to the above types, we add a number of ``active'' types.
 These types describe actions to be taken during the parsing process
 rather than strictly describing the data format. The $\pcompute e
-\ity$ types allow us to include an element in the parsed output that
+\ity$ type allows us to include an element in the parsed output that
 does not appear in the data stream (although it is likely dependent on
 elements that do), based on evaluation of an expression $e$.  In
-contrast, the types $\pabsorb \ty$ transform data based on the type
-$\ty$, but discard the returned value. This behaviour can be useful
+contrast, the $\pabsorb \ty$ type transforms data based on the type
+$\ty$, but discards the returned value. This behaviour can be useful
 for data which might be important for parsing, such as a separator,
 yet uninteresting to users of the parsed data. The last of the
-``active'' types are $\pscan \ty$ which scan the input stream for a
+``active'' types is $\pscan \ty$ which scans the input stream for a
 portion of data that can be successfully transformed according to
 $\ty$. This behaviour can be useful, for example, when we expect that
 extraneous data might have been erroneously inserted in the data

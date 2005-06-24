@@ -117,11 +117,14 @@
    {\kwd{case} \; #1 \; \kwd{of} \, (#2 \Rightarrow #3 \, | \, \_ \Rightarrow #4) } 
 \newcommand{\pcaseA}[3]
    {\kwd{case}^* \; #1 \; \kwd{of} \, (#2 \Rightarrow #3)}
-\newcommand{\pcompute}[2]{\kwd{compute}(#1{:}#2)}
-\newcommand{\pabsorb}[1]{\kwd{absorb}(#1)}
+\newcommand{\pcomputen}{\kwd{compute}}
+\newcommand{\pcompute}[2]{\pcomputen{}(#1{:}#2)}
+\newcommand{\pabsorbn}{\kwd{absorb})}
+\newcommand{\pabsorb}[1]{\pabsorbn{}(#1)}
   %% transfrom pd
 \newcommand{\pxpd}[2]{\kwd{pdtrans}(#1,#2)}
-\newcommand{\pscan}[1]{\kwd{scan}(#1)}
+\newcommand{\pscann}{\kwd{scan}}
+\newcommand{\pscan}[1]{\pscann{}(#1)}
 \newcommand{\ptry}[2]{\kwd{try}(#1,#2)}
 \newcommand{\ptransform}[3]{#1 \; #2 \rightsquigarrow #3}
 \newcommand{\pmu}[2]{\gm #1.#2}
