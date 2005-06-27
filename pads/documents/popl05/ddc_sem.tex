@@ -406,9 +406,10 @@ $
 
 The kinding judgment defined in \figref{fig:ddc-kinding} determines
 well-formed \ddc{} types, assigning kind $\kty$ to basic types and
-$\ity \iarrowi \kind$ to type abstractions. There are two contexts in
-which the kinding judgment is made. First appears $\rctxt$, an ordered
-list of mappings between type variables and recursive types.
+kind $\ity \iarrowi \kind$ to type abstractions. There are two
+contexts in which the kinding judgment is made. First appears
+$\rctxt$, an ordered list of mappings between type variables and
+recursive types.
 \[
 \rctxt \mathrel{::=} \cdot \bnfalt \rctxt,\ptyvar{=}\pmu \ptyvar \ty
 \]
@@ -492,11 +493,11 @@ translate into well formed \implang{} types.
 
 In \figref{fig:implang-syntax} we introduce an extension of the
 simple-typed polymorphic lambda calculus for two purposes. First,
-while the \ddc{} is not tied to any particular expression language, we
+while \ddc{} is not tied to any particular expression language, we
 present this calculus as an example of a potential expression
 language.  It captures many of the features found in common expression
 languages at a high level. Second, we will later encode the parsing
-semantics of the \ddc{} in this calculus.
+semantics of \ddc{} in this calculus.
 
 {\em Rewrite this next paragraph.}
 
