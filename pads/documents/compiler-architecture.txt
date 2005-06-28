@@ -1,0 +1,171 @@
+******
+./cmd:
+******
+
+  ./cmd/cmonster:
+  ---------------
+
+*******
+./comp:
+*******
+  main.sml : [[structure Main]]
+             mainline of Pads compiler
+
+./comp/ckit:
+============
+
+./comp/ckit/doc:
+===============
+
+./comp/ckit/src:
+================
+
+./comp/ckit/src/ast:
+====================
+   ast-sig.sml : [[functor AST]], AST for C 
+
+   bindings.sml : [[structure Bindings]] 
+                  Types the bindings of program identifiers, including
+                  types, labels, objects (variables and function
+                  names) in environments, i.e. tidtabs and symbol
+                  tables (Type identifiers for C types)
+
+   cnv-ext-sig.sml : [[structure CnvExt]]
+                 Normalization/mapping from ParseTree to C-AST
+
+   tables.sml :  [[structure Tables]]
+
+   uidtabimp-fn.sml: [[functor UidtabImpFn]] 
+                     Polymorphic hash tables 
+
+   tidtab.sml : [[structure Tidtab]] 
+                Hash table on C types
+
+  ./comp/ckit/src/ast/extensions:
+  -------------------------------
+    ./comp/ckit/src/ast/extensions/pads:
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      ast-ext-sig.sml : [[signature ASTEXT]]
+
+      base-ty-info.txt : ASCII table of known PADS base types
+
+      base-tys.sml : [[structure PBaseTys]] ingested from
+                     base-ty-info.txt; Contains all info about base types
+    
+      build-utils.sml : [[structure BuildUtils]]
+                        Utility functions for looking up parsed-Pads types ...
+
+      cmp-tys.sml : [[structure PTys]]
+                    [[type pTyInfo]]
+                    [[type sTyInfo]]
+                    Complex/composite parsed-Pads type info
+
+      parse-tree-ext.sml : [[structure ParseTreeExt]]
+                    PADS Parse Tree
+
+      utils.sml : (* Mary: Why are XML Schema types buried in this file?!! *)
+		  [[structure PTyUtils]]
+
+  ./comp/ckit/src/ast/extensions/pads/transform:
+  ----------------------------------------------
+
+  ./comp/ckit/src/ast/pp:
+  ----------------------
+    pp-ast-ext-sig.sml : [[functor PPASTEXT]]
+
+    ./comp/ckit/src/ast/pp/extensions:
+    ----------------------------------
+      ./comp/ckit/src/ast/pp/extensions/pads:
+      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        pp-ast-xschema.sml : PPAstPaidAdornment
+	                     PPXSchemaAST
+        pp-ast-xschema-fn.sml : CType to XML Schema Mappings
+                                PPAstXschemaFn
+        pp-ast-paid-adornment-sig.sml : PPASTPAIDADORNMENT
+
+./comp/ckit/src/ast-utils:
+==========================
+  ./comp/ckit/src/ast-utils/copy:
+  ------------------------------
+  ./comp/ckit/src/ast-utils/equality:
+  -----------------------------------
+  ./comp/ckit/src/ast-utils/simplifier:
+  -------------------------------------
+
+./comp/ckit/src/c-util:
+=======================
+
+./comp/ckit/src/parser:
+=======================
+  ./comp/ckit/src/parser/extensions:
+  ----------------------------------
+    ./comp/ckit/src/parser/extensions/pads:
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  ./comp/ckit/src/parser/grammar:
+  -------------------------------
+  ./comp/ckit/src/parser/util:
+  ---------------------------
+
+./comp/ckit/src/variants:
+=========================
+  ./comp/ckit/src/variants/ansic:
+  -------------------------------
+
+./comp/util:
+===========
+
+***********
+./examples:
+***********
+take_list
+./examples/cbtests:
+./examples/copybook:
+./examples/data:
+take_list
+./examples/data/http:
+./examples/gen:
+./examples/NOTES:
+./examples/p:
+./examples/palm:
+./examples/regress:
+./examples/tests:
+
+./examples/xml:
+  ./examples/xml/childrentest:
+  ./examples/xml/data:
+  ./examples/xml/gen:
+  ./examples/xml/idltest:
+  ./examples/xml/queries:
+    ./examples/xml/queries/ai:
+    ./examples/xml/queries/dibbler_notrailer:
+  ./examples/xml/regress:
+  ./examples/xml/tests:
+  ./examples/xml/tests_pglx:
+  ./examples/xml/xml:
+  ./examples/xml/yitzhak:
+    ./examples/xml/yitzhak/tests:
+
+**********
+./include:
+**********
+  ./include/ptypes:
+    ./include/ptypes/impl:
+  ./include/template:
+
+**********
+./libpads:
+**********
+  ./libpads/data:
+  ./libpads/regress:
+  ./libpads/tests:
+
+**********
+./libpglx:
+**********
+
+**********
+./pads-glx:
+**********
+
