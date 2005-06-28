@@ -2,6 +2,7 @@ structure PBaseTys = struct
    structure PT = ParseTree
 
    type baseInfoTy = {padsname : Atom.atom, 
+		      padsxname: Atom.atom,
 		      repname  : Atom.atom, 
                       mname    : Atom.atom,
                       pdname   : Atom.atom,
@@ -16,6 +17,7 @@ structure PBaseTys = struct
 
 
    fun printEntry    {padsname : Atom.atom, 
+		      padsxname: Atom.atom,
 		      repname  : Atom.atom, 
 		      numArgs  : int,
                       mname    : Atom.atom,
@@ -29,6 +31,7 @@ structure PBaseTys = struct
 		      endian   : bool} = (
     (print (String.concat["padsname = ", (Atom.toString padsname), "\n"]));
     (print (String.concat["numArgs= ", (Int.toString numArgs), "\n"]));
+    (print (String.concat["padsxname = ", (Atom.toString padsxname), "\n"]));
     (print (String.concat["repname = ", Atom.toString repname, "\n"]));
     (print (String.concat["mname = ", Atom.toString mname, "\n"]));
     (print (String.concat["pdname = ", Atom.toString pdname, "\n"]));
@@ -72,27 +75,28 @@ structure PBaseTys = struct
    fun processLine s = 
        if String.isPrefix "#" s then [] 
        else 
-	   let val fields = String.tokens (fn c => c = #" " orelse c = #"\n") s
+	   let val fields = String.tokens (fn c => c = #" " orelse c = #"\n" orelse c = #"\t") s
 	       val numColumns = List.length fields
 	       val padsname = if numColumns > 0 then List.nth(fields,0) else ""
 	       val errStr = "Compiler bug: error in "^padsname^" entry in base-ty-info table.\n"
-               val numArgs = if numColumns > 1 then Option.valOf(Int.fromString (List.nth(fields,1))) else 0
-		             handle Option => (print errStr; 0)
+               val numArgs = (if numColumns > 1 then Option.valOf(Int.fromString (List.nth(fields,1))) else 0)
+		             handle Option.Option => (print errStr; 0)
 	       val r = if (numColumns = 0) then [] else 
-		       if (numColumns >=11 ) then 
+		       if (numColumns >= 12 ) then 
 	               [{padsname = Atom.atom padsname,
 			 numArgs  = numArgs,
-			 repname  = Atom.atom(List.nth(fields,2)),
-			 mname    = Atom.atom(List.nth(fields,3)),
-			 pdname   = Atom.atom(List.nth(fields,4)),
+			 padsxname = Atom.atom(List.nth(fields,2)),
+			 repname  = Atom.atom(List.nth(fields,3)),
+			 mname    = Atom.atom(List.nth(fields,4)),
+			 pdname   = Atom.atom(List.nth(fields,5)),
 			 readname = Atom.atom(PNames.readSuf padsname),
-			 predname  = if List.nth(fields,5) = "-" then NONE
+			 predname  = if List.nth(fields,6) = "-" then NONE
 				    else SOME (Atom.atom(List.nth(fields,5))),
-			 scanname = if List.nth(fields,6) = "-" then NONE
+			 scanname = if List.nth(fields,7) = "-" then NONE
 				    else SOME (Atom.atom(List.nth(fields,6))),
-			 accname  = if List.nth(fields,7) = "-" then NONE
-				    else SOME (Atom.atom(List.nth(fields,7))),
-			 diskSize = let val str = List.nth(fields,8) 
+			 accname  = if List.nth(fields,8) = "-" then NONE
+				    else SOME (Atom.atom(List.nth(fields,8))),
+			 diskSize = let val str = List.nth(fields,9) 
 				    in
 			               if str = "P" then TyProps.Variable
 				       else if String.isPrefix "P" str then 
@@ -109,9 +113,9 @@ structure PBaseTys = struct
 					    of NONE => TyProps.Variable
 					    | SOME n => TyProps.mkSize (n,0)
 				    end,
-			 memChar  = if "S" =  List.nth(fields,9) then TyProps.Static else TyProps.Dynamic,
-		         endian   = if "Y" =  List.nth(fields,10) then true else false}]
-		       else (print errStr; [])
+			 memChar  = if "S" =  List.nth(fields,10) then TyProps.Static else TyProps.Dynamic,
+		         endian   = if "Y" =  List.nth(fields,11) then true else false}]
+		       else (print (errStr^"  Missing columns.\n"); [])
 	   in
 	       r
 	   end

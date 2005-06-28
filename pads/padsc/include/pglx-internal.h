@@ -335,6 +335,7 @@ struct PDCI_node_s {
 #ifndef FOR_CKIT
   };
 #else
+  // add name for union because ckit does not understand anonymous unions.
   } ext; 
 #endif
 };
@@ -513,6 +514,11 @@ PDCI_DECL_VT(Ppos_t);
 PDCI_DECL_VAL_VT(PDCI_cstr);
 
 /* Base type vtables */
+
+/* I don't think that non in-memory types need their own vtables, as
+   they are never referenced.  These tables should probably be done
+   the same way as the val tables --YHM */
+
 PDCI_DECL_NEW_VT(Pchar);
 PDCI_DECL_NEW_VT(Pa_char);
 PDCI_DECL_NEW_VT(Pe_char);
@@ -535,6 +541,11 @@ PDCI_DECL_NEW_VT(Pe_string_CME);
 PDCI_DECL_NEW_VT(Pe_string_SE);
 PDCI_DECL_NEW_VT(Pe_string_CSE);
 
+PDCI_DECL_NEW_VT(Pip);
+PDCI_DECL_NEW_VT(Pdate);
+PDCI_DECL_NEW_VT(Ptime);
+PDCI_DECL_NEW_VT(Ptimestamp);
+
 PDCI_DECL_NEW_VT(Pint8);
 PDCI_DECL_NEW_VT(Pint16);
 PDCI_DECL_NEW_VT(Pint32);
@@ -551,6 +562,12 @@ PDCI_DECL_NEW_VT(Puint64);
 /* The required _val_vtable */
 PDCI_DECL_VAL_VT(Pchar);
 PDCI_DECL_VAL_VT(Pstring);
+
+PDCI_DECL_VAL_VT(Pip);
+PDCI_DECL_VAL_VT(Pdate);
+PDCI_DECL_VAL_VT(Ptime);
+PDCI_DECL_VAL_VT(Ptimestamp);
+
 PDCI_DECL_VAL_VT(Pint8);
 PDCI_DECL_VAL_VT(Pint16);
 PDCI_DECL_VAL_VT(Pint32);

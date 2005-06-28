@@ -77,7 +77,8 @@ struct
 
   val acc       = "acc"
   val sfstderr  = "sfstderr"
-  fun repSuf  s = s (* Make rep type same as pads name; s^"_rep" *)
+  fun repSuf  s = s (* Make rep type same as pads name *)
+  fun padsxSuf  s = s (* Make pads/x type same as pads name. will only differ at base types (potentially). *)
   fun mSuf   s = s^"_"^m
   fun mConSuf s = s^"_con"
   fun pdSuf   s = s^"_"^pd

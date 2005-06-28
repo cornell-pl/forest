@@ -191,7 +191,6 @@ PDCI_node_t * ty ## _node_kthChild(PDCI_node_t *node, childIndex idx) \
 PDCI_node_t * ty ## _node_kthChildNamed(PDCI_node_t *node, childIndex idx, const char *name) \
 { \
   PDCI_node_t *result = 0; \
-  ty        *rep = (ty*)node->rep; \
   Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
 \
   /* the only valid idx is 0  */ \
@@ -518,9 +517,9 @@ PDCI_node_t * ty ## _val_node_kthChild(PDCI_node_t *node, childIndex idx) \
   PDCI_node_t *result = 0; \
   /* the only valid idx is 0  */ \
   if (idx) return 0; \
-  /* PDCI_MK_TEXTNODE(result, & ty ## _text_node_vtable,  node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); */ \ 
+  /* PDCI_MK_TEXTNODE(result, & ty ## _text_node_vtable,  node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); */ \
   /* Mary: This function initializes the text node's pd: */ \
-  result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); \ 
+  result = ty ## _text_node_new(node, PDCI_MacroArg2String(ty) "_val_node_kthChild"); \
   return result; \
 } \
  \
@@ -1984,6 +1983,129 @@ item Pstring_sndNode_typed_value (PDCI_node_t *node)
   return res;
 }
 
+item Pdate_typed_value (PDCI_node_t *node){
+  item         res = 0;
+/*   Pstring *ps = (Pstring*)node->rep; */
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd;
+  Pbase_pd   tpd;
+  if (!pd) {
+    pd = &tpd;
+    pd->errCode = P_NO_ERR;
+  }
+/*   sfstrseek(node->pads->tmp2, 0, SEEK_SET); */
+/*   sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str); */
+/*   if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) { */
+  if (galax_atomicString("TESTING", &res)) {
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pdate_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+  }
+  return res;
+}
+
+item Pdate_sndNode_typed_value (PDCI_node_t *node){
+  return 0;
+}
+
+item Ptime_typed_value (PDCI_node_t *node){
+  item         res = 0;
+/*   Pstring *ps = (Pstring*)node->rep; */
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd;
+  Pbase_pd   tpd;
+  if (!pd) {
+    pd = &tpd;
+    pd->errCode = P_NO_ERR;
+  }
+/*   sfstrseek(node->pads->tmp2, 0, SEEK_SET); */
+/*   sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str); */
+/*   if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) { */
+  if (galax_atomicString("TESTING", &res)) {
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pdate_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+  }
+  return res;
+}
+
+item Ptime_sndNode_typed_value (PDCI_node_t *node){
+  return 0;
+}
+
+item Ptimestamp_typed_value (PDCI_node_t *node){
+  item         res = 0;
+/*   Pstring *ps = (Pstring*)node->rep; */
+  Pbase_pd  *pd  = (Pbase_pd*)node->pd;
+  Pbase_pd   tpd;
+  if (!pd) {
+    pd = &tpd;
+    pd->errCode = P_NO_ERR;
+  }
+/*   sfstrseek(node->pads->tmp2, 0, SEEK_SET); */
+/*   sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str); */
+/*   if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) { */
+  if (galax_atomicString("TESTING", &res)) {
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pdate_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+  }
+  return res;
+}
+
+item Ptimestamp_sndNode_typed_value (PDCI_node_t *node){
+  return 0;
+}
+
+item Pip_typed_value (PDCI_node_t *node)
+{
+  item         res = 0;
+  Pip pip = *(Pip*)node->rep;
+  Pbase_pd  *pd = (Pbase_pd*)node->pd;
+  Pbase_pd   tpd;
+
+  if (!pd) {
+    pd = &tpd;
+    pd->errCode = P_NO_ERR;
+  }
+  sfstrseek(node->pads->tmp2, 0, SEEK_SET);
+  sfprintf(node->pads->tmp2, "%u.%u.%u.%u", 
+	   (pip >> 24) & 0xFF, 
+	   (pip >> 16) & 0xFF,
+	   (pip >>  8) & 0xFF,
+	    pip        & 0xFF);
+  if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) {
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,
+		    "Pip_typed_value",
+		    "PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+  }
+  return res;
+}
+
+item Pip_sndNode_typed_value (PDCI_node_t *node)
+{
+  item         res = 0;
+  Pip pip;
+  Pbase_pd  *pd;
+  Pbase_pd   tpd;
+
+  /* Make sure that the node is valid before attempting to access its contents. */
+  PDCI_sndNode_validate(node);
+  pip = *(Pip*)node->rep;
+  pd  = (Pbase_pd*)node->pd; 
+
+  if (!pd) {
+    pd = &tpd;
+    pd->errCode = P_NO_ERR;
+  }
+  sfstrseek(node->pads->tmp2, 0, SEEK_SET);
+  sfprintf(node->pads->tmp2, "%u.%u.%u.%u", 
+	   (pip >> 24) & 0xFF, 
+	   (pip >> 16) & 0xFF,
+	   (pip >>  8) & 0xFF,
+	    pip        & 0xFF);
+  if (galax_atomicString(sfstruse(node->pads->tmp2), &res)) {
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,
+		    "Pip_typed_value",
+		    "PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
+  }
+  return res;
+}
+
+
+
 /* ---------------------------
  * Some string_value functions
  * --------------------------- */
@@ -2060,6 +2182,24 @@ PDCI_cstr_val_sndNode_vtable = {PDCI_error_cachedNode_init,
 
 /* Impl some base type children and typed_value functions and
    associated vtable/val_vtable pairs */
+
+PDCI_IMPL_BASE_VT(Pip);
+PDCI_IMPL_BASE_VAL_VT(Pip);
+
+PDCI_IMPL_BASE_VT(Pdate);
+/* The second parameter is copied from Pstring below. 
+   I don't know that it is the correct choice. YHM.*/
+PDCI_IMPL_BASE_VAL_VT_ARG1(Pdate, ' ');
+
+PDCI_IMPL_BASE_VT(Ptime);
+/* The second parameter is copied from Pstring below. 
+   I don't know that it is the correct choice. YHM.*/
+PDCI_IMPL_BASE_VAL_VT_ARG1(Ptime, ' ');
+
+PDCI_IMPL_BASE_VT(Ptimestamp);
+/* The second parameter is copied from Pstring below. 
+   I don't know that it is the correct choice. YHM.*/
+PDCI_IMPL_BASE_VAL_VT_ARG1(Ptimestamp, ' ');
 
 PDCI_IMPL_BASE_VT(Pchar);
 PDCI_IMPL_BASE_VAL_VT(Pchar);

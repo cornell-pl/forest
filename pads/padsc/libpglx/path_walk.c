@@ -44,7 +44,7 @@ Perror_t ty ## _node_pathWalk(P_t *pads, Pbase_m *m, Pbase_pd *pd, ty *rep, PDCI
 	  *rep_out = rep;\
           *pd_out = pd;\
 	  res = P_OK;    \
-        } \								       
+        } \
 	break; \
     } \
   }else{\
@@ -94,6 +94,12 @@ Perror_t ty ## _text_node_pathWalk(P_t *pads, ty *rep, PDCI_path_t path,void **r
 
 PDCI_DEF_BASE_PATH_WALK(Pchar);
 PDCI_DEF_BASE_PATH_WALK(Pstring);
+
+PDCI_DEF_BASE_PATH_WALK(Pip);
+PDCI_DEF_BASE_PATH_WALK(Pdate);
+PDCI_DEF_BASE_PATH_WALK(Ptime);
+PDCI_DEF_BASE_PATH_WALK(Ptimestamp);
+
 PDCI_DEF_BASE_PATH_WALK(Pint8);
 PDCI_DEF_BASE_PATH_WALK(Pint16);
 PDCI_DEF_BASE_PATH_WALK(Pint32);

@@ -440,7 +440,7 @@ structure Main : sig
 
 
     (* Generates the compiler and exports an executable. *)
-    fun emit release =
+    fun emit release = 
 	if release then 
 	    (silenceGC();
 	     SMLofNJ.exportFn ("../../lib/padsc", main release);

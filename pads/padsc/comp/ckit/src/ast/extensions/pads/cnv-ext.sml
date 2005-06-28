@@ -862,11 +862,7 @@ structure CnvExt : CNVEXT = struct
                                                     (* end nested case *)) 
                                     |  SOME(b:PBTys.baseInfoTy) => false)(* ???? *)
 
-              fun lookupBranch(ty:pty) = 
-		  case ty
-                  of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
-				    of NONE => s  (* non-base type *)
-                                    |  SOME (b:PBTys.baseInfoTy) => Atom.toString (#repname b))
+              fun lookupPadsx(ty:pty) = BU.lookupTy(ty,padsxSuf,#padsxname)
 
 	      fun lookupCompoundDiskSize (ty:pty) =
 		  case ty
@@ -2083,6 +2079,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 	              (***** typedef PADS-Galax *****)
 
+		      val basePXTypeName = lookupPadsx(baseTy)
+											 
 		      fun genGalaxTypedefKthChildFun(name,baseTypeName) =		
 			  let val nodeRepTy = PL.nodeT
 			      val returnTy = P.ptrPCT nodeRepTy
@@ -2115,12 +2113,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	              val galaxEDs = 
 			  [G.makeNodeNewFun(name),
 			   G.makeCNInitFun(name,P.intX 2),
-			   genGalaxTypedefKthChildFun(name,baseTypeName),
+			   genGalaxTypedefKthChildFun(name,basePXTypeName),
 			   genGalaxTypedefKthChildNamedFun(name),
 			   G.makeCNKCFun(name,P.intX 2),
 			   G.makeSNDInitFun(name),				      
-			   G.makeTypedefSNDKthChildFun(name,baseTypeName), 
-			   G.makeTypedefPathWalkFun(name,baseTypeName), 
+			   G.makeTypedefSNDKthChildFun(name,basePXTypeName), 
+			   G.makeTypedefPathWalkFun(name,basePXTypeName), 
 			   G.makeNodeVtable(name),
 			   G.makeCachedNodeVtable(name),
 			   G.makeSNDNodeVtable(name)]
@@ -4020,7 +4018,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT]
                          val paramNames = [G.self,G.idx]
                          val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
-			 val elemName = BU.lookupTy(baseTy, repSuf, #repname)
+			 val elemName = lookupPadsx(baseTy)
 		         val bodySs = G.makeInvisibleDecls([name,elemName],nil)
 				      @ [G.macroArrKC(name,elemName),
 					 P.returnS (G.macroArrKCRet())]
@@ -4044,7 +4042,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     end
 			 
 		 fun makeGalaxEDs(name) = 
-		     let val elemName = BU.lookupTy(baseTy, repSuf, #repname)
+		     let val elemName = lookupPadsx(baseTy)
 			 val pdName = BU.lookupTy(baseTy, pdSuf, #pdname)
 			 val mName = BU.lookupTy(baseTy, mSuf, #mname)
 		     in 
@@ -5475,15 +5473,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	              (* In the XML representation of unions, each alternative is always the second child 
                          (index 1), after the <pd> child. *)
 
-		      fun genCaseBranch (name, pty) =  (* why is this testing if there is an accumulator???*)
-			  case lookupAcc(pty) of NONE   => []
-					       | SOME a => [(name, SOME(lookupBranch pty))] 
+		      (* Note on field types: *)
+		      (*   full field - normal field *)
+		      (*   manifest field - Pcompute *)
+		      (*   brief - literals *)
+		      (* --YHM *)
+						      
+		      fun genCaseBranch (name, pty) =  [(name, SOME(lookupPadsx pty))] 
 
-		      fun genBranchFull ({pty :PX.Pty, args:pcexp list, name:string, 
-					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool, 
-					 pred, comment,...}:BU.pfieldty) =  genCaseBranch (name, pty)
+(* 		      fun genBranchFull ({pty :PX.Pty, args:pcexp list, name:string,  *)
+(* 					 isVirtual:bool, isEndian:bool, isRecord, containsRecord, largeHeuristic:bool,  *)
+(* 					 pred, comment,...}:BU.pfieldty) =  genCaseBranch (name, pty) *)
+		      fun genBranchFull ({pty :PX.Pty, name:string,...}:BU.pfieldty) =  genCaseBranch (name, pty)
 		      fun genBranchBrief e = case getString e of NONE => [] | SOME s => [(s,NONE)]
-		      fun genBranchMan {tyname, name, args, isVirtual, expr, pred, comment}= 
+		      fun genBranchMan ({tyname, name, isVirtual,... }:BU.pmanty)= 
 			  case isPadsTy tyname of PTys.CTy => [] | _ => 
 			      if isVirtual then [(name, NONE)] else genCaseBranch(name, getPadsName tyname)
 
@@ -5497,7 +5500,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                               val paramNames = [G.self,G.idx]
                               val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
-				  (* What are thse types being used for? *)
+				  (* What are these types being used for? *)
+                                  (* To create fake var. decls that allow us to pass type names to macros -- YHM *)
 			      val uniqueBranchTys = G.getUniqueTys (List.mapPartial (fn(x,y) => y ) branches)
 			      val caseSs = List.map (G.makeUnionKCCase name)  branches
 
@@ -6456,25 +6460,21 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 						    (***** struct PADS-Galax *****)
 
-		      fun genFieldFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
-					isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					pred, comment: string option,...}:BU.pfieldty) = 
-			  if isVirtual then [] else [(name, BU.lookupTy (pty, repSuf, #repname), false)]
+		      fun genFieldFull ({pty: PX.Pty, name: string, isVirtual: bool, ...}:BU.pfieldty) = 
+			  if isVirtual then [] else [(name, lookupPadsx(pty), false)]
 		      fun genFieldBrief e = []
 		      fun genFieldMan {tyname, name, args, isVirtual, expr, pred, comment} =
 			  if isVirtual then [] else
 			  case isPadsTy tyname
                            of PTys.CTy => []
 			    | _ => (let val pty = getPadsName tyname
-				    in case lookupAcc(pty) of NONE   => [] | SOME a => [(name, lookupBranch pty, true)]
+				    in [(name, lookupPadsx pty, true)]
                                     end)
 
 		      val localFields = P.mungeFields genFieldFull genFieldBrief genFieldMan fields
 
 						    (* counting Full and Computed fields *)
-		      fun countFieldFull ({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool,
-					  isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
-					  pred, comment: string option,...}:BU.pfieldty) =
+		      fun countFieldFull ({isVirtual: bool,...}:BU.pfieldty) =
 			  if isVirtual then [] else [1]
 		      fun countFieldMan m = []
 		      fun countFieldBrief e = [1]

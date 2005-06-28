@@ -23,6 +23,12 @@ Perror_t ty ## _text_node_pathWalk(P_t *pads, ty *rep, PDCI_path_t path,void **r
 
 PDCI_DECL_BASE_PATH_WALK(Pchar);
 PDCI_DECL_BASE_PATH_WALK(Pstring);
+#ifndef FOR_CKIT
+PDCI_DECL_BASE_PATH_WALK(Pip);
+PDCI_DECL_BASE_PATH_WALK(Pdate);
+PDCI_DECL_BASE_PATH_WALK(Ptime);
+PDCI_DECL_BASE_PATH_WALK(Ptimestamp);
+#endif
 PDCI_DECL_BASE_PATH_WALK(Pint8);
 PDCI_DECL_BASE_PATH_WALK(Pint16);
 PDCI_DECL_BASE_PATH_WALK(Pint32);
