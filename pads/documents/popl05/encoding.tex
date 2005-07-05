@@ -6,7 +6,7 @@
 Note that contexts always contain surface-language types, not pads
 types. Formally, the form of $\gG$ is:
 \begin{bnf}
-\name{} \meta{\gG} \::= . \| \gG,x {:} \ity
+\name{}  &\gG & \::= . \| \gG,x {:} \ity
 \end{bnf}
 
 We now define some syntactic sugar for multi-argument versions of type
@@ -35,11 +35,9 @@ abbreviations take a list of bindings $b$, each of the form $x{:}t$.
   \end{array}
 \end{align*}
 
-The interface $\Ikind$ provides the kind of base
-types $C$. Note that $\Pwhere{}$ requires that the surrounded type
-have kind $\kty$.
+The function $\Ikind$ provides the kind of base types $C$.
 
-\begin{figure}
+%\begin{figure}
 \fbox{$
   \begin{array}{l}
     \ctxt \turn {prog} \Longrightarrow \ty \; {prog} \\
@@ -48,7 +46,7 @@ have kind $\kty$.
 $}
 
 \[
- \infer[ProgOne]{ 
+ \infer[\text{Prog-One}]{ 
     \ctxt \turn {pty} \Longrightarrow \ty \; {prog}
   }{
     \ctxt \turn {pty} \Longrightarrow \ty : \kty
@@ -56,15 +54,23 @@ $}
 \]
 
 \[
-  \infer[ProgSome]{ 
-    \ctxt \turn x = {pty} \quad {prog} \Longrightarrow \ty \; {prog}
+  \infer[\text{Prog-Def}]{ 
+    \ctxt \turn \ga = {pty}; \; {prog} \Longrightarrow \ty \; {prog}
   }{
-    \ctxt \turn {prog}[{pty}/x] \Longrightarrow \ty \; {prog}
+    \ctxt \turn {prog}[{pty}/\ga] \Longrightarrow \ty \; {prog}
   }
 \]
 
 \[
-  \infer[Base]{ 
+  \infer[\text{Prog-RecDef}]{ 
+    \ctxt \turn  \Prec{}\; \ga = {pty}; \; {prog} \Longrightarrow \ty \; {prog}
+  }{
+    \ctxt \turn {prog}[\Prec{}\; \ga.{pty}/\ga] \Longrightarrow \ty \; {prog}
+  }
+\]
+
+\[
+  \infer[\text{Base}]{ 
     \ctxt \turn \Pbase e \Longrightarrow \pbase e : \kty
   }{
     \ctxt \turn e : \ity & (\Ikind(C) = \ity \to \kty)
@@ -72,7 +78,7 @@ $}
 \]
 
 \[
-  \infer[Pfun]{ 
+  \infer[\text{Pfun}]{ 
     \ctxt \turn \Pfun (x:\ity) = {pty} \Longrightarrow \plam x
     \ity \ty : \ity \to \kind
   }{
@@ -81,7 +87,7 @@ $}
 \]
 
 \[
-  \infer[PApp]{ 
+  \infer[\text{App}]{ 
     \ctxt \turn {pty} \; e \Longrightarrow \ty \; e : \kind
   }{
     \ctxt \turn {pty} \Longrightarrow \ty : \ity \to \kind & \ctxt \turn e : \ity
@@ -89,7 +95,7 @@ $}
 \]
 
 \[
-  \infer[Pstruct]{
+  \infer[\text{Pstruct}]{
     \ctxt \turn \Pstruct \{\vec x:\vec {{pty}}\} \Longrightarrow
     \gS^* \vec x{:}\vec \ty : \kty
   }{ 
@@ -104,7 +110,7 @@ $}
 \]
 
 \[
-  \infer[Punion]{
+  \infer[\text{Punion}]{
     \ctxt \turn \Punion \{\vec x:\vec {{pty}}\} \Longrightarrow
     +^* (\vec \ty,\pfalse) : \kty
   }{ 
@@ -116,7 +122,7 @@ $}
 \]
 
 \[
-  \infer[Palt]{
+  \infer[\text{Palt}]{
     \ctxt \turn \Palt \{\vec x:\vec {{pty}}\} \Longrightarrow
     \&^* \vec \ty : \kty
   }{ 
@@ -128,7 +134,7 @@ $}
 \]
 
 \[
-  \infer[Popt]{
+  \infer[\text{Popt}]{
     \ctxt \turn \Popt \; {pty} \Longrightarrow
      \psum \ty {} \ptrue
   }{
@@ -137,7 +143,7 @@ $}
 \]
 
 \[
-  \infer[Pwhere]{
+  \infer[\text{Pwhere}]{
     \begin{array}{l}
       \ctxt \turn {pty} \; \Pwhere \, x.e \Longrightarrow  \\
       \qquad
@@ -151,24 +157,21 @@ $}
 \]
 
 \[
-  \infer[Parray]{
-    \ctxt \turn {pty} \; [{pty}_{sep}; e,{pty}_{term}] \Longrightarrow 
-    \pseq \ty {\pscan {\ty_s}} {\pterm e {\ty_t}} : \kty
+  \infer[\text{Parray}]{
+    \ctxt \turn \iParray{{pty}}{{pty_{sep}}}{{pty_{term}}}{} \Longrightarrow 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}} : \kty
   }{ 
-       \begin{array}{lcr}
+       \begin{array}{lr}
          \ctxt \turn {pty} \Longrightarrow \ty : \kty & 
          \ctxt \turn {pty}_{sep} \Longrightarrow \ty_s : \kty \\ 
-         \ctxt \turn {pty}_{term} \Longrightarrow \ty_t : \kty \\
-         \multicolumn{2}{c}{
-           \stsem[e,\ctxt,\iprod {\iseq {\itsem[\ty]}}{\iseq
-             {\itpdsem[\ty]}} \iarrowi \iboolty]
-         }
+         \ctxt \turn {pty}_{term} \Longrightarrow \ty_t : \kty &
+         (f = \ilam x{}\ifalse)\\
        \end{array}
   }
 \]
 
 \[
-  \infer[Pcompute]{ 
+  \infer[\text{Pcompute}]{ 
     \ctxt \turn \Pcompute{} \; e \Longrightarrow \pcompute e \ity : \kty
   }{
     \stsem[e,\ctxt,\ity]
@@ -176,20 +179,88 @@ $}
 \]
 
 \[
-  \infer[Plit]{ 
+  \infer[\text{Plit}]{ 
     \ctxt \turn \Plit \const \Longrightarrow 
     \pscan {\pabsorb {\pset \var \ty {\ivar = \iconst}}} : \kty
   }{
     \stsem[\const,\ctxt,\ity] & \defty \ity \ty
   }
 \]  
-  \caption{Encoding \ipads{} in the \ddc{}}
-  \label{fig:encode-ipads}
-\end{figure}
+
+\[
+  \infer[\text{Var}]{ 
+    \ctxt \turn \ga \Longrightarrow \ga
+  }{}    
+\]
+
+\[
+  \infer[\text{Prec}]{ 
+    \ctxt \turn \Prec{}\; \ga.{pty} \Longrightarrow \pmu \ga \ty
+  }{
+    \ctxt \turn {pty} \Longrightarrow \ty
+  }
+\]
+
+%   \caption{Encoding \ipads{} in the \ddc{}}
+%   \label{fig:encode-ipads}
+% \end{figure}
 
 \subsection{Sketches of Other DDLs}
-{\em add sketches of Datascript, packet types and BLT here.}
+The syntax of a \datascript{}-style array named ${id}$ with elements of
+type ${dty}$ is ${dty}\;{id}[{length}]$, with length optional. If the
+user supplies the length of the sequence then the array parser reads
+exactly that number of elements. Otherwise, the parser continues until
+an element constraint is violated or the input is completely consumed.
 
+The first case be encoded in a straightforward manner with \ddc{}
+sequences: 
+\[
+  \infer{
+    \ctxt \turn {dty} \; [{length}] \Longrightarrow 
+    \pseq \ty {\ptrue{}} {\pterm f {\pfalse{}}} : \kty
+  }{ 
+    \ctxt \turn {dty} \Longrightarrow \ty : \kty & 
+    (f = \codefont{isLength} \; {length})
+  }
+\]
+As binary data has no separators, we use $\ptrue$. The function {\tt
+  isLength} is a curried function taking a length and a pair of Rep
+and PD arrays and returning a boolean indicating whether both arrays
+have the specified length. As there is no lookahead-terminator, we use
+$\pfalse$ (thereby guaranteeing that the array will not be terminated
+due to lookahead).
+
+For the second case, we need a way to terminate if the next element
+will not parse correctly without consuming it. We cannot use the
+termination predicate as it can only look at elements that have
+already been parsed and hence consumed from the input. Therefore, we
+need a way to encode the notion of a failed element parse in the
+terminator type. To do so, we introduce a new \ddc{} type $\pnot \ty$,
+which we encode in \ddc{} as {\small
+\[
+\pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
+  {\ifalse} {\_} {\itrue}}
+\]}
+\noindent
+It attempts to parse a $\ty$. On success, the Rep will be a left
+injection. The constraint in the set type will therefore fail. If a
+$\ty$ cannot be parsed, the sum will default to $\ptrue$, the Rep will
+be a right injection, and the constraint will succeed. The use of the
+sum in the underlying type is critical as it allows the set-type to be
+error free even if parsing a $\ty$ fails.
+
+With $\pnotn$, we can encode the unbounded \datascript{} array as
+follows:
+\[
+  \infer{
+    \ctxt \turn {dty} \; [{length}] \Longrightarrow 
+    \pseq \ty {\ptrue{}} {\pterm {\ilam x {} \ifalse} {\pnot \ty}} : \kty
+  }{ 
+    \ctxt \turn {dty} \Longrightarrow \ty : \kty 
+  }
+\]
+Note that the termination predicate is trivially false, as we use the
+lookahead-terminator exclusively to terminate the array.
 
 %%% Local Variables: 
 %%% mode: latex

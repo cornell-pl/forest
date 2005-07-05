@@ -279,20 +279,6 @@ Note that \textit{T-Generalize} can only be used in the premise of a
   }
 \]
 
-\[%\quad
-  \infer[Error]{
-    \stsem[\ierror e,\pctxt;\ctxt,\ierrty \ity]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ity]
-  }
-\quad
-  \infer[Exm]{
-    \stsem[\iexamine e,\pctxt;\ctxt,\ity]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ierrty \ity]
-  }
-\]
-
 \[%\qquad
   \infer[Generalize]{
     \stsem[v,\pctxt;\ctxt,\forall \ityvar.\ity]
@@ -321,8 +307,7 @@ Note that \textit{T-Generalize} can only be used in the premise of a
   \icaseg E {\nrm x} e {\nrm x} {e'} \nlalt
   \iarr{\vec v \, E \, \vec{e}} \| 
   \iappend E e \| \iappend v E \nlalt
-  \isub e E \| \isub v E \nlalt
-  \ierror E \| \iexamine E\\
+  \isub e E \| \isub v E \\
 \end{bnf}
 
 We specify the implementation of an operator with
@@ -428,10 +413,6 @@ expression fails.
 \]
 
 \[
-\infer[Examine]{
-  \iexamine{\ierror v} \stepsto v
-}{}
-\quad
 \infer[Step]{
   E[e] \stepsto E[e']
 }{
@@ -457,10 +438,10 @@ expression fails.
 
 \item $\ifun {max} {\ictup{m,n}} {\codefont{\iif {m>n}\; \ithen m\; \ielse n}}$
 \item $\ifun {pos} n {\codefont{\iif {n=0}\; \ithen 0\; \ielse 1}}$
-\item $\ifun {isOk} p {\codefont{pos(p.nerr) = 0}}$
-\item $\ifun {isErr} p {\codefont{pos(p.nerr) = 1}}$
+\item $\ifun {isOk} p {\codefont{pos(p.h.nerr) = 0}}$
+\item $\ifun {isErr} p {\codefont{pos(p.h.nerr) = 1}}$
 
-\item $\ifun {ecCeil} {\ictup{ec_1, ec_2}} {}$ \\
+\item $\ifun {max\_ec} {\ictup{ec_1, ec_2}} {}$ \\
   $\begin{array}{l}
     \iif {\codefont{ec_1} = \iecpc \iori \codefont{ec_2} = \iecpc}\; \ithen \iecpc \\
     \ielse{} \iif {\codefont{ec_1} = \iecerr \iori \codefont{ec_2} = \iecerr}\; \ithen \iecerr \\

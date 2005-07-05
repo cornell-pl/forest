@@ -22,17 +22,6 @@ individual primitives will be based on just such a conception of their
 meaning.
 }
 
-{\em This paragraph belongs somewhere in this section or the next:
-A few things to note regarding variable names. First, all variable
-names introduced in translation are by definition not equal to the
-target of the substitution, nor present in the free variables of the
-term being substituted. Second, for those types with bound variables,
-we note that the potential alpha-conversion when performing a
-substitution on the type exactly parallels any alpha-conversion of the
-same variable where it appears in the translation of the type. Last,
-all constructors, support functions and base-type parsers are closed
-with respect to user-defined variable names.}
-
 \subsection{\ddc{} Syntax}
 The syntax of \ddc{} is parameterised by an expression language.  We specify one possible such language in the next section.  Otherwise,
 the syntax of \ddc{} is as follows:
@@ -122,37 +111,46 @@ for the sake of clarity, we introduce a number of type abbreviations
 in the form $\mathrm{name} \equiv \ty$, before showing the final type
 describing the format in its entirety.
 
-{\em explain and cleanup}
-
 \[
 \begin{array}{l}
-\mathrm{S} \equiv \plam {ch} {} {\pset c {Pchar} {c = {ch}}}\\
+\mathtt{S} \equiv \plam {\mathtt{ch}} {} {\pset {\mathtt{c}}
+  {\mathtt{Pchar}} {\mathtt{c = ch}}}\\
 \\
-\mathrm{response\_t} \equiv \plam x {} {
-      \pset y {Puint16\_FW(x)} 
+\mathtt{response\_t} \equiv \plam {\mathtt x} {} {
+      \pset {\mathtt y} {\mathtt{Puint16\_FW(x)}} 
       {\codefont{100 \leq y \iandi y < 600}}
     }\\
 \\
-\mathrm{authid\_t} \equiv 
-\psum {\mathrm{S}('-')} {} {Pstring(``\;")}\\
+\mathtt{authid\_t} \equiv 
+\psum {\mathtt{S('-')}} {} {\mathtt{Pstring("\;")}}\\
 \\
-\mathrm{entry\_t} \equiv \\ \;
+\mathtt{entry\_t} \equiv \\ \;
 \begin{array}{lll}
-\psig {client} {Pip} {&\mathrm{S}('\;')} &* \\
-\psig {remoteid} {\mathrm{authid\_t}} {&\mathrm{S}('\;')} &* \\
-\psig {response} {
+\psig {\mathtt{client}} {\mathtt{Pip}} {&\mathtt{S('\;')}} &* \\
+\psig {\mathtt{remoteid}} {\mathtt{authid\_t}} {&\mathtt{S('\;')}} &* \\
+\psig {\mathtt{response}} {
   \papp
-    {\mathrm{response\_t}} 3
-}{&\mathrm{S}('\;')} &*\\
+    {\mathtt{response\_t}} 3
+}{&\mathtt{S('\;')}} &*\\
 \multicolumn{3}{c}{
 \pcompute {\codefont{getdomain\;client = ``edu"}} \iboolty}
 \end{array}\\
 \\
-\pseq {\mathrm{entry\_t}} {\mathrm{S}('\backslash n')}{
-  \pterm {\ilam x {} \ifalse} {\pfalse}
+\pseq {\mathtt{entry\_t}} {\mathtt{S('\backslash n')}}{
+  \pterm {\ilam {\mathtt x} {} \ifalse} {\pfalse}
 }
 \end{array}
 \]
+
+Note that we define a type constructor $\mathtt{S}$ to encode literals
+with a singleton set-type. Furthermore, we user the following,
+informal translations:\Pwhere{} becomes a set-type, \Pstruct{} a
+series of dependent products, \Punion{} a serious of sums, and
+\Parray{} a sequence. For this example, we assume that \Peor{} - the
+end or record -- is a newline, and therefore specify the sequence
+separator as such. As the array terminates at the end of the file, we
+use $\ilam {\mathtt x} {} \ifalse$ and $\pfalse$ to indicate the
+absence of termination condition and terminator, respectively.
 
 %%% Local Variables: 
 %%% mode: latex

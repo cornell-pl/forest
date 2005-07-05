@@ -6,11 +6,10 @@ each primitive is multi-faceted. Each simultaneously describes a
 collection of valid bit strings, two datatypes in the host language --
 one for the data representation (Rep) itself and one for its parse
 descriptor (PD) -- and a transformation from bit strings into data and
-corresponding meta-data. {\em fix next sentence:} Furthermore, many
-invalid bit strings must also be successfully transformed, with errors
-marked in the parse descriptor.
+corresponding meta-data.
 
-{\em This paragraph is nice, but I don't think it belongs here.YHM} 
+\reminder{
+This paragraph is nice, but I don't think it belongs here.YHM 
 What, then, are the semantics of a type? A number of factors went into
 the design of \ddc{}, and they heavily influenced our choice for the
 semantics of the calculus. First, it was necessary that the calculus
@@ -24,6 +23,7 @@ specify the transform so the analyst knows how that meaning is mapped
 into the host language.  Finally, it was critical that \ddc{} include
 error reporting and error handling mechanisms because errors are an
 intrinsic characteristic of ad hoc data.
+}
 %All DDLs are set up to handle errors with varying degrees of flexibility.
 %   (warn the reader that the current calculus is not necessarily
 %   ultimately flexible in this regard, but open to extension).
@@ -36,12 +36,10 @@ calculus that parses bit strings to produce structured data and
 meta-data. The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$
 describe the {\it representation semantics} of \ddc{}, detailing the
 in-memory representation of the data and meta-data -- the Rep and PD
-types, respectively -- output by the parsing functions. The function
+types, respectively -- output by the parsing functions. The purpose
 and relationship of the semantic functions is illustrated in
 \figref{fig:correspond-graphic}. We note the structural correspondence
-of Reps and PDs highlighted by the figure. We also note that the set
-of ``perfect'' bit strings are exactly those whose transformation
-results in a parse descriptor that reports no errors.
+of Reps and PDs highlighted by the figure. 
 
 \begin{table}
   \begin{center}
@@ -65,8 +63,8 @@ results in a parse descriptor that reports no errors.
 In the remainder of this section, we formalize this three-fold
 semantics of \ddc{} types.  For reference, we provide in
 \tblref{tab:judg-list} a listing of all the functions and judgments
-defined in this section and a brief description of each. {\em Should
-  we define here $\rctxt,\ctxt,\pctxt$?}
+defined in this section and a brief description of each.  
+\reminder{Should we define here $\rctxt,\ctxt,\pctxt$? --Kathleen}
 
 \begin{figure}[tp]
   \centering
@@ -89,19 +87,16 @@ introduce those types.
   \name{Types} \meta{\ity} \::= 
       \ibasety \| \iarrow \ity \ity \| \iprod \ity \ity \|
       \isum \ity \ity \nlalt
-      \iseq \ity \|
-      \ierrty \ity \| \forall \ityvar.\ity  \| \ityvar \nlalt
+      \iseq \ity \| \forall \ityvar.\ity  \| \ityvar \|
       \imu \ityvar \ity   
 \end{bnf}
 
-{\em Define noval in this paragraph.}
-
-We highlight the non-standard types of the language. The type $\invty$
-is the singleton type of the constant $\ierr$, most often injected
-into a sum when a parse fails. Types $\iecty$ and $\ioffty$ are for
-error codes recorded in the parse descriptors and bit-stream offsets,
-respectively. The type $\ierrty \ity$ classifies values of type $\ity$
-that have been tagged as violating some semantic constraint.
+\reminder{Should we fold this paragraph into the text below,
+  introducing the types as they appear? --YHM} We highlight the
+non-standard types of the language. The type $\invty$ is the singleton
+type of the constant $\ierr$, most often injected into a sum when a
+parse fails. Types $\iecty$ and $\ioffty$ are for error codes recorded
+in the parse descriptors and bit-stream offsets, respectively.
 
 The remaining types have their standard meaning: function types,
 product types, sum types, sequence types $\iseqty \ty$; polymorphic
@@ -120,7 +115,7 @@ recursive types $\imu \ityvar \ity$.
 \itsem[\psig \var {\ty_1} {\ty_2}]  & = & \iprod {\itsem[\ty_1]} {\itsem[\ty_2]}    \\
 \itsem[\psum {\ty_1} e {\ty_2}]     & = & \isum {\itsem[\ty_1]} {\itsem[\ty_2]} \\
 \itsem[\pand {\ty_1} {\ty_2}]  & = & \iprod {\itsem[\ty_1]}{\itsem[\ty_2]}\\
-\itsem[\pset x \ty e] & = & \isum {\itsem[\ty]}{\ierrty {\itsem[\ty]}}\\
+\itsem[\pset x \ty e] & = & \isum {\itsem[\ty]}{\itsem[\ty]}\\
 % field names: length, elts
 \itsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
     \iprod \iintty {(\iseq{\itsem[\ty]})}             \\
@@ -281,19 +276,20 @@ as input and outputs a Rep and PD whose type is determined by
 % kinding system to differentiate between type constructors and ???
 % types.  
 
-\begin{figure}
+\begin{figure*}[t]
 \small
-\fbox{$\ddck[\ty,\rctxt;\ctxt,\kind,\mcon]$} 
+\fbox{$\ddck[\ty,\rctxt;\ctxt,\kind,\mcon]$}\\
+%\centering
 
-$\infer[True]{
+$\infer[\text{True}]{
     \ddck[\ptrue,\rctxt;\ctxt,\kty,\con]
   }{\wfd {} \ctxt}
 $
-$\quad \infer[False]{
+$\quad \infer[\text{False}]{
     \ddck[\pfalse,\rctxt;\ctxt,\kty,\con]
   }{\wfd {} \ctxt}
 $
-$\quad \infer[Const]{
+$\quad \infer[\text{Const}]{
     \ddck[\pbase{e},\rctxt;\ctxt,\kty,\con]
   }{
     \begin{semcond}
@@ -302,48 +298,48 @@ $\quad \infer[Const]{
     \end{semcond}
   }
 $
-$\quad \infer[Abs]{
+$\quad \infer[\text{Abs}]{
     \ddck[\plam{\var}{\ity}{\ty},
          \rctxt;\ctxt,\ity \iarrowi \kind,\mcon]
   }{
     \ddck[\ty,\rctxt;\ectxt{\var{:}\ity},\kind,\mcon]
   }
-$
-$\quad \infer[App]{
+$\\
+
+$\quad \infer[\text{App}]{
     \ddck[\papp{\ty}{e},\rctxt;\ctxt,\gk,\mcon]
   }{
     \ddck[\ty,\rctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
     \stsem[e,\cdot;\ctxt,\ity]
   }
 $
-$\quad \infer[Prod]{
+$\quad \infer[\text{Prod}]{
     \ddck[\psig{x}{\ty}{\ty'},\rctxt;\ctxt,\kty,\con]
   }{       
-    \begin{semcond}
-      \ddck[\ty,\rctxt;\ctxt,\kty,\mcon]\\
-      \ddck[\ty',\rctxt;
-             \ectxt {x{:}\iprod {\itsem[\asub \rctxt \ty]} 
-               {\itpdsem[\asub \rctxt \ty]}},
-             \kty,\mcon']
-    \end{semcond}
+    \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] &
+    \ddck[\ty',\rctxt;
+          \ectxt {x{:}\iprod {\itsem[\asub \rctxt \ty]} 
+              {\itpdsem[\asub \rctxt \ty]}},
+          \kty,\mcon']
   }
 $
 $\quad
-  \infer[Sum]{
+  \infer[\text{Sum}]{
     \ddck[\psum{\ty}{e}{\ty'},\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\rctxt;\ctxt,\kty,\mcon'] 
   }
-$
+$\\
+
 $\quad
-  \infer[Intersection]{
+  \infer[\text{Intersection}]{
     \ddck[\pand \ty {\ty'},\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\rctxt;\ctxt,\kty,\mcon'] 
   }
 $
 $\quad
-  \infer[Set]{
+  \infer[\text{Set}]{
     \ddck[\pset x \ty e,\rctxt;\ctxt,\kty,\con]
   }{ 
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & 
@@ -351,9 +347,10 @@ $\quad
     \ectxt{x{:}\iprod{\itsem[\asub \rctxt \ty]} 
       {\itpdsem[\asub \rctxt \ty]}},\iboolty]
   }
-$
+$\\
+
 $\quad
-  \infer[Seq]{
+  \infer[\text{Seq}]{
     \ddck[\pseq \ty {\ty_s} {\pterm e {\ty_t}},\rctxt;\ctxt,\kty,\con]
   }{
     \begin{array}{c}
@@ -369,32 +366,34 @@ $\quad
   }
 $
 $\quad
-  \infer[Var]{
+  \infer[\text{Var}]{
     \ddck[\ptyvar,{\rctxt;\ctxt},\kty,\ncon]
   }{\wfd {} \ctxt \quad \ptyvar \in \dom \rctxt}
-  \quad
-  \infer[Rec]{
+$ 
+$\quad
+  \infer[\text{Rec}]{
     \ddck[\pmu \ptyvar \ty,\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,{\rctxt,\ptyvar {=} \pmu \ptyvar \ty;\ctxt},\kty,\con]
   }
-$
+$\\
+
 $\quad
-  \infer[Compute]{       
+  \infer[\text{Compute}]{       
     \ddck[\pcompute{e}{\ity},\rctxt;\ctxt,\kty,\con]
   }{
     \stsem[e,\cdot;\ctxt,\ity]
   }      
 $
 $\quad
-  \infer[Absorb]{
+  \infer[\text{Absorb}]{
     \ddck[\pabsorb{\ty},\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon]
   }
 $
 $\quad
-  \infer[Scan]{
+  \infer[\text{Scan}]{
     \ddck[\pscan{\ty},\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon]
@@ -402,7 +401,7 @@ $\quad
 $ 
 \caption{\ddc{} Kinding Rules}
 \label{fig:ddc-kinding}
-\end{figure}
+\end{figure*}
 
 The kinding judgment defined in \figref{fig:ddc-kinding} determines
 well-formed \ddc{} types, assigning kind $\kty$ to basic types and
@@ -439,16 +438,14 @@ indicates that it is not and $\mcon$ indicates that it may be either
 one. We also assign an ordering to $\mcon$ of $\ncon < \con$. 
 
 Otherwise, the rules are mostly straightforward. We highlight here
-just two of them. Base types, $\pbase{e}$, are assigned a kind from
-the interface $\Ikind$.  {\em Is $\Ikind$ and interface itself or is
-  it just a function within the base-type interface?} While their kind
-does not differentiate them from type abstractions, they are not well
-formed when not applied.  Also note that, once applied, all base types
-have kind $\kty$. The product rule shows that $\var$ is bound as a
-pair of a representation and a corresponding parse descriptor. Note
-that $\rctxt$ is applied to the type before translation to a
-\implang{} type - thereby closing it - as open \ddc{} types do not
-translate into well formed \implang{} types.
+just two of them. Base types $\pbase{e}$ are assigned a kind by the
+function $\Ikind$. While their kind does not differentiate them from
+type abstractions, they are not well formed when not applied.  Also
+note that, once applied, all base types have kind $\kty$. The product
+rule shows that $\var$ is bound as a pair of a representation and a
+corresponding parse descriptor. Note that $\rctxt$ is applied to the
+type before translation to a \implang{} type - thereby closing it - as
+open \ddc{} types do not translate into well formed \implang{} types.
 
 \subsection{\Implang{} Language}
 
@@ -461,13 +458,13 @@ translate into well formed \implang{} types.
   \name{Bits}  \meta{B}   \::= \vec{b} \\ 
   \name{Constants} \meta{c} \::=
       () \| \itrue \| \ifalse \| 0 \| 1 \| -1 \| \dots \nlalt
-      \ierr \| \data \| \off \| \iok \| \iecerr \| \ldots \\
+      \ierr \| \data \| \off \| \iok \| \iecerr \| \iecpc \| \ldots \\
 
   \name{Values} \meta{v,r,p} \::= 
       \const \| % \ilam{\nrm \var}{\ity}{e} \| 
       \ifun {\nrm f} {\nrm x} e \nlalt
       \ipair v v \| \iinld{\ity}{v} \| \iinrd{\ity}{v} \nlalt
-      \iarr{\vec{v}} \| \ierror{v} \\
+      \iarr{\vec{v}} \\
 
   \name{Operators} \meta{op} \::= 
       = \; \| \; < \; \| \inotop \| \isizeofop
@@ -484,60 +481,56 @@ translate into well formed \implang{} types.
       \ipair{e}{e} \| \ipi {\nrm i}{e} \nlalt
       \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
       \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
-      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e} \nlalt
-      \ierror{e} \| \iexamine{e}      
+      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e}
 \end{bnf}
 \caption{\Implang{} Language}
 \label{fig:implang-syntax}
 \end{figure}
 
-In \figref{fig:implang-syntax} we introduce an extension of the
-simple-typed polymorphic lambda calculus for two purposes. First,
-while \ddc{} is not tied to any particular expression language, we
-present this calculus as an example of a potential expression
-language.  It captures many of the features found in common expression
-languages at a high level. Second, we will later encode the parsing
-semantics of \ddc{} in this calculus.
+We now present an extension of the simple-typed polymorphic lambda
+calculus, shown in \figref{fig:implang-syntax}. In
+Section~\ref{sec:parse-sem} we encode the parsing semantics of \ddc{}
+in this calculus. For simplicity, we equate this calculus with the
+expression language of \ddc{}, as it captures many of the features
+found in common expression languages at a high level.
 
-{\em Rewrite this next paragraph.}
+As the calculus is largely standard, we highlight only its
+differences. The constants include bitstreams $\data$, offsets $\off$,
+representing locations in bitstreams, and error codes $\iok$,
+$\iecerr$, and $\iecpc$, indicating success, success with errors and
+failure, respectively. The value $\ierr$, representing invalid values,
+is also a constant, but it cannot be introduced in any user-supplied
+expressions appearing in \ddc{} types. We include a special
+$\isizeofop$ operator, which returns the size in the data source of
+its input.  \reminder{Is this next point necessary?} Note that
+operators are distinct from constants, as the operator implementations
+are not necessarily functions written in the \implang language. Our
+expressions include arbitrary length (possible zero) sequence
+$\iarr{\vec e}$, sequence append $\iappend e {e'}$, and sequence
+indexing $\isub e {\nrm i}$.
 
-Most of the syntax is taken unchanged from standard presentations of
-the polymorphic lambda calculus. The major differences are in the
-constants. As this language is used to encode parsing functions, we
-include bits and offsets as atomic elements of the calculus. While the
-parsers may manipulate individual bits of source data, they more often
-manipulate whole sources at once, here represented by bit strings
-$\idata$. 
-The constants $c$ include the unit value, the standard boolean values
-and the integers. In addition, we include abstract bit string offsets
-$\off$, $\ierr$, used to indicate unrecoverable errors in the data
-source (at the level of base types), and error codes $\iok$ and $\iecerr$.
-
-The operators include the standard boolean operators and integer
-comparisons. We also have a special $\isizeofop$ operator that returns
-the size in the data source of a variable. Operators are distinct from
-constants, as the operator implementations are not necessarily written
-in the \implang language.  Expressions include constants $\const$,
-variables (denoted by any of the metavariables $f,x,y$), recursive
-functions $\ifun {\nrm f} {\nrm x} e$, let expressions, conditionals,
-pairs, projections, injections, cases expressions, an arbitrary length
-(possible zero) sequence $\iarr{\vec e}$, sequence append $\iappend e
-{e'}$, and sequence indexing $\isub e {\nrm i}$. In addition, we add a
-new expression $\ierror e$, which wraps $e$ in an error tag, and
-$\iexamine e$, which strips error tags off of error values in order to
-look at the underlying value.
-
-Finally, we introduce some syntactic sugar and abbreviations for use
-throughout the paper. Unnamed functions $\ilam {\nrm x} \ity e$ are
-equivalent to $\ifun {\nrm f} {\nrm x} e$, with $f \not\in {\rm
-  FV}(e)$ and function bindings $\iletfun {\nrm f} {\nrm x} e \; \iin
-\; e'$ are equivalent to $\ilet {\nrm f} {\ifun {\nrm f} {\nrm x} e}
-\; e'$.  We define the type abbreviation $\ispty$ to be a pair of
-offsets, $\iprod \ioffty \ioffty$. Also, as sums and products are
-binary operators, we introduce the convention that a multi-type sum or
-product should be converted into binary sums and products by
-considering the operators to be right associative. Hence, for example,
-$a \iprodi b \iprodi c$, should be read as $a \iprodi (b \iprodi c)$.
+We extend the formal syntax with some syntactic sugar and
+abbreviations for use throughout the paper: unnamed functions $\ilam
+{\nrm x} \ity e$ for $\ifun {\nrm f} {\nrm x} e$, with $f \not\in {\rm
+  FV}(e)$; function bindings $\iletfun {\nrm f} {\nrm x} e \; \iin \;
+e'$ for $\ilet {\nrm f} {\ifun {\nrm f} {\nrm x} e} \; e'$;
+$\lampair{\codefont e}$ for $\ilam{\ivar}{}{ \ilet B
+  {\ipi{1}{\ivar}}\; \ilet \off {\ipi{2}{\ivar}}\; e}$;$\ilet
+{\itup{\off,r,p}} e$ for $\ilet \var e$ followed by individual
+bindings of $\off$,$r$, and $p$, to appropriate projections of $\var$;
+type $\ispty$ for $\iprod \ioffty \ioffty$. 
+% $ \sfn{x}{}{( \sfn{B}{}{
+%     \sfn{\off}{}{\mathtt{e}} }) \sapp (\spi{1}{\ivar}) \sapp
+%   (\s) }$ 
+Although we have no formal records with named fields, we use a field
+access notation for commonly occuring projections. For example, for a
+pair $\mathtt x$ of Rep and PD, we use $\codefont{x.rep}$ and
+$\codefont{x.pd}$ for the left and right projections of
+$\codefont{x}$, respectively. Generally, the particular projection
+intended should be apparent from context, and will be specified when
+it is not. Also, sums and products are right-associative. Hence, for
+example, $a \iprodi b \iprodi c$ is shorthand for $a \iprodi (b
+\iprodi c)$.
 
 We define standard judgments for the static semantics
 ($\stsem[e,{\pctxt;\ctxt},\ity]$) and operational semantics ($e
@@ -546,137 +539,6 @@ see our companion technical report~\cite{fisher+:pads-semantics-ext}.
 
 \subsection{Parsing Semantics of the \ddc{}}
 \label{sec:parse-sem}
-
-The semantics of a type is a function, expressed in the \implang
-language that parses bit strings to produce data structures in the
-lambda calculus.  Each parsing function takes a data source and an
-offset in the data source and returns a new offset, a representation
-of the parsed data (Rep) and a parse descriptor (PD). The semantics of
-each type is show in \figref{fig:ddc-sem}. Note that the semantics
-function is partial and only guaranteed to translate well-formed PADS
-types.
-
-In the definitions below, we use $\lampair{\codefont e}$ as an
-abbreviation for $\ilam{\ivar}{}{
-  \ilet B {\ipi{1}{\ivar}}\;
-  \ilet \off {\ipi{2}{\ivar}}\; e}$.
-% $ \sfn{x}{}{( \sfn{B}{}{
-%     \sfn{\off}{}{\mathtt{e}} }) \sapp (\spi{1}{\ivar}) \sapp
-%   (\s) }$ 
-and,similarly, $\ilet {\itup{\off,r,p}} e$ as an abbreviation for
-$\ilet \var e$ followed by a serious of let expressions binding the
-variables from the pattern to the appropriate projections from $\var$.
-We define the parsers with respect to a set of Rep and PD constructors
-$\mathtt{R_{tyname}, P_{tyname}}$, defined in \figref{fig:cons-funs},
-a set of assorted built-in functions defined in
-Appendix~\ref{sec:asst-functions}, and the base-type implementations
-$\Iimp$.
-
-For every type, there are two aspects to parsing: the mechanics of
-parsing and the tracking of errors that occur during the parse.
-Roughly speaking, the error tracking is handled by the constructor
-functions, while the mechanics of the parsing appears in the function
-body.
-
-{\em When should we discuss the workings of the constructors? Should
-  they be inlined or discussed separately?}
-
-The semantics of $\ptrue$ and $\pfalse$ show that they do not parse
-any data - that is, they do not advance the input stream. A look at
-their constructors shows that the parse descriptor for $\ptrue$ always
-indicates no errors, while that of $\pfalse$ always indicates one
-error. The semantics of base types merely applies the implementation
-of the base type's parser to the appropriate arguments. Abstraction
-and application are defined directly in terms of \implang language
-abstraction and application.  Dependent pairs read the first element
-at $\off$ and then the second at $\off'$, the offset returned from
-parser of the first element.  Notice that we bind the pair of the
-returned representation and parse descriptor to the variable $x$
-before parsing the second element, as $x$ is bound by the dependent
-product. Finally, we combine the results using the constructor
-functions, returning $\off''$ as the final offset of the parse.
-
-Sums first attempt to parse according to the left type, returning its
-value if it parses without errors. Otherwise, it parses according to
-the right type. Intersections read both types starting at the same
-point. They advance the stream to the maximum of the two offsets
-returned by the component parsers. The construction of the parse
-descriptor is similar to that of products. For set types, we call the
-parser for the underlying type $\ty$, bind $r$ and $p$ to $\var$, and
-then check whether the result satisfies the specified constraint $e$.
-We construct the representation and parse descriptor based on the
-result of this check. Note, however, that we advance the stream
-independent of whether the constraint was satisfied.
-
-Sequences have the most complicated semantics. Unlike other types,
-sequences do not contain a predefined number of subcomponents. Rather,
-that number depends on a combination of the data, the termination
-predicate and termanator type. Therefore, the sequence parser uses
-recursive functions to implement this open-ended semantics. The first
-function defined in the parser, named $\codefont{isDone}$, is a
-predicate that checks whether the parser should terminate. It first
-checks whether the end of the source has been reached, then whether
-the termination condition $e$ has been satisfied, and, finally,
-whether the terminator type can be read from the stream, without
-errors, at $\off$.
-
-The next function, $\codefont{continue}$, is the heart of the parser. It
-takes four arguments - two offsets, a sequence representation and a
-sequence parse descriptor.  The two offsets are the starting and
-ending offset of the previous round of parsing.  First, the function
-checks whether these offsets are equal, in order to determine whether
-the parser made progress in its last parsing operation. This check is
-critical in ensuring that the parser terminates. Next, the parser
-checks whether the sequence should be terminated. The first check is
-not placed in the $\codefont{isDone}$ function, as $\codefont{isDone}$ is not always
-called after a parsing operation, as will be seen below. If either of
-these checks succeed then the function terminates.  Otherwise, we
-attempt to read a separator followed by an element and then continue
-parsing the sequence, calling $\codefont{continue}$ again with the results.
-
-Next, we create an initial sequence Rep and PD. Before we commence
-parsing, we check whether the sequence is empty, calling
-$\codefont{isDone}$. If not, then we read an element and create a new
-representation and parse descriptor for the sequence.  Note that we
-use the PD for $\ptrue$ in place of a separator PD, as
-no separator is read before the first element.  Finally, we continue
-reading the sequence with a call to $\codefont{continue}$.
-
-Recursive types are translated into recursive functions with a special
-function name corresponding to the name of the bound type variable. A
-recursive type variable is translated directly into this special name.
-We note that the body of the recursive function is somewhat more complicated
-than is strictly necessary for the purposed of semantics. Instead, we
-could have chosen to define it as follows:
-\[
-  \trans[\pmu \ptyvar \ty,,] = \ifun {f_\ptyvar} {\itup{\data,\off}} 
-  {\trans[\ty,,] \; \itup{\data,\off}}
-\]
-However, we define it as shown in \figref{fig:ddc-sem}, for the
-purpose of simplifying the meta-theory. For details, please see our
-companion technical report.
-
-The definition of $\pcomputen$ just calls the compute constructors.
-The Rep constructor returns the value computed by $e$, while the PD
-records no errors and reports a span of length 0, as no data is
-consumed by the computation. The $\pabsorbn$ parser first parses
-the underlying type and then calls the absorb constructors, passing
-only the PD, which is needed by the Rep constructor to determine
-whether an error occured while parsing the underlying type. If so, the
-value returned is a $\ierr$. Otherwise, it is $\iunitty$.  The absorb
-parse descriptor records a summary of the error information of its
-underlying type.  Hence, if the underlying type had an error, then
-absorb will report that an error occured.
-
-The semantics of the $\pscann$ type is to attempt to parse the underlying
-type from the stream at an increasing scan-offset, $i$, from the original
-offset $\off$,  until success is achieved
-or a predefined maximum scan-offset (\cd{scan\_max}) is reached. Note
-that, upon success, $i$ is passed to the PD constructor function,
-which both records it in the PD and sets the error code based on
-it. It is considered a regular error for the value to be found at a
-positive $i$, whereas it is a panic error for it not to be found at
-all.
 
 \begin{figure}
 \small
@@ -855,8 +717,9 @@ all.
 \item $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
 \item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
   $\begin{array}{l}
-    \ilet {nerr} {\codefont{pos \; \itup{{h_1}.{nerr} + {h_2}.{nerr}}}}\\
-    \ilet {ec} {\codefont{ecCeil} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}} \\
+    \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+    \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+    \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
     \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
     \quad \ictup {nerr,ec,sp}
   \end{array}$
@@ -876,8 +739,9 @@ all.
 \item $\ifun {R_{\&}} {\ictup {r,r'}} {\ictup {r,r'}}$
 \item $\ifun {H_{\&}} {\ictup {h_1, h_2}} {}$ \\
     $\begin{array}{l}
-      \ilet {nerr} {\codefont{pos \; \itup{{h_1}.{nerr} + {h_2}.{nerr}}}}\\
-      \ilet {ec} {\codefont{ecCeil} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}} \\
+      \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+      \ilet {ec} {\iif {\codefont{h_1.ec} = \iecpc \iandi \codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+      \quad \ielse{\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
       \ilet {sp} {\ictup{h_1.sp.begin, max \itup{h_1.sp.end, h_2.sp.end}}} \\
       \quad \ictup {nerr,ec,sp}
     \end{array}$
@@ -887,13 +751,12 @@ all.
 
 \item %[Set:]
 \item $\ifun {R_{set}} {\ictup{c,r}} {
-    \iif {\codefont c} \; \ithen {\iinl {\codefont r}} \; \ielse {\iinr {\ierror
-        {\codefont r}}}
+    \iif {\codefont c} \; \ithen {\iinl {\codefont r}} \; \ielse {\iinr {\codefont r}}
   }$ 
 \item $\ifun {P_{set}} {\ictup {c, p}} {}$ \\
     $\begin{array}{l}
-      \iif {\codefont c} \; \ithen {\ictup{(pos(p.nerr),p.ec,p.sp),p}} \\
-      \ielse {\ictup {(pos(1+p.nerr),\iecerr,p.sp),p}}
+      \iif {\codefont c} \; \ithen {\ictup{(pos(p.h.nerr),p.h.ec,p.h.sp),p}} \\
+      \ielse {\ictup {(1 + pos(p.h.nerr),\maxec \iecerr {p.h.ec},p.h.sp),p}}
     \end{array}$
 % \end{itemize}
 % \caption{Constructor Functions}
@@ -918,8 +781,9 @@ all.
         \codefont{\quad \ithen 1 \;  \ielse 0}
       }\\
       \ilet {nerr} {\codefont{h.nerr + pos(h_s.nerr) + eerr}}\\
-      \ilet {ec} {\codefont{\iif{nerr = 0}\; \ithen {\iok}\; \ielse
-          \iecerr}} \\
+      \ilet {ec} {\iif{\codefont{h_e.ec} = \iecpc}\; \ithen {\iecpc}\\
+      \quad \ielse{\maxec {\codefont{h.ec}} {\codefont{h_e.ec}}
+          }} \\
       \ilet {sp} {\ictup{h.sp.begin,h_e.sp.end}} \\
       \quad \ictup {nerr,ec,sp}
     \end{array}$
@@ -927,7 +791,7 @@ all.
 \item $\ifun{P_{seq}} {\ictup{p, p_s, p_e}}{}$ \\ 
   $\begin{array}{l}
     \codefont{(H_{seq} \iappi \itup{p.h,p_s.h,p_e.h},}\\ 
-    \codefont{\itup{p.neerr + pos(p_e.nerr), p.len + 1,\iappend {p.elts}
+    \codefont{\itup{p.neerr + pos(p_e.h.nerr), p.len + 1,\iappend {p.elts}
         {\iarr{p_e}}})}
   \end{array}$
 
@@ -944,14 +808,14 @@ all.
 \item $\ifun{R_{scan}} r  {\codefont{\iinl r}}$
 \item $\ifun{P_{scan}} {\itup{i,p}} {}$ \\
 $\begin{array}{l}
-\ilet {nerr} {\codefont{pos(i + p'.nerr)}}\\
+\ilet {nerr} {\codefont{pos(i) + pos(p'.h.nerr)}}\\
 \ilet {ec} {\iif {\codefont{nerr = 0}}\; \ithen \iok\; \ielse \iecerr} \\
 \ilet {hdr} {\ictup{nerr,ec,(p.sp.begin - i,p.sp.end)}} \\
 \quad \ictup{hdr,\iinl {\ictup{i,p}}}
 \end{array}$
 
 \item $\ifun {R_{scan\_err}} {()} {\iinr \ierr}$
-\item $\ifun {P_{scan\_err}} \off {\ilet {hdr} {\ictup{1,pc,(\off,\off)}}}$\\
+\item $\ifun {P_{scan\_err}} \off {\ilet {hdr} {\ictup{1,\iecpc,(\off,\off)}}}$\\
   \verb+ +$\ictup{hdr,\iinr \iuval}$
 
 %% \item[Transform:]
@@ -962,7 +826,156 @@ $\begin{array}{l}
 %\caption{Constructor Functions (cont.)}
 \end{figure}
 
-\clearpage
+The semantics of a type is a function, expressed in the \implang
+language, that parses bit strings to produce data structures in the
+lambda calculus. The semantics of each type is shown in
+\figref{fig:ddc-sem}. Each parsing function takes a data source and an
+offset in the data source and returns a new offset, a representation
+of the parsed data (Rep) and a parse descriptor (PD). For any type,
+there are three aspects to parsing: parsing the subcomponents of the
+type (if any), assembling the resultant data, and calculating and
+assembling meta-data based on subcomponent meta-data (if any). For the
+sake of clarity, we have factored the latter two aspects into separate
+Rep and PD constructor functions, defined for each type. They are
+shown in \figref{fig:cons-funs}. We have also factored out some
+commonly occuring code into ``built-in''functions, explained as needed
+and defined formally in Appendix~\ref{sec:asst-functions}.
+\reminder{ Does this need to be said somewhere? Note that the
+  semantics function is partial and only guaranteed to translate
+  well-formed \pads{} types.  }
+
+An essential feature of our parsing semantics is that corrupted bit
+strings can also be successfully transformed, with errors marked in
+the parse descriptor. A key role of the PD constructors is to
+calculate the error counts and determine the error codes for their
+input. In general, the error count is determined based on the error
+counts of the subcomponents and any errors associated directly with
+the type itself.  Subcomponents errors are treated in a binary manner
+for the purposes of error counting. If a subcomponent has errors then
+the error count is increased by one; otherwise its not increased at
+all. Therefore, PD constructors apply the function ${\codefont pos}$,
+which converts all positive error counts to 1 (leaving zero as is), to
+subcomponent error counts when calculating the total error count.
+Errors at the level of the element itself - such as constraint
+violation in set types - are generally counted individually.
+
+There are three potential results to a parse. It can succeed, parsing
+the data fully without errors; it can succeed, but encounter - and
+recover from - errors in the process; or, it can encounter an
+unrecoverable error and fail. The error code indicates which occured
+with the error codes $\iok$, $\iecerr$, and $\iecpc$, respectively.
+Note that the the purpose of the $\iecpc$ code is to indicate to any
+higher level elements that some form of error recovery is required.
+Hence, the whole parse is marked as failed exactly when the parse ends
+in failure. The PD constructors determine the result of the parse
+based on their inputs and set the appropriate error code in the
+returned parse descriptor.
+
+With this general understanding of the constructors, we can now
+understand the semantics. The semantics of $\ptrue$ and $\pfalse$ show
+that they do not parse any data - that is, they do not advance the
+input stream. A look at their constructors shows that the parse
+descriptor for $\ptrue$ always indicates no errors and a corresponding
+$\iok$ code, while that of $\pfalse$ always indicates failure with an
+error count of one and the $\iecpc$ error code. The semantics of base
+types applies the implementation of the base type's parser, provided
+by the function $\Iimp$, to the appropriate arguments.  Abstraction
+and application are defined directly in terms of \implang language
+abstraction and application.  Dependent pairs read the first element
+at $\off$ and then the second at $\off'$, the offset returned from
+parsing the first element.  Notice that we bind the pair of the
+returned representation and parse descriptor to the variable $x$
+before parsing the second element, as $x$ is bound by the dependent
+product. Finally, we combine the results using the constructor
+functions, returning $\off''$ as the final offset of the parse. Notice
+that we factor the meta-data logic into the header constructor ${\codefont{H_{\gS}}}$.
+
+Sums first attempt to parse according to the left type, returning its
+value if it parses without errors. Otherwise, it parses according to
+the right type. Intersections read both types starting at the same
+point. They advance the stream to the maximum of the two offsets
+returned by the component parsers. The construction of the parse
+descriptor is similar to that of products. For set types, we call the
+parser for the underlying type $\ty$, bind $\var$ to the resulting Rep
+and PD, and check whether constraint is satisfied. The result
+indicates whether the data has a semantic error and is used in
+constructing the Rep and PD. For example, the PD constructor will add
+one to the error count if the constraint is not satisfied. Notice that
+we advance the stream independent of whether the constraint was
+satisfied.
+
+Sequences have the most complicated semantics. Unlike other types,
+sequences do not contain a predefined number of subcomponents. Rather,
+that number depends on a combination of the data, the termination
+predicate and terminator type. Therefore, the sequence parser uses
+recursive functions to implement this open-ended semantics. 
+
+The parser consists of two nested functions followed by the parser
+body. Function $\codefont{isDone}$ determines whether the parser
+should terminate, by checking whether the end of the source has been
+reached, the termination condition $e$ has been satisfied, or the
+terminator type can be read from the stream, without errors, at
+$\off$.
+
+The core function of the parser -- $\codefont{continue}$ -- takes four
+arguments: two offsets, a sequence Rep and a sequence PD.  The two
+offsets are the starting and ending offset of the previous round of
+parsing. They are compared to determine whether the parser is
+progressing in the source, a check that is critical to ensuring that
+the parser terminates. Next, the parser checks whether the sequence is
+finished, and, if so, terminates. Otherwise, it attempts to read a
+separator followed by an element and then continues parsing the
+sequence with a call to $\codefont{continue}$.
+
+Finally, the body of the parser creates an initial sequence Rep and PD
+then checks whether the sequence described is empty. If not, it reads
+an element and creates a new Rep and PD for the sequence.  Note that
+it passes the PD for $\ptrue$ in place of a separator PD, as no
+separator is read before the first element.  Finally, it continues
+reading the sequence with a call to $\codefont{continue}$.
+
+Due to the iterative nature of sequence parsing, the Rep and PD are
+constructed incrementaly. The parser first creates an empty Rep and PD
+and then adds elements to them with each call to
+$\codefont{continue}$. The error count for an array is the sum of the
+number of separators with errors plus 1 if there were any element
+errors. Therefore, in function ${\codefont{H_{seq}}}$ we first check
+if the element is the first with an error, setting $\codefont{eerr}$
+to one if so. Then, the new error count is a sum of the old,
+potentially one for a separator error, and $\codefont{eerr}$. In
+$\newpdf{seq}$ we calculate the element error count by unconditionally
+adding one if the element had an error.
+
+Recursive types are translated into recursive functions with a special
+function name corresponding to the name of the bound type variable. A
+recursive type variable is translated directly into this special name.
+\reminder{Is this note necessary for the paper?} We note that the body of
+the recursive function is somewhat redundant. However, the simpler
+encoding of $\ifun {f_\ptyvar} {\itup{\data,\off}} {\trans[\ty,,] \;
+  \itup{\data,\off}}$ would have complicated the meta-theory. For
+details, please see our companion technical report.
+
+The definition of $\pcomputen$ just calls the compute constructors.
+The Rep constructor returns the value computed by $e$, while the PD
+records no errors and reports a span of length 0, as no data is
+consumed by the computation. The $\pabsorbn$ parser first parses the
+underlying type and then calls the absorb constructors, passing only
+the PD, which is needed by the Rep constructor to determine whether an
+error occured while parsing the underlying type. If so, the value
+returned is a $\ierr$. Otherwise, it is $\iunitty$.  The absorb parse
+descriptor duplicates the error information of its underlying type.
+
+The semantics of the $\pscann$ type is to attempt to parse the underlying
+type from the stream at an increasing scan-offset, $i$, from the original
+offset $\off$,  until success is achieved
+or a predefined maximum scan-offset (\cd{scan\_max}) is reached. Note
+that, upon success, $i$ is passed to the PD constructor function,
+which both records it in the PD and sets the error code based on
+it. It is considered a regular error for the value to be found at a
+positive $i$, whereas it is a panic error for it not to be found at
+all.
+
+%\clearpage
 
 %%% Local Variables: 
 %%% mode: latex

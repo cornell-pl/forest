@@ -1,6 +1,17 @@
 \section{Meta-theory}
 \label{sec:meta-theory}
 
+\cut{This paragraph belongs somewhere in the TR:
+A few things to note regarding variable names. First, all variable
+names introduced in translation are by definition not equal to the
+target of the substitution, nor present in the free variables of the
+term being substituted. Second, for those types with bound variables,
+we note that the potential alpha-conversion when performing a
+substitution on the type exactly parallels any alpha-conversion of the
+same variable where it appears in the translation of the type. Last,
+all constructors, support functions and base-type parsers are closed
+with respect to user-defined variable names.}
+
 One of the most difficult, and perhaps most interesting, parts of our
 work on developing the theory presented above was determining what
 properties we wanted it to satisfy. What are the ``correct''
@@ -233,11 +244,6 @@ $
   specified above.
 \end{proofsketch}
 
-{\em fix this: } 
-Also included here is
-the extension of parser type assignment to recursive contexts
-$\rctxt$, decscribed in the next section. 
-
 \begin{figure}
 \small
 \fbox{$\ptyc{\rctxt} = \ctxt$} 
@@ -252,12 +258,16 @@ $\rctxt$, decscribed in the next section.
 \end{figure}
 
 Next we present the type correctness theorem, followed by a simpler
-statement for closed types. Note that we need to add $\ptyc \rctxt$ to
-$\ctxt$ in order to give types to any free function variables in
-$\trans[\ty,,]$. We also apply $\rctxt$ to $\ty$ in order to close any
-open references to recursive types before determining its parser type.
-We don't we explicitly require that $\ctxt$ be well formed as it
-follows from the fact that $\ty$ is well formed in $\ctxt$.
+statement for closed types. In the conclusion of the former, as any
+free recursive variables in $\ty$ will become free function variables
+in $\trans[\ty,,]$, we need to extend $\ctxt$ with the types of those
+variables. We do so using the function $\ptyc \rctxt$, defined in
+\figref{fig:rec-parser-types}, which maps recursive variable contexts
+$\rctxt$ to typing contexts $\ctxt$. We also apply $\rctxt$ to $\ty$
+in order to close any open references to recursive types before
+determining its parser type.  We don't explicitly require that $\ctxt$
+be well formed in the premises, as it follows from the fact that $\ty$
+is well formed in $\ctxt$.
 
 \begin{theorem}[Type Correctness]
 \label{thm:type-correctness}
@@ -345,6 +355,8 @@ Rep and PD correllation. We define {\it type normalization} in
 $\corrkl \ty r p$ iff if $\ty \kstepsto \tyval$ then $\corr \tyval r p$.
 \end{definition}
 
+In the following definition, we abbreviate $p.h.{nerr}$ as $p.{nerr}$,
+for readability.
 \begin{definition}[Rep and PD Corellation Relation]
 $\corr \ty r p$ iff exactly one of the following is true:
   \begin{itemize}
@@ -354,34 +366,34 @@ $\corr \ty r p$ iff exactly one of the following is true:
   \item $\ty = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
   \item $\ty = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
     \ipair h {\ipair {p_1} {p_2}}$ 
-    and $h.{nerr} = \mathsf{pos}(p_1.{nerr} + p_2.{nerr})$, $\corrkl
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
     {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$.
   \item $\ty = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
     and $p = \ipair h {\iinld {\ity}{p'}}$
-    and $h.{nerr} = \mathsf{pos}(p'.{nerr})$ and $\corrkl
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
     {\ty_1} {r'} {p'}$.
   \item $\ty = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
     and $p = \ipair h {\iinr {p'}}$
-    and $h.{nerr} = \mathsf{pos}(p'.{nerr})$ and $\corrkl
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
     {\ty_2} {r'} {p'}$.
   \item $\ty = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
     \ipair h {\ipair {p_1}{p_2}}$, 
-    and $h.{nerr} = \mathsf{pos}(p_1.{nerr}+p_2.{nerr})$, 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, 
     $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$.
   \item $\ty = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
     \ipair h {p'}$, 
-    and $h.{nerr} = \mathsf{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
     and $e[(r',p')/x] \kstepsto\itrue$.
-  \item $\ty = \pset x {\ty'} e$, $r = \iinrd \ity {(\ierror {r'})}$
+  \item $\ty = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
     and $p = \ipair h {p'}$,
-    and $h.{nerr} = 1 + \mathsf{pos}(p'.{nerr})$,
+    and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
     $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
   \item $\ty = \pseq {\ty_e}{\ty_s}{\pterm {e,\ty_t}}$, 
     $r = \ipair {len} {\iarr{\vec {r_i}}}$, $p = \itup{h,\itup{{neerr},{len}',\iarr {\vec {p_i}}}}$,
     ${len} = {len}'$, ${neerr} = \sum_{i=1}^{len}
-    \mathsf{pos}(p_i.{nerr})$, $\corrkl {\ty_e}
+    \mathtt{pos}(p_i.{nerr})$, $\corrkl {\ty_e}
     {r_i} {p_i}$, (for $i=1 \ldots {len}$), and
-    $h.{nerr} \geq \mathsf{pos}({neerr})$.
+    $h.{nerr} \geq \mathtt{pos}({neerr})$.
 %   \item $\ty = \pmu \ptyvar {\ty'}$ and 
 %     $\corrkl {\ty'[\pmu \ptyvar {\ty'}/\ptyvar]} r p$.
   \item $\ty = \pcompute e \ity$ and $p.{nerr} = 0$.
@@ -389,7 +401,7 @@ $\corr \ty r p$ iff exactly one of the following is true:
   \item $\ty = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
   \item $\ty = \pscan {\ty'}$, $r =\iinl {r'}$,
       $p = \ipair h {\iinl {\ipair i {p'}}}$,
-      $h.nerr = pos(i + p'.nerr)$, and
+      $h.nerr = \mathtt{pos}(i) + \mathtt{pos}(p'.nerr)$, and
       $\corrkl {\ty'}{r'}{p'}$.
   \item $\ty = \pscan {\ty'}$,
       $r =\iinr \ierr$,
@@ -433,15 +445,19 @@ the Rep and PD constructors, as expressed in the following lemma.
 \end{lemma}
 
 \begin{proof}
-  By inspection of code. Array case is most complicated, in particular
-  proving the clause $h.{nerr} \geq \mathsf{pos}({neerr})$. To do so,
-  you must prove that $H_A$ maintains this invariant. The first case
-  of the match is the hard one, as ${nerr}$ is 0 (if its $1$, then it
-  must be greater than or equal to $\mathsf{pos}(n)$, for any $n$).
-  First, as $h.{nerr} = 0$, so too must $neerr$. Next, note that in
-  this first case, $h1.{nerr} = 0$. Now, the new value of ${neerr}$ is
-  just the sum of the original ${neerr}$ and
-  $\mathsf{pos}(h1.{nerr})$, that is, $0 + 0$.
+  By inspection of code. 
+\cut{
+  \reminder{Fix the following or drop it: }
+  Array case is most complicated, in particular proving the clause
+  $h.{nerr} \geq \mathtt{pos}({neerr})$. To do so, you must prove that
+  $H_{seq}$ maintains this invariant. The first case of the match is the
+  hard one, as ${nerr}$ is 0 (if its $1$, then it must be greater than
+  or equal to $\mathtt{pos}(n)$, for any $n$).  First, as $h.{nerr} =
+  0$, so too must $neerr$. Next, note that in this first case,
+  $h1.{nerr} = 0$. Now, the new value of ${neerr}$ is just the sum of
+  the original ${neerr}$ and $\mathtt{pos}(h1.{nerr})$, that is, $0 +
+  0$
+}.
 \end{proof}
 
 Definition~\ref{def:err-corr} specifies the exact property we require
@@ -503,12 +519,11 @@ $\noerr v$ iff exactly one of the following is true:
 \end{definition}
 
 \begin{lemma}
-  If $\corrkl \ty r p$ and $p.nerr = 0$ then $\noerr r$.
+  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then $\noerr r$.
 \end{lemma}
 
 \begin{proof}
-  By induction on the structure of r. {\em Need to ensure that compute
-  can't generate errors.}
+  By induction on the structure of r.
 \end{proof}
 
 

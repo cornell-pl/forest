@@ -177,7 +177,7 @@ entry\_t = \Pstruct{} \{
               (getdomain client) == "edu";
 \};
 \(\qquad\)
-entry\_t \Parray{}(\Peor, \Peof);
+entry\_t \Parray{}(\Peor, \Peof)
 \end{code}
 
 \caption{\ipads{} Common Web Log Format Description}
@@ -245,7 +245,7 @@ node\_t = \Popt \Pstruct \{
 \Pstruct \{
   body : tree\_t;
   ";";
-\};
+\}
 \(\qquad\)
 (* Example data:
    (B:3,(A:5,C:10,E:2):12,D:0):32;
@@ -275,7 +275,7 @@ variables.
 
 \begin{figure}
 \begin{bnf}
-  \name{Programs} \meta{prog} \::= \vec {\nont {spec}} \; \nont {pty}\\
+  \name{Programs} \meta{prog} \::= \nont {pty} \| \nont {spec}; \; \nont {prog}\\
   \mname{Type Definitions}{2} \meta{spec} \::= \alpha = \nont {pty}
   \|  \Prec{} \; \alpha = \nont {pty} \\ \\
   \name{Types} \meta{pty} \::= 
@@ -287,12 +287,13 @@ variables.
 % \Palt{} \{\vec {\nont{field}}\} \|
     \Popt{}\; \nont{pty} \nlalt 
     \iParray{\nont{pty}}{\nont{pty}}{\nont{pty}}{} \| 
-    \Pcompute{} \; e 
+    \Pcompute{} \; e \nlalt
+    \Prec{} \; \alpha . \nont {pty}
     \\
   \name{Fields} \meta{field}  \::= \var : \nont {pty}
-    \\
-  \mname{Host Lang. Expressions}{2} \meta{e}  \::= ... \\ \\
-  \mname{Host Lang. Types}{2} \meta{\sigma}  \::= ...
+%     \\
+%   \mname{Host Lang. Expressions}{2} \meta{e}  \::= ... \\ \\
+%   \mname{Host Lang. Types}{2} \meta{\sigma}  \::= ...
 \end{bnf}
 \caption{\ipads{} Syntax}
 \label{fig:ipads-syntax}

@@ -119,8 +119,10 @@
    {\kwd{case}^* \; #1 \; \kwd{of} \, (#2 \Rightarrow #3)}
 \newcommand{\pcomputen}{\kwd{compute}}
 \newcommand{\pcompute}[2]{\pcomputen{}(#1{:}#2)}
-\newcommand{\pabsorbn}{\kwd{absorb})}
+\newcommand{\pabsorbn}{\kwd{absorb}}
 \newcommand{\pabsorb}[1]{\pabsorbn{}(#1)}
+\newcommand{\pnotn}{\kwd{not}}
+\newcommand{\pnot}[1]{\pnotn{}(#1)}
   %% transfrom pd
 \newcommand{\pxpd}[2]{\kwd{pdtrans}(#1,#2)}
 \newcommand{\pscann}{\kwd{scan}}
@@ -164,7 +166,7 @@
 \newcommand{\Implang}{Host\xspace}
 
 % Internal language types syntax
-\newcommand{\tyface}[1]{\texttt{#1}}
+\newcommand{\tyface}[1]{\mathtt{#1}}
 
 \newcommand{\ibasety}{a}
 \newcommand{\ibitsty}{\tyface{bits}}
@@ -213,7 +215,7 @@
 \newcommand{\iuval}{\codefont{()}}
 \newcommand{\iok}{\codefont{ok}}
 \newcommand{\iecerr}{\codefont{err}}
-\newcommand{\iecpc}{\codefont{pc}}
+\newcommand{\iecpc}{\codefont{fail}}
 \newcommand{\iop}[1]{{op}(#1)}
 \newcommand{\inotop}{\codefont{not}}
 \newcommand{\isizeofop}{\codefont{sizeof}}
@@ -327,6 +329,7 @@
   %% isErr function
 \newcommand{\pderr}[1]{\codefont{isErr(#1)}}
 \newcommand{\isdone}[1]{\codefont{isDone} \sapp \ictup{#1}}
+\newcommand{\maxec}[2]{\codefont{max\_ec} \iappi #1 \iappi #2}
 \newcommand{\scanmax}{\codefont{SCAN\_MAX}}
 \newcommand{\seterr}[1]{\kwd{SetErr} \, #1}
 \newcommand{\setmode}[2]{\kwd{SetMode} \, #1 \, #2}
