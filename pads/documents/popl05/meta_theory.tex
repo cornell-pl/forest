@@ -18,11 +18,11 @@ properties we wanted it to satisfy. What are the ``correct''
 invariants of data description languages? While there are many
 well-known desirable invariants for programming languages, the
 meta-theory of data description language has been, until now,
-unchartered waters.
+uncharted waters.
 
 We present the following three properties as critical invariants of
-our theory. We feel that the last property is of particular importance
-and should hold, in some form, for any data description language.
+our theory. We feel that they should hold, in some form, for any data
+description language.
 \begin{itemize}
 \item {\bf Translation Completeness}: The semantic function
   $\trans[\cdot,,]$ is a total function of well-formed \ddc{} types.
@@ -41,8 +41,7 @@ Before we present the formal statement of these properties, we specify
 some assumptions that we make about \ddc{} base types, their kinds,
 types and implementations, that are necessary for the satisfaction of
 the properties. In essence, we assume that the properties we desire of
-the rest of the calculus hold for the various facets of the base
-types.
+the rest of the calculus hold for the base types.
 
 \begin{condition}[Conditions on Base-type Interfaces]
 \label{cond:base-types}
@@ -73,6 +72,7 @@ be closed.
   first item of Condition~\ref{cond:base-types}.
 \end{proof}
 
+\trversion{
 We continue by stating and proving that parsers are type correct.
 However, to do so, we must first establish some typing properties of the Rep
 and PD constructors, as at least one of them appears in most
@@ -243,6 +243,7 @@ $
   type of each function. Then we verify that it matches the types
   specified above.
 \end{proofsketch}
+}
 
 \begin{figure}
 \small
@@ -346,7 +347,7 @@ Rep and PD correllation. We define {\it type normalization} in
     \pmu \ptyvar \ty \stepsto \ty[\pmu \ptyvar \ty/\ptyvar]
   }{}
 \]
-  \caption{Revised \ddc{} Syntax and Reduction Rules}
+  \caption{\ddc{} Normalized Syntax and Reduction Rules}
   \label{fig:ddc-reduction-rules}
   \label{fig:revised-ddc-syntax}
 \end{figure}
@@ -410,6 +411,7 @@ $\corr \ty r p$ iff exactly one of the following is true:
   \end{itemize}
 \end{definition}
 
+\trversion{
 Once again, we first need to prove error correllation properties of
 the Rep and PD constructors, as expressed in the following lemma.
 
@@ -456,14 +458,17 @@ the Rep and PD constructors, as expressed in the following lemma.
   0$, so too must $neerr$. Next, note that in this first case,
   $h1.{nerr} = 0$. Now, the new value of ${neerr}$ is just the sum of
   the original ${neerr}$ and $\mathtt{pos}(h1.{nerr})$, that is, $0 +
-  0$
-}.
+  0$.}
 \end{proof}
+}
 
 Definition~\ref{def:err-corr} specifies the exact property we require
 of parsing functions. At base kind, we require that any Rep and PD
 returned by the parser must be correllated. At higher kind, we require
-that the function preserve the property of error correllation.
+that the function preserve the property of error correllation. Hence,
+the definition is a simple form of logical relation.
+Lemma~\ref{lem:err-corr-at-T} states that any well-formed type of base
+kind is error-correllated.
 
 \begin{definition}[Error Correlation Relation]
 \label{def:err-corr}
@@ -476,8 +481,6 @@ $\ecpred \ty \kind$ iff exactly one of the following is true:
   \end{itemize}
 \end{definition}
 ¯
-Now, we state that any well-formed type of base kind is error-correllated.
-
 \begin{lemma}[Error Correlation at Base Kind]
 \label{lem:err-corr-at-T}
 If $\ddck[\ty,,\kty,\con]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
@@ -487,8 +490,6 @@ If $\ddck[\ty,,\kty,\con]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
 \begin{proofsketch}
   By induction on the height of the second derivation.
 \end{proofsketch}
-
-Finally, we present the error correllation theorem itself.
 
 \begin{theorem}[Error Correlation]
 \label{thm:err-corr}
@@ -500,11 +501,15 @@ If $\ddck[\ty,,\kind,\con]$ then $\ecpred \ty \kind$.
   use Lemma~\ref{lem:err-corr-at-T}.
 \end{proof}
 
+\reminder{This property isn't terribly useful given its limitation to
+  syntactic errors. We really want to state that there are no errors,
+  but there's no simple way to do that.}
+
 We conclude this section with a useful property of correllated Reps
 and PDs. If the PD reports no errors, then there are no syntactic
-errors in the Rep datastructure {\it at any level}. We formally define
-error-free values next, followed by the statement of the property
-itself.
+errors in the rep datastructure {\it at any level}. We formally define
+{\it clean} (error-free) values next, followed by the statement of the
+property itself.
 
 \begin{definition}[Clean Value]
 $\noerr v$ iff exactly one of the following is true:

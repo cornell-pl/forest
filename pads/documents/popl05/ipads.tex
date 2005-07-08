@@ -12,14 +12,13 @@ the structure of \pads{}' relatives \blt, \packettypes, and
 formal semantics to \ipads.
 
 \paragraph*{Preliminary Concepts.}
-Like \pads, \packettypes, \datascript, and \blt,
-\ipads{} data descriptions are types.  These types
-specify both the external data format (a sequence of bits or characters)
-and a mapping into an internal data structure 
-in the host programming language.  In \pads, the host language is
-C; in \ipads, the host language is the polymorphic lambda 
-calculus.  For the most part, however, the specifics of the
-host language are unimportant.  
+Like \pads, \packettypes, \datascript, and \blt, \ipads{} data
+descriptions are types.  These types specify both the external data
+format (a sequence of bits or characters) and a mapping into an
+internal data structure in the host programming language.  In \pads,
+the host language is C; in \ipads, the host language is an extension
+of the polymorphic lambda calculus.  For the most part, however, the
+specifics of the host language are unimportant.
 
 A complete \ipads{} description (program), is a sequence of type definitions
 terminated by a single type.  This terminal type describes the
@@ -30,28 +29,26 @@ $\alpha$ and binds it to \ipads{} type $pty$.
 The type identifier may be used in
 subsequent types.  The second form  ($\Prec{}\; \alpha = pty$) introduces
 a recursive type definition.  In this case, $\alpha$ may appear in $pty$.
+\reminder{Why bring up contractiveness with regard to \ipads{}? --YHM}
+However, we require that recursive definitions be {\it contractive},
+as described in Section~\ref{sec:ddc-kinding}.
 
-\reminder{should mention any ``contractiveness'' constraint here as well...}
-
-Complex \ipads{} descriptions are built by gluing a collection of base types
-together using \ipads{} type constructors.  In our examples,
-we assume \ipads{} contains a wide variety of base types
-including base types for 
-integers (\Puint{} is an ASCII representation of an 
-unsigned 32-bit integer), 
-characters (\Pchar), strings (\Pstring), dates (\Pdate), ip addresses
-(\Pip) and others.
-In general, these base types may parameterized.  For instance,
-we will assume \Pstring{} is parameterized by a string argument
-that signals termination of the string.  For instance,
-\Pstring({\tt " "}) describes any sequence of characters that is eventually
-terminated by a space character.\footnote{The space character
-is not considered part of the string that has just been 
-read -- it will be part of the
-next object.}  Similarly, \padskw{Puint16$\_$FW}{\tt (3)} is an 
-unsigned 16-bit integer described in exactly {\tt 3} characters
-in the data source.  In general, we write $\pbase{e}$ for some
-base type parameterized by a (host language) expression $e$. 
+Complex \ipads{} descriptions are built by gluing a collection of base
+types together using \ipads{} type constructors.  In our examples, we
+assume \ipads{} contains a wide variety of base types including base
+types for integers (\Puint{} is an ASCII representation of an unsigned
+32-bit integer), characters (\Pchar), strings (\Pstring), dates
+(\Pdate), ip addresses (\Pip) and others.  In general, these base
+types may parameterized.  For instance, we will assume \Pstring{} is
+parameterized by a string argument that signals termination of the
+string.  For instance, \Pstring({\tt " "}) describes any sequence of
+characters that is eventually terminated by a space character. Note,
+though, that the space character is not considered part of the string
+that has just been read -- it will be part of the next object.
+Similarly, \padskw{Puint16$\_$FW}{\tt (3)} is an unsigned 16-bit
+integer described in exactly {\tt 3} characters in the data source.
+In general, we write $\pbase{e}$ for some base type parameterized by a
+(host language) expression $e$.
 
 When interpreted as a parser, each of these base types reads
 the external data source and generates a pair of data structures
@@ -71,22 +68,20 @@ $\ierr$ (\ie{} null) and notes the error in the
 parse descriptor.
 
 \paragraph*{An \ipads{} Example.}
-\ipads{} contains a rich collection of type constructors
-for creating sophisticated descriptions of ad hoc data.
-We present most of these constructors 
-through a series of examples.
-The first example, shown in its entirety in
-\figref{fig:ipads-clf}, describes the
-Common Web Log Format~\cite{wpp}, which 
-web servers use to log the requests they receive.  
-\figref{fig:ipads-clf-data} shows a couple of sample records.
-Briefly, each line in a log file represents one request, and
-a complete log may contain any number of requests.
-A request begins with an IP address
-and is followed by two optional ids.  In the example, the ids are
-missing and dashes stand in for them.  Next, surrounded by square brackets,
-is a date.  After the date, a string in quotation marks describes the
-web request that was made.  Finally, the line ends with a pair of integers denoting the response code and the number of bytes returned to the client.
+\ipads{} contains a rich collection of type constructors for creating
+sophisticated descriptions of ad hoc data.  We present most of these
+constructors through a series of examples.  The first example, shown
+in its entirety in \figref{fig:ipads-clf}, describes the Common Web
+Log Format~\cite{wpp}, which web servers use to log the requests they
+receive.  \figref{fig:ipads-clf-data} shows a couple of sample
+records.  Briefly, each line in a log file represents one request, and
+a complete log may contain any number of requests.  A request begins
+with an IP address and is followed by two optional ids.  In the
+example, the ids are missing and dashes stand in for them.  Next,
+surrounded by square brackets, is a date.  After the date, a string in
+quotation marks describes the web request that was made.  Finally, the
+line ends with a pair of integers denoting the response code and the
+number of bytes returned to the client.
 
 The \ipads{} description of web logs is most easily read from bottom to top.
 The terminal type, which describes the entire web log source, is an array type.
@@ -258,19 +253,20 @@ node\_t = \Popt \Pstruct \{
 \end{figure}
 
 \paragraph*{Formal Syntax.}
-Figure~\ref{fig:ipads-syntax} summarizes the formal syntax of 
-\ipads.  In the examples we have discussed, we have allowed ourselves
-to abbreviate this syntax in places.  For instance, in general, we
-omit ``\padskw{Plit}'' from ``\Plit{c}{}'' 
-when specifying constant (singleton) types
-in our examples.  In addition, formally, every field of a structure is
-labeled.  However, rather than write 
-``$x : \Plit{c};$'' we write ``$c;$'' instead.  In addition, formally, all base
-types \Pbase{} have a single parameter whereas we have omitted parameters for
-base types such as \Puint.  For now, we continue to leave the details
-of the host language expressions $e$ and types $\sigma$ unspecified.  Notice, however, that we use $x$ for
-host language expression variables and $\alpha$ for \ipads{} type 
-variables.
+Figure~\ref{fig:ipads-syntax} summarizes the formal syntax of \ipads.
+In the examples we have discussed, we have allowed ourselves to
+abbreviate this syntax in places.  For instance, in general, we omit
+``\padskw{Plit}'' from ``\Plit{c}{}'' when specifying constant
+(singleton) types in our examples.  In addition, formally, every field
+of a structure is labeled.  However, rather than write ``$x :
+\Plit{c};$'' we write ``$c;$'' instead.  In addition, formally, all
+base types \Pbase{} have a single parameter whereas we have omitted
+parameters for base types such as \Puint.  Also, expressions $e$ and
+types $\sigma$ are taken from the host language, which is detailed in
+Section~\ref{sec:host-lang}. Notice, however, that we use
+$x$ for host language expression variables and $\alpha$ for \ipads{}
+type variables. \reminder{Should we add Palt to syntax chart and
+  mention it here?}
 
 
 \begin{figure}
@@ -281,8 +277,8 @@ variables.
   \name{Types} \meta{pty} \::= 
     \pbase{e} \| \alpha \| \Plit{\const} \nlalt
     \Pfun{} (\var:\ity) = \nont{pty} \| \nont {pty}\; e \nlalt
-    \Pstruct{} \{\vec {\nont {field}}\} \| 
-    \Punion{} \{\vec {\nont {field}}\} \nlalt
+    \Pstruct{} \{\overrightarrow {\nont {field}}\} \| 
+    \Punion{} \{\overrightarrow {\nont {field}}\} \nlalt
     \nont{pty} \; \Pwhere{} \, x.e \| 
 % \Palt{} \{\vec {\nont{field}}\} \|
     \Popt{}\; \nont{pty} \nlalt 

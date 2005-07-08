@@ -3,176 +3,153 @@
 \subsection{IPADS Translation}
 \label{sec:trans-sl}
 
-Note that contexts always contain surface-language types, not pads
-types. Formally, the form of $\gG$ is:
-\begin{bnf}
-\name{}  &\gG & \::= . \| \gG,x {:} \ity
-\end{bnf}
+% We now define some syntactic sugar for multi-argument versions of type
+% constructors that only take one or two arguments. Some of these
+% abbreviations take a list of bindings $b$, each of the form $x{:}t$.
 
-We now define some syntactic sugar for multi-argument versions of type
-constructors that only take one or two arguments. Some of these
-abbreviations take a list of bindings $b$, each of the form $x{:}t$.
+% \begin{align*}
+%   &\begin{array}{l}
+%     \plamA{x{:}\ity}{\ty} = \plam{x}{\ity}{\ty} \\
+%     \plamA{x{:}\ity,\vec{b}}{\ty} = \plam{x}{\ity}{\plamA{\vec{b}}{\ty}}
+%   \end{array}
+%   &
+%   &\begin{array}{l}
+%     \gS^* x:\ty,y:\ty' = \gS x:\ty.\ty' \\
+%     \gS^* x:t,\vec b   = \gS x:\ty.\gS^* \vec b
+%   \end{array}
+%   \\ \\
+%   &\begin{array}{l}
+%     +^* \ty,\ty' = \ty + \ty'\\
+%     +^* \ty,\vec{\ty} = \ty + (+^* \vec{\ty})
+%   \end{array}
+%   &
+%   &\begin{array}{l}
+%     \&^* \ty,\ty' =\pand \ty {\ty'}\\
+%     \&^* \ty,\vec{\ty} = \pand \ty {(\&^* \vec{\ty})}
+%   \end{array}
+% \end{align*}
 
-\begin{align*}
-  &\begin{array}{l}
-    \plamA{x{:}\ity}{\ty} = \plam{x}{\ity}{\ty} \\
-    \plamA{x{:}\ity,\vec{b}}{\ty} = \plam{x}{\ity}{\plamA{\vec{b}}{\ty}}
-  \end{array}
-  &
-  &\begin{array}{l}
-    \gS^* x:\ty,y:\ty' = \gS x:\ty.\ty' \\
-    \gS^* x:t,\vec b   = \gS x:\ty.\gS^* \vec b
-  \end{array}
-  \\ \\
-  &\begin{array}{l}
-    +^* \ty,\ty' = \ty + \ty'\\
-    +^* \ty,\vec{\ty} = \ty + (+^* \vec{\ty})
-  \end{array}
-  &
-  &\begin{array}{l}
-    \&^* \ty,\ty' =\pand \ty {\ty'}\\
-    \&^* \ty,\vec{\ty} = \pand \ty {(\&^* \vec{\ty})}
-  \end{array}
-\end{align*}
-
-The function $\Ikind$ provides the kind of base types $C$.
-
-%\begin{figure}
-\fbox{$
-  \begin{array}{l}
-    \ctxt \turn {prog} \Longrightarrow \ty \; {prog} \\
-    \ctxt \turn {pty}  \Longrightarrow \ty : \kind
-  \end{array}
-$}
+\begin{figure*}
+{\small
+\fbox{$\ctxt \turn {prog} \cipads \ty \; \text{prog}$}
 
 \[
  \infer[\text{Prog-One}]{ 
-    \ctxt \turn {pty} \Longrightarrow \ty \; {prog}
+    \ctxt \turn {pty} \cipads \ty \; \text{prog}
   }{
-    \ctxt \turn {pty} \Longrightarrow \ty : \kty
+    \ctxt \turn {pty} \cipads \ty : \kty
   }
-\]
-
-\[
+\quad
   \infer[\text{Prog-Def}]{ 
-    \ctxt \turn \ga = {pty}; \; {prog} \Longrightarrow \ty \; {prog}
+    \ctxt \turn \ga = {pty}; \; {prog} \cipads \ty \; \text{prog}
   }{
-    \ctxt \turn {prog}[{pty}/\ga] \Longrightarrow \ty \; {prog}
+    \ctxt \turn {prog}[{pty}/\ga] \cipads \ty \; \text{prog}
+  }
+\quad
+  \infer[\text{Prog-RecDef}]{ 
+    \ctxt \turn  \Prec{}\; \ga = {pty}; \; {prog} \cipads \ty \; \text{prog}
+  }{
+    \ctxt \turn {prog}[\Prec{}\; \ga.{pty}/\ga] \cipads \ty \; \text{prog}
   }
 \]
 
-\[
-  \infer[\text{Prog-RecDef}]{ 
-    \ctxt \turn  \Prec{}\; \ga = {pty}; \; {prog} \Longrightarrow \ty \; {prog}
-  }{
-    \ctxt \turn {prog}[\Prec{}\; \ga.{pty}/\ga] \Longrightarrow \ty \; {prog}
-  }
-\]
+\fbox{$\ctxt \turn {pty}  \cipads \ty : \kind$}
 
 \[
   \infer[\text{Base}]{ 
-    \ctxt \turn \Pbase e \Longrightarrow \pbase e : \kty
+    \ctxt \turn \Pbase e \cipads \pbase e : \kty
   }{
     \ctxt \turn e : \ity & (\Ikind(C) = \ity \to \kty)
   }
-\]
-
-\[
+\quad
   \infer[\text{Pfun}]{ 
-    \ctxt \turn \Pfun (x:\ity) = {pty} \Longrightarrow \plam x
+    \ctxt \turn \Pfun (x:\ity) = {pty} \cipads \plam x
     \ity \ty : \ity \to \kind
   }{
-    \ectxt{x{:}\ity} \turn {pty} \Longrightarrow \ty : \kind
+    \ectxt{x{:}\ity} \turn {pty} \cipads \ty : \kind
   }
-\]
-
-\[
+\quad
   \infer[\text{App}]{ 
-    \ctxt \turn {pty} \; e \Longrightarrow \ty \; e : \kind
+    \ctxt \turn {pty} \; e \cipads \ty \; e : \kind
   }{
-    \ctxt \turn {pty} \Longrightarrow \ty : \ity \to \kind & \ctxt \turn e : \ity
+    \ctxt \turn {pty} \cipads \ty : \ity \to \kind & \ctxt \turn e : \ity
   }
 \]
 
 \[
   \infer[\text{Pstruct}]{
-    \ctxt \turn \Pstruct \{\vec x:\vec {{pty}}\} \Longrightarrow
-    \gS^* \vec x{:}\vec \ty : \kty
+    \begin{array}{l}
+    \ctxt \turn \Pstruct \{x_1{:}{pty}_1 \dots x_n{:}{pty}_n\}
+    \cipads \\
+    \qquad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n : \kty      
+    \end{array}
   }{ 
     \begin{array}{c}
-      \ctxt_1 = \ctxt \quad \ity_{i-1} = \iprod{\itsem[\ty_{i-1}]} {\itpdsem[\ty_{i-1}]}\\
-      \ctxt_i = \ctxt_{i-1},x_{i-1}{:} \ity_{i-1} \quad 
-      (\text{for} \; i = 2 \ldots n) \\
-      \ctxt_i \turn {pty}_i \Longrightarrow \ty_i : \kty \quad
-      (\text{for} \; i = 1 \ldots n)
+%       \ctxt_1 = \ctxt \quad \ity_{i-1} = \iprod{\itsem[\ty_{i-1}]} {\itpdsem[\ty_{i-1}]}\\
+%       \ctxt_i = \ctxt_{i-1},x_{i-1}{:} \ity_{i-1} \quad 
+%       (\text{for} \; i = 2 \ldots n) \\
+%       \ctxt_i \turn {pty}_i \cipads \ty_i : \kty \quad
+%       (\text{for} \; i = 1 \ldots n)
+      \ctxt_i = \ctxt,x_1{:}\ity_1, \dots, x_{i-1}{:} \ity_{i-1} \\
+      \ity_{i} = \iprod{\itsem[\ty_{i}]} {\itpdsem[\ty_{i}]} \quad
+      \ctxt_i \turn {pty}_i \cipads \ty_i : \kty
     \end{array}
   }
-\]
-
-\[
+\quad
   \infer[\text{Punion}]{
-    \ctxt \turn \Punion \{\vec x:\vec {{pty}}\} \Longrightarrow
-    +^* (\vec \ty,\pfalse) : \kty
-  }{ 
-    \begin{array}{c}
-      \ctxt \turn {pty}_i \Longrightarrow \ty_i : \kty \quad
-      (\text{for} \; i = 1 \ldots n)
+    \begin{array}{l}
+      \ctxt \turn \Punion \{x_1{:}{pty}_1 \dots x_n{:}{pty}_n\}
+      \cipads \\
+      \ty_1 + \dots + \ty_n + \pfalse : \kty
     \end{array}
+  }{ 
+    \ctxt \turn {pty}_i \cipads \ty_i : \kty
   }
 \]
 
 \[
   \infer[\text{Palt}]{
-    \ctxt \turn \Palt \{\vec x:\vec {{pty}}\} \Longrightarrow
-    \&^* \vec \ty : \kty
+    \ctxt \turn \Palt \{x_1{:}{pty}_1 \dots x_n{:}{pty}_n\} \cipads
+    \ty_1 \& \dots \& \ty_n: \kty
   }{ 
-    \begin{array}{c}
-      \ctxt \turn {pty}_i \Longrightarrow \ty_i : \kty \quad
-      (\text{for} \; i = 1 \ldots n) \\
-    \end{array}
+    \ctxt \turn {pty}_i \cipads \ty_i : \kty
   }
-\]
-
-\[
+\quad
   \infer[\text{Popt}]{
-    \ctxt \turn \Popt \; {pty} \Longrightarrow
+    \ctxt \turn \Popt \; {pty} \cipads
      \psum \ty {} \ptrue
   }{
-    \ctxt \turn {pty} \Longrightarrow \ty : \kty
+    \ctxt \turn {pty} \cipads \ty : \kty
   }
-\]
-
-\[
+\quad
   \infer[\text{Pwhere}]{
     \begin{array}{l}
-      \ctxt \turn {pty} \; \Pwhere \, x.e \Longrightarrow  \\
+      \ctxt \turn {pty} \; \Pwhere \, x.e \cipads  \\
       \qquad
       \pset x \ty {\iif {\pdok {x.\codefont{pd}}} \; \ithen e \; \ielse
         \itrue}
     \end{array}
   }{ 
-     \ctxt \turn {pty} \Longrightarrow \ty : \kty & 
+     \ctxt \turn {pty} \cipads \ty : \kty & 
      \stsem[e,\ectxt{x{:}\iprod{\itsem[\ty]} {\itpdsem[\ty]}},\iboolty]
   }
 \]
 
 \[
   \infer[\text{Parray}]{
-    \ctxt \turn \iParray{{pty}}{{pty_{sep}}}{{pty_{term}}}{} \Longrightarrow 
+    \ctxt \turn \iParray{{pty}}{{pty_{sep}}}{{pty_{term}}}{} \cipads 
     \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}} : \kty
   }{ 
        \begin{array}{lr}
-         \ctxt \turn {pty} \Longrightarrow \ty : \kty & 
-         \ctxt \turn {pty}_{sep} \Longrightarrow \ty_s : \kty \\ 
-         \ctxt \turn {pty}_{term} \Longrightarrow \ty_t : \kty &
+         \ctxt \turn {pty} \cipads \ty : \kty & 
+         \ctxt \turn {pty}_{sep} \cipads \ty_s : \kty \\ 
+         \ctxt \turn {pty}_{term} \cipads \ty_t : \kty &
          (f = \ilam x{}\ifalse)\\
        \end{array}
   }
-\]
-
-\[
+\quad
   \infer[\text{Pcompute}]{ 
-    \ctxt \turn \Pcompute{} \; e \Longrightarrow \pcompute e \ity : \kty
+    \ctxt \turn \Pcompute{} \; e \cipads \pcompute e \ity : \kty
   }{
     \stsem[e,\ctxt,\ity]
   }
@@ -180,32 +157,67 @@ $}
 
 \[
   \infer[\text{Plit}]{ 
-    \ctxt \turn \Plit \const \Longrightarrow 
+    \ctxt \turn \Plit \const \cipads 
     \pscan {\pabsorb {\pset \var \ty {\ivar = \iconst}}} : \kty
   }{
     \stsem[\const,\ctxt,\ity] & \defty \ity \ty
   }
-\]  
-
-\[
+\quad
   \infer[\text{Var}]{ 
-    \ctxt \turn \ga \Longrightarrow \ga
+    \ctxt \turn \ga \cipads \ga
   }{}    
-\]
-
-\[
+\quad
   \infer[\text{Prec}]{ 
-    \ctxt \turn \Prec{}\; \ga.{pty} \Longrightarrow \pmu \ga \ty
+    \ctxt \turn \Prec{}\; \ga.{pty} \cipads \pmu \ga \ty
   }{
-    \ctxt \turn {pty} \Longrightarrow \ty
+    \ctxt \turn {pty} \cipads \ty
   }
 \]
+}
+  \caption{Encoding \ipads{} in \ddc{}}
+  \label{fig:encode-ipads}
+\end{figure*}
 
-%   \caption{Encoding \ipads{} in the \ddc{}}
-%   \label{fig:encode-ipads}
-% \end{figure}
+The function $\Ikind$ provides the kind of base types $C$.
 
-\subsection{Sketches of Other DDLs}
+\subsection{Sketches of Other Features and DDLs}
+
+Overlays are syntactic sugar. Formalism allows  us to check them for
+well-formedness.
+\\
+\noindent
+Switched unions:
+\begin{code}
+  if p then T1 else T2 =
+    \{y:\{x:unit|!p\} + T1 | p\} +  T2\linebreak
+
+  if p then T1 else T2 =
+    S y:(\{x:unit|!p\} + T1).(\{x:unit| p\} + T2)\linebreak
+  
+  switch(e)\{
+    c1 => T1
+    c2 => T2
+    ...
+    default => Tdef
+  \} \(\cipads{}\)
+  (\(\gl\) c. 
+   if c = c1 then T1 else
+   if c = c2 then T2 else
+   ...
+   Tdef) e
+\end{code}
+
+Features of other languages that we can encode:
+\begin{itemize}
+\item \datascript{}: primitive types, set types (enums and bitmask
+  sets), arrays (greedy and fixed size), constraints, type parameters,
+  non-overlapping lables.
+\item \packettypes{}: arrays (fixed size and greedy), where clauses,
+  structures, overlays, alternation.
+\end{itemize}
+Note, as far as I can tell, neither \packettypes{} nor \datascript{}
+supports greedy arrays that include erroneous records.
+
 The syntax of a \datascript{}-style array named ${id}$ with elements of
 type ${dty}$ is ${dty}\;{id}[{length}]$, with length optional. If the
 user supplies the length of the sequence then the array parser reads
@@ -216,15 +228,15 @@ The first case be encoded in a straightforward manner with \ddc{}
 sequences: 
 \[
   \infer{
-    \ctxt \turn {dty} \; [{length}] \Longrightarrow 
+    \ctxt \turn {dty} \; [{length}] \cipads 
     \pseq \ty {\ptrue{}} {\pterm f {\pfalse{}}} : \kty
   }{ 
-    \ctxt \turn {dty} \Longrightarrow \ty : \kty & 
+    \ctxt \turn {dty} \cipads \ty : \kty & 
     (f = \codefont{isLength} \; {length})
   }
 \]
 As binary data has no separators, we use $\ptrue$. The function {\tt
-  isLength} is a curried function taking a length and a pair of Rep
+  isLength} is a curried function taking a length and a pair of rep
 and PD arrays and returning a boolean indicating whether both arrays
 have the specified length. As there is no lookahead-terminator, we use
 $\pfalse$ (thereby guaranteeing that the array will not be terminated
@@ -235,16 +247,16 @@ will not parse correctly without consuming it. We cannot use the
 termination predicate as it can only look at elements that have
 already been parsed and hence consumed from the input. Therefore, we
 need a way to encode the notion of a failed element parse in the
-terminator type. To do so, we introduce a new \ddc{} type $\pnot \ty$,
-which we encode in \ddc{} as {\small
+terminator type. To do so, we define $\pnot \ty$ to be:
+ {\small
 \[
 \pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
   {\ifalse} {\_} {\itrue}}
 \]}
 \noindent
-It attempts to parse a $\ty$. On success, the Rep will be a left
+This type attempts to parse a $\ty$. On success, the rep will be a left
 injection. The constraint in the set type will therefore fail. If a
-$\ty$ cannot be parsed, the sum will default to $\ptrue$, the Rep will
+$\ty$ cannot be parsed, the sum will default to $\ptrue$, the rep will
 be a right injection, and the constraint will succeed. The use of the
 sum in the underlying type is critical as it allows the set-type to be
 error free even if parsing a $\ty$ fails.
@@ -253,10 +265,10 @@ With $\pnotn$, we can encode the unbounded \datascript{} array as
 follows:
 \[
   \infer{
-    \ctxt \turn {dty} \; [{length}] \Longrightarrow 
+    \ctxt \turn {dty} \; [{length}] \cipads 
     \pseq \ty {\ptrue{}} {\pterm {\ilam x {} \ifalse} {\pnot \ty}} : \kty
   }{ 
-    \ctxt \turn {dty} \Longrightarrow \ty : \kty 
+    \ctxt \turn {dty} \cipads \ty : \kty 
   }
 \]
 Note that the termination predicate is trivially false, as we use the

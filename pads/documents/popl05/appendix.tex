@@ -1,7 +1,7 @@
 \appendix
 
-
-\section{Well-Formedness Rules}
+\section{Host Language}
+\subsection{Well-Formedness Rules}
 \label{app:well-form}
 
 \fbox{$\wfd \pctxt \ity$}
@@ -92,7 +92,7 @@
 }
 \]
 
-\section{\Implang Expression Typing}
+\subsection{Typing Rules}
 
 Constants are assigned types with the interface $\Icty$ and operators
 with $\Iopty$. Some example constants and their types are show below.
@@ -295,7 +295,7 @@ Note that \textit{T-Generalize} can only be used in the premise of a
   }
 \]
 
-\section{\Implang Expression Evaluation}
+\subsection{Evaluation Rules}
 \begin{bnf}
 \name{Evaluation} \meta{E} \::= 
   [] \| \iop{E} \| \iapp E e \| \iapp v E \\
@@ -447,28 +447,15 @@ expression fails.
     \ielse{} \iif {\codefont{ec_1} = \iecerr \iori \codefont{ec_2} = \iecerr}\; \ithen \iecerr \\
     \ielse \iok
    \end{array}$
-
-%% \item[Transform:]
-%% \item \fnm{P_T} (h,b) = (h,(???,b))
-
-%% \item \fnm{SetNumRead} p n = p\{numRead=n\}
-%% \item \fnm{IncNR} p = \fnm{SetNumRead} (p.numRead + 1) p
-
-%% \item // \textit{In most cases, when SetErr is used, nerr should also be set.}
-%% \item \fnm{SetErr} p = p\{errCode=err\}
-
-%% \item // \textit{SetPanic sets error as well (and nerr?).}
-%% \item \fnm{SetPanic} p = p\{state=pc,errCode=err\}
-
-%% \item \fnm{MakeErrorPd} t = ...
 \end{description}
 
+\trversion{
 \begin{lemma}[Function Types]
   $\stsem[\codefont{isOk},
   \codefont{pos}{:}\iintty \iarrowi \iintty,
   \forall \ga.\ipty \ga \iarrowi \iboolty]$.
 \end{lemma}
-
+}
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "semantics"
