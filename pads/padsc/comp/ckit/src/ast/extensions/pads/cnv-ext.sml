@@ -799,7 +799,7 @@ structure CnvExt : CNVEXT = struct
 		      fun find f [] = NONE
                         | find f (x::xs) = case (f x) of NONE => find f xs | r => r
 		      fun chkOne(a, b:PBTys.baseInfoTy) = 
-			  let val n = #repname b
+			  let val n = #padsxname b
 			      val accPCT = P.makeTypedefPCT (Atom.toString n)
 			      val (accCT, sc) = CTcnvType accPCT
 			  in
@@ -814,7 +814,7 @@ structure CnvExt : CNVEXT = struct
 		  case ty
                   of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
 				    of NONE => s  (* non-base type; mem constructed from rep name*)
-                                    |  SOME(b:PBTys.baseInfoTy) => Atom.toString (#repname b))
+                                    |  SOME(b:PBTys.baseInfoTy) => Atom.toString (#padsxname b))
 
               fun lookupMemChar (ty:pty) = 
                   case ty 
@@ -997,7 +997,7 @@ structure CnvExt : CNVEXT = struct
                       val pct = case CTgetTyName act
 			        of NONE => CTtoPTct act
                                 | SOME tyName => 
-				    P.makeTypedefPCT(BU.lookupTy(PX.Name tyName, repSuf, #repname))
+				    P.makeTypedefPCT(BU.lookupTy(PX.Name tyName, repSuf, #padsxname))
 
                       val name = case nOpt
 			         of NONE => (PE.error "Parameters to PADS data types must have names\n"; 
@@ -1543,12 +1543,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				orelse isSuffix "_pd" name 
 			    then PE.error (structOrUnion^" "^structOrUnionName^" contains field with reserved name '"^name^"'\n")
 			    else ();
-			    let val tyName = BU.lookupTy (pty, repSuf, #repname)
-				val ty = P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname))
+			    let val tyName = BU.lookupTy (pty, repSuf, #padsxname)
+				val ty = P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #padsxname))
 				val () = ( CTcnvType ty  (* ensure that the type has been defined *) ; () )
 				val (ty,tyName) = if arrayDecl orelse optDecl then 
-				                    let val tyName = name^"_t"
-							val tyName = genFreshName tyNameDefined name "_t"
+				                    let val tyName = genFreshName tyNameDefined name "_t"
 						    in (P.makeTypedefPCT tyName, tyName) 
 						    end 
 						  else (ty,tyName)
@@ -1587,7 +1586,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 then [( [name], [name], [(tmpName(name),tyname)], tmpMapping(name),  [],             tmpMapping(name),      [tyname], ["bogus"] )]
 				 else [( [name], [],     [],                       readMapping(name), pdMapping name, postReadMapping(name), [tyname], ["bogus"] )]
 			       | _        => 
-				 let val tyName = BU.lookupTy ((getPadsName tyname), repSuf, #repname)
+				 let val tyName = BU.lookupTy ((getPadsName tyname), repSuf, #padsxname)
 				     val ty = P.makeTypedefPCT(tyName)
 				     val () = ( CTcnvType ty  (* ensure that the type has been defined *) ;
 						if lookupContainsRecord(getPadsName tyname)
@@ -1743,7 +1742,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  let val fullCommentOpt = BU.manComment(name, comment, expr, pred)
 		      val ty = case isPadsTy tyname
 			       of PTys.CTy => tyname
-                               | _ => P.makeTypedefPCT(BU.lookupTy(getPadsName tyname, repSuf, #repname))
+                               | _ => P.makeTypedefPCT(BU.lookupTy(getPadsName tyname, repSuf, #padsxname))
 		  in
 		      [(name, ty, fullCommentOpt)]
 		  end
@@ -1849,7 +1848,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 (*			        predTy: PX.Pty option, thisVar: string option, pred: pcexp option}) =  *)
 		  let val base = "base"
 		      val baseTyName = BU.lookupTy(baseTy, repSuf, #padsname)		
-		      val baseTypeName = BU.lookupTy(baseTy, repSuf, #repname)		
+		      val baseTypeName = BU.lookupTy(baseTy, repSuf, #padsxname)		
 		      val cParams : (string * pcty) list = List.map mungeParam params
 		      val paramNames = #1(ListPair.unzip cParams)
 
@@ -1890,7 +1889,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
 		      (* Generate canonical representation: typedef to base representation *)
-		      val baseTyPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, repSuf, #repname))
+		      val baseTyPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, repSuf, #padsxname))
 		      val canonicalED = P.makeTyDefEDecl (baseTyPCT, repSuf name)
 		      val (canonicalDecls, canonicalTid) = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
                       val canonicalPCT = P.makeTypedefPCT (repSuf name)
@@ -2158,7 +2157,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val neerr = "neerr"
                  val firstError = "firstError"
 		 val violated = "violated"
-                 val elemRepPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, repSuf, #repname))
+                 val elemRepPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, repSuf, #padsxname))
                  val elemEdPCT  = P.makeTypedefPCT(BU.lookupTy(baseTy, pdSuf, #pdname))
                  val elemMPCT  = P.makeTypedefPCT(BU.lookupTy(baseTy, mSuf, #mname))
                  val elemReadName = BU.lookupTy(baseTy, readSuf, #readname)
@@ -3755,7 +3754,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		 (* Assemble read_one driver function *)
 		 fun roDriverBodySs(name) =
-		     let val elemName = BU.lookupTy(baseTy, repSuf, #repname)
+		     let val elemName = BU.lookupTy(baseTy, repSuf, #padsxname)
 			 val elemPdName  = BU.lookupTy(baseTy, pdSuf, #pdname)
 
 			 val initDecSs =   
@@ -4678,7 +4677,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     let val predStringOpt = Option.map BU.constraintToString pred
 				 val fullCommentOpt = BU.stringOptMerge(comment, predStringOpt)
 			     in
-				 [(name, P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
+				 [(name, P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #padsxname)), fullCommentOpt )]
 			     end
 			 else []
 		     fun genRepBrief (e,labelOpt) = 
@@ -4928,7 +4927,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				     pred, comment,...}:BU.pfieldty) = 
 			 let val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
 			     val readFieldName = BU.lookupTy(pty, readSuf, #readname)
-	                     val tyname = P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname))
 			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
 			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
 			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
@@ -5017,7 +5015,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 let val () = chkCaseLabel eOpt
 			     val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
 			     val readFieldName = BU.lookupTy(pty, readSuf, #readname)
-	                     val tyname = P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname))
 			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
 			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
 			     val modArgs = List.map (PTSub.substExps (!readSubList)) args
@@ -5773,7 +5770,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      let val predStringOpt = Option.map BU.constraintToString pred
 			          val fullCommentOpt = BU.stringOptMerge(comment, predStringOpt)
 			      in
-				  [(name, P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #repname)), fullCommentOpt )]
+				  [(name, P.makeTypedefPCT(BU.lookupTy (pty, repSuf, #padsxname)), fullCommentOpt )]
 			      end
 			  else []
 		      fun genRepBrief e = []
