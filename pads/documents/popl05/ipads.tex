@@ -3,7 +3,7 @@
 
 In this section, we define \ipads{}, an idealized data description
 language.  \ipads{} captures the essence of \pads{} in a fashion
-similar to the way that MiniML~\cite{miniml} captures the essence of ML or Featherweight
+similar to the way that MinML~\cite{harper:plbook} captures the essence of ML or Featherweight
 Java~\cite{igarasi+:featherweight} captures the essence of Java.  The main goal of this section is to introduce
 the reader to the form and function of \ipads{} by giving its syntax
 and walking through a couple of examples.  Though the syntax differs,
@@ -28,10 +28,11 @@ two forms.  The form ($\alpha = pty$) introduces the type identifier
 $\alpha$ and binds it to \ipads{} type $pty$.
 The type identifier may be used in
 subsequent types.  The second form  ($\Prec{}\; \alpha = pty$) introduces
-a recursive type definition.  In this case, $\alpha$ may appear in $pty$.
-\reminder{Why bring up contractiveness with regard to \ipads{}? --YHM}
-However, we require that recursive definitions be {\it contractive},
-as described in Section~\ref{sec:ddc-kinding}.
+a recursive type definition.  In this case, $\alpha$ may appear in 
+$pty$.~\footnote{For technical reasons, 
+we require that recursive definitions be {\it contractive} ---
+$\alpha$ can only appear inside another type constructor such as a
+record or union.  See Section~\ref{sec:ddc-kinding} for further details.}
 
 Complex \ipads{} descriptions are built by gluing a collection of base
 types together using \ipads{} type constructors.  In our examples, we
