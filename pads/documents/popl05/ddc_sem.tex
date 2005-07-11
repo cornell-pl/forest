@@ -1,42 +1,40 @@
 \section{\ddc{} Semantics}
 \label{sec:ddc-sem}
 
-\reminder{
-Move to intro. in some form or another. --YHM.
-
 The primitives of \ddc{} are deceptively simple.  Each captures a
 simple concept, often familiar from type theory. However, in reality,
 each primitive is multi-faceted. Each simultaneously describes a
 collection of valid bit strings, two datatypes in the host language --
 one for the data representation (rep) itself and one for its parse
-descriptor (PD) -- and a transformation from bit strings into data and
-corresponding meta-data.
+descriptor (PD) -- and a transformation from bit strings, including
+invalid ones, into data and corresponding meta-data.
 
-What, then, are the semantics of a type? A number of factors went into
-the design of \ddc{}, and they heavily influenced our choice for the
-semantics of the calculus. First, it was necessary that the calculus
-be simultaneously detailed enough to capture meaningful differences
-between various data description languages (DDLs), and broad enough to
-express the constructs found in these languages. Second, we sought to
-explain to DDL users the process by which a bit stream is converted
-into an in-memory representation. For the analyst, the data format
-already existed, with a specific meaning. We sought to precisely
-specify the transform so the analyst knows how that meaning is mapped
-into the host language.  Finally, it was critical that \ddc{} include
-error reporting and error handling mechanisms because errors are an
-intrinsic characteristic of ad hoc data.
-
-%All DDLs are set up to handle errors with varying degrees of flexibility.
-%   (warn the reader that the current calculus is not necessarily
-%   ultimately flexible in this regard, but open to extension).
-
-\begin{figure}[tp]
-  \centering
-  \includegraphics[height=2in,width=2in]{correspond}  
-  \caption{Relationship between semantics functions}
-  \label{fig:correspond-graphic}
-\end{figure}
+\cut{
+With the \ddc{} semantics, we seek to explain to data description
+language users the process by which a bit stream is converted into an
+in-memory representation. For the analyst, the data format already
+existed, with a specific meaning. We precisely specify the transform
+so the analyst knows how that meaning is mapped into the host
+language. Also, it is critical that \ddc{} include error reporting and
+error handling mechanisms because errors are an intrinsic
+characteristic of ad hoc data.
 }
+
+We give semantics to well formed types with three semantic functions
+that each precisely convey a particular facet of a type's meaning.
+The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$ describe the {\it
+  representation semantics} of \ddc{}, detailing the types of the
+in-memory representation of the data and its meta-data -- the rep and
+PD types, respectively. The function $\trans[\cdot,,]$ describes the
+{\it parsing semantics} of \ddc{}, defining a function in the
+\implang{} language that parses bit strings to produce structured data
+and meta-data. We do not directly define the set of valid bit strings
+for each type, but rather define it to be those for which the PD
+indicates no errors when parsed.
+
+We begin this section with a kinding judgment that determines whether
+a type is well formed. In the remainder of the section, we formalize
+the three-fold semantics of well formed \ddc{} types.
 
 \cut{
 \begin{table}
@@ -62,20 +60,6 @@ For reference, we provide in
 defined in this section and a brief description of each.  
 }
 
-We begin our presentation of the semantics of \ddc{} with a kinding
-judgment $\ddck[\ty,{\rctxt;\ctxt},\kind,\mcon]$ that determines
-whether a type is well formed. We then give semantics for well formed
-types with three semantic functions that each precisely convey a
-particular aspect of a type's meaning.  The function $\trans[\cdot,,]$
-describes the {\it parsing semantics} of \ddc{}, defining a function
-in the lambda calculus that parses bit strings to produce structured
-data and meta-data. The functions $\itsem[\cdot]$ and
-$\itpdsem[\cdot]$ describe the {\it representation semantics} of
-\ddc{}, detailing the in-memory representation of the data and
-meta-data -- the rep and PD types, respectively -- output by the
-parsing functions. In the remainder of this section, we formalize this
-three-fold semantics of \ddc{} types.
-
 \subsection{\ddc{} Kinding}
 \label{sec:ddc-kinding}
 
@@ -94,22 +78,20 @@ three-fold semantics of \ddc{} types.
 \begin{figure*}[t]
 \small
 \fbox{$\ddck[\ty,\rctxt;\ctxt,\kind,\mcon]$}\\
-%\centering
-\noindent
-$\quad
+\[
   \infer[\text{Var}]{
     \ddck[\ptyvar,{\rctxt;\ctxt},\kty,\ncon]
   }{\wfd {} \ctxt \quad \ptyvar \in \dom \rctxt}
-$ 
-$\infer[\text{Unit}]{
+\quad
+\infer[\text{Unit}]{
     \ddck[\ptrue,\rctxt;\ctxt,\kty,\con]
   }{\wfd {} \ctxt}
-$
-$\quad \infer[\text{Bottom}]{
+\quad 
+\infer[\text{Bottom}]{
     \ddck[\pfalse,\rctxt;\ctxt,\kty,\con]
   }{\wfd {} \ctxt}
-$
-$\quad \infer[\text{Const}]{
+\quad 
+\infer[\text{Const}]{
     \ddck[\pbase{e},\rctxt;\ctxt,\kty,\con]
   }{
     \begin{semcond}
@@ -117,23 +99,24 @@ $\quad \infer[\text{Const}]{
       (\vlet {\ity \iarrowi \kty} {\Ikind(C)})
     \end{semcond}
   }
-$\\
-\noindent
-$\quad \infer[\text{Abs}]{
+\]
+
+\[
+\infer[\text{Abs}]{
     \ddck[\plam{\var}{\ity}{\ty},
          \rctxt;\ctxt,\ity \iarrowi \kind,\mcon]
   }{
     \ddck[\ty,\rctxt;\ectxt{\var{:}\ity},\kind,\mcon]
   }
-$
-$\quad \infer[\text{App}]{
-    \ddck[\papp{\ty}{e},\rctxt;\ctxt,\gk,\mcon]
-  }{
-    \ddck[\ty,\rctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
-    \stsem[e,\cdot;\ctxt,\ity]
-  }
-$
-$\quad \infer[\text{Prod}]{
+\quad
+\infer[\text{App}]{
+  \ddck[\papp{\ty}{e},\rctxt;\ctxt,\gk,\mcon]
+}{
+  \ddck[\ty,\rctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
+  \stsem[e,\cdot;\ctxt,\ity]
+}
+\quad
+\infer[\text{Prod}]{
     \ddck[\psig{x}{\ty}{\ty'},\rctxt;\ctxt,\kty,\con]
   }{       
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] &
@@ -142,23 +125,21 @@ $\quad \infer[\text{Prod}]{
               {\itpdsem[\asub \rctxt \ty]}},
           \kty,\mcon']
   }
-$\\
-\noindent
-$\quad
-  \infer[\text{Sum}]{
+\]
+
+\[
+\infer[\text{Sum}]{
     \ddck[\psum{\ty}{e}{\ty'},\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\rctxt;\ctxt,\kty,\mcon'] 
   }
-$
-$\quad
+\quad
   \infer[\text{Intersection}]{
     \ddck[\pand \ty {\ty'},\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\rctxt;\ctxt,\kty,\mcon'] 
   }
-$
-$\quad
+\quad
   \infer[\text{Set}]{
     \ddck[\pset x \ty e,\rctxt;\ctxt,\kty,\con]
   }{ 
@@ -167,10 +148,9 @@ $\quad
     \ectxt{x{:}\iprod{\itsem[\asub \rctxt \ty]} 
       {\itpdsem[\asub \rctxt \ty]}},\iboolty]
   }
-$\\
-\noindent
-$\quad
-  \infer[\text{Seq}]{
+\]
+
+\[\infer[\text{Seq}]{
     \ddck[\pseq \ty {\ty_s} {\pterm e {\ty_t}},\rctxt;\ctxt,\kty,\con]
   }{
     \begin{array}{c}
@@ -184,36 +164,33 @@ $\quad
     \quad (\ty_m = \asub \rctxt {\pseq \ty {\ty_s} {\pterm e {\ty_t}}})
     \end{array}
   }
-$
-$\quad
+\quad
   \infer[\text{Rec}]{
     \ddck[\pmu \ptyvar \ty,\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,{\rctxt,\ptyvar {=} \pmu \ptyvar \ty;\ctxt},\kty,\con]
   }
-$
-$\quad
+\quad
   \infer[\text{Compute}]{       
     \ddck[\pcompute{e}{\ity},\rctxt;\ctxt,\kty,\con]
   }{
     \stsem[e,\cdot;\ctxt,\ity]
   }      
-$\\
-\noindent
-$\quad
-  \infer[\text{Absorb}]{
+\]
+
+\[
+\infer[\text{Absorb}]{
     \ddck[\pabsorb{\ty},\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon]
   }
-$
-$\quad
+\quad
   \infer[\text{Scan}]{
     \ddck[\pscan{\ty},\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon]
   }
-$ 
+\]
 \caption{\ddc{} Kinding Rules}
 \label{fig:ddc-kinding}
 \end{figure*}
@@ -252,14 +229,15 @@ indicates that it is not and $\mcon$ indicates that it may be either
 one. We also assign an ordering to $\mcon$ of $\ncon < \con$. 
 
 Otherwise, the rules are mostly straightforward. We highlight here
-just two of them. Base types $C$ are assigned a kind by the
-function $\Ikind$. While their kind does not differentiate them from
-type abstractions, they are not well formed when not applied.  Also
-note that, once applied, all base types have kind $\kty$. The product
-rule shows that $\var$ is bound as a pair of a representation and a
-corresponding parse descriptor. Note that $\rctxt$ is applied to the
-type before translation to a \implang{} type - thereby closing it - as
-open \ddc{} types do not translate into well formed \implang{} types.
+just two of them. Base types $C$ are assigned a kind by the function
+$\Ikind$. While their kind does not differentiate them from type
+abstractions, they are not well formed when not applied.  Also note
+that, once applied, all base types have kind $\kty$. The product rule
+shows that $\var$ is bound as a pair of a rep and corresponding PD.
+Their types are determined by the semantic functions defined in the
+next section.  Note that $\rctxt$ is applied to the type before
+translation to a \implang{} type - thereby closing it - as open \ddc{}
+types do not translate into well formed \implang{} types.
 
 \subsection{Representation Semantics}
 \label{sec:intty-sem}
@@ -366,11 +344,11 @@ underlying type in case of success.
 \end{figure}
 
 In \figref{fig:pd-tys}, we present the corresponding parse descriptor
-type for each \ddc{} type. Every parse descriptor shares the same
+type for each \ddc{} type. Most PD types share the same
 basic shape of a pair of header and body, which is critical to the
-definition of polymorphic functions on PDs. \reminder{I need to
-  qualify the preceding line, as it is not immediately apparent for
-  all types and is only true for well-formed types.} 
+definition of polymorphic functions on PDs. For well-formed types, we
+have proven that all PD types have a header and body, as described
+in our companion technical report~\cite{fisher+:pads-semantics-ext}.
 
 Each header records the number of errors encountered during parsing,
 an error code indicating the degree of success of the parse --

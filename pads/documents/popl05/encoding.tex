@@ -1,60 +1,43 @@
 \section{Encoding DDLs in the DDC}
 \label{sec:encodings}
 
+We can better understand the data description languages described
+earlier by translating their constructs into the types of \ddc{}. We
+begin with the translation of \ipads{}, which captures many of the
+common features of DDLs. Then, we introduce some features not found in
+\ipads{} and give their semantics with \ddc{}.  Next, we list features
+of \datascript{} and \packettypes{} which we can encode in \ddc{},
+without detaling the translation. Finally, we briefly discuss some
+features not encodeable in \ddc{} and explain these limitations.
+
 \subsection{IPADS Translation}
 \label{sec:trans-sl}
 
-% We now define some syntactic sugar for multi-argument versions of type
-% constructors that only take one or two arguments. Some of these
-% abbreviations take a list of bindings $b$, each of the form $x{:}t$.
-
-% \begin{align*}
-%   &\begin{array}{l}
-%     \plamA{x{:}\ity}{\ty} = \plam{x}{\ity}{\ty} \\
-%     \plamA{x{:}\ity,\vec{b}}{\ty} = \plam{x}{\ity}{\plamA{\vec{b}}{\ty}}
-%   \end{array}
-%   &
-%   &\begin{array}{l}
-%     \gS^* x:\ty,y:\ty' = \gS x:\ty.\ty' \\
-%     \gS^* x:t,\vec b   = \gS x:\ty.\gS^* \vec b
-%   \end{array}
-%   \\ \\
-%   &\begin{array}{l}
-%     +^* \ty,\ty' = \ty + \ty'\\
-%     +^* \ty,\vec{\ty} = \ty + (+^* \vec{\ty})
-%   \end{array}
-%   &
-%   &\begin{array}{l}
-%     \&^* \ty,\ty' =\pand \ty {\ty'}\\
-%     \&^* \ty,\vec{\ty} = \pand \ty {(\&^* \vec{\ty})}
-%   \end{array}
-% \end{align*}
-
 \begin{figure*}
 {\small
-\fbox{$\ctxt \turn {prog} \cipads \ty \; \text{prog}$}
+\fbox{$\ctxt \turn \mathit{prog} \cipads \ty \; \text{prog}$}
 
 \[
  \infer[\text{Prog-One}]{ 
-    \ctxt \turn {pty} \cipads \ty \; \text{prog}
+    \ctxt \turn \mathit{pty} \cipads \ty \; \text{prog}
   }{
-    \ctxt \turn {pty} \cipads \ty : \kty
+    \ctxt \turn \mathit{pty} \cipads \ty : \kty
   }
 \quad
   \infer[\text{Prog-Def}]{ 
-    \ctxt \turn \ga = {pty}; \; {prog} \cipads \ty \; \text{prog}
+    \ctxt \turn \ga = \mathit{pty}; \; \mathit{prog} \cipads \ty \; \text{prog}
   }{
-    \ctxt \turn {prog}[{pty}/\ga] \cipads \ty \; \text{prog}
+    \ctxt \turn \mathit{prog}[\mathit{pty}/\ga] \cipads \ty \; \text{prog}
   }
 \quad
   \infer[\text{Prog-RecDef}]{ 
-    \ctxt \turn  \Prec{}\; \ga = {pty}; \; {prog} \cipads \ty \; \text{prog}
+    \ctxt \turn  \Prec{}\; \ga = \mathit{pty}; \; \mathit{prog} \cipads \ty \; \text{prog}
   }{
-    \ctxt \turn {prog}[\Prec{}\; \ga.{pty}/\ga] \cipads \ty \; \text{prog}
+    \ctxt \turn \mathit{prog}[\Prec{}\; \ga.\mathit{pty}/\ga] \cipads \ty \; \text{prog}
   }
 \]
 
-\fbox{$\ctxt \turn {pty}  \cipads \ty : \kind$}
+\fbox{$\ctxt \turn \mathit{pty}  \cipads \ty : \kind$}
 
 \[
   \infer[\text{Base}]{ 
@@ -64,23 +47,23 @@
   }
 \quad
   \infer[\text{Pfun}]{ 
-    \ctxt \turn \Pfun (x:\ity) = {pty} \cipads \plam x
+    \ctxt \turn \Pfun (x:\ity) = \mathit{pty} \cipads \plam x
     \ity \ty : \ity \to \kind
   }{
-    \ectxt{x{:}\ity} \turn {pty} \cipads \ty : \kind
+    \ectxt{x{:}\ity} \turn \mathit{pty} \cipads \ty : \kind
   }
 \quad
   \infer[\text{App}]{ 
-    \ctxt \turn {pty} \; e \cipads \ty \; e : \kind
+    \ctxt \turn \mathit{pty} \; e \cipads \ty \; e : \kind
   }{
-    \ctxt \turn {pty} \cipads \ty : \ity \to \kind & \ctxt \turn e : \ity
+    \ctxt \turn \mathit{pty} \cipads \ty : \ity \to \kind & \ctxt \turn e : \ity
   }
 \]
 
 \[
   \infer[\text{Pstruct}]{
     \begin{array}{l}
-    \ctxt \turn \Pstruct \{x_1{:}{pty}_1 \dots x_n{:}{pty}_n\}
+    \ctxt \turn \Pstruct \{x_1{:}\mathit{pty}_1 \dots x_n{:}\mathit{pty}_n\}
     \cipads \\
     \qquad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n : \kty      
     \end{array}
@@ -89,62 +72,62 @@
 %       \ctxt_1 = \ctxt \quad \ity_{i-1} = \iprod{\itsem[\ty_{i-1}]} {\itpdsem[\ty_{i-1}]}\\
 %       \ctxt_i = \ctxt_{i-1},x_{i-1}{:} \ity_{i-1} \quad 
 %       (\text{for} \; i = 2 \ldots n) \\
-%       \ctxt_i \turn {pty}_i \cipads \ty_i : \kty \quad
+%       \ctxt_i \turn \mathit{pty}_i \cipads \ty_i : \kty \quad
 %       (\text{for} \; i = 1 \ldots n)
       \ctxt_i = \ctxt,x_1{:}\ity_1, \dots, x_{i-1}{:} \ity_{i-1} \\
       \ity_{i} = \iprod{\itsem[\ty_{i}]} {\itpdsem[\ty_{i}]} \quad
-      \ctxt_i \turn {pty}_i \cipads \ty_i : \kty
+      \ctxt_i \turn \mathit{pty}_i \cipads \ty_i : \kty
     \end{array}
   }
 \quad
   \infer[\text{Punion}]{
     \begin{array}{l}
-      \ctxt \turn \Punion \{x_1{:}{pty}_1 \dots x_n{:}{pty}_n\}
+      \ctxt \turn \Punion \{x_1{:}\mathit{pty}_1 \dots x_n{:}\mathit{pty}_n\}
       \cipads \\
       \ty_1 + \dots + \ty_n + \pfalse : \kty
     \end{array}
   }{ 
-    \ctxt \turn {pty}_i \cipads \ty_i : \kty
+    \ctxt \turn \mathit{pty}_i \cipads \ty_i : \kty
   }
 \]
 
 \[
   \infer[\text{Palt}]{
-    \ctxt \turn \Palt \{x_1{:}{pty}_1 \dots x_n{:}{pty}_n\} \cipads
+    \ctxt \turn \Palt \{x_1{:}\mathit{pty}_1 \dots x_n{:}\mathit{pty}_n\} \cipads
     \ty_1 \& \dots \& \ty_n: \kty
   }{ 
-    \ctxt \turn {pty}_i \cipads \ty_i : \kty
+    \ctxt \turn \mathit{pty}_i \cipads \ty_i : \kty
   }
 \quad
   \infer[\text{Popt}]{
-    \ctxt \turn \Popt \; {pty} \cipads
+    \ctxt \turn \Popt \; \mathit{pty} \cipads
      \psum \ty {} \ptrue
   }{
-    \ctxt \turn {pty} \cipads \ty : \kty
+    \ctxt \turn \mathit{pty} \cipads \ty : \kty
   }
 \quad
   \infer[\text{Pwhere}]{
     \begin{array}{l}
-      \ctxt \turn {pty} \; \Pwhere \, x.e \cipads  \\
+      \ctxt \turn \mathit{pty} \; \Pwhere \, x.e \cipads  \\
       \qquad
       \pset x \ty {\iif {\pdok {x.\codefont{pd}}} \; \ithen e \; \ielse
         \itrue}
     \end{array}
   }{ 
-     \ctxt \turn {pty} \cipads \ty : \kty & 
+     \ctxt \turn \mathit{pty} \cipads \ty : \kty & 
      \stsem[e,\ectxt{x{:}\iprod{\itsem[\ty]} {\itpdsem[\ty]}},\iboolty]
   }
 \]
 
 \[
   \infer[\text{Parray}]{
-    \ctxt \turn \iParray{{pty}}{{pty_{sep}}}{{pty_{term}}}{} \cipads 
+    \ctxt \turn \iParray{\mathit{pty}}{{pty_{sep}}}{{pty_{term}}}{} \cipads 
     \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}} : \kty
   }{ 
        \begin{array}{lr}
-         \ctxt \turn {pty} \cipads \ty : \kty & 
-         \ctxt \turn {pty}_{sep} \cipads \ty_s : \kty \\ 
-         \ctxt \turn {pty}_{term} \cipads \ty_t : \kty &
+         \ctxt \turn \mathit{pty} \cipads \ty : \kty & 
+         \ctxt \turn \mathit{pty}_{sep} \cipads \ty_s : \kty \\ 
+         \ctxt \turn \mathit{pty}_{term} \cipads \ty_t : \kty &
          (f = \ilam x{}\ifalse)\\
        \end{array}
   }
@@ -169,9 +152,9 @@
   }{}    
 \quad
   \infer[\text{Prec}]{ 
-    \ctxt \turn \Prec{}\; \ga.{pty} \cipads \pmu \ga \ty
+    \ctxt \turn \Prec{}\; \ga.\mathit{pty} \cipads \pmu \ga \ty
   }{
-    \ctxt \turn {pty} \cipads \ty
+    \ctxt \turn \mathit{pty} \cipads \ty
   }
 \]
 }
@@ -179,12 +162,23 @@
   \label{fig:encode-ipads}
 \end{figure*}
 
+In Section~\ref{sec:ddc-example}, we gave an example of how an
+\ipads{} description would appear in \ddc{} and informally described
+how \ipads{} is encoded in \ddc{}. In \figref{fig:encode-ipads}, we
+formalize this translation. The judgment $\ctxt \turn {prog} \cipads
+\ty\; \text{prog}$ indicates that the \ipads{} program ${prog}$ is encoded as \ddc{}
+type $\ty$ in context $\ctxt$, while $\ctxt \turn \mathit{pty} \cipads
+\ty$ does the same for \ipads{} types $\mathit{pty}$.
+
 The function $\Ikind$ provides the kind of base types $C$.
+
+struct, union, 
 
 \subsection{Sketches of Other Features and DDLs}
 
-Overlays are syntactic sugar. Formalism allows  us to check them for
-well-formedness.
+PT has overlays. Here's example. We've developed translation of
+overlay syntax. Relatively straightforward. Formalism allows us to
+check them for well-formedness.
 \\
 \noindent
 Switched unions:
@@ -208,16 +202,19 @@ Switched unions:
    Tdef) e
 \end{code}
 
+In addition, we've looked at these features.
+
 Features of other languages that we can encode:
 \begin{itemize}
 \item \datascript{}: primitive types, set types (enums and bitmask
-  sets), arrays (greedy and fixed size), constraints, type parameters,
+  sets), arrays (greedy and fixed size), constraints, type parameters
+  (by which they mean ...),
   non-overlapping lables.
 \item \packettypes{}: arrays (fixed size and greedy), where clauses,
   structures, overlays, alternation.
 \end{itemize}
-Note, as far as I can tell, neither \packettypes{} nor \datascript{}
-supports greedy arrays that include erroneous records.
+% Note, as far as I can tell, neither \packettypes{} nor \datascript{}
+% supports greedy arrays that include erroneous records.
 
 The syntax of a \datascript{}-style array named ${id}$ with elements of
 type ${dty}$ is ${dty}\;{id}[{length}]$, with length optional. If the
@@ -274,6 +271,9 @@ follows:
 \]
 Note that the termination predicate is trivially false, as we use the
 lookahead-terminator exclusively to terminate the array.
+
+
+There are things we can't do as well, but we're happy with it ...
 
 %%% Local Variables: 
 %%% mode: latex

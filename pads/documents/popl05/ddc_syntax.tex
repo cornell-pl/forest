@@ -210,7 +210,7 @@ $\ilam {\nrm x} \ity e$ for $\ifun {\nrm f} {\nrm x} e$, with $f
 \; \iin \; e'$ for $\ilet {\nrm f} {\ifun {\nrm f} {\nrm x} e} \; e'$;
 $\ispty$ for $\iprod \ioffty \ioffty$.  We will often use
 pattern-matching syntax for pairs in place of explicit projections, as
-in $\lampair{\codefont e}$ and $\ilet {\itup{\off,r,p}} e$.  Although
+in $\lampair{\codefont e}$ and $\ilet {\itup{\off,r,p}} e\; e'$.  Although
 we have no formal records with named fields, we use a dot notation for
 commonly occuring projections. For example, for a pair $\mathtt x$ of
 rep and PD, we use $\codefont{x.rep}$ and $\codefont{x.pd}$ for the
@@ -226,6 +226,7 @@ We define standard judgments for the static semantics
 see our companion technical report~\cite{fisher+:pads-semantics-ext}.
 
 \subsection{Example}
+\label{sec:ddc-example}
 
 As an example, we present an abbreviated description of the common log
 format as it might appear in the calculus. Note that, for simplicity,
