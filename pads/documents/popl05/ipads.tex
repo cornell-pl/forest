@@ -54,12 +54,11 @@ In general, we write $\pbase{e}$ for some base type parameterized by a
 When interpreted as a parser, each of these base types reads
 the external data source and generates a pair of data structures
 in the host language.  The first data structure is the
-{\em internal representation} of the data source and
+{\em internal representation}  and
 the second is the {\em parse descriptor}, which contains meta-data collected during parsing.
-For instance, \Puint{} reads a series of digits from the
-data source and generates an unsigned 32-bit integer as its
+For instance, \Puint{} reads a series of digits and generates an unsigned 32-bit integer as its
 internal representation.  \Pstring{} generates a 
-host language string as its internal representation.  
+host language string.  
 \Pdate{} might read dates in a multitude of
 different formats, but always generates a record
 with time, day, month, and year fields as its internal 
@@ -86,25 +85,25 @@ number of bytes returned to the client.
 
 The \ipads{} description of web logs is most easily read from bottom to top.
 The terminal type, which describes the entire web log source, is an array type.
-All arrays in \ipads{} takes three arguments: the description
+All arrays in \ipads{} take three arguments: the description
 of the elements in the array (in this case, {\tt entry$\_$t}),
 the description of the separator that appears in between each element
-(in this case, a newline character \Peor{} as there is one entry per line), and 
+(in this case, a newline character \Peor{}), and 
 the description of the terminator (in this case, the end-of-file character).
 In \pads{} itself there is a much wider selection of separators and
 termination conditions, but these additional variations are of little semantic 
 interest so we omit them from \ipads.  
 The internal host-language data structure corresponding to
-an array is a sequence (list) of elements.
+an array is a list of elements.
 The separator and terminator characters are not 
 represented internally.
 
 The contents of each line in a web log, 
 {\tt entry$\_$t}, are described using a
 \Pstruct.  Like an array, a \Pstruct{} describes a sequence of 
-objects in a data source.  The result of parsing a \Pstruct{} is
-represented as a record of objects in the host language.  The elements
-of a \Pstruct{} are either named fields (\eg {\tt client : \Pip{}}) or
+objects in a data source.  We represent the result of parsing a \Pstruct{} 
+as a record in the host language.  The elements
+of a \Pstruct{} are either named fields (\eg{} {\tt client : \Pip{}}) or
 anonymous fields (\eg{} {\tt " "}).  Reading from the beginning of {\tt
 entry$\_$t}, the \Pstruct{} declares that the first thing on the line
 is an IP address (\Pip) and immediately following it is a space
@@ -114,30 +113,28 @@ authid$\_$t} followed by another space character and so on.
 The last field of {\tt entry$\_$t} is quite different from the others.
 It is a \Pcompute{} type, meaning it does not match any characters in
 the data source, but it does form a part of the internal data structure
-that may be used by host programs.  The argument of a \Pcompute{}
+used by host programs.  The argument of a \Pcompute{}
 field is an arbitrary host language expression that determines the value of the associated field.  In this case, the
 field {\tt academic} computes a boolean that indicates whether 
-the web request came from an academic site.  To do so, it uses the
-host language function {\tt getdomain}, which operates over the
-internal representation of IP addresses.  Notice that the computation
+the web request came from an academic site. Notice that the computation
 depends upon a host language value constructed earlier --- the value
 stored in the {\tt client} field.  In general, later fields in a \Pstruct{} may
-reference and depend upon fields that appear earlier in the \Pstruct{}.
+reference fields that appear earlier in the \Pstruct{}.
 
-The {\tt entry$\_$t} description depends upon the type {\tt authid$\_$t} to
+The {\tt entry$\_$t} description uses the type {\tt authid$\_$t} to
 describe the two fields {\tt remoteid} and {\tt localid}.  The {\tt
 authid$\_$t} type is a \Punion{} with two branches.  Unions are
 represented internally as sum types.  If the data source can be
 described by the first branch (a dash), then the internal
-representation is the left/first injection into the sum.  If the data
+representation is the first injection into the sum.  If the data
 source cannot be described by the first branch, but can be described
 by the second branch then the internal representation is the second
-injection into the sum.  Otherwise, there is an error.
+injection.  Otherwise, there is an error.
 
 Finally, the {\tt response$\_$t} type is a \Pfun, a user-defined
 parameterized type.  The parameter of {\tt response$\_$t} is a host
 language integer.  The body of the \Pfun{} is a \padskw{Puint16$\_$FW}
-where \padskw{FW}, the fixed width, is the argument of the function.  In
+where \cd{x}, the fixed width, is the argument of the function.  In
 addition, the value of the fixed-width integer is constrained by the
 \Pwhere{} clause.  In this case, the \Pwhere{} clause demands that
 the fixed-width integer {\tt y} that is read from the source lie 
@@ -197,8 +194,8 @@ entry\_t \Parray{}(\Peor, \Peof)
 Figure~\ref{fig:ipads-newick} presents a second \ipads{} example.
 In this example, \ipads{} describes the Newick format, a flat
 representation of tree-structured data.  The leaves of the trees
-are string names that describe an ``entity''.   In our variant of Newick, 
-leaf names may be omitted if the user chooses.  If the leaf name does appear,
+are names that describe an ``entity''.   In our variant of Newick, 
+leaf names may be omitted.  If the leaf name does appear,
 it is followed by a colon and a number.  The number describes the ``distance''
 from the parent node.  Microbiologists often use
 distances to describe the
@@ -239,8 +236,7 @@ node\_t = \Popt \Pstruct \{
   \};
 \(\qquad\)
 \Pstruct \{
-  body : tree\_t;
-  ";";
+  body : tree\_t; ";";
 \}
 \(\qquad\)
 (* Example data:
