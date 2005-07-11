@@ -31,4 +31,8 @@ void        PGLX_node_free           (nodeRep ocaml_n);     /* free node ocaml_n
 void        PGLX_nodelist_free       (nodeRepArray child_list); /* free a void ** list returned from generic_children */
 /* Note: PGLX_nodelist_free does not free the child nodes, just the list that refers to them */
 
+/* The Ptimestamp/xs:dateTime format for XML Schema: */
+#define TIMESTAMP_OUT_FMT "%Y-%m-%dT%H:%M:%S"
+#define TIMESTAMP_EXPLICIT_OUT_FMT "%Y-%m-%dT%H:%M:%S"
+
 #endif  /*   __PGLX_H__   */

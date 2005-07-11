@@ -3,9 +3,11 @@
 signature PP_XML_AST =
 sig
 
-  type aidinfo
-  type paidinfo
-  type ptyinfo
+  type aidinfo  (* Original AST *)
+  type paidinfo (* PADS annotation of AST *)
+  type ptyinfo  (* Type of things stored in paidtab *)
+  (* Tables.tidtab : CKIT stores *)
+
   type 'a pp = OldPrettyPrint.ppstream -> 'a -> unit
 
   val printConst      : bool ref

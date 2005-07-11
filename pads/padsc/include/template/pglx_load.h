@@ -226,7 +226,7 @@ int main(int argc, char** argv) {
       error(2, "<note>header read returned error</note>");
     } else {
       exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
-      error(2, "<note>header read returned OK</note>");
+      error(2, "<note>header read returned OK</note>"); 
     }
   }
 #endif /* PADS_HDR_TY */

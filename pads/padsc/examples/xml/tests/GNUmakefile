@@ -46,10 +46,10 @@ endif
 
 # DEP_myenum =
 
-LOAD_TESTS=load_format7 load_wsl load_ai load_dns load_dibbler_notrailer
-BULK_QUERY_TESTS=bulk_format7 bulk_wsl bulk_ai bulk_dns bulk_dibbler_notrailer
-SMART_QUERY_TESTS=smart_format7 smart_wsl smart_ai smart_dibbler_notrailer
-REGRESS_TESTS=regress_format7 regress_wsl regress_ai regress_dns regress_dibbler_notrailer
+LOAD_TESTS=load_format7 load_ai load_dns load_dibbler_notrailer
+BULK_QUERY_TESTS=bulk_format7 bulk_ai bulk_dns bulk_dibbler_notrailer
+SMART_QUERY_TESTS=smart_format7 smart_ai smart_dibbler_notrailer
+REGRESS_TESTS=regress_format7 regress_ai regress_dns regress_dibbler_notrailer
 
 ALL_TESTS_O = $(LOAD_TESTS) $(BULK_QUERY_TESTS) $(SMART_QUERY_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
@@ -98,7 +98,7 @@ pglx_lib:
 compare_files:
 	(cmp $${S} $${T} && echo "*** OK: $${N} PASSED") || echo "*** ERROR: $${N} FAILED" 
 
-regress_load_%: test_load_% 
+regress_load_%: load_% 
 	./$? 
 	$(MAKE) -f ../GNUmakefile -k -s N=load_$* S=load_$*.xml T=../../regress/$*.xml compare_files
 
@@ -110,13 +110,13 @@ regress_smart_%: smart_%
 	./$? 
 	$(MAKE) -f ../GNUmakefile -k -s N=smart_$* S=smart_$*.xml T=../../regress/$*.xml compare_files
 
-regress_format7: regress_load_format7 regress_bulk_format7 regress_smart_format7
+regress_format7: regress_load_format7 regress_bulk_format7 regress_smart_format7 schema_format7
 
-regress_ai: regress_load_ai regress_bulk_ai regress_smart_ai
+regress_ai: regress_load_ai regress_bulk_ai regress_smart_ai schema_ai 
 
-regress_dns: regress_load_dns regress_bulk_dns
+regress_dns: regress_load_dns regress_bulk_dns schema_dns 
 
-regress_dibbler_notrailer: regress_load_dibbler_notrailer regress_bulk_dibbler_notrailer regress_smart_dibbler_notrailer
+regress_dibbler_notrailer: regress_load_dibbler_notrailer regress_bulk_dibbler_notrailer regress_smart_dibbler_notrailer schema_dibbler_notrailer
 
 regress: $(REGRESS_TESTS)
 

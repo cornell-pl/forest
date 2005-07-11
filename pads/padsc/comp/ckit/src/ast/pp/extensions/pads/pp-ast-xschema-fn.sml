@@ -731,31 +731,6 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 		        , rDelim="}"
 		        } pps initExprs
 
-  fun getCTyName tidtab (cty:Ast.ctype) = 
-      let fun getName tid = 
-	  let val SOME (tyBinding : Bindings.tidBinding) = Tidtab.find(tidtab,tid)
-	  in
-	      #name tyBinding
-	  end
-         fun getIntName(intKind, signedness, signednessTag) =
-	     case (intKind, signedness) 
-	     of (Ast.INT, Ast.SIGNED) => SOME("xs:int")
-             |  (Ast.FLOAT, _) => SOME("xs:float")
-             | _ => SOME ("ToBeImplemented")
-      in
-       (case cty 
-        of Qual(qual, ctype) => getCTyName tidtab ctype
-        |  Numeric(_,_,signedness,intKind,signednessTag) => getIntName (intKind, signedness, signednessTag)
-	|  Pointer ctype => getCTyName tidtab ctype
-        |  StructRef tid => getName tid
-        |  UnionRef tid => getName tid
-        |  EnumRef tid => getName tid
-        |  TypeRef tid => getName tid
-        |  _ => NONE ) 
-       handle Option => NONE
-      end
-
-
   (** PADS to XML XSchema translation **)
 
   (* ppXMLHeader prints the header for a Schema declaration: 
@@ -764,13 +739,10 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
      If the name of the element is "pd", it is always optional. 
      This is a hack!!!!
   *)
-  fun ppXMLHeader opentag closetag pps (mapTypeName, tyNameOpt, NameOpt) =	
+  fun ppXMLHeader opentag closetag pps (mapTypeName, tyNameOpt, name) =	
       ( PPL.addStr pps opentag
       ; 
-       let val (NameAttr,isPdField) = 
-	   case NameOpt of 
-	       NONE => ("", false) 
-	     | SOME name => (("name=\"" ^ name ^ "\""), name = "pd")
+       let val (NameAttr,isPdField) = (("name=\"" ^ name ^ "\""), name = "pd")
            val tyNameAttr = 
 	       (case tyNameOpt of 
 		   NONE => "" | 
@@ -828,8 +800,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       PPL.addStr pps ("<xs:restriction base=\"" ^ base ^ "\"/> \n")
       
   fun isIdentity  arg = case arg of
-      (_,_,NONE) => false 
-    | (_,_,SOME name) => name = PNames.identifier 
+    (_,_,name) => name = PNames.identifier 
 
   fun id s = s
 
@@ -874,7 +845,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   *)
   fun ppTopElemIfPsource pps (ptyInfo:PTys.pTyInfo,repNameOpt) =
 	if (#isSource ptyInfo) 
-	then ( ppXMLHeader "<xs:element " "/>" pps (mapFieldTypeName, repNameOpt,SOME "PSource")
+	then ( ppXMLHeader "<xs:element " "/>" pps (mapFieldTypeName, repNameOpt, "PSource")
 	     ; newline pps)
 	else ()
 
@@ -905,10 +876,10 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   *)
   fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val pdTid = #pdTid ptyInfo
-	  val (pdTyName, pdFields) = structInfo tidtab pdTid
-	  val pdHeader = makeBaseNames (List.take(pdFields,4))
-          val (repName, repFields) = structInfo tidtab tid
-	  val augRepFields = makeFieldNames (repFields @ [(pdTyName, SOME "pd")])
+	  val (pdTyName, pdFields) = structPdFields tidtab pdTid
+	  val pdHeader = makeBaseNames pdFields
+          val (repName, repFields) = structFields tidtab tid
+	  val augRepFields = makeFieldNames (repFields @ [(pdTyName, "pd")])
       in
 	((newline pps
 (*	; PPL.addStr pps "<!-- Pstruct "^repName^" -->" *)
@@ -932,10 +903,10 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 *)  
   fun ppPUnion (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...}) =
       let val pdTid = #pdTid ptyInfo
-          val (repName,uFields) = unionInfo tidtab tid
+          val (repName,uFields) = unionFields tidtab tid
 	  val uFields' = makeFieldNames uFields 
-          val (pdTyName,Fields,uPdFields) = unionPdInfo tidtab pdTid
-	  val pdFields = makeBaseNames(List.take (Fields,5))
+          val (pdTyName,pdFields) = unionPdFields tidtab pdTid
+	  val pdFields = makeBaseNames pdFields
 	  val tagName = SOME (valOf repName ^ "_tag")  
        in 
 
@@ -957,7 +928,6 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
             <element name="nerr" type="Puint32"/>
             <element name="errCode" type="PerrCode_t"/>
             <element name="loc" type="Ploc_t"/>
-            <element name="tag" type=[[identifier]]_tag/>
           </sequence>
         </complexType>
         ; 
@@ -981,7 +951,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       ; ppXMLFields pps uFields'
       ; newline pps
       ; PPL.addStr pps "</xs:choice>\n"
-      ; ppXMLFields pps [(mapFieldTypeName, pdTyName, SOME "pd")]
+      ; ppXMLFields pps [(mapFieldTypeName, pdTyName, "pd")]
       ; PPL.addStr pps "</xs:sequence>\n"
       ; complexTypeClose pps
 
@@ -1002,16 +972,15 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
     ]]  ==
   *)
   fun ppPArray (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
-      let fun changeName newName (oldType,oldName) = (oldType, SOME newName) 
+      let fun changeName newName (oldType,oldName) = (oldType, newName) 
           fun addType Facets (oldType,oldName) = (mapFieldTypeName, SOME ((valOf oldType) ^ Facets), oldName) 
 	  val pdTid = #pdTid ptyInfo
-	  val (pdTyName, pd1Fields) = structInfo tidtab pdTid
-          val pdFields = makeBaseNames (List.take (pd1Fields,7))
-
-          val (repName, repFields) = structInfo tidtab tid
+	  val (pdTyName, pd1Fields) = structPdFields tidtab pdTid
+          val pdFields = makeBaseNames pd1Fields
+          val (repName, repFields) = structFields tidtab tid
           val lengthField = List.hd (makeBaseNames repFields)	(* takes only two fields = length & elts *) 
           val eltField = addType "\" minOccurs=\"0\" maxOccurs=\"unbounded" (changeName "elt" (List.hd (List.tl repFields)))
-          val Fields = eltField :: lengthField :: (mapFieldTypeName, pdTyName, SOME "pd") :: []
+          val Fields = eltField :: lengthField :: (mapFieldTypeName, pdTyName, "pd") :: []
       in
 	((newline pps
 	  (* 
@@ -1067,7 +1036,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       in
 	((newline pps
 	  ; complexTypeOpen pps (repName)
-	  ; ppXMLSequence pps [(mapBaseTypeName, SOME "Puint8", SOME "val"), (mapPdName o mapFieldTypeName, SOME "Puint8", SOME "pd")]
+	  ; ppXMLSequence pps [(mapBaseTypeName, SOME "Puint8", "val"), (mapPdName o mapFieldTypeName, SOME "Puint8", "pd")]
 	  ; complexTypeClose pps
 	  ; ppTopElemIfPsource pps (ptyInfo,repName)	
         )
@@ -1111,7 +1080,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 	       (* ; PPL.addStr pps "<!-- Ptypedef "^Name^" -->" *)
 	       ; complexTypeOpen pps (Name)
 	       (* ; ppXMLRestriction pps base_name *)
-	       ; ppXMLSequence pps [(mapBaseTypeName, SOME base, SOME "val"), (mapPdName o mapFieldTypeName, SOME base, SOME "pd")]
+	       ; ppXMLSequence pps [(mapBaseTypeName, SOME base, "val"), (mapPdName o mapFieldTypeName, SOME base, "pd")]
 	       ; complexTypeClose pps
 	       (*
 	     ; 

@@ -61,6 +61,9 @@ int main(int argc, char** argv) {
   PADS_TY(_m)   m;
   PDCI_node_t   *smart_node;
 
+  my_disc.out_formats.timestamp = "%Y-%m-%dT%H:%M:%S"; 
+  my_disc.out_formats.timestamp_explicit = "%Y-%m-%dT%H:%M:%S"; 
+
 #ifdef PADS_HDR_TY
   PADS_HDR_TY( )    hdr_rep;
   PADS_HDR_TY(_pd)  hdr_pd;

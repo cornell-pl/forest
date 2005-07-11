@@ -266,7 +266,7 @@
  *               for a record-based IO discipline (other than finding
  *               end-of-record), whereas a built-in soft limit of
  *               P_BUILTIN_MATCH_MAX characters is imposed for non-record-based
- *               IO disciplnes.  (The built-in limit is soft because if the match
+ *               IO disciplines.  (The built-in limit is soft because if the match
  *               happens to get more than P_BUILTIN_MATCH_MAX characters in a
  *               single IO discipline read call it will go ahead and consider all
  *               of them.  In contrast, if the discipline match_max is set

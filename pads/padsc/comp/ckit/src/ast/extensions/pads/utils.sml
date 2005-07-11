@@ -2,29 +2,81 @@ structure PTyUtils =
 struct
   open Ast
 
-  fun getCTyName tidtab (cty:Ast.ctype) = 
-      let fun getName tid = 
-	  let val SOME (tyBinding : Bindings.tidBinding) = Tidtab.find(tidtab,tid)
-	  in
-	      #name tyBinding
-	  end
+  (* *)
+  fun isPdFieldType t = 
+      (case t
+	   of "Ploc_t" => true
+	 | "PerrCode_t" => true
+	 | "Pbase_pd" => true 
+	 | "Pflags_t" => true
+	 | _ => false)
+
+  fun isPdFieldName (t, f) = 
+      (case f
+	   of "pstate" => true
+	 | "nerr" => true
+	 | "errCode" => true
+	 | "loc" => true 
+	 | "neerr" => true
+	 | "firstError" => true
+	 | _ => false)
+
+  (* Given a tid, return the corresponding padsTy kind (Base,
+     Compound, C) and (optional) type name *)
+  fun padsTyKindName tidtab tid = 
+      (case Tidtab.find (tidtab, tid) 
+	  of SOME (tyBinding : Bindings.tidBinding) => 
+	      let val SOME n = #name tyBinding in
+		  ((* print ("Found "^n^"\n"); *)
+		   case PBaseTys.find(PBaseTys.baseInfo, Atom.atom n)
+		       of SOME b => (PTys.BaseTy b, SOME n)
+		     |  NONE => (case PTys.find(Atom.atom n)
+				     of NONE => (PTys.CTy, SOME n)
+				   | SOME b =>  (PTys.CompoundTy b, SOME n)))
+	      end
+	| NONE => (PTys.CTy, NONE))
+
+  (* Given a tid, return the (optional) Base or Compound type name. *)
+  fun padsTyName tidtab tid = 
+      (case (padsTyKindName tidtab tid) 
+	  (* Native C types should never be mapped to XML Schema *)
+	   (* !!HACK ALERT!! Mary : These native C types appear in PDs, therefore they are mapped *)
+	  of (PTys.CTy, SOME n) => if (isPdFieldType n) then SOME n else NONE
+	| (PTys.CTy, NONE) => NONE
+        | (_, nopt) => nopt)
+
+  (* Given a tid, return its corresponding name *)
+  fun tyBindingName tidtab tid = 
+      (case Tidtab.find(tidtab,tid) 
+	   of SOME (tyBinding : Bindings.tidBinding) => (#name tyBinding)
+	 | NONE => NONE)
+
+  (* Given a C type, return the Abstract PADS Type *)
+  fun getAbstractTypeName tidtab (cty:Ast.ctype) symName = 
+      let fun getAbstractTypeNameAux (cty : Ast.ctype)  = 
+	  (case cty 
+	       of Qual(qual, ctype) => getAbstractTypeNameAux ctype
+		   (* Native C types only should never be mapped to XML Schema *)
+	     |  Numeric(_,_,signedness,intKind,signednessTag) => NONE
+	     |  Pointer ctype => ((* print ("Lookup pointer \n"); *)getAbstractTypeNameAux ctype)
+	     |  StructRef tid => ((* print ("Lookup struct \n"); *)  tyBindingName tidtab tid)
+	     |  UnionRef tid =>  ((* print ("Lookup union \n"); *)  tyBindingName tidtab tid)
+	     |  EnumRef tid =>   ((* print ("Lookup enum \n"); *)  tyBindingName tidtab tid)
+	     |  TypeRef tid =>   ((* print ("Lookup typedef \n"); *)  padsTyName tidtab tid)
+	     |  _ => ((* print ("Lookup OTHER \n"); *)  NONE))
+	       handle Option => NONE
+      in
+	  case getAbstractTypeNameAux cty
+	      of SOME name => SOME (SOME name, symName)
+	    |  NONE => NONE
+      end
+(*        |  Numeric(_,_,signedness,intKind,signednessTag) => (getIntName (intKind, signedness, signednessTag),  symNameOpt) 
          fun getIntName(intKind, signedness, signednessTag) =
 	     case (intKind, signedness) 
 	     of (Ast.INT, Ast.SIGNED) => SOME("xsd:int")
              |  (Ast.FLOAT, _) => SOME("xsd:float")
              | _ => SOME ("ToBeImplemented")
-      in
-       (case cty 
-        of Qual(qual, ctype) => getCTyName tidtab ctype
-        |  Numeric(_,_,signedness,intKind,signednessTag) => getIntName (intKind, signedness, signednessTag)
-	|  Pointer ctype => getCTyName tidtab ctype
-        |  StructRef tid => getName tid
-        |  UnionRef tid => getName tid
-        |  EnumRef tid => getName tid
-        |  TypeRef tid => getName tid
-        |  _ => NONE ) 
-       handle Option => NONE
-      end
+*)
 
 
   fun bind tidtab tid = 
@@ -33,23 +85,29 @@ struct
        binding
       end
 
-  fun structInfo tidtab tid =
+  fun cnvStructField tidtab (cty, memOpt : Ast.member option, _, _) = 
+      let val fsym : Symbol.symbol = #name(valOf memOpt)
+      in
+	  getAbstractTypeName tidtab cty (Symbol.name fsym)
+      end
+
+  fun structFields tidtab tid =
       let val binding = bind tidtab tid
 	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
 	  val (Ast.StructRef stid) = cty
 	  val Bindings.Struct(tid'',fields) = valOf(#ntype (bind tidtab stid))
-	  fun cnvField (cty,memOpt : Ast.member option,_,_) = 
-	      let val fsym : Symbol.symbol = #name(valOf memOpt)
-	      in
-		  (getCTyName tidtab cty, SOME (Symbol.name fsym))
-	      end
       in
-	 (#name binding,List.map cnvField fields)
+	 (#name binding, List.mapPartial (cnvStructField tidtab) fields)
 	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", []))
   	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", []))
       end
 
-  fun unionInfo tidtab tid = 
+  fun structPdFields tidtab pdtid =
+      let val (name, pdfields) = structFields tidtab pdtid 
+      in (name, List.filter isPdFieldName pdfields)
+      end
+
+  fun unionFields tidtab tid = 
       let val binding = bind tidtab tid
 	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
 	  val (Ast.StructRef stid) = cty
@@ -60,42 +118,26 @@ struct
           val Bindings.Typedef(tid''',utype) = valOf(#ntype (bind tidtab utid))
           val (Ast.UnionRef uutid) = utype
           val Bindings.Union(tid'''',ufields) = valOf(#ntype (bind tidtab uutid)) (* union fields *)
-          fun cnvUField (cty,mem : Ast.member,_) =
+          fun cnvUField (cty, mem : Ast.member,_) =
               let val fsym : Symbol.symbol = #name mem
               in
-                  (getCTyName tidtab cty, SOME (Symbol.name fsym))
+                  getAbstractTypeName tidtab cty (Symbol.name fsym)
               end
       in 
-	(#name binding,List.map cnvUField ufields)
+	(#name binding,List.mapPartial cnvUField ufields)
 	handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", []))
 	handle Option => (PError.bug "expected SOME"; (SOME "bogus", []))
       end
 
-  fun unionPdInfo tidtab tid =
-      let val binding = bind tidtab tid
+  fun unionPdFields tidtab pdtid =
+      let val binding = bind tidtab pdtid
           val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
           val (Ast.StructRef stid) = cty
-          val Bindings.Struct(tid'',pdfields) = valOf(#ntype (bind tidtab stid))    
-          val pdfield = (List.last pdfields)
-          fun valtid (uctype,_,_,_) = uctype
-          val (Ast.TypeRef pdtid) = valtid pdfield
-          val Bindings.Typedef(tid''',updtype) = valOf(#ntype (bind tidtab pdtid))
-          val (Ast.UnionRef updtid) = updtype
-          val Bindings.Union(tid'''',updfields) = valOf(#ntype (bind tidtab updtid))   
-          fun cnvField (cty,mem: Ast.member,_) =                            
-              let val fsym : Symbol.symbol = #name mem
-              in
-                  (getCTyName tidtab cty, SOME (Symbol.name fsym))
-              end
-	  fun cnvPdField (cty,memOpt : Ast.member option,_,_) = 
-	      let val fsym : Symbol.symbol = #name(valOf memOpt)
-	      in
-		  (getCTyName tidtab cty, SOME (Symbol.name fsym))
-	      end
+          val Bindings.Struct(tid'',pdfields) = valOf(#ntype (bind tidtab stid))   
       in
-	 (#name binding,List.map cnvPdField pdfields,List.map cnvField updfields)
-	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", [], []))
-  	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", [], []))
+	 (#name binding, List.filter isPdFieldName (List.mapPartial (cnvStructField tidtab) pdfields))
+	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", []))
+  	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", []))
       end
 
   fun enumInfo tidtab tid =
@@ -109,7 +151,7 @@ struct
 		  (SOME (Symbol.name fsym))
 	      end
       in
-	 (#name binding,List.map cnvField fields)
+	 (#name binding,List.mapPartial cnvField fields)
 	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", []))
   	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", []))
       end

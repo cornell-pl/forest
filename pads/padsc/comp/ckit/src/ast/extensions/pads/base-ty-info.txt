@@ -63,7 +63,7 @@
 #      (64 bits) of memory, where the numerator is made up of 4 digits (2 BCD
 #      numeric bytes).  The denominator is always 1000 (10^3).
 # 
-
+#External               Abstract      Internal Rep
 #PADS_name       numArg Pads/X        inMemory      mask       parseDescription     isPredOpt            scanFunctionOpt       accumulatorOpt  DiskSize     Memory(S/V) Endian
 				      				      
 Puint8           0      Puint8        Puint8        Pbase_m    Pbase_pd             -                    -                     Puint8_acc      V            S           N

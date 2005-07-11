@@ -60,6 +60,9 @@
                     [[type sTyInfo]]
                     Complex/composite parsed-Pads type info
 
+      cnv-ext.sml : [[structure CnvExt]]	  
+                    Implements cnv-ext-sig.sml: Normalization/mapping from ParseTree to C-AST
+
       parse-tree-ext.sml : [[structure ParseTreeExt]]
                     PADS Parse Tree
 

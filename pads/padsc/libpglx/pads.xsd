@@ -286,4 +286,37 @@
   </xs:choice>
 </xs:complexType>
 
+<xs:simpleType name="Pdate">
+  <xs:restriction base="xs:date"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Pdate">
+  <xs:choice>
+   <xs:element name="val" type="p:Pdate"/>
+   <xs:element name="pd" type="p:Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+<xs:simpleType name="Ptime">
+  <xs:restriction base="xs:time"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Ptime">
+  <xs:choice>
+   <xs:element name="val" type="p:Ptime"/>
+   <xs:element name="pd" type="p:Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+<xs:simpleType name="Ptimestamp">
+  <xs:restriction base="xs:dateTime"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Ptimestamp">
+  <xs:choice>
+   <xs:element name="val" type="p:Ptimestamp"/>
+   <xs:element name="pd" type="p:Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
 </xs:schema>
