@@ -46,10 +46,10 @@ endif
 
 # DEP_myenum =
 
-LOAD_TESTS=test_load_format7 test_load_ai test_load_dns test_load_dibbler_notrailer
-BULK_QUERY_TESTS=test_bulk_format7 test_bulk_ai test_bulk_dns test_bulk_dibbler_notrailer
-SMART_QUERY_TESTS=test_smart_format7 test_smart_ai test_smart_dibbler_notrailer
-REGRESS_TESTS=regress_format7 regress_ai regress_dns regress_dibbler_notrailer
+LOAD_TESTS=load_format7 load_wsl load_ai load_dns load_dibbler_notrailer
+BULK_QUERY_TESTS=bulk_format7 bulk_wsl bulk_ai bulk_dns bulk_dibbler_notrailer
+SMART_QUERY_TESTS=smart_format7 smart_wsl smart_ai smart_dibbler_notrailer
+REGRESS_TESTS=regress_format7 regress_wsl regress_ai regress_dns regress_dibbler_notrailer
 
 ALL_TESTS_O = $(LOAD_TESTS) $(BULK_QUERY_TESTS) $(SMART_QUERY_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
@@ -57,25 +57,25 @@ ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
 
 .PHONY: pglx_lib clean
 
-test_load_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/test_load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_D) 
+load_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_D) 
 	@$(CCExec_DYNAMIC_D)
 
-test_load_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/test_load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+load_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
 	@$(CCExec_DYNAMIC_O)
 
 # Test bulk load & query
-test_bulk_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/test_bulk_%.c $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)
+bulk_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/bulk_%.c $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
-test_bulk_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/test_bulk_%.c $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_O)
+bulk_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/bulk_%.c $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 
 # Test smart load & query
-test_smart_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/test_smart_%.c $(TEMPL_DIR)/pglx_smart_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)  
+smart_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/smart_%.c $(TEMPL_DIR)/pglx_smart_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)  
 	@$(CCExec_DYNAMIC_D)
 
-test_smart_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/test_smart_%.c $(TEMPL_DIR)/pglx_smart_query.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+smart_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/smart_%.c $(TEMPL_DIR)/pglx_smart_query.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
 	@$(CCExec_DYNAMIC_O)
 
 # Miscellaneous tests
@@ -100,15 +100,15 @@ compare_files:
 
 regress_load_%: test_load_% 
 	./$? 
-	$(MAKE) -f ../GNUmakefile -k -s N=test_load_$* S=test_load_$*.xml T=../../regress/test_$*.xml compare_files
+	$(MAKE) -f ../GNUmakefile -k -s N=load_$* S=load_$*.xml T=../../regress/$*.xml compare_files
 
-regress_bulk_%: test_bulk_% 
+regress_bulk_%: bulk_% 
 	./$? 
-	$(MAKE) -f ../GNUmakefile -k -s N=test_bulk_$* S=test_bulk_$*.xml T=../../regress/test_$*.xml compare_files
+	$(MAKE) -f ../GNUmakefile -k -s N=bulk_$* S=bulk_$*.xml T=../../regress/$*.xml compare_files
 
-regress_smart_%: test_smart_% 
+regress_smart_%: smart_% 
 	./$? 
-	$(MAKE) -f ../GNUmakefile -k -s N=test_smart_$* S=test_smart_$*.xml T=../../regress/test_$*.xml compare_files
+	$(MAKE) -f ../GNUmakefile -k -s N=smart_$* S=smart_$*.xml T=../../regress/$*.xml compare_files
 
 regress_format7: regress_load_format7 regress_bulk_format7 regress_smart_format7
 
@@ -122,9 +122,9 @@ regress: $(REGRESS_TESTS)
 
 # XML Schema Tests
 
-test_schema_%: test_load_%
+schema_%: load_%
 	./$?
-	$(GALAX_HOME)/bin/galax-parse test_load_$*.xml -validate -xmlschema ../../gen/$*.xsd
+	$(GALAX_HOME)/bin/galax-parse load_$*.xml -validate -xmlschema ../../gen/$*.xsd
 
 #	$(MAKE) -f ../GNUmakefile -k -s N=schema_$* S=schema_$*.xml T=../../regress/schema_$*.xml compare_files
 
