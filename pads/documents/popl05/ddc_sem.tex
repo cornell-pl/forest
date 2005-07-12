@@ -79,10 +79,6 @@ defined in this section and a brief description of each.
 \small
 \fbox{$\ddck[\ty,\rctxt;\ctxt,\kind,\mcon]$}\\
 \[
-  \infer[\text{Var}]{
-    \ddck[\ptyvar,{\rctxt;\ctxt},\kty,\ncon]
-  }{\wfd {} \ctxt \quad \ptyvar \in \dom \rctxt}
-\quad
 \infer[\text{Unit}]{
     \ddck[\ptrue,\rctxt;\ctxt,\kty,\con]
   }{\wfd {} \ctxt}
@@ -165,20 +161,24 @@ defined in this section and a brief description of each.
     \end{array}
   }
 \quad
+  \infer[\text{Var}]{
+    \ddck[\ptyvar,{\rctxt;\ctxt},\kty,\ncon]
+  }{\wfd {} \ctxt \quad \ptyvar \in \dom \rctxt}
+\quad
   \infer[\text{Rec}]{
     \ddck[\pmu \ptyvar \ty,\rctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,{\rctxt,\ptyvar {=} \pmu \ptyvar \ty;\ctxt},\kty,\con]
   }
-\quad
+\]
+
+\[
   \infer[\text{Compute}]{       
     \ddck[\pcompute{e}{\ity},\rctxt;\ctxt,\kty,\con]
   }{
     \stsem[e,\cdot;\ctxt,\ity]
   }      
-\]
-
-\[
+\quad
 \infer[\text{Absorb}]{
     \ddck[\pabsorb{\ty},\rctxt;\ctxt,\kty,\con]
   }{
@@ -337,21 +337,19 @@ underlying type in case of success.
 \label{fig:pd-tys}
 \end{figure}
 
-In \figref{fig:pd-tys}, we present the parse descriptor
-type corresponding to each \ddc{} type. Most PD types share the
-basic shape of a header and a body, which is critical to the
-definition of polymorphic functions on PDs. 
-%For well-formed types, we
-%have proven that all PD types have a header and body.
-Each header records the number of errors encountered during parsing,
-an error code indicating the degree of success of the parse --
-success, success with errors, or failure -- and the span of data
-described by the descriptor.  Formally, the type of the header,
-$\tyface{pd\_hdr}$ is $\iintty \iprodi \iecty \iprodi \ispty$.  Each
-body consists of subdescriptors corresponding to subcomponents of the
-rep (if any) and any meta-data particular to the type. For types with
-neither subcomponents nor special meta-data, we use $\iunitty$ as the
-body type.
+In \figref{fig:pd-tys}, we present the corresponding parse descriptor
+type for each \ddc{} type. We can prove that (for well formed types)
+all PD types share the same basic shape of a pair of header and body.
+This common shape allows us to define functions that polymorphically
+process PDs based on their headers. Each header records the number of
+errors encountered during parsing, an error code indicating the degree
+of success of the parse -- success, success with errors, or failure --
+and the span of data described by the descriptor.  Formally, the type
+of the header, $\tyface{pd\_hdr}$ is $\iintty \iprodi \iecty \iprodi
+\ispty$.  Each body consists of subdescriptors corresponding to
+subcomponents of the rep (if any) and any meta-data particular to the
+type. For types with neither subcomponents nor special meta-data, we
+use $\iunitty$ as the body type.
 
 The sequence PD body contains the parse descriptors of all elements,
 number of element errors, and the sequence length. Note that the
@@ -808,11 +806,10 @@ adding one if the element had an error.
 Recursive types are translated into recursive functions with a special
 function name corresponding to the name of the bound type variable. A
 recursive type variable is translated directly into this special name.
-\trversion{We note that the body of
-the recursive function is somewhat redundant. However, the simpler
-encoding of $\ifun {f_\ptyvar} {\itup{\data,\off}} {\trans[\ty,,] \;
-  \itup{\data,\off}}$ would have complicated the meta-theory. For
-details, please see our companion technical report.}
+\trversion{We note that the body of the recursive function is somewhat
+  redundant. However, the simpler encoding of $\ifun {f_\ptyvar}
+  {\itup{\data,\off}} {\trans[\ty,,] \; \itup{\data,\off}}$ would have
+  complicated the meta-theory.}
 
 The definition of $\pcomputen$ just calls the compute constructors.
 The rep constructor returns the value computed by $e$, while the PD

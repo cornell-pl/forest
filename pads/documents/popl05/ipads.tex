@@ -114,7 +114,8 @@ The last field of {\tt entry$\_$t} is quite different from the others.
 It is a \Pcompute{} type, meaning it does not match any characters in
 the data source, but it does form a part of the internal data structure
 used by host programs.  The argument of a \Pcompute{}
-field is an arbitrary host language expression that determines the value of the associated field.  In this case, the
+field is an arbitrary host language expression (and its
+type) that determines the value of the associated field.  In this case, the
 field {\tt academic} computes a boolean that indicates whether 
 the web request came from an academic site. Notice that the computation
 depends upon a host language value constructed earlier --- the value
@@ -144,7 +145,7 @@ In general, a \Pwhere{} clause may be attached to
 any type specification.  The expression in the \Pwhere{} clause
 is an arbitrary host language expression with boolean type.
 
-% Note that ${pty} \; \Pwhere{} \, x.e$ binds $x$ in $e$. 
+% Note that $\itmv \; \Pwhere{} \, x.e$ binds $x$ in $e$. 
 
 \begin{figure}
 
@@ -167,7 +168,7 @@ entry\_t = \Pstruct{} \{
   response : response\_t 3;    " "; 
   length   : \Puint{};
   academic : \Pcompute 
-              (getdomain client) == "edu";
+              (getdomain client) == "edu" : bool;
 \};
 \(\qquad\)
 entry\_t \Parray{}(\Peor, \Peof)
@@ -268,22 +269,22 @@ type variables. \reminder{Should we add Palt to syntax chart and
 
 \begin{figure}
 \begin{bnf}
-  \name{Programs} \meta{prog} \::= \nont {pty} \| \nont {spec}; \; \nont {prog}\\
-  \mname{Type Definitions}{2} \meta{spec} \::= \alpha = \nont {pty}
-  \|  \Prec{} \; \alpha = \nont {pty} \\ \\
-  \name{Types} \meta{pty} \::= 
+  \name{Programs} \meta{prog} \::= \itmv \| \nont {spec}; \; \nont {prog}\\
+  \mname{Type Definitions}{2} \meta{spec} \::= \alpha = \itmv
+  \|  \Prec{} \; \alpha = \itmv \\ \\
+  \name{Types} \meta{\itmv} \::= 
     \pbase{e} \| \Plit{\const} \nlalt
-    \Pfun{} (\var:\ity) = \nont{pty} \| \nont {pty}\; e \nlalt
+    \Pfun{} (\var:\ity) = \itmv \| \itmv\; e \nlalt
     \Pstruct{} \{\overrightarrow {\nont {field}}\} \| 
     \Punion{} \{\overrightarrow {\nont {field}}\} \nlalt
-    \nont{pty} \; \Pwhere{} \, x.e \| 
+    \itmv \; \Pwhere{} \, x.e \| 
 % \Palt{} \{\vec {\nont{field}}\} \|
-    \Popt{}\; \nont{pty} \nlalt 
-    \iParray{\nont{pty}}{\nont{pty}}{\nont{pty}}{} \| 
-    \Pcompute{} \; e \nlalt
-    \alpha \| \Prec{} \; \alpha . \nont {pty}
+    \Popt{}\; \itmv \nlalt 
+    \iParray{\itmv}{\itmv}{\itmv}{} \| 
+    \Pcompute{} \; e{:}\ity \nlalt
+     \alpha \| \Prec{} \; \alpha . \itmv
     \\
-  \name{Fields} \meta{field}  \::= \var : \nont {pty}
+  \name{Fields} \meta{field}  \::= \var : \itmv
 %     \\
 %   \mname{Host Lang. Expressions}{2} \meta{e}  \::= ... \\ \\
 %   \mname{Host Lang. Types}{2} \meta{\sigma}  \::= ...
