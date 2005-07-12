@@ -2,7 +2,8 @@ structure PTyUtils =
 struct
   open Ast
 
-  (* *)
+  (* HACK ALERT!!! These types are special-cased because they are
+     native C types, but fields of these types occur in PD structs. *)
   fun isPdFieldType t = 
       (case t
 	   of "Ploc_t" => true

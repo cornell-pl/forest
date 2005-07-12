@@ -1,3 +1,47 @@
+July 11, 2005 - Mary
+
+  o PADS to XML Schema Mapping 
+    ==========================
+
+    - Updated mapping to support Pip,Pdate*,Ptimestamp*,Ptime* types.
+
+      Required "conceptual" change to : 
+
+        padsc/comp/ckit/src/ast/extensions/pads/base-ty-info.txt 
+
+      to distinguish between external/parsed type, abstract/PADX type,
+      and internal/rep type.  PADX Schema mapping is applied to
+      abstract/PADX, not internal/rep type.
+
+    - Isolated all PADX-specific functions for manipulating type
+      name/field name, and for filtering out types/fields that are
+      mapped in:
+
+      padsc/comp/ckit/src/ast/extensions/pads/utils.sml   
+
+      Includes a HACK to special-case C types that occur in PD structs.
+
+    - Default output format for PADX timestamp set to "%Y-%m-%dT%H:%M:%S" in:
+      padsc/include/pglx.h   
+
+
+  o PADX Regression tests 
+    =====================
+
+    - Updated PADX regression tests to include PADS descriptions:
+      format7, wsl, ai, dibbler_notrailer, dns
+
+    To run PADX regression tests in padsc/examples/xml/tests
+ 
+       make regress
+
+    In addition to existing regressions ("load", "bulk", "smart"),
+    there is a "schema" regression that runs the "load" regression
+    then validates the output XML w.r.t. the corresponding XML
+    schema. 
+
+    See regression documentation in padsc/examples/xml/README. 
+
 May 22, 2005 - Mary
 
   o Added mapping rules for PADS to XML Schema in :

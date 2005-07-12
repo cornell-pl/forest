@@ -38,6 +38,10 @@ I. Organization of tests for PADS/Galax Interface
   smart nodes to incrementally read a Psource Parray during query
   evaluation.
 
+  The "schema" regression runs the "load" regression and then
+  validates the resulting XML document against the generated .xsd file
+  in padsc/examples/xml/gen. 
+
   In example/xml/tests/, there are template *.[hc] files for each of
   the following PADS sources:
 
@@ -82,10 +86,13 @@ II. Running Regression Tests for PADS-Galax Interface
 
 2. In examples/xml/tests/
 
-      gmake regress_ai
+      gmake regress
+
+   This will run regressions for : format7, wsl, ai,
+   dibbler_notrailer, dns
 
    This regression will compare the output of each
-   test_{load,bulk,smart}_* program with the expected results in
+   {load,bulk,smart}_* program with the expected results in
    examples/xml/regress.   The default query is ".", which simply
    returns the entire document.
 
