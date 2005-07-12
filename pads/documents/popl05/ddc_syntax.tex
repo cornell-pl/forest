@@ -59,13 +59,11 @@ meaning.
 The syntax of \ddc{} is shown in \figref{fig:ddc-syntax}. As with
 \ipads{}, the expressions $e$ and types $\ity$ belong to the host
 language, which is defined in Section~\ref{sec:host-lang}.
-
 The most basic types are $\ptrue$ and $\pfalse$, both of which consume
 no input and return unit as the value portion of the internal
 representation.  The difference between $\ptrue$ and $\pfalse$ is that
 the former always succeeds, while the latter always fails, a
 distinction recorded in the associated parse descriptors.
-
 The syntax $\pbase e$ denotes a base type $C$ parameterized by a
 host-language expression $e$, and $\ptyvar$ denotes a type variable
 introduced in a recursive type.
@@ -94,18 +92,17 @@ additionally check that the constraint $e$ is met.  The value returned
 by $\ty$ is bound as $x$ when checking $e$.
 
 The type $\pseq \ty {\ty_s} {\pterm e {\ty_t}}$ represents a sequence
-of values of type $\ty$. The first type, $\ty$, specifies the element
-type of the sequence. The second type, $\ty_s$, specifies the type of
+of values of type $\ty$. The type $\ty_s$ specifies the type of
 the separator found between elements of the sequence. For sequences
 without separators, we can use $\ptrue$ as the separator type.  The
 expression $e$ is a boolean-valued function that examines the parsed
 contents of the sequence after each element is read to determine
 whether the sequence has completed. For example, a function that
 checks whether the sequence has $100$ elements could be used to
-terminate the sequence when it reaches length $100$.  The final type,
-$\ty_t$, denotes the type of the terminator expected after the last
+terminate the sequence when it reaches length $100$.  The type 
+$\ty_t$ denotes the type of the terminator expected after the last
 element of the sequence. For sequences without terminators, we can use
-$\pfalse$ as the terminator type.
+$\pfalse$ for this type.
 
 Recursive types $\pmu \ptyvar \ty$ describe recursive data formats.
 The name $\ptyvar$ can be used in $\ty$ to refer to the recursive type
@@ -132,16 +129,6 @@ $\ty$ is successfully parsed.
 \begin{figure}[tp]
 \small
 \begin{bnf}
-  \name{Base Types} \meta{a} \::= 
-  \iboolty \| \iintty \| \iunitty \| 
-  \invty \nlalt \iecty \| \ioffty \| \ibitsty
-  \\
-  \name{Types} \meta{\ity} \::= 
-      \ibasety \| \ityvar \| \iarrow \ity \ity \| \iprod \ity \ity \|
-      \isum \ity \ity \nlalt
-      \iseq \ity \| \forall \ityvar.\ity  \|
-      \imu \ityvar \ity   
-  \\
   \name{Variables} \meta{f,x,y} \\
 
   \name{Bit}   \meta{b}   \::= 0 \| 1 \\ 
@@ -157,7 +144,7 @@ $\ty$ is successfully parsed.
       \iarr{\vec{v}} \\
 
   \name{Operators} \meta{op} \::= 
-      = \; \| \; < \; \| \inotop \| \isizeofop
+      = \; \| \; < \; \| \inotop % \| \isizeofop
       \| \ldots \\
 
   \name{Expressions} \meta{e} \::= 
@@ -172,28 +159,39 @@ $\ty$ is successfully parsed.
       \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
       \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
       \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e}
+      \\
+      
+  \name{Base Types} \meta{a} \::= 
+      \iunitty \| \iboolty \| \iintty  \| 
+      \invty \nlalt  \ibitsty \| \ioffty \| \iecty
+  \\
+  \name{Types} \meta{\ity} \::= 
+      \ibasety \| \ityvar \| \iarrow \ity \ity \| \iprod \ity \ity \|
+      \isum \ity \ity \nlalt
+      \iseq \ity \| \forall \ityvar.\ity  \|
+      \imu \ityvar \ity   
+  
 \end{bnf}
 \caption{\Implang{} Language}
 \label{fig:implang-syntax}
 \end{figure}
 
 In \figref{fig:implang-syntax} present the host language of \ddc{}, an
-extension of the simple-typed polymorphic lambda calculus. In
-Section~\ref{sec:parse-sem} we encode the parsing semantics of \ddc{}
-in this calculus. We also use it to write the expressions that appear
-in \ddc{}, as it captures many of the features found in common
-programming languages.
+extension of the simple-typed polymorphic lambda calculus. 
+We use this host language both to encode the parsing semantics of \ddc{} 
+and to write the expressions that can appear within \ddc{} itself.
 
 As the calculus is largely standard, we highlight only its
-differences. The constants include bitstreams $\data$, offsets $\off$,
+unusual features. The constants include bitstreams $\data$, offsets $\off$,
 representing locations in bitstreams, and error codes $\iok$,
 $\iecerr$, and $\iecpc$, indicating success, success with errors and
 failure, respectively. The constant $\ierr$ is used to indicate a
-failed parse.  Due to its specific meaning, it cannot be introduced in
-any user-supplied expressions appearing in \ddc{} types. We include a
-special $\isizeofop$ operator, which returns the size in the data
-source of its input. Our expressions include arbitrary length
-(possible zero) sequence $\iarr{\vec e}$, sequence append $\iappend e
+failed parse.  Because of its specific meaning, it cannot be introduced in
+any user-supplied expressions appearing in \ddc{} types. 
+%We include a special $\isizeofop$ operator, which returns the size in the data
+%source of its input. 
+Our expressions include arbitrary length
+sequences $\iarr{\vec e}$, sequence append $\iappend e
 {e'}$, and sequence indexing $\isub e {\nrm i}$.
 
 The type $\invty$ is the singleton type of the constant $\ierr$ and
@@ -229,13 +227,11 @@ see our companion technical report~\cite{fisher+:pads-semantics-ext}.
 \label{sec:ddc-example}
 
 As an example, we present an abbreviated description of the common log
-format as it might appear in the calculus. Note that, for simplicity,
-the description below does not fully capture the semantics of the
+format as it might appear in \ddc{}. For brevity,
+this description does not fully capture the semantics of the
 \ipads{} description from \secref{sec:ipads}. Additionally, we
-use the abbreviation $\ty * \ty'$ for non-dependent products. Finally,
-for the sake of clarity, we introduce a number of type abbreviations
-in the form $\mathtt{name} = \ty$, before showing the final type
-describing the format in its entirety.
+use the standard abbreviation $\ty * \ty'$ for non-dependent products and introduce a number of type abbreviations
+in the form $\mathtt{name} = \ty$ before giving the type that describes the data source.
 
 \[
 \begin{array}{l}
@@ -271,7 +267,7 @@ describing the format in its entirety.
 Note that we define a type constructor $\mathtt{S}$ to encode literals
 with a singleton set-type. Furthermore, we user the following,
 informal translations:\Pwhere{} becomes a set-type, \Pstruct{} a
-series of dependent products, \Punion{} a serious of sums, and
+series of dependent products, \Punion{} a series of sums, and
 \Parray{} a sequence. For this example, we assume that \Peor{} - the
 end or record -- is a newline, and therefore specify the sequence
 separator as such. As the array terminates at the end of the file, we
