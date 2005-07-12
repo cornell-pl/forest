@@ -242,7 +242,6 @@ types do not translate into well formed \implang{} types.
 \fbox{$\itsem[\ty] = \ity$}
 \[
 \begin{array}{lcl} 
-\itsem[\ptyvar] & = & \ptyvar \\
 \itsem[\ptrue] & = & \iunitty \\
 \itsem[\pfalse] & = & \invty \\
 \itsem[\pbase{e}] & = & \isum {\Irty(C)} \invty   \\
@@ -256,6 +255,7 @@ types do not translate into well formed \implang{} types.
 \itsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
     \iprod \iintty {(\iseq{\itsem[\ty]})}             \\
 %% \itsem[\pcase e c {\ty_1} {\ty_2}]       & = & \isum {\itsem[\ty_1]} {\itsem[\ty_2]}\\
+\itsem[\ptyvar] & = & \ptyvar \\
 \itsem[\pmu \ptyvar \ty] & = & \imu{\ptyvar}{\itsem[\ty]} \\
 \itsem[\pcompute e \ity]                 & = & \ity \\
 \itsem[\pabsorb \ty]                     & = & \isum \iunitty \invty \\
@@ -269,34 +269,33 @@ types do not translate into well formed \implang{} types.
 \label{fig:rep-tys}
 \end{figure}
 
-In Figure~\ref{fig:rep-tys}, we present the type of the representation
-of each \ddc{} primitive. As a general note, while the primitives are
-dependent types, the dependency is erased in the \implang{} language,
-as most conventional programming languages do not have dependent types. For all basic types
-in which expressions appear -- base, set, sequence and compute types,
+In Figure~\ref{fig:rep-tys}, we present the representation type
+of each \ddc{} primitive. While the primitives are
+dependent types, the mapping to the \implang{} language erases the dependency because most conventional languages do not have dependent types. For all basic \ddc{} types in which expressions appear,
 the translation simply drops the expressions to remove the dependency.
-With these expressions gone, variables become useless, and, hence,
-variable bindings are dropped as well, as in product and set types.
+With these expressions gone, variables become useless, so we drop 
+variable bindings as well, as in product and set types.
 Similarly, as type abstraction and application are only relevant for
 dependency, we translate them according to their underlying types.
 
-The \ddc{} type $\ptrue$ transforms no input and hence produces only
-the $\iunitty$ value.  Correspondingly, $\pfalse$ transforms no input,
-but uniformly fails, and hence produces the $\invty$ value. The
+In more detail,
+the \ddc{} type $\ptrue$ consumes no input and produces only
+the $\iunitty$ value.  Correspondingly, $\pfalse$ consumes no input,
+but uniformly fails, producing the value $\invty$. The
 function $\Irty$ maps each base type to a representation for
-successfully parsed data. As base type parsers can fail, this type is
-summed with $\invty$ to produce the actual representation. Similarly,
-set types produce sums, where a left branch indicates that the data
-satisfies the contraint, and the right indicates that it does not.  In
-the latter case, though, as the error is semantic rather than
-syntactic, the parser can return the offending data rather than
-$\ierr$.
-
-Intersection types produce a pair of values -- one for each sub-type
--- as the representations of the subtypes need not be identical nor
-even compatible. Sequences produce an sequence together with its
+successfully parsed data. Note that this representation does not depend
+on the argument expression. As base type parsers can fail, we sum this type
+with $\invty$ to produce the actual representation.
+Intersection types produce a pair of values, one for each sub-type,
+because the representations of the subtypes need not be identical nor
+even compatible. 
+Set types produce sums, where a left branch indicates that the data
+satisfies the constraint and the right indicates that it does not. In
+the latter case, the parser returns the offending data rather than
+$\ierr$ because the error is semantic rather than syntactic.
+Sequences produce a \implang{} language sequence paired with its
 length.  Recursive types generate recursive \implang{} data
-structures. Note that the \implang{} type uses the same variable names
+structures. Note that the \implang{} type uses the same variable name
 as the \ddc{} type, and so the type corresponding to the type variable
 $\ptyvar$ is exactly $\ityvar$.
 
@@ -313,7 +312,6 @@ underlying type in case of success.
 %% %% example: \ua.(int * a) + None
 %% %%          pd = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * [a]_pd)) + [None]_pd)
 %% %%             = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * a)) + [None]_pd)
-\itpdsem[\ptyvar] & = & \ptyvar \\
 \itpdsem[\ptrue] & = & \ipty \iunitty \\                                                  
 \itpdsem[\pfalse] & = & \ipty \iunitty \\                                                  
 \itpdsem[\pbase{e}] & = & \ipty \iunitty\\
@@ -327,6 +325,7 @@ underlying type in case of success.
 \itpdsem[\pset x \ty e] & = & \ipty {\itpdsem[\ty]} \\
 \itpdsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
   \iapty {\itpdsem[\ty]} \\
+\itpdsem[\ptyvar] & = & \ptyvar \\
 \itpdsem[\pmu \ptyvar \ty] & = & \imu \ptyvar {\itpdsem[\ty]} \\
 \itpdsem[\pcompute e \ity]            & = & \ipty \iunitty \\
 \itpdsem[\pabsorb \ty]                & = & \ipty \iunitty \\
@@ -338,12 +337,12 @@ underlying type in case of success.
 \label{fig:pd-tys}
 \end{figure}
 
-In \figref{fig:pd-tys}, we present the corresponding parse descriptor
-type for each \ddc{} type. Most PD types share the same
-basic shape of a pair of header and body, which is critical to the
-definition of polymorphic functions on PDs. For well-formed types, we
-have proven that all PD types have a header and body.
-
+In \figref{fig:pd-tys}, we present the parse descriptor
+type corresponding to each \ddc{} type. Most PD types share the
+basic shape of a header and a body, which is critical to the
+definition of polymorphic functions on PDs. 
+%For well-formed types, we
+%have proven that all PD types have a header and body.
 Each header records the number of errors encountered during parsing,
 an error code indicating the degree of success of the parse --
 success, success with errors, or failure -- and the span of data
@@ -399,9 +398,6 @@ as input and outputs a rep and PD whose type is determined by
 
 \begin{itemize}
 \renewcommand{\labelitemi}{}
-%% Var
-\item $\trans[\ptyvar,,] = \codefont{f_\ptyvar}$
-
 %% None 
 \item $\trans[\ptrue,\ctxt,\kty] =
   \lampair{\spair<\off,\newrep{unit}{},\newpd{unit}{\off}>}$
@@ -509,6 +505,9 @@ as input and outputs a rep and PD whose type is determined by
       \quad \mathtt{continue} \sapp \ictup{\off,\off_e,
         \newrep {seq} {r,r_e}, \newpd {seq} {p, \newpd {unit} \off, p_e}}      
   \end{array}$
+
+%% Var
+\item $\trans[\ptyvar,,] = \codefont{f_\ptyvar}$
 
 %% Mu
 \item $\trans[\pmu \ptyvar \ty,,] =$ \\

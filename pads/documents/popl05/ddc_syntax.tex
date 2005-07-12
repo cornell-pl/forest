@@ -39,7 +39,7 @@ meaning.
   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
                                \pext{\| \gk \-> \gk} \\
   \name{Types} \meta{\ty} \::= 
-    \ptyvar \| \ptrue\| \pfalse \| \pbase{e} \| 
+    \ptrue\| \pfalse \| \pbase{e} \| 
     \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \nlalt
 %%        \|
 %%       \pext{\plam{\ptyvar}{\gk}{\ty} \| \papp{\ty}{\ty} \nlalt}
@@ -49,7 +49,7 @@ meaning.
 %%       }
     \psig x \ty \ty \| \psum \ty e \ty \| \pand \ty \ty \|
     \pset x \ty e \| \pseq \ty \ty {\pterm e \ty} \nlalt
-    \pmu{\ptyvar}{\ty} \| \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
+    \ptyvar       \| \pmu{\ptyvar}{\ty} \| \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
 \end{bnf}
 }
 \caption{\ddc{} Syntax}
@@ -182,8 +182,8 @@ We use this host language both to encode the parsing semantics of \ddc{}
 and to write the expressions that can appear within \ddc{} itself.
 
 As the calculus is largely standard, we highlight only its
-unusual features. The constants include bitstreams $\data$, offsets $\off$,
-representing locations in bitstreams, and error codes $\iok$,
+unusual features. The constants include bitstreams $\data$; offsets $\off$,
+representing locations in bitstreams; and error codes $\iok$,
 $\iecerr$, and $\iecpc$, indicating success, success with errors and
 failure, respectively. The constant $\ierr$ is used to indicate a
 failed parse.  Because of its specific meaning, it cannot be introduced in
@@ -194,8 +194,8 @@ Our expressions include arbitrary length
 sequences $\iarr{\vec e}$, sequence append $\iappend e
 {e'}$, and sequence indexing $\isub e {\nrm i}$.
 
-The type $\invty$ is the singleton type of the constant $\ierr$ and
-types $\iecty$ and $\ioffty$ are for error codes and bit-stream
+The type $\invty$ is the singleton type of the constant $\ierr$.
+Types $\iecty$ and $\ioffty$ are for error codes and bit-stream
 offsets, respectively. The remaining types have their standard
 meaning: function types, product types, sum types, sequence types
 $\iseqty \ty$; polymorphic types $\forall \ityvar.\ity$ and type

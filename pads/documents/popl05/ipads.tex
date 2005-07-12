@@ -272,7 +272,7 @@ type variables. \reminder{Should we add Palt to syntax chart and
   \mname{Type Definitions}{2} \meta{spec} \::= \alpha = \nont {pty}
   \|  \Prec{} \; \alpha = \nont {pty} \\ \\
   \name{Types} \meta{pty} \::= 
-    \pbase{e} \| \alpha \| \Plit{\const} \nlalt
+    \pbase{e} \| \Plit{\const} \nlalt
     \Pfun{} (\var:\ity) = \nont{pty} \| \nont {pty}\; e \nlalt
     \Pstruct{} \{\overrightarrow {\nont {field}}\} \| 
     \Punion{} \{\overrightarrow {\nont {field}}\} \nlalt
@@ -281,7 +281,7 @@ type variables. \reminder{Should we add Palt to syntax chart and
     \Popt{}\; \nont{pty} \nlalt 
     \iParray{\nont{pty}}{\nont{pty}}{\nont{pty}}{} \| 
     \Pcompute{} \; e \nlalt
-    \Prec{} \; \alpha . \nont {pty}
+    \alpha \| \Prec{} \; \alpha . \nont {pty}
     \\
   \name{Fields} \meta{field}  \::= \var : \nont {pty}
 %     \\
