@@ -1,6 +1,8 @@
 \appendix
 
 \section{Host Language}
+\label{app:host-lang}
+
 \subsection{Well-Formedness Rules}
 \label{app:well-form}
 
@@ -93,6 +95,7 @@
 \]
 
 \subsection{Typing Rules}
+\label{app:hl-typing}
 
 Constants are assigned types with the interface $\Icty$ and operators
 with $\Iopty$. Some example constants and their types are show below.
@@ -112,8 +115,8 @@ of $\ctxt$ is as follows:
 \name{Context} \meta{\ctxt} \::= . \| \ctxt,x{:}\ity
 \end{bnf}
 
-Note that \textit{T-Generalize} can only be used in the premise of a
-\texttt{let} expression.
+% Note that \textit{T-Generalize} can only be used in the premise of a
+% \texttt{let} expression.
 
 \[
   \infer[Const]{
@@ -296,6 +299,8 @@ Note that \textit{T-Generalize} can only be used in the premise of a
 \]
 
 \subsection{Evaluation Rules}
+\label{app:hl-evaluation}
+
 \begin{bnf}
 \name{Evaluation} \meta{E} \::= 
   [] \| \iop{E} \| \iapp E e \| \iapp v E \\
@@ -421,8 +426,7 @@ expression fails.
 \]
 
 \section{Assorted Functions}
-\label{sec:asst-functions}
-\label{sec:ty-constructors}
+\label{app:asst-functions}
 
 %% Maps pads base types to implementation language base types
 \begin{description}
